@@ -4,12 +4,35 @@ Last modified: $Date$
 
 - Credit Sam (from Ultr@VNC) for his efforts to translate the missing parts
   to French. Not yet done!
+  => bseifert
+
+- Credit assarbad, tigroo and possibly Darek and further translators.
+  => bseifert
+
 - Date/time formatting more flexible
-- Possibly add a column for file attributes to the tree. Alternatively
-  signal the attributes via coloring of the icons ... maybe even both.
+  => bseifert
+  
+- Add a column for file attributes to the directory list. Same design
+  as in Windows Explorer "R A H" etc.
+  => assarbad
+  
 - The "Browse dialog" called from the drive selection dialog should
   start at the position it was last - not at "My Documents" always.
-- Deletion of multiple items at once as in explorer for example.  
+  => assarbad
+  
+- Multiple selection (and deletion).
+  Concept first! Which cleanup actions will still be enabled
+  and how will they work if multiple items are selected?
+  => bseifert+assarbad
+
+- Sync Online help. 
+
+- Unicode file releases
+  => bseifert
+  
+- Rename "Table Of Contents.hhc" to toc.hhc,
+  as Linux cvs cannot handle filenames with blanks in them.
+  => bseifert
 
 
 Possible additional useful features:
