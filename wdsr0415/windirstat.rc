@@ -492,9 +492,9 @@ BEGIN
     DEFPUSHBUTTON   "OK",IDOK,154,212,50,14
     PUSHBUTTON      "Anuluj",IDCANCEL,303,212,50,14
     LTEXT           "Od:",IDC_STATIC,7,7,20,8
-    LTEXT           "Do:",IDC_STATIC_TO,185,7,12,8
+    LTEXT           "Do:",IDC_STATIC_TO,179,7,12,8
     LTEXT           "<from>",IDC_FROM,51,7,122,8
-    LTEXT           "<to>",IDC_TO,230,7,123,8
+    LTEXT           "<to>",IDC_TO,214,7,139,8
     GROUPBOX        "Rodzaj b³êdu",IDC_STATIC_SEVERITY,7,33,346,24,0,
                     WS_EX_TRANSPARENT
     LTEXT           "Charakter:",IDC_STATIC,7,65,49,8
@@ -502,8 +502,8 @@ BEGIN
                     IDC_STATIC,7,84,346,12
     LTEXT           "Aplikacja:",IDC_STATIC,7,18,38,8
     LTEXT           "<application>",IDC_APPLICATION,51,18,123,8
-    LTEXT           "Platforma:",IDC_STATIC_PLATFORM,185,18,30,8
-    LTEXT           "<platform>",IDC_PLATFORM,230,18,123,8
+    LTEXT           "Platforma:",IDC_STATIC_PLATFORM,179,18,30,8
+    LTEXT           "<platform>",IDC_PLATFORM,214,18,139,8
     LTEXT           "W przypadku b³êdu, opisz jego symptomy w³¹czaj¹c dok³adny tekst komunikatu o b³êdzie, oraz je¿eli to mo¿liwe kolejne kroki, w celu wygenerowania b³êdu ponownie.",
                     IDC_HINT,7,99,346,19
     LTEXT           "Po naciœniêciu OK, bêdziesz móg³ przejrzeæ treœæ problemu w programie pocztowym.",
@@ -774,7 +774,7 @@ BEGIN
                             "Tworzenie procesu(%1!s!) nie powiod³o siê: %2!s!"
     IDS_LANGUAGERESTARTNOW  "Jêzyk zostanie zmieniony po ponownym uruchomieniu programu.\r\n\r\nUruchomiæ ponownie teraz?"
     IDS_ABOUT_AUTHORS       "Authors"
-    IDS_ABOUT_AUTHORSTEXT   "=== Programmers ===\r\n\r\nBernhard Seifert\r\nCreator of the project and coordinator\r\n(mailto:bseifert@users.sourceforge.net)\r\n\r\nOliver Schneider\r\n(mailto:assarbad@users.sourceforge.net)\r\n\r\n\r\n=== Translators ===\r\n\r\n--- French ---\r\n\r\nPascal Delrot\r\n(mailto:tigroo@users.sourceforge.net)\r\n\r\nUltraSam\r\n(mailto:sam.fd@wanadoo.fr)\r\n\r\n\r\n--- Polish ---\r\n\r\nDariusz Ma³achowski\r\n(mailto:d_malachowski@pf.pl)\r\n\r\n\r\n--- Russian ---\r\n\r\nSergiy 'Polet' Polyetayev\r\n"
+    IDS_ABOUT_AUTHORSTEXTs  "=== Programmers ===\r\n\r\nBernhard Seifert\r\nCreator of the project and coordinator\r\n(mailto:%1!s!)\r\n\r\nOliver Schneider\r\n(mailto:assarbad@users.sourceforge.net)\r\n\r\n\r\n=== Translators ===\r\n\r\n--- French ---\r\n\r\nPascal Delrot\r\n(mailto:tigroo@users.sourceforge.net)\r\n\r\nUltraSam\r\n(mailto:sam.fd@wanadoo.fr)\r\n\r\n\r\n--- Polish ---\r\n\r\nDariusz Ma³achowski\r\n(mailto:d_malachowski@pf.pl)\r\n\r\n\r\n--- Russian ---\r\n\r\nSergiy 'Polet' Polyetayev\r\n(mailto:s_polyetayev@hotmail.com)\r\n"
 END
 
 STRINGTABLE 

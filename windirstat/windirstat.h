@@ -44,6 +44,7 @@ CMyImageList *GetMyImageList();
 // Other application related globals
 CString GetAuthorEmail();
 CString GetWinDirStatHomepage();
+CString GetFeedbackEmail();
 
 //
 // CDirstatApp. The MFC application object. 
@@ -126,6 +127,9 @@ protected:
 
 
 // $Log$
+// Revision 1.13  2004/12/19 10:52:39  bseifert
+// Minor fixes.
+//
 // Revision 1.12  2004/11/28 14:40:06  assarbad
 // - Extended CFileFindWDS to replace a global function
 // - Now packing/unpacking the file attributes. This even spares a call to find encrypted/compressed files.

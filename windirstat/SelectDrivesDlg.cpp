@@ -622,7 +622,7 @@ void CSelectDrivesDlg::OnBnClickedBrowsefolder()
 	bi.lpfn = BFFCALLBACK(BrowseCallbackProc);
 	bi.lParam = LPARAM(sSelectedFolder.GetBuffer());
 	// Set the required flags
-	bi.ulFlags= BIF_RETURNONLYFSDIRS | BIF_EDITBOX | /*BIF_NEWDIALOGSTYLE |*/ BIF_NONEWFOLDERBUTTON;
+	bi.ulFlags= BIF_RETURNONLYFSDIRS | BIF_EDITBOX | BIF_NEWDIALOGSTYLE | BIF_NONEWFOLDERBUTTON;
 	
 	LPITEMIDLIST pidl= SHBrowseForFolder(&bi);
 	// Release the actual buffer
@@ -857,6 +857,9 @@ int CALLBACK CSelectDrivesDlg::BrowseCallbackProc(	HWND	hWnd,
 }
 
 // $Log$
+// Revision 1.19  2004/12/19 10:52:39  bseifert
+// Minor fixes.
+//
 // Revision 1.18  2004/11/14 21:50:44  assarbad
 // - Pre-select the last used folder
 //

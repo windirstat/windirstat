@@ -44,7 +44,7 @@
 // Format: #define blank LINKCOUNT blanks decimal
 // Reset this to zero only when you increment VERNUM_MAJOR/MINOR/REVISION.
 
-#define LINKCOUNT  410
+#define LINKCOUNT  436
 
 //-------------------------------------------------------------------
 // Release candidate number. Relevant for BC_RELEASECANDIDATE.
@@ -114,6 +114,9 @@
 
 
 // $Log$
+// Revision 1.21  2004/12/19 10:52:36  bseifert
+// Minor fixes.
+//
 // Revision 1.20  2004/12/12 13:40:47  bseifert
 // Improved image coloring. Junction point image now with awxlink overlay.
 //

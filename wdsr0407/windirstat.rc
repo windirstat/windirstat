@@ -488,9 +488,9 @@ BEGIN
     DEFPUSHBUTTON   "OK",IDOK,154,212,50,14
     PUSHBUTTON      "Abbruch",IDCANCEL,303,212,50,14
     LTEXT           "Von:",IDC_STATIC,7,7,20,8
-    LTEXT           "An:",IDC_STATIC_TO,185,7,12,8
+    LTEXT           "An:",IDC_STATIC_TO,179,7,12,8
     LTEXT           "<from>",IDC_FROM,51,7,122,8
-    LTEXT           "<to>",IDC_TO,230,7,123,8
+    LTEXT           "<to>",IDC_TO,214,7,139,8
     GROUPBOX        "Schwere",IDC_STATIC_SEVERITY,7,39,346,31,0,
                     WS_EX_TRANSPARENT
     LTEXT           "In einem &Wort:",IDC_STATIC,7,81,50,8
@@ -498,8 +498,8 @@ BEGIN
                     IDC_STATIC,7,100,346,12
     LTEXT           "Programm:",IDC_STATIC,7,22,38,8
     LTEXT           "<application>",IDC_APPLICATION,51,22,123,8
-    LTEXT           "Plattform:",IDC_STATIC_PLATFORM,185,22,31,8
-    LTEXT           "<platform>",IDC_PLATFORM,230,22,123,8
+    LTEXT           "Plattform:",IDC_STATIC_PLATFORM,179,22,31,8
+    LTEXT           "<platform>",IDC_PLATFORM,214,22,139,8
     LTEXT           "Für einen Fehlerbericht ist es am besten, wenn Sie das Symptom nennen, mit dem vollständigen Wortlaut der Fehlermeldung, und möglichst die Schritte, die zu diesem Fehler führen.",
                     IDC_HINT,7,115,346,19
     LTEXT           "Wenn Sie OK drücken, können Sie die Nachricht in Ihrem E-Mail-Programm nachprüfen.",
@@ -761,7 +761,7 @@ BEGIN
     IDS_CREATEPROCESSsFAILEDs "CreateProcess(%1!s!) fehlgeschlagen: %2!s!"
     IDS_LANGUAGERESTARTNOW  "Änderungen der Sprache werden erst wirksam, wenn das Programm neu gestartet wird.\r\n\r\nLanguage changes take not effect until the application is restarted.\r\n\r\nWinDirStat jetzt neu starten?"
     IDS_ABOUT_AUTHORS       "Autoren"
-    IDS_ABOUT_AUTHORSTEXT   "=== Programmierer ===\r\n\r\nBernhard Seifert\r\nGründer des Projekts und Koordinator\r\n(mailto:bseifert@users.sourceforge.net)\r\n\r\nOliver Schneider\r\n(mailto:assarbad@users.sourceforge.net)\r\n\r\n\r\n=== Übersetzer ===\r\n\r\n--- Französisch ---\r\n\r\nPascal Delrot\r\n(mailto:tigroo@users.sourceforge.net)\r\n\r\nUltraSam\r\n(mailto:sam.fd@wanadoo.fr)\r\n\r\n\r\n--- Polnisch ---\r\n\r\nDariusz Malachowski\r\n(mailto:d_malachowski@pf.pl)\r\n\r\n\r\n--- Russisch ---\r\n\r\nSergiy 'Polet' Polyetayev\r\n"
+    IDS_ABOUT_AUTHORSTEXTs  "=== Programmierer ===\r\n\r\nBernhard Seifert\r\nGründer des Projekts und Koordinator\r\n(mailto:%1!s!)\r\n\r\nOliver Schneider\r\n(mailto:assarbad@users.sourceforge.net)\r\n\r\n\r\n=== Übersetzer ===\r\n\r\n--- Französisch ---\r\n\r\nPascal Delrot\r\n(mailto:tigroo@users.sourceforge.net)\r\n\r\nUltraSam\r\n(mailto:sam.fd@wanadoo.fr)\r\n\r\n\r\n--- Polnisch ---\r\n\r\nDariusz Malachowski\r\n(mailto:d_malachowski@pf.pl)\r\n\r\n\r\n--- Russisch ---\r\n\r\nSergiy 'Polet' Polyetayev\r\n(mailto:s_polyetayev@hotmail.com)\r\n"
 END
 
 STRINGTABLE 

@@ -497,18 +497,18 @@ BEGIN
     DEFPUSHBUTTON   "ОК",IDOK,154,212,50,14
     PUSHBUTTON      "Отмена",IDCANCEL,303,212,50,14
     LTEXT           "От:",IDC_STATIC,7,7,20,8
-    LTEXT           "Кому:",IDC_STATIC_TO,185,7,19,8
-    LTEXT           "<from>",IDC_FROM,51,7,122,8
-    LTEXT           "<to>",IDC_TO,230,7,123,8
+    LTEXT           "Кому:",IDC_STATIC_TO,177,7,19,8
+    LTEXT           "<from>",IDC_FROM,53,7,120,8
+    LTEXT           "<to>",IDC_TO,214,7,139,8
     GROUPBOX        "Важность",IDC_STATIC_SEVERITY,7,33,346,24,0,
                     WS_EX_TRANSPARENT
     LTEXT           "Тема:",IDC_STATIC,7,65,49,8
     LTEXT           "Введите текст (на английском или немецком языке, пожалуйста), который вы хотите предложить в качестве отчета об ошибке либо коментария.",
                     IDC_STATIC,7,79,346,17
     LTEXT           "Приложение:",IDC_STATIC,7,18,43,8
-    LTEXT           "<application>",IDC_APPLICATION,51,18,123,8
-    LTEXT           "Платформа:",IDC_STATIC_PLATFORM,185,18,42,8
-    LTEXT           "<platform>",IDC_PLATFORM,230,18,123,8
+    LTEXT           "<application>",IDC_APPLICATION,53,18,120,8
+    LTEXT           "Платформа:",IDC_STATIC_PLATFORM,177,18,34,8
+    LTEXT           "<platform>",IDC_PLATFORM,214,18,139,8
     LTEXT           "Для сообщения об ошибке, было бы идеально, если бы вы описали симптом, дословно привели текст ошибки, и, при возможности, шаги чтобы воспроизвести повдение.",
                     IDC_HINT,7,99,346,19
     LTEXT           "После нажатия кнопки ОК, вы сможете просмотреть сообщение в вашей почтовой программе.",
@@ -777,7 +777,7 @@ BEGIN
     IDS_CREATEPROCESSsFAILEDs "Создание процесса (%1!s!) неуспешно: %2!s!"
     IDS_LANGUAGERESTARTNOW  "Изменение языка вступит в силу только после перезапуска приожения.\r\n\r\nПерезапустить WinDirStat сейчас?"
     IDS_ABOUT_AUTHORS       "Authors"
-    IDS_ABOUT_AUTHORSTEXT   "=== Programmers ===\r\n\r\nBernhard Seifert\r\nCreator of the project and coordinator\r\n(mailto:bseifert@users.sourceforge.net)\r\n\r\nOliver Schneider\r\n(mailto:assarbad@users.sourceforge.net)\r\n\r\n\r\n=== Translators ===\r\n\r\n--- French ---\r\n\r\nPascal Delrot\r\n(mailto:tigroo@users.sourceforge.net)\r\n\r\nUltraSam\r\n(mailto:sam.fd@wanadoo.fr)\r\n\r\n\r\n--- Polish ---\r\n\r\nDariusz Malachowski\r\n(mailto:d_malachowski@pf.pl)\r\n\r\n\r\n--- Russian ---\r\n\r\nSergiy 'Polet' Polyetayev\r\n"
+    IDS_ABOUT_AUTHORSTEXTs  "=== Programmers ===\r\n\r\nBernhard Seifert\r\nCreator of the project and coordinator\r\n(mailto:%1!s!)\r\n\r\nOliver Schneider\r\n(mailto:assarbad@users.sourceforge.net)\r\n\r\n\r\n=== Translators ===\r\n\r\n--- French ---\r\n\r\nPascal Delrot\r\n(mailto:tigroo@users.sourceforge.net)\r\n\r\nUltraSam\r\n(mailto:sam.fd@wanadoo.fr)\r\n\r\n\r\n--- Polish ---\r\n\r\nDariusz Malachowski\r\n(mailto:d_malachowski@pf.pl)\r\n\r\n\r\n--- Russian ---\r\n\r\nSergiy 'Polet' Polyetayev\r\n(mailto:s_polyetayev@hotmail.com)\r\n"
 END
 
 STRINGTABLE 

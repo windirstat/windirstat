@@ -58,6 +58,11 @@ CString GetWinDirStatHomepage()
 	return _T("windirstat.sourceforge.net");
 }
 
+CString GetFeedbackEmail()
+{
+	return _T("windirstat-feedback@lists.sourceforge.net");
+}
+
 CMyImageList *GetMyImageList()
 {
 	return GetApp()->GetMyImageList();
@@ -566,6 +571,9 @@ void CDirstatApp::OnHelpReportbug()
 }
 
 // $Log$
+// Revision 1.14  2004/12/19 10:52:39  bseifert
+// Minor fixes.
+//
 // Revision 1.13  2004/11/28 14:40:06  assarbad
 // - Extended CFileFindWDS to replace a global function
 // - Now packing/unpacking the file attributes. This even spares a call to find encrypted/compressed files.

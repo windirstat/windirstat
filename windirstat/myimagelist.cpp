@@ -33,6 +33,8 @@ namespace
 {
 	COLORREF Greenify(COLORREF c)
 	{
+		if (c == RGB(255,255,255))
+			return c;
 		double b = CColorSpace::GetColorBrightness(c);
 		b = b * b;
 		return CColorSpace::MakeBrightColor(RGB(0, 255, 0), b);
@@ -40,12 +42,16 @@ namespace
 
 	COLORREF Blueify(COLORREF c)
 	{
+		if (c == RGB(255,255,255))
+			return c;
 		double b = CColorSpace::GetColorBrightness(c);
 		return CColorSpace::MakeBrightColor(RGB(0, 0, 255), b);
 	}
 
 	COLORREF Yellowify(COLORREF c)
 	{
+		if (c == RGB(255,255,255))
+			return c;
 		double b = CColorSpace::GetColorBrightness(c);
 		b = b * b;
 		return CColorSpace::MakeBrightColor(RGB(255, 255, 0), b);
@@ -243,7 +249,7 @@ void CMyImageList::AddCustomImages()
 
 		dcmem.FillSolidRect(0, 0, rc.Width() * CUSTOM_IMAGE_COUNT, rc.Height(), bgcolor);
 		CPoint pt(0, 0);
-		COLORREF safe= SetBkColor(bgcolor);
+		COLORREF safe= SetBkColor(CLR_NONE);
 		VERIFY(Draw(&dcmem, folderImage, pt, ILD_NORMAL));
 		pt.x+= rc.Width();
 		VERIFY(Draw(&dcmem, driveImage, pt, ILD_NORMAL));
@@ -296,6 +302,9 @@ void CMyImageList::AddCustomImages()
 }
 
 // $Log$
+// Revision 1.8  2004/12/19 10:52:39  bseifert
+// Minor fixes.
+//
 // Revision 1.7  2004/12/12 13:40:51  bseifert
 // Improved image coloring. Junction point image now with awxlink overlay.
 //

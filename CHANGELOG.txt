@@ -2,6 +2,13 @@ changelog.txt - What has been done to WinDirStat (newest top)
 Last modified: $Date$
 =============================================================
 
+2004-12-19	bseifert
+	* CMyImageList: bugfix: the background of <Files> etc. was
+	  wrong when list had 'stripes' style.
+	* Included Sergiy's e-mail address in authors tab.
+	* Feedback now routed to feedback-mailing list.
+	* Corrected 4 spelling errors in English help file.
+
 2004-12-12	bseifert
 	* CMyImageList: improved coloring of <Files>, <Free Space>,
 	  and <Unknown> images.

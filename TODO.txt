@@ -2,15 +2,11 @@ TODO.txt - What still has to been done to WinDirStat
 Last modified: $Date$
 =============================================================
 
-- Insert Sergiy's e-mail address into IDS_ABOUT_AUTHORSTEXT
-
-- Translate IDS_ABOUT_AUTHORS and IDS_ABOUT_AUTHORSTEXT
+- Translate IDS_ABOUT_AUTHORS and IDS_ABOUT_AUTHORSTEXTs
 
 - Setup: Translate IDS_CREATEINGSENDTOSHORTCUT, IDC_SHORTCUTSENDTO and
   IDS_TREECOL_ATTRIBUTES.
   
-- Route Feedback to new mailing-list
-
 - Sync testplan.
   
 - Sync Online help. 

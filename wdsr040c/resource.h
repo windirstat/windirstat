@@ -105,7 +105,7 @@
 #define IDS_CREATEPROCESSsFAILEDs       276
 #define IDS_LANGUAGERESTARTNOW          277
 #define IDS_ABOUT_AUTHORS               278
-#define IDS_ABOUT_AUTHORSTEXT           279
+#define IDS_ABOUT_AUTHORSTEXTs          279
 #define IDR_TEXT1                       900
 #define IDR_AUTHORS                     900
 #define IDR_TEXT2                       901

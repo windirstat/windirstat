@@ -139,7 +139,7 @@ void CAboutDlg::CMyTabControl::SetPageText(int tab)
 		text.FormatMessage(IDS_ABOUT_ABOUTTEXTss, GetAuthorEmail(), GetWinDirStatHomepage());
 		break;
 	case TAB_AUTHORS:
-		text.LoadString(IDS_ABOUT_AUTHORSTEXT);
+		text.FormatMessage(IDS_ABOUT_AUTHORSTEXTs, GetAuthorEmail());
 		break;
 	case TAB_THANKSTO:
 		text.LoadString(IDS_ABOUT_THANKSTOTEXT);
@@ -305,6 +305,9 @@ void CAboutDlg::OnDestroy()
 }
 
 // $Log$
+// Revision 1.16  2004/12/19 10:52:39  bseifert
+// Minor fixes.
+//
 // Revision 1.15  2004/12/12 13:40:51  bseifert
 // Improved image coloring. Junction point image now with awxlink overlay.
 //

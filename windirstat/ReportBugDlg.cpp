@@ -114,7 +114,7 @@ BOOL CReportBugDlg::OnInitDialog()
 	m_layout.OnInitDialog(true);
 
 	m_from= GetUserName();
-	m_to= GetAuthorEmail();
+	m_to= GetFeedbackEmail();
 	m_application= CAboutDlg::GetAppVersion();
 	m_platform= GetOsPlatformString();
 
@@ -241,6 +241,9 @@ void CReportBugDlg::OnDestroy()
 }
 
 // $Log$
+// Revision 1.6  2004/12/19 10:52:39  bseifert
+// Minor fixes.
+//
 // Revision 1.5  2004/11/13 08:17:07  bseifert
 // Remove blanks in Unicode Configuration names.
 //
