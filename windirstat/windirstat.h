@@ -63,6 +63,12 @@ public:
 	bool IsMountPoint(CString path);
 	bool IsJunctionPoint(CString path);
 
+	bool IsCompressed(CString path);
+	bool IsEncrypted(CString path);
+
+	COLORREF GetAltEncryptionColor();
+	COLORREF GetAltColor();
+	
 	CString GetCurrentProcessMemoryInfo();
 
 	CMyImageList *GetMyImageList();
@@ -102,6 +108,8 @@ protected:
 	LONGLONG m_workingSet;					// Current working set (RAM usage)
 	LONGLONG m_pageFaults;					// Page faults so far (unused)
 	DWORD m_lastPeriodicalRamUsageUpdate;	// Tick count
+	COLORREF m_AltColor;					// Coloring of compressed items
+	COLORREF m_AltEncryptionColor;			// Coloring of encrypted items
 
 	DECLARE_MESSAGE_MAP()
 	afx_msg void OnFileOpen();
@@ -113,6 +121,10 @@ protected:
 
 
 // $Log$
+// Revision 1.7  2004/11/08 00:46:26  assarbad
+// - Added feature to distinguish compressed and encrypted files/folders by color as in the Windows 2000/XP explorer.
+//   Same rules apply. (Green = encrypted / Blue = compressed)
+//
 // Revision 1.6  2004/11/05 16:53:08  assarbad
 // Added Date and History tag where appropriate.
 //

@@ -62,7 +62,7 @@ public:
 
 	virtual int CompareSibling(const CTreeListItem *tlib, int subitem) const =0;
 
-	virtual bool DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *width, int *focusLeft) const;
+	virtual bool DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *width, int *focusLeft, COLORREF textcol = CLR_NONE) const;
 	virtual CString GetText(int subitem) const;
 	virtual int GetImage() const;
 	virtual int Compare(const CSortingListItem *other, int subitem) const;
@@ -173,6 +173,10 @@ protected:
 
 
 // $Log$
+// Revision 1.5  2004/11/08 00:46:26  assarbad
+// - Added feature to distinguish compressed and encrypted files/folders by color as in the Windows 2000/XP explorer.
+//   Same rules apply. (Green = encrypted / Blue = compressed)
+//
 // Revision 1.4  2004/11/05 16:53:07  assarbad
 // Added Date and History tag where appropriate.
 //

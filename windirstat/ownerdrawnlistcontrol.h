@@ -48,7 +48,7 @@ public:
 	// width != NULL -> only determine width, do not draw.
 	// If focus rectangle shall not begin leftmost, set *focusLeft
 	// to the left edge of the desired focus rectangle.
-	virtual bool DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *width, int *focusLeft) const =0;
+	virtual bool DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *width, int *focusLeft, COLORREF textcol = CLR_NONE) const =0;
 
 	virtual void DrawAdditionalState(CDC * /*pdc*/, const CRect& /*rcLabel*/) const {}
 
@@ -126,6 +126,10 @@ protected:
 
 
 // $Log$
+// Revision 1.7  2004/11/08 00:46:26  assarbad
+// - Added feature to distinguish compressed and encrypted files/folders by color as in the Windows 2000/XP explorer.
+//   Same rules apply. (Green = encrypted / Blue = compressed)
+//
 // Revision 1.6  2004/11/07 23:28:14  assarbad
 // - Partial implementation for coloring of compressed/encrypted files
 //

@@ -50,7 +50,7 @@ protected:
 	public:
 		CListItem(CExtensionListControl *list, LPCTSTR extension, SExtensionRecord r);
 
-		virtual bool DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *width, int *focusLeft) const;
+		virtual bool DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *width, int *focusLeft, COLORREF textcol = CLR_NONE) const;
 		virtual CString GetText(int subitem) const;
 
 		CString GetExtension() const;
@@ -148,6 +148,10 @@ inline CDirstatDoc* CTypeView::GetDocument() const
 
 
 // $Log$
+// Revision 1.7  2004/11/08 00:46:26  assarbad
+// - Added feature to distinguish compressed and encrypted files/folders by color as in the Windows 2000/XP explorer.
+//   Same rules apply. (Green = encrypted / Blue = compressed)
+//
 // Revision 1.6  2004/11/05 16:53:08  assarbad
 // Added Date and History tag where appropriate.
 //

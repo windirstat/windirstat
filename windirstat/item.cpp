@@ -74,11 +74,19 @@ CItem::~CItem()
 		delete m_children[i];
 }
 
-bool CItem::DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *width, int *focusLeft) const
+bool CItem::DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *width, int *focusLeft, COLORREF textcol) const
 {
 	if (subitem == COL_NAME)
 	{
-		return CTreeListItem::DrawSubitem(subitem, pdc, rc, state, width, focusLeft);
+		if (textcol == CLR_NONE)
+		{
+			if (GetApp()->IsCompressed(GetPath()))
+				textcol = GetApp()->GetAltColor();
+			else
+				if (GetApp()->IsEncrypted(GetPath()))
+					textcol = GetApp()->GetAltEncryptionColor();
+		}
+		return CTreeListItem::DrawSubitem(subitem, pdc, rc, state, width, focusLeft, textcol);
 	}
 	if (subitem != COL_SUBTREEPERCENTAGE)
 		return false;
@@ -1507,6 +1515,10 @@ void CItem::DrivePacman()
 
 
 // $Log$
+// Revision 1.14  2004/11/08 00:46:26  assarbad
+// - Added feature to distinguish compressed and encrypted files/folders by color as in the Windows 2000/XP explorer.
+//   Same rules apply. (Green = encrypted / Blue = compressed)
+//
 // Revision 1.13  2004/11/07 20:14:30  assarbad
 // - Added wrapper for GetCompressedFileSize() so that by default the compressed file size will be shown.
 //

@@ -6,7 +6,17 @@ Last modified: $Date$
         * French part for setup.rc
         * Minor bugfix concerning "follow junction points"
         * Using compressed file size as reference now. This includes
-          compressed and sparse files. The wrapper makes this transparent.
+          compressed and sparse files. A wrapper makes this transparent
+          for the caller.
+        * Compressed files/folders are now shown by default in blue,
+          encrypted files/folders are shown by default in green.
+          These settings can be altered by modifying the two
+          REG_BINARY values "AltColor" (for compressed) and
+          "AltEncryptionColor" (for encrypted) under the key:
+          
+          HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer
+
+          This mimics the behavior of the Windows XP explorer.
 
 2004-11-06	assarbad
         * Added the CVS-tags for Date and History whereever appropriate.

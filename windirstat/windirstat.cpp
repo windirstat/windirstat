@@ -82,6 +82,8 @@ CDirstatApp::CDirstatApp()
 	m_workingSet= 0;
 	m_pageFaults= 0;
 	m_lastPeriodicalRamUsageUpdate= GetTickCount();
+	m_AltEncryptionColor= CLR_NONE; // RGB(0x00, 0x80, 0x00)
+	m_AltColor= CLR_NONE; // RGB(0x00, 0x00, 0xFF);
 
 	#ifdef _DEBUG
 		TestScanResourceDllName();
@@ -317,6 +319,54 @@ bool CDirstatApp::IsJunctionPoint(CString path)
 	return m_mountPoints.IsJunctionPoint(path);
 }
 
+bool CDirstatApp::IsCompressed(CString path)
+{
+	return (GetFileAttributes(path) & FILE_ATTRIBUTE_COMPRESSED);
+}
+
+bool CDirstatApp::IsEncrypted(CString path)
+{
+	return (GetFileAttributes(path) & FILE_ATTRIBUTE_ENCRYPTED);
+}
+
+#define ENCRYPTED_COLOR		RGB(0x00, 0x80, 0x00)
+#define COMPRESSED_COLOR	RGB(0x00, 0x00, 0xFF)
+#define EXPLORER_KEY		"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer"
+#define ALTCOLOR			"AltColor"
+#define ALTENCRYPTIONCOLOR	"AltEncryptionColor"
+
+COLORREF CDirstatApp::GetAltEncryptionColor()
+{
+	if (m_AltEncryptionColor == CLR_NONE)
+	{
+		COLORREF x; DWORD cbValue = sizeof(x);
+		CRegKey key;
+
+		key.Open(HKEY_CURRENT_USER, _T(EXPLORER_KEY), KEY_READ);
+		if (ERROR_SUCCESS == key.QueryBinaryValue(_T(ALTENCRYPTIONCOLOR), &x, &cbValue))
+			m_AltEncryptionColor = x;
+		else
+			m_AltEncryptionColor = ENCRYPTED_COLOR;
+	}
+	return m_AltEncryptionColor;
+}
+
+COLORREF CDirstatApp::GetAltColor()
+{
+	if (m_AltColor == CLR_NONE)
+	{
+		COLORREF x; DWORD cbValue = sizeof(x);
+		CRegKey key;
+
+		key.Open(HKEY_CURRENT_USER, _T(EXPLORER_KEY), KEY_READ);
+		if (ERROR_SUCCESS == key.QueryBinaryValue(_T(ALTCOLOR), &x, &cbValue))
+			m_AltColor = x;
+		else
+			m_AltColor = COMPRESSED_COLOR;
+	}
+	return m_AltColor;
+}
+
 CString CDirstatApp::GetCurrentProcessMemoryInfo()
 {
 	UpdateMemoryInfo();
@@ -515,6 +565,10 @@ void CDirstatApp::OnHelpReportbug()
 }
 
 // $Log$
+// Revision 1.8  2004/11/08 00:46:26  assarbad
+// - Added feature to distinguish compressed and encrypted files/folders by color as in the Windows 2000/XP explorer.
+//   Same rules apply. (Green = encrypted / Blue = compressed)
+//
 // Revision 1.7  2004/11/05 16:53:08  assarbad
 // Added Date and History tag where appropriate.
 //

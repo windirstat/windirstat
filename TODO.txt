@@ -7,7 +7,3 @@ Last modified: $Date$
 - Date/time formatting more flexible
 - Possibly add a column for file attributes to the tree. Alternatively
   signal the attributes via coloring of the icons ... maybe even both.
-
-AltEncryptionColor      -> RGB(0x00, 0x80, 0x00);
-AltColor                -> RGB(0x00, 0x00, 0xFF);
-HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer
