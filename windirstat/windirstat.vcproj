@@ -29,7 +29,7 @@
 				RuntimeTypeInfo="FALSE"
 				UsePrecompiledHeader="3"
 				WarningLevel="4"
-				WarnAsError="TRUE"
+				WarnAsError="FALSE"
 				Detect64BitPortabilityProblems="FALSE"
 				DebugInformationFormat="4"/>
 			<Tool

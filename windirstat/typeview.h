@@ -23,6 +23,8 @@
 
 #include "dirstatdoc.h"	// SExtensionRecord
 
+class CTypeView;
+
 //
 // CExtensionListControl.
 //
@@ -69,23 +71,28 @@ protected:
 	};
 
 public:
-	CExtensionListControl();
+	CExtensionListControl(CTypeView *typeView);
 	virtual bool GetAscendingDefault(int column);
 	void Initialize();
 	void SetExtensionData(const CExtensionData *ed);
 	void SetRootSize(LONGLONG totalBytes);
 	LONGLONG GetRootSize();
 	void SelectExtension(LPCTSTR ext);
+	CString GetSelectedExtension();
 
 protected:
 	CListItem *GetListItem(int i);
 
+	CTypeView *m_typeView;
 	LONGLONG m_rootSize;
 
 	DECLARE_MESSAGE_MAP()
 	afx_msg void OnDestroy();
 	afx_msg void OnLvnDeleteitem(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void MeasureItem(LPMEASUREITEMSTRUCT mis);
+	afx_msg void OnSetFocus(CWnd* pOldWnd);
+	afx_msg void OnLvnItemchanged(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
 };
 
 
@@ -108,6 +115,8 @@ public:
 	bool IsShowTypes();
 	void ShowTypes(bool show);
 
+	void SetHighlightExtension(LPCTSTR ext);
+
 protected:
 	virtual void OnInitialUpdate();
 	virtual void OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint);
@@ -121,6 +130,7 @@ protected:
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	afx_msg void OnSize(UINT nType, int cx, int cy);
+	afx_msg void OnSetFocus(CWnd* pOldWnd);
 public:
 	#ifdef _DEBUG
 		virtual void AssertValid() const;

@@ -45,6 +45,8 @@ COwnerDrawnListItem::~COwnerDrawnListItem()
 
 void COwnerDrawnListItem::DrawLabel(COwnerDrawnListControl *list, CImageList *il, CDC *pdc, CRect& rc, UINT state, int *width, bool indent) const
 {
+	bool haveFocus = (GetFocus() == list->m_hWnd);
+
 	CRect rcRest= rc;
 	if (indent)
 		rcRest.left+= GENERAL_INDENT;
@@ -74,10 +76,12 @@ void COwnerDrawnListItem::DrawLabel(COwnerDrawnListControl *list, CImageList *il
 
 	CSetBkMode bk(pdc, TRANSPARENT);
 	COLORREF textColor= RGB(0,0,0);
-	if (width == NULL && (state & ODS_SELECTED) != 0 && (GetFocus() == list->m_hWnd || (list->GetStyle() & LVS_SHOWSELALWAYS) != 0))
+	if (width == NULL && (state & ODS_SELECTED) != 0 && (haveFocus || (list->GetStyle() & LVS_SHOWSELALWAYS) != 0))
 	{
-		pdc->FillSolidRect(rcLabel, RGB(0,0,180));
-		textColor= GetSysColor(COLOR_WINDOW);
+		COLORREF bgColor= (haveFocus ? RGB(0, 0, 180): RGB(190, 190, 190));
+		pdc->FillSolidRect(rcLabel, bgColor);
+		if (haveFocus)
+			textColor= GetSysColor(COLOR_WINDOW);
 	}
 	CSetTextColor stc(pdc, textColor);
 	if (width == NULL)
@@ -87,7 +91,7 @@ void COwnerDrawnListItem::DrawLabel(COwnerDrawnListControl *list, CImageList *il
 
 	rcLabel.InflateRect(1, 1);
 
-	if (state & ODS_FOCUS && width == NULL)
+	if ((state & ODS_FOCUS) != 0 && haveFocus && width == NULL)
 		pdc->DrawFocusRect(rcLabel);
 
 	if (width == NULL)

@@ -23,6 +23,7 @@
 
 #include "TreeListControl.h"
 
+class CDirstatView;
 class CDirstatDoc;
 class CItem;
 
@@ -33,10 +34,16 @@ class CItem;
 class CMyTreeListControl: public CTreeListControl
 {
 public:
-	CMyTreeListControl();
+	CMyTreeListControl(CDirstatView *dirstatView);
 	virtual bool GetAscendingDefault(int column);
+
+protected:
+	CDirstatView *m_dirstatView;
+
 	DECLARE_MESSAGE_MAP()
 	afx_msg void OnContextMenu(CWnd* /*pWnd*/, CPoint /*point*/);
+	afx_msg void OnSetFocus(CWnd* pOldWnd);
+	afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
 };
 
 

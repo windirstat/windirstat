@@ -35,8 +35,9 @@ namespace
 	const UINT _nIdTreeListControl = 4711;
 }
 
-CMyTreeListControl::CMyTreeListControl()
+CMyTreeListControl::CMyTreeListControl(CDirstatView *dirstatView)
 : CTreeListControl(20)
+, m_dirstatView(dirstatView)
 {
 }
 
@@ -47,6 +48,8 @@ bool CMyTreeListControl::GetAscendingDefault(int column)
 
 BEGIN_MESSAGE_MAP(CMyTreeListControl, CTreeListControl)
 	ON_WM_CONTEXTMENU()
+	ON_WM_SETFOCUS()
+	ON_WM_KEYDOWN()
 END_MESSAGE_MAP()
 
 
@@ -87,10 +90,31 @@ void CMyTreeListControl::OnContextMenu(CWnd* /*pWnd*/, CPoint ptscreen)
 	sub->TrackPopupMenu(TPM_LEFTALIGN | TPM_LEFTBUTTON, ptmenu.x, ptmenu.y, AfxGetMainWnd());
 }
 
+void CMyTreeListControl::OnSetFocus(CWnd* pOldWnd)
+{
+	CTreeListControl::OnSetFocus(pOldWnd);
+	GetMainFrame()->SetLogicalFocus(LF_DIRECTORYLIST);
+}
+
+void CMyTreeListControl::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
+{
+	if (nChar == VK_TAB)
+	{
+		GetMainFrame()->MoveFocus(LF_EXTENSIONLIST);
+	}
+	else if (nChar == VK_ESCAPE)
+	{
+		GetMainFrame()->MoveFocus(LF_NONE);
+	}
+	CTreeListControl::OnKeyDown(nChar, nRepCnt, nFlags);
+}
+
+/////////////////////////////////////////////////////////////////////////////
 
 IMPLEMENT_DYNCREATE(CDirstatView, CView)
 
 CDirstatView::CDirstatView()
+: m_treeListControl(this)
 {
 	m_treeListControl.SetSorting(COL_SUBTREETOTAL, false);
 }
@@ -136,6 +160,7 @@ CFont *CDirstatView::GetSmallFont()
 { 
 	return m_treeListControl.GetFont(); 
 }
+
 BOOL CDirstatView::PreCreateWindow(CREATESTRUCT& cs)
 {
 	return CView::PreCreateWindow(cs);

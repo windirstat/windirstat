@@ -23,6 +23,10 @@
 #include "windirstat.h"
 #include ".\pagetreemap.h"
 
+namespace
+{
+	const UINT _maxHeight = 200;
+}
 
 IMPLEMENT_DYNAMIC(CPageTreemap, CPropertyPage)
 
@@ -100,9 +104,10 @@ BOOL CPageTreemap::OnInitDialog()
 
 	m_brightness.SetPageSize(10);
 	m_cushionShading.SetPageSize(10);
-	m_height.SetPageSize(10);
+	m_height.SetRange(0, _maxHeight, true);
+	m_height.SetPageSize(_maxHeight / 10);
 	m_scaleFactor.SetPageSize(10);
-	m_lightSource.SetRange(CSize(200, 200));
+	m_lightSource.SetRange(CSize(400, 400));
 
 	m_options= *GetOptions()->GetTreemapOptions();
 	m_highlightColor.SetColor(GetOptions()->GetTreemapHighlightColor());
@@ -128,7 +133,7 @@ void CPageTreemap::UpdateOptions(bool save)
 	{
 		m_options.SetBrightnessPercent(100 - m_nBrightness);
 		m_options.SetAmbientLightPercent(m_nCushionShading);
-		m_options.SetHeightPercent(100 - m_nHeight);
+		m_options.SetHeightPercent(_maxHeight - m_nHeight);
 		m_options.SetScaleFactorPercent(100 - m_nScaleFactor);
 		m_options.SetLightSourcePoint(m_ptLightSource);
 		m_options.style = (m_style == 0 ? CTreemap::KDirStatStyle : CTreemap::SequoiaViewStyle);
@@ -139,7 +144,7 @@ void CPageTreemap::UpdateOptions(bool save)
 	{
 		m_nBrightness= 100 - m_options.GetBrightnessPercent();
 		m_nCushionShading= m_options.GetAmbientLightPercent();
-		m_nHeight= 100 - m_options.GetHeightPercent();
+		m_nHeight= _maxHeight - m_options.GetHeightPercent();
 		m_nScaleFactor= 100 - m_options.GetScaleFactorPercent();
 		m_ptLightSource= m_options.GetLightSourcePoint();
 		m_style= (m_options.style == CTreemap::KDirStatStyle ? 0 : 1);
@@ -152,7 +157,7 @@ void CPageTreemap::UpdateStatics()
 {
 	m_sBrightness		.Format(_T("%d"), 100 - m_nBrightness);
 	m_sCushionShading	.Format(_T("%d"), 100 - m_nCushionShading);
-	m_sHeight			.Format(_T("%d"), 100 - m_nHeight);
+	m_sHeight			.Format(_T("%d"), (_maxHeight - m_nHeight) / (_maxHeight / 100));
 	m_sScaleFactor		.Format(_T("%d"), 100 - m_nScaleFactor);
 }
 

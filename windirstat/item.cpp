@@ -1329,11 +1329,11 @@ COLORREF CItem::GetGraphColor() const
 	switch (GetType())
 	{
 	case IT_UNKNOWN:
-		color= RGB(255,255,0);
+		color= RGB(255,255,0) | CTreemap::COLORFLAG_LIGHTER;
 		break;
 
 	case IT_FREESPACE:
-		color= RGB(100,100,100);
+		color= RGB(100,100,100) | CTreemap::COLORFLAG_DARKER;
 		break;
 
 	case IT_FILE:

@@ -22,6 +22,7 @@
 #include "stdafx.h"
 #include "windirstat.h"
 #include "item.h"
+#include "mainframe.h"
 #include "dirstatdoc.h"
 #include ".\typeview.h"
 
@@ -183,10 +184,14 @@ BEGIN_MESSAGE_MAP(CExtensionListControl, COwnerDrawnListControl)
 	ON_WM_MEASUREITEM_REFLECT()
 	ON_WM_DESTROY()
 	ON_NOTIFY_REFLECT(LVN_DELETEITEM, OnLvnDeleteitem)
+	ON_WM_SETFOCUS()
+	ON_NOTIFY_REFLECT(LVN_ITEMCHANGED, OnLvnItemchanged)
+	ON_WM_KEYDOWN()
 END_MESSAGE_MAP()
 
-CExtensionListControl::CExtensionListControl()
+CExtensionListControl::CExtensionListControl(CTypeView *typeView)
 : COwnerDrawnListControl(_T("types"), 19)
+, m_typeView(typeView)
 {
 	m_rootSize= 0;
 }
@@ -278,6 +283,21 @@ void CExtensionListControl::SelectExtension(LPCTSTR ext)
 	}
 }
 
+CString CExtensionListControl::GetSelectedExtension()
+{
+	POSITION pos = GetFirstSelectedItemPosition();
+	if (pos == NULL)
+	{
+		return "";
+	}
+	else
+	{
+		int i= GetNextSelectedItem(pos);
+		CListItem *item= GetListItem(i);
+		return item->GetExtension();
+	}
+}
+
 CExtensionListControl::CListItem *CExtensionListControl::GetListItem(int i)
 {
 	return (CListItem *)GetItemData(i);
@@ -295,6 +315,35 @@ void CExtensionListControl::MeasureItem(LPMEASUREITEMSTRUCT mis)
 	mis->itemHeight= GetRowHeight();
 }
 
+void CExtensionListControl::OnSetFocus(CWnd* pOldWnd)
+{
+	COwnerDrawnListControl::OnSetFocus(pOldWnd);
+	GetMainFrame()->SetLogicalFocus(LF_EXTENSIONLIST);
+}
+
+void CExtensionListControl::OnLvnItemchanged(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
+	if ((pNMLV->uNewState & LVIS_SELECTED) != 0)
+	{
+		m_typeView->SetHighlightExtension(GetSelectedExtension());
+	}
+	*pResult = 0;
+}
+
+void CExtensionListControl::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
+{
+	if (nChar == VK_TAB)
+	{
+		GetMainFrame()->MoveFocus(LF_DIRECTORYLIST);
+	}
+	else if (nChar == VK_ESCAPE)
+	{
+		GetMainFrame()->MoveFocus(LF_NONE);
+	}
+	COwnerDrawnListControl::OnKeyDown(nChar, nRepCnt, nFlags);
+}
+
 /////////////////////////////////////////////////////////////////////////////
 
 static UINT _nIdExtensionListControl = 4711;
@@ -306,10 +355,12 @@ BEGIN_MESSAGE_MAP(CTypeView, CView)
 	ON_WM_CREATE()
 	ON_WM_ERASEBKGND()
 	ON_WM_SIZE()
+	ON_WM_SETFOCUS()
 END_MESSAGE_MAP()
 
 
 CTypeView::CTypeView()
+	: m_extensionListControl(this)
 {
 	m_showTypes= true;
 }
@@ -327,6 +378,12 @@ void CTypeView::ShowTypes(bool show)
 {
 	m_showTypes= show;
 	OnUpdate(NULL, 0, NULL);
+}
+
+void CTypeView::SetHighlightExtension(LPCTSTR ext)
+{
+	GetDocument()->SetHighlightExtension(ext);
+	GetDocument()->UpdateAllViews(this, HINT_SELECTIONCHANGED);
 }
 
 BOOL CTypeView::PreCreateWindow(CREATESTRUCT& cs)
@@ -450,3 +507,9 @@ void CTypeView::OnSize(UINT nType, int cx, int cy)
 		m_extensionListControl.MoveWindow(rc);
 	}
 }
+
+void CTypeView::OnSetFocus(CWnd* /*pOldWnd*/)
+{
+	m_extensionListControl.SetFocus();
+}
+

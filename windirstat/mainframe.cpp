@@ -64,7 +64,8 @@ namespace
 
 	enum
 	{
-		IDC_SUSPEND = 4712	// ID of "Suspend"-Button
+		IDC_SUSPEND = 4712,	// ID of "Suspend"-Button
+		IDC_DEADFOCUS		// ID of dead-focus window
 	};
 
 	// Clipboard-Opener
@@ -129,7 +130,6 @@ namespace
 	};
 
 }
-
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -291,6 +291,35 @@ void CPacmanControl::OnPaint()
 
 /////////////////////////////////////////////////////////////////////////////
 
+CDeadFocusWnd::CDeadFocusWnd()
+{
+}
+
+void CDeadFocusWnd::Create(CWnd *parent)
+{
+	CRect rc(0,0,0,0);
+	VERIFY(CWnd::Create(AfxRegisterWndClass(0, 0, 0, 0), "_deadfocus", WS_CHILD, rc, parent, IDC_DEADFOCUS));
+}
+
+CDeadFocusWnd::~CDeadFocusWnd()
+{
+	DestroyWindow();
+}
+
+BEGIN_MESSAGE_MAP(CDeadFocusWnd, CWnd)
+	ON_WM_KEYDOWN()
+END_MESSAGE_MAP()
+
+void CDeadFocusWnd::OnKeyDown(UINT nChar, UINT /* nRepCnt */, UINT /* nFlags */)
+{
+	if (nChar == VK_TAB)
+	{
+		GetMainFrame()->MoveFocus(LF_DIRECTORYLIST);
+	}
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
 IMPLEMENT_DYNCREATE(CMainFrame, CFrameWnd)
 
 BEGIN_MESSAGE_MAP(CMainFrame, CFrameWnd)
@@ -345,6 +374,7 @@ CMainFrame::CMainFrame()
 	_theFrame= this;
 	m_progressVisible= false;
 	m_progressRange= 100;
+	m_logicalFocus= LF_NONE;
 }
 
 CMainFrame::~CMainFrame()
@@ -522,6 +552,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 	VERIFY(m_wndStatusBar.Create(this));
 	VERIFY(m_wndStatusBar.SetIndicators(indic, size));
+	m_wndDeadFocus.Create(this);
 
 	m_wndToolBar.EnableDocking(CBRS_ALIGN_ANY);
 	EnableDocking(CBRS_ALIGN_ANY);
@@ -853,6 +884,58 @@ void CMainFrame::AppendUserDefinedCleanups(CMenu *menu)
 	}
 }
 
+void CMainFrame::SetLogicalFocus(LOGICAL_FOCUS lf)
+{
+	if (lf != m_logicalFocus)
+	{
+		m_logicalFocus= lf;
+		SetSelectionMessageText();
+
+		GetDocument()->UpdateAllViews(NULL, HINT_SELECTIONSTYLECHANGED);
+	}
+}
+
+LOGICAL_FOCUS CMainFrame::GetLogicalFocus()
+{
+	return m_logicalFocus;
+}
+
+void CMainFrame::MoveFocus(LOGICAL_FOCUS lf)
+{
+	switch (lf)
+	{
+	case LF_NONE:
+		SetLogicalFocus(LF_NONE);
+		m_wndDeadFocus.SetFocus();
+		break;
+	case LF_DIRECTORYLIST:
+		GetDirstatView()->SetFocus();
+		break;
+	case LF_EXTENSIONLIST:
+		GetTypeView()->SetFocus();
+		break;
+	}
+}
+
+void CMainFrame::SetSelectionMessageText()
+{
+	switch (GetLogicalFocus())
+	{
+	case LF_NONE:
+		SetMessageText(AFX_IDS_IDLEMESSAGE);
+		break;
+	case LF_DIRECTORYLIST:
+		if (GetDocument()->GetSelection() != NULL)
+			SetMessageText(GetDocument()->GetSelection()->GetPath());
+		else
+			SetMessageText(AFX_IDS_IDLEMESSAGE);
+		break;
+	case LF_EXTENSIONLIST:
+		SetMessageText(_T("*") + GetDocument()->GetHighlightExtension());
+		break;
+	}
+}
+
 void CMainFrame::OnUpdateMemoryUsage(CCmdUI *pCmdUI)
 {
 	pCmdUI->Enable(true);
@@ -973,3 +1056,4 @@ void CMainFrame::OnTreemapHelpabouttreemaps()
 {
 	GetApp()->DoContextHelp(IDH_Treemap);
 }
+

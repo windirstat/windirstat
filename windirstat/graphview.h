@@ -59,6 +59,11 @@ protected:
 	void DrawEmptyView(CDC *pDC);
 
 	void DrawZoomFrame(CDC *pdc, CRect& rc);
+	void DrawHighlights(CDC *pdc);
+
+	void DrawHighlightExtension(CDC *pdc);
+	void RecurseHighlightExtension(CDC *pdc, const CItem *item);
+
 	void DrawSelection(CDC *pdc);
 
 	bool m_recalculationSuspended;	// True while the user is resizing the window.

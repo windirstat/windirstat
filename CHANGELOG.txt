@@ -1,6 +1,12 @@
 changelog.txt - What has been done to WinDirStat (newest top)
 =============================================================
 
+2003-12-27	bseifert
+	* Selection of types: When the extension list has the focus,
+	  the treemap highlights all files of the given extension.
+	* Focus can now moved between directory list and extension list
+	  via TAB key. Selection can be canceled with ESC key.
+	
 2003-12-24	bseifert
 	* RESOURCEVERSION is now 3. This means that windirstat.exe 
 	    will not load resource dlls of previous versions.

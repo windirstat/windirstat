@@ -32,6 +32,14 @@
 class CTreemap
 {
 public:
+	// One of these flags can be added to the COLORREF returned
+	// by TmiGetGraphColor(). Used for <Free space> (darker)
+	// and <Unknown> (brighter).
+	//
+	static const DWORD COLORFLAG_DARKER  = 0x01000000;
+	static const DWORD COLORFLAG_LIGHTER = 0x02000000;
+	static const DWORD COLORFLAG_MASK	 = 0x03000000;
+
 	//
 	// Item. Interface which must be supported by the tree items.
 	// If you prefer to use the getHead()/getNext() pattern rather
@@ -88,8 +96,8 @@ public:
 		double height;			// 0..oo	(default = 0.40)	Factor "H"
 		double scaleFactor;		// 0..1.0	(default = 0.90)	Factor "F"
 		double ambientLight;	// 0..1.0	(default = 0.15)	Factor "Ia"
-		double lightSourceX;	// -2.0..+2.0 (default = -1.0), negative = left
-		double lightSourceY;	// -2.0..+2.0 (default = -1.0), negative = top
+		double lightSourceX;	// -4.0..+4.0 (default = -1.0), negative = left
+		double lightSourceY;	// -4.0..+4.0 (default = -1.0), negative = top
 
 		int GetBrightnessPercent()	{ return RoundDouble(brightness * 100); }
 		int GetHeightPercent()		{ return RoundDouble(height * 100); }
@@ -117,6 +125,9 @@ public:
 	// Create a equally-bright palette from a set of arbitrary colors
 	static void EqualizeColors(const COLORREF *colors, int count, CArray<COLORREF, COLORREF&>& out);
 
+	// Give a color a defined brightness
+	static COLORREF MakeBrightColor(COLORREF color, double brightness);
+
 	// Good values
 	static Options GetDefaultOptions();
 
@@ -134,6 +145,9 @@ public:
 	void SetOptions(const Options *options);
 	Options GetOptions();
 
+	// DEBUG function
+	void RecurseCheckTree(Item *item);
+
 	// Create and draw a treemap
 	void DrawTreemap(CDC *pdc, CRect rc, Item *root, const Options *options =NULL);
 
@@ -141,7 +155,7 @@ public:
 	void DrawTreemapDoubleBuffered(CDC *pdc, const CRect& rc, Item *root, const Options *options =NULL);
 
 	// In the resulting treemap, find the item below a given coordinate.
-	// Return value is not NULL, but may be a non-leaf, if grid lines are used.
+	// Return value can be NULL, iff point is outside root rect.
 	Item *FindItemByPoint(Item *root, CPoint point);
 
 	// Draws a sample rectangle in the given style (for color legend)
@@ -188,11 +202,14 @@ protected:
 	// Leaves space for grid and then calls RenderRectangle()
 	void RenderLeaf(CDC *pdc, Item *item, const double *surface);
 
-	// Either calls RenderCushion() or FillSolidRect()
-	void RenderRectangle(CDC *pdc, const CRect& rc, const double *surface, COLORREF col);
+	// Either calls DrawCushion() or DrawSolidRect()
+	void RenderRectangle(CDC *pdc, const CRect& rc, const double *surface, DWORD color);
 
 	// Draws the surface using SetPixel()
-	void RenderCushion(CDC *pdc, const CRect& rc, const double *surface, COLORREF col);
+	void DrawCushion(CDC *pdc, const CRect& rc, const double *surface, COLORREF col, double brightness);
+
+	// Draws the surface using SetPixel()
+	void DrawSolidRect(CDC *pdc, const CRect& rc, COLORREF col, double brightness);
 
 	// Adds a new ridge to surface
 	static void AddRidge(const CRect& rc, double *surface, double h);

@@ -426,7 +426,7 @@ void CDirstatDoc::SetSelection(const CItem *item, bool keepReselectChildStack)
 	bool keep= keepReselectChildStack || m_selectedItem == item;
 
 	m_selectedItem= const_cast<CItem *>(item);
-	SetSelectionMessageText();
+	GetMainFrame()->SetSelectionMessageText();
 
 	if (!keep)
 		ClearReselectChildStack();
@@ -437,14 +437,15 @@ CItem *CDirstatDoc::GetSelection()
 	return m_selectedItem;
 }
 
-// Sets the status bar text to the path of the selection.
-//
-void CDirstatDoc::SetSelectionMessageText()
+void CDirstatDoc::SetHighlightExtension(LPCTSTR ext)
 {
-	if (GetSelection() != NULL)
-		GetMainFrame()->SetMessageText(GetSelection()->GetPath());
-	else
-		GetMainFrame()->SetMessageText(AFX_IDS_IDLEMESSAGE);
+	m_highlightExtension= ext;
+	GetMainFrame()->SetSelectionMessageText();
+}
+
+CString CDirstatDoc::GetHighlightExtension()
+{
+	return m_highlightExtension;
 }
 
 // The very root has been deleted.

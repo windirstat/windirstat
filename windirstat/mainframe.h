@@ -31,6 +31,20 @@ class CGraphView;
 class CTypeView;
 
 //
+// The "logical focus" can be 
+// - on the Directory List
+// - on the Extension List
+// Although these windows can loose the real focus, for instance
+// when a dialog box is opened, the logical focus will not be lost.
+//
+enum LOGICAL_FOCUS
+{
+	LF_NONE,
+	LF_DIRECTORYLIST,
+	LF_EXTENSIONLIST
+};
+
+//
 // CMySplitterWnd. A CSplitterWnd with 2 columns or rows, which
 // knows about the current split ratio and retains it even when resized.
 //
@@ -55,7 +69,9 @@ public:
 	afx_msg void OnDestroy();
 };
 
-
+//
+// CPacmanControl. Pacman on the status bar.
+//
 class CPacmanControl: public CStatic
 {
 public:
@@ -68,14 +84,35 @@ protected:
 
 	DECLARE_MESSAGE_MAP()
 	afx_msg void OnPaint();
-public:
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 };
 
 //
+// CDeadFocusWnd. The focus in Windirstat can be on 
+// - the directory list
+// - the extension list,
+// - or none of them. In this case the focus lies on
+//   an invisible (zero-size) child of CMainFrame.
+// On VK_TAB CDeadFocusWnd moves the focus to the
+// directory list then.
+//
+class CDeadFocusWnd: public CWnd
+{
+public:
+	CDeadFocusWnd();
+	void Create(CWnd *parent);
+	~CDeadFocusWnd();
+
+protected:
+	DECLARE_MESSAGE_MAP()
+	afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
+};
+
+
+//
 // CMainFrame. The main application window.
 //
-class CMainFrame : public CFrameWnd
+class CMainFrame: public CFrameWnd
 {
 protected:
 	static CMainFrame *_theFrame;
@@ -107,6 +144,12 @@ public:
 	void UpdateProgress();
 	void AppendUserDefinedCleanups(CMenu *menu);
 
+	void SetLogicalFocus(LOGICAL_FOCUS lf);
+	LOGICAL_FOCUS GetLogicalFocus();
+	void MoveFocus(LOGICAL_FOCUS lf);
+
+	void SetSelectionMessageText();
+
 protected:
 	virtual BOOL OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext* pContext);
 	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
@@ -133,6 +176,9 @@ protected:
 	CPacmanControl	m_pacman;		// Static control for Pacman.
 	CButton			m_suspendButton;// Progress-Suspend-Button
 
+	LOGICAL_FOCUS	m_logicalFocus; // Which view has the logical focus
+	CDeadFocusWnd	m_wndDeadFocus;	// Zero-size window which holds the focus if logical focus is "NONE"
+
 	DECLARE_MESSAGE_MAP()
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg LRESULT OnEnterSizeMove(WPARAM, LPARAM);
@@ -150,13 +196,13 @@ protected:
 	afx_msg void OnUpdateSendmailtoowner(CCmdUI *pCmdUI);
 	afx_msg void OnSendmailtoowner();
 	afx_msg void OnBnClickedSuspend();
+	afx_msg void OnTreemapHelpabouttreemaps();
 
 public:
 	#ifdef _DEBUG
 		virtual void AssertValid() const;
 		virtual void Dump(CDumpContext& dc) const;
 	#endif
-		afx_msg void OnTreemapHelpabouttreemaps();
 };
 
 

@@ -57,6 +57,7 @@ enum
 	HINT_NEWROOT,			// Root item has changed - clear everything.
 	HINT_SELECTIONCHANGED,	// The selection has changed, EnsureVisible.
 	HINT_SHOWNEWSELECTION,	// The selection has changed, Show Path
+	HINT_SELECTIONSTYLECHANGED,	// Only update selection in Graphview
 	HINT_ZOOMCHANGED,		// Only zoom item has changed.
 	HINT_REDRAWWINDOW,		// Only graphically redraw views.
 
@@ -107,9 +108,13 @@ public:
 	CItem *GetRootItem();
 	CItem *GetZoomItem();
 	bool IsZoomed();
+	
 	void SetSelection(const CItem *item, bool keepReselectChildStack = false);
 	CItem *GetSelection();
-	void SetSelectionMessageText();
+	
+	void SetHighlightExtension(LPCTSTR ext);
+	CString GetHighlightExtension();
+
 	void UnlinkRoot();
 	bool UserDefinedCleanupWorksForItem(const USERDEFINEDCLEANUP *udc, const CItem *item);
 	LONGLONG GetWorkingItemReadJobs();
@@ -148,6 +153,7 @@ protected:
 
 	CItem *m_rootItem;			// The very root item
 	CItem *m_selectedItem;		// Currently selected item, or NULL
+	CString m_highlightExtension;	// Currently highlighted extension
 	CItem *m_zoomItem;			// Current "zoom root"
 	CItem *m_workingItem;		// Current item we are working on. For progress indication
 

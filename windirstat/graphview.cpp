@@ -174,8 +174,7 @@ void CGraphView::OnDraw(CDC* pDC)
 				if (GetDocument()->IsZoomed())
 					DrawZoomFrame(&dcmem, rc);
 
-				if (rc.Width() > 0 && rc.Height() > 0)
-					m_treemap.DrawTreemap(&dcmem, rc, GetDocument()->GetZoomItem(), GetOptions()->GetTreemapOptions());
+				m_treemap.DrawTreemap(&dcmem, rc, GetDocument()->GetZoomItem(), GetOptions()->GetTreemapOptions());
 
 				// Cause OnIdle() to be called once.
 				PostAppMessage(GetCurrentThreadId(), WM_NULL, 0, 0);
@@ -185,7 +184,7 @@ void CGraphView::OnDraw(CDC* pDC)
 
 			pDC->BitBlt(0, 0, m_size.cx, m_size.cy, &dcmem, 0, 0, SRCCOPY);
 
-			DrawSelection(pDC);
+			DrawHighlights(pDC);
 		}
 	}
 	else
@@ -216,6 +215,63 @@ void CGraphView::DrawZoomFrame(CDC *pdc, CRect& rc)
 	pdc->FillSolidRect(r, GetDocument()->GetZoomColor());
 
 	rc.DeflateRect(w, w);
+}
+
+void CGraphView::DrawHighlights(CDC *pdc)
+{
+	switch (GetMainFrame()->GetLogicalFocus())
+	{
+	case LF_DIRECTORYLIST:
+		DrawSelection(pdc);
+		break;
+	case LF_EXTENSIONLIST:
+		DrawHighlightExtension(pdc);
+		break;
+	}
+}
+
+void CGraphView::DrawHighlightExtension(CDC *pdc)
+{
+	CWaitCursor wc;
+
+	CPen pen(PS_SOLID, 1, GetOptions()->GetTreemapHighlightColor());
+	CSelectObject sopen(pdc, &pen);
+	CSelectStockObject sobrush(pdc, NULL_BRUSH);
+	RecurseHighlightExtension(pdc, GetDocument()->GetZoomItem());
+}
+
+void CGraphView::RecurseHighlightExtension(CDC *pdc, const CItem *item)
+{
+	CRect rc = item->TmiGetRectangle();
+	if (rc.Width() <= 0 || rc.Height() <= 0)
+		return;
+
+	GetApp()->PeriodicalUpdateRamUsage();
+
+	if (item->TmiIsLeaf())
+	{
+		if (item->GetType() == IT_FILE 
+		&& item->GetExtension().CompareNoCase(GetDocument()->GetHighlightExtension()) == 0)
+		{
+			pdc->Rectangle(rc);
+			rc.DeflateRect(1, 1);
+			pdc->Rectangle(rc);
+			rc.DeflateRect(1, 1);
+			pdc->Rectangle(rc);
+		}
+	}
+	else
+	{
+		for (int i=0; i < item->TmiGetChildrenCount(); i++)
+		{
+			const CItem *child= item->GetChild(i);
+			if (child->TmiGetSize() == 0)
+				break;
+			if (child->TmiGetRectangle().left == -1)
+				break;
+			RecurseHighlightExtension(pdc, child);
+		}
+	}
 }
 
 void CGraphView::DrawSelection(CDC *pdc)
@@ -357,6 +413,7 @@ void CGraphView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 
 	case HINT_SELECTIONCHANGED:
 	case HINT_SHOWNEWSELECTION:
+	case HINT_SELECTIONSTYLECHANGED:
 		CView::OnUpdate(pSender, lHint, pHint);
 		break;
 
@@ -431,7 +488,7 @@ void CGraphView::OnTimer(UINT /*nIDEvent*/)
 
 	if (!rc.PtInRect(point))
 	{
-		GetDocument()->SetSelectionMessageText();
+		GetMainFrame()->SetSelectionMessageText();
 		KillTimer(m_timer);
 		m_timer= 0;
 	}

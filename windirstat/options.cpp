@@ -631,7 +631,7 @@ void COptions::SetTreemapHighlightColor(COLORREF color)
 	if (m_treemapHighlightColor != color)
 	{
 		m_treemapHighlightColor= color;
-		GetDocument()->UpdateAllViews(NULL, HINT_SELECTIONCHANGED);
+		GetDocument()->UpdateAllViews(NULL, HINT_SELECTIONSTYLECHANGED);
 	}
 }
 
