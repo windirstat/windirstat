@@ -1,4 +1,8 @@
+TODO.txt - What still has to been done to WinDirStat
+Last modified: $Date$
+=============================================================
+
 - Fix the bug with ampersands. If file or directory names have an ampersand
   they will show with underbar under the character right to the ampersand.
   This is similar to the behavior of accelerators in Windows dialogs.
-  
+
