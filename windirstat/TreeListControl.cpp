@@ -94,11 +94,6 @@ CString CTreeListItem::GetText(int /*subitem*/) const
 	return _T("test"); 
 }
 
-COLORREF CTreeListItem::GetItemTextColor() const
-{
-	return CLR_NONE;
-}
-
 int CTreeListItem::GetImage() const
 {
 	ASSERT(IsVisible());
@@ -854,6 +849,9 @@ void CTreeListControl::MeasureItem(LPMEASUREITEMSTRUCT mis)
 
 
 // $Log$
+// Revision 1.8  2004/11/12 22:14:16  bseifert
+// Eliminated CLR_NONE. Minor corrections.
+//
 // Revision 1.7  2004/11/12 00:47:42  assarbad
 // - Fixed the code for coloring of compressed/encrypted items. Now the coloring spans the full row!
 //

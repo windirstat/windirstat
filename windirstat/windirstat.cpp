@@ -82,8 +82,8 @@ CDirstatApp::CDirstatApp()
 	m_workingSet= 0;
 	m_pageFaults= 0;
 	m_lastPeriodicalRamUsageUpdate= GetTickCount();
-	m_AltEncryptionColor=	GetAlternativeColor(RGB(0x00, 0x80, 0x00), _T("AltEncryptionColor"));
-	m_AltColor=				GetAlternativeColor(RGB(0x00, 0x00, 0xFF), _T("AltColor"));
+	m_altEncryptionColor=	GetAlternativeColor(RGB(0x00, 0x80, 0x00), _T("AltEncryptionColor"));
+	m_altColor=				GetAlternativeColor(RGB(0x00, 0x00, 0xFF), _T("AltColor"));
 
 	#ifdef _DEBUG
 		TestScanResourceDllName();
@@ -332,32 +332,37 @@ bool CDirstatApp::IsEncrypted(CString path)
 // Get the alternative colors for compressed and encrypted files/folders.
 // This function uses either the value defined in the Explorer configuration
 // or the default color values.
-COLORREF CDirstatApp::GetAlternativeColor(COLORREF clrDefault, LPCTSTR szWhich)
+COLORREF CDirstatApp::GetAlternativeColor(COLORREF clrDefault, LPCTSTR which)
 {
-	const LPCTSTR szExplorerKey = _T("Software\\Microsoft\\Windows\\CurrentVersion\\Explorer");
+	const LPCTSTR explorerKey = _T("Software\\Microsoft\\Windows\\CurrentVersion\\Explorer");
 	COLORREF x; DWORD cbValue = sizeof(x); CRegKey key;
 
 	// Open the explorer key
-	key.Open(HKEY_CURRENT_USER, szExplorerKey, KEY_READ);
+	key.Open(HKEY_CURRENT_USER, explorerKey, KEY_READ);
+
 	// Try to read the REG_BINARY value
-	if (ERROR_SUCCESS == key.QueryBinaryValue(szWhich, &x, &cbValue))
+	if (ERROR_SUCCESS == key.QueryBinaryValue(which, &x, &cbValue))
+	{
 		// Return the read value upon success
 		return x;
+	}
 	else
+	{
 		// Return the default upon failure
 		return clrDefault;
+	}
 }
 
 COLORREF CDirstatApp::AltColor()
 {
 	// Return property value
-	return m_AltColor;
+	return m_altColor;
 }
 
 COLORREF CDirstatApp::AltEncryptionColor()
 {
 	// Return property value
-	return m_AltEncryptionColor;
+	return m_altEncryptionColor;
 }
 
 CString CDirstatApp::GetCurrentProcessMemoryInfo()
@@ -558,6 +563,9 @@ void CDirstatApp::OnHelpReportbug()
 }
 
 // $Log$
+// Revision 1.10  2004/11/12 22:14:16  bseifert
+// Eliminated CLR_NONE. Minor corrections.
+//
 // Revision 1.9  2004/11/10 01:03:00  assarbad
 // - Style cleaning of the alternative coloring code for compressed/encrypted items
 //

@@ -98,7 +98,7 @@ protected:
 	bool UpdateMemoryInfo();
 
 	// Get the alternative color from Explorer configuration
-	COLORREF GetAlternativeColor(COLORREF clrDefault, LPCTSTR szWhich);
+	COLORREF GetAlternativeColor(COLORREF clrDefault, LPCTSTR which);
 
 	virtual BOOL OnIdle(LONG lCount);		// This is, where scanning is done.
 
@@ -111,8 +111,8 @@ protected:
 	LONGLONG m_workingSet;					// Current working set (RAM usage)
 	LONGLONG m_pageFaults;					// Page faults so far (unused)
 	DWORD m_lastPeriodicalRamUsageUpdate;	// Tick count
-	COLORREF m_AltColor;					// Coloring of compressed items
-	COLORREF m_AltEncryptionColor;			// Coloring of encrypted items
+	COLORREF m_altColor;					// Coloring of compressed items
+	COLORREF m_altEncryptionColor;			// Coloring of encrypted items
 
 	DECLARE_MESSAGE_MAP()
 	afx_msg void OnFileOpen();
@@ -124,6 +124,9 @@ protected:
 
 
 // $Log$
+// Revision 1.9  2004/11/12 22:14:16  bseifert
+// Eliminated CLR_NONE. Minor corrections.
+//
 // Revision 1.8  2004/11/10 01:03:00  assarbad
 // - Style cleaning of the alternative coloring code for compressed/encrypted items
 //

@@ -246,12 +246,6 @@ CString CDriveItem::GetText(int subitem) const
 	return s;
 }
 
-COLORREF CDriveItem::GetItemTextColor() const
-{
-	// No coloring in the drive selection box
-	return CLR_NONE;
-}
-
 CString CDriveItem::GetPath() const
 {
 	return m_path;
@@ -624,7 +618,6 @@ void CSelectDrivesDlg::OnBnClickedBrowsefolder()
 	// Use the CString as buffer (minimum is MAX_PATH as length)
 	bi.pszDisplayName= sDisplayName.GetBuffer(_MAX_PATH);
 	bi.lpszTitle= title;
-	bi.lpfn= 
 	bi.ulFlags= BIF_RETURNONLYFSDIRS | BIF_EDITBOX | BIF_NEWDIALOGSTYLE | BIF_NONEWFOLDERBUTTON;
 	
 	LPITEMIDLIST pidl= SHBrowseForFolder(&bi);
@@ -842,6 +835,9 @@ void CSelectDrivesDlg::OnSysColorChange()
 }
 
 // $Log$
+// Revision 1.16  2004/11/12 22:14:16  bseifert
+// Eliminated CLR_NONE. Minor corrections.
+//
 // Revision 1.15  2004/11/12 16:54:43  assarbad
 // - Corrected a comment which actually refers to ExitProcess() but to TerminateProcess() as previously assumed.
 //

@@ -103,15 +103,20 @@ void COwnerDrawnListItem::DrawLabel(COwnerDrawnListControl *list, CImageList *il
 		pdc->FillSolidRect(selection, list->GetHighlightColor());
 	}
 	else
-	// Use the color designated for this item (if it is != CLR_NONE)
-	// This is currently only for encrypted and compressed items
-		if (GetItemTextColor() != CLR_NONE)
-			textColor = GetItemTextColor();
+	{
+		// Use the color designated for this item
+		// This is currently only for encrypted and compressed items
+		textColor = GetItemTextColor();
+	}
+
 	// Set text color for device context
 	CSetTextColor stc(pdc, textColor);
+	
 	if (width == NULL)
-	// Draw the actual text	
+	{
+		// Draw the actual text	
 		pdc->DrawText(GetText(0), rcRest, DT_SINGLELINE | DT_VCENTER | DT_WORD_ELLIPSIS | DT_NOPREFIX);
+	}
 
 	rcLabel.InflateRect(1, 1);
 	
@@ -441,6 +446,7 @@ void COwnerDrawnListControl::DrawItem(LPDRAWITEMSTRUCT pdis)
 			
 			// Get the correct color in case of compressed or encrypted items
 			COLORREF textColor = item->GetItemTextColor();
+
 			// Except if the item is selected - in this case just use standard colors
 			if ((pdis->itemState & ODS_SELECTED) && (HasFocus() || IsShowSelectionAlways()))
 				textColor = GetItemSelectionTextColor(pdis->itemID);
@@ -715,6 +721,9 @@ void COwnerDrawnListControl::OnHdnItemchanging(NMHDR * /*pNMHDR*/, LRESULT *pRes
 
 
 // $Log$
+// Revision 1.12  2004/11/12 22:14:16  bseifert
+// Eliminated CLR_NONE. Minor corrections.
+//
 // Revision 1.11  2004/11/12 00:47:42  assarbad
 // - Fixed the code for coloring of compressed/encrypted items. Now the coloring spans the full row!
 //

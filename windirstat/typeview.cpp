@@ -108,12 +108,6 @@ CString CExtensionListControl::CListItem::GetText(int subitem) const
 	}
 }
 
-COLORREF CExtensionListControl::CListItem::GetItemTextColor() const
-{
-	// No coloring for extension list control
-	return CLR_NONE;
-}
-
 CString CExtensionListControl::CListItem::GetExtension() const
 {
 	return m_extension;
@@ -541,6 +535,9 @@ void CTypeView::OnSetFocus(CWnd* /*pOldWnd*/)
 
 
 // $Log$
+// Revision 1.11  2004/11/12 22:14:16  bseifert
+// Eliminated CLR_NONE. Minor corrections.
+//
 // Revision 1.10  2004/11/12 00:47:42  assarbad
 // - Fixed the code for coloring of compressed/encrypted items. Now the coloring spans the full row!
 //

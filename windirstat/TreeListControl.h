@@ -64,7 +64,6 @@ public:
 
 	virtual bool DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *width, int *focusLeft) const;
 	virtual CString GetText(int subitem) const;
-	virtual COLORREF GetItemTextColor() const;
 	virtual int GetImage() const;
 	virtual int Compare(const CSortingListItem *other, int subitem) const;
 	virtual CTreeListItem *GetTreeListChild(int i) const =0;
@@ -174,6 +173,9 @@ protected:
 
 
 // $Log$
+// Revision 1.7  2004/11/12 22:14:16  bseifert
+// Eliminated CLR_NONE. Minor corrections.
+//
 // Revision 1.6  2004/11/12 00:47:42  assarbad
 // - Fixed the code for coloring of compressed/encrypted items. Now the coloring spans the full row!
 //

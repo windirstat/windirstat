@@ -609,20 +609,27 @@ ULONGLONG MyGetFileSize(CFileFind* finder)
 		return finder->GetLength();
 }
 
-// Retrieve an Item ID list from a given path
+// Retrieve an Item ID list from a given path.
+// Returns a valid pidl, or throws an exception.
 LPCITEMIDLIST SHGetPIDLFromPath(CString path)
 {
-	LPITEMIDLIST pidl;
-	LPSHELLFOLDER pshf;
+	USES_CONVERSION;
+
+	CComPtr<IShellFolder> pshf;
 	HRESULT hr= SHGetDesktopFolder(&pshf); 
-	ASSERT(SUCCEEDED(hr));
-	hr= pshf->ParseDisplayName(NULL, NULL, path.AllocSysString(), NULL, &pidl, NULL);
-	ASSERT(SUCCEEDED(hr));
-	pshf->Release();
+	MdThrowFailed(hr, _T("SHGetDesktopFolder"));
+
+	LPITEMIDLIST pidl;
+	hr= pshf->ParseDisplayName(NULL, NULL, const_cast<LPOLESTR>(T2CW(path)), NULL, &pidl, NULL);
+	MdThrowFailed(hr, _T("ParseDisplayName"));
+
 	return pidl;
 }
 
 // $Log$
+// Revision 1.15  2004/11/12 22:14:16  bseifert
+// Eliminated CLR_NONE. Minor corrections.
+//
 // Revision 1.14  2004/11/12 13:19:44  assarbad
 // - Minor changes and additions (in preparation for the solution of the "Browse for Folder" problem)
 //

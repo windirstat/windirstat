@@ -186,18 +186,22 @@ CString CItem::GetText(int subitem) const
 COLORREF CItem::GetItemTextColor() const
 {
 	// Get the file/folder attributes
-	DWORD dwAttr = GetFileAttributes(GetPath());
+	DWORD attr = GetFileAttributes(GetPath());
 
 	// Check for compressed flag
-	if (dwAttr & FILE_ATTRIBUTE_COMPRESSED)
+	if (attr & FILE_ATTRIBUTE_COMPRESSED)
+	{
 		return GetApp()->AltColor();
+	}
+	else if (attr & FILE_ATTRIBUTE_ENCRYPTED)
+	{
+		return GetApp()->AltEncryptionColor();
+	}
 	else
-		// Check for encrypted flag
-		if (dwAttr & FILE_ATTRIBUTE_ENCRYPTED)
-			return GetApp()->AltEncryptionColor();
-		else
-			// The rest is not colored
-			return CLR_NONE;
+	{
+		// The rest is not colored
+		return CTreeListItem::GetItemTextColor();
+	}
 }
 
 int CItem::CompareSibling(const CTreeListItem *tlib, int subitem) const
@@ -1524,6 +1528,9 @@ void CItem::DrivePacman()
 
 
 // $Log$
+// Revision 1.17  2004/11/12 22:14:16  bseifert
+// Eliminated CLR_NONE. Minor corrections.
+//
 // Revision 1.16  2004/11/12 00:47:42  assarbad
 // - Fixed the code for coloring of compressed/encrypted items. Now the coloring spans the full row!
 //

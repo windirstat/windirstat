@@ -44,7 +44,7 @@ public:
 	// This text is drawn, if DrawSubitem returns false
 	virtual CString GetText(int subitem) const = 0;
 	// This color is used for the  current item
-	virtual COLORREF GetItemTextColor() const = 0;
+	virtual COLORREF GetItemTextColor() const { return GetSysColor(COLOR_WINDOWTEXT); }
 	
 	// Returnvalue is true, if the item draws itself.
 	// width != NULL -> only determine width, do not draw.
@@ -128,6 +128,9 @@ protected:
 
 
 // $Log$
+// Revision 1.9  2004/11/12 22:14:16  bseifert
+// Eliminated CLR_NONE. Minor corrections.
+//
 // Revision 1.8  2004/11/12 00:47:42  assarbad
 // - Fixed the code for coloring of compressed/encrypted items. Now the coloring spans the full row!
 //
