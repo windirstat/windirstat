@@ -75,6 +75,7 @@ END
 
 IDR_MAINFRAME           BITMAP                  "res\\Toolbar.bmp"
 IDB_NODES               BITMAP                  "res\\bitmap1.bmp"
+IDB_JUNCTIONPOINT       BITMAP                  "res\\junctionpoint.bmp"
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -756,13 +757,24 @@ BEGIN
     IDS_ABOUT_ABOUTTEXTss   "\r\nWinDirStat - Statystyki Katalogów\r\n\r\n""Pokazuje zajêtoœæ Twojej przestrzeni dyskowej\r\ni pomaga j¹ porz¹dkowaæ.""\r\n\r\nProgramowanie dla MS Windows przez\r\nBernharda Seiferta (mailto:%1!s!),\r\n\r\nna podstawie linuksowego progamu (KDE) KDirStat Stefana Hundhammera\r\n(http://kdirstat.sourceforge.net/).\r\n\r\nStrona domowa WinDirStat http://%2!s!/\r\n\r\nCopyright (c) 2003-2004 The authors of WinDirStat"
     IDS_ABOUT_THANKSTOTEXT  "\r\nStefana Hundhammera za jego linuksowe super narzêdzie KDirStat.\r\nU¿ywa³em KDirStat (2.3.7) jako specyfikacji, co pozwoli³o mi zaoszczêdziæ mnóstwo czasu.\r\nhttp://kdirstat.sourceforge.net/\r\n\r\nAutorów SequoiaView za pokazanie jak u¿yteczne mog¹ byæ mapy dysków.\r\nhttp://www.win.tue.nl/sequoiaview/\r\n\r\nJarke J. van Wijk, Huub van de Wetering, Mark Bruls i Kees Huizing\r\nza ich informacje o cieniowaniu map drzew oraz o ""squarified treemaps"".\r\nhttp://www.win.tue.nl/~vanwijk/\r\n\r\nBena Shneidermana za jego genialn¹ teoriê map drzew -\r\na prawdziwie intuicyjn¹ metodê prezentacji zawartoœci drzew.\r\nhttp://www.cs.umd.edu/hcil/treemap-history/\r\n\r\nDla moich przyjació³ za pomoc przy pierwszych wersjach WinDirStat.\r\nhttp://www.daccord.net/\r\n\r\nBeatrix Lödige'a i Nicka Linesa - beta-testerów.\r\n"
     IDS_ABOUT_ABOUT         "O programie"
-	IDS_ABOUT_AUTHORS		"Authors"
-	IDS_ABOUT_AUTHORSTEXT	"=== Programmers ===\r\n\r\nBernhard Seifert\r\nCreator of the project and coordinator\r\n(mailto:bseifert@users.sourceforge.net)\r\n\r\nOliver Schneider\r\n(mailto:assarbad@users.sourceforge.net)\r\n\r\n\r\n=== Translators ===\r\n\r\n--- French ---\r\n\r\nPascal Delrot\r\n(mailto:tigroo@users.sourceforge.net)\r\n\r\nUltraSam\r\n(mailto:sam.fd@wanadoo.fr)\r\n\r\n\r\n--- Polish ---\r\n\r\nDariusz Ma³achowski\r\n(mailto:d_malachowski@pf.pl)\r\n\r\n\r\n--- Russian ---\r\n\r\nSergiy 'Polet' Polyetayev\r\n"
     IDS_ABOUT_THANKSTO      "Podziêkowania dla"
     IDS_ABOUT_LICENSEAGREEMENT "Licencja"
     IDS_MYCOMPUTER          "Mój komputer"
     IDS_UDC_CONFIRMATIONss  "Zamierzasz uruchomiæ zdefiniowane porz¹dkowanie\r\n'%1!s!'\r\n\r\ndla '%2!s!'.\r\n\r\nKontynuowaæ?"
     IDS_RUDC_CONFIRMATIONss "Zamierzasz uruchomiæ zdefiniowane porz¹dkowanie z uwzglêdnieniem podkatalogów\r\n'%1!s!'\r\n\r\ndla '%2!s!'.\r\n\r\nKontynuowaæ?"
+END
+
+STRINGTABLE 
+BEGIN
+    IDS_RESETTODEFAULTS     "Ustawienia &domyœlne"
+    IDS_BACKTOUSERSETTINGS  "Wróæ do &ustawieñ u¿ytkownika"
+    IDS_COLLAPSE            "&Zwiñ"
+    IDS_EXPAND              "&Rozwiñ"
+    IDS_CREATEPROCESSsFAILEDs 
+                            "Tworzenie procesu(%1!s!) nie powiod³o siê: %2!s!"
+    IDS_LANGUAGERESTARTNOW  "Jêzyk zostanie zmieniony po ponownym uruchomieniu programu.\r\n\r\nUruchomiæ ponownie teraz?"
+    IDS_ABOUT_AUTHORS       "Authors"
+    IDS_ABOUT_AUTHORSTEXT   "=== Programmers ===\r\n\r\nBernhard Seifert\r\nCreator of the project and coordinator\r\n(mailto:bseifert@users.sourceforge.net)\r\n\r\nOliver Schneider\r\n(mailto:assarbad@users.sourceforge.net)\r\n\r\n\r\n=== Translators ===\r\n\r\n--- French ---\r\n\r\nPascal Delrot\r\n(mailto:tigroo@users.sourceforge.net)\r\n\r\nUltraSam\r\n(mailto:sam.fd@wanadoo.fr)\r\n\r\n\r\n--- Polish ---\r\n\r\nDariusz Ma³achowski\r\n(mailto:d_malachowski@pf.pl)\r\n\r\n\r\n--- Russian ---\r\n\r\nSergiy 'Polet' Polyetayev\r\n"
 END
 
 STRINGTABLE 
@@ -847,17 +859,6 @@ BEGIN
     IDS_SPEC_TB             "TB"
     IDS_RESETTO_DEFAULTS    "Ustawienia\r\n&domyœlne"
     IDS_BACKTO_USERSETTINGS "Wróæ do\r\n&ustawieñ u¿ytkownika"
-END
-
-STRINGTABLE 
-BEGIN
-    IDS_RESETTODEFAULTS     "Ustawienia &domyœlne"
-    IDS_BACKTOUSERSETTINGS  "Wróæ do &ustawieñ u¿ytkownika"
-    IDS_COLLAPSE            "&Zwiñ"
-    IDS_EXPAND              "&Rozwiñ"
-    IDS_CREATEPROCESSsFAILEDs 
-                            "Tworzenie procesu(%1!s!) nie powiod³o siê: %2!s!"
-    IDS_LANGUAGERESTARTNOW  "Jêzyk zostanie zmieniony po ponownym uruchomieniu programu.\r\n\r\nUruchomiæ ponownie teraz?"
 END
 
 #endif    // Polish resources

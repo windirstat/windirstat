@@ -3,6 +3,12 @@ Last modified: $Date$
 =============================================================
 
 2004-12-12	bseifert
+	* CMyImageList: improved coloring of <Files>, <Free Space>,
+	  and <Unknown> images.
+	* CMyImageList: Junction points are now no longer greenified
+	  folder icons but a folder icon with a awxlink overlay.
+	  
+2004-12-12	bseifert
 	* Aboutbox: added "Authors" Tab.
 	* Copyright now hold by "The authors of WinDirStat".
 	* license.txt not needed in localized resource dlls.

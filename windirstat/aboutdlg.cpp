@@ -166,7 +166,6 @@ void CAboutDlg::CMyTabControl::SetPageText(int tab)
 
 	m_text.CreateEx(exstyle, style, rc, this, RE_CONTROL);
 
-	m_text.ModifyStyleEx(0, exstyle);
 	m_text.SetAutoURLDetect();
 	m_text.SetEventMask(ENM_LINK | ENM_KEYEVENTS);
 	m_text.SetFont(GetFont());
@@ -306,6 +305,9 @@ void CAboutDlg::OnDestroy()
 }
 
 // $Log$
+// Revision 1.15  2004/12/12 13:40:51  bseifert
+// Improved image coloring. Junction point image now with awxlink overlay.
+//
 // Revision 1.14  2004/12/12 08:34:59  bseifert
 // Aboutbox: added Authors-Tab. Removed license.txt from resource dlls (saves 16 KB per dll).
 //

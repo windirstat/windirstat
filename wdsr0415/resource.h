@@ -104,11 +104,13 @@
 #define IDS_EXPAND                      275
 #define IDS_CREATEPROCESSsFAILEDs       276
 #define IDS_LANGUAGERESTARTNOW          277
-#define IDS_ABOUT_AUTHORS				278
-#define IDS_ABOUT_AUTHORSTEXT			279
+#define IDS_ABOUT_AUTHORS               278
+#define IDS_ABOUT_AUTHORSTEXT           279
 #define IDR_TEXT1                       900
 #define IDR_AUTHORS                     900
 #define IDR_TEXT2                       901
+#define IDB_BITMAP1                     902
+#define IDB_JUNCTIONPOINT               902
 #define IDC_ALLDRIVES                   1000
 #define IDC_GROUPS                      1000
 #define IDC_ALLLOCALDRIVES              1000
@@ -271,7 +273,7 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        902
+#define _APS_NEXT_RESOURCE_VALUE        903
 #define _APS_NEXT_COMMAND_VALUE         33024
 #define _APS_NEXT_CONTROL_VALUE         1226
 #define _APS_NEXT_SYMED_VALUE           104

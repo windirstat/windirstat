@@ -44,7 +44,7 @@
 // Format: #define blank LINKCOUNT blanks decimal
 // Reset this to zero only when you increment VERNUM_MAJOR/MINOR/REVISION.
 
-#define LINKCOUNT  281
+#define LINKCOUNT  410
 
 //-------------------------------------------------------------------
 // Release candidate number. Relevant for BC_RELEASECANDIDATE.
@@ -114,6 +114,9 @@
 
 
 // $Log$
+// Revision 1.20  2004/12/12 13:40:47  bseifert
+// Improved image coloring. Junction point image now with awxlink overlay.
+//
 // Revision 1.19  2004/12/12 08:34:56  bseifert
 // Aboutbox: added Authors-Tab. Removed license.txt from resource dlls (saves 16 KB per dll).
 //

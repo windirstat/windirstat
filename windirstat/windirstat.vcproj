@@ -571,10 +571,16 @@
 				RelativePath=".\res\bitmap1.bmp">
 			</File>
 			<File
+				RelativePath=".\res\bmp00001.bmp">
+			</File>
+			<File
 				RelativePath=".\res\icon1.ico">
 			</File>
 			<File
 				RelativePath=".\res\iconjunc.ico">
+			</File>
+			<File
+				RelativePath=".\res\junctionpoint.bmp">
 			</File>
 			<File
 				RelativePath=".\res\license.txt">
