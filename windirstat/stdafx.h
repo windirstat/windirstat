@@ -59,6 +59,7 @@
 #include <afxcmn.h>			// MFC Common Controls
 #include <afxtempl.h>		// MFC Container classes
 #include <afxmt.h>			// MFC Multithreading
+#include <afxdisp.h>
 
 #include <io.h>				// _access()
 #include <math.h>			// floor(), fmod(), sqrt() etc.
@@ -89,6 +90,9 @@ template<class T> int signum(T x) { return (x) < 0 ? -1 : (x) == 0 ? 0 : 1; }
 
 
 // $Log$
+// Revision 1.9  2004/11/12 13:19:44  assarbad
+// - Minor changes and additions (in preparation for the solution of the "Browse for Folder" problem)
+//
 // Revision 1.8  2004/11/05 16:53:08  assarbad
 // Added Date and History tag where appropriate.
 //

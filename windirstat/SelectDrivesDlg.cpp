@@ -621,17 +621,22 @@ BOOL CSelectDrivesDlg::OnInitDialog()
 
 void CSelectDrivesDlg::OnBnClickedBrowsefolder()
 {
+	// Buffer, because SHBrowseForFolder() wants a buffer
 	CString sDisplayName;
 	BROWSEINFO bi;
 	ZeroMemory(&bi, sizeof(bi));
 
+	// Load a meaningful title for the browse dialog
 	CString title= LoadString(IDS_SELECTFOLDER);
 	bi.hwndOwner= m_hWnd;
+	// Use the CString as buffer (minimum is MAX_PATH as length)
 	bi.pszDisplayName= sDisplayName.GetBuffer(_MAX_PATH);
 	bi.lpszTitle= title;
+	bi.lpfn= 
 	bi.ulFlags= BIF_RETURNONLYFSDIRS | BIF_EDITBOX | BIF_NEWDIALOGSTYLE | BIF_NONEWFOLDERBUTTON;
 	
 	LPITEMIDLIST pidl= SHBrowseForFolder(&bi);
+	// Release the actual buffer
 	sDisplayName.ReleaseBuffer();
 
 	if (pidl != NULL)
@@ -845,6 +850,9 @@ void CSelectDrivesDlg::OnSysColorChange()
 }
 
 // $Log$
+// Revision 1.14  2004/11/12 13:19:44  assarbad
+// - Minor changes and additions (in preparation for the solution of the "Browse for Folder" problem)
+//
 // Revision 1.13  2004/11/12 00:47:42  assarbad
 // - Fixed the code for coloring of compressed/encrypted items. Now the coloring spans the full row!
 //

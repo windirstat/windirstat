@@ -58,8 +58,12 @@ CString GetSpec_MB();
 CString GetSpec_GB();
 CString GetSpec_TB();
 ULONGLONG MyGetFileSize(CFileFind* finder);
+LPCITEMIDLIST SHGetPIDLFromPath(CString path);
 
 // $Log$
+// Revision 1.12  2004/11/12 13:19:44  assarbad
+// - Minor changes and additions (in preparation for the solution of the "Browse for Folder" problem)
+//
 // Revision 1.11  2004/11/07 20:14:30  assarbad
 // - Added wrapper for GetCompressedFileSize() so that by default the compressed file size will be shown.
 //

@@ -609,7 +609,23 @@ ULONGLONG MyGetFileSize(CFileFind* finder)
 		return finder->GetLength();
 }
 
+// Retrieve an Item ID list from a given path
+LPCITEMIDLIST SHGetPIDLFromPath(CString path)
+{
+	LPITEMIDLIST pidl;
+	LPSHELLFOLDER pshf;
+	HRESULT hr= SHGetDesktopFolder(&pshf); 
+	ASSERT(SUCCEEDED(hr));
+	hr= pshf->ParseDisplayName(NULL, NULL, path.AllocSysString(), NULL, &pidl, NULL);
+	ASSERT(SUCCEEDED(hr));
+	pshf->Release();
+	return pidl;
+}
+
 // $Log$
+// Revision 1.14  2004/11/12 13:19:44  assarbad
+// - Minor changes and additions (in preparation for the solution of the "Browse for Folder" problem)
+//
 // Revision 1.13  2004/11/12 00:47:42  assarbad
 // - Fixed the code for coloring of compressed/encrypted items. Now the coloring spans the full row!
 //
