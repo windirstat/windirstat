@@ -2,6 +2,12 @@ changelog.txt - What has been done to WinDirStat (newest top)
 Last modified: $Date$
 =============================================================
 
+2004-11-12  bseifert
+	* Added Polish resource dll: wdsr0415. Thanks to Darek.
+	* New output folders for Unicode build: udebug, urelease
+	* Eliminated CLR_NONE
+	* Minor formatting and error handling corrections
+	
 2004-11-12	assarbad
 	* Coloring for compressed and encrypted items spans the
 	  full row (for list control in another state than "Full

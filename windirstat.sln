@@ -33,6 +33,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "linkcounter", "linkcounter\
 	ProjectSection(ProjectDependencies) = postProject
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "wdsr0415", "wdsr0415\wdsr0415.vcproj", "{23B76347-204C-4DE6-A311-F562CEF5D89C}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfiguration) = preSolution
 		Debug = Debug
@@ -112,6 +116,16 @@ Global
 		{B22C844E-3380-4CCA-916C-ACD354D291C4}.Unicode Debug.Build.0 = Release|Win32
 		{B22C844E-3380-4CCA-916C-ACD354D291C4}.Unicode Release.ActiveCfg = Release|Win32
 		{B22C844E-3380-4CCA-916C-ACD354D291C4}.Unicode Release.Build.0 = Release|Win32
+		{23B76347-204C-4DE6-A311-F562CEF5D89C}.Debug.ActiveCfg = Debug|Win32
+		{23B76347-204C-4DE6-A311-F562CEF5D89C}.Debug.Build.0 = Debug|Win32
+		{23B76347-204C-4DE6-A311-F562CEF5D89C}.Release.ActiveCfg = Release|Win32
+		{23B76347-204C-4DE6-A311-F562CEF5D89C}.Release.Build.0 = Release|Win32
+		{23B76347-204C-4DE6-A311-F562CEF5D89C}.StrongDebug.ActiveCfg = Debug|Win32
+		{23B76347-204C-4DE6-A311-F562CEF5D89C}.StrongDebug.Build.0 = Debug|Win32
+		{23B76347-204C-4DE6-A311-F562CEF5D89C}.Unicode Debug.ActiveCfg = Unicode Debug|Win32
+		{23B76347-204C-4DE6-A311-F562CEF5D89C}.Unicode Debug.Build.0 = Unicode Debug|Win32
+		{23B76347-204C-4DE6-A311-F562CEF5D89C}.Unicode Release.ActiveCfg = Unicode Release|Win32
+		{23B76347-204C-4DE6-A311-F562CEF5D89C}.Unicode Release.Build.0 = Unicode Release|Win32
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 	EndGlobalSection
