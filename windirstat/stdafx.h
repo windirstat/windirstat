@@ -72,6 +72,7 @@
 #include "../common/mdexceptions.h"
 #include "../common/cotaskmem.h"
 #include "../common/commonhelpers.h"
+#include "../common/platform.h"
 
 // General purpose headers
 #include "selectobject.h"

@@ -102,9 +102,13 @@ void COwnerDrawnListItem::DrawLabel(COwnerDrawnListControl *list, CImageList *il
 
 void COwnerDrawnListItem::DrawPercentage(CDC *pdc, CRect rc, double fraction, COLORREF color) const
 {
-	const COLORREF light = RGB(208, 208, 208);	// light edge
-	const COLORREF dark = RGB(128, 128, 128);	// dark edge
-	const COLORREF bg = RGB(230, 230, 230);		// background (lighter than light edge)
+	const int LIGHT = 198;	// light edge
+	const int DARK = 118;	// dark edge
+	const int BG = 225;		// background (lighter than light edge)
+
+	const COLORREF light	= RGB(LIGHT, LIGHT, LIGHT);
+	const COLORREF dark		= RGB(DARK, DARK, DARK);
+	const COLORREF bg		= RGB(BG, BG, BG);
 
 	CRect rcLeft= rc;
 	rcLeft.right= (int)(rcLeft.left + rc.Width() * fraction);

@@ -49,5 +49,3 @@ bool FolderExists(LPCTSTR path);
 bool DriveExists(const CString& path);
 CString GetUserName();
 bool IsHexDigit(int c);
-//CString GetAppFileName();
-//CString GetAppFolder();

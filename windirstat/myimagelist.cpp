@@ -39,8 +39,12 @@ void CMyImageList::Initialize()
 {
 	if (m_hImageList == NULL)
 	{
+		CString s;
+		GetSystemDirectory(s.GetBuffer(_MAX_PATH), _MAX_PATH);
+		s.ReleaseBuffer();
+
 		SHFILEINFO sfi;
-		HIMAGELIST hil= (HIMAGELIST)SHGetFileInfo(_T(""), 0, &sfi, sizeof(sfi), SHGFI_SYSICONINDEX | SHGFI_SMALLICON);
+		HIMAGELIST hil= (HIMAGELIST)SHGetFileInfo(s, 0, &sfi, sizeof(sfi), SHGFI_SYSICONINDEX | SHGFI_SMALLICON);
 
 		Attach(ImageList_Duplicate(hil));
 

@@ -39,6 +39,7 @@ private:
 	void UpdatePosition(double& position, bool& up, double diff);
 	COLORREF CalculateColor();
 
+	bool m_isWindows9x;		// True if we are running on Windows9x/me, false for NT and higher.
 	COLORREF m_bgcolor;		// Background color
 	double m_speed;			// Speed in full width / ms
 	bool m_moving;			// Whether pacman is moving

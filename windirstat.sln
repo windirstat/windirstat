@@ -9,6 +9,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "wdsr0407", "wdsr0407\wdsr04
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "wdsh0407", "wdsh0407\wdsh0407.vcproj", "{76695BEC-D0B6-44BC-8F2D-E9C45D239137}"
 	ProjectSection(ProjectDependencies) = postProject
+		{BD11B94C-6594-4477-9FDF-2E24447D1F14} = {BD11B94C-6594-4477-9FDF-2E24447D1F14}
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "setup", "setup\setup.vcproj", "{C9448E7F-B7CF-4267-81EC-0D9F98589F2C}"
@@ -17,6 +18,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "setup", "setup\setup.vcproj
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "wdshelp", "wdshelp\wdshelp.vcproj", "{7EE5206B-1657-482A-B6A1-343DE5D6DE11}"
 	ProjectSection(ProjectDependencies) = postProject
+		{BD11B94C-6594-4477-9FDF-2E24447D1F14} = {BD11B94C-6594-4477-9FDF-2E24447D1F14}
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "wdsr040c", "wdsr040c\wdsr040c.vcproj", "{DA4DDD24-67BC-4A9D-87D3-18C73E5CAF31}"

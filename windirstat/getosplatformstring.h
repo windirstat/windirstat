@@ -22,6 +22,4 @@
 
 #pragma once
 
-bool PlatformIsWindows9x();
-
 CString GetOsPlatformString();

@@ -99,7 +99,6 @@ private:
 	afx_msg void OnLvnGetdispinfo(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnHdnItemclick(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnHdnItemdblclick(NMHDR *pNMHDR, LRESULT *pResult);
-public:
 	afx_msg void OnDestroy();
 };
 

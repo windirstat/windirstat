@@ -354,7 +354,8 @@ bool CDirstatDoc::Work(DWORD ticks)
 		else
 		{
 			ASSERT(m_workingItem != NULL);
-			GetMainFrame()->SetProgressPos(m_workingItem->GetProgressPos());
+			if (m_workingItem != NULL) // to be honest, "defensive programming" is stupid, but c'est la vie: it's safer.
+				GetMainFrame()->SetProgressPos(m_workingItem->GetProgressPos());
 		}
 
 		UpdateAllViews(NULL);

@@ -1,6 +1,11 @@
 changelog.txt - What has been done to WinDirStat (newest top)
 =============================================================
 
+2003-11-26	bseifert
+	* Version number '1.0.1rc3'
+	* Placed platform.h/cpp into 'common' folder.
+	* Pacman is now symmetric on NT AND 9x.
+	
 2003-11-25	bseifert
 	* With slow drives (diskettes), the program crashed, when activating 
 	    or deactivating "show free space" or "show unknown".

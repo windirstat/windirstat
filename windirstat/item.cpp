@@ -691,29 +691,32 @@ void CItem::SetDone()
 	if (m_done)
 		return;
 
-	if (GetType() == IT_DRIVE && GetDocument()->OptionShowUnknown())
+	if (GetType() == IT_DRIVE)
 	{
 		UpdateFreeSpaceItem();
 
-		CItem *unknown= FindUnknownItem();
-
-		LONGLONG total;
-		LONGLONG free;
-		MyGetDiskFreeSpace(GetPath(), total, free);
-		
-		LONGLONG unknownspace= total - GetSize();
-		if (!GetDocument()->OptionShowFreeSpace())
-			unknownspace-= free;
-
-		// For CDs, the GetDiskFreeSpaceEx()-function is not correct.
-		if (unknownspace < 0)
+		if (GetDocument()->OptionShowUnknown())
 		{
-			TRACE(_T("GetDiskFreeSpace(%s) incorrect.\n"), GetPath());
-			unknownspace= 0;
-		}
-		unknown->SetSize(unknownspace);
+			CItem *unknown= FindUnknownItem();
 
-		UpwardAddSize(unknownspace);
+			LONGLONG total;
+			LONGLONG free;
+			MyGetDiskFreeSpace(GetPath(), total, free);
+			
+			LONGLONG unknownspace= total - GetSize();
+			if (!GetDocument()->OptionShowFreeSpace())
+				unknownspace-= free;
+
+			// For CDs, the GetDiskFreeSpaceEx()-function is not correct.
+			if (unknownspace < 0)
+			{
+				TRACE(_T("GetDiskFreeSpace(%s) incorrect.\n"), GetPath());
+				unknownspace= 0;
+			}
+			unknown->SetSize(unknownspace);
+
+			UpwardAddSize(unknownspace);
+		}
 	}
 
 	for (int i=0; i < GetChildrenCount(); i++)
@@ -994,7 +997,7 @@ bool CItem::StartRefresh()
 
 				UpwardAddSize(fi.length);
 				UpwardUpdateLastChange(GetLastChange());
-				UpwardAddFiles(1);
+				GetParent()->UpwardAddFiles(1);
 			}
 		}
 		SetDone();
@@ -1136,6 +1139,8 @@ void CItem::UpdateFreeSpaceItem()
 	LONGLONG diff= free - before;
 
 	freeSpaceItem->UpwardAddSize(diff);
+	
+	ASSERT(freeSpaceItem->GetSize() == free);
 }
 
 void CItem::RemoveFreeSpaceItem()

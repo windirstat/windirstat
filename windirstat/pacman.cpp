@@ -30,6 +30,7 @@ namespace
 
 CPacman::CPacman()
 {
+	m_isWindows9x= PlatformIsWindows9x();
 	m_bgcolor= GetSysColor(COLOR_WINDOW);
 	m_readJobs= 0;
 	m_speed= 0.0005;
@@ -110,17 +111,24 @@ void CPacman::Draw(CDC *pdc, const CRect& rect)
 	int hmiddle= rc.top + diameter / 2;
 
 	int mouthcy= (int)(m_aperture * m_aperture * diameter);
-	int upperMouthcy= (mouthcy == 0 ? 0 : mouthcy - 1);
+	int upperMouthcy= mouthcy;
+	int lowerMouthcy= mouthcy;
+
+	// It's the sad truth, that CDC::Pie() behaves different on
+	// Windows 9x than on NT.
+	if (!m_isWindows9x)
+		lowerMouthcy++;
+
 	if (m_toTheRight)
 	{
 		ptStart.x= ptEnd.x= rc.right;
 		ptStart.y	= hmiddle - upperMouthcy;
-		ptEnd.y		= hmiddle + mouthcy;
+		ptEnd.y		= hmiddle + lowerMouthcy;
 	}
 	else
 	{
 		ptStart.x= ptEnd.x= rc.left;
-		ptStart.y	= hmiddle + mouthcy;
+		ptStart.y	= hmiddle + lowerMouthcy;
 		ptEnd.y		= hmiddle - upperMouthcy;
 	}
 

@@ -47,11 +47,10 @@ protected:
 	COLORREF m_treelistColor[TREELISTCOLORCOUNT];
 
 	CColorButton m_colorButton[TREELISTCOLORCOUNT];
+	CSliderCtrl m_slider;
 
 	DECLARE_MESSAGE_MAP()
 	afx_msg void OnBnClickedTreelistgrid();
 	afx_msg void OnColorChanged(UINT id, NMHDR *, LRESULT *);
-public:
-	CSliderCtrl m_slider;
 	afx_msg void OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
 };

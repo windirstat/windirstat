@@ -76,6 +76,8 @@ protected:
 	CButton m_ctlWaitForCompletion;
 	CStatic m_ctlHintSp;
 	CStatic m_ctlHintSn;
+	CButton m_ctlUp;
+	CButton m_ctlDown;
 
 	DECLARE_MESSAGE_MAP()
 	afx_msg void OnLbnSelchangeList();
@@ -91,10 +93,7 @@ protected:
 	afx_msg void OnBnClickedShowconsolewindow();
 	afx_msg void OnBnClickedWaitforcompletion();
 	afx_msg void OnCbnSelendokRefreshpolicy();
-public:
 	afx_msg void OnBnClickedUp();
 	afx_msg void OnBnClickedDown();
-	CButton m_ctlUp;
-	CButton m_ctlDown;
 	afx_msg void OnBnClickedHelpbutton();
 };

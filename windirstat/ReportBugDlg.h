@@ -63,7 +63,6 @@ protected:
 	afx_msg void OnBnClickedNormal();
 	afx_msg void OnBnClickedWish();
 	afx_msg void OnBnClickedFeedback();
-public:
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg void OnGetMinMaxInfo(MINMAXINFO* lpMMI);
 	afx_msg void OnDestroy();
