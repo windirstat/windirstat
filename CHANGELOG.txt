@@ -2,6 +2,12 @@ changelog.txt - What has been done to WinDirStat (newest top)
 Last modified: $Date$
 =============================================================
 
+2004-11-23	bseifert
+	* Bugfix: About-Dialog: When the RichEdit control had
+	  the focus, pressing the ESC key made id disappear.
+	  Now ESC (and TAB) merly move the focus to the tab
+	  control.
+
 2004-11-19	bseifert
 	* Setup optionally installs a link to windirstat in the
 	  SendTo-Folder.

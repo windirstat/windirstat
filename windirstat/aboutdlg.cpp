@@ -159,7 +159,7 @@ void CAboutDlg::CMyTabControl::SetPageText(int tab)
 	m_text.CreateEx(exstyle, style, rc, this, RE_CONTROL);
 
 	m_text.SetAutoURLDetect();
-	m_text.SetEventMask(ENM_LINK);
+	m_text.SetEventMask(ENM_LINK | ENM_KEYEVENTS);
 	m_text.SetFont(GetFont());
 
 	m_text.SetWindowText(text);
@@ -168,6 +168,7 @@ void CAboutDlg::CMyTabControl::SetPageText(int tab)
 
 BEGIN_MESSAGE_MAP(CAboutDlg::CMyTabControl, CTabCtrl)
 	ON_NOTIFY(EN_LINK, RE_CONTROL, OnEnLinkText)
+	ON_NOTIFY(EN_MSGFILTER, RE_CONTROL, OnEnMsgFilter)
 	ON_WM_SIZE()
 END_MESSAGE_MAP()
 
@@ -184,6 +185,23 @@ void CAboutDlg::CMyTabControl::OnEnLinkText(NMHDR *pNMHDR, LRESULT *pResult)
 		ShellExecute(*this, NULL, link, NULL, _T(""), SW_SHOWNORMAL);
 	}
 }
+
+void CAboutDlg::CMyTabControl::OnEnMsgFilter(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	MSGFILTER *mf = reinterpret_cast<MSGFILTER *>(pNMHDR);
+	*pResult = 0;
+
+	if (mf->msg == WM_KEYDOWN && (mf->wParam == VK_ESCAPE || mf->wParam == VK_TAB))
+	{
+		// Move the focus back to the Tab control
+		SetFocus();
+
+		// If we didn't ignore VK_ESCAPE here, strange things happen:
+		// both m_text and the Tab control would disappear.
+		*pResult = 1;
+	}
+}
+
 
 void CAboutDlg::CMyTabControl::OnSize(UINT nType, int cx, int cy)
 {
@@ -278,6 +296,9 @@ void CAboutDlg::OnDestroy()
 }
 
 // $Log$
+// Revision 1.13  2004/11/23 06:37:04  bseifert
+// Fixed bug in AboutDlg: Esc-key made controls disappear.
+//
 // Revision 1.12  2004/11/13 08:17:07  bseifert
 // Remove blanks in Unicode Configuration names.
 //

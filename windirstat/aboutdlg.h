@@ -52,6 +52,7 @@ class CAboutDlg : public CDialog
 	
 		DECLARE_MESSAGE_MAP()
 		afx_msg void OnEnLinkText(NMHDR *pNMHDR, LRESULT *pResult);
+		afx_msg void OnEnMsgFilter(NMHDR *pNMHDR, LRESULT *pResult);
 		afx_msg void OnSize(UINT nType, int cx, int cy);
 	};
 
@@ -76,6 +77,9 @@ protected:
 
 
 // $Log$
+// Revision 1.6  2004/11/23 06:37:04  bseifert
+// Fixed bug in AboutDlg: Esc-key made controls disappear.
+//
 // Revision 1.5  2004/11/13 08:17:07  bseifert
 // Remove blanks in Unicode Configuration names.
 //
