@@ -27,6 +27,8 @@ Last modified: $Date$
 
 - Sync Online help. 
 
+- Sync Website
+
 - Unicode file releases
   => bseifert
 
