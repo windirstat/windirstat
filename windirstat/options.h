@@ -230,6 +230,11 @@ public:
 	bool IsFollowJunctionPoints();
 	void SetFollowJunctionPoints(bool ignore);
 
+	// Invisible option to use Explorer style vs. classic WinDirStat style
+	// when showing the context menu in the tree.
+	// Because it is invisible there is no "set" method.
+	bool IsExplorerStyle();
+
 	void GetUserDefinedCleanups(USERDEFINEDCLEANUP udc[USERDEFINEDCLEANUPCOUNT]);
 	void SetUserDefinedCleanups(const USERDEFINEDCLEANUP udc[USERDEFINEDCLEANUPCOUNT]);
 
@@ -270,6 +275,7 @@ private:
 	
 	bool m_followMountPoints;
 	bool m_followJunctionPoints;
+	bool m_explorerStyle;
 	USERDEFINEDCLEANUP m_userDefinedCleanup[USERDEFINEDCLEANUPCOUNT];
 
 	CString m_reportSubject;
@@ -280,6 +286,10 @@ private:
 
 
 // $Log$
+// Revision 1.10  2004/11/12 09:27:01  assarbad
+// - Implemented ExplorerStyle option which will not be accessible through the options dialog.
+//   It handles where the context menu is being shown.
+//
 // Revision 1.9  2004/11/05 16:53:07  assarbad
 // Added Date and History tag where appropriate.
 //

@@ -80,6 +80,7 @@ namespace
 	const LPCTSTR entryLightSourceY			= _T("lightSourceY");
 	const LPCTSTR entryFollowMountPoints	= _T("followMountPoints");
 	const LPCTSTR entryFollowJunctionPoints	= _T("followJunctionPoints");
+	const LPCTSTR entryExplorerStyle		= _T("ExplorerStyle");
 
 	const LPCTSTR sectionUserDefinedCleanupD	= _T("options\\userDefinedCleanup%02d");
 	const LPCTSTR entryEnabled					= _T("enabled");
@@ -762,6 +763,11 @@ void COptions::SetFollowJunctionPoints(bool follow)
 	}
 }
 
+bool COptions::IsExplorerStyle()
+{
+	return m_explorerStyle;
+}
+
 CString COptions::GetReportSubject()
 {
 	return m_reportSubject;
@@ -891,6 +897,10 @@ void COptions::LoadFromRegistry()
 	m_followMountPoints = GetProfileBool(sectionOptions, entryFollowMountPoints, false);
 	// Ignore junctions by default
 	m_followJunctionPoints = GetProfileBool(sectionOptions, entryFollowJunctionPoints, false);
+
+	// Classic WinDirStat style bey default. Explorer style shows the context menu
+	// directly at the cursor.
+	m_explorerStyle = GetProfileBool(sectionOptions, entryExplorerStyle, false);
 
 	for (i=0; i < USERDEFINEDCLEANUPCOUNT; i++)
 		ReadUserDefinedCleanup(i);
@@ -1092,6 +1102,10 @@ void CRegistryUser::CheckRange(int& value, int min, int max)
 
 
 // $Log$
+// Revision 1.12  2004/11/12 09:27:01  assarbad
+// - Implemented ExplorerStyle option which will not be accessible through the options dialog.
+//   It handles where the context menu is being shown.
+//
 // Revision 1.11  2004/11/05 16:53:07  assarbad
 // Added Date and History tag where appropriate.
 //
