@@ -882,7 +882,7 @@ void CDirstatDoc::RecursiveUserDefinedCleanup(const USERDEFINEDCLEANUP *udc, con
 			continue;
 		if (GetApp()->IsMountPoint(finder.GetFilePath()) && !GetOptions()->IsFollowMountPoints())
 			continue;
-		if (GetApp()->IsJunctionPoint(finder.GetFilePath()) && GetOptions()->IsFollowJunctionPoints())
+		if (GetApp()->IsJunctionPoint(finder.GetFilePath()) && !GetOptions()->IsFollowJunctionPoints())
 			continue;
 
 		RecursiveUserDefinedCleanup(udc, rootPath, finder.GetFilePath());
@@ -1490,6 +1490,9 @@ void CDirstatDoc::Dump(CDumpContext& dc) const
 
 
 // $Log$
+// Revision 1.13  2004/11/07 10:17:37  bseifert
+// Bugfix: Recursive UDCs must not follow junction points.
+//
 // Revision 1.12  2004/11/05 16:53:07  assarbad
 // Added Date and History tag where appropriate.
 //
