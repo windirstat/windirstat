@@ -55,7 +55,7 @@ BEGIN_MESSAGE_MAP(CMyTreeListControl, CTreeListControl)
 END_MESSAGE_MAP()
 
 
-void CMyTreeListControl::OnContextMenu(CWnd* /*pWnd*/, CPoint /*ptscreen*/)
+void CMyTreeListControl::OnContextMenu(CWnd* /*pWnd*/, CPoint ptscreen)
 {
 	int i= GetSelectedItem();
 	if (i == -1)
@@ -66,8 +66,8 @@ void CMyTreeListControl::OnContextMenu(CWnd* /*pWnd*/, CPoint /*ptscreen*/)
 	CRect rc= GetWholeSubitemRect(i, 0);
 	CRect rcTitle= item->GetTitleRect() + rc.TopLeft();
 
-	CPoint ptmenu(rcTitle.right, rcTitle.top + rcTitle.Height() / 2);
-	ClientToScreen(&ptmenu);
+//	CPoint ptmenu(rcTitle.right, rcTitle.top + rcTitle.Height() / 2);
+//	ClientToScreen(&ptmenu);
 
 	CMenu menu;
 	menu.LoadMenu(IDR_POPUPLIST);
@@ -76,7 +76,8 @@ void CMyTreeListControl::OnContextMenu(CWnd* /*pWnd*/, CPoint /*ptscreen*/)
 	PrepareDefaultMenu(sub, (CItem *)item);
 	GetMainFrame()->AppendUserDefinedCleanups(sub);
 
-	sub->TrackPopupMenu(TPM_LEFTALIGN | TPM_LEFTBUTTON, ptmenu.x, ptmenu.y, AfxGetMainWnd());
+	sub->TrackPopupMenu(TPM_LEFTALIGN | TPM_LEFTBUTTON, ptscreen.x, ptscreen.y, AfxGetMainWnd());
+//	sub->TrackPopupMenu(TPM_LEFTALIGN | TPM_LEFTBUTTON, ptmenu.x, ptmenu.y, AfxGetMainWnd());
 }
 
 void CMyTreeListControl::OnItemDoubleClick(int i)
@@ -389,6 +390,9 @@ void CDirstatView::Dump(CDumpContext& dc) const
 
 
 // $Log$
+// Revision 1.10  2004/11/09 22:30:40  assarbad
+// - Context menu at the actual position after right-click in the tree (may be reverted)
+//
 // Revision 1.9  2004/11/05 16:53:07  assarbad
 // Added Date and History tag where appropriate.
 //
