@@ -812,7 +812,7 @@ BEGIN
     IDS_CANNOTEMTPYCLIPBOARD "Невозможно очистить буфер обмена."
     IDS_CANNOTSETCLIPBAORDDATA "Невозможно установить данные буфера обмена"
     IDS_WINDIRSTAT_SETTINGS "WinDirStat - Настройки"
-    IDS_SCANNING_           "Идет сканирование"
+    IDS_SCANNING_           "Идет сканирование "
     IDS_EMPTYRECYCLEBIN     "Очистить корзину"
     IDS__ONEITEMss          " (1 Item, %1!s!%2!s!)"
     IDS__sITEMSss           " (%1!s! Items, %2!s!%3!s!)"

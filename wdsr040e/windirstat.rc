@@ -306,7 +306,7 @@ BEGIN
     CONTROL         "&Ne mutassa a figyelmeztetést újra.",IDC_DONTSHOWAGAIN,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,130,99,139,10
     LTEXT           "Biztos benne, hogy mit csinál?",IDC_STATIC,7,7,110,8
-    LTEXT           "Ön ennek az eltávolítására készül",IDC_STATIC,7,23,82,8
+    LTEXT           "Ennek a törlésére készül",IDC_STATIC,7,23,82,8
     CTEXT           "<filename>",IDC_FILENAME,7,38,262,8,SS_PATHELLIPSIS
     LTEXT           "a számítógépérõl.",IDC_STATIC,7,53,67,8
     LTEXT           "A rendszerfájlok, vagy könyvtárak törlése komoly károkat okozhat a rendszerében.",
@@ -451,7 +451,7 @@ BEGIN
     GROUPBOX        "&Lista stílus",IDC_STATIC,30,61,90,65
     CONTROL         "&Teljes sor kijelölés",IDC_FULLROWSELECTION,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,38,76,75,10
-    CONTROL         "&Rácsvonalak mutatása",IDC_SHOWGRID,"Button",
+    CONTROL         "&Rácsozást mutat",IDC_SHOWGRID,"Button",BS_AUTOCHECKBOX |
                     BS_AUTOCHECKBOX | WS_TABSTOP,38,93,68,10
     CONTROL         "&Sávok mutatása",IDC_SHOWSTRIPES,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,38,110,68,10
@@ -762,7 +762,7 @@ BEGIN
     IDS_COLLAPSE            "&Bezár"
     IDS_EXPAND              "K&ibont"
     IDS_CREATEPROCESSsFAILEDs "A(z) (%1!s!) folyamat sikertelen: %2!s!"
-    IDS_LANGUAGERESTARTNOW  "A nyelv módosítása addíg nem kerül érvényesítésre, amíg nem indítja újra az alkalmazást.\r\n\r\nÚjraindítja a WinDirStat-ot most?"
+    IDS_LANGUAGERESTARTNOW  "A nyelv módosítása addíg nem kerül érvényesítésre, amíg nem indítja újra az alkalmazást.\r\n\r\nLanguage changes take not effect until the application is restarted.\r\n\r\nÚjraindítja a WinDirStat-ot most?"
     IDS_ABOUT_AUTHORS       "Szerzõk"
     IDS_ABOUT_AUTHORSTEXTs  "=== Programozó ===\r\n\r\nBernhard Seifert\r\nA projekt létrehozója és koordinátora\r\n(mailto:%1!s!)\r\n\r\nOliver Schneider\r\n(mailto:assarbad#users.sourceforge.net)\r\n\r\n\r\n=== Fordítók ===\r\n\r\n--- Francia ---\r\n\r\nPascal Delrot\r\n(mailto:tigroo#users.sourceforge.net)\r\n\r\nUltraSam\r\n(mailto:sam.fd#wanadoo.fr)\r\n\r\n\r\n--- Lengyel ---\r\n\r\nDariusz Malachowski\r\n(mailto:d_malachowski#pf.pl)\r\n\r\n\r\n--- Orosz ---\r\n\r\nSergiy 'Polet' Polyetayev\r\n(mailto:s_polyetayev#hotmail.com)\r\n\r\n\r\n--- Magyar ---\r\n\r\nLeonard Nimoy\r\n(mailto:sorge#freemail.hu)\r\n\r\n\r\n--- Spanish ---\r\n\r\nSergio Omar Maurelli\r\n(mailto:sergiomaurelli#hotmail.com)\r\n"
 END
@@ -799,7 +799,7 @@ BEGIN
     IDS_CANNOTEMTPYCLIPBOARD "Nem lehet üríteni a vágólapot."
     IDS_CANNOTSETCLIPBAORDDATA "Nem lehet beállítani a vágólap adatokat."
     IDS_WINDIRSTAT_SETTINGS "WinDirStat - Beállítások"
-    IDS_SCANNING_           "Vizsgálat"
+    IDS_SCANNING_           "Vizsgálat "
     IDS_EMPTYRECYCLEBIN     "Lomtár ürítés&e"
     IDS__ONEITEMss          " (1 elem, %1!s!%2!s!)"
     IDS__sITEMSss           " (%1!s! elem, %2!s!%3!s!)"

@@ -2,6 +2,15 @@ changelog.txt - What has been done to WinDirStat (newest top)
 Last modified: $Date$
 =============================================================
 
+2005-02-14	bseifert
+	* Added wdsh040e: Hungarian helpfile. Thanks to Nimoy!
+	* 2 corrections in Hungarian windirstat.rc.
+	* Undone spanish translation of IDS_SEV_CRITICAL, IDS_SEV_GRAVE,
+		IDS_SEV_NORMAL, IDS_SEV_WISH and IDS_SEV_FEEDBACK.
+		Those must not be translated because they appear in feedback
+		mails (we read them!). :-)
+	* IDS_LANGUAGERESTARTNOW should be be-lingual (native language + English).
+	
 2005-02-09	assarbad
 	* Preparation for Bulgarian translation (without translation
 	  yet).

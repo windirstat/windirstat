@@ -44,7 +44,7 @@
 // Format: #define blank LINKCOUNT blanks decimal
 // Reset this to zero only when you increment VERNUM_MAJOR/MINOR/REVISION.
 
-#define LINKCOUNT  29
+#define LINKCOUNT  30
 
 //-------------------------------------------------------------------
 // Release candidate number. Relevant for BC_RELEASECANDIDATE.
@@ -114,6 +114,9 @@
 
 
 // $Log$
+// Revision 1.31  2005/02/14 23:03:22  bseifert
+// Add Hungarian help file. Minor resource file corrections.
+//
 // Revision 1.30  2005/02/07 16:22:28  assarbad
 // - Adjusted all resources to show Spanish. Missing translation of the word
 //  "Spanish" for Hungarian and of the words "Spanish" and "Hungarian" for French.
