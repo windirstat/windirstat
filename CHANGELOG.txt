@@ -2,6 +2,18 @@ changelog.txt - What has been done to WinDirStat (newest top)
 Last modified: $Date$
 =============================================================
 
+2004-11-06	assarbad
+        * Added the CVS-tags for Date and History whereever appropriate.
+          (already yesterday)
+        * Sam from the Ultr@VNC [ultravnc.sf.net] project volunteered to
+          translate the missing parts to French. Still necessary to check
+          wether the design is broken.
+        * Fixed the bug with ampersands. If file or directory names have an
+          ampersand they would show with underbar under the character right
+          to the ampersand. This is similar to the behavior of accelerators
+          in Windows dialogs. Just added DT_NOPREFX to all DrawText()
+          instances.
+
 2004-11-02	assarbad
         * Replaced the custom icon for junction points by code to greenify
           the folder image. Thus junction points are now represented by green
@@ -16,10 +28,14 @@ Last modified: $Date$
         * Translation to German and French not yet done for the newly
           added items.
 
+2004-01-22	bseifert
+        * Release of 1.1.0 with unknown changes by Bernhard.
+          [This entry was added as late as 2004-11-06]
+
 2004-01-20	bseifert
 	* Temporarily removed French translation from setup and Aboutbox for release 1.0.2.
 	* New option: Full row selection (default).
-	
+
 2004-01-11	bseifert	
 	* Completed French translation.
 	* Added rc2-files.

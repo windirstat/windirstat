@@ -76,7 +76,7 @@ void COwnerDrawnListItem::DrawLabel(COwnerDrawnListControl *list, CImageList *il
 	rcRest.DeflateRect(list->GetTextXMargin(), 0);
 
 	CRect rcLabel= rcRest;
-	pdc->DrawText(GetText(0), rcLabel, DT_SINGLELINE | DT_VCENTER | DT_WORD_ELLIPSIS | DT_CALCRECT);
+	pdc->DrawText(GetText(0), rcLabel, DT_SINGLELINE | DT_VCENTER | DT_WORD_ELLIPSIS | DT_CALCRECT | DT_NOPREFIX);
 
 	rcLabel.InflateRect(LABEL_INFLATE_CX, 0);
 	rcLabel.top= rcRest.top + LABEL_Y_MARGIN;
@@ -95,7 +95,7 @@ void COwnerDrawnListItem::DrawLabel(COwnerDrawnListControl *list, CImageList *il
 	}
 	CSetTextColor stc(pdc, textColor);
 	if (width == NULL)
-		pdc->DrawText(GetText(0), rcRest, DT_SINGLELINE | DT_VCENTER | DT_WORD_ELLIPSIS);
+		pdc->DrawText(GetText(0), rcRest, DT_SINGLELINE | DT_VCENTER | DT_WORD_ELLIPSIS | DT_NOPREFIX);
 
 	rcLabel.InflateRect(1, 1);
 	
@@ -424,7 +424,7 @@ void COwnerDrawnListControl::DrawItem(LPDRAWITEMSTRUCT pdis)
 			UINT align= IsColumnRightAligned(subitem) ? DT_RIGHT : DT_LEFT;
 			
 			CSetTextColor tc(&dcmem, GetItemSelectionTextColor(pdis->itemID));
-			dcmem.DrawText(s, rcText, DT_SINGLELINE | DT_VCENTER | DT_WORD_ELLIPSIS | align);
+			dcmem.DrawText(s, rcText, DT_SINGLELINE | DT_VCENTER | DT_WORD_ELLIPSIS | DT_NOPREFIX | align);
 			// Test: dcmem.FillSolidRect(rcDraw, 0);
 		}
 		
@@ -507,13 +507,13 @@ int COwnerDrawnListControl::GetSubItemWidth(COwnerDrawnListItem *item, int subit
 	CString s= item->GetText(subitem);
 	if (s.IsEmpty())
 	{
-		// DrawText(..DT_CALCRECT) scheint mit Leerstrings nicht klarzukommen
+		// DrawText(..DT_CALCRECT) seems to stumble about empty strings
 		return 0;
 	}
 
 	CSelectObject sofont(&dc, GetFont());
 	UINT align= IsColumnRightAligned(subitem) ? DT_RIGHT : DT_LEFT;
-	dc.DrawText(s, rc, DT_SINGLELINE | DT_VCENTER | align | DT_CALCRECT);
+	dc.DrawText(s, rc, DT_SINGLELINE | DT_VCENTER | DT_CALCRECT | DT_NOPREFIX | align);
 
 	rc.InflateRect(TEXT_X_MARGIN, 0);
 	return rc.Width();
@@ -691,6 +691,9 @@ void COwnerDrawnListControl::OnHdnItemchanging(NMHDR * /*pNMHDR*/, LRESULT *pRes
 
 
 // $Log$
+// Revision 1.9  2004/11/07 00:06:34  assarbad
+// - Fixed minor bug with ampersand (details in changelog.txt)
+//
 // Revision 1.8  2004/11/05 16:53:07  assarbad
 // Added Date and History tag where appropriate.
 //

@@ -315,7 +315,7 @@ BEGIN
     CONTROL         "Ne plus &afficher cet avertissement.",
                     IDC_DONTSHOWAGAIN,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
                     130,99,139,10
-    LTEXT           "Etes-vous bien certain de vouloir effectuer cette opération ?,IDC_STATIC,7,7,110,8
+    LTEXT           "Etes-vous bien certain de vouloir effectuer cette opération ?",IDC_STATIC,7,7,110,8
     LTEXT           "Vous allez effacer",IDC_STATIC,7,23,82,8
     CTEXT           "<filename>",IDC_FILENAME,7,38,262,8,SS_PATHELLIPSIS
     LTEXT           "de votre ordinateur.",IDC_STATIC,7,53,67,8
@@ -892,6 +892,9 @@ LANGUAGE 12, 1
 
 
 // $Log$
+// Revision 1.14  2004/11/07 00:06:34  assarbad
+// - Fixed minor bug with ampersand (details in changelog.txt)
+//
 // Revision 1.13  2004/11/05 16:53:06  assarbad
 // Added Date and History tag where appropriate.
 //

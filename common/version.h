@@ -43,7 +43,7 @@
 // The following line is automatically incremented by linkcounter.exe.
 // Format: #define blank LINKCOUNT blanks decimal
 // Reset this to zero only when you increment VERNUM_MAJOR/MINOR/REVISION.
-#define LINKCOUNT  123
+#define LINKCOUNT  131
 
 //-------------------------------------------------------------------
 // Release candidate number. Relevant for BC_RELEASECANDIDATE.
@@ -99,6 +99,9 @@
 
 
 // $Log$
+// Revision 1.9  2004/11/07 00:06:34  assarbad
+// - Fixed minor bug with ampersand (details in changelog.txt)
+//
 // Revision 1.8  2004/11/05 16:53:05  assarbad
 // Added Date and History tag where appropriate.
 //

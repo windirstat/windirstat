@@ -235,9 +235,9 @@ void CXySlider::PaintValues(CDC *pdc)
 
 	CString s;
 	s.Format(_T("%d"), m_externalPos.x);
-	pdc->DrawText(s, rcLeft, DT_SINGLELINE | DT_CENTER | DT_VCENTER);
+	pdc->DrawText(s, rcLeft, DT_SINGLELINE | DT_CENTER | DT_VCENTER); // @ | DT_NOPREFIX
 	s.Format(_T("%d"), m_externalPos.y);
-	pdc->DrawText(s, rcRight, DT_SINGLELINE | DT_CENTER | DT_VCENTER);
+	pdc->DrawText(s, rcRight, DT_SINGLELINE | DT_CENTER | DT_VCENTER); // @ | DT_NOPREFIX
 }
 */
 
@@ -493,6 +493,9 @@ void CXySlider::OnTimer(UINT /*nIDEvent*/)
 }
 
 // $Log$
+// Revision 1.4  2004/11/07 00:06:34  assarbad
+// - Fixed minor bug with ampersand (details in changelog.txt)
+//
 // Revision 1.3  2004/11/05 16:53:08  assarbad
 // Added Date and History tag where appropriate.
 //
