@@ -57,9 +57,12 @@ CString GetSpec_KB();
 CString GetSpec_MB();
 CString GetSpec_GB();
 CString GetSpec_TB();
-
+ULONGLONG MyGetFileSize(CFileFind* finder);
 
 // $Log$
+// Revision 1.11  2004/11/07 20:14:30  assarbad
+// - Added wrapper for GetCompressedFileSize() so that by default the compressed file size will be shown.
+//
 // Revision 1.10  2004/11/05 16:53:07  assarbad
 // Added Date and History tag where appropriate.
 //

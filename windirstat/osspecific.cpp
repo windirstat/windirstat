@@ -242,8 +242,36 @@ DWORD CQueryDosDeviceApi::QueryDosDevice(LPCTSTR lpDeviceName, LPTSTR lpTargetPa
 	return (*m_QueryDosDevice)(lpDeviceName, lpTargetPath, ucchMax);
 }
 
+/////////////////////////////////////////////////////////////////////////////
+
+CGetCompressedFileSizeApi::CGetCompressedFileSizeApi()
+{
+	m_dll= LoadLibrary(_T("kernel32.dll"));
+	TGETPROC(GetCompressedFileSize);
+}
+
+CGetCompressedFileSizeApi::~CGetCompressedFileSizeApi()
+{
+	if (m_dll != NULL)
+		FreeLibrary(m_dll);
+}
+
+bool CGetCompressedFileSizeApi::IsSupported()
+{
+	CHECK(GetCompressedFileSize);
+	return true;
+}
+
+DWORD CGetCompressedFileSizeApi::GetCompressedFileSize(LPCTSTR lpFileName, LPDWORD lpFileSizeHigh)
+{
+	ASSERT(IsSupported());
+	return (*m_GetCompressedFileSize)(lpFileName, lpFileSizeHigh);
+}
 
 // $Log$
+// Revision 1.5  2004/11/07 20:14:31  assarbad
+// - Added wrapper for GetCompressedFileSize() so that by default the compressed file size will be shown.
+//
 // Revision 1.4  2004/11/05 16:53:07  assarbad
 // Added Date and History tag where appropriate.
 //

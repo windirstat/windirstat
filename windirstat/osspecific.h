@@ -157,7 +157,30 @@ private:
 	TypeQueryDosDevice m_QueryDosDevice;
 };
 
+//
+// GetCompressedFileSize. Only supported on the NT platform
+//
+class CGetCompressedFileSizeApi
+{
+public:
+	CGetCompressedFileSizeApi();
+	~CGetCompressedFileSizeApi();
+
+	bool IsSupported();
+
+	DWORD GetCompressedFileSize(LPCTSTR lpFileName, LPDWORD lpFileSizeHigh);
+
+private:
+	typedef DWORD (WINAPI *TypeGetCompressedFileSize)(LPCTSTR lpFileName, LPDWORD lpFileSizeHigh);
+
+	HMODULE m_dll;
+	TypeGetCompressedFileSize m_GetCompressedFileSize;
+};
+
 // $Log$
+// Revision 1.5  2004/11/07 20:14:31  assarbad
+// - Added wrapper for GetCompressedFileSize() so that by default the compressed file size will be shown.
+//
 // Revision 1.4  2004/11/05 16:53:07  assarbad
 // Added Date and History tag where appropriate.
 //

@@ -43,7 +43,7 @@
 // The following line is automatically incremented by linkcounter.exe.
 // Format: #define blank LINKCOUNT blanks decimal
 // Reset this to zero only when you increment VERNUM_MAJOR/MINOR/REVISION.
-#define LINKCOUNT  133
+#define LINKCOUNT  141
 
 //-------------------------------------------------------------------
 // Release candidate number. Relevant for BC_RELEASECANDIDATE.
@@ -99,6 +99,9 @@
 
 
 // $Log$
+// Revision 1.11  2004/11/07 20:14:30  assarbad
+// - Added wrapper for GetCompressedFileSize() so that by default the compressed file size will be shown.
+//
 // Revision 1.10  2004/11/07 00:51:30  assarbad
 // *** empty log message ***
 //

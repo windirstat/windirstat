@@ -510,6 +510,12 @@ bool IsHexDigit(int c)
 //
 // I hope that a drive is SUBSTed iff this string starts with \??\.
 //
+// assarbad:
+//   It cannot be safely determined wether a path is or is not SUBSTed on NT
+//	 via this API. You would have to lookup the volume mount points because
+//	 SUBST only works per session by definition whereas volume mount points
+//	 work accross sessions (after restarts).
+//
 CString MyQueryDosDevice(LPCTSTR drive)
 {
 	CString d = drive;
@@ -583,8 +589,29 @@ CString GetSpec_TB()
 	return s;
 }
 
+// Wrapper for file size retrieval
+ULONGLONG MyGetFileSize(CFileFind* finder)
+{
+	// Try to use the NT-specific API
+	CGetCompressedFileSizeApi api;
+  
+	if (api.IsSupported())
+	{
+	  ULARGE_INTEGER ret;
+	  ret.LowPart = api.GetCompressedFileSize(finder->GetFilePath(), &ret.HighPart);
+	  if ((ret.LowPart == INVALID_FILE_SIZE) && GetLastError() == NO_ERROR)
+		return ret.QuadPart;
+	  else
+		return finder->GetLength();
+	}
+	else
+	  return finder->GetLength();
+}
 
 // $Log$
+// Revision 1.11  2004/11/07 20:14:30  assarbad
+// - Added wrapper for GetCompressedFileSize() so that by default the compressed file size will be shown.
+//
 // Revision 1.10  2004/11/05 16:53:07  assarbad
 // Added Date and History tag where appropriate.
 //

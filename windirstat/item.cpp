@@ -798,7 +798,8 @@ void CItem::DoSomeWork(DWORD ticks)
 
 					FILEINFO fi;
 					fi.name= finder.GetFileName();
-					fi.length= finder.GetLength();
+					// Retrieve file size
+					fi.length= MyGetFileSize(&finder);
 					finder.GetLastWriteTime(&fi.lastWriteTime);
 					// (We don't use GetLastWriteTime(CTime&) here, because, if the file has
 					// an invalid timestamp, that function would ASSERT and throw an Exception.)
@@ -958,7 +959,8 @@ bool CItem::StartRefresh()
 
 			FILEINFO fi;
 			fi.name= finder.GetFileName();
-			fi.length= finder.GetLength();
+			// Retrieve file size
+            fi.length= MyGetFileSize(&finder);
 			finder.GetLastWriteTime(&fi.lastWriteTime);
 
 			AddFile(fi);
@@ -1007,7 +1009,8 @@ bool CItem::StartRefresh()
 			{
 				FILEINFO fi;
 				fi.name= finder.GetFileName();
-				fi.length= finder.GetLength();
+				// Retrieve file size
+                fi.length= MyGetFileSize(&finder);
 				finder.GetLastWriteTime(&fi.lastWriteTime);
 
 				SetLastChange(fi.lastWriteTime);
@@ -1504,6 +1507,9 @@ void CItem::DrivePacman()
 
 
 // $Log$
+// Revision 1.13  2004/11/07 20:14:30  assarbad
+// - Added wrapper for GetCompressedFileSize() so that by default the compressed file size will be shown.
+//
 // Revision 1.12  2004/11/05 16:53:07  assarbad
 // Added Date and History tag where appropriate.
 //
