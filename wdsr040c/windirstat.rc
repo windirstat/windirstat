@@ -134,7 +134,7 @@ BEGIN
                                                 ID_CLEANUP_OPENINCONSOLE
         MENUITEM "&Effacer (vers la corbeille)\tDel", 
                                                 ID_CLEANUP_DELETETOTRASHBIN
-        MENUITEM "&Détruire (impossible de récupérer!)\tShift+Del",
+        MENUITEM "&Détruire (impossible de récupérer!)\tShift+Del", 
                                                 ID_CLEANUP_DELETE
         MENUITEM SEPARATOR
         MENUITEM "&Propriétés",                 ID_CLEANUP_PROPERTIES
@@ -778,7 +778,7 @@ BEGIN
     IDS_CREATEPROCESSsFAILEDs "CreateProcess(%1!s!) échec : %2!s!"
     IDS_LANGUAGERESTARTNOW  "Le changement de la langue ne prendra effet qu'après redémarrage du programme.\r\n\r\nLanguage changes take not effect until the application is restarted.\r\n\r\nRedémarrer WinDirStat maintenant?"
     IDS_ABOUT_AUTHORS       "Auteurs"
-    IDS_ABOUT_AUTHORSTEXTs  "=== Programmeurs ===\r\n\r\nBernhard Seifert\r\nCréateur du project et coordinateur\r\n(mailto:%1!s!)\r\n\r\nOliver Schneider\r\n(mailto:assarbad#users.sourceforge.net)\r\n\r\n\r\n===Traducteurs ===\r\n\r\n--- Français ---\r\n\r\nPascal Delrot\r\n(mailto:tigroo#users.sourceforge.net)\r\n\r\nUltraSam\r\n(mailto:sam.fd#wanadoo.fr)\r\n\r\n\r\n---Polonais ---\r\n\r\nDariusz Malachowski\r\n(mailto:d_malachowski#pf.pl)\r\n\r\n\r\n--- Russe ---\r\n\r\nSergiy 'Polet' Polyetayev\r\n(mailto:s_polyetayev#hotmail.com)\r\n\r\n\r\n--- Hungarian ---\r\n\r\nLeonard Nimoy\r\n(mailto:sorge#freemail.hu)\r\n"
+    IDS_ABOUT_AUTHORSTEXTs  "=== Programmeurs ===\r\n\r\nBernhard Seifert\r\nCréateur du project et coordinateur\r\n(mailto:%1!s!)\r\n\r\nOliver Schneider\r\n(mailto:assarbad#users.sourceforge.net)\r\n\r\n\r\n===Traducteurs ===\r\n\r\n--- Français ---\r\n\r\nPascal Delrot\r\n(mailto:tigroo#users.sourceforge.net)\r\n\r\nUltraSam\r\n(mailto:sam.fd#wanadoo.fr)\r\n\r\n\r\n---Polonais ---\r\n\r\nDariusz Malachowski\r\n(mailto:d_malachowski#pf.pl)\r\n\r\n\r\n--- Russe ---\r\n\r\nSergiy 'Polet' Polyetayev\r\n(mailto:s_polyetayev#hotmail.com)\r\n\r\n\r\n--- Hungarian ---\r\n\r\nLeonard Nimoy\r\n(mailto:sorge#freemail.hu)\r\n\r\n\r\n--- Spanish ---\r\n\r\nSergio Omar Maurelli\r\n(mailto:sergiomaurelli#hotmail.com)\r\n"
 END
 
 STRINGTABLE 

@@ -143,7 +143,7 @@ BEGIN
     END
     POPUP "&Mapa drzewa"
     BEGIN
-        MENUITEM "&Poka¿ Mapê Drzewa\tF9",     ID_VIEW_SHOWTREEMAP
+        MENUITEM "&Poka¿ Mapê Drzewa\tF9",      ID_VIEW_SHOWTREEMAP
         MENUITEM SEPARATOR
         MENUITEM "Po&wiêksz\t+",                ID_TREEMAP_ZOOMIN
         MENUITEM "Po&mniejsz\t-",               ID_TREEMAP_ZOOMOUT
@@ -774,7 +774,7 @@ BEGIN
                             "Tworzenie procesu(%1!s!) nie powiod³o siê: %2!s!"
     IDS_LANGUAGERESTARTNOW  "Jêzyk zostanie zmieniony po ponownym uruchomieniu programu.\r\n\r\nLanguage changes take not effect until the application is restarted.\r\n\r\nUruchomiæ ponownie teraz?"
     IDS_ABOUT_AUTHORS       "Autorzy"
-    IDS_ABOUT_AUTHORSTEXTs  "=== Programiœci ===\r\n\r\nBernhard Seifert\r\nTwórca projektu i koordynator\r\n(mailto:%1!s!)\r\n\r\nOliver Schneider\r\n(mailto:assarbad#users.sourceforge.net)\r\n\r\n\r\n=== T³umacz¹cy ===\r\n\r\n--- Francuski ---\r\n\r\nPascal Delrot\r\n(mailto:tigroo#users.sourceforge.net)\r\n\r\nUltraSam\r\n(mailto:sam.fd#wanadoo.fr)\r\n\r\n\r\n--- Polski ---\r\n\r\nDariusz Ma³achowski\r\n(mailto:d_malachowski#pf.pl)\r\n\r\n\r\n--- Rosyjski ---\r\n\r\nSergiy 'Polet' Polyetayev\r\n(mailto:s_polyetayev#hotmail.com)\r\n\r\n\r\n--- Hungarian ---\r\n\r\nLeonard Nimoy\r\n(mailto:sorge#freemail.hu)\r\n"
+    IDS_ABOUT_AUTHORSTEXTs  "=== Programiœci ===\r\n\r\nBernhard Seifert\r\nTwórca projektu i koordynator\r\n(mailto:%1!s!)\r\n\r\nOliver Schneider\r\n(mailto:assarbad#users.sourceforge.net)\r\n\r\n\r\n=== T³umacz¹cy ===\r\n\r\n--- Francuski ---\r\n\r\nPascal Delrot\r\n(mailto:tigroo#users.sourceforge.net)\r\n\r\nUltraSam\r\n(mailto:sam.fd#wanadoo.fr)\r\n\r\n\r\n--- Polski ---\r\n\r\nDariusz Ma³achowski\r\n(mailto:d_malachowski#pf.pl)\r\n\r\n\r\n--- Rosyjski ---\r\n\r\nSergiy 'Polet' Polyetayev\r\n(mailto:s_polyetayev#hotmail.com)\r\n\r\n\r\n--- Wêgierski ---\r\n\r\nLeonard Nimoy\r\n(mailto:sorge#freemail.hu)\r\n\r\n\r\n--- Hiszpanski ---\r\n\r\nSergio Omar Maurelli\r\n(mailto:sergiomaurelli#hotmail.com)\r\n"
 END
 
 STRINGTABLE 

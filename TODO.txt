@@ -2,8 +2,9 @@ TODO.txt - What still has to been done to WinDirStat
 Last modified: $Date$
 =============================================================
 
-- Translate IDS_ABOUT_AUTHORSTEXTs ("Hungarian") to
-  French, Polish and Russian
+- Translate IDS_ABOUT_AUTHORSTEXTs
+  "Hungarian" & "Spanish" into French
+  "Spanish" into Hungarian
 
 - Christmas Release 1.1.1
 ==========================================================

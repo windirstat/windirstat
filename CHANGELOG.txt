@@ -3,6 +3,11 @@ Last modified: $Date$
 =============================================================
 
 2005-02-06	assarbad
+	* Adjusted all resources to show Spanish. Missing translation of
+	  the word "Spanish" for Hungarian and of the words "Spanish"
+	  and "Hungarian" for French.
+
+2005-02-06	assarbad
 	* Added Spanish resource dll (thanks to Sergio).
 
 2005-01-29	bseifert

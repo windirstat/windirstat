@@ -764,7 +764,7 @@ BEGIN
     IDS_CREATEPROCESSsFAILEDs "A(z) (%1!s!) folyamat sikertelen: %2!s!"
     IDS_LANGUAGERESTARTNOW  "A nyelv módosítása addíg nem kerül érvényesítésre, amíg nem indítja újra az alkalmazást.\r\n\r\nÚjraindítja a WinDirStat-ot most?"
     IDS_ABOUT_AUTHORS       "Szerzõk"
-    IDS_ABOUT_AUTHORSTEXTs  "=== Programozó ===\r\n\r\nBernhard Seifert\r\nA projekt létrehozója és koordinátora\r\n(mailto:%1!s!)\r\n\r\nOliver Schneider\r\n(mailto:assarbad#users.sourceforge.net)\r\n\r\n\r\n=== Fordítók ===\r\n\r\n--- Francia ---\r\n\r\nPascal Delrot\r\n(mailto:tigroo#users.sourceforge.net)\r\n\r\nUltraSam\r\n(mailto:sam.fd#wanadoo.fr)\r\n\r\n\r\n--- Lengyel ---\r\n\r\nDariusz Malachowski\r\n(mailto:d_malachowski#pf.pl)\r\n\r\n\r\n--- Orosz ---\r\n\r\nSergiy 'Polet' Polyetayev\r\n(mailto:s_polyetayev#hotmail.com)\r\n\r\n\r\n--- Magyar ---\r\n\r\nLeonard Nimoy\r\n(mailto:sorge#freemail.hu)\r\n"
+    IDS_ABOUT_AUTHORSTEXTs  "=== Programozó ===\r\n\r\nBernhard Seifert\r\nA projekt létrehozója és koordinátora\r\n(mailto:%1!s!)\r\n\r\nOliver Schneider\r\n(mailto:assarbad#users.sourceforge.net)\r\n\r\n\r\n=== Fordítók ===\r\n\r\n--- Francia ---\r\n\r\nPascal Delrot\r\n(mailto:tigroo#users.sourceforge.net)\r\n\r\nUltraSam\r\n(mailto:sam.fd#wanadoo.fr)\r\n\r\n\r\n--- Lengyel ---\r\n\r\nDariusz Malachowski\r\n(mailto:d_malachowski#pf.pl)\r\n\r\n\r\n--- Orosz ---\r\n\r\nSergiy 'Polet' Polyetayev\r\n(mailto:s_polyetayev#hotmail.com)\r\n\r\n\r\n--- Magyar ---\r\n\r\nLeonard Nimoy\r\n(mailto:sorge#freemail.hu)\r\n\r\n\r\n--- Spanish ---\r\n\r\nSergio Omar Maurelli\r\n(mailto:sergiomaurelli#hotmail.com)\r\n"
 END
 
 STRINGTABLE 

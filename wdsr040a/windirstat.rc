@@ -37,19 +37,19 @@ IDR_MAINFRAME           ICON                    "res\\icon1.ico"
 // TEXTINCLUDE
 //
 
-1 TEXTINCLUDE
+1 TEXTINCLUDE 
 BEGIN
     "resource.h\0"
 END
 
-2 TEXTINCLUDE
+2 TEXTINCLUDE 
 BEGIN
     "#include ""afxres.h""\r\n"
     "#include ""../common/version.h""\r\n"
     "\0"
 END
 
-3 TEXTINCLUDE
+3 TEXTINCLUDE 
 BEGIN
     "#define _AFX_NO_OLE_RESOURCES\r\n"
     "#define _AFX_NO_TRACKER_RESOURCES\r\n"
@@ -66,6 +66,7 @@ BEGIN
 END
 
 #endif    // APSTUDIO_INVOKED
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -781,7 +782,7 @@ BEGIN
     IDS_CREATEPROCESSsFAILEDs "CreateProcess(%1!s!) falló: %2!s!"
     IDS_LANGUAGERESTARTNOW  "Los cambios de Idioma no tomarán efecto hasta que la aplicación se reinicie.\r\n\r\nReiniciar WinDirStat ahora?"
     IDS_ABOUT_AUTHORS       "Autores"
-    IDS_ABOUT_AUTHORSTEXTs  "=== Programadores ===\r\n\r\nBernhard Seifert\r\nCreador del proyecto y coordinador\r\n(mailto:%1!s!)\r\n\r\nOliver Schneider\r\n(mailto:assarbad#users.sourceforge.net)\r\n\r\n\r\n=== Traductores ===\r\n\r\n--- Francés ---\r\n\r\nPascal Delrot\r\n(mailto:tigroo#users.sourceforge.net)\r\n\r\nUltraSam\r\n(mailto:sam.fd#wanadoo.fr)\r\n\r\n\r\n--- Polaco ---\r\n\r\nDariusz Malachowski\r\n(mailto:d_malachowski#pf.pl)\r\n\r\n\r\n--- Ruso ---\r\n\r\nSergiy 'Polet' Polyetayev\r\n(mailto:s_polyetayev#hotmail.com)\r\n\r\n\r\n--- Húngaro ---\r\n\r\nLeonard Nimoy\r\n(mailto:sorge#freemail.hu)\r\n"
+    IDS_ABOUT_AUTHORSTEXTs  "=== Programadores ===\r\n\r\nBernhard Seifert\r\nCreador del proyecto y coordinador\r\n(mailto:%1!s!)\r\n\r\nOliver Schneider\r\n(mailto:assarbad#users.sourceforge.net)\r\n\r\n\r\n=== Traductores ===\r\n\r\n--- Francés ---\r\n\r\nPascal Delrot\r\n(mailto:tigroo#users.sourceforge.net)\r\n\r\nUltraSam\r\n(mailto:sam.fd#wanadoo.fr)\r\n\r\n\r\n--- Polaco ---\r\n\r\nDariusz Malachowski\r\n(mailto:d_malachowski#pf.pl)\r\n\r\n\r\n--- Ruso ---\r\n\r\nSergiy 'Polet' Polyetayev\r\n(mailto:s_polyetayev#hotmail.com)\r\n\r\n\r\n--- Húngaro ---\r\n\r\nLeonard Nimoy\r\n(mailto:sorge#freemail.hu)\r\n\r\n\r\n--- Español ---\r\n\r\nSergio Omar Maurelli\r\n(mailto:sergiomaurelli#hotmail.com)\r\n"
 END
 
 STRINGTABLE 
