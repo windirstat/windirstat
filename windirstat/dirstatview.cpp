@@ -126,7 +126,7 @@ CString CDirstatView::GenerateReport()
 	}
 
 	report+= LoadString(IDS_DISKUSAGEREPORTGENERATEDBYWINDIRSTAT);
-	report.AppendFormat(_T("http://%s\r\n"), GetWinDirStatHomepage());
+	report.AppendFormat(_T("http://%s/\r\n"), GetWinDirStatHomepage());
 
 	return report;
 }

@@ -1,0 +1,11 @@
+changelog.txt - What has been done to WinDirStat (newest top)
+=============================================================
+
+2003-11-03	bseifert
+	* New option "Show Time Spent in Directory list".
+	* Some URLs had no trailing backslash.
+	* Fixed some spelling errors in help files.
+	* This changelog added.
+
+2003-10-01	bseifert
+	* Initial Release 1.0.0.

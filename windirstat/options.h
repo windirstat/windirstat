@@ -202,6 +202,9 @@ public:
 	bool IsPacmanAnimation();
 	void SetPacmanAnimation(bool animate);
 
+	bool IsShowTimeSpent();
+	void SetShowTimeSpent(bool show);
+
 	bool IsCushionShading();
 	void SetCushionShading(bool shade);
 
@@ -249,6 +252,7 @@ private:
 	int m_treelistColorCount;
 	bool m_humanFormat;
 	bool m_pacmanAnimation;
+	bool m_showTimeSpent;
 	bool m_cushionShading;
 	bool m_treemapGrid;
 	COLORREF m_treemapGridColor;

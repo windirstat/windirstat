@@ -537,6 +537,9 @@
 			</File>
 		</Filter>
 		<File
+			RelativePath="..\changelog.txt">
+		</File>
+		<File
 			RelativePath="..\README.txt">
 		</File>
 		<File

@@ -59,6 +59,7 @@ namespace
 	const LPCTSTR entryTreelistColorN		= _T("treelistColor%d");
 	const LPCTSTR entryHumanFormat			= _T("humanFormat");
 	const LPCTSTR entryPacmanAnimation		= _T("pacmanAnimation");
+	const LPCTSTR entryShowTimeSpent		= _T("showTimeSpent");
 	const LPCTSTR entryCushionShading		= _T("cushionShading");
 	const LPCTSTR entryTreemapGrid			= _T("treemapGrid");
 	const LPCTSTR entryTreemapGridColor		= _T("treemapGridColor");
@@ -604,6 +605,19 @@ void COptions::SetPacmanAnimation(bool animate)
 	}
 }
 
+bool COptions::IsShowTimeSpent()
+{
+	return m_showTimeSpent;
+}
+
+void COptions::SetShowTimeSpent(bool show)
+{
+	if (m_showTimeSpent != show)
+	{
+		m_showTimeSpent= show;
+	}
+}
+
 bool COptions::IsCushionShading()
 {
 	return m_cushionShading;
@@ -798,6 +812,7 @@ void COptions::SaveToRegistry()
 	}
 	SetProfileBool(sectionOptions, entryHumanFormat, m_humanFormat);
 	SetProfileBool(sectionOptions, entryPacmanAnimation, m_pacmanAnimation);
+	SetProfileBool(sectionOptions, entryShowTimeSpent, m_showTimeSpent);
 	SetProfileBool(sectionOptions, entryCushionShading, m_cushionShading);
 	SetProfileBool(sectionOptions, entryTreemapGrid, m_treemapGrid);
 	SetProfileInt(sectionOptions, entryTreemapGridColor, m_treemapGridColor);
@@ -825,6 +840,7 @@ void COptions::LoadFromRegistry()
 	}
 	m_humanFormat= GetProfileBool(sectionOptions, entryHumanFormat, true);
 	m_pacmanAnimation= GetProfileBool(sectionOptions, entryPacmanAnimation, true);
+	m_showTimeSpent= GetProfileBool(sectionOptions, entryShowTimeSpent, false);
 	m_cushionShading= GetProfileBool(sectionOptions, entryCushionShading, true);
 	m_treemapGrid= GetProfileBool(sectionOptions, entryTreemapGrid, false);
 	m_treemapGridColor= GetProfileInt(sectionOptions, entryTreemapGridColor, RGB(0, 0, 0));

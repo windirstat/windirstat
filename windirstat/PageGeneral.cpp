@@ -44,6 +44,7 @@ void CPageGeneral::DoDataExchange(CDataExchange* pDX)
 	DDX_Check(pDX, IDC_HUMANFORMAT, m_humanFormat);
 	DDX_Check(pDX, IDC_FOLLOWMOUNTPOINTS, m_followMountPoints);
 	DDX_Check(pDX, IDC_PACMANANIMATION, m_pacmanAnimation);
+	DDX_Check(pDX, IDC_SHOWTIMESPENT, m_showTimeSpent);
 	DDX_Control(pDX, IDC_COMBO, m_combo);
 	DDX_Control(pDX, IDC_FOLLOWMOUNTPOINTS, m_ctlFollowMountPoints);
 }
@@ -53,6 +54,7 @@ BEGIN_MESSAGE_MAP(CPageGeneral, CPropertyPage)
 	ON_BN_CLICKED(IDC_HUMANFORMAT, OnBnClickedHumanformat)
 	ON_BN_CLICKED(IDC_FOLLOWMOUNTPOINTS, OnBnClickedFollowmountpoints)
 	ON_BN_CLICKED(IDC_PACMANANIMATION, OnBnClickedPacmananimation)
+	ON_BN_CLICKED(IDC_SHOWTIMESPENT, OnBnClickedShowTimeSpent)
 END_MESSAGE_MAP()
 
 
@@ -62,6 +64,7 @@ BOOL CPageGeneral::OnInitDialog()
 
 	m_humanFormat= GetOptions()->IsHumanFormat();
 	m_pacmanAnimation= GetOptions()->IsPacmanAnimation();
+	m_showTimeSpent= GetOptions()->IsShowTimeSpent();
 
 	m_followMountPoints= GetOptions()->IsFollowMountPoints();
 	CVolumeApi va;
@@ -102,6 +105,7 @@ void CPageGeneral::OnOK()
 	GetOptions()->SetHumanFormat(m_humanFormat);
 	GetOptions()->SetFollowMountPoints(m_followMountPoints);
 	GetOptions()->SetPacmanAnimation(m_pacmanAnimation);
+	GetOptions()->SetShowTimeSpent(m_showTimeSpent);
 
 	LANGID id= (LANGID)m_combo.GetItemData(m_combo.GetCurSel());
 	CLanguageOptions::SetLanguage(id);
@@ -120,6 +124,11 @@ void CPageGeneral::OnBnClickedFollowmountpoints()
 }
 
 void CPageGeneral::OnBnClickedPacmananimation()
+{
+	SetModified();
+}
+
+void CPageGeneral::OnBnClickedShowTimeSpent()
 {
 	SetModified();
 }

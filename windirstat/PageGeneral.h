@@ -36,18 +36,20 @@ public:
 
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);
-
-	BOOL m_humanFormat;
-
-	DECLARE_MESSAGE_MAP()
 	virtual BOOL OnInitDialog();
 	virtual void OnOK();
-	afx_msg void OnBnClickedHumanformat();
-public:
-	BOOL m_followMountPoints;
-	afx_msg void OnBnClickedFollowmountpoints();
+
 	BOOL m_pacmanAnimation;
-	afx_msg void OnBnClickedPacmananimation();
+	BOOL m_followMountPoints;
+	BOOL m_humanFormat;
+	BOOL m_showTimeSpent;
+
 	CComboBox m_combo;
 	CButton m_ctlFollowMountPoints;
+
+	DECLARE_MESSAGE_MAP()
+	afx_msg void OnBnClickedHumanformat();
+	afx_msg void OnBnClickedFollowmountpoints();
+	afx_msg void OnBnClickedPacmananimation();
+	afx_msg void OnBnClickedShowTimeSpent();
 };

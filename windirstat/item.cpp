@@ -147,7 +147,7 @@ CString CItem::GetText(int subitem) const
 		break;
 
 	case COL_PERCENTAGE:
-		if (MustShowReadJobs() || IsRootItem())
+		if (GetOptions()->IsShowTimeSpent() && MustShowReadJobs() || IsRootItem())
 		{
 			s.Format(_T("[%s s]"), FormatMilliseconds(GetTicksWorked()));
 		}

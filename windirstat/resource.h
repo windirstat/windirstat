@@ -109,6 +109,7 @@
 #define IDC_PACMANANIMATION             1021
 #define IDC_TREEMAPGRID                 1022
 #define IDC_ASKFORCONFIRMATION          1022
+#define IDC_SHOWTIMESPENT               1022
 #define IDC_SHOWCONSOLEWINDOW           1023
 #define IDC_WAITFORCOMPLETION           1024
 #define IDC_HEIGHTFACTORSPIN            1026
