@@ -147,7 +147,7 @@ protected:
 	CItem *PopReselectChild();
 	void ClearReselectChildStack();
 	bool IsReselectChildAvailable();
-
+	bool DirectoryListHasFocus();
 
 	bool m_showFreeSpace;		// Whether to show the <Free Space> item
 	bool m_showUnknown;			// Whether to show the <Unknown> item

@@ -406,10 +406,28 @@ bool CDrivesList::IsItemSelected(int i)
 
 void CDrivesList::OnLButtonDown(UINT /*nFlags*/, CPoint /*point*/)
 {
-	// We simulate Ctrl-Key-Down here, so that the dialog
-	// can be driven with one hand (mouse) only.
-	const MSG *msg= GetCurrentMessage();
-	DefWindowProc(msg->message, msg->wParam | MK_CONTROL, msg->lParam);
+	if (GetFocus() == this || GetSelectedCount() == 0)
+	{
+		// We simulate Ctrl-Key-Down here, so that the dialog
+		// can be driven with one hand (mouse) only.
+		const MSG *msg= GetCurrentMessage();
+		DefWindowProc(msg->message, msg->wParam | MK_CONTROL, msg->lParam);
+	}
+	else
+	{
+		SetFocus();
+
+		// Send a LVN_ITEMCHANGED to the parent, so that it can
+		// update the radio button.
+		NMLISTVIEW lv;
+		ZeroMemory(&lv, sizeof(lv));
+		lv.hdr.hwndFrom= m_hWnd;
+		lv.hdr.idFrom= GetDlgCtrlID();
+		lv.hdr.code= LVN_ITEMCHANGED;
+		GetParent()->SendMessage(WM_NOTIFY, GetDlgCtrlID(), (LPARAM)&lv);
+		
+		// no further action
+	}
 }
 
 void CDrivesList::OnNMDblclk(NMHDR * /*pNMHDR*/, LRESULT *pResult)
@@ -640,20 +658,18 @@ void CSelectDrivesDlg::OnOK()
 		m_folderName= MyGetFullPathName(m_folderName);
 		UpdateData(false);
 	}
-	else
-	{
-		for (int i=0; i < m_list.GetItemCount(); i++)
-		{
-			CDriveItem *item= m_list.GetItem(i);
 
-			if (m_radio == RADIO_ALLLOCALDRIVES && !item->IsRemote() && !item->IsSUBSTed()
-			||  m_radio == RADIO_SOMEDRIVES && m_list.IsItemSelected(i))
-			{
-				m_drives.Add(item->GetDrive());
-				if (m_list.IsItemSelected(i))
-					m_selectedDrives.Add(item->GetDrive());
-			}
+	for (int i=0; i < m_list.GetItemCount(); i++)
+	{
+		CDriveItem *item= m_list.GetItem(i);
+
+		if (m_radio == RADIO_ALLLOCALDRIVES && !item->IsRemote() && !item->IsSUBSTed()
+		||  m_radio == RADIO_SOMEDRIVES && m_list.IsItemSelected(i))
+		{
+			m_drives.Add(item->GetDrive());
 		}
+		if (m_list.IsItemSelected(i))
+			m_selectedDrives.Add(item->GetDrive());
 	}
 
 	CPersistence::SetSelectDrivesRadio(m_radio);

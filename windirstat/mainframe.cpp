@@ -912,8 +912,13 @@ void CMainFrame::AppendUserDefinedCleanups(CMenu *menu)
 			string.FormatMessage(IDS_UDCsCTRLd, GetOptions()->GetUserDefinedCleanup(indices[i])->title, indices[i]);
 
 			UINT flags= MF_GRAYED | MF_DISABLED;
-			if (GetDocument()->UserDefinedCleanupWorksForItem(GetOptions()->GetUserDefinedCleanup(indices[i]), GetDocument()->GetSelection()))
+			if (
+			GetLogicalFocus() == LF_DIRECTORYLIST
+			&& GetDocument()->UserDefinedCleanupWorksForItem(GetOptions()->GetUserDefinedCleanup(indices[i]), GetDocument()->GetSelection())
+			)
+			{
 				flags= MF_ENABLED;
+			}
 			menu->AppendMenu(flags|MF_STRING, ID_USERDEFINEDCLEANUP0 + indices[i], string);
 		}
 	}
@@ -1065,7 +1070,8 @@ void CMainFrame::OnConfigure()
 void CMainFrame::OnUpdateSendmailtoowner(CCmdUI *pCmdUI)
 {
 	pCmdUI->Enable(
-		GetDocument()->GetSelection() != NULL
+		GetLogicalFocus() == LF_DIRECTORYLIST
+		&& GetDocument()->GetSelection() != NULL
 		&& GetDocument()->GetSelection()->IsDone()
 		&& CModalSendMail::IsSendMailAvailable()
 	);

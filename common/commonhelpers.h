@@ -30,3 +30,4 @@ bool FileExists(LPCTSTR path);
 CString LoadString(UINT resId);
 CString GetAppFileName();
 CString GetAppFolder();
+CString MyGetFullPathName(LPCTSTR relativePath);

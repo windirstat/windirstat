@@ -48,7 +48,6 @@ bool FolderExists(LPCTSTR path);
 bool DriveExists(const CString& path);
 CString GetUserName();
 bool IsHexDigit(int c);
-CString MyGetFullPathName(LPCTSTR relativePath);
 CString MyQueryDosDevice(LPCTSTR drive);
 bool IsSUBSTedDrive(LPCTSTR drive);
 CString GetSpec_Bytes();

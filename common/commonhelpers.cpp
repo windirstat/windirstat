@@ -137,3 +137,29 @@ CString GetAppFolder()
 	return s;
 }
 
+CString MyGetFullPathName(LPCTSTR relativePath)
+{
+	LPTSTR dummy;
+	CString buffer;
+
+	DWORD len = _MAX_PATH;
+
+    DWORD dw = GetFullPathName(relativePath, len, buffer.GetBuffer(len), &dummy);
+	buffer.ReleaseBuffer();
+
+	while (dw >= len)
+	{
+		len+= _MAX_PATH;
+		dw = GetFullPathName(relativePath, len, buffer.GetBuffer(len), &dummy);
+		buffer.ReleaseBuffer();
+	}
+
+	if (dw == 0)
+	{
+		TRACE("GetFullPathName(%s) failed: GetLastError returns %u\r\n", relativePath, GetLastError());
+		return relativePath;
+	}
+
+	return buffer;
+}
+

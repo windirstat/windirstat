@@ -1,8 +1,20 @@
 changelog.txt - What has been done to WinDirStat (newest top)
 =============================================================
 
+2003-01-02	bseifert
+	* Internal bugfix: the cleanup actions are now disabled, if
+	  the extension list has the focus.
+	* 'Command prompt here' is now disabled for UNC paths.
+	* Drive selection dialog: the set of selected drives was not
+	  always persistent.
+	* Drive selection dialog: If the drives list has no focus and
+	  the selection is not empty, the first mouse click on the 
+	  drives list merley sets focus and the radio button.
+	* Setup.exe: If the user enters a relative path, it is now
+	  expanded when the Next button is pressed.
+	  
 2004-01-01	bseifert
-	* All file VERSIONINFOs are now conforming to Windoww.
+	* All file VERSIONINFOs are now conforming to Windows.
 	  Introduced automatic update of build number.
 	* The lists now realize when system colors change, and the
 	  program needs not to be restarted.
@@ -34,7 +46,8 @@ changelog.txt - What has been done to WinDirStat (newest top)
 	* The default title for user defined cleanups is now no longer
 	  stored as string to the registry. So, after changing the language, it
 	  now appears in the new language.
-	* SUBST'd drives are now excluded from "All local drives".
+	* SUBST'd drives are now excluded from "All local drives"
+	  (doesn't work on W9x).
 	* There was a duplicate error message, when "Show Properties" or
 	  "Explorer here" failed.
 	

@@ -953,6 +953,11 @@ bool CDirstatDoc::IsReselectChildAvailable()
 	return !m_reselectChildStack.IsEmpty();
 }
 
+bool CDirstatDoc::DirectoryListHasFocus()
+{
+	return (GetMainFrame()->GetLogicalFocus() == LF_DIRECTORYLIST);
+}
+
 BEGIN_MESSAGE_MAP(CDirstatDoc, CDocument)
 	ON_COMMAND(ID_REFRESHSELECTED, OnRefreshselected)
 	ON_UPDATE_COMMAND_UI(ID_REFRESHSELECTED, OnUpdateRefreshselected)
@@ -993,7 +998,8 @@ END_MESSAGE_MAP()
 void CDirstatDoc::OnUpdateRefreshselected(CCmdUI *pCmdUI)
 {
 	pCmdUI->Enable(
-		GetSelection() != NULL 
+		DirectoryListHasFocus()
+		&& GetSelection() != NULL 
 		&& GetSelection()->GetType() != IT_FREESPACE
 		&& GetSelection()->GetType() != IT_UNKNOWN
 	);
@@ -1018,6 +1024,7 @@ void CDirstatDoc::OnUpdateEditCopy(CCmdUI *pCmdUI)
 {
 	const CItem *item= GetSelection();
 	pCmdUI->Enable(
+		DirectoryListHasFocus() &&
 		item != NULL && 
 		item->GetType() != IT_MYCOMPUTER &&
 		item->GetType() != IT_FILESFOLDER &&
@@ -1165,7 +1172,9 @@ void CDirstatDoc::OnTreemapZoomout()
 
 void CDirstatDoc::OnUpdateExplorerHere(CCmdUI *pCmdUI)
 {
-	pCmdUI->Enable(GetSelection() != NULL
+	pCmdUI->Enable(
+		DirectoryListHasFocus()
+		&& GetSelection() != NULL
 		&& GetSelection()->GetType() != IT_FREESPACE
 		&& GetSelection()->GetType() != IT_UNKNOWN
 	);
@@ -1210,10 +1219,13 @@ void CDirstatDoc::OnExplorerHere()
 
 void CDirstatDoc::OnUpdateCommandPromptHere(CCmdUI *pCmdUI)
 {
-	pCmdUI->Enable(GetSelection() != NULL 
+	pCmdUI->Enable(
+		DirectoryListHasFocus()
+		&& GetSelection() != NULL 
 		&& GetSelection()->GetType() != IT_MYCOMPUTER
 		&& GetSelection()->GetType() != IT_FREESPACE
 		&& GetSelection()->GetType() != IT_UNKNOWN
+		&& ! GetSelection()->HasUncPath()
 	);
 }
 
@@ -1239,7 +1251,9 @@ void CDirstatDoc::OnUpdateCleanupDeletetotrashbin(CCmdUI *pCmdUI)
 {
 	CItem *item= GetSelection();
 	
-	pCmdUI->Enable(item != NULL
+	pCmdUI->Enable(
+		DirectoryListHasFocus()
+		&& item != NULL
 		&& (item->GetType() == IT_DIRECTORY || item->GetType() == IT_FILE)
 		&& !item->IsRootItem()
 	);
@@ -1263,7 +1277,9 @@ void CDirstatDoc::OnUpdateCleanupDelete(CCmdUI *pCmdUI)
 {
 	CItem *item= GetSelection();
 	
-	pCmdUI->Enable(item != NULL
+	pCmdUI->Enable(
+		DirectoryListHasFocus()
+		&& item != NULL
 		&& (item->GetType() == IT_DIRECTORY || item->GetType() == IT_FILE)
 		&& !item->IsRootItem()
 	);
@@ -1289,7 +1305,8 @@ void CDirstatDoc::OnUpdateUserdefinedcleanup(CCmdUI *pCmdUI)
 	CItem *item= GetSelection();
 
 	pCmdUI->Enable(
-		GetOptions()->IsUserDefinedCleanupEnabled(i)
+		DirectoryListHasFocus()
+		&& GetOptions()->IsUserDefinedCleanupEnabled(i)
 		&& UserDefinedCleanupWorksForItem(GetOptions()->GetUserDefinedCleanup(i), item)
 	);
 }
@@ -1349,7 +1366,9 @@ void CDirstatDoc::OnTreemapReselectchild()
 
 void CDirstatDoc::OnUpdateCleanupOpen(CCmdUI *pCmdUI)
 {
-	pCmdUI->Enable(GetSelection() != NULL
+	pCmdUI->Enable(
+		DirectoryListHasFocus()
+		&& GetSelection() != NULL
 		&& GetSelection()->GetType() != IT_FILESFOLDER
 		&& GetSelection()->GetType() != IT_FREESPACE
 		&& GetSelection()->GetType() != IT_UNKNOWN
@@ -1366,7 +1385,9 @@ void CDirstatDoc::OnCleanupOpen()
 
 void CDirstatDoc::OnUpdateCleanupProperties(CCmdUI *pCmdUI)
 {
-	pCmdUI->Enable(GetSelection() != NULL
+	pCmdUI->Enable(
+		DirectoryListHasFocus()
+		&& GetSelection() != NULL
 		&& GetSelection()->GetType() != IT_FREESPACE
 		&& GetSelection()->GetType() != IT_UNKNOWN
 		&& GetSelection()->GetType() != IT_FILESFOLDER

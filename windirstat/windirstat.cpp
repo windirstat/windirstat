@@ -380,7 +380,6 @@ BOOL CDirstatApp::InitInstance()
 			{
 				AfxSetResourceHandle(dll);
 				m_langid= langid;
-				CLanguageOptions::SetLanguage(m_langid);
 			}
 			else
 			{
@@ -388,6 +387,8 @@ BOOL CDirstatApp::InitInstance()
 			}
 		}
 		// else: We use our built-in English resources.
+
+		CLanguageOptions::SetLanguage(m_langid);
 	}
 
 	GetOptions()->LoadFromRegistry();

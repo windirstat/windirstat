@@ -41,12 +41,12 @@
 // The following line is automatically incremented by linkcounter.exe.
 // Format: #define blank LINKCOUNT blanks decimal
 // Reset this to zero only when you increment VERNUM_MAJOR/MINOR/REVISION.
-#define LINKCOUNT  14
+#define LINKCOUNT  48
 
 //-------------------------------------------------------------------
 // Release candidate number. Relevant for BC_RELEASECANDIDATE.
 //
-#define VERNUM_CANDIDATE	2
+#define VERNUM_CANDIDATE	3
 
 
 

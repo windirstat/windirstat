@@ -4,8 +4,8 @@ Windirstat 1.0 - Test Plan
 Quick Overall Test
 ------------------
 --> There are 6 files in the binary distribution of WinDirStat:
-    setup.exe, shfolder.dll, wsdh0407.chm, wdsr0407.dll, windirstat.chm, windirstat.exe.
---> The version infos of the executbles have the correct version number.
+    setup.exe, shfolder.dll, wdsh0407.chm, wdsr0407.dll, windirstat.chm, windirstat.exe.
+--> The version infos of the executables have the correct version number.
 
 Delete C:\program files\windirstat
 Delete all shortcuts to windirstat
@@ -159,7 +159,8 @@ SUBST a folder to K:. Select "All local drives"
 
 Online Help
 --> Is available in the selected Language
---> Is accessible through three points: F1, Help about Treemaps, User defined Cleanups Help
+--> Is accessible through four points: 
+    F1, Help menu, Help about Treemaps, User defined Cleanups Help
 --> All hyperlinks on the first page work.
 
 About box
@@ -233,6 +234,9 @@ Say no.
 Select the folder C:\program Diles\windirstat
 --> Warning, whether c:\program Diles shall be created
 Say no.
+Enter a relative path, press next
+--> The path is expanded, then warning.
+Say no.
 Select the folder C:\temp\a\b\c\windirstat
 --> Warning, whether C:\temp\a\b\c\windirstat shall be created
 Say yes.
@@ -258,7 +262,8 @@ Set "show unknown" on.
 replace 600 ms by 5 in windirstat.cpp, line: if (doc != NULL && !doc->Work(600)),
 and scan a HD instead.]
 
-Scan a folder or diskette with only 3 file types.
+Scan a folder with only a view files so that the extension list
+has no vertical scroll bar.
 Refresh All.
 --> The header control of the extension list repaints correctly.
 
