@@ -2,6 +2,11 @@ changelog.txt - What has been done to WinDirStat (newest top)
 Last modified: $Date$
 =============================================================
 
+2004-11-28	assarbad
+	* Extended CFileFindWDS.
+	* Packing of file attributes to keep CItem small.
+	* Sorting of file attribute column now implemented.
+
 2004-11-27	bseifert
 	* Progress bar now disabled (and Pacman used instead)
 	  if "follow junction points" is enabled.

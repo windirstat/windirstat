@@ -2,10 +2,6 @@ TODO.txt - What still has to been done to WinDirStat
 Last modified: $Date$
 =============================================================
 
-- item.h: declare m_attributes as char and pack the bits
-  in order to optimize sizeof(CItem).
-  => assarbard
-
 - item.h: m_rect: don't use tagRECT but a smaller short-based
   struct instead in order to optimize sizeof(CItem)
   => bseifert
