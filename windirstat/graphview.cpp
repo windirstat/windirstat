@@ -461,9 +461,6 @@ void CGraphView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 
 void CGraphView::OnContextMenu(CWnd* /*pWnd*/, CPoint ptscreen)
 {
-	CPoint point= ptscreen;
-	ScreenToClient(&point);
-
 	CItem *root= GetDocument()->GetRootItem();
 	if (root != NULL && root->IsDone())
 	{
@@ -519,6 +516,9 @@ void CGraphView::OnPopupCancel()
 }
 
 // $Log$
+// Revision 1.6  2004/11/09 22:31:59  assarbad
+// - Removed obsolete code lines
+//
 // Revision 1.5  2004/11/05 16:53:07  assarbad
 // Added Date and History tag where appropriate.
 //
