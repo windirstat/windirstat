@@ -13,30 +13,35 @@
 	</head>
 	<BODY>
 		<h2>Häufig gestellte Fragen</h2>
-		<h3>F: Gibt die Baumkarte die Belegung der Harddisk-Sektoren wieder?</h3>
-		<p>A: Nein. Die Baumkartenansicht hat nichts zu tun mit den Harddisk-Sektoren. Die 
+		<h3>Gibt die Baumkarte die Belegung der Harddisk-Sektoren wieder?</h3>
+		<p>Nein. Die Baumkartenansicht hat nichts zu tun mit den Harddisk-Sektoren. Die 
 			Verteilung der Dateien auf Sektoren ist eine ganz andere. Im allgemeinen sind 
 			große Dateien weit über die Harddisk verstreut. Die Baumkarte hingegen stellt 
 			jede Datei als <i>ein</i> Rechteck dar.
 		</p>
-		<h3>F: Werden für die Leseaufträge Threads gestartet?</h3>
-		<p>A: Nein. WinDirStat ist - abgesehen von der Aboutbox, die in einem eigenen 
-			Thread läuft - zutiefst single-threaded. Alle Arbeit geschieht in OnIdle().
+		<h3>Werden für die Leseaufträge Threads gestartet?</h3>
+		<p>Nein. WinDirStat ist - abgesehen von der Aboutbox, die in einem eigenen Thread 
+			läuft - zutiefst single-threaded. Alle Arbeit geschieht in OnIdle().
 		</p>
-		<h3>F: Was hat es mit dem Eintrag &lt;Dateien&gt; auf sich?</h3>
-		<p>A: Siehe <A href="legend.htm">Zeichenerklärung</A>.
+		<h3>Was hat es mit dem Eintrag &lt;Dateien&gt; auf sich?</h3>
+		<p>Siehe <A href="legend.htm">Zeichenerklärung</A>.
 		</p>
-		<h3>F: Was bedeutet das &gt;-Zeichen vor den Spaltenüberschriften?</h3>
-		<p>A: Die &gt;- und &lt;-Zeichen in den Spaltenüberschriften deuten die aktuelle <A href="sorting.htm">
+		<h3>Was bedeutet das &gt;-Zeichen vor den Spaltenüberschriften?</h3>
+		<p>Die &gt;- und &lt;-Zeichen in den Spaltenüberschriften deuten die aktuelle <A href="sorting.htm">
 				Sortierung</A> an.
 		</p>
-		<h3>F: Wozu ist die Datei wdsr0407.dll da?</h3>
-		<p>A: Diese Datei enthält die deutsche Übersetzung von WinDirStat. 0407 ist die 
+		<h3>Auf meinem XP zeigt WinDirStat mehr als 1 GB &lt;Unbekannt&gt; an. Ist das 
+			normal?</h3>
+		<p>Ja. XP speichert ziemlich oft ziemlich große 'Systemwiederherstellungspunkte' 
+			unter C:\System Volume Information, verweigert aber den Zugriff darauf.
+		</p>
+		<h3>Wozu ist die Datei wdsr0407.dll da?</h3>
+		<p>Diese Datei enthält die deutsche Übersetzung von WinDirStat. 0407 ist die 
 			Kennziffer für "Deutsch - Deutschland". Wenn diese Datei fehlt, dann ist 
 			WinDirStat nur in der (eingebauten) Sprache Englisch verfügbar.
 		</p>
-		<h3>F: Die Größenangaben in KB und MB scheinen etwas zu klein zu sein.</h3>
-		<p>A: WinDirStat hält sich an die im Computerwesen übliche Konvention, dass "Kilo" 
+		<h3>Die Größenangaben in KB und MB scheinen etwas zu klein zu sein.</h3>
+		<p>WinDirStat hält sich an die im Computerwesen übliche Konvention, dass "Kilo" 
 			nicht für 1000 steht sondern für 1024. Es gilt also:<br>
 			1 KB = 1024 Bytes<br>
 			1 MB = 1024 KB = 1.048.576 Bytes<br>

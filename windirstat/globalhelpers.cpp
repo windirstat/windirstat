@@ -194,12 +194,14 @@ CString FormatFileTime(const FILETIME& t)
 	if (!FileTimeToSystemTime(&t, &st))
 		return MdGetWinerrorText(GetLastError());
 
+	LCID lcid = MAKELCID(GetApp()->GetLangid(), SORT_DEFAULT);
+
 	CString date;
-	VERIFY(0 < GetDateFormat(LOCALE_USER_DEFAULT, DATE_SHORTDATE, &st, NULL, date.GetBuffer(256), 256));
+	VERIFY(0 < GetDateFormat(lcid, DATE_SHORTDATE, &st, NULL, date.GetBuffer(256), 256));
 	date.ReleaseBuffer();
 
 	CString time;
-	VERIFY(0 < GetTimeFormat(LOCALE_USER_DEFAULT, 0, &st, NULL, time.GetBuffer(256), 256));
+	VERIFY(0 < GetTimeFormat(lcid, 0, &st, NULL, time.GetBuffer(256), 256));
 	time.ReleaseBuffer();
 
 	return date + _T("  ") + time;
@@ -451,7 +453,7 @@ bool FolderExists(LPCTSTR path)
 	{
 		// Here we land, if path is an UNC drive. In this case we
 		// try another FindFile:
-		b= finder.FindFile(CString(path) + "\\*.*");
+		b= finder.FindFile(CString(path) + _T("\\*.*"));
 		if (b)
 			return true;
 

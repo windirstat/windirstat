@@ -45,6 +45,7 @@ public:
 
 protected:
 	void DrawLabel(COwnerDrawnListControl *list, CImageList *il, CDC *pdc, CRect& rc, UINT state, int *width, bool indent = true) const;
+	void DrawPercentage(CDC *pdc, CRect rc, double fraction, COLORREF color) const;
 };
 
 

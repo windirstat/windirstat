@@ -115,7 +115,11 @@ int CMyImageList::GetMountPointImage()
 
 int CMyImageList::GetFolderImage()
 {
-	return CacheIcon(_T(""), 0);
+	CString s;
+	GetSystemDirectory(s.GetBuffer(_MAX_PATH), _MAX_PATH);
+	s.ReleaseBuffer();
+
+	return CacheIcon(s, 0);
 }
 
 int CMyImageList::GetFileImage(LPCTSTR path)
@@ -213,7 +217,7 @@ void CMyImageList::AddCustomImages()
 			if (c != bgcolor)
 			{
 				int brightness= (GetRValue(c) + GetGValue(c) + GetBValue(c)) / 3;
-				dcmem.SetPixel(rc.Width() + i, j, RGB(120, brightness, 120));
+				dcmem.SetPixel(rc.Width() + i, j, RGB(64, brightness, 64));
 			}
 		
 			// ...and "yellowify" the drive image ("<Unknown>")

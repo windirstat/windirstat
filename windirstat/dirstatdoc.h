@@ -97,6 +97,7 @@ public:
 	bool OptionShowUnknown();
 
 	const CExtensionData *GetExtensionData();
+	LONGLONG GetRootSize();
 
 	void ForgetItemTree();
 	bool Work(DWORD ticks); // return: true if done.
@@ -123,6 +124,7 @@ protected:
 	void SetExtensionColors(const CStringArray& sortedExtensions);
 	static CExtensionData *_pqsortExtensionData;
 	static int __cdecl _compareExtensions(const void *ext1, const void *ext2);
+	void SetWorkingItemAncestor(CItem *item);
 	void SetWorkingItem(CItem *item);
 	bool DeletePhysicalItem(CItem *item, bool toTrashBin);
 	void SetZoomItem(CItem *item);

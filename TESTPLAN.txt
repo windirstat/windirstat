@@ -236,6 +236,33 @@ Start setup.exe
 Select only "create shortcut in the start menu".
 --> Shortcut in the Start->Programs-Menu is created.
 
+
+Fixed Bugs
+----------
+Set show free space on and show unknown off.
+Scan a diskette (slow drive)
+Set "show unknown" on.
+--> The program doesn't crash.
+[If you don't have a diskette drive (that's my situation :-( ),
+replace 600 ms by 5 in windirstat.cpp, line: if (doc != NULL && !doc->Work(600)),
+and scan a HD instead.]
+
+Scan a folder or diskette with only 3 file types.
+Refresh All.
+--> The header control of the extension list repaints correctly.
+
+Expand some folders and scroll down the directory list
+--> The list doesn't flicker.
+Scroll down the extension list
+--> The list doesn't flicker.
+
+Start windirstat from diskette.
+--> The <Files> icon is ok.
+
+Repeatedly make the color column in the extension list
+small and wide again
+--> No crash.
+
 Special cases
 -------------
 Delete C:\program files\windirstat
@@ -249,7 +276,7 @@ Start windirstat
 --> what happens?
 
 Set the color depth to 256 colors or start WinDirStat under Terminal Server.
---> The extension list show only 8 colors, not 12.
+--> The extension list show only 6 colors, not 12.
 
 Start setup.exe from floppy disk.
 --> It works as expected.
@@ -259,6 +286,9 @@ Start setup.exe from CD
 
 Start WinDirStat from CD
 --> It works fine.
+
+Set the Windows colors to strange values and restart WinDirStat
+--> It still looks good.
 
 Set the Desktop design to "XP"
 --> All windirstat controls are XP-like.

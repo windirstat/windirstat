@@ -84,16 +84,15 @@ namespace
 	const LPCTSTR entryRefreshPolicy			= _T("refreshPolicy");
 
 	COLORREF treelistColorDefault[TREELISTCOLORCOUNT] = {
-		RGB(0, 128, 192),
-		RGB(255, 128, 128),
-		RGB(128, 255, 128),
-		RGB(180, 180, 0),
+		RGB(64, 64, 140),
+		RGB(140, 64, 64),
+		RGB(64, 140, 64),
+		RGB(140, 140, 64),
 		RGB(0, 0, 255),
 		RGB(255, 0, 0),
 		RGB(0, 255, 0),
 		RGB(255, 255, 0)
 	};
-
 }
 
 /////////////////////////////////////////////////////////////////////////////

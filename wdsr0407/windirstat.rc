@@ -706,12 +706,12 @@ END
 
 STRINGTABLE 
 BEGIN
-    IDS_RESOURCEVERSION     "Resource Version 1"
+    IDS_RESOURCEVERSION     "Resource Version 2"
     IDS_ABOUT_ABOUTTEXTss   "\r\nWinDirStat - Verzeichnisstatistik\r\n\r\nZeigt an, wo all der Plattenplatz geblieben ist,\r\nund hilft aufzuräumen.\r\n\r\nNeu programmiert für MS Windows von\r\nBernhard Seifert (mailto:%1!s!),\r\n\r\nauf Grundlage von Stefan Hundhammers KDE (Linux)-Programm KDirStat\r\n(http://kdirstat.sourceforge.net/).\r\n\r\nWinDirStats Homepage ist http://%2!s!/\r\n\r\nCopyright (c) 2003 Bernhard Seifert"
     IDS_ABOUT_THANKSTOTEXT  "\r\nStefan Hundhammer für sein vorzügliches Linux-Tool KDirStat.\r\nKDirStat (2.3.7) als Vorlage zu nehmen hat mir eine Menge Zeit gespart.\r\nhttp://kdirstat.sourceforge.net/\r\n\r\nDen Autoren von SequoiaView, die gezeigt haben, wie nützlich Baumkarten sein können.\r\nhttp://www.win.tue.nl/sequoiaview/\r\n\r\nJarke J. van Wijk, Huub van de Wetering, Mark Bruls und Kees Huizing\r\nfür ihre Dokumente über ""Cushion Treemaps"" und ""Squarified Treemaps"".\r\nhttp://www.win.tue.nl/~vanwijk/\r\n\r\nBen Shneiderman für seine geniale Erfindung von Treemaps -\r\neiner wirklich intuitiven Art und Weise, Bäume zu visualisieren.\r\nhttp://www.cs.umd.edu/hcil/treemap-history/\r\n\r\nMeinen Kollegen für ihr Feedback zu den frühen Versionen von WinDirStat.\r\nhttp://www.daccord.net/\r\n"
     IDS_ABOUT_ABOUT         "Über WinDirStat"
     IDS_ABOUT_THANKSTO      "Dank"
-    IDS_ABOUT_LICENSEAGREEMENT "Lizenzvereinbarung"
+    IDS_ABOUT_LICENSEAGREEMENT "Lizenz"
     IDS_MYCOMPUTER          "Arbeitsplatz"
     IDS_UDC_CONFIRMATIONss  "Sie rufen die benutzerdefinierte Aktion\r\n'%1!s!'\r\n\r\nfür '%2!s!' auf.\r\n\r\nFortfahren?"
     IDS_RUDC_CONFIRMATIONss "Sie rufen die rekursive benutzerdefinierte Aktion\r\n'%1!s!'\r\n\r\nfür '%2!s!' auf.\r\n\r\nFortfahren?"

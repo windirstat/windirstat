@@ -100,6 +100,30 @@ void COwnerDrawnListItem::DrawLabel(COwnerDrawnListControl *list, CImageList *il
 		*width= rcLabel.Width() + 5; // Don't know, why +5
 }
 
+void COwnerDrawnListItem::DrawPercentage(CDC *pdc, CRect rc, double fraction, COLORREF color) const
+{
+	const COLORREF light = RGB(208, 208, 208);	// light edge
+	const COLORREF dark = RGB(128, 128, 128);	// dark edge
+	const COLORREF bg = RGB(230, 230, 230);		// background (lighter than light edge)
+
+	CRect rcLeft= rc;
+	rcLeft.right= (int)(rcLeft.left + rc.Width() * fraction);
+
+	CRect rcRight= rc;
+	rcRight.left= rcLeft.right;
+
+	if (rcLeft.right > rcLeft.left)
+		pdc->Draw3dRect(rcLeft, light, dark);
+	rcLeft.DeflateRect(1, 1);
+	if (rcLeft.right > rcLeft.left)
+		pdc->FillSolidRect(rcLeft, color);
+
+	if (rcRight.right > rcRight.left)
+		pdc->Draw3dRect(rcRight, light, light);
+	rcRight.DeflateRect(1, 1);
+	if (rcRight.right > rcRight.left)
+		pdc->FillSolidRect(rcRight, bg);
+}
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -309,7 +333,7 @@ BOOL COwnerDrawnListControl::OnEraseBkgnd(CDC* pDC)
 	if (GetItemCount() > 0)
 	{
 		CRect rc;
-		GetItemRect(0, rc, LVIR_BOUNDS);
+		GetItemRect(GetTopIndex(), rc, LVIR_BOUNDS);
 		m_yFirstItem= rc.top;
 	}
 	// else: if we did the same thing as in OnColumnsCreated(), we get
@@ -411,6 +435,7 @@ BOOL COwnerDrawnListControl::OnEraseBkgnd(CDC* pDC)
 
 		top+= GetRowHeight();
 	}
+
 	return true;
 }
 

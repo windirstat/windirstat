@@ -309,6 +309,13 @@ const CExtensionData *CDirstatDoc::GetExtensionData()
 	return &m_extensionData;
 }
 
+LONGLONG CDirstatDoc::GetRootSize()
+{
+	ASSERT(m_rootItem != NULL);
+	ASSERT(IsRootDone());
+	return m_rootItem->GetSize();
+}
+
 void CDirstatDoc::ForgetItemTree()
 {
 	// The program is closing.
@@ -346,6 +353,7 @@ bool CDirstatDoc::Work(DWORD ticks)
 		}
 		else
 		{
+			ASSERT(m_workingItem != NULL);
 			GetMainFrame()->SetProgressPos(m_workingItem->GetProgressPos());
 		}
 
@@ -625,6 +633,14 @@ int __cdecl CDirstatDoc::_compareExtensions(const void *item1, const void *item2
 	return signum(r2.bytes - r1.bytes);
 }
 
+void CDirstatDoc::SetWorkingItemAncestor(CItem *item)
+{
+	if (m_workingItem != NULL)
+		SetWorkingItem(CItem::FindCommonAncestor(m_workingItem, item));
+	else
+		SetWorkingItem(item);
+}
+
 void CDirstatDoc::SetWorkingItem(CItem *item)
 {
 	if (GetMainFrame() != NULL)
@@ -689,10 +705,7 @@ void CDirstatDoc::RefreshItem(CItem *item)
 		UpdateAllViews(NULL, HINT_SELECTIONCHANGED);
 	}
 
-	if (m_workingItem != NULL)
-		SetWorkingItem(CItem::FindCommonAncestor(m_workingItem, item));
-	else
-		SetWorkingItem(item);
+	SetWorkingItemAncestor(item);
 
 	CItem *parent= item->GetParent();
 
@@ -1028,6 +1041,10 @@ void CDirstatDoc::OnViewShowfreespace()
 			drives[i]->CreateFreeSpaceItem();
 		m_showFreeSpace= true;
 	}
+
+	if (drives.GetSize() > 0)
+        SetWorkingItem(GetRootItem());
+
 	UpdateAllViews(NULL);
 }
 
@@ -1064,6 +1081,10 @@ void CDirstatDoc::OnViewShowunknown()
 			drives[i]->CreateUnknownItem();
 		m_showUnknown= true;
 	}
+
+	if (drives.GetSize() > 0)
+        SetWorkingItem(GetRootItem());
+
 	UpdateAllViews(NULL);
 }
 

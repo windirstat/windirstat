@@ -110,17 +110,18 @@ void CPacman::Draw(CDC *pdc, const CRect& rect)
 	int hmiddle= rc.top + diameter / 2;
 
 	int mouthcy= (int)(m_aperture * m_aperture * diameter);
+	int upperMouthcy= (mouthcy == 0 ? 0 : mouthcy - 1);
 	if (m_toTheRight)
 	{
 		ptStart.x= ptEnd.x= rc.right;
-		ptStart.y	= hmiddle - mouthcy;
+		ptStart.y	= hmiddle - upperMouthcy;
 		ptEnd.y		= hmiddle + mouthcy;
 	}
 	else
 	{
 		ptStart.x= ptEnd.x= rc.left;
 		ptStart.y	= hmiddle + mouthcy;
-		ptEnd.y		= hmiddle - mouthcy;
+		ptEnd.y		= hmiddle - upperMouthcy;
 	}
 
 	pdc->Pie(rc, ptStart, ptEnd);

@@ -1,6 +1,23 @@
 changelog.txt - What has been done to WinDirStat (newest top)
 =============================================================
 
+2003-11-25	bseifert
+	* With slow drives (diskettes), the program crashed, when activating 
+	    or deactivating "show free space" or "show unknown".
+	* Program could crash when the color column in the extension list was
+	    made too small.
+	* By mistake, the <Files>-icon reflected the working directory
+	    (this could possibly be a drive-icon). Fixed.
+	* Made pacman more symmetric.
+	* The <Free space>-icon didn't look green on some systems.
+	* Fixed repainting problem of header control of extension list.
+	* Refined the drawing of subtree percentage.
+	* The lists don't flicker any more when scrolling down.
+	* Date/Time is now formatted rather by the selected language than the LocaleDefault.
+	* RESOURCEVERSION is now 2. This means that windirstat.exe 
+	    will not load resource dlls of previous versions.
+	* Added column "% Bytes" to extension list.
+
 2003-11-23	bseifert
 	* Added project wdsr040c: Frame for French resource dll.
 	* More minor corrections in the help file.

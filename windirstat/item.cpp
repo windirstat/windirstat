@@ -104,20 +104,7 @@ bool CItem::DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *width)
 		for (int i=0; i < GetIndent(); i++)
 			rc.left+= rc.Width() / 10;
 
-		CPen pen(PS_SOLID, 1, RGB(0,0,0));
-		CSelectObject sopen(pdc, &pen);
-		CSelectStockObject sobrush(pdc, NULL_BRUSH);
-		pdc->Rectangle(rc);
-
-		rc.DeflateRect(1, 1);
-
-		CRect rcLeft= rc;
-		rcLeft.right= (int)(rcLeft.left + rc.Width() * GetFraction());
-		pdc->FillSolidRect(rcLeft, GetPercentageColor());
-
-		CRect rcRight= rc;
-		rcRight.left= rcLeft.right;
-		pdc->FillSolidRect(rcRight, RGB(220,220,220));
+		DrawPercentage(pdc, rc, GetFraction(), GetPercentageColor());
 	}
 	return true;
 }

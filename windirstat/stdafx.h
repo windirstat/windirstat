@@ -78,7 +78,7 @@
 #include "set.h"
 
 #ifdef _DEBUG
-#define _STRONG_DEBUG		// Extensive checking (slow)
+//#define _STRONG_DEBUG		// Extensive checking (slow)
 #endif
 
 #define countof(arr) (sizeof(arr)/sizeof((arr)[0]))

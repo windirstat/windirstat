@@ -36,7 +36,8 @@ protected:
 		COL_COLOR,
 		COL_DESCRIPTION,
 		COL_BYTES,
-		COL_FILES,
+		COL_BYTESPERCENT,
+		COL_FILES
 	};
 
 	// CListItem. The items of the CExtensionListControl.
@@ -56,6 +57,9 @@ protected:
 		void DrawColor(CDC *pdc, CRect rc, UINT state, int *width) const;
 
 		CString GetDescription() const;
+		CString GetBytesPercent() const;
+
+		double GetBytesFraction() const;
 
 		CExtensionListControl *m_list;
 		CString m_extension;
@@ -69,10 +73,14 @@ public:
 	virtual bool GetAscendingDefault(int column);
 	void Initialize();
 	void SetExtensionData(const CExtensionData *ed);
+	void SetRootSize(LONGLONG totalBytes);
+	LONGLONG GetRootSize();
 	void SelectExtension(LPCTSTR ext);
 
 protected:
 	CListItem *GetListItem(int i);
+
+	LONGLONG m_rootSize;
 
 	DECLARE_MESSAGE_MAP()
 	afx_msg void OnDestroy();

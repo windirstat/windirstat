@@ -108,22 +108,8 @@ bool CDriveItem::DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *w
 
 		rc.DeflateRect(3, 3);
 	
-		CPen pen(PS_SOLID, 1, RGB(0,0,0));
-		CSelectObject sopen(pdc, &pen);
+		DrawPercentage(pdc, rc, m_used, RGB(0,0,170));
 
-		CSelectStockObject sobrush(pdc, NULL_BRUSH);
-		pdc->Rectangle(rc);
-
-		rc.DeflateRect(1, 1);
-
-		CRect rcLeft= rc;
-		rcLeft.right= rcLeft.left + (int)(m_used * rc.Width());
-		pdc->FillSolidRect(rcLeft, RGB(0,0,170));
-
-		CRect rcRight= rc;
-		rcRight.left= rcLeft.right;
-		pdc->FillSolidRect(rcRight, RGB(220,220,220));
-		
 		return true;
 	}
 	else
@@ -303,6 +289,8 @@ BOOL CSelectDrivesDlg::OnInitDialog()
 	CWaitCursor wc;
 
 	CDialog::OnInitDialog();
+
+	ModifyStyle(0, WS_CLIPCHILDREN);
 
 	m_layout.AddControl(IDOK,				1, 0, 0, 0);
 	m_layout.AddControl(IDCANCEL,			1, 0, 0, 0);

@@ -13,30 +13,34 @@
 	</head>
 	<BODY>
 		<h2>Frequently Asked Questions</h2>
-		<h3>Q: Does the treemap relate to the allocation of hard disk sectors?</h3>
-		<p>A: No. The treemap view has nothing to do with hard disk sectors.
-		Generally big files are scattered on the hard disk. The treemap on the other
-		hand shows each file as <i>one</i> rectangle.
+		<h3>Does the treemap relate to the allocation of hard disk sectors?</h3>
+		<p>No. The treemap view has nothing to do with hard disk sectors. Generally big 
+			files are scattered on the hard disk. The treemap on the other hand shows each 
+			file as <i>one</i> rectangle.
 		</p>
-		<h3>Q: Does WinDirStat start threads for the read jobs?</h3>
-		<p>A: No. WinDirStat is - apart from the about box, which runs in an own thread
-		 - deeply single-threaded. All work is done in OnIdle().
+		<h3>Does WinDirStat start threads for the read jobs?</h3>
+		<p>No. WinDirStat is - apart from the about box, which runs in an own thread - 
+			deeply single-threaded. All work is done in OnIdle().
 		</p>
-		<h3>Q: What does the item &lt;Files&gt; mean?</h3>
-		<p>A: See <A href="legend.htm">Legend</A>.
+		<h3>What does the item &lt;Files&gt; mean?</h3>
+		<p>See <A href="legend.htm">Legend</A>.
 		</p>
-		<h3>Q: What does the &gt; symbol in front of the column captions mean?</h3>
-		<p>A: The &gt; and &lt; symbols in the column headers indicate the current 
-		<A href="sorting.htm">sorting</A>.
+		<h3>What does the &gt; symbol in front of the column captions mean?</h3>
+		<p>The &gt; and &lt; symbols in the column headers indicate the current <A href="sorting.htm">
+				sorting</A>.
 		</p>
-		<h3>Q: What is the file wdsr0407.dll for?</h3>
-		<p>A: This file contains the German translation of WinDirStat. 0407 is the 
-			language identifier for "German - Germany". If this file is absent, then
-			WinDirStat is available in the (built-in) language English only.
+		<h3>On my XP WinDirStat shows more than a GB &lt;Unknown&gt;, what's wrong?</h3>
+		<p>Nothing. XP quite often creates rather big 'System restore points' under 
+			C:\System Volume Information, but denies access to it.
 		</p>
-		<h3>Q: The size information in KB and MB seems to be a bit too small.</h3>
-		<p>A: WinDirStat sticks to the computing convention, that "kilo" doesn't stand 
-		for	1000 but for 1024. So we have:<br>
+		<h3>What is the file wdsr0407.dll for?</h3>
+		<p>This file contains the German translation of WinDirStat. 0407 is the language 
+			identifier for "German - Germany". If this file is absent, then WinDirStat is 
+			available in the (built-in) language English only.
+		</p>
+		<h3>The size information in KB and MB seems to be a bit too small.</h3>
+		<p>WinDirStat sticks to the computing convention, that "kilo" doesn't stand for 
+			1000 but for 1024. So we have:<br>
 			1 KB = 1024 Bytes<br>
 			1 MB = 1024 KB = 1,048,576 Bytes<br>
 			1 GB = 1024 MB = 1,048,576 KB = 1,073,741,824 Bytes.

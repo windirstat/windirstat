@@ -68,6 +68,9 @@ void CExtensionListControl::CListItem::DrawColor(CDC *pdc, CRect rc, UINT /*stat
 
 	rc.DeflateRect(2, 3);
 
+	if (rc.right <= rc.left || rc.bottom <= rc.top)
+		return;
+
 	double surface[4];
 	for (int i=0; i < 4; i++)
 		surface[i]= 0;
@@ -103,6 +106,9 @@ CString CExtensionListControl::CListItem::GetText(int subitem) const
 	case COL_DESCRIPTION:
 		return GetDescription();
 
+	case COL_BYTESPERCENT:
+		return GetBytesPercent();
+
 	default:
 		ASSERT(0);
 		return _T("");
@@ -132,6 +138,21 @@ CString CExtensionListControl::CListItem::GetDescription() const
 	return m_description;
 }
 
+CString CExtensionListControl::CListItem::GetBytesPercent() const
+{
+	CString s;
+	s.Format(_T("%s%%"), FormatDouble(GetBytesFraction() * 100));
+	return s;
+}
+
+double CExtensionListControl::CListItem::GetBytesFraction() const
+{
+	if (m_list->GetRootSize() == 0)
+		return 0;
+
+	return (double)	m_record.bytes / m_list->GetRootSize();
+}
+
 int CExtensionListControl::CListItem::Compare(const CSortingListItem *baseOther, int subitem) const
 {
 	int r= 0;
@@ -157,6 +178,10 @@ int CExtensionListControl::CListItem::Compare(const CSortingListItem *baseOther,
 		r= GetDescription().CompareNoCase(other->GetDescription());
 		break;
 
+	case COL_BYTESPERCENT:
+		r= signum(GetBytesFraction() - other->GetBytesFraction());
+		break;
+
 	default:
 		ASSERT(0);
 	}
@@ -175,6 +200,7 @@ END_MESSAGE_MAP()
 CExtensionListControl::CExtensionListControl()
 : COwnerDrawnListControl(_T("types"), 19)
 {
+	m_rootSize= 0;
 }
 
 bool CExtensionListControl::GetAscendingDefault(int column)
@@ -187,6 +213,7 @@ bool CExtensionListControl::GetAscendingDefault(int column)
 	case COL_COLOR:
 	case COL_BYTES:
 	case COL_FILES:
+	case COL_BYTESPERCENT:
 		return false;
 	default:
 		ASSERT(0);
@@ -203,6 +230,7 @@ void CExtensionListControl::Initialize()
 	InsertColumn(COL_EXTENSION,		LoadString(IDS_EXTCOL_EXTENSION),	LVCFMT_LEFT, 60, COL_EXTENSION);
 	InsertColumn(COL_COLOR,			LoadString(IDS_EXTCOL_COLOR),		LVCFMT_LEFT, 40, COL_COLOR);
 	InsertColumn(COL_BYTES,			LoadString(IDS_EXTCOL_BYTES),		LVCFMT_RIGHT, 60, COL_BYTES);
+	InsertColumn(COL_BYTESPERCENT,	_T("% ") + LoadString(IDS_EXTCOL_BYTES), LVCFMT_RIGHT, 50, COL_BYTESPERCENT);
 	InsertColumn(COL_FILES,			LoadString(IDS_EXTCOL_FILES),		LVCFMT_RIGHT, 50, COL_FILES);
 	InsertColumn(COL_DESCRIPTION,	LoadString(IDS_EXTCOL_DESCRIPTION), LVCFMT_LEFT, 170, COL_DESCRIPTION);
 
@@ -236,6 +264,16 @@ void CExtensionListControl::SetExtensionData(const CExtensionData *ed)
 	}
 
 	SortItems();
+}
+
+void CExtensionListControl::SetRootSize(LONGLONG totalBytes)
+{
+	m_rootSize= totalBytes;
+}
+
+LONGLONG CExtensionListControl::GetRootSize()
+{
+	return m_rootSize;
 }
 
 void CExtensionListControl::SelectExtension(LPCTSTR ext)
@@ -333,9 +371,18 @@ void CTypeView::OnUpdate(CView * /*pSender*/, LPARAM lHint, CObject *)
 	case HINT_NEWROOT:
 	case 0:
 		if (IsShowTypes() && GetDocument()->IsRootDone())
+		{
+			m_extensionListControl.SetRootSize(GetDocument()->GetRootSize());
 			m_extensionListControl.SetExtensionData(GetDocument()->GetExtensionData());
+
+			// If there is no vertical scroll bar, the header control doen't repaint
+			// correctly. Don't know why. But this helps:
+			m_extensionListControl.GetHeaderCtrl()->InvalidateRect(NULL);
+		}
 		else
+		{
 			m_extensionListControl.DeleteAllItems();
+		}
 		
 		// fall thru
 
