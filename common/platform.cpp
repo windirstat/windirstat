@@ -25,7 +25,7 @@
 #define WINVER 0x0400		// Change this to the appropriate value to target Windows 98 and Windows 2000 or later.
 #endif
 
-#include <afxwin.h>         // MFC core and standard components
+#include <afxwin.h>         // MFC  core and standard components
 #include "platform.h"
 
 bool PlatformIsWindows9x()
@@ -45,6 +45,9 @@ bool PlatformIsWindows9x()
 
 
 // $Log$
+// Revision 1.4  2004/11/13 17:25:17  bseifert
+// Test-commit of platform.cpp
+//
 // Revision 1.3  2004/11/05 16:53:05  assarbad
 // Added Date and History tag where appropriate.
 //
