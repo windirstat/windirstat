@@ -450,9 +450,9 @@ BEGIN
     CONTROL         "&Größen im GB/MB/kB/Bytes-Format anzeigen",
                     IDC_HUMANFORMAT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,
                     41,229,10
-    GROUPBOX        "&Listenstil",IDC_STATIC,30,61,90,65
+    GROUPBOX        "&Listenstil",IDC_STATIC,30,61,96,65
     CONTROL         "Ganze &Zeile markieren",IDC_FULLROWSELECTION,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,38,76,75,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,38,76,81,10
     CONTROL         "&Raster",IDC_SHOWGRID,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,38,93,68,10
     CONTROL         "S&treifen",IDC_SHOWSTRIPES,"Button",BS_AUTOCHECKBOX | 
@@ -625,6 +625,7 @@ BEGIN
     IDR_MAINFRAME           "WinDirStat\n\nWinDirStat\n\n\n\n"
     IDS_QUERYING            "(Abfrage läuft...)"
     IDS_NOTACCESSIBLE       "(nicht verfügbar)"
+    IDS_TREECOL_ATTRIBUTES  "Attribute"
 END
 
 STRINGTABLE 

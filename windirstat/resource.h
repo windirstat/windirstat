@@ -9,6 +9,7 @@
 #define IDS_QUERYING                    129
 #define IDS_NOTACCESSIBLE               130
 #define IDB_NODES                       131
+#define IDS_TREECOL_ATTRIBUTES          131
 #define IDD_SELECTDRIVES                133
 #define IDR_POPUPLIST                   134
 #define IDB_IMAGELIST                   135

@@ -176,6 +176,13 @@ CString CItem::GetText(int subitem) const
 		}
 		break;
 
+	case COL_ATTRIBUTES:
+		if (GetType() != IT_FREESPACE && GetType() != IT_UNKNOWN && GetType() != IT_MYCOMPUTER && GetType() != IT_FILESFOLDER)
+		{
+			s = FormatAttributes(GetFileAttributes(GetPath()));
+		}
+		break;
+
 	default:
 		ASSERT(0);
 		break;
@@ -1533,6 +1540,11 @@ void CItem::DrivePacman()
 
 
 // $Log$
+// Revision 1.19  2004/11/25 21:13:38  assarbad
+// - Implemented "attributes" column in the treelist
+// - Adopted width in German dialog
+// - Provided German, Russian and English version of IDS_TREECOL_ATTRIBUTES
+//
 // Revision 1.18  2004/11/25 11:58:52  assarbad
 // - Minor fixes (odd behavior of coloring in ANSI version, caching of the GetCompressedFileSize API)
 //   for details see the changelog.txt

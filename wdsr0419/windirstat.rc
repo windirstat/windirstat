@@ -642,6 +642,7 @@ BEGIN
     IDR_MAINFRAME           "WinDirStat\n\nWinDirStat\n\n\n\n"
     IDS_QUERYING            "(запрашивается...)"
     IDS_NOTACCESSIBLE       "(недоступно)"
+    IDS_TREECOL_ATTRIBUTES  "Атрибуты"
 END
 
 STRINGTABLE 
@@ -868,6 +869,7 @@ END
 
 #endif    // Russian resources
 /////////////////////////////////////////////////////////////////////////////
+
 
 
 #ifndef APSTUDIO_INVOKED

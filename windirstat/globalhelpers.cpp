@@ -211,6 +211,34 @@ CString FormatFileTime(const FILETIME& t)
 	return date + _T("  ") + time;
 }
 
+CString FormatAttributes(const DWORD& attr)
+{
+	if(attr == INVALID_FILE_ATTRIBUTES)
+		return _T("?????");
+
+	CString attributes;
+
+	if(attr & FILE_ATTRIBUTE_READONLY)
+		attributes.Append(_T("R"));
+
+	if(attr & FILE_ATTRIBUTE_HIDDEN)
+		attributes.Append(_T("H"));
+
+	if(attr & FILE_ATTRIBUTE_SYSTEM)
+		attributes.Append(_T("S"));
+
+	if(attr & FILE_ATTRIBUTE_ARCHIVE)
+		attributes.Append(_T("A"));
+
+	if(attr & FILE_ATTRIBUTE_COMPRESSED)
+		attributes.Append(_T("C"));
+
+	if(attr & FILE_ATTRIBUTE_ENCRYPTED)
+		attributes.Append(_T("E"));
+
+	return attributes;
+}
+
 CString FormatMilliseconds(DWORD ms)
 {
 	CString ret;
@@ -609,6 +637,11 @@ LPCITEMIDLIST SHGetPIDLFromPath(CString path)
 */
 
 // $Log$
+// Revision 1.19  2004/11/25 21:13:38  assarbad
+// - Implemented "attributes" column in the treelist
+// - Adopted width in German dialog
+// - Provided German, Russian and English version of IDS_TREECOL_ATTRIBUTES
+//
 // Revision 1.18  2004/11/25 11:58:52  assarbad
 // - Minor fixes (odd behavior of coloring in ANSI version, caching of the GetCompressedFileSize API)
 //   for details see the changelog.txt

@@ -34,6 +34,7 @@ CString FormatCount(LONGLONG n);
 CString FormatDouble(double d);
 CString PadWidthBlanks(CString n, int width);
 CString FormatFileTime(const FILETIME& t);
+CString FormatAttributes(const DWORD& attr);
 CString FormatMilliseconds(DWORD ms);
 CString GetParseNameOfMyComputer() throw (CException *);
 void GetPidlOfMyComputer(LPITEMIDLIST *ppidl) throw (CException *);
@@ -59,6 +60,11 @@ CString GetSpec_GB();
 CString GetSpec_TB();
 
 // $Log$
+// Revision 1.14  2004/11/25 21:13:38  assarbad
+// - Implemented "attributes" column in the treelist
+// - Adopted width in German dialog
+// - Provided German, Russian and English version of IDS_TREECOL_ATTRIBUTES
+//
 // Revision 1.13  2004/11/25 11:58:52  assarbad
 // - Minor fixes (odd behavior of coloring in ANSI version, caching of the GetCompressedFileSize API)
 //   for details see the changelog.txt

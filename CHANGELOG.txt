@@ -12,6 +12,7 @@ Last modified: $Date$
 	* Fixed coloring bug upon error codes #2 and #123 which
 	  happens using the ANSI version on files with Unicode
 	  names which cannot be mapped to ANSI names.
+	* Implemented the column to show file attributes.
 
 2004-11-24	bseifert
 	* Eliminated hidden option "ExplorerStyle". The directory

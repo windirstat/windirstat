@@ -272,6 +272,7 @@ int CDirstatView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	m_treeListControl.InsertColumn(COL_FILES, LoadString(IDS_TREECOL_FILES), LVCFMT_RIGHT, 55, COL_FILES);
 	m_treeListControl.InsertColumn(COL_SUBDIRS, LoadString(IDS_TREECOL_SUBDIRS), LVCFMT_RIGHT, 55, COL_SUBDIRS);
 	m_treeListControl.InsertColumn(COL_LASTCHANGE, LoadString(IDS_TREECOL_LASTCHANGE), LVCFMT_LEFT, 120, COL_LASTCHANGE);
+	m_treeListControl.InsertColumn(COL_ATTRIBUTES, LoadString(IDS_TREECOL_ATTRIBUTES), LVCFMT_LEFT, 50, COL_ATTRIBUTES);
 
 	m_treeListControl.OnColumnsInserted();
 
@@ -413,6 +414,11 @@ void CDirstatView::Dump(CDumpContext& dc) const
 
 
 // $Log$
+// Revision 1.13  2004/11/25 21:13:38  assarbad
+// - Implemented "attributes" column in the treelist
+// - Adopted width in German dialog
+// - Provided German, Russian and English version of IDS_TREECOL_ATTRIBUTES
+//
 // Revision 1.12  2004/11/24 20:28:12  bseifert
 // Implemented context menu compromise.
 //

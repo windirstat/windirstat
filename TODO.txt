@@ -2,7 +2,8 @@ TODO.txt - What still has to been done to WinDirStat
 Last modified: $Date$
 =============================================================
 
-- Setup: Translate IDS_CREATEINGSENDTOSHORTCUT and IDC_SHORTCUTSENDTO.
+- Setup: Translate IDS_CREATEINGSENDTOSHORTCUT, IDC_SHORTCUTSENDTO and
+  IDS_TREECOL_ATTRIBUTES.
   
 - Credit Sam (UltraSam (sam.fd@wanadoo.fr)) for his efforts to translate the missing parts to French.
   Credit assarbad as co-developer since Oct/2004, 
@@ -10,10 +11,6 @@ Last modified: $Date$
   Credit Dariusz 'Darek' Malachowski for Polish translation
   Credit Sergiy 'Polet' Polyetayev for Russian translation
   => bseifert
-
-- Add a column for file attributes to the directory list. Same design
-  as in Windows Explorer "RHSAEC" etc.
-  => assarbad
   
 - Multiple selection (and deletion).
   Concept first! Which cleanup actions will still be enabled

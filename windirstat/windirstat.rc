@@ -643,6 +643,7 @@ BEGIN
     IDR_MAINFRAME           "WinDirStat\n\nWinDirStat\n\n\n\n"
     IDS_QUERYING            "(querying...)"
     IDS_NOTACCESSIBLE       "(unavailable)"
+    IDS_TREECOL_ATTRIBUTES  "Attributes"
 END
 
 STRINGTABLE 
