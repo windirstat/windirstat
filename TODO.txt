@@ -6,12 +6,9 @@ Last modified: $Date$
   to French. Not yet done!
   => bseifert
 
-- Credit assarbad, tigroo and possibly Darek and further translators.
+- Credit assarbad, tigroo and Darek and further translators.
   => bseifert
 
-- Date/time formatting more flexible
-  => bseifert
-  
 - Add a column for file attributes to the directory list. Same design
   as in Windows Explorer "RHSAEC" etc.
   => assarbad
@@ -19,7 +16,10 @@ Last modified: $Date$
 - The "Browse dialog" called from the drive selection dialog should
   start at the position it was last - not at "My Documents" always.
   => assarbad
-  
+
+- Setup: optionally install a link to Windirstat in the SendTo-Folder.
+  => bseifert
+    
 - Multiple selection (and deletion).
   Concept first! Which cleanup actions will still be enabled
   and how will they work if multiple items are selected?

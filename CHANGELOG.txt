@@ -2,6 +2,16 @@ changelog.txt - What has been done to WinDirStat (newest top)
 Last modified: $Date$
 =============================================================
 
+2004-11-14	bseifert
+	* Date/time and number formatting is now done using
+	  GetUserDefaultLangID(), unless the new option
+	  "Use this language for formatting" (near the language
+	  combo box) is selected.
+	  So British users, for example, see their preferred
+	  date/time format as configured in the control panel
+	  although the selected language for Windirstat is
+	  "English - US".
+	   
 2004-11-12  bseifert
 	* Added Polish resource dll: wdsr0415. Thanks to Darek.
 	* New output folders for Unicode build: udebug, urelease

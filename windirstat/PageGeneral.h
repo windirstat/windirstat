@@ -46,6 +46,7 @@ protected:
 
 	BOOL m_followMountPoints;
 	BOOL m_followJunctionPoints;
+	BOOL m_useWdsLocale;
 	BOOL m_humanFormat;
 	BOOL m_listGrid;
 	BOOL m_listStripes;
@@ -61,6 +62,7 @@ protected:
 	afx_msg void OnBnClickedHumanformat();
 	afx_msg void OnBnClickedFollowmountpoints();
 	afx_msg void OnBnClickedFollowjunctionpoints();
+	afx_msg void OnBnClickedUseWdsLocale();
 	afx_msg void OnCbnSelendokCombo();
 	afx_msg void OnBnClickedListGrid();
 	afx_msg void OnBnClickedListStripes();
@@ -68,6 +70,9 @@ protected:
 };
 
 // $Log$
+// Revision 1.9  2004/11/14 08:49:06  bseifert
+// Date/Time/Number formatting now uses User-Locale. New option to force old behavior.
+//
 // Revision 1.8  2004/11/13 08:17:07  bseifert
 // Remove blanks in Unicode Configuration names.
 //

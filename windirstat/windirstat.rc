@@ -1,7 +1,5 @@
 // Microsoft Visual C++ generated resource script.
 //
-// Last modified: $Date$
-//
 #include "resource.h"
 
 #define APSTUDIO_READONLY_SYMBOLS
@@ -458,17 +456,20 @@ BEGIN
     GROUPBOX        "&List Style",IDC_STATIC,30,61,90,65
     CONTROL         "&Full Row Selection",IDC_FULLROWSELECTION,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,38,76,75,10
-    CONTROL         "Show &Grid",IDC_SHOWGRID,"Button",BS_AUTOCHECKBOX |
+    CONTROL         "Show &Grid",IDC_SHOWGRID,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,38,93,68,10
-    CONTROL         "Show S&tripes",IDC_SHOWSTRIPES,"Button",BS_AUTOCHECKBOX |
+    CONTROL         "Show S&tripes",IDC_SHOWSTRIPES,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,38,110,68,10
-    LTEXT           "&Language",IDC_STATIC,32,144,166,8
-    COMBOBOX        IDC_COMBO,32,157,156,140,CBS_DROPDOWNLIST | CBS_SORT |
+    LTEXT           "&Language",IDC_STATIC,32,139,166,8
+    COMBOBOX        IDC_COMBO,32,152,156,140,CBS_DROPDOWNLIST | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
+    CONTROL         "&Use this language for date/time and number formatting",
+                    IDC_USEWDSLOCALE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
+                    32,172,298,10
 END
 
 IDD_REPORTBUG DIALOGEX 0, 0, 360, 233
-STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU |
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU | 
     WS_THICKFRAME
 CAPTION "WinDirStat - Submit Bug Report/Feedback"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
@@ -892,8 +893,3 @@ LANGUAGE 9, 1
 /////////////////////////////////////////////////////////////////////////////
 #endif    // not APSTUDIO_INVOKED
 
-
-// $Log$
-// Revision 1.16  2004/11/05 16:53:08  assarbad
-// Added Date and History tag where appropriate.
-//

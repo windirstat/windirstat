@@ -57,7 +57,8 @@ public:
 	virtual int ExitInstance();
 
 	LANGID GetBuiltInLanguage() ;
-	LANGID GetLangid();
+	LANGID GetLangid();				// Language as selected in PageGeneral
+	LANGID GetEffectiveLangid();	// Language to be used for date/time and number formatting
 
 	void ReReadMountPoints();
 	bool IsMountPoint(CString path);
@@ -124,6 +125,9 @@ protected:
 
 
 // $Log$
+// Revision 1.10  2004/11/14 08:49:06  bseifert
+// Date/Time/Number formatting now uses User-Locale. New option to force old behavior.
+//
 // Revision 1.9  2004/11/12 22:14:16  bseifert
 // Eliminated CLR_NONE. Minor corrections.
 //

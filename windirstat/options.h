@@ -235,6 +235,10 @@ public:
 	// Because it is invisible there is no "set" method.
 	bool IsExplorerStyle();
 
+	// Option to use CDirStatApp::m_langid for date/time and number formatting
+	bool IsUseWdsLocale();
+	void SetUseWdsLocale(bool use);
+
 	void GetUserDefinedCleanups(USERDEFINEDCLEANUP udc[USERDEFINEDCLEANUPCOUNT]);
 	void SetUserDefinedCleanups(const USERDEFINEDCLEANUP udc[USERDEFINEDCLEANUPCOUNT]);
 
@@ -276,6 +280,8 @@ private:
 	bool m_followMountPoints;
 	bool m_followJunctionPoints;
 	bool m_explorerStyle;
+	bool m_useWdsLocale;
+
 	USERDEFINEDCLEANUP m_userDefinedCleanup[USERDEFINEDCLEANUPCOUNT];
 
 	CString m_reportSubject;
@@ -286,6 +292,9 @@ private:
 
 
 // $Log$
+// Revision 1.11  2004/11/14 08:49:06  bseifert
+// Date/Time/Number formatting now uses User-Locale. New option to force old behavior.
+//
 // Revision 1.10  2004/11/12 09:27:01  assarbad
 // - Implemented ExplorerStyle option which will not be accessible through the options dialog.
 //   It handles where the context menu is being shown.

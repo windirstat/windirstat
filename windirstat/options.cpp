@@ -81,6 +81,7 @@ namespace
 	const LPCTSTR entryFollowMountPoints	= _T("followMountPoints");
 	const LPCTSTR entryFollowJunctionPoints	= _T("followJunctionPoints");
 	const LPCTSTR entryExplorerStyle		= _T("ExplorerStyle");
+	const LPCTSTR entryUseWdsLocale			= _T("useWdsLocale");
 
 	const LPCTSTR sectionUserDefinedCleanupD	= _T("options\\userDefinedCleanup%02d");
 	const LPCTSTR entryEnabled					= _T("enabled");
@@ -768,6 +769,20 @@ bool COptions::IsExplorerStyle()
 	return m_explorerStyle;
 }
 
+bool COptions::IsUseWdsLocale()
+{
+	return m_useWdsLocale;
+}
+
+void COptions::SetUseWdsLocale(bool use)
+{
+	if (m_useWdsLocale != use)
+	{
+		m_useWdsLocale = use;
+		GetDocument()->UpdateAllViews(NULL, HINT_NULL);
+	}
+}
+
 CString COptions::GetReportSubject()
 {
 	return m_reportSubject;
@@ -839,6 +854,7 @@ void COptions::SaveToRegistry()
 
 	SetProfileBool(sectionOptions, entryFollowMountPoints, m_followMountPoints);
 	SetProfileBool(sectionOptions, entryFollowJunctionPoints, m_followJunctionPoints);
+	SetProfileBool(sectionOptions, entryUseWdsLocale, m_useWdsLocale);
 
 	for (i=0; i < USERDEFINEDCLEANUPCOUNT; i++)
 		SaveUserDefinedCleanup(i);
@@ -897,6 +913,8 @@ void COptions::LoadFromRegistry()
 	m_followMountPoints = GetProfileBool(sectionOptions, entryFollowMountPoints, false);
 	// Ignore junctions by default
 	m_followJunctionPoints = GetProfileBool(sectionOptions, entryFollowJunctionPoints, false);
+	// use user locale by default
+	m_useWdsLocale = GetProfileBool(sectionOptions, entryUseWdsLocale, false);
 
 	// Classic WinDirStat style bey default. Explorer style shows the context menu
 	// directly at the cursor.
@@ -1102,6 +1120,9 @@ void CRegistryUser::CheckRange(int& value, int min, int max)
 
 
 // $Log$
+// Revision 1.13  2004/11/14 08:49:06  bseifert
+// Date/Time/Number formatting now uses User-Locale. New option to force old behavior.
+//
 // Revision 1.12  2004/11/12 09:27:01  assarbad
 // - Implemented ExplorerStyle option which will not be accessible through the options dialog.
 //   It handles where the context menu is being shown.

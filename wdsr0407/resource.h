@@ -2,8 +2,6 @@
 // Microsoft Visual C++ generated include file.
 // Used by windirstat.rc
 //
-// Last modified: $Date$
-//
 #define IDD_ABOUTBOX                    100
 #define ID_VIEW_ARRANGE                 127
 #define IDR_MAINFRAME                   128
@@ -196,6 +194,7 @@
 #define IDC_SUBJECT                     1221
 #define IDC_PREFIX                      1222
 #define IDC_SUFFIX                      1223
+#define IDC_USEWDSLOCALE                1225
 #define ID_FILE_OPENURL                 32771
 #define ID_FILE_OPENRECENT              32772
 #define ID_FILE_REFRESHALL              32773
@@ -271,8 +270,3 @@
 #define _APS_NEXT_SYMED_VALUE           104
 #endif
 #endif
-
-// $Log$
-// Revision 1.11  2004/11/05 16:53:05  assarbad
-// Added Date and History tag where appropriate.
-//

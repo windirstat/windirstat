@@ -493,6 +493,14 @@ LANGID CDirstatApp::GetLangid()
 	return m_langid;
 }
 
+LANGID CDirstatApp::GetEffectiveLangid()
+{
+	if (GetOptions()->IsUseWdsLocale())
+		return GetLangid();
+	else
+		return GetUserDefaultLangID();
+}
+
 void CDirstatApp::OnAppAbout()
 {
 	StartAboutDialog();
@@ -563,6 +571,9 @@ void CDirstatApp::OnHelpReportbug()
 }
 
 // $Log$
+// Revision 1.11  2004/11/14 08:49:06  bseifert
+// Date/Time/Number formatting now uses User-Locale. New option to force old behavior.
+//
 // Revision 1.10  2004/11/12 22:14:16  bseifert
 // Eliminated CLR_NONE. Minor corrections.
 //

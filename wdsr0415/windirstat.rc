@@ -142,7 +142,7 @@ BEGIN
     END
     POPUP "&Mapa drzewa"
     BEGIN
-        MENUITEM "&Poka¿ Mapê D	rzewa\tF9",      ID_VIEW_SHOWTREEMAP
+        MENUITEM "&Poka¿ Mapê D rzewa\tF9",     ID_VIEW_SHOWTREEMAP
         MENUITEM SEPARATOR
         MENUITEM "Po&wiêksz\t+",                ID_TREEMAP_ZOOMIN
         MENUITEM "Po&mniejsz\t-",               ID_TREEMAP_ZOOMOUT
@@ -285,8 +285,8 @@ BEGIN
     CONTROL         "",IDC_DRIVES,"SysListView32",LVS_REPORT | 
                     LVS_OWNERDRAWFIXED | LVS_ALIGNLEFT | WS_BORDER | 
                     WS_TABSTOP,7,43,262,100
-    CONTROL         "&Katalog",IDC_AFOLDER,"Button",BS_AUTORADIOBUTTON,7,
-                    150,100,10
+    CONTROL         "&Katalog",IDC_AFOLDER,"Button",BS_AUTORADIOBUTTON,7,150,
+                    100,10
     EDITTEXT        IDC_FOLDERNAME,6,161,209,14,ES_AUTOHSCROLL
     PUSHBUTTON      "...",IDC_BROWSEFOLDER,219,161,50,14
     DEFPUSHBUTTON   "OK",IDOK,219,7,50,14
@@ -461,9 +461,12 @@ BEGIN
                     WS_TABSTOP,38,93,68,10
     CONTROL         "Poka¿ Pas&ki",IDC_SHOWSTRIPES,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,38,110,68,10
-    LTEXT           "&Jêzyk",IDC_STATIC,32,144,166,8
-    COMBOBOX        IDC_COMBO,32,157,156,140,CBS_DROPDOWNLIST | CBS_SORT | 
+    LTEXT           "&Jêzyk",IDC_STATIC,32,139,166,8
+    COMBOBOX        IDC_COMBO,32,152,156,140,CBS_DROPDOWNLIST | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
+    CONTROL         "&Use this language for date/time and number formatting",
+                    IDC_USEWDSLOCALE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
+                    32,172,298,10
 END
 
 IDD_REPORTBUG DIALOGEX 0, 0, 360, 233

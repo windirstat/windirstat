@@ -54,6 +54,7 @@ void CPageGeneral::DoDataExchange(CDataExchange* pDX)
 	DDX_Check(pDX, IDC_HUMANFORMAT, m_humanFormat);
 	DDX_Check(pDX, IDC_FOLLOWMOUNTPOINTS, m_followMountPoints);
 	DDX_Check(pDX, IDC_FOLLOWJUNCTIONS, m_followJunctionPoints);
+	DDX_Check(pDX, IDC_USEWDSLOCALE, m_useWdsLocale);
 	DDX_Control(pDX, IDC_COMBO, m_combo);
 	DDX_Control(pDX, IDC_FOLLOWMOUNTPOINTS, m_ctlFollowMountPoints);
 	DDX_Control(pDX, IDC_FOLLOWJUNCTIONS, m_ctlFollowJunctionPoints);
@@ -67,6 +68,7 @@ BEGIN_MESSAGE_MAP(CPageGeneral, CPropertyPage)
 	ON_BN_CLICKED(IDC_HUMANFORMAT, OnBnClickedHumanformat)
 	ON_BN_CLICKED(IDC_FOLLOWMOUNTPOINTS, OnBnClickedFollowmountpoints)
 	ON_BN_CLICKED(IDC_FOLLOWJUNCTIONS, OnBnClickedFollowjunctionpoints)
+	ON_BN_CLICKED(IDC_USEWDSLOCALE, OnBnClickedUseWdsLocale)
 	ON_CBN_SELENDOK(IDC_COMBO, OnCbnSelendokCombo)
 	ON_BN_CLICKED(IDC_SHOWGRID, OnBnClickedListGrid)
 	ON_BN_CLICKED(IDC_SHOWSTRIPES, OnBnClickedListStripes)
@@ -85,6 +87,7 @@ BOOL CPageGeneral::OnInitDialog()
 
 	m_followMountPoints= GetOptions()->IsFollowMountPoints();
 	m_followJunctionPoints= GetOptions()->IsFollowJunctionPoints();
+	m_useWdsLocale= GetOptions()->IsUseWdsLocale();
 
 	CVolumeApi va;
 	if (!va.IsSupported())
@@ -129,6 +132,7 @@ void CPageGeneral::OnOK()
 	GetOptions()->SetHumanFormat(m_humanFormat);
 	GetOptions()->SetFollowMountPoints(m_followMountPoints);
 	GetOptions()->SetFollowJunctionPoints(m_followJunctionPoints);
+	GetOptions()->SetUseWdsLocale(m_useWdsLocale);
 	GetOptions()->SetListGrid(m_listGrid);
 	GetOptions()->SetListStripes(m_listStripes);
 	GetOptions()->SetListFullRowSelection(m_listFullRowSelection);
@@ -150,6 +154,11 @@ void CPageGeneral::OnBnClickedFollowmountpoints()
 }
 
 void CPageGeneral::OnBnClickedFollowjunctionpoints()
+{
+	SetModified();
+}
+
+void CPageGeneral::OnBnClickedUseWdsLocale()
 {
 	SetModified();
 }
@@ -177,6 +186,9 @@ void CPageGeneral::OnCbnSelendokCombo()
 }
 
 // $Log$
+// Revision 1.9  2004/11/14 08:49:06  bseifert
+// Date/Time/Number formatting now uses User-Locale. New option to force old behavior.
+//
 // Revision 1.8  2004/11/13 08:17:07  bseifert
 // Remove blanks in Unicode Configuration names.
 //

@@ -99,12 +99,12 @@ CString GetLocaleLanguage(LANGID langid)
 
 CString GetLocaleThousandSeparator()
 {
-	return GetLocaleString(LOCALE_STHOUSAND, GetApp()->GetLangid());
+	return GetLocaleString(LOCALE_STHOUSAND, GetApp()->GetEffectiveLangid());
 }
 
 CString GetLocaleDecimalSeparator()
 {
-	return GetLocaleString(LOCALE_SDECIMAL, GetApp()->GetLangid());
+	return GetLocaleString(LOCALE_SDECIMAL, GetApp()->GetEffectiveLangid());
 }
 
 CString FormatBytes(LONGLONG n)
@@ -198,7 +198,7 @@ CString FormatFileTime(const FILETIME& t)
 	if (!FileTimeToSystemTime(&t, &st))
 		return MdGetWinerrorText(GetLastError());
 
-	LCID lcid = MAKELCID(GetApp()->GetLangid(), SORT_DEFAULT);
+	LCID lcid = MAKELCID(GetApp()->GetEffectiveLangid(), SORT_DEFAULT);
 
 	CString date;
 	VERIFY(0 < GetDateFormat(lcid, DATE_SHORTDATE, &st, NULL, date.GetBuffer(256), 256));
@@ -627,6 +627,9 @@ LPCITEMIDLIST SHGetPIDLFromPath(CString path)
 }
 
 // $Log$
+// Revision 1.16  2004/11/14 08:49:06  bseifert
+// Date/Time/Number formatting now uses User-Locale. New option to force old behavior.
+//
 // Revision 1.15  2004/11/12 22:14:16  bseifert
 // Eliminated CLR_NONE. Minor corrections.
 //

@@ -1,7 +1,5 @@
 // Microsoft Visual C++ generated resource script.
 //
-// Last modified: $Date$
-//
 #include "resource.h"
 
 #define APSTUDIO_READONLY_SYMBOLS
@@ -443,23 +441,28 @@ STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION |
 CAPTION "Allgemein"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    CONTROL         "&Dateisystemgrenzen überschreiten",IDC_FOLLOWMOUNTPOINTS,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,13,229,10
+    CONTROL         "&Dateisystemgrenzen überschreiten",
+                    IDC_FOLLOWMOUNTPOINTS,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,32,13,229,10
     CONTROL         "Symbolischen Verzeichnislinks &folgen (außer Volume Mount Points)",
-                    IDC_FOLLOWJUNCTIONS,"Button",BS_AUTOCHECKBOX |
+                    IDC_FOLLOWJUNCTIONS,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,32,27,229,10
-    CONTROL         "&Größen im GB/MB/kB/Bytes-Format anzeigen",IDC_HUMANFORMAT,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,41,229,10
+    CONTROL         "&Größen im GB/MB/kB/Bytes-Format anzeigen",
+                    IDC_HUMANFORMAT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,
+                    41,229,10
     GROUPBOX        "&Listenstil",IDC_STATIC,30,61,90,65
     CONTROL         "Ganze &Zeile markieren",IDC_FULLROWSELECTION,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,38,76,75,10
-    CONTROL         "&Raster",IDC_SHOWGRID,"Button",BS_AUTOCHECKBOX |
+    CONTROL         "&Raster",IDC_SHOWGRID,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,38,93,68,10
-    CONTROL         "S&treifen",IDC_SHOWSTRIPES,"Button",BS_AUTOCHECKBOX |
+    CONTROL         "S&treifen",IDC_SHOWSTRIPES,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,38,110,68,10
-    LTEXT           "&Sprache",IDC_STATIC,32,144,166,8
-    COMBOBOX        IDC_COMBO,32,157,156,140,CBS_DROPDOWNLIST | CBS_SORT |
+    LTEXT           "&Sprache",IDC_STATIC,32,139,166,8
+    COMBOBOX        IDC_COMBO,32,152,156,140,CBS_DROPDOWNLIST | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
+    CONTROL         "D&iese Sprache für Datum/Zeit- und Dezimal-Formatierung benutzen",
+                    IDC_USEWDSLOCALE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
+                    32,172,298,10
 END
 
 IDD_REPORTBUG DIALOGEX 0, 0, 360, 233
@@ -874,8 +877,3 @@ LANGUAGE 7, 1
 /////////////////////////////////////////////////////////////////////////////
 #endif    // not APSTUDIO_INVOKED
 
-
-// $Log$
-// Revision 1.16  2004/11/05 16:53:05  assarbad
-// Added Date and History tag where appropriate.
-//
