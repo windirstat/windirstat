@@ -33,7 +33,7 @@ class COwnerDrawnListControl;
 // COwnerDrawnListItem. An item in a COwnerDrawnListControl.
 // Some columns (subitems) may be owner drawn (DrawSubitem() returns true),
 // COwnerDrawnListControl draws the texts (GetText()) of all others.
-// DrawLabel() draws a standard label (width image, text, seletion and focus rect)
+// DrawLabel() draws a standard label (width image, text, selection and focus rect)
 //
 class COwnerDrawnListItem: public CSortingListItem
 {
@@ -45,7 +45,7 @@ public:
 	virtual CString GetText(int subitem) const =0;
 	
 	// Returnvalue is true, if the item draws itself.
-	// whith != NULL -> only determine width, do not draw.
+	// width != NULL -> only determine width, do not draw.
 	// If focus rectangle shall not begin leftmost, set *focusLeft
 	// to the left edge of the desired focus rectangle.
 	virtual bool DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *width, int *focusLeft) const =0;
@@ -54,7 +54,7 @@ public:
 
 	void DrawSelection(COwnerDrawnListControl *list, CDC *pdc, CRect rc, UINT state) const;
 protected:
-	void DrawLabel(COwnerDrawnListControl *list, CImageList *il, CDC *pdc, CRect& rc, UINT state, int *width, int *focusLeft, bool indent = true) const;
+	void DrawLabel(COwnerDrawnListControl *list, CImageList *il, CDC *pdc, CRect& rc, UINT state, int *width, int *focusLeft, bool indent = true, COLORREF textcol = CLR_NONE) const;
 	void DrawPercentage(CDC *pdc, CRect rc, double fraction, COLORREF color) const;
 };
 
@@ -126,6 +126,9 @@ protected:
 
 
 // $Log$
+// Revision 1.6  2004/11/07 23:28:14  assarbad
+// - Partial implementation for coloring of compressed/encrypted files
+//
 // Revision 1.5  2004/11/05 16:53:07  assarbad
 // Added Date and History tag where appropriate.
 //

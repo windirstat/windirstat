@@ -50,12 +50,15 @@ COwnerDrawnListItem::~COwnerDrawnListItem()
 {
 }
 
-void COwnerDrawnListItem::DrawLabel(COwnerDrawnListControl *list, CImageList *il, CDC *pdc, CRect& rc, UINT state, int *width, int *focusLeft, bool indent) const
+// Draws an item (icon, text and so on) in all parts of the WinDirStat view
+void COwnerDrawnListItem::DrawLabel(COwnerDrawnListControl *list, CImageList *il, CDC *pdc, CRect& rc, UINT state, int *width, int *focusLeft, bool indent, COLORREF textcol) const
 {
 	CRect rcRest= rc;
+        // Increase indentation according to tree-level
 	if (indent)
 		rcRest.left+= GENERAL_INDENT;
 
+	// Prepare to draw the file/folder icon
 	ASSERT(GetImage() < il->GetImageCount());
 
 	IMAGEINFO ii;
@@ -64,11 +67,13 @@ void COwnerDrawnListItem::DrawLabel(COwnerDrawnListControl *list, CImageList *il
 
 	if (width == NULL)
 	{
+		// Draw the color with transparent background
 		CPoint pt(rcRest.left, rcRest.top + rcRest.Height() / 2 - rcImage.Height() / 2);
 		il->SetBkColor(CLR_NONE);
 		il->Draw(pdc, GetImage(), pt, ILD_NORMAL);
 	}
 
+	// Decrease size of the remainder rectangle from left
 	rcRest.left+= rcImage.Width();
 
 	CSelectObject sofont(pdc, list->GetFont());
@@ -86,15 +91,24 @@ void COwnerDrawnListItem::DrawLabel(COwnerDrawnListControl *list, CImageList *il
 	COLORREF textColor= GetSysColor(COLOR_WINDOWTEXT);
 	if (width == NULL && (state & ODS_SELECTED) != 0 && (list->HasFocus() || list->IsShowSelectionAlways()))
 	{
+		// Color for the text in a highlighted item (usually white)
 		textColor= list->GetHighlightTextColor();
 
 		CRect selection= rcLabel;
+		// Depending on "FullRowSelection" style
 		if (list->IsFullRowSelection())
 			selection.right= rc.right;
+		// Fill the selection rectangle background (usually dark blue)
 		pdc->FillSolidRect(selection, list->GetHighlightColor());
 	}
+	else
+	// If given (and item not selected), draw the text in a specific color
+		if (textcol != CLR_NONE)
+			textColor = textcol;
+	// Set text color for device context
 	CSetTextColor stc(pdc, textColor);
 	if (width == NULL)
+	// Draw the actual text	
 		pdc->DrawText(GetText(0), rcRest, DT_SINGLELINE | DT_VCENTER | DT_WORD_ELLIPSIS | DT_NOPREFIX);
 
 	rcLabel.InflateRect(1, 1);
@@ -691,6 +705,9 @@ void COwnerDrawnListControl::OnHdnItemchanging(NMHDR * /*pNMHDR*/, LRESULT *pRes
 
 
 // $Log$
+// Revision 1.10  2004/11/07 23:28:14  assarbad
+// - Partial implementation for coloring of compressed/encrypted files
+//
 // Revision 1.9  2004/11/07 00:06:34  assarbad
 // - Fixed minor bug with ampersand (details in changelog.txt)
 //
