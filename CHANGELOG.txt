@@ -2,6 +2,10 @@ changelog.txt - What has been done to WinDirStat (newest top)
 Last modified: $Date$
 =============================================================
 
+2004-12-25	bseifert
+	* Documented Attributes column in helpfiles.
+	* Documented Junction points in helpfiles.
+	
 2004-12-24	bseifert
 	* setup: included Polish translation (thanks to Darek).
 	* wdsh0415: Polish help file complete! (Thanks to Darek).
@@ -143,8 +147,7 @@ Last modified: $Date$
 	  added items.
 
 2004-01-22	bseifert
-	* Release of 1.1.0 with unknown changes by Bernhard.
-      [This entry was added as late as 2004-11-06]
+	* Release of 1.1.0. (Decided to call it 1.1.0 instead of 1.0.2)
 
 2004-01-20	bseifert
 	* Temporarily removed French translation from setup and Aboutbox for release 1.0.2.

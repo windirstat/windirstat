@@ -2,19 +2,24 @@ TODO.txt - What still has to been done to WinDirStat
 Last modified: $Date$
 =============================================================
 
-- Translate IDS_ABOUT_AUTHORS and IDS_ABOUT_AUTHORSTEXTs
+- Polish helpfile: 
+	translate "Attributes" section in directorytree.htm
+	translate "Junction Points" section in configuration.htm
 
-- Setup: Translate IDS_CREATEINGSENDTOSHORTCUT, IDC_SHORTCUTSENDTO and
-  IDS_TREECOL_ATTRIBUTES.
-  
+- Polish windirstat.rc: translate "Use this language for date/time and number formatting",
+  translate IDS_TREECOL_ATTRIBUTES.
+
+- Russian resource: abbreviate IDS_USERDEFINEDCLEANUPd 
+
+- Polish, French, Russian: translate IDS_ABOUT_AUTHORS and IDS_ABOUT_AUTHORSTEXTs
+
+- Increment RESOURCEVERSION.
+
 - Sync testplan.
   
-- Sync Online help. 
-
 - Execute testplan.
 
 - Unicode file releases
-  => bseifert
 
 - Sync Website
 

@@ -53,7 +53,7 @@ CReportBugDlg::CReportBugDlg(CWnd* pParent /*=NULL*/)
 	, m_application(_T(""))
 	, m_platform(_T(""))
 	, m_hint(_T(""))
-	, m_severity(SEV_NORMAL)
+	, m_severity(SEV_FEEDBACK)
 	, m_inAWord(_T(""))
 	, m_text(_T(""))
 	, m_layout(this, _T("rbdlg"))
@@ -241,6 +241,9 @@ void CReportBugDlg::OnDestroy()
 }
 
 // $Log$
+// Revision 1.7  2004/12/25 13:41:47  bseifert
+// Synced help files.
+//
 // Revision 1.6  2004/12/19 10:52:39  bseifert
 // Minor fixes.
 //

@@ -2,6 +2,7 @@
 <HTML>
 <HEAD>
 <meta name="GENERATOR" content="Microsoft&reg; HTML Help Workshop 4.1">
+<META http-equiv="Content-Type" content="text/html; charset=iso-8859-2">
 <!-- Sitemap 1.0 -->
 </HEAD><BODY>
 <OBJECT type="text/site properties">
@@ -37,11 +38,11 @@
 		<param name="Local" value="selectdrivesdialog.htm">
 		</OBJECT>
 	<LI> <OBJECT type="text/sitemap">
-		<param name="Name" value="Porządkowania">
+		<param name="Name" value="Porzadkowania">
 		<param name="Local" value="actions.htm">
 		</OBJECT>
 	<LI> <OBJECT type="text/sitemap">
-		<param name="Name" value="Porządkowania użytkownika">
+		<param name="Name" value="Porzadkowania użytkownika">
 		<param name="Local" value="userdefinedcleanups.htm">
 		</OBJECT>
 	<LI> <OBJECT type="text/sitemap">

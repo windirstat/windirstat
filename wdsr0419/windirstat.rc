@@ -427,7 +427,7 @@ BEGIN
                     TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,347,17,16,104
     RTEXT           "Источник света",IDC_STATIC,246,147,59,8
     LTEXT           "Static",IDC_LIGHTSOURCE,313,146,58,48,WS_TABSTOP
-    PUSHBUTTON      "",IDC_RESET,242,167,55,22,BS_MULTILINE
+    PUSHBUTTON      "",IDC_RESET,242,160,60,29,BS_MULTILINE
     GROUPBOX        "Стиль",IDC_STATIC,7,146,63,49
     CONTROL         "&KDirStat",IDC_KDIRSTAT,"Button",BS_AUTORADIOBUTTON | 
                     WS_GROUP | WS_TABSTOP,12,159,42,10
@@ -497,7 +497,7 @@ BEGIN
     DEFPUSHBUTTON   "ОК",IDOK,154,212,50,14
     PUSHBUTTON      "Отмена",IDCANCEL,303,212,50,14
     LTEXT           "От:",IDC_STATIC,7,7,20,8
-    LTEXT           "Кому:",IDC_STATIC_TO,177,7,19,8
+    LTEXT           "Кому:",IDC_STATIC_TO,172,7,19,8
     LTEXT           "<from>",IDC_FROM,53,7,120,8
     LTEXT           "<to>",IDC_TO,214,7,139,8
     GROUPBOX        "Важность",IDC_STATIC_SEVERITY,7,33,346,24,0,
@@ -507,7 +507,7 @@ BEGIN
                     IDC_STATIC,7,79,346,17
     LTEXT           "Приложение:",IDC_STATIC,7,18,43,8
     LTEXT           "<application>",IDC_APPLICATION,53,18,120,8
-    LTEXT           "Платформа:",IDC_STATIC_PLATFORM,177,18,34,8
+    LTEXT           "Платформа:",IDC_STATIC_PLATFORM,172,18,41,8
     LTEXT           "<platform>",IDC_PLATFORM,214,18,139,8
     LTEXT           "Для сообщения об ошибке, было бы идеально, если бы вы описали симптом, дословно привели текст ошибки, и, при возможности, шаги чтобы воспроизвести повдение.",
                     IDC_HINT,7,99,346,19
