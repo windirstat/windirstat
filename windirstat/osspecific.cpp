@@ -210,3 +210,29 @@ ULONG CMapi32Api::MAPISendMail(LHANDLE lhSession, ULONG ulUIParam, lpMapiMessage
 	return (*m_MAPISendMail)(lhSession, ulUIParam, lpMessage, flFlags, ulReserved);
 }
 
+/////////////////////////////////////////////////////////////////////////////
+
+CQueryDosDeviceApi::CQueryDosDeviceApi()
+{
+	m_dll= LoadLibrary(_T("kernel32.dll"));
+	TGETPROC(QueryDosDevice);
+}
+
+CQueryDosDeviceApi::~CQueryDosDeviceApi()
+{
+	if (m_dll != NULL)
+		FreeLibrary(m_dll);
+}
+
+bool CQueryDosDeviceApi::IsSupported()
+{
+	CHECK(QueryDosDevice);
+	return true;
+}
+
+DWORD CQueryDosDeviceApi::QueryDosDevice(LPCTSTR lpDeviceName, LPTSTR lpTargetPath, DWORD ucchMax)
+{
+	ASSERT(IsSupported());
+	return (*m_QueryDosDevice)(lpDeviceName, lpTargetPath, ucchMax);
+}
+

@@ -1134,9 +1134,8 @@ void CDirstatDoc::OnExplorerHere()
 			sei.lpIDList= pidl;
 			sei.fMask|= SEE_MASK_IDLIST;
 
-			BOOL b= ShellExecuteEx(&sei);
-			if (!b)
-				MdThrowStringExceptionF(_T("ShellExecuteEx(explore) failed: %1!s!"), MdGetWinerrorText(GetLastError()));
+			ShellExecuteEx(&sei);
+			// ShellExecuteEx seems to display its own Messagebox on error.
 		}
 		else
 		{
@@ -1324,9 +1323,9 @@ void CDirstatDoc::OnCleanupOpen()
 				sei.lpIDList= pidl;
 				sei.fMask|= SEE_MASK_IDLIST;
 
-				BOOL b= ShellExecuteEx(&sei);
-				if (!b)
-					MdThrowStringExceptionF(_T("ShellExecuteEx(properties) failed: %1!s!"), MdGetWinerrorText(GetLastError()));
+				ShellExecuteEx(&sei);
+				// ShellExecuteEx seems to display its own Messagebox, if failed.
+
 				return;
 			}
 			break;
@@ -1402,9 +1401,8 @@ void CDirstatDoc::OnCleanupProperties()
 			ASSERT(0);
 		}
 
-		BOOL b= ShellExecuteEx(&sei);
-		if (!b)
-			MdThrowStringExceptionF(_T("ShellExecuteEx(properties) failed: %1!s!"), MdGetWinerrorText(GetLastError()));
+		ShellExecuteEx(&sei);
+		// ShellExecuteEx seems to display its own Messagebox on error.
 	}
 	catch (CException *pe)
 	{

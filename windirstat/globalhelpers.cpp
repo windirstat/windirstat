@@ -473,7 +473,7 @@ CString GetUserName()
 
 bool IsHexDigit(int c)
 {
-	if (isdigit(c))
+	if (_istdigit((short)c))
 		return true;
 
 	if (_T('a') <= c && c <= _T('f'))
@@ -509,6 +509,63 @@ CString MyGetFullPathName(LPCTSTR relativePath)
 	}
 
 	return buffer;
+}
+
+// drive is a drive spec like C: or C:\ or C:\path (path is ignored).
+//
+// This function returns
+// "", if QueryDosDevice is unsupported or drive doesn't begin with a drive letter,
+// 'Information about MS-DOS device names' otherwise:
+// Something like
+//
+// \Device\Harddisk\Volume1                               for a local drive
+// \Device\LanmanRedirector\;T:0000000011e98\spock\temp   for a network drive 
+// \??\C:\programme                                       for a SUBSTed local path
+// \??\T:\Neuer Ordner                                    for a SUBSTed SUBSTed path
+// \??\UNC\spock\temp                                     for a SUBSTed UNC path
+//
+// As always, I had to experimentally determine these strings, Microsoft
+// didn't think it necessary to document them. (Sometimes I think, they
+// even don't document such things internally...)
+//
+// I hope that a drive is SUBSTed iff this string starts with \??\.
+//
+CString MyQueryDosDevice(LPCTSTR drive)
+{
+	CString d = drive;
+
+	if (d.GetLength() < 2 || d[1] != _T(':'))
+		return _T("");
+
+	d = d.Left(2);
+
+	CQueryDosDeviceApi api;
+	
+	if (!api.IsSupported())
+		return _T("");
+
+	CString info;
+	DWORD dw = api.QueryDosDevice(d, info.GetBuffer(512), 512);
+	info.ReleaseBuffer();
+
+	if (dw == 0)
+	{
+		TRACE(_T("QueryDosDevice(%s) failed: %s\r\n"), d, MdGetWinerrorText(GetLastError()));
+		return _T("");
+	}
+
+	return info;
+}
+
+// drive is a drive spec like C: or C:\ or C:\path (path is ignored).
+// 
+// This function returnes true, if QueryDosDevice() is supported
+// and drive is a SUBSTed drive.
+//
+bool IsSUBSTedDrive(LPCTSTR drive)
+{
+	CString info = MyQueryDosDevice(drive);
+	return (info.GetLength() >= 4 && info.Left(4) == "\\??\\");
 }
 
 CString GetSpec_Bytes()

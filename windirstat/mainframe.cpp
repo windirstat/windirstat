@@ -34,6 +34,7 @@
 #include "pagetreelist.h"
 #include "pagetreemap.h"
 #include "pagegeneral.h"
+#include "pagereport.h"
 
 #include ".\mainframe.h"
 
@@ -298,7 +299,7 @@ CDeadFocusWnd::CDeadFocusWnd()
 void CDeadFocusWnd::Create(CWnd *parent)
 {
 	CRect rc(0,0,0,0);
-	VERIFY(CWnd::Create(AfxRegisterWndClass(0, 0, 0, 0), "_deadfocus", WS_CHILD, rc, parent, IDC_DEADFOCUS));
+	VERIFY(CWnd::Create(AfxRegisterWndClass(0, 0, 0, 0), _T("_deadfocus"), WS_CHILD, rc, parent, IDC_DEADFOCUS));
 }
 
 CDeadFocusWnd::~CDeadFocusWnd()
@@ -1003,11 +1004,13 @@ void CMainFrame::OnConfigure()
 	CPageTreelist treelist;
 	CPageTreemap treemap;
 	CPageCleanups cleanups;
+	CPageReport report;
 
 	sheet.AddPage(&general);
 	sheet.AddPage(&treelist);
 	sheet.AddPage(&treemap);
 	sheet.AddPage(&cleanups);
+	sheet.AddPage(&report);
 
 	sheet.DoModal();
 
@@ -1026,11 +1029,10 @@ void CMainFrame::OnUpdateSendmailtoowner(CCmdUI *pCmdUI)
 
 void CMainFrame::OnSendmailtoowner()
 {
-	CString subject= LoadString(IDS_REPORT_DISKUSAGE);
 	CString body= GetDirstatView()->GenerateReport();
 
 	CModalSendMail sm;
-	sm.SendMail(_T(""), subject, body);
+	sm.SendMail(_T(""), GetOptions()->GetReportSubject(), body);
 
 /*
 	This works only for small bodies:

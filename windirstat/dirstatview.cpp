@@ -125,7 +125,7 @@ CDirstatView::~CDirstatView()
 
 CString CDirstatView::GenerateReport()
 {
-	CString report= LoadString(IDS_PLEASECHECKYOURDISKUSAGE);
+	CString report= GetOptions()->GetReportPrefix() + _T("\r\n");
 
 	CItem *root= GetDocument()->GetSelection();
 	ASSERT(root != NULL);
@@ -148,8 +148,8 @@ CString CDirstatView::GenerateReport()
 		report.AppendFormat(_T("%s %s\r\n"), PadWidthBlanks(FormatLongLongHuman(item->GetSize()), 11), item->GetReportPath());
 	}
 
-	report+= LoadString(IDS_DISKUSAGEREPORTGENERATEDBYWINDIRSTAT);
-	report.AppendFormat(_T("http://%s/\r\n"), GetWinDirStatHomepage());
+	report+= _T("\r\n\r\n");
+	report+= GetOptions()->GetReportSuffix();
 
 	return report;
 }

@@ -37,6 +37,7 @@ enum REFRESHPOLICY
 struct USERDEFINEDCLEANUP
 {
 	bool enabled;
+	bool virginTitle;
 	CString title;
 	bool worksForDrives;
 	bool worksForDirectories;
@@ -224,10 +225,22 @@ public:
 	bool IsUserDefinedCleanupEnabled(int i);
 	const USERDEFINEDCLEANUP *GetUserDefinedCleanup(int i);
 
+	CString GetReportSubject();
+	CString GetReportDefaultSubject();
+	void SetReportSubject(LPCTSTR subject);
+
+	CString GetReportPrefix();
+	CString GetReportDefaultPrefix();
+	void SetReportPrefix(LPCTSTR prefix);
+
+	CString GetReportSuffix();
+	CString GetReportDefaultSuffix();
+	void SetReportSuffix(LPCTSTR suffix);
 
 private:
 	void ReadUserDefinedCleanup(int i);
 	void SaveUserDefinedCleanup(int i);
+	bool LooksLikeVirginCleanupTitle(CString title);
 	void ReadTreemapOptions();
 	void SaveTreemapOptions();
 
@@ -243,6 +256,10 @@ private:
 	
 	bool m_followMountPoints;
 	USERDEFINEDCLEANUP m_userDefinedCleanup[USERDEFINEDCLEANUPCOUNT];
+
+	CString m_reportSubject;
+	CString m_reportPrefix;
+	CString m_reportSuffix;
 };
 
 

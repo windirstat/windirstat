@@ -23,6 +23,7 @@
 #define IDD_PAGE_TREEMAP                143
 #define IDD_PAGE_GENERAL                144
 #define IDD_REPORTBUG                   145
+#define IDD_PAGE_REPORT                 146
 #define IDS_RESOURCEVERSION             199
 #define IDS_ABOUT_ABOUTTEXTss           200
 #define IDS_ABOUT_THANKSTOTEXT          201
@@ -94,8 +95,10 @@
 #define IDS_SPEC_MB                     267
 #define IDS_SPEC_GB                     268
 #define IDS_SPEC_TB                     269
-#define IDS_RESETTODEFAULTS				270
-#define IDS_BACKTOUSERSETTINGS			271
+#define IDS_RESETTO_DEFAULTS            270
+#define IDS_BACKTO_USERSETTINGS         271
+#define IDS_RESETTODEFAULTS             272
+#define IDS_BACKTOUSERSETTINGS          273
 #define IDC_ALLDRIVES                   1000
 #define IDC_GROUPS                      1000
 #define IDC_ALLLOCALDRIVES              1000
@@ -178,6 +181,9 @@
 #define IDC_STATICHEIGHT                1218
 #define IDC_STATICSCALEFACTOR           1219
 #define IDC_LIGHTSOURCE                 1220
+#define IDC_SUBJECT                     1221
+#define IDC_PREFIX                      1222
+#define IDC_SUFFIX                      1223
 #define ID_FILE_OPENURL                 32771
 #define ID_FILE_OPENRECENT              32772
 #define ID_FILE_REFRESHALL              32773
@@ -248,7 +254,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        900
 #define _APS_NEXT_COMMAND_VALUE         33022
-#define _APS_NEXT_CONTROL_VALUE         1221
+#define _APS_NEXT_CONTROL_VALUE         1225
 #define _APS_NEXT_SYMED_VALUE           104
 #endif
 #endif

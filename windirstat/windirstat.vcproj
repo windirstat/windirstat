@@ -312,6 +312,9 @@
 				RelativePath=".\PageGeneral.cpp">
 			</File>
 			<File
+				RelativePath=".\PageReport.cpp">
+			</File>
+			<File
 				RelativePath=".\PageTreelist.cpp">
 			</File>
 			<File
@@ -441,6 +444,9 @@
 			</File>
 			<File
 				RelativePath=".\PageGeneral.h">
+			</File>
+			<File
+				RelativePath=".\PageReport.h">
 			</File>
 			<File
 				RelativePath=".\PageTreelist.h">

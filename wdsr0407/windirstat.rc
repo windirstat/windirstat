@@ -494,6 +494,25 @@ BEGIN
                     IDC_STATIC_OKHINT,7,200,346,8
 END
 
+IDD_PAGE_REPORT DIALOGEX 0, 0, 380, 202
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | 
+    WS_SYSMENU
+CAPTION "Report"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    LTEXT           "Hier können Sie den Report 'E-Mail an den Eigentümer' maßschneidern.",
+                    IDC_STATIC,7,9,226,8
+    LTEXT           "&Betreff",IDC_STATIC,7,31,46,8
+    EDITTEXT        IDC_SUBJECT,59,31,314,14,ES_AUTOHSCROLL
+    LTEXT           "&Vorspann",IDC_STATIC,7,51,46,8
+    EDITTEXT        IDC_PREFIX,59,51,314,54,ES_MULTILINE | ES_AUTOVSCROLL | 
+                    ES_AUTOHSCROLL | ES_WANTRETURN
+    LTEXT           "&Nachspann",IDC_STATIC,7,111,46,8
+    EDITTEXT        IDC_SUFFIX,59,111,314,54,ES_MULTILINE | ES_AUTOVSCROLL | 
+                    ES_AUTOHSCROLL | ES_WANTRETURN
+    PUSHBUTTON      "",IDC_RESET,59,174,115,14
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -743,9 +762,9 @@ BEGIN
     IDS_TREECOL_SUBDIRS     "Verzeichnisse"
     IDS_TREECOL_LASTCHANGE  "Letzte Änderung"
     IDS_PLEASECHECKYOURDISKUSAGE 
-                            "Bitte überprüfen Sie den Plattenplatzverbrauch und räumen Sie, wenn möglich, auf. Danke.\r\n\r\n"
+                            "Bitte überprüfen Sie den Plattenplatzverbrauch und räumen Sie, wenn möglich, auf. Danke.\r\n"
     IDS_DISKUSAGEREPORTGENERATEDBYWINDIRSTAT 
-                            "\r\n\r\nPlattenplatzbelegungsreport erzeugt von WinDirStat.\r\n"
+                            "Plattenplatzbelegungsreport erzeugt von WinDirStat.\r\n"
     IDS__UNKNOWN_           "<unbekannt>"
     IDS_FREESPACE_ITEM      "<Freier Platz>"
     IDS_UNKNOWN_ITEM        "<Unbekannt>"
@@ -808,8 +827,14 @@ BEGIN
     IDS_SPEC_MB             "MB"
     IDS_SPEC_GB             "GB"
     IDS_SPEC_TB             "TB"
-    IDS_RESETTODEFAULTS     "Standard\r\n&wiederherstellen"
-    IDS_BACKTOUSERSETTINGS  "&Zurück zur eige-\r\nnen Einstellung"
+    IDS_RESETTO_DEFAULTS    "Standard\r\n&wiederherstellen"
+    IDS_BACKTO_USERSETTINGS "&Zurück zur eige-\r\nnen Einstellung"
+END
+
+STRINGTABLE 
+BEGIN
+    IDS_RESETTODEFAULTS     "Standard &wiederherstellen"
+    IDS_BACKTOUSERSETTINGS  "&Zurück zur eigenen Einstellung"
 END
 
 #endif    // German (Germany) resources

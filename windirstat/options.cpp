@@ -86,6 +86,9 @@ namespace
 	const LPCTSTR entryShowConsoleWindow		= _T("showConsoleWindow");
 	const LPCTSTR entryWaitForCompletion		= _T("waitForCompletion");
 	const LPCTSTR entryRefreshPolicy			= _T("refreshPolicy");
+	const LPCTSTR entryReportSubject			= _T("reportSubject");
+	const LPCTSTR entryReportPrefix				= _T("reportPrefix");
+	const LPCTSTR entryReportSuffix				= _T("reportSuffix");
 
 	COLORREF treelistColorDefault[TREELISTCOLORCOUNT] = {
 		RGB(64, 64, 140),
@@ -97,6 +100,7 @@ namespace
 		RGB(0, 255, 0),
 		RGB(255, 255, 0)
 	};
+
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -369,7 +373,7 @@ void CPersistence::GetArray(LPCTSTR entry, /* in/out */ CArray<int, int>& rarr)
 	while (i < s.GetLength())
 	{
 		int n= 0;
-		while (i < s.GetLength() && isdigit(s[i]))
+		while (i < s.GetLength() && _istdigit(s[i]))
 		{
 			n*= 10;
 			n+= s[i] - _T('0');
@@ -708,6 +712,55 @@ void COptions::SetFollowMountPoints(bool follow)
 	}
 }
 
+CString COptions::GetReportSubject()
+{
+	return m_reportSubject;
+}
+
+CString COptions::GetReportDefaultSubject()
+{
+	return LoadString(IDS_REPORT_DISKUSAGE);
+}
+
+void COptions::SetReportSubject(LPCTSTR subject)
+{
+	m_reportSubject= subject;
+}
+
+CString COptions::GetReportPrefix()
+{
+	return m_reportPrefix;
+}
+
+CString COptions::GetReportDefaultPrefix()
+{
+	return LoadString(IDS_PLEASECHECKYOURDISKUSAGE);
+}
+
+void COptions::SetReportPrefix(LPCTSTR prefix)
+{
+	m_reportPrefix= prefix;
+}
+
+CString COptions::GetReportSuffix()
+{
+	return m_reportSuffix;
+}
+
+CString COptions::GetReportDefaultSuffix()
+{
+	CString suffix= LoadString(IDS_DISKUSAGEREPORTGENERATEDBYWINDIRSTAT);
+	suffix.AppendFormat(_T("http://%s/\r\n"), GetWinDirStatHomepage());
+	return suffix;
+}
+
+void COptions::SetReportSuffix(LPCTSTR suffix)
+{
+	m_reportSuffix= suffix;
+}
+
+
+
 void COptions::SaveToRegistry()
 {
 	SetProfileBool(sectionOptions, entryTreelistGrid, m_treelistGrid);
@@ -728,6 +781,35 @@ void COptions::SaveToRegistry()
 	SetProfileBool(sectionOptions, entryFollowMountPoints, m_followMountPoints);
 	for (i=0; i < USERDEFINEDCLEANUPCOUNT; i++)
 		SaveUserDefinedCleanup(i);
+
+
+	// We must distinguish between 'empty' and 'default'.
+	// 'Default' will read ""
+	// 'Empty' will read "$"
+	// Others will read "$text.."
+	const LPCTSTR stringPrefix = _T("$");
+
+	CString s;
+	
+	if (m_reportSubject == GetReportDefaultSubject())
+		s.Empty();
+	else
+		s= stringPrefix + m_reportSubject;
+	SetProfileString(sectionOptions, entryReportSubject, s);
+
+
+	if (m_reportPrefix == GetReportDefaultPrefix())
+		s.Empty();
+	else
+		s= stringPrefix + m_reportPrefix;
+	SetProfileString(sectionOptions, entryReportPrefix, s);
+
+
+	if (m_reportSuffix == GetReportDefaultSuffix())
+		s.Empty();
+	else
+		s= stringPrefix + m_reportSuffix;
+	SetProfileString(sectionOptions, entryReportSuffix, s);
 }
 
 void COptions::LoadFromRegistry()
@@ -751,6 +833,26 @@ void COptions::LoadFromRegistry()
 	m_followMountPoints= GetProfileBool(sectionOptions, entryFollowMountPoints, false);
 	for (i=0; i < USERDEFINEDCLEANUPCOUNT; i++)
 		ReadUserDefinedCleanup(i);
+
+
+	CString s;
+	s= GetProfileString(sectionOptions, entryReportSubject, _T(""));
+	if (s.IsEmpty())
+		m_reportSubject= GetReportDefaultSubject();
+	else
+		m_reportSubject= s.Mid(1);
+
+	s= GetProfileString(sectionOptions, entryReportPrefix, _T(""));
+	if (s.IsEmpty())
+		m_reportPrefix= GetReportDefaultPrefix();
+	else
+		m_reportPrefix= s.Mid(1);
+
+	s= GetProfileString(sectionOptions, entryReportSuffix, _T(""));
+	if (s.IsEmpty())
+		m_reportSuffix= GetReportDefaultSuffix();
+	else
+		m_reportSuffix= s.Mid(1);
 }
 
 void COptions::ReadUserDefinedCleanup(int i)
@@ -762,7 +864,17 @@ void COptions::ReadUserDefinedCleanup(int i)
 	defaultTitle.FormatMessage(IDS_USERDEFINEDCLEANUPd, i);
 
 	m_userDefinedCleanup[i].enabled= GetProfileBool(section, entryEnabled, false);
-	m_userDefinedCleanup[i].title= GetProfileString(section, entryTitle, defaultTitle);
+	m_userDefinedCleanup[i].title= GetProfileString(section, entryTitle, _T(""));
+	if (m_userDefinedCleanup[i].title.IsEmpty()
+	|| LooksLikeVirginCleanupTitle(m_userDefinedCleanup[i].title))
+	{
+		m_userDefinedCleanup[i].title= defaultTitle;
+		m_userDefinedCleanup[i].virginTitle= true;
+	}
+	else
+	{
+		m_userDefinedCleanup[i].virginTitle= false;
+	}
 	m_userDefinedCleanup[i].worksForDrives= GetProfileBool(section, entryWorksForDrives, false);
 	m_userDefinedCleanup[i].worksForDirectories= GetProfileBool(section, entryWorksForDirectories, false);
 	m_userDefinedCleanup[i].worksForFilesFolder= GetProfileBool(section, entryWorksForFilesFolder, false);
@@ -784,7 +896,10 @@ void COptions::SaveUserDefinedCleanup(int i)
 	section.Format(sectionUserDefinedCleanupD, i);
 
 	SetProfileBool(section, entryEnabled, m_userDefinedCleanup[i].enabled);
-	SetProfileString(section, entryTitle, m_userDefinedCleanup[i].title);
+	if (m_userDefinedCleanup[i].virginTitle)
+		SetProfileString(section, entryTitle, _T(""));
+	else
+		SetProfileString(section, entryTitle, m_userDefinedCleanup[i].title);
 	SetProfileBool(section, entryWorksForDrives, m_userDefinedCleanup[i].worksForDrives);
 	SetProfileBool(section, entryWorksForDirectories, m_userDefinedCleanup[i].worksForDirectories);
 	SetProfileBool(section, entryWorksForFilesFolder, m_userDefinedCleanup[i].worksForFilesFolder);
@@ -796,6 +911,30 @@ void COptions::SaveUserDefinedCleanup(int i)
 	SetProfileBool(section, entryShowConsoleWindow, m_userDefinedCleanup[i].showConsoleWindow);
 	SetProfileBool(section, entryWaitForCompletion, m_userDefinedCleanup[i].waitForCompletion);
 	SetProfileInt(section, entryRefreshPolicy, m_userDefinedCleanup[i].refreshPolicy);
+}
+
+// This is an ugly repair of a problem with windirstat <= 1.0.1.
+// Older versions of windirstat saved virgin titles to the registry.
+// The effect was, that after changing the language the titles
+// were still in the old language. We try to repair this for 
+// users upgrading to windirstat 1.0.2.
+// (Windirstat <= 1.0.1 existed only in English and German.)
+//
+bool COptions::LooksLikeVirginCleanupTitle(CString title)
+{
+	if (title.GetLength() < 1)
+		return false;
+	
+	TCHAR last= title[title.GetLength() - 1];
+	if (!_istdigit(last))
+		return false;
+
+	CString prefix= title.Left(title.GetLength() - 1);
+	if (prefix == _T("User defined cleanup #")
+	|| prefix == _T("Benutzerdefinierte Aktion Nr."))
+		return true;
+
+	return false;
 }
 
 void COptions::ReadTreemapOptions()

@@ -132,6 +132,11 @@ bool CDriveItem::IsRemote() const
 	return m_isRemote;
 }
 
+bool CDriveItem::IsSUBSTed() const
+{
+	return IsSUBSTedDrive(m_path);
+}
+
 int CDriveItem::Compare(const CSortingListItem *baseOther, int subitem) const
 {
 	const CDriveItem *other= (CDriveItem *)baseOther;
@@ -393,16 +398,6 @@ bool CDrivesList::IsItemSelected(int i)
 	return (LVIS_SELECTED == GetItemState(i, LVIS_SELECTED));
 }
 
-void CDrivesList::SelectAllLocalDrives()
-{
-	for (int i=0; i < GetItemCount(); i++)
-	{
-		CDriveItem *item= GetItem(i);
-		UINT state= item->IsRemote() ? 0 : LVIS_SELECTED;
-		SetItemState(i, LVIS_SELECTED, state);
-	}
-}
-
 void CDrivesList::OnLButtonDown(UINT /*nFlags*/, CPoint /*point*/)
 {
 	// We simulate Ctrl-Key-Down here, so that the dialog
@@ -643,7 +638,7 @@ void CSelectDrivesDlg::OnOK()
 		{
 			CDriveItem *item= m_list.GetItem(i);
 
-			if (m_radio == RADIO_ALLLOCALDRIVES && !item->IsRemote() 
+			if (m_radio == RADIO_ALLLOCALDRIVES && !item->IsRemote() && !item->IsSUBSTed()
 			||  m_radio == RADIO_SOMEDRIVES && m_list.IsItemSelected(i))
 			{
 				m_drives.Add(item->GetDrive());

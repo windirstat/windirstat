@@ -152,6 +152,8 @@ Play with the Select Drives Dialog
 --> A double click on a drive opens that drive alone.
 --> The selection is persistent.
 --> UNC Paths work.
+SUBST a folder to K:. Select "All local drives"
+--> K: is not included.
 
 Online Help
 --> Is available in the selected Language
@@ -303,6 +305,14 @@ Double click C:
 --> C: is being scanned.
 Open the drive selection dialog again.
 --> K: is being queried. After 30 seconds it says "(unavailable)".
+
+Scan C:\temp. Select a file. In the Windows Explorer delete
+this file. Windirstat-Properties.
+--> There is 1 Messagebox, not 2.
+
+Page User defined cleanups: Select the cleanup No 9. Empty
+its title. In the list click below cleanup No. 9.
+--> No crash.
 
 
 Special cases

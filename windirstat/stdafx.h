@@ -80,10 +80,6 @@
 #include "selectobject.h"
 #include "set.h"
 
-#ifdef _DEBUG
-//#define _STRONG_DEBUG		// Extensive checking (slow)
-#endif
-
 #define countof(arr) (sizeof(arr)/sizeof((arr)[0]))
 
 template<class T> int signum(T x) { return (x) < 0 ? -1 : (x) == 0 ? 0 : 1; }

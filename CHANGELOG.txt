@@ -1,6 +1,18 @@
 changelog.txt - What has been done to WinDirStat (newest top)
 =============================================================
 
+2003-12-29	bseifert
+	* Page User defined cleanups: Select the cleanup No 9. Empty
+	  its title. In the list click below cleanup No. 9.
+	  --> The program crashed (invalid pointer). Fixed.
+	* The 'Send e-mail to owner' report can now be customized.
+	* The default title for user defined cleanups is now no longer
+	  stored as string to the registry. So, after changing the language, it
+	  now appears in the new language.
+	* SUBST'd drives are now excluded from "All local drives".
+	* There was a duplicate error message, when "Show Properties" or
+	  "Explorer here" failed.
+	
 2003-12-27	bseifert
 	* Selection of types: When the extension list has the focus,
 	  the treemap highlights all files of the given extension.

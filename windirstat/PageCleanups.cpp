@@ -144,6 +144,11 @@ void CPageCleanups::OnLbnSelchangeList()
 	CheckEmptyTitle();
 
 	m_current= m_list.GetCurSel();
+	if (m_current < 0 || m_current >= USERDEFINEDCLEANUPCOUNT)
+	{
+		m_current= USERDEFINEDCLEANUPCOUNT - 1;
+		m_list.SetCurSel(m_current);
+	}
 	CurrentUdcToDialog();
 }
 
@@ -162,6 +167,7 @@ void CPageCleanups::CheckEmptyTitle()
 		m_list.InsertString(m_current, m_title);
 
 		DialogToCurrentUdc();
+		m_udc[m_current].virginTitle= true;
 	}
 }
 
@@ -261,6 +267,7 @@ void CPageCleanups::OnBnClickedEnabled()
 void CPageCleanups::OnEnChangeTitle()
 {
 	OnSomethingChanged();
+	m_udc[m_current].virginTitle= false;
 	m_list.DeleteString(m_current);
 	m_list.InsertString(m_current, m_title);
 	m_list.SetCurSel(m_current);

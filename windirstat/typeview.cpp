@@ -288,7 +288,7 @@ CString CExtensionListControl::GetSelectedExtension()
 	POSITION pos = GetFirstSelectedItemPosition();
 	if (pos == NULL)
 	{
-		return "";
+		return _T("");
 	}
 	else
 	{

@@ -135,3 +135,23 @@ private:
 	TypeMAPISendMail m_MAPISendMail;
 };
 
+
+//
+// QueryDosDevice. Supported with W98 and higher.
+//
+class CQueryDosDeviceApi
+{
+public:
+	CQueryDosDeviceApi();
+	~CQueryDosDeviceApi();
+
+	bool IsSupported();
+
+	DWORD QueryDosDevice(LPCTSTR lpDeviceName, LPTSTR lpTargetPath, DWORD ucchMax);
+
+private:
+	typedef DWORD (WINAPI *TypeQueryDosDevice)(LPCTSTR lpDeviceName, LPTSTR lpTargetPath, DWORD ucchMax);
+
+	HMODULE m_dll;
+	TypeQueryDosDevice m_QueryDosDevice;
+};

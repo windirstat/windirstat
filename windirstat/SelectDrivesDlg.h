@@ -54,6 +54,7 @@ public:
 	CString GetPath() const;
 	CString GetDrive() const;
 	bool IsRemote() const;
+	bool IsSUBSTed() const;
 	virtual bool DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *width) const;
 	virtual CString GetText(int subitem) const;
 	int GetImage() const;
@@ -123,7 +124,6 @@ public:
 	CDriveItem *GetItem(int i);
 	void SelectItem(CDriveItem *item);
 	bool IsItemSelected(int i);
-	void SelectAllLocalDrives();
 
 	virtual bool HasImages();
 

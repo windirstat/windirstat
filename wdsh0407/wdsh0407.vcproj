@@ -34,30 +34,6 @@
 				CleanCommandLine="del ..\..\release\wdsh0407.chm"
 				Output="..\..\release\wdsh0407.chm"/>
 		</Configuration>
-		<Configuration
-			Name="Unicode Debug|Win32"
-			OutputDirectory="$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)"
-			ConfigurationType="0">
-			<Tool
-				Name="VCNMakeTool"
-				BuildCommandLine="echo The help file will only be generated in release build."
-				ReBuildCommandLine="echo The help file will only be generated in release build."
-				CleanCommandLine="echo clean"
-				Output="wdsh0407.chm"/>
-		</Configuration>
-		<Configuration
-			Name="Unicode Release|Win32"
-			OutputDirectory="$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)"
-			ConfigurationType="0">
-			<Tool
-				Name="VCNMakeTool"
-				BuildCommandLine="hhc &quot;$(ProjectDir)windirstat.hhp&quot; || cd ."
-				ReBuildCommandLine="hhc &quot;$(ProjectDir)windirstat.hhp&quot; || cd ."
-				CleanCommandLine="del ..\..\release\wdsh0407.chm"
-				Output="..\..\release\wdsh0407.chm"/>
-		</Configuration>
 	</Configurations>
 	<References>
 	</References>
