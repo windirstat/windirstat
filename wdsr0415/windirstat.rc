@@ -142,7 +142,7 @@ BEGIN
     END
     POPUP "&Mapa drzewa"
     BEGIN
-        MENUITEM "&Poka¿ mapê drzewa\tF9",      ID_VIEW_SHOWTREEMAP
+        MENUITEM "&Poka¿ Mapê D	rzewa\tF9",      ID_VIEW_SHOWTREEMAP
         MENUITEM SEPARATOR
         MENUITEM "Po&wiêksz\t+",                ID_TREEMAP_ZOOMIN
         MENUITEM "Po&mniejsz\t-",               ID_TREEMAP_ZOOMOUT
@@ -285,7 +285,7 @@ BEGIN
     CONTROL         "",IDC_DRIVES,"SysListView32",LVS_REPORT | 
                     LVS_OWNERDRAWFIXED | LVS_ALIGNLEFT | WS_BORDER | 
                     WS_TABSTOP,7,43,262,100
-    CONTROL         "A &Katalog",IDC_AFOLDER,"Button",BS_AUTORADIOBUTTON,7,
+    CONTROL         "&Katalog",IDC_AFOLDER,"Button",BS_AUTORADIOBUTTON,7,
                     150,100,10
     EDITTEXT        IDC_FOLDERNAME,6,161,209,14,ES_AUTOHSCROLL
     PUSHBUTTON      "...",IDC_BROWSEFOLDER,219,161,50,14
@@ -363,7 +363,7 @@ BEGIN
                     WS_VSCROLL | WS_TABSTOP
     PUSHBUTTON      "&Góra",IDC_UP,21,181,37,14
     PUSHBUTTON      "&Dó³",IDC_DOWN,66,181,37,14
-    LTEXT           "Zasady &odœwie¿ania",IDC_STATIC,128,174,108,8
+    LTEXT           "Regu³y &odœwie¿ania",IDC_STATIC,128,174,108,8
     LTEXT           "&Nazwa",IDC_STATIC,186,7,24,8
     LTEXT           "&Wiersz polecenia",IDC_STATIC,129,25,83,8
     GROUPBOX        "Zastosuj do",IDC_STATIC,129,81,244,40
@@ -748,7 +748,7 @@ END
 STRINGTABLE 
 BEGIN
     ID_TREEMAP_RESELECTCHILD 
-                            "Wybiera ponownie poziom ni¿ej.\nWybierz poziom ni¿ej"
+                            "Skacze poziom ni¿ej dla wybranej pozycji.\nWybierz poziom ni¿ej"
     ID_CLEANUP_OPEN         "Otwiera wybran¹ pozycjê.\r\nOtwórz"
     ID_CLEANUP_PROPERTIES   "Pokazuje w³aœciwoœci wybranej pozycji.\r\nPoka¿ w³aœciwoœci"
 END
@@ -776,7 +776,7 @@ BEGIN
     IDS_TREECOL_SUBTREEPERCENTAGE "Poddrzewo procentowo"
     IDS_TREECOL_PERCENTAGE  "Procentowo"
     IDS_TREECOL_SIZE        "Rozmiar"
-    IDS_TREECOL_ITEMS       "Elementy"
+    IDS_TREECOL_ITEMS       "Liczba elementów"
     IDS_TREECOL_FILES       "Pliki"
     IDS_TREECOL_SUBDIRS     "Podkatalogi"
     IDS_TREECOL_LASTCHANGE  "Ostatnia modyfikacja"

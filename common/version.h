@@ -43,7 +43,7 @@
 // The following line is automatically incremented by linkcounter.exe.
 // Format: #define blank LINKCOUNT blanks decimal
 // Reset this to zero only when you increment VERNUM_MAJOR/MINOR/REVISION.
-#define LINKCOUNT  219
+#define LINKCOUNT  221
 
 //-------------------------------------------------------------------
 // Release candidate number. Relevant for BC_RELEASECANDIDATE.
@@ -99,6 +99,9 @@
 
 
 // $Log$
+// Revision 1.16  2004/11/13 18:48:29  bseifert
+// Few corrections in Polish windirstat.rc. Thanks to Darek.
+//
 // Revision 1.15  2004/11/13 08:17:04  bseifert
 // Remove blanks in Unicode Configuration names.
 //
