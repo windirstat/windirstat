@@ -194,6 +194,7 @@
 #define IDC_SUBJECT                     1221
 #define IDC_PREFIX                      1222
 #define IDC_SUFFIX                      1223
+#define IDC_CHECK1                      1225
 #define IDC_USEWDSLOCALE                1225
 #define ID_FILE_OPENURL                 32771
 #define ID_FILE_OPENRECENT              32772
@@ -266,7 +267,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        900
 #define _APS_NEXT_COMMAND_VALUE         33024
-#define _APS_NEXT_CONTROL_VALUE         1225
+#define _APS_NEXT_CONTROL_VALUE         1226
 #define _APS_NEXT_SYMED_VALUE           104
 #endif
 #endif

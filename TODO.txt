@@ -2,26 +2,35 @@ TODO.txt - What still has to been done to WinDirStat
 Last modified: $Date$
 =============================================================
 
-- Credit Sam (from Ultr@VNC) for his efforts to translate the missing parts
-  to French. Not yet done!
-  => bseifert
-
-- Credit assarbad, tigroo and Darek and further translators.
+- Setup: Translate IDS_CREATEINGSENDTOSHORTCUT and IDC_SHORTCUTSENDTO.
+  
+- Credit Sam (UltraSam (sam.fd@wanadoo.fr)) for his efforts to translate the missing parts to French.
+  Credit assarbad as co-developer since Oct/2004, 
+  Credit tigroo for Frensh tranlation, 
+  Credit Dariusz 'Darek' Malachowski for Polish translation
+  Credit Sergiy 'Polet' Polyetayev for Russian translation
   => bseifert
 
 - Add a column for file attributes to the directory list. Same design
   as in Windows Explorer "RHSAEC" etc.
   => assarbad
   
-- Setup: optionally install a link to Windirstat in the SendTo-Folder.
-  => bseifert
-    
 - Multiple selection (and deletion).
   Concept first! Which cleanup actions will still be enabled
   and how will they work if multiple items are selected?
   => bseifert+assarbad
 
+- Use windirstat.ini, if present
+
+- Implement Context menu position compromise
+
+- Route Feedback to new mailing-list
+
+- Sync testplan.
+  
 - Sync Online help. 
+
+- Execute testplan.
 
 - Sync Website
 

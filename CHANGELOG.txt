@@ -2,6 +2,10 @@ changelog.txt - What has been done to WinDirStat (newest top)
 Last modified: $Date$
 =============================================================
 
+2004-11-19	bseifert
+	* Setup optionally installs a link to windirstat in the
+	  SendTo-Folder.
+	  
 2004-11-14	bseifert/assarbad
 	* Date/time and number formatting is now done using
 	  GetUserDefaultLangID(), unless the new option
