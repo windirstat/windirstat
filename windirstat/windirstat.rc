@@ -191,7 +191,7 @@ BEGIN
         MENUITEM "&Command Prompt Here\tCtrl+P", 32808
         MENUITEM "&Refresh Selected\tF5",       32817
         MENUITEM SEPARATOR
-        MENUITEM "&Delete (to Recyle Bin)\tDel", 32809
+        MENUITEM "&Delete (to Recycle Bin)\tDel", 32809
         MENUITEM "Delete (no &way to undelete!)\tShift+Del", 32810
         MENUITEM SEPARATOR
         MENUITEM "&Properties",                 ID_CLEANUP_PROPERTIES
@@ -431,8 +431,8 @@ BEGIN
                     WS_TABSTOP,76,150,54,10
     PUSHBUTTON      "Grid &Color",IDC_TREEMAPGRIDCOLOR,134,150,85,14,0,
                     WS_EX_RIGHT
-    PUSHBUTTON      "H&ighlight Rectangle",IDC_TREEMAPHIGHLIGHTCOLOR,76,175,
-                    143,14,0,WS_EX_RIGHT
+    PUSHBUTTON      "H&ighlighting Rectangle",IDC_TREEMAPHIGHLIGHTCOLOR,76,
+                    175,143,14,0,WS_EX_RIGHT
     CTEXT           "Static",IDC_STATICSCALEFACTOR,339,7,32,8
     CTEXT           "Static",IDC_STATICHEIGHT,305,7,32,8
     CTEXT           "Static",IDC_STATICCUSHIONSHADING,271,7,32,8
@@ -476,8 +476,8 @@ FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     CONTROL         "&Critical",IDC_CRITICAL,"Button",BS_AUTORADIOBUTTON | 
                     WS_GROUP,14,43,43,10
-    CONTROL         "&Grave",IDC_GRAVE,"Button",BS_AUTORADIOBUTTON,73,43,43,
-                    10
+    CONTROL         "&Serious",IDC_GRAVE,"Button",BS_AUTORADIOBUTTON,73,43,
+                    43,10
     CONTROL         "&Normal",IDC_NORMAL,"Button",BS_AUTORADIOBUTTON,132,43,
                     43,10
     CONTROL         "&Wish",IDC_WISH,"Button",BS_AUTORADIOBUTTON,191,43,43,
@@ -502,7 +502,7 @@ BEGIN
     LTEXT           "<application>",IDC_APPLICATION,51,18,123,8
     LTEXT           "Platform:",IDC_STATIC_PLATFORM,185,18,30,8
     LTEXT           "<platform>",IDC_PLATFORM,230,18,123,8
-    LTEXT           "For a bug report, it's best if you describe the symptom, including the exact wording of the error message, and, if possible,  the steps to reproduce the behavior.",
+    LTEXT           "For a bug report, it's best if you describe the symptom, including the exact wording of the error message, and, if possible, the steps to reproduce the behavior.",
                     IDC_HINT,7,99,346,19
     LTEXT           "When you press OK, you will be able to review the message in your e-mail program.",
                     IDC_STATIC_OKHINT,7,201,346,8
@@ -825,7 +825,7 @@ BEGIN
     IDS_FEEDBACKHINT        "Feedback is always appreciated."
     IDS_FROMsPLATFORMs      "From: %1!s!. Platform: %2!s!.\r\n\r\n"
     IDS_SEV_CRITICAL        "Critical Bug"
-    IDS_SEV_GRAVE           "Grave Bug"
+    IDS_SEV_GRAVE           "Serious Bug"
     IDS_SEV_NORMAL          "Bug"
     IDS_SEV_WISH            "Wish"
     IDS_SEV_FEEDBACK        "Feedback"

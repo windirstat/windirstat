@@ -38,7 +38,8 @@ enum
 	COL_ITEMS,
 	COL_FILES,
 	COL_SUBDIRS,
-	COL_LASTCHANGE
+	COL_LASTCHANGE,
+	COL_ATTRIBUTES
 };
 
 // Item types
@@ -226,6 +227,9 @@ private:
 
 
 // $Log$
+// Revision 1.10  2004/11/15 19:50:39  assarbad
+// - Minor corrections
+//
 // Revision 1.9  2004/11/12 00:47:42  assarbad
 // - Fixed the code for coloring of compressed/encrypted items. Now the coloring spans the full row!
 //
