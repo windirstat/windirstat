@@ -1,7 +1,7 @@
 [OPTIONS]
 Compatibility=1.1 or later
 Compiled file=..\..\release\wdsh0407.chm
-Contents file=Table of Contents.hhc
+Contents file=toc.hhc
 Default Window=main
 Default topic=windirstat.htm
 Display compile progress=No
@@ -10,7 +10,7 @@ Language=0x407 Deutsch (Deutschland)
 Title=WinDirStat
 
 [WINDOWS]
-main="WinDirStat","Table of Contents.hhc",,"windirstat.htm","windirstat.htm",,,,,0x63420,,0x3006,[22,19,816,782],0x108f0000,,,,,,0
+main="WinDirStat","toc.hhc",,"windirstat.htm","windirstat.htm",,,,,0x63420,,0x3006,[22,19,816,782],0x108f0000,,,,,,0
 
 
 [FILES]
