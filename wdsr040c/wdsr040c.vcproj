@@ -109,7 +109,7 @@
 				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
 		</Configuration>
 		<Configuration
-			Name="Unicode Debug|Win32"
+			Name="UnicodeDebug|Win32"
 			OutputDirectory="$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="2"
@@ -129,7 +129,7 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="../../debug/wdsr040c.dll"
+				OutputFile="../../udebug/wdsr040c.dll"
 				LinkIncremental="2"
 				GenerateDebugInformation="TRUE"
 				ProgramDatabaseFile="$(OutDir)/wdsr040c.pdb"
@@ -159,7 +159,7 @@
 				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
 		</Configuration>
 		<Configuration
-			Name="Unicode Release|Win32"
+			Name="UnicodeRelease|Win32"
 			OutputDirectory="$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="2"
@@ -176,7 +176,7 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="../../release/wdsr040c.dll"
+				OutputFile="../../urelease/wdsr040c.dll"
 				LinkIncremental="1"
 				GenerateDebugInformation="TRUE"
 				SubSystem="2"
@@ -234,6 +234,9 @@
 				RelativePath=".\res\icon1.ico">
 			</File>
 			<File
+				RelativePath=".\res\license.txt">
+			</File>
+			<File
 				RelativePath=".\res\Toolbar.bmp">
 			</File>
 			<File
@@ -243,9 +246,6 @@
 				RelativePath=".\res\windirstat.rc2">
 			</File>
 		</Filter>
-		<File
-			RelativePath=".\res\license.txt">
-		</File>
 	</Files>
 	<Globals>
 	</Globals>

@@ -127,7 +127,7 @@
 				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
 		</Configuration>
 		<Configuration
-			Name="Unicode Debug|Win32"
+			Name="UnicodeDebug|Win32"
 			OutputDirectory="$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="1"
@@ -152,7 +152,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="htmlhelp.lib"
-				OutputFile="../../debug/windirstat.exe"
+				OutputFile="../../udebug/windirstat.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="TRUE"
 				SubSystem="2"
@@ -184,7 +184,7 @@
 				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
 		</Configuration>
 		<Configuration
-			Name="Unicode Release|Win32"
+			Name="UnicodeRelease|Win32"
 			OutputDirectory="$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="1"
@@ -206,7 +206,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="htmlhelp.lib"
-				OutputFile="../../release/windirstat.exe"
+				OutputFile="../../urelease/windirstat.exe"
 				LinkIncremental="1"
 				GenerateDebugInformation="TRUE"
 				SubSystem="2"
@@ -404,13 +404,13 @@
 						UsePrecompiledHeader="1"/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Unicode Debug|Win32">
+					Name="UnicodeDebug|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
 						UsePrecompiledHeader="1"/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Unicode Release|Win32">
+					Name="UnicodeRelease|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
 						UsePrecompiledHeader="1"/>
@@ -607,13 +607,13 @@
 						UsePrecompiledHeader="0"/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Unicode Debug|Win32">
+					Name="UnicodeDebug|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
 						UsePrecompiledHeader="0"/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Unicode Release|Win32">
+					Name="UnicodeRelease|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
 						UsePrecompiledHeader="0"/>
@@ -649,13 +649,13 @@
 						UsePrecompiledHeader="0"/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Unicode Debug|Win32">
+					Name="UnicodeDebug|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
 						UsePrecompiledHeader="0"/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Unicode Release|Win32">
+					Name="UnicodeRelease|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
 						UsePrecompiledHeader="0"/>

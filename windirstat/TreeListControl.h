@@ -173,6 +173,9 @@ protected:
 
 
 // $Log$
+// Revision 1.8  2004/11/13 08:17:07  bseifert
+// Remove blanks in Unicode Configuration names.
+//
 // Revision 1.7  2004/11/12 22:14:16  bseifert
 // Eliminated CLR_NONE. Minor corrections.
 //

@@ -94,7 +94,7 @@
 				DeploymentContent="TRUE">
 			</File>
 			<File
-				RelativePath=".\Table of Contents.hhc">
+				RelativePath=".\toc.hhc">
 			</File>
 			<File
 				RelativePath=".\treemap.htm"
