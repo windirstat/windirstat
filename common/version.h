@@ -29,8 +29,8 @@
 // Build categories. Uncomment _one_ line.
 //
 
-#define BC_DEVEL				// Development version. The usual setting. File version is 0.0.0.buildno.
-//#define BC_RELEASECANDIDATE		// Release candidate. Version number is relevant but not yet official. About-box shows x.y.zrcn. File version is x.y.z.buildno.
+//#define BC_DEVEL				// Development version. The usual setting. File version is 0.0.0.buildno.
+#define BC_RELEASECANDIDATE		// Release candidate. Version number is relevant but not yet official. About-box shows x.y.zrcn. File version is x.y.z.buildno.
 //#define BC_RELEASE			// Set this only during official builds. About-box shows x.y.z. File version is x.y.z.buildno
 
 
@@ -39,17 +39,17 @@
 // 
 #define VERNUM_MAJOR		1
 #define VERNUM_MINOR		1
-#define VERNUM_REVISION		0
+#define VERNUM_REVISION		1
 // The following line is automatically incremented by linkcounter.exe.
 // Format: #define blank LINKCOUNT blanks decimal
 // Reset this to zero only when you increment VERNUM_MAJOR/MINOR/REVISION.
 
-#define LINKCOUNT  468
+#define LINKCOUNT  2
 
 //-------------------------------------------------------------------
 // Release candidate number. Relevant for BC_RELEASECANDIDATE.
 //
-#define VERNUM_CANDIDATE	3
+#define VERNUM_CANDIDATE	1
 
 
 
@@ -114,6 +114,9 @@
 
 
 // $Log$
+// Revision 1.26  2004/12/30 11:26:12  bseifert
+// Decided to use serif font for help files. Incremented version number. rc1.
+//
 // Revision 1.25  2004/12/30 10:18:39  bseifert
 // Updated RESOURCEVERSION. Updated testplan. setup: "minimize size".
 //
