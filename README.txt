@@ -10,7 +10,7 @@ This project, made up of
 
 - resource DLLs [executables]
 	wdsr0407 (German), wdsr040c (French), wdsr0415 (Polish),
-	wdsr0419 (Russian), wdsr040e (Hungarian)
+	wdsr0419 (Russian), wdsr040e (Hungarian), wdsr040a (Spanish)
 
 - helper/utility programs [executables]
 	setup, linkcounter
@@ -76,6 +76,7 @@ wdsh0407	-> German Helpfile wdsh0407.chm
 wdsh0415	-> Polish Helpfile wdsh0415.chm
 wdshelp		-> English Helpfile windirstat.chm
 wdsr0407	-> German Resource DLL wdsr0407.dll
+wdsr040a	-> Spanish Resource DLL wdsr040a.dll
 wdsr040c	-> French Resource DLL wdsr040c.dll
 wdsr040e	-> Hungarian Resource DLL wdsr040e.dll
 wdsr0415	-> Polish Resource DLL wdsr0415.dll

@@ -2,11 +2,14 @@ changelog.txt - What has been done to WinDirStat (newest top)
 Last modified: $Date$
 =============================================================
 
+2005-02-06	assarbad
+	* Added Spanish resource dll (thanks to Sergio).
+
 2005-01-29	bseifert
 	* Added Hungarian resource dll (thanks to Leonard).
 	* Only one build configuration for resource DLLs: UnicodeRelease
 	* IDS_ABOUT_AUTHORSTEXTs: obscured e-mail addresses by #-signs to avoid spam
-	
+
 2005-01-02	bseifert
 	* Copyright -2005.
 

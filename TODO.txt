@@ -4,10 +4,6 @@ Last modified: $Date$
 
 - Translate IDS_ABOUT_AUTHORSTEXTs ("Hungarian") to
   French, Polish and Russian
-  
-- Russian resource: abbreviate IDS_USERDEFINEDCLEANUPd 
-
-- Russian: translate IDS_ABOUT_AUTHORS and IDS_ABOUT_AUTHORSTEXTs
 
 - Christmas Release 1.1.1
 ==========================================================
