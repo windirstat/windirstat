@@ -274,6 +274,8 @@ path (like .) into the filename field. Press OK.
 --> The root item has its path expanded.
 Enter a folder name with trailing backslash, like C:\temp\. Press OK.
 --> The trailing backslash is removed.
+In a network enter an UNC path to the filename field via keyboard.
+--> OK button is enabled, no validation-delay.
 
 Start Windirstat an cancel the drive selection dialog.
 Empty Recycle Bin

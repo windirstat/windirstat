@@ -798,6 +798,11 @@ BEGIN
                             "Die Hilfedatei %1!s! ist nicht da.\r\nSie wird im selben Verzeichnis erwartet, in dem windirstat.exe liegt.\r\nSie sollten sie zusammen mit windirstat.exe erhalten haben.\r\nSie können eine Hilfedatei downloaden von der WinDirStat Homepage (siehe Aboutbox)."
     IDS_SUSPENDED_          "(angehalten) "
     IDS_SUSPEND             "Anhalten"
+	IDS_SPEC_BYTES			"Bytes"
+	IDS_SPEC_KB				"KB"
+	IDS_SPEC_MB				"MB"
+	IDS_SPEC_GB				"GB"
+	IDS_SPEC_TB				"TB"
 END
 
 #endif    // German (Germany) resources

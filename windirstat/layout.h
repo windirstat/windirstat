@@ -38,9 +38,25 @@ class CLayout
 		CRect originalRectangle;
 	};
 
+	class CSizeGripper: public CWnd
+	{
+	public:
+		static const int _width;
+
+		CSizeGripper();
+		void Create(CWnd *parent, CRect rc);
+
+	private:
+		void DrawShadowLine(CDC *pdc, CPoint start, CPoint end);
+
+		DECLARE_MESSAGE_MAP()
+		afx_msg void OnPaint();
+		afx_msg UINT OnNcHitTest(CPoint point);
+	};
+
 public:
 	CLayout(CWnd *dialog, LPCTSTR name);
-	void AddControl(CWnd *control, double movex, double movey, double stretchx, double stretchy);
+	int AddControl(CWnd *control, double movex, double movey, double stretchx, double stretchy);
 	void AddControl(UINT id, double movex, double movey, double stretchx, double stretchy);
 
 	void OnInitDialog(bool centerWindow);
@@ -53,4 +69,5 @@ protected:
 	CString m_name;
 	CSize m_originalDialogSize;
 	CArray<SControlInfo, SControlInfo&> m_control;
+	CSizeGripper m_sizeGripper;
 };

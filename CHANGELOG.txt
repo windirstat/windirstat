@@ -1,6 +1,14 @@
 changelog.txt - What has been done to WinDirStat (newest top)
 =============================================================
 
+2003-12-13	bseifert
+	* Added size grippers to the resizable dialogs.
+	* Corrections in French windirstat.rc
+	* Made "Bytes", "KB", "MB, "GB", "TB" localizable.
+
+2003-12-08	bseifert
+	* Release 1.0.1
+	
 2003-12-07	bseifert
 	* User defined cleanups are now by default disabled for UNC paths.
 	  New option to enable udcs for UNC paths.

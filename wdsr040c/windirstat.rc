@@ -338,11 +338,11 @@ BEGIN
     EDITTEXT        IDC_COMMANDLINE,129,35,244,14,ES_AUTOHSCROLL
     LTEXT           "%p Chemin complet",IDC_STATIC,128,54,93,8
     LTEXT           "%n Nom de fichier ou dossier sans le chemin",IDC_STATIC,
-                    225,54,138,8
-    LTEXT           "%sp Chemin complet du sous répertoire",IDC_HINTSP,128,
-                    63,94,8
+                    225,54,148,8
+    LTEXT           "%sp Chemin complet du\r\n         sous répertoire",
+                    IDC_HINTSP,128,63,94,17
     LTEXT           "%sn Nom du sous dossier sans le chemin",IDC_HINTSN,225,
-                    63,138,8
+                    63,148,8
     CONTROL         "&Lecteurs",IDC_WORKSFORDRIVES,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,138,92,49,10
     CONTROL         "&Répertoires",IDC_WORKSFORDIRECTORIES,"Button",
@@ -365,11 +365,11 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,250,160,100,10
     COMBOBOX        IDC_REFRESHPOLICY,128,183,245,93,CBS_DROPDOWNLIST | 
                     WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "&Monter",IDC_UP,21,181,37,14
-    PUSHBUTTON      "&Descendre",IDC_DOWN,66,181,37,14
+    PUSHBUTTON      "&Monter",IDC_UP,19,181,39,14
+    PUSHBUTTON      "&Descendre",IDC_DOWN,66,181,39,14
     LTEXT           "&Règles de rafraichissement",IDC_STATIC,128,174,108,8
     LTEXT           "&Titre",IDC_STATIC,186,7,24,8
-    LTEXT           "Invite de &commande",IDC_STATIC,129,25,83,8
+    LTEXT           "Ligne de &commande",IDC_STATIC,129,25,83,8
     GROUPBOX        "Travail sur",IDC_STATIC,129,81,244,40
 END
 
@@ -412,21 +412,21 @@ BEGIN
     CONTROL         "&Utiliser un ombrage en coussin",IDC_CUSHIONSHADING,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,18,15,122,10
     LTEXT           "&Hauteur",IDC_STATIC,31,32,54,8
-    EDITTEXT        IDC_HEIGHTFACTOR,88,30,35,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_HEIGHTFACTOR,88,30,37,14,ES_AUTOHSCROLL
     CONTROL         "",IDC_HEIGHTFACTORSPIN,"msctls_updown32",
-                    UDS_SETBUDDYINT | UDS_AUTOBUDDY | UDS_ARROWKEYS,125,30,
+                    UDS_SETBUDDYINT | UDS_AUTOBUDDY | UDS_ARROWKEYS,128,30,
                     11,14
     LTEXT           "&Facteur d'agrandissement",IDC_STATIC,31,53,54,8
-    EDITTEXT        IDC_SCALEFACTOR,88,51,35,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_SCALEFACTOR,88,51,37,14,ES_AUTOHSCROLL
     CONTROL         "",IDC_SCALEFACTORSPIN,"msctls_updown32",UDS_SETBUDDYINT | 
-                    UDS_AUTOBUDDY | UDS_ARROWKEYS,125,51,11,14
+                    UDS_AUTOBUDDY | UDS_ARROWKEYS,128,51,11,14
     LTEXT           "Lumière &ambiante",IDC_STATIC,31,74,53,8
-    EDITTEXT        IDC_AMBIENTLIGHT,88,73,35,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_AMBIENTLIGHT,88,73,37,14,ES_AUTOHSCROLL
     CONTROL         "",IDC_AMBIENTLIGHTSPIN,"msctls_updown32",
-                    UDS_SETBUDDYINT | UDS_AUTOBUDDY | UDS_ARROWKEYS,125,73,
+                    UDS_SETBUDDYINT | UDS_AUTOBUDDY | UDS_ARROWKEYS,128,73,
                     11,14
     PUSHBUTTON      "&Remettre les valeurs par défaut",IDC_RESETTODEFAULTS,
-                    31,94,105,14
+                    31,94,108,14
     CONTROL         "Montrer la &grille",IDC_TREEMAPGRID,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,18,144,62,10
     PUSHBUTTON      "&Couleur de grille",IDC_TREEMAPGRIDCOLOR,89,143,98,14,0,
@@ -496,7 +496,7 @@ BEGIN
                     IDC_STATIC,7,79,346,16
     LTEXT           "Application:",IDC_STATIC,7,18,38,8
     LTEXT           "<application>",IDC_APPLICATION,51,18,123,8
-    LTEXT           "Platteforme:",IDC_STATIC_PLATFORM,185,18,30,8
+    LTEXT           "Platteforme:",IDC_STATIC_PLATFORM,185,18,42,8
     LTEXT           "<platform>",IDC_PLATFORM,230,18,123,8
     LTEXT           "Pour signaler une erreur, il est mieux de décrire le symptome, en donner le message d'erreur exact, et si possible les étapes ayant donné l'erreur (ou pour la reproduire).",
                     IDC_HINT,7,99,346,19
@@ -728,7 +728,7 @@ STRINGTABLE
 BEGIN
     IDS_RESOURCEVERSION     "Resource Version 2"
     IDS_ABOUT_ABOUTTEXTss   "\r\nWinDirStat - Statistiques sur les systèmes de fichiers\r\n\r\n""Montre où est passé tout votre espace dique\r\net vous aide à faire le nettoyage.""\r\n\r\nRe-programmé pour MS Windows par\r\nBernhard Seifert (mailto:%1!s!),\r\n\r\nà partir du travail de Stefan Hundhammer sous KDE (Linux) KDirStat\r\n(http://kdirstat.sourceforge.net/).\r\n\r\nLa page Internet de WinDirStat est http://%2!s!/\r\n\r\nFrench translation: Pascal Delrot (mailto:tigroo@users.sourceforge.net)\r\n\r\nCopyright (c) 2003 Bernhard Seifert"
-    IDS_ABOUT_THANKSTOTEXT  "\r\nStefan Hundhammer pour son superbe outil Linux ""KDirStat"".\r\nUtiliser KDirStat (2.3.7) comme spécification m'a permis de gagner beaucoup de temps.\r\nhttp://kdirstat.sourceforge.net/\r\n\r\nLes auteurs de ""SequoiaView"" pour m'avoir montré à quel point les arbres sont utiles.\r\nhttp://www.win.tue.nl/sequoiaview/\r\n\r\nJarke J. van Wijk, Huub van de Wetering, Mark Bruls and Kees Huizing\r\npour leurs articles sur les arbres en coussins et rectangulaires.\r\nhttp://www.win.tue.nl/~vanwijk/\r\n\r\nBen Shneiderman pour son idée ingénieuse des arbres -\r\nune manière vraiment intuitive de visualiser le contenu des répertoires.\r\nhttp://www.cs.umd.edu/hcil/treemap-history/\r\n\r\nMes collègues pour leurs remarques sur les toutes premières versions de WinDirStat.\r\nhttp://www.daccord.net/\r\n\r\nBeatrix Lödige and Nick Lines for beta testing.\r\n"
+    IDS_ABOUT_THANKSTOTEXT  "\r\nStefan Hundhammer pour son superbe outil Linux ""KDirStat"".\r\nUtiliser KDirStat (2.3.7) comme spécification m'a permis de gagner beaucoup de temps.\r\nhttp://kdirstat.sourceforge.net/\r\n\r\nLes auteurs de ""SequoiaView"" pour m'avoir montré à quel point les arbres sont utiles.\r\nhttp://www.win.tue.nl/sequoiaview/\r\n\r\nJarke J. van Wijk, Huub van de Wetering, Mark Bruls and Kees Huizing\r\npour leurs articles sur les arbres en coussins et rectangulaires.\r\nhttp://www.win.tue.nl/~vanwijk/\r\n\r\nBen Shneiderman pour son idée ingénieuse des arbres -\r\nune manière vraiment intuitive de visualiser le contenu des répertoires.\r\nhttp://www.cs.umd.edu/hcil/treemap-history/\r\n\r\nMes collègues pour leurs remarques sur les toutes premières versions de WinDirStat.\r\nhttp://www.daccord.net/\r\n\r\nBeatrix Lödige et Nick Lines pour les tests de la version beta.\r\n"
     IDS_ABOUT_ABOUT         "A propos de"
     IDS_ABOUT_THANKSTO      "Merci à"
     IDS_ABOUT_LICENSEAGREEMENT "Accord de license"
@@ -744,7 +744,7 @@ BEGIN
     IDS_COULDNOTCREATEPROCESSssss 
                             "Impossible de créer un processus.\r\n\r\nApplication: '%1!s!',\r\nLigne de commande: '%2!s!',\r\nRépertoire de travail: '%3!s!'\r\nMessage d'erreur:\r\n%4!s!\r\n(Le rafraichissement n'aura pas lieu.)"
     IDS_TREECOL_NAME        "Nom"
-    IDS_TREECOL_SUBTREEPERCENTAGE "Pourcentage sur la branche"
+    IDS_TREECOL_SUBTREEPERCENTAGE "Pourcentage (graphique)"
     IDS_TREECOL_PERCENTAGE  "Pourcentage"
     IDS_TREECOL_SIZE        "Taille"
     IDS_TREECOL_ITEMS       "Eléments"
@@ -771,8 +771,8 @@ BEGIN
     IDS_WINDIRSTAT_SETTINGS "WinDirStat - Paramètres"
     IDS_SCANNING_           "Parcours "
     IDS_EMPTYRECYCLEBIN     "&Vider la corbeille"
-    IDS__ONEITEMss          " (1 élément, %1!s!%2!s!)"
-    IDS__sITEMSss           " (%1!s! éléments, %2!s!%3!s!)"
+    IDS__ONEITEMss          " (1 élément; %1!s!%2!s!)"
+    IDS__sITEMSss           " (%1!s! éléments; %2!s!%3!s!)"
     IDS_UDCsCTRLd           "%1!s!\tCtrl+%2!d!"
     IDS_USERDEFINEDCLEANUP0 "Nettoyage personnalisé #0"
     IDS_REPORT_DISKUSAGE    "Utilisation du disque"
@@ -784,7 +784,7 @@ STRINGTABLE
 BEGIN
     IDS_POLICY_REFRESHTHISENTRY "Rafraichir cette entrée"
     IDS_POLICY_REFRESHPARENT "Rafraichir le dossier parent de cette entrée"
-    IDS_BUGREPORTHINT       "For signaler une erreur, il est mieux de décrire les symptômes, en donnant le message d'erreur complet, et si possible, la manière de provoquer l'erreur en question."
+    IDS_BUGREPORTHINT       "Pour signaler une erreur, il est mieux de décrire les symptômes, en donnant le message d'erreur complet, et si possible, la manière de provoquer l'erreur en question."
     IDS_FEEDBACKHINT        "Les commentaires sont toujours les bienvenus."
     IDS_FROMsPLATFORMs      "De : %1!s!. Platte-forme : %2!s!.\r\n\r\n"
     IDS_SEV_CRITICAL        "Erreur critique"
@@ -809,9 +809,14 @@ BEGIN
     IDS_EXTCOL_DESCRIPTION  "Description"
     IDS_RAMUSAGEs           "Utilisation de la mémoire RAM: %1!s!"
     IDS_HELPFILEsCOULDNOTBEFOUND 
-                            "Le fichier d'aide %1!s! ne peut pas être trouvé.\r\nIt is expected to be in the same folder where windirstat.exe is.\r\nYou should have received it along with windirstat.exe.\r\nVous pouvez le télécharger depuis le site Internet de WinDirStat (voir la boite de dialogue ""A propos de"")."
+                            "Le fichier d'aide %1!s! ne peut pas être trouvé.\r\nIl est supposé se trouver dans le même répertoire que windirstat.exe is.\r\nVous auriez du recevoir ce fichier d'aide avec windirstat.exe.\r\nVous pouvez le télécharger depuis le site Internet de WinDirStat (voir la boite de dialogue ""A propos de"")."
     IDS_SUSPENDED_          "(suspendu) "
     IDS_SUSPEND             "Suspendre"
+    IDS_SPEC_BYTES          "octets"
+    IDS_SPEC_KB             "Ko"
+    IDS_SPEC_MB             "Mo"
+    IDS_SPEC_GB             "Go"
+    IDS_SPEC_TB             "To"
 END
 
 #endif    // French (France) resources

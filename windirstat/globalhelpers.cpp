@@ -73,6 +73,19 @@ namespace
 		}
 	}
 
+	void CacheString(CString& s, UINT resId, LPCTSTR defaultVal)
+	{
+		ASSERT(lstrlen(defaultVal) > 0);
+
+		if (s.IsEmpty())
+		{
+			s= LoadString(resId);
+		
+			if (s.IsEmpty())
+				s= defaultVal;
+		}
+	}
+
 }
 
 CString GetLocaleString(LCTYPE lctype, LANGID langid)
@@ -90,7 +103,15 @@ CString GetLocaleString(LCTYPE lctype, LANGID langid)
 
 CString GetLocaleLanguage(LANGID langid)
 {
-	return GetLocaleString(LOCALE_SNATIVELANGNAME, langid) + _T(" - ") + GetLocaleString(LOCALE_SNATIVECTRYNAME, langid);
+	CString s= GetLocaleString(LOCALE_SNATIVELANGNAME, langid);
+
+	// In the French case, the system returns "francais",
+	// but we want "Francais".
+
+	if (s.GetLength() > 0)
+		s.SetAt(0, toupper(s[0]));
+
+	return s + _T(" - ") + GetLocaleString(LOCALE_SNATIVECTRYNAME, langid);
 }
 
 CString GetLocaleThousandSeparator()
@@ -135,15 +156,15 @@ CString FormatLongLongHuman(LONGLONG n)
 	double TB = (int)(n);
 
 	if (TB != 0 || GB == base - 1 && MB >= half)
-		s= FormatDouble(TB + GB/base) + _T(" TB");
+		s.Format(_T("%s %s"), FormatDouble(TB + GB/base), GetSpec_TB());
 	else if (GB != 0 || MB == base - 1 && KB >= half)
-		s= FormatDouble(GB + MB/base) + _T(" GB");
+		s.Format(_T("%s %s"), FormatDouble(GB + MB/base), GetSpec_GB());
 	else if (MB != 0 || KB == base - 1 && B >= half)
-		s= FormatDouble(MB + KB/base) + _T(" MB");
+		s.Format(_T("%s %s"), FormatDouble(MB + KB/base), GetSpec_MB());
 	else if (KB != 0)
-		s= FormatDouble(KB + B/base) + _T(" KB");
+		s.Format(_T("%s %s"), FormatDouble(KB + B/base), GetSpec_KB());
 	else if (B != 0)
-		s.Format(_T("%d Bytes"), (int)B);
+		s.Format(_T("%d %s"), (int)B, GetSpec_Bytes());
 	else
 		s= _T("0");
 
@@ -537,3 +558,39 @@ CString MyGetFullPathName(LPCTSTR relativePath)
 
 	return buffer;
 }
+
+CString GetSpec_Bytes()
+{
+	static CString s;
+	CacheString(s, IDS_SPEC_BYTES, _T("Bytes"));
+	return s;
+}
+
+CString GetSpec_KB()
+{
+	static CString s;
+	CacheString(s, IDS_SPEC_KB, _T("KB"));
+	return s;
+}
+
+CString GetSpec_MB()
+{
+	static CString s;
+	CacheString(s, IDS_SPEC_MB, _T("MB"));
+	return s;
+}
+
+CString GetSpec_GB()
+{
+	static CString s;
+	CacheString(s, IDS_SPEC_GB, _T("GB"));
+	return s;
+}
+
+CString GetSpec_TB()
+{
+	static CString s;
+	CacheString(s, IDS_SPEC_TB, _T("TB"));
+	return s;
+}
+

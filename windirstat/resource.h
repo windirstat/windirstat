@@ -89,6 +89,11 @@
 #define IDS_HELPFILEsCOULDNOTBEFOUND    262
 #define IDS_SUSPENDED_                  263
 #define IDS_SUSPEND                     264
+#define IDS_SPEC_BYTES					265
+#define IDS_SPEC_KB						266
+#define IDS_SPEC_MB						267
+#define IDS_SPEC_GB						268
+#define IDS_SPEC_TB						269
 #define IDC_ALLDRIVES                   1000
 #define IDC_GROUPS                      1000
 #define IDC_ALLLOCALDRIVES              1000
@@ -170,6 +175,7 @@
 #define IDC_STATIC_PLATFORM             1205
 #define IDC_STATIC_SEVERITY             1206
 #define IDC_STATIC_OKHINT               1207
+#define IDC_SIZEGRIPPER					1208
 #define ID_FILE_OPENURL                 32771
 #define ID_FILE_OPENRECENT              32772
 #define ID_FILE_REFRESHALL              32773
@@ -240,7 +246,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        900
 #define _APS_NEXT_COMMAND_VALUE         33022
-#define _APS_NEXT_CONTROL_VALUE         1208
+#define _APS_NEXT_CONTROL_VALUE         1209
 #define _APS_NEXT_SYMED_VALUE           104
 #endif
 #endif

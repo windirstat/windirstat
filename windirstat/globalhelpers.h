@@ -51,3 +51,9 @@ bool DriveExists(const CString& path);
 CString GetUserName();
 bool IsHexDigit(int c);
 CString MyGetFullPathName(LPCTSTR relativePath);
+CString GetSpec_Bytes();
+CString GetSpec_KB();
+CString GetSpec_MB();
+CString GetSpec_GB();
+CString GetSpec_TB();
+

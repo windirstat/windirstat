@@ -843,6 +843,11 @@ BEGIN
                             "The help file %1!s! could not be found.\r\nIt is expected to be in the same folder where windirstat.exe is.\r\nYou should have received it along with windirstat.exe.\r\nYou can download one from WinDirStat's home site (see About box)."
     IDS_SUSPENDED_          "(suspended) "
     IDS_SUSPEND             "Suspend"
+	IDS_SPEC_BYTES			"Bytes"
+	IDS_SPEC_KB				"KB"
+	IDS_SPEC_MB				"MB"
+	IDS_SPEC_GB				"GB"
+	IDS_SPEC_TB				"TB"
 END
 
 #endif    // English (U.S.) resources

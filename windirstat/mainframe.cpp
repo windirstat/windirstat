@@ -765,9 +765,9 @@ void CMainFrame::UpdateCleanupMenu(CMenu *menu)
 		
 		CString info;
 		if (items == 1)
-			info.FormatMessage(IDS__ONEITEMss, FormatBytes(bytes), GetOptions()->IsHumanFormat() && bytes != 0 ? "" : " Bytes");
+			info.FormatMessage(IDS__ONEITEMss, FormatBytes(bytes), GetOptions()->IsHumanFormat() && bytes != 0 ? _T("") : _T(" ") + GetSpec_Bytes());
 		else
-			info.FormatMessage(IDS__sITEMSss, FormatCount(items), FormatBytes(bytes), GetOptions()->IsHumanFormat() && bytes != 0 ? "" : " Bytes");
+			info.FormatMessage(IDS__sITEMSss, FormatCount(items), FormatBytes(bytes), GetOptions()->IsHumanFormat() && bytes != 0 ? _T("") : _T(" ") + GetSpec_Bytes());
 
 		s+= info;
 		VERIFY(menu->ModifyMenu(ID_CLEANUP_EMPTYRECYCLEBIN, MF_BYCOMMAND|MF_STRING, ID_CLEANUP_EMPTYRECYCLEBIN, s));
