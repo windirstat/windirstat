@@ -493,7 +493,7 @@ BEGIN
     LTEXT           "Суффикс",IDC_STATIC,7,111,46,8
     EDITTEXT        IDC_SUFFIX,59,111,314,54,ES_MULTILINE | ES_AUTOVSCROLL | 
                     ES_AUTOHSCROLL | ES_WANTRETURN
-    PUSHBUTTON      "",IDC_RESET,59,174,89,14
+    PUSHBUTTON      "",IDC_RESET,59,174,146,14
 END
 
 
@@ -780,7 +780,7 @@ BEGIN
     IDS__sITEMSss           " (%1!s! Items, %2!s!%3!s!)"
     IDS_UDCsCTRLd           "%1!s!\tCtrl+%2!d!"
     IDS_USERDEFINEDCLEANUP0 "Очистка определенная пользователем #0"
-    IDS_REPORT_DISKUSAGE    "Ипользование дискового пространства"
+    IDS_REPORT_DISKUSAGE    "Использование дискового пространства"
     IDS_USERDEFINEDCLEANUPd "Очистка, определенная пользователем #%1!d!"
     IDS_POLICY_NOREFRESH    "Не обновлять"
 END
