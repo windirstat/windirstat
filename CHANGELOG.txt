@@ -2,6 +2,17 @@ changelog.txt - What has been done to WinDirStat (newest top)
 Last modified: $Date$
 =============================================================
 
+2004-11-25	assarbad
+	* Removal of obsolete functions IsCompressed() and
+	  IsEncrypted().
+	* Optimised use of GetCompressedFileSize() API which is
+	  now cached in the application object similar to PSAPI.
+	* Removed manifest and respective file for Russian and
+	  the manifest file for German ressources.
+	* Fixed coloring bug upon error codes #2 and #123 which
+	  happens using the ANSI version on files with Unicode
+	  names which cannot be mapped to ANSI names.
+
 2004-11-24	bseifert
 	* Eliminated hidden option "ExplorerStyle". The directory
 	  list context menu now appears horizontally at the cursor 
@@ -49,50 +60,50 @@ Last modified: $Date$
 	  It handles where the context menu is being shown.
 
 2004-11-07	assarbad/bseifert
-        * French part for setup.rc
-        * Minor bugfix concerning "follow junction points"
-        * Using compressed file size as reference now. This includes
-          compressed and sparse files. A wrapper makes this transparent
-          for the caller.
-        * Compressed files/folders are now shown by default in blue,
-          encrypted files/folders are shown by default in green.
-          These settings can be altered by modifying the two
-          REG_BINARY values "AltColor" (for compressed) and
-          "AltEncryptionColor" (for encrypted) under the key:
+	* French part for setup.rc
+	* Minor bugfix concerning "follow junction points"
+	* Using compressed file size as reference now. This includes
+	  compressed and sparse files. A wrapper makes this transparent
+	  for the caller.
+	* Compressed files/folders are now shown by default in blue,
+	  encrypted files/folders are shown by default in green.
+	  These settings can be altered by modifying the two
+	  REG_BINARY values "AltColor" (for compressed) and
+	  "AltEncryptionColor" (for encrypted) under the key:
           
-          HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer
+	  HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer
 
-          This mimics the behavior of the Windows XP explorer.
+	  This mimics the behavior of the Windows XP explorer.
 
 2004-11-06	assarbad
-        * Added the CVS-tags for Date and History whereever appropriate.
-          (already yesterday)
-        * Sam from the Ultr@VNC [ultravnc.sf.net] project volunteered to
-          translate the missing parts to French. Still necessary to check
-          wether the design is broken.
-        * Fixed the bug with ampersands. If file or directory names have an
-          ampersand they would show with underbar under the character right
-          to the ampersand. This is similar to the behavior of accelerators
-          in Windows dialogs. Just added DT_NOPREFX to all DrawText()
-          instances.
+	* Added the CVS-tags for Date and History whereever appropriate.
+	  (already yesterday)
+	* Sam from the Ultr@VNC [ultravnc.sf.net] project volunteered to
+	  translate the missing parts to French. Still necessary to check
+	  wether the design is broken.
+	* Fixed the bug with ampersands. If file or directory names have an
+	  ampersand they would show with underbar under the character right
+	  to the ampersand. This is similar to the behavior of accelerators
+	  in Windows dialogs. Just added DT_NOPREFX to all DrawText()
+	  instances.
 
 2004-11-02	assarbad
-        * Replaced the custom icon for junction points by code to greenify
-          the folder image. Thus junction points are now represented by green
-          folder icons.
-        * ANSI/Unicode DLLs and EXEs now have the same name. No more appended
-          "U" (which broke several things such as localization).
+	* Replaced the custom icon for junction points by code to greenify
+	  the folder image. Thus junction points are now represented by green
+	  folder icons.
+	* ANSI/Unicode DLLs and EXEs now have the same name. No more appended
+	  "U" (which broke several things such as localization).
 
 2004-10-31	assarbad
-        * Added option to ignore junction points (reparse points) for
-          those directories not being volume mount points already.
-        * Added the respective icon to represent junction points.
-        * Translation to German and French not yet done for the newly
-          added items.
+	* Added option to ignore junction points (reparse points) for
+	  those directories not being volume mount points already.
+	* Added the respective icon to represent junction points.
+	* Translation to German and French not yet done for the newly
+	  added items.
 
 2004-01-22	bseifert
-        * Release of 1.1.0 with unknown changes by Bernhard.
-          [This entry was added as late as 2004-11-06]
+	* Release of 1.1.0 with unknown changes by Bernhard.
+      [This entry was added as late as 2004-11-06]
 
 2004-01-20	bseifert
 	* Temporarily removed French translation from setup and Aboutbox for release 1.0.2.

@@ -463,7 +463,7 @@ BEGIN
                     WS_TABSTOP,32,13,229,10
     CONTROL         "&Suivre les points de montage (excepté les points de montage des Volumes)",
                     IDC_FOLLOWJUNCTIONS,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,32,27,229,10
+                    WS_TABSTOP,32,27,255,10
     CONTROL         "&Montrer la taille des fichiers en Go/Mo/Ko/octets",
                     IDC_HUMANFORMAT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,
                     41,229,10

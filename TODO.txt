@@ -6,7 +6,7 @@ Last modified: $Date$
   
 - Credit Sam (UltraSam (sam.fd@wanadoo.fr)) for his efforts to translate the missing parts to French.
   Credit assarbad as co-developer since Oct/2004, 
-  Credit tigroo for Frensh tranlation, 
+  Credit tigroo for French tranlation, 
   Credit Dariusz 'Darek' Malachowski for Polish translation
   Credit Sergiy 'Polet' Polyetayev for Russian translation
   => bseifert

@@ -57,10 +57,12 @@ CString GetSpec_KB();
 CString GetSpec_MB();
 CString GetSpec_GB();
 CString GetSpec_TB();
-ULONGLONG MyGetFileSize(CFileFind* finder);
-LPCITEMIDLIST SHGetPIDLFromPath(CString path);
 
 // $Log$
+// Revision 1.13  2004/11/25 11:58:52  assarbad
+// - Minor fixes (odd behavior of coloring in ANSI version, caching of the GetCompressedFileSize API)
+//   for details see the changelog.txt
+//
 // Revision 1.12  2004/11/12 13:19:44  assarbad
 // - Minor changes and additions (in preparation for the solution of the "Browse for Folder" problem)
 //

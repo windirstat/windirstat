@@ -53,7 +53,7 @@ CItem::CItem(ITEMTYPE type, LPCTSTR name, bool dontFollow)
 	if (GetType() == IT_FILE || dontFollow || GetType() == IT_FREESPACE || GetType() == IT_UNKNOWN || GetType() == IT_MYCOMPUTER)
 	{
 		SetReadJobDone();
-		m_readJobs= 0;
+		m_readJobs = 0;
 	}
 	else if (GetType() == IT_DIRECTORY || GetType() == IT_DRIVE || GetType() == IT_FILESFOLDER)
 	{
@@ -62,7 +62,7 @@ CItem::CItem(ITEMTYPE type, LPCTSTR name, bool dontFollow)
 
 	if (GetType() == IT_DRIVE)
 	{
-		m_name= FormatVolumeNameOfRootPath(m_name);
+		m_name = FormatVolumeNameOfRootPath(m_name);
 	}
 
 	ZeroMemory(&m_lastChange, sizeof(m_lastChange));
@@ -83,7 +83,7 @@ bool CItem::DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *width,
 	if (subitem != COL_SUBTREEPERCENTAGE)
 		return false;
 
-	bool showReadJobs= MustShowReadJobs();
+	bool showReadJobs = MustShowReadJobs();
 
 	if (showReadJobs && !GetOptions()->IsPacmanAnimation())
 		return false;
@@ -93,7 +93,7 @@ bool CItem::DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *width,
 
 	if (width != NULL)
 	{
-		*width= GetSubtreePercentageWidth();
+		*width = GetSubtreePercentageWidth();
 		return true;
 	}
 
@@ -108,7 +108,7 @@ bool CItem::DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *width,
 	{
 		rc.DeflateRect(2, 5);
 		for (int i=0; i < GetIndent(); i++)
-			rc.left+= rc.Width() / 10;
+			rc.left += rc.Width() / 10;
 
 		DrawPercentage(pdc, rc, GetFraction(), GetPercentageColor());
 	}
@@ -121,14 +121,14 @@ CString CItem::GetText(int subitem) const
 	switch (subitem)
 	{
 	case COL_NAME:
-		s= m_name;
+		s = m_name;
 		break;
 
 	case COL_SUBTREEPERCENTAGE:
 		if (IsDone())
 		{
 			ASSERT(m_readJobs == 0);
-			//s= "ok";
+			//s = "ok";
 		}
 		else
 		{
@@ -151,28 +151,28 @@ CString CItem::GetText(int subitem) const
 		break;
 
 	case COL_SUBTREETOTAL:
-		s= FormatBytes(GetSize());
+		s = FormatBytes(GetSize());
 		break;
 
 	case COL_ITEMS:
 		if (GetType() != IT_FILE && GetType() != IT_FREESPACE && GetType() != IT_UNKNOWN)
-			s= FormatCount(GetItemsCount());
+			s = FormatCount(GetItemsCount());
 		break;
 
 	case COL_FILES:
 		if (GetType() != IT_FILE && GetType() != IT_FREESPACE && GetType() != IT_UNKNOWN)
-			s= FormatCount(GetFilesCount());
+			s = FormatCount(GetFilesCount());
 		break;
 
 	case COL_SUBDIRS:
 		if (GetType() != IT_FILE && GetType() != IT_FREESPACE && GetType() != IT_UNKNOWN)
-			s= FormatCount(GetSubdirsCount());
+			s = FormatCount(GetSubdirsCount());
 		break;
 
 	case COL_LASTCHANGE:
 		if (GetType() != IT_FREESPACE && GetType() != IT_UNKNOWN)
 		{
-			s= FormatFileTime(m_lastChange);
+			s = FormatFileTime(m_lastChange);
 		}
 		break;
 
@@ -187,6 +187,11 @@ COLORREF CItem::GetItemTextColor() const
 {
 	// Get the file/folder attributes
 	DWORD attr = GetFileAttributes(GetPath());
+
+	// This happens e.g. on a Unicode-capable FS when using ANSI APIs
+	// to list files with ("real") Unicode names
+	if (attr == INVALID_FILE_ATTRIBUTES)
+		return CTreeListItem::GetItemTextColor();
 
 	// Check for compressed flag
 	if (attr & FILE_ATTRIBUTE_COMPRESSED)
@@ -206,7 +211,7 @@ COLORREF CItem::GetItemTextColor() const
 
 int CItem::CompareSibling(const CTreeListItem *tlib, int subitem) const
 { 
-	CItem *other= (CItem *)tlib;
+	CItem *other = (CItem *)tlib;
 
 	int r=0;
 	switch (subitem)
@@ -215,39 +220,39 @@ int CItem::CompareSibling(const CTreeListItem *tlib, int subitem) const
 		if (GetType() == IT_DRIVE)
 		{
 			ASSERT(other->GetType() == IT_DRIVE);
-			r= GetPath().CompareNoCase(other->GetPath());
+			r = GetPath().CompareNoCase(other->GetPath());
 		}
 		else
 		{
-			r= m_name.CompareNoCase(other->m_name);
+			r = m_name.CompareNoCase(other->m_name);
 		}
 		break;
 
 	case COL_SUBTREEPERCENTAGE:
 		if (MustShowReadJobs())
-			r= signum(m_readJobs - other->m_readJobs);
+			r = signum(m_readJobs - other->m_readJobs);
 		else
-			r= signum(GetFraction() - other->GetFraction());
+			r = signum(GetFraction() - other->GetFraction());
 		break;
 
 	case COL_PERCENTAGE:
-		r= signum(GetFraction() - other->GetFraction());
+		r = signum(GetFraction() - other->GetFraction());
 		break;
 
 	case COL_SUBTREETOTAL:
-		r= signum(GetSize() - other->GetSize());
+		r = signum(GetSize() - other->GetSize());
 		break;
 
 	case COL_ITEMS:
-		r= signum(GetItemsCount() - other->GetItemsCount());
+		r = signum(GetItemsCount() - other->GetItemsCount());
 		break;
 
 	case COL_FILES:
-		r= signum(GetFilesCount() - other->GetFilesCount());
+		r = signum(GetFilesCount() - other->GetFilesCount());
 		break;
 
 	case COL_SUBDIRS:
-		r= signum(GetSubdirsCount() - other->GetSubdirsCount());
+		r = signum(GetSubdirsCount() - other->GetSubdirsCount());
 		break;
 
 	case COL_LASTCHANGE:
@@ -286,36 +291,36 @@ int CItem::GetImageToCache() const
 
 	if (GetType() == IT_MYCOMPUTER)
 	{
-		image= GetMyImageList()->GetMyComputerImage();
+		image = GetMyImageList()->GetMyComputerImage();
 	}
 	else if (GetType() == IT_FILESFOLDER)
 	{
-		image= GetMyImageList()->GetFilesFolderImage();
+		image = GetMyImageList()->GetFilesFolderImage();
 	}
 	else if (GetType() == IT_FREESPACE)
 	{
-		image= GetMyImageList()->GetFreeSpaceImage();
+		image = GetMyImageList()->GetFreeSpaceImage();
 	}
 	else if (GetType() == IT_UNKNOWN)
 	{
-		image= GetMyImageList()->GetUnknownImage();
+		image = GetMyImageList()->GetUnknownImage();
 	}
 	else
 	{
-		CString path= GetPath();
+		CString path = GetPath();
 
 		if (GetType() == IT_DIRECTORY && GetApp()->IsMountPoint(path))
 		{
-			image= GetMyImageList()->GetMountPointImage();
+			image = GetMyImageList()->GetMountPointImage();
 		}
 		else
 		if (GetType() == IT_DIRECTORY && GetApp()->IsJunctionPoint(path))
 		{
-			image= GetMyImageList()->GetJunctionImage();
+			image = GetMyImageList()->GetJunctionImage();
 		}
 		else
 		{
-			image= GetMyImageList()->GetFileImage(path);
+			image = GetMyImageList()->GetFileImage(path);
 		}
 	}
 	return image; 
@@ -325,7 +330,7 @@ void CItem::DrawAdditionalState(CDC *pdc, const CRect& rcLabel) const
 {
 	if (!IsRootItem() && this == GetDocument()->GetZoomItem())
 	{
-		CRect rc= rcLabel;
+		CRect rc = rcLabel;
 		rc.InflateRect(1, 0);
 		rc.bottom++;
 
@@ -344,21 +349,21 @@ int CItem::GetSubtreePercentageWidth()
 
 CItem *CItem::FindCommonAncestor(const CItem *item1, const CItem *item2)
 {
-	const CItem *parent= item1;
+	const CItem *parent = item1;
 	while (!parent->IsAncestorOf(item2))
-		parent= parent->GetParent();
+		parent = parent->GetParent();
 	ASSERT(parent != NULL);
 	return const_cast<CItem *>(parent);
 }
 
 bool CItem::IsAncestorOf(const CItem *item) const
 {
-	const CItem *p= item;
+	const CItem *p = item;
 	while (p != NULL)
 	{
 		if (p == this)
 			break;
-		p= p->GetParent();
+		p = p->GetParent();
 	}
 	return (p != NULL);
 }
@@ -422,14 +427,14 @@ void CItem::UpdateLastChange()
 	ZeroMemory(&m_lastChange, sizeof(m_lastChange));
 	if (GetType() == IT_DIRECTORY || GetType() == IT_FILE)
 	{
-		CString path= GetPath();
+		CString path = GetPath();
 
-		int i= path.ReverseFind(_T('\\'));
-		CString basename= path.Mid(i + 1);
+		int i = path.ReverseFind(_T('\\'));
+		CString basename = path.Mid(i + 1);
 		CString pattern;
 		pattern.Format(_T("%s\\..\\%s"), path, basename);
 		CFileFind finder;
-		BOOL b= finder.FindFile(pattern);
+		BOOL b = finder.FindFile(pattern);
 		if (!b)
 			return; // no chance
 		finder.FindNextFile();
@@ -475,7 +480,7 @@ void CItem::AddChild(CItem *child)
 
 void CItem::RemoveChild(int i) 
 { 
-	CItem *child= GetChild(i);
+	CItem *child = GetChild(i);
 	m_children.RemoveAt(i); 
 	GetTreeListControl()->OnChildRemoved(this, child);
 	delete child; 
@@ -494,28 +499,28 @@ void CItem::RemoveAllChildren()
 
 void CItem::UpwardAddSubdirs(LONGLONG dirCount)
 {
-	m_subdirs+= dirCount;
+	m_subdirs += dirCount;
 	if (GetParent() != NULL)
 		GetParent()->UpwardAddSubdirs(dirCount);
 }
 
 void CItem::UpwardAddFiles(LONGLONG fileCount)
 {
-	m_files+= fileCount;
+	m_files += fileCount;
 	if (GetParent() != NULL)
 		GetParent()->UpwardAddFiles(fileCount);
 }
 
 void CItem::UpwardAddSize(LONGLONG bytes)
 {
-	m_size+= bytes;
+	m_size += bytes;
 	if (GetParent() != NULL)
 		GetParent()->UpwardAddSize(bytes);
 }
 
 void CItem::UpwardAddReadJobs(/* signed */LONGLONG count)
 {
-	m_readJobs+= count;
+	m_readJobs += count;
 	if (GetParent() != NULL)
 		GetParent()->UpwardAddReadJobs(count);
 }
@@ -525,7 +530,7 @@ void CItem::UpwardUpdateLastChange(const FILETIME& t)
 {
 	if (m_lastChange < t)
 	{
-		m_lastChange= t;
+		m_lastChange = t;
 		if (GetParent() != NULL)
 			GetParent()->UpwardUpdateLastChange(t);
 	}
@@ -539,7 +544,7 @@ void CItem::UpwardRecalcLastChange()
 	for (int i=0; i < GetChildrenCount(); i++)
 	{
 		if (m_lastChange < GetChild(i)->GetLastChange())
-			m_lastChange= GetChild(i)->GetLastChange();
+			m_lastChange = GetChild(i)->GetLastChange();
 	}
 	if (GetParent() != NULL)
 		GetParent()->UpwardRecalcLastChange();
@@ -554,7 +559,7 @@ void CItem::SetSize(LONGLONG ownSize)
 {
 	ASSERT(IsLeaf(GetType()));
 	ASSERT(ownSize >= 0);
-	m_size= ownSize;
+	m_size = ownSize;
 }
 
 LONGLONG CItem::GetReadJobs() const
@@ -569,7 +574,7 @@ FILETIME CItem::GetLastChange() const
 
 void CItem::SetLastChange(const FILETIME& t)
 {
-	m_lastChange= t;
+	m_lastChange = t;
 }
 
 double CItem::GetFraction() const
@@ -595,24 +600,24 @@ bool CItem::IsRootItem() const
 
 CString CItem::GetPath()  const
 { 
-	CString path= UpwardGetPathWithoutBackslash();
+	CString path = UpwardGetPathWithoutBackslash();
 	if (GetType() == IT_DRIVE || GetType() == IT_FILESFOLDER && GetParent()->GetType() == IT_DRIVE)
-		path+= _T("\\");
+		path += _T("\\");
 	return path;
 }
 
 bool CItem::HasUncPath() const
 {
-	CString path= GetPath();
+	CString path = GetPath();
 	return (path.GetLength() >= 2 && path.Left(2) == _T("\\\\"));
 }
 
 CString CItem::GetFindPattern() const
 {
-	CString pattern= GetPath();
+	CString pattern = GetPath();
 	if (pattern.Right(1) != _T('\\'))
-		pattern+= _T("\\");
-	pattern+= _T("*.*");
+		pattern += _T("\\");
+	pattern += _T("*.*");
 	return pattern;
 }
 
@@ -623,16 +628,16 @@ CString CItem::GetFolderPath() const
 
 	if (GetType() == IT_MYCOMPUTER)
 	{
-		path= GetParseNameOfMyComputer();
+		path = GetParseNameOfMyComputer();
 	}
 	else
 	{
-		path= GetPath();
+		path = GetPath();
 		if (GetType() == IT_FILE)
 		{
-			int i= path.ReverseFind(_T('\\'));
+			int i = path.ReverseFind(_T('\\'));
 			ASSERT(i != -1);
-			path= path.Left(i + 1);
+			path = path.Left(i + 1);
 		}
 	}
 	return path;
@@ -641,13 +646,13 @@ CString CItem::GetFolderPath() const
 // returns the path for the mail-report
 CString CItem::GetReportPath() const
 {
-	CString path= UpwardGetPathWithoutBackslash();
+	CString path = UpwardGetPathWithoutBackslash();
 	if (GetType() == IT_DRIVE || GetType() == IT_FILESFOLDER)
-		path+= _T("\\");
+		path += _T("\\");
 	if (GetType() == IT_FILESFOLDER
 	|| GetType() == IT_FREESPACE
 	|| GetType() == IT_UNKNOWN)
-		path+= GetName();
+		path += GetName();
 
 	return path;
 }
@@ -665,17 +670,17 @@ CString CItem::GetExtension() const
 	{
 	case IT_FILE:
 		{
-			int i= GetName().ReverseFind(_T('.'));
+			int i = GetName().ReverseFind(_T('.'));
 			if (i == -1)
-				ext= _T(".");
+				ext = _T(".");
 			else
-				ext= GetName().Mid(i);
+				ext = GetName().Mid(i);
 			ext.MakeLower();
 			break;
 		}
 	case IT_FREESPACE:
 	case IT_UNKNOWN:
-		ext= GetName();
+		ext = GetName();
 		break;
 
 	default:
@@ -715,7 +720,7 @@ void CItem::SetReadJobDone(bool done)
 	{
 		UpwardAddReadJobs(1 - m_readJobs);
 	}
-	m_readJobDone= done;
+	m_readJobDone = done;
 
 }
 
@@ -735,21 +740,21 @@ void CItem::SetDone()
 
 		if (GetDocument()->OptionShowUnknown())
 		{
-			CItem *unknown= FindUnknownItem();
+			CItem *unknown = FindUnknownItem();
 
 			LONGLONG total;
 			LONGLONG free;
 			MyGetDiskFreeSpace(GetPath(), total, free);
 			
-			LONGLONG unknownspace= total - GetSize();
+			LONGLONG unknownspace = total - GetSize();
 			if (!GetDocument()->OptionShowFreeSpace())
-				unknownspace-= free;
+				unknownspace -= free;
 
 			// For CDs, the GetDiskFreeSpaceEx()-function is not correct.
 			if (unknownspace < 0)
 			{
 				TRACE(_T("GetDiskFreeSpace(%s) incorrect.\n"), GetPath());
-				unknownspace= 0;
+				unknownspace = 0;
 			}
 			unknown->SetSize(unknownspace);
 
@@ -765,7 +770,7 @@ void CItem::SetDone()
 
 	m_rect.SetRectEmpty();
 
-	m_done= true;
+	m_done = true;
 }
 
 DWORD CItem::GetTicksWorked() const
@@ -775,7 +780,7 @@ DWORD CItem::GetTicksWorked() const
 
 void CItem::AddTicksWorked(DWORD more) 
 { 
-	m_ticksWorked+= more; 
+	m_ticksWorked += more; 
 }
 
 void CItem::DoSomeWork(DWORD ticks)
@@ -787,25 +792,25 @@ void CItem::DoSomeWork(DWORD ticks)
 
 	DriveVisualUpdateDuringWork();
 
-	DWORD start= GetTickCount();
+	DWORD start = GetTickCount();
 
 	if (GetType() == IT_DRIVE || GetType() == IT_DIRECTORY)
 	{
 		if (!IsReadJobDone())
 		{
-			LONGLONG dirCount= 0;
-			LONGLONG fileCount= 0;
+			LONGLONG dirCount = 0;
+			LONGLONG fileCount = 0;
 
 			CList<FILEINFO, FILEINFO> files;
 
 
 			CFileFind finder;
-			BOOL b= finder.FindFile(GetFindPattern());
+			BOOL b = finder.FindFile(GetFindPattern());
 			while (b)
 			{
 				DriveVisualUpdateDuringWork();
 
-				b= finder.FindNextFile();
+				b = finder.FindNextFile();
 				if (finder.IsDots())
 					continue;
 				if (finder.IsDirectory())
@@ -818,9 +823,9 @@ void CItem::DoSomeWork(DWORD ticks)
 					fileCount++;
 
 					FILEINFO fi;
-					fi.name= finder.GetFileName();
+					fi.name = finder.GetFileName();
 					// Retrieve file size
-					fi.length= MyGetFileSize(&finder);
+					fi.length = GetApp()->GetFileSizeWDS(finder);
 					finder.GetLastWriteTime(&fi.lastWriteTime);
 					// (We don't use GetLastWriteTime(CTime&) here, because, if the file has
 					// an invalid timestamp, that function would ASSERT and throw an Exception.)
@@ -829,21 +834,21 @@ void CItem::DoSomeWork(DWORD ticks)
 				}
 			}
 
-			CItem *filesFolder= 0;
+			CItem *filesFolder = 0;
 			if (dirCount > 0 && fileCount > 1)
 			{
-				filesFolder= new CItem(IT_FILESFOLDER, LoadString(IDS_FILES_ITEM));
+				filesFolder = new CItem(IT_FILESFOLDER, LoadString(IDS_FILES_ITEM));
 				filesFolder->SetReadJobDone();
 				AddChild(filesFolder);
 			}
 			else if (fileCount > 0)
 			{
-				filesFolder= this;
+				filesFolder = this;
 			}
 
 			for (POSITION pos=files.GetHeadPosition(); pos != NULL; files.GetNext(pos))
 			{
-				const FILEINFO& fi= files.GetAt(pos);
+				const FILEINFO& fi = files.GetAt(pos);
 				filesFolder->AddFile(fi);
 			}
 
@@ -882,20 +887,20 @@ void CItem::DoSomeWork(DWORD ticks)
 			return;
 		}
 
-		DWORD startChildren= GetTickCount();
+		DWORD startChildren = GetTickCount();
 		while (GetTickCount() - start < ticks)
 		{
-			DWORD minticks= UINT_MAX;
-			CItem *minchild= NULL;
+			DWORD minticks = UINT_MAX;
+			CItem *minchild = NULL;
 			for (int i=0; i < GetChildrenCount(); i++)
 			{
-				CItem *child= GetChild(i);
+				CItem *child = GetChild(i);
 				if (child->IsDone())
 					continue;
 				if (child->GetTicksWorked() < minticks)
 				{
-					minticks= child->GetTicksWorked();
-					minchild= child;
+					minticks = child->GetTicksWorked();
+					minchild = child;
 				}
 			}
 			if (minchild == NULL)
@@ -903,7 +908,7 @@ void CItem::DoSomeWork(DWORD ticks)
 				SetDone();
 				break;
 			}
-			DWORD tickssofar= GetTickCount() - start;
+			DWORD tickssofar = GetTickCount() - start;
 			if (ticks > tickssofar)
 				minchild->DoSomeWork(ticks - tickssofar);
 		}
@@ -922,7 +927,7 @@ bool CItem::StartRefresh()
 	ASSERT(GetType() != IT_FREESPACE);
 	ASSERT(GetType() != IT_UNKNOWN);
 
-	m_ticksWorked= 0;
+	m_ticksWorked = 0;
 
 	// Special case IT_MYCOMPUTER
 	if (GetType() == IT_MYCOMPUTER)
@@ -936,10 +941,10 @@ bool CItem::StartRefresh()
 	}
 	ASSERT(GetType() == IT_FILE || GetType() == IT_DRIVE || GetType() == IT_DIRECTORY || GetType() == IT_FILESFOLDER);
 
-	bool wasExpanded= IsVisible() && IsExpanded();
-	int oldScrollPosition =0;
+	bool wasExpanded = IsVisible() && IsExpanded();
+	int oldScrollPosition = 0;
 	if (IsVisible())
-		oldScrollPosition= GetScrollPosition();
+		oldScrollPosition = GetScrollPosition();
 
 	UncacheImage();
 
@@ -971,17 +976,17 @@ bool CItem::StartRefresh()
 	if (GetType() == IT_FILESFOLDER)
 	{
 		CFileFind finder;
-		BOOL b= finder.FindFile(GetFindPattern());
+		BOOL b = finder.FindFile(GetFindPattern());
 		while (b)
 		{
-			b= finder.FindNextFile();
+			b = finder.FindNextFile();
 			if (finder.IsDirectory())
 				continue;
 
 			FILEINFO fi;
-			fi.name= finder.GetFileName();
+			fi.name = finder.GetFileName();
 			// Retrieve file size
-            fi.length= MyGetFileSize(&finder);
+            fi.length = GetApp()->GetFileSizeWDS(finder);
 			finder.GetLastWriteTime(&fi.lastWriteTime);
 
 			AddFile(fi);
@@ -996,13 +1001,13 @@ bool CItem::StartRefresh()
 	ASSERT(GetType() == IT_FILE || GetType() == IT_DRIVE || GetType() == IT_DIRECTORY);
 
 	// The item may have been deleted.
-	bool deleted= false;
+	bool deleted = false;
 	if (GetType() == IT_DRIVE)
-		deleted= !DriveExists(GetPath());
+		deleted = !DriveExists(GetPath());
 	else if (GetType() == IT_FILE)
-		deleted= !FileExists(GetPath());
+		deleted = !FileExists(GetPath());
 	else if (GetType() == IT_DIRECTORY)
-		deleted= !FolderExists(GetPath());
+		deleted = !FolderExists(GetPath());
 
 	if (deleted)
 	{
@@ -1022,16 +1027,16 @@ bool CItem::StartRefresh()
 	if (GetType() == IT_FILE)
 	{
 		CFileFind finder;
-		BOOL b= finder.FindFile(GetPath());
+		BOOL b = finder.FindFile(GetPath());
 		if (b)
 		{
 			finder.FindNextFile();
 			if (!finder.IsDirectory())
 			{
 				FILEINFO fi;
-				fi.name= finder.GetFileName();
+				fi.name = finder.GetFileName();
 				// Retrieve file size
-                fi.length= MyGetFileSize(&finder);
+                fi.length = GetApp()->GetFileSizeWDS(finder);
 				finder.GetLastWriteTime(&fi.lastWriteTime);
 
 				SetLastChange(fi.lastWriteTime);
@@ -1083,14 +1088,14 @@ void CItem::UpwardSetUndone()
 		for (int i=0; i < GetChildrenCount(); i++)
 			if (GetChild(i)->GetType() == IT_UNKNOWN)
 				break;
-		CItem *unknown= GetChild(i);
+		CItem *unknown = GetChild(i);
 
 		UpwardAddSize(- unknown->GetSize());
 
 		unknown->SetSize(0);
 	}
 
-	m_done= false; 
+	m_done = false; 
 
 	if (GetParent() != NULL)
 		GetParent()->UpwardSetUndone();
@@ -1101,7 +1106,7 @@ void CItem::RefreshRecycler()
 	ASSERT(GetType() == IT_DRIVE);
 	DWORD dummy;
 	CString system;
-	BOOL b= GetVolumeInformation(GetPath(), NULL, 0, NULL, &dummy, &dummy, system.GetBuffer(128), 128);
+	BOOL b = GetVolumeInformation(GetPath(), NULL, 0, NULL, &dummy, &dummy, system.GetBuffer(128), 128);
 	system.ReleaseBuffer();
 	if (!b)
 	{
@@ -1112,11 +1117,11 @@ void CItem::RefreshRecycler()
 	CString recycler;
 	if (system.CompareNoCase(_T("NTFS")) == 0)
 	{
-		recycler= _T("recycler");
+		recycler = _T("recycler");
 	}
 	else if (system.CompareNoCase(_T("FAT32")) == 0)
 	{
-		recycler= _T("recycled");
+		recycler = _T("recycled");
 	}
 	else
 	{
@@ -1148,7 +1153,7 @@ void CItem::CreateFreeSpaceItem()
 	LONGLONG free;
 	MyGetDiskFreeSpace(GetPath(), total, free);
 
-	CItem *freespace= new CItem(IT_FREESPACE, GetFreeSpaceItemName());
+	CItem *freespace = new CItem(IT_FREESPACE, GetFreeSpaceItemName());
 	freespace->SetSize(free);
 	freespace->SetDone();
 
@@ -1157,7 +1162,7 @@ void CItem::CreateFreeSpaceItem()
 
 CItem *CItem::FindFreeSpaceItem() const
 {
-	int i= FindFreeSpaceItemIndex();
+	int i = FindFreeSpaceItemIndex();
 	if (i < GetChildrenCount())
 		return GetChild(i);
 	else
@@ -1172,15 +1177,15 @@ void CItem::UpdateFreeSpaceItem()
 	if (!GetDocument()->OptionShowFreeSpace())
 		return;
 
-	CItem *freeSpaceItem= FindFreeSpaceItem();
+	CItem *freeSpaceItem = FindFreeSpaceItem();
 	ASSERT(freeSpaceItem != NULL);
 
 	LONGLONG total;
 	LONGLONG free;
 	MyGetDiskFreeSpace(GetPath(), total, free);
 
-	LONGLONG before= freeSpaceItem->GetSize();
-	LONGLONG diff= free - before;
+	LONGLONG before = freeSpaceItem->GetSize();
+	LONGLONG diff = free - before;
 
 	freeSpaceItem->UpwardAddSize(diff);
 	
@@ -1193,10 +1198,10 @@ void CItem::RemoveFreeSpaceItem()
 
 	UpwardSetUndone();
 
-	int i= FindFreeSpaceItemIndex();
+	int i = FindFreeSpaceItemIndex();
 	ASSERT(i < GetChildrenCount());
 
-	CItem *freespace= GetChild(i);
+	CItem *freespace = GetChild(i);
 
 	UpwardAddSize(-freespace->GetSize());
 
@@ -1209,7 +1214,7 @@ void CItem::CreateUnknownItem()
 
 	UpwardSetUndone();
 
-	CItem *unknown= new CItem(IT_UNKNOWN, GetUnknownItemName());
+	CItem *unknown = new CItem(IT_UNKNOWN, GetUnknownItemName());
 	unknown->SetDone();
 
 	AddChild(unknown);
@@ -1217,7 +1222,7 @@ void CItem::CreateUnknownItem()
 
 CItem *CItem::FindUnknownItem() const
 {
-	int i= FindUnknownItemIndex();
+	int i = FindUnknownItemIndex();
 	if (i < GetChildrenCount())
 		return GetChild(i);
 	else
@@ -1230,10 +1235,10 @@ void CItem::RemoveUnknownItem()
 
 	UpwardSetUndone();
 
-	int i= FindUnknownItemIndex();
+	int i = FindUnknownItemIndex();
 	ASSERT(i < GetChildrenCount());
 
-	CItem *unknown= GetChild(i);
+	CItem *unknown = GetChild(i);
 
 	UpwardAddSize(-unknown->GetSize());
 
@@ -1242,7 +1247,7 @@ void CItem::RemoveUnknownItem()
 
 CItem *CItem::FindDirectoryByPath(const CString& path)
 {
-	CString myPath= GetPath();
+	CString myPath = GetPath();
 	myPath.MakeLower();
 
 	int i=0;
@@ -1260,7 +1265,7 @@ CItem *CItem::FindDirectoryByPath(const CString& path)
 
 	for (i=0; i < GetChildrenCount(); i++)
 	{
-		CItem *item= GetChild(i)->FindDirectoryByPath(path);
+		CItem *item = GetChild(i)->FindDirectoryByPath(path);
 		if (item != NULL)
 			return item;
 	}
@@ -1276,17 +1281,17 @@ void CItem::RecurseCollectExtensionData(CExtensionData *ed)
 	{
 		if (GetType() == IT_FILE)
 		{
-			CString ext= GetExtension();
+			CString ext = GetExtension();
 			SExtensionRecord r;
 			if (ed->Lookup(ext, r))
 			{
-				r.bytes+= GetSize();
+				r.bytes += GetSize();
 				r.files++;
 			}
 			else
 			{
-				r.bytes= GetSize();
-				r.files= 1;
+				r.bytes = GetSize();
+				r.files = 1;
 			}
 			ed->SetAt(ext, r);
 		}
@@ -1302,11 +1307,11 @@ void CItem::RecurseCollectExtensionData(CExtensionData *ed)
 
 int __cdecl CItem::_compareBySize(const void *p1, const void *p2)
 {
-	CItem *item1= *(CItem **)p1;
-	CItem *item2= *(CItem **)p2;
+	CItem *item1 = *(CItem **)p1;
+	CItem *item2 = *(CItem **)p2;
 
-	LONGLONG size1= item1->GetSize();
-	LONGLONG size2= item2->GetSize();
+	LONGLONG size1 = item1->GetSize();
+	LONGLONG size2 = item2->GetSize();
 
 	// TODO: Use 2nd sort column (as set in our TreeListView?)
 
@@ -1317,10 +1322,10 @@ LONGLONG CItem::GetProgressRangeMyComputer() const
 {
 	ASSERT(GetType() == IT_MYCOMPUTER);
 
-	LONGLONG range= 0;
-	for (int i=0; i < GetChildrenCount(); i++)
+	LONGLONG range = 0;
+	for (int i = 0; i < GetChildrenCount(); i++)
 	{
-		range+= GetChild(i)->GetProgressRangeDrive();
+		range += GetChild(i)->GetProgressRangeDrive();
 	}
 	return range;
 }
@@ -1329,10 +1334,10 @@ LONGLONG CItem::GetProgressPosMyComputer() const
 {
 	ASSERT(GetType() == IT_MYCOMPUTER);
 
-	LONGLONG pos= 0;
-	for (int i=0; i < GetChildrenCount(); i++)
+	LONGLONG pos = 0;
+	for (int i = 0; i < GetChildrenCount(); i++)
 	{
-		pos+= GetChild(i)->GetProgressPosDrive();
+		pos += GetChild(i)->GetProgressPosDrive();
 	}
 	return pos;
 }
@@ -1343,7 +1348,7 @@ LONGLONG CItem::GetProgressRangeDrive() const
 	LONGLONG free;
 	MyGetDiskFreeSpace(GetPath(), total, free);
 
-	LONGLONG range= total - free;
+	LONGLONG range = total - free;
 
 	ASSERT(range >= 0);
 	return range;
@@ -1351,12 +1356,12 @@ LONGLONG CItem::GetProgressRangeDrive() const
 
 LONGLONG CItem::GetProgressPosDrive() const
 {
-	LONGLONG pos= GetSize();
+	LONGLONG pos = GetSize();
 
-	CItem *fs= FindFreeSpaceItem();
+	CItem *fs = FindFreeSpaceItem();
 	if (fs != NULL)
 	{
-		pos-= fs->GetSize();
+		pos -= fs->GetSize();
 	}
 
 	return pos;
@@ -1369,19 +1374,19 @@ COLORREF CItem::GetGraphColor() const
 	switch (GetType())
 	{
 	case IT_UNKNOWN:
-		color= RGB(255,255,0) | CTreemap::COLORFLAG_LIGHTER;
+		color = RGB(255,255,0) | CTreemap::COLORFLAG_LIGHTER;
 		break;
 
 	case IT_FREESPACE:
-		color= RGB(100,100,100) | CTreemap::COLORFLAG_DARKER;
+		color = RGB(100,100,100) | CTreemap::COLORFLAG_DARKER;
 		break;
 
 	case IT_FILE:
-		color= GetDocument()->GetCushionColor(GetExtension());
+		color = GetDocument()->GetCushionColor(GetExtension());
 		break;
 
 	default:
-		color= RGB(0,0,0);
+		color = RGB(0,0,0);
 		break;
 	}
 
@@ -1402,7 +1407,7 @@ bool CItem::MustShowReadJobs() const
 
 COLORREF CItem::GetPercentageColor() const
 {
-	int i= GetIndent() % GetOptions()->GetTreelistColorCount();
+	int i = GetIndent() % GetOptions()->GetTreelistColorCount();
 	return GetOptions()->GetTreelistColor(i);
 }
 
@@ -1430,7 +1435,7 @@ CString CItem::UpwardGetPathWithoutBackslash() const
 {
 	CString path;
 	if (GetParent() != NULL)
-		path= GetParent()->UpwardGetPathWithoutBackslash();
+		path = GetParent()->UpwardGetPathWithoutBackslash();
 
 	switch (GetType())
 	{
@@ -1440,17 +1445,17 @@ CString CItem::UpwardGetPathWithoutBackslash() const
 
 	case IT_DRIVE:
 		// (we don't use our parent's path here.)
-		path= PathFromVolumeName(m_name);
+		path = PathFromVolumeName(m_name);
 		break;
 
 	case IT_DIRECTORY:
 		if (!path.IsEmpty())
-			path+= _T("\\");
-		path+= m_name;
+			path += _T("\\");
+		path += m_name;
 		break;
 
 	case IT_FILE:
-		path+= _T("\\") + m_name;
+		path += _T("\\") + m_name;
 		break;
 
 	case IT_FILESFOLDER:
@@ -1473,7 +1478,7 @@ void CItem::AddDirectory(CFileFind& finder)
 
 	dontFollow |= GetApp()->IsJunctionPoint(finder.GetFilePath()) && !GetOptions()->IsFollowJunctionPoints();
 
-	CItem *child= new CItem(IT_DIRECTORY, finder.GetFileName(), dontFollow);
+	CItem *child = new CItem(IT_DIRECTORY, finder.GetFileName(), dontFollow);
 	FILETIME t;
 	finder.GetLastWriteTime(&t);
 	child->SetLastChange(t);
@@ -1482,7 +1487,7 @@ void CItem::AddDirectory(CFileFind& finder)
 
 void CItem::AddFile(const FILEINFO& fi)
 {
-	CItem *child= new CItem(IT_FILE, fi.name);
+	CItem *child = new CItem(IT_FILE, fi.name);
 	child->SetSize(fi.length);
 	child->SetLastChange(fi.lastWriteTime);
 	child->SetDone();
@@ -1518,16 +1523,20 @@ void CItem::DrivePacman()
 	if (!CTreeListItem::DrivePacman(GetReadJobs()))
 		return;
 
-	int i= GetTreeListControl()->FindTreeItem(this);
+	int i = GetTreeListControl()->FindTreeItem(this);
 
 	CClientDC dc(GetTreeListControl());
-	CRect rc= GetTreeListControl()->GetWholeSubitemRect(i, COL_SUBTREEPERCENTAGE);
+	CRect rc = GetTreeListControl()->GetWholeSubitemRect(i, COL_SUBTREEPERCENTAGE);
 	rc.DeflateRect(sizeDeflatePacman);
 	DrawPacman(&dc, rc, GetTreeListControl()->GetItemSelectionBackgroundColor(i));
 }
 
 
 // $Log$
+// Revision 1.18  2004/11/25 11:58:52  assarbad
+// - Minor fixes (odd behavior of coloring in ANSI version, caching of the GetCompressedFileSize API)
+//   for details see the changelog.txt
+//
 // Revision 1.17  2004/11/12 22:14:16  bseifert
 // Eliminated CLR_NONE. Minor corrections.
 //

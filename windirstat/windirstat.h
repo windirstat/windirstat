@@ -64,15 +64,15 @@ public:
 	bool IsMountPoint(CString path);
 	bool IsJunctionPoint(CString path);
 
-	bool IsCompressed(CString path);
-	bool IsEncrypted(CString path);
-
 	COLORREF AltColor();					// Coloring of compressed items
 	COLORREF AltEncryptionColor();			// Coloring of encrypted items
 
 	CString GetCurrentProcessMemoryInfo();
 
 	CMyImageList *GetMyImageList();
+
+	ULONGLONG GetFileSizeWDS(CFileFind& finder);
+
 	void UpdateRamUsage();
 	
 	void PeriodicalUpdateRamUsage();
@@ -109,6 +109,7 @@ protected:
 	CMountPoints m_mountPoints;				// Mount point information
 	CMyImageList m_myImageList;				// Out central image list
 	CPsapi m_psapi;							// Dynamically linked psapi.dll (for RAM usage)
+	CGetCompressedFileSizeApi m_comprSize;	// Dynamically linked API GetCompressedFileSize()
 	LONGLONG m_workingSet;					// Current working set (RAM usage)
 	LONGLONG m_pageFaults;					// Page faults so far (unused)
 	DWORD m_lastPeriodicalRamUsageUpdate;	// Tick count
@@ -125,6 +126,10 @@ protected:
 
 
 // $Log$
+// Revision 1.11  2004/11/25 11:58:52  assarbad
+// - Minor fixes (odd behavior of coloring in ANSI version, caching of the GetCompressedFileSize API)
+//   for details see the changelog.txt
+//
 // Revision 1.10  2004/11/14 08:49:06  bseifert
 // Date/Time/Number formatting now uses User-Locale. New option to force old behavior.
 //

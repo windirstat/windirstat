@@ -5,12 +5,23 @@ Last modified: $Date$
 =============================================================================
 
 This project, made up of
-setup, wdsh0407, wdshelp, wdsr0407, and windirstat
+- the program [executables]
+	windirstat
 
-is distributed under the terms of the GPL v2 (executables)
+- resource DLLs [executables]
+	wdsr0407 (German), wdsr040c (French), wdsr0415 (Polish),
+	wdsr0419 (Russian)
+
+- helper/utility programs [executables]
+	setup, linkcounter
+
+- help files
+	wdsh0407 (German), wdshelp (English)
+
+is distributed under the terms of the GPL v2 (executables+source)
 respectively GNU FDL (help files).
 
-See Resource Files/license.txt and wdshelp/gnufdl.htm.
+See windirstat/res/license.txt and wdshelp/gnufdl.htm.
 
 The tree-GIF was found in http://www.world-in-motion.de - I hope, I
 don't violate any copyright (tell me).
@@ -20,6 +31,13 @@ don't violate any copyright (tell me).
 WinDirStat is a disk usage statistics viewer and cleanup tool for MS Windows
 (all current variants). It shows disk, file and directory sizes in a treelist
 as well as graphically in a treemap, much like KDirStat and Sequoiaview.
+
+
+=============================================================================
+If you make any changes or enhancements, find bugs or have feature requests,
+please contact us. Note, however, that not all proposed features will be
+taken into account as we want to keep WinDirStat what it is: a tool to view
+disk usage statistics and to clean up your disk, simple and intuitive.
 
 
 =============================================================================
@@ -38,16 +56,17 @@ Major features:
 * 3 views, Directory tree, Treemap and Extension list, coupled with each other,
 * Built-in cleanup actions including Open, Delete, Show Properties,
 * User defined cleanup actions (command line based),
-* Language can be set to English or German; further translations can be added
-   as resource DLLs,
+* Language is English by default; further translations can be added as
+  resource DLLs,
 * Online-Help,
 * A little setup.exe which installs the files and shortcuts.
 
 
-
 =============================================================================
 This is a Microsoft Visual Studio.NET 2003 - Project.
-Apart from CString::AppendFormat() I didn't use any MFC 7.0 specific features.
+
+Trying to backport this project was already done in failed. However, should
+you succeed in doing so, please send us your changes.
 
 Projects included in the workspace
 ----------------------------------
@@ -57,6 +76,8 @@ wdsh0407	-> German Helpfile wdsh0407.chm
 wdshelp		-> English Helpfile windirstat.chm
 wdsr0407	-> German Resource DLL wdsr0407.dll
 wdsr040c	-> French Resource DLL wdsr040c.dll
+wdsr0415	-> Polish Resource DLL wdsr0415.dll
+wdsr0419	-> Russian Resource DLL wdsr0419.dll
 windirstat	-> windirstat.exe (including English resources).
 
 The Microsoft redistributable file shfolder.dll is also included.
@@ -94,11 +115,6 @@ How to create a resource dll.
   by windirstat.exe.
   This version string may be changed in future versions of windirstat, if
   the resources must be changed, too.
-
-=============================================================================
-
-I'm distributing the ANSI variant. Feel free to build the UNICODE variant
-(will not run on Windows 9x).
 
 
 =============================================================================

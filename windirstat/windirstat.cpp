@@ -319,16 +319,6 @@ bool CDirstatApp::IsJunctionPoint(CString path)
 	return m_mountPoints.IsJunctionPoint(path);
 }
 
-bool CDirstatApp::IsCompressed(CString path)
-{
-	return (GetFileAttributes(path) & FILE_ATTRIBUTE_COMPRESSED);
-}
-
-bool CDirstatApp::IsEncrypted(CString path)
-{
-	return (GetFileAttributes(path) & FILE_ATTRIBUTE_ENCRYPTED);
-}
-
 // Get the alternative colors for compressed and encrypted files/folders.
 // This function uses either the value defined in the Explorer configuration
 // or the default color values.
@@ -378,6 +368,29 @@ CString CDirstatApp::GetCurrentProcessMemoryInfo()
 	s.FormatMessage(IDS_RAMUSAGEs, n);
 
 	return s;
+}
+
+// Wrapper for file size retrieval
+// This function tries to return compressed file size whenever possible.
+// If the file is not compressed the uncompressed size is being returned.
+ULONGLONG CDirstatApp::GetFileSizeWDS(CFileFind& finder)
+{
+	// Try to use the NT-specific API
+	if (m_comprSize.IsSupported())
+	{
+		ULARGE_INTEGER ret;
+		ret.LowPart = m_comprSize.GetCompressedFileSize(finder.GetFilePath(), &ret.HighPart);
+		TRACE(_T("Compressed size %d.\r\n"), ret.LowPart);
+		// Check for error
+		if ((GetLastError() != NO_ERROR) && (ret.LowPart == INVALID_FILE_SIZE))
+			// IN case of an error return size from CFileFind object
+			return finder.GetLength();
+		else
+			return ret.QuadPart;
+	}
+	else
+		// Use the file size already found by the finder object
+		return finder.GetLength();
 }
 
 bool CDirstatApp::UpdateMemoryInfo()
@@ -571,6 +584,10 @@ void CDirstatApp::OnHelpReportbug()
 }
 
 // $Log$
+// Revision 1.12  2004/11/25 11:58:52  assarbad
+// - Minor fixes (odd behavior of coloring in ANSI version, caching of the GetCompressedFileSize API)
+//   for details see the changelog.txt
+//
 // Revision 1.11  2004/11/14 08:49:06  bseifert
 // Date/Time/Number formatting now uses User-Locale. New option to force old behavior.
 //

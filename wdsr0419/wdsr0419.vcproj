@@ -246,9 +246,6 @@
 				RelativePath=".\res\windirstat.rc2">
 			</File>
 		</Filter>
-		<File
-			RelativePath=".\res\windirstat.manifest">
-		</File>
 	</Files>
 	<Globals>
 	</Globals>

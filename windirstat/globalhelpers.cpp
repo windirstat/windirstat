@@ -589,26 +589,6 @@ CString GetSpec_TB()
 	return s;
 }
 
-// Wrapper for file size retrieval
-ULONGLONG MyGetFileSize(CFileFind* finder)
-{
-	// Try to use the NT-specific API
-	CGetCompressedFileSizeApi api;
-
-	if (api.IsSupported())
-	{
-		ULARGE_INTEGER ret;
-		ret.LowPart = api.GetCompressedFileSize(finder->GetFilePath(), &ret.HighPart);
-		TRACE(_T("Compressed size %d.\r\n"), ret.LowPart);
-		if ((GetLastError() != NO_ERROR) && (ret.LowPart == INVALID_FILE_SIZE))
-			return finder->GetLength();
-		else
-			return ret.QuadPart;
-	}
-	else
-		return finder->GetLength();
-}
-
 /*
 // Retrieve an Item ID list from a given path.
 // Returns a valid pidl, or throws an exception.
@@ -629,6 +609,10 @@ LPCITEMIDLIST SHGetPIDLFromPath(CString path)
 */
 
 // $Log$
+// Revision 1.18  2004/11/25 11:58:52  assarbad
+// - Minor fixes (odd behavior of coloring in ANSI version, caching of the GetCompressedFileSize API)
+//   for details see the changelog.txt
+//
 // Revision 1.17  2004/11/14 21:50:44  assarbad
 // - Pre-select the last used folder
 //
