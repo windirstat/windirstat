@@ -247,14 +247,14 @@ bool GetVolumeName(LPCTSTR rootPath, CString& volumeName)
 // Given a root path like "C:\", this function
 // obtains the volume name and returns a complete display string
 // like "BOOT (C:)".
-CString FormatVolumeName(CString rootPath)
+CString FormatVolumeNameOfRootPath(CString rootPath)
 {
 	CString ret;
 	CString volumeName;
 	bool b= GetVolumeName(rootPath, volumeName);
 	if (b)
 	{
-		ret.Format(_T("%s (%s)"), volumeName, rootPath.Left(2));
+		ret= FormatVolumeName(rootPath, volumeName);
 	}
 	else
 	{
@@ -263,7 +263,14 @@ CString FormatVolumeName(CString rootPath)
 	return ret;
 }
 
-// The inverse of FormatVolumeName().
+CString FormatVolumeName(CString rootPath, CString volumeName)
+{
+	CString ret;
+	ret.Format(_T("%s (%s)"), volumeName, rootPath.Left(2));
+	return ret;
+}
+
+// The inverse of FormatVolumeNameOfRootPath().
 // Given a name like "BOOT (C:)", it returns "C:" (without trailing backslash).
 // Or, if name like "C:\", it returns "C:".
 CString PathFromVolumeName(CString name)

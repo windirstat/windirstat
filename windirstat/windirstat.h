@@ -56,6 +56,7 @@ class CDirstatApp : public CWinApp
 public:
 	CDirstatApp();
 	virtual BOOL InitInstance();
+	virtual int ExitInstance();
 
 	LANGID GetBuiltInLanguage() ;
 	LANGID GetLangid();

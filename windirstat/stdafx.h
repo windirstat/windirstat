@@ -56,6 +56,7 @@
 #include <afxdtctl.h>		// MFC IE 4
 #include <afxcmn.h>			// MFC Common Controls
 #include <afxtempl.h>		// MFC Container classes
+#include <afxmt.h>			// MFC Multithreading
 
 #include <io.h>				// _access()
 #include <math.h>			// floor(), fmod(), sqrt() etc.

@@ -58,7 +58,7 @@ CItem::CItem(ITEMTYPE type, LPCTSTR name, bool dontFollow)
 
 	if (GetType() == IT_DRIVE)
 	{
-		m_name= FormatVolumeName(m_name);
+		m_name= FormatVolumeNameOfRootPath(m_name);
 	}
 
 	ZeroMemory(&m_lastChange, sizeof(m_lastChange));

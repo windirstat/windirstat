@@ -213,13 +213,10 @@ CString CDirstatApp::FindHelpfilePathByLangid(LANGID langid)
 	if (!s.IsEmpty())
 		return s;
 
-	// If our primary language is English, try windirstat.chm again.
-	if (PRIMARYLANGID(langid) == PRIMARYLANGID(GetBuiltInLanguage()))
-	{
-		s= GetAppFolder() + _T("\\windirstat.chm");
-		if (FileExists(s))
-			return s;
-	}
+	// Else, try windirstat.chm again.
+	s= GetAppFolder() + _T("\\windirstat.chm");
+	if (FileExists(s))
+		return s;
 
 	// Not found.
 	return _T("");
@@ -481,6 +478,11 @@ BOOL CDirstatApp::InitInstance()
 	}
 
 	return TRUE;
+}
+
+int CDirstatApp::ExitInstance()
+{
+	return CWinApp::ExitInstance();
 }
 
 LANGID CDirstatApp::GetLangid()

@@ -1,16 +1,22 @@
 changelog.txt - What has been done to WinDirStat (newest top)
 =============================================================
 
+2003-12-06	bseifert
+	* If the localized help file is not found, the English one is now tried.
+	* New shortcut F5 for 'Refresh Selected'.
+	* English version: '?' renamed to 'Help'.
+	* Select Drives Dialog: now queries the drives via background threads.
+	* tigroo almost finished French translation of windirstat.rc.
 	* When the tree is empty (drive selection canceled), the program
-	    crashed after 'Empty Recycle Bin'.
-	    It also crashed when 'Show free space' or 'Show unknown' was
-	    selected.
+	    crashed after 'Empty Recycle Bin'. It also crashed when 
+	    'Show free space' or 'Show unknown' was selected.
 	* Due to a bug, 'Empty Recycle Bin' was always enabled, even when
 	    the recycle bin was empty.
-	* Due to a bug, 'Empty Recycle Bin' was not enabled on W2k.
+	* Due to a bug, 'Empty Recycle Bin' was never enabled on W2k.
 
-	* Relative paths or trailing backslashes are now handled correctly
-	  in the 'A folder' field in the drive selection dialog.
+2003-12-03	bseifert
+	* Select Drives Dialog: 'A Folder' field: Relative paths and
+	    trailing backslashes are now handled correctly.
 	* Added "Thanks to" beta testers.
 	* Contextmenu and doubleclick didn't work correctly if Name-column wasn't leftmost.
 

@@ -113,7 +113,7 @@ BEGIN
         MENUITEM "&Öffnen...\tStrg+O",          ID_FILE_OPEN
         MENUITEM SEPARATOR
         MENUITEM "&Alles aktualisieren",        ID_REFRESHALL
-        MENUITEM "&Markierung aktualisieren",   ID_REFRESHSELECTED
+        MENUITEM "&Markierung aktualisieren\tF5", ID_REFRESHSELECTED
         MENUITEM SEPARATOR
         MENUITEM "&Beenden\tAlt+F4",            ID_APP_EXIT
     END
@@ -186,7 +186,7 @@ BEGIN
         MENUITEM "&Pfad kopieren\tStrg+C",      57634
         MENUITEM "&Explorer hier starten\tStrg+E", 32774
         MENUITEM "&DOS-Prompt hier starten\tStrg+P", 32808
-        MENUITEM "&Markierung aktualisieren",   32817
+        MENUITEM "&Markierung aktualisieren\tF5", 32817
         MENUITEM SEPARATOR
         MENUITEM "&Löschen (in den Papierkorb)\tEntf", 32809
         MENUITEM "Löschen (&irreversibel!)\tUmschalt+Entf", 32810
@@ -223,6 +223,7 @@ IDR_MAINFRAME ACCELERATORS
 BEGIN
     VK_DELETE,      ID_CLEANUP_DELETE,      VIRTKEY, SHIFT, NOINVERT
     VK_DELETE,      ID_CLEANUP_DELETETOTRASHBIN, VIRTKEY, NOINVERT
+    VK_RETURN,      ID_CLEANUP_OPEN,        VIRTKEY, NOINVERT
     "P",            ID_CLEANUP_OPENINCONSOLE, VIRTKEY, CONTROL, NOINVERT
     "E",            ID_CLEANUP_OPENINEXPLORER, VIRTKEY, CONTROL, NOINVERT
     "C",            ID_EDIT_COPY,           VIRTKEY, CONTROL, NOINVERT
@@ -248,7 +249,7 @@ BEGIN
     VK_F6,          ID_VIEW_SHOWFREESPACE,  VIRTKEY, NOINVERT
     VK_F9,          ID_VIEW_SHOWTREEMAP,    VIRTKEY, NOINVERT
     VK_F7,          ID_VIEW_SHOWUNKNOWN,    VIRTKEY, NOINVERT
-    VK_RETURN,      ID_CLEANUP_OPEN,        VIRTKEY, NOINVERT
+    VK_F5,          ID_REFRESHSELECTED,     VIRTKEY, NOINVERT
 END
 
 
@@ -585,6 +586,8 @@ IDR_LICENSE             TEXT                    "res\\license.txt"
 STRINGTABLE 
 BEGIN
     IDR_MAINFRAME           "WinDirStat\n\nWinDirStat\n\n\n\n"
+    IDS_QUERYING            "(Abfrage läuft...)"
+    IDS_NOTACCESSIBLE       "(nicht verfügbar)"
 END
 
 STRINGTABLE 

@@ -23,6 +23,10 @@
 #include "windirstat.h"
 #include ".\selectdrivesdlg.h"
 
+#ifdef _DEBUG
+//#define TESTTHREADS //####
+#endif
+
 namespace
 {
 	enum
@@ -36,6 +40,26 @@ namespace
 	};
 
 	const UINT WMU_OK = WM_USER + 100;
+
+	UINT WMU_THREADFINISHED = RegisterWindowMessage("{F03D3293-86E0-4c87-B559-5FD103F5AF58}");
+
+	// Return: false, if drive not accessible
+	bool RetrieveDriveInformation(LPCTSTR path, CString& name, LONGLONG& total, LONGLONG& free)
+	{
+		CString volumeName;
+
+		if (!GetVolumeName(path, volumeName))
+			return false;
+		
+		name= FormatVolumeName(path, volumeName);
+
+		MyGetDiskFreeSpace(path, total, free);
+		
+		ASSERT(free <= total);
+
+		return true;
+	}
+
 }
 
 
@@ -43,20 +67,64 @@ namespace
 /////////////////////////////////////////////////////////////////////////////
 
 CDriveItem::CDriveItem(CDrivesList *list, LPCTSTR pszPath)
+	: m_list(list)
+	, m_path(pszPath)
 {
-	m_list= list;
-	m_path= pszPath;
+	m_success= false;
 
-	m_name= FormatVolumeName(m_path);
-
-	MyGetDiskFreeSpace(m_path, m_totalBytes, m_freeBytes);
-
-	ASSERT(m_freeBytes <= m_totalBytes);
+	m_name= m_path;
+	m_totalBytes= 0;
+	m_freeBytes= 0;
 	m_used= 0;
-	if (m_totalBytes > 0)
-		m_used= (double)(m_totalBytes - m_freeBytes) / m_totalBytes;
 
 	m_isRemote= (DRIVE_REMOTE == GetDriveType(m_path));
+
+	m_querying= true;
+
+	/*
+	For local drives we could do this synchronously:
+		if (!m_isRemote)
+		{
+			m_querying= false;
+
+			CString name= m_name;
+			LONGLONG total = 0;
+			LONGLONG free = 0;
+
+			bool success= RetrieveDriveInformation(m_path, name, total, free);
+			SetDriveInformation(success, name, total, free);
+		}
+	*/
+}
+
+void CDriveItem::StartQuery(HWND dialog, UINT serial)
+{
+	ASSERT(dialog != NULL);
+
+	ASSERT(m_querying);	// The synchronous query in the constructor is commented out.
+
+	if (m_querying)
+	{
+		new CDriveInformationThread(m_path, (LPARAM)this, dialog, serial);
+		// (will delete itself when finished.)
+	}
+}
+
+void CDriveItem::SetDriveInformation(bool success, LPCTSTR name, LONGLONG total, LONGLONG free)
+{
+	m_querying= false;
+	m_success= success;
+
+	if (m_success)
+	{
+		m_name= name;
+		m_totalBytes= total;
+		m_freeBytes= free;
+
+		m_used= 0;
+		if (m_totalBytes > 0)
+			m_used= (double)(m_totalBytes - m_freeBytes) / m_totalBytes;
+	}
 }
 
 bool CDriveItem::IsRemote() const
@@ -100,6 +168,12 @@ bool CDriveItem::DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *w
 	}
 	else if (subitem == COL_GRAPH)
 	{
+		if (!m_success)
+		{
+			return false;
+		}
+		
+
 		if (width != NULL)
 		{		
 			*width= 100;
@@ -120,7 +194,7 @@ bool CDriveItem::DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *w
 
 CString CDriveItem::GetText(int subitem) const
 {
-	CString s= m_name;
+	CString s;
 
 	switch (subitem)
 	{
@@ -129,18 +203,25 @@ CString CDriveItem::GetText(int subitem) const
 		break;
 
 	case COL_TOTAL:
-		s= FormatBytes((LONGLONG)m_totalBytes);
+		if (m_success)
+			s= FormatBytes((LONGLONG)m_totalBytes);
 		break;
 
 	case COL_FREE:
-		s= FormatBytes((LONGLONG)m_freeBytes);
+		if (m_success)
+			s= FormatBytes((LONGLONG)m_freeBytes);
 		break;
 
 	case COL_GRAPH:
+		if (m_querying)
+			s.LoadString(IDS_QUERYING);
+		else if (!m_success)
+			s.LoadString(IDS_NOTACCESSIBLE);
 		break;
 
 	case COL_PERCENTUSED:
-		s= FormatDouble(m_used * 100) + _T("%");
+		if (m_success)
+			s= FormatDouble(m_used * 100) + _T("%");
 		break;
 
 	default:
@@ -158,6 +239,127 @@ CString CDriveItem::GetPath() const
 CString CDriveItem::GetDrive() const
 {
 	return m_path.Left(2);
+}
+
+
+/////////////////////////////////////////////////////////////////////////////
+
+CSet<CDriveInformationThread *, CDriveInformationThread *> CDriveInformationThread::_runningThreads;
+CCriticalSection CDriveInformationThread::_csRunningThreads;
+
+void CDriveInformationThread::AddRunningThread()
+{
+	CSingleLock lock(&_csRunningThreads, true);
+	_runningThreads.SetKey(this);
+}
+
+void CDriveInformationThread::RemoveRunningThread()
+{
+	CSingleLock lock(&_csRunningThreads, true);
+	_runningThreads.RemoveKey(this);
+}
+
+
+// This static method is called by the dialog when the dialog gets closed.
+// We set the m_dialog members of all running threads to null, so that
+// they don't send messages around to a no-more-existing window.
+//
+void CDriveInformationThread::InvalidateDialogHandle()
+{
+	CSingleLock lock(&_csRunningThreads, true);
+
+	POSITION pos= _runningThreads.GetStartPosition();
+	while (pos != NULL)
+	{
+		CDriveInformationThread *thread;
+		_runningThreads.GetNextAssoc(pos, thread);
+
+		CSingleLock lockObj(&thread->m_cs, true);
+		thread->m_dialog= NULL;
+	}
+}
+
+void CDriveInformationThread::OnAppExit()
+{
+	// The documentation for ExitProcess() says:
+	//
+	// Terminating a process causes the following:
+	// 2. All of the threads in the process terminate their execution. 
+	// 3. The state of the process object becomes signaled, satisfying any threads that had been waiting for the process to terminate. 
+
+	// So we need not do anything here.
+	// (we may have some memory leak, if threads are still running.)
+}
+
+
+// The constructor starts the thread.
+//
+CDriveInformationThread::CDriveInformationThread(LPCTSTR path, LPARAM driveItem, HWND dialog, UINT serial)
+	: m_path(path)
+	, m_driveItem(driveItem)
+	, m_serial(serial)
+{
+	ASSERT(m_bAutoDelete);
+
+	m_dialog= dialog;
+
+	m_totalBytes= 0;
+	m_freeBytes= 0;
+	m_success= false;
+
+	AddRunningThread();
+
+	VERIFY(CreateThread());
+}
+
+BOOL CDriveInformationThread::InitInstance()
+{
+	m_success= RetrieveDriveInformation(m_path, m_name, m_totalBytes, m_freeBytes);
+	
+#ifdef TESTTHREADS
+	srand(GetTickCount());
+	Sleep((rand() & 0x07) * 1000);
+#endif
+
+	HWND dialog = NULL;
+
+	{
+		CSingleLock lock(&m_cs, true);
+		dialog= m_dialog;
+		// Of course, we must release m_cs here to avoid deadlocks.
+	}
+
+	if (dialog != NULL)
+	{
+		// Theoretically the dialog may have been closed at this point.
+		// SendMessage() to a non-existing window simply fails immediately.
+		// If in the meantime the system recycled the window handle,
+		// (it may even belong to another process now?!),
+		// we are safe, because WMU_THREADFINISHED is a unique registered message.
+		// (Well if the other process crashes because of our message, there is nothing we can do about it.)
+		// If the window handle is recycled by a new Select drives dialog,
+		// its new serial will prevent it from reacting.
+		SendMessage(dialog, WMU_THREADFINISHED, m_serial, (LPARAM)this);
+	}
+
+	RemoveRunningThread();
+
+	ASSERT(m_bAutoDelete); // Object will delete itself.
+	return false; // no Run(), please!
+}
+
+// This method is only called by the gui thread, while we hang 
+// in SendMessage(dialog, WMU_THREADFINISHED, 0, this).
+// So we need no synchronization.
+//
+LPARAM CDriveInformationThread::GetDriveInformation(bool& success, CString& name, LONGLONG& total, LONGLONG& free)
+{
+	name= m_name;
+	total= m_totalBytes;
+	free= m_freeBytes;
+	success= m_success;
+
+	return m_driveItem;
 }
 
 
@@ -249,10 +451,13 @@ void CDrivesList::MeasureItem(LPMEASUREITEMSTRUCT mis)
 
 IMPLEMENT_DYNAMIC(CSelectDrivesDlg, CDialog)
 
+UINT CSelectDrivesDlg::_serial;
+
 CSelectDrivesDlg::CSelectDrivesDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CSelectDrivesDlg::IDD, pParent)
 	, m_layout(this, _T("sddlg"))
 {
+	_serial++;
 }
 
 CSelectDrivesDlg::~CSelectDrivesDlg()
@@ -281,6 +486,7 @@ BEGIN_MESSAGE_MAP(CSelectDrivesDlg, CDialog)
 	ON_WM_GETMINMAXINFO()
 	ON_WM_DESTROY()
 	ON_MESSAGE(WMU_OK, OnWmuOk)
+	ON_REGISTERED_MESSAGE(WMU_THREADFINISHED, OnWmuThreadFinished)
 END_MESSAGE_MAP()
 
 
@@ -289,6 +495,12 @@ BOOL CSelectDrivesDlg::OnInitDialog()
 	CWaitCursor wc;
 
 	CDialog::OnInitDialog();
+
+	if (WMU_THREADFINISHED == 0)
+	{
+		TRACE("RegisterMessage() failed. Using WM_USER + 123\r\n");
+		WMU_THREADFINISHED = WM_USER + 123;
+	}
 
 	ModifyStyle(0, WS_CLIPCHILDREN);
 
@@ -307,10 +519,10 @@ BOOL CSelectDrivesDlg::OnInitDialog()
 	// If we set an ImageList here, OnMeasureItem will have no effect ?!
 
 	m_list.InsertColumn(COL_NAME,		LoadString(IDS_DRIVECOL_NAME),		LVCFMT_LEFT, 120, COL_NAME);
-	m_list.InsertColumn(COL_TOTAL,		LoadString(IDS_DRIVECOL_TOTAL),		LVCFMT_RIGHT, 120, COL_TOTAL);
-	m_list.InsertColumn(COL_FREE,		LoadString(IDS_DRIVECOL_FREE),		LVCFMT_RIGHT, 120, COL_FREE);
-	m_list.InsertColumn(COL_GRAPH,		LoadString(IDS_DRIVECOL_GRAPH),		LVCFMT_RIGHT, 120, COL_GRAPH);
-	m_list.InsertColumn(COL_PERCENTUSED,LoadString(IDS_DRIVECOL_PERCENTUSED),LVCFMT_RIGHT, 80, COL_PERCENTUSED);
+	m_list.InsertColumn(COL_TOTAL,		LoadString(IDS_DRIVECOL_TOTAL),		LVCFMT_RIGHT, 55, COL_TOTAL);
+	m_list.InsertColumn(COL_FREE,		LoadString(IDS_DRIVECOL_FREE),		LVCFMT_RIGHT, 55, COL_FREE);
+	m_list.InsertColumn(COL_GRAPH,		LoadString(IDS_DRIVECOL_GRAPH),		LVCFMT_LEFT, 100, COL_GRAPH);
+	m_list.InsertColumn(COL_PERCENTUSED,LoadString(IDS_DRIVECOL_PERCENTUSED),LVCFMT_RIGHT, 55, COL_PERCENTUSED);
 
 	m_list.OnColumnsInserted();
 
@@ -327,35 +539,30 @@ BOOL CSelectDrivesDlg::OnInitDialog()
 	DWORD mask= 0x00000001;
 	for (i=0; i < 32; i++, mask <<= 1)
 	{
-		if ((drives & mask) != 0)
+		if ((drives & mask) == 0)
+			continue;
+
+		CString s;
+		s.Format(_T("%c:\\"), i + _T('A'));
+
+		UINT type= GetDriveType(s);
+		if (type == DRIVE_UNKNOWN || type == DRIVE_NO_ROOT_DIR)
+			continue;
+
+		// The check of remote drives will be done in the backgound by the CDriveInformationThread.
+		if (type != DRIVE_REMOTE && !DriveExists(s))
+			continue;
+
+		CDriveItem *item= new CDriveItem(&m_list, s);
+		m_list.InsertListItem(m_list.GetItemCount(), item);
+		item->StartQuery(m_hWnd, _serial);
+
+		for (int k=0; k < m_selectedDrives.GetSize(); k++)
 		{
-			CString s;
-			s.Format(_T("%c:\\"), i + _T('A'));
-
-			UINT type= GetDriveType(s);
-			if (type == DRIVE_UNKNOWN || type == DRIVE_NO_ROOT_DIR)
+			if (item->GetDrive() == m_selectedDrives[k])
 			{
-				continue;
-			}
-
-			if (!DriveExists(s))
-			{
-				continue;
-			}
-
-			CDriveItem *item= new CDriveItem(&m_list, s);
-			m_list.InsertListItem(m_list.GetItemCount(), item);
-			for (int col=0; col < COLUMN_COUNT; col++)
-				m_list.AdjustColumnWidth(col);
-			m_list.UpdateWindow();
-
-			for (int k=0; k < m_selectedDrives.GetSize(); k++)
-			{
-				if (item->GetDrive() == m_selectedDrives[k])
-				{
-					m_list.SelectItem(item);
-					break;
-				}
+				m_list.SelectItem(item);
+				break;
 			}
 		}
 	}
@@ -538,6 +745,8 @@ void CSelectDrivesDlg::OnGetMinMaxInfo(MINMAXINFO* mmi)
 
 void CSelectDrivesDlg::OnDestroy()
 {
+	CDriveInformationThread::InvalidateDialogHandle();
+
 	m_layout.OnDestroy();
 	CDialog::OnDestroy();
 }
@@ -545,5 +754,49 @@ void CSelectDrivesDlg::OnDestroy()
 LRESULT CSelectDrivesDlg::OnWmuOk(WPARAM, LPARAM)
 {
 	OnOK();
+	return 0;
+}
+
+// This message is _sent_ by a CDriveInformationThread.
+//
+LRESULT CSelectDrivesDlg::OnWmuThreadFinished(WPARAM serial, LPARAM lparam)
+{
+	if (serial != _serial)
+	{
+		TRACE("OnWmuThreadFinished: invalid serial (window handle recycled?)\r\n");
+		return 0;
+	}
+
+	CDriveInformationThread *thread= (CDriveInformationThread *)lparam;
+	
+	bool success;
+	CString name;
+	LONGLONG total;
+	LONGLONG free;
+	
+	LPARAM driveItem = thread->GetDriveInformation(success, name, total, free);
+	
+	// For paranoia's sake we check, whether driveItem is in our list.
+	// (and we so find its index.)
+	LVFINDINFO fi;
+	ZeroMemory(&fi, sizeof(fi));
+	fi.flags= LVFI_PARAM;
+	fi.lParam= driveItem;
+
+	int i= m_list.FindItem(&fi);
+	if (i == -1)
+	{
+		TRACE("OnWmuThreadFinished: item not found!\r\n");
+		return 0;
+	}
+
+	CDriveItem *item= (CDriveItem *)driveItem;
+
+	item->SetDriveInformation(success, name, total, free);
+
+	m_list.RedrawItems(i, i);
+
+	m_list.SortItems();
+
 	return 0;
 }

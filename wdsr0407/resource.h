@@ -6,7 +6,8 @@
 #define ID_VIEW_ARRANGE                 127
 #define IDR_MAINFRAME                   128
 #define IDR_windirstatTYPE              129
-#define IDR_11                          130
+#define IDS_QUERYING                    129
+#define IDS_NOTACCESSIBLE               130
 #define IDB_NODES                       131
 #define IDD_SELECTDRIVES                133
 #define IDR_POPUPLIST                   134

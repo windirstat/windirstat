@@ -113,7 +113,7 @@ BEGIN
         MENUITEM "&Open...\tCtrl+O",            ID_FILE_OPEN
         MENUITEM SEPARATOR
         MENUITEM "Refresh &All",                ID_REFRESHALL
-        MENUITEM "Refresh &Selected",           ID_REFRESHSELECTED
+        MENUITEM "Refresh &Selected\tF5",       ID_REFRESHSELECTED
         MENUITEM SEPARATOR
         MENUITEM "&Quit\tAlt+F4",               ID_APP_EXIT
     END
@@ -166,7 +166,7 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "&Configure WinDirStat...",    ID_CONFIGURE
     END
-    POPUP "&?"
+    POPUP "&Help"
     BEGIN
         MENUITEM "&Help\tF1",                   ID_HELP_MANUAL
         MENUITEM "&Report Bug/Feedback...",     ID_HELP_REPORTBUG
@@ -184,7 +184,7 @@ BEGIN
         MENUITEM "&Copy Path\tCtrl+C",          57634
         MENUITEM "&Explorer Here\tCtrl+E",      32774
         MENUITEM "&Command Prompt Here\tCtrl+P", 32808
-        MENUITEM "&Refresh Selected",           32817
+        MENUITEM "&Refresh Selected\tF5",       32817
         MENUITEM SEPARATOR
         MENUITEM "&Delete (to Recyle Bin)\tDel", 32809
         MENUITEM "Delete (no &way to undelete!)\tShift+Del", 32810
@@ -221,6 +221,7 @@ IDR_MAINFRAME ACCELERATORS
 BEGIN
     VK_DELETE,      ID_CLEANUP_DELETE,      VIRTKEY, SHIFT, NOINVERT
     VK_DELETE,      ID_CLEANUP_DELETETOTRASHBIN, VIRTKEY, NOINVERT
+    VK_RETURN,      ID_CLEANUP_OPEN,        VIRTKEY, NOINVERT
     "P",            ID_CLEANUP_OPENINCONSOLE, VIRTKEY, CONTROL, NOINVERT
     "E",            ID_CLEANUP_OPENINEXPLORER, VIRTKEY, CONTROL, NOINVERT
     "C",            ID_EDIT_COPY,           VIRTKEY, CONTROL, NOINVERT
@@ -246,7 +247,7 @@ BEGIN
     VK_F6,          ID_VIEW_SHOWFREESPACE,  VIRTKEY, NOINVERT
     VK_F9,          ID_VIEW_SHOWTREEMAP,    VIRTKEY, NOINVERT
     VK_F7,          ID_VIEW_SHOWUNKNOWN,    VIRTKEY, NOINVERT
-    VK_RETURN,      ID_CLEANUP_OPEN,        VIRTKEY, NOINVERT
+    VK_F5,          ID_REFRESHSELECTED,     VIRTKEY, NOINVERT
 END
 
 
@@ -632,6 +633,8 @@ IDR_LICENSE             TEXT                    "res\\license.txt"
 STRINGTABLE 
 BEGIN
     IDR_MAINFRAME           "WinDirStat\n\nWinDirStat\n\n\n\n"
+    IDS_QUERYING            "(querying...)"
+    IDS_NOTACCESSIBLE       "(unavailable)"
 END
 
 STRINGTABLE 
