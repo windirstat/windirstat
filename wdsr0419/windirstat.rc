@@ -473,7 +473,7 @@ BEGIN
     LTEXT           "<platform>",IDC_PLATFORM,230,18,123,8
     LTEXT           "Для сообщения об ошибке, было бы идеально, если бы вы описали симптом, дословно привели текст ошибки, и, при возможности, шаги чтобы воспроизвести повдение.",
                     IDC_HINT,7,99,346,19
-    LTEXT           "После нажатия кнопки ОК, бы сможете просмотреть сообщение в вашей почтовой программе.",
+    LTEXT           "После нажатия кнопки ОК, вы сможете просмотреть сообщение в вашей почтовой программе.",
                     IDC_STATIC_OKHINT,7,201,346,8
 END
 
@@ -610,8 +610,8 @@ IDR_LICENSE             TEXT                    "res\\license.txt"
 STRINGTABLE 
 BEGIN
     IDR_MAINFRAME           "WinDirStat\n\nWinDirStat\n\n\n\n"
-    IDS_QUERYING            "(запрашывается...)"
-    IDS_NOTACCESSIBLE       "(unavailable)"
+    IDS_QUERYING            "(запрашивается...)"
+    IDS_NOTACCESSIBLE       "(недоступно)"
 END
 
 STRINGTABLE 
@@ -628,7 +628,7 @@ BEGIN
     ID_INDICATOR_SCRL       "SCRL"
     ID_INDICATOR_OVR        "OVR"
     ID_INDICATOR_REC        "REC"
-    ID_INDICATOR_MEMORYUSAGE "RAM Usage: 123.456.789"
+    ID_INDICATOR_MEMORYUSAGE "Использование RAM: 123.456.789"
 END
 
 STRINGTABLE 
@@ -670,71 +670,71 @@ END
 
 STRINGTABLE 
 BEGIN
-    ID_FILE_REFRESHALL      "Re-Reads the Whole Tree"
+    ID_FILE_REFRESHALL      "Сканирует все дерево заново"
     ID_CLEANUP_OPENINEXPLORER 
-                            "Opens an Explorer at the Selected Location.\nExplorer"
-    ID_TREEMAP_ZOOMIN       "Enlarges the Treemap.\nZoom in"
+                            "Открывает проводник в указанном месте.\nПроводник"
+    ID_TREEMAP_ZOOMIN       "Увеличивает Treemap.\nУвеличить"
 END
 
 STRINGTABLE 
 BEGIN
-    ID_FILE_REFRESHSELECTED "Re-Reads the Selected Subtree"
+    ID_FILE_REFRESHSELECTED "Сканирует выделенную ветвь заново"
     ID_CLEANUP_OPENINCONSOLE 
-                            "Opens a Command Prompt at the Selected Location.\nCommand Prompt"
+                            "Вызывает командную строку в указанном месте.\nКомандная строка "
     ID_CLEANUP_DELETETOTRASHBIN 
-                            "Moves the Selected Item to the Recycle Bin.\nDelete (to Recycle Bin)"
-    ID_CLEANUP_DELETE       "Deletes the Selected Item (no way to undelete!).\nDelete (no way to undelete!)"
-    ID_CONFIGURE            "Opens the Settings Dialog.\nConfigure"
-    ID_HELP_MANUAL          "Opens the WinDirStat Online Help\nManual"
+                            "Перемещает выделенные элементы в корзину.\nУдалить (в корзину)"
+    ID_CLEANUP_DELETE       "Удаляет выбранный элемент (без возможности воссановления!).\nУдалить (без возможности воссановления!)"
+    ID_CONFIGURE            "Открывает диалоговое окно настроек.\nНастройки"
+    ID_HELP_MANUAL          "Открывает онлайн помощь о WinDirStat\nСправочник"
 END
 
 STRINGTABLE 
 BEGIN
-    ID_TREEMAP_ZOOMOUT      "Reduces the Treemap.\nZoom out"
-    ID_TREEMAP_SELECTPARENT "Selects the Current Item's Parent.\nSelect Parent"
+    ID_TREEMAP_ZOOMOUT      "Уменьшает Treemap.\nУменьшить"
+    ID_TREEMAP_SELECTPARENT "Выбирает родительский элемент по отношению к текущему.\nВыбрать надуровень"
     ID_TREEMAP_HELPABOUTTREEMAPS 
-                            "Displays Help about Treemaps.\nHelp about Treemaps"
-    ID_VIEW_SHOWTREEMAP     "Shows/hides the Treemap.\nTreemap"
-    ID_HELP_REPORTBUG       "Composes a Bug/Feedback Mail.\nReport Bug/Feedback"
+                            "Показывает помощь о Treemaps.\nПомощь о Treemaps"
+    ID_VIEW_SHOWTREEMAP     "Показывает/скрывакет структуру каталогов.\nTreemap"
+    ID_HELP_REPORTBUG       "Создает письмо об ошибке/отзыв.\nОтослать сообщение об ошибке/отзыв..."
 END
 
 STRINGTABLE 
 BEGIN
-    ID_REFRESHALL           "Rescans the whole directory tree.\nRefresh All"
-    ID_REFRESHSELECTED      "Rescans the selected subtree.\nRefresh Selected"
-    ID_CLEANUP_EMPTYRECYCLEBIN "Empties the Recycle Bin.\nEmpty Recycle Bin"
-    ID_VIEW_SHOWFREESPACE   "Shows/hides the <Free Space> Item.\nShow Free Space"
-    ID_VIEW_SHOWUNKNOWN     "Shows/hides the <Unknown> Item.\nShow Unknown"
+    ID_REFRESHALL           "Сканирует все дерево заново.\nОбновить все"
+    ID_REFRESHSELECTED      "Сканирует выделенную ветвь заново.\nОбновить выделенные элементы"
+    ID_CLEANUP_EMPTYRECYCLEBIN "Очищает корзину.\nОчистить корзину"
+    ID_VIEW_SHOWFREESPACE   "Показывает/скрывает элемент <Свободное место>ю\nПоказывать свободное место"
+    ID_VIEW_SHOWUNKNOWN     "Показывает/скрывает элемент<Неизвестный>.\nПоказывать неизвестные"
 END
 
 STRINGTABLE 
 BEGIN
     ID_DUMMY_USERDEFINEDCLEANUP 
-                            "Calls up User definied Cleanup #0\nUser defined Cleanup"
+                            "Вызывает очистку, определенную пользователем #0\nОчистка, определенную пользователем"
 END
 
 STRINGTABLE 
 BEGIN
-    ID_SENDMAILTOOWNER      "Composes an e-mail report on the currently selected item.\nSend Mail"
+    ID_SENDMAILTOOWNER      "Создает пилсьмо с отчетом о текущем элементе.\nОтправить письмо"
 END
 
 STRINGTABLE 
 BEGIN
-    ID_VIEW_SHOWFILETYPES   "Shows/hides the Extension List.\nShow File Types"
+    ID_VIEW_SHOWFILETYPES   "Показывает/скрывает список расширений.\nПоказывать типы файлов"
 END
 
 STRINGTABLE 
 BEGIN
-    ID_TREEMAP_RESELECTCHILD "Re-selects the child.\nReselect Child"
-    ID_CLEANUP_OPEN         "Opens the selected item.\r\nOpen Item"
-    ID_CLEANUP_PROPERTIES   "Show the properties of the selected item.\r\nShow Properties"
+    ID_TREEMAP_RESELECTCHILD "Выбрирает подуровень.\nВыбрать подуровень"
+    ID_CLEANUP_OPEN         "Открывает выделленый элемент.\r\nОткрыть элемент"
+    ID_CLEANUP_PROPERTIES   "Показывает свойства выбранного элемента.\r\nПоказать свойства"
 END
 
 STRINGTABLE 
 BEGIN
     IDS_RESOURCEVERSION     "Resource Version 3"
     IDS_ABOUT_ABOUTTEXTss   "\r\nWinDirStat - Статистика каталогов\r\n\r\n""Показывает куда пропала место на диске\r\nи помогает вам очистить его.""\r\n\r\nПерепрограмировано для MS Windows -\r\nBernhard Seifert (mailto:%1!s!),\r\n\r\nосновано на программе KDirStat - Stefan Hundhammer для KDE (Linux)\r\n(http://kdirstat.sourceforge.net/).\r\n\r\nОфициальный сайт http://%2!s!/\r\n\r\nCopyright (c) 2003-2004 Bernhard Seifert"
-    IDS_ABOUT_THANKSTOTEXT  "\r\nStefan Hundhammer for his superb Linux tool KDirStat.\r\nUsing KDirStat (2.3.7) as a specification saved me a lot of time.\r\nhttp://kdirstat.sourceforge.net/\r\n\r\nThe authors of SequoiaView for showing just how useful treemaps really can be.\r\nhttp://www.win.tue.nl/sequoiaview/\r\n\r\nJarke J. van Wijk, Huub van de Wetering, Mark Bruls and Kees Huizing\r\nfor their papers about cushion treemaps and squarified treemaps.\r\nhttp://www.win.tue.nl/~vanwijk/\r\n\r\nBen Shneiderman for his ingenious idea of treemaps -\r\na truly intuitive way of visualizing tree contents.\r\nhttp://www.cs.umd.edu/hcil/treemap-history/\r\n\r\nMy colleagues for their feedback on the early releases of WinDirStat.\r\nhttp://www.daccord.net/\r\n\r\nBeatrix Lodige and Nick Lines for beta testing.\r\n"
+    IDS_ABOUT_THANKSTOTEXT  "\r\nStefan Hundhammer за его превосходный инструмент для Линукс KDirStat.\r\nИспользование KDirStat (2.3.7), как спецификации, сохранило мне много времени.\r\nhttp://kdirstat.sourceforge.net/\r\n\r\nАвторам SequoiaView за демонстрацию полезности использования структуры каталогов (treemaps).\r\nhttp://www.win.tue.nl/sequoiaview/\r\n\r\nJarke J. van Wijk, Huub van de Wetering, Mark Bruls и Kees Huizing\r\nза их работы о подушечных treemaps и squarified treemaps.\r\nhttp://www.win.tue.nl/~vanwijk/\r\n\r\nBen Shneiderman за его изобретательную идею относительно treemaps -\r\nдействительно интуитивного способа визуализировать древесную структуру.\r\nhttp://www.cs.umd.edu/hcil/treemap-history/\r\n\r\nМоим коллегам за их отзывы о ранних версиях WinDirStat.\r\nhttp://www.daccord.net/\r\n\r\nBeatrix Lodige и Nick Lines за бета тестирование.\r\n"
     IDS_ABOUT_ABOUT         "О"
     IDS_ABOUT_THANKSTO      "Благодарности"
     IDS_ABOUT_LICENSEAGREEMENT "Лицензионное соглашение"
@@ -745,10 +745,10 @@ END
 
 STRINGTABLE 
 BEGIN
-    IDS_THEDIRECTORYsDOESNOTEXIST "The directory '%1!s!' doesn't exist."
-    IDS_THEFILEsDOESNOTEXIST "The file '%1!s!' doesn't exist."
+    IDS_THEDIRECTORYsDOESNOTEXIST "Каталог '%1!s!' не сушествует."
+    IDS_THEFILEsDOESNOTEXIST "Файл '%1!s!' не существует."
     IDS_COULDNOTCREATEPROCESSssss 
-                            "Could not create process.\r\n\r\nApplication: '%1!s!',\r\nCommand Line: '%2!s!',\r\nWorking Directory: '%3!s!'\r\nError Message:\r\n%4!s!\r\n(Refreshing will not take place.)"
+                            "Не возможно создать процесс.\r\n\r\nПриложение: '%1!s!',\r\nКомандная строка: '%2!s!',\r\nРабочий каталог: '%3!s!'\r\nТекст ошибки:\r\n%4!s!\r\n(Обновлние не будет иметь место.)"
     IDS_TREECOL_NAME        "Имя"
     IDS_TREECOL_SUBTREEPERCENTAGE "Подкаталоги, %"
     IDS_TREECOL_PERCENTAGE  "Процентное отношение"
@@ -759,7 +759,7 @@ BEGIN
     IDS_TREECOL_LASTCHANGE  "Изменен"
     IDS_PLEASECHECKYOURDISKUSAGE "\r\n"
     IDS_DISKUSAGEREPORTGENERATEDBYWINDIRSTAT 
-                            "Disk usage report generated by WinDirStat.\r\n"
+                            "Очет о ипользовании дискового пространства создан в  WinDirStat.\r\n"
     IDS__UNKNOWN_           "<неизвестный>"
     IDS_FREESPACE_ITEM      "<Свободное место>"
     IDS_UNKNOWN_ITEM        "<Неизвестный>"
@@ -772,37 +772,37 @@ BEGIN
     IDS_sREADJOBS           "[%1!s! Задач(а/и)]"
     IDS_CANNOTOPENCLIPBOARD "Невозможно открыть буфер обмена."
     IDS_CANNOTEMTPYCLIPBOARD "Невозможно очистить буфер обмена."
-    IDS_CANNOTSETCLIPBAORDDATA "Cannot set clipboard data."
+    IDS_CANNOTSETCLIPBAORDDATA "Невозможно установить данные буфера обмена"
     IDS_WINDIRSTAT_SETTINGS "WinDirStat - Настройки"
-    IDS_SCANNING_           "Scanning "
+    IDS_SCANNING_           "Идет сканирование"
     IDS_EMPTYRECYCLEBIN     "Очистить корзину"
     IDS__ONEITEMss          " (1 Item, %1!s!%2!s!)"
     IDS__sITEMSss           " (%1!s! Items, %2!s!%3!s!)"
     IDS_UDCsCTRLd           "%1!s!\tCtrl+%2!d!"
     IDS_USERDEFINEDCLEANUP0 "Очистка определенная пользователем #0"
-    IDS_REPORT_DISKUSAGE    "Disk Usage"
-    IDS_USERDEFINEDCLEANUPd "User defined cleanup #%1!d!"
-    IDS_POLICY_NOREFRESH    "No refresh"
+    IDS_REPORT_DISKUSAGE    "Ипользование дискового пространства"
+    IDS_USERDEFINEDCLEANUPd "Очистка, определенная пользователем #%1!d!"
+    IDS_POLICY_NOREFRESH    "Не обновлять"
 END
 
 STRINGTABLE 
 BEGIN
-    IDS_POLICY_REFRESHTHISENTRY "Refresh this entry"
-    IDS_POLICY_REFRESHPARENT "Refresh this entry's parent"
-    IDS_BUGREPORTHINT       "For a bug report, it's best if you describe the symptom, including the complete wording of the error message, and, if possible,  the steps to reproduce the behavior."
-    IDS_FEEDBACKHINT        "Feedback is always appreciated."
-    IDS_FROMsPLATFORMs      "From: %1!s!. Platform: %2!s!.\r\n\r\n"
-    IDS_SEV_CRITICAL        "Critical Bug"
-    IDS_SEV_GRAVE           "Serious Bug"
-    IDS_SEV_NORMAL          "Bug"
-    IDS_SEV_WISH            "Wish"
-    IDS_SEV_FEEDBACK        "Feedback"
+    IDS_POLICY_REFRESHTHISENTRY "Обновить данный элемент"
+    IDS_POLICY_REFRESHPARENT "Обновить надуровень"
+    IDS_BUGREPORTHINT       "Для сообщения об ошибке, было бы идеально, если бы вы описали симптом, дословно привели текст ошибки, и, при возможности, шаги чтобы воспроизвести повдение."
+    IDS_FEEDBACKHINT        "Отзывы всегда приветствуются."
+    IDS_FROMsPLATFORMs      "От: %1!s!. Платформа: %2!s!.\r\n\r\n"
+    IDS_SEV_CRITICAL        "Критическая ошибка"
+    IDS_SEV_GRAVE           "Серьезная ошибка"
+    IDS_SEV_NORMAL          "Ошибка"
+    IDS_SEV_WISH            "Пожелание"
+    IDS_SEV_FEEDBACK        "Отзыв"
     IDS_DRIVECOL_NAME       "Имя"
-    IDS_DRIVECOL_TOTAL      "Total"
-    IDS_DRIVECOL_FREE       "Free"
-    IDS_DRIVECOL_GRAPH      "Used/Total"
-    IDS_DRIVECOL_PERCENTUSED "Used/Total"
-    IDS_SELECTFOLDER        "WinDirStat - Select Folder"
+    IDS_DRIVECOL_TOTAL      "Всего"
+    IDS_DRIVECOL_FREE       "Свободно"
+    IDS_DRIVECOL_GRAPH      "Занято/Всего"
+    IDS_DRIVECOL_PERCENTUSED "Занято/Всего"
+    IDS_SELECTFOLDER        "WinDirStat - Выбрать каталог"
 END
 
 STRINGTABLE 
@@ -810,30 +810,30 @@ BEGIN
     IDS_EXTCOL_EXTENSION    "Расширение"
     IDS_EXTCOL_COLOR        "Цвет"
     IDS_EXTCOL_BYTES        "Bytes"
-    IDS_EXTCOL_FILES        "Files"
+    IDS_EXTCOL_FILES        "Файлы"
     IDS_EXTCOL_DESCRIPTION  "Описание"
-    IDS_RAMUSAGEs           "RAM Usage: %1!s!"
+    IDS_RAMUSAGEs           "Использование RAM: %1!s!"
     IDS_HELPFILEsCOULDNOTBEFOUND 
-                            "The help file %1!s! could not be found.\r\nIt is expected to be in the same folder where windirstat.exe is.\r\nYou should have received it along with windirstat.exe.\r\nYou can download one from WinDirStat's home site (see About box)."
-    IDS_SUSPENDED_          "(suspended) "
-    IDS_SUSPEND             "Suspend"
+                            "Файл справки %1!s! не может быть найден.\r\nОжидается, что он в том же каталоге что и windirstat.exe is.\r\nВы должны были получить его наряду с windirstat.exe\r\nКопию вы можете загрузить с домашнего сайта WinDirStat (см. 'О WinDirStat...')."
+    IDS_SUSPENDED_          "(приостановлено) "
+    IDS_SUSPEND             "Приостановить"
     IDS_SPEC_BYTES          "Bytes"
     IDS_SPEC_KB             "KB"
     IDS_SPEC_MB             "MB"
     IDS_SPEC_GB             "GB"
     IDS_SPEC_TB             "TB"
-    IDS_RESETTO_DEFAULTS    "&Reset to\r\nDefaults"
-    IDS_BACKTO_USERSETTINGS "Back to\r\n&User Settings"
+    IDS_RESETTO_DEFAULTS    "Сбросить к \r\nзначениям по умолчанию"
+    IDS_BACKTO_USERSETTINGS "Вернуться к\r\nпользовательским настройкам"
 END
 
 STRINGTABLE 
 BEGIN
-    IDS_RESETTODEFAULTS     "&Reset to Defaults"
-    IDS_BACKTOUSERSETTINGS  "Back to &User Settings"
+    IDS_RESETTODEFAULTS     "Сбросить к значениям по умолчанию"
+    IDS_BACKTOUSERSETTINGS  "Вернуться к пользовательским настройкам"
     IDS_COLLAPSE            "Свернуть"
-    IDS_EXPAND              "E&xpand"
-    IDS_CREATEPROCESSsFAILEDs "CreateProcess(%1!s!) failed: %2!s!"
-    IDS_LANGUAGERESTARTNOW  "Language changes take not effect until the application is restarted.\r\n\r\nRestart WinDirStat now?"
+    IDS_EXPAND              "Развернуть"
+    IDS_CREATEPROCESSsFAILEDs "Создание процесса (%1!s!) неуспешно: %2!s!"
+    IDS_LANGUAGERESTARTNOW  "Изменение языка вступит в силу только после перезапуска приожения.\r\n\r\nПерезапустить WinDirStat сейчас?"
 END
 
 #endif    // Russian resources
