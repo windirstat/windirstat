@@ -165,6 +165,7 @@ public:
 	void SetLastChange(const FILETIME& t);
 	void SetAttributes(DWORD attr);
 	DWORD GetAttributes() const;
+	DWORD GetSortAttributes() const;
 	double GetFraction() const;
 	ITEMTYPE GetType() const;
 	bool IsRootItem() const;
@@ -239,6 +240,9 @@ private:
 
 
 // $Log$
+// Revision 1.13  2004/11/28 15:38:42  assarbad
+// - Possible sorting implementation (using bit-order in m_attributes)
+//
 // Revision 1.12  2004/11/28 14:40:06  assarbad
 // - Extended CFileFindWDS to replace a global function
 // - Now packing/unpacking the file attributes. This even spares a call to find encrypted/compressed files.

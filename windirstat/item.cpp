@@ -275,7 +275,12 @@ int CItem::CompareSibling(const CTreeListItem *tlib, int subitem) const
 		break;
 	case COL_ATTRIBUTES:
 		{
-//			return CompareNoCase(other->m_name);
+			if (GetSortAttributes() < other->GetSortAttributes())
+				return -1;
+			else if (GetSortAttributes() == other->GetSortAttributes())
+				return 0;
+			else 
+				return 1;
 		}
 		break;
 
@@ -642,6 +647,21 @@ DWORD CItem::GetAttributes() const
 	ret |= (m_attributes & 0x40) << 8;
 	
 	return ret;
+}
+
+// Returns a value which resembles sorting of RHSACE considering gaps
+DWORD CItem::GetSortAttributes() const
+{
+	DWORD ret = 0;
+
+	ret += (m_attributes & 0x01); // R
+	ret += (m_attributes & 0x02); // H
+	ret += (m_attributes & 0x04); // S
+	ret += (m_attributes & 0x08); // A
+	ret += (m_attributes & 0x20); // C
+	ret += (m_attributes & 0x40); // E
+
+	return (m_attributes & INVALID_m_attributes) ? 0 : ret;
 }
 
 double CItem::GetFraction() const
@@ -1605,6 +1625,9 @@ void CItem::DrivePacman()
 
 
 // $Log$
+// Revision 1.22  2004/11/28 15:38:42  assarbad
+// - Possible sorting implementation (using bit-order in m_attributes)
+//
 // Revision 1.21  2004/11/28 14:40:06  assarbad
 // - Extended CFileFindWDS to replace a global function
 // - Now packing/unpacking the file attributes. This even spares a call to find encrypted/compressed files.
