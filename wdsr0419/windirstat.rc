@@ -814,7 +814,7 @@ BEGIN
     IDS_EXTCOL_DESCRIPTION  "Описание"
     IDS_RAMUSAGEs           "Использование RAM: %1!s!"
     IDS_HELPFILEsCOULDNOTBEFOUND 
-                            "Файл справки %1!s! не может быть найден.\r\nОжидается, что он в том же каталоге что и windirstat.exe is.\r\nВы должны были получить его наряду с windirstat.exe\r\nКопию вы можете загрузить с домашнего сайта WinDirStat (см. 'О WinDirStat...')."
+                            "Файл справки %1!s! не может быть найден.\r\nОжидается, что он в том же каталоге что и windirstat.exe.\r\nВы должны были получить его наряду с windirstat.exe\r\nКопию вы можете загрузить с домашнего сайта WinDirStat (см. 'О WinDirStat...')."
     IDS_SUSPENDED_          "(приостановлено) "
     IDS_SUSPEND             "Приостановить"
     IDS_SPEC_BYTES          "Bytes"
