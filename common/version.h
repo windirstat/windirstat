@@ -29,9 +29,9 @@
 // Build categories. Uncomment _one_ line.
 //
 
-//#define BC_DEVEL				// Development version. The usual setting. File version is 0.0.0.buildno.
+#define BC_DEVEL				// Development version. The usual setting. File version is 0.0.0.buildno.
 //#define BC_RELEASECANDIDATE		// Release candidate. Version number is relevant but not yet official. About-box shows x.y.zrcn. File version is x.y.z.buildno.
-#define BC_RELEASE			// Set this only during official builds. About-box shows x.y.z. File version is x.y.z.buildno
+//#define BC_RELEASE			// Set this only during official builds. About-box shows x.y.z. File version is x.y.z.buildno
 
 
 //-------------------------------------------------------------------
@@ -44,7 +44,7 @@
 // Format: #define blank LINKCOUNT blanks decimal
 // Reset this to zero only when you increment VERNUM_MAJOR/MINOR/REVISION.
 
-#define LINKCOUNT  18
+#define LINKCOUNT  27
 
 //-------------------------------------------------------------------
 // Release candidate number. Relevant for BC_RELEASECANDIDATE.
@@ -114,6 +114,9 @@
 
 
 // $Log$
+// Revision 1.29  2005/01/29 07:08:13  bseifert
+// Added Hungarian resource dll.
+//
 // Revision 1.28  2005/01/02 03:56:04  bseifert
 // Copyright -2005. Release 1.1.1
 //

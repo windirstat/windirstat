@@ -1,6 +1,6 @@
 [OPTIONS]
 Compatibility=1.1 or later
-Compiled file=..\..\release\wdsh0407.chm
+Compiled file=..\..\urelease\wdsh0407.chm
 Contents file=toc.hhc
 Default Window=main
 Default topic=windirstat.htm

@@ -2,6 +2,9 @@ TODO.txt - What still has to been done to WinDirStat
 Last modified: $Date$
 =============================================================
 
+- Translate IDS_ABOUT_AUTHORSTEXTs ("Hungarian") to
+  French, Polish and Russian
+  
 - Russian resource: abbreviate IDS_USERDEFINEDCLEANUPd 
 
 - Russian: translate IDS_ABOUT_AUTHORS and IDS_ABOUT_AUTHORSTEXTs

@@ -11,18 +11,6 @@
 	</Platforms>
 	<Configurations>
 		<Configuration
-			Name="Debug|Win32"
-			OutputDirectory="Debug"
-			IntermediateDirectory="Debug"
-			ConfigurationType="0">
-			<Tool
-				Name="VCNMakeTool"
-				BuildCommandLine="echo The help file will only be generated in release build."
-				ReBuildCommandLine="echo The help file will only be generated in release build."
-				CleanCommandLine="echo clean"
-				Output="windirstat.chm"/>
-		</Configuration>
-		<Configuration
 			Name="Release|Win32"
 			OutputDirectory="Release"
 			IntermediateDirectory="Release"
@@ -31,8 +19,8 @@
 				Name="VCNMakeTool"
 				BuildCommandLine="hhc &quot;$(ProjectDir)windirstat.hhp&quot; || cd ."
 				ReBuildCommandLine="hhc &quot;$(ProjectDir)windirstat.hhp&quot; || cd ."
-				CleanCommandLine="del ..\..\release\wdsh0407.chm"
-				Output="..\..\release\windirstat.chm"/>
+				CleanCommandLine="del ..\..\urelease\wdsh0407.chm"
+				Output="..\..\urelease\windirstat.chm"/>
 		</Configuration>
 	</Configurations>
 	<References>

@@ -10,7 +10,7 @@ This project, made up of
 
 - resource DLLs [executables]
 	wdsr0407 (German), wdsr040c (French), wdsr0415 (Polish),
-	wdsr0419 (Russian)
+	wdsr0419 (Russian), wdsr040e (Hungarian)
 
 - helper/utility programs [executables]
 	setup, linkcounter
@@ -77,6 +77,7 @@ wdsh0415	-> Polish Helpfile wdsh0415.chm
 wdshelp		-> English Helpfile windirstat.chm
 wdsr0407	-> German Resource DLL wdsr0407.dll
 wdsr040c	-> French Resource DLL wdsr040c.dll
+wdsr040e	-> Hungarian Resource DLL wdsr040e.dll
 wdsr0415	-> Polish Resource DLL wdsr0415.dll
 wdsr0419	-> Russian Resource DLL wdsr0419.dll
 windirstat	-> windirstat.exe (including English resources).
@@ -107,11 +108,11 @@ How to create a resource dll.
 
 * In Text Include 3 adjust the LANGUAGE
 
-* Remove the manifest
+* Remove the manifest and license.txt
 
 * Translate the rc-File
 
-* Note that the string IDS_RESOURCEVERSION (currently =  "Resource Version 3")
+* Note that the string IDS_RESOURCEVERSION (currently =  "Resource Version 4")
   must not be changed, otherwise the resource dll is not accepted
   by windirstat.exe.
   This version string may be changed in future versions of windirstat, if

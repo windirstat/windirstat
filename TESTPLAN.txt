@@ -3,13 +3,14 @@ Windirstat - Test Plan
 
 Quick Overall Test
 ------------------
---> There are 10 files in the binary distribution of WinDirStat:
+--> There are 11 files in the binary distribution of WinDirStat:
     setup.exe, 
     shfolder.dll, 
     wdsh0407.chm, 
     wdsh0415.chm,
-    wdsr040c.dll,
     wdsr0407.dll,
+    wdsr040c.dll,
+    wdsr040e.dll,
     wdsr0415.dll,
     wdsr0419.dll, 
     windirstat.chm, 

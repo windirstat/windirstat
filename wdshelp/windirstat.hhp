@@ -1,6 +1,6 @@
 [OPTIONS]
 Compatibility=1.1 or later
-Compiled file=..\..\release\windirstat.chm
+Compiled file=..\..\urelease\windirstat.chm
 Contents file=toc.hhc
 Default Window=main
 Default topic=windirstat.htm

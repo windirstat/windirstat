@@ -140,6 +140,8 @@ void CAboutDlg::CMyTabControl::SetPageText(int tab)
 		break;
 	case TAB_AUTHORS:
 		text.FormatMessage(IDS_ABOUT_AUTHORSTEXTs, GetAuthorEmail());
+		// Anti-spam: avoid e-mail addresses in source-code:
+		text.Replace(_T('#'), _T('@'));
 		break;
 	case TAB_THANKSTO:
 		text.LoadString(IDS_ABOUT_THANKSTOTEXT);
@@ -305,6 +307,9 @@ void CAboutDlg::OnDestroy()
 }
 
 // $Log$
+// Revision 1.17  2005/01/29 07:08:18  bseifert
+// Added Hungarian resource dll.
+//
 // Revision 1.16  2004/12/19 10:52:39  bseifert
 // Minor fixes.
 //
