@@ -2,6 +2,14 @@ TODO.txt - What still has to been done to WinDirStat
 Last modified: $Date$
 =============================================================
 
+- item.h: declare m_attributes as char and pack the bits
+  in order to optimize sizeof(CItem).
+  => assarbard
+
+- item.h: m_rect: don't use tagRECT but a smaller short-based
+  struct instead in order to optimize sizeof(CItem)
+  => bseifert
+  
 - Setup: Translate IDS_CREATEINGSENDTOSHORTCUT, IDC_SHORTCUTSENDTO and
   IDS_TREECOL_ATTRIBUTES.
   
@@ -12,15 +20,6 @@ Last modified: $Date$
   Credit Sergiy 'Polet' Polyetayev for Russian translation
   => bseifert
   
-- Multiple selection (and deletion).
-  Concept first! Which cleanup actions will still be enabled
-  and how will they work if multiple items are selected?
-  => bseifert+assarbad
-
-- Use windirstat.ini, if present
-
-- Correct foreign windirstat.rc2 files
-
 - Route Feedback to new mailing-list
 
 - Sync testplan.
@@ -29,10 +28,22 @@ Last modified: $Date$
 
 - Execute testplan.
 
-- Sync Website
-
 - Unicode file releases
   => bseifert
+
+- Sync Website
+
+- Christmas Release 1.1.1
+==========================================================
+
+- Multiple selection (and deletion).
+  Concept first! Which cleanup actions will still be enabled
+  and how will they work if multiple items are selected?
+  => bseifert+assarbad
+
+- Use windirstat.ini, if present
+
+- Filters
 
 Possible additional useful features:
 - Show element size for selected element(s) in status bar
