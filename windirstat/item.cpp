@@ -613,32 +613,41 @@ Bitmask of m_attributes:
 | |______________ 1 == E					(0x40)
 |________________ 1 == invalid attributes	(0x80)
 */
+	DWORD ret = attr;
 
-	if (attr == INVALID_FILE_ATTRIBUTES)
+	if (ret == INVALID_FILE_ATTRIBUTES)
 	{
-		m_attributes = INVALID_m_attributes;
+		m_attributes = (unsigned char)INVALID_m_attributes;
 		return;
 	}
 
-	m_attributes  = char(attr & MaskRHS); // Mask out lower 3 bits
+	ret &= FILE_ATTRIBUTE_READONLY | // Mask out lower 3 bits
+			FILE_ATTRIBUTE_HIDDEN |
+			FILE_ATTRIBUTE_SYSTEM;
 // Prepend the archive attribute
-	m_attributes |= (attr & FILE_ATTRIBUTE_ARCHIVE) >> 2;
+	ret |= (attr & FILE_ATTRIBUTE_ARCHIVE) >> 2;
 // --> At this point the lower nibble is fully used
 // Now shift the reparse point and compressed attribute into the lower 2 bits of
 // the high nibble.
-	m_attributes |= (attr & (FILE_ATTRIBUTE_REPARSE_POINT |
-							 FILE_ATTRIBUTE_COMPRESSED)) >> 6;
+	ret |= (attr & (FILE_ATTRIBUTE_REPARSE_POINT |
+					FILE_ATTRIBUTE_COMPRESSED)) >> 6;
 // Shift the encrypted bit by 8 places
-	m_attributes |= (attr & FILE_ATTRIBUTE_ENCRYPTED) >> 8;
+	ret |= (attr & FILE_ATTRIBUTE_ENCRYPTED) >> 8;
+
+	m_attributes = (unsigned char)ret;
 }
 
 // Decode the attributes encoded by SetAttributes()
 DWORD CItem::GetAttributes() const
 {
-	if (m_attributes & INVALID_m_attributes)
+	DWORD ret = m_attributes;
+
+	if (ret & INVALID_m_attributes)
 		return INVALID_FILE_ATTRIBUTES;
 
-	DWORD ret = m_attributes & MaskRHS;  // Mask out lower 3 bits
+	ret &= FILE_ATTRIBUTE_READONLY | // Mask out lower 3 bits
+			FILE_ATTRIBUTE_HIDDEN |
+			FILE_ATTRIBUTE_SYSTEM;
 // FILE_ATTRIBUTE_ARCHIVE
 	ret |= (m_attributes & 0x08) << 2;
 // FILE_ATTRIBUTE_REPARSE_POINT | FILE_ATTRIBUTE_COMPRESSED
@@ -654,12 +663,14 @@ DWORD CItem::GetSortAttributes() const
 {
 	DWORD ret = 0;
 
-	ret += (m_attributes & 0x01); // R
-	ret += (m_attributes & 0x02); // H
-	ret += (m_attributes & 0x04); // S
-	ret += (m_attributes & 0x08); // A
-	ret += (m_attributes & 0x20); // C
-	ret += (m_attributes & 0x40); // E
+// We want to enforce the order RHSACE with R being the highest priority
+// attribute and E being the lowest priority attribute.
+	ret += (m_attributes & 0x01) ? 1000000 : 0; // R
+	ret += (m_attributes & 0x02) ? 100000 : 0; // H
+	ret += (m_attributes & 0x04) ? 10000 : 0; // S
+	ret += (m_attributes & 0x08) ? 1000 : 0; // A
+	ret += (m_attributes & 0x20) ? 100 : 0; // C
+	ret += (m_attributes & 0x40) ? 10 : 0; // E
 
 	return (m_attributes & INVALID_m_attributes) ? 0 : ret;
 }
@@ -1625,6 +1636,10 @@ void CItem::DrivePacman()
 
 
 // $Log$
+// Revision 1.23  2004/11/28 19:20:46  assarbad
+// - Fixing strange behavior of logical operators by rearranging code in
+//   CItem::SetAttributes() and CItem::GetAttributes()
+//
 // Revision 1.22  2004/11/28 15:38:42  assarbad
 // - Possible sorting implementation (using bit-order in m_attributes)
 //

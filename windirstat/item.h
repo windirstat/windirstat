@@ -59,11 +59,7 @@ enum ITEMTYPE
 };
 
 // File attribute packing
-#define	MaskRHS					FILE_ATTRIBUTE_READONLY | \
-								FILE_ATTRIBUTE_HIDDEN | \
-								FILE_ATTRIBUTE_SYSTEM
-#define INVALID_m_attributes char(0x80)
-
+#define INVALID_m_attributes 0x00000080
 
 // Whether an item type is a leaf type
 inline bool IsLeaf(ITEMTYPE t) { return t == IT_FILE || t == IT_FREESPACE || t == IT_UNKNOWN; }
@@ -223,7 +219,7 @@ private:
 	LONGLONG m_files;			// # Files in subtree
 	LONGLONG m_subdirs;			// # Folder in subtree
 	FILETIME m_lastChange;		// Last modification time OF SUBTREE
-	char m_attributes;			// File attributes of the item
+	unsigned char m_attributes;	// File attributes of the item
 
 	bool m_readJobDone;			// FindFiles() (our own read job) is finished.
 	bool m_done;				// Whole Subtree is done.
@@ -240,6 +236,10 @@ private:
 
 
 // $Log$
+// Revision 1.14  2004/11/28 19:20:46  assarbad
+// - Fixing strange behavior of logical operators by rearranging code in
+//   CItem::SetAttributes() and CItem::GetAttributes()
+//
 // Revision 1.13  2004/11/28 15:38:42  assarbad
 // - Possible sorting implementation (using bit-order in m_attributes)
 //
