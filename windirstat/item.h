@@ -22,6 +22,7 @@
 #pragma once
 
 #include "Treelistcontrol.h"
+#include "treemap.h"
 #include "dirstatdoc.h"		// CExtensionData
 
 
@@ -88,7 +89,7 @@ inline bool operator== (const FILETIME& t1, const FILETIME& t2)
 // Methods which recurse down to every child (expensive) are named "RecurseDoSomething".
 // Methods which recurse up to the parent (not so expensive) are named "UpwardDoSomething".
 //
-class CItem: public CTreeListItem
+class CItem: public CTreeListItem, public CTreemap::Item
 {
 	// We collect data of files in FILEINFOs before we create items for them,
 	// because we need to know their count before we can decide whether or not
@@ -113,6 +114,15 @@ public:
 	virtual CTreeListItem *GetTreeListChild(int i) const;
 	virtual int GetImageToCache() const;
 	virtual void DrawAdditionalState(CDC *pdc, const CRect& rcLabel) const;
+
+	// CTreemap::Item interface
+	virtual            bool TmiIsLeaf()                const { return IsLeaf(GetType()); }
+	virtual    const CRect& TmiGetRectangle()          const { return m_rect; }
+	virtual            void TmiSetRectangle(const CRect& rc) { m_rect = rc; }
+	virtual        COLORREF TmiGetGraphColor()         const { return GetGraphColor(); }
+	virtual             int TmiGetChildrenCount()      const { return GetChildrenCount(); }
+	virtual CTreemap::Item *TmiGetChild(int c)         const { return GetChild(c); }
+	virtual        LONGLONG TmiGetSize()               const { return GetSize(); }
 
 	// CItem
 	static int GetSubtreePercentageWidth();
@@ -173,35 +183,23 @@ public:
 	CItem *FindDirectoryByPath(const CString& path);
 	void RecurseCollectExtensionData(CExtensionData *ed);
 
-	// for GraphView
-	void DrawGraph(CDC *pdc, CRect rc) const;
-	CRect GetRect() const;
-	const CItem *FindChildByPoint(CPoint point) const;
-
 private:
 	static int __cdecl _compareBySize(const void *p1, const void *p2);
 	LONGLONG GetProgressRangeMyComputer() const;
 	LONGLONG GetProgressPosMyComputer() const;
 	LONGLONG GetProgressRangeDrive() const;
 	LONGLONG GetProgressPosDrive() const;
-	void RecurseDrawGraph(CDC *pdc, const CRect& rc, bool asroot, const double *surface, double h, double f) const;
-	bool ArrangeChildren(CArray<double, double>& childWidth, CArray<double, double>& rows, CArray<int, int>& childrenPerRow) const;
-	double CalcutateNextRow(const int nextChild, double width, int& childrenUsed, CArray<double, double>& childWidth) const;
 	COLORREF GetGraphColor() const;
 	bool MustShowReadJobs() const;
 	COLORREF GetPercentageColor() const;
 	int FindFreeSpaceItemIndex() const;
 	int FindUnknownItemIndex() const;
-	void RenderLeaf(CDC *pdc, const double *surface) const;
 	CString UpwardGetPathWithoutBackslash() const;
 	void AddDirectory(CFileFind& finder);
 	void AddFile(const FILEINFO& fi);
 	void DriveVisualUpdateDuringWork();
 	void UpwardDrivePacman();
 	void DrivePacman();
-
-	static void UpdateRamUsage();
-	static DWORD _m_lastRamUsageUpdate;	// Tick count. Used during DrawGraph().
 
 	ITEMTYPE m_type;			// Indicates our type. See ITEMTYPE.
 	CString m_name;				// Display name
@@ -220,6 +218,6 @@ private:
 	CArray<CItem *, CItem *> m_children;	
 
 	// For GraphView:
-	mutable CRect m_rect;		// Finally, this is our coordinates in the Treemap view.
+	CRect m_rect;				// Finally, this is our coordinates in the Treemap view.
 };
 

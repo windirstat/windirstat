@@ -584,46 +584,11 @@ void CDirstatDoc::SortExtensionData(CStringArray& sortedExtensions)
 
 void CDirstatDoc::SetExtensionColors(const CStringArray& sortedExtensions)
 {
-	static CArray<COLORREF, COLORREF> colors;
+	static CArray<COLORREF, COLORREF&> colors;
 	
 	if (colors.GetSize() == 0)
 	{
-		if (Is256Colors())
-		{
-			ASSERT(countof(_cushionColors) >= 6);
-			colors.SetSize(7);
-			for (int i=0; i < 6; i++)
-			{
-				colors[i]= _cushionColors[i];
-			}
-			colors[6]= RGB(100, 100, 100);
-		}
-		else
-		{
-			colors.SetSize(countof(_cushionColors));
-
-			for (int i=0; i < countof(_cushionColors); i++)
-			{
-				COLORREF c= _cushionColors[i];
-
-				double dred= GetRValue(c) / 255.0;
-				double dgreen= GetGValue(c) / 255.0;
-				double dblue= GetBValue(c) / 255.0;
-
-				double f= BASE_BRIGHTNESS / (dred + dgreen + dblue);
-				dred*= f;
-				dgreen*= f;
-				dblue*= f;
-
-				int red		= (int)(dred * 255);
-				int green	= (int)(dgreen * 255);
-				int blue	= (int)(dblue * 255);
-				
-				NormalizeColor(red, green, blue);
-
-				colors[i]= RGB(red, green, blue);
-			}
-		}
+		CTreemap::GetDefaultPalette(colors);
 	}
 
 	for (int i=0; i < sortedExtensions.GetSize(); i++)

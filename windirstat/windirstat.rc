@@ -399,31 +399,37 @@ STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION |
 CAPTION "Treemap"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    CONTROL         "&Use Cushion Shading",IDC_CUSHIONSHADING,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,18,15,122,10
-    LTEXT           "&Height",IDC_STATIC,31,32,54,8
-    EDITTEXT        IDC_HEIGHTFACTOR,88,30,35,14,ES_AUTOHSCROLL
-    CONTROL         "",IDC_HEIGHTFACTORSPIN,"msctls_updown32",
-                    UDS_SETBUDDYINT | UDS_AUTOBUDDY | UDS_ARROWKEYS,125,30,
-                    11,14
-    LTEXT           "&Scale Factor",IDC_STATIC,31,53,54,8
-    EDITTEXT        IDC_SCALEFACTOR,88,51,35,14,ES_AUTOHSCROLL
-    CONTROL         "",IDC_SCALEFACTORSPIN,"msctls_updown32",UDS_SETBUDDYINT | 
-                    UDS_AUTOBUDDY | UDS_ARROWKEYS,125,51,11,14
-    LTEXT           "&Ambient Light",IDC_STATIC,31,74,53,8
-    EDITTEXT        IDC_AMBIENTLIGHT,88,73,35,14,ES_AUTOHSCROLL
-    CONTROL         "",IDC_AMBIENTLIGHTSPIN,"msctls_updown32",
-                    UDS_SETBUDDYINT | UDS_AUTOBUDDY | UDS_ARROWKEYS,125,73,
-                    11,14
-    PUSHBUTTON      "&Reset to defaults",IDC_RESETTODEFAULTS,31,94,105,14
+    CTEXT           "&Bright-\r\nness",IDC_STATIC,237,122,32,18
+    CONTROL         "",IDC_BRIGHTNESS,"msctls_trackbar32",TBS_VERT | 
+                    TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,245,17,16,104
+    CTEXT           "&Cushion\r\nShading",IDC_STATIC,271,122,32,18
+    CONTROL         "",IDC_CUSHIONSHADING,"msctls_trackbar32",TBS_VERT | 
+                    TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,279,17,16,104
+    CTEXT           "&Height",IDC_STATIC,305,122,32,18
+    CONTROL         "",IDC_HEIGHT,"msctls_trackbar32",TBS_VERT | TBS_BOTH | 
+                    TBS_NOTICKS | WS_TABSTOP,313,17,16,104
+    CTEXT           "&Scale\r\nFactor",IDC_STATIC,339,122,32,18
+    CONTROL         "",IDC_SCALEFACTOR,"msctls_trackbar32",TBS_VERT | 
+                    TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,347,17,16,104
+    RTEXT           "&Light Incidence",IDC_STATIC,246,147,59,8
+    LTEXT           "Static",IDC_LIGHTSOURCE,313,146,58,48,WS_TABSTOP
+    PUSHBUTTON      "",IDC_RESET,242,167,55,22,BS_MULTILINE
+    GROUPBOX        "St&yle",IDC_STATIC,7,146,63,49
+    CONTROL         "&KDirStat",IDC_KDIRSTAT,"Button",BS_AUTORADIOBUTTON | 
+                    WS_GROUP | WS_TABSTOP,12,159,42,10
+    CONTROL         "Se&quoiaView",IDC_SEQUOIAVIEW,"Button",
+                    BS_AUTORADIOBUTTON,12,176,53,10
     CONTROL         "Show &Grid",IDC_TREEMAPGRID,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,18,144,48,10
-    PUSHBUTTON      "Grid &Color",IDC_TREEMAPGRIDCOLOR,74,143,62,14,0,
+                    WS_TABSTOP,76,150,54,10
+    PUSHBUTTON      "Grid &Color",IDC_TREEMAPGRIDCOLOR,134,150,85,14,0,
                     WS_EX_RIGHT
-    CONTROL         "",IDC_DEMO,"Static",SS_BLACKFRAME | WS_BORDER,147,30,
-                    118,78,WS_EX_TRANSPARENT
-    PUSHBUTTON      "H&ighlight Rectangle",IDC_TREEMAPHIGHLIGHTCOLOR,18,166,
-                    117,14,0,WS_EX_RIGHT
+    PUSHBUTTON      "H&ighlight Rectangle",IDC_TREEMAPHIGHLIGHTCOLOR,76,175,
+                    143,14,0,WS_EX_RIGHT
+    CTEXT           "Static",IDC_STATICSCALEFACTOR,339,7,32,8
+    CTEXT           "Static",IDC_STATICHEIGHT,305,7,32,8
+    CTEXT           "Static",IDC_STATICCUSHIONSHADING,271,7,32,8
+    CTEXT           "Static",IDC_STATICBRIGHTNESS,237,7,32,8
+    LTEXT           "Static",IDC_PREVIEW,7,7,211,124
 END
 
 IDD_PAGE_GENERAL DIALOGEX 0, 0, 380, 202
@@ -757,7 +763,7 @@ END
 
 STRINGTABLE 
 BEGIN
-    IDS_RESOURCEVERSION     "Resource Version 2"
+    IDS_RESOURCEVERSION     "Resource Version 3"
     IDS_ABOUT_ABOUTTEXTss   "\r\nWinDirStat - Directory Statistics\r\n\r\n""Shows where all your disk space has gone\r\nand helps you clean it up.""\r\n\r\nRe-programmed for MS Windows by\r\nBernhard Seifert (mailto:%1!s!),\r\n\r\nbased on Stefan Hundhammer's KDE (Linux) program KDirStat\r\n(http://kdirstat.sourceforge.net/).\r\n\r\nWinDirStat's home is http://%2!s!/\r\n\r\nCopyright (c) 2003 Bernhard Seifert"
     IDS_ABOUT_THANKSTOTEXT  "\r\nStefan Hundhammer for his superb Linux tool KDirStat.\r\nUsing KDirStat (2.3.7) as a specification saved me a lot of time.\r\nhttp://kdirstat.sourceforge.net/\r\n\r\nThe authors of SequoiaView for showing just how useful treemaps really can be.\r\nhttp://www.win.tue.nl/sequoiaview/\r\n\r\nJarke J. van Wijk, Huub van de Wetering, Mark Bruls and Kees Huizing\r\nfor their papers about cushion treemaps and squarified treemaps.\r\nhttp://www.win.tue.nl/~vanwijk/\r\n\r\nBen Shneiderman for his ingenious idea of treemaps -\r\na truly intuitive way of visualizing tree contents.\r\nhttp://www.cs.umd.edu/hcil/treemap-history/\r\n\r\nMy colleagues for their feedback on the early releases of WinDirStat.\r\nhttp://www.daccord.net/\r\n\r\nBeatrix Lödige and Nick Lines for beta testing.\r\n"
     IDS_ABOUT_ABOUT         "About"
@@ -843,11 +849,13 @@ BEGIN
                             "The help file %1!s! could not be found.\r\nIt is expected to be in the same folder where windirstat.exe is.\r\nYou should have received it along with windirstat.exe.\r\nYou can download one from WinDirStat's home site (see About box)."
     IDS_SUSPENDED_          "(suspended) "
     IDS_SUSPEND             "Suspend"
-	IDS_SPEC_BYTES			"Bytes"
-	IDS_SPEC_KB				"KB"
-	IDS_SPEC_MB				"MB"
-	IDS_SPEC_GB				"GB"
-	IDS_SPEC_TB				"TB"
+    IDS_SPEC_BYTES          "Bytes"
+    IDS_SPEC_KB             "KB"
+    IDS_SPEC_MB             "MB"
+    IDS_SPEC_GB             "GB"
+    IDS_SPEC_TB             "TB"
+	IDS_RESETTODEFAULTS		"&Reset to\r\nDefaults"
+	IDS_BACKTOUSERSETTINGS	"Back to\r\n&User Settings"
 END
 
 #endif    // English (U.S.) resources

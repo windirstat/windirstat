@@ -1,7 +1,16 @@
 changelog.txt - What has been done to WinDirStat (newest top)
 =============================================================
 
-	* Resizable dialogs: the controls don't overwrite each other any more.
+2003-12-24	bseifert
+	* RESOURCEVERSION is now 3. This means that windirstat.exe 
+	    will not load resource dlls of previous versions.
+	* Treemap algorithm now isolated in treemap.h/treemap.cpp.
+	  Two squarification styles: KDirStat-like, SequoiaView-like.
+	  Two new parameters: brightness and position of the light source.
+	  Treemap-options-page completely reworked:
+	  - true treemap preview
+	  - 4 big sliders and a 2D-Slider
+	* Resizable dialogs: fixed repainting problem.
 
 2003-12-13	bseifert
 	* Added size grippers to the resizable dialogs.

@@ -21,6 +21,8 @@
 
 #pragma once
 
+#include "treemap.h"
+
 class COptions;
 
 enum REFRESHPOLICY
@@ -206,32 +208,11 @@ public:
 	bool IsShowTimeSpent();
 	void SetShowTimeSpent(bool show);
 
-	bool IsCushionShading();
-	void SetCushionShading(bool shade);
-
-	bool IsTreemapGrid();
-	void SetTreemapGrid(bool show);
-
-	COLORREF GetTreemapGridColor();
-	void SetTreemapGridColor(COLORREF color);
-
 	COLORREF GetTreemapHighlightColor();
 	void SetTreemapHighlightColor(COLORREF color);
 
-	int GetHeightFactor(); // Percent
-	void SetHeightFactor(int h); // Percent
-	int GetHeightFactorDefault();
-	void GetHeightFactorRange(int& min, int& max);
-
-	int GetScaleFactor(); // Percent
-	void SetScaleFactor(int f); // Percent
-	int GetScaleFactorDefault();
-	void GetScaleFactorRange(int& min, int& max);
-
-	int GetAmbientLight(); // Percent
-	void SetAmbientLight(int a); // Percent
-	int GetAmbientLightDefault();
-	void GetAmbientLightRange(int& min, int& max);
+	const CTreemap::Options *GetTreemapOptions();
+	void SetTreemapOptions(const CTreemap::Options& options);
 
 	bool IsFollowMountPoints();
 	void SetFollowMountPoints(bool follow);
@@ -247,6 +228,8 @@ public:
 private:
 	void ReadUserDefinedCleanup(int i);
 	void SaveUserDefinedCleanup(int i);
+	void ReadTreemapOptions();
+	void SaveTreemapOptions();
 
 	bool m_treelistGrid;
 	COLORREF m_treelistColor[TREELISTCOLORCOUNT];
@@ -254,13 +237,10 @@ private:
 	bool m_humanFormat;
 	bool m_pacmanAnimation;
 	bool m_showTimeSpent;
-	bool m_cushionShading;
-	bool m_treemapGrid;
-	COLORREF m_treemapGridColor;
 	COLORREF m_treemapHighlightColor;
-	int m_heightFactor;	// H  (percent)
-	int m_scaleFactor;	// F  (percent)
-	int m_ambientLight;	// Ia (percent)
+
+	CTreemap::Options m_treemapOptions;
+	
 	bool m_followMountPoints;
 	USERDEFINEDCLEANUP m_userDefinedCleanup[USERDEFINEDCLEANUPCOUNT];
 };

@@ -61,8 +61,7 @@ enum
 	HINT_REDRAWWINDOW,		// Only graphically redraw views.
 
 	HINT_TREELISTSTYLECHANGED,	// Options: Treelist style (grid) changed
-	HINT_TREEMAPSTYLECHANGED,	// Options: Treemap style (grid, colors etc.) changed
-	HINT_CUSHIONSHADINGCHANGED,	// Options: Wether or not cushion shading is used changed
+	HINT_TREEMAPSTYLECHANGED	// Options: Treemap style (grid, colors etc.) changed
 };
 
 //

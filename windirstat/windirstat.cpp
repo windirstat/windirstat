@@ -56,102 +56,6 @@ CString GetWinDirStatHomepage()
 	return _T("windirstat.sourceforge.net");
 }
 
-void AddRidge(const CRect& rc, double *surface, double h)
-{
-	/* 
-	Unoptimized:
-
-	if (rc.Width() > 0)
-	{
-		surface[2]+= 4 * h * (rc.right + rc.left) / (rc.right - rc.left);
-		surface[0]-= 4 * h / (rc.right - rc.left);
-	}
-
-	if (rc.Height() > 0)
-	{
-		surface[3]+= 4 * h * (rc.bottom + rc.top) / (rc.bottom - rc.top);
-		surface[1]-= 4 * h / (rc.bottom - rc.top);
-	}
-	*/
-	
-	// Optimized (gains 15 ms of 1030):
-
-	int width= rc.Width();
-	int height= rc.Height();
-
-	ASSERT(width > 0 && height > 0);
-
-	double h4= 4 * h;
-
-	double wf= h4 / width;
-	surface[2]+= wf * (rc.right + rc.left);
-	surface[0]-= wf;
-
-	double hf= h4 / height;
-	surface[3]+= hf * (rc.bottom + rc.top);
-	surface[1]-= hf;
-}
-
-void RenderRectangle(CDC *pdc, const CRect& rc, const double *surface, COLORREF col)
-{
-	if (GetOptions()->IsCushionShading())
-	{
-		RenderCushion(pdc, rc, surface, col);
-	}
-	else
-	{
-		pdc->FillSolidRect(rc, col);
-	}
-}
-
-void RenderCushion(CDC *pdc, const CRect& rc, const double *surface, COLORREF col)
-{
-	// Cushion parameters
-	const double Ia = GetOptions()->GetAmbientLight() / 100.0;
-
-	// where is the light:
-	static const double lx = -1;		// negative = left
-	static const double ly = -1;		// negative = top
-	static const double lz = 10;
-
-	// Derived parameters
-	const double Is = 1 - Ia;	// brightness
-
-	static const double len= sqrt(lx*lx + ly*ly + lz*lz);
-	static const double Lx = lx / len;
-	static const double Ly = lx / len;
-	static const double Lz = lz / len;
-
-	const double colR= GetRValue(col);
-	const double colG= GetGValue(col);
-	const double colB= GetBValue(col);
-
-	for (int iy = rc.top; iy < rc.bottom; iy++)
-	for (int ix = rc.left; ix < rc.right; ix++)
-	{
-		double nx= -(2 * surface[0] * (ix + 0.5) + surface[2]);
-		double ny= -(2 * surface[1] * (iy + 0.5) + surface[3]);
-		double cosa= (nx*Lx + ny*Ly + Lz) / sqrt(nx*nx + ny*ny + 1.0);
-		
-		double brightness= Is * cosa;
-		if (brightness < 0)
-			brightness= 0;
-		
-		brightness+= Ia;
-		ASSERT(brightness <= 1.0);
-
-		brightness*= 2.5 / BASE_BRIGHTNESS;
-
-		int red		= (int)(colR * brightness);
-		int green	= (int)(colG * brightness);
-		int blue	= (int)(colB * brightness);
-
-		NormalizeColor(red, green, blue);
-
-		pdc->SetPixel(ix, iy, RGB(red, green, blue));
-	}
-}
-
 CMyImageList *GetMyImageList()
 {
 	return GetApp()->GetMyImageList();
@@ -175,6 +79,7 @@ CDirstatApp::CDirstatApp()
 {
 	m_workingSet= 0;
 	m_pageFaults= 0;
+	m_lastPeriodicalRamUsageUpdate= GetTickCount();
 
 	#ifdef _DEBUG
 		TestScanResourceDllName();
@@ -190,6 +95,15 @@ CMyImageList *CDirstatApp::GetMyImageList()
 void CDirstatApp::UpdateRamUsage()
 {
 	CWinThread::OnIdle(0);
+}
+
+void CDirstatApp::PeriodicalUpdateRamUsage()
+{
+	if (GetTickCount() - m_lastPeriodicalRamUsageUpdate > 1200)
+	{
+		UpdateRamUsage();
+		m_lastPeriodicalRamUsageUpdate= GetTickCount();
+	}
 }
 
 CString CDirstatApp::FindResourceDllPathByLangid(LANGID& langid)

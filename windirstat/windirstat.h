@@ -43,10 +43,6 @@ CMyImageList *GetMyImageList();
 CString GetAuthorEmail();
 CString GetWinDirStatHomepage();
 
-void AddRidge(const CRect& rc, double *surface, double h);
-void RenderRectangle(CDC *pdc, const CRect& rc, const double *surface, COLORREF col);
-void RenderCushion(CDC *pdc, const CRect& rc, const double *surface, COLORREF col);
-
 //
 // CDirstatApp. The MFC application object. 
 // Knows about RAM Usage, Mount points, Help files and the CMyImageList.
@@ -68,6 +64,8 @@ public:
 
 	CMyImageList *GetMyImageList();
 	void UpdateRamUsage();
+	
+	void PeriodicalUpdateRamUsage();
 
 	void DoContextHelp(DWORD topic);
 
@@ -98,6 +96,7 @@ protected:
 	CPsapi m_psapi;							// Dynamically linked psapi.dll (for RAM usage)
 	LONGLONG m_workingSet;					// Current working set (RAM usage)
 	LONGLONG m_pageFaults;					// Page faults so far (unused)
+	DWORD m_lastPeriodicalRamUsageUpdate;	// Tick count
 
 	DECLARE_MESSAGE_MAP()
 	afx_msg void OnFileOpen();

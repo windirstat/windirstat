@@ -60,13 +60,16 @@ namespace
 	const LPCTSTR entryHumanFormat			= _T("humanFormat");
 	const LPCTSTR entryPacmanAnimation		= _T("pacmanAnimation");
 	const LPCTSTR entryShowTimeSpent		= _T("showTimeSpent");
-	const LPCTSTR entryCushionShading		= _T("cushionShading");
+	const LPCTSTR entryTreemapHighlightColor= _T("treemapHighlightColor");
+	const LPCTSTR entryTreemapStyle			= _T("treemapStyle");
 	const LPCTSTR entryTreemapGrid			= _T("treemapGrid");
 	const LPCTSTR entryTreemapGridColor		= _T("treemapGridColor");
-	const LPCTSTR entryTreemapHighlightColor= _T("treemapHighlightColor");
+	const LPCTSTR entryBrightness			= _T("brightness");
 	const LPCTSTR entryHeightFactor			= _T("heightFactor");
 	const LPCTSTR entryScaleFactor			= _T("scaleFactor");
 	const LPCTSTR entryAmbientLight			= _T("ambientLight");
+	const LPCTSTR entryLightSourceX			= _T("lightSourceX");
+	const LPCTSTR entryLightSourceY			= _T("lightSourceY");
 	const LPCTSTR entryFollowMountPoints	= _T("followMountPoints");
 
 	const LPCTSTR sectionUserDefinedCleanupD	= _T("options\\userDefinedCleanup%02d");
@@ -618,48 +621,6 @@ void COptions::SetShowTimeSpent(bool show)
 	}
 }
 
-bool COptions::IsCushionShading()
-{
-	return m_cushionShading;
-}
-
-void COptions::SetCushionShading(bool shade)
-{
-	if (m_cushionShading != shade)
-	{
-		m_cushionShading= shade;
-		GetDocument()->UpdateAllViews(NULL, HINT_CUSHIONSHADINGCHANGED);
-	}
-}
-
-bool COptions::IsTreemapGrid()
-{
-	return m_treemapGrid;
-}
-
-void COptions::SetTreemapGrid(bool show)
-{
-	if (m_treemapGrid != show)
-	{
-		m_treemapGrid= show;
-		GetDocument()->UpdateAllViews(NULL, HINT_TREEMAPSTYLECHANGED);
-	}
-}
-
-COLORREF COptions::GetTreemapGridColor()
-{
-	return m_treemapGridColor;
-}
-
-void COptions::SetTreemapGridColor(COLORREF color)
-{
-	if (m_treemapGridColor != color)
-	{
-		m_treemapGridColor= color;
-		GetDocument()->UpdateAllViews(NULL, HINT_TREEMAPSTYLECHANGED);
-	}
-}
-
 COLORREF COptions::GetTreemapHighlightColor()
 {
 	return m_treemapHighlightColor;
@@ -674,80 +635,27 @@ void COptions::SetTreemapHighlightColor(COLORREF color)
 	}
 }
 
-int COptions::GetHeightFactor() // "H"
+const CTreemap::Options *COptions::GetTreemapOptions()
 {
-	return m_heightFactor;
+	return &m_treemapOptions;
 }
 
-void COptions::SetHeightFactor(int h)
+void COptions::SetTreemapOptions(const CTreemap::Options& options)
 {
-	if (m_heightFactor != h)
+	if (options.style != m_treemapOptions.style
+	|| options.grid != m_treemapOptions.grid
+	|| options.gridColor != m_treemapOptions.gridColor
+	|| options.brightness != m_treemapOptions.brightness
+	|| options.height != m_treemapOptions.height
+	|| options.scaleFactor != m_treemapOptions.scaleFactor
+	|| options.ambientLight != m_treemapOptions.ambientLight
+	|| options.lightSourceX != m_treemapOptions.lightSourceX
+	|| options.lightSourceY != m_treemapOptions.lightSourceY
+	)
 	{
-		m_heightFactor= h;
+		m_treemapOptions= options;
 		GetDocument()->UpdateAllViews(NULL, HINT_TREEMAPSTYLECHANGED);
 	}
-}
-
-int COptions::GetHeightFactorDefault()
-{
-	return 40;
-}
-
-void COptions::GetHeightFactorRange(int& min, int& max)
-{
-	min= 0;
-	max= 200;
-}
-
-
-int COptions::GetScaleFactor() // "F"
-{
-	return m_scaleFactor;
-}
-
-void COptions::SetScaleFactor(int f)
-{
-	if (m_scaleFactor != f)
-	{
-		m_scaleFactor= f;
-		GetDocument()->UpdateAllViews(NULL, HINT_TREEMAPSTYLECHANGED);
-	}
-}
-
-int COptions::GetScaleFactorDefault()
-{
-	return 90;
-}
-
-void COptions::GetScaleFactorRange(int& min, int& max)
-{
-	min= 20;
-	max= 100;
-}
-
-int COptions::GetAmbientLight()
-{
-	return m_ambientLight;
-}
-
-void COptions::SetAmbientLight(int a)
-{
-	if (m_ambientLight != a)
-	{
-		m_ambientLight= a;
-		GetDocument()->UpdateAllViews(NULL, HINT_TREEMAPSTYLECHANGED);
-	}
-}
-
-int COptions::GetAmbientLightDefault()
-{
-	return 15;
-}
-
-void COptions::GetAmbientLightRange(int& min, int& max)
-{
-	min= 0;
-	max= 100;
 }
 
 void COptions::GetUserDefinedCleanups(USERDEFINEDCLEANUP udc[USERDEFINEDCLEANUPCOUNT])
@@ -813,13 +721,10 @@ void COptions::SaveToRegistry()
 	SetProfileBool(sectionOptions, entryHumanFormat, m_humanFormat);
 	SetProfileBool(sectionOptions, entryPacmanAnimation, m_pacmanAnimation);
 	SetProfileBool(sectionOptions, entryShowTimeSpent, m_showTimeSpent);
-	SetProfileBool(sectionOptions, entryCushionShading, m_cushionShading);
-	SetProfileBool(sectionOptions, entryTreemapGrid, m_treemapGrid);
-	SetProfileInt(sectionOptions, entryTreemapGridColor, m_treemapGridColor);
 	SetProfileInt(sectionOptions, entryTreemapHighlightColor, m_treemapHighlightColor);
-	SetProfileInt(sectionOptions, entryHeightFactor, m_heightFactor);
-	SetProfileInt(sectionOptions, entryScaleFactor, m_scaleFactor);
-	SetProfileInt(sectionOptions, entryAmbientLight, m_ambientLight);
+
+	SaveTreemapOptions();
+
 	SetProfileBool(sectionOptions, entryFollowMountPoints, m_followMountPoints);
 	for (i=0; i < USERDEFINEDCLEANUPCOUNT; i++)
 		SaveUserDefinedCleanup(i);
@@ -827,8 +732,6 @@ void COptions::SaveToRegistry()
 
 void COptions::LoadFromRegistry()
 {
-	int min;
-	int max;
 	m_treelistGrid= GetProfileBool(sectionOptions, entryTreelistGrid, false);
 	m_treelistColorCount= GetProfileInt(sectionOptions, entryTreelistColorCount, 4);
 	CheckRange(m_treelistColorCount, 1, TREELISTCOLORCOUNT);
@@ -841,19 +744,10 @@ void COptions::LoadFromRegistry()
 	m_humanFormat= GetProfileBool(sectionOptions, entryHumanFormat, true);
 	m_pacmanAnimation= GetProfileBool(sectionOptions, entryPacmanAnimation, true);
 	m_showTimeSpent= GetProfileBool(sectionOptions, entryShowTimeSpent, false);
-	m_cushionShading= GetProfileBool(sectionOptions, entryCushionShading, true);
-	m_treemapGrid= GetProfileBool(sectionOptions, entryTreemapGrid, false);
-	m_treemapGridColor= GetProfileInt(sectionOptions, entryTreemapGridColor, RGB(0, 0, 0));
 	m_treemapHighlightColor= GetProfileInt(sectionOptions, entryTreemapHighlightColor, RGB(0,255,255));
-	m_heightFactor= GetProfileInt(sectionOptions, entryHeightFactor, GetHeightFactorDefault());
-	GetHeightFactorRange(min, max);
-	CheckRange(m_heightFactor, min, max);
-	m_scaleFactor= GetProfileInt(sectionOptions, entryScaleFactor, GetScaleFactorDefault());
-	GetScaleFactorRange(min, max);
-	CheckRange(m_scaleFactor, min, max);
-	m_ambientLight= GetProfileInt(sectionOptions, entryAmbientLight, GetAmbientLightDefault());
-	GetAmbientLightRange(min, max);
-	CheckRange(m_ambientLight, min, max);
+
+	ReadTreemapOptions();
+
 	m_followMountPoints= GetProfileBool(sectionOptions, entryFollowMountPoints, false);
 	for (i=0; i < USERDEFINEDCLEANUPCOUNT; i++)
 		ReadUserDefinedCleanup(i);
@@ -904,7 +798,56 @@ void COptions::SaveUserDefinedCleanup(int i)
 	SetProfileInt(section, entryRefreshPolicy, m_userDefinedCleanup[i].refreshPolicy);
 }
 
+void COptions::ReadTreemapOptions()
+{
+	CTreemap::Options standard = CTreemap::GetDefaultOptions();
 
+	int style = GetProfileInt(sectionOptions, entryTreemapStyle, standard.style);
+	if (style != CTreemap::KDirStatStyle && style != CTreemap::SequoiaViewStyle)
+		style= CTreemap::KDirStatStyle;
+	m_treemapOptions.style= (CTreemap::STYLE)style;
+
+	m_treemapOptions.grid= GetProfileBool(sectionOptions, entryTreemapGrid, standard.grid);
+	
+	m_treemapOptions.gridColor= GetProfileInt(sectionOptions, entryTreemapGridColor, standard.gridColor);
+
+	int brightness = GetProfileInt(sectionOptions, entryBrightness, standard.GetBrightnessPercent());
+	CheckRange(brightness, 0, 100);
+	m_treemapOptions.SetBrightnessPercent(brightness);
+
+	int height= GetProfileInt(sectionOptions, entryHeightFactor, standard.GetHeightPercent());
+	CheckRange(height, 0, 100);
+	m_treemapOptions.SetHeightPercent(height);
+
+	int scaleFactor= GetProfileInt(sectionOptions, entryScaleFactor, standard.GetScaleFactorPercent());
+	CheckRange(scaleFactor, 0, 100);
+	m_treemapOptions.SetScaleFactorPercent(scaleFactor);
+
+	int ambientLight= GetProfileInt(sectionOptions, entryAmbientLight, standard.GetAmbientLightPercent());
+	CheckRange(ambientLight, 0, 100);
+	m_treemapOptions.SetAmbientLightPercent(ambientLight);
+
+	int lightSourceX= GetProfileInt(sectionOptions, entryLightSourceX, standard.GetLightSourceXPercent());
+	CheckRange(lightSourceX, -200, 200);
+	m_treemapOptions.SetLightSourceXPercent(lightSourceX);
+
+	int lightSourceY= GetProfileInt(sectionOptions, entryLightSourceY, standard.GetLightSourceYPercent());
+	CheckRange(lightSourceY, -200, 200);
+	m_treemapOptions.SetLightSourceYPercent(lightSourceY);
+}
+
+void COptions::SaveTreemapOptions()
+{
+	SetProfileInt(sectionOptions, entryTreemapStyle, m_treemapOptions.style);
+	SetProfileBool(sectionOptions, entryTreemapGrid, m_treemapOptions.grid);
+	SetProfileInt(sectionOptions, entryTreemapGridColor, m_treemapOptions.gridColor);
+	SetProfileInt(sectionOptions, entryBrightness, m_treemapOptions.GetBrightnessPercent());
+	SetProfileInt(sectionOptions, entryHeightFactor, m_treemapOptions.GetHeightPercent());
+	SetProfileInt(sectionOptions, entryScaleFactor, m_treemapOptions.GetScaleFactorPercent());
+	SetProfileInt(sectionOptions, entryAmbientLight, m_treemapOptions.GetAmbientLightPercent());
+	SetProfileInt(sectionOptions, entryLightSourceX, m_treemapOptions.GetLightSourceXPercent());
+	SetProfileInt(sectionOptions, entryLightSourceY, m_treemapOptions.GetLightSourceYPercent());
+}
 
 
 /////////////////////////////////////////////////////////////////////////////

@@ -63,6 +63,7 @@
 #include <psapi.h>			// PROCESS_MEMORY_INFO
 #include <mapi.h>			// E-Mail
 #include <lmcons.h>			// UNLEN
+#include <float.h>			// DBL_MAX
 
 #include <atlbase.h>		// USES_CONVERSION, ComPtr<>
 

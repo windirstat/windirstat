@@ -50,29 +50,6 @@ namespace
 		return all;
 	}
 
-	void DistributeFirst(int& first, int& second, int& third)
-	{
-		int h= (first - 255) / 2;
-		first= 255;
-		second+= h;
-		third+= h;
-
-		if (second > 255)
-		{
-			int h= second - 255;
-			second= 255;
-			third+= h;
-			ASSERT(third <= 255);
-		}
-		else if (third > 255)
-		{
-			int h= third - 255;
-			third= 255;
-			second+= h;
-			ASSERT(second <= 255);
-		}
-	}
-
 	void CacheString(CString& s, UINT resId, LPCTSTR defaultVal)
 	{
 		ASSERT(lstrlen(defaultVal) > 0);
@@ -109,7 +86,7 @@ CString GetLocaleLanguage(LANGID langid)
 	// but we want "Francais".
 
 	if (s.GetLength() > 0)
-		s.SetAt(0, toupper(s[0]));
+		s.SetAt(0, (TCHAR)_totupper(s[0]));
 
 	return s + _T(" - ") + GetLocaleString(LOCALE_SNATIVECTRYNAME, langid);
 }
@@ -387,13 +364,6 @@ void MyGetDiskFreeSpace(LPCTSTR pszRootPath, LONGLONG& total, LONGLONG& unused)
 	ASSERT(unused <= total);
 }
 
-// Returns true, if the System has 256 Colors or less
-bool Is256Colors()
-{
-	CClientDC dc(CWnd::GetDesktopWindow());
-	return (dc.GetDeviceCaps(NUMCOLORS) != -1);
-}
-
 CString GetFolderNameFromPath(LPCTSTR path)
 {
 	CString s= path;
@@ -447,24 +417,6 @@ void WaitForHandleWithRepainting(HANDLE h)
 			// The handle became signaled. 
 			break;
 		}
-	}
-}
-
-void NormalizeColor(int& red, int& green, int& blue)
-{
-	ASSERT(red + green + blue <= 3 * 255);
-
-	if (red > 255)
-	{
-		DistributeFirst(red, green, blue);
-	}
-	else if (green > 255)
-	{
-		DistributeFirst(green, red, blue);
-	}
-	else if (blue > 255)
-	{
-		DistributeFirst(blue, red, green);
 	}
 }
 

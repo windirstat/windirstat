@@ -71,20 +71,8 @@ void CExtensionListControl::CListItem::DrawColor(CDC *pdc, CRect rc, UINT /*stat
 	if (rc.right <= rc.left || rc.bottom <= rc.top)
 		return;
 
-	double surface[4];
-	for (int i=0; i < 4; i++)
-		surface[i]= 0;
-
-	AddRidge(rc, surface, GetOptions()->GetHeightFactor()/100.0 * GetOptions()->GetScaleFactor()/100.0);
-
-    RenderRectangle(pdc, rc, surface, m_record.color);
-	if (GetOptions()->IsTreemapGrid())
-	{
-		CPen pen(PS_SOLID, 1, GetOptions()->GetTreemapGridColor());
-		CSelectObject sopen(pdc, &pen);
-		CSelectStockObject sobrush(pdc, NULL_BRUSH);
-		pdc->Rectangle(rc);
-	}
+	CTreemap treemap;
+	treemap.DrawColorPreview(pdc, rc, m_record.color, GetOptions()->GetTreemapOptions());
 }
 
 CString CExtensionListControl::CListItem::GetText(int subitem) const
@@ -399,7 +387,6 @@ void CTypeView::OnUpdate(CView * /*pSender*/, LPARAM lHint, CObject *)
 		m_extensionListControl.RedrawWindow();
 		break;
 
-	case HINT_CUSHIONSHADINGCHANGED:
 	case HINT_TREEMAPSTYLECHANGED:
 		InvalidateRect(NULL);
 		m_extensionListControl.InvalidateRect(NULL);

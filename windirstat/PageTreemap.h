@@ -22,34 +22,9 @@
 #pragma once
 
 #include "colorbutton.h"
-
-//
-// CDemoControl. Shows the effect of alteration of H and F.
-//
-class CDemoControl: public CStatic
-{
-public:
-	CDemoControl();
-	void SetParameters(int heightFactor, int scaleFactor); // Percent
-
-protected:
-	DECLARE_MESSAGE_MAP()
-	afx_msg void OnPaint();
-
-	void AddRidge(int left, int right, double *surface, double h);
-	void DrawSurface(CDC *pdc, const CRect& rc, int left, int right, const double *surface, COLORREF color, int thick);
-
-	double m_h;
-	double m_f;
-
-	double m_bigSurface[3];		// y(x) = [0] * x^2  +  [1] * x + [2]
-	double m_smallSurface1[3];
-	double m_smallSurface2[3];
-	double m_sum1[3];
-	double m_sum2[3];
-	int m_middle;
-};
-
+#include "treemap.h"
+#include "xyslider.h"
+#include "afxwin.h"
 
 //
 // CPageTreemap. "Settings" property page "Treemap".
@@ -64,37 +39,56 @@ public:
 	virtual ~CPageTreemap();
 
 protected:
+	void UpdateOptions(bool save = true);
+	void UpdateStatics();
+	void OnSomethingChanged();
+	void ValuesAltered(bool altered = true);
+
 	virtual void DoDataExchange(CDataExchange* pDX);
 	virtual BOOL OnInitDialog();
 	virtual void OnOK();
 
-	void UpdateControlStatus();
+	CTreemap::Options m_options;	// Current options
 
-	BOOL m_treemapGrid;
-	CColorButton m_treemapGridColor;
-	CColorButton m_treemapHighlightColor;
-	BOOL m_cushionShading;
-	UINT m_scaleFactor;
-	UINT m_heightFactor;
-	UINT m_ambientLight;
-	CSpinButtonCtrl m_ambientLightSpin;
-	CSpinButtonCtrl m_heightFactorSpin;
-	CSpinButtonCtrl m_scaleFactorSpin;
-	CEdit m_ctlAmbientLight;
-	CEdit m_ctlHeightFactor;
-	CEdit m_ctlScaleFactor;
-	CButton m_resetToDefaults;
-	CDemoControl m_demo;
+	bool m_altered;				// Values have been altered. Button reads "Reset to defaults".
+	CTreemap::Options m_undo;	// Valid, if m_altered = false
 
-	bool m_inited;	// true after OnInitDialog
+	CTreemapPreview m_preview;
+
+	int m_style;
+	CColorButton m_highlightColor;
+	BOOL m_grid;
+	CColorButton m_gridColor;
+	
+	CSliderCtrl m_brightness;
+	CString m_sBrightness;
+	int m_nBrightness;
+
+	CSliderCtrl m_cushionShading;
+	CString m_sCushionShading;
+	int m_nCushionShading;
+
+	CSliderCtrl m_height;
+	CString m_sHeight;
+	int m_nHeight;
+
+	CSliderCtrl m_scaleFactor;
+	CString m_sScaleFactor;
+	int m_nScaleFactor;
+
+	CXySlider m_lightSource;
+	CPoint m_ptLightSource;
+
+	CButton m_resetButton;
 
 	DECLARE_MESSAGE_MAP()
-	afx_msg void OnBnClickedCushionshading();
-	afx_msg void OnEnChangeScalefactor();
-	afx_msg void OnEnChangeHeightfactor();
-	afx_msg void OnEnChangeAmbientlight();
-	afx_msg void OnBnClickedResettodefaults();
-	afx_msg void OnBnClickedTreemapgrid();
 	afx_msg void OnColorChangedTreemapGrid(NMHDR *, LRESULT *);
 	afx_msg void OnColorChangedTreemapHighlight(NMHDR *, LRESULT *);
+	afx_msg void OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
+	afx_msg void OnLightSourceChanged(NMHDR *, LRESULT *);
+	afx_msg void OnBnClickedKdirstat();
+	afx_msg void OnBnClickedSequoiaview();
+	afx_msg void OnBnClickedTreemapgrid();
+	afx_msg void OnBnClickedReset();
+
 };

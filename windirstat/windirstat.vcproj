@@ -29,7 +29,7 @@
 				RuntimeTypeInfo="FALSE"
 				UsePrecompiledHeader="3"
 				WarningLevel="4"
-				WarnAsError="FALSE"
+				WarnAsError="TRUE"
 				Detect64BitPortabilityProblems="FALSE"
 				DebugInformationFormat="4"/>
 			<Tool
@@ -357,10 +357,16 @@
 				RelativePath=".\TreeListControl.cpp">
 			</File>
 			<File
+				RelativePath=".\treemap.cpp">
+			</File>
+			<File
 				RelativePath=".\typeview.cpp">
 			</File>
 			<File
 				RelativePath=".\windirstat.cpp">
+			</File>
+			<File
+				RelativePath=".\xyslider.cpp">
 			</File>
 		</Filter>
 		<Filter
@@ -467,10 +473,16 @@
 				RelativePath=".\TreeListControl.h">
 			</File>
 			<File
+				RelativePath=".\treemap.h">
+			</File>
+			<File
 				RelativePath=".\typeview.h">
 			</File>
 			<File
 				RelativePath=".\windirstat.h">
+			</File>
+			<File
+				RelativePath=".\xyslider.h">
 			</File>
 		</Filter>
 		<Filter

@@ -34,8 +34,6 @@ namespace
 }
 
 
-DWORD CItem::_m_lastRamUsageUpdate;
-
 CItem::CItem(ITEMTYPE type, LPCTSTR name, bool dontFollow)
 	: m_type(type)
 	, m_name(name)
@@ -1232,7 +1230,7 @@ CItem *CItem::FindDirectoryByPath(const CString& path)
 
 void CItem::RecurseCollectExtensionData(CExtensionData *ed)
 {
-	UpdateRamUsage();
+	GetApp()->PeriodicalUpdateRamUsage();
 
 	if (IsLeaf(GetType()))
 	{
@@ -1260,76 +1258,6 @@ void CItem::RecurseCollectExtensionData(CExtensionData *ed)
 			GetChild(i)->RecurseCollectExtensionData(ed);
 		}
 	}
-}
-
-void CItem::DrawGraph(CDC *pdc, CRect rc) const
-{
-	//pdc->FillSolidRect(rc, RGB(255,0,0));	// This is a test. There shouldn't be any leaks
-
-/*	DWORD start= GetTickCount(); */
-
-	// Pen for grid. This pen remains selected during the recursive drawing.
-	CPen pen(PS_SOLID, 1, GetOptions()->GetTreemapGridColor());
-	CSelectObject sopen(pdc, &pen);
-
-	if (GetOptions()->IsTreemapGrid())
-	{
-		pdc->FillSolidRect(rc, GetOptions()->GetTreemapGridColor());
-	}
-
-	double surface[4];
-	for (int i=0; i < 4; i++)
-		surface[i]= 0;
-
-	RecurseDrawGraph(pdc, rc, true, surface, GetOptions()->GetHeightFactor()/100.0, GetOptions()->GetScaleFactor() / 100.0);
-
-/*	DWORD time= GetTickCount() - start;
-	CString s;
-	s.Format("%d ms", time);
-	AfxMessageBox(s);
-*/
-
-#ifdef _STRONG_DEBUG
-	int bottom= rc.bottom;
-	int right= rc.right;
-	if (GetOptions()->IsTreemapGrid())
-	{
-		bottom--;
-		right--;
-	}
-	for (int y=rc.top; y < bottom; y++)
-	for (int x=rc.left; x < right; x++)
-		ASSERT(NULL != FindChildByPoint(CPoint(x, y)));
-#endif
-}
-
-CRect CItem::GetRect() const
-{
-	return m_rect;
-}
-
-const CItem *CItem::FindChildByPoint(CPoint point) const
-{
-	ASSERT(IsDone());
-
-	const CItem *item= NULL;
-
-	if (m_rect.PtInRect(point))
-	{
-		for (int i=0; i < GetChildrenCount(); i++)
-		{
-			if (GetChild(i)->GetRect().PtInRect(point))
-			{
-				item= GetChild(i)->FindChildByPoint(point);
-				break;
-			}
-		}
-		if (item == NULL)
-		{
-			item= this;
-		}
-	}
-	return item;
 }
 
 int __cdecl CItem::_compareBySize(const void *p1, const void *p2)
@@ -1394,238 +1322,6 @@ LONGLONG CItem::GetProgressPosDrive() const
 	return pos;
 }
 
-void CItem::RecurseDrawGraph(
-	CDC *pdc,			// Device Context
-	const CRect& rc,	// Rectangle, where to draw item
-	bool asroot,		// If we are the root (zoom) item
-	const double *psurface, // Coefficients so far
-	double h,				// Height factor
-	double f				// Scale factor
-) const
-{
-	ASSERT(IsDone());
-	ASSERT(rc.Width() >= 0);
-	ASSERT(rc.Height() >= 0);
-
-	// The application may have been paged out by the system.
-	// When the user tops it again an manipulates, for example, the splitter,
-	// then the treemap is repainted and so everything must be paged in again.
-	// That can last a long time (30 sec).
-	// In order to give some visual feedback, we periodically update the RAM usage indicator.
-	UpdateRamUsage();
-
-	m_rect= rc;
-
-	int gridWidth= GetOptions()->IsTreemapGrid() ? 1 : 0;
-
-	if (m_rect.Width() <= gridWidth || m_rect.Height() <= gridWidth)
-	{
-		return;
-	}
-
-	double surface[4];
-
-	if (GetOptions()->IsCushionShading())
-	{
-		for (int i=0; i < 4; i++)
-			surface[i]= psurface[i];
-
-		if (!asroot)
-			AddRidge(m_rect, surface, h);
-	}
-
-	if (GetChildrenCount() > 0)
-	{
-		CArray<double, double> rows;	// Our rectangle is divided into rows, each of which gets this height (fraction of total height).
-		CArray<int, int> childrenPerRow;// childrenPerRow[i] = # of children in rows[i]
-
-		CArray<double, double> childWidth; // Widths of the children (fraction of row width).
-		childWidth.SetSize(GetChildrenCount());
-
-		bool horizontalRows= ArrangeChildren(childWidth, rows, childrenPerRow);
-
-		const int width= horizontalRows ? rc.Width() : rc.Height();
-		const int height= horizontalRows ? rc.Height() : rc.Width();
-		ASSERT(width >= 0);
-		ASSERT(height >= 0);
-
-		int c = 0;
-		double top= horizontalRows ? rc.top : rc.left;
-		for (int row=0; row < rows.GetSize(); row++)
-		{
-			double fBottom= top + rows[row] * height;
-			int bottom= (int)fBottom;
-			if (row == rows.GetSize() - 1)
-				bottom= horizontalRows ? rc.bottom : rc.right;
-			double left= horizontalRows ? rc.left : rc.top;
-			for (int i=0; i < childrenPerRow[row]; i++, c++)
-			{
-				CItem *child= GetChild(c);
-				ASSERT(child->IsDone());
-				ASSERT(childWidth[c] >= 0);
-				double fRight= left + childWidth[c] * width;
-				int right= (int)fRight;
-				if (i == childrenPerRow[row] - 1)
-					right= horizontalRows ? rc.right : rc.bottom;
-
-				CRect rcChild;
-				if (horizontalRows)
-				{
-					rcChild.left= (int)left;
-					rcChild.right= right;
-					rcChild.top= (int)top;
-					rcChild.bottom= bottom;
-				}
-				else
-				{
-					rcChild.left= (int)top;
-					rcChild.right= bottom;
-					rcChild.top= (int)left;
-					rcChild.bottom= right;
-				}
-
-				#ifdef _DEBUG
-				if (rcChild.Width() > 0 && rcChild.Height() > 0)
-				{
-					CRect test;
-					test.IntersectRect(m_rect, rcChild);
-					ASSERT(test == rcChild);
-				}
-				#endif			
-				
-				child->RecurseDrawGraph(pdc, rcChild, false, surface, h * f, f);
-				left= fRight;
-			}
-			// This asserts due to rounding error: ASSERT(left == (horizontalRows ? rc.right : rc.bottom));
-			top= fBottom;
-		}
-		// This asserts due to rounding error: ASSERT(top == (horizontalRows ? rc.bottom : rc.right));
-	}
-	else
-	{
-		RenderLeaf(pdc, surface);
-	}
-}
-
-// return: whether the rows are horizontal.
-bool CItem::ArrangeChildren(
-	CArray<double, double>& childWidth,
-	CArray<double, double>& rows,
-    CArray<int, int>& childrenPerRow
-) const
-{
-	ASSERT(IsDone());
-	ASSERT(GetChildrenCount() > 0);
-
-	if (GetSize() == 0)
-	{
-		rows.Add(1.0);
-		childrenPerRow.Add(GetChildrenCount());
-		for (int i=0; i < GetChildrenCount(); i++)
-			childWidth[i]= 1.0 / GetChildrenCount();
-		return true;
-	}
-
-	bool horizontalRows= (m_rect.Width() >= m_rect.Height());
-
-	double width= 1.0;
-	if (horizontalRows)
-	{
-		if (m_rect.Height() > 0)
-			width= (double)m_rect.Width() / m_rect.Height();
-	}
-	else
-	{
-		if (m_rect.Width() > 0)
-			width= (double)m_rect.Height() / m_rect.Width();
-	}
-
-	int nextChild= 0;
-	while (nextChild < GetChildrenCount())
-	{
-		int childrenUsed;
-		rows.Add(CalcutateNextRow(nextChild, width, childrenUsed, childWidth));
-		childrenPerRow.Add(childrenUsed);
-		nextChild+= childrenUsed;
-	}
-
-	return horizontalRows;
-}
-
-double CItem::CalcutateNextRow(const int nextChild, double width, int& childrenUsed, CArray<double, double>& childWidth) const
-{
-	ASSERT(IsDone());
-
-	static const double _minProportion = 0.4;
-	ASSERT(_minProportion < 1);
-
-	ASSERT(nextChild < GetChildrenCount());
-	ASSERT(width >= 1.0);
-
-	const double mySize= (double)GetSize();
-	ASSERT(mySize > 0);
-	LONGLONG sizeUsed= 0;
-	double rowHeight= 0;
-
-	for (int i=nextChild; i < GetChildrenCount(); i++)
-	{
-		LONGLONG childSize= GetChild(i)->GetSize();
-		if (childSize == 0)
-		{
-			ASSERT(i > nextChild);	// first child has size > 0
-			break;
-		}
-
-		sizeUsed+= childSize;
-		double virtualRowHeight= sizeUsed / mySize;
-		ASSERT(virtualRowHeight > 0);
-		ASSERT(virtualRowHeight <= 1);
-		
-		// Rectangle(mySize)    = width * 1.0
-		// Rectangle(childSize) = childWidth * virtualRowHeight
-		// Rectangle(childSize) = childSize / mySize * width
-
-		double childWidth= childSize / mySize * width / virtualRowHeight;
-
-		if (childWidth / virtualRowHeight < _minProportion)
-		{
-			ASSERT(i > nextChild); // because width >= 1 and _minProportion < 1.
-			// For the first child we have:
-			// childWidth / rowHeight
-			// = childSize / mySize * width / rowHeight / rowHeight
-			// = childSize * width / sizeUsed / sizeUsed * mySize
-			// > childSize * mySize / sizeUsed / sizeUsed
-			// > childSize * childSize / childSize / childSize 
-			// = 1 > _minProportion.
-			break;
-		}
-		rowHeight= virtualRowHeight;
-	}
-	ASSERT(i > nextChild);
-
-	// Now i-1 is the last child used
-	// and rowHeight is the height of the row.
-
-	// We add the rest of the children, if their size is 0.
-	while (i < GetChildrenCount() && GetChild(i)->GetSize() == 0)
-		i++;
-
-	childrenUsed= i - nextChild;
-
-	// Now as we know the rowHeight, we compute the widths of our children.
-	for (i=0; i < childrenUsed; i++)
-	{
-		// Rectangle(1.0 * 1.0) = mySize
-		double rowSize= mySize * rowHeight;
-        double childSize= (double)GetChild(nextChild + i)->GetSize();
-		double cw= childSize / rowSize;
-		ASSERT(cw >= 0);
-		childWidth[nextChild + i]= cw;
-	}
-
-	return rowHeight;
-}
-
 COLORREF CItem::GetGraphColor() const
 {
 	COLORREF color;
@@ -1688,20 +1384,6 @@ int CItem::FindUnknownItemIndex() const
 			break;
 	}
 	return i; // maybe == GetChildrenCount() (=> not found)
-}
-
-void CItem::RenderLeaf(CDC *pdc, const double *surface) const
-{
-	CRect rc= m_rect;
-	if (GetOptions()->IsTreemapGrid())
-	{
-		rc.top++;
-		rc.left++;
-		if (rc.Width() <= 0 || rc.Height() <= 0)
-			return;
-	}
-	
-	::RenderRectangle(pdc, rc, surface, GetGraphColor());
 }
 
 CString CItem::UpwardGetPathWithoutBackslash() const
@@ -1799,14 +1481,4 @@ void CItem::DrivePacman()
 	rc.DeflateRect(sizeDeflatePacman);
 	DrawPacman(&dc, rc);
 }
-
-void CItem::UpdateRamUsage()
-{
-	if (GetTickCount() - _m_lastRamUsageUpdate > 1200)
-	{
-		GetApp()->UpdateRamUsage();
-		_m_lastRamUsageUpdate= GetTickCount();
-	}
-}
-
 

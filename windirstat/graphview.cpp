@@ -60,6 +60,11 @@ CGraphView::~CGraphView()
 {
 }
 
+void CGraphView::TreemapDrawingCallback()
+{
+	GetApp()->PeriodicalUpdateRamUsage();
+}
+
 void CGraphView::SuspendRecalculation(bool suspend)
 {
 	m_recalculationSuspended= suspend;
@@ -170,7 +175,7 @@ void CGraphView::OnDraw(CDC* pDC)
 					DrawZoomFrame(&dcmem, rc);
 
 				if (rc.Width() > 0 && rc.Height() > 0)
-					GetDocument()->GetZoomItem()->DrawGraph(&dcmem, rc);
+					m_treemap.DrawTreemap(&dcmem, rc, GetDocument()->GetZoomItem(), GetOptions()->GetTreemapOptions());
 
 				// Cause OnIdle() to be called once.
 				PostAppMessage(GetCurrentThreadId(), WM_NULL, 0, 0);
@@ -222,8 +227,8 @@ void CGraphView::DrawSelection(CDC *pdc)
 	CRect rcClient;
 	GetClientRect(rcClient);
 
-	CRect rc= item->GetRect();
-	if (GetOptions()->IsTreemapGrid())
+	CRect rc= item->TmiGetRectangle();
+	if (m_treemap.GetOptions().grid)
 	{
 		rc.right++;
 		rc.bottom++;
@@ -287,7 +292,7 @@ void CGraphView::OnLButtonDown(UINT nFlags, CPoint point)
 	CItem *root= GetDocument()->GetRootItem();
 	if (root != NULL && root->IsDone() && IsDrawn())
 	{
-		const CItem *item= GetDocument()->GetZoomItem()->FindChildByPoint(point);
+		const CItem *item= (const CItem *)m_treemap.FindItemByPoint(GetDocument()->GetZoomItem(), point);
 		if (item == NULL)
 			return;
 
@@ -365,7 +370,6 @@ void CGraphView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 		break;
 
 	case HINT_TREEMAPSTYLECHANGED:
-	case HINT_CUSHIONSHADINGCHANGED:
 		Inactivate();
 		CView::OnUpdate(pSender, lHint, pHint);
 		break;
@@ -399,7 +403,7 @@ void CGraphView::OnMouseMove(UINT /*nFlags*/, CPoint point)
 	CItem *root= GetDocument()->GetRootItem();
 	if (root != NULL && root->IsDone() && IsDrawn())
 	{
-		const CItem *item= GetDocument()->GetZoomItem()->FindChildByPoint(point);
+		const CItem *item= (const CItem *)m_treemap.FindItemByPoint(GetDocument()->GetZoomItem(), point);
 		if (item != NULL)
 			GetMainFrame()->SetMessageText(item->GetPath());
 	}
