@@ -463,6 +463,9 @@ bool CDirstatDoc::UserDefinedCleanupWorksForItem(const USERDEFINEDCLEANUP *udc, 
 
 	if (item != NULL)
 	{
+		if (!udc->worksForUncPaths && item->HasUncPath())
+			return false;
+
 		switch (item->GetType())
 		{
 		case IT_DRIVE:

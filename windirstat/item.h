@@ -144,6 +144,7 @@ public:
 	ITEMTYPE GetType() const;
 	bool IsRootItem() const;
 	CString GetPath() const;
+	bool HasUncPath() const;
 	CString GetFindPattern() const;
 	CString GetFolderPath() const;
 	CString GetReportPath() const;

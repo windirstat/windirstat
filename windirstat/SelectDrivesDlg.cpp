@@ -41,7 +41,7 @@ namespace
 
 	const UINT WMU_OK = WM_USER + 100;
 
-	UINT WMU_THREADFINISHED = RegisterWindowMessage("{F03D3293-86E0-4c87-B559-5FD103F5AF58}");
+	UINT WMU_THREADFINISHED = RegisterWindowMessage(_T("{F03D3293-86E0-4c87-B559-5FD103F5AF58}"));
 
 	// Return: false, if drive not accessible
 	bool RetrieveDriveInformation(LPCTSTR path, CString& name, LONGLONG& total, LONGLONG& free)
@@ -675,13 +675,20 @@ void CSelectDrivesDlg::UpdateButtons()
 	case RADIO_AFOLDER:
 		if (!m_folderName.IsEmpty())
 		{
-			CString pattern= m_folderName;
-			if (pattern.Right(1) != _T("\\"))
-				pattern+= _T("\\");
-			pattern+= _T("*.*");
-			CFileFind finder;
-			BOOL b= finder.FindFile(pattern);
-            enableOk= b;
+			if (m_folderName.GetLength() >= 2 && m_folderName.Left(2) == _T("\\\\"))
+			{
+				enableOk= true;
+			}
+			else
+			{
+				CString pattern= m_folderName;
+				if (pattern.Right(1) != _T("\\"))
+					pattern+= _T("\\");
+				pattern+= _T("*.*");
+				CFileFind finder;
+				BOOL b= finder.FindFile(pattern);
+				enableOk= b;
+			}
 		}
 		break;
 	default:

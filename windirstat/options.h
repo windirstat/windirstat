@@ -40,6 +40,7 @@ struct USERDEFINEDCLEANUP
 	bool worksForDirectories;
 	bool worksForFilesFolder;
 	bool worksForFiles;
+	bool worksForUncPaths;
 	CString commandLine;
 	bool recurseIntoSubdirectories;
 	bool askForConfirmation;

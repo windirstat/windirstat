@@ -76,6 +76,7 @@ namespace
 	const LPCTSTR entryWorksForDirectories		= _T("worksForDirectories");
 	const LPCTSTR entryWorksForFilesFolder		= _T("worksForFilesFolder");
 	const LPCTSTR entryWorksForFiles			= _T("worksForFiles");
+	const LPCTSTR entryWorksForUncPaths			= _T("worksForUncPaths");
 	const LPCTSTR entryCommandLine				= _T("commandLine");
 	const LPCTSTR entryRecurseIntoSubdirectories= _T("recurseIntoSubdirectories");
 	const LPCTSTR entryAskForConfirmation		= _T("askForConfirmation");
@@ -872,6 +873,7 @@ void COptions::ReadUserDefinedCleanup(int i)
 	m_userDefinedCleanup[i].worksForDirectories= GetProfileBool(section, entryWorksForDirectories, false);
 	m_userDefinedCleanup[i].worksForFilesFolder= GetProfileBool(section, entryWorksForFilesFolder, false);
 	m_userDefinedCleanup[i].worksForFiles= GetProfileBool(section, entryWorksForFiles, false);
+	m_userDefinedCleanup[i].worksForUncPaths= GetProfileBool(section, entryWorksForUncPaths, false);
 	m_userDefinedCleanup[i].commandLine= GetProfileString(section, entryCommandLine, _T(""));
 	m_userDefinedCleanup[i].recurseIntoSubdirectories= GetProfileBool(section, entryRecurseIntoSubdirectories, false);
 	m_userDefinedCleanup[i].askForConfirmation= GetProfileBool(section, entryAskForConfirmation, true);
@@ -893,6 +895,7 @@ void COptions::SaveUserDefinedCleanup(int i)
 	SetProfileBool(section, entryWorksForDirectories, m_userDefinedCleanup[i].worksForDirectories);
 	SetProfileBool(section, entryWorksForFilesFolder, m_userDefinedCleanup[i].worksForFilesFolder);
 	SetProfileBool(section, entryWorksForFiles, m_userDefinedCleanup[i].worksForFiles);
+	SetProfileBool(section, entryWorksForUncPaths, m_userDefinedCleanup[i].worksForUncPaths);
 	SetProfileString(section, entryCommandLine, m_userDefinedCleanup[i].commandLine);
 	SetProfileBool(section, entryRecurseIntoSubdirectories, m_userDefinedCleanup[i].recurseIntoSubdirectories);
 	SetProfileBool(section, entryAskForConfirmation, m_userDefinedCleanup[i].askForConfirmation);

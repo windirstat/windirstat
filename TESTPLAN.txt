@@ -287,6 +287,21 @@ Show unknown.
 Start Windirstat on W2k and delete a file to the recycle bin.
 --> 'Empty Recycle Bin' is enabled.
 
+Open the task manager.
+Map a remote drive as K:
+Open the drive selection dialog and wait until K: is queried. Cancel.
+Disconnect the network cable from the remote machine.
+Open the drive selection dialog again.
+--> K: is being queried
+Cancel and close Windirstat.
+--> The windirstat.exe process dies silently after about 30 seconds.
+Open windirstat again.
+--> K: is being queried.
+Double click C:
+--> C: is being scanned.
+Open the drive selection dialog again.
+--> K: is being queried. After 30 seconds it says "(unavailable)".
+
 
 Special cases
 -------------

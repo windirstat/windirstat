@@ -1,7 +1,14 @@
 changelog.txt - What has been done to WinDirStat (newest top)
 =============================================================
 
-2003-12-06	bseifert
+2003-12-07	bseifert
+	* User defined cleanups are now by default disabled for UNC paths.
+	  New option to enable udcs for UNC paths.
+	* Drive Selection Dialog: Foldername field: Validation took a long
+	  time, if UNC paths were entered using the keyboard. Validation
+	  is now turned off, if the path begins with \\.
+	  
+2003-12-07	bseifert
 	* If the localized help file is not found, the English one is now tried.
 	* New shortcut F5 for 'Refresh Selected'.
 	* English version: '?' renamed to 'Help'.

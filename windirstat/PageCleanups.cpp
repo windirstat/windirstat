@@ -34,6 +34,7 @@ CPageCleanups::CPageCleanups()
 	, m_worksForDirectories(FALSE)
 	, m_worksForFilesFolder(FALSE)
 	, m_worksForFiles(FALSE)
+	, m_worksForUncPaths(FALSE)
 	, m_recurseIntoSubdirectories(FALSE)
 	, m_askForConfirmation(FALSE)
 	, m_showConsoleWindow(FALSE)
@@ -58,6 +59,7 @@ void CPageCleanups::DoDataExchange(CDataExchange* pDX)
 	DDX_Check(pDX, IDC_WORKSFORDIRECTORIES, m_worksForDirectories);
 	DDX_Check(pDX, IDC_WORKSFORFILESFOLDER, m_worksForFilesFolder);
 	DDX_Check(pDX, IDC_WORKSFORFILES, m_worksForFiles);
+	DDX_Check(pDX, IDC_WORKSFORUNCPATHS, m_worksForUncPaths);
 	DDX_Text(pDX, IDC_COMMANDLINE, m_commandLine);
 	DDX_Check(pDX, IDC_RECURSEINTOSUBDIRECTORIES, m_recurseIntoSubdirectories);
 	DDX_Check(pDX, IDC_ASKFORCONFIRMATION, m_askForConfirmation);
@@ -71,6 +73,7 @@ void CPageCleanups::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_WORKSFORDIRECTORIES, m_ctlWorksForDirectories);
 	DDX_Control(pDX, IDC_WORKSFORFILESFOLDER, m_ctlWorksForFilesFolder);
 	DDX_Control(pDX, IDC_WORKSFORFILES, m_ctlWorksForFiles);
+	DDX_Control(pDX, IDC_WORKSFORUNCPATHS, m_ctlWorksForUncPaths);
 	DDX_Control(pDX, IDC_COMMANDLINE, m_ctlCommandLine);
 	DDX_Control(pDX, IDC_RECURSEINTOSUBDIRECTORIES, m_ctlRecurseIntoSubdirectories);
 	DDX_Control(pDX, IDC_ASKFORCONFIRMATION, m_ctlAskForConfirmation);
@@ -91,6 +94,7 @@ BEGIN_MESSAGE_MAP(CPageCleanups, CPropertyPage)
 	ON_BN_CLICKED(IDC_WORKSFORDIRECTORIES, OnBnClickedWorksfordirectories)
 	ON_BN_CLICKED(IDC_WORKSFORFILESFOLDER, OnBnClickedWorksforfilesfolder)
 	ON_BN_CLICKED(IDC_WORKSFORFILES, OnBnClickedWorksforfiles)
+	ON_BN_CLICKED(IDC_WORKSFORUNCPATHS, OnBnClickedWorksforuncpaths)
 	ON_EN_CHANGE(IDC_COMMANDLINE, OnEnChangeCommandline)
 	ON_BN_CLICKED(IDC_RECURSEINTOSUBDIRECTORIES, OnBnClickedRecurseintosubdirectories)
 	ON_BN_CLICKED(IDC_ASKFORCONFIRMATION, OnBnClickedAskforconfirmation)
@@ -169,6 +173,7 @@ void CPageCleanups::CurrentUdcToDialog()
 	m_worksForDirectories= m_udc[m_current].worksForDirectories;
 	m_worksForFilesFolder= m_udc[m_current].worksForFilesFolder;
 	m_worksForFiles= m_udc[m_current].worksForFiles;
+	m_worksForUncPaths= m_udc[m_current].worksForUncPaths;
 	m_commandLine= m_udc[m_current].commandLine;
 	m_recurseIntoSubdirectories= m_udc[m_current].recurseIntoSubdirectories;
 	m_askForConfirmation= m_udc[m_current].askForConfirmation;
@@ -191,6 +196,7 @@ void CPageCleanups::DialogToCurrentUdc()
 	m_udc[m_current].worksForDirectories= m_worksForDirectories;
 	m_udc[m_current].worksForFilesFolder= m_worksForFilesFolder;
 	m_udc[m_current].worksForFiles= m_worksForFiles;
+	m_udc[m_current].worksForUncPaths= m_worksForUncPaths;
 	m_udc[m_current].commandLine= m_commandLine;
 	m_udc[m_current].recurseIntoSubdirectories= m_recurseIntoSubdirectories;
 	m_udc[m_current].askForConfirmation= m_askForConfirmation;
@@ -222,6 +228,7 @@ void CPageCleanups::UpdateControlStatus()
 	m_ctlWorksForDirectories.EnableWindow(m_enabled);
 	m_ctlWorksForFilesFolder.EnableWindow(m_enabled);
 	m_ctlWorksForFiles.EnableWindow(m_enabled);
+	m_ctlWorksForUncPaths.EnableWindow(m_enabled);
 	m_ctlCommandLine.EnableWindow(m_enabled);
 	m_ctlRecurseIntoSubdirectories.EnableWindow(m_enabled && (m_worksForDrives || m_worksForDirectories));
 	m_ctlAskForConfirmation.EnableWindow(m_enabled);
@@ -277,6 +284,11 @@ void CPageCleanups::OnBnClickedWorksforfilesfolder()
 }
 
 void CPageCleanups::OnBnClickedWorksforfiles()
+{
+	OnSomethingChanged();
+}
+
+void CPageCleanups::OnBnClickedWorksforuncpaths()
 {
 	OnSomethingChanged();
 }

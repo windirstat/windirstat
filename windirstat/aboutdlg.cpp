@@ -208,7 +208,7 @@ CAboutDlg::CAboutDlg()
 CString CAboutDlg::GetAppVersion()
 {
 	CString s;
-	s.Format(_T("WinDirStat devel"));
+	s.Format(_T("WinDirStat 1.0.1"));
 	return s;
 }
 

@@ -56,6 +56,7 @@ protected:
 	BOOL m_worksForDirectories;
 	BOOL m_worksForFilesFolder;
 	BOOL m_worksForFiles;
+	BOOL m_worksForUncPaths;
 	CString m_commandLine;
 	BOOL m_recurseIntoSubdirectories;
 	BOOL m_askForConfirmation;
@@ -69,6 +70,7 @@ protected:
 	CButton m_ctlWorksForDirectories;
 	CButton m_ctlWorksForFilesFolder;
 	CButton m_ctlWorksForFiles;
+	CButton m_ctlWorksForUncPaths;
 	CEdit m_ctlCommandLine;
 	CButton m_ctlRecurseIntoSubdirectories;
 	CButton m_ctlAskForConfirmation;
@@ -87,6 +89,7 @@ protected:
 	afx_msg void OnBnClickedWorksfordirectories();
 	afx_msg void OnBnClickedWorksforfilesfolder();
 	afx_msg void OnBnClickedWorksforfiles();
+	afx_msg void OnBnClickedWorksforuncpaths();
 	afx_msg void OnEnChangeCommandline();
 	afx_msg void OnBnClickedRecurseintosubdirectories();
 	afx_msg void OnBnClickedAskforconfirmation();

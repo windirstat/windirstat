@@ -569,6 +569,12 @@ CString CItem::GetPath()  const
 	return path;
 }
 
+bool CItem::HasUncPath() const
+{
+	CString path= GetPath();
+	return (path.GetLength() >= 2 && path.Left(2) == _T("\\\\"));
+}
+
 CString CItem::GetFindPattern() const
 {
 	CString pattern= GetPath();

@@ -142,6 +142,7 @@
 #define IDC_DOWN                        1050
 #define IDC_FROM                        1050
 #define IDC_TO                          1051
+#define IDC_WORKSFORUNCPATHS            1051
 #define IDC_CRITICAL                    1052
 #define IDC_GRAVE                       1053
 #define IDC_NORMAL                      1054
