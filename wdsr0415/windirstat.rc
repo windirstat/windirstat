@@ -143,7 +143,7 @@ BEGIN
     END
     POPUP "&Mapa drzewa"
     BEGIN
-        MENUITEM "&Poka¿ Mapê D rzewa\tF9",     ID_VIEW_SHOWTREEMAP
+        MENUITEM "&Poka¿ Mapê Drzewa\tF9",     ID_VIEW_SHOWTREEMAP
         MENUITEM SEPARATOR
         MENUITEM "Po&wiêksz\t+",                ID_TREEMAP_ZOOMIN
         MENUITEM "Po&mniejsz\t-",               ID_TREEMAP_ZOOMOUT
@@ -772,7 +772,7 @@ BEGIN
     IDS_EXPAND              "&Rozwiñ"
     IDS_CREATEPROCESSsFAILEDs 
                             "Tworzenie procesu(%1!s!) nie powiod³o siê: %2!s!"
-    IDS_LANGUAGERESTARTNOW  "Jêzyk zostanie zmieniony po ponownym uruchomieniu programu.\r\n\r\nUruchomiæ ponownie teraz?"
+    IDS_LANGUAGERESTARTNOW  "Jêzyk zostanie zmieniony po ponownym uruchomieniu programu.\r\n\r\nLanguage changes take not effect until the application is restarted.\r\n\r\nUruchomiæ ponownie teraz?"
     IDS_ABOUT_AUTHORS       "Autorzy"
     IDS_ABOUT_AUTHORSTEXTs  "=== Programiœci ===\r\n\r\nBernhard Seifert\r\nTwórca projektu i koordynator\r\n(mailto:%1!s!)\r\n\r\nOliver Schneider\r\n(mailto:assarbad@users.sourceforge.net)\r\n\r\n\r\n=== T³umacz¹cy ===\r\n\r\n--- Francuski ---\r\n\r\nPascal Delrot\r\n(mailto:tigroo@users.sourceforge.net)\r\n\r\nUltraSam\r\n(mailto:sam.fd@wanadoo.fr)\r\n\r\n\r\n--- Polski ---\r\n\r\nDariusz Ma³achowski\r\n(mailto:d_malachowski@pf.pl)\r\n\r\n\r\n--- Rosyjski ---\r\n\r\nSergiy 'Polet' Polyetayev\r\n(mailto:s_polyetayev@hotmail.com)\r\n"
 END
@@ -826,12 +826,12 @@ BEGIN
     IDS_POLICY_REFRESHPARENT "Odœwie¿ poziom wy¿ej dla elementu"
     IDS_BUGREPORTHINT       "W przypadku b³êdu, opisz jego symptomy w³¹czaj¹c dok³adny tekst komunikatu o b³êdzie, oraz je¿eli to mo¿liwe kolejne kroki, w celu wygenerowania b³êdu ponownie."
     IDS_FEEDBACKHINT        "Uwagi s¹ zawsze mile widziane."
-    IDS_FROMsPLATFORMs      "Od: %1!s!. Platforma: %2!s!.\r\n\r\n"
-    IDS_SEV_CRITICAL        "B³¹d krytyczny"
-    IDS_SEV_GRAVE           "B³¹d powa¿ny"
-    IDS_SEV_NORMAL          "B³¹d normalny"
-    IDS_SEV_WISH            "Proœba"
-    IDS_SEV_FEEDBACK        "Opinia"
+    IDS_FROMsPLATFORMs      "From: %1!s!. Platform: %2!s!.\r\n\r\n"
+    IDS_SEV_CRITICAL        "Critical Bug"
+    IDS_SEV_GRAVE           "Serious Bug"
+    IDS_SEV_NORMAL          "Bug"
+    IDS_SEV_WISH            "Wish"
+    IDS_SEV_FEEDBACK        "Feedback"
     IDS_DRIVECOL_NAME       "Nazwa"
     IDS_DRIVECOL_TOTAL      "Pojemnoœæ"
     IDS_DRIVECOL_FREE       "Wolne"

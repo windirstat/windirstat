@@ -45,10 +45,17 @@ int CSortingListItem::GetImage() const
 	return 0;
 }
 
+// Return value:
+// <= -2:	this is less than other regardless of ascending flag
+// -1:		this is less than other
+// 0:		this equals other
+// +1:		this is greater than other
+// >= +1:	this is greater than other regardless of ascending flag.
+//
 int CSortingListItem::Compare(const CSortingListItem *other, int subitem) const
 {
 	// Default implementation compares strings
-	return GetText(subitem).CompareNoCase(other->GetText(subitem));
+	return signum(GetText(subitem).CompareNoCase(other->GetText(subitem)));
 }
 
 int CSortingListItem::CompareS(const CSortingListItem *other, const SSorting& sorting) const
@@ -288,6 +295,9 @@ void CSortingListControl::OnDestroy()
 }
 
 // $Log$
+// Revision 1.4  2004/12/31 16:01:42  bseifert
+// Bugfixes. See changelog 2004-12-31.
+//
 // Revision 1.3  2004/11/05 16:53:07  assarbad
 // Added Date and History tag where appropriate.
 //

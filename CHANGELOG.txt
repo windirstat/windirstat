@@ -2,6 +2,14 @@ changelog.txt - What has been done to WinDirStat (newest top)
 Last modified: $Date$
 =============================================================
 
+2004-12-31	bseifert
+	* Added English phrases to IDS_LANGUAGERESTARTNOW (Russian and Polish).
+	* Untranslated Polish, French and Russian IDS_SEV_*** and IDS_FROMsPLATFORMs strings.
+	* Unicode CString::CompareNoCase doesn't return -1,0,+1 always. Used signum().
+	* Bugfix in CMountPoints::IsJunctionPoint().
+	* Minor correction configuration.htm.
+	* Minor correction in Polish menu.
+	
 2004-12-30	bseifert
 	* setup.exe is no compiled optimizing size (-> ca. -15 KB)
 	* Updated testplan.

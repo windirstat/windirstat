@@ -211,9 +211,14 @@ bool CMountPoints::IsMountPoint(CString path)
 // as the latter ones are treated differently (see above).
 bool CMountPoints::IsJunctionPoint(CString path)
 {
-	return ( !IsMountPoint(path) &&
-			 bool(GetFileAttributes(path) & FILE_ATTRIBUTE_REPARSE_POINT)
-			);
+	if (IsMountPoint(path))
+		return false;
+
+	DWORD attr = GetFileAttributes(path);
+	if (attr == INVALID_FILE_ATTRIBUTES)
+		return false;
+
+	return ((attr & FILE_ATTRIBUTE_REPARSE_POINT) != 0);
 }
 
 bool CMountPoints::IsVolumeMountPoint(CString volume, CString path)
@@ -246,6 +251,9 @@ bool CMountPoints::IsVolumeMountPoint(CString volume, CString path)
 }
 
 // $Log$
+// Revision 1.5  2004/12/31 16:01:42  bseifert
+// Bugfixes. See changelog 2004-12-31.
+//
 // Revision 1.4  2004/11/05 16:53:07  assarbad
 // Added Date and History tag where appropriate.
 //

@@ -155,7 +155,7 @@ int CExtensionListControl::CListItem::Compare(const CSortingListItem *baseOther,
 	switch (subitem)
 	{
 	case COL_EXTENSION:
-		r= GetExtension().CompareNoCase(other->GetExtension());
+		r= signum(GetExtension().CompareNoCase(other->GetExtension()));
 		break;
 
 	case COL_COLOR:
@@ -168,7 +168,7 @@ int CExtensionListControl::CListItem::Compare(const CSortingListItem *baseOther,
 		break;
 
 	case COL_DESCRIPTION:
-		r= GetDescription().CompareNoCase(other->GetDescription());
+		r= signum(GetDescription().CompareNoCase(other->GetDescription()));
 		break;
 
 	case COL_BYTESPERCENT:
@@ -535,6 +535,9 @@ void CTypeView::OnSetFocus(CWnd* /*pOldWnd*/)
 
 
 // $Log$
+// Revision 1.12  2004/12/31 16:01:42  bseifert
+// Bugfixes. See changelog 2004-12-31.
+//
 // Revision 1.11  2004/11/12 22:14:16  bseifert
 // Eliminated CLR_NONE. Minor corrections.
 //

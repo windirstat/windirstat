@@ -153,7 +153,7 @@ int CDriveItem::Compare(const CSortingListItem *baseOther, int subitem) const
 
 	switch (subitem)
 	{
-	case COL_NAME:		r= GetPath().CompareNoCase(other->GetPath()); break;
+	case COL_NAME:		r= signum(GetPath().CompareNoCase(other->GetPath())); break;
 	case COL_TOTAL:		r= signum(m_totalBytes - other->m_totalBytes); break;
 	case COL_FREE:		r= signum(m_freeBytes - other->m_freeBytes); break;
 	case COL_GRAPH:
@@ -857,6 +857,9 @@ int CALLBACK CSelectDrivesDlg::BrowseCallbackProc(	HWND	hWnd,
 }
 
 // $Log$
+// Revision 1.20  2004/12/31 16:01:42  bseifert
+// Bugfixes. See changelog 2004-12-31.
+//
 // Revision 1.19  2004/12/19 10:52:39  bseifert
 // Minor fixes.
 //

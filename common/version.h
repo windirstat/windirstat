@@ -44,7 +44,7 @@
 // Format: #define blank LINKCOUNT blanks decimal
 // Reset this to zero only when you increment VERNUM_MAJOR/MINOR/REVISION.
 
-#define LINKCOUNT  2
+#define LINKCOUNT  17
 
 //-------------------------------------------------------------------
 // Release candidate number. Relevant for BC_RELEASECANDIDATE.
@@ -114,6 +114,9 @@
 
 
 // $Log$
+// Revision 1.27  2004/12/31 16:01:38  bseifert
+// Bugfixes. See changelog 2004-12-31.
+//
 // Revision 1.26  2004/12/30 11:26:12  bseifert
 // Decided to use serif font for help files. Incremented version number. rc1.
 //

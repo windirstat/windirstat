@@ -251,11 +251,11 @@ int CItem::CompareSibling(const CTreeListItem *tlib, int subitem) const
 		if (GetType() == IT_DRIVE)
 		{
 			ASSERT(other->GetType() == IT_DRIVE);
-			r = GetPath().CompareNoCase(other->GetPath());
+			r = signum(GetPath().CompareNoCase(other->GetPath()));
 		}
 		else
 		{
-			r = m_name.CompareNoCase(other->m_name);
+			r = signum(m_name.CompareNoCase(other->m_name));
 		}
 		break;
 
@@ -1660,6 +1660,9 @@ void CItem::DrivePacman()
 
 
 // $Log$
+// Revision 1.26  2004/12/31 16:01:42  bseifert
+// Bugfixes. See changelog 2004-12-31.
+//
 // Revision 1.25  2004/12/12 08:34:59  bseifert
 // Aboutbox: added Authors-Tab. Removed license.txt from resource dlls (saves 16 KB per dll).
 //
