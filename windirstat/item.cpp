@@ -49,6 +49,7 @@ CItem::CItem(ITEMTYPE type, LPCTSTR name, bool dontFollow)
 	, m_done(false)
 	, m_ticksWorked(0)
 	, m_readJobs(0)
+	, m_attributes(0)
 {
 	if (GetType() == IT_FILE || dontFollow || GetType() == IT_FREESPACE || GetType() == IT_UNKNOWN || GetType() == IT_MYCOMPUTER)
 	{
@@ -179,7 +180,7 @@ CString CItem::GetText(int subitem) const
 	case COL_ATTRIBUTES:
 		if (GetType() != IT_FREESPACE && GetType() != IT_UNKNOWN && GetType() != IT_MYCOMPUTER && GetType() != IT_FILESFOLDER)
 		{
-			s = FormatAttributes(GetFileAttributes(GetPath()));
+			s = FormatAttributes(m_attributes);
 		}
 		break;
 
@@ -440,12 +441,13 @@ void CItem::UpdateLastChange()
 		CString basename = path.Mid(i + 1);
 		CString pattern;
 		pattern.Format(_T("%s\\..\\%s"), path, basename);
-		CFileFind finder;
+		CFileFindWDS finder;
 		BOOL b = finder.FindFile(pattern);
 		if (!b)
 			return; // no chance
 		finder.FindNextFile();
 		finder.GetLastWriteTime(&m_lastChange);
+		m_attributes = finder.GetAttributes();
 	}
 }
 
@@ -582,6 +584,11 @@ FILETIME CItem::GetLastChange() const
 void CItem::SetLastChange(const FILETIME& t)
 {
 	m_lastChange = t;
+}
+
+void CItem::SetAttributes(const DWORD attr)
+{
+	m_attributes = attr;
 }
 
 double CItem::GetFraction() const
@@ -811,7 +818,7 @@ void CItem::DoSomeWork(DWORD ticks)
 			CList<FILEINFO, FILEINFO> files;
 
 
-			CFileFind finder;
+			CFileFindWDS finder;
 			BOOL b = finder.FindFile(GetFindPattern());
 			while (b)
 			{
@@ -831,6 +838,7 @@ void CItem::DoSomeWork(DWORD ticks)
 
 					FILEINFO fi;
 					fi.name = finder.GetFileName();
+					fi.attributes = finder.GetAttributes();
 					// Retrieve file size
 					fi.length = GetApp()->GetFileSizeWDS(finder);
 					finder.GetLastWriteTime(&fi.lastWriteTime);
@@ -982,7 +990,7 @@ bool CItem::StartRefresh()
 	// Special case IT_FILESFOLDER
 	if (GetType() == IT_FILESFOLDER)
 	{
-		CFileFind finder;
+		CFileFindWDS finder;
 		BOOL b = finder.FindFile(GetFindPattern());
 		while (b)
 		{
@@ -992,6 +1000,7 @@ bool CItem::StartRefresh()
 
 			FILEINFO fi;
 			fi.name = finder.GetFileName();
+			fi.attributes = finder.GetAttributes();
 			// Retrieve file size
             fi.length = GetApp()->GetFileSizeWDS(finder);
 			finder.GetLastWriteTime(&fi.lastWriteTime);
@@ -1033,7 +1042,7 @@ bool CItem::StartRefresh()
 	// Case IT_FILE
 	if (GetType() == IT_FILE)
 	{
-		CFileFind finder;
+		CFileFindWDS finder;
 		BOOL b = finder.FindFile(GetPath());
 		if (b)
 		{
@@ -1042,6 +1051,7 @@ bool CItem::StartRefresh()
 			{
 				FILEINFO fi;
 				fi.name = finder.GetFileName();
+				fi.attributes = finder.GetAttributes();
 				// Retrieve file size
                 fi.length = GetApp()->GetFileSizeWDS(finder);
 				finder.GetLastWriteTime(&fi.lastWriteTime);
@@ -1479,7 +1489,7 @@ CString CItem::UpwardGetPathWithoutBackslash() const
 	return path; 
 }
 
-void CItem::AddDirectory(CFileFind& finder)
+void CItem::AddDirectory(CFileFindWDS& finder)
 {
 	bool dontFollow = GetApp()->IsMountPoint(finder.GetFilePath()) && !GetOptions()->IsFollowMountPoints();
 
@@ -1489,6 +1499,7 @@ void CItem::AddDirectory(CFileFind& finder)
 	FILETIME t;
 	finder.GetLastWriteTime(&t);
 	child->SetLastChange(t);
+	child->SetAttributes(finder.GetAttributes());
 	AddChild(child);
 }
 
@@ -1497,6 +1508,7 @@ void CItem::AddFile(const FILEINFO& fi)
 	CItem *child = new CItem(IT_FILE, fi.name);
 	child->SetSize(fi.length);
 	child->SetLastChange(fi.lastWriteTime);
+	child->SetAttributes(fi.attributes);
 	child->SetDone();
 
 	AddChild(child);
@@ -1540,6 +1552,9 @@ void CItem::DrivePacman()
 
 
 // $Log$
+// Revision 1.20  2004/11/25 23:07:23  assarbad
+// - Derived CFileFindWDS from CFileFind to correct a problem of the ANSI version
+//
 // Revision 1.19  2004/11/25 21:13:38  assarbad
 // - Implemented "attributes" column in the treelist
 // - Adopted width in German dialog

@@ -452,7 +452,7 @@ BEGIN
                     41,229,10
     GROUPBOX        "&Listenstil",IDC_STATIC,30,61,96,65
     CONTROL         "Ganze &Zeile markieren",IDC_FULLROWSELECTION,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,38,76,81,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,38,76,84,10
     CONTROL         "&Raster",IDC_SHOWGRID,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,38,93,68,10
     CONTROL         "S&treifen",IDC_SHOWSTRIPES,"Button",BS_AUTOCHECKBOX | 

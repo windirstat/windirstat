@@ -321,6 +321,9 @@
 				RelativePath=".\dirstatview.cpp">
 			</File>
 			<File
+				RelativePath=".\FileFindWDS.cpp">
+			</File>
+			<File
 				RelativePath=".\getosplatformstring.cpp">
 			</File>
 			<File
@@ -456,6 +459,9 @@
 			</File>
 			<File
 				RelativePath=".\dirstatview.h">
+			</File>
+			<File
+				RelativePath=".\FileFindWDS.h">
 			</File>
 			<File
 				RelativePath=".\getosplatformstring.h">

@@ -26,6 +26,7 @@
 #include "Treelistcontrol.h"
 #include "treemap.h"
 #include "dirstatdoc.h"		// CExtensionData
+#include "FileFindWDS.h"		// CFileFindWDS
 
 
 // Columns
@@ -103,6 +104,7 @@ class CItem: public CTreeListItem, public CTreemap::Item
 		CString name;
 		LONGLONG length;
 		FILETIME lastWriteTime;
+		DWORD attributes;
 	};
 
 public:
@@ -154,6 +156,7 @@ public:
 	LONGLONG GetReadJobs() const;
 	FILETIME GetLastChange() const;
 	void SetLastChange(const FILETIME& t);
+	void SetAttributes(const DWORD attr);
 	double GetFraction() const;
 	ITEMTYPE GetType() const;
 	bool IsRootItem() const;
@@ -199,7 +202,7 @@ private:
 	int FindFreeSpaceItemIndex() const;
 	int FindUnknownItemIndex() const;
 	CString UpwardGetPathWithoutBackslash() const;
-	void AddDirectory(CFileFind& finder);
+	void AddDirectory(CFileFindWDS& finder);
 	void AddFile(const FILEINFO& fi);
 	void DriveVisualUpdateDuringWork();
 	void UpwardDrivePacman();
@@ -211,6 +214,7 @@ private:
 	LONGLONG m_files;			// # Files in subtree
 	LONGLONG m_subdirs;			// # Folder in subtree
 	FILETIME m_lastChange;		// Last modification time OF SUBTREE
+	DWORD m_attributes;			// File attributes of the item
 
 	bool m_readJobDone;			// FindFiles() (our own read job) is finished.
 	bool m_done;				// Whole Subtree is done.
@@ -227,6 +231,9 @@ private:
 
 
 // $Log$
+// Revision 1.11  2004/11/25 23:07:24  assarbad
+// - Derived CFileFindWDS from CFileFind to correct a problem of the ANSI version
+//
 // Revision 1.10  2004/11/15 19:50:39  assarbad
 // - Minor corrections
 //
