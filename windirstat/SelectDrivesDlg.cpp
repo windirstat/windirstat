@@ -302,16 +302,8 @@ void CDriveInformationThread::InvalidateDialogHandle()
 
 void CDriveInformationThread::OnAppExit()
 {
-	// The documentation for ExitProcess() says:
-	//
-	// Terminating a process causes the following:
-	// 2. All of the threads in the process terminate their execution. 
-	// 3. The state of the process object becomes signaled, satisfying any threads that had been waiting for the process to terminate. 
-
-	// So we need not do anything here.
-	// (we may have some memory leak, if threads are still running.)
+	// We need not do anything here.
 }
-
 
 // The constructor starts the thread.
 //
@@ -850,6 +842,9 @@ void CSelectDrivesDlg::OnSysColorChange()
 }
 
 // $Log$
+// Revision 1.15  2004/11/12 16:54:43  assarbad
+// - Corrected a comment which actually refers to ExitProcess() but to TerminateProcess() as previously assumed.
+//
 // Revision 1.14  2004/11/12 13:19:44  assarbad
 // - Minor changes and additions (in preparation for the solution of the "Browse for Folder" problem)
 //
