@@ -1,7 +1,7 @@
 // PageGeneral.cpp	- Implementation of CPageGeneral
 //
 // WinDirStat - Directory Statistics
-// Copyright (C) 2003 Bernhard Seifert
+// Copyright (C) 2003-2004 Bernhard Seifert
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -21,16 +21,17 @@
 
 #include "stdafx.h"
 #include "windirstat.h"
+#include "mainframe.h"		// COptionsPropertySheet
 #include ".\pagegeneral.h"
 
+#ifdef _DEBUG
+#define new DEBUG_NEW
+#endif
 
 IMPLEMENT_DYNAMIC(CPageGeneral, CPropertyPage)
 
 CPageGeneral::CPageGeneral()
 	: CPropertyPage(CPageGeneral::IDD)
-	, m_humanFormat(FALSE)
-	, m_followMountPoints(FALSE)
-	, m_pacmanAnimation(FALSE)
 {
 }
 
@@ -38,23 +39,31 @@ CPageGeneral::~CPageGeneral()
 {
 }
 
+COptionsPropertySheet *CPageGeneral::GetSheet()
+{
+	COptionsPropertySheet *sheet = DYNAMIC_DOWNCAST(COptionsPropertySheet, GetParent());
+	ASSERT(sheet != NULL);
+	return sheet;
+}
+
 void CPageGeneral::DoDataExchange(CDataExchange* pDX)
 {
 	CPropertyPage::DoDataExchange(pDX);
 	DDX_Check(pDX, IDC_HUMANFORMAT, m_humanFormat);
 	DDX_Check(pDX, IDC_FOLLOWMOUNTPOINTS, m_followMountPoints);
-	DDX_Check(pDX, IDC_PACMANANIMATION, m_pacmanAnimation);
-	DDX_Check(pDX, IDC_SHOWTIMESPENT, m_showTimeSpent);
 	DDX_Control(pDX, IDC_COMBO, m_combo);
 	DDX_Control(pDX, IDC_FOLLOWMOUNTPOINTS, m_ctlFollowMountPoints);
+	DDX_Check(pDX, IDC_SHOWGRID, m_listGrid);
+	DDX_Check(pDX, IDC_SHOWSTRIPES, m_listStripes);
 }
 
 
 BEGIN_MESSAGE_MAP(CPageGeneral, CPropertyPage)
 	ON_BN_CLICKED(IDC_HUMANFORMAT, OnBnClickedHumanformat)
 	ON_BN_CLICKED(IDC_FOLLOWMOUNTPOINTS, OnBnClickedFollowmountpoints)
-	ON_BN_CLICKED(IDC_PACMANANIMATION, OnBnClickedPacmananimation)
-	ON_BN_CLICKED(IDC_SHOWTIMESPENT, OnBnClickedShowTimeSpent)
+	ON_CBN_SELENDOK(IDC_COMBO, OnCbnSelendokCombo)
+	ON_BN_CLICKED(IDC_SHOWGRID, OnBnClickedListGrid)
+	ON_BN_CLICKED(IDC_SHOWSTRIPES, OnBnClickedListStripes)
 END_MESSAGE_MAP()
 
 
@@ -63,8 +72,8 @@ BOOL CPageGeneral::OnInitDialog()
 	CPropertyPage::OnInitDialog();
 
 	m_humanFormat= GetOptions()->IsHumanFormat();
-	m_pacmanAnimation= GetOptions()->IsPacmanAnimation();
-	m_showTimeSpent= GetOptions()->IsShowTimeSpent();
+	m_listGrid= GetOptions()->IsListGrid();
+	m_listStripes= GetOptions()->IsListStripes();
 
 	m_followMountPoints= GetOptions()->IsFollowMountPoints();
 	CVolumeApi va;
@@ -86,11 +95,13 @@ BOOL CPageGeneral::OnInitDialog()
 		m_combo.SetItemData(k, langid[i]);
 	}
 
+	m_originalLanguage= 0;
 	for (i=0; i < m_combo.GetCount(); i++)
 	{
-		if (m_combo.GetItemData(i) == GetApp()->GetLangid())
+		if (m_combo.GetItemData(i) == CLanguageOptions::GetLanguage())
 		{
 			m_combo.SetCurSel(i);
+			m_originalLanguage= i;
 			break;
 		}
 	}
@@ -104,8 +115,8 @@ void CPageGeneral::OnOK()
 	UpdateData();
 	GetOptions()->SetHumanFormat(m_humanFormat);
 	GetOptions()->SetFollowMountPoints(m_followMountPoints);
-	GetOptions()->SetPacmanAnimation(m_pacmanAnimation);
-	GetOptions()->SetShowTimeSpent(m_showTimeSpent);
+	GetOptions()->SetListGrid(m_listGrid);
+	GetOptions()->SetListStripes(m_listStripes);
 
 	LANGID id= (LANGID)m_combo.GetItemData(m_combo.GetCurSel());
 	CLanguageOptions::SetLanguage(id);
@@ -123,12 +134,19 @@ void CPageGeneral::OnBnClickedFollowmountpoints()
 	SetModified();
 }
 
-void CPageGeneral::OnBnClickedPacmananimation()
+void CPageGeneral::OnBnClickedListGrid()
 {
 	SetModified();
 }
 
-void CPageGeneral::OnBnClickedShowTimeSpent()
+void CPageGeneral::OnBnClickedListStripes()
 {
+	SetModified();
+}
+
+void CPageGeneral::OnCbnSelendokCombo()
+{
+	int i= m_combo.GetCurSel();
+	GetSheet()->SetLanguageChanged(i != m_originalLanguage);
 	SetModified();
 }

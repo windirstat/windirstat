@@ -1,7 +1,7 @@
 // SelectDrivesDlg.h	- Declaration of CDriveItem, CDrivesList and CSelectDrivesDlg
 //
 // WinDirStat - Directory Statistics
-// Copyright (C) 2003 Bernhard Seifert
+// Copyright (C) 2003-2004 Bernhard Seifert
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -180,4 +180,5 @@ protected:
 	afx_msg void OnDestroy();
 	afx_msg LRESULT OnWmuOk(WPARAM, LPARAM);
 	afx_msg LRESULT OnWmuThreadFinished(WPARAM, LPARAM lparam);
+	afx_msg void OnSysColorChange();
 };

@@ -1,7 +1,7 @@
 // mainframe.cpp	- Implementation of CMySplitterWnd, CPacmanControl and CMainFrame
 //
 // WinDirStat - Directory Statistics
-// Copyright (C) 2003 Bernhard Seifert
+// Copyright (C) 2003-2004 Bernhard Seifert
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -94,42 +94,80 @@ namespace
 	};
 
 	
-	class CMyPropertySheet: public CPropertySheet
+}
+
+
+/////////////////////////////////////////////////////////////////////////////
+
+IMPLEMENT_DYNAMIC(COptionsPropertySheet, CPropertySheet)
+
+COptionsPropertySheet::COptionsPropertySheet()
+	: CPropertySheet(IDS_WINDIRSTAT_SETTINGS)
+{
+	m_restartApplication= false;
+	m_languageChanged= false;
+	m_alreadyAsked= false;
+}
+
+void COptionsPropertySheet::SetLanguageChanged(bool changed)
+{
+	m_languageChanged= changed;
+}
+
+BOOL COptionsPropertySheet::OnInitDialog()
+{
+	BOOL bResult= CPropertySheet::OnInitDialog();
+	
+	CRect rc;
+	GetWindowRect(rc);
+	CPoint pt= rc.TopLeft();
+	CPersistence::GetConfigPosition(pt);
+	CRect rc2(pt, rc.Size());
+	MoveWindow(rc2);
+
+	SetActivePage(CPersistence::GetConfigPage(GetPageCount() - 1));
+	return bResult;
+}
+
+BOOL COptionsPropertySheet::OnCommand(WPARAM wParam, LPARAM lParam)
+{
+	CPersistence::SetConfigPage(GetActiveIndex());
+
+	CRect rc;
+	GetWindowRect(rc);
+	CPersistence::SetConfigPosition(rc.TopLeft());
+
+	int cmd = LOWORD(wParam);
+	if (cmd == IDOK || cmd == ID_APPLY_NOW)
 	{
-	public:
-		CMyPropertySheet()
-			: CPropertySheet(IDS_WINDIRSTAT_SETTINGS)
-		{}
-		virtual BOOL OnInitDialog()
+		if (m_languageChanged && (cmd == IDOK || !m_alreadyAsked))
 		{
-			BOOL bResult= CPropertySheet::OnInitDialog();
-			
-			CRect rc;
-			GetWindowRect(rc);
-			CPoint pt= rc.TopLeft();
-			CPersistence::GetConfigPosition(pt);
-			CRect rc2(pt, rc.Size());
-			MoveWindow(rc2);
+			int r= AfxMessageBox(IDS_LANGUAGERESTARTNOW, MB_YESNOCANCEL);
+			if (r == IDCANCEL)
+			{
+				return true;	// "Message handled". Don't proceed.
+			}
+			else if (r == IDNO)
+			{
+				m_alreadyAsked= true; // Don't ask twice.
+			}
+			else
+			{
+				ASSERT(r == IDYES);
+				m_restartApplication= true;
 
-			SetActivePage(CPersistence::GetConfigPage(GetPageCount() - 1));
-			return bResult;
+				if (cmd == ID_APPLY_NOW)
+				{
+					// This _posts_ a message...
+					EndDialog(IDOK);
+					// ... so after returning from this function, the OnOK()-handlers
+					// of the pages will be called, before the sheet is closed.
+				}
+			}
 		}
+	}
 
-	protected:
-		virtual BOOL OnCommand(WPARAM wParam, LPARAM lParam)
-		{
-			if (LOWORD(wParam) == IDOK)
-				CPersistence::SetConfigPage(GetActiveIndex());
-
-			CRect rc;
-			GetWindowRect(rc);
-			CPersistence::SetConfigPosition(rc.TopLeft());
-
-			return CPropertySheet::OnCommand(wParam, lParam);
-		}
-
-	};
-
+	return CPropertySheet::OnCommand(wParam, lParam);
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -341,6 +379,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWnd)
 	ON_COMMAND(ID_SENDMAILTOOWNER, OnSendmailtoowner)
 	ON_COMMAND(ID_TREEMAP_HELPABOUTTREEMAPS, OnTreemapHelpabouttreemaps)
 	ON_BN_CLICKED(IDC_SUSPEND, OnBnClickedSuspend)
+	ON_WM_SYSCOLORCHANGE()
 END_MESSAGE_MAP()
 
 static UINT indicators[] =
@@ -998,7 +1037,7 @@ void CMainFrame::OnViewShowfiletypes()
 
 void CMainFrame::OnConfigure()
 {
-	CMyPropertySheet sheet;
+	COptionsPropertySheet sheet;
 	
 	CPageGeneral general;
 	CPageTreelist treelist;
@@ -1015,6 +1054,11 @@ void CMainFrame::OnConfigure()
 	sheet.DoModal();
 
 	GetOptions()->SaveToRegistry();
+
+	if (sheet.m_restartApplication)
+	{
+		GetApp()->RestartApplication();
+	}
 }
 
 
@@ -1059,3 +1103,10 @@ void CMainFrame::OnTreemapHelpabouttreemaps()
 	GetApp()->DoContextHelp(IDH_Treemap);
 }
 
+
+void CMainFrame::OnSysColorChange()
+{
+	CFrameWnd::OnSysColorChange();
+	GetDirstatView()->SysColorChanged();
+	GetTypeView()->SysColorChanged();
+}

@@ -1,7 +1,7 @@
 // typeview.cpp		- Implementation of CExtensionListControl and CTypeView
 //
 // WinDirStat - Directory Statistics
-// Copyright (C) 2003 Bernhard Seifert
+// Copyright (C) 2003-2004 Bernhard Seifert
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -369,6 +369,11 @@ CTypeView::~CTypeView()
 {
 }
 
+void CTypeView::SysColorChanged()
+{
+	m_extensionListControl.SysColorChanged();
+}
+
 bool CTypeView::IsShowTypes()
 {
 	return m_showTypes;
@@ -383,7 +388,8 @@ void CTypeView::ShowTypes(bool show)
 void CTypeView::SetHighlightExtension(LPCTSTR ext)
 {
 	GetDocument()->SetHighlightExtension(ext);
-	GetDocument()->UpdateAllViews(this, HINT_SELECTIONCHANGED);
+	if (GetFocus() == &m_extensionListControl)
+		GetDocument()->UpdateAllViews(this, HINT_EXTENSIONSELECTIONCHANGED);
 }
 
 BOOL CTypeView::PreCreateWindow(CREATESTRUCT& cs)
@@ -399,6 +405,9 @@ int CTypeView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	RECT rect= { 0, 0, 0, 0 };
 	VERIFY(m_extensionListControl.CreateEx(0, LVS_SINGLESEL | LVS_OWNERDRAWFIXED | LVS_SHOWSELALWAYS | WS_CHILD|WS_VISIBLE|LVS_REPORT, rect, this, _nIdExtensionListControl));
 	m_extensionListControl.SetExtendedStyle(m_extensionListControl.GetExtendedStyle() | LVS_EX_HEADERDRAGDROP);
+
+	m_extensionListControl.ShowGrid(GetOptions()->IsListGrid());
+	m_extensionListControl.ShowStripes(GetOptions()->IsListStripes());
 
 	m_extensionListControl.Initialize();
 	return 0;
@@ -448,6 +457,11 @@ void CTypeView::OnUpdate(CView * /*pSender*/, LPARAM lHint, CObject *)
 		InvalidateRect(NULL);
 		m_extensionListControl.InvalidateRect(NULL);
 		m_extensionListControl.GetHeaderCtrl()->InvalidateRect(NULL);
+		break;
+
+	case HINT_LISTSTYLECHANGED:
+		m_extensionListControl.ShowGrid(GetOptions()->IsListGrid());
+		m_extensionListControl.ShowStripes(GetOptions()->IsListStripes());
 		break;
 
 	default:

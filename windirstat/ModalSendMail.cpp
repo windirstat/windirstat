@@ -1,7 +1,7 @@
 // modalsendmail.cpp	- Implementation of CModalSendMail
 //
 // WinDirStat - Directory Statistics
-// Copyright (C) 2003 Bernhard Seifert
+// Copyright (C) 2003-2004 Bernhard Seifert
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -23,6 +23,9 @@
 #include "windirstat.h"
 #include "modalsendmail.h"
 
+#ifdef _DEBUG
+#define new DEBUG_NEW
+#endif
 
 namespace
 {

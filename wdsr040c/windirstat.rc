@@ -183,6 +183,8 @@ IDR_POPUPLIST MENU
 BEGIN
     POPUP "POPUP_LIST"
     BEGIN
+        MENUITEM "<toggle>",                    ID_POPUP_TOGGLE
+        MENUITEM SEPARATOR
         MENUITEM "&Ouvrir\tEntrer",             ID_CLEANUP_OPEN
         MENUITEM SEPARATOR
         MENUITEM "&Copier le chemin\tCtrl+C",   57634
@@ -379,8 +381,13 @@ STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION |
 CAPTION "Liste des répertoires"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    CONTROL         "&Montrer la grille",IDC_TREELISTGRID,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,23,25,97,10
+    CONTROL         "Animation ""&Pacman""",IDC_PACMANANIMATION,"Button",
+                    BS_AUTOCHECKBOX | BS_MULTILINE | WS_TABSTOP,7,7,102,10
+    CONTROL         "Montrer le &temps passé during the scan",
+                    IDC_SHOWTIMESPENT,"Button",BS_AUTOCHECKBOX | 
+                    BS_MULTILINE | WS_TABSTOP,7,24,92,23
+    GROUPBOX        "&Couleurs des pourcentages de l'arbre",IDC_STATIC,119,7,
+                    254,185
     PUSHBUTTON      "Branche de niveau &1",IDC_COLORBUTTON0,135,19,195,14,0,
                     WS_EX_RIGHT
     PUSHBUTTON      "Branche de niveau &2",IDC_COLORBUTTON1,151,40,179,14,0,
@@ -399,8 +406,6 @@ BEGIN
                     WS_EX_RIGHT
     CONTROL         "",IDC_SLIDER,"msctls_trackbar32",TBS_VERT | TBS_BOTH | 
                     TBS_NOTICKS | WS_TABSTOP,339,29,18,160
-    GROUPBOX        "&Couleurs des pourcentages de l'arbre",IDC_STATIC,129,7,
-                    244,185
 END
 
 IDD_PAGE_TREEMAP DIALOGEX 0, 0, 380, 202
@@ -455,19 +460,14 @@ BEGIN
     CONTROL         "&Montrer la taille des fichiers en Go/Mo/Ko/octets",
                     IDC_HUMANFORMAT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,
                     32,229,10
-    CONTROL         "Animation ""&Pacman"" dans la liste des répetoires",
-                    IDC_PACMANANIMATION,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,32,51,216,10
-    CONTROL         "Montrer le &temps passé dans le répertoire",
-                    IDC_SHOWTIMESPENT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
-                    32,70,216,10
-    LTEXT           "&Langue",IDC_STATIC,32,97,166,8
-    COMBOBOX        IDC_COMBO,32,110,156,140,CBS_DROPDOWNLIST | CBS_SORT | 
+    GROUPBOX        "&List Style",IDC_STATIC,30,52,90,45
+    CONTROL         "&Montrer la grille",IDC_SHOWGRID,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,38,65,68,10
+    CONTROL         "Show S&tripes",IDC_SHOWSTRIPES,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,38,81,68,10
+    LTEXT           "&Langue",IDC_STATIC,32,109,166,8
+    COMBOBOX        IDC_COMBO,32,122,156,140,CBS_DROPDOWNLIST | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Le changement de la langue ne prendra effet qu'après redémarrage du programme.",
-                    IDC_STATIC,200,110,173,35
-    LTEXT           "Language changes take not effect until the application is restarted.",
-                    IDC_STATIC,200,143,173,35
 END
 
 IDD_REPORTBUG DIALOGEX 0, 0, 360, 233
@@ -752,7 +752,7 @@ END
 STRINGTABLE 
 BEGIN
     IDS_RESOURCEVERSION     "Resource Version 3"
-    IDS_ABOUT_ABOUTTEXTss   "\r\nWinDirStat - Statistiques sur les systèmes de fichiers\r\n\r\n""Montre où est passé tout votre espace dique\r\net vous aide à faire le nettoyage.""\r\n\r\nRe-programmé pour MS Windows par\r\nBernhard Seifert (mailto:%1!s!),\r\n\r\nà partir du travail de Stefan Hundhammer sous KDE (Linux) KDirStat\r\n(http://kdirstat.sourceforge.net/).\r\n\r\nLa page Internet de WinDirStat est http://%2!s!/\r\n\r\nFrench translation: Pascal Delrot (mailto:tigroo@users.sourceforge.net)\r\n\r\nCopyright (c) 2003 Bernhard Seifert"
+    IDS_ABOUT_ABOUTTEXTss   "\r\nWinDirStat - Statistiques sur les systèmes de fichiers\r\n\r\n""Montre où est passé tout votre espace dique\r\net vous aide à faire le nettoyage.""\r\n\r\nRe-programmé pour MS Windows par\r\nBernhard Seifert (mailto:%1!s!),\r\n\r\nà partir du travail de Stefan Hundhammer sous KDE (Linux) KDirStat\r\n(http://kdirstat.sourceforge.net/).\r\n\r\nLa page Internet de WinDirStat est http://%2!s!/\r\n\r\nFrench translation: Pascal Delrot (mailto:tigroo@users.sourceforge.net)\r\n\r\nCopyright (c) 2003-2004 Bernhard Seifert"
     IDS_ABOUT_THANKSTOTEXT  "\r\nStefan Hundhammer pour son superbe outil Linux ""KDirStat"".\r\nUtiliser KDirStat (2.3.7) comme spécification m'a permis de gagner beaucoup de temps.\r\nhttp://kdirstat.sourceforge.net/\r\n\r\nLes auteurs de ""SequoiaView"" pour m'avoir montré à quel point les arbres sont utiles.\r\nhttp://www.win.tue.nl/sequoiaview/\r\n\r\nJarke J. van Wijk, Huub van de Wetering, Mark Bruls and Kees Huizing\r\npour leurs articles sur les arbres en coussins et rectangulaires.\r\nhttp://www.win.tue.nl/~vanwijk/\r\n\r\nBen Shneiderman pour son idée ingénieuse des arbres -\r\nune manière vraiment intuitive de visualiser le contenu des répertoires.\r\nhttp://www.cs.umd.edu/hcil/treemap-history/\r\n\r\nMes collègues pour leurs remarques sur les toutes premières versions de WinDirStat.\r\nhttp://www.daccord.net/\r\n\r\nBeatrix Lödige et Nick Lines pour les tests de la version beta.\r\n"
     IDS_ABOUT_ABOUT         "A propos de"
     IDS_ABOUT_THANKSTO      "Merci à"
@@ -850,6 +850,10 @@ STRINGTABLE
 BEGIN
     IDS_RESETTODEFAULTS     "&Remettre les valeurs par défaut"
     IDS_BACKTOUSERSETTINGS  "Back to &User Settings"
+    IDS_COLLAPSE            "Co&llapse"
+    IDS_EXPAND              "E&xpand"
+    IDS_CREATEPROCESSsFAILEDs "CreateProcess(%1!s!) échec : %2!s!"
+    IDS_LANGUAGERESTARTNOW  "Le changement de la langue ne prendra effet qu'après redémarrage du programme.\r\n\r\nLanguage changes take not effect until the application is restarted.\r\n\r\nRestart WinDirStat now?"
 END
 
 #endif    // French (France) resources

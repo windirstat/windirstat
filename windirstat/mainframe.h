@@ -1,7 +1,7 @@
 // mainframe.h		- Declaration of CMySplitterWnd and CMainFrame
 //
 // WinDirStat - Directory Statistics
-// Copyright (C) 2003 Bernhard Seifert
+// Copyright (C) 2003-2004 Bernhard Seifert
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -43,6 +43,29 @@ enum LOGICAL_FOCUS
 	LF_DIRECTORYLIST,
 	LF_EXTENSIONLIST
 };
+
+
+//
+// COptionsPropertySheet. The options dialog.
+//
+class COptionsPropertySheet: public CPropertySheet
+{
+	DECLARE_DYNAMIC(COptionsPropertySheet)
+
+public:
+	COptionsPropertySheet();
+	void SetLanguageChanged(bool changed);
+	virtual BOOL OnInitDialog();
+
+	bool m_restartApplication;	// [out]
+
+protected:
+	virtual BOOL OnCommand(WPARAM wParam, LPARAM lParam);
+
+	bool m_languageChanged;
+	bool m_alreadyAsked;
+};
+
 
 //
 // CMySplitterWnd. A CSplitterWnd with 2 columns or rows, which
@@ -203,6 +226,7 @@ public:
 		virtual void AssertValid() const;
 		virtual void Dump(CDumpContext& dc) const;
 	#endif
+		afx_msg void OnSysColorChange();
 };
 
 

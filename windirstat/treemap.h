@@ -1,7 +1,7 @@
-// treemap.h	- Deklaration of CTreemap and CTreemapPreview
+// treemap.h	- Deklaration of CColorSpace, CTreemap and CTreemapPreview
 //
 // WinDirStat - Directory Statistics
-// Copyright (C) 2003 Bernhard Seifert
+// Copyright (C) 2003-2004 Bernhard Seifert
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -21,6 +21,29 @@
 
 #ifndef TREEMAP_H_INCLUDED
 #define TREEMAP_H_INCLUDED
+
+//
+// CColorSpace. Helper class for manipulating colors. Static members only.
+//
+class CColorSpace
+{
+public:
+	// Returns the brightness of color. Brightness is a value between 0 and 1.0.
+	static double GetColorBrightness(COLORREF color);
+
+	// Gives a color a defined brightness.
+	static COLORREF MakeBrightColor(COLORREF color, double brightness);
+
+	// Returns true, if the system has <= 256 colors
+	static bool Is256Colors();
+
+	// Swaps values above 255 to the other two values
+	static void NormalizeColor(int& red, int& green, int& blue);
+
+protected:
+	// Helper function for NormalizeColor()
+	static void DistributeFirst(int& first, int& second, int& third);
+};
 
 
 //
@@ -125,17 +148,11 @@ public:
 	// Create a equally-bright palette from a set of arbitrary colors
 	static void EqualizeColors(const COLORREF *colors, int count, CArray<COLORREF, COLORREF&>& out);
 
-	// Give a color a defined brightness
-	static COLORREF MakeBrightColor(COLORREF color, double brightness);
-
 	// Good values
 	static Options GetDefaultOptions();
 
 	// WinDirStat <= 1.0.1 default options
 	static Options GetOldDefaultOptions();
-
-	// Returns true, if the system has <= 256 colors
-	static bool Is256Colors();
 
 public:
 	// Construct the treemap generator and register the callback interface.
@@ -213,12 +230,6 @@ protected:
 
 	// Adds a new ridge to surface
 	static void AddRidge(const CRect& rc, double *surface, double h);
-
-	// Swaps values above 255 to the other two values
-	static void NormalizeColor(int& red, int& green, int& blue);
-
-	// Helper function for NormalizeColor()
-	static void DistributeFirst(int& first, int& second, int& third);
 
 	static const Options  _defaultOptions;				// Good values. Default for WinDirStat 1.0.2
 	static const Options  _defaultOptionsOld;			// WinDirStat 1.0.1 default options

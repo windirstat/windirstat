@@ -1,7 +1,7 @@
 // graphview.h	- Declaration of CGraphView (the Treemap view)
 //
 // WinDirStat - Directory Statistics
-// Copyright (C) 2003 Bernhard Seifert
+// Copyright (C) 2003-2004 Bernhard Seifert
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -65,6 +65,8 @@ protected:
 	void RecurseHighlightExtension(CDC *pdc, const CItem *item);
 
 	void DrawSelection(CDC *pdc);
+
+	void RenderHighlightRectangle(CDC *pdc, CRect& rc);
 
 	bool m_recalculationSuspended;	// True while the user is resizing the window.
 	bool m_showTreemap;				// False, if the user switched off the treemap (by F9).

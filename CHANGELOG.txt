@@ -1,6 +1,28 @@
 changelog.txt - What has been done to WinDirStat (newest top)
 =============================================================
 
+	* The lists now realize when system colors change, and the
+	  program needs not to be restarted.
+	  Text- and item highlight colors are no longer hardcoded.
+	* Options: 'Pacman animation' and 'Show time spent' have
+	  been moved to the page 'Directory list'.
+	  'Show grid' and the new option 'Show stripes' have been
+	  moved to the General page and now apply to all lists.
+	* Options 'General': When the language has been changed, the user
+	  is now prompted for restarting Windirstat.
+	* Directory list: During the scan it was hard to manipulate
+	  items with mouse clicks due to the periodical re-sort.
+	  Now mouse messages are processed before the re-sort, so it
+	  is much more likely to hit the wanted item.
+	* Directory list: During the scan it was hard to navigate
+	  in the tree because the selection was auto-scrolled into
+	  view every 0.6 sec. This is now removed.
+	* Directory list: The context menu key didn't work. Fixed.
+	  Corrected right mouse button handling.
+	  Context menu now has default items (expand, collapse or open).
+	  A double click on a file opens the file.
+	* Treemap: Small selection rectangles were not painted correctly.
+	
 2003-12-29	bseifert
 	* Page User defined cleanups: Select the cleanup No 9. Empty
 	  its title. In the list click below cleanup No. 9.
@@ -16,7 +38,7 @@ changelog.txt - What has been done to WinDirStat (newest top)
 2003-12-27	bseifert
 	* Selection of types: When the extension list has the focus,
 	  the treemap highlights all files of the given extension.
-	* Focus can now moved between directory list and extension list
+	* Focus can now be moved between directory list and extension list
 	  via TAB key. Selection can be canceled with ESC key.
 	
 2003-12-24	bseifert

@@ -99,6 +99,10 @@
 #define IDS_BACKTO_USERSETTINGS         271
 #define IDS_RESETTODEFAULTS             272
 #define IDS_BACKTOUSERSETTINGS          273
+#define IDS_COLLAPSE                    274
+#define IDS_EXPAND                      275
+#define IDS_CREATEPROCESSsFAILEDs       276
+#define IDS_LANGUAGERESTARTNOW          277
 #define IDC_ALLDRIVES                   1000
 #define IDC_GROUPS                      1000
 #define IDC_ALLLOCALDRIVES              1000
@@ -122,8 +126,11 @@
 #define IDC_SHOWCONSOLEWINDOW           1023
 #define IDC_WAITFORCOMPLETION           1024
 #define IDC_TREELISTGRID                1028
+#define IDC_SHOWGRID                    1028
 #define IDC_HUMANFORMAT                 1029
 #define IDC_TREEMAPGRIDCOLOR            1030
+#define IDC_SHOWGRID2                   1030
+#define IDC_SHOWSTRIPES                 1030
 #define IDC_RESET                       1034
 #define IDC_LIST                        1036
 #define IDC_TITLE                       1037
@@ -246,6 +253,7 @@
 #define ID_CLEANUP_OPEN                 33015
 #define ID_CLEANUP_PROPERTIES           33019
 #define ID_BUTTON33021                  33021
+#define ID_POPUP_TOGGLE                 33023
 #define ID_INDICATOR_MEMORYUSAGE        59142
 
 // Next default values for new objects
@@ -253,7 +261,7 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        900
-#define _APS_NEXT_COMMAND_VALUE         33022
+#define _APS_NEXT_COMMAND_VALUE         33024
 #define _APS_NEXT_CONTROL_VALUE         1225
 #define _APS_NEXT_SYMED_VALUE           104
 #endif

@@ -1,7 +1,7 @@
 // PageTreelist.cpp		- Implementation of CPageTreelist
 //
 // WinDirStat - Directory Statistics
-// Copyright (C) 2003 Bernhard Seifert
+// Copyright (C) 2003-2004 Bernhard Seifert
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -23,12 +23,14 @@
 #include "windirstat.h"
 #include ".\pagetreelist.h"
 
+#ifdef _DEBUG
+#define new DEBUG_NEW
+#endif
 
 IMPLEMENT_DYNAMIC(CPageTreelist, CPropertyPage)
 
 CPageTreelist::CPageTreelist()
 	: CPropertyPage(CPageTreelist::IDD)
-	, m_treelistGrid(FALSE)
 {
 }
 
@@ -39,7 +41,8 @@ CPageTreelist::~CPageTreelist()
 void CPageTreelist::DoDataExchange(CDataExchange* pDX)
 {
 	CPropertyPage::DoDataExchange(pDX);
-	DDX_Check(pDX, IDC_TREELISTGRID, m_treelistGrid);
+	DDX_Check(pDX, IDC_PACMANANIMATION, m_pacmanAnimation);
+	DDX_Check(pDX, IDC_SHOWTIMESPENT, m_showTimeSpent);
 	for (int i=0; i < TREELISTCOLORCOUNT; i++)
 	{
 		DDX_Control(pDX, IDC_COLORBUTTON0 + i, m_colorButton[i]);
@@ -53,9 +56,10 @@ void CPageTreelist::DoDataExchange(CDataExchange* pDX)
 
 
 BEGIN_MESSAGE_MAP(CPageTreelist, CPropertyPage)
-	ON_BN_CLICKED(IDC_TREELISTGRID, OnBnClickedTreelistgrid)
 	ON_NOTIFY_RANGE(COLBN_CHANGED, IDC_COLORBUTTON0, IDC_COLORBUTTON7, OnColorChanged)
 	ON_WM_VSCROLL()
+	ON_BN_CLICKED(IDC_PACMANANIMATION, OnBnClickedPacmananimation)
+	ON_BN_CLICKED(IDC_SHOWTIMESPENT, OnBnClickedShowTimeSpent)
 END_MESSAGE_MAP()
 
 
@@ -63,7 +67,8 @@ BOOL CPageTreelist::OnInitDialog()
 {
 	CPropertyPage::OnInitDialog();
 
-	m_treelistGrid= GetOptions()->IsTreelistGrid();
+	m_pacmanAnimation= GetOptions()->IsPacmanAnimation();
+	m_showTimeSpent= GetOptions()->IsShowTimeSpent();
 	m_treelistColorCount= GetOptions()->GetTreelistColorCount();
 	GetOptions()->GetTreelistColors(m_treelistColor);
 
@@ -79,13 +84,19 @@ BOOL CPageTreelist::OnInitDialog()
 void CPageTreelist::OnOK()
 {
 	UpdateData();
-	GetOptions()->SetTreelistGrid(m_treelistGrid);
+	GetOptions()->SetPacmanAnimation(m_pacmanAnimation);
+	GetOptions()->SetShowTimeSpent(m_showTimeSpent);
 	GetOptions()->SetTreelistColorCount(m_treelistColorCount);
 	GetOptions()->SetTreelistColors(m_treelistColor);
 	CPropertyPage::OnOK();
 }
 
-void CPageTreelist::OnBnClickedTreelistgrid()
+void CPageTreelist::OnBnClickedPacmananimation()
+{
+	SetModified();
+}
+
+void CPageTreelist::OnBnClickedShowTimeSpent()
 {
 	SetModified();
 }

@@ -1,7 +1,7 @@
 // pagegeneral.h	- Declaration of CPageGeneral
 //
 // WinDirStat - Directory Statistics
-// Copyright (C) 2003 Bernhard Seifert
+// Copyright (C) 2003-2004 Bernhard Seifert
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -21,6 +21,7 @@
 
 #pragma once
 
+class COptionsPropertySheet;
 
 //
 // CPageGeneral. "Settings" property page "General".
@@ -35,21 +36,26 @@ public:
 	virtual ~CPageGeneral();
 
 protected:
+	COptionsPropertySheet *GetSheet();
+
 	virtual void DoDataExchange(CDataExchange* pDX);
 	virtual BOOL OnInitDialog();
 	virtual void OnOK();
 
-	BOOL m_pacmanAnimation;
 	BOOL m_followMountPoints;
 	BOOL m_humanFormat;
-	BOOL m_showTimeSpent;
+	BOOL m_listGrid;
+	BOOL m_listStripes;
 
 	CComboBox m_combo;
 	CButton m_ctlFollowMountPoints;
 
+	int m_originalLanguage;
+
 	DECLARE_MESSAGE_MAP()
 	afx_msg void OnBnClickedHumanformat();
 	afx_msg void OnBnClickedFollowmountpoints();
-	afx_msg void OnBnClickedPacmananimation();
-	afx_msg void OnBnClickedShowTimeSpent();
+	afx_msg void OnCbnSelendokCombo();
+	afx_msg void OnBnClickedListGrid();
+	afx_msg void OnBnClickedListStripes();
 };

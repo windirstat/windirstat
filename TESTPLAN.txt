@@ -48,7 +48,9 @@ Copy some big directories to C:\temp (for deletion).
 For the following "during the scan" tests it is is good idea,
 to activate the "cross file system boundaries" option and
 mount e.g. C: to D:\mount\c and D: to C:\mount\d. Because
-of the circularity the scan will then last forever.
+of the circularity the scan will then last forever (well
+there seems to be some system limit of recursion depth, 
+but on my machine it virtually lasts forever).
 
 Select some big drives
 During the scan refresh some items
@@ -175,6 +177,8 @@ Options->Directory List
 --> works as expected.
 Options->Treemap
 --> works as expected.
+Options->Report
+--> works as expected.
 
 Change Column widths and column order
 --> The settings are persistent
@@ -226,9 +230,14 @@ Select the folder C:\temp\wds
 --> Warning, whether c:\temp\wds shall be created
 Say no.
 --> The wizard doesn't proceed.
+Select the folder C:\program Diles\windirstat
+--> Warning, whether c:\program Diles shall be created
+Say no.
+Select the folder C:\temp\a\b\c\windirstat
+--> Warning, whether C:\temp\a\b\c\windirstat shall be created
 Say yes.
---> The wizard proceeds. C:\temp\wds is created.
-Go back and select C:\programme\windirstat again.
+--> The wizard proceeds. C:\temp\a\b\c\windirstat is created.
+Go back and select C:\program files\windirstat.
 Deselect both shortcut options. Finish.
 --> windirstat is installed but without shortcuts.
 Start setup.exe
@@ -314,6 +323,9 @@ Page User defined cleanups: Select the cleanup No 9. Empty
 its title. In the list click below cleanup No. 9.
 --> No crash.
 
+Directory list: press the context menu key
+--> it works.
+
 
 Special cases
 -------------
@@ -339,8 +351,8 @@ Start setup.exe from CD
 Start WinDirStat from CD
 --> It works fine.
 
-Set the Windows colors to strange values and restart WinDirStat
---> It still looks good.
+Set the Windows colors to strange values
+--> It still looks good (without restart).
 
 Set the Desktop design to "XP"
 --> All windirstat controls are XP-like.

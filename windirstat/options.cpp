@@ -1,7 +1,7 @@
 // options.cpp	- Implementation of CPersistence, COptions and CRegistryUser
 //
 // WinDirStat - Directory Statistics
-// Copyright (C) 2003 Bernhard Seifert
+// Copyright (C) 2003-2004 Bernhard Seifert
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -23,6 +23,10 @@
 #include "windirstat.h"
 #include "dirstatdoc.h"
 #include "options.h"
+
+#ifdef _DEBUG
+#define new DEBUG_NEW
+#endif
 
 namespace
 {
@@ -54,7 +58,8 @@ namespace
 	const LPCTSTR entryLanguage				= _T("language");
 
 	const LPCTSTR sectionOptions			= _T("options");
-	const LPCTSTR entryTreelistGrid			= _T("treelistGrid");
+	const LPCTSTR entryListGrid				= _T("treelistGrid"); // for compatibility with 1.0.1, this entry is named treelistGrid.
+	const LPCTSTR entryListStripes			= _T("listStripes");	
 	const LPCTSTR entryTreelistColorCount	= _T("treelistColorCount");
 	const LPCTSTR entryTreelistColorN		= _T("treelistColor%d");
 	const LPCTSTR entryHumanFormat			= _T("humanFormat");
@@ -533,20 +538,33 @@ COptions *GetOptions()
 
 COptions::COptions()
 {
-	m_treelistGrid= true;
 }
 
-bool COptions::IsTreelistGrid()
+bool COptions::IsListGrid()
 {
-	return m_treelistGrid;
+	return m_listGrid;
 }
 
-void COptions::SetTreelistGrid(bool show)
+void COptions::SetListGrid(bool show)
 {
-	if (m_treelistGrid != show)
+	if (m_listGrid != show)
 	{
-		m_treelistGrid= show;
-		GetDocument()->UpdateAllViews(NULL, HINT_TREELISTSTYLECHANGED);
+		m_listGrid= show;
+		GetDocument()->UpdateAllViews(NULL, HINT_LISTSTYLECHANGED);
+	}
+}
+
+bool COptions::IsListStripes()
+{
+	return m_listStripes;
+}
+
+void COptions::SetListStripes(bool show)
+{
+	if (m_listStripes != show)
+	{
+		m_listStripes= show;
+		GetDocument()->UpdateAllViews(NULL, HINT_LISTSTYLECHANGED);
 	}
 }
 
@@ -560,7 +578,7 @@ void COptions::SetTreelistColors(const COLORREF color[TREELISTCOLORCOUNT])
 {
 	for (int i=0; i < TREELISTCOLORCOUNT; i++)
 		m_treelistColor[i]= color[i];
-	GetDocument()->UpdateAllViews(NULL, HINT_TREELISTSTYLECHANGED);
+	GetDocument()->UpdateAllViews(NULL, HINT_LISTSTYLECHANGED);
 }
 
 COLORREF COptions::GetTreelistColor(int i)
@@ -580,7 +598,7 @@ void COptions::SetTreelistColorCount(int count)
 	if (m_treelistColorCount != count)
 	{
 		m_treelistColorCount= count;
-		GetDocument()->UpdateAllViews(NULL, HINT_TREELISTSTYLECHANGED);
+		GetDocument()->UpdateAllViews(NULL, HINT_LISTSTYLECHANGED);
 	}
 }
 
@@ -763,7 +781,9 @@ void COptions::SetReportSuffix(LPCTSTR suffix)
 
 void COptions::SaveToRegistry()
 {
-	SetProfileBool(sectionOptions, entryTreelistGrid, m_treelistGrid);
+	SetProfileBool(sectionOptions, entryListGrid, m_listGrid);
+	SetProfileBool(sectionOptions, entryListStripes, m_listStripes);
+
 	SetProfileInt(sectionOptions, entryTreelistColorCount, m_treelistColorCount);
 	for (int i=0; i < TREELISTCOLORCOUNT; i++)
 	{
@@ -814,7 +834,9 @@ void COptions::SaveToRegistry()
 
 void COptions::LoadFromRegistry()
 {
-	m_treelistGrid= GetProfileBool(sectionOptions, entryTreelistGrid, false);
+	m_listGrid= GetProfileBool(sectionOptions, entryListGrid, false);
+	m_listStripes= GetProfileBool(sectionOptions, entryListStripes, false);
+
 	m_treelistColorCount= GetProfileInt(sectionOptions, entryTreelistColorCount, 4);
 	CheckRange(m_treelistColorCount, 1, TREELISTCOLORCOUNT);
 	for (int i=0; i < TREELISTCOLORCOUNT; i++)

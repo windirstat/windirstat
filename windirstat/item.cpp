@@ -1,7 +1,7 @@
 // item.cpp	- Implementation of CItem
 //
 // WinDirStat - Directory Statistics
-// Copyright (C) 2003 Bernhard Seifert
+// Copyright (C) 2003-2004 Bernhard Seifert
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -24,6 +24,10 @@
 #include "dirstatdoc.h"	// GetItemColor()
 #include "mainframe.h"
 #include "item.h"
+
+#ifdef _DEBUG
+#define new DEBUG_NEW
+#endif
 
 namespace
 {
@@ -94,7 +98,7 @@ bool CItem::DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *width)
 	if (showReadJobs)
 	{
 		rc.DeflateRect(sizeDeflatePacman);
-		DrawPacman(pdc, rc);
+		DrawPacman(pdc, rc, GetTreeListControl()->GetItemBackgroundColor(this));
 	}
 	else
 	{
@@ -1476,9 +1480,11 @@ void CItem::DrivePacman()
 	if (!CTreeListItem::DrivePacman(GetReadJobs()))
 		return;
 
+	int i= GetTreeListControl()->FindTreeItem(this);
+
 	CClientDC dc(GetTreeListControl());
-	CRect rc= GetTreeListControl()->GetWholeSubitemRect(GetTreeListControl()->FindTreeItem(this), COL_SUBTREEPERCENTAGE);
+	CRect rc= GetTreeListControl()->GetWholeSubitemRect(i, COL_SUBTREEPERCENTAGE);
 	rc.DeflateRect(sizeDeflatePacman);
-	DrawPacman(&dc, rc);
+	DrawPacman(&dc, rc, GetTreeListControl()->GetItemBackgroundColor(i));
 }
 

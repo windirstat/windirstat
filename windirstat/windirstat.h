@@ -1,7 +1,7 @@
 // windirstat.h	- Main header for the windirstat application
 //
 // WinDirStat - Directory Statistics
-// Copyright (C) 2003 Bernhard Seifert
+// Copyright (C) 2003-2004 Bernhard Seifert
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -70,6 +70,8 @@ public:
 	void DoContextHelp(DWORD topic);
 
 	void GetAvailableResourceDllLangids(CArray<LANGID, LANGID>& arr);
+
+	void RestartApplication();
 
 protected:
 	CString FindResourceDllPathByLangid(LANGID& langid);

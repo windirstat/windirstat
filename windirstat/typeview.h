@@ -1,7 +1,7 @@
 // typeview.h	- Declaration of CExtensionListControl and CTypeView
 //
 // WinDirStat - Directory Statistics
-// Copyright (C) 2003 Bernhard Seifert
+// Copyright (C) 2003-2004 Bernhard Seifert
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -109,6 +109,7 @@ protected:
 public:
 	virtual ~CTypeView();
 	CDirstatDoc* GetDocument() const;
+	void SysColorChanged();
 
 	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
 

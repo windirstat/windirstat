@@ -1,7 +1,7 @@
 // TreeListControl.h - Declaration of CTreeListItem and CTreeListControl
 //
 // WinDirStat - Directory Statistics
-// Copyright (C) 2003 Bernhard Seifert
+// Copyright (C) 2003-2004 Bernhard Seifert
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -68,7 +68,7 @@ public:
 	virtual int GetChildrenCount() const =0;
 	virtual int GetImageToCache() const =0;
 
-	void DrawPacman(CDC *pdc, const CRect& rc) const;
+	void DrawPacman(CDC *pdc, const CRect& rc, COLORREF bgColor) const;
 	void UncacheImage();
 	void SortChildren();
 	CTreeListItem *GetSortedChild(int i);
@@ -119,6 +119,7 @@ public:
 	virtual ~CTreeListControl();
 	void MySetImageList(CImageList *il);
 	virtual BOOL CreateEx(DWORD dwExStyle, DWORD dwStyle, const RECT& rect,	CWnd* pParentWnd, UINT nID);
+	virtual void SysColorChanged();
 	void SetRootItem(CTreeListItem *root);
 	void OnChildAdded(CTreeListItem *parent, CTreeListItem *child);
 	void OnChildRemoved(CTreeListItem *parent, CTreeListItem *childdata);
@@ -134,26 +135,36 @@ public:
 	int FindTreeItem(const CTreeListItem *item);
 	int GetItemScrollPosition(CTreeListItem *item);
 	void SetItemScrollPosition(CTreeListItem *item, int top);
+	bool SelectedItemCanToggle();
+	void ToggleSelectedItem();
 
 	virtual bool HasImages();
 
 protected:
+	virtual void OnItemDoubleClick(int i);
+	void InitializeNodeBitmaps();
+
+
 	void InsertItem(int i, CTreeListItem *item);
 	void DeleteItem(int i);
 	void CollapseItem(int i);
 	void ExpandItem(int i, bool scroll = true);
 	void ToggleExpansion(int i);
 	void SelectItem(int i);
+	int GetSelectedItem();
 
-	CBitmap m_bmNodes;			// The bitmaps needed to draw the treecontrol-like branches
+	CBitmap m_bmNodes0;			// The bitmaps needed to draw the treecontrol-like branches
+	CBitmap m_bmNodes1;			// The same bitmaps with stripe-background color
 	CImageList *m_imageList;	// We don't use the system-supplied SetImageList(), but MySetImageList().
+	int m_lButtonDownItem;		// Set in OnLButtonDown(). -1 if not item hit.
+	bool m_lButtonDownOnPlusMinusRect;	// Set in OnLButtonDown(). True, if plus-minus-rect hit.
 
 	DECLARE_MESSAGE_MAP()
 
 	afx_msg void MeasureItem(LPMEASUREITEMSTRUCT mis);
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
-	afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
 	afx_msg void OnLButtonDblClk(UINT nFlags, CPoint point);
+	afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 };
 

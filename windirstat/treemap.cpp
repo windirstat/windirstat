@@ -1,7 +1,7 @@
 // treemap.cpp	- Implementation of CTreemap and CTreemapPreview
 //
 // WinDirStat - Directory Statistics
-// Copyright (C) 2003 Bernhard Seifert
+// Copyright (C) 2003-2004 Bernhard Seifert
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -34,6 +34,91 @@
 
 static const double PALETTE_BRIGHTNESS = 0.6;
 
+
+/////////////////////////////////////////////////////////////////////////////
+
+double CColorSpace::GetColorBrightness(COLORREF color)
+{
+	return (GetRValue(color) + GetGValue(color) + GetBValue(color)) / 255.0 / 3.0;
+}
+
+COLORREF CColorSpace::MakeBrightColor(COLORREF color, double brightness)
+{
+	ASSERT(brightness >= 0.0);
+	ASSERT(brightness <= 1.0);
+
+	double dred= GetRValue(color) / 255.0;
+	double dgreen= GetGValue(color) / 255.0;
+	double dblue= GetBValue(color) / 255.0;
+
+	double f= 3.0 * brightness / (dred + dgreen + dblue);
+	dred*= f;
+	dgreen*= f;
+	dblue*= f;
+
+	int red		= (int)(dred * 255);
+	int green	= (int)(dgreen * 255);
+	int blue	= (int)(dblue * 255);
+	
+	NormalizeColor(red, green, blue);
+
+	return RGB(red, green, blue);
+}
+
+// Returns true, if the System has 256 Colors or less.
+// In this case options.brightness is ignored (and the
+// slider should be disabled).
+//
+bool CColorSpace::Is256Colors()
+{
+	CClientDC dc(CWnd::GetDesktopWindow());
+	return (dc.GetDeviceCaps(NUMCOLORS) != -1);
+}
+
+void CColorSpace::NormalizeColor(int& red, int& green, int& blue)
+{
+	ASSERT(red + green + blue <= 3 * 255);
+
+	if (red > 255)
+	{
+		DistributeFirst(red, green, blue);
+	}
+	else if (green > 255)
+	{
+		DistributeFirst(green, red, blue);
+	}
+	else if (blue > 255)
+	{
+		DistributeFirst(blue, red, green);
+	}
+}
+
+void CColorSpace::DistributeFirst(int& first, int& second, int& third)
+{
+	int h= (first - 255) / 2;
+	first= 255;
+	second+= h;
+	third+= h;
+
+	if (second > 255)
+	{
+		int h= second - 255;
+		second= 255;
+		third+= h;
+		ASSERT(third <= 255);
+	}
+	else if (third > 255)
+	{
+		int h= third - 255;
+		third= 255;
+		second+= h;
+		ASSERT(second <= 255);
+	}
+}
+
+
+
+/////////////////////////////////////////////////////////////////////////////
 
 const CTreemap::Options CTreemap::_defaultOptions = {
 	KDirStatStyle,
@@ -87,7 +172,7 @@ const COLORREF CTreemap::_defaultCushionColors256[] = {
 
 void CTreemap::GetDefaultPalette(CArray<COLORREF, COLORREF&>& palette)
 {
-	if (Is256Colors())
+	if (CColorSpace::Is256Colors())
 	{
 		palette.SetSize(countof(_defaultCushionColors256));
 		for (int i=0; i < countof(_defaultCushionColors256); i++)
@@ -109,31 +194,8 @@ void CTreemap::EqualizeColors(const COLORREF *colors, int count, CArray<COLORREF
 
 	for (int i=0; i < count; i++)
 	{
-		out[i] = MakeBrightColor(colors[i], PALETTE_BRIGHTNESS);
+		out[i] = CColorSpace::MakeBrightColor(colors[i], PALETTE_BRIGHTNESS);
 	}
-}
-
-COLORREF CTreemap::MakeBrightColor(COLORREF color, double brightness)
-{
-	ASSERT(brightness >= 0.0);
-	ASSERT(brightness <= 1.0);
-
-	double dred= GetRValue(color) / 255.0;
-	double dgreen= GetGValue(color) / 255.0;
-	double dblue= GetBValue(color) / 255.0;
-
-	double f= 3.0 * brightness / (dred + dgreen + dblue);
-	dred*= f;
-	dgreen*= f;
-	dblue*= f;
-
-	int red		= (int)(dred * 255);
-	int green	= (int)(dgreen * 255);
-	int blue	= (int)(dblue * 255);
-	
-	NormalizeColor(red, green, blue);
-
-	return RGB(red, green, blue);
 }
 
 CTreemap::Options CTreemap::GetDefaultOptions()
@@ -144,15 +206,6 @@ CTreemap::Options CTreemap::GetDefaultOptions()
 CTreemap::Options CTreemap::GetOldDefaultOptions()
 {
 	return _defaultOptionsOld;
-}
-
-// Returns true, if the System has 256 Colors or less.
-// In this case options.brightness is ignored (and the
-// slider should be disabled).
-bool CTreemap::Is256Colors()
-{
-	CClientDC dc(CWnd::GetDesktopWindow());
-	return (dc.GetDeviceCaps(NUMCOLORS) != -1);
 }
 
 CTreemap::CTreemap(Callback *callback)
@@ -187,7 +240,7 @@ CTreemap::Options CTreemap::GetOptions()
 
 void CTreemap::SetBrightnessFor256()
 {
-	if (Is256Colors())
+	if (CColorSpace::Is256Colors())
 		m_options.brightness= PALETTE_BRIGHTNESS;
 }
 
@@ -1006,7 +1059,7 @@ void CTreemap::RenderRectangle(CDC *pdc, const CRect& rc, const double *surface,
 	if ((color & COLORFLAG_MASK) != 0)
 	{
 		DWORD flags = (color & COLORFLAG_MASK);
-		color= MakeBrightColor(color, PALETTE_BRIGHTNESS);
+		color= CColorSpace::MakeBrightColor(color, PALETTE_BRIGHTNESS);
 
 		if ((flags & COLORFLAG_DARKER) != 0)
 		{
@@ -1042,7 +1095,7 @@ void CTreemap::DrawSolidRect(CDC *pdc, const CRect& rc, COLORREF col, double bri
 	green= (int)(green * factor);
 	blue= (int)(blue * factor);
 
-	NormalizeColor(red, green, blue);
+	CColorSpace::NormalizeColor(red, green, blue);
 
 	pdc->FillSolidRect(rc, RGB(red, green, blue));
 }
@@ -1091,7 +1144,7 @@ void CTreemap::DrawCushion(CDC *pdc, const CRect& rc, const double *surface, COL
 		int green	= (int)(colG * pixel);
 		int blue	= (int)(colB * pixel);
 
-		NormalizeColor(red, green, blue);
+		CColorSpace::NormalizeColor(red, green, blue);
 
 		// ... and set!
 		pdc->SetPixel(ix, iy, RGB(red, green, blue));
@@ -1132,47 +1185,6 @@ void CTreemap::AddRidge(const CRect& rc, double *surface, double h)
 	double hf= h4 / height;
 	surface[3]+= hf * (rc.bottom + rc.top);
 	surface[1]-= hf;
-}
-
-void CTreemap::NormalizeColor(int& red, int& green, int& blue)
-{
-	ASSERT(red + green + blue <= 3 * 255);
-
-	if (red > 255)
-	{
-		DistributeFirst(red, green, blue);
-	}
-	else if (green > 255)
-	{
-		DistributeFirst(green, red, blue);
-	}
-	else if (blue > 255)
-	{
-		DistributeFirst(blue, red, green);
-	}
-}
-
-void CTreemap::DistributeFirst(int& first, int& second, int& third)
-{
-	int h= (first - 255) / 2;
-	first= 255;
-	second+= h;
-	third+= h;
-
-	if (second > 255)
-	{
-		int h= second - 255;
-		second= 255;
-		third+= h;
-		ASSERT(third <= 255);
-	}
-	else if (third > 255)
-	{
-		int h= third - 255;
-		third= 255;
-		second+= h;
-		ASSERT(second <= 255);
-	}
 }
 
 

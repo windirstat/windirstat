@@ -1,7 +1,7 @@
 // windirstat.cpp	- Implementation of CDirstatApp and some globals
 //
 // WinDirStat - Directory Statistics
-// Copyright (C) 2003 Bernhard Seifert
+// Copyright (C) 2003-2004 Bernhard Seifert
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -152,6 +152,38 @@ void CDirstatApp::GetAvailableResourceDllLangids(CArray<LANGID, LANGID>& arr)
 		if (ScanResourceDllName(finder.GetFileName(), langid) && IsCorrectResourceDll(finder.GetFilePath()))
 			arr.Add(langid);
 	}
+}
+
+void CDirstatApp::RestartApplication()
+{
+	// First, try to create the suspended process
+	STARTUPINFO si;
+	ZeroMemory(&si, sizeof(si));
+	si.cb= sizeof(si);
+
+	PROCESS_INFORMATION pi;
+	ZeroMemory(&pi, sizeof(pi));
+
+	BOOL success = CreateProcess(GetAppFileName(), NULL, NULL, NULL, false, CREATE_SUSPENDED, NULL, NULL, &si, &pi);
+	if (!success)
+	{
+		CString s;
+		s.FormatMessage(IDS_CREATEPROCESSsFAILEDs, GetAppFileName(), MdGetWinerrorText(GetLastError()));
+		AfxMessageBox(s);
+		return;
+	}
+
+	// We _send_ the WM_CLOSE here to ensure that all CPersistence-Settings
+	// like column widths an so on are saved before the new instance is resumed.
+	// This will post a WM_QUIT message.
+	GetMainFrame()->SendMessage(WM_CLOSE);
+
+	DWORD dw= ::ResumeThread(pi.hThread);
+	if (dw != 1)
+		TRACE(_T("ResumeThread() didn't return 1\r\n"));
+
+	CloseHandle(pi.hProcess);
+	CloseHandle(pi.hThread);
 }
 
 bool CDirstatApp::ScanResourceDllName(LPCTSTR name, LANGID& langid)
@@ -348,6 +380,7 @@ BOOL CDirstatApp::InitInstance()
 			{
 				AfxSetResourceHandle(dll);
 				m_langid= langid;
+				CLanguageOptions::SetLanguage(m_langid);
 			}
 			else
 			{
@@ -424,7 +457,7 @@ BOOL CDirstatApp::OnIdle(LONG lCount)
 	bool more= false;
 
 	CDirstatDoc *doc= GetDocument();
-	if (doc != NULL && !doc->Work(600)) 
+	if (doc != NULL && !doc->Work(600))
 		more= true;
 
 	if (CWinApp::OnIdle(lCount))

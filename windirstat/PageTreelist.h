@@ -1,7 +1,7 @@
 // pagetreelist.h	- Declaration of CPageTreelist
 //
 // WinDirStat - Directory Statistics
-// Copyright (C) 2003 Bernhard Seifert
+// Copyright (C) 2003-2004 Bernhard Seifert
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -42,7 +42,9 @@ protected:
 	virtual void OnOK();
 	void EnableButtons();
 
-	BOOL m_treelistGrid;
+	BOOL m_pacmanAnimation;
+	BOOL m_showTimeSpent;
+
 	int m_treelistColorCount;
 	COLORREF m_treelistColor[TREELISTCOLORCOUNT];
 
@@ -50,7 +52,8 @@ protected:
 	CSliderCtrl m_slider;
 
 	DECLARE_MESSAGE_MAP()
-	afx_msg void OnBnClickedTreelistgrid();
 	afx_msg void OnColorChanged(UINT id, NMHDR *, LRESULT *);
 	afx_msg void OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
+	afx_msg void OnBnClickedPacmananimation();
+	afx_msg void OnBnClickedShowTimeSpent();
 };

@@ -1,7 +1,7 @@
 // dirstatdoc.h		- Declaration of the CDirstatDoc class
 //
 // WinDirStat - Directory Statistics
-// Copyright (C) 2003 Bernhard Seifert
+// Copyright (C) 2003-2004 Bernhard Seifert
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -58,10 +58,12 @@ enum
 	HINT_SELECTIONCHANGED,	// The selection has changed, EnsureVisible.
 	HINT_SHOWNEWSELECTION,	// The selection has changed, Show Path
 	HINT_SELECTIONSTYLECHANGED,	// Only update selection in Graphview
+	HINT_EXTENSIONSELECTIONCHANGED,	// Type list selected a new extension
 	HINT_ZOOMCHANGED,		// Only zoom item has changed.
 	HINT_REDRAWWINDOW,		// Only graphically redraw views.
+	HINT_SOMEWORKDONE,		// Directory list shall process mouse messages first, then re-sort.
 
-	HINT_TREELISTSTYLECHANGED,	// Options: Treelist style (grid) changed
+	HINT_LISTSTYLECHANGED,	// Options: List style (grid/stripes) or treelist colors changed
 	HINT_TREEMAPSTYLECHANGED	// Options: Treemap style (grid, colors etc.) changed
 };
 
@@ -118,6 +120,8 @@ public:
 	void UnlinkRoot();
 	bool UserDefinedCleanupWorksForItem(const USERDEFINEDCLEANUP *udc, const CItem *item);
 	LONGLONG GetWorkingItemReadJobs();
+
+	void OpenItem(const CItem *item);
 
 protected:
 	void RecurseRefreshMountPointItems(CItem *item);

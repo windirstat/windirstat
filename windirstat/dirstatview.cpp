@@ -1,7 +1,7 @@
 // dirstatview.cpp : Implementation of CDirstatView
 //
 // WinDirStat - Directory Statistics
-// Copyright (C) 2003 Bernhard Seifert
+// Copyright (C) 2003-2004 Bernhard Seifert
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -53,30 +53,16 @@ BEGIN_MESSAGE_MAP(CMyTreeListControl, CTreeListControl)
 END_MESSAGE_MAP()
 
 
-void CMyTreeListControl::OnContextMenu(CWnd* /*pWnd*/, CPoint ptscreen)
+void CMyTreeListControl::OnContextMenu(CWnd* /*pWnd*/, CPoint /*ptscreen*/)
 {
-	CPoint point= ptscreen;
-	ScreenToClient(&point);
-
-	LVHITTESTINFO hti;
-	ZeroMemory(&hti, sizeof(hti));
-	hti.pt= point;
-
-	int i= HitTest(&hti);
+	int i= GetSelectedItem();
 	if (i == -1)
-		return;
-
-	if (hti.iSubItem != 0)
 		return;
 
 	CTreeListItem *item= GetItem(i);
 
 	CRect rc= GetWholeSubitemRect(i, 0);
 	CRect rcTitle= item->GetTitleRect() + rc.TopLeft();
-	if (!rcTitle.PtInRect(point))
-		return;
-
-	COwnerDrawnListControl::OnLButtonDown(0, point);
 
 	CPoint ptmenu(rcTitle.right, rcTitle.top + rcTitle.Height() / 2);
 	ClientToScreen(&ptmenu);
@@ -85,9 +71,39 @@ void CMyTreeListControl::OnContextMenu(CWnd* /*pWnd*/, CPoint ptscreen)
 	menu.LoadMenu(IDR_POPUPLIST);
 	CMenu *sub= menu.GetSubMenu(0);
 
+	PrepareDefaultMenu(sub, (CItem *)item);
 	GetMainFrame()->AppendUserDefinedCleanups(sub);
 
 	sub->TrackPopupMenu(TPM_LEFTALIGN | TPM_LEFTBUTTON, ptmenu.x, ptmenu.y, AfxGetMainWnd());
+}
+
+void CMyTreeListControl::OnItemDoubleClick(int i)
+{
+	const CItem *item= (const CItem *)GetItem(i);
+	if (item->GetType() == IT_FILE)
+	{
+		GetDocument()->OpenItem(item);
+	}
+	else
+	{
+		CTreeListControl::OnItemDoubleClick(i);
+	}
+}
+
+void CMyTreeListControl::PrepareDefaultMenu(CMenu *menu, const CItem *item)
+{
+	if (IsLeaf(item->GetType()))
+	{
+		menu->DeleteMenu(0, MF_BYPOSITION);	// Remove "Expand/Collapse" item
+		menu->DeleteMenu(0, MF_BYPOSITION);	// Remove separator
+		menu->SetDefaultItem(ID_CLEANUP_OPEN, false);
+	}
+	else
+	{
+		CString command = LoadString(item->IsExpanded() && item->HasChildren() ? IDS_COLLAPSE : IDS_EXPAND);
+		VERIFY(menu->ModifyMenu(ID_POPUP_TOGGLE, MF_BYCOMMAND|MF_STRING, ID_POPUP_TOGGLE, command));
+		menu->SetDefaultItem(ID_POPUP_TOGGLE, false);
+	}
 }
 
 void CMyTreeListControl::OnSetFocus(CWnd* pOldWnd)
@@ -161,6 +177,11 @@ CFont *CDirstatView::GetSmallFont()
 	return m_treeListControl.GetFont(); 
 }
 
+void CDirstatView::SysColorChanged()
+{
+	m_treeListControl.SysColorChanged();
+}
+
 BOOL CDirstatView::PreCreateWindow(CREATESTRUCT& cs)
 {
 	return CView::PreCreateWindow(cs);
@@ -190,6 +211,8 @@ BEGIN_MESSAGE_MAP(CDirstatView, CView)
 	ON_WM_DESTROY()
 	ON_WM_SETFOCUS()
 	ON_NOTIFY(LVN_ITEMCHANGED, _nIdTreeListControl, OnLvnItemchanged)
+	ON_UPDATE_COMMAND_UI(ID_POPUP_TOGGLE, OnUpdatePopupToggle)
+	ON_COMMAND(ID_POPUP_TOGGLE, OnPopupToggle)
 END_MESSAGE_MAP()
 
 void CDirstatView::OnSize(UINT nType, int cx, int cy)
@@ -210,8 +233,9 @@ int CDirstatView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	RECT rect= { 0, 0, 0, 0 };
 	VERIFY(m_treeListControl.CreateEx(0, WS_CHILD|WS_VISIBLE|LVS_REPORT|LVS_SHOWSELALWAYS, rect, this, _nIdTreeListControl));
 	m_treeListControl.AddExtendedStyle(LVS_EX_HEADERDRAGDROP);
-	if (GetOptions()->IsTreelistGrid())
-		m_treeListControl.ShowGrid(true);
+
+	m_treeListControl.ShowGrid(GetOptions()->IsListGrid());
+	m_treeListControl.ShowStripes(GetOptions()->IsListStripes());
 
 	m_treeListControl.InsertColumn(COL_NAME, LoadString(IDS_TREECOL_NAME), LVCFMT_LEFT,	200, COL_NAME);
 	m_treeListControl.InsertColumn(COL_SUBTREEPERCENTAGE, LoadString(IDS_TREECOL_SUBTREEPERCENTAGE), LVCFMT_RIGHT, CItem::GetSubtreePercentageWidth(), COL_SUBTREEPERCENTAGE);
@@ -298,14 +322,33 @@ void CDirstatView::OnUpdate(CView *pSender, LPARAM lHint, CObject *pHint)
 		CView::OnUpdate(pSender, lHint, pHint);
 		break;
 
-	case HINT_TREELISTSTYLECHANGED:
-		m_treeListControl.ShowGrid(GetOptions()->IsTreelistGrid());
+	case HINT_LISTSTYLECHANGED:
+		m_treeListControl.ShowGrid(GetOptions()->IsListGrid());
+		m_treeListControl.ShowStripes(GetOptions()->IsListStripes());
 		break;
 
+	case HINT_SOMEWORKDONE:
+		{
+			MSG msg;
+			while (PeekMessage(&msg, m_treeListControl, WM_MOUSEFIRST, WM_MOUSELAST, PM_REMOVE))
+			{
+				if (msg.message == WM_QUIT)
+				{
+					PostQuitMessage(msg.wParam);
+					break;
+				}
+				TranslateMessage(&msg);
+				DispatchMessage(&msg);
+			}
+		}
+		// fall thru
 	case 0:
 		m_treeListControl.Sort();
-		m_treeListControl.EnsureItemVisible(GetDocument()->GetSelection());
-		m_treeListControl.RedrawItems(0, m_treeListControl.GetItemCount() - 1);
+		
+		// I decided (from 1.0.1 to 1.0.2) that this is not so good:
+		// m_treeListControl.EnsureItemVisible(GetDocument()->GetSelection());
+
+		CView::OnUpdate(pSender, lHint, pHint);
 		break;
 
 	default:
@@ -313,7 +356,17 @@ void CDirstatView::OnUpdate(CView *pSender, LPARAM lHint, CObject *pHint)
 	}
 }
 
-// CDirstatView Diagnostics
+void CDirstatView::OnUpdatePopupToggle(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(m_treeListControl.SelectedItemCanToggle());
+}
+
+void CDirstatView::OnPopupToggle()
+{
+	m_treeListControl.ToggleSelectedItem();
+}
+
+
 
 #ifdef _DEBUG
 void CDirstatView::AssertValid() const

@@ -1,7 +1,7 @@
 // dirstatview.h	- Declaration of CMyTreeListControl and CDirstatView
 //
 // WinDirStat - Directory Statistics
-// Copyright (C) 2003 Bernhard Seifert
+// Copyright (C) 2003-2004 Bernhard Seifert
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -38,6 +38,10 @@ public:
 	virtual bool GetAscendingDefault(int column);
 
 protected:
+	virtual void OnItemDoubleClick(int i);
+
+	void PrepareDefaultMenu(CMenu *menu, const CItem *item);
+
 	CDirstatView *m_dirstatView;
 
 	DECLARE_MESSAGE_MAP()
@@ -60,12 +64,14 @@ public:
 	virtual ~CDirstatView();
 	CString GenerateReport();
 	CFont *GetSmallFont();
+	void SysColorChanged();
 
 protected:
 	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
 	virtual void OnInitialUpdate();
 	virtual void OnDraw(CDC* pDC);
 	CDirstatDoc* GetDocument() const;
+	virtual void OnUpdate(CView *pSender, LPARAM lHint, CObject *pHint);
 
 	CMyTreeListControl m_treeListControl;	// The tree list
 
@@ -77,7 +83,8 @@ protected:
 	afx_msg void OnDestroy();
 	afx_msg void OnSetFocus(CWnd* pOldWnd);
 	afx_msg void OnLvnItemchanged(NMHDR *pNMHDR, LRESULT *pResult);
-	virtual void OnUpdate(CView *pSender, LPARAM lHint, CObject *pHint);
+	afx_msg void OnUpdatePopupToggle(CCmdUI *pCmdUI);
+	afx_msg void OnPopupToggle();
 
 public:
 	#ifdef _DEBUG

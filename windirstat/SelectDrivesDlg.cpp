@@ -1,7 +1,7 @@
 // SelectDrivesDlg.cpp	- Implementation of CDriveItem, CDrivesList and CSelectDrivesDlg
 //
 // WinDirStat - Directory Statistics
-// Copyright (C) 2003 Bernhard Seifert
+// Copyright (C) 2003-2004 Bernhard Seifert
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -22,6 +22,10 @@
 #include "stdafx.h"
 #include "windirstat.h"
 #include ".\selectdrivesdlg.h"
+
+#ifdef _DEBUG
+#define new DEBUG_NEW
+#endif
 
 #ifdef _DEBUG
 //#define TESTTHREADS //####
@@ -482,6 +486,7 @@ BEGIN_MESSAGE_MAP(CSelectDrivesDlg, CDialog)
 	ON_WM_DESTROY()
 	ON_MESSAGE(WMU_OK, OnWmuOk)
 	ON_REGISTERED_MESSAGE(WMU_THREADFINISHED, OnWmuThreadFinished)
+	ON_WM_SYSCOLORCHANGE()
 END_MESSAGE_MAP()
 
 
@@ -508,7 +513,8 @@ BOOL CSelectDrivesDlg::OnInitDialog()
 
 	m_layout.OnInitDialog(true);
 
-	m_list.ShowGrid(true);
+	m_list.ShowGrid(GetOptions()->IsListGrid());
+	m_list.ShowStripes(GetOptions()->IsListStripes());
 
 	m_list.SetExtendedStyle(m_list.GetExtendedStyle() | LVS_EX_HEADERDRAGDROP);
 	// If we set an ImageList here, OnMeasureItem will have no effect ?!
@@ -801,4 +807,10 @@ LRESULT CSelectDrivesDlg::OnWmuThreadFinished(WPARAM serial, LPARAM lparam)
 	m_list.SortItems();
 
 	return 0;
+}
+
+void CSelectDrivesDlg::OnSysColorChange()
+{
+	CDialog::OnSysColorChange();
+	m_list.SysColorChanged();
 }

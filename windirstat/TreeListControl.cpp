@@ -1,7 +1,7 @@
 // TreeListControl.cpp	- Implementation of CTreeListItem and CTreeListControl
 //
 // WinDirStat - Directory Statistics
-// Copyright (C) 2003 Bernhard Seifert
+// Copyright (C) 2003-2004 Bernhard Seifert
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -22,6 +22,10 @@
 #include "stdafx.h"
 #include "windirstat.h"
 #include ".\treelistcontrol.h"
+
+#ifdef _DEBUG
+#define new DEBUG_NEW
+#endif
 
 namespace
 {
@@ -96,9 +100,10 @@ int CTreeListItem::GetImage() const
 	return m_vi->image;
 }
 
-void CTreeListItem::DrawPacman(CDC *pdc, const CRect& rc) const
+void CTreeListItem::DrawPacman(CDC *pdc, const CRect& rc, COLORREF bgColor) const
 {
 	ASSERT(IsVisible());
+	m_vi->pacman.SetBackgroundColor(bgColor);
 	m_vi->pacman.Draw(pdc, rc);
 }
 
@@ -316,6 +321,14 @@ void CTreeListControl::SelectItem(int i)
 	EnsureVisible(i, false);
 }
 
+int CTreeListControl::GetSelectedItem()
+{
+	POSITION pos= GetFirstSelectedItemPosition();
+	if (pos == NULL)
+		return -1;
+	return GetNextSelectedItem(pos);
+}
+
 void CTreeListControl::SelectItem(const CTreeListItem *item)
 {
 	int i= FindTreeItem(item);
@@ -325,14 +338,17 @@ void CTreeListControl::SelectItem(const CTreeListItem *item)
 
 BOOL CTreeListControl::CreateEx(DWORD dwExStyle, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID)
 {
-	COLORMAP cm[1] = {
-		{ RGB(255,0,255),	GetSysColor(COLOR_WINDOW) }
-	};
-	VERIFY(m_bmNodes.LoadMappedBitmap(IDB_NODES, 0, cm, 1));
+	InitializeNodeBitmaps();
 
 	dwStyle|= LVS_OWNERDRAWFIXED | LVS_SINGLESEL;
 	VERIFY(COwnerDrawnListControl::CreateEx(dwExStyle, dwStyle, rect, pParentWnd, nID));
 	return true;
+}
+
+void CTreeListControl::SysColorChanged()
+{
+	COwnerDrawnListControl::SysColorChanged();
+	InitializeNodeBitmaps();
 }
 
 CTreeListItem *CTreeListControl::GetItem(int i)
@@ -404,6 +420,24 @@ void CTreeListControl::SelectAndShowItem(const CTreeListItem *item, bool showWho
 	SelectItem(i);
 }
 
+void CTreeListControl::OnItemDoubleClick(int i)
+{
+	ToggleExpansion(i);
+}
+
+void CTreeListControl::InitializeNodeBitmaps()
+{
+	m_bmNodes0.DeleteObject();
+	m_bmNodes1.DeleteObject();
+
+	COLORMAP cm[1] = {	{ RGB(255,0,255), 0 } };
+	
+	cm[0].to= GetWindowColor();
+	VERIFY(m_bmNodes0.LoadMappedBitmap(IDB_NODES, 0, cm, 1));
+	cm[0].to= GetStripeColor();
+	VERIFY(m_bmNodes1.LoadMappedBitmap(IDB_NODES, 0, cm, 1));
+}
+
 void CTreeListControl::InsertItem(int i, CTreeListItem *item)
 {
 	COwnerDrawnListControl::InsertListItem(i, item);
@@ -441,7 +475,7 @@ void CTreeListControl::DrawNode(CDC *pdc, CRect& rc, CRect& rcPlusMinus, const C
 
 		CDC dcmem;
 		dcmem.CreateCompatibleDC(pdc);
-		CSelectObject sonodes(&dcmem, &m_bmNodes);
+		CSelectObject sonodes(&dcmem, (IsItemStripeColor(item) ? &m_bmNodes1 : &m_bmNodes0));
 
 		int ysrc= NODE_HEIGHT / 2 - GetRowHeight() / 2;
 
@@ -498,6 +532,8 @@ void CTreeListControl::DrawNode(CDC *pdc, CRect& rc, CRect& rcPlusMinus, const C
 
 void CTreeListControl::OnLButtonDown(UINT nFlags, CPoint point)
 {
+	m_lButtonDownItem= -1;
+
 	LVHITTESTINFO hti;
 	ZeroMemory(&hti, sizeof(hti));
 	hti.pt= point;
@@ -517,10 +553,35 @@ void CTreeListControl::OnLButtonDown(UINT nFlags, CPoint point)
 
 	CTreeListItem *item= GetItem(i);
 
+	m_lButtonDownItem= i;
+
 	if (item->GetPlusMinusRect().PtInRect(pt))
+	{
+		m_lButtonDownOnPlusMinusRect= true;
 		ToggleExpansion(i);
+	}
 	else
+	{
+		m_lButtonDownOnPlusMinusRect= false;
 		COwnerDrawnListControl::OnLButtonDown(nFlags, point);
+	}
+}
+
+void CTreeListControl::OnLButtonDblClk(UINT nFlags, CPoint point)
+{
+	COwnerDrawnListControl::OnLButtonDblClk(nFlags, point);
+
+	if (m_lButtonDownItem == -1)
+		return;
+
+	if (m_lButtonDownOnPlusMinusRect)
+	{
+		ToggleExpansion(m_lButtonDownItem);
+	}
+	else
+	{
+		OnItemDoubleClick(m_lButtonDownItem);
+	}
 }
 
 void CTreeListControl::ToggleExpansion(int i)
@@ -570,6 +631,24 @@ void CTreeListControl::SetItemScrollPosition(CTreeListItem *item, int top)
 {
 	int old= GetItemScrollPosition(item);
 	Scroll(CSize(0, top - old));
+}
+
+bool CTreeListControl::SelectedItemCanToggle()
+{
+	int i= GetSelectedItem();
+	if (i == -1)
+		return false;
+
+	const CTreeListItem *item= GetItem(i);
+
+	return item->HasChildren();
+}
+
+void CTreeListControl::ToggleSelectedItem()
+{
+	int i= GetSelectedItem();
+	ASSERT(i != -1);
+	ToggleExpansion(i);
 }
 
 void CTreeListControl::ExpandItem(CTreeListItem *item)
@@ -684,35 +763,6 @@ void CTreeListControl::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 		}
 	}
 	COwnerDrawnListControl::OnKeyDown(nChar, nRepCnt, nFlags);
-}
-
-void CTreeListControl::OnLButtonDblClk(UINT nFlags, CPoint point)
-{
-	LVHITTESTINFO hti;
-	ZeroMemory(&hti, sizeof(hti));
-	hti.pt= point;
-
-	int i= HitTest(&hti);
-	if (i == -1)
-		return;
-
-	if (hti.iSubItem != 0)
-		return;
-
-	CRect rc= GetWholeSubitemRect(i, 0);
-	CPoint pt= point - rc.TopLeft();
-
-	CTreeListItem *item= GetItem(i);
-
-	if (item->GetTitleRect().PtInRect(pt))
-	{
-		COwnerDrawnListControl::OnLButtonDblClk(nFlags, point);
-		ToggleExpansion(i);
-	}
-	else if (item->GetPlusMinusRect().PtInRect(pt))
-	{
-		ToggleExpansion(i);
-	}
 }
 
 void CTreeListControl::OnChildAdded(CTreeListItem *parent, CTreeListItem *child)

@@ -1,7 +1,7 @@
 // dirstatdoc.cpp: Implementation of CDirstatDoc
 //
 // WinDirStat - Directory Statistics
-// Copyright (C) 2003 Bernhard Seifert
+// Copyright (C) 2003-2004 Bernhard Seifert
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -357,15 +357,18 @@ bool CDirstatDoc::Work(DWORD ticks)
 			GetMainFrame()->SetProgressPos100();
 			GetMainFrame()->RestoreTypeView();
 			GetMainFrame()->RestoreGraphView();
+
+			UpdateAllViews(NULL);
 		}
 		else
 		{
 			ASSERT(m_workingItem != NULL);
 			if (m_workingItem != NULL) // to be honest, "defensive programming" is stupid, but c'est la vie: it's safer.
 				GetMainFrame()->SetProgressPos(m_workingItem->GetProgressPos());
+
+			UpdateAllViews(NULL, HINT_SOMEWORKDONE);
 		}
 
-		UpdateAllViews(NULL);
 	}
 	if (m_rootItem->IsDone())
 	{
@@ -496,6 +499,62 @@ LONGLONG CDirstatDoc::GetWorkingItemReadJobs()
 		return m_workingItem->GetReadJobs();
 	else
 		return 0;
+}
+
+void CDirstatDoc::OpenItem(const CItem *item)
+{
+	ASSERT(item != NULL);
+
+	CWaitCursor wc;
+
+	try
+	{
+		CString path;
+
+		switch (item->GetType())
+		{
+		case IT_MYCOMPUTER:
+			{
+				SHELLEXECUTEINFO sei;
+				ZeroMemory(&sei, sizeof(sei));
+				sei.cbSize= sizeof(sei);
+				sei.hwnd= *AfxGetMainWnd();
+				sei.lpVerb= _T("open");
+				//sei.fMask= SEE_MASK_INVOKEIDLIST;
+				sei.nShow= SW_SHOWNORMAL;
+				CCoTaskMem<LPITEMIDLIST> pidl;
+			
+				GetPidlOfMyComputer(&pidl);
+				sei.lpIDList= pidl;
+				sei.fMask|= SEE_MASK_IDLIST;
+
+				ShellExecuteEx(&sei);
+				// ShellExecuteEx seems to display its own Messagebox, if failed.
+
+				return;
+			}
+			break;
+
+		case IT_DRIVE:
+		case IT_DIRECTORY:
+			path= item->GetFolderPath();
+			break;
+
+		case IT_FILE:
+			path= item->GetPath();
+			break;
+
+		default:
+			ASSERT(0);
+		}
+
+		ShellExecuteWithAssocDialog(*AfxGetMainWnd(), path);
+	}
+	catch (CException *pe)
+	{
+		pe->ReportError();
+		pe->Delete();
+	}
 }
 
 void CDirstatDoc::RecurseRefreshMountPointItems(CItem *item)
@@ -1299,57 +1358,10 @@ void CDirstatDoc::OnUpdateCleanupOpen(CCmdUI *pCmdUI)
 
 void CDirstatDoc::OnCleanupOpen()
 {
-	try
-	{
-		CString path;
+	const CItem *item= GetSelection();
+	ASSERT(item != NULL);
 
-		const CItem *item= GetSelection();
-		ASSERT(item != NULL);
-
-		switch (item->GetType())
-		{
-		case IT_MYCOMPUTER:
-			{
-				SHELLEXECUTEINFO sei;
-				ZeroMemory(&sei, sizeof(sei));
-				sei.cbSize= sizeof(sei);
-				sei.hwnd= *AfxGetMainWnd();
-				sei.lpVerb= _T("open");
-				//sei.fMask= SEE_MASK_INVOKEIDLIST;
-				sei.nShow= SW_SHOWNORMAL;
-				CCoTaskMem<LPITEMIDLIST> pidl;
-			
-				GetPidlOfMyComputer(&pidl);
-				sei.lpIDList= pidl;
-				sei.fMask|= SEE_MASK_IDLIST;
-
-				ShellExecuteEx(&sei);
-				// ShellExecuteEx seems to display its own Messagebox, if failed.
-
-				return;
-			}
-			break;
-
-		case IT_DRIVE:
-		case IT_DIRECTORY:
-			path= item->GetFolderPath();
-			break;
-
-		case IT_FILE:
-			path= item->GetPath();
-			break;
-
-		default:
-			ASSERT(0);
-		}
-
-		ShellExecuteWithAssocDialog(*AfxGetMainWnd(), path);
-	}
-	catch (CException *pe)
-	{
-		pe->ReportError();
-		pe->Delete();
-	}
+	OpenItem(item);
 }
 
 void CDirstatDoc::OnUpdateCleanupProperties(CCmdUI *pCmdUI)

@@ -1,7 +1,7 @@
 // ownerdrawnlistcontrol.h	- Declaration of COwnerDrawnListControl and COwnerDrawnListItem
 //
 // WinDirStat - Directory Statistics
-// Copyright (C) 2003 Bernhard Seifert
+// Copyright (C) 2003-2004 Bernhard Seifert
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -60,10 +60,19 @@ public:
 	COwnerDrawnListControl(LPCTSTR name, int rowHeight);
 	virtual ~COwnerDrawnListControl();
 	void OnColumnsInserted();
+	virtual void SysColorChanged();
 
 	int GetRowHeight();
 	void ShowGrid(bool show);
+	void ShowStripes(bool show);
 
+	COLORREF GetWindowColor();
+	COLORREF GetStripeColor();
+	bool IsItemStripeColor(int i);
+	bool IsItemStripeColor(const COwnerDrawnListItem *item);
+	COLORREF GetItemBackgroundColor(int i);
+	COLORREF GetItemBackgroundColor(const COwnerDrawnListItem *item);
+	
 	COwnerDrawnListItem *GetItem(int i);
 	int FindListItem(const COwnerDrawnListItem *item);
 	int GetTextXMargin();
@@ -72,13 +81,17 @@ public:
 	CRect GetWholeSubitemRect(int item, int subitem);
 
 protected:
+	void InitializeColors();
 	virtual void DrawItem(LPDRAWITEMSTRUCT pdis);
 	int GetSubItemWidth(COwnerDrawnListItem *item, int subitem);
 	bool IsColumnRightAligned(int col);
 
 	int m_rowHeight;	// Height of an item
 	bool m_showGrid;	// Whether to draw a grid
+	bool m_showStripes;	// Whether to show stripes
 	int m_yFirstItem;	// Top of a first list item
+	COLORREF m_windowColor;	// The default background color if !m_showStripes
+	COLORREF m_stripeColor;	// The stripe color, used for every other item if m_showStripes
 
 	DECLARE_MESSAGE_MAP()
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);

@@ -1,7 +1,7 @@
 // options.h		- Declaration of CRegistryUser, COptions and CPersistence
 //
 // WinDirStat - Directory Statistics
-// Copyright (C) 2003 Bernhard Seifert
+// Copyright (C) 2003-2004 Bernhard Seifert
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -190,8 +190,11 @@ public:
 	void LoadFromRegistry();
 	void SaveToRegistry();
 
-	bool IsTreelistGrid();
-	void SetTreelistGrid(bool show);
+	bool IsListGrid();
+	void SetListGrid(bool show);
+
+	bool IsListStripes();
+	void SetListStripes(bool show);
 
 	void GetTreelistColors(COLORREF color[TREELISTCOLORCOUNT]);
 	void SetTreelistColors(const COLORREF color[TREELISTCOLORCOUNT]);
@@ -244,7 +247,8 @@ private:
 	void ReadTreemapOptions();
 	void SaveTreemapOptions();
 
-	bool m_treelistGrid;
+	bool m_listGrid;
+	bool m_listStripes;
 	COLORREF m_treelistColor[TREELISTCOLORCOUNT];
 	int m_treelistColorCount;
 	bool m_humanFormat;

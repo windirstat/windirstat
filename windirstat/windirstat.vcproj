@@ -77,6 +77,8 @@
 			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
+				GlobalOptimizations="FALSE"
+				FavorSizeOrSpeed="0"
 				AdditionalIncludeDirectories=""
 				MinimalRebuild="FALSE"
 				RuntimeLibrary="0"

@@ -1,7 +1,7 @@
 // graphview.cpp: Implementation of CGraphView
 //
 // WinDirStat - Directory Statistics
-// Copyright (C) 2003 Bernhard Seifert
+// Copyright (C) 2003-2004 Bernhard Seifert
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -253,11 +253,7 @@ void CGraphView::RecurseHighlightExtension(CDC *pdc, const CItem *item)
 		if (item->GetType() == IT_FILE 
 		&& item->GetExtension().CompareNoCase(GetDocument()->GetHighlightExtension()) == 0)
 		{
-			pdc->Rectangle(rc);
-			rc.DeflateRect(1, 1);
-			pdc->Rectangle(rc);
-			rc.DeflateRect(1, 1);
-			pdc->Rectangle(rc);
+			RenderHighlightRectangle(pdc, rc);
 		}
 	}
 	else
@@ -304,13 +300,33 @@ void CGraphView::DrawSelection(CDC *pdc)
 	CPen pen(PS_SOLID, 1, GetOptions()->GetTreemapHighlightColor());
 	CSelectObject sopen(pdc, &pen);
 
-	pdc->Rectangle(rc);
-	rc.DeflateRect(1, 1);
-	pdc->Rectangle(rc);
-	rc.DeflateRect(1, 1);
-	pdc->Rectangle(rc);
+	RenderHighlightRectangle(pdc, rc);
 }
 
+// A pen and the null brush must be selected.
+//
+void CGraphView::RenderHighlightRectangle(CDC *pdc, CRect& rc)
+{
+	ASSERT(rc.Width() >= 0);
+	ASSERT(rc.Height() >= 0);
+
+	// The documentation of CDC::Rectangle() says that the width
+	// and height must be greater than 2. Experiment says that
+	// it must be greater than 1. We follow the documentation.
+
+	if (rc.Width() >= 7 && rc.Height() >= 7)
+	{
+		pdc->Rectangle(rc);		// w = 7
+		rc.DeflateRect(1, 1);
+		pdc->Rectangle(rc);		// w = 5
+		rc.DeflateRect(1, 1);
+		pdc->Rectangle(rc);		// w = 3
+	}
+	else
+	{
+		pdc->FillSolidRect(rc, GetOptions()->GetTreemapHighlightColor());
+	}
+}
 
 #ifdef _DEBUG
 void CGraphView::AssertValid() const
@@ -414,6 +430,7 @@ void CGraphView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 	case HINT_SELECTIONCHANGED:
 	case HINT_SHOWNEWSELECTION:
 	case HINT_SELECTIONSTYLECHANGED:
+	case HINT_EXTENSIONSELECTIONCHANGED:
 		CView::OnUpdate(pSender, lHint, pHint);
 		break;
 
@@ -463,6 +480,7 @@ void CGraphView::OnMouseMove(UINT /*nFlags*/, CPoint point)
 		const CItem *item= (const CItem *)m_treemap.FindItemByPoint(GetDocument()->GetZoomItem(), point);
 		if (item != NULL)
 			GetMainFrame()->SetMessageText(item->GetPath());
+
 	}
 	if (m_timer == 0)
 		m_timer= SetTimer(4711, 100, NULL);
