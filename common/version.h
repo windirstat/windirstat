@@ -36,8 +36,8 @@
 // Version number. Relevant for BC_RELEASECANDIDATE and BC_RELEASE.
 // 
 #define VERNUM_MAJOR		1
-#define VERNUM_MINOR		0
-#define VERNUM_REVISION		2
+#define VERNUM_MINOR		1
+#define VERNUM_REVISION		0
 // The following line is automatically incremented by linkcounter.exe.
 // Format: #define blank LINKCOUNT blanks decimal
 // Reset this to zero only when you increment VERNUM_MAJOR/MINOR/REVISION.
