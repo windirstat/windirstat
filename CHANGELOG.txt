@@ -2,6 +2,10 @@ changelog.txt - What has been done to WinDirStat (newest top)
 Last modified: $Date$
 =============================================================
 
+2004-11-29	bseifert
+	* Introduced SRECT. sizeof(CItem) is now 104 compared to 112.
+	* Minor formatting changes.
+	
 2004-11-28	assarbad
 	* Extended CFileFindWDS.
 	* Packing of file attributes to keep CItem small.

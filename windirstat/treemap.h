@@ -75,7 +75,7 @@ public:
 	{
 	public:
 		virtual         bool TmiIsLeaf()                const = 0;
-		virtual const CRect& TmiGetRectangle()          const = 0;
+		virtual        CRect TmiGetRectangle()          const = 0;
 		virtual         void TmiSetRectangle(const CRect& rc) = 0;
 		virtual     COLORREF TmiGetGraphColor()         const = 0;
 		virtual          int TmiGetChildrenCount()      const = 0;
@@ -287,7 +287,7 @@ class CTreemapPreview: public CStatic
 		}
 
 		virtual         bool TmiIsLeaf()                const	{ return m_children.GetSize() == 0; }
-		virtual const CRect& TmiGetRectangle()          const	{ return m_rect; }
+		virtual        CRect TmiGetRectangle()          const	{ return m_rect; }
 		virtual         void TmiSetRectangle(const CRect& rc)	{ m_rect = rc; }
 		virtual     COLORREF TmiGetGraphColor()         const	{ return m_color; }
 		virtual          int TmiGetChildrenCount()      const	{ return (int)m_children.GetSize(); }
@@ -322,6 +322,9 @@ protected:
 #endif
 
 // $Log$
+// Revision 1.6  2004/11/29 07:07:47  bseifert
+// Introduced SRECT. Saves 8 Bytes in sizeof(CItem). Formatting changes.
+//
 // Revision 1.5  2004/11/05 16:53:08  assarbad
 // Added Date and History tag where appropriate.
 //

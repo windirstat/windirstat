@@ -55,7 +55,7 @@ ULONGLONG CFileFindWDS::GetCompressedLength() const
 	{
 		ULARGE_INTEGER ret;
 		ret.LowPart = GetApp()->GetComprSizeApi()->GetCompressedFileSize(GetFilePath(), &ret.HighPart);
-		TRACE(_T("Compressed size %d.\r\n"), ret.LowPart);
+		
 		// Check for error
 		if ((GetLastError() != NO_ERROR) && (ret.LowPart == INVALID_FILE_SIZE))
 			// IN case of an error return size from CFileFind object
@@ -68,33 +68,10 @@ ULONGLONG CFileFindWDS::GetCompressedLength() const
 		return GetLength();
 }
 
-/*
-// Wrapper for file size retrieval
-// This function tries to return compressed file size whenever possible.
-// If the file is not compressed the uncompressed size is being returned.
-ULONGLONG CDirstatApp::GetFileSizeWDS(CFileFind& finder)
-{
-	// Try to use the NT-specific API
-	if (m_comprSize.IsSupported())
-	{
-		ULARGE_INTEGER ret;
-		ret.LowPart = m_comprSize.GetCompressedFileSize(finder.GetFilePath(), &ret.HighPart);
-		TRACE(_T("Compressed size %d.\r\n"), ret.LowPart);
-		// Check for error
-		if ((GetLastError() != NO_ERROR) && (ret.LowPart == INVALID_FILE_SIZE))
-			// IN case of an error return size from CFileFind object
-			return finder.GetLength();
-		else
-			return ret.QuadPart;
-	}
-	else
-		// Use the file size already found by the finder object
-		return finder.GetLength();
-}
-
-*/
-
 // $Log$
+// Revision 1.3  2004/11/29 07:07:47  bseifert
+// Introduced SRECT. Saves 8 Bytes in sizeof(CItem). Formatting changes.
+//
 // Revision 1.2  2004/11/28 14:40:06  assarbad
 // - Extended CFileFindWDS to replace a global function
 // - Now packing/unpacking the file attributes. This even spares a call to find encrypted/compressed files.

@@ -58,9 +58,6 @@ enum ITEMTYPE
 	ITF_ROOTITEM = 0x8000	// This is an additional flag, not a type.
 };
 
-// File attribute packing
-#define INVALID_m_attributes 0x00000080
-
 // Whether an item type is a leaf type
 inline bool IsLeaf(ITEMTYPE t) { return t == IT_FILE || t == IT_FREESPACE || t == IT_UNKNOWN; }
 
@@ -110,6 +107,15 @@ class CItem: public CTreeListItem, public CTreemap::Item
 		DWORD attributes;
 	};
 
+	// short-based RECT, saves 8 bytes compared to tagRECT
+	struct SRECT
+	{
+		short left;
+		short top;
+		short right;
+		short bottom;
+	};
+
 public:
 	CItem(ITEMTYPE type, LPCTSTR name, bool dontFollow=false);
 	~CItem();
@@ -126,8 +132,8 @@ public:
 
 	// CTreemap::Item interface
 	virtual            bool TmiIsLeaf()                const { return IsLeaf(GetType()); }
-	virtual    const CRect& TmiGetRectangle()          const { return m_rect; }
-	virtual            void TmiSetRectangle(const CRect& rc) { m_rect = rc; }
+	virtual		      CRect TmiGetRectangle()          const;
+	virtual            void TmiSetRectangle(const CRect& rc);
 	virtual        COLORREF TmiGetGraphColor()         const { return GetGraphColor(); }
 	virtual             int TmiGetChildrenCount()      const { return GetChildrenCount(); }
 	virtual CTreemap::Item *TmiGetChild(int c)         const { return GetChild(c); }
@@ -161,7 +167,7 @@ public:
 	void SetLastChange(const FILETIME& t);
 	void SetAttributes(DWORD attr);
 	DWORD GetAttributes() const;
-	DWORD GetSortAttributes() const;
+	int GetSortAttributes() const;
 	double GetFraction() const;
 	ITEMTYPE GetType() const;
 	bool IsRootItem() const;
@@ -219,7 +225,7 @@ private:
 	LONGLONG m_files;			// # Files in subtree
 	LONGLONG m_subdirs;			// # Folder in subtree
 	FILETIME m_lastChange;		// Last modification time OF SUBTREE
-	unsigned char m_attributes;	// File attributes of the item
+	unsigned char m_attributes;	// Packed file attributes of the item
 
 	bool m_readJobDone;			// FindFiles() (our own read job) is finished.
 	bool m_done;				// Whole Subtree is done.
@@ -231,11 +237,14 @@ private:
 	CArray<CItem *, CItem *> m_children;	
 
 	// For GraphView:
-	CRect m_rect;				// Finally, this is our coordinates in the Treemap view.
+	SRECT m_rect;				// Finally, this is our coordinates in the Treemap view.
 };
 
 
 // $Log$
+// Revision 1.15  2004/11/29 07:07:47  bseifert
+// Introduced SRECT. Saves 8 Bytes in sizeof(CItem). Formatting changes.
+//
 // Revision 1.14  2004/11/28 19:20:46  assarbad
 // - Fixing strange behavior of logical operators by rearranging code in
 //   CItem::SetAttributes() and CItem::GetAttributes()

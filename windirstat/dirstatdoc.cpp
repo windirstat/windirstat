@@ -76,6 +76,8 @@ CDirstatDoc::CDirstatDoc()
 	m_showFreeSpace= CPersistence::GetShowFreeSpace();
 	m_showUnknown= CPersistence::GetShowUnknown();
 	m_extensionDataValid= false;
+
+	TRACE(_T("sizeof(CItem) = %d\r\n"), sizeof(CItem));
 }
 
 CDirstatDoc::~CDirstatDoc()
@@ -1490,6 +1492,9 @@ void CDirstatDoc::Dump(CDumpContext& dc) const
 
 
 // $Log$
+// Revision 1.14  2004/11/29 07:07:47  bseifert
+// Introduced SRECT. Saves 8 Bytes in sizeof(CItem). Formatting changes.
+//
 // Revision 1.13  2004/11/07 10:17:37  bseifert
 // Bugfix: Recursive UDCs must not follow junction points.
 //

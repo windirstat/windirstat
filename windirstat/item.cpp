@@ -37,6 +37,9 @@ namespace
 	CString GetUnknownItemName() { return LoadString(IDS_UNKNOWN_ITEM); }
 
 	const SIZE sizeDeflatePacman = { 1, 2 };
+
+	// File attribute packing
+	const unsigned char INVALID_m_attributes = 0x80;
 }
 
 
@@ -73,6 +76,26 @@ CItem::~CItem()
 {
 	for (int i=0; i < m_children.GetSize(); i++) 
 		delete m_children[i];
+}
+
+CRect CItem::TmiGetRectangle() const 
+{ 
+	CRect rc;
+
+	rc.left		= m_rect.left;
+	rc.top		= m_rect.top;
+	rc.right	= m_rect.right;
+	rc.bottom	= m_rect.bottom;
+
+	return rc;
+}
+
+void CItem::TmiSetRectangle(const CRect& rc) 
+{
+	m_rect.left		= rc.left;
+	m_rect.top		= rc.top;
+	m_rect.right	= rc.right;
+	m_rect.bottom	= rc.bottom;
 }
 
 bool CItem::DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *width, int *focusLeft) const
@@ -274,14 +297,7 @@ int CItem::CompareSibling(const CTreeListItem *tlib, int subitem) const
 		}
 		break;
 	case COL_ATTRIBUTES:
-		{
-			if (GetSortAttributes() < other->GetSortAttributes())
-				return -1;
-			else if (GetSortAttributes() == other->GetSortAttributes())
-				return 0;
-			else 
-				return 1;
-		}
+		r = signum(GetSortAttributes() - other->GetSortAttributes());
 		break;
 
 	default:
@@ -599,20 +615,21 @@ void CItem::SetLastChange(const FILETIME& t)
 // Encode the attributes to fit 1 byte
 void CItem::SetAttributes(DWORD attr)
 {
-/*
-Bitmask of m_attributes:
+	/*
+	Bitmask of m_attributes:
 
-7 6 5 4 3 2 1 0
-^ ^ ^ ^ ^ ^ ^ ^
-| | | | | | | |__ 1 == R					(0x01)
-| | | | | | |____ 1 == H					(0x02)
-| | | | | |______ 1 == S					(0x04)
-| | | | |________ 1 == A					(0x08)
-| | | |__________ 1 == Reparse point		(0x10)
-| | |____________ 1 == C					(0x20)
-| |______________ 1 == E					(0x40)
-|________________ 1 == invalid attributes	(0x80)
-*/
+	7 6 5 4 3 2 1 0
+	^ ^ ^ ^ ^ ^ ^ ^
+	| | | | | | | |__ 1 == R					(0x01)
+	| | | | | | |____ 1 == H					(0x02)
+	| | | | | |______ 1 == S					(0x04)
+	| | | | |________ 1 == A					(0x08)
+	| | | |__________ 1 == Reparse point		(0x10)
+	| | |____________ 1 == C					(0x20)
+	| |______________ 1 == E					(0x40)
+	|________________ 1 == invalid attributes	(0x80)
+	*/
+	
 	DWORD ret = attr;
 
 	if (ret == INVALID_FILE_ATTRIBUTES)
@@ -624,14 +641,18 @@ Bitmask of m_attributes:
 	ret &= FILE_ATTRIBUTE_READONLY | // Mask out lower 3 bits
 			FILE_ATTRIBUTE_HIDDEN |
 			FILE_ATTRIBUTE_SYSTEM;
-// Prepend the archive attribute
+	
+	// Prepend the archive attribute
 	ret |= (attr & FILE_ATTRIBUTE_ARCHIVE) >> 2;
-// --> At this point the lower nibble is fully used
-// Now shift the reparse point and compressed attribute into the lower 2 bits of
-// the high nibble.
+	
+	// --> At this point the lower nibble is fully used
+	
+	// Now shift the reparse point and compressed attribute into the lower 2 bits of
+	// the high nibble.
 	ret |= (attr & (FILE_ATTRIBUTE_REPARSE_POINT |
 					FILE_ATTRIBUTE_COMPRESSED)) >> 6;
-// Shift the encrypted bit by 8 places
+	
+	// Shift the encrypted bit by 8 places
 	ret |= (attr & FILE_ATTRIBUTE_ENCRYPTED) >> 8;
 
 	m_attributes = (unsigned char)ret;
@@ -648,23 +669,26 @@ DWORD CItem::GetAttributes() const
 	ret &= FILE_ATTRIBUTE_READONLY | // Mask out lower 3 bits
 			FILE_ATTRIBUTE_HIDDEN |
 			FILE_ATTRIBUTE_SYSTEM;
-// FILE_ATTRIBUTE_ARCHIVE
+	
+	// FILE_ATTRIBUTE_ARCHIVE
 	ret |= (m_attributes & 0x08) << 2;
-// FILE_ATTRIBUTE_REPARSE_POINT | FILE_ATTRIBUTE_COMPRESSED
+	
+	// FILE_ATTRIBUTE_REPARSE_POINT | FILE_ATTRIBUTE_COMPRESSED
 	ret |= (m_attributes & 0x30) << 6;
-// FILE_ATTRIBUTE_ENCRYPTED
+	
+	// FILE_ATTRIBUTE_ENCRYPTED
 	ret |= (m_attributes & 0x40) << 8;
 	
 	return ret;
 }
 
 // Returns a value which resembles sorting of RHSACE considering gaps
-DWORD CItem::GetSortAttributes() const
+int CItem::GetSortAttributes() const
 {
 	DWORD ret = 0;
 
-// We want to enforce the order RHSACE with R being the highest priority
-// attribute and E being the lowest priority attribute.
+	// We want to enforce the order RHSACE with R being the highest priority
+	// attribute and E being the lowest priority attribute.
 	ret += (m_attributes & 0x01) ? 1000000 : 0; // R
 	ret += (m_attributes & 0x02) ? 100000 : 0; // H
 	ret += (m_attributes & 0x04) ? 10000 : 0; // S
@@ -866,7 +890,7 @@ void CItem::SetDone()
 	//m_children.FreeExtra(); // Doesn't help much.
 	qsort(m_children.GetData(), m_children.GetSize(), sizeof(CItem *), &_compareBySize);
 
-	m_rect.SetRectEmpty();
+	ZeroMemory(&m_rect, sizeof(m_rect));
 
 	m_done = true;
 }
@@ -1636,6 +1660,9 @@ void CItem::DrivePacman()
 
 
 // $Log$
+// Revision 1.24  2004/11/29 07:07:47  bseifert
+// Introduced SRECT. Saves 8 Bytes in sizeof(CItem). Formatting changes.
+//
 // Revision 1.23  2004/11/28 19:20:46  assarbad
 // - Fixing strange behavior of logical operators by rearranging code in
 //   CItem::SetAttributes() and CItem::GetAttributes()
