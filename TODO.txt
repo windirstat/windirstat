@@ -7,3 +7,13 @@ Last modified: $Date$
 - Date/time formatting more flexible
 - Possibly add a column for file attributes to the tree. Alternatively
   signal the attributes via coloring of the icons ... maybe even both.
+- The "Browse dialog" called from the drive selection dialog should
+  start at the position it was last - not at "My Documents" always.
+- Deletion of multiple items at once as in explorer for example.  
+
+
+Possible additional useful features:
+- Show element size for selected element(s) in status bar
+  -> also if one chooses an element in the cushion view or the extension
+     view!
+
