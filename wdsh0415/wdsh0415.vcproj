@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<VisualStudioProject
+	ProjectType="Visual C++"
+	Version="7.10"
+	Name="wdsh0415"
+	ProjectGUID="{3222DC0C-0051-43EB-854C-EF59E2B4988D}"
+	Keyword="MakeFileProj">
+	<Platforms>
+		<Platform
+			Name="Win32"/>
+	</Platforms>
+	<Configurations>
+		<Configuration
+			Name="Debug|Win32"
+			OutputDirectory="Debug"
+			IntermediateDirectory="Debug"
+			ConfigurationType="0">
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="echo The help file will only be generated in release build."
+				ReBuildCommandLine="echo The help file will only be generated in release build."
+				CleanCommandLine="echo clean"
+				Output="wdsh0415.chm"/>
+		</Configuration>
+		<Configuration
+			Name="Release|Win32"
+			OutputDirectory="Release"
+			IntermediateDirectory="Release"
+			ConfigurationType="0">
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="hhc &quot;$(ProjectDir)windirstat.hhp&quot; || cd ."
+				ReBuildCommandLine="hhc &quot;$(ProjectDir)windirstat.hhp&quot; || cd ."
+				CleanCommandLine="del ..\..\release\wdsh0415.chm"
+				Output="..\..\release\wdsh0415.chm"/>
+		</Configuration>
+	</Configurations>
+	<References>
+	</References>
+	<Files>
+		<Filter
+			Name="Source Files"
+			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
+			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
+			<File
+				RelativePath=".\actions.htm"
+				DeploymentContent="TRUE">
+			</File>
+			<File
+				RelativePath=".\configuration.htm"
+				DeploymentContent="TRUE">
+			</File>
+			<File
+				RelativePath=".\coupling.htm"
+				DeploymentContent="TRUE">
+			</File>
+			<File
+				RelativePath=".\deinstallation.htm"
+				DeploymentContent="TRUE">
+			</File>
+			<File
+				RelativePath=".\directorytree.htm"
+				DeploymentContent="TRUE">
+			</File>
+			<File
+				RelativePath=".\extensionlist.htm"
+				DeploymentContent="TRUE">
+			</File>
+			<File
+				RelativePath=".\faq.htm"
+				DeploymentContent="TRUE">
+			</File>
+			<File
+				RelativePath=".\format.css">
+			</File>
+			<File
+				RelativePath=".\gnufdl.htm"
+				DeploymentContent="TRUE">
+			</File>
+			<File
+				RelativePath=".\legend.htm"
+				DeploymentContent="TRUE">
+			</File>
+			<File
+				RelativePath=".\limits.htm"
+				DeploymentContent="TRUE">
+			</File>
+			<File
+				RelativePath=".\selectdrivesdialog.htm"
+				DeploymentContent="TRUE">
+			</File>
+			<File
+				RelativePath=".\sorting.htm"
+				DeploymentContent="TRUE">
+			</File>
+			<File
+				RelativePath=".\toc.hhc">
+			</File>
+			<File
+				RelativePath=".\tree.jpg">
+			</File>
+			<File
+				RelativePath=".\treemap.htm"
+				DeploymentContent="TRUE">
+			</File>
+			<File
+				RelativePath=".\userdefinedcleanups.htm"
+				DeploymentContent="TRUE">
+			</File>
+			<File
+				RelativePath=".\whatisatree.htm"
+				DeploymentContent="TRUE">
+			</File>
+			<File
+				RelativePath=".\windirstat.hhp">
+			</File>
+			<File
+				RelativePath=".\windirstat.htm"
+				DeploymentContent="TRUE">
+			</File>
+		</Filter>
+	</Files>
+	<Globals>
+	</Globals>
+</VisualStudioProject>

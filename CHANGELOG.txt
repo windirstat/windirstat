@@ -2,6 +2,11 @@ changelog.txt - What has been done to WinDirStat (newest top)
 Last modified: $Date$
 =============================================================
 
+2004-12-24	bseifert
+	* setup: included Polish translation (thanks to Darek).
+	* wdsh0415: Polish help file complete! (Thanks to Darek).
+	* Help files: switched to a serif font.
+
 2004-12-19	bseifert
 	* CMyImageList: bugfix: the background of <Files> etc. was
 	  wrong when list had 'stripes' style.

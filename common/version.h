@@ -44,7 +44,7 @@
 // Format: #define blank LINKCOUNT blanks decimal
 // Reset this to zero only when you increment VERNUM_MAJOR/MINOR/REVISION.
 
-#define LINKCOUNT  436
+#define LINKCOUNT  443
 
 //-------------------------------------------------------------------
 // Release candidate number. Relevant for BC_RELEASECANDIDATE.
@@ -114,6 +114,9 @@
 
 
 // $Log$
+// Revision 1.22  2004/12/24 10:39:27  bseifert
+// Added Polish setup and  Polish help file.
+//
 // Revision 1.21  2004/12/19 10:52:36  bseifert
 // Minor fixes.
 //
