@@ -599,16 +599,21 @@ ULONGLONG MyGetFileSize(CFileFind* finder)
 	{
 	  ULARGE_INTEGER ret;
 	  ret.LowPart = api.GetCompressedFileSize(finder->GetFilePath(), &ret.HighPart);
-	  if ((ret.LowPart == INVALID_FILE_SIZE) && GetLastError() == NO_ERROR)
-		return ret.QuadPart;
-	  else
+	  TRACE(_T("Compressed size %d.\r\n"), ret.LowPart);
+	  if ((GetLastError() != NO_ERROR) && (ret.LowPart == INVALID_FILE_SIZE))
 		return finder->GetLength();
+	  else
+		return ret.QuadPart;
 	}
 	else
 	  return finder->GetLength();
 }
 
 // $Log$
+// Revision 1.12  2004/11/07 21:10:25  assarbad
+// - Corrected IF statement
+// - Changed solution file to build consistent "Unicode Debug" configuration for "Unicode Debug" of main project
+//
 // Revision 1.11  2004/11/07 20:14:30  assarbad
 // - Added wrapper for GetCompressedFileSize() so that by default the compressed file size will be shown.
 //
