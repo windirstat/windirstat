@@ -242,6 +242,9 @@
 			<File
 				RelativePath=".\windirstat.rc">
 			</File>
+			<File
+				RelativePath=".\res\windirstat.rc2">
+			</File>
 		</Filter>
 	</Files>
 	<Globals>

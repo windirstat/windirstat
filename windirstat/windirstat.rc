@@ -49,6 +49,7 @@ BEGIN
     "#if !defined(AFX_RESOURCE_DLL)\r\n"
     "LANGUAGE 9, 1\r\n"
     "#pragma code_page(1252)\r\n"
+    "#include ""res\\windirstat.rc2""  // non-Microsoft Visual C++ edited resources\r\n"
     "#include ""afxres.rc""         // Standard components\r\n"
     "\r\n"
     "#endif\r\n"
@@ -519,44 +520,6 @@ BEGIN
 END
 
 
-/////////////////////////////////////////////////////////////////////////////
-//
-// Version
-//
-
-VS_VERSION_INFO VERSIONINFO
- FILEVERSION VN_MAJOR,VN_MINOR,VN_REVISION,VN_BUILD
- PRODUCTVERSION VN_MAJOR,VN_MINOR,VN_REVISION,VN_BUILD
- FILEFLAGSMASK 0x3fL
-#ifdef _DEBUG
- FILEFLAGS 0x1L + VN_FILEFLAG
-#else
- FILEFLAGS 0x0L + VN_FILEFLAG
-#endif
- FILEOS 0x4L
- FILETYPE 0x1L
- FILESUBTYPE 0x0L
-BEGIN
-    BLOCK "StringFileInfo"
-    BEGIN
-        BLOCK "040904e4"
-        BEGIN
-            VALUE "CompanyName", "Seifert"
-            VALUE "FileDescription", "Windows Directory Statistics"
-            VALUE "FileVersion", VN_STRING
-            VALUE "InternalName", "windirstat"
-            VALUE "LegalCopyright", "Copyright (c) 2003-2004 Bernhard Seifert"
-            VALUE "OriginalFilename", "windirstat.exe"
-            VALUE "ProductName", "WinDirStat"
-            VALUE "ProductVersion", VN_STRING
-        END
-    END
-    BLOCK "VarFileInfo"
-    BEGIN
-        VALUE "Translation", 0x409, 1252
-    END
-END
-
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -915,6 +878,7 @@ END
 #if !defined(AFX_RESOURCE_DLL)
 LANGUAGE 9, 1
 #pragma code_page(1252)
+#include "res\windirstat.rc2"  // non-Microsoft Visual C++ edited resources
 #include "afxres.rc"         // Standard components
 
 #endif

@@ -49,6 +49,7 @@ BEGIN
     "#if !defined(AFX_RESOURCE_DLL)\r\n"
     "LANGUAGE 7, 1\r\n"
     "#pragma code_page(1252)\r\n"
+    "#include ""res\\windirstat.rc2""\r\n"
     "#include ""afxres.rc""         // Standard components\r\n"
     "\r\n"
     "#endif\r\n"
@@ -846,45 +847,6 @@ END
 #endif    // German (Germany) resources
 /////////////////////////////////////////////////////////////////////////////
 
-/////////////////////////////////////////////////////////////////////////////
-//
-// Version
-//
-
-VS_VERSION_INFO VERSIONINFO
- FILEVERSION VN_MAJOR,VN_MINOR,VN_REVISION,VN_BUILD
- PRODUCTVERSION VN_MAJOR,VN_MINOR,VN_REVISION,VN_BUILD
- FILEFLAGSMASK 0x3fL
-#ifdef _DEBUG
- FILEFLAGS 0x1L + VN_FILEFLAG
-#else
- FILEFLAGS 0x0L + VN_FILEFLAG
-#endif
- FILEOS 0x4L
- FILETYPE VFT_DLL
- FILESUBTYPE 0x0L
-BEGIN
-    BLOCK "StringFileInfo"
-    BEGIN
-        BLOCK "040904e4"
-        BEGIN
-            VALUE "CompanyName", "Seifert"
-            VALUE "FileDescription", "WinDirStat German Resources"
-            VALUE "FileVersion", VN_STRING
-            VALUE "InternalName", "wdsr0407"
-            VALUE "LegalCopyright", "Copyright (c) 2003-2004 Bernhard Seifert"
-            VALUE "OriginalFilename", "wdsr0407.dll"
-            VALUE "ProductName", "WinDirStat"
-            VALUE "ProductVersion", VN_STRING
-        END
-    END
-    BLOCK "VarFileInfo"
-    BEGIN
-        VALUE "Translation", 0x407, 1252
-    END
-END
-
-
 
 
 #ifndef APSTUDIO_INVOKED
@@ -899,6 +861,7 @@ END
 #if !defined(AFX_RESOURCE_DLL)
 LANGUAGE 7, 1
 #pragma code_page(1252)
+#include "res\windirstat.rc2"
 #include "afxres.rc"         // Standard components
 
 #endif

@@ -1,4 +1,4 @@
-// treemap.cpp	- Implementation of CTreemap and CTreemapPreview
+// treemap.cpp	- Implementation of CColorSpace, CTreemap and CTreemapPreview
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2004 Bernhard Seifert
@@ -255,6 +255,7 @@ void CTreemap::RecurseCheckTree(Item *item)
 	}
 	else
 	{
+// ###Todo: check that children are sorted by size.
 		LONGLONG sum = 0;
 		for (int i=0; i < item->TmiGetChildrenCount(); i++)
 		{
@@ -403,7 +404,7 @@ CTreemap::Item *CTreemap::FindItemByPoint(Item *item, CPoint point)
 			{
 				ret= FindItemByPoint(child, point);
 				ASSERT(ret != NULL);
-#if 0
+#ifdef STRONGDEBUG
 #ifdef _DEBUG
 				for (i++; i < item->TmiGetChildrenCount(); i++)
 				{

@@ -1,4 +1,4 @@
-// treemap.h	- Deklaration of CColorSpace, CTreemap and CTreemapPreview
+// treemap.h	- Declaration of CColorSpace, CTreemap and CTreemapPreview
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2004 Bernhard Seifert
@@ -84,7 +84,7 @@ public:
 	//
 	// Callback. Interface with 1 "callback" method. Can be given
 	// to the CTreemap-constructor. The CTreemap will call the
-	// method very rapidly during building the treemap.
+	// method very frequently during building the treemap.
 	// It's because, if the tree has been paged out by the system,
 	// building the treemap can last long (> 30 seconds).
 	// TreemapDrawingCallback() gives the chance to provide at
@@ -225,7 +225,7 @@ protected:
 	// Draws the surface using SetPixel()
 	void DrawCushion(CDC *pdc, const CRect& rc, const double *surface, COLORREF col, double brightness);
 
-	// Draws the surface using SetPixel()
+	// Draws the surface using FillSolidRect()
 	void DrawSolidRect(CDC *pdc, const CRect& rc, COLORREF col, double brightness);
 
 	// Adds a new ridge to surface

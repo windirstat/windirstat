@@ -1,6 +1,10 @@
 changelog.txt - What has been done to WinDirStat (newest top)
 =============================================================
 
+2003-01-11	bseifert	
+	* Completed French translation.
+	* Added rc2-files.
+	
 2003-01-02	bseifert
 	* Added the French resources to setup.exe.
 	* Internal bugfix: the cleanup actions are now disabled, if

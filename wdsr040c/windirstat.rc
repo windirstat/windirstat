@@ -49,6 +49,7 @@ BEGIN
     "#if !defined(AFX_RESOURCE_DLL)\r\n"
     "LANGUAGE 12, 1\r\n"
     "#pragma code_page(1252)\r\n"
+    "#include ""res\\windirstat.rc2""\r\n"
     "#include ""afxres.rc""         // Standard components\r\n"
     "\r\n"
     "#endif\r\n"
@@ -148,8 +149,8 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "Agrand&ir\t+",                ID_TREEMAP_ZOOMIN
         MENUITEM "Dimin&uer\t-",                ID_TREEMAP_ZOOMOUT
-        MENUITEM "&Reselectionner le précedent dossier enfant\t*", 33011
-        MENUITEM "&Selectionner le dossier parent\t/", 
+        MENUITEM "&Resélectionner le précedent dossier enfant\t*", 33011
+        MENUITEM "&Sélectionner le dossier parent\t/", 
                                                 ID_TREEMAP_SELECTPARENT
         MENUITEM SEPARATOR
         MENUITEM "&Aide à propos des arbres",   ID_TREEMAP_HELPABOUTTREEMAPS
@@ -187,12 +188,12 @@ BEGIN
     BEGIN
         MENUITEM "<toggle>",                    ID_POPUP_TOGGLE
         MENUITEM SEPARATOR
-        MENUITEM "&Ouvrir\tEntrer",             ID_CLEANUP_OPEN
+        MENUITEM "&Ouvrir\tEntrée",             ID_CLEANUP_OPEN
         MENUITEM SEPARATOR
         MENUITEM "&Copier le chemin\tCtrl+C",   57634
         MENUITEM "&Explorer ici\tCtrl+E",       32774
         MENUITEM "Ligne de &commande ici\tCtrl+P", 32808
-        MENUITEM "&Rafraichir le dossier sélectionner\tF5", 32817
+        MENUITEM "&Rafraichir le dossier sélectionné\tF5", 32817
         MENUITEM SEPARATOR
         MENUITEM "&Effacer (vers la corbeille)\tDel", 32809
         MENUITEM "&Détruire (impossible de restaurer le fichier!)\tShift+Del", 
@@ -209,9 +210,9 @@ BEGIN
     BEGIN
         MENUITEM "&Agrandir\t+",                32783
         MENUITEM "&Diminuer\t-",                32784
-        MENUITEM "&Reselect le dossier enfant précédent\t*", 
+        MENUITEM "&Resélectionner le dossier enfant précédent\t*", 
                                                 ID_TREEMAP_RESELECTCHILD
-        MENUITEM "&Selectionner le dossier parent\t/", 
+        MENUITEM "&Sélectionner le dossier parent\t/", 
                                                 ID_TREEMAP_SELECTPARENT
         MENUITEM SEPARATOR
         MENUITEM "&Copier le chemin\tCtrl+C",   57634
@@ -258,6 +259,7 @@ BEGIN
     VK_F9,          ID_VIEW_SHOWTREEMAP,    VIRTKEY, NOINVERT
     VK_F7,          ID_VIEW_SHOWUNKNOWN,    VIRTKEY, NOINVERT
     VK_RETURN,      ID_CLEANUP_OPEN,        VIRTKEY, NOINVERT
+    VK_F5,          ID_REFRESHSELECTED,     VIRTKEY, NOINVERT
 END
 
 
@@ -385,7 +387,7 @@ FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     CONTROL         "Animation ""&Pacman""",IDC_PACMANANIMATION,"Button",
                     BS_AUTOCHECKBOX | BS_MULTILINE | WS_TABSTOP,7,7,102,10
-    CONTROL         "Montrer le &temps passé during the scan",
+    CONTROL         "Montrer le &temps passé à parcourir les répertoires",
                     IDC_SHOWTIMESPENT,"Button",BS_AUTOCHECKBOX | 
                     BS_MULTILINE | WS_TABSTOP,7,24,92,23
     GROUPBOX        "&Couleurs des pourcentages de l'arbre",IDC_STATIC,119,7,
@@ -416,7 +418,7 @@ STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION |
 CAPTION "Arbre"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    CTEXT           "&Bright-\r\nness",IDC_STATIC,237,120,32,18
+    CTEXT           "L&umi-\r\nnosité",IDC_STATIC,237,120,32,18
     CONTROL         "",IDC_BRIGHTNESS,"msctls_trackbar32",TBS_VERT | 
                     TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,245,17,16,104
     CTEXT           "&Ombrage\r\nen coussin",IDC_STATIC,270,120,34,18
@@ -429,7 +431,7 @@ BEGIN
                     36,24
     CONTROL         "",IDC_SCALEFACTOR,"msctls_trackbar32",TBS_VERT | 
                     TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,347,17,16,104
-    RTEXT           "&Light Incidence",IDC_STATIC,246,147,59,8
+    RTEXT           "Incidence de la &lumière",IDC_STATIC,226,147,79,8
     LTEXT           "",IDC_LIGHTSOURCE,313,146,58,48,WS_TABSTOP
     PUSHBUTTON      "",IDC_RESET,242,163,55,30,BS_MULTILINE
     GROUPBOX        "St&yle",IDC_STATIC,7,146,63,49
@@ -456,17 +458,17 @@ STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION |
 CAPTION "Général"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    CONTROL         "Parcourir tous les points de &montage des lecteurs",
+    CONTROL         "&Parcourir tous les points de montage des lecteurs",
                     IDC_FOLLOWMOUNTPOINTS,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,32,13,229,10
     CONTROL         "&Montrer la taille des fichiers en Go/Mo/Ko/octets",
                     IDC_HUMANFORMAT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,
                     32,229,10
-    GROUPBOX        "&List Style",IDC_STATIC,30,52,90,45
+    GROUPBOX        "Style de la &liste",IDC_STATIC,30,52,90,45
     CONTROL         "&Montrer la grille",IDC_SHOWGRID,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,38,65,68,10
-    CONTROL         "Show S&tripes",IDC_SHOWSTRIPES,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,38,81,68,10
+    CONTROL         "Faire des &rayures",IDC_SHOWSTRIPES,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,38,81,68,10
     LTEXT           "&Langue",IDC_STATIC,32,109,166,8
     COMBOBOX        IDC_COMBO,32,122,156,140,CBS_DROPDOWNLIST | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
@@ -515,20 +517,20 @@ END
 IDD_PAGE_REPORT DIALOGEX 0, 0, 380, 202
 STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | 
     WS_SYSMENU
-CAPTION "Report"
+CAPTION "Rapport"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    LTEXT           "Here you can customize the reports generated by the 'Send Mail to Owner' feature.",
-                    IDC_STATIC,7,9,268,8
-    LTEXT           "&Subject",IDC_STATIC,7,31,46,8
+    LTEXT           "Vous pouvez choisir ici les textes des rapports réalisés par la fonction 'Envoyer un courriel au propriétaire'.",
+                    IDC_STATIC,7,9,365,8
+    LTEXT           "&Objet",IDC_STATIC,7,31,46,8
     EDITTEXT        IDC_SUBJECT,59,31,314,14,ES_AUTOHSCROLL
-    LTEXT           "&Prefix",IDC_STATIC,7,51,46,8
+    LTEXT           "&Prefixe",IDC_STATIC,7,51,46,8
     EDITTEXT        IDC_PREFIX,59,51,314,54,ES_MULTILINE | ES_AUTOVSCROLL | 
                     ES_AUTOHSCROLL | ES_WANTRETURN
-    LTEXT           "S&uffix",IDC_STATIC,7,111,46,8
+    LTEXT           "S&uffixe",IDC_STATIC,7,111,46,8
     EDITTEXT        IDC_SUFFIX,59,111,314,54,ES_MULTILINE | ES_AUTOVSCROLL | 
                     ES_AUTOHSCROLL | ES_WANTRETURN
-    PUSHBUTTON      "",IDC_RESET,59,174,113,14
+    PUSHBUTTON      "",IDC_RESET,59,174,126,14
 END
 
 
@@ -630,8 +632,8 @@ IDR_LICENSE             TEXT                    "res\\license.txt"
 STRINGTABLE 
 BEGIN
     IDR_MAINFRAME           "WinDirStat\n\nWinDirStat\n\n\n\n"
-    IDS_QUERYING            "(querying...)"
-    IDS_NOTACCESSIBLE       "(unavailable)"
+    IDS_QUERYING            "(accès en cours...)"
+    IDS_NOTACCESSIBLE       "(indisponible)"
 END
 
 STRINGTABLE 
@@ -754,7 +756,7 @@ END
 STRINGTABLE 
 BEGIN
     IDS_RESOURCEVERSION     "Resource Version 3"
-    IDS_ABOUT_ABOUTTEXTss   "\r\nWinDirStat - Statistiques sur les systèmes de fichiers\r\n\r\n""Montre où est passé tout votre espace dique\r\net vous aide à faire le nettoyage.""\r\n\r\nRe-programmé pour MS Windows par\r\nBernhard Seifert (mailto:%1!s!),\r\n\r\nà partir du travail de Stefan Hundhammer sous KDE (Linux) KDirStat\r\n(http://kdirstat.sourceforge.net/).\r\n\r\nLa page Internet de WinDirStat est http://%2!s!/\r\n\r\nFrench translation: Pascal Delrot (mailto:tigroo@users.sourceforge.net).\r\n\r\nCopyright (c) 2003-2004 Bernhard Seifert"
+    IDS_ABOUT_ABOUTTEXTss   "\r\nWinDirStat - Statistiques sur les systèmes de fichiers\r\n\r\n""Montre où est passé tout votre espace disque\r\net vous aide à faire le nettoyage.""\r\n\r\nRe-programmé pour MS Windows par\r\nBernhard Seifert (mailto:%1!s!),\r\n\r\nà partir du travail de Stefan Hundhammer sous KDE (Linux) KDirStat\r\n(http://kdirstat.sourceforge.net/).\r\n\r\nLa page Internet de WinDirStat est http://%2!s!/\r\n\r\nTraduction française: Pascal Delrot (mailto:tigroo@users.sourceforge.net).\r\n\r\nCopyright (c) 2003-2004 Bernhard Seifert"
     IDS_ABOUT_THANKSTOTEXT  "\r\nStefan Hundhammer pour son superbe outil Linux ""KDirStat"".\r\nUtiliser KDirStat (2.3.7) comme spécification m'a permis de gagner beaucoup de temps.\r\nhttp://kdirstat.sourceforge.net/\r\n\r\nLes auteurs de ""SequoiaView"" pour m'avoir montré à quel point les arbres sont utiles.\r\nhttp://www.win.tue.nl/sequoiaview/\r\n\r\nJarke J. van Wijk, Huub van de Wetering, Mark Bruls and Kees Huizing\r\npour leurs articles sur les arbres en coussins et rectangulaires.\r\nhttp://www.win.tue.nl/~vanwijk/\r\n\r\nBen Shneiderman pour son idée ingénieuse des arbres -\r\nune manière vraiment intuitive de visualiser le contenu des répertoires.\r\nhttp://www.cs.umd.edu/hcil/treemap-history/\r\n\r\nMes collègues pour leurs remarques sur les toutes premières versions de WinDirStat.\r\nhttp://www.daccord.net/\r\n\r\nBeatrix Lödige et Nick Lines pour les tests de la version beta.\r\n"
     IDS_ABOUT_ABOUT         "A propos de"
     IDS_ABOUT_THANKSTO      "Merci à"
@@ -779,7 +781,7 @@ BEGIN
     IDS_TREECOL_SUBDIRS     "Sous-dossiers"
     IDS_TREECOL_LASTCHANGE  "Dernier changement"
     IDS_PLEASECHECKYOURDISKUSAGE 
-                            "S'il vous plait veuillez vérifier l'utilisation de votre espace disque et nettoyez le si vous pouvez. Merci.\r\n"
+                            "S'il vous plait veuillez vérifier l'utilisation de votre\r\nespace disque et nettoyez le si vous pouvez. Merci.\r\n"
     IDS_DISKUSAGEREPORTGENERATEDBYWINDIRSTAT 
                             "Utilisation de l'espace disque créé par WinDirStat.\r\n"
     IDS__UNKNOWN_           "<inconnu>"
@@ -845,59 +847,22 @@ BEGIN
     IDS_SPEC_GB             "Go"
     IDS_SPEC_TB             "To"
     IDS_RESETTO_DEFAULTS    "&Remettre les\r\nvaleurs par défaut"
-    IDS_BACKTO_USERSETTINGS "Back to\r\n&User Settings"
+    IDS_BACKTO_USERSETTINGS "Revenir aux\r\nvaleurs de l'&utilisateur"
 END
 
 STRINGTABLE 
 BEGIN
     IDS_RESETTODEFAULTS     "&Remettre les valeurs par défaut"
-    IDS_BACKTOUSERSETTINGS  "Back to &User Settings"
-    IDS_COLLAPSE            "Co&llapse"
-    IDS_EXPAND              "E&xpand"
+    IDS_BACKTOUSERSETTINGS  "Revenir aux valeurs de l'&utilisateur"
+    IDS_COLLAPSE            "&Réduire"
+    IDS_EXPAND              "&Développer"
     IDS_CREATEPROCESSsFAILEDs "CreateProcess(%1!s!) échec : %2!s!"
-    IDS_LANGUAGERESTARTNOW  "Le changement de la langue ne prendra effet qu'après redémarrage du programme.\r\n\r\nLanguage changes take not effect until the application is restarted.\r\n\r\nRestart WinDirStat now?"
+    IDS_LANGUAGERESTARTNOW  "Le changement de la langue ne prendra effet qu'après redémarrage du programme.\r\n\r\nLanguage changes take not effect until the application is restarted.\r\n\r\nRedémarrer WinDirStat maintenant?"
 END
 
 #endif    // French (France) resources
 /////////////////////////////////////////////////////////////////////////////
 
-/////////////////////////////////////////////////////////////////////////////
-//
-// Version
-//
-
-VS_VERSION_INFO VERSIONINFO
- FILEVERSION VN_MAJOR,VN_MINOR,VN_REVISION,VN_BUILD
- PRODUCTVERSION VN_MAJOR,VN_MINOR,VN_REVISION,VN_BUILD
- FILEFLAGSMASK 0x3fL
-#ifdef _DEBUG
- FILEFLAGS 0x1L + VN_FILEFLAG
-#else
- FILEFLAGS 0x0L + VN_FILEFLAG
-#endif
- FILEOS 0x4L
- FILETYPE VFT_DLL
- FILESUBTYPE 0x0L
-BEGIN
-    BLOCK "StringFileInfo"
-    BEGIN
-        BLOCK "040904e4"
-        BEGIN
-            VALUE "CompanyName", "Seifert"
-            VALUE "FileDescription", "WinDirStat French Resources"
-            VALUE "FileVersion", VN_STRING
-            VALUE "InternalName", "wdsr040c"
-            VALUE "LegalCopyright", "Copyright (c) 2003-2004 Bernhard Seifert"
-            VALUE "OriginalFilename", "wdsr040c.dll"
-            VALUE "ProductName", "WinDirStat"
-            VALUE "ProductVersion", VN_STRING
-        END
-    END
-    BLOCK "VarFileInfo"
-    BEGIN
-        VALUE "Translation", 0x40c, 1252
-    END
-END
 
 
 #ifndef APSTUDIO_INVOKED
@@ -912,6 +877,7 @@ END
 #if !defined(AFX_RESOURCE_DLL)
 LANGUAGE 12, 1
 #pragma code_page(1252)
+#include "res\windirstat.rc2"
 #include "afxres.rc"         // Standard components
 
 #endif

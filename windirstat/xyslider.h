@@ -24,7 +24,7 @@
 #define XYSLIDER_CHANGED	0x88	// this is a value, I hope, that is nowhere used as notification code.
 
 //
-// CXySlider. A two-dimesional slider.
+// CXySlider. A two-dimensional slider.
 //
 class CXySlider: public CStatic
 {
