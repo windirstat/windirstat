@@ -1,6 +1,19 @@
 changelog.txt - What has been done to WinDirStat (newest top)
 =============================================================
 
+	* When the tree is empty (drive selection canceled), the program
+	    crashed after 'Empty Recycle Bin'.
+	    It also crashed when 'Show free space' or 'Show unknown' was
+	    selected.
+	* Due to a bug, 'Empty Recycle Bin' was always enabled, even when
+	    the recycle bin was empty.
+	* Due to a bug, 'Empty Recycle Bin' was not enabled on W2k.
+
+	* Relative paths or trailing backslashes are now handled correctly
+	  in the 'A folder' field in the drive selection dialog.
+	* Added "Thanks to" beta testers.
+	* Contextmenu and doubleclick didn't work correctly if Name-column wasn't leftmost.
+
 2003-11-26	bseifert
 	* Version number '1.0.1rc3'
 	* Placed platform.h/cpp into 'common' folder.

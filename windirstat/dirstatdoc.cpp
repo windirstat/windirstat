@@ -162,6 +162,13 @@ void CDirstatDoc::DecodeSelection(CString s, CString& folder, CStringArray& driv
 		}
 		else
 		{
+			// Remove trailing backslash, if any and not drive-root.
+			if (f.GetLength() > 0 && f.Right(1) == _T("\\")
+			&& (f.GetLength() != 3 || f[1] != _T(':')))
+			{
+				f= f.Left(f.GetLength() - 1);
+			}
+
 			folder= f;
 		}
 	}
@@ -506,6 +513,10 @@ void CDirstatDoc::GetDriveItems(CArray<CItem *, CItem *>& drives)
 	drives.RemoveAll();
 
 	CItem *root= GetRootItem();
+	
+	if (root == NULL)
+		return;
+
 	if (root->GetType() == IT_MYCOMPUTER)
 	{
 		for (int i=0; i < root->GetChildrenCount(); i++)

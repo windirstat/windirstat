@@ -263,6 +263,31 @@ Repeatedly make the color column in the extension list
 small and wide again
 --> No crash.
 
+Directory list: Change the column order so that the name column
+is not the first column. Right-click on a name. 
+--> The context menu does appear.
+Double-click on a name.
+--> The item expands.
+
+Drive Selection Dialog: Select "a folder" and enter a relative 
+path (like .) into the filename field. Press OK.
+--> The root item has its path expanded.
+Enter a folder name with trailing backslash, like C:\temp\. Press OK.
+--> The trailing backslash is removed.
+
+Start Windirstat an cancel the drive selection dialog.
+Empty Recycle Bin
+--> No crash.
+--> Empty Recycle Bin now is disabled (0 items, 0 bytes).
+Show free space.
+--> No crash.
+Show unknown.
+--> No crash.
+
+Start Windirstat on W2k and delete a file to the recycle bin.
+--> 'Empty Recycle Bin' is enabled.
+
+
 Special cases
 -------------
 Delete C:\program files\windirstat

@@ -25,7 +25,7 @@
 namespace
 {
 	DWORD UPDATEINTERVAL = 40;	// ms
-	double MOUTHSPEED = 0.0025;	// aperture alteration / ms
+	double MOUTHSPEED = 0.0030;	// aperture alteration / ms
 }
 
 CPacman::CPacman()

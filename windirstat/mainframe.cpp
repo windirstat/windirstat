@@ -758,26 +758,26 @@ void CMainFrame::UpdateCleanupMenu(CMenu *menu)
 	CRecycleBinApi rb;
 	if (rb.IsSupported())
 	{
+		LONGLONG items;
+		LONGLONG bytes;
+
+		MyQueryRecycleBin(rb, items, bytes);
 		
-		SHQUERYRBINFO qbi;
-		ZeroMemory(&qbi, sizeof(qbi));
-		qbi.cbSize= sizeof(qbi);
-
-		HRESULT hr= rb.SHQueryRecycleBin(NULL, &qbi);
-		if (FAILED(hr))
-			return;
-
 		CString info;
-		if (qbi.i64NumItems == 1)
-			info.FormatMessage(IDS__ONEITEMss, FormatBytes(qbi.i64Size), GetOptions()->IsHumanFormat() ? "" : " Bytes");
+		if (items == 1)
+			info.FormatMessage(IDS__ONEITEMss, FormatBytes(bytes), GetOptions()->IsHumanFormat() && bytes != 0 ? "" : " Bytes");
 		else
-			info.FormatMessage(IDS__sITEMSss, FormatCount(qbi.i64NumItems), FormatBytes(qbi.i64Size), GetOptions()->IsHumanFormat() ? "" : " Bytes");
+			info.FormatMessage(IDS__sITEMSss, FormatCount(items), FormatBytes(bytes), GetOptions()->IsHumanFormat() && bytes != 0 ? "" : " Bytes");
 
 		s+= info;
 		VERIFY(menu->ModifyMenu(ID_CLEANUP_EMPTYRECYCLEBIN, MF_BYCOMMAND|MF_STRING, ID_CLEANUP_EMPTYRECYCLEBIN, s));
+		
+		// ModifyMenu() re-enables the item. So we disable (or enable) it again.
 
-		if (qbi.i64NumItems > 0)
-			menu->EnableMenuItem(ID_CLEANUP_EMPTYRECYCLEBIN, MF_BYCOMMAND | MF_ENABLED);
+		UINT flags = (items > 0 ? MF_ENABLED : MF_DISABLED|MF_GRAYED);
+		flags|= MF_BYCOMMAND;
+		
+		menu->EnableMenuItem(ID_CLEANUP_EMPTYRECYCLEBIN, flags);
 	}
 
 	UINT toRemove= menu->GetMenuItemCount() - MAINMENU_USERDEFINEDCLEANUP_POSITION;
@@ -785,6 +785,48 @@ void CMainFrame::UpdateCleanupMenu(CMenu *menu)
 		menu->RemoveMenu(MAINMENU_USERDEFINEDCLEANUP_POSITION, MF_BYPOSITION);
 
 	AppendUserDefinedCleanups(menu);
+}
+
+void CMainFrame::MyQueryRecycleBin(CRecycleBinApi& rb, LONGLONG& items, LONGLONG& bytes)
+{
+	// On W2k, the first parameter to SHQueryRecycleBin must not be NULL.
+	// So we must sum the item counts and sizes of the recycle bins of all local drives.
+
+	ASSERT(rb.IsSupported());
+
+	items= 0;
+	bytes= 0;
+
+	DWORD drives= GetLogicalDrives();
+	int i;
+	DWORD mask= 0x00000001;
+	for (i=0; i < 32; i++, mask <<= 1)
+	{
+		if ((drives & mask) == 0)
+			continue;
+
+		CString s;
+		s.Format(_T("%c:\\"), i + _T('A'));
+
+		UINT type= GetDriveType(s);
+		if (type == DRIVE_UNKNOWN || type == DRIVE_NO_ROOT_DIR)
+			continue;
+
+		if (type == DRIVE_REMOTE)
+			continue;
+
+		SHQUERYRBINFO qbi;
+		ZeroMemory(&qbi, sizeof(qbi));
+		qbi.cbSize= sizeof(qbi);
+
+		HRESULT hr= rb.SHQueryRecycleBin(s, &qbi);
+		
+		if (FAILED(hr))
+			continue;
+
+		items+= qbi.i64NumItems;
+		bytes+= qbi.i64Size;
+	}
 }
 
 void CMainFrame::AppendUserDefinedCleanups(CMenu *menu)
@@ -798,7 +840,7 @@ void CMainFrame::AppendUserDefinedCleanups(CMenu *menu)
 			CString string;
 			string.FormatMessage(IDS_UDCsCTRLd, GetOptions()->GetUserDefinedCleanup(indices[i])->title, indices[i]);
 
-			UINT flags= MF_GRAYED;
+			UINT flags= MF_GRAYED | MF_DISABLED;
 			if (GetDocument()->UserDefinedCleanupWorksForItem(GetOptions()->GetUserDefinedCleanup(indices[i]), GetDocument()->GetSelection()))
 				flags= MF_ENABLED;
 			menu->AppendMenu(flags|MF_STRING, ID_USERDEFINEDCLEANUP0 + indices[i], string);

@@ -425,7 +425,12 @@ void CSelectDrivesDlg::OnOK()
 
 	m_drives.RemoveAll();
 	m_selectedDrives.RemoveAll();
-	if (m_radio != RADIO_AFOLDER)
+	if (m_radio == RADIO_AFOLDER)
+	{
+		m_folderName= MyGetFullPathName(m_folderName);
+		UpdateData(false);
+	}
+	else
 	{
 		for (int i=0; i < m_list.GetItemCount(); i++)
 		{

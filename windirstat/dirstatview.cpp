@@ -68,8 +68,7 @@ void CMyTreeListControl::OnContextMenu(CWnd* /*pWnd*/, CPoint ptscreen)
 
 	CTreeListItem *item= GetItem(i);
 
-	CRect rc;
-	GetItemRect(i, rc, LVIR_BOUNDS);
+	CRect rc= GetWholeSubitemRect(i, 0);
 	CRect rcTitle= item->GetTitleRect() + rc.TopLeft();
 	if (!rcTitle.PtInRect(point))
 		return;

@@ -699,8 +699,7 @@ void CTreeListControl::OnLButtonDblClk(UINT nFlags, CPoint point)
 	if (hti.iSubItem != 0)
 		return;
 
-	CRect rc;
-	GetItemRect(i, rc, LVIR_BOUNDS);
+	CRect rc= GetWholeSubitemRect(i, 0);
 	CPoint pt= point - rc.TopLeft();
 
 	CTreeListItem *item= GetItem(i);

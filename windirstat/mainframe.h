@@ -118,6 +118,7 @@ protected:
 	void DestroyProgress();
 
 	void UpdateCleanupMenu(CMenu *menu);
+	void MyQueryRecycleBin(CRecycleBinApi& rb, LONGLONG& items, LONGLONG& bytes);
 
 	bool m_progressVisible;		// True while progress must be shown (either pacman or progressbar)
 	LONGLONG m_progressRange;	// Progress range. A range of 0 means that we have no range available. In this case we should display pacman.
