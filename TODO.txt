@@ -4,3 +4,9 @@ Last modified: $Date$
 
 - Credit Sam (from Ultr@VNC) for his efforts to translate the missing parts
   to French. Not yet done!
+- On volumes supporting file compression use the compressed file size
+  to show the cushion treemap and the file sizes in the tree.
+- Date/time formatting more flexible
+- Possibly add a column for file attributes to the tree. Alternatively
+  signal the attributes via coloring of the icons ... maybe even both.
+
