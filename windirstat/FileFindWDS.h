@@ -22,7 +22,7 @@
 // Last modified: $Date$
 
 #pragma once
-#include "afx.h"
+#include "afx.h" // Declaration of prototype for CFileFind
 
 class CFileFindWDS :
 	public CFileFind
@@ -31,9 +31,14 @@ public:
 	CFileFindWDS(void);
 	~CFileFindWDS(void);
 	DWORD GetAttributes() const;
+	ULONGLONG GetCompressedLength() const;
 };
 
 // $Log$
+// Revision 1.2  2004/11/28 14:40:06  assarbad
+// - Extended CFileFindWDS to replace a global function
+// - Now packing/unpacking the file attributes. This even spares a call to find encrypted/compressed files.
+//
 // Revision 1.1  2004/11/25 23:07:24  assarbad
 // - Derived CFileFindWDS from CFileFind to correct a problem of the ANSI version
 //

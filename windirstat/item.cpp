@@ -180,7 +180,7 @@ CString CItem::GetText(int subitem) const
 	case COL_ATTRIBUTES:
 		if (GetType() != IT_FREESPACE && GetType() != IT_UNKNOWN && GetType() != IT_MYCOMPUTER && GetType() != IT_FILESFOLDER)
 		{
-			s = FormatAttributes(m_attributes);
+			s = FormatAttributes(GetAttributes());
 		}
 		break;
 
@@ -194,7 +194,7 @@ CString CItem::GetText(int subitem) const
 COLORREF CItem::GetItemTextColor() const
 {
 	// Get the file/folder attributes
-	DWORD attr = GetFileAttributes(GetPath());
+	DWORD attr = GetAttributes();
 
 	// This happens e.g. on a Unicode-capable FS when using ANSI APIs
 	// to list files with ("real") Unicode names
@@ -271,6 +271,11 @@ int CItem::CompareSibling(const CTreeListItem *tlib, int subitem) const
 				return 0;
 			else 
 				return 1;
+		}
+		break;
+	case COL_ATTRIBUTES:
+		{
+//			return CompareNoCase(other->m_name);
 		}
 		break;
 
@@ -447,7 +452,7 @@ void CItem::UpdateLastChange()
 			return; // no chance
 		finder.FindNextFile();
 		finder.GetLastWriteTime(&m_lastChange);
-		m_attributes = finder.GetAttributes();
+		SetAttributes(finder.GetAttributes());
 	}
 }
 
@@ -586,9 +591,57 @@ void CItem::SetLastChange(const FILETIME& t)
 	m_lastChange = t;
 }
 
-void CItem::SetAttributes(const DWORD attr)
+// Encode the attributes to fit 1 byte
+void CItem::SetAttributes(DWORD attr)
 {
-	m_attributes = attr;
+/*
+Bitmask of m_attributes:
+
+7 6 5 4 3 2 1 0
+^ ^ ^ ^ ^ ^ ^ ^
+| | | | | | | |__ 1 == R					(0x01)
+| | | | | | |____ 1 == H					(0x02)
+| | | | | |______ 1 == S					(0x04)
+| | | | |________ 1 == A					(0x08)
+| | | |__________ 1 == Reparse point		(0x10)
+| | |____________ 1 == C					(0x20)
+| |______________ 1 == E					(0x40)
+|________________ 1 == invalid attributes	(0x80)
+*/
+
+	if (attr == INVALID_FILE_ATTRIBUTES)
+	{
+		m_attributes = INVALID_m_attributes;
+		return;
+	}
+
+	m_attributes  = char(attr & MaskRHS); // Mask out lower 3 bits
+// Prepend the archive attribute
+	m_attributes |= (attr & FILE_ATTRIBUTE_ARCHIVE) >> 2;
+// --> At this point the lower nibble is fully used
+// Now shift the reparse point and compressed attribute into the lower 2 bits of
+// the high nibble.
+	m_attributes |= (attr & (FILE_ATTRIBUTE_REPARSE_POINT |
+							 FILE_ATTRIBUTE_COMPRESSED)) >> 6;
+// Shift the encrypted bit by 8 places
+	m_attributes |= (attr & FILE_ATTRIBUTE_ENCRYPTED) >> 8;
+}
+
+// Decode the attributes encoded by SetAttributes()
+DWORD CItem::GetAttributes() const
+{
+	if (m_attributes & INVALID_m_attributes)
+		return INVALID_FILE_ATTRIBUTES;
+
+	DWORD ret = m_attributes & MaskRHS;  // Mask out lower 3 bits
+// FILE_ATTRIBUTE_ARCHIVE
+	ret |= (m_attributes & 0x08) << 2;
+// FILE_ATTRIBUTE_REPARSE_POINT | FILE_ATTRIBUTE_COMPRESSED
+	ret |= (m_attributes & 0x30) << 6;
+// FILE_ATTRIBUTE_ENCRYPTED
+	ret |= (m_attributes & 0x40) << 8;
+	
+	return ret;
 }
 
 double CItem::GetFraction() const
@@ -840,7 +893,7 @@ void CItem::DoSomeWork(DWORD ticks)
 					fi.name = finder.GetFileName();
 					fi.attributes = finder.GetAttributes();
 					// Retrieve file size
-					fi.length = GetApp()->GetFileSizeWDS(finder);
+					fi.length = finder.GetCompressedLength();
 					finder.GetLastWriteTime(&fi.lastWriteTime);
 					// (We don't use GetLastWriteTime(CTime&) here, because, if the file has
 					// an invalid timestamp, that function would ASSERT and throw an Exception.)
@@ -1002,7 +1055,7 @@ bool CItem::StartRefresh()
 			fi.name = finder.GetFileName();
 			fi.attributes = finder.GetAttributes();
 			// Retrieve file size
-            fi.length = GetApp()->GetFileSizeWDS(finder);
+			fi.length = finder.GetCompressedLength();
 			finder.GetLastWriteTime(&fi.lastWriteTime);
 
 			AddFile(fi);
@@ -1053,7 +1106,7 @@ bool CItem::StartRefresh()
 				fi.name = finder.GetFileName();
 				fi.attributes = finder.GetAttributes();
 				// Retrieve file size
-                fi.length = GetApp()->GetFileSizeWDS(finder);
+				fi.length = finder.GetCompressedLength();
 				finder.GetLastWriteTime(&fi.lastWriteTime);
 
 				SetLastChange(fi.lastWriteTime);
@@ -1552,6 +1605,10 @@ void CItem::DrivePacman()
 
 
 // $Log$
+// Revision 1.21  2004/11/28 14:40:06  assarbad
+// - Extended CFileFindWDS to replace a global function
+// - Now packing/unpacking the file attributes. This even spares a call to find encrypted/compressed files.
+//
 // Revision 1.20  2004/11/25 23:07:23  assarbad
 // - Derived CFileFindWDS from CFileFind to correct a problem of the ANSI version
 //

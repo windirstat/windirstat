@@ -58,6 +58,13 @@ enum ITEMTYPE
 	ITF_ROOTITEM = 0x8000	// This is an additional flag, not a type.
 };
 
+// File attribute packing
+#define	MaskRHS					FILE_ATTRIBUTE_READONLY | \
+								FILE_ATTRIBUTE_HIDDEN | \
+								FILE_ATTRIBUTE_SYSTEM
+#define INVALID_m_attributes char(0x80)
+
+
 // Whether an item type is a leaf type
 inline bool IsLeaf(ITEMTYPE t) { return t == IT_FILE || t == IT_FREESPACE || t == IT_UNKNOWN; }
 
@@ -156,7 +163,8 @@ public:
 	LONGLONG GetReadJobs() const;
 	FILETIME GetLastChange() const;
 	void SetLastChange(const FILETIME& t);
-	void SetAttributes(const DWORD attr);
+	void SetAttributes(DWORD attr);
+	DWORD GetAttributes() const;
 	double GetFraction() const;
 	ITEMTYPE GetType() const;
 	bool IsRootItem() const;
@@ -214,7 +222,7 @@ private:
 	LONGLONG m_files;			// # Files in subtree
 	LONGLONG m_subdirs;			// # Folder in subtree
 	FILETIME m_lastChange;		// Last modification time OF SUBTREE
-	DWORD m_attributes;			// File attributes of the item
+	char m_attributes;			// File attributes of the item
 
 	bool m_readJobDone;			// FindFiles() (our own read job) is finished.
 	bool m_done;				// Whole Subtree is done.
@@ -231,6 +239,10 @@ private:
 
 
 // $Log$
+// Revision 1.12  2004/11/28 14:40:06  assarbad
+// - Extended CFileFindWDS to replace a global function
+// - Now packing/unpacking the file attributes. This even spares a call to find encrypted/compressed files.
+//
 // Revision 1.11  2004/11/25 23:07:24  assarbad
 // - Derived CFileFindWDS from CFileFind to correct a problem of the ANSI version
 //

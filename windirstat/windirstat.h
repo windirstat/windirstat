@@ -71,8 +71,6 @@ public:
 
 	CMyImageList *GetMyImageList();
 
-	ULONGLONG GetFileSizeWDS(CFileFind& finder);
-
 	void UpdateRamUsage();
 	
 	void PeriodicalUpdateRamUsage();
@@ -82,6 +80,8 @@ public:
 	void GetAvailableResourceDllLangids(CArray<LANGID, LANGID>& arr);
 
 	void RestartApplication();
+
+	CGetCompressedFileSizeApi *GetComprSizeApi();
 
 protected:
 	CString FindResourceDllPathByLangid(LANGID& langid);
@@ -126,6 +126,10 @@ protected:
 
 
 // $Log$
+// Revision 1.12  2004/11/28 14:40:06  assarbad
+// - Extended CFileFindWDS to replace a global function
+// - Now packing/unpacking the file attributes. This even spares a call to find encrypted/compressed files.
+//
 // Revision 1.11  2004/11/25 11:58:52  assarbad
 // - Minor fixes (odd behavior of coloring in ANSI version, caching of the GetCompressedFileSize API)
 //   for details see the changelog.txt

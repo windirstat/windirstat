@@ -34,7 +34,7 @@ CString FormatCount(LONGLONG n);
 CString FormatDouble(double d);
 CString PadWidthBlanks(CString n, int width);
 CString FormatFileTime(const FILETIME& t);
-CString FormatAttributes(const DWORD& attr);
+CString FormatAttributes(DWORD attr);
 CString FormatMilliseconds(DWORD ms);
 CString GetParseNameOfMyComputer() throw (CException *);
 void GetPidlOfMyComputer(LPITEMIDLIST *ppidl) throw (CException *);
@@ -60,6 +60,10 @@ CString GetSpec_GB();
 CString GetSpec_TB();
 
 // $Log$
+// Revision 1.15  2004/11/28 14:40:06  assarbad
+// - Extended CFileFindWDS to replace a global function
+// - Now packing/unpacking the file attributes. This even spares a call to find encrypted/compressed files.
+//
 // Revision 1.14  2004/11/25 21:13:38  assarbad
 // - Implemented "attributes" column in the treelist
 // - Adopted width in German dialog

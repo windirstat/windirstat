@@ -211,30 +211,18 @@ CString FormatFileTime(const FILETIME& t)
 	return date + _T("  ") + time;
 }
 
-CString FormatAttributes(const DWORD& attr)
+CString FormatAttributes(DWORD attr)
 {
 	if(attr == INVALID_FILE_ATTRIBUTES)
 		return _T("?????");
 
 	CString attributes;
-
-	if(attr & FILE_ATTRIBUTE_READONLY)
-		attributes.Append(_T("R"));
-
-	if(attr & FILE_ATTRIBUTE_HIDDEN)
-		attributes.Append(_T("H"));
-
-	if(attr & FILE_ATTRIBUTE_SYSTEM)
-		attributes.Append(_T("S"));
-
-	if(attr & FILE_ATTRIBUTE_ARCHIVE)
-		attributes.Append(_T("A"));
-
-	if(attr & FILE_ATTRIBUTE_COMPRESSED)
-		attributes.Append(_T("C"));
-
-	if(attr & FILE_ATTRIBUTE_ENCRYPTED)
-		attributes.Append(_T("E"));
+	attributes.Append((attr & FILE_ATTRIBUTE_READONLY  ) ? _T("R") : _T(""));
+	attributes.Append((attr & FILE_ATTRIBUTE_HIDDEN    ) ? _T("H") : _T(""));
+	attributes.Append((attr & FILE_ATTRIBUTE_SYSTEM    ) ? _T("S") : _T(""));
+	attributes.Append((attr & FILE_ATTRIBUTE_ARCHIVE   ) ? _T("A") : _T(""));
+	attributes.Append((attr & FILE_ATTRIBUTE_COMPRESSED) ? _T("C") : _T(""));
+	attributes.Append((attr & FILE_ATTRIBUTE_ENCRYPTED ) ? _T("E") : _T(""));
 
 	return attributes;
 }
@@ -637,6 +625,10 @@ LPCITEMIDLIST SHGetPIDLFromPath(CString path)
 */
 
 // $Log$
+// Revision 1.20  2004/11/28 14:40:06  assarbad
+// - Extended CFileFindWDS to replace a global function
+// - Now packing/unpacking the file attributes. This even spares a call to find encrypted/compressed files.
+//
 // Revision 1.19  2004/11/25 21:13:38  assarbad
 // - Implemented "attributes" column in the treelist
 // - Adopted width in German dialog

@@ -268,7 +268,19 @@ DWORD CGetCompressedFileSizeApi::GetCompressedFileSize(LPCTSTR lpFileName, LPDWO
 	return (*m_GetCompressedFileSize)(lpFileName, lpFileSizeHigh);
 }
 
+ULONGLONG CGetCompressedFileSizeApi::GetCompressedFileSize(LPCTSTR lpFileName)
+{
+	ASSERT(IsSupported());
+	ULARGE_INTEGER ret;
+	ret.LowPart = (*m_GetCompressedFileSize)(lpFileName, &ret.HighPart);
+	return ret.QuadPart;
+}
+
 // $Log$
+// Revision 1.6  2004/11/28 14:40:06  assarbad
+// - Extended CFileFindWDS to replace a global function
+// - Now packing/unpacking the file attributes. This even spares a call to find encrypted/compressed files.
+//
 // Revision 1.5  2004/11/07 20:14:31  assarbad
 // - Added wrapper for GetCompressedFileSize() so that by default the compressed file size will be shown.
 //

@@ -370,27 +370,9 @@ CString CDirstatApp::GetCurrentProcessMemoryInfo()
 	return s;
 }
 
-// Wrapper for file size retrieval
-// This function tries to return compressed file size whenever possible.
-// If the file is not compressed the uncompressed size is being returned.
-ULONGLONG CDirstatApp::GetFileSizeWDS(CFileFind& finder)
+CGetCompressedFileSizeApi *CDirstatApp::GetComprSizeApi()
 {
-	// Try to use the NT-specific API
-	if (m_comprSize.IsSupported())
-	{
-		ULARGE_INTEGER ret;
-		ret.LowPart = m_comprSize.GetCompressedFileSize(finder.GetFilePath(), &ret.HighPart);
-		TRACE(_T("Compressed size %d.\r\n"), ret.LowPart);
-		// Check for error
-		if ((GetLastError() != NO_ERROR) && (ret.LowPart == INVALID_FILE_SIZE))
-			// IN case of an error return size from CFileFind object
-			return finder.GetLength();
-		else
-			return ret.QuadPart;
-	}
-	else
-		// Use the file size already found by the finder object
-		return finder.GetLength();
+	return &m_comprSize;
 }
 
 bool CDirstatApp::UpdateMemoryInfo()
@@ -584,6 +566,10 @@ void CDirstatApp::OnHelpReportbug()
 }
 
 // $Log$
+// Revision 1.13  2004/11/28 14:40:06  assarbad
+// - Extended CFileFindWDS to replace a global function
+// - Now packing/unpacking the file attributes. This even spares a call to find encrypted/compressed files.
+//
 // Revision 1.12  2004/11/25 11:58:52  assarbad
 // - Minor fixes (odd behavior of coloring in ANSI version, caching of the GetCompressedFileSize API)
 //   for details see the changelog.txt
