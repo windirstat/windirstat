@@ -430,7 +430,7 @@ void CMainFrame::ShowProgress(LONGLONG range)
 	// In this case we display pacman.
 	HideProgress();
 
-	if (GetOptions()->IsFollowMountPoints())
+	if (GetOptions()->IsFollowMountPoints() || GetOptions()->IsFollowJunctionPoints())
 		range= 0;
 	m_progressRange= range;
 	m_progressPos= 0;
@@ -1120,6 +1120,9 @@ void CMainFrame::OnSysColorChange()
 }
 
 // $Log$
+// Revision 1.9  2004/11/27 07:19:37  bseifert
+// Unicode/Ansi/Debug-specification in version.h/Aboutbox. Minor fixes.
+//
 // Revision 1.8  2004/11/05 16:53:07  assarbad
 // Added Date and History tag where appropriate.
 //

@@ -2,6 +2,13 @@ changelog.txt - What has been done to WinDirStat (newest top)
 Last modified: $Date$
 =============================================================
 
+2004-11-27	bseifert
+	* Progress bar now disabled (and Pacman used instead)
+	  if "follow junction points" is enabled.
+	* The aboutbox and versioninfo now contains a "Unicode"/"Ansi"
+	  and a "Debug" specification if applicable.
+	* Updated VERSIONINFOs in the windirstat.rc2 files.
+	
 2004-11-25	assarbad
 	* Removal of obsolete functions IsCompressed() and
 	  IsEncrypted().

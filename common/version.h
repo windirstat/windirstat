@@ -43,6 +43,7 @@
 // The following line is automatically incremented by linkcounter.exe.
 // Format: #define blank LINKCOUNT blanks decimal
 // Reset this to zero only when you increment VERNUM_MAJOR/MINOR/REVISION.
+
 #define LINKCOUNT  237
 
 //-------------------------------------------------------------------
@@ -60,13 +61,27 @@
 #define PPSX(s) #s				    
 #define PPS(s) PPSX(s)
 
+#ifdef _UNICODE
+	#define UASPEC "Unicode"
+#else
+	#define UASPEC "Ansi"
+#endif
+
+#ifdef _DEBUG
+	#define DRSPEC " Debug"
+#else
+	#define DRSPEC ""
+#endif
+
+#define VERVARIANT " (" UASPEC DRSPEC ")"
+
 #if defined(BC_DEVEL)
 
 	#define VN_MAJOR	0
 	#define VN_MINOR	0
 	#define VN_REVISION	0
 	#define VN_FILEFLAG	0
-	#define VN_STRING	"devel"
+	#define VN_STRING	"devel" VERVARIANT
 
 #elif defined(BC_RELEASECANDIDATE)
 
@@ -74,7 +89,7 @@
 	#define VN_MINOR	VERNUM_MINOR
 	#define VN_REVISION	VERNUM_REVISION
 	#define VN_FILEFLAG	VS_FF_PRERELEASE
-	#define VN_STRING	PPS(VN_MAJOR) "." PPS(VN_MINOR) "." PPS(VN_REVISION) "rc" PPS(VERNUM_CANDIDATE)
+	#define VN_STRING	PPS(VN_MAJOR) "." PPS(VN_MINOR) "." PPS(VN_REVISION) "rc" PPS(VERNUM_CANDIDATE) VERVARIANT
 
 #elif defined(BC_RELEASE)
 
@@ -82,7 +97,7 @@
 	#define VN_MINOR	VERNUM_MINOR
 	#define VN_REVISION	VERNUM_REVISION
 	#define VN_FILEFLAG	0
-	#define VN_STRING	PPS(VN_MAJOR) "." PPS(VN_MINOR) "." PPS(VN_REVISION)
+	#define VN_STRING	PPS(VN_MAJOR) "." PPS(VN_MINOR) "." PPS(VN_REVISION) VERVARIANT
 
 #endif
 
@@ -99,6 +114,9 @@
 
 
 // $Log$
+// Revision 1.18  2004/11/27 07:19:36  bseifert
+// Unicode/Ansi/Debug-specification in version.h/Aboutbox. Minor fixes.
+//
 // Revision 1.17  2004/11/25 23:07:22  assarbad
 // - Derived CFileFindWDS from CFileFind to correct a problem of the ANSI version
 //
