@@ -20,6 +20,8 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // Author: bseifert@users.sourceforge.net, bseifert@daccord.net
+//
+// Last modified: $Date$
 
 #pragma once
 
@@ -85,3 +87,8 @@
 template<class T> int signum(T x) { return (x) < 0 ? -1 : (x) == 0 ? 0 : 1; }
 
 
+
+// $Log$
+// Revision 1.8  2004/11/05 16:53:08  assarbad
+// Added Date and History tag where appropriate.
+//

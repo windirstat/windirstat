@@ -20,6 +20,8 @@
 // This general purpose header is derived from a file
 // created by www.daccord.net und published
 // here under GPL with friendly permission of D'accord.
+//
+// Last modified: $Date$
 
 // Md is just a prefix.
 
@@ -165,3 +167,8 @@ inline void MdThrowFailed(HRESULT hr, LPCTSTR pszPrefix =NULL) throw (CMdStringE
 }
 
 #endif
+
+// $Log$
+// Revision 1.3  2004/11/05 16:53:05  assarbad
+// Added Date and History tag where appropriate.
+//

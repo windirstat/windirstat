@@ -1,4 +1,5 @@
 changelog.txt - What has been done to WinDirStat (newest top)
+Last modified: $Date$
 =============================================================
 
 2004-11-02	assarbad

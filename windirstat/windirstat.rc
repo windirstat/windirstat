@@ -1,5 +1,7 @@
 // Microsoft Visual C++ generated resource script.
 //
+// Last modified: $Date$
+//
 #include "resource.h"
 
 #define APSTUDIO_READONLY_SYMBOLS
@@ -890,3 +892,8 @@ LANGUAGE 9, 1
 /////////////////////////////////////////////////////////////////////////////
 #endif    // not APSTUDIO_INVOKED
 
+
+// $Log$
+// Revision 1.16  2004/11/05 16:53:08  assarbad
+// Added Date and History tag where appropriate.
+//

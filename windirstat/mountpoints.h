@@ -18,6 +18,8 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // Author: bseifert@users.sourceforge.net, bseifert@daccord.net
+//
+// Last modified: $Date$
 
 #pragma once
 
@@ -54,3 +56,8 @@ private:
 	// m_volume maps all volume identifiers to PointVolumeArrays
 	CMap<CString, LPCTSTR, PointVolumeArray *, PointVolumeArray *> m_volume;	
 };
+
+// $Log$
+// Revision 1.4  2004/11/05 16:53:07  assarbad
+// Added Date and History tag where appropriate.
+//

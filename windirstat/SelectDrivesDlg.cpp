@@ -18,6 +18,8 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // Author: bseifert@users.sourceforge.net, bseifert@daccord.net
+//
+// Last modified: $Date$
 
 #include "stdafx.h"
 #include "windirstat.h"
@@ -835,3 +837,8 @@ void CSelectDrivesDlg::OnSysColorChange()
 	CDialog::OnSysColorChange();
 	m_list.SysColorChanged();
 }
+
+// $Log$
+// Revision 1.11  2004/11/05 16:53:06  assarbad
+// Added Date and History tag where appropriate.
+//

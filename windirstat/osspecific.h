@@ -18,7 +18,8 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // Author: bseifert@users.sourceforge.net, bseifert@daccord.net
-
+//
+// Last modified: $Date$
 
 // I try not to blow up such classes; they shall _only_ hide away the dynamic linking.
 
@@ -155,3 +156,8 @@ private:
 	HMODULE m_dll;
 	TypeQueryDosDevice m_QueryDosDevice;
 };
+
+// $Log$
+// Revision 1.4  2004/11/05 16:53:07  assarbad
+// Added Date and History tag where appropriate.
+//

@@ -18,6 +18,8 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // Author: bseifert@users.sourceforge.net, bseifert@daccord.net
+//
+// Last modified: $Date$
 
 #include "stdafx.h"
 #include "osspecific.h"
@@ -242,3 +244,8 @@ bool CMountPoints::IsVolumeMountPoint(CString volume, CString path)
 		path= path.Mid(point.GetLength());
 	}
 }
+
+// $Log$
+// Revision 1.4  2004/11/05 16:53:07  assarbad
+// Added Date and History tag where appropriate.
+//

@@ -21,6 +21,8 @@
 // the friendly permission of D'accord (www.daccord.net).
 //
 // 08.09.1998 - JR
+//
+// Last modified: $Date$
 
 #ifndef _COTASKMEM_H
 #define _COTASKMEM_H
@@ -67,3 +69,8 @@ public:
 };
 
 #endif
+
+// $Log$
+// Revision 1.3  2004/11/05 16:53:05  assarbad
+// Added Date and History tag where appropriate.
+//

@@ -18,6 +18,8 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // Author: bseifert@users.sourceforge.net, bseifert@daccord.net
+//
+// Last modified: $Date$
 
 #ifndef WINVER				// Allow use of features specific to Windows 95 and Windows NT 4 or later.
 #define WINVER 0x0400		// Change this to the appropriate value to target Windows 98 and Windows 2000 or later.
@@ -163,3 +165,8 @@ CString MyGetFullPathName(LPCTSTR relativePath)
 	return buffer;
 }
 
+
+// $Log$
+// Revision 1.4  2004/11/05 16:53:05  assarbad
+// Added Date and History tag where appropriate.
+//

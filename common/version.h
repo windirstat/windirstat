@@ -18,6 +18,8 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // Author: bseifert@users.sourceforge.net, bseifert@daccord.net
+//
+// Last modified: $Date$
 
 // The output of this file is
 // VN_MAJOR, VN_MINOR, VN_REVISION, VN_BUILD, VN_FILEFLAG and VN_STRING
@@ -95,3 +97,8 @@
 #undef BC_RELEASECANDIDATE
 #undef BC_RELEASE
 
+
+// $Log$
+// Revision 1.8  2004/11/05 16:53:05  assarbad
+// Added Date and History tag where appropriate.
+//

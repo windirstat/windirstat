@@ -18,7 +18,8 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // Author: bseifert@users.sourceforge.net, bseifert@daccord.net
-
+//
+// Last modified: $Date$
 
 #ifdef APSTUDIO_INVOKED
 #error this file is not editable by Microsoft Visual C++
@@ -63,3 +64,8 @@ BEGIN
 END
 
 
+
+// $Log$
+// Revision 1.2  2004/11/05 16:53:05  assarbad
+// Added Date and History tag where appropriate.
+//

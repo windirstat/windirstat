@@ -18,6 +18,8 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // Author: bseifert@users.sourceforge.net, bseifert@daccord.net
+//
+// Last modified: $Date$
 
 #pragma once
 
@@ -109,3 +111,8 @@ protected:
 	afx_msg void OnHelpReportbug();
 };
 
+
+// $Log$
+// Revision 1.6  2004/11/05 16:53:08  assarbad
+// Added Date and History tag where appropriate.
+//

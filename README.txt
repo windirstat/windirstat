@@ -1,6 +1,7 @@
 =============================================================================
 WinDirStat - Windows Directory Statistics
 (c) 2003-2004 Bernhard Seifert (bseifert@users.sourceforge.net)
+Last modified: $Date$
 =============================================================================
 
 This project, made up of
