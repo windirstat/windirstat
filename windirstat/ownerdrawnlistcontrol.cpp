@@ -448,7 +448,7 @@ void COwnerDrawnListControl::DrawItem(LPDRAWITEMSTRUCT pdis)
 			COLORREF textColor = item->GetItemTextColor();
 
 			// Except if the item is selected - in this case just use standard colors
-			if ((pdis->itemState & ODS_SELECTED) && (HasFocus() || IsShowSelectionAlways()))
+			if ((pdis->itemState & ODS_SELECTED) && (HasFocus() || IsShowSelectionAlways()) && (IsFullRowSelection()))
 				textColor = GetItemSelectionTextColor(pdis->itemID);
 
 			// Set the text color
@@ -721,6 +721,9 @@ void COwnerDrawnListControl::OnHdnItemchanging(NMHDR * /*pNMHDR*/, LRESULT *pRes
 
 
 // $Log$
+// Revision 1.13  2004/11/15 00:29:25  assarbad
+// - Minor enhancement for the coloring of compressed/encrypted items when not in "select full row" mode
+//
 // Revision 1.12  2004/11/12 22:14:16  bseifert
 // Eliminated CLR_NONE. Minor corrections.
 //
