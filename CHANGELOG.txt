@@ -2,6 +2,7 @@ changelog.txt - What has been done to WinDirStat (newest top)
 =============================================================
 
 2003-01-02	bseifert
+	* Added the French resources to setup.exe.
 	* Internal bugfix: the cleanup actions are now disabled, if
 	  the extension list has the focus.
 	* 'Command prompt here' is now disabled for UNC paths.

@@ -1,22 +1,30 @@
-Windirstat 1.0 - Test Plan
-==========================
+Windirstat - Test Plan
+======================
 
 Quick Overall Test
 ------------------
---> There are 6 files in the binary distribution of WinDirStat:
-    setup.exe, shfolder.dll, wdsh0407.chm, wdsr0407.dll, windirstat.chm, windirstat.exe.
---> The version infos of the executables have the correct version number.
+--> There are 7 files in the binary distribution of WinDirStat:
+    setup.exe, 
+    shfolder.dll, 
+    wdsh0407.chm, 
+    wdsr040c.dll,
+    wdsr0407.dll, 
+    windirstat.chm, 
+    windirstat.exe.
+--> The version infos of the executables show the correct version number.
 
 Delete C:\program files\windirstat
 Delete all shortcuts to windirstat
 Delete HKCU\Software\seifert\windirstat
 
 Start setup.exe
---> On German systems, the language is German
+--> On German systems, the language is German,
+	On French systems, the language is French,
     On other systems, the language is English.
 Using the default settings, proceed through the installation
 --> WinDirStat starts up
-    On German systems, in German
+    On German systems, in German,
+    On French systems, in French,
     On other systems, in English.
     The Select Drives Dialog comes up with the default "All local drives".
 Press OK.
@@ -158,7 +166,8 @@ SUBST a folder to K:. Select "All local drives"
 --> K: is not included.
 
 Online Help
---> Is available in the selected Language
+--> Is available in the selected Language. (In English, when
+    French is selected.)
 --> Is accessible through four points: 
     F1, Help menu, Help about Treemaps, User defined Cleanups Help
 --> All hyperlinks on the first page work.
