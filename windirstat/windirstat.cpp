@@ -82,8 +82,8 @@ CDirstatApp::CDirstatApp()
 	m_workingSet= 0;
 	m_pageFaults= 0;
 	m_lastPeriodicalRamUsageUpdate= GetTickCount();
-	m_AltEncryptionColor= CLR_NONE; // RGB(0x00, 0x80, 0x00)
-	m_AltColor= CLR_NONE; // RGB(0x00, 0x00, 0xFF);
+	m_AltEncryptionColor=	GetAlternativeColor(RGB(0x00, 0x80, 0x00), _T("AltEncryptionColor"));
+	m_AltColor=				GetAlternativeColor(RGB(0x00, 0x00, 0xFF), _T("AltColor"));
 
 	#ifdef _DEBUG
 		TestScanResourceDllName();
@@ -329,42 +329,35 @@ bool CDirstatApp::IsEncrypted(CString path)
 	return (GetFileAttributes(path) & FILE_ATTRIBUTE_ENCRYPTED);
 }
 
-#define ENCRYPTED_COLOR		RGB(0x00, 0x80, 0x00)
-#define COMPRESSED_COLOR	RGB(0x00, 0x00, 0xFF)
-#define EXPLORER_KEY		"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer"
-#define ALTCOLOR			"AltColor"
-#define ALTENCRYPTIONCOLOR	"AltEncryptionColor"
-
-COLORREF CDirstatApp::GetAltEncryptionColor()
+// Get the alternative colors for compressed and encrypted files/folders.
+// This function uses either the value defined in the Explorer configuration
+// or the default color values.
+COLORREF CDirstatApp::GetAlternativeColor(COLORREF clrDefault, LPCTSTR szWhich)
 {
-	if (m_AltEncryptionColor == CLR_NONE)
-	{
-		COLORREF x; DWORD cbValue = sizeof(x);
-		CRegKey key;
+	const LPCTSTR szExplorerKey = _T("Software\\Microsoft\\Windows\\CurrentVersion\\Explorer");
+	COLORREF x; DWORD cbValue = sizeof(x); CRegKey key;
 
-		key.Open(HKEY_CURRENT_USER, _T(EXPLORER_KEY), KEY_READ);
-		if (ERROR_SUCCESS == key.QueryBinaryValue(_T(ALTENCRYPTIONCOLOR), &x, &cbValue))
-			m_AltEncryptionColor = x;
-		else
-			m_AltEncryptionColor = ENCRYPTED_COLOR;
-	}
-	return m_AltEncryptionColor;
+	// Open the explorer key
+	key.Open(HKEY_CURRENT_USER, szExplorerKey, KEY_READ);
+	// Try to read the REG_BINARY value
+	if (ERROR_SUCCESS == key.QueryBinaryValue(szWhich, &x, &cbValue))
+		// Return the read value upon success
+		return x;
+	else
+		// Return the default upon failure
+		return clrDefault;
 }
 
-COLORREF CDirstatApp::GetAltColor()
+COLORREF CDirstatApp::AltColor()
 {
-	if (m_AltColor == CLR_NONE)
-	{
-		COLORREF x; DWORD cbValue = sizeof(x);
-		CRegKey key;
-
-		key.Open(HKEY_CURRENT_USER, _T(EXPLORER_KEY), KEY_READ);
-		if (ERROR_SUCCESS == key.QueryBinaryValue(_T(ALTCOLOR), &x, &cbValue))
-			m_AltColor = x;
-		else
-			m_AltColor = COMPRESSED_COLOR;
-	}
+	// Return property value
 	return m_AltColor;
+}
+
+COLORREF CDirstatApp::AltEncryptionColor()
+{
+	// Return property value
+	return m_AltEncryptionColor;
 }
 
 CString CDirstatApp::GetCurrentProcessMemoryInfo()
@@ -565,6 +558,9 @@ void CDirstatApp::OnHelpReportbug()
 }
 
 // $Log$
+// Revision 1.9  2004/11/10 01:03:00  assarbad
+// - Style cleaning of the alternative coloring code for compressed/encrypted items
+//
 // Revision 1.8  2004/11/08 00:46:26  assarbad
 // - Added feature to distinguish compressed and encrypted files/folders by color as in the Windows 2000/XP explorer.
 //   Same rules apply. (Green = encrypted / Blue = compressed)

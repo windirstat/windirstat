@@ -81,10 +81,10 @@ bool CItem::DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *width,
 		if (textcol == CLR_NONE)
 		{
 			if (GetApp()->IsCompressed(GetPath()))
-				textcol = GetApp()->GetAltColor();
+				textcol = GetApp()->AltColor();
 			else
 				if (GetApp()->IsEncrypted(GetPath()))
-					textcol = GetApp()->GetAltEncryptionColor();
+					textcol = GetApp()->AltEncryptionColor();
 		}
 		return CTreeListItem::DrawSubitem(subitem, pdc, rc, state, width, focusLeft, textcol);
 	}
@@ -1515,6 +1515,9 @@ void CItem::DrivePacman()
 
 
 // $Log$
+// Revision 1.15  2004/11/10 01:03:00  assarbad
+// - Style cleaning of the alternative coloring code for compressed/encrypted items
+//
 // Revision 1.14  2004/11/08 00:46:26  assarbad
 // - Added feature to distinguish compressed and encrypted files/folders by color as in the Windows 2000/XP explorer.
 //   Same rules apply. (Green = encrypted / Blue = compressed)

@@ -66,9 +66,9 @@ public:
 	bool IsCompressed(CString path);
 	bool IsEncrypted(CString path);
 
-	COLORREF GetAltEncryptionColor();
-	COLORREF GetAltColor();
-	
+	COLORREF AltColor();					// Coloring of compressed items
+	COLORREF AltEncryptionColor();			// Coloring of encrypted items
+
 	CString GetCurrentProcessMemoryInfo();
 
 	CMyImageList *GetMyImageList();
@@ -97,6 +97,9 @@ protected:
 	
 	bool UpdateMemoryInfo();
 
+	// Get the alternative color from Explorer configuration
+	COLORREF GetAlternativeColor(COLORREF clrDefault, LPCTSTR szWhich);
+
 	virtual BOOL OnIdle(LONG lCount);		// This is, where scanning is done.
 
 	CSingleDocTemplate* m_pDocTemplate;		// MFC voodoo.
@@ -121,6 +124,9 @@ protected:
 
 
 // $Log$
+// Revision 1.8  2004/11/10 01:03:00  assarbad
+// - Style cleaning of the alternative coloring code for compressed/encrypted items
+//
 // Revision 1.7  2004/11/08 00:46:26  assarbad
 // - Added feature to distinguish compressed and encrypted files/folders by color as in the Windows 2000/XP explorer.
 //   Same rules apply. (Green = encrypted / Blue = compressed)
