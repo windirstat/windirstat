@@ -12,11 +12,8 @@ Last modified: $Date$
 - Date/time formatting more flexible
   => bseifert
   
-- Coloring for compressed and encrypted items should span the full row
-  => assarbad
-
 - Add a column for file attributes to the directory list. Same design
-  as in Windows Explorer "R A H" etc.
+  as in Windows Explorer "RHSAEC" etc.
   => assarbad
   
 - The "Browse dialog" called from the drive selection dialog should
@@ -32,11 +29,6 @@ Last modified: $Date$
 
 - Unicode file releases
   => bseifert
-  
-- Rename "Table Of Contents.hhc" to toc.hhc,
-  as Linux cvs cannot handle filenames with blanks in them.
-  => bseifert
-
 
 Possible additional useful features:
 - Show element size for selected element(s) in status bar

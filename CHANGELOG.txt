@@ -2,6 +2,13 @@ changelog.txt - What has been done to WinDirStat (newest top)
 Last modified: $Date$
 =============================================================
 
+2004-11-12	assarbad
+	* Coloring for compressed and encrypted items spans the
+	  full row (for list control in another state than "Full
+	  row select" the style needs to be decided, yet).
+	* Renamed "Table Of Contents.hhc" to toc.hhc, as Linux
+	  CVS cannot handle filenames with blanks in them.
+
 2004-11-07	assarbad/bseifert
         * French part for setup.rc
         * Minor bugfix concerning "follow junction points"

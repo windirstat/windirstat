@@ -172,11 +172,11 @@ int CDriveItem::GetImage() const
 	return GetMyImageList()->GetFileImage(m_path);
 }
 
-bool CDriveItem::DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *width, int *focusLeft, COLORREF textcol) const
+bool CDriveItem::DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *width, int *focusLeft) const
 {
 	if (subitem == COL_NAME)
 	{
-		DrawLabel(m_list, GetMyImageList(), pdc, rc, state, width, focusLeft, textcol);
+		DrawLabel(m_list, GetMyImageList(), pdc, rc, state, width, focusLeft);
 		return true;
 	}
 	else if (subitem == COL_GRAPH)
@@ -244,6 +244,12 @@ CString CDriveItem::GetText(int subitem) const
 	}
 	
 	return s;
+}
+
+COLORREF CDriveItem::GetItemTextColor() const
+{
+	// No coloring in the drive selection box
+	return CLR_NONE;
 }
 
 CString CDriveItem::GetPath() const
@@ -839,6 +845,9 @@ void CSelectDrivesDlg::OnSysColorChange()
 }
 
 // $Log$
+// Revision 1.13  2004/11/12 00:47:42  assarbad
+// - Fixed the code for coloring of compressed/encrypted items. Now the coloring spans the full row!
+//
 // Revision 1.12  2004/11/08 00:46:26  assarbad
 // - Added feature to distinguish compressed and encrypted files/folders by color as in the Windows 2000/XP explorer.
 //   Same rules apply. (Green = encrypted / Blue = compressed)

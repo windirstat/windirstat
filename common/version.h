@@ -43,7 +43,7 @@
 // The following line is automatically incremented by linkcounter.exe.
 // Format: #define blank LINKCOUNT blanks decimal
 // Reset this to zero only when you increment VERNUM_MAJOR/MINOR/REVISION.
-#define LINKCOUNT  146
+#define LINKCOUNT  186
 
 //-------------------------------------------------------------------
 // Release candidate number. Relevant for BC_RELEASECANDIDATE.
@@ -99,6 +99,9 @@
 
 
 // $Log$
+// Revision 1.13  2004/11/12 00:47:42  assarbad
+// - Fixed the code for coloring of compressed/encrypted items. Now the coloring spans the full row!
+//
 // Revision 1.12  2004/11/09 23:23:03  bseifert
 // Committed new LINKCOUNT to demonstrate merge conflict.
 //

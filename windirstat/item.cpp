@@ -74,19 +74,11 @@ CItem::~CItem()
 		delete m_children[i];
 }
 
-bool CItem::DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *width, int *focusLeft, COLORREF textcol) const
+bool CItem::DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *width, int *focusLeft) const
 {
 	if (subitem == COL_NAME)
 	{
-		if (textcol == CLR_NONE)
-		{
-			if (GetApp()->IsCompressed(GetPath()))
-				textcol = GetApp()->AltColor();
-			else
-				if (GetApp()->IsEncrypted(GetPath()))
-					textcol = GetApp()->AltEncryptionColor();
-		}
-		return CTreeListItem::DrawSubitem(subitem, pdc, rc, state, width, focusLeft, textcol);
+		return CTreeListItem::DrawSubitem(subitem, pdc, rc, state, width, focusLeft);
 	}
 	if (subitem != COL_SUBTREEPERCENTAGE)
 		return false;
@@ -189,6 +181,23 @@ CString CItem::GetText(int subitem) const
 		break;
 	}
 	return s;
+}
+
+COLORREF CItem::GetItemTextColor() const
+{
+	// Get the file/folder attributes
+	DWORD dwAttr = GetFileAttributes(GetPath());
+
+	// Check for compressed flag
+	if (dwAttr & FILE_ATTRIBUTE_COMPRESSED)
+		return GetApp()->AltColor();
+	else
+		// Check for encrypted flag
+		if (dwAttr & FILE_ATTRIBUTE_ENCRYPTED)
+			return GetApp()->AltEncryptionColor();
+		else
+			// The rest is not colored
+			return CLR_NONE;
 }
 
 int CItem::CompareSibling(const CTreeListItem *tlib, int subitem) const
@@ -1515,6 +1524,9 @@ void CItem::DrivePacman()
 
 
 // $Log$
+// Revision 1.16  2004/11/12 00:47:42  assarbad
+// - Fixed the code for coloring of compressed/encrypted items. Now the coloring spans the full row!
+//
 // Revision 1.15  2004/11/10 01:03:00  assarbad
 // - Style cleaning of the alternative coloring code for compressed/encrypted items
 //

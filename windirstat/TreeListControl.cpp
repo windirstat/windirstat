@@ -63,7 +63,7 @@ CTreeListItem::~CTreeListItem()
 	delete m_vi;
 }
 
-bool CTreeListItem::DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *width, int *focusLeft, COLORREF textcol) const
+bool CTreeListItem::DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *width, int *focusLeft) const
 {
 	if (subitem != 0)
 		return false; 
@@ -74,7 +74,7 @@ bool CTreeListItem::DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int
 
 	CRect rcLabel= rc;
 	rcLabel.left= rcNode.right;
-	DrawLabel(GetTreeListControl(), GetMyImageList(), pdc, rcLabel, state, width, focusLeft, false, textcol);
+	DrawLabel(GetTreeListControl(), GetMyImageList(), pdc, rcLabel, state, width, focusLeft, false);
 
 	if (width != NULL)
 	{
@@ -92,6 +92,11 @@ bool CTreeListItem::DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int
 CString CTreeListItem::GetText(int /*subitem*/) const
 { 
 	return _T("test"); 
+}
+
+COLORREF CTreeListItem::GetItemTextColor() const
+{
+	return CLR_NONE;
 }
 
 int CTreeListItem::GetImage() const
@@ -849,6 +854,9 @@ void CTreeListControl::MeasureItem(LPMEASUREITEMSTRUCT mis)
 
 
 // $Log$
+// Revision 1.7  2004/11/12 00:47:42  assarbad
+// - Fixed the code for coloring of compressed/encrypted items. Now the coloring spans the full row!
+//
 // Revision 1.6  2004/11/08 00:46:26  assarbad
 // - Added feature to distinguish compressed and encrypted files/folders by color as in the Windows 2000/XP explorer.
 //   Same rules apply. (Green = encrypted / Blue = compressed)

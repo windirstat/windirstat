@@ -50,11 +50,12 @@ COwnerDrawnListItem::~COwnerDrawnListItem()
 {
 }
 
-// Draws an item (icon, text and so on) in all parts of the WinDirStat view
-void COwnerDrawnListItem::DrawLabel(COwnerDrawnListControl *list, CImageList *il, CDC *pdc, CRect& rc, UINT state, int *width, int *focusLeft, bool indent, COLORREF textcol) const
+// Draws an item label (icon, text) in all parts of the WinDirStat view
+// the rest is drawn by DrawItem()
+void COwnerDrawnListItem::DrawLabel(COwnerDrawnListControl *list, CImageList *il, CDC *pdc, CRect& rc, UINT state, int *width, int *focusLeft, bool indent) const
 {
 	CRect rcRest= rc;
-        // Increase indentation according to tree-level
+	// Increase indentation according to tree-level
 	if (indent)
 		rcRest.left+= GENERAL_INDENT;
 
@@ -102,9 +103,10 @@ void COwnerDrawnListItem::DrawLabel(COwnerDrawnListControl *list, CImageList *il
 		pdc->FillSolidRect(selection, list->GetHighlightColor());
 	}
 	else
-	// If given (and item not selected), draw the text in a specific color
-		if (textcol != CLR_NONE)
-			textColor = textcol;
+	// Use the color designated for this item (if it is != CLR_NONE)
+	// This is currently only for encrypted and compressed items
+		if (GetItemTextColor() != CLR_NONE)
+			textColor = GetItemTextColor();
 	// Set text color for device context
 	CSetTextColor stc(pdc, textColor);
 	if (width == NULL)
@@ -437,7 +439,15 @@ void COwnerDrawnListControl::DrawItem(LPDRAWITEMSTRUCT pdis)
 			CString s= item->GetText(subitem);
 			UINT align= IsColumnRightAligned(subitem) ? DT_RIGHT : DT_LEFT;
 			
-			CSetTextColor tc(&dcmem, GetItemSelectionTextColor(pdis->itemID));
+			// Get the correct color in case of compressed or encrypted items
+			COLORREF textColor = item->GetItemTextColor();
+			// Except if the item is selected - in this case just use standard colors
+			if ((pdis->itemState & ODS_SELECTED) && (HasFocus() || IsShowSelectionAlways()))
+				textColor = GetItemSelectionTextColor(pdis->itemID);
+
+			// Set the text color
+			CSetTextColor tc(&dcmem, textColor);
+			// Draw the (sub)item text
 			dcmem.DrawText(s, rcText, DT_SINGLELINE | DT_VCENTER | DT_WORD_ELLIPSIS | DT_NOPREFIX | align);
 			// Test: dcmem.FillSolidRect(rcDraw, 0);
 		}
@@ -705,6 +715,9 @@ void COwnerDrawnListControl::OnHdnItemchanging(NMHDR * /*pNMHDR*/, LRESULT *pRes
 
 
 // $Log$
+// Revision 1.11  2004/11/12 00:47:42  assarbad
+// - Fixed the code for coloring of compressed/encrypted items. Now the coloring spans the full row!
+//
 // Revision 1.10  2004/11/07 23:28:14  assarbad
 // - Partial implementation for coloring of compressed/encrypted files
 //

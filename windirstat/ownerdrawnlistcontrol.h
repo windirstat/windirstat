@@ -42,19 +42,21 @@ public:
 	virtual ~COwnerDrawnListItem();
 
 	// This text is drawn, if DrawSubitem returns false
-	virtual CString GetText(int subitem) const =0;
+	virtual CString GetText(int subitem) const = 0;
+	// This color is used for the  current item
+	virtual COLORREF GetItemTextColor() const = 0;
 	
 	// Returnvalue is true, if the item draws itself.
 	// width != NULL -> only determine width, do not draw.
 	// If focus rectangle shall not begin leftmost, set *focusLeft
 	// to the left edge of the desired focus rectangle.
-	virtual bool DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *width, int *focusLeft, COLORREF textcol = CLR_NONE) const =0;
+	virtual bool DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *width, int *focusLeft) const =0;
 
 	virtual void DrawAdditionalState(CDC * /*pdc*/, const CRect& /*rcLabel*/) const {}
 
 	void DrawSelection(COwnerDrawnListControl *list, CDC *pdc, CRect rc, UINT state) const;
 protected:
-	void DrawLabel(COwnerDrawnListControl *list, CImageList *il, CDC *pdc, CRect& rc, UINT state, int *width, int *focusLeft, bool indent = true, COLORREF textcol = CLR_NONE) const;
+	void DrawLabel(COwnerDrawnListControl *list, CImageList *il, CDC *pdc, CRect& rc, UINT state, int *width, int *focusLeft, bool indent = true) const;
 	void DrawPercentage(CDC *pdc, CRect rc, double fraction, COLORREF color) const;
 };
 
@@ -126,6 +128,9 @@ protected:
 
 
 // $Log$
+// Revision 1.8  2004/11/12 00:47:42  assarbad
+// - Fixed the code for coloring of compressed/encrypted items. Now the coloring spans the full row!
+//
 // Revision 1.7  2004/11/08 00:46:26  assarbad
 // - Added feature to distinguish compressed and encrypted files/folders by color as in the Windows 2000/XP explorer.
 //   Same rules apply. (Green = encrypted / Blue = compressed)

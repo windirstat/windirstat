@@ -594,22 +594,25 @@ ULONGLONG MyGetFileSize(CFileFind* finder)
 {
 	// Try to use the NT-specific API
 	CGetCompressedFileSizeApi api;
-  
+
 	if (api.IsSupported())
 	{
-	  ULARGE_INTEGER ret;
-	  ret.LowPart = api.GetCompressedFileSize(finder->GetFilePath(), &ret.HighPart);
-	  TRACE(_T("Compressed size %d.\r\n"), ret.LowPart);
-	  if ((GetLastError() != NO_ERROR) && (ret.LowPart == INVALID_FILE_SIZE))
-		return finder->GetLength();
-	  else
-		return ret.QuadPart;
+		ULARGE_INTEGER ret;
+		ret.LowPart = api.GetCompressedFileSize(finder->GetFilePath(), &ret.HighPart);
+		TRACE(_T("Compressed size %d.\r\n"), ret.LowPart);
+		if ((GetLastError() != NO_ERROR) && (ret.LowPart == INVALID_FILE_SIZE))
+			return finder->GetLength();
+		else
+			return ret.QuadPart;
 	}
 	else
-	  return finder->GetLength();
+		return finder->GetLength();
 }
 
 // $Log$
+// Revision 1.13  2004/11/12 00:47:42  assarbad
+// - Fixed the code for coloring of compressed/encrypted items. Now the coloring spans the full row!
+//
 // Revision 1.12  2004/11/07 21:10:25  assarbad
 // - Corrected IF statement
 // - Changed solution file to build consistent "Unicode Debug" configuration for "Unicode Debug" of main project

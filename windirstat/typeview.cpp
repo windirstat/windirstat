@@ -43,11 +43,11 @@ CExtensionListControl::CListItem::CListItem(CExtensionListControl *list, LPCTSTR
 	m_image= -1;
 }
 
-bool CExtensionListControl::CListItem::DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *width, int *focusLeft, COLORREF textcol) const
+bool CExtensionListControl::CListItem::DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *width, int *focusLeft) const
 {
 	if (subitem == COL_EXTENSION)
 	{
-		DrawLabel(m_list, GetMyImageList(), pdc, rc, state, width, focusLeft, textcol);
+		DrawLabel(m_list, GetMyImageList(), pdc, rc, state, width, focusLeft);
 	}
 	else if (subitem == COL_COLOR)
 	{
@@ -106,6 +106,12 @@ CString CExtensionListControl::CListItem::GetText(int subitem) const
 		ASSERT(0);
 		return _T("");
 	}
+}
+
+COLORREF CExtensionListControl::CListItem::GetItemTextColor() const
+{
+	// No coloring for extension list control
+	return CLR_NONE;
 }
 
 CString CExtensionListControl::CListItem::GetExtension() const
@@ -535,6 +541,9 @@ void CTypeView::OnSetFocus(CWnd* /*pOldWnd*/)
 
 
 // $Log$
+// Revision 1.10  2004/11/12 00:47:42  assarbad
+// - Fixed the code for coloring of compressed/encrypted items. Now the coloring spans the full row!
+//
 // Revision 1.9  2004/11/08 00:46:26  assarbad
 // - Added feature to distinguish compressed and encrypted files/folders by color as in the Windows 2000/XP explorer.
 //   Same rules apply. (Green = encrypted / Blue = compressed)
