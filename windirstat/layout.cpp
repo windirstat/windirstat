@@ -101,6 +101,11 @@ void CLayout::OnSize()
 
 	CSize diff= newDialogSize - m_originalDialogSize;
 
+	// The DeferWindowPos-stuff prevents the controls
+	// from overwriting each other.
+
+	HDWP hdwp= BeginDeferWindowPos(m_control.GetSize());
+
 	for (int i=0; i < m_control.GetSize(); i++)
 	{
 		CRect rc= m_control[i].originalRectangle;
@@ -111,8 +116,11 @@ void CLayout::OnSize()
 		rc+= move;
 		rc+= stretch;
 
-		m_control[i].control->MoveWindow(rc);
+		hdwp= DeferWindowPos(hdwp, *m_control[i].control, NULL, rc.left, rc.top, rc.Width(), rc.Height(), 
+			SWP_NOOWNERZORDER|SWP_NOZORDER);
 	}
+
+	EndDeferWindowPos(hdwp);
 }
 
 void CLayout::OnGetMinMaxInfo(MINMAXINFO *mmi)

@@ -1,6 +1,8 @@
 changelog.txt - What has been done to WinDirStat (newest top)
 =============================================================
 
+	* Resizable dialogs: the controls don't overwrite each other any more.
+
 2003-12-13	bseifert
 	* Added size grippers to the resizable dialogs.
 	* Corrections in French windirstat.rc

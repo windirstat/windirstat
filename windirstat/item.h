@@ -77,7 +77,7 @@ inline bool operator== (const FILETIME& t1, const FILETIME& t2)
 // It is derived from CTreeListItem because it _may_ become "visible" and therefore
 // may be inserted in the TreeList view (we don't clone any data).
 //
-// Of cource, this class and the base classes are optimized rather for size than for speed.
+// Of course, this class and the base classes are optimized rather for size than for speed.
 //
 // The m_type indicates whether we are a file or a folder or a drive etc.
 // It may have been better to design a class hierarchy for this, but I can't help it,
@@ -86,7 +86,7 @@ inline bool operator== (const FILETIME& t1, const FILETIME& t2)
 //
 // Naming convention:
 // Methods which recurse down to every child (expensive) are named "RecurseDoSomething".
-// Methods which recurse up to the parent (not so expensive) are named "UpwardDoDomething".
+// Methods which recurse up to the parent (not so expensive) are named "UpwardDoSomething".
 //
 class CItem: public CTreeListItem
 {
