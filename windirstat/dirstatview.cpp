@@ -236,6 +236,7 @@ int CDirstatView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 	m_treeListControl.ShowGrid(GetOptions()->IsListGrid());
 	m_treeListControl.ShowStripes(GetOptions()->IsListStripes());
+	m_treeListControl.ShowFullRowSelection(GetOptions()->IsListFullRowSelection());
 
 	m_treeListControl.InsertColumn(COL_NAME, LoadString(IDS_TREECOL_NAME), LVCFMT_LEFT,	200, COL_NAME);
 	m_treeListControl.InsertColumn(COL_SUBTREEPERCENTAGE, LoadString(IDS_TREECOL_SUBTREEPERCENTAGE), LVCFMT_RIGHT, CItem::GetSubtreePercentageWidth(), COL_SUBTREEPERCENTAGE);
@@ -325,6 +326,7 @@ void CDirstatView::OnUpdate(CView *pSender, LPARAM lHint, CObject *pHint)
 	case HINT_LISTSTYLECHANGED:
 		m_treeListControl.ShowGrid(GetOptions()->IsListGrid());
 		m_treeListControl.ShowStripes(GetOptions()->IsListStripes());
+		m_treeListControl.ShowFullRowSelection(GetOptions()->IsListFullRowSelection());
 		break;
 
 	case HINT_SOMEWORKDONE:

@@ -1,7 +1,11 @@
 changelog.txt - What has been done to WinDirStat (newest top)
 =============================================================
 
-2003-01-11	bseifert	
+2004-01-20	bseifert
+	* Temporarily removed French translation from setup and Aboutbox for release 1.0.2.
+	* New option: Full row selection (default).
+	
+2004-01-11	bseifert	
 	* Completed French translation.
 	* Added rc2-files.
 	

@@ -170,11 +170,11 @@ int CDriveItem::GetImage() const
 	return GetMyImageList()->GetFileImage(m_path);
 }
 
-bool CDriveItem::DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *width) const
+bool CDriveItem::DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *width, int *focusLeft) const
 {
 	if (subitem == COL_NAME)
 	{
-		DrawLabel(m_list, GetMyImageList(), pdc, rc, state, width);
+		DrawLabel(m_list, GetMyImageList(), pdc, rc, state, width, focusLeft);
 		return true;
 	}
 	else if (subitem == COL_GRAPH)
@@ -191,7 +191,9 @@ bool CDriveItem::DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *w
 			return true;
 		}
 
-		rc.DeflateRect(3, 3);
+		DrawSelection(m_list, pdc, rc, state);
+
+		rc.DeflateRect(3, 5);
 	
 		DrawPercentage(pdc, rc, m_used, RGB(0,0,170));
 
@@ -535,6 +537,7 @@ BOOL CSelectDrivesDlg::OnInitDialog()
 
 	m_list.ShowGrid(GetOptions()->IsListGrid());
 	m_list.ShowStripes(GetOptions()->IsListStripes());
+	m_list.ShowFullRowSelection(GetOptions()->IsListFullRowSelection());
 
 	m_list.SetExtendedStyle(m_list.GetExtendedStyle() | LVS_EX_HEADERDRAGDROP);
 	// If we set an ImageList here, OnMeasureItem will have no effect ?!

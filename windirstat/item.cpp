@@ -34,7 +34,7 @@ namespace
 	CString GetFreeSpaceItemName() 	{ return LoadString(IDS_FREESPACE_ITEM); }
 	CString GetUnknownItemName() { return LoadString(IDS_UNKNOWN_ITEM); }
 
-	const SIZE sizeDeflatePacman = { 0, 2 };
+	const SIZE sizeDeflatePacman = { 1, 2 };
 }
 
 
@@ -72,11 +72,11 @@ CItem::~CItem()
 		delete m_children[i];
 }
 
-bool CItem::DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *width) const
+bool CItem::DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *width, int *focusLeft) const
 {
 	if (subitem == COL_NAME)
 	{
-		return CTreeListItem::DrawSubitem(subitem, pdc, rc, state, width);
+		return CTreeListItem::DrawSubitem(subitem, pdc, rc, state, width, focusLeft);
 	}
 	if (subitem != COL_SUBTREEPERCENTAGE)
 		return false;
@@ -95,14 +95,16 @@ bool CItem::DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *width)
 		return true;
 	}
 
+	DrawSelection(GetTreeListControl(), pdc, rc, state);
+
 	if (showReadJobs)
 	{
 		rc.DeflateRect(sizeDeflatePacman);
-		DrawPacman(pdc, rc, GetTreeListControl()->GetItemBackgroundColor(this));
+		DrawPacman(pdc, rc, GetTreeListControl()->GetItemSelectionBackgroundColor(this));
 	}
 	else
 	{
-		rc.DeflateRect(2, 3);
+		rc.DeflateRect(2, 5);
 		for (int i=0; i < GetIndent(); i++)
 			rc.left+= rc.Width() / 10;
 
@@ -1485,6 +1487,6 @@ void CItem::DrivePacman()
 	CClientDC dc(GetTreeListControl());
 	CRect rc= GetTreeListControl()->GetWholeSubitemRect(i, COL_SUBTREEPERCENTAGE);
 	rc.DeflateRect(sizeDeflatePacman);
-	DrawPacman(&dc, rc, GetTreeListControl()->GetItemBackgroundColor(i));
+	DrawPacman(&dc, rc, GetTreeListControl()->GetItemSelectionBackgroundColor(i));
 }
 

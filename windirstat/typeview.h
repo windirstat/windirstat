@@ -48,7 +48,7 @@ protected:
 	public:
 		CListItem(CExtensionListControl *list, LPCTSTR extension, SExtensionRecord r);
 
-		virtual bool DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *width) const;
+		virtual bool DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *width, int *focusLeft) const;
 		virtual CString GetText(int subitem) const;
 
 		CString GetExtension() const;

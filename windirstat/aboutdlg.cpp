@@ -212,8 +212,10 @@ CAboutDlg::CAboutDlg()
 
 CString CAboutDlg::GetAppVersion()
 {
+	USES_CONVERSION;
+
 	CString s;
-	s.Format(_T("WinDirStat %s"), _T(VN_STRING));
+	s.Format(_T("WinDirStat %s"), A2T(VN_STRING));
 	return s;
 }
 

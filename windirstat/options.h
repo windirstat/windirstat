@@ -196,6 +196,9 @@ public:
 	bool IsListStripes();
 	void SetListStripes(bool show);
 
+	bool IsListFullRowSelection();
+	void SetListFullRowSelection(bool show);
+
 	void GetTreelistColors(COLORREF color[TREELISTCOLORCOUNT]);
 	void SetTreelistColors(const COLORREF color[TREELISTCOLORCOUNT]);
 	COLORREF GetTreelistColor(int i);
@@ -249,6 +252,7 @@ private:
 
 	bool m_listGrid;
 	bool m_listStripes;
+	bool m_listFullRowSelection;
 	COLORREF m_treelistColor[TREELISTCOLORCOUNT];
 	int m_treelistColorCount;
 	bool m_humanFormat;

@@ -131,6 +131,7 @@
 #define IDC_TREEMAPGRIDCOLOR            1030
 #define IDC_SHOWGRID2                   1030
 #define IDC_SHOWSTRIPES                 1030
+#define IDC_FULLROWSELECTION            1031
 #define IDC_RESET                       1034
 #define IDC_LIST                        1036
 #define IDC_TITLE                       1037

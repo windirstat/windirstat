@@ -60,7 +60,7 @@ public:
 
 	virtual int CompareSibling(const CTreeListItem *tlib, int subitem) const =0;
 
-	virtual bool DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *width) const;
+	virtual bool DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *width, int *focusLeft) const;
 	virtual CString GetText(int subitem) const;
 	virtual int GetImage() const;
 	virtual int Compare(const CSortingListItem *other, int subitem) const;

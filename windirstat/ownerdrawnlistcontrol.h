@@ -39,12 +39,20 @@ public:
 	COwnerDrawnListItem();
 	virtual ~COwnerDrawnListItem();
 
+	// This text is drawn, if DrawSubitem returns false
 	virtual CString GetText(int subitem) const =0;
-	virtual bool DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *width) const =0;
+	
+	// Returnvalue is true, if the item draws itself.
+	// whith != NULL -> only determine width, do not draw.
+	// If focus rectangle shall not begin leftmost, set *focusLeft
+	// to the left edge of the desired focus rectangle.
+	virtual bool DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *width, int *focusLeft) const =0;
+
 	virtual void DrawAdditionalState(CDC * /*pdc*/, const CRect& /*rcLabel*/) const {}
 
+	void DrawSelection(COwnerDrawnListControl *list, CDC *pdc, CRect rc, UINT state) const;
 protected:
-	void DrawLabel(COwnerDrawnListControl *list, CImageList *il, CDC *pdc, CRect& rc, UINT state, int *width, bool indent = true) const;
+	void DrawLabel(COwnerDrawnListControl *list, CImageList *il, CDC *pdc, CRect& rc, UINT state, int *width, int *focusLeft, bool indent = true) const;
 	void DrawPercentage(CDC *pdc, CRect rc, double fraction, COLORREF color) const;
 };
 
@@ -65,20 +73,33 @@ public:
 	int GetRowHeight();
 	void ShowGrid(bool show);
 	void ShowStripes(bool show);
+	void ShowFullRowSelection(bool show);
+	bool IsFullRowSelection();
 
 	COLORREF GetWindowColor();
 	COLORREF GetStripeColor();
+	COLORREF GetNonFocusHighlightColor();
+	COLORREF GetNonFocusHighlightTextColor();
+	COLORREF GetHighlightColor();
+	COLORREF GetHighlightTextColor();
+
 	bool IsItemStripeColor(int i);
 	bool IsItemStripeColor(const COwnerDrawnListItem *item);
 	COLORREF GetItemBackgroundColor(int i);
 	COLORREF GetItemBackgroundColor(const COwnerDrawnListItem *item);
-	
+	COLORREF GetItemSelectionBackgroundColor(int i);
+	COLORREF GetItemSelectionBackgroundColor(const COwnerDrawnListItem *item);
+	COLORREF GetItemSelectionTextColor(int i);
+
 	COwnerDrawnListItem *GetItem(int i);
 	int FindListItem(const COwnerDrawnListItem *item);
 	int GetTextXMargin();
 	int GetGeneralLeftIndent();
 	void AdjustColumnWidth(int col);
 	CRect GetWholeSubitemRect(int item, int subitem);
+
+	bool HasFocus();
+	bool IsShowSelectionAlways();
 
 protected:
 	void InitializeColors();
@@ -89,6 +110,7 @@ protected:
 	int m_rowHeight;	// Height of an item
 	bool m_showGrid;	// Whether to draw a grid
 	bool m_showStripes;	// Whether to show stripes
+	bool m_showFullRowSelection; // Whether to draw full row selection
 	int m_yFirstItem;	// Top of a first list item
 	COLORREF m_windowColor;	// The default background color if !m_showStripes
 	COLORREF m_stripeColor;	// The stripe color, used for every other item if m_showStripes

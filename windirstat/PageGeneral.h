@@ -46,6 +46,7 @@ protected:
 	BOOL m_humanFormat;
 	BOOL m_listGrid;
 	BOOL m_listStripes;
+	BOOL m_listFullRowSelection;
 
 	CComboBox m_combo;
 	CButton m_ctlFollowMountPoints;
@@ -58,4 +59,5 @@ protected:
 	afx_msg void OnCbnSelendokCombo();
 	afx_msg void OnBnClickedListGrid();
 	afx_msg void OnBnClickedListStripes();
+	afx_msg void OnBnClickedListFullRowSelection();
 };

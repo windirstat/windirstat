@@ -55,7 +55,7 @@ public:
 	CString GetDrive() const;
 	bool IsRemote() const;
 	bool IsSUBSTed() const;
-	virtual bool DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *width) const;
+	virtual bool DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *width, int *focusLeft) const;
 	virtual CString GetText(int subitem) const;
 	int GetImage() const;
 

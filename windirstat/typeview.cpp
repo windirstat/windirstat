@@ -41,11 +41,11 @@ CExtensionListControl::CListItem::CListItem(CExtensionListControl *list, LPCTSTR
 	m_image= -1;
 }
 
-bool CExtensionListControl::CListItem::DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *width) const
+bool CExtensionListControl::CListItem::DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *width, int *focusLeft) const
 {
 	if (subitem == COL_EXTENSION)
 	{
-		DrawLabel(m_list, GetMyImageList(), pdc, rc, state, width);
+		DrawLabel(m_list, GetMyImageList(), pdc, rc, state, width, focusLeft);
 	}
 	else if (subitem == COL_COLOR)
 	{
@@ -59,13 +59,15 @@ bool CExtensionListControl::CListItem::DrawSubitem(int subitem, CDC *pdc, CRect 
 	return true;
 }
 
-void CExtensionListControl::CListItem::DrawColor(CDC *pdc, CRect rc, UINT /*state*/, int *width) const
+void CExtensionListControl::CListItem::DrawColor(CDC *pdc, CRect rc, UINT state, int *width) const
 {
 	if (width != NULL)
 	{
 		*width= 40;
 		return;
 	}
+
+	DrawSelection(m_list, pdc, rc, state);
 
 	rc.DeflateRect(2, 3);
 
@@ -278,7 +280,7 @@ void CExtensionListControl::SelectExtension(LPCTSTR ext)
 	}
 	if (i < GetItemCount())
 	{
-		SetItemState(i, LVIS_SELECTED, LVIS_SELECTED);
+		SetItemState(i, LVIS_SELECTED|LVIS_FOCUSED, LVIS_SELECTED|LVIS_FOCUSED);
 		EnsureVisible(i, false);
 	}
 }
@@ -408,6 +410,7 @@ int CTypeView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 	m_extensionListControl.ShowGrid(GetOptions()->IsListGrid());
 	m_extensionListControl.ShowStripes(GetOptions()->IsListStripes());
+	m_extensionListControl.ShowFullRowSelection(GetOptions()->IsListFullRowSelection());
 
 	m_extensionListControl.Initialize();
 	return 0;
@@ -462,6 +465,7 @@ void CTypeView::OnUpdate(CView * /*pSender*/, LPARAM lHint, CObject *)
 	case HINT_LISTSTYLECHANGED:
 		m_extensionListControl.ShowGrid(GetOptions()->IsListGrid());
 		m_extensionListControl.ShowStripes(GetOptions()->IsListStripes());
+		m_extensionListControl.ShowFullRowSelection(GetOptions()->IsListFullRowSelection());
 		break;
 
 	default:

@@ -55,6 +55,7 @@ void CPageGeneral::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_FOLLOWMOUNTPOINTS, m_ctlFollowMountPoints);
 	DDX_Check(pDX, IDC_SHOWGRID, m_listGrid);
 	DDX_Check(pDX, IDC_SHOWSTRIPES, m_listStripes);
+	DDX_Check(pDX, IDC_FULLROWSELECTION, m_listFullRowSelection);
 }
 
 
@@ -64,6 +65,7 @@ BEGIN_MESSAGE_MAP(CPageGeneral, CPropertyPage)
 	ON_CBN_SELENDOK(IDC_COMBO, OnCbnSelendokCombo)
 	ON_BN_CLICKED(IDC_SHOWGRID, OnBnClickedListGrid)
 	ON_BN_CLICKED(IDC_SHOWSTRIPES, OnBnClickedListStripes)
+	ON_BN_CLICKED(IDC_FULLROWSELECTION, OnBnClickedListFullRowSelection)
 END_MESSAGE_MAP()
 
 
@@ -74,6 +76,7 @@ BOOL CPageGeneral::OnInitDialog()
 	m_humanFormat= GetOptions()->IsHumanFormat();
 	m_listGrid= GetOptions()->IsListGrid();
 	m_listStripes= GetOptions()->IsListStripes();
+	m_listFullRowSelection= GetOptions()->IsListFullRowSelection();
 
 	m_followMountPoints= GetOptions()->IsFollowMountPoints();
 	CVolumeApi va;
@@ -117,6 +120,7 @@ void CPageGeneral::OnOK()
 	GetOptions()->SetFollowMountPoints(m_followMountPoints);
 	GetOptions()->SetListGrid(m_listGrid);
 	GetOptions()->SetListStripes(m_listStripes);
+	GetOptions()->SetListFullRowSelection(m_listFullRowSelection);
 
 	LANGID id= (LANGID)m_combo.GetItemData(m_combo.GetCurSel());
 	CLanguageOptions::SetLanguage(id);
@@ -140,6 +144,11 @@ void CPageGeneral::OnBnClickedListGrid()
 }
 
 void CPageGeneral::OnBnClickedListStripes()
+{
+	SetModified();
+}
+
+void CPageGeneral::OnBnClickedListFullRowSelection()
 {
 	SetModified();
 }

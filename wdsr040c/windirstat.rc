@@ -464,13 +464,15 @@ BEGIN
     CONTROL         "&Montrer la taille des fichiers en Go/Mo/Ko/octets",
                     IDC_HUMANFORMAT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,
                     32,229,10
-    GROUPBOX        "Style de la &liste",IDC_STATIC,30,52,90,45
+    GROUPBOX        "Style de la &liste",IDC_STATIC,30,52,90,65
+    CONTROL         "&Full Row Selection",IDC_FULLROWSELECTION,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,38,67,76,10
     CONTROL         "&Montrer la grille",IDC_SHOWGRID,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,38,65,68,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,38,84,68,10
     CONTROL         "Faire des &rayures",IDC_SHOWSTRIPES,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,38,81,68,10
-    LTEXT           "&Langue",IDC_STATIC,32,109,166,8
-    COMBOBOX        IDC_COMBO,32,122,156,140,CBS_DROPDOWNLIST | CBS_SORT | 
+                    BS_AUTOCHECKBOX | WS_TABSTOP,38,101,68,10
+    LTEXT           "&Langue",IDC_STATIC,32,129,166,8
+    COMBOBOX        IDC_COMBO,32,142,156,140,CBS_DROPDOWNLIST | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
 END
 

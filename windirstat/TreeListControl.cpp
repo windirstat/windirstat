@@ -61,7 +61,7 @@ CTreeListItem::~CTreeListItem()
 	delete m_vi;
 }
 
-bool CTreeListItem::DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *width) const
+bool CTreeListItem::DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *width, int *focusLeft) const
 {
 	if (subitem != 0)
 		return false; 
@@ -72,7 +72,7 @@ bool CTreeListItem::DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int
 
 	CRect rcLabel= rc;
 	rcLabel.left= rcNode.right;
-	DrawLabel(GetTreeListControl(), GetMyImageList(), pdc, rcLabel, state, width, false);
+	DrawLabel(GetTreeListControl(), GetMyImageList(), pdc, rcLabel, state, width, focusLeft, false);
 
 	if (width != NULL)
 	{

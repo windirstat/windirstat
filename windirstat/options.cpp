@@ -60,6 +60,7 @@ namespace
 	const LPCTSTR sectionOptions			= _T("options");
 	const LPCTSTR entryListGrid				= _T("treelistGrid"); // for compatibility with 1.0.1, this entry is named treelistGrid.
 	const LPCTSTR entryListStripes			= _T("listStripes");	
+	const LPCTSTR entryListFullRowSelection = _T("listFullRowSelection");
 	const LPCTSTR entryTreelistColorCount	= _T("treelistColorCount");
 	const LPCTSTR entryTreelistColorN		= _T("treelistColor%d");
 	const LPCTSTR entryHumanFormat			= _T("humanFormat");
@@ -568,6 +569,20 @@ void COptions::SetListStripes(bool show)
 	}
 }
 
+bool COptions::IsListFullRowSelection()
+{
+	return m_listFullRowSelection;
+}
+
+void COptions::SetListFullRowSelection(bool show)
+{
+	if (m_listFullRowSelection != show)
+	{
+		m_listFullRowSelection= show;
+		GetDocument()->UpdateAllViews(NULL, HINT_LISTSTYLECHANGED);
+	}
+}
+
 void COptions::GetTreelistColors(COLORREF color[TREELISTCOLORCOUNT])
 {
 	for (int i=0; i < TREELISTCOLORCOUNT; i++)
@@ -783,6 +798,7 @@ void COptions::SaveToRegistry()
 {
 	SetProfileBool(sectionOptions, entryListGrid, m_listGrid);
 	SetProfileBool(sectionOptions, entryListStripes, m_listStripes);
+	SetProfileBool(sectionOptions, entryListFullRowSelection, m_listFullRowSelection);
 
 	SetProfileInt(sectionOptions, entryTreelistColorCount, m_treelistColorCount);
 	for (int i=0; i < TREELISTCOLORCOUNT; i++)
@@ -836,6 +852,7 @@ void COptions::LoadFromRegistry()
 {
 	m_listGrid= GetProfileBool(sectionOptions, entryListGrid, false);
 	m_listStripes= GetProfileBool(sectionOptions, entryListStripes, false);
+	m_listFullRowSelection= GetProfileBool(sectionOptions, entryListFullRowSelection, true);
 
 	m_treelistColorCount= GetProfileInt(sectionOptions, entryTreelistColorCount, 4);
 	CheckRange(m_treelistColorCount, 1, TREELISTCOLORCOUNT);
@@ -848,7 +865,7 @@ void COptions::LoadFromRegistry()
 	m_humanFormat= GetProfileBool(sectionOptions, entryHumanFormat, true);
 	m_pacmanAnimation= GetProfileBool(sectionOptions, entryPacmanAnimation, true);
 	m_showTimeSpent= GetProfileBool(sectionOptions, entryShowTimeSpent, false);
-	m_treemapHighlightColor= GetProfileInt(sectionOptions, entryTreemapHighlightColor, RGB(0,255,255));
+	m_treemapHighlightColor= GetProfileInt(sectionOptions, entryTreemapHighlightColor, RGB(255,255,255));
 
 	ReadTreemapOptions();
 
