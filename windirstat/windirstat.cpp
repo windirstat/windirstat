@@ -310,6 +310,11 @@ bool CDirstatApp::IsMountPoint(CString path)
 	return m_mountPoints.IsMountPoint(path);
 }
 
+bool CDirstatApp::IsJunctionPoint(CString path)
+{
+	return m_mountPoints.IsJunctionPoint(path);
+}
+
 CString CDirstatApp::GetCurrentProcessMemoryInfo()
 {
 	UpdateMemoryInfo();

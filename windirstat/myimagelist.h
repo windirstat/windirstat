@@ -37,6 +37,7 @@ public:
 
 	int GetMyComputerImage();
 	int GetMountPointImage();
+	int GetJunctionImage();
 	int GetFolderImage();
 	int GetFileImage(LPCTSTR path);
 	int GetExtImageAndDescription(LPCTSTR ext, CString& description);
@@ -57,5 +58,8 @@ protected:
 	int m_freeSpaceImage;	// <Free Space>
 	int m_unknownImage;		// <Unknown>
 	int m_emptyImage;		// For items whose image cannot be found
+
+	// Junction point
+	int m_junctionImage;
 };
 

@@ -77,6 +77,7 @@ namespace
 	const LPCTSTR entryLightSourceX			= _T("lightSourceX");
 	const LPCTSTR entryLightSourceY			= _T("lightSourceY");
 	const LPCTSTR entryFollowMountPoints	= _T("followMountPoints");
+	const LPCTSTR entryFollowJunctionPoints	= _T("followJunctionPoints");
 
 	const LPCTSTR sectionUserDefinedCleanupD	= _T("options\\userDefinedCleanup%02d");
 	const LPCTSTR entryEnabled					= _T("enabled");
@@ -740,8 +741,22 @@ void COptions::SetFollowMountPoints(bool follow)
 {
 	if (m_followMountPoints != follow)
 	{
-		m_followMountPoints= follow;
+		m_followMountPoints = follow;
 		GetDocument()->RefreshMountPointItems();
+	}
+}
+
+bool COptions::IsFollowJunctionPoints()
+{
+	return m_followJunctionPoints;
+}
+
+void COptions::SetFollowJunctionPoints(bool follow)
+{
+	if (m_followJunctionPoints != follow)
+	{
+		m_followJunctionPoints = follow;
+		GetDocument()->RefreshJunctionItems();
 	}
 }
 
@@ -815,6 +830,8 @@ void COptions::SaveToRegistry()
 	SaveTreemapOptions();
 
 	SetProfileBool(sectionOptions, entryFollowMountPoints, m_followMountPoints);
+	SetProfileBool(sectionOptions, entryFollowJunctionPoints, m_followJunctionPoints);
+
 	for (i=0; i < USERDEFINEDCLEANUPCOUNT; i++)
 		SaveUserDefinedCleanup(i);
 
@@ -869,7 +886,10 @@ void COptions::LoadFromRegistry()
 
 	ReadTreemapOptions();
 
-	m_followMountPoints= GetProfileBool(sectionOptions, entryFollowMountPoints, false);
+	m_followMountPoints = GetProfileBool(sectionOptions, entryFollowMountPoints, false);
+	// Ignore junctions by default
+	m_followJunctionPoints = GetProfileBool(sectionOptions, entryFollowJunctionPoints, false);
+
 	for (i=0; i < USERDEFINEDCLEANUPCOUNT; i++)
 		ReadUserDefinedCleanup(i);
 

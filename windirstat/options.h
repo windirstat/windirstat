@@ -224,6 +224,10 @@ public:
 	bool IsFollowMountPoints();
 	void SetFollowMountPoints(bool follow);
 
+	// Option to ignore junction points which are not volume mount points
+	bool IsFollowJunctionPoints();
+	void SetFollowJunctionPoints(bool ignore);
+
 	void GetUserDefinedCleanups(USERDEFINEDCLEANUP udc[USERDEFINEDCLEANUPCOUNT]);
 	void SetUserDefinedCleanups(const USERDEFINEDCLEANUP udc[USERDEFINEDCLEANUPCOUNT]);
 
@@ -263,6 +267,7 @@ private:
 	CTreemap::Options m_treemapOptions;
 	
 	bool m_followMountPoints;
+	bool m_followJunctionPoints;
 	USERDEFINEDCLEANUP m_userDefinedCleanup[USERDEFINEDCLEANUPCOUNT];
 
 	CString m_reportSubject;

@@ -16,8 +16,8 @@ don't violate any copyright (tell me).
 
 
 =============================================================================
-WinDirStat is a disk usage statistics viewer and cleanup tool for MS Windows 
-(all current variants). It shows disk, file and directory sizes in a treelist 
+WinDirStat is a disk usage statistics viewer and cleanup tool for MS Windows
+(all current variants). It shows disk, file and directory sizes in a treelist
 as well as graphically in a treemap, much like KDirStat and Sequoiaview.
 
 
@@ -47,7 +47,6 @@ Major features:
 =============================================================================
 This is a Microsoft Visual Studio.NET 2003 - Project.
 Apart from CString::AppendFormat() I didn't use any MFC 7.0 specific features.
-So this project can easily be ported to Visual Studio 6.0.
 
 Projects included in the workspace
 ----------------------------------
@@ -61,7 +60,7 @@ windirstat	-> windirstat.exe (including English resources).
 
 The Microsoft redistributable file shfolder.dll is also included.
 
-I've commented 
+I've commented
 - every source file
 - every class
 - every data member.

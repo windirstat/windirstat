@@ -32,6 +32,8 @@ CMyImageList::CMyImageList()
 	m_filesFolderImage= 0;
 	m_freeSpaceImage= 0;
 	m_unknownImage= 0;
+	m_emptyImage= 0;
+	m_junctionImage = 0;
 }
 
 CMyImageList::~CMyImageList()
@@ -120,6 +122,12 @@ int CMyImageList::GetMountPointImage()
 	return CacheIcon(GetADriveSpec(), 0); // The flag SHGFI_USEFILEATTRIBUTES doesn't work on W95.
 }
 
+int CMyImageList::GetJunctionImage()
+{
+	// Intermediate solution until we find a nice icon for junction points
+	return m_junctionImage;
+}
+
 int CMyImageList::GetFolderImage()
 {
 	CString s;
@@ -138,7 +146,6 @@ int CMyImageList::GetExtImageAndDescription(LPCTSTR ext, CString& description)
 {
 	return CacheIcon(ext, SHGFI_USEFILEATTRIBUTES, &description);
 }
-
 
 int CMyImageList::GetFilesFolderImage()
 {
@@ -178,7 +185,7 @@ CString CMyImageList::GetADriveSpec()
 
 void CMyImageList::AddCustomImages()
 {
-	const CUSTOM_IMAGE_COUNT = 4;
+	const CUSTOM_IMAGE_COUNT = 5;
 	const COLORREF bgcolor= RGB(255,0,255);
 
 	int folderImage= GetFolderImage();
@@ -205,34 +212,49 @@ void CMyImageList::AddCustomImages()
 		VERIFY(Draw(&dcmem, driveImage, pt, ILD_NORMAL));
 		pt.x+= rc.Width();
 		VERIFY(Draw(&dcmem, driveImage, pt, ILD_NORMAL));
+		pt.x+= rc.Width();
+		VERIFY(Draw(&dcmem, folderImage, pt, ILD_NORMAL));
 		SetBkColor(safe);
 
 		// Now we re-color the imagees
 		for (int i=0; i < rc.Width(); i++)
 		for (int j=0; j < rc.Height(); j++)
 		{
+			int idx = 0;
+
 			// We "blueify" the folder image ("<Files>")
-			COLORREF c= dcmem.GetPixel(i, j);
+			COLORREF c= dcmem.GetPixel(idx * rc.Width() + i, j);
 			if (c != bgcolor)
 			{
 				int brightness= (GetRValue(c) + GetGValue(c) + GetBValue(c)) / 3;
-				dcmem.SetPixel(i, j, RGB(0, brightness, brightness));
+				dcmem.SetPixel(idx * rc.Width() + i, j, RGB(0, brightness, brightness));
 			}
+			idx++;
 	
 			// ... "greenify" the drive image ("<Free Space>")
-			c= dcmem.GetPixel(rc.Width() + i, j);
+			c= dcmem.GetPixel(idx * rc.Width() + i, j);
 			if (c != bgcolor)
 			{
 				int brightness= (GetRValue(c) + GetGValue(c) + GetBValue(c)) / 3;
-				dcmem.SetPixel(rc.Width() + i, j, RGB(64, brightness, 64));
+				dcmem.SetPixel(idx * rc.Width() + i, j, RGB(64, brightness, 64));
 			}
+			idx++;
 		
 			// ...and "yellowify" the drive image ("<Unknown>")
-			c= dcmem.GetPixel(2 * rc.Width() + i, j);
+			c= dcmem.GetPixel(idx * rc.Width() + i, j);
 			if (c != bgcolor)
 			{
 				int brightness= (GetRValue(c) + GetGValue(c) + GetBValue(c)) / 3;
-				dcmem.SetPixel(2 * rc.Width() + i, j, RGB(brightness, brightness, 0));
+				dcmem.SetPixel(idx * rc.Width() + i, j, RGB(brightness, brightness, 0));
+			}
+			idx++;
+
+			// We "greenify" the folder image ("<Junction Point>")
+			c= dcmem.GetPixel(idx * rc.Width() + i, j);
+			if (c != bgcolor)
+			{
+				int brightness= (GetRValue(c) + GetGValue(c) + GetBValue(c)) / 3;
+				dcmem.SetPixel(idx * rc.Width() + i, j, RGB(16, brightness, 16));
 			}
 		}
 	}
@@ -240,5 +262,6 @@ void CMyImageList::AddCustomImages()
 	m_filesFolderImage= k++;
 	m_freeSpaceImage= k++;
 	m_unknownImage= k++;
+	m_junctionImage = k++;
 	m_emptyImage= k++;
 }

@@ -36,6 +36,7 @@ public:
 	~CMountPoints();
 	void Initialize();
 	bool IsMountPoint(CString path);
+	bool IsJunctionPoint(CString path);
 
 private:
 	void Clear();
@@ -53,4 +54,3 @@ private:
 	// m_volume maps all volume identifiers to PointVolumeArrays
 	CMap<CString, LPCTSTR, PointVolumeArray *, PointVolumeArray *> m_volume;	
 };
-

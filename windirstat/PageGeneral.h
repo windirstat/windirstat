@@ -43,6 +43,7 @@ protected:
 	virtual void OnOK();
 
 	BOOL m_followMountPoints;
+	BOOL m_followJunctionPoints;
 	BOOL m_humanFormat;
 	BOOL m_listGrid;
 	BOOL m_listStripes;
@@ -50,12 +51,14 @@ protected:
 
 	CComboBox m_combo;
 	CButton m_ctlFollowMountPoints;
+	CButton m_ctlFollowJunctionPoints;
 
 	int m_originalLanguage;
 
 	DECLARE_MESSAGE_MAP()
 	afx_msg void OnBnClickedHumanformat();
 	afx_msg void OnBnClickedFollowmountpoints();
+	afx_msg void OnBnClickedFollowjunctionpoints();
 	afx_msg void OnCbnSelendokCombo();
 	afx_msg void OnBnClickedListGrid();
 	afx_msg void OnBnClickedListStripes();

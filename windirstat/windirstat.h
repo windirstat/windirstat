@@ -59,6 +59,7 @@ public:
 
 	void ReReadMountPoints();
 	bool IsMountPoint(CString path);
+	bool IsJunctionPoint(CString path);
 
 	CString GetCurrentProcessMemoryInfo();
 

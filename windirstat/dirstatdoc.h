@@ -105,6 +105,7 @@ public:
 	bool Work(DWORD ticks); // return: true if done.
 	bool IsDrive(CString spec);
 	void RefreshMountPointItems();
+	void RefreshJunctionItems();
 
 	bool IsRootDone();
 	CItem *GetRootItem();
@@ -125,6 +126,7 @@ public:
 
 protected:
 	void RecurseRefreshMountPointItems(CItem *item);
+	void RecurseRefreshJunctionItems(CItem *item);
 	void GetDriveItems(CArray<CItem *, CItem *>& drives);
 	void RefreshRecyclers();
 	void RebuildExtensionData();

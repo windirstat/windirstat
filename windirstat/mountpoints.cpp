@@ -205,6 +205,15 @@ bool CMountPoints::IsMountPoint(CString path)
 	return IsVolumeMountPoint(volume, path);
 }
 
+// Check wether the current item is a junction point but no volume mount point
+// as the latter ones are treated differently (see above).
+bool CMountPoints::IsJunctionPoint(CString path)
+{
+	return ( !IsMountPoint(path) &&
+			 bool(GetFileAttributes(path) & FILE_ATTRIBUTE_REPARSE_POINT)
+			);
+}
+
 bool CMountPoints::IsVolumeMountPoint(CString volume, CString path)
 {
 	for (;;)

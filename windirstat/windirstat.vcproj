@@ -37,7 +37,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="htmlhelp.lib"
-				OutputFile="../../debug/$(ProjectName).exe"
+				OutputFile="../../debug/windirstat.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="TRUE"
 				SubSystem="2"
@@ -93,7 +93,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="htmlhelp.lib"
-				OutputFile="../../release/$(ProjectName).exe"
+				OutputFile="../../release/windirstat.exe"
 				LinkIncremental="1"
 				GenerateDebugInformation="TRUE"
 				SubSystem="2"
@@ -152,7 +152,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="htmlhelp.lib"
-				OutputFile="../../debug/$(ProjectName)U.exe"
+				OutputFile="../../debug/windirstat.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="TRUE"
 				SubSystem="2"
@@ -206,7 +206,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="htmlhelp.lib"
-				OutputFile="../../release/windirstatU.exe"
+				OutputFile="../../release/windirstat.exe"
 				LinkIncremental="1"
 				GenerateDebugInformation="TRUE"
 				SubSystem="2"
@@ -266,7 +266,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="htmlhelp.lib"
-				OutputFile="../../debug/$(ProjectName)StrongDebug.exe"
+				OutputFile="../../debug/windirstatStrongDebug.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="TRUE"
 				SubSystem="2"
@@ -568,7 +568,13 @@
 				RelativePath=".\res\icon1.ico">
 			</File>
 			<File
+				RelativePath=".\res\iconjunc.ico">
+			</File>
+			<File
 				RelativePath=".\res\license.txt">
+			</File>
+			<File
+				RelativePath=".\res\reparse-point.ico">
 			</File>
 			<File
 				RelativePath=".\res\Toolbar.bmp">

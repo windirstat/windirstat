@@ -1,6 +1,20 @@
 changelog.txt - What has been done to WinDirStat (newest top)
 =============================================================
 
+2004-11-02	assarbad
+        * Replaced the custom icon for junction points by code to greenify
+          the folder image. Thus junction points are now represented by green
+          folder icons.
+        * ANSI/Unicode DLLs and EXEs now have the same name. No more appended
+          "U" (which broke several things such as localization).
+
+2004-10-31	assarbad
+        * Added option to ignore junction points (reparse points) for
+          those directories not being volume mount points already.
+        * Added the respective icon to represent junction points.
+        * Translation to German and French not yet done for the newly
+          added items.
+
 2004-01-20	bseifert
 	* Temporarily removed French translation from setup and Aboutbox for release 1.0.2.
 	* New option: Full row selection (default).

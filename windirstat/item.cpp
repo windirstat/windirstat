@@ -286,6 +286,11 @@ int CItem::GetImageToCache() const
 			image= GetMyImageList()->GetMountPointImage();
 		}
 		else
+		if (GetType() == IT_DIRECTORY && GetApp()->IsJunctionPoint(path))
+		{
+			image= GetMyImageList()->GetJunctionImage();
+		}
+		else
 		{
 			image= GetMyImageList()->GetFileImage(path);
 		}
@@ -1019,6 +1024,9 @@ bool CItem::StartRefresh()
 	if (GetType() == IT_DIRECTORY && !IsRootItem() && GetApp()->IsMountPoint(GetPath()) && !GetOptions()->IsFollowMountPoints())
 		return true;
 
+	if (GetType() == IT_DIRECTORY && !IsRootItem() && GetApp()->IsJunctionPoint(GetPath()) && !GetOptions()->IsFollowJunctionPoints())
+		return true;
+
 	// Initiate re-read
 	SetReadJobDone(false);
 
@@ -1435,7 +1443,9 @@ CString CItem::UpwardGetPathWithoutBackslash() const
 
 void CItem::AddDirectory(CFileFind& finder)
 {
-	bool dontFollow= GetApp()->IsMountPoint(finder.GetFilePath()) && !GetOptions()->IsFollowMountPoints();
+	bool dontFollow = GetApp()->IsMountPoint(finder.GetFilePath()) && !GetOptions()->IsFollowMountPoints();
+
+	dontFollow |= GetApp()->IsJunctionPoint(finder.GetFilePath()) && !GetOptions()->IsFollowJunctionPoints();
 
 	CItem *child= new CItem(IT_DIRECTORY, finder.GetFileName(), dontFollow);
 	FILETIME t;

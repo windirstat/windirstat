@@ -51,8 +51,10 @@ void CPageGeneral::DoDataExchange(CDataExchange* pDX)
 	CPropertyPage::DoDataExchange(pDX);
 	DDX_Check(pDX, IDC_HUMANFORMAT, m_humanFormat);
 	DDX_Check(pDX, IDC_FOLLOWMOUNTPOINTS, m_followMountPoints);
+	DDX_Check(pDX, IDC_FOLLOWJUNCTIONS, m_followJunctionPoints);
 	DDX_Control(pDX, IDC_COMBO, m_combo);
 	DDX_Control(pDX, IDC_FOLLOWMOUNTPOINTS, m_ctlFollowMountPoints);
+	DDX_Control(pDX, IDC_FOLLOWJUNCTIONS, m_ctlFollowJunctionPoints);
 	DDX_Check(pDX, IDC_SHOWGRID, m_listGrid);
 	DDX_Check(pDX, IDC_SHOWSTRIPES, m_listStripes);
 	DDX_Check(pDX, IDC_FULLROWSELECTION, m_listFullRowSelection);
@@ -62,6 +64,7 @@ void CPageGeneral::DoDataExchange(CDataExchange* pDX)
 BEGIN_MESSAGE_MAP(CPageGeneral, CPropertyPage)
 	ON_BN_CLICKED(IDC_HUMANFORMAT, OnBnClickedHumanformat)
 	ON_BN_CLICKED(IDC_FOLLOWMOUNTPOINTS, OnBnClickedFollowmountpoints)
+	ON_BN_CLICKED(IDC_FOLLOWJUNCTIONS, OnBnClickedFollowjunctionpoints)
 	ON_CBN_SELENDOK(IDC_COMBO, OnCbnSelendokCombo)
 	ON_BN_CLICKED(IDC_SHOWGRID, OnBnClickedListGrid)
 	ON_BN_CLICKED(IDC_SHOWSTRIPES, OnBnClickedListStripes)
@@ -79,11 +82,16 @@ BOOL CPageGeneral::OnInitDialog()
 	m_listFullRowSelection= GetOptions()->IsListFullRowSelection();
 
 	m_followMountPoints= GetOptions()->IsFollowMountPoints();
+	m_followJunctionPoints= GetOptions()->IsFollowJunctionPoints();
+
 	CVolumeApi va;
 	if (!va.IsSupported())
 	{
 		m_followMountPoints= false;	// Otherwise we would see pacman only.
 		m_ctlFollowMountPoints.ShowWindow(SW_HIDE); // Ignorance is bliss.
+		// The same for junction points
+		m_followJunctionPoints = false;	// Otherwise we would see pacman only.
+		m_ctlFollowJunctionPoints.ShowWindow(SW_HIDE); // Ignorance is bliss.
 	}
 
 	int k= m_combo.AddString(GetLocaleLanguage(GetApp()->GetBuiltInLanguage()));
@@ -118,6 +126,7 @@ void CPageGeneral::OnOK()
 	UpdateData();
 	GetOptions()->SetHumanFormat(m_humanFormat);
 	GetOptions()->SetFollowMountPoints(m_followMountPoints);
+	GetOptions()->SetFollowJunctionPoints(m_followJunctionPoints);
 	GetOptions()->SetListGrid(m_listGrid);
 	GetOptions()->SetListStripes(m_listStripes);
 	GetOptions()->SetListFullRowSelection(m_listFullRowSelection);
@@ -134,6 +143,11 @@ void CPageGeneral::OnBnClickedHumanformat()
 }
 
 void CPageGeneral::OnBnClickedFollowmountpoints()
+{
+	SetModified();
+}
+
+void CPageGeneral::OnBnClickedFollowjunctionpoints()
 {
 	SetModified();
 }

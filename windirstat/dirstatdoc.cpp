@@ -400,6 +400,20 @@ void CDirstatDoc::RefreshMountPointItems()
 	RecurseRefreshMountPointItems(root);
 }
 
+// Starts a refresh of all junction points in our tree.
+// Called when the user changes the ignore junction points option.
+//
+void CDirstatDoc::RefreshJunctionItems()
+{
+	CWaitCursor wc;
+
+	CItem *root= GetRootItem();
+	if (root == NULL)
+		return;
+
+	RecurseRefreshJunctionItems(root);
+}
+
 bool CDirstatDoc::IsRootDone()
 {
 	return m_rootItem != NULL && m_rootItem->IsDone();
@@ -566,6 +580,18 @@ void CDirstatDoc::RecurseRefreshMountPointItems(CItem *item)
 	for (int i=0; i < item->GetChildrenCount(); i++)
 	{
 		RecurseRefreshMountPointItems(item->GetChild(i));
+	}
+}
+
+void CDirstatDoc::RecurseRefreshJunctionItems(CItem *item)
+{
+	if (item->GetType() == IT_DIRECTORY && item != GetRootItem() && GetApp()->IsJunctionPoint(item->GetPath()))
+	{
+		RefreshItem(item);
+	}
+	for (int i=0; i < item->GetChildrenCount(); i++)
+	{
+		RecurseRefreshJunctionItems(item->GetChild(i));
 	}
 }
 
@@ -853,6 +879,8 @@ void CDirstatDoc::RecursiveUserDefinedCleanup(const USERDEFINEDCLEANUP *udc, con
 		if (!finder.IsDirectory())
 			continue;
 		if (GetApp()->IsMountPoint(finder.GetFilePath()) && !GetOptions()->IsFollowMountPoints())
+			continue;
+		if (GetApp()->IsJunctionPoint(finder.GetFilePath()) && GetOptions()->IsFollowJunctionPoints())
 			continue;
 
 		RecursiveUserDefinedCleanup(udc, rootPath, finder.GetFilePath());

@@ -441,21 +441,22 @@ STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION |
 CAPTION "Allgemein"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    CONTROL         "&Dateisystemgrenzen überschreiten",
-                    IDC_FOLLOWMOUNTPOINTS,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,32,13,187,10
-    CONTROL         "&Größen im GB/MB/KB/Bytes-Format anzeigen",
-                    IDC_HUMANFORMAT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,
-                    33,207,10
-    GROUPBOX        "&Listenstil",IDC_STATIC,30,52,99,65
+    CONTROL         "&Dateisystemgrenzen überschreiten",IDC_FOLLOWMOUNTPOINTS,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,13,229,10
+    CONTROL         "Symbolischen Verzeichnislinks &folgen (außer Volume Mount Points)",
+                    IDC_FOLLOWJUNCTIONS,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP,32,27,229,10
+    CONTROL         "&Größen im GB/MB/kB/Bytes-Format anzeigen",IDC_HUMANFORMAT,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,41,229,10
+    GROUPBOX        "&Listenstil",IDC_STATIC,30,61,90,65
     CONTROL         "Ganze &Zeile markieren",IDC_FULLROWSELECTION,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,38,67,88,10
-    CONTROL         "&Raster",IDC_SHOWGRID,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,38,84,58,10
-    CONTROL         "S&treifen",IDC_SHOWSTRIPES,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,38,101,58,10
-    LTEXT           "&Sprache",IDC_STATIC,32,132,166,8
-    COMBOBOX        IDC_COMBO,32,145,156,140,CBS_DROPDOWNLIST | CBS_SORT | 
+                    BS_AUTOCHECKBOX | WS_TABSTOP,38,76,75,10
+    CONTROL         "&Raster",IDC_SHOWGRID,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP,38,93,68,10
+    CONTROL         "S&treifen",IDC_SHOWSTRIPES,"Button",BS_AUTOCHECKBOX |
+                    WS_TABSTOP,38,110,68,10
+    LTEXT           "&Sprache",IDC_STATIC,32,144,166,8
+    COMBOBOX        IDC_COMBO,32,157,156,140,CBS_DROPDOWNLIST | CBS_SORT |
                     WS_VSCROLL | WS_TABSTOP
 END
 

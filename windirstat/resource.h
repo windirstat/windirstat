@@ -120,6 +120,7 @@
 #define IDC_DONTSHOWAGAIN               1017
 #define IDC_FOLLOWMOUNTPOINTS           1020
 #define IDC_PACMANANIMATION             1021
+#define IDC_FOLLOWJUNCTIONS             1021
 #define IDC_ASKFORCONFIRMATION          1022
 #define IDC_SHOWTIMESPENT               1022
 #define IDC_TREEMAPGRID                 1022
