@@ -2,6 +2,11 @@ changelog.txt - What has been done to WinDirStat (newest top)
 Last modified: $Date$
 =============================================================
 
+2004-11-24	bseifert
+	* Eliminated hidden option "ExplorerStyle". The directory
+	  list context menu now appears horizontally at the cursor 
+	  position and vertically under (or above) the label.
+	  
 2004-11-23	bseifert
 	* Bugfix: About-Dialog: When the RichEdit control had
 	  the focus, pressing the ESC key made id disappear.
@@ -11,7 +16,11 @@ Last modified: $Date$
 2004-11-19	bseifert
 	* Setup optionally installs a link to windirstat in the
 	  SendTo-Folder.
-	  
+
+2004-11-15	assarbad
+	* Russian translation (still a few strings missing) 
+	  - thanks to Sergiy Polyetayev
+
 2004-11-14	bseifert/assarbad
 	* Date/time and number formatting is now done using
 	  GetUserDefaultLangID(), unless the new option

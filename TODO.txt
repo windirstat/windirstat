@@ -22,7 +22,7 @@ Last modified: $Date$
 
 - Use windirstat.ini, if present
 
-- Implement Context menu position compromise
+- Correct foreign windirstat.rc2 files
 
 - Route Feedback to new mailing-list
 

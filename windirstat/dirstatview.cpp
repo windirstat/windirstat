@@ -55,7 +55,7 @@ BEGIN_MESSAGE_MAP(CMyTreeListControl, CTreeListControl)
 END_MESSAGE_MAP()
 
 
-void CMyTreeListControl::OnContextMenu(CWnd* /*pWnd*/, CPoint ptscreen)
+void CMyTreeListControl::OnContextMenu(CWnd* /*pWnd*/, CPoint pt)
 {
 	int i= GetSelectedItem();
 	if (i == -1)
@@ -66,17 +66,6 @@ void CMyTreeListControl::OnContextMenu(CWnd* /*pWnd*/, CPoint ptscreen)
 	CRect rc= GetWholeSubitemRect(i, 0);
 	CRect rcTitle= item->GetTitleRect() + rc.TopLeft();
 
-	CPoint ptmenu(rcTitle.right, rcTitle.top + rcTitle.Height() / 2);
-	// Decide wether the context menu should be shown at the cursor (explorer style)
-	// or right to the name of the item (classic WinDirStat style)
-	// This can be set by the "ExplorerStyle" value of REG_DWORD treated as bool
-	if (!GetOptions()->IsExplorerStyle())
-		// We take WDS style
-		ClientToScreen(&ptmenu);
-	else
-		// We use Explorer style
-		ptmenu = ptscreen;
-
 	CMenu menu;
 	menu.LoadMenu(IDR_POPUPLIST);
 	CMenu *sub= menu.GetSubMenu(0);
@@ -85,7 +74,33 @@ void CMyTreeListControl::OnContextMenu(CWnd* /*pWnd*/, CPoint ptscreen)
 	GetMainFrame()->AppendUserDefinedCleanups(sub);
 
 	// Show popup menu and act accordingly.
-	sub->TrackPopupMenu(TPM_LEFTALIGN | TPM_LEFTBUTTON, ptmenu.x, ptmenu.y, AfxGetMainWnd());
+	//
+	// The menu shall not overlap the label but appear
+	// horizontally at the cursor position,
+	// vertically under (or above) the label.
+	// TrackPopupMenuEx() behaves in the desired way, if
+	// we exclude the label rectangle extended to full screen width.
+	// 
+	// Thanks to Sven for this compromise between the old Windirstat
+	// behavior (show the menu to the right of the label) and the
+	// Explorer behavior (show the menu at the cursor position).
+
+	TPMPARAMS tp;
+	tp.cbSize = sizeof(tp);
+	tp.rcExclude = rcTitle;
+	ClientToScreen(&tp.rcExclude);
+
+	CRect desktop;
+	GetDesktopWindow()->GetWindowRect(desktop);
+
+	tp.rcExclude.left = desktop.left;
+	tp.rcExclude.right = desktop.right;
+
+	const int overlap = 2;	// a little vertical overlapping
+	tp.rcExclude.top += overlap;
+	tp.rcExclude.bottom -= overlap;
+
+	sub->TrackPopupMenuEx(TPM_LEFTALIGN | TPM_LEFTBUTTON, pt.x, pt.y, AfxGetMainWnd(), &tp);
 }
 
 void CMyTreeListControl::OnItemDoubleClick(int i)
@@ -398,6 +413,9 @@ void CDirstatView::Dump(CDumpContext& dc) const
 
 
 // $Log$
+// Revision 1.12  2004/11/24 20:28:12  bseifert
+// Implemented context menu compromise.
+//
 // Revision 1.11  2004/11/12 09:27:01  assarbad
 // - Implemented ExplorerStyle option which will not be accessible through the options dialog.
 //   It handles where the context menu is being shown.

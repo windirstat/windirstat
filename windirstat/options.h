@@ -230,11 +230,6 @@ public:
 	bool IsFollowJunctionPoints();
 	void SetFollowJunctionPoints(bool ignore);
 
-	// Invisible option to use Explorer style vs. classic WinDirStat style
-	// when showing the context menu in the tree.
-	// Because it is invisible there is no "set" method.
-	bool IsExplorerStyle();
-
 	// Option to use CDirStatApp::m_langid for date/time and number formatting
 	bool IsUseWdsLocale();
 	void SetUseWdsLocale(bool use);
@@ -279,7 +274,6 @@ private:
 	
 	bool m_followMountPoints;
 	bool m_followJunctionPoints;
-	bool m_explorerStyle;
 	bool m_useWdsLocale;
 
 	USERDEFINEDCLEANUP m_userDefinedCleanup[USERDEFINEDCLEANUPCOUNT];
@@ -292,6 +286,9 @@ private:
 
 
 // $Log$
+// Revision 1.12  2004/11/24 20:28:13  bseifert
+// Implemented context menu compromise.
+//
 // Revision 1.11  2004/11/14 08:49:06  bseifert
 // Date/Time/Number formatting now uses User-Locale. New option to force old behavior.
 //

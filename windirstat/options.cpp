@@ -80,7 +80,6 @@ namespace
 	const LPCTSTR entryLightSourceY			= _T("lightSourceY");
 	const LPCTSTR entryFollowMountPoints	= _T("followMountPoints");
 	const LPCTSTR entryFollowJunctionPoints	= _T("followJunctionPoints");
-	const LPCTSTR entryExplorerStyle		= _T("ExplorerStyle");
 	const LPCTSTR entryUseWdsLocale			= _T("useWdsLocale");
 
 	const LPCTSTR sectionUserDefinedCleanupD	= _T("options\\userDefinedCleanup%02d");
@@ -764,11 +763,6 @@ void COptions::SetFollowJunctionPoints(bool follow)
 	}
 }
 
-bool COptions::IsExplorerStyle()
-{
-	return m_explorerStyle;
-}
-
 bool COptions::IsUseWdsLocale()
 {
 	return m_useWdsLocale;
@@ -915,10 +909,6 @@ void COptions::LoadFromRegistry()
 	m_followJunctionPoints = GetProfileBool(sectionOptions, entryFollowJunctionPoints, false);
 	// use user locale by default
 	m_useWdsLocale = GetProfileBool(sectionOptions, entryUseWdsLocale, false);
-
-	// Classic WinDirStat style bey default. Explorer style shows the context menu
-	// directly at the cursor.
-	m_explorerStyle = GetProfileBool(sectionOptions, entryExplorerStyle, false);
 
 	for (i=0; i < USERDEFINEDCLEANUPCOUNT; i++)
 		ReadUserDefinedCleanup(i);
@@ -1120,6 +1110,9 @@ void CRegistryUser::CheckRange(int& value, int min, int max)
 
 
 // $Log$
+// Revision 1.14  2004/11/24 20:28:13  bseifert
+// Implemented context menu compromise.
+//
 // Revision 1.13  2004/11/14 08:49:06  bseifert
 // Date/Time/Number formatting now uses User-Locale. New option to force old behavior.
 //
