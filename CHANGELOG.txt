@@ -2,6 +2,9 @@ changelog.txt - What has been done to WinDirStat (newest top)
 Last modified: $Date$
 =============================================================
 
+2005-02-08	assarbad
+	* Corrections to the Spanish translation after review by Sergio.
+
 2005-02-07	assarbad
 	* Adjusted all resources to show Spanish. Missing translation of
 	  the word "Spanish" for Hungarian and of the words "Spanish"
