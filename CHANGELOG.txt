@@ -2,6 +2,10 @@ changelog.txt - What has been done to WinDirStat (newest top)
 Last modified: $Date$
 =============================================================
 
+2005-02-09	assarbad
+	* Preparation for Bulgarian translation (without translation
+	  yet).
+
 2005-02-08	assarbad
 	* Corrections to the Spanish translation after review by Sergio.
 
