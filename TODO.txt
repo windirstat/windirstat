@@ -6,12 +6,6 @@ Last modified: $Date$
 
 - Russian: translate IDS_ABOUT_AUTHORS and IDS_ABOUT_AUTHORSTEXTs
 
-- Execute testplan.
-
-- Unicode file releases
-
-- Sync Website
-
 - Christmas Release 1.1.1
 ==========================================================
 

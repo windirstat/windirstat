@@ -2,6 +2,9 @@ changelog.txt - What has been done to WinDirStat (newest top)
 Last modified: $Date$
 =============================================================
 
+2005-01-02	bseifert
+	* Copyright -2005.
+
 2004-12-31	bseifert
 	* Added English phrases to IDS_LANGUAGERESTARTNOW (Russian and Polish).
 	* Untranslated Polish, French and Russian IDS_SEV_*** and IDS_FROMsPLATFORMs strings.
