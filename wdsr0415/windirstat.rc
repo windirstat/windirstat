@@ -465,7 +465,7 @@ BEGIN
     LTEXT           "&Jêzyk",IDC_STATIC,32,139,166,8
     COMBOBOX        IDC_COMBO,32,152,156,140,CBS_DROPDOWNLIST | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
-    CONTROL         "&Use this language for date/time and number formatting",
+    CONTROL         "&U¿yj ustawieñ jêzyka do formatowania daty/czasu i liczb",
                     IDC_USEWDSLOCALE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
                     32,172,298,10
 END
@@ -631,7 +631,7 @@ BEGIN
     IDR_MAINFRAME           "WinDirStat\n\nWinDirStat\n\n\n\n"
     IDS_QUERYING            "(skanowanie...)"
     IDS_NOTACCESSIBLE       "(niedostêpne)"
-    IDS_TREECOL_ATTRIBUTES  "Attributes"
+    IDS_TREECOL_ATTRIBUTES  "Atrybuty"
 END
 
 STRINGTABLE 
@@ -773,8 +773,8 @@ BEGIN
     IDS_CREATEPROCESSsFAILEDs 
                             "Tworzenie procesu(%1!s!) nie powiod³o siê: %2!s!"
     IDS_LANGUAGERESTARTNOW  "Jêzyk zostanie zmieniony po ponownym uruchomieniu programu.\r\n\r\nUruchomiæ ponownie teraz?"
-    IDS_ABOUT_AUTHORS       "Authors"
-    IDS_ABOUT_AUTHORSTEXTs  "=== Programmers ===\r\n\r\nBernhard Seifert\r\nCreator of the project and coordinator\r\n(mailto:%1!s!)\r\n\r\nOliver Schneider\r\n(mailto:assarbad@users.sourceforge.net)\r\n\r\n\r\n=== Translators ===\r\n\r\n--- French ---\r\n\r\nPascal Delrot\r\n(mailto:tigroo@users.sourceforge.net)\r\n\r\nUltraSam\r\n(mailto:sam.fd@wanadoo.fr)\r\n\r\n\r\n--- Polish ---\r\n\r\nDariusz Ma³achowski\r\n(mailto:d_malachowski@pf.pl)\r\n\r\n\r\n--- Russian ---\r\n\r\nSergiy 'Polet' Polyetayev\r\n(mailto:s_polyetayev@hotmail.com)\r\n"
+    IDS_ABOUT_AUTHORS       "Autorzy"
+    IDS_ABOUT_AUTHORSTEXTs  "=== Programiœci ===\r\n\r\nBernhard Seifert\r\nTwórca projektu i koordynator\r\n(mailto:%1!s!)\r\n\r\nOliver Schneider\r\n(mailto:assarbad@users.sourceforge.net)\r\n\r\n\r\n=== T³umacz¹cy ===\r\n\r\n--- Francuski ---\r\n\r\nPascal Delrot\r\n(mailto:tigroo@users.sourceforge.net)\r\n\r\nUltraSam\r\n(mailto:sam.fd@wanadoo.fr)\r\n\r\n\r\n--- Polski ---\r\n\r\nDariusz Ma³achowski\r\n(mailto:d_malachowski@pf.pl)\r\n\r\n\r\n--- Rosyjski ---\r\n\r\nSergiy 'Polet' Polyetayev\r\n(mailto:s_polyetayev@hotmail.com)\r\n"
 END
 
 STRINGTABLE 
