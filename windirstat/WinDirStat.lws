@@ -1,0 +1,6 @@
+InputRC=.\windirstat.rc
+LangINI=..\..\windirstat_0409.ini
+OutputRC=..\..\windirstat_Target.rc
+Copy=0
+ObsoleteItems=0
+NoSort=0
