@@ -22,7 +22,7 @@
 // Last modified: $Date$
 
 #pragma once
-#include "afx.h" // Declaration of prototype for CFileFind
+#include <afx.h> // Declaration of prototype for CFileFind
 
 class CFileFindWDS :
 	public CFileFind
@@ -35,6 +35,9 @@ public:
 };
 
 // $Log$
+// Revision 1.3  2004/11/29 09:07:53  assarbad
+// - Changed scope for including afx.h
+//
 // Revision 1.2  2004/11/28 14:40:06  assarbad
 // - Extended CFileFindWDS to replace a global function
 // - Now packing/unpacking the file attributes. This even spares a call to find encrypted/compressed files.
