@@ -12,6 +12,9 @@ Last modified: $Date$
 - Date/time formatting more flexible
   => bseifert
   
+- Coloring for compressed and encrypted items should span the full row
+  => assarbad
+
 - Add a column for file attributes to the directory list. Same design
   as in Windows Explorer "R A H" etc.
   => assarbad
