@@ -2,6 +2,12 @@ changelog.txt - What has been done to WinDirStat (newest top)
 Last modified: $Date$
 =============================================================
 
+2004-11-07	assarbad/bseifert
+        * French part for setup.rc
+        * Minor bugfix concerning "follow junction points"
+        * Using compressed file size as reference now. This includes
+          compressed and sparse files. The wrapper makes this transparent.
+
 2004-11-06	assarbad
         * Added the CVS-tags for Date and History whereever appropriate.
           (already yesterday)
