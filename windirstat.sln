@@ -19,6 +19,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "wdshelp", "wdshelp\wdshelp.
 	ProjectSection(ProjectDependencies) = postProject
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "wdsr040c", "wdsr040c\wdsr040c.vcproj", "{DA4DDD24-67BC-4A9D-87D3-18C73E5CAF31}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfiguration) = preSolution
 		Debug = Debug
@@ -67,6 +71,14 @@ Global
 		{7EE5206B-1657-482A-B6A1-343DE5D6DE11}.Unicode Debug.Build.0 = Debug|Win32
 		{7EE5206B-1657-482A-B6A1-343DE5D6DE11}.Unicode Release.ActiveCfg = Release|Win32
 		{7EE5206B-1657-482A-B6A1-343DE5D6DE11}.Unicode Release.Build.0 = Release|Win32
+		{DA4DDD24-67BC-4A9D-87D3-18C73E5CAF31}.Debug.ActiveCfg = Debug|Win32
+		{DA4DDD24-67BC-4A9D-87D3-18C73E5CAF31}.Debug.Build.0 = Debug|Win32
+		{DA4DDD24-67BC-4A9D-87D3-18C73E5CAF31}.Release.ActiveCfg = Release|Win32
+		{DA4DDD24-67BC-4A9D-87D3-18C73E5CAF31}.Release.Build.0 = Release|Win32
+		{DA4DDD24-67BC-4A9D-87D3-18C73E5CAF31}.Unicode Debug.ActiveCfg = Debug|Win32
+		{DA4DDD24-67BC-4A9D-87D3-18C73E5CAF31}.Unicode Debug.Build.0 = Debug|Win32
+		{DA4DDD24-67BC-4A9D-87D3-18C73E5CAF31}.Unicode Release.ActiveCfg = Release|Win32
+		{DA4DDD24-67BC-4A9D-87D3-18C73E5CAF31}.Unicode Release.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 	EndGlobalSection
