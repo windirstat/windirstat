@@ -2,7 +2,7 @@ changelog.txt - What has been done to WinDirStat (newest top)
 Last modified: $Date$
 =============================================================
 
-2004-11-14	bseifert
+2004-11-14	bseifert/assarbad
 	* Date/time and number formatting is now done using
 	  GetUserDefaultLangID(), unless the new option
 	  "Use this language for formatting" (near the language
@@ -11,6 +11,7 @@ Last modified: $Date$
 	  date/time format as configured in the control panel
 	  although the selected language for Windirstat is
 	  "English - US".
+	* Last used folder now pre-selected
 	   
 2004-11-12  bseifert
 	* Added Polish resource dll: wdsr0415. Thanks to Darek.

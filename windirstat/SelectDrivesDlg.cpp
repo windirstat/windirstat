@@ -608,7 +608,7 @@ BOOL CSelectDrivesDlg::OnInitDialog()
 void CSelectDrivesDlg::OnBnClickedBrowsefolder()
 {
 	// Buffer, because SHBrowseForFolder() wants a buffer
-	CString sDisplayName;
+	CString sDisplayName, sSelectedFolder = m_folderName;
 	BROWSEINFO bi;
 	ZeroMemory(&bi, sizeof(bi));
 
@@ -618,11 +618,16 @@ void CSelectDrivesDlg::OnBnClickedBrowsefolder()
 	// Use the CString as buffer (minimum is MAX_PATH as length)
 	bi.pszDisplayName= sDisplayName.GetBuffer(_MAX_PATH);
 	bi.lpszTitle= title;
-	bi.ulFlags= BIF_RETURNONLYFSDIRS | BIF_EDITBOX | BIF_NEWDIALOGSTYLE | BIF_NONEWFOLDERBUTTON;
+	// Set a callback function to pre-select a folder
+	bi.lpfn = BFFCALLBACK(BrowseCallbackProc);
+	bi.lParam = LPARAM(sSelectedFolder.GetBuffer());
+	// Set the required flags
+	bi.ulFlags= BIF_RETURNONLYFSDIRS | BIF_EDITBOX | /*BIF_NEWDIALOGSTYLE |*/ BIF_NONEWFOLDERBUTTON;
 	
 	LPITEMIDLIST pidl= SHBrowseForFolder(&bi);
 	// Release the actual buffer
 	sDisplayName.ReleaseBuffer();
+	sSelectedFolder.ReleaseBuffer();
 
 	if (pidl != NULL)
 	{
@@ -834,7 +839,27 @@ void CSelectDrivesDlg::OnSysColorChange()
 	m_list.SysColorChanged();
 }
 
+// Callback function for the dialog shown by SHBrowseForFolder()
+int CALLBACK CSelectDrivesDlg::BrowseCallbackProc(	HWND	hWnd,
+													UINT	uMsg,
+													LPARAM	lParam,
+													LPARAM	lpData)
+{
+	UNREFERENCED_PARAMETER(lParam);
+	
+	switch( uMsg )
+	{
+	case BFFM_INITIALIZED:
+		::SendMessage(hWnd, BFFM_SETSELECTION, TRUE, lpData); 
+		break;
+	}
+	return 0;
+}
+
 // $Log$
+// Revision 1.18  2004/11/14 21:50:44  assarbad
+// - Pre-select the last used folder
+//
 // Revision 1.17  2004/11/13 08:17:07  bseifert
 // Remove blanks in Unicode Configuration names.
 //

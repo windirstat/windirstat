@@ -168,6 +168,10 @@ protected:
 	CStringArray m_selectedDrives;
 	CLayout m_layout;
 
+	// Callback function for the dialog shown by SHBrowseForFolder()
+	// MUST be static!
+	static int CALLBACK BrowseCallbackProc(HWND hWnd, UINT uMsg, LPARAM lParam, LPARAM lpData);
+
 	DECLARE_MESSAGE_MAP()
 	afx_msg void OnBnClickedBrowsefolder();
 	afx_msg void OnLbnSelchangeDrives();
@@ -186,6 +190,9 @@ protected:
 };
 
 // $Log$
+// Revision 1.11  2004/11/14 21:50:44  assarbad
+// - Pre-select the last used folder
+//
 // Revision 1.10  2004/11/13 08:17:07  bseifert
 // Remove blanks in Unicode Configuration names.
 //

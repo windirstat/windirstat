@@ -609,6 +609,7 @@ ULONGLONG MyGetFileSize(CFileFind* finder)
 		return finder->GetLength();
 }
 
+/*
 // Retrieve an Item ID list from a given path.
 // Returns a valid pidl, or throws an exception.
 LPCITEMIDLIST SHGetPIDLFromPath(CString path)
@@ -625,8 +626,12 @@ LPCITEMIDLIST SHGetPIDLFromPath(CString path)
 
 	return pidl;
 }
+*/
 
 // $Log$
+// Revision 1.17  2004/11/14 21:50:44  assarbad
+// - Pre-select the last used folder
+//
 // Revision 1.16  2004/11/14 08:49:06  bseifert
 // Date/Time/Number formatting now uses User-Locale. New option to force old behavior.
 //

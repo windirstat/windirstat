@@ -13,10 +13,6 @@ Last modified: $Date$
   as in Windows Explorer "RHSAEC" etc.
   => assarbad
   
-- The "Browse dialog" called from the drive selection dialog should
-  start at the position it was last - not at "My Documents" always.
-  => assarbad
-
 - Setup: optionally install a link to Windirstat in the SendTo-Folder.
   => bseifert
     
