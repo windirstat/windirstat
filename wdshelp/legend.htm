@@ -1,0 +1,56 @@
+<html>
+	<head>
+		<title>Legend</title>
+		<META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+		<meta name="vs_targetSchema" content="http://schemas.microsoft.com/intellisense/ie5">
+		<link rel="stylesheet" type="text/css" href="format.css">
+		<style type="text/css">
+		<!--
+			h3 { margin-bottom:6pt; }
+			p { margin-top:0pt; }
+		-->
+		</style>
+	</head>
+	<BODY>
+		<h2>Legend</h2>
+		<h3>&lt;Files&gt;</h3>
+		<p>Generally, each directory in the directory list has a pseudo subdirectory
+		&lt;Files&gt;. There, all ordinary files of the directory are put together.
+		That is, all files, which are immediate children of the directory, not those
+		of subdirectories. This has the advantage, that the directory list is cleaner
+		and that the statistics is sounder. Because with this item you can
+		see how much space is used all in all by the files of the directory (not of subdirectories).
+		</p>
+		<p>The &lt;Files&gt; item is ommitted, if there is only one file in the
+		directory, or if it has no subdirectories.
+		</p>
+		<h3>&lt;Free Space&gt;</h3>
+		<p>If you have activated "Show Free Space" in the Options menu, each drive
+		has an &lt;Free Space&gt; item. The size of this item tallies with the amount
+		of free space available on the drive. In the treemap this item has a dark grey color. 
+		Through the &lt;Free Space&gt; item you get an impression of the ratio between
+		the totaly used disk space and the free disk space. This information corresponds
+		with the value shown in the Windows Explorer properties dialog for the drive.
+		</p>
+		<h3>&lt;Unknown&gt;</h3>
+		<p>If you have activated "Show Unknown" in the Options menu, each drive
+		has an &lt;Unknown&gt; item. The matter is as follows.
+		On the one hand, WinDirStat knows the total capacity of the drive and
+		the free disk space. (These values tally with the number shown by the
+		Windows Explorer properties dialog for the drive.)
+		On the other hand WinDirStat has determined the sizes of all files
+		and added them up.
+		Well, &lt;Unknown&gt; is the difference: Total capacity minus free space
+		minus determined sum. This rest can be greater than zero by serveral reasons.
+		For instance there can be directories (e.g. "System Volume Information") with read-access
+		denied. Their size cannot be included in the sum calculated by WinDirStat.
+		In the treemap, the &lt;Unknown&gt; item is colored vivid yellow.
+		</p>
+		<h3>&lt; (in column headings)</h3>
+		<p>indicates that the list is <a href="sorting.htm">sorted</a> by this column in ascending order.
+		</p>
+		<h3>&gt; (in column headings)</h3>
+		<p>indicates that the list is <a href="sorting.htm">sorted</a> by this column in descending order.
+		</p>
+	</BODY>
+</html>

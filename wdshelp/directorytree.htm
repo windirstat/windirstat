@@ -1,0 +1,61 @@
+<html>
+	<head>
+		<title>Directory List</title>
+		<META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+		<meta name="vs_targetSchema" content="http://schemas.microsoft.com/intellisense/ie5">
+		<link rel="stylesheet" type="text/css" href="format.css">
+	</head>
+	<BODY>
+		<h2>Directory List</h2>
+		<p>The directory list resembles the tree view of the Windows Explorer, with the 
+			difference that it shows directories and files sorted by size descending. At 
+			the top you see the directories and files, which use up most space. When you 
+			expand a directory, its subdirectories are shown again sorted by size, and so 
+			on.
+		</p>
+		<h3>Columns</h3>
+		<p>
+			<ul>
+				<li>
+					<u>Name</u>. This column shows the names of the files and directories and their 
+					tree structure.</li>
+				<li>
+					<u>Size</u>. For files, this is the size of the file, in bytes. For 
+					directories, this is the size of the subtree, that is the sum of the sizes of 
+					all subdirectories and files.</li>
+				<li>
+					<u>Subtree Percentage</u>. This column shows, how the size of a subtree is 
+					composed of the sizes of the sub-items. This information is comparable only 
+					within <i>one</i> level and is always related to the expanded parent item.<br>
+					[During the scanning, this column shows either a pacman or the number of read 
+					jobs to do for the subtree.]
+				</li>
+				<li>
+					<u>Percentage</u>. The same information as in "Subtree Percentage", in percent.<br>
+					[During the scanning, this column shows the time spent for the subtree so far.]
+				</li>
+				<li>
+					<u>Files</u>. Number of files in the subtree.</li>
+				<li>
+					<u>Subdirs</u>. Number of sub-directories in the subtree.</li>
+				<li>
+					<u>Items</u>. Number of items in the subtree. Sum of "Files" and "Subdirs".</li>
+				<li>
+					<u>Last Change</u>. Date of the last modification in the subtree.</li>
+			</ul>
+		</p>
+		<h3>Operation</h3>
+		<p>In the column "Name" you can expand and collapse the directories by a mouse 
+			click on the little boxes with + and -, as in the Windows Explorer. A click on 
+			a name <i>selects</i> an item. After that you can navigate in the tree with the 
+			arrow keys.
+		</p>
+		<p>The treemap always highlights the selected item with a frame.
+		</p>
+		<p>If you select a file, the extension list automatically shows its type.
+		</p>
+		<p>The <a href="sorting.htm">sorting</a> can be set with a mouse click on a column 
+			header.
+		</p>
+	</BODY>
+</html>

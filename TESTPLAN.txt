@@ -1,0 +1,265 @@
+Windirstat 1.0 - Test Plan
+==========================
+
+Quick Overall Test
+------------------
+--> There are 6 files in the binary distribution of WinDirStat:
+    setup.exe, shfolder.dll, wsdh0407.chm, wdsr0407.dll, windirstat.chm, windirstat.exe.
+--> The version infos of the executbles point to the about box.
+
+Delete C:\program files\windirstat
+Delete all shortcuts to windirstat
+Delete HKCU\Software\seifert\windirstat
+
+Start setup.exe
+--> On German systems, the language is German
+    On other systems, the language is English.
+Using the default settings, proceed through the installation
+--> WinDirStat starts up
+    On German systems, in German
+    On other systems, in English.
+    The Select Drives Dialog comes up with the default "All local drives".
+Press OK.
+--> All local drives are scanned, with pacman animation.
+    Then the treemap and extension list are shown.
+Quit WinDirStat.
+--> In C:\program files\windirstat there are 4 files.
+--> There is a shortcut to windirstat.exe on the desktop (all users).
+--> There is a shortcut to windirstat exe in the Start menu (all users on NT, local user on W9x).
+--> There is a registry key in HKCU\Software\Seifert\windirstat.
+
+Critical Features
+-----------------
+Select the English Language and restart WinDirStat
+(the English version should be tested best).
+
+Drag+Drop a folder onto the desktop shortcut
+--> WinDirStat comes up with this folder as root.
+Drag+Drop an empty folder onto the desktop shortcut
+--> WinDirStat comes up with a black treemap.
+Insert an empty diskette into drive A:
+Select this drive as root
+--> WinDirStat comes up with a black treemap.
+Select some big drives
+During the scan quit WinDirStat
+--> WinDirStat quits silently.
+
+Copy some big directories to C:\temp (for deletion).
+For the following "during the scan" tests it is is good idea,
+to activate the "cross file system boundaries" option and
+mount e.g. C: to D:\mount\c and D: to C:\mount\d. Because
+of the circularity the scan will then last forever.
+
+Select some big drives
+During the scan refresh some items
+--> WinDirStat refreshs the items.
+During the scan expand and collapse folders
+During the scan open the about box
+--> The scan continues even with the about box open.
+During the scan delete a file under c:\temp (to the recycle bin)
+--> The extra warning comes up.
+Say No
+--> Nothing happens.
+Delete the file under C:\temp again
+--> The extra warning comes up again.
+Say Yes
+--> The Shell warning comes up. This dialog is modal to WinDirStat.
+Say No
+--> Nothing happens (the item is refeshed).
+Delete the file under C:\temp again
+--> The extra warning comes up again
+Say "Don't show this warning again"
+Say No.
+--> Nothing happens.
+Delete the file under C:\temp again
+--> The extra waring comes up again
+Say "Don't show this warning again"
+Say Yes.
+--> The Shell warning comes up. This dialog is modal to WinDirStat.
+Say Yes.
+--> The file is deleted, the view is refreshed.
+Delete another file under C:\temp.
+--> The Shell warning comes up. This dialog is modal to WinDirStat.
+Say No.
+
+--> The menu Clean Up shows Empty Recycle Bin with at least 1 item.
+--> This information corresponds to the properties of the recycle bin.
+During the scan do Clean Up->Empty Recycle Bin
+--> A Shell warning comes up. This dialog is modal to WinDirStat.
+Say No
+--> Nothing happens
+During the scan do Clean Up->Empty Recycle Bin again
+--> A Shell warning comes up.  This dialog is modal to WinDirStat.
+Say Yes
+--> Your recycle bin is emptied, the recycler folders are refreshed,
+During the scan delete a big folder in C:\temp.
+Confirm the Shell warning with Yes.
+--> The deletion progress dialog is modal to WinDirStat.
+
+Deactivate the "cross file system boundaries" option.
+--> The 2 mount points are refreshed and empty. The scan completes.
+
+When the scan is complete, select a file deep in the tree.
+Repeatedly "select parent" and "re-select child" by keyboard, context menu and main menu.
+Repeatedly "select parent". Then select a different item.
+--> "re-select child" is disabled.
+Repeatedly "zoom in" and "zoom out" by keyboard, context menu and main menu.
+Zoom in some levels.
+Select an item outside of the zoom root.
+--> The zoom is place to the common ancestor of the item and the pervious zoom root.
+
+Delete folder in C:\temp.
+--> The item is refreshed. The treemap is dimmed and then rebuilt.
+
+Resize the main window.
+--> The treemap is dimmed and then rebuilt.
+
+F9
+--> Shows/hides the treemap
+
+F8
+--> Shows/hides the extension list
+
+F6
+--> Shows/hides <free space>
+--> The free space correspondes to the properties of the drive.
+
+F7
+--> Shows/hides <unknown>
+
+For NT and W9x DO
+	For each item type (My Computer, drive, folder, file, <Files>, <Freespace>, <Unknown>) DO
+		For each access method (Main menu, context menu, toolbar, shortcut)
+			Open Item
+			Copy Path
+			Explorer here
+			Command prompt here
+			Refresh selected
+			Delete to recycle bin
+			Delete (no way to undelete)
+			Properties
+			Send email to Owner
+			--> The action is either disabled or works as expected.
+		NEXT access method
+	NEXT item type
+NEXT platform
+
+
+Other Features
+--------------
+Play with the Select Drives Dialog
+--> It works as expected. 
+--> A double click on a drive opens that drive alone.
+--> The selection is persistent.
+--> UNC Paths work.
+
+Online Help
+--> Is available in the selected Language
+--> Is accessible through three points: F1, Help about Treemaps, User defined Cleanups Help
+--> All hyperlinks on the first page work.
+
+About box
+--> 3 Tabs, all links work.
+
+Report Bug/Feedback
+Cancel.
+--> It disappears.
+Fill in some data. Press OK.
+--> The email client comes up modaly.
+
+Options-General
+--> works as expected.
+Options->Directory List
+--> works as expected.
+Options->Treemap
+--> works as expected.
+
+Change Column widths and column order
+--> The settings are persistent
+Change Sorting
+--> works as expected
+
+Change the size of the dialogs Select Drives,
+Report Bug, Aboutbox
+--> size is persistent, position is restored to center always
+
+Minimize WinDirStat and close it via the system menu.
+Start WinDirStat
+--> It opens up in the restored state.
+
+
+User defined Cleanups
+---------------------
+Test cleanup 1: 'CD & PAUSE' (NT), resp. 'CD > dir.txt' (W9x)
+Test cleanup 2: 'C: & CD 'program files' & CD windirstat & windirstat "%p"' (NT)
+                'windirstat "%p"' (set a PATH to windirstat under W9x)
+Test cleanup 3: 'echo %p %n %sp %sn & PAUSE' (NT)
+                'echo %p %n %sp %sn > echo.txt' (W9x)
+--> The 3 UDCs appear in the main menu and the directory tree context menu
+--> They work as expected
+--> They are accessible through their shortcuts
+FOR each option (Works for..., Recurse, Confirmation, Show Console, Wait, Refresh policy)
+	--> The option works as expected
+NEXT option
+--> The Up and Down button work as expected.
+Leave WinDirStat and start it again.
+--> The UDCs are still there.
+Disable the test cleanups.
+--> They disappear from the menus.
+
+
+Setup Options
+-------------
+Delete C:\program files\windirstat
+Delete all shortcuts to windirstat
+Delete HKCU\Software\seifert\windirstat
+
+Start setup.exe
+Cancel.
+--> setup quits.
+Start setup.exe
+Select the  folder like C:\temp\windirstat (temp exists)
+--> No warning about non-existent directory
+Select the folder C:\temp\wds
+--> Warning, whether c:\temp\wds shall be created
+Say no.
+--> The wizard doesn't proceed.
+Say yes.
+--> The wizard proceeds. C:\temp\wds is created.
+Go back and select C:\programme\windirstat again.
+Deselect both shortcut options. Finish.
+--> windirstat is installed but without shortcuts.
+Start setup.exe
+Select only "create shortcut on desktop"
+--> Only one shortcut on the desktop is created.
+Start setup.exe
+Select only "create shortcut in the start menu".
+--> Shortcut in the Start->Programs-Menu is created.
+
+Special cases
+-------------
+Delete C:\program files\windirstat
+Delete all shortcuts to windirstat
+Delete HKCU\Software\seifert\windirstat
+
+Logon as a under-priviledged user.
+Perform setup.exe
+--> what happens?
+Start windirstat
+--> what happens?
+
+Set the color depth to 256 colors or start WinDirStat under Terminal Server.
+--> The extension list show only 8 colors, not 12.
+
+Start setup.exe from floppy disk.
+--> It works as expected.
+
+Start setup.exe from CD
+--> It works as expected.
+
+Start WinDirStat from CD
+--> It works fine.
+
+Set the Desktop design to "XP"
+--> All windirstat controls are XP-like.
+

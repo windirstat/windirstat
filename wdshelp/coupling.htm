@@ -1,0 +1,35 @@
+<html>
+	<head>
+		<title>Coupling of the Views</title>
+		<META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+		<meta name="vs_targetSchema" content="http://schemas.microsoft.com/intellisense/ie5">
+		<link rel="stylesheet" type="text/css" href="format.css">
+	</head>
+	<BODY>
+		<h2>Coupling of the Views</h2>
+		<p>The really strong point of WinDirStat is, that the three views, Directory List, 
+			Extension List and Treemap, are coupled with each other.
+		</p>
+		<h3>Directory List -> Treemap</h3>
+		<p>When you <i>select</i> an item (directory or file) in the directory list, the 
+			treemap also shows this item by highlighting it with a colored frame. In 
+			particular you can see the size of directories.
+		</p>
+		<h3>Treemap -> Directory List</h3>
+		<p>When you click into the treemap, the mouse always hits a file (a colored 
+			rectangle). After that the directory list expands (if necessary) the 
+			appropriate nodes and selects this file. So you can, e.g. by clicking on a big 
+			rectangle, see path and attributes of the corresponding big file in the 
+			directory list.
+		</p>
+		<p>So, because of this mutual coupling, the selections in the directory list and in 
+			the treemap are always the same.
+		</p>
+		<h3>Directory List + Treemap -> Extension List</h3>
+		<p>When you select a <i>file</i> in the directory list (or in the treemap), the 
+			extension list shows the file type (the extension). The extension is selected 
+			and scrolled into view. So you can see the description and the 
+			statistics for this file type.
+		</p>
+	</BODY>
+</html>
