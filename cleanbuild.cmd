@@ -17,6 +17,7 @@ del /f /q .\common\linkcounter.exe
 for /d %%i in (*) do @(
   rd /s /q ".\%%i\Unicode Release"
   rd /s /q ".\%%i\Release"
+  rd /s /q ".\%%i\Debug"
 )
 :: rem Change back to the previous dir
 popd
