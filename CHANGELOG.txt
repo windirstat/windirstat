@@ -1,6 +1,9 @@
 changelog.txt - What has been done to WinDirStat (newest top)
 =============================================================
 
+2004-01-01	bseifert
+	* All file VERSIONINFOs are now conforming to Windoww.
+	  Introduced automatic update of build number.
 	* The lists now realize when system colors change, and the
 	  program needs not to be restarted.
 	  Text- and item highlight colors are no longer hardcoded.
@@ -13,7 +16,7 @@ changelog.txt - What has been done to WinDirStat (newest top)
 	* Directory list: During the scan it was hard to manipulate
 	  items with mouse clicks due to the periodical re-sort.
 	  Now mouse messages are processed before the re-sort, so it
-	  is much more likely to hit the wanted item.
+	  is more likely to hit the wanted item.
 	* Directory list: During the scan it was hard to navigate
 	  in the tree because the selection was auto-scrolled into
 	  view every 0.6 sec. This is now removed.

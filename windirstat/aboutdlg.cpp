@@ -21,6 +21,7 @@
 
 #include "stdafx.h"
 #include "windirstat.h"
+#include "../common/version.h"
 #include ".\aboutdlg.h"
 
 #ifdef _DEBUG
@@ -212,7 +213,7 @@ CAboutDlg::CAboutDlg()
 CString CAboutDlg::GetAppVersion()
 {
 	CString s;
-	s.Format(_T("WinDirStat devel"));
+	s.Format(_T("WinDirStat %s"), _T(VN_STRING));
 	return s;
 }
 

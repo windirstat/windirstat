@@ -84,7 +84,7 @@ void COwnerDrawnListItem::DrawLabel(COwnerDrawnListControl *list, CImageList *il
 	COLORREF textColor= GetSysColor(COLOR_WINDOWTEXT);
 	if (width == NULL && (state & ODS_SELECTED) != 0 && (haveFocus || (list->GetStyle() & LVS_SHOWSELALWAYS) != 0))
 	{
-		static const COLORREF nonFocusBgColor = RGB(120, 120, 120); // RGB(190,190,190): this would be Windows conform, but has too little contrast.
+		static const COLORREF nonFocusBgColor = RGB(120, 120, 120); // RGB(190,190,190): this would be Windows conforming, but has too little contrast.
 		static const COLORREF nonFocusTextColor = RGB(255,255,255); // RGB(0,0,0)
 		COLORREF bgColor= (haveFocus ? GetSysColor(COLOR_HIGHLIGHT) : nonFocusBgColor);
 		pdc->FillSolidRect(rcLabel, bgColor);

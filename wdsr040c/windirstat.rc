@@ -8,6 +8,7 @@
 // Generated from the TEXTINCLUDE 2 resource.
 //
 #include "afxres.h"
+#include "../common/version.h"
 
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
@@ -35,6 +36,7 @@ END
 2 TEXTINCLUDE 
 BEGIN
     "#include ""afxres.h""\r\n"
+    "#include ""../common/version.h""\r\n"
     "\0"
 END
 
@@ -859,6 +861,43 @@ END
 #endif    // French (France) resources
 /////////////////////////////////////////////////////////////////////////////
 
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION VN_MAJOR,VN_MINOR,VN_REVISION,VN_BUILD
+ PRODUCTVERSION VN_MAJOR,VN_MINOR,VN_REVISION,VN_BUILD
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L + VN_FILEFLAG
+#else
+ FILEFLAGS 0x0L + VN_FILEFLAG
+#endif
+ FILEOS 0x4L
+ FILETYPE VFT_DLL
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904e4"
+        BEGIN
+            VALUE "CompanyName", "Seifert"
+            VALUE "FileDescription", "WinDirStat French Resources"
+            VALUE "FileVersion", VN_STRING
+            VALUE "InternalName", "wdsr040c"
+            VALUE "LegalCopyright", "Copyright (c) 2003-2004 Bernhard Seifert"
+            VALUE "OriginalFilename", "wdsr040c.dll"
+            VALUE "ProductName", "WinDirStat"
+            VALUE "ProductVersion", VN_STRING
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x40c, 1252
+    END
+END
 
 
 #ifndef APSTUDIO_INVOKED

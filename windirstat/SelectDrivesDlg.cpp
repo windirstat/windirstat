@@ -28,7 +28,9 @@
 #endif
 
 #ifdef _DEBUG
-//#define TESTTHREADS //####
+#ifdef STRONGDEBUG
+#define TESTTHREADS
+#endif
 #endif
 
 namespace

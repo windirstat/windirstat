@@ -308,7 +308,7 @@ void CTreemap::DrawTreemap(CDC *pdc, CRect rc, Item *root, const Options *option
 
 		RecurseDrawGraph(pdc, root, rc, true, surface, m_options.height, 0);
 
-#if 0	// Extensive testing (slow, but must be done for each release) ###
+#ifdef STRONGDEBUG	// slow, but finds bugs!
 #ifdef _DEBUG
 		for (int x=rc.left; x < rc.right - m_options.grid; x++)
 		for (int y=rc.top; y < rc.bottom - m_options.grid; y++)

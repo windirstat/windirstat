@@ -51,10 +51,12 @@ So this project can easily be ported to Visual Studio 6.0.
 
 Projects included in the workspace
 ----------------------------------
+linkcounter	-> linkercounter.exe. Updates LINKCOUNT in common/version.h.
 setup		-> setup.exe
 wdsh0407	-> German Helpfile wdsh0407.chm
 wdshelp		-> English Helpfile windirstat.chm
 wdsr0407	-> German Resource DLL wdsr0407.dll
+wdsr040c	-> French Resource DLL wdsr040c.dll
 windirstat	-> windirstat.exe (including English resources).
 
 The Microsoft redistributable file shfolder.dll is also included.
@@ -83,11 +85,11 @@ How to create a resource dll.
 
 * In Text Include 3 adjust the LANGUAGE
 
-* Remove the manifest and the Versioninfo
+* Remove the manifest
 
 * Translate the rc-File
 
-* Note that the string IDS_RESOURCEVERSION (currently =  "Resource Version 1")
+* Note that the string IDS_RESOURCEVERSION (currently =  "Resource Version 3")
   must not be changed, otherwise the resource dll is not accepted
   by windirstat.exe.
   This version string may be changed in future versions of windirstat, if

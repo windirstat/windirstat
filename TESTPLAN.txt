@@ -5,7 +5,7 @@ Quick Overall Test
 ------------------
 --> There are 6 files in the binary distribution of WinDirStat:
     setup.exe, shfolder.dll, wsdh0407.chm, wdsr0407.dll, windirstat.chm, windirstat.exe.
---> The version infos of the executbles point to the about box.
+--> The version infos of the executbles have the correct version number.
 
 Delete C:\program files\windirstat
 Delete all shortcuts to windirstat
