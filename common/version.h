@@ -44,7 +44,7 @@
 // Format: #define blank LINKCOUNT blanks decimal
 // Reset this to zero only when you increment VERNUM_MAJOR/MINOR/REVISION.
 
-#define LINKCOUNT  460
+#define LINKCOUNT  468
 
 //-------------------------------------------------------------------
 // Release candidate number. Relevant for BC_RELEASECANDIDATE.
@@ -114,6 +114,9 @@
 
 
 // $Log$
+// Revision 1.25  2004/12/30 10:18:39  bseifert
+// Updated RESOURCEVERSION. Updated testplan. setup: "minimize size".
+//
 // Revision 1.24  2004/12/30 08:01:11  bseifert
 // helpfile updated.
 //

@@ -757,7 +757,7 @@ END
 
 STRINGTABLE 
 BEGIN
-    IDS_RESOURCEVERSION     "Resource Version 3"
+    IDS_RESOURCEVERSION     "Resource Version 4"
     IDS_ABOUT_ABOUTTEXTss   "\r\nWinDirStat - Статистика каталогов\r\n\r\n""Показывает куда пропала место на диске\r\nи помогает вам очистить его.""\r\n\r\nПерепрограмировано для MS Windows -\r\nBernhard Seifert (mailto:%1!s!),\r\n\r\nосновано на программе KDirStat - Stefan Hundhammer для KDE (Linux)\r\n(http://kdirstat.sourceforge.net/).\r\n\r\nОфициальный сайт http://%2!s!/\r\n\r\nCopyright (c) 2003-2004 The authors of WinDirStat"
     IDS_ABOUT_THANKSTOTEXT  "\r\nStefan Hundhammer за его превосходный инструмент для Линукс KDirStat.\r\nИспользование KDirStat (2.3.7), как спецификации, сохранило мне много времени.\r\nhttp://kdirstat.sourceforge.net/\r\n\r\nАвторам SequoiaView за демонстрацию полезности использования структуры каталогов (treemaps).\r\nhttp://www.win.tue.nl/sequoiaview/\r\n\r\nJarke J. van Wijk, Huub van de Wetering, Mark Bruls и Kees Huizing\r\nза их работы о подушечных treemaps и squarified treemaps.\r\nhttp://www.win.tue.nl/~vanwijk/\r\n\r\nBen Shneiderman за его изобретательную идею относительно treemaps -\r\nдействительно интуитивного способа визуализировать древесную структуру.\r\nhttp://www.cs.umd.edu/hcil/treemap-history/\r\n\r\nМоим коллегам за их отзывы о ранних версиях WinDirStat.\r\nhttp://www.daccord.net/\r\n\r\nBeatrix Lodige и Nick Lines за бета тестирование.\r\n"
     IDS_ABOUT_ABOUT         "О"

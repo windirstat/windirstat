@@ -2,6 +2,11 @@ changelog.txt - What has been done to WinDirStat (newest top)
 Last modified: $Date$
 =============================================================
 
+2004-12-30	bseifert
+	* setup.exe is no compiled optimizing size (-> ca. -15 KB)
+	* Updated testplan.
+	* Incremented RESOURCEVERSION to 4.
+	
 2004-12-25	bseifert
 	* Documented Attributes column in helpfiles.
 	* Documented Junction points in helpfiles.

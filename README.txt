@@ -16,7 +16,7 @@ This project, made up of
 	setup, linkcounter
 
 - help files
-	wdsh0407 (German), wdshelp (English)
+	wdsh0407 (German), wdsh0415 (Polish), wdshelp (English)
 
 is distributed under the terms of the GPL v2 (executables+source)
 respectively GNU FDL (help files).
@@ -73,6 +73,7 @@ Projects included in the workspace
 linkcounter	-> linkercounter.exe. Updates LINKCOUNT in common/version.h.
 setup		-> setup.exe
 wdsh0407	-> German Helpfile wdsh0407.chm
+wdsh0415	-> Polish Helpfile wdsh0415.chm
 wdshelp		-> English Helpfile windirstat.chm
 wdsr0407	-> German Resource DLL wdsr0407.dll
 wdsr040c	-> French Resource DLL wdsr040c.dll
