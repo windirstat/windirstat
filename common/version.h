@@ -44,7 +44,7 @@
 // Format: #define blank LINKCOUNT blanks decimal
 // Reset this to zero only when you increment VERNUM_MAJOR/MINOR/REVISION.
 
-#define LINKCOUNT  237
+#define LINKCOUNT  281
 
 //-------------------------------------------------------------------
 // Release candidate number. Relevant for BC_RELEASECANDIDATE.
@@ -114,6 +114,9 @@
 
 
 // $Log$
+// Revision 1.19  2004/12/12 08:34:56  bseifert
+// Aboutbox: added Authors-Tab. Removed license.txt from resource dlls (saves 16 KB per dll).
+//
 // Revision 1.18  2004/11/27 07:19:36  bseifert
 // Unicode/Ansi/Debug-specification in version.h/Aboutbox. Minor fixes.
 //

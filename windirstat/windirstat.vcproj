@@ -583,6 +583,9 @@
 				RelativePath=".\res\reparse-point.ico">
 			</File>
 			<File
+				RelativePath=".\res\text1.bin">
+			</File>
+			<File
 				RelativePath=".\res\Toolbar.bmp">
 			</File>
 			<File

@@ -2,6 +2,12 @@ changelog.txt - What has been done to WinDirStat (newest top)
 Last modified: $Date$
 =============================================================
 
+2004-12-12	bseifert
+	* Aboutbox: added "Authors" Tab.
+	* Copyright now hold by "The authors of WinDirStat".
+	* license.txt not needed in localized resource dlls.
+	  -> saves 16 KB per resource dll.
+
 2004-11-29	bseifert
 	* Introduced SRECT. sizeof(CItem) is now 104 compared to 112.
 	* Minor formatting changes.

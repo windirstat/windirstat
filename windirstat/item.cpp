@@ -92,10 +92,10 @@ CRect CItem::TmiGetRectangle() const
 
 void CItem::TmiSetRectangle(const CRect& rc) 
 {
-	m_rect.left		= rc.left;
-	m_rect.top		= rc.top;
-	m_rect.right	= rc.right;
-	m_rect.bottom	= rc.bottom;
+	m_rect.left		= (short)rc.left;
+	m_rect.top		= (short)rc.top;
+	m_rect.right	= (short)rc.right;
+	m_rect.bottom	= (short)rc.bottom;
 }
 
 bool CItem::DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *width, int *focusLeft) const
@@ -1660,6 +1660,9 @@ void CItem::DrivePacman()
 
 
 // $Log$
+// Revision 1.25  2004/12/12 08:34:59  bseifert
+// Aboutbox: added Authors-Tab. Removed license.txt from resource dlls (saves 16 KB per dll).
+//
 // Revision 1.24  2004/11/29 07:07:47  bseifert
 // Introduced SRECT. Saves 8 Bytes in sizeof(CItem). Formatting changes.
 //

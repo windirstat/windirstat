@@ -41,27 +41,28 @@ namespace
 	enum
 	{
 		TAB_ABOUT,
+		TAB_AUTHORS,
 		TAB_THANKSTO,
 		TAB_LICENSE
 	};
 
 	// Retrieve the GPL text from our resources
-	CString GetTextResource(UINT id)
+	CString GetTextResource(UINT id, HMODULE dll = AfxGetResourceHandle())
 	{
 		CString s;
 
 		HGLOBAL hresource = NULL;
 		try
 		{
-			HRSRC hrsrc= FindResource(NULL, MAKEINTRESOURCE(id), _T("TEXT"));
+			HRSRC hrsrc= FindResource(dll, MAKEINTRESOURCE(id), _T("TEXT"));
 			if (hrsrc == NULL)
 				MdThrowLastWinerror();
 
-			DWORD dwSize= SizeofResource(AfxGetInstanceHandle(), hrsrc);
+			DWORD dwSize= SizeofResource(dll, hrsrc);
 			if (dwSize == 0)
 				MdThrowLastWinerror();
 
-			hresource= LoadResource(NULL, hrsrc);
+			hresource= LoadResource(dll, hrsrc);
 			const BYTE *pData= (const BYTE *)LockResource(hresource);
 
 			CComBSTR bstr(dwSize, (LPCSTR)pData);
@@ -109,6 +110,7 @@ void CAboutDlg::CMyTabControl::Initialize()
 	ModifyStyle(0, WS_CLIPCHILDREN);
 
 	InsertItem(TAB_ABOUT, LoadString(IDS_ABOUT_ABOUT));
+	InsertItem(TAB_AUTHORS, LoadString(IDS_ABOUT_AUTHORS));
 	InsertItem(TAB_THANKSTO, LoadString(IDS_ABOUT_THANKSTO));
 	InsertItem(TAB_LICENSE, LoadString(IDS_ABOUT_LICENSEAGREEMENT));
 
@@ -126,6 +128,8 @@ void CAboutDlg::CMyTabControl::Initialize()
 
 void CAboutDlg::CMyTabControl::SetPageText(int tab)
 {
+	USES_CONVERSION;
+
 	CString text;
 	DWORD newStyle= ES_CENTER;
 
@@ -134,11 +138,14 @@ void CAboutDlg::CMyTabControl::SetPageText(int tab)
 	case TAB_ABOUT:
 		text.FormatMessage(IDS_ABOUT_ABOUTTEXTss, GetAuthorEmail(), GetWinDirStatHomepage());
 		break;
+	case TAB_AUTHORS:
+		text.LoadString(IDS_ABOUT_AUTHORSTEXT);
+		break;
 	case TAB_THANKSTO:
 		text.LoadString(IDS_ABOUT_THANKSTOTEXT);
 		break;
 	case TAB_LICENSE:
-		text= GetTextResource(IDR_LICENSE);
+		text= GetTextResource(IDR_LICENSE, NULL);
 		newStyle= ES_LEFT;
 		break;
 	default:
@@ -156,13 +163,16 @@ void CAboutDlg::CMyTabControl::SetPageText(int tab)
 	DWORD exstyle= m_text.GetExStyle();
 
 	m_text.DestroyWindow();
+
 	m_text.CreateEx(exstyle, style, rc, this, RE_CONTROL);
 
+	m_text.ModifyStyleEx(0, exstyle);
 	m_text.SetAutoURLDetect();
 	m_text.SetEventMask(ENM_LINK | ENM_KEYEVENTS);
 	m_text.SetFont(GetFont());
 
 	m_text.SetWindowText(text);
+
 	m_text.HideCaret();
 }
 
@@ -296,6 +306,9 @@ void CAboutDlg::OnDestroy()
 }
 
 // $Log$
+// Revision 1.14  2004/12/12 08:34:59  bseifert
+// Aboutbox: added Authors-Tab. Removed license.txt from resource dlls (saves 16 KB per dll).
+//
 // Revision 1.13  2004/11/23 06:37:04  bseifert
 // Fixed bug in AboutDlg: Esc-key made controls disappear.
 //

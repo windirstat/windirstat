@@ -2,15 +2,12 @@ TODO.txt - What still has to been done to WinDirStat
 Last modified: $Date$
 =============================================================
 
+- Insert Sergiy's e-mail address into IDS_ABOUT_AUTHORSTEXT
+
+- Translate IDS_ABOUT_AUTHORS and IDS_ABOUT_AUTHORSTEXT
+
 - Setup: Translate IDS_CREATEINGSENDTOSHORTCUT, IDC_SHORTCUTSENDTO and
   IDS_TREECOL_ATTRIBUTES.
-  
-- Credit Sam (UltraSam (sam.fd@wanadoo.fr)) for his efforts to translate the missing parts to French.
-  Credit assarbad as co-developer since Oct/2004, 
-  Credit tigroo for French tranlation, 
-  Credit Dariusz 'Darek' Malachowski for Polish translation
-  Credit Sergiy 'Polet' Polyetayev for Russian translation
-  => bseifert
   
 - Route Feedback to new mailing-list
 
