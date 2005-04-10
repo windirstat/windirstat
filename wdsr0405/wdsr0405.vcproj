@@ -4,6 +4,7 @@
 	Version="7.10"
 	Name="wdsr0405"
 	ProjectGUID="{C3F39C58-7FC4-4243-82B2-A3572235AE02}"
+	RootNamespace="wdsr0405"
 	Keyword="Win32Proj">
 	<Platforms>
 		<Platform
@@ -28,13 +29,16 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
+				IgnoreImportLibrary="TRUE"
 				OutputFile="../../urelease/wdsr0405.dll"
 				LinkIncremental="1"
-				GenerateDebugInformation="TRUE"
+				IgnoreAllDefaultLibraries="TRUE"
+				GenerateDebugInformation="FALSE"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
 				ResourceOnlyDLL="TRUE"
+				SetChecksum="TRUE"
 				ImportLibrary="$(OutDir)/wdsr0405.lib"
 				TargetMachine="1"/>
 			<Tool

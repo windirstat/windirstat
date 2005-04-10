@@ -7,6 +7,7 @@ Last modified: $Date$
 	* Added Czech resource DLL project
 	* Fixed problem with VS-project GUIDs
 	* Resource string version now in the *.rc2 files
+	* Optimization of resource DLLs saving 4kB each.
 
 2005-02-14	bseifert
 	* Added wdsh040e: Hungarian helpfile. Thanks to Nimoy!

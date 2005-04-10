@@ -28,13 +28,16 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
+				IgnoreImportLibrary="TRUE"
 				OutputFile="../../urelease/wdsr0415.dll"
 				LinkIncremental="1"
-				GenerateDebugInformation="TRUE"
+				IgnoreAllDefaultLibraries="TRUE"
+				GenerateDebugInformation="FALSE"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
 				ResourceOnlyDLL="TRUE"
+				SetChecksum="TRUE"
 				ImportLibrary="$(OutDir)/wdsr0415.lib"
 				TargetMachine="1"/>
 			<Tool

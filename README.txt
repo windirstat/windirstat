@@ -6,17 +6,21 @@ Last modified: $Date$
 
 This project, made up of
 - the program [executables]
-	windirstat
+	windirstat (English; default)
 
 - resource DLLs [executables]
-	wdsr0407 (German), wdsr040c (French), wdsr0415 (Polish),
-	wdsr0419 (Russian), wdsr040e (Hungarian), wdsr040a (Spanish)
+	wdsr0405 (Czech), wdsr0407 (German), wdsr040a (Spanish),
+	wdsr040c (French), wdsr040e (Hungarian), wdsr0410 (Italian),
+	wdsr0415 (Polish), wdsr0419 (Russian)
+	(prepared but not implemented!: wdsr0402 (Bulgarian))
+	
 
 - helper/utility programs [executables]
 	setup, linkcounter
 
 - help files
-	wdsh0407 (German), wdsh0415 (Polish), wdshelp (English)
+	wdsh0407 (German), wdsh040e (Hungarian), wdsh0415 (Polish),
+	wdshelp (English; default)
 
 is distributed under the terms of the GPL v2 (executables+source)
 respectively GNU FDL (help files).
@@ -65,7 +69,7 @@ Major features:
 =============================================================================
 This is a Microsoft Visual Studio.NET 2003 - Project.
 
-Trying to backport this project was already done in failed. However, should
+Trying to backport this project was already done and failed. However, should
 you succeed in doing so, please send us your changes.
 
 Projects included in the workspace
@@ -73,12 +77,15 @@ Projects included in the workspace
 linkcounter	-> linkercounter.exe. Updates LINKCOUNT in common/version.h.
 setup		-> setup.exe
 wdsh0407	-> German Helpfile wdsh0407.chm
+wdsh040e	-> Hungarian Helpfile wdsh040e.chm
 wdsh0415	-> Polish Helpfile wdsh0415.chm
 wdshelp		-> English Helpfile windirstat.chm
+wdsr0405	-> Czech Resource DLL wdsr0407.dll
 wdsr0407	-> German Resource DLL wdsr0407.dll
 wdsr040a	-> Spanish Resource DLL wdsr040a.dll
 wdsr040c	-> French Resource DLL wdsr040c.dll
 wdsr040e	-> Hungarian Resource DLL wdsr040e.dll
+wdsr0410	-> Italian Resource DLL wdsr0415.dll
 wdsr0415	-> Polish Resource DLL wdsr0415.dll
 wdsr0419	-> Russian Resource DLL wdsr0419.dll
 windirstat	-> windirstat.exe (including English resources).
@@ -112,13 +119,6 @@ How to create a resource dll.
 * Remove the manifest and license.txt
 
 * Translate the rc-File
-
-* Note that the string IDS_RESOURCEVERSION (currently =  "Resource Version 4")
-  must not be changed, otherwise the resource dll is not accepted
-  by windirstat.exe.
-  This version string may be changed in future versions of windirstat, if
-  the resources must be changed, too.
-
 
 =============================================================================
 testplan.txt may be useful for future releases.
