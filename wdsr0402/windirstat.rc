@@ -29,7 +29,7 @@ LANGUAGE LANG_BULGARIAN, SUBLANG_DEFAULT
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-IDR_MAINFRAME           ICON                    "res\\icon1.ico"
+IDR_MAINFRAME           ICON                    "..\\windirstat\\res\\icon1.ico"
 
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
@@ -73,9 +73,9 @@ END
 // Bitmap
 //
 
-IDR_MAINFRAME           BITMAP                  "res\\Toolbar.bmp"
-IDB_NODES               BITMAP                  "res\\bitmap1.bmp"
-IDB_JUNCTIONPOINT       BITMAP                  "res\\junctionpoint.bmp"
+IDR_MAINFRAME           BITMAP                  "..\\windirstat\\res\\Toolbar.bmp"
+IDB_NODES               BITMAP                  "..\\windirstat\\res\\bitmap1.bmp"
+IDB_JUNCTIONPOINT       BITMAP                  "..\\windirstat\\res\\junctionpoint.bmp"
 
 /////////////////////////////////////////////////////////////////////////////
 //

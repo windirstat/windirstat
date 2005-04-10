@@ -110,6 +110,9 @@
 				RelativePath=".\res\windirstat.rc2">
 			</File>
 		</Filter>
+		<File
+			RelativePath=".\.Spanish.txt">
+		</File>
 	</Files>
 	<Globals>
 	</Globals>

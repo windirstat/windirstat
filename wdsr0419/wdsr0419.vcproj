@@ -3,7 +3,7 @@
 	ProjectType="Visual C++"
 	Version="7.10"
 	Name="wdsr0419"
-	ProjectGUID="{23B76347-204C-4DE6-A311-F562CEF5D89C}"
+	ProjectGUID="{7F06AAC4-9FBE-412F-B1D7-CB37AB8F311D}"
 	Keyword="Win32Proj">
 	<Platforms>
 		<Platform
@@ -98,6 +98,9 @@
 				RelativePath=".\res\windirstat.rc2">
 			</File>
 		</Filter>
+		<File
+			RelativePath=".\.Russian.txt">
+		</File>
 	</Files>
 	<Globals>
 	</Globals>

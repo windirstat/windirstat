@@ -44,7 +44,7 @@
 // Format: #define blank LINKCOUNT blanks decimal
 // Reset this to zero only when you increment VERNUM_MAJOR/MINOR/REVISION.
 
-#define LINKCOUNT  30
+#define LINKCOUNT  45
 
 //-------------------------------------------------------------------
 // Release candidate number. Relevant for BC_RELEASECANDIDATE.
@@ -114,6 +114,9 @@
 
 
 // $Log$
+// Revision 1.32  2005/04/10 14:57:09  assarbad
+// - Added Italian and Czech. See changelog for details.
+//
 // Revision 1.31  2005/02/14 23:03:22  bseifert
 // Add Hungarian help file. Minor resource file corrections.
 //

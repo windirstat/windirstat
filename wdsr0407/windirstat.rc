@@ -66,16 +66,16 @@ END
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-IDR_MAINFRAME           ICON                    "res\\icon1.ico"
+IDR_MAINFRAME           ICON                    "..\\windirstat\\res\\icon1.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 //
 // Bitmap
 //
 
-IDR_MAINFRAME           BITMAP                  "res\\Toolbar.bmp"
-IDB_NODES               BITMAP                  "res\\bitmap1.bmp"
-IDB_JUNCTIONPOINT       BITMAP                  "res\\junctionpoint.bmp"
+IDR_MAINFRAME           BITMAP                  "..\\windirstat\\res\\Toolbar.bmp"
+IDB_NODES               BITMAP                  "..\\windirstat\\res\\bitmap1.bmp"
+IDB_JUNCTIONPOINT       BITMAP                  "..\\windirstat\\res\\junctionpoint.bmp"
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -742,7 +742,7 @@ END
 STRINGTABLE 
 BEGIN
     IDS_RESOURCEVERSION     "Resource Version 4"
-    IDS_ABOUT_ABOUTTEXTss   "\r\nWinDirStat - Verzeichnisstatistik\r\n\r\nZeigt an, wo all der Plattenplatz geblieben ist,\r\nund hilft aufzuräumen.\r\n\r\nNeu programmiert für MS Windows von\r\nBernhard Seifert (mailto:%1!s!),\r\n\r\nauf Grundlage von Stefan Hundhammers KDE (Linux)-Programm KDirStat\r\n(http://kdirstat.sourceforge.net/).\r\n\r\nWinDirStats Homepage ist http://%2!s!/\r\n\r\nCopyright (c) 2003-2005 Die Autoren von WinDirStat"
+    IDS_ABOUT_ABOUTTEXTss   "\r\nWinDirStat - Verzeichnisstatistik\r\n\r\nZeigt an, wo all der Plattenplatz geblieben ist,\r\nund hilft aufzuräumen.\r\n\r\nNeu programmiert für MS Windows von\r\nBernhard Seifert (mailto:%1!s!),\r\n\r\nauf Grundlage von Stefan Hundhammers KDE (Linux)-Programm KDirStat\r\n(kdirstat.sourceforge.net/).\r\n\r\nWinDirStats Homepage ist http://%2!s!/\r\n\r\nCopyright (c) 2003-2005 Die Autoren von WinDirStat"
     IDS_ABOUT_THANKSTOTEXT  "\r\nStefan Hundhammer für sein vorzügliches Linux-Tool KDirStat.\r\nKDirStat (2.3.7) als Vorlage zu nehmen hat mir eine Menge Zeit gespart.\r\nhttp://kdirstat.sourceforge.net/\r\n\r\nDen Autoren von SequoiaView, die gezeigt haben, wie nützlich Baumkarten sein können.\r\nhttp://www.win.tue.nl/sequoiaview/\r\n\r\nJarke J. van Wijk, Huub van de Wetering, Mark Bruls und Kees Huizing\r\nfür ihre Dokumente über ""Cushion Treemaps"" und ""Squarified Treemaps"".\r\nhttp://www.win.tue.nl/~vanwijk/\r\n\r\nBen Shneiderman für seine geniale Erfindung von Treemaps -\r\neiner wirklich intuitiven Art und Weise, Bäume zu visualisieren.\r\nhttp://www.cs.umd.edu/hcil/treemap-history/\r\n\r\nMeinen Kollegen für ihr Feedback zu den frühen Versionen von WinDirStat.\r\nhttp://www.daccord.net/\r\n\r\nBeatrix Lödige und Nick Lines fürs Betatesten.\r\n"
     IDS_ABOUT_ABOUT         "Über WinDirStat"
     IDS_ABOUT_THANKSTO      "Dank"
@@ -761,7 +761,7 @@ BEGIN
     IDS_CREATEPROCESSsFAILEDs "CreateProcess(%1!s!) fehlgeschlagen: %2!s!"
     IDS_LANGUAGERESTARTNOW  "Änderungen der Sprache werden erst wirksam, wenn das Programm neu gestartet wird.\r\n\r\nLanguage changes take not effect until the application is restarted.\r\n\r\nWinDirStat jetzt neu starten?"
     IDS_ABOUT_AUTHORS       "Autoren"
-    IDS_ABOUT_AUTHORSTEXTs  "=== Programmierer ===\r\n\r\nBernhard Seifert\r\nGründer des Projekts und Koordinator\r\n(mailto:%1!s!)\r\n\r\nOliver Schneider\r\n(mailto:assarbad#users.sourceforge.net)\r\n\r\n\r\n=== Übersetzer ===\r\n\r\n--- Französisch ---\r\n\r\nPascal Delrot\r\n(mailto:tigroo#users.sourceforge.net)\r\n\r\nUltraSam\r\n(mailto:sam.fd#wanadoo.fr)\r\n\r\n\r\n--- Polnisch ---\r\n\r\nDariusz Malachowski\r\n(mailto:d_malachowski#pf.pl)\r\n\r\n\r\n--- Russisch ---\r\n\r\nSergiy 'Polet' Polyetayev\r\n(mailto:s_polyetayev#hotmail.com)\r\n\r\n\r\n--- Ungarisch ---\r\n\r\nLeonard Nimoy\r\n(mailto:sorge#freemail.hu)\r\n\r\n\r\n--- Spanisch ---\r\n\r\nSergio Omar Maurelli\r\n(mailto:sergiomaurelli#hotmail.com)\r\n"
+    IDS_ABOUT_AUTHORSTEXTs  "=== Programmierer ===\r\n\r\nBernhard Seifert\r\nGründer des Projekts und Koordinator\r\n(mailto:%1!s!)\r\n\r\nOliver Schneider\r\n(mailto:assarbad#users.sourceforge.net)\r\n\r\n\r\n=== Übersetzer ===\r\n\r\n--- Französisch ---\r\n\r\nPascal Delrot\r\n(mailto:tigroo#users.sourceforge.net)\r\n\r\nUltraSam\r\n(mailto:sam.fd#wanadoo.fr)\r\n\r\n\r\n--- Polnisch ---\r\n\r\nDariusz Malachowski\r\n(mailto:d_malachowski#pf.pl)\r\n\r\n\r\n--- Russisch ---\r\n\r\nSergiy 'Polet' Polyetayev\r\n(mailto:s_polyetayev#hotmail.com)\r\n\r\n\r\n--- Ungarisch ---\r\n\r\nLeonard Nimoy\r\n(mailto:sorge#freemail.hu)\r\n\r\n\r\n--- Spanisch ---\r\n\r\nSergio Omar Maurelli\r\n(mailto:sergiomaurelli#hotmail.com)\r\n\r\n\r\n--- Italienisch ---\r\n\r\nMaria Antonietta Ricagno\r\n(mailto:ricagno#antotranslation.com)\r\n"
 END
 
 STRINGTABLE 
