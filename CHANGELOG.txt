@@ -6,6 +6,7 @@ Last modified: $Date$
 	* Added Italian resource DLL project
 	* Added Czech resource DLL project
 	* Fixed problem with VS-project GUIDs
+	* Resource string version now in the *.rc2 files
 
 2005-02-14	bseifert
 	* Added wdsh040e: Hungarian helpfile. Thanks to Nimoy!

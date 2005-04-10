@@ -36,7 +36,7 @@
 
 //-------------------------------------------------------------------
 // Version number. Relevant for BC_RELEASECANDIDATE and BC_RELEASE.
-// 
+//
 #define VERNUM_MAJOR		1
 #define VERNUM_MINOR		1
 #define VERNUM_REVISION		1
@@ -44,8 +44,8 @@
 // Format: #define blank LINKCOUNT blanks decimal
 // Reset this to zero only when you increment VERNUM_MAJOR/MINOR/REVISION.
 
-#define LINKCOUNT  45
-
+#define LINKCOUNT  49
+#define VN_RESOURCEDLL "Resource Version 4"
 //-------------------------------------------------------------------
 // Release candidate number. Relevant for BC_RELEASECANDIDATE.
 //
@@ -114,6 +114,9 @@
 
 
 // $Log$
+// Revision 1.33  2005/04/10 16:49:22  assarbad
+// - Some smaller fixes including moving the resource string version into the rc2 files
+//
 // Revision 1.32  2005/04/10 14:57:09  assarbad
 // - Added Italian and Czech. See changelog for details.
 //

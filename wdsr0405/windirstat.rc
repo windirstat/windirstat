@@ -748,9 +748,8 @@ BEGIN
     ID_CLEANUP_PROPERTIES   "Zobrazí vlastnosti zvolené položky.\r\nVlastnosti"
 END
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
-    IDS_RESOURCEVERSION     "Resource Version 4"
     IDS_ABOUT_ABOUTTEXTss   "\r\nWinDirStat - statistika složek\r\n\r\n""Ukáže kam se podìlo volné místo Vašeho\r\ndisku a pomùže jej vyèistit.""\r\n\r\nPøeprogramováno pro MS Windows \r\nBernhardem Seifertem (mailto:%1!s!),\r\n\r\nna základì linuxového programu KDirStat Stefana Hundhammera\r\n(http://kdirstat.sourceforge.net/).\r\n\r\nWinDirStat najdete na http://%2!s!/\r\n\r\nCopyright (c) 2003-2005 Autoøi WinDirStat"
     IDS_ABOUT_THANKSTOTEXT  "\r\nStefanu Hundhammerovi za skvìlou linuxovou utilitku KDirStat.\r\nPoužití KDirStat (2.3.7) mi ušetøilo mnoho èasu pøi návrhu.\r\nhttp://kdirstat.sourceforge.net/\r\n\r\nAutorùm SequoiaView za ukázku, jak užiteèné mohou být stromové mapy.\r\nhttp://www.win.tue.nl/sequoiaview/\r\n\r\nJarke J. van Wijkovi, Huub van de Weteringovi, Marku Brulsovi a Kees Huizingovi\r\n za jejich informace o polštáøových a hranatých stromových mapách.\r\nhttp://www.win.tue.nl/~vanwijk/\r\n\r\nBenu Shneidermanovi za geniální myšlenku o stromových mapách -\r\nopravdu intuitivním zpùsobu vizualizace stromových dat.\r\nhttp://www.cs.umd.edu/hcil/treemap-history/\r\n\r\nMým kolegùm za zpìtnou vazbu k prvním verzím WinDirStat.\r\nhttp://www.daccord.net/\r\n\r\nBeatrix Lödige a Nicku Linesovi za betatestování.\r\n"
     IDS_ABOUT_ABOUT         "O programu..."

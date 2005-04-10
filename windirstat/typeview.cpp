@@ -1,7 +1,7 @@
 // typeview.cpp		- Implementation of CExtensionListControl and CTypeView
 //
 // WinDirStat - Directory Statistics
-// Copyright (C) 2003-2004 Bernhard Seifert
+// Copyright (C) 2003-2005 Bernhard Seifert
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -535,6 +535,9 @@ void CTypeView::OnSetFocus(CWnd* /*pOldWnd*/)
 
 
 // $Log$
+// Revision 1.13  2005/04/10 16:49:30  assarbad
+// - Some smaller fixes including moving the resource string version into the rc2 files
+//
 // Revision 1.12  2004/12/31 16:01:42  bseifert
 // Bugfixes. See changelog 2004-12-31.
 //

@@ -1,7 +1,7 @@
 // windirstat.rc2 - resources Microsoft Visual C++ does not edit directly
 //
 // WinDirStat - Directory Statistics
-// Copyright (C) 2003-2004 Bernhard Seifert
+// Copyright (C) 2003-2005 Bernhard Seifert
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -51,7 +51,7 @@ BEGIN
             VALUE "FileDescription", "WinDirStat Czech Resources"
             VALUE "FileVersion", VN_STRING
             VALUE "InternalName", "wdsr0405"
-            VALUE "LegalCopyright", "Copyright (c) 2003-2004 Bernhard Seifert"
+            VALUE "LegalCopyright", "Copyright (c) 2003-2005 Bernhard Seifert"
             VALUE "OriginalFilename", "wdsr0405.dll"
             VALUE "ProductName", "WinDirStat"
             VALUE "ProductVersion", VN_STRING
@@ -61,5 +61,10 @@ BEGIN
     BEGIN
         VALUE "Translation", 0x405, 1251
     END
+END
+
+STRINGTABLE
+BEGIN
+    IDS_RESOURCEVERSION     VN_RESOURCEDLL
 END
 

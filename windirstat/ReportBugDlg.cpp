@@ -1,7 +1,7 @@
 // ReportBugDlg.cpp		- Implementation of CReportBugDlg
 //
 // WinDirStat - Directory Statistics
-// Copyright (C) 2003-2004 Bernhard Seifert
+// Copyright (C) 2003-2005 Bernhard Seifert
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -241,6 +241,9 @@ void CReportBugDlg::OnDestroy()
 }
 
 // $Log$
+// Revision 1.8  2005/04/10 16:49:30  assarbad
+// - Some smaller fixes including moving the resource string version into the rc2 files
+//
 // Revision 1.7  2004/12/25 13:41:47  bseifert
 // Synced help files.
 //

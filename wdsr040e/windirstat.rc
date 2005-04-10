@@ -744,7 +744,6 @@ END
 
 STRINGTABLE 
 BEGIN
-    IDS_RESOURCEVERSION     "Resource Version 4"
     IDS_ABOUT_ABOUTTEXTss   "\r\nWinDirStat - Könyvtár statisztika\r\n\r\n""Itt megtekintheti az összes lemezterületét\r\nés segítséget kap a kitakarításhoz.""\r\n\r\nA MS Windows-hoz újraprogramozta\r\nBernhard Seifert (mailto:%1!s!),\r\n\r\naz alapot Stefan Hundhammer KDE (Linux) KDirStat programja alkotja\r\n(http://kdirstat.sourceforge.net/).\r\n\r\nA WinDirStat honlapja http://%2!s!/\r\n\r\nCopyright (c) 2003-2005 The authors of WinDirStat"
     IDS_ABOUT_THANKSTOTEXT  "\r\nStefan Hundhammer nagyszerû Linuxos eszköze a KDirStat.\r\nÉn már nagyon sokat használtam a KDirStat (2.3.7) programot.\r\nhttp://kdirstat.sourceforge.net/\r\n\r\nItt a SequoiaView szerzõi bemutatják, hogy a faszerkezet valójában hogyan kerül használatra.\r\nhttp://www.win.tue.nl/sequoiaview/\r\n\r\nJarke J. van Wijk, Huub van de Wetering, Mark Bruls és Kees Huizing\r\nakik elkészítették a négyszögletes faszerkezet tapétáját.\r\nhttp://www.win.tue.nl/~vanwijk/\r\n\r\nBen Shneiderman akitõl ez a szellemes faszerkezet ötlete származik\r\namely igazán intuitív módon jeleníti meg a faszerkezet tartalmát.\r\nhttp://www.cs.umd.edu/hcil/treemap-history/\r\n\r\nÕk azok a munkatársak, akik visszajelzéseket küldtek a WinDirStat végleges kiadása elõtt.\r\nhttp://www.daccord.net/\r\n\r\nBeatrix Lödige és Nick Lines bétatesztelõk.\r\n"
     IDS_ABOUT_ABOUT         "Névjegy"
