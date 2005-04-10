@@ -6,7 +6,6 @@ Last modified: $Date$
   "Hungarian" & "Spanish" into French
   "Spanish" into Hungarian
 
-- Christmas Release 1.1.1
 ==========================================================
 
 - Multiple selection (and deletion).
@@ -23,3 +22,4 @@ Possible additional useful features:
   -> also if one chooses an element in the cushion view or the extension
      view!
 
+- Saving current scan

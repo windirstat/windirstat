@@ -1,0 +1,884 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+#include "../common/version.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// Czech resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_CZECH, SUBLANG_DEFAULT
+#pragma code_page(1250)
+#endif //_WIN32
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDR_MAINFRAME           ICON                    "..\\windirstat\\res\\icon1.ico"
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "#include ""../common/version.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "#define _AFX_NO_OLE_RESOURCES\r\n"
+    "#define _AFX_NO_TRACKER_RESOURCES\r\n"
+    "#define _AFX_NO_PROPERTY_RESOURCES\r\n"
+    "\r\n"
+    "#if !defined(AFX_RESOURCE_DLL)\r\n"
+    "LANGUAGE 9, 1\r\n"
+    "#pragma code_page(1250)\r\n"
+    "#include ""res\\windirstat.rc2""  // non-Microsoft Visual C++ edited resources\r\n"
+    "#include ""afxres.rc""         // Standard components\r\n"
+    "\r\n"
+    "#endif\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+IDR_MAINFRAME           BITMAP                  "..\\windirstat\\res\\Toolbar.bmp"
+IDB_NODES               BITMAP                  "..\\windirstat\\res\\bitmap1.bmp"
+IDB_JUNCTIONPOINT       BITMAP                  "..\\windirstat\\res\\junctionpoint.bmp"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Toolbar
+//
+
+IDR_MAINFRAME TOOLBAR  16, 15
+BEGIN
+    BUTTON      ID_FILE_OPEN
+    BUTTON      ID_REFRESHALL
+    SEPARATOR
+    BUTTON      ID_CLEANUP_OPEN
+    BUTTON      ID_EDIT_COPY
+    BUTTON      ID_CLEANUP_OPENINEXPLORER
+    BUTTON      ID_CLEANUP_OPENINCONSOLE
+    BUTTON      ID_REFRESHSELECTED
+    SEPARATOR
+    BUTTON      ID_CLEANUP_DELETETOTRASHBIN
+    BUTTON      ID_CLEANUP_DELETE
+    SEPARATOR
+    BUTTON      ID_CLEANUP_PROPERTIES
+    SEPARATOR
+    BUTTON      ID_TREEMAP_ZOOMIN
+    BUTTON      ID_TREEMAP_ZOOMOUT
+    SEPARATOR
+    BUTTON      ID_HELP_MANUAL
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+
+IDR_MAINFRAME MENU 
+BEGIN
+    POPUP "&Soubor"
+    BEGIN
+        MENUITEM "&Otev¯Ìt...\tCtrl+O",            ID_FILE_OPEN
+        MENUITEM SEPARATOR
+        MENUITEM "Obnovit &vöe",                ID_REFRESHALL
+        MENUITEM "Obnovit v&ybranÈ\tF5",       ID_REFRESHSELECTED
+        MENUITEM SEPARATOR
+        MENUITEM "&Konec\tAlt+F4",               ID_APP_EXIT
+    END
+    POPUP "&⁄pravy"
+    BEGIN
+        MENUITEM "KopÌrovat &cestu\tCtrl+C",          ID_EDIT_COPY
+    END
+    POPUP "N·s&troje"
+    BEGIN
+        MENUITEM "&Otev¯Ìt\tEnter",                ID_CLEANUP_OPEN
+        MENUITEM SEPARATOR
+        MENUITEM "&Pr˘zkumnÌk\tCtrl+E",      ID_CLEANUP_OPENINEXPLORER
+        MENUITEM "P¯Ìkazov˝ &¯·dek\tCtrl+P", ID_CLEANUP_OPENINCONSOLE
+        MENUITEM "Smazat (do &koöe)\tDel", 
+                                                ID_CLEANUP_DELETETOTRASHBIN
+        MENUITEM "&Smazat (bez moûnosti obnovenÌ!)\tShift+Del", 
+                                                ID_CLEANUP_DELETE
+        MENUITEM SEPARATOR
+        MENUITEM "&Vlastnosti",                 ID_CLEANUP_PROPERTIES
+        MENUITEM SEPARATOR
+        MENUITEM "V&ysypat koö",          ID_CLEANUP_EMPTYRECYCLEBIN
+        MENUITEM SEPARATOR
+        MENUITEM "Uûivatelsk˝ n·stroj #0",     ID_DUMMY_USERDEFINEDCLEANUP
+        , GRAYED
+    END
+    POPUP "Stromov· &mapa"
+    BEGIN
+        MENUITEM "&Zobrazit mapu\tF9",           ID_VIEW_SHOWTREEMAP
+        MENUITEM SEPARATOR
+        MENUITEM "Z&vÏtöit\t+",                 ID_TREEMAP_ZOOMIN
+        MENUITEM "Z&menöit\t-",                ID_TREEMAP_ZOOMOUT
+        MENUITEM "ZnovuoznaËit &potomka\t*",          33011
+        MENUITEM "OznaËit &rodiËe\t/",           ID_TREEMAP_SELECTPARENT
+        MENUITEM SEPARATOR
+        MENUITEM "&O stromov˝ch map·ch...",        ID_TREEMAP_HELPABOUTTREEMAPS
+    END
+    POPUP "&Zpr·va"
+    BEGIN
+        MENUITEM "&Odeslat mail vlastnÌkovi...",      ID_SENDMAILTOOWNER
+    END
+    POPUP "N&astavenÌ"
+    BEGIN
+        MENUITEM "Zobrazit &volnÈ mÌsto\tF6",        ID_VIEW_SHOWFREESPACE
+        MENUITEM "Zobrazit &nezn·mÈ\tF7",           ID_VIEW_SHOWUNKNOWN
+        MENUITEM SEPARATOR
+        MENUITEM "Zobrazit &typy soubor˘\tF8",        ID_VIEW_SHOWFILETYPES
+        MENUITEM "Zobrazit &stromovou mapu\tF9",           ID_VIEW_SHOWTREEMAP
+        MENUITEM "Zobrazit n·strojovou &liötu",               ID_VIEW_TOOLBAR
+        MENUITEM "Zobrazit stavov˝ &¯·dek",             ID_VIEW_STATUS_BAR
+        MENUITEM SEPARATOR
+        MENUITEM "Nastavit &WinDirStat...",    ID_CONFIGURE
+    END
+    POPUP "&N·povÏda"
+    BEGIN
+        MENUITEM "&N·povÏda\tF1",                   ID_HELP_MANUAL
+        MENUITEM "&Ohl·sit chybu...",     ID_HELP_REPORTBUG
+        MENUITEM SEPARATOR
+        MENUITEM "O &WinDirStat...",        ID_APP_ABOUT
+    END
+END
+
+IDR_POPUPLIST MENU 
+BEGIN
+    POPUP "POPUP_LIST"
+    BEGIN
+        MENUITEM "<toggle>",                    ID_POPUP_TOGGLE
+        MENUITEM SEPARATOR
+        MENUITEM "&Otev¯Ìt\tEnter",                ID_CLEANUP_OPEN
+        MENUITEM SEPARATOR
+        MENUITEM "KopÌrovat &cestu\tCtrl+C",          57634
+        MENUITEM "&Pr˘zkumnÌk\tCtrl+E",      32774
+        MENUITEM "P¯Ìkazov˝ &¯·dek\tCtrl+P", 32808
+        MENUITEM "Obnovit v&ybranÈ\tF5",       32817
+        MENUITEM SEPARATOR
+        MENUITEM "Smazat (do &koöe)\tDel", 32809
+        MENUITEM "&Smazat (bez moûnosti obnovenÌ!)\tShift+Del", 32810
+        MENUITEM SEPARATOR
+        MENUITEM "&Vlastnosti",                 ID_CLEANUP_PROPERTIES
+        MENUITEM SEPARATOR
+    END
+END
+
+IDR_POPUPGRAPH MENU 
+BEGIN
+    POPUP "POPUP_GRAPH"
+    BEGIN
+        MENUITEM "Z&vÏtöit\t+",                 32783
+        MENUITEM "Z&menöit\t-",                32784
+        MENUITEM "&ZnovuoznaËit potomka\t*",          ID_TREEMAP_RESELECTCHILD
+        MENUITEM "&OznaËit rodiËe\t/",           ID_TREEMAP_SELECTPARENT
+        MENUITEM SEPARATOR
+        MENUITEM "KopÌrovat &cestu\tCtrl+C",          57634
+        MENUITEM "&Pr˘zkumnÌk\tCtrl+E",      32774
+        MENUITEM "P¯Ìkazov˝ &¯·dek\tCtrl+P", 32808
+        MENUITEM SEPARATOR
+        MENUITEM "&Storno\tEsc",                ID_POPUP_CANCEL
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Accelerator
+//
+
+IDR_MAINFRAME ACCELERATORS 
+BEGIN
+    VK_DELETE,      ID_CLEANUP_DELETE,      VIRTKEY, SHIFT, NOINVERT
+    VK_DELETE,      ID_CLEANUP_DELETETOTRASHBIN, VIRTKEY, NOINVERT
+    VK_RETURN,      ID_CLEANUP_OPEN,        VIRTKEY, NOINVERT
+    "P",            ID_CLEANUP_OPENINCONSOLE, VIRTKEY, CONTROL, NOINVERT
+    "E",            ID_CLEANUP_OPENINEXPLORER, VIRTKEY, CONTROL, NOINVERT
+    "C",            ID_EDIT_COPY,           VIRTKEY, CONTROL, NOINVERT
+    VK_INSERT,      ID_EDIT_COPY,           VIRTKEY, CONTROL, NOINVERT
+    "N",            ID_FILE_NEW,            VIRTKEY, CONTROL, NOINVERT
+    "O",            ID_FILE_OPEN,           VIRTKEY, CONTROL, NOINVERT
+    VK_F1,          ID_HELP_MANUAL,         VIRTKEY, NOINVERT
+    VK_MULTIPLY,    ID_TREEMAP_RESELECTCHILD, VIRTKEY, NOINVERT
+    VK_DIVIDE,      ID_TREEMAP_SELECTPARENT, VIRTKEY, NOINVERT
+    VK_ADD,         ID_TREEMAP_ZOOMIN,      VIRTKEY, NOINVERT
+    VK_SUBTRACT,    ID_TREEMAP_ZOOMOUT,     VIRTKEY, NOINVERT
+    "0",            ID_USERDEFINEDCLEANUP0, VIRTKEY, CONTROL, NOINVERT
+    "1",            ID_USERDEFINEDCLEANUP1, VIRTKEY, CONTROL, NOINVERT
+    "2",            ID_USERDEFINEDCLEANUP2, VIRTKEY, CONTROL, NOINVERT
+    "3",            ID_USERDEFINEDCLEANUP3, VIRTKEY, CONTROL, NOINVERT
+    "4",            ID_USERDEFINEDCLEANUP4, VIRTKEY, CONTROL, NOINVERT
+    "5",            ID_USERDEFINEDCLEANUP5, VIRTKEY, CONTROL, NOINVERT
+    "6",            ID_USERDEFINEDCLEANUP6, VIRTKEY, CONTROL, NOINVERT
+    "7",            ID_USERDEFINEDCLEANUP7, VIRTKEY, CONTROL, NOINVERT
+    "8",            ID_USERDEFINEDCLEANUP8, VIRTKEY, CONTROL, NOINVERT
+    "9",            ID_USERDEFINEDCLEANUP9, VIRTKEY, CONTROL, NOINVERT
+    VK_F8,          ID_VIEW_SHOWFILETYPES,  VIRTKEY, NOINVERT
+    VK_F6,          ID_VIEW_SHOWFREESPACE,  VIRTKEY, NOINVERT
+    VK_F9,          ID_VIEW_SHOWTREEMAP,    VIRTKEY, NOINVERT
+    VK_F7,          ID_VIEW_SHOWUNKNOWN,    VIRTKEY, NOINVERT
+    VK_F5,          ID_REFRESHSELECTED,     VIRTKEY, NOINVERT
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_ABOUTBOX DIALOGEX 0, 0, 273, 199
+STYLE DS_SETFONT | WS_POPUP | WS_CLIPCHILDREN | WS_CAPTION | WS_SYSMENU | 
+    WS_THICKFRAME
+CAPTION "O WinDirStat..."
+FONT 9, "Microsoft Sans Serif", 400, 0, 0x0
+BEGIN
+    CONTROL         "",IDC_TAB,"SysTabControl32",WS_TABSTOP,7,22,259,155,
+                    WS_EX_ACCEPTFILES
+    DEFPUSHBUTTON   "OK",IDOK,111,180,50,12,WS_GROUP
+    CTEXT           "WinDirStat 0.0.000",IDC_CAPTION,69,7,134,8
+    ICON            IDR_MAINFRAME,IDC_STATIC,7,3,20,20
+END
+
+IDD_SELECTDRIVES DIALOGEX 0, 0, 276, 182
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU | 
+    WS_THICKFRAME
+CAPTION "WinDirStat - v˝bÏr disk˘"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    CONTROL         "&Vöechny lok·lnÌ disky",IDC_ALLLOCALDRIVES,"Button",
+                    BS_AUTORADIOBUTTON | WS_GROUP,7,7,99,10
+    CONTROL         "&Individu·lnÌ v˝bÏr",IDC_SOMEDRIVES,"Button",
+                    BS_AUTORADIOBUTTON,7,31,91,10
+    CONTROL         "",IDC_DRIVES,"SysListView32",LVS_REPORT | 
+                    LVS_OWNERDRAWFIXED | LVS_ALIGNLEFT | WS_BORDER | 
+                    WS_TABSTOP,7,43,262,100
+    CONTROL         "&Sloûka",IDC_AFOLDER,"Button",BS_AUTORADIOBUTTON,7,
+                    150,100,10
+    EDITTEXT        IDC_FOLDERNAME,6,161,209,14,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",IDC_BROWSEFOLDER,219,161,50,14
+    DEFPUSHBUTTON   "OK",IDOK,219,7,50,14
+    PUSHBUTTON      "Storno",IDCANCEL,219,24,50,14
+END
+
+IDD_DELETE_WARNING DIALOGEX 0, 0, 276, 150
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | 
+    WS_SYSMENU
+CAPTION "Varov·nÌ"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "Ne",IDNO,163,129,50,14
+    PUSHBUTTON      "Ano",IDYES,63,129,50,14
+    CONTROL         "&Toto varov·nÌ p¯ÌötÏ nezobrazovat.",IDC_DONTSHOWAGAIN,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,130,99,139,10
+    LTEXT           "UrËitÏ to chcete udÏlat?",IDC_STATIC,7,7,110,8
+    LTEXT           "Chyst·te se z vaöeho disku smazat",IDC_STATIC,7,23,82,8
+    CTEXT           "<filename>",IDC_FILENAME,7,38,262,8,SS_PATHELLIPSIS
+    LTEXT           ".",IDC_STATIC,7,53,67,8
+    LTEXT           "V˝maz systÈmov˝ch soubor˘ nebo sloûek m˘ûe v·ûnÏ poökodit V·ö system.",
+                    IDC_STATIC,7,76,262,19
+    LTEXT           "PokraËovat?",IDC_STATIC,7,99,104,8
+END
+
+IDD_MODALAPISHUTTLE DIALOGEX 0, 0, 186, 90
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | 
+    WS_SYSMENU
+CAPTION "<invisible dialog>"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+END
+
+IDD_PAGE_CLEANUPS DIALOGEX 0, 0, 380, 202
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | 
+    WS_SYSMENU
+CAPTION "N·stroje"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    LISTBOX         IDC_LIST,7,7,113,169,LBS_HASSTRINGS | 
+                    LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "&Povoleno",IDC_ENABLED,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,129,7,53,10
+    EDITTEXT        IDC_TITLE,212,7,161,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_COMMANDLINE,129,35,244,14,ES_AUTOHSCROLL
+    LTEXT           "%p ˙pln· cesta",IDC_STATIC,128,54,93,8
+    LTEXT           "%n soubor/sloûka bez cesty",IDC_STATIC,225,54,
+                    138,8
+    LTEXT           "%sp ˙pln· cesta k podsloûce",IDC_HINTSP,128,63,94,8
+    LTEXT           "%sn n·zev podsloûky bez cesty",IDC_HINTSN,225,63,138,8
+    CONTROL         "&Disky",IDC_WORKSFORDRIVES,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,138,92,49,10
+    CONTROL         "&Sloûkami",IDC_WORKSFORDIRECTORIES,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,208,92,69,10
+    CONTROL         "&UNC cestami",IDC_WORKSFORUNCPATHS,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,304,92,61,10
+    CONTROL         "S&oubory",IDC_WORKSFORFILES,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,138,107,57,10
+    CONTROL         "<Files> &pseudo z·znamy",IDC_WORKSFORFILESFOLDER,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,207,107,92,10
+    PUSHBUTTON      "&N·povÏda",IDC_HELPBUTTON,323,131,50,14
+    CONTROL         "&RekurzÌvnÏ",
+                    IDC_RECURSEINTOSUBDIRECTORIES,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,128,132,160,10
+    CONTROL         "&Vyûadovat potvrzenÌ",IDC_ASKFORCONFIRMATION,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,128,146,160,10
+    CONTROL         "&Zobrazit okno konzoly",IDC_SHOWCONSOLEWINDOW,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,128,160,100,10
+    CONTROL         "V&yËkat na dokonËenÌ",IDC_WAITFORCOMPLETION,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,250,160,100,10
+    COMBOBOX        IDC_REFRESHPOLICY,128,183,245,93,CBS_DROPDOWNLIST | 
+                    WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "N&ahoru",IDC_UP,21,181,37,14
+    PUSHBUTTON      "Do&l˘",IDC_DOWN,66,181,37,14
+    LTEXT           "Zp˘so&b obnovenÌ",IDC_STATIC,128,174,108,8
+    LTEXT           "N·z&ev",IDC_STATIC,186,7,24,8
+    LTEXT           "P¯Ìkazov˝ &¯·dek",IDC_STATIC,129,25,83,8
+    GROUPBOX        "Pracuje s",IDC_STATIC,129,81,244,40
+END
+
+IDD_PAGE_TREELIST DIALOGEX 0, 0, 380, 199
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | 
+    WS_SYSMENU
+CAPTION "Seznam sloûek"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    CONTROL         "&Pacman animace",IDC_PACMANANIMATION,"Button",
+                    BS_AUTOCHECKBOX | BS_MULTILINE | WS_TABSTOP,7,7,102,19
+    CONTROL         "&Zobrazit Ëas pot¯ebn˝ pro naËtenÌ",IDC_SHOWTIMESPENT,
+                    "Button",BS_AUTOCHECKBOX | BS_MULTILINE | WS_TABSTOP,7,
+                    30,95,19
+    GROUPBOX        "⁄rovÚovÈ &barvy",IDC_STATIC,129,7,244,185
+    PUSHBUTTON      "⁄roveÚ &1",IDC_COLORBUTTON0,151,19,175,14,0,
+                    WS_EX_RIGHT
+    PUSHBUTTON      "⁄roveÚ &2",IDC_COLORBUTTON1,167,40,159,14,0,
+                    WS_EX_RIGHT
+    PUSHBUTTON      "⁄roveÚ &3",IDC_COLORBUTTON2,181,61,145,14,0,
+                    WS_EX_RIGHT
+    PUSHBUTTON      "⁄roveÚ &4",IDC_COLORBUTTON3,195,82,131,14,0,
+                    WS_EX_RIGHT
+    PUSHBUTTON      "⁄roveÚ &5",IDC_COLORBUTTON4,207,103,119,14,0,
+                    WS_EX_RIGHT
+    PUSHBUTTON      "⁄roveÚ &6",IDC_COLORBUTTON5,218,124,108,14,0,
+                    WS_EX_RIGHT
+    PUSHBUTTON      "⁄roveÚ &7",IDC_COLORBUTTON6,227,145,99,14,0,
+                    WS_EX_RIGHT
+    PUSHBUTTON      "⁄roveÚ &8",IDC_COLORBUTTON7,236,166,90,14,0,
+                    WS_EX_RIGHT
+    CONTROL         "",IDC_SLIDER,"msctls_trackbar32",TBS_VERT | TBS_BOTH | 
+                    TBS_NOTICKS | WS_TABSTOP,339,29,18,160
+END
+
+IDD_PAGE_TREEMAP DIALOGEX 0, 0, 380, 202
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | 
+    WS_SYSMENU
+CAPTION "Stromov· mapa"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    CTEXT           "&SvÏtlost",IDC_STATIC,237,122,32,18
+    CONTROL         "",IDC_BRIGHTNESS,"msctls_trackbar32",TBS_VERT | 
+                    TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,245,17,16,104
+    CTEXT           "&Polöt·¯ovÈ\r\nstÌnov·nÌ",IDC_STATIC,271,122,32,18
+    CONTROL         "",IDC_CUSHIONSHADING,"msctls_trackbar32",TBS_VERT | 
+                    TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,279,17,16,104
+    CTEXT           "&V˝öka",IDC_STATIC,305,122,32,18
+    CONTROL         "",IDC_HEIGHT,"msctls_trackbar32",TBS_VERT | TBS_BOTH | 
+                    TBS_NOTICKS | WS_TABSTOP,313,17,16,104
+    CTEXT           "&MÏ¯Ìtko",IDC_STATIC,339,122,32,18
+    CONTROL         "",IDC_SCALEFACTOR,"msctls_trackbar32",TBS_VERT | 
+                    TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,347,17,16,104
+    RTEXT           "&Dopad svÏtla",IDC_STATIC,246,147,59,8
+    LTEXT           "Static",IDC_LIGHTSOURCE,313,146,58,48,WS_TABSTOP
+    PUSHBUTTON      "",IDC_RESET,242,167,55,22,BS_MULTILINE
+    GROUPBOX        "S&tyl",IDC_STATIC,7,146,63,49
+    CONTROL         "&KDirStat",IDC_KDIRSTAT,"Button",BS_AUTORADIOBUTTON | 
+                    WS_GROUP | WS_TABSTOP,12,159,42,10
+    CONTROL         "Se&quoiaView",IDC_SEQUOIAVIEW,"Button",
+                    BS_AUTORADIOBUTTON,12,176,53,10
+    CONTROL         "Z&obrazit m¯Ìûku",IDC_TREEMAPGRID,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,76,150,54,10
+    PUSHBUTTON      "&Barva m¯Ìûky",IDC_TREEMAPGRIDCOLOR,134,150,85,14,0,
+                    WS_EX_RIGHT
+    PUSHBUTTON      "V˝bÏrov˝ &r·meËek",IDC_TREEMAPHIGHLIGHTCOLOR,76,
+                    175,143,14,0,WS_EX_RIGHT
+    CTEXT           "Static",IDC_STATICSCALEFACTOR,339,7,32,8
+    CTEXT           "Static",IDC_STATICHEIGHT,305,7,32,8
+    CTEXT           "Static",IDC_STATICCUSHIONSHADING,271,7,32,8
+    CTEXT           "Static",IDC_STATICBRIGHTNESS,237,7,32,8
+    LTEXT           "Static",IDC_PREVIEW,7,7,211,124
+END
+
+IDD_PAGE_GENERAL DIALOGEX 0, 0, 380, 202
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | 
+    WS_SYSMENU
+CAPTION "ObecnÈ"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    CONTROL         "P¯ekraËovat &hranice souborovÈho systÈmu",IDC_FOLLOWMOUNTPOINTS,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,13,229,10
+    CONTROL         "N·sledovat odkazy sloûek (kromÏ diskov˝ch p¯Ìpojn˝ch bod˘)",
+                    IDC_FOLLOWJUNCTIONS,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,32,27,229,10
+    CONTROL         "&Zobrazit velikosti v GB/MB/kB/Bytes form·tu",IDC_HUMANFORMAT,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,41,229,10
+    GROUPBOX        "&Vzhled seznamu",IDC_STATIC,30,61,90,65
+    CONTROL         "V˝bÏr &cel˝ch ¯·dk˘",IDC_FULLROWSELECTION,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,38,76,75,10
+    CONTROL         "Zobrazit &m¯Ìûku",IDC_SHOWGRID,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,38,93,68,10
+    CONTROL         "Zobrazit &pruhy",IDC_SHOWSTRIPES,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,38,110,68,10
+    LTEXT           "&Jazyk",IDC_STATIC,32,139,166,8
+    COMBOBOX        IDC_COMBO,32,152,156,140,CBS_DROPDOWNLIST | CBS_SORT | 
+                    WS_VSCROLL | WS_TABSTOP
+    CONTROL         "PouûÌt tento jazyk pro &form·tov·nÌ data, Ëasu a ËÌsel",
+                    IDC_USEWDSLOCALE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
+                    32,172,298,10
+END
+
+IDD_REPORTBUG DIALOGEX 0, 0, 360, 233
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU | 
+    WS_THICKFRAME
+CAPTION "WinDirStat - zpr·va o chyb·ch/feedback"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    CONTROL         "&Kritick·",IDC_CRITICAL,"Button",BS_AUTORADIOBUTTON | 
+                    WS_GROUP,14,43,43,10
+    CONTROL         "&Z·vaûn·",IDC_GRAVE,"Button",BS_AUTORADIOBUTTON,73,43,
+                    43,10
+    CONTROL         "&Norm·lnÌ",IDC_NORMAL,"Button",BS_AUTORADIOBUTTON,132,43,
+                    43,10
+    CONTROL         "&P¯·nÌ",IDC_WISH,"Button",BS_AUTORADIOBUTTON,191,43,43,
+                    10
+    CONTROL         "ZpÏtn· &reakce",IDC_FEEDBACK,"Button",
+                    BS_AUTORADIOBUTTON,250,43,79,10
+    EDITTEXT        IDC_INAWORD,60,61,293,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_TEXT,7,118,346,80,ES_MULTILINE | ES_AUTOHSCROLL | 
+                    ES_WANTRETURN | WS_VSCROLL | WS_HSCROLL
+    DEFPUSHBUTTON   "OK",IDOK,154,212,50,14
+    PUSHBUTTON      "Storno",IDCANCEL,303,212,50,14
+    LTEXT           "OdesÌlatel:",IDC_STATIC,7,7,20,8
+    LTEXT           "P¯Ìjemce:",IDC_STATIC_TO,179,7,12,8
+    LTEXT           "<from>",IDC_FROM,51,7,122,8
+    LTEXT           "<to>",IDC_TO,214,7,139,8
+    GROUPBOX        "D˘leûitost",IDC_STATIC_SEVERITY,7,33,346,24,0,
+                    WS_EX_TRANSPARENT
+    LTEXT           "&Ve zkratce:",IDC_STATIC,7,65,49,8
+    LTEXT           "Popis &chyby nebo p¯·nÌ (anglicky nebo nÏmecky).",
+                    IDC_STATIC,7,84,346,12
+    LTEXT           "Aplikace:",IDC_STATIC,7,18,38,8
+    LTEXT           "<application>",IDC_APPLICATION,51,18,123,8
+    LTEXT           "Platforma:",IDC_STATIC_PLATFORM,179,18,30,8
+    LTEXT           "<platform>",IDC_PLATFORM,214,18,139,8
+    LTEXT           "U chyb prosÌm popiöte jak se projevujÌ, vËetnÏ p¯esnÈho znÏnÌ chybovÈ hl·öky a pokud je to moûnÈ i zp˘sob jak ji reprodukovat.",
+                    IDC_HINT,7,99,346,19
+    LTEXT           "Po kliknutÌ na OK budete zpr·vu jeötÏ moci upravit ve Vaöem mailovÈm programu.",
+                    IDC_STATIC_OKHINT,7,201,346,8
+END
+
+IDD_PAGE_REPORT DIALOGEX 0, 0, 380, 202
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | 
+    WS_SYSMENU
+CAPTION "Zpr·va"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    LTEXT           "Zde m˘ûete upravit zpr·vu, kter· bude odeslan· pomocÌ funkce 'Odeslat mail vlastnÌkovi'.",
+                    IDC_STATIC,7,9,268,8
+    LTEXT           "&P¯edmÏt",IDC_STATIC,7,31,46,8
+    EDITTEXT        IDC_SUBJECT,59,31,314,14,ES_AUTOHSCROLL
+    LTEXT           "Prefi&x",IDC_STATIC,7,51,46,8
+    EDITTEXT        IDC_PREFIX,59,51,314,54,ES_MULTILINE | ES_AUTOVSCROLL | 
+                    ES_AUTOHSCROLL | ES_WANTRETURN
+    LTEXT           "P&¯Ìpona",IDC_STATIC,7,111,46,8
+    EDITTEXT        IDC_SUFFIX,59,111,314,54,ES_MULTILINE | ES_AUTOVSCROLL | 
+                    ES_AUTOHSCROLL | ES_WANTRETURN
+    PUSHBUTTON      "",IDC_RESET,59,174,89,14
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO 
+BEGIN
+    IDD_ABOUTBOX, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 266
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 192
+    END
+
+    IDD_SELECTDRIVES, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 269
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 175
+    END
+
+    IDD_DELETE_WARNING, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 269
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 143
+    END
+
+    IDD_MODALAPISHUTTLE, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 179
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 83
+    END
+
+    IDD_PAGE_CLEANUPS, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 373
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 195
+    END
+
+    IDD_PAGE_TREELIST, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 373
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 192
+    END
+
+    IDD_PAGE_TREEMAP, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 373
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 195
+    END
+
+    IDD_PAGE_GENERAL, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 373
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 195
+    END
+
+    IDD_REPORTBUG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 353
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 226
+    END
+
+    IDD_PAGE_REPORT, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 373
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 195
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE 
+BEGIN
+    IDR_MAINFRAME           "WinDirStat\n\nWinDirStat\n\n\n\n"
+    IDS_QUERYING            "(zjiöùuji...)"
+    IDS_NOTACCESSIBLE       "(nenÌ k dispozici)"
+    IDS_TREECOL_ATTRIBUTES  "Atributy"
+END
+
+STRINGTABLE 
+BEGIN
+    AFX_IDS_APP_TITLE       "WinDirStat"
+    AFX_IDS_IDLEMESSAGE     "P¯ipraven"
+END
+
+STRINGTABLE 
+BEGIN
+    ID_INDICATOR_EXT        "EXT"
+    ID_INDICATOR_CAPS       "CAP"
+    ID_INDICATOR_NUM        "NUM"
+    ID_INDICATOR_SCRL       "SCRL"
+    ID_INDICATOR_OVR        "OVR"
+    ID_INDICATOR_REC        "REC"
+    ID_INDICATOR_MEMORYUSAGE "VyuûitÌ RAM: 123.456.789"
+END
+
+STRINGTABLE 
+BEGIN
+    ID_FILE_OPEN            "Otev¯e seznam disk˘.\nOtev¯Ìt"
+END
+
+STRINGTABLE 
+BEGIN
+    ID_APP_ABOUT            "ZobrazÌ informace o programu, verzi a autorsk˝ch pr·vech.\nO programu"
+    ID_APP_EXIT             "UkonËÌ WinDirStat.\nKonec"
+END
+
+STRINGTABLE 
+BEGIN
+    ID_EDIT_COPY            "ZkopÌruje vybranou cestu do schr·nky.\nKopÌrovat cestu"
+END
+
+STRINGTABLE 
+BEGIN
+    ID_VIEW_TOOLBAR         "ZobrazÌ/skryje n·strojovou liötu\nN·strojov· liöta"
+    ID_VIEW_STATUS_BAR      "ZobrazÌ/skryje stavov˝ ¯·dek.\nStavov˝ ¯·dek"
+END
+
+STRINGTABLE 
+BEGIN
+    AFX_IDS_SCSIZE          "ZmÏnit velikost okna"
+    AFX_IDS_SCMOVE          "P¯emÌstit okno"
+    AFX_IDS_SCMINIMIZE      "Minimalizovat okno"
+    AFX_IDS_SCMAXIMIZE      "Maximalizovat okno"
+    AFX_IDS_SCCLOSE         "UkonËit program"
+END
+
+STRINGTABLE 
+BEGIN
+    AFX_IDS_SCRESTORE       "Obnovit okno"
+    AFX_IDS_SCTASKLIST      "Seznam aktivnÌch ˙loh"
+END
+
+STRINGTABLE 
+BEGIN
+    ID_FILE_REFRESHALL      "Znovu naËte cel˝ strom"
+    ID_CLEANUP_OPENINEXPLORER 
+                            "Otev¯e pr˘zkumnÌka ve vybranÈ sloûce.\nPr˘zkumnÌk"
+    ID_TREEMAP_ZOOMIN       "ZvÏtöÌ stromovou mapu.\nZvÏtöit"
+END
+
+STRINGTABLE 
+BEGIN
+    ID_FILE_REFRESHSELECTED "Znovu naËte zvolenou podsloûku"
+    ID_CLEANUP_OPENINCONSOLE 
+                            "Otev¯e p¯Ìkazov˝ ¯·dek ve vybranÈ sloûce.\nP¯Ìkazov˝ ¯·dek"
+    ID_CLEANUP_DELETETOTRASHBIN 
+                            "P¯esune vybranou poloûku do koöe.\nSmazat (do koöe)"
+    ID_CLEANUP_DELETE       "Smaûe zvolenou poloûku bez moûnosti obnovenÌ!\nSmazat (bez moûnosti obnovenÌ!)"
+    ID_CONFIGURE            "Otev¯e okno s nastavenÌm programu.\nNastavenÌ"
+    ID_HELP_MANUAL          "Otev¯e n·povÏdu programu WinDirStat.\nN·povÏda"
+END
+
+STRINGTABLE 
+BEGIN
+    ID_TREEMAP_ZOOMOUT      "ZmenöÌ stromovou mapu.\nZmenöit"
+    ID_TREEMAP_SELECTPARENT "OznaËÌ rodiËe pr·vÏ vybranÈ poloûky.\nVybrat rodiËe"
+    ID_TREEMAP_HELPABOUTTREEMAPS 
+                            "ZobrazÌ n·povÏdu ke stromov˝m map·m.\nO stromov˝ch map·ch"
+    ID_VIEW_SHOWTREEMAP     "ZobrazÌ/skryje stromovou mapu.\nStromov· mapa"
+    ID_HELP_REPORTBUG       "Vytvo¯Ì mail s hl·öenÌm chyby nebo zpÏtnou reakcÌ.\nOhl·sit chybu"
+END
+
+STRINGTABLE 
+BEGIN
+    ID_REFRESHALL           "Znovu prohled·/naËte cel˝ strom.\nObnovit vöe"
+    ID_REFRESHSELECTED      "Znovu prohled·/naËte zvolenou podsloûku.\nObnovit vybranÈ"
+    ID_CLEANUP_EMPTYRECYCLEBIN "Vysype odpadkov˝ koö.\nVysypat koö"
+    ID_VIEW_SHOWFREESPACE   "ZobrazÌ/skryje poloûku <Free Space>.\nZobrazit volnÈ mÌsto"
+    ID_VIEW_SHOWUNKNOWN     "ZobrazÌ/skryje poloûku <Unknown>.\nZobrazit nezn·mÈ"
+END
+
+STRINGTABLE 
+BEGIN
+    ID_DUMMY_USERDEFINEDCLEANUP 
+                            "SpustÌ uûivatelem definovan˝ n·stroj #0\nUûivatelsk˝ n·stroj"
+END
+
+STRINGTABLE 
+BEGIN
+    ID_SENDMAILTOOWNER      "Vytvo¯Ì e-mail k pr·vÏ zvolenÈ poloûce.\nOdeslat mail"
+END
+
+STRINGTABLE 
+BEGIN
+    ID_VIEW_SHOWFILETYPES   "ZobrazÌ/skryje seznam typ˘ soubor˘.\nZobrazit typy soubor˘"
+END
+
+STRINGTABLE 
+BEGIN
+    ID_TREEMAP_RESELECTCHILD "Znovu oznaËÌ potomka.\nZnovuoznaËit potomka"
+    ID_CLEANUP_OPEN         "Otev¯e zvolenou poloûku.\r\nOtev¯Ìt"
+    ID_CLEANUP_PROPERTIES   "ZobrazÌ vlastnosti zvolenÈ poloûky.\r\nVlastnosti"
+END
+
+STRINGTABLE 
+BEGIN
+    IDS_RESOURCEVERSION     "Resource Version 4"
+    IDS_ABOUT_ABOUTTEXTss   "\r\nWinDirStat - statistika sloûek\r\n\r\n""Uk·ûe kam se podÏlo volnÈ mÌsto Vaöeho\r\ndisku a pom˘ûe jej vyËistit.""\r\n\r\nP¯eprogramov·no pro MS Windows \r\nBernhardem Seifertem (mailto:%1!s!),\r\n\r\nna z·kladÏ linuxovÈho programu KDirStat Stefana Hundhammera\r\n(http://kdirstat.sourceforge.net/).\r\n\r\nWinDirStat najdete na http://%2!s!/\r\n\r\nCopyright (c) 2003-2005 Auto¯i WinDirStat"
+    IDS_ABOUT_THANKSTOTEXT  "\r\nStefanu Hundhammerovi za skvÏlou linuxovou utilitku KDirStat.\r\nPouûitÌ KDirStat (2.3.7) mi uöet¯ilo mnoho Ëasu p¯i n·vrhu.\r\nhttp://kdirstat.sourceforge.net/\r\n\r\nAutor˘m SequoiaView za uk·zku, jak uûiteËnÈ mohou b˝t stromovÈ mapy.\r\nhttp://www.win.tue.nl/sequoiaview/\r\n\r\nJarke J. van Wijkovi, Huub van de Weteringovi, Marku Brulsovi a Kees Huizingovi\r\n za jejich informace o polöt·¯ov˝ch a hranat˝ch stromov˝ch map·ch.\r\nhttp://www.win.tue.nl/~vanwijk/\r\n\r\nBenu Shneidermanovi za geni·lnÌ myölenku o stromov˝ch map·ch -\r\nopravdu intuitivnÌm zp˘sobu vizualizace stromov˝ch dat.\r\nhttp://www.cs.umd.edu/hcil/treemap-history/\r\n\r\nM˝m koleg˘m za zpÏtnou vazbu k prvnÌm verzÌm WinDirStat.\r\nhttp://www.daccord.net/\r\n\r\nBeatrix Lˆdige a Nicku Linesovi za betatestov·nÌ.\r\n"
+    IDS_ABOUT_ABOUT         "O programu..."
+    IDS_ABOUT_THANKSTO      "DÌky pat¯Ì:"
+    IDS_ABOUT_LICENSEAGREEMENT "Licence"
+    IDS_MYCOMPUTER          "Tento poËÌtaË"
+    IDS_UDC_CONFIRMATIONss  "Chyst·te se spustit uûivatelsky definovan˝ n·stroj\r\n'%1!s!'\r\n\r\nna '%2!s!'.\r\n\r\nPokraËovat?"
+    IDS_RUDC_CONFIRMATIONss "Chyst·te se spustit rekurzivnÌ uûivatelsky definovan˝ n·stroj\r\n'%1!s!'\r\n\r\nna '%2!s!'.\r\n\r\nPokraËovat?"
+END
+
+STRINGTABLE 
+BEGIN
+    IDS_RESETTODEFAULTS     "&Nastavit v˝chozÌ"
+    IDS_BACKTOUSERSETTINGS  "&ZpÏt k uûivatelskÈmu nastavenÌ"
+    IDS_COLLAPSE            "&Sbalit"
+    IDS_EXPAND              "&Rozbalit"
+    IDS_CREATEPROCESSsFAILEDs "Vytvo¯enÌ procesu (%1!s!) selhalo: %2!s!"
+    IDS_LANGUAGERESTARTNOW  "ZmÏna jazyka se projevÌ aû p¯i p¯ÌötÌm spuötÏnÌ programu.\r\n\r\nRestartovat WinDirStat nynÌ?"
+    IDS_ABOUT_AUTHORS       "Auto¯i"
+    IDS_ABOUT_AUTHORSTEXTs  "=== Program·to¯i ===\r\n\r\nBernhard Seifert\r\nTv˘rce a koordin·tor projektu\r\n(mailto:%1!s!)\r\n\r\nOliver Schneider\r\n(mailto:assarbad#users.sourceforge.net)\r\n\r\n\r\n=== P¯ekladatelÈ ===\r\n\r\n--- Francouzötina ---\r\n\r\nPascal Delrot\r\n(mailto:tigroo#users.sourceforge.net)\r\n\r\nUltraSam\r\n(mailto:sam.fd#wanadoo.fr)\r\n\r\n\r\n--- Polötina ---\r\n\r\nDariusz Malachowski\r\n(mailto:d_malachowski#pf.pl)\r\n\r\n\r\n--- Ruötina ---\r\n\r\nSergiy 'Polet' Polyetayev\r\n(mailto:s_polyetayev#hotmail.com)\r\n\r\n\r\n--- MaÔarötina ---\r\n\r\nLeonard Nimoy\r\n(mailto:sorge#freemail.hu)\r\n\r\n\r\n--- äpanÏlötina ---\r\n\r\nSergio Omar Maurelli\r\n(mailto:sergiomaurelli#hotmail.com)\r\n"
+END
+
+STRINGTABLE 
+BEGIN
+    IDS_THEDIRECTORYsDOESNOTEXIST "Sloûka '%1!s!' neexistuje."
+    IDS_THEFILEsDOESNOTEXIST "Soubor '%1!s!' neexistuje."
+    IDS_COULDNOTCREATEPROCESSssss 
+                            "Nepoda¯ilo se vytvo¯it proces.\r\n\r\nProgram: '%1!s!',\r\nP¯Ìkazov˝ ¯·dek: '%2!s!',\r\nPracovnÌ sloûka: '%3!s!'\r\nChybov· hl·öka:\r\n%4!s!\r\n(NeprobÏhne û·dn· aktualizace.)"
+    IDS_TREECOL_NAME        "N·zev"
+    IDS_TREECOL_SUBTREEPERCENTAGE "PodÌl podsloûky"
+    IDS_TREECOL_PERCENTAGE  "PodÌl"
+    IDS_TREECOL_SIZE        "Velikost"
+    IDS_TREECOL_ITEMS       "Poloûky"
+    IDS_TREECOL_FILES       "Soubory"
+    IDS_TREECOL_SUBDIRS     "Podsloûky"
+    IDS_TREECOL_LASTCHANGE  "PoslednÌ zmÏna"
+    IDS_PLEASECHECKYOURDISKUSAGE 
+                            "ProsÌm zkontrolujte obsah vaöeho disku a vyËistÏte jej pokud moûno. DÌky.\r\n"
+    IDS_DISKUSAGEREPORTGENERATEDBYWINDIRSTAT 
+                            "VyuûitÌ disku generovanÈ programem WinDirStat.\r\n"
+    IDS__UNKNOWN_           "<unknown>"
+    IDS_FREESPACE_ITEM      "<Free Space>"
+    IDS_UNKNOWN_ITEM        "<Unknown>"
+END
+
+STRINGTABLE 
+BEGIN
+    IDS_FILES_ITEM          "<Files>"
+    IDS_ONEREADJOB          "[1 ËtecÌ ˙loha]"
+    IDS_sREADJOBS           "[%1!s! ËtecÌch ˙loh]"
+    IDS_CANNOTOPENCLIPBOARD "Nemohu otev¯Ìt schr·nku."
+    IDS_CANNOTEMTPYCLIPBOARD "Nemohu vypr·zdnit schr·nku."
+    IDS_CANNOTSETCLIPBAORDDATA "Nemohu zapisovat do schr·nky."
+    IDS_WINDIRSTAT_SETTINGS "WinDirStat - nastavenÌ"
+    IDS_SCANNING_           "Proch·zÌm "
+    IDS_EMPTYRECYCLEBIN     "&Vysypat koö"
+    IDS__ONEITEMss          " (1 poloûka, %1!s!%2!s!)"
+    IDS__sITEMSss           " (%1!s! poloûek, %2!s!%3!s!)"
+    IDS_UDCsCTRLd           "%1!s!\tCtrl+%2!d!"
+    IDS_USERDEFINEDCLEANUP0 "Uûivatelsk˝ n·stroj #0"
+    IDS_REPORT_DISKUSAGE    "VyuûitÌ disku"
+    IDS_USERDEFINEDCLEANUPd "Uûivatelsk˝ n·stroj #%1!d!"
+    IDS_POLICY_NOREFRESH    "é·dnÈ obnovenÌ"
+END
+
+STRINGTABLE 
+BEGIN
+    IDS_POLICY_REFRESHTHISENTRY "Obnovit tuto poloûku"
+    IDS_POLICY_REFRESHPARENT "Obnovit rodiËe tÈto poloûky"
+    IDS_BUGREPORTHINT       "U chyb prosÌm popiöte, jak se projevujÌ, vËetnÏ p¯esnÈho znÏnÌ chybovÈ hl·öky a pokud je to moûnÈ i zp˘sob jak ji reprodukovat."
+    IDS_FEEDBACKHINT        "ZpÏtnÈ reakce jsou vûdy vÌt·ny."
+    IDS_FROMsPLATFORMs      "OdesÌlatel: %1!s!. Platforma: %2!s!.\r\n\r\n"
+    IDS_SEV_CRITICAL        "Kritick· chyba"
+    IDS_SEV_GRAVE           "Z·v·ûn· chyba"
+    IDS_SEV_NORMAL          "Chyba"
+    IDS_SEV_WISH            "P¯·nÌ"
+    IDS_SEV_FEEDBACK        "ZpÏtn· reakce"
+    IDS_DRIVECOL_NAME       "N·zev"
+    IDS_DRIVECOL_TOTAL      "Celkem"
+    IDS_DRIVECOL_FREE       "VolnÈ"
+    IDS_DRIVECOL_GRAPH      "VyuûitÈ/Celkem"
+    IDS_DRIVECOL_PERCENTUSED "VyuûitÈ/Celkem"
+    IDS_SELECTFOLDER        "WinDirStat - v˝bÏr sloûky"
+END
+
+STRINGTABLE 
+BEGIN
+    IDS_EXTCOL_EXTENSION    "P¯Ìpona"
+    IDS_EXTCOL_COLOR        "Barva"
+    IDS_EXTCOL_BYTES        "Byt˘"
+    IDS_EXTCOL_FILES        "Soubory"
+    IDS_EXTCOL_DESCRIPTION  "Popis"
+    IDS_RAMUSAGEs           "VyuûitÌ RAM: %1!s!"
+    IDS_HELPFILEsCOULDNOTBEFOUND 
+                            "Soubor s n·povÏdou %1!s! nebyl nalezen.\r\nMÏl by b˝t ve stejnÈ sloûce jako windirstat.exe,\r\nse kter˝m byl spoleËnÏ dod·n.\r\nM˘ûete jej st·hnout z domovskÈ str·nky WinDirStat (viz dialog O programu...)."
+    IDS_SUSPENDED_          "(p¯eruöeno) "
+    IDS_SUSPEND             "P¯eruöit"
+    IDS_SPEC_BYTES          "Byt˘"
+    IDS_SPEC_KB             "KB"
+    IDS_SPEC_MB             "MB"
+    IDS_SPEC_GB             "GB"
+    IDS_SPEC_TB             "TB"
+    IDS_RESETTO_DEFAULTS    "&Nastavit\r\nv˝chozÌ"
+    IDS_BACKTO_USERSETTINGS "ZpÏt na &uûiv.\r\nnastavenÌ"
+END
+
+#endif    // Czech resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+#define _AFX_NO_OLE_RESOURCES
+#define _AFX_NO_TRACKER_RESOURCES
+#define _AFX_NO_PROPERTY_RESOURCES
+
+#if !defined(AFX_RESOURCE_DLL)
+LANGUAGE 9, 1
+#pragma code_page(1252)
+#include "res\windirstat.rc2"  // non-Microsoft Visual C++ edited resources
+#include "afxres.rc"         // Standard components
+
+#endif
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+
