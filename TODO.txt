@@ -5,6 +5,12 @@ Last modified: $Date$
 - Translate IDS_ABOUT_AUTHORSTEXTs
   "Hungarian" & "Spanish" into French
   "Spanish" into Hungarian
+- Complete entries of translators for certain languages,
+  e.g. Czech and Italian.
+- Completely move the list of translators out of the .RC
+  files. It should be static and only available in English
+  with language or country shortcuts as identifiers!
+- Fix a bug which appears in Spanish, Italian and Czech resource DLLs!
 
 ==========================================================
 

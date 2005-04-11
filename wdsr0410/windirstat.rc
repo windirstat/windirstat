@@ -121,7 +121,7 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "&Esci\tAlt+F4",               ID_APP_EXIT
     END
-    POPUP "&Edit"
+    POPUP "&Modifica"
     BEGIN
         MENUITEM "&Copia percorso\tCtrl+C",          ID_EDIT_COPY
     END
@@ -362,8 +362,8 @@ BEGIN
                     BS_AUTOCHECKBOX | WS_TABSTOP,250,160,100,10
     COMBOBOX        IDC_REFRESHPOLICY,128,183,245,93,CBS_DROPDOWNLIST |
                     WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "&Up",IDC_UP,21,181,37,14
-    PUSHBUTTON      "&Su Giù",IDC_DOWN,66,181,37,14
+    PUSHBUTTON      "&Su",IDC_UP,21,181,37,14
+    PUSHBUTTON      "&Giù",IDC_DOWN,66,181,37,14
     LTEXT           "Aggiorna &politica",IDC_STATIC,128,174,108,8
     LTEXT           "&Titolo",IDC_STATIC,186,7,24,8
     LTEXT           "Riga di &comando",IDC_STATIC,129,25,83,8
@@ -444,7 +444,7 @@ END
 IDD_PAGE_GENERAL DIALOGEX 0, 0, 380, 202
 STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | 
     WS_SYSMENU
-CAPTION "General"
+CAPTION "Generale"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     CONTROL         "&Attraversa confini del file system",IDC_FOLLOWMOUNTPOINTS,
@@ -646,7 +646,7 @@ BEGIN
     ID_INDICATOR_SCRL       "SCRL"
     ID_INDICATOR_OVR        "OVR"
     ID_INDICATOR_REC        "REC"
-    ID_INDICATOR_MEMORYUSAGE "Udo della RAM: 123.456.789"
+    ID_INDICATOR_MEMORYUSAGE "Uso della RAM: 123.456.789"
 END
 
 STRINGTABLE
@@ -769,14 +769,14 @@ BEGIN
     IDS_CREATEPROCESSsFAILEDs "CreateProcess(%1!s!) fallito: %2!s!"
     IDS_LANGUAGERESTARTNOW  "Le modifiche della lingua non sono effettive se non dopo il riavvio dell'applicazione.\r\n\r\nRiavviare WinDirStat ora?"
     IDS_ABOUT_AUTHORS       "Autori"
-    IDS_ABOUT_AUTHORSTEXTs  "=== Programmatori ===\r\n\r\nBernhard Seifert\r\nCreatore del progetto e coordinatore\r\n(mailto:%1!s!)\r\n\r\nOliver Schneider\r\n(mailto:assarbad#users.sourceforge.net)\r\n\r\n\r\n=== Traduttori ===\r\n\r\n--- Francese ---\r\n\r\nPascal Delrot\r\n(mailto:tigroo#users.sourceforge.net)\r\n\r\nUltraSam\r\n(mailto:sam.fd#wanadoo.fr)\r\n\r\n\r\n--- Polacco ---\r\n\r\nDariusz Malachowski\r\n(mailto:d_malachowski#pf.pl)\r\n\r\n\r\n--- Russo ---\r\n\r\nSergiy 'Polet' Polyetayev\r\n(mailto:s_polyetayev#hotmail.com)\r\n\r\n\r\n--- Ungherese ---\r\n\r\nLeonard Nimoy\r\n(mailto:sorge#freemail.hu)\r\n\r\n\r\n--- Spagnolo ---\r\n\r\nSergio Omar Maurelli\r\n(mailto:sergiomaurelli#hotmail.com)\r\n\r\n\r\n--- Italiano ---\r\n\r\nMaria Antonietta Ricagno\r\n(mailto:ricagno#antotranslation.com)\r\n"
+    IDS_ABOUT_AUTHORSTEXTs  "=== Programmatori ===\r\n\r\nBernhard Seifert\r\nCreatore del progetto e coordinatore\r\n(mailto:%1!s!)\r\n\r\nOliver Schneider\r\n(mailto:assarbad#users.sourceforge.net)\r\n\r\n\r\n=== Traduttori ===\r\n\r\n--- Francese ---\r\n\r\nPascal Delrot\r\n(mailto:tigroo#users.sourceforge.net)\r\n\r\nUltraSam\r\n(mailto:sam.fd#wanadoo.fr)\r\n\r\n\r\n--- Polacco ---\r\n\r\nDariusz Malachowski\r\n(mailto:d_malachowski#pf.pl)\r\n\r\n\r\n--- Russo ---\r\n\r\nSergiy 'Polet' Polyetayev\r\n(mailto:s_polyetayev#hotmail.com)\r\n\r\n\r\n--- Ungherese ---\r\n\r\nLeonard Nimoy\r\n(mailto:sorge#freemail.hu)\r\n\r\n\r\n--- Spagnolo ---\r\n\r\nSergio Omar Maurelli\r\n(mailto:sergiomaurelli#hotmail.com)\r\n\r\n\r\n--- Italiano ---\r\n\r\nMaria Antonietta Ricagno\r\n(mailto:ricagno#antotranslation.com)\r\nhttp://www.antotranslation.com\r\n"
 END
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     IDS_THEDIRECTORYsDOESNOTEXIST "Directory '%1!s!' inesistente."
     IDS_THEFILEsDOESNOTEXIST "File '%1!s!' inesistente."
-    IDS_COULDNOTCREATEPROCESSssss 
+    IDS_COULDNOTCREATEPROCESSssss
                             "Impossibile creare il processo.\r\n\r\nApplicazione: '%1!s!',\r\nLinea di comando: '%2!s!',\r\nDirectory di lavoro: '%3!s!'\r\nMessaggio di errore:\r\n%4!s!\r\n(L'aggiornamento non avrà luogo.)"
     IDS_TREECOL_NAME        "Nome"
     IDS_TREECOL_SUBTREEPERCENTAGE "Percentuale sottoalbero"
@@ -820,7 +820,7 @@ BEGIN
     IDS_POLICY_REFRESHTHISENTRY "Aggiorna questa voce"
     IDS_POLICY_REFRESHPARENT "Aggiorna il primario di questa voce"
     IDS_BUGREPORTHINT       "Per un rapporto sui bug, è meglio descrivere il sintomo, includendo il messaggio di errore esatto e, se possibile, le fasi per riprodurre il comportamento."
-    IDS_FEEDBACKHINT        "Siamo sempre grati di ricevere unn feedback."
+    IDS_FEEDBACKHINT        "Siamo sempre grati di ricevere un feedback."
     IDS_FROMsPLATFORMs      "Da: %1!s!. Piattaforma: %2!s!.\r\n\r\n"
     IDS_SEV_CRITICAL        "Bug critico"
     IDS_SEV_GRAVE           "Bug grave"
