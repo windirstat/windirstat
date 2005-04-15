@@ -4,7 +4,6 @@
 	Version="7.10"
 	Name="wdsr0405"
 	ProjectGUID="{C3F39C58-7FC4-4243-82B2-A3572235AE02}"
-	RootNamespace="wdsr0405"
 	Keyword="Win32Proj">
 	<Platforms>
 		<Platform
@@ -19,7 +18,7 @@
 			CharacterSet="1">
 			<Tool
 				Name="VCCLCompilerTool"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;wdsr0405_EXPORTS"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;WDSR0405_EXPORTS"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
@@ -84,16 +83,16 @@
 			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx"
 			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}">
 			<File
-				RelativePath=".\res\bitmap1.bmp">
+				RelativePath="..\windirstat\res\bitmap1.bmp">
 			</File>
 			<File
-				RelativePath=".\res\icon1.ico">
+				RelativePath="..\windirstat\res\icon1.ico">
 			</File>
 			<File
-				RelativePath=".\res\junctionpoint.bmp">
+				RelativePath="..\windirstat\res\junctionpoint.bmp">
 			</File>
 			<File
-				RelativePath=".\res\Toolbar.bmp">
+				RelativePath="..\windirstat\res\Toolbar.bmp">
 			</File>
 			<File
 				RelativePath=".\windirstat.rc">
