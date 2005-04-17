@@ -12,8 +12,6 @@ This project, made up of
 	wdsr0405 (Czech), wdsr0407 (German), wdsr040a (Spanish),
 	wdsr040c (French), wdsr040e (Hungarian), wdsr0410 (Italian),
 	wdsr0415 (Polish), wdsr0419 (Russian)
-	(prepared but not implemented!: wdsr0402 (Bulgarian))
-	
 
 - helper/utility programs [executables]
 	setup, linkcounter
@@ -119,6 +117,31 @@ How to create a resource dll.
 * Remove the manifest and license.txt
 
 * Translate the rc-File
+
+=============================================================================
+
+For the translators give credit by giving the language's name in the
+respective language plus all the three-letter codes available for the
+language in ISO 639.
+Find the list of already included languages in the table below:
+
+ ------------------------------------------------------------
+ L-ID  | Language      | Native name  | 3-letter ISO 639 code
+ (hex) | (english)     |              | (all available)
+ ------------------------------------------------------------
+ 0405  | Czech         | Ceština      | CES/CZE
+ 0407  | German        | Deutsch      | DEU/GER
+ 0409  | English       | English      | ENG
+ 040a  | Spanish       | Español      | ESL/SPA
+ 040c  | French        | Français     | FRA/FRE
+ 040e  | Hungarian     | Magyar       | HUN
+ 0410  | Italian       | Italiano     | ITA
+ 0415  | Polish        | Polski       | POL
+ 0419  | Russian       | Ðóññêèé      | RUS
+ ------------------------------------------------------------
+
+To lookup further language codes look at:
+-> http://www.w3.org/WAI/ER/IG/ert/iso639.htm
 
 =============================================================================
 testplan.txt may be useful for future releases.

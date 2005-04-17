@@ -130,7 +130,7 @@ void CAboutDlg::CMyTabControl::SetPageText(int tab)
 {
 	USES_CONVERSION;
 
-	CString text;
+	CString text, translators;
 	DWORD newStyle= ES_CENTER;
 
 	switch (tab)
@@ -140,6 +140,8 @@ void CAboutDlg::CMyTabControl::SetPageText(int tab)
 		break;
 	case TAB_AUTHORS:
 		text.FormatMessage(IDS_ABOUT_AUTHORSTEXTs, GetAuthorEmail());
+		translators.LoadString(IDS_TRANSLATORS);
+		text += translators;
 		// Anti-spam: avoid e-mail addresses in source-code:
 		text.Replace(_T('#'), _T('@'));
 		break;
@@ -307,6 +309,9 @@ void CAboutDlg::OnDestroy()
 }
 
 // $Log$
+// Revision 1.21  2005/04/17 20:45:19  assarbad
+// - Now the list of translators is shared among all translations. See changelog for details.
+//
 // Revision 1.20  2005/04/17 18:13:46  assarbad
 // - Moved some "static" resource strings into the respective *.rc2 files
 // - Corrected typo in Russian DLL

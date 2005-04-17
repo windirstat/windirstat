@@ -21,17 +21,31 @@
 //
 // Last modified: $Date$
 
-// The output of this file is
-// VN_MAJOR, VN_MINOR, VN_REVISION, VN_BUILD, VN_FILEFLAG and VN_STRING
-
+/*-------------------------------------------------------------------
+  This file defines the following:
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  - VN_FILEFLAG_EXE (contains information about RC or debug build)
+  - VN_STRING_EXE (contains info about unicode and debug)
+  - VN_STRING_DLL (just major.minor.rev.build)
+  - VN_FILEVERSION_EXE and VN_PRODVERSION_EXE (only different from
+    the DLL version if a development release)
+  - VN_FILEVERSION_DLL and VN_PRODVERSION_DLL (numeric representation
+    of VN_STRING_DLL)
+  - VN_FILEOS_EXE (this depends on Unicode and ANSI!
+      For Unicode: VN_FILEOS_EXE == VOS_NT_WINDOWS32
+      For ANSI   : VN_FILEOS_EXE == VOS__WINDOWS32 )
+  - VN_COPYRIGHTSTRING (copyright to include in the VERSIONINFO)
+  - VN_RESOURCEDLL (version of resource DLLs must be the same for DLL
+    and EXE at runtime)
+  -------------------------------------------------------------------*/
 
 //-------------------------------------------------------------------
 // Build categories. Uncomment _one_ line.
 //
 
-//#define BC_DEVEL				// Development version. The usual setting. File version is 0.0.0.buildno.
+#define BC_DEVEL			// Development version. The usual setting. File version is 0.0.0.buildno.
 //#define BC_RELEASECANDIDATE		// Release candidate. Version number is relevant but not yet official. About-box shows x.y.zrcn. File version is x.y.z.buildno.
-#define BC_RELEASE			// Set this only during official builds. About-box shows x.y.z. File version is x.y.z.buildno
+//#define BC_RELEASE			// Set this only during official builds. About-box shows x.y.z. File version is x.y.z.buildno
 
 // A release version must not contain debug information. Raise an error!
 #if defined(_DEBUG) && defined(BC_RELEASE)
@@ -52,17 +66,7 @@
 // Format: #define blank LINKCOUNT blanks decimal
 // Reset this to zero only when you increment VERNUM_MAJOR/MINOR/REVISION.
 
-#define LINKCOUNT  70
-
-// Version of resource DLL
-#define VN_RESOURCEDLL "Resource Version 4"
-// Version information in feedback always appears in English
-#define IDSS_FROMsPLATFORMs      "From: %1!s!. Platform: %2!s!.\r\n\r\n"
-#define IDSS_SEV_CRITICAL        "Critical Bug"
-#define IDSS_SEV_GRAVE           "Serious Bug"
-#define IDSS_SEV_NORMAL          "Bug"
-#define IDSS_SEV_WISH            "Wish"
-#define IDSS_SEV_FEEDBACK        "Feedback"
+#define LINKCOUNT  72
 
 //-------------------------------------------------------------------
 // Release candidate number. Relevant for BC_RELEASECANDIDATE.
@@ -144,25 +148,6 @@
  #define VN_FILEFLAG_EXE VN_FILEFLAG
 #endif
 
-
-/*-------------------------------------------------------------------
-  This file defines the following:
-  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  - VN_FILEFLAG_EXE (contains information about RC or debug build)
-  - VN_STRING_EXE (contains info about unicode and debug)
-  - VN_STRING_DLL (just major.minor.rev.build)
-  - VN_FILEVERSION_EXE and VN_PRODVERSION_EXE (only different from
-    the DLL version if a development release)
-  - VN_FILEVERSION_DLL and VN_PRODVERSION_DLL (numeric representation
-    of VN_STRING_DLL)
-  - VN_FILEOS_EXE (this depends on Unicode and ANSI!
-      For Unicode: VN_FILEOS_EXE == VOS_NT_WINDOWS32
-      For ANSI   : VN_FILEOS_EXE == VOS__WINDOWS32 )
-  - VN_COPYRIGHTSTRING (copyright to include in the VERSIONINFO)
-  - VN_RESOURCEDLL (version of resource DLLs must be the same for DLL
-    and EXE at runtime)
-  -------------------------------------------------------------------*/
-
 // ...nothing else.
 #undef BC_DEVEL
 #undef BC_RELEASECANDIDATE
@@ -170,6 +155,9 @@
 
 
 // $Log$
+// Revision 1.36  2005/04/17 20:45:15  assarbad
+// - Now the list of translators is shared among all translations. See changelog for details.
+//
 // Revision 1.35  2005/04/17 18:13:42  assarbad
 // - Moved some "static" resource strings into the respective *.rc2 files
 // - Corrected typo in Russian DLL

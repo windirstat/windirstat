@@ -784,7 +784,7 @@ BEGIN
     IDS_CREATEPROCESSsFAILEDs "CreateProcess(%1!s!) failed: %2!s!"
     IDS_LANGUAGERESTARTNOW  "Language changes take not effect until the application is restarted.\r\n\r\nRestart WinDirStat now?"
     IDS_ABOUT_AUTHORS       "Authors"
-    IDS_ABOUT_AUTHORSTEXTs  "=== Programmers ===\r\n\r\nBernhard Seifert\r\nCreator of the project and coordinator\r\n(mailto:%1!s!)\r\n\r\nOliver Schneider\r\n(mailto:assarbad#users.sourceforge.net)\r\n\r\n\r\n=== Translators ===\r\n\r\n--- French ---\r\n\r\nPascal Delrot\r\n(mailto:tigroo#users.sourceforge.net)\r\n\r\nUltraSam\r\n(mailto:sam.fd#wanadoo.fr)\r\n\r\n\r\n--- Polish ---\r\n\r\nDariusz Malachowski\r\n(mailto:d_malachowski#pf.pl)\r\n\r\n\r\n--- Russian ---\r\n\r\nSergiy 'Polet' Polyetayev\r\n(mailto:s_polyetayev#hotmail.com)\r\n\r\n\r\n--- Hungarian ---\r\n\r\nLeonard Nimoy\r\n(mailto:sorge#freemail.hu)\r\n\r\n\r\n--- Spanish ---\r\n\r\nSergio Omar Maurelli\r\n(mailto:sergiomaurelli#hotmail.com)\r\n\r\n\r\n--- Italian ---\r\n\r\nMaria Antonietta Ricagno\r\n(mailto:ricagno#antotranslation.com)\r\n"
+    IDS_ABOUT_AUTHORSTEXTs  "=== Programmers ===\r\n\r\nBernhard Seifert\r\nCreator of the project and coordinator\r\n(mailto:%1!s!)\r\n\r\nOliver Schneider\r\n(mailto:assarbad#users.sourceforge.net)\r\n\r\n\r\n=== Translators ===\r\n\r\n"
 END
 
 STRINGTABLE 

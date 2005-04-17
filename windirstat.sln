@@ -184,6 +184,7 @@ Global
 		{70C09DAA-6F6D-4AAC-955F-ACD602A667CE}.Debug.ActiveCfg = UnicodeRelease|Win32
 		{70C09DAA-6F6D-4AAC-955F-ACD602A667CE}.Debug.Build.0 = UnicodeRelease|Win32
 		{70C09DAA-6F6D-4AAC-955F-ACD602A667CE}.Release.ActiveCfg = UnicodeRelease|Win32
+		{70C09DAA-6F6D-4AAC-955F-ACD602A667CE}.Release.Build.0 = UnicodeRelease|Win32
 		{70C09DAA-6F6D-4AAC-955F-ACD602A667CE}.StrongDebug.ActiveCfg = UnicodeRelease|Win32
 		{70C09DAA-6F6D-4AAC-955F-ACD602A667CE}.StrongDebug.Build.0 = UnicodeRelease|Win32
 		{70C09DAA-6F6D-4AAC-955F-ACD602A667CE}.UnicodeDebug.ActiveCfg = UnicodeRelease|Win32

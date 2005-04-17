@@ -608,6 +608,9 @@
 			Name="Common Files"
 			Filter="">
 			<File
+				RelativePath="..\common\common_rsrcstr.h">
+			</File>
+			<File
 				RelativePath="..\common\commonhelpers.cpp">
 				<FileConfiguration
 					Name="Debug|Win32">

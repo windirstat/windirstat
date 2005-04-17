@@ -23,6 +23,11 @@ Last modified: $Date$
 	  more information than before in the product version.
 	* Corrected typo in the Russian translation. Thanks to Dima for
 	  pointing it out to me.
+	* Credits for translators now in a unicode encoded resource string!
+	  Changes to the about dialog have been necessary, obviously.
+	  The fact that only a single string with names of translators is
+	  being used will greatly simplify maintenance as new translation
+	  become available!
 
 2005-04-10	assarbad
 	* Added Italian resource DLL project

@@ -776,7 +776,7 @@ BEGIN
     IDS_CREATEPROCESSsFAILEDs "CreateProcess(%1!s!) fehlgeschlagen: %2!s!"
     IDS_LANGUAGERESTARTNOW  "Änderungen der Sprache werden erst wirksam, wenn das Programm neu gestartet wird.\r\n\r\nLanguage changes take not effect until the application is restarted.\r\n\r\nWinDirStat jetzt neu starten?"
     IDS_ABOUT_AUTHORS       "Autoren"
-    IDS_ABOUT_AUTHORSTEXTs  "=== Programmierer ===\r\n\r\nBernhard Seifert\r\nGründer des Projekts und Koordinator\r\n(mailto:%1!s!)\r\n\r\nOliver Schneider\r\n(mailto:assarbad#users.sourceforge.net)\r\n\r\n\r\n=== Übersetzer ===\r\n\r\n--- Französisch ---\r\n\r\nPascal Delrot\r\n(mailto:tigroo#users.sourceforge.net)\r\n\r\nUltraSam\r\n(mailto:sam.fd#wanadoo.fr)\r\n\r\n\r\n--- Polnisch ---\r\n\r\nDariusz Malachowski\r\n(mailto:d_malachowski#pf.pl)\r\n\r\n\r\n--- Russisch ---\r\n\r\nSergiy 'Polet' Polyetayev\r\n(mailto:s_polyetayev#hotmail.com)\r\n\r\n\r\n--- Ungarisch ---\r\n\r\nLeonard Nimoy\r\n(mailto:sorge#freemail.hu)\r\n\r\n\r\n--- Spanisch ---\r\n\r\nSergio Omar Maurelli\r\n(mailto:sergiomaurelli#hotmail.com)\r\n\r\n\r\n--- Italienisch ---\r\n\r\nMaria Antonietta Ricagno\r\n(mailto:ricagno#antotranslation.com)\r\n"
+    IDS_ABOUT_AUTHORSTEXTs  "=== Programmierer ===\r\n\r\nBernhard Seifert\r\nGründer des Projekts und Koordinator\r\n(mailto:%1!s!)\r\n\r\nOliver Schneider\r\n(mailto:assarbad#users.sourceforge.net)\r\n\r\n\r\n=== Übersetzer ===\r\n\r\n"
 END
 
 STRINGTABLE 

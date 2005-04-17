@@ -776,7 +776,7 @@ BEGIN
     IDS_CREATEPROCESSsFAILEDs "Создание процесса (%1!s!) неуспешно: %2!s!"
     IDS_LANGUAGERESTARTNOW  "Изменение языка вступит в силу только после перезапуска приожения.\r\n\r\nLanguage changes take not effect until the application is restarted.\r\n\r\nПерезапустить WinDirStat сейчас?"
     IDS_ABOUT_AUTHORS       "Авторы"
-    IDS_ABOUT_AUTHORSTEXTs  "=== Программисты ===\r\n\r\nBernhard Seifert\r\nСоздатель проекта и координатор\r\n(mailto:%1!s!)\r\n\r\nOliver Schneider\r\n(mailto:assarbad#users.sourceforge.net)\r\n\r\n\r\n=== Переводчики ===\r\n\r\n--- Французский ---\r\n\r\nPascal Delrot\r\n(mailto:tigroo#users.sourceforge.net)\r\n\r\nUltraSam\r\n(mailto:sam.fd#wanadoo.fr)\r\n\r\n\r\n--- Польский ---\r\n\r\nDariusz Malachowski\r\n(mailto:d_malachowski#pf.pl)\r\n\r\n\r\n--- Русский ---\r\n\r\nSergiy Polyetayev\r\n(mailto:s_polyetayev#hotmail.com)\r\n\r\n\r\n--- Венгерский ---\r\n\r\nLeonard Nimoy\r\n(mailto:sorge#freemail.hu)\r\n\r\n\r\n--- Испанский ---\r\n\r\nSergio Omar Maurelli\r\n(mailto:sergiomaurelli#hotmail.com)\r\n"
+    IDS_ABOUT_AUTHORSTEXTs  "=== Программисты ===\r\n\r\nBernhard Seifert\r\nСоздатель проекта и координатор\r\n(mailto:%1!s!)\r\n\r\nOliver Schneider\r\n(mailto:assarbad#users.sourceforge.net)\r\n\r\n\r\n=== Переводчики ===\r\n\r\n"
 END
 
 STRINGTABLE 
