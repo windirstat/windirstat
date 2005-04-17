@@ -10,7 +10,7 @@
                                  L"--- Magyar (HUN) ---\n\n'Leonard Nimoy'\n(mailto:sorge#freemail.hu)\n\n\n" \
                                  L"--- Italiano (ITA) ---\n\nMaria Antonietta Ricagno\n(mailto:ricagno#antotranslation.com\nhttp://www.antotranslation.com)\n\n\n" \
                                  L"--- Polski (POL) ---\n\nDariusz Ma\x0142achowski\n(mailto:d_malachowski#pf.pl)\n\n\n" \
-                                 L"--- \x0420\x0443\x0441\x0441\x043A\x0438\x0439/Russkiy (RUS) ---\n\nSergiy '\x041F\x043E\x043B\x0451\x0442' Polyetayev\n(mailto:s_polyetayev#hotmail.com)\n\n\n"
+                                 L"--- \x0420\x0443\x0441\x0441\x043A\x0438\x0439/Russkij (RUS) ---\n\nSergiy '\x041F\x043E\x043B\x0451\x0442' Polyetayev\n(mailto:s_polyetayev#hotmail.com)\n\n\n"
 
 // Version of resource DLL
 #define IDSS_RESOURCEDLL         "Resource Version 4"
