@@ -12,6 +12,7 @@ attrib -r -h -s *.* /S /D
 del /f /q /s *.ncb
 del /f /q /s *.suo
 del /f /q /s *.aps
+del /f /q /s *.bak
 del /f /q .\common\linkcounter.exe
 :: rem Delete all release subdirectories (the release of the binaries is not touched)
 for /d %%i in (*) do @(
