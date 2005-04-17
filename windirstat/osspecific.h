@@ -58,6 +58,7 @@ private:
 	typedef BOOL (WINAPI *TypeFindVolumeMountPointClose)(HANDLE hFindVolumeMountPoint);
 
 	HMODULE m_dll;
+	bool m_UnloadDll;
 	TypeGetVolumeNameForVolumeMountPoint	m_GetVolumeNameForVolumeMountPoint;
 	TypeFindFirstVolume						m_FindFirstVolume;
 	TypeFindNextVolume						m_FindNextVolume;
@@ -87,6 +88,7 @@ private:
 	typedef HRESULT (STDAPICALLTYPE *TypeSHQueryRecycleBin)(LPCTSTR pszRootPath, LPSHQUERYRBINFO pSHQueryRBInfo);
 
 	HMODULE m_dll;
+	bool m_UnloadDll;
 
 	TypeSHEmptyRecycleBin m_SHEmptyRecycleBin;
 	TypeSHQueryRecycleBin m_SHQueryRecycleBin;
@@ -154,6 +156,8 @@ private:
 	typedef DWORD (WINAPI *TypeQueryDosDevice)(LPCTSTR lpDeviceName, LPTSTR lpTargetPath, DWORD ucchMax);
 
 	HMODULE m_dll;
+	bool m_UnloadDll;
+
 	TypeQueryDosDevice m_QueryDosDevice;
 };
 
@@ -175,10 +179,15 @@ private:
 	typedef DWORD (WINAPI *TypeGetCompressedFileSize)(LPCTSTR lpFileName, LPDWORD lpFileSizeHigh);
 
 	HMODULE m_dll;
+	bool m_UnloadDll;
+	
 	TypeGetCompressedFileSize m_GetCompressedFileSize;
 };
 
 // $Log$
+// Revision 1.7  2005/04/17 12:27:21  assarbad
+// - For details see changelog of 2005-04-17
+//
 // Revision 1.6  2004/11/28 14:40:06  assarbad
 // - Extended CFileFindWDS to replace a global function
 // - Now packing/unpacking the file attributes. This even spares a call to find encrypted/compressed files.

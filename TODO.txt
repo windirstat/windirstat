@@ -10,7 +10,6 @@ Last modified: $Date$
 - Completely move the list of translators out of the .RC
   files. It should be static and only available in English
   with language or country shortcuts as identifiers!
-- Fix a bug which appears in Spanish, Italian and Czech resource DLLs!
 
 ==========================================================
 

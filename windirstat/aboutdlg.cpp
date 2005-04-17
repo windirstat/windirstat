@@ -109,10 +109,10 @@ void CAboutDlg::CMyTabControl::Initialize()
 {
 	ModifyStyle(0, WS_CLIPCHILDREN);
 
-	InsertItem(TAB_ABOUT, LoadString(IDS_ABOUT_ABOUT));
-	InsertItem(TAB_AUTHORS, LoadString(IDS_ABOUT_AUTHORS));
-	InsertItem(TAB_THANKSTO, LoadString(IDS_ABOUT_THANKSTO));
-	InsertItem(TAB_LICENSE, LoadString(IDS_ABOUT_LICENSEAGREEMENT));
+	InsertItem(TAB_ABOUT, LPCTSTR(LoadString(IDS_ABOUT_ABOUT)));
+	InsertItem(TAB_AUTHORS, LPCTSTR(LoadString(IDS_ABOUT_AUTHORS)));
+	InsertItem(TAB_THANKSTO, LPCTSTR(LoadString(IDS_ABOUT_THANKSTO)));
+	InsertItem(TAB_LICENSE, LPCTSTR(LoadString(IDS_ABOUT_LICENSEAGREEMENT)));
 
 	CRect rc;
 	GetClientRect(rc);
@@ -307,6 +307,9 @@ void CAboutDlg::OnDestroy()
 }
 
 // $Log$
+// Revision 1.19  2005/04/17 12:27:21  assarbad
+// - For details see changelog of 2005-04-17
+//
 // Revision 1.18  2005/04/10 16:49:30  assarbad
 // - Some smaller fixes including moving the resource string version into the rc2 files
 //

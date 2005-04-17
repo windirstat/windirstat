@@ -44,7 +44,7 @@
 // Format: #define blank LINKCOUNT blanks decimal
 // Reset this to zero only when you increment VERNUM_MAJOR/MINOR/REVISION.
 
-#define LINKCOUNT  49
+#define LINKCOUNT  66
 #define VN_RESOURCEDLL "Resource Version 4"
 //-------------------------------------------------------------------
 // Release candidate number. Relevant for BC_RELEASECANDIDATE.
@@ -114,6 +114,9 @@
 
 
 // $Log$
+// Revision 1.34  2005/04/17 12:27:17  assarbad
+// - For details see changelog of 2005-04-17
+//
 // Revision 1.33  2005/04/10 16:49:22  assarbad
 // - Some smaller fixes including moving the resource string version into the rc2 files
 //

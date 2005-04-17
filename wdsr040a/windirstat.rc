@@ -22,15 +22,6 @@ LANGUAGE LANG_SPANISH, SUBLANG_SPANISH
 #pragma code_page(1252)
 #endif //_WIN32
 
-/////////////////////////////////////////////////////////////////////////////
-//
-// Icon
-//
-
-// Icon with lowest ID value placed first to ensure application icon
-// remains consistent on all systems.
-IDR_MAINFRAME           ICON                    "..\\windirstat\\res\\icon1.ico"
-
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -56,7 +47,7 @@ BEGIN
     "#define _AFX_NO_PROPERTY_RESOURCES\r\n"
     "\r\n"
     "#if !defined(AFX_RESOURCE_DLL)\r\n"
-    "LANGUAGE 9, 1\r\n"
+    "LANGUAGE 7, 1\r\n"
     "#pragma code_page(1252)\r\n"
     "#include ""res\\windirstat.rc2""  // non-Microsoft Visual C++ edited resources\r\n"
     "#include ""afxres.rc""         // Standard components\r\n"
@@ -67,6 +58,14 @@ END
 
 #endif    // APSTUDIO_INVOKED
 
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDR_MAINFRAME           ICON                    "..\\windirstat\\res\\icon1.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -181,23 +180,6 @@ BEGIN
     END
 END
 
-IDR_POPUPGRAPH MENU 
-BEGIN
-    POPUP "POPUP_GRAPH"
-    BEGIN
-        MENUITEM "Zoom &in\t+",                 32783
-        MENUITEM "Zoom &out\t-",                32784
-        MENUITEM "&Reseleccionar Hijo\t*",      ID_TREEMAP_RESELECTCHILD
-        MENUITEM "&Seleccionar Padre\t/",       ID_TREEMAP_SELECTPARENT
-        MENUITEM SEPARATOR
-        MENUITEM "&Copiar Path\tCtrl+C",        57634
-        MENUITEM "&Explorador Aquí\tCtrl+E",    32774
-        MENUITEM "Línea de C&omandos Aquí\tCtrl+P", 32808
-        MENUITEM SEPARATOR
-        MENUITEM "C&ancelar\tEsc",              ID_POPUP_CANCEL
-    END
-END
-
 IDR_POPUPLIST MENU 
 BEGIN
     POPUP "POPUP_LIST"
@@ -217,6 +199,23 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "&Propiedades",                ID_CLEANUP_PROPERTIES
         MENUITEM SEPARATOR
+    END
+END
+
+IDR_POPUPGRAPH MENU 
+BEGIN
+    POPUP "POPUP_GRAPH"
+    BEGIN
+        MENUITEM "Zoom &in\t+",                 32783
+        MENUITEM "Zoom &out\t-",                32784
+        MENUITEM "&Reseleccionar Hijo\t*",      ID_TREEMAP_RESELECTCHILD
+        MENUITEM "&Seleccionar Padre\t/",       ID_TREEMAP_SELECTPARENT
+        MENUITEM SEPARATOR
+        MENUITEM "&Copiar Path\tCtrl+C",        57634
+        MENUITEM "&Explorador Aquí\tCtrl+E",    32774
+        MENUITEM "Línea de C&omandos Aquí\tCtrl+P", 32808
+        MENUITEM SEPARATOR
+        MENUITEM "C&ancelar\tEsc",              ID_POPUP_CANCEL
     END
 END
 
@@ -278,6 +277,27 @@ BEGIN
     ICON            IDR_MAINFRAME,IDC_STATIC,7,3,20,20
 END
 
+IDD_SELECTDRIVES DIALOGEX 0, 0, 276, 182
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU | 
+    WS_THICKFRAME
+CAPTION "WinDirStat - Seleccionar Discos"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    CONTROL         "&Todos los Discos Locales",IDC_ALLLOCALDRIVES,"Button",
+                    BS_AUTORADIOBUTTON | WS_GROUP,7,7,99,10
+    CONTROL         "Discos &Individuales",IDC_SOMEDRIVES,"Button",
+                    BS_AUTORADIOBUTTON,7,31,91,10
+    CONTROL         "",IDC_DRIVES,"SysListView32",LVS_REPORT | 
+                    LVS_OWNERDRAWFIXED | LVS_ALIGNLEFT | WS_BORDER | 
+                    WS_TABSTOP,7,43,262,100
+    CONTROL         "Una &Carpeta",IDC_AFOLDER,"Button",BS_AUTORADIOBUTTON,7,
+                    150,100,10
+    EDITTEXT        IDC_FOLDERNAME,6,161,209,14,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",IDC_BROWSEFOLDER,219,161,50,14
+    DEFPUSHBUTTON   "OK",IDOK,219,7,50,14
+    PUSHBUTTON      "Cancelar",IDCANCEL,219,24,50,14
+END
+
 IDD_DELETE_WARNING DIALOGEX 0, 0, 276, 150
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | 
     WS_SYSMENU
@@ -324,8 +344,7 @@ BEGIN
                     54,138,8
     LTEXT           "%sp Path Completo de Subdirectorio",IDC_HINTSP,128,63,
                     94,8
-    LTEXT           "%sn Nombre de Subdirectorio sin Path",IDC_HINTSN,225,63,
-                    138,8
+    LTEXT           "%sn Nombre de Subdirectorio sin Path",IDC_HINTSN,225,63,138,8
     CONTROL         "&Discos",IDC_WORKSFORDRIVES,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,138,92,49,10
     CONTROL         "&Carpetas",IDC_WORKSFORDIRECTORIES,"Button",
@@ -338,8 +357,7 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,207,107,92,10
     PUSHBUTTON      "&Ayuda",IDC_HELPBUTTON,323,131,50,14
     CONTROL         "&Incluir Subdirectorios Recursivamente",
-                    IDC_RECURSEINTOSUBDIRECTORIES,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,128,132,160,10
+                    IDC_RECURSEINTOSUBDIRECTORIES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,128,132,160,10
     CONTROL         "&Pedir Confirmación",IDC_ASKFORCONFIRMATION,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,128,146,160,10
     CONTROL         "&Ventana de Consola",IDC_SHOWCONSOLEWINDOW,
@@ -354,55 +372,6 @@ BEGIN
     LTEXT           "&Título",IDC_STATIC,186,7,24,8
     LTEXT           "Línea de &Comandos",IDC_STATIC,129,25,83,8
     GROUPBOX        "Trabaja para",IDC_STATIC,129,81,244,40
-END
-
-IDD_PAGE_GENERAL DIALOGEX 0, 0, 380, 202
-STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | 
-    WS_SYSMENU
-CAPTION "General"
-FONT 8, "MS Shell Dlg", 400, 0, 0x1
-BEGIN
-    CONTROL         "&Cruzar Límites del Sistema de Archivos",
-                    IDC_FOLLOWMOUNTPOINTS,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,32,13,229,10
-    CONTROL         "Seguir Puntos de &Unión (excepto Ptos.Montaje de Volúmenes)",
-                    IDC_FOLLOWJUNCTIONS,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,32,27,229,10
-    CONTROL         "&Mostrar Tamaños en Formato GB/MB/kB/Bytes",
-                    IDC_HUMANFORMAT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,
-                    41,229,10
-    GROUPBOX        "Estilo &Lista",IDC_STATIC,30,61,90,65
-    CONTROL         "Selec.&Fila Completa",IDC_FULLROWSELECTION,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,38,76,75,10
-    CONTROL         "Mostrar &Grilla",IDC_SHOWGRID,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,38,93,68,10
-    CONTROL         "Mostrar &Bandas",IDC_SHOWSTRIPES,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,38,110,68,10
-    LTEXT           "&Idioma",IDC_STATIC,32,139,166,8
-    COMBOBOX        IDC_COMBO,32,152,156,140,CBS_DROPDOWNLIST | CBS_SORT | 
-                    WS_VSCROLL | WS_TABSTOP
-    CONTROL         "&Usar este idioma para fecha/hora y formato de números",
-                    IDC_USEWDSLOCALE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
-                    32,172,298,10
-END
-
-IDD_PAGE_REPORT DIALOGEX 0, 0, 380, 202
-STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | 
-    WS_SYSMENU
-CAPTION "Informe"
-FONT 8, "MS Shell Dlg", 400, 0, 0x1
-BEGIN
-    LTEXT           "Personalice aquí los reportes generados por la opción 'Enviar Mail al Dueño'.",
-                    IDC_STATIC,7,9,268,8
-    LTEXT           "&Asunto",IDC_STATIC,7,31,46,8
-    EDITTEXT        IDC_SUBJECT,59,31,314,14,ES_AUTOHSCROLL
-    LTEXT           "&Prefijo",IDC_STATIC,7,51,46,8
-    EDITTEXT        IDC_PREFIX,59,51,314,54,ES_MULTILINE | ES_AUTOVSCROLL | 
-                    ES_AUTOHSCROLL | ES_WANTRETURN
-    LTEXT           "S&ufijo",IDC_STATIC,7,111,46,8
-    EDITTEXT        IDC_SUFFIX,59,111,314,54,ES_MULTILINE | ES_AUTOVSCROLL | 
-                    ES_AUTOHSCROLL | ES_WANTRETURN
-    PUSHBUTTON      "",IDC_RESET,59,174,89,14
 END
 
 IDD_PAGE_TREELIST DIALOGEX 0, 0, 380, 199
@@ -477,6 +446,36 @@ BEGIN
     LTEXT           "Estático",IDC_PREVIEW,7,7,211,124
 END
 
+IDD_PAGE_GENERAL DIALOGEX 0, 0, 380, 202
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | 
+    WS_SYSMENU
+CAPTION "General"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    CONTROL         "&Cruzar Límites del Sistema de Archivos",
+                    IDC_FOLLOWMOUNTPOINTS,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,32,13,229,10
+    CONTROL         "Seguir Puntos de &Unión (excepto Ptos.Montaje de Volúmenes)",
+                    IDC_FOLLOWJUNCTIONS,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,32,27,229,10
+    CONTROL         "&Mostrar Tamaños en Formato GB/MB/kB/Bytes",
+                    IDC_HUMANFORMAT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,
+                    41,229,10
+    GROUPBOX        "Estilo &Lista",IDC_STATIC,30,61,90,65
+    CONTROL         "Selec.&Fila Completa",IDC_FULLROWSELECTION,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,38,76,75,10
+    CONTROL         "Mostrar &Grilla",IDC_SHOWGRID,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,38,93,68,10
+    CONTROL         "Mostrar &Bandas",IDC_SHOWSTRIPES,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,38,110,68,10
+    LTEXT           "&Idioma",IDC_STATIC,32,139,166,8
+    COMBOBOX        IDC_COMBO,32,152,156,140,CBS_DROPDOWNLIST | CBS_SORT | 
+                    WS_VSCROLL | WS_TABSTOP
+    CONTROL         "&Usar este idioma para fecha/hora y formato de números",
+                    IDC_USEWDSLOCALE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
+                    32,172,298,10
+END
+
 IDD_REPORTBUG DIALOGEX 0, 0, 360, 233
 STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU | 
     WS_THICKFRAME
@@ -517,27 +516,25 @@ BEGIN
                     IDC_STATIC_OKHINT,7,201,346,8
 END
 
-IDD_SELECTDRIVES DIALOGEX 0, 0, 276, 182
-STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU | 
-    WS_THICKFRAME
-CAPTION "WinDirStat - Seleccionar Discos"
+
+IDD_PAGE_REPORT DIALOGEX 0, 0, 380, 202
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | 
+    WS_SYSMENU
+CAPTION "Informe"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    CONTROL         "&Todos los Discos Locales",IDC_ALLLOCALDRIVES,"Button",
-                    BS_AUTORADIOBUTTON | WS_GROUP,7,7,99,10
-    CONTROL         "Discos &Individuales",IDC_SOMEDRIVES,"Button",
-                    BS_AUTORADIOBUTTON,7,31,91,10
-    CONTROL         "",IDC_DRIVES,"SysListView32",LVS_REPORT | 
-                    LVS_OWNERDRAWFIXED | LVS_ALIGNLEFT | WS_BORDER | 
-                    WS_TABSTOP,7,43,262,100
-    CONTROL         "Una &Carpeta",IDC_AFOLDER,"Button",BS_AUTORADIOBUTTON,7,
-                    150,100,10
-    EDITTEXT        IDC_FOLDERNAME,6,161,209,14,ES_AUTOHSCROLL
-    PUSHBUTTON      "...",IDC_BROWSEFOLDER,219,161,50,14
-    DEFPUSHBUTTON   "OK",IDOK,219,7,50,14
-    PUSHBUTTON      "Cancelar",IDCANCEL,219,24,50,14
+    LTEXT           "Personalice aquí los reportes generados por la opción 'Enviar Mail al Dueño'.",
+                    IDC_STATIC,7,9,268,8
+    LTEXT           "&Asunto",IDC_STATIC,7,31,46,8
+    EDITTEXT        IDC_SUBJECT,59,31,314,14,ES_AUTOHSCROLL
+    LTEXT           "&Prefijo",IDC_STATIC,7,51,46,8
+    EDITTEXT        IDC_PREFIX,59,51,314,54,ES_MULTILINE | ES_AUTOVSCROLL | 
+                    ES_AUTOHSCROLL | ES_WANTRETURN
+    LTEXT           "S&ufijo",IDC_STATIC,7,111,46,8
+    EDITTEXT        IDC_SUFFIX,59,111,314,54,ES_MULTILINE | ES_AUTOVSCROLL | 
+                    ES_AUTOHSCROLL | ES_WANTRETURN
+    PUSHBUTTON      "",IDC_RESET,59,174,89,14
 END
-
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -553,6 +550,14 @@ BEGIN
         RIGHTMARGIN, 266
         TOPMARGIN, 7
         BOTTOMMARGIN, 192
+    END
+
+    IDD_SELECTDRIVES, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 269
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 175
     END
 
     IDD_DELETE_WARNING, DIALOG
@@ -579,22 +584,6 @@ BEGIN
         BOTTOMMARGIN, 195
     END
 
-    IDD_PAGE_GENERAL, DIALOG
-    BEGIN
-        LEFTMARGIN, 7
-        RIGHTMARGIN, 373
-        TOPMARGIN, 7
-        BOTTOMMARGIN, 195
-    END
-
-    IDD_PAGE_REPORT, DIALOG
-    BEGIN
-        LEFTMARGIN, 7
-        RIGHTMARGIN, 373
-        TOPMARGIN, 7
-        BOTTOMMARGIN, 195
-    END
-
     IDD_PAGE_TREELIST, DIALOG
     BEGIN
         LEFTMARGIN, 7
@@ -611,20 +600,28 @@ BEGIN
         BOTTOMMARGIN, 195
     END
 
+    IDD_PAGE_GENERAL, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 373
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 195
+    END
+
+    IDD_PAGE_REPORT, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 373
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 195
+    END
+
     IDD_REPORTBUG, DIALOG
     BEGIN
         LEFTMARGIN, 7
         RIGHTMARGIN, 353
         TOPMARGIN, 7
         BOTTOMMARGIN, 226
-    END
-
-    IDD_SELECTDRIVES, DIALOG
-    BEGIN
-        LEFTMARGIN, 7
-        RIGHTMARGIN, 269
-        TOPMARGIN, 7
-        BOTTOMMARGIN, 175
     END
 END
 #endif    // APSTUDIO_INVOKED
@@ -755,7 +752,8 @@ END
 
 STRINGTABLE 
 BEGIN
-    ID_TREEMAP_RESELECTCHILD "Re-seleccionar el hijo.\nReseleccionar Hijo"
+    ID_TREEMAP_RESELECTCHILD
+                            "Re-seleccionar el hijo.\nReseleccionar Hijo"
     ID_CLEANUP_OPEN         "Abrir el item seleccionado.\r\nAbrir Item"
     ID_CLEANUP_PROPERTIES   "Mostrar las propiedades del item seleccionado.\r\nMostrar Propiedades"
 END
@@ -885,7 +883,7 @@ END
 #define _AFX_NO_PROPERTY_RESOURCES
 
 #if !defined(AFX_RESOURCE_DLL)
-LANGUAGE 9, 1
+LANGUAGE 7, 1
 #pragma code_page(1252)
 #include "res\windirstat.rc2"  // non-Microsoft Visual C++ edited resources
 #include "afxres.rc"         // Standard components

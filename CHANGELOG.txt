@@ -2,6 +2,20 @@ changelog.txt - What has been done to WinDirStat (newest top)
 Last modified: $Date$
 =============================================================
 
+2005-04-17	assarbad
+	* Fixed a bug that appeared only in the Spanish, Italian and Czech
+	  resource DLLs, but seemed to be by chance. It was the fact that
+	  the resource version string which had been moved to the *.rc2
+	  files recently, had no explicit statement to which language it
+	  belonged. Therefore the Spanish DLL contained the version string
+	  as a German string, for example. This confused the ATL code.
+	* Changed order of resources manually for one .rc to compare better
+	  and track down that error above.
+	* Minor changes: added comment and used GetModuleHandle() instead
+	  of LoadLibrary() for osspecific.cpp in several places for those
+	  DLLs which are anyway already loaded at the time the call is
+	  placed.
+
 2005-04-10	assarbad
 	* Added Italian resource DLL project
 	* Added Czech resource DLL project

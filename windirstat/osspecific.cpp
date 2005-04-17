@@ -42,8 +42,14 @@
 /////////////////////////////////////////////////////////////////////////////
 
 CVolumeApi::CVolumeApi()
+	: m_UnloadDll(false)
 {
-	m_dll= LoadLibrary(_T("kernel32.dll"));
+	m_dll = GetModuleHandle(_T("kernel32.dll"));
+	if(!m_dll)
+	{
+		m_dll = LoadLibrary(_T("kernel32.dll"));
+		m_UnloadDll = (m_dll != NULL);
+	}
 
 	TGETPROC(GetVolumeNameForVolumeMountPoint);
 	TGETPROC(FindFirstVolume);
@@ -56,7 +62,7 @@ CVolumeApi::CVolumeApi()
 
 CVolumeApi::~CVolumeApi()
 {
-	if (m_dll != NULL)
+	if (m_UnloadDll)
 		FreeLibrary(m_dll);
 	// "It is not safe to call FreeLibrary from DllMain."
 	// Therefore, don't use global variables of type CVolumeApi in a DLL.
@@ -124,8 +130,14 @@ BOOL CVolumeApi::FindVolumeMountPointClose(HANDLE hFindVolumeMountPoint)
 /////////////////////////////////////////////////////////////////////////////
 
 CRecycleBinApi::CRecycleBinApi()
+	: m_UnloadDll(false)
 {
-	m_dll= LoadLibrary(_T("shell32.dll"));
+	m_dll = GetModuleHandle(_T("shell32.dll"));
+	if(!m_dll)
+	{
+		m_dll = LoadLibrary(_T("shell32.dll"));
+		m_UnloadDll = (m_dll != NULL);
+	}
 
 	TGETPROC(SHEmptyRecycleBin);
 	TGETPROC(SHQueryRecycleBin);
@@ -133,7 +145,7 @@ CRecycleBinApi::CRecycleBinApi()
 
 CRecycleBinApi::~CRecycleBinApi()
 {
-	if (m_dll != NULL)
+	if (m_UnloadDll)
 		FreeLibrary(m_dll);
 }
 
@@ -219,14 +231,21 @@ ULONG CMapi32Api::MAPISendMail(LHANDLE lhSession, ULONG ulUIParam, lpMapiMessage
 /////////////////////////////////////////////////////////////////////////////
 
 CQueryDosDeviceApi::CQueryDosDeviceApi()
+	: m_UnloadDll(false)
 {
-	m_dll= LoadLibrary(_T("kernel32.dll"));
+	m_dll = GetModuleHandle(_T("kernel32.dll"));
+	if(!m_dll)
+	{
+		m_dll = LoadLibrary(_T("kernel32.dll"));
+		m_UnloadDll = (m_dll != NULL);
+	}
+
 	TGETPROC(QueryDosDevice);
 }
 
 CQueryDosDeviceApi::~CQueryDosDeviceApi()
 {
-	if (m_dll != NULL)
+	if (m_UnloadDll)
 		FreeLibrary(m_dll);
 }
 
@@ -245,14 +264,21 @@ DWORD CQueryDosDeviceApi::QueryDosDevice(LPCTSTR lpDeviceName, LPTSTR lpTargetPa
 /////////////////////////////////////////////////////////////////////////////
 
 CGetCompressedFileSizeApi::CGetCompressedFileSizeApi()
+	: m_UnloadDll(false)
 {
-	m_dll= LoadLibrary(_T("kernel32.dll"));
+	m_dll = GetModuleHandle(_T("kernel32.dll"));
+	if(!m_dll)
+	{
+		m_dll = LoadLibrary(_T("kernel32.dll"));
+		m_UnloadDll = (m_dll != NULL);
+	}
+
 	TGETPROC(GetCompressedFileSize);
 }
 
 CGetCompressedFileSizeApi::~CGetCompressedFileSizeApi()
 {
-	if (m_dll != NULL)
+	if (m_UnloadDll)
 		FreeLibrary(m_dll);
 }
 
@@ -277,6 +303,9 @@ ULONGLONG CGetCompressedFileSizeApi::GetCompressedFileSize(LPCTSTR lpFileName)
 }
 
 // $Log$
+// Revision 1.7  2005/04/17 12:27:21  assarbad
+// - For details see changelog of 2005-04-17
+//
 // Revision 1.6  2004/11/28 14:40:06  assarbad
 // - Extended CFileFindWDS to replace a global function
 // - Now packing/unpacking the file attributes. This even spares a call to find encrypted/compressed files.

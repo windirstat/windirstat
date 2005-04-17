@@ -290,15 +290,15 @@ CString CDirstatApp::ConstructHelpFileName()
 
 bool CDirstatApp::IsCorrectResourceDll(LPCTSTR path)
 {
-	HMODULE module= LoadLibrary(path);
+	HMODULE module = LoadLibrary(path);
 	if (module == NULL)
 		return false;
 
-	CString reference= LoadString(IDS_RESOURCEVERSION);
+	CString reference = LoadString(IDS_RESOURCEVERSION);
 	
-	int bufsize= reference.GetLength() * 2;
+	int bufsize = reference.GetLength() * 2;
 	CString s;
-	int r= LoadString(module, IDS_RESOURCEVERSION, s.GetBuffer(bufsize), bufsize);
+	int r = LoadString(module, IDS_RESOURCEVERSION, s.GetBuffer(bufsize), bufsize);
 	s.ReleaseBuffer();
 
 	FreeLibrary(module);
@@ -424,17 +424,19 @@ BOOL CDirstatApp::InitInstance()
 
 	m_langid= GetBuiltInLanguage(); 
 
-	LANGID langid= CLanguageOptions::GetLanguage();
+	LANGID langid = CLanguageOptions::GetLanguage();
 	if (langid != GetBuiltInLanguage())
 	{
-		CString resourceDllPath= FindResourceDllPathByLangid(langid);
+		CString resourceDllPath = FindResourceDllPathByLangid(langid);
 		if (!resourceDllPath.IsEmpty())
 		{
-			HINSTANCE dll= LoadLibrary(resourceDllPath);
+			// Load language resource DLL
+			HINSTANCE dll = LoadLibrary(resourceDllPath);
 			if (dll != NULL)
 			{
+				// Set default module handle for loading of resources
 				AfxSetResourceHandle(dll);
-				m_langid= langid;
+				m_langid = langid;
 			}
 			else
 			{
@@ -571,6 +573,9 @@ void CDirstatApp::OnHelpReportbug()
 }
 
 // $Log$
+// Revision 1.16  2005/04/17 12:27:21  assarbad
+// - For details see changelog of 2005-04-17
+//
 // Revision 1.15  2005/04/10 16:49:30  assarbad
 // - Some smaller fixes including moving the resource string version into the rc2 files
 //

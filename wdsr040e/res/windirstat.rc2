@@ -45,7 +45,7 @@ VS_VERSION_INFO VERSIONINFO
 BEGIN
     BLOCK "StringFileInfo"
     BEGIN
-        BLOCK "040e04e2"
+        BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "Seifert"
             VALUE "FileDescription", "WinDirStat Hungarian Resources"
@@ -64,6 +64,7 @@ BEGIN
 END
 
 STRINGTABLE
+LANGUAGE LANG_HUNGARIAN, SUBLANG_DEFAULT
 BEGIN
     IDS_RESOURCEVERSION     VN_RESOURCEDLL
 END

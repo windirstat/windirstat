@@ -49,7 +49,7 @@ BEGIN
     "#if !defined(AFX_RESOURCE_DLL)\r\n"
     "LANGUAGE 7, 1\r\n"
     "#pragma code_page(1252)\r\n"
-    "#include ""res\\windirstat.rc2""\r\n"
+    "#include ""res\\windirstat.rc2""  // non-Microsoft Visual C++ edited resources\r\n"
     "#include ""afxres.rc""         // Standard components\r\n"
     "\r\n"
     "#endif\r\n"
@@ -338,8 +338,7 @@ BEGIN
     EDITTEXT        IDC_TITLE,212,7,161,14,ES_AUTOHSCROLL
     EDITTEXT        IDC_COMMANDLINE,129,35,244,14,ES_AUTOHSCROLL
     LTEXT           "%p Kompletter Pfad",IDC_STATIC,128,54,94,8
-    LTEXT           "%n Datei/Verzeichnisname ohne Pfad",IDC_STATIC,225,54,
-                    138,8
+    LTEXT           "%n Datei/Verzeichnisname ohne Pfad",IDC_STATIC,225,54,138,8
     LTEXT           "%sp Kompletter Pfad des Unterverzeichnisses",IDC_HINTSP,
                     128,63,91,16
     LTEXT           "%sn Name des Unterverzeichnisses ohne Pfad",IDC_HINTSN,
@@ -384,15 +383,24 @@ BEGIN
     CONTROL         "&Verbrauchte Zeit während des Einlesens anzeigen",
                     IDC_SHOWTIMESPENT,"Button",BS_AUTOCHECKBOX | 
                     BS_MULTILINE | WS_TABSTOP,7,23,101,22
-    GROUPBOX        "&Teilbaumanteil-Farben",IDC_STATIC,129,7,244,185
-    PUSHBUTTON      "Ebene &1",IDC_COLORBUTTON0,151,19,175,14,0,WS_EX_RIGHT
-    PUSHBUTTON      "Ebene &2",IDC_COLORBUTTON1,167,40,159,14,0,WS_EX_RIGHT
-    PUSHBUTTON      "Ebene &3",IDC_COLORBUTTON2,181,61,145,14,0,WS_EX_RIGHT
-    PUSHBUTTON      "Ebene &4",IDC_COLORBUTTON3,195,82,131,14,0,WS_EX_RIGHT
-    PUSHBUTTON      "Ebene &5",IDC_COLORBUTTON4,207,103,119,14,0,WS_EX_RIGHT
-    PUSHBUTTON      "Ebene &6",IDC_COLORBUTTON5,218,124,108,14,0,WS_EX_RIGHT
-    PUSHBUTTON      "Ebene &7",IDC_COLORBUTTON6,227,145,99,14,0,WS_EX_RIGHT
-    PUSHBUTTON      "Ebene &8",IDC_COLORBUTTON7,236,166,90,14,0,WS_EX_RIGHT
+    GROUPBOX        "&Teilbaumanteil-Farben",IDC_STATIC,129,7,
+                    244,185
+    PUSHBUTTON      "Ebene &1",IDC_COLORBUTTON0,151,19,175,14,0,
+                    WS_EX_RIGHT
+    PUSHBUTTON      "Ebene &2",IDC_COLORBUTTON1,167,40,159,14,0,
+                    WS_EX_RIGHT
+    PUSHBUTTON      "Ebene &3",IDC_COLORBUTTON2,181,61,145,14,0,
+                    WS_EX_RIGHT
+    PUSHBUTTON      "Ebene &4",IDC_COLORBUTTON3,195,82,131,14,0,
+                    WS_EX_RIGHT
+    PUSHBUTTON      "Ebene &5",IDC_COLORBUTTON4,207,103,119,14,0,
+                    WS_EX_RIGHT
+    PUSHBUTTON      "Ebene &6",IDC_COLORBUTTON5,218,124,108,14,0,
+                    WS_EX_RIGHT
+    PUSHBUTTON      "Ebene &7",IDC_COLORBUTTON6,227,145,99,14,0,
+                    WS_EX_RIGHT
+    PUSHBUTTON      "Ebene &8",IDC_COLORBUTTON7,236,166,90,14,0,
+                    WS_EX_RIGHT
     CONTROL         "",IDC_SLIDER,"msctls_trackbar32",TBS_VERT | TBS_BOTH | 
                     TBS_NOTICKS | WS_TABSTOP,339,29,18,160
 END
@@ -598,6 +606,14 @@ BEGIN
         BOTTOMMARGIN, 195
     END
 
+    IDD_PAGE_REPORT, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 373
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 195
+    END
+
     IDD_REPORTBUG, DIALOG
     BEGIN
         LEFTMARGIN, 7
@@ -765,8 +781,7 @@ END
 
 STRINGTABLE 
 BEGIN
-    IDS_THEDIRECTORYsDOESNOTEXIST 
-                            "Das Verzeichnis '%1!s!' existiert nicht mehr."
+    IDS_THEDIRECTORYsDOESNOTEXIST "Das Verzeichnis '%1!s!' existiert nicht mehr."
     IDS_THEFILEsDOESNOTEXIST "Die Datei '%1!s!' existiert nicht mehr."
     IDS_COULDNOTCREATEPROCESSssss 
                             "Konnte Prozess nicht starten.\r\n\r\nProgramm: '%1!s!',\r\nKommandozeile: '%2!s!',\r\nArbeitsverzeichnis: '%3!s!'\r\nFehlermeldung:\r\n%4!s!\r\n(Es wird keine Aktualisierung durchgeführt.)"
@@ -793,8 +808,10 @@ BEGIN
     IDS_ONEREADJOB          "[1 Leseauftrag]"
     IDS_sREADJOBS           "[%1!s! Leseaufträge]"
     IDS_CANNOTOPENCLIPBOARD "Kann die Zwischenablage nicht öffnen."
-    IDS_CANNOTEMTPYCLIPBOARD "Kann die Zwischenablage nicht leeren."
-    IDS_CANNOTSETCLIPBAORDDATA "Kann die Zwischenablage nicht befüllen."
+    IDS_CANNOTEMTPYCLIPBOARD
+                            "Kann die Zwischenablage nicht leeren."
+    IDS_CANNOTSETCLIPBAORDDATA
+                            "Kann die Zwischenablage nicht befüllen."
     IDS_WINDIRSTAT_SETTINGS "WinDirStat - Einstellungen"
     IDS_SCANNING_           "Einlesen "
     IDS_EMPTYRECYCLEBIN     "&Papierkorb leeren"
