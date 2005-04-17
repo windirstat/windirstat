@@ -133,7 +133,7 @@ BEGIN
         MENUITEM "Вызвать командную строку\tCtrl+P", 
                                                 ID_CLEANUP_OPENINCONSOLE
         MENUITEM "Удалить (в корзину)\tDel",    ID_CLEANUP_DELETETOTRASHBIN
-        MENUITEM "Удалить (без возможности воссановления!)\tShift+Del", 
+        MENUITEM "Удалить (без возможности восстановления!)\tShift+Del", 
                                                 ID_CLEANUP_DELETE
         MENUITEM SEPARATOR
         MENUITEM "Свойства",                    ID_CLEANUP_PROPERTIES
@@ -194,7 +194,7 @@ BEGIN
         MENUITEM "Обновить выделенные элементы\tF5", 32817
         MENUITEM SEPARATOR
         MENUITEM "Удалить (в корзину)\tDel",    32809
-        MENUITEM "Удалить (без возможности воссановления!)\tShift+Del", 
+        MENUITEM "Удалить (без возможности восстановления!)\tShift+Del", 
                                                 32810
         MENUITEM SEPARATOR
         MENUITEM "Свойства",                    ID_CLEANUP_PROPERTIES
@@ -708,7 +708,7 @@ BEGIN
                             "Вызывает командную строку в указанном месте.\nКомандная строка "
     ID_CLEANUP_DELETETOTRASHBIN 
                             "Перемещает выделенные элементы в корзину.\nУдалить (в корзину)"
-    ID_CLEANUP_DELETE       "Удаляет выбранный элемент (без возможности воссановления!).\nУдалить (без возможности воссановления!)"
+    ID_CLEANUP_DELETE       "Удаляет выбранный элемент (без возможности восстановления!).\nУдалить (без возможности восстановления!)"
     ID_CONFIGURE            "Открывает диалоговое окно настроек.\nНастройки"
     ID_HELP_MANUAL          "Открывает онлайн помощь о WinDirStat\nСправочник"
 END
@@ -828,12 +828,6 @@ BEGIN
     IDS_POLICY_REFRESHPARENT "Обновить надуровень"
     IDS_BUGREPORTHINT       "Для сообщения об ошибке, было бы идеально, если бы вы описали симптом, дословно привели текст ошибки, и, при возможности, шаги чтобы воспроизвести повдение."
     IDS_FEEDBACKHINT        "Отзывы всегда приветствуются."
-    IDS_FROMsPLATFORMs      "From: %1!s!. Platform: %2!s!.\r\n\r\n"
-    IDS_SEV_CRITICAL        "Critical Bug"
-    IDS_SEV_GRAVE           "Serious Bug"
-    IDS_SEV_NORMAL          "Bug"
-    IDS_SEV_WISH            "Wish"
-    IDS_SEV_FEEDBACK        "Feedback"
     IDS_DRIVECOL_NAME       "Имя"
     IDS_DRIVECOL_TOTAL      "Всего"
     IDS_DRIVECOL_FREE       "Свободно"

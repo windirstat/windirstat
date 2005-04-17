@@ -246,7 +246,7 @@ CString CAboutDlg::GetAppVersion()
 	USES_CONVERSION;
 
 	CString s;
-	s.Format(_T("WinDirStat %s"), A2T(VN_STRING));
+	s.Format(_T("WinDirStat %s"), A2T(VN_STRING_EXE));
 	return s;
 }
 
@@ -307,6 +307,12 @@ void CAboutDlg::OnDestroy()
 }
 
 // $Log$
+// Revision 1.20  2005/04/17 18:13:46  assarbad
+// - Moved some "static" resource strings into the respective *.rc2 files
+// - Corrected typo in Russian DLL
+// - Modified behavior of VERSIONINFO for DLLs. "version.h" has changed therefore
+// ... for details as usual, see the changelog.
+//
 // Revision 1.19  2005/04/17 12:27:21  assarbad
 // - For details see changelog of 2005-04-17
 //

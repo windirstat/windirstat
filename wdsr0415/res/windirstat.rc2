@@ -27,21 +27,17 @@
 
 /////////////////////////////////////////////////////////////////////////////
 //
-// windirstat.exe - Version
+// wdsr0415.dll - Version
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION VN_MAJOR,VN_MINOR,VN_REVISION,VN_BUILD
- PRODUCTVERSION VN_MAJOR,VN_MINOR,VN_REVISION,VN_BUILD
+ FILEVERSION VN_FILEVERSION_DLL
+ PRODUCTVERSION VN_PRODVERSION_DLL
  FILEFLAGSMASK 0x3fL
-#ifdef _DEBUG
- FILEFLAGS 0x1L + VN_FILEFLAG
-#else
- FILEFLAGS 0x0L + VN_FILEFLAG
-#endif
- FILEOS 0x4L
+ FILEFLAGS 0
+ FILEOS VOS__WINDOWS32
  FILETYPE VFT_DLL
- FILESUBTYPE 0x0L
+ FILESUBTYPE VFT2_UNKNOWN
 BEGIN
     BLOCK "StringFileInfo"
     BEGIN
@@ -49,12 +45,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "Seifert"
             VALUE "FileDescription", "WinDirStat Polish Resources"
-            VALUE "FileVersion", VN_STRING
+            VALUE "FileVersion", VN_STRING_DLL
             VALUE "InternalName", "wdsr0415"
-            VALUE "LegalCopyright", "Copyright (C) 2003-2005 Bernhard Seifert"
+            VALUE "LegalCopyright", VN_COPYRIGHTSTRING
             VALUE "OriginalFilename", "wdsr0415.dll"
             VALUE "ProductName", "WinDirStat"
-            VALUE "ProductVersion", VN_STRING
+            VALUE "ProductVersion", VN_STRING_DLL
         END
     END
     BLOCK "VarFileInfo"
@@ -67,5 +63,11 @@ STRINGTABLE
 LANGUAGE LANG_POLISH, SUBLANG_DEFAULT
 BEGIN
     IDS_RESOURCEVERSION     VN_RESOURCEDLL
+    IDS_FROMsPLATFORMs      IDSS_FROMsPLATFORMs
+    IDS_SEV_CRITICAL        IDSS_SEV_CRITICAL
+    IDS_SEV_GRAVE           IDSS_SEV_GRAVE
+    IDS_SEV_NORMAL          IDSS_SEV_NORMAL
+    IDS_SEV_WISH            IDSS_SEV_WISH
+    IDS_SEV_FEEDBACK        IDSS_SEV_FEEDBACK
 END
 

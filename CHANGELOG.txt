@@ -15,6 +15,14 @@ Last modified: $Date$
 	  of LoadLibrary() for osspecific.cpp in several places for those
 	  DLLs which are anyway already loaded at the time the call is
 	  placed.
+	* Although included in the respective language DLL the IDS_SEV_* and
+	  IDS_FROMsPLATFORMs are now located in the *.rc2 to not translate
+	  them by mistake.
+	* Changes to the version strings in version.h (resource DLLs need no
+	  information whether Unicode or Debug. Development versions show
+	  more information than before in the product version.
+	* Corrected typo in the Russian translation. Thanks to Dima for
+	  pointing it out to me.
 
 2005-04-10	assarbad
 	* Added Italian resource DLL project

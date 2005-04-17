@@ -29,10 +29,18 @@
 // Build categories. Uncomment _one_ line.
 //
 
-#define BC_DEVEL				// Development version. The usual setting. File version is 0.0.0.buildno.
+//#define BC_DEVEL				// Development version. The usual setting. File version is 0.0.0.buildno.
 //#define BC_RELEASECANDIDATE		// Release candidate. Version number is relevant but not yet official. About-box shows x.y.zrcn. File version is x.y.z.buildno.
-//#define BC_RELEASE			// Set this only during official builds. About-box shows x.y.z. File version is x.y.z.buildno
+#define BC_RELEASE			// Set this only during official builds. About-box shows x.y.z. File version is x.y.z.buildno
 
+// A release version must not contain debug information. Raise an error!
+#if defined(_DEBUG) && defined(BC_RELEASE)
+  #error BC_RELEASE _and_ _DEBUG are defined. This must not happen. Releases contain no debug information.
+#endif
+
+// This will not change to often, but the years need to be modified
+// regularly, so it can be in one central place
+#define VN_COPYRIGHTSTRING "Copyright (C) 2003-2005 Bernhard Seifert"
 
 //-------------------------------------------------------------------
 // Version number. Relevant for BC_RELEASECANDIDATE and BC_RELEASE.
@@ -44,8 +52,18 @@
 // Format: #define blank LINKCOUNT blanks decimal
 // Reset this to zero only when you increment VERNUM_MAJOR/MINOR/REVISION.
 
-#define LINKCOUNT  66
+#define LINKCOUNT  70
+
+// Version of resource DLL
 #define VN_RESOURCEDLL "Resource Version 4"
+// Version information in feedback always appears in English
+#define IDSS_FROMsPLATFORMs      "From: %1!s!. Platform: %2!s!.\r\n\r\n"
+#define IDSS_SEV_CRITICAL        "Critical Bug"
+#define IDSS_SEV_GRAVE           "Serious Bug"
+#define IDSS_SEV_NORMAL          "Bug"
+#define IDSS_SEV_WISH            "Wish"
+#define IDSS_SEV_FEEDBACK        "Feedback"
+
 //-------------------------------------------------------------------
 // Release candidate number. Relevant for BC_RELEASECANDIDATE.
 //
@@ -58,13 +76,17 @@
 
 #define VN_BUILD	LINKCOUNT
 
-#define PPSX(s) #s				    
+#define PPSX(s) #s
 #define PPS(s) PPSX(s)
 
 #ifdef _UNICODE
 	#define UASPEC "Unicode"
+	// OS version is only relevant for the EXE
+	#define VN_FILEOS_EXE VOS_NT_WINDOWS32
 #else
 	#define UASPEC "Ansi"
+	// OS version is only relevant for the EXE
+	#define VN_FILEOS_EXE VOS__WINDOWS32
 #endif
 
 #ifdef _DEBUG
@@ -75,13 +97,18 @@
 
 #define VERVARIANT " (" UASPEC DRSPEC ")"
 
+// This is just major.minor.rev.build always!
+#define VN_STRING_DLL	PPS(VERNUM_MAJOR) "." PPS(VERNUM_MINOR) "." PPS(VERNUM_REVISION) "." PPS(VN_BUILD)
+
 #if defined(BC_DEVEL)
 
 	#define VN_MAJOR	0
 	#define VN_MINOR	0
 	#define VN_REVISION	0
 	#define VN_FILEFLAG	0
-	#define VN_STRING	"devel" VERVARIANT
+	#define VN_STRING_DLL	PPS(VERNUM_MAJOR) "." PPS(VERNUM_MINOR) "." PPS(VERNUM_REVISION) "." PPS(VN_BUILD)
+	// The variant (debug or not/ unicode or not) is not relevant for resource DLLs, but for EXEs
+	#define VN_STRING_EXE	VN_STRING_DLL " devel" VERVARIANT
 
 #elif defined(BC_RELEASECANDIDATE)
 
@@ -89,7 +116,8 @@
 	#define VN_MINOR	VERNUM_MINOR
 	#define VN_REVISION	VERNUM_REVISION
 	#define VN_FILEFLAG	VS_FF_PRERELEASE
-	#define VN_STRING	PPS(VN_MAJOR) "." PPS(VN_MINOR) "." PPS(VN_REVISION) "rc" PPS(VERNUM_CANDIDATE) VERVARIANT
+	// The variant (debug or not/ unicode or not) is not relevant for resource DLLs, but for EXEs
+	#define VN_STRING_EXE	VN_STRING_DLL "rc" PPS(VERNUM_CANDIDATE) VERVARIANT
 
 #elif defined(BC_RELEASE)
 
@@ -97,15 +125,43 @@
 	#define VN_MINOR	VERNUM_MINOR
 	#define VN_REVISION	VERNUM_REVISION
 	#define VN_FILEFLAG	0
-	#define VN_STRING	PPS(VN_MAJOR) "." PPS(VN_MINOR) "." PPS(VN_REVISION) VERVARIANT
+	// The variant (debug or not/ unicode or not) is not relevant for resource DLLs, but for EXEs
+	#define VN_STRING_EXE	VN_STRING_DLL VERVARIANT
 
 #endif
 
+// EXE files have a different version number in development releases
+#define VN_FILEVERSION_EXE VN_MAJOR,VN_MINOR,VN_REVISION,VN_BUILD
+#define VN_PRODVERSION_EXE VN_FILEVERSION_EXE
+// Resource DLLs need no different version number
+#define VN_FILEVERSION_DLL VERNUM_MAJOR,VERNUM_MINOR,VERNUM_REVISION,VN_BUILD
+#define VN_PRODVERSION_DLL VN_FILEVERSION_DLL
 
-//
-// The output of this file is
-// VN_MAJOR, VN_MINOR, VN_REVISION, VN_BUILD, VN_FILEFLAG and VN_STRING
-//
+// Whether debug or not is not relevant for resource DLLs
+#ifdef _DEBUG
+ #define VN_FILEFLAG_EXE VS_FF_DEBUG | VN_FILEFLAG
+#else
+ #define VN_FILEFLAG_EXE VN_FILEFLAG
+#endif
+
+
+/*-------------------------------------------------------------------
+  This file defines the following:
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  - VN_FILEFLAG_EXE (contains information about RC or debug build)
+  - VN_STRING_EXE (contains info about unicode and debug)
+  - VN_STRING_DLL (just major.minor.rev.build)
+  - VN_FILEVERSION_EXE and VN_PRODVERSION_EXE (only different from
+    the DLL version if a development release)
+  - VN_FILEVERSION_DLL and VN_PRODVERSION_DLL (numeric representation
+    of VN_STRING_DLL)
+  - VN_FILEOS_EXE (this depends on Unicode and ANSI!
+      For Unicode: VN_FILEOS_EXE == VOS_NT_WINDOWS32
+      For ANSI   : VN_FILEOS_EXE == VOS__WINDOWS32 )
+  - VN_COPYRIGHTSTRING (copyright to include in the VERSIONINFO)
+  - VN_RESOURCEDLL (version of resource DLLs must be the same for DLL
+    and EXE at runtime)
+  -------------------------------------------------------------------*/
 
 // ...nothing else.
 #undef BC_DEVEL
@@ -114,6 +170,12 @@
 
 
 // $Log$
+// Revision 1.35  2005/04/17 18:13:42  assarbad
+// - Moved some "static" resource strings into the respective *.rc2 files
+// - Corrected typo in Russian DLL
+// - Modified behavior of VERSIONINFO for DLLs. "version.h" has changed therefore
+// ... for details as usual, see the changelog.
+//
 // Revision 1.34  2005/04/17 12:27:17  assarbad
 // - For details see changelog of 2005-04-17
 //

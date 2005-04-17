@@ -31,17 +31,13 @@
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION VN_MAJOR,VN_MINOR,VN_REVISION,VN_BUILD
- PRODUCTVERSION VN_MAJOR,VN_MINOR,VN_REVISION,VN_BUILD
+ FILEVERSION VN_FILEVERSION_EXE
+ PRODUCTVERSION VN_PRODVERSION_EXE
  FILEFLAGSMASK 0x3fL
-#ifdef _DEBUG
- FILEFLAGS 0x1L + VN_FILEFLAG
-#else
- FILEFLAGS 0x0L + VN_FILEFLAG
-#endif
- FILEOS 0x4L
- FILETYPE 0x1L
- FILESUBTYPE 0x0L
+ FILEFLAGS VN_FILEFLAG_EXE
+ FILEOS VN_FILEOS_EXE
+ FILETYPE VFT_APP
+ FILESUBTYPE VFT2_UNKNOWN
 BEGIN
     BLOCK "StringFileInfo"
     BEGIN
@@ -49,12 +45,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "Seifert"
             VALUE "FileDescription", "Windows Directory Statistics"
-            VALUE "FileVersion", VN_STRING
+            VALUE "FileVersion", VN_STRING_EXE
             VALUE "InternalName", "windirstat"
-            VALUE "LegalCopyright", "Copyright (C) 2003-2005 Bernhard Seifert"
+            VALUE "LegalCopyright", VN_COPYRIGHTSTRING
             VALUE "OriginalFilename", "windirstat.exe"
             VALUE "ProductName", "WinDirStat"
-            VALUE "ProductVersion", VN_STRING
+            VALUE "ProductVersion", VN_STRING_EXE
         END
     END
     BLOCK "VarFileInfo"
@@ -64,7 +60,14 @@ BEGIN
 END
 
 STRINGTABLE
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 BEGIN
     IDS_RESOURCEVERSION     VN_RESOURCEDLL
+    IDS_FROMsPLATFORMs      IDSS_FROMsPLATFORMs
+    IDS_SEV_CRITICAL        IDSS_SEV_CRITICAL
+    IDS_SEV_GRAVE           IDSS_SEV_GRAVE
+    IDS_SEV_NORMAL          IDSS_SEV_NORMAL
+    IDS_SEV_WISH            IDSS_SEV_WISH
+    IDS_SEV_FEEDBACK        IDSS_SEV_FEEDBACK
 END
 
