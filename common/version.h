@@ -61,12 +61,12 @@
 //
 #define VERNUM_MAJOR		1
 #define VERNUM_MINOR		1
-#define VERNUM_REVISION		1
+#define VERNUM_REVISION		2
 // The following line is automatically incremented by linkcounter.exe.
 // Format: #define blank LINKCOUNT blanks decimal
 // Reset this to zero only when you increment VERNUM_MAJOR/MINOR/REVISION.
 
-#define LINKCOUNT  77
+#define LINKCOUNT  80
 
 //-------------------------------------------------------------------
 // Release candidate number. Relevant for BC_RELEASECANDIDATE.
@@ -155,6 +155,9 @@
 
 
 // $Log$
+// Revision 1.38  2005/07/16 13:58:05  assarbad
+// *** empty log message ***
+//
 // Revision 1.37  2005/07/16 13:38:44  assarbad
 // - Preparation for release 1.1.2
 //
