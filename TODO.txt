@@ -11,6 +11,10 @@ Last modified: $Date$
 
 - Filters
 
+- Plugins (Could be combined with Filters!)
+
+- NSIS for setup (providing both Unicode and ANSI version)
+
 Possible additional useful features:
 - Show element size for selected element(s) in status bar
   -> also if one chooses an element in the cushion view or the extension
