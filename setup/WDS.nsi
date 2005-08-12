@@ -10,6 +10,7 @@
   !include "Sections.nsh"
   ;Name and file
   Name "${sVersionFull}"
+  BrandingText "http://windirstat.sourceforge.net"
   OutFile "windirstat${sVersionFile}_setup.exe"
   SetDatablockOptimize on
   SetCompress force
