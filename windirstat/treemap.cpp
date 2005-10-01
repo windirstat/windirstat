@@ -181,7 +181,7 @@ void CTreemap::GetDefaultPalette(CArray<COLORREF, COLORREF&>& palette)
 			palette[i]= _defaultCushionColors256[i];
 
 		// We don't do
-		//EqualizeColors(_defaultCushionColors256, countof(_defaultCushionColors256), palette);
+		// EqualizeColors(_defaultCushionColors256, countof(_defaultCushionColors256), palette);
 		// because on 256 color screens, the resulting colors are not distinguishable.
 	}
 	else
@@ -1272,6 +1272,9 @@ void CTreemapPreview::OnPaint()
 
 
 // $Log$
+// Revision 1.7  2005/10/01 11:21:08  assarbad
+// *** empty log message ***
+//
 // Revision 1.6  2004/11/05 16:53:08  assarbad
 // Added Date and History tag where appropriate.
 //

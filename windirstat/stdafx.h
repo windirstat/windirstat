@@ -59,6 +59,7 @@
 #include <afxcmn.h>			// MFC Common Controls
 #include <afxtempl.h>		// MFC Container classes
 #include <afxmt.h>			// MFC Multithreading
+#include <afxinet.h>		// For CInternet* classes
 //#include <afxdisp.h>	?
 
 #include <io.h>				// _access()
@@ -90,6 +91,9 @@ template<class T> int signum(T x) { return (x) < 0 ? -1 : (x) == 0 ? 0 : 1; }
 
 
 // $Log$
+// Revision 1.11  2005/10/01 11:21:08  assarbad
+// *** empty log message ***
+//
 // Revision 1.10  2004/11/12 22:14:16  bseifert
 // Eliminated CLR_NONE. Minor corrections.
 //

@@ -59,7 +59,7 @@ namespace
 		if (!GetVolumeName(path, volumeName))
 			return false;
 		
-		name= FormatVolumeName(path, volumeName);
+		name = FormatVolumeName(path, volumeName);
 
 		MyGetDiskFreeSpace(path, total, free);
 		
@@ -857,6 +857,9 @@ int CALLBACK CSelectDrivesDlg::BrowseCallbackProc(	HWND	hWnd,
 }
 
 // $Log$
+// Revision 1.22  2005/10/01 11:21:08  assarbad
+// *** empty log message ***
+//
 // Revision 1.21  2005/04/10 16:49:30  assarbad
 // - Some smaller fixes including moving the resource string version into the rc2 files
 //

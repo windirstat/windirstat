@@ -46,6 +46,8 @@ CString GetAuthorEmail();
 CString GetWinDirStatHomepage();
 CString GetFeedbackEmail();
 
+#define MyGetDiskFreeSpace GetApp()->GetFreeSpaceApi()->GetDiskFreeSpace
+
 //
 // CDirstatApp. The MFC application object. 
 // Knows about RAM Usage, Mount points, Help files and the CMyImageList.
@@ -83,6 +85,7 @@ public:
 	void RestartApplication();
 
 	CGetCompressedFileSizeApi *GetComprSizeApi();
+	CGetDiskFreeSpaceApi *GetFreeSpaceApi();
 
 protected:
 	CString FindResourceDllPathByLangid(LANGID& langid);
@@ -111,6 +114,7 @@ protected:
 	CMyImageList m_myImageList;				// Out central image list
 	CPsapi m_psapi;							// Dynamically linked psapi.dll (for RAM usage)
 	CGetCompressedFileSizeApi m_comprSize;	// Dynamically linked API GetCompressedFileSize()
+	CGetDiskFreeSpaceApi m_freeSpace;		// For compatibility with W95 first release!
 	LONGLONG m_workingSet;					// Current working set (RAM usage)
 	LONGLONG m_pageFaults;					// Page faults so far (unused)
 	DWORD m_lastPeriodicalRamUsageUpdate;	// Tick count
@@ -127,6 +131,9 @@ protected:
 
 
 // $Log$
+// Revision 1.14  2005/10/01 11:21:08  assarbad
+// *** empty log message ***
+//
 // Revision 1.13  2004/12/19 10:52:39  bseifert
 // Minor fixes.
 //

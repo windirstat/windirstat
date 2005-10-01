@@ -43,9 +43,9 @@
 // Build categories. Uncomment _one_ line.
 //
 
-//#define BC_DEVEL			// Development version. The usual setting. File version is 0.0.0.buildno.
+#define BC_DEVEL			// Development version. The usual setting. File version is 0.0.0.buildno.
 //#define BC_RELEASECANDIDATE		// Release candidate. Version number is relevant but not yet official. About-box shows x.y.zrcn. File version is x.y.z.buildno.
-#define BC_RELEASE			// Set this only during official builds. About-box shows x.y.z. File version is x.y.z.buildno
+//#define BC_RELEASE			// Set this only during official builds. About-box shows x.y.z. File version is x.y.z.buildno
 
 // A release version must not contain debug information. Raise an error!
 #if defined(_DEBUG) && defined(BC_RELEASE)
@@ -66,7 +66,7 @@
 // Format: #define blank LINKCOUNT blanks decimal
 // Reset this to zero only when you increment VERNUM_MAJOR/MINOR/REVISION.
 
-#define LINKCOUNT  80
+#define LINKCOUNT  175
 
 //-------------------------------------------------------------------
 // Release candidate number. Relevant for BC_RELEASECANDIDATE.
@@ -148,6 +148,14 @@
  #define VN_FILEFLAG_EXE VN_FILEFLAG
 #endif
 
+#ifdef BC_DEVEL
+#define IDSS_CHECKUPDATESRV      "localhost"
+#else
+#define IDSS_CHECKUPDATESRV      "windirstat.sourceforge.net"
+#endif
+#define IDSS_CHECKUPDATEURI      "checkupdate.php"
+#define IDXS_CHECKUPDATEPORT     80
+
 // ...nothing else.
 #undef BC_DEVEL
 #undef BC_RELEASECANDIDATE
@@ -155,6 +163,9 @@
 
 
 // $Log$
+// Revision 1.39  2005/10/01 11:21:07  assarbad
+// *** empty log message ***
+//
 // Revision 1.38  2005/07/16 13:58:05  assarbad
 // *** empty log message ***
 //

@@ -380,6 +380,11 @@ CGetCompressedFileSizeApi *CDirstatApp::GetComprSizeApi()
 	return &m_comprSize;
 }
 
+CGetDiskFreeSpaceApi *CDirstatApp::GetFreeSpaceApi()
+{
+	return &m_freeSpace;
+}
+
 bool CDirstatApp::UpdateMemoryInfo()
 {
 	if (!m_psapi.IsSupported())
@@ -573,6 +578,9 @@ void CDirstatApp::OnHelpReportbug()
 }
 
 // $Log$
+// Revision 1.17  2005/10/01 11:21:08  assarbad
+// *** empty log message ***
+//
 // Revision 1.16  2005/04/17 12:27:21  assarbad
 // - For details see changelog of 2005-04-17
 //

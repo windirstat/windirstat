@@ -229,12 +229,16 @@ public:
 		virtual void Dump(CDumpContext& dc) const;
 	#endif
 		afx_msg void OnSysColorChange();
+		afx_msg void OnHelpCheckforupdates();
 };
 
 
 
 
 // $Log$
+// Revision 1.6  2005/10/01 11:21:08  assarbad
+// *** empty log message ***
+//
 // Revision 1.5  2004/11/05 16:53:07  assarbad
 // Added Date and History tag where appropriate.
 //

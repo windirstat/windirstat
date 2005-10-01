@@ -43,7 +43,6 @@ bool GetVolumeName(LPCTSTR rootPath, CString& volumeName);
 CString FormatVolumeNameOfRootPath(CString rootPath);
 CString FormatVolumeName(CString rootPath, CString volumeName);
 CString PathFromVolumeName(CString name);
-void MyGetDiskFreeSpace(LPCTSTR pszRootPath, LONGLONG& total, LONGLONG& unused);
 CString GetFolderNameFromPath(LPCTSTR path);
 CString GetCOMSPEC();
 void WaitForHandleWithRepainting(HANDLE h);
@@ -60,6 +59,9 @@ CString GetSpec_GB();
 CString GetSpec_TB();
 
 // $Log$
+// Revision 1.16  2005/10/01 11:21:08  assarbad
+// *** empty log message ***
+//
 // Revision 1.15  2004/11/28 14:40:06  assarbad
 // - Extended CFileFindWDS to replace a global function
 // - Now packing/unpacking the file attributes. This even spares a call to find encrypted/compressed files.

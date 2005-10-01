@@ -15,6 +15,12 @@ Last modified: $Date$
 
 - NSIS for setup (providing both Unicode and ANSI version)
 
+- "Check for updates" in help menu
+
+- Filter by owner?
+
+- Drill down from any place! (incl. file list)
+
 Possible additional useful features:
 - Show element size for selected element(s) in status bar
   -> also if one chooses an element in the cushion view or the extension

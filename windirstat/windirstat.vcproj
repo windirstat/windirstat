@@ -309,6 +309,9 @@
 				RelativePath=".\aboutdlg.cpp">
 			</File>
 			<File
+				RelativePath=".\CheckForUpdateDlg.cpp">
+			</File>
+			<File
 				RelativePath=".\colorbutton.cpp">
 			</File>
 			<File
@@ -393,6 +396,9 @@
 				RelativePath=".\sortinglistcontrol.cpp">
 			</File>
 			<File
+				RelativePath=".\StaticHyperlink.cpp">
+			</File>
+			<File
 				RelativePath=".\stdafx.cpp">
 				<FileConfiguration
 					Name="Debug|Win32">
@@ -447,6 +453,9 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
 			<File
 				RelativePath=".\aboutdlg.h">
+			</File>
+			<File
+				RelativePath=".\CheckForUpdateDlg.h">
 			</File>
 			<File
 				RelativePath=".\colorbutton.h">
@@ -545,6 +554,9 @@
 				RelativePath=".\sortinglistcontrol.h">
 			</File>
 			<File
+				RelativePath=".\StaticHyperlink.h">
+			</File>
+			<File
 				RelativePath=".\stdafx.h">
 			</File>
 			<File
@@ -584,6 +596,9 @@
 			</File>
 			<File
 				RelativePath=".\res\license.txt">
+			</File>
+			<File
+				RelativePath=".\res\linkhand.cur">
 			</File>
 			<File
 				RelativePath=".\res\reparse-point.ico">

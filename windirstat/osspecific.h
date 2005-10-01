@@ -1,7 +1,7 @@
 // osspecific.h		- Declaration of CVolumeApi, CRecycleBinApi, CPsapi, CMapi32Api
 //
 // WinDirStat - Directory Statistics
-// Copyright (C) 2003-2004 Bernhard Seifert
+// Copyright (C) 2003-2005 Bernhard Seifert
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -184,7 +184,36 @@ private:
 	TypeGetCompressedFileSize m_GetCompressedFileSize;
 };
 
+//
+// GetDiskFreeSpaceEx() vs. GetDiskFreeSpace(). This class wraps the
+// functions and hides the differences since GetDiskFreeSpaceEx() is only
+// available starting with Windows 95 OSR2!
+//
+class CGetDiskFreeSpaceApi
+{
+public:
+	CGetDiskFreeSpaceApi();
+	~CGetDiskFreeSpaceApi();
+
+	bool IsSupported();
+
+	void GetDiskFreeSpace(LPCTSTR pszRootPath, LONGLONG& total, LONGLONG& unused);
+
+private:
+	typedef BOOL (WINAPI *TypeGetDiskFreeSpace)(LPCTSTR lpRootPathName, LPDWORD lpSectorsPerCluster, LPDWORD lpBytesPerSector, LPDWORD lpNumberOfFreeClusters, LPDWORD lpTotalNumberOfClusters);
+	typedef BOOL (WINAPI *TypeGetDiskFreeSpaceEx)(LPCTSTR lpDirectoryName, PULARGE_INTEGER lpFreeBytesAvailable, PULARGE_INTEGER lpTotalNumberOfBytes, PULARGE_INTEGER lpTotalNumberOfFreeBytes);
+
+	HMODULE m_dll;
+	bool m_UnloadDll;
+	
+	TypeGetDiskFreeSpace m_GetDiskFreeSpace;
+	TypeGetDiskFreeSpaceEx m_GetDiskFreeSpaceEx;
+};
+
 // $Log$
+// Revision 1.8  2005/10/01 11:21:08  assarbad
+// *** empty log message ***
+//
 // Revision 1.7  2005/04/17 12:27:21  assarbad
 // - For details see changelog of 2005-04-17
 //

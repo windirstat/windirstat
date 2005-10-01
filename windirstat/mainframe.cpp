@@ -38,7 +38,9 @@
 #include "pagegeneral.h"
 #include "pagereport.h"
 
-#include ".\mainframe.h"
+#include "./mainframe.h"
+#include "./CheckForUpdateDlg.h"
+#include "../common/version.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -382,6 +384,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWnd)
 	ON_COMMAND(ID_TREEMAP_HELPABOUTTREEMAPS, OnTreemapHelpabouttreemaps)
 	ON_BN_CLICKED(IDC_SUSPEND, OnBnClickedSuspend)
 	ON_WM_SYSCOLORCHANGE()
+	ON_COMMAND(ID_HELP_CHECKFORUPDATES, OnHelpCheckforupdates)
 END_MESSAGE_MAP()
 
 static UINT indicators[] =
@@ -1119,7 +1122,15 @@ void CMainFrame::OnSysColorChange()
 	GetTypeView()->SysColorChanged();
 }
 
+void CMainFrame::OnHelpCheckforupdates()
+{
+	StartUpdateDialog();
+}
+
 // $Log$
+// Revision 1.10  2005/10/01 11:21:08  assarbad
+// *** empty log message ***
+//
 // Revision 1.9  2004/11/27 07:19:37  bseifert
 // Unicode/Ansi/Debug-specification in version.h/Aboutbox. Minor fixes.
 //

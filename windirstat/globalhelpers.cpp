@@ -347,7 +347,7 @@ void ShellExecuteWithAssocDialog(HWND hwnd, LPCTSTR filename) throw (CException 
 {
 	CWaitCursor wc;
 
-	UINT u= (UINT)ShellExecute(hwnd, NULL, filename, NULL, NULL, SW_SHOWNORMAL);
+	UINT u = (UINT)ShellExecute(hwnd, NULL, filename, NULL, NULL, SW_SHOWNORMAL);
 	if (u == SE_ERR_NOASSOC)
 	{
 		// Q192352
@@ -357,7 +357,7 @@ void ShellExecuteWithAssocDialog(HWND hwnd, LPCTSTR filename) throw (CException 
 		sysDir.ReleaseBuffer();
 		
 		CString parameters = _T("shell32.dll,OpenAs_RunDLL ");
-		u= (UINT)ShellExecute(hwnd, _T("open"), _T("RUNDLL32.EXE"), parameters + filename, sysDir, SW_SHOWNORMAL);
+		u = (UINT)ShellExecute(hwnd, _T("open"), _T("RUNDLL32.EXE"), parameters + filename, sysDir, SW_SHOWNORMAL);
 	}
 		
 	if (u <= 32)
@@ -366,30 +366,10 @@ void ShellExecuteWithAssocDialog(HWND hwnd, LPCTSTR filename) throw (CException 
 	}
 }
 
-void MyGetDiskFreeSpace(LPCTSTR pszRootPath, LONGLONG& total, LONGLONG& unused)
-{
-	ULARGE_INTEGER uavailable;
-	ULARGE_INTEGER utotal;
-	ULARGE_INTEGER ufree;
-	uavailable.QuadPart= 0;
-	utotal.QuadPart= 0;
-	ufree.QuadPart= 0;
-
-	// On NT 4.0, the 2nd Parameter to this function must NOT be NULL.
-	BOOL b= GetDiskFreeSpaceEx(pszRootPath, &uavailable, &utotal, &ufree);
-	if (!b)
-		TRACE(_T("GetDiskFreeSpaceEx(%s) failed.\n"), pszRootPath);
-	
-	total= (LONGLONG)utotal.QuadPart; // will fail, when more than 2^63 Bytes free ....
-	unused= (LONGLONG)ufree.QuadPart;
-
-	ASSERT(unused <= total);
-}
-
 CString GetFolderNameFromPath(LPCTSTR path)
 {
-	CString s= path;
-	int i= s.ReverseFind(_T('\\'));
+	CString s = path;
+	int i = s.ReverseFind(_T('\\'));
 	if (i < 0)
 		return s;
 	return s.Left(i);
@@ -399,13 +379,13 @@ CString GetCOMSPEC()
 {
 	CString cmd;
 
-	DWORD dw= GetEnvironmentVariable(_T("COMSPEC"), cmd.GetBuffer(_MAX_PATH), _MAX_PATH);
+	DWORD dw = GetEnvironmentVariable(_T("COMSPEC"), cmd.GetBuffer(_MAX_PATH), _MAX_PATH);
 	cmd.ReleaseBuffer();
 
 	if (dw == 0)
 	{
 		TRACE(_T("COMSPEC not set.\n"));
-		cmd= _T("cmd.exe");
+		cmd = _T("cmd.exe");
 	}
 	return cmd;
 }
@@ -625,6 +605,9 @@ LPCITEMIDLIST SHGetPIDLFromPath(CString path)
 */
 
 // $Log$
+// Revision 1.21  2005/10/01 11:21:08  assarbad
+// *** empty log message ***
+//
 // Revision 1.20  2004/11/28 14:40:06  assarbad
 // - Extended CFileFindWDS to replace a global function
 // - Now packing/unpacking the file attributes. This even spares a call to find encrypted/compressed files.

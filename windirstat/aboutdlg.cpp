@@ -24,7 +24,7 @@
 #include "stdafx.h"
 #include "windirstat.h"
 #include "../common/version.h"
-#include ".\aboutdlg.h"
+#include "./aboutdlg.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -54,20 +54,20 @@ namespace
 		HGLOBAL hresource = NULL;
 		try
 		{
-			HRSRC hrsrc= FindResource(dll, MAKEINTRESOURCE(id), _T("TEXT"));
+			HRSRC hrsrc = FindResource(dll, MAKEINTRESOURCE(id), _T("TEXT"));
 			if (hrsrc == NULL)
 				MdThrowLastWinerror();
 
-			DWORD dwSize= SizeofResource(dll, hrsrc);
+			DWORD dwSize = SizeofResource(dll, hrsrc);
 			if (dwSize == 0)
 				MdThrowLastWinerror();
 
-			hresource= LoadResource(dll, hrsrc);
-			const BYTE *pData= (const BYTE *)LockResource(hresource);
+			hresource = LoadResource(dll, hrsrc);
+			const BYTE *pData = (const BYTE *)LockResource(hresource);
 
 			CComBSTR bstr(dwSize, (LPCSTR)pData);
 
-			s= bstr;
+			s = bstr;
 		}
 		catch (CException *pe)
 		{
@@ -120,7 +120,7 @@ void CAboutDlg::CMyTabControl::Initialize()
 	CRect rcItem;
 	GetItemRect(0, rcItem);
 
-	rc.top= rcItem.bottom;
+	rc.top = rcItem.bottom;
 
 	VERIFY(m_text.CreateEx(0, WS_CHILD|WS_VISIBLE|WS_BORDER | ES_CENTER|ES_MULTILINE|ES_READONLY, rc, this, RE_CONTROL));
 	SetPageText(TAB_ABOUT);
@@ -131,7 +131,7 @@ void CAboutDlg::CMyTabControl::SetPageText(int tab)
 	USES_CONVERSION;
 
 	CString text, translators;
-	DWORD newStyle= ES_CENTER;
+	DWORD newStyle = ES_CENTER;
 
 	switch (tab)
 	{
@@ -149,8 +149,8 @@ void CAboutDlg::CMyTabControl::SetPageText(int tab)
 		text.LoadString(IDS_ABOUT_THANKSTOTEXT);
 		break;
 	case TAB_LICENSE:
-		text= GetTextResource(IDR_LICENSE, NULL);
-		newStyle= ES_LEFT;
+		text = GetTextResource(IDR_LICENSE, NULL);
+		newStyle = ES_LEFT;
 		break;
 	default:
 		ASSERT(0);
@@ -159,10 +159,10 @@ void CAboutDlg::CMyTabControl::SetPageText(int tab)
 	m_text.GetWindowRect(rc);
 	ScreenToClient(rc);
 
-	DWORD style= m_text.GetStyle();
-	style&= ~ES_CENTER;
-	style|= newStyle;
-	style|= WS_VSCROLL;
+	DWORD style = m_text.GetStyle();
+	style &= ~ES_CENTER;
+	style |= newStyle;
+	style |= WS_VSCROLL;
 
 	DWORD exstyle= m_text.GetExStyle();
 
@@ -228,7 +228,7 @@ void CAboutDlg::CMyTabControl::OnSize(UINT nType, int cx, int cy)
 		CRect rcItem;
 		GetItemRect(0, rcItem);
 
-		rc.top= rcItem.bottom;
+		rc.top = rcItem.bottom;
 
 		m_text.MoveWindow(rc);
 	}
@@ -309,6 +309,9 @@ void CAboutDlg::OnDestroy()
 }
 
 // $Log$
+// Revision 1.22  2005/10/01 11:21:08  assarbad
+// *** empty log message ***
+//
 // Revision 1.21  2005/04/17 20:45:19  assarbad
 // - Now the list of translators is shared among all translations. See changelog for details.
 //

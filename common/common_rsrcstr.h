@@ -21,4 +21,3 @@
 #define IDSS_SEV_NORMAL          "Bug"
 #define IDSS_SEV_WISH            "Wish"
 #define IDSS_SEV_FEEDBACK        "Feedback"
-
