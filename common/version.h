@@ -66,7 +66,7 @@
 // Format: #define blank LINKCOUNT blanks decimal
 // Reset this to zero only when you increment VERNUM_MAJOR/MINOR/REVISION.
 
-#define LINKCOUNT  175
+#define LINKCOUNT  180
 
 //-------------------------------------------------------------------
 // Release candidate number. Relevant for BC_RELEASECANDIDATE.
@@ -163,6 +163,9 @@
 
 
 // $Log$
+// Revision 1.40  2005/10/11 10:02:16  assarbad
+// - Added Dutch
+//
 // Revision 1.39  2005/10/01 11:21:07  assarbad
 // *** empty log message ***
 //

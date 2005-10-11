@@ -2,10 +2,14 @@ changelog.txt - What has been done to WinDirStat (newest top)
 Last modified: $Date$
 =============================================================
 
+2005-10-11	assarbad
+	* Added Dutch translation. Thanks to Gerben Wieringa.
+	  Possibly requires more corrections, will send for review.
+
 2005-07-16	assarbad
 	* Release of version 1.1.2 which features new translations and some
 	  very minor code corrections.
-	
+
 2005-04-17	assarbad
 	* Fixed a bug that appeared only in the Spanish, Italian and Czech
 	  resource DLLs, but seemed to be by chance. It was the fact that

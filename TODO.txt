@@ -27,3 +27,7 @@ Possible additional useful features:
      view!
 
 - Saving current scan
+
+- Right-click system menu (as submenu of the WDS menu)
+
+- Drag and Drop (to Explorer)
