@@ -62,8 +62,9 @@ namespace
 		name = FormatVolumeName(path, volumeName);
 
 		MyGetDiskFreeSpace(path, total, free);
-		
-		ASSERT(free <= total);
+
+		// This condition *can* become true if quotas exist!
+		//ASSERT(free <= total);
 
 		return true;
 	}
@@ -131,7 +132,16 @@ void CDriveItem::SetDriveInformation(bool success, LPCTSTR name, LONGLONG total,
 
 		m_used= 0;
 		if (m_totalBytes > 0)
-			m_used= (double)(m_totalBytes - m_freeBytes) / m_totalBytes;
+		{
+			if(m_totalBytes < m_freeBytes) // can happen with quotas enabled
+			{
+				m_used= 0.0; // always return 0% in this case
+			}
+			else
+			{
+				m_used= (double)(m_totalBytes - m_freeBytes) / m_totalBytes;
+			}
+		}
 	}
 }
 
@@ -857,6 +867,9 @@ int CALLBACK CSelectDrivesDlg::BrowseCallbackProc(	HWND	hWnd,
 }
 
 // $Log$
+// Revision 1.23  2005/11/08 20:10:55  assarbad
+// - Fixed minor bug. See changelog.txt for details. Sent for review to the reporter of the bug.
+//
 // Revision 1.22  2005/10/01 11:21:08  assarbad
 // *** empty log message ***
 //

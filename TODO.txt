@@ -2,32 +2,56 @@ TODO.txt - What still has to been done to WinDirStat
 Last modified: $Date$
 =============================================================
 
+- NSIS for setup (providing both Unicode and ANSI version)
+  (This is mostly done already, requires approval of Bernhard!)
+  => assarbad
+
+- "Check for updates" in help menu
+  => assarbad  +translators
+
 - Multiple selection (and deletion).
   Concept first! Which cleanup actions will still be enabled
   and how will they work if multiple items are selected?
   => bseifert+assarbad
 
+- Drag and Drop (to Explorer)
+  => assarbad (?!)
+
+- Saving current scan
+  => assarbad
+
 - Use windirstat.ini, if present
+  => assarbad (?!)
 
-- Filters
+- Plugins
+  => assarbad
 
-- Plugins (Could be combined with Filters!)
-
-- NSIS for setup (providing both Unicode and ANSI version)
-
-- "Check for updates" in help menu
-
-- Filter by owner?
+- Filters (plugin!), by extension, size, owner, blacklist, attribute ...
+  => assarbad
 
 - Drill down from any place! (incl. file list)
+  => ???
 
 Possible additional useful features:
 - Show element size for selected element(s) in status bar
   -> also if one chooses an element in the cushion view or the extension
      view!
-
-- Saving current scan
+  => assarbad
 
 - Right-click system menu (as submenu of the WDS menu)
+  => assarbad
 
-- Drag and Drop (to Explorer)
+- Resize (i.e. shrink) first column after item was collapsed? As an option?
+  => ???
+
+- "After I empty the Recycler in Explorer, the WinDirStat failed to refresh
+   the Recycler." - handle via notifications or ignore????
+  => assarbad
+
+- Adding FAQ to the help file(s):
+  * how to remove the program (provide setup first!!!) -> Use uninstall
+  * can one delete <Unknown> -> NO!
+  * after installing WDS my computer reboots randomly/doesn't reboot anymore
+    -> NOT our problem, WDS cannot be responsible for such problems
+  * future date/time stamps -> Occurs on some systems, not a WDS problem
+  => assarbad  +translators

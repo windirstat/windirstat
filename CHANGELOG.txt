@@ -2,6 +2,12 @@ changelog.txt - What has been done to WinDirStat (newest top)
 Last modified: $Date$
 =============================================================
 
+2005-11-08	assarbad
+	* Tiny fix of a problem if the free size exceeds the total
+	  size of a disk, which can happen with quotas. Now we show
+	  0% for the "used" column in this case.
+	* Updated TODO.TXT
+
 2005-10-11	assarbad
 	* Added Dutch translation. Thanks to Gerben Wieringa.
 	  Possibly requires more corrections, will send for review.
