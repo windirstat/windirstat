@@ -27,7 +27,8 @@
   ; Default installation folder
   InstallDir "$PROGRAMFILES\WinDirStat"
   ; Get installation folder from registry if available
-  InstallDirRegKey HKCU "Software\Seifert\WinDirStat" "InstDir"
+  !define APPKEY "Software\Seifert\WinDirStat"
+  InstallDirRegKey HKCU "${APPKEY}" "InstDir"
 
 ;--------------------------------
 ; Global variables
@@ -370,6 +371,7 @@ Function un.CreateUninstallEntry
 ; Delete the uninstaller
   Delete "$INSTDIR\Uninstall.exe"
   DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\WinDirStat"
+  DeleteRegKey HKCU "${APPKEY}"
 FunctionEnd
 ; -----------------------------------------------------------------------------
 !endif ; WDSMAIN_NSI

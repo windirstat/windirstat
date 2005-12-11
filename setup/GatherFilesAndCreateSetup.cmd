@@ -232,6 +232,9 @@ if EXIST "%install%\wdsr%langno%.dll" (
   echo     SectionIn 1 2 >> %langfile%
 rem  echo     SetOutPath ^$INSTDIR >> %langfile%
   echo     File %install%\wdsr%langno%.dll >> %langfile%
+  echo     ${SectionFlagIsSet} ${%lang%} ${SF_BOLD} 0 SkipRegSet%langno% >> %langfile%
+  echo     WriteRegDWORD HKCU "${APPKEY}\options" "language" "0x%langno%" >> %langfile%
+  echo    SkipRegSet%langno%: >> %langfile%
   if EXIST "%install%\wdsh%langno%.chm" (
     echo     File %install%\wdsh%langno%.chm >> %langfile%
     echo     CreateShortCut "$SMPROGRAMS\WinDirStat\Help (${LangEngName%langno%} - ${LangNatName%langno%}).lnk" "$INSTDIR\wdsh%langno%.chm" >> %langfile%
