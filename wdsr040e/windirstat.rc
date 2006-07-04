@@ -129,7 +129,7 @@ BEGIN
     BEGIN
         MENUITEM "M&egnyitás\tEnter",           ID_CLEANUP_OPEN
         MENUITEM SEPARATOR
-        MENUITEM "&Intézõ megnyitása\tCtrl+E",  ID_CLEANUP_OPENINEXPLORER
+        MENUITEM "&Intézo megnyitása\tCtrl+E",  ID_CLEANUP_OPENINEXPLORER
         MENUITEM "Paran&cssor megnyitása\tCtrl+P", ID_CLEANUP_OPENINCONSOLE
         MENUITEM "&Törlés (a Lomtárba)\tDel",   ID_CLEANUP_DELETETOTRASHBIN
         MENUITEM "Törlés (&véglegesen!)\tShift+Del", ID_CLEANUP_DELETE
@@ -138,9 +138,7 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "&Lomtár ürítése",             ID_CLEANUP_EMPTYRECYCLEBIN
         MENUITEM SEPARATOR
-        MENUITEM "Felhasználó által megadott takarítás #0", 
-                                                ID_DUMMY_USERDEFINEDCLEANUP
-        , GRAYED
+        MENUITEM "Felhasználó által megadott takarítás #0", ID_DUMMY_USERDEFINEDCLEANUP, GRAYED
     END
     POPUP "&Térképfa"
     BEGIN
@@ -149,7 +147,7 @@ BEGIN
         MENUITEM "&Nagyít\t+",                  ID_TREEMAP_ZOOMIN
         MENUITEM "&Kicsinyít\t-",               ID_TREEMAP_ZOOMOUT
         MENUITEM "&Gyermek újrajelölése\t*",    33011
-        MENUITEM "&Szülõ kijelölése\t/",        ID_TREEMAP_SELECTPARENT
+        MENUITEM "&Szülo kijelölése\t/",        ID_TREEMAP_SELECTPARENT
         MENUITEM SEPARATOR
         MENUITEM "&Súgó a Térképfáról",         ID_TREEMAP_HELPABOUTTREEMAPS
     END
@@ -187,7 +185,7 @@ BEGIN
         MENUITEM "&Megnyitás\tEnter",           ID_CLEANUP_OPEN
         MENUITEM SEPARATOR
         MENUITEM "Útvonal &másolása\tCtrl+C",   57634
-        MENUITEM "&Intézõ megnyitása\tCtrl+E",  32774
+        MENUITEM "&Intézo megnyitása\tCtrl+E",  32774
         MENUITEM "Paran&cssor megnyitása\tCtrl+P", 32808
         MENUITEM "Kijelöltet fri&ssít\tF5",     32817
         MENUITEM SEPARATOR
@@ -206,10 +204,10 @@ BEGIN
         MENUITEM "&Nagyít\t+",                  32783
         MENUITEM "&Kicsinyít\t-",               32784
         MENUITEM "&Gyermek újrajelölése\t*",    ID_TREEMAP_RESELECTCHILD
-        MENUITEM "&Szülõ kijelölése\t/",        ID_TREEMAP_SELECTPARENT
+        MENUITEM "&Szülo kijelölése\t/",        ID_TREEMAP_SELECTPARENT
         MENUITEM SEPARATOR
         MENUITEM "Útvonal &másolása\tCtrl+C",   57634
-        MENUITEM "&Intézõ megnyitása\tCtrl+E",  32774
+        MENUITEM "&Intézo megnyitása\tCtrl+E",  32774
         MENUITEM "Paran&cssor megnyitása\tCtrl+P", 32808
         MENUITEM SEPARATOR
         MENUITEM "&Mégse\tEsc",                 ID_POPUP_CANCEL
@@ -262,33 +260,25 @@ END
 //
 
 IDD_ABOUTBOX DIALOGEX 0, 0, 273, 199
-STYLE DS_SETFONT | WS_POPUP | WS_CLIPCHILDREN | WS_CAPTION | WS_SYSMENU | 
-    WS_THICKFRAME
+STYLE DS_SETFONT | WS_POPUP | WS_CLIPCHILDREN | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
 CAPTION "WinDirStat névjegye"
 FONT 9, "Microsoft Sans Serif", 400, 0, 0x0
 BEGIN
-    CONTROL         "",IDC_TAB,"SysTabControl32",WS_TABSTOP,7,22,259,155,
-                    WS_EX_ACCEPTFILES
+    CONTROL         "",IDC_TAB,"SysTabControl32",WS_TABSTOP,7,22,259,155,WS_EX_ACCEPTFILES
     DEFPUSHBUTTON   "OK",IDOK,111,180,50,12,WS_GROUP
     CTEXT           "WinDirStat 0.0.000",IDC_CAPTION,69,7,134,8
     ICON            IDR_MAINFRAME,IDC_STATIC,7,3,20,20
 END
 
 IDD_SELECTDRIVES DIALOGEX 0, 0, 276, 182
-STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU | 
-    WS_THICKFRAME
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
 CAPTION "WinDirStat - Meghajtó kijelölése"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    CONTROL         "Minden helyi megh&ajtó",IDC_ALLLOCALDRIVES,"Button",
-                    BS_AUTORADIOBUTTON | WS_GROUP,7,7,99,10
-    CONTROL         "&Egyéni meghajtók",IDC_SOMEDRIVES,"Button",
-                    BS_AUTORADIOBUTTON,7,31,91,10
-    CONTROL         "",IDC_DRIVES,"SysListView32",LVS_REPORT | 
-                    LVS_OWNERDRAWFIXED | LVS_ALIGNLEFT | WS_BORDER | 
-                    WS_TABSTOP,7,43,262,100
-    CONTROL         "A &Mappa",IDC_AFOLDER,"Button",BS_AUTORADIOBUTTON,7,150,
-                    100,10
+    CONTROL         "Minden helyi megh&ajtó",IDC_ALLLOCALDRIVES,"Button",BS_AUTORADIOBUTTON | WS_GROUP,7,7,99,10
+    CONTROL         "&Egyéni meghajtók",IDC_SOMEDRIVES,"Button",BS_AUTORADIOBUTTON,7,31,91,10
+    CONTROL         "",IDC_DRIVES,"SysListView32",LVS_REPORT | LVS_OWNERDRAWFIXED | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,7,43,262,100
+    CONTROL         "A &Mappa",IDC_AFOLDER,"Button",BS_AUTORADIOBUTTON,7,150,100,10
     EDITTEXT        IDC_FOLDERNAME,6,161,209,14,ES_AUTOHSCROLL
     PUSHBUTTON      "...",IDC_BROWSEFOLDER,219,161,50,14
     DEFPUSHBUTTON   "OK",IDOK,219,7,50,14
@@ -296,8 +286,7 @@ BEGIN
 END
 
 IDD_DELETE_WARNING DIALOGEX 0, 0, 276, 150
-STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | 
-    WS_SYSMENU
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Figyelmeztetés"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
@@ -308,60 +297,44 @@ BEGIN
     LTEXT           "Biztos benne, hogy mit csinál?",IDC_STATIC,7,7,110,8
     LTEXT           "Ennek a törlésére készül",IDC_STATIC,7,23,82,8
     CTEXT           "<filename>",IDC_FILENAME,7,38,262,8,SS_PATHELLIPSIS
-    LTEXT           "a számítógépérõl.",IDC_STATIC,7,53,67,8
-    LTEXT           "A rendszerfájlok, vagy könyvtárak törlése komoly károkat okozhat a rendszerében.",
-                    IDC_STATIC,7,76,262,19
+    LTEXT           "a számítógépérol.",IDC_STATIC,7,53,67,8
+    LTEXT           "A rendszerfájlok, vagy könyvtárak törlése komoly károkat okozhat a rendszerében.",IDC_STATIC,7,76,262,19
     LTEXT           "Folytatja?",IDC_STATIC,7,99,104,8
 END
 
 IDD_MODALAPISHUTTLE DIALOGEX 0, 0, 186, 90
-STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | 
-    WS_SYSMENU
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "<invisible dialog>"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
 END
 
 IDD_PAGE_CLEANUPS DIALOGEX 0, 0, 380, 202
-STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | 
-    WS_SYSMENU
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | WS_SYSMENU
 CAPTION "Takarítások"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    LISTBOX         IDC_LIST,7,7,113,169,LBS_HASSTRINGS | 
-                    LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "&Engedélyez",IDC_ENABLED,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,129,7,53,10
+    LISTBOX         IDC_LIST,7,7,113,169,LBS_HASSTRINGS | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "&Engedélyez",IDC_ENABLED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,129,7,53,10
     EDITTEXT        IDC_TITLE,212,7,161,14,ES_AUTOHSCROLL
     EDITTEXT        IDC_COMMANDLINE,129,35,244,14,ES_AUTOHSCROLL
     LTEXT           "%p teljes útvonal",IDC_STATIC,128,54,93,8
-    LTEXT           "%n fájl/könyvtár név útvonal nélkül",IDC_STATIC,225,54,
-                    138,8
+    LTEXT           "%n fájl/könyvtár név útvonal nélkül",IDC_STATIC,225,54,138,8
     LTEXT           "%sp alkönyvtár teljes útvonal",IDC_HINTSP,128,63,94,8
-    LTEXT           "%sn alkönyvtár név útvonal nélkül",IDC_HINTSN,225,63,
-                    138,8
-    CONTROL         "&Meghajtók",IDC_WORKSFORDRIVES,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,138,92,49,10
-    CONTROL         "Könyv&tárak",IDC_WORKSFORDIRECTORIES,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,208,92,69,10
-    CONTROL         "&UNC útvonalak",IDC_WORKSFORUNCPATHS,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,304,92,61,10
-    CONTROL         "&Fájlok",IDC_WORKSFORFILES,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,138,107,57,10
+    LTEXT           "%sn alkönyvtár név útvonal nélkül",IDC_HINTSN,225,63,138,8
+    CONTROL         "&Meghajtók",IDC_WORKSFORDRIVES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,138,92,49,10
+    CONTROL         "Könyv&tárak",IDC_WORKSFORDIRECTORIES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,208,92,69,10
+    CONTROL         "&UNC útvonalak",IDC_WORKSFORUNCPATHS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,304,92,61,10
+    CONTROL         "&Fájlok",IDC_WORKSFORFILES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,138,107,57,10
     CONTROL         "<Fájlok> &Ál-bejegyzések",IDC_WORKSFORFILESFOLDER,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,207,107,92,10
     PUSHBUTTON      "&Súgó",IDC_HELPBUTTON,323,131,50,14
-    CONTROL         "&Visszatér az alkönyvtárakba",
-                    IDC_RECURSEINTOSUBDIRECTORIES,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,128,132,160,10
-    CONTROL         "Rákérdez &megerõsítéshez",IDC_ASKFORCONFIRMATION,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,128,146,160,10
-    CONTROL         "&Parancssor megjelenítése",IDC_SHOWCONSOLEWINDOW,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,128,160,100,10
-    CONTROL         "&Befejezésre vár",IDC_WAITFORCOMPLETION,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,250,160,100,10
-    COMBOBOX        IDC_REFRESHPOLICY,128,183,245,93,CBS_DROPDOWNLIST | 
-                    WS_VSCROLL | WS_TABSTOP
+    CONTROL         "&Visszatér az alkönyvtárakba",IDC_RECURSEINTOSUBDIRECTORIES,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,128,132,160,10
+    CONTROL         "Rákérdez &megerosítéshez",IDC_ASKFORCONFIRMATION,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,128,146,160,10
+    CONTROL         "&Parancssor megjelenítése",IDC_SHOWCONSOLEWINDOW,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,128,160,100,10
+    CONTROL         "&Befejezésre vár",IDC_WAITFORCOMPLETION,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,250,160,100,10
+    COMBOBOX        IDC_REFRESHPOLICY,128,183,245,93,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     PUSHBUTTON      "&Fel",IDC_UP,21,181,37,14
     PUSHBUTTON      "&Le",IDC_DOWN,66,181,37,14
     LTEXT           "&Házirend frissítése",IDC_STATIC,128,174,108,8
@@ -371,63 +344,47 @@ BEGIN
 END
 
 IDD_PAGE_TREELIST DIALOGEX 0, 0, 380, 199
-STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | 
-    WS_SYSMENU
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | WS_SYSMENU
 CAPTION "Könyvtárlista"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    CONTROL         "&Pacman animáció",IDC_PACMANANIMATION,"Button",
-                    BS_AUTOCHECKBOX | BS_MULTILINE | WS_TABSTOP,7,7,102,19
-    CONTROL         "&Vizsgálat alatt eltelt idõ mutatása",IDC_SHOWTIMESPENT,
-                    "Button",BS_AUTOCHECKBOX | BS_MULTILINE | WS_TABSTOP,7,
-                    30,95,19
+    CONTROL         "&Pacman animáció",IDC_PACMANANIMATION,"Button",BS_AUTOCHECKBOX | BS_MULTILINE | WS_TABSTOP,7,7,102,19
+    CONTROL         "&Vizsgálat alatt eltelt ido mutatása",IDC_SHOWTIMESPENT,
+                    "Button",BS_AUTOCHECKBOX | BS_MULTILINE | WS_TABSTOP,7,30,95,19
     GROUPBOX        "Részfák &arányainak színei",IDC_STATIC,129,7,244,185
     PUSHBUTTON      "&1. szint",IDC_COLORBUTTON0,151,19,175,14,0,WS_EX_RIGHT
     PUSHBUTTON      "&2. szint",IDC_COLORBUTTON1,167,40,159,14,0,WS_EX_RIGHT
     PUSHBUTTON      "&3. szint",IDC_COLORBUTTON2,181,61,145,14,0,WS_EX_RIGHT
     PUSHBUTTON      "&4. szint",IDC_COLORBUTTON3,195,82,131,14,0,WS_EX_RIGHT
-    PUSHBUTTON      "&5. szint",IDC_COLORBUTTON4,207,103,119,14,0,
-                    WS_EX_RIGHT
-    PUSHBUTTON      "&6. szint",IDC_COLORBUTTON5,218,124,108,14,0,
-                    WS_EX_RIGHT
+    PUSHBUTTON      "&5. szint",IDC_COLORBUTTON4,207,103,119,14,0,WS_EX_RIGHT
+    PUSHBUTTON      "&6. szint",IDC_COLORBUTTON5,218,124,108,14,0,WS_EX_RIGHT
     PUSHBUTTON      "&7. szint",IDC_COLORBUTTON6,227,145,99,14,0,WS_EX_RIGHT
     PUSHBUTTON      "&8. szint",IDC_COLORBUTTON7,236,166,90,14,0,WS_EX_RIGHT
-    CONTROL         "",IDC_SLIDER,"msctls_trackbar32",TBS_VERT | TBS_BOTH | 
-                    TBS_NOTICKS | WS_TABSTOP,339,29,18,160
+    CONTROL         "",IDC_SLIDER,"msctls_trackbar32",TBS_VERT | TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,339,29,18,160
 END
 
 IDD_PAGE_TREEMAP DIALOGEX 0, 0, 380, 202
-STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | 
-    WS_SYSMENU
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | WS_SYSMENU
 CAPTION "Térképfa"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    CTEXT           "&Fény-\r\nerõ",IDC_STATIC,237,122,32,18
-    CONTROL         "",IDC_BRIGHTNESS,"msctls_trackbar32",TBS_VERT | 
-                    TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,245,17,16,104
+    CTEXT           "&Fény-\r\nero",IDC_STATIC,237,122,32,18
+    CONTROL         "",IDC_BRIGHTNESS,"msctls_trackbar32",TBS_VERT | TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,245,17,16,104
     CTEXT           "&Párna\r\nárnyék",IDC_STATIC,271,122,32,18
-    CONTROL         "",IDC_CUSHIONSHADING,"msctls_trackbar32",TBS_VERT | 
-                    TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,279,17,16,104
+    CONTROL         "",IDC_CUSHIONSHADING,"msctls_trackbar32",TBS_VERT | TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,279,17,16,104
     CTEXT           "&Magasság",IDC_STATIC,305,122,32,18
-    CONTROL         "",IDC_HEIGHT,"msctls_trackbar32",TBS_VERT | TBS_BOTH | 
-                    TBS_NOTICKS | WS_TABSTOP,313,17,16,104
-    CTEXT           "Mé&ret-\r\ntényezõ",IDC_STATIC,339,122,32,18
-    CONTROL         "",IDC_SCALEFACTOR,"msctls_trackbar32",TBS_VERT | 
-                    TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,347,17,16,104
+    CONTROL         "",IDC_HEIGHT,"msctls_trackbar32",TBS_VERT | TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,313,17,16,104
+    CTEXT           "Mé&ret-\r\ntényezo",IDC_STATIC,339,122,32,18
+    CONTROL         "",IDC_SCALEFACTOR,"msctls_trackbar32",TBS_VERT | TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,347,17,16,104
     RTEXT           "Fény e&sés",IDC_STATIC,246,147,59,8
     LTEXT           "Static",IDC_LIGHTSOURCE,313,146,58,48,WS_TABSTOP
     PUSHBUTTON      "",IDC_RESET,242,167,63,28,BS_MULTILINE
     GROUPBOX        "St&ílus",IDC_STATIC,7,146,63,49
-    CONTROL         "&KDirStat",IDC_KDIRSTAT,"Button",BS_AUTORADIOBUTTON | 
-                    WS_GROUP | WS_TABSTOP,12,159,42,10
-    CONTROL         "Se&quoiaView",IDC_SEQUOIAVIEW,"Button",
-                    BS_AUTORADIOBUTTON,12,176,53,10
-    CONTROL         "Rá&csozás",IDC_TREEMAPGRID,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,76,150,54,10
-    PUSHBUTTON      "Rács szí&n",IDC_TREEMAPGRIDCOLOR,134,150,85,14,0,
-                    WS_EX_RIGHT
-    PUSHBUTTON      "Négyszög &kiemelése",IDC_TREEMAPHIGHLIGHTCOLOR,76,175,
-                    143,14,0,WS_EX_RIGHT
+    CONTROL         "&KDirStat",IDC_KDIRSTAT,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,12,159,42,10
+    CONTROL         "Se&quoiaView",IDC_SEQUOIAVIEW,"Button",BS_AUTORADIOBUTTON,12,176,53,10
+    CONTROL         "Rá&csozás",IDC_TREEMAPGRID,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,76,150,54,10
+    PUSHBUTTON      "Rács szí&n",IDC_TREEMAPGRIDCOLOR,134,150,85,14,0,WS_EX_RIGHT
+    PUSHBUTTON      "Négyszög &kiemelése",IDC_TREEMAPHIGHLIGHTCOLOR,76,175,143,14,0,WS_EX_RIGHT
     CTEXT           "Static",IDC_STATICSCALEFACTOR,339,7,32,8
     CTEXT           "Static",IDC_STATICHEIGHT,305,7,32,8
     CTEXT           "Static",IDC_STATICCUSHIONSHADING,271,7,32,8
@@ -436,89 +393,38 @@ BEGIN
 END
 
 IDD_PAGE_GENERAL DIALOGEX 0, 0, 380, 202
-STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | 
-    WS_SYSMENU
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | WS_SYSMENU
 CAPTION "Általános"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     CONTROL         "&Keresztállomány korlátozások",IDC_FOLLOWMOUNTPOINTS,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,13,229,10
-    CONTROL         "E&lágazó csomópontok követése (kivéve kötet csatolási pontok)",
-                    IDC_FOLLOWJUNCTIONS,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,32,27,229,10
+    CONTROL         "E&lágazó csomópontok követése (kivéve kötet csatolási pontok)",IDC_FOLLOWJUNCTIONS,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,27,229,10
     CONTROL         "Méretek GB/MB/kB/bájt formát&umban",IDC_HUMANFORMAT,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,41,229,10
     GROUPBOX        "&Lista stílus",IDC_STATIC,30,61,90,65
-    CONTROL         "&Teljes sor kijelölés",IDC_FULLROWSELECTION,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,38,76,75,10
-    CONTROL         "&Rácsozást mutat",IDC_SHOWGRID,"Button",BS_AUTOCHECKBOX |
-                    BS_AUTOCHECKBOX | WS_TABSTOP,38,93,68,10
-    CONTROL         "&Sávok mutatása",IDC_SHOWSTRIPES,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,38,110,68,10
+    CONTROL         "&Teljes sor kijelölés",IDC_FULLROWSELECTION,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,38,76,75,10
+    CONTROL         "&Rácsozást mutat",IDC_SHOWGRID,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,38,93,68,10
+    CONTROL         "&Sávok mutatása",IDC_SHOWSTRIPES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,38,110,68,10
     LTEXT           "&Nyelv",IDC_STATIC,32,139,166,8
-    COMBOBOX        IDC_COMBO,32,152,156,140,CBS_DROPDOWNLIST | CBS_SORT | 
-                    WS_VSCROLL | WS_TABSTOP
-    CONTROL         "Ezt a nyelvet &használja a dátum/idõ és számformátumhoz",
-                    IDC_USEWDSLOCALE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
-                    32,172,298,10
-END
-
-IDD_REPORTBUG DIALOGEX 0, 0, 360, 241
-STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU | 
-    WS_THICKFRAME
-CAPTION "WinDirStat - Hibajelentés/Visszajelzés küldése"
-FONT 8, "MS Shell Dlg", 400, 0, 0x1
-BEGIN
-    CONTROL         "&Kritikus",IDC_CRITICAL,"Button",BS_AUTORADIOBUTTON | 
-                    WS_GROUP,14,43,43,10
-    CONTROL         "&Súlyos",IDC_GRAVE,"Button",BS_AUTORADIOBUTTON,73,43,43,
-                    10
-    CONTROL         "&Normál",IDC_NORMAL,"Button",BS_AUTORADIOBUTTON,132,43,
-                    43,10
-    CONTROL         "Kí&vánság",IDC_WISH,"Button",BS_AUTORADIOBUTTON,191,43,
-                    43,10
-    CONTROL         "Általános v&isszajelzés",IDC_FEEDBACK,"Button",
-                    BS_AUTORADIOBUTTON,250,43,79,10
-    EDITTEXT        IDC_INAWORD,60,61,293,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_TEXT,7,126,346,80,ES_MULTILINE | ES_AUTOHSCROLL | 
-                    ES_WANTRETURN | WS_VSCROLL | WS_HSCROLL
-    DEFPUSHBUTTON   "OK",IDOK,154,220,50,14
-    PUSHBUTTON      "Mégse",IDCANCEL,303,220,50,14
-    LTEXT           "Feladó:",IDC_STATIC,7,7,20,8
-    LTEXT           "Címzett:",IDC_STATIC_TO,179,7,12,8
-    LTEXT           "<from>",IDC_FROM,51,7,122,8
-    LTEXT           "<to>",IDC_TO,214,7,139,8
-    GROUPBOX        "Súlyosság",IDC_STATIC_SEVERITY,7,33,346,24,0,
-                    WS_EX_TRANSPARENT
-    LTEXT           "&Röviden:",IDC_STATIC,7,65,49,8
-    LTEXT           "Gép&elje be a szöveget (kérem angolul, vagy németül), amelyet hibajelentésként, vagy megjegyzésként el akar küldeni.",
-                    IDC_STATIC,7,84,346,20
-    LTEXT           "Program:",IDC_STATIC,7,18,38,8
-    LTEXT           "<application>",IDC_APPLICATION,51,18,123,8
-    LTEXT           "Környezet:",IDC_STATIC_PLATFORM,179,18,30,8
-    LTEXT           "<platform>",IDC_PLATFORM,214,18,139,8
-    LTEXT           "A hibajelentéshez, legjobb ha leírja a tüneteket, a pontos hibaüzenetet és ha lehetséges a hiba reprodukálásához szükséges lépéseket.",
-                    IDC_HINT,7,107,346,19
-    LTEXT           "Amikor lenyomja az OK gombot, átnézheti az üzenetet a saját levelezõ programjában.",
-                    IDC_STATIC_OKHINT,7,209,346,8
+    COMBOBOX        IDC_COMBO,32,152,156,140,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Ezt a nyelvet &használja a dátum/ido és számformátumhoz",IDC_USEWDSLOCALE,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,172,298,10
 END
 
 IDD_PAGE_REPORT DIALOGEX 0, 0, 380, 202
-STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | 
-    WS_SYSMENU
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | WS_SYSMENU
 CAPTION "Jelentés"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    LTEXT           "Itt testreszabhatja a 'Levél küldése a tulajdonosnak' jellemzõit.",
-                    IDC_STATIC,7,9,268,8
+    LTEXT           "Itt testreszabhatja a 'Levél küldése a tulajdonosnak' jellemzoit.",IDC_STATIC,7,9,268,8
     LTEXT           "&Tárgy",IDC_STATIC,7,31,46,8
     EDITTEXT        IDC_SUBJECT,59,31,314,14,ES_AUTOHSCROLL
-    LTEXT           "&Elõtag",IDC_STATIC,7,51,46,8
-    EDITTEXT        IDC_PREFIX,59,51,314,54,ES_MULTILINE | ES_AUTOVSCROLL | 
-                    ES_AUTOHSCROLL | ES_WANTRETURN
+    LTEXT           "&Elotag",IDC_STATIC,7,51,46,8
+    EDITTEXT        IDC_PREFIX,59,51,314,54,ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_WANTRETURN
     LTEXT           "&Utótag",IDC_STATIC,7,111,46,8
-    EDITTEXT        IDC_SUFFIX,59,111,314,54,ES_MULTILINE | ES_AUTOVSCROLL | 
-                    ES_AUTOHSCROLL | ES_WANTRETURN
+    EDITTEXT        IDC_SUFFIX,59,111,314,54,ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_WANTRETURN
     PUSHBUTTON      "",IDC_RESET,59,174,153,14
 END
 
@@ -595,14 +501,6 @@ BEGIN
         BOTTOMMARGIN, 195
     END
 
-    IDD_REPORTBUG, DIALOG
-    BEGIN
-        LEFTMARGIN, 7
-        RIGHTMARGIN, 353
-        TOPMARGIN, 7
-        BOTTOMMARGIN, 234
-    END
-
     IDD_PAGE_REPORT, DIALOG
     BEGIN
         LEFTMARGIN, 7
@@ -623,7 +521,7 @@ STRINGTABLE
 BEGIN
     IDR_MAINFRAME           "WinDirStat\n\nWinDirStat\n\n\n\n"
     IDS_QUERYING            "(lekérdezés...)"
-    IDS_NOTACCESSIBLE       "(nem elérhetõ)"
+    IDS_NOTACCESSIBLE       "(nem elérheto)"
     IDS_TREECOL_ATTRIBUTES  "Attribútumok"
 END
 
@@ -646,7 +544,7 @@ END
 
 STRINGTABLE 
 BEGIN
-    ID_FILE_OPEN            "Lemezgyûjtemény megnyitása.\nMegnyitás"
+    ID_FILE_OPEN            "Lemezgyujtemény megnyitása.\nMegnyitás"
 END
 
 STRINGTABLE 
@@ -684,7 +582,7 @@ END
 STRINGTABLE 
 BEGIN
     ID_FILE_REFRESHALL      "Teljes faszerkezet újra-olvasása"
-    ID_CLEANUP_OPENINEXPLORER "Intézõ megnyitása a kijelölt helyen.\nIntézõ"
+    ID_CLEANUP_OPENINEXPLORER "Intézo megnyitása a kijelölt helyen.\nIntézo"
     ID_TREEMAP_ZOOMIN       "Térképfa nagyítása.\nNagyítás"
 END
 
@@ -703,7 +601,7 @@ END
 STRINGTABLE 
 BEGIN
     ID_TREEMAP_ZOOMOUT      "Térképfa csökkentése.\nKicsinyítés"
-    ID_TREEMAP_SELECTPARENT "Aktuális elem szülõjének a kijelölése.\nSzülõ kijelölése"
+    ID_TREEMAP_SELECTPARENT "Aktuális elem szülojének a kijelölése.\nSzülo kijelölése"
     ID_TREEMAP_HELPABOUTTREEMAPS 
                             "Térképfa súgójának a megjelenítése.\nTérképfa súgó"
     ID_VIEW_SHOWTREEMAP     "Térképfa mutatása/elrejtése.\nTérképfa"
@@ -727,7 +625,7 @@ END
 
 STRINGTABLE 
 BEGIN
-    ID_SENDMAILTOOWNER      "A jelenleg kijelölt elemrõl e-mail jelentés összeállítása.\nLevél küldése"
+    ID_SENDMAILTOOWNER      "A jelenleg kijelölt elemrol e-mail jelentés összeállítása.\nLevél küldése"
 END
 
 STRINGTABLE 
@@ -745,7 +643,7 @@ END
 STRINGTABLE 
 BEGIN
     IDS_ABOUT_ABOUTTEXTss   "\r\nWinDirStat - Könyvtár statisztika\r\n\r\n""Itt megtekintheti az összes lemezterületét\r\nés segítséget kap a kitakarításhoz.""\r\n\r\nA MS Windows-hoz újraprogramozta\r\nBernhard Seifert (mailto:%1!s!),\r\n\r\naz alapot Stefan Hundhammer KDE (Linux) KDirStat programja alkotja\r\n(http://kdirstat.sourceforge.net/).\r\n\r\nA WinDirStat honlapja http://%2!s!/\r\n\r\nCopyright (c) 2003-2005 The authors of WinDirStat"
-    IDS_ABOUT_THANKSTOTEXT  "\r\nStefan Hundhammer nagyszerû Linuxos eszköze a KDirStat.\r\nÉn már nagyon sokat használtam a KDirStat (2.3.7) programot.\r\nhttp://kdirstat.sourceforge.net/\r\n\r\nItt a SequoiaView szerzõi bemutatják, hogy a faszerkezet valójában hogyan kerül használatra.\r\nhttp://www.win.tue.nl/sequoiaview/\r\n\r\nJarke J. van Wijk, Huub van de Wetering, Mark Bruls és Kees Huizing\r\nakik elkészítették a négyszögletes faszerkezet tapétáját.\r\nhttp://www.win.tue.nl/~vanwijk/\r\n\r\nBen Shneiderman akitõl ez a szellemes faszerkezet ötlete származik\r\namely igazán intuitív módon jeleníti meg a faszerkezet tartalmát.\r\nhttp://www.cs.umd.edu/hcil/treemap-history/\r\n\r\nÕk azok a munkatársak, akik visszajelzéseket küldtek a WinDirStat végleges kiadása elõtt.\r\nhttp://www.daccord.net/\r\n\r\nBeatrix Lödige és Nick Lines bétatesztelõk.\r\n"
+    IDS_ABOUT_THANKSTOTEXT  "\r\nStefan Hundhammer nagyszeru Linuxos eszköze a KDirStat.\r\nÉn már nagyon sokat használtam a KDirStat (2.3.7) programot.\r\nhttp://kdirstat.sourceforge.net/\r\n\r\nItt a SequoiaView szerzoi bemutatják, hogy a faszerkezet valójában hogyan kerül használatra.\r\nhttp://www.win.tue.nl/sequoiaview/\r\n\r\nJarke J. van Wijk, Huub van de Wetering, Mark Bruls és Kees Huizing\r\nakik elkészítették a négyszögletes faszerkezet tapétáját.\r\nhttp://www.win.tue.nl/~vanwijk/\r\n\r\nBen Shneiderman akitol ez a szellemes faszerkezet ötlete származik\r\namely igazán intuitív módon jeleníti meg a faszerkezet tartalmát.\r\nhttp://www.cs.umd.edu/hcil/treemap-history/\r\n\r\nOk azok a munkatársak, akik visszajelzéseket küldtek a WinDirStat végleges kiadása elott.\r\nhttp://www.daccord.net/\r\n\r\nBeatrix Lödige és Nick Lines bétatesztelok.\r\n"
     IDS_ABOUT_ABOUT         "Névjegy"
     IDS_ABOUT_THANKSTO      "Köszönet"
     IDS_ABOUT_LICENSEAGREEMENT "Licenc"
@@ -762,7 +660,7 @@ BEGIN
     IDS_EXPAND              "K&ibont"
     IDS_CREATEPROCESSsFAILEDs "A(z) (%1!s!) folyamat sikertelen: %2!s!"
     IDS_LANGUAGERESTARTNOW  "A nyelv módosítása addíg nem kerül érvényesítésre, amíg nem indítja újra az alkalmazást.\r\n\r\nLanguage changes take not effect until the application is restarted.\r\n\r\nÚjraindítja a WinDirStat-ot most?"
-    IDS_ABOUT_AUTHORS       "Szerzõk"
+    IDS_ABOUT_AUTHORS       "Szerzok"
     IDS_ABOUT_AUTHORSTEXTs  "=== Programozó ===\r\n\r\nBernhard Seifert\r\nA projekt létrehozója és koordinátora\r\n(mailto:%1!s!)\r\n\r\nOliver Schneider\r\n(mailto:assarbad#users.sourceforge.net)\r\n\r\n\r\n=== Fordítók ===\r\n\r\n"
 END
 
@@ -781,7 +679,7 @@ BEGIN
     IDS_TREECOL_SUBDIRS     "Alkönyvtárak"
     IDS_TREECOL_LASTCHANGE  "Utóljára módosítva"
     IDS_PLEASECHECKYOURDISKUSAGE 
-                            "Kérem ellenõrizze a lemezhasználatot és takarítsa ki azt. Köszönöm.\r\n"
+                            "Kérem ellenorizze a lemezhasználatot és takarítsa ki azt. Köszönöm.\r\n"
     IDS_DISKUSAGEREPORTGENERATEDBYWINDIRSTAT 
                             "WinDirStat által készített lemezhasználati jelentés.\r\n"
     IDS__UNKNOWN_           "<ismeretlen>"
@@ -812,7 +710,7 @@ END
 STRINGTABLE 
 BEGIN
     IDS_POLICY_REFRESHTHISENTRY "Bejegyzés frissítése"
-    IDS_POLICY_REFRESHPARENT "Szülõ bejegyzés frissítése"
+    IDS_POLICY_REFRESHPARENT "Szülo bejegyzés frissítése"
     IDS_BUGREPORTHINT       "Egy hibajelentéshez, legjobb ha leírja a tüneteket a hibaüzenet teljes szövegével együtt, és ha lehetséges a lépéseket a probléma reprodukálásához."
     IDS_FEEDBACKHINT        "A visszajelzéseket mindig értékeljük."
     IDS_DRIVECOL_NAME       "Név"
@@ -832,7 +730,7 @@ BEGIN
     IDS_EXTCOL_DESCRIPTION  "Leírás"
     IDS_RAMUSAGEs           "RAM használat: %1!s!"
     IDS_HELPFILEsCOULDNOTBEFOUND 
-                            "A(z) %1!s! súgófájl nem található.\r\nAnnak ugyanott kell lennie, ahol a windirstat.exe fájl is van.\r\nEllenõrizze, hogy azt megkapta-e a windirstat.exe fájllal együtt.\r\nLetöltheti a WinDirStat honlapjáról is (nézze meg a Névjegy ablakot)."
+                            "A(z) %1!s! súgófájl nem található.\r\nAnnak ugyanott kell lennie, ahol a windirstat.exe fájl is van.\r\nEllenorizze, hogy azt megkapta-e a windirstat.exe fájllal együtt.\r\nLetöltheti a WinDirStat honlapjáról is (nézze meg a Névjegy ablakot)."
     IDS_SUSPENDED_          "(felfüggeszt) "
     IDS_SUSPEND             "Felfüggeszt"
     IDS_SPEC_BYTES          "Bájt"

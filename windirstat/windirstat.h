@@ -126,12 +126,15 @@ protected:
 	afx_msg void OnFileOpen();
 	afx_msg void OnHelpManual();
 	afx_msg void OnAppAbout();
-	afx_msg void OnUpdateHelpReportbug(CCmdUI *pCmdUI);
-	afx_msg void OnHelpReportbug();
 };
 
 
 // $Log$
+// Revision 1.16  2006/07/04 22:07:29  assarbad
+// - Changed project options (no manifest for resource DLLs)
+// - Removed report bug dialog from all resource DLLs
+// - Removed report bug module from sources
+//
 // Revision 1.15  2006/07/04 20:45:23  assarbad
 // - See changelog for the changes of todays previous check-ins as well as this one!
 //

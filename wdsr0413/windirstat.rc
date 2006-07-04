@@ -16,7 +16,7 @@
 /////////////////////////////////////////////////////////////////////////////
 // Dutch (Netherlands) resources
 
-#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_NLD)
 #ifdef _WIN32
 LANGUAGE LANG_DUTCH, SUBLANG_DUTCH
 #pragma code_page(1252)
@@ -28,7 +28,7 @@ LANGUAGE LANG_DUTCH, SUBLANG_DUTCH
 // TEXTINCLUDE
 //
 
-1 TEXTINCLUDE
+1 TEXTINCLUDE 
 BEGIN
     "resource.h\0"
 END
@@ -131,18 +131,14 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "&Verkenner Hier\tCtrl+E",     ID_CLEANUP_OPENINEXPLORER
         MENUITEM "&Oprachtprompt Hier\tCtrl+P", ID_CLEANUP_OPENINCONSOLE
-        MENUITEM "&Verwijder (naar Prullenbak)\tDel", 
-                                                ID_CLEANUP_DELETETOTRASHBIN
-        MENUITEM "Verwijder (geen &herstel mogelijk!)\tShift+Del", 
-                                                ID_CLEANUP_DELETE
+        MENUITEM "&Verwijder (naar Prullenbak)\tDel", ID_CLEANUP_DELETETOTRASHBIN
+        MENUITEM "Verwijder (geen &herstel mogelijk!)\tShift+Del", ID_CLEANUP_DELETE
         MENUITEM SEPARATOR
         MENUITEM "&Eigenschappen",              ID_CLEANUP_PROPERTIES
         MENUITEM SEPARATOR
         MENUITEM "Prullenbak &Leegmaken",       ID_CLEANUP_EMPTYRECYCLEBIN
         MENUITEM SEPARATOR
-        MENUITEM "Gebruikergedefinieerde Actie #0", 
-                                                ID_DUMMY_USERDEFINEDCLEANUP
-        , GRAYED
+        MENUITEM "Gebruikergedefinieerde Actie #0", ID_DUMMY_USERDEFINEDCLEANUP, GRAYED
     END
     POPUP "&Boomkaart"
     BEGIN
@@ -265,21 +261,18 @@ END
 //
 
 IDD_ABOUTBOX DIALOGEX 0, 0, 273, 199
-STYLE DS_SETFONT | WS_POPUP | WS_CLIPCHILDREN | WS_CAPTION | WS_SYSMENU | 
-    WS_THICKFRAME
+STYLE DS_SETFONT | WS_POPUP | WS_CLIPCHILDREN | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
 CAPTION "Over WinDirStat"
 FONT 9, "Microsoft Sans Serif", 400, 0, 0x0
 BEGIN
-    CONTROL         "",IDC_TAB,"SysTabControl32",WS_TABSTOP,7,22,259,155,
-                    WS_EX_ACCEPTFILES
+    CONTROL         "",IDC_TAB,"SysTabControl32",WS_TABSTOP,7,22,259,155,WS_EX_ACCEPTFILES
     DEFPUSHBUTTON   "OK",IDOK,111,180,50,12,WS_GROUP
     CTEXT           "WinDirStat 0.0.000",IDC_CAPTION,69,7,134,8
     ICON            IDR_MAINFRAME,IDC_STATIC,7,3,20,20
 END
 
 IDD_CHECKFORUPDATE DIALOGEX 0, 0, 236, 47
-STYLE DS_SETFONT | DS_MODALFRAME | DS_3DLOOK | DS_FIXEDSYS | DS_CENTER | 
-    WS_POPUP | WS_CAPTION
+STYLE DS_SETFONT | DS_MODALFRAME | DS_3DLOOK | DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_CAPTION
 CAPTION "Dialog"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
@@ -289,8 +282,7 @@ BEGIN
 END
 
 IDD_DELETE_WARNING DIALOGEX 0, 0, 276, 150
-STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | 
-    WS_SYSMENU
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Waarschuwing"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
@@ -302,57 +294,43 @@ BEGIN
     LTEXT           "Je gaat verwijderen",IDC_STATIC,7,23,82,8
     CTEXT           "<bestandsnaam>",IDC_FILENAME,7,38,262,8,SS_PATHELLIPSIS
     LTEXT           "van jouw computer.",IDC_STATIC,7,53,67,8
-    LTEXT           "Verwijderen van systeembestanden of -mappen kan het systeem beschadigen.",
-                    IDC_STATIC,7,76,262,19
+    LTEXT           "Verwijderen van systeembestanden of -mappen kan het systeem beschadigen.",IDC_STATIC,7,76,262,19
     LTEXT           "Doorgaan?",IDC_STATIC,7,99,104,8
 END
 
 IDD_MODALAPISHUTTLE DIALOGEX 0, 0, 186, 90
-STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION |
-    WS_SYSMENU
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "<invisible dialog>"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
 END
 
 IDD_PAGE_CLEANUPS DIALOGEX 0, 0, 380, 202
-STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | 
-    WS_SYSMENU
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | WS_SYSMENU
 CAPTION "Acties"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    LISTBOX         IDC_LIST,7,7,113,169,LBS_HASSTRINGS | 
-                    LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "&Actief",IDC_ENABLED,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,129,7,53,10
+    LISTBOX         IDC_LIST,7,7,113,169,LBS_HASSTRINGS | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "&Actief",IDC_ENABLED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,129,7,53,10
     EDITTEXT        IDC_TITLE,212,7,161,14,ES_AUTOHSCROLL
     EDITTEXT        IDC_COMMANDLINE,129,35,244,14,ES_AUTOHSCROLL
     LTEXT           "%p Volledig Pad",IDC_STATIC,128,54,93,8
-    LTEXT           "%n Bestand- of Mapnaam zonder Pad",IDC_STATIC,225,54,
-                    138,8
+    LTEXT           "%n Bestand- of Mapnaam zonder Pad",IDC_STATIC,225,54,138,8
     LTEXT           "%sp Submap Volledig Pad",IDC_HINTSP,128,63,94,8
     LTEXT           "%sn Submapnaam zonder Pad",IDC_HINTSN,225,63,138,8
-    CONTROL         "&Schijven",IDC_WORKSFORDRIVES,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,138,92,49,10
-    CONTROL         "&Map",IDC_WORKSFORDIRECTORIES,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,208,92,69,10
-    CONTROL         "&UNC-Paden",IDC_WORKSFORUNCPATHS,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,304,92,61,10
-    CONTROL         "&Bestanden",IDC_WORKSFORFILES,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,138,107,57,10
+    CONTROL         "&Schijven",IDC_WORKSFORDRIVES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,138,92,49,10
+    CONTROL         "&Map",IDC_WORKSFORDIRECTORIES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,208,92,69,10
+    CONTROL         "&UNC-Paden",IDC_WORKSFORUNCPATHS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,304,92,61,10
+    CONTROL         "&Bestanden",IDC_WORKSFORFILES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,138,107,57,10
     CONTROL         "<Bestanden> &Pseudo-onderdelen",IDC_WORKSFORFILESFOLDER,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,207,107,92,10
     PUSHBUTTON      "&Help",IDC_HELPBUTTON,323,131,50,14
-    CONTROL         "&Recursief",IDC_RECURSEINTOSUBDIRECTORIES,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,128,132,160,10
-    CONTROL         "&Vraag om bevestiging",IDC_ASKFORCONFIRMATION,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,128,146,160,10
+    CONTROL         "&Recursief",IDC_RECURSEINTOSUBDIRECTORIES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,128,132,160,10
+    CONTROL         "&Vraag om bevestiging",IDC_ASKFORCONFIRMATION,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,128,146,160,10
     CONTROL         "&Toon Opdrachtprompt-venster",IDC_SHOWCONSOLEWINDOW,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,128,160,100,10
-    CONTROL         "&Wacht tot gereed",IDC_WAITFORCOMPLETION,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,250,160,100,10
-    COMBOBOX        IDC_REFRESHPOLICY,128,183,245,93,CBS_DROPDOWNLIST | 
-                    WS_VSCROLL | WS_TABSTOP
+    CONTROL         "&Wacht tot gereed",IDC_WAITFORCOMPLETION,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,250,160,100,10
+    COMBOBOX        IDC_REFRESHPOLICY,128,183,245,93,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     PUSHBUTTON      "Om&hoog",IDC_UP,21,181,37,14
     PUSHBUTTON      "Om&laag",IDC_DOWN,66,181,37,14
     LTEXT           "Ververs&beleid",IDC_STATIC,128,174,108,8
@@ -362,117 +340,82 @@ BEGIN
 END
 
 IDD_PAGE_GENERAL DIALOGEX 0, 0, 380, 202
-STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | 
-    WS_SYSMENU
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | WS_SYSMENU
 CAPTION "Algemeen"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    CONTROL         "&Over filesysteemgrenzen",IDC_FOLLOWMOUNTPOINTS,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,32,13,229,10
-    CONTROL         "Volg &Symbolische verbindingspunten (behalve Volume Mount Points)",
-                    IDC_FOLLOWJUNCTIONS,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,32,27,229,10
-    CONTROL         "&Toon groottes in GB/MB/kB/Bytes Formaat",
-                    IDC_HUMANFORMAT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,
-                    41,229,10
+    CONTROL         "&Over filesysteemgrenzen",IDC_FOLLOWMOUNTPOINTS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,13,229,10
+    CONTROL         "Volg &Symbolische verbindingspunten (behalve Volume Mount Points)",IDC_FOLLOWJUNCTIONS,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,27,229,10
+    CONTROL         "&Toon groottes in GB/MB/kB/Bytes Formaat",IDC_HUMANFORMAT,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,41,229,10
     GROUPBOX        "&Lijststijl",IDC_STATIC,30,61,90,65
-    CONTROL         "&Volledige rijselectie",IDC_FULLROWSELECTION,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,38,76,75,10
-    CONTROL         "Toon &Grid",IDC_SHOWGRID,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,38,93,68,10
-    CONTROL         "Toon S&trepen",IDC_SHOWSTRIPES,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,38,110,68,10
+    CONTROL         "&Volledige rijselectie",IDC_FULLROWSELECTION,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,38,76,75,10
+    CONTROL         "Toon &Grid",IDC_SHOWGRID,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,38,93,68,10
+    CONTROL         "Toon S&trepen",IDC_SHOWSTRIPES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,38,110,68,10
     LTEXT           "&Taal",IDC_STATIC,32,139,166,8
-    COMBOBOX        IDC_COMBO,32,152,156,140,CBS_DROPDOWNLIST | CBS_SORT | 
-                    WS_VSCROLL | WS_TABSTOP
-    CONTROL         "&Gebruik deze taal voor datum/tijd formaat",
-                    IDC_USEWDSLOCALE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
-                    32,172,298,10
+    COMBOBOX        IDC_COMBO,32,152,156,140,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "&Gebruik deze taal voor datum/tijd formaat",IDC_USEWDSLOCALE,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,172,298,10
 END
 
 IDD_PAGE_REPORT DIALOGEX 0, 0, 380, 202
-STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | 
-    WS_SYSMENU
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | WS_SYSMENU
 CAPTION "Rapport"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    LTEXT           "Hier kun je de rapportages aanpassen die worden gegenereerd door de functie 'Stuur e-mail naar eigenaar'",
-                    IDC_STATIC,7,9,268,8
+    LTEXT           "Hier kun je de rapportages aanpassen die worden gegenereerd door de functie 'Stuur e-mail naar eigenaar'",IDC_STATIC,7,9,268,8
     LTEXT           "&Onderwerp",IDC_STATIC,7,31,46,8
     EDITTEXT        IDC_SUBJECT,59,31,314,14,ES_AUTOHSCROLL
     LTEXT           "&Voorvoegsel",IDC_STATIC,7,51,46,8
-    EDITTEXT        IDC_PREFIX,59,51,314,54,ES_MULTILINE | ES_AUTOVSCROLL | 
-                    ES_AUTOHSCROLL | ES_WANTRETURN
+    EDITTEXT        IDC_PREFIX,59,51,314,54,ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_WANTRETURN
     LTEXT           "Achter&voegsel",IDC_STATIC,7,111,46,8
-    EDITTEXT        IDC_SUFFIX,59,111,314,54,ES_MULTILINE | ES_AUTOVSCROLL | 
-                    ES_AUTOHSCROLL | ES_WANTRETURN
+    EDITTEXT        IDC_SUFFIX,59,111,314,54,ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_WANTRETURN
     PUSHBUTTON      "",IDC_RESET,59,174,89,14
 END
 
 IDD_PAGE_TREELIST DIALOGEX 0, 0, 380, 199
-STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | 
-    WS_SYSMENU
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | WS_SYSMENU
 CAPTION "Mappenlijst"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    CONTROL         "&Pacman Animatie",IDC_PACMANANIMATION,"Button",
-                    BS_AUTOCHECKBOX | BS_MULTILINE | WS_TABSTOP,7,7,102,19
-    CONTROL         "Toon besteedde &Tijd gedurende de Scan",
-                    IDC_SHOWTIMESPENT,"Button",BS_AUTOCHECKBOX | 
-                    BS_MULTILINE | WS_TABSTOP,7,30,95,19
+    CONTROL         "&Pacman Animatie",IDC_PACMANANIMATION,"Button",BS_AUTOCHECKBOX | BS_MULTILINE | WS_TABSTOP,7,7,102,19
+    CONTROL         "Toon besteedde &Tijd gedurende de Scan",IDC_SHOWTIMESPENT,
+                    "Button",BS_AUTOCHECKBOX | BS_MULTILINE | WS_TABSTOP,7,30,95,19
     GROUPBOX        "Deelboompercentage &Kleuren",IDC_STATIC,129,7,244,185
-    PUSHBUTTON      "Boomniveau &1",IDC_COLORBUTTON0,151,19,175,14,0,
-                    WS_EX_RIGHT
-    PUSHBUTTON      "Boomniveau &2",IDC_COLORBUTTON1,167,40,159,14,0,
-                    WS_EX_RIGHT
-    PUSHBUTTON      "Boomniveau &3",IDC_COLORBUTTON2,181,61,145,14,0,
-                    WS_EX_RIGHT
-    PUSHBUTTON      "Boomniveau &4",IDC_COLORBUTTON3,195,82,131,14,0,
-                    WS_EX_RIGHT
-    PUSHBUTTON      "Boomniveau &5",IDC_COLORBUTTON4,207,103,119,14,0,
-                    WS_EX_RIGHT
-    PUSHBUTTON      "Boomniveau &6",IDC_COLORBUTTON5,218,124,108,14,0,
-                    WS_EX_RIGHT
-    PUSHBUTTON      "Boomniveau &7",IDC_COLORBUTTON6,227,145,99,14,0,
-                    WS_EX_RIGHT
-    PUSHBUTTON      "Boomniveau &8",IDC_COLORBUTTON7,236,166,90,14,0,
-                    WS_EX_RIGHT
-    CONTROL         "",IDC_SLIDER,"msctls_trackbar32",TBS_VERT | TBS_BOTH | 
-                    TBS_NOTICKS | WS_TABSTOP,339,29,18,160
+    PUSHBUTTON      "Boomniveau &1",IDC_COLORBUTTON0,151,19,175,14,0,WS_EX_RIGHT
+    PUSHBUTTON      "Boomniveau &2",IDC_COLORBUTTON1,167,40,159,14,0,WS_EX_RIGHT
+    PUSHBUTTON      "Boomniveau &3",IDC_COLORBUTTON2,181,61,145,14,0,WS_EX_RIGHT
+    PUSHBUTTON      "Boomniveau &4",IDC_COLORBUTTON3,195,82,131,14,0,WS_EX_RIGHT
+    PUSHBUTTON      "Boomniveau &5",IDC_COLORBUTTON4,207,103,119,14,0,WS_EX_RIGHT
+    PUSHBUTTON      "Boomniveau &6",IDC_COLORBUTTON5,218,124,108,14,0,WS_EX_RIGHT
+    PUSHBUTTON      "Boomniveau &7",IDC_COLORBUTTON6,227,145,99,14,0,WS_EX_RIGHT
+    PUSHBUTTON      "Boomniveau &8",IDC_COLORBUTTON7,236,166,90,14,0,WS_EX_RIGHT
+    CONTROL         "",IDC_SLIDER,"msctls_trackbar32",TBS_VERT | TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,339,29,18,160
 END
 
 IDD_PAGE_TREEMAP DIALOGEX 0, 0, 380, 202
-STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | 
-    WS_SYSMENU
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | WS_SYSMENU
 CAPTION "Boomkaart"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     CTEXT           "&Helder-\r\nheid",IDC_STATIC,237,122,32,18
-    CONTROL         "",IDC_BRIGHTNESS,"msctls_trackbar32",TBS_VERT | 
-                    TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,245,17,16,104
+    CONTROL         "",IDC_BRIGHTNESS,"msctls_trackbar32",TBS_VERT | TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,245,17,16,104
     CTEXT           "&Kussen-\r\n-schaduw",IDC_STATIC,271,122,32,18
-    CONTROL         "",IDC_CUSHIONSHADING,"msctls_trackbar32",TBS_VERT | 
-                    TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,279,17,16,104
+    CONTROL         "",IDC_CUSHIONSHADING,"msctls_trackbar32",TBS_VERT | TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,279,17,16,104
     CTEXT           "&Hoogte",IDC_STATIC,305,122,32,18
-    CONTROL         "",IDC_HEIGHT,"msctls_trackbar32",TBS_VERT | TBS_BOTH | 
-                    TBS_NOTICKS | WS_TABSTOP,313,17,16,104
+    CONTROL         "",IDC_HEIGHT,"msctls_trackbar32",TBS_VERT | TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,313,17,16,104
     CTEXT           "&Schaal\r\nFactor",IDC_STATIC,339,122,32,18
-    CONTROL         "",IDC_SCALEFACTOR,"msctls_trackbar32",TBS_VERT | 
-                    TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,347,17,16,104
+    CONTROL         "",IDC_SCALEFACTOR,"msctls_trackbar32",TBS_VERT | TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,347,17,16,104
     RTEXT           "&Lichtinval",IDC_STATIC,246,147,59,8
     LTEXT           "Static",IDC_LIGHTSOURCE,313,146,58,48,WS_TABSTOP
     PUSHBUTTON      "",IDC_RESET,242,167,55,22,BS_MULTILINE
     GROUPBOX        "St&ijl",IDC_STATIC,7,146,63,49
-    CONTROL         "&KDirStat",IDC_KDIRSTAT,"Button",BS_AUTORADIOBUTTON | 
-                    WS_GROUP | WS_TABSTOP,12,159,42,10
-    CONTROL         "Se&quoiaView",IDC_SEQUOIAVIEW,"Button",
-                    BS_AUTORADIOBUTTON,12,176,53,10
-    CONTROL         "Toon &Grid",IDC_TREEMAPGRID,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,76,150,54,10
-    PUSHBUTTON      "Grid &Kleur",IDC_TREEMAPGRIDCOLOR,134,150,85,14,0,
-                    WS_EX_RIGHT
-    PUSHBUTTON      "Selectierechthoek",IDC_TREEMAPHIGHLIGHTCOLOR,76,175,143,
-                    14,0,WS_EX_RIGHT
+    CONTROL         "&KDirStat",IDC_KDIRSTAT,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,12,159,42,10
+    CONTROL         "Se&quoiaView",IDC_SEQUOIAVIEW,"Button",BS_AUTORADIOBUTTON,12,176,53,10
+    CONTROL         "Toon &Grid",IDC_TREEMAPGRID,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,76,150,54,10
+    PUSHBUTTON      "Grid &Kleur",IDC_TREEMAPGRIDCOLOR,134,150,85,14,0,WS_EX_RIGHT
+    PUSHBUTTON      "Selectierechthoek",IDC_TREEMAPHIGHLIGHTCOLOR,76,175,143,14,0,WS_EX_RIGHT
     CTEXT           "Static",IDC_STATICSCALEFACTOR,339,7,32,8
     CTEXT           "Static",IDC_STATICHEIGHT,305,7,32,8
     CTEXT           "Static",IDC_STATICCUSHIONSHADING,271,7,32,8
@@ -480,61 +423,15 @@ BEGIN
     LTEXT           "Static",IDC_PREVIEW,7,7,211,124
 END
 
-IDD_REPORTBUG DIALOGEX 0, 0, 360, 233
-STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU | 
-    WS_THICKFRAME
-CAPTION "WinDirStat - Stuur Bugrapport/Feedback e-mail"
-FONT 8, "MS Shell Dlg", 400, 0, 0x1
-BEGIN
-    CONTROL         "&Kritisch",IDC_CRITICAL,"Button",BS_AUTORADIOBUTTON | 
-                    WS_GROUP,14,43,43,10
-    CONTROL         "&Ernstig",IDC_GRAVE,"Button",BS_AUTORADIOBUTTON,73,43,
-                    43,10
-    CONTROL         "&Normaal",IDC_NORMAL,"Button",BS_AUTORADIOBUTTON,132,43,
-                    43,10
-    CONTROL         "&Wens",IDC_WISH,"Button",BS_AUTORADIOBUTTON,191,43,43,
-                    10
-    CONTROL         "Algemene &Feedback",IDC_FEEDBACK,"Button",
-                    BS_AUTORADIOBUTTON,250,43,79,10
-    EDITTEXT        IDC_INAWORD,60,61,293,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_TEXT,7,118,346,80,ES_MULTILINE | ES_AUTOHSCROLL | 
-                    ES_WANTRETURN | WS_VSCROLL | WS_HSCROLL
-    DEFPUSHBUTTON   "OK",IDOK,154,212,50,14
-    PUSHBUTTON      "Annuleren",IDCANCEL,303,212,50,14
-    LTEXT           "Van:",IDC_STATIC,7,7,20,8
-    LTEXT           "Naar:",IDC_STATIC_TO,179,7,12,8
-    LTEXT           "<van>",IDC_FROM,51,7,122,8
-    LTEXT           "<naar>",IDC_TO,214,7,139,8
-    GROUPBOX        "Ernst",IDC_STATIC_SEVERITY,7,33,346,24,0,
-                    WS_EX_TRANSPARENT
-    LTEXT           "In een &woord:",IDC_STATIC,7,65,49,8
-    LTEXT           "&Voer de tekst in (in Engels of Duits alstublieft) die je wilt versturen als bugrapportage of opmerking.",
-                    IDC_STATIC,7,84,346,12
-    LTEXT           "Applicatie:",IDC_STATIC,7,18,38,8
-    LTEXT           "<applicatie>",IDC_APPLICATION,51,18,123,8
-    LTEXT           "Platform:",IDC_STATIC_PLATFORM,179,18,30,8
-    LTEXT           "<platform>",IDC_PLATFORM,214,18,139,8
-    LTEXT           "Voor rapportage van een bug is het het beste om het symptoom te beschrijven, inclusief de volledige tekst van de foutmelding en, indien mogelijk, de stappen om het gedrag te reproduceren.",
-                    IDC_HINT,7,99,346,19
-    LTEXT           "Wanneer je op OK drukt kun je het bericht herzien in je mailprogramma.",
-                    IDC_STATIC_OKHINT,7,201,346,8
-END
-
 IDD_SELECTDRIVES DIALOGEX 0, 0, 276, 182
-STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU | 
-    WS_THICKFRAME
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
 CAPTION "WinDirStat - Selecteer Schijven"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    CONTROL         "&Alle Lokale Schijven",IDC_ALLLOCALDRIVES,"Button",
-                    BS_AUTORADIOBUTTON | WS_GROUP,7,7,99,10
-    CONTROL         "&Individuele Schijven",IDC_SOMEDRIVES,"Button",
-                    BS_AUTORADIOBUTTON,7,31,91,10
-    CONTROL         "",IDC_DRIVES,"SysListView32",LVS_REPORT | 
-                    LVS_OWNERDRAWFIXED | LVS_ALIGNLEFT | WS_BORDER | 
-                    WS_TABSTOP,7,43,262,100
-    CONTROL         "Een &Map",IDC_AFOLDER,"Button",BS_AUTORADIOBUTTON,7,150,
-                    100,10
+    CONTROL         "&Alle Lokale Schijven",IDC_ALLLOCALDRIVES,"Button",BS_AUTORADIOBUTTON | WS_GROUP,7,7,99,10
+    CONTROL         "&Individuele Schijven",IDC_SOMEDRIVES,"Button",BS_AUTORADIOBUTTON,7,31,91,10
+    CONTROL         "",IDC_DRIVES,"SysListView32",LVS_REPORT | LVS_OWNERDRAWFIXED | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,7,43,262,100
+    CONTROL         "Een &Map",IDC_AFOLDER,"Button",BS_AUTORADIOBUTTON,7,150,100,10
     EDITTEXT        IDC_FOLDERNAME,6,161,209,14,ES_AUTOHSCROLL
     PUSHBUTTON      "...",IDC_BROWSEFOLDER,219,161,50,14
     DEFPUSHBUTTON   "OK",IDOK,219,7,50,14
@@ -622,14 +519,6 @@ BEGIN
         BOTTOMMARGIN, 195
     END
 
-    IDD_REPORTBUG, DIALOG
-    BEGIN
-        LEFTMARGIN, 7
-        RIGHTMARGIN, 353
-        TOPMARGIN, 7
-        BOTTOMMARGIN, 226
-    END
-
     IDD_SELECTDRIVES, DIALOG
     BEGIN
         LEFTMARGIN, 7
@@ -646,7 +535,7 @@ END
 // String Table
 //
 
-STRINGTABLE
+STRINGTABLE 
 BEGIN
     IDR_MAINFRAME           "WinDirStat\n\nWinDirStat\n\n\n\n"
     IDS_QUERYING            "(aanvragen...)"

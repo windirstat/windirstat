@@ -4,6 +4,7 @@
 	Version="8,00"
 	Name="wdsr0413"
 	ProjectGUID="{70A55EB7-E109-41DE-81B4-0DF2B72DCDE9}"
+	RootNamespace="wdsr0413"
 	Keyword="Win32Proj"
 	>
 	<Platforms>
@@ -60,6 +61,7 @@
 				IgnoreImportLibrary="true"
 				OutputFile="../../urelease/wdsr0413.dll"
 				LinkIncremental="1"
+				GenerateManifest="false"
 				IgnoreAllDefaultLibraries="true"
 				GenerateDebugInformation="false"
 				SubSystem="2"
@@ -75,6 +77,7 @@
 			/>
 			<Tool
 				Name="VCManifestTool"
+				EmbedManifest="false"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"

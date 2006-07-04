@@ -23,7 +23,6 @@
 #define IDD_PAGE_TREELIST               142
 #define IDD_PAGE_TREEMAP                143
 #define IDD_PAGE_GENERAL                144
-#define IDD_REPORTBUG                   145
 #define IDD_PAGE_REPORT                 146
 #define IDS_RESOURCEVERSION             199
 #define IDS_ABOUT_ABOUTTEXTss           200
@@ -123,7 +122,6 @@
 #define IDC_FOLDERNAME                  1003
 #define IDC_BROWSEFOLDER                1004
 #define IDC_DRIVES                      1005
-#define IDC_TEXT                        1012
 #define IDC_TAB                         1013
 #define IDC_CAPTION                     1014
 #define IDC_FILENAME                    1016
@@ -161,18 +159,7 @@
 #define IDC_HINTSN                      1048
 #define IDC_UP                          1049
 #define IDC_DOWN                        1050
-#define IDC_FROM                        1050
-#define IDC_TO                          1051
 #define IDC_WORKSFORUNCPATHS            1051
-#define IDC_CRITICAL                    1052
-#define IDC_GRAVE                       1053
-#define IDC_NORMAL                      1054
-#define IDC_WISH                        1055
-#define IDC_INAWORD                     1056
-#define IDC_APPLICATION                 1057
-#define IDC_FEEDBACK                    1058
-#define IDC_PLATFORM                    1059
-#define IDC_HINT                        1060
 #define IDC_COLORBUTTON0                1100
 #define IDC_COLORBUTTON1                1101
 #define IDC_COLORBUTTON2                1102
@@ -185,10 +172,6 @@
 #define IDC_BUTTON8                     1201
 #define IDC_TREEMAPHIGHLIGHTCOLOR       1202
 #define IDC_COMBO                       1203
-#define IDC_STATIC_TO                   1204
-#define IDC_STATIC_PLATFORM             1205
-#define IDC_STATIC_SEVERITY             1206
-#define IDC_STATIC_OKHINT               1207
 #define IDC_SIZEGRIPPER                 1208
 #define IDC_SCALEFACTOR                 1209
 #define IDC_HEIGHT                      1210

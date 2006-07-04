@@ -413,35 +413,6 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,172,298,10
 END
 
-IDD_REPORTBUG DIALOGEX 0, 0, 360, 233
-STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
-CAPTION "WinDirStat - Submit Bug Report/Feedback"
-FONT 8, "MS Shell Dlg", 400, 0, 0x1
-BEGIN
-    CONTROL         "&Critical",IDC_CRITICAL,"Button",BS_AUTORADIOBUTTON | WS_GROUP,14,43,43,10
-    CONTROL         "&Serious",IDC_GRAVE,"Button",BS_AUTORADIOBUTTON,73,43,43,10
-    CONTROL         "&Normal",IDC_NORMAL,"Button",BS_AUTORADIOBUTTON,132,43,43,10
-    CONTROL         "&Wish",IDC_WISH,"Button",BS_AUTORADIOBUTTON,191,43,43,10
-    CONTROL         "General &Feedback",IDC_FEEDBACK,"Button",BS_AUTORADIOBUTTON,250,43,79,10
-    EDITTEXT        IDC_INAWORD,60,61,293,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_TEXT,7,118,346,80,ES_MULTILINE | ES_AUTOHSCROLL | ES_WANTRETURN | WS_VSCROLL | WS_HSCROLL
-    DEFPUSHBUTTON   "OK",IDOK,154,212,50,14
-    PUSHBUTTON      "Cancel",IDCANCEL,303,212,50,14
-    LTEXT           "From:",IDC_STATIC,7,7,20,8
-    LTEXT           "To:",IDC_STATIC_TO,179,7,12,8
-    LTEXT           "<from>",IDC_FROM,51,7,122,8
-    LTEXT           "<to>",IDC_TO,214,7,139,8
-    GROUPBOX        "Severity",IDC_STATIC_SEVERITY,7,33,346,24,0,WS_EX_TRANSPARENT
-    LTEXT           "In a &word:",IDC_STATIC,7,65,49,8
-    LTEXT           "&Enter the text (in English or German, please) that you wish to submit for the bug report or comment.",IDC_STATIC,7,84,346,12
-    LTEXT           "Application:",IDC_STATIC,7,18,38,8
-    LTEXT           "<application>",IDC_APPLICATION,51,18,123,8
-    LTEXT           "Platform:",IDC_STATIC_PLATFORM,179,18,30,8
-    LTEXT           "<platform>",IDC_PLATFORM,214,18,139,8
-    LTEXT           "For a bug report, it's best if you describe the symptom, including the exact wording of the error message, and, if possible, the steps to reproduce the behavior.",IDC_HINT,7,99,346,19
-    LTEXT           "When you press OK, you will be able to review the message in your e-mail program.",IDC_STATIC_OKHINT,7,201,346,8
-END
-
 IDD_PAGE_REPORT DIALOGEX 0, 0, 380, 202
 STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | WS_SYSMENU
 CAPTION "Report"
@@ -538,14 +509,6 @@ BEGIN
         RIGHTMARGIN, 373
         TOPMARGIN, 7
         BOTTOMMARGIN, 195
-    END
-
-    IDD_REPORTBUG, DIALOG
-    BEGIN
-        LEFTMARGIN, 7
-        RIGHTMARGIN, 353
-        TOPMARGIN, 7
-        BOTTOMMARGIN, 226
     END
 
     IDD_PAGE_REPORT, DIALOG

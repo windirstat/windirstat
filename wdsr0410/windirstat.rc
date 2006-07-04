@@ -14,9 +14,9 @@
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
-// Italian (Standard) resources
+// Italian (Italy) resources
 
-#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ITA)
 #ifdef _WIN32
 LANGUAGE LANG_ITALIAN, SUBLANG_ITALIAN
 #pragma code_page(1252)
@@ -49,7 +49,7 @@ BEGIN
     "\0"
 END
 
-3 TEXTINCLUDE
+3 TEXTINCLUDE 
 BEGIN
     "#define _AFX_NO_OLE_RESOURCES\r\n"
     "#define _AFX_NO_TRACKER_RESOURCES\r\n"
@@ -116,66 +116,63 @@ BEGIN
     BEGIN
         MENUITEM "&Apri...\tCtrl+O",            ID_FILE_OPEN
         MENUITEM SEPARATOR
-        MENUITEM "Aggiorna &tutto",                ID_REFRESHALL
-        MENUITEM "Aggiorna &selezionato\tF5",       ID_REFRESHSELECTED
+        MENUITEM "Aggiorna &tutto",             ID_REFRESHALL
+        MENUITEM "Aggiorna &selezionato\tF5",   ID_REFRESHSELECTED
         MENUITEM SEPARATOR
         MENUITEM "&Esci\tAlt+F4",               ID_APP_EXIT
     END
     POPUP "&Modifica"
     BEGIN
-        MENUITEM "&Copia percorso\tCtrl+C",          ID_EDIT_COPY
+        MENUITEM "&Copia percorso\tCtrl+C",     ID_EDIT_COPY
     END
     POPUP "&Ripulisci"
     BEGIN
         MENUITEM "&Apri\tInvio",                ID_CLEANUP_OPEN
         MENUITEM SEPARATOR
-        MENUITEM "&Explorer qui\tCtrl+E",      ID_CLEANUP_OPENINEXPLORER
+        MENUITEM "&Explorer qui\tCtrl+E",       ID_CLEANUP_OPENINEXPLORER
         MENUITEM "Prompt &comandi qui\tCtrl+P", ID_CLEANUP_OPENINCONSOLE
-        MENUITEM "&Cancella (Al Cestino di riciclaggio)\tCanc",
-                                                ID_CLEANUP_DELETETOTRASHBIN
-        MENUITEM "Cancella (impossibile annullare la cancellazione!)\tShift+Canc",
-                                                ID_CLEANUP_DELETE
+        MENUITEM "&Cancella (Al Cestino di riciclaggio)\tCanc", ID_CLEANUP_DELETETOTRASHBIN
+        MENUITEM "Cancella (impossibile annullare la cancellazione!)\tShift+Canc", ID_CLEANUP_DELETE
         MENUITEM SEPARATOR
-        MENUITEM "&Proprietà",                 ID_CLEANUP_PROPERTIES
+        MENUITEM "&Proprietà",                  ID_CLEANUP_PROPERTIES
         MENUITEM SEPARATOR
-        MENUITEM "Svuota &cestino di riciclaggio",          ID_CLEANUP_EMPTYRECYCLEBIN
+        MENUITEM "Svuota &cestino di riciclaggio", ID_CLEANUP_EMPTYRECYCLEBIN
         MENUITEM SEPARATOR
-        MENUITEM "Cleanup definito dall'utente #0",     ID_DUMMY_USERDEFINEDCLEANUP
-        , GRAYED
+        MENUITEM "Cleanup definito dall'utente #0", ID_DUMMY_USERDEFINEDCLEANUP, GRAYED
     END
     POPUP "&Treemap"
     BEGIN
-        MENUITEM "&Mostra Treemap\tF9",           ID_VIEW_SHOWTREEMAP
+        MENUITEM "&Mostra Treemap\tF9",         ID_VIEW_SHOWTREEMAP
         MENUITEM SEPARATOR
-        MENUITEM "&Ingrandisci\t+",                 ID_TREEMAP_ZOOMIN
-        MENUITEM "&Riduci\t-",                ID_TREEMAP_ZOOMOUT
-        MENUITEM "&Riseleziona secondario\t*",          33011
-        MENUITEM "&Seleziona primario\t/",           ID_TREEMAP_SELECTPARENT
+        MENUITEM "&Ingrandisci\t+",             ID_TREEMAP_ZOOMIN
+        MENUITEM "&Riduci\t-",                  ID_TREEMAP_ZOOMOUT
+        MENUITEM "&Riseleziona secondario\t*",  33011
+        MENUITEM "&Seleziona primario\t/",      ID_TREEMAP_SELECTPARENT
         MENUITEM SEPARATOR
-        MENUITEM "&Guida su Treemap",        ID_TREEMAP_HELPABOUTTREEMAPS
+        MENUITEM "&Guida su Treemap",           ID_TREEMAP_HELPABOUTTREEMAPS
     END
     POPUP "&Report"
     BEGIN
-        MENUITEM "&Invia posta al proprietario...",      ID_SENDMAILTOOWNER
+        MENUITEM "&Invia posta al proprietario...", ID_SENDMAILTOOWNER
     END
     POPUP "&Opzioni"
     BEGIN
-        MENUITEM "Mostra &spazio libero\tF6",        ID_VIEW_SHOWFREESPACE
-        MENUITEM "Mostra &sconosciuto\tF7",           ID_VIEW_SHOWUNKNOWN
+        MENUITEM "Mostra &spazio libero\tF6",   ID_VIEW_SHOWFREESPACE
+        MENUITEM "Mostra &sconosciuto\tF7",     ID_VIEW_SHOWUNKNOWN
         MENUITEM SEPARATOR
-        MENUITEM "Mostra &tipi file\tF8",        ID_VIEW_SHOWFILETYPES
-        MENUITEM "Mostra Tree&map\tF9",           ID_VIEW_SHOWTREEMAP
-        MENUITEM "Mostra &barra degli strumenti",               ID_VIEW_TOOLBAR
-        MENUITEM "Mostra barra di s&tato",             ID_VIEW_STATUS_BAR
+        MENUITEM "Mostra &tipi file\tF8",       ID_VIEW_SHOWFILETYPES
+        MENUITEM "Mostra Tree&map\tF9",         ID_VIEW_SHOWTREEMAP
+        MENUITEM "Mostra &barra degli strumenti", ID_VIEW_TOOLBAR
+        MENUITEM "Mostra barra di s&tato",      ID_VIEW_STATUS_BAR
         MENUITEM SEPARATOR
         MENUITEM "&Configura WinDirStat...",    ID_CONFIGURE
     END
     POPUP "&Guida"
     BEGIN
-        MENUITEM "&Guida\tF1",                   ID_HELP_MANUAL
-        MENUITEM "&Rapporto sui bug/feedback...",     ID_HELP_REPORTBUG
+        MENUITEM "&Guida\tF1",                  ID_HELP_MANUAL
+        MENUITEM "&Rapporto sui bug/feedback...", ID_HELP_REPORTBUG
         MENUITEM SEPARATOR
-        MENUITEM "&Informazioni su WinDirStat...",        ID_APP_ABOUT
+        MENUITEM "&Informazioni su WinDirStat...", ID_APP_ABOUT
     END
 END
 
@@ -187,15 +184,15 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "&Apri\tInvio",                ID_CLEANUP_OPEN
         MENUITEM SEPARATOR
-        MENUITEM "&Copia percorso\tCtrl+C",          57634
-        MENUITEM "&Explorer qui\tCtrl+E",      32774
+        MENUITEM "&Copia percorso\tCtrl+C",     57634
+        MENUITEM "&Explorer qui\tCtrl+E",       32774
         MENUITEM "Prompt &comandi qui\tCtrl+P", 32808
-        MENUITEM "&Aggiorna selezionato\tF5",       32817
+        MENUITEM "&Aggiorna selezionato\tF5",   32817
         MENUITEM SEPARATOR
         MENUITEM "&Cancella (al Cestino di riciclaggio)\tDel", 32809
         MENUITEM "Cancella (impossibile annullare la cancellazione!)\tShift+Canc", 32810
         MENUITEM SEPARATOR
-        MENUITEM "&Proprietà",                 ID_CLEANUP_PROPERTIES
+        MENUITEM "&Proprietà",                  ID_CLEANUP_PROPERTIES
         MENUITEM SEPARATOR
     END
 END
@@ -204,16 +201,16 @@ IDR_POPUPGRAPH MENU
 BEGIN
     POPUP "POPUP_GRAPH"
     BEGIN
-        MENUITEM "&Ingrandisci\t+",                 32783
-        MENUITEM "&Riduci\t-",                32784
-        MENUITEM "&Riseleziona secondario\t*",          ID_TREEMAP_RESELECTCHILD
-        MENUITEM "&Seleziona primario\t/",           ID_TREEMAP_SELECTPARENT
+        MENUITEM "&Ingrandisci\t+",             32783
+        MENUITEM "&Riduci\t-",                  32784
+        MENUITEM "&Riseleziona secondario\t*",  ID_TREEMAP_RESELECTCHILD
+        MENUITEM "&Seleziona primario\t/",      ID_TREEMAP_SELECTPARENT
         MENUITEM SEPARATOR
-        MENUITEM "&Copia percorso\tCtrl+C",          57634
-        MENUITEM "&Explorer qui\tCtrl+E",      32774
+        MENUITEM "&Copia percorso\tCtrl+C",     57634
+        MENUITEM "&Explorer qui\tCtrl+E",       32774
         MENUITEM "Prompt c&omandi qui\tCtrl+P", 32808
         MENUITEM SEPARATOR
-        MENUITEM "A&nnulla\tEsc",                ID_POPUP_CANCEL
+        MENUITEM "A&nnulla\tEsc",               ID_POPUP_CANCEL
     END
 END
 
@@ -263,33 +260,25 @@ END
 //
 
 IDD_ABOUTBOX DIALOGEX 0, 0, 273, 199
-STYLE DS_SETFONT | WS_POPUP | WS_CLIPCHILDREN | WS_CAPTION | WS_SYSMENU |
-    WS_THICKFRAME
+STYLE DS_SETFONT | WS_POPUP | WS_CLIPCHILDREN | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
 CAPTION "Informazioni su WinDirStat"
 FONT 9, "Microsoft Sans Serif", 400, 0, 0x0
 BEGIN
-    CONTROL         "",IDC_TAB,"SysTabControl32",WS_TABSTOP,7,22,259,155,
-                    WS_EX_ACCEPTFILES
+    CONTROL         "",IDC_TAB,"SysTabControl32",WS_TABSTOP,7,22,259,155,WS_EX_ACCEPTFILES
     DEFPUSHBUTTON   "OK",IDOK,111,180,50,12,WS_GROUP
     CTEXT           "WinDirStat 0.0.000",IDC_CAPTION,69,7,134,8
     ICON            IDR_MAINFRAME,IDC_STATIC,7,3,20,20
 END
 
 IDD_SELECTDRIVES DIALOGEX 0, 0, 276, 182
-STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU |
-    WS_THICKFRAME
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
 CAPTION "WinDirStat - Seleziona unità"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    CONTROL         "&Tutte le unità locali",IDC_ALLLOCALDRIVES,"Button",
-                    BS_AUTORADIOBUTTON | WS_GROUP,7,7,99,10
-    CONTROL         "&Singole unità",IDC_SOMEDRIVES,"Button",
-                    BS_AUTORADIOBUTTON,7,31,91,10
-    CONTROL         "",IDC_DRIVES,"SysListView32",LVS_REPORT | 
-                    LVS_OWNERDRAWFIXED | LVS_ALIGNLEFT | WS_BORDER | 
-                    WS_TABSTOP,7,43,262,100
-    CONTROL         "Una &cartella",IDC_AFOLDER,"Button",BS_AUTORADIOBUTTON,7,
-                    150,100,10
+    CONTROL         "&Tutte le unità locali",IDC_ALLLOCALDRIVES,"Button",BS_AUTORADIOBUTTON | WS_GROUP,7,7,99,10
+    CONTROL         "&Singole unità",IDC_SOMEDRIVES,"Button",BS_AUTORADIOBUTTON,7,31,91,10
+    CONTROL         "",IDC_DRIVES,"SysListView32",LVS_REPORT | LVS_OWNERDRAWFIXED | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,7,43,262,100
+    CONTROL         "Una &cartella",IDC_AFOLDER,"Button",BS_AUTORADIOBUTTON,7,150,100,10
     EDITTEXT        IDC_FOLDERNAME,6,161,209,14,ES_AUTOHSCROLL
     PUSHBUTTON      "...",IDC_BROWSEFOLDER,219,161,50,14
     DEFPUSHBUTTON   "OK",IDOK,219,7,50,14
@@ -297,8 +286,7 @@ BEGIN
 END
 
 IDD_DELETE_WARNING DIALOGEX 0, 0, 276, 150
-STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION |
-    WS_SYSMENU
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Avvertenza"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
@@ -310,58 +298,42 @@ BEGIN
     LTEXT           "Stai per eliminare",IDC_STATIC,7,23,82,8
     CTEXT           "<filename>",IDC_FILENAME,7,38,262,8,SS_PATHELLIPSIS
     LTEXT           "dal computer.",IDC_STATIC,7,53,67,8
-    LTEXT           "La cancellazione di file o directory di sistema può danneggiare gravemente il sistema.",
-                    IDC_STATIC,7,76,262,19
+    LTEXT           "La cancellazione di file o directory di sistema può danneggiare gravemente il sistema.",IDC_STATIC,7,76,262,19
     LTEXT           "Continuare?",IDC_STATIC,7,99,104,8
 END
 
 IDD_MODALAPISHUTTLE DIALOGEX 0, 0, 186, 90
-STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION |
-    WS_SYSMENU
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "<invisible dialog>"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
 END
 
 IDD_PAGE_CLEANUPS DIALOGEX 0, 0, 380, 202
-STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | 
-    WS_SYSMENU
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | WS_SYSMENU
 CAPTION "Cleanup"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    LISTBOX         IDC_LIST,7,7,113,169,LBS_HASSTRINGS | 
-                    LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "&Abilitato",IDC_ENABLED,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,129,7,53,10
+    LISTBOX         IDC_LIST,7,7,113,169,LBS_HASSTRINGS | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "&Abilitato",IDC_ENABLED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,129,7,53,10
     EDITTEXT        IDC_TITLE,212,7,161,14,ES_AUTOHSCROLL
     EDITTEXT        IDC_COMMANDLINE,129,35,244,14,ES_AUTOHSCROLL
     LTEXT           "%p Percorso completo",IDC_STATIC,128,54,93,8
-    LTEXT           "%n Nome file/directory senza percorso",IDC_STATIC,225,54,
-                    138,8
+    LTEXT           "%n Nome file/directory senza percorso",IDC_STATIC,225,54,138,8
     LTEXT           "%sp Percorso completo sottodirectory",IDC_HINTSP,128,63,94,8
     LTEXT           "%sn Nome sottodirectory senza percorso",IDC_HINTSN,225,63,138,8
-    CONTROL         "&Unità",IDC_WORKSFORDRIVES,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,138,92,49,10
-    CONTROL         "D&irectory",IDC_WORKSFORDIRECTORIES,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,208,92,69,10
-    CONTROL         "Percorsi &UNC",IDC_WORKSFORUNCPATHS,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,304,92,61,10
-    CONTROL         "&File",IDC_WORKSFORFILES,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,138,107,57,10
-    CONTROL         "<File> &Pseudo-voci",IDC_WORKSFORFILESFOLDER,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,207,107,92,10
+    CONTROL         "&Unità",IDC_WORKSFORDRIVES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,138,92,49,10
+    CONTROL         "D&irectory",IDC_WORKSFORDIRECTORIES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,208,92,69,10
+    CONTROL         "Percorsi &UNC",IDC_WORKSFORUNCPATHS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,304,92,61,10
+    CONTROL         "&File",IDC_WORKSFORFILES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,138,107,57,10
+    CONTROL         "<File> &Pseudo-voci",IDC_WORKSFORFILESFOLDER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,207,107,92,10
     PUSHBUTTON      "&Guida",IDC_HELPBUTTON,323,131,50,14
-    CONTROL         "&Ricorsività nelle sottodirectory",
-                    IDC_RECURSEINTOSUBDIRECTORIES,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,128,132,160,10
-    CONTROL         "&Chiedi conferma",IDC_ASKFORCONFIRMATION,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,128,146,160,10
-    CONTROL         "&Mostra finestra console",IDC_SHOWCONSOLEWINDOW,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,128,160,100,10
-    CONTROL         "&Attendere completamento",IDC_WAITFORCOMPLETION,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,250,160,100,10
-    COMBOBOX        IDC_REFRESHPOLICY,128,183,245,93,CBS_DROPDOWNLIST |
-                    WS_VSCROLL | WS_TABSTOP
+    CONTROL         "&Ricorsività nelle sottodirectory",IDC_RECURSEINTOSUBDIRECTORIES,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,128,132,160,10
+    CONTROL         "&Chiedi conferma",IDC_ASKFORCONFIRMATION,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,128,146,160,10
+    CONTROL         "&Mostra finestra console",IDC_SHOWCONSOLEWINDOW,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,128,160,100,10
+    CONTROL         "&Attendere completamento",IDC_WAITFORCOMPLETION,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,250,160,100,10
+    COMBOBOX        IDC_REFRESHPOLICY,128,183,245,93,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     PUSHBUTTON      "&Su",IDC_UP,21,181,37,14
     PUSHBUTTON      "&Giù",IDC_DOWN,66,181,37,14
     LTEXT           "Aggiorna &politica",IDC_STATIC,128,174,108,8
@@ -371,69 +343,47 @@ BEGIN
 END
 
 IDD_PAGE_TREELIST DIALOGEX 0, 0, 380, 199
-STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | 
-    WS_SYSMENU
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | WS_SYSMENU
 CAPTION "Elenco directory"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    CONTROL         "Animazione &Pacman",IDC_PACMANANIMATION,"Button",
-                    BS_AUTOCHECKBOX | BS_MULTILINE | WS_TABSTOP,7,7,102,19
+    CONTROL         "Animazione &Pacman",IDC_PACMANANIMATION,"Button",BS_AUTOCHECKBOX | BS_MULTILINE | WS_TABSTOP,7,7,102,19
     CONTROL         "Mostra il &tempo trascorso durante la scansione",IDC_SHOWTIMESPENT,
-                    "Button",BS_AUTOCHECKBOX | BS_MULTILINE | WS_TABSTOP,7,
-                    30,95,19
+                    "Button",BS_AUTOCHECKBOX | BS_MULTILINE | WS_TABSTOP,7,30,95,19
     GROUPBOX        "&Colori percentuale sottoalbero",IDC_STATIC,129,7,244,185
-    PUSHBUTTON      "Livello albero &1",IDC_COLORBUTTON0,151,19,175,14,0,
-                    WS_EX_RIGHT
-    PUSHBUTTON      "Livello albero &2",IDC_COLORBUTTON1,167,40,159,14,0,
-                    WS_EX_RIGHT
-    PUSHBUTTON      "Livello albero &3",IDC_COLORBUTTON2,181,61,145,14,0,
-                    WS_EX_RIGHT
-    PUSHBUTTON      "Livello albero &4",IDC_COLORBUTTON3,195,82,131,14,0,
-                    WS_EX_RIGHT
-    PUSHBUTTON      "Livello albero &5",IDC_COLORBUTTON4,207,103,119,14,0,
-                    WS_EX_RIGHT
-    PUSHBUTTON      "Livello albero &6",IDC_COLORBUTTON5,218,124,108,14,0,
-                    WS_EX_RIGHT
-    PUSHBUTTON      "Livello albero &7",IDC_COLORBUTTON6,227,145,99,14,0,
-                    WS_EX_RIGHT
-    PUSHBUTTON      "Livello albero &8",IDC_COLORBUTTON7,236,166,90,14,0,
-                    WS_EX_RIGHT
-    CONTROL         "",IDC_SLIDER,"msctls_trackbar32",TBS_VERT | TBS_BOTH | 
-                    TBS_NOTICKS | WS_TABSTOP,339,29,18,160
+    PUSHBUTTON      "Livello albero &1",IDC_COLORBUTTON0,151,19,175,14,0,WS_EX_RIGHT
+    PUSHBUTTON      "Livello albero &2",IDC_COLORBUTTON1,167,40,159,14,0,WS_EX_RIGHT
+    PUSHBUTTON      "Livello albero &3",IDC_COLORBUTTON2,181,61,145,14,0,WS_EX_RIGHT
+    PUSHBUTTON      "Livello albero &4",IDC_COLORBUTTON3,195,82,131,14,0,WS_EX_RIGHT
+    PUSHBUTTON      "Livello albero &5",IDC_COLORBUTTON4,207,103,119,14,0,WS_EX_RIGHT
+    PUSHBUTTON      "Livello albero &6",IDC_COLORBUTTON5,218,124,108,14,0,WS_EX_RIGHT
+    PUSHBUTTON      "Livello albero &7",IDC_COLORBUTTON6,227,145,99,14,0,WS_EX_RIGHT
+    PUSHBUTTON      "Livello albero &8",IDC_COLORBUTTON7,236,166,90,14,0,WS_EX_RIGHT
+    CONTROL         "",IDC_SLIDER,"msctls_trackbar32",TBS_VERT | TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,339,29,18,160
 END
 
 IDD_PAGE_TREEMAP DIALOGEX 0, 0, 380, 202
-STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | 
-    WS_SYSMENU
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | WS_SYSMENU
 CAPTION "Treemap"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     CTEXT           "&Lumino-\r\nsità",IDC_STATIC,237,122,32,18
-    CONTROL         "",IDC_BRIGHTNESS,"msctls_trackbar32",TBS_VERT | 
-                    TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,245,17,16,104
+    CONTROL         "",IDC_BRIGHTNESS,"msctls_trackbar32",TBS_VERT | TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,245,17,16,104
     CTEXT           "&Cushion\r\nOmbreggiatura",IDC_STATIC,271,122,32,18
-    CONTROL         "",IDC_CUSHIONSHADING,"msctls_trackbar32",TBS_VERT | 
-                    TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,279,17,16,104
+    CONTROL         "",IDC_CUSHIONSHADING,"msctls_trackbar32",TBS_VERT | TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,279,17,16,104
     CTEXT           "&Altezza",IDC_STATIC,305,122,32,18
-    CONTROL         "",IDC_HEIGHT,"msctls_trackbar32",TBS_VERT | TBS_BOTH | 
-                    TBS_NOTICKS | WS_TABSTOP,313,17,16,104
+    CONTROL         "",IDC_HEIGHT,"msctls_trackbar32",TBS_VERT | TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,313,17,16,104
     CTEXT           "Fattore di\r\n&scala",IDC_STATIC,339,122,32,18
-    CONTROL         "",IDC_SCALEFACTOR,"msctls_trackbar32",TBS_VERT | 
-                    TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,347,17,16,104
+    CONTROL         "",IDC_SCALEFACTOR,"msctls_trackbar32",TBS_VERT | TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,347,17,16,104
     RTEXT           "Incidenza &luce",IDC_STATIC,246,147,59,8
     LTEXT           "Static",IDC_LIGHTSOURCE,313,146,58,48,WS_TABSTOP
     PUSHBUTTON      "",IDC_RESET,242,167,55,22,BS_MULTILINE
     GROUPBOX        "St&ile",IDC_STATIC,7,146,63,49
-    CONTROL         "&KDirStat",IDC_KDIRSTAT,"Button",BS_AUTORADIOBUTTON | 
-                    WS_GROUP | WS_TABSTOP,12,159,42,10
-    CONTROL         "Se&quoiaView",IDC_SEQUOIAVIEW,"Button",
-                    BS_AUTORADIOBUTTON,12,176,53,10
-    CONTROL         "Mostra &griglia",IDC_TREEMAPGRID,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,76,150,54,10
-    PUSHBUTTON      "&Colore griglia",IDC_TREEMAPGRIDCOLOR,134,150,85,14,0,
-                    WS_EX_RIGHT
-    PUSHBUTTON      "E&videnziazione rettangolo",IDC_TREEMAPHIGHLIGHTCOLOR,76,
-                    175,143,14,0,WS_EX_RIGHT
+    CONTROL         "&KDirStat",IDC_KDIRSTAT,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,12,159,42,10
+    CONTROL         "Se&quoiaView",IDC_SEQUOIAVIEW,"Button",BS_AUTORADIOBUTTON,12,176,53,10
+    CONTROL         "Mostra &griglia",IDC_TREEMAPGRID,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,76,150,54,10
+    PUSHBUTTON      "&Colore griglia",IDC_TREEMAPGRIDCOLOR,134,150,85,14,0,WS_EX_RIGHT
+    PUSHBUTTON      "E&videnziazione rettangolo",IDC_TREEMAPHIGHLIGHTCOLOR,76,175,143,14,0,WS_EX_RIGHT
     CTEXT           "Static",IDC_STATICSCALEFACTOR,339,7,32,8
     CTEXT           "Static",IDC_STATICHEIGHT,305,7,32,8
     CTEXT           "Static",IDC_STATICCUSHIONSHADING,271,7,32,8
@@ -442,89 +392,38 @@ BEGIN
 END
 
 IDD_PAGE_GENERAL DIALOGEX 0, 0, 380, 202
-STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | 
-    WS_SYSMENU
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | WS_SYSMENU
 CAPTION "Generale"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     CONTROL         "&Attraversa confini del file system",IDC_FOLLOWMOUNTPOINTS,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,13,229,10
-    CONTROL         "Segui punti di &connessione (tranne punti di montaggio volume)",
-                    IDC_FOLLOWJUNCTIONS,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,32,27,229,10
+    CONTROL         "Segui punti di &connessione (tranne punti di montaggio volume)",IDC_FOLLOWJUNCTIONS,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,27,229,10
     CONTROL         "&Mostra dimensioni in formato GB/MB/kB/Byte",IDC_HUMANFORMAT,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,41,229,10
     GROUPBOX        "Stile &elenco",IDC_STATIC,30,61,90,65
-    CONTROL         "Selezione riga &completa",IDC_FULLROWSELECTION,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,38,76,75,10
-    CONTROL         "Mostra &griglia",IDC_SHOWGRID,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,38,93,68,10
-    CONTROL         "Mostra s&trisce",IDC_SHOWSTRIPES,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,38,110,68,10
+    CONTROL         "Selezione riga &completa",IDC_FULLROWSELECTION,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,38,76,75,10
+    CONTROL         "Mostra &griglia",IDC_SHOWGRID,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,38,93,68,10
+    CONTROL         "Mostra s&trisce",IDC_SHOWSTRIPES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,38,110,68,10
     LTEXT           "&Lingua",IDC_STATIC,32,139,166,8
-    COMBOBOX        IDC_COMBO,32,152,156,140,CBS_DROPDOWNLIST | CBS_SORT | 
-                    WS_VSCROLL | WS_TABSTOP
-    CONTROL         "&Usa questa lingua per la formattazione di data/ora e numero",
-                    IDC_USEWDSLOCALE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
-                    32,172,298,10
-END
-
-IDD_REPORTBUG DIALOGEX 0, 0, 360, 233
-STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU | 
-    WS_THICKFRAME
-CAPTION "WinDirStat - Presenta rapporto sui bug/feedback"
-FONT 8, "MS Shell Dlg", 400, 0, 0x1
-BEGIN
-    CONTROL         "&Critico",IDC_CRITICAL,"Button",BS_AUTORADIOBUTTON | 
-                    WS_GROUP,14,43,43,10
-    CONTROL         "&Grave",IDC_GRAVE,"Button",BS_AUTORADIOBUTTON,73,43,
-                    43,10
-    CONTROL         "&Normale",IDC_NORMAL,"Button",BS_AUTORADIOBUTTON,132,43,
-                    43,10
-    CONTROL         "&Richiesta",IDC_WISH,"Button",BS_AUTORADIOBUTTON,191,43,43,
-                    10
-    CONTROL         "&Feedback generale",IDC_FEEDBACK,"Button",
-                    BS_AUTORADIOBUTTON,250,43,79,10
-    EDITTEXT        IDC_INAWORD,60,61,293,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_TEXT,7,118,346,80,ES_MULTILINE | ES_AUTOHSCROLL | 
-                    ES_WANTRETURN | WS_VSCROLL | WS_HSCROLL
-    DEFPUSHBUTTON   "OK",IDOK,154,212,50,14
-    PUSHBUTTON      "Annulla",IDCANCEL,303,212,50,14
-    LTEXT           "Da:",IDC_STATIC,7,7,20,8
-    LTEXT           "A:",IDC_STATIC_TO,179,7,12,8
-    LTEXT           "<da>",IDC_FROM,51,7,122,8
-    LTEXT           "<a>",IDC_TO,214,7,139,8
-    GROUPBOX        "Gravità",IDC_STATIC_SEVERITY,7,33,346,24,0,
-                    WS_EX_TRANSPARENT
-    LTEXT           "In una &parola:",IDC_STATIC,7,65,49,8
-    LTEXT           "&Inserire il testo (in inglese o tedesco) che si desidera presentare al rapporto dei bug o al commento.",
-                    IDC_STATIC,7,84,346,12
-    LTEXT           "Applicazione:",IDC_STATIC,7,18,38,8
-    LTEXT           "<applicazione>",IDC_APPLICATION,51,18,123,8
-    LTEXT           "Piattaforma:",IDC_STATIC_PLATFORM,179,18,30,8
-    LTEXT           "<piattaforma>",IDC_PLATFORM,214,18,139,8
-    LTEXT           "Per un rapporto sui bug, è meglio descrivere il sintomo, incluso il messaggio di errore esatto e, se possibile, le fasi per riprodurre il comportamento.",
-                    IDC_HINT,7,99,346,19
-    LTEXT           "Premendo OK, si avrà la possibilità di esaminare il messaggio nel proprio programma di posta elettronica.",
-                    IDC_STATIC_OKHINT,7,201,346,8
+    COMBOBOX        IDC_COMBO,32,152,156,140,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "&Usa questa lingua per la formattazione di data/ora e numero",IDC_USEWDSLOCALE,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,172,298,10
 END
 
 IDD_PAGE_REPORT DIALOGEX 0, 0, 380, 202
-STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | 
-    WS_SYSMENU
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | WS_SYSMENU
 CAPTION "Rapporto"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    LTEXT           "Qui è possibile personalizzare i rapporti generati dalla funzionalità 'Invia posta al proprietario'.",
-                    IDC_STATIC,7,9,268,8
+    LTEXT           "Qui è possibile personalizzare i rapporti generati dalla funzionalità 'Invia posta al proprietario'.",IDC_STATIC,7,9,268,8
     LTEXT           "&Oggetto",IDC_STATIC,7,31,46,8
     EDITTEXT        IDC_SUBJECT,59,31,314,14,ES_AUTOHSCROLL
     LTEXT           "&Prefisso",IDC_STATIC,7,51,46,8
-    EDITTEXT        IDC_PREFIX,59,51,314,54,ES_MULTILINE | ES_AUTOVSCROLL | 
-                    ES_AUTOHSCROLL | ES_WANTRETURN
+    EDITTEXT        IDC_PREFIX,59,51,314,54,ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_WANTRETURN
     LTEXT           "S&uffisso",IDC_STATIC,7,111,46,8
-    EDITTEXT        IDC_SUFFIX,59,111,314,54,ES_MULTILINE | ES_AUTOVSCROLL | 
-                    ES_AUTOHSCROLL | ES_WANTRETURN
+    EDITTEXT        IDC_SUFFIX,59,111,314,54,ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_WANTRETURN
     PUSHBUTTON      "",IDC_RESET,59,174,89,14
 END
 
@@ -601,14 +500,6 @@ BEGIN
         BOTTOMMARGIN, 195
     END
 
-    IDD_REPORTBUG, DIALOG
-    BEGIN
-        LEFTMARGIN, 7
-        RIGHTMARGIN, 353
-        TOPMARGIN, 7
-        BOTTOMMARGIN, 226
-    END
-
     IDD_PAGE_REPORT, DIALOG
     BEGIN
         LEFTMARGIN, 7
@@ -618,6 +509,7 @@ BEGIN
     END
 END
 #endif    // APSTUDIO_INVOKED
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -649,7 +541,7 @@ BEGIN
     ID_INDICATOR_MEMORYUSAGE "Uso della RAM: 123.456.789"
 END
 
-STRINGTABLE
+STRINGTABLE 
 BEGIN
     ID_FILE_OPEN            "Apre una raccolta di unità.\nApri"
 END
@@ -720,7 +612,8 @@ STRINGTABLE
 BEGIN
     ID_REFRESHALL           "Riscansiona l'intero albero delle directory.\nAggiorna tutto"
     ID_REFRESHSELECTED      "Riscansiona il sottoalbero selezionato.\nAggiorna selezionato"
-    ID_CLEANUP_EMPTYRECYCLEBIN "Svuota il cestino di ricicalggio.\nSvuota cestino di riciclaggio"
+    ID_CLEANUP_EMPTYRECYCLEBIN 
+                            "Svuota il cestino di ricicalggio.\nSvuota cestino di riciclaggio"
     ID_VIEW_SHOWFREESPACE   "Mostra/nasconde la voce <Spazio libero>.\nMostra Spazio libero"
     ID_VIEW_SHOWUNKNOWN     "Mostra/nasconde la voce <Sconosciuto>.\nMostra Sconosciuto"
 END
@@ -743,7 +636,8 @@ END
 
 STRINGTABLE 
 BEGIN
-    ID_TREEMAP_RESELECTCHILD "Riseleziona il secondario.\nRiseleziona secondario"
+    ID_TREEMAP_RESELECTCHILD 
+                            "Riseleziona il secondario.\nRiseleziona secondario"
     ID_CLEANUP_OPEN         "Apre la voce selezionata.\r\nApri voce"
     ID_CLEANUP_PROPERTIES   "Mostra le proprietà della voce selezionata.\r\nMostra Proprietà"
 END
@@ -772,11 +666,11 @@ BEGIN
     IDS_ABOUT_AUTHORSTEXTs  "=== Programmatori ===\r\n\r\nBernhard Seifert\r\nCreatore del progetto e coordinatore\r\n(mailto:%1!s!)\r\n\r\nOliver Schneider\r\n(mailto:assarbad#users.sourceforge.net)\r\n\r\n\r\n=== Traduttori ===\r\n\r\n"
 END
 
-STRINGTABLE
+STRINGTABLE 
 BEGIN
     IDS_THEDIRECTORYsDOESNOTEXIST "Directory '%1!s!' inesistente."
     IDS_THEFILEsDOESNOTEXIST "File '%1!s!' inesistente."
-    IDS_COULDNOTCREATEPROCESSssss
+    IDS_COULDNOTCREATEPROCESSssss 
                             "Impossibile creare il processo.\r\n\r\nApplicazione: '%1!s!',\r\nLinea di comando: '%2!s!',\r\nDirectory di lavoro: '%3!s!'\r\nMessaggio di errore:\r\n%4!s!\r\n(L'aggiornamento non avrà luogo.)"
     IDS_TREECOL_NAME        "Nome"
     IDS_TREECOL_SUBTREEPERCENTAGE "Percentuale sottoalbero"
@@ -850,7 +744,7 @@ BEGIN
     IDS_BACKTO_USERSETTINGS "Torna alle\r\n&impostazioni utente"
 END
 
-#endif    // Italian (Standard) resources
+#endif    // Italian (Italy) resources
 /////////////////////////////////////////////////////////////////////////////
 
 

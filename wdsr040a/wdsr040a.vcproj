@@ -4,6 +4,7 @@
 	Version="8,00"
 	Name="wdsr040a"
 	ProjectGUID="{23B76347-204C-4DE6-A311-F562CEF5D89C}"
+	RootNamespace="wdsr040a"
 	Keyword="Win32Proj"
 	>
 	<Platforms>
@@ -60,6 +61,7 @@
 				IgnoreImportLibrary="true"
 				OutputFile="../../urelease/wdsr040a.dll"
 				LinkIncremental="1"
+				GenerateManifest="false"
 				IgnoreAllDefaultLibraries="true"
 				GenerateDebugInformation="false"
 				SubSystem="2"
@@ -75,6 +77,7 @@
 			/>
 			<Tool
 				Name="VCManifestTool"
+				EmbedManifest="false"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"

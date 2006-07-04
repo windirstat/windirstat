@@ -27,7 +27,6 @@
 #include "mainframe.h"
 #include "selectdrivesdlg.h"
 #include "aboutdlg.h"
-#include "reportbugdlg.h"
 #include "dirstatdoc.h"
 #include "graphview.h"
 
@@ -75,8 +74,6 @@ BEGIN_MESSAGE_MAP(CDirstatApp, CWinApp)
 	ON_COMMAND(ID_APP_ABOUT, OnAppAbout)
 	ON_COMMAND(ID_FILE_OPEN, OnFileOpen)
 	ON_COMMAND(ID_HELP_MANUAL, OnHelpManual)
-	ON_UPDATE_COMMAND_UI(ID_HELP_REPORTBUG, OnUpdateHelpReportbug)
-	ON_COMMAND(ID_HELP_REPORTBUG, OnHelpReportbug)
 END_MESSAGE_MAP()
 
 
@@ -615,31 +612,12 @@ void CDirstatApp::DoContextHelp(DWORD topic)
 	}
 }
 
-void CDirstatApp::OnUpdateHelpReportbug(CCmdUI *pCmdUI)
-{
-	UNREFERENCED_PARAMETER(pCmdUI);
-	// TODO: Fix!!!
-	AfxMessageBox(TEXT("Not implemented!"));
-/*
-	pCmdUI->Enable(CModalSendMail::IsSendMailAvailable());
-*/
-}
-
-void CDirstatApp::OnHelpReportbug()
-{
-	// TODO: Fix!!!
-	AfxMessageBox(TEXT("Not implemented!"));
-/*
-	CReportBugDlg dlg;
-	if(IDOK == dlg.DoModal())
-	{
-		CModalSendMail msm;
-		msm.SendMail(dlg.m_recipient, dlg.m_subject, dlg.m_body);
-	}
-*/
-}
-
 // $Log$
+// Revision 1.19  2006/07/04 22:07:29  assarbad
+// - Changed project options (no manifest for resource DLLs)
+// - Removed report bug dialog from all resource DLLs
+// - Removed report bug module from sources
+//
 // Revision 1.18  2006/07/04 20:45:23  assarbad
 // - See changelog for the changes of todays previous check-ins as well as this one!
 //

@@ -566,10 +566,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\ReportBugDlg.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\SelectDrivesDlg.cpp"
 				>
 			</File>
@@ -757,10 +753,6 @@
 			</File>
 			<File
 				RelativePath=".\PageTreemap.h"
-				>
-			</File>
-			<File
-				RelativePath=".\ReportBugDlg.h"
 				>
 			</File>
 			<File
