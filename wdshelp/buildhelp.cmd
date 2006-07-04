@@ -2,7 +2,7 @@
 :: #######################################################################
 :: ## Small NT script build all the HTML help files at once or clean them
 :: ##
-:: ## Last modified: $Date$
+:: ## $Header$
 :: #######################################################################
 pushd .\
 setlocal

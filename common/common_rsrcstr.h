@@ -20,7 +20,7 @@
 //
 // Author: bseifert@users.sourceforge.net, bseifert@daccord.net
 //
-// Last modified: $Date$
+// $Header$
 
 // This is a unicode encoded string with the names of the translators.
 // Note that each language appears with its native name, followed by the

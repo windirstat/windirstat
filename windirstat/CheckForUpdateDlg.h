@@ -20,7 +20,7 @@
 //
 // Author: bseifert@users.sourceforge.net, bseifert@daccord.net
 //
-// Last modified: $Date$
+// $Header$
 
 #pragma once
 #include "afxwin.h"

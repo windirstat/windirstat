@@ -20,7 +20,7 @@
 //
 // Author: bseifert@users.sourceforge.net, bseifert@daccord.net
 //
-// Last modified: $Date$
+// $Header$
 
 #pragma once
 
@@ -28,6 +28,9 @@ bool PlatformIsWindows9x();
 
 
 // $Log$
+// Revision 1.5  2006/07/04 22:49:19  assarbad
+// - Replaced CVS keyword "Date" by "Header" in the file headers
+//
 // Revision 1.4  2006/07/04 20:45:16  assarbad
 // - See changelog for the changes of todays previous check-ins as well as this one!
 //

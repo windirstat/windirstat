@@ -20,7 +20,7 @@
 //
 // Author: bseifert@users.sourceforge.net, bseifert@daccord.net
 //
-// Last modified: $Date$
+// $Header$
 
 #include "stdafx.h"
 #include "windirstat.h"

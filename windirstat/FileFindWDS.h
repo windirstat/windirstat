@@ -20,7 +20,7 @@
 //
 // Author: assarbad@users.sourceforge.net
 //
-// Last modified: $Date$
+// $Header$
 
 #pragma once
 #include <afx.h> // Declaration of prototype for CFileFind
@@ -36,6 +36,9 @@ public:
 };
 
 // $Log$
+// Revision 1.5  2006/07/04 22:49:20  assarbad
+// - Replaced CVS keyword "Date" by "Header" in the file headers
+//
 // Revision 1.4  2006/07/04 20:45:22  assarbad
 // - See changelog for the changes of todays previous check-ins as well as this one!
 //

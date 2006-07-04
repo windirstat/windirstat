@@ -20,7 +20,7 @@
 //
 // Author: bseifert@users.sourceforge.net, bseifert@daccord.net
 //
-// Last modified: $Date$
+// $Header$
 
 #ifndef WINVER				// Allow use of features specific to Windows 95 and Windows NT 4 or later.
 #define WINVER 0x0400		// Change this to the appropriate value to target Windows 98 and Windows 2000 or later.
@@ -234,6 +234,9 @@ CString MyGetFullPathName(LPCTSTR relativePath)
 
 
 // $Log$
+// Revision 1.6  2006/07/04 22:49:18  assarbad
+// - Replaced CVS keyword "Date" by "Header" in the file headers
+//
 // Revision 1.5  2006/07/04 20:45:16  assarbad
 // - See changelog for the changes of todays previous check-ins as well as this one!
 //

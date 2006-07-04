@@ -20,7 +20,7 @@
 //
 // Author: bseifert@users.sourceforge.net, bseifert@daccord.net
 //
-// Last modified: $Date$
+// $Header$
 
 #include "stdafx.h"
 #include "windirstat.h"
@@ -311,6 +311,9 @@ void CSortingListControl::OnDestroy()
 }
 
 // $Log$
+// Revision 1.7  2006/07/04 22:49:21  assarbad
+// - Replaced CVS keyword "Date" by "Header" in the file headers
+//
 // Revision 1.6  2006/07/04 20:45:23  assarbad
 // - See changelog for the changes of todays previous check-ins as well as this one!
 //

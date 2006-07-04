@@ -20,7 +20,7 @@
 //
 // Author: bseifert@users.sourceforge.net, bseifert@daccord.net
 //
-// Last modified: $Date$
+// $Header$
 
 #pragma once
 
@@ -223,6 +223,9 @@ extern CDirstatDoc *GetDocument();
 
 
 // $Log$
+// Revision 1.11  2006/07/04 22:49:20  assarbad
+// - Replaced CVS keyword "Date" by "Header" in the file headers
+//
 // Revision 1.10  2006/07/04 20:45:22  assarbad
 // - See changelog for the changes of todays previous check-ins as well as this one!
 //

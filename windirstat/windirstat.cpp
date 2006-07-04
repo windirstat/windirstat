@@ -20,7 +20,7 @@
 //
 // Author: bseifert@users.sourceforge.net, bseifert@daccord.net
 //
-// Last modified: $Date$
+// $Header$
 
 #include "stdafx.h"
 #include "windirstat.h"
@@ -613,6 +613,9 @@ void CDirstatApp::DoContextHelp(DWORD topic)
 }
 
 // $Log$
+// Revision 1.20  2006/07/04 22:49:21  assarbad
+// - Replaced CVS keyword "Date" by "Header" in the file headers
+//
 // Revision 1.19  2006/07/04 22:07:29  assarbad
 // - Changed project options (no manifest for resource DLLs)
 // - Removed report bug dialog from all resource DLLs

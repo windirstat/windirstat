@@ -20,7 +20,7 @@
 //
 // Author: bseifert@users.sourceforge.net, bseifert@daccord.net
 //
-// Last modified: $Date$
+// $Header$
 
 #pragma once
 
@@ -59,6 +59,9 @@ public:
 };
 
 // $Log$
+// Revision 1.5  2006/07/04 22:49:21  assarbad
+// - Replaced CVS keyword "Date" by "Header" in the file headers
+//
 // Revision 1.4  2006/07/04 20:45:23  assarbad
 // - See changelog for the changes of todays previous check-ins as well as this one!
 //

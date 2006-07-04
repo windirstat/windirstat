@@ -22,7 +22,7 @@
 //
 // 08.09.1998 - JR
 //
-// Last modified: $Date$
+// $Header$
 
 #ifndef _COTASKMEM_H
 #define _COTASKMEM_H
@@ -71,6 +71,9 @@ public:
 #endif
 
 // $Log$
+// Revision 1.5  2006/07/04 22:49:18  assarbad
+// - Replaced CVS keyword "Date" by "Header" in the file headers
+//
 // Revision 1.4  2006/07/04 20:45:16  assarbad
 // - See changelog for the changes of todays previous check-ins as well as this one!
 //
