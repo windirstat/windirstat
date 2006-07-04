@@ -2,7 +2,7 @@
 :: #######################################################################
 :: ## Small NT script to delete all intermediate files.
 :: ##
-:: ## Last modified: $Date$
+:: ## $Header$
 :: #######################################################################
 :: Change to the make directory
 pushd .\make
