@@ -62,7 +62,7 @@ echo *.dll (Resource DLLs and shfolder.dll)
 copy /y /v ..\release\*.dll "%install%" > NUL
 copy /y /v ..\urelease\*.dll "%install%" > NUL
 echo *.chm (Help files)
-copy /y /v ..\urelease\*.chm "%install%" > NUL
+copy /y /v ..\help\*.chm "%install%" > NUL
 echo *.exe (ANSI and Unicode version)
 copy /y /v ..\urelease\windirstat.exe "%install%\windirstatU.exe" > NUL
 copy /y /v ..\release\windirstat.exe "%install%\windirstatA.exe" > NUL
