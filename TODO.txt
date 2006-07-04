@@ -1,5 +1,5 @@
 TODO.txt - What still has to been done to WinDirStat
-Last modified: $Date$
+$Header$
 =============================================================
 
 - Check under Terminal Services to fix the redrawing problems
