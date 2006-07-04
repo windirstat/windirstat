@@ -2,8 +2,10 @@ TODO.txt - What still has to been done to WinDirStat
 Last modified: $Date$
 =============================================================
 
+- Check under Terminal Services to fix the redrawing problems
+  => assarbad
+
 - NSIS for setup (providing both Unicode and ANSI version)
-  (This is mostly done already, requires approval of Bernhard!)
   => assarbad
 
 - "Check for updates" in help menu

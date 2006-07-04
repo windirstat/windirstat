@@ -1,7 +1,8 @@
-// typeview.h	- Declaration of CExtensionListControl and CTypeView
+// typeview.h - Declaration of CExtensionListControl and CTypeView
 //
 // WinDirStat - Directory Statistics
-// Copyright (C) 2003-2004 Bernhard Seifert
+// Copyright (C) 2003-2005 Bernhard Seifert
+// Copyright (C) 2004-2006 Oliver Schneider (assarbad.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -77,8 +78,8 @@ public:
 	virtual bool GetAscendingDefault(int column);
 	void Initialize();
 	void SetExtensionData(const CExtensionData *ed);
-	void SetRootSize(LONGLONG totalBytes);
-	LONGLONG GetRootSize();
+	void SetRootSize(ULONGLONG totalBytes);
+	ULONGLONG GetRootSize();
 	void SelectExtension(LPCTSTR ext);
 	CString GetSelectedExtension();
 
@@ -86,7 +87,7 @@ protected:
 	CListItem *GetListItem(int i);
 
 	CTypeView *m_typeView;
-	LONGLONG m_rootSize;
+	ULONGLONG m_rootSize;
 
 	DECLARE_MESSAGE_MAP()
 	afx_msg void OnDestroy();
@@ -148,6 +149,9 @@ inline CDirstatDoc* CTypeView::GetDocument() const
 
 
 // $Log$
+// Revision 1.10  2006/07/04 20:45:23  assarbad
+// - See changelog for the changes of todays previous check-ins as well as this one!
+//
 // Revision 1.9  2004/11/12 22:14:16  bseifert
 // Eliminated CLR_NONE. Minor corrections.
 //

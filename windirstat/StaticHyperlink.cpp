@@ -1,21 +1,40 @@
-// StaticHyperlink.cpp : implementation file
+// StaticHyperlink.cpp - implementation file
 //
+// WinDirStat - Directory Statistics
+// Copyright (C) 2003-2005 Bernhard Seifert
+// Copyright (C) 2004-2006 Oliver Schneider (assarbad.net)
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+//
+// Author: bseifert@users.sourceforge.net, bseifert@daccord.net
+//
+// Last modified: $Date$
 
 #include "stdafx.h"
 #include "windirstat.h"
 #include "StaticHyperlink.h"
-#include ".\statichyperlink.h"
-
 
 // CStaticHyperlink
 
 IMPLEMENT_DYNAMIC(CStaticHyperlink, CStatic)
 CStaticHyperlink::CStaticHyperlink()
-: m_bHovering(false),
-  m_bShowTooltip(false),
-  m_clHovering(RGB(0, 0, 0xFF)),
-  m_clNormal(RGB(0, 0, 0x80)),
-  m_curHovering(0)
+	: m_bHovering(false)
+	, m_bShowTooltip(false)
+	, m_clHovering(RGB(0, 0, 0xFF))
+	, m_clNormal(RGB(0, 0, 0x80))
+	, m_curHovering(0)
 {
 }
 
@@ -23,15 +42,12 @@ CStaticHyperlink::~CStaticHyperlink()
 {
 }
 
-
 BEGIN_MESSAGE_MAP(CStaticHyperlink, CStatic)
 	ON_WM_CTLCOLOR_REFLECT()
 	ON_WM_MOUSEMOVE()
 	ON_WM_SETCURSOR()
 	ON_CONTROL_REFLECT(STN_CLICKED, OnStnClicked)
 END_MESSAGE_MAP()
-
-
 
 // CStaticHyperlink message handlers
 
@@ -49,16 +65,21 @@ void CStaticHyperlink::PreSubclassWindow()
 
 	m_curHovering = GetApp()->LoadCursor(IDC_HANDCURSOR);
 	if(m_curHovering)
+	{
 		SetCursor(m_curHovering);
+	}
 
 	CStatic::PreSubclassWindow();
 
 	if(m_curHovering)
+	{
 		SetCursor(m_curHovering);
+	}
 }
 
 HBRUSH CStaticHyperlink::CtlColor(CDC* pDC, UINT nCtlColor)
 {
+	UNREFERENCED_PARAMETER(nCtlColor);
 	pDC->SetTextColor((m_bHovering) ? m_clHovering : m_clNormal);
 	pDC->SetBkMode(TRANSPARENT);
 	return HBRUSH(GetStockObject(NULL_BRUSH));
@@ -162,5 +183,7 @@ COLORREF CStaticHyperlink::GetHoverColor()
 void CStaticHyperlink::OnStnClicked()
 {
 	if(!m_url.IsEmpty())
-		::ShellExecute(GetSafeHwnd(), _T("open"), LPCTSTR(m_url), NULL, NULL, SW_SHOWNORMAL);
+	{
+		::ShellExecute(GetSafeHwnd(), TEXT("open"), LPCTSTR(m_url), NULL, NULL, SW_SHOWNORMAL);
+	}
 }

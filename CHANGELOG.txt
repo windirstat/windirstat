@@ -2,6 +2,25 @@ changelog.txt - What has been done to WinDirStat (newest top)
 Last modified: $Date$
 =============================================================
 
+2006-07-04 assarbad
+	* Lots of enhancements, especially in code-style:
+	  - added curly brackets whereever possible
+	  - assignment operators now surrounded by blank spaces
+	  - reformatted dozens of statements
+	  - renamed some functions, variables, types
+	* Introduced CDynamicApi for OS-specific functions
+	  Consequently the respective code of the underlying classes
+	  has been adapted as well.
+	* Replaced LONGLONG by ULONGLONG or ULARGE_INTEGER where possible!
+	  Several changes were necessary together with this change to
+	  adapt the code to the unsigned integers.
+	* Removed project "setup" from solution and from CVS HEAD branch
+	* Removed project "linkcounter" from solution and from CVS HEAD branch
+	  The functionality has been replaced by a small NT script.
+	  Since Visual Studio 2005 does not run on non-NT systems, this
+	  is legitimate, I guess ;)
+	* All help projects joined into "wdshelp", driven by an NT script
+
 2005-11-08	assarbad
 	* Tiny fix of a problem if the free size exceeds the total
 	  size of a disk, which can happen with quotas. Now we show

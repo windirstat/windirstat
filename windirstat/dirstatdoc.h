@@ -1,7 +1,8 @@
-// dirstatdoc.h		- Declaration of the CDirstatDoc class
+// dirstatdoc.h - Declaration of the CDirstatDoc class
 //
 // WinDirStat - Directory Statistics
-// Copyright (C) 2003-2004 Bernhard Seifert
+// Copyright (C) 2003-2005 Bernhard Seifert
+// Copyright (C) 2004-2006 Oliver Schneider (assarbad.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -24,6 +25,7 @@
 #pragma once
 
 #include "selectdrivesdlg.h"
+#include "../common/wds_constants.h"
 
 class CItem;
 
@@ -40,8 +42,8 @@ class CItem;
 //
 struct SExtensionRecord
 {
-	LONGLONG files;
-	LONGLONG bytes;
+	ULONGLONG files;
+	ULONGLONG bytes;
 	COLORREF color;
 };
 
@@ -101,7 +103,7 @@ public:
 	bool OptionShowUnknown();
 
 	const CExtensionData *GetExtensionData();
-	LONGLONG GetRootSize();
+	ULONGLONG GetRootSize();
 
 	void ForgetItemTree();
 	bool Work(DWORD ticks); // return: true if done.
@@ -122,7 +124,7 @@ public:
 
 	void UnlinkRoot();
 	bool UserDefinedCleanupWorksForItem(const USERDEFINEDCLEANUP *udc, const CItem *item);
-	LONGLONG GetWorkingItemReadJobs();
+	ULONGLONG GetWorkingItemReadJobs();
 
 	void OpenItem(const CItem *item);
 
@@ -221,6 +223,9 @@ extern CDirstatDoc *GetDocument();
 
 
 // $Log$
+// Revision 1.10  2006/07/04 20:45:22  assarbad
+// - See changelog for the changes of todays previous check-ins as well as this one!
+//
 // Revision 1.9  2004/11/05 16:53:07  assarbad
 // Added Date and History tag where appropriate.
 //

@@ -1,7 +1,8 @@
-// options.h		- Declaration of CRegistryUser, COptions and CPersistence
+// options.h - Declaration of CRegistryUser, COptions and CPersistence
 //
 // WinDirStat - Directory Statistics
-// Copyright (C) 2003-2004 Bernhard Seifert
+// Copyright (C) 2003-2005 Bernhard Seifert
+// Copyright (C) 2004-2006 Oliver Schneider (assarbad.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -24,6 +25,7 @@
 #pragma once
 
 #include "treemap.h"
+#include "../common/wds_constants.h"
 
 class COptions;
 
@@ -286,6 +288,9 @@ private:
 
 
 // $Log$
+// Revision 1.13  2006/07/04 20:45:23  assarbad
+// - See changelog for the changes of todays previous check-ins as well as this one!
+//
 // Revision 1.12  2004/11/24 20:28:13  bseifert
 // Implemented context menu compromise.
 //

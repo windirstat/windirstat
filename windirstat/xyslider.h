@@ -1,7 +1,8 @@
-// xyslider.h	- Declaration of CXySlider
+// xyslider.h - Declaration of CXySlider
 //
 // WinDirStat - Directory Statistics
-// Copyright (C) 2003-2004 Bernhard Seifert
+// Copyright (C) 2003-2005 Bernhard Seifert
+// Copyright (C) 2004-2006 Oliver Schneider (assarbad.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -89,7 +90,7 @@ protected:
 	DECLARE_MESSAGE_MAP()
 	afx_msg void OnDestroy();
 	afx_msg UINT OnGetDlgCode();
-	afx_msg UINT OnNcHitTest(CPoint point);
+	afx_msg LRESULT OnNcHitTest(CPoint point);
 	afx_msg void OnSetFocus(CWnd* pOldWnd);
 	afx_msg void OnKillFocus(CWnd* pNewWnd);
 	afx_msg void OnPaint();
@@ -106,6 +107,9 @@ void AFXAPI DDX_XySlider(CDataExchange* pDX, int nIDC, CPoint& value);
 
 
 // $Log$
+// Revision 1.5  2006/07/04 20:45:23  assarbad
+// - See changelog for the changes of todays previous check-ins as well as this one!
+//
 // Revision 1.4  2004/11/05 16:53:08  assarbad
 // Added Date and History tag where appropriate.
 //

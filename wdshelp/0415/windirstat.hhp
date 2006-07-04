@@ -1,0 +1,43 @@
+[OPTIONS]
+Compatibility=1.1 or later
+Compiled file=..\..\..\help\wdsh0415.chm
+Contents file=toc.hhc
+Default Window=main
+Default topic=windirstat.htm
+Display compile progress=No
+Full-text search=Yes
+Language=0x415 Polnisch
+Title=WinDirStat
+
+[WINDOWS]
+main="WinDirStat","toc.hhc",,"windirstat.htm","windirstat.htm",,,,,0x63420,,0x3006,[22,19,816,782],0x108f0000,,,,,,0
+
+
+[FILES]
+windirstat.htm
+directorytree.htm
+extensionlist.htm
+treemap.htm
+actions.htm
+configuration.htm
+coupling.htm
+faq.htm
+gnufdl.htm
+legend.htm
+selectdrivesdialog.htm
+sorting.htm
+whatisatree.htm
+userdefinedcleanups.htm
+limits.htm
+deinstallation.htm
+
+[ALIAS]
+IDH_StartPage=windirstat.htm
+IDH_UserDefinedCleanups=userdefinedcleanups.htm
+IDH_Treemap=treemap.htm
+
+[MAP]
+#include ..\windirstat\helpmap.h
+
+[INFOTYPES]
+

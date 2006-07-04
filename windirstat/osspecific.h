@@ -1,7 +1,8 @@
-// osspecific.h		- Declaration of CVolumeApi, CRecycleBinApi, CPsapi, CMapi32Api
+// osspecific.h - Declaration of CVolumeApi, CRecycleBinApi, CPsapi, CMapi32Api
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
+// Copyright (C) 2004-2006 Oliver Schneider (assarbad.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -21,10 +22,95 @@
 //
 // Last modified: $Date$
 
-// I try not to blow up such classes; they shall _only_ hide away the dynamic linking.
-
 #pragma once
 
+const LPCTSTR nameKernel32 = TEXT("kernel32.dll");
+const LPCTSTR nameShell32 = TEXT("shell32.dll");
+const LPCTSTR namePsApi = TEXT("psapi.dll");
+
+///////////////////////////////////////////////////////////////////////////////
+///  CDllModule
+///  Encapsulates the module handle for a DLL given the DLL name in the ctor
+///
+///
+///  @remarks Should be preferably used as a static instance.
+///////////////////////////////////////////////////////////////////////////////
+class CDllModule
+{
+public:
+	///////////////////////////////////////////////////////////////////////////////
+	///  inline public constructor  CDllModule
+	///  Ctor for the CDllModule wrapper class
+	///
+	///  @param [in]       DllName LPCTSTR    Name of the DLL of which we want the handle
+	///
+	///  This function doesn't return a value
+	///////////////////////////////////////////////////////////////////////////////
+	CDllModule(LPCTSTR DllName)
+	{
+		m_hDll = LoadLibrary(DllName);
+	}
+
+	///////////////////////////////////////////////////////////////////////////////
+	///  inline public destructor  ~CDllModule
+	///  Dtor for the CDllModule wrapper class
+	///
+	///  This function doesn't return a value
+	///////////////////////////////////////////////////////////////////////////////
+	~CDllModule()
+	{
+		if(m_hDll)
+		{
+			FreeLibrary(m_hDll);
+		}
+	}
+
+	///////////////////////////////////////////////////////////////////////////////
+	///  inline public  Handle
+	///  Returns the module handle value of this class instance
+	///
+	///  @return HMODULE Returns the module handle or NULL if there is no valid handle
+	///
+	///  @remarks The caller is responsible to verify the returned handle!
+	///////////////////////////////////////////////////////////////////////////////
+	HMODULE Handle()
+	{
+		return m_hDll;
+	}
+
+private:
+	///////////////////////////////////////////////////////////////////////////////
+	///  HMODULE m_hDll
+	///  The private member variable which holds the module handle
+	///
+	///  @remarks This is initialized directly inside the ctor!
+	///////////////////////////////////////////////////////////////////////////////
+	HMODULE m_hDll;
+};
+
+template < class FctType > class CDynamicApi
+{
+public:
+	CDynamicApi(HMODULE hDll, LPCSTR pszFctName)
+		: pfnFct(NULL)
+	{
+		if(hDll)
+		{
+			pfnFct = FctType(GetProcAddress(hDll, pszFctName));
+		}
+	}
+
+	~CDynamicApi()
+	{
+	}
+
+	bool IsSupported()
+	{
+		return (pfnFct != NULL);
+	}
+
+	FctType pfnFct;
+};
 
 //
 // CVolumeApi. Supported with Windows 2000 or higher.
@@ -47,27 +133,25 @@ public:
 	BOOL FindNextVolumeMountPoint(HANDLE hFindVolumeMountPoint, LPTSTR lpszVolumeMountPoint, DWORD cchBufferLength);
 	BOOL FindVolumeMountPointClose(HANDLE hFindVolumeMountPoint);
 
-
 private:
-	typedef BOOL (WINAPI *TypeGetVolumeNameForVolumeMountPoint)(LPCTSTR lpszVolumeMountPoint, LPTSTR lpszVolumeName, DWORD cchBufferLength);
-	typedef HANDLE (WINAPI *TypeFindFirstVolume)(LPTSTR lpszVolumeName, DWORD cchBufferLength);
-	typedef BOOL (WINAPI *TypeFindNextVolume)(HANDLE hFindVolume, LPTSTR lpszVolumeName, DWORD cchBufferLength);
-	typedef BOOL (WINAPI *TypeFindVolumeClose)(HANDLE hFindVolume);
-	typedef HANDLE (WINAPI *TypeFindFirstVolumeMountPoint)(LPCTSTR lpszRootPathName, LPTSTR lpszVolumeMountPoint, DWORD cchBufferLength);
-	typedef BOOL (WINAPI *TypeFindNextVolumeMountPoint)(HANDLE hFindVolumeMountPoint, LPTSTR lpszVolumeMountPoint, DWORD cchBufferLength);
-	typedef BOOL (WINAPI *TypeFindVolumeMountPointClose)(HANDLE hFindVolumeMountPoint);
+	typedef BOOL (WINAPI *TFNGetVolumeNameForVolumeMountPoint)(LPCTSTR lpszVolumeMountPoint, LPTSTR lpszVolumeName, DWORD cchBufferLength);
+	typedef HANDLE (WINAPI *TFNFindFirstVolume)(LPTSTR lpszVolumeName, DWORD cchBufferLength);
+	typedef BOOL (WINAPI *TFNFindNextVolume)(HANDLE hFindVolume, LPTSTR lpszVolumeName, DWORD cchBufferLength);
+	typedef BOOL (WINAPI *TFNFindVolumeClose)(HANDLE hFindVolume);
+	typedef HANDLE (WINAPI *TFNFindFirstVolumeMountPoint)(LPCTSTR lpszRootPathName, LPTSTR lpszVolumeMountPoint, DWORD cchBufferLength);
+	typedef BOOL (WINAPI *TFNFindNextVolumeMountPoint)(HANDLE hFindVolumeMountPoint, LPTSTR lpszVolumeMountPoint, DWORD cchBufferLength);
+	typedef BOOL (WINAPI *TFNFindVolumeMountPointClose)(HANDLE hFindVolumeMountPoint);
 
-	HMODULE m_dll;
-	bool m_UnloadDll;
-	TypeGetVolumeNameForVolumeMountPoint	m_GetVolumeNameForVolumeMountPoint;
-	TypeFindFirstVolume						m_FindFirstVolume;
-	TypeFindNextVolume						m_FindNextVolume;
-	TypeFindVolumeClose						m_FindVolumeClose;
-	TypeFindFirstVolumeMountPoint			m_FindFirstVolumeMountPoint;
-	TypeFindNextVolumeMountPoint			m_FindNextVolumeMountPoint;
-	TypeFindVolumeMountPointClose			m_FindVolumeMountPointClose;
+	HMODULE m_hDll;
+
+	CDynamicApi<TFNGetVolumeNameForVolumeMountPoint>	m_GetVolumeNameForVolumeMountPoint;
+	CDynamicApi<TFNFindFirstVolume>						m_FindFirstVolume;
+	CDynamicApi<TFNFindNextVolume>						m_FindNextVolume;
+	CDynamicApi<TFNFindVolumeClose>						m_FindVolumeClose;
+	CDynamicApi<TFNFindFirstVolumeMountPoint>			m_FindFirstVolumeMountPoint;
+	CDynamicApi<TFNFindNextVolumeMountPoint>			m_FindNextVolumeMountPoint;
+	CDynamicApi<TFNFindVolumeMountPointClose>			m_FindVolumeMountPointClose;
 };
-
 
 //
 // CRecycleBinApi. Not always supported on NT and W95/98.
@@ -84,19 +168,17 @@ public:
 	HRESULT SHQueryRecycleBin(LPCTSTR pszRootPath, LPSHQUERYRBINFO pSHQueryRBInfo);
 
 private:
-	typedef HRESULT (STDAPICALLTYPE *TypeSHEmptyRecycleBin)(HWND hwnd, LPCTSTR pszRootPath, DWORD dwFlags);
-	typedef HRESULT (STDAPICALLTYPE *TypeSHQueryRecycleBin)(LPCTSTR pszRootPath, LPSHQUERYRBINFO pSHQueryRBInfo);
+	typedef HRESULT (STDAPICALLTYPE *TFNSHEmptyRecycleBin)(HWND hwnd, LPCTSTR pszRootPath, DWORD dwFlags);
+	typedef HRESULT (STDAPICALLTYPE *TFNSHQueryRecycleBin)(LPCTSTR pszRootPath, LPSHQUERYRBINFO pSHQueryRBInfo);
 
-	HMODULE m_dll;
-	bool m_UnloadDll;
+	HMODULE m_hDll;
 
-	TypeSHEmptyRecycleBin m_SHEmptyRecycleBin;
-	TypeSHQueryRecycleBin m_SHQueryRecycleBin;
+	CDynamicApi<TFNSHEmptyRecycleBin>					m_SHEmptyRecycleBin;
+	CDynamicApi<TFNSHQueryRecycleBin>					m_SHQueryRecycleBin;
 };
 
-
 //
-// CPsapi. Not Supported on W95/W98/me.
+// CPsapi. Not Supported on Win9x/Me.
 //
 class CPsapi
 {
@@ -109,13 +191,15 @@ public:
 	BOOL GetProcessMemoryInfo(HANDLE Process, PPROCESS_MEMORY_COUNTERS ppsmemCounters, DWORD cb);
 
 private:
-	typedef BOOL (WINAPI *TypeGetProcessMemoryInfo)(HANDLE Process, PPROCESS_MEMORY_COUNTERS ppsmemCounters, DWORD cb);
+	typedef BOOL (WINAPI *TFNGetProcessMemoryInfo)(HANDLE Process, PPROCESS_MEMORY_COUNTERS ppsmemCounters, DWORD cb);
 
-	HMODULE m_dll;
-	TypeGetProcessMemoryInfo m_GetProcessMemoryInfo;
+	HMODULE m_hDll;
+
+	CDynamicApi<TFNGetProcessMemoryInfo>				m_GetProcessMemoryInfo;
 };
 
 
+/*
 //
 // CMapi32Api. CDocument::OnFileSendMail() loads mapi32.dll dynamically. 
 // So we do, too.
@@ -134,9 +218,10 @@ public:
 private:
 	typedef ULONG (FAR PASCAL *TypeMAPISendMail)(LHANDLE lhSession, ULONG ulUIParam, lpMapiMessage lpMessage, FLAGS flFlags, ULONG ulReserved);
  
-	HMODULE m_dll;
+	HMODULE m_hDll;
 	TypeMAPISendMail m_MAPISendMail;
 };
+*/
 
 
 //
@@ -153,12 +238,11 @@ public:
 	DWORD QueryDosDevice(LPCTSTR lpDeviceName, LPTSTR lpTargetPath, DWORD ucchMax);
 
 private:
-	typedef DWORD (WINAPI *TypeQueryDosDevice)(LPCTSTR lpDeviceName, LPTSTR lpTargetPath, DWORD ucchMax);
+	typedef DWORD (WINAPI *TFNQueryDosDevice)(LPCTSTR lpDeviceName, LPTSTR lpTargetPath, DWORD ucchMax);
 
-	HMODULE m_dll;
-	bool m_UnloadDll;
+	HMODULE m_hDll;
 
-	TypeQueryDosDevice m_QueryDosDevice;
+	CDynamicApi<TFNQueryDosDevice>						m_QueryDosDevice;
 };
 
 //
@@ -176,12 +260,11 @@ public:
 	ULONGLONG GetCompressedFileSize(LPCTSTR lpFileName);
 
 private:
-	typedef DWORD (WINAPI *TypeGetCompressedFileSize)(LPCTSTR lpFileName, LPDWORD lpFileSizeHigh);
+	typedef DWORD (WINAPI *TFNGetCompressedFileSize)(LPCTSTR lpFileName, LPDWORD lpFileSizeHigh);
 
-	HMODULE m_dll;
-	bool m_UnloadDll;
+	HMODULE m_hDll;
 	
-	TypeGetCompressedFileSize m_GetCompressedFileSize;
+	CDynamicApi<TFNGetCompressedFileSize>				m_GetCompressedFileSize;
 };
 
 //
@@ -197,20 +280,22 @@ public:
 
 	bool IsSupported();
 
-	void GetDiskFreeSpace(LPCTSTR pszRootPath, LONGLONG& total, LONGLONG& unused);
+	void GetDiskFreeSpace(LPCTSTR pszRootPath, ULONGLONG& total, ULONGLONG& unused);
 
 private:
-	typedef BOOL (WINAPI *TypeGetDiskFreeSpace)(LPCTSTR lpRootPathName, LPDWORD lpSectorsPerCluster, LPDWORD lpBytesPerSector, LPDWORD lpNumberOfFreeClusters, LPDWORD lpTotalNumberOfClusters);
-	typedef BOOL (WINAPI *TypeGetDiskFreeSpaceEx)(LPCTSTR lpDirectoryName, PULARGE_INTEGER lpFreeBytesAvailable, PULARGE_INTEGER lpTotalNumberOfBytes, PULARGE_INTEGER lpTotalNumberOfFreeBytes);
+	typedef BOOL (WINAPI *TFNGetDiskFreeSpace)(LPCTSTR lpRootPathName, LPDWORD lpSectorsPerCluster, LPDWORD lpBytesPerSector, LPDWORD lpNumberOfFreeClusters, LPDWORD lpTotalNumberOfClusters);
+	typedef BOOL (WINAPI *TFNGetDiskFreeSpaceEx)(LPCTSTR lpDirectoryName, ULARGE_INTEGER *lpFreeBytesAvailable, ULARGE_INTEGER *lpTotalNumberOfBytes, ULARGE_INTEGER *lpTotalNumberOfFreeBytes);
 
-	HMODULE m_dll;
-	bool m_UnloadDll;
+	HMODULE m_hDll;
 	
-	TypeGetDiskFreeSpace m_GetDiskFreeSpace;
-	TypeGetDiskFreeSpaceEx m_GetDiskFreeSpaceEx;
+	CDynamicApi<TFNGetDiskFreeSpace>					m_GetDiskFreeSpace;
+	CDynamicApi<TFNGetDiskFreeSpaceEx>					m_GetDiskFreeSpaceEx;
 };
 
 // $Log$
+// Revision 1.9  2006/07/04 20:45:23  assarbad
+// - See changelog for the changes of todays previous check-ins as well as this one!
+//
 // Revision 1.8  2005/10/01 11:21:08  assarbad
 // *** empty log message ***
 //

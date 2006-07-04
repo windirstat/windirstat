@@ -1,7 +1,8 @@
-// mainframe.cpp	- Implementation of CMySplitterWnd, CPacmanControl and CMainFrame
+// mainframe.cpp - Implementation of CMySplitterWnd, CPacmanControl and CMainFrame
 //
 // WinDirStat - Directory Statistics
-// Copyright (C) 2003-2004 Bernhard Seifert
+// Copyright (C) 2003-2005 Bernhard Seifert
+// Copyright (C) 2004-2006 Oliver Schneider (assarbad.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -30,7 +31,6 @@
 #include "dirstatdoc.h"
 #include "osspecific.h"
 #include "item.h"
-#include "modalsendmail.h"
 
 #include "pagecleanups.h"
 #include "pagetreelist.h"
@@ -38,9 +38,10 @@
 #include "pagegeneral.h"
 #include "pagereport.h"
 
-#include "./mainframe.h"
-#include "./CheckForUpdateDlg.h"
+#include "CheckForUpdateDlg.h"
 #include "../common/version.h"
+
+#include "mainframe.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -79,19 +80,25 @@ namespace
 	public:
 		COpenClipboard(CWnd *owner, bool empty =true) 
 		{ 
-			m_open= owner->OpenClipboard();
-			if (!m_open)
-				MdThrowStringException(IDS_CANNOTOPENCLIPBOARD);
-			if (empty)
+			m_open = owner->OpenClipboard();
+			if(!m_open)
 			{
-				if (!EmptyClipboard())
+				MdThrowStringException(IDS_CANNOTOPENCLIPBOARD);
+			}
+			if(empty)
+			{
+				if(!EmptyClipboard())
+				{
 					MdThrowStringException(IDS_CANNOTEMTPYCLIPBOARD);
+				}
 			}
 		}
 		~COpenClipboard()
 		{
-			if (m_open)
+			if(m_open)
+			{
 				CloseClipboard();
+			}
 		}
 	private:
 		BOOL m_open;
@@ -107,24 +114,24 @@ IMPLEMENT_DYNAMIC(COptionsPropertySheet, CPropertySheet)
 
 COptionsPropertySheet::COptionsPropertySheet()
 	: CPropertySheet(IDS_WINDIRSTAT_SETTINGS)
+	, m_restartApplication(false)
+	, m_languageChanged(false)
+	, m_alreadyAsked(false)
 {
-	m_restartApplication= false;
-	m_languageChanged= false;
-	m_alreadyAsked= false;
 }
 
 void COptionsPropertySheet::SetLanguageChanged(bool changed)
 {
-	m_languageChanged= changed;
+	m_languageChanged = changed;
 }
 
 BOOL COptionsPropertySheet::OnInitDialog()
 {
-	BOOL bResult= CPropertySheet::OnInitDialog();
+	BOOL bResult = CPropertySheet::OnInitDialog();
 	
 	CRect rc;
 	GetWindowRect(rc);
-	CPoint pt= rc.TopLeft();
+	CPoint pt = rc.TopLeft();
 	CPersistence::GetConfigPosition(pt);
 	CRect rc2(pt, rc.Size());
 	MoveWindow(rc2);
@@ -142,25 +149,25 @@ BOOL COptionsPropertySheet::OnCommand(WPARAM wParam, LPARAM lParam)
 	CPersistence::SetConfigPosition(rc.TopLeft());
 
 	int cmd = LOWORD(wParam);
-	if (cmd == IDOK || cmd == ID_APPLY_NOW)
+	if((IDOK == cmd) || (ID_APPLY_NOW == cmd))
 	{
-		if (m_languageChanged && (cmd == IDOK || !m_alreadyAsked))
+		if(m_languageChanged && ((IDOK == cmd) || (!m_alreadyAsked)))
 		{
-			int r= AfxMessageBox(IDS_LANGUAGERESTARTNOW, MB_YESNOCANCEL);
-			if (r == IDCANCEL)
+			int r = AfxMessageBox(IDS_LANGUAGERESTARTNOW, MB_YESNOCANCEL);
+			if(IDCANCEL == r)
 			{
 				return true;	// "Message handled". Don't proceed.
 			}
-			else if (r == IDNO)
+			else if(IDNO == r)
 			{
-				m_alreadyAsked= true; // Don't ask twice.
+				m_alreadyAsked = true; // Don't ask twice.
 			}
 			else
 			{
-				ASSERT(r == IDYES);
-				m_restartApplication= true;
+				ASSERT(IDYES == r);
+				m_restartApplication = true;
 
-				if (cmd == ID_APPLY_NOW)
+				if(ID_APPLY_NOW == cmd)
 				{
 					// This _posts_ a message...
 					EndDialog(IDOK);
@@ -177,9 +184,9 @@ BOOL COptionsPropertySheet::OnCommand(WPARAM wParam, LPARAM lParam)
 /////////////////////////////////////////////////////////////////////////////
 
 CMySplitterWnd::CMySplitterWnd(LPCTSTR name)
-: m_persistenceName(name)
+	: m_persistenceName(name)
+	, m_splitterPos(0.5)
 {
-	m_splitterPos= 0.5;
 	CPersistence::GetSplitterPos(m_persistenceName, m_wasTrackedByUser, m_userSplitterPos);
 }
 
@@ -192,19 +199,21 @@ void CMySplitterWnd::StopTracking(BOOL bAccept)
 {
 	CSplitterWnd::StopTracking(bAccept);
 
-	if (bAccept)
+	if(bAccept)
 	{
 		CRect rcClient;
 		GetClientRect(rcClient);
 
-		if (GetColumnCount() > 1)
+		if(GetColumnCount() > 1)
 		{
 			int dummy;
 			int cxLeft;
 			GetColumnInfo(0, cxLeft, dummy);
 	
-			if (rcClient.Width() > 0)
-				m_splitterPos= (double)cxLeft / rcClient.Width();
+			if(rcClient.Width() > 0)
+			{
+				m_splitterPos = (double)cxLeft / rcClient.Width();
+			}
 		}
 		else
 		{
@@ -212,11 +221,13 @@ void CMySplitterWnd::StopTracking(BOOL bAccept)
 			int cyUpper;
 			GetRowInfo(0, cyUpper, dummy);
 	
-			if (rcClient.Height() > 0)
-				m_splitterPos= (double)cyUpper / rcClient.Height();
+			if(rcClient.Height() > 0)
+			{
+				m_splitterPos = (double)cyUpper / rcClient.Height();
+			}
 		}
-		m_wasTrackedByUser= true;
-		m_userSplitterPos= m_splitterPos;
+		m_wasTrackedByUser = true;
+		m_userSplitterPos = m_splitterPos;
 	}
 }
 
@@ -227,17 +238,17 @@ double CMySplitterWnd::GetSplitterPos()
 
 void CMySplitterWnd::SetSplitterPos(double pos)
 {
-	m_splitterPos= pos;
+	m_splitterPos = pos;
 
 	CRect rcClient;
 	GetClientRect(rcClient);
 
-	if (GetColumnCount() > 1)
+	if(GetColumnCount() > 1)
 	{
-		if (m_pColInfo != NULL)
+		if(m_pColInfo != NULL)
 		{
-			int cxLeft= (int) (pos * rcClient.Width());
-			if (cxLeft >= 0)
+			int cxLeft = (int) (pos * rcClient.Width());
+			if(cxLeft >= 0)
 			{		
 				SetColumnInfo(0, cxLeft, 0);
 				RecalcLayout();
@@ -246,10 +257,10 @@ void CMySplitterWnd::SetSplitterPos(double pos)
 	}
 	else
 	{
-		if (m_pRowInfo != NULL)
+		if(m_pRowInfo != NULL)
 		{
-			int cyUpper= (int) (pos * rcClient.Height());
-			if (cyUpper >= 0)
+			int cyUpper = (int) (pos * rcClient.Height());
+			if(cyUpper >= 0)
 			{		
 				SetRowInfo(0, cyUpper, 0);
 				RecalcLayout();
@@ -260,25 +271,33 @@ void CMySplitterWnd::SetSplitterPos(double pos)
 
 void CMySplitterWnd::RestoreSplitterPos(double posIfVirgin)
 {
-	if (m_wasTrackedByUser)
+	if(m_wasTrackedByUser)
+	{
 		SetSplitterPos(m_userSplitterPos);
+	}
 	else
+	{
 		SetSplitterPos(posIfVirgin);
+	}
 }
 
 void CMySplitterWnd::OnSize(UINT nType, int cx, int cy)
 {
-	if (GetColumnCount() > 1)
+	if(GetColumnCount() > 1)
 	{
-		int cxLeft= (int)(cx * m_splitterPos);
-		if (cxLeft > 0)
+		int cxLeft = (int)(cx * m_splitterPos);
+		if(cxLeft > 0)
+		{
 			SetColumnInfo(0, cxLeft, 0);
+		}
 	}
 	else
 	{
-		int cyUpper= (int)(cy * m_splitterPos);
-		if (cyUpper > 0)
+		int cyUpper = (int)(cy * m_splitterPos);
+		if(cyUpper > 0)
+		{
 			SetRowInfo(0, cyUpper, 0);
+		}
 	}
 	CSplitterWnd::OnSize(nType, cx, cy);
 }
@@ -298,10 +317,12 @@ CPacmanControl::CPacmanControl()
 	m_pacman.SetSpeed(0.00005);
 }
 
-void CPacmanControl::Drive(LONGLONG readJobs)
+void CPacmanControl::Drive(ULONGLONG readJobs)
 {
-	if (IsWindow(m_hWnd) && m_pacman.Drive(readJobs))
+	if(IsWindow(m_hWnd) && m_pacman.Drive(readJobs))
+	{
 		RedrawWindow();
+	}
 }
 
 void CPacmanControl::Start(bool start)
@@ -316,8 +337,10 @@ END_MESSAGE_MAP()
 
 int CPacmanControl::OnCreate(LPCREATESTRUCT lpCreateStruct)
 {
-	if (CStatic::OnCreate(lpCreateStruct) == -1)
+	if(CStatic::OnCreate(lpCreateStruct) == -1)
+	{
 		return -1;
+	}
 
 	m_pacman.Reset();
 	m_pacman.Start(true);
@@ -341,7 +364,7 @@ CDeadFocusWnd::CDeadFocusWnd()
 void CDeadFocusWnd::Create(CWnd *parent)
 {
 	CRect rc(0,0,0,0);
-	VERIFY(CWnd::Create(AfxRegisterWndClass(0, 0, 0, 0), _T("_deadfocus"), WS_CHILD, rc, parent, IDC_DEADFOCUS));
+	VERIFY(CWnd::Create(AfxRegisterWndClass(0, 0, 0, 0), TEXT("_deadfocus"), WS_CHILD, rc, parent, IDC_DEADFOCUS));
 }
 
 CDeadFocusWnd::~CDeadFocusWnd()
@@ -355,7 +378,7 @@ END_MESSAGE_MAP()
 
 void CDeadFocusWnd::OnKeyDown(UINT nChar, UINT /* nRepCnt */, UINT /* nFlags */)
 {
-	if (nChar == VK_TAB)
+	if(nChar == VK_TAB)
 	{
 		GetMainFrame()->MoveFocus(LF_DIRECTORYLIST);
 	}
@@ -413,73 +436,84 @@ CMainFrame *CMainFrame::GetTheFrame()
 }
 
 CMainFrame::CMainFrame()
-	: m_wndSplitter(_T("main"))
-	, m_wndSubSplitter(_T("sub"))
+	: m_wndSplitter(TEXT("main"))
+	, m_wndSubSplitter(TEXT("sub"))
+	, m_progressVisible(false)
+	, m_progressRange(100)
+	, m_logicalFocus(LF_NONE)
 {
-	_theFrame= this;
-	m_progressVisible= false;
-	m_progressRange= 100;
-	m_logicalFocus= LF_NONE;
+	_theFrame = this;
 }
 
 CMainFrame::~CMainFrame()
 {
-	_theFrame= NULL;
+	_theFrame = NULL;
 }
 
-void CMainFrame::ShowProgress(LONGLONG range)
+void CMainFrame::ShowProgress(ULONGLONG range)
 {
 	// A range of 0 means that we have no range.
 	// In this case we display pacman.
 	HideProgress();
 
-	if (GetOptions()->IsFollowMountPoints() || GetOptions()->IsFollowJunctionPoints())
-		range= 0;
-	m_progressRange= range;
-	m_progressPos= 0;
-	m_progressVisible= true;
-	if (range > 0)
+	if(GetOptions()->IsFollowMountPoints() || GetOptions()->IsFollowJunctionPoints())
+	{
+		range = 0;
+	}
+	m_progressRange = range;
+	m_progressPos = 0;
+	m_progressVisible = true;
+	if(range > 0)
+	{
 		CreateStatusProgress();
+	}
 	else
+	{
 		CreatePacmanProgress();
+	}
 	UpdateProgress();
 }
 
 void CMainFrame::HideProgress()
 {
 	DestroyProgress();
-	if (m_progressVisible)
+	if(m_progressVisible)
 	{
-		m_progressVisible= false;
-		if (IsWindow(*GetMainFrame()))
+		m_progressVisible = false;
+		if(IsWindow(*GetMainFrame()))
 		{
-			GetDocument()->SetTitlePrefix(_T(""));
+			GetDocument()->SetTitlePrefix(strEmpty);
 			SetMessageText(AFX_IDS_IDLEMESSAGE);
 		}
 	}
 }
 
-void CMainFrame::SetProgressPos(LONGLONG pos)
+void CMainFrame::SetProgressPos(ULONGLONG pos)
 {
-	if (m_progressRange > 0 && pos > m_progressRange)
-		pos= m_progressRange;
+	if(m_progressRange > 0 && pos > m_progressRange)
+	{
+		pos = m_progressRange;
+	}
 
-	m_progressPos= pos;
+	m_progressPos = pos;
 	UpdateProgress();
 }
 
 void CMainFrame::SetProgressPos100()
 {
-	if (m_progressRange > 0)
+	if(m_progressRange > 0)
+	{
 		SetProgressPos(m_progressRange);
+	}
 }
 
 bool CMainFrame::IsProgressSuspended()
 {
-	if (!IsWindow(m_suspendButton.m_hWnd))
+	if(!IsWindow(m_suspendButton.m_hWnd))
+	{
 		return false;
-	bool checked= (m_suspendButton.GetState() & 0x3) != 0;
-	return checked;
+	}
+	return ((m_suspendButton.GetState() & 0x3) != 0);
 }
 
 void CMainFrame::DrivePacman()
@@ -489,25 +523,25 @@ void CMainFrame::DrivePacman()
 
 void CMainFrame::UpdateProgress()
 {
-	if (m_progressVisible)
+	if(m_progressVisible)
 	{
 		CString titlePrefix;
 		CString suspended;
 
-		if (IsProgressSuspended())
+		if(IsProgressSuspended())
 		{
 			suspended.LoadString(IDS_SUSPENDED_);
 		}
 
-		if (m_progressRange > 0)
+		if(m_progressRange > 0)
 		{
-			int pos= (int)((double) m_progressPos * 100 / m_progressRange);
+			int pos = (int)((double) m_progressPos * 100 / m_progressRange);
 			m_progress.SetPos(pos);
-			titlePrefix.Format(_T("%d%% %s"), pos, suspended);
+			titlePrefix.Format(TEXT("%d%% %s"), pos, suspended);
 		}
 		else
 		{
-			titlePrefix= LoadString(IDS_SCANNING_) + suspended;
+			titlePrefix = LoadString(IDS_SCANNING_) + suspended;
 		}
 
 		GetDocument()->SetTitlePrefix(titlePrefix);
@@ -516,24 +550,24 @@ void CMainFrame::UpdateProgress()
 
 void CMainFrame::CreateStatusProgress()
 {
-	if (m_progress.m_hWnd == NULL)
+	if(m_progress.m_hWnd == NULL)
 	{
 		CRect rc;
 		m_wndStatusBar.GetItemRect(0, rc);
 		CreateSuspendButton(rc);
-		m_progress.Create(WS_CHILD|WS_VISIBLE, rc, &m_wndStatusBar, 4711);
+		m_progress.Create(WS_CHILD | WS_VISIBLE, rc, &m_wndStatusBar, 4711);
 		m_progress.ModifyStyle(WS_BORDER, 0); // Doesn't help with XP-style control.
 	}
 }
 
 void CMainFrame::CreatePacmanProgress()
 {
-	if (m_pacman.m_hWnd == NULL)
+	if(m_pacman.m_hWnd == NULL)
 	{
 		CRect rc;
 		m_wndStatusBar.GetItemRect(0, rc);
 		CreateSuspendButton(rc);
-		m_pacman.Create(_T(""), WS_CHILD|WS_VISIBLE, rc, &m_wndStatusBar, 4711);
+		m_pacman.Create(strEmpty, WS_CHILD | WS_VISIBLE, rc, &m_wndStatusBar, 4711);
 	}
 }
 
@@ -541,31 +575,31 @@ void CMainFrame::CreatePacmanProgress()
 // rc [out]: Rest for progress/pacman-control
 void CMainFrame::CreateSuspendButton(CRect& rc)
 {
-	CRect rcButton= rc;
-	rcButton.right= rcButton.left + 80;
+	CRect rcButton = rc;
+	rcButton.right = rcButton.left + 80;
 
-	VERIFY(m_suspendButton.Create(LoadString(IDS_SUSPEND), WS_CHILD|WS_VISIBLE|BS_AUTOCHECKBOX|BS_PUSHLIKE, rcButton, &m_wndStatusBar, IDC_SUSPEND));
+	VERIFY(m_suspendButton.Create(LoadString(IDS_SUSPEND), WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX | BS_PUSHLIKE, rcButton, &m_wndStatusBar, IDC_SUSPEND));
 	m_suspendButton.SetFont(GetDirstatView()->GetSmallFont());
 
-	rc.left= rcButton.right;
+	rc.left = rcButton.right;
 }
 
 void CMainFrame::DestroyProgress()
 {
-	if (IsWindow(m_progress.m_hWnd))
+	if(IsWindow(m_progress.m_hWnd))
 	{
 		m_progress.DestroyWindow();
-		m_progress.m_hWnd= NULL;
+		m_progress.m_hWnd = NULL;
 	}
-	else if (IsWindow(m_pacman.m_hWnd))
+	else if(IsWindow(m_pacman.m_hWnd))
 	{
 		m_pacman.DestroyWindow();
-		m_pacman.m_hWnd= NULL;
+		m_pacman.m_hWnd = NULL;
 	}
-	if (IsWindow(m_suspendButton.m_hWnd))
+	if(IsWindow(m_suspendButton.m_hWnd))
 	{
 		m_suspendButton.DestroyWindow();
-		m_suspendButton.m_hWnd= NULL;
+		m_suspendButton.m_hWnd = NULL;
 	}
 }
 
@@ -577,22 +611,22 @@ void CMainFrame::OnBnClickedSuspend()
 
 int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 {
-	if (CFrameWnd::OnCreate(lpCreateStruct) == -1)
+	if(CFrameWnd::OnCreate(lpCreateStruct) == -1)
+	{
 		return -1;
+	}
 	
-	VERIFY(m_wndToolBar.CreateEx(this, TBSTYLE_FLAT, WS_CHILD | WS_VISIBLE | CBRS_TOP
-			| CBRS_GRIPPER | CBRS_TOOLTIPS | CBRS_FLYBY | CBRS_SIZE_DYNAMIC)
-	);
+	VERIFY(m_wndToolBar.CreateEx(this, TBSTYLE_FLAT, WS_CHILD | WS_VISIBLE | CBRS_TOP | CBRS_GRIPPER | CBRS_TOOLTIPS | CBRS_FLYBY | CBRS_SIZE_DYNAMIC));
 	VERIFY(m_wndToolBar.LoadToolBar(IDR_MAINFRAME));
 
-	UINT *indic= indicators;
-	UINT size= countof(indicators);
+	UINT *indic = indicators;
+	UINT size = countof(indicators);
 
 	// If psapi is not supported, don't show that pane.
-	if (GetApp()->GetCurrentProcessMemoryInfo() == _T(""))
+	if(GetApp()->GetCurrentProcessMemoryInfo() == strEmpty)
 	{
-		indic= indicatorsWithoutMemoryUsage;
-		size= countof(indicatorsWithoutMemoryUsage);
+		indic = indicatorsWithoutMemoryUsage;
+		size = countof(indicatorsWithoutMemoryUsage);
 	}
 
 	VERIFY(m_wndStatusBar.Create(this));
@@ -613,7 +647,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 void CMainFrame::InitialShowWindow()
 {
 	WINDOWPLACEMENT wp;
-	wp.length= sizeof(wp);
+	wp.length = sizeof(wp);
 	GetWindowPlacement(&wp);
 	CPersistence::GetMainWindowPlacement(wp);
 	MakeSaneShowCmd(wp.showCmd);
@@ -636,7 +670,9 @@ void CMainFrame::MakeSaneShowCmd(UINT& u)
 	case SW_SHOWDEFAULT:
 	case SW_SHOW:
 	case SW_SHOWNORMAL:
-		u= SW_SHOWNORMAL;
+		{
+			u = SW_SHOWNORMAL;
+		}
 		break;
 	case SW_SHOWMAXIMIZED:
 		break;
@@ -666,7 +702,7 @@ void CMainFrame::OnClose()
 void CMainFrame::OnDestroy()
 {
 	WINDOWPLACEMENT wp;
-	wp.length= sizeof(wp);
+	wp.length = sizeof(wp);
 	GetWindowPlacement(&wp);
 	CPersistence::SetMainWindowPlacement(wp);
 
@@ -696,7 +732,9 @@ BOOL CMainFrame::OnCreateClient(LPCREATESTRUCT /*lpcs*/, CCreateContext* pContex
 BOOL CMainFrame::PreCreateWindow(CREATESTRUCT& cs)
 {
 	if( !CFrameWnd::PreCreateWindow(cs) )
+	{
 		return FALSE;
+	}
 
 	return TRUE;
 }
@@ -724,7 +762,7 @@ void CMainFrame::MinimizeTypeView()
 
 void CMainFrame::RestoreTypeView()
 {
-	if (GetTypeView()->IsShowTypes())
+	if(GetTypeView()->IsShowTypes())
 	{
 		m_wndSubSplitter.RestoreSplitterPos(0.72);
 		GetTypeView()->RedrawWindow();
@@ -738,7 +776,7 @@ void CMainFrame::MinimizeGraphView()
 
 void CMainFrame::RestoreGraphView()
 {
-	if (GetGraphView()->IsShowTreemap())
+	if(GetGraphView()->IsShowTreemap())
 	{
 		m_wndSplitter.RestoreSplitterPos(0.4);
 		GetGraphView()->DrawEmptyView();
@@ -755,15 +793,15 @@ CDirstatView* CMainFrame::GetDirstatView()
 
 CGraphView *CMainFrame::GetGraphView()
 {
-	CWnd *pWnd= m_wndSplitter.GetPane(1, 0);
-	CGraphView *pView= DYNAMIC_DOWNCAST(CGraphView, pWnd);
+	CWnd *pWnd = m_wndSplitter.GetPane(1, 0);
+	CGraphView *pView = DYNAMIC_DOWNCAST(CGraphView, pWnd);
 	return pView;
 }
 
 CTypeView *CMainFrame::GetTypeView()
 {
-	CWnd *pWnd= m_wndSubSplitter.GetPane(0, 1);
-	CTypeView *pView= DYNAMIC_DOWNCAST(CTypeView, pWnd);
+	CWnd *pWnd = m_wndSubSplitter.GetPane(0, 1);
+	CTypeView *pView = DYNAMIC_DOWNCAST(CTypeView, pWnd);
 	return pView;
 }
 
@@ -784,24 +822,29 @@ void CMainFrame::CopyToClipboard(LPCTSTR psz)
 	try
 	{
 		COpenClipboard clipboard(this);
+		SIZE_T cchBufLen = _tcslen(psz) + 1;
 
-		HGLOBAL h= GlobalAlloc(GMEM_MOVEABLE, (lstrlen(psz) + 1 ) * sizeof(TCHAR)); 
-		if (h == NULL) 
-			MdThrowStringException(_T("GlobalAlloc failed."));
+		HGLOBAL h = GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT, (cchBufLen) * sizeof(TCHAR)); 
+		if(h == NULL) 
+		{
+			MdThrowStringException(TEXT("GlobalAlloc failed."));
+		}
 
- 		LPVOID lp= GlobalLock(h);
+ 		LPVOID lp = GlobalLock(h);
 		ASSERT(lp != NULL);
 
-		lstrcpy((LPTSTR)lp, psz);
+		_tcscpy_s((LPTSTR)lp, cchBufLen, psz);
 	
 		GlobalUnlock(h);
   
-		UINT uFormat= CF_TEXT;
+		UINT uFormat = CF_TEXT;
 #ifdef UNICODE
-		uFormat= CF_UNICODETEXT;
+		uFormat = CF_UNICODETEXT;
 #endif
-		if (NULL == SetClipboardData(uFormat, h))
+		if(NULL == SetClipboardData(uFormat, h))
+		{
 			MdThrowStringException(IDS_CANNOTSETCLIPBAORDDATA);
+		}
 	}
 	catch (CException *pe)
 	{
@@ -814,12 +857,14 @@ void CMainFrame::OnInitMenuPopup(CMenu* pPopupMenu, UINT nIndex, BOOL bSysMenu)
 {
 	CFrameWnd::OnInitMenuPopup(pPopupMenu, nIndex, bSysMenu);
 
-	if (!bSysMenu)
+	if(!bSysMenu)
 	{
 		switch (nIndex)
 		{
 		case TLM_CLEANUP:
-			UpdateCleanupMenu(pPopupMenu);
+			{
+				UpdateCleanupMenu(pPopupMenu);
+			}
 			break;
 		}
 	}
@@ -827,81 +872,95 @@ void CMainFrame::OnInitMenuPopup(CMenu* pPopupMenu, UINT nIndex, BOOL bSysMenu)
 
 void CMainFrame::UpdateCleanupMenu(CMenu *menu)
 {
-	CString s= LoadString(IDS_EMPTYRECYCLEBIN);
-	VERIFY(menu->ModifyMenu(ID_CLEANUP_EMPTYRECYCLEBIN, MF_BYCOMMAND|MF_STRING, ID_CLEANUP_EMPTYRECYCLEBIN, s));
-	menu->EnableMenuItem(ID_CLEANUP_EMPTYRECYCLEBIN, MF_BYCOMMAND | MF_DISABLED|MF_GRAYED);
+	CString s = LoadString(IDS_EMPTYRECYCLEBIN);
+	VERIFY(menu->ModifyMenu(ID_CLEANUP_EMPTYRECYCLEBIN, MF_BYCOMMAND | MF_STRING, ID_CLEANUP_EMPTYRECYCLEBIN, s));
+	menu->EnableMenuItem(ID_CLEANUP_EMPTYRECYCLEBIN, MF_BYCOMMAND | MF_DISABLED | MF_GRAYED);
 
 	CRecycleBinApi rb;
-	if (rb.IsSupported())
+	if(rb.IsSupported())
 	{
-		LONGLONG items;
-		LONGLONG bytes;
+		ULONGLONG items;
+		ULONGLONG bytes;
 
 		MyQueryRecycleBin(rb, items, bytes);
 		
 		CString info;
-		if (items == 1)
-			info.FormatMessage(IDS__ONEITEMss, FormatBytes(bytes), GetOptions()->IsHumanFormat() && bytes != 0 ? _T("") : _T(" ") + GetSpec_Bytes());
+		if(items == 1)
+		{
+			info.FormatMessage(IDS__ONEITEMss, FormatBytes(bytes), GetOptions()->IsHumanFormat() && bytes != 0 ? strEmpty : strBlankSpace + GetSpec_Bytes());
+		}
 		else
-			info.FormatMessage(IDS__sITEMSss, FormatCount(items), FormatBytes(bytes), GetOptions()->IsHumanFormat() && bytes != 0 ? _T("") : _T(" ") + GetSpec_Bytes());
+		{
+			info.FormatMessage(IDS__sITEMSss, FormatCount(items), FormatBytes(bytes), GetOptions()->IsHumanFormat() && bytes != 0 ? strEmpty : strBlankSpace + GetSpec_Bytes());
+		}
 
-		s+= info;
-		VERIFY(menu->ModifyMenu(ID_CLEANUP_EMPTYRECYCLEBIN, MF_BYCOMMAND|MF_STRING, ID_CLEANUP_EMPTYRECYCLEBIN, s));
+		s += info;
+		VERIFY(menu->ModifyMenu(ID_CLEANUP_EMPTYRECYCLEBIN, MF_BYCOMMAND | MF_STRING, ID_CLEANUP_EMPTYRECYCLEBIN, s));
 		
 		// ModifyMenu() re-enables the item. So we disable (or enable) it again.
 
-		UINT flags = (items > 0 ? MF_ENABLED : MF_DISABLED|MF_GRAYED);
-		flags|= MF_BYCOMMAND;
+		UINT flags = (items > 0 ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
+		flags |= MF_BYCOMMAND;
 		
 		menu->EnableMenuItem(ID_CLEANUP_EMPTYRECYCLEBIN, flags);
 	}
 
-	UINT toRemove= menu->GetMenuItemCount() - MAINMENU_USERDEFINEDCLEANUP_POSITION;
-	for (UINT i=0; i < toRemove; i++)
+	UINT toRemove = menu->GetMenuItemCount() - MAINMENU_USERDEFINEDCLEANUP_POSITION;
+	for(UINT i = 0; i < toRemove; i++)
+	{
 		menu->RemoveMenu(MAINMENU_USERDEFINEDCLEANUP_POSITION, MF_BYPOSITION);
+	}
 
 	AppendUserDefinedCleanups(menu);
 }
 
-void CMainFrame::MyQueryRecycleBin(CRecycleBinApi& rb, LONGLONG& items, LONGLONG& bytes)
+void CMainFrame::MyQueryRecycleBin(CRecycleBinApi& rb, ULONGLONG& items, ULONGLONG& bytes)
 {
 	// On W2k, the first parameter to SHQueryRecycleBin must not be NULL.
 	// So we must sum the item counts and sizes of the recycle bins of all local drives.
 
 	ASSERT(rb.IsSupported());
 
-	items= 0;
-	bytes= 0;
+	items = 0;
+	bytes = 0;
 
-	DWORD drives= GetLogicalDrives();
+	DWORD drives = GetLogicalDrives();
 	int i;
-	DWORD mask= 0x00000001;
-	for (i=0; i < 32; i++, mask <<= 1)
+	DWORD mask = 0x00000001;
+	for(i = 0; i < 32; i++, mask <<= 1)
 	{
-		if ((drives & mask) == 0)
+		if((drives & mask) == 0)
+		{
 			continue;
+		}
 
 		CString s;
-		s.Format(_T("%c:\\"), i + _T('A'));
+		s.Format(TEXT("%c:\\"), i + chrCapA);
 
-		UINT type= GetDriveType(s);
-		if (type == DRIVE_UNKNOWN || type == DRIVE_NO_ROOT_DIR)
+		UINT type = GetDriveType(s);
+		if(type == DRIVE_UNKNOWN || type == DRIVE_NO_ROOT_DIR)
+		{
 			continue;
+		}
 
-		if (type == DRIVE_REMOTE)
+		if(type == DRIVE_REMOTE)
+		{
 			continue;
+		}
 
 		SHQUERYRBINFO qbi;
 		ZeroMemory(&qbi, sizeof(qbi));
-		qbi.cbSize= sizeof(qbi);
+		qbi.cbSize = sizeof(qbi);
 
-		HRESULT hr= rb.SHQueryRecycleBin(s, &qbi);
+		HRESULT hr = rb.SHQueryRecycleBin(s, &qbi);
 		
-		if (FAILED(hr))
+		if(FAILED(hr))
+		{
 			continue;
+		}
 
-		items+= qbi.i64NumItems;
-		bytes+= qbi.i64Size;
+		items += qbi.i64NumItems;
+		bytes += qbi.i64Size;
 	}
 }
 
@@ -909,20 +968,20 @@ void CMainFrame::AppendUserDefinedCleanups(CMenu *menu)
 {
 	CArray<int, int> indices;
 	GetOptions()->GetEnabledUserDefinedCleanups(indices);
-	if (indices.GetSize() > 0)
+	if(indices.GetSize() > 0)
 	{
-		for (int i=0; i < indices.GetSize(); i++)
+		for(int i = 0; i < indices.GetSize(); i++)
 		{
 			CString string;
 			string.FormatMessage(IDS_UDCsCTRLd, GetOptions()->GetUserDefinedCleanup(indices[i])->title, indices[i]);
 
-			UINT flags= MF_GRAYED | MF_DISABLED;
-			if (
+			UINT flags = MF_GRAYED | MF_DISABLED;
+			if(
 			GetLogicalFocus() == LF_DIRECTORYLIST
 			&& GetDocument()->UserDefinedCleanupWorksForItem(GetOptions()->GetUserDefinedCleanup(indices[i]), GetDocument()->GetSelection())
 			)
 			{
-				flags= MF_ENABLED;
+				flags = MF_ENABLED;
 			}
 			menu->AppendMenu(flags|MF_STRING, ID_USERDEFINEDCLEANUP0 + indices[i], string);
 		}
@@ -936,9 +995,9 @@ void CMainFrame::AppendUserDefinedCleanups(CMenu *menu)
 
 void CMainFrame::SetLogicalFocus(LOGICAL_FOCUS lf)
 {
-	if (lf != m_logicalFocus)
+	if(lf != m_logicalFocus)
 	{
-		m_logicalFocus= lf;
+		m_logicalFocus = lf;
 		SetSelectionMessageText();
 
 		GetDocument()->UpdateAllViews(NULL, HINT_SELECTIONSTYLECHANGED);
@@ -955,14 +1014,20 @@ void CMainFrame::MoveFocus(LOGICAL_FOCUS lf)
 	switch (lf)
 	{
 	case LF_NONE:
-		SetLogicalFocus(LF_NONE);
-		m_wndDeadFocus.SetFocus();
+		{
+			SetLogicalFocus(LF_NONE);
+			m_wndDeadFocus.SetFocus();
+		}
 		break;
 	case LF_DIRECTORYLIST:
-		GetDirstatView()->SetFocus();
+		{
+			GetDirstatView()->SetFocus();
+		}
 		break;
 	case LF_EXTENSIONLIST:
-		GetTypeView()->SetFocus();
+		{
+			GetTypeView()->SetFocus();
+		}
 		break;
 	}
 }
@@ -972,16 +1037,24 @@ void CMainFrame::SetSelectionMessageText()
 	switch (GetLogicalFocus())
 	{
 	case LF_NONE:
-		SetMessageText(AFX_IDS_IDLEMESSAGE);
+		{
+			SetMessageText(AFX_IDS_IDLEMESSAGE);
+		}
 		break;
 	case LF_DIRECTORYLIST:
-		if (GetDocument()->GetSelection() != NULL)
+		if(GetDocument()->GetSelection() != NULL)
+		{
 			SetMessageText(GetDocument()->GetSelection()->GetPath());
+		}
 		else
+		{
 			SetMessageText(AFX_IDS_IDLEMESSAGE);
+		}
 		break;
 	case LF_EXTENSIONLIST:
-		SetMessageText(_T("*") + GetDocument()->GetHighlightExtension());
+		{
+			SetMessageText(strStar + GetDocument()->GetHighlightExtension());
+		}
 		break;
 	}
 }
@@ -992,29 +1065,33 @@ void CMainFrame::OnUpdateMemoryUsage(CCmdUI *pCmdUI)
 	pCmdUI->SetText(GetApp()->GetCurrentProcessMemoryInfo());
 }
 
-
-
 void CMainFrame::OnSize(UINT nType, int cx, int cy)
 {
 	CFrameWnd::OnSize(nType, cx, cy);
 
-	if (!IsWindow(m_wndStatusBar.m_hWnd))
+	if(!IsWindow(m_wndStatusBar.m_hWnd))
+	{
 		return;
+	}
 
 	CRect rc;
 	m_wndStatusBar.GetItemRect(0, rc);
 
-	if (m_suspendButton.m_hWnd != NULL)
+	if(m_suspendButton.m_hWnd != NULL)
 	{
 		CRect suspend;
 		m_suspendButton.GetClientRect(suspend);
-		rc.left= suspend.right;
+		rc.left = suspend.right;
 	}
 
-	if (m_progress.m_hWnd != NULL)
+	if(m_progress.m_hWnd != NULL)
+	{
 		m_progress.MoveWindow(rc);
-	else if (m_pacman.m_hWnd != NULL)
+	}
+	else if(m_pacman.m_hWnd != NULL)
+	{
 		m_pacman.MoveWindow(rc);
+	}
 }
 
 void CMainFrame::OnUpdateViewShowtreemap(CCmdUI *pCmdUI)
@@ -1025,10 +1102,14 @@ void CMainFrame::OnUpdateViewShowtreemap(CCmdUI *pCmdUI)
 void CMainFrame::OnViewShowtreemap()
 {
 	GetGraphView()->ShowTreemap(!GetGraphView()->IsShowTreemap());
-	if (GetGraphView()->IsShowTreemap())
+	if(GetGraphView()->IsShowTreemap())
+	{
 		RestoreGraphView();
+	}
 	else
+	{
 		MinimizeGraphView();
+	}
 }
 
 void CMainFrame::OnUpdateViewShowfiletypes(CCmdUI *pCmdUI)
@@ -1039,10 +1120,14 @@ void CMainFrame::OnUpdateViewShowfiletypes(CCmdUI *pCmdUI)
 void CMainFrame::OnViewShowfiletypes()
 {
 	GetTypeView()->ShowTypes(!GetTypeView()->IsShowTypes());
-	if (GetTypeView()->IsShowTypes())
+	if(GetTypeView()->IsShowTypes())
+	{
 		RestoreTypeView();
+	}
 	else
+	{
 		MinimizeTypeView();
+	}
 }
 
 void CMainFrame::OnConfigure()
@@ -1065,7 +1150,7 @@ void CMainFrame::OnConfigure()
 
 	GetOptions()->SaveToRegistry();
 
-	if (sheet.m_restartApplication)
+	if(sheet.m_restartApplication)
 	{
 		GetApp()->RestartApplication();
 	}
@@ -1074,27 +1159,36 @@ void CMainFrame::OnConfigure()
 
 void CMainFrame::OnUpdateSendmailtoowner(CCmdUI *pCmdUI)
 {
+	UNREFERENCED_PARAMETER(pCmdUI);
+	// TODO: Fix!!!
+	AfxMessageBox(TEXT("Not implemented!"));
+/*
 	pCmdUI->Enable(
 		GetLogicalFocus() == LF_DIRECTORYLIST
 		&& GetDocument()->GetSelection() != NULL
 		&& GetDocument()->GetSelection()->IsDone()
 		&& CModalSendMail::IsSendMailAvailable()
 	);
+*/
 }
 
 void CMainFrame::OnSendmailtoowner()
 {
-	CString body= GetDirstatView()->GenerateReport();
+	CString body = GetDirstatView()->GenerateReport();
 
+	// TODO: Fix!!!
+	AfxMessageBox(TEXT("Not implemented!"));
+/*
 	CModalSendMail sm;
-	sm.SendMail(_T(""), GetOptions()->GetReportSubject(), body);
+	sm.SendMail(strEmpty, GetOptions()->GetReportSubject(), body);
+*/
 
 /*
 	This works only for small bodies:
 
 	CString url;
 	url.Format("mailto:?subject=%s&body=%s", subject, body);
-	url= MyUrlCanonicalize(url);
+	url = MyUrlCanonicalize(url);
 
 	AfxMessageBox(url);
 	try
@@ -1128,6 +1222,9 @@ void CMainFrame::OnHelpCheckforupdates()
 }
 
 // $Log$
+// Revision 1.11  2006/07/04 20:45:23  assarbad
+// - See changelog for the changes of todays previous check-ins as well as this one!
+//
 // Revision 1.10  2005/10/01 11:21:08  assarbad
 // *** empty log message ***
 //

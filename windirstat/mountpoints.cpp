@@ -1,7 +1,8 @@
-// mountpoints.cpp	- Implementation of CMountPoints
+// mountpoints.cpp - Implementation of CMountPoints
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
+// Copyright (C) 2004-2006 Oliver Schneider (assarbad.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -39,11 +40,11 @@ void CMountPoints::Clear()
 {
 	m_drive.RemoveAll();
 
-	POSITION pos= m_volume.GetStartPosition();
-	while (pos != NULL)
+	POSITION pos = m_volume.GetStartPosition();
+	while(pos != NULL)
 	{
 		CString volume;
-		PointVolumeArray *pva= NULL;
+		PointVolumeArray *pva = NULL;
 		m_volume.GetNextAssoc(pos, volume, pva);
 		ASSERT_VALID(pva);
 		delete pva;
@@ -55,8 +56,10 @@ void CMountPoints::Initialize()
 {
 	Clear();
 
-	if (!m_va.IsSupported())
+	if(!m_va.IsSupported())
+	{
 		return;
+	}
 
 	GetDriveVolumes();
 	GetAllMountPoints();
@@ -66,24 +69,24 @@ void CMountPoints::GetDriveVolumes()
 {
 	m_drive.SetSize(32);
 
-	DWORD drives= GetLogicalDrives();
+	DWORD drives = GetLogicalDrives();
 	int i;
-	DWORD mask= 0x00000001;
-	for (i=0; i < 32; i++, mask <<= 1)
+	DWORD mask = 0x00000001;
+	for(i = 0; i < 32; i++, mask <<= 1)
 	{
 		CString volume;
 
-		if ((drives & mask) != 0)
+		if((drives & mask) != 0)
 		{
 			CString s;
-			s.Format(_T("%c:\\"), i + _T('A'));
+			s.Format(TEXT("%c:\\"), i + chrCapA);
 
-			BOOL b= m_va.GetVolumeNameForVolumeMountPoint(s, volume.GetBuffer(_MAX_PATH), _MAX_PATH);
+			BOOL b = m_va.GetVolumeNameForVolumeMountPoint(s, volume.GetBuffer(_MAX_PATH), _MAX_PATH);
 			volume.ReleaseBuffer();
 
-			if (!b)
+			if(!b)
 			{
-				TRACE(_T("GetVolumeNameForVolumeMountPoint(%s) failed.\n"), s);
+				TRACE(TEXT("GetVolumeNameForVolumeMountPoint(%s) failed.\n"), s);
 				volume.Empty();
 			}
 		}
@@ -95,66 +98,66 @@ void CMountPoints::GetDriveVolumes()
 void CMountPoints::GetAllMountPoints()
 {
 	TCHAR volume[_MAX_PATH];
-	HANDLE hvol= m_va.FindFirstVolume(volume, countof(volume));
-	if (hvol == INVALID_HANDLE_VALUE)
+	HANDLE hvol = m_va.FindFirstVolume(volume, countof(volume));
+	if(hvol == INVALID_HANDLE_VALUE)
 	{
-		TRACE(_T("No volumes found.\r\n"));
+		TRACE(TEXT("No volumes found.\r\n"));
 		return;
 	}
 
-	for (BOOL bContinue=true; bContinue; bContinue= m_va.FindNextVolume(hvol, volume, countof(volume)))
+	for(BOOL bContinue = true; bContinue; bContinue = m_va.FindNextVolume(hvol, volume, countof(volume)))
 	{
-		PointVolumeArray *pva= new PointVolumeArray;
+		PointVolumeArray *pva = new PointVolumeArray;
 		ASSERT_VALID(pva);
 
 		DWORD sysflags;
 		CString fsname;
-		BOOL b= GetVolumeInformation(volume, NULL, 0, NULL, NULL, &sysflags, fsname.GetBuffer(_MAX_PATH), _MAX_PATH);
+		BOOL b = GetVolumeInformation(volume, NULL, 0, NULL, NULL, &sysflags, fsname.GetBuffer(_MAX_PATH), _MAX_PATH);
 		fsname.ReleaseBuffer();
 
-		if (!b)
+		if(!b)
 		{
-			TRACE(_T("This file system (%s) is not ready.\r\n"), volume);
+			TRACE(TEXT("This file system (%s) is not ready.\r\n"), volume);
 			m_volume.SetAt(volume, pva);		
 			continue;
 		}
 
-		if ((sysflags & FILE_SUPPORTS_REPARSE_POINTS) == 0)
+		if((sysflags & FILE_SUPPORTS_REPARSE_POINTS) == 0)
 		{
 			// No support for reparse points, and therefore for volume 
 			// mount points, which are implemented using reparse points.
-			TRACE(_T("This file system (%s) does not support volume mount points.\r\n"), volume);
+			TRACE(TEXT("This file system (%s) does not support volume mount points.\r\n"), volume);
 			m_volume.SetAt(volume, pva);		
 			continue;
 		} 
 
 		TCHAR point[_MAX_PATH];
-		HANDLE h= m_va.FindFirstVolumeMountPoint(volume, point, countof(point));
-		if (h == INVALID_HANDLE_VALUE)
+		HANDLE h = m_va.FindFirstVolumeMountPoint(volume, point, countof(point));
+		if(h == INVALID_HANDLE_VALUE)
 		{
-			TRACE(_T("No volume mount points found on %s.\r\n"), volume);
+			TRACE(TEXT("No volume mount points found on %s.\r\n"), volume);
 			m_volume.SetAt(volume, pva);		
 			continue;
 		} 
 
-		for (BOOL bCont=true; bCont; bCont= m_va.FindNextVolumeMountPoint(h, point, countof(point)))
+		for(BOOL bCont = true; bCont; bCont = m_va.FindNextVolumeMountPoint(h, point, countof(point)))
 		{
-			CString uniquePath= volume;
-			uniquePath+= point;
+			CString uniquePath = volume;
+			uniquePath += point;
 			CString mountedVolume;
 
-			BOOL b= m_va.GetVolumeNameForVolumeMountPoint(uniquePath, mountedVolume.GetBuffer(_MAX_PATH), _MAX_PATH);
+			BOOL b = m_va.GetVolumeNameForVolumeMountPoint(uniquePath, mountedVolume.GetBuffer(_MAX_PATH), _MAX_PATH);
 			mountedVolume.ReleaseBuffer();
 
-			if (!b)
+			if(!b)
 			{
-				TRACE(_T("GetVolumeNameForVolumeMountPoint(%s) failed.\r\n"), uniquePath);
+				TRACE(TEXT("GetVolumeNameForVolumeMountPoint(%s) failed.\r\n"), uniquePath);
 				continue;
 			}
 
 			SPointVolume pv;
-			pv.point= point;
-			pv.volume= mountedVolume;
+			pv.point = point;
+			pv.volume = mountedVolume;
 
 			pv.point.MakeLower();
 
@@ -168,11 +171,11 @@ void CMountPoints::GetAllMountPoints()
 	(void)m_va.FindVolumeClose(hvol);
 
 #ifdef _DEBUG
-	POSITION pos= m_volume.GetStartPosition();
-	while (pos != NULL)
+	POSITION pos = m_volume.GetStartPosition();
+	while(pos != NULL)
 	{
 		CString volume;
-		PointVolumeArray *pva= NULL;
+		PointVolumeArray *pva = NULL;
 		m_volume.GetNextAssoc(pos, volume, pva);
 		pva->AssertValid();
 	}
@@ -183,74 +186,92 @@ void CMountPoints::GetAllMountPoints()
 
 bool CMountPoints::IsMountPoint(CString path)
 {
-	if (path.GetLength() < 3 || path[1] != _T(':') || path[2] != _T('\\'))
+	if(path.GetLength() < 3 || path[1] != chrColon || path[2] != chrBackslash)
 	{
 		// Don't know how to make out mount points on UNC paths ###
 		return false;
 	}
 
 	ASSERT(path.GetLength() >= 3);
-	ASSERT(path[1] == _T(':'));
-	ASSERT(path[2] == _T('\\'));
+	ASSERT(path[1] == chrColon);
+	ASSERT(path[2] == chrBackslash);
 
-	if (!m_va.IsSupported())
+	if(!m_va.IsSupported())
+	{
 		return false;
+	}
 
-	if (path.Right(1) != _T('\\'))
-		path+= _T("\\");
+	if(path.Right(1) != chrBackslash)
+	{
+		path += TEXT("\\");
+	}
 
 	path.MakeLower();
 
-	CString volume= m_drive[path[0] - _T('a')];
-	path= path.Mid(3);
+	CString volume = m_drive[path[0] - chrSmallA];
+	path = path.Mid(3);
 
 	return IsVolumeMountPoint(volume, path);
 }
 
-// Check wether the current item is a junction point but no volume mount point
+// Check whether the current item is a junction point but no volume mount point
 // as the latter ones are treated differently (see above).
 bool CMountPoints::IsJunctionPoint(CString path)
 {
-	if (IsMountPoint(path))
+	if(IsMountPoint(path))
+	{
 		return false;
+	}
 
 	DWORD attr = GetFileAttributes(path);
-	if (attr == INVALID_FILE_ATTRIBUTES)
+	if(attr == INVALID_FILE_ATTRIBUTES)
+	{
 		return false;
+	}
 
 	return ((attr & FILE_ATTRIBUTE_REPARSE_POINT) != 0);
 }
 
 bool CMountPoints::IsVolumeMountPoint(CString volume, CString path)
 {
-	for (;;)
+	while(true)
 	{
+		int i = 0;
 		PointVolumeArray *pva;
-		if (!m_volume.Lookup(volume, pva))
+		if(!m_volume.Lookup(volume, pva))
 		{
-			TRACE(_T("CMountPoints: Volume(%s) unknown!\r\n"), volume);	
+			TRACE(TEXT("CMountPoints: Volume(%s) unknown!\r\n"), volume);	
 			return false;
 		}
 
 		CString point;
-		for (int i=0; i < pva->GetSize(); i++)
+		for(i  =  0; i < pva->GetSize(); i++)
 		{
-			point= (*pva)[i].point;
-			if (path.Left(point.GetLength()) == point)
+			point = (*pva)[i].point;
+			if(path.Left(point.GetLength()) == point)
+			{
 				break;
+			}
 		}
-		if (i >= pva->GetSize())
+		if(i >= pva->GetSize())
+		{
 			return false;
+		}
 
-		if (path.GetLength() == point.GetLength())
+		if(path.GetLength() == point.GetLength())
+		{
 			return true;
+		}
 
-		volume= (*pva)[i].volume;
-		path= path.Mid(point.GetLength());
+		volume = (*pva)[i].volume;
+		path = path.Mid(point.GetLength());
 	}
 }
 
 // $Log$
+// Revision 1.7  2006/07/04 20:45:23  assarbad
+// - See changelog for the changes of todays previous check-ins as well as this one!
+//
 // Revision 1.6  2005/04/10 16:49:30  assarbad
 // - Some smaller fixes including moving the resource string version into the rc2 files
 //

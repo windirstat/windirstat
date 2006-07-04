@@ -1,0 +1,52 @@
+<html>
+	<head>
+		<title>Häufig gestellte Fragen</title>
+		<META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+		<meta content="http://schemas.microsoft.com/intellisense/ie5" name="vs_targetSchema">
+		<LINK href="format.css" type="text/css" rel="stylesheet">
+		<style type="text/css">
+		<!--
+			h3 { margin-bottom:6pt; }
+			p { margin-top:0pt; }
+		-->
+		</style>
+	</head>
+	<BODY>
+		<h2>Häufig gestellte Fragen</h2>
+		<h3>Gibt die Baumkarte die Belegung der Harddisk-Sektoren wieder?</h3>
+		<p>Nein. Die Baumkartenansicht hat nichts zu tun mit den Harddisk-Sektoren. Die 
+			Verteilung der Dateien auf Sektoren ist eine ganz andere. Im allgemeinen sind 
+			große Dateien weit über die Harddisk verstreut. Die Baumkarte hingegen stellt 
+			jede Datei als <i>ein</i> Rechteck dar.
+		</p>
+		<h3>Werden für die Leseaufträge Threads gestartet?</h3>
+		<p>Nein. WinDirStat ist - abgesehen von der Aboutbox, die in einem eigenen Thread 
+			läuft und von den Abfragen im Laufwerksauswahldialog - single-threaded. 
+			Alle Arbeit geschieht in OnIdle().
+		</p>
+		<h3>Was hat es mit dem Eintrag &lt;Dateien&gt; auf sich?</h3>
+		<p>Siehe <A href="legend.htm">Zeichenerklärung</A>.
+		</p>
+		<h3>Was bedeutet das &gt;-Zeichen vor den Spaltenüberschriften?</h3>
+		<p>Die &gt;- und &lt;-Zeichen in den Spaltenüberschriften deuten die aktuelle <A href="sorting.htm">
+				Sortierung</A> an.
+		</p>
+		<h3>Auf meinem XP zeigt WinDirStat mehr als 1 GB &lt;Unbekannt&gt; an. Ist das 
+			normal?</h3>
+		<p>Ja. XP speichert ziemlich oft ziemlich große 'Systemwiederherstellungspunkte' 
+			unter C:\System Volume Information, verweigert aber den Zugriff darauf.
+		</p>
+		<h3>Wozu ist die Datei wdsr0407.dll da?</h3>
+		<p>Diese Datei enthält die deutsche Übersetzung von WinDirStat. 0407 ist die 
+			Kennziffer für "Deutsch - Deutschland". Wenn diese Datei fehlt, dann ist 
+			WinDirStat nur in der (eingebauten) Sprache Englisch verfügbar.
+		</p>
+		<h3>Die Größenangaben in KB und MB scheinen etwas zu klein zu sein.</h3>
+		<p>WinDirStat hält sich an die im Computerwesen übliche Konvention, dass "Kilo" 
+			nicht für 1000 steht sondern für 1024. Es gilt also:<br>
+			1 KB = 1024 Bytes<br>
+			1 MB = 1024 KB = 1.048.576 Bytes<br>
+			1 GB = 1024 MB = 1.048.576 KB = 1.073.741.824 Bytes.
+		</p>
+	</BODY>
+</html>

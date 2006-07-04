@@ -1,7 +1,8 @@
-// sortinglistcontrol.cpp	- Implementation of CSortingListItem and CSortingListControl
+// sortinglistcontrol.cpp - Implementation of CSortingListItem and CSortingListControl
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
+// Copyright (C) 2004-2006 Oliver Schneider (assarbad.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -23,7 +24,7 @@
 
 #include "stdafx.h"
 #include "windirstat.h"
-#include ".\sortinglistcontrol.h"
+#include "sortinglistcontrol.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -35,7 +36,7 @@ CString CSortingListItem::GetText(int subitem) const
 {
 	// Dummy implementation
 	CString s;
-	s.Format(_T("subitem %d"), subitem);
+	s.Format(TEXT("subitem %d"), subitem);
 	return s;
 }
 
@@ -60,15 +61,19 @@ int CSortingListItem::Compare(const CSortingListItem *other, int subitem) const
 
 int CSortingListItem::CompareS(const CSortingListItem *other, const SSorting& sorting) const
 {
-	int r= Compare(other, sorting.column1);
-	if (abs(r) < 2 && !sorting.ascending1)
-		r= -r;
-	
-	if (r == 0 && sorting.column2 != sorting.column1)
+	int r = Compare(other, sorting.column1);
+	if(abs(r) < 2 && !sorting.ascending1)
 	{
-		r= Compare(other, sorting.column2);
-		if (abs(r) < 2 && !sorting.ascending2)
-			r= -r;
+		r = -r;
+	}
+	
+	if(r == 0 && sorting.column2 != sorting.column1)
+	{
+		r = Compare(other, sorting.column2);
+		if(abs(r) < 2 && !sorting.ascending2)
+		{
+			r = -r;
+		}
 	}
 	return r;
 }
@@ -81,8 +86,8 @@ IMPLEMENT_DYNAMIC(CSortingListControl, CListCtrl)
 
 CSortingListControl::CSortingListControl(LPCTSTR name)
 {
-	m_name= name;
-	m_indicatedColumn= -1;
+	m_name = name;
+	m_indicatedColumn = -1;
 }
 
 CSortingListControl::~CSortingListControl()
@@ -91,6 +96,7 @@ CSortingListControl::~CSortingListControl()
 
 void CSortingListControl::LoadPersistentAttributes()
 {
+	int i = 0;
 	CArray<int, int> arr;
 	arr.SetSize(GetHeaderCtrl()->GetItemCount());
 
@@ -98,15 +104,17 @@ void CSortingListControl::LoadPersistentAttributes()
 	CPersistence::GetColumnOrder(m_name, arr);
 	SetColumnOrderArray(arr.GetSize(), arr.GetData());
 
-	for (int i=0; i < arr.GetSize(); i++)
+	for(i = 0; i < arr.GetSize(); i++)
+	{
 		arr[i]= GetColumnWidth(i);
+	}
 	CPersistence::GetColumnWidths(m_name, arr);
-	for (i=0; i < arr.GetSize(); i++)
+	for(i = 0; i < arr.GetSize(); i++)
 	{
 		// To avoid "insane" settings we set the column width to
 		// maximal twice the default width.
-		int maxWidth= GetColumnWidth(i) * 2;
-		int w= min(arr[i], maxWidth);
+		int maxWidth = GetColumnWidth(i) * 2;
+		int w = min(arr[i], maxWidth);
 		SetColumnWidth(i, w);
 	}
 
@@ -123,8 +131,10 @@ void CSortingListControl::SavePersistentAttributes()
 	GetColumnOrderArray(arr.GetData(), arr.GetSize());	
 	CPersistence::SetColumnOrder(m_name, arr);
 
-	for (int i=0; i < arr.GetSize(); i++)
+	for(int i = 0; i < arr.GetSize(); i++)
+	{
 		arr[i]= GetColumnWidth(i);
+	}
 	CPersistence::SetColumnWidths(m_name, arr);
 
 	// Not so good: CPersistence::SetSorting(m_name, m_sorting.column1, m_sorting.ascending1, m_sorting.column2, m_sorting.ascending2);
@@ -148,23 +158,23 @@ const SSorting& CSortingListControl::GetSorting()
 
 void CSortingListControl::SetSorting(const SSorting& sorting)
 {
-	m_sorting= sorting;
+	m_sorting = sorting;
 }
 
 void CSortingListControl::SetSorting(int sortColumn1, bool ascending1, int sortColumn2, bool ascending2)
 {
-	m_sorting.column1= sortColumn1;
-	m_sorting.ascending1= ascending1;
-	m_sorting.column2= sortColumn2;
-	m_sorting.ascending2= ascending2;
+	m_sorting.column1 = sortColumn1;
+	m_sorting.ascending1 = ascending1;
+	m_sorting.column2 = sortColumn2;
+	m_sorting.ascending2 = ascending2;
 }
 
 void CSortingListControl::SetSorting(int sortColumn, bool ascending)
 {
-	m_sorting.column2= m_sorting.column1;
-	m_sorting.ascending2= m_sorting.ascending1;
-	m_sorting.column1= sortColumn;
-	m_sorting.ascending1= ascending;
+	m_sorting.column2 = m_sorting.column1;
+	m_sorting.ascending2 = m_sorting.ascending1;
+	m_sorting.column1 = sortColumn;
+	m_sorting.ascending1 = ascending;
 }
 
 void CSortingListControl::InsertListItem(int i, CSortingListItem *item)
@@ -172,14 +182,16 @@ void CSortingListControl::InsertListItem(int i, CSortingListItem *item)
 	LVITEM lvitem;
 	ZeroMemory(&lvitem, sizeof(lvitem));
 
-	lvitem.mask= LVIF_TEXT | LVIF_PARAM;
-	if (HasImages())
-		lvitem.mask|= LVIF_IMAGE;
+	lvitem.mask = LVIF_TEXT | LVIF_PARAM;
+	if(HasImages())
+	{
+		lvitem.mask |= LVIF_IMAGE;
+	}
 
-	lvitem.iItem= i;
-	lvitem.pszText= LPSTR_TEXTCALLBACK;
-	lvitem.iImage= I_IMAGECALLBACK;
-	lvitem.lParam= (LPARAM)item;
+	lvitem.iItem = i;
+	lvitem.pszText = LPSTR_TEXTCALLBACK;
+	lvitem.iImage = I_IMAGECALLBACK;
+	lvitem.lParam = (LPARAM)item;
 
 	VERIFY(i == CListCtrl::InsertItem(&lvitem));
 }
@@ -196,29 +208,29 @@ void CSortingListControl::SortItems()
 	HDITEM hditem;
 	ZeroMemory(&hditem, sizeof(hditem));
 
-	if (m_indicatedColumn != -1)
+	if(m_indicatedColumn != -1)
 	{
 		CString text;
-		hditem.mask= HDI_TEXT;
-		hditem.pszText= text.GetBuffer(256);
-		hditem.cchTextMax= 256;
+		hditem.mask = HDI_TEXT;
+		hditem.pszText = text.GetBuffer(256);
+		hditem.cchTextMax = 256;
 		GetHeaderCtrl()->GetItem(m_indicatedColumn, &hditem);
 		text.ReleaseBuffer();
-		text= text.Mid(2);
-		hditem.pszText= (LPTSTR)(LPCTSTR)text;
+		text = text.Mid(2);
+		hditem.pszText = (LPTSTR)(LPCTSTR)text;
 		GetHeaderCtrl()->SetItem(m_indicatedColumn, &hditem);
 	}
 
 	CString text;
-	hditem.mask= HDI_TEXT;
-	hditem.pszText= text.GetBuffer(256);
-	hditem.cchTextMax= 256;
+	hditem.mask = HDI_TEXT;
+	hditem.pszText = text.GetBuffer(256);
+	hditem.cchTextMax = 256;
 	GetHeaderCtrl()->GetItem(m_sorting.column1, &hditem);
 	text.ReleaseBuffer();
-	text= (m_sorting.ascending1 ? _T("< ") : _T("> ")) + text;
-	hditem.pszText= (LPTSTR)(LPCTSTR)text;
+	text = (m_sorting.ascending1 ? TEXT("< ") : TEXT("> ")) + text;
+	hditem.pszText = (LPTSTR)(LPCTSTR)text;
 	GetHeaderCtrl()->SetItem(m_sorting.column1, &hditem);
-	m_indicatedColumn= m_sorting.column1;
+	m_indicatedColumn = m_sorting.column1;
 }
 
 bool CSortingListControl::GetAscendingDefault(int /*column*/)
@@ -233,9 +245,9 @@ bool CSortingListControl::HasImages()
 
 int CALLBACK CSortingListControl::_CompareFunc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
 {
-	CSortingListItem *item1= (CSortingListItem *)lParam1;
-	CSortingListItem *item2= (CSortingListItem *)lParam2;
-	SSorting *sorting= (SSorting *)lParamSort;
+	CSortingListItem *item1 = (CSortingListItem *)lParam1;
+	CSortingListItem *item2 = (CSortingListItem *)lParam2;
+	SSorting *sorting = (SSorting *)lParamSort;
 
 	return item1->CompareS(item2, *sorting);
 }
@@ -251,16 +263,20 @@ END_MESSAGE_MAP()
 
 void CSortingListControl::OnLvnGetdispinfo(NMHDR *pNMHDR, LRESULT *pResult)
 {
-	NMLVDISPINFO *di= reinterpret_cast<NMLVDISPINFO*>(pNMHDR);
-	*pResult= 0;
+	NMLVDISPINFO *di = reinterpret_cast<NMLVDISPINFO*>(pNMHDR);
+	*pResult = 0;
 
-	CSortingListItem *item= (CSortingListItem *)(di->item.lParam);
+	CSortingListItem *item = (CSortingListItem *)(di->item.lParam);
 
-	if ((di->item.mask & LVIF_TEXT) != 0)
-		lstrcpyn(di->item.pszText, item->GetText(di->item.iSubItem), di->item.cchTextMax);
+	if((di->item.mask & LVIF_TEXT) != 0)
+	{
+		_tcscpy_s(di->item.pszText, di->item.cchTextMax, item->GetText(di->item.iSubItem));
+	}
 
-	if ((di->item.mask & LVIF_IMAGE) != 0)
-		di->item.iImage= item->GetImage();
+	if((di->item.mask & LVIF_IMAGE) != 0)
+	{
+		di->item.iImage = item->GetImage();
+	}
 }
 
 void CSortingListControl::OnHdnItemclick(NMHDR *pNMHDR, LRESULT *pResult)
@@ -268,9 +284,9 @@ void CSortingListControl::OnHdnItemclick(NMHDR *pNMHDR, LRESULT *pResult)
 	LPNMHEADER phdr = reinterpret_cast<LPNMHEADER>(pNMHDR);
 	*pResult = 0;
 	
-	int col= phdr->iItem;
+	int col = phdr->iItem;
 
-	if (col == m_sorting.column1)
+	if(col == m_sorting.column1)
 	{
 		m_sorting.ascending1 =  ! m_sorting.ascending1;
 	}
@@ -295,6 +311,9 @@ void CSortingListControl::OnDestroy()
 }
 
 // $Log$
+// Revision 1.6  2006/07/04 20:45:23  assarbad
+// - See changelog for the changes of todays previous check-ins as well as this one!
+//
 // Revision 1.5  2005/04/10 16:49:30  assarbad
 // - Some smaller fixes including moving the resource string version into the rc2 files
 //

@@ -1,7 +1,8 @@
-// SelectDrivesDlg.h	- Declaration of CDriveItem, CDrivesList and CSelectDrivesDlg
+// SelectDrivesDlg.h - Declaration of CDriveItem, CDrivesList and CSelectDrivesDlg
 //
 // WinDirStat - Directory Statistics
-// Copyright (C) 2003-2004 Bernhard Seifert
+// Copyright (C) 2003-2005 Bernhard Seifert
+// Copyright (C) 2004-2006 Oliver Schneider (assarbad.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -49,7 +50,7 @@ public:
 	CDriveItem(CDrivesList *list, LPCTSTR pszPath);
 	void StartQuery(HWND dialog, UINT serial); 
 
-	void SetDriveInformation(bool success, LPCTSTR name, LONGLONG total, LONGLONG free);
+	void SetDriveInformation(bool success, LPCTSTR name, ULONGLONG total, ULONGLONG free);
 
 	virtual int Compare(const CSortingListItem *other, int subitem) const;
 
@@ -70,8 +71,8 @@ private:
 	bool m_success;			// Drive is accessible. false while m_querying is true.
 
 	CString m_name;			// e.g. "BOOT (C:)"
-	LONGLONG m_totalBytes;	// Capacity
-	LONGLONG m_freeBytes;	// Free space
+	ULONGLONG m_totalBytes;	// Capacity
+	ULONGLONG m_freeBytes;	// Free space
 
 	double m_used;			// used space / total space
 };
@@ -98,7 +99,7 @@ public:
 	CDriveInformationThread(LPCTSTR path, LPARAM driveItem, HWND dialog, UINT serial);
 	virtual BOOL InitInstance();
 	
-	LPARAM GetDriveInformation(bool& success, CString& name, LONGLONG& total, LONGLONG& free);
+	LPARAM GetDriveInformation(bool& success, CString& name, ULONGLONG& total, ULONGLONG& free);
 
 private:
 	const CString m_path;		// Path like "C:\"
@@ -110,8 +111,8 @@ private:
 
 	// "[out]"-parameters
 	CString m_name;			// Result: name like "BOOT (C:)", valid if m_success
-	LONGLONG m_totalBytes;	// Result: capacity of the drive, valid if m_success
-	LONGLONG m_freeBytes;	// Result: free space on the drive, valid if m_success
+	ULONGLONG m_totalBytes;	// Result: capacity of the drive, valid if m_success
+	ULONGLONG m_freeBytes;	// Result: free space on the drive, valid if m_success
 	bool m_success;			// Result: false, iff drive is unaccessible.
 };
 
@@ -190,6 +191,9 @@ protected:
 };
 
 // $Log$
+// Revision 1.12  2006/07/04 20:45:22  assarbad
+// - See changelog for the changes of todays previous check-ins as well as this one!
+//
 // Revision 1.11  2004/11/14 21:50:44  assarbad
 // - Pre-select the last used folder
 //

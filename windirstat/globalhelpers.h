@@ -1,7 +1,8 @@
-// globalhelpers.h	- Declaration of global helper functions
+// globalhelpers.h - Declaration of global helper functions
 //
 // WinDirStat - Directory Statistics
-// Copyright (C) 2003-2004 Bernhard Seifert
+// Copyright (C) 2003-2005 Bernhard Seifert
+// Copyright (C) 2004-2006 Oliver Schneider (assarbad.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -22,15 +23,15 @@
 // Last modified: $Date$
 
 #pragma once
-
+#include "../common/wds_constants.h"
 
 CString GetLocaleString(LCTYPE lctype, LANGID langid);
 CString GetLocaleLanguage(LANGID langid);
 CString GetLocaleThousandSeparator();
 CString GetLocaleDecimalSeparator();
-CString FormatBytes(LONGLONG n);
-CString FormatLongLongHuman(LONGLONG n);
-CString FormatCount(LONGLONG n);
+CString FormatBytes(ULONGLONG n);
+CString FormatLongLongHuman(ULONGLONG n);
+CString FormatCount(ULONGLONG n);
 CString FormatDouble(double d);
 CString PadWidthBlanks(CString n, int width);
 CString FormatFileTime(const FILETIME& t);
@@ -49,7 +50,6 @@ void WaitForHandleWithRepainting(HANDLE h);
 bool FolderExists(LPCTSTR path);
 bool DriveExists(const CString& path);
 CString GetUserName();
-bool IsHexDigit(int c);
 CString MyQueryDosDevice(LPCTSTR drive);
 bool IsSUBSTedDrive(LPCTSTR drive);
 CString GetSpec_Bytes();
@@ -59,6 +59,9 @@ CString GetSpec_GB();
 CString GetSpec_TB();
 
 // $Log$
+// Revision 1.17  2006/07/04 20:45:22  assarbad
+// - See changelog for the changes of todays previous check-ins as well as this one!
+//
 // Revision 1.16  2005/10/01 11:21:08  assarbad
 // *** empty log message ***
 //

@@ -1,7 +1,8 @@
-// layout.h	- Declaration of CLayout
+// layout.h - Declaration of CLayout
 //
 // WinDirStat - Directory Statistics
-// Copyright (C) 2003-2004 Bernhard Seifert
+// Copyright (C) 2003-2005 Bernhard Seifert
+// Copyright (C) 2004-2006 Oliver Schneider (assarbad.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -53,7 +54,7 @@ class CLayout
 
 		DECLARE_MESSAGE_MAP()
 		afx_msg void OnPaint();
-		afx_msg UINT OnNcHitTest(CPoint point);
+		afx_msg LRESULT OnNcHitTest(CPoint point);
 	};
 
 public:
@@ -75,6 +76,9 @@ protected:
 };
 
 // $Log$
+// Revision 1.5  2006/07/04 20:45:23  assarbad
+// - See changelog for the changes of todays previous check-ins as well as this one!
+//
 // Revision 1.4  2004/11/05 16:53:07  assarbad
 // Added Date and History tag where appropriate.
 //

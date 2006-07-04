@@ -1,9 +1,10 @@
-// stdafx.h : include file for standard system include files,
+// stdafx.h - include file for standard system include files,
 // or project specific include files that are used frequently,
 // but are changed infrequently
 //
 // WinDirStat - Directory Statistics
-// Copyright (C) 2003-2004 Bernhard Seifert
+// Copyright (C) 2003-2005 Bernhard Seifert
+// Copyright (C) 2004-2006 Oliver Schneider (assarbad.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -91,6 +92,9 @@ template<class T> int signum(T x) { return (x) < 0 ? -1 : (x) == 0 ? 0 : 1; }
 
 
 // $Log$
+// Revision 1.12  2006/07/04 20:45:23  assarbad
+// - See changelog for the changes of todays previous check-ins as well as this one!
+//
 // Revision 1.11  2005/10/01 11:21:08  assarbad
 // *** empty log message ***
 //

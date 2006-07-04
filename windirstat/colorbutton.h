@@ -1,7 +1,8 @@
 // colorbutton.h - Declaration of CColorButton
 //
 // WinDirStat - Directory Statistics
-// Copyright (C) 2003-2004 Bernhard Seifert
+// Copyright (C) 2003-2005 Bernhard Seifert
+// Copyright (C) 2004-2006 Oliver Schneider (assarbad.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -74,6 +75,9 @@ protected:
 
 
 // $Log$
+// Revision 1.4  2006/07/04 20:45:22  assarbad
+// - See changelog for the changes of todays previous check-ins as well as this one!
+//
 // Revision 1.3  2004/11/05 16:53:07  assarbad
 // Added Date and History tag where appropriate.
 //

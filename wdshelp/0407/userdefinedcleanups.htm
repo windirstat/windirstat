@@ -1,0 +1,67 @@
+<html>
+	<head>
+		<title>Benutzerdefinierte Aktionen</title>
+		<META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+		<meta name="vs_targetSchema" content="http://schemas.microsoft.com/intellisense/ie5">
+		<link rel="stylesheet" type="text/css" href="format.css">
+	</head>
+	<BODY>
+		<h2>Benutzerdefinierte Aktionen</h2>
+		<p><i>Dieser Punkt ist für Experten.</i></p>
+		<p>Hier können Sie bis zu 10 Aktionen selbst definieren. Die Aktionen werden als <i>Kommandozeile</i>
+			spezifiziert.
+		</p>
+		<p>Selektieren Sie in der Liste einen Eintrag und setzen Sie ihn auf "Freigegeben". 
+			Vergeben Sie einen Titel, der Titel erscheint in den Menüs.
+		</p>
+		<p>Formulieren Sie eine Kommandozeile. Benutzen Sie die "MSDOS-Eingabeaufforderung" 
+			(Windows 9x, command.com) bzw. die "Eingabeaufforderung" (NT, cmd.exe), um 
+			Hilfe zu möglichen Kommandos abzufragen und die Kommandozeile auszuprobieren.
+		</p>
+		<h3>Beispiele</h3>
+		<p>
+			<ul>
+				<li>
+					<pre>dir /b > dir.txt</pre>
+					Dateinamen in die Textdatei dir.txt schreiben.</li>
+				<li>
+					<pre>del *.bak</pre>
+					Alle *.bak-Dateien im aktuellen Verzeichnis löschen.</li>
+				<li>
+					<pre>del /s *.bak *.tmp</pre>
+					Alle *.bak- und *.tmp-Dateien in allen Unterverzeichnissen löschen (rekursiv).</li>
+				<li>
+					<pre>C:\programme\windirstat.exe "%p"</pre>
+					Ein zweites WinDirStat aufrufen mit dem Pfad des aktuellen Verzeichnisses.</li>
+			</ul>
+		</p>
+		<h3>Beispiele (nur NT und höher)</h3>
+		<p>
+			<ul>
+				<li>
+					<pre>echo %n & pause</pre>
+					Namen des aktuellen Verzeichnisses ausgeben.</li>
+				<li>
+					<pre>cd & pause</pre>
+					Aktuellen Pfad ausgeben und auf Tastendruck warten.</li>
+				<li>
+					<pre>cd .. && myzip "%n"</pre>
+					Aktuelles Verzeichnis komprimieren (mit dem hypothetischen Tool myzip).</li>
+			</ul>
+		</p>
+		<p>Die Bedeutung der Platzhalter %p, %n, %sp, %sn ist im Dialog angegeben. 
+			Vergessen Sie nicht, sie ggf. in Anführungszeichen einzuschließen.</p>
+		<h3>Aufbau der Kommandozeile</h3>
+		<p>Angenommen, Sie geben die Kommandozeile
+			<pre>xyz</pre>
+			ein. WinDirStat versucht dann, folgenden Prozess zu starten:
+			<pre>%COMSPEC% /c xyz</pre>
+		</p>
+		<h3>Weitere Optionen</h3>
+		<p>Geben Sie an, auf welche Elemente die Aktion anwendbar sein soll. Vorsicht bei
+		UNC-Pfaden: ein Command-Prompt kann keinen UNC-Pfad als Arbeitsverzeichnis haben.</p>
+		<p>Geben Sie an, ob die Aktion rekursiv auf alle Unterverzeichnisse angewendet 
+			werden soll (depth first).</p>
+		<p>Die restlichen Optionen müssten klar sein.</p>
+	</BODY>
+</html>

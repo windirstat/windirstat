@@ -1,0 +1,42 @@
+<html>
+	<head>
+		<title>Configuration</title>
+		<META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+		<meta name="vs_targetSchema" content="http://schemas.microsoft.com/intellisense/ie5">
+		<link rel="stylesheet" type="text/css" href="format.css">
+	</head>
+	<BODY>
+		<h2>Configuration</h2>
+		<h3>General</h3>
+		<p><u>Cross file system boundaries (only NT and higher)</u>. Under NTFS volumes can 
+			be mounted in directories. By default WinDirStat stops reading at these mount 
+			points, i.e. it shows only the usage of <i>one</i> file system. Here you can 
+			change this behavior. (No mount points are recognized on UNC drives.)
+		</p>
+		<p><u>Follow Junction Points (except Volume Mount Points) (only NT and higher)</u>.
+			Under NTFS target folders can be grafted onto another folder by using junction points.
+			(You need a third-party tool, e.g. awxlink, downloadable from 
+			<a href="http://www.arniworld.de/" target="_blank">http://www.arniworld.de/</a>, to create junction points.)
+			By default WinDirStat stops reading at these junction points. Here you can
+			change this behavior.
+		</p>
+		<p><u>List Style</u>. These options, grid and stripes, apply to all lists in WinDirStat.
+		</p>
+		<p><u>Language</u>. In addition to the built-in language English, this combo box 
+			offers those languages, for which a correspondig wdsrxxxx.dll exists. The 
+			setting takes effect next time when WinDirStat is started.</p>
+		<h3>Directory List</h3>
+		<p>Two options which control what the columns 'Subtree Percentage' and 'Percentage'
+		display during the scan. Colors for the subtree percentage presentation.
+		</p>
+		<h3>Treemap</h3>
+		<p>Squarification style, parameters for the cushion shading, grid lines, color of the 
+			selection rectangle.
+		</p>
+		<h3>Cleanups</h3>
+		<p>Here you can configure the <a href="userdefinedcleanups.htm">User Defined Cleanups</a>.
+		</p>
+		<h3>Report</h3>
+		<p>Administrators can customize the e-mail report feature here.</p>
+	</BODY>
+</html>

@@ -1,7 +1,8 @@
 // version.h - Version number. Used by all resource scripts and by aboutdlg.cpp.
 //
 // WinDirStat - Directory Statistics
-// Copyright (C) 2003-2004 Bernhard Seifert
+// Copyright (C) 2003-2005 Bernhard Seifert
+// Copyright (C) 2004-2006 Oliver Schneider (assarbad.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -43,9 +44,9 @@
 // Build categories. Uncomment _one_ line.
 //
 
-#define BC_DEVEL			// Development version. The usual setting. File version is 0.0.0.buildno.
+#define BC_DEVEL					// Development version. The usual setting. File version is 0.0.0.buildno.
 //#define BC_RELEASECANDIDATE		// Release candidate. Version number is relevant but not yet official. About-box shows x.y.zrcn. File version is x.y.z.buildno.
-//#define BC_RELEASE			// Set this only during official builds. About-box shows x.y.z. File version is x.y.z.buildno
+//#define BC_RELEASE				// Set this only during official builds. About-box shows x.y.z. File version is x.y.z.buildno
 
 // A release version must not contain debug information. Raise an error!
 #if defined(_DEBUG) && defined(BC_RELEASE)
@@ -54,19 +55,19 @@
 
 // This will not change to often, but the years need to be modified
 // regularly, so it can be in one central place
-#define VN_COPYRIGHTSTRING "Copyright (C) 2003-2005 Bernhard Seifert"
+#define VN_COPYRIGHTSTRING "Copyright (C) 2003-2005 Bernhard Seifert, (C) 2004-2006 Oliver Schneider"
 
 //-------------------------------------------------------------------
 // Version number. Relevant for BC_RELEASECANDIDATE and BC_RELEASE.
 //
 #define VERNUM_MAJOR		1
-#define VERNUM_MINOR		1
-#define VERNUM_REVISION		2
+#define VERNUM_MINOR		2
+#define VERNUM_REVISION		0
 // The following line is automatically incremented by linkcounter.exe.
 // Format: #define blank LINKCOUNT blanks decimal
 // Reset this to zero only when you increment VERNUM_MAJOR/MINOR/REVISION.
 
-#define LINKCOUNT  182
+#include "../common/buildnumber.h"
 
 //-------------------------------------------------------------------
 // Release candidate number. Relevant for BC_RELEASECANDIDATE.
@@ -120,7 +121,7 @@
 	#define VN_MINOR	VERNUM_MINOR
 	#define VN_REVISION	VERNUM_REVISION
 	#define VN_FILEFLAG	VS_FF_PRERELEASE
-	// The variant (debug or not/ unicode or not) is not relevant for resource DLLs, but for EXEs
+	// The variant (debug or not/ Unicode or not) is not relevant for resource DLLs, but for EXEs
 	#define VN_STRING_EXE	VN_STRING_DLL "rc" PPS(VERNUM_CANDIDATE) VERVARIANT
 
 #elif defined(BC_RELEASE)
@@ -129,7 +130,7 @@
 	#define VN_MINOR	VERNUM_MINOR
 	#define VN_REVISION	VERNUM_REVISION
 	#define VN_FILEFLAG	0
-	// The variant (debug or not/ unicode or not) is not relevant for resource DLLs, but for EXEs
+	// The variant (debug or not/ Unicode or not) is not relevant for resource DLLs, but for EXEs
 	#define VN_STRING_EXE	VN_STRING_DLL VERVARIANT
 
 #endif
@@ -163,6 +164,9 @@
 
 
 // $Log$
+// Revision 1.42  2006/07/04 20:45:16  assarbad
+// - See changelog for the changes of todays previous check-ins as well as this one!
+//
 // Revision 1.41  2005/11/08 20:10:55  assarbad
 // - Fixed minor bug. See changelog.txt for details. Sent for review to the reporter of the bug.
 //

@@ -1,0 +1,76 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<HTML>
+<HEAD>
+<meta name="GENERATOR" content="Microsoft&reg; HTML Help Workshop 4.1">
+<!-- Sitemap 1.0 -->
+</HEAD><BODY>
+<OBJECT type="text/site properties">
+	<param name="ImageType" value="Folder">
+</OBJECT>
+<UL>
+	<LI> <OBJECT type="text/sitemap">
+		<param name="Name" value="WinDirStat">
+		<param name="Local" value="windirstat.htm">
+		</OBJECT>
+	<LI> <OBJECT type="text/sitemap">
+		<param name="Name" value="Mi is van a k&ouml;nyvt&aacute;rszerkezetben?">
+		<param name="Local" value="whatisatree.htm">
+		</OBJECT>
+	<LI> <OBJECT type="text/sitemap">
+		<param name="Name" value="K&ouml;nyvt&aacute;r lista">
+		<param name="Local" value="directorytree.htm">
+		</OBJECT>
+	<LI> <OBJECT type="text/sitemap">
+		<param name="Name" value="Kiterjeszt&eacute;sek lista">
+		<param name="Local" value="extensionlist.htm">
+		</OBJECT>
+	<LI> <OBJECT type="text/sitemap">
+		<param name="Name" value="T&eacute;rk&eacute;pfa">
+		<param name="Local" value="treemap.htm">
+		</OBJECT>
+	<LI> <OBJECT type="text/sitemap">
+		<param name="Name" value="N&eacute;zetek &ouml;sszekapcsol&aacute;sa">
+		<param name="Local" value="coupling.htm">
+		</OBJECT>
+	<LI> <OBJECT type="text/sitemap">
+		<param name="Name" value="Meghajt&oacute; kijel&ouml;l&eacute;se p&aacute;rbesz&eacute;dablak">
+		<param name="Local" value="selectdrivesdialog.htm">
+		</OBJECT>
+	<LI> <OBJECT type="text/sitemap">
+		<param name="Name" value="Takar&iacute;t&aacute;s">
+		<param name="Local" value="actions.htm">
+		</OBJECT>
+	<LI> <OBJECT type="text/sitemap">
+		<param name="Name" value="Felhaszn&aacute;l&oacute; &aacute;ltal megadott takar&iacute;t&aacute;s">
+		<param name="Local" value="userdefinedcleanups.htm">
+		</OBJECT>
+	<LI> <OBJECT type="text/sitemap">
+		<param name="Name" value="Be&aacute;ll&iacute;t&aacute;s">
+		<param name="Local" value="configuration.htm">
+		</OBJECT>
+	<LI> <OBJECT type="text/sitemap">
+		<param name="Name" value="Rendez&eacute;s">
+		<param name="Local" value="sorting.htm">
+		</OBJECT>
+	<LI> <OBJECT type="text/sitemap">
+		<param name="Name" value="Jelmagyar&aacute;zat">
+		<param name="Local" value="legend.htm">
+		</OBJECT>
+	<LI> <OBJECT type="text/sitemap">
+		<param name="Name" value="Gyakran Ism&eacute;telt K&eacute;rd&eacute;sek">
+		<param name="Local" value="faq.htm">
+		</OBJECT>
+	<LI> <OBJECT type="text/sitemap">
+		<param name="Name" value="Korl&aacute;toz&aacute;sok">
+		<param name="Local" value="limits.htm">
+		</OBJECT>
+	<LI> <OBJECT type="text/sitemap">
+		<param name="Name" value="Elt&aacute;vol&iacute;t&aacute;s">
+		<param name="Local" value="deinstallation.htm">
+		</OBJECT>
+	<LI> <OBJECT type="text/sitemap">
+		<param name="Name" value="GNU Free Documentation License">
+		<param name="Local" value="gnufdl.htm">
+		</OBJECT>
+</UL>
+</BODY></HTML>

@@ -1,7 +1,8 @@
-// colorbutton.cpp	- Implementation of CColorButton
+// colorbutton.cpp - Implementation of CColorButton
 //
 // WinDirStat - Directory Statistics
-// Copyright (C) 2003-2004 Bernhard Seifert
+// Copyright (C) 2003-2005 Bernhard Seifert
+// Copyright (C) 2004-2006 Oliver Schneider (assarbad.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -22,7 +23,7 @@
 // Last modified: $Date$
 
 #include "stdafx.h"
-#include ".\colorbutton.h"
+#include "colorbutton.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -37,7 +38,7 @@ END_MESSAGE_MAP()
 
 CColorButton::CPreview::CPreview()
 {
-	m_color= 0;
+	m_color = 0;
 }
 
 COLORREF CColorButton::CPreview::GetColor()
@@ -47,9 +48,11 @@ COLORREF CColorButton::CPreview::GetColor()
 
 void CColorButton::CPreview::SetColor(COLORREF color)
 {
-	m_color= color;
-	if (IsWindow(m_hWnd))
+	m_color = color;
+	if(IsWindow(m_hWnd))
+	{
 		InvalidateRect(NULL);
+	}
 }
 
 void CColorButton::CPreview::OnPaint()
@@ -59,11 +62,13 @@ void CColorButton::CPreview::OnPaint()
 	CRect rc;
 	GetClientRect(rc);
 
-	dc.DrawEdge(rc, EDGE_BUMP, BF_RECT|BF_ADJUST);
+	dc.DrawEdge(rc, EDGE_BUMP, BF_RECT | BF_ADJUST);
 
-	COLORREF color= m_color;
-	if ((GetParent()->GetStyle() & WS_DISABLED) != 0)
-		color= GetSysColor(COLOR_BTNFACE);
+	COLORREF color = m_color;
+	if((GetParent()->GetStyle() & WS_DISABLED) != 0)
+	{
+		color = GetSysColor(COLOR_BTNFACE);
+	}
 	dc.FillSolidRect(rc, color);
 }
 
@@ -97,15 +102,15 @@ void CColorButton::SetColor(COLORREF color)
 
 void CColorButton::OnPaint()
 {
-	if (m_preview.m_hWnd == NULL)
+	if(NULL == m_preview.m_hWnd)
 	{
 		CRect rc;
 		GetClientRect(rc);
 
-		rc.right= rc.left + rc.Width() / 3;
+		rc.right = rc.left + rc.Width() / 3;
 		rc.DeflateRect(4, 4);
 
-		VERIFY(m_preview.Create(AfxRegisterWndClass(0, 0, 0, 0), _T(""), WS_CHILD|WS_VISIBLE, rc, this, 4711));
+		VERIFY(m_preview.Create(AfxRegisterWndClass(0, 0, 0, 0), strEmpty, WS_CHILD | WS_VISIBLE, rc, this, 4711));
 
 		ModifyStyle(0, WS_CLIPCHILDREN);
 	}
@@ -114,21 +119,23 @@ void CColorButton::OnPaint()
 
 void CColorButton::OnDestroy()
 {
-	if (IsWindow(m_preview.m_hWnd))
+	if(IsWindow(m_preview.m_hWnd))
+	{
 		m_preview.DestroyWindow();
+	}
 	CButton::OnDestroy();
 }
 
 void CColorButton::OnBnClicked()
 {
 	CColorDialog dlg(GetColor());
-	if (IDOK == dlg.DoModal())
+	if(IDOK == dlg.DoModal())
 	{
 		SetColor(dlg.GetColor());
 		NMHDR hdr;
-		hdr.hwndFrom= m_hWnd;
-		hdr.idFrom= GetDlgCtrlID();
-		hdr.code= COLBN_CHANGED;
+		hdr.hwndFrom = m_hWnd;
+		hdr.idFrom = GetDlgCtrlID();
+		hdr.code = COLBN_CHANGED;
 
 		GetParent()->SendMessage(WM_NOTIFY, GetDlgCtrlID(), (LPARAM)&hdr);
 	}
@@ -137,12 +144,17 @@ void CColorButton::OnBnClicked()
 
 void CColorButton::OnEnable(BOOL bEnable)
 {
-	if (IsWindow(m_preview.m_hWnd))
+	if(IsWindow(m_preview.m_hWnd))
+	{
 		m_preview.InvalidateRect(NULL);
+	}
 	CButton::OnEnable(bEnable);
 }
 
 // $Log$
+// Revision 1.6  2006/07/04 20:45:22  assarbad
+// - See changelog for the changes of todays previous check-ins as well as this one!
+//
 // Revision 1.5  2004/11/13 08:17:07  bseifert
 // Remove blanks in Unicode Configuration names.
 //

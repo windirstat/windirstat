@@ -1,7 +1,8 @@
-// windirstat.h	- Main header for the windirstat application
+// windirstat.h - Main header for the windirstat application
 //
 // WinDirStat - Directory Statistics
-// Copyright (C) 2003-2004 Bernhard Seifert
+// Copyright (C) 2003-2005 Bernhard Seifert
+// Copyright (C) 2004-2006 Oliver Schneider (assarbad.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -115,8 +116,8 @@ protected:
 	CPsapi m_psapi;							// Dynamically linked psapi.dll (for RAM usage)
 	CGetCompressedFileSizeApi m_comprSize;	// Dynamically linked API GetCompressedFileSize()
 	CGetDiskFreeSpaceApi m_freeSpace;		// For compatibility with W95 first release!
-	LONGLONG m_workingSet;					// Current working set (RAM usage)
-	LONGLONG m_pageFaults;					// Page faults so far (unused)
+	ULONGLONG m_workingSet;					// Current working set (RAM usage)
+	ULONGLONG m_pageFaults;					// Page faults so far (unused)
 	DWORD m_lastPeriodicalRamUsageUpdate;	// Tick count
 	COLORREF m_altColor;					// Coloring of compressed items
 	COLORREF m_altEncryptionColor;			// Coloring of encrypted items
@@ -131,6 +132,9 @@ protected:
 
 
 // $Log$
+// Revision 1.15  2006/07/04 20:45:23  assarbad
+// - See changelog for the changes of todays previous check-ins as well as this one!
+//
 // Revision 1.14  2005/10/01 11:21:08  assarbad
 // *** empty log message ***
 //

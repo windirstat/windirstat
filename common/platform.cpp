@@ -1,7 +1,8 @@
-// platform.cpp	- Implementation of PlatformIsWindows9x()
+// platform.cpp - Implementation of PlatformIsWindows9x()
 //
 // WinDirStat - Directory Statistics
-// Copyright (C) 2003-2004 Bernhard Seifert
+// Copyright (C) 2003-2005 Bernhard Seifert
+// Copyright (C) 2004-2006 Oliver Schneider (assarbad.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -25,26 +26,29 @@
 #define WINVER 0x0400		// Change this to the appropriate value to target Windows 98 and Windows 2000 or later.
 #endif
 
-#include <afxwin.h>         // MFC  core and standard components
+#include <afxwin.h> // MFC  core and standard components
 #include "platform.h"
 
 bool PlatformIsWindows9x()
 {
 	OSVERSIONINFO osvi;
 	ZeroMemory(&osvi, sizeof(osvi));
-	osvi.dwOSVersionInfoSize= sizeof(osvi);
+	osvi.dwOSVersionInfoSize = sizeof(osvi);
 
-	if (!GetVersionEx(&osvi))
+	if(!GetVersionEx(&osvi))
 	{
 		TRACE("GetVersionEx() failed.\r\n");
 		return false;
 	}
 
-	return (osvi.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS);
+	return (VER_PLATFORM_WIN32_WINDOWS == osvi.dwPlatformId);
 }
 
 
 // $Log$
+// Revision 1.5  2006/07/04 20:45:16  assarbad
+// - See changelog for the changes of todays previous check-ins as well as this one!
+//
 // Revision 1.4  2004/11/13 17:25:17  bseifert
 // Test-commit of platform.cpp
 //

@@ -1,5 +1,26 @@
-// CheckForUpdateDlg.cpp : implementation file
+// CheckForUpdateDlg.cpp - implementation file
 //
+// WinDirStat - Directory Statistics
+// Copyright (C) 2003-2005 Bernhard Seifert
+// Copyright (C) 2004-2006 Oliver Schneider (assarbad.net)
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+//
+// Author: bseifert@users.sourceforge.net, bseifert@daccord.net
+//
+// Last modified: $Date$
 
 #include "stdafx.h"
 #include "windirstat.h"
@@ -66,7 +87,6 @@ void CCheckForUpdateDlg::OnShowWindow(BOOL bShow, UINT nStatus)
 	CDialog::OnShowWindow(bShow, nStatus);
 
 	UpdateFromUrl(_T(IDSS_CHECKUPDATESRV), _T(IDSS_CHECKUPDATEURI), IDXS_CHECKUPDATEPORT);
-
 }
 
 void CCheckForUpdateDlg::UpdateFromUrl(CString server, CString uri, INTERNET_PORT port)
@@ -79,22 +99,22 @@ void CCheckForUpdateDlg::UpdateFromUrl(CString server, CString uri, INTERNET_POR
 		const UINT CHUNK_SIZE = 0x800;
 		// We pass the current version via the agent string!
 		// It contains all information (Ansi/Unicode/Debug or not ... etc)
-		WDSagent.Format(_T("WinDirStat/%d.%d.%d [Build %d] (%s%4.4X)%s"), VN_MAJOR, VN_MINOR, VN_REVISION, VN_BUILD, _T(UASPEC), GetApp()->GetLangid(), _T(DRSPEC));
+		WDSagent.Format(TEXT("WinDirStat/%d.%d.%d [Build %d] (%s%4.4X)%s"), VN_MAJOR, VN_MINOR, VN_REVISION, VN_BUILD, _T(UASPEC), GetApp()->GetLangid(), _T(DRSPEC));
 		// Create a session
-		DescriptiveText.SetWindowText(_T("Trying to connect ..."));
+		DescriptiveText.SetWindowText(TEXT("Trying to connect ..."));
 		CInternetSession Session(WDSagent, 1, INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, INTERNET_FLAG_DONT_CACHE);
 		// Connect to our server
-		DescriptiveText.SetWindowText(_T("Establishing link to server ..."));
+		DescriptiveText.SetWindowText(TEXT("Establishing link to server ..."));
 		CHttpConnection* pHttpConn = Session.GetHttpConnection(server, INTERNET_FLAG_NO_AUTO_REDIRECT, port, NULL, NULL);
 		// Prepare fetching the update info ...
-		DescriptiveText.SetWindowText(_T("Fetching file ..."));
-		CHttpFile* pHttpFile = pHttpConn->OpenRequest(_T("GET"), uri, NULL, 1, NULL, NULL, INTERNET_FLAG_KEEP_CONNECTION | INTERNET_FLAG_EXISTING_CONNECT | INTERNET_FLAG_DONT_CACHE | INTERNET_FLAG_RELOAD);
+		DescriptiveText.SetWindowText(TEXT("Fetching file ..."));
+		CHttpFile* pHttpFile = pHttpConn->OpenRequest(TEXT("GET"), uri, NULL, 1, NULL, NULL, INTERNET_FLAG_KEEP_CONNECTION | INTERNET_FLAG_EXISTING_CONNECT | INTERNET_FLAG_DONT_CACHE | INTERNET_FLAG_RELOAD);
 		// Tell what kind of data we expect
-		pHttpFile->AddRequestHeaders(_T("Content-Type: text/plain; charset=utf-8"));
+		pHttpFile->AddRequestHeaders(TEXT("Content-Type: text/plain; charset=utf-8"));
 		pHttpFile->SendRequest();
 		// Query the status
 		pHttpFile->QueryInfoStatusCode(dwStatusCode);
-		if(dwStatusCode == HTTP_STATUS_OK)
+		if(HTTP_STATUS_OK == dwStatusCode)
 		{
 			CString Response;
 			CHAR szBuf[CHUNK_SIZE] = {0};
@@ -105,8 +125,10 @@ void CCheckForUpdateDlg::UpdateFromUrl(CString server, CString uri, INTERNET_POR
 				nBytesRead = pHttpFile->Read((void*) szBuf, CHUNK_SIZE);
 				Response += CString(szBuf);
 				if(nBytesRead < CHUNK_SIZE)
-				  break;
-			} while(nBytesRead == CHUNK_SIZE);
+				{
+					break;
+				}
+			} while(CHUNK_SIZE == nBytesRead);
 
 			DescriptiveText.SetWindowText(Response);
 		}

@@ -1,7 +1,8 @@
-// FileFindWDS.cpp	- Implementation of CFileFindWDS
+// FileFindWDS.cpp - Implementation of CFileFindWDS
 //
 // WinDirStat - Directory Statistics
-// Copyright (C) 2004 Assarbad
+// Copyright (C) 2003-2005 Bernhard Seifert
+// Copyright (C) 2004-2006 Oliver Schneider (assarbad.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -39,10 +40,14 @@ DWORD CFileFindWDS::GetAttributes() const
 	ASSERT(m_hContext != NULL);
 	ASSERT_VALID(this);
 
-	if (m_pFoundInfo != NULL)
+	if(m_pFoundInfo != NULL)
+	{
 		return ((LPWIN32_FIND_DATA)m_pFoundInfo)->dwFileAttributes;
+	}
 	else
+	{
 		return INVALID_FILE_ATTRIBUTES;
+	}
 }
 
 // Wrapper for file size retrieval
@@ -51,24 +56,33 @@ DWORD CFileFindWDS::GetAttributes() const
 ULONGLONG CFileFindWDS::GetCompressedLength() const
 {
 	// Try to use the NT-specific API
-	if (GetApp()->GetComprSizeApi()->IsSupported())
+	if(GetApp()->GetComprSizeApi()->IsSupported())
 	{
 		ULARGE_INTEGER ret;
 		ret.LowPart = GetApp()->GetComprSizeApi()->GetCompressedFileSize(GetFilePath(), &ret.HighPart);
 		
 		// Check for error
-		if ((GetLastError() != NO_ERROR) && (ret.LowPart == INVALID_FILE_SIZE))
-			// IN case of an error return size from CFileFind object
+		if((GetLastError() != ERROR_SUCCESS) && (ret.LowPart == INVALID_FILE_SIZE))
+		{
+			// In case of an error return size from CFileFind object
 			return GetLength();
+		}
 		else
+		{
 			return ret.QuadPart;
+		}
 	}
 	else
+	{
 		// Use the file size already found by the finder object
 		return GetLength();
+	}
 }
 
 // $Log$
+// Revision 1.4  2006/07/04 20:45:22  assarbad
+// - See changelog for the changes of todays previous check-ins as well as this one!
+//
 // Revision 1.3  2004/11/29 07:07:47  bseifert
 // Introduced SRECT. Saves 8 Bytes in sizeof(CItem). Formatting changes.
 //

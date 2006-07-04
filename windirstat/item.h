@@ -1,7 +1,8 @@
-// item.h	- Declaration of CItem
+// item.h - Declaration of CItem
 //
 // WinDirStat - Directory Statistics
-// Copyright (C) 2003-2004 Bernhard Seifert
+// Copyright (C) 2003-2005 Bernhard Seifert
+// Copyright (C) 2004-2006 Oliver Schneider (assarbad.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -25,9 +26,9 @@
 
 #include "Treelistcontrol.h"
 #include "treemap.h"
-#include "dirstatdoc.h"		// CExtensionData
-#include "FileFindWDS.h"		// CFileFindWDS
-
+#include "dirstatdoc.h" // CExtensionData
+#include "FileFindWDS.h" // CFileFindWDS
+#include "../common/wds_constants.h"
 
 // Columns
 enum
@@ -64,14 +65,14 @@ inline bool IsLeaf(ITEMTYPE t) { return t == IT_FILE || t == IT_FREESPACE || t =
 // Compare FILETIMEs
 inline bool operator< (const FILETIME& t1, const FILETIME& t2)
 {
-	ULARGE_INTEGER& u1= (ULARGE_INTEGER&)t1;
-	ULARGE_INTEGER& u2= (ULARGE_INTEGER&)t2;
+	ULONGLONG& u1 = (ULONGLONG&)t1;
+	ULONGLONG& u2 = (ULONGLONG&)t2;
 
-	return (u1.QuadPart < u2.QuadPart);
+	return (u1 < u2);
 }
 
 // Compare FILETIMEs
-inline bool operator== (const FILETIME& t1, const FILETIME& t2)
+inline bool operator == (const FILETIME& t1, const FILETIME& t2)
 {
 	return t1.dwLowDateTime == t2.dwLowDateTime && t1.dwHighDateTime == t2.dwHighDateTime;
 }
@@ -102,7 +103,7 @@ class CItem: public CTreeListItem, public CTreemap::Item
 	struct FILEINFO
 	{
 		CString name;
-		LONGLONG length;
+		ULONGLONG length;
 		FILETIME lastWriteTime;
 		DWORD attributes;
 	};
@@ -117,7 +118,7 @@ class CItem: public CTreeListItem, public CTreemap::Item
 	};
 
 public:
-	CItem(ITEMTYPE type, LPCTSTR name, bool dontFollow=false);
+	CItem(ITEMTYPE type, LPCTSTR name, bool dontFollow = false);
 	~CItem();
 
 	// CTreeListItem Interface
@@ -137,15 +138,15 @@ public:
 	virtual        COLORREF TmiGetGraphColor()         const { return GetGraphColor(); }
 	virtual             int TmiGetChildrenCount()      const { return GetChildrenCount(); }
 	virtual CTreemap::Item *TmiGetChild(int c)         const { return GetChild(c); }
-	virtual        LONGLONG TmiGetSize()               const { return GetSize(); }
+	virtual        ULONGLONG TmiGetSize()               const { return GetSize(); }
 
 	// CItem
 	static int GetSubtreePercentageWidth();
 	static CItem *FindCommonAncestor(const CItem *item1, const CItem *item2);
 
 	bool IsAncestorOf(const CItem *item) const;
-	LONGLONG GetProgressRange() const;
-	LONGLONG GetProgressPos() const;
+	ULONGLONG GetProgressRange() const;
+	ULONGLONG GetProgressPos() const;
 	const CItem *UpwardGetRoot() const;
 	void UpdateLastChange();
 	CItem *GetChild(int i) const;
@@ -154,15 +155,19 @@ public:
 	void AddChild(CItem *child);
 	void RemoveChild(int i);
 	void RemoveAllChildren();
-	void UpwardAddSubdirs(LONGLONG dirCount);
-	void UpwardAddFiles(LONGLONG fileCount);
-	void UpwardAddSize(LONGLONG bytes);
-	void UpwardAddReadJobs(/* signed */LONGLONG count);
+	void UpwardAddSubdirs(ULONGLONG dirCount);
+	void UpwardSubtractSubdirs(ULONGLONG dirCount);
+	void UpwardAddFiles(ULONGLONG fileCount);
+	void UpwardSubtractFiles(ULONGLONG fileCount);
+	void UpwardAddSize(ULONGLONG bytes);
+	void UpwardSubtractSize(ULONGLONG bytes);
+	void UpwardAddReadJobs(ULONGLONG count);
+	void UpwardSubtractReadJobs(ULONGLONG count);
 	void UpwardUpdateLastChange(const FILETIME& t);
 	void UpwardRecalcLastChange();
-	LONGLONG GetSize() const;
-	void SetSize(LONGLONG ownSize);
-	LONGLONG GetReadJobs() const;
+	ULONGLONG GetSize() const;
+	void SetSize(ULONGLONG ownSize);
+	ULONGLONG GetReadJobs() const;
 	FILETIME GetLastChange() const;
 	void SetLastChange(const FILETIME& t);
 	void SetAttributes(DWORD attr);
@@ -178,11 +183,11 @@ public:
 	CString GetReportPath() const;
 	CString GetName() const;
 	CString GetExtension() const;
-	LONGLONG GetFilesCount() const;
-	LONGLONG GetSubdirsCount() const;
-	LONGLONG GetItemsCount() const;
+	ULONGLONG GetFilesCount() const;
+	ULONGLONG GetSubdirsCount() const;
+	ULONGLONG GetItemsCount() const;
 	bool IsReadJobDone() const;
-	void SetReadJobDone(bool done=true);
+	void SetReadJobDone(bool done = true);
 	bool IsDone() const;
 	void SetDone();
 	DWORD GetTicksWorked() const;
@@ -203,10 +208,10 @@ public:
 
 private:
 	static int __cdecl _compareBySize(const void *p1, const void *p2);
-	LONGLONG GetProgressRangeMyComputer() const;
-	LONGLONG GetProgressPosMyComputer() const;
-	LONGLONG GetProgressRangeDrive() const;
-	LONGLONG GetProgressPosDrive() const;
+	ULONGLONG GetProgressRangeMyComputer() const;
+	ULONGLONG GetProgressPosMyComputer() const;
+	ULONGLONG GetProgressRangeDrive() const;
+	ULONGLONG GetProgressPosDrive() const;
 	COLORREF GetGraphColor() const;
 	bool MustShowReadJobs() const;
 	COLORREF GetPercentageColor() const;
@@ -221,16 +226,16 @@ private:
 
 	ITEMTYPE m_type;			// Indicates our type. See ITEMTYPE.
 	CString m_name;				// Display name
-	LONGLONG m_size;			// OwnSize, if IT_FILE or IT_FREESPACE, or IT_UNKNOWN; SubtreeTotal else.
-	LONGLONG m_files;			// # Files in subtree
-	LONGLONG m_subdirs;			// # Folder in subtree
+	ULONGLONG m_size;			// OwnSize, if IT_FILE or IT_FREESPACE, or IT_UNKNOWN; SubtreeTotal else.
+	ULONGLONG m_files;			// # Files in subtree
+	ULONGLONG m_subdirs;			// # Folder in subtree
 	FILETIME m_lastChange;		// Last modification time OF SUBTREE
 	unsigned char m_attributes;	// Packed file attributes of the item
 
 	bool m_readJobDone;			// FindFiles() (our own read job) is finished.
 	bool m_done;				// Whole Subtree is done.
 	DWORD m_ticksWorked;		// ms time spent on this item.
-	LONGLONG m_readJobs;		// # "read jobs" in subtree.
+	ULONGLONG m_readJobs;		// # "read jobs" in subtree.
 
 
 	// Our children. When "this" is set to "done", this array is sorted by child size.
@@ -242,6 +247,9 @@ private:
 
 
 // $Log$
+// Revision 1.16  2006/07/04 20:45:23  assarbad
+// - See changelog for the changes of todays previous check-ins as well as this one!
+//
 // Revision 1.15  2004/11/29 07:07:47  bseifert
 // Introduced SRECT. Saves 8 Bytes in sizeof(CItem). Formatting changes.
 //

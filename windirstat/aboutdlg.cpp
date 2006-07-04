@@ -1,7 +1,8 @@
-// aboutdlg.cpp		- Implementation of the StartAboutDialog() function
+// aboutdlg.cpp - Implementation of the StartAboutDialog() function
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
+// Copyright (C) 2004-2006 Oliver Schneider (assarbad.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -24,7 +25,7 @@
 #include "stdafx.h"
 #include "windirstat.h"
 #include "../common/version.h"
-#include "./aboutdlg.h"
+#include "aboutdlg.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -54,13 +55,17 @@ namespace
 		HGLOBAL hresource = NULL;
 		try
 		{
-			HRSRC hrsrc = FindResource(dll, MAKEINTRESOURCE(id), _T("TEXT"));
-			if (hrsrc == NULL)
+			HRSRC hrsrc = FindResource(dll, MAKEINTRESOURCE(id), TEXT("TEXT"));
+			if(NULL == hrsrc)
+			{
 				MdThrowLastWinerror();
+			}
 
 			DWORD dwSize = SizeofResource(dll, hrsrc);
-			if (dwSize == 0)
+			if(0 == dwSize)
+			{
 				MdThrowLastWinerror();
+			}
 
 			hresource = LoadResource(dll, hrsrc);
 			const BYTE *pData = (const BYTE *)LockResource(hresource);
@@ -75,8 +80,10 @@ namespace
 			pe->Delete();
 		}
 
-		if (hresource != NULL)
+		if(hresource != NULL)
+		{
 			FreeResource(hresource);
+		}
 
 		return s;
 	}
@@ -122,7 +129,7 @@ void CAboutDlg::CMyTabControl::Initialize()
 
 	rc.top = rcItem.bottom;
 
-	VERIFY(m_text.CreateEx(0, WS_CHILD|WS_VISIBLE|WS_BORDER | ES_CENTER|ES_MULTILINE|ES_READONLY, rc, this, RE_CONTROL));
+	VERIFY(m_text.Create(WS_CHILD | WS_VISIBLE | WS_BORDER | ES_CENTER | ES_MULTILINE | ES_READONLY, rc, this, RE_CONTROL));
 	SetPageText(TAB_ABOUT);
 }
 
@@ -136,24 +143,34 @@ void CAboutDlg::CMyTabControl::SetPageText(int tab)
 	switch (tab)
 	{
 	case TAB_ABOUT:
-		text.FormatMessage(IDS_ABOUT_ABOUTTEXTss, GetAuthorEmail(), GetWinDirStatHomepage());
+		{
+			text.FormatMessage(IDS_ABOUT_ABOUTTEXTss, GetAuthorEmail(), GetWinDirStatHomepage());
+		}
 		break;
 	case TAB_AUTHORS:
-		text.FormatMessage(IDS_ABOUT_AUTHORSTEXTs, GetAuthorEmail());
-		translators.LoadString(IDS_TRANSLATORS);
-		text += translators;
-		// Anti-spam: avoid e-mail addresses in source-code:
-		text.Replace(_T('#'), _T('@'));
+		{
+			text.FormatMessage(IDS_ABOUT_AUTHORSTEXTs, GetAuthorEmail());
+			translators.LoadString(IDS_TRANSLATORS);
+			text += translators;
+			// Anti-spam: avoid e-mail addresses in source-code:
+			text.Replace(chrSharp, chrAt);
+		}
 		break;
 	case TAB_THANKSTO:
-		text.LoadString(IDS_ABOUT_THANKSTOTEXT);
+		{
+			text.LoadString(IDS_ABOUT_THANKSTOTEXT);
+		}
 		break;
 	case TAB_LICENSE:
-		text = GetTextResource(IDR_LICENSE, NULL);
-		newStyle = ES_LEFT;
+		{
+			text = GetTextResource(IDR_LICENSE, NULL);
+			newStyle = ES_LEFT;
+		}
 		break;
 	default:
-		ASSERT(0);
+		{
+			ASSERT(0);
+		}
 	}
 	CRect rc;
 	m_text.GetWindowRect(rc);
@@ -161,14 +178,17 @@ void CAboutDlg::CMyTabControl::SetPageText(int tab)
 
 	DWORD style = m_text.GetStyle();
 	style &= ~ES_CENTER;
-	style |= newStyle;
-	style |= WS_VSCROLL;
+	style |= newStyle | WS_VSCROLL;
 
-	DWORD exstyle= m_text.GetExStyle();
+	DWORD exstyle = m_text.GetExStyle();
 
 	m_text.DestroyWindow();
 
-	m_text.CreateEx(exstyle, style, rc, this, RE_CONTROL);
+	m_text.Create(style, rc, this, RE_CONTROL);
+	if(exstyle)
+	{
+		m_text.ModifyStyleEx(0, exstyle);
+	}
 
 	m_text.SetAutoURLDetect();
 	m_text.SetEventMask(ENM_LINK | ENM_KEYEVENTS);
@@ -187,15 +207,15 @@ END_MESSAGE_MAP()
 
 void CAboutDlg::CMyTabControl::OnEnLinkText(NMHDR *pNMHDR, LRESULT *pResult)
 {
-	ENLINK *el= reinterpret_cast<ENLINK *>(pNMHDR);
+	ENLINK *el = reinterpret_cast<ENLINK *>(pNMHDR);
 	*pResult = 0;
 
-	if (el->msg == WM_LBUTTONDOWN)
+	if(WM_LBUTTONDOWN == el->msg)
 	{
 		CString link;
 		m_text.GetTextRange(el->chrg.cpMin, el->chrg.cpMax, link);
 
-		ShellExecute(*this, NULL, link, NULL, _T(""), SW_SHOWNORMAL);
+		ShellExecute(*this, NULL, link, NULL, strEmpty, SW_SHOWNORMAL);
 	}
 }
 
@@ -204,7 +224,7 @@ void CAboutDlg::CMyTabControl::OnEnMsgFilter(NMHDR *pNMHDR, LRESULT *pResult)
 	MSGFILTER *mf = reinterpret_cast<MSGFILTER *>(pNMHDR);
 	*pResult = 0;
 
-	if (mf->msg == WM_KEYDOWN && (mf->wParam == VK_ESCAPE || mf->wParam == VK_TAB))
+	if(WM_KEYDOWN == mf->msg && (VK_ESCAPE == mf->wParam || VK_TAB == mf->wParam))
 	{
 		// Move the focus back to the Tab control
 		SetFocus();
@@ -215,12 +235,11 @@ void CAboutDlg::CMyTabControl::OnEnMsgFilter(NMHDR *pNMHDR, LRESULT *pResult)
 	}
 }
 
-
 void CAboutDlg::CMyTabControl::OnSize(UINT nType, int cx, int cy)
 {
 	CTabCtrl::OnSize(nType, cx, cy);
 
-	if (IsWindow(m_text.m_hWnd))
+	if(IsWindow(m_text.m_hWnd))
 	{
 		CRect rc;
 		GetClientRect(rc);
@@ -239,7 +258,7 @@ void CAboutDlg::CMyTabControl::OnSize(UINT nType, int cx, int cy)
 
 CAboutDlg::CAboutDlg() 
 	: CDialog(CAboutDlg::IDD)
-	, m_layout(this, _T("aboutdlg"))
+	, m_layout(this, TEXT("aboutdlg"))
 {
 }
 
@@ -248,7 +267,7 @@ CString CAboutDlg::GetAppVersion()
 	USES_CONVERSION;
 
 	CString s;
-	s.Format(_T("WinDirStat %s"), A2T(VN_STRING_EXE));
+	s.Format(TEXT("WinDirStat %s"), A2T(VN_STRING_EXE));
 	return s;
 }
 
@@ -309,6 +328,9 @@ void CAboutDlg::OnDestroy()
 }
 
 // $Log$
+// Revision 1.23  2006/07/04 20:45:22  assarbad
+// - See changelog for the changes of todays previous check-ins as well as this one!
+//
 // Revision 1.22  2005/10/01 11:21:08  assarbad
 // *** empty log message ***
 //

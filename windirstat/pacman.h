@@ -1,7 +1,8 @@
-// pacman.h	- Declaration of CPacman
+// pacman.h - Declaration of CPacman
 //
 // WinDirStat - Directory Statistics
-// Copyright (C) 2003-2004 Bernhard Seifert
+// Copyright (C) 2003-2005 Bernhard Seifert
+// Copyright (C) 2004-2006 Oliver Schneider (assarbad.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -34,7 +35,7 @@ public:
 	void SetSpeed(double speed);
 	void Reset();
 	void Start(bool start);
-	bool Drive(LONGLONG readJobs);	// return: true -> should be redrawn.
+	bool Drive(ULONGLONG readJobs);	// return: true -> should be redrawn.
 	void Draw(CDC *pdc, const CRect& rc);
 
 private:
@@ -54,6 +55,9 @@ private:
 };
 
 // $Log$
+// Revision 1.5  2006/07/04 20:45:23  assarbad
+// - See changelog for the changes of todays previous check-ins as well as this one!
+//
 // Revision 1.4  2004/11/05 16:53:07  assarbad
 // Added Date and History tag where appropriate.
 //

@@ -1,7 +1,8 @@
-// ModalShellApi.cpp	- Implementation of CModalShellApi
+// ModalShellApi.cpp - Implementation of CModalShellApi
 //
 // WinDirStat - Directory Statistics
-// Copyright (C) 2003-2004 Bernhard Seifert
+// Copyright (C) 2003-2005 Bernhard Seifert
+// Copyright (C) 2004-2006 Oliver Schneider (assarbad.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -50,16 +51,16 @@ bool CModalShellApi::IsRecycleBinApiSupported()
 
 void CModalShellApi::EmptyRecycleBin()
 {
-	m_operation= EMPTY_RECYCLE_BIN;
+	m_operation = EMPTY_RECYCLE_BIN;
 
 	DoModal();
 }
 
 void CModalShellApi::DeleteFile(LPCTSTR fileName, bool toRecycleBin)
 {
-	m_operation= DELETE_FILE;
-	m_fileName= fileName;
-	m_toRecycleBin= toRecycleBin;
+	m_operation = DELETE_FILE;
+	m_fileName = fileName;
+	m_toRecycleBin = toRecycleBin;
 	
 	DoModal();
 }
@@ -69,35 +70,41 @@ void CModalShellApi::DoOperation()
 	switch (m_operation)
 	{
 	case EMPTY_RECYCLE_BIN:
-		DoEmptyRecycleBin();
+		{
+			DoEmptyRecycleBin();
+		}
 		break;
 
 	case DELETE_FILE:
-		DoDeleteFile();
+		{
+			DoDeleteFile();
+		}
 		break;
 	}
 }
 
 void CModalShellApi::DoEmptyRecycleBin()
 {
-	HRESULT hr= m_rbapi.SHEmptyRecycleBin(*AfxGetMainWnd(), NULL, 0);
-	if (FAILED(hr))
-		AfxMessageBox(MdGetWinerrorText(hr));
+	HRESULT hr = m_rbapi.SHEmptyRecycleBin(*AfxGetMainWnd(), NULL, 0);
+	if(FAILED(hr))
+	{
+		AfxMessageBox(MdGetWinErrorText(hr));
+	}
 }
 
 void CModalShellApi::DoDeleteFile()
 {
-	int len= m_fileName.GetLength();
-	LPTSTR psz= m_fileName.GetBuffer(len + 2);
+	int len = m_fileName.GetLength();
+	LPTSTR psz = m_fileName.GetBuffer(len + 2);
 	psz[len + 1]= 0;
 
 	SHFILEOPSTRUCT sfos;
 	ZeroMemory(&sfos, sizeof(sfos));
-	sfos.wFunc= FO_DELETE;
-	sfos.pFrom= psz;
-	sfos.fFlags= m_toRecycleBin ? FOF_ALLOWUNDO : 0;
+	sfos.wFunc = FO_DELETE;
+	sfos.pFrom = psz;
+	sfos.fFlags = m_toRecycleBin ? FOF_ALLOWUNDO : 0;
 
-	sfos.hwnd= *AfxGetMainWnd();
+	sfos.hwnd = *AfxGetMainWnd();
 	
 	(void)SHFileOperation(&sfos);
 
@@ -105,6 +112,9 @@ void CModalShellApi::DoDeleteFile()
 }
 
 // $Log$
+// Revision 1.6  2006/07/04 20:45:22  assarbad
+// - See changelog for the changes of todays previous check-ins as well as this one!
+//
 // Revision 1.5  2004/11/13 08:17:07  bseifert
 // Remove blanks in Unicode Configuration names.
 //

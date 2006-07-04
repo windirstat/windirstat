@@ -1,0 +1,52 @@
+<html>
+	<head>
+		<title>Często zadawane pytania</title>
+		<META http-equiv="Content-Type" content="text/html; charset=iso-8859-2">
+		<meta content="http://schemas.microsoft.com/intellisense/ie5" name="vs_targetSchema">
+		<LINK href="format.css" type="text/css" rel="stylesheet">
+		<style type="text/css">
+		<!--
+			h3 { margin-bottom:6pt; }
+			p { margin-top:0pt; }
+		-->
+		</style>
+	</head>
+	<BODY>
+		<h2>Często zadawane pytania</h2>
+		<h3>Czy mapa drzewa odzwierciedla położenie sektorów na twardym dysku?</h3>
+		<p>Nie. Mapa drzewa nie przedstawia położenia sektorów na dysku. Ogólnie,
+		duże pliki są pofragmentowane na dysku twardym, natomiast mapa drzewa
+		pokazuje każdy plik jako <i>jeden</i> prostokąt.		
+		</p>
+		<h3>Czy WinDirStat uruchamia wątki w procesie odczytu?</h3>
+		<p>Nie. WinDirStat jest jedno-wątkowy, z wyjątkiem okna o programie,
+		które jest uruchamiane we własnym wątku, oraz okna wyboru dysku/ów.
+		Wszystkie zadania są wykonywane w czasie bezczynności systemu (OnIdle()).
+		</p>
+		<h3>Co oznacza pozycja &lt;Pliki&gt;?</h3>
+		<p>Patrz <A href="legend.htm">Legenda</A>.
+		</p>
+		<h3>Co oznacza symbol &gt; przed nazwą kolumny?</h3>
+		<p>Symbole &gt; i &lt; w nazwach kolumn oznaczają bieżące <A href="sorting.htm">
+			sortowanie</A>.
+		</p>
+		<h3>W moim Windows XP WinDirStat pokazuje więcej niż 1 GB dla pozycji
+		&lt;Nieznany&gt;, czy coś jest nie tak?</h3>
+		<p>Wszystko jest w porządku. Windows XP dość często tworzy 'Punkty
+		przywracania systemu' o dużej objętości, w katalogu C:\System Volume Information
+		i jednocześnie zabrania dostępu do nich.
+		</p>
+		<h3>Do czego służy plik wdsr0407.dll?</h3>
+		<p>Plik ten zawiera Niemieckie tłumaczenie programu WinDirStat. 0407 jest
+		identyfikatorem dla 'Niemcy - Niemiecki'. Brak tego pliku oznacza, że program
+		WinDirStat jest dostępny jedynie we wbudowanym języku Angielskim.
+		</p>
+		<h3>Rozmiary podawane w KB i MB wydają się być trochę za małe.</h3>
+		<p>WinDirStat do obliczania rozmiarów używa konwencji 1024,
+		w której:<br>
+			1 KB = 1024 Bajtów<br>
+			1 MB = 1024 KB = 1,048,576 Bajtów<br>
+			1 GB = 1024 MB = 1,048,576 KB = 1,073,741,824 Bajtów.
+		</p>
+	</BODY>
+</html>

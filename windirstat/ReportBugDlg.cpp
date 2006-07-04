@@ -1,7 +1,8 @@
-// ReportBugDlg.cpp		- Implementation of CReportBugDlg
+// ReportBugDlg.cpp - Implementation of CReportBugDlg
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
+// Copyright (C) 2004-2006 Oliver Schneider (assarbad.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -25,7 +26,7 @@
 #include "windirstat.h"
 #include "aboutdlg.h"
 #include "getosplatformstring.h"
-#include ".\reportbugdlg.h"
+#include "ReportBugDlg.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -48,15 +49,15 @@ IMPLEMENT_DYNAMIC(CReportBugDlg, CDialog)
 
 CReportBugDlg::CReportBugDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CReportBugDlg::IDD, pParent)
-	, m_from(_T(""))
-	, m_to(_T(""))
-	, m_application(_T(""))
-	, m_platform(_T(""))
-	, m_hint(_T(""))
+	, m_from(strEmpty)
+	, m_to(strEmpty)
+	, m_application(strEmpty)
+	, m_platform(strEmpty)
+	, m_hint(strEmpty)
 	, m_severity(SEV_FEEDBACK)
-	, m_inAWord(_T(""))
-	, m_text(_T(""))
-	, m_layout(this, _T("rbdlg"))
+	, m_inAWord(strEmpty)
+	, m_text(strEmpty)
+	, m_layout(this, TEXT("rbdlg"))
 {
 }
 
@@ -113,10 +114,10 @@ BOOL CReportBugDlg::OnInitDialog()
 
 	m_layout.OnInitDialog(true);
 
-	m_from= GetUserName();
-	m_to= GetFeedbackEmail();
-	m_application= CAboutDlg::GetAppVersion();
-	m_platform= GetOsPlatformString();
+	m_from = GetUserName();
+	m_to = GetFeedbackEmail();
+	m_application = CAboutDlg::GetAppVersion();
+	m_platform = GetOsPlatformString();
 
 	UpdateData(false);
 	OnSeverityClick();
@@ -156,16 +157,24 @@ void CReportBugDlg::OnSeverityClick()
 	case SEV_CRITICAL:
 	case SEV_GRAVE:
 	case SEV_NORMAL:
-		m_hint.LoadString(IDS_BUGREPORTHINT);
+		{
+			m_hint.LoadString(IDS_BUGREPORTHINT);
+		}
 		break;
 	case SEV_WISH:
-		m_hint.Empty();
+		{
+			m_hint.Empty();
+		}
 		break;
 	case SEV_FEEDBACK:
-		m_hint.LoadString(IDS_FEEDBACKHINT);
+		{
+			m_hint.LoadString(IDS_FEEDBACKHINT);
+		}
 		break;
 	default:
-		ASSERT(0);
+		{
+			ASSERT(0);
+		}
 	}
 	
 	UpdateData(false);
@@ -176,20 +185,20 @@ void CReportBugDlg::OnOK()
 {
 	UpdateData();
 
-	m_recipient= m_to;
-	m_subject.Format(_T("%s - %s: %s"), m_application, GetSeverityString(), m_inAWord);
+	m_recipient = m_to;
+	m_subject.Format(TEXT("%s - %s: %s"), m_application, GetSeverityString(), m_inAWord);
 	m_body.Empty();
 
 	CString s;
 	
 	s.FormatMessage(IDS_FROMsPLATFORMs, m_from, m_platform);
-	m_body+= s;
+	m_body += s;
 
-	s= m_text;
+	s = m_text;
 	s.TrimLeft();
 	s.TrimRight();
-	s+= _T("\r\n");
-	m_body+= s;
+	s += TEXT("\r\n");
+	m_body += s;
 
 	CDialog::OnOK();
 }
@@ -201,22 +210,34 @@ CString CReportBugDlg::GetSeverityString()
 	switch (m_severity)
 	{
 	case SEV_CRITICAL:
-		s.LoadString(IDS_SEV_CRITICAL);
+		{
+			s.LoadString(IDS_SEV_CRITICAL);
+		}
 		break;
 	case SEV_GRAVE:
-		s.LoadString(IDS_SEV_GRAVE);
+		{
+			s.LoadString(IDS_SEV_GRAVE);
+		}
 		break;
 	case SEV_NORMAL:
-		s.LoadString(IDS_SEV_NORMAL);
+		{
+			s.LoadString(IDS_SEV_NORMAL);
+		}
 		break;
 	case SEV_WISH:
-		s.LoadString(IDS_SEV_WISH);
+		{
+			s.LoadString(IDS_SEV_WISH);
+		}
 		break;
 	case SEV_FEEDBACK:
-		s.LoadString(IDS_SEV_FEEDBACK);
+		{
+			s.LoadString(IDS_SEV_FEEDBACK);
+		}
 		break;
 	default:
-		ASSERT(0);
+		{
+			ASSERT(0);
+		}
 	}
 
 	return s;
@@ -241,6 +262,9 @@ void CReportBugDlg::OnDestroy()
 }
 
 // $Log$
+// Revision 1.9  2006/07/04 20:45:22  assarbad
+// - See changelog for the changes of todays previous check-ins as well as this one!
+//
 // Revision 1.8  2005/04/10 16:49:30  assarbad
 // - Some smaller fixes including moving the resource string version into the rc2 files
 //

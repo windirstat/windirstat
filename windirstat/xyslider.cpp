@@ -1,7 +1,8 @@
-// XySlider.cpp	- Implementation of CXySlider
+// XySlider.cpp - Implementation of CXySlider
 //
 // WinDirStat - Directory Statistics
-// Copyright (C) 2003-2004 Bernhard Seifert
+// Copyright (C) 2003-2005 Bernhard Seifert
+// Copyright (C) 2004-2006 Oliver Schneider (assarbad.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -22,7 +23,7 @@
 // Last modified: $Date$
 
 #include "stdafx.h"
-#include ".\xyslider.h"
+#include "xyslider.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -39,52 +40,59 @@ void AFXAPI DDX_XySlider(CDataExchange* pDX, int nIDC, CPoint& value)
 	pDX->PrepareCtrl(nIDC);
 	HWND hWndCtrl;
 	pDX->m_pDlgWnd->GetDlgItem(nIDC, &hWndCtrl);
-	if (pDX->m_bSaveAndValidate)
+	if(pDX->m_bSaveAndValidate)
+	{
 		::SendMessage(hWndCtrl, CXySlider::XY_GETPOS, 0, (LPARAM)&value);
+	}
 	else
+	{
 		::SendMessage(hWndCtrl, CXySlider::XY_SETPOS, 0, (LPARAM)&value);
+	}
 }
 
-
 CXySlider::CXySlider()
+	: m_externalRange(CSize(100, 100))
+	, m_externalPos(CPoint(0, 0))
+	, m_pos(CPoint(0, 0))
+	, m_timer(0)
+	, m_inited(false)
+	, m_gripperHighlight(false)
 {
-	m_externalRange= CSize(100, 100);
-	m_externalPos= CPoint(0, 0);
-	m_pos= CPoint(0, 0);
-	m_timer= 0;
-	m_inited= false;
-	m_gripperHighlight= false;
 }
 
 void CXySlider::Initialize()
 {
-	if (!m_inited && IsWindow(m_hWnd))
+	if(!m_inited && IsWindow(m_hWnd))
 	{
 		// Make size odd, so that zero lines are central
 		CRect rc;
 		GetWindowRect(rc);
 		GetParent()->ScreenToClient(rc);
-		if (rc.Width() % 2 == 0)
+		if(rc.Width() % 2 == 0)
+		{
 			rc.right--;
-		if (rc.Height() % 2 == 0)
+		}
+		if(rc.Height() % 2 == 0)
+		{
 			rc.bottom--;
+		}
 		MoveWindow(rc);
 
 		// Initialize constants
 		CalcSizes();
 
-		m_inited= true;
+		m_inited = true;
 	}
 }
 
 void CXySlider::GetRange(CSize& range)
 {
-	range= m_externalRange;
+	range = m_externalRange;
 }
 
 void CXySlider::SetRange(CSize range)
 {
-	m_externalRange= range;
+	m_externalRange = range;
 }
 	
 CPoint CXySlider::GetPos()
@@ -94,15 +102,15 @@ CPoint CXySlider::GetPos()
 
 LRESULT CXySlider::OnSetPos(WPARAM, LPARAM lparam)
 {
-	POINT *point= (POINT *)lparam;
+	POINT *point = (POINT *)lparam;
 	SetPos(*point);
 	return 0;
 }
 
 LRESULT CXySlider::OnGetPos(WPARAM, LPARAM lparam)
 {
-	POINT *point= (POINT *)lparam;
-	*point= GetPos();
+	POINT *point = (POINT *)lparam;
+	*point = GetPos();
 	return 0;
 }
 
@@ -111,7 +119,7 @@ void CXySlider::SetPos(CPoint pt)
 {
 	Initialize();
 
-	m_externalPos= pt;
+	m_externalPos = pt;
 	ExternToIntern();
 	Invalidate();
 }
@@ -129,19 +137,19 @@ void CXySlider::CalcSizes()
 	ASSERT(m_rcAll.Width() >= _gripperRadius * 2);	// Control must be large enough
 	ASSERT(m_rcAll.Height() >= _gripperRadius * 2);
 
-	m_zero.x= m_rcAll.Width() / 2;
-	m_zero.y= m_rcAll.Height() / 2;
+	m_zero.x = m_rcAll.Width() / 2;
+	m_zero.y = m_rcAll.Height() / 2;
 
 	m_radius.cx = m_rcAll.Width() / 2 - 1;
 	m_radius.cy = m_rcAll.Height() / 2 - 1;
 
-	m_rcInner= m_rcAll;
+	m_rcInner = m_rcAll;
 	m_rcInner.DeflateRect(_gripperRadius - 3, _gripperRadius - 3);
 
-	m_gripperRadius.cx= _gripperRadius;
-	m_gripperRadius.cy= _gripperRadius;
+	m_gripperRadius.cx = _gripperRadius;
+	m_gripperRadius.cy = _gripperRadius;
 
-	m_range= m_radius - m_gripperRadius;
+	m_range = m_radius - m_gripperRadius;
 }
 
 CRect CXySlider::GetGripperRect()
@@ -161,10 +169,14 @@ void CXySlider::CheckMinMax(LONG& val, int min, int max)
 {
 	ASSERT(min <= max);
 
-	if (val < min)
-		val= min;
-	if (val > max)
-		val= max;
+	if(val < min)
+	{
+		val = min;
+	}
+	if(val > max)
+	{
+		val = max;
+	}
 }
 
 void CXySlider::InternToExtern()
@@ -175,16 +187,16 @@ void CXySlider::InternToExtern()
 
 void CXySlider::ExternToIntern()
 {
-	m_pos.x= (int)((double)abs(m_externalPos.x) * m_range.cx / m_externalRange.cx + 0.5) * signum(m_externalPos.x);
-	m_pos.y= (int)((double)abs(m_externalPos.y) * m_range.cy / m_externalRange.cy + 0.5) * signum(m_externalPos.y);
+	m_pos.x = (int)((double)abs(m_externalPos.x) * m_range.cx / m_externalRange.cx + 0.5) * signum(m_externalPos.x);
+	m_pos.y = (int)((double)abs(m_externalPos.y) * m_range.cy / m_externalRange.cy + 0.5) * signum(m_externalPos.y);
 }
 
 void CXySlider::NotifyParent()
 {
 	NMHDR hdr;
-	hdr.hwndFrom= m_hWnd;
-	hdr.idFrom= GetDlgCtrlID();
-	hdr.code= XYSLIDER_CHANGED;
+	hdr.hwndFrom = m_hWnd;
+	hdr.idFrom = GetDlgCtrlID();
+	hdr.code = XYSLIDER_CHANGED;
 
 	GetParent()->SendMessage(WM_NOTIFY, GetDlgCtrlID(), (LPARAM)&hdr);
 }
@@ -193,8 +205,8 @@ void CXySlider::PaintBackground(CDC *pdc)
 {
 	pdc->FillSolidRect(m_rcAll, GetSysColor(COLOR_BTNFACE));
 
-	CRect rc= m_rcInner;
-	pdc->DrawEdge(rc, EDGE_SUNKEN, BF_RECT|BF_ADJUST);
+	CRect rc = m_rcInner;
+	pdc->DrawEdge(rc, EDGE_SUNKEN, BF_RECT | BF_ADJUST);
 
 	pdc->FillSolidRect(rc, RGB(255,255,255));
 
@@ -206,55 +218,57 @@ void CXySlider::PaintBackground(CDC *pdc)
 	pdc->MoveTo(m_zero.x, rc.top);
 	pdc->LineTo(m_zero.x, rc.bottom);
 
-	CRect circle= m_rcAll;
+	CRect circle = m_rcAll;
 	circle.DeflateRect(m_gripperRadius);
 
 	CSelectStockObject sobrush(pdc, NULL_BRUSH);
 	pdc->Ellipse(circle);
 
-	if (GetFocus() == this)
+	if(GetFocus() == this)
+	{
 		pdc->DrawFocusRect(m_rcAll);
+	}
 }
 
 /* This is too noisy
 void CXySlider::PaintValues(CDC *pdc)
 {
-	CRect rc= m_rcAll;
+	CRect rc = m_rcAll;
 	rc.DeflateRect(m_gripperRadius);
-	if (m_pos.y >= 0)
-		rc.bottom= rc.top + rc.Height() / 4;
+	if(m_pos.y >= 0)
+		rc.bottom = rc.top + rc.Height() / 4;
 	else
-		rc.top= rc.bottom - rc.Height() / 4;
+		rc.top = rc.bottom - rc.Height() / 4;
 
-	CRect rcLeft= rc;
-	rcLeft.right= rcLeft.left + rc.Width() / 2;
-	CRect rcRight= rc;
-	rcRight.left= rcRight.right - rc.Width() / 2;
+	CRect rcLeft = rc;
+	rcLeft.right = rcLeft.left + rc.Width() / 2;
+	CRect rcRight = rc;
+	rcRight.left = rcRight.right - rc.Width() / 2;
 
 	CSelectObject sofont(pdc, GetParent()->GetFont());
 
 	CString s;
-	s.Format(_T("%d"), m_externalPos.x);
+	s.Format(TEXT("%d"), m_externalPos.x);
 	pdc->DrawText(s, rcLeft, DT_SINGLELINE | DT_CENTER | DT_VCENTER); // @ | DT_NOPREFIX
-	s.Format(_T("%d"), m_externalPos.y);
+	s.Format(TEXT("%d"), m_externalPos.y);
 	pdc->DrawText(s, rcRight, DT_SINGLELINE | DT_CENTER | DT_VCENTER); // @ | DT_NOPREFIX
 }
 */
 
 void CXySlider::PaintGripper(CDC *pdc)
 {
-	CRect rc= GetGripperRect();
+	CRect rc = GetGripperRect();
 
-	COLORREF color= GetSysColor(COLOR_BTNFACE);
-	if (m_gripperHighlight)
+	COLORREF color = GetSysColor(COLOR_BTNFACE);
+	if(m_gripperHighlight)
 	{
-		int r= GetRValue(color);
-		int g= GetGValue(color);
-		int b= GetBValue(color);
-		r+= (255 - r)/3;
-		g+= (255 - g)/3;
-		b+= (255 - b)/3;
-		color= RGB(r, g, b);
+		int r = GetRValue(color);
+		int g = GetGValue(color);
+		int b = GetBValue(color);
+		r += (255 - r)/3;
+		g += (255 - g)/3;
+		b += (255 - b)/3;
+		color = RGB(r, g, b);
 	}
 	pdc->FillSolidRect(rc, color);
 	pdc->DrawEdge(rc, EDGE_RAISED, BF_RECT);
@@ -270,23 +284,25 @@ void CXySlider::PaintGripper(CDC *pdc)
 
 void CXySlider::DoMoveBy(int cx, int cy)
 {
-	m_pos.x+= cx;
+	m_pos.x += cx;
 	CheckMinMax(m_pos.x, -m_range.cx, m_range.cx);
 
-	m_pos.y+= cy;
+	m_pos.y += cy;
 	CheckMinMax(m_pos.y, - m_range.cy, m_range.cy);
 
 	RedrawWindow();
 
-	CPoint oldpos= m_externalPos;
+	CPoint oldpos = m_externalPos;
 	InternToExtern();
-	if (m_externalPos != oldpos)
+	if(m_externalPos != oldpos)
+	{
 		NotifyParent();
+	}
 }
 
 void CXySlider::DoDrag(CPoint point)
 {
-	CPoint pt0= point;
+	CPoint pt0 = point;
 
 	HighlightGripper(true);
 
@@ -295,21 +311,27 @@ void CXySlider::DoDrag(CPoint point)
 	CPoint ptMax(m_zero + m_range + inGripper);
 
 	SetCapture();
-	for(;;)
+	while(true)
 	{
 		MSG msg;
-		if (!GetMessage(&msg, NULL, 0, 0))
-			break;
-
-		if (msg.message == WM_LBUTTONUP)
-			break;
-
-		if (GetCapture() != this)
-			break;
-
-		if (msg.message == WM_MOUSEMOVE)
+		if(!GetMessage(&msg, NULL, 0, 0))
 		{
-			CPoint pt= msg.pt;
+			break;
+		}
+
+		if(msg.message == WM_LBUTTONUP)
+		{
+			break;
+		}
+
+		if(GetCapture() != this)
+		{
+			break;
+		}
+
+		if(msg.message == WM_MOUSEMOVE)
+		{
+			CPoint pt = msg.pt;
 			ScreenToClient(&pt);
 
 			CheckMinMax(pt.x, ptMin.x, ptMax.x);
@@ -320,7 +342,7 @@ void CXySlider::DoDrag(CPoint point)
 
 			DoMoveBy(dx, dy);
 
-			pt0= pt;
+			pt0 = pt;
 		}
 		else
 		{
@@ -350,21 +372,23 @@ void CXySlider::DoPage(CPoint point)
 
 void CXySlider::HighlightGripper(bool on)
 {
-	m_gripperHighlight= on;
+	m_gripperHighlight = on;
 	RedrawWindow();
 }
 
 void CXySlider::InstallTimer()
 {
 	RemoveTimer();
-	m_timer= SetTimer(4711, 500, NULL);
+	m_timer = SetTimer(4711, 500, NULL);
 }
 
 void CXySlider::RemoveTimer()
 {
-	if (m_timer != 0)
+	if(m_timer != 0)
+	{
 		KillTimer(m_timer);
-	m_timer= 0;
+	}
+	m_timer = 0;
 }
 
 
@@ -395,7 +419,7 @@ UINT CXySlider::OnGetDlgCode()
 	return DLGC_WANTARROWS;
 }
 
-UINT CXySlider::OnNcHitTest(CPoint /*point*/)
+LRESULT CXySlider::OnNcHitTest(CPoint /*point*/)
 {
 	return HTCLIENT;
 }
@@ -415,8 +439,8 @@ void CXySlider::OnKillFocus(CWnd* pNewWnd)
 void CXySlider::OnPaint()
 {
 	Initialize();
-	int w= m_rcAll.Width();
-	int h= m_rcAll.Height();
+	int w = m_rcAll.Width();
+	int h = m_rcAll.Height();
 
 	CPaintDC dc(this);
 	CDC dcmem;
@@ -436,10 +460,26 @@ void CXySlider::OnKeyDown(UINT nChar, UINT /*nRepCnt*/, UINT /*nFlags*/)
 {
 	switch (nChar)
 	{
-	case VK_LEFT:	DoMoveBy(-1, 0); break;
-	case VK_RIGHT:	DoMoveBy(1, 0); break;
-	case VK_UP:		DoMoveBy(0, -1); break;
-	case VK_DOWN:	DoMoveBy(0, 1); break;
+	case VK_LEFT:
+		{
+			DoMoveBy(-1, 0);
+		}
+		break;
+	case VK_RIGHT:
+		{
+			DoMoveBy(1, 0);
+		}
+		break;
+	case VK_UP:
+		{
+			DoMoveBy(0, -1);
+		}
+		break;
+	case VK_DOWN:
+		{
+			DoMoveBy(0, 1);
+		}
+		break;
 	}
 }
 
@@ -447,9 +487,9 @@ void CXySlider::OnLButtonDown(UINT /*nFlags*/, CPoint point)
 {
 	SetFocus();
 
-	CRect rc= GetGripperRect();
+	CRect rc = GetGripperRect();
 
-	if (rc.PtInRect(point))
+	if(rc.PtInRect(point))
 	{
 		DoDrag(point);
 	}
@@ -464,7 +504,7 @@ void CXySlider::OnLButtonDblClk(UINT /*nFlags*/, CPoint point)
 {
 	SetFocus();
 
-	if (GetGripperRect().PtInRect(point))
+	if(GetGripperRect().PtInRect(point))
 	{
 		DoMoveBy(-m_pos.x, -m_pos.y);
 	}
@@ -487,12 +527,17 @@ void CXySlider::OnTimer(UINT /*nIDEvent*/)
 	GetCursorPos(&point);
 	ScreenToClient(&point);
 
-	CRect rc= GetGripperRect();
-	if (!rc.PtInRect(point))
+	CRect rc = GetGripperRect();
+	if(!rc.PtInRect(point))
+	{
 		DoPage(point);
+	}
 }
 
 // $Log$
+// Revision 1.5  2006/07/04 20:45:23  assarbad
+// - See changelog for the changes of todays previous check-ins as well as this one!
+//
 // Revision 1.4  2004/11/07 00:06:34  assarbad
 // - Fixed minor bug with ampersand (details in changelog.txt)
 //
