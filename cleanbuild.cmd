@@ -16,7 +16,6 @@ del /f /q /s *.bak
 del /f /q /s *.pdb
 del /f /q /s *.old
 del /f /q /s *.user
-del /f /q .\common\linkcounter.exe
 :: Delete all release subdirectories (the release of the binaries is not touched)
 for /d %%i in (*) do @(
   rd /s /q ".\%%i\UnicodeRelease"
