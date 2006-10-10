@@ -21,7 +21,7 @@
 // Author(s): - bseifert -> bseifert@users.sourceforge.net, bseifert@daccord.net
 //            - assarbad -> http://assarbad.net/en/contact
 //
-// $Header$
+// $Id$
 
 #include "stdafx.h"
 #include "windirstat.h"
@@ -359,7 +359,7 @@ int CItem::CompareSibling(const CTreeListItem *tlib, int subitem) const
 
 int CItem::GetChildrenCount() const
 {
-	return m_children.GetSize();
+	return int(m_children.GetSize());
 }
 
 CTreeListItem *CItem::GetTreeListChild(int i) const
@@ -1912,6 +1912,11 @@ void CItem::DrivePacman()
 
 
 // $Log$
+// Revision 1.31  2006/10/10 01:41:50  assarbad
+// - Added credits for Gerben Wieringa (Dutch translation)
+// - Replaced Header tag by Id for the CVS tags in the source files ...
+// - Started re-ordering of the files inside the project(s)/solution(s)
+//
 // Revision 1.30  2006/07/04 23:37:39  assarbad
 // - Added my email address in the header, adjusted "Author" -> "Author(s)"
 // - Added CVS Log keyword to those files not having it

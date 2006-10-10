@@ -21,7 +21,7 @@
 // Author(s): - bseifert -> bseifert@users.sourceforge.net, bseifert@daccord.net
 //            - assarbad -> http://assarbad.net/en/contact
 //
-// $Header$
+// $Id$
 
 #include "stdafx.h"
 #include "windirstat.h"
@@ -441,7 +441,7 @@ void CTreeListControl::SelectAndShowItem(const CTreeListItem *item, bool showWho
 	}
 
 	int parent = 0;
-	for(i = path.GetSize() - 1; i >= 0; i--)
+	for(i = int(path.GetSize()) - 1; i >= 0; i--)
 	{
 		int index = FindTreeItem(path[i]);
 		if(index == -1)
@@ -972,6 +972,11 @@ void CTreeListControl::MeasureItem(LPMEASUREITEMSTRUCT mis)
 
 
 // $Log$
+// Revision 1.13  2006/10/10 01:41:50  assarbad
+// - Added credits for Gerben Wieringa (Dutch translation)
+// - Replaced Header tag by Id for the CVS tags in the source files ...
+// - Started re-ordering of the files inside the project(s)/solution(s)
+//
 // Revision 1.12  2006/07/04 23:37:39  assarbad
 // - Added my email address in the header, adjusted "Author" -> "Author(s)"
 // - Added CVS Log keyword to those files not having it

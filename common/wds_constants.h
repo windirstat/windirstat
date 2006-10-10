@@ -21,7 +21,7 @@
 // Author(s): - bseifert -> bseifert@users.sourceforge.net, bseifert@daccord.net
 //            - assarbad -> http://assarbad.net/en/contact
 //
-// $Header$
+// $Id$
 
 #pragma once
 
@@ -55,6 +55,11 @@ const LPCTSTR strPercent = TEXT("%");
 const LPCTSTR strExplorerKey = TEXT("Software\\Microsoft\\Windows\\CurrentVersion\\Explorer");
 
 // $Log$
+// Revision 1.3  2006/10/10 01:41:49  assarbad
+// - Added credits for Gerben Wieringa (Dutch translation)
+// - Replaced Header tag by Id for the CVS tags in the source files ...
+// - Started re-ordering of the files inside the project(s)/solution(s)
+//
 // Revision 1.2  2006/07/04 23:40:39  assarbad
 // - Added file header to wds_constants.h
 //

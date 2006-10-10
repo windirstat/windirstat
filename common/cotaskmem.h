@@ -22,7 +22,7 @@
 //
 // 08.09.1998 - JR
 //
-// $Header$
+// $Id$
 
 #ifndef _COTASKMEM_H
 #define _COTASKMEM_H
@@ -71,6 +71,11 @@ public:
 #endif
 
 // $Log$
+// Revision 1.6  2006/10/10 01:41:49  assarbad
+// - Added credits for Gerben Wieringa (Dutch translation)
+// - Replaced Header tag by Id for the CVS tags in the source files ...
+// - Started re-ordering of the files inside the project(s)/solution(s)
+//
 // Revision 1.5  2006/07/04 22:49:18  assarbad
 // - Replaced CVS keyword "Date" by "Header" in the file headers
 //

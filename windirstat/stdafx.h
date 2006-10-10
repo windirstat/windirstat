@@ -23,7 +23,7 @@
 // Author(s): - bseifert -> bseifert@users.sourceforge.net, bseifert@daccord.net
 //            - assarbad -> http://assarbad.net/en/contact
 //
-// $Header$
+// $Id$
 
 #pragma once
 
@@ -67,7 +67,6 @@
 #include <io.h>				// _access()
 #include <math.h>			// floor(), fmod(), sqrt() etc.
 #include <psapi.h>			// PROCESS_MEMORY_INFO
-#include <mapi.h>			// E-Mail
 #include <lmcons.h>			// UNLEN
 #include <float.h>			// DBL_MAX
 
@@ -93,6 +92,11 @@ template<class T> int signum(T x) { return (x) < 0 ? -1 : (x) == 0 ? 0 : 1; }
 
 
 // $Log$
+// Revision 1.15  2006/10/10 01:41:50  assarbad
+// - Added credits for Gerben Wieringa (Dutch translation)
+// - Replaced Header tag by Id for the CVS tags in the source files ...
+// - Started re-ordering of the files inside the project(s)/solution(s)
+//
 // Revision 1.14  2006/07/04 23:37:40  assarbad
 // - Added my email address in the header, adjusted "Author" -> "Author(s)"
 // - Added CVS Log keyword to those files not having it

@@ -21,7 +21,7 @@
 // Author(s): - bseifert -> bseifert@users.sourceforge.net, bseifert@daccord.net
 //            - assarbad -> http://assarbad.net/en/contact
 //
-// $Header$
+// $Id$
 
 #pragma once
 
@@ -29,13 +29,13 @@
 //
 // CModalApiShuttle. (Base class for CModalShellApi and CModalSendMail.)
 //
-// Both the SHFileOperation() and MAPISendMail() functions show modeless dialogs,
-// but we want them to be modal.
+// The SHFileOperation() function shows a modeless dialog, but we want
+// them to be modal.
 //
 // My first approximation was:
 //
 // AfxGetMainWnd()->EnableWindow(false);
-// Do the operation (SHFileOperation respectively MAPISendMail)
+// Do the operation (SHFileOperation)
 // AfxGetMainWnd()->EnableWindow(true);
 //
 // But when the operation window is destroyed, the system brings
@@ -64,6 +64,11 @@ protected:
 };
 
 // $Log$
+// Revision 1.9  2006/10/10 01:41:50  assarbad
+// - Added credits for Gerben Wieringa (Dutch translation)
+// - Replaced Header tag by Id for the CVS tags in the source files ...
+// - Started re-ordering of the files inside the project(s)/solution(s)
+//
 // Revision 1.8  2006/07/04 23:37:39  assarbad
 // - Added my email address in the header, adjusted "Author" -> "Author(s)"
 // - Added CVS Log keyword to those files not having it

@@ -21,7 +21,7 @@
 // Author(s): - bseifert -> bseifert@users.sourceforge.net, bseifert@daccord.net
 //            - assarbad -> http://assarbad.net/en/contact
 //
-// $Header$
+// $Id$
 
 #include "stdafx.h"
 #include "windirstat.h"
@@ -1342,11 +1342,11 @@ void CDirstatDoc::OnExplorerHere()
 			sei.fMask |= SEE_MASK_IDLIST;
 
 			ShellExecuteEx(&sei);
-			// ShellExecuteEx seems to display its own Messagebox on error.
+			// ShellExecuteEx seems to display its own MessageBox on error.
 		}
 		else
 		{
-			MyShellExecute(*AfxGetMainWnd(), TEXT("explore"), item->GetFolderPath(), NULL, NULL, SW_SHOWNORMAL);
+			ShellExecuteThrow(*AfxGetMainWnd(), TEXT("explore"), item->GetFolderPath(), NULL, NULL, SW_SHOWNORMAL);
 		}
 	}
 	catch (CException *pe)
@@ -1377,7 +1377,7 @@ void CDirstatDoc::OnCommandPromptHere()
 		
 		CString cmd = GetCOMSPEC();
 
-		MyShellExecute(*AfxGetMainWnd(), TEXT("open"), cmd, NULL, item->GetFolderPath(), SW_SHOWNORMAL);
+		ShellExecuteThrow(*AfxGetMainWnd(), TEXT("open"), cmd, NULL, item->GetFolderPath(), SW_SHOWNORMAL);
 	}
 	catch (CException *pe)
 	{
@@ -1613,6 +1613,11 @@ void CDirstatDoc::Dump(CDumpContext& dc) const
 
 
 // $Log$
+// Revision 1.18  2006/10/10 01:41:50  assarbad
+// - Added credits for Gerben Wieringa (Dutch translation)
+// - Replaced Header tag by Id for the CVS tags in the source files ...
+// - Started re-ordering of the files inside the project(s)/solution(s)
+//
 // Revision 1.17  2006/07/04 23:37:39  assarbad
 // - Added my email address in the header, adjusted "Author" -> "Author(s)"
 // - Added CVS Log keyword to those files not having it

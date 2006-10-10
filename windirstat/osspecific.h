@@ -1,4 +1,5 @@
-// osspecific.h - Declaration of CVolumeApi, CRecycleBinApi, CPsapi, CMapi32Api
+// osspecific.h - Declaration of CVolumeApi, CRecycleBinApi, CPsapi,
+//                CGetDiskFreeSpaceApi, CGetCompressedFileSizeApi
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
@@ -21,7 +22,7 @@
 // Author(s): - bseifert -> bseifert@users.sourceforge.net, bseifert@daccord.net
 //            - assarbad -> http://assarbad.net/en/contact
 //
-// $Header$
+// $Id$
 
 #pragma once
 
@@ -89,9 +90,26 @@ private:
 	HMODULE m_hDll;
 };
 
+///////////////////////////////////////////////////////////////////////////////
+///  CDynamicApi
+///  Template class to implement dynamic linking to functions
+///
+///
+///  @remarks Preferably used as a class member variable and initialized in the
+///           initializer list.
+///////////////////////////////////////////////////////////////////////////////
 template < class FctType > class CDynamicApi
 {
 public:
+	///////////////////////////////////////////////////////////////////////////////
+	///  inline public constructor  CDynamicApi
+	///  Ctor of the dynamic linking template class
+	///
+	///  @param [in]       hDll HMODULE    Module handle to the DLL implementing the wrapped function
+	///  @param [in]       pszFctName LPCSTR    Name of the function (ANSI)
+	///
+	///  This function doesn't return a value
+	///////////////////////////////////////////////////////////////////////////////
 	CDynamicApi(HMODULE hDll, LPCSTR pszFctName)
 		: pfnFct(NULL)
 	{
@@ -101,21 +119,43 @@ public:
 		}
 	}
 
+	///////////////////////////////////////////////////////////////////////////////
+	///  inline public destructor  ~CDynamicApi
+	///  Dtor of the dynamic linking template class
+	///
+	///  This function doesn't return a value
+	///////////////////////////////////////////////////////////////////////////////
 	~CDynamicApi()
 	{
 	}
 
+	///////////////////////////////////////////////////////////////////////////////
+	///  inline public  IsSupported
+	///  Used to check whether the wrapped function is supported (found)
+	///
+	///  @return bool true if the function can be called, false otherwise
+	///////////////////////////////////////////////////////////////////////////////
 	bool IsSupported()
 	{
 		return (pfnFct != NULL);
 	}
 
+	///////////////////////////////////////////////////////////////////////////////
+	///  FctType pfnFct
+	///  Function pointer, typed thanks to the C++ template mechanism
+	///
+	///  @remarks This is intentionally public!
+	///////////////////////////////////////////////////////////////////////////////
 	FctType pfnFct;
 };
 
-//
-// CVolumeApi. Supported with Windows 2000 or higher.
-//
+///////////////////////////////////////////////////////////////////////////////
+///  CVolumeApi
+///  Wraps a bunch of functions relating to volume mount points and more ...
+///
+///
+///  @remarks The methods are documented in the .cpp file
+///////////////////////////////////////////////////////////////////////////////
 class CVolumeApi
 {
 public:
@@ -126,10 +166,12 @@ public:
 
 	BOOL GetVolumeNameForVolumeMountPoint(LPCTSTR lpszVolumeMountPoint, LPTSTR lpszVolumeName, DWORD cchBufferLength);
 
+	// min.: Windows 2000
 	HANDLE FindFirstVolume(LPTSTR lpszVolumeName, DWORD cchBufferLength);
 	BOOL FindNextVolume(HANDLE hFindVolume, LPTSTR lpszVolumeName, DWORD cchBufferLength);
 	BOOL FindVolumeClose(HANDLE hFindVolume);
 
+	// min.: Windows 2000
 	HANDLE FindFirstVolumeMountPoint(LPCTSTR lpszRootPathName, LPTSTR lpszVolumeMountPoint, DWORD cchBufferLength);
 	BOOL FindNextVolumeMountPoint(HANDLE hFindVolumeMountPoint, LPTSTR lpszVolumeMountPoint, DWORD cchBufferLength);
 	BOOL FindVolumeMountPointClose(HANDLE hFindVolumeMountPoint);
@@ -154,9 +196,13 @@ private:
 	CDynamicApi<TFNFindVolumeMountPointClose>			m_FindVolumeMountPointClose;
 };
 
-//
-// CRecycleBinApi. Not always supported on NT and W95/98.
-//
+///////////////////////////////////////////////////////////////////////////////
+///  CRecycleBinApi
+///  <TODO: insert class description here>
+///
+///
+///  @remarks The methods are documented in the .cpp file
+///////////////////////////////////////////////////////////////////////////////
 class CRecycleBinApi
 {
 public:
@@ -165,6 +211,7 @@ public:
 
 	bool IsSupported();
 
+	// min.: Windows 2000, Windows NT 4.0 with Internet Explorer 4.0, Windows 98, Windows 95 with Internet Explorer 4.0
 	HRESULT SHEmptyRecycleBin(HWND hwnd, LPCTSTR pszRootPath, DWORD dwFlags);
 	HRESULT SHQueryRecycleBin(LPCTSTR pszRootPath, LPSHQUERYRBINFO pSHQueryRBInfo);
 
@@ -178,9 +225,13 @@ private:
 	CDynamicApi<TFNSHQueryRecycleBin>					m_SHQueryRecycleBin;
 };
 
-//
-// CPsapi. Not Supported on Win9x/Me.
-//
+///////////////////////////////////////////////////////////////////////////////
+///  CPsapi
+///  <TODO: insert class description here>
+///
+///
+///  @remarks The methods are documented in the .cpp file
+///////////////////////////////////////////////////////////////////////////////
 class CPsapi
 {
 public:
@@ -189,6 +240,7 @@ public:
 
 	bool IsSupported();
 
+	// min.: Windows NT 4.0 (DLL has to exist!)
 	BOOL GetProcessMemoryInfo(HANDLE Process, PPROCESS_MEMORY_COUNTERS ppsmemCounters, DWORD cb);
 
 private:
@@ -199,35 +251,13 @@ private:
 	CDynamicApi<TFNGetProcessMemoryInfo>				m_GetProcessMemoryInfo;
 };
 
-
-/*
-//
-// CMapi32Api. CDocument::OnFileSendMail() loads mapi32.dll dynamically. 
-// So we do, too.
-//
-class CMapi32Api
-{
-public:
-	CMapi32Api();
-	~CMapi32Api();
-
-	static bool IsDllPresent();
-	bool IsSupported();
-
-	ULONG MAPISendMail(LHANDLE lhSession, ULONG ulUIParam, lpMapiMessage lpMessage, FLAGS flFlags, ULONG ulReserved);
- 
-private:
-	typedef ULONG (FAR PASCAL *TypeMAPISendMail)(LHANDLE lhSession, ULONG ulUIParam, lpMapiMessage lpMessage, FLAGS flFlags, ULONG ulReserved);
- 
-	HMODULE m_hDll;
-	TypeMAPISendMail m_MAPISendMail;
-};
-*/
-
-
-//
-// QueryDosDevice. Supported with W98 and higher.
-//
+///////////////////////////////////////////////////////////////////////////////
+///  CQueryDosDeviceApi
+///  <TODO: insert class description here>
+///
+///
+///  @remarks The methods are documented in the .cpp file
+///////////////////////////////////////////////////////////////////////////////
 class CQueryDosDeviceApi
 {
 public:
@@ -236,6 +266,7 @@ public:
 
 	bool IsSupported();
 
+	// min.: Windows 98/Windows NT 4.0
 	DWORD QueryDosDevice(LPCTSTR lpDeviceName, LPTSTR lpTargetPath, DWORD ucchMax);
 
 private:
@@ -246,9 +277,13 @@ private:
 	CDynamicApi<TFNQueryDosDevice>						m_QueryDosDevice;
 };
 
-//
-// GetCompressedFileSize. Only supported on the NT platform
-//
+///////////////////////////////////////////////////////////////////////////////
+///  CGetCompressedFileSizeApi
+///  <TODO: insert class description here>
+///
+///
+///  @remarks The methods are documented in the .cpp file
+///////////////////////////////////////////////////////////////////////////////
 class CGetCompressedFileSizeApi
 {
 public:
@@ -257,6 +292,7 @@ public:
 
 	bool IsSupported();
 
+	// min.: Windows NT 4.0
 	DWORD GetCompressedFileSize(LPCTSTR lpFileName, LPDWORD lpFileSizeHigh);
 	ULONGLONG GetCompressedFileSize(LPCTSTR lpFileName);
 
@@ -268,11 +304,15 @@ private:
 	CDynamicApi<TFNGetCompressedFileSize>				m_GetCompressedFileSize;
 };
 
-//
-// GetDiskFreeSpaceEx() vs. GetDiskFreeSpace(). This class wraps the
-// functions and hides the differences since GetDiskFreeSpaceEx() is only
-// available starting with Windows 95 OSR2!
-//
+///////////////////////////////////////////////////////////////////////////////
+///  CGetDiskFreeSpaceApi
+///  Hides the differences between GetDiskFreeSpaceEx() and GetDiskFreeSpace().
+///  This is important, because GetDiskFreeSpaceEx() is available only from
+///  Windows 95 ORS2 onwards - not on the very first edition of Windows 95.
+///
+///
+///  @remarks The methods are documented in the .cpp file
+///////////////////////////////////////////////////////////////////////////////
 class CGetDiskFreeSpaceApi
 {
 public:
@@ -294,6 +334,11 @@ private:
 };
 
 // $Log$
+// Revision 1.12  2006/10/10 01:41:50  assarbad
+// - Added credits for Gerben Wieringa (Dutch translation)
+// - Replaced Header tag by Id for the CVS tags in the source files ...
+// - Started re-ordering of the files inside the project(s)/solution(s)
+//
 // Revision 1.11  2006/07/04 23:37:40  assarbad
 // - Added my email address in the header, adjusted "Author" -> "Author(s)"
 // - Added CVS Log keyword to those files not having it

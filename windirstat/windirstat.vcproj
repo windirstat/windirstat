@@ -20,12 +20,13 @@
 			OutputDirectory="Debug"
 			IntermediateDirectory="Debug"
 			ConfigurationType="1"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			UseOfMFC="1"
 			CharacterSet="2"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
+				Description="Increasing build number"
+				CommandLine="$(SolutionDir)\common\buildinc.cmd &quot;$(SolutionDir)\common&quot;"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -47,13 +48,14 @@
 				AdditionalIncludeDirectories=""
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
+				SmallerTypeCheck="true"
 				RuntimeLibrary="1"
 				TreatWChar_tAsBuiltInType="true"
 				RuntimeTypeInfo="false"
 				UsePrecompiledHeader="2"
 				WarningLevel="4"
 				WarnAsError="false"
-				Detect64BitPortabilityProblems="false"
+				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="4"
 			/>
 			<Tool
@@ -62,7 +64,7 @@
 			<Tool
 				Name="VCResourceCompilerTool"
 				PreprocessorDefinitions="_DEBUG"
-				Culture="1031"
+				Culture="1033"
 				AdditionalIncludeDirectories="$(IntDir)"
 			/>
 			<Tool
@@ -72,9 +74,13 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="htmlhelp.lib"
 				OutputFile="../../debug/windirstat.exe"
-				LinkIncremental="2"
+				LinkIncremental="0"
 				GenerateDebugInformation="true"
 				SubSystem="2"
+				SwapRunFromCD="true"
+				SwapRunFromNet="true"
+				OptimizeForWindows98="2"
+				SetChecksum="true"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -107,12 +113,13 @@
 			OutputDirectory="Release"
 			IntermediateDirectory="Release"
 			ConfigurationType="1"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			UseOfMFC="1"
 			CharacterSet="2"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
+				Description="Increasing build number"
+				CommandLine="$(SolutionDir)\common\buildinc.cmd &quot;$(SolutionDir)\common&quot;"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -130,7 +137,9 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				FavorSizeOrSpeed="0"
+				Optimization="3"
+				EnableIntrinsicFunctions="true"
+				FavorSizeOrSpeed="1"
 				AdditionalIncludeDirectories=""
 				MinimalRebuild="false"
 				RuntimeLibrary="0"
@@ -138,7 +147,7 @@
 				RuntimeTypeInfo="false"
 				UsePrecompiledHeader="2"
 				WarningLevel="4"
-				Detect64BitPortabilityProblems="false"
+				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="3"
 			/>
 			<Tool
@@ -147,7 +156,7 @@
 			<Tool
 				Name="VCResourceCompilerTool"
 				PreprocessorDefinitions="NDEBUG"
-				Culture="1031"
+				Culture="1033"
 				AdditionalIncludeDirectories="$(IntDir)"
 			/>
 			<Tool
@@ -157,11 +166,15 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="htmlhelp.lib"
 				OutputFile="../../release/windirstat.exe"
-				LinkIncremental="1"
+				LinkIncremental="0"
 				GenerateDebugInformation="true"
 				SubSystem="2"
+				SwapRunFromCD="true"
+				SwapRunFromNet="true"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
+				OptimizeForWindows98="2"
+				SetChecksum="true"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -194,12 +207,13 @@
 			OutputDirectory="$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="1"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			UseOfMFC="1"
 			CharacterSet="1"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
+				Description="Increasing build number"
+				CommandLine="$(SolutionDir)\common\buildinc.cmd &quot;$(SolutionDir)\common&quot;"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -221,13 +235,14 @@
 				AdditionalIncludeDirectories=""
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
+				SmallerTypeCheck="true"
 				RuntimeLibrary="1"
 				TreatWChar_tAsBuiltInType="true"
 				RuntimeTypeInfo="false"
 				UsePrecompiledHeader="2"
 				WarningLevel="4"
 				WarnAsError="false"
-				Detect64BitPortabilityProblems="false"
+				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="4"
 			/>
 			<Tool
@@ -236,7 +251,7 @@
 			<Tool
 				Name="VCResourceCompilerTool"
 				PreprocessorDefinitions="_DEBUG"
-				Culture="1031"
+				Culture="1033"
 				AdditionalIncludeDirectories="$(IntDir)"
 			/>
 			<Tool
@@ -246,9 +261,13 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="htmlhelp.lib"
 				OutputFile="../../udebug/windirstat.exe"
-				LinkIncremental="2"
+				LinkIncremental="0"
 				GenerateDebugInformation="true"
 				SubSystem="2"
+				SwapRunFromCD="true"
+				SwapRunFromNet="true"
+				OptimizeForWindows98="1"
+				SetChecksum="true"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -281,7 +300,6 @@
 			OutputDirectory="$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="1"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			UseOfMFC="1"
 			CharacterSet="1"
 			>
@@ -306,6 +324,9 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				Optimization="3"
+				EnableIntrinsicFunctions="true"
+				FavorSizeOrSpeed="1"
 				AdditionalIncludeDirectories=""
 				MinimalRebuild="false"
 				RuntimeLibrary="0"
@@ -313,7 +334,7 @@
 				RuntimeTypeInfo="false"
 				UsePrecompiledHeader="2"
 				WarningLevel="4"
-				Detect64BitPortabilityProblems="false"
+				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="3"
 			/>
 			<Tool
@@ -322,7 +343,7 @@
 			<Tool
 				Name="VCResourceCompilerTool"
 				PreprocessorDefinitions="NDEBUG"
-				Culture="1031"
+				Culture="1033"
 				AdditionalIncludeDirectories="$(IntDir)"
 			/>
 			<Tool
@@ -332,11 +353,15 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="htmlhelp.lib"
 				OutputFile="../../urelease/windirstat.exe"
-				LinkIncremental="1"
+				LinkIncremental="0"
 				GenerateDebugInformation="true"
 				SubSystem="2"
+				SwapRunFromCD="true"
+				SwapRunFromNet="true"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
+				OptimizeForWindows98="1"
+				SetChecksum="true"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -369,12 +394,13 @@
 			OutputDirectory="$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="1"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			UseOfMFC="1"
 			CharacterSet="2"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
+				Description="Increasing build number"
+				CommandLine="$(SolutionDir)\common\buildinc.cmd &quot;$(SolutionDir)\common&quot;"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -397,13 +423,14 @@
 				PreprocessorDefinitions="STRONGDEBUG"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
+				SmallerTypeCheck="true"
 				RuntimeLibrary="1"
 				TreatWChar_tAsBuiltInType="true"
 				RuntimeTypeInfo="false"
 				UsePrecompiledHeader="2"
 				WarningLevel="4"
 				WarnAsError="false"
-				Detect64BitPortabilityProblems="false"
+				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="4"
 			/>
 			<Tool
@@ -412,7 +439,7 @@
 			<Tool
 				Name="VCResourceCompilerTool"
 				PreprocessorDefinitions="_DEBUG"
-				Culture="1031"
+				Culture="1033"
 				AdditionalIncludeDirectories="$(IntDir)"
 			/>
 			<Tool
@@ -422,9 +449,108 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="htmlhelp.lib"
 				OutputFile="../../debug/windirstatStrongDebug.exe"
-				LinkIncremental="2"
+				LinkIncremental="0"
 				GenerateDebugInformation="true"
 				SubSystem="2"
+				SwapRunFromCD="true"
+				SwapRunFromNet="true"
+				OptimizeForWindows98="2"
+				SetChecksum="true"
+				TargetMachine="1"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCWebDeploymentTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+			/>
+		</Configuration>
+		<Configuration
+			Name="UnicodeRelSSE2|Win32"
+			OutputDirectory="$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
+			ConfigurationType="1"
+			UseOfMFC="1"
+			CharacterSet="1"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+				Description="Increasing build number"
+				CommandLine="$(SolutionDir)\common\buildinc.cmd &quot;$(SolutionDir)\common&quot;"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+				PreprocessorDefinitions="NDEBUG"
+				MkTypLibCompatible="false"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="3"
+				EnableIntrinsicFunctions="true"
+				FavorSizeOrSpeed="1"
+				AdditionalIncludeDirectories=""
+				MinimalRebuild="false"
+				RuntimeLibrary="0"
+				EnableEnhancedInstructionSet="2"
+				TreatWChar_tAsBuiltInType="true"
+				RuntimeTypeInfo="false"
+				UsePrecompiledHeader="2"
+				WarningLevel="4"
+				Detect64BitPortabilityProblems="true"
+				DebugInformationFormat="3"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="NDEBUG"
+				Culture="1033"
+				AdditionalIncludeDirectories="$(IntDir)"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLinkerTool"
+				AdditionalDependencies="htmlhelp.lib"
+				OutputFile="../../urelease/windirstat.exe"
+				LinkIncremental="0"
+				GenerateDebugInformation="true"
+				SubSystem="2"
+				SwapRunFromCD="true"
+				SwapRunFromNet="true"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
+				OptimizeForWindows98="1"
+				SetChecksum="true"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -462,22 +588,6 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\aboutdlg.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\CheckForUpdateDlg.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\colorbutton.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\DeleteWarningDlg.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\dirstatdoc.cpp"
 				>
 			</File>
@@ -495,10 +605,6 @@
 			</File>
 			<File
 				RelativePath=".\globalhelpers.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\graphview.cpp"
 				>
 			</File>
 			<File
@@ -526,23 +632,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\myimagelist.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\options.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\osspecific.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ownerdrawnlistcontrol.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\pacman.cpp"
 				>
 			</File>
 			<File
@@ -566,16 +660,16 @@
 				>
 			</File>
 			<File
-				RelativePath=".\SelectDrivesDlg.cpp"
+				RelativePath=".\RegIni.cpp"
 				>
-			</File>
-			<File
-				RelativePath=".\sortinglistcontrol.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\StaticHyperlink.cpp"
-				>
+				<FileConfiguration
+					Name="UnicodeRelSSE2|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\stdafx.cpp"
@@ -620,49 +714,201 @@
 						UsePrecompiledHeader="1"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="UnicodeRelSSE2|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="1"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\TreeListControl.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\treemap.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\typeview.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\windirstat.cpp"
 				>
 			</File>
-			<File
-				RelativePath=".\xyslider.cpp"
+			<Filter
+				Name="Common"
 				>
-			</File>
+				<File
+					RelativePath="..\common\commonhelpers.cpp"
+					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="UnicodeDebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="UnicodeRelease|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="StrongDebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="UnicodeRelSSE2|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\common\platform.cpp"
+					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="UnicodeDebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="UnicodeRelease|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="StrongDebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="UnicodeRelSSE2|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+				</File>
+			</Filter>
+			<Filter
+				Name="Dialogs"
+				>
+				<File
+					RelativePath=".\aboutdlg.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\CheckForUpdateDlg.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\DeleteWarningDlg.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\SelectDrivesDlg.cpp"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="Controls"
+				>
+				<File
+					RelativePath=".\colorbutton.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\graphview.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\myimagelist.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\ownerdrawnlistcontrol.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\pacman.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\sortinglistcontrol.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\StaticHyperlink.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\treemap.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\typeview.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\xyslider.cpp"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
-			<File
-				RelativePath=".\aboutdlg.h"
-				>
-			</File>
-			<File
-				RelativePath=".\CheckForUpdateDlg.h"
-				>
-			</File>
-			<File
-				RelativePath=".\colorbutton.h"
-				>
-			</File>
-			<File
-				RelativePath=".\DeleteWarningDlg.h"
-				>
-			</File>
 			<File
 				RelativePath=".\dirstatdoc.h"
 				>
@@ -681,10 +927,6 @@
 			</File>
 			<File
 				RelativePath=".\globalhelpers.h"
-				>
-			</File>
-			<File
-				RelativePath=".\graphview.h"
 				>
 			</File>
 			<File
@@ -716,23 +958,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\myimagelist.h"
-				>
-			</File>
-			<File
 				RelativePath=".\options.h"
 				>
 			</File>
 			<File
 				RelativePath=".\osspecific.h"
-				>
-			</File>
-			<File
-				RelativePath=".\ownerdrawnlistcontrol.h"
-				>
-			</File>
-			<File
-				RelativePath=".\pacman.h"
 				>
 			</File>
 			<File
@@ -756,11 +986,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Resource.h"
+				RelativePath=".\RegIni.h"
 				>
 			</File>
 			<File
-				RelativePath=".\SelectDrivesDlg.h"
+				RelativePath=".\Resource.h"
 				>
 			</File>
 			<File
@@ -772,37 +1002,113 @@
 				>
 			</File>
 			<File
-				RelativePath=".\sortinglistcontrol.h"
-				>
-			</File>
-			<File
-				RelativePath=".\StaticHyperlink.h"
-				>
-			</File>
-			<File
 				RelativePath=".\stdafx.h"
-				>
-			</File>
-			<File
-				RelativePath=".\TreeListControl.h"
-				>
-			</File>
-			<File
-				RelativePath=".\treemap.h"
-				>
-			</File>
-			<File
-				RelativePath=".\typeview.h"
 				>
 			</File>
 			<File
 				RelativePath=".\windirstat.h"
 				>
 			</File>
-			<File
-				RelativePath=".\xyslider.h"
+			<Filter
+				Name="Common"
 				>
-			</File>
+				<File
+					RelativePath="..\common\common_rsrcstr.h"
+					>
+				</File>
+				<File
+					RelativePath="..\common\commonhelpers.h"
+					>
+				</File>
+				<File
+					RelativePath="..\common\cotaskmem.h"
+					>
+				</File>
+				<File
+					RelativePath="..\common\mdexceptions.h"
+					>
+				</File>
+				<File
+					RelativePath="..\common\platform.h"
+					>
+				</File>
+				<File
+					RelativePath="..\common\version.h"
+					>
+				</File>
+				<File
+					RelativePath="..\common\wds_constants.h"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="Dialogs"
+				>
+				<File
+					RelativePath=".\aboutdlg.h"
+					>
+				</File>
+				<File
+					RelativePath=".\CheckForUpdateDlg.h"
+					>
+				</File>
+				<File
+					RelativePath=".\DeleteWarningDlg.h"
+					>
+				</File>
+				<File
+					RelativePath=".\SelectDrivesDlg.h"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="Controls"
+				>
+				<File
+					RelativePath=".\colorbutton.h"
+					>
+				</File>
+				<File
+					RelativePath=".\graphview.h"
+					>
+				</File>
+				<File
+					RelativePath=".\myimagelist.h"
+					>
+				</File>
+				<File
+					RelativePath=".\ownerdrawnlistcontrol.h"
+					>
+				</File>
+				<File
+					RelativePath=".\pacman.h"
+					>
+				</File>
+				<File
+					RelativePath=".\sortinglistcontrol.h"
+					>
+				</File>
+				<File
+					RelativePath=".\StaticHyperlink.h"
+					>
+				</File>
+				<File
+					RelativePath=".\TreeListControl.h"
+					>
+				</File>
+				<File
+					RelativePath=".\treemap.h"
+					>
+				</File>
+				<File
+					RelativePath=".\typeview.h"
+					>
+				</File>
+				<File
+					RelativePath=".\xyslider.h"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Resource Files"
@@ -810,88 +1116,8 @@
 			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
 			>
 			<File
-				RelativePath=".\res\bitmap1.bmp"
-				>
-			</File>
-			<File
-				RelativePath=".\res\bmp00001.bmp"
-				>
-			</File>
-			<File
-				RelativePath=".\res\icon1.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\iconjunc.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\junctionpoint.bmp"
-				>
-			</File>
-			<File
 				RelativePath=".\res\license.txt"
 				>
-			</File>
-			<File
-				RelativePath=".\res\linkhand.cur"
-				>
-			</File>
-			<File
-				RelativePath=".\res\reparse-point.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\text1.bin"
-				>
-			</File>
-			<File
-				RelativePath=".\res\Toolbar.bmp"
-				>
-			</File>
-			<File
-				RelativePath=".\res\windirstat.manifest"
-				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="UnicodeDebug|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="UnicodeRelease|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="StrongDebug|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\windirstat.rc"
@@ -901,126 +1127,42 @@
 				RelativePath=".\res\windirstat.rc2"
 				>
 			</File>
-		</Filter>
-		<Filter
-			Name="Common Files"
-			>
-			<File
-				RelativePath="..\common\common_rsrcstr.h"
+			<Filter
+				Name="Pictures"
 				>
-			</File>
-			<File
-				RelativePath="..\common\commonhelpers.cpp"
-				>
-				<FileConfiguration
-					Name="Debug|Win32"
+				<File
+					RelativePath=".\res\bitmap1.bmp"
 					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
+				</File>
+				<File
+					RelativePath=".\res\bmp00001.bmp"
 					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="UnicodeDebug|Win32"
+				</File>
+				<File
+					RelativePath=".\res\icon1.ico"
 					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="UnicodeRelease|Win32"
+				</File>
+				<File
+					RelativePath=".\res\iconjunc.ico"
 					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="StrongDebug|Win32"
+				</File>
+				<File
+					RelativePath=".\res\junctionpoint.bmp"
 					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\common\commonhelpers.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\cotaskmem.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\mdexceptions.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\platform.cpp"
-				>
-				<FileConfiguration
-					Name="Debug|Win32"
+				</File>
+				<File
+					RelativePath=".\res\linkhand.cur"
 					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
+				</File>
+				<File
+					RelativePath=".\res\reparse-point.ico"
 					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="UnicodeDebug|Win32"
+				</File>
+				<File
+					RelativePath=".\res\Toolbar.bmp"
 					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="UnicodeRelease|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="StrongDebug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\common\platform.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\version.h"
-				>
-			</File>
-			<File
-				RelativePath="..\common\wds_constants.h"
-				>
-			</File>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Special Files"
@@ -1030,6 +1172,14 @@
 				>
 				<FileConfiguration
 					Name="UnicodeRelease|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="UnicodeRelSSE2|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -1048,12 +1198,27 @@
 						Name="VCCustomBuildTool"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="UnicodeRelSSE2|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\common\buildnumber.h"
 				>
 				<FileConfiguration
 					Name="UnicodeRelease|Win32"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="UnicodeRelSSE2|Win32"
 					>
 					<Tool
 						Name="VCCustomBuildTool"

@@ -1,5 +1,5 @@
 changelog.txt - What has been done to WinDirStat (newest top)
-$Header$
+$Id$
 =============================================================
 
 2006-07-04 assarbad

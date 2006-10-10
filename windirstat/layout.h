@@ -21,7 +21,7 @@
 // Author(s): - bseifert -> bseifert@users.sourceforge.net, bseifert@daccord.net
 //            - assarbad -> http://assarbad.net/en/contact
 //
-// $Header$
+// $Id$
 
 #pragma once
 
@@ -58,6 +58,16 @@ class CLayout
 		afx_msg LRESULT OnNcHitTest(CPoint point);
 	};
 
+	class CPositioner  
+	{
+	public:
+		CPositioner(int nNumWindows = 10);
+		virtual ~CPositioner();
+		void SetWindowPos(HWND hWnd, int x, int y, int cx, int cy, UINT uFlags);
+	private:
+		HDWP m_wdp;
+	};
+
 public:
 	CLayout(CWnd *dialog, LPCTSTR name);
 	int AddControl(CWnd *control, double movex, double movey, double stretchx, double stretchy);
@@ -77,6 +87,11 @@ protected:
 };
 
 // $Log$
+// Revision 1.8  2006/10/10 01:41:50  assarbad
+// - Added credits for Gerben Wieringa (Dutch translation)
+// - Replaced Header tag by Id for the CVS tags in the source files ...
+// - Started re-ordering of the files inside the project(s)/solution(s)
+//
 // Revision 1.7  2006/07/04 23:37:39  assarbad
 // - Added my email address in the header, adjusted "Author" -> "Author(s)"
 // - Added CVS Log keyword to those files not having it

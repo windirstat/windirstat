@@ -21,7 +21,7 @@
 // Author(s): - bseifert -> bseifert@users.sourceforge.net, bseifert@daccord.net
 //            - assarbad -> http://assarbad.net/en/contact
 //
-// $Header$
+// $Id$
 
 // This is a unicode encoded string with the names of the translators.
 // Note that each language appears with its native name, followed by the
@@ -35,6 +35,7 @@
 		L"--- Fran\x00E7ais(FRA/FRE) ---\n\nPascal Delrot\n(mailto:tigroo#users.sourceforge.net)\n'UltraSam'\n(mailto:sam.fd#wanadoo.fr)\n\n\n" \
 		L"--- Magyar (HUN) ---\n\n'Leonard Nimoy'\n(mailto:sorge#freemail.hu)\n\n\n" \
 		L"--- Italiano (ITA) ---\n\nMaria Antonietta Ricagno\n(mailto:ricagno#antotranslation.com\nhttp://www.antotranslation.com)\n\n\n" \
+		L"--- Nederlands (NLD) ---\n\nGerben Wieringa\n(mailto:gerbenwieringa#gmail.com)\n\n\n" \
 		L"--- Polski (POL) ---\n\nDariusz Ma\x0142achowski\n(mailto:d_malachowski#pf.pl)\n\n\n" \
 		L"--- \x0420\x0443\x0441\x0441\x043A\x0438\x0439/Russkij (RUS) ---\n\nSergiy '\x041F\x043E\x043B\x0451\x0442' Polyetayev\n(mailto:s_polyetayev#hotmail.com)\n\n\n"
 
@@ -49,6 +50,11 @@
 #define IDSS_SEV_FEEDBACK		"Feedback"
 
 // $Log$
+// Revision 1.7  2006/10/10 01:41:49  assarbad
+// - Added credits for Gerben Wieringa (Dutch translation)
+// - Replaced Header tag by Id for the CVS tags in the source files ...
+// - Started re-ordering of the files inside the project(s)/solution(s)
+//
 // Revision 1.6  2006/07/04 23:37:39  assarbad
 // - Added my email address in the header, adjusted "Author" -> "Author(s)"
 // - Added CVS Log keyword to those files not having it

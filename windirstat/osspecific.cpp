@@ -21,7 +21,7 @@
 // Author(s): - bseifert -> bseifert@users.sourceforge.net, bseifert@daccord.net
 //            - assarbad -> http://assarbad.net/en/contact
 //
-// $Header$
+// $Id$
 
 #include "stdafx.h"
 #include "osspecific.h"
@@ -178,43 +178,6 @@ BOOL CPsapi::GetProcessMemoryInfo(HANDLE Process, PPROCESS_MEMORY_COUNTERS ppsme
 	return m_GetProcessMemoryInfo.pfnFct(Process, ppsmemCounters, cb);
 }
 
-
-/////////////////////////////////////////////////////////////////////////////
-
-/*
-CMapi32Api::CMapi32Api()
-	: m_MAPISendMail(NULL)
-{
-	m_hDll = LoadLibrary(TEXT("mapi32.dll"));
-	GETPROC(MAPISendMail);
-}
-
-CMapi32Api::~CMapi32Api()
-{
-	if(m_hDll != NULL)
-	{
-		FreeLibrary(m_hDll);
-	}
-}
-
-bool CMapi32Api::IsDllPresent()
-{
-	return SearchPath(NULL, TEXT("mapi32.dll"), NULL, 0, NULL, NULL) != 0;
-}
-
-bool CMapi32Api::IsSupported()
-{
-	CHECK(MAPISendMail);
-	return true;
-}
-
-ULONG CMapi32Api::MAPISendMail(LHANDLE lhSession, ULONG ulUIParam, lpMapiMessage lpMessage, FLAGS flFlags, ULONG ulReserved)
-{
-	ASSERT(IsSupported());
-	return (*m_MAPISendMail)(lhSession, ulUIParam, lpMessage, flFlags, ulReserved);
-}
-*/
-
 /////////////////////////////////////////////////////////////////////////////
 
 CQueryDosDeviceApi::CQueryDosDeviceApi()
@@ -333,6 +296,11 @@ void CGetDiskFreeSpaceApi::GetDiskFreeSpace(LPCTSTR pszRootPath, ULONGLONG& tota
 }
 
 // $Log$
+// Revision 1.12  2006/10/10 01:41:50  assarbad
+// - Added credits for Gerben Wieringa (Dutch translation)
+// - Replaced Header tag by Id for the CVS tags in the source files ...
+// - Started re-ordering of the files inside the project(s)/solution(s)
+//
 // Revision 1.11  2006/07/04 23:37:40  assarbad
 // - Added my email address in the header, adjusted "Author" -> "Author(s)"
 // - Added CVS Log keyword to those files not having it

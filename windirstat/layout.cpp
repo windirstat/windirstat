@@ -21,7 +21,7 @@
 // Author(s): - bseifert -> bseifert@users.sourceforge.net, bseifert@daccord.net
 //            - assarbad -> http://assarbad.net/en/contact
 //
-// $Header$
+// $Id$
 
 #include "stdafx.h"
 #include "windirstat.h"
@@ -54,7 +54,7 @@ int CLayout::AddControl(CWnd *control, double movex, double movey, double stretc
 	info.stretchx = stretchx;
 	info.stretchy = stretchy;
 	
-	return m_control.Add(info);
+	return int(m_control.Add(info));
 }
 
 void CLayout::AddControl(UINT id, double movex, double movey, double stretchx, double stretchy)
@@ -111,10 +111,7 @@ void CLayout::OnSize()
 
 	CSize diff = newDialogSize - m_originalDialogSize;
 
-	// The DeferWindowPos-stuff prevents the controls
-	// from overwriting each other.
-
-	HDWP hdwp = BeginDeferWindowPos(m_control.GetSize());
+	CPositioner pos(int(m_control.GetSize()));
 
 	for(int i = 0; i < m_control.GetSize(); i++)
 	{
@@ -126,11 +123,8 @@ void CLayout::OnSize()
 		rc += move;
 		rc += stretch;
 
-		hdwp = DeferWindowPos(hdwp, *m_control[i].control, NULL, rc.left, rc.top, rc.Width(), rc.Height(), 
-			SWP_NOOWNERZORDER | SWP_NOZORDER);
+		pos.SetWindowPos(*m_control[i].control, rc.left, rc.top, rc.Width(), rc.Height(), SWP_NOOWNERZORDER | SWP_NOZORDER);
 	}
-
-	EndDeferWindowPos(hdwp);
 }
 
 void CLayout::OnGetMinMaxInfo(MINMAXINFO *mmi)
@@ -245,7 +239,27 @@ LRESULT CLayout::CSizeGripper::OnNcHitTest(CPoint point)
 	}
 }
 
+CLayout::CPositioner::CPositioner(int nNumWindows)
+	: m_wdp(BeginDeferWindowPos(nNumWindows))
+{
+}
+
+CLayout::CPositioner::~CPositioner()
+{
+	EndDeferWindowPos(m_wdp);
+}
+
+void CLayout::CPositioner::SetWindowPos(HWND hWnd, int x, int y, int cx, int cy, UINT uFlags)
+{
+	m_wdp = DeferWindowPos(m_wdp, hWnd, NULL, x, y, cx, cy, uFlags | SWP_NOZORDER);
+}
+
 // $Log$
+// Revision 1.9  2006/10/10 01:41:50  assarbad
+// - Added credits for Gerben Wieringa (Dutch translation)
+// - Replaced Header tag by Id for the CVS tags in the source files ...
+// - Started re-ordering of the files inside the project(s)/solution(s)
+//
 // Revision 1.8  2006/07/04 23:37:39  assarbad
 // - Added my email address in the header, adjusted "Author" -> "Author(s)"
 // - Added CVS Log keyword to those files not having it

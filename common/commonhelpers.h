@@ -21,14 +21,14 @@
 // Author(s): - bseifert -> bseifert@users.sourceforge.net, bseifert@daccord.net
 //            - assarbad -> http://assarbad.net/en/contact
 //
-// $Header$
+// $Id$
 
 #pragma once
 
 #include "../common/wds_constants.h"
 
-CString GetShellExecuteError(UINT u);
-void MyShellExecute(HWND hwnd, LPCTSTR lpOperation, LPCTSTR lpFile, LPCTSTR lpParameters, LPCTSTR lpDirectory, INT nShowCmd) throw (CException *);
+BOOL ShellExecuteThrow(HWND hwnd, LPCTSTR lpVerb, LPCTSTR lpFile, LPCTSTR lpParameters, LPCTSTR lpDirectory, INT nShowCmd) throw (CException *);
+BOOL ShellExecuteNoThrow(HWND hwnd, LPCTSTR lpVerb, LPCTSTR lpFile, LPCTSTR lpParameters, LPCTSTR lpDirectory, INT nShowCmd) throw (CException *);
 CString MyStrRetToString(const LPITEMIDLIST pidl, const STRRET *strret);
 CString GetBaseNameFromPath(LPCTSTR path);
 bool FileExists(LPCTSTR path);
@@ -38,6 +38,11 @@ CString GetAppFolder();
 CString MyGetFullPathName(LPCTSTR relativePath);
 
 // $Log$
+// Revision 1.8  2006/10/10 01:41:49  assarbad
+// - Added credits for Gerben Wieringa (Dutch translation)
+// - Replaced Header tag by Id for the CVS tags in the source files ...
+// - Started re-ordering of the files inside the project(s)/solution(s)
+//
 // Revision 1.7  2006/07/04 23:37:39  assarbad
 // - Added my email address in the header, adjusted "Author" -> "Author(s)"
 // - Added CVS Log keyword to those files not having it

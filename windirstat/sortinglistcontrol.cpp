@@ -21,7 +21,7 @@
 // Author(s): - bseifert -> bseifert@users.sourceforge.net, bseifert@daccord.net
 //            - assarbad -> http://assarbad.net/en/contact
 //
-// $Header$
+// $Id$
 
 #include "stdafx.h"
 #include "windirstat.h"
@@ -101,9 +101,9 @@ void CSortingListControl::LoadPersistentAttributes()
 	CArray<int, int> arr;
 	arr.SetSize(GetHeaderCtrl()->GetItemCount());
 
-	GetColumnOrderArray(arr.GetData(), arr.GetSize());	
+	GetColumnOrderArray(arr.GetData(), int(arr.GetSize()));
 	CPersistence::GetColumnOrder(m_name, arr);
-	SetColumnOrderArray(arr.GetSize(), arr.GetData());
+	SetColumnOrderArray(int(arr.GetSize()), arr.GetData());
 
 	for(i = 0; i < arr.GetSize(); i++)
 	{
@@ -129,7 +129,7 @@ void CSortingListControl::SavePersistentAttributes()
 	CArray<int, int> arr;
 	arr.SetSize(GetHeaderCtrl()->GetItemCount());
 
-	GetColumnOrderArray(arr.GetData(), arr.GetSize());	
+	GetColumnOrderArray(arr.GetData(), int(arr.GetSize()));
 	CPersistence::SetColumnOrder(m_name, arr);
 
 	for(int i = 0; i < arr.GetSize(); i++)
@@ -312,6 +312,11 @@ void CSortingListControl::OnDestroy()
 }
 
 // $Log$
+// Revision 1.9  2006/10/10 01:41:50  assarbad
+// - Added credits for Gerben Wieringa (Dutch translation)
+// - Replaced Header tag by Id for the CVS tags in the source files ...
+// - Started re-ordering of the files inside the project(s)/solution(s)
+//
 // Revision 1.8  2006/07/04 23:37:40  assarbad
 // - Added my email address in the header, adjusted "Author" -> "Author(s)"
 // - Added CVS Log keyword to those files not having it

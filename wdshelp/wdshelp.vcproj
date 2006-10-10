@@ -20,7 +20,6 @@
 			OutputDirectory="../../help"
 			IntermediateDirectory="../../help"
 			ConfigurationType="0"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			BuildLogFile=""
 			>
 			<Tool

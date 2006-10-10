@@ -21,7 +21,7 @@
 // Author(s): - bseifert -> bseifert@users.sourceforge.net, bseifert@daccord.net
 //            - assarbad -> http://assarbad.net/en/contact
 //
-// $Header$
+// $Id$
 
 #ifndef WINVER				// Allow use of features specific to Windows 95 and Windows NT 4 or later.
 #define WINVER 0x0400		// Change this to the appropriate value to target Windows 98 and Windows 2000 or later.
@@ -33,89 +33,6 @@
 #include "mdexceptions.h"
 
 #include "commonhelpers.h"
-
-
-CString GetShellExecuteError(UINT u)
-{
-	CString s;
-
-	switch (u)
-	{
-	case 0:
-		{
-			s = TEXT("The operating system is out of memory or resources.");
-		}
-		break;
-	case ERROR_FILE_NOT_FOUND:
-		{
-			s = TEXT("The specified file was not found.");
-		}
-		break;
-	case ERROR_PATH_NOT_FOUND:
-		{
-			s = TEXT("The specified path was not found.");
-		}
-		break;
-	case ERROR_BAD_FORMAT:
-		{
-			s = TEXT("The .exe file is invalid (non-Microsoft Win32 .exe or error in .exe image).");
-		}
-		break;
-	case SE_ERR_ACCESSDENIED:
-		{
-			s = TEXT("The operating system denied access to the specified file.");
-		}
-		break;
-	case SE_ERR_ASSOCINCOMPLETE:
-		{
-			s = TEXT("The file name association is incomplete or invalid.");
-		}
-		break;
-	case SE_ERR_DDEBUSY:
-		{
-			s = TEXT("The Dynamic Data Exchange (DDE) transaction could not be completed because other DDE transactions were being processed.");
-		}
-		break;
-	case SE_ERR_DDEFAIL:
-		{
-			s = TEXT("The DDE transaction failed.");
-		}
-		break;
-	case SE_ERR_DDETIMEOUT:
-		{
-			s = TEXT("The DDE transaction could not be completed because the request timed out.");
-		}
-		break;
-	case SE_ERR_DLLNOTFOUND:
-		{
-			s = TEXT("The specified dynamic-link library (DLL) was not found.");
-		}
-		break;
-	case SE_ERR_NOASSOC:
-		{
-			s = TEXT("There is no application associated with the given file name extension. This error will also be returned if you attempt to print a file that is not printable.");
-		}
-		break;
-	case SE_ERR_OOM:
-		{
-			s = TEXT("There was not enough memory to complete the operation.");
-		}
-		break;
-	case SE_ERR_SHARE:
-		{
-			s = TEXT("A sharing violation occurred");
-		}
-		break;
-	default:
-		{
-			s.Format(TEXT("Error Number %d"), u);
-		}
-		break;
-	}
-
-	return s;
-}
-
 
 CString MyStrRetToString(const LPITEMIDLIST pidl, const STRRET *strret)
 {
@@ -146,18 +63,41 @@ CString MyStrRetToString(const LPITEMIDLIST pidl, const STRRET *strret)
 
 	return s;
 }
-
-void MyShellExecute(HWND hwnd, LPCTSTR lpOperation, LPCTSTR lpFile, LPCTSTR lpParameters, LPCTSTR lpDirectory, INT nShowCmd) throw (CException *)
+BOOL ShellExecuteNoThrow(HWND hwnd, LPCTSTR lpVerb, LPCTSTR lpFile, LPCTSTR lpParameters, LPCTSTR lpDirectory, INT nShowCmd)
 {
-	CWaitCursor wc;
+	SHELLEXECUTEINFO sei = {
+		sizeof(SHELLEXECUTEINFO),
+		0,
+		hwnd,
+		lpVerb,
+		lpFile,
+		lpParameters,
+		lpDirectory,
+		nShowCmd,
+		0, // hInstApp
+		0,
+		0,
+		0,
+		0, // dwHotKey
+		0,
+		0
+		};
 
-	UINT h = (UINT)ShellExecute(hwnd, lpOperation, lpFile, lpParameters, lpDirectory, nShowCmd);
-	if(h <= 32)
-	{
-		MdThrowStringExceptionF(TEXT("ShellExecute failed: %1!s!"), GetShellExecuteError(h));
-	}
+	return ShellExecuteEx(&sei);
 }
 
+BOOL ShellExecuteThrow(HWND hwnd, LPCTSTR lpVerb, LPCTSTR lpFile, LPCTSTR lpParameters, LPCTSTR lpDirectory, INT nShowCmd) throw (CException *)
+{
+	CWaitCursor wc;
+	BOOL bResult = FALSE;
+
+	bResult = ShellExecuteNoThrow(hwnd, lpVerb, lpFile, lpParameters, lpDirectory, nShowCmd);
+	if(!bResult)
+	{
+		MdThrowStringExceptionF(TEXT("ShellExecute failed: %1!s!"), MdGetWinErrorText(GetLastError()));
+	}
+	return bResult;
+}
 
 CString GetBaseNameFromPath(LPCTSTR path)
 {
@@ -235,6 +175,11 @@ CString MyGetFullPathName(LPCTSTR relativePath)
 
 
 // $Log$
+// Revision 1.8  2006/10/10 01:41:49  assarbad
+// - Added credits for Gerben Wieringa (Dutch translation)
+// - Replaced Header tag by Id for the CVS tags in the source files ...
+// - Started re-ordering of the files inside the project(s)/solution(s)
+//
 // Revision 1.7  2006/07/04 23:37:39  assarbad
 // - Added my email address in the header, adjusted "Author" -> "Author(s)"
 // - Added CVS Log keyword to those files not having it

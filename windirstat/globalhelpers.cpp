@@ -21,7 +21,7 @@
 // Author(s): - bseifert -> bseifert@users.sourceforge.net, bseifert@daccord.net
 //            - assarbad -> http://assarbad.net/en/contact
 //
-// $Header$
+// $Id$
 
 #include "stdafx.h"
 #include "windirstat.h"
@@ -386,8 +386,8 @@ void ShellExecuteWithAssocDialog(HWND hwnd, LPCTSTR filename) throw (CException 
 {
 	CWaitCursor wc;
 
-	UINT u = (UINT)ShellExecute(hwnd, NULL, filename, NULL, NULL, SW_SHOWNORMAL);
-	if(u == SE_ERR_NOASSOC)
+	BOOL bExecuted = ShellExecuteNoThrow(hwnd, NULL, filename, NULL, NULL, SW_SHOWNORMAL);
+	if((!bExecuted) && (ERROR_NO_ASSOCIATION == GetLastError()))
 	{
 		// Q192352
 		CString sysDir;
@@ -396,12 +396,12 @@ void ShellExecuteWithAssocDialog(HWND hwnd, LPCTSTR filename) throw (CException 
 		sysDir.ReleaseBuffer();
 		
 		CString parameters = TEXT("shell32.dll,OpenAs_RunDLL ");
-		u = (UINT)ShellExecute(hwnd, TEXT("open"), TEXT("RUNDLL32.EXE"), parameters + filename, sysDir, SW_SHOWNORMAL);
+		bExecuted = ShellExecuteNoThrow(hwnd, TEXT("open"), TEXT("RUNDLL32.EXE"), parameters + filename, sysDir, SW_SHOWNORMAL);
 	}
 		
-	if(u <= 32)
+	if(!bExecuted)
 	{
-		MdThrowStringExceptionF(TEXT("ShellExecute failed: %1!s!"), GetShellExecuteError(u));
+		MdThrowStringExceptionF(TEXT("ShellExecute failed: %1!s!"), MdGetWinErrorText(GetLastError()));
 	}
 }
 
@@ -639,6 +639,11 @@ LPCITEMIDLIST SHGetPIDLFromPath(CString path)
 */
 
 // $Log$
+// Revision 1.25  2006/10/10 01:41:50  assarbad
+// - Added credits for Gerben Wieringa (Dutch translation)
+// - Replaced Header tag by Id for the CVS tags in the source files ...
+// - Started re-ordering of the files inside the project(s)/solution(s)
+//
 // Revision 1.24  2006/07/04 23:37:39  assarbad
 // - Added my email address in the header, adjusted "Author" -> "Author(s)"
 // - Added CVS Log keyword to those files not having it

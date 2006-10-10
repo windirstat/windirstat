@@ -21,7 +21,7 @@
 // Author(s): - bseifert -> bseifert@users.sourceforge.net, bseifert@daccord.net
 //            - assarbad -> http://assarbad.net/en/contact
 //
-// $Header$
+// $Id$
 
 #include "stdafx.h"
 #include "windirstat.h"
@@ -468,7 +468,7 @@ void COwnerDrawnListControl::DrawItem(LPDRAWITEMSTRUCT pdis)
 
 	CArray<int, int> order;
 	order.SetSize(GetHeaderCtrl()->GetItemCount());
-	GetHeaderCtrl()->GetOrderArray(order.GetData(), order.GetSize());
+	GetHeaderCtrl()->GetOrderArray(order.GetData(), int(order.GetSize()));
 
 	CRect rcFocus = rcItem;
 	rcFocus.DeflateRect(0, LABEL_Y_MARGIN - 1);
@@ -649,7 +649,7 @@ BOOL COwnerDrawnListControl::OnEraseBkgnd(CDC* pDC)
 
 	CArray<int, int> columnOrder;
 	columnOrder.SetSize(GetHeaderCtrl()->GetItemCount());
-	GetColumnOrderArray(columnOrder.GetData(), columnOrder.GetSize());
+	GetColumnOrderArray(columnOrder.GetData(), int(columnOrder.GetSize()));
 
 	CArray<int, int> vertical;
 	vertical.SetSize(GetHeaderCtrl()->GetItemCount());
@@ -782,6 +782,11 @@ void COwnerDrawnListControl::OnHdnItemchanging(NMHDR * /*pNMHDR*/, LRESULT *pRes
 
 
 // $Log$
+// Revision 1.17  2006/10/10 01:41:50  assarbad
+// - Added credits for Gerben Wieringa (Dutch translation)
+// - Replaced Header tag by Id for the CVS tags in the source files ...
+// - Started re-ordering of the files inside the project(s)/solution(s)
+//
 // Revision 1.16  2006/07/04 23:37:40  assarbad
 // - Added my email address in the header, adjusted "Author" -> "Author(s)"
 // - Added CVS Log keyword to those files not having it
