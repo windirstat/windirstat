@@ -64,14 +64,14 @@ void CCheckForUpdateDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_STATIC_TEXT, DescriptiveText);
-	DDX_Control(pDX, IDOK, CloseButton);
-	DDX_Control(pDX, IDC_STATIC_URL, UpdateUrl);
+	DDX_Control(pDX, IDOK, m_btnClose);
+	DDX_Control(pDX, IDC_BUTTON_ACTION, m_btnAction);
 }
 
 
 BEGIN_MESSAGE_MAP(CCheckForUpdateDlg, CDialog)
 	ON_BN_CLICKED(IDOK, OnBnClickedOk)
-	ON_WM_SHOWWINDOW()
+	ON_BN_CLICKED(IDC_BUTTON_ACTION, OnActionButton)
 END_MESSAGE_MAP()
 
 
@@ -79,15 +79,13 @@ END_MESSAGE_MAP()
 
 void CCheckForUpdateDlg::OnBnClickedOk()
 {
-	// TODO: Add your control notification handler code here
 	OnOK();
 }
 
-void CCheckForUpdateDlg::OnShowWindow(BOOL bShow, UINT nStatus)
+void CCheckForUpdateDlg::OnActionButton()
 {
-	CDialog::OnShowWindow(bShow, nStatus);
-
 	UpdateFromUrl(_T(IDSS_CHECKUPDATESRV), _T(IDSS_CHECKUPDATEURI), IDXS_CHECKUPDATEPORT);
+
 }
 
 void CCheckForUpdateDlg::UpdateFromUrl(CString server, CString uri, INTERNET_PORT port)
@@ -135,7 +133,9 @@ void CCheckForUpdateDlg::UpdateFromUrl(CString server, CString uri, INTERNET_POR
 		}
 		else
 		{
-			// Unknown update status!
+			CString Response;
+			Response.Format(TEXT("Unexpected HTTP status code: %d"), dwStatusCode);
+			DescriptiveText.SetWindowText(Response);
 		}
 
 		if(pHttpFile)
@@ -161,6 +161,9 @@ void CCheckForUpdateDlg::UpdateFromUrl(CString server, CString uri, INTERNET_POR
 }
 
 // $Log$
+// Revision 1.6  2007/02/01 01:13:49  assarbad
+// - Several minor updates
+//
 // Revision 1.5  2006/10/10 01:41:50  assarbad
 // - Added credits for Gerben Wieringa (Dutch translation)
 // - Replaced Header tag by Id for the CVS tags in the source files ...

@@ -26,7 +26,7 @@
 #pragma once
 #include "afxwin.h"
 #include "../common/version.h"
-#include "StaticHyperlink.h"
+//#include "StaticHyperlink.h"
 
 void StartUpdateDialog();
 
@@ -56,14 +56,17 @@ protected:
 	DECLARE_MESSAGE_MAP()
 public:
 	CStatic DescriptiveText;
-	CButton CloseButton;
-	CStaticHyperlink UpdateUrl;
+	CButton m_btnClose;
+	CButton m_btnAction;
 	afx_msg void OnBnClickedOk();
-	afx_msg void OnShowWindow(BOOL bShow, UINT nStatus);
+	afx_msg void OnActionButton();
 	void UpdateFromUrl(CString server, CString uri, INTERNET_PORT port);
 };
 
 // $Log$
+// Revision 1.6  2007/02/01 01:13:49  assarbad
+// - Several minor updates
+//
 // Revision 1.5  2006/10/10 01:41:50  assarbad
 // - Added credits for Gerben Wieringa (Dutch translation)
 // - Replaced Header tag by Id for the CVS tags in the source files ...

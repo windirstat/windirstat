@@ -113,7 +113,7 @@
 	#define VN_REVISION	0
 	#define VN_FILEFLAG	0
 	#define VN_STRING_DLL	PPS(VERNUM_MAJOR) "." PPS(VERNUM_MINOR) "." PPS(VERNUM_REVISION) "." PPS(VN_BUILD)
-	// The variant (debug or not/ unicode or not) is not relevant for resource DLLs, but for EXEs
+	// The variant (debug or not/ Unicode or not) is not relevant for resource DLLs, but for EXEs
 	#define VN_STRING_EXE	VN_STRING_DLL " devel" VERVARIANT
 
 #elif defined(BC_RELEASECANDIDATE)
@@ -165,6 +165,9 @@
 
 
 // $Log$
+// Revision 1.46  2007/02/01 01:13:49  assarbad
+// - Several minor updates
+//
 // Revision 1.45  2006/10/10 01:41:49  assarbad
 // - Added credits for Gerben Wieringa (Dutch translation)
 // - Replaced Header tag by Id for the CVS tags in the source files ...

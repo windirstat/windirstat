@@ -170,6 +170,7 @@
 #define IDC_COLORBUTTON7                1107
 #define IDC_SLIDER                      1200
 #define IDC_BUTTON8                     1201
+#define IDC_BUTTON_ACTION               1201
 #define IDC_TREEMAPHIGHLIGHTCOLOR       1202
 #define IDC_COMBO                       1203
 #define IDC_SIZEGRIPPER                 1208
@@ -193,6 +194,7 @@
 #define IDC_LIST1                       1226
 #define IDC_STATIC_URL                  1227
 #define IDC_STATIC_TEXT                 1228
+#define IDC_BUTTON1                     1229
 #define ID_FILE_OPENURL                 32771
 #define ID_FILE_OPENRECENT              32772
 #define ID_FILE_REFRESHALL              32773
@@ -265,7 +267,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        905
 #define _APS_NEXT_COMMAND_VALUE         33025
-#define _APS_NEXT_CONTROL_VALUE         1229
+#define _APS_NEXT_CONTROL_VALUE         1230
 #define _APS_NEXT_SYMED_VALUE           104
 #endif
 #endif
