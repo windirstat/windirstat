@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8,00"
+	Version="9,00"
 	Name="wdsr0413"
 	ProjectGUID="{70A55EB7-E109-41DE-81B4-0DF2B72DCDE9}"
 	RootNamespace="wdsr0413"
 	Keyword="Win32Proj"
+	TargetFrameworkVersion="131072"
 	>
 	<Platforms>
 		<Platform
@@ -68,6 +69,8 @@
 				EnableCOMDATFolding="2"
 				ResourceOnlyDLL="true"
 				SetChecksum="true"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
 				ImportLibrary="$(OutDir)/wdsr0413.lib"
 				TargetMachine="1"
 			/>
@@ -89,9 +92,6 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
