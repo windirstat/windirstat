@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2006 Oliver Schneider (assarbad.net)
+// Copyright (C) 2004-2006, 2008 Oliver Schneider (assarbad.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -18,8 +18,8 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
-// Author(s): - bseifert -> bseifert@users.sourceforge.net, bseifert@daccord.net
-//            - assarbad -> http://assarbad.net/en/contact
+// Author(s): - bseifert -> bernhard@windirstat.info
+//            - assarbad -> oliver@windirstat.info
 //
 // $Id$
 
@@ -44,6 +44,8 @@
 //-------------------------------------------------------------------
 // Build categories. Uncomment _one_ line.
 //
+#ifndef __WDS_VERSION_H__
+#define __WDS_VERSION_H__
 
 #define BC_DEVEL					// Development version. The usual setting. File version is 0.0.0.buildno.
 //#define BC_RELEASECANDIDATE		// Release candidate. Version number is relevant but not yet official. About-box shows x.y.zrcn. File version is x.y.z.buildno.
@@ -153,7 +155,7 @@
 #ifdef BC_DEVEL
 #define IDSS_CHECKUPDATESRV      "localhost"
 #else
-#define IDSS_CHECKUPDATESRV      "windirstat.sourceforge.net"
+#define IDSS_CHECKUPDATESRV      "windirstat.info"
 #endif
 #define IDSS_CHECKUPDATEURI      "checkupdate.php"
 #define IDXS_CHECKUPDATEPORT     80
@@ -163,130 +165,4 @@
 #undef BC_RELEASECANDIDATE
 #undef BC_RELEASE
 
-
-// $Log$
-// Revision 1.46  2007/02/01 01:13:49  assarbad
-// - Several minor updates
-//
-// Revision 1.45  2006/10/10 01:41:49  assarbad
-// - Added credits for Gerben Wieringa (Dutch translation)
-// - Replaced Header tag by Id for the CVS tags in the source files ...
-// - Started re-ordering of the files inside the project(s)/solution(s)
-//
-// Revision 1.44  2006/07/04 23:37:39  assarbad
-// - Added my email address in the header, adjusted "Author" -> "Author(s)"
-// - Added CVS Log keyword to those files not having it
-// - Added the files which I forgot during last commit
-//
-// Revision 1.43  2006/07/04 22:49:19  assarbad
-// - Replaced CVS keyword "Date" by "Header" in the file headers
-//
-// Revision 1.42  2006/07/04 20:45:16  assarbad
-// - See changelog for the changes of todays previous check-ins as well as this one!
-//
-// Revision 1.41  2005/11/08 20:10:55  assarbad
-// - Fixed minor bug. See changelog.txt for details. Sent for review to the reporter of the bug.
-//
-// Revision 1.40  2005/10/11 10:02:16  assarbad
-// - Added Dutch
-//
-// Revision 1.39  2005/10/01 11:21:07  assarbad
-// *** empty log message ***
-//
-// Revision 1.38  2005/07/16 13:58:05  assarbad
-// *** empty log message ***
-//
-// Revision 1.37  2005/07/16 13:38:44  assarbad
-// - Preparation for release 1.1.2
-//
-// Revision 1.36  2005/04/17 20:45:15  assarbad
-// - Now the list of translators is shared among all translations. See changelog for details.
-//
-// Revision 1.35  2005/04/17 18:13:42  assarbad
-// - Moved some "static" resource strings into the respective *.rc2 files
-// - Corrected typo in Russian DLL
-// - Modified behavior of VERSIONINFO for DLLs. "version.h" has changed therefore
-// ... for details as usual, see the changelog.
-//
-// Revision 1.34  2005/04/17 12:27:17  assarbad
-// - For details see changelog of 2005-04-17
-//
-// Revision 1.33  2005/04/10 16:49:22  assarbad
-// - Some smaller fixes including moving the resource string version into the rc2 files
-//
-// Revision 1.32  2005/04/10 14:57:09  assarbad
-// - Added Italian and Czech. See changelog for details.
-//
-// Revision 1.31  2005/02/14 23:03:22  bseifert
-// Add Hungarian help file. Minor resource file corrections.
-//
-// Revision 1.30  2005/02/07 16:22:28  assarbad
-// - Adjusted all resources to show Spanish. Missing translation of the word
-//  "Spanish" for Hungarian and of the words "Spanish" and "Hungarian" for French.
-//
-// Revision 1.29  2005/01/29 07:08:13  bseifert
-// Added Hungarian resource dll.
-//
-// Revision 1.28  2005/01/02 03:56:04  bseifert
-// Copyright -2005. Release 1.1.1
-//
-// Revision 1.27  2004/12/31 16:01:38  bseifert
-// Bugfixes. See changelog 2004-12-31.
-//
-// Revision 1.26  2004/12/30 11:26:12  bseifert
-// Decided to use serif font for help files. Incremented version number. rc1.
-//
-// Revision 1.25  2004/12/30 10:18:39  bseifert
-// Updated RESOURCEVERSION. Updated testplan. setup: "minimize size".
-//
-// Revision 1.24  2004/12/30 08:01:11  bseifert
-// helpfile updated.
-//
-// Revision 1.23  2004/12/25 13:41:46  bseifert
-// Synced help files.
-//
-// Revision 1.22  2004/12/24 10:39:27  bseifert
-// Added Polish setup and  Polish help file.
-//
-// Revision 1.21  2004/12/19 10:52:36  bseifert
-// Minor fixes.
-//
-// Revision 1.20  2004/12/12 13:40:47  bseifert
-// Improved image coloring. Junction point image now with awxlink overlay.
-//
-// Revision 1.19  2004/12/12 08:34:56  bseifert
-// Aboutbox: added Authors-Tab. Removed license.txt from resource dlls (saves 16 KB per dll).
-//
-// Revision 1.18  2004/11/27 07:19:36  bseifert
-// Unicode/Ansi/Debug-specification in version.h/Aboutbox. Minor fixes.
-//
-// Revision 1.17  2004/11/25 23:07:22  assarbad
-// - Derived CFileFindWDS from CFileFind to correct a problem of the ANSI version
-//
-// Revision 1.16  2004/11/13 18:48:29  bseifert
-// Few corrections in Polish windirstat.rc. Thanks to Darek.
-//
-// Revision 1.15  2004/11/13 08:17:04  bseifert
-// Remove blanks in Unicode Configuration names.
-//
-// Revision 1.14  2004/11/12 21:03:53  bseifert
-// Added wdsr0415.dll. New output dirs for Unicode. Minor corrections.
-//
-// Revision 1.13  2004/11/12 00:47:42  assarbad
-// - Fixed the code for coloring of compressed/encrypted items. Now the coloring spans the full row!
-//
-// Revision 1.12  2004/11/09 23:23:03  bseifert
-// Committed new LINKCOUNT to demonstrate merge conflict.
-//
-// Revision 1.11  2004/11/07 20:14:30  assarbad
-// - Added wrapper for GetCompressedFileSize() so that by default the compressed file size will be shown.
-//
-// Revision 1.10  2004/11/07 00:51:30  assarbad
-// *** empty log message ***
-//
-// Revision 1.9  2004/11/07 00:06:34  assarbad
-// - Fixed minor bug with ampersand (details in changelog.txt)
-//
-// Revision 1.8  2004/11/05 16:53:05  assarbad
-// Added Date and History tag where appropriate.
-//
+#endif // __WDS_VERSION_H__

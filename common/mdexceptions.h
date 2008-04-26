@@ -25,6 +25,8 @@
 
 // Note: Md is just a prefix.
 
+#ifndef __WDS_MDEXCEPTIONS_H__
+#define __WDS_MDEXCEPTIONS_H__
 #pragma once
 
 #ifndef _INC_STDARG
@@ -187,18 +189,4 @@ inline void MdThrowFailed(HRESULT hr, LPCTSTR pszPrefix = NULL)
 	}
 }
 
-// $Log$
-// Revision 1.6  2006/10/10 01:41:49  assarbad
-// - Added credits for Gerben Wieringa (Dutch translation)
-// - Replaced Header tag by Id for the CVS tags in the source files ...
-// - Started re-ordering of the files inside the project(s)/solution(s)
-//
-// Revision 1.5  2006/07/04 22:49:18  assarbad
-// - Replaced CVS keyword "Date" by "Header" in the file headers
-//
-// Revision 1.4  2006/07/04 20:45:16  assarbad
-// - See changelog for the changes of todays previous check-ins as well as this one!
-//
-// Revision 1.3  2004/11/05 16:53:05  assarbad
-// Added Date and History tag where appropriate.
-//
+#endif // __WDS_MDEXCEPTIONS_H__

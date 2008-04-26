@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2006 Oliver Schneider (assarbad.net)
+// Copyright (C) 2004-2006, 2008 Oliver Schneider (assarbad.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -18,11 +18,13 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
-// Author(s): - bseifert -> bseifert@users.sourceforge.net, bseifert@daccord.net
-//            - assarbad -> http://assarbad.net/en/contact
+// Author(s): - bseifert -> bernhard@windirstat.info
+//            - assarbad -> oliver@windirstat.info
 //
 // $Id$
 
+#ifndef __WDS_ITEM_H__
+#define __WDS_ITEM_H__
 #pragma once
 
 #include "Treelistcontrol.h"
@@ -246,51 +248,4 @@ private:
 	SRECT m_rect;				// Finally, this is our coordinates in the Treemap view.
 };
 
-
-// $Log$
-// Revision 1.19  2006/10/10 01:41:50  assarbad
-// - Added credits for Gerben Wieringa (Dutch translation)
-// - Replaced Header tag by Id for the CVS tags in the source files ...
-// - Started re-ordering of the files inside the project(s)/solution(s)
-//
-// Revision 1.18  2006/07/04 23:37:39  assarbad
-// - Added my email address in the header, adjusted "Author" -> "Author(s)"
-// - Added CVS Log keyword to those files not having it
-// - Added the files which I forgot during last commit
-//
-// Revision 1.17  2006/07/04 22:49:20  assarbad
-// - Replaced CVS keyword "Date" by "Header" in the file headers
-//
-// Revision 1.16  2006/07/04 20:45:23  assarbad
-// - See changelog for the changes of todays previous check-ins as well as this one!
-//
-// Revision 1.15  2004/11/29 07:07:47  bseifert
-// Introduced SRECT. Saves 8 Bytes in sizeof(CItem). Formatting changes.
-//
-// Revision 1.14  2004/11/28 19:20:46  assarbad
-// - Fixing strange behavior of logical operators by rearranging code in
-//   CItem::SetAttributes() and CItem::GetAttributes()
-//
-// Revision 1.13  2004/11/28 15:38:42  assarbad
-// - Possible sorting implementation (using bit-order in m_attributes)
-//
-// Revision 1.12  2004/11/28 14:40:06  assarbad
-// - Extended CFileFindWDS to replace a global function
-// - Now packing/unpacking the file attributes. This even spares a call to find encrypted/compressed files.
-//
-// Revision 1.11  2004/11/25 23:07:24  assarbad
-// - Derived CFileFindWDS from CFileFind to correct a problem of the ANSI version
-//
-// Revision 1.10  2004/11/15 19:50:39  assarbad
-// - Minor corrections
-//
-// Revision 1.9  2004/11/12 00:47:42  assarbad
-// - Fixed the code for coloring of compressed/encrypted items. Now the coloring spans the full row!
-//
-// Revision 1.8  2004/11/08 00:46:26  assarbad
-// - Added feature to distinguish compressed and encrypted files/folders by color as in the Windows 2000/XP explorer.
-//   Same rules apply. (Green = encrypted / Blue = compressed)
-//
-// Revision 1.7  2004/11/05 16:53:07  assarbad
-// Added Date and History tag where appropriate.
-//
+#endif // __WDS_ITEM_H__

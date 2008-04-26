@@ -5,9 +5,6 @@ $Id$
 - Check under Terminal Services to fix the redrawing problems
   => assarbad
 
-- NSIS for setup (providing both Unicode and ANSI version)
-  => assarbad
-
 - "Check for updates" in help menu
   => assarbad  +translators
 
