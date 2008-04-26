@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2006 Oliver Schneider (assarbad.net)
+// Copyright (C) 2004-2006, 2008 Oliver Schneider (assarbad.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
-// Author(s): - bseifert -> bseifert@users.sourceforge.net, bseifert@daccord.net
+// Author(s): - bseifert -> bernhard@windirstat.info
 //            - assarbad -> http://assarbad.net/en/contact
 //
 // $Id$
@@ -870,7 +870,7 @@ void CDirstatDoc::RefreshItem(CItem *item)
 
 // UDC confirmation Dialog.
 //
-void CDirstatDoc::AskForConfirmation(const USERDEFINEDCLEANUP *udc, CItem *item) throw (CUserException *)
+void CDirstatDoc::AskForConfirmation(const USERDEFINEDCLEANUP *udc, CItem *item)
 {
 	if(!udc->askForConfirmation)
 	{
@@ -886,7 +886,7 @@ void CDirstatDoc::AskForConfirmation(const USERDEFINEDCLEANUP *udc, CItem *item)
 	}
 }
 
-void CDirstatDoc::PerformUserDefinedCleanup(const USERDEFINEDCLEANUP *udc, CItem *item) throw(CException *)
+void CDirstatDoc::PerformUserDefinedCleanup(const USERDEFINEDCLEANUP *udc, CItem *item)
 {
 	CWaitCursor wc;
 
@@ -1613,6 +1613,10 @@ void CDirstatDoc::Dump(CDumpContext& dc) const
 
 
 // $Log$
+// Revision 1.19  2008/04/26 19:26:35  assarbad
+// - Getting rid of several warnings
+// - Build in Visual Studio 2008 now works properly
+//
 // Revision 1.18  2006/10/10 01:41:50  assarbad
 // - Added credits for Gerben Wieringa (Dutch translation)
 // - Replaced Header tag by Id for the CVS tags in the source files ...

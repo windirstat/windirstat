@@ -27,6 +27,7 @@
 #ifndef __WDS_OSSPECIFIC_H__
 #define __WDS_OSSPECIFIC_H__
 #pragma once
+#include <Windows.h>
 #include <ShellAPI.h>
 
 class CAbstractionLayer

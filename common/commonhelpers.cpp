@@ -23,10 +23,6 @@
 //
 // $Id$
 
-#ifndef WINVER				// Allow use of features specific to Windows 95 and Windows NT 4 or later.
-#define WINVER 0x0400		// Change this to the appropriate value to target Windows 98 and Windows 2000 or later.
-#endif
-
 #include <afxwin.h> // MFC core and standard components
 #include <atlbase.h> // CComPtr, USES_CONVERSION
 
@@ -86,7 +82,7 @@ BOOL ShellExecuteNoThrow(HWND hwnd, LPCTSTR lpVerb, LPCTSTR lpFile, LPCTSTR lpPa
 	return ShellExecuteEx(&sei);
 }
 
-BOOL ShellExecuteThrow(HWND hwnd, LPCTSTR lpVerb, LPCTSTR lpFile, LPCTSTR lpParameters, LPCTSTR lpDirectory, INT nShowCmd) throw (CException *)
+BOOL ShellExecuteThrow(HWND hwnd, LPCTSTR lpVerb, LPCTSTR lpFile, LPCTSTR lpParameters, LPCTSTR lpDirectory, INT nShowCmd)
 {
 	CWaitCursor wc;
 	BOOL bResult = FALSE;

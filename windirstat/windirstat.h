@@ -26,7 +26,7 @@
 #ifndef __WDS_WINDIRSTAT_H__
 #define __WDS_WINDIRSTAT_H__
 #pragma once
-
+#include <Windows.h>
 #include "resource.h" 
 #include "myimagelist.h"
 #include "osspecific.h"

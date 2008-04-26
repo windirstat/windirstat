@@ -43,11 +43,12 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
-				PreprocessorDefinitions="_DEBUG"
+				PreprocessorDefinitions="WINVER=0x0500;_DEBUG"
 				MkTypLibCompatible="false"
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				PreprocessorDefinitions="WINVER=0x0500;_DEBUG"
 				Optimization="0"
 				AdditionalIncludeDirectories=""
 				MinimalRebuild="true"
@@ -66,7 +67,7 @@
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="_DEBUG"
+				PreprocessorDefinitions="WINVER=0x0500;_DEBUG"
 				Culture="1033"
 				AdditionalIncludeDirectories="$(IntDir)"
 			/>
@@ -82,7 +83,6 @@
 				SubSystem="2"
 				SwapRunFromCD="true"
 				SwapRunFromNet="true"
-				OptimizeForWindows98="2"
 				SetChecksum="true"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
@@ -134,12 +134,13 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
-				PreprocessorDefinitions="_DEBUG"
+				PreprocessorDefinitions="WINVER=0x0500;_DEBUG"
 				MkTypLibCompatible="false"
 				TargetEnvironment="3"
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				PreprocessorDefinitions="WINVER=0x0500;_DEBUG"
 				Optimization="0"
 				AdditionalIncludeDirectories=""
 				MinimalRebuild="true"
@@ -158,7 +159,7 @@
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="_DEBUG"
+				PreprocessorDefinitions="WINVER=0x0500;_DEBUG"
 				Culture="1033"
 				AdditionalIncludeDirectories="$(IntDir)"
 			/>
@@ -174,7 +175,6 @@
 				SubSystem="2"
 				SwapRunFromCD="true"
 				SwapRunFromNet="true"
-				OptimizeForWindows98="2"
 				SetChecksum="true"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
@@ -226,11 +226,12 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
-				PreprocessorDefinitions="NDEBUG"
+				PreprocessorDefinitions="WINVER=0x0500;NDEBUG"
 				MkTypLibCompatible="false"
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				PreprocessorDefinitions="WINVER=0x0500;NDEBUG"
 				Optimization="3"
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
@@ -248,7 +249,7 @@
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="NDEBUG"
+				PreprocessorDefinitions="WINVER=0x0500;NDEBUG"
 				Culture="1033"
 				AdditionalIncludeDirectories="$(IntDir)"
 			/>
@@ -266,7 +267,6 @@
 				SwapRunFromNet="true"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
-				OptimizeForWindows98="2"
 				SetChecksum="true"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
@@ -318,12 +318,13 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
-				PreprocessorDefinitions="NDEBUG"
+				PreprocessorDefinitions="WINVER=0x0500;NDEBUG"
 				MkTypLibCompatible="false"
 				TargetEnvironment="3"
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				PreprocessorDefinitions="WINVER=0x0500;NDEBUG"
 				Optimization="3"
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
@@ -341,7 +342,7 @@
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="NDEBUG"
+				PreprocessorDefinitions="WINVER=0x0500;NDEBUG"
 				Culture="1033"
 				AdditionalIncludeDirectories="$(IntDir)"
 			/>
@@ -359,7 +360,6 @@
 				SwapRunFromNet="true"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
-				OptimizeForWindows98="2"
 				SetChecksum="true"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
@@ -411,11 +411,12 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
-				PreprocessorDefinitions="_DEBUG"
+				PreprocessorDefinitions="WINVER=0x0500;_DEBUG"
 				MkTypLibCompatible="false"
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				PreprocessorDefinitions="WINVER=0x0500;_DEBUG"
 				Optimization="0"
 				AdditionalIncludeDirectories=""
 				MinimalRebuild="true"
@@ -434,7 +435,7 @@
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="_DEBUG"
+				PreprocessorDefinitions="WINVER=0x0500;_DEBUG"
 				Culture="1033"
 				AdditionalIncludeDirectories="$(IntDir)"
 			/>
@@ -450,7 +451,6 @@
 				SubSystem="2"
 				SwapRunFromCD="true"
 				SwapRunFromNet="true"
-				OptimizeForWindows98="1"
 				SetChecksum="true"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
@@ -502,12 +502,13 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
-				PreprocessorDefinitions="_DEBUG"
+				PreprocessorDefinitions="WINVER=0x0500;_DEBUG"
 				MkTypLibCompatible="false"
 				TargetEnvironment="3"
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				PreprocessorDefinitions="WINVER=0x0500;_DEBUG"
 				Optimization="0"
 				AdditionalIncludeDirectories=""
 				MinimalRebuild="true"
@@ -526,7 +527,7 @@
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="_DEBUG"
+				PreprocessorDefinitions="WINVER=0x0500;_DEBUG"
 				Culture="1033"
 				AdditionalIncludeDirectories="$(IntDir)"
 			/>
@@ -542,7 +543,6 @@
 				SubSystem="2"
 				SwapRunFromCD="true"
 				SwapRunFromNet="true"
-				OptimizeForWindows98="1"
 				SetChecksum="true"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
@@ -594,11 +594,12 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
-				PreprocessorDefinitions="NDEBUG"
+				PreprocessorDefinitions="WINVER=0x0500;NDEBUG"
 				MkTypLibCompatible="false"
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				PreprocessorDefinitions="WINVER=0x0500;NDEBUG"
 				Optimization="3"
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
@@ -616,7 +617,7 @@
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="NDEBUG"
+				PreprocessorDefinitions="WINVER=0x0500;NDEBUG"
 				Culture="1033"
 				AdditionalIncludeDirectories="$(IntDir)"
 			/>
@@ -634,7 +635,6 @@
 				SwapRunFromNet="true"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
-				OptimizeForWindows98="1"
 				SetChecksum="true"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
@@ -686,12 +686,13 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
-				PreprocessorDefinitions="NDEBUG"
+				PreprocessorDefinitions="WINVER=0x0500;NDEBUG"
 				MkTypLibCompatible="false"
 				TargetEnvironment="3"
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				PreprocessorDefinitions="WINVER=0x0500;NDEBUG"
 				Optimization="3"
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
@@ -709,7 +710,7 @@
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="NDEBUG"
+				PreprocessorDefinitions="WINVER=0x0500;NDEBUG"
 				Culture="1033"
 				AdditionalIncludeDirectories="$(IntDir)"
 			/>
@@ -727,7 +728,6 @@
 				SwapRunFromNet="true"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
-				OptimizeForWindows98="1"
 				SetChecksum="true"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
@@ -779,14 +779,14 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
-				PreprocessorDefinitions="_DEBUG"
+				PreprocessorDefinitions="WINVER=0x0500;_DEBUG"
 				MkTypLibCompatible="false"
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories=""
-				PreprocessorDefinitions="STRONGDEBUG"
+				PreprocessorDefinitions="WINVER=0x0500;_DEBUG;STRONGDEBUG"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				SmallerTypeCheck="true"
@@ -803,7 +803,7 @@
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="_DEBUG"
+				PreprocessorDefinitions="WINVER=0x0500;_DEBUG"
 				Culture="1033"
 				AdditionalIncludeDirectories="$(IntDir)"
 			/>
@@ -819,7 +819,6 @@
 				SubSystem="2"
 				SwapRunFromCD="true"
 				SwapRunFromNet="true"
-				OptimizeForWindows98="2"
 				SetChecksum="true"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
@@ -871,7 +870,7 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
-				PreprocessorDefinitions="_DEBUG"
+				PreprocessorDefinitions="WINVER=0x0500;_DEBUG"
 				MkTypLibCompatible="false"
 				TargetEnvironment="3"
 			/>
@@ -879,7 +878,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories=""
-				PreprocessorDefinitions="STRONGDEBUG"
+				PreprocessorDefinitions="WINVER=0x0500;_DEBUG;STRONGDEBUG"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				SmallerTypeCheck="true"
@@ -896,7 +895,7 @@
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="_DEBUG"
+				PreprocessorDefinitions="WINVER=0x0500;_DEBUG"
 				Culture="1033"
 				AdditionalIncludeDirectories="$(IntDir)"
 			/>
@@ -912,7 +911,6 @@
 				SubSystem="2"
 				SwapRunFromCD="true"
 				SwapRunFromNet="true"
-				OptimizeForWindows98="2"
 				SetChecksum="true"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
@@ -964,11 +962,12 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
-				PreprocessorDefinitions="NDEBUG"
+				PreprocessorDefinitions="WINVER=0x0500;NDEBUG"
 				MkTypLibCompatible="false"
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				PreprocessorDefinitions="WINVER=0x0500;NDEBUG"
 				Optimization="3"
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
@@ -987,7 +986,7 @@
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="NDEBUG"
+				PreprocessorDefinitions="WINVER=0x0500;NDEBUG"
 				Culture="1033"
 				AdditionalIncludeDirectories="$(IntDir)"
 			/>
@@ -1005,7 +1004,6 @@
 				SwapRunFromNet="true"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
-				OptimizeForWindows98="1"
 				SetChecksum="true"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
@@ -1057,12 +1055,13 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
-				PreprocessorDefinitions="NDEBUG"
+				PreprocessorDefinitions="WINVER=0x0500;NDEBUG"
 				MkTypLibCompatible="false"
 				TargetEnvironment="3"
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				PreprocessorDefinitions="WINVER=0x0500;NDEBUG"
 				Optimization="3"
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
@@ -1081,7 +1080,7 @@
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="NDEBUG"
+				PreprocessorDefinitions="WINVER=0x0500;NDEBUG"
 				Culture="1033"
 				AdditionalIncludeDirectories="$(IntDir)"
 			/>
@@ -1099,7 +1098,6 @@
 				SwapRunFromNet="true"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
-				OptimizeForWindows98="1"
 				SetChecksum="true"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
@@ -1207,26 +1205,6 @@
 			<File
 				RelativePath=".\PageTreemap.cpp"
 				>
-			</File>
-			<File
-				RelativePath=".\RegIni.cpp"
-				>
-				<FileConfiguration
-					Name="UnicodeRelSSE2|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="UnicodeRelSSE2|x64"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-					/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\stdafx.cpp"

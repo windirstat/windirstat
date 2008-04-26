@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2006 Oliver Schneider (assarbad.net)
+// Copyright (C) 2004-2006, 2008 Oliver Schneider (assarbad.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -18,8 +18,8 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
-// Author(s): - bseifert -> bseifert@users.sourceforge.net, bseifert@daccord.net
-//            - assarbad -> http://assarbad.net/en/contact
+// Author(s): - bseifert -> bernhard@windirstat.info
+//            - assarbad -> oliver@windirstat.info
 //
 // $Id$
 
@@ -768,9 +768,7 @@ void CSelectDrivesDlg::UpdateButtons()
 					pattern += TEXT("\\");
 				}
 				pattern += TEXT("*.*");
-				CFileFind finder;
-				BOOL b = finder.FindFile(pattern);
-				enableOk = b;
+				enableOk = FALSE != CFileFind().FindFile(pattern);
 			}
 		}
 		break;
@@ -917,60 +915,3 @@ int CALLBACK CSelectDrivesDlg::BrowseCallbackProc(	HWND hWnd, UINT uMsg, LPARAM 
 	return 0;
 }
 
-// $Log$
-// Revision 1.27  2006/10/10 01:41:50  assarbad
-// - Added credits for Gerben Wieringa (Dutch translation)
-// - Replaced Header tag by Id for the CVS tags in the source files ...
-// - Started re-ordering of the files inside the project(s)/solution(s)
-//
-// Revision 1.26  2006/07/04 23:37:39  assarbad
-// - Added my email address in the header, adjusted "Author" -> "Author(s)"
-// - Added CVS Log keyword to those files not having it
-// - Added the files which I forgot during last commit
-//
-// Revision 1.25  2006/07/04 22:49:20  assarbad
-// - Replaced CVS keyword "Date" by "Header" in the file headers
-//
-// Revision 1.24  2006/07/04 20:45:22  assarbad
-// - See changelog for the changes of todays previous check-ins as well as this one!
-//
-// Revision 1.23  2005/11/08 20:10:55  assarbad
-// - Fixed minor bug. See changelog.txt for details. Sent for review to the reporter of the bug.
-//
-// Revision 1.22  2005/10/01 11:21:08  assarbad
-// *** empty log message ***
-//
-// Revision 1.21  2005/04/10 16:49:30  assarbad
-// - Some smaller fixes including moving the resource string version into the rc2 files
-//
-// Revision 1.20  2004/12/31 16:01:42  bseifert
-// Bugfixes. See changelog 2004-12-31.
-//
-// Revision 1.19  2004/12/19 10:52:39  bseifert
-// Minor fixes.
-//
-// Revision 1.18  2004/11/14 21:50:44  assarbad
-// - Pre-select the last used folder
-//
-// Revision 1.17  2004/11/13 08:17:07  bseifert
-// Remove blanks in Unicode Configuration names.
-//
-// Revision 1.16  2004/11/12 22:14:16  bseifert
-// Eliminated CLR_NONE. Minor corrections.
-//
-// Revision 1.15  2004/11/12 16:54:43  assarbad
-// - Corrected a comment which actually refers to ExitProcess() but to TerminateProcess() as previously assumed.
-//
-// Revision 1.14  2004/11/12 13:19:44  assarbad
-// - Minor changes and additions (in preparation for the solution of the "Browse for Folder" problem)
-//
-// Revision 1.13  2004/11/12 00:47:42  assarbad
-// - Fixed the code for coloring of compressed/encrypted items. Now the coloring spans the full row!
-//
-// Revision 1.12  2004/11/08 00:46:26  assarbad
-// - Added feature to distinguish compressed and encrypted files/folders by color as in the Windows 2000/XP explorer.
-//   Same rules apply. (Green = encrypted / Blue = compressed)
-//
-// Revision 1.11  2004/11/05 16:53:06  assarbad
-// Added Date and History tag where appropriate.
-//

@@ -146,8 +146,8 @@ protected:
 	bool DeletePhysicalItem(CItem *item, bool toTrashBin);
 	void SetZoomItem(CItem *item);
 	void RefreshItem(CItem *item);
-	void AskForConfirmation(const USERDEFINEDCLEANUP *udc, CItem *item) throw (CUserException *);
-	void PerformUserDefinedCleanup(const USERDEFINEDCLEANUP *udc, CItem *item) throw(CException *);
+	void AskForConfirmation(const USERDEFINEDCLEANUP *udc, CItem *item);
+	void PerformUserDefinedCleanup(const USERDEFINEDCLEANUP *udc, CItem *item);
 	void RefreshAfterUserDefinedCleanup(const USERDEFINEDCLEANUP *udc, CItem *item);
 	void RecursiveUserDefinedCleanup(const USERDEFINEDCLEANUP *udc, const CString& rootPath, const CString& currentPath);
 	void CallUserDefinedCleanup(bool isDirectory, const CString& format, const CString& rootPath, const CString& currentPath, bool showConsoleWindow, bool wait);

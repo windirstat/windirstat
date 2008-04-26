@@ -33,8 +33,6 @@
 #include <stdarg.h>
 #endif
 
-#pragma warning(disable: 4290) // C++ Exception Specification ignored
-
 class CMdStringException: public CException
 {
 public:
@@ -60,7 +58,7 @@ protected:
 	CString m_sText;
 };
 
-inline CString MdGetExceptionMessage(CException *pe)
+inline CString MdGetExceptionMessage(const CException *pe)
 {
 	const INT ccBufferSize = 0x400;
 	CString s;
@@ -102,13 +100,11 @@ inline CString MdGetWinErrorText(HRESULT hr)
 }
 
 inline void MdThrowStringException(UINT resId)
-	throw (CMdStringException *)
 {
 	throw new CMdStringException(MAKEINTRESOURCE(resId));
 }
 
 inline void MdThrowStringException(LPCTSTR pszText)
-	throw (CMdStringException *)
 {
 	throw new CMdStringException(pszText);
 }
@@ -158,7 +154,6 @@ inline void MdThrowStringExceptionF(UINT nResIdFormat, va_list vlist)
 }
 
 inline void MdThrowWinError(DWORD dw, LPCTSTR pszPrefix =NULL)
-	throw (CMdStringException *)
 {
 	CString sMsg = pszPrefix;
 	sMsg += TEXT(": ") + MdGetWinErrorText(dw);
@@ -166,7 +161,6 @@ inline void MdThrowWinError(DWORD dw, LPCTSTR pszPrefix =NULL)
 }
 
 inline void MdThrowHresult(HRESULT hr, LPCTSTR pszPrefix =NULL)
-	throw (CMdStringException *)
 {
 	CString sMsg = pszPrefix;
 	sMsg += TEXT(": ") + MdGetWinErrorText(hr);
@@ -175,13 +169,11 @@ inline void MdThrowHresult(HRESULT hr, LPCTSTR pszPrefix =NULL)
 
 
 inline void MdThrowLastWinerror(LPCTSTR pszPrefix = NULL)
-	throw (CMdStringException *)
 {
 	MdThrowWinError(GetLastError(), pszPrefix);
 }
 
 inline void MdThrowFailed(HRESULT hr, LPCTSTR pszPrefix = NULL)
-	throw (CMdStringException *)
 {
 	if(FAILED(hr))
 	{
