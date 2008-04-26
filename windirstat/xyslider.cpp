@@ -522,7 +522,7 @@ void CXySlider::OnLButtonUp(UINT nFlags, CPoint point)
 	CStatic::OnLButtonUp(nFlags, point);
 }
 
-void CXySlider::OnTimer(UINT /*nIDEvent*/)
+void CXySlider::OnTimer(UINT_PTR /*nIDEvent*/)
 {
 	CPoint point;
 	GetCursorPos(&point);

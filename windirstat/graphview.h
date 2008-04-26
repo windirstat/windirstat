@@ -92,7 +92,7 @@ protected:
 	afx_msg void OnContextMenu(CWnd *pWnd, CPoint point);
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
 	afx_msg void OnDestroy();
-	afx_msg void OnTimer(UINT nIDEvent);
+	afx_msg void OnTimer(UINT_PTR nIDEvent);
 
 public:
 	#ifdef _DEBUG
