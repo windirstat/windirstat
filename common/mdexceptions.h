@@ -94,7 +94,7 @@ inline CString MdGetWinErrorText(HRESULT hr)
 	}
 	else 
 	{ 
-		sRet = (LPCTSTR)lpMsgBuf; 
+		sRet = CString(static_cast<LPTSTR>(lpMsgBuf)); 
 		LocalFree(lpMsgBuf); 
 	}
 	return sRet;

@@ -28,12 +28,9 @@
 #pragma once
 #include <afx.h> // Declaration of prototype for CFileFind
 
-class CFileFindWDS :
-	public CFileFind
+class CFileFindWDS : public CFileFind
 {
 public:
-	CFileFindWDS(void);
-	~CFileFindWDS(void);
 	DWORD GetAttributes() const;
 	ULONGLONG GetCompressedLength() const;
 };

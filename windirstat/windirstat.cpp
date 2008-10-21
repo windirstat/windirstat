@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2006 Oliver Schneider (assarbad.net)
+// Copyright (C) 2004-2006, 2008 Oliver Schneider (assarbad.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -18,8 +18,8 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
-// Author(s): - bseifert -> bseifert@users.sourceforge.net, bseifert@daccord.net
-//            - assarbad -> http://assarbad.net/en/contact
+// Author(s): - bseifert -> bernhard@windirstat.info
+//            - assarbad -> oliver@windirstat.info
 //
 // $Id$
 
@@ -35,6 +35,54 @@
 #define new DEBUG_NEW
 #endif
 
+// #if (!defined(_AMD64_) && !defined(_IA64_))
+// class CDisable64bitFsRedirect
+// {
+// 	typedef BOOLEAN (WINAPI *TFNWow64EnableWow64FsRedirection)(BOOLEAN);
+// 	typedef BOOL (WINAPI *TFNWow64DisableWow64FsRedirection)(PVOID *);
+// 	typedef BOOL (WINAPI *TFNWow64RevertWow64FsRedirection)(PVOID);
+// public:
+// 	CDisable64bitFsRedirect()
+// 		: m_hKernel32(::GetModuleHandle(TEXT("kernel32.dll")))
+// 		, m_pfnWow64EnableWow64FsRedirection(reinterpret_cast<TFNWow64EnableWow64FsRedirection>(::GetProcAddress(m_hKernel32, "Wow64EnableWow64FsRedirection")))
+// 		, m_pfnWow64DisableWow64FsRedirection(reinterpret_cast<TFNWow64DisableWow64FsRedirection>(::GetProcAddress(m_hKernel32, "Wow64DisableWow64FsRedirection")))
+// 		, m_pfnWow64RevertWow64FsRedirection(reinterpret_cast<TFNWow64RevertWow64FsRedirection>(::GetProcAddress(m_hKernel32, "Wow64RevertWow64FsRedirection")))
+// 		, m_OldValue(NULL)
+// 		, m_WasDisabled(FALSE)
+// 	{
+// 		if((0 != m_pfnWow64DisableWow64FsRedirection) && (0 != m_pfnWow64RevertWow64FsRedirection))
+// 		{
+// 			m_WasDisabled = (FALSE != m_pfnWow64DisableWow64FsRedirection(&m_OldValue));
+// 		}
+// 		else if(0 != m_pfnWow64EnableWow64FsRedirection)
+// 		{
+// 			m_WasDisabled = m_pfnWow64EnableWow64FsRedirection(FALSE);
+// 		}
+// 	}
+// 
+// 	~CDisable64bitFsRedirect()
+// 	{
+// 		if(m_WasDisabled)
+// 		{
+// 			if((0 != m_pfnWow64DisableWow64FsRedirection) && (0 != m_pfnWow64RevertWow64FsRedirection))
+// 			{
+// 				m_pfnWow64RevertWow64FsRedirection(m_OldValue);
+// 			}
+// 			else if(0 != m_pfnWow64EnableWow64FsRedirection)
+// 			{
+// 				m_pfnWow64EnableWow64FsRedirection(TRUE);
+// 			}
+// 		}
+// 	}
+// 
+// 	HMODULE m_hKernel32;
+// 	TFNWow64EnableWow64FsRedirection m_pfnWow64EnableWow64FsRedirection;
+// 	TFNWow64DisableWow64FsRedirection m_pfnWow64DisableWow64FsRedirection;
+// 	TFNWow64RevertWow64FsRedirection m_pfnWow64RevertWow64FsRedirection;
+//     PVOID m_OldValue;
+// 	BOOLEAN m_WasDisabled;
+// };
+// #endif
 
 CMainFrame *GetMainFrame()
 {
@@ -79,6 +127,9 @@ END_MESSAGE_MAP()
 
 
 CDirstatApp _theApp;
+// #if (!defined(_AMD64_) && !defined(_IA64_))
+// CDisable64bitFsRedirect _fs64Redirects;
+// #endif
 
 CDirstatApp::CDirstatApp()
 {
@@ -613,61 +664,3 @@ void CDirstatApp::DoContextHelp(DWORD topic)
 	}
 }
 
-// $Log$
-// Revision 1.22  2006/10/10 01:41:50  assarbad
-// - Added credits for Gerben Wieringa (Dutch translation)
-// - Replaced Header tag by Id for the CVS tags in the source files ...
-// - Started re-ordering of the files inside the project(s)/solution(s)
-//
-// Revision 1.21  2006/07/04 23:37:40  assarbad
-// - Added my email address in the header, adjusted "Author" -> "Author(s)"
-// - Added CVS Log keyword to those files not having it
-// - Added the files which I forgot during last commit
-//
-// Revision 1.20  2006/07/04 22:49:21  assarbad
-// - Replaced CVS keyword "Date" by "Header" in the file headers
-//
-// Revision 1.19  2006/07/04 22:07:29  assarbad
-// - Changed project options (no manifest for resource DLLs)
-// - Removed report bug dialog from all resource DLLs
-// - Removed report bug module from sources
-//
-// Revision 1.18  2006/07/04 20:45:23  assarbad
-// - See changelog for the changes of todays previous check-ins as well as this one!
-//
-// Revision 1.17  2005/10/01 11:21:08  assarbad
-// *** empty log message ***
-//
-// Revision 1.16  2005/04/17 12:27:21  assarbad
-// - For details see changelog of 2005-04-17
-//
-// Revision 1.15  2005/04/10 16:49:30  assarbad
-// - Some smaller fixes including moving the resource string version into the rc2 files
-//
-// Revision 1.14  2004/12/19 10:52:39  bseifert
-// Minor fixes.
-//
-// Revision 1.13  2004/11/28 14:40:06  assarbad
-// - Extended CFileFindWDS to replace a global function
-// - Now packing/unpacking the file attributes. This even spares a call to find encrypted/compressed files.
-//
-// Revision 1.12  2004/11/25 11:58:52  assarbad
-// - Minor fixes (odd behavior of coloring in ANSI version, caching of the GetCompressedFileSize API)
-//   for details see the changelog.txt
-//
-// Revision 1.11  2004/11/14 08:49:06  bseifert
-// Date/Time/Number formatting now uses User-Locale. New option to force old behavior.
-//
-// Revision 1.10  2004/11/12 22:14:16  bseifert
-// Eliminated CLR_NONE. Minor corrections.
-//
-// Revision 1.9  2004/11/10 01:03:00  assarbad
-// - Style cleaning of the alternative coloring code for compressed/encrypted items
-//
-// Revision 1.8  2004/11/08 00:46:26  assarbad
-// - Added feature to distinguish compressed and encrypted files/folders by color as in the Windows 2000/XP explorer.
-//   Same rules apply. (Green = encrypted / Blue = compressed)
-//
-// Revision 1.7  2004/11/05 16:53:08  assarbad
-// Added Date and History tag where appropriate.
-//
