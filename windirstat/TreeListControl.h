@@ -30,6 +30,7 @@
 #include "ownerdrawnlistcontrol.h"
 #include "pacman.h"
 
+class CDirstatView;
 class CTreeListItem;
 class CTreeListControl;
 
@@ -121,7 +122,11 @@ class CTreeListControl: public COwnerDrawnListControl
 public:
 	static CTreeListControl *GetTheTreeListControl();
 
+#ifdef SINGLE_SELECT
 	CTreeListControl(int rowHeight = -1);
+#else
+    CTreeListControl(CDirstatView *dirstatView, int rowHeight = -1);
+#endif // SINGLE_SELECT
 	virtual ~CTreeListControl();
 	void MySetImageList(CImageList *il);
 	virtual BOOL CreateEx(DWORD dwExStyle, DWORD dwStyle, const RECT& rect,	CWnd* pParentWnd, UINT nID);
@@ -132,9 +137,16 @@ public:
 	void OnRemovingAllChildren(CTreeListItem *parent);
 	CTreeListItem *GetItem(int i);
 	void DeselectAll();
+#ifdef SINGLE_SELECT
 	void SelectAndShowItem(const CTreeListItem *item, bool showWholePath);
+#else
+    void ExpandPathToItem(const CTreeListItem *item);
+#endif // SINGLE_SELECT
 	void DrawNode(CDC *pdc, CRect& rc, CRect& rcPlusMinus, const CTreeListItem *item, int *width);
 	void SelectItem(const CTreeListItem *item);
+#ifndef SINGLE_SELECT
+    void SelectSingleItem(const CTreeListItem *item);
+#endif // SINGLE_SELECT
 	void Sort();
 	void EnsureItemVisible(const CTreeListItem *item);
 	void ExpandItem(CTreeListItem *item);
@@ -143,7 +155,11 @@ public:
 	void SetItemScrollPosition(CTreeListItem *item, int top);
 	bool SelectedItemCanToggle();
 	void ToggleSelectedItem();
+#ifndef SINGLE_SELECT
+    void ExtendSelection(const CTreeListItem *item);
 
+    virtual void SortItems();
+#endif // SINGLE_SELECT
 	virtual bool HasImages();
 
 protected:
@@ -157,7 +173,25 @@ protected:
 	void ExpandItem(int i, bool scroll = true);
 	void ToggleExpansion(int i);
 	void SelectItem(int i);
+#ifndef SINGLE_SELECT
+    void DeselectItem(int i);
+    void FocusItem(int i);
+    void SelectSingleItem(int i);
+#endif // SINGLE_SELECT
 	int GetSelectedItem();
+
+#ifndef SINGLE_SELECT
+    /////////////////////////////////////////////////////
+    // Selection management
+    void ExtendSelection(int i);
+    void UpdateDocumentSelection();
+
+    CTreeListItem *m_selectionAnchor;
+    //
+    /////////////////////////////////////////////////////
+
+    CDirstatView *m_dirstatView;// backpointer to the directory list
+#endif // SINGLE_SELECT
 
 	CBitmap m_bmNodes0;			// The bitmaps needed to draw the treecontrol-like branches
 	CBitmap m_bmNodes1;			// The same bitmaps with stripe-background color

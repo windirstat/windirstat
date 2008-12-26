@@ -63,6 +63,7 @@ enum
 	HINT_NULL,				// General update
 	HINT_NEWROOT,			// Root item has changed - clear everything.
 	HINT_SELECTIONCHANGED,	// The selection has changed, EnsureVisible.
+    HINT_EXTENDSELECTION,	// DirstatView shall expand selection. pHint = CItem *
 	HINT_SHOWNEWSELECTION,	// The selection has changed, Show Path
 	HINT_SELECTIONSTYLECHANGED,	// Only update selection in Graphview
 	HINT_EXTENSIONSELECTIONCHANGED,	// Type list selected a new extension
@@ -119,8 +120,20 @@ public:
 	CItem *GetZoomItem();
 	bool IsZoomed();
 	
-	void SetSelection(const CItem *item, bool keepReselectChildStack = false);
+#ifndef SINGLE_SELECT
+    void RemoveAllSelections();
+    bool CanAddSelection(const CItem *item);
+    void AddSelection(const CItem *item);
+    void RemoveSelection(const CItem *item);
+    void AssertSelectionValid();
+    unsigned int GetSelectionCount();
+    bool IsSelected(const CItem *item);
+    // FIXME: Multi-select
+    CItem *GetSelection(unsigned int i);
+#else
 	CItem *GetSelection();
+#endif // SINGLE_SELECT
+    void SetSelection(const CItem *item, bool keepReselectChildStack = false);
 	
 	void SetHighlightExtension(LPCTSTR ext);
 	CString GetHighlightExtension();
@@ -157,6 +170,9 @@ protected:
 	void ClearReselectChildStack();
 	bool IsReselectChildAvailable();
 	bool DirectoryListHasFocus();
+#ifndef SINGLE_SELECT
+    CItem *GetSelectionParent();
+#endif // SINGLE_SELECT
 
 	bool m_showFreeSpace;		// Whether to show the <Free Space> item
 	bool m_showUnknown;			// Whether to show the <Unknown> item
@@ -165,7 +181,11 @@ protected:
 								// In this case, we need a root pseudo item ("My Computer").
 
 	CItem *m_rootItem;			// The very root item
+#ifdef SINGLE_SELECT
 	CItem *m_selectedItem;		// Currently selected item, or NULL
+#else
+    CArray<CItem *, CItem *> m_selectedItems;	// The currently selected items
+#endif // SINGLE_SELECT
 	CString m_highlightExtension;	// Currently highlighted extension
 	CItem *m_zoomItem;			// Current "zoom root"
 	CItem *m_workingItem;		// Current item we are working on. For progress indication

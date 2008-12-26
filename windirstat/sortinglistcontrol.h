@@ -86,9 +86,14 @@ public:
 	void InsertListItem(int i, CSortingListItem *item);
 	CSortingListItem *GetSortingListItem(int i);
 
+#ifdef SINGLE_SELECT
 	void SortItems();
+#endif // SINGLE_SELECT
 
 	// Overridables
+#ifndef SINGLE_SELECT
+    virtual void SortItems();
+#endif // SINGLE_SELECT
 	virtual bool GetAscendingDefault(int column);
 	virtual bool HasImages();
 

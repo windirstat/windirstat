@@ -529,7 +529,8 @@ void CTypeView::OnUpdate(CView * /*pSender*/, LPARAM lHint, CObject *)
 
 void CTypeView::SetSelection()
 {
-	CItem *item = GetDocument()->GetSelection();
+    // FIXME: Multi-select
+	CItem *item = GetDocument()->GetSelection(0);
 	if(item == NULL || item->GetType() != IT_FILE)
 	{
 		m_extensionListControl.EnsureVisible(0, false);

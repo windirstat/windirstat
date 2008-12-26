@@ -40,8 +40,12 @@ namespace
 }
 
 CMyTreeListControl::CMyTreeListControl(CDirstatView *dirstatView)
+#ifdef SINGLE_SELECT
 	: CTreeListControl(20)
 	, m_dirstatView(dirstatView)
+#else
+    : CTreeListControl(dirstatView, 20)
+#endif // SINGLE_SELECT
 {
 }
 
@@ -173,7 +177,8 @@ CString CDirstatView::GenerateReport()
 {
 	CString report = GetOptions()->GetReportPrefix() + TEXT("\r\n");
 
-	CItem *root = GetDocument()->GetSelection();
+    // FIXME: Multi-select
+	CItem *root = GetDocument()->GetSelection(0);
 	ASSERT(root != NULL);
 	ASSERT(root->IsVisible());
 
@@ -345,13 +350,35 @@ void CDirstatView::OnUpdate(CView *pSender, LPARAM lHint, CObject *pHint)
 
 	case HINT_SELECTIONCHANGED:
 		{
+#ifdef SINGLE_SELECT
 			m_treeListControl.SelectAndShowItem(GetDocument()->GetSelection(), false);
+#else
+            // FIXME: Multi-select
+            m_treeListControl.DeselectAll();
+            for (int i=0; i < GetDocument()->GetSelectionCount(); i++)
+            {
+                m_treeListControl.SelectItem(GetDocument()->GetSelection(i));
+            }
+#endif // SINGLE_SELECT
 		}
 		break;
 
+#ifndef SINGLE_SELECT
+    case HINT_EXTENDSELECTION:
+        {
+            CItem *item = (CItem *)pHint;
+            m_treeListControl.ExtendSelection(item);
+        }
+#endif // SINGLE_SELECT
+
 	case HINT_SHOWNEWSELECTION:
 		{
+#ifdef SINGLE_SELECT
 			m_treeListControl.SelectAndShowItem(GetDocument()->GetSelection(), true);
+#else
+            // FIXME: Multi-select
+            const CItem *item = (const CItem *)pHint;
+#endif // SINGLE_SELECT
 		}
 		break;
 
@@ -378,7 +405,7 @@ void CDirstatView::OnUpdate(CView *pSender, LPARAM lHint, CObject *pHint)
 	case HINT_SOMEWORKDONE:
 		{
 			MSG msg;
-			while(PeekMessage(&msg, m_treeListControl, WM_MOUSEFIRST, WM_MOUSELAST, PM_REMOVE))
+			while(PeekMessage(&msg, m_treeListControl, 0, 0, PM_REMOVE))
 			{
 				if(msg.message == WM_QUIT)
 				{

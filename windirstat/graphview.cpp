@@ -283,6 +283,7 @@ void CGraphView::RecurseHighlightExtension(CDC *pdc, const CItem *item)
 
 void CGraphView::DrawSelection(CDC *pdc)
 {
+#ifdef SINGLE_SELECT
 	const CItem *item = GetDocument()->GetSelection();
 	if(item == NULL)
 	{
@@ -322,7 +323,57 @@ void CGraphView::DrawSelection(CDC *pdc)
 	CSelectObject sopen(pdc, &pen);
 
 	RenderHighlightRectangle(pdc, rc);
+#else
+    CSelectStockObject sobrush(pdc, NULL_BRUSH);
+
+    CPen pen(PS_SOLID, 1, GetOptions()->GetTreemapHighlightColor());
+    CSelectObject sopen(pdc, &pen);
+
+    bool single = (GetDocument()->GetSelectionCount() <= 1);
+
+    for (unsigned int i = 0; i < GetDocument()->GetSelectionCount(); i++)
+    {
+        HighlightSelectedItem(pdc, GetDocument()->GetSelection(i), single);
+    }
+#endif // SINGLE_SELECT
 }
+
+#ifndef SINGLE_SELECT
+// A pen and the null brush must be selected.
+// Draws the hilight rectangle of item. If single, the rectangle is slightly
+// bigger than the item rect, else it fits inside.
+//
+void CGraphView::HighlightSelectedItem(CDC *pdc, const CItem *item, bool single)
+{
+    CRect rc= item->TmiGetRectangle();
+
+    if (single)
+    {
+        CRect rcClient;
+        GetClientRect(rcClient);
+
+        if (m_treemap.GetOptions().grid)
+        {
+            rc.right++;
+            rc.bottom++;
+        }
+
+        if (rcClient.left < rc.left)
+            rc.left--;
+        if (rcClient.top < rc.top)
+            rc.top--;
+        if (rc.right < rcClient.right)
+            rc.right++;
+        if (rc.bottom < rcClient.bottom)
+            rc.bottom++;
+    }
+
+    if (rc.Width() <= 0 || rc.Height() <= 0)
+        return;
+
+    RenderHighlightRectangle(pdc, rc);
+}
+#endif // SINGLE_SELECT
 
 // A pen and the null brush must be selected.
 //
@@ -391,8 +442,49 @@ void CGraphView::OnLButtonDown(UINT nFlags, CPoint point)
 			return;
 		}
 
+#ifdef SINGLE_SELECT
 		GetDocument()->SetSelection(item);
 		GetDocument()->UpdateAllViews(NULL, HINT_SHOWNEWSELECTION);
+#else
+        GetDocument()->UpdateAllViews(this, HINT_EXTENDSELECTION, (CObject *)item);
+        /*
+        const bool shift = (0x8000 & GetKeyState(VK_SHIFT)) != 0;
+        const bool control = (0x8000 & GetKeyState(VK_CONTROL)) != 0;
+
+        if (shift)
+        {
+        MessageBeep(0);
+        return;
+        }
+
+        if (control)
+        {
+        if (GetDocument()->IsSelected(item))
+        {
+        GetDocument()->RemoveSelection(item);
+
+        GetDocument()->UpdateAllViews(NULL, HINT_SELECTIONCHANGED);
+        }
+        else if (GetDocument()->CanAddSelection(item))
+        {
+        GetDocument()->AddSelection(item);
+
+        GetDocument()->UpdateAllViews(NULL, HINT_SHOWNEWSELECTION, (CObject *)item);
+        }
+        else
+        {
+        MessageBeep(0);
+        }
+        }
+        else
+        {
+        GetDocument()->RemoveAllSelections();
+        GetDocument()->AddSelection(item);
+
+        GetDocument()->UpdateAllViews(NULL, HINT_SHOWNEWSELECTION, (CObject *)item);
+        }
+        */
+#endif // SINGLE_SELECT
 	}
 	CView::OnLButtonDown(nFlags, point);
 }

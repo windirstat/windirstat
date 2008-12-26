@@ -48,7 +48,9 @@ protected:
 
 	void PrepareDefaultMenu(CMenu *menu, const CItem *item);
 
+#ifdef SINGLE_SELECT
 	CDirstatView *m_dirstatView;
+#endif // SINGLE_SELECT
 
 	DECLARE_MESSAGE_MAP()
 	afx_msg void OnContextMenu(CWnd* /*pWnd*/, CPoint /*point*/);

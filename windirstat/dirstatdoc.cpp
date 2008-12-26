@@ -73,7 +73,9 @@ CDirstatDoc::CDirstatDoc()
 	m_rootItem = NULL;
 	m_workingItem = NULL;
 	m_zoomItem = NULL;
+#ifdef SINGLE_SELECT
 	m_selectedItem = NULL;
+#endif // SINGLE_SELECT
 
 	m_showFreeSpace = CPersistence::GetShowFreeSpace();
 	m_showUnknown = CPersistence::GetShowUnknown();
@@ -198,7 +200,11 @@ void CDirstatDoc::DeleteContents()
 	m_rootItem = NULL;
 	SetWorkingItem(NULL);
 	m_zoomItem = NULL;
+#ifdef SINGLE_SELECT
 	m_selectedItem = NULL;
+#else
+    m_selectedItems.RemoveAll();
+#endif // SINGLE_SELECT
 	GetApp()->ReReadMountPoints();
 }
 
@@ -357,7 +363,11 @@ void CDirstatDoc::ForgetItemTree()
 	m_rootItem = NULL;
 
 	m_zoomItem = NULL;
+#ifdef SINGLE_SELECT
 	m_selectedItem = NULL;
+#else
+    m_selectedItems.RemoveAll();
+#endif // SINGLE_SELECT
 	
 }
 
@@ -469,8 +479,59 @@ bool CDirstatDoc::IsZoomed()
 	return GetZoomItem() != GetRootItem();
 }
 
+void CDirstatDoc::RemoveAllSelections()
+{
+    m_selectedItems.RemoveAll();
+}
+
+CItem *CDirstatDoc::GetSelectionParent()
+{
+    ASSERT(m_selectedItems.GetCount() > 0);
+    CItem *item = m_selectedItems[0];
+    return item->GetParent();
+}
+
+bool CDirstatDoc::CanAddSelection(const CItem *item)
+{
+    if (m_selectedItems.GetCount() == 0)
+        return true;
+
+    return item->GetParent() == GetSelectionParent();
+}
+
+void CDirstatDoc::AddSelection(const CItem *item)
+{
+    ASSERT(CanAddSelection(item));
+    m_selectedItems.Add(const_cast<CItem *>(item));
+}
+
+void CDirstatDoc::RemoveSelection(const CItem *item)
+{
+    for (int i = 0; i < m_selectedItems.GetCount(); i++)
+    {
+        if (m_selectedItems[i] == item)
+        {
+            m_selectedItems.RemoveAt(i);
+            return;
+        }
+    }
+    ASSERT(i < m_selectedItems.GetCount());
+}
+
+#ifdef _DEBUG
+void CDirstatDoc::AssertSelectionValid()
+{
+    if (m_selectedItems.GetCount() == 0)
+        return;
+    CItem *parent = GetSelectionParent();
+    for (int i=0; i < m_selectedItems.GetCount(); i++)
+        ASSERT(m_selectedItems[i]->GetParent() == parent);
+}
+#endif
+
 void CDirstatDoc::SetSelection(const CItem *item, bool keepReselectChildStack)
 {
+#ifdef SINGLE_SELECT
 	CItem *newzoom = CItem::FindCommonAncestor(m_zoomItem, item);
 	if(newzoom != m_zoomItem)
 	{
@@ -486,11 +547,37 @@ void CDirstatDoc::SetSelection(const CItem *item, bool keepReselectChildStack)
 	{
 		ClearReselectChildStack();
 	}
+#endif // SINGLE_SELECT
 }
 
+#ifdef SINGLE_SELECT
 CItem *CDirstatDoc::GetSelection()
+#else
+CItem *CDirstatDoc::GetSelection(unsigned int i)
+#endif // SINGLE_SELECT
 {
+#ifdef SINGLE_SELECT
 	return m_selectedItem;
+#else
+    return m_selectedItems[i];
+#endif // SINGLE_SELECT
+}
+
+unsigned int CDirstatDoc::GetSelectionCount()
+{
+    return m_selectedItems.GetCount();
+}
+
+bool CDirstatDoc::IsSelected(const CItem *item)
+{
+    for (int i = 0; i < m_selectedItems.GetCount(); i++)
+    {
+        if (m_selectedItems[i] == item)
+        {
+            return true;
+        }
+    }
+    return false;
 }
 
 void CDirstatDoc::SetHighlightExtension(LPCTSTR ext)
@@ -838,7 +925,8 @@ void CDirstatDoc::RefreshItem(CItem *item)
 		SetZoomItem(item);
 	}
 
-	if(item->IsAncestorOf(GetSelection()))
+    // FIXME: Multi-select
+	if(item->IsAncestorOf(GetSelection(0)))
 	{
 		SetSelection(item);
 		UpdateAllViews(NULL, HINT_SELECTIONCHANGED);
@@ -854,7 +942,8 @@ void CDirstatDoc::RefreshItem(CItem *item)
 		{
 			SetZoomItem(parent);
 		}
-		if(GetSelection() == item)
+        // FIXME: Multi-select
+		if(GetSelection(0) == item)
 		{
 			SetSelection(parent);
 			UpdateAllViews(NULL, HINT_SELECTIONCHANGED);
@@ -1120,15 +1209,19 @@ void CDirstatDoc::OnUpdateRefreshselected(CCmdUI *pCmdUI)
 {
 	pCmdUI->Enable(
 		DirectoryListHasFocus()
-		&& GetSelection() != NULL 
-		&& GetSelection()->GetType() != IT_FREESPACE
-		&& GetSelection()->GetType() != IT_UNKNOWN
+        // FIXME: Multi-select
+		&& GetSelection(0) != NULL 
+        // FIXME: Multi-select
+		&& GetSelection(0)->GetType() != IT_FREESPACE
+        // FIXME: Multi-select
+		&& GetSelection(0)->GetType() != IT_UNKNOWN
 	);
 }
 
 void CDirstatDoc::OnRefreshselected()
 {
-	RefreshItem(GetSelection());
+    // FIXME: Multi-select
+	RefreshItem(GetSelection(0));
 }
 
 void CDirstatDoc::OnUpdateRefreshall(CCmdUI *pCmdUI)
@@ -1143,7 +1236,8 @@ void CDirstatDoc::OnRefreshall()
 
 void CDirstatDoc::OnUpdateEditCopy(CCmdUI *pCmdUI)
 {
-	const CItem *item = GetSelection();
+    // FIXME: Multi-select
+	const CItem *item = GetSelection(0);
 	pCmdUI->Enable(
 		DirectoryListHasFocus() &&
 		item != NULL && 
@@ -1156,11 +1250,25 @@ void CDirstatDoc::OnUpdateEditCopy(CCmdUI *pCmdUI)
 
 void CDirstatDoc::OnEditCopy()
 {
+#ifdef SINGLE_SELECT
 	const CItem *item = GetSelection();
 	ASSERT(item != NULL);
 	ASSERT(IT_DRIVE == item->GetType() || IT_DIRECTORY == item->GetType() || IT_FILE == item->GetType());
 
 	GetMainFrame()->CopyToClipboard(item->GetPath());
+#else
+    CString paths;
+    for (unsigned int i = 0; i < GetSelectionCount(); i++)
+    {
+        if (i > 0)
+            paths += _T("\r\n");
+
+        paths += GetSelection(i)->GetPath();
+    }
+
+    // FIXME: Need to fix the clipboard code!!!
+    AfxMessageBox(paths);
+#endif // SINGLE_SELECT
 }
 
 void CDirstatDoc::OnCleanupEmptyrecyclebin()
@@ -1195,7 +1303,8 @@ void CDirstatDoc::OnViewShowfreespace()
 			CItem *free = drives[i]->FindFreeSpaceItem();
 			ASSERT(free != NULL);
 		
-			if(GetSelection() == free)
+            // FIXME: Multi-select
+			if(GetSelection(0) == free)
 			{
 				SetSelection(free->GetParent());
 			}
@@ -1243,7 +1352,8 @@ void CDirstatDoc::OnViewShowunknown()
 			CItem *unknown = drives[i]->FindUnknownItem();
 			ASSERT(unknown != NULL);
 		
-			if(GetSelection() == unknown)
+            // FIXME: Multi-select
+			if(GetSelection(0) == unknown)
 			{
 				SetSelection(unknown->GetParent());
 			}
@@ -1278,13 +1388,15 @@ void CDirstatDoc::OnUpdateTreemapZoomin(CCmdUI *pCmdUI)
 {
 	pCmdUI->Enable(
 		m_rootItem != NULL && m_rootItem->IsDone() 
-		&& GetSelection() != NULL && GetSelection() != GetZoomItem()
+        // FIXME: Multi-select (2x)
+		&& GetSelection(0) != NULL && GetSelection(0) != GetZoomItem()
 	);
 }
 
 void CDirstatDoc::OnTreemapZoomin()
 {
-	CItem *p = GetSelection();
+    // FIXME: Multi-select
+	CItem *p = GetSelection(0);
 	CItem *z = NULL;
 	while(p != GetZoomItem())
 	{
@@ -1313,9 +1425,12 @@ void CDirstatDoc::OnUpdateExplorerHere(CCmdUI *pCmdUI)
 {
 	pCmdUI->Enable(
 		DirectoryListHasFocus()
-		&& GetSelection() != NULL
-		&& GetSelection()->GetType() != IT_FREESPACE
-		&& GetSelection()->GetType() != IT_UNKNOWN
+        // FIXME: Multi-select
+		&& GetSelection(0) != NULL
+        // FIXME: Multi-select
+		&& GetSelection(0)->GetType() != IT_FREESPACE
+        // FIXME: Multi-select
+		&& GetSelection(0)->GetType() != IT_UNKNOWN
 	);
 }
 
@@ -1323,7 +1438,8 @@ void CDirstatDoc::OnExplorerHere()
 {
 	try
 	{
-		const CItem *item = GetSelection();
+        // FIXME: Multi-select
+		const CItem *item = GetSelection(0);
 		ASSERT(item != NULL);
 
 		if(IT_MYCOMPUTER == item->GetType())
@@ -1360,11 +1476,16 @@ void CDirstatDoc::OnUpdateCommandPromptHere(CCmdUI *pCmdUI)
 {
 	pCmdUI->Enable(
 		DirectoryListHasFocus()
-		&& GetSelection() != NULL 
-		&& GetSelection()->GetType() != IT_MYCOMPUTER
-		&& GetSelection()->GetType() != IT_FREESPACE
-		&& GetSelection()->GetType() != IT_UNKNOWN
-		&& ! GetSelection()->HasUncPath()
+        // FIXME: Multi-select
+		&& GetSelection(0) != NULL 
+        // FIXME: Multi-select
+		&& GetSelection(0)->GetType() != IT_MYCOMPUTER
+        // FIXME: Multi-select
+		&& GetSelection(0)->GetType() != IT_FREESPACE
+        // FIXME: Multi-select
+		&& GetSelection(0)->GetType() != IT_UNKNOWN
+        // FIXME: Multi-select
+		&& ! GetSelection(0)->HasUncPath()
 	);
 }
 
@@ -1372,7 +1493,8 @@ void CDirstatDoc::OnCommandPromptHere()
 {
 	try
 	{
-		CItem *item = GetSelection();
+        // FIXME: Multi-select
+		CItem *item = GetSelection(0);
 		ASSERT(item != NULL);
 		
 		CString cmd = GetCOMSPEC();
@@ -1388,7 +1510,8 @@ void CDirstatDoc::OnCommandPromptHere()
 
 void CDirstatDoc::OnUpdateCleanupDeletetotrashbin(CCmdUI *pCmdUI)
 {
-	CItem *item = GetSelection();
+    // FIXME: Multi-select
+	CItem *item = GetSelection(0);
 	
 	pCmdUI->Enable(
 		DirectoryListHasFocus()
@@ -1400,7 +1523,8 @@ void CDirstatDoc::OnUpdateCleanupDeletetotrashbin(CCmdUI *pCmdUI)
 
 void CDirstatDoc::OnCleanupDeletetotrashbin()
 {
-	CItem *item = GetSelection();
+    // FIXME: Multi-select
+	CItem *item = GetSelection(0);
 	
 	if(NULL == item || item->GetType() != IT_DIRECTORY && item->GetType() != IT_FILE || item->IsRootItem())
 	{
@@ -1416,7 +1540,8 @@ void CDirstatDoc::OnCleanupDeletetotrashbin()
 
 void CDirstatDoc::OnUpdateCleanupDelete(CCmdUI *pCmdUI)
 {
-	CItem *item = GetSelection();
+    // FIXME: Multi-select
+	CItem *item = GetSelection(0);
 	
 	pCmdUI->Enable(
 		DirectoryListHasFocus()
@@ -1428,7 +1553,8 @@ void CDirstatDoc::OnUpdateCleanupDelete(CCmdUI *pCmdUI)
 
 void CDirstatDoc::OnCleanupDelete()
 {
-	CItem *item = GetSelection();
+    // FIXME: Multi-select
+	CItem *item = GetSelection(0);
 	
 	if(NULL == item || item->GetType() != IT_DIRECTORY && item->GetType() != IT_FILE || item->IsRootItem())
 	{
@@ -1445,7 +1571,8 @@ void CDirstatDoc::OnCleanupDelete()
 void CDirstatDoc::OnUpdateUserdefinedcleanup(CCmdUI *pCmdUI)
 {
 	int i = pCmdUI->m_nID - ID_USERDEFINEDCLEANUP0;
-	CItem *item = GetSelection();
+    // FIXME: Multi-select
+	CItem *item = GetSelection(0);
 
 	pCmdUI->Enable(
 		DirectoryListHasFocus()
@@ -1457,7 +1584,8 @@ void CDirstatDoc::OnUpdateUserdefinedcleanup(CCmdUI *pCmdUI)
 void CDirstatDoc::OnUserdefinedcleanup(UINT id)
 {
 	const USERDEFINEDCLEANUP *udc = GetOptions()->GetUserDefinedCleanup(id - ID_USERDEFINEDCLEANUP0);
-	CItem *item = GetSelection();
+    // FIXME: Multi-select
+	CItem *item = GetSelection(0);
 	
 	ASSERT(UserDefinedCleanupWorksForItem(udc, item));
 	if(!UserDefinedCleanupWorksForItem(udc, item))
@@ -1486,13 +1614,16 @@ void CDirstatDoc::OnUserdefinedcleanup(UINT id)
 
 void CDirstatDoc::OnUpdateTreemapSelectparent(CCmdUI *pCmdUI)
 {
-	pCmdUI->Enable(GetSelection() != NULL && GetSelection()->GetParent() != NULL);
+    // FIXME: Multi-select
+	pCmdUI->Enable(GetSelection(0) != NULL && GetSelection(0)->GetParent() != NULL);
 }
 
 void CDirstatDoc::OnTreemapSelectparent()
 {
-	PushReselectChild(GetSelection());
-	CItem *p = GetSelection()->GetParent();
+    // FIXME: Multi-select
+	PushReselectChild(GetSelection(0));
+    // FIXME: Multi-select
+	CItem *p = GetSelection(0)->GetParent();
 	SetSelection(p, true);
 	UpdateAllViews(NULL, HINT_SHOWNEWSELECTION);
 }
@@ -1506,11 +1637,17 @@ void CDirstatDoc::OnTreemapReselectchild()
 {
 	CItem *item = PopReselectChild();
 	SetSelection(item, true);
+#ifdef SINGLE_SELECT
 	UpdateAllViews(NULL, HINT_SHOWNEWSELECTION);
+#else
+    UpdateAllViews(NULL, HINT_SHOWNEWSELECTION, reinterpret_cast<CObject*>(item));
+#endif // SINGLE_SELECT
 }
 
 void CDirstatDoc::OnUpdateCleanupOpen(CCmdUI *pCmdUI)
 {
+// FIXME: Multi-select
+#ifdef SINGLE_SELECT
 	pCmdUI->Enable(
 		DirectoryListHasFocus()
 		&& GetSelection() != NULL
@@ -1518,18 +1655,24 @@ void CDirstatDoc::OnUpdateCleanupOpen(CCmdUI *pCmdUI)
 		&& GetSelection()->GetType() != IT_FREESPACE
 		&& GetSelection()->GetType() != IT_UNKNOWN
 	);
+#endif // SINGLE_SELECT
 }
 
 void CDirstatDoc::OnCleanupOpen()
 {
+// FIXME: Multi-select
+#ifdef SINGLE_SELECT
 	const CItem *item = GetSelection();
 	ASSERT(item != NULL);
 
 	OpenItem(item);
+#endif // SINGLE_SELECT
 }
 
 void CDirstatDoc::OnUpdateCleanupProperties(CCmdUI *pCmdUI)
 {
+// FIXME: Multi-select
+#ifdef SINGLE_SELECT
 	pCmdUI->Enable(
 		DirectoryListHasFocus()
 		&& GetSelection() != NULL
@@ -1537,10 +1680,13 @@ void CDirstatDoc::OnUpdateCleanupProperties(CCmdUI *pCmdUI)
 		&& GetSelection()->GetType() != IT_UNKNOWN
 		&& GetSelection()->GetType() != IT_FILESFOLDER
 	);
+#endif // SINGLE_SELECT
 }
 
 void CDirstatDoc::OnCleanupProperties()
 {
+// FIXME: Multi-select
+#ifdef SINGLE_SELECT
 	try
 	{
 		SHELLEXECUTEINFO sei;
@@ -1595,6 +1741,7 @@ void CDirstatDoc::OnCleanupProperties()
 		pe->ReportError();
 		pe->Delete();
 	}
+#endif // SINGLE_SELECT
 }
 
 // CDirstatDoc Diagnostics

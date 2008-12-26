@@ -25,6 +25,8 @@
 
 #include "stdafx.h"
 #include "windirstat.h"
+#include "dirstatdoc.h"
+#include "dirstatview.h"
 #include "TreeListControl.h"
 
 #ifdef _DEBUG
@@ -330,11 +332,22 @@ CTreeListControl *CTreeListControl::GetTheTreeListControl()
 
 IMPLEMENT_DYNAMIC(CTreeListControl, COwnerDrawnListControl)
 
+#ifdef SINGLE_SELECT
 CTreeListControl::CTreeListControl(int rowHeight)
-: COwnerDrawnListControl(TEXT("treelist"), rowHeight)
+#else
+CTreeListControl::CTreeListControl(CDirstatView *dirstatView, int rowHeight)
+#endif // SINGLE_SELECT
+    : COwnerDrawnListControl(TEXT("treelist"), rowHeight)
+#ifndef SINGLE_SELECT
+    , m_dirstatView(dirstatView)
+#endif // SINGLE_SELECT
 {
 	ASSERT(_theTreeListControl == NULL);
 	_theTreeListControl = this;
+
+#ifndef SINGLE_SELECT
+    m_selectionAnchor = NULL;
+#endif // SINGLE_SELECT
 
 	ASSERT(rowHeight <= NODE_HEIGHT);	// größer können wir nicht
 	ASSERT(rowHeight % 2 == 0);			// muss gerade sein
@@ -342,6 +355,14 @@ CTreeListControl::CTreeListControl(int rowHeight)
 
 CTreeListControl::~CTreeListControl()
 {
+}
+
+void CTreeListControl::SortItems()
+{
+    COwnerDrawnListControl::SortItems();
+
+    // re-init document selection array
+    UpdateDocumentSelection();
 }
 
 bool CTreeListControl::HasImages()
@@ -355,12 +376,37 @@ void CTreeListControl::MySetImageList(CImageList *il)
 
 void CTreeListControl::SelectItem(int i)
 {
+#ifdef SINGLE_SELECT
 	SetItemState(i, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
 	EnsureVisible(i, false);
+#else
+    SetItemState(i, LVIS_SELECTED, LVIS_SELECTED);
+#endif // SINGLE_SELECT
 }
+
+#ifndef SINGLE_SELECT
+void CTreeListControl::FocusItem(int i)
+{
+    SetItemState(i, LVIS_FOCUSED, LVIS_FOCUSED);
+}
+
+void CTreeListControl::DeselectItem(int i)
+{
+    SetItemState(i, 0, LVIS_SELECTED);
+}
+
+void CTreeListControl::SelectSingleItem(int i)
+{
+    GetDocument()->RemoveAllSelections();
+    GetDocument()->AddSelection((const CItem *)GetItem(i));
+    GetDocument()->UpdateAllViews(NULL, HINT_SELECTIONCHANGED);
+    FocusItem(i);
+}
+#endif // SINGLE_SELECT
 
 int CTreeListControl::GetSelectedItem()
 {
+    // FIXME: Multi-select
 	POSITION pos = GetFirstSelectedItemPosition();
 	if(pos == NULL)
 	{
@@ -371,6 +417,7 @@ int CTreeListControl::GetSelectedItem()
 
 void CTreeListControl::SelectItem(const CTreeListItem *item)
 {
+    // FIXME: Multi-select
 	int i = FindTreeItem(item);
 	if(i != -1)
 	{
@@ -378,12 +425,25 @@ void CTreeListControl::SelectItem(const CTreeListItem *item)
 	}
 }
 
+#ifndef SINGLE_SELECT
+void CTreeListControl::SelectSingleItem(const CTreeListItem *item)
+{
+    int i = FindTreeItem(item);
+    if (i != -1)
+        SelectSingleItem(i);
+}
+#endif // SINGLE_SELECT
+
 BOOL CTreeListControl::CreateEx(DWORD dwExStyle, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID)
 {
 	BOOL bRet = FALSE;
 	InitializeNodeBitmaps();
 
+#ifdef SINGLE_SELECT
 	dwStyle |= LVS_OWNERDRAWFIXED | LVS_SINGLESEL;
+#else
+    dwStyle|= LVS_OWNERDRAWFIXED;
+#endif // SINGLE_SELECT
 	bRet = COwnerDrawnListControl::Create(dwStyle, rect, pParentWnd, nID);
 	VERIFY(bRet);
 	if((bRet) && (dwExStyle))
@@ -409,6 +469,10 @@ void CTreeListControl::SetRootItem(CTreeListItem *root)
 {
 	DeleteAllItems();
 
+#ifndef SINGLE_SELECT
+    m_selectionAnchor = root;
+#endif // SINGLE_SELECT
+
 	if(root != NULL)
 	{
 		InsertItem(0, root);
@@ -420,11 +484,19 @@ void CTreeListControl::DeselectAll()
 {
 	for(int i = 0; i < GetItemCount(); i++)
 	{
+#ifdef SINGLE_SELECT
 		SetItemState(i, 0, LVIS_SELECTED);
+#else
+        DeselectItem(i);
+#endif // SINGLE_SELECT
 	}
 }
 
+#ifdef SINGLE_SELECT
 void CTreeListControl::SelectAndShowItem(const CTreeListItem *item, bool showWholePath)
+#else
+void CTreeListControl::ExpandPathToItem(const CTreeListItem *item)
+#endif // SINGLE_SELECT
 {
 	int i = 0;
 	if(item == NULL)
@@ -469,12 +541,14 @@ void CTreeListControl::SelectAndShowItem(const CTreeListItem *item, bool showWho
 		SetColumnWidth(0, w);
 	}
 
+#ifdef SINGLE_SELECT
 	if(showWholePath)
 	{
 		EnsureVisible(0, false);
 	}
 
 	SelectItem(i);
+#endif // SINGLE_SELECT
 }
 
 void CTreeListControl::OnItemDoubleClick(int i)
@@ -503,6 +577,11 @@ void CTreeListControl::InsertItem(int i, CTreeListItem *item)
 
 void CTreeListControl::DeleteItem(int i)
 {
+#ifndef SINGLE_SELECT
+    if (GetItem(i) == m_selectionAnchor)
+        m_selectionAnchor = GetItem(0);
+#endif // SINGLE_SELECT
+
 	GetItem(i)->SetExpanded(false);
 	GetItem(i)->SetVisible(false);
 	COwnerDrawnListControl::DeleteItem(i);
@@ -625,7 +704,11 @@ void CTreeListControl::OnLButtonDown(UINT nFlags, CPoint point)
 
 	if(hti.iSubItem != 0)
 	{
+#ifdef SINGLE_SELECT
 		COwnerDrawnListControl::OnLButtonDown(nFlags, point);
+#else
+        ExtendSelection(i);
+#endif // SINGLE_SELECT
 		return;
 	}
 
@@ -665,6 +748,121 @@ void CTreeListControl::OnLButtonDblClk(UINT nFlags, CPoint point)
 	{
 		OnItemDoubleClick(m_lButtonDownItem);
 	}
+}
+
+void CTreeListControl::ExtendSelection(const CTreeListItem *item)
+{
+    const bool shift = (0x8000 & GetKeyState(VK_SHIFT)) != 0;
+    const bool control = (0x8000 & GetKeyState(VK_CONTROL)) != 0;
+
+    int i = FindTreeItem(item);
+    if (i == -1 && !shift && (!control || GetDocument()->GetSelectionCount() == 0))
+    {
+        ExpandPathToItem(item);
+        i = FindTreeItem(item);
+    }
+
+    if (i == -1)
+    {
+        MessageBeep(0);
+        return;
+    }
+
+    ExtendSelection(i);
+}
+
+// Item i has been clicked or navigated to by arrow key.
+// Computes new selection.
+//
+void CTreeListControl::ExtendSelection(int i)
+{
+    const bool shift = (0x8000 & GetKeyState(VK_SHIFT)) != 0;
+    const bool control = (0x8000 & GetKeyState(VK_CONTROL)) != 0;
+
+    const bool selected = (GetItemState(i, LVIS_SELECTED) & LVIS_SELECTED) != 0;
+
+    if (shift)
+    {
+        // impossible, if anchor and this have different parents
+        if (GetItem(i)->GetParent() != m_selectionAnchor->GetParent())
+        {
+            MessageBeep(0);
+            return;
+        }
+    }
+
+    if (control && !selected && GetDocument()->GetSelectionCount() > 0)
+    {
+        const CTreeListItem *selectionParent = NULL;
+        POSITION pos = GetFirstSelectedItemPosition();
+        if (pos != NULL)
+            selectionParent = GetItem(GetNextSelectedItem(pos))->GetParent();
+
+        // impossible to select item outside selection parent
+        if (GetItem(i)->GetParent() != selectionParent)
+        {
+            MessageBeep(0);
+            return;
+        }
+    }
+
+    // First calculate new selection in the list control.
+
+    if (!control)
+    {
+        DeselectAll();
+    }
+
+    if (shift)
+    {
+        const int anchor = FindTreeItem(m_selectionAnchor);
+        ASSERT(anchor >= 0);
+
+        const CTreeListItem *selectionParent = GetItem(i)->GetParent();
+
+        int begin = min(anchor, i);
+        int end   = max(anchor, i);
+
+        for (int k=begin; k <= end; k++)
+        {
+            if (GetItem(k)->GetParent() == selectionParent)
+            {
+                SelectItem(k);
+            }
+        }
+    }
+    else
+    {
+        if (control && selected)
+            DeselectItem(i);
+        else
+            SelectItem(i);
+
+        m_selectionAnchor = GetItem(i);
+    }
+
+    // Second, transfer the new selection to the document,
+    // preserving the current ordering.
+
+    UpdateDocumentSelection();
+
+    GetDocument()->UpdateAllViews(m_dirstatView, HINT_SELECTIONCHANGED);
+
+    FocusItem(i);
+    EnsureVisible(i, false);
+}
+
+// Transfers the current selection to the document.
+//
+void CTreeListControl::UpdateDocumentSelection()
+{
+    GetDocument()->RemoveAllSelections();
+    POSITION pos = GetFirstSelectedItemPosition(); // I assume, this retrieves the selected items in the order from top to bottom.
+    while (pos != NULL)
+    {
+        int k = GetNextSelectedItem(pos);
+        GetDocument()->AddSelection((const CItem *)GetItem(k));
+    }
 }
 
 void CTreeListControl::ToggleExpansion(int i)
@@ -711,7 +909,12 @@ void CTreeListControl::CollapseItem(int i)
 	item->SetExpanded(false);
 	if(selectNode)
 	{
+#ifdef SINGLE_SELECT
 		SelectItem(i);
+#else
+        SelectSingleItem(i);
+        m_selectionAnchor = GetItem(i);
+#endif // SINGLE_SELECT
 	}
 	UnlockWindowUpdate();
 	RedrawItems(i, i);
@@ -847,6 +1050,7 @@ void CTreeListControl::ExpandItem(int i, bool scroll)
 void CTreeListControl::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 {
 	int i = GetNextItem(-1, LVNI_FOCUSED);
+#ifdef SINGLE_SELECT
 	if(i != -1)
 	{
 		CTreeListItem *item = GetItem(i);
@@ -876,6 +1080,86 @@ void CTreeListControl::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 		}
 	}
 	COwnerDrawnListControl::OnKeyDown(nChar, nRepCnt, nFlags);
+#else
+    if (i == -1)
+    {
+        COwnerDrawnListControl::OnKeyDown(nChar, nRepCnt, nFlags);
+        return;
+    }
+
+    const bool shift = (0x8000 & GetKeyState(VK_SHIFT)) != 0;
+    const bool control = (0x8000 & GetKeyState(VK_CONTROL)) != 0;
+
+    CTreeListItem *item= GetItem(i);
+    switch (nChar)
+    {
+    case VK_LEFT:
+        if (item->IsExpanded())
+        {
+            CollapseItem(i);
+        }
+        else if (item->GetParent() != NULL && !control && !shift)
+        {
+            SelectSingleItem(item->GetParent());
+        }
+        else
+        {
+            MessageBeep(0);
+        }
+        break;
+
+    case VK_RIGHT:
+        if (!item->IsExpanded() && item->GetChildrenCount() > 0)
+        {
+            ExpandItem(i);
+        }
+        else if (item->GetChildrenCount() > 0 && !control && !shift)
+        {
+            SelectSingleItem(item->GetSortedChild(0));
+        }
+        else
+        {
+            MessageBeep(0);
+        }
+        break;
+
+    case VK_UP:
+        if (i > 0)
+        {
+            ExtendSelection(i - 1);
+        }
+        break;
+
+    case VK_DOWN:
+        if (i + 1 < GetItemCount())
+        {
+            ExtendSelection(i + 1);
+        }
+        break;
+
+    case VK_PRIOR:
+        i -= max(GetCountPerPage() - 1, 1);
+
+        if (i < 0)
+            i = 0;
+
+        if (i < GetItemCount())
+            ExtendSelection(i);
+
+        break;
+
+    case VK_NEXT:
+        i += max(GetCountPerPage() - 1, 1);
+
+        if (i >= GetItemCount())
+            i = GetItemCount() - 1;
+
+        if (i >= 0)
+            ExtendSelection(i);
+
+        break;
+    }
+#endif // SINGLE_SELECT
 }
 
 void CTreeListControl::OnChildAdded(CTreeListItem *parent, CTreeListItem *child)
@@ -919,7 +1203,11 @@ void CTreeListControl::OnChildRemoved(CTreeListItem *parent, CTreeListItem *chil
 
 		int c = FindTreeItem(child);
 		ASSERT(c != -1);
+#ifdef SINGLE_SELECT
 		COwnerDrawnListControl::DeleteItem(c);
+#else
+        DeleteItem(c);
+#endif // SINGLE_SELECT
 		parent->SortChildren();
 	}
 

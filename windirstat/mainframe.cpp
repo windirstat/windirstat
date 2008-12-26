@@ -979,7 +979,8 @@ void CMainFrame::AppendUserDefinedCleanups(CMenu *menu)
 			UINT flags = MF_GRAYED | MF_DISABLED;
 			if(
 			GetLogicalFocus() == LF_DIRECTORYLIST
-			&& GetDocument()->UserDefinedCleanupWorksForItem(GetOptions()->GetUserDefinedCleanup(indices[i]), GetDocument()->GetSelection())
+            // FIXME: Multi-select
+			&& GetDocument()->UserDefinedCleanupWorksForItem(GetOptions()->GetUserDefinedCleanup(indices[i]), GetDocument()->GetSelection(0))
 			)
 			{
 				flags = MF_ENABLED;
@@ -1043,9 +1044,11 @@ void CMainFrame::SetSelectionMessageText()
 		}
 		break;
 	case LF_DIRECTORYLIST:
-		if(GetDocument()->GetSelection() != NULL)
+        // FIXME: Multi-select
+		if(GetDocument()->GetSelection(0) != NULL)
 		{
-			SetMessageText(GetDocument()->GetSelection()->GetPath());
+            // FIXME: Multi-select
+			SetMessageText(GetDocument()->GetSelection(0)->GetPath());
 		}
 		else
 		{

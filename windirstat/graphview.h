@@ -71,6 +71,9 @@ protected:
 
 	void DrawSelection(CDC *pdc);
 
+#ifndef SINGLE_SELECT
+    void HighlightSelectedItem(CDC *pdc, const CItem *item, bool single);
+#endif // SINGLE_SELECT
 	void RenderHighlightRectangle(CDC *pdc, CRect& rc);
 
 	bool m_recalculationSuspended;	// True while the user is resizing the window.
