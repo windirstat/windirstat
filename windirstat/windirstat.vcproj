@@ -1948,7 +1948,7 @@
 			</File>
 		</Filter>
 		<File
-			RelativePath="..\changelog.txt"
+			RelativePath="..\CHANGELOG.txt"
 			>
 		</File>
 		<File
@@ -1956,7 +1956,7 @@
 			>
 		</File>
 		<File
-			RelativePath="..\testplan.txt"
+			RelativePath="..\TESTPLAN.txt"
 			>
 		</File>
 		<File

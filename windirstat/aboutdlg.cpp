@@ -18,8 +18,8 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
-// Author(s): - bseifert -> bseifert@users.sourceforge.net, bseifert@daccord.net
-//            - assarbad -> http://assarbad.net/en/contact
+// Author(s): - bseifert -> http://windirstat.info/contact/bernhard/
+//            - assarbad -> http://windirstat.info/contact/oliver/
 //
 // $Id$
 
@@ -328,62 +328,3 @@ void CAboutDlg::OnDestroy()
 	CDialog::OnDestroy();
 }
 
-// $Log$
-// Revision 1.26  2006/10/10 01:41:50  assarbad
-// - Added credits for Gerben Wieringa (Dutch translation)
-// - Replaced Header tag by Id for the CVS tags in the source files ...
-// - Started re-ordering of the files inside the project(s)/solution(s)
-//
-// Revision 1.25  2006/07/04 23:37:39  assarbad
-// - Added my email address in the header, adjusted "Author" -> "Author(s)"
-// - Added CVS Log keyword to those files not having it
-// - Added the files which I forgot during last commit
-//
-// Revision 1.24  2006/07/04 22:49:20  assarbad
-// - Replaced CVS keyword "Date" by "Header" in the file headers
-//
-// Revision 1.23  2006/07/04 20:45:22  assarbad
-// - See changelog for the changes of todays previous check-ins as well as this one!
-//
-// Revision 1.22  2005/10/01 11:21:08  assarbad
-// *** empty log message ***
-//
-// Revision 1.21  2005/04/17 20:45:19  assarbad
-// - Now the list of translators is shared among all translations. See changelog for details.
-//
-// Revision 1.20  2005/04/17 18:13:46  assarbad
-// - Moved some "static" resource strings into the respective *.rc2 files
-// - Corrected typo in Russian DLL
-// - Modified behavior of VERSIONINFO for DLLs. "version.h" has changed therefore
-// ... for details as usual, see the changelog.
-//
-// Revision 1.19  2005/04/17 12:27:21  assarbad
-// - For details see changelog of 2005-04-17
-//
-// Revision 1.18  2005/04/10 16:49:30  assarbad
-// - Some smaller fixes including moving the resource string version into the rc2 files
-//
-// Revision 1.17  2005/01/29 07:08:18  bseifert
-// Added Hungarian resource dll.
-//
-// Revision 1.16  2004/12/19 10:52:39  bseifert
-// Minor fixes.
-//
-// Revision 1.15  2004/12/12 13:40:51  bseifert
-// Improved image coloring. Junction point image now with awxlink overlay.
-//
-// Revision 1.14  2004/12/12 08:34:59  bseifert
-// Aboutbox: added Authors-Tab. Removed license.txt from resource dlls (saves 16 KB per dll).
-//
-// Revision 1.13  2004/11/23 06:37:04  bseifert
-// Fixed bug in AboutDlg: Esc-key made controls disappear.
-//
-// Revision 1.12  2004/11/13 08:17:07  bseifert
-// Remove blanks in Unicode Configuration names.
-//
-// Revision 1.11  2004/11/12 22:14:16  bseifert
-// Eliminated CLR_NONE. Minor corrections.
-//
-// Revision 1.10  2004/11/05 16:53:07  assarbad
-// Added Date and History tag where appropriate.
-//

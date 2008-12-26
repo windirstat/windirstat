@@ -18,8 +18,8 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
-// Author(s): - bseifert -> bseifert@users.sourceforge.net, bseifert@daccord.net
-//            - assarbad -> http://assarbad.net/en/contact
+// Author(s): - bseifert -> http://windirstat.info/contact/bernhard/
+//            - assarbad -> http://windirstat.info/contact/oliver/
 //
 // $Id$
 
@@ -1911,74 +1911,3 @@ void CItem::DrivePacman()
 }
 
 
-// $Log$
-// Revision 1.31  2006/10/10 01:41:50  assarbad
-// - Added credits for Gerben Wieringa (Dutch translation)
-// - Replaced Header tag by Id for the CVS tags in the source files ...
-// - Started re-ordering of the files inside the project(s)/solution(s)
-//
-// Revision 1.30  2006/07/04 23:37:39  assarbad
-// - Added my email address in the header, adjusted "Author" -> "Author(s)"
-// - Added CVS Log keyword to those files not having it
-// - Added the files which I forgot during last commit
-//
-// Revision 1.29  2006/07/04 22:49:20  assarbad
-// - Replaced CVS keyword "Date" by "Header" in the file headers
-//
-// Revision 1.28  2006/07/04 20:45:22  assarbad
-// - See changelog for the changes of todays previous check-ins as well as this one!
-//
-// Revision 1.27  2005/04/10 16:49:30  assarbad
-// - Some smaller fixes including moving the resource string version into the rc2 files
-//
-// Revision 1.26  2004/12/31 16:01:42  bseifert
-// Bugfixes. See changelog 2004-12-31.
-//
-// Revision 1.25  2004/12/12 08:34:59  bseifert
-// Aboutbox: added Authors-Tab. Removed license.txt from resource dlls (saves 16 KB per dll).
-//
-// Revision 1.24  2004/11/29 07:07:47  bseifert
-// Introduced SRECT. Saves 8 Bytes in sizeof(CItem). Formatting changes.
-//
-// Revision 1.23  2004/11/28 19:20:46  assarbad
-// - Fixing strange behavior of logical operators by rearranging code in
-//   CItem::SetAttributes() and CItem::GetAttributes()
-//
-// Revision 1.22  2004/11/28 15:38:42  assarbad
-// - Possible sorting implementation (using bit-order in m_attributes)
-//
-// Revision 1.21  2004/11/28 14:40:06  assarbad
-// - Extended CFileFindWDS to replace a global function
-// - Now packing/unpacking the file attributes. This even spares a call to find encrypted/compressed files.
-//
-// Revision 1.20  2004/11/25 23:07:23  assarbad
-// - Derived CFileFindWDS from CFileFind to correct a problem of the ANSI version
-//
-// Revision 1.19  2004/11/25 21:13:38  assarbad
-// - Implemented "attributes" column in the treelist
-// - Adopted width in German dialog
-// - Provided German, Russian and English version of IDS_TREECOL_ATTRIBUTES
-//
-// Revision 1.18  2004/11/25 11:58:52  assarbad
-// - Minor fixes (odd behavior of coloring in ANSI version, caching of the GetCompressedFileSize API)
-//   for details see the changelog.txt
-//
-// Revision 1.17  2004/11/12 22:14:16  bseifert
-// Eliminated CLR_NONE. Minor corrections.
-//
-// Revision 1.16  2004/11/12 00:47:42  assarbad
-// - Fixed the code for coloring of compressed/encrypted items. Now the coloring spans the full row!
-//
-// Revision 1.15  2004/11/10 01:03:00  assarbad
-// - Style cleaning of the alternative coloring code for compressed/encrypted items
-//
-// Revision 1.14  2004/11/08 00:46:26  assarbad
-// - Added feature to distinguish compressed and encrypted files/folders by color as in the Windows 2000/XP explorer.
-//   Same rules apply. (Green = encrypted / Blue = compressed)
-//
-// Revision 1.13  2004/11/07 20:14:30  assarbad
-// - Added wrapper for GetCompressedFileSize() so that by default the compressed file size will be shown.
-//
-// Revision 1.12  2004/11/05 16:53:07  assarbad
-// Added Date and History tag where appropriate.
-//

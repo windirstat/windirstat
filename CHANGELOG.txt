@@ -2,6 +2,37 @@ changelog.txt - What has been done to WinDirStat (newest top)
 $Id$
 =============================================================
 
+2008-12-26 assarbad (r162..163)
+	* Merged Bernhard's raw multi-selection prototype code into trunk. Needs
+	  a lot of work before we can be sure it works. Much of the functionality
+	  is not yet implemented (used stubs and FIXME comments)
+	* Removed Log keyword from all files
+	* Fixed contact information in file headers
+	* Updated this changelog with some older entries
+
+2008-10-21 assarbad (r161)
+	* Test code for WOW64 file system redirection issues
+
+2008-05-05 assarbad (r159..160)
+	* Added Visual Lint option file
+
+2008-04-26 assarbad (r155..158)
+	* Fixed build for VS2008
+	* Proper handling of 64bit issues (language-level)
+	* Fixed numerous warnings
+	* Added several header guards
+
+2008-02-01 assarbad (r153)
+	* Very minor code updates
+
+2006-10-26 assarbad (r152)
+	* Added credits for Gerben Wieringa (Dutch translation)
+	* Replaced Header tag by Id for the CVS tags in the source files ...
+	* Started re-ordering of the files inside the project(s)/solution(s)
+
+2006-07-05 assarbad (r151)
+	* Fixed cleanbuild.cmd
+
 2006-07-04 assarbad
 	* Lots of enhancements, especially in code-style:
 	  - added curly brackets whereever possible
