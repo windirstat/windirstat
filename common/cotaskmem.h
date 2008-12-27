@@ -40,33 +40,33 @@ class CCoTaskMem
 {
 // construction
 public:
-	CCoTaskMem( T lp = 0 )
-	{ p = lp; }
-	CCoTaskMem(const CCoTaskMem<T>&) // operator not allowed for CCoTaskMem 
-	{ _ASSERTE( 0 ); p = 0; }
-	~CCoTaskMem()
-	{ if( p ) CoTaskMemFree( p ); }
+    CCoTaskMem( T lp = 0 )
+    { p = lp; }
+    CCoTaskMem(const CCoTaskMem<T>&) // operator not allowed for CCoTaskMem
+    { _ASSERTE( 0 ); p = 0; }
+    ~CCoTaskMem()
+    { if( p ) CoTaskMemFree( p ); }
 
-	operator T() { return p; }
-	T& operator*() { _ASSERTE( p != NULL ); return p; }
-	//The assert on operator& usually indicates a bug.  If this is really
-	//what is needed, however, take the address of the p member explicitly.
-	T* operator&() 
-	{ _ASSERTE(NULL == p); return &p; }
-	T operator->()
-	{ _ASSERTE(NULL != p); return p; }
-	T operator= ( T lp ) 
-	{ if(NULL != p) CoTaskMemFree(p); p = lp; return p;}
-	T operator= ( const CCoTaskMem<T>& lp ) // operator not allowed for CCoTaskMem 
-	{ _ASSERTE( 0 ); return p;}
+    operator T() { return p; }
+    T& operator*() { _ASSERTE( p != NULL ); return p; }
+    //The assert on operator& usually indicates a bug.  If this is really
+    //what is needed, however, take the address of the p member explicitly.
+    T* operator&()
+    { _ASSERTE(NULL == p); return &p; }
+    T operator->()
+    { _ASSERTE(NULL != p); return p; }
+    T operator= ( T lp )
+    { if(NULL != p) CoTaskMemFree(p); p = lp; return p;}
+    T operator= ( const CCoTaskMem<T>& lp ) // operator not allowed for CCoTaskMem
+    { _ASSERTE( 0 ); return p;}
 
 #if _MSC_VER>1020
-	bool operator!() { return (NULL == p); }
+    bool operator!() { return (NULL == p); }
 #else
-	BOOL operator!() { return (NULL == p) ? TRUE : FALSE; }
+    BOOL operator!() { return (NULL == p) ? TRUE : FALSE; }
 #endif
-	
-	T p;
+
+    T p;
 };
 
 #endif // __WDS_COTASKMEM_H__

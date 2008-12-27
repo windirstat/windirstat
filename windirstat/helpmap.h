@@ -19,7 +19,7 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // Author(s): - bseifert -> http://windirstat.info/contact/bernhard/
-//            - assarbad -> oliver@windirstat.info
+//            - assarbad -> http://windirstat.info/contact/oliver/
 //
 // $Id$
 
@@ -27,8 +27,8 @@
 #define __WDS_HELPMAP_H__
 #pragma once
 
-#define IDH_StartPage					1001
-#define IDH_UserDefinedCleanups			1002
-#define IDH_Treemap						1003
+#define IDH_StartPage                   1001
+#define IDH_UserDefinedCleanups         1002
+#define IDH_Treemap                     1003
 
 #endif // __WDS_HELPMAP_H__

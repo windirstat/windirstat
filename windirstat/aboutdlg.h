@@ -19,7 +19,7 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // Author(s): - bseifert -> http://windirstat.info/contact/bernhard/
-//            - assarbad -> oliver@windirstat.info
+//            - assarbad -> http://windirstat.info/contact/oliver/
 //
 // $Id$
 
@@ -36,48 +36,48 @@ void StartAboutDialog();
 
 class CAboutThread: public CWinThread
 {
-	DECLARE_DYNCREATE(CAboutThread);
+    DECLARE_DYNCREATE(CAboutThread);
 protected:
-	virtual BOOL InitInstance();
+    virtual BOOL InitInstance();
 };
 
 
 class CAboutDlg : public CDialog
 {
-	enum { IDD = IDD_ABOUTBOX };
+    enum { IDD = IDD_ABOUTBOX };
 
-	class CMyTabControl: public CTabCtrl
-	{
-	public:
-		void Initialize();
-		void SetPageText(int tab);
+    class CMyTabControl: public CTabCtrl
+    {
+    public:
+        void Initialize();
+        void SetPageText(int tab);
 
-	protected:
-		CRichEditCtrl m_text;
-	
-		DECLARE_MESSAGE_MAP()
-		afx_msg void OnEnLinkText(NMHDR *pNMHDR, LRESULT *pResult);
-		afx_msg void OnEnMsgFilter(NMHDR *pNMHDR, LRESULT *pResult);
-		afx_msg void OnSize(UINT nType, int cx, int cy);
-	};
+    protected:
+        CRichEditCtrl m_text;
+
+        DECLARE_MESSAGE_MAP()
+        afx_msg void OnEnLinkText(NMHDR *pNMHDR, LRESULT *pResult);
+        afx_msg void OnEnMsgFilter(NMHDR *pNMHDR, LRESULT *pResult);
+        afx_msg void OnSize(UINT nType, int cx, int cy);
+    };
 
 public:
-	CAboutDlg();
-	static CString GetAppVersion();
+    CAboutDlg();
+    static CString GetAppVersion();
 
 protected:
-	virtual BOOL OnInitDialog();
-	virtual void DoDataExchange(CDataExchange* pDX);
+    virtual BOOL OnInitDialog();
+    virtual void DoDataExchange(CDataExchange* pDX);
 
-	CStatic m_caption;
-	CMyTabControl m_tab;
-	CLayout m_layout;
+    CStatic m_caption;
+    CMyTabControl m_tab;
+    CLayout m_layout;
 
-	DECLARE_MESSAGE_MAP()
-	afx_msg void OnTcnSelchangeTab(NMHDR *pNMHDR, LRESULT *pResult);
-	afx_msg void OnSize(UINT nType, int cx, int cy);
-	afx_msg void OnGetMinMaxInfo(MINMAXINFO* lpMMI);
-	afx_msg void OnDestroy();
+    DECLARE_MESSAGE_MAP()
+    afx_msg void OnTcnSelchangeTab(NMHDR *pNMHDR, LRESULT *pResult);
+    afx_msg void OnSize(UINT nType, int cx, int cy);
+    afx_msg void OnGetMinMaxInfo(MINMAXINFO* lpMMI);
+    afx_msg void OnDestroy();
 };
 
 #endif // __WDS_ABOUTDLG_H__

@@ -19,7 +19,7 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // Author(s): - bseifert -> http://windirstat.info/contact/bernhard/
-//            - assarbad -> oliver@windirstat.info
+//            - assarbad -> http://windirstat.info/contact/oliver/
 //
 // $Id$
 
@@ -33,28 +33,28 @@
 class CPacman
 {
 public:
-	CPacman();
-	void SetBackgroundColor(COLORREF color);
-	void SetSpeed(double speed);
-	void Reset();
-	void Start(bool start);
-	bool Drive(ULONGLONG readJobs);	// return: true -> should be redrawn.
-	void Draw(CDC *pdc, const CRect& rc);
+    CPacman();
+    void SetBackgroundColor(COLORREF color);
+    void SetSpeed(double speed);
+    void Reset();
+    void Start(bool start);
+    bool Drive(ULONGLONG readJobs); // return: true -> should be redrawn.
+    void Draw(CDC *pdc, const CRect& rc);
 
 private:
-	void UpdatePosition(double& position, bool& up, double diff);
-	COLORREF CalculateColor();
+    void UpdatePosition(double& position, bool& up, double diff);
+    COLORREF CalculateColor();
 
-	bool m_isWindows9x;		// True if we are running on Windows9x/me, false for NT and higher.
-	COLORREF m_bgcolor;		// Background color
-	double m_speed;			// Speed in full width / ms
-	bool m_moving;			// Whether pacman is moving
-	double m_readJobs;		// # of read jobs determines our color 
-	bool m_toTheRight;		// moving right
-	double m_position;		// 0...1
-	bool m_mouthOpening;	// Mouth is opening
-	double m_aperture;		// 0...1
-	DWORD m_lastUpdate;		// TickCount
+    bool m_isWindows9x;     // True if we are running on Windows9x/me, false for NT and higher.
+    COLORREF m_bgcolor;     // Background color
+    double m_speed;         // Speed in full width / ms
+    bool m_moving;          // Whether pacman is moving
+    double m_readJobs;      // # of read jobs determines our color
+    bool m_toTheRight;      // moving right
+    double m_position;      // 0...1
+    bool m_mouthOpening;    // Mouth is opening
+    double m_aperture;      // 0...1
+    DWORD m_lastUpdate;     // TickCount
 };
 
 #endif // __WDS_PACMAN_H__

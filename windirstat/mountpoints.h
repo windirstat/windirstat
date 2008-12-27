@@ -19,7 +19,7 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // Author(s): - bseifert -> http://windirstat.info/contact/bernhard/
-//            - assarbad -> oliver@windirstat.info
+//            - assarbad -> http://windirstat.info/contact/oliver/
 //
 // $Id$
 
@@ -31,35 +31,35 @@
 
 class CMountPoints
 {
-	struct SPointVolume
-	{
-		CString point;	// Path like "mount\backup\"
-		CString volume;	// Volume identifier
-	};
+    struct SPointVolume
+    {
+        CString point;  // Path like "mount\backup\"
+        CString volume; // Volume identifier
+    };
 
-	typedef CArray<SPointVolume, SPointVolume&> PointVolumeArray;
+    typedef CArray<SPointVolume, SPointVolume&> PointVolumeArray;
 
 public:
-	~CMountPoints();
-	void Initialize();
-	bool IsMountPoint(CString path);
-	bool IsJunctionPoint(CString path);
+    ~CMountPoints();
+    void Initialize();
+    bool IsMountPoint(CString path);
+    bool IsJunctionPoint(CString path);
 
 private:
-	void Clear();
-	void GetDriveVolumes();
-	void GetAllMountPoints();
+    void Clear();
+    void GetDriveVolumes();
+    void GetAllMountPoints();
 
-	bool IsVolumeMountPoint(CString volume, CString path);
+    bool IsVolumeMountPoint(CString volume, CString path);
 
-	CVolumeApi m_va;
+    CVolumeApi m_va;
 
-	// m_drive contains the volume identifiers of the Drives A:, B: etc.
-	// mdrive[0] = Volume identifier of A:\.
-	CArray<CString, LPCTSTR> m_drive;
+    // m_drive contains the volume identifiers of the Drives A:, B: etc.
+    // mdrive[0] = Volume identifier of A:\.
+    CArray<CString, LPCTSTR> m_drive;
 
-	// m_volume maps all volume identifiers to PointVolumeArrays
-	CMap<CString, LPCTSTR, PointVolumeArray *, PointVolumeArray *> m_volume;	
+    // m_volume maps all volume identifiers to PointVolumeArrays
+    CMap<CString, LPCTSTR, PointVolumeArray *, PointVolumeArray *> m_volume;
 };
 
 #endif // __WDS_MOUNTPOINTS_H__

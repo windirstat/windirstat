@@ -19,7 +19,7 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // Author(s): - bseifert -> http://windirstat.info/contact/bernhard/
-//            - assarbad -> oliver@windirstat.info
+//            - assarbad -> http://windirstat.info/contact/oliver/
 //
 // $Id$
 
@@ -37,65 +37,65 @@
 //
 class CPageTreemap : public CPropertyPage
 {
-	DECLARE_DYNAMIC(CPageTreemap)
-	enum { IDD = IDD_PAGE_TREEMAP };
+    DECLARE_DYNAMIC(CPageTreemap)
+    enum { IDD = IDD_PAGE_TREEMAP };
 
 public:
-	CPageTreemap();
-	virtual ~CPageTreemap();
+    CPageTreemap();
+    virtual ~CPageTreemap();
 
 protected:
-	void UpdateOptions(bool save = true);
-	void UpdateStatics();
-	void OnSomethingChanged();
-	void ValuesAltered(bool altered = true);
+    void UpdateOptions(bool save = true);
+    void UpdateStatics();
+    void OnSomethingChanged();
+    void ValuesAltered(bool altered = true);
 
-	virtual void DoDataExchange(CDataExchange* pDX);
-	virtual BOOL OnInitDialog();
-	virtual void OnOK();
+    virtual void DoDataExchange(CDataExchange* pDX);
+    virtual BOOL OnInitDialog();
+    virtual void OnOK();
 
-	CTreemap::Options m_options;	// Current options
+    CTreemap::Options m_options;    // Current options
 
-	bool m_altered;				// Values have been altered. Button reads "Reset to defaults".
-	CTreemap::Options m_undo;	// Valid, if m_altered = false
+    bool m_altered;                 // Values have been altered. Button reads "Reset to defaults".
+    CTreemap::Options m_undo;       // Valid, if m_altered = false
 
-	CTreemapPreview m_preview;
+    CTreemapPreview m_preview;
 
-	int m_style;
-	CColorButton m_highlightColor;
-	BOOL m_grid;
-	CColorButton m_gridColor;
-	
-	CSliderCtrl m_brightness;
-	CString m_sBrightness;
-	int m_nBrightness;
+    int m_style;
+    CColorButton m_highlightColor;
+    BOOL m_grid;
+    CColorButton m_gridColor;
 
-	CSliderCtrl m_cushionShading;
-	CString m_sCushionShading;
-	int m_nCushionShading;
+    CSliderCtrl m_brightness;
+    CString m_sBrightness;
+    int m_nBrightness;
 
-	CSliderCtrl m_height;
-	CString m_sHeight;
-	int m_nHeight;
+    CSliderCtrl m_cushionShading;
+    CString m_sCushionShading;
+    int m_nCushionShading;
 
-	CSliderCtrl m_scaleFactor;
-	CString m_sScaleFactor;
-	int m_nScaleFactor;
+    CSliderCtrl m_height;
+    CString m_sHeight;
+    int m_nHeight;
 
-	CXySlider m_lightSource;
-	CPoint m_ptLightSource;
+    CSliderCtrl m_scaleFactor;
+    CString m_sScaleFactor;
+    int m_nScaleFactor;
 
-	CButton m_resetButton;
+    CXySlider m_lightSource;
+    CPoint m_ptLightSource;
 
-	DECLARE_MESSAGE_MAP()
-	afx_msg void OnColorChangedTreemapGrid(NMHDR *, LRESULT *);
-	afx_msg void OnColorChangedTreemapHighlight(NMHDR *, LRESULT *);
-	afx_msg void OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
-	afx_msg void OnLightSourceChanged(NMHDR *, LRESULT *);
-	afx_msg void OnBnClickedKdirstat();
-	afx_msg void OnBnClickedSequoiaview();
-	afx_msg void OnBnClickedTreemapgrid();
-	afx_msg void OnBnClickedReset();
+    CButton m_resetButton;
+
+    DECLARE_MESSAGE_MAP()
+    afx_msg void OnColorChangedTreemapGrid(NMHDR *, LRESULT *);
+    afx_msg void OnColorChangedTreemapHighlight(NMHDR *, LRESULT *);
+    afx_msg void OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
+    afx_msg void OnLightSourceChanged(NMHDR *, LRESULT *);
+    afx_msg void OnBnClickedKdirstat();
+    afx_msg void OnBnClickedSequoiaview();
+    afx_msg void OnBnClickedTreemapgrid();
+    afx_msg void OnBnClickedReset();
 
 };
 

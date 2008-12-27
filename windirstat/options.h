@@ -19,7 +19,7 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // Author(s): - bseifert -> http://windirstat.info/contact/bernhard/
-//            - assarbad -> oliver@windirstat.info
+//            - assarbad -> http://windirstat.info/contact/oliver/
 //
 // $Id$
 
@@ -34,29 +34,29 @@ class COptions;
 
 enum REFRESHPOLICY
 {
-	RP_NO_REFRESH,
-	RP_REFRESH_THIS_ENTRY,
-	RP_REFRESH_THIS_ENTRYS_PARENT,
-	// RP_ASSUME_ENTRY_HAS_BEEN_DELETED, // feature not implemented.
-	REFRESHPOLICYCOUNT
+    RP_NO_REFRESH,
+    RP_REFRESH_THIS_ENTRY,
+    RP_REFRESH_THIS_ENTRYS_PARENT,
+    // RP_ASSUME_ENTRY_HAS_BEEN_DELETED, // feature not implemented.
+    REFRESHPOLICYCOUNT
 };
 
 struct USERDEFINEDCLEANUP
 {
-	bool enabled;
-	bool virginTitle;
-	CString title;
-	bool worksForDrives;
-	bool worksForDirectories;
-	bool worksForFilesFolder;
-	bool worksForFiles;
-	bool worksForUncPaths;
-	CString commandLine;
-	bool recurseIntoSubdirectories;
-	bool askForConfirmation;
-	bool showConsoleWindow;
-	bool waitForCompletion;
-	REFRESHPOLICY refreshPolicy;
+    bool enabled;
+    bool virginTitle;
+    CString title;
+    bool worksForDrives;
+    bool worksForDirectories;
+    bool worksForFilesFolder;
+    bool worksForFiles;
+    bool worksForUncPaths;
+    CString commandLine;
+    bool recurseIntoSubdirectories;
+    bool askForConfirmation;
+    bool showConsoleWindow;
+    bool waitForCompletion;
+    REFRESHPOLICY refreshPolicy;
 };
 
 #define USERDEFINEDCLEANUPCOUNT 10
@@ -71,16 +71,16 @@ struct USERDEFINEDCLEANUP
 class CRegistryUser
 {
 public:
-	static void SetProfileString(LPCTSTR section, LPCTSTR entry, LPCTSTR value);
-	static CString GetProfileString(LPCTSTR section, LPCTSTR entry, LPCTSTR defaultValue);
+    static void SetProfileString(LPCTSTR section, LPCTSTR entry, LPCTSTR value);
+    static CString GetProfileString(LPCTSTR section, LPCTSTR entry, LPCTSTR defaultValue);
 
-	static void SetProfileInt(LPCTSTR section, LPCTSTR entry, int value);
-	static int GetProfileInt(LPCTSTR section, LPCTSTR entry, int defaultValue);
+    static void SetProfileInt(LPCTSTR section, LPCTSTR entry, int value);
+    static int GetProfileInt(LPCTSTR section, LPCTSTR entry, int defaultValue);
 
-	static void SetProfileBool(LPCTSTR section, LPCTSTR entry, bool value);
-	static bool GetProfileBool(LPCTSTR section, LPCTSTR entry, bool defaultValue);
+    static void SetProfileBool(LPCTSTR section, LPCTSTR entry, bool value);
+    static bool GetProfileBool(LPCTSTR section, LPCTSTR entry, bool defaultValue);
 
-	static void CheckRange(int& value, int min, int max);
+    static void CheckRange(int& value, int min, int max);
 };
 
 
@@ -91,77 +91,77 @@ public:
 class CPersistence: private CRegistryUser
 {
 public:
-	static bool GetShowFreeSpace();
-	static void SetShowFreeSpace(bool show);
+    static bool GetShowFreeSpace();
+    static void SetShowFreeSpace(bool show);
 
-	static bool GetShowUnknown();
-	static void SetShowUnknown(bool show);
+    static bool GetShowUnknown();
+    static void SetShowUnknown(bool show);
 
-	static bool GetShowFileTypes();
-	static void SetShowFileTypes(bool show);
+    static bool GetShowFileTypes();
+    static void SetShowFileTypes(bool show);
 
-	static bool GetShowTreemap();
-	static void SetShowTreemap(bool show);
+    static bool GetShowTreemap();
+    static void SetShowTreemap(bool show);
 
-	static bool GetShowToolbar();
-	static void SetShowToolbar(bool show);
+    static bool GetShowToolbar();
+    static void SetShowToolbar(bool show);
 
-	static bool GetShowStatusbar();
-	static void SetShowStatusbar(bool show);
+    static bool GetShowStatusbar();
+    static void SetShowStatusbar(bool show);
 
-	static void GetMainWindowPlacement(/* [in/out] */ WINDOWPLACEMENT& wp);
-	static void SetMainWindowPlacement(const WINDOWPLACEMENT& wp);
+    static void GetMainWindowPlacement(/* [in/out] */ WINDOWPLACEMENT& wp);
+    static void SetMainWindowPlacement(const WINDOWPLACEMENT& wp);
 
-	static void SetSplitterPos(LPCTSTR name, bool valid, double userpos);
-	static void GetSplitterPos(LPCTSTR name, bool& valid, double& userpos);
+    static void SetSplitterPos(LPCTSTR name, bool valid, double userpos);
+    static void GetSplitterPos(LPCTSTR name, bool& valid, double& userpos);
 
-	static void SetColumnOrder(LPCTSTR name, const CArray<int, int>& arr);
-	static void GetColumnOrder(LPCTSTR name, /* in/out */ CArray<int, int>& arr);
+    static void SetColumnOrder(LPCTSTR name, const CArray<int, int>& arr);
+    static void GetColumnOrder(LPCTSTR name, /* in/out */ CArray<int, int>& arr);
 
-	static void SetColumnWidths(LPCTSTR name, const CArray<int, int>& arr);
-	static void GetColumnWidths(LPCTSTR name, /* in/out */ CArray<int, int>& arr);
+    static void SetColumnWidths(LPCTSTR name, const CArray<int, int>& arr);
+    static void GetColumnWidths(LPCTSTR name, /* in/out */ CArray<int, int>& arr);
 
-	static void SetDialogRectangle(LPCTSTR name, const CRect& rc);
-	static void GetDialogRectangle(LPCTSTR name, CRect& rc);
+    static void SetDialogRectangle(LPCTSTR name, const CRect& rc);
+    static void GetDialogRectangle(LPCTSTR name, CRect& rc);
 
-//	static void SetSorting(LPCTSTR name, int column1, bool ascending1, int column2, bool ascending2);
-//	static void GetSorting(LPCTSTR name, int columnCount, int& column1, bool& ascending1, int& column2, bool& ascending2);
+//   static void SetSorting(LPCTSTR name, int column1, bool ascending1, int column2, bool ascending2);
+//   static void GetSorting(LPCTSTR name, int columnCount, int& column1, bool& ascending1, int& column2, bool& ascending2);
 
-	static int GetConfigPage(int max);
-	static void SetConfigPage(int page);
+    static int GetConfigPage(int max);
+    static void SetConfigPage(int page);
 
-	static void GetConfigPosition(/* in/out */ CPoint& pt);
-	static void SetConfigPosition(CPoint pt);
+    static void GetConfigPosition(/* in/out */ CPoint& pt);
+    static void SetConfigPosition(CPoint pt);
 
-	static CString GetBarStateSection();
+    static CString GetBarStateSection();
 
-	static int GetSelectDrivesRadio();
-	static void SetSelectDrivesRadio(int radio);
+    static int GetSelectDrivesRadio();
+    static void SetSelectDrivesRadio(int radio);
 
-	static CString GetSelectDrivesFolder();
-	static void SetSelectDrivesFolder(LPCTSTR folder);
+    static CString GetSelectDrivesFolder();
+    static void SetSelectDrivesFolder(LPCTSTR folder);
 
-	static void GetSelectDrivesDrives(CStringArray& drives);
-	static void SetSelectDrivesDrives(const CStringArray& drives);
+    static void GetSelectDrivesDrives(CStringArray& drives);
+    static void SetSelectDrivesDrives(const CStringArray& drives);
 
-	static bool GetShowDeleteWarning();
-	static void SetShowDeleteWarning(bool show);
+    static bool GetShowDeleteWarning();
+    static void SetShowDeleteWarning(bool show);
 
 private:
-	static void SetArray(LPCTSTR entry, const CArray<int, int>& arr);
-	static void GetArray(LPCTSTR entry, /* in/out */ CArray<int, int>& arr);
-	static void SetRect(LPCTSTR entry, const CRect& rc);
-	static void GetRect(LPCTSTR entry, CRect& rc);
-	static void SanifyRect(CRect& rc);
+    static void SetArray(LPCTSTR entry, const CArray<int, int>& arr);
+    static void GetArray(LPCTSTR entry, /* in/out */ CArray<int, int>& arr);
+    static void SetRect(LPCTSTR entry, const CRect& rc);
+    static void GetRect(LPCTSTR entry, CRect& rc);
+    static void SanifyRect(CRect& rc);
 
-	static CString EncodeWindowPlacement(const WINDOWPLACEMENT& wp);
-	static void DecodeWindowPlacement(const CString& s, WINDOWPLACEMENT& wp);
-	static CString MakeSplitterPosEntry(LPCTSTR name);
-	static CString MakeColumnOrderEntry(LPCTSTR name);
-	static CString MakeColumnWidthsEntry(LPCTSTR name);
-	//static CString MakeSortingColumnEntry(LPCTSTR name, int n);
-	//static CString MakeSortingAscendingEntry(LPCTSTR name, int n);
-	static CString MakeDialogRectangleEntry(LPCTSTR name);
+    static CString EncodeWindowPlacement(const WINDOWPLACEMENT& wp);
+    static void DecodeWindowPlacement(const CString& s, WINDOWPLACEMENT& wp);
+    static CString MakeSplitterPosEntry(LPCTSTR name);
+    static CString MakeColumnOrderEntry(LPCTSTR name);
+    static CString MakeColumnWidthsEntry(LPCTSTR name);
+    //static CString MakeSortingColumnEntry(LPCTSTR name, int n);
+    //static CString MakeSortingAscendingEntry(LPCTSTR name, int n);
+    static CString MakeDialogRectangleEntry(LPCTSTR name);
 
 
 };
@@ -174,8 +174,8 @@ private:
 class CLanguageOptions: private CRegistryUser
 {
 public:
-	static LANGID GetLanguage();
-	static void SetLanguage(LANGID langid);
+    static LANGID GetLanguage();
+    static void SetLanguage(LANGID langid);
 };
 
 
@@ -192,100 +192,100 @@ COptions *GetOptions();
 class COptions: private CRegistryUser
 {
 public:
-	COptions();
+    COptions();
 
-	void LoadFromRegistry();
-	void SaveToRegistry();
+    void LoadFromRegistry();
+    void SaveToRegistry();
 
-	bool IsListGrid();
-	void SetListGrid(bool show);
+    bool IsListGrid();
+    void SetListGrid(bool show);
 
-	bool IsListStripes();
-	void SetListStripes(bool show);
+    bool IsListStripes();
+    void SetListStripes(bool show);
 
-	bool IsListFullRowSelection();
-	void SetListFullRowSelection(bool show);
+    bool IsListFullRowSelection();
+    void SetListFullRowSelection(bool show);
 
-	void GetTreelistColors(COLORREF color[TREELISTCOLORCOUNT]);
-	void SetTreelistColors(const COLORREF color[TREELISTCOLORCOUNT]);
-	COLORREF GetTreelistColor(int i);
+    void GetTreelistColors(COLORREF color[TREELISTCOLORCOUNT]);
+    void SetTreelistColors(const COLORREF color[TREELISTCOLORCOUNT]);
+    COLORREF GetTreelistColor(int i);
 
-	int GetTreelistColorCount();
-	void SetTreelistColorCount(int count);
+    int GetTreelistColorCount();
+    void SetTreelistColorCount(int count);
 
-	bool IsHumanFormat();
-	void SetHumanFormat(bool human);
+    bool IsHumanFormat();
+    void SetHumanFormat(bool human);
 
-	bool IsPacmanAnimation();
-	void SetPacmanAnimation(bool animate);
+    bool IsPacmanAnimation();
+    void SetPacmanAnimation(bool animate);
 
-	bool IsShowTimeSpent();
-	void SetShowTimeSpent(bool show);
+    bool IsShowTimeSpent();
+    void SetShowTimeSpent(bool show);
 
-	COLORREF GetTreemapHighlightColor();
-	void SetTreemapHighlightColor(COLORREF color);
+    COLORREF GetTreemapHighlightColor();
+    void SetTreemapHighlightColor(COLORREF color);
 
-	const CTreemap::Options *GetTreemapOptions();
-	void SetTreemapOptions(const CTreemap::Options& options);
+    const CTreemap::Options *GetTreemapOptions();
+    void SetTreemapOptions(const CTreemap::Options& options);
 
-	bool IsFollowMountPoints();
-	void SetFollowMountPoints(bool follow);
+    bool IsFollowMountPoints();
+    void SetFollowMountPoints(bool follow);
 
-	// Option to ignore junction points which are not volume mount points
-	bool IsFollowJunctionPoints();
-	void SetFollowJunctionPoints(bool ignore);
+    // Option to ignore junction points which are not volume mount points
+    bool IsFollowJunctionPoints();
+    void SetFollowJunctionPoints(bool ignore);
 
-	// Option to use CDirStatApp::m_langid for date/time and number formatting
-	bool IsUseWdsLocale();
-	void SetUseWdsLocale(bool use);
+    // Option to use CDirStatApp::m_langid for date/time and number formatting
+    bool IsUseWdsLocale();
+    void SetUseWdsLocale(bool use);
 
-	void GetUserDefinedCleanups(USERDEFINEDCLEANUP udc[USERDEFINEDCLEANUPCOUNT]);
-	void SetUserDefinedCleanups(const USERDEFINEDCLEANUP udc[USERDEFINEDCLEANUPCOUNT]);
+    void GetUserDefinedCleanups(USERDEFINEDCLEANUP udc[USERDEFINEDCLEANUPCOUNT]);
+    void SetUserDefinedCleanups(const USERDEFINEDCLEANUP udc[USERDEFINEDCLEANUPCOUNT]);
 
-	void GetEnabledUserDefinedCleanups(CArray<int, int>& indices);
-	bool IsUserDefinedCleanupEnabled(int i);
-	const USERDEFINEDCLEANUP *GetUserDefinedCleanup(int i);
+    void GetEnabledUserDefinedCleanups(CArray<int, int>& indices);
+    bool IsUserDefinedCleanupEnabled(int i);
+    const USERDEFINEDCLEANUP *GetUserDefinedCleanup(int i);
 
-	CString GetReportSubject();
-	CString GetReportDefaultSubject();
-	void SetReportSubject(LPCTSTR subject);
+    CString GetReportSubject();
+    CString GetReportDefaultSubject();
+    void SetReportSubject(LPCTSTR subject);
 
-	CString GetReportPrefix();
-	CString GetReportDefaultPrefix();
-	void SetReportPrefix(LPCTSTR prefix);
+    CString GetReportPrefix();
+    CString GetReportDefaultPrefix();
+    void SetReportPrefix(LPCTSTR prefix);
 
-	CString GetReportSuffix();
-	CString GetReportDefaultSuffix();
-	void SetReportSuffix(LPCTSTR suffix);
+    CString GetReportSuffix();
+    CString GetReportDefaultSuffix();
+    void SetReportSuffix(LPCTSTR suffix);
 
 private:
-	void ReadUserDefinedCleanup(int i);
-	void SaveUserDefinedCleanup(int i);
-	bool LooksLikeVirginCleanupTitle(CString title);
-	void ReadTreemapOptions();
-	void SaveTreemapOptions();
+    void ReadUserDefinedCleanup(int i);
+    void SaveUserDefinedCleanup(int i);
+    bool LooksLikeVirginCleanupTitle(CString title);
+    void ReadTreemapOptions();
+    void SaveTreemapOptions();
 
-	bool m_listGrid;
-	bool m_listStripes;
-	bool m_listFullRowSelection;
-	COLORREF m_treelistColor[TREELISTCOLORCOUNT];
-	int m_treelistColorCount;
-	bool m_humanFormat;
-	bool m_pacmanAnimation;
-	bool m_showTimeSpent;
-	COLORREF m_treemapHighlightColor;
+    bool m_listGrid;
+    bool m_listStripes;
+    bool m_listFullRowSelection;
+    COLORREF m_treelistColor[TREELISTCOLORCOUNT];
+    int m_treelistColorCount;
+    bool m_humanFormat;
+    bool m_pacmanAnimation;
+    bool m_showTimeSpent;
+    COLORREF m_treemapHighlightColor;
 
-	CTreemap::Options m_treemapOptions;
-	
-	bool m_followMountPoints;
-	bool m_followJunctionPoints;
-	bool m_useWdsLocale;
+    CTreemap::Options m_treemapOptions;
 
-	USERDEFINEDCLEANUP m_userDefinedCleanup[USERDEFINEDCLEANUPCOUNT];
+    bool m_followMountPoints;
+    bool m_followJunctionPoints;
+    bool m_useWdsLocale;
 
-	CString m_reportSubject;
-	CString m_reportPrefix;
-	CString m_reportSuffix;
+    USERDEFINEDCLEANUP m_userDefinedCleanup[USERDEFINEDCLEANUPCOUNT];
+
+    CString m_reportSubject;
+    CString m_reportPrefix;
+    CString m_reportSuffix;
 };
 
 #endif // __WDS_OPTIONS_H__

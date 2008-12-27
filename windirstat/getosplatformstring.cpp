@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2006 Oliver Schneider (assarbad.net)
+// Copyright (C) 2004-2006, 2008 Oliver Schneider (assarbad.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -33,88 +33,87 @@
 
 CString GetOsPlatformString()
 {
-	CString ret;
+    CString ret;
 
-	OSVERSIONINFO osvi;
-	ZeroMemory(&osvi, sizeof(osvi));
-	osvi.dwOSVersionInfoSize = sizeof(osvi);
+    OSVERSIONINFO osvi;
+    ZeroMemory(&osvi, sizeof(osvi));
+    osvi.dwOSVersionInfoSize = sizeof(osvi);
 
-	if(!GetVersionEx(&osvi))
-	{
-		return LoadString(IDS__UNKNOWN_);
-	}
+    if(!GetVersionEx(&osvi))
+    {
+        return LoadString(IDS__UNKNOWN_);
+    }
 
-	switch (osvi.dwPlatformId)
-	{
-	case VER_PLATFORM_WIN32_NT:
-		if(osvi.dwMajorVersion == 5 && osvi.dwMinorVersion == 2)
-		{
-			ret = TEXT("Windows Server 2003");
-		}
-		else if(osvi.dwMajorVersion == 5 && osvi.dwMinorVersion == 1)
-		{
-			ret = TEXT("Windows XP");
-		}
-		else if(osvi.dwMajorVersion == 5 && osvi.dwMinorVersion == 0)
-		{
-			ret = TEXT("Windows 2000");
-		}
-		else if(osvi.dwMajorVersion <= 4)
-		{
-			ret = TEXT("Windows NT");
-		}
-		else
-		{
-			ret.Format(TEXT("Windows %u.%u"), osvi.dwMajorVersion, osvi.dwMinorVersion);
-		}
-		if(_tcslen(osvi.szCSDVersion) > 0)
-		{
-			CString s;
-			s.Format(TEXT(" (%s)"), osvi.szCSDVersion);
-			ret += s;
-		}
-		break;
+    switch (osvi.dwPlatformId)
+    {
+    case VER_PLATFORM_WIN32_NT:
+        if(osvi.dwMajorVersion == 5 && osvi.dwMinorVersion == 2)
+        {
+            ret = _T("Windows Server 2003");
+        }
+        else if(osvi.dwMajorVersion == 5 && osvi.dwMinorVersion == 1)
+        {
+            ret = _T("Windows XP");
+        }
+        else if(osvi.dwMajorVersion == 5 && osvi.dwMinorVersion == 0)
+        {
+            ret = _T("Windows 2000");
+        }
+        else if(osvi.dwMajorVersion <= 4)
+        {
+            ret = _T("Windows NT");
+        }
+        else
+        {
+            ret.Format(_T("Windows %u.%u"), osvi.dwMajorVersion, osvi.dwMinorVersion);
+        }
+        if(_tcslen(osvi.szCSDVersion) > 0)
+        {
+            CString s;
+            s.Format(_T(" (%s)"), osvi.szCSDVersion);
+            ret += s;
+        }
+        break;
 
-	case VER_PLATFORM_WIN32_WINDOWS:
-		if(osvi.dwMajorVersion == 4 && osvi.dwMinorVersion == 0)
-		{
-			ret = TEXT("Windows 95");
-			if(osvi.szCSDVersion[1] == chrCapC || osvi.szCSDVersion[1] == chrCapB)
-			{
-				ret += TEXT(" OSR2");
-			}
-		} 
-		else if(osvi.dwMajorVersion == 4 && osvi.dwMinorVersion == 10)
-		{
-			ret = TEXT("Windows 98");
-			if(osvi.szCSDVersion[1] == chrCapA)
-			{
-				ret += TEXT(" SE");
-			}
-		} 
-		else if(osvi.dwMajorVersion == 4 && osvi.dwMinorVersion == 90)
-		{
-			ret = TEXT("Windows ME");
-		}
-		else
-		{
-			ret.Format(TEXT("<platform %u %u.%u>"), osvi.dwPlatformId, osvi.dwMajorVersion, osvi.dwMinorVersion);
-		}
-		break;
+    case VER_PLATFORM_WIN32_WINDOWS:
+        if(osvi.dwMajorVersion == 4 && osvi.dwMinorVersion == 0)
+        {
+            ret = _T("Windows 95");
+            if(osvi.szCSDVersion[1] == chrCapC || osvi.szCSDVersion[1] == chrCapB)
+            {
+                ret += _T(" OSR2");
+            }
+        }
+        else if(osvi.dwMajorVersion == 4 && osvi.dwMinorVersion == 10)
+        {
+            ret = _T("Windows 98");
+            if(osvi.szCSDVersion[1] == chrCapA)
+            {
+                ret += _T(" SE");
+            }
+        }
+        else if(osvi.dwMajorVersion == 4 && osvi.dwMinorVersion == 90)
+        {
+            ret = _T("Windows ME");
+        }
+        else
+        {
+            ret.Format(_T("<platform %u %u.%u>"), osvi.dwPlatformId, osvi.dwMajorVersion, osvi.dwMinorVersion);
+        }
+        break;
 
-	case VER_PLATFORM_WIN32s:
-		{
-			ret = TEXT("Win32s\n"); // ooops!!
-		}
-		break;
+    case VER_PLATFORM_WIN32s:
+        {
+            ret = _T("Win32s\n"); // ooops!!
+        }
+        break;
 
-	default:
-		{
-			ret.Format(TEXT("<platform id %u>"), osvi.dwPlatformId);
-		}
-		break;
-	}
+    default:
+        {
+            ret.Format(_T("<platform id %u>"), osvi.dwPlatformId);
+        }
+        break;
+    }
 
-	return ret;
+    return ret;
 }
-

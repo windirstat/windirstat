@@ -1,10 +1,10 @@
 // stdafx.cpp - source file that includes just the standard includes
-//	windirstat.pch will be the pre-compiled header
-//	stdafx.obj will contain the pre-compiled type information
+// windirstat.pch will be the pre-compiled header
+// stdafx.obj will contain the pre-compiled type information
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2006 Oliver Schneider (assarbad.net)
+// Copyright (C) 2004-2006, 2008 Oliver Schneider (assarbad.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -26,6 +26,3 @@
 // $Id$
 
 #include "stdafx.h"
-
-
-

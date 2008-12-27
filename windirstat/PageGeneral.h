@@ -19,7 +19,7 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // Author(s): - bseifert -> http://windirstat.info/contact/bernhard/
-//            - assarbad -> oliver@windirstat.info
+//            - assarbad -> http://windirstat.info/contact/oliver/
 //
 // $Id$
 
@@ -34,43 +34,43 @@ class COptionsPropertySheet;
 //
 class CPageGeneral : public CPropertyPage
 {
-	DECLARE_DYNAMIC(CPageGeneral)
-	enum { IDD = IDD_PAGE_GENERAL };
+    DECLARE_DYNAMIC(CPageGeneral)
+    enum { IDD = IDD_PAGE_GENERAL };
 
 public:
-	CPageGeneral();
-	virtual ~CPageGeneral();
+    CPageGeneral();
+    virtual ~CPageGeneral();
 
 protected:
-	COptionsPropertySheet *GetSheet();
+    COptionsPropertySheet *GetSheet();
 
-	virtual void DoDataExchange(CDataExchange* pDX);
-	virtual BOOL OnInitDialog();
-	virtual void OnOK();
+    virtual void DoDataExchange(CDataExchange* pDX);
+    virtual BOOL OnInitDialog();
+    virtual void OnOK();
 
-	BOOL m_followMountPoints;
-	BOOL m_followJunctionPoints;
-	BOOL m_useWdsLocale;
-	BOOL m_humanFormat;
-	BOOL m_listGrid;
-	BOOL m_listStripes;
-	BOOL m_listFullRowSelection;
+    BOOL m_followMountPoints;
+    BOOL m_followJunctionPoints;
+    BOOL m_useWdsLocale;
+    BOOL m_humanFormat;
+    BOOL m_listGrid;
+    BOOL m_listStripes;
+    BOOL m_listFullRowSelection;
 
-	CComboBox m_combo;
-	CButton m_ctlFollowMountPoints;
-	CButton m_ctlFollowJunctionPoints;
+    CComboBox m_combo;
+    CButton m_ctlFollowMountPoints;
+    CButton m_ctlFollowJunctionPoints;
 
-	int m_originalLanguage;
+    int m_originalLanguage;
 
-	DECLARE_MESSAGE_MAP()
-	afx_msg void OnBnClickedHumanformat();
-	afx_msg void OnBnClickedFollowmountpoints();
-	afx_msg void OnBnClickedFollowjunctionpoints();
-	afx_msg void OnBnClickedUseWdsLocale();
-	afx_msg void OnCbnSelendokCombo();
-	afx_msg void OnBnClickedListGrid();
-	afx_msg void OnBnClickedListStripes();
-	afx_msg void OnBnClickedListFullRowSelection();
+    DECLARE_MESSAGE_MAP()
+    afx_msg void OnBnClickedHumanformat();
+    afx_msg void OnBnClickedFollowmountpoints();
+    afx_msg void OnBnClickedFollowjunctionpoints();
+    afx_msg void OnBnClickedUseWdsLocale();
+    afx_msg void OnCbnSelendokCombo();
+    afx_msg void OnBnClickedListGrid();
+    afx_msg void OnBnClickedListStripes();
+    afx_msg void OnBnClickedListFullRowSelection();
 };
 
 #endif // __WDS_PAGEGENERAL_H__

@@ -19,7 +19,7 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // Author(s): - bseifert -> http://windirstat.info/contact/bernhard/
-//            - assarbad -> oliver@windirstat.info
+//            - assarbad -> http://windirstat.info/contact/oliver/
 //
 // $Id$
 
@@ -27,7 +27,7 @@
 #define __WDS_COLORBUTTON_H__
 #pragma once
 
-#define COLBN_CHANGED	0x87	// this is a value, I hope, that is nowhere used as notification code.
+#define COLBN_CHANGED   0x87    // this is a value, I hope, that is nowhere used as notification code.
 
 //
 // CColorButton. A Pushbutton which allows to choose a color and
@@ -42,35 +42,35 @@
 class CColorButton: public CButton
 {
 public:
-	COLORREF GetColor();
-	void SetColor(COLORREF color);
+    COLORREF GetColor();
+    void SetColor(COLORREF color);
 
 private:
-	// The color preview is an own little child window of the button.
-	class CPreview: public CWnd
-	{
-	public:
-		CPreview();
-		COLORREF GetColor();
-		void SetColor(COLORREF color);
+    // The color preview is an own little child window of the button.
+    class CPreview: public CWnd
+    {
+    public:
+        CPreview();
+        COLORREF GetColor();
+        void SetColor(COLORREF color);
 
-	private:
-		COLORREF m_color;
+    private:
+        COLORREF m_color;
 
-		DECLARE_MESSAGE_MAP()
-		afx_msg void OnPaint();
-	public:
-		afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
-	};
+        DECLARE_MESSAGE_MAP()
+        afx_msg void OnPaint();
+    public:
+        afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
+    };
 
-	CPreview m_preview;
+    CPreview m_preview;
 
 protected:
-	DECLARE_MESSAGE_MAP()
-	afx_msg void OnPaint();
-	afx_msg void OnDestroy();
-	afx_msg void OnBnClicked();
-	afx_msg void OnEnable(BOOL bEnable);
+    DECLARE_MESSAGE_MAP()
+    afx_msg void OnPaint();
+    afx_msg void OnDestroy();
+    afx_msg void OnBnClicked();
+    afx_msg void OnEnable(BOOL bEnable);
 };
 
 #endif // __WDS_COLORBUTTON_H__

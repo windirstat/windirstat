@@ -19,7 +19,7 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // Author(s): - bseifert -> http://windirstat.info/contact/bernhard/
-//            - assarbad -> oliver@windirstat.info
+//            - assarbad -> http://windirstat.info/contact/oliver/
 //
 // $Id$
 
@@ -47,9 +47,9 @@
 #ifndef __WDS_VERSION_H__
 #define __WDS_VERSION_H__
 
-#define BC_DEVEL					// Development version. The usual setting. File version is 0.0.0.buildno.
-//#define BC_RELEASECANDIDATE		// Release candidate. Version number is relevant but not yet official. About-box shows x.y.zrcn. File version is x.y.z.buildno.
-//#define BC_RELEASE				// Set this only during official builds. About-box shows x.y.z. File version is x.y.z.buildno
+#define BC_DEVEL                    // Development version. The usual setting. File version is 0.0.0.buildno.
+//#define BC_RELEASECANDIDATE       // Release candidate. Version number is relevant but not yet official. About-box shows x.y.zrcn. File version is x.y.z.buildno.
+//#define BC_RELEASE                // Set this only during official builds. About-box shows x.y.z. File version is x.y.z.buildno
 
 // A release version must not contain debug information. Raise an error!
 #if defined(_DEBUG) && defined(BC_RELEASE)
@@ -63,9 +63,9 @@
 //-------------------------------------------------------------------
 // Version number. Relevant for BC_RELEASECANDIDATE and BC_RELEASE.
 //
-#define VERNUM_MAJOR		1
-#define VERNUM_MINOR		2
-#define VERNUM_REVISION		0
+#define VERNUM_MAJOR        1
+#define VERNUM_MINOR        3
+#define VERNUM_REVISION     0
 // The following line is automatically incremented by linkcounter.exe.
 // Format: #define blank LINKCOUNT blanks decimal
 // Reset this to zero only when you increment VERNUM_MAJOR/MINOR/REVISION.
@@ -75,66 +75,66 @@
 //-------------------------------------------------------------------
 // Release candidate number. Relevant for BC_RELEASECANDIDATE.
 //
-#define VERNUM_CANDIDATE	1
+#define VERNUM_CANDIDATE    1
 
 
 
 /////////////////////////////////////////////////////////////////////
 // Derived values from here. Do not edit.
 
-#define VN_BUILD	LINKCOUNT
+#define VN_BUILD    LINKCOUNT
 
 #define PPSX(s) #s
 #define PPS(s) PPSX(s)
 
 #ifdef _UNICODE
-	#define UASPEC "Unicode"
-	// OS version is only relevant for the EXE
-	#define VN_FILEOS_EXE VOS_NT_WINDOWS32
+    #define UASPEC "Unicode"
+    // OS version is only relevant for the EXE
+    #define VN_FILEOS_EXE VOS_NT_WINDOWS32
 #else
-	#define UASPEC "Ansi"
-	// OS version is only relevant for the EXE
-	#define VN_FILEOS_EXE VOS__WINDOWS32
+    #define UASPEC "Ansi"
+    // OS version is only relevant for the EXE
+    #define VN_FILEOS_EXE VOS__WINDOWS32
 #endif
 
 #ifdef _DEBUG
-	#define DRSPEC " Debug"
+    #define DRSPEC " Debug"
 #else
-	#define DRSPEC ""
+    #define DRSPEC ""
 #endif
 
 #define VERVARIANT " (" UASPEC DRSPEC ")"
 
 // This is just major.minor.rev.build always!
-#define VN_STRING_DLL	PPS(VERNUM_MAJOR) "." PPS(VERNUM_MINOR) "." PPS(VERNUM_REVISION) "." PPS(VN_BUILD)
+#define VN_STRING_DLL   PPS(VERNUM_MAJOR) "." PPS(VERNUM_MINOR) "." PPS(VERNUM_REVISION) "." PPS(VN_BUILD)
 
 #if defined(BC_DEVEL)
 
-	#define VN_MAJOR	0
-	#define VN_MINOR	0
-	#define VN_REVISION	0
-	#define VN_FILEFLAG	0
-	#define VN_STRING_DLL	PPS(VERNUM_MAJOR) "." PPS(VERNUM_MINOR) "." PPS(VERNUM_REVISION) "." PPS(VN_BUILD)
-	// The variant (debug or not/ Unicode or not) is not relevant for resource DLLs, but for EXEs
-	#define VN_STRING_EXE	VN_STRING_DLL " devel" VERVARIANT
+    #define VN_MAJOR    0
+    #define VN_MINOR    0
+    #define VN_REVISION 0
+    #define VN_FILEFLAG 0
+    #define VN_STRING_DLL   PPS(VERNUM_MAJOR) "." PPS(VERNUM_MINOR) "." PPS(VERNUM_REVISION) "." PPS(VN_BUILD)
+    // The variant (debug or not/ Unicode or not) is not relevant for resource DLLs, but for EXEs
+    #define VN_STRING_EXE   VN_STRING_DLL " devel" VERVARIANT
 
 #elif defined(BC_RELEASECANDIDATE)
 
-	#define VN_MAJOR	VERNUM_MAJOR
-	#define VN_MINOR	VERNUM_MINOR
-	#define VN_REVISION	VERNUM_REVISION
-	#define VN_FILEFLAG	VS_FF_PRERELEASE
-	// The variant (debug or not/ Unicode or not) is not relevant for resource DLLs, but for EXEs
-	#define VN_STRING_EXE	VN_STRING_DLL "rc" PPS(VERNUM_CANDIDATE) VERVARIANT
+    #define VN_MAJOR    VERNUM_MAJOR
+    #define VN_MINOR    VERNUM_MINOR
+    #define VN_REVISION VERNUM_REVISION
+    #define VN_FILEFLAG VS_FF_PRERELEASE
+    // The variant (debug or not/ Unicode or not) is not relevant for resource DLLs, but for EXEs
+    #define VN_STRING_EXE   VN_STRING_DLL "rc" PPS(VERNUM_CANDIDATE) VERVARIANT
 
 #elif defined(BC_RELEASE)
 
-	#define VN_MAJOR	VERNUM_MAJOR
-	#define VN_MINOR	VERNUM_MINOR
-	#define VN_REVISION	VERNUM_REVISION
-	#define VN_FILEFLAG	0
-	// The variant (debug or not/ Unicode or not) is not relevant for resource DLLs, but for EXEs
-	#define VN_STRING_EXE	VN_STRING_DLL VERVARIANT
+    #define VN_MAJOR    VERNUM_MAJOR
+    #define VN_MINOR    VERNUM_MINOR
+    #define VN_REVISION VERNUM_REVISION
+    #define VN_FILEFLAG 0
+    // The variant (debug or not/ Unicode or not) is not relevant for resource DLLs, but for EXEs
+    #define VN_STRING_EXE   VN_STRING_DLL VERVARIANT
 
 #endif
 

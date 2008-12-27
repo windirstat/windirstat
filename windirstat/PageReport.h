@@ -19,7 +19,7 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // Author(s): - bseifert -> http://windirstat.info/contact/bernhard/
-//            - assarbad -> oliver@windirstat.info
+//            - assarbad -> http://windirstat.info/contact/oliver/
 //
 // $Id$
 
@@ -30,37 +30,37 @@
 
 class CPageReport: public CPropertyPage
 {
-	DECLARE_DYNAMIC(CPageReport)
-	enum { IDD = IDD_PAGE_REPORT };
+    DECLARE_DYNAMIC(CPageReport)
+    enum { IDD = IDD_PAGE_REPORT };
 
 public:
-	CPageReport();
-	virtual ~CPageReport();
+    CPageReport();
+    virtual ~CPageReport();
 
 protected:
-	virtual void DoDataExchange(CDataExchange* pDX);
-	virtual BOOL OnInitDialog();
-	virtual void OnOK();
+    virtual void DoDataExchange(CDataExchange* pDX);
+    virtual BOOL OnInitDialog();
+    virtual void OnOK();
 
-	void ValuesAltered(bool altered = true);
+    void ValuesAltered(bool altered = true);
 
-	CString m_subject;
-	CString m_prefix;
-	CString m_suffix;
+    CString m_subject;
+    CString m_prefix;
+    CString m_suffix;
 
-	bool m_altered;		// Values have been modified. Button reads "Reset to defaults"
-	CString m_undoSubject;
-	CString m_undoPrefix;
-	CString m_undoSuffix;
+    bool m_altered; // Values have been modified. Button reads "Reset to defaults"
+    CString m_undoSubject;
+    CString m_undoPrefix;
+    CString m_undoSuffix;
 
-	CButton m_reset;
+    CButton m_reset;
 
-	DECLARE_MESSAGE_MAP()
-	afx_msg void OnBnClickedReset();
+    DECLARE_MESSAGE_MAP()
+    afx_msg void OnBnClickedReset();
 public:
-	afx_msg void OnEnChangeSubject();
-	afx_msg void OnEnChangePrefix();
-	afx_msg void OnEnChangeSuffix();
+    afx_msg void OnEnChangeSubject();
+    afx_msg void OnEnChangePrefix();
+    afx_msg void OnEnChangeSuffix();
 };
 
 #endif // __WDS_PAGEREPORT_H__

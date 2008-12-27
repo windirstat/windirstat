@@ -19,7 +19,7 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // Author(s): - bseifert -> http://windirstat.info/contact/bernhard/
-//            - assarbad -> oliver@windirstat.info
+//            - assarbad -> http://windirstat.info/contact/oliver/
 //
 // $Id$
 
@@ -28,32 +28,32 @@
 #pragma once
 
 // Single character constants
-const TCHAR chrSharp = TEXT('#');
-const TCHAR chrBracketOpen = TEXT('(');
-const TCHAR chrBracketClose = TEXT(')');
-const TCHAR chrComma = TEXT(',');
-const TCHAR chrDot = TEXT('.');
-const TCHAR chrColon = TEXT(':');
-const TCHAR chrAt = TEXT('@');
-const TCHAR chrBackslash = TEXT('\\');
-const TCHAR chrPipe = TEXT('|');
-const TCHAR chrZero = TEXT('0');
-const TCHAR chrSmallA = TEXT('a');
-const TCHAR chrCapA = TEXT('A');
-const TCHAR chrCapB = TEXT('B');
-const TCHAR chrCapC = TEXT('C');
+const TCHAR chrSharp = _T('#');
+const TCHAR chrBracketOpen = _T('(');
+const TCHAR chrBracketClose = _T(')');
+const TCHAR chrComma = _T(',');
+const TCHAR chrDot = _T('.');
+const TCHAR chrColon = _T(':');
+const TCHAR chrAt = _T('@');
+const TCHAR chrBackslash = _T('\\');
+const TCHAR chrPipe = _T('|');
+const TCHAR chrZero = _T('0');
+const TCHAR chrSmallA = _T('a');
+const TCHAR chrCapA = _T('A');
+const TCHAR chrCapB = _T('B');
+const TCHAR chrCapC = _T('C');
 
 // Constants strings
-const LPCTSTR strEmpty = TEXT("");
-const LPCTSTR strBlankSpace = TEXT(" ");
-const LPCTSTR strStar = TEXT("*");
-const LPCTSTR strComma = TEXT(",");
-const LPCTSTR strDot = TEXT(".");
-const LPCTSTR strBackslash = TEXT("\\");
-const LPCTSTR strPipe = TEXT("|");
-const LPCTSTR strDollar = TEXT("$");
-const LPCTSTR strPercent = TEXT("%");
+const LPCTSTR strEmpty = _T("");
+const LPCTSTR strBlankSpace = _T(" ");
+const LPCTSTR strStar = _T("*");
+const LPCTSTR strComma = _T(",");
+const LPCTSTR strDot = _T(".");
+const LPCTSTR strBackslash = _T("\\");
+const LPCTSTR strPipe = _T("|");
+const LPCTSTR strDollar = _T("$");
+const LPCTSTR strPercent = _T("%");
 
-const LPCTSTR strExplorerKey = TEXT("Software\\Microsoft\\Windows\\CurrentVersion\\Explorer");
+const LPCTSTR strExplorerKey = _T("Software\\Microsoft\\Windows\\CurrentVersion\\Explorer");
 
 #endif // __WDS_CONSTANTS_H__

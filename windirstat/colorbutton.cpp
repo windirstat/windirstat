@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2006 Oliver Schneider (assarbad.net)
+// Copyright (C) 2004-2006, 2008 Oliver Schneider (assarbad.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -33,51 +33,51 @@
 /////////////////////////////////////////////////////////////////////////////
 
 BEGIN_MESSAGE_MAP(CColorButton::CPreview, CWnd)
-	ON_WM_PAINT()
-	ON_WM_LBUTTONDOWN()
+    ON_WM_PAINT()
+    ON_WM_LBUTTONDOWN()
 END_MESSAGE_MAP()
 
 CColorButton::CPreview::CPreview()
 {
-	m_color = 0;
+    m_color = 0;
 }
 
 COLORREF CColorButton::CPreview::GetColor()
 {
-	return m_color;
+    return m_color;
 }
 
 void CColorButton::CPreview::SetColor(COLORREF color)
 {
-	m_color = color;
-	if(IsWindow(m_hWnd))
-	{
-		InvalidateRect(NULL);
-	}
+    m_color = color;
+    if(IsWindow(m_hWnd))
+    {
+        InvalidateRect(NULL);
+    }
 }
 
 void CColorButton::CPreview::OnPaint()
 {
-	CPaintDC dc(this);
+    CPaintDC dc(this);
 
-	CRect rc;
-	GetClientRect(rc);
+    CRect rc;
+    GetClientRect(rc);
 
-	dc.DrawEdge(rc, EDGE_BUMP, BF_RECT | BF_ADJUST);
+    dc.DrawEdge(rc, EDGE_BUMP, BF_RECT | BF_ADJUST);
 
-	COLORREF color = m_color;
-	if((GetParent()->GetStyle() & WS_DISABLED) != 0)
-	{
-		color = GetSysColor(COLOR_BTNFACE);
-	}
-	dc.FillSolidRect(rc, color);
+    COLORREF color = m_color;
+    if((GetParent()->GetStyle() & WS_DISABLED) != 0)
+    {
+        color = GetSysColor(COLOR_BTNFACE);
+    }
+    dc.FillSolidRect(rc, color);
 }
 
 void CColorButton::CPreview::OnLButtonDown(UINT nFlags, CPoint point)
 {
-	ClientToScreen(&point);
-	GetParent()->ScreenToClient(&point);
-	GetParent()->SendMessage(WM_LBUTTONDOWN, nFlags, MAKELPARAM(point.x, point.y));
+    ClientToScreen(&point);
+    GetParent()->ScreenToClient(&point);
+    GetParent()->SendMessage(WM_LBUTTONDOWN, nFlags, MAKELPARAM(point.x, point.y));
 }
 
 
@@ -85,70 +85,69 @@ void CColorButton::CPreview::OnLButtonDown(UINT nFlags, CPoint point)
 /////////////////////////////////////////////////////////////////////////////
 
 BEGIN_MESSAGE_MAP(CColorButton, CButton)
-	ON_WM_PAINT()
-	ON_WM_DESTROY()
-	ON_CONTROL_REFLECT(BN_CLICKED, OnBnClicked)
-	ON_WM_ENABLE()
+    ON_WM_PAINT()
+    ON_WM_DESTROY()
+    ON_CONTROL_REFLECT(BN_CLICKED, OnBnClicked)
+    ON_WM_ENABLE()
 END_MESSAGE_MAP()
 
 COLORREF CColorButton::GetColor()
 {
-	return m_preview.GetColor();
+    return m_preview.GetColor();
 }
 
 void CColorButton::SetColor(COLORREF color)
 {
-	m_preview.SetColor(color);
+    m_preview.SetColor(color);
 }
 
 void CColorButton::OnPaint()
 {
-	if(NULL == m_preview.m_hWnd)
-	{
-		CRect rc;
-		GetClientRect(rc);
+    if(NULL == m_preview.m_hWnd)
+    {
+        CRect rc;
+        GetClientRect(rc);
 
-		rc.right = rc.left + rc.Width() / 3;
-		rc.DeflateRect(4, 4);
+        rc.right = rc.left + rc.Width() / 3;
+        rc.DeflateRect(4, 4);
 
-		VERIFY(m_preview.Create(AfxRegisterWndClass(0, 0, 0, 0), strEmpty, WS_CHILD | WS_VISIBLE, rc, this, 4711));
+        VERIFY(m_preview.Create(AfxRegisterWndClass(0, 0, 0, 0), strEmpty, WS_CHILD | WS_VISIBLE, rc, this, 4711));
 
-		ModifyStyle(0, WS_CLIPCHILDREN);
-	}
-	CButton::OnPaint();
+        ModifyStyle(0, WS_CLIPCHILDREN);
+    }
+    CButton::OnPaint();
 }
 
 void CColorButton::OnDestroy()
 {
-	if(IsWindow(m_preview.m_hWnd))
-	{
-		m_preview.DestroyWindow();
-	}
-	CButton::OnDestroy();
+    if(IsWindow(m_preview.m_hWnd))
+    {
+        m_preview.DestroyWindow();
+    }
+    CButton::OnDestroy();
 }
 
 void CColorButton::OnBnClicked()
 {
-	CColorDialog dlg(GetColor());
-	if(IDOK == dlg.DoModal())
-	{
-		SetColor(dlg.GetColor());
-		NMHDR hdr;
-		hdr.hwndFrom = m_hWnd;
-		hdr.idFrom = GetDlgCtrlID();
-		hdr.code = COLBN_CHANGED;
+    CColorDialog dlg(GetColor());
+    if(IDOK == dlg.DoModal())
+    {
+        SetColor(dlg.GetColor());
+        NMHDR hdr;
+        hdr.hwndFrom = m_hWnd;
+        hdr.idFrom = GetDlgCtrlID();
+        hdr.code = COLBN_CHANGED;
 
-		GetParent()->SendMessage(WM_NOTIFY, GetDlgCtrlID(), (LPARAM)&hdr);
-	}
+        GetParent()->SendMessage(WM_NOTIFY, GetDlgCtrlID(), (LPARAM)&hdr);
+    }
 }
 
 
 void CColorButton::OnEnable(BOOL bEnable)
 {
-	if(IsWindow(m_preview.m_hWnd))
-	{
-		m_preview.InvalidateRect(NULL);
-	}
-	CButton::OnEnable(bEnable);
+    if(IsWindow(m_preview.m_hWnd))
+    {
+        m_preview.InvalidateRect(NULL);
+    }
+    CButton::OnEnable(bEnable);
 }
-

@@ -19,7 +19,7 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // Author(s): - bseifert -> http://windirstat.info/contact/bernhard/
-//            - assarbad -> oliver@windirstat.info
+//            - assarbad -> http://windirstat.info/contact/oliver/
 //
 // $Id$
 
@@ -27,7 +27,7 @@
 #define __WDS_TYPEVIEW_H__
 #pragma once
 
-#include "dirstatdoc.h"	// SExtensionRecord
+#include "dirstatdoc.h" // SExtensionRecord
 
 class CTypeView;
 
@@ -37,68 +37,68 @@ class CTypeView;
 class CExtensionListControl: public COwnerDrawnListControl
 {
 protected:
-	// Columns
-	enum
-	{
-		COL_EXTENSION,
-		COL_COLOR,
-		COL_DESCRIPTION,
-		COL_BYTES,
-		COL_BYTESPERCENT,
-		COL_FILES
-	};
+    // Columns
+    enum
+    {
+        COL_EXTENSION,
+        COL_COLOR,
+        COL_DESCRIPTION,
+        COL_BYTES,
+        COL_BYTESPERCENT,
+        COL_FILES
+    };
 
-	// CListItem. The items of the CExtensionListControl.
-	class CListItem: public COwnerDrawnListItem
-	{
-	public:
-		CListItem(CExtensionListControl *list, LPCTSTR extension, SExtensionRecord r);
+    // CListItem. The items of the CExtensionListControl.
+    class CListItem: public COwnerDrawnListItem
+    {
+    public:
+        CListItem(CExtensionListControl *list, LPCTSTR extension, SExtensionRecord r);
 
-		virtual bool DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *width, int *focusLeft) const;
-		virtual CString GetText(int subitem) const;
+        virtual bool DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *width, int *focusLeft) const;
+        virtual CString GetText(int subitem) const;
 
-		CString GetExtension() const;
-		int GetImage() const;
-		int Compare(const CSortingListItem *other, int subitem) const;
+        CString GetExtension() const;
+        int GetImage() const;
+        int Compare(const CSortingListItem *other, int subitem) const;
 
-	private:
-		void DrawColor(CDC *pdc, CRect rc, UINT state, int *width) const;
+    private:
+        void DrawColor(CDC *pdc, CRect rc, UINT state, int *width) const;
 
-		CString GetDescription() const;
-		CString GetBytesPercent() const;
+        CString GetDescription() const;
+        CString GetBytesPercent() const;
 
-		double GetBytesFraction() const;
+        double GetBytesFraction() const;
 
-		CExtensionListControl *m_list;
-		CString m_extension;
-		SExtensionRecord m_record;
-		mutable CString m_description;
-		mutable int m_image;
-	};
+        CExtensionListControl *m_list;
+        CString m_extension;
+        SExtensionRecord m_record;
+        mutable CString m_description;
+        mutable int m_image;
+    };
 
 public:
-	CExtensionListControl(CTypeView *typeView);
-	virtual bool GetAscendingDefault(int column);
-	void Initialize();
-	void SetExtensionData(const CExtensionData *ed);
-	void SetRootSize(ULONGLONG totalBytes);
-	ULONGLONG GetRootSize();
-	void SelectExtension(LPCTSTR ext);
-	CString GetSelectedExtension();
+    CExtensionListControl(CTypeView *typeView);
+    virtual bool GetAscendingDefault(int column);
+    void Initialize();
+    void SetExtensionData(const CExtensionData *ed);
+    void SetRootSize(ULONGLONG totalBytes);
+    ULONGLONG GetRootSize();
+    void SelectExtension(LPCTSTR ext);
+    CString GetSelectedExtension();
 
 protected:
-	CListItem *GetListItem(int i);
+    CListItem *GetListItem(int i);
 
-	CTypeView *m_typeView;
-	ULONGLONG m_rootSize;
+    CTypeView *m_typeView;
+    ULONGLONG m_rootSize;
 
-	DECLARE_MESSAGE_MAP()
-	afx_msg void OnDestroy();
-	afx_msg void OnLvnDeleteitem(NMHDR *pNMHDR, LRESULT *pResult);
-	afx_msg void MeasureItem(LPMEASUREITEMSTRUCT mis);
-	afx_msg void OnSetFocus(CWnd* pOldWnd);
-	afx_msg void OnLvnItemchanged(NMHDR *pNMHDR, LRESULT *pResult);
-	afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
+    DECLARE_MESSAGE_MAP()
+    afx_msg void OnDestroy();
+    afx_msg void OnLvnDeleteitem(NMHDR *pNMHDR, LRESULT *pResult);
+    afx_msg void MeasureItem(LPMEASUREITEMSTRUCT mis);
+    afx_msg void OnSetFocus(CWnd* pOldWnd);
+    afx_msg void OnLvnItemchanged(NMHDR *pNMHDR, LRESULT *pResult);
+    afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
 };
 
 
@@ -109,40 +109,40 @@ protected:
 class CTypeView: public CView
 {
 protected:
-	CTypeView();
-	DECLARE_DYNCREATE(CTypeView)
+    CTypeView();
+    DECLARE_DYNCREATE(CTypeView)
 
 public:
-	virtual ~CTypeView();
-	CDirstatDoc* GetDocument() const;
-	void SysColorChanged();
+    virtual ~CTypeView();
+    CDirstatDoc* GetDocument() const;
+    void SysColorChanged();
 
-	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
+    virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
 
-	bool IsShowTypes();
-	void ShowTypes(bool show);
+    bool IsShowTypes();
+    void ShowTypes(bool show);
 
-	void SetHighlightExtension(LPCTSTR ext);
+    void SetHighlightExtension(LPCTSTR ext);
 
 protected:
-	virtual void OnInitialUpdate();
-	virtual void OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint);
-	virtual void OnDraw(CDC* pDC);
-	void SetSelection();
+    virtual void OnInitialUpdate();
+    virtual void OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint);
+    virtual void OnDraw(CDC* pDC);
+    void SetSelection();
 
-	bool m_showTypes;		// Whether this view shall be shown (F8 option)
-	CExtensionListControl m_extensionListControl;	// The list control
+    bool m_showTypes;   // Whether this view shall be shown (F8 option)
+    CExtensionListControl m_extensionListControl;   // The list control
 
-	DECLARE_MESSAGE_MAP()
-	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
-	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
-	afx_msg void OnSize(UINT nType, int cx, int cy);
-	afx_msg void OnSetFocus(CWnd* pOldWnd);
+    DECLARE_MESSAGE_MAP()
+    afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
+    afx_msg BOOL OnEraseBkgnd(CDC* pDC);
+    afx_msg void OnSize(UINT nType, int cx, int cy);
+    afx_msg void OnSetFocus(CWnd* pOldWnd);
 public:
-	#ifdef _DEBUG
-		virtual void AssertValid() const;
-		virtual void Dump(CDumpContext& dc) const;
-	#endif
+    #ifdef _DEBUG
+        virtual void AssertValid() const;
+        virtual void Dump(CDumpContext& dc) const;
+    #endif
 };
 
 #ifndef _DEBUG  // Debugversion in typeview.cpp

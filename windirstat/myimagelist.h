@@ -19,7 +19,7 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // Author(s): - bseifert -> http://windirstat.info/contact/bernhard/
-//            - assarbad -> oliver@windirstat.info
+//            - assarbad -> http://windirstat.info/contact/oliver/
 //
 // $Id$
 
@@ -38,37 +38,37 @@
 class CMyImageList: public CImageList
 {
 public:
-	CMyImageList();
-	virtual ~CMyImageList();
+    CMyImageList();
+    virtual ~CMyImageList();
 
-	void Initialize();
+    void Initialize();
 
-	int GetMyComputerImage();
-	int GetMountPointImage();
-	int GetJunctionImage();
-	int GetFolderImage();
-	int GetFileImage(LPCTSTR path);
-	int GetExtImageAndDescription(LPCTSTR ext, CString& description);
+    int GetMyComputerImage();
+    int GetMountPointImage();
+    int GetJunctionImage();
+    int GetFolderImage();
+    int GetFileImage(LPCTSTR path);
+    int GetExtImageAndDescription(LPCTSTR ext, CString& description);
 
-	int GetFilesFolderImage();
-	int GetFreeSpaceImage();
-	int GetUnknownImage();
-	int GetEmptyImage();
+    int GetFilesFolderImage();
+    int GetFreeSpaceImage();
+    int GetUnknownImage();
+    int GetEmptyImage();
 
 protected:
-	int CacheIcon(LPCTSTR path, UINT flags, CString *psTypeName = NULL);
-	CString GetADriveSpec();
-	void AddCustomImages();
-	
-	CMap<int, int, int, int> m_indexMap;	// system image list index -> our index
+    int CacheIcon(LPCTSTR path, UINT flags, CString *psTypeName = NULL);
+    CString GetADriveSpec();
+    void AddCustomImages();
 
-	int m_filesFolderImage;	// <Files>
-	int m_freeSpaceImage;	// <Free Space>
-	int m_unknownImage;		// <Unknown>
-	int m_emptyImage;		// For items whose image cannot be found
+    CMap<int, int, int, int> m_indexMap;    // system image list index -> our index
 
-	// Junction point
-	int m_junctionImage;
+    int m_filesFolderImage; // <Files>
+    int m_freeSpaceImage;   // <Free Space>
+    int m_unknownImage;     // <Unknown>
+    int m_emptyImage;       // For items whose image cannot be found
+
+    // Junction point
+    int m_junctionImage;
 };
 
 #endif __WDS_MYIMAGELIST_H__

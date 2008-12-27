@@ -19,7 +19,7 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // Author(s): - bseifert -> http://windirstat.info/contact/bernhard/
-//            - assarbad -> oliver@windirstat.info
+//            - assarbad -> http://windirstat.info/contact/oliver/
 //
 // $Id$
 
@@ -33,59 +33,59 @@
 //
 class CLayout
 {
-	struct SControlInfo
-	{
-		CWnd *control;
-		double movex;
-		double movey;
-		double stretchx;
-		double stretchy;
+    struct SControlInfo
+    {
+        CWnd *control;
+        double movex;
+        double movey;
+        double stretchx;
+        double stretchy;
 
-		CRect originalRectangle;
-	};
+        CRect originalRectangle;
+    };
 
-	class CSizeGripper: public CWnd
-	{
-	public:
-		static const int _width;
+    class CSizeGripper: public CWnd
+    {
+    public:
+        static const int _width;
 
-		CSizeGripper();
-		void Create(CWnd *parent, CRect rc);
+        CSizeGripper();
+        void Create(CWnd *parent, CRect rc);
 
-	private:
-		void DrawShadowLine(CDC *pdc, CPoint start, CPoint end);
+    private:
+        void DrawShadowLine(CDC *pdc, CPoint start, CPoint end);
 
-		DECLARE_MESSAGE_MAP()
-		afx_msg void OnPaint();
-		afx_msg LRESULT OnNcHitTest(CPoint point);
-	};
+        DECLARE_MESSAGE_MAP()
+        afx_msg void OnPaint();
+        afx_msg LRESULT OnNcHitTest(CPoint point);
+    };
 
-	class CPositioner  
-	{
-	public:
-		CPositioner(int nNumWindows = 10);
-		virtual ~CPositioner();
-		void SetWindowPos(HWND hWnd, int x, int y, int cx, int cy, UINT uFlags);
-	private:
-		HDWP m_wdp;
-	};
+    class CPositioner
+    {
+    public:
+        CPositioner(int nNumWindows = 10);
+        virtual ~CPositioner();
+        void SetWindowPos(HWND hWnd, int x, int y, int cx, int cy, UINT uFlags);
+    private:
+        HDWP m_wdp;
+    };
 
 public:
-	CLayout(CWnd *dialog, LPCTSTR name);
-	int AddControl(CWnd *control, double movex, double movey, double stretchx, double stretchy);
-	void AddControl(UINT id, double movex, double movey, double stretchx, double stretchy);
+    CLayout(CWnd *dialog, LPCTSTR name);
+    int AddControl(CWnd *control, double movex, double movey, double stretchx, double stretchy);
+    void AddControl(UINT id, double movex, double movey, double stretchx, double stretchy);
 
-	void OnInitDialog(bool centerWindow);
-	void OnSize();
-	void OnGetMinMaxInfo(MINMAXINFO *mmi);
-	void OnDestroy();
+    void OnInitDialog(bool centerWindow);
+    void OnSize();
+    void OnGetMinMaxInfo(MINMAXINFO *mmi);
+    void OnDestroy();
 
 protected:
-	CWnd *m_dialog;
-	CString m_name;
-	CSize m_originalDialogSize;
-	CArray<SControlInfo, SControlInfo&> m_control;
-	CSizeGripper m_sizeGripper;
+    CWnd *m_dialog;
+    CString m_name;
+    CSize m_originalDialogSize;
+    CArray<SControlInfo, SControlInfo&> m_control;
+    CSizeGripper m_sizeGripper;
 };
 
 #endif // __WDS_LAYOUT_H__

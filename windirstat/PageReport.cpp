@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2006 Oliver Schneider (assarbad.net)
+// Copyright (C) 2004-2006, 2008 Oliver Schneider (assarbad.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -35,10 +35,10 @@
 IMPLEMENT_DYNAMIC(CPageReport, CPropertyPage)
 
 CPageReport::CPageReport()
-	: CPropertyPage(CPageReport::IDD)
-	, m_subject(strEmpty)
-	, m_prefix(strEmpty)
-	, m_suffix(strEmpty)
+    : CPropertyPage(CPageReport::IDD)
+    , m_subject(strEmpty)
+    , m_prefix(strEmpty)
+    , m_suffix(strEmpty)
 {
 }
 
@@ -48,96 +48,95 @@ CPageReport::~CPageReport()
 
 void CPageReport::DoDataExchange(CDataExchange* pDX)
 {
-	CPropertyPage::DoDataExchange(pDX);
-	DDX_Text(pDX, IDC_SUBJECT, m_subject);
-	DDX_Text(pDX, IDC_PREFIX, m_prefix);
-	DDX_Text(pDX, IDC_SUFFIX, m_suffix);
-	DDX_Control(pDX, IDC_RESET, m_reset);
+    CPropertyPage::DoDataExchange(pDX);
+    DDX_Text(pDX, IDC_SUBJECT, m_subject);
+    DDX_Text(pDX, IDC_PREFIX, m_prefix);
+    DDX_Text(pDX, IDC_SUFFIX, m_suffix);
+    DDX_Control(pDX, IDC_RESET, m_reset);
 }
 
 
 BEGIN_MESSAGE_MAP(CPageReport, CPropertyPage)
-	ON_BN_CLICKED(IDC_RESET, OnBnClickedReset)
-	ON_EN_CHANGE(IDC_SUBJECT, OnEnChangeSubject)
-	ON_EN_CHANGE(IDC_PREFIX, OnEnChangePrefix)
-	ON_EN_CHANGE(IDC_SUFFIX, OnEnChangeSuffix)
+    ON_BN_CLICKED(IDC_RESET, OnBnClickedReset)
+    ON_EN_CHANGE(IDC_SUBJECT, OnEnChangeSubject)
+    ON_EN_CHANGE(IDC_PREFIX, OnEnChangePrefix)
+    ON_EN_CHANGE(IDC_SUFFIX, OnEnChangeSuffix)
 END_MESSAGE_MAP()
 
 
 
 BOOL CPageReport::OnInitDialog()
 {
-	CPropertyPage::OnInitDialog();
+    CPropertyPage::OnInitDialog();
 
-	m_subject = GetOptions()->GetReportSubject();
-	m_prefix = GetOptions()->GetReportPrefix();
-	m_suffix = GetOptions()->GetReportSuffix();
+    m_subject = GetOptions()->GetReportSubject();
+    m_prefix = GetOptions()->GetReportPrefix();
+    m_suffix = GetOptions()->GetReportSuffix();
 
-	ValuesAltered();
+    ValuesAltered();
 
-	UpdateData(false);
-	return TRUE;
+    UpdateData(false);
+    return TRUE;
 }
 
 void CPageReport::ValuesAltered(bool altered)
 {
-	m_altered = altered;
-	CString s = LoadString(m_altered ? IDS_RESETTODEFAULTS : IDS_BACKTOUSERSETTINGS);
-	m_reset.SetWindowText(s);
+    m_altered = altered;
+    CString s = LoadString(m_altered ? IDS_RESETTODEFAULTS : IDS_BACKTOUSERSETTINGS);
+    m_reset.SetWindowText(s);
 }
 
 void CPageReport::OnOK()
 {
-	UpdateData();
+    UpdateData();
 
-	GetOptions()->SetReportSubject(m_subject);
-	GetOptions()->SetReportPrefix(m_prefix);
-	GetOptions()->SetReportSuffix(m_suffix);
+    GetOptions()->SetReportSubject(m_subject);
+    GetOptions()->SetReportPrefix(m_prefix);
+    GetOptions()->SetReportSuffix(m_suffix);
 
-	CPropertyPage::OnOK();
+    CPropertyPage::OnOK();
 }
 
 void CPageReport::OnBnClickedReset()
 {
-	UpdateData();
+    UpdateData();
 
-	if(m_altered)
-	{
-		m_undoSubject = m_subject;
-		m_undoPrefix = m_prefix;
-		m_undoSuffix = m_suffix;
+    if(m_altered)
+    {
+        m_undoSubject = m_subject;
+        m_undoPrefix = m_prefix;
+        m_undoSuffix = m_suffix;
 
-		m_subject = GetOptions()->GetReportDefaultSubject();
-		m_prefix = GetOptions()->GetReportDefaultPrefix();
-		m_suffix = GetOptions()->GetReportDefaultSuffix();
-	}
-	else
-	{
-		m_subject = m_undoSubject;
-		m_prefix = m_undoPrefix;
-		m_suffix = m_undoSuffix;
-	}
+        m_subject = GetOptions()->GetReportDefaultSubject();
+        m_prefix = GetOptions()->GetReportDefaultPrefix();
+        m_suffix = GetOptions()->GetReportDefaultSuffix();
+    }
+    else
+    {
+        m_subject = m_undoSubject;
+        m_prefix = m_undoPrefix;
+        m_suffix = m_undoSuffix;
+    }
 
-	ValuesAltered(!m_altered);
-	UpdateData(false);
-	SetModified();
+    ValuesAltered(!m_altered);
+    UpdateData(false);
+    SetModified();
 }
 
 void CPageReport::OnEnChangeSubject()
 {
-	ValuesAltered();
-	SetModified();
+    ValuesAltered();
+    SetModified();
 }
 
 void CPageReport::OnEnChangePrefix()
 {
-	ValuesAltered();
-	SetModified();
+    ValuesAltered();
+    SetModified();
 }
 
 void CPageReport::OnEnChangeSuffix()
 {
-	ValuesAltered();
-	SetModified();
+    ValuesAltered();
+    SetModified();
 }
-

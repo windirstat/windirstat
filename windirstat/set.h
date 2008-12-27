@@ -19,7 +19,7 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // Author(s): - bseifert -> http://windirstat.info/contact/bernhard/
-//            - assarbad -> oliver@windirstat.info
+//            - assarbad -> http://windirstat.info/contact/oliver/
 //
 // $Id$
 
@@ -36,28 +36,28 @@ template<class KEY, class ARG_KEY>
 class CSet
 {
 public:
-	CSet(int nBlockSize = 10): m_map(nBlockSize) { }
-	~CSet()	{ }
-	void Serialize(CArchive& ar) { m_map.Serialize(ar); }
+    CSet(int nBlockSize = 10): m_map(nBlockSize) { }
+    ~CSet() { }
+    void Serialize(CArchive& ar) { m_map.Serialize(ar); }
 
-	int GetCount() const { return m_map.GetCount(); }
-	BOOL IsEmpty() const { return m_map.IsEmpty(); }
-	BOOL Lookup(ARG_KEY key) const { int dummy; return m_map.Lookup(key, dummy); }
-	void SetKey(ARG_KEY key) { m_map.SetAt(key, 0); }
-	BOOL RemoveKey(ARG_KEY key) { return m_map.RemoveKey(key); }
-	void RemoveAll() { m_map.RemoveAll(); }
-	POSITION GetStartPosition() const { return m_map.GetStartPosition(); }
-	void GetNextAssoc(POSITION& rNextPosition, KEY& rKey) const { int dummy; m_map.GetNextAssoc(rNextPosition, rKey, dummy); }
-	UINT GetHashTableSize() const { return m_map.GetHashTableSize(); }
-	void InitHashTable(UINT hashSize, BOOL bAllocNow = TRUE) { m_map.InitHashTable(hashSize, bAllocNow); }
+    int GetCount() const { return m_map.GetCount(); }
+    BOOL IsEmpty() const { return m_map.IsEmpty(); }
+    BOOL Lookup(ARG_KEY key) const { int dummy; return m_map.Lookup(key, dummy); }
+    void SetKey(ARG_KEY key) { m_map.SetAt(key, 0); }
+    BOOL RemoveKey(ARG_KEY key) { return m_map.RemoveKey(key); }
+    void RemoveAll() { m_map.RemoveAll(); }
+    POSITION GetStartPosition() const { return m_map.GetStartPosition(); }
+    void GetNextAssoc(POSITION& rNextPosition, KEY& rKey) const { int dummy; m_map.GetNextAssoc(rNextPosition, rKey, dummy); }
+    UINT GetHashTableSize() const { return m_map.GetHashTableSize(); }
+    void InitHashTable(UINT hashSize, BOOL bAllocNow = TRUE) { m_map.InitHashTable(hashSize, bAllocNow); }
 
 protected:
-	CMap<KEY, ARG_KEY, int, int> m_map;
+    CMap<KEY, ARG_KEY, int, int> m_map;
 
 public:
 #ifdef _DEBUG
-	void Dump(CDumpContext& dc) const { m_map.Dump(dc); }
-	void AssertValid() const { m_map.AssertValid(); }
+    void Dump(CDumpContext& dc) const { m_map.Dump(dc); }
+    void AssertValid() const { m_map.AssertValid(); }
 #endif
 };
 

@@ -19,7 +19,7 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // Author(s): - bseifert -> http://windirstat.info/contact/bernhard/
-//            - assarbad -> oliver@windirstat.info
+//            - assarbad -> http://windirstat.info/contact/oliver/
 //
 // $Id$
 
@@ -35,33 +35,33 @@
 //
 class CPageTreelist : public CPropertyPage
 {
-	DECLARE_DYNAMIC(CPageTreelist)
-	enum { IDD = IDD_PAGE_TREELIST };
+    DECLARE_DYNAMIC(CPageTreelist)
+    enum { IDD = IDD_PAGE_TREELIST };
 
 public:
-	CPageTreelist();
-	virtual ~CPageTreelist();
+    CPageTreelist();
+    virtual ~CPageTreelist();
 
 protected:
-	virtual void DoDataExchange(CDataExchange* pDX);
-	virtual BOOL OnInitDialog();
-	virtual void OnOK();
-	void EnableButtons();
+    virtual void DoDataExchange(CDataExchange* pDX);
+    virtual BOOL OnInitDialog();
+    virtual void OnOK();
+    void EnableButtons();
 
-	BOOL m_pacmanAnimation;
-	BOOL m_showTimeSpent;
+    BOOL m_pacmanAnimation;
+    BOOL m_showTimeSpent;
 
-	int m_treelistColorCount;
-	COLORREF m_treelistColor[TREELISTCOLORCOUNT];
+    int m_treelistColorCount;
+    COLORREF m_treelistColor[TREELISTCOLORCOUNT];
 
-	CColorButton m_colorButton[TREELISTCOLORCOUNT];
-	CSliderCtrl m_slider;
+    CColorButton m_colorButton[TREELISTCOLORCOUNT];
+    CSliderCtrl m_slider;
 
-	DECLARE_MESSAGE_MAP()
-	afx_msg void OnColorChanged(UINT id, NMHDR *, LRESULT *);
-	afx_msg void OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
-	afx_msg void OnBnClickedPacmananimation();
-	afx_msg void OnBnClickedShowTimeSpent();
+    DECLARE_MESSAGE_MAP()
+    afx_msg void OnColorChanged(UINT id, NMHDR *, LRESULT *);
+    afx_msg void OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
+    afx_msg void OnBnClickedPacmananimation();
+    afx_msg void OnBnClickedShowTimeSpent();
 };
 
 #endif // __WDS_PAGETREELIST_H__

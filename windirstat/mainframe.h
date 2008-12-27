@@ -19,7 +19,7 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // Author(s): - bseifert -> http://windirstat.info/contact/bernhard/
-//            - assarbad -> oliver@windirstat.info
+//            - assarbad -> http://windirstat.info/contact/oliver/
 //
 // $Id$
 
@@ -38,7 +38,7 @@ class CGraphView;
 class CTypeView;
 
 //
-// The "logical focus" can be 
+// The "logical focus" can be
 // - on the Directory List
 // - on the Extension List
 // Although these windows can loose the real focus, for instance
@@ -46,9 +46,9 @@ class CTypeView;
 //
 enum LOGICAL_FOCUS
 {
-	LF_NONE,
-	LF_DIRECTORYLIST,
-	LF_EXTENSIONLIST
+    LF_NONE,
+    LF_DIRECTORYLIST,
+    LF_EXTENSIONLIST
 };
 
 
@@ -57,20 +57,20 @@ enum LOGICAL_FOCUS
 //
 class COptionsPropertySheet: public CPropertySheet
 {
-	DECLARE_DYNAMIC(COptionsPropertySheet)
+    DECLARE_DYNAMIC(COptionsPropertySheet)
 
 public:
-	COptionsPropertySheet();
-	void SetLanguageChanged(bool changed);
-	virtual BOOL OnInitDialog();
+    COptionsPropertySheet();
+    void SetLanguageChanged(bool changed);
+    virtual BOOL OnInitDialog();
 
-	bool m_restartApplication;	// [out]
+    bool m_restartApplication;  // [out]
 
 protected:
-	virtual BOOL OnCommand(WPARAM wParam, LPARAM lParam);
+    virtual BOOL OnCommand(WPARAM wParam, LPARAM lParam);
 
-	bool m_languageChanged;
-	bool m_alreadyAsked;
+    bool m_languageChanged;
+    bool m_alreadyAsked;
 };
 
 
@@ -81,22 +81,22 @@ protected:
 class CMySplitterWnd: public CSplitterWnd
 {
 public:
-	CMySplitterWnd(LPCTSTR name);
-	virtual void StopTracking(BOOL bAccept);
-	double GetSplitterPos();
-	void SetSplitterPos(double pos);
-	void RestoreSplitterPos(double posIfVirgin);
+    CMySplitterWnd(LPCTSTR name);
+    virtual void StopTracking(BOOL bAccept);
+    double GetSplitterPos();
+    void SetSplitterPos(double pos);
+    void RestoreSplitterPos(double posIfVirgin);
 
 protected:
-	CString m_persistenceName;	// Name of object for CPersistence
-	double m_splitterPos;		// Current split ratio
-	bool m_wasTrackedByUser;	// True as soon as user has modified the splitter position
-	double m_userSplitterPos;	// Split ratio as set by the user
+    CString m_persistenceName;  // Name of object for CPersistence
+    double m_splitterPos;       // Current split ratio
+    bool m_wasTrackedByUser;    // True as soon as user has modified the splitter position
+    double m_userSplitterPos;   // Split ratio as set by the user
 
-	DECLARE_MESSAGE_MAP()
-	afx_msg void OnSize(UINT nType, int cx, int cy);
+    DECLARE_MESSAGE_MAP()
+    afx_msg void OnSize(UINT nType, int cx, int cy);
 public:
-	afx_msg void OnDestroy();
+    afx_msg void OnDestroy();
 };
 
 //
@@ -105,20 +105,20 @@ public:
 class CPacmanControl: public CStatic
 {
 public:
-	CPacmanControl();
-	void Drive(ULONGLONG readJobs);
-	void Start(bool start);
+    CPacmanControl();
+    void Drive(ULONGLONG readJobs);
+    void Start(bool start);
 
 protected:
-	CPacman m_pacman;
+    CPacman m_pacman;
 
-	DECLARE_MESSAGE_MAP()
-	afx_msg void OnPaint();
-	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
+    DECLARE_MESSAGE_MAP()
+    afx_msg void OnPaint();
+    afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 };
 
 //
-// CDeadFocusWnd. The focus in Windirstat can be on 
+// CDeadFocusWnd. The focus in Windirstat can be on
 // - the directory list
 // - the extension list,
 // - or none of them. In this case the focus lies on
@@ -129,13 +129,13 @@ protected:
 class CDeadFocusWnd: public CWnd
 {
 public:
-	CDeadFocusWnd();
-	void Create(CWnd *parent);
-	~CDeadFocusWnd();
+    CDeadFocusWnd();
+    void Create(CWnd *parent);
+    ~CDeadFocusWnd();
 
 protected:
-	DECLARE_MESSAGE_MAP()
-	afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
+    DECLARE_MESSAGE_MAP()
+    afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
 };
 
 
@@ -145,96 +145,96 @@ protected:
 class CMainFrame: public CFrameWnd
 {
 protected:
-	static CMainFrame *_theFrame;
-	CMainFrame();		// Created by MFC only
-	DECLARE_DYNCREATE(CMainFrame)
+    static CMainFrame *_theFrame;
+    CMainFrame();   // Created by MFC only
+    DECLARE_DYNCREATE(CMainFrame)
 
 public:
-	static CMainFrame *GetTheFrame();
-	virtual ~CMainFrame();
-	void InitialShowWindow();
+    static CMainFrame *GetTheFrame();
+    virtual ~CMainFrame();
+    void InitialShowWindow();
 
-	void RestoreGraphView();
-	void RestoreTypeView();
-	void MinimizeGraphView();
-	void MinimizeTypeView();
-	void CopyToClipboard(LPCTSTR psz);
+    void RestoreGraphView();
+    void RestoreTypeView();
+    void MinimizeGraphView();
+    void MinimizeTypeView();
+    void CopyToClipboard(LPCTSTR psz);
 
-	CDirstatView *GetDirstatView();
-	CGraphView *GetGraphView();
-	CTypeView *GetTypeView();
+    CDirstatView *GetDirstatView();
+    CGraphView *GetGraphView();
+    CTypeView *GetTypeView();
 
-	void ShowProgress(ULONGLONG range);
-	void HideProgress();
-	void SetProgressPos(ULONGLONG pos);
-	void SetProgressPos100();
-	bool IsProgressSuspended();
-	void DrivePacman();
+    void ShowProgress(ULONGLONG range);
+    void HideProgress();
+    void SetProgressPos(ULONGLONG pos);
+    void SetProgressPos100();
+    bool IsProgressSuspended();
+    void DrivePacman();
 
-	void UpdateProgress();
-	void AppendUserDefinedCleanups(CMenu *menu);
+    void UpdateProgress();
+    void AppendUserDefinedCleanups(CMenu *menu);
 
-	void SetLogicalFocus(LOGICAL_FOCUS lf);
-	LOGICAL_FOCUS GetLogicalFocus();
-	void MoveFocus(LOGICAL_FOCUS lf);
+    void SetLogicalFocus(LOGICAL_FOCUS lf);
+    LOGICAL_FOCUS GetLogicalFocus();
+    void MoveFocus(LOGICAL_FOCUS lf);
 
-	void SetSelectionMessageText();
+    void SetSelectionMessageText();
 
 protected:
-	virtual BOOL OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext* pContext);
-	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
-	void MakeSaneShowCmd(UINT& u);
+    virtual BOOL OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext* pContext);
+    virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
+    void MakeSaneShowCmd(UINT& u);
 
-	void CreateStatusProgress();
-	void CreatePacmanProgress();
-	void CreateSuspendButton(CRect& rc);
-	void DestroyProgress();
+    void CreateStatusProgress();
+    void CreatePacmanProgress();
+    void CreateSuspendButton(CRect& rc);
+    void DestroyProgress();
 
-	void UpdateCleanupMenu(CMenu *menu);
-	void MyQueryRecycleBin(CRecycleBinApi& rb, ULONGLONG& items, ULONGLONG& bytes);
+    void UpdateCleanupMenu(CMenu *menu);
+    void MyQueryRecycleBin(CRecycleBinApi& rb, ULONGLONG& items, ULONGLONG& bytes);
 
-	bool m_progressVisible;		// True while progress must be shown (either pacman or progressbar)
-	ULONGLONG m_progressRange;	// Progress range. A range of 0 means that we have no range available. In this case we should display pacman.
-	ULONGLONG m_progressPos;		// Progress position (<= progressRange, or an item count in case of m_progressRang == 0)
+    bool m_progressVisible;     // True while progress must be shown (either pacman or progressbar)
+    ULONGLONG m_progressRange;  // Progress range. A range of 0 means that we have no range available. In this case we should display pacman.
+    ULONGLONG m_progressPos;    // Progress position (<= progressRange, or an item count in case of m_progressRang == 0)
 
-	CMySplitterWnd m_wndSubSplitter;	// Contains the two upper views
-	CMySplitterWnd m_wndSplitter;		// Contains (a) m_wndSubSplitter and (b) the graphview.
+    CMySplitterWnd m_wndSubSplitter;    // Contains the two upper views
+    CMySplitterWnd m_wndSplitter;       // Contains (a) m_wndSubSplitter and (b) the graphview.
 
-	CStatusBar		m_wndStatusBar;	// Status bar
-	CToolBar		m_wndToolBar;	// Tool bar
-	CProgressCtrl	m_progress;		// Progress control. Is Create()ed and Destroy()ed again every time.
-	CPacmanControl	m_pacman;		// Static control for Pacman.
-	CButton			m_suspendButton;// Progress-Suspend-Button
+    CStatusBar  m_wndStatusBar;     // Status bar
+    CToolBar    m_wndToolBar;       // Tool bar
+    CProgressCtrl   m_progress;     // Progress control. Is Create()ed and Destroy()ed again every time.
+    CPacmanControl  m_pacman;       // Static control for Pacman.
+    CButton         m_suspendButton;// Progress-Suspend-Button
 
-	LOGICAL_FOCUS	m_logicalFocus; // Which view has the logical focus
-	CDeadFocusWnd	m_wndDeadFocus;	// Zero-size window which holds the focus if logical focus is "NONE"
+    LOGICAL_FOCUS   m_logicalFocus; // Which view has the logical focus
+    CDeadFocusWnd   m_wndDeadFocus; // Zero-size window which holds the focus if logical focus is "NONE"
 
-	DECLARE_MESSAGE_MAP()
-	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
-	afx_msg LRESULT OnEnterSizeMove(WPARAM, LPARAM);
-	afx_msg LRESULT OnExitSizeMove(WPARAM, LPARAM);
-	afx_msg void OnClose();
-	afx_msg void OnInitMenuPopup(CMenu* pPopupMenu, UINT nIndex, BOOL bSysMenu);
-	afx_msg void OnUpdateMemoryUsage(CCmdUI *pCmdUI);
-	afx_msg void OnSize(UINT nType, int cx, int cy);
-	afx_msg void OnUpdateViewShowtreemap(CCmdUI *pCmdUI);
-	afx_msg void OnViewShowtreemap();
-	afx_msg void OnUpdateViewShowfiletypes(CCmdUI *pCmdUI);
-	afx_msg void OnViewShowfiletypes();
-	afx_msg void OnConfigure();
-	afx_msg void OnDestroy();
-	afx_msg void OnUpdateSendmailtoowner(CCmdUI *pCmdUI);
-	afx_msg void OnSendmailtoowner();
-	afx_msg void OnBnClickedSuspend();
-	afx_msg void OnTreemapHelpabouttreemaps();
+    DECLARE_MESSAGE_MAP()
+    afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
+    afx_msg LRESULT OnEnterSizeMove(WPARAM, LPARAM);
+    afx_msg LRESULT OnExitSizeMove(WPARAM, LPARAM);
+    afx_msg void OnClose();
+    afx_msg void OnInitMenuPopup(CMenu* pPopupMenu, UINT nIndex, BOOL bSysMenu);
+    afx_msg void OnUpdateMemoryUsage(CCmdUI *pCmdUI);
+    afx_msg void OnSize(UINT nType, int cx, int cy);
+    afx_msg void OnUpdateViewShowtreemap(CCmdUI *pCmdUI);
+    afx_msg void OnViewShowtreemap();
+    afx_msg void OnUpdateViewShowfiletypes(CCmdUI *pCmdUI);
+    afx_msg void OnViewShowfiletypes();
+    afx_msg void OnConfigure();
+    afx_msg void OnDestroy();
+    afx_msg void OnUpdateSendmailtoowner(CCmdUI *pCmdUI);
+    afx_msg void OnSendmailtoowner();
+    afx_msg void OnBnClickedSuspend();
+    afx_msg void OnTreemapHelpabouttreemaps();
 
 public:
-	#ifdef _DEBUG
-		virtual void AssertValid() const;
-		virtual void Dump(CDumpContext& dc) const;
-	#endif
-		afx_msg void OnSysColorChange();
-		afx_msg void OnHelpCheckforupdates();
+    #ifdef _DEBUG
+        virtual void AssertValid() const;
+        virtual void Dump(CDumpContext& dc) const;
+    #endif
+        afx_msg void OnSysColorChange();
+        afx_msg void OnHelpCheckforupdates();
 };
 
 #endif // __WDS_MAINFRAME_H__

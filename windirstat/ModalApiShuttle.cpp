@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2006 Oliver Schneider (assarbad.net)
+// Copyright (C) 2004-2006, 2008 Oliver Schneider (assarbad.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -34,7 +34,7 @@
 IMPLEMENT_DYNAMIC(CModalApiShuttle, CDialog)
 
 CModalApiShuttle::CModalApiShuttle(CWnd* pParent /*=NULL*/)
-	: CDialog(CModalApiShuttle::IDD, pParent)
+    : CDialog(CModalApiShuttle::IDD, pParent)
 {
 }
 
@@ -48,22 +48,20 @@ END_MESSAGE_MAP()
 
 BOOL CModalApiShuttle::OnInitDialog()
 {
-	CDialog::OnInitDialog();
+    CDialog::OnInitDialog();
 
-	CRect rc;
-	AfxGetMainWnd()->GetWindowRect(rc);
-	rc.right = rc.left;
-	rc.bottom = rc.top;
+    CRect rc;
+    AfxGetMainWnd()->GetWindowRect(rc);
+    rc.right = rc.left;
+    rc.bottom = rc.top;
 
-	MoveWindow(rc, false);
+    MoveWindow(rc, false);
 
-	EnableWindow(true);
-	ShowWindow(SW_SHOW);
+    EnableWindow(true);
+    ShowWindow(SW_SHOW);
 
-	DoOperation();
+    DoOperation();
 
-	EndDialog(IDOK);
-	return TRUE;
+    EndDialog(IDOK);
+    return TRUE;
 }
-
-

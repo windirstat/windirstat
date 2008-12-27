@@ -19,7 +19,7 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // Author(s): - bseifert -> http://windirstat.info/contact/bernhard/
-//            - assarbad -> oliver@windirstat.info
+//            - assarbad -> http://windirstat.info/contact/oliver/
 //
 // $Id$
 
@@ -30,17 +30,17 @@
 // Function to access the file attributes from outside
 DWORD CFileFindWDS::GetAttributes() const
 {
-	ASSERT(m_hContext != NULL);
-	ASSERT_VALID(this);
+    ASSERT(m_hContext != NULL);
+    ASSERT_VALID(this);
 
-	if(m_pFoundInfo != NULL)
-	{
-		return ((LPWIN32_FIND_DATA)m_pFoundInfo)->dwFileAttributes;
-	}
-	else
-	{
-		return INVALID_FILE_ATTRIBUTES;
-	}
+    if(m_pFoundInfo != NULL)
+    {
+        return ((LPWIN32_FIND_DATA)m_pFoundInfo)->dwFileAttributes;
+    }
+    else
+    {
+        return INVALID_FILE_ATTRIBUTES;
+    }
 }
 
 // Wrapper for file size retrieval
@@ -48,27 +48,26 @@ DWORD CFileFindWDS::GetAttributes() const
 // If the file is not compressed the uncompressed size is being returned.
 ULONGLONG CFileFindWDS::GetCompressedLength() const
 {
-	// Try to use the NT-specific API
-	if(GetApp()->GetComprSizeApi()->IsSupported())
-	{
-		ULARGE_INTEGER ret;
-		ret.LowPart = GetApp()->GetComprSizeApi()->GetCompressedFileSize(GetFilePath(), &ret.HighPart);
-		
-		// Check for error
-		if((GetLastError() != ERROR_SUCCESS) && (ret.LowPart == INVALID_FILE_SIZE))
-		{
-			// In case of an error return size from CFileFind object
-			return GetLength();
-		}
-		else
-		{
-			return ret.QuadPart;
-		}
-	}
-	else
-	{
-		// Use the file size already found by the finder object
-		return GetLength();
-	}
-}
+    // Try to use the NT-specific API
+    if(GetWDSApp()->GetComprSizeApi()->IsSupported())
+    {
+        ULARGE_INTEGER ret;
+        ret.LowPart = GetWDSApp()->GetComprSizeApi()->GetCompressedFileSize(GetFilePath(), &ret.HighPart);
 
+        // Check for error
+        if((GetLastError() != ERROR_SUCCESS) && (ret.LowPart == INVALID_FILE_SIZE))
+        {
+            // In case of an error return size from CFileFind object
+            return GetLength();
+        }
+        else
+        {
+            return ret.QuadPart;
+        }
+    }
+    else
+    {
+        // Use the file size already found by the finder object
+        return GetLength();
+    }
+}

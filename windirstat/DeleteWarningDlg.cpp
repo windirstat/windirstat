@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2006 Oliver Schneider (assarbad.net)
+// Copyright (C) 2004-2006, 2008 Oliver Schneider (assarbad.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -35,9 +35,9 @@
 IMPLEMENT_DYNAMIC(CDeleteWarningDlg, CDialog)
 
 CDeleteWarningDlg::CDeleteWarningDlg(CWnd* pParent /*=NULL*/)
-	: CDialog(CDeleteWarningDlg::IDD, pParent)
-	, m_fileName(strEmpty)
-	, m_dontShowAgain(false)
+    : CDialog(CDeleteWarningDlg::IDD, pParent)
+    , m_fileName(strEmpty)
+    , m_dontShowAgain(false)
 {
 }
 
@@ -47,27 +47,26 @@ CDeleteWarningDlg::~CDeleteWarningDlg()
 
 void CDeleteWarningDlg::DoDataExchange(CDataExchange* pDX)
 {
-	CDialog::DoDataExchange(pDX);
-	DDX_Check(pDX, IDC_DONTSHOWAGAIN, m_dontShowAgain);
-	DDX_Text(pDX, IDC_FILENAME, m_fileName);
+    CDialog::DoDataExchange(pDX);
+    DDX_Check(pDX, IDC_DONTSHOWAGAIN, m_dontShowAgain);
+    DDX_Text(pDX, IDC_FILENAME, m_fileName);
 }
 
 
 BEGIN_MESSAGE_MAP(CDeleteWarningDlg, CDialog)
-	ON_BN_CLICKED(IDNO, OnBnClickedNo)
-	ON_BN_CLICKED(IDYES, OnBnClickedYes)
+    ON_BN_CLICKED(IDNO, OnBnClickedNo)
+    ON_BN_CLICKED(IDYES, OnBnClickedYes)
 END_MESSAGE_MAP()
 
 
 void CDeleteWarningDlg::OnBnClickedNo()
 {
-	UpdateData();
-	EndDialog(IDNO);
+    UpdateData();
+    EndDialog(IDNO);
 }
 
 void CDeleteWarningDlg::OnBnClickedYes()
 {
-	UpdateData();
-	EndDialog(IDYES);
+    UpdateData();
+    EndDialog(IDYES);
 }
-

@@ -20,7 +20,7 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // Author(s): - bseifert -> http://windirstat.info/contact/bernhard/
-//            - assarbad -> oliver@windirstat.info
+//            - assarbad -> http://windirstat.info/contact/oliver/
 //
 // $Id$
 
@@ -32,14 +32,14 @@
 
 class CAbstractionLayer
 {
-	CAbstractionLayer()
-	{
-	}
+    CAbstractionLayer()
+    {
+    }
 };
 
-const LPCTSTR nameKernel32 = TEXT("kernel32.dll");
-const LPCTSTR nameShell32 = TEXT("shell32.dll");
-const LPCTSTR namePsApi = TEXT("psapi.dll");
+const LPCTSTR nameKernel32 = _T("kernel32.dll");
+const LPCTSTR nameShell32 = _T("shell32.dll");
+const LPCTSTR namePsApi = _T("psapi.dll");
 
 ///////////////////////////////////////////////////////////////////////////////
 ///  CDllModule
@@ -51,54 +51,54 @@ const LPCTSTR namePsApi = TEXT("psapi.dll");
 class CDllModule
 {
 public:
-	///////////////////////////////////////////////////////////////////////////////
-	///  inline public constructor  CDllModule
-	///  Ctor for the CDllModule wrapper class
-	///
-	///  @param [in]       DllName LPCTSTR    Name of the DLL of which we want the handle
-	///
-	///  This function doesn't return a value
-	///////////////////////////////////////////////////////////////////////////////
-	CDllModule(LPCTSTR DllName)
-	{
-		m_hDll = LoadLibrary(DllName);
-	}
+    ///////////////////////////////////////////////////////////////////////////////
+    ///  inline public constructor  CDllModule
+    ///  Ctor for the CDllModule wrapper class
+    ///
+    ///  @param [in]       DllName LPCTSTR    Name of the DLL of which we want the handle
+    ///
+    ///  This function doesn't return a value
+    ///////////////////////////////////////////////////////////////////////////////
+    CDllModule(LPCTSTR DllName)
+    {
+        m_hDll = LoadLibrary(DllName);
+    }
 
-	///////////////////////////////////////////////////////////////////////////////
-	///  inline public destructor  ~CDllModule
-	///  Dtor for the CDllModule wrapper class
-	///
-	///  This function doesn't return a value
-	///////////////////////////////////////////////////////////////////////////////
-	~CDllModule()
-	{
-		if(m_hDll)
-		{
-			FreeLibrary(m_hDll);
-		}
-	}
+    ///////////////////////////////////////////////////////////////////////////////
+    ///  inline public destructor  ~CDllModule
+    ///  Dtor for the CDllModule wrapper class
+    ///
+    ///  This function doesn't return a value
+    ///////////////////////////////////////////////////////////////////////////////
+    ~CDllModule()
+    {
+        if(m_hDll)
+        {
+            FreeLibrary(m_hDll);
+        }
+    }
 
-	///////////////////////////////////////////////////////////////////////////////
-	///  inline public  Handle
-	///  Returns the module handle value of this class instance
-	///
-	///  @return HMODULE Returns the module handle or NULL if there is no valid handle
-	///
-	///  @remarks The caller is responsible to verify the returned handle!
-	///////////////////////////////////////////////////////////////////////////////
-	HMODULE Handle()
-	{
-		return m_hDll;
-	}
+    ///////////////////////////////////////////////////////////////////////////////
+    ///  inline public  Handle
+    ///  Returns the module handle value of this class instance
+    ///
+    ///  @return HMODULE Returns the module handle or NULL if there is no valid handle
+    ///
+    ///  @remarks The caller is responsible to verify the returned handle!
+    ///////////////////////////////////////////////////////////////////////////////
+    HMODULE Handle()
+    {
+        return m_hDll;
+    }
 
 private:
-	///////////////////////////////////////////////////////////////////////////////
-	///  HMODULE m_hDll
-	///  The private member variable which holds the module handle
-	///
-	///  @remarks This is initialized directly inside the ctor!
-	///////////////////////////////////////////////////////////////////////////////
-	HMODULE m_hDll;
+    ///////////////////////////////////////////////////////////////////////////////
+    ///  HMODULE m_hDll
+    ///  The private member variable which holds the module handle
+    ///
+    ///  @remarks This is initialized directly inside the ctor!
+    ///////////////////////////////////////////////////////////////////////////////
+    HMODULE m_hDll;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -112,52 +112,52 @@ private:
 template < class FctType > class CDynamicApi
 {
 public:
-	///////////////////////////////////////////////////////////////////////////////
-	///  inline public constructor  CDynamicApi
-	///  Ctor of the dynamic linking template class
-	///
-	///  @param [in]       hDll HMODULE    Module handle to the DLL implementing the wrapped function
-	///  @param [in]       pszFctName LPCSTR    Name of the function (ANSI)
-	///
-	///  This function doesn't return a value
-	///////////////////////////////////////////////////////////////////////////////
-	CDynamicApi(HMODULE hDll, LPCSTR pszFctName)
-		: pfnFct(NULL)
-	{
-		if(hDll)
-		{
-			pfnFct = FctType(GetProcAddress(hDll, pszFctName));
-		}
-	}
+    ///////////////////////////////////////////////////////////////////////////////
+    ///  inline public constructor  CDynamicApi
+    ///  Ctor of the dynamic linking template class
+    ///
+    ///  @param [in]       hDll HMODULE    Module handle to the DLL implementing the wrapped function
+    ///  @param [in]       pszFctName LPCSTR    Name of the function (ANSI)
+    ///
+    ///  This function doesn't return a value
+    ///////////////////////////////////////////////////////////////////////////////
+    CDynamicApi(HMODULE hDll, LPCSTR pszFctName)
+        : pfnFct(NULL)
+    {
+        if(hDll)
+        {
+            pfnFct = FctType(GetProcAddress(hDll, pszFctName));
+        }
+    }
 
-	///////////////////////////////////////////////////////////////////////////////
-	///  inline public destructor  ~CDynamicApi
-	///  Dtor of the dynamic linking template class
-	///
-	///  This function doesn't return a value
-	///////////////////////////////////////////////////////////////////////////////
-	~CDynamicApi()
-	{
-	}
+    ///////////////////////////////////////////////////////////////////////////////
+    ///  inline public destructor  ~CDynamicApi
+    ///  Dtor of the dynamic linking template class
+    ///
+    ///  This function doesn't return a value
+    ///////////////////////////////////////////////////////////////////////////////
+    ~CDynamicApi()
+    {
+    }
 
-	///////////////////////////////////////////////////////////////////////////////
-	///  inline public  IsSupported
-	///  Used to check whether the wrapped function is supported (found)
-	///
-	///  @return bool true if the function can be called, false otherwise
-	///////////////////////////////////////////////////////////////////////////////
-	bool IsSupported()
-	{
-		return (pfnFct != NULL);
-	}
+    ///////////////////////////////////////////////////////////////////////////////
+    ///  inline public  IsSupported
+    ///  Used to check whether the wrapped function is supported (found)
+    ///
+    ///  @return bool true if the function can be called, false otherwise
+    ///////////////////////////////////////////////////////////////////////////////
+    bool IsSupported()
+    {
+        return (pfnFct != NULL);
+    }
 
-	///////////////////////////////////////////////////////////////////////////////
-	///  FctType pfnFct
-	///  Function pointer, typed thanks to the C++ template mechanism
-	///
-	///  @remarks This is intentionally public!
-	///////////////////////////////////////////////////////////////////////////////
-	FctType pfnFct;
+    ///////////////////////////////////////////////////////////////////////////////
+    ///  FctType pfnFct
+    ///  Function pointer, typed thanks to the C++ template mechanism
+    ///
+    ///  @remarks This is intentionally public!
+    ///////////////////////////////////////////////////////////////////////////////
+    FctType pfnFct;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -170,41 +170,41 @@ public:
 class CVolumeApi
 {
 public:
-	CVolumeApi();
-	~CVolumeApi();
+    CVolumeApi();
+    ~CVolumeApi();
 
-	bool IsSupported();
+    bool IsSupported();
 
-	BOOL GetVolumeNameForVolumeMountPoint(LPCTSTR lpszVolumeMountPoint, LPTSTR lpszVolumeName, DWORD cchBufferLength);
+    BOOL GetVolumeNameForVolumeMountPoint(LPCTSTR lpszVolumeMountPoint, LPTSTR lpszVolumeName, DWORD cchBufferLength);
 
-	// min.: Windows 2000
-	HANDLE FindFirstVolume(LPTSTR lpszVolumeName, DWORD cchBufferLength);
-	BOOL FindNextVolume(HANDLE hFindVolume, LPTSTR lpszVolumeName, DWORD cchBufferLength);
-	BOOL FindVolumeClose(HANDLE hFindVolume);
+    // min.: Windows 2000
+    HANDLE FindFirstVolume(LPTSTR lpszVolumeName, DWORD cchBufferLength);
+    BOOL FindNextVolume(HANDLE hFindVolume, LPTSTR lpszVolumeName, DWORD cchBufferLength);
+    BOOL FindVolumeClose(HANDLE hFindVolume);
 
-	// min.: Windows 2000
-	HANDLE FindFirstVolumeMountPoint(LPCTSTR lpszRootPathName, LPTSTR lpszVolumeMountPoint, DWORD cchBufferLength);
-	BOOL FindNextVolumeMountPoint(HANDLE hFindVolumeMountPoint, LPTSTR lpszVolumeMountPoint, DWORD cchBufferLength);
-	BOOL FindVolumeMountPointClose(HANDLE hFindVolumeMountPoint);
+    // min.: Windows 2000
+    HANDLE FindFirstVolumeMountPoint(LPCTSTR lpszRootPathName, LPTSTR lpszVolumeMountPoint, DWORD cchBufferLength);
+    BOOL FindNextVolumeMountPoint(HANDLE hFindVolumeMountPoint, LPTSTR lpszVolumeMountPoint, DWORD cchBufferLength);
+    BOOL FindVolumeMountPointClose(HANDLE hFindVolumeMountPoint);
 
 private:
-	typedef BOOL (WINAPI *TFNGetVolumeNameForVolumeMountPoint)(LPCTSTR lpszVolumeMountPoint, LPTSTR lpszVolumeName, DWORD cchBufferLength);
-	typedef HANDLE (WINAPI *TFNFindFirstVolume)(LPTSTR lpszVolumeName, DWORD cchBufferLength);
-	typedef BOOL (WINAPI *TFNFindNextVolume)(HANDLE hFindVolume, LPTSTR lpszVolumeName, DWORD cchBufferLength);
-	typedef BOOL (WINAPI *TFNFindVolumeClose)(HANDLE hFindVolume);
-	typedef HANDLE (WINAPI *TFNFindFirstVolumeMountPoint)(LPCTSTR lpszRootPathName, LPTSTR lpszVolumeMountPoint, DWORD cchBufferLength);
-	typedef BOOL (WINAPI *TFNFindNextVolumeMountPoint)(HANDLE hFindVolumeMountPoint, LPTSTR lpszVolumeMountPoint, DWORD cchBufferLength);
-	typedef BOOL (WINAPI *TFNFindVolumeMountPointClose)(HANDLE hFindVolumeMountPoint);
+    typedef BOOL (WINAPI *TFNGetVolumeNameForVolumeMountPoint)(LPCTSTR lpszVolumeMountPoint, LPTSTR lpszVolumeName, DWORD cchBufferLength);
+    typedef HANDLE (WINAPI *TFNFindFirstVolume)(LPTSTR lpszVolumeName, DWORD cchBufferLength);
+    typedef BOOL (WINAPI *TFNFindNextVolume)(HANDLE hFindVolume, LPTSTR lpszVolumeName, DWORD cchBufferLength);
+    typedef BOOL (WINAPI *TFNFindVolumeClose)(HANDLE hFindVolume);
+    typedef HANDLE (WINAPI *TFNFindFirstVolumeMountPoint)(LPCTSTR lpszRootPathName, LPTSTR lpszVolumeMountPoint, DWORD cchBufferLength);
+    typedef BOOL (WINAPI *TFNFindNextVolumeMountPoint)(HANDLE hFindVolumeMountPoint, LPTSTR lpszVolumeMountPoint, DWORD cchBufferLength);
+    typedef BOOL (WINAPI *TFNFindVolumeMountPointClose)(HANDLE hFindVolumeMountPoint);
 
-	HMODULE m_hDll;
+    HMODULE m_hDll;
 
-	CDynamicApi<TFNGetVolumeNameForVolumeMountPoint>	m_GetVolumeNameForVolumeMountPoint;
-	CDynamicApi<TFNFindFirstVolume>						m_FindFirstVolume;
-	CDynamicApi<TFNFindNextVolume>						m_FindNextVolume;
-	CDynamicApi<TFNFindVolumeClose>						m_FindVolumeClose;
-	CDynamicApi<TFNFindFirstVolumeMountPoint>			m_FindFirstVolumeMountPoint;
-	CDynamicApi<TFNFindNextVolumeMountPoint>			m_FindNextVolumeMountPoint;
-	CDynamicApi<TFNFindVolumeMountPointClose>			m_FindVolumeMountPointClose;
+    CDynamicApi<TFNGetVolumeNameForVolumeMountPoint>    m_GetVolumeNameForVolumeMountPoint;
+    CDynamicApi<TFNFindFirstVolume>                     m_FindFirstVolume;
+    CDynamicApi<TFNFindNextVolume>                      m_FindNextVolume;
+    CDynamicApi<TFNFindVolumeClose>                     m_FindVolumeClose;
+    CDynamicApi<TFNFindFirstVolumeMountPoint>           m_FindFirstVolumeMountPoint;
+    CDynamicApi<TFNFindNextVolumeMountPoint>            m_FindNextVolumeMountPoint;
+    CDynamicApi<TFNFindVolumeMountPointClose>           m_FindVolumeMountPointClose;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -217,23 +217,23 @@ private:
 class CRecycleBinApi
 {
 public:
-	CRecycleBinApi();
-	~CRecycleBinApi();
+    CRecycleBinApi();
+    ~CRecycleBinApi();
 
-	bool IsSupported();
+    bool IsSupported();
 
-	// min.: Windows 2000, Windows NT 4.0 with Internet Explorer 4.0, Windows 98, Windows 95 with Internet Explorer 4.0
-	HRESULT SHEmptyRecycleBin(HWND hwnd, LPCTSTR pszRootPath, DWORD dwFlags);
-	HRESULT SHQueryRecycleBin(LPCTSTR pszRootPath, SHQUERYRBINFO* pSHQueryRBInfo);
+    // min.: Windows 2000, Windows NT 4.0 with Internet Explorer 4.0, Windows 98, Windows 95 with Internet Explorer 4.0
+    HRESULT SHEmptyRecycleBin(HWND hwnd, LPCTSTR pszRootPath, DWORD dwFlags);
+    HRESULT SHQueryRecycleBin(LPCTSTR pszRootPath, SHQUERYRBINFO* pSHQueryRBInfo);
 
 private:
-	typedef HRESULT (STDAPICALLTYPE *TFNSHEmptyRecycleBin)(HWND hwnd, LPCTSTR pszRootPath, DWORD dwFlags);
-	typedef HRESULT (STDAPICALLTYPE *TFNSHQueryRecycleBin)(LPCTSTR pszRootPath, SHQUERYRBINFO* pSHQueryRBInfo);
+    typedef HRESULT (STDAPICALLTYPE *TFNSHEmptyRecycleBin)(HWND hwnd, LPCTSTR pszRootPath, DWORD dwFlags);
+    typedef HRESULT (STDAPICALLTYPE *TFNSHQueryRecycleBin)(LPCTSTR pszRootPath, SHQUERYRBINFO* pSHQueryRBInfo);
 
-	HMODULE m_hDll;
+    HMODULE m_hDll;
 
-	CDynamicApi<TFNSHEmptyRecycleBin>					m_SHEmptyRecycleBin;
-	CDynamicApi<TFNSHQueryRecycleBin>					m_SHQueryRecycleBin;
+    CDynamicApi<TFNSHEmptyRecycleBin>                   m_SHEmptyRecycleBin;
+    CDynamicApi<TFNSHQueryRecycleBin>                   m_SHQueryRecycleBin;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -246,20 +246,20 @@ private:
 class CPsapi
 {
 public:
-	CPsapi();
-	~CPsapi();
+    CPsapi();
+    ~CPsapi();
 
-	bool IsSupported();
+    bool IsSupported();
 
-	// min.: Windows NT 4.0 (DLL has to exist!)
-	BOOL GetProcessMemoryInfo(HANDLE Process, PPROCESS_MEMORY_COUNTERS ppsmemCounters, DWORD cb);
+    // min.: Windows NT 4.0 (DLL has to exist!)
+    BOOL GetProcessMemoryInfo(HANDLE Process, PPROCESS_MEMORY_COUNTERS ppsmemCounters, DWORD cb);
 
 private:
-	typedef BOOL (WINAPI *TFNGetProcessMemoryInfo)(HANDLE Process, PPROCESS_MEMORY_COUNTERS ppsmemCounters, DWORD cb);
+    typedef BOOL (WINAPI *TFNGetProcessMemoryInfo)(HANDLE Process, PPROCESS_MEMORY_COUNTERS ppsmemCounters, DWORD cb);
 
-	HMODULE m_hDll;
+    HMODULE m_hDll;
 
-	CDynamicApi<TFNGetProcessMemoryInfo>				m_GetProcessMemoryInfo;
+    CDynamicApi<TFNGetProcessMemoryInfo>            m_GetProcessMemoryInfo;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -272,20 +272,20 @@ private:
 class CQueryDosDeviceApi
 {
 public:
-	CQueryDosDeviceApi();
-	~CQueryDosDeviceApi();
+    CQueryDosDeviceApi();
+    ~CQueryDosDeviceApi();
 
-	bool IsSupported();
+    bool IsSupported();
 
-	// min.: Windows 98/Windows NT 4.0
-	DWORD QueryDosDevice(LPCTSTR lpDeviceName, LPTSTR lpTargetPath, DWORD ucchMax);
+    // min.: Windows 98/Windows NT 4.0
+    DWORD QueryDosDevice(LPCTSTR lpDeviceName, LPTSTR lpTargetPath, DWORD ucchMax);
 
 private:
-	typedef DWORD (WINAPI *TFNQueryDosDevice)(LPCTSTR lpDeviceName, LPTSTR lpTargetPath, DWORD ucchMax);
+    typedef DWORD (WINAPI *TFNQueryDosDevice)(LPCTSTR lpDeviceName, LPTSTR lpTargetPath, DWORD ucchMax);
 
-	HMODULE m_hDll;
+    HMODULE m_hDll;
 
-	CDynamicApi<TFNQueryDosDevice>						m_QueryDosDevice;
+    CDynamicApi<TFNQueryDosDevice>                      m_QueryDosDevice;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -298,21 +298,21 @@ private:
 class CGetCompressedFileSizeApi
 {
 public:
-	CGetCompressedFileSizeApi();
-	~CGetCompressedFileSizeApi();
+    CGetCompressedFileSizeApi();
+    ~CGetCompressedFileSizeApi();
 
-	bool IsSupported();
+    bool IsSupported();
 
-	// min.: Windows NT 4.0
-	DWORD GetCompressedFileSize(LPCTSTR lpFileName, LPDWORD lpFileSizeHigh);
-	ULONGLONG GetCompressedFileSize(LPCTSTR lpFileName);
+    // min.: Windows NT 4.0
+    DWORD GetCompressedFileSize(LPCTSTR lpFileName, LPDWORD lpFileSizeHigh);
+    ULONGLONG GetCompressedFileSize(LPCTSTR lpFileName);
 
 private:
-	typedef DWORD (WINAPI *TFNGetCompressedFileSize)(LPCTSTR lpFileName, LPDWORD lpFileSizeHigh);
+    typedef DWORD (WINAPI *TFNGetCompressedFileSize)(LPCTSTR lpFileName, LPDWORD lpFileSizeHigh);
 
-	HMODULE m_hDll;
-	
-	CDynamicApi<TFNGetCompressedFileSize>				m_GetCompressedFileSize;
+    HMODULE m_hDll;
+
+    CDynamicApi<TFNGetCompressedFileSize>               m_GetCompressedFileSize;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -327,21 +327,21 @@ private:
 class CGetDiskFreeSpaceApi
 {
 public:
-	CGetDiskFreeSpaceApi();
-	~CGetDiskFreeSpaceApi();
+    CGetDiskFreeSpaceApi();
+    ~CGetDiskFreeSpaceApi();
 
-	bool IsSupported();
+    bool IsSupported();
 
-	void GetDiskFreeSpace(LPCTSTR pszRootPath, ULONGLONG& total, ULONGLONG& unused);
+    void GetDiskFreeSpace(LPCTSTR pszRootPath, ULONGLONG& total, ULONGLONG& unused);
 
 private:
-	typedef BOOL (WINAPI *TFNGetDiskFreeSpace)(LPCTSTR lpRootPathName, LPDWORD lpSectorsPerCluster, LPDWORD lpBytesPerSector, LPDWORD lpNumberOfFreeClusters, LPDWORD lpTotalNumberOfClusters);
-	typedef BOOL (WINAPI *TFNGetDiskFreeSpaceEx)(LPCTSTR lpDirectoryName, ULARGE_INTEGER *lpFreeBytesAvailable, ULARGE_INTEGER *lpTotalNumberOfBytes, ULARGE_INTEGER *lpTotalNumberOfFreeBytes);
+    typedef BOOL (WINAPI *TFNGetDiskFreeSpace)(LPCTSTR lpRootPathName, LPDWORD lpSectorsPerCluster, LPDWORD lpBytesPerSector, LPDWORD lpNumberOfFreeClusters, LPDWORD lpTotalNumberOfClusters);
+    typedef BOOL (WINAPI *TFNGetDiskFreeSpaceEx)(LPCTSTR lpDirectoryName, ULARGE_INTEGER *lpFreeBytesAvailable, ULARGE_INTEGER *lpTotalNumberOfBytes, ULARGE_INTEGER *lpTotalNumberOfFreeBytes);
 
-	HMODULE m_hDll;
-	
-	CDynamicApi<TFNGetDiskFreeSpace>					m_GetDiskFreeSpace;
-	CDynamicApi<TFNGetDiskFreeSpaceEx>					m_GetDiskFreeSpaceEx;
+    HMODULE m_hDll;
+
+    CDynamicApi<TFNGetDiskFreeSpace>                    m_GetDiskFreeSpace;
+    CDynamicApi<TFNGetDiskFreeSpaceEx>                  m_GetDiskFreeSpaceEx;
 };
 
 #endif // __WDS_OSSPECIFIC_H__

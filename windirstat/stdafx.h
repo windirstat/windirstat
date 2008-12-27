@@ -21,7 +21,7 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // Author(s): - bseifert -> http://windirstat.info/contact/bernhard/
-//            - assarbad -> oliver@windirstat.info
+//            - assarbad -> http://windirstat.info/contact/oliver/
 //
 // $Id$
 
@@ -30,10 +30,10 @@
 #pragma once
 
 #ifndef VC_EXTRALEAN
-#define VC_EXTRALEAN		// Exclude rarely-used stuff from Windows headers
+#define VC_EXTRALEAN        // Exclude rarely-used stuff from Windows headers
 #endif
 
-#define _ATL_CSTRING_EXPLICIT_CONSTRUCTORS	// some CString constructors will be explicit
+#define _ATL_CSTRING_EXPLICIT_CONSTRUCTORS  // some CString constructors will be explicit
 
 // turns off MFC's hiding of some common and often safely ignored warning messages
 #define _AFX_ALL_WARNINGS
@@ -41,20 +41,19 @@
 #include <afxwin.h>         // MFC Core
 #include <afxext.h>         // MFC Extensions
 
-#include <afxdtctl.h>		// MFC IE 4
-#include <afxcmn.h>			// MFC Common Controls
-#include <afxtempl.h>		// MFC Container classes
-#include <afxmt.h>			// MFC Multithreading
-#include <afxinet.h>		// For CInternet* classes
-//#include <afxdisp.h>	?
+#include <afxdtctl.h>       // MFC IE 4
+#include <afxcmn.h>         // MFC Common Controls
+#include <afxtempl.h>       // MFC Container classes
+#include <afxmt.h>          // MFC Multithreading
+#include <afxinet.h>        // For CInternet* classes
 
-#include <io.h>				// _access()
-#include <math.h>			// floor(), fmod(), sqrt() etc.
-#include <psapi.h>			// PROCESS_MEMORY_INFO
-#include <lmcons.h>			// UNLEN
-#include <float.h>			// DBL_MAX
+#include <io.h>             // _access()
+#include <math.h>           // floor(), fmod(), sqrt() etc.
+#include <psapi.h>          // PROCESS_MEMORY_INFO
+#include <lmcons.h>         // UNLEN
+#include <float.h>          // DBL_MAX
 
-#include <atlbase.h>		// USES_CONVERSION, ComPtr<>
+#include <atlbase.h>        // USES_CONVERSION, ComPtr<>
 
 // Headers placed in the common directory
 // (used by windirstat and by setup)

@@ -19,7 +19,7 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // Author(s): - bseifert -> http://windirstat.info/contact/bernhard/
-//            - assarbad -> oliver@windirstat.info
+//            - assarbad -> http://windirstat.info/contact/oliver/
 //
 // $Id$
 
@@ -32,141 +32,139 @@
 
 CString MyStrRetToString(const LPITEMIDLIST pidl, const STRRET *strret)
 {
-	// StrRetToStr() is not always available (e.g. on Windows 98).
-	// So we use an own function instead.
-	USES_CONVERSION;
+    // StrRetToStr() is not always available (e.g. on Windows 98).
+    // So we use an own function instead.
+    USES_CONVERSION;
 
-	CString s;
+    CString s;
 
-	switch (strret->uType)
-	{
-	case STRRET_CSTR:
-		{
-			s = strret->cStr;
-		}
-		break;
-	case STRRET_OFFSET:
-		{
-			s = A2T((char *)pidl + strret->uOffset);
-		}
-		break;
-	case STRRET_WSTR:
-		{
-			s = W2T(strret->pOleStr);
-		}
-		break;
-	}
+    switch (strret->uType)
+    {
+    case STRRET_CSTR:
+        {
+            s = strret->cStr;
+        }
+        break;
+    case STRRET_OFFSET:
+        {
+            s = A2T((char *)pidl + strret->uOffset);
+        }
+        break;
+    case STRRET_WSTR:
+        {
+            s = W2T(strret->pOleStr);
+        }
+        break;
+    }
 
-	return s;
+    return s;
 }
 BOOL ShellExecuteNoThrow(HWND hwnd, LPCTSTR lpVerb, LPCTSTR lpFile, LPCTSTR lpParameters, LPCTSTR lpDirectory, INT nShowCmd)
 {
-	SHELLEXECUTEINFO sei = {
-		sizeof(SHELLEXECUTEINFO),
-		0,
-		hwnd,
-		lpVerb,
-		lpFile,
-		lpParameters,
-		lpDirectory,
-		nShowCmd,
-		0, // hInstApp
-		0,
-		0,
-		0,
-		0, // dwHotKey
-		0,
-		0
-		};
+    SHELLEXECUTEINFO sei = {
+        sizeof(SHELLEXECUTEINFO),
+        0,
+        hwnd,
+        lpVerb,
+        lpFile,
+        lpParameters,
+        lpDirectory,
+        nShowCmd,
+        0, // hInstApp
+        0,
+        0,
+        0,
+        0, // dwHotKey
+        0,
+        0
+        };
 
-	return ShellExecuteEx(&sei);
+    return ShellExecuteEx(&sei);
 }
 
 BOOL ShellExecuteThrow(HWND hwnd, LPCTSTR lpVerb, LPCTSTR lpFile, LPCTSTR lpParameters, LPCTSTR lpDirectory, INT nShowCmd)
 {
-	CWaitCursor wc;
-	BOOL bResult = FALSE;
+    CWaitCursor wc;
+    BOOL bResult = FALSE;
 
-	bResult = ShellExecuteNoThrow(hwnd, lpVerb, lpFile, lpParameters, lpDirectory, nShowCmd);
-	if(!bResult)
-	{
-		MdThrowStringExceptionF(TEXT("ShellExecute failed: %1!s!"), MdGetWinErrorText(GetLastError()));
-	}
-	return bResult;
+    bResult = ShellExecuteNoThrow(hwnd, lpVerb, lpFile, lpParameters, lpDirectory, nShowCmd);
+    if(!bResult)
+    {
+        MdThrowStringExceptionF(_T("ShellExecute failed: %1!s!"), MdGetWinErrorText(GetLastError()));
+    }
+    return bResult;
 }
 
 CString GetBaseNameFromPath(LPCTSTR path)
 {
-	CString s = path;
-	int i = s.ReverseFind(chrBackslash);
-	if(i < 0)
-	{
-		return s;
-	}
-	return s.Mid(i + 1);
+    CString s = path;
+    int i = s.ReverseFind(chrBackslash);
+    if(i < 0)
+    {
+        return s;
+    }
+    return s.Mid(i + 1);
 }
 
 bool FileExists(LPCTSTR path)
 {
-	CFileFind finder;
-	BOOL b = finder.FindFile(path);
-	if(b)
-	{
-		finder.FindNextFile();
-		return !finder.IsDirectory();
-	}
-	else
-	{
-		return false;
-	}
+    CFileFind finder;
+    BOOL b = finder.FindFile(path);
+    if(b)
+    {
+        finder.FindNextFile();
+        return !finder.IsDirectory();
+    }
+    else
+    {
+        return false;
+    }
 }
 
 CString LoadString(UINT resId)
 {
-	return MAKEINTRESOURCE(resId);
+    return MAKEINTRESOURCE(resId);
 }
 
 CString GetAppFileName()
 {
-	CString s;
-	VERIFY(GetModuleFileName(NULL, s.GetBuffer(_MAX_PATH), _MAX_PATH));
-	s.ReleaseBuffer();
-	return s;
+    CString s;
+    VERIFY(GetModuleFileName(NULL, s.GetBuffer(_MAX_PATH), _MAX_PATH));
+    s.ReleaseBuffer();
+    return s;
 }
 
 CString GetAppFolder()
 {
-	CString s = GetAppFileName();
-	int i = s.ReverseFind(chrBackslash);
-	ASSERT(i >= 0);
-	s = s.Left(i);
-	return s;
+    CString s = GetAppFileName();
+    int i = s.ReverseFind(chrBackslash);
+    ASSERT(i >= 0);
+    s = s.Left(i);
+    return s;
 }
 
 CString MyGetFullPathName(LPCTSTR relativePath)
 {
-	LPTSTR dummy;
-	CString buffer;
+    LPTSTR dummy;
+    CString buffer;
 
-	DWORD len = _MAX_PATH;
+    DWORD len = _MAX_PATH;
 
     DWORD dw = GetFullPathName(relativePath, len, buffer.GetBuffer(len), &dummy);
-	buffer.ReleaseBuffer();
+    buffer.ReleaseBuffer();
 
-	while(dw >= len)
-	{
-		len += _MAX_PATH;
-		dw = GetFullPathName(relativePath, len, buffer.GetBuffer(len), &dummy);
-		buffer.ReleaseBuffer();
-	}
+    while(dw >= len)
+    {
+        len += _MAX_PATH;
+        dw = GetFullPathName(relativePath, len, buffer.GetBuffer(len), &dummy);
+        buffer.ReleaseBuffer();
+    }
 
-	if(0 == dw)
-	{
-		TRACE("GetFullPathName(%s) failed: GetLastError returns %u\r\n", relativePath, GetLastError());
-		return relativePath;
-	}
+    if(0 == dw)
+    {
+        TRACE("GetFullPathName(%s) failed: GetLastError returns %u\r\n", relativePath, GetLastError());
+        return relativePath;
+    }
 
-	return buffer;
+    return buffer;
 }
-
-

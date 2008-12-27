@@ -19,13 +19,13 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // Author(s): - bseifert -> http://windirstat.info/contact/bernhard/
-//            - assarbad -> oliver@windirstat.info
+//            - assarbad -> http://windirstat.info/contact/oliver/
 //
 // $Id$
 
 
 // Example:
-// Instead of writing 
+// Instead of writing
 //     CGdiObject *old = pdc->SelectObject(&brush); ...; pdc->SelectObject(old);
 // we can simply write
 //     CSelectObject sobrush(pdc, &brush);
@@ -39,85 +39,85 @@
 class CSelectObject
 {
 public:
-	CSelectObject(CDC *pdc, CGdiObject *pObject)
-	{ m_pOldObject = pdc->SelectObject(pObject); m_pdc = pdc; }
-	~CSelectObject()
-	{ m_pdc->SelectObject(m_pOldObject); }
+    CSelectObject(CDC *pdc, CGdiObject *pObject)
+    { m_pOldObject = pdc->SelectObject(pObject); m_pdc = pdc; }
+    ~CSelectObject()
+    { m_pdc->SelectObject(m_pOldObject); }
 protected:
-	CDC *m_pdc;
-	CGdiObject *m_pOldObject;
+    CDC *m_pdc;
+    CGdiObject *m_pOldObject;
 };
 
 class CSelectStockObject
 {
 public:
-	CSelectStockObject(CDC *pdc, int nIndex)
-	{ m_pOldObject = pdc->SelectStockObject(nIndex); m_pdc = pdc; }
-	~CSelectStockObject()
-	{ m_pdc->SelectObject(m_pOldObject); }
+    CSelectStockObject(CDC *pdc, int nIndex)
+    { m_pOldObject = pdc->SelectStockObject(nIndex); m_pdc = pdc; }
+    ~CSelectStockObject()
+    { m_pdc->SelectObject(m_pOldObject); }
 protected:
-	CDC *m_pdc;
-	CGdiObject *m_pOldObject;
+    CDC *m_pdc;
+    CGdiObject *m_pOldObject;
 };
 
 class CSetBkMode
 {
 public:
-	CSetBkMode(CDC *pdc, int mode)
-	{ m_pdc = pdc; m_oldMode = pdc->SetBkMode(mode); }
-	~CSetBkMode()
-	{ m_pdc->SetBkMode(m_oldMode); }
+    CSetBkMode(CDC *pdc, int mode)
+    { m_pdc = pdc; m_oldMode = pdc->SetBkMode(mode); }
+    ~CSetBkMode()
+    { m_pdc->SetBkMode(m_oldMode); }
 protected:
-	CDC *m_pdc;
-	int m_oldMode;
+    CDC *m_pdc;
+    int m_oldMode;
 };
 
 class CSetTextColor
 {
 public:
-	CSetTextColor(CDC *pdc, COLORREF color)
-	{ m_pdc = pdc; m_oldColor = pdc->SetTextColor(color); }
-	~CSetTextColor()
-	{ m_pdc->SetTextColor(m_oldColor); }
+    CSetTextColor(CDC *pdc, COLORREF color)
+    { m_pdc = pdc; m_oldColor = pdc->SetTextColor(color); }
+    ~CSetTextColor()
+    { m_pdc->SetTextColor(m_oldColor); }
 protected:
-	CDC *m_pdc;
-	COLORREF m_oldColor;
+    CDC *m_pdc;
+    COLORREF m_oldColor;
 };
 
 class CSetBkColor
 {
 public:
-	CSetBkColor(CDC *pdc, COLORREF color)
-	{ m_pdc = pdc; m_oldColor = pdc->SetBkColor(color); }
-	~CSetBkColor()
-	{ m_pdc->SetBkColor(m_oldColor); }
+    CSetBkColor(CDC *pdc, COLORREF color)
+    { m_pdc = pdc; m_oldColor = pdc->SetBkColor(color); }
+    ~CSetBkColor()
+    { m_pdc->SetBkColor(m_oldColor); }
 protected:
-	CDC *m_pdc;
-	COLORREF m_oldColor;
+    CDC *m_pdc;
+    COLORREF m_oldColor;
 };
 
 class CSaveDC
 {
 public:
-	CSaveDC(CDC *pdc) { m_pdc = pdc; m_save = pdc->SaveDC(); }
-	~CSaveDC() { m_pdc->RestoreDC(m_save); }
+    CSaveDC(CDC *pdc) { m_pdc = pdc; m_save = pdc->SaveDC(); }
+    ~CSaveDC() { m_pdc->RestoreDC(m_save); }
 protected:
-	CDC *m_pdc;
-	int m_save;
+    CDC *m_pdc;
+    int m_save;
 };
 
 inline BOOL CreateRectRgn(CRgn& rgn, CRect rc)
 {
-	return rgn.CreateRectRgn(rc.left, rc.top, rc.right, rc.bottom);
+    return rgn.CreateRectRgn(rc.left, rc.top, rc.right, rc.bottom);
 }
 
 inline COLORREF MakeShadowColor(COLORREF c, int percent)
 {
-	return RGB(
-		GetRValue(c) * percent / 100,
-		GetGValue(c) * percent / 100,
-		GetBValue(c) * percent / 100
-	);
+    return RGB(
+        GetRValue(c) * percent / 100,
+        GetGValue(c) * percent / 100,
+        GetBValue(c) * percent / 100
+    );
 }
 
 #endif // __WDS_SELECTOBJECT_H__

@@ -19,7 +19,7 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // Author(s): - bseifert -> http://windirstat.info/contact/bernhard/
-//            - assarbad -> oliver@windirstat.info
+//            - assarbad -> http://windirstat.info/contact/oliver/
 //
 // $Id$
 
@@ -51,18 +51,18 @@
 //
 class CModalApiShuttle: public CDialog
 {
-	DECLARE_DYNAMIC(CModalApiShuttle)
+    DECLARE_DYNAMIC(CModalApiShuttle)
 
 public:
-	CModalApiShuttle(CWnd* pParent = NULL);
-	virtual ~CModalApiShuttle();
+    CModalApiShuttle(CWnd* pParent = NULL);
+    virtual ~CModalApiShuttle();
 
 protected:
-	enum { IDD = IDD_MODALAPISHUTTLE };
-	virtual BOOL OnInitDialog();
-	DECLARE_MESSAGE_MAP()
+    enum { IDD = IDD_MODALAPISHUTTLE };
+    virtual BOOL OnInitDialog();
+    DECLARE_MESSAGE_MAP()
 
-	virtual void DoOperation() =0;
+    virtual void DoOperation() =0;
 };
 
 #endif // __WDS_MODALAPISHUTTLE_H__

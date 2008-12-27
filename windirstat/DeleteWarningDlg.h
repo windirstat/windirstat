@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2006 Oliver Schneider (assarbad.net)
+// Copyright (C) 2004-2006, 2008 Oliver Schneider (assarbad.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -32,20 +32,19 @@
 //
 class CDeleteWarningDlg : public CDialog
 {
-	DECLARE_DYNAMIC(CDeleteWarningDlg)
-	enum { IDD = IDD_DELETE_WARNING };
+    DECLARE_DYNAMIC(CDeleteWarningDlg)
+    enum { IDD = IDD_DELETE_WARNING };
 
 public:
-	CDeleteWarningDlg(CWnd* pParent = NULL);
-	virtual ~CDeleteWarningDlg();
+    CDeleteWarningDlg(CWnd* pParent = NULL);
+    virtual ~CDeleteWarningDlg();
 
-	CString m_fileName;				// [in] file name for feedback
-	BOOL m_dontShowAgain;			// [out]
+    CString m_fileName;             // [in] file name for feedback
+    BOOL m_dontShowAgain;           // [out]
 
 protected:
-	virtual void DoDataExchange(CDataExchange* pDX);
-	DECLARE_MESSAGE_MAP()
-	afx_msg void OnBnClickedNo();
-	afx_msg void OnBnClickedYes();
+    virtual void DoDataExchange(CDataExchange* pDX);
+    DECLARE_MESSAGE_MAP()
+    afx_msg void OnBnClickedNo();
+    afx_msg void OnBnClickedYes();
 };
-

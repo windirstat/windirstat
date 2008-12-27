@@ -19,7 +19,7 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // Author(s): - bseifert -> http://windirstat.info/contact/bernhard/
-//            - assarbad -> oliver@windirstat.info
+//            - assarbad -> http://windirstat.info/contact/oliver/
 //
 // $Id$
 
@@ -28,17 +28,15 @@
 
 bool PlatformIsWindows9x()
 {
-	OSVERSIONINFO osvi;
-	ZeroMemory(&osvi, sizeof(osvi));
-	osvi.dwOSVersionInfoSize = sizeof(osvi);
+    OSVERSIONINFO osvi;
+    ZeroMemory(&osvi, sizeof(osvi));
+    osvi.dwOSVersionInfoSize = sizeof(osvi);
 
-	if(!GetVersionEx(&osvi))
-	{
-		TRACE("GetVersionEx() failed.\r\n");
-		return false;
-	}
+    if(!GetVersionEx(&osvi))
+    {
+        TRACE("GetVersionEx() failed.\r\n");
+        return false;
+    }
 
-	return (VER_PLATFORM_WIN32_WINDOWS == osvi.dwPlatformId);
+    return (VER_PLATFORM_WIN32_WINDOWS == osvi.dwPlatformId);
 }
-
-

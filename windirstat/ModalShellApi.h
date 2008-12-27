@@ -19,7 +19,7 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // Author(s): - bseifert -> http://windirstat.info/contact/bernhard/
-//            - assarbad -> oliver@windirstat.info
+//            - assarbad -> http://windirstat.info/contact/oliver/
 //
 // $Id$
 
@@ -39,22 +39,22 @@
 class CModalShellApi : public CModalApiShuttle
 {
 public:
-	CModalShellApi();
+    CModalShellApi();
 
-	bool IsRecycleBinApiSupported();
-	void EmptyRecycleBin();
-	void DeleteFile(LPCTSTR fileName, bool toRecycleBin);
+    bool IsRecycleBinApiSupported();
+    void EmptyRecycleBin();
+    void DeleteFile(LPCTSTR fileName, bool toRecycleBin);
 
 protected:
-	virtual void DoOperation();
+    virtual void DoOperation();
 
-	void DoEmptyRecycleBin();
-	void DoDeleteFile();
+    void DoEmptyRecycleBin();
+    void DoDeleteFile();
 
-	CRecycleBinApi m_rbapi;	// Dynamically linked shell32.dll functions
-	int m_operation;		// Enum specifying the desired operation
-	CString m_fileName;		// File name to be deleted
-	bool m_toRecycleBin;	// True if file shall only be move to the recycle bin
+    CRecycleBinApi m_rbapi; // Dynamically linked shell32.dll functions
+    int m_operation;        // Enum specifying the desired operation
+    CString m_fileName;     // File name to be deleted
+    bool m_toRecycleBin;    // True if file shall only be move to the recycle bin
 };
 
 #endif // __WDS_MODALSHELLAPI_H__

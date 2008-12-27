@@ -19,7 +19,7 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // Author(s): - bseifert -> http://windirstat.info/contact/bernhard/
-//            - assarbad -> oliver@windirstat.info
+//            - assarbad -> http://windirstat.info/contact/oliver/
 //
 // $Id$
 
@@ -33,11 +33,11 @@
 //
 struct SSorting
 {
-	SSorting() { column1 = column2 = 0; ascending1 = ascending2 = true; }
-	int  column1;
-	bool ascending1;
-	int  column2;
-	bool ascending2;
+    SSorting() { column1 = column2 = 0; ascending1 = ascending2 = true; }
+    int  column1;
+    bool ascending1;
+    int  column2;
+    bool ascending2;
 };
 
 //
@@ -46,10 +46,10 @@ struct SSorting
 class CSortingListItem
 {
 public:
-	virtual CString GetText(int subitem) const;
-	virtual int GetImage() const;
-	virtual int Compare(const CSortingListItem *other, int subitem) const;
-	int CompareS(const CSortingListItem *other, const SSorting& sorting) const;
+    virtual CString GetText(int subitem) const;
+    virtual int GetImage() const;
+    virtual int Compare(const CSortingListItem *other, int subitem) const;
+    int CompareS(const CSortingListItem *other, const SSorting& sorting) const;
 };
 
 
@@ -64,53 +64,47 @@ public:
 //
 class CSortingListControl: public CListCtrl
 {
-	DECLARE_DYNAMIC(CSortingListControl)
+    DECLARE_DYNAMIC(CSortingListControl)
 public:
-	// Construction
-	CSortingListControl(LPCTSTR name);
-	virtual ~CSortingListControl();
+    // Construction
+    CSortingListControl(LPCTSTR name);
+    virtual ~CSortingListControl();
 
-	// Public methods
-	void LoadPersistentAttributes();
+    // Public methods
+    void LoadPersistentAttributes();
 
-	void AddExtendedStyle(DWORD exStyle);
-	void RemoveExtendedStyle(DWORD exStyle);
+    void AddExtendedStyle(DWORD exStyle);
+    void RemoveExtendedStyle(DWORD exStyle);
 
-	const SSorting& GetSorting();
-	void GetSorting(int& sortColumn1, bool& ascending1, int& sortColumn2, bool& ascending2);
+    const SSorting& GetSorting();
+    void GetSorting(int& sortColumn1, bool& ascending1, int& sortColumn2, bool& ascending2);
 
-	void SetSorting(const SSorting& sorting);
-	void SetSorting(int sortColumn1, bool ascending1, int sortColumn2, bool ascending2);
-	void SetSorting(int sortColumn, bool ascending);
+    void SetSorting(const SSorting& sorting);
+    void SetSorting(int sortColumn1, bool ascending1, int sortColumn2, bool ascending2);
+    void SetSorting(int sortColumn, bool ascending);
 
-	void InsertListItem(int i, CSortingListItem *item);
-	CSortingListItem *GetSortingListItem(int i);
+    void InsertListItem(int i, CSortingListItem *item);
+    CSortingListItem *GetSortingListItem(int i);
 
-#ifdef SINGLE_SELECT
-	void SortItems();
-#endif // SINGLE_SELECT
-
-	// Overridables
-#ifndef SINGLE_SELECT
+    // Overridables
     virtual void SortItems();
-#endif // SINGLE_SELECT
-	virtual bool GetAscendingDefault(int column);
-	virtual bool HasImages();
+    virtual bool GetAscendingDefault(int column);
+    virtual bool HasImages();
 
 private:
-	void SavePersistentAttributes();
-	static int CALLBACK _CompareFunc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
+    void SavePersistentAttributes();
+    static int CALLBACK _CompareFunc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
 
-	CString m_name;	 // for persistence
-	SSorting m_sorting;
+    CString m_name; // for persistence
+    SSorting m_sorting;
 
-	int m_indicatedColumn;
+    int m_indicatedColumn;
 
-	DECLARE_MESSAGE_MAP()
-	afx_msg void OnLvnGetdispinfo(NMHDR *pNMHDR, LRESULT *pResult);
-	afx_msg void OnHdnItemclick(NMHDR *pNMHDR, LRESULT *pResult);
-	afx_msg void OnHdnItemdblclick(NMHDR *pNMHDR, LRESULT *pResult);
-	afx_msg void OnDestroy();
+    DECLARE_MESSAGE_MAP()
+    afx_msg void OnLvnGetdispinfo(NMHDR *pNMHDR, LRESULT *pResult);
+    afx_msg void OnHdnItemclick(NMHDR *pNMHDR, LRESULT *pResult);
+    afx_msg void OnHdnItemdblclick(NMHDR *pNMHDR, LRESULT *pResult);
+    afx_msg void OnDestroy();
 };
 
 #endif // __WDS_SORTINGLISTCONTROL_H__
