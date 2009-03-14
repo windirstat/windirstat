@@ -517,7 +517,7 @@ void CDirstatDoc::AssertSelectionValid()
 }
 #endif
 
-void CDirstatDoc::SetSelection(const CItem *item, bool keepReselectChildStack)
+void CDirstatDoc::SetSelection(const CItem * /*item*/, bool /*keepReselectChildStack*/)
 {
 }
 
@@ -1595,7 +1595,7 @@ void CDirstatDoc::OnTreemapReselectchild()
     UpdateAllViews(NULL, HINT_SHOWNEWSELECTION, reinterpret_cast<CObject*>(item));
 }
 
-void CDirstatDoc::OnUpdateCleanupOpen(CCmdUI *pCmdUI)
+void CDirstatDoc::OnUpdateCleanupOpen(CCmdUI * /*pCmdUI*/)
 {
 // FIXME: Multi-select
 //     pCmdUI->Enable(
@@ -1616,7 +1616,7 @@ void CDirstatDoc::OnCleanupOpen()
 //     OpenItem(item);
 }
 
-void CDirstatDoc::OnUpdateCleanupProperties(CCmdUI *pCmdUI)
+void CDirstatDoc::OnUpdateCleanupProperties(CCmdUI * /*pCmdUI*/)
 {
 // FIXME: Multi-select
 //     pCmdUI->Enable(

@@ -43,7 +43,7 @@ static const double PALETTE_BRIGHTNESS = 0.6;
 
 double CColorSpace::GetColorBrightness(COLORREF color)
 {
-    return (GetRValue(color) + GetGValue(color) + GetBValue(color)) / 255.0 / 3.0;
+    return (RGB_GET_RVALUE(color) + RGB_GET_GVALUE(color) + RGB_GET_BVALUE(color)) / 255.0 / 3.0;
 }
 
 COLORREF CColorSpace::MakeBrightColor(COLORREF color, double brightness)
@@ -51,9 +51,9 @@ COLORREF CColorSpace::MakeBrightColor(COLORREF color, double brightness)
     ASSERT(brightness >= 0.0);
     ASSERT(brightness <= 1.0);
 
-    double dred = GetRValue(color) / 255.0;
-    double dgreen = GetGValue(color) / 255.0;
-    double dblue = GetBValue(color) / 255.0;
+    double dred =   (RGB_GET_RVALUE(color) & 0xFF) / 255.0;
+    double dgreen = (RGB_GET_GVALUE(color) & 0xFF) / 255.0;
+    double dblue =  (RGB_GET_BVALUE(color) & 0xFF) / 255.0;
 
     double f = 3.0 * brightness / (dred + dgreen + dblue);
     dred*= f;
@@ -1152,9 +1152,9 @@ void CTreemap::RenderRectangle(CDC *pdc, const CRect& rc, const double *surface,
 
 void CTreemap::DrawSolidRect(CDC *pdc, const CRect& rc, COLORREF col, double brightness)
 {
-    int red = GetRValue(col);
-    int green = GetGValue(col);
-    int blue = GetBValue(col);
+    int red = RGB_GET_RVALUE(col);
+    int green = RGB_GET_GVALUE(col);
+    int blue = RGB_GET_BVALUE(col);
 
     const double factor = brightness / PALETTE_BRIGHTNESS;
 
@@ -1175,9 +1175,9 @@ void CTreemap::DrawCushion(CDC *pdc, const CRect& rc, const double *surface, COL
     // Derived parameters
     const double Is = 1 - Ia;   // shading
 
-    const double colR = GetRValue(col);
-    const double colG = GetGValue(col);
-    const double colB = GetBValue(col);
+    const double colR = RGB_GET_RVALUE(col);
+    const double colG = RGB_GET_GVALUE(col);
+    const double colB = RGB_GET_BVALUE(col);
 
     for(int iy  =  rc.top; iy < rc.bottom; iy++)
     for(int ix  =  rc.left; ix < rc.right; ix++)

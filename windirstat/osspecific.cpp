@@ -41,9 +41,9 @@
 
 #define CHECK(name) if(!m_##name.IsSupported()) return false
 
-static CDllModule dllKernel32(nameKernel32);
-static CDllModule dllShell32(nameShell32);
-static CDllModule dllPsApi(namePsApi);
+CDllModule dllKernel32(nameKernel32);
+CDllModule dllShell32(nameShell32);
+CDllModule dllPsApi(namePsApi);
 
 /////////////////////////////////////////////////////////////////////////////
 

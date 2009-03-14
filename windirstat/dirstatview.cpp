@@ -364,7 +364,7 @@ void CDirstatView::OnUpdate(CView *pSender, LPARAM lHint, CObject *pHint)
     case HINT_SHOWNEWSELECTION:
         {
             // FIXME: Multi-select
-            const CItem *item = (const CItem *)pHint;
+//             const CItem *item = (const CItem *)pHint;
         }
         break;
 

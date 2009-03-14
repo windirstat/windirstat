@@ -34,7 +34,7 @@
 #ifndef __WDS_SELECTOBJECT_H__
 #define __WDS_SELECTOBJECT_H__
 #pragma once
-
+#include "stdafx.h"
 
 class CSelectObject
 {
@@ -114,9 +114,9 @@ inline BOOL CreateRectRgn(CRgn& rgn, CRect rc)
 inline COLORREF MakeShadowColor(COLORREF c, int percent)
 {
     return RGB(
-        GetRValue(c) * percent / 100,
-        GetGValue(c) * percent / 100,
-        GetBValue(c) * percent / 100
+        RGB_GET_RVALUE(c) * percent / 100,
+        RGB_GET_GVALUE(c) * percent / 100,
+        RGB_GET_BVALUE(c) * percent / 100
     );
 }
 

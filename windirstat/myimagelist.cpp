@@ -68,11 +68,11 @@ namespace
 
 
 CMyImageList::CMyImageList()
-    : m_filesFolderImage(0)
-    , m_freeSpaceImage(0)
-    , m_unknownImage(0)
-    , m_emptyImage(0)
-    , m_junctionImage(0)
+    : m_filesFolderImage(-1)
+    , m_freeSpaceImage(-1)
+    , m_unknownImage(-1)
+    , m_emptyImage(-1)
+    , m_junctionImage(-1)
 {
 }
 
@@ -128,7 +128,7 @@ int CMyImageList::CacheIcon(LPCTSTR path, UINT flags, CString *psTypeName)
     int i;
     if(!m_indexMap.Lookup(sfi.iIcon, i))
     {
-        CImageList *sil = CImageList::FromHandle(hil);
+        CImageList *sil = CImageList::FromHandle(hil); // does not have to be destroyed
 
         /*
             This doesn't work:

@@ -263,9 +263,9 @@ void CXySlider::PaintGripper(CDC *pdc)
     COLORREF color = GetSysColor(COLOR_BTNFACE);
     if(m_gripperHighlight)
     {
-        int r = GetRValue(color);
-        int g = GetGValue(color);
-        int b = GetBValue(color);
+        int r = RGB_GET_RVALUE(color);
+        int g = RGB_GET_GVALUE(color);
+        int b = RGB_GET_BVALUE(color);
         r += (255 - r)/3;
         g += (255 - g)/3;
         b += (255 - b)/3;

@@ -101,6 +101,10 @@ private:
     HMODULE m_hDll;
 };
 
+extern CDllModule dllKernel32;
+extern CDllModule dllShell32;
+extern CDllModule dllPsApi;
+
 ///////////////////////////////////////////////////////////////////////////////
 ///  CDynamicApi
 ///  Template class to implement dynamic linking to functions
@@ -109,7 +113,7 @@ private:
 ///  @remarks Preferably used as a class member variable and initialized in the
 ///           initializer list.
 ///////////////////////////////////////////////////////////////////////////////
-template < class FctType > class CDynamicApi
+template <class FctType> class CDynamicApi
 {
 public:
     ///////////////////////////////////////////////////////////////////////////////
@@ -122,22 +126,12 @@ public:
     ///  This function doesn't return a value
     ///////////////////////////////////////////////////////////////////////////////
     CDynamicApi(HMODULE hDll, LPCSTR pszFctName)
-        : pfnFct(NULL)
+        : pfnFct(0)
     {
         if(hDll)
         {
-            pfnFct = FctType(GetProcAddress(hDll, pszFctName));
+            pfnFct = reinterpret_cast<FctType>(GetProcAddress(hDll, pszFctName));
         }
-    }
-
-    ///////////////////////////////////////////////////////////////////////////////
-    ///  inline public destructor  ~CDynamicApi
-    ///  Dtor of the dynamic linking template class
-    ///
-    ///  This function doesn't return a value
-    ///////////////////////////////////////////////////////////////////////////////
-    ~CDynamicApi()
-    {
     }
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -151,12 +145,7 @@ public:
         return (pfnFct != NULL);
     }
 
-    ///////////////////////////////////////////////////////////////////////////////
-    ///  FctType pfnFct
-    ///  Function pointer, typed thanks to the C++ template mechanism
-    ///
-    ///  @remarks This is intentionally public!
-    ///////////////////////////////////////////////////////////////////////////////
+public:
     FctType pfnFct;
 };
 

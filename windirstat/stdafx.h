@@ -62,6 +62,10 @@
 #include "../common/commonhelpers.h"
 #include "../common/platform.h"
 
+#define RGB_GET_RVALUE(rgb) (rgb & 0xFF)
+#define RGB_GET_GVALUE(rgb) ((rgb & 0xFF00) >> 8)
+#define RGB_GET_BVALUE(rgb) ((rgb & 0xFF0000) >> 16)
+
 // General purpose headers
 #include "selectobject.h"
 #include "set.h"

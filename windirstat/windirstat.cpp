@@ -141,6 +141,11 @@ CDirstatApp::CDirstatApp()
     , m_altColor(GetAlternativeColor(RGB(0x00, 0x00, 0xFF), _T("AltColor")))
     , m_altEncryptionColor(GetAlternativeColor(RGB(0x00, 0x80, 0x00), _T("AltEncryptionColor")))
 {
+    typedef BOOL (__stdcall *TFNFileIconInit)(BOOL);
+
+    CDynamicApi<TFNFileIconInit> FileIconInit(dllShell32.Handle(), reinterpret_cast<LPCSTR>(660));
+    ASSERT(FileIconInit.IsSupported());
+    VERIFY(FileIconInit.pfnFct(FALSE));
 #   ifdef _DEBUG
     TestScanResourceDllName();
 #   endif

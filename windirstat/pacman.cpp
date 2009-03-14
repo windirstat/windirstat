@@ -211,9 +211,9 @@ COLORREF CPacman::CalculateColor()
     // a == 1 --> yellow
     // a == 0 --> bgcolor
 
-    int red     = (int)(a * 255 + (1 - a) * GetRValue(m_bgcolor));
-    int green   = (int)(a * 255 + (1 - a) * GetGValue(m_bgcolor));
-    int blue    = (int)(          (1 - a) * GetBValue(m_bgcolor));
+    int red     = (int)(a * 255 + (1 - a) * RGB_GET_RVALUE(m_bgcolor));
+    int green   = (int)(a * 255 + (1 - a) * RGB_GET_GVALUE(m_bgcolor));
+    int blue    = (int)(          (1 - a) * RGB_GET_BVALUE(m_bgcolor));
 
     return RGB(red, green, blue);
 }
