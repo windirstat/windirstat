@@ -1,0 +1,795 @@
+﻿// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+#include "../common/version.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// Dutch (Netherlands) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_NLD)
+#ifdef _WIN32
+LANGUAGE LANG_DUTCH, SUBLANG_DUTCH
+#pragma code_page(1252)
+#endif //_WIN32
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "#include ""../common/version.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "#define _AFX_NO_OLE_RESOURCES\r\n"
+    "#define _AFX_NO_TRACKER_RESOURCES\r\n"
+    "#define _AFX_NO_PROPERTY_RESOURCES\r\n"
+    "\r\n"
+    "#if !defined(AFX_RESOURCE_DLL)\r\n"
+    "LANGUAGE 9, 1\r\n"
+    "#pragma code_page(1252)\r\n"
+    "#include ""res\\windirstat.rc2""  // non-Microsoft Visual C++ edited resources\r\n"
+    "#include ""afxres.rc""         // Standard components\r\n"
+    "\r\n"
+    "#endif\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDR_MAINFRAME           ICON                    "..\\windirstat\\res\\icon1.ico"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+IDR_MAINFRAME           BITMAP                  "..\\windirstat\\res\\Toolbar.bmp"
+IDB_NODES               BITMAP                  "..\\windirstat\\res\\bitmap1.bmp"
+IDB_JUNCTIONPOINT       BITMAP                  "..\\windirstat\\res\\junctionpoint.bmp"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Toolbar
+//
+
+IDR_MAINFRAME TOOLBAR  16, 15
+BEGIN
+    BUTTON      ID_FILE_OPEN
+    BUTTON      ID_REFRESHALL
+    SEPARATOR
+    BUTTON      ID_CLEANUP_OPEN
+    BUTTON      ID_EDIT_COPY
+    BUTTON      ID_CLEANUP_OPENINEXPLORER
+    BUTTON      ID_CLEANUP_OPENINCONSOLE
+    BUTTON      ID_REFRESHSELECTED
+    SEPARATOR
+    BUTTON      ID_CLEANUP_DELETETOTRASHBIN
+    BUTTON      ID_CLEANUP_DELETE
+    SEPARATOR
+    BUTTON      ID_CLEANUP_PROPERTIES
+    SEPARATOR
+    BUTTON      ID_TREEMAP_ZOOMIN
+    BUTTON      ID_TREEMAP_ZOOMOUT
+    SEPARATOR
+    BUTTON      ID_HELP_MANUAL
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+
+IDR_MAINFRAME MENU 
+BEGIN
+    POPUP "&Bestand"
+    BEGIN
+        MENUITEM "&Open...\tCtrl+O",            ID_FILE_OPEN
+        MENUITEM SEPARATOR
+        MENUITEM "Actualiseer &Alle",           ID_REFRESHALL
+        MENUITEM "Actualiseer Ge&selecteerde\tF5", ID_REFRESHSELECTED
+        MENUITEM SEPARATOR
+        MENUITEM "&Afsluiten\tAlt+F4",          ID_APP_EXIT
+    END
+    POPUP "&Wijzig"
+    BEGIN
+        MENUITEM "&Kopieer Pad\tCtrl+C",        ID_EDIT_COPY
+    END
+    POPUP "&Schoonmaken"
+    BEGIN
+        MENUITEM "&Open\tEnter",                ID_CLEANUP_OPEN
+        MENUITEM SEPARATOR
+        MENUITEM "&Verkenner Hier\tCtrl+E",     ID_CLEANUP_OPENINEXPLORER
+        MENUITEM "&Oprachtprompt Hier\tCtrl+P", ID_CLEANUP_OPENINCONSOLE
+        MENUITEM "&Verwijder (naar Prullenbak)\tDel", ID_CLEANUP_DELETETOTRASHBIN
+        MENUITEM "Verwijder (geen &herstel mogelijk!)\tShift+Del", ID_CLEANUP_DELETE
+        MENUITEM SEPARATOR
+        MENUITEM "&Eigenschappen",              ID_CLEANUP_PROPERTIES
+        MENUITEM SEPARATOR
+        MENUITEM "Prullenbak &Leegmaken",       ID_CLEANUP_EMPTYRECYCLEBIN
+        MENUITEM SEPARATOR
+        MENUITEM "Gebruikergedefinieerde Actie #0", ID_DUMMY_USERDEFINEDCLEANUP, GRAYED
+    END
+    POPUP "&Boomkaart"
+    BEGIN
+        MENUITEM "&Toon Boomkaart\tF9",         ID_VIEW_SHOWTREEMAP
+        MENUITEM SEPARATOR
+        MENUITEM "Zoom &in\t+",                 ID_TREEMAP_ZOOMIN
+        MENUITEM "Zoom &uit\t-",                ID_TREEMAP_ZOOMOUT
+        MENUITEM "Terug naar &kindelement\t*",  33011
+        MENUITEM "&Selecteer Ouder\t/",         ID_TREEMAP_SELECTPARENT
+        MENUITEM SEPARATOR
+        MENUITEM "&Help over Boomkaarten",      ID_TREEMAP_HELPABOUTTREEMAPS
+    END
+    POPUP "&Rapport"
+    BEGIN
+        MENUITEM "&Stuur e-mail naar Eigenaar...", ID_SENDMAILTOOWNER
+    END
+    POPUP "&Opties"
+    BEGIN
+        MENUITEM "Toon &Vrije Ruimte\tF6",      ID_VIEW_SHOWFREESPACE
+        MENUITEM "Toon &Onbekend\tF7",          ID_VIEW_SHOWUNKNOWN
+        MENUITEM SEPARATOR
+        MENUITEM "Toon Bestand&types\tF8",      ID_VIEW_SHOWFILETYPES
+        MENUITEM "Toon Boom&kaart\tF9",         ID_VIEW_SHOWTREEMAP
+        MENUITEM "Toon Werk&balk",              ID_VIEW_TOOLBAR
+        MENUITEM "Toon S&tatusbalk",            ID_VIEW_STATUS_BAR
+        MENUITEM SEPARATOR
+        MENUITEM "&Configureer WinDirStat...",  ID_CONFIGURE
+    END
+    POPUP "&Help"
+    BEGIN
+        MENUITEM "&Help\tF1",                   ID_HELP_MANUAL
+        MENUITEM "&Rapporteer Bug/Feedback...", ID_HELP_REPORTBUG
+        MENUITEM "Controleer of er updates zijn...", ID_HELP_CHECKFORUPDATES
+        MENUITEM SEPARATOR
+        MENUITEM "&Over WinDirStat...",         ID_APP_ABOUT
+    END
+END
+
+IDR_POPUPGRAPH MENU 
+BEGIN
+    POPUP "POPUP_GRAPH"
+    BEGIN
+        MENUITEM "Zoom &in\t+",                 32783
+        MENUITEM "Zoom &uit\t-",                32784
+        MENUITEM "Terug naar &kindelement\t*",  ID_TREEMAP_RESELECTCHILD
+        MENUITEM "&Selecteer Ouder\t/",         ID_TREEMAP_SELECTPARENT
+        MENUITEM SEPARATOR
+        MENUITEM "&Kopieer Pad\tCtrl+C",        57634
+        MENUITEM "&Verkenner Hier\tCtrl+E",     32774
+        MENUITEM "&Opdrachtprompt Hier\tCtrl+P", 32808
+        MENUITEM SEPARATOR
+        MENUITEM "&Annuleren\tEsc",             ID_POPUP_CANCEL
+    END
+END
+
+IDR_POPUPLIST MENU 
+BEGIN
+    POPUP "POPUP_LIST"
+    BEGIN
+        MENUITEM "<omzetten>",                  ID_POPUP_TOGGLE
+        MENUITEM SEPARATOR
+        MENUITEM "&Open\tEnter",                ID_CLEANUP_OPEN
+        MENUITEM SEPARATOR
+        MENUITEM "&Kopieer Pad\tCtrl+C",        57634
+        MENUITEM "&Verkenner Hier\tCtrl+E",     32774
+        MENUITEM "&Oprachtprompt Hier\tCtrl+P", 32808
+        MENUITEM "&Actualiseer Geselecteerde\tF5", 32817
+        MENUITEM SEPARATOR
+        MENUITEM "&Verwijder (naar Prullenbak)\tDel", 32809
+        MENUITEM "Verwijder (geen &herstel mogelijk!)\tShift+Del", 32810
+        MENUITEM SEPARATOR
+        MENUITEM "&Eigenschappen",              ID_CLEANUP_PROPERTIES
+        MENUITEM SEPARATOR
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Accelerator
+//
+
+IDR_MAINFRAME ACCELERATORS 
+BEGIN
+    VK_DELETE,      ID_CLEANUP_DELETE,      VIRTKEY, SHIFT, NOINVERT
+    VK_DELETE,      ID_CLEANUP_DELETETOTRASHBIN, VIRTKEY, NOINVERT
+    VK_RETURN,      ID_CLEANUP_OPEN,        VIRTKEY, NOINVERT
+    "P",            ID_CLEANUP_OPENINCONSOLE, VIRTKEY, CONTROL, NOINVERT
+    "E",            ID_CLEANUP_OPENINEXPLORER, VIRTKEY, CONTROL, NOINVERT
+    "C",            ID_EDIT_COPY,           VIRTKEY, CONTROL, NOINVERT
+    VK_INSERT,      ID_EDIT_COPY,           VIRTKEY, CONTROL, NOINVERT
+    "N",            ID_FILE_NEW,            VIRTKEY, CONTROL, NOINVERT
+    "O",            ID_FILE_OPEN,           VIRTKEY, CONTROL, NOINVERT
+    VK_F1,          ID_HELP_MANUAL,         VIRTKEY, NOINVERT
+    VK_MULTIPLY,    ID_TREEMAP_RESELECTCHILD, VIRTKEY, NOINVERT
+    VK_DIVIDE,      ID_TREEMAP_SELECTPARENT, VIRTKEY, NOINVERT
+    VK_ADD,         ID_TREEMAP_ZOOMIN,      VIRTKEY, NOINVERT
+    VK_SUBTRACT,    ID_TREEMAP_ZOOMOUT,     VIRTKEY, NOINVERT
+    "0",            ID_USERDEFINEDCLEANUP0, VIRTKEY, CONTROL, NOINVERT
+    "1",            ID_USERDEFINEDCLEANUP1, VIRTKEY, CONTROL, NOINVERT
+    "2",            ID_USERDEFINEDCLEANUP2, VIRTKEY, CONTROL, NOINVERT
+    "3",            ID_USERDEFINEDCLEANUP3, VIRTKEY, CONTROL, NOINVERT
+    "4",            ID_USERDEFINEDCLEANUP4, VIRTKEY, CONTROL, NOINVERT
+    "5",            ID_USERDEFINEDCLEANUP5, VIRTKEY, CONTROL, NOINVERT
+    "6",            ID_USERDEFINEDCLEANUP6, VIRTKEY, CONTROL, NOINVERT
+    "7",            ID_USERDEFINEDCLEANUP7, VIRTKEY, CONTROL, NOINVERT
+    "8",            ID_USERDEFINEDCLEANUP8, VIRTKEY, CONTROL, NOINVERT
+    "9",            ID_USERDEFINEDCLEANUP9, VIRTKEY, CONTROL, NOINVERT
+    VK_F8,          ID_VIEW_SHOWFILETYPES,  VIRTKEY, NOINVERT
+    VK_F6,          ID_VIEW_SHOWFREESPACE,  VIRTKEY, NOINVERT
+    VK_F9,          ID_VIEW_SHOWTREEMAP,    VIRTKEY, NOINVERT
+    VK_F7,          ID_VIEW_SHOWUNKNOWN,    VIRTKEY, NOINVERT
+    VK_F5,          ID_REFRESHSELECTED,     VIRTKEY, NOINVERT
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_ABOUTBOX DIALOGEX 0, 0, 273, 199
+STYLE DS_SETFONT | WS_POPUP | WS_CLIPCHILDREN | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
+CAPTION "Over WinDirStat"
+FONT 9, "Microsoft Sans Serif", 400, 0, 0x0
+BEGIN
+    CONTROL         "",IDC_TAB,"SysTabControl32",WS_TABSTOP,7,22,259,155,WS_EX_ACCEPTFILES
+    DEFPUSHBUTTON   "OK",IDOK,111,180,50,12,WS_GROUP
+    CTEXT           "WinDirStat 0.0.000",IDC_CAPTION,69,7,134,8
+    ICON            IDR_MAINFRAME,IDC_STATIC,7,3,20,20
+END
+
+IDD_CHECKFORUPDATE DIALOGEX 0, 0, 236, 47
+STYLE DS_SETFONT | DS_MODALFRAME | DS_3DLOOK | DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_CAPTION
+CAPTION "Dialog"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,184,2,50,32,0,WS_EX_CLIENTEDGE
+    CTEXT           "Testetsttetsjkbdckjdcb",IDC_STATIC_URL,2,37,232,8
+    CTEXT           "",IDC_STATIC_TEXT,2,2,177,32,SS_NOPREFIX
+END
+
+IDD_DELETE_WARNING DIALOGEX 0, 0, 276, 150
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Waarschuwing"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "Nee",IDNO,163,129,50,14
+    PUSHBUTTON      "Ja",IDYES,63,129,50,14
+    CONTROL         "&Toon deze waarschuwing niet meer.",IDC_DONTSHOWAGAIN,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,130,99,139,10
+    LTEXT           "Weet je waar je mee bezig bent?",IDC_STATIC,7,7,110,8
+    LTEXT           "Je gaat verwijderen",IDC_STATIC,7,23,82,8
+    CTEXT           "<bestandsnaam>",IDC_FILENAME,7,38,262,8,SS_PATHELLIPSIS
+    LTEXT           "van jouw computer.",IDC_STATIC,7,53,67,8
+    LTEXT           "Verwijderen van systeembestanden of -mappen kan het systeem beschadigen.",IDC_STATIC,7,76,262,19
+    LTEXT           "Doorgaan?",IDC_STATIC,7,99,104,8
+END
+
+IDD_MODALAPISHUTTLE DIALOGEX 0, 0, 186, 90
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "<invisible dialog>"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+END
+
+IDD_PAGE_CLEANUPS DIALOGEX 0, 0, 380, 202
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | WS_SYSMENU
+CAPTION "Acties"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    LISTBOX         IDC_LIST,7,7,113,169,LBS_HASSTRINGS | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "&Actief",IDC_ENABLED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,129,7,53,10
+    EDITTEXT        IDC_TITLE,212,7,161,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_COMMANDLINE,129,35,244,14,ES_AUTOHSCROLL
+    LTEXT           "%p Volledig Pad",IDC_STATIC,128,54,93,8
+    LTEXT           "%n Bestand- of Mapnaam zonder Pad",IDC_STATIC,225,54,138,8
+    LTEXT           "%sp Submap Volledig Pad",IDC_HINTSP,128,63,94,8
+    LTEXT           "%sn Submapnaam zonder Pad",IDC_HINTSN,225,63,138,8
+    CONTROL         "&Schijven",IDC_WORKSFORDRIVES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,138,92,49,10
+    CONTROL         "&Map",IDC_WORKSFORDIRECTORIES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,208,92,69,10
+    CONTROL         "&UNC-Paden",IDC_WORKSFORUNCPATHS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,304,92,61,10
+    CONTROL         "&Bestanden",IDC_WORKSFORFILES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,138,107,57,10
+    CONTROL         "<Bestanden> &Pseudo-onderdelen",IDC_WORKSFORFILESFOLDER,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,207,107,92,10
+    PUSHBUTTON      "&Help",IDC_HELPBUTTON,323,131,50,14
+    CONTROL         "&Recursief",IDC_RECURSEINTOSUBDIRECTORIES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,128,132,160,10
+    CONTROL         "&Vraag om bevestiging",IDC_ASKFORCONFIRMATION,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,128,146,160,10
+    CONTROL         "&Toon Opdrachtprompt-venster",IDC_SHOWCONSOLEWINDOW,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,128,160,100,10
+    CONTROL         "&Wacht tot gereed",IDC_WAITFORCOMPLETION,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,250,160,100,10
+    COMBOBOX        IDC_REFRESHPOLICY,128,183,245,93,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Om&hoog",IDC_UP,21,181,37,14
+    PUSHBUTTON      "Om&laag",IDC_DOWN,66,181,37,14
+    LTEXT           "Ververs&beleid",IDC_STATIC,128,174,108,8
+    LTEXT           "&Titel",IDC_STATIC,186,7,24,8
+    LTEXT           "&Opdrachtregel",IDC_STATIC,129,25,83,8
+    GROUPBOX        "Werkt voor",IDC_STATIC,129,81,244,40
+END
+
+IDD_PAGE_GENERAL DIALOGEX 0, 0, 380, 202
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | WS_SYSMENU
+CAPTION "Algemeen"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    CONTROL         "&Over filesysteemgrenzen",IDC_FOLLOWMOUNTPOINTS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,13,229,10
+    CONTROL         "Volg &Symbolische verbindingspunten (behalve Volume Mount Points)",IDC_FOLLOWJUNCTIONS,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,27,229,10
+    CONTROL         "&Toon groottes in GB/MB/kB/Bytes Formaat",IDC_HUMANFORMAT,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,41,229,10
+    GROUPBOX        "&Lijststijl",IDC_STATIC,30,61,90,65
+    CONTROL         "&Volledige rijselectie",IDC_FULLROWSELECTION,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,38,76,75,10
+    CONTROL         "Toon &Grid",IDC_SHOWGRID,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,38,93,68,10
+    CONTROL         "Toon S&trepen",IDC_SHOWSTRIPES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,38,110,68,10
+    LTEXT           "&Taal",IDC_STATIC,32,139,166,8
+    COMBOBOX        IDC_COMBO,32,152,156,140,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "&Gebruik deze taal voor datum/tijd formaat",IDC_USEWDSLOCALE,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,172,298,10
+END
+
+IDD_PAGE_REPORT DIALOGEX 0, 0, 380, 202
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | WS_SYSMENU
+CAPTION "Rapport"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    LTEXT           "Hier kun je de rapportages aanpassen die worden gegenereerd door de functie 'Stuur e-mail naar eigenaar'",IDC_STATIC,7,9,268,8
+    LTEXT           "&Onderwerp",IDC_STATIC,7,31,46,8
+    EDITTEXT        IDC_SUBJECT,59,31,314,14,ES_AUTOHSCROLL
+    LTEXT           "&Voorvoegsel",IDC_STATIC,7,51,46,8
+    EDITTEXT        IDC_PREFIX,59,51,314,54,ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_WANTRETURN
+    LTEXT           "Achter&voegsel",IDC_STATIC,7,111,46,8
+    EDITTEXT        IDC_SUFFIX,59,111,314,54,ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_WANTRETURN
+    PUSHBUTTON      "",IDC_RESET,59,174,89,14
+END
+
+IDD_PAGE_TREELIST DIALOGEX 0, 0, 380, 199
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | WS_SYSMENU
+CAPTION "Mappenlijst"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    CONTROL         "&Pacman Animatie",IDC_PACMANANIMATION,"Button",BS_AUTOCHECKBOX | BS_MULTILINE | WS_TABSTOP,7,7,102,19
+    CONTROL         "Toon besteedde &Tijd gedurende de Scan",IDC_SHOWTIMESPENT,
+                    "Button",BS_AUTOCHECKBOX | BS_MULTILINE | WS_TABSTOP,7,30,95,19
+    GROUPBOX        "Deelboompercentage &Kleuren",IDC_STATIC,129,7,244,185
+    PUSHBUTTON      "Boomniveau &1",IDC_COLORBUTTON0,151,19,175,14,0,WS_EX_RIGHT
+    PUSHBUTTON      "Boomniveau &2",IDC_COLORBUTTON1,167,40,159,14,0,WS_EX_RIGHT
+    PUSHBUTTON      "Boomniveau &3",IDC_COLORBUTTON2,181,61,145,14,0,WS_EX_RIGHT
+    PUSHBUTTON      "Boomniveau &4",IDC_COLORBUTTON3,195,82,131,14,0,WS_EX_RIGHT
+    PUSHBUTTON      "Boomniveau &5",IDC_COLORBUTTON4,207,103,119,14,0,WS_EX_RIGHT
+    PUSHBUTTON      "Boomniveau &6",IDC_COLORBUTTON5,218,124,108,14,0,WS_EX_RIGHT
+    PUSHBUTTON      "Boomniveau &7",IDC_COLORBUTTON6,227,145,99,14,0,WS_EX_RIGHT
+    PUSHBUTTON      "Boomniveau &8",IDC_COLORBUTTON7,236,166,90,14,0,WS_EX_RIGHT
+    CONTROL         "",IDC_SLIDER,"msctls_trackbar32",TBS_VERT | TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,339,29,18,160
+END
+
+IDD_PAGE_TREEMAP DIALOGEX 0, 0, 380, 202
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | WS_SYSMENU
+CAPTION "Boomkaart"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    CTEXT           "&Helder-\r\nheid",IDC_STATIC,237,122,32,18
+    CONTROL         "",IDC_BRIGHTNESS,"msctls_trackbar32",TBS_VERT | TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,245,17,16,104
+    CTEXT           "&Kussen-\r\n-schaduw",IDC_STATIC,271,122,32,18
+    CONTROL         "",IDC_CUSHIONSHADING,"msctls_trackbar32",TBS_VERT | TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,279,17,16,104
+    CTEXT           "&Hoogte",IDC_STATIC,305,122,32,18
+    CONTROL         "",IDC_HEIGHT,"msctls_trackbar32",TBS_VERT | TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,313,17,16,104
+    CTEXT           "&Schaal\r\nFactor",IDC_STATIC,339,122,32,18
+    CONTROL         "",IDC_SCALEFACTOR,"msctls_trackbar32",TBS_VERT | TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,347,17,16,104
+    RTEXT           "&Lichtinval",IDC_STATIC,246,147,59,8
+    LTEXT           "Static",IDC_LIGHTSOURCE,313,146,58,48,WS_TABSTOP
+    PUSHBUTTON      "",IDC_RESET,242,167,55,22,BS_MULTILINE
+    GROUPBOX        "St&ijl",IDC_STATIC,7,146,63,49
+    CONTROL         "&KDirStat",IDC_KDIRSTAT,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,12,159,42,10
+    CONTROL         "Se&quoiaView",IDC_SEQUOIAVIEW,"Button",BS_AUTORADIOBUTTON,12,176,53,10
+    CONTROL         "Toon &Grid",IDC_TREEMAPGRID,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,76,150,54,10
+    PUSHBUTTON      "Grid &Kleur",IDC_TREEMAPGRIDCOLOR,134,150,85,14,0,WS_EX_RIGHT
+    PUSHBUTTON      "Selectierechthoek",IDC_TREEMAPHIGHLIGHTCOLOR,76,175,143,14,0,WS_EX_RIGHT
+    CTEXT           "Static",IDC_STATICSCALEFACTOR,339,7,32,8
+    CTEXT           "Static",IDC_STATICHEIGHT,305,7,32,8
+    CTEXT           "Static",IDC_STATICCUSHIONSHADING,271,7,32,8
+    CTEXT           "Static",IDC_STATICBRIGHTNESS,237,7,32,8
+    LTEXT           "Static",IDC_PREVIEW,7,7,211,124
+END
+
+IDD_SELECTDRIVES DIALOGEX 0, 0, 276, 182
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
+CAPTION "WinDirStat - Selecteer Schijven"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    CONTROL         "&Alle Lokale Schijven",IDC_ALLLOCALDRIVES,"Button",BS_AUTORADIOBUTTON | WS_GROUP,7,7,99,10
+    CONTROL         "&Individuele Schijven",IDC_SOMEDRIVES,"Button",BS_AUTORADIOBUTTON,7,31,91,10
+    CONTROL         "",IDC_DRIVES,"SysListView32",LVS_REPORT | LVS_OWNERDRAWFIXED | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,7,43,262,100
+    CONTROL         "Een &Map",IDC_AFOLDER,"Button",BS_AUTORADIOBUTTON,7,150,100,10
+    EDITTEXT        IDC_FOLDERNAME,6,161,209,14,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",IDC_BROWSEFOLDER,219,161,50,14
+    DEFPUSHBUTTON   "OK",IDOK,219,7,50,14
+    PUSHBUTTON      "Annuleren",IDCANCEL,219,24,50,14
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO 
+BEGIN
+    IDD_ABOUTBOX, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 266
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 192
+    END
+
+    IDD_CHECKFORUPDATE, DIALOG
+    BEGIN
+        LEFTMARGIN, 2
+        RIGHTMARGIN, 234
+        TOPMARGIN, 2
+        BOTTOMMARGIN, 45
+    END
+
+    IDD_DELETE_WARNING, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 269
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 143
+    END
+
+    IDD_MODALAPISHUTTLE, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 179
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 83
+    END
+
+    IDD_PAGE_CLEANUPS, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 373
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 195
+    END
+
+    IDD_PAGE_GENERAL, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 373
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 195
+    END
+
+    IDD_PAGE_REPORT, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 373
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 195
+    END
+
+    IDD_PAGE_TREELIST, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 373
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 192
+    END
+
+    IDD_PAGE_TREEMAP, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 373
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 195
+    END
+
+    IDD_SELECTDRIVES, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 269
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 175
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE 
+BEGIN
+    IDR_MAINFRAME           "WinDirStat\n\nWinDirStat\n\n\n\n"
+    IDS_QUERYING            "(aanvragen...)"
+    IDS_NOTACCESSIBLE       "(niet beschikbaar)"
+    IDS_TREECOL_ATTRIBUTES  "Attributen"
+END
+
+STRINGTABLE 
+BEGIN
+    AFX_IDS_APP_TITLE       "WinDirStat"
+    AFX_IDS_IDLEMESSAGE     "Klaar"
+END
+
+STRINGTABLE 
+BEGIN
+    ID_INDICATOR_EXT        "EXT"
+    ID_INDICATOR_CAPS       "CAP"
+    ID_INDICATOR_NUM        "NUM"
+    ID_INDICATOR_SCRL       "SCRL"
+    ID_INDICATOR_OVR        "OVR"
+    ID_INDICATOR_REC        "REC"
+    ID_INDICATOR_MEMORYUSAGE "Geheugengebruik: 123.456.789"
+END
+
+STRINGTABLE 
+BEGIN
+    ID_FILE_OPEN            "Opent een Collectie van Schijven.\nOpen"
+END
+
+STRINGTABLE 
+BEGIN
+    ID_APP_ABOUT            "Toont Programma, Versie, en Copyright Informatie.\nInfo"
+    ID_APP_EXIT             "Sluit de applicatie.\nAfsluiten"
+END
+
+STRINGTABLE 
+BEGIN
+    ID_EDIT_COPY            "Kopieert het Geselecteerde Pad naar het Klembord.\nKopieer Pad     "
+END
+
+STRINGTABLE 
+BEGIN
+    ID_VIEW_TOOLBAR         "Toont/verbergt de Werkbalk\nWerkbalk"
+    ID_VIEW_STATUS_BAR      "Toont/verbergt de Statusbalk.\nStatusbalk"
+END
+
+STRINGTABLE 
+BEGIN
+    AFX_IDS_SCSIZE          "Wijzig de vensterafmeting"
+    AFX_IDS_SCMOVE          "Wijzig de vensterpositie"
+    AFX_IDS_SCMINIMIZE      "Reduceert het venster tot een icoon"
+    AFX_IDS_SCMAXIMIZE      "Vergroot het venster tot maximaal"
+    AFX_IDS_SCCLOSE         "Sluit de applicatie"
+END
+
+STRINGTABLE 
+BEGIN
+    AFX_IDS_SCRESTORE       "Herstel het venster tot de normale afmeting"
+    AFX_IDS_SCTASKLIST      "Activeer Taaklijst"
+END
+
+STRINGTABLE 
+BEGIN
+    ID_FILE_REFRESHALL      "Actualiseert de Hele Boom"
+    ID_CLEANUP_OPENINEXPLORER 
+                            "Opent een Verkenner op de Geselecteerde Locatie.\nVerkenner"
+    ID_TREEMAP_ZOOMIN       "Vergroot de Boomkaart.\nZoom in"
+END
+
+STRINGTABLE 
+BEGIN
+    ID_FILE_REFRESHSELECTED "Actualiseert de Geselecteerde Deelboom"
+    ID_CLEANUP_OPENINCONSOLE 
+                            "Opent een Opdrachtprompt op de Geselecteerde Locatie.\nOpdrachtprompt"
+    ID_CLEANUP_DELETETOTRASHBIN 
+                            "Verplaatst het Geselecteerde Item naar de Prullenbak.\nVerwijder (naar Prullenbak)"
+    ID_CLEANUP_DELETE       "Verwijdert het Geselecteerde Item (geen herstel mogelijk!).\nVerwijder (geen herstel mogelijk!)"
+    ID_CONFIGURE            "Opent het Instellingenscherm.\nInstellingen"
+    ID_HELP_MANUAL          "Opent de WinDirStat Online Help\nHandleiding"
+END
+
+STRINGTABLE 
+BEGIN
+    ID_TREEMAP_ZOOMOUT      "Reduceert de Boomkaart.\nZoom uit"
+    ID_TREEMAP_SELECTPARENT "Selecteert de Ouder van het Huidige Item.\nSelecteer Ouder"
+    ID_TREEMAP_HELPABOUTTREEMAPS 
+                            "Toont Help over Boomkaarten.\nHelp over Boomkaarten"
+    ID_VIEW_SHOWTREEMAP     "Toont/verbergt de Boomkaart.\nBoomkaart"
+    ID_HELP_REPORTBUG       "Stel een Bug/Feedback e-mail samen.\nRapporteer Bug/Feedback"
+END
+
+STRINGTABLE 
+BEGIN
+    ID_REFRESHALL           "Herscan van de hele directory boom.\nActualiseer Alles"
+    ID_REFRESHSELECTED      "Herscan van de geselecteerde deelboom.\nActualiseer Geselecteerde"
+    ID_CLEANUP_EMPTYRECYCLEBIN 
+                            "Maakt de prullenbak leeg.\nPrullenbak leegmaken"
+    ID_VIEW_SHOWFREESPACE   "Toont/verbergt het <Vrije Ruimte> Item.\nToon Vrije Ruimte"
+    ID_VIEW_SHOWUNKNOWN     "Toont/verbergt het <Onbekend> Item.\nToon Onbekend"
+END
+
+STRINGTABLE 
+BEGIN
+    ID_DUMMY_USERDEFINEDCLEANUP 
+                            "Roept de Gebruikergedefinieerde Actie aan#0\nGebruikergedefinieerde Actie"
+END
+
+STRINGTABLE 
+BEGIN
+    ID_SENDMAILTOOWNER      "Opstellen e-mail rapport over huidig geselecteerde item.\nStuur e-mail naar eigenaar"
+END
+
+STRINGTABLE 
+BEGIN
+    ID_VIEW_SHOWFILETYPES   "Toont/verbergt de Extensielijst.\nToon Bestandstypes"
+END
+
+STRINGTABLE 
+BEGIN
+    ID_TREEMAP_RESELECTCHILD 
+                            "Ga terug naar kindelement.\nTerug naar kindelement"
+    ID_CLEANUP_OPEN         "Opent het geselecteerde item.\r\nOpen Item"
+    ID_CLEANUP_PROPERTIES   "Toon de eigenschappen van het geselecteerde item.\r\nToon Eigenschappen"
+END
+
+STRINGTABLE 
+BEGIN
+    IDS_ABOUT_ABOUTTEXTss   "\r\nWinDirStat - Directory Statistieken\r\n\r\n""Toont waar al je schijfruimte gebleven is\r\nen helpt je het op te ruimen.""\r\n\r\nOpnieuw Geprogrammeerd voor MS Windows door\r\nBernhard Seifert (mailto:%1!s!),\r\n\r\ngebaseerd op Stefan Hundhammer's KDE (Linux) programma KDirStat\r\n(http://kdirstat.sourceforge.net/).\r\n\r\nWinDirStat's internetpagina is http://%2!s!/\r\n\r\nCopyright (c) 2003-2005 de auteur van WinDirStat"
+    IDS_ABOUT_THANKSTOTEXT  "\r\nStefan Hundhammer voor zijn fantastische Linux tool KDirStat.\r\nGebruik van KDirStat (2.3.7) als specificatie bespaarde me veel tijd.\r\nhttp://kdirstat.sourceforge.net/\r\n\r\nde auteurs van SequoiaView voor aantonen hoe bruikbaar boomkaarten (treemaps) kunnen zijn.\r\nhttp://www.win.tue.nl/sequoiaview/\r\n\r\nJarke J. van Wijk, Huub van de Wetering, Mark Bruls en Kees Huizing\r\nvoor hun artikelen over 'cushion treemaps and squarified treemaps'.\r\nhttp://www.win.tue.nl/~vanwijk/\r\n\r\nBen Shneiderman voor zijn ingenieuze idee van boomkaarten -\r\neen echt intuïtieve manier om boomstructuren te visualiseren.\r\nhttp://www.cs.umd.edu/hcil/treemap-history/\r\n\r\nMijn collega's voor hun feedback over de vroege releases van WinDirStat.\r\nhttp://www.daccord.net/\r\n\r\nBeatrix Lödige en Nick Lines voor bètatesten.\r\n"
+    IDS_ABOUT_ABOUT         "Over"
+    IDS_ABOUT_THANKSTO      "Bedankt"
+    IDS_ABOUT_LICENSEAGREEMENT "Licentie"
+    IDS_MYCOMPUTER          "Mijn Computer"
+    IDS_UDC_CONFIRMATIONss  "Je roept de gebruikergedefinieerde actie\r\n'%1!s!'\r\n\r\nvoor '%2!s!' aan.\r\n\r\nDoorgaan?"
+    IDS_RUDC_CONFIRMATIONss "Je roept de recursieve gebruikergedefinieerde actie\r\n'%1!s!'\r\n\r\nvoor '%2!s!' aan.\r\n\r\nDoorgaan?"
+END
+
+STRINGTABLE 
+BEGIN
+    IDS_RESETTODEFAULTS     "&Zet standaardinstellingen terug"
+    IDS_BACKTOUSERSETTINGS  "Terug naar &Gebruikersinstellingen"
+    IDS_COLLAPSE            "&Inklappen"
+    IDS_EXPAND              "&Uitklappen"
+    IDS_CREATEPROCESSsFAILEDs "CreateProcess(%1!s!) failed: %2!s!"
+    IDS_LANGUAGERESTARTNOW  "Taalwijzigingen worden pas actief wanneer de applicatie herstart wordt.\r\n\r\nHerstart WinDirStat nu?"
+    IDS_ABOUT_AUTHORS       "Auteurs"
+    IDS_ABOUT_AUTHORSTEXTs  "=== Programmeurs ===\r\n\r\nBernhard Seifert\r\nCreator of de project and coordinator\r\n(mailto:%1!s!)\r\n\r\nOliver Schneider\r\n(mailto:assarbad#users.sourceforge.net)\r\n\r\n\r\n=== Vertalers ===\r\n\r\n"
+END
+
+STRINGTABLE 
+BEGIN
+    IDS_THEDIRECTORYsDOESNOTEXIST "De map '%1!s!' bestaat niet."
+    IDS_THEFILEsDOESNOTEXIST "Het bestand '%1!s!' bestaat niet."
+    IDS_COULDNOTCREATEPROCESSssss 
+                            "Kan proces niet aanmaken.\r\n\r\nApplicatie: '%1!s!',\r\nOprachtprompt: '%2!s!',\r\nWerkdirectory: '%3!s!'\r\nFoutmelding:\r\n%4!s!\r\n(Actualisering zal niet plaatsvinden.)"
+    IDS_TREECOL_NAME        "Naam"
+    IDS_TREECOL_SUBTREEPERCENTAGE "Deelboom Percentage"
+    IDS_TREECOL_PERCENTAGE  "Percentage"
+    IDS_TREECOL_SIZE        "Grootte"
+    IDS_TREECOL_ITEMS       "Items"
+    IDS_TREECOL_FILES       "Bestanden"
+    IDS_TREECOL_SUBDIRS     "Submappen"
+    IDS_TREECOL_LASTCHANGE  "Laatste Wijziging"
+    IDS_PLEASECHECKYOURDISKUSAGE 
+                            "Controleer alstublieft uw Schijfgebruik en ruim op indien mogelijk. Dank u.\r\n"
+    IDS_DISKUSAGEREPORTGENERATEDBYWINDIRSTAT 
+                            "Rapportage Schijfgebruik gegenereerd door WinDirStat.\r\n"
+    IDS__UNKNOWN_           "<onbekend>"
+    IDS_FREESPACE_ITEM      "<Vrije Ruimte>"
+    IDS_UNKNOWN_ITEM        "<Onbekend>"
+END
+
+STRINGTABLE 
+BEGIN
+    IDS_FILES_ITEM          "<Bestanden>"
+    IDS_ONEREADJOB          "[1 Leestaak]"
+    IDS_sREADJOBS           "[%1!s! Leestaken]"
+    IDS_CANNOTOPENCLIPBOARD "Kan het Klembord niet openen."
+    IDS_CANNOTEMTPYCLIPBOARD "Kan het Klembord niet leegmaken."
+    IDS_CANNOTSETCLIPBAORDDATA "Kan niet naar het Klembord schrijven."
+    IDS_WINDIRSTAT_SETTINGS "WinDirStat - Instellingen"
+    IDS_SCANNING_           "Scannen "
+    IDS_EMPTYRECYCLEBIN     "&Prullenbak leegmaken"
+    IDS__ONEITEMss          " (1 Item, %1!s!%2!s!)"
+    IDS__sITEMSss           " (%1!s! Items, %2!s!%3!s!)"
+    IDS_UDCsCTRLd           "%1!s!\tCtrl+%2!d!"
+    IDS_USERDEFINEDCLEANUP0 "Gebruikergedefinieerde actie #0"
+    IDS_REPORT_DISKUSAGE    "Disk Gebruik"
+    IDS_USERDEFINEDCLEANUPd "Gebruikergedefinieerde actie #%1!d!"
+    IDS_POLICY_NOREFRESH    "Geen actualisering"
+END
+
+STRINGTABLE 
+BEGIN
+    IDS_POLICY_REFRESHTHISENTRY "Actualiseer deze entry"
+    IDS_POLICY_REFRESHPARENT "Actualiseer deze entry's ouder"
+    IDS_BUGREPORTHINT       "Voor rapportage van een bug is het het beste om het symptoom te beschrijven, inclusief de volledige tekst van de foutmelding en, indien mogelijk, de stappen om het gedrag te reproduceren."
+    IDS_FEEDBACKHINT        "Feedback wordt altijd gewaardeerd."
+    IDS_DRIVECOL_NAME       "Naam"
+    IDS_DRIVECOL_TOTAL      "Totaal"
+    IDS_DRIVECOL_FREE       "Vrij"
+    IDS_DRIVECOL_GRAPH      "Gebruikt/Totaal"
+    IDS_DRIVECOL_PERCENTUSED "Gebruikt/Totaal"
+    IDS_SELECTFOLDER        "WinDirStat - Selecteer Map"
+END
+
+STRINGTABLE 
+BEGIN
+    IDS_EXTCOL_EXTENSION    "Extensie"
+    IDS_EXTCOL_COLOR        "Kleur"
+    IDS_EXTCOL_BYTES        "Bytes"
+    IDS_EXTCOL_FILES        "Bestanden"
+    IDS_EXTCOL_DESCRIPTION  "Beschrijving"
+    IDS_RAMUSAGEs           "Geheugengebruik: %1!s!"
+    IDS_HELPFILEsCOULDNOTBEFOUND 
+                            "Het helpbestand %1!s! kan niet gevonden worden.\r\nHet bestand wordt verwacht in dezelfde map als waar windirstat.exe staat.\r\nHet is de bedoeling dat je die samen met windirstat.exe gekregen hebt.\r\nJe kunt een downloaden van de WinDirStat internetpagina (zie Over-venster)."
+    IDS_SUSPENDED_          "(uitgesteld) "
+    IDS_SUSPEND             "Uitstellen"
+    IDS_SPEC_BYTES          "Bytes"
+    IDS_SPEC_KB             "KB"
+    IDS_SPEC_MB             "MB"
+    IDS_SPEC_GB             "GB"
+    IDS_SPEC_TB             "TB"
+    IDS_RESETTO_DEFAULTS    "&Herstel\r\nStandaardinstellingen"
+    IDS_BACKTO_USERSETTINGS "Terug naar\r\n&Gebruikersinstellingen"
+END
+
+STRINGTABLE 
+BEGIN
+    ID_HELP_CHECKFORUPDATES "Controleert of er updates zijn"
+END
+
+#endif    // Dutch (Netherlands) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+#define _AFX_NO_OLE_RESOURCES
+#define _AFX_NO_TRACKER_RESOURCES
+#define _AFX_NO_PROPERTY_RESOURCES
+
+#if !defined(AFX_RESOURCE_DLL)
+LANGUAGE 9, 1
+#pragma code_page(1252)
+#include "res\windirstat.rc2"  // non-Microsoft Visual C++ edited resources
+#include "afxres.rc"         // Standard components
+
+#endif
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

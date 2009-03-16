@@ -1,0 +1,807 @@
+﻿// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+#include "../common/version.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.S.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif //_WIN32
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDR_MAINFRAME           ICON                    "res\\icon1.ico"
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "#include ""../common/version.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "#define _AFX_NO_OLE_RESOURCES\r\n"
+    "#define _AFX_NO_TRACKER_RESOURCES\r\n"
+    "#define _AFX_NO_PROPERTY_RESOURCES\r\n"
+    "\r\n"
+    "#if !defined(AFX_RESOURCE_DLL)\r\n"
+    "LANGUAGE 9, 1\r\n"
+    "#pragma code_page(1252)\r\n"
+    "#include ""res\\windirstat.rc2""  // non-Microsoft Visual C++ edited resources\r\n"
+    "#include ""afxres.rc""         // Standard components\r\n"
+    "\r\n"
+    "#endif\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+IDR_MAINFRAME           BITMAP                  "res\\Toolbar.bmp"
+IDB_NODES               BITMAP                  "res\\bitmap1.bmp"
+IDB_JUNCTIONPOINT       BITMAP                  "res\\junctionpoint.bmp"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Toolbar
+//
+
+IDR_MAINFRAME TOOLBAR  16, 15
+BEGIN
+    BUTTON      ID_FILE_OPEN
+    BUTTON      ID_REFRESHALL
+    SEPARATOR
+    BUTTON      ID_CLEANUP_OPEN
+    BUTTON      ID_EDIT_COPY
+    BUTTON      ID_CLEANUP_OPENINEXPLORER
+    BUTTON      ID_CLEANUP_OPENINCONSOLE
+    BUTTON      ID_REFRESHSELECTED
+    SEPARATOR
+    BUTTON      ID_CLEANUP_DELETETOTRASHBIN
+    BUTTON      ID_CLEANUP_DELETE
+    SEPARATOR
+    BUTTON      ID_CLEANUP_PROPERTIES
+    SEPARATOR
+    BUTTON      ID_TREEMAP_ZOOMIN
+    BUTTON      ID_TREEMAP_ZOOMOUT
+    SEPARATOR
+    BUTTON      ID_HELP_MANUAL
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+
+IDR_MAINFRAME MENU 
+BEGIN
+    POPUP "&File"
+    BEGIN
+        MENUITEM "&Open...\tCtrl+O",            ID_FILE_OPEN
+        MENUITEM SEPARATOR
+        MENUITEM "Refresh &All",                ID_REFRESHALL
+        MENUITEM "Refresh &Selected\tF5",       ID_REFRESHSELECTED
+        MENUITEM SEPARATOR
+        MENUITEM "&Quit\tAlt+F4",               ID_APP_EXIT
+    END
+    POPUP "&Edit"
+    BEGIN
+        MENUITEM "&Copy Path\tCtrl+C",          ID_EDIT_COPY
+    END
+    POPUP "&Clean Up"
+    BEGIN
+        MENUITEM "&Open\tEnter",                ID_CLEANUP_OPEN
+        MENUITEM SEPARATOR
+        MENUITEM "&Explorer Here\tCtrl+E",      ID_CLEANUP_OPENINEXPLORER
+        MENUITEM "&Command Prompt Here\tCtrl+P", ID_CLEANUP_OPENINCONSOLE
+        MENUITEM "&Delete (to Recycle Bin)\tDel", ID_CLEANUP_DELETETOTRASHBIN
+        MENUITEM "Delete (no &way to undelete!)\tShift+Del", ID_CLEANUP_DELETE
+        MENUITEM SEPARATOR
+        MENUITEM "&Properties",                 ID_CLEANUP_PROPERTIES
+        MENUITEM SEPARATOR
+        MENUITEM "Empty Recycle &Bin",          ID_CLEANUP_EMPTYRECYCLEBIN
+        MENUITEM SEPARATOR
+        MENUITEM "User defined cleanup #0",     ID_DUMMY_USERDEFINEDCLEANUP, GRAYED
+    END
+    POPUP "&Treemap"
+    BEGIN
+        MENUITEM "&Show Treemap\tF9",           ID_VIEW_SHOWTREEMAP
+        MENUITEM SEPARATOR
+        MENUITEM "Zoom &in\t+",                 ID_TREEMAP_ZOOMIN
+        MENUITEM "Zoom &out\t-",                ID_TREEMAP_ZOOMOUT
+        MENUITEM "&Reselect Child\t*",          33011
+        MENUITEM "&Select Parent\t/",           ID_TREEMAP_SELECTPARENT
+        MENUITEM SEPARATOR
+        MENUITEM "&Help about Treemaps",        ID_TREEMAP_HELPABOUTTREEMAPS
+    END
+    POPUP "&Report"
+    BEGIN
+        MENUITEM "&Send Mail to Owner...",      ID_SENDMAILTOOWNER
+    END
+    POPUP "&Options"
+    BEGIN
+        MENUITEM "Show &Free Space\tF6",        ID_VIEW_SHOWFREESPACE
+        MENUITEM "Show &Unknown\tF7",           ID_VIEW_SHOWUNKNOWN
+        MENUITEM SEPARATOR
+        MENUITEM "Show File &Types\tF8",        ID_VIEW_SHOWFILETYPES
+        MENUITEM "Show Tree&map\tF9",           ID_VIEW_SHOWTREEMAP
+        MENUITEM "Show Tool&bar",               ID_VIEW_TOOLBAR
+        MENUITEM "Show S&tatusbar",             ID_VIEW_STATUS_BAR
+        MENUITEM SEPARATOR
+        MENUITEM "&Configure WinDirStat...",    ID_CONFIGURE
+    END
+    POPUP "&Help"
+    BEGIN
+        MENUITEM "&Help\tF1",                   ID_HELP_MANUAL
+        MENUITEM "&Report Bug/Feedback...",     ID_HELP_REPORTBUG
+        MENUITEM "Check for updates ...",       ID_HELP_CHECKFORUPDATES
+        MENUITEM SEPARATOR
+        MENUITEM "&About WinDirStat...",        ID_APP_ABOUT
+    END
+END
+
+IDR_POPUPLIST MENU 
+BEGIN
+    POPUP "POPUP_LIST"
+    BEGIN
+        MENUITEM "<toggle>",                    ID_POPUP_TOGGLE
+        MENUITEM SEPARATOR
+        MENUITEM "&Open\tEnter",                ID_CLEANUP_OPEN
+        MENUITEM SEPARATOR
+        MENUITEM "&Copy Path\tCtrl+C",          57634
+        MENUITEM "&Explorer Here\tCtrl+E",      32774
+        MENUITEM "&Command Prompt Here\tCtrl+P", 32808
+        MENUITEM "&Refresh Selected\tF5",       32817
+        MENUITEM SEPARATOR
+        MENUITEM "&Delete (to Recycle Bin)\tDel", 32809
+        MENUITEM "Delete (no &way to undelete!)\tShift+Del", 32810
+        MENUITEM SEPARATOR
+        MENUITEM "&Properties",                 ID_CLEANUP_PROPERTIES
+        MENUITEM SEPARATOR
+    END
+END
+
+IDR_POPUPGRAPH MENU 
+BEGIN
+    POPUP "POPUP_GRAPH"
+    BEGIN
+        MENUITEM "Zoom &in\t+",                 32783
+        MENUITEM "Zoom &out\t-",                32784
+        MENUITEM "&Reselect Child\t*",          ID_TREEMAP_RESELECTCHILD
+        MENUITEM "&Select Parent\t/",           ID_TREEMAP_SELECTPARENT
+        MENUITEM SEPARATOR
+        MENUITEM "&Copy Path\tCtrl+C",          57634
+        MENUITEM "&Explorer Here\tCtrl+E",      32774
+        MENUITEM "C&ommand Prompt Here\tCtrl+P", 32808
+        MENUITEM SEPARATOR
+        MENUITEM "C&ancel\tEsc",                ID_POPUP_CANCEL
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Accelerator
+//
+
+IDR_MAINFRAME ACCELERATORS 
+BEGIN
+    VK_DELETE,      ID_CLEANUP_DELETE,      VIRTKEY, SHIFT, NOINVERT
+    VK_DELETE,      ID_CLEANUP_DELETETOTRASHBIN, VIRTKEY, NOINVERT
+    VK_RETURN,      ID_CLEANUP_OPEN,        VIRTKEY, NOINVERT
+    "P",            ID_CLEANUP_OPENINCONSOLE, VIRTKEY, CONTROL, NOINVERT
+    "E",            ID_CLEANUP_OPENINEXPLORER, VIRTKEY, CONTROL, NOINVERT
+    "C",            ID_EDIT_COPY,           VIRTKEY, CONTROL, NOINVERT
+    VK_INSERT,      ID_EDIT_COPY,           VIRTKEY, CONTROL, NOINVERT
+    "N",            ID_FILE_NEW,            VIRTKEY, CONTROL, NOINVERT
+    "O",            ID_FILE_OPEN,           VIRTKEY, CONTROL, NOINVERT
+    VK_F1,          ID_HELP_MANUAL,         VIRTKEY, NOINVERT
+    VK_MULTIPLY,    ID_TREEMAP_RESELECTCHILD, VIRTKEY, NOINVERT
+    VK_DIVIDE,      ID_TREEMAP_SELECTPARENT, VIRTKEY, NOINVERT
+    VK_ADD,         ID_TREEMAP_ZOOMIN,      VIRTKEY, NOINVERT
+    VK_SUBTRACT,    ID_TREEMAP_ZOOMOUT,     VIRTKEY, NOINVERT
+    "0",            ID_USERDEFINEDCLEANUP0, VIRTKEY, CONTROL, NOINVERT
+    "1",            ID_USERDEFINEDCLEANUP1, VIRTKEY, CONTROL, NOINVERT
+    "2",            ID_USERDEFINEDCLEANUP2, VIRTKEY, CONTROL, NOINVERT
+    "3",            ID_USERDEFINEDCLEANUP3, VIRTKEY, CONTROL, NOINVERT
+    "4",            ID_USERDEFINEDCLEANUP4, VIRTKEY, CONTROL, NOINVERT
+    "5",            ID_USERDEFINEDCLEANUP5, VIRTKEY, CONTROL, NOINVERT
+    "6",            ID_USERDEFINEDCLEANUP6, VIRTKEY, CONTROL, NOINVERT
+    "7",            ID_USERDEFINEDCLEANUP7, VIRTKEY, CONTROL, NOINVERT
+    "8",            ID_USERDEFINEDCLEANUP8, VIRTKEY, CONTROL, NOINVERT
+    "9",            ID_USERDEFINEDCLEANUP9, VIRTKEY, CONTROL, NOINVERT
+    VK_F8,          ID_VIEW_SHOWFILETYPES,  VIRTKEY, NOINVERT
+    VK_F6,          ID_VIEW_SHOWFREESPACE,  VIRTKEY, NOINVERT
+    VK_F9,          ID_VIEW_SHOWTREEMAP,    VIRTKEY, NOINVERT
+    VK_F7,          ID_VIEW_SHOWUNKNOWN,    VIRTKEY, NOINVERT
+    VK_F5,          ID_REFRESHSELECTED,     VIRTKEY, NOINVERT
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_ABOUTBOX DIALOGEX 0, 0, 273, 199
+STYLE DS_SETFONT | WS_POPUP | WS_CLIPCHILDREN | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
+CAPTION "About WinDirStat"
+FONT 9, "Microsoft Sans Serif", 400, 0, 0x0
+BEGIN
+    CONTROL         "",IDC_TAB,"SysTabControl32",WS_TABSTOP,7,22,259,155,WS_EX_ACCEPTFILES
+    DEFPUSHBUTTON   "OK",IDOK,111,180,50,12,WS_GROUP
+    CTEXT           "WinDirStat 0.0.000",IDC_CAPTION,27,7,219,8
+    ICON            IDR_MAINFRAME,IDC_STATIC,7,3,20,20
+END
+
+IDD_SELECTDRIVES DIALOGEX 0, 0, 276, 182
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
+CAPTION "WinDirStat - Select Drives"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    CONTROL         "&All Local Drives",IDC_ALLLOCALDRIVES,"Button",BS_AUTORADIOBUTTON | WS_GROUP,7,7,99,10
+    CONTROL         "&Individual Drives",IDC_SOMEDRIVES,"Button",BS_AUTORADIOBUTTON,7,31,91,10
+    CONTROL         "",IDC_DRIVES,"SysListView32",LVS_REPORT | LVS_OWNERDRAWFIXED | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,7,43,262,100
+    CONTROL         "A &Folder",IDC_AFOLDER,"Button",BS_AUTORADIOBUTTON,7,150,100,10
+    EDITTEXT        IDC_FOLDERNAME,6,161,209,14,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",IDC_BROWSEFOLDER,219,161,50,14
+    DEFPUSHBUTTON   "OK",IDOK,219,7,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,219,24,50,14
+END
+
+IDD_DELETE_WARNING DIALOGEX 0, 0, 276, 150
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Warning"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "No",IDNO,163,129,50,14
+    PUSHBUTTON      "Yes",IDYES,63,129,50,14
+    CONTROL         "&Don't show this warning again.",IDC_DONTSHOWAGAIN,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,130,99,139,10
+    LTEXT           "Do you know what you are doing?",IDC_STATIC,7,7,110,8
+    LTEXT           "Your are going to remove",IDC_STATIC,7,23,82,8
+    CTEXT           "<filename>",IDC_FILENAME,7,38,262,8,SS_PATHELLIPSIS
+    LTEXT           "from your computer.",IDC_STATIC,7,53,67,8
+    LTEXT           "Deletion of system files or directories can seriously damage your system.",IDC_STATIC,7,76,262,19
+    LTEXT           "Continue?",IDC_STATIC,7,99,104,8
+END
+
+IDD_MODALAPISHUTTLE DIALOGEX 0, 0, 186, 90
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "<invisible dialog>"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+END
+
+IDD_PAGE_CLEANUPS DIALOGEX 0, 0, 380, 202
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | WS_SYSMENU
+CAPTION "Cleanups"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    LISTBOX         IDC_LIST,7,7,113,169,LBS_HASSTRINGS | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "&Enabled",IDC_ENABLED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,129,7,53,10
+    EDITTEXT        IDC_TITLE,212,7,161,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_COMMANDLINE,129,35,244,14,ES_AUTOHSCROLL
+    LTEXT           "%p Full Path",IDC_STATIC,128,54,93,8
+    LTEXT           "%n File/Directory Name without Path",IDC_STATIC,225,54,138,8
+    LTEXT           "%sp Subdir Full Path",IDC_HINTSP,128,63,94,8
+    LTEXT           "%sn Subdir Name without Path",IDC_HINTSN,225,63,138,8
+    CONTROL         "&Drives",IDC_WORKSFORDRIVES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,138,92,49,10
+    CONTROL         "D&irectories",IDC_WORKSFORDIRECTORIES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,208,92,69,10
+    CONTROL         "&UNC Paths",IDC_WORKSFORUNCPATHS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,304,92,61,10
+    CONTROL         "&Files",IDC_WORKSFORFILES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,138,107,57,10
+    CONTROL         "<Files> &Pseudo Entries",IDC_WORKSFORFILESFOLDER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,207,107,92,10
+    PUSHBUTTON      "&Help",IDC_HELPBUTTON,323,131,50,14
+    CONTROL         "&Recurse into Subdirectories",IDC_RECURSEINTOSUBDIRECTORIES,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,128,132,160,10
+    CONTROL         "&Ask for Confirmation",IDC_ASKFORCONFIRMATION,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,128,146,160,10
+    CONTROL         "&Show Console Window",IDC_SHOWCONSOLEWINDOW,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,128,160,100,10
+    CONTROL         "&Wait for Completion",IDC_WAITFORCOMPLETION,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,250,160,100,10
+    COMBOBOX        IDC_REFRESHPOLICY,128,183,245,93,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "&Up",IDC_UP,21,181,37,14
+    PUSHBUTTON      "&Down",IDC_DOWN,66,181,37,14
+    LTEXT           "Refresh &Policy",IDC_STATIC,128,174,108,8
+    LTEXT           "&Title",IDC_STATIC,186,7,24,8
+    LTEXT           "&Command Line",IDC_STATIC,129,25,83,8
+    GROUPBOX        "Works for",IDC_STATIC,129,81,244,40
+END
+
+IDD_PAGE_TREELIST DIALOGEX 0, 0, 380, 199
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | WS_SYSMENU
+CAPTION "Directory List"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    CONTROL         "&Pacman Animation",IDC_PACMANANIMATION,"Button",BS_AUTOCHECKBOX | BS_MULTILINE | WS_TABSTOP,7,7,102,19
+    CONTROL         "Show &Time spent during the Scan",IDC_SHOWTIMESPENT,
+                    "Button",BS_AUTOCHECKBOX | BS_MULTILINE | WS_TABSTOP,7,30,95,19
+    GROUPBOX        "Subtree Percentage &Colors",IDC_STATIC,129,7,244,185
+    PUSHBUTTON      "Tree Level &1",IDC_COLORBUTTON0,151,19,175,14,0,WS_EX_RIGHT
+    PUSHBUTTON      "Tree Level &2",IDC_COLORBUTTON1,167,40,159,14,0,WS_EX_RIGHT
+    PUSHBUTTON      "Tree Level &3",IDC_COLORBUTTON2,181,61,145,14,0,WS_EX_RIGHT
+    PUSHBUTTON      "Tree Level &4",IDC_COLORBUTTON3,195,82,131,14,0,WS_EX_RIGHT
+    PUSHBUTTON      "Tree Level &5",IDC_COLORBUTTON4,207,103,119,14,0,WS_EX_RIGHT
+    PUSHBUTTON      "Tree Level &6",IDC_COLORBUTTON5,218,124,108,14,0,WS_EX_RIGHT
+    PUSHBUTTON      "Tree Level &7",IDC_COLORBUTTON6,227,145,99,14,0,WS_EX_RIGHT
+    PUSHBUTTON      "Tree Level &8",IDC_COLORBUTTON7,236,166,90,14,0,WS_EX_RIGHT
+    CONTROL         "",IDC_SLIDER,"msctls_trackbar32",TBS_VERT | TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,339,29,18,160
+END
+
+IDD_PAGE_TREEMAP DIALOGEX 0, 0, 380, 202
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | WS_SYSMENU
+CAPTION "Treemap"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    CTEXT           "&Bright-\r\nness",IDC_STATIC,237,122,32,18
+    CONTROL         "",IDC_BRIGHTNESS,"msctls_trackbar32",TBS_VERT | TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,245,17,16,104
+    CTEXT           "&Cushion\r\nShading",IDC_STATIC,271,122,32,18
+    CONTROL         "",IDC_CUSHIONSHADING,"msctls_trackbar32",TBS_VERT | TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,279,17,16,104
+    CTEXT           "&Height",IDC_STATIC,305,122,32,18
+    CONTROL         "",IDC_HEIGHT,"msctls_trackbar32",TBS_VERT | TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,313,17,16,104
+    CTEXT           "&Scale\r\nFactor",IDC_STATIC,339,122,32,18
+    CONTROL         "",IDC_SCALEFACTOR,"msctls_trackbar32",TBS_VERT | TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,347,17,16,104
+    RTEXT           "&Light Incidence",IDC_STATIC,246,147,59,8
+    LTEXT           "Static",IDC_LIGHTSOURCE,313,146,58,48,WS_TABSTOP
+    PUSHBUTTON      "",IDC_RESET,242,167,55,22,BS_MULTILINE
+    GROUPBOX        "St&yle",IDC_STATIC,7,146,63,49
+    CONTROL         "&KDirStat",IDC_KDIRSTAT,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,12,159,42,10
+    CONTROL         "Se&quoiaView",IDC_SEQUOIAVIEW,"Button",BS_AUTORADIOBUTTON,12,176,53,10
+    CONTROL         "Show &Grid",IDC_TREEMAPGRID,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,76,150,54,10
+    PUSHBUTTON      "Grid &Color",IDC_TREEMAPGRIDCOLOR,134,150,85,14,0,WS_EX_RIGHT
+    PUSHBUTTON      "H&ighlighting Rectangle",IDC_TREEMAPHIGHLIGHTCOLOR,76,175,143,14,0,WS_EX_RIGHT
+    CTEXT           "Static",IDC_STATICSCALEFACTOR,339,7,32,8
+    CTEXT           "Static",IDC_STATICHEIGHT,305,7,32,8
+    CTEXT           "Static",IDC_STATICCUSHIONSHADING,271,7,32,8
+    CTEXT           "Static",IDC_STATICBRIGHTNESS,237,7,32,8
+    LTEXT           "Static",IDC_PREVIEW,7,7,211,124
+END
+
+IDD_PAGE_GENERAL DIALOGEX 0, 0, 380, 202
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | WS_SYSMENU
+CAPTION "General"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    CONTROL         "&Cross File System Boundaries",IDC_FOLLOWMOUNTPOINTS,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,13,229,10
+    CONTROL         "Follow &Junction Points (except Volume Mount Points)",IDC_FOLLOWJUNCTIONS,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,27,229,10
+    CONTROL         "&Show Sizes in GB/MB/kB/Bytes Format",IDC_HUMANFORMAT,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,41,229,10
+    GROUPBOX        "&List Style",IDC_STATIC,30,61,90,65
+    CONTROL         "&Full Row Selection",IDC_FULLROWSELECTION,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,38,76,75,10
+    CONTROL         "Show &Grid",IDC_SHOWGRID,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,38,93,68,10
+    CONTROL         "Show S&tripes",IDC_SHOWSTRIPES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,38,110,68,10
+    LTEXT           "&Language",IDC_STATIC,32,139,166,8
+    COMBOBOX        IDC_COMBO,32,152,156,140,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "&Use this language for date/time and number formatting",IDC_USEWDSLOCALE,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,172,298,10
+END
+
+IDD_PAGE_REPORT DIALOGEX 0, 0, 380, 202
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | WS_SYSMENU
+CAPTION "Report"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    LTEXT           "Here you can customize the reports generated by the 'Send Mail to Owner' feature.",IDC_STATIC,7,9,268,8
+    LTEXT           "&Subject",IDC_STATIC,7,31,46,8
+    EDITTEXT        IDC_SUBJECT,59,31,314,14,ES_AUTOHSCROLL
+    LTEXT           "&Prefix",IDC_STATIC,7,51,46,8
+    EDITTEXT        IDC_PREFIX,59,51,314,54,ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_WANTRETURN
+    LTEXT           "S&uffix",IDC_STATIC,7,111,46,8
+    EDITTEXT        IDC_SUFFIX,59,111,314,54,ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_WANTRETURN
+    PUSHBUTTON      "",IDC_RESET,59,174,89,14
+END
+
+IDD_CHECKFORUPDATE DIALOGEX 0, 0, 298, 108
+STYLE DS_SETFONT | DS_MODALFRAME | DS_3DLOOK | DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_CAPTION
+CAPTION "Check for update"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "&Close",IDOK,179,86,70,20,0,WS_EX_CLIENTEDGE
+    CTEXT           "",IDC_STATIC_TEXT,2,2,294,81,SS_NOPREFIX,WS_EX_STATICEDGE
+    PUSHBUTTON      "Check for update",IDC_BUTTON_ACTION,49,86,126,20,0,WS_EX_CLIENTEDGE
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO 
+BEGIN
+    IDD_ABOUTBOX, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 266
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 192
+    END
+
+    IDD_SELECTDRIVES, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 269
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 175
+    END
+
+    IDD_DELETE_WARNING, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 269
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 143
+    END
+
+    IDD_MODALAPISHUTTLE, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 179
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 83
+    END
+
+    IDD_PAGE_CLEANUPS, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 373
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 195
+    END
+
+    IDD_PAGE_TREELIST, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 373
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 192
+    END
+
+    IDD_PAGE_TREEMAP, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 373
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 195
+    END
+
+    IDD_PAGE_GENERAL, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 373
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 195
+    END
+
+    IDD_PAGE_REPORT, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 373
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 195
+    END
+
+    IDD_CHECKFORUPDATE, DIALOG
+    BEGIN
+        LEFTMARGIN, 2
+        RIGHTMARGIN, 296
+        TOPMARGIN, 2
+        BOTTOMMARGIN, 106
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXT
+//
+
+IDR_LICENSE             TEXT                    "res\\license.txt"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Cursor
+//
+
+IDC_HANDCURSOR          CURSOR                  "res\\linkhand.cur"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE 
+BEGIN
+    IDR_MAINFRAME           "WinDirStat\n\nWinDirStat\n\n\n\n"
+    IDS_QUERYING            "(querying...)"
+    IDS_NOTACCESSIBLE       "(unavailable)"
+    IDS_TREECOL_ATTRIBUTES  "Attributes"
+END
+
+STRINGTABLE 
+BEGIN
+    AFX_IDS_APP_TITLE       "WinDirStat"
+    AFX_IDS_IDLEMESSAGE     "Ready"
+END
+
+STRINGTABLE 
+BEGIN
+    ID_INDICATOR_EXT        "EXT"
+    ID_INDICATOR_CAPS       "CAP"
+    ID_INDICATOR_NUM        "NUM"
+    ID_INDICATOR_SCRL       "SCRL"
+    ID_INDICATOR_OVR        "OVR"
+    ID_INDICATOR_REC        "REC"
+    ID_INDICATOR_MEMORYUSAGE "RAM Usage: 123.456.789"
+END
+
+STRINGTABLE 
+BEGIN
+    ID_FILE_OPEN            "Opens a Collection of Drives.\nOpen"
+END
+
+STRINGTABLE 
+BEGIN
+    ID_APP_ABOUT            "Shows Program, Version, and Copyright Information.\nInfo"
+    ID_APP_EXIT             "Quits the Application.\nQuit"
+END
+
+STRINGTABLE 
+BEGIN
+    ID_EDIT_COPY            "Copies the Selected Path into the Clipboard.\nCopy Path"
+END
+
+STRINGTABLE 
+BEGIN
+    ID_VIEW_TOOLBAR         "Shows/hides the Toolbar\nToolbar"
+    ID_VIEW_STATUS_BAR      "Shows/hides the Statusbar.\nStatusbar"
+END
+
+STRINGTABLE 
+BEGIN
+    AFX_IDS_SCSIZE          "Change the window size"
+    AFX_IDS_SCMOVE          "Change the window position"
+    AFX_IDS_SCMINIMIZE      "Reduce the window to an icon"
+    AFX_IDS_SCMAXIMIZE      "Enlarge the window to full size"
+    AFX_IDS_SCCLOSE         "Close the application"
+END
+
+STRINGTABLE 
+BEGIN
+    AFX_IDS_SCRESTORE       "Restore the window to normal size"
+    AFX_IDS_SCTASKLIST      "Activate Task List"
+END
+
+STRINGTABLE 
+BEGIN
+    ID_FILE_REFRESHALL      "Re-Reads the Whole Tree"
+    ID_CLEANUP_OPENINEXPLORER 
+                            "Opens an Explorer at the Selected Location.\nExplorer"
+    ID_TREEMAP_ZOOMIN       "Enlarges the Treemap.\nZoom in"
+END
+
+STRINGTABLE 
+BEGIN
+    ID_FILE_REFRESHSELECTED "Re-Reads the Selected Subtree"
+    ID_CLEANUP_OPENINCONSOLE 
+                            "Opens a Command Prompt at the Selected Location.\nCommand Prompt"
+    ID_CLEANUP_DELETETOTRASHBIN 
+                            "Moves the Selected Item to the Recycle Bin.\nDelete (to Recycle Bin)"
+    ID_CLEANUP_DELETE       "Deletes the Selected Item (no way to undelete!).\nDelete (no way to undelete!)"
+    ID_CONFIGURE            "Opens the Settings Dialog.\nConfigure"
+    ID_HELP_MANUAL          "Opens the WinDirStat Online Help\nManual"
+END
+
+STRINGTABLE 
+BEGIN
+    ID_TREEMAP_ZOOMOUT      "Reduces the Treemap.\nZoom out"
+    ID_TREEMAP_SELECTPARENT "Selects the Current Item's Parent.\nSelect Parent"
+    ID_TREEMAP_HELPABOUTTREEMAPS 
+                            "Displays Help about Treemaps.\nHelp about Treemaps"
+    ID_VIEW_SHOWTREEMAP     "Shows/hides the Treemap.\nTreemap"
+    ID_HELP_REPORTBUG       "Composes a Bug/Feedback Mail.\nReport Bug/Feedback"
+END
+
+STRINGTABLE 
+BEGIN
+    ID_REFRESHALL           "Rescans the whole directory tree.\nRefresh All"
+    ID_REFRESHSELECTED      "Rescans the selected subtree.\nRefresh Selected"
+    ID_CLEANUP_EMPTYRECYCLEBIN "Empties the Recycle Bin.\nEmpty Recycle Bin"
+    ID_VIEW_SHOWFREESPACE   "Shows/hides the <Free Space> Item.\nShow Free Space"
+    ID_VIEW_SHOWUNKNOWN     "Shows/hides the <Unknown> Item.\nShow Unknown"
+END
+
+STRINGTABLE 
+BEGIN
+    ID_DUMMY_USERDEFINEDCLEANUP 
+                            "Calls up User definied Cleanup #0\nUser defined Cleanup"
+END
+
+STRINGTABLE 
+BEGIN
+    ID_SENDMAILTOOWNER      "Composes an e-mail report on the currently selected item.\nSend Mail"
+END
+
+STRINGTABLE 
+BEGIN
+    ID_VIEW_SHOWFILETYPES   "Shows/hides the Extension List.\nShow File Types"
+END
+
+STRINGTABLE 
+BEGIN
+    ID_TREEMAP_RESELECTCHILD "Re-selects the child.\nReselect Child"
+    ID_CLEANUP_OPEN         "Opens the selected item.\r\nOpen Item"
+    ID_CLEANUP_PROPERTIES   "Show the properties of the selected item.\r\nShow Properties"
+END
+
+STRINGTABLE 
+BEGIN
+    IDS_ABOUT_ABOUTTEXTss   "\r\nWinDirStat - Directory Statistics\r\n\r\n""Shows where all your disk space has gone\r\nand helps you clean it up.""\r\n\r\nRe-programmed for MS Windows by\r\nBernhard Seifert (mailto:%1!s!),\r\n\r\nbased on Stefan Hundhammer's KDE (Linux) program KDirStat\r\n(http://kdirstat.sourceforge.net/).\r\n\r\nWinDirStat's home is http://%2!s!/\r\n\r\nCopyright (c) 2003-2005 The authors of WinDirStat"
+    IDS_ABOUT_THANKSTOTEXT  "\r\nStefan Hundhammer for his superb Linux tool KDirStat.\r\nUsing KDirStat (2.3.7) as a specification saved me a lot of time.\r\nhttp://kdirstat.sourceforge.net/\r\n\r\nThe authors of SequoiaView for showing just how useful treemaps really can be.\r\nhttp://www.win.tue.nl/sequoiaview/\r\n\r\nJarke J. van Wijk, Huub van de Wetering, Mark Bruls and Kees Huizing\r\nfor their papers about cushion treemaps and squarified treemaps.\r\nhttp://www.win.tue.nl/~vanwijk/\r\n\r\nBen Shneiderman for his ingenious idea of treemaps -\r\na truly intuitive way of visualizing tree contents.\r\nhttp://www.cs.umd.edu/hcil/treemap-history/\r\n\r\nMy colleagues for their feedback on the early releases of WinDirStat.\r\nhttp://www.daccord.net/\r\n\r\nBeatrix Lödige and Nick Lines for beta testing.\r\n"
+    IDS_ABOUT_ABOUT         "About"
+    IDS_ABOUT_THANKSTO      "Thanks To"
+    IDS_ABOUT_LICENSEAGREEMENT "License"
+    IDS_MYCOMPUTER          "My Computer"
+    IDS_UDC_CONFIRMATIONss  "You are going to call the user defined cleanup\r\n'%1!s!'\r\n\r\non '%2!s!'.\r\n\r\nContinue?"
+    IDS_RUDC_CONFIRMATIONss "You are going to call the recursive user defined cleanup\r\n'%1!s!'\r\n\r\non '%2!s!'.\r\n\r\nContinue?"
+END
+
+STRINGTABLE 
+BEGIN
+    IDS_RESETTODEFAULTS     "&Reset to Defaults"
+    IDS_BACKTOUSERSETTINGS  "Back to &User Settings"
+    IDS_COLLAPSE            "Co&llapse"
+    IDS_EXPAND              "E&xpand"
+    IDS_CREATEPROCESSsFAILEDs "CreateProcess(%1!s!) failed: %2!s!"
+    IDS_LANGUAGERESTARTNOW  "Language changes take not effect until the application is restarted.\r\n\r\nRestart WinDirStat now?"
+    IDS_ABOUT_AUTHORS       "Authors"
+    IDS_ABOUT_AUTHORSTEXTs  "=== Programmers ===\r\n\r\nBernhard Seifert\r\nCreator of the project and coordinator\r\n(mailto:%1!s!)\r\n\r\nOliver Schneider\r\n(mailto:assarbad#users.sourceforge.net)\r\n\r\n\r\n=== Translators ===\r\n\r\n"
+END
+
+STRINGTABLE 
+BEGIN
+    IDS_THEDIRECTORYsDOESNOTEXIST "The directory '%1!s!' doesn't exist."
+    IDS_THEFILEsDOESNOTEXIST "The file '%1!s!' doesn't exist."
+    IDS_COULDNOTCREATEPROCESSssss 
+                            "Could not create process.\r\n\r\nApplication: '%1!s!',\r\nCommand Line: '%2!s!',\r\nWorking Directory: '%3!s!'\r\nError Message:\r\n%4!s!\r\n(Refreshing will not take place.)"
+    IDS_TREECOL_NAME        "Name"
+    IDS_TREECOL_SUBTREEPERCENTAGE "Subtree Percentage"
+    IDS_TREECOL_PERCENTAGE  "Percentage"
+    IDS_TREECOL_SIZE        "Size"
+    IDS_TREECOL_ITEMS       "Items"
+    IDS_TREECOL_FILES       "Files"
+    IDS_TREECOL_SUBDIRS     "Subdirs"
+    IDS_TREECOL_LASTCHANGE  "Last Change"
+    IDS_PLEASECHECKYOURDISKUSAGE 
+                            "Please check your disk usage and clean up if you can. Thank you.\r\n"
+    IDS_DISKUSAGEREPORTGENERATEDBYWINDIRSTAT 
+                            "Disk usage report generated by WinDirStat.\r\n"
+    IDS__UNKNOWN_           "<unknown>"
+    IDS_FREESPACE_ITEM      "<Free Space>"
+    IDS_UNKNOWN_ITEM        "<Unknown>"
+END
+
+STRINGTABLE 
+BEGIN
+    IDS_FILES_ITEM          "<Files>"
+    IDS_ONEREADJOB          "[1 Read Job]"
+    IDS_sREADJOBS           "[%1!s! Read Jobs]"
+    IDS_CANNOTOPENCLIPBOARD "Cannot open the clipboard."
+    IDS_CANNOTEMTPYCLIPBOARD "Cannot empty the clipboard."
+    IDS_CANNOTSETCLIPBAORDDATA "Cannot set clipboard data."
+    IDS_WINDIRSTAT_SETTINGS "WinDirStat - Settings"
+    IDS_SCANNING_           "Scanning "
+    IDS_EMPTYRECYCLEBIN     "&Empty Recycle Bin"
+    IDS__ONEITEMss          " (1 Item, %1!s!%2!s!)"
+    IDS__sITEMSss           " (%1!s! Items, %2!s!%3!s!)"
+    IDS_UDCsCTRLd           "%1!s!\tCtrl+%2!d!"
+    IDS_USERDEFINEDCLEANUP0 "User defined cleanup #0"
+    IDS_REPORT_DISKUSAGE    "Disk Usage"
+    IDS_USERDEFINEDCLEANUPd "User defined cleanup #%1!d!"
+    IDS_POLICY_NOREFRESH    "No refresh"
+END
+
+STRINGTABLE 
+BEGIN
+    IDS_POLICY_REFRESHTHISENTRY "Refresh this entry"
+    IDS_POLICY_REFRESHPARENT "Refresh this entry's parent"
+    IDS_BUGREPORTHINT       "For a bug report, it's best if you describe the symptom, including the complete wording of the error message, and, if possible,  the steps to reproduce the behavior."
+    IDS_FEEDBACKHINT        "Feedback is always appreciated."
+    IDS_DRIVECOL_NAME       "Name"
+    IDS_DRIVECOL_TOTAL      "Total"
+    IDS_DRIVECOL_FREE       "Free"
+    IDS_DRIVECOL_GRAPH      "Used/Total"
+    IDS_DRIVECOL_PERCENTUSED "Used/Total"
+    IDS_SELECTFOLDER        "WinDirStat - Select Folder"
+END
+
+STRINGTABLE 
+BEGIN
+    IDS_EXTCOL_EXTENSION    "Extension"
+    IDS_EXTCOL_COLOR        "Color"
+    IDS_EXTCOL_BYTES        "Bytes"
+    IDS_EXTCOL_FILES        "Files"
+    IDS_EXTCOL_DESCRIPTION  "Description"
+    IDS_RAMUSAGEs           "RAM Usage: %1!s!"
+    IDS_HELPFILEsCOULDNOTBEFOUND 
+                            "The help file %1!s! could not be found.\r\nIt is expected to be in the same folder where windirstat.exe is.\r\nYou should have received it along with windirstat.exe.\r\nYou can download one from WinDirStat's home site (see About box)."
+    IDS_SUSPENDED_          "(suspended) "
+    IDS_SUSPEND             "Suspend"
+    IDS_SPEC_BYTES          "Bytes"
+    IDS_SPEC_KB             "KB"
+    IDS_SPEC_MB             "MB"
+    IDS_SPEC_GB             "GB"
+    IDS_SPEC_TB             "TB"
+    IDS_RESETTO_DEFAULTS    "&Reset to\r\nDefaults"
+    IDS_BACKTO_USERSETTINGS "Back to\r\n&User Settings"
+END
+
+STRINGTABLE 
+BEGIN
+    ID_HELP_CHECKFORUPDATES "Checks if any updates are available"
+END
+
+#endif    // English (U.S.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+#define _AFX_NO_OLE_RESOURCES
+#define _AFX_NO_TRACKER_RESOURCES
+#define _AFX_NO_PROPERTY_RESOURCES
+
+#if !defined(AFX_RESOURCE_DLL)
+LANGUAGE 9, 1
+#pragma code_page(1252)
+#include "res\windirstat.rc2"  // non-Microsoft Visual C++ edited resources
+#include "afxres.rc"         // Standard components
+
+#endif
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+
