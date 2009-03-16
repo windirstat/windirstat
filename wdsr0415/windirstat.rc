@@ -116,61 +116,62 @@ BEGIN
     BEGIN
         MENUITEM "&Otwórz...\tCtrl+O",          ID_FILE_OPEN
         MENUITEM SEPARATOR
-        MENUITEM "Odswiez &wszystko",           ID_REFRESHALL
-        MENUITEM "Odswiez z&aznaczone\tF5",     ID_REFRESHSELECTED
+        MENUITEM "Odœwie¿ &wszystko",           ID_REFRESHALL
+        MENUITEM "Odœwie¿ z&aznaczone\tF5",     ID_REFRESHSELECTED
         MENUITEM SEPARATOR
-        MENUITEM "&Zakoncz\tAlt+F4",            ID_APP_EXIT
+        MENUITEM "&Zakoñcz\tAlt+F4",            ID_APP_EXIT
     END
     POPUP "&Edycja"
     BEGIN
-        MENUITEM "&Kopiuj sciezke\tCtrl+C",     ID_EDIT_COPY
+        MENUITEM "&Kopiuj œcie¿kê\tCtrl+C",     ID_EDIT_COPY
     END
-    POPUP "&Porzadkowanie"
+    POPUP "&Porz¹dkowanie"
     BEGIN
         MENUITEM "&Otwórz\tEnter",              ID_CLEANUP_OPEN
         MENUITEM SEPARATOR
         MENUITEM "&Eksploruj\tCtrl+E",          ID_CLEANUP_OPENINEXPLORER
         MENUITEM "Wiersz &Polecenia\tCtrl+P",   ID_CLEANUP_OPENINCONSOLE
-        MENUITEM "&Usun (do Kosza)\tDel",       ID_CLEANUP_DELETETOTRASHBIN
-        MENUITEM "Usun (tr&wale!)\tShift+Del",  ID_CLEANUP_DELETE
+        MENUITEM "&Usuñ (do Kosza)\tDel",       ID_CLEANUP_DELETETOTRASHBIN
+        MENUITEM "Usuñ (tr&wale!)\tShift+Del",  ID_CLEANUP_DELETE
         MENUITEM SEPARATOR
-        MENUITEM "&Wlasciwosci",                ID_CLEANUP_PROPERTIES
+        MENUITEM "&W³aœciwoœci",                ID_CLEANUP_PROPERTIES
         MENUITEM SEPARATOR
-        MENUITEM "Opróznij &Kosz",              ID_CLEANUP_EMPTYRECYCLEBIN
+        MENUITEM "Opró¿nij &Kosz",              ID_CLEANUP_EMPTYRECYCLEBIN
         MENUITEM SEPARATOR
-        MENUITEM "Porzadkowanie uzytkownika #0", ID_DUMMY_USERDEFINEDCLEANUP, GRAYED
+        MENUITEM "Porz¹dkowanie u¿ytkownika #0", ID_DUMMY_USERDEFINEDCLEANUP
+        , GRAYED
     END
     POPUP "&Mapa drzewa"
     BEGIN
-        MENUITEM "&Pokaz Mape Drzewa\tF9",      ID_VIEW_SHOWTREEMAP
+        MENUITEM "&Poka¿ Mapê Drzewa\tF9",      ID_VIEW_SHOWTREEMAP
         MENUITEM SEPARATOR
-        MENUITEM "Po&wieksz\t+",                ID_TREEMAP_ZOOMIN
+        MENUITEM "Po&wiêksz\t+",                ID_TREEMAP_ZOOMIN
         MENUITEM "Po&mniejsz\t-",               ID_TREEMAP_ZOOMOUT
-        MENUITEM "Skocz poziom &nizej\t*",      33011
-        MENUITEM "Skocz poziom &wyzej\t/",      ID_TREEMAP_SELECTPARENT
+        MENUITEM "Skocz poziom &ni¿ej\t*",      33011
+        MENUITEM "Skocz poziom &wy¿ej\t/",      ID_TREEMAP_SELECTPARENT
         MENUITEM SEPARATOR
         MENUITEM "&Mapa Drzewa - pomoc",        ID_TREEMAP_HELPABOUTTREEMAPS
     END
     POPUP "&Raport"
     BEGIN
-        MENUITEM "&Wyslij poczte do uzytkownika...", ID_SENDMAILTOOWNER
+        MENUITEM "&Wyœlij pocztê do u¿ytkownika...", ID_SENDMAILTOOWNER
     END
     POPUP "&Opcje"
     BEGIN
-        MENUITEM "Pokaz &Wolna Przestrzen\tF6", ID_VIEW_SHOWFREESPACE
-        MENUITEM "Pokaz elementy &nieznany\tF7", ID_VIEW_SHOWUNKNOWN
+        MENUITEM "Poka¿ &Woln¹ Przestrzeñ\tF6", ID_VIEW_SHOWFREESPACE
+        MENUITEM "Poka¿ elementy &nieznany\tF7", ID_VIEW_SHOWUNKNOWN
         MENUITEM SEPARATOR
-        MENUITEM "Pokaz &typy plików\tF8",      ID_VIEW_SHOWFILETYPES
-        MENUITEM "Pokaz &Mape Drzewa\tF9",      ID_VIEW_SHOWTREEMAP
-        MENUITEM "Pokaz &Pasek Narzedzi",       ID_VIEW_TOOLBAR
-        MENUITEM "Pokaz Pasek &Stanu",          ID_VIEW_STATUS_BAR
+        MENUITEM "Poka¿ &typy plików\tF8",      ID_VIEW_SHOWFILETYPES
+        MENUITEM "Poka¿ &Mapê Drzewa\tF9",      ID_VIEW_SHOWTREEMAP
+        MENUITEM "Poka¿ &Pasek Narzêdzi",       ID_VIEW_TOOLBAR
+        MENUITEM "Poka¿ Pasek &Stanu",          ID_VIEW_STATUS_BAR
         MENUITEM SEPARATOR
         MENUITEM "&Konfiguracja WinDirStat...", ID_CONFIGURE
     END
     POPUP "&Pomoc"
     BEGIN
         MENUITEM "&Pomoc\tF1",                  ID_HELP_MANUAL
-        MENUITEM "&Zglos blad...",              ID_HELP_REPORTBUG
+        MENUITEM "&Zg³oœ b³¹d...",              ID_HELP_REPORTBUG
         MENUITEM SEPARATOR
         MENUITEM "&O WinDirStat...",            ID_APP_ABOUT
     END
@@ -184,15 +185,15 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "&Otwórz\tEnter",              ID_CLEANUP_OPEN
         MENUITEM SEPARATOR
-        MENUITEM "&Kopiuj sciezke\tCtrl+C",     57634
+        MENUITEM "&Kopiuj œcie¿kê\tCtrl+C",     57634
         MENUITEM "&Eksploruj\tCtrl+E",          32774
         MENUITEM "Wiersz &Polecenia\tCtrl+P",   32808
-        MENUITEM "Odswiez z&aznaczone\tF5",     32817
+        MENUITEM "Odœwie¿ z&aznaczone\tF5",     32817
         MENUITEM SEPARATOR
-        MENUITEM "&Usun (do Kosza)\tDel",       32809
-        MENUITEM "Usun (tr&wale!)\tShift+Del",  32810
+        MENUITEM "&Usuñ (do Kosza)\tDel",       32809
+        MENUITEM "Usuñ (tr&wale!)\tShift+Del",  32810
         MENUITEM SEPARATOR
-        MENUITEM "Wlas&ciwosci",                ID_CLEANUP_PROPERTIES
+        MENUITEM "W³aœ&ciwoœci",                ID_CLEANUP_PROPERTIES
         MENUITEM SEPARATOR
     END
 END
@@ -201,12 +202,12 @@ IDR_POPUPGRAPH MENU
 BEGIN
     POPUP "POPUP_GRAPH"
     BEGIN
-        MENUITEM "Po&wieksz\t+",                32783
+        MENUITEM "Po&wiêksz\t+",                32783
         MENUITEM "Po&mniejsz\t-",               32784
-        MENUITEM "Skocz poziom &nizej\t*",      ID_TREEMAP_RESELECTCHILD
-        MENUITEM "&Skocz poziom wyzej\t/",      ID_TREEMAP_SELECTPARENT
+        MENUITEM "Skocz poziom &ni¿ej\t*",      ID_TREEMAP_RESELECTCHILD
+        MENUITEM "&Skocz poziom wy¿ej\t/",      ID_TREEMAP_SELECTPARENT
         MENUITEM SEPARATOR
-        MENUITEM "&Kopiuj sciezke\tCtrl+C",     57634
+        MENUITEM "&Kopiuj œcie¿kê\tCtrl+C",     57634
         MENUITEM "&Eksploruj\tCtrl+E",          32774
         MENUITEM "Wiersz &Polecenia\tCtrl+P",   32808
         MENUITEM SEPARATOR
@@ -260,25 +261,33 @@ END
 //
 
 IDD_ABOUTBOX DIALOGEX 0, 0, 273, 199
-STYLE DS_SETFONT | WS_POPUP | WS_CLIPCHILDREN | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
+STYLE DS_SETFONT | WS_POPUP | WS_CLIPCHILDREN | WS_CAPTION | WS_SYSMENU | 
+    WS_THICKFRAME
 CAPTION "O WinDirStat"
 FONT 9, "Microsoft Sans Serif", 400, 0, 0x0
 BEGIN
-    CONTROL         "",IDC_TAB,"SysTabControl32",WS_TABSTOP,7,22,259,155,WS_EX_ACCEPTFILES
+    CONTROL         "",IDC_TAB,"SysTabControl32",WS_TABSTOP,7,22,259,155,
+                    WS_EX_ACCEPTFILES
     DEFPUSHBUTTON   "OK",IDOK,111,180,50,12,WS_GROUP
     CTEXT           "WinDirStat 0.0.000",IDC_CAPTION,69,7,134,8
     ICON            IDR_MAINFRAME,IDC_STATIC,7,3,20,20
 END
 
 IDD_SELECTDRIVES DIALOGEX 0, 0, 276, 182
-STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU | 
+    WS_THICKFRAME
 CAPTION "WinDirStat - Wybierz dyski"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    CONTROL         "&Wszystkie dyski lokalne",IDC_ALLLOCALDRIVES,"Button",BS_AUTORADIOBUTTON | WS_GROUP,7,7,99,10
-    CONTROL         "&Okreslone dyski",IDC_SOMEDRIVES,"Button",BS_AUTORADIOBUTTON,7,31,91,10
-    CONTROL         "",IDC_DRIVES,"SysListView32",LVS_REPORT | LVS_OWNERDRAWFIXED | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,7,43,262,100
-    CONTROL         "&Katalog",IDC_AFOLDER,"Button",BS_AUTORADIOBUTTON,7,150,100,10
+    CONTROL         "&Wszystkie dyski lokalne",IDC_ALLLOCALDRIVES,"Button",
+                    BS_AUTORADIOBUTTON | WS_GROUP,7,7,99,10
+    CONTROL         "&Okreœlone dyski",IDC_SOMEDRIVES,"Button",
+                    BS_AUTORADIOBUTTON,7,31,91,10
+    CONTROL         "",IDC_DRIVES,"SysListView32",LVS_REPORT | 
+                    LVS_OWNERDRAWFIXED | LVS_ALIGNLEFT | WS_BORDER | 
+                    WS_TABSTOP,7,43,262,100
+    CONTROL         "&Katalog",IDC_AFOLDER,"Button",BS_AUTORADIOBUTTON,7,150,
+                    100,10
     EDITTEXT        IDC_FOLDERNAME,6,161,209,14,ES_AUTOHSCROLL
     PUSHBUTTON      "...",IDC_BROWSEFOLDER,219,161,50,14
     DEFPUSHBUTTON   "OK",IDOK,219,7,50,14
@@ -286,103 +295,145 @@ BEGIN
 END
 
 IDD_DELETE_WARNING DIALOGEX 0, 0, 276, 150
-STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Ostrzezenie"
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | 
+    WS_SYSMENU
+CAPTION "Ostrze¿enie"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     DEFPUSHBUTTON   "Nie",IDNO,163,129,50,14
     PUSHBUTTON      "Tak",IDYES,63,129,50,14
-    CONTROL         "&Nie pokazuj tego ostrzezenia ponownie.",IDC_DONTSHOWAGAIN,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,130,99,139,10
-    LTEXT           "Czy jestes pewien?",IDC_STATIC,7,7,110,8
-    LTEXT           "Zamierzasz usunac",IDC_STATIC,7,23,82,8
+    CONTROL         "&Nie pokazuj tego ostrze¿enia ponownie.",
+                    IDC_DONTSHOWAGAIN,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
+                    130,99,139,10
+    LTEXT           "Czy jesteœ pewien?",IDC_STATIC,7,7,110,8
+    LTEXT           "Zamierzasz usun¹æ",IDC_STATIC,7,23,82,8
     CTEXT           "<filename>",IDC_FILENAME,7,38,262,8,SS_PATHELLIPSIS
     LTEXT           "z dysku.",IDC_STATIC,7,53,67,8
-    LTEXT           "Usuniecie plików lub katalogów systemowych moze powaznie uszkodzic Twój system!",IDC_STATIC,7,76,262,19
-    LTEXT           "Czy kontynuowac?",IDC_STATIC,7,99,104,8
+    LTEXT           "Usuniêcie plików lub katalogów systemowych mo¿e powa¿nie uszkodziæ Twój system!",
+                    IDC_STATIC,7,76,262,19
+    LTEXT           "Czy kontynuowaæ?",IDC_STATIC,7,99,104,8
 END
 
 IDD_MODALAPISHUTTLE DIALOGEX 0, 0, 186, 90
-STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | 
+    WS_SYSMENU
 CAPTION "<invisible dialog>"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
 END
 
 IDD_PAGE_CLEANUPS DIALOGEX 0, 0, 380, 202
-STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | WS_SYSMENU
-CAPTION "Porzadkowanie"
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | 
+    WS_SYSMENU
+CAPTION "Porz¹dkowanie"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    LISTBOX         IDC_LIST,7,7,113,169,LBS_HASSTRINGS | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "&Aktywne",IDC_ENABLED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,129,7,53,10
+    LISTBOX         IDC_LIST,7,7,113,169,LBS_HASSTRINGS | 
+                    LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "&Aktywne",IDC_ENABLED,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,129,7,53,10
     EDITTEXT        IDC_TITLE,212,7,161,14,ES_AUTOHSCROLL
     EDITTEXT        IDC_COMMANDLINE,129,35,244,14,ES_AUTOHSCROLL
-    LTEXT           "%p Pelna sciezka",IDC_STATIC,128,54,93,8
-    LTEXT           "%n Nazwa pliku/katalogu bez sciezki",IDC_STATIC,225,54,138,8
-    LTEXT           "%sp Pelna sciezka do podkatalogu",IDC_HINTSP,128,63,94,8
-    LTEXT           "%sn Nazwa podkatalogu bez sciezki",IDC_HINTSN,225,63,138,8
-    CONTROL         "D&yski",IDC_WORKSFORDRIVES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,138,92,49,10
-    CONTROL         "&Katalogi",IDC_WORKSFORDIRECTORIES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,208,92,69,10
-    CONTROL         "S&ciezki UNC",IDC_WORKSFORUNCPATHS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,304,92,61,10
-    CONTROL         "&Pliki",IDC_WORKSFORFILES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,138,107,57,10
-    CONTROL         "<Pliki> &Pseudo wpisy",IDC_WORKSFORFILESFOLDER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,207,107,92,10
+    LTEXT           "%p Pe³na œcie¿ka",IDC_STATIC,128,54,93,8
+    LTEXT           "%n Nazwa pliku/katalogu bez œcie¿ki",IDC_STATIC,225,54,
+                    138,8
+    LTEXT           "%sp Pe³na œcie¿ka do podkatalogu",IDC_HINTSP,128,63,94,
+                    8
+    LTEXT           "%sn Nazwa podkatalogu bez œcie¿ki",IDC_HINTSN,225,63,
+                    138,8
+    CONTROL         "D&yski",IDC_WORKSFORDRIVES,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,138,92,49,10
+    CONTROL         "&Katalogi",IDC_WORKSFORDIRECTORIES,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,208,92,69,10
+    CONTROL         "Œ&cie¿ki UNC",IDC_WORKSFORUNCPATHS,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,304,92,61,10
+    CONTROL         "&Pliki",IDC_WORKSFORFILES,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,138,107,57,10
+    CONTROL         "<Pliki> &Pseudo wpisy",IDC_WORKSFORFILESFOLDER,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,207,107,92,10
     PUSHBUTTON      "Po&moc",IDC_HELPBUTTON,323,131,50,14
-    CONTROL         "&Uwzglednij podkatalogi",IDC_RECURSEINTOSUBDIRECTORIES,
+    CONTROL         "&Uwzglêdnij podkatalogi",IDC_RECURSEINTOSUBDIRECTORIES,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,128,132,160,10
-    CONTROL         "Pytaj o potwie&rdzenie",IDC_ASKFORCONFIRMATION,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,128,146,160,10
-    CONTROL         "&Pokaz Wiersz Polecenia",IDC_SHOWCONSOLEWINDOW,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,128,160,100,10
-    CONTROL         "Cze&kaj na zakonczenie",IDC_WAITFORCOMPLETION,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,250,160,100,10
-    COMBOBOX        IDC_REFRESHPOLICY,128,183,245,93,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Pytaj o potwie&rdzenie",IDC_ASKFORCONFIRMATION,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,128,146,160,10
+    CONTROL         "&Poka¿ Wiersz Polecenia",IDC_SHOWCONSOLEWINDOW,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,128,160,100,10
+    CONTROL         "Cze&kaj na zakoñczenie",IDC_WAITFORCOMPLETION,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,250,160,100,10
+    COMBOBOX        IDC_REFRESHPOLICY,128,183,245,93,CBS_DROPDOWNLIST | 
+                    WS_VSCROLL | WS_TABSTOP
     PUSHBUTTON      "&Góra",IDC_UP,21,181,37,14
-    PUSHBUTTON      "&Dól",IDC_DOWN,66,181,37,14
-    LTEXT           "Reguly &odswiezania",IDC_STATIC,128,174,108,8
+    PUSHBUTTON      "&Dó³",IDC_DOWN,66,181,37,14
+    LTEXT           "Regu³y &odœwie¿ania",IDC_STATIC,128,174,108,8
     LTEXT           "&Nazwa",IDC_STATIC,186,7,24,8
     LTEXT           "&Wiersz polecenia",IDC_STATIC,129,25,83,8
     GROUPBOX        "Zastosuj do",IDC_STATIC,129,81,244,40
 END
 
 IDD_PAGE_TREELIST DIALOGEX 0, 0, 380, 199
-STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | WS_SYSMENU
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | 
+    WS_SYSMENU
 CAPTION "Lista Katalogów"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    CONTROL         "Animacja &Pacman",IDC_PACMANANIMATION,"Button",BS_AUTOCHECKBOX | BS_MULTILINE | WS_TABSTOP,7,7,102,19
-    CONTROL         "Pokaz &czas skanowania",IDC_SHOWTIMESPENT,"Button",BS_AUTOCHECKBOX | BS_MULTILINE | WS_TABSTOP,7,30,95,19
-    GROUPBOX        "&Kolory poddrzewa - procentowo",IDC_STATIC,129,7,244,185
-    PUSHBUTTON      "Drzewo - poziom &1",IDC_COLORBUTTON0,151,19,175,14,0,WS_EX_RIGHT
-    PUSHBUTTON      "Drzewo - poziom &2",IDC_COLORBUTTON1,167,40,159,14,0,WS_EX_RIGHT
-    PUSHBUTTON      "Drzewo - poziom &3",IDC_COLORBUTTON2,181,61,145,14,0,WS_EX_RIGHT
-    PUSHBUTTON      "Drzewo - poziom &4",IDC_COLORBUTTON3,195,82,131,14,0,WS_EX_RIGHT
-    PUSHBUTTON      "Drzewo - poziom &5",IDC_COLORBUTTON4,207,103,119,14,0,WS_EX_RIGHT
-    PUSHBUTTON      "Drzewo - poziom &6",IDC_COLORBUTTON5,218,124,108,14,0,WS_EX_RIGHT
-    PUSHBUTTON      "Drzewo - poziom &7",IDC_COLORBUTTON6,227,145,99,14,0,WS_EX_RIGHT
-    PUSHBUTTON      "Drzewo - poziom &8",IDC_COLORBUTTON7,236,166,90,14,0,WS_EX_RIGHT
-    CONTROL         "",IDC_SLIDER,"msctls_trackbar32",TBS_VERT | TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,339,29,18,160
+    CONTROL         "Animacja &Pacman",IDC_PACMANANIMATION,"Button",
+                    BS_AUTOCHECKBOX | BS_MULTILINE | WS_TABSTOP,7,7,102,19
+    CONTROL         "Poka¿ &czas skanowania",IDC_SHOWTIMESPENT,"Button",
+                    BS_AUTOCHECKBOX | BS_MULTILINE | WS_TABSTOP,7,30,95,19
+    GROUPBOX        "&Kolory poddrzewa - procentowo",IDC_STATIC,129,7,244,
+                    185
+    PUSHBUTTON      "Drzewo - poziom &1",IDC_COLORBUTTON0,151,19,175,14,0,
+                    WS_EX_RIGHT
+    PUSHBUTTON      "Drzewo - poziom &2",IDC_COLORBUTTON1,167,40,159,14,0,
+                    WS_EX_RIGHT
+    PUSHBUTTON      "Drzewo - poziom &3",IDC_COLORBUTTON2,181,61,145,14,0,
+                    WS_EX_RIGHT
+    PUSHBUTTON      "Drzewo - poziom &4",IDC_COLORBUTTON3,195,82,131,14,0,
+                    WS_EX_RIGHT
+    PUSHBUTTON      "Drzewo - poziom &5",IDC_COLORBUTTON4,207,103,119,14,0,
+                    WS_EX_RIGHT
+    PUSHBUTTON      "Drzewo - poziom &6",IDC_COLORBUTTON5,218,124,108,14,0,
+                    WS_EX_RIGHT
+    PUSHBUTTON      "Drzewo - poziom &7",IDC_COLORBUTTON6,227,145,99,14,0,
+                    WS_EX_RIGHT
+    PUSHBUTTON      "Drzewo - poziom &8",IDC_COLORBUTTON7,236,166,90,14,0,
+                    WS_EX_RIGHT
+    CONTROL         "",IDC_SLIDER,"msctls_trackbar32",TBS_VERT | TBS_BOTH | 
+                    TBS_NOTICKS | WS_TABSTOP,339,29,18,160
 END
 
 IDD_PAGE_TREEMAP DIALOGEX 0, 0, 380, 202
-STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | WS_SYSMENU
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | 
+    WS_SYSMENU
 CAPTION "Mapa drzewa"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    CTEXT           "&Jasnosc",IDC_STATIC,237,122,32,18
-    CONTROL         "",IDC_BRIGHTNESS,"msctls_trackbar32",TBS_VERT | TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,245,17,16,104
+    CTEXT           "&Jasnoœæ",IDC_STATIC,237,122,32,18
+    CONTROL         "",IDC_BRIGHTNESS,"msctls_trackbar32",TBS_VERT | 
+                    TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,245,17,16,104
     CTEXT           "&Cienio-\r\nwanie",IDC_STATIC,271,122,32,18
-    CONTROL         "",IDC_CUSHIONSHADING,"msctls_trackbar32",TBS_VERT | TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,279,17,16,104
-    CTEXT           "&Wyso-\r\nkosc",IDC_STATIC,305,122,32,18
-    CONTROL         "",IDC_HEIGHT,"msctls_trackbar32",TBS_VERT | TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,313,17,16,104
+    CONTROL         "",IDC_CUSHIONSHADING,"msctls_trackbar32",TBS_VERT | 
+                    TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,279,17,16,104
+    CTEXT           "&Wyso-\r\nkoœæ",IDC_STATIC,305,122,32,18
+    CONTROL         "",IDC_HEIGHT,"msctls_trackbar32",TBS_VERT | TBS_BOTH | 
+                    TBS_NOTICKS | WS_TABSTOP,313,17,16,104
     CTEXT           "&Skala",IDC_STATIC,339,122,32,18
-    CONTROL         "",IDC_SCALEFACTOR,"msctls_trackbar32",TBS_VERT | TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,347,17,16,104
-    RTEXT           "&Padanie swiatla",IDC_STATIC,246,147,59,8
+    CONTROL         "",IDC_SCALEFACTOR,"msctls_trackbar32",TBS_VERT | 
+                    TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,347,17,16,104
+    RTEXT           "&Padanie œwiat³a",IDC_STATIC,246,147,59,8
     LTEXT           "Static",IDC_LIGHTSOURCE,313,146,58,48,WS_TABSTOP
     PUSHBUTTON      "",IDC_RESET,242,167,55,22,BS_MULTILINE
     GROUPBOX        "St&yl",IDC_STATIC,7,146,63,49
-    CONTROL         "&KDirStat",IDC_KDIRSTAT,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,12,159,42,10
-    CONTROL         "Se&quoiaView",IDC_SEQUOIAVIEW,"Button",BS_AUTORADIOBUTTON,12,176,53,10
-    CONTROL         "Pokaz sia&tke",IDC_TREEMAPGRID,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,76,150,54,10
-    PUSHBUTTON      "K&olor siatki",IDC_TREEMAPGRIDCOLOR,134,150,85,14,0,WS_EX_RIGHT
-    PUSHBUTTON      "&Zaznaczony prostokat",IDC_TREEMAPHIGHLIGHTCOLOR,76,175,143,14,0,WS_EX_RIGHT
+    CONTROL         "&KDirStat",IDC_KDIRSTAT,"Button",BS_AUTORADIOBUTTON | 
+                    WS_GROUP | WS_TABSTOP,12,159,42,10
+    CONTROL         "Se&quoiaView",IDC_SEQUOIAVIEW,"Button",
+                    BS_AUTORADIOBUTTON,12,176,53,10
+    CONTROL         "Poka¿ sia&tkê",IDC_TREEMAPGRID,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,76,150,54,10
+    PUSHBUTTON      "K&olor siatki",IDC_TREEMAPGRIDCOLOR,134,150,85,14,0,
+                    WS_EX_RIGHT
+    PUSHBUTTON      "&Zaznaczony prostok¹t",IDC_TREEMAPHIGHLIGHTCOLOR,76,175,
+                    143,14,0,WS_EX_RIGHT
     CTEXT           "Static",IDC_STATICSCALEFACTOR,339,7,32,8
     CTEXT           "Static",IDC_STATICHEIGHT,305,7,32,8
     CTEXT           "Static",IDC_STATICCUSHIONSHADING,271,7,32,8
@@ -391,38 +442,50 @@ BEGIN
 END
 
 IDD_PAGE_GENERAL DIALOGEX 0, 0, 380, 202
-STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | WS_SYSMENU
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | 
+    WS_SYSMENU
 CAPTION "Ogólne"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    CONTROL         "&System plików bez ograniczen",IDC_FOLLOWMOUNTPOINTS,
+    CONTROL         "&System plików bez ograniczeñ",IDC_FOLLOWMOUNTPOINTS,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,13,229,10
-    CONTROL         "Przejdz przez punkty k&rzyzowe (oprócz punktów montowania dysków)",IDC_FOLLOWJUNCTIONS,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,27,287,10
-    CONTROL         "Pokaz rozmiar w &formacie GB/MB/kB/Bajty",IDC_HUMANFORMAT,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,41,229,10
+    CONTROL         "PrzejdŸ przez punkty k&rzy¿owe (oprócz punktów montowania dysków)",
+                    IDC_FOLLOWJUNCTIONS,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,32,27,287,10
+    CONTROL         "Poka¿ rozmiar w &formacie GB/MB/kB/Bajty",
+                    IDC_HUMANFORMAT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,
+                    41,229,10
     GROUPBOX        "Styl &listy",IDC_STATIC,30,61,102,65
-    CONTROL         "&Wybierz caly wiersz",IDC_FULLROWSELECTION,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,38,76,85,10
-    CONTROL         "Pokaz sia&tke",IDC_SHOWGRID,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,38,93,68,10
-    CONTROL         "Pokaz Pas&ki",IDC_SHOWSTRIPES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,38,110,68,10
-    LTEXT           "&Jezyk",IDC_STATIC,32,139,166,8
-    COMBOBOX        IDC_COMBO,32,152,156,140,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "&Uzyj ustawien jezyka do formatowania daty/czasu i liczb",IDC_USEWDSLOCALE,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,172,298,10
+    CONTROL         "&Wybierz ca³y wiersz",IDC_FULLROWSELECTION,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,38,76,85,10
+    CONTROL         "Poka¿ sia&tkê",IDC_SHOWGRID,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,38,93,68,10
+    CONTROL         "Poka¿ Pas&ki",IDC_SHOWSTRIPES,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,38,110,68,10
+    LTEXT           "&Jêzyk",IDC_STATIC,32,139,166,8
+    COMBOBOX        IDC_COMBO,32,152,156,140,CBS_DROPDOWNLIST | CBS_SORT | 
+                    WS_VSCROLL | WS_TABSTOP
+    CONTROL         "&U¿yj ustawieñ jêzyka do formatowania daty/czasu i liczb",
+                    IDC_USEWDSLOCALE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
+                    32,172,298,10
 END
 
 IDD_PAGE_REPORT DIALOGEX 0, 0, 380, 202
-STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | WS_SYSMENU
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | 
+    WS_SYSMENU
 CAPTION "Raport"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    LTEXT           "Mozesz tutaj spersonalizowac raporty wysylane do uzytkownika poczta elektroniczna.",IDC_STATIC,7,9,268,8
+    LTEXT           "Mo¿esz tutaj spersonalizowaæ raporty wysy³ane do u¿ytkownika poczt¹ elektroniczn¹.",
+                    IDC_STATIC,7,9,268,8
     LTEXT           "&Temat",IDC_STATIC,7,31,46,8
     EDITTEXT        IDC_SUBJECT,59,31,314,14,ES_AUTOHSCROLL
     LTEXT           "&Prefiks",IDC_STATIC,7,51,46,8
-    EDITTEXT        IDC_PREFIX,59,51,314,54,ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_WANTRETURN
+    EDITTEXT        IDC_PREFIX,59,51,314,54,ES_MULTILINE | ES_AUTOVSCROLL | 
+                    ES_AUTOHSCROLL | ES_WANTRETURN
     LTEXT           "S&ufiks",IDC_STATIC,7,111,46,8
-    EDITTEXT        IDC_SUFFIX,59,111,314,54,ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_WANTRETURN
+    EDITTEXT        IDC_SUFFIX,59,111,314,54,ES_MULTILINE | ES_AUTOVSCROLL | 
+                    ES_AUTOHSCROLL | ES_WANTRETURN
     PUSHBUTTON      "",IDC_RESET,59,174,89,14
 END
 
@@ -519,7 +582,7 @@ STRINGTABLE
 BEGIN
     IDR_MAINFRAME           "WinDirStat\n\nWinDirStat\n\n\n\n"
     IDS_QUERYING            "(skanowanie...)"
-    IDS_NOTACCESSIBLE       "(niedostepne)"
+    IDS_NOTACCESSIBLE       "(niedostêpne)"
     IDS_TREECOL_ATTRIBUTES  "Atrybuty"
 END
 
@@ -537,35 +600,35 @@ BEGIN
     ID_INDICATOR_SCRL       "SCRL"
     ID_INDICATOR_OVR        "OVR"
     ID_INDICATOR_REC        "REC"
-    ID_INDICATOR_MEMORYUSAGE "Uzycie RAM: 123.456.789"
+    ID_INDICATOR_MEMORYUSAGE "U¿ycie RAM: 123.456.789"
 END
 
 STRINGTABLE 
 BEGIN
-    ID_FILE_OPEN            "Pozwala wybrac dyski.\nOpen"
+    ID_FILE_OPEN            "Pozwala wybraæ dyski.\nOpen"
 END
 
 STRINGTABLE 
 BEGIN
     ID_APP_ABOUT            "Pokazuje informacje o programie, wersji, licencji.\nInformacje"
-    ID_APP_EXIT             "Konczy prace z programem.\nKoniec pracy"
+    ID_APP_EXIT             "Koñczy pracê z programem.\nKoniec pracy"
 END
 
 STRINGTABLE 
 BEGIN
-    ID_EDIT_COPY            "Kopiuje wybrana sciezke do Schowka.\nKopiuj sciezke"
+    ID_EDIT_COPY            "Kopiuje wybran¹ œcie¿kê do Schowka.\nKopiuj œcie¿kê"
 END
 
 STRINGTABLE 
 BEGIN
-    ID_VIEW_TOOLBAR         "Pokazuje/ukrywa Pasek Narzedzi\nPasek Narzedzi"
+    ID_VIEW_TOOLBAR         "Pokazuje/ukrywa Pasek Narzêdzi\nPasek Narzêdzi"
     ID_VIEW_STATUS_BAR      "Pokazuje/ukrywa Pasek Statusu.\nPasek Statusu"
 END
 
 STRINGTABLE 
 BEGIN
     AFX_IDS_SCSIZE          "Zmienia rozmiar okna programu"
-    AFX_IDS_SCMOVE          "Zmienia pozycje okna programu"
+    AFX_IDS_SCMOVE          "Zmienia pozycjê okna programu"
     AFX_IDS_SCMINIMIZE      "Minimalizuje okno programu"
     AFX_IDS_SCMAXIMIZE      "Maksymalizuje okno programu"
     AFX_IDS_SCCLOSE         "Zamyka program"
@@ -574,95 +637,95 @@ END
 STRINGTABLE 
 BEGIN
     AFX_IDS_SCRESTORE       "Przywraca normalny rozmiar okna programu"
-    AFX_IDS_SCTASKLIST      "Aktywuje liste zadan"
+    AFX_IDS_SCTASKLIST      "Aktywuje listê zadañ"
 END
 
 STRINGTABLE 
 BEGIN
-    ID_FILE_REFRESHALL      "Odswieza zawartosc drzewa"
+    ID_FILE_REFRESHALL      "Odœwie¿a zawartoœæ drzewa"
     ID_CLEANUP_OPENINEXPLORER 
                             "Otwiera Exploratora Windows dla wybranej lokacji.\nEksplorator Windows"
-    ID_TREEMAP_ZOOMIN       "Powieksza mape drzewa.\nPowieksz"
+    ID_TREEMAP_ZOOMIN       "Powiêksza mapê drzewa.\nPowiêksz"
 END
 
 STRINGTABLE 
 BEGIN
-    ID_FILE_REFRESHSELECTED "Odswieza zawartosc wybranego poddrzewa"
+    ID_FILE_REFRESHSELECTED "Odœwie¿a zawartoœæ wybranego poddrzewa"
     ID_CLEANUP_OPENINCONSOLE 
                             "Otwiera Wiersz Polecenia dla wybranej lokacji.\nWiersz Polecenia"
     ID_CLEANUP_DELETETOTRASHBIN 
-                            "Przenosi wybrana pozycje do Kosza.\nUsun (do Kosza)"
-    ID_CLEANUP_DELETE       "Trwale usuwa wybrana pozycje.\nUsun (bez mozliwosci przywrócenia!)"
+                            "Przenosi wybran¹ pozycjê do Kosza.\nUsuñ (do Kosza)"
+    ID_CLEANUP_DELETE       "Trwale usuwa wybran¹ pozycjê.\nUsuñ (bez mo¿liwoœci przywrócenia!)"
     ID_CONFIGURE            "Otwiera okno konfiguracji programu.\nKonfiguracja"
     ID_HELP_MANUAL          "Otwiera okno pomocy WinDirStat\nPomoc"
 END
 
 STRINGTABLE 
 BEGIN
-    ID_TREEMAP_ZOOMOUT      "Pomniejsza mape drzewa.\nPomniejsz"
-    ID_TREEMAP_SELECTPARENT "Skacze poziom wyzej dla danej pozycji.\nWybierz poziom wyzej"
+    ID_TREEMAP_ZOOMOUT      "Pomniejsza mapê drzewa.\nPomniejsz"
+    ID_TREEMAP_SELECTPARENT "Skacze poziom wy¿ej dla danej pozycji.\nWybierz poziom wy¿ej"
     ID_TREEMAP_HELPABOUTTREEMAPS 
-                            "Wyswietla pomoc dla Mapy Drzewa.\nPomoc Mapy Drzewa"
-    ID_VIEW_SHOWTREEMAP     "Pokazuje/Ukrywa Mape Drzewa.\nMapa Drzewa"
-    ID_HELP_REPORTBUG       "Tworzy raport o bledzie.\nRaport o bledzie"
+                            "Wyœwietla pomoc dla Mapy Drzewa.\nPomoc Mapy Drzewa"
+    ID_VIEW_SHOWTREEMAP     "Pokazuje/Ukrywa Mapê Drzewa.\nMapa Drzewa"
+    ID_HELP_REPORTBUG       "Tworzy raport o b³êdzie.\nRaport o b³êdzie"
 END
 
 STRINGTABLE 
 BEGIN
-    ID_REFRESHALL           "Odswieza zawartosc calego drzewa.\nOdswiez wszystko"
-    ID_REFRESHSELECTED      "Odswieza wybrane poddrzewo.\nOdswiez poddrzewo"
-    ID_CLEANUP_EMPTYRECYCLEBIN "Opróznia Kosz.\nOpróznia Kosz"
-    ID_VIEW_SHOWFREESPACE   "Pokazuje/Ukrywa <Wolna przestrzen>.\nPokaz wolna przestrzen"
-    ID_VIEW_SHOWUNKNOWN     "Pokazuje/Ukrywa elementy <Nieznany>.\nPokaz elementy nieznane"
+    ID_REFRESHALL           "Odœwie¿a zawartoœæ ca³ego drzewa.\nOdœwie¿ wszystko"
+    ID_REFRESHSELECTED      "Odœwie¿a wybrane poddrzewo.\nOdœwie¿ poddrzewo"
+    ID_CLEANUP_EMPTYRECYCLEBIN "Opró¿nia Kosz.\nOpró¿nia Kosz"
+    ID_VIEW_SHOWFREESPACE   "Pokazuje/Ukrywa <Woln¹ przestrzeñ>.\nPoka¿ woln¹ przestrzeñ"
+    ID_VIEW_SHOWUNKNOWN     "Pokazuje/Ukrywa elementy <Nieznany>.\nPoka¿ elementy nieznane"
 END
 
 STRINGTABLE 
 BEGIN
     ID_DUMMY_USERDEFINEDCLEANUP 
-                            "Uruchamia zdefiniowane porzadkowanie #0\nUruchom porzadkowanie"
+                            "Uruchamia zdefiniowane porz¹dkowanie #0\nUruchom porz¹dkowanie"
 END
 
 STRINGTABLE 
 BEGIN
-    ID_SENDMAILTOOWNER      "Tworzy raport e-mail dla wybranej pozycji.\nWyslij e-mail"
+    ID_SENDMAILTOOWNER      "Tworzy raport e-mail dla wybranej pozycji.\nWyœlij e-mail"
 END
 
 STRINGTABLE 
 BEGIN
-    ID_VIEW_SHOWFILETYPES   "Pokazuje/Ukrywa rozszerzenia plików.\nPokaz rozszerzenia plików"
+    ID_VIEW_SHOWFILETYPES   "Pokazuje/Ukrywa rozszerzenia plików.\nPoka¿ rozszerzenia plików"
 END
 
 STRINGTABLE 
 BEGIN
     ID_TREEMAP_RESELECTCHILD 
-                            "Skacze poziom nizej dla wybranej pozycji.\nWybierz poziom nizej"
-    ID_CLEANUP_OPEN         "Otwiera wybrana pozycje.\r\nOtwórz"
-    ID_CLEANUP_PROPERTIES   "Pokazuje wlasciwosci wybranej pozycji.\r\nPokaz wlasciwosci"
+                            "Skacze poziom ni¿ej dla wybranej pozycji.\nWybierz poziom ni¿ej"
+    ID_CLEANUP_OPEN         "Otwiera wybran¹ pozycjê.\r\nOtwórz"
+    ID_CLEANUP_PROPERTIES   "Pokazuje w³aœciwoœci wybranej pozycji.\r\nPoka¿ w³aœciwoœci"
 END
 
 STRINGTABLE 
 BEGIN
-    IDS_ABOUT_ABOUTTEXTss   "\r\nWinDirStat - Statystyki Katalogów\r\n\r\n""Pokazuje zajetosc Twojej przestrzeni dyskowej\r\ni pomaga ja porzadkowac.""\r\n\r\nProgramowanie dla MS Windows przez\r\nBernharda Seiferta (mailto:%1!s!),\r\n\r\nna podstawie linuksowego progamu (KDE) KDirStat Stefana Hundhammera\r\n(http://kdirstat.sourceforge.net/).\r\n\r\nStrona domowa WinDirStat http://%2!s!/\r\n\r\nCopyright (c) 2003-2005 The authors of WinDirStat"
-    IDS_ABOUT_THANKSTOTEXT  "\r\nStefana Hundhammera za jego linuksowe super narzedzie KDirStat.\r\nUzywalem KDirStat (2.3.7) jako specyfikacji, co pozwolilo mi zaoszczedzic mnóstwo czasu.\r\nhttp://kdirstat.sourceforge.net/\r\n\r\nAutorów SequoiaView za pokazanie jak uzyteczne moga byc mapy dysków.\r\nhttp://www.win.tue.nl/sequoiaview/\r\n\r\nJarke J. van Wijk, Huub van de Wetering, Mark Bruls i Kees Huizing\r\nza ich informacje o cieniowaniu map drzew oraz o ""squarified treemaps"".\r\nhttp://www.win.tue.nl/~vanwijk/\r\n\r\nBena Shneidermana za jego genialna teorie map drzew -\r\na prawdziwie intuicyjna metode prezentacji zawartosci drzew.\r\nhttp://www.cs.umd.edu/hcil/treemap-history/\r\n\r\nDla moich przyjaciól za pomoc przy pierwszych wersjach WinDirStat.\r\nhttp://www.daccord.net/\r\n\r\nBeatrix Lödige'a i Nicka Linesa - beta-testerów.\r\n"
+    IDS_ABOUT_ABOUTTEXTss   "\r\nWinDirStat - Statystyki Katalogów\r\n\r\n""Pokazuje zajêtoœæ Twojej przestrzeni dyskowej\r\ni pomaga j¹ porz¹dkowaæ.""\r\n\r\nProgramowanie dla MS Windows przez\r\nBernharda Seiferta (mailto:%1!s!),\r\n\r\nna podstawie linuksowego progamu (KDE) KDirStat Stefana Hundhammera\r\n(http://kdirstat.sourceforge.net/).\r\n\r\nStrona domowa WinDirStat http://%2!s!/\r\n\r\nCopyright (c) 2003-2005 The authors of WinDirStat"
+    IDS_ABOUT_THANKSTOTEXT  "\r\nStefana Hundhammera za jego linuksowe super narzêdzie KDirStat.\r\nU¿ywa³em KDirStat (2.3.7) jako specyfikacji, co pozwoli³o mi zaoszczêdziæ mnóstwo czasu.\r\nhttp://kdirstat.sourceforge.net/\r\n\r\nAutorów SequoiaView za pokazanie jak u¿yteczne mog¹ byæ mapy dysków.\r\nhttp://www.win.tue.nl/sequoiaview/\r\n\r\nJarke J. van Wijk, Huub van de Wetering, Mark Bruls i Kees Huizing\r\nza ich informacje o cieniowaniu map drzew oraz o ""squarified treemaps"".\r\nhttp://www.win.tue.nl/~vanwijk/\r\n\r\nBena Shneidermana za jego genialn¹ teoriê map drzew -\r\na prawdziwie intuicyjn¹ metodê prezentacji zawartoœci drzew.\r\nhttp://www.cs.umd.edu/hcil/treemap-history/\r\n\r\nDla moich przyjació³ za pomoc przy pierwszych wersjach WinDirStat.\r\nhttp://www.daccord.net/\r\n\r\nBeatrix Lödige'a i Nicka Linesa - beta-testerów.\r\n"
     IDS_ABOUT_ABOUT         "O programie"
-    IDS_ABOUT_THANKSTO      "Podziekowania dla"
+    IDS_ABOUT_THANKSTO      "Podziêkowania dla"
     IDS_ABOUT_LICENSEAGREEMENT "Licencja"
     IDS_MYCOMPUTER          "Mój komputer"
-    IDS_UDC_CONFIRMATIONss  "Zamierzasz uruchomic zdefiniowane porzadkowanie\r\n'%1!s!'\r\n\r\ndla '%2!s!'.\r\n\r\nKontynuowac?"
-    IDS_RUDC_CONFIRMATIONss "Zamierzasz uruchomic zdefiniowane porzadkowanie z uwzglednieniem podkatalogów\r\n'%1!s!'\r\n\r\ndla '%2!s!'.\r\n\r\nKontynuowac?"
+    IDS_UDC_CONFIRMATIONss  "Zamierzasz uruchomiæ zdefiniowane porz¹dkowanie\r\n'%1!s!'\r\n\r\ndla '%2!s!'.\r\n\r\nKontynuowaæ?"
+    IDS_RUDC_CONFIRMATIONss "Zamierzasz uruchomiæ zdefiniowane porz¹dkowanie z uwzglêdnieniem podkatalogów\r\n'%1!s!'\r\n\r\ndla '%2!s!'.\r\n\r\nKontynuowaæ?"
 END
 
 STRINGTABLE 
 BEGIN
-    IDS_RESETTODEFAULTS     "Ustawienia &domyslne"
-    IDS_BACKTOUSERSETTINGS  "Wróc do &ustawien uzytkownika"
-    IDS_COLLAPSE            "&Zwin"
-    IDS_EXPAND              "&Rozwin"
+    IDS_RESETTODEFAULTS     "Ustawienia &domyœlne"
+    IDS_BACKTOUSERSETTINGS  "Wróæ do &ustawieñ u¿ytkownika"
+    IDS_COLLAPSE            "&Zwiñ"
+    IDS_EXPAND              "&Rozwiñ"
     IDS_CREATEPROCESSsFAILEDs 
-                            "Tworzenie procesu(%1!s!) nie powiodlo sie: %2!s!"
-    IDS_LANGUAGERESTARTNOW  "Jezyk zostanie zmieniony po ponownym uruchomieniu programu.\r\n\r\nLanguage changes take not effect until the application is restarted.\r\n\r\nUruchomic ponownie teraz?"
+                            "Tworzenie procesu(%1!s!) nie powiod³o siê: %2!s!"
+    IDS_LANGUAGERESTARTNOW  "Jêzyk zostanie zmieniony po ponownym uruchomieniu programu.\r\n\r\nLanguage changes take not effect until the application is restarted.\r\n\r\nUruchomiæ ponownie teraz?"
     IDS_ABOUT_AUTHORS       "Autorzy"
-    IDS_ABOUT_AUTHORSTEXTs  "=== Programisci ===\r\n\r\nBernhard Seifert\r\nTwórca projektu i koordynator\r\n(mailto:%1!s!)\r\n\r\nOliver Schneider\r\n(mailto:assarbad#users.sourceforge.net)\r\n\r\n\r\n=== Tlumaczacy ===\r\n\r\n"
+    IDS_ABOUT_AUTHORSTEXTs  "=== Programiœci ===\r\n\r\nBernhard Seifert\r\nTwórca projektu i koordynator\r\n(mailto:%1!s!)\r\n\r\nOliver Schneider\r\n(mailto:assarbad#users.sourceforge.net)\r\n\r\n\r\n=== T³umacz¹cy ===\r\n\r\n"
 END
 
 STRINGTABLE 
@@ -670,7 +733,7 @@ BEGIN
     IDS_THEDIRECTORYsDOESNOTEXIST "Katalog '%1!s!' nie istnieje."
     IDS_THEFILEsDOESNOTEXIST "Plik '%1!s!' nie istnieje."
     IDS_COULDNOTCREATEPROCESSssss 
-                            "Nie mozna stworzyc procesu.\r\n\r\nAplikacja: '%1!s!',\r\nWiersz Polecenia: '%2!s!',\r\nKatalog roboczy: '%3!s!'\r\nKomunikat o bledzie:\r\n%4!s!\r\n(Odswiezenie nie jest mozliwe.)"
+                            "Nie mo¿na stworzyæ procesu.\r\n\r\nAplikacja: '%1!s!',\r\nWiersz Polecenia: '%2!s!',\r\nKatalog roboczy: '%3!s!'\r\nKomunikat o b³êdzie:\r\n%4!s!\r\n(Odswie¿enie nie jest mo¿liwe.)"
     IDS_TREECOL_NAME        "Nazwa"
     IDS_TREECOL_SUBTREEPERCENTAGE "Poddrzewo procentowo"
     IDS_TREECOL_PERCENTAGE  "Procentowo"
@@ -680,11 +743,11 @@ BEGIN
     IDS_TREECOL_SUBDIRS     "Podkatalogi"
     IDS_TREECOL_LASTCHANGE  "Ostatnia modyfikacja"
     IDS_PLEASECHECKYOURDISKUSAGE 
-                            "Prosze sprawdzic zajetosc dysku i zastosowac porzadkowanie. Dziekuje.\r\n"
+                            "Proszê sprawdziæ zajêtoœæ dysku i zastosowaæ porz¹dkowanie. Dziêkujê.\r\n"
     IDS_DISKUSAGEREPORTGENERATEDBYWINDIRSTAT 
-                            "Raport zajetosci dysku wygenerowany przez WinDirStat.\r\n"
+                            "Raport zajêtoœci dysku wygenerowany przez WinDirStat.\r\n"
     IDS__UNKNOWN_           "<Nieznany>"
-    IDS_FREESPACE_ITEM      "<Wolna przestrzen>"
+    IDS_FREESPACE_ITEM      "<Wolna przestrzeñ>"
     IDS_UNKNOWN_ITEM        "<Nieznany>"
 END
 
@@ -692,33 +755,33 @@ STRINGTABLE
 BEGIN
     IDS_FILES_ITEM          "<Pliki>"
     IDS_ONEREADJOB          "[1 zadanie odczytu]"
-    IDS_sREADJOBS           "[%1!s! zadania(n) odczytu]"
-    IDS_CANNOTOPENCLIPBOARD "Nie mozna otworzyc Schowka."
-    IDS_CANNOTEMTPYCLIPBOARD "Nie mozna opróznic Schowka"
-    IDS_CANNOTSETCLIPBAORDDATA "Nie mozna okreslic danych w Schowku."
+    IDS_sREADJOBS           "[%1!s! zadania(ñ) odczytu]"
+    IDS_CANNOTOPENCLIPBOARD "Nie mo¿na otworzyæ Schowka."
+    IDS_CANNOTEMTPYCLIPBOARD "Nie mo¿na opróŸniæ Schowka"
+    IDS_CANNOTSETCLIPBAORDDATA "Nie mo¿na okreœliæ danych w Schowku."
     IDS_WINDIRSTAT_SETTINGS "WinDirStat - Ustawienia"
     IDS_SCANNING_           "Odczytywanie... "
-    IDS_EMPTYRECYCLEBIN     "&Opróznij Kosz"
+    IDS_EMPTYRECYCLEBIN     "&Opró¿nij Kosz"
     IDS__ONEITEMss          " (1 element, %1!s!%2!s!)"
     IDS__sITEMSss           " (%1!s! elementy(ów), %2!s!%3!s!)"
     IDS_UDCsCTRLd           "%1!s!\tCtrl+%2!d!"
-    IDS_USERDEFINEDCLEANUP0 "Porzadkowanie uzytkownika #0"
-    IDS_REPORT_DISKUSAGE    "Uzycie dysku"
-    IDS_USERDEFINEDCLEANUPd "Porzadkowanie uzytkownika #%1!d!"
-    IDS_POLICY_NOREFRESH    "Bez odswiezania"
+    IDS_USERDEFINEDCLEANUP0 "Porz¹dkowanie u¿ytkownika #0"
+    IDS_REPORT_DISKUSAGE    "U¿ycie dysku"
+    IDS_USERDEFINEDCLEANUPd "Porz¹dkowanie u¿ytkownika #%1!d!"
+    IDS_POLICY_NOREFRESH    "Bez odœwie¿ania"
 END
 
 STRINGTABLE 
 BEGIN
-    IDS_POLICY_REFRESHTHISENTRY "Odswiez ten element"
-    IDS_POLICY_REFRESHPARENT "Odswiez poziom wyzej dla elementu"
-    IDS_BUGREPORTHINT       "W przypadku bledu, opisz jego symptomy wlaczajac dokladny tekst komunikatu o bledzie, oraz jezeli to mozliwe kolejne kroki, w celu wygenerowania bledu ponownie."
-    IDS_FEEDBACKHINT        "Uwagi sa zawsze mile widziane."
+    IDS_POLICY_REFRESHTHISENTRY "Odœwie¿ ten element"
+    IDS_POLICY_REFRESHPARENT "Odœwie¿ poziom wy¿ej dla elementu"
+    IDS_BUGREPORTHINT       "W przypadku b³êdu, opisz jego symptomy w³¹czaj¹c dok³adny tekst komunikatu o b³êdzie, oraz je¿eli to mo¿liwe kolejne kroki, w celu wygenerowania b³êdu ponownie."
+    IDS_FEEDBACKHINT        "Uwagi s¹ zawsze mile widziane."
     IDS_DRIVECOL_NAME       "Nazwa"
-    IDS_DRIVECOL_TOTAL      "Pojemnosc"
+    IDS_DRIVECOL_TOTAL      "Pojemnoœæ"
     IDS_DRIVECOL_FREE       "Wolne"
-    IDS_DRIVECOL_GRAPH      "Uzywane/Pojemnosc"
-    IDS_DRIVECOL_PERCENTUSED "Uzywane/Pojemnosc"
+    IDS_DRIVECOL_GRAPH      "U¿ywane/Pojemnoœæ"
+    IDS_DRIVECOL_PERCENTUSED "U¿ywane/Pojemnoœæ"
     IDS_SELECTFOLDER        "WinDirStat - Wybierz katalog"
 END
 
@@ -729,7 +792,7 @@ BEGIN
     IDS_EXTCOL_BYTES        "Bajtów"
     IDS_EXTCOL_FILES        "Plików"
     IDS_EXTCOL_DESCRIPTION  "Opis"
-    IDS_RAMUSAGEs           "Uzycie RAM: %1!s!"
+    IDS_RAMUSAGEs           "U¿ycie RAM: %1!s!"
     IDS_HELPFILEsCOULDNOTBEFOUND 
                             "The help file %1!s! could not be found.\r\nIt is expected to be in the same folder where windirstat.exe is.\r\nYou should have received it along with windirstat.exe.\r\nYou can download one from WinDirStat's home site (see About box)."
     IDS_SUSPENDED_          "(Wstrzymane) "
@@ -739,8 +802,8 @@ BEGIN
     IDS_SPEC_MB             "MB"
     IDS_SPEC_GB             "GB"
     IDS_SPEC_TB             "TB"
-    IDS_RESETTO_DEFAULTS    "Ustawienia\r\n&domyslne"
-    IDS_BACKTO_USERSETTINGS "Wróc do\r\n&ustawien uzytkownika"
+    IDS_RESETTO_DEFAULTS    "Ustawienia\r\n&domyœlne"
+    IDS_BACKTO_USERSETTINGS "Wróæ do\r\n&ustawieñ u¿ytkownika"
 END
 
 #endif    // Polish resources
