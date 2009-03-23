@@ -9,6 +9,8 @@ close(FILE);
 my %strings;
 # Read all the string IDs first of all
 slurpStrings(\%strings, \@fconts);
+slurpMenus(\%strings, \@fconts);
+
 while(my ($key, $value) = each(%strings))
 {
     print "{$key}\n\t$value\n";
@@ -59,6 +61,69 @@ sub slurpStrings
                     print "ERROR PARSING [$currstr]\n";
                 }
                 $currstr = undef;
+            }
+        }
+    }
+}
+
+sub slurpMenus
+{
+    my ($refStrings, $refArray) = @_;
+    my ($insidemn, $currstr, $cnt) = (0, undef, 0); # inside a menu?
+    foreach my $line (@{$refArray})
+    {
+        if($line =~ m/^\s*?([A-Za-z0-9_]+)\s+MENU/)
+        {
+            die "Ouch, nested menus??? [$line]" if($insidemn);
+            $insidemn++;
+        }
+        elsif(($insidemn > 0) and ($line =~ m/^\s*?BEGIN/))
+        {
+            $insidemn++; # This is the BEGIN marker of a menu
+        }
+        elsif(($insidemn > 1) and ($line =~ m/^\s*?END/))
+        {
+            $insidemn--; # We are leaving a menu
+            if($insidemn == 1)
+            {
+                $insidemn--;
+            }
+        }
+        elsif($insidemn > 1) # Must be something inside a menu
+        {
+            $currstr = $line;
+            $currstr =~ s/[\n\r]//gism; # Strip any line breaks
+            # Next round if we don't have a quoted string just yet
+            # Extract the ID and the actual string contents
+            my ($stringid, $string) = (undef, undef);
+            unless($currstr =~ /^\s*?MENUITEM\s+?SEPARATOR/)
+            {
+                # Parse POPUP item
+                ($stringid, $string) = $currstr =~ m/^\s*(POPUP)\s+(".+)$/;
+                # Not a POPUP item?
+                unless($stringid and $string)
+                {
+                    # Parse MENUITEM item
+                    ($stringid, $string) = $currstr =~ m/^\s*(MENUITEM)\s+(".+)$/;
+                    if($stringid and $string)
+                    {
+                        ($string, $stringid) = $string =~ m/^(".+?),\s*([A-Za-z0-9_]+)\s*$/;
+                        $stringid = "MENUITEM_" . $stringid;
+                    }
+                }
+                else
+                {
+                    $stringid = "POPUP_" . $stringid . sprintf("%03d", $cnt++);
+                }
+                if($stringid and $string)
+                {
+                    # Now let's clean up the strings
+                    $refStrings->{$stringid} = cleanupString($string);
+                }
+                else
+                {
+                    print "ERROR PARSING [$currstr]\n";
+                }
             }
         }
     }
