@@ -1,0 +1,5 @@
+In order to build TinyXPath under Linux:
+	make -f Makefile.configure
+	./configure 
+	make
+	

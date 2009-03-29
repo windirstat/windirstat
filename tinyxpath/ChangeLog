@@ -1,0 +1,73 @@
+// ================== 1.3.1 ==================
+
+Release: June 25th, 2007
+
+Bug fixes for 1.3.1
+- The name() function can now be used without argument as well.
+
+Structural changes for 1.3.1 
+- TinyXML version 2.5.3 is now used by default in TinyXPath
+
+// ================== 1.3.0 ==================
+
+Structural changes for 1.3.0 (Release date: April 29th, 2007)
+
+- All code is now reentrant: we do not use the UserData anymore
+- Some very useful enhancements to the Linux build (Thanks Martin Bernreuther)
+
+// ================== 1.2.3 ==================
+
+Bug fixes for 1.2.3
+
+- December 14th, 2004 : Bug fix : text was not recognized as an element (Thanks Alexey Sokirko)
+- June 19th, 2004 : Bug fix, when computing an expression based on a non-root element node (Thanks Augustus Sanders)
+- May 8th, 2004 : Bug fix by Jonathan Taylor in node_set::S_get_string_value
+- May 8th, 2004 : Bug fix in multiple additive expressions : a+b+c. (Thanks Jonathan Taylor)
+- Apr 26th, 2004 : Bug fix : missing conversion from text to double (Thanks Laura Glow)
+- Apr 24th, 2004 : Bug fix in expressions like "//x[text()='sub text']/@target" (Thanks Jonathan Taylor) : text() wasn't recognized
+as a function call in that context
+
+// ================== 1.2.2 ==================
+
+Release : March 13th, 2004
+
+Bug fixes for 1.2.2
+
+- Bug fix in the position() : it was counting the order of a node within it's brotherhood, which 
+was correct only if the search was like *[position()=3] (Thanks Daniel Côté)
+
+Structural changes for 1.2.2
+
+- The interface functions returning nodes should not return const pointers : there's no reason to
+forbid the user from chaning it's own structure (Thanks Colin Barschel)
+
+// ================== 1.2.1 ==================
+
+Released : January 18th, 2004
+
+Bug fixes for 1.2.1
+
+- Bug fix in predicate evaluation : the [n] count was always the childhood element number, whether the
+axis was a '*' or a name
+
+Structural changes for 1.2.1
+
+- No more syntax_backtrack exception : a syntactically correct expression doesn't yield any exception anymore
+- Added static functions for simpler API (xpath_static.h and xpath_static.cpp)
+
+// ================== 1.2 ==================
+
+Released : January 9th, 2004
+
+Bug fixes for 1.2
+
+- Bug fix : passing a node in the middle of a tree did destroy it's parent and siblings relationships
+- Bug fix : the integer value of a node set was 0
+- Missing processing for text() and node() node tests
+
+Structural changes for 1.2
+
+- Group all TinyXPath definitions in a TinyXPath namespace
+- New configuration header for global #defines (tinyxpath_conf.h) and exclude debuging member functions with ifdefs
+- Windows : Project with libraries (debug and release)
+- Update to latest TinyXML code, where user data are defined on the TiXmlBase level
