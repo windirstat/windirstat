@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+	This is a work-in-progress effort to establish a text-based translation system for WDS.
+	It is heavily commented for now, instead of providing a DTD or similar. This may change
+	over time and release versions of this file should not contain any comments if possible.
+	
+	Line breaks within the XML do NOT translate into line breaks in the text that gets
+	displayed. Instead the translator has to give the well-known <br /> in places where
+	it is needed.
+	
+	TBD: Allow <br /> also inside attributes in its masked form, i.e. "&lt;br /&gt;"? Probably not!
+-->
+<application name="WinDirStat" version="0x00010003">
+    <localization>
+        <!--
+        	List of languages
+        	
+        	If you correct or amend an existing translation you must never remove the existing
+        	entries of previous translators!
+        -->
+        <languages>
+        	<!--
+        		"id" attribute is the three-letter ISO code of the language
+        		"name" is the English name of the language
+        		"authors" is a comma-separated list of IDs of "author" elements elsewhere
+        		"priority" can have a comma-separated combination of the following three
+        			values: "fallback", "locale" and "select". The first always takes
+        			precedence. "fallback" can only occur once in all languages. If it
+        			occurs more than once, the first one is automatically used and a
+        			warning is issued.
+        		The content of the element is the name of the language in its native form.
+        	-->
+            <language id="enu" name="English" authors="wds_team" priority="select,locale,fallback">English</language>
+            <language id="deu" name="German" authors="wds_team" priority="select,locale">Deutsch</language>
+            <language id="rus" name="Russian" authors="polyetayev_s" priority="select,locale">Русский</language>
+            <!--
+            	The "id" values determine the name of the elements used throughout this
+            	file
+            -->
+        </languages>
+        <!--
+        	List of authors
+        	
+        	This is a list of the authors that can be referenced from within the "authors"
+        	attribute whereever applicable.
+        -->
+        <authors>
+        	<!--
+        		The contents of the "author" elements can contain a subset of simple HTML
+        		directives (yet to be decided!)
+        		NOTE: These elements should only contain names, formatting and hyperlinks.
+        			They will be used in a language-neutral fashion in the About dialog.
+        	-->
+            <author id="wds_team"><a href="http://windirstat.info" target="_blank">WinDirStat team</a></author>
+            <author id="polyetayev_s">Sergiy 'Полет' Polyetayev</author>
+        </authors>
+        <!--
+        	List of menus
+        	
+        	This is a list of menus used by the program. A menu *must* be identified by its
+        	ID and thus has to provide an "id" attribute in all cases.
+        -->
+        <menu id="main_menu">
+        	<!--
+        		"popup" is a special element that defines a sub-menu of a menu (i.e. nesting)
+        		
+        		A popup element may have an "id" attribute if it needs to be referenced
+        		explicitly from within the program, but it doesn't have to.
+        	-->
+        	<popup>
+	        	<!--
+        			Each language gets its own entry.
+        			
+        			Here an incomplete example with English, German and Russian.
+    	    	-->
+        		<text language="enu">File</text>
+        		<text language="deu">Datei</text>
+        		<text language="rus">Файл</text>
+	        	<!--
+        			Items in turn get one language entry each as well
+    	    	-->
+        		<item>
+	        		<text language="enu">Open</text>
+	        		<text language="deu">Öffnen</text>
+	        		<text language="rus">Открыть</text>
+        		</item>
+	        	<!--
+        			Menu separators are "empty" items with the "separator" attribute set to "separator"
+    	    	-->
+        		<item separator="separator" />
+        		<item>
+	        		<text language="enu">Refresh all</text>
+	        		<text language="deu">Alles aktualisieren</text>
+	        		<text language="rus">Обновить все</text>
+        		</item>
+        		<item>
+	        		<text language="enu">Refresh selected</text>
+	        		<text language="deu">Markierung aktualisieren</text>
+	        		<text language="rus">Обновить выделенные элементы</text>
+        		</item>
+        		<item separator="separator" />
+        		<item>
+	        		<text language="enu">Quit</text>
+	        		<text language="deu">Beenden</text>
+	        		<text language="rus">Выход</text>
+        		</item>
+        	</popup>
+        	<popup>
+        		<text language="enu">Edit</text>
+        		<text language="deu">Bearbeiten</text>
+        		<text language="rus">Редактировать</text>
+        	</popup>
+        	<popup>
+        		<text language="enu">Cleanup</text>
+        		<text language="deu">Aufräumen</text>
+        		<text language="rus">Очистка</text>
+        	</popup>
+        	<popup>
+        		<text language="enu">Treemap</text>
+        		<text language="deu">Baumkarte</text>
+        		<text language="rus">Структура каталогов</text>
+        	</popup>
+        	<popup>
+        		<text language="enu">Report</text>
+        		<text language="deu">Bericht</text>
+        		<text language="rus">Отчет</text>
+        	</popup>
+        	<popup>
+        		<text language="enu">Options</text>
+        		<text language="deu">Optionen</text>
+        		<text language="rus">Настройки</text>
+        	</popup>
+        	<popup id="help_menu">
+        		<text language="enu">Help</text>
+        		<text language="deu">Hilfe</text>
+        		<text language="rus">Помощь</text>
+        	</popup>
+        </menu>
+    <localization>
+</application>
