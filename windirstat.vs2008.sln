@@ -1,6 +1,6 @@
 Microsoft Visual Studio Solution File, Format Version 10.00
 # Visual Studio 2008
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "windirstat", "windirstat\windirstat.vcproj", "{BD11B94C-6594-4477-9FDF-2E24447D1F14}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "windirstat", "windirstat\windirstat.vs2008.vcproj", "{BD11B94C-6594-4477-9FDF-2E24447D1F14}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
