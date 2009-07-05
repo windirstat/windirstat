@@ -125,7 +125,7 @@ public:
     void AddSelection(const CItem *item);
     void RemoveSelection(const CItem *item);
     void AssertSelectionValid();
-    unsigned int GetSelectionCount();
+    INT_PTR GetSelectionCount();
     bool IsSelected(const CItem *item);
     // FIXME: Multi-select
     CItem *GetSelection(unsigned int i);

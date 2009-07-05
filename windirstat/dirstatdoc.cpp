@@ -526,7 +526,7 @@ CItem *CDirstatDoc::GetSelection(unsigned int i)
     return m_selectedItems.GetCount() ? m_selectedItems[i] : 0;
 }
 
-unsigned int CDirstatDoc::GetSelectionCount()
+INT_PTR CDirstatDoc::GetSelectionCount()
 {
     return m_selectedItems.GetCount();
 }
