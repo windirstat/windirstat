@@ -172,7 +172,7 @@ CString CDirstatView::GenerateReport()
 {
     CString report = GetOptions()->GetReportPrefix() + _T("\r\n");
 
-    for(unsigned int j = 0; j < GetDocument()->GetSelectionCount(); j++)
+    for(size_t j = 0; j < GetDocument()->GetSelectionCount(); j++)
     {
         CItem *root = GetDocument()->GetSelection(j);
         ASSERT(root != NULL);
@@ -348,7 +348,7 @@ void CDirstatView::OnUpdate(CView *pSender, LPARAM lHint, CObject *pHint)
         {
             // FIXME: Multi-select
             m_treeListControl.DeselectAll();
-            for (unsigned int i = 0; i < GetDocument()->GetSelectionCount(); i++)
+            for (size_t i = 0; i < GetDocument()->GetSelectionCount(); i++)
             {
                 m_treeListControl.SelectItem(GetDocument()->GetSelection(i));
             }

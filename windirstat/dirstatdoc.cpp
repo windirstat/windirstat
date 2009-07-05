@@ -521,12 +521,12 @@ void CDirstatDoc::SetSelection(const CItem * /*item*/, bool /*keepReselectChildS
 {
 }
 
-CItem *CDirstatDoc::GetSelection(unsigned int i)
+CItem *CDirstatDoc::GetSelection(size_t i)
 {
     return m_selectedItems.GetCount() ? m_selectedItems[i] : 0;
 }
 
-INT_PTR CDirstatDoc::GetSelectionCount()
+size_t CDirstatDoc::GetSelectionCount()
 {
     return m_selectedItems.GetCount();
 }
@@ -1214,7 +1214,7 @@ void CDirstatDoc::OnUpdateEditCopy(CCmdUI *pCmdUI)
 void CDirstatDoc::OnEditCopy()
 {
     CString paths;
-    for (unsigned int i = 0; i < GetSelectionCount(); i++)
+    for (size_t i = 0; i < GetSelectionCount(); i++)
     {
         if (i > 0)
             paths += _T("\r\n");

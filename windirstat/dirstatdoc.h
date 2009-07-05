@@ -125,10 +125,10 @@ public:
     void AddSelection(const CItem *item);
     void RemoveSelection(const CItem *item);
     void AssertSelectionValid();
-    INT_PTR GetSelectionCount();
+    size_t GetSelectionCount();
     bool IsSelected(const CItem *item);
     // FIXME: Multi-select
-    CItem *GetSelection(unsigned int i);
+    CItem *GetSelection(size_t i);
     void SetSelection(const CItem *item, bool keepReselectChildStack = false);
 
     void SetHighlightExtension(LPCTSTR ext);

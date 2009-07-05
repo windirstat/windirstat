@@ -290,7 +290,7 @@ void CGraphView::DrawSelection(CDC *pdc)
 
     bool single = (GetDocument()->GetSelectionCount() <= 1);
 
-    for (unsigned int i = 0; i < GetDocument()->GetSelectionCount(); i++)
+    for (size_t i = 0; i < GetDocument()->GetSelectionCount(); i++)
     {
         HighlightSelectedItem(pdc, GetDocument()->GetSelection(i), single);
     }
