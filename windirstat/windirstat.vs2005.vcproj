@@ -448,7 +448,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="htmlhelp.lib"
-				OutputFile="../../udebug/windirstat.exe"
+				OutputFile="../build/wds32D.exe"
 				LinkIncremental="0"
 				GenerateDebugInformation="true"
 				SubSystem="2"
@@ -541,7 +541,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="htmlhelp.lib"
-				OutputFile="../../udebug/windirstat.exe"
+				OutputFile="../build/wds64D.exe"
 				LinkIncremental="0"
 				GenerateDebugInformation="true"
 				SubSystem="2"
@@ -632,7 +632,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="htmlhelp.lib"
-				OutputFile="../../urelease/windirstat.exe"
+				OutputFile="../build/wds32.exe"
 				LinkIncremental="0"
 				GenerateDebugInformation="true"
 				SubSystem="2"
@@ -726,7 +726,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="htmlhelp.lib"
-				OutputFile="../../urelease/windirstat.exe"
+				OutputFile="../build/wds64.exe"
 				LinkIncremental="0"
 				GenerateDebugInformation="true"
 				SubSystem="2"

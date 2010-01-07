@@ -58,7 +58,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				IgnoreImportLibrary="true"
-				OutputFile="../../urelease/wdsr040b.dll"
+				OutputFile="../build/wdsr040b.dll"
 				LinkIncremental="1"
 				GenerateManifest="false"
 				IgnoreAllDefaultLibraries="true"
