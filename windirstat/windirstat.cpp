@@ -173,7 +173,16 @@ void CDirstatApp::PeriodicalUpdateRamUsage()
 
 CString CDirstatApp::FindResourceDllPathByLangid(LANGID& langid)
 {
-    return FindAuxiliaryFileByLangid(_T("wdsr"), _T(".dll"), langid, true);
+    return FindAuxiliaryFileByLangid(
+        _T("wdsr")
+#if defined(_WIN64)
+        , _T(".r64")
+#else
+        , _T(".r32")
+#endif
+        , langid
+        , true
+        );
 }
 
 CString CDirstatApp::FindHelpfilePathByLangid(LANGID langid)
