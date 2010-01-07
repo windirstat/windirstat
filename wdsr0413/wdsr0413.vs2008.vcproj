@@ -73,7 +73,7 @@
 				SetChecksum="true"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
-				ImportLibrary="$(OutDir)/wdsr0413.lib"
+				ImportLibrary="$(OutDir)/wdsr0413_x86.lib"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -154,7 +154,7 @@
 				SetChecksum="true"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
-				ImportLibrary="$(OutDir)/wdsr0413.lib"
+				ImportLibrary="$(OutDir)/wdsr0413_x64.lib"
 				TargetMachine="17"
 			/>
 			<Tool
