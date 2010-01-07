@@ -176,9 +176,9 @@ CString CDirstatApp::FindResourceDllPathByLangid(LANGID& langid)
     return FindAuxiliaryFileByLangid(
         _T("wdsr")
 #if defined(_WIN64)
-        , _T(".r64")
+        , _T(".L64")
 #else
-        , _T(".r32")
+        , _T(".L32")
 #endif
         , langid
         , true
