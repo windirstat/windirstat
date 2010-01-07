@@ -28,8 +28,6 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
-				Description="Increasing build number"
-				CommandLine="$(SolutionDir)\common\buildinc.cmd &quot;$(SolutionDir)\common&quot;"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -120,8 +118,6 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
-				Description="Increasing build number"
-				CommandLine="$(SolutionDir)\common\buildinc.cmd &quot;$(SolutionDir)\common&quot;"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -400,8 +396,6 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
-				Description="Increasing build number"
-				CommandLine="$(SolutionDir)\common\buildinc.cmd &quot;$(SolutionDir)\common&quot;"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -492,8 +486,6 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
-				Description="Increasing build number"
-				CommandLine="$(SolutionDir)\common\buildinc.cmd &quot;$(SolutionDir)\common&quot;"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
