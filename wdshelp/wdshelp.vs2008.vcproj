@@ -42,8 +42,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release|x64"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			OutputDirectory="..\intermediate\vs2008_$(PlatformName)\$(ConfigurationName)"
+			IntermediateDirectory="..\intermediate\vs2008_$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="0"
 			BuildLogFile=""
 			>
