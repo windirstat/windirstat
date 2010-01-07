@@ -102,6 +102,7 @@ void CMyImageList::Initialize()
     }
 }
 
+// Returns the index of the added icon
 int CMyImageList::CacheIcon(LPCTSTR path, UINT flags, CString *psTypeName)
 {
     ASSERT(m_hImageList != NULL); // should have been Initialize()ed.

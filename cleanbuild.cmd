@@ -18,8 +18,6 @@ del /f /q /s *.old
 del /f /q /s *.user
 :: Delete all release subdirectories (the release of the binaries is not touched)
 for /d %%i in (*) do @(
-  rd /s /q ".\%%i\UnicodeRelease"
-  rd /s /q ".\%%i\UnicodeDebug"
   rd /s /q ".\%%i\Release"
   rd /s /q ".\%%i\Debug"
 )

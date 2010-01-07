@@ -391,7 +391,7 @@
 			/>
 		</Configuration>
 		<Configuration
-			Name="UnicodeDebug|Win32"
+			Name="Debug|Win32"
 			OutputDirectory="$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="1"
@@ -483,7 +483,7 @@
 			/>
 		</Configuration>
 		<Configuration
-			Name="UnicodeDebug|x64"
+			Name="Debug|x64"
 			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="1"
@@ -576,7 +576,7 @@
 			/>
 		</Configuration>
 		<Configuration
-			Name="UnicodeRelease|Win32"
+			Name="Release|Win32"
 			OutputDirectory="$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="1"
@@ -669,7 +669,7 @@
 			/>
 		</Configuration>
 		<Configuration
-			Name="UnicodeRelease|x64"
+			Name="Release|x64"
 			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="1"
@@ -879,7 +879,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="UnicodeDebug|Win32"
+					Name="Debug|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -887,7 +887,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="UnicodeDebug|x64"
+					Name="Debug|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -895,7 +895,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="UnicodeRelease|Win32"
+					Name="Release|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -903,7 +903,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="UnicodeRelease|x64"
+					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -958,7 +958,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="UnicodeDebug|Win32"
+						Name="Debug|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -966,7 +966,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="UnicodeDebug|x64"
+						Name="Debug|x64"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -974,7 +974,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="UnicodeRelease|Win32"
+						Name="Release|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -982,7 +982,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="UnicodeRelease|x64"
+						Name="Release|x64"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -1026,7 +1026,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="UnicodeDebug|Win32"
+						Name="Debug|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -1034,7 +1034,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="UnicodeDebug|x64"
+						Name="Debug|x64"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -1042,7 +1042,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="UnicodeRelease|Win32"
+						Name="Release|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -1050,7 +1050,7 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="UnicodeRelease|x64"
+						Name="Release|x64"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -1387,7 +1387,7 @@
 				RelativePath="..\common\BUILD"
 				>
 				<FileConfiguration
-					Name="UnicodeRelease|Win32"
+					Name="Release|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -1395,7 +1395,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="UnicodeRelease|x64"
+					Name="Release|x64"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -1407,7 +1407,7 @@
 				RelativePath="..\common\buildinc.cmd"
 				>
 				<FileConfiguration
-					Name="UnicodeRelease|Win32"
+					Name="Release|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -1415,7 +1415,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="UnicodeRelease|x64"
+					Name="Release|x64"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -1427,14 +1427,14 @@
 				RelativePath="..\common\buildnumber.h"
 				>
 				<FileConfiguration
-					Name="UnicodeRelease|Win32"
+					Name="Release|Win32"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="UnicodeRelease|x64"
+					Name="Release|x64"
 					>
 					<Tool
 						Name="VCCustomBuildTool"

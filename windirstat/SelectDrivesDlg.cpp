@@ -31,12 +31,6 @@
 #define new DEBUG_NEW
 #endif
 
-#ifdef _DEBUG
-#ifdef STRONGDEBUG
-#define TESTTHREADS
-#endif
-#endif
-
 namespace
 {
     enum
