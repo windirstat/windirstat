@@ -3,7 +3,7 @@
 	ProjectType="Visual C++"
 	Version="9,00"
 	Name="wdsr0407"
-	ProjectGUID="{C7A5D1EC-35D3-4754-A815-2C527CACD584}"
+	ProjectGUID="{C8D9E4F9-7051-4B41-A5AB-F68F3FCE42E8}"
 	RootNamespace="wdsr0407"
 	Keyword="Win32Proj"
 	TargetFrameworkVersion="131072"
