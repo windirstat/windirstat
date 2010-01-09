@@ -415,22 +415,6 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,172,298,10
 END
 
-IDD_PAGE_REPORT DIALOGEX 0, 0, 380, 202
-STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | WS_SYSMENU
-CAPTION "Rapport"
-FONT 8, "MS Shell Dlg", 400, 0, 0x1
-BEGIN
-    LTEXT           "Vous pouvez choisir ici les textes des rapports réalisés par la fonction 'Envoyer un courriel au propriétaire'.",IDC_STATIC,7,9,365,8
-    LTEXT           "&Objet",IDC_STATIC,7,31,46,8
-    EDITTEXT        IDC_SUBJECT,59,31,314,14,ES_AUTOHSCROLL
-    LTEXT           "&Prefixe",IDC_STATIC,7,51,46,8
-    EDITTEXT        IDC_PREFIX,59,51,314,54,ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_WANTRETURN
-    LTEXT           "S&uffixe",IDC_STATIC,7,111,46,8
-    EDITTEXT        IDC_SUFFIX,59,111,314,54,ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_WANTRETURN
-    PUSHBUTTON      "",IDC_RESET,59,174,126,14
-END
-
-
 /////////////////////////////////////////////////////////////////////////////
 //
 // DESIGNINFO

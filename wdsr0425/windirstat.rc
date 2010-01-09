@@ -411,24 +411,6 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,172,298,10
 END
 
-IDD_PAGE_REPORT DIALOGEX 0, 0, 380, 202
-STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | WS_SYSMENU
-CAPTION "Aruanne"
-FONT 8, "MS Shell Dlg", 400, 0, 0x1
-BEGIN
-    LTEXT           "Siin saad saata erinevaid teateid (raport) 'Saada Mail Omanikule' iseärasustest.",IDC_STATIC,7,9,268,8
-    LTEXT           "&Teema",IDC_STATIC,7,31,46,8
-    EDITTEXT        IDC_SUBJECT,59,31,314,14,ES_AUTOHSCROLL
-    LTEXT           "&Esildis",IDC_STATIC,7,51,46,8
-    EDITTEXT        IDC_PREFIX,59,51,314,54,ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_WANTRETURN
-    LTEXT           "&Järelliide",IDC_STATIC,7,111,46,8
-    EDITTEXT        IDC_SUFFIX,59,111,314,54,ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_WANTRETURN
-    PUSHBUTTON      "Taasta alg seaded",IDC_RESET,59,174,89,14
-END
-
-
-
-
 /////////////////////////////////////////////////////////////////////////////
 //
 // DESIGNINFO
@@ -500,16 +482,6 @@ BEGIN
         TOPMARGIN, 7
         BOTTOMMARGIN, 195
     END
-
-    IDD_PAGE_REPORT, DIALOG
-    BEGIN
-        LEFTMARGIN, 7
-        RIGHTMARGIN, 373
-        TOPMARGIN, 7
-        BOTTOMMARGIN, 195
-    END
-
-    
 END
 #endif    // APSTUDIO_INVOKED
 
