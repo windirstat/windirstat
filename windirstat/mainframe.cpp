@@ -37,7 +37,6 @@
 #include "pagetreelist.h"
 #include "pagetreemap.h"
 #include "pagegeneral.h"
-#include "pagereport.h"
 
 #include "CheckForUpdateDlg.h"
 #include "../common/version.h"
@@ -1142,13 +1141,11 @@ void CMainFrame::OnConfigure()
     CPageTreelist treelist;
     CPageTreemap treemap;
     CPageCleanups cleanups;
-    CPageReport report;
 
     sheet.AddPage(&general);
     sheet.AddPage(&treelist);
     sheet.AddPage(&treemap);
     sheet.AddPage(&cleanups);
-    sheet.AddPage(&report);
 
     sheet.DoModal();
 
