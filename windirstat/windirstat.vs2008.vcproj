@@ -715,10 +715,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\PageReport.h"
-				>
-			</File>
-			<File
 				RelativePath=".\PageTreelist.h"
 				>
 			</File>
