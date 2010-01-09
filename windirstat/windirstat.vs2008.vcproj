@@ -46,9 +46,9 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				PreprocessorDefinitions="WINVER=0x0500;_DEBUG"
 				Optimization="0"
 				AdditionalIncludeDirectories=""
+				PreprocessorDefinitions="WINVER=0x0500;_DEBUG"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				SmallerTypeCheck="true"
@@ -136,9 +136,9 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				PreprocessorDefinitions="WINVER=0x0500;_DEBUG"
 				Optimization="0"
 				AdditionalIncludeDirectories=""
+				PreprocessorDefinitions="WINVER=0x0500;_DEBUG"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				SmallerTypeCheck="true"
@@ -227,11 +227,11 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				PreprocessorDefinitions="WINVER=0x0500;NDEBUG"
 				Optimization="3"
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
 				AdditionalIncludeDirectories=""
+				PreprocessorDefinitions="WINVER=0x0500;NDEBUG"
 				MinimalRebuild="false"
 				RuntimeLibrary="0"
 				TreatWChar_tAsBuiltInType="true"
@@ -320,11 +320,11 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				PreprocessorDefinitions="WINVER=0x0500;NDEBUG"
 				Optimization="3"
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
 				AdditionalIncludeDirectories=""
+				PreprocessorDefinitions="WINVER=0x0500;NDEBUG"
 				MinimalRebuild="false"
 				RuntimeLibrary="0"
 				TreatWChar_tAsBuiltInType="true"
@@ -453,10 +453,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\PageReport.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\PageTreelist.cpp"
 				>
 			</File>
@@ -467,38 +463,6 @@
 			<File
 				RelativePath=".\stdafx.cpp"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="1"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|x64"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="1"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="1"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|x64"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="1"
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32"
 					>
@@ -578,74 +542,10 @@
 							UsePrecompiledHeader="0"
 						/>
 					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|x64"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|x64"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\common\platform.cpp"
 					>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|x64"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|x64"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
 					<FileConfiguration
 						Name="Debug|Win32"
 						>

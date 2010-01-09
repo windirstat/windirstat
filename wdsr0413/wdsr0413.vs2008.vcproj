@@ -21,8 +21,8 @@
 	<Configurations>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="..\intermediate\vs2008_$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="..\intermediate\vs2008_$(PlatformName)\$(ConfigurationName)"
+			OutputDirectory="..\intermediate\vs2008_$(PlatformName)_$(ConfigurationName)\wdsr0413"
+			IntermediateDirectory="..\intermediate\vs2008_$(PlatformName)_$(ConfigurationName)\wdsr0413"
 			ConfigurationType="2"
 			CharacterSet="1"
 			>
@@ -101,8 +101,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release|x64"
-			OutputDirectory="..\intermediate\vs2008_$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="..\intermediate\vs2008_$(PlatformName)\$(ConfigurationName)"
+			OutputDirectory="..\intermediate\vs2008_$(PlatformName)_$(ConfigurationName)\wdsr0413"
+			IntermediateDirectory="..\intermediate\vs2008_$(PlatformName)_$(ConfigurationName)\wdsr0413"
 			ConfigurationType="2"
 			CharacterSet="1"
 			>
