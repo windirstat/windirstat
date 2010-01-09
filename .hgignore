@@ -1,0 +1,6 @@
+syntax: regexp
+# Folders that make up the control parts of the CVS working copy
+/CVS$
+^CVS/
+# Intermediate files
+\.(obj|map|exp|html?|pdb|suo|ncb|idb|res|lib|exe|dll|lnt|user|manifest|dep|pch|bak|orig)$
