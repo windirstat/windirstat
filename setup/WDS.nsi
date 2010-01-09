@@ -1,4 +1,4 @@
-; Define the following symbols to get the intended functionality
+﻿; Define the following symbols to get the intended functionality
 ; LANGUAGES_NSI
 ; GETVERSION_NSI
 ; WDSMAIN_NSI
@@ -81,7 +81,7 @@
   VIAddVersionKey /LANG=${LANG_ENGLISH} "ProductName" "WinDirStat"
   VIAddVersionKey /LANG=${LANG_ENGLISH} "Comments" "This release contains both, Unicode and ANSI version of WinDirStat"
   VIAddVersionKey /LANG=${LANG_ENGLISH} "CompanyName" "WDS Team"
-  VIAddVersionKey /LANG=${LANG_ENGLISH} "LegalCopyright" "� 2003-2005 WDS Team"
+  VIAddVersionKey /LANG=${LANG_ENGLISH} "LegalCopyright" "© 2003-2005 WDS Team"
   VIAddVersionKey /LANG=${LANG_ENGLISH} "FileDescription" "${sVersionFull}"
   VIAddVersionKey /LANG=${LANG_ENGLISH} "FileVersion" "${sVersionS}"
   VIAddVersionKey /LANG=${LANG_ENGLISH} "InternalName" "WDS Setup"

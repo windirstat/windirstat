@@ -17,7 +17,7 @@
 :: 7. Putting all language information into WDS_LanguagesTemp.nsi
 :: ----------------------------------------------------------------------------
 set install=.\Installer
-set nsis=%ProgramFiles%\NSIS\makensis.exe
+set nsissub=NSIS\Unicode\makensis.exe
 set verfileA=VersionA.txt
 set verfileU=VersionU.txt
 set vernsi=WDS_LangAnd%verfileA:A.txt=.nsi%
@@ -32,7 +32,11 @@ set getvernsi=WDS_GetVersion.nsi
 set langsnsi=WDS_Languages.nsi
 set wdsmain=WDS_Main.nsi
 set err=Unknown error
-if NOT EXIST %nsis% @(
+
+if EXIST "%ProgramFiles%\%nsissub%"         set nsis=%ProgramFiles%\%nsissub%
+if EXIST "%ProgramFiles(x86)%\%nsissub%"    set nsis=%ProgramFiles(x86)%\%nsissub%
+
+if NOT EXIST "%nsis%" @(
   set err=Could not find NSIS compiler at "%nsis%"
   goto ERROR
 )
