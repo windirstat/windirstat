@@ -221,7 +221,14 @@ void CDirstatApp::GetAvailableResourceDllLangids(CArray<LANGID, LANGID>& arr)
     arr.RemoveAll();
 
     CFileFind finder;
-    BOOL b = finder.FindFile(GetAppFolder() + _T("\\wdsr*.dll"));
+    BOOL b = finder.FindFile(
+        GetAppFolder() +
+#if defined(_WIN64)
+        _T("\\wdsr*.L64")
+#else
+        _T("\\wdsr*.L32")
+#endif
+        );
     while(b)
     {
         b = finder.FindNextFile();
@@ -274,7 +281,16 @@ void CDirstatApp::RestartApplication()
 
 bool CDirstatApp::ScanResourceDllName(LPCTSTR name, LANGID& langid)
 {
-    return ScanAuxiliaryFileName(_T("wdsr"), _T(".dll"), name, langid);
+    return ScanAuxiliaryFileName(
+        _T("wdsr")
+#if defined(_WIN64)
+        , _T(".L64")
+#else
+        , _T(".L32")
+#endif
+        , name
+        , langid
+        );
 }
 
 bool CDirstatApp::ScanAuxiliaryFileName(LPCTSTR prefix, LPCTSTR suffix, LPCTSTR name, LANGID& langid)
