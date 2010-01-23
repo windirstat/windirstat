@@ -427,14 +427,14 @@ void CDirstatApp::ReReadMountPoints()
     m_mountPoints.Initialize();
 }
 
-bool CDirstatApp::IsMountPoint(CString path)
+bool CDirstatApp::IsVolumeMountPoint(CString path)
 {
-    return m_mountPoints.IsMountPoint(path);
+    return m_mountPoints.IsVolumeMountPoint(path);
 }
 
-bool CDirstatApp::IsJunctionPoint(CString path)
+bool CDirstatApp::IsFolderJunction(CString path)
 {
-    return m_mountPoints.IsJunctionPoint(path);
+    return m_mountPoints.IsFolderJunction(path);
 }
 
 // Get the alternative colors for compressed and encrypted files/folders.

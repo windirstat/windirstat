@@ -682,7 +682,7 @@ void CDirstatDoc::OpenItem(const CItem *item)
 
 void CDirstatDoc::RecurseRefreshMountPointItems(CItem *item)
 {
-    if(IT_DIRECTORY == item->GetType() && item != GetRootItem() && GetWDSApp()->IsMountPoint(item->GetPath()))
+    if(IT_DIRECTORY == item->GetType() && item != GetRootItem() && GetWDSApp()->IsVolumeMountPoint(item->GetPath()))
     {
         RefreshItem(item);
     }
@@ -694,7 +694,7 @@ void CDirstatDoc::RecurseRefreshMountPointItems(CItem *item)
 
 void CDirstatDoc::RecurseRefreshJunctionItems(CItem *item)
 {
-    if(IT_DIRECTORY == item->GetType() && item != GetRootItem() && GetWDSApp()->IsJunctionPoint(item->GetPath()))
+    if(IT_DIRECTORY == item->GetType() && item != GetRootItem() && GetWDSApp()->IsFolderJunction(item->GetPath()))
     {
         RefreshItem(item);
     }
@@ -1017,11 +1017,11 @@ void CDirstatDoc::RecursiveUserDefinedCleanup(const USERDEFINEDCLEANUP *udc, con
         {
             continue;
         }
-        if(GetWDSApp()->IsMountPoint(finder.GetFilePath()) && !GetOptions()->IsFollowMountPoints())
+        if(GetWDSApp()->IsVolumeMountPoint(finder.GetFilePath()) && !GetOptions()->IsFollowMountPoints())
         {
             continue;
         }
-        if(GetWDSApp()->IsJunctionPoint(finder.GetFilePath()) && !GetOptions()->IsFollowJunctionPoints())
+        if(GetWDSApp()->IsFolderJunction(finder.GetFilePath()) && !GetOptions()->IsFollowJunctionPoints())
         {
             continue;
         }

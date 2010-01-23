@@ -29,7 +29,7 @@
 
 #include "../common/wds_constants.h"
 
-class CMountPoints
+class CReparsePoints
 {
     struct SPointVolume
     {
@@ -40,10 +40,10 @@ class CMountPoints
     typedef CArray<SPointVolume, SPointVolume&> PointVolumeArray;
 
 public:
-    ~CMountPoints();
+    ~CReparsePoints();
     void Initialize();
-    bool IsMountPoint(CString path);
-    bool IsJunctionPoint(CString path);
+    bool IsVolumeMountPoint(CString path);
+    bool IsFolderJunction(CString path);
 
 private:
     void Clear();

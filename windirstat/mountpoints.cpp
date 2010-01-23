@@ -32,12 +32,12 @@
 #define new DEBUG_NEW
 #endif
 
-CMountPoints::~CMountPoints()
+CReparsePoints::~CReparsePoints()
 {
     Clear();
 }
 
-void CMountPoints::Clear()
+void CReparsePoints::Clear()
 {
     m_drive.RemoveAll();
 
@@ -53,7 +53,7 @@ void CMountPoints::Clear()
     m_volume.RemoveAll();
 }
 
-void CMountPoints::Initialize()
+void CReparsePoints::Initialize()
 {
     Clear();
 
@@ -66,7 +66,7 @@ void CMountPoints::Initialize()
     GetAllMountPoints();
 }
 
-void CMountPoints::GetDriveVolumes()
+void CReparsePoints::GetDriveVolumes()
 {
     m_drive.SetSize(32);
 
@@ -96,7 +96,7 @@ void CMountPoints::GetDriveVolumes()
     }
 }
 
-void CMountPoints::GetAllMountPoints()
+void CReparsePoints::GetAllMountPoints()
 {
     TCHAR volume[_MAX_PATH];
     HANDLE hvol = m_va.FindFirstVolume(volume, countof(volume));
@@ -184,7 +184,7 @@ void CMountPoints::GetAllMountPoints()
 }
 
 
-bool CMountPoints::IsMountPoint(CString path)
+bool CReparsePoints::IsVolumeMountPoint(CString path)
 {
     if(path.GetLength() < 3 || path[1] != chrColon || path[2] != chrBackslash)
     {
@@ -216,9 +216,9 @@ bool CMountPoints::IsMountPoint(CString path)
 
 // Check whether the current item is a junction point but no volume mount point
 // as the latter ones are treated differently (see above).
-bool CMountPoints::IsJunctionPoint(CString path)
+bool CReparsePoints::IsFolderJunction(CString path)
 {
-    if(IsMountPoint(path))
+    if(IsVolumeMountPoint(path))
     {
         return false;
     }
@@ -232,7 +232,7 @@ bool CMountPoints::IsJunctionPoint(CString path)
     return ((attr & FILE_ATTRIBUTE_REPARSE_POINT) != 0);
 }
 
-bool CMountPoints::IsVolumeMountPoint(CString volume, CString path)
+bool CReparsePoints::IsVolumeMountPoint(CString volume, CString path)
 {
     while(true)
     {

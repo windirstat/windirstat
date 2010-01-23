@@ -69,8 +69,8 @@ public:
     LANGID GetEffectiveLangid();    // Language to be used for date/time and number formatting
 
     void ReReadMountPoints();
-    bool IsMountPoint(CString path);
-    bool IsJunctionPoint(CString path);
+    bool IsVolumeMountPoint(CString path);
+    bool IsFolderJunction(CString path);
 
     COLORREF AltColor();                    // Coloring of compressed items
     COLORREF AltEncryptionColor();          // Coloring of encrypted items
@@ -113,7 +113,7 @@ protected:
     CSingleDocTemplate* m_pDocTemplate;     // MFC voodoo.
 
     LANGID m_langid;                        // Language we are running
-    CMountPoints m_mountPoints;             // Mount point information
+    CReparsePoints m_mountPoints;             // Mount point information
     CMyImageList m_myImageList;             // Our central image list
     CPsapi m_psapi;                         // Dynamically linked psapi.dll (for RAM usage)
     CGetCompressedFileSizeApi m_comprSize;  // Dynamically linked API GetCompressedFileSize()
