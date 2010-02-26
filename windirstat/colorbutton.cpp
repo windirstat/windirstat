@@ -111,7 +111,7 @@ void CColorButton::OnPaint()
         rc.right = rc.left + rc.Width() / 3;
         rc.DeflateRect(4, 4);
 
-        VERIFY(m_preview.Create(AfxRegisterWndClass(0, 0, 0, 0), strEmpty, WS_CHILD | WS_VISIBLE, rc, this, 4711));
+        VERIFY(m_preview.Create(AfxRegisterWndClass(0, 0, 0, 0), wds::strEmpty, WS_CHILD | WS_VISIBLE, rc, this, 4711));
 
         ModifyStyle(0, WS_CLIPCHILDREN);
     }

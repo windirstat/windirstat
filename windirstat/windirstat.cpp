@@ -174,12 +174,8 @@ void CDirstatApp::PeriodicalUpdateRamUsage()
 CString CDirstatApp::FindResourceDllPathByLangid(LANGID& langid)
 {
     return FindAuxiliaryFileByLangid(
-        _T("wdsr")
-#if defined(_WIN64)
-        , _T(".L64")
-#else
-        , _T(".L32")
-#endif
+        wds::strLangPrefix
+        , wds::strLangSuffix
         , langid
         , true
         );
@@ -213,7 +209,7 @@ CString CDirstatApp::FindHelpfilePathByLangid(LANGID langid)
     }
 
     // Not found.
-    return strEmpty;
+    return wds::strEmpty;
 }
 
 void CDirstatApp::GetAvailableResourceDllLangids(CArray<LANGID, LANGID>& arr)
@@ -282,8 +278,8 @@ void CDirstatApp::RestartApplication()
 bool CDirstatApp::ScanResourceDllName(LPCTSTR name, LANGID& langid)
 {
     return ScanAuxiliaryFileName(
-        _T("wdsr")
-        , strLangSuffix
+        wds::strLangPrefix
+        , wds::strLangSuffix
         , name
         , langid
         );
@@ -333,14 +329,14 @@ bool CDirstatApp::ScanAuxiliaryFileName(LPCTSTR prefix, LPCTSTR suffix, LPCTSTR 
     void CDirstatApp::TestScanResourceDllName()
     {
         LANGID id;
-        ASSERT(!ScanResourceDllName(strEmpty, id));
-        ASSERT(!ScanResourceDllName(_T("wdsr") _T(STR_LANG_SUFFIX), id));
-        ASSERT(!ScanResourceDllName(_T("wdsr123") _T(STR_LANG_SUFFIX), id));
-        ASSERT(!ScanResourceDllName(_T("wdsr12345") _T(STR_LANG_SUFFIX), id));
-        ASSERT(!ScanResourceDllName(_T("wdsr1234.exe"), id));
-        ASSERT(ScanResourceDllName(_T("wdsr0123") _T(STR_LANG_SUFFIX), id));
+        ASSERT(!ScanResourceDllName(wds::strEmpty, id));
+        ASSERT(!ScanResourceDllName(_T(STR_RESOURCE_PREFIX) _T(STR_LANG_SUFFIX), id));
+        ASSERT(!ScanResourceDllName(_T(STR_RESOURCE_PREFIX) _T("123") _T(STR_LANG_SUFFIX), id));
+        ASSERT(!ScanResourceDllName(_T(STR_RESOURCE_PREFIX) _T("12345") _T(STR_LANG_SUFFIX), id));
+        ASSERT(!ScanResourceDllName(_T(STR_RESOURCE_PREFIX) _T("1234.exe"), id));
+        ASSERT(ScanResourceDllName (_T(STR_RESOURCE_PREFIX) _T("0123") _T(STR_LANG_SUFFIX), id));
         ASSERT(id == 0x0123);
-        ASSERT(ScanResourceDllName(_T("WDsRa13F") _T(STR_LANG_SUFFIX), id));
+        ASSERT(ScanResourceDllName (CString(_T(STR_RESOURCE_PREFIX) _T("a13F") _T(STR_LANG_SUFFIX)).MakeUpper(), id));
         ASSERT(id == 0xa13f);
     }
 #endif
@@ -385,7 +381,7 @@ CString CDirstatApp::FindAuxiliaryFileByLangid(LPCTSTR prefix, LPCTSTR suffix, L
         }
     }
 
-    return strEmpty;
+    return wds::strEmpty;
 }
 
 CString CDirstatApp::ConstructHelpFileName()
@@ -443,7 +439,7 @@ COLORREF CDirstatApp::GetAlternativeColor(COLORREF clrDefault, LPCTSTR which)
     COLORREF x; DWORD cbValue = sizeof(x); CRegKey key;
 
     // Open the explorer key
-    key.Open(HKEY_CURRENT_USER, strExplorerKey, KEY_READ);
+    key.Open(HKEY_CURRENT_USER, wds::strExplorerKey, KEY_READ);
 
     // Try to read the REG_BINARY value
     if(ERROR_SUCCESS == key.QueryBinaryValue(which, &x, &cbValue))
@@ -476,7 +472,7 @@ CString CDirstatApp::GetCurrentProcessMemoryInfo()
 
     if(m_workingSet == 0)
     {
-        return strEmpty;
+        return wds::strEmpty;
     }
 
     CString n = PadWidthBlanks(FormatBytes(m_workingSet), 11);

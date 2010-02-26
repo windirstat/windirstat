@@ -246,16 +246,40 @@ CString FormatAttributes(DWORD attr)
 {
     if(attr == INVALID_FILE_ATTRIBUTES)
     {
-        return _T("??????");
+        return wds::strInvalidAttributes;
     }
 
     CString attributes;
-    attributes.Append((attr & FILE_ATTRIBUTE_READONLY  ) ? _T("R") : strEmpty);
-    attributes.Append((attr & FILE_ATTRIBUTE_HIDDEN    ) ? _T("H") : strEmpty);
-    attributes.Append((attr & FILE_ATTRIBUTE_SYSTEM    ) ? _T("S") : strEmpty);
-    attributes.Append((attr & FILE_ATTRIBUTE_ARCHIVE   ) ? _T("A") : strEmpty);
-    attributes.Append((attr & FILE_ATTRIBUTE_COMPRESSED) ? _T("C") : strEmpty);
-    attributes.Append((attr & FILE_ATTRIBUTE_ENCRYPTED ) ? _T("E") : strEmpty);
+    if(attr & FILE_ATTRIBUTE_READONLY)
+    {
+        attributes.Append(wds::strAttributeReadonly);
+    }
+
+    if(attr & FILE_ATTRIBUTE_HIDDEN)
+    {
+        attributes.Append(wds::strAttributeHidden);
+    }
+
+    if(attr & FILE_ATTRIBUTE_SYSTEM)
+    {
+        attributes.Append(wds::strAttributeSystem);
+    }
+
+
+    if(attr & FILE_ATTRIBUTE_ARCHIVE)
+    {
+        attributes.Append(wds::strAttributeArchive);
+    }
+
+    if(attr & FILE_ATTRIBUTE_COMPRESSED)
+    {
+        attributes.Append(wds::strAttributeCompressed   );
+    }
+
+    if(attr & FILE_ATTRIBUTE_ENCRYPTED)
+    {
+        attributes.Append(wds::strAttributeEncrypted);
+    }
 
     return attributes;
 }
@@ -334,7 +358,7 @@ CString FormatVolumeName(CString rootPath, CString volumeName)
 // Or, if name like "C:\", it returns "C:".
 CString PathFromVolumeName(CString name)
 {
-    int i = name.ReverseFind(chrBracketClose);
+    int i = name.ReverseFind(wds::chrBracketClose);
     if(i == -1)
     {
         ASSERT(name.GetLength() == 3);
@@ -342,12 +366,12 @@ CString PathFromVolumeName(CString name)
     }
 
     ASSERT(i != -1);
-    int k = name.ReverseFind(chrBracketOpen);
+    int k = name.ReverseFind(wds::chrBracketOpen);
     ASSERT(k != -1);
     ASSERT(k < i);
     CString path = name.Mid(k + 1, i - k - 1);
     ASSERT(path.GetLength() == 2);
-    ASSERT(path[1] == chrColon);
+    ASSERT(path[1] == wds::chrColon);
 
     return path;
 }
@@ -408,7 +432,7 @@ void ShellExecuteWithAssocDialog(HWND hwnd, LPCTSTR filename)
 CString GetFolderNameFromPath(LPCTSTR path)
 {
     CString s = path;
-    int i = s.ReverseFind(chrBackslash);
+    int i = s.ReverseFind(wds::chrBackslash);
     if(i < 0)
     {
         return s;
@@ -483,14 +507,14 @@ bool FolderExists(LPCTSTR path)
 
 bool DriveExists(const CString& path)
 {
-    if(path.GetLength() != 3 || path[1] != chrColon || path[2] != chrBackslash)
+    if(path.GetLength() != 3 || path[1] != wds::chrColon || path[2] != wds::chrBackslash)
     {
         return false;
     }
 
     CString letter = path.Left(1);
     letter.MakeLower();
-    int d = letter[0] - chrSmallA;
+    int d = letter[0] - wds::chrSmallA;
 
     DWORD mask = 0x1 << d;
 
@@ -546,9 +570,9 @@ CString MyQueryDosDevice(LPCTSTR drive)
 {
     CString d = drive;
 
-    if(d.GetLength() < 2 || d[1] != chrColon)
+    if(d.GetLength() < 2 || d[1] != wds::chrColon)
     {
-        return strEmpty;
+        return wds::strEmpty;
     }
 
     d = d.Left(2);
@@ -557,7 +581,7 @@ CString MyQueryDosDevice(LPCTSTR drive)
 
     if(!api.IsSupported())
     {
-        return strEmpty;
+        return wds::strEmpty;
     }
 
     CString info;
@@ -567,7 +591,7 @@ CString MyQueryDosDevice(LPCTSTR drive)
     if(dw == 0)
     {
         TRACE(_T("QueryDosDevice(%s) failed: %s\r\n"), d, MdGetWinErrorText(GetLastError()));
-        return strEmpty;
+        return wds::strEmpty;
     }
 
     return info;

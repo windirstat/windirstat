@@ -536,7 +536,7 @@ void CItem::UpdateLastChange()
     {
         CString path = GetPath();
 
-        int i = path.ReverseFind(chrBackslash);
+        int i = path.ReverseFind(wds::chrBackslash);
         CString basename = path.Mid(i + 1);
         CString pattern;
         pattern.Format(_T("%s\\..\\%s"), path, basename);
@@ -867,8 +867,10 @@ bool CItem::HasUncPath() const
 CString CItem::GetFindPattern() const
 {
     CString pattern = GetPath();
-    if(pattern.Right(1) != chrBackslash)
+    if(pattern.Right(1) != wds::chrBackslash)
+    {
         pattern += _T("\\");
+    }
     pattern += _T("*.*");
     return pattern;
 }
@@ -887,7 +889,7 @@ CString CItem::GetFolderPath() const
         path = GetPath();
         if(GetType() == IT_FILE)
         {
-            int i = path.ReverseFind(chrBackslash);
+            int i = path.ReverseFind(wds::chrBackslash);
             ASSERT(i != -1);
             path = path.Left(i + 1);
         }
@@ -924,7 +926,7 @@ CString CItem::GetExtension() const
     {
     case IT_FILE:
         {
-            int i = GetName().ReverseFind(chrDot);
+            int i = GetName().ReverseFind(wds::chrDot);
             if(i == -1)
             {
                 ext = _T(".");

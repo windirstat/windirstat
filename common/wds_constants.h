@@ -27,40 +27,54 @@
 #define __WDS_CONSTANTS_H__
 #pragma once
 
-// Single character constants
-const TCHAR chrSharp = _T('#');
-const TCHAR chrBracketOpen = _T('(');
-const TCHAR chrBracketClose = _T(')');
-const TCHAR chrComma = _T(',');
-const TCHAR chrDot = _T('.');
-const TCHAR chrColon = _T(':');
-const TCHAR chrAt = _T('@');
-const TCHAR chrBackslash = _T('\\');
-const TCHAR chrPipe = _T('|');
-const TCHAR chrZero = _T('0');
-const TCHAR chrSmallA = _T('a');
-const TCHAR chrCapA = _T('A');
-const TCHAR chrCapB = _T('B');
-const TCHAR chrCapC = _T('C');
+namespace wds
+{
+    // Single character constants
+    const TCHAR chrSharp = _T('#');
+    const TCHAR chrBracketOpen = _T('(');
+    const TCHAR chrBracketClose = _T(')');
+    const TCHAR chrComma = _T(',');
+    const TCHAR chrDot = _T('.');
+    const TCHAR chrColon = _T(':');
+    const TCHAR chrAt = _T('@');
+    const TCHAR chrBackslash = _T('\\');
+    const TCHAR chrPipe = _T('|');
+    const TCHAR chrZero = _T('0');
+    const TCHAR chrSmallA = _T('a');
+    const TCHAR chrCapA = _T('A');
+    const TCHAR chrCapB = _T('B');
+    const TCHAR chrCapC = _T('C');
 
-// Constants strings
-const LPCTSTR strEmpty = _T("");
-const LPCTSTR strBlankSpace = _T(" ");
-const LPCTSTR strStar = _T("*");
-const LPCTSTR strComma = _T(",");
-const LPCTSTR strDot = _T(".");
-const LPCTSTR strBackslash = _T("\\");
-const LPCTSTR strPipe = _T("|");
-const LPCTSTR strDollar = _T("$");
-const LPCTSTR strPercent = _T("%");
+    // Constants strings
+    const LPCTSTR strEmpty = _T("");
+    const LPCTSTR strBlankSpace = _T(" ");
+    const LPCTSTR strStar = _T("*");
+    const LPCTSTR strComma = _T(",");
+    const LPCTSTR strDot = _T(".");
+    const LPCTSTR strBackslash = _T("\\");
+    const LPCTSTR strPipe = _T("|");
+    const LPCTSTR strDollar = _T("$");
+    const LPCTSTR strPercent = _T("%");
 
-const LPCTSTR strExplorerKey = _T("Software\\Microsoft\\Windows\\CurrentVersion\\Explorer");
+    const LPCTSTR strExplorerKey = _T("Software\\Microsoft\\Windows\\CurrentVersion\\Explorer");
 
 #if defined(_WIN64)
-#define STR_LANG_SUFFIX ".L64"
+#   define STR_LANG_SUFFIX ".L64"
 #else
-#define STR_LANG_SUFFIX ".L32"
+#   define STR_LANG_SUFFIX ".L32"
 #endif
-const LPCTSTR strLangSuffix = _T(STR_LANG_SUFFIX);
+    const LPCTSTR strLangSuffix = _T(STR_LANG_SUFFIX);
+
+#   define STR_RESOURCE_PREFIX "wdsr"
+    const LPCTSTR strLangPrefix = _T(STR_RESOURCE_PREFIX);
+
+    const LPCTSTR strInvalidAttributes = _T("??????");
+    const LPCTSTR strAttributeReadonly = _T("R");
+    const LPCTSTR strAttributeHidden = _T("H");
+    const LPCTSTR strAttributeSystem = _T("S");
+    const LPCTSTR strAttributeArchive = _T("A");
+    const LPCTSTR strAttributeCompressed = _T("R");
+    const LPCTSTR strAttributeEncrypted = _T("E");
+}
 
 #endif // __WDS_CONSTANTS_H__

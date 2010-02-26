@@ -71,16 +71,16 @@ struct USERDEFINEDCLEANUP
 class CRegistryUser
 {
 public:
-    static void SetProfileString(LPCTSTR section, LPCTSTR entry, LPCTSTR value);
-    static CString GetProfileString(LPCTSTR section, LPCTSTR entry, LPCTSTR defaultValue);
+    static void setProfileString(LPCTSTR section, LPCTSTR entry, LPCTSTR value);
+    static CString getProfileString(LPCTSTR section, LPCTSTR entry, LPCTSTR defaultValue = wds::strEmpty);
 
-    static void SetProfileInt(LPCTSTR section, LPCTSTR entry, int value);
-    static int GetProfileInt(LPCTSTR section, LPCTSTR entry, int defaultValue);
+    static void setProfileInt(LPCTSTR section, LPCTSTR entry, int value);
+    static int getProfileInt(LPCTSTR section, LPCTSTR entry, int defaultValue);
 
-    static void SetProfileBool(LPCTSTR section, LPCTSTR entry, bool value);
-    static bool GetProfileBool(LPCTSTR section, LPCTSTR entry, bool defaultValue);
+    static void setProfileBool(LPCTSTR section, LPCTSTR entry, bool value);
+    static bool getProfileBool(LPCTSTR section, LPCTSTR entry, bool defaultValue);
 
-    static void CheckRange(int& value, int min, int max);
+    static void checkRange(int& value, int min, int max);
 };
 
 
@@ -261,7 +261,6 @@ public:
 private:
     void ReadUserDefinedCleanup(int i);
     void SaveUserDefinedCleanup(int i);
-    bool LooksLikeVirginCleanupTitle(CString title);
     void ReadTreemapOptions();
     void SaveTreemapOptions();
 

@@ -599,7 +599,7 @@ BOOL CSelectDrivesDlg::OnInitDialog()
         }
 
         CString s;
-        s.Format(_T("%c:\\"), i + chrCapA);
+        s.Format(_T("%c:\\"), i + wds::chrCapA);
 
         UINT type = GetDriveType(s);
         if(type == DRIVE_UNKNOWN || type == DRIVE_NO_ROOT_DIR)

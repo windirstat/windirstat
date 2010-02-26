@@ -151,7 +151,7 @@ void CLayout::CSizeGripper::Create(CWnd *parent, CRect rc)
             (HBRUSH)(COLOR_BTNFACE + 1),
             0
         ),
-        strEmpty,
+        wds::strEmpty,
         WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS,
         rc,
         parent,

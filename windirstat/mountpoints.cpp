@@ -80,7 +80,7 @@ void CReparsePoints::GetDriveVolumes()
         if((drives & mask) != 0)
         {
             CString s;
-            s.Format(_T("%c:\\"), i + chrCapA);
+            s.Format(_T("%c:\\"), i + wds::chrCapA);
 
             BOOL b = m_va.GetVolumeNameForVolumeMountPoint(s, volume.GetBuffer(_MAX_PATH), _MAX_PATH);
             volume.ReleaseBuffer();
@@ -186,29 +186,29 @@ void CReparsePoints::GetAllMountPoints()
 
 bool CReparsePoints::IsVolumeMountPoint(CString path)
 {
-    if(path.GetLength() < 3 || path[1] != chrColon || path[2] != chrBackslash)
+    if(path.GetLength() < 3 || path[1] != wds::chrColon || path[2] != wds::chrBackslash)
     {
         // Don't know how to make out mount points on UNC paths ###
         return false;
     }
 
     ASSERT(path.GetLength() >= 3);
-    ASSERT(path[1] == chrColon);
-    ASSERT(path[2] == chrBackslash);
+    ASSERT(path[1] == wds::chrColon);
+    ASSERT(path[2] == wds::chrBackslash);
 
     if(!m_va.IsSupported())
     {
         return false;
     }
 
-    if(path.Right(1) != chrBackslash)
+    if(path.Right(1) != wds::chrBackslash)
     {
         path += _T("\\");
     }
 
     path.MakeLower();
 
-    CString volume = m_drive[path[0] - chrSmallA];
+    CString volume = m_drive[path[0] - wds::chrSmallA];
     path = path.Mid(3);
 
     return IsVolumeMountPoint(volume, path);

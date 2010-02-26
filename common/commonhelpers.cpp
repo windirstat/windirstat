@@ -98,7 +98,7 @@ BOOL ShellExecuteThrow(HWND hwnd, LPCTSTR lpVerb, LPCTSTR lpFile, LPCTSTR lpPara
 CString GetBaseNameFromPath(LPCTSTR path)
 {
     CString s = path;
-    int i = s.ReverseFind(chrBackslash);
+    int i = s.ReverseFind(wds::chrBackslash);
     if(i < 0)
     {
         return s;
@@ -137,7 +137,7 @@ CString GetAppFileName()
 CString GetAppFolder()
 {
     CString s = GetAppFileName();
-    int i = s.ReverseFind(chrBackslash);
+    int i = s.ReverseFind(wds::chrBackslash);
     ASSERT(i >= 0);
     s = s.Left(i);
     return s;

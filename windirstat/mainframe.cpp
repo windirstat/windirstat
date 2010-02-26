@@ -482,7 +482,7 @@ void CMainFrame::HideProgress()
         m_progressVisible = false;
         if(IsWindow(*GetMainFrame()))
         {
-            GetDocument()->SetTitlePrefix(strEmpty);
+            GetDocument()->SetTitlePrefix(wds::strEmpty);
             SetMessageText(AFX_IDS_IDLEMESSAGE);
         }
     }
@@ -567,7 +567,7 @@ void CMainFrame::CreatePacmanProgress()
         CRect rc;
         m_wndStatusBar.GetItemRect(0, rc);
         CreateSuspendButton(rc);
-        m_pacman.Create(strEmpty, WS_CHILD | WS_VISIBLE, rc, &m_wndStatusBar, 4711);
+        m_pacman.Create(wds::strEmpty, WS_CHILD | WS_VISIBLE, rc, &m_wndStatusBar, 4711); // FIXME: hard-coded value out
     }
 }
 
@@ -623,7 +623,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
     UINT size = countof(indicators);
 
     // If psapi is not supported, don't show that pane.
-    if(GetWDSApp()->GetCurrentProcessMemoryInfo() == strEmpty)
+    if(GetWDSApp()->GetCurrentProcessMemoryInfo() == wds::strEmpty)
     {
         indic = indicatorsWithoutMemoryUsage;
         size = countof(indicatorsWithoutMemoryUsage);
@@ -887,11 +887,11 @@ void CMainFrame::UpdateCleanupMenu(CMenu *menu)
         CString info;
         if(items == 1)
         {
-            info.FormatMessage(IDS__ONEITEMss, FormatBytes(bytes), GetOptions()->IsHumanFormat() && bytes != 0 ? strEmpty : strBlankSpace + GetSpec_Bytes());
+            info.FormatMessage(IDS__ONEITEMss, FormatBytes(bytes), GetOptions()->IsHumanFormat() && bytes != 0 ? wds::strEmpty : wds::strBlankSpace + GetSpec_Bytes());
         }
         else
         {
-            info.FormatMessage(IDS__sITEMSss, FormatCount(items), FormatBytes(bytes), GetOptions()->IsHumanFormat() && bytes != 0 ? strEmpty : strBlankSpace + GetSpec_Bytes());
+            info.FormatMessage(IDS__sITEMSss, FormatCount(items), FormatBytes(bytes), GetOptions()->IsHumanFormat() && bytes != 0 ? wds::strEmpty : wds::strBlankSpace + GetSpec_Bytes());
         }
 
         s += info;
@@ -935,7 +935,7 @@ void CMainFrame::MyQueryRecycleBin(CRecycleBinApi& rb, ULONGLONG& items, ULONGLO
         }
 
         CString s;
-        s.Format(_T("%c:\\"), i + chrCapA);
+        s.Format(_T("%c:\\"), i + wds::chrCapA);
 
         UINT type = GetDriveType(s);
         if(type == DRIVE_UNKNOWN || type == DRIVE_NO_ROOT_DIR)
@@ -1056,7 +1056,7 @@ void CMainFrame::SetSelectionMessageText()
         break;
     case LF_EXTENSIONLIST:
         {
-            SetMessageText(strStar + GetDocument()->GetHighlightExtension());
+            SetMessageText(wds::strStar + GetDocument()->GetHighlightExtension());
         }
         break;
     }

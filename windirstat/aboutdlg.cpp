@@ -154,7 +154,7 @@ void CAboutDlg::CMyTabControl::SetPageText(int tab)
             translators.LoadString(IDS_TRANSLATORS);
             text += translators;
             // Anti-spam: avoid e-mail addresses in source-code:
-            text.Replace(chrSharp, chrAt);
+            text.Replace(wds::chrSharp, wds::chrAt);
         }
         break;
     case TAB_THANKSTO:
@@ -216,7 +216,7 @@ void CAboutDlg::CMyTabControl::OnEnLinkText(NMHDR *pNMHDR, LRESULT *pResult)
         CString link;
         m_text.GetTextRange(el->chrg.cpMin, el->chrg.cpMax, link);
 
-        ShellExecute(*this, NULL, link, NULL, strEmpty, SW_SHOWNORMAL);
+        ShellExecute(*this, NULL, link, NULL, wds::strEmpty, SW_SHOWNORMAL);
     }
 }
 

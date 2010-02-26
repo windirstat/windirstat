@@ -121,7 +121,7 @@ CString CExtensionListControl::CListItem::GetText(int subitem) const
     default:
         {
             ASSERT(0);
-            return strEmpty;
+            return wds::strEmpty;
         }
     }
 }
@@ -333,7 +333,7 @@ CString CExtensionListControl::GetSelectedExtension()
     POSITION pos = GetFirstSelectedItemPosition();
     if(pos == NULL)
     {
-        return strEmpty;
+        return wds::strEmpty;
     }
     else
     {

@@ -161,7 +161,7 @@ void CDirstatDoc::DecodeSelection(CString s, CString& folder, CStringArray& driv
         {
             CString d = sa[i];
             ASSERT(2 == d.GetLength());
-            ASSERT(chrColon == d[1]);
+            ASSERT(wds::chrColon == d[1]);
 
             drives.Add(d + _T("\\"));
         }
@@ -169,14 +169,14 @@ void CDirstatDoc::DecodeSelection(CString s, CString& folder, CStringArray& driv
     else
     {
         CString f = sa[0];
-        if(2 == f.GetLength() && chrColon == f[1])
+        if(2 == f.GetLength() && wds::chrColon == f[1])
         {
             drives.Add(f + _T("\\"));
         }
         else
         {
             // Remove trailing backslash, if any and not drive-root.
-            if((f.GetLength() > 0) && (strBackslash == f.Right(1)) && (f.GetLength() != 3 || f[1] != chrColon))
+            if((f.GetLength() > 0) && (wds::strBackslash == f.Right(1)) && (f.GetLength() != 3 || f[1] != wds::chrColon))
             {
                 f = f.Left(f.GetLength() - 1);
             }
@@ -188,7 +188,7 @@ void CDirstatDoc::DecodeSelection(CString s, CString& folder, CStringArray& driv
 
 TCHAR CDirstatDoc::GetEncodingSeparator()
 {
-    return chrPipe; // This character must be one, which is not allowed in file names.
+    return wds::chrPipe; // This character must be one, which is not allowed in file names.
 }
 
 void CDirstatDoc::DeleteContents()
@@ -412,7 +412,7 @@ bool CDirstatDoc::Work(DWORD ticks)
 
 bool CDirstatDoc::IsDrive(CString spec)
 {
-    return (3 == spec.GetLength() && chrColon == spec[1] && chrBackslash == spec[2]);
+    return (3 == spec.GetLength() && wds::chrColon == spec[1] && wds::chrBackslash == spec[2]);
 }
 
 // Starts a refresh of all mount points in our tree.

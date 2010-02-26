@@ -44,6 +44,7 @@ CString GetOsPlatformString()
         return LoadString(IDS__UNKNOWN_);
     }
 
+    // FIXME: Update this to include Windows Vista/2008 and 7/2008 R2
     switch (osvi.dwPlatformId)
     {
     case VER_PLATFORM_WIN32_NT:
@@ -72,39 +73,6 @@ CString GetOsPlatformString()
             CString s;
             s.Format(_T(" (%s)"), osvi.szCSDVersion);
             ret += s;
-        }
-        break;
-
-    case VER_PLATFORM_WIN32_WINDOWS:
-        if(osvi.dwMajorVersion == 4 && osvi.dwMinorVersion == 0)
-        {
-            ret = _T("Windows 95");
-            if(osvi.szCSDVersion[1] == chrCapC || osvi.szCSDVersion[1] == chrCapB)
-            {
-                ret += _T(" OSR2");
-            }
-        }
-        else if(osvi.dwMajorVersion == 4 && osvi.dwMinorVersion == 10)
-        {
-            ret = _T("Windows 98");
-            if(osvi.szCSDVersion[1] == chrCapA)
-            {
-                ret += _T(" SE");
-            }
-        }
-        else if(osvi.dwMajorVersion == 4 && osvi.dwMinorVersion == 90)
-        {
-            ret = _T("Windows ME");
-        }
-        else
-        {
-            ret.Format(_T("<platform %u %u.%u>"), osvi.dwPlatformId, osvi.dwMajorVersion, osvi.dwMinorVersion);
-        }
-        break;
-
-    case VER_PLATFORM_WIN32s:
-        {
-            ret = _T("Win32s\n"); // ooops!!
         }
         break;
 

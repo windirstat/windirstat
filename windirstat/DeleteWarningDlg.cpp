@@ -36,7 +36,7 @@ IMPLEMENT_DYNAMIC(CDeleteWarningDlg, CDialog)
 
 CDeleteWarningDlg::CDeleteWarningDlg(CWnd* pParent /*=NULL*/)
     : CDialog(CDeleteWarningDlg::IDD, pParent)
-    , m_fileName(strEmpty)
+    , m_fileName(wds::strEmpty)
     , m_dontShowAgain(false)
 {
 }

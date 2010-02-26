@@ -225,7 +225,7 @@ CString CMyImageList::GetADriveSpec()
     CString s;
     UINT u = GetWindowsDirectory(s.GetBuffer(_MAX_PATH), _MAX_PATH);
     s.ReleaseBuffer();
-    if(u == 0 || s.GetLength() < 3 || s[1] != chrColon || s[2] != chrBackslash)
+    if(u == 0 || s.GetLength() < 3 || s[1] != wds::chrColon || s[2] != wds::chrBackslash)
     {
         return _T("C:\\");
     }
