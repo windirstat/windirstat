@@ -952,7 +952,7 @@ void COptions::LoadFromRegistry()
         m_treelistColor[i]= GetProfileInt(sectionOptions, entry, treelistColorDefault[i]);
     }
     m_humanFormat = GetProfileBool(sectionOptions, entryHumanFormat, true);
-    m_pacmanAnimation = GetProfileBool(sectionOptions, entryPacmanAnimation, true);
+    m_pacmanAnimation = GetProfileBool(sectionOptions, entryPacmanAnimation, false);
     m_showTimeSpent = GetProfileBool(sectionOptions, entryShowTimeSpent, false);
     m_treemapHighlightColor = GetProfileInt(sectionOptions, entryTreemapHighlightColor, RGB(255,255,255));
 

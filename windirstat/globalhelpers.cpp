@@ -101,7 +101,7 @@ CString GetLocaleLanguage(LANGID langid)
 
     if(s.GetLength() > 0)
     {
-        s.SetAt(0, (TCHAR)_totupper(s[0]));
+        s.SetAt(0, (TCHAR)_totupper(s[0])); // FIXME: same holds for Russian, but _toupper won't work there ...
     }
 
     return s + _T(" - ") + GetLocaleString(LOCALE_SNATIVECTRYNAME, langid);

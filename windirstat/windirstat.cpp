@@ -283,11 +283,7 @@ bool CDirstatApp::ScanResourceDllName(LPCTSTR name, LANGID& langid)
 {
     return ScanAuxiliaryFileName(
         _T("wdsr")
-#if defined(_WIN64)
-        , _T(".L64")
-#else
-        , _T(".L32")
-#endif
+        , strLangSuffix
         , name
         , langid
         );
@@ -296,22 +292,22 @@ bool CDirstatApp::ScanResourceDllName(LPCTSTR name, LANGID& langid)
 bool CDirstatApp::ScanAuxiliaryFileName(LPCTSTR prefix, LPCTSTR suffix, LPCTSTR name, LANGID& langid)
 {
     ASSERT(_tcslen(prefix) == 4);   // "wdsr" or "wdsh"
-    ASSERT(_tcslen(suffix) == 4);   // ".dll" or ".chm"
+    ASSERT(_tcslen(suffix) == 4);   // ".L??" or ".chm"
 
-    CString s = name;   // "wdsr0a01.dll"
+    CString s = name;   // "wdsr0a01.L??"
     s.MakeLower();
     if(s.Left(4) != prefix)
     {
         return false;
     }
-    s = s.Mid(4);       // "0a01.dll"
+    s = s.Mid(4);       // "0a01.L??"
 
     if(s.GetLength() != 8)
     {
         return false;
     }
 
-    if(s.Mid(4) != suffix)
+    if(s.Mid(4) != CString(suffix).MakeLower())
     {
         return false;
     }
@@ -338,13 +334,13 @@ bool CDirstatApp::ScanAuxiliaryFileName(LPCTSTR prefix, LPCTSTR suffix, LPCTSTR 
     {
         LANGID id;
         ASSERT(!ScanResourceDllName(strEmpty, id));
-        ASSERT(!ScanResourceDllName(_T("wdsr.dll"), id));
-        ASSERT(!ScanResourceDllName(_T("wdsr123.dll"), id));
-        ASSERT(!ScanResourceDllName(_T("wdsr12345.dll"), id));
+        ASSERT(!ScanResourceDllName(_T("wdsr") _T(STR_LANG_SUFFIX), id));
+        ASSERT(!ScanResourceDllName(_T("wdsr123") _T(STR_LANG_SUFFIX), id));
+        ASSERT(!ScanResourceDllName(_T("wdsr12345") _T(STR_LANG_SUFFIX), id));
         ASSERT(!ScanResourceDllName(_T("wdsr1234.exe"), id));
-        ASSERT(ScanResourceDllName(_T("wdsr0123.dll"), id));
+        ASSERT(ScanResourceDllName(_T("wdsr0123") _T(STR_LANG_SUFFIX), id));
         ASSERT(id == 0x0123);
-        ASSERT(ScanResourceDllName(_T("WDsRa13F.dll"), id));
+        ASSERT(ScanResourceDllName(_T("WDsRa13F") _T(STR_LANG_SUFFIX), id));
         ASSERT(id == 0xa13f);
     }
 #endif
@@ -404,6 +400,8 @@ bool CDirstatApp::IsCorrectResourceDll(LPCTSTR path)
     {
         return false;
     }
+
+    // TODO: introduce some method of checking the resource version
 
     CString reference = LoadString(IDS_RESOURCEVERSION);
 

@@ -56,4 +56,11 @@ const LPCTSTR strPercent = _T("%");
 
 const LPCTSTR strExplorerKey = _T("Software\\Microsoft\\Windows\\CurrentVersion\\Explorer");
 
+#if defined(_WIN64)
+#define STR_LANG_SUFFIX ".L64"
+#else
+#define STR_LANG_SUFFIX ".L32"
+#endif
+const LPCTSTR strLangSuffix = _T(STR_LANG_SUFFIX);
+
 #endif // __WDS_CONSTANTS_H__
