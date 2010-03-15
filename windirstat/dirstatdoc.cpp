@@ -1066,7 +1066,7 @@ void CDirstatDoc::CallUserDefinedCleanup(bool isDirectory, const CString& format
     if(!b)
     {
         MdThrowStringExceptionF(IDS_COULDNOTCREATEPROCESSssss,
-            app, cmdline, directory, MdGetWinErrorText(GetLastError())
+            app, cmdline, directory, MdGetWinErrorText(::GetLastError())
         );
         return;
     }

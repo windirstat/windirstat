@@ -79,7 +79,7 @@ BOOL ShellExecuteNoThrow(HWND hwnd, LPCTSTR lpVerb, LPCTSTR lpFile, LPCTSTR lpPa
         0
         };
 
-    return ShellExecuteEx(&sei);
+    return ::ShellExecuteEx(&sei);
 }
 
 BOOL ShellExecuteThrow(HWND hwnd, LPCTSTR lpVerb, LPCTSTR lpFile, LPCTSTR lpParameters, LPCTSTR lpDirectory, INT nShowCmd)
@@ -90,7 +90,7 @@ BOOL ShellExecuteThrow(HWND hwnd, LPCTSTR lpVerb, LPCTSTR lpFile, LPCTSTR lpPara
     bResult = ShellExecuteNoThrow(hwnd, lpVerb, lpFile, lpParameters, lpDirectory, nShowCmd);
     if(!bResult)
     {
-        MdThrowStringExceptionF(_T("ShellExecute failed: %1!s!"), MdGetWinErrorText(GetLastError()));
+        MdThrowStringExceptionF(_T("ShellExecute failed: %1!s!"), MdGetWinErrorText(::GetLastError()));
     }
     return bResult;
 }
@@ -129,7 +129,7 @@ CString LoadString(UINT resId)
 CString GetAppFileName()
 {
     CString s;
-    VERIFY(GetModuleFileName(NULL, s.GetBuffer(_MAX_PATH), _MAX_PATH));
+    VERIFY(::GetModuleFileName(NULL, s.GetBuffer(_MAX_PATH), _MAX_PATH));
     s.ReleaseBuffer();
     return s;
 }
@@ -150,19 +150,19 @@ CString MyGetFullPathName(LPCTSTR relativePath)
 
     DWORD len = _MAX_PATH;
 
-    DWORD dw = GetFullPathName(relativePath, len, buffer.GetBuffer(len), &dummy);
+    DWORD dw = ::GetFullPathName(relativePath, len, buffer.GetBuffer(len), &dummy);
     buffer.ReleaseBuffer();
 
     while(dw >= len)
     {
         len += _MAX_PATH;
-        dw = GetFullPathName(relativePath, len, buffer.GetBuffer(len), &dummy);
+        dw = ::GetFullPathName(relativePath, len, buffer.GetBuffer(len), &dummy);
         buffer.ReleaseBuffer();
     }
 
     if(0 == dw)
     {
-        TRACE("GetFullPathName(%s) failed: GetLastError returns %u\r\n", relativePath, GetLastError());
+        TRACE("GetFullPathName(%s) failed: GetLastError returns %u\r\n", relativePath, ::GetLastError());
         return relativePath;
     }
 

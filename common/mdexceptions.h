@@ -171,7 +171,7 @@ inline void MdThrowHresult(HRESULT hr, LPCTSTR pszPrefix =NULL)
 
 inline void MdThrowLastWinerror(LPCTSTR pszPrefix = NULL)
 {
-    MdThrowWinError(GetLastError(), pszPrefix);
+    MdThrowWinError(::GetLastError(), pszPrefix);
 }
 
 inline void MdThrowFailed(HRESULT hr, LPCTSTR pszPrefix = NULL)

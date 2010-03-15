@@ -255,7 +255,7 @@ void CDirstatApp::RestartApplication()
     if(!success)
     {
         CString s;
-        s.FormatMessage(IDS_CREATEPROCESSsFAILEDs, GetAppFileName(), MdGetWinErrorText(GetLastError()));
+        s.FormatMessage(IDS_CREATEPROCESSsFAILEDs, GetAppFileName(), MdGetWinErrorText(::GetLastError()));
         AfxMessageBox(s);
         return;
     }
@@ -559,7 +559,7 @@ BOOL CDirstatApp::InitInstance()
             }
             else
             {
-                TRACE(_T("LoadLibrary(%s) failed: %u\r\n"), resourceDllPath, GetLastError());
+                TRACE(_T("LoadLibrary(%s) failed: %u\r\n"), resourceDllPath, ::GetLastError());
             }
         }
         // else: We use our built-in English resources.

@@ -226,7 +226,7 @@ CString FormatFileTime(const FILETIME& t)
     SYSTEMTIME st;
     if(!FileTimeToSystemTime(&t, &st))
     {
-        return MdGetWinErrorText(GetLastError());
+        return MdGetWinErrorText(::GetLastError());
     }
 
     LCID lcid = MAKELCID(GetWDSApp()->GetEffectiveLangid(), SORT_DEFAULT);
@@ -319,7 +319,7 @@ bool GetVolumeName(LPCTSTR rootPath, CString& volumeName)
 
     if(!b)
     {
-        TRACE(_T("GetVolumeInformation(%s) failed: %u\n"), rootPath, GetLastError());
+        TRACE(_T("GetVolumeInformation(%s) failed: %u\n"), rootPath, ::GetLastError());
     }
 
     SetErrorMode(old);
@@ -411,7 +411,7 @@ void ShellExecuteWithAssocDialog(HWND hwnd, LPCTSTR filename)
     CWaitCursor wc;
 
     BOOL bExecuted = ShellExecuteNoThrow(hwnd, NULL, filename, NULL, NULL, SW_SHOWNORMAL);
-    if((!bExecuted) && (ERROR_NO_ASSOCIATION == GetLastError()))
+    if((!bExecuted) && (ERROR_NO_ASSOCIATION == ::GetLastError()))
     {
         // Q192352
         CString sysDir;
@@ -425,7 +425,7 @@ void ShellExecuteWithAssocDialog(HWND hwnd, LPCTSTR filename)
 
     if(!bExecuted)
     {
-        MdThrowStringExceptionF(_T("ShellExecute failed: %1!s!"), MdGetWinErrorText(GetLastError()));
+        MdThrowStringExceptionF(_T("ShellExecute failed: %1!s!"), MdGetWinErrorText(::GetLastError()));
     }
 }
 
@@ -590,7 +590,7 @@ CString MyQueryDosDevice(LPCTSTR drive)
 
     if(dw == 0)
     {
-        TRACE(_T("QueryDosDevice(%s) failed: %s\r\n"), d, MdGetWinErrorText(GetLastError()));
+        TRACE(_T("QueryDosDevice(%s) failed: %s\r\n"), d, MdGetWinErrorText(::GetLastError()));
         return wds::strEmpty;
     }
 
