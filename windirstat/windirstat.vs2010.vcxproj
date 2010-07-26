@@ -77,10 +77,10 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\intermediate\vs2010_$(Platform)_$(Configuration)\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\build\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\intermediate\vs2010_$(Platform)_$(Configuration)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" />
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">..\intermediate\vs2010_$(Platform)_$(Configuration)\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">..\build\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">..\intermediate\vs2010_$(Platform)_$(Configuration)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\build\</OutDir>
