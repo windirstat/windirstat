@@ -152,7 +152,7 @@ private:
     static void GetArray(LPCTSTR entry, /* in/out */ CArray<int, int>& arr);
     static void SetRect(LPCTSTR entry, const CRect& rc);
     static void GetRect(LPCTSTR entry, CRect& rc);
-    static void SanifyRect(CRect& rc);
+    static void SanitizeRect(CRect& rc);
 
     static CString EncodeWindowPlacement(const WINDOWPLACEMENT& wp);
     static void DecodeWindowPlacement(const CString& s, WINDOWPLACEMENT& wp);

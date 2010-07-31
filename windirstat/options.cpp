@@ -181,7 +181,7 @@ void CPersistence::GetMainWindowPlacement(/* [in/out] */ WINDOWPLACEMENT& wp)
     ASSERT(wp.length == sizeof(wp));
     CString s = getProfileString(sectionPersistence, entryMainWindowPlacement);
     DecodeWindowPlacement(s, wp);
-    SanifyRect((CRect &)wp.rcNormalPosition);
+    SanitizeRect((CRect &)wp.rcNormalPosition);
 }
 
 void CPersistence::SetMainWindowPlacement(const WINDOWPLACEMENT& wp)
@@ -248,7 +248,7 @@ void CPersistence::SetDialogRectangle(LPCTSTR name, const CRect& rc)
 void CPersistence::GetDialogRectangle(LPCTSTR name, CRect& rc)
 {
     GetRect(MakeDialogRectangleEntry(name), rc);
-    SanifyRect(rc);
+    SanitizeRect(rc);
 }
 /*
 void CPersistence::SetSorting(LPCTSTR name, int column1, bool ascending1, int column2, bool ascending2)
@@ -289,7 +289,7 @@ void CPersistence::GetConfigPosition(/* in/out */ CPoint& pt)
     pt.y = getProfileInt(sectionPersistence, entryConfigPositionY, pt.y);
 
     CRect rc(pt, CSize(100, 100));
-    SanifyRect(rc);
+    SanitizeRect(rc);
     pt = rc.TopLeft();
 }
 
@@ -431,7 +431,7 @@ void CPersistence::GetRect(LPCTSTR entry, CRect& rc)
     }
 }
 
-void CPersistence::SanifyRect(CRect& rc)
+void CPersistence::SanitizeRect(CRect& rc)
 {
     const int visible = 30;
 

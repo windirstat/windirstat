@@ -4,7 +4,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2006, 2008 Oliver Schneider (assarbad.net)
+// Copyright (C) 2004-2006, 2008, 2010 Oliver Schneider (assarbad.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -61,6 +61,7 @@
 #include "../common/cotaskmem.h"
 #include "../common/commonhelpers.h"
 #include "../common/platform.h"
+#include "../common/tracer.h"
 
 #define RGB_GET_RVALUE(rgb) (rgb & 0xFF)
 #define RGB_GET_GVALUE(rgb) ((rgb & 0xFF00) >> 8)

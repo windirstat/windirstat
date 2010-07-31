@@ -78,7 +78,7 @@ CDirstatDoc::CDirstatDoc()
     m_showUnknown = CPersistence::GetShowUnknown();
     m_extensionDataValid = false;
 
-    TRACE(_T("sizeof(CItem) = %d\r\n"), sizeof(CItem));
+    VTRACE(_T("sizeof(CItem) = %d"), sizeof(CItem));
 }
 
 CDirstatDoc::~CDirstatDoc()

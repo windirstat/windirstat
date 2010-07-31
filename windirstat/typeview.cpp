@@ -135,7 +135,7 @@ int CExtensionListControl::CListItem::GetImage() const
 {
     if(m_image == -1)
     {
-        m_image = GetMyImageList()->GetExtImageAndDescription(m_extension, m_description);
+        m_image = GetMyImageList()->getExtImageAndDescription(m_extension, m_description);
     }
     return m_image;
 }
@@ -144,7 +144,7 @@ CString CExtensionListControl::CListItem::GetDescription() const
 {
     if(m_description.IsEmpty())
     {
-        m_image = GetMyImageList()->GetExtImageAndDescription(m_extension, m_description);
+        m_image = GetMyImageList()->getExtImageAndDescription(m_extension, m_description);
     }
     return m_description;
 }

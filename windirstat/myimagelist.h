@@ -32,33 +32,38 @@
 //
 // CMyImageList. Both CDirstatView and CTypeView use this central
 // image list. It caches the system image list images as needed,
-// and adds 4 special images at initialization.
+// and adds a few special images at initialization.
 // This is because I don't want to deal with two images lists.
 //
 class CMyImageList: public CImageList
 {
+    static const UINT WDS_SHGFI_DEFAULTS = SHGFI_SYSICONINDEX | SHGFI_SMALLICON | SHGFI_ICON;
+    static COLORREF greenify_(COLORREF c);
+    static COLORREF blueify_(COLORREF c);
+    static COLORREF yellowify_(COLORREF c);
+
 public:
     CMyImageList();
     virtual ~CMyImageList();
 
-    void Initialize();
+    void initialize();
 
-    int GetMyComputerImage();
-    int GetMountPointImage();
-    int GetJunctionImage();
-    int GetFolderImage();
-    int GetFileImage(LPCTSTR path);
-    int GetExtImageAndDescription(LPCTSTR ext, CString& description);
+    int getMyComputerImage();
+    int getMountPointImage();
+    int getJunctionImage();
+    int getFolderImage();
+    int getFileImage(LPCTSTR path);
+    int getExtImageAndDescription(LPCTSTR ext, CString& description);
 
-    int GetFilesFolderImage();
-    int GetFreeSpaceImage();
-    int GetUnknownImage();
-    int GetEmptyImage();
+    int getFilesFolderImage();
+    int getFreeSpaceImage();
+    int getUnknownImage();
+    int getEmptyImage();
 
 protected:
-    int CacheIcon(LPCTSTR path, UINT flags, CString *psTypeName = NULL);
-    CString GetADriveSpec();
-    void AddCustomImages();
+    int cacheIcon(LPCTSTR path, UINT flags, CString *psTypeName = NULL);
+    CString getADriveSpec();
+    void addCustomImages();
 
     CMap<int, int, int, int> m_indexMap;    // system image list index -> our index
 

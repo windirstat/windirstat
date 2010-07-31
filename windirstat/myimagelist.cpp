@@ -31,42 +31,6 @@
 #define new DEBUG_NEW
 #endif
 
-namespace
-{
-    COLORREF Greenify(COLORREF c)
-    {
-        if(c == RGB(255,255,255))
-        {
-            return c;
-        }
-        double b = CColorSpace::GetColorBrightness(c);
-        b = b * b;
-        return CColorSpace::MakeBrightColor(RGB(0, 255, 0), b);
-    }
-
-    COLORREF Blueify(COLORREF c)
-    {
-        if(c == RGB(255,255,255))
-        {
-            return c;
-        }
-        double b = CColorSpace::GetColorBrightness(c);
-        return CColorSpace::MakeBrightColor(RGB(0, 0, 255), b);
-    }
-
-    COLORREF Yellowify(COLORREF c)
-    {
-        if(c == RGB(255,255,255))
-        {
-            return c;
-        }
-        double b = CColorSpace::GetColorBrightness(c);
-        b = b * b;
-        return CColorSpace::MakeBrightColor(RGB(255, 255, 0), b);
-    }
-}
-
-
 CMyImageList::CMyImageList()
     : m_filesFolderImage(-1)
     , m_freeSpaceImage(-1)
@@ -80,45 +44,80 @@ CMyImageList::~CMyImageList()
 {
 }
 
-void CMyImageList::Initialize()
+void CMyImageList::initialize()
 {
     if(m_hImageList == NULL)
     {
         CString s;
-        GetSystemDirectory(s.GetBuffer(_MAX_PATH), _MAX_PATH);
+        ::GetSystemDirectory(s.GetBuffer(_MAX_PATH), _MAX_PATH);
         s.ReleaseBuffer();
+        VTRACE(_T("GetSystemDirectory() -> %s"), s.GetString());
 
         SHFILEINFO sfi;
-        HIMAGELIST hil = (HIMAGELIST)SHGetFileInfo(s, 0, &sfi, sizeof(sfi), SHGFI_SYSICONINDEX | SHGFI_SMALLICON);
+        HIMAGELIST hil = (HIMAGELIST)::SHGetFileInfo(s, 0, &sfi, sizeof(sfi), WDS_SHGFI_DEFAULTS);
 
-        Attach(ImageList_Duplicate(hil));
+        this->Attach(ImageList_Duplicate(hil));
 
-        for(int i = 0; i < GetImageCount(); i++)
+        VTRACE(_T("System image list has %i icons"), this->GetImageCount());
+        for(int i = 0; i < this->GetImageCount(); i++)
         {
             m_indexMap.SetAt(i, i);
         }
 
-        AddCustomImages();
+        this->addCustomImages();
     }
 }
 
-// Returns the index of the added icon
-int CMyImageList::CacheIcon(LPCTSTR path, UINT flags, CString *psTypeName)
+COLORREF CMyImageList::greenify_(COLORREF c)
 {
-    ASSERT(m_hImageList != NULL); // should have been Initialize()ed.
+    if(c == RGB(255,255,255))
+    {
+        return c;
+    }
+    double b = CColorSpace::GetColorBrightness(c);
+    b = b * b;
+    return CColorSpace::MakeBrightColor(RGB(0, 255, 0), b);
+}
 
-    flags |= SHGFI_SYSICONINDEX | SHGFI_SMALLICON;
+COLORREF CMyImageList::blueify_(COLORREF c)
+{
+    if(c == RGB(255,255,255))
+    {
+        return c;
+    }
+    double b = CColorSpace::GetColorBrightness(c);
+    return CColorSpace::MakeBrightColor(RGB(0, 0, 255), b);
+}
+
+COLORREF CMyImageList::yellowify_(COLORREF c)
+{
+    if(c == RGB(255,255,255))
+    {
+        return c;
+    }
+    double b = CColorSpace::GetColorBrightness(c);
+    b = b * b;
+    return CColorSpace::MakeBrightColor(RGB(255, 255, 0), b);
+}
+
+// Returns the index of the added icon
+int CMyImageList::cacheIcon(LPCTSTR path, UINT flags, CString *psTypeName)
+{
+    ASSERT(m_hImageList != NULL); // should have been initialize()ed.
+
+    flags |= WDS_SHGFI_DEFAULTS;
     if(psTypeName != NULL)
     {
+        // Also retrieve the file type description
         flags |= SHGFI_TYPENAME;
     }
 
     SHFILEINFO sfi;
-    HIMAGELIST hil = (HIMAGELIST)SHGetFileInfo(path, 0, &sfi, sizeof(sfi), flags);
+    HIMAGELIST hil = (HIMAGELIST)::SHGetFileInfo(path, 0, &sfi, sizeof(sfi), flags);
     if(hil == NULL)
     {
         TRACE(_T("SHGetFileInfo() failed\n"));
-        return GetEmptyImage();
+        return getEmptyImage();
     }
 
     if(psTypeName != NULL)
@@ -140,79 +139,79 @@ int CMyImageList::CacheIcon(LPCTSTR path, UINT flags, CString *psTypeName)
 
             So we use this method:
         */
-        i = Add(sil->ExtractIcon(sfi.iIcon));
+        i = this->Add(sil->ExtractIcon(sfi.iIcon));
         m_indexMap.SetAt(sfi.iIcon, i);
     }
 
     return i;
 }
 
-int CMyImageList::GetMyComputerImage()
+int CMyImageList::getMyComputerImage()
 {
     LPITEMIDLIST pidl = NULL;
-    HRESULT hr = SHGetSpecialFolderLocation(NULL, CSIDL_DRIVES, &pidl);
+    HRESULT hr = ::SHGetSpecialFolderLocation(NULL, CSIDL_DRIVES, &pidl);
     if(FAILED(hr))
     {
         TRACE(_T("SHGetSpecialFolderLocation(CSIDL_DRIVES) failed!\n"));
         return 0;
     }
 
-    int i = CacheIcon((LPCTSTR)pidl, SHGFI_PIDL);
+    int i = cacheIcon((LPCTSTR)pidl, SHGFI_PIDL);
 
-    CoTaskMemFree(pidl);
+    ::CoTaskMemFree(pidl);
 
     return i;
 }
 
-int CMyImageList::GetMountPointImage()
+int CMyImageList::getMountPointImage()
 {
-    return CacheIcon(GetADriveSpec(), 0); // The flag SHGFI_USEFILEATTRIBUTES doesn't work on W95.
+    return cacheIcon(getADriveSpec(), 0); // The flag SHGFI_USEFILEATTRIBUTES doesn't work on W95.
 }
 
-int CMyImageList::GetJunctionImage()
+int CMyImageList::getJunctionImage()
 {
     // Intermediate solution until we find a nice icon for junction points
     return m_junctionImage;
 }
 
-int CMyImageList::GetFolderImage()
+int CMyImageList::getFolderImage()
 {
     CString s;
-    GetSystemDirectory(s.GetBuffer(_MAX_PATH), _MAX_PATH);
+    ::GetSystemDirectory(s.GetBuffer(_MAX_PATH), _MAX_PATH);
     s.ReleaseBuffer();
 
-    return CacheIcon(s, 0);
+    return cacheIcon(s, 0);
 }
 
-int CMyImageList::GetFileImage(LPCTSTR path)
+int CMyImageList::getFileImage(LPCTSTR path)
 {
-    return CacheIcon(path, 0);
+    return cacheIcon(path, 0);
 }
 
-int CMyImageList::GetExtImageAndDescription(LPCTSTR ext, CString& description)
+int CMyImageList::getExtImageAndDescription(LPCTSTR ext, CString& description)
 {
-    return CacheIcon(ext, SHGFI_USEFILEATTRIBUTES, &description);
+    return cacheIcon(ext, SHGFI_USEFILEATTRIBUTES, &description);
 }
 
-int CMyImageList::GetFilesFolderImage()
+int CMyImageList::getFilesFolderImage()
 {
-    ASSERT(m_hImageList != NULL); // should have been Initialize()ed.
+    ASSERT(m_hImageList != NULL); // should have been initialize()ed.
     return m_filesFolderImage;
 }
 
-int CMyImageList::GetFreeSpaceImage()
+int CMyImageList::getFreeSpaceImage()
 {
-    ASSERT(m_hImageList != NULL); // should have been Initialize()ed.
+    ASSERT(m_hImageList != NULL); // should have been initialize()ed.
     return m_freeSpaceImage;
 }
 
-int CMyImageList::GetUnknownImage()
+int CMyImageList::getUnknownImage()
 {
-    ASSERT(m_hImageList != NULL); // should have been Initialize()ed.
+    ASSERT(m_hImageList != NULL); // should have been initialize()ed.
     return m_unknownImage;
 }
 
-int CMyImageList::GetEmptyImage()
+int CMyImageList::getEmptyImage()
 {
     ASSERT(m_hImageList != NULL);
     return m_emptyImage;
@@ -220,7 +219,8 @@ int CMyImageList::GetEmptyImage()
 
 
 // Returns an arbitrary present drive
-CString CMyImageList::GetADriveSpec()
+// TODO: doesn't work on Vista and up because the system drive has a different icon
+CString CMyImageList::getADriveSpec()
 {
     CString s;
     UINT u = GetWindowsDirectory(s.GetBuffer(_MAX_PATH), _MAX_PATH);
@@ -232,18 +232,18 @@ CString CMyImageList::GetADriveSpec()
     return s.Left(3);
 }
 
-void CMyImageList::AddCustomImages()
+void CMyImageList::addCustomImages()
 {
     const int CUSTOM_IMAGE_COUNT = 5;
     const COLORREF bgcolor = RGB(255,255,255);
 
-    int folderImage = GetFolderImage();
-    int driveImage = GetMountPointImage();
+    const int folderImage = getFolderImage();
+    const int driveImage = getMountPointImage();
 
     IMAGEINFO ii;
     ZeroMemory(&ii, sizeof(ii));
-    VERIFY(GetImageInfo(folderImage, &ii));
-    CRect rc = ii.rcImage;
+    VERIFY(this->GetImageInfo(folderImage, &ii));
+    const CRect rc(ii.rcImage);
 
     CClientDC dcClient(CWnd::GetDesktopWindow());
 
@@ -266,7 +266,7 @@ void CMyImageList::AddCustomImages()
 
         dcmem.FillSolidRect(0, 0, rc.Width() * CUSTOM_IMAGE_COUNT, rc.Height(), bgcolor);
         CPoint pt(0, 0);
-        COLORREF safe = SetBkColor(CLR_NONE);
+        COLORREF savedClr = this->SetBkColor(CLR_NONE);
         VERIFY(Draw(&dcmem, folderImage, pt, ILD_NORMAL));
         pt.x += rc.Width();
         VERIFY(Draw(&dcmem, driveImage, pt, ILD_NORMAL));
@@ -274,7 +274,7 @@ void CMyImageList::AddCustomImages()
         VERIFY(Draw(&dcmem, driveImage, pt, ILD_NORMAL));
         pt.x += rc.Width();
         VERIFY(Draw(&dcmem, folderImage, pt, ILD_NORMAL));
-        SetBkColor(safe);
+        this->SetBkColor(savedClr);
 
         // Now we re-color the images
         for(int i = 0; i < rc.Width(); i++)
@@ -285,17 +285,17 @@ void CMyImageList::AddCustomImages()
 
                 // We "blueify" the folder image ("<Files>")
                 COLORREF c = dcmem.GetPixel(idx * rc.Width() + i, j);
-                dcmem.SetPixel(idx * rc.Width() + i, j, Blueify(c));
+                dcmem.SetPixel(idx * rc.Width() + i, j, blueify_(c));
                 idx++;
 
                 // ... "greenify" the drive image ("<Free Space>")
                 c = dcmem.GetPixel(idx * rc.Width() + i, j);
-                dcmem.SetPixel(idx * rc.Width() + i, j, Greenify(c));
+                dcmem.SetPixel(idx * rc.Width() + i, j, greenify_(c));
                 idx++;
 
                 // ...and "yellowify" the drive image ("<Unknown>")
                 c = dcmem.GetPixel(idx * rc.Width() + i, j);
-                dcmem.SetPixel(idx * rc.Width() + i, j, Yellowify(c));
+                dcmem.SetPixel(idx * rc.Width() + i, j, yellowify_(c));
                 idx++;
 
                 // ...and overlay the junction point image with the link symbol.
@@ -314,7 +314,8 @@ void CMyImageList::AddCustomImages()
             }
         }
     }
-    int k = Add(&target, bgcolor);
+    int k = this->Add(&target, bgcolor);
+    VTRACE(_T("k == %i"), k);
     m_filesFolderImage = k++;
     m_freeSpaceImage = k++;
     m_unknownImage = k++;

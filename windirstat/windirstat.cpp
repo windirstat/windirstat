@@ -153,7 +153,7 @@ CDirstatApp::CDirstatApp()
 
 CMyImageList* CDirstatApp::GetMyImageList()
 {
-    m_myImageList.Initialize();
+    m_myImageList.initialize();
     return &m_myImageList;
 }
 

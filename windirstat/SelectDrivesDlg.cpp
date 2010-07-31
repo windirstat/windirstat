@@ -191,7 +191,7 @@ int CDriveItem::Compare(const CSortingListItem *baseOther, int subitem) const
 
 int CDriveItem::GetImage() const
 {
-    return GetMyImageList()->GetFileImage(m_path);
+    return GetMyImageList()->getFileImage(m_path);
 }
 
 bool CDriveItem::DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *width, int *focusLeft) const

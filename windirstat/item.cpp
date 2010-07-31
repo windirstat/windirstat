@@ -375,19 +375,19 @@ int CItem::GetImageToCache() const
 
     if(GetType() == IT_MYCOMPUTER)
     {
-        image = GetMyImageList()->GetMyComputerImage();
+        image = GetMyImageList()->getMyComputerImage();
     }
     else if(GetType() == IT_FILESFOLDER)
     {
-        image = GetMyImageList()->GetFilesFolderImage();
+        image = GetMyImageList()->getFilesFolderImage();
     }
     else if(GetType() == IT_FREESPACE)
     {
-        image = GetMyImageList()->GetFreeSpaceImage();
+        image = GetMyImageList()->getFreeSpaceImage();
     }
     else if(GetType() == IT_UNKNOWN)
     {
-        image = GetMyImageList()->GetUnknownImage();
+        image = GetMyImageList()->getUnknownImage();
     }
     else
     {
@@ -395,15 +395,15 @@ int CItem::GetImageToCache() const
 
         if(GetType() == IT_DIRECTORY && GetWDSApp()->IsVolumeMountPoint(path))
         {
-            image = GetMyImageList()->GetMountPointImage();
+            image = GetMyImageList()->getMountPointImage();
         }
         else if(GetType() == IT_DIRECTORY && GetWDSApp()->IsFolderJunction(path))
         {
-            image = GetMyImageList()->GetJunctionImage();
+            image = GetMyImageList()->getJunctionImage();
         }
         else
         {
-            image = GetMyImageList()->GetFileImage(path);
+            image = GetMyImageList()->getFileImage(path);
         }
     }
     return image;
