@@ -113,15 +113,6 @@ class CItem: public CTreeListItem, public CTreemap::Item
         DWORD attributes;
     };
 
-    // short-based RECT, saves 8 bytes compared to tagRECT
-    struct SRECT
-    {
-        short left;
-        short top;
-        short right;
-        short bottom;
-    };
-
 public:
     CItem(ITEMTYPE type, LPCTSTR name, bool dontFollow = false);
     ~CItem();
@@ -247,7 +238,7 @@ private:
     CArray<CItem *, CItem *> m_children;
 
     // For GraphView:
-    SRECT m_rect;               // Finally, this is our coordinates in the Treemap view.
+    RECT m_rect;                // Finally, this is our coordinates in the Treemap view.
 };
 
 #endif // __WDS_ITEM_H__

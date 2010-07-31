@@ -84,22 +84,12 @@ CItem::~CItem()
 
 CRect CItem::TmiGetRectangle() const
 {
-    CRect rc;
-
-    rc.left     = m_rect.left;
-    rc.top      = m_rect.top;
-    rc.right    = m_rect.right;
-    rc.bottom   = m_rect.bottom;
-
-    return rc;
+    return m_rect;
 }
 
 void CItem::TmiSetRectangle(const CRect& rc)
 {
-    m_rect.left     = (short)rc.left;
-    m_rect.top      = (short)rc.top;
-    m_rect.right    = (short)rc.right;
-    m_rect.bottom   = (short)rc.bottom;
+    m_rect      = rc;
 }
 
 bool CItem::DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *width, int *focusLeft) const
