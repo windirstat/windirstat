@@ -89,7 +89,7 @@ CRect CItem::TmiGetRectangle() const
 
 void CItem::TmiSetRectangle(const CRect& rc)
 {
-    m_rect      = rc;
+    m_rect = rc;
 }
 
 bool CItem::DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *width, int *focusLeft) const

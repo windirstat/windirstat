@@ -248,7 +248,7 @@ void CGraphView::DrawHighlightExtension(CDC *pdc)
 
 void CGraphView::RecurseHighlightExtension(CDC *pdc, const CItem *item)
 {
-    CRect rc = item->TmiGetRectangle();
+    CRect rc(item->TmiGetRectangle());
     if(rc.Width() <= 0 || rc.Height() <= 0)
     {
         return;
@@ -302,7 +302,7 @@ void CGraphView::DrawSelection(CDC *pdc)
 //
 void CGraphView::HighlightSelectedItem(CDC *pdc, const CItem *item, bool single)
 {
-    CRect rc= item->TmiGetRectangle();
+    CRect rc(item->TmiGetRectangle());
 
     if (single)
     {

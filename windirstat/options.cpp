@@ -181,7 +181,9 @@ void CPersistence::GetMainWindowPlacement(/* [in/out] */ WINDOWPLACEMENT& wp)
     ASSERT(wp.length == sizeof(wp));
     CString s = getProfileString(sectionPersistence, entryMainWindowPlacement);
     DecodeWindowPlacement(s, wp);
-    SanitizeRect((CRect &)wp.rcNormalPosition);
+    CRect rc(wp.rcNormalPosition);
+    SanitizeRect(rc);
+    wp.rcNormalPosition = rc;
 }
 
 void CPersistence::SetMainWindowPlacement(const WINDOWPLACEMENT& wp)

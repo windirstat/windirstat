@@ -415,7 +415,7 @@ CTreemap::Item *CTreemap::FindItemByPoint(Item *item, CPoint point)
             ASSERT(child->TmiGetSize() > 0);
 
 #ifdef _DEBUG
-            CRect rcChild = child->TmiGetRectangle();
+            CRect rcChild(child->TmiGetRectangle());
             ASSERT(rcChild.right >= rcChild.left);
             ASSERT(rcChild.bottom >= rcChild.top);
             ASSERT(rcChild.left >= rc.left);
@@ -818,7 +818,7 @@ double CTreemap::KDirStat_CalcutateNextRow(Item *parent, const int nextChild, do
 void CTreemap::SequoiaView_DrawChildren(CDC *pdc, Item *parent, const double *surface, double h, DWORD /*flags*/)
 {
     // Rest rectangle to fill
-    CRect remaining = parent->TmiGetRectangle();
+    CRect remaining(parent->TmiGetRectangle());
 
     ASSERT(remaining.Width() > 0);
     ASSERT(remaining.Height() > 0);

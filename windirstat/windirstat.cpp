@@ -35,7 +35,7 @@
 #define new DEBUG_NEW
 #endif
 
-#if (!defined(_AMD64_) && !defined(_IA64_))
+#if 0
 class CDisable64bitFsRedirect
 {
     typedef BOOLEAN (WINAPI *TFNWow64EnableWow64FsRedirection)(BOOLEAN);
@@ -131,9 +131,6 @@ END_MESSAGE_MAP()
 
 
 CDirstatApp _theApp;
-// #if (!defined(_AMD64_) && !defined(_IA64_))
-// CDisable64bitFsRedirect _fs64Redirects;
-// #endif
 
 CDirstatApp::CDirstatApp()
     : Inherited()
@@ -595,9 +592,9 @@ BOOL CDirstatApp::InitInstance()
         ::CloseHandle(m_ElevationEvent);
         m_ElevationEvent = 0;
     }
-
-    GetOptions()->LoadFromRegistry();
 #endif // WDS_ELEVATION
+
+    //GetOptions()->LoadFromRegistry();
 
     free((void*)m_pszHelpFilePath);
     m_pszHelpFilePath = _tcsdup(ConstructHelpFileName()); // ~CWinApp() will free this memory.
