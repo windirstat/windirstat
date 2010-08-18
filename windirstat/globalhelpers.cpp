@@ -455,8 +455,9 @@ CString GetCOMSPEC()
     return cmd;
 }
 
-void WaitForHandleWithRepainting(HANDLE h)
+DWORD WaitForHandleWithRepainting(HANDLE h, DWORD TimeOut /*= INFINITE*/)
 {
+    DWORD r = 0;
     // Code derived from MSDN sample "Waiting in a Message Loop".
 
     while(true)
@@ -470,7 +471,7 @@ void WaitForHandleWithRepainting(HANDLE h)
 
         // Wait for WM_PAINT message sent or posted to this queue
         // or for one of the passed handles be set to signaled.
-        DWORD r = MsgWaitForMultipleObjects(1, &h, FALSE, INFINITE, QS_PAINT);
+        r = MsgWaitForMultipleObjects(1, &h, FALSE, TimeOut, QS_PAINT);
 
         // The result tells us the type of event we have.
         if(r == WAIT_OBJECT_0 + 1)
@@ -485,6 +486,8 @@ void WaitForHandleWithRepainting(HANDLE h)
             break;
         }
     }
+
+    return r;
 }
 
 bool FolderExists(LPCTSTR path)
@@ -642,6 +645,32 @@ CString GetSpec_TB()
     CacheString(s, IDS_SPEC_TB, _T("TiB"));
     return s;
 }
+
+#if WDS_ELEVATION
+BOOL IsAdmin()
+{
+    SID_IDENTIFIER_AUTHORITY NtAuthority = SECURITY_NT_AUTHORITY;
+    PSID pSid;
+    if (::AllocateAndInitializeSid(&NtAuthority,
+        2,
+        SECURITY_BUILTIN_DOMAIN_RID,
+        DOMAIN_ALIAS_RID_ADMINS,
+        0, 0, 0, 0, 0, 0,
+        &pSid))
+    {
+        BOOL bResult = FALSE;
+        if (!::CheckTokenMembership( NULL, pSid, &bResult))
+        {
+            ::FreeSid(pSid);
+            return FALSE;
+        }
+        ::FreeSid(pSid);
+        return bResult;
+    }
+
+    return FALSE;
+}
+#endif // WDS_ELEVATION
 
 /*
 // Retrieve an Item ID list from a given path.

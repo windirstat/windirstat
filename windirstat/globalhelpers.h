@@ -49,7 +49,7 @@ CString FormatVolumeName(CString rootPath, CString volumeName);
 CString PathFromVolumeName(CString name);
 CString GetFolderNameFromPath(LPCTSTR path);
 CString GetCOMSPEC();
-void WaitForHandleWithRepainting(HANDLE h);
+DWORD WaitForHandleWithRepainting(HANDLE h, DWORD TimeOut = INFINITE);
 bool FolderExists(LPCTSTR path);
 bool DriveExists(const CString& path);
 CString GetUserName();
@@ -60,5 +60,8 @@ CString GetSpec_KB();
 CString GetSpec_MB();
 CString GetSpec_GB();
 CString GetSpec_TB();
+#if WDS_ELEVATION
+BOOL IsAdmin(); 
+#endif // WDS_ELEVATION
 
 #endif // __WDS_GLOBALHELPERS_H__

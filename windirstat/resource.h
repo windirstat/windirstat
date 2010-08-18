@@ -259,14 +259,16 @@
 #define ID_BUTTON33021                  33021
 #define ID_POPUP_TOGGLE                 33023
 #define ID_HELP_CHECKFORUPDATES         33024
+#define ID_FILE_RUNWINDIRSTATELEVATED   33025
+#define ID_RUNELEVATED                  33026
 #define ID_INDICATOR_MEMORYUSAGE        59142
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        905
-#define _APS_NEXT_COMMAND_VALUE         33025
+#define _APS_NEXT_RESOURCE_VALUE        910
+#define _APS_NEXT_COMMAND_VALUE         33027
 #define _APS_NEXT_CONTROL_VALUE         1230
 #define _APS_NEXT_SYMED_VALUE           104
 #endif

@@ -122,6 +122,10 @@ CMyImageList* GetMyImageList()
 BEGIN_MESSAGE_MAP(CDirstatApp, CWinApp)
     ON_COMMAND(ID_APP_ABOUT, OnAppAbout)
     ON_COMMAND(ID_FILE_OPEN, OnFileOpen)
+#if WDS_ELEVATION
+    ON_COMMAND(ID_RUNELEVATED, OnRunElevated)
+    ON_UPDATE_COMMAND_UI(ID_RUNELEVATED, OnUpdateRunElevated)
+#endif // WDS_ELEVATION
     ON_COMMAND(ID_HELP_MANUAL, OnHelpManual)
 END_MESSAGE_MAP()
 
@@ -140,6 +144,9 @@ CDirstatApp::CDirstatApp()
     , m_lastPeriodicalRamUsageUpdate(::GetTickCount())
     , m_altColor(GetAlternativeColor(RGB(0x00, 0x00, 0xFF), _T("AltColor")))
     , m_altEncryptionColor(GetAlternativeColor(RGB(0x00, 0x80, 0x00), _T("AltEncryptionColor")))
+#   if WDS_ELEVATION
+    , m_ElevationEvent(NULL)
+#   endif // WDS_ELEVATION
 {
     typedef BOOL (__stdcall *TFNFileIconInit)(BOOL);
 
@@ -149,6 +156,16 @@ CDirstatApp::CDirstatApp()
 #   ifdef _DEBUG
     TestScanResourceDllName();
 #   endif
+}
+
+CDirstatApp::~CDirstatApp()
+{
+#if WDS_ELEVATION
+    if (m_ElevationEvent)
+    {
+        CloseHandle(m_ElevationEvent); //make sure this is the very last thing that is destroyed (way after WM_CLOSE)
+    }	
+#endif // WDS_ELEVATION
 }
 
 CMyImageList* CDirstatApp::GetMyImageList()
@@ -567,7 +584,20 @@ BOOL CDirstatApp::InitInstance()
         CLanguageOptions::SetLanguage(m_langid);
     }
 
+#if WDS_ELEVATION
+    //check for an elevation event
+    m_ElevationEvent = ::OpenEvent(SYNCHRONIZE, FALSE, WINDIRSTAT_EVENT_NAME);
+
+    if (m_ElevationEvent)
+    {
+        //and if so, wait for it, so previous instance can store its config that we reload next
+        ::WaitForSingleObject(m_ElevationEvent, 20 * 1000);
+        ::CloseHandle(m_ElevationEvent);
+        m_ElevationEvent = 0;
+    }
+
     GetOptions()->LoadFromRegistry();
+#endif // WDS_ELEVATION
 
     free((void*)m_pszHelpFilePath);
     m_pszHelpFilePath = _tcsdup(ConstructHelpFileName()); // ~CWinApp() will free this memory.
@@ -644,6 +674,111 @@ void CDirstatApp::OnFileOpen()
         m_pDocTemplate->OpenDocumentFile(path, true);
     }
 }
+
+#if WDS_ELEVATION
+BOOL CDirstatApp::IsUACEnabled()
+{
+    OSVERSIONINFOEX osInfo;
+    DWORDLONG conditionMask = 0;
+
+    ZeroMemory(&osInfo, sizeof(osInfo));
+    osInfo.dwOSVersionInfoSize = sizeof(osInfo);
+    osInfo.dwMajorVersion = 6;
+    osInfo.dwMinorVersion = 0;
+    VER_SET_CONDITION(conditionMask, VER_MAJORVERSION, VER_GREATER_EQUAL);
+    VER_SET_CONDITION(conditionMask, VER_MINORVERSION, VER_GREATER_EQUAL);
+
+    if (::VerifyVersionInfo(&osInfo, VER_MAJORVERSION | VER_MINORVERSION, conditionMask))
+    {
+        HKEY hKey;
+        if (::RegOpenKeyW(HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\System", &hKey) == ERROR_SUCCESS)
+        {
+            DWORD value = 0;
+            if (::RegQueryValueExW(hKey, L"EnableLUA", NULL, NULL, NULL, &value) == ERROR_SUCCESS)
+            {
+                return (value != 0);
+            }
+            else
+            {
+                TRACE("IsUACEnabled::RegQueryValueExW failed");
+            }
+
+            ::RegCloseKey(hKey);
+        }
+        else
+        {
+            TRACE("IsUACEnabled::RegOpenKeyW failed");
+        }
+    }
+    
+    return FALSE;
+}
+
+void CDirstatApp::OnUpdateRunElevated(CCmdUI *pCmdUI)
+{
+    pCmdUI->Enable(!IsAdmin() && IsUACEnabled());
+}
+
+#ifndef SEE_MASK_DEFAULT
+#   define SEE_MASK_DEFAULT           0x00000000
+#endif
+
+void CDirstatApp::OnRunElevated()
+{
+    if (IsAdmin() || !IsUACEnabled())
+        return;
+    
+    CString sAppName = GetAppFileName();
+
+    SHELLEXECUTEINFO shellInfo;
+    ZeroMemory(&shellInfo, sizeof(shellInfo));
+    shellInfo.cbSize = sizeof(shellInfo);
+    shellInfo.fMask = SEE_MASK_DEFAULT;
+    shellInfo.lpFile = sAppName;
+    shellInfo.lpVerb = L"runas"; //DO NOT LOCALIZE
+    shellInfo.nShow = SW_NORMAL;
+
+
+    if (m_ElevationEvent)
+    {
+        ::CloseHandle(m_ElevationEvent);
+    }
+    m_ElevationEvent = ::CreateEvent(NULL, TRUE, FALSE, WINDIRSTAT_EVENT_NAME); 
+    if (!m_ElevationEvent)
+    {
+        TRACE1("CreateEvent failed: %d", GetLastError());
+        m_ElevationEvent = 0;
+        return;
+    }
+    if (ERROR_ALREADY_EXISTS == ::GetLastError())
+    {
+        TRACE("Event already exists");
+        ::CloseHandle(m_ElevationEvent);
+        m_ElevationEvent = 0;
+        return;
+    }
+
+    if (!::ShellExecuteEx(&shellInfo))
+    {
+        TRACE1("ShellExecuteEx failed to elevate %d", GetLastError());
+        
+        ::CloseHandle(m_ElevationEvent);
+        m_ElevationEvent = 0;
+
+        //TODO: Display message to user?
+    }
+    else
+    {
+        //TODO: Store configurations for the new app
+        
+        GetMainFrame()->SendMessage(WM_CLOSE);
+        ::SetEvent(m_ElevationEvent); //Tell other process that we finished saving data (it waits only 20s)
+
+        ::CloseHandle(m_ElevationEvent);
+        m_ElevationEvent = 0;
+    }
+}
+#endif // _UNICODE
 
 BOOL CDirstatApp::OnIdle(LONG lCount)
 {
