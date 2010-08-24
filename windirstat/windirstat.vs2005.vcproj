@@ -769,6 +769,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\common\SimpleIni.h"
+					>
+				</File>
+				<File
 					RelativePath="..\common\version.h"
 					>
 				</File>
