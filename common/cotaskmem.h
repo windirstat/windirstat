@@ -23,7 +23,6 @@
 //
 // 08.09.1998 - JR
 //
-// $Id$
 
 #ifndef __WDS_COTASKMEM_H__
 #define __WDS_COTASKMEM_H__

@@ -21,7 +21,6 @@
 // Author(s): - bseifert -> http://windirstat.info/contact/bernhard/
 //            - assarbad -> http://windirstat.info/contact/oliver/
 //
-// $Id$
 
 #ifndef __WDS_DELETEWARNINGDLG_H__
 #define __WDS_DELETEWARNINGDLG_H__

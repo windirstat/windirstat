@@ -21,7 +21,6 @@
 // Author(s): - bseifert -> http://windirstat.info/contact/bernhard/
 //            - assarbad -> http://windirstat.info/contact/oliver/
 //
-// $Id$
 
 #include "stdafx.h"
 #include "windirstat.h"
@@ -34,7 +33,7 @@
 
 namespace
 {
-    COptions _theOptions;
+    static COptions _theOptions;
 
     const LPCTSTR sectionPersistence        = _T("persistence");
     const LPCTSTR entryShowFreeSpace        = _T("showFreeSpace");

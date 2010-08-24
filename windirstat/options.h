@@ -21,7 +21,6 @@
 // Author(s): - bseifert -> http://windirstat.info/contact/bernhard/
 //            - assarbad -> http://windirstat.info/contact/oliver/
 //
-// $Id$
 
 #ifndef __WDS_OPTIONS_H__
 #define __WDS_OPTIONS_H__
@@ -178,7 +177,10 @@ public:
     static void SetLanguage(LANGID langid);
 };
 
-
+// m_pszProfileName|m_pszRegistryKey
+// CWinApp::SetRegistryKey
+// CWinApp::DelRegTree
+// CWinApp::WriteProfileBinary
 
 
 //

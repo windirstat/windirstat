@@ -21,7 +21,6 @@
 // Author(s): - bseifert -> http://windirstat.info/contact/bernhard/
 //            - assarbad -> http://windirstat.info/contact/oliver/
 //
-// $Id$
 
 /*-------------------------------------------------------------------
   This file defines the following:

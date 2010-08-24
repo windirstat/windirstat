@@ -22,7 +22,6 @@
 // created by www.daccord.net und published
 // here under GPL with friendly permission of D'accord.
 //
-// $Id$
 
 // Note: Md is just a prefix.
 

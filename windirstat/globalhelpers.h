@@ -2,7 +2,8 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2006, 2008 Oliver Schneider (assarbad.net)
+// Copyright (C) 2004-2006, 2008, 2010 Oliver Schneider (assarbad.net)
+// Copyright (C) 2010 Chris Wimmer
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -20,8 +21,8 @@
 //
 // Author(s): - bseifert -> http://windirstat.info/contact/bernhard/
 //            - assarbad -> http://windirstat.info/contact/oliver/
+//            - dezipaitor -> http://sourceforge.net/users/dezipaitor
 //
-// $Id$
 
 #ifndef __WDS_GLOBALHELPERS_H__
 #define __WDS_GLOBALHELPERS_H__

@@ -22,7 +22,6 @@
 // Author(s): - bseifert -> http://windirstat.info/contact/bernhard/
 //            - assarbad -> http://windirstat.info/contact/oliver/
 //
-// $Id$
 
 #ifndef __WDS_OSSPECIFIC_H__
 #define __WDS_OSSPECIFIC_H__
