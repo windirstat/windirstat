@@ -28,6 +28,8 @@
 
 #include "treemap.h"
 #include "../common/wds_constants.h"
+#include "../common/SimpleIni.h"
+#include <atlbase.h> // CRegKey
 
 class COptions;
 
@@ -62,11 +64,68 @@ struct USERDEFINEDCLEANUP
 
 #define TREELISTCOLORCOUNT 8
 
+// Base interface for retrieving/storing configuration
+class ICfgStorage
+{
+public:
+    virtual void setString(LPCTSTR section, LPCTSTR entry, LPCTSTR value) = 0;
+    virtual CString getString(LPCTSTR section, LPCTSTR entry, LPCTSTR defaultValue) = 0;
 
-//
-// CRegistryUser. (Base class for COptions and CPersistence.)
-// Can read from and write to the registry.
-//
+    virtual void setInt(LPCTSTR section, LPCTSTR entry, int value) = 0;
+    virtual int getInt(LPCTSTR section, LPCTSTR entry, int defaultValue) = 0;
+
+    virtual void setUint(LPCTSTR section, LPCTSTR entry, unsigned int value) = 0;
+    virtual int getUint(LPCTSTR section, LPCTSTR entry, unsigned int defaultValue) = 0;
+
+    virtual void setProfileBool(LPCTSTR section, LPCTSTR entry, bool value) = 0;
+    virtual bool getProfileBool(LPCTSTR section, LPCTSTR entry, bool defaultValue) = 0;
+};
+
+class CRegistryStg : public ICfgStorage
+{
+    CRegistryStg(); // hide
+    CRegistryStg& operator=(const CRegistryStg&); // hide
+public:
+    CRegistryStg(HKEY hKeyParent, LPCTSTR lpszKeyName);
+
+    virtual void setString(LPCTSTR section, LPCTSTR entry, LPCTSTR value);
+    virtual CString getString(LPCTSTR section, LPCTSTR entry, LPCTSTR defaultValue);
+
+    virtual void setInt(LPCTSTR section, LPCTSTR entry, int value);
+    virtual int getInt(LPCTSTR section, LPCTSTR entry, int defaultValue);
+
+    virtual void setUint(LPCTSTR section, LPCTSTR entry, unsigned int value);
+    virtual int getUint(LPCTSTR section, LPCTSTR entry, unsigned int defaultValue);
+
+    virtual void setProfileBool(LPCTSTR section, LPCTSTR entry, bool value);
+    virtual bool getProfileBool(LPCTSTR section, LPCTSTR entry, bool defaultValue);
+
+private:
+    CRegKey m_key;
+
+    REGSAM const m_sam;
+};
+
+class CIniFileStg : public ICfgStorage
+{
+    CIniFileStg(); // hide
+    CIniFileStg& operator=(const CIniFileStg&); // hide
+public:
+    CIniFileStg(LPCTSTR lpszFilePath);
+
+    virtual void setString(LPCTSTR section, LPCTSTR entry, LPCTSTR value);
+    virtual CString getString(LPCTSTR section, LPCTSTR entry, LPCTSTR defaultValue);
+
+    virtual void setInt(LPCTSTR section, LPCTSTR entry, int value);
+    virtual int getInt(LPCTSTR section, LPCTSTR entry, int defaultValue);
+
+    virtual void setUint(LPCTSTR section, LPCTSTR entry, unsigned int value);
+    virtual int getUint(LPCTSTR section, LPCTSTR entry, unsigned int defaultValue);
+
+    virtual void setProfileBool(LPCTSTR section, LPCTSTR entry, bool value);
+    virtual bool getProfileBool(LPCTSTR section, LPCTSTR entry, bool defaultValue);
+};
+
 class CRegistryUser
 {
 public:
@@ -80,6 +139,7 @@ public:
     static bool getProfileBool(LPCTSTR section, LPCTSTR entry, bool defaultValue);
 
     static void checkRange(int& value, int min, int max);
+    static void checkRange(unsigned int& value, unsigned int min, unsigned int max);
 };
 
 

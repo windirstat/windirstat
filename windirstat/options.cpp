@@ -1160,3 +1160,54 @@ void CRegistryUser::checkRange(int& value, int min, int max)
         value = max;
     }
 }
+
+CRegistryStg::CRegistryStg(HKEY hKeyParent, LPCTSTR lpszKeyName)
+    : m_sam(KEY_READ | KEY_WRITE | ((LOWORD(::GetVersion()) > 0x0500) ? KEY_WOW64_64KEY : 0))
+{
+    LONG const lr = m_key.Create(hKeyParent, lpszKeyName, REG_NONE, REG_OPTION_NON_VOLATILE, m_sam);
+    HRESULT const hr = HRESULT_FROM_WIN32(lr);
+    if(FAILED(hr))
+    {
+        throw hr;
+    }
+}
+
+void CRegistryStg::setString(LPCTSTR section, LPCTSTR entry, LPCTSTR value)
+{
+
+}
+
+CString CRegistryStg::getString(LPCTSTR section, LPCTSTR entry, LPCTSTR defaultValue)
+{
+    return _T("");
+}
+
+void CRegistryStg::setInt(LPCTSTR section, LPCTSTR entry, int value)
+{
+
+}
+
+int CRegistryStg::getInt(LPCTSTR section, LPCTSTR entry, int defaultValue)
+{
+    return 0;
+}
+
+void CRegistryStg::setUint(LPCTSTR section, LPCTSTR entry, unsigned int value)
+{
+
+}
+
+int CRegistryStg::getUint(LPCTSTR section, LPCTSTR entry, unsigned int defaultValue)
+{
+    return 0;
+}
+
+void CRegistryStg::setProfileBool(LPCTSTR section, LPCTSTR entry, bool value)
+{
+
+}
+
+bool CRegistryStg::getProfileBool(LPCTSTR section, LPCTSTR entry, bool defaultValue)
+{
+    return false;
+}
