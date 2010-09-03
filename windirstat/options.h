@@ -65,6 +65,8 @@ struct USERDEFINEDCLEANUP
 #define TREELISTCOLORCOUNT 8
 
 // Base interface for retrieving/storing configuration
+// The ctor of derived classes is allowed to throw an HRESULT if something
+// goes wrong.
 class ICfgStorage
 {
 public:
@@ -75,10 +77,13 @@ public:
     virtual int getInt(LPCTSTR section, LPCTSTR entry, int defaultValue) = 0;
 
     virtual void setUint(LPCTSTR section, LPCTSTR entry, unsigned int value) = 0;
-    virtual int getUint(LPCTSTR section, LPCTSTR entry, unsigned int defaultValue) = 0;
+    virtual unsigned int getUint(LPCTSTR section, LPCTSTR entry, unsigned int defaultValue) = 0;
 
     virtual void setProfileBool(LPCTSTR section, LPCTSTR entry, bool value) = 0;
     virtual bool getProfileBool(LPCTSTR section, LPCTSTR entry, bool defaultValue) = 0;
+
+    virtual void flush() = 0;
+    virtual long getLastError() const = 0;
 };
 
 class CRegistryStg : public ICfgStorage
@@ -95,15 +100,21 @@ public:
     virtual int getInt(LPCTSTR section, LPCTSTR entry, int defaultValue);
 
     virtual void setUint(LPCTSTR section, LPCTSTR entry, unsigned int value);
-    virtual int getUint(LPCTSTR section, LPCTSTR entry, unsigned int defaultValue);
+    virtual unsigned int getUint(LPCTSTR section, LPCTSTR entry, unsigned int defaultValue);
 
     virtual void setProfileBool(LPCTSTR section, LPCTSTR entry, bool value);
     virtual bool getProfileBool(LPCTSTR section, LPCTSTR entry, bool defaultValue);
 
-private:
-    CRegKey m_key;
+    virtual void flush();
+    virtual long getLastError() const;
 
+private:
+    mutable long m_lastError;
     REGSAM const m_sam;
+    HKEY m_parentKey;
+    CString m_lpszKeyName;
+
+    CRegKey m_key;
 };
 
 class CIniFileStg : public ICfgStorage
@@ -112,6 +123,7 @@ class CIniFileStg : public ICfgStorage
     CIniFileStg& operator=(const CIniFileStg&); // hide
 public:
     CIniFileStg(LPCTSTR lpszFilePath);
+    ~CIniFileStg();
 
     virtual void setString(LPCTSTR section, LPCTSTR entry, LPCTSTR value);
     virtual CString getString(LPCTSTR section, LPCTSTR entry, LPCTSTR defaultValue);
@@ -120,10 +132,20 @@ public:
     virtual int getInt(LPCTSTR section, LPCTSTR entry, int defaultValue);
 
     virtual void setUint(LPCTSTR section, LPCTSTR entry, unsigned int value);
-    virtual int getUint(LPCTSTR section, LPCTSTR entry, unsigned int defaultValue);
+    virtual unsigned int getUint(LPCTSTR section, LPCTSTR entry, unsigned int defaultValue);
 
     virtual void setProfileBool(LPCTSTR section, LPCTSTR entry, bool value);
     virtual bool getProfileBool(LPCTSTR section, LPCTSTR entry, bool defaultValue);
+
+    virtual void flush();
+    virtual long getLastError() const;
+
+private:
+    mutable long m_lastError;
+    CString m_lpszFilePath;
+    CSimpleIni m_ini;
+
+    static HRESULT siErrorToHR_(SI_Error err);
 };
 
 class CRegistryUser
