@@ -1222,6 +1222,7 @@ void CRegistryStg::setUint(LPCTSTR section, LPCTSTR entry, unsigned int value)
 {
     REGISTRYSTG_SET(section, entry, static_cast<DWORD>(value), SetDWORDValue);
 }
+#undef REGISTRYSTG_SET
 
 unsigned int CRegistryStg::getUint(LPCTSTR section, LPCTSTR entry, unsigned int defaultValue)
 {
@@ -1239,12 +1240,12 @@ unsigned int CRegistryStg::getUint(LPCTSTR section, LPCTSTR entry, unsigned int 
     return defaultValue;
 }
 
-void CRegistryStg::setProfileBool(LPCTSTR section, LPCTSTR entry, bool value)
+void CRegistryStg::setBool(LPCTSTR section, LPCTSTR entry, bool value)
 {
     setUint(section, entry, value);
 }
 
-bool CRegistryStg::getProfileBool(LPCTSTR section, LPCTSTR entry, bool defaultValue)
+bool CRegistryStg::getBool(LPCTSTR section, LPCTSTR entry, bool defaultValue)
 {
     return (0 != getUint(section, entry, defaultValue));
 }
@@ -1306,12 +1307,12 @@ unsigned int CIniFileStg::getUint(LPCTSTR section, LPCTSTR entry, unsigned int d
     return static_cast<unsigned int>(m_ini.GetLongValue(section, entry, defaultValue));
 }
 
-void CIniFileStg::setProfileBool(LPCTSTR section, LPCTSTR entry, bool Value)
+void CIniFileStg::setBool(LPCTSTR section, LPCTSTR entry, bool Value)
 {
     m_ini.SetBoolValue(section, entry, Value);
 }
 
-bool CIniFileStg::getProfileBool(LPCTSTR section, LPCTSTR entry, bool defaultValue)
+bool CIniFileStg::getBool(LPCTSTR section, LPCTSTR entry, bool defaultValue)
 {
     return m_ini.GetBoolValue(section, entry, defaultValue);
 }
@@ -1347,4 +1348,59 @@ HRESULT CIniFileStg::siErrorToHR_(SI_Error err)
         break;
     }
     return hr;
+}
+
+CConfigStorage::CConfigStorage(ICfgStorage* primary, ICfgStorage* secondary)
+    : m_primaryStore(primary)
+    , m_secondaryStore(secondary)
+{
+}
+
+CConfigStorage::~CConfigStorage()
+{
+    m_primaryStore->flush();
+}
+
+void CConfigStorage::setString(LPCTSTR section, LPCTSTR entry, LPCTSTR value)
+{
+    m_primaryStore->setString(section, entry, value);
+}
+
+CString CConfigStorage::getString(LPCTSTR section, LPCTSTR entry, LPCTSTR defaultvalue)
+{
+    if(m_secondaryStore.get())
+    {
+
+    }
+    return _T("");
+}
+
+void CConfigStorage::setInt(LPCTSTR section, LPCTSTR entry, int value)
+{
+    m_primaryStore->setInt(section, entry, value);
+}
+
+int CConfigStorage::getInt(LPCTSTR section, LPCTSTR entry, int defaultvalue)
+{
+    return 0;
+}
+
+void CConfigStorage::setUint(LPCTSTR section, LPCTSTR entry, unsigned int value)
+{
+    m_primaryStore->setUint(section, entry, value);
+}
+
+unsigned int CConfigStorage::getUint(LPCTSTR section, LPCTSTR entry, unsigned int defaultvalue)
+{
+    return 0;
+}
+
+void CConfigStorage::setBool(LPCTSTR section, LPCTSTR entry, bool value)
+{
+    m_primaryStore->setBool(section, entry, value);
+}
+
+bool CConfigStorage::getBool(LPCTSTR section, LPCTSTR entry, bool defaultvalue)
+{
+    return false;
 }

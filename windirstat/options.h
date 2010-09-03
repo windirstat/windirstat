@@ -30,6 +30,7 @@
 #include "../common/wds_constants.h"
 #include "../common/SimpleIni.h"
 #include <atlbase.h> // CRegKey
+#include <memory>
 
 class COptions;
 
@@ -79,8 +80,8 @@ public:
     virtual void setUint(LPCTSTR section, LPCTSTR entry, unsigned int value) = 0;
     virtual unsigned int getUint(LPCTSTR section, LPCTSTR entry, unsigned int defaultValue) = 0;
 
-    virtual void setProfileBool(LPCTSTR section, LPCTSTR entry, bool value) = 0;
-    virtual bool getProfileBool(LPCTSTR section, LPCTSTR entry, bool defaultValue) = 0;
+    virtual void setBool(LPCTSTR section, LPCTSTR entry, bool value) = 0;
+    virtual bool getBool(LPCTSTR section, LPCTSTR entry, bool defaultValue) = 0;
 
     virtual void flush() = 0;
     virtual long getLastError() const = 0;
@@ -102,8 +103,8 @@ public:
     virtual void setUint(LPCTSTR section, LPCTSTR entry, unsigned int value);
     virtual unsigned int getUint(LPCTSTR section, LPCTSTR entry, unsigned int defaultValue);
 
-    virtual void setProfileBool(LPCTSTR section, LPCTSTR entry, bool value);
-    virtual bool getProfileBool(LPCTSTR section, LPCTSTR entry, bool defaultValue);
+    virtual void setBool(LPCTSTR section, LPCTSTR entry, bool value);
+    virtual bool getBool(LPCTSTR section, LPCTSTR entry, bool defaultValue);
 
     virtual void flush();
     virtual long getLastError() const;
@@ -134,8 +135,8 @@ public:
     virtual void setUint(LPCTSTR section, LPCTSTR entry, unsigned int value);
     virtual unsigned int getUint(LPCTSTR section, LPCTSTR entry, unsigned int defaultValue);
 
-    virtual void setProfileBool(LPCTSTR section, LPCTSTR entry, bool value);
-    virtual bool getProfileBool(LPCTSTR section, LPCTSTR entry, bool defaultValue);
+    virtual void setBool(LPCTSTR section, LPCTSTR entry, bool value);
+    virtual bool getBool(LPCTSTR section, LPCTSTR entry, bool defaultValue);
 
     virtual void flush();
     virtual long getLastError() const;
@@ -146,6 +147,31 @@ private:
     CSimpleIni m_ini;
 
     static HRESULT siErrorToHR_(SI_Error err);
+};
+
+// It's an aggregate, but provides the same interface
+class CConfigStorage : public ICfgStorage
+{
+public:
+    // primary *must* be given, secondary is optional
+    CConfigStorage(ICfgStorage* primary, ICfgStorage* secondary);
+    ~CConfigStorage();
+
+    virtual void setString(LPCTSTR section, LPCTSTR entry, LPCTSTR value);
+    virtual CString getString(LPCTSTR section, LPCTSTR entry, LPCTSTR defaultValue);
+
+    virtual void setInt(LPCTSTR section, LPCTSTR entry, int value);
+    virtual int getInt(LPCTSTR section, LPCTSTR entry, int defaultValue);
+
+    virtual void setUint(LPCTSTR section, LPCTSTR entry, unsigned int value);
+    virtual unsigned int getUint(LPCTSTR section, LPCTSTR entry, unsigned int defaultValue);
+
+    virtual void setBool(LPCTSTR section, LPCTSTR entry, bool value);
+    virtual bool getBool(LPCTSTR section, LPCTSTR entry, bool defaultValue);
+
+private:
+    std::auto_ptr<ICfgStorage> m_primaryStore;
+    std::auto_ptr<ICfgStorage> m_secondaryStore;
 };
 
 class CRegistryUser
