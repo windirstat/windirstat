@@ -1370,7 +1370,7 @@ CString CConfigStorage::getString(LPCTSTR section, LPCTSTR entry, LPCTSTR defaul
 {
     if(m_secondaryStore.get())
     {
-
+        m_secondaryStore->getString(section, entry, defaultvalue);
     }
     return _T("");
 }
