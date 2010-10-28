@@ -113,7 +113,7 @@ CString CDirstatDoc::EncodeSelection(RADIO radio, CString folder, const CStringA
 
     case RADIO_AFOLDER:
         {
-            ret.Format(_T("%s"), folder);
+            ret = folder;
         }
         break;
     }
