@@ -32,6 +32,8 @@
 #include "dirstatdoc.h"
 #include "graphview.h"
 
+UINT g_taskBarMessage = 0;
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -619,6 +621,7 @@ BOOL CDirstatApp::InitInstance()
     {
         return FALSE;
     }
+    g_taskBarMessage = ::RegisterWindowMessage(TEXT("TaskbarButtonCreated"));
 
     GetMainFrame()->InitialShowWindow();
     m_pMainWnd->UpdateWindow();

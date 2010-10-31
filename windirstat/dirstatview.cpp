@@ -236,6 +236,8 @@ CDirstatDoc* CDirstatView::GetDocument() const // Non debug version is inline
 }
 #endif
 
+extern UINT g_taskBarMessage;
+
 BEGIN_MESSAGE_MAP(CDirstatView, CView)
     ON_WM_SIZE()
     ON_WM_CREATE()
@@ -245,6 +247,7 @@ BEGIN_MESSAGE_MAP(CDirstatView, CView)
     ON_NOTIFY(LVN_ITEMCHANGED, _nIdTreeListControl, OnLvnItemchanged)
     ON_UPDATE_COMMAND_UI(ID_POPUP_TOGGLE, OnUpdatePopupToggle)
     ON_COMMAND(ID_POPUP_TOGGLE, OnPopupToggle)
+    ON_REGISTERED_MESSAGE(g_taskBarMessage, OnTaskButtonCreated)
 END_MESSAGE_MAP()
 
 void CDirstatView::OnSize(UINT nType, int cx, int cy)
@@ -426,6 +429,12 @@ void CDirstatView::OnUpdatePopupToggle(CCmdUI *pCmdUI)
 void CDirstatView::OnPopupToggle()
 {
     m_treeListControl.ToggleSelectedItem();
+}
+
+LRESULT CDirstatView::OnTaskButtonCreated(WPARAM, LPARAM)
+{
+    // Create ITaskbarList3 instance
+    return 0;
 }
 
 #ifdef _DEBUG
