@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2006, 2008 Oliver Schneider (assarbad.net)
+// Copyright (C) 2004-2006, 2008, 2010 Oliver Schneider (assarbad.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -43,6 +43,29 @@
 CDllModule dllKernel32(nameKernel32);
 CDllModule dllShell32(nameShell32);
 CDllModule dllPsApi(namePsApi);
+
+// Required to use the system image lists
+// - http://www.catch22.net/tuts/sysimg
+// - http://msdn.microsoft.com/en-us/library/bb776418(VS.85).aspx
+BOOL FileIconInit(__in  BOOL fRestoreCache)
+{
+    typedef BOOL (WINAPI * TFNFileIconInit)(BOOL);
+    static HMODULE hShell32 = NULL;
+    static TFNFileIconInit pfnFileIconInit = 0;
+    if(!hShell32)
+    {
+        hShell32 = ::LoadLibrary(TEXT("shell32.dll"));
+    }
+    if(hShell32 && !pfnFileIconInit)
+    {
+        pfnFileIconInit = reinterpret_cast<TFNFileIconInit>(::GetProcAddress(hShell32, ((LPCSTR)660)));
+    }
+    if(pfnFileIconInit)
+    {
+        return pfnFileIconInit(fRestoreCache);
+    }
+    return TRUE;
+}
 
 /////////////////////////////////////////////////////////////////////////////
 

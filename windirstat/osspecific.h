@@ -29,6 +29,8 @@
 #include <Windows.h>
 #include <ShellAPI.h>
 
+BOOL FileIconInit(__in  BOOL fRestoreCache);
+
 class CAbstractionLayer
 {
     CAbstractionLayer()

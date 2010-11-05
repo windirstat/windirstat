@@ -28,6 +28,7 @@
 #include "item.h"
 #include "mainframe.h"
 #include "dirstatview.h"
+#include "osspecific.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -244,6 +245,7 @@ BEGIN_MESSAGE_MAP(CDirstatView, CView)
     ON_WM_ERASEBKGND()
     ON_WM_DESTROY()
     ON_WM_SETFOCUS()
+    ON_WM_SETTINGCHANGE()
     ON_NOTIFY(LVN_ITEMCHANGED, _nIdTreeListControl, OnLvnItemchanged)
     ON_UPDATE_COMMAND_UI(ID_POPUP_TOGGLE, OnUpdatePopupToggle)
     ON_COMMAND(ID_POPUP_TOGGLE, OnPopupToggle)
@@ -305,6 +307,15 @@ void CDirstatView::OnDestroy()
 void CDirstatView::OnSetFocus(CWnd* /*pOldWnd*/)
 {
     m_treeListControl.SetFocus();
+}
+
+void CDirstatView::OnSettingChange(UINT uFlags, LPCTSTR lpszSection)
+{
+    if(uFlags & SPI_SETNONCLIENTMETRICS)
+    {
+        FileIconInit(TRUE);
+    }
+    CView::OnSettingChange(uFlags, lpszSection);
 }
 
 void CDirstatView::OnLvnItemchanged(NMHDR *pNMHDR, LRESULT *pResult)

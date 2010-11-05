@@ -31,6 +31,7 @@
 #include "aboutdlg.h"
 #include "dirstatdoc.h"
 #include "graphview.h"
+#include "osspecific.h"
 
 UINT g_taskBarMessage = 0;
 
@@ -622,6 +623,7 @@ BOOL CDirstatApp::InitInstance()
         return FALSE;
     }
     g_taskBarMessage = ::RegisterWindowMessage(TEXT("TaskbarButtonCreated"));
+    FileIconInit(TRUE);
 
     GetMainFrame()->InitialShowWindow();
     m_pMainWnd->UpdateWindow();
