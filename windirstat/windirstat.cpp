@@ -251,11 +251,11 @@ bool CDirstatApp::ScanAuxiliaryFileName(LPCTSTR prefix, LPCTSTR suffix, LPCTSTR 
 
     CString s(name);   // [prefix][lngcode].[suffix]
     s.MakeLower();
-    if(s.Left(_tcslen(prefix)) != prefix)
+    if(s.Left(((int)_tcslen(prefix))) != prefix)
     {
         return false;
     }
-    s = s.Mid(_tcslen(prefix)); // remove prefix from the front -> [lngcode].[suffix]
+    s = s.Mid(((int)_tcslen(prefix))); // remove prefix from the front -> [lngcode].[suffix]
 
     if(s.GetLength() != (iLangCodeLength + ((int)_tcslen(suffix))))
     {
