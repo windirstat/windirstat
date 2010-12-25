@@ -70,6 +70,8 @@ namespace wds
     const LPCTSTR strAttributeArchive = _T("A");
     const LPCTSTR strAttributeCompressed = _T("R");
     const LPCTSTR strAttributeEncrypted = _T("E");
+
+    const int iLangCodeLength = 4;
 }
 
 #endif // __WDS_CONSTANTS_H__

@@ -59,6 +59,7 @@
 #include "../common/commonhelpers.h"
 #include "../common/platform.h"
 #include "../common/tracer.h"
+#include "../common\wds_constants.h"
 
 #define RGB_GET_RVALUE(rgb) (rgb & 0xFF)
 #define RGB_GET_GVALUE(rgb) ((rgb & 0xFF00) >> 8)

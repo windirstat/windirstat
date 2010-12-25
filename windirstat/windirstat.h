@@ -49,7 +49,6 @@ CMyImageList* GetMyImageList();
 // Other application related globals
 CString GetAuthorEmail();
 CString GetWinDirStatHomepage();
-CString GetFeedbackEmail();
 
 #if WDS_ELEVATION
 #   define WINDIRSTAT_EVENT_NAME L"WinDirStat_ElevationEvent_{72D223E3-1539-461D-980E-0863FE480E84}"

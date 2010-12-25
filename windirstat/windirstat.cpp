@@ -39,55 +39,6 @@ UINT g_taskBarMessage = 0;
 #define new DEBUG_NEW
 #endif
 
-#if 0
-class CDisable64bitFsRedirect
-{
-    typedef BOOLEAN (WINAPI *TFNWow64EnableWow64FsRedirection)(BOOLEAN);
-    typedef BOOL (WINAPI *TFNWow64DisableWow64FsRedirection)(PVOID *);
-    typedef BOOL (WINAPI *TFNWow64RevertWow64FsRedirection)(PVOID);
-public:
-    CDisable64bitFsRedirect()
-        : m_hKernel32(::GetModuleHandle(_T("kernel32.dll")))
-        , m_pfnWow64EnableWow64FsRedirection(reinterpret_cast<TFNWow64EnableWow64FsRedirection>(::GetProcAddress(m_hKernel32, "Wow64EnableWow64FsRedirection")))
-        , m_pfnWow64DisableWow64FsRedirection(reinterpret_cast<TFNWow64DisableWow64FsRedirection>(::GetProcAddress(m_hKernel32, "Wow64DisableWow64FsRedirection")))
-        , m_pfnWow64RevertWow64FsRedirection(reinterpret_cast<TFNWow64RevertWow64FsRedirection>(::GetProcAddress(m_hKernel32, "Wow64RevertWow64FsRedirection")))
-        , m_OldValue(NULL)
-        , m_WasDisabled(FALSE)
-    {
-        if((0 != m_pfnWow64DisableWow64FsRedirection) && (0 != m_pfnWow64RevertWow64FsRedirection))
-        {
-            m_WasDisabled = (FALSE != m_pfnWow64DisableWow64FsRedirection(&m_OldValue));
-        }
-        else if(0 != m_pfnWow64EnableWow64FsRedirection)
-        {
-            m_WasDisabled = m_pfnWow64EnableWow64FsRedirection(FALSE);
-        }
-    }
-
-    ~CDisable64bitFsRedirect()
-    {
-        if(m_WasDisabled)
-        {
-            if((0 != m_pfnWow64DisableWow64FsRedirection) && (0 != m_pfnWow64RevertWow64FsRedirection))
-            {
-                m_pfnWow64RevertWow64FsRedirection(m_OldValue);
-            }
-            else if(0 != m_pfnWow64EnableWow64FsRedirection)
-            {
-                m_pfnWow64EnableWow64FsRedirection(TRUE);
-            }
-        }
-    }
-
-    HMODULE m_hKernel32;
-    TFNWow64EnableWow64FsRedirection m_pfnWow64EnableWow64FsRedirection;
-    TFNWow64DisableWow64FsRedirection m_pfnWow64DisableWow64FsRedirection;
-    TFNWow64RevertWow64FsRedirection m_pfnWow64RevertWow64FsRedirection;
-    PVOID m_OldValue;
-    BOOLEAN m_WasDisabled;
-};
-#endif
-
 CMainFrame *GetMainFrame()
 {
     // Not: return (CMainFrame *)AfxGetMainWnd();
@@ -108,11 +59,6 @@ CString GetAuthorEmail()
 CString GetWinDirStatHomepage()
 {
     return _T("windirstat.info"); // FIXME into common string file
-}
-
-CString GetFeedbackEmail()
-{
-    return _T("windirstat-feedback@lists.sourceforge.net"); // FIXME into common string file
 }
 
 CMyImageList* GetMyImageList()
@@ -296,30 +242,32 @@ bool CDirstatApp::ScanResourceDllName(LPCTSTR name, LANGID& langid)
         );
 }
 
+// suffix contains the dot (e.g. ".chm")
 bool CDirstatApp::ScanAuxiliaryFileName(LPCTSTR prefix, LPCTSTR suffix, LPCTSTR name, LANGID& langid)
 {
-    ASSERT(_tcslen(prefix) == 4);   // "wdsr" or "wdsh"
-    ASSERT(_tcslen(suffix) == 4);   // ".L??" or ".chm"
+    using wds::iLangCodeLength;
+    ASSERT(_tcslen(prefix) == _tcslen(wds::strLangPrefix)); // FIXME: Also add .chm part or split
+    ASSERT(_tcslen(suffix) == _tcslen(wds::strLangSuffix)); // FIXME: see above
 
-    CString s = name;   // "wdsr0a01.L??"
+    CString s(name);   // [prefix][lngcode].[suffix]
     s.MakeLower();
-    if(s.Left(4) != prefix)
+    if(s.Left(_tcslen(prefix)) != prefix)
     {
         return false;
     }
-    s = s.Mid(4);       // "0a01.L??"
+    s = s.Mid(_tcslen(prefix)); // remove prefix from the front -> [lngcode].[suffix]
 
-    if(s.GetLength() != 8)
-    {
-        return false;
-    }
-
-    if(s.Mid(4) != CString(suffix).MakeLower())
+    if(s.GetLength() != (iLangCodeLength + ((int)_tcslen(suffix))))
     {
         return false;
     }
 
-    s = s.Left(4);      // "0a01"
+    if(s.Mid(iLangCodeLength) != CString(suffix).MakeLower())
+    {
+        return false;
+    }
+
+    s = s.Left(iLangCodeLength); // retain the language code -> [lngcode]
 
     for(int i = 0; i < 4; i++)
     {
@@ -337,19 +285,19 @@ bool CDirstatApp::ScanAuxiliaryFileName(LPCTSTR prefix, LPCTSTR suffix, LPCTSTR 
 }
 
 #ifdef _DEBUG
-    void CDirstatApp::TestScanResourceDllName()
-    {
-        LANGID id;
-        ASSERT(!ScanResourceDllName(wds::strEmpty, id));
-        ASSERT(!ScanResourceDllName(_T(STR_RESOURCE_PREFIX) _T(STR_LANG_SUFFIX), id));
-        ASSERT(!ScanResourceDllName(_T(STR_RESOURCE_PREFIX) _T("123") _T(STR_LANG_SUFFIX), id));
-        ASSERT(!ScanResourceDllName(_T(STR_RESOURCE_PREFIX) _T("12345") _T(STR_LANG_SUFFIX), id));
-        ASSERT(!ScanResourceDllName(_T(STR_RESOURCE_PREFIX) _T("1234.exe"), id));
-        ASSERT(ScanResourceDllName (_T(STR_RESOURCE_PREFIX) _T("0123") _T(STR_LANG_SUFFIX), id));
-        ASSERT(id == 0x0123);
-        ASSERT(ScanResourceDllName (CString(_T(STR_RESOURCE_PREFIX) _T("a13F") _T(STR_LANG_SUFFIX)).MakeUpper(), id));
-        ASSERT(id == 0xa13f);
-    }
+void CDirstatApp::TestScanResourceDllName()
+{
+    LANGID id;
+    ASSERT(!ScanResourceDllName(wds::strEmpty, id));
+    ASSERT(!ScanResourceDllName(_T(STR_RESOURCE_PREFIX) _T(STR_LANG_SUFFIX), id));
+    ASSERT(!ScanResourceDllName(_T(STR_RESOURCE_PREFIX) _T("123") _T(STR_LANG_SUFFIX), id));
+    ASSERT(!ScanResourceDllName(_T(STR_RESOURCE_PREFIX) _T("12345") _T(STR_LANG_SUFFIX), id));
+    ASSERT(!ScanResourceDllName(_T(STR_RESOURCE_PREFIX) _T("1234.exe"), id));
+    ASSERT(ScanResourceDllName (_T(STR_RESOURCE_PREFIX) _T("0123") _T(STR_LANG_SUFFIX), id));
+    ASSERT(id == 0x0123);
+    ASSERT(ScanResourceDllName (CString(_T(STR_RESOURCE_PREFIX) _T("a13F") _T(STR_LANG_SUFFIX)).MakeUpper(), id));
+    ASSERT(id == 0xa13f);
+}
 #endif
 
 CString CDirstatApp::FindAuxiliaryFileByLangid(LPCTSTR prefix, LPCTSTR suffix, LANGID& langid, bool checkResource)
