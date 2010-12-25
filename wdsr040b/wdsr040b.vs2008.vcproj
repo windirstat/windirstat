@@ -12,9 +12,6 @@
 		<Platform
 			Name="Win32"
 		/>
-		<Platform
-			Name="x64"
-		/>
 	</Platforms>
 	<ToolFiles>
 	</ToolFiles>
@@ -61,7 +58,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				IgnoreImportLibrary="true"
-				OutputFile="../build/wdsr040b.L32"
+				OutputFile="../build/wdsr040b.wdslng"
 				LinkIncremental="1"
 				GenerateManifest="false"
 				IgnoreAllDefaultLibraries="true"
@@ -75,87 +72,6 @@
 				DataExecutionPrevention="0"
 				ImportLibrary="$(OutDir)/wdsr040b_x86.lib"
 				TargetMachine="1"
-			/>
-			<Tool
-				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCManifestTool"
-				EmbedManifest="false"
-			/>
-			<Tool
-				Name="VCXDCMakeTool"
-			/>
-			<Tool
-				Name="VCBscMakeTool"
-			/>
-			<Tool
-				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCPostBuildEventTool"
-			/>
-		</Configuration>
-		<Configuration
-			Name="Release|x64"
-			OutputDirectory="..\intermediate\vs2008_$(PlatformName)_$(ConfigurationName)\wdsr040b"
-			IntermediateDirectory="..\intermediate\vs2008_$(PlatformName)_$(ConfigurationName)\wdsr040b"
-			ConfigurationType="2"
-			CharacterSet="1"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-				TargetEnvironment="3"
-			/>
-			<Tool
-				Name="VCCLCompilerTool"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;WDSR0407_EXPORTS"
-				RuntimeLibrary="0"
-				UsePrecompiledHeader="0"
-				WarningLevel="3"
-				DebugInformationFormat="3"
-			/>
-			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
-			<Tool
-				Name="VCLinkerTool"
-				IgnoreImportLibrary="true"
-				OutputFile="../build/wdsr040b.L64"
-				LinkIncremental="1"
-				GenerateManifest="false"
-				IgnoreAllDefaultLibraries="true"
-				GenerateDebugInformation="false"
-				SubSystem="2"
-				OptimizeReferences="2"
-				EnableCOMDATFolding="2"
-				ResourceOnlyDLL="true"
-				SetChecksum="true"
-				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
-				ImportLibrary="$(OutDir)/wdsr040b_x64.lib"
-				TargetMachine="17"
 			/>
 			<Tool
 				Name="VCALinkTool"
