@@ -7,3 +7,6 @@ syntax: regexp
 glob:windirstat.vs2010.sdf
 glob:intermediate/*
 glob:windirstat.vs2010.opensdf
+glob:*.wdslng
+glob:*.png
+glob:Backup *

@@ -57,11 +57,7 @@ namespace wds
 
     const LPCTSTR strExplorerKey = _T("Software\\Microsoft\\Windows\\CurrentVersion\\Explorer");
 
-#if defined(_WIN64)
-#   define STR_LANG_SUFFIX ".L64"
-#else
-#   define STR_LANG_SUFFIX ".L32"
-#endif
+#define STR_LANG_SUFFIX ".wdslng"
     const LPCTSTR strLangSuffix = _T(STR_LANG_SUFFIX);
 
 #   define STR_RESOURCE_PREFIX "wdsr"

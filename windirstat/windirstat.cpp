@@ -235,14 +235,7 @@ void CDirstatApp::GetAvailableResourceDllLangids(CArray<LANGID, LANGID>& arr)
     arr.RemoveAll();
 
     CFileFind finder;
-    BOOL b = finder.FindFile(
-        GetAppFolder() +
-#if defined(_WIN64)
-        _T("\\wdsr*.L64")
-#else
-        _T("\\wdsr*.L32")
-#endif
-        );
+    BOOL b = finder.FindFile(GetAppFolder() + _T("\\wdsr*") _T(STR_LANG_SUFFIX));
     while(b)
     {
         b = finder.FindNextFile();
@@ -409,7 +402,7 @@ CString CDirstatApp::ConstructHelpFileName()
 
 bool CDirstatApp::IsCorrectResourceDll(LPCTSTR path)
 {
-    HMODULE module = LoadLibrary(path);
+    HMODULE module = LoadLibraryEx(path, NULL, LOAD_LIBRARY_AS_DATAFILE);
     if(module == NULL)
     {
         return false;

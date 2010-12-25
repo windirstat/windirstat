@@ -43,7 +43,7 @@
 #include <afxdtctl.h>       // MFC IE 4
 #include <afxcmn.h>         // MFC Common Controls
 #include <afxtempl.h>       // MFC Container classes
-#include <afxmt.h>          // MFC Multithreading
+#include <afxmt.h>          // MFC Multi-threading
 #include <afxinet.h>        // For CInternet* classes
 
 #include <io.h>             // _access()
@@ -54,8 +54,6 @@
 
 #include <atlbase.h>        // USES_CONVERSION, ComPtr<>
 
-// Headers placed in the common directory
-// (used by windirstat and by setup)
 #include "../common/mdexceptions.h"
 #include "../common/cotaskmem.h"
 #include "../common/commonhelpers.h"
