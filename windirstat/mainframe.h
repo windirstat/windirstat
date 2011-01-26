@@ -233,7 +233,6 @@ public:
         virtual void Dump(CDumpContext& dc) const;
     #endif
         afx_msg void OnSysColorChange();
-        afx_msg void OnHelpCheckforupdates();
 };
 
 #endif // __WDS_MAINFRAME_H__

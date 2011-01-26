@@ -588,10 +588,6 @@
 					>
 				</File>
 				<File
-					RelativePath=".\CheckForUpdateDlg.cpp"
-					>
-				</File>
-				<File
 					RelativePath=".\DeleteWarningDlg.cpp"
 					>
 				</File>
@@ -625,10 +621,6 @@
 				</File>
 				<File
 					RelativePath=".\sortinglistcontrol.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\StaticHyperlink.cpp"
 					>
 				</File>
 				<File

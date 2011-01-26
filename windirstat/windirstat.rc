@@ -171,7 +171,6 @@ BEGIN
     BEGIN
         MENUITEM "&Help\tF1",                   ID_HELP_MANUAL
         MENUITEM "&Report Bug/Feedback...",     ID_HELP_REPORTBUG
-        MENUITEM "Check for updates ...",       ID_HELP_CHECKFORUPDATES
         MENUITEM SEPARATOR
         MENUITEM "&About WinDirStat...",        ID_APP_ABOUT
     END
@@ -413,17 +412,6 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,172,298,10
 END
 
-IDD_CHECKFORUPDATE DIALOGEX 0, 0, 298, 108
-STYLE DS_SETFONT | DS_MODALFRAME | DS_3DLOOK | DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_CAPTION
-CAPTION "Check for update"
-FONT 8, "MS Shell Dlg", 400, 0, 0x1
-BEGIN
-    DEFPUSHBUTTON   "&Close",IDOK,179,86,70,20,0,WS_EX_CLIENTEDGE
-    CTEXT           "",IDC_STATIC_TEXT,2,2,294,81,SS_NOPREFIX,WS_EX_STATICEDGE
-    PUSHBUTTON      "Check for update",IDC_BUTTON_ACTION,49,86,126,20,0,WS_EX_CLIENTEDGE
-END
-
-
 /////////////////////////////////////////////////////////////////////////////
 //
 // DESIGNINFO
@@ -494,14 +482,6 @@ BEGIN
         RIGHTMARGIN, 373
         TOPMARGIN, 7
         BOTTOMMARGIN, 195
-    END
-
-    IDD_CHECKFORUPDATE, DIALOG
-    BEGIN
-        LEFTMARGIN, 2
-        RIGHTMARGIN, 296
-        TOPMARGIN, 2
-        BOTTOMMARGIN, 106
     END
 END
 #endif    // APSTUDIO_INVOKED
@@ -750,11 +730,6 @@ BEGIN
     IDS_SPEC_TB             "TB"
     IDS_RESETTO_DEFAULTS    "&Reset to\r\nDefaults"
     IDS_BACKTO_USERSETTINGS "Back to\r\n&User Settings"
-END
-
-STRINGTABLE 
-BEGIN
-    ID_HELP_CHECKFORUPDATES "Checks if any updates are available"
 END
 
 #endif    // English (U.S.) resources

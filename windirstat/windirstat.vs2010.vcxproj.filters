@@ -108,9 +108,6 @@
     <ClCompile Include="aboutdlg.cpp">
       <Filter>Source Files\Dialogs</Filter>
     </ClCompile>
-    <ClCompile Include="CheckForUpdateDlg.cpp">
-      <Filter>Source Files\Dialogs</Filter>
-    </ClCompile>
     <ClCompile Include="DeleteWarningDlg.cpp">
       <Filter>Source Files\Dialogs</Filter>
     </ClCompile>
@@ -133,9 +130,6 @@
       <Filter>Source Files\Controls</Filter>
     </ClCompile>
     <ClCompile Include="sortinglistcontrol.cpp">
-      <Filter>Source Files\Controls</Filter>
-    </ClCompile>
-    <ClCompile Include="StaticHyperlink.cpp">
       <Filter>Source Files\Controls</Filter>
     </ClCompile>
     <ClCompile Include="treemap.cpp">

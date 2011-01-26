@@ -309,7 +309,6 @@
       </PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="aboutdlg.cpp" />
-    <ClCompile Include="CheckForUpdateDlg.cpp" />
     <ClCompile Include="DeleteWarningDlg.cpp" />
     <ClCompile Include="SelectDrivesDlg.cpp" />
     <ClCompile Include="colorbutton.cpp" />
@@ -318,7 +317,6 @@
     <ClCompile Include="ownerdrawnlistcontrol.cpp" />
     <ClCompile Include="pacman.cpp" />
     <ClCompile Include="sortinglistcontrol.cpp" />
-    <ClCompile Include="StaticHyperlink.cpp" />
     <ClCompile Include="treemap.cpp" />
     <ClCompile Include="typeview.cpp" />
     <ClCompile Include="xyslider.cpp" />

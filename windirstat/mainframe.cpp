@@ -37,7 +37,6 @@
 #include "pagetreemap.h"
 #include "pagegeneral.h"
 
-#include "CheckForUpdateDlg.h"
 #include "../common/version.h"
 
 #include "mainframe.h"
@@ -406,7 +405,6 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWnd)
     ON_COMMAND(ID_TREEMAP_HELPABOUTTREEMAPS, OnTreemapHelpabouttreemaps)
     ON_BN_CLICKED(IDC_SUSPEND, OnBnClickedSuspend)
     ON_WM_SYSCOLORCHANGE()
-    ON_COMMAND(ID_HELP_CHECKFORUPDATES, OnHelpCheckforupdates)
 END_MESSAGE_MAP()
 
 static UINT indicators[] =
@@ -1213,9 +1211,4 @@ void CMainFrame::OnSysColorChange()
     CFrameWnd::OnSysColorChange();
     GetDirstatView()->SysColorChanged();
     GetTypeView()->SysColorChanged();
-}
-
-void CMainFrame::OnHelpCheckforupdates()
-{
-    StartUpdateDialog();
 }
