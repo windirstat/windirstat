@@ -565,10 +565,10 @@ CString GetUserName()
 // I hope that a drive is SUBSTed iff this string starts with \??\.
 //
 // assarbad:
-//   It cannot be safely determined wether a path is or is not SUBSTed on NT
-//   via this API. You would have to lookup the volume mount points because
+//   It cannot be safely determined whether a path is or is not SUBSTed on NT
+//   via this API. You would have to look up the volume mount points because
 //   SUBST only works per session by definition whereas volume mount points
-//   work accross sessions (after restarts).
+//   work across sessions (after restarts).
 //
 CString MyQueryDosDevice(LPCTSTR drive)
 {
@@ -581,15 +581,8 @@ CString MyQueryDosDevice(LPCTSTR drive)
 
     d = d.Left(2);
 
-    CQueryDosDeviceApi api;
-
-    if(!api.IsSupported())
-    {
-        return wds::strEmpty;
-    }
-
     CString info;
-    DWORD dw = api.QueryDosDevice(d, info.GetBuffer(512), 512);
+	DWORD dw = ::QueryDosDevice(d, info.GetBuffer(512), 512);
     info.ReleaseBuffer();
 
     if(dw == 0)

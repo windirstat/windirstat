@@ -47,26 +47,21 @@ DWORD CFileFindWDS::GetAttributes() const
 // If the file is not compressed the uncompressed size is being returned.
 ULONGLONG CFileFindWDS::GetCompressedLength() const
 {
-    // Try to use the NT-specific API
-    if(GetWDSApp()->GetComprSizeApi()->IsSupported())
-    {
-        ULARGE_INTEGER ret;
-        ret.LowPart = GetWDSApp()->GetComprSizeApi()->GetCompressedFileSize(GetFilePath(), &ret.HighPart);
+#if 0 // TODO: make this an option (the compressed size instead of "normal" size
+	ULARGE_INTEGER ret;
+	ret.LowPart = ::GetCompressedFileSize(GetFilePath(), &ret.HighPart);
 
-        // Check for error
-        if((::GetLastError() != ERROR_SUCCESS) && (ret.LowPart == INVALID_FILE_SIZE))
-        {
-            // In case of an error return size from CFileFind object
-            return GetLength();
-        }
-        else
-        {
-            return ret.QuadPart;
-        }
-    }
-    else
-    {
-        // Use the file size already found by the finder object
-        return GetLength();
-    }
+	// Check for error
+	if((::GetLastError() != ERROR_SUCCESS) && (ret.LowPart == INVALID_FILE_SIZE))
+	{
+		// In case of an error return size from CFileFind object
+		return GetLength();
+	}
+	else
+	{
+		return ret.QuadPart;
+	}
+#endif // 0
+	// Use the file size already found by the finder object
+	return GetLength();
 }

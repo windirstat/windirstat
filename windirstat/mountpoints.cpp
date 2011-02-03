@@ -56,11 +56,6 @@ void CReparsePoints::Initialize()
 {
     Clear();
 
-    if(!m_va.IsSupported())
-    {
-        return;
-    }
-
     GetDriveVolumes();
     GetAllMountPoints();
 }
@@ -81,7 +76,7 @@ void CReparsePoints::GetDriveVolumes()
             CString s;
             s.Format(_T("%c:\\"), i + wds::chrCapA);
 
-            BOOL b = m_va.GetVolumeNameForVolumeMountPoint(s, volume.GetBuffer(_MAX_PATH), _MAX_PATH);
+			BOOL b = ::GetVolumeNameForVolumeMountPoint(s, volume.GetBuffer(_MAX_PATH), _MAX_PATH);
             volume.ReleaseBuffer();
 
             if(!b)
@@ -98,14 +93,14 @@ void CReparsePoints::GetDriveVolumes()
 void CReparsePoints::GetAllMountPoints()
 {
     TCHAR volume[_MAX_PATH];
-    HANDLE hvol = m_va.FindFirstVolume(volume, countof(volume));
+	HANDLE hvol = ::FindFirstVolume(volume, countof(volume));
     if(hvol == INVALID_HANDLE_VALUE)
     {
         TRACE(_T("No volumes found.\r\n"));
         return;
     }
 
-    for(BOOL bContinue = true; bContinue; bContinue = m_va.FindNextVolume(hvol, volume, countof(volume)))
+	for(BOOL bContinue = true; bContinue; bContinue = ::FindNextVolume(hvol, volume, countof(volume)))
     {
         PointVolumeArray *pva = new PointVolumeArray;
         ASSERT_VALID(pva);
@@ -132,7 +127,7 @@ void CReparsePoints::GetAllMountPoints()
         }
 
         TCHAR point[_MAX_PATH];
-        HANDLE h = m_va.FindFirstVolumeMountPoint(volume, point, countof(point));
+		HANDLE h = ::FindFirstVolumeMountPoint(volume, point, countof(point));
         if(h == INVALID_HANDLE_VALUE)
         {
             TRACE(_T("No volume mount points found on %s.\r\n"), volume);
@@ -140,13 +135,13 @@ void CReparsePoints::GetAllMountPoints()
             continue;
         }
 
-        for(BOOL bCont = true; bCont; bCont = m_va.FindNextVolumeMountPoint(h, point, countof(point)))
+		for(BOOL bCont = true; bCont; bCont = ::FindNextVolumeMountPoint(h, point, countof(point)))
         {
             CString uniquePath = volume;
             uniquePath += point;
             CString mountedVolume;
 
-            BOOL b = m_va.GetVolumeNameForVolumeMountPoint(uniquePath, mountedVolume.GetBuffer(_MAX_PATH), _MAX_PATH);
+			BOOL b = ::GetVolumeNameForVolumeMountPoint(uniquePath, mountedVolume.GetBuffer(_MAX_PATH), _MAX_PATH);
             mountedVolume.ReleaseBuffer();
 
             if(!b)
@@ -163,12 +158,12 @@ void CReparsePoints::GetAllMountPoints()
 
             pva->Add(pv);
         }
-        m_va.FindVolumeMountPointClose(h);
+		::FindVolumeMountPointClose(h);
 
         m_volume.SetAt(volume, pva);
     }
 
-    (void)m_va.FindVolumeClose(hvol);
+	(void)::FindVolumeClose(hvol);
 
 #ifdef _DEBUG
     POSITION pos = m_volume.GetStartPosition();
@@ -194,11 +189,6 @@ bool CReparsePoints::IsVolumeMountPoint(CString path)
     ASSERT(path.GetLength() >= 3);
     ASSERT(path[1] == wds::chrColon);
     ASSERT(path[2] == wds::chrBackslash);
-
-    if(!m_va.IsSupported())
-    {
-        return false;
-    }
 
     if(path.Right(1) != wds::chrBackslash)
     {

@@ -442,11 +442,6 @@ CString CDirstatApp::GetCurrentProcessMemoryInfo()
     return s;
 }
 
-CGetCompressedFileSizeApi *CDirstatApp::GetComprSizeApi()
-{
-    return &m_comprSize;
-}
-
 CGetDiskFreeSpaceApi *CDirstatApp::GetFreeSpaceApi()
 {
     return &m_freeSpace;

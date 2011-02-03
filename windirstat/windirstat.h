@@ -93,7 +93,6 @@ public:
 
     void RestartApplication();
 
-    CGetCompressedFileSizeApi *GetComprSizeApi();
     CGetDiskFreeSpaceApi *GetFreeSpaceApi();
 
 protected:
@@ -122,10 +121,9 @@ protected:
     CSingleDocTemplate* m_pDocTemplate;     // MFC voodoo.
 
     LANGID m_langid;                        // Language we are running
-    CReparsePoints m_mountPoints;             // Mount point information
+    CReparsePoints m_mountPoints;           // Mount point information
     CMyImageList m_myImageList;             // Our central image list
     CPsapi m_psapi;                         // Dynamically linked psapi.dll (for RAM usage)
-    CGetCompressedFileSizeApi m_comprSize;  // Dynamically linked API GetCompressedFileSize()
     CGetDiskFreeSpaceApi m_freeSpace;       // For compatibility with W95 first release!
     ULONGLONG m_workingSet;                 // Current working set (RAM usage)
     ULONGLONG m_pageFaults;                 // Page faults so far (unused)

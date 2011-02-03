@@ -151,53 +151,6 @@ public:
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-///  CVolumeApi
-///  Wraps a bunch of functions relating to volume mount points and more ...
-///
-///
-///  @remarks The methods are documented in the .cpp file
-///////////////////////////////////////////////////////////////////////////////
-class CVolumeApi
-{
-public:
-    CVolumeApi();
-    ~CVolumeApi();
-
-    bool IsSupported();
-
-    BOOL GetVolumeNameForVolumeMountPoint(LPCTSTR lpszVolumeMountPoint, LPTSTR lpszVolumeName, DWORD cchBufferLength);
-
-    // min.: Windows 2000
-    HANDLE FindFirstVolume(LPTSTR lpszVolumeName, DWORD cchBufferLength);
-    BOOL FindNextVolume(HANDLE hFindVolume, LPTSTR lpszVolumeName, DWORD cchBufferLength);
-    BOOL FindVolumeClose(HANDLE hFindVolume);
-
-    // min.: Windows 2000
-    HANDLE FindFirstVolumeMountPoint(LPCTSTR lpszRootPathName, LPTSTR lpszVolumeMountPoint, DWORD cchBufferLength);
-    BOOL FindNextVolumeMountPoint(HANDLE hFindVolumeMountPoint, LPTSTR lpszVolumeMountPoint, DWORD cchBufferLength);
-    BOOL FindVolumeMountPointClose(HANDLE hFindVolumeMountPoint);
-
-private:
-    typedef BOOL (WINAPI *TFNGetVolumeNameForVolumeMountPoint)(LPCTSTR lpszVolumeMountPoint, LPTSTR lpszVolumeName, DWORD cchBufferLength);
-    typedef HANDLE (WINAPI *TFNFindFirstVolume)(LPTSTR lpszVolumeName, DWORD cchBufferLength);
-    typedef BOOL (WINAPI *TFNFindNextVolume)(HANDLE hFindVolume, LPTSTR lpszVolumeName, DWORD cchBufferLength);
-    typedef BOOL (WINAPI *TFNFindVolumeClose)(HANDLE hFindVolume);
-    typedef HANDLE (WINAPI *TFNFindFirstVolumeMountPoint)(LPCTSTR lpszRootPathName, LPTSTR lpszVolumeMountPoint, DWORD cchBufferLength);
-    typedef BOOL (WINAPI *TFNFindNextVolumeMountPoint)(HANDLE hFindVolumeMountPoint, LPTSTR lpszVolumeMountPoint, DWORD cchBufferLength);
-    typedef BOOL (WINAPI *TFNFindVolumeMountPointClose)(HANDLE hFindVolumeMountPoint);
-
-    HMODULE m_hDll;
-
-    CDynamicApi<TFNGetVolumeNameForVolumeMountPoint>    m_GetVolumeNameForVolumeMountPoint;
-    CDynamicApi<TFNFindFirstVolume>                     m_FindFirstVolume;
-    CDynamicApi<TFNFindNextVolume>                      m_FindNextVolume;
-    CDynamicApi<TFNFindVolumeClose>                     m_FindVolumeClose;
-    CDynamicApi<TFNFindFirstVolumeMountPoint>           m_FindFirstVolumeMountPoint;
-    CDynamicApi<TFNFindNextVolumeMountPoint>            m_FindNextVolumeMountPoint;
-    CDynamicApi<TFNFindVolumeMountPointClose>           m_FindVolumeMountPointClose;
-};
-
-///////////////////////////////////////////////////////////////////////////////
 ///  CRecycleBinApi
 ///  <TODO: insert class description here>
 ///
@@ -250,59 +203,6 @@ private:
     HMODULE m_hDll;
 
     CDynamicApi<TFNGetProcessMemoryInfo>            m_GetProcessMemoryInfo;
-};
-
-///////////////////////////////////////////////////////////////////////////////
-///  CQueryDosDeviceApi
-///  <TODO: insert class description here>
-///
-///
-///  @remarks The methods are documented in the .cpp file
-///////////////////////////////////////////////////////////////////////////////
-class CQueryDosDeviceApi
-{
-public:
-    CQueryDosDeviceApi();
-    ~CQueryDosDeviceApi();
-
-    bool IsSupported();
-
-    // min.: Windows 98/Windows NT 4.0
-    DWORD QueryDosDevice(LPCTSTR lpDeviceName, LPTSTR lpTargetPath, DWORD ucchMax);
-
-private:
-    typedef DWORD (WINAPI *TFNQueryDosDevice)(LPCTSTR lpDeviceName, LPTSTR lpTargetPath, DWORD ucchMax);
-
-    HMODULE m_hDll;
-
-    CDynamicApi<TFNQueryDosDevice>                      m_QueryDosDevice;
-};
-
-///////////////////////////////////////////////////////////////////////////////
-///  CGetCompressedFileSizeApi
-///  <TODO: insert class description here>
-///
-///
-///  @remarks The methods are documented in the .cpp file
-///////////////////////////////////////////////////////////////////////////////
-class CGetCompressedFileSizeApi
-{
-public:
-    CGetCompressedFileSizeApi();
-    ~CGetCompressedFileSizeApi();
-
-    bool IsSupported();
-
-    // min.: Windows NT 4.0
-    DWORD GetCompressedFileSize(LPCTSTR lpFileName, LPDWORD lpFileSizeHigh);
-    ULONGLONG GetCompressedFileSize(LPCTSTR lpFileName);
-
-private:
-    typedef DWORD (WINAPI *TFNGetCompressedFileSize)(LPCTSTR lpFileName, LPDWORD lpFileSizeHigh);
-
-    HMODULE m_hDll;
-
-    CDynamicApi<TFNGetCompressedFileSize>               m_GetCompressedFileSize;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
