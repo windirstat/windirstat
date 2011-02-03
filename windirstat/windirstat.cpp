@@ -33,7 +33,7 @@
 #include "graphview.h"
 #include "osspecific.h"
 
-UINT g_taskBarMessage = 0;
+UINT g_taskBarMessage = ::RegisterWindowMessage(TEXT("TaskbarButtonCreated"));
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -230,6 +230,29 @@ void CDirstatApp::RestartApplication()
 
     CloseHandle(pi.hProcess);
     CloseHandle(pi.hThread);
+}
+
+bool CDirstatApp::getDiskFreeSpace(LPCTSTR pszRootPath, ULONGLONG& total, ULONGLONG& unused)
+{
+	static ULARGE_INTEGER u64available = {0};
+	ULARGE_INTEGER u64total = {0};
+	ULARGE_INTEGER u64free = {0};
+
+	// On NT 4.0, the 2nd Parameter to this function must NOT be NULL.
+	// TODO: verify whether Windows 2000 behaves correctly
+	BOOL b = GetDiskFreeSpaceEx(pszRootPath, &u64available, &u64total, &u64free);
+	if(!b)
+	{
+		TRACE(_T("GetDiskFreeSpaceEx(%s) failed.\n"), pszRootPath);
+	}
+
+	// FIXME: need to retrieve total via IOCTL_DISK_GET_PARTITION_INFO instead
+	total = u64total.QuadPart;
+	unused = u64free.QuadPart;
+
+	// Race condition ...
+	ASSERT(unused <= total);
+	return (FALSE != b);
 }
 
 bool CDirstatApp::ScanResourceDllName(LPCTSTR name, LANGID& langid)
@@ -442,11 +465,6 @@ CString CDirstatApp::GetCurrentProcessMemoryInfo()
     return s;
 }
 
-CGetDiskFreeSpaceApi *CDirstatApp::GetFreeSpaceApi()
-{
-    return &m_freeSpace;
-}
-
 bool CDirstatApp::UpdateMemoryInfo()
 {
     if(!m_psapi.IsSupported())
@@ -558,7 +576,6 @@ BOOL CDirstatApp::InitInstance()
     {
         return FALSE;
     }
-    g_taskBarMessage = ::RegisterWindowMessage(TEXT("TaskbarButtonCreated"));
     FileIconInit(TRUE);
 
     GetMainFrame()->InitialShowWindow();

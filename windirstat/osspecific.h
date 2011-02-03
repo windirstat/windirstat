@@ -205,33 +205,4 @@ private:
     CDynamicApi<TFNGetProcessMemoryInfo>            m_GetProcessMemoryInfo;
 };
 
-///////////////////////////////////////////////////////////////////////////////
-///  CGetDiskFreeSpaceApi
-///  Hides the differences between GetDiskFreeSpaceEx() and GetDiskFreeSpace().
-///  This is important, because GetDiskFreeSpaceEx() is available only from
-///  Windows 95 ORS2 onwards - not on the very first edition of Windows 95.
-///
-///
-///  @remarks The methods are documented in the .cpp file
-///////////////////////////////////////////////////////////////////////////////
-class CGetDiskFreeSpaceApi
-{
-public:
-    CGetDiskFreeSpaceApi();
-    ~CGetDiskFreeSpaceApi();
-
-    bool IsSupported();
-
-    void GetDiskFreeSpace(LPCTSTR pszRootPath, ULONGLONG& total, ULONGLONG& unused);
-
-private:
-    typedef BOOL (WINAPI *TFNGetDiskFreeSpace)(LPCTSTR lpRootPathName, LPDWORD lpSectorsPerCluster, LPDWORD lpBytesPerSector, LPDWORD lpNumberOfFreeClusters, LPDWORD lpTotalNumberOfClusters);
-    typedef BOOL (WINAPI *TFNGetDiskFreeSpaceEx)(LPCTSTR lpDirectoryName, ULARGE_INTEGER *lpFreeBytesAvailable, ULARGE_INTEGER *lpTotalNumberOfBytes, ULARGE_INTEGER *lpTotalNumberOfFreeBytes);
-
-    HMODULE m_hDll;
-
-    CDynamicApi<TFNGetDiskFreeSpace>                    m_GetDiskFreeSpace;
-    CDynamicApi<TFNGetDiskFreeSpaceEx>                  m_GetDiskFreeSpaceEx;
-};
-
 #endif // __WDS_OSSPECIFIC_H__

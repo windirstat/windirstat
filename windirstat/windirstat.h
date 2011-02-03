@@ -54,8 +54,6 @@ CString GetWinDirStatHomepage();
 #   define WINDIRSTAT_EVENT_NAME L"WinDirStat_ElevationEvent_{72D223E3-1539-461D-980E-0863FE480E84}"
 #endif // WDS_ELEVATION
 
-#define MyGetDiskFreeSpace GetWDSApp()->GetFreeSpaceApi()->GetDiskFreeSpace
-
 //
 // CDirstatApp. The MFC application object.
 // Knows about RAM Usage, Mount points, Help files and the CMyImageList.
@@ -93,7 +91,7 @@ public:
 
     void RestartApplication();
 
-    CGetDiskFreeSpaceApi *GetFreeSpaceApi();
+	static bool getDiskFreeSpace(LPCTSTR pszRootPath, ULONGLONG& total, ULONGLONG& unused);
 
 protected:
     CString FindResourceDllPathByLangid(LANGID& langid);
@@ -124,7 +122,6 @@ protected:
     CReparsePoints m_mountPoints;           // Mount point information
     CMyImageList m_myImageList;             // Our central image list
     CPsapi m_psapi;                         // Dynamically linked psapi.dll (for RAM usage)
-    CGetDiskFreeSpaceApi m_freeSpace;       // For compatibility with W95 first release!
     ULONGLONG m_workingSet;                 // Current working set (RAM usage)
     ULONGLONG m_pageFaults;                 // Page faults so far (unused)
     DWORD m_lastPeriodicalRamUsageUpdate;   // Tick count

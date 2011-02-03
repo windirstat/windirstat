@@ -90,7 +90,7 @@ class CDriveInformationThread: public CWinThread
     static CSet<CDriveInformationThread *, CDriveInformationThread *> _runningThreads;
     static CCriticalSection _csRunningThreads;
 
-    // The objects register and deregister themselves in _runningThreads
+    // The objects register and unregister themselves in _runningThreads
     void AddRunningThread();
     void RemoveRunningThread();
 

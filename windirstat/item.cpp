@@ -997,7 +997,7 @@ void CItem::SetDone()
 
             ULONGLONG total;
             ULONGLONG free;
-            MyGetDiskFreeSpace(GetPath(), total, free);
+			CDirstatApp::getDiskFreeSpace(GetPath(), total, free);
 
             ULONGLONG unknownspace = total - GetSize();
             if(!GetDocument()->OptionShowFreeSpace())
@@ -1465,7 +1465,7 @@ void CItem::CreateFreeSpaceItem()
 
     ULONGLONG total;
     ULONGLONG free;
-    MyGetDiskFreeSpace(GetPath(), total, free);
+	CDirstatApp::getDiskFreeSpace(GetPath(), total, free);
 
     CItem *freespace = new CItem(IT_FREESPACE, GetFreeSpaceItemName());
     freespace->SetSize(free);
@@ -1502,7 +1502,7 @@ void CItem::UpdateFreeSpaceItem()
 
     ULONGLONG total;
     ULONGLONG free;
-    MyGetDiskFreeSpace(GetPath(), total, free);
+    CDirstatApp::getDiskFreeSpace(GetPath(), total, free);
 
     ULONGLONG before = freeSpaceItem->GetSize();
     ULONGLONG diff = free - before;
@@ -1676,12 +1676,12 @@ ULONGLONG CItem::GetProgressRangeDrive() const
 {
     ULONGLONG total;
     ULONGLONG free;
-    MyGetDiskFreeSpace(GetPath(), total, free);
+    CDirstatApp::getDiskFreeSpace(GetPath(), total, free);
 
-    ULONGLONG range = total - free;
+    total -= free;
 
-    ASSERT(range >= 0);
-    return range;
+    ASSERT(total >= 0);
+    return total;
 }
 
 ULONGLONG CItem::GetProgressPosDrive() const

@@ -44,7 +44,7 @@ namespace
 
     const UINT WMU_OK = WM_USER + 100;
 
-    UINT WMU_THREADFINISHED = RegisterWindowMessage(_T("{F03D3293-86E0-4c87-B559-5FD103F5AF58}"));
+	static UINT WMU_THREADFINISHED = ::RegisterWindowMessage(_T("{F03D3293-86E0-4c87-B559-5FD103F5AF58}"));
 
     // Return: false, if drive not accessible
     bool RetrieveDriveInformation(LPCTSTR path, CString& name, ULONGLONG& total, ULONGLONG& free)
@@ -58,14 +58,16 @@ namespace
 
         name = FormatVolumeName(path, volumeName);
 
-        MyGetDiskFreeSpace(path, total, free);
+		if(!CDirstatApp::getDiskFreeSpace(path, total, free))
+		{
+			return false;
+		}
 
         // This condition *can* become true if quotas exist!
         //ASSERT(free <= total);
 
         return true;
     }
-
 }
 
 
