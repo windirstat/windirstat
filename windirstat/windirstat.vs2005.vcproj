@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8,00"
+	Version="8.00"
 	Name="windirstat"
 	ProjectGUID="{BD11B94C-6594-4477-9FDF-2E24447D1F14}"
 	RootNamespace="windirstat"
@@ -546,42 +546,6 @@
 						/>
 					</FileConfiguration>
 				</File>
-				<File
-					RelativePath="..\common\platform.cpp"
-					>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|x64"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|x64"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-				</File>
 			</Filter>
 			<Filter
 				Name="Dialogs"
@@ -754,10 +718,6 @@
 				</File>
 				<File
 					RelativePath="..\common\mdexceptions.h"
-					>
-				</File>
-				<File
-					RelativePath="..\common\platform.h"
 					>
 				</File>
 				<File
