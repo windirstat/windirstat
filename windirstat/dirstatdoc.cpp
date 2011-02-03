@@ -1228,12 +1228,6 @@ void CDirstatDoc::OnEditCopy()
 void CDirstatDoc::OnCleanupEmptyrecyclebin()
 {
     CModalShellApi msa;
-
-    if(!msa.IsRecycleBinApiSupported())
-    {
-        return;
-    }
-
     msa.EmptyRecycleBin();
 
     RefreshRecyclers();

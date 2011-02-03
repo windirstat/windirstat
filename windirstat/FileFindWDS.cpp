@@ -48,20 +48,20 @@ DWORD CFileFindWDS::GetAttributes() const
 ULONGLONG CFileFindWDS::GetCompressedLength() const
 {
 #if 0 // TODO: make this an option (the compressed size instead of "normal" size
-	ULARGE_INTEGER ret;
-	ret.LowPart = ::GetCompressedFileSize(GetFilePath(), &ret.HighPart);
+    ULARGE_INTEGER ret;
+    ret.LowPart = ::GetCompressedFileSize(GetFilePath(), &ret.HighPart);
 
-	// Check for error
-	if((::GetLastError() != ERROR_SUCCESS) && (ret.LowPart == INVALID_FILE_SIZE))
-	{
-		// In case of an error return size from CFileFind object
-		return GetLength();
-	}
-	else
-	{
-		return ret.QuadPart;
-	}
+    // Check for error
+    if((::GetLastError() != ERROR_SUCCESS) && (ret.LowPart == INVALID_FILE_SIZE))
+    {
+        // In case of an error return size from CFileFind object
+        return GetLength();
+    }
+    else
+    {
+        return ret.QuadPart;
+    }
 #endif // 0
-	// Use the file size already found by the finder object
-	return GetLength();
+    // Use the file size already found by the finder object
+    return GetLength();
 }

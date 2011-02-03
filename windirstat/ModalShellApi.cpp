@@ -44,11 +44,6 @@ CModalShellApi::CModalShellApi()
 {
 }
 
-bool CModalShellApi::IsRecycleBinApiSupported()
-{
-    return m_rbapi.IsSupported();
-}
-
 void CModalShellApi::EmptyRecycleBin()
 {
     m_operation = EMPTY_RECYCLE_BIN;
@@ -85,7 +80,7 @@ void CModalShellApi::DoOperation()
 
 void CModalShellApi::DoEmptyRecycleBin()
 {
-    HRESULT hr = m_rbapi.SHEmptyRecycleBin(*AfxGetMainWnd(), NULL, 0);
+    HRESULT hr = ::SHEmptyRecycleBin(*AfxGetMainWnd(), NULL, 0);
     if(FAILED(hr))
     {
         AfxMessageBox(MdGetWinErrorText(hr));

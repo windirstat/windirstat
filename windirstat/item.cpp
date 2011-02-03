@@ -997,19 +997,12 @@ void CItem::SetDone()
 
             ULONGLONG total;
             ULONGLONG free;
-			CDirstatApp::getDiskFreeSpace(GetPath(), total, free);
+            CDirstatApp::getDiskFreeSpace(GetPath(), total, free);
 
             ULONGLONG unknownspace = total - GetSize();
             if(!GetDocument()->OptionShowFreeSpace())
             {
                 unknownspace -= free;
-            }
-
-            // For CDs, the GetDiskFreeSpaceEx()-function is not correct.
-            if(unknownspace < 0)
-            {
-                TRACE(_T("GetDiskFreeSpace(%s) incorrect.\n"), GetPath());
-                unknownspace = 0;
             }
             unknown->SetSize(unknownspace);
 
@@ -1465,7 +1458,7 @@ void CItem::CreateFreeSpaceItem()
 
     ULONGLONG total;
     ULONGLONG free;
-	CDirstatApp::getDiskFreeSpace(GetPath(), total, free);
+    CDirstatApp::getDiskFreeSpace(GetPath(), total, free);
 
     CItem *freespace = new CItem(IT_FREESPACE, GetFreeSpaceItemName());
     freespace->SetSize(free);

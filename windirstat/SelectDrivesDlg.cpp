@@ -44,7 +44,7 @@ namespace
 
     const UINT WMU_OK = WM_USER + 100;
 
-	static UINT WMU_THREADFINISHED = ::RegisterWindowMessage(_T("{F03D3293-86E0-4c87-B559-5FD103F5AF58}"));
+    static UINT WMU_THREADFINISHED = ::RegisterWindowMessage(_T("{F03D3293-86E0-4c87-B559-5FD103F5AF58}"));
 
     // Return: false, if drive not accessible
     bool RetrieveDriveInformation(LPCTSTR path, CString& name, ULONGLONG& total, ULONGLONG& free)
@@ -58,10 +58,10 @@ namespace
 
         name = FormatVolumeName(path, volumeName);
 
-		if(!CDirstatApp::getDiskFreeSpace(path, total, free))
-		{
-			return false;
-		}
+        if(!CDirstatApp::getDiskFreeSpace(path, total, free))
+        {
+            return false;
+        }
 
         // This condition *can* become true if quotas exist!
         //ASSERT(free <= total);
@@ -912,26 +912,26 @@ int CALLBACK CSelectDrivesDlg::BrowseCallbackProc(HWND hWnd, UINT uMsg, LPARAM l
 
 CString CSelectDrivesDlg::getFullPathName_(LPCTSTR relativePath)
 {
-	LPTSTR dummy;
-	CString buffer;
+    LPTSTR dummy;
+    CString buffer;
 
-	DWORD len = _MAX_PATH;
+    DWORD len = _MAX_PATH;
 
-	DWORD dw = ::GetFullPathName(relativePath, len, buffer.GetBuffer(len), &dummy);
-	buffer.ReleaseBuffer();
+    DWORD dw = ::GetFullPathName(relativePath, len, buffer.GetBuffer(len), &dummy);
+    buffer.ReleaseBuffer();
 
-	while(dw >= len)
-	{
-		len += _MAX_PATH;
-		dw = ::GetFullPathName(relativePath, len, buffer.GetBuffer(len), &dummy);
-		buffer.ReleaseBuffer();
-	}
+    while(dw >= len)
+    {
+        len += _MAX_PATH;
+        dw = ::GetFullPathName(relativePath, len, buffer.GetBuffer(len), &dummy);
+        buffer.ReleaseBuffer();
+    }
 
-	if(0 == dw)
-	{
-		TRACE("GetFullPathName(%s) failed: GetLastError returns %u\r\n", relativePath, ::GetLastError());
-		return relativePath;
-	}
+    if(0 == dw)
+    {
+        TRACE("GetFullPathName(%s) failed: GetLastError returns %u\r\n", relativePath, ::GetLastError());
+        return relativePath;
+    }
 
-	return buffer;
+    return buffer;
 }

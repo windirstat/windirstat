@@ -91,11 +91,11 @@ BOOL CPageGeneral::OnInitDialog()
     m_followJunctionPoints = GetOptions()->IsFollowJunctionPoints();
     m_useWdsLocale = GetOptions()->IsUseWdsLocale();
 
-	m_followMountPoints = false;    // Otherwise we would see pacman only.
-	m_ctlFollowMountPoints.ShowWindow(SW_HIDE); // Ignorance is bliss.
-	// The same for junction points
-	m_followJunctionPoints = false; // Otherwise we would see pacman only.
-	m_ctlFollowJunctionPoints.ShowWindow(SW_HIDE); // Ignorance is bliss.
+    m_followMountPoints = false;    // Otherwise we would see pacman only.
+    m_ctlFollowMountPoints.ShowWindow(SW_HIDE); // Ignorance is bliss.
+    // The same for junction points
+    m_followJunctionPoints = false; // Otherwise we would see pacman only.
+    m_ctlFollowJunctionPoints.ShowWindow(SW_HIDE); // Ignorance is bliss.
 
     int k = m_combo.AddString(GetLocaleLanguage(GetWDSApp()->GetBuiltInLanguage()));
     m_combo.SetItemData(k, GetWDSApp()->GetBuiltInLanguage());

@@ -148,7 +148,7 @@ class CSelectDrivesDlg : public CDialog
 {
     DECLARE_DYNAMIC(CSelectDrivesDlg)
     enum { IDD = IDD_SELECTDRIVES };
-	static CString getFullPathName_(LPCTSTR relativePath);
+    static CString getFullPathName_(LPCTSTR relativePath);
 
 public:
     CSelectDrivesDlg(CWnd* pParent = NULL);

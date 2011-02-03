@@ -871,36 +871,33 @@ void CMainFrame::UpdateCleanupMenu(CMenu *menu)
 {
     CString s = LoadString(IDS_EMPTYRECYCLEBIN);
     VERIFY(menu->ModifyMenu(ID_CLEANUP_EMPTYRECYCLEBIN, MF_BYCOMMAND | MF_STRING, ID_CLEANUP_EMPTYRECYCLEBIN, s));
+    // TODO: can be cleaned, so that we don't disable and then enable the menu item
     menu->EnableMenuItem(ID_CLEANUP_EMPTYRECYCLEBIN, MF_BYCOMMAND | MF_DISABLED | MF_GRAYED);
 
-    CRecycleBinApi rb;
-    if(rb.IsSupported())
+    ULONGLONG items;
+    ULONGLONG bytes;
+
+    queryRecycleBin(items, bytes);
+
+    CString info;
+    if(items == 1)
     {
-        ULONGLONG items;
-        ULONGLONG bytes;
-
-        MyQueryRecycleBin(rb, items, bytes);
-
-        CString info;
-        if(items == 1)
-        {
-            info.FormatMessage(IDS__ONEITEMss, FormatBytes(bytes), GetOptions()->IsHumanFormat() && bytes != 0 ? wds::strEmpty : wds::strBlankSpace + GetSpec_Bytes());
-        }
-        else
-        {
-            info.FormatMessage(IDS__sITEMSss, FormatCount(items), FormatBytes(bytes), GetOptions()->IsHumanFormat() && bytes != 0 ? wds::strEmpty : wds::strBlankSpace + GetSpec_Bytes());
-        }
-
-        s += info;
-        VERIFY(menu->ModifyMenu(ID_CLEANUP_EMPTYRECYCLEBIN, MF_BYCOMMAND | MF_STRING, ID_CLEANUP_EMPTYRECYCLEBIN, s));
-
-        // ModifyMenu() re-enables the item. So we disable (or enable) it again.
-
-        UINT flags = (items > 0 ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
-        flags |= MF_BYCOMMAND;
-
-        menu->EnableMenuItem(ID_CLEANUP_EMPTYRECYCLEBIN, flags);
+        info.FormatMessage(IDS__ONEITEMss, FormatBytes(bytes), GetOptions()->IsHumanFormat() && bytes != 0 ? wds::strEmpty : wds::strBlankSpace + GetSpec_Bytes());
     }
+    else
+    {
+        info.FormatMessage(IDS__sITEMSss, FormatCount(items), FormatBytes(bytes), GetOptions()->IsHumanFormat() && bytes != 0 ? wds::strEmpty : wds::strBlankSpace + GetSpec_Bytes());
+    }
+
+    s += info;
+    VERIFY(menu->ModifyMenu(ID_CLEANUP_EMPTYRECYCLEBIN, MF_BYCOMMAND | MF_STRING, ID_CLEANUP_EMPTYRECYCLEBIN, s));
+
+    // ModifyMenu() re-enables the item. So we disable (or enable) it again.
+
+    UINT flags = (items > 0 ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
+    flags |= MF_BYCOMMAND;
+
+    menu->EnableMenuItem(ID_CLEANUP_EMPTYRECYCLEBIN, flags);
 
     UINT toRemove = menu->GetMenuItemCount() - MAINMENU_USERDEFINEDCLEANUP_POSITION;
     for(UINT i = 0; i < toRemove; i++)
@@ -911,12 +908,10 @@ void CMainFrame::UpdateCleanupMenu(CMenu *menu)
     AppendUserDefinedCleanups(menu);
 }
 
-void CMainFrame::MyQueryRecycleBin(CRecycleBinApi& rb, ULONGLONG& items, ULONGLONG& bytes)
+void CMainFrame::queryRecycleBin(ULONGLONG& items, ULONGLONG& bytes)
 {
     // On W2k, the first parameter to SHQueryRecycleBin must not be NULL.
     // So we must sum the item counts and sizes of the recycle bins of all local drives.
-
-    ASSERT(rb.IsSupported());
 
     items = 0;
     bytes = 0;
@@ -949,7 +944,7 @@ void CMainFrame::MyQueryRecycleBin(CRecycleBinApi& rb, ULONGLONG& items, ULONGLO
         ZeroMemory(&qbi, sizeof(qbi));
         qbi.cbSize = sizeof(qbi);
 
-        HRESULT hr = rb.SHQueryRecycleBin(s, &qbi);
+        HRESULT hr = ::SHQueryRecycleBin(s, &qbi);
 
         if(FAILED(hr))
         {

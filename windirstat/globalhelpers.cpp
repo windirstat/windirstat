@@ -582,7 +582,7 @@ CString MyQueryDosDevice(LPCTSTR drive)
     d = d.Left(2);
 
     CString info;
-	DWORD dw = ::QueryDosDevice(d, info.GetBuffer(512), 512);
+    DWORD dw = ::QueryDosDevice(d, info.GetBuffer(512), 512);
     info.ReleaseBuffer();
 
     if(dw == 0)

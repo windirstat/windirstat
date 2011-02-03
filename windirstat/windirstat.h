@@ -91,7 +91,7 @@ public:
 
     void RestartApplication();
 
-	static bool getDiskFreeSpace(LPCTSTR pszRootPath, ULONGLONG& total, ULONGLONG& unused);
+    static bool getDiskFreeSpace(LPCTSTR pszRootPath, ULONGLONG& total, ULONGLONG& unused);
 
 protected:
     CString FindResourceDllPathByLangid(LANGID& langid);
@@ -121,7 +121,6 @@ protected:
     LANGID m_langid;                        // Language we are running
     CReparsePoints m_mountPoints;           // Mount point information
     CMyImageList m_myImageList;             // Our central image list
-    CPsapi m_psapi;                         // Dynamically linked psapi.dll (for RAM usage)
     ULONGLONG m_workingSet;                 // Current working set (RAM usage)
     ULONGLONG m_pageFaults;                 // Page faults so far (unused)
     DWORD m_lastPeriodicalRamUsageUpdate;   // Tick count

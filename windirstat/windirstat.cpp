@@ -234,25 +234,25 @@ void CDirstatApp::RestartApplication()
 
 bool CDirstatApp::getDiskFreeSpace(LPCTSTR pszRootPath, ULONGLONG& total, ULONGLONG& unused)
 {
-	static ULARGE_INTEGER u64available = {0};
-	ULARGE_INTEGER u64total = {0};
-	ULARGE_INTEGER u64free = {0};
+    static ULARGE_INTEGER u64available = {0};
+    ULARGE_INTEGER u64total = {0};
+    ULARGE_INTEGER u64free = {0};
 
-	// On NT 4.0, the 2nd Parameter to this function must NOT be NULL.
-	// TODO: verify whether Windows 2000 behaves correctly
-	BOOL b = GetDiskFreeSpaceEx(pszRootPath, &u64available, &u64total, &u64free);
-	if(!b)
-	{
-		TRACE(_T("GetDiskFreeSpaceEx(%s) failed.\n"), pszRootPath);
-	}
+    // On NT 4.0, the 2nd Parameter to this function must NOT be NULL.
+    // TODO: verify whether Windows 2000 behaves correctly
+    BOOL b = GetDiskFreeSpaceEx(pszRootPath, &u64available, &u64total, &u64free);
+    if(!b)
+    {
+        TRACE(_T("GetDiskFreeSpaceEx(%s) failed.\n"), pszRootPath);
+    }
 
-	// FIXME: need to retrieve total via IOCTL_DISK_GET_PARTITION_INFO instead
-	total = u64total.QuadPart;
-	unused = u64free.QuadPart;
+    // FIXME: need to retrieve total via IOCTL_DISK_GET_PARTITION_INFO instead
+    total = u64total.QuadPart;
+    unused = u64free.QuadPart;
 
-	// Race condition ...
-	ASSERT(unused <= total);
-	return (FALSE != b);
+    // Race condition ...
+    ASSERT(unused <= total);
+    return (FALSE != b);
 }
 
 bool CDirstatApp::ScanResourceDllName(LPCTSTR name, LANGID& langid)
@@ -467,16 +467,11 @@ CString CDirstatApp::GetCurrentProcessMemoryInfo()
 
 bool CDirstatApp::UpdateMemoryInfo()
 {
-    if(!m_psapi.IsSupported())
-    {
-        return false;
-    }
-
     PROCESS_MEMORY_COUNTERS pmc;
     ZeroMemory(&pmc, sizeof(pmc));
     pmc.cb = sizeof(pmc);
 
-    if(!m_psapi.GetProcessMemoryInfo(GetCurrentProcess(), &pmc, sizeof(pmc)))
+    if(!::GetProcessMemoryInfo(GetCurrentProcess(), &pmc, sizeof(pmc)))
     {
         return false;
     }

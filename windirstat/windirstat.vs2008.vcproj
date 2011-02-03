@@ -74,7 +74,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="htmlhelp.lib"
+				AdditionalDependencies="htmlhelp.lib psapi.lib"
 				OutputFile="../build/wds32D.exe"
 				LinkIncremental="0"
 				GenerateDebugInformation="true"
@@ -164,7 +164,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="htmlhelp.lib"
+				AdditionalDependencies="htmlhelp.lib psapi.lib"
 				OutputFile="../build/wds64D.exe"
 				LinkIncremental="0"
 				GenerateDebugInformation="true"
@@ -254,7 +254,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="htmlhelp.lib"
+				AdditionalDependencies="htmlhelp.lib psapi.lib"
 				OutputFile="../build/wds32.exe"
 				LinkIncremental="0"
 				GenerateDebugInformation="true"
@@ -347,7 +347,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="htmlhelp.lib"
+				AdditionalDependencies="htmlhelp.lib psapi.lib"
 				OutputFile="../build/wds64.exe"
 				LinkIncremental="0"
 				GenerateDebugInformation="true"

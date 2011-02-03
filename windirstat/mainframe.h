@@ -179,6 +179,8 @@ public:
 
     void SetSelectionMessageText();
 
+    static void queryRecycleBin(ULONGLONG& items, ULONGLONG& bytes);
+
 protected:
     virtual BOOL OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext* pContext);
     virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
@@ -190,14 +192,13 @@ protected:
     void DestroyProgress();
 
     void UpdateCleanupMenu(CMenu *menu);
-    void MyQueryRecycleBin(CRecycleBinApi& rb, ULONGLONG& items, ULONGLONG& bytes);
 
-    bool m_progressVisible;     // True while progress must be shown (either pacman or progressbar)
+    bool m_progressVisible;     // True while progress must be shown (either pacman or progress bar)
     ULONGLONG m_progressRange;  // Progress range. A range of 0 means that we have no range available. In this case we should display pacman.
     ULONGLONG m_progressPos;    // Progress position (<= progressRange, or an item count in case of m_progressRang == 0)
 
     CMySplitterWnd m_wndSubSplitter;    // Contains the two upper views
-    CMySplitterWnd m_wndSplitter;       // Contains (a) m_wndSubSplitter and (b) the graphview.
+    CMySplitterWnd m_wndSplitter;       // Contains (a) m_wndSubSplitter and (b) the graph view.
 
     CStatusBar  m_wndStatusBar;     // Status bar
     CToolBar    m_wndToolBar;       // Tool bar
