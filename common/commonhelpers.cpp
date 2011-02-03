@@ -105,21 +105,6 @@ CString GetBaseNameFromPath(LPCTSTR path)
     return s.Mid(i + 1);
 }
 
-bool FileExists(LPCTSTR path)
-{
-    CFileFind finder;
-    BOOL b = finder.FindFile(path);
-    if(b)
-    {
-        finder.FindNextFile();
-        return !finder.IsDirectory();
-    }
-    else
-    {
-        return false;
-    }
-}
-
 CString LoadString(UINT resId)
 {
     return MAKEINTRESOURCE(resId);
@@ -140,30 +125,4 @@ CString GetAppFolder()
     ASSERT(i >= 0);
     s = s.Left(i);
     return s;
-}
-
-CString MyGetFullPathName(LPCTSTR relativePath)
-{
-    LPTSTR dummy;
-    CString buffer;
-
-    DWORD len = _MAX_PATH;
-
-    DWORD dw = ::GetFullPathName(relativePath, len, buffer.GetBuffer(len), &dummy);
-    buffer.ReleaseBuffer();
-
-    while(dw >= len)
-    {
-        len += _MAX_PATH;
-        dw = ::GetFullPathName(relativePath, len, buffer.GetBuffer(len), &dummy);
-        buffer.ReleaseBuffer();
-    }
-
-    if(0 == dw)
-    {
-        TRACE("GetFullPathName(%s) failed: GetLastError returns %u\r\n", relativePath, ::GetLastError());
-        return relativePath;
-    }
-
-    return buffer;
 }

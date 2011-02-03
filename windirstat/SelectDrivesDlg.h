@@ -148,6 +148,7 @@ class CSelectDrivesDlg : public CDialog
 {
     DECLARE_DYNAMIC(CSelectDrivesDlg)
     enum { IDD = IDD_SELECTDRIVES };
+	static CString getFullPathName_(LPCTSTR relativePath);
 
 public:
     CSelectDrivesDlg(CWnd* pParent = NULL);
@@ -170,7 +171,6 @@ protected:
     CButton m_okButton;
     CStringArray m_selectedDrives;
     CLayout m_layout;
-
     // Callback function for the dialog shown by SHBrowseForFolder()
     // MUST be static!
     static int CALLBACK BrowseCallbackProc(HWND hWnd, UINT uMsg, LPARAM lParam, LPARAM lpData);

@@ -152,7 +152,7 @@ CString CDirstatApp::FindHelpfilePathByLangid(LANGID langid)
     {
         // The english help file is named windirstat.chm.
         s = GetAppFolder() + _T("\\windirstat.chm");
-        if(FileExists(s))
+        if(PathFileExists(s))
         {
             return s;
         }
@@ -167,7 +167,7 @@ CString CDirstatApp::FindHelpfilePathByLangid(LANGID langid)
 
     // Else, try windirstat.chm again.
     s = GetAppFolder() + _T("\\windirstat.chm");
-    if(FileExists(s))
+    if(PathFileExists(s))
     {
         return s;
     }
@@ -309,7 +309,7 @@ CString CDirstatApp::FindAuxiliaryFileByLangid(LPCTSTR prefix, LPCTSTR suffix, L
     exactName.Format(_T("%s%s%s"), prefix, number, suffix);
 
     CString exactPath = GetAppFolder() + _T("\\") + exactName;
-    if(FileExists(exactPath) && (!checkResource || IsCorrectResourceDll(exactPath)))
+    if(PathFileExists(exactPath) && (!checkResource || IsCorrectResourceDll(exactPath)))
     {
         return exactPath;
     }
@@ -756,7 +756,7 @@ void CDirstatApp::OnHelpManual()
 
 void CDirstatApp::DoContextHelp(DWORD topic)
 {
-    if(FileExists(m_pszHelpFilePath))
+    if(PathFileExists(m_pszHelpFilePath))
     {
         // I want a NULL parent window. So I don't use CWinApp::HtmlHelp().
         ::HtmlHelp(NULL, m_pszHelpFilePath, HH_HELP_CONTEXT, topic);

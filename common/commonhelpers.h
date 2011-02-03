@@ -32,10 +32,8 @@ BOOL ShellExecuteThrow(HWND hwnd, LPCTSTR lpVerb, LPCTSTR lpFile, LPCTSTR lpPara
 BOOL ShellExecuteNoThrow(HWND hwnd, LPCTSTR lpVerb, LPCTSTR lpFile, LPCTSTR lpParameters, LPCTSTR lpDirectory, INT nShowCmd);
 CString MyStrRetToString(const LPITEMIDLIST pidl, const STRRET *strret);
 CString GetBaseNameFromPath(LPCTSTR path);
-bool FileExists(LPCTSTR path);
 CString LoadString(UINT resId);
 CString GetAppFileName();
 CString GetAppFolder();
-CString MyGetFullPathName(LPCTSTR relativePath);
 
 #endif // __WDS_COMMONHELPERS_H__

@@ -1293,7 +1293,7 @@ bool CItem::StartRefresh()
     }
     else if(GetType() == IT_FILE)
     {
-        deleted = !FileExists(GetPath());
+        deleted = !PathFileExists(GetPath());
     }
     else if(GetType() == IT_DIRECTORY)
     {

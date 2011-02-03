@@ -704,7 +704,7 @@ void CSelectDrivesDlg::OnOK()
     m_selectedDrives.RemoveAll();
     if(m_radio == RADIO_AFOLDER)
     {
-        m_folderName = MyGetFullPathName(m_folderName);
+        m_folderName = getFullPathName_(m_folderName);
         UpdateData(false);
     }
 
@@ -906,4 +906,30 @@ int CALLBACK CSelectDrivesDlg::BrowseCallbackProc(HWND hWnd, UINT uMsg, LPARAM l
         break;
     }
     return 0;
+}
+
+CString CSelectDrivesDlg::getFullPathName_(LPCTSTR relativePath)
+{
+	LPTSTR dummy;
+	CString buffer;
+
+	DWORD len = _MAX_PATH;
+
+	DWORD dw = ::GetFullPathName(relativePath, len, buffer.GetBuffer(len), &dummy);
+	buffer.ReleaseBuffer();
+
+	while(dw >= len)
+	{
+		len += _MAX_PATH;
+		dw = ::GetFullPathName(relativePath, len, buffer.GetBuffer(len), &dummy);
+		buffer.ReleaseBuffer();
+	}
+
+	if(0 == dw)
+	{
+		TRACE("GetFullPathName(%s) failed: GetLastError returns %u\r\n", relativePath, ::GetLastError());
+		return relativePath;
+	}
+
+	return buffer;
 }
