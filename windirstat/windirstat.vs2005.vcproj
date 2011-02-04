@@ -741,10 +741,6 @@
 					>
 				</File>
 				<File
-					RelativePath=".\CheckForUpdateDlg.h"
-					>
-				</File>
-				<File
 					RelativePath=".\DeleteWarningDlg.h"
 					>
 				</File>

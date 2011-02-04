@@ -353,7 +353,6 @@
     <ClInclude Include="..\common\version.h" />
     <ClInclude Include="..\common\wds_constants.h" />
     <ClInclude Include="aboutdlg.h" />
-    <ClInclude Include="CheckForUpdateDlg.h" />
     <ClInclude Include="DeleteWarningDlg.h" />
     <ClInclude Include="SelectDrivesDlg.h" />
     <ClInclude Include="colorbutton.h" />

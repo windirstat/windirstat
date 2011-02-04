@@ -236,9 +236,6 @@
     <ClInclude Include="aboutdlg.h">
       <Filter>Header Files\Dialogs</Filter>
     </ClInclude>
-    <ClInclude Include="CheckForUpdateDlg.h">
-      <Filter>Header Files\Dialogs</Filter>
-    </ClInclude>
     <ClInclude Include="DeleteWarningDlg.h">
       <Filter>Header Files\Dialogs</Filter>
     </ClInclude>
