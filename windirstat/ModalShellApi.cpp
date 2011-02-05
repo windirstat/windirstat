@@ -101,7 +101,7 @@ void CModalShellApi::DoDeleteFile()
 
     sfos.hwnd = *AfxGetMainWnd();
 
-    (void)SHFileOperation(&sfos);
+    ::SHFileOperation(&sfos); // FIXME: use return value
 
     m_fileName.ReleaseBuffer();
 }

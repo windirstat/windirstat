@@ -1046,7 +1046,7 @@ void CItem::DoSomeWork(DWORD ticks)
 
     DriveVisualUpdateDuringWork();
 
-    DWORD start = GetTickCount();
+    DWORD start = ::GetTickCount();
 
     if(GetType() == IT_DRIVE || GetType() == IT_DIRECTORY)
     {
@@ -1120,14 +1120,14 @@ void CItem::DoSomeWork(DWORD ticks)
 
             UpwardAddSubdirs(dirCount);
             SetReadJobDone();
-            AddTicksWorked(GetTickCount() - start);
+            AddTicksWorked(::GetTickCount() - start);
         }
         if(GetType() == IT_DRIVE)
         {
             UpdateFreeSpaceItem();
         }
 
-        if(GetTickCount() - start > ticks)
+        if(::GetTickCount() - start > ticks)
         {
             StartPacman(false);
             return;
@@ -1148,8 +1148,8 @@ void CItem::DoSomeWork(DWORD ticks)
             return;
         }
 
-        DWORD startChildren = GetTickCount();
-        while(GetTickCount() - start < ticks)
+        DWORD startChildren = ::GetTickCount();
+        while(::GetTickCount() - start < ticks)
         {
             DWORD minticks = UINT_MAX;
             CItem *minchild = NULL;
@@ -1171,13 +1171,13 @@ void CItem::DoSomeWork(DWORD ticks)
                 SetDone();
                 break;
             }
-            DWORD tickssofar = GetTickCount() - start;
+            DWORD tickssofar = ::GetTickCount() - start;
             if(ticks > tickssofar)
             {
                 minchild->DoSomeWork(ticks - tickssofar);
             }
         }
-        AddTicksWorked(GetTickCount() - startChildren);
+        AddTicksWorked(::GetTickCount() - startChildren);
     }
     else
     {
@@ -1286,7 +1286,7 @@ bool CItem::StartRefresh()
     }
     else if(GetType() == IT_FILE)
     {
-        deleted = !PathFileExists(GetPath());
+        deleted = !::PathFileExists(GetPath());
     }
     else if(GetType() == IT_DIRECTORY)
     {

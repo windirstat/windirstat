@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2008 Oliver Schneider (assarbad.net)
+// Copyright (C) 2008, 2011 Oliver Schneider (assarbad.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -93,8 +93,8 @@ inline CString MdGetWinErrorText(HRESULT hr)
     }
     else
     {
-        sRet = CString(static_cast<LPTSTR>(lpMsgBuf));
-        LocalFree(lpMsgBuf);
+        sRet = CString(static_cast<LPCTSTR>(lpMsgBuf));
+        ::LocalFree(lpMsgBuf);
     }
     return sRet;
 }

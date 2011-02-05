@@ -298,7 +298,7 @@ void CTreemap::DrawTreemap(CDC *pdc, CRect rc, Item *root, const Options *option
         // We shrink the rectangle here, too.
         // If we didn't do this, the layout of the treemap would
         // change, when grid is switched on and off.
-        CPen pen(PS_SOLID, 1, GetSysColor(COLOR_3DSHADOW));
+        CPen pen(PS_SOLID, 1, ::GetSysColor(COLOR_3DSHADOW));
         CSelectObject sopen(pdc, &pen);
         pdc->MoveTo(rc.right - 1, rc.top);
         pdc->LineTo(rc.right - 1, rc.bottom);
@@ -317,7 +317,7 @@ void CTreemap::DrawTreemap(CDC *pdc, CRect rc, Item *root, const Options *option
     if(root->TmiGetSize() > 0)
     {
         double surface[4];
-        for(int i = 0; i < 4; i++)
+        for(int i = 0; i < _countof(surface); i++)
         {
             surface[i]= 0;
         }
@@ -479,7 +479,7 @@ void CTreemap::DrawColorPreview(CDC *pdc, const CRect& rc, COLORREF color, const
     }
 
     double surface[4];
-    for(int i = 0; i < 4; i++)
+    for(int i = 0; i < _countof(surface); i++)
     {
         surface[i]= 0;
     }
@@ -512,7 +512,9 @@ void CTreemap::RecurseDrawGraph(
     ASSERT(item->TmiGetSize() > 0);
 
     if(m_callback != NULL)
+    {
         m_callback->TreemapDrawingCallback();
+    }
 
     item->TmiSetRectangle(rc);
 
@@ -527,7 +529,7 @@ void CTreemap::RecurseDrawGraph(
 
     if(IsCushionShading())
     {
-        for(int i = 0; i < 4; i++)
+        for(int i = 0; i < _countof(surface); i++)
         {
             surface[i]= psurface[i];
         }
@@ -838,7 +840,7 @@ void CTreemap::SequoiaView_DrawChildren(CDC *pdc, Item *parent, const double *su
         ASSERT(remaining.Width() > 0);
         ASSERT(remaining.Height() > 0);
 
-        // How we devide the remaining rectangle
+        // How we divide the remaining rectangle
         bool horizontal = (remaining.Width() >= remaining.Height());
 
         // Height of the new row
@@ -855,7 +857,7 @@ void CTreemap::SequoiaView_DrawChildren(CDC *pdc, Item *parent, const double *su
         // Worst ratio so far
         double worst = DBL_MAX;
 
-        // Maxmium size of children in row
+        // Maximum size of children in row
         ULONGLONG rmax = parent->TmiGetChild(rowBegin)->TmiGetSize();
 
         // Sum of sizes of children in row
@@ -1016,7 +1018,7 @@ void CTreemap::SequoiaView_DrawChildren(CDC *pdc, Item *parent, const double *su
 void CTreemap::Simple_DrawChildren(CDC *pdc, Item *parent, const double *surface, double h, DWORD flags)
 {
 #if 1
-    ASSERT(0); // Not used in Windirstat.
+    ASSERT(0); // Not used in WinDirStat.
 
     pdc; parent; surface; h; flags;
 
@@ -1135,7 +1137,9 @@ void CTreemap::RenderRectangle(CDC *pdc, const CRect& rc, const double *surface,
         {
             brightness*= 1.2;
             if(brightness > 1.0)
+            {
                 brightness = 1.0;
+            }
         }
     }
 
@@ -1287,6 +1291,7 @@ void CTreemapPreview::BuildDemoData()
     int col = -1;
     COLORREF color;
     int i;
+    // FIXME: uses too many hardcoded literals without explanation
 
     CArray<CItem *, CItem *> c4;
     color = GetNextColor(col);

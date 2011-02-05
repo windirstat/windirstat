@@ -92,7 +92,7 @@ void COwnerDrawnListItem::DrawLabel(COwnerDrawnListControl *list, CImageList *il
     rcLabel.bottom = rcRest.bottom - LABEL_Y_MARGIN;
 
     CSetBkMode bk(pdc, TRANSPARENT);
-    COLORREF textColor = GetSysColor(COLOR_WINDOWTEXT);
+    COLORREF textColor = ::GetSysColor(COLOR_WINDOWTEXT);
     if(width == NULL && (state & ODS_SELECTED) != 0 && (list->HasFocus() || list->IsShowSelectionAlways()))
     {
         // Color for the text in a highlighted item (usually white)
@@ -259,7 +259,7 @@ int COwnerDrawnListControl::GetRowHeight()
 void COwnerDrawnListControl::ShowGrid(bool show)
 {
     m_showGrid = show;
-    if(IsWindow(m_hWnd))
+    if(::IsWindow(m_hWnd))
     {
         InvalidateRect(NULL);
     }
@@ -268,7 +268,7 @@ void COwnerDrawnListControl::ShowGrid(bool show)
 void COwnerDrawnListControl::ShowStripes(bool show)
 {
     m_showStripes = show;
-    if(IsWindow(m_hWnd))
+    if(::IsWindow(m_hWnd))
     {
         InvalidateRect(NULL);
     }
@@ -277,7 +277,7 @@ void COwnerDrawnListControl::ShowStripes(bool show)
 void COwnerDrawnListControl::ShowFullRowSelection(bool show)
 {
     m_showFullRowSelection = show;
-    if(IsWindow(m_hWnd))
+    if(::IsWindow(m_hWnd))
     {
         InvalidateRect(NULL);
     }
@@ -316,7 +316,7 @@ COLORREF COwnerDrawnListControl::GetHighlightColor()
 {
     if(HasFocus())
     {
-        return GetSysColor(COLOR_HIGHLIGHT);
+        return ::GetSysColor(COLOR_HIGHLIGHT);
     }
     else
     {
@@ -328,7 +328,7 @@ COLORREF COwnerDrawnListControl::GetHighlightTextColor()
 {
     if(HasFocus())
     {
-        return GetSysColor(COLOR_HIGHLIGHTTEXT);
+        return ::GetSysColor(COLOR_HIGHLIGHTTEXT);
     }
     else
     {
@@ -383,7 +383,7 @@ COLORREF COwnerDrawnListControl::GetItemSelectionTextColor(int i)
     }
     else
     {
-        return GetSysColor(COLOR_WINDOWTEXT);
+        return ::GetSysColor(COLOR_WINDOWTEXT);
     }
 }
 
@@ -423,7 +423,7 @@ void COwnerDrawnListControl::InitializeColors()
     const double diff = 0.07;       // Try to alter the brightness by diff.
     const double threshold = 1.04;  // If result would be brighter, make color darker.
 
-    m_windowColor = GetSysColor(COLOR_WINDOW);
+    m_windowColor = ::GetSysColor(COLOR_WINDOW);
 
     double b = CColorSpace::GetColorBrightness(m_windowColor);
 
@@ -684,7 +684,7 @@ BOOL COwnerDrawnListControl::OnEraseBkgnd(CDC* pDC)
     }
 
     const int gridWidth = m_showGrid ? 1 : 0;
-    const COLORREF bgcolor = GetSysColor(COLOR_WINDOW);
+    const COLORREF bgcolor = ::GetSysColor(COLOR_WINDOW);
 
     const int lineCount = GetCountPerPage() + 1;
     const int firstItem = GetTopIndex();
@@ -766,7 +766,7 @@ void COwnerDrawnListControl::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScr
     CListCtrl::OnVScroll(nSBCode, nPos, pScrollBar);
 
     // Owner drawn list controls with LVS_EX_GRIDLINES don't repaint correctly
-    // when scrolled (under Windows XP). So we fource a complete repaint here.
+    // when scrolled (under Windows XP). So we force a complete repaint here.
     InvalidateRect(NULL);
 }
 

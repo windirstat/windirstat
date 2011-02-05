@@ -40,7 +40,7 @@ CPacman::CPacman()
     , m_speed(0.0005)
     , m_moving(false)
     , m_lastUpdate(0)
-    , m_bgcolor(GetSysColor(COLOR_WINDOW))
+    , m_bgcolor(::GetSysColor(COLOR_WINDOW))
 {
     Reset();
 }
@@ -66,7 +66,7 @@ void CPacman::SetSpeed(double speed)
 void CPacman::Start(bool start)
 {
     m_moving = start;
-    m_lastUpdate = GetTickCount();
+    m_lastUpdate = ::GetTickCount();
 }
 
 bool CPacman::Drive(ULONGLONG readJobs)
@@ -78,7 +78,7 @@ bool CPacman::Drive(ULONGLONG readJobs)
         return false;
     }
 
-    DWORD now = GetTickCount();
+    DWORD now = ::GetTickCount();
     DWORD delta = now - m_lastUpdate;
 
     if(delta < UPDATEINTERVAL)

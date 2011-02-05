@@ -84,7 +84,7 @@ void CMyTreeListControl::OnContextMenu(CWnd* /*pWnd*/, CPoint pt)
     // TrackPopupMenuEx() behaves in the desired way, if
     // we exclude the label rectangle extended to full screen width.
     // 
-    // Thanks to Sven for this compromise between the old Windirstat
+    // Thanks to Sven for this compromise between the old WinDirStat
     // behavior (show the menu to the right of the label) and the
     // Explorer behavior (show the menu at the cursor position).
 
@@ -255,7 +255,7 @@ END_MESSAGE_MAP()
 void CDirstatView::OnSize(UINT nType, int cx, int cy)
 {
     CView::OnSize(nType, cx, cy);
-    if(IsWindow(m_treeListControl.m_hWnd))
+    if(::IsWindow(m_treeListControl.m_hWnd))
     {
         CRect rc(0, 0, cx, cy);
         m_treeListControl.MoveWindow(rc);
@@ -404,18 +404,18 @@ void CDirstatView::OnUpdate(CView *pSender, LPARAM lHint, CObject *pHint)
     case HINT_SOMEWORKDONE:
         {
             MSG msg;
-            while(PeekMessage(&msg, m_treeListControl, 0, 0, PM_REMOVE))
+            while(::PeekMessage(&msg, m_treeListControl, 0, 0, PM_REMOVE))
             {
                 if(msg.message == WM_QUIT)
                 {
-                    PostQuitMessage(int(msg.wParam));
+                    ::PostQuitMessage(int(msg.wParam));
                     break;
                 }
-                TranslateMessage(&msg);
-                DispatchMessage(&msg);
+                ::TranslateMessage(&msg);
+                ::DispatchMessage(&msg);
             }
         }
-        // fall thru
+        // fall through
     case 0:
         {
             m_treeListControl.Sort();

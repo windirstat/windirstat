@@ -95,11 +95,6 @@ CDirstatApp::CDirstatApp()
     , m_ElevationEvent(NULL)
 #   endif // WDS_ELEVATION
 {
-    typedef BOOL (__stdcall *TFNFileIconInit)(BOOL);
-
-    CDynamicApi<TFNFileIconInit> FileIconInit(dllShell32.Handle(), reinterpret_cast<LPCSTR>(660));
-    ASSERT(FileIconInit.IsSupported());
-    VERIFY(FileIconInit.pfnFct(FALSE));
 #   ifdef _DEBUG
     TestScanResourceDllName();
 #   endif
@@ -128,10 +123,10 @@ void CDirstatApp::UpdateRamUsage()
 
 void CDirstatApp::PeriodicalUpdateRamUsage()
 {
-    if(GetTickCount() - m_lastPeriodicalRamUsageUpdate > 1200)
+    if(::GetTickCount() - m_lastPeriodicalRamUsageUpdate > 1200)
     {
         UpdateRamUsage();
-        m_lastPeriodicalRamUsageUpdate = GetTickCount();
+        m_lastPeriodicalRamUsageUpdate = ::GetTickCount();
     }
 }
 
@@ -150,9 +145,9 @@ CString CDirstatApp::FindHelpfilePathByLangid(LANGID langid)
     CString s;
     if(langid == GetBuiltInLanguage())
     {
-        // The english help file is named windirstat.chm.
+        // The English help file is named windirstat.chm.
         s = GetAppFolder() + _T("\\windirstat.chm");
-        if(PathFileExists(s))
+        if(::PathFileExists(s))
         {
             return s;
         }
@@ -167,7 +162,7 @@ CString CDirstatApp::FindHelpfilePathByLangid(LANGID langid)
 
     // Else, try windirstat.chm again.
     s = GetAppFolder() + _T("\\windirstat.chm");
-    if(PathFileExists(s))
+    if(::PathFileExists(s))
     {
         return s;
     }
@@ -228,8 +223,8 @@ void CDirstatApp::RestartApplication()
         TRACE(_T("ResumeThread() didn't return 1\r\n"));
     }
 
-    CloseHandle(pi.hProcess);
-    CloseHandle(pi.hThread);
+    ::CloseHandle(pi.hProcess);
+    ::CloseHandle(pi.hThread);
 }
 
 bool CDirstatApp::getDiskFreeSpace(LPCTSTR pszRootPath, ULONGLONG& total, ULONGLONG& unused)
@@ -292,7 +287,7 @@ bool CDirstatApp::ScanAuxiliaryFileName(LPCTSTR prefix, LPCTSTR suffix, LPCTSTR 
 
     s = s.Left(iLangCodeLength); // retain the language code -> [lngcode]
 
-    for(int i = 0; i < 4; i++)
+    for(int i = 0; i < iLangCodeLength; i++)
     {
         if(!_istxdigit(s[i]))
         {
@@ -332,7 +327,7 @@ CString CDirstatApp::FindAuxiliaryFileByLangid(LPCTSTR prefix, LPCTSTR suffix, L
     exactName.Format(_T("%s%s%s"), prefix, number, suffix);
 
     CString exactPath = GetAppFolder() + _T("\\") + exactName;
-    if(PathFileExists(exactPath) && (!checkResource || IsCorrectResourceDll(exactPath)))
+    if(::PathFileExists(exactPath) && (!checkResource || IsCorrectResourceDll(exactPath)))
     {
         return exactPath;
     }
@@ -373,7 +368,7 @@ CString CDirstatApp::ConstructHelpFileName()
 
 bool CDirstatApp::IsCorrectResourceDll(LPCTSTR path)
 {
-    HMODULE module = LoadLibraryEx(path, NULL, LOAD_LIBRARY_AS_DATAFILE);
+    HMODULE module = ::LoadLibraryEx(path, NULL, LOAD_LIBRARY_AS_DATAFILE);
     if(module == NULL)
     {
         return false;
@@ -499,7 +494,7 @@ BOOL CDirstatApp::InitInstance()
     Inherited::InitInstance();
 
     ::InitCommonControls();           // InitCommonControls() is necessary for Windows XP.
-    VERIFY(AfxOleInit());           // For SHBrowseForFolder()
+    VERIFY(AfxOleInit());           // For ::SHBrowseForFolder()
     AfxEnableControlContainer();    // For our rich edit controls in the about dialog
     VERIFY(AfxInitRichEdit());      // Rich edit control in out about box
     VERIFY(AfxInitRichEdit2());     // On NT, this helps.
@@ -576,7 +571,7 @@ BOOL CDirstatApp::InitInstance()
     GetMainFrame()->InitialShowWindow();
     m_pMainWnd->UpdateWindow();
 
-    // When called by setup.exe, windirstat remained in the
+    // When called by setup.exe, WinDirStat remained in the
     // background, so we do a
     m_pMainWnd->BringWindowToTop();
     m_pMainWnd->SetForegroundWindow();
@@ -763,7 +758,7 @@ void CDirstatApp::OnHelpManual()
 
 void CDirstatApp::DoContextHelp(DWORD topic)
 {
-    if(PathFileExists(m_pszHelpFilePath))
+    if(::PathFileExists(m_pszHelpFilePath))
     {
         // I want a NULL parent window. So I don't use CWinApp::HtmlHelp().
         ::HtmlHelp(NULL, m_pszHelpFilePath, HH_HELP_CONTEXT, topic);

@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2006, 2008, 2010 Oliver Schneider (assarbad.net)
+// Copyright (C) 2004-2006, 2008, 2010, 2011 Oliver Schneider (assarbad.net)
 // Copyright (C) 2010 Chris Wimmer
 //
 // This program is free software; you can redistribute it and/or modify
@@ -84,10 +84,10 @@ CString GetLocaleString(LCTYPE lctype, LANGID langid)
 {
     LCID lcid = MAKELCID(langid, SORT_DEFAULT);
 
-    int len = GetLocaleInfo(lcid, lctype, NULL, 0);
+    int len = ::GetLocaleInfo(lcid, lctype, NULL, 0);
     CString s;
 
-    GetLocaleInfo(lcid, lctype, s.GetBuffer(len), len);
+    ::GetLocaleInfo(lcid, lctype, s.GetBuffer(len), len);
     s.ReleaseBuffer();
 
     return s;
@@ -99,6 +99,8 @@ CString GetLocaleLanguage(LANGID langid)
 
     // In the French case, the system returns "francais",
     // but we want "Francais".
+
+    // TODO: need a Unicode version for this function
 
     if(s.GetLength() > 0)
     {
@@ -118,7 +120,7 @@ CString GetLocaleDecimalSeparator()
     return GetLocaleString(LOCALE_SDECIMAL, GetWDSApp()->GetEffectiveLangid());
 }
 
-CString FormatBytes(ULONGLONG n)
+CString FormatBytes(ULONGLONG const& n)
 {
     if(GetOptions()->IsHumanFormat())
     {
@@ -182,7 +184,7 @@ CString FormatLongLongHuman(ULONGLONG n)
 }
 
 
-CString FormatCount(ULONGLONG n)
+CString FormatCount(ULONGLONG const& n)
 {
     return FormatLongLongNormal(n);
 }
@@ -225,7 +227,7 @@ CString PadWidthBlanks(CString n, int width)
 CString FormatFileTime(const FILETIME& t)
 {
     SYSTEMTIME st;
-    if(!FileTimeToSystemTime(&t, &st))
+    if(!::FileTimeToSystemTime(&t, &st))
     {
         return MdGetWinErrorText(::GetLastError());
     }
@@ -233,7 +235,7 @@ CString FormatFileTime(const FILETIME& t)
     LCID lcid = MAKELCID(GetWDSApp()->GetEffectiveLangid(), SORT_DEFAULT);
 
     CString date;
-    VERIFY(0 < GetDateFormat(lcid, DATE_SHORTDATE, &st, NULL, date.GetBuffer(256), 256));
+    VERIFY(0 < ::GetDateFormat(lcid, DATE_SHORTDATE, &st, NULL, date.GetBuffer(256), 256));
     date.ReleaseBuffer();
 
     CString time;
@@ -323,7 +325,7 @@ bool GetVolumeName(LPCTSTR rootPath, CString& volumeName)
         TRACE(_T("GetVolumeInformation(%s) failed: %u\n"), rootPath, ::GetLastError());
     }
 
-    SetErrorMode(old);
+    ::SetErrorMode(old);
 
     return b;
 }
@@ -381,11 +383,11 @@ CString PathFromVolumeName(CString name)
 CString GetParseNameOfMyComputer()
 {
     CComPtr<IShellFolder> sf;
-    HRESULT hr = SHGetDesktopFolder(&sf);
-    MdThrowFailed(hr, _T("SHGetDesktopFolder"));
+    HRESULT hr = ::SHGetDesktopFolder(&sf);
+    MdThrowFailed(hr, _T("::SHGetDesktopFolder"));
 
     CCoTaskMem<LPITEMIDLIST> pidl;
-    hr = SHGetSpecialFolderLocation(NULL, CSIDL_DRIVES, &pidl);
+    hr = ::SHGetSpecialFolderLocation(NULL, CSIDL_DRIVES, &pidl);
     MdThrowFailed(hr, _T("SHGetSpecialFolderLocation(CSIDL_DRIVES)"));
 
     STRRET name;
@@ -400,10 +402,10 @@ CString GetParseNameOfMyComputer()
 void GetPidlOfMyComputer(LPITEMIDLIST *ppidl)
 {
     CComPtr<IShellFolder> sf;
-    HRESULT hr = SHGetDesktopFolder(&sf);
+    HRESULT hr = ::SHGetDesktopFolder(&sf);
     MdThrowFailed(hr, _T("SHGetDesktopFolder"));
 
-    hr = SHGetSpecialFolderLocation(NULL, CSIDL_DRIVES, ppidl);
+    hr = ::SHGetSpecialFolderLocation(NULL, CSIDL_DRIVES, ppidl);
     MdThrowFailed(hr, _T("SHGetSpecialFolderLocation(CSIDL_DRIVES)"));
 }
 
@@ -417,7 +419,7 @@ void ShellExecuteWithAssocDialog(HWND hwnd, LPCTSTR filename)
         // Q192352
         CString sysDir;
         //-- Get the system directory so that we know where Rundll32.exe resides.
-        GetSystemDirectory(sysDir.GetBuffer(_MAX_PATH), _MAX_PATH);
+        ::GetSystemDirectory(sysDir.GetBuffer(_MAX_PATH), _MAX_PATH);
         sysDir.ReleaseBuffer();
 
         CString parameters = _T("shell32.dll,OpenAs_RunDLL ");
@@ -445,7 +447,7 @@ CString GetCOMSPEC()
 {
     CString cmd;
 
-    DWORD dw = GetEnvironmentVariable(_T("COMSPEC"), cmd.GetBuffer(_MAX_PATH), _MAX_PATH);
+    DWORD dw = ::GetEnvironmentVariable(_T("COMSPEC"), cmd.GetBuffer(_MAX_PATH), _MAX_PATH);
     cmd.ReleaseBuffer();
 
     if(dw == 0)
@@ -465,14 +467,14 @@ DWORD WaitForHandleWithRepainting(HANDLE h, DWORD TimeOut /*= INFINITE*/)
     {
         // Read all of the messages in this next loop, removing each message as we read it.
         MSG msg;
-        while(PeekMessage(&msg, NULL, WM_PAINT, WM_PAINT, PM_REMOVE))
+        while(::PeekMessage(&msg, NULL, WM_PAINT, WM_PAINT, PM_REMOVE))
         {
-            DispatchMessage(&msg);
+            ::DispatchMessage(&msg);
         }
 
         // Wait for WM_PAINT message sent or posted to this queue
         // or for one of the passed handles be set to signaled.
-        r = MsgWaitForMultipleObjects(1, &h, FALSE, TimeOut, QS_PAINT);
+        r = ::MsgWaitForMultipleObjects(1, &h, FALSE, TimeOut, QS_PAINT);
 
         // The result tells us the type of event we have.
         if(r == WAIT_OBJECT_0 + 1)
@@ -522,13 +524,13 @@ bool DriveExists(const CString& path)
 
     DWORD mask = 0x1 << d;
 
-    if((mask & GetLogicalDrives()) == 0)
+    if((mask & ::GetLogicalDrives()) == 0)
     {
         return false;
     }
 
     CString dummy;
-    if(!GetVolumeName(path, dummy))
+    if(!::GetVolumeName(path, dummy))
     {
         return false;
     }
@@ -540,7 +542,7 @@ CString GetUserName()
 {
     CString s;
     DWORD size = UNLEN + 1;
-    (void)GetUserName(s.GetBuffer(size), &size);
+    (void)::GetUserName(s.GetBuffer(size), &size);
     s.ReleaseBuffer();
     return s;
 }
@@ -615,7 +617,7 @@ CString GetSpec_Bytes()
 CString GetSpec_KB()
 {
     static CString s;
-    CacheString(s, IDS_SPEC_KB, _T("kiB"));
+    CacheString(s, IDS_SPEC_KB, _T("KiB"));
     return s;
 }
 
@@ -674,8 +676,8 @@ LPCITEMIDLIST SHGetPIDLFromPath(CString path)
     USES_CONVERSION;
 
     CComPtr<IShellFolder> pshf;
-    HRESULT hr = SHGetDesktopFolder(&pshf);
-    MdThrowFailed(hr, _T("SHGetDesktopFolder"));
+    HRESULT hr = ::SHGetDesktopFolder(&pshf);
+    MdThrowFailed(hr, _T("::SHGetDesktopFolder"));
 
     LPITEMIDLIST pidl;
     hr = pshf->ParseDisplayName(NULL, NULL, const_cast<LPOLESTR>(T2CW(path)), NULL, &pidl, NULL);

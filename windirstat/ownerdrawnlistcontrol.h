@@ -47,7 +47,7 @@ public:
     // This text is drawn, if DrawSubitem returns false
     virtual CString GetText(int subitem) const = 0;
     // This color is used for the  current item
-    virtual COLORREF GetItemTextColor() const { return GetSysColor(COLOR_WINDOWTEXT); }
+    virtual COLORREF GetItemTextColor() const { return ::GetSysColor(COLOR_WINDOWTEXT); }
 
     // Return value is true, if the item draws itself.
     // width != NULL -> only determine width, do not draw.

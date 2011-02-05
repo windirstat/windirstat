@@ -415,7 +415,9 @@ void CTreeListControl::SelectSingleItem(const CTreeListItem *item)
 {
     int i = FindTreeItem(item);
     if (i != -1)
+    {
         SelectSingleItem(i);
+    }
 }
 
 BOOL CTreeListControl::CreateEx(DWORD dwExStyle, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID)
@@ -548,7 +550,9 @@ void CTreeListControl::InsertItem(int i, CTreeListItem *item)
 void CTreeListControl::DeleteItem(int i)
 {
     if (GetItem(i) == m_selectionAnchor)
+    {
         m_selectionAnchor = GetItem(0);
+    }
 
     GetItem(i)->SetExpanded(false);
     GetItem(i)->SetVisible(false);
@@ -716,8 +720,8 @@ void CTreeListControl::OnLButtonDblClk(UINT nFlags, CPoint point)
 
 void CTreeListControl::ExtendSelection(const CTreeListItem *item)
 {
-    const bool shift = (0x8000 & GetKeyState(VK_SHIFT)) != 0;
-    const bool control = (0x8000 & GetKeyState(VK_CONTROL)) != 0;
+    const bool shift = (0x8000 & ::GetKeyState(VK_SHIFT)) != 0;
+    const bool control = (0x8000 & ::GetKeyState(VK_CONTROL)) != 0;
 
     int i = FindTreeItem(item);
     if (i == -1 && !shift && (!control || GetDocument()->GetSelectionCount() == 0))
@@ -728,7 +732,7 @@ void CTreeListControl::ExtendSelection(const CTreeListItem *item)
 
     if (i == -1)
     {
-        MessageBeep(0);
+        ::MessageBeep(0);
         return;
     }
 
@@ -740,8 +744,8 @@ void CTreeListControl::ExtendSelection(const CTreeListItem *item)
 //
 void CTreeListControl::ExtendSelection(int i)
 {
-    const bool shift = (0x8000 & GetKeyState(VK_SHIFT)) != 0;
-    const bool control = (0x8000 & GetKeyState(VK_CONTROL)) != 0;
+    const bool shift = (0x8000 & ::GetKeyState(VK_SHIFT)) != 0;
+    const bool control = (0x8000 & ::GetKeyState(VK_CONTROL)) != 0;
 
     const bool selected = (GetItemState(i, LVIS_SELECTED) & LVIS_SELECTED) != 0;
 
@@ -750,7 +754,7 @@ void CTreeListControl::ExtendSelection(int i)
         // impossible, if anchor and this have different parents
         if (GetItem(i)->GetParent() != m_selectionAnchor->GetParent())
         {
-            MessageBeep(0);
+            ::MessageBeep(0);
             return;
         }
     }
@@ -765,7 +769,7 @@ void CTreeListControl::ExtendSelection(int i)
         // impossible to select item outside selection parent
         if (GetItem(i)->GetParent() != selectionParent)
         {
-            MessageBeep(0);
+            ::MessageBeep(0);
             return;
         }
     }
@@ -1016,8 +1020,8 @@ void CTreeListControl::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
         return;
     }
 
-    const bool shift = (0x8000 & GetKeyState(VK_SHIFT)) != 0;
-    const bool control = (0x8000 & GetKeyState(VK_CONTROL)) != 0;
+    const bool shift = (0x8000 & ::GetKeyState(VK_SHIFT)) != 0;
+    const bool control = (0x8000 & ::GetKeyState(VK_CONTROL)) != 0;
 
     CTreeListItem *item= GetItem(i);
     switch (nChar)
@@ -1033,7 +1037,7 @@ void CTreeListControl::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
         }
         else
         {
-            MessageBeep(0);
+            ::MessageBeep(0);
         }
         break;
 
@@ -1048,7 +1052,7 @@ void CTreeListControl::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
         }
         else
         {
-            MessageBeep(0);
+            ::MessageBeep(0);
         }
         break;
 
@@ -1081,10 +1085,14 @@ void CTreeListControl::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
         i += max(GetCountPerPage() - 1, 1);
 
         if (i >= GetItemCount())
+        {
             i = GetItemCount() - 1;
+        }
 
         if (i >= 0)
+        {
             ExtendSelection(i);
+        }
 
         break;
     }

@@ -147,6 +147,7 @@ int CMyImageList::cacheIcon(LPCTSTR path, UINT flags, CString *psTypeName)
 
 int CMyImageList::getMyComputerImage()
 {
+    // FIXME: see whether we can wrap this up in some nice helper function instead ...
     LPITEMIDLIST pidl = NULL;
     HRESULT hr = ::SHGetSpecialFolderLocation(NULL, CSIDL_DRIVES, &pidl);
     if(FAILED(hr))
@@ -222,7 +223,7 @@ int CMyImageList::getEmptyImage()
 CString CMyImageList::getADriveSpec()
 {
     CString s;
-    UINT u = GetWindowsDirectory(s.GetBuffer(_MAX_PATH), _MAX_PATH);
+    UINT u = ::GetWindowsDirectory(s.GetBuffer(_MAX_PATH), _MAX_PATH);
     s.ReleaseBuffer();
     if(u == 0 || s.GetLength() < 3 || s[1] != wds::chrColon || s[2] != wds::chrBackslash)
     {

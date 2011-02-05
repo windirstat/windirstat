@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2006, 2008 Oliver Schneider (assarbad.net)
+// Copyright (C) 2004-2006, 2008, 2011 Oliver Schneider (assarbad.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -311,13 +311,13 @@ void CMySplitterWnd::OnDestroy()
 
 CPacmanControl::CPacmanControl()
 {
-    m_pacman.SetBackgroundColor(GetSysColor(COLOR_BTNFACE));
+    m_pacman.SetBackgroundColor(::GetSysColor(COLOR_BTNFACE));
     m_pacman.SetSpeed(0.00005);
 }
 
 void CPacmanControl::Drive(ULONGLONG readJobs)
 {
-    if(IsWindow(m_hWnd) && m_pacman.Drive(readJobs))
+    if(::IsWindow(m_hWnd) && m_pacman.Drive(readJobs))
     {
         RedrawWindow();
     }
@@ -400,8 +400,6 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWnd)
     ON_COMMAND(ID_VIEW_SHOWFILETYPES, OnViewShowfiletypes)
     ON_COMMAND(ID_CONFIGURE, OnConfigure)
     ON_WM_DESTROY()
-    ON_UPDATE_COMMAND_UI(ID_SENDMAILTOOWNER, OnUpdateSendmailtoowner)
-    ON_COMMAND(ID_SENDMAILTOOWNER, OnSendmailtoowner)
     ON_COMMAND(ID_TREEMAP_HELPABOUTTREEMAPS, OnTreemapHelpabouttreemaps)
     ON_BN_CLICKED(IDC_SUSPEND, OnBnClickedSuspend)
     ON_WM_SYSCOLORCHANGE()
@@ -477,7 +475,7 @@ void CMainFrame::HideProgress()
     if(m_progressVisible)
     {
         m_progressVisible = false;
-        if(IsWindow(*GetMainFrame()))
+        if(::IsWindow(*GetMainFrame()))
         {
             GetDocument()->SetTitlePrefix(wds::strEmpty);
             SetMessageText(AFX_IDS_IDLEMESSAGE);
@@ -506,7 +504,7 @@ void CMainFrame::SetProgressPos100()
 
 bool CMainFrame::IsProgressSuspended()
 {
-    if(!IsWindow(m_suspendButton.m_hWnd))
+    if(!::IsWindow(m_suspendButton.m_hWnd))
     {
         return false;
     }
@@ -583,17 +581,17 @@ void CMainFrame::CreateSuspendButton(CRect& rc)
 
 void CMainFrame::DestroyProgress()
 {
-    if(IsWindow(m_progress.m_hWnd))
+    if(::IsWindow(m_progress.m_hWnd))
     {
         m_progress.DestroyWindow();
         m_progress.m_hWnd = NULL;
     }
-    else if(IsWindow(m_pacman.m_hWnd))
+    else if(::IsWindow(m_pacman.m_hWnd))
     {
         m_pacman.DestroyWindow();
         m_pacman.m_hWnd = NULL;
     }
-    if(IsWindow(m_suspendButton.m_hWnd))
+    if(::IsWindow(m_suspendButton.m_hWnd))
     {
         m_suspendButton.DestroyWindow();
         m_suspendButton.m_hWnd = NULL;
@@ -821,24 +819,24 @@ void CMainFrame::CopyToClipboard(LPCTSTR psz)
         COpenClipboard clipboard(this);
         SIZE_T cchBufLen = _tcslen(psz) + 1;
 
-        HGLOBAL h = GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT, (cchBufLen) * sizeof(TCHAR));
+        HGLOBAL h = ::GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT, (cchBufLen) * sizeof(TCHAR));
         if(h == NULL)
         {
             MdThrowStringException(_T("GlobalAlloc failed."));
         }
 
-        LPVOID lp = GlobalLock(h);
+        LPVOID lp = ::GlobalLock(h);
         ASSERT(lp != NULL);
 
         _tcscpy_s((LPTSTR)lp, cchBufLen, psz);
 
-        GlobalUnlock(h);
+        ::GlobalUnlock(h);
 
         UINT uFormat = CF_TEXT;
 #ifdef UNICODE
         uFormat = CF_UNICODETEXT;
 #endif
-        if(NULL == SetClipboardData(uFormat, h))
+        if(NULL == ::SetClipboardData(uFormat, h))
         {
             MdThrowStringException(IDS_CANNOTSETCLIPBAORDDATA);
         }
@@ -916,10 +914,10 @@ void CMainFrame::queryRecycleBin(ULONGLONG& items, ULONGLONG& bytes)
     items = 0;
     bytes = 0;
 
-    DWORD drives = GetLogicalDrives();
+    DWORD drives = ::GetLogicalDrives();
     int i;
     DWORD mask = 0x00000001;
-    for(i = 0; i < 32; i++, mask <<= 1)
+    for(i = 0; i < wds::iNumDriveLetters; i++, mask <<= 1)
     {
         if((drives & mask) == 0)
         {
@@ -929,7 +927,7 @@ void CMainFrame::queryRecycleBin(ULONGLONG& items, ULONGLONG& bytes)
         CString s;
         s.Format(_T("%c:\\"), i + wds::chrCapA);
 
-        UINT type = GetDriveType(s);
+        UINT type = ::GetDriveType(s);
         if(type == DRIVE_UNKNOWN || type == DRIVE_NO_ROOT_DIR)
         {
             continue;
@@ -1064,7 +1062,7 @@ void CMainFrame::OnSize(UINT nType, int cx, int cy)
 {
     CFrameWnd::OnSize(nType, cx, cy);
 
-    if(!IsWindow(m_wndStatusBar.m_hWnd))
+    if(!::IsWindow(m_wndStatusBar.m_hWnd))
     {
         return;
     }
@@ -1147,53 +1145,6 @@ void CMainFrame::OnConfigure()
     {
         GetWDSApp()->RestartApplication();
     }
-}
-
-
-void CMainFrame::OnUpdateSendmailtoowner(CCmdUI *pCmdUI)
-{
-    UNREFERENCED_PARAMETER(pCmdUI);
-    // TODO: Fix!!!
-    AfxMessageBox(_T("Not implemented!"));
-/*
-    pCmdUI->Enable(
-        GetLogicalFocus() == LF_DIRECTORYLIST
-        && GetDocument()->GetSelection() != NULL
-        && GetDocument()->GetSelection()->IsDone()
-        && CModalSendMail::IsSendMailAvailable()
-    );
-*/
-}
-
-void CMainFrame::OnSendmailtoowner()
-{
-    CString body = GetDirstatView()->GenerateReport();
-
-    // TODO: Fix!!!
-    AfxMessageBox(_T("Not implemented!"));
-/*
-    CModalSendMail sm;
-    sm.SendMail(strEmpty, GetOptions()->GetReportSubject(), body);
-*/
-
-/*
-    This works only for small bodies:
-
-    CString url;
-    url.Format("mailto:?subject=%s&body=%s", subject, body);
-    url = MyUrlCanonicalize(url);
-
-    AfxMessageBox(url);
-    try
-    {
-        MyShellExecute(NULL, NULL, url, NULL, NULL, SW_SHOWNORMAL);
-    }
-    catch (CException *pe)
-    {
-        pe->ReportError();
-        pe->Delete();
-    }
-*/
 }
 
 void CMainFrame::OnTreemapHelpabouttreemaps()

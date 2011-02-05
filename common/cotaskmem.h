@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2008 Oliver Schneider (assarbad.net)
+// Copyright (C) 2008, 2011 Oliver Schneider (assarbad.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -41,10 +41,8 @@ class CCoTaskMem
 public:
     CCoTaskMem( T lp = 0 )
     { p = lp; }
-    CCoTaskMem(const CCoTaskMem<T>&) // operator not allowed for CCoTaskMem
-    { _ASSERTE( 0 ); p = 0; }
     ~CCoTaskMem()
-    { if( p ) CoTaskMemFree( p ); }
+    { if( p ) ::CoTaskMemFree( p ); }
 
     operator T() { return p; }
     T& operator*() { _ASSERTE( p != NULL ); return p; }
@@ -55,15 +53,17 @@ public:
     T operator->()
     { _ASSERTE(NULL != p); return p; }
     T operator= ( T lp )
-    { if(NULL != p) CoTaskMemFree(p); p = lp; return p;}
-    T operator= ( const CCoTaskMem<T>& lp ) // operator not allowed for CCoTaskMem
-    { _ASSERTE( 0 ); return p;}
+    { if(NULL != p) ::CoTaskMemFree(p); p = lp; return p;}
 
 #if _MSC_VER>1020
     bool operator!() { return (NULL == p); }
 #else
     BOOL operator!() { return (NULL == p) ? TRUE : FALSE; }
 #endif
+
+private:
+    CCoTaskMem(const CCoTaskMem<T>&); // operator not allowed for CCoTaskMem
+    T operator= ( const CCoTaskMem<T>& lp ); // operator not allowed for CCoTaskMem
 
     T p;
 };

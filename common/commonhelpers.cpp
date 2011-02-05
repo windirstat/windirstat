@@ -31,6 +31,8 @@
 
 CString MyStrRetToString(const LPITEMIDLIST pidl, const STRRET *strret)
 {
+    // TODO: replace with shallow wrapper around StrRetToStr
+
     // StrRetToStr() is not always available (e.g. on Windows 98).
     // So we use an own function instead.
     USES_CONVERSION;

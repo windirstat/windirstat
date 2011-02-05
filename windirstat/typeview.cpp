@@ -225,7 +225,7 @@ BEGIN_MESSAGE_MAP(CExtensionListControl, COwnerDrawnListControl)
 END_MESSAGE_MAP()
 
 CExtensionListControl::CExtensionListControl(CTypeView *typeView)
-    : COwnerDrawnListControl(_T("types"), 19)
+    : COwnerDrawnListControl(_T("types"), 19) // FIXME: hardcoded value
     , m_typeView(typeView)
 {
     m_rootSize = 0;
@@ -573,7 +573,7 @@ BOOL CTypeView::OnEraseBkgnd(CDC* pDC)
 void CTypeView::OnSize(UINT nType, int cx, int cy)
 {
     CView::OnSize(nType, cx, cy);
-    if(IsWindow(m_extensionListControl.m_hWnd))
+    if(::IsWindow(m_extensionListControl.m_hWnd))
     {
         CRect rc(0, 0, cx, cy);
         m_extensionListControl.MoveWindow(rc);

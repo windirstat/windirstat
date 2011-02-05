@@ -90,13 +90,13 @@ void CGraphView::ShowTreemap(bool show)
 BOOL CGraphView::PreCreateWindow(CREATESTRUCT& cs)
 {
     // We don't want a background brush
-    VERIFY(CView::PreCreateWindow(cs)); // this registeres a wndclass
+    VERIFY(CView::PreCreateWindow(cs)); // this registers a wndclass
 
     WNDCLASS wc;
     VERIFY(GetClassInfo(AfxGetInstanceHandle(), cs.lpszClass, &wc));
     wc.hbrBackground = NULL;
-    wc.lpszClassName = _T("windirstat_graphview_class");
-    cs.lpszClass = (LPCTSTR)RegisterClass(&wc);
+    wc.lpszClassName = _T("windirstat_graphview_class-{E0BE4F6F-3904-4c99-A3D4-2F11DE629740}");
+    cs.lpszClass = (LPCTSTR)::RegisterClass(&wc);
 
     return true;
 }
@@ -177,12 +177,14 @@ void CGraphView::OnDraw(CDC* pDC)
                 CSelectObject sobmp(&dcmem, &m_bitmap);
 
                 if(GetDocument()->IsZoomed())
+                {
                     DrawZoomFrame(&dcmem, rc);
+                }
 
                 m_treemap.DrawTreemap(&dcmem, rc, GetDocument()->GetZoomItem(), GetOptions()->GetTreemapOptions());
 
                 // Cause OnIdle() to be called once.
-                PostAppMessage(GetCurrentThreadId(), WM_NULL, 0, 0);
+                ::PostThreadMessage(::GetCurrentThreadId(), WM_NULL, 0, 0);
             }
 
             CSelectObject sobmp2(&dcmem, &m_bitmap);
@@ -325,7 +327,9 @@ void CGraphView::HighlightSelectedItem(CDC *pdc, const CItem *item, bool single)
     }
 
     if (rc.Width() <= 0 || rc.Height() <= 0)
+    {
         return;
+    }
 
     RenderHighlightRectangle(pdc, rc);
 }
@@ -399,12 +403,12 @@ void CGraphView::OnLButtonDown(UINT nFlags, CPoint point)
 
         GetDocument()->UpdateAllViews(this, HINT_EXTENDSELECTION, (CObject *)item);
         /*
-        const bool shift = (0x8000 & GetKeyState(VK_SHIFT)) != 0;
-        const bool control = (0x8000 & GetKeyState(VK_CONTROL)) != 0;
+        const bool shift = (0x8000 & ::GetKeyState(VK_SHIFT)) != 0;
+        const bool control = (0x8000 & ::GetKeyState(VK_CONTROL)) != 0;
 
         if (shift)
         {
-        MessageBeep(0);
+        ::MessageBeep(0);
         return;
         }
 
@@ -424,7 +428,7 @@ void CGraphView::OnLButtonDown(UINT nFlags, CPoint point)
         }
         else
         {
-        MessageBeep(0);
+        ::MessageBeep(0);
         }
         }
         else
@@ -453,7 +457,7 @@ void CGraphView::Inactivate()
         m_dimmed.Attach(m_bitmap.Detach());
         m_dimmedSize = m_size;
 
-        // Dimm m_inactive
+        // Dim m_inactive
         CClientDC dc(this);
         CDC dcmem;
         dcmem.CreateCompatibleDC(&dc);

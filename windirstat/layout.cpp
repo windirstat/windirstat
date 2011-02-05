@@ -199,7 +199,7 @@ void CLayout::CSizeGripper::OnPaint()
 void CLayout::CSizeGripper::DrawShadowLine(CDC *pdc, CPoint start, CPoint end)
 {
     {
-        CPen lightPen(PS_SOLID, 1, GetSysColor(COLOR_3DHIGHLIGHT));
+        CPen lightPen(PS_SOLID, 1, ::GetSysColor(COLOR_3DHIGHLIGHT));
         CSelectObject sopen(pdc, &lightPen);
 
         pdc->MoveTo(start);
@@ -210,7 +210,7 @@ void CLayout::CSizeGripper::DrawShadowLine(CDC *pdc, CPoint start, CPoint end)
     end.y++;
 
     {
-        CPen darkPen(PS_SOLID, 1, GetSysColor(COLOR_3DSHADOW));
+        CPen darkPen(PS_SOLID, 1, ::GetSysColor(COLOR_3DSHADOW));
         CSelectObject sopen(pdc, &darkPen);
 
         pdc->MoveTo(start);
@@ -239,16 +239,16 @@ LRESULT CLayout::CSizeGripper::OnNcHitTest(CPoint point)
 }
 
 CLayout::CPositioner::CPositioner(int nNumWindows)
-    : m_wdp(BeginDeferWindowPos(nNumWindows))
+: m_wdp(::BeginDeferWindowPos(nNumWindows))
 {
 }
 
 CLayout::CPositioner::~CPositioner()
 {
-    EndDeferWindowPos(m_wdp);
+    ::EndDeferWindowPos(m_wdp);
 }
 
 void CLayout::CPositioner::SetWindowPos(HWND hWnd, int x, int y, int cx, int cy, UINT uFlags)
 {
-    m_wdp = DeferWindowPos(m_wdp, hWnd, NULL, x, y, cx, cy, uFlags | SWP_NOZORDER);
+    m_wdp = ::DeferWindowPos(m_wdp, hWnd, NULL, x, y, cx, cy, uFlags | SWP_NOZORDER);
 }

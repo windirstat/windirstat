@@ -38,12 +38,6 @@
 #define PROCNAME(name) #name
 #define TPROCNAME(name) #name TSPEC
 
-#define CHECK(name) if(!m_##name.IsSupported()) return false
-
-CDllModule dllKernel32(nameKernel32);
-CDllModule dllShell32(nameShell32);
-CDllModule dllPsApi(namePsApi);
-
 // Required to use the system image lists
 // - http://www.catch22.net/tuts/sysimg
 // - http://msdn.microsoft.com/en-us/library/bb776418(VS.85).aspx

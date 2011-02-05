@@ -62,7 +62,7 @@ CXySlider::CXySlider()
 
 void CXySlider::Initialize()
 {
-    if(!m_inited && IsWindow(m_hWnd))
+    if(!m_inited && ::IsWindow(m_hWnd))
     {
         // Make size odd, so that zero lines are central
         CRect rc;
@@ -203,14 +203,14 @@ void CXySlider::NotifyParent()
 
 void CXySlider::PaintBackground(CDC *pdc)
 {
-    pdc->FillSolidRect(m_rcAll, GetSysColor(COLOR_BTNFACE));
+    pdc->FillSolidRect(m_rcAll, ::GetSysColor(COLOR_BTNFACE));
 
     CRect rc = m_rcInner;
     pdc->DrawEdge(rc, EDGE_SUNKEN, BF_RECT | BF_ADJUST);
 
     pdc->FillSolidRect(rc, RGB(255,255,255));
 
-    CPen pen(PS_SOLID, 1, GetSysColor(COLOR_3DLIGHT));
+    CPen pen(PS_SOLID, 1, ::GetSysColor(COLOR_3DLIGHT));
     CSelectObject sopen(pdc, &pen);
 
     pdc->MoveTo(rc.left, m_zero.y);
@@ -259,7 +259,7 @@ void CXySlider::PaintGripper(CDC *pdc)
 {
     CRect rc = GetGripperRect();
 
-    COLORREF color = GetSysColor(COLOR_BTNFACE);
+    COLORREF color = ::GetSysColor(COLOR_BTNFACE);
     if(m_gripperHighlight)
     {
         int r = RGB_GET_RVALUE(color);
@@ -273,7 +273,7 @@ void CXySlider::PaintGripper(CDC *pdc)
     pdc->FillSolidRect(rc, color);
     pdc->DrawEdge(rc, EDGE_RAISED, BF_RECT);
 
-    CPen pen(PS_SOLID, 1, GetSysColor(COLOR_3DSHADOW));
+    CPen pen(PS_SOLID, 1, ::GetSysColor(COLOR_3DSHADOW));
     CSelectObject sopen(pdc, &pen);
 
     pdc->MoveTo(rc.left, rc.top + rc.Height() / 2);
@@ -379,7 +379,7 @@ void CXySlider::HighlightGripper(bool on)
 void CXySlider::InstallTimer()
 {
     RemoveTimer();
-    m_timer = SetTimer(4711, 500, NULL);
+    m_timer = SetTimer(4711, 500, NULL); // FIXME: hardcoded values
 }
 
 void CXySlider::RemoveTimer()

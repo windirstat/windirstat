@@ -55,20 +55,20 @@ namespace
         HGLOBAL hresource = NULL;
         try
         {
-            HRSRC hrsrc = FindResource(dll, MAKEINTRESOURCE(id), _T("TEXT"));
+            HRSRC hrsrc = ::FindResource(dll, MAKEINTRESOURCE(id), _T("TEXT"));
             if(NULL == hrsrc)
             {
                 MdThrowLastWinerror();
             }
 
-            DWORD dwSize = SizeofResource(dll, hrsrc);
+            DWORD dwSize = ::SizeofResource(dll, hrsrc);
             if(0 == dwSize)
             {
                 MdThrowLastWinerror();
             }
 
-            hresource = LoadResource(dll, hrsrc);
-            const BYTE *pData = (const BYTE *)LockResource(hresource);
+            hresource = ::LoadResource(dll, hrsrc);
+            const BYTE *pData = (const BYTE *)::LockResource(hresource);
 
             CComBSTR bstr(dwSize, (LPCSTR)pData);
 
@@ -82,7 +82,7 @@ namespace
 
         if(hresource != NULL)
         {
-            FreeResource(hresource);
+            ::FreeResource(hresource);
         }
 
         return s;
@@ -215,7 +215,8 @@ void CAboutDlg::CMyTabControl::OnEnLinkText(NMHDR *pNMHDR, LRESULT *pResult)
         CString link;
         m_text.GetTextRange(el->chrg.cpMin, el->chrg.cpMax, link);
 
-        ShellExecute(*this, NULL, link, NULL, wds::strEmpty, SW_SHOWNORMAL);
+        // FIXME: should probably one of the helper variants of this function
+        ::ShellExecute(*this, NULL, link, NULL, wds::strEmpty, SW_SHOWNORMAL);
     }
 }
 
@@ -239,7 +240,7 @@ void CAboutDlg::CMyTabControl::OnSize(UINT nType, int cx, int cy)
 {
     CTabCtrl::OnSize(nType, cx, cy);
 
-    if(IsWindow(m_text.m_hWnd))
+    if(::IsWindow(m_text.m_hWnd))
     {
         CRect rc;
         GetClientRect(rc);

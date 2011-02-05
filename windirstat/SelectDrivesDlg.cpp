@@ -82,7 +82,7 @@ CDriveItem::CDriveItem(CDrivesList *list, LPCTSTR pszPath)
     , m_totalBytes(0)
     , m_freeBytes(0)
     , m_used(0)
-    , m_isRemote(DRIVE_REMOTE == GetDriveType(m_path))
+    , m_isRemote(DRIVE_REMOTE == ::GetDriveType(m_path))
     , m_querying(true)
 {
 
@@ -245,14 +245,14 @@ CString CDriveItem::GetText(int subitem) const
     case COL_TOTAL:
         if(m_success)
         {
-            s = FormatBytes((ULONGLONG)m_totalBytes);
+            s = FormatBytes(m_totalBytes);
         }
         break;
 
     case COL_FREE:
         if(m_success)
         {
-            s = FormatBytes((ULONGLONG)m_freeBytes);
+            s = FormatBytes(m_freeBytes);
         }
         break;
 
@@ -357,8 +357,8 @@ BOOL CDriveInformationThread::InitInstance()
     m_success = RetrieveDriveInformation(m_path, m_name, m_totalBytes, m_freeBytes);
 
 #ifdef TESTTHREADS
-    srand(GetTickCount());
-    Sleep((rand() & 0x07) * 1000);
+    srand(::GetTickCount());
+    ::Sleep((rand() & 0x07) * 1000);
 #endif
 
     HWND dialog = NULL;
@@ -379,7 +379,7 @@ BOOL CDriveInformationThread::InitInstance()
         // (Well if the other process crashes because of our message, there is nothing we can do about it.)
         // If the window handle is recycled by a new Select drives dialog,
         // its new serial will prevent it from reacting.
-        SendMessage(dialog, WMU_THREADFINISHED, m_serial, (LPARAM)this);
+        ::SendMessage(dialog, WMU_THREADFINISHED, m_serial, (LPARAM)this);
     }
 
     RemoveRunningThread();
@@ -589,10 +589,10 @@ BOOL CSelectDrivesDlg::OnInitDialog()
     BringWindowToTop();
     SetForegroundWindow();
 
-    DWORD drives = GetLogicalDrives();
+    DWORD drives = ::GetLogicalDrives();
     int i;
     DWORD mask = 0x00000001;
-    for(i = 0; i < 32; i++, mask <<= 1)
+    for(i = 0; i < wds::iNumDriveLetters; i++, mask <<= 1)
     {
         if((drives & mask) == 0)
         {
@@ -602,7 +602,7 @@ BOOL CSelectDrivesDlg::OnInitDialog()
         CString s;
         s.Format(_T("%c:\\"), i + wds::chrCapA);
 
-        UINT type = GetDriveType(s);
+        UINT type = ::GetDriveType(s);
         if(type == DRIVE_UNKNOWN || type == DRIVE_NO_ROOT_DIR)
         {
             continue;
@@ -610,7 +610,9 @@ BOOL CSelectDrivesDlg::OnInitDialog()
 
         // The check of remote drives will be done in the background by the CDriveInformationThread.
         if(type != DRIVE_REMOTE && !DriveExists(s))
+        {
             continue;
+        }
 
         CDriveItem *item = new CDriveItem(&m_list, s);
         m_list.InsertListItem(m_list.GetItemCount(), item);
@@ -669,7 +671,7 @@ void CSelectDrivesDlg::OnBnClickedBrowsefolder()
     // Set the required flags
     bi.ulFlags = BIF_RETURNONLYFSDIRS | BIF_EDITBOX | BIF_NEWDIALOGSTYLE | BIF_NONEWFOLDERBUTTON;
 
-    LPITEMIDLIST pidl = SHBrowseForFolder(&bi);
+    CCoTaskMem<LPITEMIDLIST> pidl = ::SHBrowseForFolder(&bi);
     // Release the actual buffer
     sDisplayName.ReleaseBuffer();
     sSelectedFolder.ReleaseBuffer();
@@ -678,8 +680,8 @@ void CSelectDrivesDlg::OnBnClickedBrowsefolder()
     {
         CString sDir;
 
-        LPSHELLFOLDER pshf;
-        HRESULT hr = SHGetDesktopFolder(&pshf);
+        CComPtr<IShellFolder> pshf;
+        HRESULT hr = ::SHGetDesktopFolder(&pshf);
         ASSERT(SUCCEEDED(hr));
 
         STRRET strret;
@@ -687,9 +689,6 @@ void CSelectDrivesDlg::OnBnClickedBrowsefolder()
         hr = pshf->GetDisplayNameOf(pidl, SHGDN_FORPARSING, &strret);
         ASSERT(SUCCEEDED(hr));
         sDir = MyStrRetToString(pidl, &strret);
-
-        CoTaskMemFree(pidl);
-        pshf->Release();
 
         m_folderName = sDir;
         m_radio = RADIO_AFOLDER;

@@ -223,8 +223,6 @@ protected:
     afx_msg void OnViewShowfiletypes();
     afx_msg void OnConfigure();
     afx_msg void OnDestroy();
-    afx_msg void OnUpdateSendmailtoowner(CCmdUI *pCmdUI);
-    afx_msg void OnSendmailtoowner();
     afx_msg void OnBnClickedSuspend();
     afx_msg void OnTreemapHelpabouttreemaps();
 

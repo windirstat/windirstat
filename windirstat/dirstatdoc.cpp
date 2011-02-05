@@ -957,7 +957,7 @@ void CDirstatDoc::PerformUserDefinedCleanup(const USERDEFINEDCLEANUP *udc, CItem
     {
         ASSERT(IT_FILE == item->GetType());
 
-        if(!PathFileExists(path))
+        if(!::PathFileExists(path))
         {
             MdThrowStringExceptionF(IDS_THEFILEsDOESNOTEXIST, path);
         }

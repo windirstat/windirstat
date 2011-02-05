@@ -43,6 +43,7 @@ namespace wds
     const TCHAR chrCapA = _T('A');
     const TCHAR chrCapB = _T('B');
     const TCHAR chrCapC = _T('C');
+    const TCHAR chrCapZ = _T('Z');
 
     // Constants strings
     const LPCTSTR strEmpty = _T("");
@@ -72,6 +73,7 @@ namespace wds
     const LPCTSTR strAttributeEncrypted = _T("E");
 
     const int iLangCodeLength = 4;
+    const int iNumDriveLetters = (chrCapZ - chrCapA) + 1;
 }
 
 #endif // __WDS_CONSTANTS_H__

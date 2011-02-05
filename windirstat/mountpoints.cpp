@@ -62,12 +62,12 @@ void CReparsePoints::Initialize()
 
 void CReparsePoints::GetDriveVolumes()
 {
-    m_drive.SetSize(32);
+    m_drive.SetSize(wds::iNumDriveLetters);
 
-    DWORD drives = GetLogicalDrives();
+    DWORD drives = ::GetLogicalDrives();
     int i;
     DWORD mask = 0x00000001;
-    for(i = 0; i < 32; i++, mask <<= 1)
+    for(i = 0; i < wds::iNumDriveLetters; i++, mask <<= 1)
     {
         CString volume;
 
@@ -107,7 +107,7 @@ void CReparsePoints::GetAllMountPoints()
 
         DWORD sysflags;
         CString fsname;
-        BOOL b = GetVolumeInformation(volume, NULL, 0, NULL, NULL, &sysflags, fsname.GetBuffer(_MAX_PATH), _MAX_PATH);
+        BOOL b = ::GetVolumeInformation(volume, NULL, 0, NULL, NULL, &sysflags, fsname.GetBuffer(_MAX_PATH), _MAX_PATH);
         fsname.ReleaseBuffer();
 
         if(!b)
@@ -212,7 +212,7 @@ bool CReparsePoints::IsFolderJunction(CString path)
         return false;
     }
 
-    DWORD attr = GetFileAttributes(path);
+    DWORD attr = ::GetFileAttributes(path);
     if(attr == INVALID_FILE_ATTRIBUTES)
     {
         return false;
