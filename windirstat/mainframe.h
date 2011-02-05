@@ -208,6 +208,8 @@ protected:
 
     LOGICAL_FOCUS   m_logicalFocus; // Which view has the logical focus
     CDeadFocusWnd   m_wndDeadFocus; // Zero-size window which holds the focus if logical focus is "NONE"
+    CComPtr<ITaskbarList3> m_TaskbarList;
+    TBPFLAG m_TaskbarButtonState, m_TaskbarButtonPreviousState;
 
     DECLARE_MESSAGE_MAP()
     afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
@@ -225,6 +227,7 @@ protected:
     afx_msg void OnDestroy();
     afx_msg void OnBnClickedSuspend();
     afx_msg void OnTreemapHelpabouttreemaps();
+    afx_msg LRESULT OnTaskButtonCreated(WPARAM, LPARAM);
 
 public:
     #ifdef _DEBUG

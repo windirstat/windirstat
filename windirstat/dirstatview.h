@@ -89,7 +89,6 @@ protected:
     afx_msg void OnLvnItemchanged(NMHDR *pNMHDR, LRESULT *pResult);
     afx_msg void OnUpdatePopupToggle(CCmdUI *pCmdUI);
     afx_msg void OnPopupToggle();
-    afx_msg LRESULT OnTaskButtonCreated(WPARAM, LPARAM);
 
 public:
     #ifdef _DEBUG

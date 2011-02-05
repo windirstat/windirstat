@@ -383,6 +383,7 @@ void CDeadFocusWnd::OnKeyDown(UINT nChar, UINT /* nRepCnt */, UINT /* nFlags */)
 }
 
 /////////////////////////////////////////////////////////////////////////////
+extern UINT g_taskBarMessage;
 
 IMPLEMENT_DYNCREATE(CMainFrame, CFrameWnd)
 
@@ -403,6 +404,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWnd)
     ON_COMMAND(ID_TREEMAP_HELPABOUTTREEMAPS, OnTreemapHelpabouttreemaps)
     ON_BN_CLICKED(IDC_SUSPEND, OnBnClickedSuspend)
     ON_WM_SYSCOLORCHANGE()
+    ON_REGISTERED_MESSAGE(g_taskBarMessage, OnTaskButtonCreated)
 END_MESSAGE_MAP()
 
 static UINT indicators[] =
@@ -436,6 +438,8 @@ CMainFrame::CMainFrame()
     , m_progressVisible(false)
     , m_progressRange(100)
     , m_logicalFocus(LF_NONE)
+    , m_TaskbarButtonState(TBPF_INDETERMINATE)
+    , m_TaskbarButtonPreviousState(TBPF_INDETERMINATE)
 {
     _theFrame = this;
 }
@@ -443,6 +447,19 @@ CMainFrame::CMainFrame()
 CMainFrame::~CMainFrame()
 {
     _theFrame = NULL;
+}
+
+LRESULT CMainFrame::OnTaskButtonCreated(WPARAM, LPARAM)
+{
+    if(!m_TaskbarList)
+    {
+        HRESULT hr = ::CoCreateInstance(CLSID_TaskbarList, NULL, CLSCTX_ALL, IID_ITaskbarList3, reinterpret_cast<LPVOID*>(&m_TaskbarList));
+        if(FAILED(hr))
+        {
+            TRACE("CoCreateInstance(CLSID_TaskbarList, NULL, CLSCTX_ALL) failed %08X\n", hr);
+        }
+    }
+    return 0;
 }
 
 void CMainFrame::ShowProgress(ULONGLONG range)
@@ -494,11 +511,15 @@ void CMainFrame::SetProgressPos(ULONGLONG pos)
     UpdateProgress();
 }
 
-void CMainFrame::SetProgressPos100()
+void CMainFrame::SetProgressPos100() // called by CDirstatDoc
 {
     if(m_progressRange > 0)
     {
         SetProgressPos(m_progressRange);
+    }
+    if(m_TaskbarList)
+    {
+        m_TaskbarList->SetProgressState(*this, m_TaskbarButtonState = TBPF_NOPROGRESS);
     }
 }
 
@@ -533,6 +554,20 @@ void CMainFrame::UpdateProgress()
             int pos = (int)((double) m_progressPos * 100 / m_progressRange);
             m_progress.SetPos(pos);
             titlePrefix.Format(_T("%d%% %s"), pos, suspended);
+            if(m_TaskbarList && (m_TaskbarButtonState != TBPF_PAUSED))
+            {
+                switch(pos)
+                {
+                // FIXME: hardcoded value here and elsewhere in this file
+                case 100:
+                    m_TaskbarList->SetProgressState(*this, m_TaskbarButtonState = TBPF_INDETERMINATE); // often happens before we're finished
+                    break;
+                default:
+                    m_TaskbarList->SetProgressState(*this, m_TaskbarButtonState = TBPF_NORMAL); // often happens before we're finished
+                    m_TaskbarList->SetProgressValue(*this, m_progressPos, m_progressRange);
+                    break;
+                }
+            }
         }
         else
         {
@@ -553,6 +588,10 @@ void CMainFrame::CreateStatusProgress()
         m_progress.Create(WS_CHILD | WS_VISIBLE, rc, &m_wndStatusBar, 4711);
         m_progress.ModifyStyle(WS_BORDER, 0); // Doesn't help with XP-style control.
     }
+    if(m_TaskbarList)
+    {
+        m_TaskbarList->SetProgressState(*this, m_TaskbarButtonState = TBPF_INDETERMINATE);
+    }
 }
 
 void CMainFrame::CreatePacmanProgress()
@@ -571,7 +610,7 @@ void CMainFrame::CreatePacmanProgress()
 void CMainFrame::CreateSuspendButton(CRect& rc)
 {
     CRect rcButton = rc;
-    rcButton.right = rcButton.left + 80;
+    rcButton.right = rcButton.left + 80; // FIXME: hardcoded value
 
     VERIFY(m_suspendButton.Create(LoadString(IDS_SUSPEND), WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX | BS_PUSHLIKE, rcButton, &m_wndStatusBar, IDC_SUSPEND));
     m_suspendButton.SetFont(GetDirstatView()->GetSmallFont());
@@ -600,7 +639,21 @@ void CMainFrame::DestroyProgress()
 
 void CMainFrame::OnBnClickedSuspend()
 {
-    m_pacman.Start(!IsProgressSuspended());
+    bool const isSuspended = IsProgressSuspended();
+    m_pacman.Start(!isSuspended);
+    if(m_TaskbarList)
+    {
+        switch(m_TaskbarButtonState)
+        {
+        case TBPF_PAUSED:
+            m_TaskbarList->SetProgressState(*this, m_TaskbarButtonState = m_TaskbarButtonPreviousState);
+            break;
+        default:
+            m_TaskbarButtonPreviousState = m_TaskbarButtonState;
+            m_TaskbarList->SetProgressState(*this, m_TaskbarButtonState = TBPF_PAUSED);
+            break;
+        }
+    }
     UpdateProgress();
 }
 
