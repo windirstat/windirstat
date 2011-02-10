@@ -249,6 +249,9 @@ enum OpArgMask {
   OpArgK   /* argument is a constant or register/constant */
 };
 
+#ifdef luaall_c
+extern
+#endif // luaall_c
 LUAI_DATA const lu_byte luaP_opmodes[NUM_OPCODES];
 
 #define getOpMode(m)	(cast(enum OpMode, luaP_opmodes[m] & 3))
@@ -257,7 +260,9 @@ LUAI_DATA const lu_byte luaP_opmodes[NUM_OPCODES];
 #define testAMode(m)	(luaP_opmodes[m] & (1 << 6))
 #define testTMode(m)	(luaP_opmodes[m] & (1 << 7))
 
-
+#ifdef luaall_c
+extern
+#endif // luaall_c
 LUAI_DATA const char *const luaP_opnames[NUM_OPCODES+1];  /* opcode names */
 
 

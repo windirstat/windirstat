@@ -43,6 +43,9 @@ typedef enum {
 
 #define fasttm(l,et,e)	gfasttm(G(l), et, e)
 
+#ifdef luaall_c
+extern
+#endif // luaall_c
 LUAI_DATA const char *const luaT_typenames[];
 
 

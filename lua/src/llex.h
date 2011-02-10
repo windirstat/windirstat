@@ -37,6 +37,9 @@ enum RESERVED {
 
 
 /* array with token `names' */
+#ifdef luaall_c
+extern
+#endif // luaall_c
 LUAI_DATA const char *const luaX_tokens [];
 
 

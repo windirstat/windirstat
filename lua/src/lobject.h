@@ -362,6 +362,9 @@ typedef struct Table {
 
 #define luaO_nilobject		(&luaO_nilobject_)
 
+#ifdef luaall_c
+extern
+#endif // luaall_c
 LUAI_DATA const TValue luaO_nilobject_;
 
 #define ceillog2(x)	(luaO_log2((x)-1) + 1)
