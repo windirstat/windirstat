@@ -383,7 +383,7 @@ void CDeadFocusWnd::OnKeyDown(UINT nChar, UINT /* nRepCnt */, UINT /* nFlags */)
 }
 
 /////////////////////////////////////////////////////////////////////////////
-extern UINT g_taskBarMessage;
+UINT CMainFrame::s_taskBarMessage = ::RegisterWindowMessage(TEXT("TaskbarButtonCreated"));
 
 IMPLEMENT_DYNCREATE(CMainFrame, CFrameWnd)
 
@@ -404,7 +404,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWnd)
     ON_COMMAND(ID_TREEMAP_HELPABOUTTREEMAPS, OnTreemapHelpabouttreemaps)
     ON_BN_CLICKED(IDC_SUSPEND, OnBnClickedSuspend)
     ON_WM_SYSCOLORCHANGE()
-    ON_REGISTERED_MESSAGE(g_taskBarMessage, OnTaskButtonCreated)
+    ON_REGISTERED_MESSAGE(s_taskBarMessage, OnTaskButtonCreated)
 END_MESSAGE_MAP()
 
 static UINT indicators[] =

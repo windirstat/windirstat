@@ -32,12 +32,26 @@
 #include "dirstatdoc.h"
 #include "graphview.h"
 #include "osspecific.h"
-
-UINT g_taskBarMessage = ::RegisterWindowMessage(TEXT("TaskbarButtonCreated"));
+#include <Dbghelp.h> // for mini dumps
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
+
+class CMiniDumper
+{
+private:
+    typedef BOOL (WINAPI *TFNMiniDumpWriteDump)
+        (
+        HANDLE hProcess,
+        DWORD ProcessId,
+        HANDLE hFile,
+        MINIDUMP_TYPE DumpType,
+        PMINIDUMP_EXCEPTION_INFORMATION ExceptionParam,
+        PMINIDUMP_USER_STREAM_INFORMATION UserStreamParam,
+        PMINIDUMP_CALLBACK_INFORMATION CallbackParam
+        );
+};
 
 CMainFrame *GetMainFrame()
 {

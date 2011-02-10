@@ -144,6 +144,7 @@ protected:
 class CMainFrame: public CFrameWnd
 {
 protected:
+    static UINT CMainFrame::s_taskBarMessage;
     static CMainFrame *_theFrame;
     CMainFrame();   // Created by MFC only
     DECLARE_DYNCREATE(CMainFrame)
