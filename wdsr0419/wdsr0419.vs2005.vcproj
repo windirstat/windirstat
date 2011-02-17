@@ -50,6 +50,7 @@
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
+				AdditionalOptions="/nologo"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
