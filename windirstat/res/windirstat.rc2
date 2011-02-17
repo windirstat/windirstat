@@ -43,7 +43,7 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "Seifert"
+            VALUE "CompanyName", "WDS Team"
             VALUE "FileDescription", "Windows Directory Statistics"
             VALUE "FileVersion", VN_STRING_EXE
             VALUE "InternalName", "windirstat"
