@@ -10,3 +10,5 @@ glob:windirstat.vs2010.opensdf
 glob:*.wdslng
 glob:*.png
 glob:Backup *
+glob:sandbox/luaconf/Debug/**
+glob:sandbox/luaconf/Release/**
