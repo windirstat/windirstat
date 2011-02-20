@@ -27,7 +27,7 @@
 #ifndef __WDS_GLOBALHELPERS_H__
 #define __WDS_GLOBALHELPERS_H__
 #pragma once
-#include "../common/wds_constants.h"
+#include <common/wds_constants.h>
 
 CString GetLocaleString(LCTYPE lctype, LANGID langid);
 CString GetLocaleLanguage(LANGID langid);

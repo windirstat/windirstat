@@ -26,7 +26,7 @@
 #define __WDS_MOUNTPOINTS_H__
 #pragma once
 
-#include "../common/wds_constants.h"
+#include <common/wds_constants.h>
 
 class CReparsePoints
 {

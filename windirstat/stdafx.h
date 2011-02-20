@@ -54,11 +54,11 @@
 
 #include <atlbase.h>        // USES_CONVERSION, ComPtr<>
 
-#include "../common/mdexceptions.h"
-#include "../common/cotaskmem.h"
-#include "../common/commonhelpers.h"
-#include "../common/platform.h"
-#include "../common/tracer.h"
+#include <common/mdexceptions.h>
+#include <common/cotaskmem.h>
+#include <common/commonhelpers.h>
+#include <common/platform.h>
+#include <common/tracer.h>
 #include "../common\wds_constants.h"
 
 #define RGB_GET_RVALUE(rgb) (rgb & 0xFF)

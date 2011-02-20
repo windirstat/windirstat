@@ -30,7 +30,7 @@
 #include "treemap.h"
 #include "dirstatdoc.h" // CExtensionData
 #include "FileFindWDS.h" // CFileFindWDS
-#include "../common/wds_constants.h"
+#include <common/wds_constants.h>
 
 // Columns
 enum

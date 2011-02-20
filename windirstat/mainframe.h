@@ -27,7 +27,7 @@
 #pragma once
 
 #include "pacman.h"
-#include "../common/wds_constants.h"
+#include <common/wds_constants.h>
 
 class CMySplitterWnd;
 class CMainFrame;

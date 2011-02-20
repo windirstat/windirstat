@@ -47,7 +47,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="$(ProjectDir)\..\lua\src"
+				AdditionalIncludeDirectories="$(ProjectDir)\..;$(ProjectDir)\..\lua\src"
 				PreprocessorDefinitions="WINVER=0x0500;_DEBUG"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -68,7 +68,7 @@
 				AdditionalOptions="/nologo"
 				PreprocessorDefinitions="WINVER=0x0500;_DEBUG"
 				Culture="1033"
-				AdditionalIncludeDirectories="$(IntDir)"
+				AdditionalIncludeDirectories="$(ProjectDir)\..;$(IntDir)"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -138,7 +138,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="$(ProjectDir)\..\lua\src"
+				AdditionalIncludeDirectories="$(ProjectDir)\..;$(ProjectDir)\..\lua\src"
 				PreprocessorDefinitions="WINVER=0x0500;_DEBUG"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -159,7 +159,7 @@
 				AdditionalOptions="/nologo"
 				PreprocessorDefinitions="WINVER=0x0500;_DEBUG"
 				Culture="1033"
-				AdditionalIncludeDirectories="$(IntDir)"
+				AdditionalIncludeDirectories="$(ProjectDir)\..;$(IntDir)"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -232,7 +232,7 @@
 				Optimization="3"
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
-				AdditionalIncludeDirectories="$(ProjectDir)\..\lua\src"
+				AdditionalIncludeDirectories="$(ProjectDir)\..;$(ProjectDir)\..\lua\src"
 				PreprocessorDefinitions="WINVER=0x0500;NDEBUG"
 				MinimalRebuild="false"
 				RuntimeLibrary="0"
@@ -250,7 +250,7 @@
 				AdditionalOptions="/nologo"
 				PreprocessorDefinitions="WINVER=0x0500;NDEBUG"
 				Culture="1033"
-				AdditionalIncludeDirectories="$(IntDir)"
+				AdditionalIncludeDirectories="$(ProjectDir)\..;$(IntDir)"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -326,7 +326,7 @@
 				Optimization="3"
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
-				AdditionalIncludeDirectories="$(ProjectDir)\..\lua\src"
+				AdditionalIncludeDirectories="$(ProjectDir)\..;$(ProjectDir)\..\lua\src"
 				PreprocessorDefinitions="WINVER=0x0500;NDEBUG"
 				MinimalRebuild="false"
 				RuntimeLibrary="0"
@@ -344,7 +344,7 @@
 				AdditionalOptions="/nologo"
 				PreprocessorDefinitions="WINVER=0x0500;NDEBUG"
 				Culture="1033"
-				AdditionalIncludeDirectories="$(IntDir)"
+				AdditionalIncludeDirectories="$(ProjectDir)\..;$(IntDir)"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"

@@ -57,7 +57,7 @@
 
 // This will not change to often, but the years need to be modified
 // regularly, so it can be in one central place
-#define VN_COPYRIGHTSTRING "Copyright (C) 2003-2005 Bernhard Seifert, (C) 2004-2006, 2008 Oliver Schneider"
+#define VN_COPYRIGHTSTRING "Copyright (C) 2003-2005 Bernhard Seifert, (C) 2004-2011 Oliver Schneider"
 
 //-------------------------------------------------------------------
 // Version number. Relevant for BC_RELEASECANDIDATE and BC_RELEASE.
@@ -69,7 +69,7 @@
 // Format: #define blank LINKCOUNT blanks decimal
 // Reset this to zero only when you increment VERNUM_MAJOR/MINOR/REVISION.
 
-#include "../common/buildnumber.h"
+#include <common/buildnumber.h>
 
 //-------------------------------------------------------------------
 // Release candidate number. Relevant for BC_RELEASECANDIDATE.

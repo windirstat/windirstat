@@ -46,7 +46,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="$(ProjectDir)\..\..\lua\src"
+				AdditionalIncludeDirectories="$(ProjectDir)\..;$(ProjectDir)\..\..\lua\src"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -127,7 +127,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="$(ProjectDir)\..\..\lua\src"
+				AdditionalIncludeDirectories="$(ProjectDir)\..;$(ProjectDir)\..\..\lua\src"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -207,7 +207,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="$(ProjectDir)\..\..\lua\src"
+				AdditionalIncludeDirectories="$(ProjectDir)\..;$(ProjectDir)\..\..\lua\src"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="2"
@@ -288,7 +288,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="$(ProjectDir)\..\..\lua\src"
+				AdditionalIncludeDirectories="$(ProjectDir)\..;$(ProjectDir)\..\..\lua\src"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="2"
@@ -351,6 +351,10 @@
 			>
 			<File
 				RelativePath=".\lua_conf.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\windirstat\options.cpp"
 				>
 			</File>
 			<File
@@ -437,6 +441,10 @@
 			>
 			<File
 				RelativePath=".\lua_conf.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\windirstat\options.h"
 				>
 			</File>
 			<File

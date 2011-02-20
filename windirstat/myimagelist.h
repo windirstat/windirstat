@@ -26,7 +26,7 @@
 #define __WDS_MYIMAGELIST_H__
 #pragma once
 
-#include "../common/wds_constants.h"
+#include <common/wds_constants.h>
 
 //
 // CMyImageList. Both CDirstatView and CTypeView use this central

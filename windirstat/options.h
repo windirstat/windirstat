@@ -27,8 +27,8 @@
 #pragma once
 
 #include "treemap.h"
-#include "../common/wds_constants.h"
-#include "../common/SimpleIni.h"
+#include <common/wds_constants.h>
+#include <common/SimpleIni.h>
 #include <atlbase.h> // CRegKey
 #include <memory>
 

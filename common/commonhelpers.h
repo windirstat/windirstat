@@ -26,7 +26,7 @@
 #define __WDS_COMMONHELPERS_H__
 #pragma once
 
-#include "../common/wds_constants.h"
+#include <common/wds_constants.h>
 
 BOOL ShellExecuteThrow(HWND hwnd, LPCTSTR lpVerb, LPCTSTR lpFile, LPCTSTR lpParameters, LPCTSTR lpDirectory, INT nShowCmd);
 BOOL ShellExecuteNoThrow(HWND hwnd, LPCTSTR lpVerb, LPCTSTR lpFile, LPCTSTR lpParameters, LPCTSTR lpDirectory, INT nShowCmd);

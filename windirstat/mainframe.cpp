@@ -37,7 +37,7 @@
 #include "pagetreemap.h"
 #include "pagegeneral.h"
 
-#include "../common/version.h"
+#include <common/version.h>
 
 #include "mainframe.h"
 
