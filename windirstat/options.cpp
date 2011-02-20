@@ -23,8 +23,10 @@
 //
 
 #include "stdafx.h"
+#ifndef __NOT_WDS
 #include "windirstat.h"
 #include "dirstatdoc.h"
+#endif // __NOT_WDS
 #include "options.h"
 
 #ifdef _DEBUG
@@ -33,7 +35,9 @@
 
 namespace
 {
+#ifndef __NOT_WDS
     static COptions _theOptions;
+#endif // __NOT_WDS
 
     const LPCTSTR sectionPersistence        = _T("persistence");
     const LPCTSTR entryShowFreeSpace        = _T("showFreeSpace");
@@ -114,6 +118,7 @@ namespace
 
 }
 
+#ifndef __NOT_WDS
 /////////////////////////////////////////////////////////////////////////////
 bool CPersistence::GetShowFreeSpace()
 {
@@ -1115,6 +1120,7 @@ void COptions::SaveTreemapOptions()
     setProfileInt(sectionOptions, entryLightSourceX, m_treemapOptions.GetLightSourceXPercent());
     setProfileInt(sectionOptions, entryLightSourceY, m_treemapOptions.GetLightSourceYPercent());
 }
+#endif // __NOT_WDS
 
 
 /////////////////////////////////////////////////////////////////////////////

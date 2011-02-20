@@ -26,12 +26,15 @@
 #define __WDS_OPTIONS_H__
 #pragma once
 
+#ifndef __NOT_WDS
 #include "treemap.h"
+#endif // __NOT_WDS
 #include <common/wds_constants.h>
 #include <common/SimpleIni.h>
 #include <atlbase.h> // CRegKey
 #include <memory>
 
+#ifndef __NOT_WDS
 class COptions;
 
 enum REFRESHPOLICY
@@ -60,6 +63,7 @@ struct USERDEFINEDCLEANUP
     bool waitForCompletion;
     REFRESHPOLICY refreshPolicy;
 };
+#endif // __NOT_WDS
 
 #define USERDEFINEDCLEANUPCOUNT 10
 
@@ -191,6 +195,7 @@ public:
 };
 
 
+#ifndef __NOT_WDS
 //
 // CPersistence. Reads from and writes to the registry all the persistent settings
 // like window position, column order etc.
@@ -396,5 +401,6 @@ private:
     CString m_reportPrefix;
     CString m_reportSuffix;
 };
+#endif // __NOT_WDS
 
 #endif // __WDS_OPTIONS_H__

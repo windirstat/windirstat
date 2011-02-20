@@ -46,8 +46,8 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="$(ProjectDir)\..;$(ProjectDir)\..\..\lua\src"
-				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE"
+				AdditionalIncludeDirectories="$(ProjectDir)\..\..;$(ProjectDir)\..\..\lua\src"
+				PreprocessorDefinitions="__NOT_WDS;WIN32;_DEBUG;_CONSOLE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -127,8 +127,8 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="$(ProjectDir)\..;$(ProjectDir)\..\..\lua\src"
-				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE"
+				AdditionalIncludeDirectories="$(ProjectDir)\..\..;$(ProjectDir)\..\..\lua\src"
+				PreprocessorDefinitions="__NOT_WDS;WIN32;_DEBUG;_CONSOLE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -207,8 +207,8 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="$(ProjectDir)\..;$(ProjectDir)\..\..\lua\src"
-				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE"
+				AdditionalIncludeDirectories="$(ProjectDir)\..\..;$(ProjectDir)\..\..\lua\src"
+				PreprocessorDefinitions="__NOT_WDS;WIN32;NDEBUG;_CONSOLE"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="2"
 				WarningLevel="3"
@@ -288,8 +288,8 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="$(ProjectDir)\..;$(ProjectDir)\..\..\lua\src"
-				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE"
+				AdditionalIncludeDirectories="$(ProjectDir)\..\..;$(ProjectDir)\..\..\lua\src"
+				PreprocessorDefinitions="__NOT_WDS;WIN32;NDEBUG;_CONSOLE"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="2"
 				WarningLevel="3"

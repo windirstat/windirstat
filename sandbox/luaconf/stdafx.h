@@ -23,13 +23,23 @@
 #define _WIN32_IE 0x0600	// Change this to the appropriate value to target other versions of IE.
 #endif
 
-#include <stdio.h>
-#include <tchar.h>
-#define _ATL_CSTRING_EXPLICIT_CONSTRUCTORS	// some CString constructors will be explicit
-
 #ifndef VC_EXTRALEAN
-#define VC_EXTRALEAN		// Exclude rarely-used stuff from Windows headers
+#define VC_EXTRALEAN        // Exclude rarely-used stuff from Windows headers
 #endif
 
-#include <atlbase.h>
-#include <atlstr.h>
+#define _ATL_CSTRING_EXPLICIT_CONSTRUCTORS  // some CString constructors will be explicit
+
+// turns off MFC's hiding of some common and often safely ignored warning messages
+#define _AFX_ALL_WARNINGS
+
+#include <afxwin.h>         // MFC Core
+#include <afxext.h>         // MFC Extensions
+
+#include <afxdtctl.h>       // MFC IE 4
+#include <afxcmn.h>         // MFC Common Controls
+#include <afxtempl.h>       // MFC Container classes
+#include <afxmt.h>          // MFC Multi-threading
+#include <afxinet.h>        // For CInternet* classes
+
+#include <stdio.h>
+#include <tchar.h>
