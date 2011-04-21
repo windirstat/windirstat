@@ -1,0 +1,36 @@
+[% WRAPPER 'html-body.tt'
+   title = 'Background'
+   description = 'Background and history'
+   uuid = '07c225cb-e2db-49da-b1d5-c33588c8ffbb'
+   norder = '4000'
+%]
+<p>When in 2003 I came across the KDE program KDirStat (<a href="http://kdirstat.sourceforge.net">kdirstat.sourceforge.net</a>), 
+I was fascinated and enthusiastic about it, as it is probably the same with many others. I had been thinking of writing a disk
+usage tool before, and saw: that's it!
+</p>
+
+<p>SequoiaView 
+(<a href="http://w3.win.tue.nl/nl/onderzoek/onderzoek_informatica/visualization/sequoiaview/">http://w3.win.tue.nl/nl/onderzoek/onderzoek_informatica/visualization/sequoiaview/</a>) was around, but KDirStat's concept of coupling a tree list view with a treemap was unrivaled, and I didn't find anything equivalent for MS Windows.
+So I wrote WinDirStat, using Mark Bruls, Kees Huizing, Jarke J. vanWijk, and Huub van de Wetering's papers
+on squarified treemaps (<a href="http://www.win.tue.nl/~vanwijk/stm.pdf">http://www.win.tue.nl/~vanwijk/stm.pdf</a>)
+and cushion treemaps <a href="http://www.win.tue.nl/~vanwijk/ctm.pdf">http://www.win.tue.nl/~vanwijk/ctm.pdf</a>).
+</p>
+
+<p>I didn't worry to much about the functionality but simply cloned KDirStat. The pacman is not
+my idea, the extension list is. I tried to size and position each GUI element optimally and to
+avoid modal dialogue boxes. The program should output much information while requiring
+few user input.
+When I thought it was complete, I gave it to my sister and watched her interaction with the software.
+That gave me another two weeks of work to do. This procedure, together with the testplan, secured
+WinDirStat's quality.</p>
+
+<p>Meanwhile, a colleague of mine wrote Disc Inventory X 
+(<a href="http://www.derlien.com/">http://www.derlien.com/</a>), a clone for Mac OS X.
+</p>
+
+<p>That's the story so far. Oliver has taken responsibility for the project, many translations
+have been contributed. I've largely switched to Linux and observe WinDirStat's amazing download
+numbers. I hope we can provide some new version slowly but surely.</p>
+
+<p>Bernhard</p>
+[% END %]

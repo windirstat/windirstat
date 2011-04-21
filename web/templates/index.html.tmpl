@@ -1,0 +1,19 @@
+[% WRAPPER 'html-body.tt'
+   title = 'Home'
+   description = 'Windows Directory Statistics'
+   uuid = '92e5b3ac-10ac-418e-97f9-8156b67c1d57'
+   norder = '0000'
+%]
+<p>WinDirStat is a disk usage statistics viewer and cleanup tool 
+for Microsoft Windows.
+</p>
+<p>On start up, it reads the whole directory tree once and then presents it in three useful views:</p>
+<ul>
+<li>The directory list, which resembles the tree view of the Windows Explorer but is sorted by file/subtree size,</li>
+<li>The treemap, which shows the whole contents of the directory tree straight away,</li>
+<li>The extension list, which serves as a legend and shows statistics about the file types.</li>
+</ul>
+<img src="images/windirstat.jpg" alt="Screenshot"/>
+<p>The treemap represents each file as a colored rectangle, the area of which is proportional to the file's size. The rectangles are arranged in such a way, that directories again make up rectangles, which contain all their files and subdirectories. So their area is proportional to the size of the subtrees. The color of a rectangle indicates the type of the file, as shown in the extension list. The cushion shading additionally brings out the directory structure.
+</p>
+[% END %]

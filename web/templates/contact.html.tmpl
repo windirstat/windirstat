@@ -1,0 +1,58 @@
+[% WRAPPER 'html-body.tt'
+   title = 'Contact'
+   description = 'Contact the team or a team member'
+   uuid = 'a57cd25d-42ee-4e3a-aa24-f42b9548dbdd'
+   norder = '9989'
+%]
+<p>All the fields have to be filled in ...</p>
+<p><strong>NB:</strong> As a matter of courtesy you should consider adding your name (or even a pseudonym) in the message to us. You know our names as well. Besides, it makes it easier to address you in a reply. Thanks.</p>
+<form action="/bin/sendmail.cgi" method="post" accept-charset="utf-8">
+<table width="100%" summary="Mailform">
+<colgroup>
+ <col width="30%" />
+ <col width="70%" />
+</colgroup>
+<tr>
+ <td>
+ <b>Who should receive the message?:</b>
+ </td>
+ <td>
+ <select name="Recipient">
+  <option value="team" selected="selected">The whole team</option>
+  <option value="bernhard">Bernhard</option>
+  <option value="oliver">Oliver</option>
+  <option value="juan">Juan</option>
+ </select>
+ </td>
+ </tr>
+<tr>
+ <td>
+ <b>Your email address (max. 100 chars):</b>
+ </td>
+ <td>
+ <input type="text" name="Sender" maxlength="100" class="feld_" />
+ </td>
+ </tr>
+<tr>
+ <td>
+ <b>Subject (max. 100 chars):</b>
+ </td>
+
+ <td>
+ <input type="text" name="Subject" maxlength="100" class="feld_" />
+ </td>
+ </tr>
+<tr>
+ <td colspan="2">
+ <b>Here goes your text:</b><br />
+ <textarea name="Mailtext" rows="15" cols="60" class="feld3"></textarea>
+ </td>
+ </tr>
+<tr>
+ <td colspan="2" style="text-align:center; ">
+ <input type="submit" value="Send" class="btn" />
+ </td>
+ </tr>
+</table>
+</form>
+[% END %]
