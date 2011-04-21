@@ -12,3 +12,4 @@ glob:*.png
 glob:Backup *
 glob:sandbox/luaconf/Debug/**
 glob:sandbox/luaconf/Release/**
+glob:web/*.html
