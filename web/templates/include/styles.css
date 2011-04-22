@@ -40,6 +40,21 @@ body {
 	text-decoration:none;
 }
 
+a.wdslnk:link {
+	color:#007000;
+	text-decoration:none;
+}
+
+a.wdslnk:visited {
+	color:#004000;
+	text-decoration:none;
+}
+
+a.wdslnk:hover, a.wdslnk:active {
+	color:#007000;
+	text-decoration:underline;
+}
+
 #menu .selected{
 	border-color: gray white gray gray;
 	background: url(images/hor.png) repeat-y;
