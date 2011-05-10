@@ -1,0 +1,157 @@
+body {
+	background: url(images/body.png) repeat-x;
+	margin:15px;
+	font-family : Arial, Helvetica, sans-serif;
+}
+
+#frame {
+	background-color:white;
+}
+
+#heading {
+	border:1px solid gray;
+	margin:2px;
+	padding:5px;
+	background: url(images/vert.png) bottom repeat-x;
+}
+
+#menu {
+	padding-top:1em;
+	padding-bottom:3em;
+	padding-left:10px;
+	border:1px solid gray;
+	border-top:none;
+}
+
+#menu p {
+	margin: 0;
+	padding: 0;
+}
+
+#menu a, #menu .selected {
+	color:black;
+	display:block;
+	padding:10px;
+	margin:2px;
+	margin-right:0px;
+	border: 1px solid;
+	border-color: white gray white white;
+	border-right: 0px solid;
+	text-decoration:none;
+}
+
+a.wdslnk:link {
+	color:#007000;
+	text-decoration:none;
+}
+
+a.wdslnk:visited {
+	color:#004000;
+	text-decoration:none;
+}
+
+a.wdslnk:hover, a.wdslnk:active {
+	color:#007000;
+	text-decoration:underline;
+}
+
+#menu .selected{
+	border-color: gray white gray gray;
+	background: url(images/hor.png) repeat-y;
+}
+
+#menu a:hover {
+	border-color: gray;
+	background-color: #F0F0F0;
+}
+
+#page {
+	padding:12px;
+	padding-top:1em;
+	padding-left:22px;
+	border:1px solid gray;
+	border-top:none;
+	border-left:none;
+}
+
+#white a {
+	color:white;
+}
+
+li {
+	margin-top:0.1em;
+}
+li.bigspace {
+	margin-top:1em;
+}
+
+.miniari {
+	font-size : 8pt;
+	font-family : Arial, Helvetica, sans-serif;
+}
+
+img {
+	border:none;
+}
+
+th.langtabhead {
+  font-size : 12pt;
+  font-weight: bold;
+  background-color: #dddddd;
+  text-align: center;
+  vertical-align: top;
+}
+
+td.langtab {
+  font-size : 11pt;
+  padding: 0.3em;
+  text-align: center;
+  vertical-align: top;
+  border-top:1px dashed #bbbbbb;
+}
+
+table.langtab {
+  border:1px dashed gray;
+}
+
+td.translator {
+  font-size : 8pt;
+  text-align: center;
+  vertical-align: middle;
+  border:0px none gray;
+  border-top:1px dashed #eeeeee;
+}
+
+td.bordleft {
+  border-left:1px dashed #eeeeee;
+}
+
+.btn {
+  border : 1px solid gray;
+  padding: 4px;
+  padding-left: 2em;
+  padding-right: 2em;
+}
+
+.btn:hover {
+  border : 1px solid black;
+  padding: 4px;
+  padding-left: 2em;
+  padding-right: 2em;
+}
+
+.myform {
+  border : 1px dashed gray;
+  width : 95%;
+  padding : 0.5em;
+}
+
+.feld_ {
+  border : 1px solid #cccccc;
+  width : 100%;
+}
+
+.feld3 {
+  border : 1px solid #cccccc;
+  width : 100%;
+}

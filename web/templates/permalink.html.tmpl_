@@ -1,0 +1,25 @@
+[% WRAPPER 'html-body.tt'
+   title = 'Permanent Links'
+   description = 'Permalinks to downloads and other content'
+   uuid = '24719a1c-e784-454d-9a05-4bbf82e53cb5'
+   norder = '3000'
+%]
+  <p>
+  If you want to link to this website or one of the resources, please use the following links.
+  They point to the mirrors of SourceForge and are guaranteed to link to the current release always,
+  whereas the actual links on the project page will change with each release:
+  </p>
+
+  <ul>
+    <li class="bigspace">Website:<br />
+      <a href="/">http://windirstat.info</a>
+      </li>
+    <li class="bigspace">Current installer:<br />
+      <a href="/wds_current_setup.exe">http://windirstat.info/wds_current_setup.exe</a>
+      </li>
+    <li class="bigspace">Current Source release:<br />
+      <a href="/wds_current_source.zip">http://windirstat.info/wds_current_source.zip</a> <br/> or <br/>
+<a href="/wds_current_source.7z">http://windirstat.info/wds_current_source.7z</a>
+      </li>
+  </ul>
+[% END %]

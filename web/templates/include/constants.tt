@@ -1,0 +1,14 @@
+[%
+  keywords = [
+      {
+        lang = 'en'
+        cont = 'WinDirStat, WDS, Cushion treemap, treemap, Windows, disk usage statistics, disk cleanup tool'
+      }
+      {
+        lang = 'de'
+        cont = 'WinDirStat, WDS, Kissenbaumkarten, Baumkarten, Windows, Festplattenstatistik, Festplattenreinigung, Festplattenbereinigung'
+      }
+    ]
+  revisit = '5 days'
+  currver = '1.1.2'
+%]
