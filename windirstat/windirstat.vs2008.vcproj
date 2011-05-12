@@ -107,6 +107,8 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				Description="Signing the binary"
+				CommandLine="signtool.exe sign /v /a /sm /ph /d &quot;WinDirStat&quot; /du &quot;http://windirstat.info&quot; /tr http://www.startssl.com/timestamp &quot;$(TargetPath)&quot;"
 			/>
 		</Configuration>
 		<Configuration
@@ -198,6 +200,8 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				Description="Signing the binary"
+				CommandLine="signtool.exe sign /v /a /sm /ph /d &quot;WinDirStat&quot; /du &quot;http://windirstat.info&quot; /tr http://www.startssl.com/timestamp &quot;$(TargetPath)&quot;"
 			/>
 		</Configuration>
 		<Configuration
@@ -291,6 +295,8 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				Description="Signing the binary"
+				CommandLine="signtool.exe sign /v /a /sm /ph /d &quot;WinDirStat&quot; /du &quot;http://windirstat.info&quot; /tr http://www.startssl.com/timestamp &quot;$(TargetPath)&quot;"
 			/>
 		</Configuration>
 		<Configuration
@@ -385,6 +391,8 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				Description="Signing the binary"
+				CommandLine="signtool.exe sign /v /a /sm /ph /d &quot;WinDirStat&quot; /du &quot;http://windirstat.info&quot; /tr http://www.startssl.com/timestamp &quot;$(TargetPath)&quot;"
 			/>
 		</Configuration>
 	</Configurations>
