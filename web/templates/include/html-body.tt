@@ -29,7 +29,7 @@
 <body>
 <p style="text-align:center;">
 <img src="images/logo_wds_white.png" alt="WinDirStat logo with text" height="72" width="191" />
-<a style="position:absolute; right:1.5em; z-index:100;" href="http://sourceforge.net/projects/windirstat"><img src="http://sflogo.sourceforge.net/sflogo.php?group_id=91252&amp;type=9" width="80" height="15" alt="Get WinDirStat: Windows Directory Statistics at SourceForge.net. Fast, secure and Free Open Source software downloads" /></a>
+<a style="position:absolute; right:1.5em; z-index:100;" href="https://sourceforge.net/projects/windirstat"><img src="https://sflogo.sourceforge.net/sflogo.php?group_id=91252&amp;type=9" width="80" height="15" alt="Get WinDirStat: Windows Directory Statistics at SourceForge.net. Fast, secure and Free Open Source software downloads" /></a>
 <span style="position:absolute; left:1.5em; z-index:200; font-weight:bold; color:white;">Latest version: [% currver %]</span>
 </p>
 <table id="frame" cellpadding="0" cellspacing="0" border="0" width="100%">
