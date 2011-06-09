@@ -39,13 +39,21 @@
 
 #if defined(UNICODE) || defined(_UNICODE)
 #   define lua_pushlstringT lua_pushlstringW
+#   define luaL_checkstringT luaL_checkstringW
+#   define luaL_checkstringW(L,n) (luaL_checklstringW(L, (n), NULL))
 #else
 #   define lua_pushlstringT lua_pushlstring
+#   define luaL_checkstringT luaL_checkstring
 #endif
 
 #if defined(UNICODE) || defined(_UNICODE)
-LUA_API void  lua_pushlstringW(lua_State *L, const WCHAR *s, size_t nLength)
+LUA_API void lua_pushlstringW(lua_State *L, const WCHAR *s, size_t nLength)
 {
+}
+
+LUALIB_API const WCHAR * luaL_checklstringW(lua_State *L, int numArg, size_t *nLength)
+{
+    return NULL;
 }
 #endif
 
@@ -64,7 +72,7 @@ int windows_pusherror(lua_State *L, DWORD dwError, int nresults)
         TCHAR buffer[1024];
         DWORD len, res;
 
-        len = _stprintf(buffer, TEXT("%lu (0x%lX): "), dwError, dwError);
+        len = _stprintf_s(buffer, countof(buffer) - 1, TEXT("%lu (0x%lX): "), dwError, dwError);
 
         res = FormatMessage(
             FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_FROM_SYSTEM,
@@ -79,7 +87,7 @@ int windows_pusherror(lua_State *L, DWORD dwError, int nresults)
         }
         else
         {
-            len += _stprintf(buffer + len, TEXT("<error string not available>"));
+            len += _stprintf_s(buffer + len, countof(buffer) - len - 1, TEXT("<error string not available>"));
         }
 
         lua_pushnil(L);
@@ -129,15 +137,15 @@ static HKEY * check_hkey(lua_State *L, int idx)
 static int hkey_open(lua_State *L)
 {
     HKEY k, *pk;
-    const char *subkey;
+    const TCHAR *subkey;
     REGSAM sam = KEY_ALL_ACCESS;
     LONG ret;
     DBUG_ENTER("hkey_open");
     k = *check_hkey(L, 1);
-    subkey = luaL_checkstring(L, 2);
+    subkey = luaL_checkstringT(L, 2);
     if (!lua_isnoneornil(L, 3))
     {
-        sam = luaL_checknumber(L, 3);
+        sam = (REGSAM)luaL_checknumber(L, 3); // lossless for DWORD (REGSAM)
     }
     pk = new_hkey(L);
     DBUG_PRINT("W", ("RegOpenKeyEx(%p,\"%s\",...)", k, subkey));
@@ -150,15 +158,15 @@ static int hkey_open(lua_State *L)
 static int hkey_create(lua_State *L)
 {
     HKEY k, *pk;
-    const char *subkey;
+    const TCHAR *subkey;
     REGSAM sam = KEY_ALL_ACCESS;
     LONG ret;
     DBUG_ENTER("hkey_create");
     k = *check_hkey(L, 1);
-    subkey = luaL_checkstring(L, 2);
+    subkey = luaL_checkstringT(L, 2);
     if (!lua_isnoneornil(L, 3))
     {
-        sam = (REGSAM)luaL_checknumber(L, 3); // lossless for DWORD
+        sam = (REGSAM)luaL_checknumber(L, 3); // lossless for DWORD (REGSAM)
     }
     pk = new_hkey(L);
     DBUG_PRINT("W", ("RegCreateKeyEx(%p,\"%s\",...)", k, subkey));
@@ -187,11 +195,11 @@ static int hkey_close(lua_State *L)
 static int hkey_delete(lua_State *L)
 {
     HKEY k;
-    const char *subkey;
+    const TCHAR *subkey;
     LONG ret;
     DBUG_ENTER("hkey_delete");
     k = *check_hkey(L, 1);
-    subkey = luaL_checkstring(L, 2);
+    subkey = luaL_checkstringT(L, 2);
     DBUG_PRINT("W", ("RegDeleteKey(%p,\"%s\")", k, subkey));
     ret = RegDeleteKey(k, subkey);
     lua_pushboolean(L, 1);
@@ -202,14 +210,14 @@ static int hkey_delete(lua_State *L)
 static int hkey_queryvalue(lua_State *L)
 {
     HKEY k;
-    const char *vnam;
+    const TCHAR *vnam;
     DWORD type, datalen;
-    char autobuf[1024];
+    TCHAR autobuf[1024];
     void *data;
     LONG ret;
     DBUG_ENTER("hkey_queryvalue");
     k = *check_hkey(L, 1);
-    vnam = luaL_checkstring(L, 2);
+    vnam = luaL_checkstringT(L, 2);
     data = lua_isnoneornil(L, 3) ? autobuf : 0;
     do
     {
@@ -258,7 +266,7 @@ static int hkey_queryvalue(lua_State *L)
 static int hkey_setvalue(lua_State *L)
 {
     HKEY k;
-    const char *vnam;
+    const TCHAR *vnam;
     DWORD type;
     size_t datalen;
     const void *data;
@@ -266,7 +274,7 @@ static int hkey_setvalue(lua_State *L)
     LONG ret;
     DBUG_ENTER("hkey_setvalue");
     k = *check_hkey(L, 1);
-    vnam = luaL_checkstring(L, 2);
+    vnam = luaL_checkstringT(L, 2);
     switch (lua_type(L, 3))
     {
         case LUA_TNONE:
@@ -280,7 +288,7 @@ static int hkey_setvalue(lua_State *L)
             type = REG_DWORD;
             break;
         case LUA_TNUMBER:
-            num = lua_tonumber(L, 3);
+            num = (DWORD)lua_tonumber(L, 3);
             data = &num;
             datalen = sizeof num;
             type = REG_DWORD;
@@ -295,12 +303,12 @@ static int hkey_setvalue(lua_State *L)
     }
     if (!lua_isnoneornil(L, 4))
     {
-        type = luaL_checknumber(L, 4);
+        type = (DWORD)luaL_checknumber(L, 4);
     }
     DBUG_PRINT("W", ("RegSetValueEx(%p,\"%s\",0,%lu,%p,%lu)", k, vnam, type, data, datalen));
-    ret = RegSetValueEx(k, vnam, 0, type, data, datalen);
+    ret = RegSetValueEx(k, vnam, 0, type, data, (DWORD)datalen);
     lua_pushboolean(L, 1);
-    DBUG_T_RETURN(int, windows_pusherror(L, ret, 1));
+    DBUG_T_RETURN(int, windows_pusherror(L, (DWORD)ret, 1));
 }
 
 /* k:deletevalue(valuename) */
@@ -308,10 +316,10 @@ static int hkey_deletevalue(lua_State *L)
 {
     DBUG_ENTER("hkey_deletevalue");
     HKEY k;
-    const char *vnam;
+    const TCHAR *vnam;
     LONG ret;
     k = *check_hkey(L, 1);
-    vnam = luaL_checkstring(L, 2);
+    vnam = luaL_checkstringT(L, 2);
     DBUG_PRINT("W", ("RegDeleteValue(%p,\"%s\")", k, vnam));
     ret = RegDeleteValue(k, vnam);
     lua_pushboolean(L, 1);
@@ -360,9 +368,9 @@ struct enumvalues_iter_s
 {
     HKEY k;
     DWORD index;
-    size_t vnamlen; // TBD: bytes or characters
+    DWORD vnamlen; // TBD: bytes or characters
     TCHAR *vnam;
-    size_t datalen;
+    DWORD datalen;
     void *data;
 };
 
@@ -412,7 +420,7 @@ static int hkey_enumvalues(lua_State *L)
         state->k = k;
         state->index = 0;
         state->vnamlen = vnamlen;
-        state->vnam = (char *)&state[1];
+        state->vnam = (char *)&state[1]; // TODO: ???
         state->datalen = datalen;
         state->data = state->vnam + vnamlen;
     }
@@ -426,7 +434,7 @@ static int hkey_tostring(lua_State *L)
     TCHAR buf[20];
     DBUG_ENTER("hkey_tostring");
     k = *check_hkey(L, 1);
-    lua_pushlstringT(L, buf, _stprintf(buf, TEXT("HKEY:%p"), (void *)k));
+    lua_pushlstringT(L, buf, _stprintf_s(buf, countof(buf), TEXT("HKEY:%p"), (void *)k));
     DBUG_T_RETURN(int, 1);
 }
 
