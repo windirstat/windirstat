@@ -24,6 +24,6 @@
 #if (defined(_MSC_VER) && (_MSC_VER >= 1020)) || defined(__MCPP)
 #pragma once
 #endif // Check for "#pragma once" support
- 
-int luaopen_windows_hkey(lua_State *L);
+
+//int luaopen_windows_hkey(lua_State *L);
 #endif // __LWINREG_H_VER__
