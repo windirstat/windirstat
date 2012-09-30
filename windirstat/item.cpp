@@ -1010,12 +1010,12 @@ void CItem::SetDone()
         }
     }
 
-#ifdef _DEBUG
-    for(int i = 0; i < GetChildrenCount(); i++)
-    {
-        ASSERT(GetChild(i)->IsDone());
-    }
-#endif // _DEBUG
+// #ifdef _DEBUG
+//     for(int i = 0; i < GetChildrenCount(); i++)
+//     {
+//         ASSERT(GetChild(i)->IsDone());
+//     }
+// #endif // _DEBUG
 
     //m_children.FreeExtra(); // Doesn't help much.
     qsort(m_children.GetData(), m_children.GetSize(), sizeof(CItem *), &_compareBySize);
@@ -1091,32 +1091,32 @@ void CItem::DoSomeWork(DWORD ticks)
                 }
             }
 
-            CItem *filesFolder = 0;
-            if(dirCount > 0 && fileCount > 1)
-            {
-                filesFolder = new CItem(IT_FILESFOLDER, LoadString(IDS_FILES_ITEM));
-                filesFolder->SetReadJobDone();
-                AddChild(filesFolder);
-            }
-            else if(fileCount > 0)
-            {
-                filesFolder = this;
-            }
+//             CItem *filesFolder = 0;
+//             if(dirCount > 0 && fileCount > 1)
+//             {
+//                 filesFolder = new CItem(IT_FILESFOLDER, LoadString(IDS_FILES_ITEM));
+//                 filesFolder->SetReadJobDone();
+//                 AddChild(filesFolder);
+//             }
+//             if(fileCount > 0)
+//             {
+//                 filesFolder = this;
+//             }
 
             for(POSITION pos = files.GetHeadPosition(); pos != NULL; files.GetNext(pos))
             {
                 const FILEINFO& fi = files.GetAt(pos);
-                filesFolder->AddFile(fi);
+                this->AddFile(fi);
             }
 
-            if(filesFolder != NULL)
-            {
-                filesFolder->UpwardAddFiles(fileCount);
-                if(dirCount > 0 && fileCount > 1)
+//             if(filesFolder != NULL)
+//             {
+                this->UpwardAddFiles(fileCount);
+                if(dirCount > 0 && fileCount > 0)
                 {
-                    filesFolder->SetDone();
+                    this->SetDone();
                 }
-            }
+//             }
 
             UpwardAddSubdirs(dirCount);
             SetReadJobDone();

@@ -101,7 +101,7 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..;..\common;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WINVER=0x0500;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -117,7 +117,7 @@
     <ResourceCompile>
       <PreprocessorDefinitions>WINVER=0x0500;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <Culture>0x0409</Culture>
-      <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories);..;..\common</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
       <AdditionalDependencies>htmlhelp.lib;psapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -141,7 +141,7 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..;..\common;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WINVER=0x0500;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -157,7 +157,7 @@
     <ResourceCompile>
       <PreprocessorDefinitions>WINVER=0x0500;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <Culture>0x0409</Culture>
-      <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories);..;..\common</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
       <AdditionalDependencies>htmlhelp.lib;psapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -396,52 +396,6 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="windirstat.rc" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\wdsr0405\wdsr0405.vs2010.vcxproj">
-      <Project>{c3f39c58-7fc4-4243-82b2-a3572235ae02}</Project>
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-    </ProjectReference>
-    <ProjectReference Include="..\wdsr0407\wdsr0407.vs2010.vcxproj">
-      <Project>{c8d9e4f9-7051-4b41-a5ab-f68f3fce42e8}</Project>
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-    </ProjectReference>
-    <ProjectReference Include="..\wdsr040a\wdsr040a.vs2010.vcxproj">
-      <Project>{23b76347-204c-4de6-a311-f562cef5d89c}</Project>
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-    </ProjectReference>
-    <ProjectReference Include="..\wdsr040b\wdsr040b.vs2010.vcxproj">
-      <Project>{c7a5d1ec-35d3-4754-a815-2c527cacd584}</Project>
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-    </ProjectReference>
-    <ProjectReference Include="..\wdsr040c\wdsr040c.vs2010.vcxproj">
-      <Project>{da4ddd24-67bc-4a9d-87d3-18c73e5caf31}</Project>
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-    </ProjectReference>
-    <ProjectReference Include="..\wdsr040e\wdsr040e.vs2010.vcxproj">
-      <Project>{2a75aa20-bffe-4d1c-8aec-274823223919}</Project>
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-    </ProjectReference>
-    <ProjectReference Include="..\wdsr0410\wdsr0410.vs2010.vcxproj">
-      <Project>{fd4194a7-ea1e-4466-a80b-ab4d8d17f33c}</Project>
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-    </ProjectReference>
-    <ProjectReference Include="..\wdsr0413\wdsr0413.vs2010.vcxproj">
-      <Project>{70a55eb7-e109-41de-81b4-0df2b72dcde9}</Project>
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-    </ProjectReference>
-    <ProjectReference Include="..\wdsr0415\wdsr0415.vs2010.vcxproj">
-      <Project>{70c09daa-6f6d-4aac-955f-acd602a667ce}</Project>
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-    </ProjectReference>
-    <ProjectReference Include="..\wdsr0419\wdsr0419.vs2010.vcxproj">
-      <Project>{7f06aac4-9fbe-412f-b1d7-cb37ab8f311d}</Project>
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-    </ProjectReference>
-    <ProjectReference Include="..\wdsr0425\wdsr0425.vs2010.vcxproj">
-      <Project>{2fadc62c-c670-4963-8b69-70eca7987b93}</Project>
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

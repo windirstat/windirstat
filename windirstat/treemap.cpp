@@ -415,12 +415,12 @@ CTreemap::Item *CTreemap::FindItemByPoint(Item *item, CPoint point)
 
 #ifdef _DEBUG
             CRect rcChild(child->TmiGetRectangle());
-            ASSERT(rcChild.right >= rcChild.left);
-            ASSERT(rcChild.bottom >= rcChild.top);
-            ASSERT(rcChild.left >= rc.left);
-            ASSERT(rcChild.right <= rc.right);
-            ASSERT(rcChild.top >= rc.top);
-            ASSERT(rcChild.bottom <= rc.bottom);
+            WEAK_ASSERT(rcChild.right >= rcChild.left);
+            WEAK_ASSERT(rcChild.bottom >= rcChild.top);
+            WEAK_ASSERT(rcChild.left >= rc.left);
+            WEAK_ASSERT(rcChild.right <= rc.right);
+            WEAK_ASSERT(rcChild.top >= rc.top);
+            WEAK_ASSERT(rcChild.bottom <= rc.bottom);
 #endif
             if(child->TmiGetRectangle().PtInRect(point))
             {
@@ -509,7 +509,7 @@ void CTreemap::RecurseDrawGraph(
     ASSERT(rc.Width() >= 0);
     ASSERT(rc.Height() >= 0);
 
-    ASSERT(item->TmiGetSize() > 0);
+    WEAK_ASSERT(item->TmiGetSize() > 0);
 
     if(m_callback != NULL)
     {
@@ -625,7 +625,7 @@ void CTreemap::KDirStat_DrawChildren(CDC *pdc, Item *parent, const double *surfa
         for(int i = 0; i < childrenPerRow[row]; i++, c++)
         {
             Item *child = parent->TmiGetChild(c);
-            ASSERT(childWidth[c] >= 0);
+            WEAK_ASSERT(childWidth[c] >= 0);
             double fRight = left + childWidth[c] * width;
             int right = (int)fRight;
 
@@ -757,7 +757,7 @@ double CTreemap::KDirStat_CalcutateNextRow(Item *parent, const int nextChild, do
         ULONGLONG childSize = parent->TmiGetChild(i)->TmiGetSize();
         if(childSize == 0)
         {
-            ASSERT(i > nextChild);  // first child has size > 0
+            WEAK_ASSERT(i > nextChild);  // first child has size > 0
             break;
         }
 
@@ -786,7 +786,7 @@ double CTreemap::KDirStat_CalcutateNextRow(Item *parent, const int nextChild, do
         }
         rowHeight = virtualRowHeight;
     }
-    ASSERT(i > nextChild);
+    WEAK_ASSERT(i > nextChild);
 
     // Now i-1 is the last child used
     // and rowHeight is the height of the row.
@@ -806,7 +806,7 @@ double CTreemap::KDirStat_CalcutateNextRow(Item *parent, const int nextChild, do
         double rowSize = mySize * rowHeight;
         double childSize = (double)parent->TmiGetChild(nextChild + i)->TmiGetSize();
         double cw = childSize / rowSize;
-        ASSERT(cw >= 0);
+        WEAK_ASSERT(cw >= 0);
         childWidth[nextChild + i]= cw;
     }
 

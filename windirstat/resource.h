@@ -109,7 +109,6 @@
 #define IDR_TEXT1                       900
 #define IDR_AUTHORS                     900
 #define IDR_TEXT2                       901
-#define IDB_BITMAP1                     902
 #define IDB_JUNCTIONPOINT               902
 #define IDD_CHECKFORUPDATE              903
 #define IDC_ALLDRIVES                   1000

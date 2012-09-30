@@ -13,3 +13,8 @@ glob:Backup *
 glob:sandbox/luaconf/Debug/**
 glob:sandbox/luaconf/Release/**
 glob:web/*.html
+syntax: glob
+src/*
+Visual Lint/*
+*.aqt
+windirstat/windirstat_prof/*
