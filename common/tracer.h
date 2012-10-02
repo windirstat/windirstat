@@ -40,7 +40,7 @@ public:
         , m_srcbasename((srcfile) ? strrchr(srcfile, '\\') : NULL)
     {
         // Skip over the backslash
-        m_srcbasename = (m_srcbasename) ? m_srcbasename + 1 : NULL;
+        m_srcbasename = (m_srcbasename) ? m_srcbasename + 1 : srcfile;
     }
 
     void operator()(LPCSTR format, ...) // ANSI

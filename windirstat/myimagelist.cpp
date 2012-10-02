@@ -125,19 +125,9 @@ int CMyImageList::cacheIcon(LPCTSTR path, UINT flags, CString *psTypeName)
     }
 
     int i;
-    if(!m_indexMap.Lookup(sfi.iIcon, i))
+    if(!m_indexMap.Lookup(sfi.iIcon, i)) // part of the system image list?
     {
         CImageList *sil = CImageList::FromHandle(hil); // does not have to be destroyed
-
-        /*
-            This doesn't work:
-            IMAGEINFO ii;
-            VERIFY(sil->GetImageInfo(sfi.iIcon, &ii));
-
-            i = Add(CBitmap::FromHandle(ii.hbmImage), CBitmap::FromHandle(ii.hbmMask));
-
-            So we use this method:
-        */
         i = this->Add(sil->ExtractIcon(sfi.iIcon));
         m_indexMap.SetAt(sfi.iIcon, i);
     }

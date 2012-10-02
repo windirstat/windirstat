@@ -4,13 +4,18 @@ syntax: regexp
 ^CVS/
 # Intermediate files
 \.(obj|map|exp|html?|pdb|suo|ncb|idb|res|lib|exe|dll|lnt|user|manifest|dep|pch|bak|orig|L32|L64)$
-glob:windirstat.vs2010.sdf
-glob:intermediate/*
-glob:windirstat.vs2010.opensdf
-glob:*.wdslng
-glob:*.png
-glob:Backup *
-glob:sandbox/luaconf/Debug/**
-glob:sandbox/luaconf/Release/**
-glob:web/*.html
-glob:web/software/cushionstarlets.php
+syntax: glob
+windirstat.vs2010.sdf
+intermediate/*
+windirstat.vs2010.opensdf
+*.wdslng
+*.png
+Backup *
+sandbox/luaconf/Debug/**
+sandbox/luaconf/Release/**
+web/*.html
+web/software/cushionstarlets.php
+src/*
+Visual Lint/*
+*.aqt
+windirstat/windirstat_prof/*

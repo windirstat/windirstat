@@ -73,4 +73,6 @@
 
 template<class T> int signum(T x) { return (x) < 0 ? -1 : (x) == 0 ? 0 : 1; }
 
+#define WEAK_ASSERT /##/ ASSERT
+
 #endif // __WDS_STDAFX_H__
