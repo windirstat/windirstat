@@ -13,3 +13,4 @@ glob:Backup *
 glob:sandbox/luaconf/Debug/**
 glob:sandbox/luaconf/Release/**
 glob:web/*.html
+glob:web/software/cushionstarlets.php

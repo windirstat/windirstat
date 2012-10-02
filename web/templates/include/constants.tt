@@ -11,4 +11,6 @@
     ]
   revisit = '5 days'
   currver = '1.1.2'
+  download_DBS = 'http://www.downloadbestsoft.com/WinDirStat.html'
+  download_SF  = 'http://prdownloads.sourceforge.net/windirstat/windirstat1_1_2_setup.exe'
 %]

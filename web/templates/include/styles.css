@@ -42,16 +42,19 @@ body {
 
 a.wdslnk:link {
 	color:#007000;
+	font-weight:bold;
 	text-decoration:none;
 }
 
 a.wdslnk:visited {
 	color:#004000;
+	font-weight:bold;
 	text-decoration:none;
 }
 
 a.wdslnk:hover, a.wdslnk:active {
 	color:#007000;
+	font-weight:bold;
 	text-decoration:underline;
 }
 
@@ -154,4 +157,17 @@ td.bordleft {
 .feld3 {
   border : 1px solid #cccccc;
   width : 100%;
+}
+
+ul.download {
+  border : 1px dashed #cccccc;
+  padding : 1em;
+  margin : 1em;
+  font-size : 150%;
+  list-style : disc inside url('/images/download.png');
+  background-color : #C0E0B0
+}
+
+li.download {
+  padding-bottom : 1ex;
 }
