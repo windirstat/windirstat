@@ -46,7 +46,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="$(ProjectDir)\..;$(ProjectDir)\..\lua\src;$(ProjectDir)\Controls;$(ProjectDir)\Dialogs"
+				AdditionalIncludeDirectories="$(ProjectDir)\..;$(ProjectDir)\..\lua\src;$(ProjectDir);$(ProjectDir)\Controls;$(ProjectDir)\Dialogs"
 				PreprocessorDefinitions="WINVER=0x0500;_DEBUG"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -140,7 +140,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="$(ProjectDir)\..;$(ProjectDir)\..\lua\src;$(ProjectDir)\Controls;$(ProjectDir)\Dialogs"
+				AdditionalIncludeDirectories="$(ProjectDir)\..;$(ProjectDir)\..\lua\src;$(ProjectDir);$(ProjectDir)\Controls;$(ProjectDir)\Dialogs"
 				PreprocessorDefinitions="WINVER=0x0500;_DEBUG"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -237,7 +237,7 @@
 				Optimization="3"
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
-				AdditionalIncludeDirectories="$(ProjectDir)\..;$(ProjectDir)\..\lua\src;$(ProjectDir)\Controls;$(ProjectDir)\Dialogs"
+				AdditionalIncludeDirectories="$(ProjectDir)\..;$(ProjectDir)\..\lua\src;$(ProjectDir);$(ProjectDir)\Controls;$(ProjectDir)\Dialogs"
 				PreprocessorDefinitions="WINVER=0x0500;NDEBUG"
 				MinimalRebuild="false"
 				RuntimeLibrary="0"
@@ -334,7 +334,7 @@
 				Optimization="3"
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
-				AdditionalIncludeDirectories="$(ProjectDir)\..;$(ProjectDir)\..\lua\src;$(ProjectDir)\Controls;$(ProjectDir)\Dialogs"
+				AdditionalIncludeDirectories="$(ProjectDir)\..;$(ProjectDir)\..\lua\src;$(ProjectDir);$(ProjectDir)\Controls;$(ProjectDir)\Dialogs"
 				PreprocessorDefinitions="WINVER=0x0500;NDEBUG"
 				MinimalRebuild="false"
 				RuntimeLibrary="0"
@@ -512,10 +512,6 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\TreeListControl.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\WDS_Lua_C.c"
 				>
 				<FileConfiguration
@@ -640,6 +636,10 @@
 				</File>
 				<File
 					RelativePath="Controls\sortinglistcontrol.cpp"
+					>
+				</File>
+				<File
+					RelativePath="Controls\TreeListControl.cpp"
 					>
 				</File>
 				<File

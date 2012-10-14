@@ -51,6 +51,9 @@
 			<Tool
 				Name="VCResourceCompilerTool"
 				AdditionalOptions="/nologo"
+				PreprocessorDefinitions="WINVER=0x0500"
+				Culture="1033"
+				AdditionalIncludeDirectories="$(ProjectDir)\..;$(IntDir)"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
