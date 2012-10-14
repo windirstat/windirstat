@@ -46,7 +46,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="$(ProjectDir)\..;$(ProjectDir)\..\lua\src"
+				AdditionalIncludeDirectories="$(ProjectDir)\..;$(ProjectDir)\..\lua\src;$(ProjectDir)\Controls;$(ProjectDir)\Dialogs"
 				PreprocessorDefinitions="WINVER=0x0500;_DEBUG"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -140,7 +140,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="$(ProjectDir)\..;$(ProjectDir)\..\lua\src"
+				AdditionalIncludeDirectories="$(ProjectDir)\..;$(ProjectDir)\..\lua\src;$(ProjectDir)\Controls;$(ProjectDir)\Dialogs"
 				PreprocessorDefinitions="WINVER=0x0500;_DEBUG"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -237,7 +237,7 @@
 				Optimization="3"
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
-				AdditionalIncludeDirectories="$(ProjectDir)\..;$(ProjectDir)\..\lua\src"
+				AdditionalIncludeDirectories="$(ProjectDir)\..;$(ProjectDir)\..\lua\src;$(ProjectDir)\Controls;$(ProjectDir)\Dialogs"
 				PreprocessorDefinitions="WINVER=0x0500;NDEBUG"
 				MinimalRebuild="false"
 				RuntimeLibrary="0"
@@ -334,7 +334,7 @@
 				Optimization="3"
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
-				AdditionalIncludeDirectories="$(ProjectDir)\..;$(ProjectDir)\..\lua\src"
+				AdditionalIncludeDirectories="$(ProjectDir)\..;$(ProjectDir)\..\lua\src;$(ProjectDir)\Controls;$(ProjectDir)\Dialogs"
 				PreprocessorDefinitions="WINVER=0x0500;NDEBUG"
 				MinimalRebuild="false"
 				RuntimeLibrary="0"
@@ -603,15 +603,15 @@
 				Name="Dialogs"
 				>
 				<File
-					RelativePath=".\aboutdlg.cpp"
+					RelativePath="Dialogs\AboutDlg.cpp"
 					>
 				</File>
 				<File
-					RelativePath=".\DeleteWarningDlg.cpp"
+					RelativePath="Dialogs\DeleteWarningDlg.cpp"
 					>
 				</File>
 				<File
-					RelativePath=".\SelectDrivesDlg.cpp"
+					RelativePath="Dialogs\SelectDrivesDlg.cpp"
 					>
 				</File>
 			</Filter>
@@ -619,39 +619,39 @@
 				Name="Controls"
 				>
 				<File
-					RelativePath=".\colorbutton.cpp"
+					RelativePath="Controls\ColorButton.cpp"
 					>
 				</File>
 				<File
-					RelativePath=".\graphview.cpp"
+					RelativePath="Controls\graphview.cpp"
 					>
 				</File>
 				<File
-					RelativePath=".\myimagelist.cpp"
+					RelativePath="Controls\myimagelist.cpp"
 					>
 				</File>
 				<File
-					RelativePath=".\ownerdrawnlistcontrol.cpp"
+					RelativePath="Controls\ownerdrawnlistcontrol.cpp"
 					>
 				</File>
 				<File
-					RelativePath=".\pacman.cpp"
+					RelativePath="Controls\pacman.cpp"
 					>
 				</File>
 				<File
-					RelativePath=".\sortinglistcontrol.cpp"
+					RelativePath="Controls\sortinglistcontrol.cpp"
 					>
 				</File>
 				<File
-					RelativePath=".\treemap.cpp"
+					RelativePath="Controls\treemap.cpp"
 					>
 				</File>
 				<File
-					RelativePath=".\typeview.cpp"
+					RelativePath="Controls\typeview.cpp"
 					>
 				</File>
 				<File
-					RelativePath=".\xyslider.cpp"
+					RelativePath="Controls\xyslider.cpp"
 					>
 				</File>
 			</Filter>
