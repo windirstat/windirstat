@@ -51,16 +51,26 @@ solution ("windirstat")
         flags           {"StaticRuntime", "Unicode", "MFC", "NativeWChar", "ExtraWarnings", "NoRTTI", "WinMain", "NoMinimalRebuild"}
         defines         {"WINVER=0x0500"}
         targetdir       ("build")
+        includedirs     { "windirstat", "common", "windirstat/Controls", "windirstat/Dialogs" }
         objdir          (int_dir)
-        -- pchheader       ("windirstat/stdafx.h")
-        -- pchsource       ("windirstat/stdafx.cpp")
 
         files
         {
+            "common/*.h",
             "common/*.cpp",
             "windirstat/*.cpp",
+            "windirstat/Controls/*.cpp",
+            "windirstat/Dialogs/*.cpp",
             "windirstat/*.c",
+            "windirstat/*.h",
+            "windirstat/Controls/*.h",
+            "windirstat/Dialogs/*.h",
             "windirstat/windirstat.rc",
+            "windirstat/res/*.*",
+            "*.txt",
+            "common/BUILD",
+            "common/buildinc.cmd",
+            "premake4.lua",
         }
 
         excludes
@@ -70,6 +80,24 @@ solution ("windirstat")
             "lua/src/luac.c",
             "lua/src/print.c",
             "lua/src/**.lua",
+            "windirstat/stdafx.cpp",
+        }
+        
+        vpaths
+        {
+            ["Header Files/Common/*"] = { "common/*.h" },
+            ["Header Files/Controls/*"] = { "windirstat/Controls/*.h" },
+            ["Header Files/Dialogs/*"] = { "windirstat/Dialogs/*.h" },
+            ["Header Files/*"] = { "windirstat/*.h" },
+            ["Resource Files/*"] = { "windirstat/*.rc" },
+            ["Resource Files/Resources/*"] = { "windirstat/res/*.*" },
+            ["Source Files/Common/*"] = { "common/*.cpp" },
+            ["Source Files/Lua/*"] = { "windirstat/WDS_Lua_C.c" },
+            ["Source Files/Controls/*"] = { "windirstat/Controls/*.cpp" },
+            ["Source Files/Dialogs/*"] = { "windirstat/Dialogs/*.cpp" },
+            ["Source Files/*"] = { "windirstat/*.cpp" },
+            ["Special Files/*"] = { "common/BUILD", "common/buildinc.cmd", "premake4.lua" },
+            ["*"] = { "*.txt" },
         }
 
         configuration {"Debug", "x32"}
@@ -93,11 +121,10 @@ solution ("windirstat")
             linkoptions     {"/release"}
             buildoptions    {"/Oi", "/Ot"}
         configuration {"vs*"}
-            -- buildoptions {}
             links           { "htmlhelp", "psapi" }
             resoptions      {"/nologo", "/l409"}
             resincludedirs  {"$(IntDir)"}
             includedirs     {".", "lua/src"}
-            linkoptions     {"/delayload:psapi.dll"}
---        configuration {"WDS_Lua_C.c"}
---          defines         ("_CRT_SECURE_NO_WARNINGS")
+            --linkoptions     {"/delayload:psapi.dll"}
+        configuration {"vs2005", "windirstat/WDS_Lua_C.c"}
+            defines         ("_CRT_SECURE_NO_WARNINGS")

@@ -1,148 +1,116 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Source Files">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
-    </Filter>
-    <Filter Include="Source Files\Common">
-      <UniqueIdentifier>{039142a2-b61b-48d4-8c97-93df5b51b882}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Dialogs">
-      <UniqueIdentifier>{e834cc26-c03b-4e75-ae5e-7094bc73a921}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Controls">
-      <UniqueIdentifier>{472ac995-5516-49d8-8881-13f7238a31b0}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+      <UniqueIdentifier>{96AEAAA0-F5B4-3A4C-8A2D-8421BB4C9A7B}</UniqueIdentifier>
     </Filter>
     <Filter Include="Header Files\Common">
-      <UniqueIdentifier>{c33d5585-6d84-418a-b46c-8f2346367c32}</UniqueIdentifier>
+      <UniqueIdentifier>{51CCD37A-B091-5449-8375-458BE888B620}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\Dialogs">
-      <UniqueIdentifier>{cd988fd3-672d-493f-b3a2-3413eff72710}</UniqueIdentifier>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{FAC84B45-2445-1E43-B80B-CF15DD4BA0A0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Common">
+      <UniqueIdentifier>{77B41A1B-0588-9B42-9F87-77C1FF487EB8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Controls">
+      <UniqueIdentifier>{386E4F7B-F98B-8848-B4A4-0FA30DED8AB4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Dialogs">
+      <UniqueIdentifier>{47FF374F-784F-C842-B010-B1C0AD1F7A8D}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Lua">
+      <UniqueIdentifier>{D770112C-0D9C-6844-B6C6-0F18140006E9}</UniqueIdentifier>
     </Filter>
     <Filter Include="Header Files\Controls">
-      <UniqueIdentifier>{5c4c6e71-b80d-4efa-a40f-51f1cb70a689}</UniqueIdentifier>
+      <UniqueIdentifier>{70D158A0-AB1D-964A-9B69-6DF3DA9989CD}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Dialogs">
+      <UniqueIdentifier>{1D9E3C14-5F01-A048-A59B-C5C5E75F590C}</UniqueIdentifier>
     </Filter>
     <Filter Include="Resource Files">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx</Extensions>
+      <UniqueIdentifier>{9672D2A5-674E-594D-A3DC-D60038BF8CD0}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Resource Files\Pictures">
-      <UniqueIdentifier>{090b6972-f92e-4c62-b456-467e3d9aa488}</UniqueIdentifier>
+    <Filter Include="Resource Files\Resources">
+      <UniqueIdentifier>{245797C1-6AFE-B046-A349-79598A8419F7}</UniqueIdentifier>
     </Filter>
     <Filter Include="Special Files">
-      <UniqueIdentifier>{ffa0004a-16c6-452a-9ed5-929b16157a95}</UniqueIdentifier>
+      <UniqueIdentifier>{1AB729FE-CBC4-0849-891F-051C2B9FDA0A}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="dirstatdoc.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="dirstatview.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="FileFindWDS.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="getosplatformstring.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="globalhelpers.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="item.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="layout.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="mainframe.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ModalApiShuttle.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ModalShellApi.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="mountpoints.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="options.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="osspecific.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="PageCleanups.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="PageGeneral.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="PageTreelist.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="PageTreemap.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="stdafx.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="TreeListControl.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="windirstat.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\common\commonhelpers.cpp">
-      <Filter>Source Files\Common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\common\platform.cpp">
-      <Filter>Source Files\Common</Filter>
-    </ClCompile>
-    <ClCompile Include="aboutdlg.cpp">
-      <Filter>Source Files\Dialogs</Filter>
-    </ClCompile>
-    <ClCompile Include="DeleteWarningDlg.cpp">
-      <Filter>Source Files\Dialogs</Filter>
-    </ClCompile>
-    <ClCompile Include="SelectDrivesDlg.cpp">
-      <Filter>Source Files\Dialogs</Filter>
-    </ClCompile>
-    <ClCompile Include="colorbutton.cpp">
-      <Filter>Source Files\Controls</Filter>
-    </ClCompile>
-    <ClCompile Include="graphview.cpp">
-      <Filter>Source Files\Controls</Filter>
-    </ClCompile>
-    <ClCompile Include="myimagelist.cpp">
-      <Filter>Source Files\Controls</Filter>
-    </ClCompile>
-    <ClCompile Include="ownerdrawnlistcontrol.cpp">
-      <Filter>Source Files\Controls</Filter>
-    </ClCompile>
-    <ClCompile Include="pacman.cpp">
-      <Filter>Source Files\Controls</Filter>
-    </ClCompile>
-    <ClCompile Include="sortinglistcontrol.cpp">
-      <Filter>Source Files\Controls</Filter>
-    </ClCompile>
-    <ClCompile Include="treemap.cpp">
-      <Filter>Source Files\Controls</Filter>
-    </ClCompile>
-    <ClCompile Include="typeview.cpp">
-      <Filter>Source Files\Controls</Filter>
-    </ClCompile>
-    <ClCompile Include="xyslider.cpp">
-      <Filter>Source Files\Controls</Filter>
-    </ClCompile>
+    <None Include="res\bitmap1.bmp">
+      <Filter>Resource Files\Resources</Filter>
+    </None>
+    <None Include="res\icon1.ico">
+      <Filter>Resource Files\Resources</Filter>
+    </None>
+    <None Include="res\icon2.ico">
+      <Filter>Resource Files\Resources</Filter>
+    </None>
+    <None Include="res\junctionpoint.bmp">
+      <Filter>Resource Files\Resources</Filter>
+    </None>
+    <None Include="res\license.txt">
+      <Filter>Resource Files\Resources</Filter>
+    </None>
+    <None Include="res\linkhand.cur">
+      <Filter>Resource Files\Resources</Filter>
+    </None>
+    <None Include="res\Toolbar.bmp">
+      <Filter>Resource Files\Resources</Filter>
+    </None>
+    <None Include="res\windirstat.manifest">
+      <Filter>Resource Files\Resources</Filter>
+    </None>
+    <None Include="res\windirstat.rc2">
+      <Filter>Resource Files\Resources</Filter>
+    </None>
+    <None Include="..\CHANGELOG.txt" />
+    <None Include="..\README.txt" />
+    <None Include="..\TESTPLAN.txt" />
+    <None Include="..\TODO.txt" />
+    <None Include="..\common\BUILD">
+      <Filter>Special Files</Filter>
+    </None>
+    <None Include="..\common\buildinc.cmd">
+      <Filter>Special Files</Filter>
+    </None>
+    <None Include="..\premake4.lua">
+      <Filter>Special Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\common\buildnumber.h">
+      <Filter>Header Files\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\commonhelpers.h">
+      <Filter>Header Files\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\common_rsrcstr.h">
+      <Filter>Header Files\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\cotaskmem.h">
+      <Filter>Header Files\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\mdexceptions.h">
+      <Filter>Header Files\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\platform.h">
+      <Filter>Header Files\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\SimpleIni.h">
+      <Filter>Header Files\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\tracer.h">
+      <Filter>Header Files\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\version.h">
+      <Filter>Header Files\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\wds_constants.h">
+      <Filter>Header Files\Common</Filter>
+    </ClInclude>
     <ClInclude Include="dirstatdoc.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -197,7 +165,7 @@
     <ClInclude Include="PageTreemap.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Resource.h">
+    <ClInclude Include="resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="selectobject.h">
@@ -209,123 +177,159 @@
     <ClInclude Include="stdafx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="WDS_Lua_C.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="windirstat.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\common\common_rsrcstr.h">
-      <Filter>Header Files\Common</Filter>
+    <ClInclude Include="Controls\ColorButton.h">
+      <Filter>Header Files\Controls</Filter>
     </ClInclude>
-    <ClInclude Include="..\common\commonhelpers.h">
-      <Filter>Header Files\Common</Filter>
+    <ClInclude Include="Controls\graphview.h">
+      <Filter>Header Files\Controls</Filter>
     </ClInclude>
-    <ClInclude Include="..\common\cotaskmem.h">
-      <Filter>Header Files\Common</Filter>
+    <ClInclude Include="Controls\myimagelist.h">
+      <Filter>Header Files\Controls</Filter>
     </ClInclude>
-    <ClInclude Include="..\common\mdexceptions.h">
-      <Filter>Header Files\Common</Filter>
+    <ClInclude Include="Controls\ownerdrawnlistcontrol.h">
+      <Filter>Header Files\Controls</Filter>
     </ClInclude>
-    <ClInclude Include="..\common\platform.h">
-      <Filter>Header Files\Common</Filter>
+    <ClInclude Include="Controls\pacman.h">
+      <Filter>Header Files\Controls</Filter>
     </ClInclude>
-    <ClInclude Include="..\common\version.h">
-      <Filter>Header Files\Common</Filter>
+    <ClInclude Include="Controls\sortinglistcontrol.h">
+      <Filter>Header Files\Controls</Filter>
     </ClInclude>
-    <ClInclude Include="..\common\wds_constants.h">
-      <Filter>Header Files\Common</Filter>
+    <ClInclude Include="Controls\TreeListControl.h">
+      <Filter>Header Files\Controls</Filter>
     </ClInclude>
-    <ClInclude Include="aboutdlg.h">
+    <ClInclude Include="Controls\treemap.h">
+      <Filter>Header Files\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="Controls\typeview.h">
+      <Filter>Header Files\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="Controls\xyslider.h">
+      <Filter>Header Files\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="Dialogs\AboutDlg.h">
       <Filter>Header Files\Dialogs</Filter>
     </ClInclude>
-    <ClInclude Include="DeleteWarningDlg.h">
+    <ClInclude Include="Dialogs\DeleteWarningDlg.h">
       <Filter>Header Files\Dialogs</Filter>
     </ClInclude>
-    <ClInclude Include="SelectDrivesDlg.h">
+    <ClInclude Include="Dialogs\SelectDrivesDlg.h">
       <Filter>Header Files\Dialogs</Filter>
-    </ClInclude>
-    <ClInclude Include="colorbutton.h">
-      <Filter>Header Files\Controls</Filter>
-    </ClInclude>
-    <ClInclude Include="graphview.h">
-      <Filter>Header Files\Controls</Filter>
-    </ClInclude>
-    <ClInclude Include="myimagelist.h">
-      <Filter>Header Files\Controls</Filter>
-    </ClInclude>
-    <ClInclude Include="ownerdrawnlistcontrol.h">
-      <Filter>Header Files\Controls</Filter>
-    </ClInclude>
-    <ClInclude Include="pacman.h">
-      <Filter>Header Files\Controls</Filter>
-    </ClInclude>
-    <ClInclude Include="sortinglistcontrol.h">
-      <Filter>Header Files\Controls</Filter>
-    </ClInclude>
-    <ClInclude Include="StaticHyperlink.h">
-      <Filter>Header Files\Controls</Filter>
-    </ClInclude>
-    <ClInclude Include="TreeListControl.h">
-      <Filter>Header Files\Controls</Filter>
-    </ClInclude>
-    <ClInclude Include="treemap.h">
-      <Filter>Header Files\Controls</Filter>
-    </ClInclude>
-    <ClInclude Include="typeview.h">
-      <Filter>Header Files\Controls</Filter>
-    </ClInclude>
-    <ClInclude Include="xyslider.h">
-      <Filter>Header Files\Controls</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="res\license.txt">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="res\windirstat.rc2">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="res\bitmap1.bmp">
-      <Filter>Resource Files\Pictures</Filter>
-    </None>
-    <None Include="res\bmp00001.bmp">
-      <Filter>Resource Files\Pictures</Filter>
-    </None>
-    <None Include="res\icon1.ico">
-      <Filter>Resource Files\Pictures</Filter>
-    </None>
-    <None Include="res\iconjunc.ico">
-      <Filter>Resource Files\Pictures</Filter>
-    </None>
-    <None Include="res\junctionpoint.bmp">
-      <Filter>Resource Files\Pictures</Filter>
-    </None>
-    <None Include="res\linkhand.cur">
-      <Filter>Resource Files\Pictures</Filter>
-    </None>
-    <None Include="res\reparse-point.ico">
-      <Filter>Resource Files\Pictures</Filter>
-    </None>
-    <None Include="res\Toolbar.bmp">
-      <Filter>Resource Files\Pictures</Filter>
-    </None>
-    <None Include="..\CHANGELOG.txt" />
-    <None Include="..\README.txt" />
-    <None Include="..\TESTPLAN.txt" />
-    <None Include="..\TODO.txt" />
+    <ClCompile Include="..\common\commonhelpers.cpp">
+      <Filter>Source Files\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\platform.cpp">
+      <Filter>Source Files\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="dirstatdoc.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="dirstatview.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="FileFindWDS.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="getosplatformstring.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="globalhelpers.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="item.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="layout.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="mainframe.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ModalApiShuttle.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ModalShellApi.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="mountpoints.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="options.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="osspecific.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PageCleanups.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PageGeneral.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PageTreelist.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PageTreemap.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="windirstat.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Controls\ColorButton.cpp">
+      <Filter>Source Files\Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="Controls\graphview.cpp">
+      <Filter>Source Files\Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="Controls\myimagelist.cpp">
+      <Filter>Source Files\Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="Controls\ownerdrawnlistcontrol.cpp">
+      <Filter>Source Files\Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="Controls\pacman.cpp">
+      <Filter>Source Files\Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="Controls\sortinglistcontrol.cpp">
+      <Filter>Source Files\Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="Controls\TreeListControl.cpp">
+      <Filter>Source Files\Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="Controls\treemap.cpp">
+      <Filter>Source Files\Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="Controls\typeview.cpp">
+      <Filter>Source Files\Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="Controls\xyslider.cpp">
+      <Filter>Source Files\Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="Dialogs\AboutDlg.cpp">
+      <Filter>Source Files\Dialogs</Filter>
+    </ClCompile>
+    <ClCompile Include="Dialogs\DeleteWarningDlg.cpp">
+      <Filter>Source Files\Dialogs</Filter>
+    </ClCompile>
+    <ClCompile Include="Dialogs\SelectDrivesDlg.cpp">
+      <Filter>Source Files\Dialogs</Filter>
+    </ClCompile>
+    <ClCompile Include="WDS_Lua_C.c">
+      <Filter>Source Files\Lua</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="windirstat.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <CustomBuildStep Include="..\common\BUILD">
-      <Filter>Special Files</Filter>
-    </CustomBuildStep>
-    <CustomBuildStep Include="..\common\buildinc.cmd">
-      <Filter>Special Files</Filter>
-    </CustomBuildStep>
-    <CustomBuildStep Include="..\common\buildnumber.h">
-      <Filter>Special Files</Filter>
-    </CustomBuildStep>
   </ItemGroup>
 </Project>
