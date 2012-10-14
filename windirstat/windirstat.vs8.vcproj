@@ -20,8 +20,8 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="..\intermediate\vs2005_$(PlatformName)_$(ConfigurationName)"
-			IntermediateDirectory="..\intermediate\vs2005_$(PlatformName)_$(ConfigurationName)"
+			OutputDirectory="..\intermediate\vs8_$(PlatformName)_$(ConfigurationName)"
+			IntermediateDirectory="..\intermediate\vs8_$(PlatformName)_$(ConfigurationName)"
 			ConfigurationType="1"
 			UseOfMFC="1"
 			CharacterSet="1"
@@ -113,8 +113,8 @@
 		</Configuration>
 		<Configuration
 			Name="Debug|x64"
-			OutputDirectory="..\intermediate\vs2005_$(PlatformName)_$(ConfigurationName)"
-			IntermediateDirectory="..\intermediate\vs2005_$(PlatformName)_$(ConfigurationName)"
+			OutputDirectory="..\intermediate\vs8_$(PlatformName)_$(ConfigurationName)"
+			IntermediateDirectory="..\intermediate\vs8_$(PlatformName)_$(ConfigurationName)"
 			ConfigurationType="1"
 			UseOfMFC="1"
 			CharacterSet="1"
@@ -207,8 +207,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="..\intermediate\vs2005_$(PlatformName)_$(ConfigurationName)"
-			IntermediateDirectory="..\intermediate\vs2005_$(PlatformName)_$(ConfigurationName)"
+			OutputDirectory="..\intermediate\vs8_$(PlatformName)_$(ConfigurationName)"
+			IntermediateDirectory="..\intermediate\vs8_$(PlatformName)_$(ConfigurationName)"
 			ConfigurationType="1"
 			UseOfMFC="1"
 			CharacterSet="1"
@@ -303,8 +303,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release|x64"
-			OutputDirectory="..\intermediate\vs2005_$(PlatformName)_$(ConfigurationName)"
-			IntermediateDirectory="..\intermediate\vs2005_$(PlatformName)_$(ConfigurationName)"
+			OutputDirectory="..\intermediate\vs8_$(PlatformName)_$(ConfigurationName)"
+			IntermediateDirectory="..\intermediate\vs8_$(PlatformName)_$(ConfigurationName)"
 			ConfigurationType="1"
 			UseOfMFC="1"
 			CharacterSet="1"

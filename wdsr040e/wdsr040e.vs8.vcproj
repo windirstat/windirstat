@@ -17,8 +17,8 @@
 	<Configurations>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="..\intermediate\vs2008_$(PlatformName)_$(ConfigurationName)\wdsr040e"
-			IntermediateDirectory="..\intermediate\vs2008_$(PlatformName)_$(ConfigurationName)\wdsr040e"
+			OutputDirectory="..\intermediate\vs8_$(PlatformName)_$(ConfigurationName)\wdsr040e"
+			IntermediateDirectory="..\intermediate\vs8_$(PlatformName)_$(ConfigurationName)\wdsr040e"
 			ConfigurationType="2"
 			CharacterSet="1"
 			>
