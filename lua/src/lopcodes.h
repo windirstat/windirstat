@@ -1,5 +1,5 @@
 /*
-** $Id: lopcodes.h,v 1.125.1.1 2007/12/27 13:02:25 roberto Exp $
+** $Id$
 ** Opcodes for Lua virtual machine
 ** See Copyright Notice in lua.h
 */
@@ -249,9 +249,6 @@ enum OpArgMask {
   OpArgK   /* argument is a constant or register/constant */
 };
 
-#ifdef luaall_c
-extern
-#endif // luaall_c
 LUAI_DATA const lu_byte luaP_opmodes[NUM_OPCODES];
 
 #define getOpMode(m)	(cast(enum OpMode, luaP_opmodes[m] & 3))
@@ -260,9 +257,7 @@ LUAI_DATA const lu_byte luaP_opmodes[NUM_OPCODES];
 #define testAMode(m)	(luaP_opmodes[m] & (1 << 6))
 #define testTMode(m)	(luaP_opmodes[m] & (1 << 7))
 
-#ifdef luaall_c
-extern
-#endif // luaall_c
+
 LUAI_DATA const char *const luaP_opnames[NUM_OPCODES+1];  /* opcode names */
 
 
