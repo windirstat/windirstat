@@ -1,5 +1,5 @@
 /*
-** $Id: lualib.h,v 1.36.1.1 2007/12/27 13:02:25 roberto Exp $
+** $Id$
 ** Lua standard libraries
 ** See Copyright Notice in lua.h
 */
@@ -46,7 +46,7 @@ LUALIB_API void (luaL_openlibs) (lua_State *L);
 
 
 #ifndef lua_assert
-#define lua_assert(x)	((void)0)
+#define lua_assert(x)	((void)(0))
 #endif
 
 

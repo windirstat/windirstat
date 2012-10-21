@@ -581,8 +581,8 @@ const TValue *luaH_get (Table *t, const TValue *key) {
       if (i != ivalue(key)) break;   /* handle non-32 bit separately */
 # endif
       return luaH_getint(t,i);
-#endif
     }
+#endif
     case LUA_TNUMBER: {
       lua_Integer j;
       if (!tt_integer_valued(key,&j)) break;
