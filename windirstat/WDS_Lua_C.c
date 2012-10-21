@@ -1,5 +1,6 @@
-#include "WDS_Lua_C.h"
 #define luaall_c
+#define LUA_CORE
+#include "WDS_Lua_C.h"
 
 #ifdef _WIN64
 #   pragma warning(push)
@@ -27,6 +28,7 @@
 #include "lundump.c"
 #include "lvm.c"
 #include "lzio.c"
+#include "lnum.c"
 
 #include "lauxlib.c"
 #include "lbaselib.c"
@@ -52,7 +54,7 @@
 #   include "lua.c"
 #endif // WDS_LUA_NO_LUAC
 
-#include "modules/lwinreg.c"
+//#include "modules/lwinreg.c"
 
 #ifdef _WIN64
 #   pragma warning(pop)

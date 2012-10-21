@@ -13,7 +13,10 @@ using namespace std;
 int _tmain(int argc, TCHAR* argv[], TCHAR* envp[])
 {
 	int nRetCode = 0;
-    _tprintf(_T("Hello world\n"));
+    lua_State* config = luaL_newstate();
+    if(config)
+    {
+    }
 
 	return nRetCode;
 }

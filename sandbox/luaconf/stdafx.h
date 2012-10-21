@@ -43,3 +43,4 @@
 
 #include <stdio.h>
 #include <tchar.h>
+#include <WDS_Lua_C.h>

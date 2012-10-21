@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8.00"
+	Version="8,00"
 	Name="lua_conf"
 	ProjectGUID="{66A24518-ACE0-4C57-96B0-FF9F324E0985}"
 	RootNamespace="lua_conf"
@@ -46,7 +46,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="$(ProjectDir)\..\..;$(ProjectDir)\..\..\lua\src"
+				AdditionalIncludeDirectories="$(ProjectDir)\..\..;$(ProjectDir)\..\..\lua\src;$(ProjectDir)\..\..\windirstat"
 				PreprocessorDefinitions="__NOT_WDS;WIN32;_DEBUG;_CONSOLE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -127,7 +127,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="$(ProjectDir)\..\..;$(ProjectDir)\..\..\lua\src"
+				AdditionalIncludeDirectories="$(ProjectDir)\..\..;$(ProjectDir)\..\..\lua\src;$(ProjectDir)\..\..\windirstat"
 				PreprocessorDefinitions="__NOT_WDS;WIN32;_DEBUG;_CONSOLE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -207,7 +207,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="$(ProjectDir)\..\..;$(ProjectDir)\..\..\lua\src"
+				AdditionalIncludeDirectories="$(ProjectDir)\..\..;$(ProjectDir)\..\..\lua\src;$(ProjectDir)\..\..\windirstat"
 				PreprocessorDefinitions="__NOT_WDS;WIN32;NDEBUG;_CONSOLE"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="2"
@@ -288,7 +288,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="$(ProjectDir)\..\..;$(ProjectDir)\..\..\lua\src"
+				AdditionalIncludeDirectories="$(ProjectDir)\..\..;$(ProjectDir)\..\..\lua\src;$(ProjectDir)\..\..\windirstat"
 				PreprocessorDefinitions="__NOT_WDS;WIN32;NDEBUG;_CONSOLE"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="2"

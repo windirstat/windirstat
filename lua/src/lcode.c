@@ -238,10 +238,11 @@ static int addk (FuncState *fs, TValue *k, TValue *v) {
   /* Note: Integer-valued LUA_TNUMBER's are handled as in unpatched Lua (below)
   */
   if (ttype(idx)==LUA_TINT) {
+    int i;
 # ifdef LNUM_INT64
     lua_assert( (int)ivalue(idx) == ivalue(idx) );  /* make sure no data is lost in the casting */
 # endif
-    int i= (int)ivalue(idx);
+    i= (int)ivalue(idx);
     lua_assert(luaO_rawequalObj(&fs->f->k[i], v));
     return i;
   }
