@@ -14,6 +14,7 @@
 #include "lobject.h"
 #include "lopcodes.h"
 #include "lundump.h"
+#include "lnum.h"
 
 #define PrintFunction	luaU_print
 
@@ -59,8 +60,17 @@ static void PrintConstant(const Proto* f, int i)
   case LUA_TBOOLEAN:
 	printf(bvalue(o) ? "true" : "false");
 	break;
+#ifdef LUA_TINT
+  case LUA_TINT:
+	printf(LUA_INTEGER_FMT,ivalue(o));
+	break;
+#endif
   case LUA_TNUMBER:
-	printf(LUA_NUMBER_FMT,nvalue(o));
+#ifdef LNUM_COMPLEX
+    { lua_Number b= nvalue_img_fast(o);    /* TBD: Do we get complex values here? */
+	  printf( LUA_NUMBER_FMT "%s" LUA_NUMBER_FMT "i", nvalue_fast(o), b>=0 ? "+":"", b ); }
+#endif
+	printf(LUA_NUMBER_FMT,nvalue_fast(o));
 	break;
   case LUA_TSTRING:
 	PrintString(rawtsvalue(o));

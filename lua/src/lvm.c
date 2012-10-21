@@ -25,22 +25,35 @@
 #include "ltable.h"
 #include "ltm.h"
 #include "lvm.h"
-
-
+#include "llex.h"
+#include "lnum.h"
 
 /* limit for table tag-method chains (to avoid loops) */
 #define MAXTAGLOOP	100
 
 
-const TValue *luaV_tonumber (const TValue *obj, TValue *n) {
-  lua_Number num;
+/*
+ * If 'obj' is a string, it is tried to be interpreted as a number.
+ */
+const TValue *luaV_tonumber ( const TValue *obj, TValue *n) {
+  lua_Number d;
+  lua_Integer i;
+  
   if (ttisnumber(obj)) return obj;
-  if (ttisstring(obj) && luaO_str2d(svalue(obj), &num)) {
-    setnvalue(n, num);
-    return n;
-  }
-  else
-    return NULL;
+
+  if (ttisstring(obj)) {
+    switch( luaO_str2d( svalue(obj), &d, &i ) ) {
+        case TK_INT:
+            setivalue(n,i); return n;
+        case TK_NUMBER: 
+            setnvalue(n,d); return n;
+#ifdef LNUM_COMPLEX
+        case TK_NUMBER2:    /* "N.NNNi", != 0 */
+            setnvalue_complex_fast(n, d*I); return n;
+#endif
+        }
+    }
+  return NULL;
 }
 
 
@@ -49,8 +62,7 @@ int luaV_tostring (lua_State *L, StkId obj) {
     return 0;
   else {
     char s[LUAI_MAXNUMBER2STR];
-    lua_Number n = nvalue(obj);
-    lua_number2str(s, n);
+    luaO_num2buf(s,obj);
     setsvalue2s(L, obj, luaS_new(L, s));
     return 1;
   }
@@ -222,59 +234,140 @@ static int l_strcmp (const TString *ls, const TString *rs) {
 }
 
 
+#ifdef LNUM_COMPLEX
+void error_complex( lua_State *L, const TValue *l, const TValue *r )
+{
+  char buf1[ LUAI_MAXNUMBER2STR ];
+  char buf2[ LUAI_MAXNUMBER2STR ];
+  luaO_num2buf( buf1, l );
+  luaO_num2buf( buf2, r );
+  luaG_runerror( L, "unable to compare: %s with %s", buf1, buf2 );
+  /* no return */
+}
+#endif
+
+
 int luaV_lessthan (lua_State *L, const TValue *l, const TValue *r) {
   int res;
-  if (ttype(l) != ttype(r))
-    return luaG_ordererror(L, l, r);
-  else if (ttisnumber(l))
-    return luai_numlt(nvalue(l), nvalue(r));
-  else if (ttisstring(l))
-    return l_strcmp(rawtsvalue(l), rawtsvalue(r)) < 0;
-  else if ((res = call_orderTM(L, l, r, TM_LT)) != -1)
-    return res;
+  int tl= ttype(l);
+
+  if (tl == ttype(r)) {
+    switch(tl) {
+#ifdef LUA_TINT
+      case LUA_TINT:
+        return ivalue(l) < ivalue(r);
+#endif
+      case LUA_TNUMBER:   
+#ifdef LNUM_COMPLEX
+        if ( (nvalue_img_fast(l)!=0) || (nvalue_img_fast(r)!=0) )
+          error_complex( L, l, r );
+#endif
+        return luai_numlt(nvalue_fast(l), nvalue_fast(r));
+      case LUA_TSTRING:   
+        return l_strcmp(rawtsvalue(l), rawtsvalue(r)) < 0;
+    }
+    if ((res = call_orderTM(L, l, r, TM_LT)) != -1)
+      return res;
+    /* fall through to 'luaG_ordererror()' */
+  }
+#ifdef LUA_TINT
+  else if (ttype_ext(l) == ttype_ext(r)) {
+    lua_Integer tmp;
+      /* Avoid accuracy losing casts: if 'r' is integer by value, do comparisons
+       * in integer realm. Only otherwise cast 'l' to FP (which might change its
+       * value).
+       */
+# ifdef LNUM_COMPLEX
+    if ( (nvalue_img(l)!=0) || (nvalue_img(r)!=0) )
+      error_complex( L, l, r );
+# endif
+    if (tl==LUA_TINT) {  /* l:int, r:num */
+      return tt_integer_valued(r,&tmp) ? (ivalue(l) < tmp)
+                : luai_numlt( cast_num(ivalue(l)), nvalue_fast(r) );
+    } else {  /* l:num, r:int */
+      return tt_integer_valued(l,&tmp) ? (tmp < ivalue(r))
+                : luai_numlt( nvalue_fast(l), cast_num(ivalue(r)) );
+    }
+  }
+#endif
   return luaG_ordererror(L, l, r);
 }
 
 
 static int lessequal (lua_State *L, const TValue *l, const TValue *r) {
   int res;
-  if (ttype(l) != ttype(r))
-    return luaG_ordererror(L, l, r);
-  else if (ttisnumber(l))
-    return luai_numle(nvalue(l), nvalue(r));
-  else if (ttisstring(l))
-    return l_strcmp(rawtsvalue(l), rawtsvalue(r)) <= 0;
-  else if ((res = call_orderTM(L, l, r, TM_LE)) != -1)  /* first try `le' */
-    return res;
-  else if ((res = call_orderTM(L, r, l, TM_LT)) != -1)  /* else try `lt' */
-    return !res;
+  int tl= ttype(l);
+
+  if (tl == ttype(r)) {
+    switch(tl) {
+#ifdef LUA_TINT
+      case LUA_TINT:
+        return ivalue(l) <= ivalue(r);
+#endif
+      case LUA_TNUMBER:
+#ifdef LNUM_COMPLEX
+        if ( (nvalue_img_fast(l)!=0) || (nvalue_img_fast(r)!=0) )
+          error_complex( L, l, r );
+#endif
+        return luai_numle(nvalue_fast(l), nvalue_fast(r));
+      case LUA_TSTRING:
+        return l_strcmp(rawtsvalue(l), rawtsvalue(r)) <= 0;
+    }
+
+    if ((res = call_orderTM(L, l, r, TM_LE)) != -1)  /* first try `le' */
+      return res;
+    else if ((res = call_orderTM(L, r, l, TM_LT)) != -1)  /* else try `lt' */
+      return !res;
+    /* fall through to 'luaG_ordererror()' */
+  }
+#ifdef LUA_TINT
+  else if (ttype_ext(l) == ttype_ext(r)) {
+    lua_Integer tmp;
+# ifdef LNUM_COMPLEX
+    if ( (nvalue_img(l)!=0) || (nvalue_img(r)!=0) )
+      error_complex( L, l, r );
+# endif
+    if (tl==LUA_TINT) {  /* l:int, r:num */
+      return tt_integer_valued(r,&tmp) ? (ivalue(l) <= tmp)
+                : luai_numle( cast_num(ivalue(l)), nvalue_fast(r) );
+    } else {  /* l:num, r:int */
+      return tt_integer_valued(l,&tmp) ? (tmp <= ivalue(r))
+                : luai_numle( nvalue_fast(l), cast_num(ivalue(r)) );
+    }
+  }
+#endif
   return luaG_ordererror(L, l, r);
 }
 
 
-int luaV_equalval (lua_State *L, const TValue *t1, const TValue *t2) {
+/* Note: 'luaV_equalval()' and 'luaO_rawequalObj()' have largely overlapping
+ *       implementation.
+ */
+int luaV_equalval (lua_State *L, const TValue *l, const TValue *r) {
   const TValue *tm;
-  lua_assert(ttype(t1) == ttype(t2));
-  switch (ttype(t1)) {
+  lua_assert( ttype_ext(l) == ttype_ext(r) );
+  switch (ttype(l)) {
     case LUA_TNIL: return 1;
-    case LUA_TNUMBER: return luai_numeq(nvalue(t1), nvalue(t2));
-    case LUA_TBOOLEAN: return bvalue(t1) == bvalue(t2);  /* true must be 1 !! */
-    case LUA_TLIGHTUSERDATA: return pvalue(t1) == pvalue(t2);
+#ifdef LUA_TINT
+    case LUA_TINT:
+#endif
+    case LUA_TNUMBER: return luaO_rawequalObj(l,r);
+    case LUA_TBOOLEAN: return bvalue(l) == bvalue(r);  /* true must be 1 !! */
+    case LUA_TLIGHTUSERDATA: return pvalue(l) == pvalue(r);
     case LUA_TUSERDATA: {
-      if (uvalue(t1) == uvalue(t2)) return 1;
-      tm = get_compTM(L, uvalue(t1)->metatable, uvalue(t2)->metatable,
-                         TM_EQ);
+      if (uvalue(l) == uvalue(r)) return 1;
+      tm = get_compTM(L, uvalue(l)->metatable, uvalue(r)->metatable, TM_EQ);
       break;  /* will try TM */
     }
     case LUA_TTABLE: {
-      if (hvalue(t1) == hvalue(t2)) return 1;
-      tm = get_compTM(L, hvalue(t1)->metatable, hvalue(t2)->metatable, TM_EQ);
+      if (hvalue(l) == hvalue(r)) return 1;
+      tm = get_compTM(L, hvalue(l)->metatable, hvalue(r)->metatable, TM_EQ);
       break;  /* will try TM */
     }
-    default: return gcvalue(t1) == gcvalue(t2);
+    default: return gcvalue(l) == gcvalue(r);
   }
   if (tm == NULL) return 0;  /* no TM? */
-  callTMres(L, L->top, tm, t1, t2);  /* call TM */
+  callTMres(L, L->top, tm, l, r);  /* call TM */
   return !l_isfalse(L->top);
 }
 
@@ -314,30 +407,6 @@ void luaV_concat (lua_State *L, int total, int last) {
 }
 
 
-static void Arith (lua_State *L, StkId ra, const TValue *rb,
-                   const TValue *rc, TMS op) {
-  TValue tempb, tempc;
-  const TValue *b, *c;
-  if ((b = luaV_tonumber(rb, &tempb)) != NULL &&
-      (c = luaV_tonumber(rc, &tempc)) != NULL) {
-    lua_Number nb = nvalue(b), nc = nvalue(c);
-    switch (op) {
-      case TM_ADD: setnvalue(ra, luai_numadd(nb, nc)); break;
-      case TM_SUB: setnvalue(ra, luai_numsub(nb, nc)); break;
-      case TM_MUL: setnvalue(ra, luai_nummul(nb, nc)); break;
-      case TM_DIV: setnvalue(ra, luai_numdiv(nb, nc)); break;
-      case TM_MOD: setnvalue(ra, luai_nummod(nb, nc)); break;
-      case TM_POW: setnvalue(ra, luai_numpow(nb, nc)); break;
-      case TM_UNM: setnvalue(ra, luai_numunm(nb)); break;
-      default: lua_assert(0); break;
-    }
-  }
-  else if (!call_binTM(L, rb, rc, ra, op))
-    luaG_aritherror(L, rb, rc);
-}
-
-
-
 /*
 ** some macros for common tasks in `luaV_execute'
 */
@@ -361,17 +430,177 @@ static void Arith (lua_State *L, StkId ra, const TValue *rb,
 #define Protect(x)	{ L->savedpc = pc; {x;}; base = L->base; }
 
 
-#define arith_op(op,tm) { \
-        TValue *rb = RKB(i); \
-        TValue *rc = RKC(i); \
-        if (ttisnumber(rb) && ttisnumber(rc)) { \
-          lua_Number nb = nvalue(rb), nc = nvalue(rc); \
-          setnvalue(ra, op(nb, nc)); \
-        } \
-        else \
-          Protect(Arith(L, ra, rb, rc, tm)); \
-      }
+/* Note: if called for unary operations, 'rc'=='rb'.
+ */
+static void Arith (lua_State *L, StkId ra, const TValue *rb,
+                   const TValue *rc, TMS op) {
+  TValue tempb, tempc;
+  const TValue *b, *c;
+  lua_Number nb,nc;
 
+  if ((b = luaV_tonumber(rb, &tempb)) != NULL &&
+      (c = luaV_tonumber(rc, &tempc)) != NULL) {
+
+    /* Keep integer arithmetics in the integer realm, if possible.
+     */
+#ifdef LUA_TINT
+    if (ttisint(b) && ttisint(c)) {
+      lua_Integer ib = ivalue(b), ic = ivalue(c);
+      lua_Integer *ri = &ra->value.i;
+      ra->tt= LUA_TINT;  /* part of 'setivalue(ra)' */
+      switch (op) {
+        case TM_ADD: if (try_addint( ri, ib, ic)) return; break;
+        case TM_SUB: if (try_subint( ri, ib, ic)) return; break;
+        case TM_MUL: if (try_mulint( ri, ib, ic)) return; break;
+        case TM_DIV: if (try_divint( ri, ib, ic)) return; break;
+        case TM_MOD: if (try_modint( ri, ib, ic)) return; break;
+        case TM_POW: if (try_powint( ri, ib, ic)) return; break;
+        case TM_UNM: if (try_unmint( ri, ib)) return; break;
+        default: lua_assert(0);
+      }
+    }
+#endif
+    /* Fallback to floating point, when leaving range. */
+
+#ifdef LNUM_COMPLEX
+    if ((nvalue_img(b)!=0) || (nvalue_img(c)!=0)) {
+      lua_Complex r;
+      if (op==TM_UNM) {
+        r= -nvalue_complex_fast(b);     /* never an integer (or scalar) */
+        setnvalue_complex_fast( ra, r );
+      } else {
+        lua_Complex bb= nvalue_complex(b), cc= nvalue_complex(c);
+        switch (op) {
+          case TM_ADD: r= bb + cc; break;
+          case TM_SUB: r= bb - cc; break;
+          case TM_MUL: r= bb * cc; break;
+          case TM_DIV: r= bb / cc; break;
+          case TM_MOD: 
+            luaG_runerror(L, "attempt to use %% on complex numbers");  /* no return */
+          case TM_POW: r= luai_vectpow( bb, cc ); break;
+          default: lua_assert(0); r=0;
+        }
+        setnvalue_complex( ra, r );
+      }
+      return;
+    }
+#endif
+    nb = nvalue(b); nc = nvalue(c);
+    switch (op) {
+      case TM_ADD: setnvalue(ra, luai_numadd(nb, nc)); return;
+      case TM_SUB: setnvalue(ra, luai_numsub(nb, nc)); return;
+      case TM_MUL: setnvalue(ra, luai_nummul(nb, nc)); return;
+      case TM_DIV: setnvalue(ra, luai_numdiv(nb, nc)); return;
+      case TM_MOD: setnvalue(ra, luai_nummod(nb, nc)); return;
+      case TM_POW: setnvalue(ra, luai_numpow(nb, nc)); return;
+      case TM_UNM: setnvalue(ra, luai_numunm(nb)); return;
+      default: lua_assert(0);
+    }
+  }
+  
+  /* Either operand not a number */
+  if (!call_binTM(L, rb, rc, ra, op))
+    luaG_aritherror(L, rb, rc);
+}
+
+/* Helper macro to sort arithmetic operations into four categories:
+ *  TK_INT: integer - integer operands
+ *  TK_NUMBER: number - number (non complex, either may be integer)
+ *  TK_NUMBER2: complex numbers (at least the other)
+ *  0: non-numeric (at least the other)
+*/
+#ifdef LNUM_COMPLEX
+static inline int arith_mode( const TValue *rb, const TValue *rc ) {
+  if (ttisint(rb) && ttisint(rc)) return TK_INT;
+  if (ttiscomplex(rb) || ttiscomplex(rc)) return TK_NUMBER2;
+  if (ttisnumber(rb) && ttisnumber(rc)) return TK_NUMBER;
+  return 0;
+}
+static inline int arith_mode1( const TValue *rb ) {
+  return ttisint(rb) ? TK_INT :
+         ttiscomplex(rb) ? TK_NUMBER2 :
+         ttisnumber(rb) ? TK_NUMBER : 0;
+}
+#elif defined(LUA_TINT)
+# define arith_mode(rb,rc) \
+    ( (ttisint(rb) && ttisint(rc)) ? TK_INT : \
+      (ttisnumber(rb) && ttisnumber(rc)) ? TK_NUMBER : 0 )
+# define arith_mode1(rb) \
+    ( ttisint(rb) ? TK_INT : ttisnumber(rb) ? TK_NUMBER : 0 )
+#else
+# define arith_mode(rb,rc) ( (ttisnumber(rb) && ttisnumber(rc)) ? TK_NUMBER : 0 )
+# define arith_mode1(rb) ( ttisnumber(rb) ? TK_NUMBER : 0 )
+#endif
+
+/* arith_op macro for two operators:
+ * automatically chooses, which function (number, integer, complex) to use
+ */
+#ifdef LUA_TINT
+# define ARITH_OP2_START( op_num, op_int ) \
+  int failed= 0; \
+  switch( arith_mode(rb,rc) ) { \
+    case TK_INT: \
+      if (op_int ( &(ra)->value.i, ivalue(rb), ivalue(rc) )) \
+        { ra->tt= LUA_TINT; break; } /* else flow through */ \
+    case TK_NUMBER: \
+      setnvalue(ra, op_num ( nvalue(rb), nvalue(rc) )); break;
+#else
+# define ARITH_OP2_START( op_num, _ ) \
+  int failed= 0; \
+  switch( arith_mode(rb,rc) ) { \
+    case TK_NUMBER: \
+      setnvalue(ra, op_num ( nvalue(rb), nvalue(rc) )); break;
+#endif
+
+#define ARITH_OP_END \
+    default: \
+      failed= 1; break; \
+  } if (!failed) continue;
+
+#define arith_op_continue_scalar( op_num, op_int ) \
+    ARITH_OP2_START( op_num, op_int ) \
+    ARITH_OP_END
+
+#ifdef LNUM_COMPLEX
+# define arith_op_continue( op_num, op_int, op_complex ) \
+    ARITH_OP2_START( op_num, op_int ) \
+      case TK_NUMBER2: \
+        setnvalue_complex( ra, op_complex ( nvalue_complex(rb), nvalue_complex(rc) ) ); break; \
+    ARITH_OP_END
+#else
+# define arith_op_continue(op_num,op_int,_) arith_op_continue_scalar(op_num,op_int)
+#endif
+
+/* arith_op macro for one operator:
+ */
+#ifdef LUA_TINT
+# define ARITH_OP1_START( op_num, op_int ) \
+  int failed= 0; \
+  switch( arith_mode1(rb) ) { \
+    case TK_INT: \
+      if (op_int ( &(ra)->value.i, ivalue(rb) )) \
+        { ra->tt= LUA_TINT; break; } /* else flow through */ \
+    case TK_NUMBER: \
+      setnvalue(ra, op_num (nvalue(rb))); break;
+#else
+# define ARITH_OP1_START( op_num, _ ) \
+  int failed= 0; \
+  switch( arith_mode1(rb) ) { \
+    case TK_NUMBER: \
+      setnvalue(ra, op_num (nvalue(rb))); break;
+#endif
+
+#ifdef LNUM_COMPLEX
+# define arith_op1_continue( op_num, op_int, op_complex ) \
+    ARITH_OP1_START( op_num, op_int ) \
+      case TK_NUMBER2: \
+        setnvalue_complex( ra, op_complex ( nvalue_complex_fast(rb) )); break; \
+    ARITH_OP_END
+#else
+# define arith_op1_continue( op_num, op_int, _ ) \
+    ARITH_OP1_START( op_num, op_int ) \
+    ARITH_OP_END
+#endif
 
 
 void luaV_execute (lua_State *L, int nexeccalls) {
@@ -472,38 +701,45 @@ void luaV_execute (lua_State *L, int nexeccalls) {
         continue;
       }
       case OP_ADD: {
-        arith_op(luai_numadd, TM_ADD);
+        TValue *rb = RKB(i), *rc= RKC(i);
+        arith_op_continue( luai_numadd, try_addint, luai_vectadd );
+        Protect(Arith(L, ra, rb, rc, TM_ADD)); \
         continue;
       }
       case OP_SUB: {
-        arith_op(luai_numsub, TM_SUB);
+        TValue *rb = RKB(i), *rc= RKC(i);
+        arith_op_continue( luai_numsub, try_subint, luai_vectsub );
+        Protect(Arith(L, ra, rb, rc, TM_SUB));
         continue;
       }
       case OP_MUL: {
-        arith_op(luai_nummul, TM_MUL);
+        TValue *rb = RKB(i), *rc= RKC(i);
+        arith_op_continue(luai_nummul, try_mulint, luai_vectmul);
+        Protect(Arith(L, ra, rb, rc, TM_MUL));
         continue;
       }
       case OP_DIV: {
-        arith_op(luai_numdiv, TM_DIV);
+        TValue *rb = RKB(i), *rc= RKC(i);
+        arith_op_continue(luai_numdiv, try_divint, luai_vectdiv);
+        Protect(Arith(L, ra, rb, rc, TM_DIV));
         continue;
       }
       case OP_MOD: {
-        arith_op(luai_nummod, TM_MOD);
+        TValue *rb = RKB(i), *rc= RKC(i);
+        arith_op_continue_scalar(luai_nummod, try_modint);  /* scalars only */
+        Protect(Arith(L, ra, rb, rc, TM_MOD));
         continue;
       }
       case OP_POW: {
-        arith_op(luai_numpow, TM_POW);
+        TValue *rb = RKB(i), *rc= RKC(i);
+        arith_op_continue(luai_numpow, try_powint, luai_vectpow);
+        Protect(Arith(L, ra, rb, rc, TM_POW));
         continue;
       }
       case OP_UNM: {
         TValue *rb = RB(i);
-        if (ttisnumber(rb)) {
-          lua_Number nb = nvalue(rb);
-          setnvalue(ra, luai_numunm(nb));
-        }
-        else {
-          Protect(Arith(L, ra, rb, rb, TM_UNM));
-        }
+        arith_op1_continue(luai_numunm, try_unmint, luai_vectunm);
+        Protect(Arith(L, ra, rb, rb, TM_UNM));
         continue;
       }
       case OP_NOT: {
@@ -515,11 +751,11 @@ void luaV_execute (lua_State *L, int nexeccalls) {
         const TValue *rb = RB(i);
         switch (ttype(rb)) {
           case LUA_TTABLE: {
-            setnvalue(ra, cast_num(luaH_getn(hvalue(rb))));
+            setivalue(ra, luaH_getn(hvalue(rb)));
             break;
           }
           case LUA_TSTRING: {
-            setnvalue(ra, cast_num(tsvalue(rb)->len));
+            setivalue(ra, tsvalue(rb)->len);
             break;
           }
           default: {  /* try metamethod */
@@ -652,14 +888,33 @@ void luaV_execute (lua_State *L, int nexeccalls) {
         }
       }
       case OP_FORLOOP: {
-        lua_Number step = nvalue(ra+2);
-        lua_Number idx = luai_numadd(nvalue(ra), step); /* increment index */
-        lua_Number limit = nvalue(ra+1);
-        if (luai_numlt(0, step) ? luai_numle(idx, limit)
-                                : luai_numle(limit, idx)) {
-          dojump(L, pc, GETARG_sBx(i));  /* jump back */
-          setnvalue(ra, idx);  /* update internal index... */
-          setnvalue(ra+3, idx);  /* ...and external index */
+        /* If start,step and limit are all integers, we don't need to check
+         * against overflow in the looping.
+         */
+#ifdef LUA_TINT
+        if (ttisint(ra) && ttisint(ra+1) && ttisint(ra+2)) {
+          lua_Integer step = ivalue(ra+2);
+          lua_Integer idx = ivalue(ra) + step; /* increment index */
+          lua_Integer limit = ivalue(ra+1);
+          if (step > 0 ? (idx <= limit) : (limit <= idx)) {
+            dojump(L, pc, GETARG_sBx(i));  /* jump back */
+            setivalue(ra, idx);  /* update internal index... */
+            setivalue(ra+3, idx);  /* ...and external index */
+          }
+        } else
+#endif
+        {
+          /* non-integer looping (don't use 'nvalue_fast', some may be integer!) 
+          */
+          lua_Number step = nvalue(ra+2);
+          lua_Number idx = luai_numadd(nvalue(ra), step); /* increment index */
+          lua_Number limit = nvalue(ra+1);
+          if (luai_numlt(0, step) ? luai_numle(idx, limit)
+                                  : luai_numle(limit, idx)) {
+            dojump(L, pc, GETARG_sBx(i));  /* jump back */
+            setnvalue(ra, idx);  /* update internal index... */
+            setnvalue(ra+3, idx);  /* ...and external index */
+          }
         }
         continue;
       }
@@ -668,12 +923,24 @@ void luaV_execute (lua_State *L, int nexeccalls) {
         const TValue *plimit = ra+1;
         const TValue *pstep = ra+2;
         L->savedpc = pc;  /* next steps may throw errors */
+        /* Using same location for tonumber's both arguments, effectively does
+         * in-place modification (string->number). */
         if (!tonumber(init, ra))
           luaG_runerror(L, LUA_QL("for") " initial value must be a number");
         else if (!tonumber(plimit, ra+1))
           luaG_runerror(L, LUA_QL("for") " limit must be a number");
         else if (!tonumber(pstep, ra+2))
           luaG_runerror(L, LUA_QL("for") " step must be a number");
+        /* Step back one value (keep within integers if we can)
+         */
+#ifdef LUA_TINT
+        if (ttisint(ra) && ttisint(pstep) &&
+            try_subint( &ra->value.i, ivalue(ra), ivalue(pstep) )) {
+          dojump(L, pc, GETARG_sBx(i));
+          continue;
+        }
+        /* fallback to floating point */
+#endif
         setnvalue(ra, luai_numsub(nvalue(ra), nvalue(pstep)));
         dojump(L, pc, GETARG_sBx(i));
         continue;
@@ -711,7 +978,7 @@ void luaV_execute (lua_State *L, int nexeccalls) {
           luaH_resizearray(L, h, last);  /* pre-alloc it at once */
         for (; n > 0; n--) {
           TValue *val = ra+n;
-          setobj2t(L, luaH_setnum(L, h, last--), val);
+          setobj2t(L, luaH_setint(L, h, last--), val);
           luaC_barriert(L, h, val);
         }
         continue;

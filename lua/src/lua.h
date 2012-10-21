@@ -14,6 +14,9 @@
 
 
 #include "luaconf.h"
+#if defined(LUA_CORE) || defined(LUA_LIB) || defined(lua_c)
+# include "luaconf_internal.h"
+#endif
 
 
 #define LUA_VERSION	"Lua 5.1"
@@ -70,6 +73,20 @@ typedef void * (*lua_Alloc) (void *ud, void *ptr, size_t osize, size_t nsize);
 ** basic types
 */
 #define LUA_TNONE		(-1)
+
+/* LUA_TINT is an internal type, not visible to applications. There are many
+ * potential values where it can be tweaked to (code autoadjusts to these):
+ *
+ * -2: not 'usual' type value; good since 'LUA_TINT' is not part of the API
+ * LUA_TNUMBER+1: shifts other type values upwards, breaking binary compatibility
+ *     not acceptable for 5.1, maybe 5.2 onwards?
+ *  9: greater than existing (5.1) type values.
+ * -13 (0xff..f3) or 0x13: 'ttisnumber()' and 'ttype_ext()' can be reduced to
+ *     bitmask operation instead of conditional (may be good for pipelined processors)
+*/
+#if defined(LNUM_INT32) || defined(LNUM_INT64)
+# define LUA_TINT (-2)
+#endif
 
 #define LUA_TNIL		0
 #define LUA_TBOOLEAN		1
@@ -138,6 +155,8 @@ LUA_API int             (lua_iscfunction) (lua_State *L, int idx);
 LUA_API int             (lua_isuserdata) (lua_State *L, int idx);
 LUA_API int             (lua_type) (lua_State *L, int idx);
 LUA_API const char     *(lua_typename) (lua_State *L, int tp);
+
+LUA_API int             (lua_isinteger) (lua_State *L, int idx);
 
 LUA_API int            (lua_equal) (lua_State *L, int idx1, int idx2);
 LUA_API int            (lua_rawequal) (lua_State *L, int idx1, int idx2);
@@ -244,6 +263,19 @@ LUA_API lua_Alloc (lua_getallocf) (lua_State *L, void **ud);
 LUA_API void lua_setallocf (lua_State *L, lua_Alloc f, void *ud);
 
 
+/*
+* It is unnecessary to break Lua C API 'lua_tonumber()' compatibility, just
+* because the Lua number type is complex. Most C modules would use scalars
+* only. We'll introduce new 'lua_tocomplex' and 'lua_pushcomplex' for when
+* the module really wants to use them.
+*/
+#ifdef LNUM_COMPLEX
+  #include <complex.h>
+  typedef LUA_NUMBER complex lua_Complex;
+  LUA_API lua_Complex (lua_tocomplex) (lua_State *L, int idx);
+  LUA_API void (lua_pushcomplex) (lua_State *L, lua_Complex v);
+#endif
+
 
 /* 
 ** ===============================================================
@@ -268,7 +300,12 @@ LUA_API void lua_setallocf (lua_State *L, lua_Alloc f, void *ud);
 #define lua_isboolean(L,n)	(lua_type(L, (n)) == LUA_TBOOLEAN)
 #define lua_isthread(L,n)	(lua_type(L, (n)) == LUA_TTHREAD)
 #define lua_isnone(L,n)		(lua_type(L, (n)) == LUA_TNONE)
-#define lua_isnoneornil(L, n)	(lua_type(L, (n)) <= 0)
+
+#if LUA_TINT < 0
+# define lua_isnoneornil(L, n)	( (lua_type(L,(n)) <= 0) && (lua_type(L,(n)) != LUA_TINT) )
+#else
+# define lua_isnoneornil(L, n)	(lua_type(L, (n)) <= 0)
+#endif
 
 #define lua_pushliteral(L, s)	\
 	lua_pushlstring(L, "" s, (sizeof(s)/sizeof(char))-1)
@@ -386,3 +423,4 @@ struct lua_Debug {
 
 
 #endif
+

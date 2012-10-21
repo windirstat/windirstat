@@ -1,5 +1,5 @@
 /*
-** $Id: llimits.h,v 1.69.1.1 2007/12/27 13:02:25 roberto Exp $
+** $Id$
 ** Limits, basic types, and some other `installation-dependent' definitions
 ** See Copyright Notice in lua.h
 */
@@ -49,6 +49,7 @@ typedef LUAI_USER_ALIGNMENT_T L_Umaxalign;
 
 /* result of a `usual argument conversion' over lua_Number */
 typedef LUAI_UACNUMBER l_uacNumber;
+typedef LUAI_UACINTEGER l_uacInteger;
 
 
 /* internal assertions for in-house debugging */
@@ -59,7 +60,7 @@ typedef LUAI_UACNUMBER l_uacNumber;
 
 #else
 
-#define lua_assert(c)		((void)0)
+#define lua_assert(c)		((void)(0))
 #define check_exp(c,e)		(e)
 #define api_check		luai_apicheck
 
@@ -78,7 +79,6 @@ typedef LUAI_UACNUMBER l_uacNumber;
 #define cast_byte(i)	cast(lu_byte, (i))
 #define cast_num(i)	cast(lua_Number, (i))
 #define cast_int(i)	cast(int, (i))
-
 
 
 /*

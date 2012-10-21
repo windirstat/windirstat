@@ -29,7 +29,10 @@ enum RESERVED {
   TK_RETURN, TK_THEN, TK_TRUE, TK_UNTIL, TK_WHILE,
   /* other terminal symbols */
   TK_CONCAT, TK_DOTS, TK_EQ, TK_GE, TK_LE, TK_NE, TK_NUMBER,
-  TK_NAME, TK_STRING, TK_EOS
+  TK_NAME, TK_STRING, TK_EOS, TK_INT
+#ifdef LNUM_COMPLEX
+  , TK_NUMBER2   /* imaginary constants: Ni */ 
+#endif
 };
 
 /* number of reserved words */
@@ -39,9 +42,12 @@ enum RESERVED {
 /* array with token `names' */
 LUAI_DATA const char *const luaX_tokens [];
 
-
+/* SemInfo is a local data structure of 'llex.c', used for carrying a string
+ * or a number. A separate token (TK_*) will tell, how to interpret the data.
+ */      
 typedef union {
   lua_Number r;
+  lua_Integer i;
   TString *ts;
 } SemInfo;  /* semantics information */
 

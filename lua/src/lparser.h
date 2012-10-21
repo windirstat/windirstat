@@ -1,5 +1,5 @@
 /*
-** $Id: lparser.h,v 1.57.1.1 2007/12/27 13:02:25 roberto Exp $
+** $Id$
 ** Lua Parser
 ** See Copyright Notice in lua.h
 */
@@ -31,7 +31,11 @@ typedef enum {
   VRELOCABLE,	/* info = instruction pc */
   VNONRELOC,	/* info = result register */
   VCALL,	/* info = instruction pc */
-  VVARARG	/* info = instruction pc */
+  VVARARG,	/* info = instruction pc */
+  VKINT     /* ival = integer value */
+#ifdef LNUM_COMPLEX
+  ,VKNUM2   /* nval = imaginary value */
+#endif
 } expkind;
 
 typedef struct expdesc {
@@ -39,6 +43,7 @@ typedef struct expdesc {
   union {
     struct { int info, aux; } s;
     lua_Number nval;
+    lua_Integer ival;
   } u;
   int t;  /* patch list of `exit when true' */
   int f;  /* patch list of `exit when false' */

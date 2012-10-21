@@ -20,12 +20,12 @@ MYLIBS=
 
 # == END OF USER SETTINGS. NO NEED TO CHANGE ANYTHING BELOW THIS LINE =========
 
-PLATS= aix ansi bsd freebsd generic linux macosx mingw posix solaris
+PLATS= aix ansi bsd freebsd generic linux linux_sse macosx mingw posix solaris
 
 LUA_A=	liblua.a
 CORE_O=	lapi.o lcode.o ldebug.o ldo.o ldump.o lfunc.o lgc.o llex.o lmem.o \
 	lobject.o lopcodes.o lparser.o lstate.o lstring.o ltable.o ltm.o  \
-	lundump.o lvm.o lzio.o
+	lundump.o lvm.o lzio.o lnum.o
 LIB_O=	lauxlib.o lbaselib.o ldblib.o liolib.o lmathlib.o loslib.o ltablib.o \
 	lstrlib.o loadlib.o linit.o
 
@@ -98,6 +98,9 @@ generic:
 linux:
 	$(MAKE) all MYCFLAGS=-DLUA_USE_LINUX MYLIBS="-Wl,-E -ldl -lreadline -lhistory -lncurses"
 
+linux_sse:
+	$(MAKE) all MYCFLAGS="-DLUA_USE_LINUX -mfpmath=sse -msse2" MYLIBS="-Wl,-E -ldl -lreadline -lhistory -lncurses"
+
 macosx:
 	$(MAKE) all MYCFLAGS=-DLUA_USE_LINUX MYLIBS="-lreadline"
 # use this on Mac OS X 10.3-
@@ -148,6 +151,7 @@ llex.o: llex.c lua.h luaconf.h ldo.h lobject.h llimits.h lstate.h ltm.h \
 lmathlib.o: lmathlib.c lua.h luaconf.h lauxlib.h lualib.h
 lmem.o: lmem.c lua.h luaconf.h ldebug.h lstate.h lobject.h llimits.h \
   ltm.h lzio.h lmem.h ldo.h
+lnum.o: lnum.c lua.h luaconf.h llex.h lnum.h
 loadlib.o: loadlib.c lua.h luaconf.h lauxlib.h lualib.h
 lobject.o: lobject.c lua.h luaconf.h ldo.h lobject.h llimits.h lstate.h \
   ltm.h lzio.h lmem.h lstring.h lgc.h lvm.h
@@ -178,5 +182,20 @@ lzio.o: lzio.c lua.h luaconf.h llimits.h lmem.h lstate.h lobject.h ltm.h \
   lzio.h
 print.o: print.c ldebug.h lstate.h lua.h luaconf.h lobject.h llimits.h \
   ltm.h lzio.h lmem.h lopcodes.h lundump.h
+
+lua.h: luaconf.h luaconf_internal.h
+
+lapi.c: lnum.h
+lauxlib.c: llimits.h
+lbaselib.c: llimits.h lobject.h lapi.h
+lcode.c: lnum.h
+liolib.c: lnum.h llex.h
+llex.c: lnum.h
+lnum.h: lobject.h
+lobject.c: llex.h lnum.h
+ltable.c: lnum.h
+lua.c: llimits.h
+lvm.c: llex.h lnum.h
+print.c: lnum.h
 
 # (end of Makefile)

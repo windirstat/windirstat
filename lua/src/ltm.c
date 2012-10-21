@@ -19,7 +19,6 @@
 #include "ltm.h"
 
 
-
 const char *const luaT_typenames[] = {
   "nil", "boolean", "userdata", "number",
   "string", "table", "function", "userdata", "thread",
@@ -67,6 +66,11 @@ const TValue *luaT_gettmbyobj (lua_State *L, const TValue *o, TMS event) {
     case LUA_TUSERDATA:
       mt = uvalue(o)->metatable;
       break;
+#ifdef LUA_TINT
+    case LUA_TINT:
+      mt = G(L)->mt[LUA_TNUMBER];
+      break;
+#endif
     default:
       mt = G(L)->mt[ttype(o)];
   }
