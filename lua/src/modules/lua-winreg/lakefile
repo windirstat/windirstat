@@ -1,0 +1,77 @@
+if not WINDOWS then quit('This is only windwos module!') end
+
+if LUA_VER == '5.2' then
+  LUA_NEED = 'lua52'
+  LUA_DIR  = ENV.LUA_DIR_5_2 or ENV.LUA_DIR
+else
+  LUA_NEED = 'lua'
+  LUA_DIR  = ENV.LUA_DIR
+end
+
+lake.define_need('unicode',function()return{
+  defines = {"UNICODE"; "_UNICODE"};
+  flags   = "/UMBS /U_MBS";
+} end)
+
+INSTALL_DIR = INSTALL_DIR or J(LUA_DIR,'libs','winreg')
+
+winreg = c.shared{'winreg',
+  base = 'src';
+  src = {"lua_int64","lua_mtutil","lua_tstring","luawin_dllerror",
+    "win_privileges","win_registry","win_trace","winreg","l52util"
+  };
+  defines  = L(
+    {'WIN32','_WIN32','_WINDOWS'},
+    {"WIN32_LEAN_AND_MEAN"; "WINDLL"; "USRDLL"},
+    IF(DEBUG,  {'_DEBUG', 'DEBUG'},'NDEBUG'),
+    IF(MSVC,   {'_CRT_SECURE_NO_WARNINGS'}),
+    IF(MSVC,   {'_WIN32_WINNT=0x0400','WINVER=0x0400', '_WIN32_IE=0x0300'}),
+    IF(MSVC,   {'CRTAPI1=_cdecl','CRTAPI2=_cdecl','_X86_=1'}),
+    'WINREG_EXPORTS', 'WINREG_API=__declspec(dllexport)'
+  );
+  flags = IF(MSVC,
+      IF(DEBUG, {'-Z7' , '-Od', --[['-MLd']]}, {'-O2', --[['-ML']]}),
+      '-Os -DNDEBUG -s'
+    );
+  libflags = IF(MSVC,IF(DEBUG, '-debug:full -debugtype:cv', '-DEBUG -OPT:REF -OPT:ICF'));
+  needs = {LUA_NEED,IF(UNICODE, 'unicode')};
+  libs  = {"advapi32", "kernel32", "user32"};
+  optimize = false;
+}
+
+target('build',{winreg})
+
+install = target('install', {
+  file.group{odir=J(INSTALL_DIR, 'test'); 
+    src = J('test','*.*');recurse=true;
+  };
+  file.group{odir=J(INSTALL_DIR, 'doc'); 
+    src = J('doc','*.*');recurse=true;
+  };
+  file.group{odir=J(INSTALL_DIR, 'examples'); 
+    src = J('examples','*.*');recurse=true;
+  };
+  target(J(INSTALL_DIR, 'bin', winreg.name .. DLL_EXT),   winreg,   CP );
+})
+
+target('test', install, function()
+  if TESTING then 
+    lake.chdir('test')
+    for file in path.mask('*.lua') do
+      print("run " .. file)
+    end
+    lake.chdir('<')
+  end
+  if not TESTING then 
+    lake.chdir(J(INSTALL_DIR,'test'))
+    for file in path.mask('*.lua') do
+      print("run " .. file)
+      if not utils.execute( LUA_EXE .. ' ' .. file ) then
+        quit("FAIL!")
+      end
+    end
+    lake.chdir('<')
+  end
+end)
+
+default('build')
