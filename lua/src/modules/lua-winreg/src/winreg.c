@@ -3,7 +3,9 @@
 #endif
 
 #include <assert.h>
-#define lua_assert assert
+#ifndef lua_assert
+#   define lua_assert assert
+#endif // lua_assert
 
 #include <lua.h>
 #include <lualib.h>
@@ -137,7 +139,7 @@ HKEY reg_aux_strtohkey(lua_State *L, const char * psz){
 		WIN_TRACEA("DIGIT ROOTKEY %s", psz);
 		return (HKEY)(size_t)x;	        
 	}else{
-		for(pph = ph; pph->name && stricmp(psz, pph->name); pph++);
+		for(pph = ph; pph->name && _stricmp(psz, pph->name); pph++);
 		if(!pph->data)luaL_error(L, "invalid prefix key '%s'", psz);
 		return (HKEY)pph->data;
 	}
@@ -280,7 +282,7 @@ BOOL reg_aux_setvalue(lua_State *L, HKEY hKey, const TCHAR * pszVal, int type, i
 		luaL_buffinit(L, &B);
 		if(lua_istable(L, i)){
 			int n;
-			int last = lua_objlen(L, i);
+			int last = (int)lua_objlen(L, i);
 			for (n = 1; n <= last; n++) {
 				lua_rawgeti(L, i, n);
 				luaL_addstring(&B, lua_checkstring(L, -1));
