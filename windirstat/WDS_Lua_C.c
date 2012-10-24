@@ -25,20 +25,30 @@
 #include "lstring.c"
 #include "ltable.c"
 #include "ltm.c"
+#if _MSC_VER >= 1400
+#   pragma push_macro("LoadString")
+#   undef LoadString
+#   define LoadString lundump_LoadString
+#else
+#   error "LoadString from lundump.c will conflict with name from Win32 API"
+#endif
 #include "lundump.c"
+#if _MSC_VER >= 1400
+#   pragma pop_macro("LoadString")
+#endif
 #include "lvm.c"
 #include "lzio.c"
+
+// Patches
 #include "lnum.c"
 
+// Libraries
 #include "lauxlib.c"
 #include "lbaselib.c"
 #include "ldblib.c"
 #ifndef WDS_LUA_NO_IOLIB
 #   include "liolib.c"
 #endif // WDS_LUA_NO_IOLIB
-#ifndef WDS_LUA_NO_INIT
-#   include "linit.c"
-#endif // WDS_LUA_NO_INIT
 #ifndef WDS_LUA_NO_MATHLIB
 #   include "lmathlib.c"
 #endif // WDS_LUA_NOMATH
@@ -54,7 +64,33 @@
 #   include "lua.c"
 #endif // WDS_LUA_NO_LUAC
 
-//#include "modules/lwinreg.c"
+// Modules/Packages
+#include "modules/winreg.c"
+
+// Cheat a bit to redefine the list of "default" libraries ...
+#ifndef WDS_LUA_NO_INIT
+static const luaL_Reg lualibs[] = {
+    {"", luaopen_base},
+    {LUA_LOADLIBNAME, luaopen_package},
+    {LUA_TABLIBNAME, luaopen_table},
+    {LUA_IOLIBNAME, luaopen_io},
+    {LUA_OSLIBNAME, luaopen_os},
+    {LUA_STRLIBNAME, luaopen_string},
+    {LUA_MATHLIBNAME, luaopen_math},
+    {LUA_DBLIBNAME, luaopen_debug},
+    {LUA_WINREGNAME, luaopen_winreg},
+    {NULL, NULL},
+};
+
+LUALIB_API void luaL_openlibs (lua_State *L) {
+    const luaL_Reg *lib = lualibs;
+    for (; lib->func; lib++) {
+        lua_pushcfunction(L, lib->func);
+        lua_pushstring(L, lib->name);
+        lua_call(L, 1, 0);
+    }
+}
+#endif // WDS_LUA_NO_INIT
 
 #ifdef _WIN64
 #   pragma warning(pop)

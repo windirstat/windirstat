@@ -12,11 +12,32 @@ using namespace std;
 
 int _tmain(int argc, TCHAR* argv[], TCHAR* envp[])
 {
-	int nRetCode = 0;
-    lua_State* config = luaL_newstate();
-    if(config)
+    lua_State* L = lua_open();
+    if(L)
     {
+        lua_gc(L, LUA_GCSTOP, 0);  /* stop collector during initialization */
+        luaL_openlibs(L);  /* open libraries */
+        int ret = 1;
+#if 0
+        ret = luaopen_winreg(L);
+        if(!ret)
+        {
+            fprintf(stderr, "Failed to load winreg module\n");
+            lua_close(L);
+            return EXIT_FAILURE;
+        }
+#endif // 0
+        lua_gc(L, LUA_GCRESTART, 0);
+        ret = luaL_dofile(L, "lua_conf.lua");
+        if(ret)
+        {
+            fprintf(stderr, "%s", lua_tostring(L, -1));
+            lua_pop(L, 1); /* pop error message from the stack */
+            lua_close(L);
+            return EXIT_FAILURE;
+        }
+        lua_close(L);
+        return EXIT_SUCCESS;
     }
-
-	return nRetCode;
+	return EXIT_FAILURE;
 }

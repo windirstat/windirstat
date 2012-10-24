@@ -45,7 +45,7 @@ BOOL APIENTRY DllMain(HANDLE hModule, DWORD  ul_reason_for_call,  LPVOID lpReser
 	UNUSED(hModule);
 	UNUSED(lpReserved);
 	UNUSED(ul_reason_for_call);
-    return TRUE;
+	return TRUE;
 }
 
 __declspec(dllexport)
@@ -192,7 +192,7 @@ int reglib_openkey(lua_State *L){//reglib.openkey
 		const TCHAR * pszMachine;
 		const char * pszRootKey;
 		// \\computer_name\hkxx
-		while(szPath[0] && ISSLASH(szPath[0]) )szPath++;// skip the begining slashes
+		while(szPath[0] && ISSLASH(szPath[0]) )szPath++;// skip the beginning slashes
 		reg_aux_splitkey(L, szPath);
 		pszMachine = lua_totstring(L,-1);
 		pszRootKey = lua_tostring(L,-2);
@@ -385,7 +385,7 @@ void reg_aux_pusheregluadata(lua_State *L, PVOID pdata, size_t cdata, DWORD dwTy
 }
 typedef struct _REG_ENUM_TAG {    // rc  
 	HKEY hKey; 
-    DWORD dwIndex;
+	DWORD dwIndex;
 	PTSTR buffer;
 	DWORD bchlen;
 } REG_ENUM_TAG;
@@ -454,7 +454,13 @@ int reg_createkey(lua_State *L){//regobj.createkey
 }
 //docok
 int reg_deletekey(lua_State *L){//regobj.deletekey
-	LONG ret = win_reg_deltree(reg_aux_gethkey(L,1), lua_checktstring(L, 2)); 
+	LONG ret;
+    // the key name is optional
+	if(reg_aux_gethkey(L,1) && lua_isnoneornil(L, 2))
+	{
+		lua_pushtstring(L, TEXT(""));
+	}
+	ret = win_reg_deltree(reg_aux_gethkey(L,1), lua_checktstring(L, 2)); 
 	LUA_CHECK_DLL_ERROR(L, ret);
 	LUA_CHECK_RETURN_OBJECT(L, ret == ERROR_SUCCESS);
 }

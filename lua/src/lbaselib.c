@@ -63,7 +63,7 @@ static int luaB_tonumber (lua_State *L) {
       lua_pushnumber(L, lua_tonumber(L, 1));
 #endif
       return 1;
-	}
+    }
   }
   else {
     const char *s1 = luaL_checkstring(L, 1);
@@ -74,11 +74,10 @@ static int luaB_tonumber (lua_State *L) {
     if (s1 != s2) {  /* at least one valid digit? */
       while (isspace((unsigned char)(*s2))) s2++;  /* skip trailing spaces */
       if (*s2 == '\0') {  /* no invalid trailing characters? */
-	  
-		/* Push as number, there needs to be separate 'luaB_tointeger' for
-		 * when the caller wants to preserve the bits (matters if unsigned
-		 * values are used).
-		 */
+        /* Push as number, there needs to be separate 'luaB_tointeger' for
+         * when the caller wants to preserve the bits (matters if unsigned
+         * values are used).
+         */
         lua_pushnumber(L, cast_num(n));
         return 1;
       }
