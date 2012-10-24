@@ -20,8 +20,8 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)"
+			OutputDirectory="intermediate\vs8_$(PlatformName)_$(ConfigurationName)"
+			IntermediateDirectory="intermediate\vs8_$(PlatformName)_$(ConfigurationName)"
 			ConfigurationType="1"
 			UseOfMFC="0"
 			UseOfATL="1"
@@ -68,6 +68,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				OutputFile="bin/lua_conf32D.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				SubSystem="1"
@@ -100,8 +101,8 @@
 		</Configuration>
 		<Configuration
 			Name="Debug|x64"
-			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			OutputDirectory="intermediate\vs8_$(PlatformName)_$(ConfigurationName)"
+			IntermediateDirectory="intermediate\vs8_$(PlatformName)_$(ConfigurationName)"
 			ConfigurationType="1"
 			UseOfMFC="0"
 			UseOfATL="1"
@@ -149,6 +150,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				OutputFile="bin/lua_conf64D.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				SubSystem="1"
@@ -181,8 +183,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)"
+			OutputDirectory="intermediate\vs8_$(PlatformName)_$(ConfigurationName)"
+			IntermediateDirectory="intermediate\vs8_$(PlatformName)_$(ConfigurationName)"
 			ConfigurationType="1"
 			UseOfMFC="0"
 			UseOfATL="1"
@@ -227,6 +229,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				OutputFile="bin/lua_conf32.exe"
 				LinkIncremental="1"
 				GenerateDebugInformation="true"
 				SubSystem="1"
@@ -261,8 +264,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release|x64"
-			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			OutputDirectory="intermediate\vs8_$(PlatformName)_$(ConfigurationName)"
+			IntermediateDirectory="intermediate\vs8_$(PlatformName)_$(ConfigurationName)"
 			ConfigurationType="1"
 			UseOfMFC="0"
 			UseOfATL="1"
@@ -308,6 +311,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				OutputFile="bin/lua_conf64.exe"
 				LinkIncremental="1"
 				GenerateDebugInformation="true"
 				SubSystem="1"

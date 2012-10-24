@@ -102,8 +102,8 @@ lua_State* luaWDS_open()
     {
         lua_gc(L, LUA_GCSTOP, 0);  /* stop collector during initialization */
         luaWDS_openlibs_(L);  /* open libraries */
-        luaL_register(L, "os", wow64_funcs);
-        luaL_register(L, "os", isadmin_funcs);
+        luaL_register(L, LUA_OSLIBNAME, wow64_funcs);
+        luaL_register(L, LUA_OSLIBNAME, isadmin_funcs);
         lua_gc(L, LUA_GCRESTART, 0); /* resume GC */
     }
     return L;
