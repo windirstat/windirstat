@@ -13,4 +13,6 @@
   currver = '1.1.2'
   download_DBS = 'http://www.downloadbestsoft.com/WinDirStat.html'
   download_SF  = 'http://prdownloads.sourceforge.net/windirstat/windirstat1_1_2_setup.exe'
+  download_MD5 = '3abf1c149873e25d4e266225fbf37cbf'
+  download_SHA1 = '6fa92dd2ca691c11dfbfc0a239e34369897a7fab'
 %]
