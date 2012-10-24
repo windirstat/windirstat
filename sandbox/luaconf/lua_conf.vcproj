@@ -354,10 +354,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\windirstat\options.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\stdafx.cpp"
 				>
 				<FileConfiguration
@@ -1873,10 +1869,6 @@
 			>
 			<File
 				RelativePath=".\lua_conf.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\windirstat\options.h"
 				>
 			</File>
 			<File
