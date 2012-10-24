@@ -40,6 +40,7 @@
 #endif
 
 
+#ifdef LUA_REG_AS_DLL
 BOOL APIENTRY DllMain(HANDLE hModule, DWORD  ul_reason_for_call,  LPVOID lpReserved){
 	UNUSED(hModule);
 	UNUSED(lpReserved);
@@ -47,7 +48,11 @@ BOOL APIENTRY DllMain(HANDLE hModule, DWORD  ul_reason_for_call,  LPVOID lpReser
     return TRUE;
 }
 
-__declspec(dllexport) int luaopen_winreg(lua_State *L){
+__declspec(dllexport)
+#else
+LUA_API
+#endif // LUA_REG_AS_DLL
+int luaopen_winreg(lua_State *L){
 	luaL_register(L, "winreg", lreg_reglib);
 	return 1;
 }
@@ -560,6 +565,7 @@ int reg_getvalue(lua_State *L){//regobj.getvalue
 	}
 	return 2;
 }
+#ifndef LUA_REG_NO_HIVEOPS
 //docok
 int reg_loadkey(lua_State *L){//regobj.load
 	LONG ret;
@@ -568,12 +574,14 @@ int reg_loadkey(lua_State *L){//regobj.load
 	LUA_CHECK_DLL_ERROR(L, ret);
 	LUA_CHECK_RETURN_OBJECT(L, ret == ERROR_SUCCESS);
 }
+#endif // LUA_REG_NO_HIVEOPS
 //docok
 int reg_openkey(lua_State *L){//regobj.openkey
 	reg_aux_newkey(L, reg_aux_gethkey(L, 1),
 		lua_checktstring(L, 2), NULL, reg_aux_getaccess(L, 3), FALSE);
 	return 1;
 }
+#ifndef LUA_REG_NO_HIVEOPS
 //docok
 int reg_replacekey(lua_State *L){//regobj.replace
 	LONG ret;
@@ -604,12 +612,14 @@ int reg_savekey(lua_State *L){//regobj.save
 	LUA_CHECK_DLL_ERROR(L, ret);
 	LUA_CHECK_RETURN_OBJECT(L, ret == ERROR_SUCCESS);
 }
+#endif // LUA_REG_NO_HIVEOPS
 //docok
 int reg_setvalue(lua_State *L){//regobj.setvalue
 	LUA_CHECK_RETURN_OBJECT(L, 
 		reg_aux_setvalue(L, reg_aux_gethkey(L, 1), lua_opttstring(L, 2, NULL), reg_aux_getdatatype(L, 4), 3)
 		);
 }
+#ifndef LUA_REG_NO_HIVEOPS
 //docok
 int reg_unloadkey(lua_State *L){//regobj.unload
 	LONG ret;
@@ -618,6 +628,7 @@ int reg_unloadkey(lua_State *L){//regobj.unload
 	LUA_CHECK_DLL_ERROR(L, ret);
 	LUA_CHECK_RETURN_OBJECT(L, ret == ERROR_SUCCESS);
 }
+#endif // LUA_REG_NO_HIVEOPS
 
 int reg_handle(lua_State *L){//regobj.handle
 	HKEY hKey = reg_aux_gethkey(L, 1);
