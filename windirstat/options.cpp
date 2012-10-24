@@ -23,10 +23,8 @@
 //
 
 #include "stdafx.h"
-#ifndef __NOT_WDS
 #include "windirstat.h"
 #include "dirstatdoc.h"
-#endif // __NOT_WDS
 #include "options.h"
 
 #ifdef _DEBUG
@@ -35,9 +33,7 @@
 
 namespace
 {
-#ifndef __NOT_WDS
     static COptions _theOptions;
-#endif // __NOT_WDS
 
     const LPCTSTR sectionPersistence        = _T("persistence");
     const LPCTSTR entryShowFreeSpace        = _T("showFreeSpace");
@@ -118,7 +114,6 @@ namespace
 
 }
 
-#ifndef __NOT_WDS
 /////////////////////////////////////////////////////////////////////////////
 bool CPersistence::GetShowFreeSpace()
 {
@@ -1120,7 +1115,6 @@ void COptions::SaveTreemapOptions()
     setProfileInt(sectionOptions, entryLightSourceX, m_treemapOptions.GetLightSourceXPercent());
     setProfileInt(sectionOptions, entryLightSourceY, m_treemapOptions.GetLightSourceYPercent());
 }
-#endif // __NOT_WDS
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -1165,248 +1159,4 @@ void CRegistryUser::checkRange(int& value, int min, int max)
     {
         value = max;
     }
-}
-
-CRegistryStg::CRegistryStg(HKEY hKeyParent, LPCTSTR lpszKeyName)
-    : m_lastError(ERROR_SUCCESS)
-    , m_sam(KEY_READ | KEY_WRITE | ((LOWORD(::GetVersion()) > 0x0500) ? KEY_WOW64_64KEY : 0))
-    , m_parentKey(hKeyParent)
-    , m_lpszKeyName(lpszKeyName)
-{
-    LONG const lr = m_key.Create(hKeyParent, lpszKeyName, REG_NONE, REG_OPTION_NON_VOLATILE, m_sam);
-    HRESULT const hr = HRESULT_FROM_WIN32(lr);
-    if(FAILED(hr))
-    {
-        throw hr;
-    }
-}
-
-#define REGISTRYSTG_SET(section, enty, value, memberfct) \
-    CRegKey subKey; \
-    m_lastError = subKey.Create(m_key, section, REG_NONE, REG_OPTION_NON_VOLATILE, m_sam); \
-    if(ERROR_SUCCESS == m_lastError) \
-    { \
-        m_lastError = subKey.memberfct(entry, value); \
-    }
-
-void CRegistryStg::setString(LPCTSTR section, LPCTSTR entry, LPCTSTR value)
-{
-    REGISTRYSTG_SET(section, entry, value, SetStringValue);
-}
-
-CString CRegistryStg::getString(LPCTSTR section, LPCTSTR entry, LPCTSTR defaultValue)
-{
-    CRegKey subKey;
-    m_lastError = subKey.Open(m_key, section, m_sam);
-    if(ERROR_SUCCESS == m_lastError)
-    {
-        CString strBuf;
-        ULONG nChars;
-        m_lastError = subKey.QueryStringValue(entry, NULL, &nChars);
-        if(ERROR_MORE_DATA == m_lastError)
-        {
-            LPTSTR buf = strBuf.GetBufferSetLength(static_cast<int>(nChars+1));
-            m_lastError = subKey.QueryStringValue(entry, buf, &nChars);
-            strBuf.ReleaseBuffer();
-        }
-        return strBuf;
-    }
-    return defaultValue;
-}
-
-void CRegistryStg::setInt(LPCTSTR section, LPCTSTR entry, int value)
-{
-    REGISTRYSTG_SET(section, entry, static_cast<DWORD>(value), SetDWORDValue);
-}
-
-int CRegistryStg::getInt(LPCTSTR section, LPCTSTR entry, int defaultValue)
-{
-    return static_cast<int>(getUint(section, entry, defaultValue));
-}
-
-void CRegistryStg::setUint(LPCTSTR section, LPCTSTR entry, unsigned int value)
-{
-    REGISTRYSTG_SET(section, entry, static_cast<DWORD>(value), SetDWORDValue);
-}
-#undef REGISTRYSTG_SET
-
-unsigned int CRegistryStg::getUint(LPCTSTR section, LPCTSTR entry, unsigned int defaultValue)
-{
-    CRegKey subKey;
-    m_lastError = subKey.Open(m_key, section, m_sam);
-    if(ERROR_SUCCESS == m_lastError)
-    {
-        DWORD dwValue;
-        m_lastError = subKey.QueryDWORDValue(entry, dwValue);
-        if(ERROR_SUCCESS == m_lastError)
-        {
-            return static_cast<unsigned int>(dwValue);
-        }
-    }
-    return defaultValue;
-}
-
-void CRegistryStg::setBool(LPCTSTR section, LPCTSTR entry, bool value)
-{
-    setUint(section, entry, value);
-}
-
-bool CRegistryStg::getBool(LPCTSTR section, LPCTSTR entry, bool defaultValue)
-{
-    return (0 != getUint(section, entry, defaultValue));
-}
-
-void CRegistryStg::flush()
-{
-    // no need to implement this for registry storage
-}
-
-long CRegistryStg::getLastError() const
-{
-    return m_lastError;
-}
-
-CIniFileStg::CIniFileStg(LPCTSTR lpszFilePath)
-    : m_lastError(ERROR_SUCCESS)
-    , m_lpszFilePath(lpszFilePath)
-    , m_ini(true, false, false) // no multi-key, no multi-line, but UTF8
-{
-    SI_Error err;
-    if(SI_OK <= (err = m_ini.LoadFile(lpszFilePath)))
-    {
-        throw siErrorToHR_(err);
-    }
-}
-
-CIniFileStg::~CIniFileStg()
-{
-    flush();
-}
-
-void CIniFileStg::setString(LPCTSTR section, LPCTSTR entry, LPCTSTR Value)
-{
-    m_ini.SetValue(section, entry, Value);
-}
-
-CString CIniFileStg::getString(LPCTSTR section, LPCTSTR entry, LPCTSTR defaultValue)
-{
-    return m_ini.GetValue(section, entry, defaultValue);
-}
-
-void CIniFileStg::setInt(LPCTSTR section, LPCTSTR entry, int Value)
-{
-    m_ini.SetLongValue(section, entry, static_cast<long>(Value));
-}
-
-int CIniFileStg::getInt(LPCTSTR section, LPCTSTR entry, int defaultValue)
-{
-    return static_cast<int>(m_ini.GetLongValue(section, entry, defaultValue));
-}
-
-void CIniFileStg::setUint(LPCTSTR section, LPCTSTR entry, unsigned int Value)
-{
-    m_ini.SetLongValue(section, entry, static_cast<long>(Value));
-}
-
-unsigned int CIniFileStg::getUint(LPCTSTR section, LPCTSTR entry, unsigned int defaultValue)
-{
-    return static_cast<unsigned int>(m_ini.GetLongValue(section, entry, defaultValue));
-}
-
-void CIniFileStg::setBool(LPCTSTR section, LPCTSTR entry, bool Value)
-{
-    m_ini.SetBoolValue(section, entry, Value);
-}
-
-bool CIniFileStg::getBool(LPCTSTR section, LPCTSTR entry, bool defaultValue)
-{
-    return m_ini.GetBoolValue(section, entry, defaultValue);
-}
-
-void CIniFileStg::flush()
-{
-    m_ini.SaveFile(m_lpszFilePath.GetString(), true);
-}
-
-long CIniFileStg::getLastError() const
-{
-    return m_lastError;
-}
-
-HRESULT CIniFileStg::siErrorToHR_(SI_Error err)
-{
-    if(SI_OK <= err)
-    {
-        return S_OK;
-    }
-    HRESULT hr;
-    switch(err)
-    {
-    case SI_NOMEM:
-        hr = HRESULT_FROM_WIN32(ERROR_NOT_ENOUGH_MEMORY);
-        break;
-    case SI_FILE:
-        hr = HRESULT_FROM_WIN32(::GetLastError());
-        break;
-    case SI_FAIL: // fall through
-    default:
-        hr = E_FAIL;
-        break;
-    }
-    return hr;
-}
-
-CConfigStorage::CConfigStorage(ICfgStorage* primary, ICfgStorage* secondary)
-    : m_primaryStore(primary)
-    , m_secondaryStore(secondary)
-{
-}
-
-CConfigStorage::~CConfigStorage()
-{
-    m_primaryStore->flush();
-}
-
-void CConfigStorage::setString(LPCTSTR section, LPCTSTR entry, LPCTSTR value)
-{
-    m_primaryStore->setString(section, entry, value);
-}
-
-CString CConfigStorage::getString(LPCTSTR section, LPCTSTR entry, LPCTSTR defaultvalue)
-{
-    if(m_secondaryStore.get())
-    {
-        m_secondaryStore->getString(section, entry, defaultvalue);
-    }
-    return _T("");
-}
-
-void CConfigStorage::setInt(LPCTSTR section, LPCTSTR entry, int value)
-{
-    m_primaryStore->setInt(section, entry, value);
-}
-
-int CConfigStorage::getInt(LPCTSTR section, LPCTSTR entry, int defaultvalue)
-{
-    return 0;
-}
-
-void CConfigStorage::setUint(LPCTSTR section, LPCTSTR entry, unsigned int value)
-{
-    m_primaryStore->setUint(section, entry, value);
-}
-
-unsigned int CConfigStorage::getUint(LPCTSTR section, LPCTSTR entry, unsigned int defaultvalue)
-{
-    return 0;
-}
-
-void CConfigStorage::setBool(LPCTSTR section, LPCTSTR entry, bool value)
-{
-    m_primaryStore->setBool(section, entry, value);
-}
-
-bool CConfigStorage::getBool(LPCTSTR section, LPCTSTR entry, bool defaultvalue)
-{
-    return false;
 }
