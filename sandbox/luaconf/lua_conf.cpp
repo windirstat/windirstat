@@ -12,12 +12,9 @@ using namespace std;
 
 int _tmain(int argc, TCHAR* argv[], TCHAR* envp[])
 {
-    lua_State* L = lua_open();
+    lua_State* L = luaWDS_open();
     if(L)
     {
-        lua_gc(L, LUA_GCSTOP, 0);  /* stop collector during initialization */
-        luaL_openlibs(L);  /* open libraries */
-        lua_gc(L, LUA_GCRESTART, 0);
         int ret = luaL_dofile(L, "..\\lua_conf.lua");
         if(ret)
         {

@@ -64,8 +64,10 @@
 #   include "lua.c"
 #endif // WDS_LUA_NO_LUAC
 
-// Modules/Packages
+// Modules/Packages, individual functions
 #include "modules/winreg.c"
+#include "modules/isadmin.c"
+#include "modules/wow64.c"
 
 // Cheat a bit to redefine the list of "default" libraries ...
 #ifndef WDS_LUA_NO_INIT
@@ -82,7 +84,8 @@ static const luaL_Reg lualibs[] = {
     {NULL, NULL},
 };
 
-LUALIB_API void luaL_openlibs (lua_State *L) {
+static void luaWDS_openlibs_(lua_State *L)
+{
     const luaL_Reg *lib = lualibs;
     for (; lib->func; lib++) {
         lua_pushcfunction(L, lib->func);
@@ -91,6 +94,28 @@ LUALIB_API void luaL_openlibs (lua_State *L) {
     }
 }
 #endif // WDS_LUA_NO_INIT
+
+static int luaWDS_init_misc_(lua_State *L)
+{
+    if(luaopen_isadmin(L) && lua_openwow64(L))
+    {
+        return 1;
+    }
+    return 0;
+}
+
+lua_State* luaWDS_open()
+{
+    lua_State* L = lua_open();
+    if(L)
+    {
+        lua_gc(L, LUA_GCSTOP, 0);  /* stop collector during initialization */
+        luaWDS_openlibs_(L);  /* open libraries */
+        luaWDS_init_misc_(L);
+        lua_gc(L, LUA_GCRESTART, 0); /* resume GC */
+    }
+    return L;
+}
 
 #ifdef _WIN64
 #   pragma warning(pop)
