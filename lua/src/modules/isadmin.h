@@ -9,7 +9,7 @@
 extern "C"
 {
 #endif // __cplusplus
-LUALIB_API int luaopen_isadmin (lua_State *L);
+    LUA_API const luaL_Reg isadmin_funcs[];
 #ifdef __cplusplus
 };
 #endif // __cplusplus

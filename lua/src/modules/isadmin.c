@@ -15,30 +15,39 @@
 #include <tchar.h>
 #include <lua.h>
 
+BOOL static IsAdmin_()
+{
+    SID_IDENTIFIER_AUTHORITY NtAuthority = SECURITY_NT_AUTHORITY;
+    PSID pSid;
+    if (AllocateAndInitializeSid(&NtAuthority, 2, SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_ADMINS, 0, 0, 0, 0, 0, 0, &pSid))
+    {
+        BOOL bResult = FALSE;
+        if (!CheckTokenMembership( NULL, pSid, &bResult))
+        {
+            FreeSid(pSid);
+            return FALSE;
+        }
+        FreeSid(pSid);
+        return bResult;
+    }
+
+    return FALSE;
+}
+
 static int luaC_isadmin_(lua_State* L)
 {
     static int *pcachedResult = NULL;
     if(!pcachedResult)
     {
         static int cachedResult = 0;
-        //pcachedResult = &cachedResult;
-    }
-    if(!pcachedResult)
-    {
-        lua_pushnil(L);
-        return 1;
+        cachedResult = (IsAdmin_()) ? 1 : 0;
+        pcachedResult = &cachedResult;
     }
     lua_pushboolean(L, *pcachedResult);
     return 1;
 }
 
-static const luaL_Reg isadmin_funcs[] = {
+LUA_API const luaL_Reg isadmin_funcs[] = {
     {"isadmin", luaC_isadmin_},
     {NULL, NULL}
 };
-
-LUALIB_API int luaopen_isadmin(lua_State *L)
-{
-    luaL_register(L, "os", isadmin_funcs);
-    return 1;
-}

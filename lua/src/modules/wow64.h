@@ -9,7 +9,7 @@
 extern "C"
 {
 #endif // __cplusplus
-LUALIB_API int luaopen_wow64 (lua_State *L);
+    LUA_API const luaL_Reg wow64_funcs[];
 #ifdef __cplusplus
 };
 #endif // __cplusplus

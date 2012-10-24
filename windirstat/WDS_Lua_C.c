@@ -95,15 +95,6 @@ static void luaWDS_openlibs_(lua_State *L)
 }
 #endif // WDS_LUA_NO_INIT
 
-static int luaWDS_init_misc_(lua_State *L)
-{
-    if(luaopen_isadmin(L) && lua_openwow64(L))
-    {
-        return 1;
-    }
-    return 0;
-}
-
 lua_State* luaWDS_open()
 {
     lua_State* L = lua_open();
@@ -111,7 +102,8 @@ lua_State* luaWDS_open()
     {
         lua_gc(L, LUA_GCSTOP, 0);  /* stop collector during initialization */
         luaWDS_openlibs_(L);  /* open libraries */
-        luaWDS_init_misc_(L);
+        luaL_register(L, "os", wow64_funcs);
+        luaL_register(L, "os", isadmin_funcs);
         lua_gc(L, LUA_GCRESTART, 0); /* resume GC */
     }
     return L;

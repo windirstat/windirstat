@@ -41,13 +41,7 @@ static int luaC_iswow64_(lua_State* L)
     return 1;
 }
 
-static const luaL_Reg wow64_funcs[] = {
+LUA_API const luaL_Reg wow64_funcs[] = {
     {"iswow64", luaC_iswow64_},
     {NULL, NULL}
 };
-
-LUALIB_API int lua_openwow64(lua_State *L)
-{
-    luaL_register(L, "os", wow64_funcs);
-    return 1;
-}
