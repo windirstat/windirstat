@@ -5,7 +5,7 @@
         <tr><th>File        <td>SimpleIni.h
         <tr><th>Author      <td>Brodie Thiesfield [code at jellycan dot com]
         <tr><th>Source      <td>http://code.jellycan.com/simpleini/
-        <tr><th>Version     <td>4.13
+        <tr><th>Version     <td>4.16
     </table>
 
     Jump to the @link CSimpleIniTempl CSimpleIni @endlink interface documentation.
@@ -77,7 +77,7 @@
         #1  On Windows you are better to use CSimpleIniA with SI_CONVERT_WIN32.<br>
         #2  Only affects Windows. On Windows this uses MBCS functions and
             so may fold case incorrectly leading to uncertain results.
-    -# Call Load() or LoadFile() to load and parse the INI configuration file
+    -# Call LoadData() or LoadFile() to load and parse the INI configuration file
     -# Access and modify the data of the file using the following functions
         <table>
             <tr><td>GetAllSections  <td>Return all section names
@@ -162,13 +162,16 @@
     - Usage of the <mbstring.h> header on Windows can be disabled by defining
       SI_NO_MBCS. This is defined automatically on Windows CE platforms.
 
+    @section contrib CONTRIBUTIONS
+    
+    - 2010/05/03: Tobias Gehrig: added GetDoubleValue()
 
     @section licence MIT LICENCE
 
     The licence text below is the boilerplate "MIT Licence" used from:
     http://www.opensource.org/licenses/mit-license.php
 
-    Copyright (c) 2006-2008, Brodie Thiesfield
+    Copyright (c) 2006-2012, Brodie Thiesfield
 
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
@@ -409,6 +412,7 @@ public:
     */
     class Converter : private SI_CONVERTER {
     public:
+        using SI_CONVERTER::SizeToStore;
         Converter(bool a_bStoreIsUtf8) : SI_CONVERTER(a_bStoreIsUtf8) {
             m_scratch.resize(1024);
         }
@@ -455,6 +459,9 @@ public:
 
     /** Deallocate all memory stored by this object */
     void Reset();
+
+    /** Has any data been loaded */
+    bool IsEmpty() const { return m_data.empty(); }
 
     /*-----------------------------------------------------------------------*/
     /** @{ @name Settings */
@@ -578,7 +585,7 @@ public:
 
         @return SI_Error    See error definitions
      */
-    SI_Error Load(
+    SI_Error LoadData(
         std::istream & a_istream
         );
 #endif // SI_SUPPORT_IOSTREAMS
@@ -589,8 +596,8 @@ public:
 
         @return SI_Error    See error definitions
      */
-    SI_Error Load(const std::string & a_strData) {
-        return Load(a_strData.c_str(), a_strData.size());
+    SI_Error LoadData(const std::string & a_strData) {
+        return LoadData(a_strData.c_str(), a_strData.size());
     }
 
     /** Load INI file data direct from memory
@@ -600,7 +607,7 @@ public:
 
         @return SI_Error    See error definitions
      */
-    SI_Error Load(
+    SI_Error LoadData(
         const char *    a_pData,
         size_t          a_uDataLen
         );
@@ -879,6 +886,26 @@ public:
         bool *          a_pHasMultiple = NULL
         ) const;
 
+    /** Retrieve a numeric value for a specific key. If multiple keys are enabled
+        (see SetMultiKey) then only the first value associated with that key
+        will be returned, see GetAllValues for getting all values with multikey.
+
+        @param a_pSection       Section to search
+        @param a_pKey           Key to search for
+        @param a_nDefault       Value to return if the key is not found
+        @param a_pHasMultiple   Optionally receive notification of if there are
+                                multiple entries for this key.
+
+        @return a_nDefault      Key was not found in the section
+        @return other           Value of the key
+     */
+    double GetDoubleValue(
+        const SI_CHAR * a_pSection,
+        const SI_CHAR * a_pKey,
+        double          a_nDefault     = 0,
+        bool *          a_pHasMultiple = NULL
+        ) const;
+
     /** Retrieve a boolean value for a specific key. If multiple keys are enabled
         (see SetMultiKey) then only the first value associated with that key
         will be returned, see GetAllValues for getting all values with multikey.
@@ -973,6 +1000,34 @@ public:
         long            a_nValue,
         const SI_CHAR * a_pComment      = NULL,
         bool            a_bUseHex       = false,
+        bool            a_bForceReplace = false
+        );
+
+    /** Add or update a double value. This will always insert
+        when multiple keys are enabled.
+
+        @param a_pSection   Section to add or update
+        @param a_pKey       Key to add or update. 
+        @param a_nValue     Value to set. 
+        @param a_pComment   Comment to be associated with the key. See the 
+                            notes on SetValue() for comments.
+        @param a_bForceReplace  Should all existing values in a multi-key INI
+                            file be replaced with this entry. This option has
+                            no effect if not using multi-key files. The 
+                            difference between Delete/SetDoubleValue and 
+                            SetDoubleValue with a_bForceReplace = true, is that 
+                            the load order and comment will be preserved this 
+                            way.
+
+        @return SI_Error    See error definitions
+        @return SI_UPDATED  Value was updated
+        @return SI_INSERTED Value was inserted
+     */
+    SI_Error SetDoubleValue(
+        const SI_CHAR * a_pSection,
+        const SI_CHAR * a_pKey,
+        double          a_nValue,
+        const SI_CHAR * a_pComment      = NULL,
         bool            a_bForceReplace = false
         );
 
@@ -1300,10 +1355,15 @@ CSimpleIniTempl<SI_CHAR,SI_STRLESS,SI_CONVERTER>::LoadFile(
     if (lSize == 0) {
         return SI_OK;
     }
-    char * pData = new char[lSize];
+    
+    // allocate and ensure NULL terminated
+    char * pData = new char[lSize+1];
     if (!pData) {
         return SI_NOMEM;
     }
+    pData[lSize] = 0;
+    
+    // load data into buffer
     fseek(a_fpFile, 0, SEEK_SET);
     size_t uRead = fread(pData, sizeof(char), lSize, a_fpFile);
     if (uRead != (size_t) lSize) {
@@ -1312,14 +1372,14 @@ CSimpleIniTempl<SI_CHAR,SI_STRLESS,SI_CONVERTER>::LoadFile(
     }
 
     // convert the raw data to unicode
-    SI_Error rc = Load(pData, uRead);
+    SI_Error rc = LoadData(pData, uRead);
     delete[] pData;
     return rc;
 }
 
 template<class SI_CHAR, class SI_STRLESS, class SI_CONVERTER>
 SI_Error
-CSimpleIniTempl<SI_CHAR,SI_STRLESS,SI_CONVERTER>::Load(
+CSimpleIniTempl<SI_CHAR,SI_STRLESS,SI_CONVERTER>::LoadData(
     const char *    a_pData,
     size_t          a_uDataLen
     )
@@ -1396,7 +1456,7 @@ CSimpleIniTempl<SI_CHAR,SI_STRLESS,SI_CONVERTER>::Load(
 #ifdef SI_SUPPORT_IOSTREAMS
 template<class SI_CHAR, class SI_STRLESS, class SI_CONVERTER>
 SI_Error
-CSimpleIniTempl<SI_CHAR,SI_STRLESS,SI_CONVERTER>::Load(
+CSimpleIniTempl<SI_CHAR,SI_STRLESS,SI_CONVERTER>::LoadData(
     std::istream & a_istream
     )
 {
@@ -1407,7 +1467,7 @@ CSimpleIniTempl<SI_CHAR,SI_STRLESS,SI_CONVERTER>::Load(
         strData.append(szBuf);
     }
     while (a_istream.good());
-    return Load(strData);
+    return LoadData(strData);
 }
 #endif // SI_SUPPORT_IOSTREAMS
 
@@ -1878,7 +1938,7 @@ CSimpleIniTempl<SI_CHAR,SI_STRLESS,SI_CONVERTER>::AddEntry(
         if (a_pComment) {
             oKey.pComment = a_pComment;
         }
-        typename TKeyVal::value_type oEntry(oKey, (const SI_CHAR *) NULL);
+        typename TKeyVal::value_type oEntry(oKey, static_cast<const SI_CHAR *>(NULL));
         iKey = keyval.insert(oEntry);
         bInserted = true;
     }
@@ -1992,6 +2052,68 @@ CSimpleIniTempl<SI_CHAR,SI_STRLESS,SI_CONVERTER>::SetLongValue(
 
     // actually add it
     return AddEntry(a_pSection, a_pKey, szOutput, a_pComment, a_bForceReplace, true);
+}
+
+template<class SI_CHAR, class SI_STRLESS, class SI_CONVERTER>
+double
+CSimpleIniTempl<SI_CHAR,SI_STRLESS,SI_CONVERTER>::GetDoubleValue(
+    const SI_CHAR * a_pSection,
+    const SI_CHAR * a_pKey,
+    double          a_nDefault,
+    bool *          a_pHasMultiple
+    ) const
+{
+    // return the default if we don't have a value
+    const SI_CHAR * pszValue = GetValue(a_pSection, a_pKey, NULL, a_pHasMultiple);
+    if (!pszValue || !*pszValue) return a_nDefault;
+
+    // convert to UTF-8/MBCS which for a numeric value will be the same as ASCII
+    char szValue[64] = { 0 };
+    SI_CONVERTER c(m_bStoreIsUtf8);
+    if (!c.ConvertToStore(pszValue, szValue, sizeof(szValue))) {
+        return a_nDefault;
+    }
+
+    char * pszSuffix = NULL;
+    double nValue = strtod(szValue, &pszSuffix);
+
+    // any invalid strings will return the default value
+    if (!pszSuffix || *pszSuffix) { 
+        return a_nDefault; 
+    }
+
+    return nValue;
+}
+
+template<class SI_CHAR, class SI_STRLESS, class SI_CONVERTER>
+SI_Error 
+CSimpleIniTempl<SI_CHAR,SI_STRLESS,SI_CONVERTER>::SetDoubleValue(
+	const SI_CHAR * a_pSection,
+	const SI_CHAR * a_pKey,
+	double          a_nValue,
+	const SI_CHAR * a_pComment,
+	bool            a_bForceReplace
+	)
+{
+	// use SetValue to create sections
+	if (!a_pSection || !a_pKey) return SI_FAIL;
+
+	// convert to an ASCII string
+	char szInput[64];
+#if __STDC_WANT_SECURE_LIB__ && !_WIN32_WCE
+	sprintf_s(szInput, "%f", a_nValue);
+#else // !__STDC_WANT_SECURE_LIB__
+	sprintf(szInput, "%f", a_nValue);
+#endif // __STDC_WANT_SECURE_LIB__
+
+	// convert to output text
+	SI_CHAR szOutput[64];
+	SI_CONVERTER c(m_bStoreIsUtf8);
+	c.ConvertFromStore(szInput, strlen(szInput) + 1, 
+		szOutput, sizeof(szOutput) / sizeof(SI_CHAR));
+
+	// actually add it
+	return AddEntry(a_pSection, a_pKey, szOutput, a_pComment, a_bForceReplace, true);
 }
 
 template<class SI_CHAR, class SI_STRLESS, class SI_CONVERTER>
@@ -2349,11 +2471,11 @@ CSimpleIniTempl<SI_CHAR,SI_STRLESS,SI_CONVERTER>::Save(
                 if (m_bAllowMultiLine && IsMultiLineData(iValue->pItem)) {
                     // multi-line data needs to be processed specially to ensure
                     // that we use the correct newline format for the current system
-                    a_oOutput.Write("<<<SI-END-OF-MULTILINE-TEXT" SI_NEWLINE_A);
+                    a_oOutput.Write("<<<END_OF_TEXT" SI_NEWLINE_A);
                     if (!OutputMultiLineText(a_oOutput, convert, iValue->pItem)) {
                         return SI_FAIL;
                     }
-                    a_oOutput.Write("SI-END-OF-MULTILINE-TEXT");
+                    a_oOutput.Write("END_OF_TEXT");
                 }
                 else {
                     a_oOutput.Write(convert.Data());
@@ -2923,10 +3045,9 @@ public:
         }
 
         nError = U_ZERO_ERROR;
-        ucnv_resetToUnicode(m_pConverter);
         int32_t nLen = ucnv_toUChars(m_pConverter, NULL, 0,
             a_pInputData, (int32_t) a_uInputDataLen, &nError);
-        if (nError != U_BUFFER_OVERFLOW_ERROR) {
+        if (U_FAILURE(nError) && nError != U_BUFFER_OVERFLOW_ERROR) {
             return (size_t) -1;
         }
 
@@ -2963,7 +3084,6 @@ public:
         }
 
         nError = U_ZERO_ERROR;
-        ucnv_resetToUnicode(m_pConverter);
         ucnv_toUChars(m_pConverter,
             a_pOutputData, (int32_t) a_uOutputDataSize,
             a_pInputData, (int32_t) a_uInputDataLen, &nError);
@@ -2998,10 +3118,9 @@ public:
         }
 
         nError = U_ZERO_ERROR;
-        ucnv_resetFromUnicode(m_pConverter);
         int32_t nLen = ucnv_fromUChars(m_pConverter, NULL, 0,
             a_pInputData, -1, &nError);
-        if (nError != U_BUFFER_OVERFLOW_ERROR) {
+        if (U_FAILURE(nError) && nError != U_BUFFER_OVERFLOW_ERROR) {
             return (size_t) -1;
         }
 
@@ -3037,7 +3156,6 @@ public:
         }
 
         nError = U_ZERO_ERROR;
-        ucnv_resetFromUnicode(m_pConverter);
         ucnv_fromUChars(m_pConverter,
             a_pOutputData, (int32_t) a_uOutputDataSize,
             a_pInputData, -1, &nError);

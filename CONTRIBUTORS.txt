@@ -1,0 +1,34 @@
+Project creator, initial author
+-------------------------------
+
+- Bernhard Seifert
+
+Direct contributors
+-------------------
+
+- Oliver Schneider (maintainer)
+
+- Chris Wimmer
+  * UAC handling
+
+Contributors of third party code
+--------------------------------
+
+- Lua authors
+  * Lua
+
+- Doug Currie
+  * %s/format patch for Lua
+
+- Asko Kauppi
+  * LNUM patch
+
+- Jas Latrix
+  * lua-winreg
+ 
+- Brodie Thiesfield
+  * SimpleIni.h
+
+Translators
+
+[TODO]
