@@ -28,6 +28,9 @@ Contributors of third party code
  
 - Brodie Thiesfield
   * SimpleIni.h
+  
+- Jason Perkins
+  * Premake4 and Lua functions from Premake4 as additions for WDS
 
 Translators
 
