@@ -28,7 +28,7 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[])
         }
 #endif // 0
         lua_gc(L, LUA_GCRESTART, 0);
-        ret = luaL_dofile(L, "lua_conf.lua");
+        ret = luaL_dofile(L, "..\\lua_conf.lua");
         if(ret)
         {
             fprintf(stderr, "%s", lua_tostring(L, -1));

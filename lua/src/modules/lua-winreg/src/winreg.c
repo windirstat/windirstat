@@ -104,6 +104,8 @@ REGSAM reg_aux_getaccess(lua_State *L, int i){
 			case 'w': acc |= KEY_WRITE; break;
 			case 'r': acc |= KEY_READ ; break;
 			case 'a': acc |= KEY_ALL_ACCESS ; break;
+			case 'X': acc |= KEY_WOW64_64KEY ; break;
+			case 'x': acc |= KEY_WOW64_32KEY ; break;
 			default : lua_error_invalid_option(L, i);
 			}
 		}
