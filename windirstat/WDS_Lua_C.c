@@ -68,6 +68,8 @@
 #include "modules/winreg.c"
 #include "modules/isadmin.c"
 #include "modules/wow64.c"
+#include "modules/dbgprint.c"
+#include "modules/w32resembed.c"
 
 // Cheat a bit to redefine the list of "default" libraries ...
 #ifndef WDS_LUA_NO_INIT
@@ -104,6 +106,7 @@ lua_State* luaWDS_open()
         luaWDS_openlibs_(L);  /* open libraries */
         luaL_register(L, LUA_OSLIBNAME, wow64_funcs);
         luaL_register(L, LUA_OSLIBNAME, isadmin_funcs);
+        luaL_register(L, LUA_OSLIBNAME, dbgprint_funcs);
         lua_gc(L, LUA_GCRESTART, 0); /* resume GC */
     }
     return L;

@@ -1124,6 +1124,42 @@
 					Name="Modules"
 					>
 					<File
+						RelativePath="..\..\lua\src\modules\dbgprint.c"
+						>
+						<FileConfiguration
+							Name="Debug|Win32"
+							ExcludedFromBuild="true"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Debug|x64"
+							ExcludedFromBuild="true"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release|Win32"
+							ExcludedFromBuild="true"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release|x64"
+							ExcludedFromBuild="true"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+							/>
+						</FileConfiguration>
+					</File>
+					<File
 						RelativePath="..\..\lua\src\modules\isadmin.c"
 						>
 						<FileConfiguration
@@ -2093,6 +2129,10 @@
 				<Filter
 					Name="Modules"
 					>
+					<File
+						RelativePath="..\..\lua\src\modules\dbgprint.h"
+						>
+					</File>
 					<File
 						RelativePath="..\..\lua\src\modules\isadmin.h"
 						>
