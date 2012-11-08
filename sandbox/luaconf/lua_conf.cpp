@@ -83,6 +83,7 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[])
                       end\n\
                       \n\
                       dumptable('package', package)\n\
+                      dumptable('package.preload', package.preload)\n\
                       dumptable('package.loaded', package.loaded)\n\
                       dumptable('package.loaders', package.loaders)\n\
                       dumptable('package.loaded._G', package.loaded._G)\n\
@@ -91,7 +92,7 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[])
                       print('package.loaded._G = ', package.loaded._G)\n\
                       ";
         dostring(L, _dostring);
-        fprintf(stderr, "---------------------------\n");
+        fprintf(stderr, "--------------------------\n");
         int ret = luaL_dofile(L, "..\\lua_conf.lua");
         if(ret)
         {
