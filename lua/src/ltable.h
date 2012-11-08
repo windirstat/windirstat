@@ -1,5 +1,5 @@
 /*
-** $Id: ltable.h,v 2.10.1.1 2007/12/27 13:02:25 roberto Exp $
+** $Id$
 ** Lua tables (hash)
 ** See Copyright Notice in lua.h
 */
@@ -18,8 +18,8 @@
 #define key2tval(n)	(&(n)->i_key.tvk)
 
 
-LUAI_FUNC const TValue *luaH_getnum (Table *t, int key);
-LUAI_FUNC TValue *luaH_setnum (lua_State *L, Table *t, int key);
+LUAI_FUNC const TValue *luaH_getint (Table *t, int key);
+LUAI_FUNC TValue *luaH_setint (lua_State *L, Table *t, int key);
 LUAI_FUNC const TValue *luaH_getstr (Table *t, TString *key);
 LUAI_FUNC TValue *luaH_setstr (lua_State *L, Table *t, TString *key);
 LUAI_FUNC const TValue *luaH_get (Table *t, const TValue *key);
