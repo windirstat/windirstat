@@ -17,6 +17,7 @@
 #include "w32resembed.h"
 
 #define WINRES_MODNAME "winres"
+#define WINRES_LOADER  "c_loader"
 
 // Forward declaration
 static int c_load_chunk_from_resources(lua_State* L);
@@ -28,7 +29,7 @@ static BOOL CALLBACK enumLuaScriptsLanguageCallback(HANDLE hModule, LPCTSTR lpsz
     if((0 == lstrcmp(RT_LUASCRIPT,lpszType)) && (LANG_NEUTRAL == PRIMARYLANGID(wIDLanguage)))
     {
         lua_pushtstring(L, lpszName);
-        lua_pushcfunction(L, c_load_chunk_from_resources);
+        lua_getfield(L, -4, WINRES_LOADER);
         lua_rawset(L, -3);
     }
     return TRUE;
@@ -79,6 +80,8 @@ static HMODULE getMyModuleHandle()
 void enumerateEmbeddedLuaScripts(lua_State* L)
 {
     lua_newtable(L);
+    lua_pushcfunction(L, c_load_chunk_from_resources);
+    lua_setfield(L, -2, WINRES_LOADER);
     lua_pushstring(L, "scripts");
     lua_newtable(L);
     EnumResourceNames(getMyModuleHandle(), RT_LUASCRIPT, (ENUMRESNAMEPROC)enumLuaScriptsNameCallback, (LONG_PTR)L);

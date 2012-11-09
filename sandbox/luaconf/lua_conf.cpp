@@ -76,24 +76,16 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[])
     lua_State* L = luaWDS_open();
     if(L)
     {
-        int stackTop = lua_gettop(L);
-        fprintf(stderr, "[STACK TOP] %i (line %i)\n", stackTop, __LINE__);
+        //fprintf(stderr, "[STACK TOP] %i (line %i)\n", lua_gettop(L), __LINE__);
         enumerateEmbeddedLuaScripts(L);
-        fprintf(stderr, "[STACK TOP] %i (line %i)\n", stackTop, __LINE__);
         int ret = luaL_dofile(L, "..\\lua_conf.lua");
-        fprintf(stderr, "[STACK TOP] %i (line %i)\n", stackTop, __LINE__);
         if(ret)
         {
-            fprintf(stderr, "%s", lua_tostring(L, -1));
             lua_pop(L, 1); /* pop error message from the stack */
-            fprintf(stderr, "[STACK TOP] %i (line %i)\n", stackTop, __LINE__);
             lua_close(L);
-            fprintf(stderr, "[STACK TOP] %i (line %i)\n", stackTop, __LINE__);
             return EXIT_FAILURE;
         }
-        fprintf(stderr, "[STACK TOP] %i (line %i)\n", stackTop, __LINE__);
         lua_close(L);
-        fprintf(stderr, "[STACK TOP] %i (line %i)\n", stackTop, __LINE__);
         return EXIT_SUCCESS;
     }
     return EXIT_FAILURE;
