@@ -79,7 +79,6 @@ static HMODULE getMyModuleHandle()
 
 static int luaC_winres_loader_(lua_State* L)
 {
-    int x;
     const char* scriptBuf = NULL;
     size_t scriptLen = 0;
     DWORD dwScriptLen = 0;
@@ -89,9 +88,7 @@ static int luaC_winres_loader_(lua_State* L)
     {
         scriptLen = (size_t)dwScriptLen;
     }
-    x = luaL_loadbuffer(L, scriptBuf, scriptLen, lua_tostring(L, 1));
-    printf("X == %d\n", x);
-    return x;
+    return luaL_loadbuffer(L, scriptBuf, scriptLen, lua_tostring(L, 1));
 }
 
 void enumerateEmbeddedLuaScripts(lua_State* L)
