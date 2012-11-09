@@ -20,7 +20,7 @@
 #define WINRES_LOADER  "c_loader"
 
 // Forward declaration
-static int c_load_chunk_from_resources(lua_State* L);
+static int luaC_winres_loader_(lua_State* L);
 
 static BOOL CALLBACK enumLuaScriptsLanguageCallback(HANDLE hModule, LPCTSTR lpszType, LPCTSTR lpszName, WORD wIDLanguage, lua_State* L)
 {
@@ -29,7 +29,7 @@ static BOOL CALLBACK enumLuaScriptsLanguageCallback(HANDLE hModule, LPCTSTR lpsz
     if((0 == lstrcmp(RT_LUASCRIPT,lpszType)) && (LANG_NEUTRAL == PRIMARYLANGID(wIDLanguage)))
     {
         lua_pushtstring(L, lpszName);
-        lua_getfield(L, -4, WINRES_LOADER);
+        lua_pushtstring(L, lpszType);
         lua_rawset(L, -3);
     }
     return TRUE;
@@ -77,37 +77,39 @@ static HMODULE getMyModuleHandle()
     return (HMODULE)mbi.AllocationBase;
 }
 
+static int luaC_winres_loader_(lua_State* L)
+{
+    int x;
+    const char* scriptBuf = NULL;
+    size_t scriptLen = 0;
+    DWORD dwScriptLen = 0;
+    LPCTSTR resName = lua_totstring(L, 1); // we _require_ a string, not ordinal resource IDs
+    // Get pointer to script contents and size of script from current module
+    if(getResourcePointer(getMyModuleHandle(), resName, RT_LUASCRIPT, ((LPVOID*)&scriptBuf), &dwScriptLen))
+    {
+        scriptLen = (size_t)dwScriptLen;
+    }
+    x = luaL_loadbuffer(L, scriptBuf, scriptLen, lua_tostring(L, 1));
+    printf("X == %d\n", x);
+    return x;
+}
+
 void enumerateEmbeddedLuaScripts(lua_State* L)
 {
-    lua_newtable(L);
-    lua_pushcfunction(L, c_load_chunk_from_resources);
-    lua_setfield(L, -2, WINRES_LOADER);
+    const luaL_Reg winres_funcs[] = {
+        {"c_loader", luaC_winres_loader_},
+        {NULL, NULL}
+    };
+    luaL_register(L, WINRES_MODNAME, winres_funcs);
+    // Get the table
+    lua_getglobal(L, WINRES_MODNAME);
+    // Name for the contained table
     lua_pushstring(L, "scripts");
+    // winres.scripts
     lua_newtable(L);
+    // Enumerate the resource names of type RT_LUASCRIPT in the current module
+    // The callback functions add the names of resources to the table at the top of the stack
     EnumResourceNames(getMyModuleHandle(), RT_LUASCRIPT, (ENUMRESNAMEPROC)enumLuaScriptsNameCallback, (LONG_PTR)L);
+    // Assign the table as winres.scripts
     lua_rawset(L, -3);
-    lua_setglobal(L, WINRES_MODNAME);
-}
-
-static const char* callback_resource_lua_Reader(lua_State* L, void* data, size_t* size)
-{
-    const char* retval = NULL;
-    DWORD retsize = 0;
-    LPCTSTR resName = lua_totstring(L, 1);
-    if(getResourcePointer(getMyModuleHandle(), resName, RT_LUASCRIPT, ((LPVOID*)&retval), &retsize))
-    {
-        *size = (size_t)retsize;
-    }
-    else
-    {
-        *size = 0;
-        retval = NULL;
-    }
-    return retval;
-}
-
-static int c_load_chunk_from_resources(lua_State* L)
-{
-    const char* ref_name = lua_tostring(L, 1);
-    return lua_load(L, callback_resource_lua_Reader, NULL, ref_name);
 }
