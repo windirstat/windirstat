@@ -62,6 +62,7 @@
 			<Tool
 				Name="VCResourceCompilerTool"
 				AdditionalOptions="/nologo"
+				AdditionalIncludeDirectories="$(ProjectDir)\..\..\lua\src"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -144,6 +145,7 @@
 			<Tool
 				Name="VCResourceCompilerTool"
 				AdditionalOptions="/nologo"
+				AdditionalIncludeDirectories="$(ProjectDir)\..\..\lua\src"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -223,6 +225,7 @@
 			<Tool
 				Name="VCResourceCompilerTool"
 				AdditionalOptions="/nologo"
+				AdditionalIncludeDirectories="$(ProjectDir)\..\..\lua\src"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -305,6 +308,7 @@
 			<Tool
 				Name="VCResourceCompilerTool"
 				AdditionalOptions="/nologo"
+				AdditionalIncludeDirectories="$(ProjectDir)\..\..\lua\src"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"

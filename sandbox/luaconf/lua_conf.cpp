@@ -3,6 +3,7 @@
 
 #include "stdafx.h"
 #include "lua_conf.h"
+#include "modules/w32resembed.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -75,33 +76,24 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[])
     lua_State* L = luaWDS_open();
     if(L)
     {
-        const char* _dostring = "function dumptable(T,t)\n\
-                      print '--------------------------'\n\
-                      print(T)\n\
-                      print '--------------------------'\n\
-                      for k,v in pairs(t)do print(k,v) end\n\
-                      end\n\
-                      \n\
-                      dumptable('package', package)\n\
-                      dumptable('package.preload', package.preload)\n\
-                      dumptable('package.loaded', package.loaded)\n\
-                      dumptable('package.loaders', package.loaders)\n\
-                      dumptable('package.loaded._G', package.loaded._G)\n\
-                      print '--------------------------'\n\
-                      print('_G = ', _G)\n\
-                      print('package.loaded._G = ', package.loaded._G)\n\
-                      ";
-        dostring(L, _dostring);
-        fprintf(stderr, "--------------------------\n");
+        int stackTop = lua_gettop(L);
+        fprintf(stderr, "[STACK TOP] %i (line %i)\n", stackTop, __LINE__);
+        enumerateEmbeddedLuaScripts(L);
+        fprintf(stderr, "[STACK TOP] %i (line %i)\n", stackTop, __LINE__);
         int ret = luaL_dofile(L, "..\\lua_conf.lua");
+        fprintf(stderr, "[STACK TOP] %i (line %i)\n", stackTop, __LINE__);
         if(ret)
         {
             fprintf(stderr, "%s", lua_tostring(L, -1));
             lua_pop(L, 1); /* pop error message from the stack */
+            fprintf(stderr, "[STACK TOP] %i (line %i)\n", stackTop, __LINE__);
             lua_close(L);
+            fprintf(stderr, "[STACK TOP] %i (line %i)\n", stackTop, __LINE__);
             return EXIT_FAILURE;
         }
+        fprintf(stderr, "[STACK TOP] %i (line %i)\n", stackTop, __LINE__);
         lua_close(L);
+        fprintf(stderr, "[STACK TOP] %i (line %i)\n", stackTop, __LINE__);
         return EXIT_SUCCESS;
     }
     return EXIT_FAILURE;

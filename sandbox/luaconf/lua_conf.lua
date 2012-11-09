@@ -12,34 +12,37 @@ else
   print "I'm NOT a WOW64 process"
 end
 
-print "-----------------"
+print '--------------------------'
 
 function test_loader(...)
-    print(...)
+    print("LOADER FUNC: ", ...)
     local mod = {}
     package.loaded[...] = mod
     return mod
 end
 
-
 package.preload["mytest"] = test_loader
 require "mytest"
 
-for k,v in pairs(package.loaded)do print(k,v) end
---[[
-local function load(modulename)
-  local errmsg = ""
-  -- Find source
-  local modulepath = string.gsub(modulename, "%.", "/")
-  for path in string.gmatch(package.path, "([^;]+)") do
-    local filename = string.gsub(path, "%?", modulepath)
-    local file = io.open(filename, "rb")
-    if file then
-      -- Compile and return the module
-      return assert(loadstring(assert(file:read("*a")), filename))
-    end
-    errmsg = errmsg.."\n\tno file '"..filename.."' (checked with custom loader)"
-  end
-  return errmsg
+function dumptable(T,t)
+    print '--------------------------'
+    print(T)
+    print '--------------------------'
+    for k,v in pairs(t)do print(k,v) end
 end
-]]
+
+dumptable('package', package)
+dumptable('package.preload', package.preload)
+dumptable('package.loaded', package.loaded)
+dumptable('package.loaders', package.loaders)
+dumptable('package.loaded._G', package.loaded._G)
+dumptable('package.loaded.winreg', package.loaded.winreg)
+if winres then
+    dumptable('winres', winres)
+    if winres.scripts then
+        dumptable('winres.scripts', winres.scripts)
+    end
+end
+print '--------------------------'
+print('_G = ', _G)
+print('package.loaded._G = ', package.loaded._G)
