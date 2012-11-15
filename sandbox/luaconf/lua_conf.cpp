@@ -67,6 +67,12 @@ namespace
         int status = luaL_loadbuffer(L, s, strlen(s), name) || docall(L, 0, 1);
         return report(L, status);
     }
+
+    static int dolibrary (lua_State *L, const char *name) {
+        lua_getglobal(L, "require");
+        lua_pushstring(L, name);
+        return report(L, lua_pcall(L, 1, 0, 0));
+    }
 }
 
 using namespace std;

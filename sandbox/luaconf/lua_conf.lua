@@ -31,5 +31,6 @@ for k,v in pairs(winres.scripts) do
     package.preload[k:upper()] = package.preload[k:lower()]
 end
 dumptable('package.preload', package.preload)
+dumptable('winreg', winreg)
 require "helloworld"
 dumptable('package.loaded', package.loaded)
