@@ -26,10 +26,16 @@ end
 
 for k,v in pairs(winres.scripts) do
     package.preload[k:lower()] = function(...)
-        return winres.c_loader(k:upper())
+        return winres.c_loader(k:lower())
     end
-    package.preload[k:upper()] = package.preload[k:lower()]
 end
+table.foreach(package, print)
 dumptable('package.preload', package.preload)
-require "helloworld"
+dumptable('winreg', winreg)
+x = require "helloworld"
 dumptable('package.loaded', package.loaded)
+dumptable('package.loaded.helloworld', x)
+x.hello()
+
+-- 
+

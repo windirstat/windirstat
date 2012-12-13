@@ -79,34 +79,74 @@ static HMODULE getMyModuleHandle()
 
 static int luaC_winres_loader_(lua_State* L)
 {
+    const BYTE utf8bom[3] = { 0xEF, 0xBB, 0xBF };
     const char* scriptBuf = NULL;
     size_t scriptLen = 0;
     DWORD dwScriptLen = 0;
-    LPCTSTR resName = lua_totstring(L, 1); // we _require_ a string, not ordinal resource IDs
+    int ret;
+    LPCTSTR resName;
+    LPCSTR chunkName;
+
+    // Expecting char string here (used as chunk name)
+    chunkName = lua_checkstring(L, 1);
+    // Take a copy on the stack
+    lua_pushstring(L, chunkName);
+    // Converts the copy to a wchar_t string
+    resName = lua_checktstring(L, 2);
+
     // Get pointer to script contents and size of script from current module
-    if(getResourcePointer(getMyModuleHandle(), resName, RT_LUASCRIPT, ((LPVOID*)&scriptBuf), &dwScriptLen))
+    if(
+        !getResourcePointer(getMyModuleHandle(), resName, RT_LUASCRIPT, ((LPVOID*)&scriptBuf), &dwScriptLen)
+        || !dwScriptLen
+        )
     {
-        scriptLen = (size_t)dwScriptLen;
+        luaL_error(L, "Could not load the Lua script from the resources: %s", chunkName);
+        return 0;
     }
-    return luaL_loadbuffer(L, scriptBuf, scriptLen, lua_tostring(L, 1));
+    scriptLen = (size_t)dwScriptLen;
+    // Skip the UTF-8 BOM, if any
+    if((scriptLen > sizeof(utf8bom)) && 0 == memcmp(utf8bom, scriptBuf, sizeof(utf8bom)))
+    {
+        scriptBuf += sizeof(utf8bom);
+        scriptLen -= sizeof(utf8bom);
+        dwScriptLen -= sizeof(utf8bom);
+    }
+    // Load the script into the Lua state
+    if(ret = luaL_loadbuffer(L, scriptBuf, scriptLen, chunkName))
+    {
+        luaL_error(L, "Could not load Lua chunk from resource (%d): %s", ret, lua_tostring(L, -1));
+        return 0;
+    }
+    // the loaded script is at the top of the stack
+    lua_remove(L, 2); // remove the chunk name now
+    lua_pushtstring(L, resName);
+    if(ret = lua_pcall(L, 1, LUA_MULTRET, 0))
+    {
+        luaL_error(L, "Could not call the newly loaded chunk (%d): %s", ret, lua_tostring(L, -1));
+    }
+    return ret;
 }
 
-void enumerateEmbeddedLuaScripts(lua_State* L)
+int enumerateEmbeddedLuaScripts(lua_State* L)
 {
     const luaL_Reg winres_funcs[] = {
         {"c_loader", luaC_winres_loader_},
         {NULL, NULL}
     };
     luaL_register(L, WINRES_MODNAME, winres_funcs);
-    // Get the table
-    lua_getglobal(L, WINRES_MODNAME);
+    // winres table at top of stack
     // Name for the contained table
     lua_pushstring(L, "scripts");
-    // winres.scripts
+    // winres.scripts (later)
     lua_newtable(L);
+    // scripts at top of stack
     // Enumerate the resource names of type RT_LUASCRIPT in the current module
     // The callback functions add the names of resources to the table at the top of the stack
     EnumResourceNames(getMyModuleHandle(), RT_LUASCRIPT, (ENUMRESNAMEPROC)enumLuaScriptsNameCallback, (LONG_PTR)L);
     // Assign the table as winres.scripts
     lua_rawset(L, -3);
+    // winres table at top of stack again
+    lua_pop(L, 1);
+    // back to previous stack top (before calling this function)
+    return 0;
 }

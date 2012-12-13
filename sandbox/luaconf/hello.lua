@@ -1,3 +1,6 @@
-module(..., package.seeall)
+﻿module(..., package.seeall)
 
-print "Hello world"
+-- Declare the functions you want in your module
+function hello()
+    print ("Hello WORLD, module")
+end

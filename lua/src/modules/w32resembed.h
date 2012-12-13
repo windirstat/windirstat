@@ -1,5 +1,5 @@
 #ifndef __W32RESEMBED_H_VER__
-#define __W32RESEMBED_H_VER__ 2012110900
+#define __W32RESEMBED_H_VER__ 2012121304
 // $Id$
 #if (defined(_MSC_VER) && (_MSC_VER >= 1020)) || defined(__MCPP)
 #pragma once
@@ -11,7 +11,7 @@
 #else
 #   define RT_LUASCRIPT TEXT("LUA")
 
-EXTERN_C void enumerateEmbeddedLuaScripts(lua_State* L);
+EXTERN_C int enumerateEmbeddedLuaScripts(lua_State* L);
 #endif
 
 #endif // __W32RESEMBED_H_VER__

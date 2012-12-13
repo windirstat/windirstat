@@ -76,12 +76,12 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[])
     lua_State* L = luaWDS_open();
     if(L)
     {
-        //fprintf(stderr, "[STACK TOP] %i (line %i)\n", lua_gettop(L), __LINE__);
         enumerateEmbeddedLuaScripts(L);
-        int ret = luaL_dofile(L, "..\\lua_conf.lua");
+        int ret;
+        ret = luaL_dofile(L, "lua_conf.lua");
         if(ret)
         {
-            lua_pop(L, 1); /* pop error message from the stack */
+            luaL_error(L, "Failed to load lua_conf.lua (%d)", ret);
             lua_close(L);
             return EXIT_FAILURE;
         }
