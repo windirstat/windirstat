@@ -95,7 +95,7 @@ static void luaWDS_openlibs_(lua_State *L)
         lua_call(L, 1, 0);
     }
 }
-#endif // WDS_LUA_NO_INIT
+#endif // WDS_LUA_NO_INIT // otherwise the implementer needs to define her own version ;)
 
 lua_State* luaWDS_open()
 {

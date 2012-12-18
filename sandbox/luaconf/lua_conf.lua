@@ -24,18 +24,9 @@ if winres then
     end
 end
 
-for k,v in pairs(winres.scripts) do
-    package.preload[k:lower()] = function(...)
-        return winres.c_loader(k:lower())
-    end
-end
-table.foreach(package, print)
 dumptable('package.preload', package.preload)
 dumptable('winreg', winreg)
 x = require "helloworld"
 dumptable('package.loaded', package.loaded)
 dumptable('package.loaded.helloworld', x)
 x.hello()
-
--- 
-
