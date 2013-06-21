@@ -38,7 +38,12 @@ as well as graphically in a treemap, much like KDirStat and Sequoiaview.
 
 =============================================================================
 If you make any changes or enhancements, find bugs or have feature requests,
-please contact us. Note, however, that not all proposed features will be
+please contact us. 
+
+Bugs can be filed at https://sourceforge.net/p/windirstat/bugs/?source=navbar
+until we switch to GitHub's issue tracker.
+
+Note, however, that not all proposed features will be
 taken into account as we want to keep WinDirStat what it is: a tool to view
 disk usage statistics and to clean up your disk, simple and intuitive.
 
@@ -130,15 +135,15 @@ Find the list of already included languages in the table below:
  L-ID  | Language      | Native name  | 3-letter ISO 639 code
  (hex) | (english)     |              | (all available)
  ------------------------------------------------------------
- 0405  | Czech         | Ceština      | CES/CZE
+ 0405  | Czech         | Ceï¿½tina      | CES/CZE
  0407  | German        | Deutsch      | DEU/GER
  0409  | English       | English      | ENG
- 040a  | Spanish       | Español      | ESL/SPA
- 040c  | French        | Français     | FRA/FRE
+ 040a  | Spanish       | Espaï¿½ol      | ESL/SPA
+ 040c  | French        | Franï¿½ais     | FRA/FRE
  040e  | Hungarian     | Magyar       | HUN
  0410  | Italian       | Italiano     | ITA
  0415  | Polish        | Polski       | POL
- 0419  | Russian       | Ðóññêèé      | RUS
+ 0419  | Russian       | ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½      | RUS
  ------------------------------------------------------------
 
 To lookup further language codes look at:
