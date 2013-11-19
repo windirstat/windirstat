@@ -741,7 +741,7 @@ void CDirstatApp::OnRunElevated()
         m_ElevationEvent = 0;
     }
 }
-#endif // _UNICODE
+#endif // WDS_ELEVATION
 
 BOOL CDirstatApp::OnIdle(LONG lCount)
 {
