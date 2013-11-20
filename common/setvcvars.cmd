@@ -1,18 +1,17 @@
 @echo off
 @if not "%OS%"=="Windows_NT" @(echo This script requires Windows NT 4.0 or later to run properly! & goto :EOF)
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-::: 2009, Oliver Schneider (assarbad.net) - Released into the PUBLIC DOMAIN.
-::: $Id: setvcvars.cmd 33 2009-07-08 23:57:01Z oliver $
+::: 2009-2012, Oliver Schneider (assarbad.net) - PUBLIC DOMAIN/CC0
 :::
 ::: PURPOSE:    This script can be used to run the vcvars32.bat from any of the
-:::             existing Visual C++ versions from .NET (2002) through 2008 or
+:::             existing Visual C++ versions from .NET (2002) through 2012 or
 :::             custom given versions (or single version) on the command line.
 :::             The script will try to find the newest installed VC version by
 :::             iterating over the space-separated (descending) list of versions
 :::             in the variable SUPPORTED_VC below.
-:::             Call it from another script and after that you will have NMAKE
-:::             and friends available without having to hardcode their path into
-:::             a script or makefile.
+:::             Call it from another script and after that you will have NMAKE,
+:::             DEVENV.EXE and friends available without having to hardcode
+:::             their path into a script or makefile.
 :::
 ::: DISCLAIMER: Disclaimer: This software is provided 'as-is', without any
 :::             express or implied warranty. In no event will the author be
@@ -21,7 +20,7 @@
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :SCRIPT
 setlocal & pushd .
-set SUPPORTED_VC=9.0 8.0 7.1 7.0
+set SUPPORTED_VC=11.0 10.0 9.0 8.0 7.1 7.0
 reg /? > NUL 2>&1 || echo "REG.EXE is a prerequisite but wasn't found!" && goto :EOF
 set SETVCV_ERROR=0
 :: Allow the version to be overridden on the command line
@@ -31,6 +30,9 @@ if not "%~1" == "" @(
     call :FindVC "%%i"
   )
 ) else @(
+  echo Trying to auto-detect supported MSVC version ^(%SUPPORTED_VC%^)
+  echo HINT: pass one of %SUPPORTED_VC% on the command line.
+  echo.
   for %%i in (%SUPPORTED_VC%) do @(
     call :FindVC "%%i"
   )
@@ -88,6 +90,12 @@ set VCVERLBL=%VCVER:.=_%
 call :FRIENDLY_%VCVERLBL% > NUL 2>&1
 :: Jump over those "subs"
 goto :FRIENDLY_SET
+:FRIENDLY_11_0
+    set _VCVER=2012
+    goto :EOF
+:FRIENDLY_10_0
+    set _VCVER=2010
+    goto :EOF
 :FRIENDLY_9_0
     set _VCVER=2008
     goto :EOF
