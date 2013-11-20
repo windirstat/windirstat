@@ -13,7 +13,11 @@ set LUAJITSRC=%~dp0..\lua\src
 :: Change into the LuaJIT src directory
 setlocal & pushd "%LUAJITSRC%"
 :: First parameter is the target folder where we put the resulting static lib
-set TGTDIR=%~1
+set TGTDIR=%~dpnx1
+if exist "%TGTDIR%\lua51.lib" @(
+  echo Skipping build, found static lib %TGTDIR%\lua51.lib
+  goto :RETURN
+)
 :: Shift by one, now %1 is either empty or 'debug'
 shift
 :: Purge the files because we build for different configurations
@@ -27,7 +31,9 @@ echo Calling LuaJIT build script: msvcbuild.bat %~1 static
 call msvcbuild.bat %~1 static
 :: Now move out the resulting .lib file and luajit.exe
 for %%i in (lua51.lib luajit.exe) do @(
-  echo %%i into -^> %TGTDIR%
+  echo Moving %%i into %TGTDIR% 
+  move "%%i" "%TGTDIR%\"
 )
 :: Back to normal
+:RETURN
 popd & endlocal

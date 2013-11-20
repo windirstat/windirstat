@@ -1,6 +1,7 @@
 -- The below is used to insert the .vs(2005|2008|2010|2012) into the file names for projects and solutions
 local action = _ACTION or ""
 do
+    -- This is mainly to support older premake4 builds
     if not premake.project.getbasename then
         print "Magic happens ..."
         -- override the function to establish the behavior we'd get after patching Premake to have premake.project.getbasename
@@ -27,6 +28,7 @@ do
             return path.getrelative(os.getcwd(), fname)
         end
     end
+    -- Name the project files after their VS version
     local orig_getbasename = premake.project.getbasename
     premake.project.getbasename = function(prjname, pattern)
         if _ACTION then
@@ -38,6 +40,23 @@ do
             end
         end
         return orig_getbasename(prjname, pattern)
+    end
+    -- Override the object directory paths ... don't make them "unique" inside premake4
+    local orig_gettarget = premake.gettarget
+    premake.gettarget = function(cfg, direction, pathstyle, namestyle, system)
+        local r = orig_gettarget(cfg, direction, pathstyle, namestyle, system)
+        if (cfg.objectsdir) and (cfg.objdir) then
+            cfg.objectsdir = cfg.objdir
+        end
+        return r
+    end
+    -- Silently don't generate the .user files ...
+    local orig_generate = premake.generate
+	premake.generate = function(obj, filename, callback)
+        if filename:find('.vcproj.user') or filename:find('.vcxproj.user') then
+            return
+        end
+        orig_generate(obj, filename, callback)
     end
 end
 
@@ -56,9 +75,10 @@ solution ("windirstat")
         flags           {"StaticRuntime", "Unicode", "MFC", "NativeWChar", "ExtraWarnings", "NoRTTI", "WinMain", "NoMinimalRebuild"}
         defines         {"WINVER=0x0500"}
         targetdir       ("build")
-        includedirs     { "", "windirstat", "common", "windirstat/Controls", "windirstat/Dialogs", "lua/src" }
+        includedirs     { ".", "windirstat", "common", "windirstat/Controls", "windirstat/Dialogs", "lua/src" }
         objdir          (int_dir)
-        links           {"htmlhelp", "psapi"}
+        libdirs         {"$(IntDir)"}
+        links           {"htmlhelp", "psapi", "lua51"}
         resoptions      {"/nologo", "/l409"}
         resincludedirs  {"$(IntDir)"}
         linkoptions     {"/delayload:psapi.dll"}
@@ -125,14 +145,14 @@ solution ("windirstat")
         configuration {"Debug"}
             defines         ("_DEBUG")
             flags           {"Symbols"}
-            prelinkcommands {"$(SolutionDir)\common\\build_luajit.cmd NUL debug"}
+            prelinkcommands {"$(SolutionDir)\common\\build_luajit.cmd \"$(ProjectDir)$(IntDir)\" debug"}
 
         configuration {"Release"}
             defines         ("NDEBUG")
             flags           {"Optimize"}
             linkoptions     {"/release"}
             buildoptions    {"/Oi", "/Ot"}
-            prelinkcommands {"$(SolutionDir)\common\\build_luajit.cmd NUL"}
+            prelinkcommands {"$(SolutionDir)\common\\build_luajit.cmd \"$(ProjectDir)$(IntDir)\""}
 
         configuration {"vs2005", "windirstat/WDS_Lua_C.c"}
             defines         ("_CRT_SECURE_NO_WARNINGS")
