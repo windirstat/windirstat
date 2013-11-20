@@ -48,7 +48,7 @@ if not defined VCVARS_PATH @(
   )
   popd & endlocal & exit /b %SETVCV_ERROR%
 )
-:: Return and make sure the outside world sees the results (i.e. leave the scope)
+:: Return and make sure the outside world see the results (i.e. leave the scope)
 popd & endlocal & if not "%VCVARS_PATH%" == "" @(call "%VCVARS_PATH%") & if not "%VCVER_FRIENDLY%" == "" set VCVER_FRIENDLY=%VCVER_FRIENDLY%
 goto :EOF
 
