@@ -56,8 +56,12 @@ solution ("windirstat")
         flags           {"StaticRuntime", "Unicode", "MFC", "NativeWChar", "ExtraWarnings", "NoRTTI", "WinMain", "NoMinimalRebuild"}
         defines         {"WINVER=0x0500"}
         targetdir       ("build")
-        includedirs     { "", "windirstat", "common", "windirstat/Controls", "windirstat/Dialogs" }
+        includedirs     { "", "windirstat", "common", "windirstat/Controls", "windirstat/Dialogs", "lua/src" }
         objdir          (int_dir)
+        links           {"htmlhelp", "psapi"}
+        resoptions      {"/nologo", "/l409"}
+        resincludedirs  {"$(IntDir)"}
+        linkoptions     {"/delayload:psapi.dll"}
 
         files
         {
@@ -122,17 +126,13 @@ solution ("windirstat")
             defines         ("_DEBUG")
             flags           {"Symbols"}
             prelinkcommands {"$(SolutionDir)\common\\build_luajit.cmd NUL debug"}
+
         configuration {"Release"}
             defines         ("NDEBUG")
             flags           {"Optimize"}
             linkoptions     {"/release"}
             buildoptions    {"/Oi", "/Ot"}
             prelinkcommands {"$(SolutionDir)\common\\build_luajit.cmd NUL"}
-        configuration {"vs*"}
-            links           {"htmlhelp", "psapi"}
-            resoptions      {"/nologo", "/l409"}
-            resincludedirs  {"$(IntDir)"}
-            -- includedirs     {".", "lua/src"}
-            --linkoptions     {"/delayload:psapi.dll"}
+
         configuration {"vs2005", "windirstat/WDS_Lua_C.c"}
             defines         ("_CRT_SECURE_NO_WARNINGS")
