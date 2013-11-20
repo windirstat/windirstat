@@ -30,7 +30,12 @@ do
     local orig_getbasename = premake.project.getbasename
     premake.project.getbasename = function(prjname, pattern)
         if _ACTION then
-            pattern = pattern:gsub("%%%%", "%%%%." .. _ACTION)
+            name_map = {vs2005 = "vs8", vs2008 = "vs9", vs2010 = "vs10", vs2012 = "vs11"}
+            if name_map[_ACTION] then
+                pattern = pattern:gsub("%%%%", "%%%%." .. name_map[_ACTION])
+            else
+                pattern = pattern:gsub("%%%%", "%%%%." .. _ACTION)
+            end
         end
         return orig_getbasename(prjname, pattern)
     end
@@ -40,7 +45,7 @@ solution ("windirstat")
     configurations  {"Debug", "Release"}
     platforms       {"x32", "x64"}
     location        ('.')
-    
+
     project ("windirstat")
         local int_dir   = "intermediate/" .. action .. "_" .. "$(PlatformName)_$(ConfigurationName)"
         uuid            ("BD11B94C-6594-4477-9FDF-2E24447D1F14")
@@ -51,7 +56,7 @@ solution ("windirstat")
         flags           {"StaticRuntime", "Unicode", "MFC", "NativeWChar", "ExtraWarnings", "NoRTTI", "WinMain", "NoMinimalRebuild"}
         defines         {"WINVER=0x0500"}
         targetdir       ("build")
-        includedirs     { "windirstat", "common", "windirstat/Controls", "windirstat/Dialogs" }
+        includedirs     { "", "windirstat", "common", "windirstat/Controls", "windirstat/Dialogs" }
         objdir          (int_dir)
 
         files
@@ -70,6 +75,7 @@ solution ("windirstat")
             "*.txt",
             "common/BUILD",
             "common/buildinc.cmd",
+            "common/build_luajit.cmd",
             "premake4.lua",
         }
 
@@ -96,7 +102,7 @@ solution ("windirstat")
             ["Source Files/Controls/*"] = { "windirstat/Controls/*.cpp" },
             ["Source Files/Dialogs/*"] = { "windirstat/Dialogs/*.cpp" },
             ["Source Files/*"] = { "windirstat/*.cpp" },
-            ["Special Files/*"] = { "common/BUILD", "common/buildinc.cmd", "premake4.lua" },
+            ["Special Files/*"] = { "common/BUILD", "common/buildinc.cmd", "premake4.lua", "*.cmd" },
             ["*"] = { "*.txt" },
         }
 
@@ -115,16 +121,18 @@ solution ("windirstat")
         configuration {"Debug"}
             defines         ("_DEBUG")
             flags           {"Symbols"}
+            prelinkcommands {"$(SolutionDir)\common\\build_luajit.cmd NUL debug"}
         configuration {"Release"}
             defines         ("NDEBUG")
             flags           {"Optimize"}
             linkoptions     {"/release"}
             buildoptions    {"/Oi", "/Ot"}
+            prelinkcommands {"$(SolutionDir)\common\\build_luajit.cmd NUL"}
         configuration {"vs*"}
-            links           { "htmlhelp", "psapi" }
+            links           {"htmlhelp", "psapi"}
             resoptions      {"/nologo", "/l409"}
             resincludedirs  {"$(IntDir)"}
-            includedirs     {".", "lua/src"}
+            -- includedirs     {".", "lua/src"}
             --linkoptions     {"/delayload:psapi.dll"}
         configuration {"vs2005", "windirstat/WDS_Lua_C.c"}
             defines         ("_CRT_SECURE_NO_WARNINGS")
