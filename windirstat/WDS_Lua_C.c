@@ -8,6 +8,8 @@
 #   pragma warning(disable:4334)
 #endif
 
+#if 0
+
 // Core
 #include "lapi.c"
 #include "lcode.c"
@@ -63,6 +65,7 @@
 #ifndef WDS_LUA_NO_LUAC
 #   include "lua.c"
 #endif // WDS_LUA_NO_LUAC
+#endif // 0
 
 // Modules/Packages, individual functions
 #include "modules/winreg.c"
