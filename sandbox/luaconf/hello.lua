@@ -2,5 +2,5 @@
 
 -- Declare the functions you want in your module
 function hello()
-    print ("Hello WORLD, module")
+print "Hello world"
 end

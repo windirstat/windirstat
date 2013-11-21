@@ -24,9 +24,13 @@ if winres then
     end
 end
 
+for k,v in pairs(winres.scripts) do
+    package.preload[k:lower()] = function(...)
+        return winres.c_loader(k:upper())
+    end
+    package.preload[k:upper()] = package.preload[k:lower()]
+end
 dumptable('package.preload', package.preload)
 dumptable('winreg', winreg)
-x = require "helloworld"
+require "helloworld"
 dumptable('package.loaded', package.loaded)
-dumptable('package.loaded.helloworld', x)
-x.hello()
