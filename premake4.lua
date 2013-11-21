@@ -72,7 +72,7 @@ solution ("windirstat")
         kind            ("WindowedApp")
         location        ("windirstat")
         targetname      ("wds")
-        flags           {"StaticRuntime", "Unicode", "MFC", "NativeWChar", "ExtraWarnings", "NoRTTI", "WinMain", "NoMinimalRebuild"}
+        flags           {"StaticRuntime", "Unicode", "MFC", "NativeWChar", "ExtraWarnings", "NoRTTI", "WinMain", "NoMinimalRebuild"} -- "No64BitChecks", "NoEditAndContinue", "NoManifest", "NoExceptions" ???
         defines         {"WINVER=0x0500"}
         targetdir       ("build")
         includedirs     { ".", "windirstat", "common", "windirstat/Controls", "windirstat/Dialogs", "lua/src" }
@@ -98,8 +98,7 @@ solution ("windirstat")
             "windirstat/res/*.*",
             "*.txt",
             "common/BUILD",
-            "common/buildinc.cmd",
-            "common/build_luajit.cmd",
+            "common/*.cmd",
             "premake4.lua",
         }
 
@@ -126,7 +125,7 @@ solution ("windirstat")
             ["Source Files/Controls/*"] = { "windirstat/Controls/*.cpp" },
             ["Source Files/Dialogs/*"] = { "windirstat/Dialogs/*.cpp" },
             ["Source Files/*"] = { "windirstat/*.cpp" },
-            ["Special Files/*"] = { "common/BUILD", "common/buildinc.cmd", "premake4.lua", "*.cmd" },
+            ["Special Files/*"] = { "common/BUILD", "common/*.cmd", "premake4.lua", "*.cmd" },
             ["*"] = { "*.txt" },
         }
 
@@ -155,4 +154,4 @@ solution ("windirstat")
             prelinkcommands {"$(SolutionDir)\common\\build_luajit.cmd \"$(ProjectDir)$(IntDir)\""}
 
         configuration {"vs2005", "windirstat/WDS_Lua_C.c"}
-            defines         ("_CRT_SECURE_NO_WARNINGS")
+            defines         ("_CRT_SECURE_NO_WARNINGS") -- _CRT_SECURE_NO_DEPRECATE, _SCL_SECURE_NO_WARNINGS, _AFX_SECURE_NO_WARNINGS and _ATL_SECURE_NO_WARNINGS???

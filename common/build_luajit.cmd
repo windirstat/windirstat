@@ -14,12 +14,18 @@ set LUAJITSRC=%~dp0..\lua\src
 setlocal & pushd "%LUAJITSRC%"
 :: First parameter is the target folder where we put the resulting static lib
 set TGTDIR=%~dpnx1
-if exist "%TGTDIR%\lua51.lib" @(
-  echo Skipping build, found static lib %TGTDIR%\lua51.lib
-  goto :RETURN
-)
 :: Shift by one, now %1 is either empty or 'debug'
 shift
+if exist "%TGTDIR%\lua51.lib" @(
+  if "%~1" == "force" @(
+    echo Forced rebuild
+    del /f "%TGTDIR%\lua51.lib"
+    shift
+  ) else @(
+    echo Skipping build, found static lib %TGTDIR%\lua51.lib
+    goto :RETURN
+  )
+)
 :: Purge the files because we build for different configurations
 for %%i in (*.obj *.ilk *.pdb *.exe *.dll *.exp *.lib host\buildvm_arch.h jit\vmdef.lua lj_bcdef.h lj_ffdef.h lj_folddef.h lj_libdef.h lj_recdef.h) do @(
   if exist "%%i" @(
