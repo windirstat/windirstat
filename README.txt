@@ -40,17 +40,16 @@ as well as graphically in a treemap, much like KDirStat and Sequoiaview.
 If you make any changes or enhancements, find bugs or have feature requests,
 please contact us. 
 
-Bugs can be filed at https://sourceforge.net/p/windirstat/bugs/?source=navbar
-until we switch to GitHub's issue tracker.
+Issues can be filed at https://bitbucket.org/windirstat/windirstat/issues
 
-Note, however, that not all proposed features will be
-taken into account as we want to keep WinDirStat what it is: a tool to view
-disk usage statistics and to clean up your disk, simple and intuitive.
+Note, however, that not all proposed features will be taken into account as
+we want to keep WinDirStat what it is: a tool to view disk usage statistics
+and to clean up your disk, simple and intuitive.
 
 
 =============================================================================
-WinDirStat is an application written in Visual C++ using MFC 7.0.
-It runs on MS Windows (9x, NT, 2000, XP).
+WinDirStat is an application written in Visual C++ using MFC.
+It currently runs on MS Windows (9x, NT, 2000, XP).
 
 It shows where all your disk space is gone and helps you clean it up.
 
