@@ -163,11 +163,18 @@ ul.download {
   border : 1px dashed #cccccc;
   padding : 1em;
   margin : 1em;
-  font-size : 150%;
-  list-style : disc inside url('/images/download.png');
+  list-style: none;
   background-color : #C0E0B0
 }
 
 li.download {
-  padding-bottom : 1ex;
+  background-image :url('/images/download.png');
+  background-repeat: no-repeat;
+  font-size : 150%;
+  padding-left: 50px;
+  padding-bottom: 1em;
+}
+
+li.download_src {
+  padding-left: 50px;
 }

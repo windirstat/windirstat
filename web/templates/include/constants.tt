@@ -15,4 +15,9 @@
   download_SF   = 'http://prdownloads.sourceforge.net/windirstat/windirstat1_1_2_setup.exe'
   download_MD5  = '3abf1c149873e25d4e266225fbf37cbf'
   download_SHA1 = '6fa92dd2ca691c11dfbfc0a239e34369897a7fab'
+  fname_setup   = 'wds_current_setup.exe'
+  fname_src_zip = 'wds_current_source.zip'
+  fname_src_7z  = 'wds_current_source.7z'
+  fname_SHA1SUM = 'SHA1SUMS'
+  dlbase_M1     = 'http://download01.windirstat.info/wds_rsync'
 %]

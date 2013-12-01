@@ -6,10 +6,12 @@
    norder = '1000'
 %]
 <ul class="download">
-<li class="download">WinDirStat [%- currver -%] from <a class="wdslnk" href="[%- download_FH -%]">FossHub</a></li>
+<li class="download">WinDirStat [%- currver -%] from <a class="wdslnk" href="[%- download_FH -%]">FossHub</a>, <a class="wdslnk" href="[%- download_SF -%]">SourceForge</a> or <a class="wdslnk" href="[%- dlbase_M1 -%]/[%- fname_setup -%]">Triple IT</a></li>
+<li class="download_src">Source code repositories: <a href="/project/">SourceForge</a> (primary) or <a href="/bitbucket/">Bitbucket</a> (secondary). For source code in <tt>.7</tt> and <tt>.zip</tt> format, see below.</li>
 </ul>
 
-<p>Please verify your download afterwards. The hashes of the setup file are: <tt>MD5: [%- download_MD5 -%]</tt> and  <tt>SHA1: [%- download_SHA1 -%]</tt>.</p>
+<p><strong>Please verify your download afterwards.</strong> The hashes of the setup file are: <tt>MD5: [%- download_MD5 -%]</tt> and  <tt>SHA1: [%- download_SHA1 -%]</tt>.
+You can use <a href="http://support.microsoft.com/kb/841290">File Checksum Integrity Verifier from Microsoft</a> to verify the file hashes (the link describes how to use it to check file hashes).</p>
 
 <p>
 The <tt>.exe</tt> files contained in the installer have the following SHA1 hashes (Unicode and ANSI version respectively):</p>
@@ -49,28 +51,43 @@ Server versions of Windows generally work as well, but aren't always tested as w
     <a href="http://blog.windirstat.info">blog.windirstat.info</a><br />
 	Announcements, thoughts and of course - through comments - a place for discussions around WinDirStat.
   </li>
-  <li class="bigspace">SourceForge.net download of WinDirStat [%- currver -%]:<br />
-  	<a href="[%- download_SF -%]">[%- download_SF -%]</a><br />
-	This is for everyone who prefers to download from SourceForge.net.
-  </li>
   <li class="bigspace">SourceForge.net project summary page:<br />
     <a href="/project/">windirstat.info/project/</a><br />
-	This is the original home of WinDirStat and remains the location of the authoritative copy of the repository.
+	This is the original home of WinDirStat and location of the authoritative copy of the source repository.
   </li>
   <li class="bigspace">Bitbucket team page:<br />
     <a href="/bitbucket/">windirstat.info/bitbucket/</a><br />
-	A Bitbucket team which can be used for those of you willing and able to contribute and already having a Bitbucket account. Send me pull requests, open issues or help create and improve Wiki pages.
-  </li>
-  <li class="bigspace">Github team page:<br />
-    <a href="/github/">windirstat.info/github/</a><br />
-	All of you Git aficionados who prefer to develop with Git send me pull requests on Github. The authoritative copy is still going to be the one on SourceForge.
+	A Bitbucket team which can be used for those of you willing and able to contribute and already having a Bitbucket account. Send me pull requests, open issues or help create and improve Wiki pages.<br/>
+	There is also a Wiki and an issue tracker there to report errors, feature requests or generally any issues you may encounter when using WinDirStat.
   </li>
   <li class="bigspace">Current installer (version [%- currver -%]):<br />
     <a href="/wds_current_setup.exe">windirstat.info/wds_current_setup.exe</a>
   </li>
   <li class="bigspace">Current Source release:<br />
-    <a href="/wds_current_source.zip">windirstat.info/wds_current_source.zip</a> <br/> or <br/>
-    <a href="/wds_current_source.7z">windirstat.info/wds_current_source.7z</a>
+    <a href="/wds_current_source.zip">windirstat.info/wds_current_source.zip</a>, same file alternatively from <a href="[%- dlbase_M1 -%]/[%- fname_src_zip -%]">mirror #1</a>, <br/> and <br/>
+    <a href="/wds_current_source.7z">windirstat.info/wds_current_source.7z</a> (smaller), same file alternatively from <a href="[%- dlbase_M1 -%]/[%- fname_src_7z -%]">mirror #1</a>.
+  </li>
+</ul>
+<h3>Thanks</h3>
+<p>
+Our heartfelt gratitude to the following companies and organizations in alphabetical order for supporting WinDirStat:
+</p>
+<ul>
+  <li class="bigspace">Atlassian/Bitbucket<br />
+    <a href="https://bitbucket.org/">bitbucket.org</a><br />
+	... for their project mirror, the issue tracker and generally an attractive project space.
+  </li>
+  <li class="bigspace">FossHub<br />
+    <a href="http://www.fosshub.com/">www.fosshub.com</a><br />
+	... for their download mirror and <a href="[%- download_FH -%]">informative review page</a>.
+  </li>
+  <li class="bigspace">SourceForge<br />
+    <a href="http://sourceforge.net/">sourceforge.net</a><br />
+	... for hosting the project and source repositories from the very start.
+  </li>
+  <li class="bigspace">Triple IT<br />
+    <a href="https://www.triple-it.nl/">www.triple-it.nl</a><br />
+	... for their generous offer of an independent file download mirror (base directory <a href="[%- dlbase_M1 -%]/">here</a>).
   </li>
 </ul>
 [% END %]
