@@ -19,5 +19,5 @@
   fname_src_zip = 'wds_current_source.zip'
   fname_src_7z  = 'wds_current_source.7z'
   fname_SHA1SUM = 'SHA1SUMS'
-  dlbase_M1     = 'http://download01.windirstat.info/wds_rsync'
+  dlbase_M1     = 'http://download01.windirstat.info'
 %]
