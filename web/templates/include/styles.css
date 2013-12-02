@@ -175,6 +175,10 @@ li.download {
   padding-bottom: 1em;
 }
 
+li.download_mirr {
+  padding-left: 50px;
+}
+
 li.download_src {
   padding-left: 50px;
 }

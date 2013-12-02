@@ -6,8 +6,9 @@
    norder = '1000'
 %]
 <ul class="download">
-<li class="download">WinDirStat [%- currver -%] from <a class="wdslnk" href="[%- download_FH -%]">FossHub</a>, <a class="wdslnk" href="[%- download_SF -%]">SourceForge</a> or <a class="wdslnk" href="[%- dlbase_M1 -%]/[%- fname_setup -%]">Triple IT</a></li>
-<li class="download_src">Source code repositories: <a href="/project/">SourceForge</a> (primary) or <a href="/bitbucket/">Bitbucket</a> (secondary). For source code in <tt>.7</tt> and <tt>.zip</tt> format, see below.</li>
+<li class="download">Download WinDirStat [%- currver -%] from <a class="wdslnk" href="[%- download_FH -%]">FossHub</a>.</li>
+<li class="download_mirr">Alternative download locations can be found <a class="wdslnk" href="#mirrors">below</a>.</li>
+<li class="download_src">Source code repositories: <a class="wdslnk" href="/project/">SourceForge</a> (primary) or <a class="wdslnk" href="/bitbucket/">Bitbucket</a> (secondary). For source code in <tt>.7</tt> and <tt>.zip</tt> format, see below.</li>
 </ul>
 
 <p><strong>Please verify your download afterwards.</strong> The hashes of the setup file are: <tt>MD5: [%- download_MD5 -%]</tt> and  <tt>SHA1: [%- download_SHA1 -%]</tt>.
@@ -30,6 +31,19 @@ The <tt>.exe</tt> files contained in the installer have the following SHA1 hashe
 (SP5), Windows 2000, Windows XP, Windows Vista, Windows 7, 8 and 8.1.<br />
 Server versions of Windows generally work as well, but aren't always tested as well by us. Feel free to get in touch with us if you want to lend a hand :)
 </p>
+
+<h3><a name="mirrors" />List of official download mirrors</h3>
+<ul>
+  <li>
+    <a href="[%- download_FH -%]">FossHub</a>
+  </li>
+  <li>
+    <a href="[%- download_SF -%]">SourceForge</a>
+  </li>
+  <li>
+    <a href="[%- dlbase_M1 -%]/[%- fname_setup -%]">Triple IT</a>
+  </li>
+</ul>
 
 <h3>Canonical links</h3>
 <p>
@@ -60,14 +74,15 @@ Server versions of Windows generally work as well, but aren't always tested as w
 	A Bitbucket team which can be used for those of you willing and able to contribute and already having a Bitbucket account. Send me pull requests, open issues or help create and improve Wiki pages.<br/>
 	There is also a Wiki and an issue tracker there to report errors, feature requests or generally any issues you may encounter when using WinDirStat.
   </li>
-  <li class="bigspace">Current installer (version [%- currver -%]):<br />
+  <li class="bigspace">Latest installer (currently version [%- currver -%]):<br />
     <a href="/wds_current_setup.exe">windirstat.info/wds_current_setup.exe</a>
   </li>
-  <li class="bigspace">Current Source release:<br />
-    <a href="/wds_current_source.zip">windirstat.info/wds_current_source.zip</a>, same file alternatively from <a href="[%- dlbase_M1 -%]/[%- fname_src_zip -%]">mirror #1</a>, <br/> and <br/>
-    <a href="/wds_current_source.7z">windirstat.info/wds_current_source.7z</a> (smaller), same file alternatively from <a href="[%- dlbase_M1 -%]/[%- fname_src_7z -%]">mirror #1</a>.
+  <li class="bigspace">Lastest source code release (currently version [%- currver -%]):<br />
+    <a href="/wds_current_source.zip">windirstat.info/wds_current_source.zip</a><br/> and <br/>
+    <a href="/wds_current_source.7z">windirstat.info/wds_current_source.7z</a>.
   </li>
 </ul>
+
 <h3>Thanks</h3>
 <p>
 Our heartfelt gratitude goes to the following companies and organizations in alphabetical order for supporting WinDirStat:

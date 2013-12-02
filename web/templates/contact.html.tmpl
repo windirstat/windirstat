@@ -4,6 +4,7 @@
    uuid = 'a57cd25d-42ee-4e3a-aa24-f42b9548dbdd'
    norder = '9989'
 %]
+[%- PROCESS 'constants.tt' -%]
 <p>All the fields have to be filled in ...</p>
 <p><strong>NB:</strong> As a matter of courtesy you should consider adding your name (or even a pseudonym) in the message to us. You know our names as well. Besides, it makes it easier to address you in a reply. Thanks.</p>
 <form action="/bin/sendmail.cgi" method="post" accept-charset="utf-8">
@@ -19,8 +20,7 @@
  <td>
  <select name="Recipient">
   <option value="developers" selected="selected">Developers</option>
-  <option value="bernhard">Bernhard</option>
-  <option value="oliver">Oliver</option>
+  [%- FOREACH key IN gpg_keys.sort('name') -%]<option value="[%- key.name | lower -%]">[%- key.name -%]</option>[%- END -%]
   <option value="team">The whole team</option>
  </select>
  </td>
@@ -55,24 +55,30 @@
  </tr>
 </table>
 </form>
-<h3>Report a bug?</h3>
+<h3>Report an issue or error ("bug")?</h3>
 <p>
-Please use the trackers over over on our SourceForge project page or for sensitive matters use a PGP-encrypted
-email. See below for public keys available.
+Please use <a class="wdslnk" href="[%- tracker_url -%]">the issue tracker over on Bitbucket</a> or for
+security-related reports use a PGP-encrypted email. See below for public keys available.
 </p>
 <h3>Email from your own client?</h3>
 <p>
 If you prefer to send an email, i.e. not use this contact form, you can use the lowercase form of the team
 member's first name and append the at sign and then <tt>windirstat.info</tt> to it to get the email address
-of that team member. If you can't remember the names, use the dropdown box above to receive a clue ;)
+of that team member (i.e. <tt>&lt;name&gt;@windirstat.info</tt>).
+If you can't remember the names, use the dropdown box above to receive a clue ;)
 </p>
 <h3>Using PGP to encrypt communication or to verify emails we send out</h3>
 <p>
-You can use the following PGP public keys to encrypt <em>to</em>. The keys will be available from commonly
-used key servers such as pgp.mit.edu or subkeys.pgp.net. Please use the traditional ASCII armor in your
-first communication to establish whether S/MIME can be used in future communication.
+You can use the following <a class="wdslnk" href="https://en.wikipedia.org/wiki/Pretty_Good_Privacy">PGP</a>
+public keys to encrypt <em>to</em>. The keys will be available from commonly used key servers such as
+pgp.mit.edu or subkeys.pgp.net. Please use the traditional ASCII armor in your first communication to
+establish whether PGP/MIME can be used in future communication.
 </p>
 <ul>
-<li>Oliver: ID: <tt>0x6190BC32</tt>, fingerprint: <tt>58F4 12A6 E0E8 9A7C A849  F0E2 9E9B CC53 6190 BC32</tt></li>
+[%- FOREACH key IN gpg_keys.sort('name') -%]
+[%- IF key.id -%]
+<li><strong>[%- key.name -%]:</strong><br />&nbsp;&nbsp;PGP key ID: <a class="wdslnk" href="[%- key.id | format(gpg_search_fmt) -%]">[%- key.id -%]</a>,<br />&nbsp;&nbsp;&nbsp;&nbsp;key fingerprint: <tt>[%- key.fingerprint -%]</tt></li>
+[%- END -%]
+[%- END -%]
 </ul>
 [% END %]
