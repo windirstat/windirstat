@@ -32,7 +32,7 @@ do
     local orig_getbasename = premake.project.getbasename
     premake.project.getbasename = function(prjname, pattern)
         if _ACTION then
-            name_map = {vs2005 = "vs8", vs2008 = "vs9", vs2010 = "vs10", vs2012 = "vs11"}
+            name_map = {vs2005 = "vs8", vs2008 = "vs9", vs2010 = "vs10", vs2012 = "vs11", vs2013 = "vs12"}
             if name_map[_ACTION] then
                 pattern = pattern:gsub("%%%%", "%%%%." .. name_map[_ACTION])
             else
