@@ -13,7 +13,7 @@ set REPOROOT=%~dp0..
 set COMMON=%~dp0
 :: Change into the repository root
 setlocal & pushd "%REPOROOT%"
-for %%i in (vs2005 vs2008 vs2010 vs2012) do @(
+for %%i in (vs2005 vs2008 vs2010 vs2012 vs2013) do @(
   "%COMMON%\premake4.exe"  %%i
 )
 :: Back to normal
