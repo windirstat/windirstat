@@ -58,6 +58,12 @@ do
         end
         orig_generate(obj, filename, callback)
     end
+    --[[ do
+        premake.action.list[name]
+        -- replace onsolution of the action
+        -- replace onproject of the action
+        -- limit the configurations ... oncheckproject?
+    end]]
 end
 
 solution ("windirstat")
@@ -155,6 +161,20 @@ solution ("windirstat")
 
         configuration {"vs2005", "windirstat/WDS_Lua_C.c"}
             defines         ("_CRT_SECURE_NO_WARNINGS") -- _CRT_SECURE_NO_DEPRECATE, _SCL_SECURE_NO_WARNINGS, _AFX_SECURE_NO_WARNINGS and _ATL_SECURE_NO_WARNINGS???
+--[[
+    resource_dlls = {
+        ["wdsr0405"] = "C3F39C58-7FC4-4243-82B2-A3572235AE02", -- Czech
+        ["wdsr0407"] = "C8D9E4F9-7051-4B41-A5AB-F68F3FCE42E8", -- German
+        ["wdsr040a"] = "23B76347-204C-4DE6-A311-F562CEF5D89C", -- Spanish
+        ["wdsr040b"] = "C7A5D1EC-35D3-4754-A815-2C527CACD584", -- Finnish
+        ["wdsr040c"] = "DA4DDD24-67BC-4A9D-87D3-18C73E5CAF31", -- French
+        ["wdsr040e"] = "2A75AA20-BFFE-4D1C-8AEC-274823223919", -- Hungarian
+        ["wdsr0410"] = "FD4194A7-EA1E-4466-A80B-AB4D8D17F33C", -- Italian
+        ["wdsr0413"] = "70A55EB7-E109-41DE-81B4-0DF2B72DCDE9", -- Dutch
+        ["wdsr0415"] = "70C09DAA-6F6D-4AAC-955F-ACD602A667CE", -- Polish
+        ["wdsr0419"] = "7F06AAC4-9FBE-412F-B1D7-CB37AB8F311D", -- Russian
+        ["wdsr0425"] = "2FADC62C-C670-4963-8B69-70ECA7987B93", -- Estonian
+    }
 
     -- Czech
     project ("wdsr0405")
@@ -163,128 +183,16 @@ solution ("windirstat")
         language        ("C++")
         kind            ("WindowedApp")
         location        ("wdsr0405")
+        flags           {"NoImportLib"}
         targetdir       ("build")
         resoptions      {"/nologo", "/l409"}
         resincludedirs  {"$(IntDir)"}
-        linkoptions     {""}
-    -- German
-    project ("wdsr0407")
-        local int_dir   = "intermediate/" .. action .. "_" .. "$(PlatformName)_$(ConfigurationName)"
-        uuid            ("C8D9E4F9-7051-4B41-A5AB-F68F3FCE42E8")
-        language        ("C++")
-        kind            ("WindowedApp")
-        location        ("wdsr0407")
-        targetdir       ("build")
-        resoptions      {"/nologo", "/l409"}
-        resincludedirs  {"$(IntDir)"}
-        linkoptions     {""}
-    -- Spanish
-    project ("wdsr040a")
-        local int_dir   = "intermediate/" .. action .. "_" .. "$(PlatformName)_$(ConfigurationName)"
-        uuid            ("23B76347-204C-4DE6-A311-F562CEF5D89C")
-        language        ("C++")
-        kind            ("WindowedApp")
-        location        ("wdsr040a")
-        targetdir       ("build")
-        resoptions      {"/nologo", "/l409"}
-        resincludedirs  {"$(IntDir)"}
-        linkoptions     {""}
-    -- Finnish
-    project ("wdsr040b")
-        local int_dir   = "intermediate/" .. action .. "_" .. "$(PlatformName)_$(ConfigurationName)"
-        uuid            ("C7A5D1EC-35D3-4754-A815-2C527CACD584")
-        language        ("C++")
-        kind            ("WindowedApp")
-        location        ("wdsr040b")
-        targetdir       ("build")
-        resoptions      {"/nologo", "/l409"}
-        resincludedirs  {"$(IntDir)"}
-        linkoptions     {""}
-    -- French
-    project ("wdsr040c")
-        local int_dir   = "intermediate/" .. action .. "_" .. "$(PlatformName)_$(ConfigurationName)"
-        uuid            ("DA4DDD24-67BC-4A9D-87D3-18C73E5CAF31")
-        language        ("C++")
-        kind            ("WindowedApp")
-        location        ("wdsr040c")
-        targetdir       ("build")
-        resoptions      {"/nologo", "/l409"}
-        resincludedirs  {"$(IntDir)"}
-        linkoptions     {""}
-    -- Hungarian
-    project ("wdsr040e")
-        local int_dir   = "intermediate/" .. action .. "_" .. "$(PlatformName)_$(ConfigurationName)"
-        uuid            ("2A75AA20-BFFE-4D1C-8AEC-274823223919")
-        language        ("C++")
-        kind            ("WindowedApp")
-        location        ("wdsr040e")
-        targetdir       ("build")
-        resoptions      {"/nologo", "/l409"}
-        resincludedirs  {"$(IntDir)"}
-        linkoptions     {""}
---[[ ICELANDIC doesn't exist, yet
-    project ("wdsr040f")
-        local int_dir   = "intermediate/" .. action .. "_" .. "$(PlatformName)_$(ConfigurationName)"
-        uuid            ("8CBD9125-53CC-4c69-B5F3-ECBAB708F0DF")
-        language        ("C++")
-        kind            ("WindowedApp")
-        location        ("wdsr040f")
-        targetdir       ("build")
-        resoptions      {"/nologo", "/l409"}
-        resincludedirs  {"$(IntDir)"}
-        linkoptions     {""} ]]
-    -- Italian
-    project ("wdsr0410")
-        local int_dir   = "intermediate/" .. action .. "_" .. "$(PlatformName)_$(ConfigurationName)"
-        uuid            ("FD4194A7-EA1E-4466-A80B-AB4D8D17F33C")
-        language        ("C++")
-        kind            ("WindowedApp")
-        location        ("wdsr0410")
-        targetdir       ("build")
-        resoptions      {"/nologo", "/l409"}
-        resincludedirs  {"$(IntDir)"}
-        linkoptions     {""}
-    -- Dutch
-    project ("wdsr0413")
-        local int_dir   = "intermediate/" .. action .. "_" .. "$(PlatformName)_$(ConfigurationName)"
-        uuid            ("70A55EB7-E109-41DE-81B4-0DF2B72DCDE9")
-        language        ("C++")
-        kind            ("WindowedApp")
-        location        ("wdsr0413")
-        targetdir       ("build")
-        resoptions      {"/nologo", "/l409"}
-        resincludedirs  {"$(IntDir)"}
-        linkoptions     {""}
-    -- Polish
-    project ("wdsr0415")
-        local int_dir   = "intermediate/" .. action .. "_" .. "$(PlatformName)_$(ConfigurationName)"
-        uuid            ("70C09DAA-6F6D-4AAC-955F-ACD602A667CE")
-        language        ("C++")
-        kind            ("WindowedApp")
-        location        ("wdsr0415")
-        targetdir       ("build")
-        resoptions      {"/nologo", "/l409"}
-        resincludedirs  {"$(IntDir)"}
-        linkoptions     {""}
-    -- Russian
-    project ("wdsr0419")
-        local int_dir   = "intermediate/" .. action .. "_" .. "$(PlatformName)_$(ConfigurationName)"
-        uuid            ("7F06AAC4-9FBE-412F-B1D7-CB37AB8F311D")
-        language        ("C++")
-        kind            ("WindowedApp")
-        location        ("wdsr0419")
-        targetdir       ("build")
-        resoptions      {"/nologo", "/l409"}
-        resincludedirs  {"$(IntDir)"}
-        linkoptions     {""}
-    -- Estonian
-    project ("wdsr0425")
-        local int_dir   = "intermediate/" .. action .. "_" .. "$(PlatformName)_$(ConfigurationName)"
-        uuid            ("2FADC62C-C670-4963-8B69-70ECA7987B93")
-        language        ("C++")
-        kind            ("WindowedApp")
-        location        ("wdsr0425")
-        targetdir       ("build")
-        resoptions      {"/nologo", "/l409"}
-        resincludedirs  {"$(IntDir)"}
-        linkoptions     {""}
+        linkoptions     {"/noentry"}
+        files
+        {
+            "wdsr0405/.*.txt",
+            "wdsr0405/windirstat.rc",
+            "wdsr0405/res/windirstat.rc2",
+            "windirstat/res/*.*",
+        }
+]]
