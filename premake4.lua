@@ -1,4 +1,4 @@
--- The below is used to insert the .vs(2005|2008|2010|2012) into the file names for projects and solutions
+-- The below is used to insert the .vs(2005|2008|2010|2012|2013) into the file names for projects and solutions
 local action = _ACTION or ""
 do
     -- This is mainly to support older premake4 builds
@@ -52,7 +52,7 @@ do
     end
     -- Silently don't generate the .user files ...
     local orig_generate = premake.generate
-	premake.generate = function(obj, filename, callback)
+    premake.generate = function(obj, filename, callback)
         if filename:find('.vcproj.user') or filename:find('.vcxproj.user') then
             return
         end
