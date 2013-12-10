@@ -337,7 +337,10 @@ void reg_aux_pusheregstrdata(lua_State *L, PVOID pdata, size_t cdata, DWORD dwTy
 			}else{
 				n = (DWORD64)(*((PDWORD32)pdata));
 			}
-			lua_pushstring(L, _ui64toa(n, buf, 10));
+			if(0 == _ui64toa_s(n, buf, _countof(buf) - 1, 10))
+				lua_pushstring(L, buf);
+			else
+				LUA_CHECK_DLL_ERROR(L, ERROR_INVALID_DATA);
 		}
 		break; case REG_MULTI_SZ:
 		{
