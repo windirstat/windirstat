@@ -19,6 +19,7 @@
 static int luaC_registerPreloader_(lua_State* L, const int winresidx, LPCTSTR lpszName)
 {
     const int oldTop = lua_gettop(L);
+    UNREFERENCED_PARAMETER(winresidx);
     // Expects the winres table at -1
     lua_getfield(L, LUA_GLOBALSINDEX, "package");
     if(!lua_istable(L, -1))
@@ -104,10 +105,10 @@ static BOOL getResourcePointer(HINSTANCE Instance, LPCTSTR ResName, LPCTSTR ResT
     if(ppRes && pdwResSize)
     {
         HRSRC hRsrc;
-        if(hRsrc = FindResource((HMODULE)Instance, ResName, ResType))
+        if(NULL != (hRsrc = FindResource((HMODULE)Instance, ResName, ResType)))
         {
             HGLOBAL hGlob;
-            if(hGlob = LoadResource(Instance, hRsrc))
+            if(NULL != (hGlob = LoadResource(Instance, hRsrc)))
             {
                 *ppRes = LockResource(hGlob);
                 *pdwResSize = SizeofResource(Instance, hRsrc);

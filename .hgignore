@@ -19,3 +19,4 @@ src/*
 Visual Lint/*
 *.aqt
 windirstat/windirstat_prof/*
+*.sdf
