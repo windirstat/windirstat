@@ -370,7 +370,7 @@ void reg_aux_pusheregluadata(lua_State *L, PVOID pdata, size_t cdata, DWORD dwTy
 		case REG_DWORD: case REG_DWORD_BIG_ENDIAN:
 			lua_pushnumber(L, *((PDWORD32)pdata));
 		break; case REG_QWORD:
-			lua_pushUINT64(L, *((PDWORD64)pdata)); 
+			lua_pushUINT64(L, *((PDWORD64)pdata), "reg_aux_pusheregluadata(REG_QWORD)", __FILE__, __LINE__); 
 		break; case REG_MULTI_SZ:
 		{
 			int c = 1;
