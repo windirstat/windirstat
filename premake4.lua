@@ -73,6 +73,18 @@ do
         end
     end]]
 end
+local function transformMacroNames(action, input)
+    local new_map   = { vs2010 = 0, vs2012 = 0, vs2013 = 0 }
+    local replacements = { PlatformName = "Platform", ConfigurationName = "Configuration" }
+    if new_map[action] ~= nil then
+        for k,v in pairs(replacements) do
+            if input:find(k) then
+                input = input:gsub(k, v)
+            end
+        end
+    end
+    return input
+end
 
 solution ("windirstat")
     configurations  {"Debug", "Release"}
@@ -80,7 +92,7 @@ solution ("windirstat")
     location        ('.')
 
     project ("windirstat")
-        local int_dir   = "intermediate/" .. action .. "_" .. "$(PlatformName)_$(ConfigurationName)"
+        local int_dir   = transformMacroNames(action, "intermediate/" .. action .. "_" .. "$(PlatformName)_$(ConfigurationName)")
         uuid            ("BD11B94C-6594-4477-9FDF-2E24447D1F14")
         language        ("C++")
         kind            ("WindowedApp")
@@ -188,7 +200,7 @@ solution ("windirstat")
             for nm,guid in pairs(resource_dlls) do
                 premake.CurrentContainer = oldcurr
                 prj = project(nm)
-                    local int_dir   = "intermediate/" .. action .. "_" .. "$(PlatformName)_$(ConfigurationName)"
+                    local int_dir   = transformMacroNames(action, "intermediate/" .. action .. "_" .. "$(PlatformName)_$(ConfigurationName)")
                     uuid            (guid)
                     language        ("C++")
                     kind            ("WindowedApp")
