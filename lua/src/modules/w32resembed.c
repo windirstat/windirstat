@@ -196,7 +196,7 @@ int w32res_enumerateEmbeddedLuaScripts(lua_State* L)
     lua_rawset(L, -3);
     // Enumerate the resource names of type RT_LUASCRIPT in the current module
     // The callback functions add the names of resources to the table at the top of the stack
-    (void)EnumResourceNames(getMyModuleHandle(), RT_LUASCRIPT, enumLuaScriptsNameCallback, (LONG_PTR)L);
+    (void)EnumResourceNames(getMyModuleHandle(), RT_LUASCRIPT, (ENUMRESNAMEPROC)enumLuaScriptsNameCallback, (LONG_PTR)L);
     if(lua_isstring(L, -1))
     {
         // Leave error message at top of stack
