@@ -71,12 +71,14 @@
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
+				CommandLine="$(SolutionDir)common\build_luajit.cmd &quot;$(ProjectDir)$(IntDir)&quot; debug"
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="htmlhelp.lib psapi.lib"
+				AdditionalDependencies="htmlhelp.lib psapi.lib lua51.lib delayimp.lib"
 				OutputFile="../build/wds32D.exe"
 				LinkIncremental="0"
+				AdditionalLibraryDirectories="$(IntDir)"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				SwapRunFromCD="true"
@@ -165,12 +167,14 @@
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
+				CommandLine="$(SolutionDir)common\build_luajit.cmd &quot;$(ProjectDir)$(IntDir)&quot; debug"
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="htmlhelp.lib psapi.lib"
+				AdditionalDependencies="htmlhelp.lib psapi.lib lua51.lib delayimp.lib"
 				OutputFile="../build/wds64D.exe"
 				LinkIncremental="0"
+				AdditionalLibraryDirectories="$(IntDir)"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				SwapRunFromCD="true"
@@ -259,12 +263,14 @@
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
+				CommandLine="$(SolutionDir)common\build_luajit.cmd &quot;$(ProjectDir)$(IntDir)&quot;"
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="htmlhelp.lib psapi.lib"
+				AdditionalDependencies="htmlhelp.lib psapi.lib lua51.lib delayimp.lib"
 				OutputFile="../build/wds32.exe"
 				LinkIncremental="0"
+				AdditionalLibraryDirectories="$(IntDir)"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				SwapRunFromCD="true"
@@ -356,12 +362,14 @@
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
+				CommandLine="$(SolutionDir)common\build_luajit.cmd &quot;$(ProjectDir)$(IntDir)&quot;"
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="htmlhelp.lib psapi.lib"
+				AdditionalDependencies="htmlhelp.lib psapi.lib lua51.lib delayimp.lib"
 				OutputFile="../build/wds64.exe"
 				LinkIncremental="0"
+				AdditionalLibraryDirectories="$(IntDir)"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				SwapRunFromCD="true"
