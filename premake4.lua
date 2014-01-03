@@ -59,7 +59,7 @@ do
         orig_generate(obj, filename, callback)
     end
     --[[
-    dofile("datadumper.lua")
+    dofile("lua/datadumper.lua")
     for _,v in ipairs{"vs2005", "vs2008", "vs2010", "vs2012", "vs2013"} do
         if _ACTION then
             if _ACTION == v then
@@ -89,12 +89,12 @@ solution ("windirstat")
         flags           {"StaticRuntime", "Unicode", "MFC", "NativeWChar", "ExtraWarnings", "NoRTTI", "WinMain", "NoMinimalRebuild"} -- "No64BitChecks", "NoEditAndContinue", "NoManifest", "NoExceptions" ???
         defines         {"WINVER=0x0500"}
         targetdir       ("build")
-        includedirs     { ".", "windirstat", "common", "windirstat/Controls", "windirstat/Dialogs", "lua/src" }
+        includedirs     {".", "windirstat", "common", "windirstat/Controls", "windirstat/Dialogs", "lua/src"}
         objdir          (int_dir)
         libdirs         {"$(IntDir)"}
-        links           {"htmlhelp", "psapi", "lua51"}
+        links           {"htmlhelp", "psapi", "lua51", "delayimp"}
         resoptions      {"/nologo", "/l409"}
-        resincludedirs  {"$(IntDir)"}
+        resincludedirs  {".", "$(IntDir)"}
         linkoptions     {"/delayload:psapi.dll"}
 
         files
@@ -169,7 +169,7 @@ solution ("windirstat")
 
         configuration {"vs2005", "windirstat/WDS_Lua_C.c"}
             defines         ("_CRT_SECURE_NO_WARNINGS") -- _CRT_SECURE_NO_DEPRECATE, _SCL_SECURE_NO_WARNINGS, _AFX_SECURE_NO_WARNINGS and _ATL_SECURE_NO_WARNINGS???
-
+--[[
         do
             local oldcurr = premake.CurrentContainer
             local resource_dlls = {
@@ -196,7 +196,7 @@ solution ("windirstat")
                     flags           {"NoImportLib"}
                     targetdir       ("build")
                     resoptions      {"/nologo", "/l409"}
-                    resincludedirs  {"$(IntDir)"}
+                    resincludedirs  {".", nm, "$(IntDir)"}
                     linkoptions     {"/noentry"}
                     files
                     {
@@ -205,6 +205,12 @@ solution ("windirstat")
                         nm .. "/res/windirstat.rc2",
                         "windirstat/res/*.*",
                     }
+                    vpaths
+                    {
+                        ["Header Files/*"] = { "*.h" },
+                        ["Resource Files/*"] = { "*.rc", "*.rc2", "windirstat/res/*" },
+                    }
             end
             premake.CurrentContainer = oldcurr
         end
+]]
