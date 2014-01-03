@@ -73,9 +73,9 @@ do
         end
     end]]
 end
-local function transformMN(input)
-    local new_map   = { vs2010 = 0, vs2012 = 0, vs2013 = 0 }
-    local replacements = { PlatformName = "Platform", ConfigurationName = "Configuration" }
+local function transformMN(input) -- transform the macro names for older Visual Studio versions
+    local new_map   = { vs2002 = 0, vs2003 = 0, vs2005 = 0, vs2008 = 0 }
+    local replacements = { Platform = "PlatformName", Configuration = "ConfigurationName" }
     if new_map[action] ~= nil then
         for k,v in pairs(replacements) do
             if input:find(k) then
@@ -92,14 +92,13 @@ solution ("windirstat")
     location        ('.')
 
     project ("windirstat")
-        local int_dir   = "intermediate/" .. action .. "_$(" .. transformMN("PlatformName") .. ")_$(" .. transformMN("ConfigurationName") .. ")"
+        local int_dir   = "intermediate/" .. action .. "_$(" .. transformMN("Platform") .. ")_$(" .. transformMN("Configuration") .. ")"
         uuid            ("BD11B94C-6594-4477-9FDF-2E24447D1F14")
         language        ("C++")
         kind            ("WindowedApp")
         location        ("windirstat")
         targetname      ("wds")
         flags           {"StaticRuntime", "Unicode", "MFC", "NativeWChar", "ExtraWarnings", "NoRTTI", "WinMain", "NoMinimalRebuild"} -- "No64BitChecks", "NoEditAndContinue", "NoManifest", "NoExceptions" ???
-        defines         {"WINVER=0x0500"}
         targetdir       ("build")
         includedirs     {".", "windirstat", "common", "windirstat/Controls", "windirstat/Dialogs", "lua/src"}
         objdir          (int_dir)
@@ -181,7 +180,13 @@ solution ("windirstat")
 
         configuration {"vs2005", "windirstat/WDS_Lua_C.c"}
             defines         ("_CRT_SECURE_NO_WARNINGS") -- _CRT_SECURE_NO_DEPRECATE, _SCL_SECURE_NO_WARNINGS, _AFX_SECURE_NO_WARNINGS and _ATL_SECURE_NO_WARNINGS???
---[[
+
+        configuration {"vs2013"}
+            defines         {"WINVER=0x0501"}
+
+        configuration {"vs2002 or vs2003 or vs2005 or vs2008 or vs2010 or vs2012"}
+            defines         {"WINVER=0x0500"}
+--[[ TODO: add option for the resource DLLs
         do
             local oldcurr = premake.CurrentContainer
             local resource_dlls = {
@@ -200,7 +205,7 @@ solution ("windirstat")
             for nm,guid in pairs(resource_dlls) do
                 premake.CurrentContainer = oldcurr
                 prj = project(nm)
-                    local int_dir   = "intermediate/" .. action .. "_$(" .. transformMN("PlatformName") .. ")_$(" .. transformMN("ConfigurationName") .. ")"
+                    local int_dir   = "intermediate/" .. action .. "_$(" .. transformMN("Platform") .. ")_$(" .. transformMN("Configuration") .. ")"
                     uuid            (guid)
                     language        ("C++")
                     kind            ("WindowedApp")
