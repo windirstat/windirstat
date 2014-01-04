@@ -74,12 +74,12 @@ addresses by a future release.
 
 Logo
 ====
-.. image:: https://bitbucket.org/windirstat/windirstat/raw/tip/common/logo_3d.png
+.. image:: https://bitbucket.org/windirstat/windirstat/raw/tip/common/logo_256px.png
    :alt: WinDirStat logo
    :target: https://windirstat.info
 
 The logo_ was generously designed and contributed to the project by Robin
-"tuqueque" Marín.
+"tuqueque" Marín. Follow him on Twitter `@tuquequeorg`_.
 
 .. _treemap: https://en.wikipedia.org/wiki/Treemap
 .. _KDirStat: http://kdirstat.sourceforge.net/
@@ -91,4 +91,5 @@ The logo_ was generously designed and contributed to the project by Robin
 .. _logo: https://windirstat.info/logo.html
 .. _`CC BY 3.0`: http://creativecommons.org/licenses/by/3.0/
 .. _Wiki: https://bitbucket.org/windirstat/windirstat/wiki/Home
+.. _@tuquequeorg: https://twitter.com/tuquequeorg
 .. |copy|   unicode:: U+000A9 .. COPYRIGHT SIGN
