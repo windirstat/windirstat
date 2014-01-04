@@ -3,6 +3,22 @@
 ===========================================
 :Author: Oliver Schneider
 
+Copyright and license
+=====================
+* Copyright |copy| 2003-2005 Bernhard Seifert (bseifert@users.sourceforge.net)
+* Copyright |copy| 2004-2014 WinDirStat team (windirstat.info)
+
+The application itself is distributed under the terms of the `GPL v2`_, but
+parts of the source code are also available under more lenient license terms.
+
+The documentation/help is distributed under the terms of the GNU FDL.
+
+*Note:* you are not at liberty to upgrade the GPL version to anything later
+than v2 at this moment.
+
+The logo and all derivatives are available under the terms of the Creative
+Commons license `CC BY 3.0`_.
+
 Description
 ===========
 WinDirStat is a program that allows you to find disk space hogs at a glance.
@@ -47,22 +63,6 @@ Logo
 ====
 The logo_ was generously designed and contributed to the project by Robin
 "tuqueque" Marín.
-
-Copyright and license
-=====================
-* Copyright |copy| 2003-2005 Bernhard Seifert (bseifert@users.sourceforge.net)
-* Copyright |copy| 2004-2014 WinDirStat team (windirstat.info)
-
-The application itself is distributed under the terms of the `GPL v2`_, but
-parts of the source code are also available under more lenient license terms.
-
-The documentation/help is distributed under the terms of the GNU FDL.
-
-*Note:* you are not at liberty to upgrade the GPL version to anything later
-than v2 at this moment.
-
-The logo and all derivatives are available under the terms of the Creative
-Commons license `CC BY 3.0`_.
 
 Contributing
 ============
