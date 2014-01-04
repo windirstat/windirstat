@@ -93,6 +93,13 @@ We currently have:
 Find a more up-to-date list of links on the website and the blog at any point
 in time.
 
+Contact - Kontakt - Контакт
+---------------------------
+
+* You may write us on the following page in either English, German or Russian: contact_
+* Ihr könnt uns auf der folgenden Webseite entweder auf Deutsch, Englisch oder Russisch schreiben: Kontakt_
+* Пишите нам на этом вебсайте на русском, на англиском или на немецком: контакт_ - **Указание:** давно в школе я учился русский язык. Но как писал это уже давно, поэтому может быть чтобы не все понимаю и наверно тоже не пишу бес ошыбок. Посмотрим.
+
 .. _treemap: https://en.wikipedia.org/wiki/Treemap
 .. _KDirStat: http://kdirstat.sourceforge.net/
 .. _SequoiaView: http://w3.win.tue.nl/nl/onderzoek/onderzoek_informatica/visualization/sequoiaview/
@@ -108,4 +115,7 @@ in time.
 .. _blog: http://blog.windirstat.info/
 .. _@windirstat: https://twitter.com/windirstat
 .. _r/WinDirStat: http://www.reddit.com/r/WinDirStat/
+.. _contact: https://windirstat.info/contact.html
+.. _Kontakt: https://windirstat.info/contact.html
+.. _контакт: https://windirstat.info/contact.html
 .. |copy|   unicode:: U+000A9 .. COPYRIGHT SIGN
