@@ -81,6 +81,18 @@ Logo
 The logo_ was generously designed and contributed to the project by Robin
 "tuqueque" Marín. Follow him on Twitter `@tuquequeorg`_.
 
+Links
+=====
+We currently have:
+
+* a website_
+* a blog_
+* are on Twitter as `@windirstat`_
+* have a SubReddit `r/WinDirStat`_
+
+Find a more up-to-date list of links on the website and the blog at any point
+in time.
+
 .. _treemap: https://en.wikipedia.org/wiki/Treemap
 .. _KDirStat: http://kdirstat.sourceforge.net/
 .. _SequoiaView: http://w3.win.tue.nl/nl/onderzoek/onderzoek_informatica/visualization/sequoiaview/
@@ -92,4 +104,8 @@ The logo_ was generously designed and contributed to the project by Robin
 .. _`CC BY 3.0`: http://creativecommons.org/licenses/by/3.0/
 .. _Wiki: https://bitbucket.org/windirstat/windirstat/wiki/Home
 .. _@tuquequeorg: https://twitter.com/tuquequeorg
+.. _website: https://windirstat.info/
+.. _blog: http://blog.windirstat.info/
+.. _@windirstat: https://twitter.com/windirstat
+.. _r/WinDirStat: http://www.reddit.com/r/WinDirStat/
 .. |copy|   unicode:: U+000A9 .. COPYRIGHT SIGN
