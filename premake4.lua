@@ -121,7 +121,7 @@ solution ("windirstat")
             "windirstat/Dialogs/*.h",
             "windirstat/windirstat.rc",
             "windirstat/res/*.*",
-            "*.txt",
+            "*.txt", "*.rst",
             "common/BUILD",
             "common/*.cmd",
             "premake4.lua",
@@ -151,7 +151,7 @@ solution ("windirstat")
             ["Source Files/Dialogs/*"] = { "windirstat/Dialogs/*.cpp" },
             ["Source Files/*"] = { "windirstat/*.cpp" },
             ["Special Files/*"] = { "common/BUILD", "common/*.cmd", "premake4.lua", "*.cmd" },
-            ["*"] = { "*.txt" },
+            ["*"] = { "*.txt", "*.rst" },
         }
 
         configuration {"Debug", "x32"}
