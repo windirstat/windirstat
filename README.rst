@@ -3,8 +3,8 @@
 ===========================================
 :Author: Oliver Schneider
 
-Copyright and license
-=====================
+Copyright and licenses
+======================
 * Copyright |copy| 2003-2005 Bernhard Seifert (bseifert@users.sourceforge.net)
 * Copyright |copy| 2004-2014 WinDirStat team (windirstat.info)
 
@@ -59,14 +59,9 @@ The FLOSS_ alternatives for other operating systems are thus:
 
 We're not aware of an alternative for Windows at this moment, but
 
-Logo
-====
-The logo_ was generously designed and contributed to the project by Robin
-"tuqueque" Marín.
-
 Contributing
 ============
-The project Wiki on Bitbucket features a whole section on the topic of
+The project Wiki_ on Bitbucket features a whole section on the topic of
 contributing. If you don't agree on the requirements, feel free to contact a
 project member regardless before you put any substantial effort into your
 potential contribution.
@@ -77,6 +72,15 @@ WinDirStat currently runs on all flavors of Windows, but does have some
 problems on more recent versions of Windows (8 and later) that will be
 addresses by a future release.
 
+Logo
+====
+.. image:: https://bitbucket.org/windirstat/windirstat/raw/tip/common/logo_3d.png
+   :alt: WinDirStat logo
+   :target: https://windirstat.info
+
+The logo_ was generously designed and contributed to the project by Robin
+"tuqueque" Marín.
+
 .. _treemap: https://en.wikipedia.org/wiki/Treemap
 .. _KDirStat: http://kdirstat.sourceforge.net/
 .. _SequoiaView: http://w3.win.tue.nl/nl/onderzoek/onderzoek_informatica/visualization/sequoiaview/
@@ -84,6 +88,7 @@ addresses by a future release.
 .. _GrandPerspective: http://grandperspectiv.sourceforge.net/
 .. _FLOSS: https://en.wikipedia.org/wiki/Alternative_terms_for_free_software
 .. _GPL v2: https://bitbucket.org/windirstat/windirstat/raw/tip/windirstat/res/license.txt
-.. _logo: http://windirstat.info/logo.html
+.. _logo: https://windirstat.info/logo.html
 .. _`CC BY 3.0`: http://creativecommons.org/licenses/by/3.0/
+.. _Wiki: https://bitbucket.org/windirstat/windirstat/wiki/Home
 .. |copy|   unicode:: U+000A9 .. COPYRIGHT SIGN
