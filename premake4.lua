@@ -225,7 +225,7 @@ solution ("windirstat")
                         targetdir       ("build")
                         targetextension (".wdslng")
                         resoptions      {"/nologo", "/l409"}
-                        resincludedirs  {".", nm, "$(IntDir)"}
+                        resincludedirs  {".", nm, "$(IntDir)"} -- ATTENTION: FAULTY IN premake-stable ... needs to be addressed
                         linkoptions     {"/noentry"}
                         files
                         {
