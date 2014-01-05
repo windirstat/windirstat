@@ -58,6 +58,14 @@ do
         end
         orig_generate(obj, filename, callback)
     end
+    -- Make sure we do not incremental linking for the resource DLLs
+    local orig_config_isincrementallink = premake.config.isincrementallink
+    premake.config.isincrementallink = function(cfg)
+        if cfg.project.name:find('wdsr') and cfg.flags.NoIncrementalLink then
+            return false
+        end
+        return orig_config_isincrementallink(cfg)
+    end
     --[[
     dofile("lua/datadumper.lua")
     for _,v in ipairs{"vs2005", "vs2008", "vs2010", "vs2012", "vs2013"} do
@@ -85,6 +93,7 @@ local function transformMN(input) -- transform the macro names for older Visual 
     end
     return input
 end
+newoption { trigger = "resources", description = "Also create projects for the resource DLLs" }
 
 solution ("windirstat")
     configurations  {"Debug", "Release"}
@@ -98,7 +107,7 @@ solution ("windirstat")
         kind            ("WindowedApp")
         location        ("windirstat")
         targetname      ("wds")
-        flags           {"StaticRuntime", "Unicode", "MFC", "NativeWChar", "ExtraWarnings", "NoRTTI", "WinMain", "NoMinimalRebuild"} -- "No64BitChecks", "NoEditAndContinue", "NoManifest", "NoExceptions" ???
+        flags           {"StaticRuntime", "Unicode", "MFC", "NativeWChar", "ExtraWarnings", "NoRTTI", "WinMain", "NoMinimalRebuild", "NoIncrementalLink"} -- "No64BitChecks", "NoEditAndContinue", "NoManifest", "NoExceptions" ???
         targetdir       ("build")
         includedirs     {".", "windirstat", "common", "windirstat/Controls", "windirstat/Dialogs", "lua/src"}
         objdir          (int_dir)
@@ -186,48 +195,58 @@ solution ("windirstat")
 
         configuration {"vs2002 or vs2003 or vs2005 or vs2008 or vs2010 or vs2012"}
             defines         {"WINVER=0x0500"}
---[[ TODO: add option for the resource DLLs
-        do
-            local oldcurr = premake.CurrentContainer
-            local resource_dlls = {
-                ["wdsr0405"] = "C3F39C58-7FC4-4243-82B2-A3572235AE02", -- Czech
-                ["wdsr0407"] = "C8D9E4F9-7051-4B41-A5AB-F68F3FCE42E8", -- German
-                ["wdsr040a"] = "23B76347-204C-4DE6-A311-F562CEF5D89C", -- Spanish
-                ["wdsr040b"] = "C7A5D1EC-35D3-4754-A815-2C527CACD584", -- Finnish
-                ["wdsr040c"] = "DA4DDD24-67BC-4A9D-87D3-18C73E5CAF31", -- French
-                ["wdsr040e"] = "2A75AA20-BFFE-4D1C-8AEC-274823223919", -- Hungarian
-                ["wdsr0410"] = "FD4194A7-EA1E-4466-A80B-AB4D8D17F33C", -- Italian
-                ["wdsr0413"] = "70A55EB7-E109-41DE-81B4-0DF2B72DCDE9", -- Dutch
-                ["wdsr0415"] = "70C09DAA-6F6D-4AAC-955F-ACD602A667CE", -- Polish
-                ["wdsr0419"] = "7F06AAC4-9FBE-412F-B1D7-CB37AB8F311D", -- Russian
-                ["wdsr0425"] = "2FADC62C-C670-4963-8B69-70ECA7987B93", -- Estonian
-                }
-            for nm,guid in pairs(resource_dlls) do
+
+        if _OPTIONS["resources"] then
+            do
+                local oldcurr = premake.CurrentContainer
+                local resource_dlls = {
+                    ["wdsr0405"] = "C3F39C58-7FC4-4243-82B2-A3572235AE02", -- Czech
+                    ["wdsr0407"] = "C8D9E4F9-7051-4B41-A5AB-F68F3FCE42E8", -- German
+                    ["wdsr040a"] = "23B76347-204C-4DE6-A311-F562CEF5D89C", -- Spanish
+                    ["wdsr040b"] = "C7A5D1EC-35D3-4754-A815-2C527CACD584", -- Finnish
+                    ["wdsr040c"] = "DA4DDD24-67BC-4A9D-87D3-18C73E5CAF31", -- French
+                    ["wdsr040e"] = "2A75AA20-BFFE-4D1C-8AEC-274823223919", -- Hungarian
+                    ["wdsr0410"] = "FD4194A7-EA1E-4466-A80B-AB4D8D17F33C", -- Italian
+                    ["wdsr0413"] = "70A55EB7-E109-41DE-81B4-0DF2B72DCDE9", -- Dutch
+                    ["wdsr0415"] = "70C09DAA-6F6D-4AAC-955F-ACD602A667CE", -- Polish
+                    ["wdsr0419"] = "7F06AAC4-9FBE-412F-B1D7-CB37AB8F311D", -- Russian
+                    ["wdsr0425"] = "2FADC62C-C670-4963-8B69-70ECA7987B93", -- Estonian
+                    }
+                for nm,guid in pairs(resource_dlls) do
+                    premake.CurrentContainer = oldcurr
+                    prj = project(nm)
+                        local int_dir   = "intermediate/" .. action .. "_$(" .. transformMN("Platform") .. ")_$(" .. transformMN("Configuration") .. ")" .. nm
+                        uuid            (guid)
+                        language        ("C++")
+                        kind            ("SharedLib")
+                        location        (nm)
+                        flags           {"NoImportLib", "Unicode", "NoManifest", "NoExceptions", "NoPCH", "NoIncrementalLink"}
+                        objdir          (int_dir)
+                        targetdir       ("build")
+                        targetextension (".wdslng")
+                        resoptions      {"/nologo", "/l409"}
+                        resincludedirs  {".", nm, "$(IntDir)"}
+                        linkoptions     {"/noentry"}
+                        files
+                        {
+                            nm .. "/*.txt", nm .. "/*.rst",
+                            nm .. "/windirstat.rc",
+                            nm .. "/res/windirstat.rc2",
+                            "common/version.h",
+                            "windirstat/res/*.bmp",
+                            "windirstat/res/*.cur",
+                            "windirstat/res/*.ico",
+                            "windirstat/res/*.txt",
+                            "windirstat/resource.h",
+                        }
+                        vpaths
+                        {
+                            ["Header Files/*"] = { "windirstat/*.h", "common/*.h", nm .. "/*.h" },
+                            ["Resource Files/*"] = { nm .. "/windirstat.rc", nm .. "/res/windirstat.rc2" },
+                            ["Resource Files/embedded/*"] = { "windirstat/res/*" },
+                            ["*"] = { nm .. "/*.txt", nm .. "/*.rst" },
+                        }
+                end
                 premake.CurrentContainer = oldcurr
-                prj = project(nm)
-                    local int_dir   = "intermediate/" .. action .. "_$(" .. transformMN("Platform") .. ")_$(" .. transformMN("Configuration") .. ")"
-                    uuid            (guid)
-                    language        ("C++")
-                    kind            ("WindowedApp")
-                    location        (nm)
-                    flags           {"NoImportLib"}
-                    targetdir       ("build")
-                    resoptions      {"/nologo", "/l409"}
-                    resincludedirs  {".", nm, "$(IntDir)"}
-                    linkoptions     {"/noentry"}
-                    files
-                    {
-                        nm .. "/.*.txt",
-                        nm .. "/windirstat.rc",
-                        nm .. "/res/windirstat.rc2",
-                        "windirstat/res/*.*",
-                    }
-                    vpaths
-                    {
-                        ["Header Files/*"] = { "*.h" },
-                        ["Resource Files/*"] = { "*.rc", "*.rc2", "windirstat/res/*" },
-                    }
             end
-            premake.CurrentContainer = oldcurr
         end
-]]
