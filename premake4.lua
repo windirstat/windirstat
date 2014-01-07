@@ -93,7 +93,14 @@ local function transformMN(input) -- transform the macro names for older Visual 
     end
     return input
 end
-newoption { trigger = "resources", description = "Also create projects for the resource DLLs" }
+newoption { trigger = "resources", description = "Also create projects for the resource DLLs." }
+newoption { trigger = "sdk71", description = "Applies to VS 2005 and 2008. If you have the Windows 7 SP1\n                   SDK, use this to create projects for a feature-complete\n                   WinDirStat." }
+if _OPTIONS["resources"] then
+    print "INFO: Creating projects for resource DLLs."
+end
+if _OPTIONS["sdk71"] then
+    print "INFO: Assuming Windows 7 SP1 SDK is installed (#define SUPPORT_W7_TASKBAR)."
+end
 
 solution ("windirstat")
     configurations  {"Debug", "Release"}
@@ -195,6 +202,11 @@ solution ("windirstat")
 
         configuration {"vs2002 or vs2003 or vs2005 or vs2008 or vs2010 or vs2012"}
             defines         {"WINVER=0x0500"}
+
+        if _OPTIONS["sdk71"] then
+            configuration {"vs2005 or vs2008"}
+                defines         {"SUPPORT_W7_TASKBAR=1"}
+        end
 
         if _OPTIONS["resources"] then
             do
