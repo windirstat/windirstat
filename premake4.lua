@@ -98,9 +98,6 @@ newoption { trigger = "sdk71", description = "Applies to VS 2005 and 2008. If yo
 if _OPTIONS["resources"] then
     print "INFO: Creating projects for resource DLLs."
 end
-if _OPTIONS["sdk71"] then
-    print "INFO: Assuming Windows 7 SP1 SDK is installed (#define SUPPORT_W7_TASKBAR)."
-end
 
 solution ("windirstat")
     configurations  {"Debug", "Release"}
@@ -206,6 +203,9 @@ solution ("windirstat")
         if _OPTIONS["sdk71"] then
             configuration {"vs2005 or vs2008"}
                 defines         {"SUPPORT_W7_TASKBAR=1"}
+                if action == "vs2005" or action == "vs2008" then
+                    print "INFO: Assuming Windows 7 SP1 SDK is installed (#define SUPPORT_W7_TASKBAR)."
+                end
         end
 
         if _OPTIONS["resources"] then

@@ -13,8 +13,11 @@ set REPOROOT=%~dp0..
 set COMMON=%~dp0
 :: Change into the repository root
 setlocal & pushd "%REPOROOT%"
+if "%~1" == "full"      set OPTIONS=--resources --sdk71
+if "%~1" == "sdk71"     set OPTIONS=--sdk71
+if "%~1" == "resources" set OPTIONS=--resources
 for %%i in (vs2005 vs2008 vs2010 vs2012 vs2013) do @(
-  "%COMMON%\premake4.exe"  %%i
+  "%COMMON%\premake4.exe" %OPTIONS% %%i
 )
 :: Back to normal
 popd & endlocal
