@@ -66,20 +66,43 @@ do
         end
         return orig_config_isincrementallink(cfg)
     end
-    --[[
-    dofile("lua/datadumper.lua")
-    for _,v in ipairs{"vs2005", "vs2008", "vs2010", "vs2012", "vs2013"} do
-        if _ACTION then
-            if _ACTION == v then
-                do
-                    orig_onsolution = premake.action.list[_ACTION].onsolution
-                    premake.action.list[_ACTION].onsolution = function(sln)
-                        orig_onsolution(sln)
+    -- Override the project creation to suppress unnecessary configurations
+    -- these get invoked by sln2005.generate per project ...
+    -- ... they depend on the values in the sln.vstudio_configs table
+    local function prjgen_override_factory(orig_prjgen)
+        return function(prj)
+            if prj.name:find('wdsr') and type(prj.solution.vstudio_configs) == "table" then
+                local cfgs = prj.solution.vstudio_configs
+                local faked_cfgs = {}
+                for k,v in pairs(cfgs) do
+                    if v['name'] == "Release|Win32" then
+                        faked_cfgs[1] = v
                     end
                 end
+                prj.solution.vstudio_configs = faked_cfgs
+                retval = orig_prjgen(prj)
+                prj.solution.vstudio_configs = cfgs
+                return retval
+            end
+            return orig_prjgen(prj)
+        end
+    end
+    premake.vs2010_vcxproj = prjgen_override_factory(premake.vs2010_vcxproj)
+    premake.vstudio.vc200x.generate = prjgen_override_factory(premake.vstudio.vc200x.generate)
+    -- Allow us to set the project configuration to Release|Win32 for the resource DLL projects,
+    -- no matter what the global solution project is.
+    local orig_project_platforms_sln2prj_mapping = premake.vstudio.sln2005.project_platforms_sln2prj_mapping
+    premake.vstudio.sln2005.project_platforms_sln2prj_mapping = function(sln, prj, cfg, mapped)
+        if prj.name:find('wdsr') then
+            _p('\t\t{%s}.%s.ActiveCfg = Release|Win32', prj.uuid, cfg.name)
+            _p('\t\t{%s}.%s.Build.0 = Release|Win32',  prj.uuid, cfg.name)
+        else
+            _p('\t\t{%s}.%s.ActiveCfg = %s|%s', prj.uuid, cfg.name, cfg.buildcfg, mapped)
+            if mapped == cfg.platform or cfg.platform == "Mixed Platforms" then
+                _p('\t\t{%s}.%s.Build.0 = %s|%s',  prj.uuid, cfg.name, cfg.buildcfg, mapped)
             end
         end
-    end]]
+    end
 end
 local function transformMN(input) -- transform the macro names for older Visual Studio versions
     local new_map   = { vs2002 = 0, vs2003 = 0, vs2005 = 0, vs2008 = 0 }
