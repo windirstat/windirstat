@@ -59,6 +59,11 @@ The FLOSS_ alternatives for other operating systems are thus:
 
 We're not aware of an alternative for Windows at this moment, but
 
+Building from source
+====================
+
+Please refer to the project Wiki page Building_.
+
 Contributing
 ============
 The project Wiki_ on Bitbucket features a whole section on the topic of
@@ -115,6 +120,7 @@ Contact - Kontakt - Контакт
 .. _blog: http://blog.windirstat.info/
 .. _@windirstat: https://twitter.com/windirstat
 .. _r/WinDirStat: http://www.reddit.com/r/WinDirStat/
+.. _Building: https://bitbucket.org/windirstat/windirstat/wiki/Building
 .. _contact: https://windirstat.info/contact.html
 .. _Kontakt: https://windirstat.info/contact.html
 .. _контакт: https://windirstat.info/contact.html
