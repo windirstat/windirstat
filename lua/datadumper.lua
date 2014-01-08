@@ -196,6 +196,10 @@ function DataDumper(value, varname, fastmode, ident)
     end
   end
   function dumplua(value, ident, path)
+    local mapping = { project = "table", solution = "table" }
+    if mapping[type(value)] and not fcts[type(value)] then
+      fcts[type(value)] = fcts[mapping[type(value)]]
+    end
     return fcts[type(value)](value, ident, path)
   end
   if varname == nil then
