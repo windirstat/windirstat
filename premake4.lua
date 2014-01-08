@@ -1,33 +1,6 @@
 -- The below is used to insert the .vs(2005|2008|2010|2012|2013) into the file names for projects and solutions
 local action = _ACTION or ""
 do
-    -- This is mainly to support older premake4 builds
-    if not premake.project.getbasename then
-        print "Magic happens ..."
-        -- override the function to establish the behavior we'd get after patching Premake to have premake.project.getbasename
-        premake.project.getbasename = function(prjname, pattern)
-            return pattern:gsub("%%%%", prjname)
-        end
-        -- obviously we also need to overwrite the following to generate functioning VS solution files
-        premake.vstudio.projectfile = function(prj)
-            local pattern
-            if prj.language == "C#" then
-                pattern = "%%.csproj"
-            else
-                pattern = iif(_ACTION > "vs2008", "%%.vcxproj", "%%.vcproj")
-            end
-
-            local fname = premake.project.getbasename(prj.name, pattern)
-            fname = path.join(prj.location, fname)
-            return fname
-        end
-        -- we simply overwrite the original function on older Premake versions
-        premake.project.getfilename = function(prj, pattern)
-            local fname = premake.project.getbasename(prj.name, pattern)
-            fname = path.join(prj.location, fname)
-            return path.getrelative(os.getcwd(), fname)
-        end
-    end
     -- Name the project files after their VS version
     local orig_getbasename = premake.project.getbasename
     premake.project.getbasename = function(prjname, pattern)
@@ -250,7 +223,7 @@ solution ("windirstat")
                 for nm,guid in pairs(resource_dlls) do
                     premake.CurrentContainer = oldcurr
                     prj = project(nm)
-                        local int_dir   = "intermediate/" .. action .. "_$(" .. transformMN("Platform") .. ")_$(" .. transformMN("Configuration") .. ")" .. nm
+                        local int_dir   = "intermediate/" .. action .. "_" .. nm
                         uuid            (guid)
                         language        ("C++")
                         kind            ("SharedLib")
