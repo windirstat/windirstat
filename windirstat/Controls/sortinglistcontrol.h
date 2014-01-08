@@ -90,6 +90,10 @@ public:
     virtual bool GetAscendingDefault(int column);
     virtual bool HasImages();
 
+#   if (_MFC_VER <=0x0800)
+    BOOL GetColumnOrderArray(LPINT piArray, INT_PTR iCount = -1);
+#   endif
+
 private:
     void SavePersistentAttributes();
     static int CALLBACK _CompareFunc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);

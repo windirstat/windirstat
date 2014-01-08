@@ -101,7 +101,7 @@ void CSortingListControl::LoadPersistentAttributes()
     CArray<int, int> arr;
     arr.SetSize(GetHeaderCtrl()->GetItemCount());
 
-    GetColumnOrderArray(arr.GetData(), int(arr.GetSize()));
+    GetColumnOrderArray(arr.GetData(), arr.GetSize());
     CPersistence::GetColumnOrder(m_name, arr);
     SetColumnOrderArray(int(arr.GetSize()), arr.GetData());
 
@@ -129,7 +129,7 @@ void CSortingListControl::SavePersistentAttributes()
     CArray<int, int> arr;
     arr.SetSize(GetHeaderCtrl()->GetItemCount());
 
-    GetColumnOrderArray(arr.GetData(), int(arr.GetSize()));
+    GetColumnOrderArray(arr.GetData(), arr.GetSize());
     CPersistence::SetColumnOrder(m_name, arr);
 
     for(int i = 0; i < arr.GetSize(); i++)
@@ -243,6 +243,14 @@ bool CSortingListControl::HasImages()
 {
     return false;
 }
+
+#   if (_MFC_VER <=0x0800)
+BOOL CSortingListControl::GetColumnOrderArray(LPINT piArray, INT_PTR iCount)
+{
+    ASSERT(iCount <= INT_MAX);
+    return dynamic_cast<CListCtrl*>(this)->GetColumnOrderArray(piArray, (int)iCount);
+}
+#   endif
 
 int CALLBACK CSortingListControl::_CompareFunc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
 {
