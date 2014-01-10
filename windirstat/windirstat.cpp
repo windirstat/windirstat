@@ -89,10 +89,10 @@ CMyImageList* GetMyImageList()
 BEGIN_MESSAGE_MAP(CDirstatApp, CWinApp)
     ON_COMMAND(ID_APP_ABOUT, OnAppAbout)
     ON_COMMAND(ID_FILE_OPEN, OnFileOpen)
-#if WDS_ELEVATION
+#if SUPPORT_ELEVATION
     ON_COMMAND(ID_RUNELEVATED, OnRunElevated)
     ON_UPDATE_COMMAND_UI(ID_RUNELEVATED, OnUpdateRunElevated)
-#endif // WDS_ELEVATION
+#endif // SUPPORT_ELEVATION
     ON_COMMAND(ID_HELP_MANUAL, OnHelpManual)
 END_MESSAGE_MAP()
 
@@ -108,9 +108,9 @@ CDirstatApp::CDirstatApp()
     , m_lastPeriodicalRamUsageUpdate(::GetTickCount())
     , m_altColor(GetAlternativeColor(RGB(0x00, 0x00, 0xFF), _T("AltColor")))
     , m_altEncryptionColor(GetAlternativeColor(RGB(0x00, 0x80, 0x00), _T("AltEncryptionColor")))
-#   if WDS_ELEVATION
+#   if SUPPORT_ELEVATION
     , m_ElevationEvent(NULL)
-#   endif // WDS_ELEVATION
+#   endif // SUPPORT_ELEVATION
 {
 #   ifdef _DEBUG
     TestScanResourceDllName();
@@ -119,12 +119,12 @@ CDirstatApp::CDirstatApp()
 
 CDirstatApp::~CDirstatApp()
 {
-#if WDS_ELEVATION
+#if SUPPORT_ELEVATION
     if (m_ElevationEvent)
     {
         CloseHandle(m_ElevationEvent); //make sure this is the very last thing that is destroyed (way after WM_CLOSE)
     }	
-#endif // WDS_ELEVATION
+#endif // SUPPORT_ELEVATION
 }
 
 CMyImageList* CDirstatApp::GetMyImageList()
@@ -546,7 +546,7 @@ BOOL CDirstatApp::InitInstance()
         CLanguageOptions::SetLanguage(m_langid);
     }
 
-#if WDS_ELEVATION
+#if SUPPORT_ELEVATION
     //check for an elevation event
     m_ElevationEvent = ::OpenEvent(SYNCHRONIZE, FALSE, WINDIRSTAT_EVENT_NAME);
 
@@ -557,7 +557,7 @@ BOOL CDirstatApp::InitInstance()
         ::CloseHandle(m_ElevationEvent);
         m_ElevationEvent = 0;
     }
-#endif // WDS_ELEVATION
+#endif // SUPPORT_ELEVATION
 
     GetOptions()->LoadFromRegistry();
 
@@ -638,7 +638,7 @@ void CDirstatApp::OnFileOpen()
     }
 }
 
-#if WDS_ELEVATION
+#if SUPPORT_ELEVATION
 BOOL CDirstatApp::IsUACEnabled()
 {
     OSVERSIONINFOEX osInfo;
@@ -741,7 +741,7 @@ void CDirstatApp::OnRunElevated()
         m_ElevationEvent = 0;
     }
 }
-#endif // WDS_ELEVATION
+#endif // SUPPORT_ELEVATION
 
 BOOL CDirstatApp::OnIdle(LONG lCount)
 {

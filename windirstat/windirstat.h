@@ -50,9 +50,9 @@ CMyImageList* GetMyImageList();
 CString GetAuthorEmail();
 CString GetWinDirStatHomepage();
 
-#if WDS_ELEVATION
+#if SUPPORT_ELEVATION
 #   define WINDIRSTAT_EVENT_NAME L"WinDirStat_ElevationEvent_{72D223E3-1539-461D-980E-0863FE480E84}"
-#endif // WDS_ELEVATION
+#endif // SUPPORT_ELEVATION
 
 //
 // CDirstatApp. The MFC application object.
@@ -112,9 +112,9 @@ protected:
     COLORREF GetAlternativeColor(COLORREF clrDefault, LPCTSTR which);
 
     virtual BOOL OnIdle(LONG lCount);       // This is, where scanning is done.
-#if WDS_ELEVATION
+#if SUPPORT_ELEVATION
     static BOOL IsUACEnabled();
-#endif // WDS_ELEVATION
+#endif // SUPPORT_ELEVATION
 
     CSingleDocTemplate* m_pDocTemplate;     // MFC voodoo.
 
@@ -126,16 +126,16 @@ protected:
     DWORD m_lastPeriodicalRamUsageUpdate;   // Tick count
     COLORREF m_altColor;                    // Coloring of compressed items
     COLORREF m_altEncryptionColor;          // Coloring of encrypted items
-#if WDS_ELEVATION
+#if SUPPORT_ELEVATION
     HANDLE m_ElevationEvent;
-#endif // WDS_ELEVATION
+#endif // SUPPORT_ELEVATION
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnFileOpen();
-#if WDS_ELEVATION
+#if SUPPORT_ELEVATION
     afx_msg void OnRunElevated();
     afx_msg void OnUpdateRunElevated(CCmdUI *pCmdUI);
-#endif // WDS_ELEVATION
+#endif // SUPPORT_ELEVATION
     afx_msg void OnHelpManual();
     afx_msg void OnAppAbout();
 };
