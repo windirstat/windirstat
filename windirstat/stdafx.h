@@ -28,6 +28,11 @@
 #define __WDS_STDAFX_H__
 #pragma once
 
+#if defined(HAVE_WIN7_SDK) && HAVE_WIN7_SDK
+#   define SUPPORT_W7_TASKBAR 1
+#   define SUPPORT_ELEVATION  1
+#endif // HAVE_WIN7_SDK
+
 #ifndef VC_EXTRALEAN
 #define VC_EXTRALEAN        // Exclude rarely-used stuff from Windows headers
 #endif

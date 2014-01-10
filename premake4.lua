@@ -198,9 +198,9 @@ solution ("windirstat")
 
         if _OPTIONS["sdk71"] then
             configuration {"vs2005 or vs2008"}
-                defines         {"SUPPORT_W7_TASKBAR=1"}
+                defines         {"HAVE_WIN7_SDK=1"}
                 if action == "vs2005" or action == "vs2008" then
-                    print "INFO: Assuming Windows 7 SP1 SDK is installed (#define SUPPORT_W7_TASKBAR)."
+                    print "INFO: Assuming Windows 7 SP1 SDK is installed (#define HAVE_WIN7_SDK=1)."
                 end
         end
 
