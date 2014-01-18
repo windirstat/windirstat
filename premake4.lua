@@ -115,7 +115,7 @@ solution ("windirstat")
         links           {"htmlhelp", "psapi", "lua51", "delayimp"}
         resoptions      {"/nologo", "/l409"}
         resincludedirs  {".", "$(IntDir)"}
-        linkoptions     {"/delayload:psapi.dll"}
+        linkoptions     {"/delayload:psapi.dll", "/pdbaltpath:%_PDB%"}
 
         files
         {
@@ -177,7 +177,7 @@ solution ("windirstat")
 
         configuration {"Release"}
             defines         ("NDEBUG")
-            flags           {"Optimize"}
+            flags           {"Optimize","Symbols"}
             linkoptions     {"/release"}
             buildoptions    {"/Oi", "/Ot"}
             prelinkcommands {"$(SolutionDir)\common\\build_luajit.cmd \"$(ProjectDir)$(IntDir)\""}
