@@ -34,14 +34,24 @@ do
     -- Override the project creation to suppress unnecessary configurations
     -- these get invoked by sln2005.generate per project ...
     -- ... they depend on the values in the sln.vstudio_configs table
+    local mprj = {["minilua"] = {["Release|Win32"] = 0}, ["buildvm"] = {["Release|Win32"] = 0, ["Release|x64"] = 0}}
     local function prjgen_override_factory(orig_prjgen)
         return function(prj)
-            if prj.name:find('minilua') and type(prj.solution.vstudio_configs) == "table" then
+            local function prjmap()
+                for k,v in pairs(mprj) do
+                    if prj.name:find(k) or prj.name:match(k) then
+                        return v
+                    end
+                end
+                return nil
+            end
+            if prjmap() and type(prj.solution.vstudio_configs) == "table" then
                 local cfgs = prj.solution.vstudio_configs
                 local faked_cfgs = {}
+                local prjmap = prjmap()
                 for k,v in pairs(cfgs) do
-                    if v['name'] == "Release|Win32" then
-                        faked_cfgs[1] = v
+                    if prjmap[v['name']] then
+                        faked_cfgs[#faked_cfgs+1] = v
                     end
                 end
                 prj.solution.vstudio_configs = faked_cfgs
