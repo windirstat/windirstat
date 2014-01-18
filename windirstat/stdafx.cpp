@@ -28,6 +28,6 @@
 
 #if !defined(HAVE_WIN7_SDK) || !HAVE_WIN7_SDK
 #   if _MSC_VER <= 1500
-#       pragma message ("You're building a feature-incomplete WinDirStat ('#define HAVE_WIN7_SDK' missing or 0). Refer to https://bitbucket.org/windirstat/windirstat/wiki/Building for details on how to build with this version of Visual Studio.")
+#       pragma message ("WARNING: You're building a feature-incomplete WinDirStat ('#define HAVE_WIN7_SDK' missing or 0). Refer to https://bitbucket.org/windirstat/windirstat/wiki/Building for details on how to build with this version of Visual Studio.")
 #   endif // Visual C/C++ 2008 and below
 #endif // HAVE_WIN7_SDK
