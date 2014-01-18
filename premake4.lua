@@ -109,7 +109,7 @@ solution ("windirstat")
         targetname      ("wds")
         flags           {"StaticRuntime", "Unicode", "MFC", "NativeWChar", "ExtraWarnings", "NoRTTI", "WinMain", "NoMinimalRebuild", "NoIncrementalLink"} -- "No64BitChecks", "NoEditAndContinue", "NoManifest", "NoExceptions" ???
         targetdir       ("build")
-        includedirs     {".", "windirstat", "common", "windirstat/Controls", "windirstat/Dialogs", "lua/src"}
+        includedirs     {".", "windirstat", "common", "windirstat/Controls", "windirstat/Dialogs", "3rdparty/lua/src"}
         objdir          (int_dir)
         libdirs         {"$(IntDir)"}
         links           {"htmlhelp", "psapi", "lua51", "delayimp"}
@@ -138,11 +138,6 @@ solution ("windirstat")
 
         excludes
         {
-            "lua/src/premake.lua",
-            "lua/src/lua.c",
-            "lua/src/luac.c",
-            "lua/src/print.c",
-            "lua/src/**.lua",
             "windirstat/stdafx.cpp",
         }
         

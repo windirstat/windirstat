@@ -9,7 +9,7 @@
 :::             software.
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :: LuaJIT source directory relative to this script
-set LUAJITSRC=%~dp0..\lua\src
+set LUAJITSRC=%~dp0..\3rdparty\lua\src
 :: Change into the LuaJIT src directory
 setlocal & pushd "%LUAJITSRC%"
 :: First parameter is the target folder where we put the resulting static lib
