@@ -177,7 +177,7 @@ solution ("windirstat")
 
         configuration {"Release"}
             defines         ("NDEBUG")
-            flags           {"Optimize","Symbols"}
+            flags           {"Optimize", "Symbols"}
             linkoptions     {"/release"}
             buildoptions    {"/Oi", "/Ot"}
             prelinkcommands {"$(SolutionDir)\common\\build_luajit.cmd \"$(ProjectDir)$(IntDir)\""}
