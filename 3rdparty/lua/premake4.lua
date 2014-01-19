@@ -1,4 +1,5 @@
 -- The below is used to insert the .vs(2005|2008|2010|2012|2013) into the file names for projects and solutions
+local standalone = false
 local action = _ACTION or ""
 if premake.CurrentContainer == nil then
     -- Name the project files after their VS version
@@ -109,7 +110,7 @@ function create_luajit_projects(basedir)
         offs = bd:gsub("[^\\/]+", ""):gsub(".", "..\\")
     end
     local oldcurr = premake.CurrentContainer
-    local int_dir           = fmt("intermediate\\%s_$(%s)_$(%s)", action, transformMN("Platform"), transformMN("Configuration"))
+    local int_dir           = fmt("intermediate\\%s_$(%s)_$(%s)\\$(ProjectName)", action, transformMN("Platform"), transformMN("Configuration"))
     local inc_dir           = fmt("intermediate\\%s_$(%s)", action, transformMN("Platform"))
     -- Single minilua for all configurations and platforms
     project ("minilua") -- required to build LuaJIT
@@ -155,7 +156,7 @@ function create_luajit_projects(basedir)
         kind                ("StaticLib")
         location            (bd.."src")
         targetname          (fmt("luajit2_$(%s)", transformMN("Platform")))
-        targetdir           (bd.."build")
+        targetdir           (offs.."build")
         includedirs         {"$(ProjectDir)", "$(ProjectDir)..\\dynasm", inc_dir}
         flags               {"StaticRuntime", "Optimize", "No64BitChecks"}
         objdir              (int_dir)
@@ -179,30 +180,33 @@ function create_luajit_projects(basedir)
                 prebuildcommands(fmt("buildvm%d -m recdef -o \"%s..\\%s\\lj_recdef.h\" %s", k, offs, inc_dir, ALL_LIB))
                 prebuildcommands(fmt("buildvm%d -m folddef -o \"%s..\\%s\\lj_folddef.h\" lj_opt_fold.c", k, offs, inc_dir))
         end
-    project ("lua") -- actual Lua executable that statically links LuaJIT2
-        uuid                ("3A806ACF-62B5-4597-B934-ED2F98A4F115")
-        language            ("C")
-        kind                ("ConsoleApp")
-        location            (bd.."src")
-        targetname          ("luajit")
-        targetdir           (bd.."build")
-        includedirs         {"$(ProjectDir)"}
-        flags               {"StaticRuntime", "Optimize", "NoMinimalRebuild", "NoIncrementalLink", "NoEditAndContinue", "No64BitChecks", "Symbols"}
-        objdir              (int_dir)
-        libdirs             {"$(IntDir)"}
-        defines             {"NDEBUG", "_CRT_SECURE_NO_DEPRECATE"}
-        links               {"luajit2"}
-        linkoptions         {"/pdbaltpath:%_PDB%"}
-        vpaths              {["Header Files/*"] = { bd.."src/*.h" }, ["Source Files/*"] = { bd.."src/*.c" },}
-        files               {bd.."src/luajit.c",}
-        configuration {"Release", "x32"}
-            targetsuffix    ("32")
-        configuration {"Release", "x64"}
-            targetsuffix    ("64")
+    if standalone then
+        project ("lua") -- actual Lua executable that statically links LuaJIT2
+            uuid                ("3A806ACF-62B5-4597-B934-ED2F98A4F115")
+            language            ("C")
+            kind                ("ConsoleApp")
+            location            (bd.."src")
+            targetname          ("luajit")
+            targetdir           (offs.."build")
+            includedirs         {"$(ProjectDir)"}
+            flags               {"StaticRuntime", "Optimize", "NoMinimalRebuild", "NoIncrementalLink", "NoEditAndContinue", "No64BitChecks", "Symbols"}
+            objdir              (int_dir)
+            libdirs             {"$(IntDir)"}
+            defines             {"NDEBUG", "_CRT_SECURE_NO_DEPRECATE"}
+            links               {"luajit2"}
+            linkoptions         {"/pdbaltpath:%_PDB%"}
+            vpaths              {["Header Files/*"] = { bd.."src/*.h" }, ["Source Files/*"] = { bd.."src/*.c" },}
+            files               {bd.."src/luajit.c",}
+            configuration {"Release", "x32"}
+                targetsuffix    ("32")
+            configuration {"Release", "x64"}
+                targetsuffix    ("64")
+    end
     premake.CurrentContainer = oldcurr -- restore container before this function was called
 end
 
 if premake.CurrentContainer == nil then
+    standalone = true
     solution ("luajit")
         configurations  {"Release"}
         platforms       {"x32", "x64"}

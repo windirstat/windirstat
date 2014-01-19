@@ -119,7 +119,7 @@ solution ("windirstat")
 
     -- Main WinDirStat project
     project ("windirstat")
-        local int_dir   = "intermediate/" .. action .. "_$(" .. transformMN("Platform") .. ")_$(" .. transformMN("Configuration") .. ")"
+        local int_dir   = "intermediate/" .. action .. "_$(" .. transformMN("Platform") .. ")_$(" .. transformMN("Configuration") .. ")\\$(ProjectName)"
         uuid            ("BD11B94C-6594-4477-9FDF-2E24447D1F14")
         language        ("C++")
         kind            ("WindowedApp")
@@ -236,7 +236,7 @@ solution ("windirstat")
             for nm,guid in pairs(resource_dlls) do
                 premake.CurrentContainer = oldcurr
                 prj = project(nm)
-                    local int_dir   = "intermediate/" .. action .. "_" .. nm
+                    local int_dir   = "intermediate/" .. action .. "_$(ProjectName)_" .. nm
                     uuid            (guid)
                     language        ("C++")
                     kind            ("SharedLib")
