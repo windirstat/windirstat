@@ -184,7 +184,7 @@ solution ("luajit")
         language            ("C")
         kind                ("ConsoleApp")
         location            ("src")
-        targetname          ("lua")
+        targetname          ("luajit")
         targetdir           ("build")
         includedirs         {"$(ProjectDir)"}
         flags               {"StaticRuntime", "Optimize", "NoMinimalRebuild", "NoIncrementalLink", "NoEditAndContinue", "No64BitChecks", "Symbols"}
