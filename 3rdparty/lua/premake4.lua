@@ -1,6 +1,6 @@
 -- The below is used to insert the .vs(2005|2008|2010|2012|2013) into the file names for projects and solutions
 local action = _ACTION or ""
-do
+if premake.CurrentContainer == nil then
     -- Name the project files after their VS version
     local orig_getbasename = premake.project.getbasename
     premake.project.getbasename = function(prjname, pattern)
@@ -31,6 +31,8 @@ do
         end
         orig_generate(obj, filename, callback)
     end
+end
+do
     -- Override the project creation to suppress unnecessary configurations
     -- these get invoked by sln2005.generate per project ...
     -- ... they depend on the values in the sln.vstudio_configs table
@@ -97,18 +99,13 @@ end
 local function fmt(msg, ...)
     return string.format(msg, unpack(arg))
 end
---[[
-function create_luajit_projects(basedir)
-    local oldcurr = premake.CurrentContainer
-    -- Define the solution
-    premake.CurrentContainer = oldcurr -- restore container before this function was called
-end
-]]
 
-solution ("luajit")
-    configurations  {"Release"}
-    platforms       {"x32", "x64"}
-    location        ('.')
+function create_luajit_projects(basedir)
+    local bd = ""
+    if basedir ~= nil then
+        bd = basedir .. "/"
+    end
+    local oldcurr = premake.CurrentContainer
     local int_dir           = fmt("intermediate\\%s_$(%s)_$(%s)", action, transformMN("Platform"), transformMN("Configuration"))
     local inc_dir           = fmt("intermediate\\%s_$(%s)", action, transformMN("Platform"))
     -- Single minilua for all configurations and platforms
@@ -116,31 +113,31 @@ solution ("luajit")
         uuid                ("531911BC-0023-4EC6-A2CE-6C3F5C182647")
         language            ("C")
         kind                ("ConsoleApp")
-        location            ("src")
+        location            (bd.."src")
         targetname          ("minilua")
-        targetdir           ("src")
+        targetdir           (bd.."src")
         flags               {"Optimize", "StaticRuntime", "NoManifest", "NoMinimalRebuild", "NoIncrementalLink", "NoEditAndContinue"}
         linkoptions         {"/release"}
         objdir              (int_dir)
         libdirs             {"$(IntDir)"}
         defines             {"NDEBUG", "_CRT_SECURE_NO_DEPRECATE"}
         vpaths              {["Header Files/*"] = { "src/host/*.h" }, ["Source Files/*"] = { "src/host/*.c" },}
-        files               {"src/host/minilua.c"}
+        files               {bd.."src/host/minilua.c"}
     project ("buildvm") -- required to build LuaJIT
         uuid                ("F949C208-7A2E-4B1C-B74D-956E88542A26")
         language            ("C")
         kind                ("ConsoleApp")
-        location            ("src")
+        location            (bd.."src")
         targetname          ("buildvm")
-        targetdir           ("src")
+        targetdir           (bd.."src")
         includedirs         {"$(ProjectDir)", "$(ProjectDir)..\\dynasm", inc_dir}
         flags               {"Optimize", "StaticRuntime", "NoManifest", "NoMinimalRebuild", "NoIncrementalLink", "NoEditAndContinue"}
         objdir              (int_dir)
         libdirs             {"$(IntDir)"}
         defines             {"NDEBUG", "_CRT_SECURE_NO_DEPRECATE"}
         links               ("minilua") -- make sure we have minilua.exe
-        vpaths              {["Header Files/*"] = { "src/host/*.h" }, ["Source Files/*"] = { "src/host/*.c" },}
-        files               {"src/host/buildvm*.c", "src/host/buildvm*.h",}
+        vpaths              {["Header Files/*"] = { bd.."src/host/*.h" }, ["Source Files/*"] = { bd.."src/host/*.c" },}
+        files               {bd.."src/host/buildvm*.c", bd.."src/host/buildvm*.h",}
         -- Add the pre-build steps required to compile and link the static library
         local prebuild_table= {[32] = "", [64] = " -D P64"}
         for k,v in pairs(prebuild_table) do
@@ -153,9 +150,9 @@ solution ("luajit")
         uuid                ("9F35C2BB-DF1E-400A-A829-AE34E1C91A70")
         language            ("C")
         kind                ("StaticLib")
-        location            ("src")
+        location            (bd.."src")
         targetname          (fmt("luajit2_$(%s)", transformMN("Platform")))
-        targetdir           ("build")
+        targetdir           (bd.."build")
         includedirs         {"$(ProjectDir)", "$(ProjectDir)..\\dynasm", inc_dir}
         flags               {"StaticRuntime", "Optimize", "No64BitChecks"}
         objdir              (int_dir)
@@ -163,8 +160,8 @@ solution ("luajit")
         defines             {"NDEBUG", "_CRT_SECURE_NO_DEPRECATE"}
         links               {"minilua", "buildvm"} -- make sure we have minilua.exe
         linkoptions         {"/nodefaultlib"}
-        vpaths              {["Header Files/*"] = { "src/*.h" }, ["Source Files/*"] = { "src/*.c" },}
-        files               {"src/lib_*.c", "src/lj_*.c", "src/*.h",}
+        vpaths              {["Header Files/*"] = { bd.."src/*.h" }, ["Source Files/*"] = { bd.."src/*.c" },}
+        files               {bd.."src/lib_*.c", bd.."src/lj_*.c", bd.."src/*.h",}
         -- Add the pre-build steps required to compile and link the static library
         local prebuild_table= {[32] = 0, [64] = 0}
         for k,v in pairs(prebuild_table) do
@@ -183,9 +180,9 @@ solution ("luajit")
         uuid                ("3A806ACF-62B5-4597-B934-ED2F98A4F115")
         language            ("C")
         kind                ("ConsoleApp")
-        location            ("src")
+        location            (bd.."src")
         targetname          ("luajit")
-        targetdir           ("build")
+        targetdir           (bd.."build")
         includedirs         {"$(ProjectDir)"}
         flags               {"StaticRuntime", "Optimize", "NoMinimalRebuild", "NoIncrementalLink", "NoEditAndContinue", "No64BitChecks", "Symbols"}
         objdir              (int_dir)
@@ -193,9 +190,19 @@ solution ("luajit")
         defines             {"NDEBUG", "_CRT_SECURE_NO_DEPRECATE"}
         links               {"luajit2"}
         linkoptions         {"/pdbaltpath:%_PDB%"}
-        vpaths              {["Header Files/*"] = { "src/*.h" }, ["Source Files/*"] = { "src/*.c" },}
-        files               {"src/luajit.c",}
+        vpaths              {["Header Files/*"] = { bd.."src/*.h" }, ["Source Files/*"] = { bd.."src/*.c" },}
+        files               {bd.."src/luajit.c",}
         configuration {"Release", "x32"}
             targetsuffix    ("32")
         configuration {"Release", "x64"}
             targetsuffix    ("64")
+    premake.CurrentContainer = oldcurr -- restore container before this function was called
+end
+
+if premake.CurrentContainer == nil then
+    solution ("luajit")
+        configurations  {"Release"}
+        platforms       {"x32", "x64"}
+        location        ('.')
+        create_luajit_projects(nil)
+end
