@@ -5,9 +5,9 @@ syntax: regexp
 # Intermediate files
 \.(obj|map|exp|html?|pdb|suo|ncb|idb|res|lib|exe|dll|lnt|user|manifest|dep|pch|bak|orig|ilk|L32|L64)$
 syntax: glob
-windirstat.vs2010.sdf
+*.sdf
 intermediate/*
-windirstat.vs2010.opensdf
+*.opensdf
 *.wdslng
 *.png
 Backup *
@@ -17,6 +17,3 @@ web/*.html
 web/software/cushionstarlets.php
 src/*
 Visual Lint/*
-*.aqt
-windirstat/windirstat_prof/*
-*.sdf

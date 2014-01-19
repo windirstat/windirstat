@@ -94,6 +94,9 @@ local function transformMN(input) -- transform the macro names for older Visual 
     end
     return input
 end
+local function fmt(msg, ...)
+    return string.format(msg, unpack(arg))
+end
 --[[
 function create_luajit_projects(basedir)
     local oldcurr = premake.CurrentContainer
@@ -106,9 +109,10 @@ solution ("luajit")
     configurations  {"Debug", "Release"}
     platforms       {"x32", "x64"}
     location        ('.')
+    local int_dir           = fmt("intermediate\\%s_$(%s)_$(%s)", action, transformMN("Platform"), transformMN("Configuration"))
+    local inc_dir           = fmt("intermediate\\%s_$(%s)", action, transformMN("Platform"))
     -- Single minilua for all configurations and platforms
     project ("minilua") -- required to build LuaJIT
-        local int_dir       = "intermediate/" .. action .. "_$(" .. transformMN("Platform") .. ")_$(" .. transformMN("Configuration") .. ")"
         uuid                ("531911BC-0023-4EC6-A2CE-6C3F5C182647")
         language            ("C")
         kind                ("ConsoleApp")
@@ -120,10 +124,9 @@ solution ("luajit")
         objdir              (int_dir)
         libdirs             {"$(IntDir)"}
         defines             {"NDEBUG", "_CRT_SECURE_NO_DEPRECATE"}
+        vpaths              {["Header Files/*"] = { "src/host/*.h" }, ["Source Files/*"] = { "src/host/*.c" },}
         files               {"src/host/minilua.c"}
     project ("buildvm") -- required to build LuaJIT
-        local int_dir       = "intermediate/" .. action .. "_$(" .. transformMN("Platform") .. ")_$(" .. transformMN("Configuration") .. ")"
-        local inc_dir       = "$(ProjectDir)host_$(" .. transformMN("Platform") .. ")"
         uuid                ("F949C208-7A2E-4B1C-B74D-956E88542A26")
         language            ("C")
         kind                ("ConsoleApp")
@@ -136,15 +139,44 @@ solution ("luajit")
         libdirs             {"$(IntDir)"}
         defines             {"NDEBUG", "_CRT_SECURE_NO_DEPRECATE"}
         links               ("minilua") -- make sure we have minilua.exe
-        files
-        {
-            "src/host/buildvm*.c",
-            "src/host/buildvm*.h",
-        }
-        prebuildcommands    {"if not exist \""..inc_dir.."\" md \""..inc_dir.."\""}
-        configuration {"x32"}
-            targetsuffix    ("32")
-            prebuildcommands{"minilua ..\\dynasm\\dynasm.lua -LN -D WIN -D JIT -D FFI -o \""..inc_dir.."\\buildvm_arch.h\" vm_x86.dasc"}
-        configuration {"x64"}
-            targetsuffix    ("64")
-            prebuildcommands{"minilua ..\\dynasm\\dynasm.lua -LN -D WIN -D JIT -D FFI -D P64 -o \"" .. inc_dir .. "\\buildvm_arch.h\" vm_x86.dasc"}
+        vpaths              {["Header Files/*"] = { "src/host/*.h" }, ["Source Files/*"] = { "src/host/*.c" },}
+        files               {"src/host/buildvm*.c", "src/host/buildvm*.h",}
+        -- Add the pre-build steps required to compile and link the static library
+        local prebuild_table= {[32] = "", [64] = " -D P64"}
+        for k,v in pairs(prebuild_table) do
+            configuration {fmt("x%d", k)}
+                targetsuffix    (fmt("%d", k))
+                prebuildcommands(fmt("if not exist \"..\\%s\" md \"..\\%s\"", inc_dir, inc_dir))
+                prebuildcommands(fmt("minilua ..\\dynasm\\dynasm.lua -LN -D WIN -D JIT -D FFI%s -o \"..\\%s\\buildvm_arch.h\" vm_x86.dasc", prebuild_table[k], inc_dir))
+        end
+    project ("luajit2") -- required to build LuaJIT
+        uuid                ("9F35C2BB-DF1E-400A-A829-AE34E1C91A70")
+        language            ("C")
+        kind                ("StaticLib")
+        location            ("src")
+        targetname          (fmt("luajit2_$(%s)", transformMN("Platform")))
+        targetdir           ("build")
+        includedirs         {"$(ProjectDir)", "$(ProjectDir)..\\dynasm", inc_dir}
+        flags               {"Optimize", "NoMinimalRebuild", "NoIncrementalLink", "NoEditAndContinue", "No64BitChecks"}
+        objdir              (int_dir)
+        libdirs             {"$(IntDir)"}
+        defines             {"NDEBUG", "_CRT_SECURE_NO_DEPRECATE"}
+        links               {"minilua", "buildvm"} -- make sure we have minilua.exe
+        linkoptions         {"/nodefaultlib"}
+        vpaths              {["Header Files/*"] = { "src/*.h" }, ["Source Files/*"] = { "src/*.c" },}
+        files               {"src/lib_*.c", "src/lj_*.c", "src/*.h",}
+        -- Add the pre-build steps required to compile and link the static library
+        local prebuild_table= {[32] = 0, [64] = 0}
+        for k,v in pairs(prebuild_table) do
+            local ALL_LIB       = "lib_base.c lib_math.c lib_bit.c lib_string.c lib_table.c lib_io.c lib_os.c lib_package.c lib_debug.c lib_jit.c lib_ffi.c"
+            configuration {fmt("x%d", k)}
+                prebuildcommands(fmt("if not exist \"..\\%s\" md \"..\\%s\"", inc_dir, inc_dir))
+                prebuildcommands(fmt("buildvm%d -m peobj -o \"$(IntDir)\\lj_vm%d.obj\"", k, k))
+                linkoptions     {fmt("\"$(IntDir)\\lj_vm%d.obj\"", k)}
+                prebuildcommands(fmt("buildvm%d -m bcdef -o \"..\\%s\\lj_bcdef.h\" %s", k, inc_dir, ALL_LIB))
+                prebuildcommands(fmt("buildvm%d -m ffdef -o \"..\\%s\\lj_ffdef.h\" %s", k, inc_dir, ALL_LIB))
+                prebuildcommands(fmt("buildvm%d -m libdef -o \"..\\%s\\lj_libdef.h\" %s", k, inc_dir, ALL_LIB))
+                prebuildcommands(fmt("buildvm%d -m recdef -o \"..\\%s\\lj_recdef.h\" %s", k, inc_dir, ALL_LIB))
+                --prebuildcommands(fmt("buildvm%d -m vmdef -o jit\\vmdef.lua %s", k, ALL_LIB))
+                prebuildcommands(fmt("buildvm%d -m folddef -o \"..\\%s\\lj_folddef.h\" lj_opt_fold.c", k, inc_dir))
+        end
