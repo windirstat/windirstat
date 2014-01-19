@@ -5,7 +5,8 @@ if premake.CurrentContainer == nil then
     local orig_getbasename = premake.project.getbasename
     premake.project.getbasename = function(prjname, pattern)
         if _ACTION then
-            name_map = {vs2005 = "vs8", vs2008 = "vs9", vs2010 = "vs10", vs2012 = "vs11", vs2013 = "vs12"}
+            -- Using vc instead of vs here to avoid collisions
+            name_map = {vs2005 = "8", vs2008 = "9", vs2010 = "10", vs2012 = "11", vs2013 = "12"}
             if name_map[_ACTION] then
                 pattern = pattern:gsub("%%%%", "%%%%." .. name_map[_ACTION])
             else
@@ -36,7 +37,7 @@ do
     -- Override the project creation to suppress unnecessary configurations
     -- these get invoked by sln2005.generate per project ...
     -- ... they depend on the values in the sln.vstudio_configs table
-    local mprj = {["minilua"] = {["Release|Win32"] = 0}, ["buildvm"] = {["Release|Win32"] = 0, ["Release|x64"] = 0}}
+    local mprj = {["minilua"] = {["Release|Win32"] = 0}, ["buildvm"] = {["Release|Win32"] = 0, ["Release|x64"] = 0}, ["luajit2"] = {["Release|Win32"] = 0, ["Release|x64"] = 0}, ["lua"] = {["Release|Win32"] = 0, ["Release|x64"] = 0}}
     local function prjgen_override_factory(orig_prjgen)
         return function(prj)
             local function prjmap()
@@ -73,7 +74,7 @@ do
         if prj.name:find('minilua') then
             _p('\t\t{%s}.%s.ActiveCfg = Release|Win32', prj.uuid, cfg.name)
             _p('\t\t{%s}.%s.Build.0 = Release|Win32',  prj.uuid, cfg.name)
-        elseif prj.name:find('buildvm') then
+        elseif prj.name:find('buildvm') or prj.name:find('luajit2') or prj.name:find('lua') then
             _p('\t\t{%s}.%s.ActiveCfg = Release|%s', prj.uuid, cfg.name, mapped)
             _p('\t\t{%s}.%s.Build.0 = Release|%s',  prj.uuid, cfg.name, mapped)
         else
@@ -102,8 +103,10 @@ end
 
 function create_luajit_projects(basedir)
     local bd = ""
+    local offs = "" -- relative path, calculated based on slashes and backslashes in bd (basedir after normalization)
     if basedir ~= nil then
-        bd = basedir .. "/"
+        bd = basedir:gsub("[\\/]+$", "") .. "\\"
+        offs = bd:gsub("[^\\/]+", ""):gsub(".", "..\\")
     end
     local oldcurr = premake.CurrentContainer
     local int_dir           = fmt("intermediate\\%s_$(%s)_$(%s)", action, transformMN("Platform"), transformMN("Configuration"))
@@ -143,8 +146,8 @@ function create_luajit_projects(basedir)
         for k,v in pairs(prebuild_table) do
             configuration {fmt("x%d", k)}
                 targetsuffix    (fmt("%d", k))
-                prebuildcommands(fmt("if not exist \"..\\%s\" md \"..\\%s\"", inc_dir, inc_dir))
-                prebuildcommands(fmt("minilua ..\\dynasm\\dynasm.lua -LN -D WIN -D JIT -D FFI%s -o \"..\\%s\\buildvm_arch.h\" vm_x86.dasc", prebuild_table[k], inc_dir))
+                prebuildcommands(fmt("if not exist \"%s..\\%s\" md \"%s..\\%s\"", offs, inc_dir, offs, inc_dir))
+                prebuildcommands(fmt("minilua ..\\dynasm\\dynasm.lua -LN -D WIN -D JIT -D FFI%s -o \"%s..\\%s\\buildvm_arch.h\" vm_x86.dasc", prebuild_table[k], offs, inc_dir))
         end
     project ("luajit2") -- actual LuaJIT2 static lib
         uuid                ("9F35C2BB-DF1E-400A-A829-AE34E1C91A70")
@@ -167,14 +170,14 @@ function create_luajit_projects(basedir)
         for k,v in pairs(prebuild_table) do
             local ALL_LIB       = "lib_base.c lib_math.c lib_bit.c lib_string.c lib_table.c lib_io.c lib_os.c lib_package.c lib_debug.c lib_jit.c lib_ffi.c"
             configuration {fmt("x%d", k)}
-                prebuildcommands(fmt("if not exist \"..\\%s\" md \"..\\%s\"", inc_dir, inc_dir))
+                prebuildcommands(fmt("if not exist \"%s..\\%s\" md \"%s..\\%s\"", offs, inc_dir, offs, inc_dir))
                 prebuildcommands(fmt("buildvm%d -m peobj -o \"$(IntDir)\\lj_vm%d.obj\"", k, k))
                 linkoptions     {fmt("\"$(IntDir)\\lj_vm%d.obj\"", k)}
-                prebuildcommands(fmt("buildvm%d -m bcdef -o \"..\\%s\\lj_bcdef.h\" %s", k, inc_dir, ALL_LIB))
-                prebuildcommands(fmt("buildvm%d -m ffdef -o \"..\\%s\\lj_ffdef.h\" %s", k, inc_dir, ALL_LIB))
-                prebuildcommands(fmt("buildvm%d -m libdef -o \"..\\%s\\lj_libdef.h\" %s", k, inc_dir, ALL_LIB))
-                prebuildcommands(fmt("buildvm%d -m recdef -o \"..\\%s\\lj_recdef.h\" %s", k, inc_dir, ALL_LIB))
-                prebuildcommands(fmt("buildvm%d -m folddef -o \"..\\%s\\lj_folddef.h\" lj_opt_fold.c", k, inc_dir))
+                prebuildcommands(fmt("buildvm%d -m bcdef -o \"%s..\\%s\\lj_bcdef.h\" %s", k, offs, inc_dir, ALL_LIB))
+                prebuildcommands(fmt("buildvm%d -m ffdef -o \"%s..\\%s\\lj_ffdef.h\" %s", k, offs, inc_dir, ALL_LIB))
+                prebuildcommands(fmt("buildvm%d -m libdef -o \"%s..\\%s\\lj_libdef.h\" %s", k, offs, inc_dir, ALL_LIB))
+                prebuildcommands(fmt("buildvm%d -m recdef -o \"%s..\\%s\\lj_recdef.h\" %s", k, offs, inc_dir, ALL_LIB))
+                prebuildcommands(fmt("buildvm%d -m folddef -o \"%s..\\%s\\lj_folddef.h\" lj_opt_fold.c", k, offs, inc_dir))
         end
     project ("lua") -- actual Lua executable that statically links LuaJIT2
         uuid                ("3A806ACF-62B5-4597-B934-ED2F98A4F115")

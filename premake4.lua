@@ -99,6 +99,10 @@ local function transformMN(input) -- transform the macro names for older Visual 
     end
     return input
 end
+local function inc(inc_dir)
+    include(inc_dir)
+    create_luajit_projects(inc_dir)
+end
 newoption { trigger = "resources", description = "Also create projects for the resource DLLs." }
 newoption { trigger = "sdk71", description = "Applies to VS 2005 and 2008. If you have the Windows 7 SP1\n                   SDK, use this to create projects for a feature-complete\n                   WinDirStat." }
 if _OPTIONS["resources"] then
@@ -110,6 +114,10 @@ solution ("windirstat")
     platforms       {"x32", "x64"}
     location        ('.')
 
+    -- Include the LuaJIT projects
+    inc("3rdparty\\lua")
+
+    -- Main WinDirStat project
     project ("windirstat")
         local int_dir   = "intermediate/" .. action .. "_$(" .. transformMN("Platform") .. ")_$(" .. transformMN("Configuration") .. ")"
         uuid            ("BD11B94C-6594-4477-9FDF-2E24447D1F14")
@@ -117,15 +125,16 @@ solution ("windirstat")
         kind            ("WindowedApp")
         location        ("windirstat")
         targetname      ("wds")
-        flags           {"StaticRuntime", "Unicode", "MFC", "NativeWChar", "ExtraWarnings", "NoRTTI", "WinMain", "NoMinimalRebuild", "NoIncrementalLink"} -- "No64BitChecks", "NoEditAndContinue", "NoManifest", "NoExceptions" ???
+        flags           {"StaticRuntime", "Unicode", "MFC", "NativeWChar", "ExtraWarnings", "NoRTTI", "WinMain", "NoMinimalRebuild", "NoIncrementalLink", "NoEditAndContinue"} -- "No64BitChecks", "NoManifest", "NoExceptions" ???
         targetdir       ("build")
         includedirs     {".", "windirstat", "common", "windirstat/Controls", "windirstat/Dialogs", "3rdparty/lua/src"}
         objdir          (int_dir)
         libdirs         {"$(IntDir)"}
-        links           {"htmlhelp", "psapi", "lua51", "delayimp"}
+        links           {"htmlhelp", "psapi", "delayimp"}
         resoptions      {"/nologo", "/l409"}
         resincludedirs  {".", "$(IntDir)"}
         linkoptions     {"/delayload:psapi.dll", "/pdbaltpath:%_PDB%"}
+        links           {"luajit2"}
 
         files
         {
@@ -183,14 +192,12 @@ solution ("windirstat")
         configuration {"Debug"}
             defines         ("_DEBUG")
             flags           {"Symbols"}
-            prelinkcommands {"$(SolutionDir)\common\\build_luajit.cmd \"$(ProjectDir)$(IntDir)\" debug"}
 
         configuration {"Release"}
             defines         ("NDEBUG")
             flags           {"Optimize", "Symbols"}
             linkoptions     {"/release"}
             buildoptions    {"/Oi", "/Ot"}
-            prelinkcommands {"$(SolutionDir)\common\\build_luajit.cmd \"$(ProjectDir)$(IntDir)\""}
 
         configuration {"vs2005", "windirstat/WDS_Lua_C.c"}
             defines         ("_CRT_SECURE_NO_WARNINGS") -- _CRT_SECURE_NO_DEPRECATE, _SCL_SECURE_NO_WARNINGS, _AFX_SECURE_NO_WARNINGS and _ATL_SECURE_NO_WARNINGS???
@@ -209,57 +216,58 @@ solution ("windirstat")
                 end
         end
 
-        if _OPTIONS["resources"] then
-            do
-                local oldcurr = premake.CurrentContainer
-                local resource_dlls = {
-                    ["wdsr0405"] = "C3F39C58-7FC4-4243-82B2-A3572235AE02", -- Czech
-                    ["wdsr0407"] = "C8D9E4F9-7051-4B41-A5AB-F68F3FCE42E8", -- German
-                    ["wdsr040a"] = "23B76347-204C-4DE6-A311-F562CEF5D89C", -- Spanish
-                    ["wdsr040b"] = "C7A5D1EC-35D3-4754-A815-2C527CACD584", -- Finnish
-                    ["wdsr040c"] = "DA4DDD24-67BC-4A9D-87D3-18C73E5CAF31", -- French
-                    ["wdsr040e"] = "2A75AA20-BFFE-4D1C-8AEC-274823223919", -- Hungarian
-                    ["wdsr0410"] = "FD4194A7-EA1E-4466-A80B-AB4D8D17F33C", -- Italian
-                    ["wdsr0413"] = "70A55EB7-E109-41DE-81B4-0DF2B72DCDE9", -- Dutch
-                    ["wdsr0415"] = "70C09DAA-6F6D-4AAC-955F-ACD602A667CE", -- Polish
-                    ["wdsr0419"] = "7F06AAC4-9FBE-412F-B1D7-CB37AB8F311D", -- Russian
-                    ["wdsr0425"] = "2FADC62C-C670-4963-8B69-70ECA7987B93", -- Estonian
-                    }
-                for nm,guid in pairs(resource_dlls) do
-                    premake.CurrentContainer = oldcurr
-                    prj = project(nm)
-                        local int_dir   = "intermediate/" .. action .. "_" .. nm
-                        uuid            (guid)
-                        language        ("C++")
-                        kind            ("SharedLib")
-                        location        (nm)
-                        flags           {"NoImportLib", "Unicode", "NoManifest", "NoExceptions", "NoPCH", "NoIncrementalLink"}
-                        objdir          (int_dir)
-                        targetdir       ("build")
-                        targetextension (".wdslng")
-                        resoptions      {"/nologo", "/l409"}
-                        resincludedirs  {".", nm, "$(IntDir)"} -- ATTENTION: FAULTY IN premake-stable ... needs to be addressed
-                        linkoptions     {"/noentry"}
-                        files
-                        {
-                            nm .. "/*.txt", nm .. "/*.rst",
-                            nm .. "/windirstat.rc",
-                            nm .. "/res/windirstat.rc2",
-                            "common/version.h",
-                            "windirstat/res/*.bmp",
-                            "windirstat/res/*.cur",
-                            "windirstat/res/*.ico",
-                            "windirstat/res/*.txt",
-                            "windirstat/resource.h",
-                        }
-                        vpaths
-                        {
-                            ["Header Files/*"] = { "windirstat/*.h", "common/*.h", nm .. "/*.h" },
-                            ["Resource Files/*"] = { nm .. "/windirstat.rc", nm .. "/res/windirstat.rc2" },
-                            ["Resource Files/embedded/*"] = { "windirstat/res/*" },
-                            ["*"] = { nm .. "/*.txt", nm .. "/*.rst" },
-                        }
-                end
+    -- Add the resource DLL projects, if requested
+    if _OPTIONS["resources"] then
+        do
+            local oldcurr = premake.CurrentContainer
+            local resource_dlls = {
+                ["wdsr0405"] = "C3F39C58-7FC4-4243-82B2-A3572235AE02", -- Czech
+                ["wdsr0407"] = "C8D9E4F9-7051-4B41-A5AB-F68F3FCE42E8", -- German
+                ["wdsr040a"] = "23B76347-204C-4DE6-A311-F562CEF5D89C", -- Spanish
+                ["wdsr040b"] = "C7A5D1EC-35D3-4754-A815-2C527CACD584", -- Finnish
+                ["wdsr040c"] = "DA4DDD24-67BC-4A9D-87D3-18C73E5CAF31", -- French
+                ["wdsr040e"] = "2A75AA20-BFFE-4D1C-8AEC-274823223919", -- Hungarian
+                ["wdsr0410"] = "FD4194A7-EA1E-4466-A80B-AB4D8D17F33C", -- Italian
+                ["wdsr0413"] = "70A55EB7-E109-41DE-81B4-0DF2B72DCDE9", -- Dutch
+                ["wdsr0415"] = "70C09DAA-6F6D-4AAC-955F-ACD602A667CE", -- Polish
+                ["wdsr0419"] = "7F06AAC4-9FBE-412F-B1D7-CB37AB8F311D", -- Russian
+                ["wdsr0425"] = "2FADC62C-C670-4963-8B69-70ECA7987B93", -- Estonian
+                }
+            for nm,guid in pairs(resource_dlls) do
                 premake.CurrentContainer = oldcurr
+                prj = project(nm)
+                    local int_dir   = "intermediate/" .. action .. "_" .. nm
+                    uuid            (guid)
+                    language        ("C++")
+                    kind            ("SharedLib")
+                    location        (nm)
+                    flags           {"NoImportLib", "Unicode", "NoManifest", "NoExceptions", "NoPCH", "NoIncrementalLink"}
+                    objdir          (int_dir)
+                    targetdir       ("build")
+                    targetextension (".wdslng")
+                    resoptions      {"/nologo", "/l409"}
+                    resincludedirs  {".", nm, "$(IntDir)"} -- ATTENTION: FAULTY IN premake-stable ... needs to be addressed
+                    linkoptions     {"/noentry"}
+                    files
+                    {
+                        nm .. "/*.txt", nm .. "/*.rst",
+                        nm .. "/windirstat.rc",
+                        nm .. "/res/windirstat.rc2",
+                        "common/version.h",
+                        "windirstat/res/*.bmp",
+                        "windirstat/res/*.cur",
+                        "windirstat/res/*.ico",
+                        "windirstat/res/*.txt",
+                        "windirstat/resource.h",
+                    }
+                    vpaths
+                    {
+                        ["Header Files/*"] = { "windirstat/*.h", "common/*.h", nm .. "/*.h" },
+                        ["Resource Files/*"] = { nm .. "/windirstat.rc", nm .. "/res/windirstat.rc2" },
+                        ["Resource Files/embedded/*"] = { "windirstat/res/*" },
+                        ["*"] = { nm .. "/*.txt", nm .. "/*.rst" },
+                    }
             end
+            premake.CurrentContainer = oldcurr
         end
+    end
