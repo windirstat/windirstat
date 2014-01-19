@@ -106,7 +106,7 @@ end
 ]]
 
 solution ("luajit")
-    configurations  {"Debug", "Release"}
+    configurations  {"Release"}
     platforms       {"x32", "x64"}
     location        ('.')
     local int_dir           = fmt("intermediate\\%s_$(%s)_$(%s)", action, transformMN("Platform"), transformMN("Configuration"))
@@ -149,7 +149,7 @@ solution ("luajit")
                 prebuildcommands(fmt("if not exist \"..\\%s\" md \"..\\%s\"", inc_dir, inc_dir))
                 prebuildcommands(fmt("minilua ..\\dynasm\\dynasm.lua -LN -D WIN -D JIT -D FFI%s -o \"..\\%s\\buildvm_arch.h\" vm_x86.dasc", prebuild_table[k], inc_dir))
         end
-    project ("luajit2") -- required to build LuaJIT
+    project ("luajit2") -- actual LuaJIT2 static lib
         uuid                ("9F35C2BB-DF1E-400A-A829-AE34E1C91A70")
         language            ("C")
         kind                ("StaticLib")
@@ -157,7 +157,7 @@ solution ("luajit")
         targetname          (fmt("luajit2_$(%s)", transformMN("Platform")))
         targetdir           ("build")
         includedirs         {"$(ProjectDir)", "$(ProjectDir)..\\dynasm", inc_dir}
-        flags               {"Optimize", "NoMinimalRebuild", "NoIncrementalLink", "NoEditAndContinue", "No64BitChecks"}
+        flags               {"StaticRuntime", "Optimize", "No64BitChecks"}
         objdir              (int_dir)
         libdirs             {"$(IntDir)"}
         defines             {"NDEBUG", "_CRT_SECURE_NO_DEPRECATE"}
@@ -177,6 +177,25 @@ solution ("luajit")
                 prebuildcommands(fmt("buildvm%d -m ffdef -o \"..\\%s\\lj_ffdef.h\" %s", k, inc_dir, ALL_LIB))
                 prebuildcommands(fmt("buildvm%d -m libdef -o \"..\\%s\\lj_libdef.h\" %s", k, inc_dir, ALL_LIB))
                 prebuildcommands(fmt("buildvm%d -m recdef -o \"..\\%s\\lj_recdef.h\" %s", k, inc_dir, ALL_LIB))
-                --prebuildcommands(fmt("buildvm%d -m vmdef -o jit\\vmdef.lua %s", k, ALL_LIB))
                 prebuildcommands(fmt("buildvm%d -m folddef -o \"..\\%s\\lj_folddef.h\" lj_opt_fold.c", k, inc_dir))
         end
+    project ("lua") -- actual Lua executable that statically links LuaJIT2
+        uuid                ("3A806ACF-62B5-4597-B934-ED2F98A4F115")
+        language            ("C")
+        kind                ("ConsoleApp")
+        location            ("src")
+        targetname          ("lua")
+        targetdir           ("build")
+        includedirs         {"$(ProjectDir)"}
+        flags               {"StaticRuntime", "Optimize", "NoMinimalRebuild", "NoIncrementalLink", "NoEditAndContinue", "No64BitChecks", "Symbols"}
+        objdir              (int_dir)
+        libdirs             {"$(IntDir)"}
+        defines             {"NDEBUG", "_CRT_SECURE_NO_DEPRECATE"}
+        links               {"luajit2"}
+        linkoptions         {"/pdbaltpath:%_PDB%"}
+        vpaths              {["Header Files/*"] = { "src/*.h" }, ["Source Files/*"] = { "src/*.c" },}
+        files               {"src/luajit.c",}
+        configuration {"Release", "x32"}
+            targetsuffix    ("32")
+        configuration {"Release", "x64"}
+            targetsuffix    ("64")
