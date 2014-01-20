@@ -125,7 +125,7 @@ function create_luajit_projects(basedir)
         objdir              (int_dir)
         libdirs             {"$(IntDir)"}
         defines             {"NDEBUG", "_CRT_SECURE_NO_DEPRECATE"}
-        vpaths              {["Header Files/*"] = { "src/host/*.h" }, ["Source Files/*"] = { "src/host/*.c" },}
+        vpaths              {["Header Files/*"] = { bd.."src/host/*.h" }, ["Source Files/*"] = { bd.."src/host/*.c" },}
         files               {bd.."src/host/minilua.c"}
     project ("buildvm") -- required to build LuaJIT
         uuid                ("F949C208-7A2E-4B1C-B74D-956E88542A26")
