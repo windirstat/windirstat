@@ -140,7 +140,7 @@ function create_luajit_projects(basedir, pfx)
         objdir              (int_dir)
         libdirs             {"$(IntDir)"}
         defines             {"NDEBUG", "_CRT_SECURE_NO_DEPRECATE"}
-        links               ("minilua") -- make sure we have minilua.exe
+        links               (pfx.."minilua") -- make sure we have minilua.exe
         vpaths              {["Header Files/*"] = { bd.."src/host/*.h" }, ["Source Files/*"] = { bd.."src/host/*.c" },}
         files               {bd.."src/host/buildvm*.c", bd.."src/host/buildvm*.h",}
         -- Add the pre-build steps required to compile and link the static library
@@ -163,7 +163,7 @@ function create_luajit_projects(basedir, pfx)
         objdir              (int_dir)
         libdirs             {"$(IntDir)"}
         defines             {"NDEBUG", "_CRT_SECURE_NO_DEPRECATE"}
-        links               {"minilua", "buildvm"} -- make sure we have minilua.exe
+        links               {pfx.."minilua", pfx.."buildvm"} -- make sure we have minilua.exe
         linkoptions         {"/nodefaultlib"}
         vpaths              {["Header Files/*"] = { bd.."src/*.h" }, ["Source Files/*"] = { bd.."src/*.c" },}
         files               {bd.."src/lib_*.c", bd.."src/lj_*.c", bd.."src/*.h",}
@@ -194,7 +194,7 @@ function create_luajit_projects(basedir, pfx)
             objdir              (int_dir)
             libdirs             {"$(IntDir)"}
             defines             {"NDEBUG", "_CRT_SECURE_NO_DEPRECATE"}
-            links               {"luajit2"}
+            links               {pfx.."luajit2"}
             linkoptions         {"/pdbaltpath:%_PDB%"}
             vpaths              {["Header Files/*"] = { bd.."src/*.h" }, ["Source Files/*"] = { bd.."src/*.c" },}
             files               {bd.."src/luajit.c",}
