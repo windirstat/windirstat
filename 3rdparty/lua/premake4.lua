@@ -102,7 +102,8 @@ local function fmt(msg, ...)
     return string.format(msg, unpack(arg))
 end
 
-function create_luajit_projects(basedir)
+function create_luajit_projects(basedir, pfx)
+    local pfx = iif(pfx, pfx, "")
     local bd = ""
     local offs = "" -- relative path, calculated based on slashes and backslashes in bd (basedir after normalization)
     if basedir ~= nil then
@@ -113,7 +114,7 @@ function create_luajit_projects(basedir)
     local int_dir           = fmt("intermediate\\%s_$(%s)_$(%s)\\$(ProjectName)", action, transformMN("Platform"), transformMN("Configuration"))
     local inc_dir           = fmt("intermediate\\%s_$(%s)", action, transformMN("Platform"))
     -- Single minilua for all configurations and platforms
-    project ("minilua") -- required to build LuaJIT
+    project (pfx.."minilua") -- required to build LuaJIT
         uuid                ("531911BC-0023-4EC6-A2CE-6C3F5C182647")
         language            ("C")
         kind                ("ConsoleApp")
@@ -127,7 +128,7 @@ function create_luajit_projects(basedir)
         defines             {"NDEBUG", "_CRT_SECURE_NO_DEPRECATE"}
         vpaths              {["Header Files/*"] = { bd.."src/host/*.h" }, ["Source Files/*"] = { bd.."src/host/*.c" },}
         files               {bd.."src/host/minilua.c"}
-    project ("buildvm") -- required to build LuaJIT
+    project (pfx.."buildvm") -- required to build LuaJIT
         uuid                ("F949C208-7A2E-4B1C-B74D-956E88542A26")
         language            ("C")
         kind                ("ConsoleApp")
@@ -150,7 +151,7 @@ function create_luajit_projects(basedir)
                 prebuildcommands(fmt("if not exist \"%s..\\%s\" md \"%s..\\%s\"", offs, inc_dir, offs, inc_dir))
                 prebuildcommands(fmt("minilua ..\\dynasm\\dynasm.lua -LN -D WIN -D JIT -D FFI%s -o \"%s..\\%s\\buildvm_arch.h\" vm_x86.dasc", prebuild_table[k], offs, inc_dir))
         end
-    project ("luajit2") -- actual LuaJIT2 static lib
+    project (pfx.."luajit2") -- actual LuaJIT2 static lib
         uuid                ("9F35C2BB-DF1E-400A-A829-AE34E1C91A70")
         language            ("C")
         kind                ("StaticLib")
@@ -181,7 +182,7 @@ function create_luajit_projects(basedir)
                 prebuildcommands(fmt("buildvm%d -m folddef -o \"%s..\\%s\\lj_folddef.h\" lj_opt_fold.c", k, offs, inc_dir))
         end
     if standalone then
-        project ("lua") -- actual Lua executable that statically links LuaJIT2
+        project (pfx.."lua") -- actual Lua executable that statically links LuaJIT2
             uuid                ("3A806ACF-62B5-4597-B934-ED2F98A4F115")
             language            ("C")
             kind                ("ConsoleApp")

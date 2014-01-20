@@ -101,16 +101,24 @@ local function transformMN(input) -- transform the macro names for older Visual 
 end
 local function inc(inc_dir)
     include(inc_dir)
-    create_luajit_projects(inc_dir)
+    create_luajit_projects(inc_dir, "wds_release_")
 end
 newoption { trigger = "resources", description = "Also create projects for the resource DLLs." }
 newoption { trigger = "sdk71", description = "Applies to VS 2005 and 2008. If you have the Windows 7 SP1\n                   SDK, use this to create projects for a feature-complete\n                   WinDirStat." }
+newoption { trigger = "release", description = "Creates a solution suitable for a release build." }
 if _OPTIONS["resources"] then
     print "INFO: Creating projects for resource DLLs."
 end
+local release = false
+if _OPTIONS["release"] then
+    print "INFO: Creating release build solution."
+    _OPTIONS["resources"] = ""
+    _OPTIONS["sdk71"] = ""
+    release = true
+end
 
-solution ("windirstat")
-    configurations  {"Debug", "Release"}
+solution (iif(release, "wds_release", "windirstat"))
+    configurations  (iif(release, {"Release"}, {"Debug", "Release"}))
     platforms       {"x32", "x64"}
     location        ('.')
 
@@ -118,7 +126,7 @@ solution ("windirstat")
     inc("3rdparty\\lua")
 
     -- Main WinDirStat project
-    project ("windirstat")
+    project (iif(release, "wds_release", "windirstat"))
         local int_dir   = "intermediate/" .. action .. "_$(" .. transformMN("Platform") .. ")_$(" .. transformMN("Configuration") .. ")\\$(ProjectName)"
         uuid            ("BD11B94C-6594-4477-9FDF-2E24447D1F14")
         language        ("C++")
@@ -235,7 +243,7 @@ solution ("windirstat")
                 }
             for nm,guid in pairs(resource_dlls) do
                 premake.CurrentContainer = oldcurr
-                prj = project(nm)
+                prj = project(iif(release, "wds_release_" .. nm, nm))
                     local int_dir   = "intermediate/" .. action .. "_$(ProjectName)_" .. nm
                     uuid            (guid)
                     language        ("C++")
