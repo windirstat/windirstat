@@ -19,3 +19,7 @@ src/*
 Visual Lint/*
 common/hgtip.h
 common/buildnumber.h
+wds_release_intermediate/**
+wds_release.*.sln
+wdsr*/wds_release_wdsr*.*.vcproj
+windirstat/wds_release.*.vcproj
