@@ -1,7 +1,13 @@
 -- The below is used to insert the .vs(2005|2008|2010|2012|2013) into the file names for projects and solutions
 local standalone = false
 local action = _ACTION or ""
-if premake.CurrentContainer == nil then
+local pfx = ""
+if premake.CurrentContainer ~= nil then
+    pfx = _OPTIONS["release"]
+    if not pfx then
+        pfx = ""
+    end
+else
     -- Name the project files after their VS version
     local orig_getbasename = premake.project.getbasename
     premake.project.getbasename = function(prjname, pattern)
@@ -33,12 +39,10 @@ if premake.CurrentContainer == nil then
         end
         orig_generate(obj, filename, callback)
     end
-end
-do
     -- Override the project creation to suppress unnecessary configurations
     -- these get invoked by sln2005.generate per project ...
     -- ... they depend on the values in the sln.vstudio_configs table
-    local mprj = {["minilua"] = {["Release|Win32"] = 0}, ["buildvm"] = {["Release|Win32"] = 0, ["Release|x64"] = 0}, ["luajit2"] = {["Release|Win32"] = 0, ["Release|x64"] = 0}, ["lua"] = {["Release|Win32"] = 0, ["Release|x64"] = 0}}
+    local mprj = {[pfx.."minilua"] = {["Release|Win32"] = 0}, [pfx.."buildvm"] = {["Release|Win32"] = 0, ["Release|x64"] = 0}, [pfx.."luajit2"] = {["Release|Win32"] = 0, ["Release|x64"] = 0}, [pfx.."lua"] = {["Release|Win32"] = 0, ["Release|x64"] = 0}}
     local function prjgen_override_factory(orig_prjgen)
         return function(prj)
             local function prjmap()
@@ -72,10 +76,10 @@ do
     -- no matter what the global solution project is.
     local orig_project_platforms_sln2prj_mapping = premake.vstudio.sln2005.project_platforms_sln2prj_mapping
     premake.vstudio.sln2005.project_platforms_sln2prj_mapping = function(sln, prj, cfg, mapped)
-        if prj.name:find('minilua') then
+        if prj.name:find(pfx..'minilua') then
             _p('\t\t{%s}.%s.ActiveCfg = Release|Win32', prj.uuid, cfg.name)
             _p('\t\t{%s}.%s.Build.0 = Release|Win32',  prj.uuid, cfg.name)
-        elseif prj.name:find('buildvm') or prj.name:find('luajit2') or prj.name:find('lua') then
+        elseif prj.name:find(pfx..'buildvm') or prj.name:find(pfx..'luajit2') or prj.name:find(pfx..'lua') then
             _p('\t\t{%s}.%s.ActiveCfg = Release|%s', prj.uuid, cfg.name, mapped)
             _p('\t\t{%s}.%s.Build.0 = Release|%s',  prj.uuid, cfg.name, mapped)
         else
@@ -102,8 +106,7 @@ local function fmt(msg, ...)
     return string.format(msg, unpack(arg))
 end
 
-function create_luajit_projects(basedir, pfx)
-    local pfx = iif(pfx, pfx, "")
+function create_luajit_projects(basedir)
     local bd = ""
     local offs = "" -- relative path, calculated based on slashes and backslashes in bd (basedir after normalization)
     if basedir ~= nil then
@@ -111,8 +114,8 @@ function create_luajit_projects(basedir, pfx)
         offs = bd:gsub("[^\\/]+", ""):gsub(".", "..\\")
     end
     local oldcurr = premake.CurrentContainer
-    local int_dir           = fmt("intermediate\\%s_$(%s)_$(%s)\\$(ProjectName)", action, transformMN("Platform"), transformMN("Configuration"))
-    local inc_dir           = fmt("intermediate\\%s_$(%s)", action, transformMN("Platform"))
+    local int_dir           = fmt(pfx.."intermediate\\%s_$(%s)_$(%s)\\$(ProjectName)", action, transformMN("Platform"), transformMN("Configuration"))
+    local inc_dir           = fmt(pfx.."intermediate\\%s_$(%s)", action, transformMN("Platform"))
     -- Single minilua for all configurations and platforms
     project (pfx.."minilua") -- required to build LuaJIT
         uuid                ("531911BC-0023-4EC6-A2CE-6C3F5C182647")

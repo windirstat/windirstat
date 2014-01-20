@@ -17,3 +17,5 @@ web/*.html
 web/software/cushionstarlets.php
 src/*
 Visual Lint/*
+common/hgtip.h
+common/buildnumber.h

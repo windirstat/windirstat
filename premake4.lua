@@ -1,5 +1,20 @@
 -- The below is used to insert the .vs(2005|2008|2010|2012|2013) into the file names for projects and solutions
 local action = _ACTION or ""
+local release = false
+local slnname = ""
+local pfx = ""
+if _OPTIONS["resources"] then
+    print "INFO: Creating projects for resource DLLs."
+end
+if _OPTIONS["release"] then
+    print "INFO: Creating release build solution."
+    _OPTIONS["resources"] = ""
+    _OPTIONS["sdk71"] = ""
+    release = true
+    slnname = "wds_release"
+    pfx = slnname .. "_"
+    _OPTIONS["release"] = pfx
+end
 do
     -- Name the project files after their VS version
     local orig_getbasename = premake.project.getbasename
@@ -34,7 +49,7 @@ do
     -- Make sure we do not incremental linking for the resource DLLs
     local orig_config_isincrementallink = premake.config.isincrementallink
     premake.config.isincrementallink = function(cfg)
-        if cfg.project.name:find('wdsr') and cfg.flags.NoIncrementalLink then
+        if cfg.project.name:find(pfx..'wdsr') and cfg.flags.NoIncrementalLink then
             return false
         end
         return orig_config_isincrementallink(cfg)
@@ -42,7 +57,7 @@ do
     -- Override the project creation to suppress unnecessary configurations
     -- these get invoked by sln2005.generate per project ...
     -- ... they depend on the values in the sln.vstudio_configs table
-    local mprj = {["wdsr%x*"] = {["Release|Win32"] = 0}}
+    local mprj = {[pfx.."wdsr%x*"] = {["Release|Win32"] = 0}, [pfx.."minilua"] = {["Release|Win32"] = 0}, [pfx.."buildvm"] = {["Release|Win32"] = 0, ["Release|x64"] = 0}, [pfx.."luajit2"] = {["Release|Win32"] = 0, ["Release|x64"] = 0}, [pfx.."lua"] = {["Release|Win32"] = 0, ["Release|x64"] = 0}}
     local function prjgen_override_factory(orig_prjgen)
         return function(prj)
             local function prjmap()
@@ -76,9 +91,19 @@ do
     -- no matter what the global solution project is.
     local orig_project_platforms_sln2prj_mapping = premake.vstudio.sln2005.project_platforms_sln2prj_mapping
     premake.vstudio.sln2005.project_platforms_sln2prj_mapping = function(sln, prj, cfg, mapped)
-        if prj.name:find('wdsr') then
+        if prj.name:find(pfx..'wdsr') then
             _p('\t\t{%s}.%s.ActiveCfg = Release|Win32', prj.uuid, cfg.name)
-            _p('\t\t{%s}.%s.Build.0 = Release|Win32',  prj.uuid, cfg.name)
+            if release and mapped == "Win32" and cfg.name == "Release|Win32" then
+                _p('\t\t{%s}.%s.Build.0 = Release|Win32',  prj.uuid, cfg.name)
+            end
+        elseif prj.name:find(pfx..'minilua') then
+            _p('\t\t{%s}.%s.ActiveCfg = Release|Win32', prj.uuid, cfg.name)
+            if not release then
+                _p('\t\t{%s}.%s.Build.0 = Release|Win32',  prj.uuid, cfg.name)
+            end
+        elseif prj.name:find(pfx..'buildvm') or prj.name:find(pfx..'luajit2') or prj.name:find(pfx..'lua') then
+            _p('\t\t{%s}.%s.ActiveCfg = Release|%s', prj.uuid, cfg.name, mapped)
+            _p('\t\t{%s}.%s.Build.0 = Release|%s',  prj.uuid, cfg.name, mapped)
         else
             _p('\t\t{%s}.%s.ActiveCfg = %s|%s', prj.uuid, cfg.name, cfg.buildcfg, mapped)
             if mapped == cfg.platform or cfg.platform == "Mixed Platforms" then
@@ -99,24 +124,13 @@ local function transformMN(input) -- transform the macro names for older Visual 
     end
     return input
 end
+local function inc(inc_dir)
+    include(inc_dir)
+    create_luajit_projects(inc_dir)
+end
 newoption { trigger = "resources", description = "Also create projects for the resource DLLs." }
 newoption { trigger = "sdk71", description = "Applies to VS 2005 and 2008. If you have the Windows 7 SP1\n                   SDK, use this to create projects for a feature-complete\n                   WinDirStat." }
 newoption { trigger = "release", description = "Creates a solution suitable for a release build." }
-if _OPTIONS["resources"] then
-    print "INFO: Creating projects for resource DLLs."
-end
-local release = false
-local slnname = "wds_release"
-if _OPTIONS["release"] then
-    print "INFO: Creating release build solution."
-    _OPTIONS["resources"] = ""
-    _OPTIONS["sdk71"] = ""
-    release = true
-end
-local function inc(inc_dir)
-    include(inc_dir)
-    create_luajit_projects(inc_dir, iif(release, slnname .. "_", ""))
-end
 
 solution (iif(release, slnname, "windirstat"))
     configurations  (iif(release, {"Release"}, {"Debug", "Release"}))
@@ -128,26 +142,30 @@ solution (iif(release, slnname, "windirstat"))
 
     -- Main WinDirStat project
     project (iif(release, slnname, "windirstat"))
-        local int_dir   = "intermediate/" .. action .. "_$(" .. transformMN("Platform") .. ")_$(" .. transformMN("Configuration") .. ")\\$(ProjectName)"
+        local int_dir   = pfx.."intermediate/" .. action .. "_$(" .. transformMN("Platform") .. ")_$(" .. transformMN("Configuration") .. ")\\$(ProjectName)"
         uuid            ("BD11B94C-6594-4477-9FDF-2E24447D1F14")
         language        ("C++")
         kind            ("WindowedApp")
         location        ("windirstat")
         targetname      ("wds")
         flags           {"StaticRuntime", "Unicode", "MFC", "NativeWChar", "ExtraWarnings", "NoRTTI", "WinMain", "NoMinimalRebuild", "NoIncrementalLink", "NoEditAndContinue"} -- "No64BitChecks", "NoManifest", "NoExceptions" ???
-        targetdir       ("build")
+        targetdir       (iif(release, slnname, "build"))
         includedirs     {".", "windirstat", "common", "windirstat/Controls", "windirstat/Dialogs", "3rdparty/lua/src"}
         objdir          (int_dir)
         libdirs         {"$(IntDir)"}
-        links           {"htmlhelp", "psapi", "delayimp", iif(release, slnname .. "_luajit2", "luajit2")}
+        links           {"htmlhelp", "psapi", "delayimp", pfx.."luajit2"}
         resoptions      {"/nologo", "/l409"}
         resincludedirs  {".", "$(IntDir)"}
         linkoptions     {"/delayload:psapi.dll", "/pdbaltpath:%_PDB%"}
+        prebuildcommands("if not exist \"$(SolutionDir)common\\buildnumber.h\" \"$(SolutionDir)common\\buildinc.cmd\" \"$(SolutionDir)common\"")
         if release then
             postbuildcommands
             {
                 "signtool.exe sign /v /a /ph /d \"WinDirStat\" /du \"http://windirstat.info\" /tr http://www.startssl.com/timestamp \"$(TargetPath)\""
             }
+            if os.isfile("common/hgtip.h") then
+                defines ("HAVE_HGTIP")
+            end
         end
         files
         {
@@ -248,19 +266,28 @@ solution (iif(release, slnname, "windirstat"))
                 }
             for nm,guid in pairs(resource_dlls) do
                 premake.CurrentContainer = oldcurr
-                prj = project(iif(release, slnname .. "_" .. nm, nm))
-                    local int_dir   = "intermediate/" .. action .. "_$(ProjectName)_" .. nm
+                prj = project(pfx..nm)
+                    local int_dir   = pfx.."intermediate/" .. action .. "_$(ProjectName)_" .. nm
                     uuid            (guid)
                     language        ("C++")
                     kind            ("SharedLib")
                     location        (nm)
                     flags           {"NoImportLib", "Unicode", "NoManifest", "NoExceptions", "NoPCH", "NoIncrementalLink"}
                     objdir          (int_dir)
-                    targetdir       ("build")
+                    targetdir       (iif(release, slnname, "build"))
                     targetextension (".wdslng")
                     resoptions      {"/nologo", "/l409"}
                     resincludedirs  {".", nm, "$(IntDir)"} -- ATTENTION: FAULTY IN premake-stable ... needs to be addressed
                     linkoptions     {"/noentry"}
+                    if release then
+                        postbuildcommands
+                        {
+                            "signtool.exe sign /v /a /ph /d \"WinDirStat resource DLL\" /du \"http://windirstat.info\" /tr http://www.startssl.com/timestamp \"$(TargetPath)\""
+                        }
+                        if os.isfile("common/hgtip.h") then
+                            defines ("HAVE_HGTIP")
+                        end
+                    end
                     files
                     {
                         nm .. "/*.txt", nm .. "/*.rst",
