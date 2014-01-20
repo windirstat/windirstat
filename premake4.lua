@@ -98,9 +98,7 @@ do
             end
         elseif prj.name:find(pfx..'minilua') then
             _p('\t\t{%s}.%s.ActiveCfg = Release|Win32', prj.uuid, cfg.name)
-            if not release then
-                _p('\t\t{%s}.%s.Build.0 = Release|Win32',  prj.uuid, cfg.name)
-            end
+            _p('\t\t{%s}.%s.Build.0 = Release|Win32',  prj.uuid, cfg.name)
         elseif prj.name:find(pfx..'buildvm') or prj.name:find(pfx..'luajit2') or prj.name:find(pfx..'lua') then
             _p('\t\t{%s}.%s.ActiveCfg = Release|%s', prj.uuid, cfg.name, mapped)
             _p('\t\t{%s}.%s.Build.0 = Release|%s',  prj.uuid, cfg.name, mapped)
