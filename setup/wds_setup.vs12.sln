@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.21005.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{930C7802-8A8C-48F9-8165-68863BCCD9DD}") = "wds_setup", "wds_setup.wixproj", "{6C0484E4-D2AE-4252-B0A9-17D4298A00A8}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x86 = Debug|x86
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{6C0484E4-D2AE-4252-B0A9-17D4298A00A8}.Debug|x86.ActiveCfg = Debug|x86
+		{6C0484E4-D2AE-4252-B0A9-17D4298A00A8}.Debug|x86.Build.0 = Debug|x86
+		{6C0484E4-D2AE-4252-B0A9-17D4298A00A8}.Release|x86.ActiveCfg = Release|x86
+		{6C0484E4-D2AE-4252-B0A9-17D4298A00A8}.Release|x86.Build.0 = Release|x86
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
