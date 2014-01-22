@@ -8,7 +8,7 @@
 // Generated from the TEXTINCLUDE 2 resource.
 //
 #include "afxres.h"
-#include "../common/version.h"
+#include "common/version.h"
 
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
@@ -36,7 +36,7 @@ END
 2 TEXTINCLUDE 
 BEGIN
     "#include ""afxres.h""\r\n"
-    "#include ""../common/version.h""\r\n"
+    "#include ""common/version.h""\r\n"
     "\0"
 END
 
@@ -66,16 +66,16 @@ END
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-IDR_MAINFRAME           ICON                    "..\\windirstat\\res\\icon1.ico"
+IDR_MAINFRAME           ICON                    "..\\..\\res\\icon1.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 //
 // Bitmap
 //
 
-IDR_MAINFRAME           BITMAP                  "..\\windirstat\\res\\Toolbar.bmp"
-IDB_NODES               BITMAP                  "..\\windirstat\\res\\bitmap1.bmp"
-IDB_JUNCTIONPOINT       BITMAP                  "..\\windirstat\\res\\junctionpoint.bmp"
+IDR_MAINFRAME           BITMAP                  "..\\..\\res\\Toolbar.bmp"
+IDB_NODES               BITMAP                  "..\\..\\res\\bitmap1.bmp"
+IDB_JUNCTIONPOINT       BITMAP                  "..\\..\\res\\junctionpoint.bmp"
 
 /////////////////////////////////////////////////////////////////////////////
 //

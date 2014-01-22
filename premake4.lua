@@ -269,13 +269,13 @@ solution (iif(release, slnname, "windirstat"))
                     uuid            (guid)
                     language        ("C++")
                     kind            ("SharedLib")
-                    location        (nm)
+                    location        ("windirstat/res/" .. nm)
                     flags           {"NoImportLib", "Unicode", "NoManifest", "NoExceptions", "NoPCH", "NoIncrementalLink"}
                     objdir          (int_dir)
                     targetdir       (iif(release, slnname, "build"))
                     targetextension (".wdslng")
                     resoptions      {"/nologo", "/l409"}
-                    resincludedirs  {".", nm, "$(IntDir)"} -- ATTENTION: FAULTY IN premake-stable ... needs to be addressed
+                    resincludedirs  {".", "$(ProjectDir)", "$(IntDir)"} -- ATTENTION: FAULTY IN premake-stable ... needs to be addressed
                     linkoptions     {"/noentry"}
                     if release then
                         postbuildcommands
@@ -288,9 +288,9 @@ solution (iif(release, slnname, "windirstat"))
                     end
                     files
                     {
-                        nm .. "/*.txt", nm .. "/*.rst",
-                        nm .. "/windirstat.rc",
-                        nm .. "/res/windirstat.rc2",
+                        "windirstat/res/" .. nm .. "/*.txt", "windirstat/res/" .. nm .. "/*.rst",
+                        "windirstat/res/" .. nm .. "/windirstat.rc",
+                        "windirstat/res/" .. nm .. "/res/windirstat.rc2",
                         "common/version.h",
                         "windirstat/res/*.bmp",
                         "windirstat/res/*.cur",
@@ -300,10 +300,10 @@ solution (iif(release, slnname, "windirstat"))
                     }
                     vpaths
                     {
-                        ["Header Files/*"] = { "windirstat/*.h", "common/*.h", nm .. "/*.h" },
-                        ["Resource Files/*"] = { nm .. "/windirstat.rc", nm .. "/res/windirstat.rc2" },
+                        ["Header Files/*"] = { "windirstat/*.h", "common/*.h", "windirstat/res/" .. nm .. "/*.h" },
+                        ["Resource Files/*"] = { "windirstat/res/" .. nm .. "/windirstat.rc", "windirstat/res/" .. nm .. "/res/windirstat.rc2" },
                         ["Resource Files/embedded/*"] = { "windirstat/res/*" },
-                        ["*"] = { nm .. "/*.txt", nm .. "/*.rst" },
+                        ["*"] = { "windirstat/res/" .. nm .. "/*.txt", "windirstat/res/" .. nm .. "/*.rst" },
                     }
             end
             premake.CurrentContainer = oldcurr
