@@ -1,7 +1,5 @@
 ﻿# WinDirStat - Windows Directory Statistics
 
-**Author:** Oliver Schneider
-
 ## Copyright and licenses
 
 * Copyright © 2003-2005 Bernhard Seifert (bseifert@users.sourceforge.net)
