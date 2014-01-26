@@ -35,26 +35,12 @@
 #include <Dbghelp.h> // for mini dumps
 
 #ifdef _DEBUG
-#define new DEBUG_NEW
+#   include <common/tracer.cpp>
+#   define new DEBUG_NEW
 #endif
 
 #pragma comment(linker,"/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' "\
     "version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
-
-class CMiniDumper
-{
-private:
-    typedef BOOL (WINAPI *TFNMiniDumpWriteDump)
-        (
-        HANDLE hProcess,
-        DWORD ProcessId,
-        HANDLE hFile,
-        MINIDUMP_TYPE DumpType,
-        PMINIDUMP_EXCEPTION_INFORMATION ExceptionParam,
-        PMINIDUMP_USER_STREAM_INFORMATION UserStreamParam,
-        PMINIDUMP_CALLBACK_INFORMATION CallbackParam
-        );
-};
 
 CMainFrame *GetMainFrame()
 {
@@ -111,6 +97,9 @@ CDirstatApp::CDirstatApp()
 #   if SUPPORT_ELEVATION
     , m_ElevationEvent(NULL)
 #   endif // SUPPORT_ELEVATION
+#   ifdef VTRACE_TO_CONSOLE
+    , m_vtrace_console(new CWDSTracerConsole())
+#   endif // VTRACE_TO_CONSOLE
 {
 #   ifdef _DEBUG
     TestScanResourceDllName();

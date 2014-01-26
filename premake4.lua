@@ -178,7 +178,7 @@ solution (iif(release, slnname, "windirstat"))
             "windirstat/Dialogs/*.h",
             "windirstat/windirstat.rc",
             "windirstat/res/*.*",
-            "*.txt", "*.rst",
+            "*.txt", "*.md",
             "common/BUILD",
             "common/*.cmd",
             "premake4.lua",
@@ -186,6 +186,7 @@ solution (iif(release, slnname, "windirstat"))
 
         excludes
         {
+            "common/tracer.cpp", -- this one gets an #include via windirstat.cpp
             "windirstat/stdafx.cpp",
         }
         
@@ -219,7 +220,7 @@ solution (iif(release, slnname, "windirstat"))
             targetsuffix    ("64")
 
         configuration {"Debug"}
-            defines         ("_DEBUG")
+            defines         {"_DEBUG", "VTRACE_TO_CONSOLE=1"}
             flags           {"Symbols"}
 
         configuration {"Release"}

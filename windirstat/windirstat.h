@@ -35,6 +35,7 @@
 #include "options.h"
 #include "mountpoints.h"
 #include "helpmap.h"
+#include <common/tracer.h>
 
 typedef CMap<CString, LPCTSTR, COLORREF, COLORREF> CExtensionColorMap;  // ".bmp" -> color
 
@@ -129,6 +130,9 @@ protected:
 #if SUPPORT_ELEVATION
     HANDLE m_ElevationEvent;
 #endif // SUPPORT_ELEVATION
+#ifdef VTRACE_TO_CONSOLE
+    CAutoPtr<CWDSTracerConsole> m_vtrace_console;
+#endif // VTRACE_TO_CONSOLE
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnFileOpen();
