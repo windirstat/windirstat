@@ -551,7 +551,7 @@ BOOL CSelectDrivesDlg::OnInitDialog()
 
     if(WMU_THREADFINISHED == 0)
     {
-        TRACE("RegisterMessage() failed. Using WM_USER + 123\r\n");
+        VTRACE(_T("RegisterMessage() failed. Using WM_USER + 123"));
         WMU_THREADFINISHED = WM_USER + 123;
     }
 
@@ -851,7 +851,7 @@ LRESULT CSelectDrivesDlg::OnWmuThreadFinished(WPARAM serial, LPARAM lparam)
 {
     if(serial != _serial)
     {
-        TRACE("OnWmuThreadFinished: invalid serial (window handle recycled?)\r\n");
+        VTRACE(_T("OnWmuThreadFinished: invalid serial (window handle recycled?)"));
         return 0;
     }
 
@@ -874,7 +874,7 @@ LRESULT CSelectDrivesDlg::OnWmuThreadFinished(WPARAM serial, LPARAM lparam)
     int i = m_list.FindItem(&fi);
     if(i == -1)
     {
-        TRACE("OnWmuThreadFinished: item not found!\r\n");
+        VTRACE(_T("OnWmuThreadFinished: item not found!"));
         return 0;
     }
 
@@ -928,7 +928,7 @@ CString CSelectDrivesDlg::getFullPathName_(LPCTSTR relativePath)
 
     if(0 == dw)
     {
-        TRACE("GetFullPathName(%s) failed: GetLastError returns %u\r\n", relativePath, ::GetLastError());
+        VTRACE(_T("GetFullPathName(%s) failed: GetLastError returns %u"), relativePath, ::GetLastError());
         return relativePath;
     }
 

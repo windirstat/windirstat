@@ -81,7 +81,7 @@ void CReparsePoints::GetDriveVolumes()
 
             if(!b)
             {
-                TRACE(_T("GetVolumeNameForVolumeMountPoint(%s) failed.\n"), s);
+                VTRACE(_T("GetVolumeNameForVolumeMountPoint(%s) failed."), s);
                 volume.Empty();
             }
         }
@@ -96,7 +96,7 @@ void CReparsePoints::GetAllMountPoints()
     HANDLE hvol = ::FindFirstVolume(volume, countof(volume));
     if(hvol == INVALID_HANDLE_VALUE)
     {
-        TRACE(_T("No volumes found.\r\n"));
+        VTRACE(_T("No volumes found."));
         return;
     }
 
@@ -112,7 +112,7 @@ void CReparsePoints::GetAllMountPoints()
 
         if(!b)
         {
-            TRACE(_T("This file system (%s) is not ready.\r\n"), volume);
+            VTRACE(_T("This file system (%s) is not ready."), volume);
             m_volume.SetAt(volume, pva);
             continue;
         }
@@ -121,7 +121,7 @@ void CReparsePoints::GetAllMountPoints()
         {
             // No support for reparse points, and therefore for volume
             // mount points, which are implemented using reparse points.
-            TRACE(_T("This file system (%s) does not support volume mount points.\r\n"), volume);
+            VTRACE(_T("This file system (%s) does not support volume mount points."), volume);
             m_volume.SetAt(volume, pva);
             continue;
         }
@@ -130,7 +130,7 @@ void CReparsePoints::GetAllMountPoints()
         HANDLE h = ::FindFirstVolumeMountPoint(volume, point, countof(point));
         if(h == INVALID_HANDLE_VALUE)
         {
-            TRACE(_T("No volume mount points found on %s.\r\n"), volume);
+            VTRACE(_T("No volume mount points found on %s."), volume);
             m_volume.SetAt(volume, pva);
             continue;
         }
@@ -146,7 +146,7 @@ void CReparsePoints::GetAllMountPoints()
 
             if(!b)
             {
-                TRACE(_T("GetVolumeNameForVolumeMountPoint(%s) failed.\r\n"), uniquePath);
+                VTRACE(_T("GetVolumeNameForVolumeMountPoint(%s) failed."), uniquePath);
                 continue;
             }
 
@@ -229,7 +229,7 @@ bool CReparsePoints::IsVolumeMountPoint(CString volume, CString path)
         PointVolumeArray *pva;
         if(!m_volume.Lookup(volume, pva))
         {
-            TRACE(_T("CMountPoints: Volume(%s) unknown!\r\n"), volume);
+            VTRACE(_T("CMountPoints: Volume(%s) unknown!"), volume);
             return false;
         }
 

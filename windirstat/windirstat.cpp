@@ -226,7 +226,7 @@ void CDirstatApp::RestartApplication()
     DWORD dw = ::ResumeThread(pi.hThread);
     if(dw != 1)
     {
-        TRACE(_T("ResumeThread() didn't return 1\r\n"));
+        VTRACE(_T("ResumeThread() didn't return 1"));
     }
 
     ::CloseHandle(pi.hProcess);
@@ -244,7 +244,7 @@ bool CDirstatApp::getDiskFreeSpace(LPCTSTR pszRootPath, ULONGLONG& total, ULONGL
     BOOL b = GetDiskFreeSpaceEx(pszRootPath, &u64available, &u64total, &u64free);
     if(!b)
     {
-        TRACE(_T("GetDiskFreeSpaceEx(%s) failed.\n"), pszRootPath);
+        VTRACE(_T("GetDiskFreeSpaceEx(%s) failed."), pszRootPath);
     }
 
     // FIXME: need to retrieve total via IOCTL_DISK_GET_PARTITION_INFO instead
@@ -527,7 +527,7 @@ BOOL CDirstatApp::InitInstance()
             }
             else
             {
-                TRACE(_T("LoadLibrary(%s) failed: %u\r\n"), resourceDllPath, ::GetLastError());
+                VTRACE(_T("LoadLibrary(%s) failed: %u"), resourceDllPath, ::GetLastError());
             }
         }
         // else: We use our built-in English resources.
@@ -652,14 +652,14 @@ BOOL CDirstatApp::IsUACEnabled()
             }
             else
             {
-                TRACE("IsUACEnabled::RegQueryValueExW failed");
+                VTRACE(_T("IsUACEnabled::RegQueryValueExW failed"));
             }
 
             ::RegCloseKey(hKey);
         }
         else
         {
-            TRACE("IsUACEnabled::RegOpenKeyW failed");
+            VTRACE(_T("IsUACEnabled::RegOpenKeyW failed"));
         }
     }
     
@@ -698,13 +698,13 @@ void CDirstatApp::OnRunElevated()
     m_ElevationEvent = ::CreateEvent(NULL, TRUE, FALSE, WINDIRSTAT_EVENT_NAME); 
     if (!m_ElevationEvent)
     {
-        TRACE1("CreateEvent failed: %d", GetLastError());
+        VTRACE(_T("CreateEvent failed: %d"), GetLastError());
         m_ElevationEvent = 0;
         return;
     }
     if (ERROR_ALREADY_EXISTS == ::GetLastError())
     {
-        TRACE("Event already exists");
+        VTRACE(_T("Event already exists"));
         ::CloseHandle(m_ElevationEvent);
         m_ElevationEvent = 0;
         return;
@@ -712,7 +712,7 @@ void CDirstatApp::OnRunElevated()
 
     if (!::ShellExecuteEx(&shellInfo))
     {
-        TRACE1("ShellExecuteEx failed to elevate %d", GetLastError());
+        VTRACE(_T("ShellExecuteEx failed to elevate %d"), GetLastError());
         
         ::CloseHandle(m_ElevationEvent);
         m_ElevationEvent = 0;

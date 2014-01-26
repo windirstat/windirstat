@@ -115,7 +115,7 @@ int CMyImageList::cacheIcon(LPCTSTR path, UINT flags, CString *psTypeName)
     HIMAGELIST hil = (HIMAGELIST)::SHGetFileInfo(path, 0, &sfi, sizeof(sfi), flags);
     if(hil == NULL)
     {
-        TRACE(_T("SHGetFileInfo() failed\n"));
+        VTRACE(_T("SHGetFileInfo() failed"));
         return getEmptyImage();
     }
 
@@ -142,7 +142,7 @@ int CMyImageList::getMyComputerImage()
     HRESULT hr = ::SHGetSpecialFolderLocation(NULL, CSIDL_DRIVES, &pidl);
     if(FAILED(hr))
     {
-        TRACE(_T("SHGetSpecialFolderLocation(CSIDL_DRIVES) failed!\n"));
+        VTRACE(_T("SHGetSpecialFolderLocation(CSIDL_DRIVES) failed!"));
         return 0;
     }
 

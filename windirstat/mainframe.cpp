@@ -463,7 +463,7 @@ LRESULT CMainFrame::OnTaskButtonCreated(WPARAM, LPARAM)
         HRESULT hr = ::CoCreateInstance(CLSID_TaskbarList, NULL, CLSCTX_ALL, IID_ITaskbarList3, reinterpret_cast<LPVOID*>(&m_TaskbarList));
         if(FAILED(hr))
         {
-            TRACE("CoCreateInstance(CLSID_TaskbarList, NULL, CLSCTX_ALL) failed %08X\n", hr);
+            VTRACE(_T("CoCreateInstance(CLSID_TaskbarList, NULL, CLSCTX_ALL) failed %08X"), hr);
         }
     }
     return 0;

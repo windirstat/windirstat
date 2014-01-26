@@ -22,7 +22,7 @@
 //            - assarbad -> http://windirstat.info/contact/oliver/
 //
 
-#include <afxwin.h> // MFC  core and standard components
+#include "stdafx.h"
 #include "platform.h"
 
 bool PlatformIsWindows9x()
@@ -33,7 +33,7 @@ bool PlatformIsWindows9x()
 
     if(!GetVersionEx(&osvi))
     {
-        TRACE("GetVersionEx() failed.\r\n");
+        VTRACE(_T("GetVersionEx() failed."));
         return false;
     }
 

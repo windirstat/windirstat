@@ -322,7 +322,7 @@ bool GetVolumeName(LPCTSTR rootPath, CString& volumeName)
 
     if(!b)
     {
-        TRACE(_T("GetVolumeInformation(%s) failed: %u\n"), rootPath, ::GetLastError());
+        VTRACE(_T("GetVolumeInformation(%s) failed: %u"), rootPath, ::GetLastError());
     }
 
     ::SetErrorMode(old);
@@ -452,7 +452,7 @@ CString GetCOMSPEC()
 
     if(dw == 0)
     {
-        TRACE(_T("COMSPEC not set.\n"));
+        VTRACE(_T("COMSPEC not set."));
         cmd = _T("cmd.exe");
     }
     return cmd;
@@ -589,7 +589,7 @@ CString MyQueryDosDevice(LPCTSTR drive)
 
     if(dw == 0)
     {
-        TRACE(_T("QueryDosDevice(%s) failed: %s\r\n"), d, MdGetWinErrorText(::GetLastError()));
+        VTRACE(_T("QueryDosDevice(%s) failed: %s"), d, MdGetWinErrorText(::GetLastError()));
         return wds::strEmpty;
     }
 

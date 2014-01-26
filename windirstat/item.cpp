@@ -1415,7 +1415,7 @@ void CItem::RefreshRecycler()
     system.ReleaseBuffer();
     if(!b)
     {
-        TRACE(_T("GetVolumeInformation(%s) failed.\n"), GetPath());
+        VTRACE(_T("GetVolumeInformation(%s) failed."), GetPath());
         return; // nix zu machen
     }
 
@@ -1430,7 +1430,7 @@ void CItem::RefreshRecycler()
     }
     else
     {
-        TRACE(_T("%s: unknown file system type %s\n"), GetPath(), system);
+        VTRACE(_T("%s: unknown file system type %s"), GetPath(), system);
         return; // nix zu machen.
     }
 
@@ -1443,7 +1443,7 @@ void CItem::RefreshRecycler()
     }
     if(i >= GetChildrenCount())
     {
-        TRACE(_T("%s: Recycler(%s) not found.\n"), GetPath(), recycler);
+        VTRACE(_T("%s: Recycler(%s) not found."), GetPath(), recycler);
         return; // nicht gefunden
     }
 
