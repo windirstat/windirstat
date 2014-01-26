@@ -33,6 +33,14 @@
 #endif // Check for "#pragma once" support
 
 #ifdef _DEBUG
+#define VTRACE_FILE_LINE_FUNC   3
+#define VTRACE_FILE_LINE        2
+#define VTRACE_FUNC             1
+
+#ifndef VTRACE_DETAIL
+#   define VTRACE_DETAIL 3
+#endif
+
 #if VTRACE_TO_CONSOLE
 class CWDSTracerConsole
 {
@@ -50,16 +58,16 @@ public:
     void operator()(LPCWSTR format, ...);
 private:
     const CStringA m_srcfile;
-    const CStringA m_srcfunc;
     unsigned int   m_srcline;
     LPCSTR         m_srcbasename;
+    LPCSTR         m_srcfunc;
     CWDSTracer&    operator=(const CWDSTracer&); // hide it
 };
 
 // Use as VTRACE(format, ...) ... *must* be on one long line ;)
 #   define VTRACE CWDSTracer(__##FILE##__, __##FUNCTION##__, __##LINE##__)
-#else // not _DEBUG, ... please note that this trick works _because_ of the VC++ preprocessor
-#   define VTRACE /##/
+#else
+#   define VTRACE __noop
 #endif // _DEBUG
 
 #endif // __TRACER_H_VER__

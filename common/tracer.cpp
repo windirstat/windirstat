@@ -40,6 +40,7 @@
 CWDSTracerConsole::CWDSTracerConsole()
 {
     ::AllocConsole();
+    ::SetConsoleTitle(_T("WinDirStat debug trace output"));
     // Standard output
     int hCrt = _open_osfhandle((intptr_t)::GetStdHandle(STD_OUTPUT_HANDLE), _O_TEXT);
     FILE *hf = _fdopen(hCrt, "w");
@@ -60,8 +61,8 @@ CWDSTracerConsole::~CWDSTracerConsole()
 
 CWDSTracer::CWDSTracer(LPCSTR srcfile, LPCSTR fctname, unsigned int srcline)
     : m_srcfile(srcfile)
-    , m_srcfunc(fctname)
     , m_srcline(srcline)
+    , m_srcfunc(fctname)
     // we can rely on the format with back slashes, no need to check forward slashes here
     , m_srcbasename((srcfile) ? strrchr(srcfile, '\\') : NULL)
 {
@@ -76,8 +77,18 @@ void CWDSTracer::operator()(LPCSTR format, ...) // ANSI
     va_start(args, format);
     str.FormatV(format, args);
     va_end(args);
-    CStringA strDbg;
-    strDbg.Format("[%hs:%u:%hs] %hs\n", m_srcbasename, m_srcline, m_srcfunc, str.GetBuffer());
+    CStringA strDbg, strPfx;
+#   if (VTRACE_DETAIL == VTRACE_FILE_LINE_FUNC)
+    strPfx.Format("%hs:%u|%hs", m_srcbasename, m_srcline, m_srcfunc);
+#   elif (VTRACE_DETAIL == VTRACE_FILE_LINE)
+    strPfx.Format("%hs:%u", m_srcbasename, m_srcline);
+#   elif (VTRACE_DETAIL == VTRACE_FUNC)
+    strPfx = m_srcfunc;
+#   endif
+    if(strPfx.IsEmpty())
+        strDbg.Format("%hs\n", str.GetBuffer());
+    else
+        strDbg.Format("[%hs] %hs\n", strPfx.GetBuffer(), str.GetBuffer());
 #   if !VTRACE_TO_CONSOLE || (VTRACE_TO_CONSOLE && !VTRACE_NO_OUTPUTDEBUGSTRING)
     OutputDebugStringA(strDbg.GetBuffer());
 #   endif
@@ -93,8 +104,18 @@ void CWDSTracer::operator()(LPCWSTR format, ...) // Unicode
     va_start(args, format);
     str.FormatV(format, args);
     va_end(args);
-    CStringW strDbg;
-    strDbg.Format(L"[%hs:%u:%hs] %ws\n", m_srcbasename, m_srcline, m_srcfunc, str.GetBuffer());
+    CStringW strDbg, strPfx;
+#   if (VTRACE_DETAIL == VTRACE_FILE_LINE_FUNC)
+    strPfx.Format(L"%hs:%u|%hs", m_srcbasename, m_srcline, m_srcfunc);
+#   elif (VTRACE_DETAIL == VTRACE_FILE_LINE)
+    strPfx.Format(L"%hs:%u", m_srcbasename, m_srcline);
+#   elif (VTRACE_DETAIL == VTRACE_FUNC)
+    strPfx = m_srcfunc;
+#   endif
+    if(strPfx.IsEmpty())
+        strDbg.Format(L"%ws\n", str.GetBuffer());
+    else
+        strDbg.Format(L"[%ws] %ws\n", strPfx.GetBuffer(), str.GetBuffer());
 #   if !VTRACE_TO_CONSOLE || (VTRACE_TO_CONSOLE && !VTRACE_NO_OUTPUTDEBUGSTRING)
     OutputDebugStringW(strDbg.GetBuffer());
 #   endif

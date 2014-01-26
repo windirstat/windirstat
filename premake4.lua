@@ -220,7 +220,7 @@ solution (iif(release, slnname, "windirstat"))
             targetsuffix    ("64")
 
         configuration {"Debug"}
-            defines         {"_DEBUG", "VTRACE_TO_CONSOLE=1"}
+            defines         {"_DEBUG", "VTRACE_TO_CONSOLE=1", "VTRACE_DETAIL=2"}
             flags           {"Symbols"}
 
         configuration {"Release"}

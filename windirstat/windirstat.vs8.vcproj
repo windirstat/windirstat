@@ -46,7 +46,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="..;.;..\common;Controls;Dialogs;..\3rdparty\lua\src"
-				PreprocessorDefinitions="_DEBUG;VTRACE_TO_CONSOLE=1;WINVER=0x0500;HAVE_WIN7_SDK=1"
+				PreprocessorDefinitions="_DEBUG;VTRACE_TO_CONSOLE=1;VTRACE_DETAIL=2;WINVER=0x0500;HAVE_WIN7_SDK=1"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
 				EnableFunctionLevelLinking="true"
@@ -64,7 +64,7 @@
 			<Tool
 				Name="VCResourceCompilerTool"
 				AdditionalOptions="/nologo /l409"
-				PreprocessorDefinitions="_DEBUG;VTRACE_TO_CONSOLE=1;WINVER=0x0500;HAVE_WIN7_SDK=1"
+				PreprocessorDefinitions="_DEBUG;VTRACE_TO_CONSOLE=1;VTRACE_DETAIL=2;WINVER=0x0500;HAVE_WIN7_SDK=1"
 				AdditionalIncludeDirectories="..;.;..\common;Controls;Dialogs;..\3rdparty\lua\src;..;$(IntDir)"
 			/>
 			<Tool
@@ -137,7 +137,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="..;.;..\common;Controls;Dialogs;..\3rdparty\lua\src"
-				PreprocessorDefinitions="_DEBUG;VTRACE_TO_CONSOLE=1;WINVER=0x0500;HAVE_WIN7_SDK=1"
+				PreprocessorDefinitions="_DEBUG;VTRACE_TO_CONSOLE=1;VTRACE_DETAIL=2;WINVER=0x0500;HAVE_WIN7_SDK=1"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
 				EnableFunctionLevelLinking="true"
@@ -155,7 +155,7 @@
 			<Tool
 				Name="VCResourceCompilerTool"
 				AdditionalOptions="/nologo /l409"
-				PreprocessorDefinitions="_DEBUG;VTRACE_TO_CONSOLE=1;WINVER=0x0500;HAVE_WIN7_SDK=1"
+				PreprocessorDefinitions="_DEBUG;VTRACE_TO_CONSOLE=1;VTRACE_DETAIL=2;WINVER=0x0500;HAVE_WIN7_SDK=1"
 				AdditionalIncludeDirectories="..;.;..\common;Controls;Dialogs;..\3rdparty\lua\src;..;$(IntDir)"
 			/>
 			<Tool
