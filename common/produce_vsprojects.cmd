@@ -13,15 +13,15 @@ set REPOROOT=%~dp0..
 set COMMON=%~dp0
 :: Change into the repository root
 setlocal & pushd "%REPOROOT%"
-if "%~1" == "full"      set OPTIONS=--resources --sdk71
-if "%~1" == "sdk71"     set OPTIONS=--sdk71
-if "%~1" == "resources" set OPTIONS=--resources
-set DEFAULT_VSVERSIONS=vs2005 vs2008 vs2010 vs2012 vs2013
+if "%~1" == "--full"      (set OPTIONS=--resources --sdk71)
+if "%~1" == "--sdk71"     (set OPTIONS=--sdk71)
+if "%~1" == "--resources" (set OPTIONS=--resources)
+set DEFAULT_VSVERSIONS=2005 2008 2010 2012 2013
 set VSVERSIONS=%*
 if "%VSVERSIONS%" == "" set VSVERSIONS=%DEFAULT_VSVERSIONS%
 for %%i in (%VSVERSIONS%) do @(
   for %%j in (%DEFAULT_VSVERSIONS%) do @(
-    if "%%i" == "%%j" "%COMMON%\premake4.exe" %OPTIONS% %%i
+    if "%%i" == "%%j" "%COMMON%premake4.exe" %OPTIONS% vs%%i
   )
 )
 :: Back to normal
