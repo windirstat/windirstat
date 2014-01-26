@@ -35,15 +35,18 @@
 #include <cstdarg>
 #include <fcntl.h>
 #include <io.h>
+#include <conio.h>
 
 #if VTRACE_TO_CONSOLE
 CWDSTracerConsole::CWDSTracerConsole()
 {
+    int hCrt;
+    FILE *hf;
     ::AllocConsole();
     ::SetConsoleTitle(_T("WinDirStat debug trace output"));
     // Standard output
-    int hCrt = _open_osfhandle((intptr_t)::GetStdHandle(STD_OUTPUT_HANDLE), _O_TEXT);
-    FILE *hf = _fdopen(hCrt, "w");
+    hCrt = _open_osfhandle((intptr_t)::GetStdHandle(STD_OUTPUT_HANDLE), _O_TEXT);
+    hf = _fdopen(hCrt, "w");
     *stdout = *hf;
     setvbuf(stdout, NULL, _IONBF, 0);
     // Standard error
@@ -55,6 +58,8 @@ CWDSTracerConsole::CWDSTracerConsole()
 
 CWDSTracerConsole::~CWDSTracerConsole()
 {
+    _tprintf(_T("Press a key to continue/close.\n"));
+    _getch();
     ::FreeConsole();
 }
 #endif // VTRACE_TO_CONSOLE
