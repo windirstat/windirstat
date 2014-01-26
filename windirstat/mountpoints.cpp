@@ -69,20 +69,19 @@ void CReparsePoints::GetDriveVolumes()
     DWORD mask = 0x00000001;
     for(i = 0; i < wds::iNumDriveLetters; i++, mask <<= 1)
     {
-        CString volume;
+        TCHAR volume[_MAX_PATH];
 
         if((drives & mask) != 0)
         {
             CString s;
             s.Format(_T("%c:\\"), i + wds::chrCapA);
 
-            BOOL b = ::GetVolumeNameForVolumeMountPoint(s, volume.GetBuffer(_MAX_PATH), _MAX_PATH);
-            volume.ReleaseBuffer();
+            BOOL b = ::GetVolumeNameForVolumeMountPoint(s, volume, countof(volume));
 
             if(!b)
             {
                 VTRACE(_T("GetVolumeNameForVolumeMountPoint(%s) failed."), s);
-                volume.Empty();
+                volume[0] = 0;
             }
         }
 
@@ -102,13 +101,12 @@ void CReparsePoints::GetAllMountPoints()
 
     for(BOOL bContinue = true; bContinue; bContinue = ::FindNextVolume(hvol, volume, countof(volume)))
     {
+        TCHAR fsname[_MAX_PATH];
         PointVolumeArray *pva = new PointVolumeArray;
         ASSERT_VALID(pva);
 
-        DWORD sysflags;
-        CString fsname;
-        BOOL b = ::GetVolumeInformation(volume, NULL, 0, NULL, NULL, &sysflags, fsname.GetBuffer(_MAX_PATH), _MAX_PATH);
-        fsname.ReleaseBuffer();
+        DWORD fsflags;
+        BOOL b = ::GetVolumeInformation(volume, NULL, 0, NULL, NULL, &fsflags, fsname, countof(fsname));
 
         if(!b)
         {
@@ -117,11 +115,11 @@ void CReparsePoints::GetAllMountPoints()
             continue;
         }
 
-        if((sysflags & FILE_SUPPORTS_REPARSE_POINTS) == 0)
+        if((fsflags & FILE_SUPPORTS_REPARSE_POINTS) == 0)
         {
             // No support for reparse points, and therefore for volume
             // mount points, which are implemented using reparse points.
-            VTRACE(_T("This file system (%s) does not support volume mount points."), volume);
+            VTRACE(_T("%s, %s, does not support volume mount points (%d)."), volume, fsname, ::GetLastError());
             m_volume.SetAt(volume, pva);
             continue;
         }
@@ -130,29 +128,29 @@ void CReparsePoints::GetAllMountPoints()
         HANDLE h = ::FindFirstVolumeMountPoint(volume, point, countof(point));
         if(h == INVALID_HANDLE_VALUE)
         {
-            VTRACE(_T("No volume mount points found on %s."), volume);
+            VTRACE(_T("No volume mount points on %s."), volume);
             m_volume.SetAt(volume, pva);
             continue;
         }
 
-        for(BOOL bCont = true; bCont; bCont = ::FindNextVolumeMountPoint(h, point, countof(point)))
+        for(BOOL bCont = TRUE; bCont; bCont = ::FindNextVolumeMountPoint(h, point, countof(point)))
         {
             CString uniquePath = volume;
             uniquePath += point;
-            CString mountedVolume;
+            TCHAR mountedVolume[_MAX_PATH];
 
-            BOOL b = ::GetVolumeNameForVolumeMountPoint(uniquePath, mountedVolume.GetBuffer(_MAX_PATH), _MAX_PATH);
-            mountedVolume.ReleaseBuffer();
+            BOOL b = ::GetVolumeNameForVolumeMountPoint(uniquePath, mountedVolume, countof(mountedVolume));
 
             if(!b)
             {
-                VTRACE(_T("GetVolumeNameForVolumeMountPoint(%s) failed."), uniquePath);
+                VTRACE(_T("GetVolumeNameForVolumeMountPoint(%s) failed (%d)."), uniquePath.GetBuffer(), ::GetLastError());
                 continue;
             }
 
             SPointVolume pv;
             pv.point = point;
             pv.volume = mountedVolume;
+            pv.flags = fsflags;
 
             pv.point.MakeLower();
 

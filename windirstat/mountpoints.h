@@ -34,6 +34,7 @@ class CReparsePoints
     {
         CString point;  // Path like "mount\backup\"
         CString volume; // Volume identifier
+        DWORD   flags;  // File system flags (see GetVolumeInformation documentation)
     };
 
     typedef CArray<SPointVolume, SPointVolume&> PointVolumeArray;
