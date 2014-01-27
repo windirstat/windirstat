@@ -642,7 +642,6 @@ CString GetSpec_TB()
     return s;
 }
 
-#if SUPPORT_ELEVATION
 BOOL IsAdmin()
 {
     SID_IDENTIFIER_AUTHORITY NtAuthority = SECURITY_NT_AUTHORITY;
@@ -666,7 +665,6 @@ BOOL IsAdmin()
 
     return FALSE;
 }
-#endif // SUPPORT_ELEVATION
 
 /*
 // Retrieve an Item ID list from a given path.

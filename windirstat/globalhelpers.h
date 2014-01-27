@@ -61,8 +61,6 @@ CString GetSpec_KB();
 CString GetSpec_MB();
 CString GetSpec_GB();
 CString GetSpec_TB();
-#if SUPPORT_ELEVATION
 BOOL IsAdmin(); 
-#endif // SUPPORT_ELEVATION
 
 #endif // __WDS_GLOBALHELPERS_H__
