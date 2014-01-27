@@ -24,8 +24,8 @@
 
 #include "stdafx.h"
 #include "osspecific.h"
-
 #include "mountpoints.h"
+#include "globalhelpers.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -80,7 +80,12 @@ void CReparsePoints::GetDriveVolumes()
 
             if(!b)
             {
-                VTRACE(_T("GetVolumeNameForVolumeMountPoint(%s) failed."), s);
+#               ifdef _DEBUG
+                if(ERROR_NOT_READY == ::GetLastError())
+                    VTRACE(_T("GetVolumeNameForVolumeMountPoint(%s): not ready (%d)."), volume, ::GetLastError());
+                else
+                    VTRACE(_T("GetVolumeNameForVolumeMountPoint(%s): unexpected error (%d)."), volume, ::GetLastError());
+#               endif // _DEBUG
                 volume[0] = 0;
             }
         }
@@ -101,16 +106,21 @@ void CReparsePoints::GetAllMountPoints()
 
     for(BOOL bContinue = true; bContinue; bContinue = ::FindNextVolume(hvol, volume, countof(volume)))
     {
-        TCHAR fsname[_MAX_PATH];
+        TCHAR fsname[_MAX_PATH], vname[_MAX_PATH];
         PointVolumeArray *pva = new PointVolumeArray;
         ASSERT_VALID(pva);
 
         DWORD fsflags;
-        BOOL b = ::GetVolumeInformation(volume, NULL, 0, NULL, NULL, &fsflags, fsname, countof(fsname));
+        BOOL b = ::GetVolumeInformation(volume, vname, countof(vname), NULL, NULL, &fsflags, fsname, countof(fsname));
 
         if(!b)
         {
-            VTRACE(_T("This file system (%s) is not ready."), volume);
+#           ifdef _DEBUG
+            if(ERROR_NOT_READY == ::GetLastError())
+                VTRACE(_T("%s (%s) is not ready (%d)."), vname, volume, ::GetLastError());
+            else
+                VTRACE(_T("Unexpected error on %s (%s, %d)."), vname, volume, ::GetLastError());
+#           endif // _DEBUG
             m_volume.SetAt(volume, pva);
             continue;
         }
@@ -119,7 +129,7 @@ void CReparsePoints::GetAllMountPoints()
         {
             // No support for reparse points, and therefore for volume
             // mount points, which are implemented using reparse points.
-            VTRACE(_T("%s, %s, does not support volume mount points (%d)."), volume, fsname, ::GetLastError());
+            VTRACE(_T("%s, %s, does not support reparse points (%d)."), volume, fsname, ::GetLastError());
             m_volume.SetAt(volume, pva);
             continue;
         }
@@ -128,7 +138,19 @@ void CReparsePoints::GetAllMountPoints()
         HANDLE h = ::FindFirstVolumeMountPoint(volume, point, countof(point));
         if(h == INVALID_HANDLE_VALUE)
         {
-            VTRACE(_T("No volume mount points on %s."), volume);
+#           ifdef _DEBUG
+            if(ERROR_ACCESS_DENIED == ::GetLastError())
+            {
+                if(IsAdmin())
+                    VTRACE(_T("Access denied for admin to %s (%d)."), volume, ::GetLastError());
+                else
+                    VTRACE(_T("Access denied to %s (%d)."), volume, ::GetLastError());
+            }
+            else if(ERROR_NO_MORE_FILES != ::GetLastError())
+            {
+                VTRACE(_T("Unexpected error for %s (%d)."), volume, ::GetLastError());
+            }
+#           endif // _DEBUG
             m_volume.SetAt(volume, pva);
             continue;
         }
@@ -151,6 +173,7 @@ void CReparsePoints::GetAllMountPoints()
             pv.point = point;
             pv.volume = mountedVolume;
             pv.flags = fsflags;
+            VTRACE(_T("%s (%s) -> %08X"), point, mountedVolume, fsflags);
 
             pv.point.MakeLower();
 
