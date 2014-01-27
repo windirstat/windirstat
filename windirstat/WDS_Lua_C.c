@@ -8,65 +8,6 @@
 #   pragma warning(disable:4334)
 #endif
 
-#if 0
-
-// Core
-#include "lapi.c"
-#include "lcode.c"
-#include "ldebug.c"
-#include "ldo.c"
-#include "ldump.c"
-#include "lfunc.c"
-#include "lgc.c"
-#include "llex.c"
-#include "lmem.c"
-#include "lobject.c"
-#include "lopcodes.c"
-#include "lparser.c"
-#include "lstate.c"
-#include "lstring.c"
-#include "ltable.c"
-#include "ltm.c"
-#if _MSC_VER >= 1400
-#   pragma push_macro("LoadString")
-#   undef LoadString
-#   define LoadString lundump_LoadString
-#else
-#   error "LoadString from lundump.c will conflict with name from Win32 API"
-#endif
-#include "lundump.c"
-#if _MSC_VER >= 1400
-#   pragma pop_macro("LoadString")
-#endif
-#include "lvm.c"
-#include "lzio.c"
-
-// Patches
-#include "lnum.c"
-
-// Libraries
-#include "lauxlib.c"
-#include "lbaselib.c"
-#include "ldblib.c"
-#ifndef WDS_LUA_NO_IOLIB
-#   include "liolib.c"
-#endif // WDS_LUA_NO_IOLIB
-#ifndef WDS_LUA_NO_MATHLIB
-#   include "lmathlib.c"
-#endif // WDS_LUA_NOMATH
-#ifndef WDS_LUA_NO_LOADLIB
-#   include "loadlib.c"
-#endif // WDS_LUA_NO_LOADLIB
-#ifndef WDS_LUA_NO_OSLIB
-#   include "loslib.c"
-#endif // WDS_LUA_NO_OSLIB
-#include "lstrlib.c"
-#include "ltablib.c"
-#ifndef WDS_LUA_NO_LUAC
-#   include "lua.c"
-#endif // WDS_LUA_NO_LUAC
-#endif // 0
-
 // Modules/Packages, individual functions
 #include "modules/winreg.c"
 #include "modules/isadmin.c"
