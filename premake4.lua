@@ -129,6 +129,7 @@ end
 newoption { trigger = "resources", description = "Also create projects for the resource DLLs." }
 newoption { trigger = "sdk71", description = "Applies to VS 2005 and 2008. If you have the Windows 7 SP1\n                   SDK, use this to create projects for a feature-complete\n                   WinDirStat." }
 newoption { trigger = "release", description = "Creates a solution suitable for a release build." }
+newoption { trigger = "dev", description = "Add projects only relevant during development." }
 
 solution (iif(release, slnname, "windirstat"))
     configurations  (iif(release, {"Release"}, {"Debug", "Release"}))
@@ -204,7 +205,7 @@ solution (iif(release, slnname, "windirstat"))
             ["Source Files/Dialogs/*"] = { "windirstat/Dialogs/*.cpp" },
             ["Source Files/*"] = { "windirstat/*.cpp" },
             ["Special Files/*"] = { "common/BUILD", "common/*.cmd", "premake4.lua", "*.cmd" },
-            ["*"] = { "*.txt", "*.rst" },
+            ["*"] = { "*.txt", "*.md" },
         }
 
         configuration {"Debug", "x32"}
@@ -245,6 +246,72 @@ solution (iif(release, slnname, "windirstat"))
                     print "INFO: Assuming Windows 7 SP1 SDK is installed (#define HAVE_WIN7_SDK=1)."
                 end
         end
+
+    if _OPTIONS["dev"] then
+        project (pfx.."luaconf")
+            local int_dir   = pfx.."intermediate/" .. action .. "_$(" .. transformMN("Platform") .. ")_$(" .. transformMN("Configuration") .. ")\\$(ProjectName)"
+            uuid            ("66A24518-ACE0-4C57-96B0-FF9F324E0985")
+            language        ("C++")
+            kind            ("ConsoleApp")
+            location        ("sandbox/luaconf")
+            targetname      ("wds")
+            flags           {"StaticRuntime", "Unicode", "MFC", "NativeWChar", "ExtraWarnings", "NoRTTI", "WinMain", "NoMinimalRebuild", "NoIncrementalLink", "NoEditAndContinue"} -- "No64BitChecks", "NoManifest", "NoExceptions" ???
+            targetdir       (iif(release, slnname, "build"))
+            includedirs     {"windirstat", "common", "3rdparty/lua/src", "sandbox/luaconf"}
+            objdir          (int_dir)
+            libdirs         {"$(IntDir)"}
+            links           {pfx.."luajit2"}
+            resoptions      {"/nologo", "/l409"}
+            resincludedirs  {".", "$(IntDir)"}
+            linkoptions     {"/pdbaltpath:%_PDB%"}
+            files
+            {
+                "windirstat/WDS_Lua_C.c",
+                "sandbox/luaconf/*.h",
+                "sandbox/luaconf/*.rc",
+                "sandbox/luaconf/*.cpp",
+                "sandbox/luaconf/*.txt", "sandbox/luaconf/*.md",
+            }
+
+            vpaths
+            {
+                ["Header Files/*"] = { "sandbox/luaconf/*.h" },
+                ["Resource Files/*"] = { "sandbox/luaconf/*.rc" },
+                ["Source Files/*"] = { "sandbox/luaconf/*.cpp", "windirstat/WDS_Lua_C.c" },
+                ["*"] = { "sandbox/luaconf/*.txt", "sandbox/luaconf/*.md" },
+            }
+
+            configuration {"Debug", "x32"}
+                targetsuffix    ("32D")
+
+            configuration {"Debug", "x64"}
+                targetsuffix    ("64D")
+
+            configuration {"Release", "x32"}
+                targetsuffix    ("32")
+
+            configuration {"Release", "x64"}
+                targetsuffix    ("64")
+
+            configuration {"Debug"}
+                defines         {"_DEBUG"}
+                flags           {"Symbols"}
+
+            configuration {"Release"}
+                defines         ("NDEBUG")
+                flags           {"Optimize", "Symbols"}
+                linkoptions     {"/release"}
+                buildoptions    {"/Oi", "/Ot"}
+
+            configuration {"vs2005", "windirstat/WDS_Lua_C.c"}
+                defines         ("_CRT_SECURE_NO_WARNINGS") -- _CRT_SECURE_NO_DEPRECATE, _SCL_SECURE_NO_WARNINGS, _AFX_SECURE_NO_WARNINGS and _ATL_SECURE_NO_WARNINGS???
+
+            configuration {"vs2013"}
+                defines         {"WINVER=0x0501"}
+
+            configuration {"vs2002 or vs2003 or vs2005 or vs2008 or vs2010 or vs2012"}
+                defines         {"WINVER=0x0500"}
+    end
 
     -- Add the resource DLL projects, if requested
     if _OPTIONS["resources"] then

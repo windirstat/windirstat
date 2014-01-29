@@ -16,6 +16,7 @@ setlocal & pushd "%REPOROOT%"
 if "%~1" == "--full"      (set OPTIONS=--resources --sdk71)
 if "%~1" == "--sdk71"     (set OPTIONS=--sdk71)
 if "%~1" == "--resources" (set OPTIONS=--resources)
+if "%~1" == "--dev"       (set OPTIONS=--dev --sdk71)
 set DEFAULT_VSVERSIONS=2005 2008 2010 2012 2013
 set VSVERSIONS=%*
 if "%VSVERSIONS%" == "" set VSVERSIONS=%DEFAULT_VSVERSIONS%

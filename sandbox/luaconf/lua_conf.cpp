@@ -83,7 +83,7 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[])
     if(L)
     {
         //fprintf(stderr, "[STACK TOP] %i (line %i)\n", lua_gettop(L), __LINE__);
-        enumerateEmbeddedLuaScripts(L);
+        w32res_enumerateEmbeddedLuaScripts(L);
         int ret = luaL_dofile(L, "..\\lua_conf.lua");
         if(ret)
         {
