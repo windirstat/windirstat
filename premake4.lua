@@ -254,7 +254,7 @@ solution (iif(release, slnname, "windirstat"))
             language        ("C++")
             kind            ("ConsoleApp")
             location        ("sandbox/luaconf")
-            targetname      ("wds")
+            targetname      ("luaconf")
             flags           {"StaticRuntime", "Unicode", "MFC", "NativeWChar", "ExtraWarnings", "NoRTTI", "WinMain", "NoMinimalRebuild", "NoIncrementalLink", "NoEditAndContinue"} -- "No64BitChecks", "NoManifest", "NoExceptions" ???
             targetdir       (iif(release, slnname, "build"))
             includedirs     {"windirstat", "common", "3rdparty/lua/src", "sandbox/luaconf"}
