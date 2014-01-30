@@ -87,7 +87,7 @@
 			/>
 			<Tool
 				Name="VCManifestTool"
-				AdditionalManifestFiles="res/windirstat_x64.manifest;res/windirstat_x86.manifest"
+				AdditionalManifestFiles="res/windirstat.manifest"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -178,7 +178,7 @@
 			/>
 			<Tool
 				Name="VCManifestTool"
-				AdditionalManifestFiles="res/windirstat_x64.manifest;res/windirstat_x86.manifest"
+				AdditionalManifestFiles="res/windirstat.manifest"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -271,7 +271,7 @@
 			/>
 			<Tool
 				Name="VCManifestTool"
-				AdditionalManifestFiles="res/windirstat_x64.manifest;res/windirstat_x86.manifest"
+				AdditionalManifestFiles="res/windirstat.manifest"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -365,7 +365,7 @@
 			/>
 			<Tool
 				Name="VCManifestTool"
-				AdditionalManifestFiles="res/windirstat_x64.manifest;res/windirstat_x86.manifest"
+				AdditionalManifestFiles="res/windirstat.manifest"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -651,19 +651,11 @@
 					>
 				</File>
 				<File
-					RelativePath="res\manifest.xml"
+					RelativePath="res\windirstat.manifest"
 					>
 				</File>
 				<File
 					RelativePath="res\windirstat.rc2"
-					>
-				</File>
-				<File
-					RelativePath="res\windirstat_x64.manifest"
-					>
-				</File>
-				<File
-					RelativePath="res\windirstat_x86.manifest"
 					>
 				</File>
 			</Filter>
