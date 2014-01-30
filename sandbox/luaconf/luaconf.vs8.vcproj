@@ -28,6 +28,7 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
+				CommandLine="copy &quot;$(ProjectDir)lua_conf.lua&quot; &quot;$(TargetDir)\&quot;"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -119,6 +120,7 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
+				CommandLine="copy &quot;$(ProjectDir)lua_conf.lua&quot; &quot;$(TargetDir)\&quot;"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"

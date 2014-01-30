@@ -264,6 +264,8 @@ solution (iif(release, slnname, "windirstat"))
             resoptions      {"/nologo", "/l409"}
             resincludedirs  {".", "$(IntDir)"}
             linkoptions     {"/pdbaltpath:%_PDB%"}
+            prebuildcommands{"copy \"$(ProjectDir)lua_conf.lua\" \"$(TargetDir)\\\""}
+
             files
             {
                 "windirstat/WDS_Lua_C.c",
