@@ -165,7 +165,7 @@ static int luaC_winres_loader_(lua_State* L)
         dwScriptLen -= sizeof(utf8bom);
     }
     // Load the script into the Lua state
-    if((ret = luaL_loadbuffer(L, scriptBuf, scriptLen, chunkName)))
+    if(0 != (ret = luaL_loadbuffer(L, scriptBuf, scriptLen, chunkName)))
     {
         luaL_error(L, "Could not load Lua chunk from resource (%d): %s", ret, lua_tostring(L, -1));
         return 0;
@@ -173,7 +173,7 @@ static int luaC_winres_loader_(lua_State* L)
     // the loaded script is at the top of the stack
     lua_remove(L, 2); // remove the chunk name now
     lua_pushtstring(L, resName);
-    if((ret = lua_pcall(L, 1, LUA_MULTRET, 0)))
+    if(0 != (ret = lua_pcall(L, 1, LUA_MULTRET, 0)))
     {
         luaL_error(L, "Could not call the newly loaded chunk (%d): %s", ret, lua_tostring(L, -1));
     }
