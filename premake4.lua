@@ -1,4 +1,13 @@
--- The below is used to insert the .vs(2005|2008|2010|2012|2013) into the file names for projects and solutions
+--[[
+        This premake4.lua _requires_ windirstat/premake-stable to work properly.
+        If you don't want to use the code-signed build that can be found in the
+        ./common/ subfolder, you can build from the WDS-branch over at:
+
+        https://bitbucket.org/windirstat/premake-stable
+  ]]
+local assemblyName = "WinDirStat_Team.WinDirStat.windirstat"
+local programVersion = "1.3" -- until we find a clever way to put this into an environment variable or so ...
+local publicKeyToken = "db89f19495b8f232" -- the token for the code-signing
 local action = _ACTION or ""
 local release = false
 local slnname = ""
@@ -19,6 +28,7 @@ do
     -- Name the project files after their VS version
     local orig_getbasename = premake.project.getbasename
     premake.project.getbasename = function(prjname, pattern)
+        -- The below is used to insert the .vs(8|9|10|11|12) into the file names for projects and solutions
         if _ACTION then
             name_map = {vs2005 = "vs8", vs2008 = "vs9", vs2010 = "vs10", vs2012 = "vs11", vs2013 = "vs12"}
             if name_map[_ACTION] then
@@ -109,6 +119,27 @@ do
             end
         end
     end
+    -- Make sure to intercept the VCManifestTool element generation, we need to add to it.
+    -- 
+    local function nval(val)
+        return iif(val, val, "<null>")
+    end
+    local VCManifestTool_handler = premake.vstudio.vc200x.toolmap["VCManifestTool"]
+    premake.vstudio.vc200x.toolmap["VCManifestTool"] = function(cfg)
+        io.capture()
+        VCManifestTool_handler(cfg)
+        local captured = io.endcapture()
+        if captured:find("res/windirstat\.manifest") and cfg.name and cfg.platform then
+            local identity_fmt = "%s, processorArchitecture=%s, version=%s, type=win32"
+            local arch = iif(cfg.platform == "x32", "x86", iif(cfg.platform == "x64", "amd64", "*"))
+            if cfg.name == "Release" then
+                identity_fmt = identity_fmt .. string.format(", publicKeyToken=%s", publicKeyToken)
+            end
+            local identity = string.format(identity_fmt, assemblyName, arch, programVersion)
+            captured = captured:gsub("(%\t+)AdditionalManifestFiles=\"[^\"]+\"", "%0" .. io.eol .. "%1AssemblyIdentity=\"" .. premake.esc(identity) .. "\"")
+        end
+        io.write(captured)
+    end
 end
 local function transformMN(input) -- transform the macro names for older Visual Studio versions
     local new_map   = { vs2002 = 0, vs2003 = 0, vs2005 = 0, vs2008 = 0 }
@@ -147,7 +178,7 @@ solution (iif(release, slnname, "windirstat"))
         kind            ("WindowedApp")
         location        ("windirstat")
         targetname      ("wds")
-        flags           {"StaticRuntime", "Unicode", "MFC", "NativeWChar", "ExtraWarnings", "NoRTTI", "WinMain", "NoMinimalRebuild", "NoIncrementalLink", "NoEditAndContinue"} -- "No64BitChecks", "NoManifest", "NoExceptions" ???
+        flags           {"StaticRuntime", "Unicode", "MFC", "NativeWChar", "ExtraWarnings", "NoRTTI", "WinMain", "NoMinimalRebuild", "NoIncrementalLink", "NoEditAndContinue"}
         targetdir       (iif(release, slnname, "build"))
         includedirs     {".", "windirstat", "common", "windirstat/Controls", "windirstat/Dialogs", "3rdparty/lua/src"}
         objdir          (int_dir)
@@ -255,7 +286,7 @@ solution (iif(release, slnname, "windirstat"))
             kind            ("ConsoleApp")
             location        ("sandbox/luaconf")
             targetname      ("luaconf")
-            flags           {"StaticRuntime", "Unicode", "MFC", "NativeWChar", "ExtraWarnings", "NoRTTI", "WinMain", "NoMinimalRebuild", "NoIncrementalLink", "NoEditAndContinue"} -- "No64BitChecks", "NoManifest", "NoExceptions" ???
+            flags           {"StaticRuntime", "Unicode", "MFC", "NativeWChar", "ExtraWarnings", "NoRTTI", "WinMain", "NoMinimalRebuild", "NoIncrementalLink", "NoEditAndContinue"}
             targetdir       (iif(release, slnname, "build"))
             includedirs     {"windirstat", "common", "3rdparty/lua/src", "sandbox/luaconf"}
             objdir          (int_dir)
