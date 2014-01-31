@@ -30,6 +30,8 @@
 #include <ShellAPI.h>
 
 BOOL FileIconInit(__in  BOOL fRestoreCache);
+CString GetCurrentDesktopName();
+CString GetCurrentWinstaName();
 
 class CAbstractionLayer
 {
