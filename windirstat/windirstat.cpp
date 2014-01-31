@@ -93,6 +93,7 @@ CDirstatApp::CDirstatApp()
     , m_altEncryptionColor(GetAlternativeColor(RGB(0x00, 0x80, 0x00), _T("AltEncryptionColor")))
 #   if SUPPORT_ELEVATION
     , m_ElevationEvent(NULL)
+    , m_ElevationEventName()
 #   endif // SUPPORT_ELEVATION
 #   ifdef VTRACE_TO_CONSOLE
     , m_vtrace_console(new CWDSTracerConsole())
@@ -101,6 +102,11 @@ CDirstatApp::CDirstatApp()
 #   ifdef _DEBUG
     TestScanResourceDllName();
 #   endif
+
+#   if SUPPORT_ELEVATION
+    m_ElevationEventName.Format(WINDIRSTAT_EVENT_NAME_FMT, static_cast<LPCTSTR>(GetCurrentDesktopName()), static_cast<LPCTSTR>(GetCurrentWinstaName()));
+    VTRACE(_T("Elevation event: %s"), static_cast<LPCTSTR>(m_ElevationEventName));
+#   endif // SUPPORT_ELEVATION
 }
 
 CDirstatApp::~CDirstatApp()
@@ -534,7 +540,7 @@ BOOL CDirstatApp::InitInstance()
 
 #if SUPPORT_ELEVATION
     //check for an elevation event
-    m_ElevationEvent = ::OpenEvent(SYNCHRONIZE, FALSE, WINDIRSTAT_EVENT_NAME);
+    m_ElevationEvent = ::OpenEvent(SYNCHRONIZE, FALSE, m_ElevationEventName);
 
     if (m_ElevationEvent)
     {
@@ -692,7 +698,7 @@ void CDirstatApp::OnRunElevated()
     {
         ::CloseHandle(m_ElevationEvent);
     }
-    m_ElevationEvent = ::CreateEvent(NULL, TRUE, FALSE, WINDIRSTAT_EVENT_NAME); 
+    m_ElevationEvent = ::CreateEvent(NULL, TRUE, FALSE, m_ElevationEventName); 
     if (!m_ElevationEvent)
     {
         VTRACE(_T("CreateEvent failed: %d"), GetLastError());
