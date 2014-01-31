@@ -52,7 +52,7 @@ CString GetAuthorEmail();
 CString GetWinDirStatHomepage();
 
 #if SUPPORT_ELEVATION
-#   define WINDIRSTAT_EVENT_NAME L"WinDirStat_ElevationEvent_{72D223E3-1539-461D-980E-0863FE480E84}"
+#   define WINDIRSTAT_EVENT_NAME_FMT L"WinDirStat_ElevationEvent_{72D223E3-1539-461D-980E-0863FE480E84}.%s.%s"
 #endif // SUPPORT_ELEVATION
 
 //
@@ -129,6 +129,7 @@ protected:
     COLORREF m_altEncryptionColor;          // Coloring of encrypted items
 #if SUPPORT_ELEVATION
     HANDLE m_ElevationEvent;
+    CString m_ElevationEventName;
 #endif // SUPPORT_ELEVATION
 #ifdef VTRACE_TO_CONSOLE
     CAutoPtr<CWDSTracerConsole> m_vtrace_console;

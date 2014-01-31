@@ -58,5 +58,45 @@ BOOL FileIconInit(__in  BOOL fRestoreCache)
     {
         return pfnFileIconInit(fRestoreCache);
     }
-    return TRUE;
+    return FALSE;
+}
+
+CString GetCurrentDesktopName()
+{
+    if(HDESK hDesktop = ::GetThreadDesktop(::GetCurrentThreadId()))
+    {
+        DWORD dwNeeded = 0;
+        if(!::GetUserObjectInformation(hDesktop, UOI_NAME, NULL, 0, &dwNeeded) && dwNeeded)
+        {
+            CString retval;
+            dwNeeded /= sizeof(TCHAR) + 1;
+            LPTSTR buf = retval.GetBuffer(dwNeeded);
+            if(::GetUserObjectInformation(hDesktop, UOI_NAME, buf, dwNeeded, &dwNeeded))
+            {
+                retval.ReleaseBuffer();
+                return retval;
+            }
+        }
+    }
+    return CString();
+}
+
+CString GetCurrentWinstaName()
+{
+    if(HWINSTA hWinsta = GetProcessWindowStation())
+    {
+        DWORD dwNeeded = 0;
+        if(!GetUserObjectInformation(hWinsta, UOI_NAME, NULL, 0, &dwNeeded) && dwNeeded)
+        {
+            CString retval;
+            dwNeeded /= sizeof(TCHAR) + 1;
+            LPTSTR buf = retval.GetBuffer(dwNeeded);
+            if(GetUserObjectInformation(hWinsta, UOI_NAME, buf, dwNeeded, &dwNeeded))
+            {
+                retval.ReleaseBuffer();
+                return retval;
+            }
+        }
+    }
+    return CString();
 }
