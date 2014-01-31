@@ -274,7 +274,7 @@
 			<Tool
 				Name="VCManifestTool"
 				AdditionalManifestFiles="res/windirstat.manifest"
-				AssemblyIdentity="WinDirStat_Team.WinDirStat.windirstat, processorArchitecture=x86, version=1.3, type=win32, publicKeyToken=db89f19495b8f232"
+				AssemblyIdentity="WinDirStat_Team.WinDirStat.windirstat, processorArchitecture=x86, version=1.3, type=win32"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -369,7 +369,7 @@
 			<Tool
 				Name="VCManifestTool"
 				AdditionalManifestFiles="res/windirstat.manifest"
-				AssemblyIdentity="WinDirStat_Team.WinDirStat.windirstat, processorArchitecture=amd64, version=1.3, type=win32, publicKeyToken=db89f19495b8f232"
+				AssemblyIdentity="WinDirStat_Team.WinDirStat.windirstat, processorArchitecture=amd64, version=1.3, type=win32"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"

@@ -132,7 +132,7 @@ do
         if captured:find("res/windirstat\.manifest") and cfg.name and cfg.platform then
             local identity_fmt = "%s, processorArchitecture=%s, version=%s, type=win32"
             local arch = iif(cfg.platform == "x32", "x86", iif(cfg.platform == "x64", "amd64", "*"))
-            if cfg.name == "Release" then
+            if _OPTIONS["release"] and (cfg.name == "Release") then
                 identity_fmt = identity_fmt .. string.format(", publicKeyToken=%s", publicKeyToken)
             end
             local identity = string.format(identity_fmt, assemblyName, arch, programVersion)
