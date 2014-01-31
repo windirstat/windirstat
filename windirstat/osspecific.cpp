@@ -69,7 +69,7 @@ CString GetCurrentDesktopName()
         if(!::GetUserObjectInformation(hDesktop, UOI_NAME, NULL, 0, &dwNeeded) && dwNeeded)
         {
             CString retval;
-            dwNeeded /= sizeof(TCHAR) + 1;
+            dwNeeded += sizeof(TCHAR);
             LPTSTR buf = retval.GetBuffer(dwNeeded);
             if(::GetUserObjectInformation(hDesktop, UOI_NAME, buf, dwNeeded, &dwNeeded))
             {
@@ -89,7 +89,7 @@ CString GetCurrentWinstaName()
         if(!GetUserObjectInformation(hWinsta, UOI_NAME, NULL, 0, &dwNeeded) && dwNeeded)
         {
             CString retval;
-            dwNeeded /= sizeof(TCHAR) + 1;
+            dwNeeded += sizeof(TCHAR);
             LPTSTR buf = retval.GetBuffer(dwNeeded);
             if(GetUserObjectInformation(hWinsta, UOI_NAME, buf, dwNeeded, &dwNeeded))
             {
