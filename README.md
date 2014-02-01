@@ -40,7 +40,7 @@ One can effortlessly gain an impression of the proportions on the hard disk(s).
 ### Background
 
 The original author of WinDirStat was Bernhard Seifert and it was inspired by
-[KDirStat](http://kdirstat.sourceforge.net/) and [SequoiaView](http://w3.win.tue.nl/nl/onderzoek/onderzoek_informatica/visualization/sequoiaview/).\
+[KDirStat](http://kdirstat.sourceforge.net/) and [SequoiaView](http://w3.win.tue.nl/nl/onderzoek/onderzoek_informatica/visualization/sequoiaview/).
 Design and many details are based on KDirStat, so WinDirStat is "a KDirStat re-programmed for MS Windows".
 
 ### WinDirStat Alternatives on other operating systems
