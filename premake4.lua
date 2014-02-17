@@ -360,6 +360,7 @@ solution (iif(release, slnname, "windirstat"))
                 ["wdsr0410"] = "FD4194A7-EA1E-4466-A80B-AB4D8D17F33C", -- Italian
                 ["wdsr0413"] = "70A55EB7-E109-41DE-81B4-0DF2B72DCDE9", -- Dutch
                 ["wdsr0415"] = "70C09DAA-6F6D-4AAC-955F-ACD602A667CE", -- Polish
+                ["wdsr0416"] = "025A9D90-4C61-4D34-8BEC-8A1A044B80EB", -- Portuguese (Brazil)
                 ["wdsr0419"] = "7F06AAC4-9FBE-412F-B1D7-CB37AB8F311D", -- Russian
                 ["wdsr0425"] = "2FADC62C-C670-4963-8B69-70ECA7987B93", -- Estonian
                 }

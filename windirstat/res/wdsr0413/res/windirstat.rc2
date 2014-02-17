@@ -43,7 +43,7 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "Seifert"
+            VALUE "CompanyName", "WDS Team (windirstat.info)"
             VALUE "FileDescription", "WinDirStat Dutch Resources"
             VALUE "FileVersion", VN_STRING_DLL
             VALUE "InternalName", "wdsr0413"
