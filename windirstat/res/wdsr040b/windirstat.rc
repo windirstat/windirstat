@@ -616,7 +616,7 @@ END
 
 STRINGTABLE 
 BEGIN
-    IDS_ABOUT_ABOUTTEXTss   "\r\nWinDirStat - Directory Statistics\r\n\r\n""N‰ytt‰‰ minne kaikki vapaa kovalevytilasi on hukkunut\r\nja auttaa levyn siivouksessa.""\r\n\r\nUudelleenohjelmoitu MS Windowsille\r\nBernhard Seifertin (mailto:%1!s!) toimesta.\r\n\r\nPerustuu Stefan Hundhammerin Linuxin KDE-ohjelmaan KDirStat\r\n(http://kdirstat.sourceforge.net/).\r\n\r\nWinDirStatin kotisivu on http://%2!s!/\r\n\r\nTekij‰noikeus (c) 2003-2005 WinDirStatin kehitt‰j‰t"
+    IDS_ABOUT_ABOUTTEXTss   "\r\nWinDirStat - Directory Statistics\r\n\r\n""N‰ytt‰‰ minne kaikki vapaa kovalevytilasi on hukkunut\r\nja auttaa levyn siivouksessa.""\r\n\r\nUudelleenohjelmoitu MS Windowsille\r\nBernhard Seifertin (mailto:%1!s!) toimesta.\r\n\r\nPerustuu Stefan Hundhammerin Linuxin KDE-ohjelmaan KDirStat\r\n(http://kdirstat.sourceforge.net/).\r\n\r\nWinDirStatin kotisivu on http://%2!s!/\r\n\r\nTekij‰noikeus (c) 2003-2014 WinDirStatin kehitt‰j‰t"
     IDS_ABOUT_THANKSTOTEXT  "\r\nStefan Hundhammerille mainiosta Linux-tyˆkalusta KDirStatista.\r\nKDirStat (2.3.7) m‰‰ritysten k‰ytt‰minen s‰‰sti minulta valtavasti aikaa.\r\nhttp://kdirstat.sourceforge.net/\r\n\r\nSequoiaViewin kehitt‰j‰t n‰ytt‰ess‰‰n kuinka havainnollisia treemap-kuvaajat voivat olla.\r\nhttp://www.win.tue.nl/sequoiaview/\r\n\r\nJarke J. van Wijk, Huub van de Wetering, Mark Bruls ja Kees Huizing\r\ntutkimuksistaan aiheista cushion treemaps ja squarified treemaps.\r\nhttp://www.win.tue.nl/~vanwijk/\r\n\r\nBen Shneiderman treemapsin keksimisest‰ -\r\ntodella intuitiivisen tavan kuvata puumuotoista sis‰ltˆ‰.\r\nhttp://www.cs.umd.edu/hcil/treemap-history/\r\n\r\nKollegoitani palautteestaan WinDirStatin alkuvaiheen versioista.\r\nhttp://www.daccord.net/\r\n\r\nBeatrix Lˆdige ja Nick Lines betatestauksesta.\r\n"
     IDS_ABOUT_ABOUT         "Tietoa"
     IDS_ABOUT_THANKSTO      "Kiitokset"
@@ -635,7 +635,7 @@ BEGIN
     IDS_CREATEPROCESSsFAILEDs "CreateProcess(%1!s!) ep‰onnistui: %2!s!"
     IDS_LANGUAGERESTARTNOW  "Kielen vaihto ei tule voimaan ennen ohjelman uudelleenk‰ynnistyst‰.\r\n\r\nK‰ynnistet‰‰nkˆ ohjelma uudelleen nyt?"
     IDS_ABOUT_AUTHORS       "Kehitt‰j‰t"
-    IDS_ABOUT_AUTHORSTEXTs  "=== Ohjelmoijat ===\r\n\r\nBernhard Seifert\r\nProjektin luoja ja ohjaaja\r\n(mailto:%1!s!)\r\n\r\nOliver Schneider\r\n(mailto:assarbad#users.sourceforge.net)\r\n\r\n\r\n=== K‰‰nt‰j‰t ===\r\n\r\n"
+    IDS_ABOUT_AUTHORSTEXTs  "=== Ohjelmoijat ===\r\n\r\n%1!s!\r\n\r\n\r\n=== K‰‰nt‰j‰t ===\r\n\r\n"
 END
 
 STRINGTABLE 

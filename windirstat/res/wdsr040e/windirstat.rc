@@ -618,7 +618,7 @@ END
 
 STRINGTABLE 
 BEGIN
-    IDS_ABOUT_ABOUTTEXTss   "\r\nWinDirStat - Könyvtár statisztika\r\n\r\n""Itt megtekintheti az összes lemezterületét\r\nés segítséget kap a kitakarításhoz.""\r\n\r\nA MS Windows-hoz újraprogramozta\r\nBernhard Seifert (mailto:%1!s!),\r\n\r\naz alapot Stefan Hundhammer KDE (Linux) KDirStat programja alkotja\r\n(http://kdirstat.sourceforge.net/).\r\n\r\nA WinDirStat honlapja http://%2!s!/\r\n\r\nCopyright (c) 2003-2005 The authors of WinDirStat"
+    IDS_ABOUT_ABOUTTEXTss   "\r\nWinDirStat - Könyvtár statisztika\r\n\r\n""Itt megtekintheti az összes lemezterületét\r\nés segítséget kap a kitakarításhoz.""\r\n\r\nA MS Windows-hoz újraprogramozta\r\nBernhard Seifert (mailto:%1!s!),\r\n\r\naz alapot Stefan Hundhammer KDE (Linux) KDirStat programja alkotja\r\n(http://kdirstat.sourceforge.net/).\r\n\r\nA WinDirStat honlapja http://%2!s!/\r\n\r\nCopyright (c) 2003-2014 The authors of WinDirStat"
     IDS_ABOUT_THANKSTOTEXT  "\r\nStefan Hundhammer nagyszeru Linuxos eszköze a KDirStat.\r\nÉn már nagyon sokat használtam a KDirStat (2.3.7) programot.\r\nhttp://kdirstat.sourceforge.net/\r\n\r\nItt a SequoiaView szerzoi bemutatják, hogy a faszerkezet valójában hogyan kerül használatra.\r\nhttp://www.win.tue.nl/sequoiaview/\r\n\r\nJarke J. van Wijk, Huub van de Wetering, Mark Bruls és Kees Huizing\r\nakik elkészítették a négyszögletes faszerkezet tapétáját.\r\nhttp://www.win.tue.nl/~vanwijk/\r\n\r\nBen Shneiderman akitol ez a szellemes faszerkezet ötlete származik\r\namely igazán intuitív módon jeleníti meg a faszerkezet tartalmát.\r\nhttp://www.cs.umd.edu/hcil/treemap-history/\r\n\r\nOk azok a munkatársak, akik visszajelzéseket küldtek a WinDirStat végleges kiadása elott.\r\nhttp://www.daccord.net/\r\n\r\nBeatrix Lödige és Nick Lines bétatesztelok.\r\n"
     IDS_ABOUT_ABOUT         "Névjegy"
     IDS_ABOUT_THANKSTO      "Köszönet"
@@ -637,7 +637,7 @@ BEGIN
     IDS_CREATEPROCESSsFAILEDs "A(z) (%1!s!) folyamat sikertelen: %2!s!"
     IDS_LANGUAGERESTARTNOW  "A nyelv módosítása addíg nem kerül érvényesítésre, amíg nem indítja újra az alkalmazást.\r\n\r\nLanguage changes take not effect until the application is restarted.\r\n\r\nÚjraindítja a WinDirStat-ot most?"
     IDS_ABOUT_AUTHORS       "Szerzok"
-    IDS_ABOUT_AUTHORSTEXTs  "=== Programozó ===\r\n\r\nBernhard Seifert\r\nA projekt létrehozója és koordinátora\r\n(mailto:%1!s!)\r\n\r\nOliver Schneider\r\n(mailto:assarbad#users.sourceforge.net)\r\n\r\n\r\n=== Fordítók ===\r\n\r\n"
+    IDS_ABOUT_AUTHORSTEXTs  "=== Programozó ===\r\n\r\n%1!s!\r\n\r\n\r\n=== Fordítók ===\r\n\r\n"
 END
 
 STRINGTABLE 

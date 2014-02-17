@@ -617,7 +617,7 @@ END
 
 STRINGTABLE 
 BEGIN
-    IDS_ABOUT_ABOUTTEXTss   "\r\nWinDirStat - statistika složek\r\n\r\n""Ukáže kam se podelo volné místo Vašeho\r\ndisku a pomuže jej vycistit.""\r\n\r\nPreprogramováno pro MS Windows \r\nBernhardem Seifertem (mailto:%1!s!),\r\n\r\nna základe linuxového programu KDirStat Stefana Hundhammera\r\n(http://kdirstat.sourceforge.net/).\r\n\r\nWinDirStat najdete na http://%2!s!/\r\n\r\nCopyright (c) 2003-2005 Autori WinDirStat"
+    IDS_ABOUT_ABOUTTEXTss   "\r\nWinDirStat - statistika složek\r\n\r\n""Ukáže kam se podelo volné místo Vašeho\r\ndisku a pomuže jej vycistit.""\r\n\r\nPreprogramováno pro MS Windows \r\nBernhardem Seifertem (mailto:%1!s!),\r\n\r\nna základe linuxového programu KDirStat Stefana Hundhammera\r\n(http://kdirstat.sourceforge.net/).\r\n\r\nWinDirStat najdete na http://%2!s!/\r\n\r\nCopyright (c) 2003-2014 Autori WinDirStat"
     IDS_ABOUT_THANKSTOTEXT  "\r\nStefanu Hundhammerovi za skvelou linuxovou utilitku KDirStat.\r\nPoužití KDirStat (2.3.7) mi ušetrilo mnoho casu pri návrhu.\r\nhttp://kdirstat.sourceforge.net/\r\n\r\nAutorum SequoiaView za ukázku, jak užitecné mohou být stromové mapy.\r\nhttp://www.win.tue.nl/sequoiaview/\r\n\r\nJarke J. van Wijkovi, Huub van de Weteringovi, Marku Brulsovi a Kees Huizingovi\r\n za jejich informace o polštárových a hranatých stromových mapách.\r\nhttp://www.win.tue.nl/~vanwijk/\r\n\r\nBenu Shneidermanovi za geniální myšlenku o stromových mapách -\r\nopravdu intuitivním zpusobu vizualizace stromových dat.\r\nhttp://www.cs.umd.edu/hcil/treemap-history/\r\n\r\nMým kolegum za zpetnou vazbu k prvním verzím WinDirStat.\r\nhttp://www.daccord.net/\r\n\r\nBeatrix Lödige a Nicku Linesovi za betatestování.\r\n"
     IDS_ABOUT_ABOUT         "O programu..."
     IDS_ABOUT_THANKSTO      "Díky patrí:"
@@ -636,7 +636,7 @@ BEGIN
     IDS_CREATEPROCESSsFAILEDs "Vytvorení procesu (%1!s!) selhalo: %2!s!"
     IDS_LANGUAGERESTARTNOW  "Zmena jazyka se projeví až pri príštím spuštení programu.\r\n\r\nRestartovat WinDirStat nyní?"
     IDS_ABOUT_AUTHORS       "Autori"
-    IDS_ABOUT_AUTHORSTEXTs  "=== Programátori ===\r\n\r\nBernhard Seifert\r\nTvurce a koordinátor projektu\r\n(mailto:%1!s!)\r\n\r\nOliver Schneider\r\n(mailto:assarbad#users.sourceforge.net)\r\n\r\n\r\n=== Prekladatelé ===\r\n\r\n"
+    IDS_ABOUT_AUTHORSTEXTs  "=== Programátori ===\r\n\r\n%1!s!\r\n\r\n\r\n=== Prekladatelé ===\r\n\r\n"
 END
 
 STRINGTABLE 

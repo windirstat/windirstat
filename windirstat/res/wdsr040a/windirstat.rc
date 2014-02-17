@@ -620,7 +620,7 @@ END
 
 STRINGTABLE 
 BEGIN
-    IDS_ABOUT_ABOUTTEXTss   "\r\nWinDirStat - Estadística de Directorios\r\n\r\n""Muestra dónde fue a parar todo su espacio en disco\r\ny le ayuda a limpiarlo.""\r\n\r\nRe-programado para MS Windows por\r\nBernhard Seifert (mailto:%1!s!),\r\n\r\nbasado en el programa KDirStat (Linux KDE) de Stefan Hundhammer\r\n(http://kdirstat.sourceforge.net/).\r\n\r\nLa página de WinDirStat es http://%2!s!/\r\n\r\nCopyright (c) 2003-2005 Los autores de WinDirStat"
+    IDS_ABOUT_ABOUTTEXTss   "\r\nWinDirStat - Estadística de Directorios\r\n\r\n""Muestra dónde fue a parar todo su espacio en disco\r\ny le ayuda a limpiarlo.""\r\n\r\nRe-programado para MS Windows por\r\nBernhard Seifert (mailto:%1!s!),\r\n\r\nbasado en el programa KDirStat (Linux KDE) de Stefan Hundhammer\r\n(http://kdirstat.sourceforge.net/).\r\n\r\nLa página de WinDirStat es http://%2!s!/\r\n\r\nCopyright (c) 2003-2014 Los autores de WinDirStat"
     IDS_ABOUT_THANKSTOTEXT  "\r\nStefan Hundhammer por su genial herramienta Linux KDirStat.\r\nUsar KDirStat (2.3.7) como especificación me ahorró un montón de tiempo.\r\nhttp://kdirstat.sourceforge.net/\r\n\r\nLos autores de SequoiaView por mostrarme que tan útiles pueden ser los treemaps.\r\nhttp://www.win.tue.nl/sequoiaview/\r\n\r\nJarke J. van Wijk, Huub van de Wetering, Mark Bruls y Kees Huizing\r\npor sus escritos acerca de los treemaps y treemaps cuadrificados.\r\nhttp://www.win.tue.nl/~vanwijk/\r\n\r\nBen Shneiderman por su ingeniosa idea de treemaps -\r\nuna forma verdaderamente intuitiva de visualizar los contenidos de árboles.\r\nhttp://www.cs.umd.edu/hcil/treemap-history/\r\n\r\nMis collegas por su retroalimentación en las primeras versiones de WinDirStat.\r\nhttp://www.daccord.net/\r\n\r\nBeatrix Lödige y Nick Lines por su beta testing.\r\n"
     IDS_ABOUT_ABOUT         "Acerca de"
     IDS_ABOUT_THANKSTO      "Gracias a"
@@ -639,7 +639,7 @@ BEGIN
     IDS_CREATEPROCESSsFAILEDs "CreateProcess(%1!s!) falló: %2!s!"
     IDS_LANGUAGERESTARTNOW  "Los cambios de Idioma no tomarán efecto hasta que la aplicación se reinicie.\r\n\r\nLanguage changes take not effect until the application is restarted.\r\n\r\nReiniciar WinDirStat ahora?"
     IDS_ABOUT_AUTHORS       "Autores"
-    IDS_ABOUT_AUTHORSTEXTs  "=== Programadores ===\r\n\r\nBernhard Seifert\r\nCreador del proyecto y coordinador\r\n(mailto:%1!s!)\r\n\r\nOliver Schneider\r\n(mailto:assarbad#users.sourceforge.net)\r\n\r\n\r\n=== Traductores ===\r\n\r\n"
+    IDS_ABOUT_AUTHORSTEXTs  "=== Programadores ===\r\n\r\n%1!s!\r\n\r\n\r\n=== Traductores ===\r\n\r\n"
 END
 
 STRINGTABLE 
