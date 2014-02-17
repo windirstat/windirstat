@@ -377,7 +377,7 @@ solution (iif(release, slnname, "windirstat"))
                     targetname      (nm)
                     targetextension (".wdslng")
                     resoptions      {"/nologo", "/l409"}
-                    resincludedirs  {".", "$(ProjectDir)", "$(IntDir)"} -- ATTENTION: FAULTY IN premake-stable ... needs to be addressed
+                    resincludedirs  {".", "$(ProjectDir)", "$(IntDir)"}
                     linkoptions     {"/noentry"}
                     if release then
                         postbuildcommands
