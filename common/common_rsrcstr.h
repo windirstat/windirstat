@@ -30,16 +30,35 @@
 // 3-letter ISO code in brackets and the the translator(s).
 // The languages are ordered by the Windows language identifier!
 #define IDSS_TRANSLATORS \
-        L"--- \x010Ce\x0161tina (CES/CZE) ---\n\n'TomR'\n(mailto:tomr#horses-online.cz)\n\n\n" \
-        L"--- Deutsch (DEU/GER) ---\n\nWDS team\n\n\n" \
-        L"--- English (ENG) ---\n\nWDS team\n\n\n" \
-        L"--- Espa\x00F1ol (ESL/SPA) ---\n\nSergio Omar Maurelli\n(mailto:sergiomaurelli#hotmail.com)\n\n\n" \
-        L"--- Fran\x00E7ais(FRA/FRE) ---\n\nPascal Delrot\n(mailto:tigroo#users.sourceforge.net)\n'UltraSam'\n(mailto:sam.fd#wanadoo.fr)\n\n\n" \
-        L"--- Magyar (HUN) ---\n\n'Leonard Nimoy'\n(mailto:sorge#freemail.hu)\n\n\n" \
-        L"--- Italiano (ITA) ---\n\nMaria Antonietta Ricagno\n(mailto:ricagno#antotranslation.com\nhttp://www.antotranslation.com)\n\n\n" \
-        L"--- Nederlands (NLD) ---\n\nGerben Wieringa\n(mailto:gerbenwieringa#gmail.com)\n\n\n" \
-        L"--- Polski (POL) ---\n\nDariusz Ma\x0142achowski\n(mailto:d_malachowski#pf.pl)\n\n\n" \
-        L"--- \x0420\x0443\x0441\x0441\x043A\x0438\x0439/Russkij (RUS) ---\n\nSergiy '\x041F\x043E\x043B\x0451\x0442' Polyetayev\n(mailto:s_polyetayev#hotmail.com)\n\n\n"
+        L"--- \x010Ce\x0161tina (cs) ---\n\n'TomR'\n(mailto:tomr#horses-online.cz)\n\n\n" \
+        L"--- Deutsch (de-DE) ---\n\nWDS team\n\n\n" \
+        L"--- English (en-US) ---\n\nWDS team\n\n\n" \
+        L"--- Espa\x00F1ol (es) ---\n\nSergio Omar Maurelli\n(mailto:sergiomaurelli#hotmail.com)\n\n\n" \
+        L"--- Suomi (fi) ---\n\nMarkus Hietaranta\n(mailto:markus.hietaranta#gmail.com)\n\n\n" \
+        L"--- Fran\x00E7ais (fr) ---\n\nPascal Delrot\n(mailto:tigroo#users.sourceforge.net)\n'UltraSam'\n(mailto:sam.fd#wanadoo.fr)\n\n\n" \
+        L"--- Magyar (hu) ---\n\n'Leonard Nimoy'\n(mailto:sorge#freemail.hu)\n\n\n" \
+        L"--- Italiano (it) ---\n\nMaria Antonietta Ricagno\n(mailto:ricagno#antotranslation.com\nhttp://www.antotranslation.com)\n\n\n" \
+        L"--- Nederlands (nl) ---\n\nGerben Wieringa\n(mailto:gerbenwieringa#gmail.com)\n\n\n" \
+        L"--- Polski (pl) ---\n\nDariusz Ma\x0142achowski\n(mailto:d_malachowski#pf.pl)\n\n\n" \
+        L"--- Portugu\x00EAs do Brasil (pt-BR) ---\n\nName: Eliezer Riani de Andrade\n(mailto:eliezer#rilaser.com.br)\n\n\n" \
+        L"--- \x0420\x0443\x0441\x0441\x043A\x0438\x0439/Russkij (ru) ---\n\nSergiy '\x041F\x043E\x043B\x0451\x0442' Polyetayev\n(mailto:s_polyetayev#hotmail.com)\n\n\n" \
+        L"--- Eesti (et) ---\n\n'Logard'\n\n\n" \
+
+/*
+0405 - Czech
+0407 - German
+0409 - English (default)
+040a - Spanish
+040b - Finnish
+040c - French
+040e - Hungarian
+0410 - Italian
+0413 - Dutch
+0415 - Polish
+0416 - Portuguese (Brazil)
+0419 - Russian
+0425 - Estonian
+*/
 
 // Version of resource DLL
 #define IDSS_RESOURCEDLL        "Resource Version 4"
