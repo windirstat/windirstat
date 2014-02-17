@@ -374,6 +374,7 @@ solution (iif(release, slnname, "windirstat"))
                     flags           {"NoImportLib", "Unicode", "NoManifest", "NoExceptions", "NoPCH", "NoIncrementalLink"}
                     objdir          (int_dir)
                     targetdir       (iif(release, slnname, "build"))
+                    targetname      (nm)
                     targetextension (".wdslng")
                     resoptions      {"/nologo", "/l409"}
                     resincludedirs  {".", "$(ProjectDir)", "$(IntDir)"} -- ATTENTION: FAULTY IN premake-stable ... needs to be addressed
