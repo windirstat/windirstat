@@ -42,7 +42,7 @@
         L"--- Polski (pl) ---\n\nDariusz Ma\x0142achowski\n(mailto:d_malachowski#pf.pl)\n\n\n" \
         L"--- Portugu\x00EAs do Brasil (pt-BR) ---\n\nName: Eliezer Riani de Andrade\n(mailto:eliezer#rilaser.com.br)\n\n\n" \
         L"--- \x0420\x0443\x0441\x0441\x043A\x0438\x0439/Russkij (ru) ---\n\nSergiy '\x041F\x043E\x043B\x0451\x0442' Polyetayev\n(mailto:s_polyetayev#hotmail.com)\n\n\n" \
-        L"--- Eesti (et) ---\n\n'Logard'\n\n\n" \
+        L"--- Eesti (et) ---\n\n'Logard'\n\n\n"
 
 /*
 0405 - Czech
