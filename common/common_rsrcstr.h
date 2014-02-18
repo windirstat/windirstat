@@ -31,7 +31,7 @@
 #define IDSS_TRANSLATORS        L"<list too long>"
 
 // Version of resource DLL
-#define IDSS_RESOURCEDLL        "Resource Version 4"
+#define IDSS_RESOURCEDLL        "Resource Version 5"
 // Version information in feedback always appears in English
 #define IDSS_FROMsPLATFORMs     "From: %1!s!. Platform: %2!s!.\r\n\r\n"
 #define IDSS_SEV_CRITICAL       "Critical Bug"

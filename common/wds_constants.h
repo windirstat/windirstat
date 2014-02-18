@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2006, 2008 Oliver Schneider (assarbad.net)
+// Copyright (C) 2004-2014 Oliver Schneider (assarbad.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -22,12 +22,39 @@
 //            - assarbad -> http://windirstat.info/contact/oliver/
 //
 
-#ifndef __WDS_CONSTANTS_H__
-#define __WDS_CONSTANTS_H__
+#ifndef __WDS_CONSTANTS_H_VER__
+#define __WDS_CONSTANTS_H_VER__ 2014021723
+#if (defined(_MSC_VER) && (_MSC_VER >= 1020)) || defined(__MCPP)
 #pragma once
+#endif // Check for "#pragma once" support
 
 namespace wds
 {
+    const size_t maxContacts = 5;
+    typedef struct _demangle_t
+    {
+        WCHAR from;
+        WCHAR to;
+    } demangle_t;
+    typedef struct _contact_t
+    {
+        LPWSTR name;
+        LPWSTR mail;
+        LPWSTR weburl;
+        LPWSTR description;
+    } contact_t;
+    typedef struct _translator_t
+    {
+        LCID   id;
+        LPWSTR lngNative;
+        LPWSTR lngEnglish;
+        LPWSTR lngISO639_1;
+        contact_t translators[maxContacts];
+    } translator_t;
+    extern translator_t translators[];
+    extern contact_t authors[];
+    extern demangle_t translator_demangle_email[];
+
     // Single character constants
     const TCHAR chrSharp = _T('#');
     const TCHAR chrBracketOpen = _T('(');
@@ -35,7 +62,7 @@ namespace wds
     const TCHAR chrComma = _T(',');
     const TCHAR chrDot = _T('.');
     const TCHAR chrColon = _T(':');
-    const TCHAR chrAt = _T('@');
+    const TCHAR chrAt = _T('\x40');
     const TCHAR chrBackslash = _T('\\');
     const TCHAR chrPipe = _T('|');
     const TCHAR chrZero = _T('0');
@@ -76,4 +103,4 @@ namespace wds
     const int iNumDriveLetters = (chrCapZ - chrCapA) + 1;
 }
 
-#endif // __WDS_CONSTANTS_H__
+#endif // __WDS_CONSTANTS_H_VER__
