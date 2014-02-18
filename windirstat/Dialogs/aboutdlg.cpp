@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2006, 2008 Oliver Schneider (assarbad.net)
+// Copyright (C) 2004-2014 Oliver Schneider (assarbad.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -25,6 +25,7 @@
 #include "stdafx.h"
 #include "windirstat.h"
 #include <common/version.h>
+#include <common/wds_constants.h>
 #include "aboutdlg.h"
 
 #ifdef _DEBUG
@@ -137,7 +138,7 @@ void CAboutDlg::CMyTabControl::SetPageText(int tab)
 {
     USES_CONVERSION;
 
-    CString text, translators;
+    CString text;
     DWORD newStyle = ES_CENTER;
 
     switch (tab)
@@ -149,11 +150,9 @@ void CAboutDlg::CMyTabControl::SetPageText(int tab)
         break;
     case TAB_AUTHORS:
         {
-            text.FormatMessage(IDS_ABOUT_AUTHORSTEXTs, GetAuthorEmail());
-            translators.LoadString(IDS_TRANSLATORS);
-            text += translators;
-            // Anti-spam: avoid e-mail addresses in source-code:
-            text.Replace(wds::chrSharp, wds::chrAt);
+            CString translators;
+            text.FormatMessage(IDS_ABOUT_AUTHORSTEXTs, GetDevelList());
+            text += GetTranslatorList();
         }
         break;
     case TAB_THANKSTO:
@@ -270,6 +269,73 @@ CString CAboutDlg::GetAppVersion()
     CString s;
     s.Format(_T("WinDirStat %s"), A2T(VN_STRING_EXE));
     return s;
+}
+
+CString CAboutDlg::GetDevelList()
+{
+    CString retval;
+    using wds::authors;
+    using wds::contact_t;
+    
+    for(size_t i = 0; authors[i].name; i++)
+    {
+        contact_t* c = &authors[i];
+        if(c->name)
+        {
+            CString tmp;
+            if(c->mail && c->weburl)
+                tmp.Format(_T("\r\n%s\r\n(mailto:%s)\r\n%s\r\n"), c->name, c->mail, c->weburl);
+            else if(c->mail)
+                tmp.Format(_T("\r\n%s\r\n(mailto:%s)\r\n"), c->name, c->mail);
+            else if(c->weburl)
+                tmp.Format(_T("\r\n%s\r\n%s\r\n"), c->name, c->weburl);
+            else
+                tmp.Format(_T("\r\n%s\r\n"), c->name);
+            if(!tmp.IsEmpty())
+            {
+                retval += tmp;
+            }
+        }
+    }
+    return retval;
+}
+
+CString CAboutDlg::GetTranslatorList()
+{
+    CString retval;
+    using wds::translators;
+    using wds::translator_t;
+
+    for(size_t i = 0; translators[i].id && translators[i].lngNative; i++)
+    {
+        translator_t* t = &translators[i];
+        if(t->lngNative && t->lngEnglish && t->lngISO639_1)
+        {
+            CString tmp;
+            tmp.Format(_T("--- %s/%s (%s) ---\n\n"), t->lngNative, t->lngEnglish, t->lngISO639_1);
+            for(size_t j = 0; t->translators[j].name; j++)
+            {
+                CString tmp2;
+                const wds::contact_t& c = t->translators[j];
+                if(c.mail && c.weburl)
+                    tmp2.Format(_T("%s\n(mailto:%s)\n%s\n"), c.name, c.mail, c.weburl);
+                else if(c.mail)
+                    tmp2.Format(_T("%s\n(mailto:%s)\n"), c.name, c.mail);
+                else if(c.weburl)
+                    tmp2.Format(_T("%s\n%s\n"), c.name, c.weburl);
+                else
+                    tmp2.Format(_T("%s\n"), c.name);
+                if(!tmp2.IsEmpty())
+                    tmp += tmp2;
+            }
+            if(!tmp.IsEmpty())
+            {
+                tmp += _T("\n");
+                retval += tmp;
+            }
+        }
+    }
+    return retval;
 }
 
 void CAboutDlg::DoDataExchange(CDataExchange* pDX)

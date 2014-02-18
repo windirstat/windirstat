@@ -53,7 +53,7 @@ CDirstatApp *GetWDSApp()
 
 CString GetAuthorEmail()
 {
-    return _T("team@windirstat.info"); // FIXME into common string file
+    return _T("team") _T("\x40") _T("windirstat.info"); // FIXME into common string file
 }
 
 CString GetWinDirStatHomepage()
