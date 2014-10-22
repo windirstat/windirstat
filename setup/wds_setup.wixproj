@@ -15,13 +15,41 @@
     <OutputPath>..\wds_release\$(Configuration)\</OutputPath>
     <IntermediateOutputPath>..\wds_release_intermediate\$(Configuration)\</IntermediateOutputPath>
     <DefineConstants>Debug</DefineConstants>
+    <Cultures>cs-CZ;de-DE;en-US;es-ES;et-EE;fi-FI;fr-FR;hu-HU;it-IT;nl-NL;pl-PL;ru-RU</Cultures>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <OutputPath>..\wds_release\$(Configuration)\</OutputPath>
     <IntermediateOutputPath>..\wds_release_intermediate\$(Configuration)\</IntermediateOutputPath>
+    <Cultures>cs-CZ; de-DE; en-US; es-ES; et-EE; fi-FI; fr-FR; hu-HU; is-IS; it-IT; nl-NL; pl-PL; ru-RU</Cultures>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="WinDirStat.wxs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Defines.wxi" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Cultures" />
+  </ItemGroup>
+  <ItemGroup>
+    <WixExtension Include="WixUIExtension">
+      <HintPath>$(WixExtDir)\WixUIExtension.dll</HintPath>
+      <Name>WixUIExtension</Name>
+    </WixExtension>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Cultures\WDS-et-EE.wxl" />
+    <EmbeddedResource Include="Cultures\WDS-ru-RU.wxl" />
+    <EmbeddedResource Include="Cultures\WDS-pl-PL.wxl" />
+    <EmbeddedResource Include="Cultures\WDS-nl-NL.wxl" />
+    <EmbeddedResource Include="Cultures\WDS-it-IT.wxl" />
+    <EmbeddedResource Include="Cultures\WDS-hu-HU.wxl" />
+    <EmbeddedResource Include="Cultures\WDS-fi-FI.wxl" />
+    <EmbeddedResource Include="Cultures\WDS-fr-FR.wxl" />
+    <EmbeddedResource Include="Cultures\WDS-de-DE.wxl" />
+    <EmbeddedResource Include="Cultures\WDS-es-ES.wxl" />
+    <EmbeddedResource Include="Cultures\WDS-cs-CZ.wxl" />
+    <EmbeddedResource Include="Cultures\WDS-en-us.wxl" />
   </ItemGroup>
   <Import Project="$(WixTargetsPath)" />
   <!--
