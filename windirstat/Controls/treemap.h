@@ -142,7 +142,7 @@ public:
         void SetLightSourceYPercent(int n)  { lightSourceY = n / 100.0; }
         void SetLightSourcePoint(CPoint pt) { SetLightSourceXPercent(pt.x); SetLightSourceYPercent(pt.y); }
 
-        int RoundDouble(double d) { return signum(d) * (int)(abs(d) + 0.5); }
+        int RoundDouble(double d) { return signum(d) * (int)(fabs(d) + 0.5); }
     };
 
 public:
