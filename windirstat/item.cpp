@@ -277,7 +277,7 @@ int CItem::CompareSibling(const CTreeListItem *tlib, int subitem) const
     case COL_SUBTREEPERCENTAGE:
         if(MustShowReadJobs())
         {
-            r = signum(m_readJobs - other->m_readJobs);
+            r = usignum(m_readJobs, other->m_readJobs);
         }
         else
         {
@@ -293,25 +293,25 @@ int CItem::CompareSibling(const CTreeListItem *tlib, int subitem) const
 
     case COL_SUBTREETOTAL:
         {
-            r = signum(GetSize() - other->GetSize());
+            r = usignum(GetSize(), other->GetSize());
         }
         break;
 
     case COL_ITEMS:
         {
-            r = signum(GetItemsCount() - other->GetItemsCount());
+            r = usignum(GetItemsCount(), other->GetItemsCount());
         }
         break;
 
     case COL_FILES:
         {
-            r = signum(GetFilesCount() - other->GetFilesCount());
+            r = usignum(GetFilesCount(), other->GetFilesCount());
         }
         break;
 
     case COL_SUBDIRS:
         {
-            r = signum(GetSubdirsCount() - other->GetSubdirsCount());
+            r = usignum(GetSubdirsCount(), other->GetSubdirsCount());
         }
         break;
 
@@ -1650,7 +1650,7 @@ int __cdecl CItem::_compareBySize(const void *p1, const void *p2)
 
     // TODO: Use 2nd sort column (as set in our TreeListView?)
 
-    return signum(size2 - size1); // biggest first
+    return usignum(size2, size1); // biggest first
 }
 
 ULONGLONG CItem::GetProgressRangeMyComputer() const

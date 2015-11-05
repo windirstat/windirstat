@@ -78,6 +78,9 @@
 
 template<class T> int signum(T x) { return (x) < 0 ? -1 : (x) == 0 ? 0 : 1; }
 
+/// signum function for unsigned numbers.
+template<class T> int usignum(T x, T y) { return (x) < (y) ? -1 : (x) == (y) ? 0 : 1; }
+
 #define WEAK_ASSERT /##/ ASSERT
 
 #endif // __WDS_STDAFX_H__

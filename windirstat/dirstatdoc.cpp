@@ -808,7 +808,7 @@ int __cdecl CDirstatDoc::_compareExtensions(const void *item1, const void *item2
     SExtensionRecord r2;
     VERIFY(_pqsortExtensionData->Lookup(*ext1, r1));
     VERIFY(_pqsortExtensionData->Lookup(*ext2, r2));
-    return signum(r2.bytes - r1.bytes);
+    return usignum(r2.bytes, r1.bytes);
 }
 
 void CDirstatDoc::SetWorkingItemAncestor(CItem *item)

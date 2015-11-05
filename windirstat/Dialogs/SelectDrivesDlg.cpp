@@ -166,12 +166,12 @@ int CDriveItem::Compare(const CSortingListItem *baseOther, int subitem) const
         break;
     case COL_TOTAL:
         {
-            r = signum(m_totalBytes - other->m_totalBytes);
+            r = usignum(m_totalBytes, other->m_totalBytes);
         }
         break;
     case COL_FREE:
         {
-            r = signum(m_freeBytes - other->m_freeBytes);
+            r = usignum(m_freeBytes, other->m_freeBytes);
         }
         break;
     case COL_GRAPH:
