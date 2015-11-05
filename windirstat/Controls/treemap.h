@@ -72,7 +72,7 @@ public:
     // If you prefer to use the getHead()/getNext() pattern rather
     // than using an array for the children, you will have to
     // rewrite CTreemap.
-    // 
+    //
     class Item
     {
     public:
@@ -187,7 +187,7 @@ public:
 protected:
     // The recursive drawing function
     void RecurseDrawGraph(
-        CDC *pdc,
+        CArray<COLORREF, COLORREF> *bitmap,
         Item *item,
         const CRect& rc,
         bool asroot,
@@ -198,7 +198,7 @@ protected:
 
     // This function switches to KDirStat-, SequoiaView- or Simple_DrawChildren
     void DrawChildren(
-        CDC *pdc,
+        CArray<COLORREF, COLORREF> *bitmap,
         Item *parent,
         const double *surface,
         double h,
@@ -206,15 +206,15 @@ protected:
     );
 
     // KDirStat-like squarification
-    void KDirStat_DrawChildren(CDC *pdc, Item *parent, const double *surface, double h, DWORD flags);
+    void KDirStat_DrawChildren(CArray<COLORREF, COLORREF> *bitmap, Item *parent, const double *surface, double h, DWORD flags);
     bool KDirStat_ArrangeChildren(Item *parent, CArray<double, double>& childWidth, CArray<double, double>& rows, CArray<int, int>& childrenPerRow);
     double KDirStat_CalcutateNextRow(Item *parent, const int nextChild, double width, int& childrenUsed, CArray<double, double>& childWidth);
 
     // Classical SequoiaView-like squarification
-    void SequoiaView_DrawChildren(CDC *pdc, Item *parent, const double *surface, double h, DWORD flags);
+    void SequoiaView_DrawChildren(CArray<COLORREF, COLORREF> *bitmap, Item *parent, const double *surface, double h, DWORD flags);
 
     // No squarification (simple style, not used in WinDirStat)
-    void Simple_DrawChildren(CDC *pdc, Item *parent, const double *surface, double h, DWORD flags);
+    void Simple_DrawChildren(CArray<COLORREF, COLORREF> *bitmap, Item *parent, const double *surface, double h, DWORD flags);
 
     // Sets brightness to a good value, if system has only 256 colors
     void SetBrightnessFor256();
@@ -223,16 +223,17 @@ protected:
     bool IsCushionShading();
 
     // Leaves space for grid and then calls RenderRectangle()
-    void RenderLeaf(CDC *pdc, Item *item, const double *surface);
+    void RenderLeaf(CArray<COLORREF, COLORREF> *bitmap, Item *item, const double *surface);
 
     // Either calls DrawCushion() or DrawSolidRect()
-    void RenderRectangle(CDC *pdc, const CRect& rc, const double *surface, DWORD color);
+    void RenderRectangle(CArray<COLORREF, COLORREF> *bitmap, const CRect& rc, const double *surface, DWORD color);
+    // void RenderRectangle(CDC *pdc, const CRect& rc, const double *surface, DWORD color);
 
     // Draws the surface using SetPixel()
-    void DrawCushion(CDC *pdc, const CRect& rc, const double *surface, COLORREF col, double brightness);
+    void DrawCushion(CArray<COLORREF, COLORREF> *bitmap, const CRect& rc, const double *surface, COLORREF col, double brightness);
 
     // Draws the surface using FillSolidRect()
-    void DrawSolidRect(CDC *pdc, const CRect& rc, COLORREF col, double brightness);
+    void DrawSolidRect(CArray<COLORREF, COLORREF> *bitmap, const CRect& rc, COLORREF col, double brightness);
 
     // Adds a new ridge to surface
     static void AddRidge(const CRect& rc, double *surface, double h);
@@ -241,6 +242,8 @@ protected:
     static const Options  _defaultOptionsOld;           // WinDirStat 1.0.1 default options
     static const COLORREF _defaultCushionColors[];      // Standard palette for WinDirStat
     static const COLORREF _defaultCushionColors256[];   // Palette for 256-colors mode
+
+    CRect m_renderArea;
 
     Options m_options;      // Current options
     double m_Lx;            // Derived parameters
