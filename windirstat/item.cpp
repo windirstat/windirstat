@@ -914,18 +914,22 @@ CString CItem::GetExtension() const
 
     CString ext;
 
+    CString name = GetName();
+
     switch (GetType())
     {
     case IT_FILE:
         {
-            int i = GetName().ReverseFind(wds::chrDot);
+            int i = name.ReverseFind(wds::chrDot);
             if(i == -1)
             {
                 ext = _T(".");
             }
             else
             {
-                ext = GetName().Mid(i);
+                // Faster than name.Mid(i);
+                LPCTSTR alpha = static_cast<LPCTSTR>(name);
+                ext = &alpha[i];
             }
             ext.MakeLower();
             break;
@@ -933,7 +937,7 @@ CString CItem::GetExtension() const
     case IT_FREESPACE:
     case IT_UNKNOWN:
         {
-            ext = GetName();
+            ext = name;
         }
         break;
 
