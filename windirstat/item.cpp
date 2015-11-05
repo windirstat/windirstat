@@ -909,6 +909,9 @@ CString CItem::GetName() const
 
 CString CItem::GetExtension() const
 {
+    if (m_extension != "")
+        return m_extension;
+
     CString ext;
 
     switch (GetType())
@@ -937,6 +940,8 @@ CString CItem::GetExtension() const
     default:
         ASSERT(0);
     }
+
+    m_extension = ext;
 
     return ext;
 }

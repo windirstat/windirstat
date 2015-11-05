@@ -221,6 +221,7 @@ private:
 
     ITEMTYPE m_type;            // Indicates our type. See ITEMTYPE.
     CString m_name;             // Display name
+    mutable CString m_extension;		// Cache of extension (it's used often)
     ULONGLONG m_size;           // OwnSize, if IT_FILE or IT_FREESPACE, or IT_UNKNOWN; SubtreeTotal else.
     ULONGLONG m_files;          // # Files in subtree
     ULONGLONG m_subdirs;        // # Folder in subtree
