@@ -220,6 +220,7 @@ private:
     void DrivePacman();
 
     ITEMTYPE m_type;            // Indicates our type. See ITEMTYPE.
+    ITEMTYPE m_etype;           
     CString m_name;             // Display name
     mutable CString m_extension;		// Cache of extension (it's used often)
     mutable bool m_extension_cached = false;

@@ -55,6 +55,7 @@ CItem::CItem(ITEMTYPE type, LPCTSTR name, bool dontFollow)
     , m_readJobs(0)
     , m_attributes(0)
 {
+    m_etype = (ITEMTYPE)(m_type & ~ITF_FLAGS); // returned by GetType
     if(GetType() == IT_FILE || dontFollow || GetType() == IT_FREESPACE || GetType() == IT_UNKNOWN || GetType() == IT_MYCOMPUTER)
     {
         SetReadJobDone();
@@ -829,7 +830,7 @@ double CItem::GetFraction() const
 
 ITEMTYPE CItem::GetType() const
 {
-    return (ITEMTYPE)(m_type & ~ITF_FLAGS);
+    return m_etype;
 }
 
 bool CItem::IsRootItem() const
@@ -923,7 +924,7 @@ CString CItem::GetExtension() const
             int i = name.ReverseFind(wds::chrDot);
             if(i == -1)
             {
-                ext = _T(".");
+                ext = L".";
             }
             else
             {
