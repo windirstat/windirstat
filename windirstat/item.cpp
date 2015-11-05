@@ -909,7 +909,7 @@ CString CItem::GetName() const
 
 CString CItem::GetExtension() const
 {
-    if (m_extension != "")
+    if (m_extension_cached)
         return m_extension;
 
     CString ext;
@@ -942,6 +942,7 @@ CString CItem::GetExtension() const
     }
 
     m_extension = ext;
+    m_extension_cached = true;
 
     return ext;
 }
@@ -1610,9 +1611,10 @@ void CItem::RecurseCollectExtensionData(CExtensionData *ed)
 {
     GetWDSApp()->PeriodicalUpdateRamUsage();
 
-    if(IsLeaf(GetType()))
+    auto type = GetType();
+    if(IsLeaf(type))
     {
-        if(GetType() == IT_FILE)
+        if(type == IT_FILE)
         {
             CString ext = GetExtension();
             SExtensionRecord r;
