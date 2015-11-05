@@ -749,6 +749,8 @@ void CDirstatDoc::RebuildExtensionData()
     CWaitCursor wc;
 
     m_extensionData.RemoveAll();
+    // 2048 is a rough estimate for amount of different extensions
+    m_extensionData.InitHashTable(2048);
     m_rootItem->RecurseCollectExtensionData(&m_extensionData);
 
     CStringArray sortedExtensions;
