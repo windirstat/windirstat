@@ -182,13 +182,13 @@ int CExtensionListControl::CListItem::Compare(const CSortingListItem *baseOther,
     case COL_COLOR:
     case COL_BYTES:
         {
-            r = signum(m_record.bytes - other->m_record.bytes);
+            r = usignum(m_record.bytes, other->m_record.bytes);
         }
         break;
 
     case COL_FILES:
         {
-            r = signum(m_record.files - other->m_record.files);
+            r = usignum(m_record.files, other->m_record.files);
         }
         break;
 

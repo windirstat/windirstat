@@ -55,6 +55,7 @@ CItem::CItem(ITEMTYPE type, LPCTSTR name, bool dontFollow)
     , m_readJobs(0)
     , m_attributes(0)
 {
+    m_etype = (ITEMTYPE)(m_type & ~ITF_FLAGS); // returned by GetType
     if(GetType() == IT_FILE || dontFollow || GetType() == IT_FREESPACE || GetType() == IT_UNKNOWN || GetType() == IT_MYCOMPUTER)
     {
         SetReadJobDone();
@@ -277,7 +278,7 @@ int CItem::CompareSibling(const CTreeListItem *tlib, int subitem) const
     case COL_SUBTREEPERCENTAGE:
         if(MustShowReadJobs())
         {
-            r = signum(m_readJobs - other->m_readJobs);
+            r = usignum(m_readJobs, other->m_readJobs);
         }
         else
         {
@@ -293,25 +294,25 @@ int CItem::CompareSibling(const CTreeListItem *tlib, int subitem) const
 
     case COL_SUBTREETOTAL:
         {
-            r = signum(GetSize() - other->GetSize());
+            r = usignum(GetSize(), other->GetSize());
         }
         break;
 
     case COL_ITEMS:
         {
-            r = signum(GetItemsCount() - other->GetItemsCount());
+            r = usignum(GetItemsCount(), other->GetItemsCount());
         }
         break;
 
     case COL_FILES:
         {
-            r = signum(GetFilesCount() - other->GetFilesCount());
+            r = usignum(GetFilesCount(), other->GetFilesCount());
         }
         break;
 
     case COL_SUBDIRS:
         {
-            r = signum(GetSubdirsCount() - other->GetSubdirsCount());
+            r = usignum(GetSubdirsCount(), other->GetSubdirsCount());
         }
         break;
 
@@ -829,7 +830,7 @@ double CItem::GetFraction() const
 
 ITEMTYPE CItem::GetType() const
 {
-    return (ITEMTYPE)(m_type & ~ITF_FLAGS);
+    return m_etype;
 }
 
 bool CItem::IsRootItem() const
@@ -909,20 +910,27 @@ CString CItem::GetName() const
 
 CString CItem::GetExtension() const
 {
+    if (m_extension_cached)
+        return m_extension;
+
     CString ext;
+
+    CString name = GetName();
 
     switch (GetType())
     {
     case IT_FILE:
         {
-            int i = GetName().ReverseFind(wds::chrDot);
+            int i = name.ReverseFind(wds::chrDot);
             if(i == -1)
             {
-                ext = _T(".");
+                ext = L".";
             }
             else
             {
-                ext = GetName().Mid(i);
+                // Faster than name.Mid(i);
+                LPCTSTR alpha = static_cast<LPCTSTR>(name);
+                ext = &alpha[i];
             }
             ext.MakeLower();
             break;
@@ -930,13 +938,16 @@ CString CItem::GetExtension() const
     case IT_FREESPACE:
     case IT_UNKNOWN:
         {
-            ext = GetName();
+            ext = name;
         }
         break;
 
     default:
         ASSERT(0);
     }
+
+    m_extension = ext;
+    m_extension_cached = true;
 
     return ext;
 }
@@ -1135,6 +1146,11 @@ void CItem::DoSomeWork(DWORD ticks)
     }
     if(GetType() == IT_DRIVE || GetType() == IT_DIRECTORY || GetType() == IT_MYCOMPUTER)
     {
+
+	// <HACK!  IsDone() is set after first pass with no decend into dirs
+        UpwardSetUndone();
+	// HACK>
+
         ASSERT(IsReadJobDone());
         if(IsDone())
         {
@@ -1600,9 +1616,10 @@ void CItem::RecurseCollectExtensionData(CExtensionData *ed)
 {
     GetWDSApp()->PeriodicalUpdateRamUsage();
 
-    if(IsLeaf(GetType()))
+    auto type = GetType();
+    if(IsLeaf(type))
     {
-        if(GetType() == IT_FILE)
+        if(type == IT_FILE)
         {
             CString ext = GetExtension();
             SExtensionRecord r;
@@ -1638,7 +1655,7 @@ int __cdecl CItem::_compareBySize(const void *p1, const void *p2)
 
     // TODO: Use 2nd sort column (as set in our TreeListView?)
 
-    return signum(size2 - size1); // biggest first
+    return usignum(size2, size1); // biggest first
 }
 
 ULONGLONG CItem::GetProgressRangeMyComputer() const

@@ -62,7 +62,7 @@ enum ITEMTYPE
 };
 
 // Whether an item type is a leaf type
-inline bool IsLeaf(ITEMTYPE t) { return t == IT_FILE || t == IT_FREESPACE || t == IT_UNKNOWN; }
+inline bool IsLeaf(ITEMTYPE t) { return ((t == IT_FILE) | (t == IT_FREESPACE) | (t == IT_UNKNOWN)); }
 
 // Compare FILETIMEs
 inline bool operator< (const FILETIME& t1, const FILETIME& t2)
@@ -220,7 +220,10 @@ private:
     void DrivePacman();
 
     ITEMTYPE m_type;            // Indicates our type. See ITEMTYPE.
+    ITEMTYPE m_etype;           
     CString m_name;             // Display name
+    mutable CString m_extension;		// Cache of extension (it's used often)
+    mutable bool m_extension_cached = false;
     ULONGLONG m_size;           // OwnSize, if IT_FILE or IT_FREESPACE, or IT_UNKNOWN; SubtreeTotal else.
     ULONGLONG m_files;          // # Files in subtree
     ULONGLONG m_subdirs;        // # Folder in subtree

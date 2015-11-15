@@ -6,6 +6,12 @@ Project creator, initial author
 Direct contributors
 -------------------
 
+- Falco Peijnenburg
+  * Performance improvments to the treemap rendering
+
+- Morten Asscheman
+  * Performance improvments to the treemap rendering
+
 - Oliver Schneider (maintainer)
 
 - Chris Wimmer

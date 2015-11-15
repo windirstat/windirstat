@@ -3,7 +3,7 @@
 ## Copyright and licenses
 
 * Copyright © 2003-2005 Bernhard Seifert (bseifert@users.sourceforge.net)
-* Copyright © 2004-2014 WinDirStat team (windirstat.info)
+* Copyright © 2004-2015 WinDirStat team (windirstat.info)
 
 The application itself is distributed under the terms of the [GPL v2](https://bitbucket.org/windirstat/windirstat/raw/tip/windirstat/res/license.txt),
 but parts of the source code are also available under more lenient license terms.
