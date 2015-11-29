@@ -2,7 +2,7 @@
 ** FOLD: Constant Folding, Algebraic Simplifications and Reassociation.
 ** ABCelim: Array Bounds Check Elimination.
 ** CSE: Common-Subexpression Elimination.
-** Copyright (C) 2005-2015 Mike Pall. See Copyright Notice in luajit.h
+** Copyright (C) 2005-2013 Mike Pall. See Copyright Notice in luajit.h
 */
 
 #define lj_opt_fold_c
@@ -505,14 +505,13 @@ LJFOLDF(kfold_strref_snew)
   } else {
     /* Reassociate: strref(snew(strref(str, a), len), b) ==> strref(str, a+b) */
     IRIns *ir = IR(fleft->op1);
-    if (ir->o == IR_STRREF) {
-      IRRef1 str = ir->op1;  /* IRIns * is not valid across emitir. */
-      PHIBARRIER(ir);
-      fins->op2 = emitir(IRTI(IR_ADD), ir->op2, fins->op2); /* Clobbers fins! */
-      fins->op1 = str;
-      fins->ot = IRT(IR_STRREF, IRT_P32);
-      return RETRYFOLD;
-    }
+    IRRef1 str = ir->op1;  /* IRIns * is not valid across emitir. */
+    lua_assert(ir->o == IR_STRREF);
+    PHIBARRIER(ir);
+    fins->op2 = emitir(IRTI(IR_ADD), ir->op2, fins->op2);  /* Clobbers fins! */
+    fins->op1 = str;
+    fins->ot = IRT(IR_STRREF, IRT_P32);
+    return RETRYFOLD;
   }
   return NEXTFOLD;
 }
@@ -1006,16 +1005,11 @@ LJFOLDF(simplify_conv_flt_num)
 LJFOLD(TOBIT CONV KNUM)
 LJFOLDF(simplify_tobit_conv)
 {
-  /* Fold even across PHI to avoid expensive num->int conversions in loop. */
-  if ((fleft->op2 & IRCONV_SRCMASK) == IRT_INT) {
+  if ((fleft->op2 & IRCONV_SRCMASK) == IRT_INT ||
+      (fleft->op2 & IRCONV_SRCMASK) == IRT_U32) {
+    /* Fold even across PHI to avoid expensive num->int conversions in loop. */
     lua_assert(irt_isnum(fleft->t));
     return fleft->op1;
-  } else if ((fleft->op2 & IRCONV_SRCMASK) == IRT_U32) {
-    lua_assert(irt_isnum(fleft->t));
-    fins->o = IR_CONV;
-    fins->op1 = fleft->op1;
-    fins->op2 = (IRT_INT<<5)|IRT_U32;
-    return RETRYFOLD;
   }
   return NEXTFOLD;
 }
@@ -1705,9 +1699,7 @@ LJFOLDF(abc_k)
 LJFOLD(ABC any any)
 LJFOLDF(abc_invar)
 {
-  /* Invariant ABC marked as PTR. Drop if op1 is invariant, too. */
-  if (!irt_isint(fins->t) && fins->op1 < J->chain[IR_LOOP] &&
-      !irt_isphi(IR(fins->op1)->t))
+  if (!irt_isint(fins->t) && J->chain[IR_LOOP])  /* Currently marked as PTR. */
     return DROPFOLD;
   return NEXTFOLD;
 }
@@ -1831,8 +1823,7 @@ LJFOLDF(merge_eqne_snew_kgc)
   if (len <= FOLD_SNEW_MAX_LEN) {
     IROp op = (IROp)fins->o;
     IRRef strref = fleft->op1;
-    if (IR(strref)->o != IR_STRREF)
-      return NEXTFOLD;
+    lua_assert(IR(strref)->o == IR_STRREF);
     if (op == IR_EQ) {
       emitir(IRTGI(IR_EQ), fleft->op2, lj_ir_kint(J, len));
       /* Caveat: fins/fleft/fright is no longer valid after emitir. */

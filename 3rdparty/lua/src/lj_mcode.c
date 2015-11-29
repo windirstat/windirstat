@@ -1,6 +1,6 @@
 /*
 ** Machine code management.
-** Copyright (C) 2005-2015 Mike Pall. See Copyright Notice in luajit.h
+** Copyright (C) 2005-2013 Mike Pall. See Copyright Notice in luajit.h
 */
 
 #define lj_mcode_c
@@ -9,7 +9,6 @@
 #include "lj_obj.h"
 #if LJ_HASJIT
 #include "lj_gc.h"
-#include "lj_err.h"
 #include "lj_jit.h"
 #include "lj_mcode.h"
 #include "lj_trace.h"
@@ -79,10 +78,10 @@ static void mcode_free(jit_State *J, void *p, size_t sz)
   VirtualFree(p, 0, MEM_RELEASE);
 }
 
-static int mcode_setprot(void *p, size_t sz, DWORD prot)
+static void mcode_setprot(void *p, size_t sz, DWORD prot)
 {
   DWORD oprot;
-  return !VirtualProtect(p, sz, prot, &oprot);
+  VirtualProtect(p, sz, prot, &oprot);
 }
 
 #elif LJ_TARGET_POSIX
@@ -113,9 +112,9 @@ static void mcode_free(jit_State *J, void *p, size_t sz)
   munmap(p, sz);
 }
 
-static int mcode_setprot(void *p, size_t sz, int prot)
+static void mcode_setprot(void *p, size_t sz, int prot)
 {
-  return mprotect(p, sz, prot);
+  mprotect(p, sz, prot);
 }
 
 #elif LJ_64
@@ -141,11 +140,13 @@ static void mcode_free(jit_State *J, void *p, size_t sz)
   lj_mem_free(J2G(J), p, sz);
 }
 
+#define mcode_setprot(p, sz, prot)	UNUSED(p)
+
 #endif
 
 /* -- MCode area protection ----------------------------------------------- */
 
-/* Define this ONLY if page protection twiddling becomes a bottleneck. */
+/* Define this ONLY if the page protection twiddling becomes a bottleneck. */
 #ifdef LUAJIT_UNPROTECT_MCODE
 
 /* It's generally considered to be a potential security risk to have
@@ -179,23 +180,11 @@ static void mcode_protect(jit_State *J, int prot)
 #define MCPROT_GEN	MCPROT_RW
 #define MCPROT_RUN	MCPROT_RX
 
-/* Protection twiddling failed. Probably due to kernel security. */
-static LJ_NOINLINE void mcode_protfail(jit_State *J)
-{
-  lua_CFunction panic = J2G(J)->panic;
-  if (panic) {
-    lua_State *L = J->L;
-    setstrV(L, L->top++, lj_err_str(L, LJ_ERR_JITPROT));
-    panic(L);
-  }
-}
-
 /* Change protection of MCode area. */
 static void mcode_protect(jit_State *J, int prot)
 {
   if (J->mcprot != prot) {
-    if (LJ_UNLIKELY(mcode_setprot(J->mcarea, J->szmcarea, prot)))
-      mcode_protfail(J);
+    mcode_setprot(J->mcarea, J->szmcarea, prot);
     J->mcprot = prot;
   }
 }
@@ -252,20 +241,7 @@ static void *mcode_alloc(jit_State *J, size_t sz)
 #else
 
 /* All memory addresses are reachable by relative jumps. */
-static void *mcode_alloc(jit_State *J, size_t sz)
-{
-#ifdef __OpenBSD__
-  /* Allow better executable memory allocation for OpenBSD W^X mode. */
-  void *p = mcode_alloc_at(J, 0, sz, MCPROT_RUN);
-  if (p && mcode_setprot(p, sz, MCPROT_GEN)) {
-    mcode_free(J, p, sz);
-    return NULL;
-  }
-  return p;
-#else
-  return mcode_alloc_at(J, 0, sz, MCPROT_GEN);
-#endif
-}
+#define mcode_alloc(J, sz)	mcode_alloc_at((J), 0, (sz), MCPROT_GEN)
 
 #endif
 
@@ -329,8 +305,7 @@ void lj_mcode_commit(jit_State *J, MCode *top)
 /* Abort the reservation. */
 void lj_mcode_abort(jit_State *J)
 {
-  if (J->mcarea)
-    mcode_protect(J, MCPROT_RUN);
+  mcode_protect(J, MCPROT_RUN);
 }
 
 /* Set/reset protection to allow patching of MCode areas. */
@@ -343,8 +318,8 @@ MCode *lj_mcode_patch(jit_State *J, MCode *ptr, int finish)
   if (finish) {
     if (J->mcarea == ptr)
       mcode_protect(J, MCPROT_RUN);
-    else if (LJ_UNLIKELY(mcode_setprot(ptr, ((MCLink *)ptr)->size, MCPROT_RUN)))
-      mcode_protfail(J);
+    else
+      mcode_setprot(ptr, ((MCLink *)ptr)->size, MCPROT_RUN);
     return NULL;
   } else {
     MCode *mc = J->mcarea;
@@ -358,8 +333,7 @@ MCode *lj_mcode_patch(jit_State *J, MCode *ptr, int finish)
       mc = ((MCLink *)mc)->next;
       lua_assert(mc != NULL);
       if (ptr >= mc && ptr < (MCode *)((char *)mc + ((MCLink *)mc)->size)) {
-	if (LJ_UNLIKELY(mcode_setprot(mc, ((MCLink *)mc)->size, MCPROT_GEN)))
-	  mcode_protfail(J);
+	mcode_setprot(mc, ((MCLink *)mc)->size, MCPROT_GEN);
 	return mc;
       }
     }

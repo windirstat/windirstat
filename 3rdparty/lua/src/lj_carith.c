@@ -1,6 +1,6 @@
 /*
 ** C data arithmetic.
-** Copyright (C) 2005-2015 Mike Pall. See Copyright Notice in luajit.h
+** Copyright (C) 2005-2013 Mike Pall. See Copyright Notice in luajit.h
 */
 
 #include "lj_obj.h"
@@ -62,7 +62,7 @@ static int carith_checkarg(lua_State *L, CTState *cts, CDArith *ca)
       TValue *o2 = i == 0 ? o+1 : o-1;
       CType *ct = ctype_raw(cts, cdataV(o2)->ctypeid);
       ca->ct[i] = NULL;
-      ca->p[i] = (uint8_t *)strVdata(o);
+      ca->p[i] = NULL;
       ok = 0;
       if (ctype_isenum(ct->info)) {
 	CTSize ofs;
@@ -79,7 +79,7 @@ static int carith_checkarg(lua_State *L, CTState *cts, CDArith *ca)
       }
     } else {
       ca->ct[i] = NULL;
-      ca->p[i] = (void *)(intptr_t)1;  /* To make it unequal. */
+      ca->p[i] = NULL;
       ok = 0;
     }
   }
@@ -234,9 +234,7 @@ static int lj_carith_meta(lua_State *L, CTState *cts, CDArith *ca, MMS mm)
     const char *repr[2];
     int i, isenum = -1, isstr = -1;
     if (mm == MM_eq) {  /* Equality checks never raise an error. */
-      int eq = ca->p[0] == ca->p[1];
-      setboolV(L->top-1, eq);
-      setboolV(&G(L)->tmptv2, eq);  /* Remember for trace recorder. */
+      setboolV(L->top-1, 0);
       return 1;
     }
     for (i = 0; i < 2; i++) {

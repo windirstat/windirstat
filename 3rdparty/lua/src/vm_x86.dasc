@@ -1,6 +1,6 @@
 |// Low-level VM code for x86 CPUs.
 |// Bytecode interpreter, fast functions and helper functions.
-|// Copyright (C) 2005-2015 Mike Pall. See Copyright Notice in luajit.h
+|// Copyright (C) 2005-2013 Mike Pall. See Copyright Notice in luajit.h
 |
 |.if P64
 |.arch x64
@@ -1617,7 +1617,7 @@ static void build_subroutines(BuildCtx *ctx)
   |  mov RD, 1+3
   |  jmp ->fff_res
   |
-  |.ffunc_2 ipairs_aux
+  |.ffunc_1 ipairs_aux
   |  cmp dword [BASE+4], LJ_TTAB;  jne ->fff_fallback
   |  cmp dword [BASE+12], LJ_TISNUM
   |.if DUALNUM
@@ -2198,7 +2198,7 @@ static void build_subroutines(BuildCtx *ctx)
   |.endif
   |
   |.ffunc_nnr math_fmod
-  |1: ; fprem; fnstsw ax; and ax, 0x400; jnz <1
+  |1: ; fprem; fnstsw ax; sahf; jp <1
   |  fpop1
   |  jmp ->fff_resn
   |
@@ -2564,8 +2564,8 @@ static void build_subroutines(BuildCtx *ctx)
   |
   |.define TOBIT_BIAS, 0x59c00000	// 2^52 + 2^51 (float, not double!).
   |
-  |.macro .ffunc_bit, name, kind, fdef
-  |  fdef name
+  |.macro .ffunc_bit, name, kind
+  |  .ffunc_1 name
   |.if kind == 2
   |.if SSE
   |  sseconst_tobit xmm1, RBa
@@ -2606,10 +2606,6 @@ static void build_subroutines(BuildCtx *ctx)
   |.endif
   |.endif
   |2:
-  |.endmacro
-  |
-  |.macro .ffunc_bit, name, kind
-  |  .ffunc_bit name, kind, .ffunc_1
   |.endmacro
   |
   |.ffunc_bit bit_tobit, 0
@@ -2685,7 +2681,7 @@ static void build_subroutines(BuildCtx *ctx)
   |
   |.macro .ffunc_bit_sh, name, ins
   |.if DUALNUM
-  |  .ffunc_bit name, 1, .ffunc_2
+  |  .ffunc_bit name, 1
   |  // Note: no inline conversion from number for 2nd argument!
   |  cmp dword [BASE+12], LJ_TISNUM; jne ->fff_fallback
   |  mov RA, dword [BASE+8]
@@ -4656,7 +4652,7 @@ static void build_ins(BuildCtx *ctx, BCOp op, int defop)
     |
     |2:  // Upvalue is black. Check if new value is collectable and white.
     |  sub RD, LJ_TISGCV
-    |  cmp RD, LJ_TNUMX - LJ_TISGCV			// tvisgcv(v)
+    |  cmp RD, LJ_TISNUM - LJ_TISGCV			// tvisgcv(v)
     |  jbe <1
     |  test byte GCOBJ:RA->gch.marked, LJ_GC_WHITES	// iswhite(v)
     |  jz <1
@@ -5324,7 +5320,8 @@ static void build_ins(BuildCtx *ctx, BCOp op, int defop)
     |  jnz <4
     |  movzx RA, PC_RA
     |  not RAa
-    |  mov LFUNC:KBASE, [BASE+RA*8-8]	// Need to prepare KBASE.
+    |  lea RA, [BASE+RA*8]
+    |  mov LFUNC:KBASE, [RA-8]		// Need to prepare KBASE.
     |  mov KBASE, LFUNC:KBASE->pc
     |  mov KBASE, [KBASE+PC2PROTO(k)]
     |  jmp <4
@@ -6347,12 +6344,12 @@ static void emit_asm_debug(BuildCtx *ctx)
 #if LJ_64
 	  "\t.byte 0xe\n\t.byte 16\n"		/* def_cfa_offset */
 	  "\t.byte 0x86\n\t.byte 0x2\n"		/* offset rbp */
-	  "\t.byte 0xd\n\t.byte 0x6\n"		/* def_cfa_register rbp */
+	  "\t.byte 0xd\n\t.uleb128 0x6\n"	/* def_cfa_register rbp */
 	  "\t.byte 0x83\n\t.byte 0x3\n"		/* offset rbx */
 #else
 	  "\t.byte 0xe\n\t.byte 8\n"		/* def_cfa_offset */
 	  "\t.byte 0x84\n\t.byte 0x2\n"		/* offset ebp (4 for MACH-O)*/
-	  "\t.byte 0xd\n\t.byte 0x4\n"		/* def_cfa_register ebp */
+	  "\t.byte 0xd\n\t.uleb128 0x4\n"	/* def_cfa_register ebp */
 	  "\t.byte 0x83\n\t.byte 0x3\n"		/* offset ebx */
 #endif
 	  "\t.align " BSZPTR "\n"

@@ -1,6 +1,6 @@
 /*
 ** Fast function call recorder.
-** Copyright (C) 2005-2015 Mike Pall. See Copyright Notice in luajit.h
+** Copyright (C) 2005-2013 Mike Pall. See Copyright Notice in luajit.h
 */
 
 #define lj_ffrecord_c
@@ -657,19 +657,20 @@ static void LJ_FASTCALL recff_string_range(jit_State *J, RecordFFData *rd)
       end = argv2int(J, &rd->argv[2]);
     }
   } else {  /* string.byte(str, [,start [,end]]) */
-    if (tref_isnil(J->base[1])) {
-      start = 1;
-      trstart = lj_ir_kint(J, 1);
-    } else {
+    if (!tref_isnil(J->base[1])) {
       start = argv2int(J, &rd->argv[1]);
       trstart = lj_opt_narrow_toint(J, J->base[1]);
-    }
-    if (J->base[1] && !tref_isnil(J->base[2])) {
-      trend = lj_opt_narrow_toint(J, J->base[2]);
-      end = argv2int(J, &rd->argv[2]);
+      trend = J->base[2];
+      if (tref_isnil(trend)) {
+	trend = trstart;
+	end = start;
+      } else {
+	trend = lj_opt_narrow_toint(J, trend);
+	end = argv2int(J, &rd->argv[2]);
+      }
     } else {
-      trend = trstart;
-      end = start;
+      trend = trstart = lj_ir_kint(J, 1);
+      end = start = 1;
     }
   }
   if (end < 0) {
