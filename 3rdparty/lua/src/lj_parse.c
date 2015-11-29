@@ -1,6 +1,6 @@
 /*
 ** Lua parser (source code -> bytecode).
-** Copyright (C) 2005-2013 Mike Pall. See Copyright Notice in luajit.h
+** Copyright (C) 2005-2015 Mike Pall. See Copyright Notice in luajit.h
 **
 ** Major portions taken verbatim or adapted from the Lua interpreter.
 ** Copyright (C) 1994-2008 Lua.org, PUC-Rio. See Copyright Notice in lua.h
@@ -685,10 +685,12 @@ static BCPos bcemit_jmp(FuncState *fs)
   BCPos j = fs->pc - 1;
   BCIns *ip = &fs->bcbase[j].ins;
   fs->jpc = NO_JMP;
-  if ((int32_t)j >= (int32_t)fs->lasttarget && bc_op(*ip) == BC_UCLO)
+  if ((int32_t)j >= (int32_t)fs->lasttarget && bc_op(*ip) == BC_UCLO) {
     setbc_j(ip, NO_JMP);
-  else
+    fs->lasttarget = j+1;
+  } else {
     j = bcemit_AJ(fs, BC_JMP, fs->freereg, NO_JMP);
+  }
   jmp_append(fs, &j, jpc);
   return j;
 }
@@ -1555,7 +1557,9 @@ static void fs_fixup_ret(FuncState *fs)
       switch (bc_op(ins)) {
       case BC_CALLMT: case BC_CALLT:
       case BC_RETM: case BC_RET: case BC_RET0: case BC_RET1:
-	offset = bcemit_INS(fs, ins)-(pc+1)+BCBIAS_J;  /* Copy return ins. */
+	offset = bcemit_INS(fs, ins);  /* Copy original instruction. */
+	fs->bcbase[offset].line = fs->bcbase[pc].line;
+	offset = offset-(pc+1)+BCBIAS_J;
 	if (offset > BCMAX_D)
 	  err_syntax(fs->ls, LJ_ERR_XFIXUP);
 	/* Replace with UCLO plus branch. */

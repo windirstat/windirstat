@@ -1,6 +1,6 @@
 /*
 ** Snapshot handling.
-** Copyright (C) 2005-2013 Mike Pall. See Copyright Notice in luajit.h
+** Copyright (C) 2005-2015 Mike Pall. See Copyright Notice in luajit.h
 */
 
 #define lj_snap_c
@@ -104,8 +104,6 @@ static BCReg snapshot_framelinks(jit_State *J, SnapEntry *map)
     if (frame_islua(frame)) {
       map[f++] = SNAP_MKPC(frame_pc(frame));
       frame = frame_prevl(frame);
-      if (frame + funcproto(frame_func(frame))->framesize > ftop)
-	ftop = frame + funcproto(frame_func(frame))->framesize;
     } else if (frame_iscont(frame)) {
       map[f++] = SNAP_MKFTSZ(frame_ftsz(frame));
       map[f++] = SNAP_MKPC(frame_contpc(frame));
@@ -114,7 +112,10 @@ static BCReg snapshot_framelinks(jit_State *J, SnapEntry *map)
       lua_assert(!frame_isc(frame));
       map[f++] = SNAP_MKFTSZ(frame_ftsz(frame));
       frame = frame_prevd(frame);
+      continue;
     }
+    if (frame + funcproto(frame_func(frame))->framesize > ftop)
+      ftop = frame + funcproto(frame_func(frame))->framesize;
   }
   lua_assert(f == (MSize)(1 + J->framedepth));
   return (BCReg)(ftop - lim);
@@ -708,7 +709,7 @@ static void snap_unsink(jit_State *J, GCtrace *T, ExitState *ex,
 	     ir->o == IR_CNEW || ir->o == IR_CNEWI);
 #if LJ_HASFFI
   if (ir->o == IR_CNEW || ir->o == IR_CNEWI) {
-    CTState *cts = ctype_ctsG(J2G(J));
+    CTState *cts = ctype_cts(J->L);
     CTypeID id = (CTypeID)T->ir[ir->op1].i;
     CTSize sz = lj_ctype_size(cts, id);
     GCcdata *cd = lj_cdata_new(cts, id, sz);
@@ -845,11 +846,14 @@ const BCIns *lj_snap_restore(jit_State *J, void *exptr)
 
   /* Compute current stack top. */
   switch (bc_op(*pc)) {
+  default:
+    if (bc_op(*pc) < BC_FUNCF) {
+      L->top = curr_topL(L);
+      break;
+    }
+    /* fallthrough */
   case BC_CALLM: case BC_CALLMT: case BC_RETM: case BC_TSETM:
     L->top = frame + snap->nslots;
-    break;
-  default:
-    L->top = curr_topL(L);
     break;
   }
   return pc;

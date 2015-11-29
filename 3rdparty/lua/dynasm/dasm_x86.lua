@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 -- DynASM x86/x64 module.
 --
--- Copyright (C) 2005-2013 Mike Pall. All rights reserved.
+-- Copyright (C) 2005-2015 Mike Pall. All rights reserved.
 -- See dynasm.lua for full copyright notice.
 ------------------------------------------------------------------------------
 
@@ -1040,7 +1040,7 @@ local map_op = {
   -- ED: *in Rdw,dx
   -- EE: *out dx,Rb
   -- EF: *out dx,Rdw
-  -- F0: *lock
+  lock_0 =	"F0",
   int1_0 =	"F1",
   repne_0 =	"F2",
   repnz_0 =	"F2",
@@ -1081,6 +1081,9 @@ local map_op = {
   btr_2 =	"mrqdw:0FB3Rm|miqdw:0FBA6mU",
   bts_2 =	"mrqdw:0FABRm|miqdw:0FBA5mU",
 
+  shld_3 =	"mriqdw:0FA4RmU|mrCqdw:0FA5Rm",
+  shrd_3 =	"mriqdw:0FACRmU|mrCqdw:0FADRm",
+
   rdtsc_0 =	"0F31", -- P1+
   cpuid_0 =	"0FA2", -- P1+
 
@@ -1114,6 +1117,9 @@ local map_op = {
   fucompp_0 =	"DAE9",
   fcompp_0 =	"DED9",
 
+  fldenv_1 =	"x.:D94m",
+  fnstenv_1 =	"x.:D96m",
+  fstenv_1 =	"x.:9BD96m",
   fldcw_1 =	"xw:nD95m",
   fstcw_1 =	"xw:n9BD97m",
   fnstcw_1 =	"xw:nD97m",
@@ -1189,6 +1195,8 @@ local map_op = {
   cvttps2dq_2 =	"rmo:F30F5BrM",
   cvttsd2si_2 =	"rr/do:F20F2CrM|rr/qo:|rx/dq:|rxq:",
   cvttss2si_2 =	"rr/do:F30F2CrM|rr/qo:|rxd:|rx/qd:",
+  fxsave_1 =	"x.:0FAE0m",
+  fxrstor_1 =	"x.:0FAE1m",
   ldmxcsr_1 =	"xd:0FAE2m",
   lfence_0 =	"0FAEE8",
   maskmovdqu_2 = "rro:660FF7rM",
@@ -1678,7 +1686,7 @@ if x64 then
   function map_op.mov64_2(params)
     if not params then return { "reg, imm", "reg, [disp]", "[disp], reg" } end
     if secpos+2 > maxsecpos then wflush() end
-    local opcode, op64, sz, rex
+    local opcode, op64, sz, rex, vreg
     local op64 = match(params[1], "^%[%s*(.-)%s*%]$")
     if op64 then
       local a = parseoperand(params[2])
@@ -1699,11 +1707,17 @@ if x64 then
 	  werror("bad operand mode")
 	end
 	op64 = params[2]
-	opcode = 0xb8 + band(a.reg, 7) -- !x64: no VREG support.
+	if a.reg == -1 then
+	  vreg = a.vreg
+	  opcode = 0xb8
+	else
+	  opcode = 0xb8 + band(a.reg, 7)
+	end
 	rex = a.reg > 7 and 9 or 8
       end
     end
     wputop(sz, opcode, rex)
+    if vreg then waction("VREG", vreg); wputxb(0) end
     waction("IMM_D", format("(unsigned int)(%s)", op64))
     waction("IMM_D", format("(unsigned int)((%s)>>32)", op64))
   end

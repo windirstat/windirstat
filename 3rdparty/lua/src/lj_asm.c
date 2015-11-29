@@ -1,6 +1,6 @@
 /*
 ** IR assembler (SSA IR -> machine code).
-** Copyright (C) 2005-2013 Mike Pall. See Copyright Notice in luajit.h
+** Copyright (C) 2005-2015 Mike Pall. See Copyright Notice in luajit.h
 */
 
 #define lj_asm_c
@@ -353,6 +353,7 @@ static Reg ra_rematk(ASMState *as, IRRef ref)
 static int32_t ra_spill(ASMState *as, IRIns *ir)
 {
   int32_t slot = ir->s;
+  lua_assert(ir >= as->ir + REF_TRUE);
   if (!ra_hasspill(slot)) {
     if (irt_is64(ir->t)) {
       slot = as->evenspill;
@@ -1246,16 +1247,18 @@ static void asm_phi_fixup(ASMState *as)
     Reg r = rset_picktop(work);
     IRRef lref = as->phireg[r];
     IRIns *ir = IR(lref);
-    /* Left PHI gained a spill slot before the loop? */
-    if (irt_ismarked(ir->t) && ra_hasspill(ir->s)) {
-      IRRef ren;
-      lj_ir_set(as->J, IRT(IR_RENAME, IRT_NIL), lref, as->loopsnapno);
-      ren = tref_ref(lj_ir_emit(as->J));
-      as->ir = as->T->ir;  /* The IR may have been reallocated. */
-      IR(ren)->r = (uint8_t)r;
-      IR(ren)->s = SPS_NONE;
+    if (irt_ismarked(ir->t)) {
+      irt_clearmark(ir->t);
+      /* Left PHI gained a spill slot before the loop? */
+      if (ra_hasspill(ir->s)) {
+	IRRef ren;
+	lj_ir_set(as->J, IRT(IR_RENAME, IRT_NIL), lref, as->loopsnapno);
+	ren = tref_ref(lj_ir_emit(as->J));
+	as->ir = as->T->ir;  /* The IR may have been reallocated. */
+	IR(ren)->r = (uint8_t)r;
+	IR(ren)->s = SPS_NONE;
+      }
     }
-    irt_clearmark(ir->t);  /* Always clear marker. */
     rset_clear(work, r);
   }
 }
@@ -1370,6 +1373,11 @@ static void asm_head_side(ASMState *as)
   int pass3 = 0;
   IRRef i;
 
+  if (as->snapno && as->topslot > as->parent->topslot) {
+    /* Force snap #0 alloc to prevent register overwrite in stack check. */
+    as->snapno = 0;
+    asm_snap_alloc(as);
+  }
   allow = asm_head_side_base(as, irp, allow);
 
   /* Scan all parent SLOADs and collect register dependencies. */

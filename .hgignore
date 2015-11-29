@@ -24,3 +24,4 @@ wds_release.*.sln
 wdsr*/wds_release_wdsr*.*.vcproj
 windirstat/wds_release.*.vcproj
 build/**
+*.zip
