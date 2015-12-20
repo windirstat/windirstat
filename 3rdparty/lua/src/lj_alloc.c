@@ -177,32 +177,40 @@ static LJ_AINLINE int CALL_MUNMAP(void *ptr, size_t size)
 #if LJ_64
 /* 64 bit mode needs special support for allocating memory in the lower 2GB. */
 
-#if LJ_TARGET_LINUX
+#if defined(MAP_32BIT)
 
+#if defined(__sun__)
+#define MMAP_REGION_START	((uintptr_t)0x1000)
+#else
 /* Actually this only gives us max. 1GB in current Linux kernels. */
+#define MMAP_REGION_START	((uintptr_t)0)
+#endif
+
 static LJ_AINLINE void *CALL_MMAP(size_t size)
 {
   int olderr = errno;
-  void *ptr = mmap(NULL, size, MMAP_PROT, MAP_32BIT|MMAP_FLAGS, -1, 0);
+  void *ptr = mmap((void *)MMAP_REGION_START, size, MMAP_PROT, MAP_32BIT|MMAP_FLAGS, -1, 0);
   errno = olderr;
   return ptr;
 }
 
-#elif LJ_TARGET_OSX || defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__OpenBSD__) || defined(__sun__)
+#elif LJ_TARGET_OSX || LJ_TARGET_PS4 || defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__DragonFly__) || defined(__sun__)
 
 /* OSX and FreeBSD mmap() use a naive first-fit linear search.
 ** That's perfect for us. Except that -pagezero_size must be set for OSX,
 ** otherwise the lower 4GB are blocked. And the 32GB RLIMIT_DATA needs
 ** to be reduced to 250MB on FreeBSD.
 */
-#if LJ_TARGET_OSX
+#if LJ_TARGET_OSX || defined(__DragonFly__)
 #define MMAP_REGION_START	((uintptr_t)0x10000)
+#elif LJ_TARGET_PS4
+#define MMAP_REGION_START	((uintptr_t)0x4000)
 #else
 #define MMAP_REGION_START	((uintptr_t)0x10000000)
 #endif
 #define MMAP_REGION_END		((uintptr_t)0x80000000)
 
-#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
+#if (defined(__FreeBSD__) || defined(__FreeBSD_kernel__)) && !LJ_TARGET_PS4
 #include <sys/resource.h>
 #endif
 
@@ -212,7 +220,7 @@ static LJ_AINLINE void *CALL_MMAP(size_t size)
   /* Hint for next allocation. Doesn't need to be thread-safe. */
   static uintptr_t alloc_hint = MMAP_REGION_START;
   int retry = 0;
-#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
+#if (defined(__FreeBSD__) || defined(__FreeBSD_kernel__)) && !LJ_TARGET_PS4
   static int rlimit_modified = 0;
   if (LJ_UNLIKELY(rlimit_modified == 0)) {
     struct rlimit rlim;
@@ -230,7 +238,7 @@ static LJ_AINLINE void *CALL_MMAP(size_t size)
       return p;
     }
     if (p != CMFAIL) munmap(p, size);
-#ifdef __sun__
+#if defined(__sun__) || defined(__DragonFly__)
     alloc_hint += 0x1000000;  /* Need near-exhaustive linear scan. */
     if (alloc_hint + size < MMAP_REGION_END) continue;
 #endif

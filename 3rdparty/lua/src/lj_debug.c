@@ -1,6 +1,6 @@
 /*
 ** Debugging and introspection.
-** Copyright (C) 2005-2013 Mike Pall. See Copyright Notice in luajit.h
+** Copyright (C) 2005-2015 Mike Pall. See Copyright Notice in luajit.h
 */
 
 #define lj_debug_c
@@ -14,6 +14,7 @@
 #include "lj_state.h"
 #include "lj_frame.h"
 #include "lj_bc.h"
+#include "lj_vm.h"
 #if LJ_HASJIT
 #include "lj_jit.h"
 #endif
@@ -71,19 +72,27 @@ static BCPos debug_framepc(lua_State *L, GCfunc *fn, cTValue *nextframe)
       /* Lua function below errfunc/gc/hook: find cframe to get the PC. */
       void *cf = cframe_raw(L->cframe);
       TValue *f = L->base-1;
-      if (cf == NULL)
-	return NO_BCPOS;
-      while (f > nextframe) {
+      for (;;) {
+	if (cf == NULL)
+	  return NO_BCPOS;
+	while (cframe_nres(cf) < 0) {
+	  if (f >= restorestack(L, -cframe_nres(cf)))
+	    break;
+	  cf = cframe_raw(cframe_prev(cf));
+	  if (cf == NULL)
+	    return NO_BCPOS;
+	}
+	if (f < nextframe)
+	  break;
 	if (frame_islua(f)) {
 	  f = frame_prevl(f);
 	} else {
-	  if (frame_isc(f))
+	  if (frame_isc(f) || (LJ_HASFFI && frame_iscont(f) &&
+			       (f-1)->u32.lo == LJ_CONT_FFI_CALLBACK))
 	    cf = cframe_raw(cframe_prev(cf));
 	  f = frame_prevd(f);
 	}
       }
-      if (cframe_prev(cf))
-	cf = cframe_raw(cframe_prev(cf));
       ins = cframe_pc(cf);
     }
   }
@@ -456,7 +465,7 @@ int lj_debug_getinfo(lua_State *L, const char *what, lj_Debug *ar, int ext)
 	lj_debug_shortname(ar->short_src, name);
 	ar->linedefined = (int)firstline;
 	ar->lastlinedefined = (int)(firstline + pt->numline);
-	ar->what = firstline ? "Lua" : "main";
+	ar->what = (firstline || !pt->numline) ? "Lua" : "main";
       } else {
 	ar->source = "=[C]";
 	ar->short_src[0] = '[';
