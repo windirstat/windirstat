@@ -28,10 +28,12 @@
 #define __WDS_STDAFX_H__
 #pragma once
 
-#if defined(HAVE_WIN7_SDK) && HAVE_WIN7_SDK
+#if (defined(HAVE_WIN7_SDK) && HAVE_WIN7_SDK) || (_MSC_VER >= 1600)
 #   define SUPPORT_W7_TASKBAR 1
 #   define SUPPORT_ELEVATION  1
 #endif // HAVE_WIN7_SDK
+
+#define _WIN32_WINNT _WIN32_WINNT_WINXP
 
 #ifndef VC_EXTRALEAN
 #define VC_EXTRALEAN        // Exclude rarely-used stuff from Windows headers
@@ -62,7 +64,6 @@
 #include <common/mdexceptions.h>
 #include <common/cotaskmem.h>
 #include <common/commonhelpers.h>
-#include <common/platform.h>
 #include <common/tracer.h>
 #include <common/wds_constants.h>
 
