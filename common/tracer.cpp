@@ -3,7 +3,7 @@
 // NOTE: this file is under MIT license as opposed to the project as a whole.
 //
 // WinDirStat - Directory Statistics
-// Copyright (C) 2010 Oliver Schneider (assarbad.net)
+// Copyright (C) 2004-2016 WinDirStat team (windirstat.info)
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 //
-// Author(s): - assarbad -> http://windirstat.info/contact/oliver/
+// Author(s): - oliver   -> http://windirstat.info/contact/oliver/
 //
 
 #ifndef __TRACER_CPP_VER__

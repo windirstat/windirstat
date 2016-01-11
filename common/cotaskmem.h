@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2008, 2011 Oliver Schneider (assarbad.net)
+// Copyright (C) 2004-2016 WinDirStat team (windirstat.info)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
