@@ -5,8 +5,8 @@
 * Copyright © 2003-2005 Bernhard Seifert (bseifert@users.sourceforge.net)
 * Copyright © 2004-2016 WinDirStat team (windirstat.info)
 
-The application itself is distributed under the terms of the [GPL v2](https://bitbucket.org/windirstat/windirstat/raw/tip/windirstat/res/license.txt),
-but parts of the source code are also available under more lenient license terms.
+The application itself is distributed under the terms of the [GPL v2](windirstat/res/license.txt), but parts of the source code are also available
+under more lenient license terms.
 
 The documentation/help is distributed under the terms of the GNU FDL.
 
@@ -77,7 +77,7 @@ addresses by a future release.
 
 ## Logo
 
-![WinDirStat logo](https://bitbucket.org/windirstat/windirstat/raw/tip/common/logo_256px.png)
+![WinDirStat logo](common/logo_256px.png)
 
 The [logo](https://windirstat.info/logo.html) was generously designed and contributed to the project by Robin
 "tuqueque" Marín. Follow him on Twitter [@tuquequeorg](https://twitter.com/tuquequeorg).
