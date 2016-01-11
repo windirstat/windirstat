@@ -22,12 +22,7 @@
 //            - assarbad -> http://windirstat.info/contact/oliver/
 //
 
-#include <afxwin.h> // MFC core and standard components
-#include <atlbase.h> // CComPtr, USES_CONVERSION
-
-#include "mdexceptions.h"
-
-#include "commonhelpers.h"
+#include "stdafx.h"
 
 CString MyStrRetToString(const LPITEMIDLIST pidl, const STRRET *strret)
 {

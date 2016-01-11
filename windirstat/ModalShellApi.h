@@ -40,14 +40,11 @@ class CModalShellApi : public CModalApiShuttle
 public:
     CModalShellApi();
 
-    bool IsRecycleBinApiSupported();
-    void EmptyRecycleBin();
     void DeleteFile(LPCTSTR fileName, bool toRecycleBin);
 
 protected:
     virtual void DoOperation();
 
-    void DoEmptyRecycleBin();
     void DoDeleteFile();
 
     int m_operation;        // Enum specifying the desired operation

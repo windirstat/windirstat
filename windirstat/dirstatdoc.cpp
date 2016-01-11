@@ -156,9 +156,9 @@ void CDirstatDoc::DecodeSelection(CString s, CString& folder, CStringArray& driv
 
     if(sa.GetSize() > 1)
     {
-        for(int i = 0; i < sa.GetSize(); i++)
+        for(int j = 0; j < sa.GetSize(); j++)
         {
-            CString d = sa[i];
+            CString d = sa[j];
             ASSERT(2 == d.GetLength());
             ASSERT(wds::chrColon == d[1]);
 
@@ -1138,7 +1138,6 @@ BEGIN_MESSAGE_MAP(CDirstatDoc, CDocument)
     ON_COMMAND(ID_REFRESHALL, OnRefreshall)
     ON_UPDATE_COMMAND_UI(ID_EDIT_COPY, OnUpdateEditCopy)
     ON_COMMAND(ID_EDIT_COPY, OnEditCopy)
-    ON_COMMAND(ID_CLEANUP_EMPTYRECYCLEBIN, OnCleanupEmptyrecyclebin)
     ON_UPDATE_COMMAND_UI(ID_VIEW_SHOWFREESPACE, OnUpdateViewShowfreespace)
     ON_COMMAND(ID_VIEW_SHOWFREESPACE, OnViewShowfreespace)
     ON_UPDATE_COMMAND_UI(ID_VIEW_SHOWUNKNOWN, OnUpdateViewShowunknown)
@@ -1225,15 +1224,6 @@ void CDirstatDoc::OnEditCopy()
 
     // FIXME: Need to fix the clipboard code!!!
     AfxMessageBox(paths);
-}
-
-void CDirstatDoc::OnCleanupEmptyrecyclebin()
-{
-    CModalShellApi msa;
-    msa.EmptyRecycleBin();
-
-    RefreshRecyclers();
-    UpdateAllViews(NULL);
 }
 
 void CDirstatDoc::OnUpdateViewShowfreespace(CCmdUI *pCmdUI)

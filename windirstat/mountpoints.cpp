@@ -161,9 +161,9 @@ void CReparsePoints::GetAllMountPoints()
             uniquePath += point;
             TCHAR mountedVolume[_MAX_PATH];
 
-            BOOL b = ::GetVolumeNameForVolumeMountPoint(uniquePath, mountedVolume, countof(mountedVolume));
+            const BOOL bGotMountPoints = ::GetVolumeNameForVolumeMountPoint(uniquePath, mountedVolume, countof(mountedVolume));
 
-            if(!b)
+            if(!bGotMountPoints)
             {
                 VTRACE(_T("GetVolumeNameForVolumeMountPoint(%s) failed (%d)."), uniquePath.GetBuffer(), ::GetLastError());
                 continue;
@@ -190,9 +190,9 @@ void CReparsePoints::GetAllMountPoints()
     POSITION pos = m_volume.GetStartPosition();
     while(pos != NULL)
     {
-        CString volume;
+        CString lvolume;
         PointVolumeArray *pva = NULL;
-        m_volume.GetNextAssoc(pos, volume, pva);
+        m_volume.GetNextAssoc(pos, lvolume, pva);
         pva->AssertValid();
     }
 #endif

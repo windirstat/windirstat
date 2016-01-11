@@ -714,14 +714,14 @@ BOOL COwnerDrawnListControl::OnEraseBkgnd(CDC* pDC)
         fill.bottom = top + GetRowHeight() - gridWidth;
 
         int left = 0;
-        for(int i = 0; i < vertical.GetSize(); i++)
+        for(int j = 0; j < vertical.GetSize(); j++)
         {
             fill.left = left;
-            fill.right = vertical[i] - gridWidth;
+            fill.right = vertical[j] - gridWidth;
 
             pDC->FillSolidRect(fill, bgcolor);
 
-            left = vertical[i];
+            left = vertical[j];
         }
         fill.left = left;
         fill.right = rcClient.right;

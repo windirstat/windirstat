@@ -104,9 +104,9 @@ void CLayout::OnDestroy()
 
 void CLayout::OnSize()
 {
-    CRect rc;
-    m_dialog->GetWindowRect(rc);
-    CSize newDialogSize = rc.Size();
+    CRect wrc;
+    m_dialog->GetWindowRect(wrc);
+    CSize newDialogSize = wrc.Size();
 
     CSize diff = newDialogSize - m_originalDialogSize;
 

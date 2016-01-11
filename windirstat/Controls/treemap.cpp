@@ -100,23 +100,23 @@ void CColorSpace::NormalizeColor(int& red, int& green, int& blue)
 
 void CColorSpace::DistributeFirst(int& first, int& second, int& third)
 {
-    int h = (first - 255) / 2;
+    const int h = (first - 255) / 2;
     first = 255;
     second += h;
     third += h;
 
     if(second > 255)
     {
-        int h = second - 255;
+        const int j = second - 255;
         second = 255;
-        third += h;
+        third += j;
         WEAK_ASSERT(third <= 255);
     }
     else if(third > 255)
     {
-        int h = third - 255;
+        const int j = third - 255;
         third = 255;
-        second += h;
+        second += j;
         WEAK_ASSERT(second <= 255);
     }
 }
@@ -830,9 +830,9 @@ double CTreemap::KDirStat_CalcutateNextRow(Item *parent, const int nextChild, do
         // Rectangle(childSize) = childWidth * virtualRowHeight
         // Rectangle(childSize) = childSize / mySize * width
 
-        double childWidth = childSize / mySize * width / virtualRowHeight;
+        double childWidth_ = childSize / mySize * width / virtualRowHeight;
 
-        if(childWidth / virtualRowHeight < _minProportion)
+        if(childWidth_ / virtualRowHeight < _minProportion)
         {
             WEAK_ASSERT(i > nextChild); // because width >= 1 and _minProportion < 1.
             // For the first child we have:

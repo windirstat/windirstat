@@ -34,21 +34,13 @@ namespace
 {
     enum
     {
-        EMPTY_RECYCLE_BIN,
-        DELETE_FILE
+        DELETE_FILE = 1
     };
 }
 
 
 CModalShellApi::CModalShellApi()
 {
-}
-
-void CModalShellApi::EmptyRecycleBin()
-{
-    m_operation = EMPTY_RECYCLE_BIN;
-
-    DoModal();
 }
 
 void CModalShellApi::DeleteFile(LPCTSTR fileName, bool toRecycleBin)
@@ -64,26 +56,11 @@ void CModalShellApi::DoOperation()
 {
     switch (m_operation)
     {
-    case EMPTY_RECYCLE_BIN:
-        {
-            DoEmptyRecycleBin();
-        }
-        break;
-
     case DELETE_FILE:
         {
             DoDeleteFile();
         }
         break;
-    }
-}
-
-void CModalShellApi::DoEmptyRecycleBin()
-{
-    HRESULT hr = ::SHEmptyRecycleBin(*AfxGetMainWnd(), NULL, 0);
-    if(FAILED(hr))
-    {
-        AfxMessageBox(MdGetWinErrorText(hr));
     }
 }
 

@@ -193,7 +193,6 @@ protected:
     afx_msg void OnRefreshall();
     afx_msg void OnUpdateEditCopy(CCmdUI *pCmdUI);
     afx_msg void OnEditCopy();
-    afx_msg void OnCleanupEmptyrecyclebin();
     afx_msg void OnUpdateViewShowfreespace(CCmdUI *pCmdUI);
     afx_msg void OnViewShowfreespace();
     afx_msg void OnUpdateViewShowunknown(CCmdUI *pCmdUI);
