@@ -1,51 +1,37 @@
-Project creator, initial author
--------------------------------
+# Project creator and original author
 
-- Bernhard Seifert
+* Bernhard Seifert
 
-Direct contributors
--------------------
+# Direct contributors
 
-- Falco Peijnenburg
-  * Performance improvments to the treemap rendering
+* Falco Peijnenburg
+    * Performance improvments to the treemap rendering
+* Morten Asscheman
+    * Performance improvments to the treemap rendering
+* Sandeep Mirchandani
+    * fixups to get the `default` branch into shape again
+* Oliver Schneider
+    * maintainer
+* Chris Wimmer
+    * UAC handling ("run elevated")
 
-- Morten Asscheman
-  * Performance improvments to the treemap rendering
-  
-- Sandeep Mirchandani
-  * fixups to get the `default` branch into shape again
+# Contributors of third party code
 
-- Oliver Schneider
-  * maintainer
+* Lua authors
+    * Lua
+* Doug Currie
+    * `%s/format` patch for Lua
+* Asko Kauppi
+    * LNUM patch
+* Jas Latrix
+    * lua-winreg
+* Mike Pall
+    * LuaJIT 2.x
+* Jason Perkins
+    * Premake4 and Lua functions from Premake4 as additions for WDS
+* Brodie Thiesfield
+    * SimpleIni.h
 
-- Chris Wimmer
-  * UAC handling
-
-Contributors of third party code
---------------------------------
-
-- Lua authors
-  * Lua
- 
-
-- Doug Currie
-  * `%s/format` patch for Lua
-
-- Asko Kauppi
-  * LNUM patch
-
-- Jas Latrix
-  * lua-winreg
-
-- Mike Pall
-  * LuaJIT 2.x
-
-- Jason Perkins
-  * Premake4 and Lua functions from Premake4 as additions for WDS
- 
-- Brodie Thiesfield
-  * SimpleIni.h
-  
-Translators
+# Translators
 
 [TODO]
