@@ -5,7 +5,6 @@ TPAGEFLAG:=--pre_chomp --post_chomp --trim --include_path=templates/include
 AUTOMENU:=templates/include/automenu.inc
 STYLESHEET:=templates/include/styles.css
 
-.PHONY: all
 all: $(HTMLPAGES)
 
 $(AUTOMENU): $(TEMPLATES)
@@ -15,6 +14,9 @@ $(AUTOMENU): $(TEMPLATES)
 	-@echo "$< --> $@"
 	tpage $(TPAGEFLAG) $< > $@
 
-.PHONY: clean
 clean:
 	rm -f $(HTMLPAGES) $(AUTOMENU)
+rebuild: clean all
+
+.PHONY: all clean rebuild
+.NOTPARALLEL: clean rebuild

@@ -41,6 +41,14 @@ pages = [
  }
 
  {
+   fname = 'permalink.html'
+   title = 'Permanent Links'
+   description = 'Permalinks to downloads and other content'
+   uuid = '24719a1c-e784-454d-9a05-4bbf82e53cb5'
+   norder = '3000'
+ }
+
+ {
    fname = 'translations.html'
    title = 'Translation Project'
    description = 'Translations of WinDirStat'
