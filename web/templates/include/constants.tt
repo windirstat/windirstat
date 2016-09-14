@@ -23,8 +23,8 @@
     ]
   revisit = '5 days'
   currver = '1.1.2'
-  download_FH   = 'http://www.fosshub.com/WinDirStat.html'
-  download_SF   = 'http://prdownloads.sourceforge.net/windirstat/windirstat1_1_2_setup.exe'
+  download_FH   = 'https://www.fosshub.com/WinDirStat.html'
+  download_SF   = 'https://prdownloads.sourceforge.net/windirstat/windirstat1_1_2_setup.exe'
   download_MD5  = '3abf1c149873e25d4e266225fbf37cbf'
   download_SHA1 = '6fa92dd2ca691c11dfbfc0a239e34369897a7fab'
   fname_setup   = 'wds_current_setup.exe'
@@ -36,4 +36,5 @@
   dlbase_M1     = 'http://download01.windirstat.info'
   gpg_search_fmt= 'http://pgp.mit.edu:11371/pks/lookup?search=%s&amp;op=index'
   tracker_url   = 'https://bitbucket.org/windirstat/windirstat/issues'
+  long_desc     = 'Windows Directory Statistics cleanup tool'
 %]

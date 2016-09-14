@@ -8,6 +8,10 @@
   <meta name="robots" content="index" />
   <meta name="revisit-after" content="[%- revisit -%]" />
   <meta name="description" content="[%- description | html -%]" />
+  <meta property="og:title" content="WinDirStat" />
+  <meta property="og:description" content="[%- long_desc | html -%]" />
+  <meta property="og:image" content="images/wds_rich_preview.png" />
+  <link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
 [%  FOREACH kw IN keywords %]
   <meta name="keywords" content="[%- kw.cont | html -%]" lang="[%- kw.lang | html -%]" />
 
