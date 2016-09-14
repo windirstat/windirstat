@@ -9,7 +9,7 @@ syntax: glob
 intermediate/*
 *.opensdf
 *.wdslng
-*.png
+#*.png
 Backup *
 sandbox/luaconf/Debug/**
 sandbox/luaconf/Release/**
