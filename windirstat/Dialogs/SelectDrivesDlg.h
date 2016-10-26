@@ -25,6 +25,7 @@
 
 #include "ownerdrawnlistcontrol.h"
 #include "layout.h"
+#include "resource.h"
 
 //
 // The dialog has these three radio buttons.

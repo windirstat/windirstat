@@ -25,6 +25,7 @@
 
 #include "selectdrivesdlg.h"
 #include <common/wds_constants.h>
+#include "options.h"
 
 class CItem;
 
