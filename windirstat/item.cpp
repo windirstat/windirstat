@@ -1120,10 +1120,6 @@ void CItem::DoSomeWork(DWORD ticks)
 //             if(filesFolder != NULL)
 //             {
                 this->UpwardAddFiles(fileCount);
-                if(dirCount > 0 && fileCount > 0)
-                {
-                    this->SetDone();
-                }
 //             }
 
             UpwardAddSubdirs(dirCount);
@@ -1143,10 +1139,6 @@ void CItem::DoSomeWork(DWORD ticks)
     }
     if(GetType() == IT_DRIVE || GetType() == IT_DIRECTORY || GetType() == IT_MYCOMPUTER)
     {
-
-	// <HACK!  IsDone() is set after first pass with no decend into dirs
-        UpwardSetUndone();
-	// HACK>
 
         ASSERT(IsReadJobDone());
         if(IsDone())
