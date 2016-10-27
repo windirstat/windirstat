@@ -29,6 +29,8 @@
 #include "FileFindWDS.h" // CFileFindWDS
 #include <common/wds_constants.h>
 
+class CWorkLimiter;
+
 // Columns
 enum
 {
@@ -184,7 +186,7 @@ public:
     void SetDone();
     DWORD GetTicksWorked() const;
     void AddTicksWorked(DWORD more);
-    void DoSomeWork(DWORD ticks);
+    void DoSomeWork(CWorkLimiter* limiter);
     bool StartRefresh();
     void UpwardSetUndone();
     void RefreshRecycler();

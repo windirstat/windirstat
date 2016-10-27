@@ -29,6 +29,7 @@
 #include "dirstatdoc.h"
 #include "graphview.h"
 #include "osspecific.h"
+#include "WorkLimiter.h"
 #include <Dbghelp.h> // for mini dumps
 
 #ifdef _DEBUG
@@ -737,7 +738,9 @@ BOOL CDirstatApp::OnIdle(LONG lCount)
     bool more = false;
 
     CDirstatDoc *doc = GetDocument();
-    if((doc) && (!doc->Work(600)))
+	CWorkLimiter limiter;
+	limiter.Start(600);
+    if((doc) && (!doc->Work(&limiter)))
     {
         more = true;
     }

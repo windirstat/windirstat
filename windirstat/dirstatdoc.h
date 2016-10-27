@@ -28,6 +28,7 @@
 #include "options.h"
 
 class CItem;
+class CWorkLimiter;
 
 //
 // The treemap colors as calculated in CDirstatDoc::SetExtensionColors()
@@ -107,7 +108,7 @@ public:
     ULONGLONG GetRootSize();
 
     void ForgetItemTree();
-    bool Work(DWORD ticks); // return: true if done.
+    bool Work(CWorkLimiter* limiter); // return: true if done.
     bool IsDrive(CString spec);
     void RefreshMountPointItems();
     void RefreshJunctionItems();

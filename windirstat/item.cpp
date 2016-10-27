@@ -24,6 +24,7 @@
 #include "dirstatdoc.h" // GetItemColor()
 #include "mainframe.h"
 #include "item.h"
+#include "WorkLimiter.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -1043,18 +1044,22 @@ void CItem::AddTicksWorked(DWORD more)
     m_ticksWorked += more;
 }
 
-void CItem::DoSomeWork(DWORD ticks)
+void CItem::DoSomeWork(CWorkLimiter* limiter)
 {
     if(IsDone())
     {
         return;
     }
+	if (limiter->IsDone())
+	{
+		return;
+	}
 
     StartPacman(true);
 
     DriveVisualUpdateDuringWork();
 
-    DWORD start = ::GetTickCount();
+    const DWORD start = ::GetTickCount();
 
     if(GetType() == IT_DRIVE || GetType() == IT_DIRECTORY)
     {
@@ -1131,7 +1136,7 @@ void CItem::DoSomeWork(DWORD ticks)
             UpdateFreeSpaceItem();
         }
 
-        if(::GetTickCount() - start > ticks)
+        if(limiter->IsDone())
         {
             StartPacman(false);
             return;
@@ -1154,7 +1159,7 @@ void CItem::DoSomeWork(DWORD ticks)
         }
 
         DWORD startChildren = ::GetTickCount();
-        while(::GetTickCount() - start < ticks)
+        while(!limiter->IsDone())
         {
             DWORD minticks = UINT_MAX;
             CItem *minchild = NULL;
@@ -1176,10 +1181,9 @@ void CItem::DoSomeWork(DWORD ticks)
                 SetDone();
                 break;
             }
-            DWORD tickssofar = ::GetTickCount() - start;
-            if(ticks > tickssofar)
+			if (!limiter->IsDone())
             {
-                minchild->DoSomeWork(ticks - tickssofar);
+                minchild->DoSomeWork(limiter);
             }
         }
         AddTicksWorked(::GetTickCount() - startChildren);

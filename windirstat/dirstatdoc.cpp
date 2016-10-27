@@ -358,7 +358,7 @@ void CDirstatDoc::ForgetItemTree()
 // This method does some work for ticks ms.
 // return: true if done or suspended.
 //
-bool CDirstatDoc::Work(DWORD ticks)
+bool CDirstatDoc::Work(CWorkLimiter* limiter)
 {
     if(NULL == m_rootItem)
     {
@@ -372,7 +372,7 @@ bool CDirstatDoc::Work(DWORD ticks)
 
     if(!m_rootItem->IsDone())
     {
-        m_rootItem->DoSomeWork(ticks);
+        m_rootItem->DoSomeWork(limiter);
         if(m_rootItem->IsDone())
         {
             m_extensionDataValid = false;
