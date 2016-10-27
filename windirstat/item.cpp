@@ -1050,10 +1050,6 @@ void CItem::DoSomeWork(CWorkLimiter* limiter)
     {
         return;
     }
-	if (limiter->IsDone())
-	{
-		return;
-	}
 
     StartPacman(true);
 
@@ -1371,8 +1367,12 @@ bool CItem::StartRefresh()
             CreateUnknownItem();
         }
     }
-
-    DoSomeWork(0);
+	
+	{
+		CWorkLimiter limiter;
+		limiter.Start(0);
+		DoSomeWork(&limiter);
+	}
 
     if(wasExpanded)
     {
