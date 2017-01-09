@@ -209,7 +209,7 @@ solution (iif(release, slnname, "windirstat"))
         targetdir       (iif(release, slnname, "build"))
         includedirs     {".", "windirstat", "common", "windirstat/Controls", "windirstat/Dialogs", "3rdparty/lua/src"}
         objdir          (int_dir)
-        libdirs         {"$(IntDir)"}
+        -- libdirs         {"$(IntDir)"} FIXME!
         links           {"htmlhelp", "psapi", "delayimp", pfx.."luajit2"}
         resoptions      {"/nologo", "/l409"}
         resincludedirs  {".", "$(IntDir)"}

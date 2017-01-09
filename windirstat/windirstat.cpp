@@ -688,7 +688,7 @@ void CDirstatApp::OnRunElevated()
     shellInfo.cbSize = sizeof(shellInfo);
     shellInfo.fMask = SEE_MASK_DEFAULT;
     shellInfo.lpFile = sAppName;
-    shellInfo.lpVerb = L"runas"; //DO NOT LOCALIZE
+    shellInfo.lpVerb = _T("runas"); //DO NOT LOCALIZE
     shellInfo.nShow = SW_NORMAL;
 
 
@@ -738,8 +738,8 @@ BOOL CDirstatApp::OnIdle(LONG lCount)
     bool more = false;
 
     CDirstatDoc *doc = GetDocument();
-	CWorkLimiter limiter;
-	limiter.Start(600);
+    CWorkLimiter limiter;
+    limiter.Start(600);
     if((doc) && (!doc->Work(&limiter)))
     {
         more = true;
