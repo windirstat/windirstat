@@ -78,6 +78,7 @@ namespace
     const LPCTSTR entryLightSourceY         = _T("lightSourceY");
     const LPCTSTR entryFollowMountPoints    = _T("followMountPoints");
     const LPCTSTR entryFollowJunctionPoints = _T("followJunctionPoints");
+    const LPCTSTR entrySkipHidden           = _T("skipHidden");
     const LPCTSTR entryUseWdsLocale         = _T("useWdsLocale");
 
     const LPCTSTR sectionUserDefinedCleanupD= _T("options\\userDefinedCleanup%02d");
@@ -813,6 +814,19 @@ void COptions::SetUseWdsLocale(bool use)
     }
 }
 
+bool COptions::IsSkipHidden()
+{
+    return m_skipHidden;
+}
+
+void COptions::SetSkipHidden(bool skip)
+{
+    if(m_skipHidden != skip)
+    {
+        m_skipHidden = skip;
+    }
+}
+
 CString COptions::GetReportSubject()
 {
     return m_reportSubject;
@@ -877,6 +891,7 @@ void COptions::SaveToRegistry()
         setProfileInt(sectionOptions, entry, m_treelistColor[i]);
     }
     getProfileBool(sectionOptions, entryHumanFormat, m_humanFormat);
+    setProfileBool(sectionOptions, entrySkipHidden, m_skipHidden);
     getProfileBool(sectionOptions, entryPacmanAnimation, m_pacmanAnimation);
     getProfileBool(sectionOptions, entryShowTimeSpent, m_showTimeSpent);
     setProfileInt(sectionOptions, entryTreemapHighlightColor, m_treemapHighlightColor);
@@ -950,6 +965,7 @@ void COptions::LoadFromRegistry()
         m_treelistColor[i]= getProfileInt(sectionOptions, entry, treelistColorDefault[i]);
     }
     m_humanFormat = getProfileBool(sectionOptions, entryHumanFormat, true);
+    m_skipHidden = getProfileBool(sectionOptions, entrySkipHidden, false);
     m_pacmanAnimation = getProfileBool(sectionOptions, entryPacmanAnimation, false);
     m_showTimeSpent = getProfileBool(sectionOptions, entryShowTimeSpent, false);
     m_treemapHighlightColor = getProfileInt(sectionOptions, entryTreemapHighlightColor, RGB(255,255,255));

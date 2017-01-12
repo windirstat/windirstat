@@ -1078,6 +1078,10 @@ void CItem::DoSomeWork(CWorkLimiter* limiter)
                 {
                     continue;
                 }
+                if(GetOptions()->IsSkipHidden() && finder.IsHidden())
+                {
+                    continue;
+                }
                 if(finder.IsDirectory())
                 {
                     dirCount++;

@@ -1,6 +1,6 @@
 //{{NO_DEPENDENCIES}}
-// Microsoft Visual C++ generated include file.
-// Used by windirstat.rc
+// Fichier Include généré de Microsoft Visual C++.
+// Utilisé par windirstat.rc
 //
 #define IDD_ABOUTBOX                    100
 #define ID_VIEW_ARRANGE                 127
@@ -142,6 +142,8 @@
 #define IDC_SHOWSTRIPES                 1030
 #define IDC_SHOWGRID3                   1031
 #define IDC_FULLROWSELECTION            1031
+#define IDC_HUMANFORMAT2                1032
+#define IDC_SKIPHIDDEN                  1032
 #define IDC_RESET                       1034
 #define IDC_LIST                        1036
 #define IDC_TITLE                       1037

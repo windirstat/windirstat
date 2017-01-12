@@ -14,13 +14,11 @@
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
-// English (U.S.) resources
+// Anglais (États-Unis) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
-#ifdef _WIN32
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 #pragma code_page(1252)
-#endif //_WIN32
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -82,7 +80,7 @@ IDB_JUNCTIONPOINT       BITMAP                  "res\\junctionpoint.bmp"
 // Toolbar
 //
 
-IDR_MAINFRAME TOOLBAR  16, 15
+IDR_MAINFRAME TOOLBAR 16, 15
 BEGIN
     BUTTON      ID_FILE_OPEN
     BUTTON      ID_REFRESHALL
@@ -110,7 +108,7 @@ END
 // Menu
 //
 
-IDR_MAINFRAME MENU 
+IDR_MAINFRAME MENU
 BEGIN
     POPUP "&File"
     BEGIN
@@ -176,7 +174,7 @@ BEGIN
     END
 END
 
-IDR_POPUPLIST MENU 
+IDR_POPUPLIST MENU
 BEGIN
     POPUP "POPUP_LIST"
     BEGIN
@@ -197,7 +195,7 @@ BEGIN
     END
 END
 
-IDR_POPUPGRAPH MENU 
+IDR_POPUPGRAPH MENU
 BEGIN
     POPUP "POPUP_GRAPH"
     BEGIN
@@ -220,7 +218,7 @@ END
 // Accelerator
 //
 
-IDR_MAINFRAME ACCELERATORS 
+IDR_MAINFRAME ACCELERATORS
 BEGIN
     VK_DELETE,      ID_CLEANUP_DELETE,      VIRTKEY, SHIFT, NOINVERT
     VK_DELETE,      ID_CLEANUP_DELETETOTRASHBIN, VIRTKEY, NOINVERT
@@ -391,7 +389,7 @@ BEGIN
     LTEXT           "Static",IDC_PREVIEW,7,7,211,124
 END
 
-IDD_PAGE_GENERAL DIALOGEX 0, 0, 380, 202
+IDD_PAGE_GENERAL DIALOGEX 0, 0, 381, 218
 STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | WS_SYSMENU
 CAPTION "General"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
@@ -402,15 +400,17 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,27,229,10
     CONTROL         "&Show Sizes in GB/MB/kB/Bytes Format",IDC_HUMANFORMAT,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,41,229,10
-    GROUPBOX        "&List Style",IDC_STATIC,30,61,90,65
-    CONTROL         "&Full Row Selection",IDC_FULLROWSELECTION,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,38,76,75,10
-    CONTROL         "Show &Grid",IDC_SHOWGRID,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,38,93,68,10
-    CONTROL         "Show S&tripes",IDC_SHOWSTRIPES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,38,110,68,10
-    LTEXT           "&Language",IDC_STATIC,32,139,166,8
-    COMBOBOX        IDC_COMBO,32,152,156,140,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "&List Style",IDC_STATIC,30,71,90,65
+    CONTROL         "&Full Row Selection",IDC_FULLROWSELECTION,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,38,86,75,10
+    CONTROL         "Show &Grid",IDC_SHOWGRID,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,38,103,68,10
+    CONTROL         "Show S&tripes",IDC_SHOWSTRIPES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,38,120,68,10
+    LTEXT           "&Language",IDC_STATIC,32,149,166,8
+    COMBOBOX        IDC_COMBO,32,162,156,140,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
     CONTROL         "&Use this language for date/time and number formatting",IDC_USEWDSLOCALE,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,172,298,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,182,298,10
+    CONTROL         "&Skip Hidden",IDC_SKIPHIDDEN,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,55,229,10
 END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -418,7 +418,7 @@ END
 //
 
 #ifdef APSTUDIO_INVOKED
-GUIDELINES DESIGNINFO 
+GUIDELINES DESIGNINFO
 BEGIN
     IDD_ABOUTBOX, DIALOG
     BEGIN
@@ -479,9 +479,9 @@ BEGIN
     IDD_PAGE_GENERAL, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 373
+        RIGHTMARGIN, 374
         TOPMARGIN, 7
-        BOTTOMMARGIN, 195
+        BOTTOMMARGIN, 211
     END
 END
 #endif    // APSTUDIO_INVOKED
@@ -506,7 +506,7 @@ IDC_HANDCURSOR          CURSOR                  "res\\linkhand.cur"
 // String Table
 //
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     IDR_MAINFRAME           "WinDirStat\n\nWinDirStat\n\n\n\n"
     IDS_QUERYING            "(querying...)"
@@ -514,13 +514,13 @@ BEGIN
     IDS_TREECOL_ATTRIBUTES  "Attributes"
 END
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     AFX_IDS_APP_TITLE       "WinDirStat"
     AFX_IDS_IDLEMESSAGE     "Ready"
 END
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     ID_INDICATOR_EXT        "EXT"
     ID_INDICATOR_CAPS       "CAP"
@@ -531,29 +531,29 @@ BEGIN
     ID_INDICATOR_MEMORYUSAGE "RAM Usage: 123.456.789"
 END
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     ID_FILE_OPEN            "Opens a Collection of Drives.\nOpen"
 END
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     ID_APP_ABOUT            "Shows Program, Version, and Copyright Information.\nInfo"
     ID_APP_EXIT             "Quits the Application.\nQuit"
 END
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     ID_EDIT_COPY            "Copies the Selected Path into the Clipboard.\nCopy Path"
 END
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     ID_VIEW_TOOLBAR         "Shows/hides the Toolbar\nToolbar"
     ID_VIEW_STATUS_BAR      "Shows/hides the Statusbar.\nStatusbar"
 END
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     AFX_IDS_SCSIZE          "Change the window size"
     AFX_IDS_SCMOVE          "Change the window position"
@@ -562,13 +562,13 @@ BEGIN
     AFX_IDS_SCCLOSE         "Close the application"
 END
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     AFX_IDS_SCRESTORE       "Restore the window to normal size"
     AFX_IDS_SCTASKLIST      "Activate Task List"
 END
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     ID_FILE_REFRESHALL      "Re-Reads the Whole Tree"
     ID_CLEANUP_OPENINEXPLORER 
@@ -576,7 +576,7 @@ BEGIN
     ID_TREEMAP_ZOOMIN       "Enlarges the Treemap.\nZoom in"
 END
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     ID_FILE_REFRESHSELECTED "Re-Reads the Selected Subtree"
     ID_CLEANUP_OPENINCONSOLE 
@@ -588,7 +588,7 @@ BEGIN
     ID_HELP_MANUAL          "Opens the WinDirStat Online Help\nManual"
 END
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     ID_TREEMAP_ZOOMOUT      "Reduces the Treemap.\nZoom out"
     ID_TREEMAP_SELECTPARENT "Selects the Current Item's Parent.\nSelect Parent"
@@ -598,7 +598,7 @@ BEGIN
     ID_HELP_REPORTBUG       "Composes a Bug/Feedback Mail.\nReport Bug/Feedback"
 END
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     ID_REFRESHALL           "Rescans the whole directory tree.\nRefresh All"
     ID_REFRESHSELECTED      "Rescans the selected subtree.\nRefresh Selected"
@@ -607,30 +607,30 @@ BEGIN
     ID_VIEW_SHOWUNKNOWN     "Shows/hides the <Unknown> Item.\nShow Unknown"
 END
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     ID_DUMMY_USERDEFINEDCLEANUP 
                             "Calls up User definied Cleanup #0\nUser defined Cleanup"
 END
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     ID_SENDMAILTOOWNER      "Composes an e-mail report on the currently selected item.\nSend Mail"
 END
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     ID_VIEW_SHOWFILETYPES   "Shows/hides the Extension List.\nShow File Types"
 END
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     ID_TREEMAP_RESELECTCHILD "Re-selects the child.\nReselect Child"
     ID_CLEANUP_OPEN         "Opens the selected item.\r\nOpen Item"
     ID_CLEANUP_PROPERTIES   "Show the properties of the selected item.\r\nShow Properties"
 END
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     IDS_ABOUT_ABOUTTEXTss   "\r\nWinDirStat - Directory Statistics\r\n\r\n""Shows where all your disk space has gone\r\nand helps you clean it up.""\r\n\r\nRe-programmed for MS Windows by\r\nBernhard Seifert (mailto:%1!s!),\r\n\r\nbased on Stefan Hundhammer's KDE (Linux) program KDirStat\r\n(http://kdirstat.sourceforge.net/).\r\n\r\nWinDirStat's home is http://%2!s!/\r\n\r\nCopyright (c) 2003-2014 The authors of WinDirStat"
     IDS_ABOUT_THANKSTOTEXT  "\r\nStefan Hundhammer for his superb Linux tool KDirStat.\r\nUsing KDirStat (2.3.7) as a specification saved me a lot of time.\r\nhttp://kdirstat.sourceforge.net/\r\n\r\nThe authors of SequoiaView for showing just how useful treemaps really can be.\r\nhttp://www.win.tue.nl/sequoiaview/\r\n\r\nJarke J. van Wijk, Huub van de Wetering, Mark Bruls and Kees Huizing\r\nfor their papers about cushion treemaps and squarified treemaps.\r\nhttp://www.win.tue.nl/~vanwijk/\r\n\r\nBen Shneiderman for his ingenious idea of treemaps -\r\na truly intuitive way of visualizing tree contents.\r\nhttp://www.cs.umd.edu/hcil/treemap-history/\r\n\r\nMy colleagues for their feedback on the early releases of WinDirStat.\r\nhttp://www.daccord.net/\r\n\r\nBeatrix Lödige and Nick Lines for beta testing.\r\n"
@@ -642,7 +642,7 @@ BEGIN
     IDS_RUDC_CONFIRMATIONss "You are going to call the recursive user defined cleanup\r\n'%1!s!'\r\n\r\non '%2!s!'.\r\n\r\nContinue?"
 END
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     IDS_RESETTODEFAULTS     "&Reset to Defaults"
     IDS_BACKTOUSERSETTINGS  "Back to &User Settings"
@@ -654,7 +654,7 @@ BEGIN
     IDS_ABOUT_AUTHORSTEXTs  "=== Programmers ===\r\n\r\n%1!s!\r\n\r\n\r\n=== Translators ===\r\n\r\n"
 END
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     IDS_THEDIRECTORYsDOESNOTEXIST "The directory '%1!s!' doesn't exist."
     IDS_THEFILEsDOESNOTEXIST "The file '%1!s!' doesn't exist."
@@ -677,7 +677,7 @@ BEGIN
     IDS_UNKNOWN_ITEM        "<Unknown>"
 END
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     IDS_FILES_ITEM          "<Files>"
     IDS_ONEREADJOB          "[1 Read Job]"
@@ -697,7 +697,7 @@ BEGIN
     IDS_POLICY_NOREFRESH    "No refresh"
 END
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     IDS_POLICY_REFRESHTHISENTRY "Refresh this entry"
     IDS_POLICY_REFRESHPARENT "Refresh this entry's parent"
@@ -711,7 +711,7 @@ BEGIN
     IDS_SELECTFOLDER        "WinDirStat - Select Folder"
 END
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     IDS_EXTCOL_EXTENSION    "Extension"
     IDS_EXTCOL_COLOR        "Color"
@@ -732,7 +732,7 @@ BEGIN
     IDS_BACKTO_USERSETTINGS "Back to\r\n&User Settings"
 END
 
-#endif    // English (U.S.) resources
+#endif    // Anglais (États-Unis) resources
 /////////////////////////////////////////////////////////////////////////////
 
 
