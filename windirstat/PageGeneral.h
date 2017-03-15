@@ -51,10 +51,12 @@ protected:
     BOOL m_listGrid;
     BOOL m_listStripes;
     BOOL m_listFullRowSelection;
+    BOOL m_skipHidden;
 
     CComboBox m_combo;
     CButton m_ctlFollowMountPoints;
     CButton m_ctlFollowJunctionPoints;
+    CButton m_ctlSkipHidden;
 
     int m_originalLanguage;
 
@@ -67,6 +69,7 @@ protected:
     afx_msg void OnBnClickedListGrid();
     afx_msg void OnBnClickedListStripes();
     afx_msg void OnBnClickedListFullRowSelection();
+    afx_msg void OnBnClickedSkipHidden();
 };
 
 #endif // __WDS_PAGEGENERAL_H__

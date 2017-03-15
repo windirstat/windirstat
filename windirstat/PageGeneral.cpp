@@ -59,6 +59,7 @@ void CPageGeneral::DoDataExchange(CDataExchange* pDX)
     DDX_Check(pDX, IDC_SHOWGRID, m_listGrid);
     DDX_Check(pDX, IDC_SHOWSTRIPES, m_listStripes);
     DDX_Check(pDX, IDC_FULLROWSELECTION, m_listFullRowSelection);
+    DDX_Check(pDX, IDC_SKIPHIDDEN, m_skipHidden);
 }
 
 
@@ -71,6 +72,7 @@ BEGIN_MESSAGE_MAP(CPageGeneral, CPropertyPage)
     ON_BN_CLICKED(IDC_SHOWGRID, OnBnClickedListGrid)
     ON_BN_CLICKED(IDC_SHOWSTRIPES, OnBnClickedListStripes)
     ON_BN_CLICKED(IDC_FULLROWSELECTION, OnBnClickedListFullRowSelection)
+    ON_BN_CLICKED(IDC_SKIPHIDDEN, OnBnClickedSkipHidden)
 END_MESSAGE_MAP()
 
 
@@ -87,6 +89,7 @@ BOOL CPageGeneral::OnInitDialog()
     m_followMountPoints = GetOptions()->IsFollowMountPoints();
     m_followJunctionPoints = GetOptions()->IsFollowJunctionPoints();
     m_useWdsLocale = GetOptions()->IsUseWdsLocale();
+    m_skipHidden = GetOptions()->IsSkipHidden();
 
     m_followMountPoints = false;    // Otherwise we would see pacman only.
     m_ctlFollowMountPoints.ShowWindow(SW_HIDE); // Ignorance is bliss.
@@ -131,6 +134,7 @@ void CPageGeneral::OnOK()
     GetOptions()->SetListGrid(FALSE != m_listGrid);
     GetOptions()->SetListStripes(FALSE != m_listStripes);
     GetOptions()->SetListFullRowSelection(FALSE != m_listFullRowSelection);
+    GetOptions()->SetSkipHidden(FALSE != m_skipHidden);
 
     LANGID id = (LANGID)m_combo.GetItemData(m_combo.GetCurSel());
     CLanguageOptions::SetLanguage(id);
@@ -177,5 +181,11 @@ void CPageGeneral::OnCbnSelendokCombo()
 {
     int i = m_combo.GetCurSel();
     GetSheet()->SetLanguageChanged(i != m_originalLanguage);
+    SetModified();
+}
+
+
+void CPageGeneral::OnBnClickedSkipHidden()
+{
     SetModified();
 }

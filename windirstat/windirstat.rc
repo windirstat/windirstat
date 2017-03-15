@@ -391,7 +391,7 @@ BEGIN
     LTEXT           "Static",IDC_PREVIEW,7,7,211,124
 END
 
-IDD_PAGE_GENERAL DIALOGEX 0, 0, 380, 202
+IDD_PAGE_GENERAL DIALOGEX 0, 0, 381, 218
 STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | WS_SYSMENU
 CAPTION "General"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
@@ -402,14 +402,15 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,27,229,10
     CONTROL         "&Show Sizes in GB/MB/kB/Bytes Format",IDC_HUMANFORMAT,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,41,229,10
-    GROUPBOX        "&List Style",IDC_STATIC,30,61,90,65
-    CONTROL         "&Full Row Selection",IDC_FULLROWSELECTION,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,38,76,75,10
-    CONTROL         "Show &Grid",IDC_SHOWGRID,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,38,93,68,10
-    CONTROL         "Show S&tripes",IDC_SHOWSTRIPES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,38,110,68,10
-    LTEXT           "&Language",IDC_STATIC,32,139,166,8
-    COMBOBOX        IDC_COMBO,32,152,156,140,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "&List Style",IDC_STATIC,30,71,90,65
+    CONTROL         "&Full Row Selection",IDC_FULLROWSELECTION,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,38,86,75,10
+    CONTROL         "Show &Grid",IDC_SHOWGRID,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,38,103,68,10
+    CONTROL         "Show S&tripes",IDC_SHOWSTRIPES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,38,120,68,10
+    LTEXT           "&Language",IDC_STATIC,32,149,166,8
+    COMBOBOX        IDC_COMBO,32,162,156,140,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
     CONTROL         "&Use this language for date/time and number formatting",IDC_USEWDSLOCALE,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,172,298,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,182,298,10
+    CONTROL         "&Skip Hidden",IDC_SKIPHIDDEN,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,55,229,10
 END
 
 /////////////////////////////////////////////////////////////////////////////
@@ -479,9 +480,9 @@ BEGIN
     IDD_PAGE_GENERAL, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 373
+        RIGHTMARGIN, 374
         TOPMARGIN, 7
-        BOTTOMMARGIN, 195
+        BOTTOMMARGIN, 211
     END
 END
 #endif    // APSTUDIO_INVOKED

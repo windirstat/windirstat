@@ -109,6 +109,7 @@
 #define IDR_TEXT1                       900
 #define IDR_AUTHORS                     900
 #define IDR_TEXT2                       901
+
 #define IDB_JUNCTIONPOINT               902
 #define IDD_CHECKFORUPDATE              903
 #define IDC_ALLDRIVES                   1000
@@ -142,6 +143,8 @@
 #define IDC_SHOWSTRIPES                 1030
 #define IDC_SHOWGRID3                   1031
 #define IDC_FULLROWSELECTION            1031
+#define IDC_HUMANFORMAT2                1032
+#define IDC_SKIPHIDDEN                  1032
 #define IDC_RESET                       1034
 #define IDC_LIST                        1036
 #define IDC_TITLE                       1037

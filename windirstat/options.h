@@ -351,6 +351,10 @@ public:
     bool IsUseWdsLocale();
     void SetUseWdsLocale(bool use);
 
+    // Option to ignore hidden files and folders
+    bool IsSkipHidden();
+    void SetSkipHidden(bool skip);
+
     void GetUserDefinedCleanups(USERDEFINEDCLEANUP udc[USERDEFINEDCLEANUPCOUNT]);
     void SetUserDefinedCleanups(const USERDEFINEDCLEANUP udc[USERDEFINEDCLEANUPCOUNT]);
 
@@ -391,6 +395,7 @@ private:
     bool m_followMountPoints;
     bool m_followJunctionPoints;
     bool m_useWdsLocale;
+    bool m_skipHidden;
 
     USERDEFINEDCLEANUP m_userDefinedCleanup[USERDEFINEDCLEANUPCOUNT];
 
