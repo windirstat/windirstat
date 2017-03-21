@@ -1,7 +1,7 @@
 @echo off
 @if not "%OS%"=="Windows_NT" @(echo This script requires Windows NT 4.0 or later to run properly! & goto :EOF)
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-::: 2009-2015, Oliver Schneider (assarbad.net) - PUBLIC DOMAIN/CC0
+::: 2009-2016, Oliver Schneider (assarbad.net) - PUBLIC DOMAIN/CC0
 ::: Available from: <https://bitbucket.org/assarbad/scripts/>
 :::
 ::: PURPOSE:    This script can be used to run the vcvars32.bat/vcvarsall.bat
@@ -24,24 +24,24 @@
 setlocal & pushd .
 :: Toolsets (potentially) supported
 set SUPPORTED_TSET=amd64 x86 ia64 x86_ia64 x86_amd64 amd64_x86 x86_arm amd64_arm
-if not "%~1" == "" @(
-  if "%~1" == "/?"     popd&endlocal&goto :Help
-  if "%~1" == "-?"     popd&endlocal&goto :Help
-  if "%~1" == "/h"     popd&endlocal&goto :Help
-  if "%~1" == "-h"     popd&endlocal&goto :Help
-  if "%~1" == "/help"  popd&endlocal&goto :Help
-  if "%~1" == "--help" popd&endlocal&goto :Help
-)
-if defined VCVER_FRIENDLY echo This script expects a clean environment. Don't run it several times in the same instance of CMD! Or use setlocal and endlocal in your own script to limit the effect of this one.&goto :EOF
-set MIN_VC=7.0
-set MAX_VC=14.0
-set MIN_NICE=2002
-set MAX_NICE=2015
 :: Internal representation of the version number
 set SUPPORTED_VC=14.0 12.0 11.0 10.0 9.0 8.0 7.1 7.0
 :: Marketing name of the Visual Studio versions
 set SUPPORTED_NICE=2015 2013 2012 2010 2008 2005 2003 2002
 set DEFAULT_TSET=x86
+if not "%~1" == "" @(
+  if "%~1" == "/?"     goto :Help
+  if "%~1" == "-?"     goto :Help
+  if "%~1" == "/h"     goto :Help
+  if "%~1" == "-h"     goto :Help
+  if "%~1" == "/help"  goto :Help
+  if "%~1" == "--help" goto :Help
+)
+if defined VCVER_FRIENDLY echo This script expects a clean environment. Don't run it several times in the same instance of CMD! Or use setlocal and endlocal in your own script to limit the effect of this one.&popd&endlocal&goto :EOF
+set MIN_VC=7.0
+set MAX_VC=14.0
+set MIN_NICE=2002
+set MAX_NICE=2015
 reg /? > NUL 2>&1 || echo "REG.EXE is a prerequisite but wasn't found!" && goto :EOF
 set SETVCV_ERROR=0
 :: First parameter may point to a particular toolset ...
@@ -214,11 +214,21 @@ goto :EOF
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :Help
 echo.
-echo Syntax: setvcvars ^[toolset^] ^[store^] ^[VS versions^]
+echo Syntax: setvcvars ^[toolset^] ^[^'store^'^] ^[VS versions^]
 echo.
-echo     The toolset can be one of %SUPPORTED_TSET% according to the version of Visual Studio.
-echo     'store' is the literal string store for Visual Studio 2015 and newer.
-exit /b 0
+echo     The toolset can be one of %SUPPORTED_TSET%
+echo     depending on the version of Visual Studio you ask for.
+echo     Unless explicitly given it defaults to %DEFAULT_TSET%.
+echo.
+echo     'store' is the literal string 'store' for Visual Studio 2015 and newer.
+echo.
+echo     VS versions can be one of %SUPPORTED_VC%
+echo     or %SUPPORTED_NICE%
+echo.
+echo     To verify success when calling this script from another, check that VCVER_FRIENDLY is
+echo     defined. If it isn't, something failed.
+echo     Use setlocal/endlocal inside your script to limit the scope of variables.
+popd&endlocal&exit /b 0
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 ::: \ Help subroutine
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::

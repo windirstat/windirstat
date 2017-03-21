@@ -1,41 +1,41 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Header Files">
-      <UniqueIdentifier>{CCC305FC-B7F2-8245-8946-E53E9C09FC77}</UniqueIdentifier>
+      <UniqueIdentifier>{598B3024-43D3-D346-8CC0-DF031DD99C45}</UniqueIdentifier>
     </Filter>
     <Filter Include="Header Files\Common">
-      <UniqueIdentifier>{3024BFFB-15AE-F34A-8E61-F7CACBE22408}</UniqueIdentifier>
+      <UniqueIdentifier>{8B891203-6A34-DF44-86F2-F4D841DE30E8}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files">
-      <UniqueIdentifier>{E511C7A5-6A12-9F4C-9BB0-36A9B4998109}</UniqueIdentifier>
+      <UniqueIdentifier>{0DDEF8B3-A408-7544-AE32-EDB514AE253C}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\Common">
-      <UniqueIdentifier>{425B1319-44F5-A743-A620-F5A851E5A750}</UniqueIdentifier>
+      <UniqueIdentifier>{0458F963-7EB9-D44D-9999-7A0B7B596875}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\Controls">
-      <UniqueIdentifier>{CB5FD4E1-1BA3-9A4F-BB6F-28601205113B}</UniqueIdentifier>
+      <UniqueIdentifier>{6CB6BCE5-97EA-DB40-8E71-CFF2CAE4F805}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\Dialogs">
-      <UniqueIdentifier>{B2F3A075-A153-6240-A6DE-910D3BF62500}</UniqueIdentifier>
+      <UniqueIdentifier>{278AB985-1947-8246-859D-B7C2A32C1602}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\Lua">
-      <UniqueIdentifier>{EEB65C72-C0E2-484E-A9DD-06496684A70A}</UniqueIdentifier>
+      <UniqueIdentifier>{C7B1A375-EC91-9B4C-91F7-584EA925C513}</UniqueIdentifier>
     </Filter>
     <Filter Include="Header Files\Controls">
-      <UniqueIdentifier>{8ACCDBFB-73A0-6D47-824F-7D6B03C1E794}</UniqueIdentifier>
+      <UniqueIdentifier>{DB7E3165-CAF5-9C4D-A7DC-D1A403006E86}</UniqueIdentifier>
     </Filter>
     <Filter Include="Header Files\Dialogs">
-      <UniqueIdentifier>{83969A47-EDEB-C444-A00E-3BA69DF32FC4}</UniqueIdentifier>
+      <UniqueIdentifier>{372521BF-EF6D-0E4C-B1F6-951B3061996B}</UniqueIdentifier>
     </Filter>
     <Filter Include="Resource Files">
-      <UniqueIdentifier>{627E267E-6874-1E47-B9B3-80CF0B70487A}</UniqueIdentifier>
+      <UniqueIdentifier>{1557F2DD-38BD-6847-9FCE-9BAB9011CA52}</UniqueIdentifier>
     </Filter>
     <Filter Include="Resource Files\Resources">
-      <UniqueIdentifier>{26A34776-A302-4246-945F-754B84B91BDE}</UniqueIdentifier>
+      <UniqueIdentifier>{22C2FF0E-A896-A941-94AA-68522EC5B8C1}</UniqueIdentifier>
     </Filter>
     <Filter Include="Special Files">
-      <UniqueIdentifier>{08AB409C-28F0-C74B-AAD5-FCCE01844956}</UniqueIdentifier>
+      <UniqueIdentifier>{C0801C97-2E0E-514F-A8D3-CF690DD8F4DA}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

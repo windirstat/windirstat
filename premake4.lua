@@ -7,7 +7,7 @@
   ]]
 local assemblyName = "WinDirStat_Team.WinDirStat.windirstat"
 local programVersion = "1.3" -- until we find a clever way to put this into an environment variable or so ...
-local publicKeyToken = "db89f19495b8f232" -- the token for the code-signing
+local publicKeyToken = "db89f19495b8f232" -- the token for the code-signing, TODO/FIXME: verify!
 local action = _ACTION or ""
 local release = false
 local slnname = ""
@@ -55,9 +55,9 @@ do
     -- Name the project files after their VS version
     local orig_getbasename = premake.project.getbasename
     premake.project.getbasename = function(prjname, pattern)
-        -- The below is used to insert the .vs(8|9|10|11|12|14) into the file names for projects and solutions
+        -- The below is used to insert the .vs(8|9|10|11|12|14|15) into the file names for projects and solutions
         if _ACTION then
-            name_map = {vs2005 = "vs8", vs2008 = "vs9", vs2010 = "vs10", vs2012 = "vs11", vs2013 = "vs12", vs2015 = "vs14"}
+            name_map = {vs2005 = "vs8", vs2008 = "vs9", vs2010 = "vs10", vs2012 = "vs11", vs2013 = "vs12", vs2015 = "vs14", vs2017 = "vs15"}
             if name_map[_ACTION] then
                 pattern = pattern:gsub("%%%%", "%%%%." .. name_map[_ACTION])
             else
@@ -90,6 +90,31 @@ do
             return false
         end
         return orig_config_isincrementallink(cfg)
+    end
+    -- We want to output the file with UTF-8 BOM
+    local orig_vc2010_header = premake.vstudio.vc2010.header
+    premake.vstudio.vc2010.header = function(targets)
+        io.capture()
+        orig_vc2010_header(targets)
+        local captured = io.endcapture()
+        io.write("\239\187\191")
+        io.write(captured)
+    end
+    -- Make sure we can generate XP-compatible projects for newer Visual Studio versions
+    local orig_vc2010_configurationPropertyGroup = premake.vstudio.vc2010.configurationPropertyGroup
+    premake.vstudio.vc2010.configurationPropertyGroup = function(cfg, cfginfo)
+        io.capture()
+        orig_vc2010_configurationPropertyGroup(cfg, cfginfo)
+        local captured = io.endcapture()
+		local toolsets = { vs2012 = "v110", vs2013 = "v120", vs2015 = "v140", vs2017 = "v141" }
+        local toolset = toolsets[_ACTION]
+        if toolset then
+            if _OPTIONS["xp"] then
+                toolset = toolset .. "_xp"
+                captured = captured:gsub("(</PlatformToolset>)", "_xp%1")
+            end
+        end
+        io.write(captured)
     end
     -- Override the project creation to suppress unnecessary configurations
     -- these get invoked by sln2005.generate per project ...
@@ -188,6 +213,7 @@ newoption { trigger = "resources", description = "Also create projects for the r
 newoption { trigger = "sdk71", description = "Applies to VS 2005 and 2008. If you have the Windows 7 SP1\n                   SDK, use this to create projects for a feature-complete\n                   WinDirStat." }
 newoption { trigger = "release", description = "Creates a solution suitable for a release build." }
 newoption { trigger = "dev", description = "Add projects only relevant during development." }
+newoption { trigger = "xp", description = "Enable XP-compatible build for newer Visual Studio versions." }
 
 solution (iif(release, slnname, "windirstat"))
     configurations  (iif(release, {"Release"}, {"Debug", "Release"}))
@@ -291,11 +317,8 @@ solution (iif(release, slnname, "windirstat"))
         configuration {"vs2005", "windirstat/WDS_Lua_C.c"}
             defines         ("_CRT_SECURE_NO_WARNINGS") -- _CRT_SECURE_NO_DEPRECATE, _SCL_SECURE_NO_WARNINGS, _AFX_SECURE_NO_WARNINGS and _ATL_SECURE_NO_WARNINGS???
 
-        configuration {"vs2013"}
+        configuration {"vs*"}
             defines         {"WINVER=0x0501"}
-
-        configuration {"vs2002 or vs2003 or vs2005 or vs2008 or vs2010 or vs2012"}
-            defines         {"WINVER=0x0500"}
 
         if _OPTIONS["sdk71"] then
             configuration {"vs2005 or vs2008"}
