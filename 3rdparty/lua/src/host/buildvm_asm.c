@@ -1,6 +1,6 @@
 /*
 ** LuaJIT VM builder: Assembler source code emitter.
-** Copyright (C) 2005-2015 Mike Pall. See Copyright Notice in luajit.h
+** Copyright (C) 2005-2017 Mike Pall. See Copyright Notice in luajit.h
 */
 
 #include "buildvm.h"
@@ -183,7 +183,8 @@ static void emit_asm_label(BuildCtx *ctx, const char *name, int size, int isfunc
   case BUILD_machasm:
     fprintf(ctx->fp,
       "\n\t.private_extern %s\n"
-      "%s:\n", name, name);
+      "\t.no_dead_strip %s\n"
+      "%s:\n", name, name, name);
     break;
   default:
     break;

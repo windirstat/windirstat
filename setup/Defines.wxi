@@ -9,7 +9,7 @@
     <?define ProductFolder =            "WinDirStat"?>
     <?define Manufacturer =             "WinDirStat Team"?>
     <?define ARPContact =               "WinDirStat Team"?>
-    <?define ARPHelpLink =              "http://windirstat.info"?>
+    <?define ARPHelpLink =              "http://windirstat.net"?>
     <!--  <?define ARPTelephone =             "N/A"?> -->
     <?define IconFilePath =             "..\common\WinDirStat.ico" ?>
 

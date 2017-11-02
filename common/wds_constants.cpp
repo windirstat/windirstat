@@ -1,7 +1,7 @@
 // wds_constants.cpp
 //
 // WinDirStat - Directory Statistics
-// Copyright (C) 2004-2016 WinDirStat team (windirstat.info)
+// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
-// Author(s): - oliver   -> http://windirstat.info/contact/oliver/
+// Author(s): - oliver   -> http://windirstat.net/contact/oliver/
 //
 
 #include "stdafx.h"
@@ -35,8 +35,8 @@ namespace wds
 
     contact_t authors[] =
     {
-        { L"Bernhard Seifert", 0, L"https://windirstat.info/contact/bernhard/", L"Creator of the project, original author" },
-        { L"Oliver Schneider", 0, L"https://windirstat.info/contact/oliver/", L"Project maintainer" },
+        { L"Bernhard Seifert", 0, L"https://windirstat.net/contact/bernhard/", L"Creator of the project, original author" },
+        { L"Oliver Schneider", 0, L"https://windirstat.net/contact/oliver/", L"Project maintainer" },
         { L"Chris Wimmer", 0, L"http://sourceforge.net/users/dezipaitor", L"Contributor" },
         { 0 },
     };

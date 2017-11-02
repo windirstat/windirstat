@@ -4,7 +4,7 @@
 <title>Installation</title>
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
 <meta name="Author" content="Mike Pall">
-<meta name="Copyright" content="Copyright (C) 2005-2015, Mike Pall">
+<meta name="Copyright" content="Copyright (C) 2005-2017, Mike Pall">
 <meta name="Language" content="en">
 <link rel="stylesheet" type="text/css" href="bluequad.css" media="screen">
 <link rel="stylesheet" type="text/css" href="bluequad-print.css" media="print">
@@ -112,23 +112,23 @@ operating systems, CPUs and compilers:
 </tr>
 <tr class="odd separate">
 <td class="compatcpu">x86 (32 bit)</td>
-<td class="compatos">GCC 4.x<br>GCC 3.4</td>
-<td class="compatos">GCC 4.x<br>GCC 3.4</td>
-<td class="compatos">GCC 4.x<br>GCC 3.4</td>
+<td class="compatos">GCC 4.x+<br>GCC 3.4</td>
+<td class="compatos">GCC 4.x+<br>GCC 3.4</td>
+<td class="compatos">XCode 5.0+<br>Clang</td>
 <td class="compatos">MSVC, MSVC/EE<br>WinSDK<br>MinGW, Cygwin</td>
 </tr>
 <tr class="even">
 <td class="compatcpu">x64 (64 bit)</td>
-<td class="compatos">GCC 4.x</td>
+<td class="compatos">GCC 4.x+</td>
 <td class="compatos">ORBIS (<a href="#ps4">PS4</a>)</td>
-<td class="compatos">GCC 4.x</td>
+<td class="compatos">XCode 5.0+<br>Clang</td>
 <td class="compatos">MSVC + SDK v7.0<br>WinSDK v7.0</td>
 </tr>
 <tr class="odd">
 <td class="compatcpu"><a href="#cross2">ARMv5+<br>ARM9E+</a></td>
 <td class="compatos">GCC 4.2+</td>
 <td class="compatos">GCC 4.2+<br>PSP2 (<a href="#psvita">PS VITA</a>)</td>
-<td class="compatos">GCC 4.2+</td>
+<td class="compatos">XCode 5.0+<br>Clang</td>
 <td class="compatos compatno">&nbsp;</td>
 </tr>
 <tr class="even">
@@ -188,8 +188,8 @@ open a terminal window and change to this directory. Now unpack the archive
 and change to the newly created directory:
 </p>
 <pre class="code">
-tar zxf LuaJIT-2.0.4.tar.gz
-cd LuaJIT-2.0.4</pre>
+tar zxf LuaJIT-2.0.5.tar.gz
+cd LuaJIT-2.0.5</pre>
 <h3>Building LuaJIT</h3>
 <p>
 The supplied Makefiles try to auto-detect the settings needed for your
@@ -344,9 +344,12 @@ target OS differ, or you'll get assembler or linker errors. E.g. if
 you're compiling on a Windows or OSX host for embedded Linux or Android,
 you need to add <tt>TARGET_SYS=Linux</tt> to the examples below. For a
 minimal target OS, you may need to disable the built-in allocator in
-<tt>src/Makefile</tt> and use <tt>TARGET_SYS=Other</tt>. The examples
-below only show some popular targets &mdash; please check the comments
-in <tt>src/Makefile</tt> for more details.
+<tt>src/Makefile</tt> and use <tt>TARGET_SYS=Other</tt>. Don't forget to
+specify the same <tt>TARGET_SYS</tt> for the install step, too.
+</p>
+<p>
+The examples below only show some popular targets &mdash; please check
+the comments in <tt>src/Makefile</tt> for more details.
 </p>
 <pre class="code">
 # Cross-compile to a 32 bit binary on a multilib x64 OS
@@ -439,8 +442,7 @@ NDKF="--sysroot $NDK/platforms/android-$NDKABI/arch-x86"
 make HOST_CC="gcc -m32" CROSS=$NDKP TARGET_FLAGS="$NDKF"
 </pre>
 <p>
-You can cross-compile for <b id="ios">iOS 3.0+</b> (iPhone/iPad) using the <a href="http://developer.apple.com/devcenter/ios/index.action"><span class="ext">&raquo;</span>&nbsp;iOS SDK</a>.
-The environment variables need to match the iOS SDK version:
+You can cross-compile for <b id="ios">iOS 3.0+</b> (iPhone/iPad) using the <a href="http://developer.apple.com/devcenter/ios/index.action"><span class="ext">&raquo;</span>&nbsp;iOS SDK</a>:
 </p>
 <p style="font-size: 8pt;">
 Note: <b>the JIT compiler is disabled for iOS</b>, because regular iOS Apps
@@ -450,13 +452,11 @@ much slower than the JIT compiler. Please complain to Apple, not me.
 Or use Android. :-p
 </p>
 <pre class="code">
-IXCODE=`xcode-select -print-path`
-ISDK=$IXCODE/Platforms/iPhoneOS.platform/Developer
-ISDKVER=iPhoneOS6.0.sdk
-ISDKP=$ISDK/usr/bin/
-ISDKF="-arch armv7 -isysroot $ISDK/SDKs/$ISDKVER"
-make HOST_CC="gcc -m32 -arch i386" CROSS=$ISDKP TARGET_FLAGS="$ISDKF" \
-     TARGET_SYS=iOS
+ISDKP=$(xcrun --sdk iphoneos --show-sdk-path)
+ICC=$(xcrun --sdk iphoneos --find clang)
+ISDKF="-arch armv7 -isysroot $ISDKP"
+make DEFAULT_CC=clang HOST_CC="clang -m32 -arch i386" \
+     CROSS="$(dirname $ICC)/" TARGET_FLAGS="$ISDKF" TARGET_SYS=iOS
 </pre>
 
 <h3 id="consoles">Cross-compiling for consoles</h3>
@@ -636,7 +636,7 @@ to me (the upstream) and not you (the package maintainer), anyway.
 </div>
 <div id="foot">
 <hr class="hide">
-Copyright &copy; 2005-2015 Mike Pall
+Copyright &copy; 2005-2017 Mike Pall
 <span class="noprint">
 &middot;
 <a href="contact.html">Contact</a>

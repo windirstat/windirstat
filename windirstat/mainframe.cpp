@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2016 WinDirStat team (windirstat.info)
+// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -34,8 +34,6 @@
 #include "pagetreelist.h"
 #include "pagetreemap.h"
 #include "pagegeneral.h"
-
-#include <common/version.h>
 
 #include "mainframe.h"
 
@@ -561,7 +559,7 @@ void CMainFrame::UpdateProgress()
         {
             int pos = (int)((double) m_progressPos * 100 / m_progressRange);
             m_progress.SetPos(pos);
-            titlePrefix.Format(_T("%d%% %s"), pos, suspended);
+            titlePrefix.Format(_T("%d%% %s"), pos, suspended.GetString());
 #ifdef SUPPORT_W7_TASKBAR
             if(m_TaskbarList && (m_TaskbarButtonState != TBPF_PAUSED))
             {
@@ -947,11 +945,11 @@ void CMainFrame::UpdateCleanupMenu(CMenu *menu)
     CString info;
     if(items == 1)
     {
-        info.FormatMessage(IDS__ONEITEMss, FormatBytes(bytes), GetOptions()->IsHumanFormat() && bytes != 0 ? wds::strEmpty : wds::strBlankSpace + GetSpec_Bytes());
+        info.FormatMessage(IDS__ONEITEMss, FormatBytes(bytes).GetString(), GetOptions()->IsHumanFormat() && bytes != 0 ? wds::strEmpty : wds::strBlankSpace + GetSpec_Bytes());
     }
     else
     {
-        info.FormatMessage(IDS__sITEMSss, FormatCount(items), FormatBytes(bytes), GetOptions()->IsHumanFormat() && bytes != 0 ? wds::strEmpty : wds::strBlankSpace + GetSpec_Bytes());
+        info.FormatMessage(IDS__sITEMSss, FormatCount(items).GetString(), FormatBytes(bytes).GetString(), GetOptions()->IsHumanFormat() && bytes != 0 ? wds::strEmpty : wds::strBlankSpace + GetSpec_Bytes());
     }
 
     s += info;
@@ -1030,7 +1028,7 @@ void CMainFrame::AppendUserDefinedCleanups(CMenu *menu)
         for(int i = 0; i < indices.GetSize(); i++)
         {
             CString string;
-            string.FormatMessage(IDS_UDCsCTRLd, GetOptions()->GetUserDefinedCleanup(indices[i])->title, indices[i]);
+            string.FormatMessage(IDS_UDCsCTRLd, GetOptions()->GetUserDefinedCleanup(indices[i])->title.GetString(), indices[i]);
 
             UINT flags = MF_GRAYED | MF_DISABLED;
             if(

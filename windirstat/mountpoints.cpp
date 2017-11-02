@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2016 WinDirStat team (windirstat.info)
+// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -247,7 +247,7 @@ bool CReparsePoints::IsVolumeMountPoint(CString volume, CString path)
         PointVolumeArray *pva;
         if(!m_volume.Lookup(volume, pva))
         {
-            VTRACE(_T("CMountPoints: Volume(%s) unknown!"), volume);
+            VTRACE(_T("CMountPoints: Volume(%s) unknown!"), volume.GetString());
             return false;
         }
 

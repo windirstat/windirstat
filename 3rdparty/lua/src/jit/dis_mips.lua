@@ -1,7 +1,7 @@
 ----------------------------------------------------------------------------
 -- LuaJIT MIPS disassembler module.
 --
--- Copyright (C) 2005-2015 Mike Pall. All rights reserved.
+-- Copyright (C) 2005-2017 Mike Pall. All rights reserved.
 -- Released under the MIT/X license. See Copyright Notice in luajit.h
 ----------------------------------------------------------------------------
 -- This is a helper module used by the LuaJIT machine code dumper module.
@@ -11,8 +11,8 @@
 ------------------------------------------------------------------------------
 
 local type = type
-local sub, byte, format = string.sub, string.byte, string.format
-local match, gmatch, gsub = string.match, string.gmatch, string.gsub
+local byte, format = string.byte, string.format
+local match, gmatch = string.match, string.gmatch
 local concat = table.concat
 local bit = require("bit")
 local band, bor, tohex = bit.band, bit.bor, bit.tohex

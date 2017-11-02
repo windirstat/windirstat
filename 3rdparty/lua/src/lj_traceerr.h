@@ -1,6 +1,6 @@
 /*
 ** Trace compiler error messages.
-** Copyright (C) 2005-2015 Mike Pall. See Copyright Notice in luajit.h
+** Copyright (C) 2005-2017 Mike Pall. See Copyright Notice in luajit.h
 */
 
 /* This file may be included multiple times with different TREDEF macros. */
@@ -23,7 +23,7 @@ TREDEF(BADTYPE,	"bad argument type")
 TREDEF(CJITOFF,	"JIT compilation disabled for function")
 TREDEF(CUNROLL,	"call unroll limit reached")
 TREDEF(DOWNREC,	"down-recursion, restarting")
-TREDEF(NYICF,	"NYI: C function %p")
+TREDEF(NYICF,	"NYI: C function %s")
 TREDEF(NYIFF,	"NYI: FastFunc %s")
 TREDEF(NYIFFU,	"NYI: unsupported variant of FastFunc %s")
 TREDEF(NYIRETL,	"NYI: return to lower frame")

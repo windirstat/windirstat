@@ -2,40 +2,40 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Header Files">
-      <UniqueIdentifier>{598B3024-43D3-D346-8CC0-DF031DD99C45}</UniqueIdentifier>
+      <UniqueIdentifier>{48D5D65E-28F5-D53D-186F-23FD908A412F}</UniqueIdentifier>
     </Filter>
     <Filter Include="Header Files\Common">
-      <UniqueIdentifier>{8B891203-6A34-DF44-86F2-F4D841DE30E8}</UniqueIdentifier>
+      <UniqueIdentifier>{A3F39BA6-CC65-7544-398B-3F818D687ACE}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files">
-      <UniqueIdentifier>{0DDEF8B3-A408-7544-AE32-EDB514AE253C}</UniqueIdentifier>
+      <UniqueIdentifier>{6DC87E6B-4990-1F63-4AC3-166E48564572}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\Common">
-      <UniqueIdentifier>{0458F963-7EB9-D44D-9999-7A0B7B596875}</UniqueIdentifier>
+      <UniqueIdentifier>{240FBEEC-022C-367E-4F3C-332BBB836A2F}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\Controls">
-      <UniqueIdentifier>{6CB6BCE5-97EA-DB40-8E71-CFF2CAE4F805}</UniqueIdentifier>
+      <UniqueIdentifier>{58B807A6-D922-7836-CD41-082C57F30F2D}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\Dialogs">
-      <UniqueIdentifier>{278AB985-1947-8246-859D-B7C2A32C1602}</UniqueIdentifier>
+      <UniqueIdentifier>{ED9704D9-CF24-8B4E-26A4-D7DDA6351EDB}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\Lua">
-      <UniqueIdentifier>{C7B1A375-EC91-9B4C-91F7-584EA925C513}</UniqueIdentifier>
+      <UniqueIdentifier>{4556325F-FBA9-4E61-8B92-CB3E0ADCEDA8}</UniqueIdentifier>
     </Filter>
     <Filter Include="Header Files\Controls">
-      <UniqueIdentifier>{DB7E3165-CAF5-9C4D-A7DC-D1A403006E86}</UniqueIdentifier>
+      <UniqueIdentifier>{463565AC-33C1-91A1-6035-48A265809213}</UniqueIdentifier>
     </Filter>
     <Filter Include="Header Files\Dialogs">
-      <UniqueIdentifier>{372521BF-EF6D-0E4C-B1F6-951B3061996B}</UniqueIdentifier>
+      <UniqueIdentifier>{E1C05760-1E9F-D184-92A0-4B6CF146078C}</UniqueIdentifier>
     </Filter>
     <Filter Include="Resource Files">
-      <UniqueIdentifier>{1557F2DD-38BD-6847-9FCE-9BAB9011CA52}</UniqueIdentifier>
+      <UniqueIdentifier>{8B94EBAA-F5FC-2C67-17EA-B0CF28E72DB4}</UniqueIdentifier>
     </Filter>
     <Filter Include="Resource Files\Resources">
-      <UniqueIdentifier>{22C2FF0E-A896-A941-94AA-68522EC5B8C1}</UniqueIdentifier>
+      <UniqueIdentifier>{FAE48057-9708-D7A8-F523-7E1B9962C744}</UniqueIdentifier>
     </Filter>
     <Filter Include="Special Files">
-      <UniqueIdentifier>{C0801C97-2E0E-514F-A8D3-CF690DD8F4DA}</UniqueIdentifier>
+      <UniqueIdentifier>{38E10655-D178-C918-DFD7-45CB0E3F34CF}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -68,13 +68,10 @@
     </None>
     <None Include="..\CONTRIBUTORS.md" />
     <None Include="..\README.md" />
-    <None Include="..\common\BUILD">
-      <Filter>Special Files</Filter>
-    </None>
-    <None Include="..\common\buildinc.cmd">
-      <Filter>Special Files</Filter>
-    </None>
     <None Include="..\common\build_luajit.cmd">
+      <Filter>Special Files</Filter>
+    </None>
+    <None Include="..\common\hgid.cmd">
       <Filter>Special Files</Filter>
     </None>
     <None Include="..\common\produce_vsprojects.cmd">
@@ -88,19 +85,13 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\common\buildnumber.h">
-      <Filter>Header Files\Common</Filter>
-    </ClInclude>
     <ClInclude Include="..\common\commonhelpers.h">
-      <Filter>Header Files\Common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\common_rsrcstr.h">
       <Filter>Header Files\Common</Filter>
     </ClInclude>
     <ClInclude Include="..\common\cotaskmem.h">
       <Filter>Header Files\Common</Filter>
     </ClInclude>
-    <ClInclude Include="..\common\hgtip.h">
+    <ClInclude Include="..\common\hgid.h">
       <Filter>Header Files\Common</Filter>
     </ClInclude>
     <ClInclude Include="..\common\mdexceptions.h">
@@ -291,6 +282,9 @@
     <ClCompile Include="PageTreemap.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="windirstat.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -342,6 +336,9 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="windirstat.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+    <ResourceCompile Include="..\common\version.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
   </ItemGroup>

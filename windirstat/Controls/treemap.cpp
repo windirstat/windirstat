@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2016 WinDirStat team (windirstat.info)
+// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -325,31 +325,30 @@ void CTreemap::DrawTreemap(CDC *pdc, CRect rc, Item *root, const Options *option
 
         // Create a temporary CDC that represents only the tree map
         CDC dcTreeView;
-        dcTreeView.CreateCompatibleDC(pdc);
+        VERIFY(dcTreeView.CreateCompatibleDC(pdc));
 
-        // This temporary CDC will be filled with this bitmap
+        // This bitmap will be blitted onto the temporary DC
         CBitmap bmp;
 
         // That bitmap in turn will be created from this array
-        CArray<COLORREF, COLORREF> *bitmap = new CArray<COLORREF, COLORREF>;
-        bitmap->SetSize(rc.Width() * rc.Height());
+        CColorRefArray bitmap_bits;
+        bitmap_bits.SetSize(rc.Width() * rc.Height());
 
         // Recursively draw the tree graph
-        RecurseDrawGraph(bitmap, root, rc, true, surface, m_options.height, 0);
+        RecurseDrawGraph(bitmap_bits, root, rc, true, surface, m_options.height, 0);
 
         // Fill the bitmap with the array
-        bmp.CreateBitmap(rc.Width(), rc.Height(), 1, 32, &(*bitmap)[0]);
+        VERIFY(bmp.CreateBitmap(rc.Width(), rc.Height(), 1, 32, &bitmap_bits[0]));
 
         // Render bitmap to the temporary CDC
         dcTreeView.SelectObject(&bmp);
 
         // And lastly, draw the temporary CDC to the real one
-        pdc->BitBlt(rc.TopLeft().x, rc.TopLeft().y, rc.Width(), rc.Height(), &dcTreeView, 0, 0, SRCCOPY);
+        VERIFY(pdc->BitBlt(rc.TopLeft().x, rc.TopLeft().y, rc.Width(), rc.Height(), &dcTreeView, 0, 0, SRCCOPY));
 
         // Free memory
-        bmp.DeleteObject();
-        dcTreeView.DeleteDC();
-        delete bitmap;
+        VERIFY(bmp.DeleteObject());
+        VERIFY(dcTreeView.DeleteDC());
 
 
 #ifdef STRONGDEBUG  // slow, but finds bugs!
@@ -385,10 +384,10 @@ void CTreemap::DrawTreemapDoubleBuffered(CDC *pdc, const CRect& rc, Item *root, 
     CDC dc;
     VERIFY(dc.CreateCompatibleDC(pdc));
 
-    CBitmap bm;
-    VERIFY(bm.CreateCompatibleBitmap(pdc, rc.Width(), rc.Height()));
+    CBitmap bmp;
+    VERIFY(bmp.CreateCompatibleBitmap(pdc, rc.Width(), rc.Height()));
 
-    CSelectObject sobmp(&dc, &bm);
+    CSelectObject sobmp(&dc, &bmp);
 
     CRect rect(CPoint(0, 0), rc.Size());
 
@@ -518,43 +517,42 @@ void CTreemap::DrawColorPreview(CDC *pdc, const CRect& rc, COLORREF color, const
 
     // Create a temporary CDC that represents only the tree map
     CDC dcTreeView;
-    dcTreeView.CreateCompatibleDC(pdc);
+    VERIFY(dcTreeView.CreateCompatibleDC(pdc));
 
-    // This temporary CDC will be filled with this bitmap
+    // This bitmap will be blitted onto the temporary DC
     CBitmap bmp;
 
     // That bitmap in turn will be created from this array
-    CArray<COLORREF, COLORREF> *bitmap = new CArray<COLORREF, COLORREF>;
-    bitmap->SetSize(rc.Width() * rc.Height());
+    CColorRefArray bitmap_bits;
+    bitmap_bits.SetSize(rc.Width() * rc.Height());
 
     // Recursively draw the tree graph
-    RenderRectangle(bitmap, CRect(0, 0, rc.Width(), rc.Height()), surface, color);
+    RenderRectangle(bitmap_bits, CRect(0, 0, rc.Width(), rc.Height()), surface, color);
 
     // Fill the bitmap with the array
-    bmp.CreateBitmap(rc.Width(), rc.Height(), 1, 32, &(*bitmap)[0]);
+    VERIFY(bmp.CreateBitmap(rc.Width(), rc.Height(), 1, 32, &bitmap_bits[0]));
 
     // Render bitmap to the temporary CDC
     dcTreeView.SelectObject(&bmp);
 
     // And lastly, draw the temporary CDC to the real one
-    pdc->BitBlt(rc.TopLeft().x, rc.TopLeft().y, rc.Width(), rc.Height(), &dcTreeView, 0, 0, SRCCOPY);
+    VERIFY(pdc->BitBlt(rc.TopLeft().x, rc.TopLeft().y, rc.Width(), rc.Height(), &dcTreeView, 0, 0, SRCCOPY));
 
     if(m_options.grid)
     {
         CPen pen(PS_SOLID, 1, m_options.gridColor);
         CSelectObject sopen(pdc, &pen);
         CSelectStockObject sobrush(pdc, NULL_BRUSH);
-        pdc->Rectangle(rc);
+        VERIFY(pdc->Rectangle(rc));
     }
 
     // Free memory
-    bmp.DeleteObject();
-    dcTreeView.DeleteDC();
-    delete bitmap;
+    VERIFY(bmp.DeleteObject());
+    VERIFY(dcTreeView.DeleteDC());
 }
 
 void CTreemap::RecurseDrawGraph(
-    CArray<COLORREF, COLORREF> *bitmap,
+    CColorRefArray &bitmap,
     Item *item,
     const CRect& rc,
     bool asroot,
@@ -616,7 +614,7 @@ void CTreemap::RecurseDrawGraph(
 // pointers, factory methods and explicit destruction. It's not worth.
 
 void CTreemap::DrawChildren(
-    CArray<COLORREF, COLORREF> *bitmap,
+    CColorRefArray &bitmap,
     Item *parent,
     const double *surface,
     double h,
@@ -649,7 +647,7 @@ void CTreemap::DrawChildren(
 // I learned this squarification style from the KDirStat executable.
 // It's the most complex one here but also the clearest, imho.
 //
-void CTreemap::KDirStat_DrawChildren(CArray<COLORREF, COLORREF> *bitmap, Item *parent, const double *surface, double h, DWORD /*flags*/)
+void CTreemap::KDirStat_DrawChildren(CColorRefArray &bitmap, Item *parent, const double *surface, double h, DWORD /*flags*/)
 {
     WEAK_ASSERT(parent->TmiGetChildrenCount() > 0);
 
@@ -873,7 +871,7 @@ double CTreemap::KDirStat_CalcutateNextRow(Item *parent, const int nextChild, do
 
 // The classical squarification method.
 //
-void CTreemap::SequoiaView_DrawChildren(CArray<COLORREF, COLORREF> *bitmap, Item *parent, const double *surface, double h, DWORD /*flags*/)
+void CTreemap::SequoiaView_DrawChildren(CColorRefArray &bitmap, Item *parent, const double *surface, double h, DWORD /*flags*/)
 {
     // Rest rectangle to fill
     CRect remaining(parent->TmiGetRectangle());
@@ -1072,7 +1070,7 @@ void CTreemap::SequoiaView_DrawChildren(CArray<COLORREF, COLORREF> *bitmap, Item
 
 // No squarification. Children are arranged alternately horizontally and vertically.
 //
-void CTreemap::Simple_DrawChildren(CArray<COLORREF, COLORREF> *bitmap, Item *parent, const double *surface, double h, DWORD flags)
+void CTreemap::Simple_DrawChildren(CColorRefArray &bitmap, Item *parent, const double *surface, double h, DWORD flags)
 {
 #if 1
     WEAK_ASSERT(0); // Not used in WinDirStat.
@@ -1160,7 +1158,7 @@ bool CTreemap::IsCushionShading()
         && m_options.scaleFactor > 0.0;
 }
 
-void CTreemap::RenderLeaf(CArray<COLORREF, COLORREF> *bitmap, Item *item, const double *surface)
+void CTreemap::RenderLeaf(CColorRefArray &bitmap, Item *item, const double *surface)
 {
     CRect rc = item->TmiGetRectangle();
 
@@ -1177,7 +1175,7 @@ void CTreemap::RenderLeaf(CArray<COLORREF, COLORREF> *bitmap, Item *item, const 
     RenderRectangle(bitmap, rc, surface, item->TmiGetGraphColor());
 }
 
-void CTreemap::RenderRectangle(CArray<COLORREF, COLORREF> *bitmap, const CRect& rc, const double *surface, DWORD color)
+void CTreemap::RenderRectangle(CColorRefArray &bitmap, const CRect& rc, const double *surface, DWORD color)
 {
     double brightness = m_options.brightness;
 
@@ -1210,7 +1208,7 @@ void CTreemap::RenderRectangle(CArray<COLORREF, COLORREF> *bitmap, const CRect& 
     }
 }
 
-void CTreemap::DrawSolidRect(CArray<COLORREF, COLORREF> *bitmap, const CRect& rc, COLORREF col, double brightness)
+void CTreemap::DrawSolidRect(CColorRefArray &bitmap, const CRect& rc, COLORREF col, double brightness)
 {
     int red = RGB_GET_RVALUE(col);
     int green = RGB_GET_GVALUE(col);
@@ -1225,13 +1223,15 @@ void CTreemap::DrawSolidRect(CArray<COLORREF, COLORREF> *bitmap, const CRect& rc
     CColorSpace::NormalizeColor(red, green, blue);
 
     for (int iy = rc.top; iy < rc.bottom; iy++)
-    for (int ix = rc.left; ix < rc.right; ix++)
     {
-        (*bitmap)[ix + iy * m_renderArea.Width()] = BGR(blue, green, red);
+        for (int ix = rc.left; ix < rc.right; ix++)
+        {
+            bitmap[ix + iy * m_renderArea.Width()] = BGR(blue, green, red);
+        }
     }
 }
 
-void CTreemap::DrawCushion(CArray<COLORREF, COLORREF> *bitmap, const CRect& rc, const double *surface, COLORREF col, double brightness)
+void CTreemap::DrawCushion(CColorRefArray &bitmap, const CRect& rc, const double *surface, COLORREF col, double brightness)
 {
     // Cushion parameters
     const double Ia = m_options.ambientLight;
@@ -1282,7 +1282,7 @@ void CTreemap::DrawCushion(CArray<COLORREF, COLORREF> *bitmap, const CRect& rc, 
         CColorSpace::NormalizeColor(red, green, blue);
 
         // ... and set!
-        (*bitmap)[ix + iy * m_renderArea.Width()] = BGR(blue, green, red);
+        bitmap[ix + iy * m_renderArea.Width()] = BGR(blue, green, red);
     }
 }
 

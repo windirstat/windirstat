@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2016 WinDirStat team (windirstat.info)
+// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
 // Copyright (C) 2010 Chris Wimmer
 //
 // This program is free software; you can redistribute it and/or modify
@@ -46,7 +46,7 @@ namespace
             CString s;
             if(n > 0)
             {
-                s.Format(_T("%s%03d"), GetLocaleThousandSeparator(), rest);
+                s.Format(_T("%s%03d"), GetLocaleThousandSeparator().GetString(), rest);
             }
             else
             {
@@ -153,23 +153,23 @@ CString FormatLongLongHuman(ULONGLONG n)
 
     if(TB != 0 || GB == base - 1 && MB >= half)
     {
-        s.Format(_T("%s %s"), FormatDouble(TB + GB/base), GetSpec_TB());
+        s.Format(_T("%s %s"), FormatDouble(TB + GB/base).GetString(), GetSpec_TB().GetString());
     }
     else if(GB != 0 || MB == base - 1 && KB >= half)
     {
-        s.Format(_T("%s %s"), FormatDouble(GB + MB/base), GetSpec_GB());
+        s.Format(_T("%s %s"), FormatDouble(GB + MB/base).GetString(), GetSpec_GB().GetString());
     }
     else if(MB != 0 || KB == base - 1 && B >= half)
     {
-        s.Format(_T("%s %s"), FormatDouble(MB + KB/base), GetSpec_MB());
+        s.Format(_T("%s %s"), FormatDouble(MB + KB/base).GetString(), GetSpec_MB().GetString());
     }
     else if(KB != 0)
     {
-        s.Format(_T("%s %s"), FormatDouble(KB + B/base), GetSpec_KB());
+        s.Format(_T("%s %s"), FormatDouble(KB + B/base).GetString(), GetSpec_KB().GetString());
     }
     else if(B != 0)
     {
-        s.Format(_T("%d %s"), (int)B, GetSpec_Bytes());
+        s.Format(_T("%d %s"), (int)B, GetSpec_Bytes().GetString());
     }
     else
     {
@@ -195,7 +195,7 @@ CString FormatDouble(double d) // "98,4" or "98.4"
     int r = (int)(10 * fmod(d, 1));
 
     CString s;
-    s.Format(_T("%d%s%d"), i, GetLocaleDecimalSeparator(), r);
+    s.Format(_T("%d%s%d"), i, GetLocaleDecimalSeparator().GetString(), r);
 
     return s;
 }
@@ -348,7 +348,7 @@ CString FormatVolumeNameOfRootPath(CString rootPath)
 CString FormatVolumeName(CString rootPath, CString volumeName)
 {
     CString ret;
-    ret.Format(_T("%s (%s)"), volumeName, rootPath.Left(2));
+    ret.Format(_T("%s (%s)"), volumeName.GetString(), rootPath.Left(2).GetString());
     return ret;
 }
 
@@ -424,7 +424,7 @@ void ShellExecuteWithAssocDialog(HWND hwnd, LPCTSTR filename)
 
     if(!bExecuted)
     {
-        MdThrowStringExceptionF(_T("ShellExecute failed: %1!s!"), MdGetWinErrorText(::GetLastError()));
+        MdThrowStringExceptionF(_T("ShellExecute failed: %1!s!"), MdGetWinErrorText(::GetLastError()).GetString());
     }
 }
 
@@ -585,7 +585,7 @@ CString MyQueryDosDevice(LPCTSTR drive)
 
     if(dw == 0)
     {
-        VTRACE(_T("QueryDosDevice(%s) failed: %s"), d, MdGetWinErrorText(::GetLastError()));
+        VTRACE(_T("QueryDosDevice(%s) failed: %s"), d.GetString(), MdGetWinErrorText(::GetLastError()).GetString());
         return wds::strEmpty;
     }
 

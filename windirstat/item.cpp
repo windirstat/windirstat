@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2016 WinDirStat team (windirstat.info)
+// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -44,7 +44,9 @@ namespace
 
 CItem::CItem(ITEMTYPE type, LPCTSTR name, bool dontFollow)
     : m_type(type)
+    , m_etype(static_cast<ITEMTYPE>(type & ~ITF_FLAGS))
     , m_name(name)
+    , m_extension_cached(false)
     , m_size(0)
     , m_files(0)
     , m_subdirs(0)
@@ -53,7 +55,6 @@ CItem::CItem(ITEMTYPE type, LPCTSTR name, bool dontFollow)
     , m_readJobs(0)
     , m_attributes(0)
 {
-    m_etype = (ITEMTYPE)(m_type & ~ITF_FLAGS); // returned by GetType
     if(GetType() == IT_FILE || dontFollow || GetType() == IT_FREESPACE || GetType() == IT_UNKNOWN || GetType() == IT_MYCOMPUTER)
     {
         SetReadJobDone();
@@ -161,18 +162,18 @@ CString CItem::GetText(int subitem) const
             if(m_readJobs == 1)
                 s.LoadString(IDS_ONEREADJOB);
             else
-                s.FormatMessage(IDS_sREADJOBS, FormatCount(m_readJobs));
+                s.FormatMessage(IDS_sREADJOBS, FormatCount(m_readJobs).GetString());
         }
         break;
 
     case COL_PERCENTAGE:
         if(GetOptions()->IsShowTimeSpent() && MustShowReadJobs() || IsRootItem())
         {
-            s.Format(_T("[%s s]"), FormatMilliseconds(GetTicksWorked()));
+            s.Format(_T("[%s s]"), FormatMilliseconds(GetTicksWorked()).GetString());
         }
         else
         {
-            s.Format(_T("%s%%"), FormatDouble(GetFraction() * 100));
+            s.Format(_T("%s%%"), FormatDouble(GetFraction() * 100).GetString());
         }
         break;
 
@@ -527,7 +528,7 @@ void CItem::UpdateLastChange()
         int i = path.ReverseFind(wds::chrBackslash);
         CString basename = path.Mid(i + 1);
         CString pattern;
-        pattern.Format(_T("%s\\..\\%s"), path, basename);
+        pattern.Format(_T("%s\\..\\%s"), path.GetString(), basename.GetString());
         CFileFindWDS finder;
         BOOL b = finder.FindFile(pattern);
         if(!b)
@@ -1428,7 +1429,7 @@ void CItem::RefreshRecycler()
     system.ReleaseBuffer();
     if(!b)
     {
-        VTRACE(_T("GetVolumeInformation(%s) failed."), GetPath());
+        VTRACE(_T("GetVolumeInformation(%s) failed."), GetPath().GetString());
         return; // nix zu machen
     }
 
@@ -1443,7 +1444,7 @@ void CItem::RefreshRecycler()
     }
     else
     {
-        VTRACE(_T("%s: unknown file system type %s"), GetPath(), system);
+        VTRACE(_T("%s: unknown file system type %s"), GetPath().GetString(), system.GetString());
         return; // nix zu machen.
     }
 
@@ -1456,7 +1457,7 @@ void CItem::RefreshRecycler()
     }
     if(i >= GetChildrenCount())
     {
-        VTRACE(_T("%s: Recycler(%s) not found."), GetPath(), recycler);
+        VTRACE(_T("%s: Recycler(%s) not found."), GetPath().GetString(), recycler.GetString());
         return; // nicht gefunden
     }
 
@@ -1613,7 +1614,7 @@ void CItem::RecurseCollectExtensionData(CExtensionData *ed)
 {
     GetWDSApp()->PeriodicalUpdateRamUsage();
 
-    auto type = GetType();
+    ITEMTYPE type = GetType();
     if(IsLeaf(type))
     {
         if(type == IT_FILE)

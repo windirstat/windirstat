@@ -1,6 +1,6 @@
 /*
 ** MIPS IR assembler (SSA IR -> machine code).
-** Copyright (C) 2005-2015 Mike Pall. See Copyright Notice in luajit.h
+** Copyright (C) 2005-2017 Mike Pall. See Copyright Notice in luajit.h
 */
 
 /* -- Register allocator extensions --------------------------------------- */
@@ -291,7 +291,7 @@ static void asm_gencall(ASMState *as, const CCallInfo *ci, IRRef *args)
 static void asm_setupresult(ASMState *as, IRIns *ir, const CCallInfo *ci)
 {
   RegSet drop = RSET_SCRATCH;
-  int hiop = ((ir+1)->o == IR_HIOP);
+  int hiop = ((ir+1)->o == IR_HIOP && !irt_isnil((ir+1)->t));
   if ((ci->flags & CCI_NOFPRCLOBBER))
     drop &= ~RSET_FPR;
   if (ra_hasreg(ir->r))
@@ -443,18 +443,14 @@ static void asm_conv(ASMState *as, IRIns *ir)
       /* y = (x ^ 0x8000000) + 2147483648.0 */
       Reg left = ra_alloc1(as, lref, RSET_GPR);
       Reg tmp = ra_scratch(as, rset_exclude(RSET_FPR, dest));
-      emit_fgh(as, irt_isfloat(ir->t) ? MIPSI_ADD_S : MIPSI_ADD_D,
-	       dest, dest, tmp);
-      emit_fg(as, irt_isfloat(ir->t) ? MIPSI_CVT_S_W : MIPSI_CVT_D_W,
-	      dest, dest);
       if (irt_isfloat(ir->t))
-	emit_lsptr(as, MIPSI_LWC1, (tmp & 31),
-		   (void *)lj_ir_k64_find(as->J, U64x(4f000000,4f000000)),
-		   RSET_GPR);
-      else
-	emit_lsptr(as, MIPSI_LDC1, (tmp & 31),
-		   (void *)lj_ir_k64_find(as->J, U64x(41e00000,00000000)),
-		   RSET_GPR);
+	emit_fg(as, MIPSI_CVT_S_D, dest, dest);
+      /* Must perform arithmetic with doubles to keep the precision. */
+      emit_fgh(as, MIPSI_ADD_D, dest, dest, tmp);
+      emit_fg(as, MIPSI_CVT_D_W, dest, dest);
+      emit_lsptr(as, MIPSI_LDC1, (tmp & 31),
+		 (void *)lj_ir_k64_find(as->J, U64x(41e00000,00000000)),
+		 RSET_GPR);
       emit_tg(as, MIPSI_MTC1, RID_TMP, dest);
       emit_dst(as, MIPSI_XOR, RID_TMP, RID_TMP, left);
       emit_ti(as, MIPSI_LUI, RID_TMP, 0x8000);
@@ -793,7 +789,6 @@ static void asm_newref(ASMState *as, IRIns *ir)
 
 static void asm_uref(ASMState *as, IRIns *ir)
 {
-  /* NYI: Check that UREFO is still open and not aliasing a slot. */
   Reg dest = ra_dest(as, ir, RSET_GPR);
   if (irref_isk(ir->op1)) {
     GCfunc *fn = ir_kfunc(IR(ir->op1));

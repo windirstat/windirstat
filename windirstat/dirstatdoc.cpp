@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2016 WinDirStat team (windirstat.info)
+// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -928,7 +928,7 @@ void CDirstatDoc::AskForConfirmation(const USERDEFINEDCLEANUP *udc, CItem *item)
     }
 
     CString msg;
-    msg.FormatMessage(udc->recurseIntoSubdirectories ? IDS_RUDC_CONFIRMATIONss : IDS_UDC_CONFIRMATIONss, udc->title, item->GetPath());
+    msg.FormatMessage(udc->recurseIntoSubdirectories ? IDS_RUDC_CONFIRMATIONss : IDS_UDC_CONFIRMATIONss, udc->title.GetString(), item->GetPath().GetString());
 
     if(IDYES != AfxMessageBox(msg, MB_YESNO))
     {
@@ -949,7 +949,7 @@ void CDirstatDoc::PerformUserDefinedCleanup(const USERDEFINEDCLEANUP *udc, CItem
     {
         if(!FolderExists(path) && !DriveExists(path))
         {
-            MdThrowStringExceptionF(IDS_THEDIRECTORYsDOESNOTEXIST, path);
+            MdThrowStringExceptionF(IDS_THEDIRECTORYsDOESNOTEXIST, path.GetString());
         }
     }
     else
@@ -958,7 +958,7 @@ void CDirstatDoc::PerformUserDefinedCleanup(const USERDEFINEDCLEANUP *udc, CItem
 
         if(!::PathFileExists(path))
         {
-            MdThrowStringExceptionF(IDS_THEFILEsDOESNOTEXIST, path);
+            MdThrowStringExceptionF(IDS_THEFILEsDOESNOTEXIST, path.GetString());
         }
     }
 
@@ -1036,7 +1036,7 @@ void CDirstatDoc::CallUserDefinedCleanup(bool isDirectory, const CString& format
 
     CString app = GetCOMSPEC();
     CString cmdline;
-    cmdline.Format(_T("%s /C %s"), GetBaseNameFromPath(app), userCommandLine);
+    cmdline.Format(_T("%s /C %s"), GetBaseNameFromPath(app).GetString(), userCommandLine.GetString());
     CString directory = isDirectory ? currentPath : GetFolderNameFromPath(currentPath);
 
     STARTUPINFO si;
@@ -1064,7 +1064,7 @@ void CDirstatDoc::CallUserDefinedCleanup(bool isDirectory, const CString& format
     if(!b)
     {
         MdThrowStringExceptionF(IDS_COULDNOTCREATEPROCESSssss,
-            app, cmdline, directory, MdGetWinErrorText(::GetLastError())
+            app.GetString(), cmdline.GetString(), directory.GetString(), MdGetWinErrorText(::GetLastError()).GetString()
         );
         return;
     }

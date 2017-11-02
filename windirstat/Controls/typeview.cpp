@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2016 WinDirStat team (windirstat.info)
+// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -148,7 +148,7 @@ CString CExtensionListControl::CListItem::GetDescription() const
 CString CExtensionListControl::CListItem::GetBytesPercent() const
 {
     CString s;
-    s.Format(_T("%s%%"), FormatDouble(GetBytesFraction() * 100));
+    s.Format(_T("%s%%"), FormatDouble(GetBytesFraction() * 100).GetString());
     return s;
 }
 

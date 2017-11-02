@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2016 WinDirStat team (windirstat.info)
+// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -142,13 +142,13 @@ void CAboutDlg::CMyTabControl::SetPageText(int tab)
     {
     case TAB_ABOUT:
         {
-            text.FormatMessage(IDS_ABOUT_ABOUTTEXTss, GetAuthorEmail(), GetWinDirStatHomepage());
+            text.FormatMessage(IDS_ABOUT_ABOUTTEXTss, GetAuthorEmail().GetString(), GetWinDirStatHomepage().GetString());
         }
         break;
     case TAB_AUTHORS:
         {
             CString translators;
-            text.FormatMessage(IDS_ABOUT_AUTHORSTEXTs, GetDevelList());
+            text.FormatMessage(IDS_ABOUT_AUTHORSTEXTs, GetDevelList().GetString());
             text += GetTranslatorList();
         }
         break;
@@ -167,6 +167,7 @@ void CAboutDlg::CMyTabControl::SetPageText(int tab)
         {
             ASSERT(0);
         }
+        break;
     }
     CRect rc;
     m_text.GetWindowRect(rc);
@@ -264,7 +265,7 @@ CString CAboutDlg::GetAppVersion()
     USES_CONVERSION;
 
     CString s;
-    s.Format(_T("WinDirStat %s"), A2T(VN_STRING_EXE));
+    s.Format(_T("WinDirStat %s"), _T("1.x.y.z")); // FIXME
     return s;
 }
 
@@ -382,7 +383,6 @@ void CAboutDlg::OnGetMinMaxInfo(MINMAXINFO* mmi)
 {
     m_layout.OnGetMinMaxInfo(mmi);
     CDialog::OnGetMinMaxInfo(mmi);
-
 }
 
 void CAboutDlg::OnDestroy()

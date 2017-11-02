@@ -1,0 +1,54 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{915BCD7E-C2A6-91B0-BD72-CE32633C6AE2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{CD13B791-FDCF-EB66-D80D-A8C3CAF7A9B9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\embedded">
+      <UniqueIdentifier>{B621C87F-C8A8-3C78-7B03-BEF282B7A0C1}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include=".French.txt" />
+    <None Include="res\windirstat.rc2">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\bitmap1.bmp">
+      <Filter>Resource Files\embedded</Filter>
+    </None>
+    <None Include="..\junctionpoint.bmp">
+      <Filter>Resource Files\embedded</Filter>
+    </None>
+    <None Include="..\Toolbar.bmp">
+      <Filter>Resource Files\embedded</Filter>
+    </None>
+    <None Include="..\linkhand.cur">
+      <Filter>Resource Files\embedded</Filter>
+    </None>
+    <None Include="..\icon1.ico">
+      <Filter>Resource Files\embedded</Filter>
+    </None>
+    <None Include="..\license.txt">
+      <Filter>Resource Files\embedded</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\common\version.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="windirstat.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+    <ResourceCompile Include="..\..\..\common\version.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>

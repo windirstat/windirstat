@@ -17,8 +17,7 @@ web/*.html
 web/software/cushionstarlets.php
 src/*
 Visual Lint/*
-common/hgtip.h
-common/buildnumber.h
+common/hgid.h
 wds_release_intermediate/**
 wds_release.*.sln
 wdsr*/wds_release_wdsr*.*.vcproj

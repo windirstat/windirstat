@@ -28,7 +28,7 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
-				CommandLine="if not exist &quot;$(SolutionDir)common\buildnumber.h&quot; &quot;$(SolutionDir)common\buildinc.cmd&quot; &quot;$(SolutionDir)common&quot;"
+				CommandLine="if not exist &quot;$(SolutionDir)common\hgid.h&quot; call &quot;$(SolutionDir)\common\hgid.cmd&quot;"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -46,7 +46,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="..;.;..\common;Controls;Dialogs;..\3rdparty\lua\src"
-				PreprocessorDefinitions="_DEBUG;VTRACE_TO_CONSOLE=1;VTRACE_DETAIL=2;WINVER=0x0501"
+				PreprocessorDefinitions="MODNAME=wds32D;_DEBUG;VTRACE_TO_CONSOLE=1;VTRACE_DETAIL=2;WINVER=0x0501"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
 				EnableFunctionLevelLinking="true"
@@ -64,7 +64,7 @@
 			<Tool
 				Name="VCResourceCompilerTool"
 				AdditionalOptions="/nologo /l409"
-				PreprocessorDefinitions="_DEBUG;VTRACE_TO_CONSOLE=1;VTRACE_DETAIL=2;WINVER=0x0501"
+				PreprocessorDefinitions="MODNAME=wds32D;_DEBUG;VTRACE_TO_CONSOLE=1;VTRACE_DETAIL=2;WINVER=0x0501"
 				AdditionalIncludeDirectories="..;.;..\common;Controls;Dialogs;..\3rdparty\lua\src;..;$(IntDir)"
 			/>
 			<Tool
@@ -119,7 +119,7 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
-				CommandLine="if not exist &quot;$(SolutionDir)common\buildnumber.h&quot; &quot;$(SolutionDir)common\buildinc.cmd&quot; &quot;$(SolutionDir)common&quot;"
+				CommandLine="if not exist &quot;$(SolutionDir)common\hgid.h&quot; call &quot;$(SolutionDir)\common\hgid.cmd&quot;"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -138,7 +138,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="..;.;..\common;Controls;Dialogs;..\3rdparty\lua\src"
-				PreprocessorDefinitions="_DEBUG;VTRACE_TO_CONSOLE=1;VTRACE_DETAIL=2;WINVER=0x0501"
+				PreprocessorDefinitions="MODNAME=wds64D;_DEBUG;VTRACE_TO_CONSOLE=1;VTRACE_DETAIL=2;WINVER=0x0501"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
 				EnableFunctionLevelLinking="true"
@@ -156,7 +156,7 @@
 			<Tool
 				Name="VCResourceCompilerTool"
 				AdditionalOptions="/nologo /l409"
-				PreprocessorDefinitions="_DEBUG;VTRACE_TO_CONSOLE=1;VTRACE_DETAIL=2;WINVER=0x0501"
+				PreprocessorDefinitions="MODNAME=wds64D;_DEBUG;VTRACE_TO_CONSOLE=1;VTRACE_DETAIL=2;WINVER=0x0501"
 				AdditionalIncludeDirectories="..;.;..\common;Controls;Dialogs;..\3rdparty\lua\src;..;$(IntDir)"
 			/>
 			<Tool
@@ -211,7 +211,7 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
-				CommandLine="if not exist &quot;$(SolutionDir)common\buildnumber.h&quot; &quot;$(SolutionDir)common\buildinc.cmd&quot; &quot;$(SolutionDir)common&quot;"
+				CommandLine="if not exist &quot;$(SolutionDir)common\hgid.h&quot; call &quot;$(SolutionDir)\common\hgid.cmd&quot;"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -230,7 +230,7 @@
 				AdditionalOptions="/Oi /Ot"
 				Optimization="3"
 				AdditionalIncludeDirectories="..;.;..\common;Controls;Dialogs;..\3rdparty\lua\src"
-				PreprocessorDefinitions="NDEBUG;WINVER=0x0501"
+				PreprocessorDefinitions="MODNAME=wds32;NDEBUG;WINVER=0x0501"
 				StringPooling="true"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
@@ -248,7 +248,7 @@
 			<Tool
 				Name="VCResourceCompilerTool"
 				AdditionalOptions="/nologo /l409"
-				PreprocessorDefinitions="NDEBUG;WINVER=0x0501"
+				PreprocessorDefinitions="MODNAME=wds32;NDEBUG;WINVER=0x0501"
 				AdditionalIncludeDirectories="..;.;..\common;Controls;Dialogs;..\3rdparty\lua\src;..;$(IntDir)"
 			/>
 			<Tool
@@ -305,7 +305,7 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
-				CommandLine="if not exist &quot;$(SolutionDir)common\buildnumber.h&quot; &quot;$(SolutionDir)common\buildinc.cmd&quot; &quot;$(SolutionDir)common&quot;"
+				CommandLine="if not exist &quot;$(SolutionDir)common\hgid.h&quot; call &quot;$(SolutionDir)\common\hgid.cmd&quot;"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -325,7 +325,7 @@
 				AdditionalOptions="/Oi /Ot"
 				Optimization="3"
 				AdditionalIncludeDirectories="..;.;..\common;Controls;Dialogs;..\3rdparty\lua\src"
-				PreprocessorDefinitions="NDEBUG;WINVER=0x0501"
+				PreprocessorDefinitions="MODNAME=wds64;NDEBUG;WINVER=0x0501"
 				StringPooling="true"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
@@ -343,7 +343,7 @@
 			<Tool
 				Name="VCResourceCompilerTool"
 				AdditionalOptions="/nologo /l409"
-				PreprocessorDefinitions="NDEBUG;WINVER=0x0501"
+				PreprocessorDefinitions="MODNAME=wds64;NDEBUG;WINVER=0x0501"
 				AdditionalIncludeDirectories="..;.;..\common;Controls;Dialogs;..\3rdparty\lua\src;..;$(IntDir)"
 			/>
 			<Tool
@@ -411,14 +411,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\common\buildnumber.h"
-					>
-				</File>
-				<File
-					RelativePath="..\common\common_rsrcstr.h"
-					>
-				</File>
-				<File
 					RelativePath="..\common\commonhelpers.h"
 					>
 				</File>
@@ -427,7 +419,7 @@
 					>
 				</File>
 				<File
-					RelativePath="..\common\hgtip.h"
+					RelativePath="..\common\hgid.h"
 					>
 				</File>
 				<File
@@ -660,6 +652,10 @@
 				</File>
 			</Filter>
 			<File
+				RelativePath="..\common\version.rc"
+				>
+			</File>
+			<File
 				RelativePath="windirstat.rc"
 				>
 			</File>
@@ -857,6 +853,10 @@
 				>
 			</File>
 			<File
+				RelativePath="stdafx.cpp"
+				>
+			</File>
+			<File
 				RelativePath="windirstat.cpp"
 				>
 			</File>
@@ -866,15 +866,11 @@
 			Filter=""
 			>
 			<File
-				RelativePath="..\common\BUILD"
-				>
-			</File>
-			<File
 				RelativePath="..\common\build_luajit.cmd"
 				>
 			</File>
 			<File
-				RelativePath="..\common\buildinc.cmd"
+				RelativePath="..\common\hgid.cmd"
 				>
 			</File>
 			<File

@@ -1,4 +1,3 @@
--- The below is used to insert the .vs(2005|2008|2010|2012|2013) into the file names for projects and solutions
 local standalone = false
 local action = _ACTION or ""
 local pfx = ""
@@ -12,8 +11,8 @@ else
     local orig_getbasename = premake.project.getbasename
     premake.project.getbasename = function(prjname, pattern)
         if _ACTION then
-            -- Using vc instead of vs here to avoid collisions
-            name_map = {vs2005 = "8", vs2008 = "9", vs2010 = "10", vs2012 = "11", vs2013 = "12"}
+            -- The below is used to insert the .vs(8|9|10|11|12|14|15) into the file names for projects and solutions
+            name_map = {vs2005 = "vs8", vs2008 = "vs9", vs2010 = "vs10", vs2012 = "vs11", vs2013 = "vs12", vs2015 = "vs14", vs2017 = "vs15"}
             if name_map[_ACTION] then
                 pattern = pattern:gsub("%%%%", "%%%%." .. name_map[_ACTION])
             else

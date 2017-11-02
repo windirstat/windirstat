@@ -1,6 +1,6 @@
 /*
 ** ARM instruction emitter.
-** Copyright (C) 2005-2015 Mike Pall. See Copyright Notice in luajit.h
+** Copyright (C) 2005-2017 Mike Pall. See Copyright Notice in luajit.h
 */
 
 /* -- Constant encoding --------------------------------------------------- */
@@ -273,7 +273,7 @@ static void emit_call(ASMState *as, void *target)
   ptrdiff_t delta = ((char *)target - (char *)p) - 8;
   if ((((delta>>2) + 0x00800000) >> 24) == 0) {
     if ((delta & 1))
-      *p = ARMI_BLX | ((uint32_t)(delta>>2) & 0x00ffffffu) | ((delta&2) << 27);
+      *p = ARMI_BLX | ((uint32_t)(delta>>2) & 0x00ffffffu) | ((delta&2) << 23);
     else
       *p = ARMI_BL | ((uint32_t)(delta>>2) & 0x00ffffffu);
   } else {  /* Target out of range: need indirect call. But don't use R0-R3. */

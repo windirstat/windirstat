@@ -3,7 +3,7 @@
 ## Copyright and licenses
 
 * Copyright © 2003-2005 Bernhard Seifert (bseifert@users.sourceforge.net)
-* Copyright © 2004-2016 WinDirStat team (windirstat.info)
+* Copyright © 2004-2017 WinDirStat Team (windirstat.net)
 
 The application itself is distributed under the terms of the [GPL v2](windirstat/res/license.txt), but parts of the source code are also available
 under more lenient license terms.
@@ -54,7 +54,7 @@ The [FLOSS](https://en.wikipedia.org/wiki/Alternative_terms_for_free_software) a
 * [Disk Inventory X](http://www.derlien.com/) (OS X)
 * [GrandPerspective](http://grandperspectiv.sourceforge.net/) (OS X)
 
-We're not aware of an alternative for Windows at this moment, but
+We're not aware of an alternative using treemaps for Windows at this moment, but ...
 
 ## Building from source
 
@@ -79,15 +79,15 @@ addresses by a future release.
 
 ![WinDirStat logo](common/logo_256px.png)
 
-The [logo](https://windirstat.info/logo.html) was generously designed and contributed to the project by Robin
+The [logo](https://windirstat.net/logo.html) was generously designed and contributed to the project by Robin
 "tuqueque" Marín. Follow him on Twitter [@tuquequeorg](https://twitter.com/tuquequeorg).
 
 ## Links
 
 We currently have:
 
-* a [website](https://windirstat.info/)
-* a [blog](http://blog.windirstat.info/)
+* a [website](https://windirstat.net/)
+* a [blog](http://blog.windirstat.net/)
 * are on Twitter as [@windirstat](https://twitter.com/windirstat)
 * have a SubReddit [r/WinDirStat](http://www.reddit.com/r/WinDirStat/)
 
@@ -96,6 +96,6 @@ in time.
 
 ### Contact - Kontakt - Контакт
 
-* You may write us on the following page in either English, German or Russian: [contact](https://windirstat.info/contact.html)
-* Ihr könnt uns auf der folgenden Webseite entweder auf Deutsch, Englisch oder Russisch schreiben: [Kontakt](https://windirstat.info/contact.html)
-* Пишите нам на этом вебсайте на русском, на англиском или на немецком: [контакт](https://windirstat.info/contact.html) - **Указание:** давно в школе я учился русский язык. Но как писал это уже давно, поэтому может быть чтобы не все понимаю и наверно тоже не пишу бес ошыбок. Посмотрим.
+* You may write us on the following page in either English, German or Russian: [contact](https://windirstat.net/contact.html)
+* Ihr könnt uns auf der folgenden Webseite entweder auf Deutsch, Englisch oder Russisch schreiben: [Kontakt](https://windirstat.net/contact.html)
+* Пишите нам на этом вебсайте на русском, на англиском или на немецком: [контакт](https://windirstat.net/contact.html) - **Указание:** давно в школе я учился русский язык. Но как писал это уже давно, поэтому может быть чтобы не все понимаю и наверно тоже не пишу бес ошыбок. Посмотрим.

@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2016 WinDirStat team (windirstat.info)
+// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -46,6 +46,8 @@ protected:
     static void DistributeFirst(int& first, int& second, int& third);
 };
 
+typedef CArray<COLORREF, COLORREF> CColorRefArray;
+typedef CArray<COLORREF, COLORREF&> CColorRefRArray;
 
 //
 // CTreemap. Can create a treemap. Knows 3 squarification methods:
@@ -144,10 +146,10 @@ public:
 
 public:
     // Get a good palette of 13 colors (7 if system has 256 colors)
-    static void GetDefaultPalette(CArray<COLORREF, COLORREF&>& palette);
+    static void GetDefaultPalette(CColorRefRArray& palette);
 
     // Create a equally-bright palette from a set of arbitrary colors
-    static void EqualizeColors(const COLORREF *colors, int count, CArray<COLORREF, COLORREF&>& out);
+    static void EqualizeColors(const COLORREF *colors, int count, CColorRefRArray& out);
 
     // Good values
     static Options GetDefaultOptions();
@@ -184,7 +186,7 @@ public:
 protected:
     // The recursive drawing function
     void RecurseDrawGraph(
-        CArray<COLORREF, COLORREF> *bitmap,
+        CColorRefArray &bitmap,
         Item *item,
         const CRect& rc,
         bool asroot,
@@ -195,7 +197,7 @@ protected:
 
     // This function switches to KDirStat-, SequoiaView- or Simple_DrawChildren
     void DrawChildren(
-        CArray<COLORREF, COLORREF> *bitmap,
+        CColorRefArray &bitmap,
         Item *parent,
         const double *surface,
         double h,
@@ -203,15 +205,15 @@ protected:
     );
 
     // KDirStat-like squarification
-    void KDirStat_DrawChildren(CArray<COLORREF, COLORREF> *bitmap, Item *parent, const double *surface, double h, DWORD flags);
+    void KDirStat_DrawChildren(CColorRefArray &bitmap, Item *parent, const double *surface, double h, DWORD flags);
     bool KDirStat_ArrangeChildren(Item *parent, CArray<double, double>& childWidth, CArray<double, double>& rows, CArray<int, int>& childrenPerRow);
     double KDirStat_CalcutateNextRow(Item *parent, const int nextChild, double width, int& childrenUsed, CArray<double, double>& childWidth);
 
     // Classical SequoiaView-like squarification
-    void SequoiaView_DrawChildren(CArray<COLORREF, COLORREF> *bitmap, Item *parent, const double *surface, double h, DWORD flags);
+    void SequoiaView_DrawChildren(CColorRefArray &bitmap, Item *parent, const double *surface, double h, DWORD flags);
 
     // No squarification (simple style, not used in WinDirStat)
-    void Simple_DrawChildren(CArray<COLORREF, COLORREF> *bitmap, Item *parent, const double *surface, double h, DWORD flags);
+    void Simple_DrawChildren(CColorRefArray &bitmap, Item *parent, const double *surface, double h, DWORD flags);
 
     // Sets brightness to a good value, if system has only 256 colors
     void SetBrightnessFor256();
@@ -220,17 +222,17 @@ protected:
     bool IsCushionShading();
 
     // Leaves space for grid and then calls RenderRectangle()
-    void RenderLeaf(CArray<COLORREF, COLORREF> *bitmap, Item *item, const double *surface);
+    void RenderLeaf(CColorRefArray &bitmap, Item *item, const double *surface);
 
     // Either calls DrawCushion() or DrawSolidRect()
-    void RenderRectangle(CArray<COLORREF, COLORREF> *bitmap, const CRect& rc, const double *surface, DWORD color);
+    void RenderRectangle(CColorRefArray &bitmap, const CRect& rc, const double *surface, DWORD color);
     // void RenderRectangle(CDC *pdc, const CRect& rc, const double *surface, DWORD color);
 
     // Draws the surface using SetPixel()
-    void DrawCushion(CArray<COLORREF, COLORREF> *bitmap, const CRect& rc, const double *surface, COLORREF col, double brightness);
+    void DrawCushion(CColorRefArray &bitmap, const CRect& rc, const double *surface, COLORREF col, double brightness);
 
     // Draws the surface using FillSolidRect()
-    void DrawSolidRect(CArray<COLORREF, COLORREF> *bitmap, const CRect& rc, COLORREF col, double brightness);
+    void DrawSolidRect(CColorRefArray &bitmap, const CRect& rc, COLORREF col, double brightness);
 
     // Adds a new ridge to surface
     static void AddRidge(const CRect& rc, double *surface, double h);

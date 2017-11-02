@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2016 WinDirStat team (windirstat.info)
+// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
 // Copyright (C) 2010 Chris Wimmer
 //
 // This program is free software; you can redistribute it and/or modify
@@ -30,7 +30,10 @@
 #include "graphview.h"
 #include "osspecific.h"
 #include "WorkLimiter.h"
+#pragma warning(push)
+#pragma warning(disable : 4091)
 #include <Dbghelp.h> // for mini dumps
+#pragma warning(pop)
 
 #ifdef _DEBUG
 #   include <common/tracer.cpp>
@@ -51,12 +54,12 @@ CDirstatApp *GetWDSApp()
 
 CString GetAuthorEmail()
 {
-    return _T("team") _T("\x40") _T("windirstat.info"); // FIXME into common string file
+    return _T("team") _T("\x40") _T("windirstat.net"); // FIXME into common string file
 }
 
 CString GetWinDirStatHomepage()
 {
-    return _T("windirstat.info"); // FIXME into common string file
+    return _T("windirstat.net"); // FIXME into common string file
 }
 
 CMyImageList* GetMyImageList()
@@ -214,7 +217,7 @@ void CDirstatApp::RestartApplication()
     if(!success)
     {
         CString s;
-        s.FormatMessage(IDS_CREATEPROCESSsFAILEDs, GetAppFileName(), MdGetWinErrorText(::GetLastError()));
+        s.FormatMessage(IDS_CREATEPROCESSsFAILEDs, GetAppFileName().GetString(), MdGetWinErrorText(::GetLastError()).GetString());
         AfxMessageBox(s);
         return;
     }
@@ -331,7 +334,7 @@ CString CDirstatApp::FindAuxiliaryFileByLangid(LPCTSTR prefix, LPCTSTR suffix, L
     number.Format(_T("%04x"), langid);
 
     CString exactName;
-    exactName.Format(_T("%s%s%s"), prefix, number, suffix);
+    exactName.Format(_T("%s%s%s"), prefix, number.GetString(), suffix);
 
     CString exactPath = GetAppFolder() + _T("\\") + exactName;
     if(::PathFileExists(exactPath) && (!checkResource || IsCorrectResourceDll(exactPath)))
@@ -462,7 +465,7 @@ CString CDirstatApp::GetCurrentProcessMemoryInfo()
     CString n = PadWidthBlanks(FormatBytes(m_workingSet), 11);
 
     CString s;
-    s.FormatMessage(IDS_RAMUSAGEs, n);
+    s.FormatMessage(IDS_RAMUSAGEs, n.GetString());
 
     return s;
 }
@@ -528,7 +531,7 @@ BOOL CDirstatApp::InitInstance()
             }
             else
             {
-                VTRACE(_T("LoadLibrary(%s) failed: %u"), resourceDllPath, ::GetLastError());
+                VTRACE(_T("LoadLibrary(%s) failed: %u"), resourceDllPath.GetString(), ::GetLastError());
             }
         }
         // else: We use our built-in English resources.

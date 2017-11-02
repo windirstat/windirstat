@@ -2,6 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
+// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -22,53 +23,3 @@
 #ifdef APSTUDIO_INVOKED
 #error this file is not editable by Microsoft Visual C++
 #endif //APSTUDIO_INVOKED
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// wdsr040c.dll - Version
-//
-
-VS_VERSION_INFO VERSIONINFO
- FILEVERSION VN_FILEVERSION_DLL
- PRODUCTVERSION VN_PRODVERSION_DLL
- FILEFLAGSMASK 0x3fL
- FILEFLAGS 0
- FILEOS VOS__WINDOWS32
- FILETYPE VFT_DLL
- FILESUBTYPE VFT2_UNKNOWN
-BEGIN
-    BLOCK "StringFileInfo"
-    BEGIN
-        BLOCK "040904e4"
-        BEGIN
-            VALUE "CompanyName", "WDS Team (windirstat.info)"
-            VALUE "FileDescription", "WinDirStat French Resources"
-            VALUE "FileVersion", VN_STRING_DLL
-            VALUE "InternalName", "wdsr040c"
-            VALUE "LegalCopyright", VN_COPYRIGHTSTRING
-            VALUE "OriginalFilename", "wdsr040c.dll"
-            VALUE "ProductName", "WinDirStat"
-            VALUE "ProductVersion", VN_STRING_DLL
-        END
-    END
-    BLOCK "VarFileInfo"
-    BEGIN
-        VALUE "Translation", 0x40c, 1252
-    END
-END
-
-#include "../../common/common_rsrcstr.h"
-
-STRINGTABLE
-LANGUAGE LANG_FRENCH, SUBLANG_FRENCH
-BEGIN
-    IDS_RESOURCEVERSION     IDSS_RESOURCEDLL
-    IDS_FROMsPLATFORMs      IDSS_FROMsPLATFORMs
-    IDS_SEV_CRITICAL        IDSS_SEV_CRITICAL
-    IDS_SEV_GRAVE           IDSS_SEV_GRAVE
-    IDS_SEV_NORMAL          IDSS_SEV_NORMAL
-    IDS_SEV_WISH            IDSS_SEV_WISH
-    IDS_SEV_FEEDBACK        IDSS_SEV_FEEDBACK
-    IDS_TRANSLATORS         IDSS_TRANSLATORS
-END
-

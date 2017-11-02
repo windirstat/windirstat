@@ -1,6 +1,6 @@
 /*
 ** SPLIT: Split 64 bit IR instructions into 32 bit IR instructions.
-** Copyright (C) 2005-2015 Mike Pall. See Copyright Notice in luajit.h
+** Copyright (C) 2005-2017 Mike Pall. See Copyright Notice in luajit.h
 */
 
 #define lj_opt_split_c
@@ -471,7 +471,8 @@ static void split_ir(jit_State *J)
 	}
 #endif
 	else if (st == IRT_I64 || st == IRT_U64) {  /* 64/64 bit cast. */
-	  /* Drop cast, since assembler doesn't care. */
+	  /* Drop cast, since assembler doesn't care. But fwd both parts. */
+	  hi = hiref;
 	  goto fwdlo;
 	} else if ((ir->op2 & IRCONV_SEXT)) {  /* Sign-extend to 64 bit. */
 	  IRRef k31 = lj_ir_kint(J, 31);

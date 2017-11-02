@@ -25,33 +25,73 @@ if _OPTIONS["release"] then
     _OPTIONS["release"] = pfx
 end
 do
-	-- This is mainly to support older premake4 builds
-	if not premake.project.getbasename then
-		print "Magic happens ..."
-		-- override the function to establish the behavior we'd get after patching Premake to have premake.project.getbasename
-		premake.project.getbasename = function(prjname, pattern)
-			return pattern:gsub("%%%%", prjname)
-		end
-		-- obviously we also need to overwrite the following to generate functioning VS solution files
-		premake.vstudio.projectfile = function(prj)
-			local pattern
-			if prj.language == "C#" then
-				pattern = "%%.csproj"
-			else
-				pattern = iif(_ACTION > "vs2008", "%%.vcxproj", "%%.vcproj")
-			end
+    -- This is mainly to support older premake4 builds
+    if not premake.project.getbasename then
+        print "Magic happens ..."
+        -- override the function to establish the behavior we'd get after patching Premake to have premake.project.getbasename
+        premake.project.getbasename = function(prjname, pattern)
+            return pattern:gsub("%%%%", prjname)
+        end
+        -- obviously we also need to overwrite the following to generate functioning VS solution files
+        premake.vstudio.projectfile = function(prj)
+            local pattern
+            if prj.language == "C#" then
+                pattern = "%%.csproj"
+            else
+                pattern = iif(_ACTION > "vs2008", "%%.vcxproj", "%%.vcproj")
+            end
 
-			local fname = premake.project.getbasename(prj.name, pattern)
-			fname = path.join(prj.location, fname)
-			return fname
-		end
-		-- we simply overwrite the original function on older Premake versions
-		premake.project.getfilename = function(prj, pattern)
-			local fname = premake.project.getbasename(prj.name, pattern)
-			fname = path.join(prj.location, fname)
-			return path.getrelative(os.getcwd(), fname)
-		end
-	end
+            local fname = premake.project.getbasename(prj.name, pattern)
+            fname = path.join(prj.location, fname)
+            return fname
+        end
+        -- we simply overwrite the original function on older Premake versions
+        premake.project.getfilename = function(prj, pattern)
+            local fname = premake.project.getbasename(prj.name, pattern)
+            fname = path.join(prj.location, fname)
+            return path.getrelative(os.getcwd(), fname)
+        end
+    end
+    -- Make UUID generation for filters deterministic
+    if os.str2uuid ~= nil then
+        local vc2010 = premake.vstudio.vc2010
+        vc2010.filteridgroup = function(prj)
+            local filters = { }
+            local filterfound = false
+
+            for file in premake.project.eachfile(prj) do
+                -- split the path into its component parts
+                local folders = string.explode(file.vpath, "/", true)
+                local path = ""
+                for i = 1, #folders - 1 do
+                    -- element is only written if there *are* filters
+                    if not filterfound then
+                        filterfound = true
+                        _p(1,'<ItemGroup>')
+                    end
+                    
+                    path = path .. folders[i]
+
+                    -- have I seen this path before?
+                    if not filters[path] then
+                        local seed = path .. (prj.uuid or "")
+                        local deterministic_uuid = os.str2uuid(seed)
+                        filters[path] = true
+                        _p(2, '<Filter Include="%s">', path)
+                        _p(3, '<UniqueIdentifier>{%s}</UniqueIdentifier>', deterministic_uuid)
+                        _p(2, '</Filter>')
+                    end
+
+                    -- prepare for the next subfolder
+                    path = path .. "\\"
+                end
+            end
+            
+            if filterfound then
+                _p(1,'</ItemGroup>')
+            end
+        end
+    end
     -- Name the project files after their VS version
     local orig_getbasename = premake.project.getbasename
     premake.project.getbasename = function(prjname, pattern)
@@ -106,7 +146,7 @@ do
         io.capture()
         orig_vc2010_configurationPropertyGroup(cfg, cfginfo)
         local captured = io.endcapture()
-		local toolsets = { vs2012 = "v110", vs2013 = "v120", vs2015 = "v140", vs2017 = "v141" }
+        local toolsets = { vs2012 = "v110", vs2013 = "v120", vs2015 = "v140", vs2017 = "v141" }
         local toolset = toolsets[_ACTION]
         if toolset then
             if _OPTIONS["xp"] then
@@ -215,6 +255,7 @@ newoption { trigger = "release", description = "Creates a solution suitable for 
 newoption { trigger = "dev", description = "Add projects only relevant during development." }
 newoption { trigger = "xp", description = "Enable XP-compatible build for newer Visual Studio versions." }
 
+--_CRT_SECURE_NO_WARNINGS, _CRT_SECURE_NO_DEPRECATE, _SCL_SECURE_NO_WARNINGS, _AFX_SECURE_NO_WARNINGS and _ATL_SECURE_NO_WARNINGS???
 solution (iif(release, slnname, "windirstat"))
     configurations  (iif(release, {"Release"}, {"Debug", "Release"}))
     platforms       {"x32", "x64"}
@@ -240,15 +281,13 @@ solution (iif(release, slnname, "windirstat"))
         resoptions      {"/nologo", "/l409"}
         resincludedirs  {".", "$(IntDir)"}
         linkoptions     {"/delayload:psapi.dll", "/pdbaltpath:%_PDB%"}
-        prebuildcommands("if not exist \"$(SolutionDir)common\\buildnumber.h\" \"$(SolutionDir)common\\buildinc.cmd\" \"$(SolutionDir)common\"")
         if release then
             postbuildcommands
             {
-                "signtool.exe sign /v /a /ph /d \"WinDirStat\" /du \"http://windirstat.info\" /tr http://www.startssl.com/timestamp \"$(TargetPath)\""
+                "ollisign.cmd -a \"$(TargetPath)\" \"https://windirstat.net\" \"WinDirStat\""
             }
-            if os.isfile("common/hgtip.h") then
-                defines ("HAVE_HGTIP")
-            end
+        else
+            prebuildcommands{"if not exist \"$(SolutionDir)common\\hgid.h\" call \"$(SolutionDir)\\common\\hgid.cmd\"",}
         end
         files
         {
@@ -264,7 +303,7 @@ solution (iif(release, slnname, "windirstat"))
             "windirstat/windirstat.rc",
             "windirstat/res/*.*",
             "*.txt", "*.md",
-            "common/BUILD",
+            "common/version.rc",
             "common/*.cmd",
             "premake4.lua",
         }
@@ -272,7 +311,6 @@ solution (iif(release, slnname, "windirstat"))
         excludes
         {
             "common/tracer.cpp", -- this one gets an #include via windirstat.cpp
-            "windirstat/stdafx.cpp",
         }
         
         vpaths
@@ -281,8 +319,8 @@ solution (iif(release, slnname, "windirstat"))
             ["Header Files/Controls/*"] = { "windirstat/Controls/*.h" },
             ["Header Files/Dialogs/*"] = { "windirstat/Dialogs/*.h" },
             ["Header Files/*"] = { "windirstat/*.h" },
-            ["Resource Files/*"] = { "windirstat/*.rc" },
             ["Resource Files/Resources/*"] = { "windirstat/res/*.*" },
+            ["Resource Files/*"] = { "common/*.rc", "windirstat/*.rc" },
             ["Source Files/Common/*"] = { "common/*.cpp" },
             ["Source Files/Lua/*"] = { "windirstat/WDS_Lua_C.c" },
             ["Source Files/Controls/*"] = { "windirstat/Controls/*.cpp" },
@@ -293,15 +331,19 @@ solution (iif(release, slnname, "windirstat"))
         }
 
         configuration {"Debug", "x32"}
+            defines         {"MODNAME=wds32D"}
             targetsuffix    ("32D")
 
         configuration {"Debug", "x64"}
+            defines         {"MODNAME=wds64D"}
             targetsuffix    ("64D")
 
         configuration {"Release", "x32"}
+            defines         {"MODNAME=wds32"}
             targetsuffix    ("32")
 
         configuration {"Release", "x64"}
+            defines         {"MODNAME=wds64"}
             targetsuffix    ("64")
 
         configuration {"Debug"}
@@ -314,11 +356,11 @@ solution (iif(release, slnname, "windirstat"))
             linkoptions     {"/release"}
             buildoptions    {"/Oi", "/Ot"}
 
-        configuration {"vs2005", "windirstat/WDS_Lua_C.c"}
-            defines         ("_CRT_SECURE_NO_WARNINGS") -- _CRT_SECURE_NO_DEPRECATE, _SCL_SECURE_NO_WARNINGS, _AFX_SECURE_NO_WARNINGS and _ATL_SECURE_NO_WARNINGS???
-
         configuration {"vs*"}
             defines         {"WINVER=0x0501"}
+
+        configuration {"vs2015 or vs2017"}
+            defines         {"_ALLOW_RTCc_IN_STL"}
 
         if _OPTIONS["sdk71"] then
             configuration {"vs2005 or vs2008"}
@@ -386,14 +428,8 @@ solution (iif(release, slnname, "windirstat"))
                 linkoptions     {"/release"}
                 buildoptions    {"/Oi", "/Ot"}
 
-            configuration {"vs2005", "windirstat/WDS_Lua_C.c"}
-                defines         ("_CRT_SECURE_NO_WARNINGS") -- _CRT_SECURE_NO_DEPRECATE, _SCL_SECURE_NO_WARNINGS, _AFX_SECURE_NO_WARNINGS and _ATL_SECURE_NO_WARNINGS???
-
-            configuration {"vs2013"}
+            configuration {"vs*"}
                 defines         {"WINVER=0x0501"}
-
-            configuration {"vs2002 or vs2003 or vs2005 or vs2008 or vs2010 or vs2012"}
-                defines         {"WINVER=0x0500"}
     end
 
     -- Add the resource DLL projects, if requested
@@ -416,10 +452,10 @@ solution (iif(release, slnname, "windirstat"))
                 }
             for nm,guid in pairs(resource_dlls) do
                 premake.CurrentContainer = oldcurr
-                prj = project(pfx..nm)
+                project(pfx..nm)
                     local int_dir   = pfx.."intermediate/" .. action .. "_$(ProjectName)_" .. nm
                     uuid            (guid)
-                    language        ("C++")
+                    language        ("C")
                     kind            ("SharedLib")
                     location        ("windirstat/res/" .. nm)
                     flags           {"NoImportLib", "Unicode", "NoManifest", "NoExceptions", "NoPCH", "NoIncrementalLink"}
@@ -427,23 +463,24 @@ solution (iif(release, slnname, "windirstat"))
                     targetdir       (iif(release, slnname, "build"))
                     targetname      (nm)
                     targetextension (".wdslng")
+                    defines         {"WDS_RESLANG=0x" .. string.sub(nm, 5), "MODNAME=" .. nm}
                     resoptions      {"/nologo", "/l409"}
                     resincludedirs  {".", "$(ProjectDir)", "$(IntDir)"}
                     linkoptions     {"/noentry"}
                     if release then
                         postbuildcommands
                         {
-                            "signtool.exe sign /v /a /ph /d \"WinDirStat resource DLL\" /du \"http://windirstat.info\" /tr http://www.startssl.com/timestamp \"$(TargetPath)\""
+                            "ollisign.cmd -a \"$(TargetPath)\" \"https://windirstat.net\" \"WinDirStat\""
                         }
-                        if os.isfile("common/hgtip.h") then
-                            defines ("HAVE_HGTIP")
-                        end
+                    else
+                        prebuildcommands{"if not exist \"$(SolutionDir)common\\hgid.h\" call \"$(SolutionDir)\\common\\hgid.cmd\"",}
                     end
                     files
                     {
                         "windirstat/res/" .. nm .. "/*.txt", "windirstat/res/" .. nm .. "/*.rst",
                         "windirstat/res/" .. nm .. "/windirstat.rc",
                         "windirstat/res/" .. nm .. "/res/windirstat.rc2",
+                        "common/version.rc",
                         "common/version.h",
                         "windirstat/res/*.bmp",
                         "windirstat/res/*.cur",
@@ -454,7 +491,7 @@ solution (iif(release, slnname, "windirstat"))
                     vpaths
                     {
                         ["Header Files/*"] = { "windirstat/*.h", "common/*.h", "windirstat/res/" .. nm .. "/*.h" },
-                        ["Resource Files/*"] = { "windirstat/res/" .. nm .. "/windirstat.rc", "windirstat/res/" .. nm .. "/res/windirstat.rc2" },
+                        ["Resource Files/*"] = { "common/version.rc", "windirstat/res/" .. nm .. "/windirstat.rc", "windirstat/res/" .. nm .. "/res/windirstat.rc2" },
                         ["Resource Files/embedded/*"] = { "windirstat/res/*" },
                         ["*"] = { "windirstat/res/" .. nm .. "/*.txt", "windirstat/res/" .. nm .. "/*.rst" },
                     }

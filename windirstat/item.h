@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2016 WinDirStat team (windirstat.info)
+// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -222,7 +222,7 @@ private:
     ITEMTYPE m_etype;           
     CString m_name;             // Display name
     mutable CString m_extension;		// Cache of extension (it's used often)
-    mutable bool m_extension_cached = false;
+    mutable bool m_extension_cached;
     ULONGLONG m_size;           // OwnSize, if IT_FILE or IT_FREESPACE, or IT_UNKNOWN; SubtreeTotal else.
     ULONGLONG m_files;          // # Files in subtree
     ULONGLONG m_subdirs;        // # Folder in subtree

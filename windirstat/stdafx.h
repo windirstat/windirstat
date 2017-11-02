@@ -4,7 +4,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2016 WinDirStat team (windirstat.info)
+// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -30,11 +30,14 @@
 #   define SUPPORT_ELEVATION  1
 #endif // HAVE_WIN7_SDK
 
-#define _WIN32_WINNT _WIN32_WINNT_WINXP
-
-#ifndef VC_EXTRALEAN
-#define VC_EXTRALEAN        // Exclude rarely-used stuff from Windows headers
-#endif
+#ifndef _WIN32_WINNT
+#   ifdef WINVER
+#       define _WIN32_WINNT WINVER
+#   else
+#       define _WIN32_WINNT _WIN32_WINNT_WINXP
+#       define WINVER       _WIN32_WINNT_WINXP
+#   endif // WINVER
+#endif // !_WIN32_WINNT
 
 #define _ATL_CSTRING_EXPLICIT_CONSTRUCTORS  // some CString constructors will be explicit
 

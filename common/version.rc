@@ -1,0 +1,114 @@
+///////////////////////////////////////////////////////////////////////////////
+///
+/// Copyright (c) 2016, 2017 Oliver Schneider (assarbad.net)
+///
+/// Permission is hereby granted, free of charge, to any person obtaining a
+/// copy of this software and associated documentation files (the "Software"),
+/// to deal in the Software without restriction, including without limitation
+/// the rights to use, copy, modify, merge, publish, distribute, sublicense,
+/// and/or sell copies of the Software, and to permit persons to whom the
+/// Software is furnished to do so, subject to the following conditions:
+///
+/// The above copyright notice and this permission notice shall be included in
+/// all copies or substantial portions of the Software.
+///
+/// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+/// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+/// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+/// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+/// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+/// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+/// DEALINGS IN THE SOFTWARE.
+///
+///////////////////////////////////////////////////////////////////////////////
+#include <winnt.rh>
+#include <verrsrc.h>
+
+#ifdef RC_INVOKED
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+#include "version.h"
+
+#define _ANSISTRING(text) #text
+#define ANSISTRING(text) _ANSISTRING(text)
+
+#define _WIDESTRING(text) L##text
+#define WIDESTRING(text) _WIDESTRING(text)
+
+#define PRESET_UNICODE_STRING(symbol, buffer) \
+        UNICODE_STRING symbol = \
+            { \
+            sizeof(WIDESTRING(buffer)) - sizeof(WCHAR), \
+            sizeof(WIDESTRING(buffer)), \
+            WIDESTRING(buffer) \
+            };
+
+#define CREATE_XVER(maj,min,patch,build) maj ## , ## min ## , ## patch ## , ## build
+#define CREATE_FVER(maj,min,patch,build) maj ## . ## min ## . ## patch ## . ## build
+#define CREATE_PVER(maj,min,patch,build) maj ## . ## min ## . ## patch
+
+#if (defined(DBG) && (DBG)) || defined(_DEBUG)
+#define ACTUAL_FILEFLAGS VS_FF_DEBUG
+#else
+#define ACTUAL_FILEFLAGS 0
+#endif
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION CREATE_XVER(FILE_MAJVER, FILE_MINVER, FILE_PATCH, FILE_BUILD_NUMERIC)
+ PRODUCTVERSION CREATE_XVER(PRD_MAJVER, PRD_MINVER, PRD_PATCH, PRD_BUILD_NUMERIC)
+ FILEFLAGSMASK VS_FFI_FILEFLAGSMASK
+ FILEFLAGS ACTUAL_FILEFLAGS
+ FILEOS VOS_NT_WINDOWS32
+ FILETYPE VFT_APP
+ FILESUBTYPE VFT2_UNKNOWN
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "000004b0"
+        BEGIN
+#ifdef TEXT_AUTHOR
+            VALUE "Author", ANSISTRING(TEXT_AUTHOR)
+#endif
+#ifdef TEXT_COMMENTS
+            VALUE "Comments", ANSISTRING(TEXT_COMMENTS)
+#endif
+            VALUE "CompanyName", ANSISTRING(TEXT_COMPANY)
+            VALUE "FileDescription", ANSISTRING(TEXT_FILEDESC)
+            VALUE "FileVersion", ANSISTRING(CREATE_FVER(FILE_MAJVER, FILE_MINVER, FILE_PATCH, FILE_BUILD))
+            VALUE "InternalName", ANSISTRING(TEXT_INTERNALNAME)
+            VALUE "LegalCopyright", ANSISTRING(TEXT_COPYRIGHT)
+            VALUE "OriginalFilename", ANSISTRING(TEXT_MODULE)
+            VALUE "ProductName", ANSISTRING(TEXT_PRODUCTNAME)
+            VALUE "ProductVersion", ANSISTRING(CREATE_PVER(PRD_MAJVER, PRD_MINVER, PRD_PATCH, PRD_BUILD))
+#ifdef TEXT_PORTIONSCOPYRIGHT
+            VALUE "Portions Copyright", TEXT_PORTIONSCOPYRIGHT
+#endif
+#ifdef TEXT_SPECIALBUILD
+            VALUE "SpecialBuild", ANSISTRING(TEXT_SPECIALBUILD)
+#endif
+#ifdef TEXT_WEBSITE
+            VALUE "Website", ANSISTRING(TEXT_WEBSITE)
+#endif
+#if defined(HG_REV_ID) && defined(HG_REV_NO)
+            VALUE "Mercurial revision", HG_REV_ID " (" ANSISTRING(HG_REV_NO) ")"
+#endif
+#if defined(HG_FULLID)
+            VALUE "Mercurial revision URL", HG_REPOSITORY "/src/" HG_FULLID
+#endif
+#ifdef HG_REPOSITORY
+            VALUE "Mercurial repository", HG_REPOSITORY
+#endif
+#ifdef STRING_REPORT_DEFECT_URL
+            VALUE "Defect report URL", STRING_REPORT_DEFECT_URL
+#endif
+#if defined(WDS_RESLANG) && (WDS_RESLANG) && defined(TEXT_RESLANG)
+            VALUE "Language", ANSISTRING(TEXT_RESLANG) " (" ANSISTRING(WDS_RESLANG) ")"
+#endif
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x0, 1200
+    END
+END
+
+#endif // RC_INVOKED

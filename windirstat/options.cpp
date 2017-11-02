@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2016 WinDirStat team (windirstat.info)
+// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -865,7 +865,7 @@ CString COptions::GetReportSuffix()
 CString COptions::GetReportDefaultSuffix()
 {
     CString suffix = LoadString(IDS_DISKUSAGEREPORTGENERATEDBYWINDIRSTAT);
-    suffix.AppendFormat(_T("http://%s/\r\n"), GetWinDirStatHomepage());
+    suffix.AppendFormat(_T("https://%s/\r\n"), GetWinDirStatHomepage().GetString());
     return suffix;
 }
 

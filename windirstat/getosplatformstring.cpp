@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2016 WinDirStat team (windirstat.info)
+// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -27,44 +27,89 @@
 #define new DEBUG_NEW
 #endif
 
+namespace {
+    typedef _Return_type_success_(return >= 0) LONG NTSTATUS;
+    /*lint -save -e624 */  // Don't complain about different typedefs.
+    typedef NTSTATUS *PNTSTATUS;
+    /*lint -restore */  // Resume checking for different typedefs.
+}
+
 CString GetOsPlatformString()
 {
+    static NTSTATUS (WINAPI* RtlGetVersion)(LPOSVERSIONINFOEXW);
+
+    if(!RtlGetVersion)
+    {
+        *(FARPROC*)&RtlGetVersion = GetProcAddress(GetModuleHandle(_T("ntdll.dll")), "RtlGetVersion");
+        ASSERT(RtlGetVersion != NULL);
+        if(!RtlGetVersion)
+        {
+            return LoadString(IDS__UNKNOWN_);
+        }
+    }
+    OSVERSIONINFOEXW osvi = { sizeof(OSVERSIONINFOEXW), 0, 0, 0, 0,{ 0 } };
+
     CString ret;
 
-    OSVERSIONINFO osvi;
-    ZeroMemory(&osvi, sizeof(osvi));
-    osvi.dwOSVersionInfoSize = sizeof(osvi);
-
-    if(!GetVersionEx(&osvi))
+    NTSTATUS ntStatus = RtlGetVersion(&osvi);
+    if(ntStatus < 0)
     {
-        return LoadString(IDS__UNKNOWN_);
+        return LoadString(IDS__UNKNOWN_); // FIXME: include the status code
     }
 
-    // FIXME: Update this to include Windows Vista/2008 and 7/2008 R2
+    LPCTSTR lpszMajorName = NULL;
+
     switch (osvi.dwPlatformId)
     {
     case VER_PLATFORM_WIN32_NT:
-        if(osvi.dwMajorVersion == 5 && osvi.dwMinorVersion == 2)
+        switch(osvi.dwMajorVersion)
         {
-            ret = _T("Windows Server 2003");
+        case 5:
+            if(osvi.dwMinorVersion == 0)
+                lpszMajorName = (VER_NT_WORKSTATION == osvi.wProductType) ? _T("2000") : _T("2000 Server");
+            else
+                if(osvi.dwMinorVersion == 1)
+                    lpszMajorName = _T("XP");
+                else
+                    if(osvi.dwMinorVersion == 2)
+                        lpszMajorName = (VER_NT_WORKSTATION == osvi.wProductType) ? _T("XP x64") : _T("Server 2003");
+            break;
+        case 6:
+            if(osvi.dwMinorVersion == 0)
+                lpszMajorName = (VER_NT_WORKSTATION == osvi.wProductType) ? _T("Vista") : _T("Server 2008");
+            else
+                if(osvi.dwMinorVersion == 1)
+                    lpszMajorName = (VER_NT_WORKSTATION == osvi.wProductType) ? _T("7") : _T("Server 2008 R2");
+                else
+                    if(osvi.dwMinorVersion == 2)
+                        lpszMajorName = (VER_NT_WORKSTATION == osvi.wProductType) ? _T("8") : _T("Server 2012");
+                    else
+                        if(osvi.dwMinorVersion == 3)
+                            lpszMajorName = (VER_NT_WORKSTATION == osvi.wProductType) ? _T("8.1") : _T("Server 2012 R2");
+            break;
+        case 10:
+            if(osvi.dwMinorVersion == 0)
+                lpszMajorName = (VER_NT_WORKSTATION == osvi.wProductType) ? _T("10") : _T("Server 2016");
+            break;
+        default:
+            break;
         }
-        else if(osvi.dwMajorVersion == 5 && osvi.dwMinorVersion == 1)
+
+        if(!lpszMajorName)
         {
-            ret = _T("Windows XP");
-        }
-        else if(osvi.dwMajorVersion == 5 && osvi.dwMinorVersion == 0)
-        {
-            ret = _T("Windows 2000");
-        }
-        else if(osvi.dwMajorVersion <= 4)
-        {
-            ret = _T("Windows NT");
+            if(osvi.wServicePackMajor)
+                ret.Format(_T("Windows %u.%u.%u, SP %u"), osvi.dwMajorVersion, osvi.dwMinorVersion, osvi.dwBuildNumber, osvi.wServicePackMajor);
+            else
+                ret.Format(_T("Windows %u.%u.%u"), osvi.dwMajorVersion, osvi.dwMinorVersion, osvi.dwBuildNumber);
         }
         else
         {
-            ret.Format(_T("Windows %u.%u"), osvi.dwMajorVersion, osvi.dwMinorVersion);
+            if(osvi.wServicePackMajor)
+                ret.Format(_T("Windows %s [%u.%u.%u], SP %u"), lpszMajorName, osvi.dwMajorVersion, osvi.dwMinorVersion, osvi.dwBuildNumber, osvi.wServicePackMajor);
+            else
+                ret.Format(_T("Windows %s [%u.%u.%u]"), lpszMajorName, osvi.dwMajorVersion, osvi.dwMinorVersion, osvi.dwBuildNumber);
         }
-        if(_tcslen(osvi.szCSDVersion) > 0)
+        if(osvi.szCSDVersion[0])
         {
             CString s;
             s.Format(_T(" (%s)"), osvi.szCSDVersion);

@@ -1,6 +1,6 @@
 /*
 ** C declaration parser.
-** Copyright (C) 2005-2015 Mike Pall. See Copyright Notice in luajit.h
+** Copyright (C) 2005-2017 Mike Pall. See Copyright Notice in luajit.h
 */
 
 #include "lj_obj.h"
@@ -310,13 +310,17 @@ static CPToken cp_next_(CPState *cp)
       else return '/';
       break;
     case '|':
-      if (cp_get(cp) != '|') return '|'; cp_get(cp); return CTOK_OROR;
+      if (cp_get(cp) != '|') return '|';
+      cp_get(cp); return CTOK_OROR;
     case '&':
-      if (cp_get(cp) != '&') return '&'; cp_get(cp); return CTOK_ANDAND;
+      if (cp_get(cp) != '&') return '&';
+      cp_get(cp); return CTOK_ANDAND;
     case '=':
-      if (cp_get(cp) != '=') return '='; cp_get(cp); return CTOK_EQ;
+      if (cp_get(cp) != '=') return '=';
+      cp_get(cp); return CTOK_EQ;
     case '!':
-      if (cp_get(cp) != '=') return '!'; cp_get(cp); return CTOK_NE;
+      if (cp_get(cp) != '=') return '!';
+      cp_get(cp); return CTOK_NE;
     case '<':
       if (cp_get(cp) == '=') { cp_get(cp); return CTOK_LE; }
       else if (cp->c == '<') { cp_get(cp); return CTOK_SHL; }
@@ -326,7 +330,8 @@ static CPToken cp_next_(CPState *cp)
       else if (cp->c == '>') { cp_get(cp); return CTOK_SHR; }
       return '>';
     case '-':
-      if (cp_get(cp) != '>') return '-'; cp_get(cp); return CTOK_DEREF;
+      if (cp_get(cp) != '>') return '-';
+      cp_get(cp); return CTOK_DEREF;
     case '$':
       return cp_param(cp);
     case '\0': return CTOK_EOF;
@@ -798,6 +803,10 @@ static void cp_push_type(CPDecl *decl, CTypeID id)
     cp_push(decl, info & ~CTMASK_CID, size);  /* Copy type. */
     break;
   case CT_ARRAY:
+    if ((ct->info & (CTF_VECTOR|CTF_COMPLEX))) {
+      info |= (decl->attr & CTF_QUAL);
+      decl->attr &= ~CTF_QUAL;
+    }
     cp_push_type(decl, ctype_cid(info));  /* Unroll. */
     cp_push(decl, info & ~CTMASK_CID, size);  /* Copy type. */
     decl->stack[decl->pos].sib = 1;  /* Mark as already checked and sized. */

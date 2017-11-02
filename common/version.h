@@ -1,8 +1,6 @@
-// version.h - Version number. Used by all resource scripts and by aboutdlg.cpp.
-//
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2016 WinDirStat team (windirstat.info)
+// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -19,146 +17,83 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 
-/*-------------------------------------------------------------------
-  This file defines the following:
-  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  - VN_FILEFLAG_EXE (contains information about RC or debug build)
-  - VN_STRING_EXE (contains info about unicode and debug)
-  - VN_STRING_DLL (just major.minor.rev.build)
-  - VN_FILEVERSION_EXE and VN_PRODVERSION_EXE (only different from
-    the DLL version if a development release)
-  - VN_FILEVERSION_DLL and VN_PRODVERSION_DLL (numeric representation
-    of VN_STRING_DLL)
-  - VN_FILEOS_EXE (this depends on Unicode and ANSI!
-      For Unicode: VN_FILEOS_EXE == VOS_NT_WINDOWS32
-      For ANSI   : VN_FILEOS_EXE == VOS__WINDOWS32 )
-  - VN_COPYRIGHTSTRING (copyright to include in the VERSIONINFO)
-  - VN_RESOURCEDLL (version of resource DLLs must be the same for DLL
-    and EXE at runtime)
-  -------------------------------------------------------------------*/
+#ifndef __VERSION_H_VER__
+#define __VERSION_H_VER__ 2017110223
+#if (defined(_MSC_VER) && (_MSC_VER >= 1020)) || defined(__MCPP)
+#pragma once
+#endif /* Check for "#pragma once" support */
 
-//-------------------------------------------------------------------
-// Build categories. Uncomment _one_ line.
-//
-#ifndef __WDS_VERSION_H__
-#define __WDS_VERSION_H__
+#include "hgid.h"
 
-#define BC_DEVEL                    // Development version. The usual setting. File version is 0.0.0.buildno.
-//#define BC_RELEASECANDIDATE       // Release candidate. Version number is relevant but not yet official. About-box shows x.y.zrcn. File version is x.y.z.buildno.
-//#define BC_RELEASE                // Set this only during official builds. About-box shows x.y.z. File version is x.y.z.buildno
-
-// A release version must not contain debug information. Raise an error!
-#if defined(_DEBUG) && defined(BC_RELEASE)
-  #error BC_RELEASE _and_ _DEBUG are defined. This must not happen. Releases contain no debug information.
+#if defined(WDS_RESLANG) && (WDS_RESLANG > 0)
+#   if (WDS_RESLANG == 0x0405)
+#       define TEXT_RESLANG             Czech
+#   elif (WDS_RESLANG == 0x0407)
+#       define TEXT_RESLANG             German
+#   elif (WDS_RESLANG == 0x0409)
+#       define TEXT_RESLANG             English (US)
+#   elif (WDS_RESLANG == 0x040a)
+#       define TEXT_RESLANG             Spanish
+#   elif (WDS_RESLANG == 0x040b)
+#       define TEXT_RESLANG             Finnish
+#   elif (WDS_RESLANG == 0x040c)
+#       define TEXT_RESLANG             French
+#   elif (WDS_RESLANG == 0x040e)
+#       define TEXT_RESLANG             Hungarian
+#   elif (WDS_RESLANG == 0x0410)
+#       define TEXT_RESLANG             Italian
+#   elif (WDS_RESLANG == 0x0413)
+#       define TEXT_RESLANG             Dutch
+#   elif (WDS_RESLANG == 0x0415)
+#       define TEXT_RESLANG             Polish
+#   elif (WDS_RESLANG == 0x0416)
+#       define TEXT_RESLANG             Portuguese (Brazil)
+#   elif (WDS_RESLANG == 0x0419)
+#       define TEXT_RESLANG             Russian
+#   elif (WDS_RESLANG == 0x0425)
+#       define TEXT_RESLANG             Estonian
+#   else
+#       error The language you defined does not have a name yet. Adjust the file with this error to include a name.
+#   endif
 #endif
 
-// This will not change to often, but the years need to be modified
-// regularly, so it can be in one central place
-#define VN_COPYRIGHTSTRING "Copyright (C) 2003-2005 Bernhard Seifert, (C) 2004-2014 WinDirStat team"
-
-//-------------------------------------------------------------------
-// Version number. Relevant for BC_RELEASECANDIDATE and BC_RELEASE.
-//
-#define VERNUM_MAJOR        1
-#define VERNUM_MINOR        3
-#define VERNUM_REVISION     0
-// The following line is automatically incremented by linkcounter.exe.
-// Format: #define blank LINKCOUNT blanks decimal
-// Reset this to zero only when you increment VERNUM_MAJOR/MINOR/REVISION.
-
-#include <common/buildnumber.h>
-
-//-------------------------------------------------------------------
-// Release candidate number. Relevant for BC_RELEASECANDIDATE.
-//
-#define VERNUM_CANDIDATE    1
-
-
-
-/////////////////////////////////////////////////////////////////////
-// Derived values from here. Do not edit.
-
-#define VN_BUILD    LINKCOUNT
-
-#define PPSX(s) #s
-#define PPS(s) PPSX(s)
-
-#ifdef _UNICODE
-    #define UASPEC "Unicode"
-    // OS version is only relevant for the EXE
-    #define VN_FILEOS_EXE VOS_NT_WINDOWS32
+#define PRD_MAJVER                  1 // major product version
+#define PRD_MINVER                  3 // minor product version
+#define PRD_PATCH                   0 // patch number
+#define PRD_BUILD                   HG_REV_NO // build number for product
+#define PRD_BUILD_NUMERIC           HG_REV_NO_NUMERIC // build number for product
+#if defined(WDS_RESLANG) && (WDS_RESLANG > 0)
+#   define FILE_MAJVER              1 // resource language version, changing this denotes incompatibilities
+#   define FILE_MINVER              0
+#   define FILE_PATCH               0
 #else
-    #define UASPEC "Ansi"
-    // OS version is only relevant for the EXE
-    #define VN_FILEOS_EXE VOS__WINDOWS32
+#   define FILE_MAJVER              PRD_MAJVER // major file version
+#   define FILE_MINVER              PRD_MINVER // minor file version
+#   define FILE_PATCH               PRD_PATCH // patch number
 #endif
-
-#ifdef _DEBUG
-    #define DRSPEC " Debug"
+#define FILE_BUILD                  PRD_BUILD // build number
+#define FILE_BUILD_NUMERIC          PRD_BUILD_NUMERIC // build number for product
+#define TEXT_WEBSITE                https:/##/windirstat.net // website
+#define TEXT_PRODUCTNAME            WinDirStat // product's name
+#if defined(WDS_RESLANG) && (WDS_RESLANG > 0)
+#define TEXT_FILEDESC               TEXT_RESLANG language file
 #else
-    #define DRSPEC ""
+#define TEXT_FILEDESC               Windows Directory Statistics visualizes disk space usage // component description
 #endif
-
-#define VERVARIANT " (" UASPEC DRSPEC ")"
-
-// This is just major.minor.rev.build always!
-#define VN_STRING_DLL   PPS(VERNUM_MAJOR) "." PPS(VERNUM_MINOR) "." PPS(VERNUM_REVISION) "." PPS(VN_BUILD)
-
-#if defined(BC_DEVEL)
-
-    #define VN_MAJOR    0
-    #define VN_MINOR    0
-    #define VN_REVISION 0
-    #define VN_FILEFLAG 0
-    #define VN_STRING_DLL   PPS(VERNUM_MAJOR) "." PPS(VERNUM_MINOR) "." PPS(VERNUM_REVISION) "." PPS(VN_BUILD)
-    // The variant (debug or not/ Unicode or not) is not relevant for resource DLLs, but for EXEs
-    #define VN_STRING_EXE   VN_STRING_DLL " devel" VERVARIANT
-
-#elif defined(BC_RELEASECANDIDATE)
-
-    #define VN_MAJOR    VERNUM_MAJOR
-    #define VN_MINOR    VERNUM_MINOR
-    #define VN_REVISION VERNUM_REVISION
-    #define VN_FILEFLAG VS_FF_PRERELEASE
-    // The variant (debug or not/ Unicode or not) is not relevant for resource DLLs, but for EXEs
-    #define VN_STRING_EXE   VN_STRING_DLL "rc" PPS(VERNUM_CANDIDATE) VERVARIANT
-
-#elif defined(BC_RELEASE)
-
-    #define VN_MAJOR    VERNUM_MAJOR
-    #define VN_MINOR    VERNUM_MINOR
-    #define VN_REVISION VERNUM_REVISION
-    #define VN_FILEFLAG 0
-    // The variant (debug or not/ Unicode or not) is not relevant for resource DLLs, but for EXEs
-    #define VN_STRING_EXE   VN_STRING_DLL VERVARIANT
-
-#endif
-
-// EXE files have a different version number in development releases
-#define VN_FILEVERSION_EXE VN_MAJOR,VN_MINOR,VN_REVISION,VN_BUILD
-#define VN_PRODVERSION_EXE VN_FILEVERSION_EXE
-// Resource DLLs need no different version number
-#define VN_FILEVERSION_DLL VERNUM_MAJOR,VERNUM_MINOR,VERNUM_REVISION,VN_BUILD
-#define VN_PRODVERSION_DLL VN_FILEVERSION_DLL
-
-// Whether debug or not is not relevant for resource DLLs
-#ifdef _DEBUG
- #define VN_FILEFLAG_EXE VS_FF_DEBUG | VN_FILEFLAG
+#if defined(MODNAME)
+#   define TEXT_MODULE              MODNAME
+#   if (WDS_RESLANG)
+#       define TEXT_INTERNALNAME    MODNAME.wdslng
+#   else
+#       define TEXT_INTERNALNAME    MODNAME.exe
+#   endif
 #else
- #define VN_FILEFLAG_EXE VN_FILEFLAG
+#   error You must define MODNAME in the project!
 #endif
 
-#ifdef BC_DEVEL
-#define IDSS_CHECKUPDATESRV      "localhost"
-#else
-#define IDSS_CHECKUPDATESRV      "windirstat.info"
-#endif
-#define IDSS_CHECKUPDATEURI      "checkupdate.php"
-#define IDXS_CHECKUPDATEPORT     80
+#define TEXT_COMPANY                WinDirStat Team (windirstat.net) // company
+#define TEXT_COPYRIGHT              \xA9 2003-2005 Bernhard Seifert, \xA9 2004-2017 WinDirStat Team // copyright information
+#define HG_REPOSITORY               "https://bitbucket.org/windirstat/windirstat"
+#define STRING_REPORT_DEFECT_URL    HG_REPOSITORY "/issues?status=new&status=open"
 
-// ...nothing else.
-#undef BC_DEVEL
-#undef BC_RELEASECANDIDATE
-#undef BC_RELEASE
-
-#endif // __WDS_VERSION_H__
+#endif /* __VERSION_H_VER__ */

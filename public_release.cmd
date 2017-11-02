@@ -1,9 +1,7 @@
 @echo off
 setlocal ENABLEEXTENSIONS & pushd .
-set HGTIPFILE="%~dp0common\hgtip.h"
-for /f %%i in ('hg id -i -r tip') do @echo #define HG_TIP_ID "%%i" > %HGTIPFILE%
-if exist %HGTIPFILE% type %HGTIPFILE%
-"%~dp0common\premake4.exe" --release --xp vs2005
+call "%~dp0common\hgid.cmd"
+"%~dp0common\premake4.exe" --release --resources vs2005
 call %~dp0common\setvcvars.cmd 2005
 call %~dp0common\buildinc.cmd "%~dp0common"
 echo %VCVER_FRIENDLY%
