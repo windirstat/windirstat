@@ -69,7 +69,7 @@ do
                         filterfound = true
                         _p(1,'<ItemGroup>')
                     end
-                    
+
                     path = path .. folders[i]
 
                     -- have I seen this path before?
@@ -130,6 +130,23 @@ do
             return false
         end
         return orig_config_isincrementallink(cfg)
+    end
+    -- We need full debug info for VS2017
+    if action == "vs2017" then
+        local orig_vc2010_link = premake.vstudio.vc2010.link
+        premake.vstudio.vc2010.link = function(cfg)
+            if cfg.flags.Symbols ~= nil and cfg.flags.Symbols then
+                io.capture()
+                orig_vc2010_link(cfg)
+                local captured = io.endcapture()
+                local indent = io.indent .. io.indent .. io.indent
+                assert(io.indent ~= nil, "io.indent must not be nil at this point!")
+                captured = captured:gsub("(</GenerateDebugInformation>)", "%1\n" .. string.format("%s<FullProgramDatabaseFile>%s</FullProgramDatabaseFile>", indent, tostring(cfg.flags.Symbols ~= nil)))
+                io.write(captured)
+            else
+                orig_vc2010_link(cfg)
+            end
+        end
     end
     -- We want to output the file with UTF-8 BOM
     local orig_vc2010_header = premake.vstudio.vc2010.header
@@ -276,8 +293,7 @@ solution (iif(release, slnname, "windirstat"))
         targetdir       (iif(release, slnname, "build"))
         includedirs     {".", "windirstat", "common", "windirstat/Controls", "windirstat/Dialogs", "3rdparty/lua/src"}
         objdir          (int_dir)
-        -- libdirs         {"$(IntDir)"} FIXME!
-        links           {"htmlhelp", "psapi", "delayimp", pfx.."luajit2"}
+        links           {"psapi", "delayimp", pfx.."luajit2"}
         resoptions      {"/nologo", "/l409"}
         resincludedirs  {".", "$(IntDir)"}
         linkoptions     {"/delayload:psapi.dll", "/pdbaltpath:%_PDB%"}
@@ -350,6 +366,7 @@ solution (iif(release, slnname, "windirstat"))
         configuration {"Debug"}
             defines         {"_DEBUG", "VTRACE_TO_CONSOLE=1", "VTRACE_DETAIL=2"}
             flags           {"Symbols"}
+            linkoptions     {"/nodefaultlib:libcmt"}
 
         configuration {"Release"}
             defines         ("NDEBUG")

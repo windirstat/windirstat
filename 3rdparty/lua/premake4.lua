@@ -197,7 +197,7 @@ function create_luajit_projects(basedir)
             libdirs             {"$(IntDir)"}
             defines             {"NDEBUG", "_CRT_SECURE_NO_DEPRECATE"}
             links               {pfx.."luajit2"}
-            linkoptions         {"/pdbaltpath:%_PDB%"}
+            linkoptions         {"/pdbaltpath:%_PDB%", "/nodefaultlib"}
             vpaths              {["Header Files/*"] = { bd.."src/*.h" }, ["Source Files/*"] = { bd.."src/*.c" },}
             files               {bd.."src/luajit.c",}
             configuration {"Release", "x32"}

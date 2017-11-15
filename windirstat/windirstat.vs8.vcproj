@@ -72,8 +72,8 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalOptions="/delayload:psapi.dll /pdbaltpath:%_PDB%"
-				AdditionalDependencies="htmlhelp.lib psapi.lib delayimp.lib ..\..\..\build\luajit2_$(PlatformName).lib"
+				AdditionalOptions="/delayload:psapi.dll /pdbaltpath:%_PDB% /nodefaultlib:libcmt"
+				AdditionalDependencies="psapi.lib delayimp.lib ..\..\..\build\luajit2_$(PlatformName).lib"
 				OutputFile="$(OutDir)\wds32D.exe"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories=""
@@ -164,8 +164,8 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalOptions="/delayload:psapi.dll /pdbaltpath:%_PDB%"
-				AdditionalDependencies="htmlhelp.lib psapi.lib delayimp.lib ..\..\..\build\luajit2_$(PlatformName).lib"
+				AdditionalOptions="/delayload:psapi.dll /pdbaltpath:%_PDB% /nodefaultlib:libcmt"
+				AdditionalDependencies="psapi.lib delayimp.lib ..\..\..\build\luajit2_$(PlatformName).lib"
 				OutputFile="$(OutDir)\wds64D.exe"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories=""
@@ -257,7 +257,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/delayload:psapi.dll /pdbaltpath:%_PDB% /release"
-				AdditionalDependencies="htmlhelp.lib psapi.lib delayimp.lib ..\..\..\build\luajit2_$(PlatformName).lib"
+				AdditionalDependencies="psapi.lib delayimp.lib ..\..\..\build\luajit2_$(PlatformName).lib"
 				OutputFile="$(OutDir)\wds32.exe"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories=""
@@ -352,7 +352,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/delayload:psapi.dll /pdbaltpath:%_PDB% /release"
-				AdditionalDependencies="htmlhelp.lib psapi.lib delayimp.lib ..\..\..\build\luajit2_$(PlatformName).lib"
+				AdditionalDependencies="psapi.lib delayimp.lib ..\..\..\build\luajit2_$(PlatformName).lib"
 				OutputFile="$(OutDir)\wds64.exe"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories=""

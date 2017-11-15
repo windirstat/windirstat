@@ -765,22 +765,14 @@ BOOL CDirstatApp::OnIdle(LONG lCount)
 
 void CDirstatApp::OnHelpManual()
 {
+    // FIXME: open browser, point to Wiki (via windirstat.net short link), based on current language
     DoContextHelp(IDH_StartPage);
 }
 
-void CDirstatApp::DoContextHelp(DWORD topic)
+void CDirstatApp::DoContextHelp(DWORD)
 {
-    if(::PathFileExists(m_pszHelpFilePath))
-    {
-        // I want a NULL parent window. So I don't use CWinApp::HtmlHelp().
-        ::HtmlHelp(NULL, m_pszHelpFilePath, HH_HELP_CONTEXT, topic);
-    }
-    else
-    {
-        CString msg;
-        msg.FormatMessage(IDS_HELPFILEsCOULDNOTBEFOUND, _T("windirstat.chm"));
-        // TODO: Add the option to download the "current language" help file ...
-        AfxMessageBox(msg);
-    }
+    CString msg;
+    msg.FormatMessage(IDS_HELPFILEsCOULDNOTBEFOUND, _T("windirstat.chm"));
+    AfxMessageBox(msg);
 }
 

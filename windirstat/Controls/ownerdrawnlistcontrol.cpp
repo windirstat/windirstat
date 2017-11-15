@@ -645,7 +645,7 @@ BOOL COwnerDrawnListControl::OnEraseBkgnd(CDC* pDC)
 
     CArray<int, int> columnOrder;
     columnOrder.SetSize(GetHeaderCtrl()->GetItemCount());
-    GetColumnOrderArray(columnOrder.GetData(), columnOrder.GetSize());
+    GetColumnOrderArray(columnOrder.GetData(), static_cast<int>(columnOrder.GetSize()));
 
     CArray<int, int> vertical;
     vertical.SetSize(GetHeaderCtrl()->GetItemCount());
