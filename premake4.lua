@@ -438,33 +438,39 @@ solution (iif(release, slnname, "windirstat"))
         do
             local oldcurr = premake.CurrentContainer
             local resource_dlls = {
-                ["wdsr0405"] = "C3F39C58-7FC4-4243-82B2-A3572235AE02", -- Czech
-                ["wdsr0407"] = "C8D9E4F9-7051-4B41-A5AB-F68F3FCE42E8", -- German
-                ["wdsr040a"] = "23B76347-204C-4DE6-A311-F562CEF5D89C", -- Spanish
-                ["wdsr040b"] = "C7A5D1EC-35D3-4754-A815-2C527CACD584", -- Finnish
-                ["wdsr040c"] = "DA4DDD24-67BC-4A9D-87D3-18C73E5CAF31", -- French
-                ["wdsr040e"] = "2A75AA20-BFFE-4D1C-8AEC-274823223919", -- Hungarian
-                ["wdsr0410"] = "FD4194A7-EA1E-4466-A80B-AB4D8D17F33C", -- Italian
-                ["wdsr0413"] = "70A55EB7-E109-41DE-81B4-0DF2B72DCDE9", -- Dutch
-                ["wdsr0415"] = "70C09DAA-6F6D-4AAC-955F-ACD602A667CE", -- Polish
-                ["wdsr0416"] = "025A9D90-4C61-4D34-8BEC-8A1A044B80EB", -- Portuguese (Brazil)
-                ["wdsr0419"] = "7F06AAC4-9FBE-412F-B1D7-CB37AB8F311D", -- Russian
-                ["wdsr0425"] = "2FADC62C-C670-4963-8B69-70ECA7987B93", -- Estonian
+                ["wdslng0405"] = "C3F39C58-7FC4-4243-82B2-A3572235AE02", -- Czech
+                ["wdslng0407"] = "C8D9E4F9-7051-4B41-A5AB-F68F3FCE42E8", -- German
+                ["wdslng040a"] = "23B76347-204C-4DE6-A311-F562CEF5D89C", -- Spanish
+                ["wdslng040b"] = "C7A5D1EC-35D3-4754-A815-2C527CACD584", -- Finnish
+                ["wdslng040c"] = "DA4DDD24-67BC-4A9D-87D3-18C73E5CAF31", -- French
+                ["wdslng040e"] = "2A75AA20-BFFE-4D1C-8AEC-274823223919", -- Hungarian
+                ["wdslng0410"] = "FD4194A7-EA1E-4466-A80B-AB4D8D17F33C", -- Italian
+                ["wdslng0413"] = "70A55EB7-E109-41DE-81B4-0DF2B72DCDE9", -- Dutch
+                ["wdslng0415"] = "70C09DAA-6F6D-4AAC-955F-ACD602A667CE", -- Polish
+                ["wdslng0416"] = "025A9D90-4C61-4D34-8BEC-8A1A044B80EB", -- Portuguese (Brazil)
+                ["wdslng0419"] = "7F06AAC4-9FBE-412F-B1D7-CB37AB8F311D", -- Russian
+                ["wdslng0425"] = "2FADC62C-C670-4963-8B69-70ECA7987B93", -- Estonian
                 }
             for nm,guid in pairs(resource_dlls) do
+                local nmpfx = string.sub(nm, 7) -- hex prefix for the language resource directory
+                local resdir = "windirstat/res/"
+                local nmdirs = os.matchdirs(resdir .. nmpfx .. ".*") -- match the directory with the given prefix
+                assert(#nmdirs == 1, "There can be only one directory per language ID")
+                local nmdir = nmdirs[1] -- the relative path to the project, e.g. windirstat/res/0405.Czech
+                local nmbase = string.sub(nmdir, #resdir + 1) -- just the basename, e.g. 0405.Czech
                 premake.CurrentContainer = oldcurr
-                project(pfx..nm)
+                project(pfx .. "wdsr" .. nmbase)
                     local int_dir   = pfx.."intermediate/" .. action .. "_$(ProjectName)_" .. nm
                     uuid            (guid)
                     language        ("C")
                     kind            ("SharedLib")
-                    location        ("windirstat/res/" .. nm)
+                    location        (nmdir)
                     flags           {"NoImportLib", "Unicode", "NoManifest", "NoExceptions", "NoPCH", "NoIncrementalLink"}
                     objdir          (int_dir)
                     targetdir       (iif(release, slnname, "build"))
-                    targetname      (nm)
+                    targetname      ("wdsr" .. nmpfx)
                     targetextension (".wdslng")
-                    defines         {"WDS_RESLANG=0x" .. string.sub(nm, 5), "MODNAME=" .. nm}
+                    defines         {"WDS_RESLANG=0x" .. nmpfx, "MODNAME=wdsr" .. nmpfx}
                     resoptions      {"/nologo", "/l409"}
                     resincludedirs  {".", "$(ProjectDir)", "$(IntDir)"}
                     linkoptions     {"/noentry"}
@@ -478,9 +484,9 @@ solution (iif(release, slnname, "windirstat"))
                     end
                     files
                     {
-                        "windirstat/res/" .. nm .. "/*.txt", "windirstat/res/" .. nm .. "/*.rst",
-                        "windirstat/res/" .. nm .. "/windirstat.rc",
-                        "windirstat/res/" .. nm .. "/res/windirstat.rc2",
+                        nmdir .. "/*.rst",
+                        nmdir .. "/windirstat.rc",
+                        nmdir .. "/res/windirstat.rc2",
                         "common/version.rc",
                         "common/version.h",
                         "windirstat/res/*.bmp",
@@ -492,9 +498,10 @@ solution (iif(release, slnname, "windirstat"))
                     vpaths
                     {
                         ["Header Files/*"] = { "windirstat/*.h", "common/*.h", "windirstat/res/" .. nm .. "/*.h" },
-                        ["Resource Files/*"] = { "common/version.rc", "windirstat/res/" .. nm .. "/windirstat.rc", "windirstat/res/" .. nm .. "/res/windirstat.rc2" },
+                        ["Resource Files/*"] = { "common/version.rc" },
+                        ["Resource Files/" .. nmbase .. "/*"] = { nmdir .. "/windirstat.rc", nmdir .. "/res/windirstat.rc2" },
                         ["Resource Files/embedded/*"] = { "windirstat/res/*" },
-                        ["*"] = { "windirstat/res/" .. nm .. "/*.txt", "windirstat/res/" .. nm .. "/*.rst" },
+                        ["*"] = { nmdir .. "/*.rst" },
                     }
             end
             premake.CurrentContainer = oldcurr

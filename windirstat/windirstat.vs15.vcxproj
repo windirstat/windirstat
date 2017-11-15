@@ -357,7 +357,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="res\bitmap1.bmp" />
-    <None Include="res\icon1.ico" />
     <None Include="res\junctionpoint.bmp" />
     <None Include="res\license.rtf" />
     <None Include="res\license.txt" />
