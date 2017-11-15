@@ -85,13 +85,13 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\common\hgid.h">
+      <Filter>Header Files\Common</Filter>
+    </ClInclude>
     <ClInclude Include="..\common\commonhelpers.h">
       <Filter>Header Files\Common</Filter>
     </ClInclude>
     <ClInclude Include="..\common\cotaskmem.h">
-      <Filter>Header Files\Common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\hgid.h">
       <Filter>Header Files\Common</Filter>
     </ClInclude>
     <ClInclude Include="..\common\mdexceptions.h">

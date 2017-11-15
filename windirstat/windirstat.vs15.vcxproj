@@ -233,9 +233,9 @@
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\common\hgid.h" />
     <ClInclude Include="..\common\commonhelpers.h" />
     <ClInclude Include="..\common\cotaskmem.h" />
-    <ClInclude Include="..\common\hgid.h" />
     <ClInclude Include="..\common\mdexceptions.h" />
     <ClInclude Include="..\common\SimpleIni.h" />
     <ClInclude Include="..\common\tracer.h" />

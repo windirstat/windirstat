@@ -291,6 +291,7 @@ solution (iif(release, slnname, "windirstat"))
         end
         files
         {
+            "common/hgid.h",
             "common/*.h",
             "common/*.cpp",
             "windirstat/*.cpp",
