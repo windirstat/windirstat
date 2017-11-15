@@ -297,13 +297,12 @@ solution (iif(release, slnname, "windirstat"))
         resoptions      {"/nologo", "/l409"}
         resincludedirs  {".", "$(IntDir)"}
         linkoptions     {"/delayload:psapi.dll", "/pdbaltpath:%_PDB%"}
+        prebuildcommands{"if not exist \"$(SolutionDir)common\\hgid.h\" call \"$(SolutionDir)\\common\\hgid.cmd\"",}
         if release then
             postbuildcommands
             {
                 "ollisign.cmd -a \"$(TargetPath)\" \"https://windirstat.net\" \"WinDirStat\""
             }
-        else
-            prebuildcommands{"if not exist \"$(SolutionDir)common\\hgid.h\" call \"$(SolutionDir)\\common\\hgid.cmd\"",}
         end
         files
         {

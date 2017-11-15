@@ -27,6 +27,10 @@
 #define new DEBUG_NEW
 #endif
 
+#ifndef _Return_type_success_
+#   define _Return_type_success_(x)
+#endif
+
 namespace {
     typedef _Return_type_success_(return >= 0) LONG NTSTATUS;
     /*lint -save -e624 */  // Don't complain about different typedefs.
