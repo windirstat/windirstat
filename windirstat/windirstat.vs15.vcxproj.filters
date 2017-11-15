@@ -42,9 +42,6 @@
     <None Include="res\bitmap1.bmp">
       <Filter>Resource Files\Resources</Filter>
     </None>
-    <None Include="res\icon1.ico">
-      <Filter>Resource Files\Resources</Filter>
-    </None>
     <None Include="res\junctionpoint.bmp">
       <Filter>Resource Files\Resources</Filter>
     </None>
