@@ -851,7 +851,7 @@ void CTreeListControl::CollapseItem(int i)
     }
 
     CWaitCursor wc;
-    LockWindowUpdate();
+    SetRedraw(FALSE);
     bool selectNode = false;
     int todelete = 0;
     for(int k = i+1; k < GetItemCount(); k++)
@@ -877,7 +877,7 @@ void CTreeListControl::CollapseItem(int i)
         SelectSingleItem(i);
         m_selectionAnchor = GetItem(i);
     }
-    UnlockWindowUpdate();
+    SetRedraw(TRUE);
     RedrawItems(i, i);
 }
 
@@ -928,7 +928,7 @@ void CTreeListControl::ExpandItem(int i, bool scroll)
     }
 
     CWaitCursor wc; // TODO: smart WaitCursor. In CollapseItem(), too.
-    LockWindowUpdate();
+    SetRedraw(FALSE);
 
     item->SortChildren();
 
@@ -953,7 +953,7 @@ void CTreeListControl::ExpandItem(int i, bool scroll)
     }
 
     item->SetExpanded(true);
-    UnlockWindowUpdate();
+    SetRedraw(TRUE);
     RedrawItems(i, i);
 
     if(scroll)
