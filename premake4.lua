@@ -136,13 +136,18 @@ do
         local orig_vc2010_link = premake.vstudio.vc2010.link
         premake.vstudio.vc2010.link = function(cfg)
             if cfg.flags.Symbols ~= nil and cfg.flags.Symbols then
-                io.capture()
+                local old_captured = io.captured -- save io.captured state
+                io.capture() -- empties io.captured
                 orig_vc2010_link(cfg)
                 local captured = io.endcapture()
                 local indent = io.indent .. io.indent .. io.indent
                 assert(io.indent ~= nil, "io.indent must not be nil at this point!")
                 captured = captured:gsub("(</GenerateDebugInformation>)", "%1\n" .. string.format("%s<FullProgramDatabaseFile>%s</FullProgramDatabaseFile>", indent, tostring(cfg.flags.Symbols ~= nil)))
-                io.write(captured)
+                if old_captured ~= nil then
+                    io.captured = old_captured .. captured -- restore outer captured state, if any
+                else
+                    io.write(captured)
+                end
             else
                 orig_vc2010_link(cfg)
             end
@@ -151,16 +156,22 @@ do
     -- We want to output the file with UTF-8 BOM
     local orig_vc2010_header = premake.vstudio.vc2010.header
     premake.vstudio.vc2010.header = function(targets)
-        io.capture()
+        local old_captured = io.captured -- save io.captured state
+        io.capture() -- empties io.captured
         orig_vc2010_header(targets)
         local captured = io.endcapture()
-        io.write("\239\187\191")
-        io.write(captured)
+        if old_captured ~= nil then
+            io.captured = old_captured .. "\239\187\191" .. captured -- restore outer captured state, if any
+        else
+            io.write("\239\187\191")
+            io.write(captured)
+        end
     end
     -- Make sure we can generate XP-compatible projects for newer Visual Studio versions
     local orig_vc2010_configurationPropertyGroup = premake.vstudio.vc2010.configurationPropertyGroup
     premake.vstudio.vc2010.configurationPropertyGroup = function(cfg, cfginfo)
-        io.capture()
+        local old_captured = io.captured -- save io.captured state
+        io.capture() -- empties io.captured
         orig_vc2010_configurationPropertyGroup(cfg, cfginfo)
         local captured = io.endcapture()
         local toolsets = { vs2012 = "v110", vs2013 = "v120", vs2015 = "v140", vs2017 = "v141" }
@@ -171,7 +182,11 @@ do
                 captured = captured:gsub("(</PlatformToolset>)", "_xp%1")
             end
         end
-        io.write(captured)
+        if old_captured ~= nil then
+            io.captured = old_captured .. captured -- restore outer captured state, if any
+        else
+            io.write(captured)
+        end
     end
     -- Override the project creation to suppress unnecessary configurations
     -- these get invoked by sln2005.generate per project ...
@@ -204,6 +219,65 @@ do
             return orig_prjgen(prj)
         end
     end
+    -- Borrowed from setLocal() at https://stackoverflow.com/a/22752379
+    local function getLocal(stkidx, name)
+        local index = 1
+        while true do
+            local var_name, var_value = debug.getlocal(stkidx, index)
+            if not var_name then break end
+            if var_name == name then 
+                return var_value
+            end
+            index = index + 1
+        end
+    end
+    -- resdefines takes no effect in VS201x solutions, let's fix that.
+    local orig_premake_vs2010_vcxproj = premake.vs2010_vcxproj
+    premake.vs2010_vcxproj = function(prj)
+        -- The whole stunt below is necessary in order to modify the resource_compile()
+        -- output. Given it's a local function we have to go through hoops.
+        local orig_p = _G._p
+        local besilent = false
+        -- We patch the global _p() function
+        _G._p = function(indent, msg, ...)
+            -- Look for indent values of 2
+            if indent == 2 and msg ~= nil then
+                -- ... with msg value of <ResourceCompile>
+                if msg == "<ResourceCompile>" then
+                    local cfg = getLocal(3, "e") -- with LuaSrcDiet
+                    if cfg == nil then
+                        cfg = getLocal(3, "cfg") -- without LuaSrcDiet
+                    end
+                    assert(type(cfg) == "table" and cfg["resdefines"] ~= nil)
+                    orig_p(indent, msg, ...) -- spit the original line out
+                    local indent = indent + 1
+                    if #cfg.defines > 0 or #cfg.resdefines then
+                        local defines = table.join(cfg.defines, cfg.resdefines)
+                        orig_p(indent,'<PreprocessorDefinitions>%s;%%(PreprocessorDefinitions)</PreprocessorDefinitions>'
+                            ,premake.esc(table.concat(premake.esc(defines), ";")))
+                    else
+                        orig_p(indent,'<PreprocessorDefinitions></PreprocessorDefinitions>')
+                    end
+                    if #cfg.includedirs > 0 or #cfg.resincludedirs > 0 then
+                        local dirs = table.join(cfg.includedirs, cfg.resincludedirs)
+                        orig_p(indent,'<AdditionalIncludeDirectories>%s;%%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>'
+                                ,premake.esc(path.translate(table.concat(dirs, ";"), '\\')))
+                    end
+                    besilent = true
+                end
+                -- ... or msg value of <ResourceCompile>
+                if msg == "</ResourceCompile>" then
+                    besilent = false
+                    -- fall through
+                end
+            end
+            if not besilent then -- should we be silent?
+                orig_p(indent, msg, ...)
+            end
+        end
+        orig_premake_vs2010_vcxproj(prj)
+        _G._p = orig_p -- restore in any case
+    end
     premake.vs2010_vcxproj = prjgen_override_factory(premake.vs2010_vcxproj)
     premake.vstudio.vc200x.generate = prjgen_override_factory(premake.vstudio.vc200x.generate)
     -- Allow us to set the project configuration to Release|Win32 for the resource DLL projects,
@@ -235,7 +309,8 @@ do
     end
     local VCManifestTool_handler = premake.vstudio.vc200x.toolmap["VCManifestTool"]
     premake.vstudio.vc200x.toolmap["VCManifestTool"] = function(cfg)
-        io.capture()
+        local old_captured = io.captured -- save io.captured state
+        io.capture() -- empties io.captured
         VCManifestTool_handler(cfg)
         local captured = io.endcapture()
         if captured:find("res/windirstat\.manifest") and cfg.name and cfg.platform then
@@ -247,7 +322,11 @@ do
             local identity = string.format(identity_fmt, assemblyName, arch, programVersion)
             captured = captured:gsub("(%\t+)AdditionalManifestFiles=\"[^\"]+\"", "%0" .. io.eol .. "%1AssemblyIdentity=\"" .. premake.esc(identity) .. "\"")
         end
-        io.write(captured)
+        if old_captured ~= nil then
+            io.captured = old_captured .. captured -- restore outer captured state, if any
+        else
+            io.write(captured)
+        end
     end
 end
 local function transformMN(input) -- transform the macro names for older Visual Studio versions
@@ -347,19 +426,19 @@ solution (iif(release, slnname, "windirstat"))
         }
 
         configuration {"Debug", "x32"}
-            defines         {"MODNAME=wds32D"}
+            resdefines      {"MODNAME=wds32D"}
             targetsuffix    ("32D")
 
         configuration {"Debug", "x64"}
-            defines         {"MODNAME=wds64D"}
+            resdefines      {"MODNAME=wds64D"}
             targetsuffix    ("64D")
 
         configuration {"Release", "x32"}
-            defines         {"MODNAME=wds32"}
+            resdefines      {"MODNAME=wds32"}
             targetsuffix    ("32")
 
         configuration {"Release", "x64"}
-            defines         {"MODNAME=wds64"}
+            resdefines      {"MODNAME=wds64"}
             targetsuffix    ("64")
 
         configuration {"Debug"}
@@ -486,7 +565,7 @@ solution (iif(release, slnname, "windirstat"))
                     targetdir       (iif(release, slnname, "build"))
                     targetname      ("wdsr" .. nmpfx)
                     targetextension (".wdslng")
-                    defines         {"WDS_RESLANG=0x" .. nmpfx, "MODNAME=wdsr" .. nmpfx}
+                    resdefines      {"WDS_RESLANG=0x" .. nmpfx, "MODNAME=wdsr" .. nmpfx}
                     resoptions      {"/nologo", "/l409"}
                     resincludedirs  {".", "$(ProjectDir)", "$(IntDir)"}
                     linkoptions     {"/noentry"}

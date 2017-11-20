@@ -46,7 +46,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="..;.;..\common;Controls;Dialogs;..\3rdparty\lua\src"
-				PreprocessorDefinitions="MODNAME=wds32D;_DEBUG;VTRACE_TO_CONSOLE=1;VTRACE_DETAIL=2;WINVER=0x0501"
+				PreprocessorDefinitions="_DEBUG;VTRACE_TO_CONSOLE=1;VTRACE_DETAIL=2;WINVER=0x0501"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
 				EnableFunctionLevelLinking="true"
@@ -64,7 +64,7 @@
 			<Tool
 				Name="VCResourceCompilerTool"
 				AdditionalOptions="/nologo /l409"
-				PreprocessorDefinitions="MODNAME=wds32D;_DEBUG;VTRACE_TO_CONSOLE=1;VTRACE_DETAIL=2;WINVER=0x0501"
+				PreprocessorDefinitions="_DEBUG;VTRACE_TO_CONSOLE=1;VTRACE_DETAIL=2;WINVER=0x0501;MODNAME=wds32D"
 				AdditionalIncludeDirectories="..;.;..\common;Controls;Dialogs;..\3rdparty\lua\src;..;$(IntDir)"
 			/>
 			<Tool
@@ -138,7 +138,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="..;.;..\common;Controls;Dialogs;..\3rdparty\lua\src"
-				PreprocessorDefinitions="MODNAME=wds64D;_DEBUG;VTRACE_TO_CONSOLE=1;VTRACE_DETAIL=2;WINVER=0x0501"
+				PreprocessorDefinitions="_DEBUG;VTRACE_TO_CONSOLE=1;VTRACE_DETAIL=2;WINVER=0x0501"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
 				EnableFunctionLevelLinking="true"
@@ -156,7 +156,7 @@
 			<Tool
 				Name="VCResourceCompilerTool"
 				AdditionalOptions="/nologo /l409"
-				PreprocessorDefinitions="MODNAME=wds64D;_DEBUG;VTRACE_TO_CONSOLE=1;VTRACE_DETAIL=2;WINVER=0x0501"
+				PreprocessorDefinitions="_DEBUG;VTRACE_TO_CONSOLE=1;VTRACE_DETAIL=2;WINVER=0x0501;MODNAME=wds64D"
 				AdditionalIncludeDirectories="..;.;..\common;Controls;Dialogs;..\3rdparty\lua\src;..;$(IntDir)"
 			/>
 			<Tool
@@ -230,7 +230,7 @@
 				AdditionalOptions="/Oi /Ot"
 				Optimization="3"
 				AdditionalIncludeDirectories="..;.;..\common;Controls;Dialogs;..\3rdparty\lua\src"
-				PreprocessorDefinitions="MODNAME=wds32;NDEBUG;WINVER=0x0501"
+				PreprocessorDefinitions="NDEBUG;WINVER=0x0501"
 				StringPooling="true"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
@@ -248,7 +248,7 @@
 			<Tool
 				Name="VCResourceCompilerTool"
 				AdditionalOptions="/nologo /l409"
-				PreprocessorDefinitions="MODNAME=wds32;NDEBUG;WINVER=0x0501"
+				PreprocessorDefinitions="NDEBUG;WINVER=0x0501;MODNAME=wds32"
 				AdditionalIncludeDirectories="..;.;..\common;Controls;Dialogs;..\3rdparty\lua\src;..;$(IntDir)"
 			/>
 			<Tool
@@ -325,7 +325,7 @@
 				AdditionalOptions="/Oi /Ot"
 				Optimization="3"
 				AdditionalIncludeDirectories="..;.;..\common;Controls;Dialogs;..\3rdparty\lua\src"
-				PreprocessorDefinitions="MODNAME=wds64;NDEBUG;WINVER=0x0501"
+				PreprocessorDefinitions="NDEBUG;WINVER=0x0501"
 				StringPooling="true"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
@@ -343,7 +343,7 @@
 			<Tool
 				Name="VCResourceCompilerTool"
 				AdditionalOptions="/nologo /l409"
-				PreprocessorDefinitions="MODNAME=wds64;NDEBUG;WINVER=0x0501"
+				PreprocessorDefinitions="NDEBUG;WINVER=0x0501;MODNAME=wds64"
 				AdditionalIncludeDirectories="..;.;..\common;Controls;Dialogs;..\3rdparty\lua\src;..;$(IntDir)"
 			/>
 			<Tool
