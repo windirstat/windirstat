@@ -21,7 +21,6 @@
 
 #include "stdafx.h"
 #include "windirstat.h"
-#include <common/version.h>
 #include <common/wds_constants.h>
 #include "aboutdlg.h"
 
@@ -133,8 +132,6 @@ void CAboutDlg::CMyTabControl::Initialize()
 
 void CAboutDlg::CMyTabControl::SetPageText(int tab)
 {
-    USES_CONVERSION;
-
     CString text;
     DWORD newStyle = ES_CENTER;
 
@@ -262,8 +259,6 @@ CAboutDlg::CAboutDlg()
 
 CString CAboutDlg::GetAppVersion()
 {
-    USES_CONVERSION;
-
     CString s;
     s.Format(_T("WinDirStat %s"), _T("1.x.y.z")); // FIXME
     return s;

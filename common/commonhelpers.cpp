@@ -23,29 +23,23 @@
 
 CString MyStrRetToString(const LPITEMIDLIST pidl, const STRRET *strret)
 {
-    // TODO: replace with shallow wrapper around StrRetToStr
-
-    // StrRetToStr() is not always available (e.g. on Windows 98).
-    // So we use an own function instead.
-    USES_CONVERSION;
-
     CString s;
 
     switch (strret->uType)
     {
     case STRRET_CSTR:
         {
-            s = strret->cStr;
-        }
+            s.Format(_T("%hs"), strret->cStr);
+    }
         break;
     case STRRET_OFFSET:
         {
-            s = A2T((char *)pidl + strret->uOffset);
+            s.Format(_T("%hs"), (char *)pidl + strret->uOffset);
         }
         break;
     case STRRET_WSTR:
         {
-            s = W2T(strret->pOleStr);
+            s = strret->pOleStr;
         }
         break;
     }

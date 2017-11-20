@@ -142,7 +142,7 @@ do
                 local captured = io.endcapture()
                 local indent = io.indent .. io.indent .. io.indent
                 assert(io.indent ~= nil, "io.indent must not be nil at this point!")
-                captured = captured:gsub("(</GenerateDebugInformation>)", "%1\n" .. string.format("%s<FullProgramDatabaseFile>%s</FullProgramDatabaseFile>", indent, tostring(cfg.flags.Symbols ~= nil)))
+                captured = captured:gsub("true(</GenerateDebugInformation>)", "DebugFull%1\n" .. string.format("%s<FullProgramDatabaseFile>%s</FullProgramDatabaseFile>", indent, tostring(cfg.flags.Symbols ~= nil)))
                 if old_captured ~= nil then
                     io.captured = old_captured .. captured -- restore outer captured state, if any
                 else

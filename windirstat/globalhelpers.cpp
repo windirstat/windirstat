@@ -661,22 +661,3 @@ BOOL IsAdmin()
 
     return FALSE;
 }
-
-/*
-// Retrieve an Item ID list from a given path.
-// Returns a valid pidl, or throws an exception.
-LPCITEMIDLIST SHGetPIDLFromPath(CString path)
-{
-    USES_CONVERSION;
-
-    CComPtr<IShellFolder> pshf;
-    HRESULT hr = ::SHGetDesktopFolder(&pshf);
-    MdThrowFailed(hr, _T("::SHGetDesktopFolder"));
-
-    LPITEMIDLIST pidl;
-    hr = pshf->ParseDisplayName(NULL, NULL, const_cast<LPOLESTR>(T2CW(path)), NULL, &pidl, NULL);
-    MdThrowFailed(hr, _T("ParseDisplayName"));
-
-    return pidl;
-}
-*/
