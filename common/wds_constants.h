@@ -20,38 +20,13 @@
 //
 
 #ifndef __WDS_CONSTANTS_H_VER__
-#define __WDS_CONSTANTS_H_VER__ 2014021723
+#define __WDS_CONSTANTS_H_VER__ 2017112218
 #if (defined(_MSC_VER) && (_MSC_VER >= 1020)) || defined(__MCPP)
 #pragma once
 #endif // Check for "#pragma once" support
 
 namespace wds
 {
-    const size_t maxContacts = 5;
-    typedef struct _demangle_t
-    {
-        WCHAR from;
-        WCHAR to;
-    } demangle_t;
-    typedef struct _contact_t
-    {
-        LPWSTR name;
-        LPWSTR mail;
-        LPWSTR weburl;
-        LPWSTR description;
-    } contact_t;
-    typedef struct _translator_t
-    {
-        LCID   id;
-        LPWSTR lngNative;
-        LPWSTR lngEnglish;
-        LPWSTR lngISO639_1;
-        contact_t translators[maxContacts];
-    } translator_t;
-    extern translator_t translators[];
-    extern contact_t authors[];
-    extern demangle_t translator_demangle_email[];
-
     // Single character constants
     const TCHAR chrSharp = _T('#');
     const TCHAR chrBracketOpen = _T('(');
@@ -89,14 +64,26 @@ namespace wds
     const LPCTSTR strLangPrefix = _T(STR_RESOURCE_PREFIX);
 
     const LPCTSTR strInvalidAttributes = _T("??????");
-    const LPCTSTR strAttributeReadonly = _T("R");
-    const LPCTSTR strAttributeHidden = _T("H");
-    const LPCTSTR strAttributeSystem = _T("S");
-    const LPCTSTR strAttributeArchive = _T("A");
-    const LPCTSTR strAttributeCompressed = _T("R");
-    const LPCTSTR strAttributeEncrypted = _T("E");
+    const LPCTSTR strAttributeReadonly = _T("R"); /*FILE_ATTRIBUTE_READONLY*/
+    const LPCTSTR strAttributeHidden = _T("H"); /*FILE_ATTRIBUTE_HIDDEN*/
+    const LPCTSTR strAttributeSystem = _T("S"); /*FILE_ATTRIBUTE_SYSTEM*/
+    /* don't need FILE_ATTRIBUTE_DIRECTORY, directories are visualized in other ways */
+    const LPCTSTR strAttributeArchive = _T("A"); /*FILE_ATTRIBUTE_ARCHIVE*/
+    /* don't need FILE_ATTRIBUTE_DEVICE */
+    /* don't need FILE_ATTRIBUTE_NORMAL */
+    const LPCTSTR strAttributeTemporary = _T("T"); /*FILE_ATTRIBUTE_TEMPORARY*/
+    const LPCTSTR strAttributeSparse = _T("~"); /*FILE_ATTRIBUTE_SPARSE_FILE*/
+    const LPCTSTR strAttributeReparsePoint = _T("@"); /*FILE_ATTRIBUTE_REPARSE_POINT*/
+    const LPCTSTR strAttributeCompressed = _T("C"); /*FILE_ATTRIBUTE_COMPRESSED*/
+    const LPCTSTR strAttributeOffline = _T("_"); /*FILE_ATTRIBUTE_OFFLINE*/
+    const LPCTSTR strAttributeNotContentIndexed = _T("i"); /*FILE_ATTRIBUTE_NOT_CONTENT_INDEXED*/
+    const LPCTSTR strAttributeEncrypted = _T("E"); /*FILE_ATTRIBUTE_ENCRYPTED*/
+    const LPCTSTR strAttributeIntegrityStream = _T("I"); /*FILE_ATTRIBUTE_INTEGRITY_STREAM*/
+    const LPCTSTR strAttributeVirtual = _T("V"); /*FILE_ATTRIBUTE_VIRTUAL*/
+    /* don't need FILE_ATTRIBUTE_NO_SCRUB_DATA */
+    const LPCTSTR strAttributeEA = _T("+"); /*FILE_ATTRIBUTE_EA*/
 
-    const int iLangCodeLength = 4;
+    const int iLangCodeLength = _countof(STR_RESOURCE_PREFIX);
     const int iNumDriveLetters = (chrCapZ - chrCapA) + 1;
 }
 

@@ -21,6 +21,7 @@
 
 #include "stdafx.h"
 #include "windirstat.h"
+#include <common/commonhelpers.h>
 #include "getosplatformstring.h"
 
 #ifdef _DEBUG

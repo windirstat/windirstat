@@ -21,6 +21,10 @@
 
 #include "stdafx.h"
 #include "windirstat.h"
+#include <common/cotaskmem.h>
+#include <common/commonhelpers.h>
+#include "options.h"
+#include "globalhelpers.h"
 #include "SelectDrivesDlg.h"
 
 #ifdef _DEBUG

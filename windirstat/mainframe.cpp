@@ -28,12 +28,16 @@
 #include "typeview.h"
 #include "dirstatdoc.h"
 #include "osspecific.h"
+#include "globalhelpers.h"
 #include "item.h"
 
 #include "pagecleanups.h"
 #include "pagetreelist.h"
 #include "pagetreemap.h"
 #include "pagegeneral.h"
+
+#include <common/mdexceptions.h>
+#include <common/commonhelpers.h>
 
 #include "mainframe.h"
 
@@ -680,13 +684,13 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
     VERIFY(m_wndToolBar.LoadToolBar(IDR_MAINFRAME));
 
     UINT *indic = indicators;
-    UINT size = countof(indicators);
+    UINT size = _countof(indicators);
 
     // If psapi is not supported, don't show that pane.
     if(GetWDSApp()->GetCurrentProcessMemoryInfo() == wds::strEmpty)
     {
         indic = indicatorsWithoutMemoryUsage;
-        size = countof(indicatorsWithoutMemoryUsage);
+        size = _countof(indicatorsWithoutMemoryUsage);
     }
 
     VERIFY(m_wndStatusBar.Create(this));

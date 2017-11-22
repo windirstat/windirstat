@@ -23,6 +23,7 @@
 #include "osspecific.h"
 #include "mountpoints.h"
 #include "globalhelpers.h"
+#include <common/tracer.h>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -73,7 +74,7 @@ void CReparsePoints::GetDriveVolumes()
             CString s;
             s.Format(_T("%c:\\"), i + wds::chrCapA);
 
-            BOOL b = ::GetVolumeNameForVolumeMountPoint(s, volume, countof(volume));
+            BOOL b = ::GetVolumeNameForVolumeMountPoint(s, volume, _countof(volume));
 
             if(!b)
             {
@@ -94,21 +95,21 @@ void CReparsePoints::GetDriveVolumes()
 void CReparsePoints::GetAllMountPoints()
 {
     TCHAR volume[_MAX_PATH];
-    HANDLE hvol = ::FindFirstVolume(volume, countof(volume));
+    HANDLE hvol = ::FindFirstVolume(volume, _countof(volume));
     if(hvol == INVALID_HANDLE_VALUE)
     {
         VTRACE(_T("No volumes found."));
         return;
     }
 
-    for(BOOL bContinue = true; bContinue; bContinue = ::FindNextVolume(hvol, volume, countof(volume)))
+    for(BOOL bContinue = true; bContinue; bContinue = ::FindNextVolume(hvol, volume, _countof(volume)))
     {
         TCHAR fsname[_MAX_PATH], vname[_MAX_PATH];
         PointVolumeArray *pva = new PointVolumeArray;
         ASSERT_VALID(pva);
 
         DWORD fsflags;
-        BOOL b = ::GetVolumeInformation(volume, vname, countof(vname), NULL, NULL, &fsflags, fsname, countof(fsname));
+        BOOL b = ::GetVolumeInformation(volume, vname, _countof(vname), NULL, NULL, &fsflags, fsname, _countof(fsname));
 
         if(!b)
         {
@@ -132,7 +133,7 @@ void CReparsePoints::GetAllMountPoints()
         }
 
         TCHAR point[_MAX_PATH];
-        HANDLE h = ::FindFirstVolumeMountPoint(volume, point, countof(point));
+        HANDLE h = ::FindFirstVolumeMountPoint(volume, point, _countof(point));
         if(h == INVALID_HANDLE_VALUE)
         {
 #           ifdef _DEBUG
@@ -152,13 +153,13 @@ void CReparsePoints::GetAllMountPoints()
             continue;
         }
 
-        for(BOOL bCont = TRUE; bCont; bCont = ::FindNextVolumeMountPoint(h, point, countof(point)))
+        for(BOOL bCont = TRUE; bCont; bCont = ::FindNextVolumeMountPoint(h, point, _countof(point)))
         {
             CString uniquePath = volume;
             uniquePath += point;
             TCHAR mountedVolume[_MAX_PATH];
 
-            const BOOL bGotMountPoints = ::GetVolumeNameForVolumeMountPoint(uniquePath, mountedVolume, countof(mountedVolume));
+            const BOOL bGotMountPoints = ::GetVolumeNameForVolumeMountPoint(uniquePath, mountedVolume, _countof(mountedVolume));
 
             if(!bGotMountPoints)
             {

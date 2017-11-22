@@ -17,14 +17,13 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
-// Author(s): - oliver   -> http://windirstat.net/contact/oliver/
-//
 
 #include "stdafx.h"
 #include "wds_constants.h"
 
 namespace wds
 {
+#if 0
     demangle_t translator_demangle_email[] =
     {
         { L'/', L'-' },
@@ -37,7 +36,7 @@ namespace wds
     {
         { L"Bernhard Seifert", 0, L"https://windirstat.net/contact/bernhard/", L"Creator of the project, original author" },
         { L"Oliver Schneider", 0, L"https://windirstat.net/contact/oliver/", L"Project maintainer" },
-        { L"Chris Wimmer", 0, L"http://sourceforge.net/users/dezipaitor", L"Contributor" },
+        { L"Chris Wimmer", 0, L"https://sourceforge.net/users/dezipaitor", L"Contributor" },
         { 0 },
     };
 
@@ -178,4 +177,5 @@ namespace wds
             0 /* end marker */
         },
     };
+#endif // 0
 }

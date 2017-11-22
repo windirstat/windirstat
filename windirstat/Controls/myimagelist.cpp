@@ -21,6 +21,8 @@
 
 #include "stdafx.h"
 #include "windirstat.h"
+#include "selectobject.h"
+#include "treemap.h"
 #include "myimagelist.h"
 
 #ifdef _DEBUG

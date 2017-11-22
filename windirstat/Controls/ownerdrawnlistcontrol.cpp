@@ -22,6 +22,7 @@
 #include "stdafx.h"
 #include "windirstat.h"
 #include "treemap.h"    // CColorSpace
+#include "selectobject.h"
 #include "ownerdrawnlistcontrol.h"
 
 #ifdef _DEBUG

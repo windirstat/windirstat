@@ -23,6 +23,7 @@
 #include "windirstat.h"
 #include "dirstatdoc.h"
 #include "dirstatview.h"
+#include "selectobject.h"
 #include "TreeListControl.h"
 
 #ifdef _DEBUG

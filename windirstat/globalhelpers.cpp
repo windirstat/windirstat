@@ -22,7 +22,11 @@
 
 #include "stdafx.h"
 #include "windirstat.h"
+#include <common/mdexceptions.h>
+#include <common/cotaskmem.h>
+#include <common/commonhelpers.h>
 #include "globalhelpers.h"
+#include "options.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -243,6 +247,21 @@ CString FormatFileTime(const FILETIME& t)
 
 CString FormatAttributes(DWORD attr)
 {
+    // order:
+    // strAttributeReadonly
+    // strAttributeHidden
+    // strAttributeSystem
+    // strAttributeArchive
+    // strAttributeTemporary
+    // strAttributeCompressed
+    // strAttributeEncrypted
+    // strAttributeIntegrityStream
+    // strAttributeVirtual
+    // strAttributeReparsePoint
+    // strAttributeSparse
+    // strAttributeOffline
+    // strAttributeNotContentIndexed
+    // strAttributeEA
     if(attr == INVALID_FILE_ATTRIBUTES)
     {
         return wds::strInvalidAttributes;

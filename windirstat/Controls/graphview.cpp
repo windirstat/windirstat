@@ -25,6 +25,7 @@
 #include "dirstatdoc.h"
 #include "dirstatview.h"
 #include "item.h"
+#include "selectobject.h"
 
 #include "graphview.h"
 

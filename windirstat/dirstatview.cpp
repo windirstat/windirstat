@@ -25,8 +25,10 @@
 #include "dirstatdoc.h"
 #include "item.h"
 #include "mainframe.h"
+#include <common/commonhelpers.h>
 #include "dirstatview.h"
 #include "osspecific.h"
+#include "globalhelpers.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW

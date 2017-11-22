@@ -22,6 +22,7 @@
 #include "stdafx.h"
 #include "windirstat.h"
 #include "options.h"
+#include "selectobject.h"
 #include "layout.h"
 
 #ifdef _DEBUG

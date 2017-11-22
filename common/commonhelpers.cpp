@@ -20,6 +20,8 @@
 //
 
 #include "stdafx.h"
+#include <common/mdexceptions.h>
+#include <common/wds_constants.h>
 
 CString MyStrRetToString(const LPITEMIDLIST pidl, const STRRET *strret)
 {

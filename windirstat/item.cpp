@@ -23,8 +23,11 @@
 #include "windirstat.h"
 #include "dirstatdoc.h" // GetItemColor()
 #include "mainframe.h"
-#include "item.h"
+#include <common/commonhelpers.h>
+#include "selectobject.h"
 #include "WorkLimiter.h"
+#include "item.h"
+#include "globalhelpers.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW

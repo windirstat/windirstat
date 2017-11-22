@@ -22,6 +22,8 @@
 #include "stdafx.h"
 #include "windirstat.h"
 #include <common/wds_constants.h>
+#include <common/mdexceptions.h>
+#include <common/commonhelpers.h>
 #include "aboutdlg.h"
 
 #ifdef _DEBUG
@@ -267,6 +269,7 @@ CString CAboutDlg::GetAppVersion()
 CString CAboutDlg::GetDevelList()
 {
     CString retval;
+#if 0
     using wds::authors;
     using wds::contact_t;
     
@@ -290,12 +293,14 @@ CString CAboutDlg::GetDevelList()
             }
         }
     }
+#endif // 0
     return retval;
 }
 
 CString CAboutDlg::GetTranslatorList()
 {
     CString retval;
+#if 0
     using wds::translators;
     using wds::translator_t;
 
@@ -328,6 +333,7 @@ CString CAboutDlg::GetTranslatorList()
             }
         }
     }
+#endif // 0
     return retval;
 }
 

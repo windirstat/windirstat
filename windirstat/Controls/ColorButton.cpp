@@ -21,6 +21,7 @@
 
 #include "stdafx.h"
 #include "colorbutton.h"
+#include <common/wds_constants.h>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW

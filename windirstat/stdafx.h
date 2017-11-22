@@ -21,9 +21,11 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 
-#ifndef __WDS_STDAFX_H__
-#define __WDS_STDAFX_H__
+#ifndef __STDAFX_H_VER__
+#define __STDAFX_H_VER__ 2017112218
+#if (defined(_MSC_VER) && (_MSC_VER >= 1020)) || defined(__MCPP)
 #pragma once
+#endif /* Check for "#pragma once" support */
 
 #if (defined(HAVE_WIN7_SDK) && HAVE_WIN7_SDK) || (_MSC_VER >= 1600)
 #   define SUPPORT_W7_TASKBAR 1
@@ -54,34 +56,22 @@
 #include <afxinet.h>        // For CInternet* classes
 
 #include <io.h>             // _access()
-#include <math.h>           // floor(), fmod(), sqrt() etc.
+#include <cmath>            // floor(), fmod(), sqrt() etc.
+#include <cfloat>           // DBL_MAX
 #include <psapi.h>          // PROCESS_MEMORY_INFO
-#include <lmcons.h>         // UNLEN
-#include <float.h>          // DBL_MAX
 
-#include <atlbase.h>        // USES_CONVERSION, ComPtr<>
+#include <atlbase.h>        // ComPtr<>
 
-#include <common/mdexceptions.h>
-#include <common/cotaskmem.h>
-#include <common/commonhelpers.h>
-#include <common/tracer.h>
-#include <common/wds_constants.h>
+// Aliasing the macros from wingdi.h
+#define RGB_GET_RVALUE(rgb) GetRValue(rgb)
+#define RGB_GET_GVALUE(rgb) GetGValue(rgb)
+#define RGB_GET_BVALUE(rgb) GetBValue(rgb)
 
-#define RGB_GET_RVALUE(rgb) (rgb & 0xFF)
-#define RGB_GET_GVALUE(rgb) ((rgb & 0xFF00) >> 8)
-#define RGB_GET_BVALUE(rgb) ((rgb & 0xFF0000) >> 16)
-
-// General purpose headers
-#include "selectobject.h"
-#include "set.h"
-
-#define countof(arr) (sizeof(arr)/sizeof((arr)[0]))
-
-template<class T> int signum(T x) { return (x) < 0 ? -1 : (x) == 0 ? 0 : 1; }
+template<typename T> int signum(T x) { return (x) < 0 ? -1 : (x) == 0 ? 0 : 1; }
 
 /// signum function for unsigned numbers.
-template<class T> int usignum(T x, T y) { return (x) < (y) ? -1 : (x) == (y) ? 0 : 1; }
+template<typename T> int usignum(T x, T y) { return (x) < (y) ? -1 : (x) == (y) ? 0 : 1; }
 
 #define WEAK_ASSERT /##/ ASSERT
 
-#endif // __WDS_STDAFX_H__
+#endif /* __STDAFX_H_VER__ */

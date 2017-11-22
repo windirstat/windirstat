@@ -20,15 +20,15 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 
-#ifndef __WDS_WINDIRSTAT_H__
-#define __WDS_WINDIRSTAT_H__
+#ifndef __WINDIRSTAT_H_VER__
+#define __WINDIRSTAT_H_VER__ 2017112219
+#if (defined(_MSC_VER) && (_MSC_VER >= 1020)) || defined(__MCPP)
 #pragma once
+#endif /* Check for "#pragma once" support */
+
 #include <Windows.h>
 #include "resource.h"
 #include "myimagelist.h"
-#include "osspecific.h"
-#include "globalhelpers.h"
-#include "options.h"
 #include "mountpoints.h"
 #include "helpmap.h"
 #include <common/tracer.h>
@@ -140,4 +140,5 @@ protected:
     afx_msg void OnHelpManual();
     afx_msg void OnAppAbout();
 };
-#endif // __WDS_WINDIRSTAT_H__
+
+#endif /* __WINDIRSTAT_H_VER__ */

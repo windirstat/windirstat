@@ -22,6 +22,7 @@
 #include "stdafx.h"
 #include "windirstat.h"
 #include "dirstatdoc.h"
+#include <common/commonhelpers.h>
 #include "options.h"
 
 #ifdef _DEBUG

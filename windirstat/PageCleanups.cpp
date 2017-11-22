@@ -21,6 +21,8 @@
 
 #include "stdafx.h"
 #include "windirstat.h"
+#include <common/commonhelpers.h>
+#include "options.h"
 #include "PageCleanups.h"
 
 #ifdef _DEBUG

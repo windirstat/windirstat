@@ -21,6 +21,7 @@
 
 #include "stdafx.h"
 #include "windirstat.h"
+#include "options.h"
 #include "PageTreelist.h"
 
 #ifdef _DEBUG

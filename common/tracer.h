@@ -23,11 +23,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 //
-// Author(s): - oliver   -> http://windirstat.net/contact/oliver/
-//
 
 #ifndef __TRACER_H_VER__
-#define __TRACER_H_VER__ 2014012617
+#define __TRACER_H_VER__ 2017112219
 #if defined(_MSC_VER) && (_MSC_VER >= 1020)
 #pragma once
 #endif // Check for "#pragma once" support

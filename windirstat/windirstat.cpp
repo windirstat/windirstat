@@ -23,12 +23,15 @@
 
 #include "stdafx.h"
 #include "windirstat.h"
+#include <common/mdexceptions.h>
+#include <common/commonhelpers.h>
 #include "mainframe.h"
 #include "selectdrivesdlg.h"
 #include "aboutdlg.h"
 #include "dirstatdoc.h"
 #include "graphview.h"
 #include "osspecific.h"
+#include "globalhelpers.h"
 #include "WorkLimiter.h"
 #pragma warning(push)
 #pragma warning(disable : 4091)
@@ -105,8 +108,8 @@ CDirstatApp::CDirstatApp()
 #   endif
 
 #   if SUPPORT_ELEVATION
-    m_ElevationEventName.Format(WINDIRSTAT_EVENT_NAME_FMT, static_cast<LPCTSTR>(GetCurrentDesktopName()), static_cast<LPCTSTR>(GetCurrentWinstaName()));
-    VTRACE(_T("Elevation event: %s"), static_cast<LPCTSTR>(m_ElevationEventName));
+    m_ElevationEventName.Format(WINDIRSTAT_EVENT_NAME_FMT, GetCurrentDesktopName().GetBuffer(), GetCurrentWinstaName().GetBuffer());
+    VTRACE(_T("Elevation event: %s"), m_ElevationEventName.GetBuffer());
 #   endif // SUPPORT_ELEVATION
 }
 

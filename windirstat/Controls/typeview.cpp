@@ -24,7 +24,9 @@
 #include "item.h"
 #include "mainframe.h"
 #include "dirstatdoc.h"
+#include <common/commonhelpers.h>
 #include "typeview.h"
+#include "globalhelpers.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW

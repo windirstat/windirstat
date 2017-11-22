@@ -20,6 +20,7 @@
 //
 
 #include "stdafx.h"
+#include "selectobject.h"
 #include "treemap.h"
 
 #ifdef _DEBUG
@@ -176,19 +177,19 @@ void CTreemap::GetDefaultPalette(CArray<COLORREF, COLORREF&>& palette)
 {
     if(CColorSpace::Is256Colors())
     {
-        palette.SetSize(countof(_defaultCushionColors256));
-        for(int i = 0; i < countof(_defaultCushionColors256); i++)
+        palette.SetSize(_countof(_defaultCushionColors256));
+        for(int i = 0; i < _countof(_defaultCushionColors256); i++)
         {
             palette[i]= _defaultCushionColors256[i];
         }
 
         // We don't do
-        // EqualizeColors(_defaultCushionColors256, countof(_defaultCushionColors256), palette);
+        // EqualizeColors(_defaultCushionColors256, _countof(_defaultCushionColors256), palette);
         // because on 256 color screens, the resulting colors are not distinguishable.
     }
     else
     {
-        EqualizeColors(_defaultCushionColors, countof(_defaultCushionColors), palette);
+        EqualizeColors(_defaultCushionColors, _countof(_defaultCushionColors), palette);
     }
 }
 

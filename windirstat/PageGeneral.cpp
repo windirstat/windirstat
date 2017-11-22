@@ -23,6 +23,8 @@
 #include "windirstat.h"
 #include "mainframe.h" // COptionsPropertySheet
 #include "PageGeneral.h"
+#include "options.h"
+#include "globalhelpers.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW

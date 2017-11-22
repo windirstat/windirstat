@@ -24,8 +24,12 @@
 #include "item.h"
 #include "mainframe.h"
 #include "osspecific.h"
+#include "globalhelpers.h"
 #include "deletewarningdlg.h"
 #include "modalshellapi.h"
+#include <common/mdexceptions.h>
+#include <common/cotaskmem.h>
+#include <common/commonhelpers.h>
 #include "dirstatdoc.h"
 
 #ifdef _DEBUG

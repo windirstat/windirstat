@@ -20,6 +20,7 @@
 //
 
 #include "stdafx.h"
+#include "selectobject.h"
 #include "pacman.h"
 
 #ifdef _DEBUG
