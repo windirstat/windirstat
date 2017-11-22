@@ -27,3 +27,4 @@ build/**
 **.VC.db
 **.VC.opendb
 *.aps
+windirstat/res/*/wds_release_wdsr*.vs8.vcproj
