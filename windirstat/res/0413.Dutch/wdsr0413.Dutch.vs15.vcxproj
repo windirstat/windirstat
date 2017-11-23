@@ -26,7 +26,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <OutDir>..\..\..\build\</OutDir>
+    <OutDir>..\..\..\build.vs2017\</OutDir>
     <IntDir>..\..\..\intermediate\vs2017_$(ProjectName)_wdslng0413\</IntDir>
     <TargetName>wdsr0413</TargetName>
     <TargetExt>.wdslng</TargetExt>

@@ -101,8 +101,6 @@ protected:
 #   endif
     bool IsCorrectResourceDll(LPCTSTR path);
 
-    CString ConstructHelpFileName();
-
     bool UpdateMemoryInfo();
 
     // Get the alternative color from Explorer configuration

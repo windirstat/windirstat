@@ -22,7 +22,7 @@
 //
 
 #ifndef __STDAFX_H_VER__
-#define __STDAFX_H_VER__ 2017112218
+#define __STDAFX_H_VER__ 2017112319
 #if (defined(_MSC_VER) && (_MSC_VER >= 1020)) || defined(__MCPP)
 #pragma once
 #endif /* Check for "#pragma once" support */
@@ -62,16 +62,13 @@
 
 #include <atlbase.h>        // ComPtr<>
 
-// Aliasing the macros from wingdi.h
-#define RGB_GET_RVALUE(rgb) GetRValue(rgb)
-#define RGB_GET_GVALUE(rgb) GetGValue(rgb)
-#define RGB_GET_BVALUE(rgb) GetBValue(rgb)
+#define RGB_GET_RVALUE(rgb) (rgb & 0xFF)
+#define RGB_GET_GVALUE(rgb) ((rgb & 0xFF00) >> 8)
+#define RGB_GET_BVALUE(rgb) ((rgb & 0xFF0000) >> 16)
 
 template<typename T> int signum(T x) { return (x) < 0 ? -1 : (x) == 0 ? 0 : 1; }
 
 /// signum function for unsigned numbers.
 template<typename T> int usignum(T x, T y) { return (x) < (y) ? -1 : (x) == (y) ? 0 : 1; }
-
-#define WEAK_ASSERT /##/ ASSERT
 
 #endif /* __STDAFX_H_VER__ */

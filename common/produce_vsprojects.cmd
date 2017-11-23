@@ -12,15 +12,20 @@ set REPOROOT=%~dp0..
 :: Directory in which this script resides ($REPOROOT/common)
 set COMMON=%~dp0
 :: Change into the repository root
-setlocal & pushd "%REPOROOT%"
+setlocal enableextensions & pushd "%REPOROOT%"
 set OPTIONS=--resources
-if "%~1" == "--full"      (set OPTIONS=--resources --sdk71)
-if "%~1" == "--sdk71"     (set OPTIONS=--sdk71)
-if "%~1" == "--resources" (set OPTIONS=--resources)
-if "%~1" == "--dev"       (set OPTIONS=--dev --sdk71)
+set VSVERSIONS=
+for %%i in (%*) do @(
+    if "%%~i" == "--full"      call :SetVar OPTIONS "--resources --sdk71"
+    if "%%~i" == "--sdk"       call :SetVar OPTIONS "--sdk71"
+    if "%%~i" == "--res"       call :SetVar OPTIONS "--resources"
+    if "%%~i" == "--dev"       call :SetVar OPTIONS "--dev --sdk71"
+    call :AppendVSVer VSVERSIONS "%%~i"
+)
 set DEFAULT_VSVERSIONS=2005 2017
-set VSVERSIONS=%*
+echo %VSVERSIONS%
 if "%VSVERSIONS%" == "" set VSVERSIONS=%DEFAULT_VSVERSIONS%
+echo Generating for %VSVERSIONS%, options: %OPTIONS%
 for %%i in (%VSVERSIONS%) do @(
   for %%j in (%DEFAULT_VSVERSIONS%) do @(
     if "%%i" == "%%j" "%COMMON%premake4.exe" %OPTIONS% vs%%i
@@ -28,3 +33,31 @@ for %%i in (%VSVERSIONS%) do @(
 )
 :: Back to normal
 popd & endlocal
+goto :EOF
+
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+::: / SetVar subroutine
+:::   Param1 == name of the variable, Param2 == value to be set for the variable
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+:SetVar
+:: Get the name of the variable we are working with
+setlocal enableextensions&set VAR_NAME=%1
+endlocal & set %VAR_NAME%=%~2
+goto :EOF
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+::: \ SetVar subroutine
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+::: / AppendVSVer subroutine
+:::   Param1 == value to be appended to the variable
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+:AppendVSVer
+:: Get the name of the variable we are working with
+setlocal enableextensions&set ADDVAL= %~1
+if not "%ADDVAL:~1,3%" == "vs" set ADDVAL=
+endlocal & set VSVERSIONS=%VSVERSIONS%%ADDVAL%
+goto :EOF
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+::: \ AppendVSVer subroutine
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::

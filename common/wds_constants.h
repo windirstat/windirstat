@@ -20,7 +20,7 @@
 //
 
 #ifndef __WDS_CONSTANTS_H_VER__
-#define __WDS_CONSTANTS_H_VER__ 2017112218
+#define __WDS_CONSTANTS_H_VER__ 2017112319
 #if (defined(_MSC_VER) && (_MSC_VER >= 1020)) || defined(__MCPP)
 #pragma once
 #endif // Check for "#pragma once" support
@@ -83,7 +83,7 @@ namespace wds
     /* don't need FILE_ATTRIBUTE_NO_SCRUB_DATA */
     const LPCTSTR strAttributeEA = _T("+"); /*FILE_ATTRIBUTE_EA*/
 
-    const int iLangCodeLength = _countof(STR_RESOURCE_PREFIX);
+    const int iLangCodeLength = _countof(STR_RESOURCE_PREFIX) - 1;
     const int iNumDriveLetters = (chrCapZ - chrCapA) + 1;
 }
 

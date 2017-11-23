@@ -69,28 +69,28 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <OutDir>..\build\</OutDir>
+    <OutDir>..\build.vs2017\</OutDir>
     <IntDir>..\intermediate\vs2017_$(Platform)_$(Configuration)\$(ProjectName)\</IntDir>
     <TargetName>wds32D</TargetName>
     <TargetExt>.exe</TargetExt>
-    <LinkIncremental>false</LinkIncremental>
+    <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <OutDir>..\build\</OutDir>
+    <OutDir>..\build.vs2017\</OutDir>
     <IntDir>..\intermediate\vs2017_$(Platform)_$(Configuration)\$(ProjectName)\</IntDir>
     <TargetName>wds64D</TargetName>
     <TargetExt>.exe</TargetExt>
-    <LinkIncremental>false</LinkIncremental>
+    <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <OutDir>..\build\</OutDir>
+    <OutDir>..\build.vs2017\</OutDir>
     <IntDir>..\intermediate\vs2017_$(Platform)_$(Configuration)\$(ProjectName)\</IntDir>
     <TargetName>wds32</TargetName>
     <TargetExt>.exe</TargetExt>
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <OutDir>..\build\</OutDir>
+    <OutDir>..\build.vs2017\</OutDir>
     <IntDir>..\intermediate\vs2017_$(Platform)_$(Configuration)\$(ProjectName)\</IntDir>
     <TargetName>wds64</TargetName>
     <TargetExt>.exe</TargetExt>
@@ -101,7 +101,7 @@
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>..;.;..\common;Controls;Dialogs;..\3rdparty\lua\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_DEBUG;VTRACE_TO_CONSOLE=1;VTRACE_DETAIL=2;WINVER=0x0501;_ALLOW_RTCc_IN_STL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <MinimalRebuild>false</MinimalRebuild>
+      <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <SmallerTypeCheck>true</SmallerTypeCheck>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -110,7 +110,7 @@
       <WarningLevel>Level4</WarningLevel>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
       <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
-      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <ProgramDataBaseFileName>$(OutDir)wds32D.pdb</ProgramDataBaseFileName>
     </ClCompile>
     <ResourceCompile>
@@ -135,7 +135,7 @@
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>..;.;..\common;Controls;Dialogs;..\3rdparty\lua\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_DEBUG;VTRACE_TO_CONSOLE=1;VTRACE_DETAIL=2;WINVER=0x0501;_ALLOW_RTCc_IN_STL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <MinimalRebuild>false</MinimalRebuild>
+      <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <SmallerTypeCheck>true</SmallerTypeCheck>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>

@@ -42,13 +42,14 @@ static const double PALETTE_BRIGHTNESS = 0.6;
 
 double CColorSpace::GetColorBrightness(COLORREF color)
 {
-    return (RGB_GET_RVALUE(color) + RGB_GET_GVALUE(color) + RGB_GET_BVALUE(color)) / 255.0 / 3.0;
+    COLORREF const crIndividualIntensitySum = RGB_GET_RVALUE(color) + RGB_GET_GVALUE(color) + RGB_GET_BVALUE(color);
+    return crIndividualIntensitySum / 255.0 / 3.0;
 }
 
 COLORREF CColorSpace::MakeBrightColor(COLORREF color, double brightness)
 {
-    WEAK_ASSERT(brightness >= 0.0);
-    WEAK_ASSERT(brightness <= 1.0);
+    ASSERT(brightness >= 0.0);
+    ASSERT(brightness <= 1.0);
 
     double dred =   (RGB_GET_RVALUE(color) & 0xFF) / 255.0;
     double dgreen = (RGB_GET_GVALUE(color) & 0xFF) / 255.0;
@@ -80,7 +81,7 @@ bool CColorSpace::Is256Colors()
 
 void CColorSpace::NormalizeColor(int& red, int& green, int& blue)
 {
-    WEAK_ASSERT(red + green + blue <= 3 * 255);
+    ASSERT(red + green + blue <= 3 * 255);
 
     if(red > 255)
     {
@@ -108,14 +109,14 @@ void CColorSpace::DistributeFirst(int& first, int& second, int& third)
         const int j = second - 255;
         second = 255;
         third += j;
-        WEAK_ASSERT(third <= 255);
+        ASSERT(third <= 255);
     }
     else if(third > 255)
     {
         const int j = third - 255;
         third = 255;
         second += j;
-        WEAK_ASSERT(second <= 255);
+        ASSERT(second <= 255);
     }
 }
 
@@ -222,7 +223,7 @@ CTreemap::CTreemap(Callback *callback)
 
 void CTreemap::SetOptions(const Options *options)
 {
-    WEAK_ASSERT(options != NULL);
+    ASSERT(options != NULL);
     m_options = *options;
 
     // Derive normalized vector here for performance
@@ -256,7 +257,7 @@ void CTreemap::RecurseCheckTree(Item *item)
 {
     if(item->TmiIsLeaf())
     {
-        WEAK_ASSERT(item->TmiGetChildrenCount() == 0);
+        ASSERT(item->TmiGetChildrenCount() == 0);
     }
     else
     {
@@ -268,7 +269,7 @@ void CTreemap::RecurseCheckTree(Item *item)
             sum += child->TmiGetSize();
             RecurseCheckTree(child);
         }
-        WEAK_ASSERT(sum == item->TmiGetSize());
+        ASSERT(sum == item->TmiGetSize());
     }
 }
 #endif
@@ -358,7 +359,7 @@ void CTreemap::DrawTreemap(CDC *pdc, CRect rc, Item *root, const Options *option
         {
             for(int y = rc.top; y < rc.bottom - m_options.grid; y++)
             {
-                WEAK_ASSERT(FindItemByPoint(root, CPoint(x, y)) != NULL);
+                ASSERT(FindItemByPoint(root, CPoint(x, y)) != NULL);
             }
         }
 #endif
@@ -399,7 +400,7 @@ void CTreemap::DrawTreemapDoubleBuffered(CDC *pdc, const CRect& rc, Item *root, 
 
 CTreemap::Item *CTreemap::FindItemByPoint(Item *item, CPoint point)
 {
-    WEAK_ASSERT(item != NULL);
+    ASSERT(item != NULL);
     const CRect& rc = item->TmiGetRectangle();
 
     if(!rc.PtInRect(point))
@@ -416,7 +417,7 @@ CTreemap::Item *CTreemap::FindItemByPoint(Item *item, CPoint point)
         return NULL;
     }
 
-    WEAK_ASSERT(rc.PtInRect(point));
+    ASSERT(rc.PtInRect(point));
 
     Item *ret = NULL;
 
@@ -432,28 +433,28 @@ CTreemap::Item *CTreemap::FindItemByPoint(Item *item, CPoint point)
     }
     else
     {
-        WEAK_ASSERT(item->TmiGetSize() > 0);
-        WEAK_ASSERT(item->TmiGetChildrenCount() > 0);
+        ASSERT(item->TmiGetSize() > 0);
+        ASSERT(item->TmiGetChildrenCount() > 0);
 
         for(int i = 0; i < item->TmiGetChildrenCount(); i++)
         {
             Item *child = item->TmiGetChild(i);
 
-            WEAK_ASSERT(child->TmiGetSize() > 0);
+            ASSERT(child->TmiGetSize() > 0);
 
 #ifdef _DEBUG
             CRect rcChild(child->TmiGetRectangle());
-            WEAK_ASSERT(rcChild.right >= rcChild.left);
-            WEAK_ASSERT(rcChild.bottom >= rcChild.top);
-            WEAK_ASSERT(rcChild.left >= rc.left);
-            WEAK_ASSERT(rcChild.right <= rc.right);
-            WEAK_ASSERT(rcChild.top >= rc.top);
-            WEAK_ASSERT(rcChild.bottom <= rc.bottom);
+            ASSERT(rcChild.right >= rcChild.left);
+            ASSERT(rcChild.bottom >= rcChild.top);
+            ASSERT(rcChild.left >= rc.left);
+            ASSERT(rcChild.right <= rc.right);
+            ASSERT(rcChild.top >= rc.top);
+            ASSERT(rcChild.bottom <= rc.bottom);
 #endif
             if(child->TmiGetRectangle().PtInRect(point))
             {
                 ret = FindItemByPoint(child, point);
-                WEAK_ASSERT(ret != NULL);
+                ASSERT(ret != NULL);
 #ifdef STRONGDEBUG
 #ifdef _DEBUG
                 for(i++; i < item->TmiGetChildrenCount(); i++)
@@ -468,18 +469,18 @@ CTreemap::Item *CTreemap::FindItemByPoint(Item *item, CPoint point)
                     rcChild = child->TmiGetRectangle();
                     if(rcChild.left == -1)
                     {
-                        WEAK_ASSERT(rcChild.top == -1);
-                        WEAK_ASSERT(rcChild.right == -1);
-                        WEAK_ASSERT(rcChild.bottom == -1);
+                        ASSERT(rcChild.top == -1);
+                        ASSERT(rcChild.right == -1);
+                        ASSERT(rcChild.bottom == -1);
                         break;
                     }
 
-                    WEAK_ASSERT(rcChild.right >= rcChild.left);
-                    WEAK_ASSERT(rcChild.bottom >= rcChild.top);
-                    WEAK_ASSERT(rcChild.left >= rc.left);
-                    WEAK_ASSERT(rcChild.right <= rc.right);
-                    WEAK_ASSERT(rcChild.top >= rc.top);
-                    WEAK_ASSERT(rcChild.bottom <= rc.bottom);
+                    ASSERT(rcChild.right >= rcChild.left);
+                    ASSERT(rcChild.bottom >= rcChild.top);
+                    ASSERT(rcChild.left >= rc.left);
+                    ASSERT(rcChild.right <= rc.right);
+                    ASSERT(rcChild.top >= rc.top);
+                    ASSERT(rcChild.bottom <= rc.bottom);
                 }
 #endif
 #endif
@@ -489,7 +490,7 @@ CTreemap::Item *CTreemap::FindItemByPoint(Item *item, CPoint point)
         }
     }
 
-    WEAK_ASSERT(ret != NULL);
+    ASSERT(ret != NULL);
 
     if(ret == NULL)
     {
@@ -562,10 +563,10 @@ void CTreemap::RecurseDrawGraph(
     DWORD flags
 )
 {
-    WEAK_ASSERT(rc.Width() >= 0);
-    WEAK_ASSERT(rc.Height() >= 0);
+    ASSERT(rc.Width() >= 0);
+    ASSERT(rc.Height() >= 0);
 
-    WEAK_ASSERT(item->TmiGetSize() > 0);
+    ASSERT(item->TmiGetSize() > 0);
 
     if(m_callback != NULL)
     {
@@ -602,8 +603,8 @@ void CTreemap::RecurseDrawGraph(
     }
     else
     {
-        WEAK_ASSERT(item->TmiGetChildrenCount() > 0);
-        WEAK_ASSERT(item->TmiGetSize() > 0);
+        ASSERT(item->TmiGetChildrenCount() > 0);
+        ASSERT(item->TmiGetSize() > 0);
 
         DrawChildren(bitmap, item, surface, h, flags);
     }
@@ -650,7 +651,7 @@ void CTreemap::DrawChildren(
 //
 void CTreemap::KDirStat_DrawChildren(CColorRefArray &bitmap, Item *parent, const double *surface, double h, DWORD /*flags*/)
 {
-    WEAK_ASSERT(parent->TmiGetChildrenCount() > 0);
+    ASSERT(parent->TmiGetChildrenCount() > 0);
 
     const CRect& rc = parent->TmiGetRectangle();
 
@@ -664,8 +665,8 @@ void CTreemap::KDirStat_DrawChildren(CColorRefArray &bitmap, Item *parent, const
 
     const int width = horizontalRows ? rc.Width() : rc.Height();
     const int height = horizontalRows ? rc.Height() : rc.Width();
-    WEAK_ASSERT(width >= 0);
-    WEAK_ASSERT(height >= 0);
+    ASSERT(width >= 0);
+    ASSERT(height >= 0);
 
     int c = 0;
     double top = horizontalRows ? rc.top : rc.left;
@@ -681,7 +682,7 @@ void CTreemap::KDirStat_DrawChildren(CColorRefArray &bitmap, Item *parent, const
         for(int i = 0; i < childrenPerRow[row]; i++, c++)
         {
             Item *child = parent->TmiGetChild(c);
-            WEAK_ASSERT(childWidth[c] >= 0);
+            ASSERT(childWidth[c] >= 0);
             double fRight = left + childWidth[c] * width;
             int right = (int)fRight;
 
@@ -713,7 +714,7 @@ void CTreemap::KDirStat_DrawChildren(CColorRefArray &bitmap, Item *parent, const
             {
                 CRect test;
                 test.IntersectRect(parent->TmiGetRectangle(), rcChild);
-                WEAK_ASSERT(test == rcChild);
+                ASSERT(test == rcChild);
             }
             #endif
 
@@ -734,10 +735,10 @@ void CTreemap::KDirStat_DrawChildren(CColorRefArray &bitmap, Item *parent, const
 
             left = fRight;
         }
-        // This asserts due to rounding error: WEAK_ASSERT(left == (horizontalRows ? rc.right : rc.bottom));
+        // This asserts due to rounding error: ASSERT(left == (horizontalRows ? rc.right : rc.bottom));
         top = fBottom;
     }
-    // This asserts due to rounding error: WEAK_ASSERT(top == (horizontalRows ? rc.bottom : rc.right));
+    // This asserts due to rounding error: ASSERT(top == (horizontalRows ? rc.bottom : rc.right));
 }
 
 
@@ -750,8 +751,8 @@ bool CTreemap::KDirStat_ArrangeChildren(
     CArray<int, int>& childrenPerRow
 )
 {
-    WEAK_ASSERT(!parent->TmiIsLeaf());
-    WEAK_ASSERT(parent->TmiGetChildrenCount() > 0);
+    ASSERT(!parent->TmiIsLeaf());
+    ASSERT(parent->TmiGetChildrenCount() > 0);
 
     if(parent->TmiGetSize() == 0)
     {
@@ -798,13 +799,13 @@ double CTreemap::KDirStat_CalcutateNextRow(Item *parent, const int nextChild, do
 {
     int i = 0;
     static const double _minProportion = 0.4;
-    WEAK_ASSERT(_minProportion < 1);
+    ASSERT(_minProportion < 1);
 
-    WEAK_ASSERT(nextChild < parent->TmiGetChildrenCount());
-    WEAK_ASSERT(width >= 1.0);
+    ASSERT(nextChild < parent->TmiGetChildrenCount());
+    ASSERT(width >= 1.0);
 
     const double mySize = (double)parent->TmiGetSize();
-    WEAK_ASSERT(mySize > 0);
+    ASSERT(mySize > 0);
     ULONGLONG sizeUsed = 0;
     double rowHeight = 0;
 
@@ -813,14 +814,14 @@ double CTreemap::KDirStat_CalcutateNextRow(Item *parent, const int nextChild, do
         ULONGLONG childSize = parent->TmiGetChild(i)->TmiGetSize();
         if(childSize == 0)
         {
-            WEAK_ASSERT(i > nextChild);  // first child has size > 0
+            ASSERT(i > nextChild);  // first child has size > 0
             break;
         }
 
         sizeUsed += childSize;
         double virtualRowHeight = sizeUsed / mySize;
-        WEAK_ASSERT(virtualRowHeight > 0);
-        WEAK_ASSERT(virtualRowHeight <= 1);
+        ASSERT(virtualRowHeight > 0);
+        ASSERT(virtualRowHeight <= 1);
 
         // Rectangle(mySize)    = width * 1.0
         // Rectangle(childSize) = childWidth * virtualRowHeight
@@ -830,7 +831,7 @@ double CTreemap::KDirStat_CalcutateNextRow(Item *parent, const int nextChild, do
 
         if(childWidth_ / virtualRowHeight < _minProportion)
         {
-            WEAK_ASSERT(i > nextChild); // because width >= 1 and _minProportion < 1.
+            ASSERT(i > nextChild); // because width >= 1 and _minProportion < 1.
             // For the first child we have:
             // childWidth / rowHeight
             // = childSize / mySize * width / rowHeight / rowHeight
@@ -842,7 +843,7 @@ double CTreemap::KDirStat_CalcutateNextRow(Item *parent, const int nextChild, do
         }
         rowHeight = virtualRowHeight;
     }
-    WEAK_ASSERT(i > nextChild);
+    ASSERT(i > nextChild);
 
     // Now i-1 is the last child used
     // and rowHeight is the height of the row.
@@ -862,7 +863,7 @@ double CTreemap::KDirStat_CalcutateNextRow(Item *parent, const int nextChild, do
         double rowSize = mySize * rowHeight;
         double childSize = (double)parent->TmiGetChild(nextChild + i)->TmiGetSize();
         double cw = childSize / rowSize;
-        WEAK_ASSERT(cw >= 0);
+        ASSERT(cw >= 0);
         childWidth[nextChild + i]= cw;
     }
 
@@ -877,12 +878,12 @@ void CTreemap::SequoiaView_DrawChildren(CColorRefArray &bitmap, Item *parent, co
     // Rest rectangle to fill
     CRect remaining(parent->TmiGetRectangle());
 
-    WEAK_ASSERT(remaining.Width() > 0);
-    WEAK_ASSERT(remaining.Height() > 0);
+    ASSERT(remaining.Width() > 0);
+    ASSERT(remaining.Height() > 0);
 
     // Size of rest rectangle
     ULONGLONG remainingSize = parent->TmiGetSize();
-    WEAK_ASSERT(remainingSize > 0);
+    ASSERT(remainingSize > 0);
 
     // Scale factor
     const double sizePerSquarePixel = (double)parent->TmiGetSize() / remaining.Width() / remaining.Height();
@@ -893,8 +894,8 @@ void CTreemap::SequoiaView_DrawChildren(CColorRefArray &bitmap, Item *parent, co
     // At least one child left
     while(head < parent->TmiGetChildrenCount())
     {
-        WEAK_ASSERT(remaining.Width() > 0);
-        WEAK_ASSERT(remaining.Height() > 0);
+        ASSERT(remaining.Width() > 0);
+        ASSERT(remaining.Height() > 0);
 
         // How we divide the remaining rectangle
         bool horizontal = (remaining.Width() >= remaining.Height());
@@ -904,7 +905,7 @@ void CTreemap::SequoiaView_DrawChildren(CColorRefArray &bitmap, Item *parent, co
 
         // Square of height in size scale for ratio formula
         const double hh = (height * height) * sizePerSquarePixel;
-        WEAK_ASSERT(hh > 0);
+        ASSERT(hh > 0);
 
         // Row will be made up of child(rowBegin)...child(rowEnd - 1)
         int rowBegin = head;
@@ -965,11 +966,11 @@ void CTreemap::SequoiaView_DrawChildren(CColorRefArray &bitmap, Item *parent, co
 
         // As the size of parent is greater than zero, the size of
         // the first child must have been greater than zero, too.
-        WEAK_ASSERT(sum > 0);
+        ASSERT(sum > 0);
 
         // Width of row
         int width = (horizontal ? remaining.Width() : remaining.Height());
-        WEAK_ASSERT(width > 0);
+        ASSERT(width > 0);
 
         if(sum < remainingSize)
             width = (int)((double)sum / remainingSize * width);
@@ -1019,13 +1020,13 @@ void CTreemap::SequoiaView_DrawChildren(CColorRefArray &bitmap, Item *parent, co
                 rc.right = end;
             }
 
-            WEAK_ASSERT(rc.left <= rc.right);
-            WEAK_ASSERT(rc.top <= rc.bottom);
+            ASSERT(rc.left <= rc.right);
+            ASSERT(rc.top <= rc.bottom);
 
-            WEAK_ASSERT(rc.left >= remaining.left);
-            WEAK_ASSERT(rc.right <= remaining.right);
-            WEAK_ASSERT(rc.top >= remaining.top);
-            WEAK_ASSERT(rc.bottom <= remaining.bottom);
+            ASSERT(rc.left >= remaining.left);
+            ASSERT(rc.right <= remaining.right);
+            ASSERT(rc.top >= remaining.top);
+            ASSERT(rc.bottom <= remaining.bottom);
 
             RecurseDrawGraph(bitmap, parent->TmiGetChild(i), rc, false, surface, h * m_options.scaleFactor, 0);
 
@@ -1047,10 +1048,10 @@ void CTreemap::SequoiaView_DrawChildren(CColorRefArray &bitmap, Item *parent, co
 
         remainingSize -= sum;
 
-        WEAK_ASSERT(remaining.left <= remaining.right);
-        WEAK_ASSERT(remaining.top <= remaining.bottom);
+        ASSERT(remaining.left <= remaining.right);
+        ASSERT(remaining.top <= remaining.bottom);
 
-        WEAK_ASSERT(remainingSize >= 0);
+        ASSERT(remainingSize >= 0);
 
         head += (rowEnd - rowBegin);
 
@@ -1064,8 +1065,8 @@ void CTreemap::SequoiaView_DrawChildren(CColorRefArray &bitmap, Item *parent, co
             break;
         }
     }
-    WEAK_ASSERT(remainingSize == 0);
-    WEAK_ASSERT(remaining.left == remaining.right || remaining.top == remaining.bottom);
+    ASSERT(remainingSize == 0);
+    ASSERT(remaining.left == remaining.right || remaining.top == remaining.bottom);
 }
 
 
@@ -1074,20 +1075,20 @@ void CTreemap::SequoiaView_DrawChildren(CColorRefArray &bitmap, Item *parent, co
 void CTreemap::Simple_DrawChildren(CColorRefArray &bitmap, Item *parent, const double *surface, double h, DWORD flags)
 {
 #if 1
-    WEAK_ASSERT(0); // Not used in WinDirStat.
+    ASSERT(0); // Not used in WinDirStat.
 
     bitmap; parent; surface; h; flags;
 
 #else
-    WEAK_ASSERT(parent->TmiGetChildrenCount() > 0);
-    WEAK_ASSERT(parent->TmiGetSize() > 0);
+    ASSERT(parent->TmiGetChildrenCount() > 0);
+    ASSERT(parent->TmiGetSize() > 0);
 
     const CRect& rc = parent->TmiGetRectangle();
 
     bool horizontal = (flags == 0);
 
     int width = horizontal ? rc.Width() : rc.Height();
-    WEAK_ASSERT(width >= 0);
+    ASSERT(width >= 0);
 
     double fBegin = horizontal ? rc.left : rc.top;
     int veryEnd = horizontal ? rc.right : rc.bottom;
@@ -1108,8 +1109,8 @@ void CTreemap::Simple_DrawChildren(CColorRefArray &bitmap, Item *parent, const d
         int begin = (int)fBegin;
         int end = (int)fEnd;
 
-        WEAK_ASSERT(begin <= end);
-        WEAK_ASSERT(end <= veryEnd);
+        ASSERT(begin <= end);
+        ASSERT(end <= veryEnd);
 
         CRect rcChild;
         if(horizontal)
@@ -1262,7 +1263,7 @@ void CTreemap::DrawCushion(CColorRefArray &bitmap, const CRect& rc, const double
         }
 
         pixel += Ia;
-        WEAK_ASSERT(pixel <= 1.0);
+        ASSERT(pixel <= 1.0);
 
         // Now, pixel is the brightness of the pixel, 0...1.0.
 
@@ -1310,7 +1311,7 @@ void CTreemap::AddRidge(const CRect& rc, double *surface, double h)
     int width = rc.Width();
     int height = rc.Height();
 
-    WEAK_ASSERT(width > 0 && height > 0);
+    ASSERT(width > 0 && height > 0);
 
     double h4 = 4 * h;
 

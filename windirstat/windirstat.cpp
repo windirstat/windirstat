@@ -374,11 +374,6 @@ CString CDirstatApp::FindAuxiliaryFileByLangid(LPCTSTR prefix, LPCTSTR suffix, L
     return wds::strEmpty;
 }
 
-CString CDirstatApp::ConstructHelpFileName()
-{
-    return FindHelpfilePathByLangid(CLanguageOptions::GetLanguage());
-}
-
 bool CDirstatApp::IsCorrectResourceDll(LPCTSTR path)
 {
     HMODULE module = ::LoadLibraryEx(path, NULL, LOAD_LIBRARY_AS_DATAFILE);
@@ -556,9 +551,6 @@ BOOL CDirstatApp::InitInstance()
 #endif // SUPPORT_ELEVATION
 
     GetOptions()->LoadFromRegistry();
-
-    free((void*)m_pszHelpFilePath);
-    m_pszHelpFilePath = _tcsdup(ConstructHelpFileName()); // ~CWinApp() will free this memory.
 
     m_pDocTemplate = new CSingleDocTemplate(
         IDR_MAINFRAME,

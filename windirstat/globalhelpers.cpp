@@ -553,6 +553,10 @@ bool DriveExists(const CString& path)
     return true;
 }
 
+#ifndef UNLEN
+#   define UNLEN MAX_PATH
+#endif
+
 CString GetUserName()
 {
     CString s;

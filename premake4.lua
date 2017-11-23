@@ -368,8 +368,8 @@ solution (iif(release, slnname, "windirstat"))
         kind            ("WindowedApp")
         location        ("windirstat")
         targetname      ("wds")
-        flags           {"StaticRuntime", "Unicode", "MFC", "NativeWChar", "ExtraWarnings", "NoRTTI", "WinMain", "NoMinimalRebuild", "NoIncrementalLink", "NoEditAndContinue"}
-        targetdir       (iif(release, slnname, "build"))
+        flags           {"StaticRuntime", "Unicode", "MFC", "NativeWChar", "ExtraWarnings", "NoRTTI", "WinMain",}
+        targetdir       (iif(release, slnname, iif(action == "vs2005", "build", "build." .. action)))
         includedirs     {".", "windirstat", "common", "windirstat/Controls", "windirstat/Dialogs", "3rdparty/lua/src"}
         objdir          (int_dir)
         links           {"psapi", "delayimp", pfx.."luajit2"}
@@ -444,11 +444,11 @@ solution (iif(release, slnname, "windirstat"))
         configuration {"Debug"}
             defines         {"_DEBUG", "VTRACE_TO_CONSOLE=1", "VTRACE_DETAIL=2"}
             flags           {"Symbols"}
-            linkoptions     {"/nodefaultlib:libcmt"}
+            linkoptions     {"/nodefaultlib:libcmt",}
 
         configuration {"Release"}
             defines         ("NDEBUG")
-            flags           {"Optimize", "Symbols"}
+            flags           {"Optimize", "Symbols", "NoMinimalRebuild", "NoIncrementalLink", "NoEditAndContinue"}
             linkoptions     {"/release"}
             buildoptions    {"/Oi", "/Ot"}
 
@@ -475,7 +475,7 @@ solution (iif(release, slnname, "windirstat"))
             location        ("sandbox/luaconf")
             targetname      ("luaconf")
             flags           {"StaticRuntime", "Unicode", "MFC", "NativeWChar", "ExtraWarnings", "NoRTTI", "WinMain", "NoMinimalRebuild", "NoIncrementalLink", "NoEditAndContinue"}
-            targetdir       (iif(release, slnname, "build"))
+            targetdir       (iif(release, slnname, iif(action == "vs2005", "build", "build." .. action)))
             includedirs     {"windirstat", "common", "3rdparty/lua/src", "sandbox/luaconf"}
             objdir          (int_dir)
             libdirs         {"$(IntDir)"}
@@ -562,7 +562,7 @@ solution (iif(release, slnname, "windirstat"))
                     location        (nmdir)
                     flags           {"NoImportLib", "Unicode", "NoManifest", "NoExceptions", "NoPCH", "NoIncrementalLink"}
                     objdir          (int_dir)
-                    targetdir       (iif(release, slnname, "build"))
+                    targetdir       (iif(release, slnname, iif(action == "vs2005", "build", "build." .. action)))
                     targetname      ("wdsr" .. nmpfx)
                     targetextension (".wdslng")
                     resdefines      {"WDS_RESLANG=0x" .. nmpfx, "MODNAME=wdsr" .. nmpfx}
