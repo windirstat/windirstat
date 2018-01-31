@@ -98,4 +98,4 @@ in time.
 
 * You may write us on the following page in either English, German or Russian: [contact](https://windirstat.net/contact.html)
 * Ihr könnt uns auf der folgenden Webseite entweder auf Deutsch, Englisch oder Russisch schreiben: [Kontakt](https://windirstat.net/contact.html)
-* Пишите нам на этом вебсайте на русском, на англиском или на немецком: [контакт](https://windirstat.net/contact.html) - **Указание:** давно в школе я учился русский язык. Но как писал это уже давно, поэтому может быть чтобы не все понимаю и наверно тоже не пишу бес ошыбок. Посмотрим.
+* Вы можете связаться с нами на русском, английском или немецком на странице [связаться](https://windirstat.net/contact.html) - **Примечание:** я учил русский язык в школе, но давно не использовал его и, наверное, уже не все понимаю и пишу тоже не без ошибок… Посмотрим…
