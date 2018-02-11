@@ -66,18 +66,14 @@ inline bool IsLeaf(ITEMTYPE t) { return ((t == IT_FILE) | (t == IT_FREESPACE) | 
 // Compare FILETIMEs
 inline bool operator< (const FILETIME& t1, const FILETIME& t2)
 {
-    // FIXME: it is *not* appropriate to cast like this due to alignment issues
-    //        see <http://blogs.msdn.com/b/oldnewthing/archive/2004/08/25/220195.aspx>
-    ULONGLONG& u1 = (ULONGLONG&)t1;
-    ULONGLONG& u2 = (ULONGLONG&)t2;
-
-    return (u1 < u2);
+    return (t1.dwHighDateTime < t2.dwHighDateTime)
+        || (t1.dwHighDateTime == t2.dwHighDateTime) && (t1.dwLowDateTime < t2.dwLowDateTime);
 }
 
 // Compare FILETIMEs
-inline bool operator == (const FILETIME& t1, const FILETIME& t2)
+inline bool operator== (const FILETIME& t1, const FILETIME& t2)
 {
-    return t1.dwLowDateTime == t2.dwLowDateTime && t1.dwHighDateTime == t2.dwHighDateTime;
+    return (t1.dwLowDateTime == t2.dwLowDateTime) && (t1.dwHighDateTime == t2.dwHighDateTime);
 }
 
 //
