@@ -302,32 +302,6 @@ do
             end
         end
     end
-    -- Make sure to intercept the VCManifestTool element generation, we need to add to it.
-    -- 
-    local function nval(val)
-        return iif(val, val, "<null>")
-    end
-    local VCManifestTool_handler = premake.vstudio.vc200x.toolmap["VCManifestTool"]
-    premake.vstudio.vc200x.toolmap["VCManifestTool"] = function(cfg)
-        local old_captured = io.captured -- save io.captured state
-        io.capture() -- empties io.captured
-        VCManifestTool_handler(cfg)
-        local captured = io.endcapture()
-        if captured:find("res/windirstat\.manifest") and cfg.name and cfg.platform then
-            local identity_fmt = "%s, processorArchitecture=%s, version=%s, type=win32"
-            local arch = iif(cfg.platform == "x32", "x86", iif(cfg.platform == "x64", "amd64", "*"))
-            if _OPTIONS["release"] and (cfg.name == "Release") then
-                identity_fmt = identity_fmt .. string.format(", publicKeyToken=%s", publicKeyToken)
-            end
-            local identity = string.format(identity_fmt, assemblyName, arch, programVersion)
-            captured = captured:gsub("(%\t+)AdditionalManifestFiles=\"[^\"]+\"", "%0" .. io.eol .. "%1AssemblyIdentity=\"" .. premake.esc(identity) .. "\"")
-        end
-        if old_captured ~= nil then
-            io.captured = old_captured .. captured -- restore outer captured state, if any
-        else
-            io.write(captured)
-        end
-    end
 end
 local function transformMN(input) -- transform the macro names for older Visual Studio versions
     local new_map   = { vs2002 = 0, vs2003 = 0, vs2005 = 0, vs2008 = 0 }

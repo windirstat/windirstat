@@ -28,3 +28,4 @@ build/**
 **.VC.opendb
 *.aps
 windirstat/res/*/wds_release_wdsr*.vs8.vcproj
+build.vs*/**
