@@ -1,12 +1,22 @@
-if not WINDOWS then quit('This is only windwos module!') end
+if not WINDOWS then quit('This is only windows module!') end
+
+PROJECT = 'winreg'
 
 if LUA_VER == '5.2' then
   LUA_NEED = 'lua52'
   LUA_DIR  = ENV.LUA_DIR_5_2 or ENV.LUA_DIR
+  LUA_RUNNER = 'lua52'
 else
-  LUA_NEED = 'lua'
+  LUA_NEED = 'lua51'
   LUA_DIR  = ENV.LUA_DIR
+  LUA_RUNNER = 'lua'
 end
+
+ROOT    = ROOT or J(LUA_DIR, 'libs', PROJECT)
+LUADIR  = LUADIR or J(ROOT, 'share')
+LIBDIR  = LIBDIR or J(ROOT, 'share')
+DYNAMIC = as_bool(DYNAMIC, false)
+WINVER  = IF(WINDOWS, WINVER or '501', '')
 
 lake.define_need('unicode',function()return{
   defines = {"UNICODE"; "_UNICODE"};
@@ -33,45 +43,28 @@ winreg = c.shared{'winreg',
       IF(DEBUG, {'-Z7' , '-Od', --[['-MLd']]}, {'-O2', --[['-ML']]}),
       '-Os -DNDEBUG -s'
     );
-  libflags = IF(MSVC,IF(DEBUG, '-debug:full -debugtype:cv', '-DEBUG -OPT:REF -OPT:ICF'));
+  libflags = IF(MSVC and DEBUG, '-debug:full -debugtype:cv', '-DEBUG -OPT:REF -OPT:ICF');
   needs = {LUA_NEED,IF(UNICODE, 'unicode')};
   libs  = {"advapi32", "kernel32", "user32"};
   optimize = false;
+  dynamic  = DYNAMIC;
 }
 
 target('build',{winreg})
 
 install = target('install', {
-  file.group{odir=J(INSTALL_DIR, 'test'); 
-    src = J('test','*.*');recurse=true;
-  };
-  file.group{odir=J(INSTALL_DIR, 'doc'); 
-    src = J('doc','*.*');recurse=true;
-  };
-  file.group{odir=J(INSTALL_DIR, 'examples'); 
-    src = J('examples','*.*');recurse=true;
-  };
-  target(J(INSTALL_DIR, 'bin', winreg.name .. DLL_EXT),   winreg,   CP );
+  file.group{odir=J(ROOT, 'test');     src = J('test','*.*');    recurse=true };
+  file.group{odir=J(ROOT, 'doc');      src = J('doc','*.*');     recurse=true };
+  file.group{odir=J(ROOT, 'examples'); src = J('examples','*.*');recurse=true };
+  file.group{odir = LIBDIR; src = winreg};
 })
 
 target('test', install, function()
-  if TESTING then 
-    lake.chdir('test')
-    for file in path.mask('*.lua') do
-      print("run " .. file)
-    end
-    lake.chdir('<')
+  lake.chdir('test')
+  for file in path.mask('*.lua') do
+    run_test(file)
   end
-  if not TESTING then 
-    lake.chdir(J(INSTALL_DIR,'test'))
-    for file in path.mask('*.lua') do
-      print("run " .. file)
-      if not utils.execute( LUA_EXE .. ' ' .. file ) then
-        quit("FAIL!")
-      end
-    end
-    lake.chdir('<')
-  end
+  lake.chdir('<')
 end)
 
 default('build')

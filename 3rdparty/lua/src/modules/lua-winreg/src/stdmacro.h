@@ -51,9 +51,7 @@
 // is between
 #define AMID(c,x,y)		(((x)<=(c))&&((c)<=(y)))
 // avoid comp err
-#ifndef UNUSED
-#   define UNUSED(x) (void)(x)
-#endif // UNUSED
+#define UNUSED(x) (void)(x)
 // Ternary ops
 #define IIF(b,t,f)		((b)?(t):(f))
 // swap 2 numbers

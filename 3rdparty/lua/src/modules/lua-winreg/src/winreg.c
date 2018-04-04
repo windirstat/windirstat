@@ -3,9 +3,7 @@
 #endif
 
 #include <assert.h>
-#ifndef lua_assert
-#   define lua_assert assert
-#endif // lua_assert
+#define lua_assert assert
 
 #include <lua.h>
 #include <lualib.h>
@@ -40,19 +38,14 @@
 #endif
 
 
-#ifdef LUA_REG_AS_DLL
 BOOL APIENTRY DllMain(HANDLE hModule, DWORD  ul_reason_for_call,  LPVOID lpReserved){
 	UNUSED(hModule);
 	UNUSED(lpReserved);
 	UNUSED(ul_reason_for_call);
-	return TRUE;
+    return TRUE;
 }
 
-__declspec(dllexport)
-#else
-LUA_API
-#endif // LUA_REG_AS_DLL
-int luaopen_winreg(lua_State *L){
+__declspec(dllexport) int luaopen_winreg(lua_State *L){
 	luaL_register(L, "winreg", lreg_reglib);
 	return 1;
 }
@@ -104,8 +97,20 @@ REGSAM reg_aux_getaccess(lua_State *L, int i){
 			case 'w': acc |= KEY_WRITE; break;
 			case 'r': acc |= KEY_READ ; break;
 			case 'a': acc |= KEY_ALL_ACCESS ; break;
-			case 'X': acc |= KEY_WOW64_64KEY ; break;
-			case 'x': acc |= KEY_WOW64_32KEY ; break;
+#ifdef KEY_WOW64_64KEY
+			case '6': if(*++psz == '4') {
+				// Access a 64-bit key from either a 32-bit or 64-bit application
+				acc |= KEY_WOW64_64KEY;
+				break;
+			}
+#endif
+#ifdef KEY_WOW64_32KEY
+			case '3': if(*++psz == '2') {
+				// Access a 64-bit key from either a 32-bit or 64-bit application
+				acc |= KEY_WOW64_32KEY;
+				break;
+			}
+#endif
 			default : lua_error_invalid_option(L, i);
 			}
 		}
@@ -146,7 +151,7 @@ HKEY reg_aux_strtohkey(lua_State *L, const char * psz){
 		WIN_TRACEA("DIGIT ROOTKEY %s", psz);
 		return (HKEY)(size_t)x;	        
 	}else{
-		for(pph = ph; pph->name && _stricmp(psz, pph->name); pph++);
+		for(pph = ph; pph->name && stricmp(psz, pph->name); pph++);
 		if(!pph->data)luaL_error(L, "invalid prefix key '%s'", psz);
 		return (HKEY)pph->data;
 	}
@@ -194,7 +199,7 @@ int reglib_openkey(lua_State *L){//reglib.openkey
 		const TCHAR * pszMachine;
 		const char * pszRootKey;
 		// \\computer_name\hkxx
-		while(szPath[0] && ISSLASH(szPath[0]) )szPath++;// skip the beginning slashes
+		while(szPath[0] && ISSLASH(szPath[0]) )szPath++;// skip the begining slashes
 		reg_aux_splitkey(L, szPath);
 		pszMachine = lua_totstring(L,-1);
 		pszRootKey = lua_tostring(L,-2);
@@ -289,7 +294,7 @@ BOOL reg_aux_setvalue(lua_State *L, HKEY hKey, const TCHAR * pszVal, int type, i
 		luaL_buffinit(L, &B);
 		if(lua_istable(L, i)){
 			int n;
-			int last = (int)lua_objlen(L, i);
+			int last = lua_objlen(L, i);
 			for (n = 1; n <= last; n++) {
 				lua_rawgeti(L, i, n);
 				luaL_addstring(&B, lua_checkstring(L, -1));
@@ -337,10 +342,7 @@ void reg_aux_pusheregstrdata(lua_State *L, PVOID pdata, size_t cdata, DWORD dwTy
 			}else{
 				n = (DWORD64)(*((PDWORD32)pdata));
 			}
-			if(0 == _ui64toa_s(n, buf, _countof(buf) - 1, 10))
-				lua_pushstring(L, buf);
-			else
-				LUA_CHECK_DLL_ERROR(L, ERROR_INVALID_DATA);
+			lua_pushstring(L, _ui64toa(n, buf, 10));
 		}
 		break; case REG_MULTI_SZ:
 		{
@@ -370,7 +372,7 @@ void reg_aux_pusheregluadata(lua_State *L, PVOID pdata, size_t cdata, DWORD dwTy
 		case REG_DWORD: case REG_DWORD_BIG_ENDIAN:
 			lua_pushnumber(L, *((PDWORD32)pdata));
 		break; case REG_QWORD:
-			lua_pushUINT64(L, *((PDWORD64)pdata), "reg_aux_pusheregluadata(REG_QWORD)", __FILE__, __LINE__); 
+			lua_pushUINT64(L, *((PDWORD64)pdata)); 
 		break; case REG_MULTI_SZ:
 		{
 			int c = 1;
@@ -390,7 +392,7 @@ void reg_aux_pusheregluadata(lua_State *L, PVOID pdata, size_t cdata, DWORD dwTy
 }
 typedef struct _REG_ENUM_TAG {    // rc  
 	HKEY hKey; 
-	DWORD dwIndex;
+    DWORD dwIndex;
 	PTSTR buffer;
 	DWORD bchlen;
 } REG_ENUM_TAG;
@@ -459,13 +461,7 @@ int reg_createkey(lua_State *L){//regobj.createkey
 }
 //docok
 int reg_deletekey(lua_State *L){//regobj.deletekey
-	LONG ret;
-    // the key name is optional
-	if(reg_aux_gethkey(L,1) && lua_isnoneornil(L, 2))
-	{
-		lua_pushtstring(L, TEXT(""));
-	}
-	ret = win_reg_deltree(reg_aux_gethkey(L,1), lua_checktstring(L, 2)); 
+	LONG ret = win_reg_deltree(reg_aux_gethkey(L,1), lua_checktstring(L, 2)); 
 	LUA_CHECK_DLL_ERROR(L, ret);
 	LUA_CHECK_RETURN_OBJECT(L, ret == ERROR_SUCCESS);
 }
@@ -576,7 +572,6 @@ int reg_getvalue(lua_State *L){//regobj.getvalue
 	}
 	return 2;
 }
-#ifndef LUA_REG_NO_HIVEOPS
 //docok
 int reg_loadkey(lua_State *L){//regobj.load
 	LONG ret;
@@ -585,14 +580,12 @@ int reg_loadkey(lua_State *L){//regobj.load
 	LUA_CHECK_DLL_ERROR(L, ret);
 	LUA_CHECK_RETURN_OBJECT(L, ret == ERROR_SUCCESS);
 }
-#endif // LUA_REG_NO_HIVEOPS
 //docok
 int reg_openkey(lua_State *L){//regobj.openkey
 	reg_aux_newkey(L, reg_aux_gethkey(L, 1),
 		lua_checktstring(L, 2), NULL, reg_aux_getaccess(L, 3), FALSE);
 	return 1;
 }
-#ifndef LUA_REG_NO_HIVEOPS
 //docok
 int reg_replacekey(lua_State *L){//regobj.replace
 	LONG ret;
@@ -623,14 +616,12 @@ int reg_savekey(lua_State *L){//regobj.save
 	LUA_CHECK_DLL_ERROR(L, ret);
 	LUA_CHECK_RETURN_OBJECT(L, ret == ERROR_SUCCESS);
 }
-#endif // LUA_REG_NO_HIVEOPS
 //docok
 int reg_setvalue(lua_State *L){//regobj.setvalue
 	LUA_CHECK_RETURN_OBJECT(L, 
 		reg_aux_setvalue(L, reg_aux_gethkey(L, 1), lua_opttstring(L, 2, NULL), reg_aux_getdatatype(L, 4), 3)
 		);
 }
-#ifndef LUA_REG_NO_HIVEOPS
 //docok
 int reg_unloadkey(lua_State *L){//regobj.unload
 	LONG ret;
@@ -639,7 +630,6 @@ int reg_unloadkey(lua_State *L){//regobj.unload
 	LUA_CHECK_DLL_ERROR(L, ret);
 	LUA_CHECK_RETURN_OBJECT(L, ret == ERROR_SUCCESS);
 }
-#endif // LUA_REG_NO_HIVEOPS
 
 int reg_handle(lua_State *L){//regobj.handle
 	HKEY hKey = reg_aux_gethkey(L, 1);

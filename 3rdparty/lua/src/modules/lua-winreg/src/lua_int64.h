@@ -21,19 +21,10 @@ int atoINT64(const char* s, INT64 *pv);
 	#define CONST_9007199254740992 9007199254740992
 #endif
 
-#ifdef _DEBUG
-#define lua_dllerrorX(L,code,expr,fname,lineno) lua_dllerror(L,code,expr,fname,lineno)
-#else
-#define lua_dllerrorX(L,code,expr,fname,lineno) lua_dllerror(L,code)
-#endif // _DEBUG
-
-#define lua_pushUINT64(L,n,expr,fname,lineno)	\
+#define lua_pushUINT64(L,n)	\
 	if( n > CONST_9007199254740992 ){ \
 		char buf[24]; \
-		if(0 == _ui64toa_s(n, buf, _countof(buf) - 1, 10)) \
-			lua_pushstring(L, buf); \
-		else \
-			lua_dllerrorX(L, ERROR_INVALID_DATA, expr, fname, lineno); \
+		lua_pushstring(L, _ui64toa(n, buf, 10)); \
 	}else{ \
 		lua_pushnumber(L, (lua_Number)(__int64)n); \
 	}
@@ -41,7 +32,7 @@ int atoINT64(const char* s, INT64 *pv);
 #define lua_pushINT64(L,n)	\
 	if(n > 9007199254740992 || n < -9007199254740992){ \
 		char buf[24]; \
-		lua_pushstring(L, _i64toa_s(n, buf, 10)); \
+		lua_pushstring(L, _i64toa(n, buf, 10)); \
 	}else{ \
 		lua_pushnumber(L, (lua_Number)n); \
 	}

@@ -15,15 +15,11 @@ int reg_enumvalue(lua_State *L);
 int reg_flushkey(lua_State *L);
 int reg_getinfo(lua_State *L);
 int reg_getvalue(lua_State *L);
-#ifndef LUA_REG_NO_HIVEOPS
 int reg_loadkey(lua_State *L);
-#endif // LUA_REG_NO_HIVEOPS
 int reg_openkey(lua_State *L);
-#ifndef LUA_REG_NO_HIVEOPS
 int reg_replacekey(lua_State *L);
 int reg_restorekey(lua_State *L);
 int reg_savekey(lua_State *L);
-#endif // LUA_REG_NO_HIVEOPS
 int reg_setvalue(lua_State *L);
 int reg_unloadkey(lua_State *L);
 int reg_handle(lua_State *L);
@@ -45,19 +41,13 @@ luaL_Reg lreg_regobj[] = {
 {"flushkey",reg_flushkey},
 {"getinfo",reg_getinfo},
 {"getvalue",reg_getvalue},
-#ifndef LUA_REG_NO_HIVEOPS
 {"load",reg_loadkey},
-#endif // LUA_REG_NO_HIVEOPS
 {"openkey",reg_openkey},
-#ifndef LUA_REG_NO_HIVEOPS
 {"replace",reg_replacekey},
 {"restore",reg_restorekey},
 {"save",reg_savekey},
-#endif // LUA_REG_NO_HIVEOPS
 {"setvalue",reg_setvalue},
-#ifndef LUA_REG_NO_HIVEOPS
 {"unload",reg_unloadkey},
-#endif // LUA_REG_NO_HIVEOPS
 {"handle",reg_handle},
 {"detach",reg_detach},
 {"getstrval",reg_getstrval},
