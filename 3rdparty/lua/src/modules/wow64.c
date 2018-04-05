@@ -22,13 +22,17 @@ static int luaC_iswow64_(lua_State* L)
     {
         typedef BOOL (WINAPI *TFNIsWow64Process) (HANDLE, PBOOL);
         static int cachedResult = 0;
-        TFNIsWow64Process pfnIsWow64Process = (TFNIsWow64Process)GetProcAddress(GetModuleHandle(TEXT("kernel32.dll")), "IsWow64Process");
-        if(pfnIsWow64Process)
+        HMODULE hKernel32 = GetModuleHandle(TEXT("kernel32.dll"));
+        if(hKernel32)
         {
-            BOOL bIsWow64 = FALSE;
-            // Ignore result, instead presume it's not WOW64
-            (void)pfnIsWow64Process(GetCurrentProcess(), &bIsWow64);
-            cachedResult = (bIsWow64) ? 1 : 0;
+            TFNIsWow64Process pfnIsWow64Process = (TFNIsWow64Process)GetProcAddress(hKernel32, "IsWow64Process");
+            if(pfnIsWow64Process)
+            {
+                BOOL bIsWow64 = FALSE;
+                // Ignore result, instead presume it's not WOW64
+                (void)pfnIsWow64Process(GetCurrentProcess(), &bIsWow64);
+                cachedResult = (bIsWow64) ? 1 : 0;
+            }
         }
         pcachedResult = &cachedResult;
     }

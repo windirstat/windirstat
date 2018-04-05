@@ -36,9 +36,7 @@
 #include "lua-winreg/src/lua_int64.c"
 #include "lua-winreg/src/lua_mtutil.c"
 #include "lua-winreg/src/lua_tstring.c"
-#ifndef LUA_REG_NO_HIVEOPS
-#   include "lua-winreg/src/win_privileges.c"
-#endif // LUA_REG_NO_HIVEOPS
+#include "lua-winreg/src/win_privileges.c"
 #include "lua-winreg/src/win_registry.c"
 #include "lua-winreg/src/win_trace.c"
 #include "lua-winreg/src/winreg.c"
