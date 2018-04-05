@@ -11,12 +11,12 @@
     ]
   gpg_keys = [
       {
-        id = '0x6190BC32'
+        id = '0x9E9BCC536190BC32'
 		name = 'Oliver'
 		fingerprint = '58F4 12A6 E0E8 9A7C A849 F0E2 9E9B CC53 6190 BC32'
       }
 	  {
-        id = '0x9D168DA9'
+        id = '0x9312A6429D168DA9'
 		name = 'Bernhard'
 		fingerprint = '5BE7 AB89 A4EF 0A78 7047 CAF2 9312 A642 9D16 8DA9'
       }
@@ -35,6 +35,6 @@
   wds_blog      = 'blog.windirstat.net'
   dlbase_M1     = 'https://windirstat.mirror.wearetriple.com/'
   gpg_search_fmt= 'http://pgp.mit.edu:11371/pks/lookup?search=%s&amp;op=index'
-  tracker_url   = 'https://bitbucket.org/windirstat/windirstat/issues'
+  tracker_url   = 'https://bitbucket.org/windirstat/windirstat/issues/new'
   long_desc     = 'Windows Directory Statistics cleanup tool'
 %]
