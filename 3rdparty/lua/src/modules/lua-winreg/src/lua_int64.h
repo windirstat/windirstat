@@ -24,7 +24,11 @@ int atoINT64(const char* s, INT64 *pv);
 #define lua_pushUINT64(L,n)	\
 	if( n > CONST_9007199254740992 ){ \
 		char buf[24]; \
-		lua_pushstring(L, _ui64toa(n, buf, 10)); \
+		if(_ui64toa_s(n, buf, _countof(buf), 10)){ \
+			lua_pushnil(L);return; \
+		}else{ \
+		lua_pushstring(L, buf); \
+		} \
 	}else{ \
 		lua_pushnumber(L, (lua_Number)(__int64)n); \
 	}

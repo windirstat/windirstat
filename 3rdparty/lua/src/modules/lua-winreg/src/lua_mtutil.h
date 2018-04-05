@@ -7,7 +7,7 @@ extern "C" {
 #include <lualib.h>
 #include <lauxlib.h>
 
-int lua_opentablemt(lua_State *L, const char * libname, const luaL_Reg * reg);
+int lua_opentablemt(lua_State *L, const char * libname, const luaL_Reg * reg, int upval);
 void * lua_newuserdatamt(lua_State *L, size_t cdata, const char * mtname, const luaL_Reg * mtreg);
 void * lua_newuserdatamtuv(lua_State *L, size_t cdata, const char * mtname, const luaL_Reg * mtreg, int upval);
 #ifdef  __cplusplus
