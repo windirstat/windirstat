@@ -1,10 +1,6 @@
 #define __LUA_WINREG_C__
 #include "winreg.h"
 
-#ifdef LUA_REG_NO_HIVEOPS
-#   define __WIN_PRIVILEGES_H__
-#endif // LUA_REG_NO_HIVEOPS
-
 #ifdef LUA_REG_NO_WINTRACE
 #   define __WINTRACE_H__
 #   ifndef NOP_FUNCTION
