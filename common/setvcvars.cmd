@@ -93,16 +93,43 @@ setlocal ENABLEEXTENSIONS & set VCVER=%~1
 if defined VCVARS_PATH @( endlocal & goto :EOF )
 :: Now let's distinguish the "nice" version numbers (2002, ... 2017) from the internal ones
 set VCVER=%VCVER:vs=%
-set NICEVER=%VCVER%
-set NUMVER=%VCVER:.0=%
-echo %NUMVER%
 :: Not a "real" version number, but the marketing one (2002, ... 2017)?
-if "%VCVER%" geq "%MIN_NICE%" call :NICE_%VCVER% > NUL 2>&1
+if %VCVER% GEQ %MIN_NICE% call :NICE_%VCVER% > NUL 2>&1
+set NUMVER=%VCVER:.0=%
 :: Figure out the set of supported toolsets
 set VCVERLBL=%VCVER:.=_%
+call :PRETTY_%VCVERLBL% > NUL 2>&1
 call :TSET_%VCVERLBL% > NUL 2>&1
+if not defined NICEVER @( echo ERROR: This script does not know the given version Visual C++ version&endlocal&set SETVCV_ERROR=1&goto :EOF )
 :: Jump over those "subs"
 goto :NICE_SET
+:PRETTY_15_0
+    set NICEVER=2017
+    goto :EOF
+:PRETTY_14_0
+    set NICEVER=2015
+    goto :EOF
+:PRETTY_12_0
+    set NICEVER=2013
+    goto :EOF
+:PRETTY_11_0
+    set NICEVER=2012
+    goto :EOF
+:PRETTY_10_0
+    set NICEVER=2010
+    goto :EOF
+:PRETTY_9_0
+    set NICEVER=2008
+    goto :EOF
+:PRETTY_8_0
+    set NICEVER=2005
+    goto :EOF
+:PRETTY_7_1
+    set NICEVER=2003
+    goto :EOF
+:PRETTY_7_0
+    set NICEVER=2002
+    goto :EOF
 :NICE_2017
     set VCVER=15.0
     set NEWVS=1
@@ -145,10 +172,10 @@ goto :NICE_SET
     set SUPPORTED_TSET=x86 ia64 amd64 x86_amd64 x86_ia64
     goto :EOF
 :NICE_SET
-echo Trying to locate Visual C++ %VCVER% ^(%VCTGT_TOOLSET%^)
+echo Trying to locate Visual C++ %NICEVER% ^(= %VCVER%, %VCTGT_TOOLSET%^)
 :: Is it a version below 15? Then we use the old registry keys
-if "%NUMVER%" lss "15" goto :OLDVS
-echo Modern (^>=2017) Visual Studio
+if %NUMVER% LSS 15 goto :OLDVS
+:: echo Modern (^>=2017) Visual Studio
 :: This is where we intend to find the installation path in the registry
 set _VSINSTALLKEY=HKLM\SOFTWARE\Microsoft\VisualStudio\SxS\VS7
 if not defined _VCINSTALLDIR @(
@@ -165,7 +192,7 @@ if not defined _VCINSTALLDIR @(
 )
 goto :DETECTION_FINISHED
 :OLDVS
-echo Old (^<2017) Visual Studio
+:: echo Old (^<2017) Visual Studio
 :: The versions of Visual Studio prior to 2017 were all using this key
 set _VSINSTALLKEY=HKLM\SOFTWARE\Microsoft\VisualStudio\%VCVER%\Setup\VC
 if not defined _VCINSTALLDIR @(
@@ -200,10 +227,10 @@ if not "%VCTGT_TOOLSET%" == "" @(
     if "%VCTGT_TOOLSET%" == "%%i" call :SetVar TEMP_SUPPORTED yes
   )
 )
-if not "%TEMP_SUPPORTED%" == "yes" @( echo ERROR: Invalid toolset %TEMP_TOOLSET% for version %VCVER% of Visual C++&endlocal&set SETVCV_ERROR=1&goto :EOF )
+if not "%TEMP_SUPPORTED%" == "yes" @( echo ERROR: Invalid toolset %TEMP_TOOLSET% for version %VCVER% of Visual C++&endlocal&set SETVCV_ERROR=2&goto :EOF )
 set VCTGT_TOOLSET=%TEMP_TOOLSET%
 :: Return, in case nothing was found
-if not defined VCVARS_PATH @( endlocal&set SETVCV_ERROR=1&goto :EOF )
+if not defined VCVARS_PATH @( endlocal&set SETVCV_ERROR=3&goto :EOF )
 :: Replace the . in the version by an underscore
 set VCVERLBL=%VCVER:.=_%
 :: Try to set a friendlier name for the Visual Studio version
@@ -211,31 +238,31 @@ call :FRIENDLY_%VCVERLBL% > NUL 2>&1
 :: Jump over those "subs"
 goto :FRIENDLY_SET
 :FRIENDLY_15_0
-    set _VCVER=2017 ^[%TEMP_TOOLSET%^]
+    set _VCVER=%NICEVER% ^[%TEMP_TOOLSET%^]
     goto :EOF
 :FRIENDLY_14_0
-    set _VCVER=2015 ^[%TEMP_TOOLSET%^]
+    set _VCVER=%NICEVER% ^[%TEMP_TOOLSET%^]
     goto :EOF
 :FRIENDLY_12_0
-    set _VCVER=2013 ^[%TEMP_TOOLSET%^]
+    set _VCVER=%NICEVER% ^[%TEMP_TOOLSET%^]
     goto :EOF
 :FRIENDLY_11_0
-    set _VCVER=2012 ^[%TEMP_TOOLSET%^]
+    set _VCVER=%NICEVER% ^[%TEMP_TOOLSET%^]
     goto :EOF
 :FRIENDLY_10_0
-    set _VCVER=2010 ^[%TEMP_TOOLSET%^]
+    set _VCVER=%NICEVER% ^[%TEMP_TOOLSET%^]
     goto :EOF
 :FRIENDLY_9_0
-    set _VCVER=2008 ^[%TEMP_TOOLSET%^]
+    set _VCVER=%NICEVER% ^[%TEMP_TOOLSET%^]
     goto :EOF
 :FRIENDLY_8_0
-    set _VCVER=2005 ^[%TEMP_TOOLSET%^]
+    set _VCVER=%NICEVER% ^[%TEMP_TOOLSET%^]
     goto :EOF
 :FRIENDLY_7_1
-    set _VCVER=.NET 2003 ^[%TEMP_TOOLSET%^]
+    set _VCVER=.NET %NICEVER% ^[%TEMP_TOOLSET%^]
     goto :EOF
 :FRIENDLY_7_0
-    set _VCVER=.NET 2002 ^[%TEMP_TOOLSET%^]
+    set _VCVER=.NET %NICEVER% ^[%TEMP_TOOLSET%^]
     goto :EOF
 :FRIENDLY_SET
 if not defined _VCVER call :SetVar _VCVER "%VCVER%"

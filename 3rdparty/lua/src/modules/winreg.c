@@ -1,4 +1,6 @@
 #define __LUA_WINREG_C__
+#define LUA_REG_DEFINE_EXTERNS
+#include "lua-winreg/src/luareg.h"
 #include "winreg.h"
 
 #ifdef LUA_REG_NO_WINTRACE

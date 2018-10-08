@@ -51,7 +51,7 @@ void CMyImageList::initialize()
         s.ReleaseBuffer();
         VTRACE(_T("GetSystemDirectory() -> %s"), s.GetString());
 
-        SHFILEINFO sfi;
+        SHFILEINFO sfi = {0};
         HIMAGELIST hil = (HIMAGELIST)::SHGetFileInfo(s, 0, &sfi, sizeof(sfi), WDS_SHGFI_DEFAULTS);
 
         this->Attach(ImageList_Duplicate(hil));
@@ -110,7 +110,7 @@ int CMyImageList::cacheIcon(LPCTSTR path, UINT flags, CString *psTypeName)
         flags |= SHGFI_TYPENAME;
     }
 
-    SHFILEINFO sfi;
+    SHFILEINFO sfi = {0};
     HIMAGELIST hil = (HIMAGELIST)::SHGetFileInfo(path, 0, &sfi, sizeof(sfi), flags);
     if(hil == NULL)
     {

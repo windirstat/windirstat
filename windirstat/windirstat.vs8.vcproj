@@ -46,7 +46,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="..;.;..\common;Controls;Dialogs;..\3rdparty\lua\src"
-				PreprocessorDefinitions="_DEBUG;VTRACE_TO_CONSOLE=1;VTRACE_DETAIL=2;WINVER=0x0501;HAVE_WIN7_SDK=1"
+				PreprocessorDefinitions="_DEBUG;VTRACE_TO_CONSOLE=1;VTRACE_DETAIL=2;WINVER=0x0501;LUA_REG_NO_WINTRACE;LUA_REG_NO_HIVEOPS;LUA_REG_NO_DLL;HAVE_WIN7_SDK=1"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -65,7 +65,7 @@
 			<Tool
 				Name="VCResourceCompilerTool"
 				AdditionalOptions="/nologo /l409"
-				PreprocessorDefinitions="_DEBUG;VTRACE_TO_CONSOLE=1;VTRACE_DETAIL=2;WINVER=0x0501;HAVE_WIN7_SDK=1;MODNAME=wds32D"
+				PreprocessorDefinitions="_DEBUG;VTRACE_TO_CONSOLE=1;VTRACE_DETAIL=2;WINVER=0x0501;LUA_REG_NO_WINTRACE;LUA_REG_NO_HIVEOPS;LUA_REG_NO_DLL;HAVE_WIN7_SDK=1;MODNAME=wds32D"
 				AdditionalIncludeDirectories="..;.;..\common;Controls;Dialogs;..\3rdparty\lua\src;..;$(IntDir)"
 			/>
 			<Tool
@@ -89,7 +89,6 @@
 			<Tool
 				Name="VCManifestTool"
 				AdditionalManifestFiles="res/windirstat.manifest"
-				AssemblyIdentity="WinDirStat_Team.WinDirStat.windirstat, processorArchitecture=x86, version=1.3, type=win32"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -139,7 +138,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="..;.;..\common;Controls;Dialogs;..\3rdparty\lua\src"
-				PreprocessorDefinitions="_DEBUG;VTRACE_TO_CONSOLE=1;VTRACE_DETAIL=2;WINVER=0x0501;HAVE_WIN7_SDK=1"
+				PreprocessorDefinitions="_DEBUG;VTRACE_TO_CONSOLE=1;VTRACE_DETAIL=2;WINVER=0x0501;LUA_REG_NO_WINTRACE;LUA_REG_NO_HIVEOPS;LUA_REG_NO_DLL;HAVE_WIN7_SDK=1"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -158,7 +157,7 @@
 			<Tool
 				Name="VCResourceCompilerTool"
 				AdditionalOptions="/nologo /l409"
-				PreprocessorDefinitions="_DEBUG;VTRACE_TO_CONSOLE=1;VTRACE_DETAIL=2;WINVER=0x0501;HAVE_WIN7_SDK=1;MODNAME=wds64D"
+				PreprocessorDefinitions="_DEBUG;VTRACE_TO_CONSOLE=1;VTRACE_DETAIL=2;WINVER=0x0501;LUA_REG_NO_WINTRACE;LUA_REG_NO_HIVEOPS;LUA_REG_NO_DLL;HAVE_WIN7_SDK=1;MODNAME=wds64D"
 				AdditionalIncludeDirectories="..;.;..\common;Controls;Dialogs;..\3rdparty\lua\src;..;$(IntDir)"
 			/>
 			<Tool
@@ -182,7 +181,6 @@
 			<Tool
 				Name="VCManifestTool"
 				AdditionalManifestFiles="res/windirstat.manifest"
-				AssemblyIdentity="WinDirStat_Team.WinDirStat.windirstat, processorArchitecture=amd64, version=1.3, type=win32"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -232,7 +230,7 @@
 				AdditionalOptions="/Oi /Ot"
 				Optimization="3"
 				AdditionalIncludeDirectories="..;.;..\common;Controls;Dialogs;..\3rdparty\lua\src"
-				PreprocessorDefinitions="NDEBUG;WINVER=0x0501;HAVE_WIN7_SDK=1"
+				PreprocessorDefinitions="NDEBUG;WINVER=0x0501;LUA_REG_NO_WINTRACE;LUA_REG_NO_HIVEOPS;LUA_REG_NO_DLL;HAVE_WIN7_SDK=1"
 				StringPooling="true"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
@@ -250,7 +248,7 @@
 			<Tool
 				Name="VCResourceCompilerTool"
 				AdditionalOptions="/nologo /l409"
-				PreprocessorDefinitions="NDEBUG;WINVER=0x0501;HAVE_WIN7_SDK=1;MODNAME=wds32"
+				PreprocessorDefinitions="NDEBUG;WINVER=0x0501;LUA_REG_NO_WINTRACE;LUA_REG_NO_HIVEOPS;LUA_REG_NO_DLL;HAVE_WIN7_SDK=1;MODNAME=wds32"
 				AdditionalIncludeDirectories="..;.;..\common;Controls;Dialogs;..\3rdparty\lua\src;..;$(IntDir)"
 			/>
 			<Tool
@@ -276,7 +274,6 @@
 			<Tool
 				Name="VCManifestTool"
 				AdditionalManifestFiles="res/windirstat.manifest"
-				AssemblyIdentity="WinDirStat_Team.WinDirStat.windirstat, processorArchitecture=x86, version=1.3, type=win32"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -327,7 +324,7 @@
 				AdditionalOptions="/Oi /Ot"
 				Optimization="3"
 				AdditionalIncludeDirectories="..;.;..\common;Controls;Dialogs;..\3rdparty\lua\src"
-				PreprocessorDefinitions="NDEBUG;WINVER=0x0501;HAVE_WIN7_SDK=1"
+				PreprocessorDefinitions="NDEBUG;WINVER=0x0501;LUA_REG_NO_WINTRACE;LUA_REG_NO_HIVEOPS;LUA_REG_NO_DLL;HAVE_WIN7_SDK=1"
 				StringPooling="true"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
@@ -345,7 +342,7 @@
 			<Tool
 				Name="VCResourceCompilerTool"
 				AdditionalOptions="/nologo /l409"
-				PreprocessorDefinitions="NDEBUG;WINVER=0x0501;HAVE_WIN7_SDK=1;MODNAME=wds64"
+				PreprocessorDefinitions="NDEBUG;WINVER=0x0501;LUA_REG_NO_WINTRACE;LUA_REG_NO_HIVEOPS;LUA_REG_NO_DLL;HAVE_WIN7_SDK=1;MODNAME=wds64"
 				AdditionalIncludeDirectories="..;.;..\common;Controls;Dialogs;..\3rdparty\lua\src;..;$(IntDir)"
 			/>
 			<Tool
@@ -371,7 +368,6 @@
 			<Tool
 				Name="VCManifestTool"
 				AdditionalManifestFiles="res/windirstat.manifest"
-				AssemblyIdentity="WinDirStat_Team.WinDirStat.windirstat, processorArchitecture=amd64, version=1.3, type=win32"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"

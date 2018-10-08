@@ -68,6 +68,7 @@ void CReparsePoints::GetDriveVolumes()
     for(i = 0; i < wds::iNumDriveLetters; i++, mask <<= 1)
     {
         TCHAR volume[_MAX_PATH];
+        volume[0] = 0;
 
         if((drives & mask) != 0)
         {

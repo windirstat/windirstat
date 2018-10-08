@@ -29,7 +29,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #ifndef __VERSIONINFO_H_VER__
-#define __VERSIONINFO_H_VER__ 2017091820
+#define __VERSIONINFO_H_VER__ 2018030119
 #if (defined(_MSC_VER) && (_MSC_VER >= 1020)) || defined(__MCPP)
 #pragma once
 #endif // Check for "#pragma once" support
@@ -37,7 +37,11 @@
 #include <Windows.h>
 #include <tchar.h>
 #pragma warning(disable:4995)
+#if defined(DDKBUILD)
+#include <stdio.h>
+#else
 #include <cstdio>
+#endif
 #pragma warning(default:4995)
 #pragma comment(lib, "delayimp")
 

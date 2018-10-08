@@ -191,7 +191,11 @@ do
     -- Override the project creation to suppress unnecessary configurations
     -- these get invoked by sln2005.generate per project ...
     -- ... they depend on the values in the sln.vstudio_configs table
+    --[[
     local mprj = {[pfx.."wdsr%x*"] = {["Release|Win32"] = 0}, [pfx.."minilua"] = {["Release|Win32"] = 0}, [pfx.."buildvm"] = {["Release|Win32"] = 0, ["Release|x64"] = 0}, [pfx.."luajit2"] = {["Release|Win32"] = 0, ["Release|x64"] = 0}, [pfx.."lua"] = {["Release|Win32"] = 0, ["Release|x64"] = 0}}
+    if _OPTIONS["dev"] then
+        mprj = {[pfx.."wdsr%x*"] = {["Release|Win32"] = 0},}
+    end
     local function prjgen_override_factory(orig_prjgen)
         return function(prj)
             local function prjmap()
@@ -207,7 +211,7 @@ do
                 local faked_cfgs = {}
                 local prjmap = prjmap()
                 for k,v in pairs(cfgs) do
-                    if prjmap[v['name']] then
+                    if prjmap[ v['name'] ] then
                         faked_cfgs[#faked_cfgs+1] = v
                     end
                 end
@@ -219,6 +223,9 @@ do
             return orig_prjgen(prj)
         end
     end
+    premake.vs2010_vcxproj = prjgen_override_factory(premake.vs2010_vcxproj)
+    premake.vstudio.vc200x.generate = prjgen_override_factory(premake.vstudio.vc200x.generate)
+    --]]
     -- Borrowed from setLocal() at https://stackoverflow.com/a/22752379
     local function getLocal(stkidx, name)
         local index = 1
@@ -278,8 +285,6 @@ do
         orig_premake_vs2010_vcxproj(prj)
         _G._p = orig_p -- restore in any case
     end
-    premake.vs2010_vcxproj = prjgen_override_factory(premake.vs2010_vcxproj)
-    premake.vstudio.vc200x.generate = prjgen_override_factory(premake.vstudio.vc200x.generate)
     -- Allow us to set the project configuration to Release|Win32 for the resource DLL projects,
     -- no matter what the global solution project is.
     local orig_project_platforms_sln2prj_mapping = premake.vstudio.sln2005.project_platforms_sln2prj_mapping
@@ -427,7 +432,7 @@ solution (iif(release, slnname, "windirstat"))
             buildoptions    {"/Oi", "/Ot"}
 
         configuration {"vs*"}
-            defines         {"WINVER=0x0501"}
+            defines         {"WINVER=0x0501", "LUA_REG_NO_WINTRACE", "LUA_REG_NO_HIVEOPS", "LUA_REG_NO_DLL"}
 
         configuration {"vs2015 or vs2017"}
             defines         {"_ALLOW_RTCc_IN_STL"}
@@ -457,7 +462,7 @@ solution (iif(release, slnname, "windirstat"))
             resoptions      {"/nologo", "/l409"}
             resincludedirs  {".", "$(IntDir)"}
             linkoptions     {"/pdbaltpath:%_PDB%"}
-            prebuildcommands{"copy \"$(ProjectDir)lua_conf.lua\" \"$(TargetDir)\\\""}
+            postbuildcommands{"xcopy /f /y \"$(ProjectDir)lua_conf.lua\" \"$(TargetDir)\""}
 
             files
             {
@@ -491,6 +496,7 @@ solution (iif(release, slnname, "windirstat"))
             configuration {"Debug"}
                 defines         {"_DEBUG"}
                 flags           {"Symbols"}
+                linkoptions     {"/nodefaultlib:libcmt",}
 
             configuration {"Release"}
                 defines         ("NDEBUG")
@@ -499,7 +505,7 @@ solution (iif(release, slnname, "windirstat"))
                 buildoptions    {"/Oi", "/Ot"}
 
             configuration {"vs*"}
-                defines         {"WINVER=0x0501"}
+                defines         {"WINVER=0x0501", "LUA_REG_NO_WINTRACE", "LUA_REG_NO_HIVEOPS", "LUA_REG_NO_DLL"}
     end
 
     -- Add the resource DLL projects, if requested

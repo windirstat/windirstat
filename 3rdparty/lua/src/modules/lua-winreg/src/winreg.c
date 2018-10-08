@@ -297,10 +297,10 @@ BOOL reg_aux_setvalue(lua_State *L, HKEY hKey, const TCHAR * pszVal, int type, i
 		luaL_Buffer B;
 		luaL_buffinit(L, &B);
 		if(lua_istable(L, i)){
-			int n;
-			int last = lua_objlen(L, i);
+			size_t n;
+			size_t last = lua_objlen(L, i);
 			for (n = 1; n <= last; n++) {
-				lua_rawgeti(L, i, n);
+				lua_rawgeti(L, i, (int)n);
 				luaL_addstring(&B, lua_checkstring(L, -1));
 				luaL_addchar(&B, 0);
 			}

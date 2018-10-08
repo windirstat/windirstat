@@ -546,7 +546,11 @@ BOOL CDirstatApp::InitInstance()
         //and if so, wait for it, so previous instance can store its config that we reload next
         ::WaitForSingleObject(m_ElevationEvent, 20 * 1000);
         ::CloseHandle(m_ElevationEvent);
-        m_ElevationEvent = 0;
+        m_ElevationEvent = NULL;
+    }
+    else
+    {
+        VTRACE(_T("OpenEvent failed with %d"), GetLastError());
     }
 #endif // SUPPORT_ELEVATION
 
@@ -677,8 +681,10 @@ void CDirstatApp::OnUpdateRunElevated(CCmdUI *pCmdUI)
 void CDirstatApp::OnRunElevated()
 {
     if (IsAdmin() || !IsUACEnabled())
+    {
         return;
-    
+    }
+
     CString sAppName = GetAppFileName();
 
     SHELLEXECUTEINFO shellInfo;
@@ -686,7 +692,7 @@ void CDirstatApp::OnRunElevated()
     shellInfo.cbSize = sizeof(shellInfo);
     shellInfo.fMask = SEE_MASK_DEFAULT;
     shellInfo.lpFile = sAppName;
-    shellInfo.lpVerb = _T("runas"); //DO NOT LOCALIZE
+    shellInfo.lpVerb = _T("runas"); //DO NOT LOCALIZE!
     shellInfo.nShow = SW_NORMAL;
 
 
@@ -697,15 +703,15 @@ void CDirstatApp::OnRunElevated()
     m_ElevationEvent = ::CreateEvent(NULL, TRUE, FALSE, m_ElevationEventName); 
     if (!m_ElevationEvent)
     {
-        VTRACE(_T("CreateEvent failed: %d"), GetLastError());
-        m_ElevationEvent = 0;
+        VTRACE(_T("CreateEvent failed with %d"), GetLastError());
+        m_ElevationEvent = NULL;
         return;
     }
     if (ERROR_ALREADY_EXISTS == ::GetLastError())
     {
         VTRACE(_T("Event already exists"));
         ::CloseHandle(m_ElevationEvent);
-        m_ElevationEvent = 0;
+        m_ElevationEvent = NULL;
         return;
     }
 
@@ -714,7 +720,7 @@ void CDirstatApp::OnRunElevated()
         VTRACE(_T("ShellExecuteEx failed to elevate %d"), GetLastError());
         
         ::CloseHandle(m_ElevationEvent);
-        m_ElevationEvent = 0;
+        m_ElevationEvent = NULL;
 
         //TODO: Display message to user?
     }
@@ -726,7 +732,7 @@ void CDirstatApp::OnRunElevated()
         ::SetEvent(m_ElevationEvent); //Tell other process that we finished saving data (it waits only 20s)
 
         ::CloseHandle(m_ElevationEvent);
-        m_ElevationEvent = 0;
+        m_ElevationEvent = NULL;
     }
 }
 #endif // SUPPORT_ELEVATION

@@ -57,7 +57,9 @@ END
 #include "modules/w32resembed.h"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-helloworld LUA "../../sandbox/luaconf/hello.lua"
+autoexec LUA "../../sandbox/luaconf/lua_conf.lua"
+globals LUA "../../embedded-lua/globals.lua"
+hello LUA "../../sandbox/luaconf/hello.lua"
 
 #ifndef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////

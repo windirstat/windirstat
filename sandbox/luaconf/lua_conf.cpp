@@ -37,7 +37,6 @@ namespace
         fflush(stderr);
     }
 
-
     static int report (lua_State *L, int status)
     {
         if (status && !lua_isnil(L, -1)) {
@@ -77,16 +76,30 @@ namespace
 
 using namespace std;
 
-int _tmain(int argc, TCHAR* argv[], TCHAR* envp[])
+int _tmain(int, TCHAR**)
 {
     lua_State* L = luaWDS_open();
     if(L)
     {
-        //fprintf(stderr, "[STACK TOP] %i (line %i)\n", lua_gettop(L), __LINE__);
-        w32res_enumerateEmbeddedLuaScripts(L);
-        int ret = luaL_dofile(L, "lua_conf.lua");
+        stackDump(L, "Before enumerating Lua resources");
+        int ret = w32res_enumerateEmbeddedLuaScripts(L);
         if(ret)
         {
+            char const* lpszError = lua_tostring(L, -1);
+            fprintf(stderr, "Error occurred: %s\n", lpszError);
+            lua_pop(L, 1); /* pop error message from the stack */
+            lua_close(L);
+            return EXIT_FAILURE;
+        }
+        lua_pop(L, 1); // pop the winres table from the stack
+        stackDump(L, "Before executing external Lua script (after enumerating Lua resources)");
+        ret = luaL_dostring(L, "require \"globals\"");
+        ret = luaL_dostring(L, "require \"autoexec\"");
+        //lua_pop(L, 1); /* pop result from the stack */
+        stackDump(L, "After executing external Lua script");
+        if (ret)
+        {
+            fprintf(stderr, "Error occurred: %s\n", lua_tostring(L, -1));
             lua_pop(L, 1); /* pop error message from the stack */
             lua_close(L);
             return EXIT_FAILURE;

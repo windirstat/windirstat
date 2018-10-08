@@ -1,5 +1,5 @@
 #ifndef __WDS_LUA_C_H_VER__
-#define __WDS_LUA_C_H_VER__ 2012121805
+#define __WDS_LUA_C_H_VER__ 2018040522
 #if (defined(_MSC_VER) && (_MSC_VER >= 1020)) || defined(__MCPP)
 #pragma once
 #endif // Check for "#pragma once" support
@@ -36,5 +36,7 @@ extern "C"
         lua_pushtstring(L, s); \
         lua_call(L, 1, 1)
 #endif // lua_pushtstring_lowercase
+
+EXTERN_C void stackDump(lua_State *L, char* description);
 
 #endif // __WDS_LUA_C_H_VER__
