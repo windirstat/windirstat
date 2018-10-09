@@ -41,6 +41,3 @@ lj.supp = LF
 **.vcxproj.filters = CRLF
 **.vcxproj = CRLF
 **.vcproj = CRLF
-##### Third-party code which we don't touch, but which came as CRLF
-3rdparty/lua/src/modules/lua-winreg/**.c = CRLF
-3rdparty/lua/src/modules/lua-winreg/**.h = CRLF
