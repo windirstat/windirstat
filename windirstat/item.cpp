@@ -163,7 +163,7 @@ CString CItem::GetText(int subitem) const
         else
         {
             if(m_readJobs == 1)
-                s.LoadString(IDS_ONEREADJOB);
+                VERIFY(s.LoadString(IDS_ONEREADJOB));
             else
                 s.FormatMessage(IDS_sREADJOBS, FormatCount(m_readJobs).GetString());
         }
@@ -1038,12 +1038,12 @@ void CItem::SetDone()
     m_done = true;
 }
 
-DWORD CItem::GetTicksWorked() const
+ULONGLONG CItem::GetTicksWorked() const
 {
     return m_ticksWorked;
 }
 
-void CItem::AddTicksWorked(DWORD more)
+void CItem::AddTicksWorked(ULONGLONG more)
 {
     m_ticksWorked += more;
 }
@@ -1059,7 +1059,7 @@ void CItem::DoSomeWork(CWorkLimiter* limiter)
 
     DriveVisualUpdateDuringWork();
 
-    const DWORD start = ::GetTickCount();
+    const ULONGLONG start = _GetTickCount64();
 
     if(GetType() == IT_DRIVE || GetType() == IT_DIRECTORY)
     {
@@ -1133,7 +1133,7 @@ void CItem::DoSomeWork(CWorkLimiter* limiter)
 
             UpwardAddSubdirs(dirCount);
             SetReadJobDone();
-            AddTicksWorked(::GetTickCount() - start);
+            AddTicksWorked(_GetTickCount64() - start);
         }
         if(GetType() == IT_DRIVE)
         {
@@ -1162,10 +1162,10 @@ void CItem::DoSomeWork(CWorkLimiter* limiter)
             return;
         }
 
-        DWORD startChildren = ::GetTickCount();
+        const ULONGLONG startChildren = _GetTickCount64();
         while(!limiter->IsDone())
         {
-            DWORD minticks = UINT_MAX;
+            ULONGLONG minticks = ULONGLONG_MAX;
             CItem *minchild = NULL;
             for(int i = 0; i < GetChildrenCount(); i++)
             {
@@ -1185,12 +1185,12 @@ void CItem::DoSomeWork(CWorkLimiter* limiter)
                 SetDone();
                 break;
             }
-			if (!limiter->IsDone())
+            if (!limiter->IsDone())
             {
                 minchild->DoSomeWork(limiter);
             }
         }
-        AddTicksWorked(::GetTickCount() - startChildren);
+        AddTicksWorked(_GetTickCount64() - startChildren);
     }
     else
     {

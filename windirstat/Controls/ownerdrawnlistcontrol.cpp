@@ -210,6 +210,9 @@ COwnerDrawnListControl::COwnerDrawnListControl(LPCTSTR name, int rowHeight)
     , m_showGrid(false)
     , m_showStripes(false)
     , m_showFullRowSelection(false)
+    , m_yFirstItem(-1)
+    , m_windowColor(CLR_NONE)
+    , m_stripeColor(CLR_NONE)
 {
     ASSERT(rowHeight > 0);
     InitializeColors();
@@ -606,10 +609,14 @@ int COwnerDrawnListControl::GetSubItemWidth(COwnerDrawnListItem *item, int subit
 
 BEGIN_MESSAGE_MAP(COwnerDrawnListControl, CSortingListControl)
     ON_WM_ERASEBKGND()
+#pragma warning(suppress: 26454)
     ON_NOTIFY(HDN_DIVIDERDBLCLICKA, 0, OnHdnDividerdblclick)
+#pragma warning(suppress: 26454)
     ON_NOTIFY(HDN_DIVIDERDBLCLICKW, 0, OnHdnDividerdblclick)
     ON_WM_VSCROLL()
+#pragma warning(suppress: 26454)
     ON_NOTIFY(HDN_ITEMCHANGINGA, 0, OnHdnItemchanging)
+#pragma warning(suppress: 26454)
     ON_NOTIFY(HDN_ITEMCHANGINGW, 0, OnHdnItemchanging)
     ON_WM_SHOWWINDOW()
 END_MESSAGE_MAP()

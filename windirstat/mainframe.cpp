@@ -556,7 +556,7 @@ void CMainFrame::UpdateProgress()
 
         if(IsProgressSuspended())
         {
-            suspended.LoadString(IDS_SUSPENDED_);
+            VERIFY(suspended.LoadString(IDS_SUSPENDED_));
         }
 
         if(m_progressRange > 0)
@@ -896,6 +896,11 @@ void CMainFrame::CopyToClipboard(LPCTSTR psz)
 
         LPVOID lp = ::GlobalLock(h);
         ASSERT(lp != NULL);
+
+        if (!lp)
+        {
+            MdThrowStringException(_T("GlobalLock failed."));
+        }
 
         _tcscpy_s((LPTSTR)lp, cchBufLen, psz);
 

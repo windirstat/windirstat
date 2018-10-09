@@ -261,10 +261,15 @@ int CALLBACK CSortingListControl::_CompareFunc(LPARAM lParam1, LPARAM lParam2, L
 }
 
 BEGIN_MESSAGE_MAP(CSortingListControl, CListCtrl)
+#pragma warning(suppress: 26454)
     ON_NOTIFY_REFLECT(LVN_GETDISPINFO, OnLvnGetdispinfo)
+#pragma warning(suppress: 26454)
     ON_NOTIFY(HDN_ITEMCLICKA, 0, OnHdnItemclick)
+#pragma warning(suppress: 26454)
     ON_NOTIFY(HDN_ITEMCLICKW, 0, OnHdnItemclick)
+#pragma warning(suppress: 26454)
     ON_NOTIFY(HDN_ITEMDBLCLICKA, 0, OnHdnItemdblclick)
+#pragma warning(suppress: 26454)
     ON_NOTIFY(HDN_ITEMDBLCLICKW, 0, OnHdnItemdblclick)
     ON_WM_DESTROY()
 END_MESSAGE_MAP()

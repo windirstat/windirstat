@@ -302,25 +302,25 @@ CString FormatAttributes(DWORD attr)
     return attributes;
 }
 
-CString FormatMilliseconds(DWORD ms)
+CString FormatMilliseconds(ULONGLONG ms)
 {
     CString ret;
-    DWORD sec = (ms + 500) / 1000;
+    ULONGLONG sec = (ms + 500) / 1000;
 
-    DWORD s = sec % 60;
-    DWORD min = sec / 60;
+    ULONGLONG s = sec % 60;
+    ULONGLONG min = sec / 60;
 
-    DWORD m = min % 60;
+    ULONGLONG m = min % 60;
 
-    DWORD h = min / 60;
+    ULONGLONG h = min / 60;
 
     if(h > 0)
     {
-        ret.Format(_T("%u:%02u:%02u"), h, m, s);
+        ret.Format(_T("%I64u:%02I64u:%02I64u"), h, m, s);
     }
     else
     {
-        ret.Format(_T("%u:%02u"), m, s);
+        ret.Format(_T("%I64u:%02I64u"), m, s);
     }
     return ret;
 }

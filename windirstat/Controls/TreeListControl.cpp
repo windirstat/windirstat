@@ -264,17 +264,7 @@ void CTreeListItem::SetVisible(bool visible)
     if(visible)
     {
         ASSERT(!IsVisible());
-        m_vi = new VISIBLEINFO;
-        if(GetParent() == NULL)
-        {
-            m_vi->indent = 0;
-        }
-        else
-        {
-            m_vi->indent = GetParent()->GetIndent() + 1;
-        }
-        m_vi->image = -1;
-        m_vi->isExpanded = false;
+        m_vi = new VISIBLEINFO((GetParent() == NULL) ? 0 : GetParent()->GetIndent() + 1);
     }
     else
     {

@@ -32,6 +32,9 @@ IMPLEMENT_DYNAMIC(CPageTreelist, CPropertyPage)
 
 CPageTreelist::CPageTreelist()
     : CPropertyPage(CPageTreelist::IDD)
+    , m_pacmanAnimation(FALSE)
+    , m_showTimeSpent(FALSE)
+    , m_treelistColorCount(TREELISTCOLORCOUNT)
 {
 }
 

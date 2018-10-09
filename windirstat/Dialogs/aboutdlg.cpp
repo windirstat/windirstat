@@ -67,6 +67,11 @@ namespace
             }
 
             hresource = ::LoadResource(dll, hrsrc);
+            if (!hresource)
+            {
+                MdThrowLastWinerror();
+            }
+
             const BYTE *pData = (const BYTE *)::LockResource(hresource);
 
             CComBSTR bstr(dwSize, (LPCSTR)pData);
@@ -153,7 +158,7 @@ void CAboutDlg::CMyTabControl::SetPageText(int tab)
         break;
     case TAB_THANKSTO:
         {
-            text.LoadString(IDS_ABOUT_THANKSTOTEXT);
+            VERIFY(text.LoadString(IDS_ABOUT_THANKSTOTEXT));
         }
         break;
     case TAB_LICENSE:
@@ -345,6 +350,7 @@ void CAboutDlg::DoDataExchange(CDataExchange* pDX)
 }
 
 BEGIN_MESSAGE_MAP(CAboutDlg, CDialog)
+#pragma warning(suppress: 26454)
     ON_NOTIFY(TCN_SELCHANGE, IDC_TAB, OnTcnSelchangeTab)
     ON_WM_SIZE()
     ON_WM_GETMINMAXINFO()

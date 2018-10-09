@@ -180,8 +180,8 @@ public:
     void SetReadJobDone(bool done = true);
     bool IsDone() const;
     void SetDone();
-    DWORD GetTicksWorked() const;
-    void AddTicksWorked(DWORD more);
+    ULONGLONG GetTicksWorked() const;
+    void AddTicksWorked(ULONGLONG more);
     void DoSomeWork(CWorkLimiter* limiter);
     bool StartRefresh();
     void UpwardSetUndone();
@@ -227,7 +227,7 @@ private:
 
     bool m_readJobDone;         // FindFiles() (our own read job) is finished.
     bool m_done;                // Whole Subtree is done.
-    DWORD m_ticksWorked;        // ms time spent on this item.
+    ULONGLONG m_ticksWorked;        // ms time spent on this item.
     ULONGLONG m_readJobs;       // # "read jobs" in subtree.
 
 

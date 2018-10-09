@@ -45,7 +45,12 @@ CString GetOsPlatformString()
 
     if(!RtlGetVersion)
     {
-        *(FARPROC*)&RtlGetVersion = GetProcAddress(GetModuleHandle(_T("ntdll.dll")), "RtlGetVersion");
+        HMODULE hNtDll = GetModuleHandle(_T("ntdll.dll"));
+        if(!hNtDll)
+        {
+            return LoadString(IDS__UNKNOWN_);
+        }
+        *(FARPROC*)&RtlGetVersion = GetProcAddress(hNtDll, "RtlGetVersion");
         ASSERT(RtlGetVersion != NULL);
         if(!RtlGetVersion)
         {

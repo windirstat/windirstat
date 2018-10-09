@@ -118,7 +118,7 @@ protected:
     CMyImageList m_myImageList;             // Our central image list
     ULONGLONG m_workingSet;                 // Current working set (RAM usage)
     ULONGLONG m_pageFaults;                 // Page faults so far (unused)
-    DWORD m_lastPeriodicalRamUsageUpdate;   // Tick count
+    ULONGLONG m_lastPeriodicalRamUsageUpdate; // Tick count
     COLORREF m_altColor;                    // Coloring of compressed items
     COLORREF m_altEncryptionColor;          // Coloring of encrypted items
 #if SUPPORT_ELEVATION

@@ -49,7 +49,7 @@ private:
     double m_position;      // 0...1
     bool m_mouthOpening;    // Mouth is opening
     double m_aperture;      // 0...1
-    DWORD m_lastUpdate;     // TickCount
+    ULONGLONG m_lastUpdate; // TickCount
 };
 
 #endif // __WDS_PACMAN_H__

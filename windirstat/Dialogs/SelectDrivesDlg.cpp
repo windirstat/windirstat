@@ -260,11 +260,11 @@ CString CDriveItem::GetText(int subitem) const
     case COL_GRAPH:
         if(m_querying)
         {
-            s.LoadString(IDS_QUERYING);
+            VERIFY(s.LoadString(IDS_QUERYING));
         }
         else if(!m_success)
         {
-            s.LoadString(IDS_NOTACCESSIBLE);
+            VERIFY(s.LoadString(IDS_NOTACCESSIBLE));
         }
         break;
 
@@ -453,6 +453,7 @@ void CDrivesList::OnLButtonDown(UINT /*nFlags*/, CPoint /*point*/)
         ZeroMemory(&lv, sizeof(lv));
         lv.hdr.hwndFrom = m_hWnd;
         lv.hdr.idFrom = GetDlgCtrlID();
+#pragma warning(suppress: 26454)
         lv.hdr.code = LVN_ITEMCHANGED;
         GetParent()->SendMessage(WM_NOTIFY, GetDlgCtrlID(), (LPARAM)&lv);
 
@@ -482,8 +483,10 @@ void CDrivesList::OnNMDblclk(NMHDR * /*pNMHDR*/, LRESULT *pResult)
 
 BEGIN_MESSAGE_MAP(CDrivesList, COwnerDrawnListControl)
     ON_WM_LBUTTONDOWN()
+#pragma warning(suppress: 26454)
     ON_NOTIFY_REFLECT(LVN_DELETEITEM, OnLvnDeleteitem)
     ON_WM_MEASUREITEM_REFLECT()
+#pragma warning(suppress: 26454)
     ON_NOTIFY_REFLECT(NM_DBLCLK, OnNMDblclk)
 END_MESSAGE_MAP()
 
@@ -533,6 +536,7 @@ BEGIN_MESSAGE_MAP(CSelectDrivesDlg, CDialog)
     ON_BN_CLICKED(IDC_SOMEDRIVES, OnBnClickedSomedrives)
     ON_EN_CHANGE(IDC_FOLDERNAME, OnEnChangeFoldername)
     ON_WM_MEASUREITEM()
+#pragma warning(suppress: 26454)
     ON_NOTIFY(LVN_ITEMCHANGED, IDC_DRIVES, OnLvnItemchangedDrives)
     ON_BN_CLICKED(IDC_ALLLOCALDRIVES, OnBnClickedAlllocaldrives)
     ON_WM_SIZE()

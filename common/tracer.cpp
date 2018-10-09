@@ -59,7 +59,7 @@ CWDSTracerConsole::CWDSTracerConsole()
 CWDSTracerConsole::~CWDSTracerConsole()
 {
     _tprintf(_T("Press a key to continue/close.\n"));
-    _getch();
+    (void)_getch();
     ::FreeConsole();
 }
 #endif // VTRACE_TO_CONSOLE

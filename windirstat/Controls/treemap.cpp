@@ -215,6 +215,9 @@ CTreemap::Options CTreemap::GetOldDefaultOptions()
 }
 
 CTreemap::CTreemap(Callback *callback)
+    : m_Lx(0.)
+    , m_Ly(0.)
+    , m_Lz(0.)
 {
     m_callback = callback;
     SetOptions(&_defaultOptions);

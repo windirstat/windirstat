@@ -12,9 +12,9 @@ CWorkLimiter::~CWorkLimiter()
 {
 }
 
-void CWorkLimiter::Start(DWORD ticks)
+void CWorkLimiter::Start(ULONGLONG ticks)
 {
-    DWORD start = Now();
+    ULONGLONG start = CWorkLimiter::Now();
     m_done = false;
     m_tickLimit = start + ticks;
     m_prevTicks = start;
@@ -25,9 +25,9 @@ bool CWorkLimiter::IsDone() const
     if (m_done) return true;
 
     // check remaining ticks
-    DWORD now = Now();
+    ULONGLONG now = CWorkLimiter::Now();
     // signed subtraction to deal with overflow
-    long remaining = m_tickLimit - now;
+    ULONGLONG remaining = m_tickLimit - now;
     if (remaining <= 0)
     {
         m_done = true;
@@ -35,7 +35,7 @@ bool CWorkLimiter::IsDone() const
     }
 
     // check if there are any pending window messages
-    long elapsed = now - m_prevTicks;
+    ULONGLONG elapsed = now - m_prevTicks;
     if (elapsed > 10)
     {
         m_prevTicks = now;
@@ -50,11 +50,7 @@ bool CWorkLimiter::IsDone() const
     return false;
 }
 
-void CWorkLimiter::DoFileWork()
+inline ULONGLONG CWorkLimiter::Now()
 {
-}
-
-DWORD CWorkLimiter::Now() const
-{
-    return ::GetTickCount();
+    return _GetTickCount64();
 }

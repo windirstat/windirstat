@@ -22,7 +22,7 @@
 //
 
 #ifndef __STDAFX_H_VER__
-#define __STDAFX_H_VER__ 2017112319
+#define __STDAFX_H_VER__ 2018100918
 #if (defined(_MSC_VER) && (_MSC_VER >= 1020)) || defined(__MCPP)
 #pragma once
 #endif /* Check for "#pragma once" support */
@@ -59,6 +59,7 @@
 #include <cmath>            // floor(), fmod(), sqrt() etc.
 #include <cfloat>           // DBL_MAX
 #include <psapi.h>          // PROCESS_MEMORY_INFO
+#include <intsafe.h>        // ULONGLONG_MAX
 
 #include <atlbase.h>        // ComPtr<>
 
@@ -70,5 +71,13 @@ template<typename T> int signum(T x) { return (x) < 0 ? -1 : (x) == 0 ? 0 : 1; }
 
 /// signum function for unsigned numbers.
 template<typename T> int usignum(T x, T y) { return (x) < (y) ? -1 : (x) == (y) ? 0 : 1; }
+
+#if (_WIN32_WINNT >= _WIN32_WINNT_VISTA)
+#define _GetTickCount64 GetTickCount64
+#else
+typedef ULONGLONG(WINAPI *GetTickCount64_t)(void);
+EXTERN_C GetTickCount64_t _GetTickCount64;
+void InitGetTickCount64();
+#endif /* (_WIN32_WINNT >= _WIN32_WINNT_VISTA) */
 
 #endif /* __STDAFX_H_VER__ */

@@ -55,6 +55,12 @@ class CTreeListItem: public COwnerDrawnListItem
         CArray<CTreeListItem *, CTreeListItem *> sortedChildren;
 
         CPacman pacman;
+
+        VISIBLEINFO(int iIndent)
+            : indent(iIndent)
+            , image(-1)
+            , isExpanded(false)
+        {}
     };
 
 public:
@@ -185,7 +191,7 @@ protected:
     afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
     afx_msg void OnLButtonDblClk(UINT nFlags, CPoint point);
     afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
-    afx_msg BOOL OnEraseBkgnd(CDC* pDC);
+    // afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 };
 
 #endif // __WDS_TREELISTCONTROL_H__

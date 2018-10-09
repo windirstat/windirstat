@@ -92,7 +92,11 @@ CDirstatApp::CDirstatApp()
     , m_langid(0)
     , m_workingSet(0)
     , m_pageFaults(0)
-    , m_lastPeriodicalRamUsageUpdate(::GetTickCount())
+#   if (_WIN32_WINNT < _WIN32_WINNT_VISTA)
+    , m_lastPeriodicalRamUsageUpdate(0)
+#   else
+    , m_lastPeriodicalRamUsageUpdate(_GetTickCount64())
+#   endif /* (_WIN32_WINNT < _WIN32_WINNT_VISTA) */
     , m_altColor(GetAlternativeColor(RGB(0x00, 0x00, 0xFF), _T("AltColor")))
     , m_altEncryptionColor(GetAlternativeColor(RGB(0x00, 0x80, 0x00), _T("AltEncryptionColor")))
 #   if SUPPORT_ELEVATION
@@ -107,6 +111,11 @@ CDirstatApp::CDirstatApp()
     TestScanResourceDllName();
 #   endif
 
+#   if (_WIN32_WINNT < _WIN32_WINNT_VISTA)
+    InitGetTickCount64();
+    m_lastPeriodicalRamUsageUpdate = _GetTickCount64();
+#   endif /* (_WIN32_WINNT < _WIN32_WINNT_VISTA) */
+
 #   if SUPPORT_ELEVATION
     m_ElevationEventName.Format(WINDIRSTAT_EVENT_NAME_FMT, GetCurrentDesktopName().GetBuffer(), GetCurrentWinstaName().GetBuffer());
     VTRACE(_T("Elevation event: %s"), m_ElevationEventName.GetBuffer());
@@ -118,8 +127,8 @@ CDirstatApp::~CDirstatApp()
 #if SUPPORT_ELEVATION
     if (m_ElevationEvent)
     {
-        CloseHandle(m_ElevationEvent); //make sure this is the very last thing that is destroyed (way after WM_CLOSE)
-    }	
+        ::CloseHandle(m_ElevationEvent); //make sure this is the very last thing that is destroyed (way after WM_CLOSE)
+    }
 #endif // SUPPORT_ELEVATION
 }
 
@@ -136,10 +145,10 @@ void CDirstatApp::UpdateRamUsage()
 
 void CDirstatApp::PeriodicalUpdateRamUsage()
 {
-    if(::GetTickCount() - m_lastPeriodicalRamUsageUpdate > 1200)
+    if(_GetTickCount64() - m_lastPeriodicalRamUsageUpdate > 1200)
     {
         UpdateRamUsage();
-        m_lastPeriodicalRamUsageUpdate = ::GetTickCount();
+        m_lastPeriodicalRamUsageUpdate = _GetTickCount64();
     }
 }
 
@@ -382,7 +391,7 @@ bool CDirstatApp::IsCorrectResourceDll(LPCTSTR path)
         return false;
     }
 
-    // TODO: introduce some method of checking the resource version
+    // TODO/FIXME: introduce some method of checking the resource version
 
     CString reference = LoadString(IDS_RESOURCEVERSION);
 

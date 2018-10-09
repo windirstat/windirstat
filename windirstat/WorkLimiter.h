@@ -27,20 +27,19 @@
 class CWorkLimiter
 {
 public:
-	CWorkLimiter();
-	~CWorkLimiter();
+    CWorkLimiter();
+    ~CWorkLimiter();
 
-	void Start(DWORD ticks);
-	bool IsDone() const;
-	void DoFileWork();
-
-private:
-	DWORD Now() const;
+    void Start(ULONGLONG ticks);
+    bool IsDone() const;
 
 private:
-	mutable bool m_done;
-	DWORD m_tickLimit;
-	mutable DWORD m_prevTicks;
+    static ULONGLONG Now();
+
+private:
+    mutable bool m_done;
+    ULONGLONG m_tickLimit;
+    mutable ULONGLONG m_prevTicks;
 };
 
 #endif

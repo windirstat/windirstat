@@ -30,3 +30,47 @@
 #       pragma message (ANSISTRING(__FILE__) "(" ANSISTRING(__LINE__) ") : warning: You're building a feature-incomplete WinDirStat ('#define HAVE_WIN7_SDK' missing or 0). Refer to https://bitbucket.org/windirstat/windirstat/wiki/Building for details on how to build with this version of Visual Studio.")
 #   endif // Visual C/C++ 2008 and below
 #endif // HAVE_WIN7_SDK
+
+#if (_WIN32_WINNT < _WIN32_WINNT_VISTA)
+namespace {
+    // Borrowed from: http://terryto-blog.tumblr.com/post/6722591298/gettickcount64-alternatives
+    static ULONGLONG WINAPI CompatibleGetTickCount64_()
+    {
+        static __declspec(thread) ULONGLONG high = 0;
+        static __declspec(thread) ULONG lastLow = 0;
+#pragma warning(suppress: 28159)
+        const ULONG low = GetTickCount();
+        if (lastLow > low)
+        { /* wrapped */
+            high += 0x100000000I64;
+        } /* else... not wrapped */
+        lastLow = low;
+        return high | (ULONGLONG)low;
+    }
+}
+
+typedef ULONGLONG(WINAPI *GetTickCount64_t)(void);
+EXTERN_C GetTickCount64_t _GetTickCount64 = NULL;
+
+void InitGetTickCount64()
+{
+    if (!_GetTickCount64)
+    {
+        static HMODULE hKernel32 = ::GetModuleHandle(_T("kernel32.dll"));
+        if (hKernel32)
+        {
+            GetTickCount64_t pfnGetTickCount64 = (GetTickCount64_t)::GetProcAddress(hKernel32, "GetTickCount64");
+            if (pfnGetTickCount64)
+            {
+                _GetTickCount64 = pfnGetTickCount64;
+            }
+        }
+    }
+    if (!_GetTickCount64)
+    {
+        // Fallback
+        _GetTickCount64 = CompatibleGetTickCount64_;
+    }
+}
+
+#endif /* (_WIN32_WINNT < _WIN32_WINNT_VISTA) */

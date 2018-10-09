@@ -36,7 +36,7 @@ CString FormatDouble(double d);
 CString PadWidthBlanks(CString n, int width);
 CString FormatFileTime(const FILETIME& t);
 CString FormatAttributes(DWORD attr);
-CString FormatMilliseconds(DWORD ms);
+CString FormatMilliseconds(ULONGLONG ms);
 CString GetParseNameOfMyComputer();
 void GetPidlOfMyComputer(LPITEMIDLIST *ppidl);
 void ShellExecuteWithAssocDialog(HWND hwnd, LPCTSTR filename);
