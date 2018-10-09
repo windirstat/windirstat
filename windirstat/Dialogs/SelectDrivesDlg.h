@@ -176,7 +176,7 @@ protected:
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnBnClickedBrowsefolder();
-    afx_msg void OnLbnSelchangeDrives();
+    // afx_msg void OnLbnSelchangeDrives();
     afx_msg void OnBnClickedAlllocaldrives();
     afx_msg void OnBnClickedAfolder();
     afx_msg void OnBnClickedSomedrives();

@@ -441,6 +441,7 @@ CMainFrame::CMainFrame()
     , m_wndSubSplitter(_T("sub"))
     , m_progressVisible(false)
     , m_progressRange(100)
+    , m_progressPos(0)
     , m_logicalFocus(LF_NONE)
 #ifdef SUPPORT_W7_TASKBAR
     , m_TaskbarButtonState(TBPF_INDETERMINATE)
