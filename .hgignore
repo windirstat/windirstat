@@ -29,3 +29,7 @@ build/**
 *.aps
 windirstat/res/*/wds_release_wdsr*.vs8.vcproj
 build.vs*/**
+*.vspx
+*.diagsession
+*.i64
+*.idb
