@@ -7,7 +7,7 @@ STYLESHEET:=templates/include/styles.css
 
 all: $(HTMLPAGES)
 
-$(AUTOMENU): $(TEMPLATES)
+$(AUTOMENU): $(filter-out %.j2.tmpl,$(TEMPLATES))
 	(echo "[%\npages = ["; for i in $^; do FNAME="$${i##*/}"; echo " {\n   fname = '$${FNAME%.tmpl}'"; grep -E '^\s+(description|norder|uuid|title) = ' $$i; echo " }\n"; done; echo "\n]\n%]";) > $@
 
 %: templates/%.tmpl $(AUTOMENU) $(TMPLINCLS) $(STYLESHEET)
@@ -18,5 +18,5 @@ clean:
 	rm -f $(HTMLPAGES) $(AUTOMENU)
 rebuild: clean all
 
-.PHONY: all clean rebuild
+.PHONY: all clean rebuild $(AUTOMENU)
 .NOTPARALLEL: clean rebuild
