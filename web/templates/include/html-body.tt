@@ -33,7 +33,6 @@
 <body>
 <p style="text-align:center;">
 <img src="images/logo_wds_white.png" alt="WinDirStat logo with text" height="72" width="191" />
-<a style="position:absolute; right:1.5em; z-index:100;" href="https://sourceforge.net/projects/windirstat"><img src="https://sflogo.sourceforge.net/sflogo.php?group_id=91252&amp;type=9" width="80" height="15" alt="Get WinDirStat: Windows Directory Statistics at SourceForge.net. Fast, secure and Free Open Source software downloads" /></a>
 <span style="position:absolute; left:1.5em; z-index:200; font-weight:bold; color:white;">Latest version: [% currver %]</span>
 </p>
 <table id="frame" cellpadding="0" cellspacing="0" border="0" width="100%">
@@ -81,7 +80,6 @@
   <a href="/stats"><img style="border:0;width:32px;height:32px" src="images/stats.png" alt="Project statistics" /></a>
  </td>
  <td align="right" valign="bottom">
-  <a href="http://sourceforge.net/donate/index.php?group_id=91252"><img src="images/project-support.jpg" alt="Support This Project" height="32" width="88" /></a>&nbsp;
   <a href="http://validator.w3.org/check?uri=referer"><img src="images/valid-xhtml10-gray.png" alt="Valid XHTML 1.0!" height="31" width="88" /></a>&nbsp;
   <a href="http://jigsaw.w3.org/css-validator/check/referer"><img style="border:0;width:88px;height:31px" src="images/vcss-gray.png" alt="Valid CSS!" /></a>
  </td>
