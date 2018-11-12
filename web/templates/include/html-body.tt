@@ -1,7 +1,7 @@
 [%- PROCESS 'constants.tt' -%]
 <?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML+RDFa 1.1//EN" "http://www.w3.org/MarkUp/DTD/xhtml-rdfa-2.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" version="XHTML+RDFa 1.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.w3.org/1999/xhtml http://www.w3.org/MarkUp/SCHEMA/xhtml-rdfa-2.xsd" lang="en" xml:lang="en" dir="ltr" xmlns:og="http://ogp.me/ns#">
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
   <meta http-equiv="Content-Style-Type" content="text/css" />
@@ -10,8 +10,8 @@
   <meta name="description" content="[%- description | html -%]" />
   <meta property="og:title" content="WinDirStat" />
   <meta property="og:description" content="[%- long_desc | html -%]" />
-  <meta property="og:image" content="images/wds_rich_preview.png" />
-  <link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
+  <meta property="og:image" content="/images/wds_rich_preview.png" />
+  <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
 [%  FOREACH kw IN keywords %]
   <meta name="keywords" content="[%- kw.cont | html -%]" lang="[%- kw.lang | html -%]" />
 
@@ -32,7 +32,7 @@
 [%- USE date(format = '%Y-%m-%d %H:%MZ') -%]
 <body>
 <p style="text-align:center;">
-<img src="images/logo_wds_white.png" alt="WinDirStat logo with text" height="72" width="191" />
+<img src="/images/logo_wds_white.png" alt="WinDirStat logo with text" height="72" width="191" />
 <span style="position:absolute; left:1.5em; z-index:200; font-weight:bold; color:white;">Latest version: [% currver %]</span>
 </p>
 <table id="frame" cellpadding="0" cellspacing="0" border="0" width="100%">
@@ -51,10 +51,10 @@
     [%- IF uuid == page.uuid -%]
     <p class="selected">
     [%- ELSE -%]
-    <p><a href="[% page.fname | uri %]">
+    <p><a href="/[% page.fname | uri %]">
     [%- END -%]
       [%- IF page.uuid == '51f50289-c61f-4cf7-ac07-fd236f442f39' -%]
-      <img src="images/logo_50px.png" alt="Colored WinDirStat logo" height="50" width="50" />
+      <img src="/images/logo_50px.png" alt="Colored WinDirStat logo" height="50" width="50" />
       [%- ELSE -%]
       [%- page.title -%]
       [%- END -%]
@@ -70,21 +70,6 @@
 </tr>
 </table>
 <p />
-<table border="0" width="100%" >
-<colgroup>
- <col width="50%" />
- <col width="50%" />
-</colgroup>
-<tr>
- <td align="left" valign="bottom">
-  <a href="/stats"><img style="border:0;width:32px;height:32px" src="images/stats.png" alt="Project statistics" /></a>
- </td>
- <td align="right" valign="bottom">
-  <a href="http://validator.w3.org/check?uri=referer"><img src="images/valid-xhtml10-gray.png" alt="Valid XHTML 1.0!" height="31" width="88" /></a>&nbsp;
-  <a href="http://jigsaw.w3.org/css-validator/check/referer"><img style="border:0;width:88px;height:31px" src="images/vcss-gray.png" alt="Valid CSS!" /></a>
- </td>
-</tr>
-</table>
 <p style="text-align:center; color:gray;" class="miniari">
 WinDirStat is Open Source software. You can redistribute and/or modify it under the terms of the GNU Public License, version 2 (GPLv2).
 <br />

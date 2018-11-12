@@ -1,5 +1,5 @@
 body {
-	background: url(images/body.png) repeat-x;
+	background: url(/images/body.png) repeat-x;
 	margin:15px;
 	font-family : Arial, Helvetica, sans-serif;
 }
@@ -12,7 +12,7 @@ body {
 	border:1px solid gray;
 	margin:2px;
 	padding:5px;
-	background: url(images/vert.png) bottom repeat-x;
+	background: url(/images/vert.png) bottom repeat-x;
 }
 
 #menu {
@@ -60,7 +60,7 @@ a.wdslnk:hover, a.wdslnk:active {
 
 #menu .selected{
 	border-color: gray white gray gray;
-	background: url(images/hor.png) repeat-y;
+	background: url(/images/hor.png) repeat-y;
 }
 
 #menu a:hover {
