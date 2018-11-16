@@ -157,6 +157,7 @@ td.bordleft {
 .feld3 {
   border : 1px solid #cccccc;
   width : 100%;
+  height: 25ex;
 }
 
 ul.download {
