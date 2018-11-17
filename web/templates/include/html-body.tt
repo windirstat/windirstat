@@ -51,7 +51,7 @@
     [%- IF uuid == page.uuid -%]
     <p class="selected">
     [%- ELSE -%]
-    <p><a href="/[% page.fname | uri %]">
+    <p><a href="/[% page.fname | remove('\.j2$') | uri %]">
     [%- END -%]
       [%- IF page.uuid == '51f50289-c61f-4cf7-ac07-fd236f442f39' -%]
       <img src="/images/logo_50px.png" alt="Colored WinDirStat logo" height="50" width="50" />

@@ -2,12 +2,12 @@
    title = 'Contact'
    description = 'Contact the team or a team member'
    uuid = '6dcfe529-89ef-44f1-903c-2614d8d56432'
-   norder = '-1'
+   norder = '8000'
 %]
 [%- PROCESS 'constants.tt' -%]
 {% if page.get and page.form %}
 <p>All the fields have to be filled in ...</p>
-<pre>{{ page|pprint }}</pre>
+{#<pre>{{ page|pprint }}</pre>#}
 <form action="{{ page.form.uri|urlencode }}" method="post" accept-charset="utf-8">
 <table width="100%" summary="Mailform">
 <colgroup>
@@ -46,7 +46,7 @@
 <tr>
  <td colspan="2">
  <div><b>Here goes your text (barring technical issues it will be transmitted as encrypted email!):</b></div>
- <textarea name="{{ page.form.message|e }}" class="feld3"></textarea>
+ <textarea name="{{ page.form.message|e }}" class="feld_" rows="20" cols="80" placeholder="Your message here (English or German). Deine Nachricht hier (Deutsch oder Englisch)."></textarea>
  </td>
  </tr>
 <tr>
@@ -71,10 +71,9 @@ If you can't remember the names, use the dropdown box above to receive a clue ;)
 </p>
 <h3>Using PGP to encrypt communication or to verify emails we send out</h3>
 <p>
-You can use the following <a class="wdslnk" href="https://en.wikipedia.org/wiki/Pretty_Good_Privacy">PGP</a>
-public keys to encrypt <em>to</em>. The keys will be available from commonly used key servers such as
-pgp.mit.edu or subkeys.pgp.net. Please use the traditional ASCII armor in your first communication to
-establish whether PGP/MIME can be used in future communication.
+You are encouraged to use the following <a class="wdslnk" href="https://en.wikipedia.org/wiki/Pretty_Good_Privacy">PGP</a>
+public keys to encrypt communication <em>to</em> us. The keys will be available from commonly used key servers such as
+pgp.mit.edu or subkeys.pgp.net.
 </p>
 <ul>
 [%- FOREACH key IN gpg_keys.sort('name') -%]
