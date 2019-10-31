@@ -1,12 +1,12 @@
 @echo off
 @if not "%OS%"=="Windows_NT" @(echo This script requires Windows NT 4.0 or later to run properly! & goto :EOF)
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-::: 2009-2018, Oliver Schneider (assarbad.net) - PUBLIC DOMAIN/CC0
+::: 2009-2019, Oliver Schneider (assarbad.net) - PUBLIC DOMAIN/CC0
 ::: Available from: <https://bitbucket.org/assarbad/scripts/>
 :::
 ::: PURPOSE:    This script can be used to run the vcvars32.bat/vcvarsall.bat
 :::             from any of the existing Visual C++ versions starting with .NET
-:::             (2002) through 2017 or versions (or a single version) given on
+:::             (2002) through 2019 or versions (or a single version) given on
 :::             the command line.
 :::             The script will try to find the newest installed VC version by
 :::             iterating over the space-separated (descending) list of versions
@@ -25,9 +25,9 @@ setlocal & pushd .
 :: Toolsets (potentially) supported
 set SUPPORTED_TSET=amd64 x86 ia64 x86_ia64 x86_amd64 amd64_x86 x86_arm amd64_arm
 :: Internal representation of the version number
-set SUPPORTED_VC=15.0 14.0 12.0 11.0 10.0 9.0 8.0 7.1 7.0
+set SUPPORTED_VC=16.0 15.0 14.0 12.0 11.0 10.0 9.0 8.0 7.1 7.0
 :: Marketing name of the Visual Studio versions
-set SUPPORTED_NICE=2017 2015 2013 2012 2010 2008 2005 2003 2002
+set SUPPORTED_NICE=2019 2017 2015 2013 2012 2010 2008 2005 2003 2002
 set DEFAULT_TSET=x86
 if not "%~1" == "" @(
   if "%~1" == "/?"     goto :Help
@@ -39,7 +39,7 @@ if not "%~1" == "" @(
 )
 if defined VCVER_FRIENDLY echo This script expects a clean environment. Don't run it several times in the same instance of CMD! Or use setlocal and endlocal in your own script to limit the effect of this one.&popd&endlocal&goto :EOF
 set MIN_VC=7.0
-set MAX_VC=15.0
+set MAX_VC=16.0
 set MIN_NICE=2002
 reg /? > NUL 2>&1 || echo "REG.EXE is a prerequisite but wasn't found!" && goto :EOF
 set SETVCV_ERROR=0
@@ -91,11 +91,12 @@ goto :EOF
 setlocal ENABLEEXTENSIONS & set VCVER=%~1
 :: We're not interested in overwriting an already existing value
 if defined VCVARS_PATH @( endlocal & goto :EOF )
-:: Now let's distinguish the "nice" version numbers (2002, ... 2017) from the internal ones
+:: Now let's distinguish the "nice" version numbers (2002, ... 2019) from the internal ones
 set VCVER=%VCVER:vs=%
-:: Not a "real" version number, but the marketing one (2002, ... 2017)?
+:: Not a "real" version number, but the marketing one (2002, ... 2019)?
 if %VCVER% GEQ %MIN_NICE% call :NICE_%VCVER% > NUL 2>&1
 set NUMVER=%VCVER:.0=%
+set NUMVER=%NUMVER:.1=%
 :: Figure out the set of supported toolsets
 set VCVERLBL=%VCVER:.=_%
 call :PRETTY_%VCVERLBL% > NUL 2>&1
@@ -103,6 +104,9 @@ call :TSET_%VCVERLBL% > NUL 2>&1
 if not defined NICEVER @( echo ERROR: This script does not know the given version Visual C++ version&endlocal&set SETVCV_ERROR=1&goto :EOF )
 :: Jump over those "subs"
 goto :NICE_SET
+:PRETTY_16_0
+    set NICEVER=2019
+    goto :EOF
 :PRETTY_15_0
     set NICEVER=2017
     goto :EOF
@@ -130,8 +134,14 @@ goto :NICE_SET
 :PRETTY_7_0
     set NICEVER=2002
     goto :EOF
+:NICE_2019
+    set VCVER=16.0
+    set VSWHERE_RANGE=16.0,17.0
+    set NEWVS=1
+    goto :EOF
 :NICE_2017
     set VCVER=15.0
+    set VSWHERE_RANGE=15.0,16.0
     set NEWVS=1
     goto :EOF
 :NICE_2015
@@ -158,6 +168,7 @@ goto :NICE_SET
 :NICE_2002
     set VCVER=7.0
     goto :EOF
+:TSET_16_0
 :TSET_15_0
 :TSET_14_0
 :TSET_12_0
@@ -175,8 +186,20 @@ goto :NICE_SET
 echo Trying to locate Visual C++ %NICEVER% ^(= %VCVER%, %VCTGT_TOOLSET%^)
 :: Is it a version below 15? Then we use the old registry keys
 if %NUMVER% LSS 15 goto :OLDVS
-:: echo Modern (^>=2017) Visual Studio
+echo Modern (^>=2017) Visual Studio
 :: This is where we intend to find the installation path in the registry
+set _VSWHERE=%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe
+"%_VSWHERE%" -? > NUL 2>&1 || set _VSWHERE=vswhere.exe
+"%_VSWHERE%" -? > NUL 2>&1 || goto :SKIPVSWHERE
+::%VSWHERE_RANGE%
+if not defined _VCINSTALLDIR @(
+  for /f "usebackq tokens=*" %%i in (`"%_VSWHERE%" -products * -format value -property installationPath -version %NUMVER%`) do (
+    call :SetVar _VCINSTALLDIR "%%i"
+  )
+)
+if defined _VCINSTALLDIR goto :DETECTION_FINISHED
+:SKIPVSWHERE
+if not "%NICEVER%" == "2017" goto :DETECTION_FINISHED
 set _VSINSTALLKEY=HKLM\SOFTWARE\Microsoft\VisualStudio\SxS\VS7
 if not defined _VCINSTALLDIR @(
   for /f "tokens=2*" %%i in ('reg query "%_VSINSTALLKEY%" /v %VCVER% 2^> NUL') do @(
@@ -237,6 +260,9 @@ set VCVERLBL=%VCVER:.=_%
 call :FRIENDLY_%VCVERLBL% > NUL 2>&1
 :: Jump over those "subs"
 goto :FRIENDLY_SET
+:FRIENDLY_16_0
+    set _VCVER=%NICEVER% ^[%TEMP_TOOLSET%^]
+    goto :EOF
 :FRIENDLY_15_0
     set _VCVER=%NICEVER% ^[%TEMP_TOOLSET%^]
     goto :EOF
