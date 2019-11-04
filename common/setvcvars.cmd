@@ -1,5 +1,5 @@
 @echo off
-@if not "%OS%"=="Windows_NT" @(echo This script requires Windows NT 4.0 or later to run properly! & goto :EOF)
+@if not "%OS%"=="Windows_NT" (echo This script requires Windows NT 4.0 or later to run properly! & goto :EOF)
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 ::: 2009-2019, Oliver Schneider (assarbad.net) - PUBLIC DOMAIN/CC0
 ::: Available from: <https://bitbucket.org/assarbad/scripts/>
@@ -29,7 +29,7 @@ set SUPPORTED_VC=16.0 15.0 14.0 12.0 11.0 10.0 9.0 8.0 7.1 7.0
 :: Marketing name of the Visual Studio versions
 set SUPPORTED_NICE=2019 2017 2015 2013 2012 2010 2008 2005 2003 2002
 set DEFAULT_TSET=x86
-if not "%~1" == "" @(
+if not "%~1" == "" (
   if "%~1" == "/?"     goto :Help
   if "%~1" == "-?"     goto :Help
   if "%~1" == "/h"     goto :Help
@@ -41,11 +41,12 @@ if defined VCVER_FRIENDLY echo This script expects a clean environment. Don't ru
 set MIN_VC=7.0
 set MAX_VC=16.0
 set MIN_NICE=2002
-reg /? > NUL 2>&1 || echo "REG.EXE is a prerequisite but wasn't found!" && goto :EOF
+reg /? > NUL 2>&1
+if not ERRORLEVEL 0 echo "REG.EXE is a prerequisite but wasn't found!" & goto :EOF
 set SETVCV_ERROR=0
 :: First parameter may point to a particular toolset ...
-if not "%~1" == "" @(
-  for %%i in (%SUPPORTED_TSET%) do @(
+if not "%~1" == "" (
+  for %%i in (%SUPPORTED_TSET%) do (
     if "%~1" == "%%i" shift & call :SetVar VCTGT_TOOLSET %%i
   )
 )
@@ -55,30 +56,45 @@ if not defined VCTGT_TOOLSET set VCTGT_TOOLSET=%DEFAULT_TSET%
 set SUPPORTED_PP=%SUPPORTED_NICE: =, %
 :: Allow the version to be overridden on the command line
 :: ... else find the VC versions in the order given by SUPPORTED_VC
-if not "%~1" == "" @(
-  for %%i in (%~1) do @(
+if not "%~1" == "" (
+  for %%i in (%~1) do (
     call :FindVC "%%i"
   )
-) else @(
+) else (
   echo Trying to auto-detect supported MSVC version ^(%SUPPORTED_PP%^)
   echo HINT: pass one ^(or several^) of %SUPPORTED_PP% on the command line.
   echo       alternatively one ^(or several^) of:  %SUPPORTED_VC%
   echo.
-  for %%i in (%SUPPORTED_VC%) do @(
+  for %%i in (%SUPPORTED_VC%) do (
     call :FindVC "%%i"
   )
 )
 :: Check result and quit with error if necessary
-if not defined VCVARS_PATH @(
-  if not "%~1" == "" @(
+if not defined VCVARS_PATH (
+  if not "%~1" == "" (
     echo Requested version ^"%~1^" of Visual Studio not found.
-  ) else @(
+  ) else (
     echo Could not find any supported version ^(%SUPPORTED_PP%^) of Visual C++.
   )
   popd & endlocal & exit /b %SETVCV_ERROR%
 )
-:: Return and make sure the outside world sees the results (i.e. leave the scope)
-popd & endlocal & if not "%VCVARS_PATH%" == "" @(call "%VCVARS_PATH%" %VCTGT_TOOLSET%) & if not "%VCVER_FRIENDLY%" == "" set VCVER_FRIENDLY=%VCVER_FRIENDLY%
+set ALLORNOT=%VCVARS_PATH:~-7,3%
+if "%ALLORNOT%" == "all" set VCTGT_TOOLSET_ARG=%VCTGT_TOOLSET%
+set WINSDK_TOOLSET=%VCTGT_TOOLSET:~0,5%
+if "%WINSDK_TOOLSET%" == "amd64" set WINSDK_TOOLSET=x64
+set WINSDK_TOOLSET=%WINSDK_TOOLSET:~0,3%
+:: ... make sure the outside world sees the results (i.e. leave the scope)
+popd & endlocal & if not "%VCVARS_PATH%" == "" @call "%VCVARS_PATH%" %VCTGT_TOOLSET_ARG% & if not "%VCVER_FRIENDLY%" == "" set VCVER_FRIENDLY=%VCVER_FRIENDLY%&set WINSDK_TOOLSET=%WINSDK_TOOLSET%
+:: ... and make sure the resource compiler (rc.exe) can be used (by default it can't on VS2015)
+rc.exe /? > NUL 2>&1
+:: Didn't fail, so nothing for us to fix
+if not ERRORLEVEL 1 goto :EOF
+:: We need those to locate rc.exe
+if not defined WindowsSdkDir goto :EOF
+if not defined WindowsSDKVersion goto :EOF
+"%WindowsSdkDir%\bin\%WindowsSDKVersion%%WINSDK_TOOLSET%\rc.exe" > NUL 2>&1
+if ERRORLEVEL 1 goto :EOF
+call :SetVar PATH "%PATH%;%WindowsSdkDir%\bin\%WindowsSDKVersion%%WINSDK_TOOLSET%"
 goto :EOF
 
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -90,7 +106,7 @@ goto :EOF
 :FindVC
 setlocal ENABLEEXTENSIONS & set VCVER=%~1
 :: We're not interested in overwriting an already existing value
-if defined VCVARS_PATH @( endlocal & goto :EOF )
+if defined VCVARS_PATH ( endlocal & goto :EOF )
 :: Now let's distinguish the "nice" version numbers (2002, ... 2019) from the internal ones
 set VCVER=%VCVER:vs=%
 :: Not a "real" version number, but the marketing one (2002, ... 2019)?
@@ -101,7 +117,7 @@ set NUMVER=%NUMVER:.1=%
 set VCVERLBL=%VCVER:.=_%
 call :PRETTY_%VCVERLBL% > NUL 2>&1
 call :TSET_%VCVERLBL% > NUL 2>&1
-if not defined NICEVER @( echo ERROR: This script does not know the given version Visual C++ version&endlocal&set SETVCV_ERROR=1&goto :EOF )
+if not defined NICEVER ( echo ERROR: This script does not know the given version Visual C++ version&endlocal&set SETVCV_ERROR=1&goto :EOF )
 :: Jump over those "subs"
 goto :NICE_SET
 :PRETTY_16_0
@@ -136,12 +152,10 @@ goto :NICE_SET
     goto :EOF
 :NICE_2019
     set VCVER=16.0
-    set VSWHERE_RANGE=16.0,17.0
     set NEWVS=1
     goto :EOF
 :NICE_2017
     set VCVER=15.0
-    set VSWHERE_RANGE=15.0,16.0
     set NEWVS=1
     goto :EOF
 :NICE_2015
@@ -191,25 +205,24 @@ echo Modern (^>=2017) Visual Studio
 set _VSWHERE=%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe
 "%_VSWHERE%" -? > NUL 2>&1 || set _VSWHERE=vswhere.exe
 "%_VSWHERE%" -? > NUL 2>&1 || goto :SKIPVSWHERE
-::%VSWHERE_RANGE%
-if not defined _VCINSTALLDIR @(
+if not defined _VCINSTALLDIR (
   for /f "usebackq tokens=*" %%i in (`"%_VSWHERE%" -products * -format value -property installationPath -version %NUMVER%`) do (
-    call :SetVar _VCINSTALLDIR "%%i"
+    call :SetVar _VCINSTALLDIR "%%i\VC\"
   )
 )
 if defined _VCINSTALLDIR goto :DETECTION_FINISHED
 :SKIPVSWHERE
 if not "%NICEVER%" == "2017" goto :DETECTION_FINISHED
 set _VSINSTALLKEY=HKLM\SOFTWARE\Microsoft\VisualStudio\SxS\VS7
-if not defined _VCINSTALLDIR @(
-  for /f "tokens=2*" %%i in ('reg query "%_VSINSTALLKEY%" /v %VCVER% 2^> NUL') do @(
+if not defined _VCINSTALLDIR (
+  for /f "tokens=2*" %%i in ('reg query "%_VSINSTALLKEY%" /v %VCVER% 2^> NUL') do (
     call :SetVar _VCINSTALLDIR "%%j"
   )
 )
 set _VSINSTALLKEY=HKLM\SOFTWARE\Wow6432Node\Microsoft\VisualStudio\SxS\VS7
 :: If we haven't found it by now, try the WOW64 "Software" key
-if not defined _VCINSTALLDIR @(
-  for /f "tokens=2*" %%i in ('reg query "%_VSINSTALLKEY%" /v %VCVER% 2^> NUL') do @(
+if not defined _VCINSTALLDIR (
+  for /f "tokens=2*" %%i in ('reg query "%_VSINSTALLKEY%" /v %VCVER% 2^> NUL') do (
     call :SetVar _VCINSTALLDIR "%%j"
   )
 )
@@ -218,42 +231,37 @@ goto :DETECTION_FINISHED
 :: echo Old (^<2017) Visual Studio
 :: The versions of Visual Studio prior to 2017 were all using this key
 set _VSINSTALLKEY=HKLM\SOFTWARE\Microsoft\VisualStudio\%VCVER%\Setup\VC
-if not defined _VCINSTALLDIR @(
-  for /f "tokens=2*" %%i in ('reg query "%_VSINSTALLKEY%" /v ProductDir 2^> NUL') do @(
+if not defined _VCINSTALLDIR (
+  for /f "tokens=2*" %%i in ('reg query "%_VSINSTALLKEY%" /v ProductDir 2^> NUL') do (
     call :SetVar _VCINSTALLDIR "%%j"
   )
 )
 set _VSINSTALLKEY=HKLM\SOFTWARE\Wow6432Node\Microsoft\VisualStudio\%VCVER%\Setup\VC
 :: If we haven't found it by now, try the WOW64 "Software" key
-if not defined _VCINSTALLDIR @(
-  for /f "tokens=2*" %%i in ('reg query "%_VSINSTALLKEY%" /v ProductDir 2^> NUL') do @(
+if not defined _VCINSTALLDIR (
+  for /f "tokens=2*" %%i in ('reg query "%_VSINSTALLKEY%" /v ProductDir 2^> NUL') do (
     call :SetVar _VCINSTALLDIR "%%j"
   )
 )
 :DETECTION_FINISHED
-set TEMP_TOOLSET=%VCTGT_TOOLSET%
 set TEMP_SUPPORTED=
-if defined _VCINSTALLDIR @(
-  if EXIST "%_VCINSTALLDIR%\VC\Auxiliary\Build\vcvarsall.bat" @(
-    call :SetVar VCVARS_PATH "%_VCINSTALLDIR%\VC\Auxiliary\Build\vcvarsall.bat"
-  )
-  if EXIST "%_VCINSTALLDIR%\vcvarsall.bat" @(
-    call :SetVar VCVARS_PATH "%_VCINSTALLDIR%\vcvarsall.bat"
-  )
-  if not defined VCVARS_PATH if EXIST "%_VCINSTALLDIR%\bin\vcvars32.bat" @(
-    call :SetVar VCVARS_PATH "%_VCINSTALLDIR%\bin\vcvars32.bat"
-    call :SetVar VCTGT_TOOLSET
-  )
+echo _VCINSTALLDIR=%_VCINSTALLDIR%
+if not defined _VCINSTALLDIR goto :SKIP_VCVARS
+if "%VCTGT_TOOLSET%" == "x86" set BATCHNAME=vcvars32.bat
+if "%VCTGT_TOOLSET%" == "amd64" set BATCHNAME=vcvars64.bat
+if not defined BATCHNAME set BATCHNAME=vcvars%VCTGT_TOOLSET%.bat
+for %%i in (Auxiliary\Build\%BATCHNAME% bin\%VCTGT_TOOLSET%\%BATCHNAME% bin\%BATCHNAME% Auxiliary\Build\vcvarsall.bat vcvarsall.bat) do (
+  call :FindVCVarsScript "%_VCINSTALLDIR%" "%%i" "%VCTGT_TOOLSET%"
 )
-if not "%VCTGT_TOOLSET%" == "" @(
-  for %%i in (%SUPPORTED_TSET%) do @(
+:SKIP_VCVARS
+if not "%VCTGT_TOOLSET%" == "" (
+  for %%i in (%SUPPORTED_TSET%) do (
     if "%VCTGT_TOOLSET%" == "%%i" call :SetVar TEMP_SUPPORTED yes
   )
 )
-if not "%TEMP_SUPPORTED%" == "yes" @( echo ERROR: Invalid toolset %TEMP_TOOLSET% for version %VCVER% of Visual C++&endlocal&set SETVCV_ERROR=2&goto :EOF )
-set VCTGT_TOOLSET=%TEMP_TOOLSET%
+if not "%TEMP_SUPPORTED%" == "yes" ( echo ERROR: Invalid toolset %TEMP_TOOLSET% for version %VCVER% of Visual C++&endlocal&set SETVCV_ERROR=2&goto :EOF )
 :: Return, in case nothing was found
-if not defined VCVARS_PATH @( endlocal&set SETVCV_ERROR=3&goto :EOF )
+if not defined VCVARS_PATH ( endlocal&set SETVCV_ERROR=3&goto :EOF )
 :: Replace the . in the version by an underscore
 set VCVERLBL=%VCVER:.=_%
 :: Try to set a friendlier name for the Visual Studio version
@@ -334,4 +342,30 @@ endlocal & set %VAR_NAME%=%~2
 goto :EOF
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 ::: \ SetVar subroutine
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+::: / FindVCVarsScript subroutine
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+:FindVCVarsScript
+setlocal ENABLEEXTENSIONS
+:: Do not overwrite any pre-existing path
+if defined VCVARS_PATH endlocal&goto :EOF
+set VCINSTALLDIR=%~1
+set VCVARSGUESS=%~2
+set VCTGT_TOOLSET=%~3
+set VCVARS_CURRENT_GUESS=%VCINSTALLDIR%%VCVARSGUESS%
+:: Use the guess passed as second argument, after building a path based on VCINSTALLDIR
+if EXIST "%VCVARS_CURRENT_GUESS%" set VCVARS_PATH=%VCVARS_CURRENT_GUESS%
+if defined VCVARS_PATH goto :VCVarsFound
+:: Just in case the install directory path contains no trailing backslash
+set VCVARS_CURRENT_GUESS=%VCINSTALLDIR%\%VCVARSGUESS%
+if EXIST "%VCVARS_CURRENT_GUESS%" set VCVARS_PATH=%VCVARS_CURRENT_GUESS%
+if defined VCVARS_PATH goto :VCVarsFound
+endlocal & goto :EOF
+:VCVarsFound
+endlocal & set VCVARS_PATH=%VCVARS_PATH%
+goto :EOF
+::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+::: \ FindVCVarsScript subroutine
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
