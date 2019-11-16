@@ -71,7 +71,7 @@ public:
 
     void ReReadMountPoints();
     bool IsVolumeMountPoint(CString path);
-    bool IsFolderJunction(CString path);
+    bool IsFolderJunction(DWORD attr);
 
     COLORREF AltColor();                    // Coloring of compressed items
     COLORREF AltEncryptionColor();          // Coloring of encrypted items

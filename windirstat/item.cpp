@@ -390,7 +390,7 @@ int CItem::GetImageToCache() const
         {
             image = GetMyImageList()->getMountPointImage();
         }
-        else if(GetType() == IT_DIRECTORY && GetWDSApp()->IsFolderJunction(path))
+        else if(GetType() == IT_DIRECTORY && GetWDSApp()->IsFolderJunction(GetAttributes()))
         {
             image = GetMyImageList()->getJunctionImage();
         }
@@ -1356,7 +1356,7 @@ bool CItem::StartRefresh()
         return true;
     }
 
-    if(GetType() == IT_DIRECTORY && !IsRootItem() && GetWDSApp()->IsFolderJunction(GetPath()) && !GetOptions()->IsFollowJunctionPoints())
+    if(GetType() == IT_DIRECTORY && !IsRootItem() && GetWDSApp()->IsFolderJunction(GetAttributes()) && !GetOptions()->IsFollowJunctionPoints())
     {
         return true;
     }
@@ -1376,12 +1376,12 @@ bool CItem::StartRefresh()
             CreateUnknownItem();
         }
     }
-	
-	{
-		CWorkLimiter limiter;
-		limiter.Start(0);
-		DoSomeWork(&limiter);
-	}
+    
+    {
+        CWorkLimiter limiter;
+        limiter.Start(0);
+        DoSomeWork(&limiter);
+    }
 
     if(wasExpanded)
     {
@@ -1846,7 +1846,7 @@ void CItem::AddDirectory(CFileFindWDS& finder)
 {
     bool dontFollow = GetWDSApp()->IsVolumeMountPoint(finder.GetFilePath()) && !GetOptions()->IsFollowMountPoints();
 
-    dontFollow |= GetWDSApp()->IsFolderJunction(finder.GetFilePath()) && !GetOptions()->IsFollowJunctionPoints();
+    dontFollow |= GetWDSApp()->IsFolderJunction(finder.GetAttributes()) && !GetOptions()->IsFollowJunctionPoints();
 
     CItem *child = new CItem(IT_DIRECTORY, finder.GetFileName(), dontFollow);
     FILETIME t;

@@ -41,6 +41,7 @@ public:
     void Initialize();
     bool IsVolumeMountPoint(CString path);
     bool IsFolderJunction(CString path);
+    bool IsFolderJunction(DWORD attr);
 
 private:
     void Clear();

@@ -694,7 +694,8 @@ void CDirstatDoc::RecurseRefreshMountPointItems(CItem *item)
 
 void CDirstatDoc::RecurseRefreshJunctionItems(CItem *item)
 {
-    if(IT_DIRECTORY == item->GetType() && item != GetRootItem() && GetWDSApp()->IsFolderJunction(item->GetPath()))
+    
+    if(IT_DIRECTORY == item->GetType() && item != GetRootItem() && GetWDSApp()->IsFolderJunction(item->GetAttributes()))
     {
         RefreshItem(item);
     }
@@ -1010,7 +1011,7 @@ void CDirstatDoc::RecursiveUserDefinedCleanup(const USERDEFINEDCLEANUP *udc, con
 {
     // (Depth first.)
 
-    CFileFind finder;
+    CFileFindWDS finder;
     BOOL b = finder.FindFile(currentPath + _T("\\*.*"));
     while(b)
     {
@@ -1023,7 +1024,7 @@ void CDirstatDoc::RecursiveUserDefinedCleanup(const USERDEFINEDCLEANUP *udc, con
         {
             continue;
         }
-        if(GetWDSApp()->IsFolderJunction(finder.GetFilePath()) && !GetOptions()->IsFollowJunctionPoints())
+        if(GetWDSApp()->IsFolderJunction(finder.GetAttributes()) && !GetOptions()->IsFollowJunctionPoints())
         {
             continue;
         }

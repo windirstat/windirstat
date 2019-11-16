@@ -225,6 +225,17 @@ bool CReparsePoints::IsVolumeMountPoint(CString path)
 
 // Check whether the current item is a junction point but no volume mount point
 // as the latter ones are treated differently (see above).
+bool CReparsePoints::IsFolderJunction(DWORD attr)
+{
+    if (attr == INVALID_FILE_ATTRIBUTES)
+    {
+        return false;
+    }
+
+    return ((attr & FILE_ATTRIBUTE_REPARSE_POINT) != 0);
+}
+
+// ... same as before, but based on the full path
 bool CReparsePoints::IsFolderJunction(CString path)
 {
     if(IsVolumeMountPoint(path))
@@ -232,13 +243,7 @@ bool CReparsePoints::IsFolderJunction(CString path)
         return false;
     }
 
-    DWORD attr = ::GetFileAttributes(path);
-    if(attr == INVALID_FILE_ATTRIBUTES)
-    {
-        return false;
-    }
-
-    return ((attr & FILE_ATTRIBUTE_REPARSE_POINT) != 0);
+    return IsFolderJunction(::GetFileAttributes(path));
 }
 
 bool CReparsePoints::IsVolumeMountPoint(CString volume, CString path)
