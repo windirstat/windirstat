@@ -25,6 +25,7 @@ if _OPTIONS["release"] then
     _OPTIONS["release"] = pfx
 end
 do
+    local name_map = {vs2005 = "vs8", vs2008 = "vs9", vs2010 = "vs10", vs2012 = "vs11", vs2013 = "vs12", vs2015 = "vs14", vs2017 = "vs15", vs2019 = "vs16"}
     -- This is mainly to support older premake4 builds
     if not premake.project.getbasename then
         print "Magic happens ..."
@@ -97,7 +98,6 @@ do
     premake.project.getbasename = function(prjname, pattern)
         -- The below is used to insert the .vs(8|9|10|11|12|14|15) into the file names for projects and solutions
         if _ACTION then
-            name_map = {vs2005 = "vs8", vs2008 = "vs9", vs2010 = "vs10", vs2012 = "vs11", vs2013 = "vs12", vs2015 = "vs14", vs2017 = "vs15"}
             if name_map[_ACTION] then
                 pattern = pattern:gsub("%%%%", "%%%%." .. name_map[_ACTION])
             else
@@ -131,8 +131,8 @@ do
         end
         return orig_config_isincrementallink(cfg)
     end
-    -- We need full debug info for VS2017
-    if action == "vs2017" then
+    -- We need full debug info for VS2017/VS2019
+    if action == "vs2017" or action == "vs2019" then
         local orig_vc2010_link = premake.vstudio.vc2010.link
         premake.vstudio.vc2010.link = function(cfg)
             if cfg.flags.Symbols ~= nil and cfg.flags.Symbols then
@@ -174,6 +174,7 @@ do
         io.capture() -- empties io.captured
         orig_vc2010_configurationPropertyGroup(cfg, cfginfo)
         local captured = io.endcapture()
+        assert(captured ~= nil)
         local toolsets = { vs2012 = "v110", vs2013 = "v120", vs2015 = "v140", vs2017 = "v141" }
         local toolset = toolsets[_ACTION]
         if toolset then
@@ -307,6 +308,53 @@ do
             end
         end
     end
+    local orig_premake_vs2010_vcxproj = premake.vs2010_vcxproj
+    premake.vs2010_vcxproj = function(prj)
+        local old_captured = io.captured -- save io.captured state
+        io.capture() -- this sets io.captured = ''
+        orig_premake_vs2010_vcxproj(prj)
+        local captured = io.endcapture()
+        assert(captured ~= nil)
+        captured = captured:gsub("%s+<ProgramDataBaseFileName>[^<]+</ProgramDataBaseFileName>", "")
+        if old_captured ~= nil then
+            io.captured = old_captured .. captured -- restore outer captured state, if any
+        else
+            io.write(captured)
+        end
+    end
+    -- ... same as above but for VS200x this time
+    local function wrap_remove_pdb_attribute(origfunc)
+        local fct = function(cfg)
+            local old_captured = io.captured -- save io.captured state
+            io.capture() -- this sets io.captured = ''
+            origfunc(cfg)
+            local captured = io.endcapture()
+            assert(captured ~= nil)
+            captured = captured:gsub('%s+ProgramDataBaseFileName=\"[^"]+\"', "")
+            if old_captured ~= nil then
+                io.captured = old_captured .. captured -- restore outer captured state, if any
+            else
+                io.write(captured)
+            end
+        end
+        return fct
+    end
+    premake.vstudio.vc200x.VCLinkerTool = wrap_remove_pdb_attribute(premake.vstudio.vc200x.VCLinkerTool)
+    premake.vstudio.vc200x.toolmap.VCLinkerTool = premake.vstudio.vc200x.VCLinkerTool -- this is important as well
+    premake.vstudio.vc200x.VCCLCompilerTool = wrap_remove_pdb_attribute(premake.vstudio.vc200x.VCCLCompilerTool)
+    premake.vstudio.vc200x.toolmap.VCCLCompilerTool = premake.vstudio.vc200x.VCCLCompilerTool -- this is important as well
+    -- Fix up premake.getlinks() to not do stupid stuff with object files we pass
+    local orig_premake_getlinks = premake.getlinks
+    premake.getlinks = function(cfg, kind, part)
+        local origret = orig_premake_getlinks(cfg, kind, part)
+        local ret = {}
+        for k,v in ipairs(origret) do
+            local dep = v:gsub(".obj.lib", ".obj")
+            dep = dep:gsub(".lib.lib", ".lib")
+            table.insert(ret, dep)
+        end
+        return ret
+    end
 end
 local function transformMN(input) -- transform the macro names for older Visual Studio versions
     local new_map   = { vs2002 = 0, vs2003 = 0, vs2005 = 0, vs2008 = 0 }
@@ -326,8 +374,9 @@ local function inc(inc_dir)
 end
 newoption { trigger = "resources", description = "Also create projects for the resource DLLs." }
 newoption { trigger = "sdk71", description = "Applies to VS 2005 and 2008. If you have the Windows 7 SP1\n                   SDK, use this to create projects for a feature-complete\n                   WinDirStat." }
-newoption { trigger = "release", description = "Creates a solution suitable for a release build." }
 newoption { trigger = "dev", description = "Add projects only relevant during development." }
+newoption { trigger = "release", description = "Creates a solution suitable for a release build." }
+
 newoption { trigger = "xp", description = "Enable XP-compatible build for newer Visual Studio versions." }
 
 --_CRT_SECURE_NO_WARNINGS, _CRT_SECURE_NO_DEPRECATE, _SCL_SECURE_NO_WARNINGS, _AFX_SECURE_NO_WARNINGS and _ATL_SECURE_NO_WARNINGS???
@@ -434,7 +483,7 @@ solution (iif(release, slnname, "windirstat"))
         configuration {"vs*"}
             defines         {"WINVER=0x0501", "LUA_REG_NO_WINTRACE", "LUA_REG_NO_HIVEOPS", "LUA_REG_NO_DLL"}
 
-        configuration {"vs2015 or vs2017"}
+        configuration {"vs2015 or vs2017 or vs2019"}
             defines         {"_ALLOW_RTCc_IN_STL"}
 
         if _OPTIONS["sdk71"] then
