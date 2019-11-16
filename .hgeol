@@ -27,7 +27,6 @@ native = LF
 README.* = LF
 ##### Individual files
 COPYRIGHT = LF
-Makefile = LF
 README = LF
 .gitignore = LF
 Makefile = LF
@@ -41,3 +40,4 @@ lj.supp = LF
 **.vcxproj.filters = CRLF
 **.vcxproj = CRLF
 **.vcproj = CRLF
+**.sln = CRLF
