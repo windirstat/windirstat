@@ -449,7 +449,7 @@ solution (iif(release, slnname, "windirstat"))
             ["Source Files/Controls/*"] = { "windirstat/Controls/*.cpp" },
             ["Source Files/Dialogs/*"] = { "windirstat/Dialogs/*.cpp" },
             ["Source Files/*"] = { "windirstat/*.cpp" },
-            ["Special Files/*"] = { "common/BUILD", "common/*.cmd", "premake4.lua", "*.cmd" },
+            ["Special Files/*"] = { "common/BUILD", "common/*.cmd", "premake4.lua", "*.cmd", ".editorconfig", ".hgignore", ".hgeol" },
             ["*"] = { "*.txt", "*.md" },
         }
 

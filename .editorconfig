@@ -1,0 +1,16 @@
+root = true
+
+[*]
+end_of_line = lf
+insert_final_newline = true
+indent_style = space
+indent_size = 4
+
+[*.{rc,rc2,cmd,bat,vcxproj,vcxproj.filters,vcproj,sln}]
+end_of_line = crlf
+
+[*.{c,cpp,h}]
+trim_trailing_whitespace = true
+
+[{Makefile,GNUmakefile}]
+indent_style = tab
