@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2019 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -266,11 +266,13 @@ class CTreemapPreview: public CStatic
     {
     public:
         CItem(int size, COLORREF color)
+            : m_size(size)
+            , m_color(color)
         {
-            m_size = size;
-            m_color = color;
         }
         CItem(const CArray<CItem *, CItem *>& children)
+            : m_size(0)
+            , m_color(CLR_INVALID)
         {
             m_size = 0;
             for(int i = 0; i < children.GetSize(); i++)

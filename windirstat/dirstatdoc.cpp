@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2019 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -67,16 +67,16 @@ IMPLEMENT_DYNCREATE(CDirstatDoc, CDocument)
 
 
 CDirstatDoc::CDirstatDoc()
+    : m_showFreeSpace(CPersistence::GetShowFreeSpace())
+    , m_showUnknown(CPersistence::GetShowUnknown())
+    , m_showMyComputer(false)
+    , m_rootItem(NULL)
+    , m_zoomItem(NULL)
+    , m_workingItem(NULL)
+    , m_extensionDataValid(false)
 {
     ASSERT(NULL == _theDocument);
     _theDocument = this;
-    m_rootItem = NULL;
-    m_workingItem = NULL;
-    m_zoomItem = NULL;
-
-    m_showFreeSpace = CPersistence::GetShowFreeSpace();
-    m_showUnknown = CPersistence::GetShowUnknown();
-    m_extensionDataValid = false;
 
     VTRACE(_T("sizeof(CItem) = %d"), sizeof(CItem));
 }

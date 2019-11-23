@@ -7,12 +7,13 @@ if premake.CurrentContainer ~= nil then
         pfx = ""
     end
 else
+    local name_map = {vs2005 = "vs8", vs2008 = "vs9", vs2010 = "vs10", vs2012 = "vs11", vs2013 = "vs12", vs2015 = "vs14", vs2017 = "vs15", vs2019 = "vs16"}
+    standalone = true
     -- Name the project files after their VS version
     local orig_getbasename = premake.project.getbasename
     premake.project.getbasename = function(prjname, pattern)
+        -- The below is used to insert the .vs(8|9|10|11|12|14|15|16) into the file names for projects and solutions
         if _ACTION then
-            -- The below is used to insert the .vs(8|9|10|11|12|14|15) into the file names for projects and solutions
-            name_map = {vs2005 = "vs8", vs2008 = "vs9", vs2010 = "vs10", vs2012 = "vs11", vs2013 = "vs12", vs2015 = "vs14", vs2017 = "vs15"}
             if name_map[_ACTION] then
                 pattern = pattern:gsub("%%%%", "%%%%." .. name_map[_ACTION])
             else
@@ -113,8 +114,8 @@ function create_luajit_projects(basedir)
         offs = bd:gsub("[^\\/]+", ""):gsub(".", "..\\")
     end
     local oldcurr = premake.CurrentContainer
-    local int_dir           = fmt(pfx.."intermediate\\%s_$(%s)_$(%s)\\$(ProjectName)", action, transformMN("Platform"), transformMN("Configuration"))
-    local inc_dir           = fmt(pfx.."intermediate\\%s_$(%s)", action, transformMN("Platform"))
+    local int_dir           = pfx.."intermediate\\" .. action .. "_$(" .. transformMN("Platform") .. ")_$(" .. transformMN("Configuration") .. ")\\$(ProjectName)"
+    local inc_dir           = int_dir .. "\\inc"
     -- Single minilua for all configurations and platforms
     project (pfx.."minilua") -- required to build LuaJIT
         uuid                ("531911BC-0023-4EC6-A2CE-6C3F5C182647")
@@ -159,7 +160,8 @@ function create_luajit_projects(basedir)
         kind                ("StaticLib")
         location            (bd.."src")
         targetname          (fmt("luajit2_$(%s)", transformMN("Platform")))
-        targetdir           (offs.."build")
+        targetdir           (iif(release, slnname, iif(action == "vs2005", "build", "build." .. action)))
+        --targetdir           (offs.."build")
         includedirs         {"$(ProjectDir)", "$(ProjectDir)..\\dynasm", inc_dir}
         flags               {"StaticRuntime", "Optimize", "No64BitChecks"}
         objdir              (int_dir)
@@ -208,8 +210,7 @@ function create_luajit_projects(basedir)
     premake.CurrentContainer = oldcurr -- restore container before this function was called
 end
 
-if premake.CurrentContainer == nil then
-    standalone = true
+if standalone then
     solution ("luajit")
         configurations  {"Release"}
         platforms       {"x32", "x64"}

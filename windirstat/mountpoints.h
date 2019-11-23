@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2019 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -32,6 +32,8 @@ class CReparsePoints
         CString point;  // Path like "mount\backup\"
         CString volume; // Volume identifier
         DWORD   flags;  // File system flags (see GetVolumeInformation documentation)
+
+        SPointVolume() : flags(0) {}
     };
 
     typedef CArray<SPointVolume, SPointVolume&> PointVolumeArray;

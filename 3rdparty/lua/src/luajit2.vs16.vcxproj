@@ -1,0 +1,321 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{9F35C2BB-DF1E-400A-A829-AE34E1C91A70}</ProjectGuid>
+    <RootNamespace>luajit2</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>..\..\..\build.vs2019\</OutDir>
+    <IntDir>..\..\..\intermediate\vs2019_$(Platform)_$(Configuration)\$(ProjectName)\</IntDir>
+    <TargetName>luajit2_$(Platform)</TargetName>
+    <TargetExt>.lib</TargetExt>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutDir>..\..\..\build.vs2019\</OutDir>
+    <IntDir>..\..\..\intermediate\vs2019_$(Platform)_$(Configuration)\$(ProjectName)\</IntDir>
+    <TargetName>luajit2_$(Platform)</TargetName>
+    <TargetExt>.lib</TargetExt>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <Optimization>Full</Optimization>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)..\dynasm;..\..\..\intermediate\vs2019_$(Platform)_$(Configuration)\$(ProjectName)\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>NDEBUG;_CRT_SECURE_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>false</MinimalRebuild>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <PrecompiledHeader></PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat></DebugInformationFormat>
+      <CompileAs>CompileAsC</CompileAs>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>NDEBUG;_CRT_SECURE_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)..\dynasm;..\..\..\intermediate\vs2019_$(Platform)_$(Configuration)\$(ProjectName)\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+  <Lib>
+    <OutputFile>$(OutDir)luajit2_$(Platform).lib</OutputFile>
+    <AdditionalOptions>/nodefaultlib &quot;$(IntDir)\lj_vm32.obj&quot; %(AdditionalOptions)</AdditionalOptions>
+    <TargetMachine>MachineX86</TargetMachine>
+  </Lib>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+    <PreBuildEvent>
+      <Command>if not exist &quot;..\..\..\intermediate\vs2019_$(Platform)_$(Configuration)\$(ProjectName)\inc&quot; md &quot;..\..\..\intermediate\vs2019_$(Platform)_$(Configuration)\$(ProjectName)\inc&quot;&#x0D;&#x0A;buildvm32 -m peobj -o &quot;$(IntDir)\lj_vm32.obj&quot;&#x0D;&#x0A;buildvm32 -m bcdef -o &quot;..\..\..\intermediate\vs2019_$(Platform)_$(Configuration)\$(ProjectName)\inc\lj_bcdef.h&quot; lib_base.c lib_math.c lib_bit.c lib_string.c lib_table.c lib_io.c lib_os.c lib_package.c lib_debug.c lib_jit.c lib_ffi.c&#x0D;&#x0A;buildvm32 -m ffdef -o &quot;..\..\..\intermediate\vs2019_$(Platform)_$(Configuration)\$(ProjectName)\inc\lj_ffdef.h&quot; lib_base.c lib_math.c lib_bit.c lib_string.c lib_table.c lib_io.c lib_os.c lib_package.c lib_debug.c lib_jit.c lib_ffi.c&#x0D;&#x0A;buildvm32 -m libdef -o &quot;..\..\..\intermediate\vs2019_$(Platform)_$(Configuration)\$(ProjectName)\inc\lj_libdef.h&quot; lib_base.c lib_math.c lib_bit.c lib_string.c lib_table.c lib_io.c lib_os.c lib_package.c lib_debug.c lib_jit.c lib_ffi.c&#x0D;&#x0A;buildvm32 -m recdef -o &quot;..\..\..\intermediate\vs2019_$(Platform)_$(Configuration)\$(ProjectName)\inc\lj_recdef.h&quot; lib_base.c lib_math.c lib_bit.c lib_string.c lib_table.c lib_io.c lib_os.c lib_package.c lib_debug.c lib_jit.c lib_ffi.c&#x0D;&#x0A;buildvm32 -m folddef -o &quot;..\..\..\intermediate\vs2019_$(Platform)_$(Configuration)\$(ProjectName)\inc\lj_folddef.h&quot; lj_opt_fold.c</Command>
+    </PreBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <Optimization>Full</Optimization>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)..\dynasm;..\..\..\intermediate\vs2019_$(Platform)_$(Configuration)\$(ProjectName)\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>NDEBUG;_CRT_SECURE_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>false</MinimalRebuild>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <PrecompiledHeader></PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat></DebugInformationFormat>
+      <CompileAs>CompileAsC</CompileAs>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>NDEBUG;_CRT_SECURE_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)..\dynasm;..\..\..\intermediate\vs2019_$(Platform)_$(Configuration)\$(ProjectName)\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+  <Lib>
+    <OutputFile>$(OutDir)luajit2_$(Platform).lib</OutputFile>
+    <AdditionalOptions>/nodefaultlib &quot;$(IntDir)\lj_vm64.obj&quot; %(AdditionalOptions)</AdditionalOptions>
+    <TargetMachine>MachineX64</TargetMachine>
+  </Lib>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+    <PreBuildEvent>
+      <Command>if not exist &quot;..\..\..\intermediate\vs2019_$(Platform)_$(Configuration)\$(ProjectName)\inc&quot; md &quot;..\..\..\intermediate\vs2019_$(Platform)_$(Configuration)\$(ProjectName)\inc&quot;&#x0D;&#x0A;buildvm64 -m peobj -o &quot;$(IntDir)\lj_vm64.obj&quot;&#x0D;&#x0A;buildvm64 -m bcdef -o &quot;..\..\..\intermediate\vs2019_$(Platform)_$(Configuration)\$(ProjectName)\inc\lj_bcdef.h&quot; lib_base.c lib_math.c lib_bit.c lib_string.c lib_table.c lib_io.c lib_os.c lib_package.c lib_debug.c lib_jit.c lib_ffi.c&#x0D;&#x0A;buildvm64 -m ffdef -o &quot;..\..\..\intermediate\vs2019_$(Platform)_$(Configuration)\$(ProjectName)\inc\lj_ffdef.h&quot; lib_base.c lib_math.c lib_bit.c lib_string.c lib_table.c lib_io.c lib_os.c lib_package.c lib_debug.c lib_jit.c lib_ffi.c&#x0D;&#x0A;buildvm64 -m libdef -o &quot;..\..\..\intermediate\vs2019_$(Platform)_$(Configuration)\$(ProjectName)\inc\lj_libdef.h&quot; lib_base.c lib_math.c lib_bit.c lib_string.c lib_table.c lib_io.c lib_os.c lib_package.c lib_debug.c lib_jit.c lib_ffi.c&#x0D;&#x0A;buildvm64 -m recdef -o &quot;..\..\..\intermediate\vs2019_$(Platform)_$(Configuration)\$(ProjectName)\inc\lj_recdef.h&quot; lib_base.c lib_math.c lib_bit.c lib_string.c lib_table.c lib_io.c lib_os.c lib_package.c lib_debug.c lib_jit.c lib_ffi.c&#x0D;&#x0A;buildvm64 -m folddef -o &quot;..\..\..\intermediate\vs2019_$(Platform)_$(Configuration)\$(ProjectName)\inc\lj_folddef.h&quot; lj_opt_fold.c</Command>
+    </PreBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="lauxlib.h" />
+    <ClInclude Include="lj_alloc.h" />
+    <ClInclude Include="lj_arch.h" />
+    <ClInclude Include="lj_asm.h" />
+    <ClInclude Include="lj_asm_arm.h" />
+    <ClInclude Include="lj_asm_mips.h" />
+    <ClInclude Include="lj_asm_ppc.h" />
+    <ClInclude Include="lj_asm_x86.h" />
+    <ClInclude Include="lj_bc.h" />
+    <ClInclude Include="lj_bcdump.h" />
+    <ClInclude Include="lj_carith.h" />
+    <ClInclude Include="lj_ccall.h" />
+    <ClInclude Include="lj_ccallback.h" />
+    <ClInclude Include="lj_cconv.h" />
+    <ClInclude Include="lj_cdata.h" />
+    <ClInclude Include="lj_char.h" />
+    <ClInclude Include="lj_clib.h" />
+    <ClInclude Include="lj_cparse.h" />
+    <ClInclude Include="lj_crecord.h" />
+    <ClInclude Include="lj_ctype.h" />
+    <ClInclude Include="lj_debug.h" />
+    <ClInclude Include="lj_def.h" />
+    <ClInclude Include="lj_dispatch.h" />
+    <ClInclude Include="lj_emit_arm.h" />
+    <ClInclude Include="lj_emit_mips.h" />
+    <ClInclude Include="lj_emit_ppc.h" />
+    <ClInclude Include="lj_emit_x86.h" />
+    <ClInclude Include="lj_err.h" />
+    <ClInclude Include="lj_errmsg.h" />
+    <ClInclude Include="lj_ff.h" />
+    <ClInclude Include="lj_ffrecord.h" />
+    <ClInclude Include="lj_frame.h" />
+    <ClInclude Include="lj_func.h" />
+    <ClInclude Include="lj_gc.h" />
+    <ClInclude Include="lj_gdbjit.h" />
+    <ClInclude Include="lj_ir.h" />
+    <ClInclude Include="lj_ircall.h" />
+    <ClInclude Include="lj_iropt.h" />
+    <ClInclude Include="lj_jit.h" />
+    <ClInclude Include="lj_lex.h" />
+    <ClInclude Include="lj_lib.h" />
+    <ClInclude Include="lj_mcode.h" />
+    <ClInclude Include="lj_meta.h" />
+    <ClInclude Include="lj_obj.h" />
+    <ClInclude Include="lj_parse.h" />
+    <ClInclude Include="lj_record.h" />
+    <ClInclude Include="lj_snap.h" />
+    <ClInclude Include="lj_state.h" />
+    <ClInclude Include="lj_str.h" />
+    <ClInclude Include="lj_strscan.h" />
+    <ClInclude Include="lj_tab.h" />
+    <ClInclude Include="lj_target.h" />
+    <ClInclude Include="lj_target_arm.h" />
+    <ClInclude Include="lj_target_mips.h" />
+    <ClInclude Include="lj_target_ppc.h" />
+    <ClInclude Include="lj_target_x86.h" />
+    <ClInclude Include="lj_trace.h" />
+    <ClInclude Include="lj_traceerr.h" />
+    <ClInclude Include="lj_udata.h" />
+    <ClInclude Include="lj_vm.h" />
+    <ClInclude Include="lj_vmevent.h" />
+    <ClInclude Include="lua.h" />
+    <ClInclude Include="luaconf.h" />
+    <ClInclude Include="luajit.h" />
+    <ClInclude Include="lualib.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="lib_aux.c">
+    </ClCompile>
+    <ClCompile Include="lib_base.c">
+    </ClCompile>
+    <ClCompile Include="lib_bit.c">
+    </ClCompile>
+    <ClCompile Include="lib_debug.c">
+    </ClCompile>
+    <ClCompile Include="lib_ffi.c">
+    </ClCompile>
+    <ClCompile Include="lib_init.c">
+    </ClCompile>
+    <ClCompile Include="lib_io.c">
+    </ClCompile>
+    <ClCompile Include="lib_jit.c">
+    </ClCompile>
+    <ClCompile Include="lib_math.c">
+    </ClCompile>
+    <ClCompile Include="lib_os.c">
+    </ClCompile>
+    <ClCompile Include="lib_package.c">
+    </ClCompile>
+    <ClCompile Include="lib_string.c">
+    </ClCompile>
+    <ClCompile Include="lib_table.c">
+    </ClCompile>
+    <ClCompile Include="lj_alloc.c">
+    </ClCompile>
+    <ClCompile Include="lj_api.c">
+    </ClCompile>
+    <ClCompile Include="lj_asm.c">
+    </ClCompile>
+    <ClCompile Include="lj_bc.c">
+    </ClCompile>
+    <ClCompile Include="lj_bcread.c">
+    </ClCompile>
+    <ClCompile Include="lj_bcwrite.c">
+    </ClCompile>
+    <ClCompile Include="lj_carith.c">
+    </ClCompile>
+    <ClCompile Include="lj_ccall.c">
+    </ClCompile>
+    <ClCompile Include="lj_ccallback.c">
+    </ClCompile>
+    <ClCompile Include="lj_cconv.c">
+    </ClCompile>
+    <ClCompile Include="lj_cdata.c">
+    </ClCompile>
+    <ClCompile Include="lj_char.c">
+    </ClCompile>
+    <ClCompile Include="lj_clib.c">
+    </ClCompile>
+    <ClCompile Include="lj_cparse.c">
+    </ClCompile>
+    <ClCompile Include="lj_crecord.c">
+    </ClCompile>
+    <ClCompile Include="lj_ctype.c">
+    </ClCompile>
+    <ClCompile Include="lj_debug.c">
+    </ClCompile>
+    <ClCompile Include="lj_dispatch.c">
+    </ClCompile>
+    <ClCompile Include="lj_err.c">
+    </ClCompile>
+    <ClCompile Include="lj_ffrecord.c">
+    </ClCompile>
+    <ClCompile Include="lj_func.c">
+    </ClCompile>
+    <ClCompile Include="lj_gc.c">
+    </ClCompile>
+    <ClCompile Include="lj_gdbjit.c">
+    </ClCompile>
+    <ClCompile Include="lj_ir.c">
+    </ClCompile>
+    <ClCompile Include="lj_lex.c">
+    </ClCompile>
+    <ClCompile Include="lj_lib.c">
+    </ClCompile>
+    <ClCompile Include="lj_load.c">
+    </ClCompile>
+    <ClCompile Include="lj_mcode.c">
+    </ClCompile>
+    <ClCompile Include="lj_meta.c">
+    </ClCompile>
+    <ClCompile Include="lj_obj.c">
+    </ClCompile>
+    <ClCompile Include="lj_opt_dce.c">
+    </ClCompile>
+    <ClCompile Include="lj_opt_fold.c">
+    </ClCompile>
+    <ClCompile Include="lj_opt_loop.c">
+    </ClCompile>
+    <ClCompile Include="lj_opt_mem.c">
+    </ClCompile>
+    <ClCompile Include="lj_opt_narrow.c">
+    </ClCompile>
+    <ClCompile Include="lj_opt_sink.c">
+    </ClCompile>
+    <ClCompile Include="lj_opt_split.c">
+    </ClCompile>
+    <ClCompile Include="lj_parse.c">
+    </ClCompile>
+    <ClCompile Include="lj_record.c">
+    </ClCompile>
+    <ClCompile Include="lj_snap.c">
+    </ClCompile>
+    <ClCompile Include="lj_state.c">
+    </ClCompile>
+    <ClCompile Include="lj_str.c">
+    </ClCompile>
+    <ClCompile Include="lj_strscan.c">
+    </ClCompile>
+    <ClCompile Include="lj_tab.c">
+    </ClCompile>
+    <ClCompile Include="lj_trace.c">
+    </ClCompile>
+    <ClCompile Include="lj_udata.c">
+    </ClCompile>
+    <ClCompile Include="lj_vmevent.c">
+    </ClCompile>
+    <ClCompile Include="lj_vmmath.c">
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="minilua.vs16.vcxproj">
+      <Project>{531911BC-0023-4EC6-A2CE-6C3F5C182647}</Project>
+    </ProjectReference>
+    <ProjectReference Include="buildvm.vs16.vcxproj">
+      <Project>{F949C208-7A2E-4B1C-B74D-956E88542A26}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

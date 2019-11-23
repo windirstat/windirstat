@@ -48,7 +48,6 @@
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="true"
-				ProgramDataBaseFileName="$(OutDir)\wdsr040b.pdb"
 				DebugInformationFormat="0"
 				CompileAs="1"
 			/>

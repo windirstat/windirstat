@@ -56,7 +56,6 @@
 				UsePrecompiledHeader="0"
 				WarningLevel="4"
 				Detect64BitPortabilityProblems="true"
-				ProgramDataBaseFileName="$(OutDir)\wds32D.pdb"
 				DebugInformationFormat="4"
 			/>
 			<Tool
@@ -74,12 +73,11 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/delayload:psapi.dll /pdbaltpath:%_PDB% /nodefaultlib:libcmt"
-				AdditionalDependencies="psapi.lib delayimp.lib ..\..\..\build\luajit2_$(PlatformName).lib"
+				AdditionalDependencies="psapi.lib delayimp.lib ..\build\luajit2_$(PlatformName).lib"
 				OutputFile="$(OutDir)\wds32D.exe"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories=""
 				GenerateDebugInformation="true"
-				ProgramDataBaseFileName="$(OutDir)\wds32D.pdb"
 				SubSystem="2"
 				TargetMachine="1"
 			/>
@@ -148,7 +146,6 @@
 				UsePrecompiledHeader="0"
 				WarningLevel="4"
 				Detect64BitPortabilityProblems="true"
-				ProgramDataBaseFileName="$(OutDir)\wds64D.pdb"
 				DebugInformationFormat="3"
 			/>
 			<Tool
@@ -166,12 +163,11 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/delayload:psapi.dll /pdbaltpath:%_PDB% /nodefaultlib:libcmt"
-				AdditionalDependencies="psapi.lib delayimp.lib ..\..\..\build\luajit2_$(PlatformName).lib"
+				AdditionalDependencies="psapi.lib delayimp.lib ..\build\luajit2_$(PlatformName).lib"
 				OutputFile="$(OutDir)\wds64D.exe"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories=""
 				GenerateDebugInformation="true"
-				ProgramDataBaseFileName="$(OutDir)\wds64D.pdb"
 				SubSystem="2"
 				TargetMachine="17"
 			/>
@@ -239,7 +235,6 @@
 				UsePrecompiledHeader="0"
 				WarningLevel="4"
 				Detect64BitPortabilityProblems="true"
-				ProgramDataBaseFileName="$(OutDir)\wds32.pdb"
 				DebugInformationFormat="3"
 			/>
 			<Tool
@@ -257,12 +252,11 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/delayload:psapi.dll /pdbaltpath:%_PDB% /release"
-				AdditionalDependencies="psapi.lib delayimp.lib ..\..\..\build\luajit2_$(PlatformName).lib"
+				AdditionalDependencies="psapi.lib delayimp.lib ..\build\luajit2_$(PlatformName).lib"
 				OutputFile="$(OutDir)\wds32.exe"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories=""
 				GenerateDebugInformation="true"
-				ProgramDataBaseFileName="$(OutDir)\wds32.pdb"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -333,7 +327,6 @@
 				UsePrecompiledHeader="0"
 				WarningLevel="4"
 				Detect64BitPortabilityProblems="true"
-				ProgramDataBaseFileName="$(OutDir)\wds64.pdb"
 				DebugInformationFormat="3"
 			/>
 			<Tool
@@ -351,12 +344,11 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/delayload:psapi.dll /pdbaltpath:%_PDB% /release"
-				AdditionalDependencies="psapi.lib delayimp.lib ..\..\..\build\luajit2_$(PlatformName).lib"
+				AdditionalDependencies="psapi.lib delayimp.lib ..\build\luajit2_$(PlatformName).lib"
 				OutputFile="$(OutDir)\wds64.exe"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories=""
 				GenerateDebugInformation="true"
-				ProgramDataBaseFileName="$(OutDir)\wds64.pdb"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"

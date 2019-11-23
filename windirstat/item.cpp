@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2019 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -1109,28 +1109,13 @@ void CItem::DoSomeWork(CWorkLimiter* limiter)
                 }
             }
 
-//             CItem *filesFolder = 0;
-//             if(dirCount > 0 && fileCount > 1)
-//             {
-//                 filesFolder = new CItem(IT_FILESFOLDER, LoadString(IDS_FILES_ITEM));
-//                 filesFolder->SetReadJobDone();
-//                 AddChild(filesFolder);
-//             }
-//             if(fileCount > 0)
-//             {
-//                 filesFolder = this;
-//             }
-
             for(POSITION pos = files.GetHeadPosition(); pos != NULL; files.GetNext(pos))
             {
                 const FILEINFO& fi = files.GetAt(pos);
                 this->AddFile(fi);
             }
 
-//             if(filesFolder != NULL)
-//             {
-                this->UpwardAddFiles(fileCount);
-//             }
+            this->UpwardAddFiles(fileCount);
 
             UpwardAddSubdirs(dirCount);
             SetReadJobDone();

@@ -5,9 +5,6 @@
 
         https://bitbucket.org/windirstat/premake-stable
   ]]
-local assemblyName = "WinDirStat_Team.WinDirStat.windirstat"
-local programVersion = "1.3" -- until we find a clever way to put this into an environment variable or so ...
-local publicKeyToken = "db89f19495b8f232" -- the token for the code-signing, TODO/FIXME: verify!
 local action = _ACTION or ""
 local release = false
 local slnname = ""
@@ -96,7 +93,7 @@ do
     -- Name the project files after their VS version
     local orig_getbasename = premake.project.getbasename
     premake.project.getbasename = function(prjname, pattern)
-        -- The below is used to insert the .vs(8|9|10|11|12|14|15) into the file names for projects and solutions
+        -- The below is used to insert the .vs(8|9|10|11|12|14|15|16) into the file names for projects and solutions
         if _ACTION then
             if name_map[_ACTION] then
                 pattern = pattern:gsub("%%%%", "%%%%." .. name_map[_ACTION])
@@ -192,7 +189,6 @@ do
     -- Override the project creation to suppress unnecessary configurations
     -- these get invoked by sln2005.generate per project ...
     -- ... they depend on the values in the sln.vstudio_configs table
-    --[[
     local mprj = {[pfx.."wdsr%x*"] = {["Release|Win32"] = 0}, [pfx.."minilua"] = {["Release|Win32"] = 0}, [pfx.."buildvm"] = {["Release|Win32"] = 0, ["Release|x64"] = 0}, [pfx.."luajit2"] = {["Release|Win32"] = 0, ["Release|x64"] = 0}, [pfx.."lua"] = {["Release|Win32"] = 0, ["Release|x64"] = 0}}
     if _OPTIONS["dev"] then
         mprj = {[pfx.."wdsr%x*"] = {["Release|Win32"] = 0},}
@@ -226,7 +222,6 @@ do
     end
     premake.vs2010_vcxproj = prjgen_override_factory(premake.vs2010_vcxproj)
     premake.vstudio.vc200x.generate = prjgen_override_factory(premake.vstudio.vc200x.generate)
-    --]]
     -- Borrowed from setLocal() at https://stackoverflow.com/a/22752379
     local function getLocal(stkidx, name)
         local index = 1
@@ -249,7 +244,28 @@ do
         -- We patch the global _p() function
         _G._p = function(indent, msg, ...)
             -- Look for indent values of 2
-            if indent == 2 and msg ~= nil then
+            if indent == 1 and msg ~= nil then
+                if msg == "</ItemDefinitionGroup>" then
+                    -- before closing the ItemDefinitionGroup element, let's see if manifest files exist, add them ...
+                    -- this is a defect in premake4, which does this for pre-VS2010 versions, but not later ...
+                    local cfg = getLocal(3, "n") -- with LuaSrcDiet
+                    if cfg == nil then
+                        cfg = getLocal(3, "cfg") -- without LuaSrcDiet
+                    end
+                    assert(type(cfg) == "table" and cfg["files"] ~= nil)
+                    local manifests = { }
+                    for _, fname in ipairs(cfg.files) do
+                        if path.getextension(fname) == ".manifest" then
+                            table.insert(manifests, fname)
+                        end
+                    end
+                    if #manifests > 0 then
+                        orig_p(indent+1, "<Manifest>")
+                        orig_p(indent+2, "<AdditionalManifestFiles>%s</AdditionalManifestFiles>", premake.esc(path.translate(table.concat(manifests, ";"))))
+                        orig_p(indent+1, "</Manifest>")
+                    end
+                end
+            elseif indent == 2 and msg ~= nil then
                 -- ... with msg value of <ResourceCompile>
                 if msg == "<ResourceCompile>" then
                     local cfg = getLocal(3, "e") -- with LuaSrcDiet
@@ -308,6 +324,8 @@ do
             end
         end
     end
+    -- Premake4 sets the PDB file name for the compiler's PDB to the default
+    -- value used by the linker's PDB. This causes error C1052 on VS2017. Fix it.
     local orig_premake_vs2010_vcxproj = premake.vs2010_vcxproj
     premake.vs2010_vcxproj = function(prj)
         local old_captured = io.captured -- save io.captured state
@@ -484,6 +502,7 @@ solution (iif(release, slnname, "windirstat"))
             defines         {"WINVER=0x0501", "LUA_REG_NO_WINTRACE", "LUA_REG_NO_HIVEOPS", "LUA_REG_NO_DLL"}
 
         configuration {"vs2015 or vs2017 or vs2019"}
+            flags           {"NoMinimalRebuild"}
             defines         {"_ALLOW_RTCc_IN_STL"}
 
         if _OPTIONS["sdk71"] then

@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2019 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -43,13 +43,7 @@ CLayout::CLayout(CWnd *dialog, LPCTSTR name)
 
 int CLayout::AddControl(CWnd *control, double movex, double movey, double stretchx, double stretchy)
 {
-    SControlInfo info;
-
-    info.control = control;
-    info.movex = movex;
-    info.movey = movey;
-    info.stretchx = stretchx;
-    info.stretchy = stretchy;
+    SControlInfo info(control, movex, movey, stretchx, stretchy);
 
     return int(m_control.Add(info));
 }

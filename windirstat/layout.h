@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2019 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -23,22 +23,46 @@
 #define __WDS_LAYOUT_H__
 #pragma once
 
+#include <limits>
+
 //
 // CLayout. A poor men's dialog layout mechanism.
 // Simple, flat, and sufficient for our purposes.
 //
 class CLayout
 {
-    struct SControlInfo
+	template<typename T> struct SControlInfoT
     {
         CWnd *control;
-        double movex;
-        double movey;
-        double stretchx;
-        double stretchy;
+        T movex;
+        T movey;
+        T stretchx;
+        T stretchy;
 
         CRect originalRectangle;
+
+        SControlInfoT()
+            : control(NULL)
+            , movex(std::numeric_limits<T>::quiet_NaN())
+            , movey(std::numeric_limits<T>::quiet_NaN())
+            , stretchx(std::numeric_limits<T>::quiet_NaN())
+            , stretchy(std::numeric_limits<T>::quiet_NaN())
+        {
+        }
+
+        SControlInfoT(CWnd* ctl, T& x, T& y, T& w, T& h)
+            : control(ctl)
+            , movex(x)
+            , movey(y)
+            , stretchx(w)
+            , stretchy(h)
+        {
+        }
+
+    private:
+        SControlInfoT(SControlInfoT&); // hide copy ctor
     };
+	typedef SControlInfoT<double> SControlInfo;
 
     class CSizeGripper: public CWnd
     {
