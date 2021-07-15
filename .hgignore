@@ -35,3 +35,4 @@ build.vs*/**
 *.diagsession
 *.i64
 *.idb
+.git/
