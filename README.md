@@ -3,7 +3,7 @@
 ## Copyright and licenses
 
 * Copyright © 2003-2005 Bernhard Seifert (bseifert@users.sourceforge.net)
-* Copyright © 2004-2017 WinDirStat Team (windirstat.net)
+* Copyright © 2004-2017 WinDirStat Team ([windirstat.net](https://windirstat.net/))
 
 The application itself is distributed under the terms of the [GPL v2](windirstat/res/license.txt), but parts of the source code are also available
 under more lenient license terms.
@@ -24,14 +24,14 @@ that assigns bigger areas to bigger files and directories. Making those areas
 visually separate by coloring and other means allows you to see literally at
 a glance what the space hogs are and where to dig deeper.
 
-The directory tree is simultanously shown as a treelist and as a treemap.
+The directory tree is simultaneously shown as a tree list and as a treemap.
 One can effortlessly gain an impression of the proportions on the hard disk(s).
 
 ### Major features
 
 * 3 views, Directory tree, Treemap and Extension list, coupled with each other,
 * Built-in cleanup actions including Open, Delete, Show Properties,
-* User defined cleanup actions (command line based),
+* User-defined cleanup actions (command line based),
 * Language is English by default; further translations can be added as
   resource DLLs,
 * Online-Help,
@@ -45,12 +45,12 @@ Design and many details are based on KDirStat, so WinDirStat is "a KDirStat re-p
 
 ### WinDirStat Alternatives on other operating systems
 
-Meanwhile alternatives also exist for OS X and many programs make use of
+Meanwhile, alternatives also exist for OS X and many programs make use of
 treemaps for a variety of visualization needs.
 
 The [FLOSS](https://en.wikipedia.org/wiki/Alternative_terms_for_free_software) alternatives for other operating systems are thus:
 
-* [KDirStat](http://kdirstat.sourceforge.net/) (Linux and virtually any \*nix that runs KDE/X11)
+* [QDirStat](https://github.com/shundhammer/qdirstat) (Linux and virtually any \*nix that runs KDE/X11)
 * [Disk Inventory X](http://www.derlien.com/) (OS X)
 * [GrandPerspective](http://grandperspectiv.sourceforge.net/) (OS X)
 
@@ -64,7 +64,7 @@ Please refer to the project Wiki page [Building](https://bitbucket.org/windirsta
 
 The project [Wiki](https://bitbucket.org/windirstat/windirstat/wiki/Home) on
 Bitbucket features a whole section on the topic of contributing. If you don't
-agree on the requirements, feel free to contact a project member regardless
+agree with the requirements, feel free to contact a project member regardless
 before you put any substantial effort into your potential contribution.
 
 To see a list of contributors, please check out [the contributors page](CONTRIBUTORS.md).
