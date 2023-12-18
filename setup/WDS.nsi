@@ -267,6 +267,7 @@ Function CreateUninstallEntry
   WriteRegExpandStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\WinDirStat" "InstallLocation" "$INSTDIR"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\WinDirStat" "DisplayName" "${sVersionFull}"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\WinDirStat" "DisplayIcon" "$INSTDIR\windirstat.exe,0"
+  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\WinDirStat" "DisplayVersion" "${dVersionMajor}.${dVersionMinor}.${dVersionRev}"
   WriteRegDWORD HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\WinDirStat" "dwVersionMajor" "${dVersionMajor}"
   WriteRegDWORD HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\WinDirStat" "dwVersionMinor" "${dVersionMinor}"
   WriteRegDWORD HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\WinDirStat" "dwVersionRev" "${dVersionRev}"
