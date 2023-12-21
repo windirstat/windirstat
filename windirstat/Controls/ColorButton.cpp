@@ -22,7 +22,7 @@
 // ReSharper disable All
 #include "stdafx.h"
 #include "colorbutton.h"
-#include <common/wds_constants.h>
+#include <common/Constants.h>
 
 /////////////////////////////////////////////////////////////////////////////
 

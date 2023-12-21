@@ -72,28 +72,28 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <OutDir>..\build\</OutDir>
     <IntDir>..\intermediate\.vcxproj$(Platform)_$(Configuration)\$(ProjectName)\</IntDir>
-    <TargetName>wds32D</TargetName>
+    <TargetName>WinDirStat32D</TargetName>
     <TargetExt>.exe</TargetExt>
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutDir>..\build\</OutDir>
     <IntDir>..\intermediate\.vcxproj$(Platform)_$(Configuration)\$(ProjectName)\</IntDir>
-    <TargetName>wds64D</TargetName>
+    <TargetName>WinDirStat64D</TargetName>
     <TargetExt>.exe</TargetExt>
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>..\build\</OutDir>
     <IntDir>..\intermediate\.vcxproj$(Platform)_$(Configuration)\$(ProjectName)\</IntDir>
-    <TargetName>wds32</TargetName>
+    <TargetName>WinDirStat32</TargetName>
     <TargetExt>.exe</TargetExt>
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>..\build\</OutDir>
     <IntDir>..\intermediate\.vcxproj$(Platform)_$(Configuration)\$(ProjectName)\</IntDir>
-    <TargetName>wds64</TargetName>
+    <TargetName>WinDirStat64</TargetName>
     <TargetExt>.exe</TargetExt>
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
@@ -125,7 +125,7 @@
       <GenerateDebugInformation>DebugFull</GenerateDebugInformation>
       <FullProgramDatabaseFile>true</FullProgramDatabaseFile>
       <AdditionalDependencies>delayimp.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>$(OutDir)wds32D.exe</OutputFile>
+      <OutputFile>$(OutDir)WinDirStat32D.exe</OutputFile>
       <TargetMachine>MachineX86</TargetMachine>
       <AdditionalOptions>/pdbaltpath:%_PDB% /nodefaultlib:libcmt %(AdditionalOptions)</AdditionalOptions>
     </Link>
@@ -164,7 +164,7 @@
       <GenerateDebugInformation>DebugFull</GenerateDebugInformation>
       <FullProgramDatabaseFile>true</FullProgramDatabaseFile>
       <AdditionalDependencies>delayimp.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>$(OutDir)wds64D.exe</OutputFile>
+      <OutputFile>$(OutDir)WinDirStat64D.exe</OutputFile>
       <TargetMachine>MachineX64</TargetMachine>
       <AdditionalOptions>/pdbaltpath:%_PDB% /nodefaultlib:libcmt %(AdditionalOptions)</AdditionalOptions>
     </Link>
@@ -206,7 +206,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>delayimp.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>$(OutDir)wds32.exe</OutputFile>
+      <OutputFile>$(OutDir)WinDirStat32.exe</OutputFile>
       <TargetMachine>MachineX86</TargetMachine>
       <AdditionalOptions>/pdbaltpath:%_PDB% /release %(AdditionalOptions)</AdditionalOptions>
     </Link>
@@ -247,7 +247,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>delayimp.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>$(OutDir)wds64.exe</OutputFile>
+      <OutputFile>$(OutDir)WinDirStat64.exe</OutputFile>
       <TargetMachine>MachineX64</TargetMachine>
       <AdditionalOptions>/pdbaltpath:%_PDB% /release %(AdditionalOptions)</AdditionalOptions>
     </Link>
@@ -260,76 +260,76 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\common\hgid.h" />
-    <ClInclude Include="..\common\commonhelpers.h" />
-    <ClInclude Include="..\common\cotaskmem.h" />
-    <ClInclude Include="..\common\mdexceptions.h" />
-    <ClInclude Include="..\common\tracer.h" />
+    <ClInclude Include="..\common\CommonHelpers.h" />
+    <ClInclude Include="..\common\CoTaskMem.h" />
+    <ClInclude Include="..\common\MdExceptions.h" />
+    <ClInclude Include="..\common\Tracer.h" />
     <ClInclude Include="..\common\version.h" />
-    <ClInclude Include="..\common\wds_constants.h" />
-    <ClInclude Include="dirstatdoc.h" />
-    <ClInclude Include="dirstatview.h" />
-    <ClInclude Include="FileFindWDS.h" />
-    <ClInclude Include="globalhelpers.h" />
-    <ClInclude Include="helpmap.h" />
-    <ClInclude Include="item.h" />
-    <ClInclude Include="layout.h" />
-    <ClInclude Include="mainframe.h" />
+    <ClInclude Include="..\common\Constants.h" />
+    <ClInclude Include="DirStatDoc.h" />
+    <ClInclude Include="DirStatView.h" />
+    <ClInclude Include="FileFind.h" />
+    <ClInclude Include="GlobalHelpers.h" />
+    <ClInclude Include="HelpMap.h" />
+    <ClInclude Include="Item.h" />
+    <ClInclude Include="Layout.h" />
+    <ClInclude Include="MainFrame.h" />
     <ClInclude Include="ModalApiShuttle.h" />
     <ClInclude Include="ModalShellApi.h" />
-    <ClInclude Include="mountpoints.h" />
-    <ClInclude Include="options.h" />
-    <ClInclude Include="osspecific.h" />
+    <ClInclude Include="MountPoints.h" />
+    <ClInclude Include="Options.h" />
+    <ClInclude Include="OsSpecific.h" />
     <ClInclude Include="PageCleanups.h" />
     <ClInclude Include="PageGeneral.h" />
     <ClInclude Include="PageTreelist.h" />
     <ClInclude Include="PageTreemap.h" />
     <ClInclude Include="resource.h" />
-    <ClInclude Include="selectobject.h" />
-    <ClInclude Include="set.h" />
+    <ClInclude Include="SelectObject.h" />
+    <ClInclude Include="Set.h" />
     <ClInclude Include="stdafx.h" />
-    <ClInclude Include="WDS_Lua_C.h" />
-    <ClInclude Include="windirstat.h" />
+    <ClInclude Include="LuaWds.h" />
+    <ClInclude Include="WinDirStat.h" />
     <ClInclude Include="WorkLimiter.h" />
     <ClInclude Include="Controls\ColorButton.h" />
-    <ClInclude Include="Controls\graphview.h" />
-    <ClInclude Include="Controls\myimagelist.h" />
-    <ClInclude Include="Controls\ownerdrawnlistcontrol.h" />
-    <ClInclude Include="Controls\pacman.h" />
-    <ClInclude Include="Controls\sortinglistcontrol.h" />
+    <ClInclude Include="Controls\GraphView.h" />
+    <ClInclude Include="Controls\MyImageList.h" />
+    <ClInclude Include="Controls\OwnerDrawnListControl.h" />
+    <ClInclude Include="Controls\PacMan.h" />
+    <ClInclude Include="Controls\SortingListControl.h" />
     <ClInclude Include="Controls\TreeListControl.h" />
-    <ClInclude Include="Controls\treemap.h" />
-    <ClInclude Include="Controls\typeview.h" />
-    <ClInclude Include="Controls\xyslider.h" />
+    <ClInclude Include="Controls\TreeMap.h" />
+    <ClInclude Include="Controls\TypeView.h" />
+    <ClInclude Include="Controls\XYSlider.h" />
     <ClInclude Include="Dialogs\AboutDlg.h" />
     <ClInclude Include="Dialogs\DeleteWarningDlg.h" />
     <ClInclude Include="Dialogs\SelectDrivesDlg.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\common\commonhelpers.cpp">
+    <ClCompile Include="..\common\CommonHelpers.cpp">
     </ClCompile>
-    <ClCompile Include="dirstatdoc.cpp">
+    <ClCompile Include="DirStatDoc.cpp">
     </ClCompile>
-    <ClCompile Include="dirstatview.cpp">
+    <ClCompile Include="DirStatView.cpp">
     </ClCompile>
-    <ClCompile Include="FileFindWDS.cpp">
+    <ClCompile Include="FileFind.cpp">
     </ClCompile>
-    <ClCompile Include="globalhelpers.cpp">
+    <ClCompile Include="GlobalHelpers.cpp">
     </ClCompile>
-    <ClCompile Include="item.cpp">
+    <ClCompile Include="Item.cpp">
     </ClCompile>
-    <ClCompile Include="layout.cpp">
+    <ClCompile Include="Layout.cpp">
     </ClCompile>
-    <ClCompile Include="mainframe.cpp">
+    <ClCompile Include="MainFrame.cpp">
     </ClCompile>
     <ClCompile Include="ModalApiShuttle.cpp">
     </ClCompile>
     <ClCompile Include="ModalShellApi.cpp">
     </ClCompile>
-    <ClCompile Include="mountpoints.cpp">
+    <ClCompile Include="MountPoints.cpp">
     </ClCompile>
-    <ClCompile Include="options.cpp">
+    <ClCompile Include="Options.cpp">
     </ClCompile>
-    <ClCompile Include="osspecific.cpp">
+    <ClCompile Include="OsSpecific.cpp">
     </ClCompile>
     <ClCompile Include="PageCleanups.cpp">
     </ClCompile>
@@ -341,37 +341,37 @@
     </ClCompile>
     <ClCompile Include="stdafx.cpp">
     </ClCompile>
-    <ClCompile Include="windirstat.cpp">
+    <ClCompile Include="WinDirStat.cpp">
     </ClCompile>
     <ClCompile Include="WorkLimiter.cpp">
     </ClCompile>
     <ClCompile Include="Controls\ColorButton.cpp">
     </ClCompile>
-    <ClCompile Include="Controls\graphview.cpp">
+    <ClCompile Include="Controls\GraphView.cpp">
     </ClCompile>
-    <ClCompile Include="Controls\myimagelist.cpp">
+    <ClCompile Include="Controls\MyImageList.cpp">
     </ClCompile>
-    <ClCompile Include="Controls\ownerdrawnlistcontrol.cpp">
+    <ClCompile Include="Controls\OwnerDrawnListControl.cpp">
     </ClCompile>
-    <ClCompile Include="Controls\pacman.cpp">
+    <ClCompile Include="Controls\PacMan.cpp">
     </ClCompile>
-    <ClCompile Include="Controls\sortinglistcontrol.cpp">
+    <ClCompile Include="Controls\SortingListControl.cpp">
     </ClCompile>
     <ClCompile Include="Controls\TreeListControl.cpp">
     </ClCompile>
-    <ClCompile Include="Controls\treemap.cpp">
+    <ClCompile Include="Controls\TreeMap.cpp">
     </ClCompile>
-    <ClCompile Include="Controls\typeview.cpp">
+    <ClCompile Include="Controls\TypeView.cpp">
     </ClCompile>
-    <ClCompile Include="Controls\xyslider.cpp">
+    <ClCompile Include="Controls\XYSlider.cpp">
     </ClCompile>
-    <ClCompile Include="Dialogs\aboutdlg.cpp">
+    <ClCompile Include="Dialogs\AboutDlg.cpp">
     </ClCompile>
     <ClCompile Include="Dialogs\DeleteWarningDlg.cpp">
     </ClCompile>
     <ClCompile Include="Dialogs\SelectDrivesDlg.cpp">
     </ClCompile>
-    <ClCompile Include="WDS_Lua_C.c">
+    <ClCompile Include="LuaWds.c">
       <CompileAs>CompileAsC</CompileAs>
     </ClCompile>
   </ItemGroup>

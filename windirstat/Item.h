@@ -24,8 +24,8 @@
 #include "Treelistcontrol.h"
 #include "treemap.h"
 #include "dirstatdoc.h" // CExtensionData
-#include "FileFindWDS.h" // CFileFindWDS
-#include <common/wds_constants.h>
+#include "FileFind.h" // CFileFindWDS
+#include <common/Constants.h>
 
 class CWorkLimiter;
 

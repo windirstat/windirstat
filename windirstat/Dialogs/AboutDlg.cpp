@@ -21,7 +21,7 @@
 
 #include "stdafx.h"
 #include "windirstat.h"
-#include <common/wds_constants.h>
+#include <common/Constants.h>
 #include <common/mdexceptions.h>
 #include <common/commonhelpers.h>
 #include "aboutdlg.h"

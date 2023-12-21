@@ -23,7 +23,7 @@
 #pragma once
 
 #include "selectdrivesdlg.h"
-#include <common/wds_constants.h>
+#include <common/Constants.h>
 #include "options.h"
 
 class CItem;

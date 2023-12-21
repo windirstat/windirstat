@@ -21,7 +21,7 @@
 
 #include "stdafx.h"
 #include <common/mdexceptions.h>
-#include <common/wds_constants.h>
+#include <common/Constants.h>
 
 CStringW MyStrRetToString(const LPITEMIDLIST pidl, const STRRET* strret)
 {

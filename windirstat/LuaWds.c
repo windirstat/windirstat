@@ -1,6 +1,6 @@
 #define luaall_c
 #define LUA_CORE
-#include "WDS_Lua_C.h"
+#include "LuaWds.h"
 
 #ifdef _WIN64
 #pragma warning(push)

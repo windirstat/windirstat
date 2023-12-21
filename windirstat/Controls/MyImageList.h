@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include <common/wds_constants.h>
+#include <common/Constants.h>
 
 //
 // CMyImageList. Both CDirstatView and CTypeView use this central

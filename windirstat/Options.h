@@ -22,7 +22,7 @@
 #pragma once
 
 #include "treemap.h"
-#include <common/wds_constants.h>
+#include <common/Constants.h>
 #include <atlbase.h> // CRegKey
 #include <memory>
 

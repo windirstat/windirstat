@@ -20,7 +20,7 @@
 //
 
 #include "StdAfx.h"
-#include "FileFindWDS.h"
+#include "FileFind.h"
 #include "windirstat.h"
 
 // Function to access the file attributes from outside

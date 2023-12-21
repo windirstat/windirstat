@@ -21,7 +21,7 @@
 //
 
 #pragma once
-#include <common/wds_constants.h>
+#include <common/Constants.h>
 
 CStringW GetLocaleString(LCTYPE lctype, LANGID langid);
 CStringW GetLocaleLanguage(LANGID langid);

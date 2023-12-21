@@ -22,7 +22,7 @@
 #pragma once
 
 #include "layout.h"
-#include <common/wds_constants.h>
+#include <common/Constants.h>
 
 
 void StartAboutDialog();

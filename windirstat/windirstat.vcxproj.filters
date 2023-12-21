@@ -85,46 +85,46 @@
     <ClInclude Include="..\common\hgid.h">
       <Filter>Header Files\Common</Filter>
     </ClInclude>
-    <ClInclude Include="..\common\commonhelpers.h">
+    <ClInclude Include="..\common\CommonHelpers.h">
       <Filter>Header Files\Common</Filter>
     </ClInclude>
-    <ClInclude Include="..\common\cotaskmem.h">
+    <ClInclude Include="..\common\CoTaskMem.h">
       <Filter>Header Files\Common</Filter>
     </ClInclude>
-    <ClInclude Include="..\common\mdexceptions.h">
+    <ClInclude Include="..\common\MdExceptions.h">
       <Filter>Header Files\Common</Filter>
     </ClInclude>
-    <ClInclude Include="..\common\tracer.h">
+    <ClInclude Include="..\common\Tracer.h">
       <Filter>Header Files\Common</Filter>
     </ClInclude>
     <ClInclude Include="..\common\version.h">
       <Filter>Header Files\Common</Filter>
     </ClInclude>
-    <ClInclude Include="..\common\wds_constants.h">
+    <ClInclude Include="..\common\Constants.h">
       <Filter>Header Files\Common</Filter>
     </ClInclude>
-    <ClInclude Include="dirstatdoc.h">
+    <ClInclude Include="DirStatDoc.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="dirstatview.h">
+    <ClInclude Include="DirStatView.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="FileFindWDS.h">
+    <ClInclude Include="FileFind.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="globalhelpers.h">
+    <ClInclude Include="GlobalHelpers.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="helpmap.h">
+    <ClInclude Include="HelpMap.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="item.h">
+    <ClInclude Include="Item.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="layout.h">
+    <ClInclude Include="Layout.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="mainframe.h">
+    <ClInclude Include="MainFrame.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ModalApiShuttle.h">
@@ -133,13 +133,13 @@
     <ClInclude Include="ModalShellApi.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="mountpoints.h">
+    <ClInclude Include="MountPoints.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="options.h">
+    <ClInclude Include="Options.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="osspecific.h">
+    <ClInclude Include="OsSpecific.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="PageCleanups.h">
@@ -157,19 +157,19 @@
     <ClInclude Include="resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="selectobject.h">
+    <ClInclude Include="SelectObject.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="set.h">
+    <ClInclude Include="Set.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="stdafx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="WDS_Lua_C.h">
+    <ClInclude Include="LuaWds.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="windirstat.h">
+    <ClInclude Include="WinDirStat.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="WorkLimiter.h">
@@ -178,31 +178,31 @@
     <ClInclude Include="Controls\ColorButton.h">
       <Filter>Header Files\Controls</Filter>
     </ClInclude>
-    <ClInclude Include="Controls\graphview.h">
+    <ClInclude Include="Controls\GraphView.h">
       <Filter>Header Files\Controls</Filter>
     </ClInclude>
-    <ClInclude Include="Controls\myimagelist.h">
+    <ClInclude Include="Controls\MyImageList.h">
       <Filter>Header Files\Controls</Filter>
     </ClInclude>
-    <ClInclude Include="Controls\ownerdrawnlistcontrol.h">
+    <ClInclude Include="Controls\OwnerDrawnListControl.h">
       <Filter>Header Files\Controls</Filter>
     </ClInclude>
-    <ClInclude Include="Controls\pacman.h">
+    <ClInclude Include="Controls\PacMan.h">
       <Filter>Header Files\Controls</Filter>
     </ClInclude>
-    <ClInclude Include="Controls\sortinglistcontrol.h">
+    <ClInclude Include="Controls\SortingListControl.h">
       <Filter>Header Files\Controls</Filter>
     </ClInclude>
     <ClInclude Include="Controls\TreeListControl.h">
       <Filter>Header Files\Controls</Filter>
     </ClInclude>
-    <ClInclude Include="Controls\treemap.h">
+    <ClInclude Include="Controls\TreeMap.h">
       <Filter>Header Files\Controls</Filter>
     </ClInclude>
-    <ClInclude Include="Controls\typeview.h">
+    <ClInclude Include="Controls\TypeView.h">
       <Filter>Header Files\Controls</Filter>
     </ClInclude>
-    <ClInclude Include="Controls\xyslider.h">
+    <ClInclude Include="Controls\XYSlider.h">
       <Filter>Header Files\Controls</Filter>
     </ClInclude>
     <ClInclude Include="Dialogs\AboutDlg.h">
@@ -216,28 +216,28 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\common\commonhelpers.cpp">
+    <ClCompile Include="..\common\CommonHelpers.cpp">
       <Filter>Source Files\Common</Filter>
     </ClCompile>
-    <ClCompile Include="dirstatdoc.cpp">
+    <ClCompile Include="DirStatDoc.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="dirstatview.cpp">
+    <ClCompile Include="DirStatView.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="FileFindWDS.cpp">
+    <ClCompile Include="FileFind.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="globalhelpers.cpp">
+    <ClCompile Include="GlobalHelpers.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="item.cpp">
+    <ClCompile Include="Item.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="layout.cpp">
+    <ClCompile Include="Layout.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="mainframe.cpp">
+    <ClCompile Include="MainFrame.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ModalApiShuttle.cpp">
@@ -246,13 +246,13 @@
     <ClCompile Include="ModalShellApi.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="mountpoints.cpp">
+    <ClCompile Include="MountPoints.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="options.cpp">
+    <ClCompile Include="Options.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="osspecific.cpp">
+    <ClCompile Include="OsSpecific.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="PageCleanups.cpp">
@@ -270,7 +270,7 @@
     <ClCompile Include="stdafx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="windirstat.cpp">
+    <ClCompile Include="WinDirStat.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="WorkLimiter.cpp">
@@ -279,34 +279,34 @@
     <ClCompile Include="Controls\ColorButton.cpp">
       <Filter>Source Files\Controls</Filter>
     </ClCompile>
-    <ClCompile Include="Controls\graphview.cpp">
+    <ClCompile Include="Controls\GraphView.cpp">
       <Filter>Source Files\Controls</Filter>
     </ClCompile>
-    <ClCompile Include="Controls\myimagelist.cpp">
+    <ClCompile Include="Controls\MyImageList.cpp">
       <Filter>Source Files\Controls</Filter>
     </ClCompile>
-    <ClCompile Include="Controls\ownerdrawnlistcontrol.cpp">
+    <ClCompile Include="Controls\OwnerDrawnListControl.cpp">
       <Filter>Source Files\Controls</Filter>
     </ClCompile>
-    <ClCompile Include="Controls\pacman.cpp">
+    <ClCompile Include="Controls\PacMan.cpp">
       <Filter>Source Files\Controls</Filter>
     </ClCompile>
-    <ClCompile Include="Controls\sortinglistcontrol.cpp">
+    <ClCompile Include="Controls\SortingListControl.cpp">
       <Filter>Source Files\Controls</Filter>
     </ClCompile>
     <ClCompile Include="Controls\TreeListControl.cpp">
       <Filter>Source Files\Controls</Filter>
     </ClCompile>
-    <ClCompile Include="Controls\treemap.cpp">
+    <ClCompile Include="Controls\TreeMap.cpp">
       <Filter>Source Files\Controls</Filter>
     </ClCompile>
-    <ClCompile Include="Controls\typeview.cpp">
+    <ClCompile Include="Controls\TypeView.cpp">
       <Filter>Source Files\Controls</Filter>
     </ClCompile>
-    <ClCompile Include="Controls\xyslider.cpp">
+    <ClCompile Include="Controls\XYSlider.cpp">
       <Filter>Source Files\Controls</Filter>
     </ClCompile>
-    <ClCompile Include="Dialogs\aboutdlg.cpp">
+    <ClCompile Include="Dialogs\AboutDlg.cpp">
       <Filter>Source Files\Dialogs</Filter>
     </ClCompile>
     <ClCompile Include="Dialogs\DeleteWarningDlg.cpp">
@@ -315,7 +315,7 @@
     <ClCompile Include="Dialogs\SelectDrivesDlg.cpp">
       <Filter>Source Files\Dialogs</Filter>
     </ClCompile>
-    <ClCompile Include="WDS_Lua_C.c">
+    <ClCompile Include="LuaWds.c">
       <Filter>Source Files\Lua</Filter>
     </ClCompile>
   </ItemGroup>
