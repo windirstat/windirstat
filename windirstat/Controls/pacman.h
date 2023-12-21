@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@
 //
 // CPacman. Pacman animation.
 //
-class CPacman
+class CPacman final
 {
 public:
     CPacman();
@@ -33,11 +33,11 @@ public:
     void Reset();
     void Start(bool start);
     bool Drive(ULONGLONG readJobs); // return: true -> should be redrawn.
-    void Draw(CDC *pdc, const CRect& rc);
+    void Draw(CDC* pdc, const CRect& rect) const;
 
 private:
     void UpdatePosition(double& position, bool& up, double diff);
-    COLORREF CalculateColor();
+    COLORREF CalculateColor() const;
 
     COLORREF m_bgcolor;     // Background color
     double m_speed;         // Speed in full width / ms

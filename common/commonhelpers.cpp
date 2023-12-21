@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -59,13 +59,13 @@ BOOL ShellExecuteNoThrow(HWND hwnd, LPCWSTR lpVerb, LPCWSTR lpFile, LPCWSTR lpPa
         lpParameters,
         lpDirectory,
         nShowCmd,
-        0, // hInstApp
-        0,
-        0,
-        0,
+        nullptr, // hInstApp
+        nullptr,
+        nullptr,
+        nullptr,
         0, // dwHotKey
-        0,
-        0
+        {},
+        nullptr
         };
 
     return ::ShellExecuteEx(&sei);
@@ -74,9 +74,8 @@ BOOL ShellExecuteNoThrow(HWND hwnd, LPCWSTR lpVerb, LPCWSTR lpFile, LPCWSTR lpPa
 BOOL ShellExecuteThrow(HWND hwnd, LPCWSTR lpVerb, LPCWSTR lpFile, LPCWSTR lpParameters, LPCWSTR lpDirectory, INT nShowCmd)
 {
     CWaitCursor wc;
-    BOOL bResult = FALSE;
 
-    bResult = ShellExecuteNoThrow(hwnd, lpVerb, lpFile, lpParameters, lpDirectory, nShowCmd);
+    BOOL bResult = ShellExecuteNoThrow(hwnd, lpVerb, lpFile, lpParameters, lpDirectory, nShowCmd);
     if(!bResult)
     {
         MdThrowStringExceptionF(L"ShellExecute failed: %1!s!", MdGetWinErrorText(::GetLastError()).GetString());
@@ -87,7 +86,7 @@ BOOL ShellExecuteThrow(HWND hwnd, LPCWSTR lpVerb, LPCWSTR lpFile, LPCWSTR lpPara
 CStringW GetBaseNameFromPath(LPCWSTR path)
 {
     CStringW s = path;
-    int i = s.ReverseFind(wds::chrBackslash);
+    const int i = s.ReverseFind(wds::chrBackslash);
     if(i < 0)
     {
         return s;
@@ -111,7 +110,7 @@ CStringW GetAppFileName()
 CStringW GetAppFolder()
 {
     CStringW s = GetAppFileName();
-    int i = s.ReverseFind(wds::chrBackslash);
+    const int i = s.ReverseFind(wds::chrBackslash);
     ASSERT(i >= 0);
     s = s.Left(i);
     return s;

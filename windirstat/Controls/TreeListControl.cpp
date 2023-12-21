@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -26,10 +26,6 @@
 #include "selectobject.h"
 #include "TreeListControl.h"
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#endif
-
 namespace
 {
     // Sequence within IDB_NODES
@@ -43,20 +39,21 @@ namespace
         NODE_END,
         NODE_LINE
     };
-    const UINT NODE_WIDTH = 15;     // Width of a node within IDB_NODES
-    const UINT NODE_HEIGHT = 24;    // Height of IDB_NODES
-    const UINT INDENT_WIDTH = 18;
 
-    const UINT HOTNODE_CX = 9;      // Size and position of the +/- buttons
-    const UINT HOTNODE_CY = 9;
-    const UINT HOTNODE_X = 0;
+    constexpr UINT NODE_WIDTH = 15;     // Width of a node within IDB_NODES
+    constexpr UINT NODE_HEIGHT = 24;    // Height of IDB_NODES
+    constexpr UINT INDENT_WIDTH = 18;
+
+    constexpr UINT HOTNODE_CX = 9;      // Size and position of the +/- buttons
+    constexpr UINT HOTNODE_CY = 9;
+    constexpr UINT HOTNODE_X = 0;
 
 }
 
 CTreeListItem::CTreeListItem()
 {
-    m_parent = NULL;
-    m_vi = NULL;
+    m_parent = nullptr;
+    m_vi = nullptr;
 }
 
 CTreeListItem::~CTreeListItem()
@@ -114,7 +111,7 @@ void CTreeListItem::DrawPacman(CDC *pdc, const CRect& rc, COLORREF bgColor) cons
     m_vi->pacman.Draw(pdc, rc);
 }
 
-void CTreeListItem::StartPacman(bool start)
+void CTreeListItem::StartPacman(bool start) const
 {
     if(IsVisible())
     {
@@ -122,7 +119,7 @@ void CTreeListItem::StartPacman(bool start)
     }
 }
 
-bool CTreeListItem::DrivePacman(ULONGLONG readJobs)
+bool CTreeListItem::DrivePacman(ULONGLONG readJobs) const
 {
     if(!IsVisible())
     {
@@ -164,8 +161,8 @@ void CTreeListItem::SortChildren()
 
 int __cdecl CTreeListItem::_compareProc(const void *p1, const void *p2)
 {
-    CTreeListItem *item1 = *(CTreeListItem **)p1;
-    CTreeListItem *item2 = *(CTreeListItem **)p2;
+	const CTreeListItem *item1 = *(CTreeListItem **)p1;
+	const CTreeListItem *item2 = *(CTreeListItem **)p2;
     return item1->CompareS(item2, GetTreeListControl()->GetSorting());
 }
 
@@ -176,7 +173,7 @@ CTreeListItem *CTreeListItem::GetSortedChild(int i)
 
 int CTreeListItem::Compare(const CSortingListItem *baseOther, int subitem) const
 {
-    CTreeListItem *other = (CTreeListItem *)baseOther;
+	const CTreeListItem *other = (CTreeListItem *)baseOther;
 
     if(other == this)
     {
@@ -188,12 +185,12 @@ int CTreeListItem::Compare(const CSortingListItem *baseOther, int subitem) const
         return CompareSibling(other, subitem);
     }
 
-    if(m_parent == NULL)
+    if(m_parent == nullptr)
     {
         return -2;
     }
 
-    if(other->m_parent == NULL)
+    if(other->m_parent == nullptr)
     {
         return 2;
     }
@@ -234,11 +231,11 @@ void CTreeListItem::SetParent(CTreeListItem *parent)
 }
 bool CTreeListItem::HasSiblings() const
 {
-    if(m_parent == NULL)
+    if(m_parent == nullptr)
     {
         return false;
     }
-    int i = m_parent->FindSortedChild(this);
+    const int i = m_parent->FindSortedChild(this);
     return i < m_parent->GetChildrenCount() - 1;
 }
 bool CTreeListItem::HasChildren() const
@@ -257,20 +254,20 @@ void CTreeListItem::SetExpanded(bool expanded)
 }
 bool CTreeListItem::IsVisible() const
 {
-    return (m_vi != NULL);
+    return m_vi != nullptr;
 }
 void CTreeListItem::SetVisible(bool visible)
 {
     if(visible)
     {
         ASSERT(!IsVisible());
-        m_vi = new VISIBLEINFO((GetParent() == NULL) ? 0 : GetParent()->GetIndent() + 1);
+        m_vi = new VISIBLEINFO(GetParent() == nullptr ? 0 : GetParent()->GetIndent() + 1);
     }
     else
     {
         ASSERT(IsVisible());
         delete m_vi;
-        m_vi = NULL;
+        m_vi = nullptr;
     }
 }
 int CTreeListItem::GetIndent() const
@@ -328,14 +325,10 @@ CTreeListControl::CTreeListControl(CDirstatView *dirstatView, int rowHeight)
     ASSERT(_theTreeListControl == NULL);
     _theTreeListControl = this;
 
-    m_selectionAnchor = NULL;
+    m_selectionAnchor = nullptr;
 
     ASSERT(rowHeight <= NODE_HEIGHT);   // can't be higher
     ASSERT(rowHeight % 2 == 0);         // must be an even number
-}
-
-CTreeListControl::~CTreeListControl()
-{
 }
 
 void CTreeListControl::SortItems()
@@ -374,7 +367,7 @@ void CTreeListControl::SelectSingleItem(int i)
 {
     GetDocument()->RemoveAllSelections();
     GetDocument()->AddSelection((const CItem *)GetItem(i));
-    GetDocument()->UpdateAllViews(NULL, HINT_SELECTIONCHANGED);
+    GetDocument()->UpdateAllViews(nullptr, HINT_SELECTIONCHANGED);
     FocusItem(i);
 }
 
@@ -382,7 +375,7 @@ int CTreeListControl::GetSelectedItem()
 {
     // FIXME: Multi-select
     POSITION pos = GetFirstSelectedItemPosition();
-    if(pos == NULL)
+    if(pos == nullptr)
     {
         return -1;
     }
@@ -392,7 +385,7 @@ int CTreeListControl::GetSelectedItem()
 void CTreeListControl::SelectItem(const CTreeListItem *item)
 {
     // FIXME: Multi-select
-    int i = FindTreeItem(item);
+    const int i = FindTreeItem(item);
     if(i != -1)
     {
         SelectItem(i);
@@ -401,7 +394,7 @@ void CTreeListControl::SelectItem(const CTreeListItem *item)
 
 void CTreeListControl::SelectSingleItem(const CTreeListItem *item)
 {
-    int i = FindTreeItem(item);
+	const int i = FindTreeItem(item);
     if (i != -1)
     {
         SelectSingleItem(i);
@@ -410,14 +403,13 @@ void CTreeListControl::SelectSingleItem(const CTreeListItem *item)
 
 BOOL CTreeListControl::CreateEx(DWORD dwExStyle, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID)
 {
-    BOOL bRet = FALSE;
-    InitializeNodeBitmaps();
+	InitializeNodeBitmaps();
 
     dwStyle|= LVS_OWNERDRAWFIXED;
 
-    bRet = COwnerDrawnListControl::Create(dwStyle, rect, pParentWnd, nID);
+    BOOL bRet = COwnerDrawnListControl::Create(dwStyle, rect, pParentWnd, nID);
     VERIFY(bRet);
-    if((bRet) && (dwExStyle))
+    if(bRet && dwExStyle)
     {
         bRet = COwnerDrawnListControl::ModifyStyleEx(0, dwExStyle);
     }
@@ -442,7 +434,7 @@ void CTreeListControl::SetRootItem(CTreeListItem *root)
 
     m_selectionAnchor = root;
 
-    if(root != NULL)
+    if(root != nullptr)
     {
         InsertItem(0, root);
         ExpandItem(0);
@@ -460,21 +452,21 @@ void CTreeListControl::DeselectAll()
 void CTreeListControl::ExpandPathToItem(const CTreeListItem *item)
 {
     int i = 0;
-    if(item == NULL)
+    if(item == nullptr)
     {
         return;
     }
 
     CArray<const CTreeListItem *, const CTreeListItem *> path;
     const CTreeListItem *p = item;
-    while(p != NULL)
+    while(p != nullptr)
     {
         path.Add(p);
         p = p->GetParent();
     }
 
     int parent = 0;
-    for(i = int(path.GetSize()) - 1; i >= 0; i--)
+    for(i = static_cast<int>(path.GetSize()) - 1; i >= 0; i--)
     {
         int index = FindTreeItem(path[i]);
         if(index == -1)
@@ -496,7 +488,7 @@ void CTreeListControl::ExpandPathToItem(const CTreeListItem *item)
 
     i = FindTreeItem(path[0]);
 
-    int w = GetSubItemWidth(GetItem(i), 0) + 5;
+    const int w = GetSubItemWidth(GetItem(i), 0) + 5;
     if(GetColumnWidth(0) < w)
     {
         SetColumnWidth(0, w);
@@ -571,11 +563,11 @@ void CTreeListControl::DrawNode(CDC *pdc, CRect& rc, CRect& rcPlusMinus, const C
 
         CDC dcmem;
         dcmem.CreateCompatibleDC(pdc);
-        CSelectObject sonodes(&dcmem, (IsItemStripeColor(item) ? &m_bmNodes1 : &m_bmNodes0));
+        CSelectObject sonodes(&dcmem, IsItemStripeColor(item) ? &m_bmNodes1 : &m_bmNodes0);
 
-        int ysrc = NODE_HEIGHT / 2 - GetRowHeight() / 2;
+        const int ysrc = NODE_HEIGHT / 2 - GetRowHeight() / 2;
 
-        if(width == NULL)
+        if(width == nullptr)
         {
             const CTreeListItem *ancestor = item;
             for(int indent = item->GetIndent() - 2; indent >= 0; indent--)
@@ -590,7 +582,7 @@ void CTreeListControl::DrawNode(CDC *pdc, CRect& rc, CRect& rcPlusMinus, const C
 
         rcRest.left += (item->GetIndent() - 1) * INDENT_WIDTH;
 
-        if(width == NULL)
+        if(width == nullptr)
         {
             int node;
             if(item->HasChildren())
@@ -642,7 +634,7 @@ void CTreeListControl::DrawNode(CDC *pdc, CRect& rc, CRect& rcPlusMinus, const C
 
     rc.right = rcRest.left;
 
-    if(width != NULL)
+    if(width != nullptr)
     {
         *width = rc.Width();
     }
@@ -656,7 +648,7 @@ void CTreeListControl::OnLButtonDown(UINT nFlags, CPoint point)
     ZeroMemory(&hti, sizeof(hti));
     hti.pt = point;
 
-    int i = HitTest(&hti);
+    const int i = HitTest(&hti);
     if(i == -1)
     {
         return;
@@ -669,9 +661,9 @@ void CTreeListControl::OnLButtonDown(UINT nFlags, CPoint point)
     }
 
     CRect rc = GetWholeSubitemRect(i, 0);
-    CPoint pt = point - rc.TopLeft();
+    const CPoint pt = point - rc.TopLeft();
 
-    CTreeListItem *item = GetItem(i);
+    const CTreeListItem *item = GetItem(i);
 
     m_lButtonDownItem = i;
 
@@ -749,9 +741,9 @@ void CTreeListControl::ExtendSelection(int i)
 
     if (control && !selected && GetDocument()->GetSelectionCount() > 0)
     {
-        const CTreeListItem *selectionParent = NULL;
+        const CTreeListItem *selectionParent = nullptr;
         POSITION pos = GetFirstSelectedItemPosition();
-        if (pos != NULL)
+        if (pos != nullptr)
             selectionParent = GetItem(GetNextSelectedItem(pos))->GetParent();
 
         // impossible to select item outside selection parent
@@ -776,8 +768,8 @@ void CTreeListControl::ExtendSelection(int i)
 
         const CTreeListItem *selectionParent = GetItem(i)->GetParent();
 
-        int begin = min(anchor, i);
-        int end   = max(anchor, i);
+        const int begin = min(anchor, i);
+        const int end   = max(anchor, i);
 
         for (int k=begin; k <= end; k++)
         {
@@ -814,9 +806,9 @@ void CTreeListControl::UpdateDocumentSelection()
 {
     GetDocument()->RemoveAllSelections();
     POSITION pos = GetFirstSelectedItemPosition(); // I assume, this retrieves the selected items in the order from top to bottom.
-    while (pos != NULL)
+    while (pos != nullptr)
     {
-        int k = GetNextSelectedItem(pos);
+	    const int k = GetNextSelectedItem(pos);
         GetDocument()->AddSelection((const CItem *)GetItem(k));
     }
 }
@@ -847,7 +839,7 @@ void CTreeListControl::CollapseItem(int i)
     int todelete = 0;
     for(int k = i+1; k < GetItemCount(); k++)
     {
-        CTreeListItem *child = GetItem(k);
+	    const CTreeListItem *child = GetItem(k);
         if(child->GetIndent() <= item->GetIndent())
         {
             break;
@@ -881,13 +873,13 @@ int CTreeListControl::GetItemScrollPosition(CTreeListItem *item)
 
 void CTreeListControl::SetItemScrollPosition(CTreeListItem *item, int top)
 {
-    int old = GetItemScrollPosition(item);
+	const int old = GetItemScrollPosition(item);
     Scroll(CSize(0, top - old));
 }
 
 bool CTreeListControl::SelectedItemCanToggle()
 {
-    int i = GetSelectedItem();
+	const int i = GetSelectedItem();
     if(i == -1)
     {
         return false;
@@ -900,7 +892,7 @@ bool CTreeListControl::SelectedItemCanToggle()
 
 void CTreeListControl::ToggleSelectedItem()
 {
-    int i = GetSelectedItem();
+	const int i = GetSelectedItem();
     ASSERT(i != -1);
     ToggleExpansion(i);
 }
@@ -930,7 +922,7 @@ void CTreeListControl::ExpandItem(int i, bool scroll)
         InsertItem(i + 1 + c, child);
         if(scroll)
         {
-            int w = GetSubItemWidth(child, 0);
+	        const int w = GetSubItemWidth(child, 0);
             if(w > maxwidth)
             {
                 maxwidth = w;
@@ -949,9 +941,7 @@ void CTreeListControl::ExpandItem(int i, bool scroll)
 
     if(scroll)
     {
-#if 0
-        EnsureVisible(i, false);
-#elif 1
+
         // Scroll up so far, that i is still visible
         // and the first child becomes visible, if possible.
         if(item->GetChildrenCount() > 0)
@@ -959,42 +949,6 @@ void CTreeListControl::ExpandItem(int i, bool scroll)
             EnsureVisible(i + 1, false);
         }
         EnsureVisible(i, false);
-#elif 0
-        // Scroll up so far, that i is still visible
-        // and the last child becomes visible, if possible.
-
-        CRect rcClient;
-        GetClientRect(rcClient);
-
-        CRect rcLastChild;
-        VERIFY(GetItemRect(i + item->GetChildrenCount(), rcLastChild, LVIR_BOUNDS));
-
-        int cy = rcLastChild.bottom - rcClient.bottom;
-        if(cy < 0)
-        {
-            return;
-        }
-
-        CRect rcHeader;
-        GetHeaderCtrl()->GetWindowRect(rcHeader);
-        ScreenToClient(rcHeader);
-
-        CRect rcParent;
-        VERIFY(GetItemRect(i, rcParent, LVIR_BOUNDS));
-
-        int cymax = rcParent.top - rcHeader.bottom;
-        if(cymax < 0)
-        {
-            return;
-        }
-
-        if(cy > cymax)
-        {
-            cy = cymax;
-        }
-
-        Scroll(CSize(0, cy));
-#endif
     }
 
 }
@@ -1019,7 +973,7 @@ void CTreeListControl::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
         {
             CollapseItem(i);
         }
-        else if (item->GetParent() != NULL && !control && !shift)
+        else if (item->GetParent() != nullptr && !control && !shift)
         {
             SelectSingleItem(item->GetParent());
         }
@@ -1093,7 +1047,7 @@ void CTreeListControl::OnChildAdded(CTreeListItem *parent, CTreeListItem *child)
         return;
     }
 
-    int p = FindTreeItem(parent);
+    const int p = FindTreeItem(parent);
     ASSERT(p != -1);
 
     if(parent->IsExpanded())
@@ -1115,7 +1069,7 @@ void CTreeListControl::OnChildRemoved(CTreeListItem *parent, CTreeListItem *chil
         return;
     }
 
-    int p = FindTreeItem(parent);
+    const int p = FindTreeItem(parent);
     ASSERT(p != -1);
 
     if(parent->IsExpanded())
@@ -1125,7 +1079,7 @@ void CTreeListControl::OnChildRemoved(CTreeListItem *parent, CTreeListItem *chil
             OnChildRemoved(child, child->GetTreeListChild(i));
         }
 
-        int c = FindTreeItem(child);
+        const int c = FindTreeItem(child);
         ASSERT(c != -1);
         DeleteItem(c);
         parent->SortChildren();
@@ -1141,7 +1095,7 @@ void CTreeListControl::OnRemovingAllChildren(CTreeListItem *parent)
         return;
     }
 
-    int p = FindTreeItem(parent);
+    const int p = FindTreeItem(parent);
     ASSERT(p != -1);
 
     CollapseItem(p);
@@ -1161,11 +1115,11 @@ void CTreeListControl::Sort()
 
 void CTreeListControl::EnsureItemVisible(const CTreeListItem *item)
 {
-    if(item == NULL)
+    if(item == nullptr)
     {
         return;
     }
-    int i = FindTreeItem(item);
+    const int i = FindTreeItem(item);
     if(i == -1)
     {
         return;

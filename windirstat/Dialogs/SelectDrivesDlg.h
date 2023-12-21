@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -51,15 +51,15 @@ public:
 
     void SetDriveInformation(bool success, LPCWSTR name, ULONGLONG total, ULONGLONG free);
 
-    virtual int Compare(const CSortingListItem *other, int subitem) const;
+    int Compare(const CSortingListItem *other, int subitem) const override;
 
     CStringW GetPath() const;
     CStringW GetDrive() const;
     bool IsRemote() const;
     bool IsSUBSTed() const;
-    virtual bool DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *width, int *focusLeft) const;
-    virtual CStringW GetText(int subitem) const;
-    int GetImage() const;
+    bool DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *width, int *focusLeft) const override;
+    CStringW GetText(int subitem) const override;
+    int GetImage() const override;
 
 private:
     CDrivesList *m_list;    // Backpointer
@@ -96,9 +96,9 @@ public:
     static void OnAppExit();
 
     CDriveInformationThread(LPCWSTR path, LPARAM driveItem, HWND dialog, UINT serial);
-    virtual BOOL InitInstance();
+    BOOL InitInstance() override;
 
-    LPARAM GetDriveInformation(bool& success, CStringW& name, ULONGLONG& total, ULONGLONG& free);
+    LPARAM GetDriveInformation(bool& success, CStringW& name, ULONGLONG& total, ULONGLONG& free) const;
 
 private:
     const CStringW m_path;       // Path like "C:\"
@@ -123,16 +123,16 @@ class CDrivesList: public COwnerDrawnListControl
     DECLARE_DYNAMIC(CDrivesList)
 public:
     CDrivesList();
-    CDriveItem *GetItem(int i);
+    CDriveItem *GetItem(int i) const;
     void SelectItem(CDriveItem *item);
     bool IsItemSelected(int i);
 
-    virtual bool HasImages();
+    bool HasImages() override;
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
     afx_msg void OnLvnDeleteitem(NMHDR *pNMHDR, LRESULT *pResult);
-    afx_msg void MeasureItem(LPMEASUREITEMSTRUCT lpMeasureItemStruct);
+    afx_msg void MeasureItem(LPMEASUREITEMSTRUCT mis);
     afx_msg void OnNMDblclk(NMHDR *pNMHDR, LRESULT *pResult);
 };
 
@@ -141,15 +141,15 @@ public:
 // CSelectDrivesDlg. The initial dialog, where the user can select
 // one or more drives or a folder for scanning.
 //
-class CSelectDrivesDlg : public CDialog
+class CSelectDrivesDlg final : public CDialog
 {
     DECLARE_DYNAMIC(CSelectDrivesDlg)
     enum { IDD = IDD_SELECTDRIVES };
     static CStringW getFullPathName_(LPCWSTR relativePath);
 
 public:
-    CSelectDrivesDlg(CWnd* pParent = NULL);
-    virtual ~CSelectDrivesDlg();
+    CSelectDrivesDlg(CWnd* pParent = nullptr);
+    ~CSelectDrivesDlg() override = default;
 
     // Dialog Data
     int m_radio;            // out.
@@ -157,9 +157,9 @@ public:
     CStringArray m_drives;  // out. Valid if m_radio != RADIO_AFOLDER
 
 protected:
-    virtual void DoDataExchange(CDataExchange* pDX);
-    virtual BOOL OnInitDialog();
-    virtual void OnOK();
+    void DoDataExchange(CDataExchange* pDX) override;
+    BOOL OnInitDialog() override;
+    void OnOK() override;
 
     void UpdateButtons();
 
@@ -179,7 +179,7 @@ protected:
     afx_msg void OnBnClickedAfolder();
     afx_msg void OnBnClickedSomedrives();
     afx_msg void OnEnChangeFoldername();
-    afx_msg void OnMeasureItem(int nIDCtl, LPMEASUREITEMSTRUCT lpMeasureItemStruct);
+    afx_msg void OnMeasureItem(int nIDCtl, LPMEASUREITEMSTRUCT mis);
     afx_msg void OnLvnItemchangedDrives(NMHDR *pNMHDR, LRESULT *pResult);
     afx_msg void OnSize(UINT nType, int cx, int cy);
     afx_msg void OnGetMinMaxInfo(MINMAXINFO* lpMMI);

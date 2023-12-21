@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -22,10 +22,6 @@
 #include "stdafx.h"
 #include "selectobject.h"
 #include "xyslider.h"
-
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#endif
 
 IMPLEMENT_DYNAMIC(CXySlider, CStatic)
 
@@ -49,11 +45,11 @@ void AFXAPI DDX_XySlider(CDataExchange* pDX, int nIDC, CPoint& value)
 }
 
 CXySlider::CXySlider()
-    : m_externalRange(CSize(100, 100))
+    : m_inited(false)
+    , m_externalRange(CSize(100, 100))
     , m_externalPos(CPoint(0, 0))
     , m_pos(CPoint(0, 0))
     , m_timer(0)
-    , m_inited(false)
     , m_gripperHighlight(false)
 {
 }
@@ -83,7 +79,7 @@ void CXySlider::Initialize()
     }
 }
 
-void CXySlider::GetRange(CSize& range)
+void CXySlider::GetRange(CSize& range) const
 {
     range = m_externalRange;
 }
@@ -93,14 +89,14 @@ void CXySlider::SetRange(CSize range)
     m_externalRange = range;
 }
 
-CPoint CXySlider::GetPos()
+CPoint CXySlider::GetPos() const
 {
     return m_externalPos;
 }
 
 LRESULT CXySlider::OnSetPos(WPARAM, LPARAM lparam)
 {
-    POINT *point = (POINT *)lparam;
+	const POINT *point = (POINT *)lparam;
     SetPos(*point);
     return 0;
 }
@@ -124,7 +120,7 @@ void CXySlider::SetPos(CPoint pt)
 
 void CXySlider::CalcSizes()
 {
-    static const int _gripperRadius = 8;
+    static constexpr int _gripperRadius = 8;
 
     GetClientRect(m_rcAll);
 
@@ -179,14 +175,14 @@ void CXySlider::CheckMinMax(LONG& val, int min, int max)
 
 void CXySlider::InternToExtern()
 {
-    m_externalPos.x = (int)((double)abs(m_pos.x) * m_externalRange.cx / m_range.cx + 0.5) * signum(m_pos.x);
-    m_externalPos.y = (int)((double)abs(m_pos.y) * m_externalRange.cy / m_range.cy + 0.5) * signum(m_pos.y);
+    m_externalPos.x = static_cast<int>((double)abs(m_pos.x) * m_externalRange.cx / m_range.cx + 0.5) * signum(m_pos.x);
+    m_externalPos.y = static_cast<int>((double)abs(m_pos.y) * m_externalRange.cy / m_range.cy + 0.5) * signum(m_pos.y);
 }
 
 void CXySlider::ExternToIntern()
 {
-    m_pos.x = (int)((double)abs(m_externalPos.x) * m_range.cx / m_externalRange.cx + 0.5) * signum(m_externalPos.x);
-    m_pos.y = (int)((double)abs(m_externalPos.y) * m_range.cy / m_externalRange.cy + 0.5) * signum(m_externalPos.y);
+    m_pos.x = static_cast<int>((double)abs(m_externalPos.x) * m_range.cx / m_externalRange.cx + 0.5) * signum(m_externalPos.x);
+    m_pos.y = static_cast<int>((double)abs(m_externalPos.y) * m_range.cy / m_externalRange.cy + 0.5) * signum(m_externalPos.y);
 }
 
 void CXySlider::NotifyParent()
@@ -290,7 +286,7 @@ void CXySlider::DoMoveBy(int cx, int cy)
 
     RedrawWindow();
 
-    CPoint oldpos = m_externalPos;
+    const CPoint oldpos = m_externalPos;
     InternToExtern();
     if(m_externalPos != oldpos)
     {
@@ -304,15 +300,15 @@ void CXySlider::DoDrag(CPoint point)
 
     HighlightGripper(true);
 
-    CSize inGripper = pt0 - GetGripperRect().CenterPoint();
-    CPoint ptMin(m_zero - m_range + inGripper);
-    CPoint ptMax(m_zero + m_range + inGripper);
+    const CSize inGripper = pt0 - GetGripperRect().CenterPoint();
+    const CPoint ptMin(m_zero - m_range + inGripper);
+    const CPoint ptMax(m_zero + m_range + inGripper);
 
     SetCapture();
     while(true)
     {
         MSG msg;
-        if(!GetMessage(&msg, NULL, 0, 0))
+        if(!GetMessage(&msg, nullptr, 0, 0))
         {
             break;
         }
@@ -335,8 +331,8 @@ void CXySlider::DoDrag(CPoint point)
             CheckMinMax(pt.x, ptMin.x, ptMax.x);
             CheckMinMax(pt.y, ptMin.y, ptMax.y);
 
-            int dx = pt.x - pt0.x;
-            int dy = pt.y - pt0.y;
+            const int dx = pt.x - pt0.x;
+            const int dy = pt.y - pt0.y;
 
             DoMoveBy(dx, dy);
 
@@ -354,16 +350,16 @@ void CXySlider::DoDrag(CPoint point)
 
 void CXySlider::DoPage(CPoint point)
 {
-    CSize sz = point - (m_zero + m_pos);
+	const CSize sz = point - (m_zero + m_pos);
 
     ASSERT(sz.cx != 0 || sz.cy != 0);
 
-    const double len = sqrt((double)(sz.cx * sz.cx + sz.cy * sz.cy));
+    const double len = sqrt(static_cast<double>(sz.cx * sz.cx + sz.cy * sz.cy));
 
-    const double d = 10;
+	constexpr double d = 10;
 
-    int dx = (int)(d * sz.cx / len);
-    int dy = (int)(d * sz.cy / len);
+	const int dx = static_cast<int>(d * sz.cx / len);
+	const int dy = static_cast<int>(d * sz.cy / len);
 
     DoMoveBy(dx, dy);
 }
@@ -377,7 +373,7 @@ void CXySlider::HighlightGripper(bool on)
 void CXySlider::InstallTimer()
 {
     RemoveTimer();
-    m_timer = SetTimer(4711, 500, NULL); // FIXME: hardcoded values
+    m_timer = SetTimer(4711, 500, nullptr); // FIXME: hardcoded values
 }
 
 void CXySlider::RemoveTimer()
@@ -437,8 +433,8 @@ void CXySlider::OnKillFocus(CWnd* pNewWnd)
 void CXySlider::OnPaint()
 {
     Initialize();
-    int w = m_rcAll.Width();
-    int h = m_rcAll.Height();
+    const int w = m_rcAll.Width();
+    const int h = m_rcAll.Height();
 
     CPaintDC dc(this);
     CDC dcmem;
@@ -485,7 +481,7 @@ void CXySlider::OnLButtonDown(UINT /*nFlags*/, CPoint point)
 {
     SetFocus();
 
-    CRect rc = GetGripperRect();
+    const CRect rc = GetGripperRect();
 
     if(rc.PtInRect(point))
     {
@@ -525,7 +521,7 @@ void CXySlider::OnTimer(UINT_PTR /*nIDEvent*/)
     GetCursorPos(&point);
     ScreenToClient(&point);
 
-    CRect rc = GetGripperRect();
+    const CRect rc = GetGripperRect();
     if(!rc.PtInRect(point))
     {
         DoPage(point);

@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2019 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
 // Copyright (C) 2010 Chris Wimmer
 //
 // This program is free software; you can redistribute it and/or modify
@@ -40,7 +40,6 @@
 
 #ifdef _DEBUG
 #   include <common/tracer.cpp>
-#   define new DEBUG_NEW
 #endif
 
 CMainFrame *GetMainFrame()
@@ -85,18 +84,16 @@ END_MESSAGE_MAP()
 CDirstatApp _theApp;
 
 CDirstatApp::CDirstatApp()
-    : Inherited()
-    , m_pDocTemplate(0)
-    , m_langid(0)
-    , m_workingSet(0)
-    , m_pageFaults(0)
-    , m_lastPeriodicalRamUsageUpdate(GetTickCount64())
-    , m_altColor(GetAlternativeColor(RGB(0x00, 0x00, 0xFF), L"AltColor"))
-    , m_altEncryptionColor(GetAlternativeColor(RGB(0x00, 0x80, 0x00), L"AltEncryptionColor"))
-    , m_ElevationEvent(NULL)
-    , m_ElevationEventName()
+    : m_pDocTemplate(nullptr)
+      , m_langid(0)
+      , m_workingSet(0)
+      , m_pageFaults(0)
+      , m_lastPeriodicalRamUsageUpdate(GetTickCount64())
+      , m_altColor(GetAlternativeColor(RGB(0x00, 0x00, 0xFF), L"AltColor"))
+      , m_altEncryptionColor(GetAlternativeColor(RGB(0x00, 0x80, 0x00), L"AltEncryptionColor"))
+      , m_ElevationEvent(nullptr)
 #   ifdef VTRACE_TO_CONSOLE
-    , m_vtrace_console(new CWDSTracerConsole())
+      , m_vtrace_console(new CWDSTracerConsole())
 #   endif // VTRACE_TO_CONSOLE
 {
 #   ifdef _DEBUG
@@ -208,7 +205,7 @@ void CDirstatApp::RestartApplication()
     PROCESS_INFORMATION pi;
     ZeroMemory(&pi, sizeof(pi));
 
-    BOOL success = CreateProcess(GetAppFileName(), NULL, NULL, NULL, false, CREATE_SUSPENDED, NULL, NULL, &si, &pi);
+    const BOOL success = CreateProcess(GetAppFileName(), nullptr, nullptr, nullptr, false, CREATE_SUSPENDED, nullptr, nullptr, &si, &pi);
     if(!success)
     {
         CStringW s;
@@ -220,9 +217,9 @@ void CDirstatApp::RestartApplication()
     // We _send_ the WM_CLOSE here to ensure that all CPersistence-Settings
     // like column widths an so on are saved before the new instance is resumed.
     // This will post a WM_QUIT message.
-    GetMainFrame()->SendMessage(WM_CLOSE);
+    (void) GetMainFrame()->SendMessage(WM_CLOSE);
 
-    DWORD dw = ::ResumeThread(pi.hThread);
+    const DWORD dw = ::ResumeThread(pi.hThread);
     if(dw != 1)
     {
         VTRACE(L"ResumeThread() didn't return 1");
@@ -240,7 +237,7 @@ bool CDirstatApp::getDiskFreeSpace(LPCWSTR pszRootPath, ULONGLONG& total, ULONGL
 
     // On NT 4.0, the 2nd Parameter to this function must NOT be NULL.
     // TODO: verify whether Windows 2000 behaves correctly
-    BOOL b = GetDiskFreeSpaceEx(pszRootPath, &u64available, &u64total, &u64free);
+    const BOOL b = GetDiskFreeSpaceEx(pszRootPath, &u64available, &u64total, &u64free);
     if(!b)
     {
         VTRACE(L"GetDiskFreeSpaceEx(%s) failed.", pszRootPath);
@@ -252,7 +249,7 @@ bool CDirstatApp::getDiskFreeSpace(LPCWSTR pszRootPath, ULONGLONG& total, ULONGL
 
     // Race condition ...
     ASSERT(unused <= total);
-    return (FALSE != b);
+    return FALSE != b;
 }
 
 bool CDirstatApp::ScanResourceDllName(LPCWSTR name, LANGID& langid)
@@ -274,13 +271,13 @@ bool CDirstatApp::ScanAuxiliaryFileName(LPCWSTR prefix, LPCWSTR suffix, LPCWSTR 
 
     CStringW s(name);   // [prefix][lngcode].[suffix]
     s.MakeLower();
-    if(s.Left(((int)wcslen(prefix))) != prefix)
+    if(s.Left(static_cast<int>(wcslen(prefix))) != prefix)
     {
         return false;
     }
-    s = s.Mid(((int)wcslen(prefix))); // remove prefix from the front -> [lngcode].[suffix]
+    s = s.Mid(static_cast<int>(wcslen(prefix))); // remove prefix from the front -> [lngcode].[suffix]
 
-    if(s.GetLength() != (iLangCodeLength + ((int)wcslen(suffix))))
+    if(s.GetLength() != iLangCodeLength + static_cast<int>(wcslen(suffix)))
     {
         return false;
     }
@@ -302,7 +299,7 @@ bool CDirstatApp::ScanAuxiliaryFileName(LPCWSTR prefix, LPCWSTR suffix, LPCWSTR 
 
     int id;
     VERIFY(1 == _stscanf_s(s, L"%04x", &id));
-    langid = (LANGID)id;
+    langid = static_cast<LANGID>(id);
 
     return true;
 }
@@ -368,19 +365,19 @@ CStringW CDirstatApp::FindAuxiliaryFileByLangid(LPCWSTR prefix, LPCWSTR suffix, 
 
 bool CDirstatApp::IsCorrectResourceDll(LPCWSTR path)
 {
-    HMODULE module = ::LoadLibraryEx(path, NULL, LOAD_LIBRARY_AS_DATAFILE);
-    if(module == NULL)
+	const HMODULE module = ::LoadLibraryEx(path, nullptr, LOAD_LIBRARY_AS_DATAFILE);
+    if(module == nullptr)
     {
         return false;
     }
 
     // TODO/FIXME: introduce some method of checking the resource version
 
-    CStringW reference = LoadString(IDS_RESOURCEVERSION);
+	const CStringW reference = LoadString(IDS_RESOURCEVERSION);
 
-    int bufsize = reference.GetLength() * 2;
+	const int bufsize = reference.GetLength() * 2;
     CStringW s;
-    int r = LoadString(module, IDS_RESOURCEVERSION, s.GetBuffer(bufsize), bufsize);
+	const int r = LoadString(module, IDS_RESOURCEVERSION, s.GetBuffer(bufsize), bufsize);
     s.ReleaseBuffer();
 
     FreeLibrary(module);
@@ -398,7 +395,7 @@ void CDirstatApp::ReReadMountPoints()
     m_mountPoints.Initialize();
 }
 
-bool CDirstatApp::IsVolumeMountPoint(CStringW path)
+bool CDirstatApp::IsVolumeMountPoint(const CStringW& path)
 {
     return m_mountPoints.IsVolumeMountPoint(path);
 }
@@ -431,13 +428,13 @@ COLORREF CDirstatApp::GetAlternativeColor(COLORREF clrDefault, LPCWSTR which)
     }
 }
 
-COLORREF CDirstatApp::AltColor()
+COLORREF CDirstatApp::AltColor() const
 {
     // Return property value
     return m_altColor;
 }
 
-COLORREF CDirstatApp::AltEncryptionColor()
+COLORREF CDirstatApp::AltEncryptionColor() const
 {
     // Return property value
     return m_altEncryptionColor;
@@ -452,7 +449,7 @@ CStringW CDirstatApp::GetCurrentProcessMemoryInfo()
         return wds::strEmpty;
     }
 
-    CStringW n = PadWidthBlanks(FormatBytes(m_workingSet), 11);
+    const CStringW n = PadWidthBlanks(FormatBytes(m_workingSet), 11);
 
     CStringW s;
     s.FormatMessage(IDS_RAMUSAGEs, n.GetString());
@@ -508,11 +505,11 @@ BOOL CDirstatApp::InitInstance()
     LANGID langid = CLanguageOptions::GetLanguage();
     if(langid != GetBuiltInLanguage())
     {
-        CStringW resourceDllPath = FindResourceDllPathByLangid(langid);
+	    const CStringW resourceDllPath = FindResourceDllPathByLangid(langid);
         if(!resourceDllPath.IsEmpty())
         {
             // Load language resource DLL
-            HINSTANCE dll = ::LoadLibrary(resourceDllPath);
+            const HINSTANCE dll = ::LoadLibrary(resourceDllPath);
             if(dll)
             {
                 // Set default module handle for loading of resources
@@ -537,7 +534,7 @@ BOOL CDirstatApp::InitInstance()
         //and if so, wait for it, so previous instance can store its config that we reload next
         ::WaitForSingleObject(m_ElevationEvent, 20 * 1000);
         ::CloseHandle(m_ElevationEvent);
-        m_ElevationEvent = NULL;
+        m_ElevationEvent = nullptr;
     }
     else
     {
@@ -615,7 +612,7 @@ void CDirstatApp::OnFileOpen()
     CSelectDrivesDlg dlg;
     if(IDOK == dlg.DoModal())
     {
-        CStringW path = CDirstatDoc::EncodeSelection((RADIO)dlg.m_radio, dlg.m_folderName, dlg.m_drives);
+	    const CStringW path = CDirstatDoc::EncodeSelection(static_cast<RADIO>(dlg.m_radio), dlg.m_folderName, dlg.m_drives);
         m_pDocTemplate->OpenDocumentFile(path, true);
     }
 }
@@ -638,9 +635,9 @@ BOOL CDirstatApp::IsUACEnabled()
         if (::RegOpenKeyW(HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\System", &hKey) == ERROR_SUCCESS)
         {
             DWORD value = 0;
-            if (::RegQueryValueExW(hKey, L"EnableLUA", NULL, NULL, NULL, &value) == ERROR_SUCCESS)
+            if (::RegQueryValueExW(hKey, L"EnableLUA", nullptr, nullptr, nullptr, &value) == ERROR_SUCCESS)
             {
-                return (value != 0);
+                return value != 0;
             }
             else
             {
@@ -674,7 +671,7 @@ void CDirstatApp::OnRunElevated()
         return;
     }
 
-    CStringW sAppName = GetAppFileName();
+    const CStringW sAppName = GetAppFileName();
 
     SHELLEXECUTEINFO shellInfo;
     ZeroMemory(&shellInfo, sizeof(shellInfo));
@@ -689,18 +686,18 @@ void CDirstatApp::OnRunElevated()
     {
         ::CloseHandle(m_ElevationEvent);
     }
-    m_ElevationEvent = ::CreateEvent(NULL, TRUE, FALSE, m_ElevationEventName); 
+    m_ElevationEvent = ::CreateEvent(nullptr, TRUE, FALSE, m_ElevationEventName); 
     if (!m_ElevationEvent)
     {
         VTRACE(L"CreateEvent failed with %d", GetLastError());
-        m_ElevationEvent = NULL;
+        m_ElevationEvent = nullptr;
         return;
     }
     if (ERROR_ALREADY_EXISTS == ::GetLastError())
     {
         VTRACE(L"Event already exists");
         ::CloseHandle(m_ElevationEvent);
-        m_ElevationEvent = NULL;
+        m_ElevationEvent = nullptr;
         return;
     }
 
@@ -709,7 +706,7 @@ void CDirstatApp::OnRunElevated()
         VTRACE(L"ShellExecuteEx failed to elevate %d", GetLastError());
         
         ::CloseHandle(m_ElevationEvent);
-        m_ElevationEvent = NULL;
+        m_ElevationEvent = nullptr;
 
         //TODO: Display message to user?
     }
@@ -717,11 +714,11 @@ void CDirstatApp::OnRunElevated()
     {
         //TODO: Store configurations for the new app
         
-        GetMainFrame()->SendMessage(WM_CLOSE);
+        (void) GetMainFrame()->SendMessage(WM_CLOSE);
         ::SetEvent(m_ElevationEvent); //Tell other process that we finished saving data (it waits only 20s)
 
         ::CloseHandle(m_ElevationEvent);
-        m_ElevationEvent = NULL;
+        m_ElevationEvent = nullptr;
     }
 }
 
@@ -732,7 +729,7 @@ BOOL CDirstatApp::OnIdle(LONG lCount)
     CDirstatDoc *doc = GetDocument();
     CWorkLimiter limiter;
     limiter.Start(600);
-    if((doc) && (!doc->Work(&limiter)))
+    if(doc && !doc->Work(&limiter))
     {
         more = true;
     }

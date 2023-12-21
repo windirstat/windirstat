@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -24,10 +24,6 @@
 #include "windirstat.h"
 #include "options.h"
 #include "sortinglistcontrol.h"
-
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#endif
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -90,10 +86,6 @@ CSortingListControl::CSortingListControl(LPCWSTR name)
     m_indicatedColumn = -1;
 }
 
-CSortingListControl::~CSortingListControl()
-{
-}
-
 void CSortingListControl::LoadPersistentAttributes()
 {
     int i = 0;
@@ -102,7 +94,7 @@ void CSortingListControl::LoadPersistentAttributes()
 
     GetColumnOrderArray(arr.GetData(), static_cast<int>(arr.GetSize()));
     CPersistence::GetColumnOrder(m_name, arr);
-    SetColumnOrderArray(int(arr.GetSize()), arr.GetData());
+    SetColumnOrderArray(static_cast<int>(arr.GetSize()), arr.GetData());
 
     for(i = 0; i < arr.GetSize(); i++)
     {
@@ -114,7 +106,7 @@ void CSortingListControl::LoadPersistentAttributes()
         // To avoid "insane" settings we set the column width to
         // maximal twice the default width.
         int maxWidth = GetColumnWidth(i) * 2;
-        int w = min(arr[i], maxWidth);
+        const int w = min(arr[i], maxWidth);
         SetColumnWidth(i, w);
     }
 
@@ -123,7 +115,7 @@ void CSortingListControl::LoadPersistentAttributes()
     // users start up with insane settings and don't get it.
 }
 
-void CSortingListControl::SavePersistentAttributes()
+void CSortingListControl::SavePersistentAttributes() const
 {
     CArray<int, int> arr;
     arr.SetSize(GetHeaderCtrl()->GetItemCount());
@@ -151,7 +143,7 @@ void CSortingListControl::RemoveExtendedStyle(DWORD exStyle)
 }
 
 
-const SSorting& CSortingListControl::GetSorting()
+const SSorting& CSortingListControl::GetSorting() const
 {
     return m_sorting;
 }
@@ -217,7 +209,7 @@ void CSortingListControl::SortItems()
         GetHeaderCtrl()->GetItem(m_indicatedColumn, &hditem);
         text.ReleaseBuffer();
         text = text.Mid(2);
-        hditem.pszText = (LPTSTR)(LPCWSTR)text;
+        hditem.pszText = (LPTSTR)static_cast<LPCWSTR>(text);
         GetHeaderCtrl()->SetItem(m_indicatedColumn, &hditem);
     }
 
@@ -228,7 +220,7 @@ void CSortingListControl::SortItems()
     GetHeaderCtrl()->GetItem(m_sorting.column1, &hditem);
     text.ReleaseBuffer();
     text = (m_sorting.ascending1 ? L"< " : L"> ") + text;
-    hditem.pszText = (LPTSTR)(LPCWSTR)text;
+    hditem.pszText = (LPTSTR)static_cast<LPCWSTR>(text);
     GetHeaderCtrl()->SetItem(m_sorting.column1, &hditem);
     m_indicatedColumn = m_sorting.column1;
 }
@@ -253,9 +245,9 @@ BOOL CSortingListControl::GetColumnOrderArray(LPINT piArray, INT_PTR iCount)
 
 int CALLBACK CSortingListControl::_CompareFunc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
 {
-    CSortingListItem *item1 = (CSortingListItem *)lParam1;
-    CSortingListItem *item2 = (CSortingListItem *)lParam2;
-    SSorting *sorting = (SSorting *)lParamSort;
+	const CSortingListItem *item1 = (CSortingListItem *)lParam1;
+	const CSortingListItem *item2 = (CSortingListItem *)lParam2;
+	const SSorting *sorting = (SSorting *)lParamSort;
 
     return item1->CompareS(item2, *sorting);
 }
@@ -279,7 +271,7 @@ void CSortingListControl::OnLvnGetdispinfo(NMHDR *pNMHDR, LRESULT *pResult)
     NMLVDISPINFO *di = reinterpret_cast<NMLVDISPINFO*>(pNMHDR);
     *pResult = 0;
 
-    CSortingListItem *item = (CSortingListItem *)(di->item.lParam);
+    const CSortingListItem *item = (CSortingListItem *)di->item.lParam;
 
     if((di->item.mask & LVIF_TEXT) != 0)
     {

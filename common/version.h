@@ -1,6 +1,6 @@
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -88,6 +88,6 @@
 #endif
 
 #define TEXT_COMPANY                WinDirStat Team (windirstat.net) // company
-#define TEXT_COPYRIGHT              \xA9 2003-2005 Bernhard Seifert, \xA9 2004-2017 WinDirStat Team // copyright information
+#define TEXT_COPYRIGHT              \xA9 2003-2005 Bernhard Seifert, \xA9 2004-2024 WinDirStat Team // copyright information
 #define HG_REPOSITORY               "https://bitbucket.org/windirstat/windirstat"
 #define STRING_REPORT_DEFECT_URL    HG_REPOSITORY "/issues?status=new&status=open"

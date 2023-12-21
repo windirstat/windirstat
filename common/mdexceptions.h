@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -39,13 +39,13 @@ public:
     {
     }
 
-    virtual BOOL GetErrorMessage(LPWSTR lpszError, UINT nMaxError, UINT *pnHelpContext = NULL)
+    BOOL GetErrorMessage(LPWSTR lpszError, UINT nMaxError, UINT *pnHelpContext = nullptr) override
     {
-        if(pnHelpContext != NULL)
+        if(pnHelpContext != nullptr)
         {
             *pnHelpContext = 0;
         }
-        if((nMaxError != 0) && (lpszError != NULL))
+        if(nMaxError != 0 && lpszError != nullptr)
         {// TODO, fix parameters
             wcscpy_s(lpszError, nMaxError, m_sText);
         }
@@ -58,9 +58,9 @@ protected:
 
 inline CStringW MdGetExceptionMessage(const CException *pe)
 {
-    const INT ccBufferSize = 0x400;
+	constexpr INT ccBufferSize = 0x400;
     CStringW s;
-    BOOL b = pe->GetErrorMessage(s.GetBuffer(ccBufferSize), ccBufferSize);
+    const BOOL b = pe->GetErrorMessage(s.GetBuffer(ccBufferSize), ccBufferSize);
     s.ReleaseBuffer();
 
     if(!b)
@@ -75,18 +75,18 @@ inline CStringW MdGetWinErrorText(HRESULT hr)
 {
     CStringW sRet;
     LPVOID lpMsgBuf;
-    DWORD dw = FormatMessage(
+    const DWORD dw = FormatMessage(
         FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
-        NULL,
+        nullptr,
         hr,
         MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
         (LPWSTR)&lpMsgBuf,
         0,
-        NULL
-        );
+        nullptr
+    );
     if(NULL == dw)
     {
-        CStringW s(MAKEINTRESOURCE(AFX_IDP_NO_ERROR_AVAILABLE));
+	    const CStringW s(MAKEINTRESOURCE(AFX_IDP_NO_ERROR_AVAILABLE));
         sRet.Format(L"%s (0x%08lx)", s.GetString(), hr);
     }
     else
@@ -151,14 +151,14 @@ inline void MdThrowStringExceptionF(UINT nResIdFormat, va_list vlist)
     MdThrowStringException(sText);
 }
 
-inline void MdThrowWinError(DWORD dw, LPCWSTR pszPrefix =NULL)
+inline void MdThrowWinError(DWORD dw, LPCWSTR pszPrefix = nullptr)
 {
     CStringW sMsg = pszPrefix;
     sMsg += L": " + MdGetWinErrorText(dw);
     MdThrowStringException(sMsg);
 }
 
-inline void MdThrowHresult(HRESULT hr, LPCWSTR pszPrefix =NULL)
+inline void MdThrowHresult(HRESULT hr, LPCWSTR pszPrefix = nullptr)
 {
     CStringW sMsg = pszPrefix;
     sMsg += L": " + MdGetWinErrorText(hr);
@@ -166,12 +166,12 @@ inline void MdThrowHresult(HRESULT hr, LPCWSTR pszPrefix =NULL)
 }
 
 
-inline void MdThrowLastWinerror(LPCWSTR pszPrefix = NULL)
+inline void MdThrowLastWinerror(LPCWSTR pszPrefix = nullptr)
 {
     MdThrowWinError(::GetLastError(), pszPrefix);
 }
 
-inline void MdThrowFailed(HRESULT hr, LPCWSTR pszPrefix = NULL)
+inline void MdThrowFailed(HRESULT hr, LPCWSTR pszPrefix = nullptr)
 {
     if(FAILED(hr))
     {

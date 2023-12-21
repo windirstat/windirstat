@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -32,11 +32,11 @@ class CAboutThread: public CWinThread
 {
     DECLARE_DYNCREATE(CAboutThread);
 protected:
-    virtual BOOL InitInstance();
+    BOOL InitInstance() override;
 };
 
 
-class CAboutDlg : public CDialog
+class CAboutDlg final : public CDialog
 {
     enum { IDD = IDD_ABOUTBOX };
 
@@ -62,8 +62,8 @@ public:
     static CStringW GetTranslatorList();
 
 protected:
-    virtual BOOL OnInitDialog();
-    virtual void DoDataExchange(CDataExchange* pDX);
+    BOOL OnInitDialog() override;
+    void DoDataExchange(CDataExchange* pDX) override;
 
     CStatic m_caption;
     CMyTabControl m_tab;

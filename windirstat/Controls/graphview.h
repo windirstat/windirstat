@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -37,21 +37,21 @@ protected:
     DECLARE_DYNCREATE(CGraphView)
 
 public:
-    virtual ~CGraphView();
+    ~CGraphView() override = default;
 
     // CTreemap::Callback
-    virtual void TreemapDrawingCallback();
+    void TreemapDrawingCallback() override;
 
-    CDirstatDoc* GetDocument();
+    CDirstatDoc* GetDocument() const;
     void SuspendRecalculation(bool suspend);
-    bool IsShowTreemap();
+    bool IsShowTreemap() const;
     void ShowTreemap(bool show);
     void DrawEmptyView();
 
 protected:
-    virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
-    virtual void OnInitialUpdate();
-    virtual void OnDraw(CDC* pDC);
+    BOOL PreCreateWindow(CREATESTRUCT& cs) override;
+    void OnInitialUpdate() override;
+    void OnDraw(CDC* pDC) override;
     bool IsDrawn();
     void Inactivate();
     void EmptyView();
@@ -81,7 +81,7 @@ protected:
     afx_msg void OnSize(UINT nType, int cx, int cy);
     afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
     afx_msg void OnSetFocus(CWnd* pOldWnd);
-    virtual void OnUpdate(CView * pSender, LPARAM lHint, CObject *pHint);
+    void OnUpdate(CView * pSender, LPARAM lHint, CObject *pHint) override;
     afx_msg void OnContextMenu(CWnd *pWnd, CPoint point);
     afx_msg void OnMouseMove(UINT nFlags, CPoint point);
     afx_msg void OnDestroy();
@@ -89,13 +89,13 @@ protected:
 
 public:
     #ifdef _DEBUG
-        virtual void AssertValid() const;
-        virtual void Dump(CDumpContext& dc) const;
+    void AssertValid() const override;
+    void Dump(CDumpContext& dc) const override;
     #endif
         afx_msg void OnPopupCancel();
 };
 
 #ifndef _DEBUG  // Debugversion in graphview.cpp
-inline CDirstatDoc* CGraphView::GetDocument()
+inline CDirstatDoc* CGraphView::GetDocument() const
    { return reinterpret_cast<CDirstatDoc*>(m_pDocument); }
 #endif

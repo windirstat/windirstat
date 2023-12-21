@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
 // Copyright (C) 2010 Chris Wimmer
 //
 // This program is free software; you can redistribute it and/or modify
@@ -28,10 +28,6 @@
 #include "globalhelpers.h"
 #include "options.h"
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#endif
-
 namespace
 {
     CStringW FormatLongLongNormal(ULONGLONG n)
@@ -44,7 +40,7 @@ namespace
 
         do
         {
-            int rest = (int)(n % 1000);
+	        const int rest = static_cast<int>(n % 1000);
             n/= 1000;
 
             CStringW s;
@@ -82,9 +78,9 @@ namespace
 
 CStringW GetLocaleString(LCTYPE lctype, LANGID langid)
 {
-    LCID lcid = MAKELCID(langid, SORT_DEFAULT);
+	const LCID lcid = MAKELCID(langid, SORT_DEFAULT);
 
-    int len = ::GetLocaleInfo(lcid, lctype, NULL, 0);
+	const int len = ::GetLocaleInfo(lcid, lctype, nullptr, 0);
     CStringW s;
 
     ::GetLocaleInfo(lcid, lctype, s.GetBuffer(len), len);
@@ -104,7 +100,7 @@ CStringW GetLocaleLanguage(LANGID langid)
 
     if(s.GetLength() > 0)
     {
-        s.SetAt(0, (TCHAR)_totupper(s[0])); // FIXME: same holds for Russian, but _toupper won't work there ...
+        s.SetAt(0, static_cast<WCHAR>(_totupper(s[0]))); // FIXME: same holds for Russian, but _toupper won't work there ...
     }
 
     return s + L" - " + GetLocaleString(LOCALE_SNATIVECTRYNAME, langid);
@@ -136,24 +132,24 @@ CStringW FormatLongLongHuman(ULONGLONG n)
 {
     // Returns formatted number like "12,4 GB".
     ASSERT(n >= 0);
-    const int base = 1024;
-    const int half = base / 2;
+    constexpr int base = 1024;
+    constexpr int half = base / 2;
 
     CStringW s;
 
-    double B = (int)(n % base);
+    const double B = static_cast<int>(n % base);
     n/= base;
 
-    double KB = (int)(n % base);
+    const double KB = static_cast<int>(n % base);
     n/= base;
 
-    double MB = (int)(n % base);
+    const double MB = static_cast<int>(n % base);
     n/= base;
 
-    double GB = (int)(n % base);
+    const double GB = static_cast<int>(n % base);
     n/= base;
 
-    double TB = (int)(n);
+    const double TB = static_cast<int>(n);
 
     if(TB != 0 || GB == base - 1 && MB >= half)
     {
@@ -173,7 +169,7 @@ CStringW FormatLongLongHuman(ULONGLONG n)
     }
     else if(B != 0)
     {
-        s.Format(L"%d %s", (int)B, GetSpec_Bytes().GetString());
+        s.Format(L"%d %s", static_cast<int>(B), GetSpec_Bytes().GetString());
     }
     else
     {
@@ -195,8 +191,8 @@ CStringW FormatDouble(double d) // "98,4" or "98.4"
 
     d += 0.05;
 
-    int i = (int)floor(d);
-    int r = (int)(10 * fmod(d, 1));
+    const int i = static_cast<int>(floor(d));
+    const int r = static_cast<int>(10 * fmod(d, 1));
 
     CStringW s;
     s.Format(L"%d%s%d", i, GetLocaleDecimalSeparator().GetString(), r);
@@ -206,13 +202,13 @@ CStringW FormatDouble(double d) // "98,4" or "98.4"
 
 CStringW PadWidthBlanks(CStringW n, int width)
 {
-    int blankCount = width - n.GetLength();
+	const int blankCount = width - n.GetLength();
     if(blankCount > 0)
     {
-        int i = 0;
         CStringW b;
-        LPWSTR psz = b.GetBuffer(blankCount + 1);
-        for(i = 0; i < blankCount; i++)
+        const LPWSTR psz = b.GetBuffer(blankCount + 1);
+        int i = 0;
+        for(i; i < blankCount; i++)
         {
             psz[i]= L' ';
         }
@@ -232,7 +228,7 @@ CStringW FormatFileTime(const FILETIME& t)
         return MdGetWinErrorText(::GetLastError());
     }
 
-    LCID lcid = MAKELCID(GetWDSApp()->GetEffectiveLangid(), SORT_DEFAULT);
+    const LCID lcid = MAKELCID(GetWDSApp()->GetEffectiveLangid(), SORT_DEFAULT);
 
     CStringW date;
     VERIFY(0 < ::GetDateFormat(lcid, DATE_SHORTDATE, &st, NULL, date.GetBuffer(256), 256));
@@ -305,14 +301,14 @@ CStringW FormatAttributes(DWORD attr)
 CStringW FormatMilliseconds(ULONGLONG ms)
 {
     CStringW ret;
-    ULONGLONG sec = (ms + 500) / 1000;
+    const ULONGLONG sec = (ms + 500) / 1000;
 
-    ULONGLONG s = sec % 60;
-    ULONGLONG min = sec / 60;
+    const ULONGLONG s = sec % 60;
+    const ULONGLONG min = sec / 60;
 
-    ULONGLONG m = min % 60;
+    const ULONGLONG m = min % 60;
 
-    ULONGLONG h = min / 60;
+    const ULONGLONG h = min / 60;
 
     if(h > 0)
     {
@@ -330,9 +326,9 @@ bool GetVolumeName(LPCWSTR rootPath, CStringW& volumeName)
     CStringW ret;
     DWORD dummy;
 
-    UINT old = SetErrorMode(SEM_FAILCRITICALERRORS);
+    const UINT old = SetErrorMode(SEM_FAILCRITICALERRORS);
 
-    bool b = (FALSE != GetVolumeInformation(rootPath, volumeName.GetBuffer(256), 256, &dummy, &dummy, &dummy, NULL, 0));
+    const bool b = FALSE != GetVolumeInformation(rootPath, volumeName.GetBuffer(256), 256, &dummy, &dummy, &dummy, nullptr, 0);
     volumeName.ReleaseBuffer();
 
     if(!b)
@@ -348,12 +344,11 @@ bool GetVolumeName(LPCWSTR rootPath, CStringW& volumeName)
 // Given a root path like "C:\", this function
 // obtains the volume name and returns a complete display string
 // like "BOOT (C:)".
-CStringW FormatVolumeNameOfRootPath(CStringW rootPath)
+CStringW FormatVolumeNameOfRootPath(const CStringW& rootPath)
 {
     CStringW ret;
     CStringW volumeName;
-    bool b = GetVolumeName(rootPath, volumeName);
-    if(b)
+    if(GetVolumeName(rootPath, volumeName))
     {
         ret = FormatVolumeName(rootPath, volumeName);
     }
@@ -364,7 +359,7 @@ CStringW FormatVolumeNameOfRootPath(CStringW rootPath)
     return ret;
 }
 
-CStringW FormatVolumeName(CStringW rootPath, CStringW volumeName)
+CStringW FormatVolumeName(const CStringW& rootPath, const CStringW& volumeName)
 {
     CStringW ret;
     ret.Format(L"%s (%s)", volumeName.GetString(), rootPath.Left(2).GetString());
@@ -374,9 +369,9 @@ CStringW FormatVolumeName(CStringW rootPath, CStringW volumeName)
 // The inverse of FormatVolumeNameOfRootPath().
 // Given a name like "BOOT (C:)", it returns "C:" (without trailing backslash).
 // Or, if name like "C:\", it returns "C:".
-CStringW PathFromVolumeName(CStringW name)
+CStringW PathFromVolumeName(const CStringW& name)
 {
-    int i = name.ReverseFind(wds::chrBracketClose);
+	const int i = name.ReverseFind(wds::chrBracketClose);
     if(i == -1)
     {
         ASSERT(name.GetLength() == 3);
@@ -384,7 +379,7 @@ CStringW PathFromVolumeName(CStringW name)
     }
 
     ASSERT(i != -1);
-    int k = name.ReverseFind(wds::chrBracketOpen);
+	const int k = name.ReverseFind(wds::chrBracketOpen);
     ASSERT(k != -1);
     ASSERT(k < i);
     CStringW path = name.Mid(k + 1, i - k - 1);
@@ -402,7 +397,7 @@ CStringW GetParseNameOfMyComputer()
     MdThrowFailed(hr, L"::SHGetDesktopFolder");
 
     CCoTaskMem<LPITEMIDLIST> pidl;
-    hr = ::SHGetSpecialFolderLocation(NULL, CSIDL_DRIVES, &pidl);
+    hr = ::SHGetSpecialFolderLocation(nullptr, CSIDL_DRIVES, &pidl);
     MdThrowFailed(hr, L"SHGetSpecialFolderLocation(CSIDL_DRIVES)");
 
     STRRET name;
@@ -420,7 +415,7 @@ void GetPidlOfMyComputer(LPITEMIDLIST *ppidl)
     HRESULT hr = ::SHGetDesktopFolder(&sf);
     MdThrowFailed(hr, L"SHGetDesktopFolder");
 
-    hr = ::SHGetSpecialFolderLocation(NULL, CSIDL_DRIVES, ppidl);
+    hr = ::SHGetSpecialFolderLocation(nullptr, CSIDL_DRIVES, ppidl);
     MdThrowFailed(hr, L"SHGetSpecialFolderLocation(CSIDL_DRIVES)");
 }
 
@@ -428,8 +423,8 @@ void ShellExecuteWithAssocDialog(HWND hwnd, LPCWSTR filename)
 {
     CWaitCursor wc;
 
-    BOOL bExecuted = ShellExecuteNoThrow(hwnd, NULL, filename, NULL, NULL, SW_SHOWNORMAL);
-    if((!bExecuted) && (ERROR_NO_ASSOCIATION == ::GetLastError()))
+    BOOL bExecuted = ShellExecuteNoThrow(hwnd, nullptr, filename, nullptr, nullptr, SW_SHOWNORMAL);
+    if(!bExecuted && ERROR_NO_ASSOCIATION == ::GetLastError())
     {
         // Q192352
         CStringW sysDir;
@@ -437,7 +432,7 @@ void ShellExecuteWithAssocDialog(HWND hwnd, LPCWSTR filename)
         ::GetSystemDirectory(sysDir.GetBuffer(_MAX_PATH), _MAX_PATH);
         sysDir.ReleaseBuffer();
 
-        CStringW parameters = L"shell32.dll,OpenAs_RunDLL ";
+        const CStringW parameters = L"shell32.dll,OpenAs_RunDLL ";
         bExecuted = ShellExecuteNoThrow(hwnd, L"open", L"RUNDLL32.EXE", parameters + filename, sysDir, SW_SHOWNORMAL);
     }
 
@@ -450,7 +445,7 @@ void ShellExecuteWithAssocDialog(HWND hwnd, LPCWSTR filename)
 CStringW GetFolderNameFromPath(LPCWSTR path)
 {
     CStringW s = path;
-    int i = s.ReverseFind(wds::chrBackslash);
+    const int i = s.ReverseFind(wds::chrBackslash);
     if(i < 0)
     {
         return s;
@@ -462,7 +457,7 @@ CStringW GetCOMSPEC()
 {
     CStringW cmd;
 
-    DWORD dw = ::GetEnvironmentVariable(L"COMSPEC", cmd.GetBuffer(_MAX_PATH), _MAX_PATH);
+    const DWORD dw = ::GetEnvironmentVariable(L"COMSPEC", cmd.GetBuffer(_MAX_PATH), _MAX_PATH);
     cmd.ReleaseBuffer();
 
     if(dw == 0)
@@ -482,7 +477,7 @@ DWORD WaitForHandleWithRepainting(HANDLE h, DWORD TimeOut /*= INFINITE*/)
     {
         // Read all of the messages in this next loop, removing each message as we read it.
         MSG msg;
-        while(::PeekMessage(&msg, NULL, WM_PAINT, WM_PAINT, PM_REMOVE))
+        while(::PeekMessage(&msg, nullptr, WM_PAINT, WM_PAINT, PM_REMOVE))
         {
             ::DispatchMessage(&msg);
         }
@@ -511,18 +506,17 @@ DWORD WaitForHandleWithRepainting(HANDLE h, DWORD TimeOut /*= INFINITE*/)
 bool FolderExists(LPCWSTR path)
 {
     CFileFind finder;
-    BOOL b = finder.FindFile(path);
-    if(b)
+    if(BOOL b = finder.FindFile(path))
     {
         finder.FindNextFile();
-        return (FALSE != finder.IsDirectory());
+        return FALSE != finder.IsDirectory();
     }
     else
     {
         // Here we land, if path is an UNC drive. In this case we
         // try another FindFile:
         b = finder.FindFile(CStringW(path) + L"\\*.*");
-        return (b != false);
+        return b != false;
     }
 }
 
@@ -535,9 +529,9 @@ bool DriveExists(const CStringW& path)
 
     CStringW letter = path.Left(1);
     letter.MakeLower();
-    int d = letter[0] - wds::chrSmallA;
+    const int d = letter[0] - wds::chrSmallA;
 
-    DWORD mask = 0x1 << d;
+    const DWORD mask = 0x1 << d;
 
     if((mask & ::GetLogicalDrives()) == 0)
     {
@@ -603,7 +597,7 @@ CStringW MyQueryDosDevice(LPCWSTR drive)
     d = d.Left(2);
 
     CStringW info;
-    DWORD dw = ::QueryDosDevice(d, info.GetBuffer(512), 512);
+    const DWORD dw = ::QueryDosDevice(d, info.GetBuffer(512), 512);
     info.ReleaseBuffer();
 
     if(dw == 0)
@@ -622,8 +616,8 @@ CStringW MyQueryDosDevice(LPCWSTR drive)
 //
 bool IsSUBSTedDrive(LPCWSTR drive)
 {
-    CStringW info = MyQueryDosDevice(drive);
-    return (info.GetLength() >= 4 && info.Left(4) == "\\??\\");
+	const CStringW info = MyQueryDosDevice(drive);
+    return info.GetLength() >= 4 && info.Left(4) == "\\??\\";
 }
 
 CStringW GetSpec_Bytes()
@@ -673,7 +667,7 @@ BOOL IsAdmin()
         &pSid))
     {
         BOOL bResult = FALSE;
-        if (!::CheckTokenMembership( NULL, pSid, &bResult))
+        if (!::CheckTokenMembership(nullptr, pSid, &bResult))
         {
             ::FreeSid(pSid);
             return FALSE;

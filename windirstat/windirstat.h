@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2019 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
 // Copyright (C) 2010 Chris Wimmer
 //
 // This program is free software; you can redistribute it and/or modify
@@ -49,26 +49,26 @@ CStringW GetWinDirStatHomepage();
 // CDirstatApp. The MFC application object.
 // Knows about RAM Usage, Mount points, Help files and the CMyImageList.
 //
-class CDirstatApp : public CWinApp
+class CDirstatApp final : public CWinApp
 {
     typedef CWinApp Inherited;
 public:
     CDirstatApp();
-    ~CDirstatApp();
+    ~CDirstatApp() override;
 
-    virtual BOOL InitInstance();
-    virtual int ExitInstance();
+    BOOL InitInstance() override;
+    int ExitInstance() override;
 
     LANGID GetBuiltInLanguage();
     LANGID GetLangid();             // Language as selected in PageGeneral
     LANGID GetEffectiveLangid();    // Language to be used for date/time and number formatting
 
     void ReReadMountPoints();
-    bool IsVolumeMountPoint(CStringW path);
+    bool IsVolumeMountPoint(const CStringW& path);
     bool IsFolderJunction(DWORD attr);
 
-    COLORREF AltColor();                    // Coloring of compressed items
-    COLORREF AltEncryptionColor();          // Coloring of encrypted items
+    COLORREF AltColor() const;                    // Coloring of compressed items
+    COLORREF AltEncryptionColor() const;          // Coloring of encrypted items
 
     CStringW GetCurrentProcessMemoryInfo();
     CMyImageList* GetMyImageList();
@@ -80,7 +80,7 @@ public:
 
     void GetAvailableResourceDllLangids(CArray<LANGID, LANGID>& arr);
 
-    void RestartApplication();
+    static void RestartApplication();
 
     static bool getDiskFreeSpace(LPCWSTR pszRootPath, ULONGLONG& total, ULONGLONG& unused);
 
@@ -100,7 +100,7 @@ protected:
     // Get the alternative color from Explorer configuration
     COLORREF GetAlternativeColor(COLORREF clrDefault, LPCWSTR which);
 
-    virtual BOOL OnIdle(LONG lCount);       // This is, where scanning is done.
+    BOOL OnIdle(LONG lCount) override;       // This is, where scanning is done.
     static BOOL IsUACEnabled();
 
     CSingleDocTemplate* m_pDocTemplate;     // MFC voodoo.

@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -25,34 +25,29 @@
 #include "options.h"
 #include "PageCleanups.h"
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#endif
-
 IMPLEMENT_DYNAMIC(CPageCleanups, CPropertyPage)
 
 CPageCleanups::CPageCleanups()
-    : CPropertyPage(CPageCleanups::IDD)
-    , m_enabled(FALSE)
-    , m_title(wds::strEmpty)
-    , m_worksForDrives(FALSE)
-    , m_worksForDirectories(FALSE)
-    , m_worksForFilesFolder(FALSE)
-    , m_worksForFiles(FALSE)
-    , m_worksForUncPaths(FALSE)
-    , m_recurseIntoSubdirectories(FALSE)
-    , m_askForConfirmation(FALSE)
-    , m_showConsoleWindow(FALSE)
-    , m_waitForCompletion(FALSE)
-    , m_refreshPolicy(0)
-    , m_commandLine(wds::strEmpty)
-    , m_current(-1)
+	: CPropertyPage(CPageCleanups::IDD)
+	  , m_udc{}
+      , m_current(-1)
+	  , m_enabled(FALSE)
+	  , m_title(wds::strEmpty)
+	  , m_worksForDrives(FALSE)
+	  , m_worksForDirectories(FALSE)
+	  , m_worksForFilesFolder(FALSE)
+	  , m_worksForFiles(FALSE)
+	  , m_worksForUncPaths(FALSE)
+	  , m_commandLine(wds::strEmpty)
+	  , m_recurseIntoSubdirectories(FALSE)
+	  , m_askForConfirmation(FALSE)
+	  , m_showConsoleWindow(FALSE)
+	  , m_waitForCompletion(FALSE)
+	  , m_refreshPolicy(0)
 {
 }
 
-CPageCleanups::~CPageCleanups()
-{
-}
+CPageCleanups::~CPageCleanups() = default;
 
 void CPageCleanups::DoDataExchange(CDataExchange* pDX)
 {
@@ -126,9 +121,9 @@ BOOL CPageCleanups::OnInitDialog()
 
     GetOptions()->GetUserDefinedCleanups(m_udc);
 
-    for(int i = 0; i < USERDEFINEDCLEANUPCOUNT; i++)
+    for(USERDEFINEDCLEANUP & udc : m_udc)
     {
-        m_list.AddString(m_udc[i].title);
+        m_list.AddString(udc.title);
     }
 
     m_list.SetCurSel(0);
@@ -205,19 +200,19 @@ void CPageCleanups::DialogToCurrentUdc()
 {
     UpdateData();
 
-    m_udc[m_current].enabled = (FALSE != m_enabled);
+    m_udc[m_current].enabled = FALSE != m_enabled;
     m_udc[m_current].title = m_title;
-    m_udc[m_current].worksForDrives = (FALSE != m_worksForDrives);
-    m_udc[m_current].worksForDirectories = (FALSE != m_worksForDirectories);
-    m_udc[m_current].worksForFilesFolder = (FALSE != m_worksForFilesFolder);
-    m_udc[m_current].worksForFiles = (FALSE != m_worksForFiles);
-    m_udc[m_current].worksForUncPaths = (FALSE != m_worksForUncPaths);
+    m_udc[m_current].worksForDrives = FALSE != m_worksForDrives;
+    m_udc[m_current].worksForDirectories = FALSE != m_worksForDirectories;
+    m_udc[m_current].worksForFilesFolder = FALSE != m_worksForFilesFolder;
+    m_udc[m_current].worksForFiles = FALSE != m_worksForFiles;
+    m_udc[m_current].worksForUncPaths = FALSE != m_worksForUncPaths;
     m_udc[m_current].commandLine = m_commandLine;
-    m_udc[m_current].recurseIntoSubdirectories = (FALSE != m_recurseIntoSubdirectories);
-    m_udc[m_current].askForConfirmation = (FALSE != m_askForConfirmation);
-    m_udc[m_current].showConsoleWindow = (FALSE != m_showConsoleWindow);
-    m_udc[m_current].waitForCompletion = (FALSE != m_waitForCompletion);
-    m_udc[m_current].refreshPolicy = (REFRESHPOLICY)m_refreshPolicy;
+    m_udc[m_current].recurseIntoSubdirectories = FALSE != m_recurseIntoSubdirectories;
+    m_udc[m_current].askForConfirmation = FALSE != m_askForConfirmation;
+    m_udc[m_current].showConsoleWindow = FALSE != m_showConsoleWindow;
+    m_udc[m_current].waitForCompletion = FALSE != m_waitForCompletion;
+    m_udc[m_current].refreshPolicy = static_cast<REFRESHPOLICY>(m_refreshPolicy);
 }
 
 void CPageCleanups::OnSomethingChanged()
@@ -355,7 +350,7 @@ void CPageCleanups::OnBnClickedUp()
 
     UpdateData();
 
-    USERDEFINEDCLEANUP h = m_udc[m_current - 1];
+    const USERDEFINEDCLEANUP h = m_udc[m_current - 1];
     m_udc[m_current - 1]= m_udc[m_current];
     m_udc[m_current]= h;
 
@@ -375,7 +370,7 @@ void CPageCleanups::OnBnClickedDown()
 
     UpdateData();
 
-    USERDEFINEDCLEANUP h = m_udc[m_current + 1];
+    const USERDEFINEDCLEANUP h = m_udc[m_current + 1];
     m_udc[m_current + 1]= m_udc[m_current];
     m_udc[m_current]= h;
 

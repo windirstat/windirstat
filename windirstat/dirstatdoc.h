@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -19,6 +19,7 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 
+// ReSharper disable All
 #pragma once
 
 #include "selectdrivesdlg.h"
@@ -75,31 +76,31 @@ enum
 // CDirstatDoc. The "Document" class.
 // Owner of the root item and various other data (see data members).
 //
-class CDirstatDoc : public CDocument
+class CDirstatDoc final : public CDocument
 {
 protected:
     CDirstatDoc();  // Created by MFC only
     DECLARE_DYNCREATE(CDirstatDoc)
 
 public:
-    virtual ~CDirstatDoc();
+    ~CDirstatDoc() override;
 
-    static CStringW EncodeSelection(RADIO radio, CStringW folder, const CStringArray& drives);
-    static void DecodeSelection(CStringW s, CStringW& folder, CStringArray& drives);
-    static TCHAR GetEncodingSeparator();
+    static CStringW EncodeSelection(RADIO radio, const CStringW& folder, const CStringArray& drives);
+    static void DecodeSelection(const CStringW& s, CStringW& folder, CStringArray& drives);
+    static WCHAR GetEncodingSeparator();
 
-    virtual void DeleteContents();
-    virtual BOOL OnNewDocument();
-    virtual BOOL OnOpenDocument(LPCWSTR lpszPathName);
-    virtual void SetPathName(LPCWSTR lpszPathName, BOOL bAddToMRU);
-    virtual void Serialize(CArchive& ar);
+    void DeleteContents() override;
+    BOOL OnNewDocument() override;
+    BOOL OnOpenDocument(LPCWSTR lpszPathName) override;
+    void SetPathName(LPCWSTR lpszPathName, BOOL bAddToMRU) override;
+    void Serialize(CArchive& ar) override;
 
-    void SetTitlePrefix(CStringW prefix);
+    void SetTitlePrefix(const CStringW& prefix) const;
 
     COLORREF GetCushionColor(LPCWSTR ext);
     COLORREF GetZoomColor();
 
-    bool OptionShowFreeSpace();
+    bool OptionShowFreeSpace() const;
     bool OptionShowUnknown();
 
     const CExtensionData *GetExtensionData();
@@ -107,7 +108,7 @@ public:
 
     void ForgetItemTree();
     bool Work(CWorkLimiter* limiter); // return: true if done.
-    bool IsDrive(CStringW spec);
+    bool IsDrive(const CStringW& spec);
     void RefreshMountPointItems();
     void RefreshJunctionItems();
 
@@ -219,8 +220,8 @@ protected:
 
 public:
     #ifdef _DEBUG
-        virtual void AssertValid() const;
-        virtual void Dump(CDumpContext& dc) const;
+    void AssertValid() const override;
+    void Dump(CDumpContext& dc) const override;
     #endif
 };
 

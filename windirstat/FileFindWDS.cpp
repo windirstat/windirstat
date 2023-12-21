@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -29,14 +29,12 @@ DWORD CFileFindWDS::GetAttributes() const
     ASSERT(m_hContext != NULL);
     ASSERT_VALID(this);
 
-    if(m_pFoundInfo != NULL)
-    {
-        return ((LPWIN32_FIND_DATA)m_pFoundInfo)->dwFileAttributes;
-    }
-    else
+    if (m_pFoundInfo == nullptr)
     {
         return INVALID_FILE_ATTRIBUTES;
     }
+        
+    return static_cast<LPWIN32_FIND_DATA>(m_pFoundInfo)->dwFileAttributes;
 }
 
 // Wrapper for file size retrieval

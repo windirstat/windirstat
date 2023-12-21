@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -26,21 +26,21 @@ class COptionsPropertySheet;
 //
 // CPageGeneral. "Settings" property page "General".
 //
-class CPageGeneral : public CPropertyPage
+class CPageGeneral final : public CPropertyPage
 {
     DECLARE_DYNAMIC(CPageGeneral)
     enum { IDD = IDD_PAGE_GENERAL };
 
 public:
     CPageGeneral();
-    virtual ~CPageGeneral();
+    ~CPageGeneral() override;
 
 protected:
-    COptionsPropertySheet *GetSheet();
+    COptionsPropertySheet *GetSheet() const;
 
-    virtual void DoDataExchange(CDataExchange* pDX);
-    virtual BOOL OnInitDialog();
-    virtual void OnOK();
+    void DoDataExchange(CDataExchange* pDX) override;
+    BOOL OnInitDialog() override;
+    void OnOK() override;
 
     BOOL m_followMountPoints;
     BOOL m_followJunctionPoints;

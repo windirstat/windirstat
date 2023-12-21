@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -24,10 +24,7 @@
 #include "selectobject.h"
 #include "treemap.h"
 #include "myimagelist.h"
-
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#endif
+#include "cotaskmem.h"
 
 CMyImageList::CMyImageList()
     : m_filesFolderImage(-1)
@@ -38,21 +35,17 @@ CMyImageList::CMyImageList()
 {
 }
 
-CMyImageList::~CMyImageList()
-{
-}
-
 void CMyImageList::initialize()
 {
-    if(m_hImageList == NULL)
+    if(m_hImageList == nullptr)
     {
         CStringW s;
         ::GetSystemDirectory(s.GetBuffer(_MAX_PATH), _MAX_PATH);
         s.ReleaseBuffer();
         VTRACE(L"GetSystemDirectory() -> %s", s.GetString());
 
-        SHFILEINFO sfi = {0};
-        HIMAGELIST hil = (HIMAGELIST)::SHGetFileInfo(s, 0, &sfi, sizeof(sfi), WDS_SHGFI_DEFAULTS);
+        SHFILEINFO sfi = {nullptr};
+        const HIMAGELIST hil = (HIMAGELIST)::SHGetFileInfo(s, 0, &sfi, sizeof(sfi), WDS_SHGFI_DEFAULTS);
 
         this->Attach(ImageList_Duplicate(hil));
 
@@ -83,7 +76,7 @@ COLORREF CMyImageList::blueify_(COLORREF c)
     {
         return c;
     }
-    double b = CColorSpace::GetColorBrightness(c);
+    const double b = CColorSpace::GetColorBrightness(c);
     return CColorSpace::MakeBrightColor(RGB(0, 0, 255), b);
 }
 
@@ -104,21 +97,21 @@ int CMyImageList::cacheIcon(LPCWSTR path, UINT flags, CStringW *psTypeName)
     ASSERT(m_hImageList != NULL); // should have been initialize()ed.
 
     flags |= WDS_SHGFI_DEFAULTS;
-    if(psTypeName != NULL)
+    if(psTypeName != nullptr)
     {
         // Also retrieve the file type description
         flags |= SHGFI_TYPENAME;
     }
 
-    SHFILEINFO sfi = {0};
-    HIMAGELIST hil = (HIMAGELIST)::SHGetFileInfo(path, 0, &sfi, sizeof(sfi), flags);
-    if(hil == NULL)
+    SHFILEINFO sfi = {nullptr};
+    const HIMAGELIST hil = (HIMAGELIST)::SHGetFileInfo(path, 0, &sfi, sizeof(sfi), flags);
+    if(hil == nullptr)
     {
         VTRACE(L"SHGetFileInfo() failed");
         return getEmptyImage();
     }
 
-    if(psTypeName != NULL)
+    if(psTypeName != nullptr)
     {
         *psTypeName = sfi.szTypeName;
     }
@@ -136,20 +129,15 @@ int CMyImageList::cacheIcon(LPCWSTR path, UINT flags, CStringW *psTypeName)
 
 int CMyImageList::getMyComputerImage()
 {
-    // FIXME: see whether we can wrap this up in some nice helper function instead ...
-    LPITEMIDLIST pidl = NULL;
-    HRESULT hr = ::SHGetSpecialFolderLocation(NULL, CSIDL_DRIVES, &pidl);
+    CCoTaskMem<LPITEMIDLIST> pidl;
+    const HRESULT hr = ::SHGetSpecialFolderLocation(nullptr, CSIDL_DRIVES, &pidl);
     if(FAILED(hr))
     {
         VTRACE(L"SHGetSpecialFolderLocation(CSIDL_DRIVES) failed!");
         return 0;
     }
 
-    int i = cacheIcon((LPCWSTR)pidl, SHGFI_PIDL);
-
-    ::CoTaskMemFree(pidl);
-
-    return i;
+    return cacheIcon(static_cast<LPCWSTR>(static_cast<LPVOID>(pidl)), SHGFI_PIDL);
 }
 
 int CMyImageList::getMountPointImage()
@@ -157,7 +145,7 @@ int CMyImageList::getMountPointImage()
     return cacheIcon(getADriveSpec(), 0); // The flag SHGFI_USEFILEATTRIBUTES doesn't work on W95.
 }
 
-int CMyImageList::getJunctionImage()
+int CMyImageList::getJunctionImage() const
 {
     // Intermediate solution until we find a nice icon for junction points
     return m_junctionImage;
@@ -182,7 +170,7 @@ int CMyImageList::getExtImageAndDescription(LPCWSTR ext, CStringW& description)
     return cacheIcon(ext, SHGFI_USEFILEATTRIBUTES, &description);
 }
 
-int CMyImageList::getFilesFolderImage()
+int CMyImageList::getFilesFolderImage() const
 {
     ASSERT(m_hImageList != NULL); // should have been initialize()ed.
     return m_filesFolderImage;
@@ -212,7 +200,7 @@ int CMyImageList::getEmptyImage()
 CStringW CMyImageList::getADriveSpec()
 {
     CStringW s;
-    UINT u = ::GetWindowsDirectory(s.GetBuffer(_MAX_PATH), _MAX_PATH);
+    const UINT u = ::GetWindowsDirectory(s.GetBuffer(_MAX_PATH), _MAX_PATH);
     s.ReleaseBuffer();
     if(u == 0 || s.GetLength() < 3 || s[1] != wds::chrColon || s[2] != wds::chrBackslash)
     {
@@ -223,8 +211,8 @@ CStringW CMyImageList::getADriveSpec()
 
 void CMyImageList::addCustomImages()
 {
-    const int CUSTOM_IMAGE_COUNT = 5;
-    const COLORREF bgcolor = RGB(255,255,255);
+	constexpr int CUSTOM_IMAGE_COUNT = 5;
+	constexpr COLORREF bgcolor = RGB(255,255,255);
 
     const int folderImage = getFolderImage();
     const int driveImage = getMountPointImage();
@@ -255,7 +243,7 @@ void CMyImageList::addCustomImages()
 
         dcmem.FillSolidRect(0, 0, rc.Width() * CUSTOM_IMAGE_COUNT, rc.Height(), bgcolor);
         CPoint pt(0, 0);
-        COLORREF savedClr = this->SetBkColor(CLR_NONE);
+        const COLORREF savedClr = this->SetBkColor(CLR_NONE);
         VERIFY(Draw(&dcmem, folderImage, pt, ILD_NORMAL));
         pt.x += rc.Width();
         VERIFY(Draw(&dcmem, driveImage, pt, ILD_NORMAL));
@@ -288,13 +276,13 @@ void CMyImageList::addCustomImages()
                 idx++;
 
                 // ...and overlay the junction point image with the link symbol.
-                int jjunc = j - (rc.Height() - bmjunc.bmHeight);
+                const int jjunc = j - (rc.Height() - bmjunc.bmHeight);
 
                 c = dcmem.GetPixel(idx * rc.Width() + i, j);
                 dcmem.SetPixel(idx * rc.Width() + i, j, c); // I don't know why this statement is required.
                 if(i < bmjunc.bmWidth && jjunc >= 0)
                 {
-                    COLORREF cjunc = dcjunc.GetPixel(i, jjunc);
+	                const COLORREF cjunc = dcjunc.GetPixel(i, jjunc);
                     if(cjunc != RGB(255,0,255))
                     {
                         dcmem.SetPixel(idx * rc.Width() + i, j, cjunc);
@@ -309,5 +297,5 @@ void CMyImageList::addCustomImages()
     m_freeSpaceImage = k++;
     m_unknownImage = k++;
     m_junctionImage = k++;
-    m_emptyImage = k++;
+    m_emptyImage = k;
 }

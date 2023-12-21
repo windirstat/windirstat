@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -24,21 +24,21 @@
 namespace wds
 {
     // Single character constants
-    const WCHAR chrSharp = L'#';
-    const WCHAR chrBracketOpen = L'(';
-    const WCHAR chrBracketClose = L')';
-    const WCHAR chrComma = L',';
-    const WCHAR chrDot = L'.';
-    const WCHAR chrColon = L':';
-    const WCHAR chrAt = L'\x40';
-    const WCHAR chrBackslash = L'\\';
-    const WCHAR chrPipe = L'|';
-    const WCHAR chrZero = L'0';
-    const WCHAR chrSmallA = L'a';
-    const WCHAR chrCapA = L'A';
-    const WCHAR chrCapB = L'B';
-    const WCHAR chrCapC = L'C';
-    const WCHAR chrCapZ = L'Z';
+    constexpr WCHAR chrSharp = L'#';
+    constexpr WCHAR chrBracketOpen = L'(';
+    constexpr WCHAR chrBracketClose = L')';
+    constexpr WCHAR chrComma = L',';
+    constexpr WCHAR chrDot = L'.';
+    constexpr WCHAR chrColon = L':';
+    constexpr WCHAR chrAt = L'\x40';
+    constexpr WCHAR chrBackslash = L'\\';
+    constexpr WCHAR chrPipe = L'|';
+    constexpr WCHAR chrZero = L'0';
+    constexpr WCHAR chrSmallA = L'a';
+    constexpr WCHAR chrCapA = L'A';
+    constexpr WCHAR chrCapB = L'B';
+    constexpr WCHAR chrCapC = L'C';
+    constexpr WCHAR chrCapZ = L'Z';
 
     // Constants strings
     const LPCWSTR strEmpty = L"";
@@ -79,6 +79,6 @@ namespace wds
     /* don't need FILE_ATTRIBUTE_NO_SCRUB_DATA */
     const LPCWSTR strAttributeEA = L"+"; /*FILE_ATTRIBUTE_EA*/
 
-    const int iLangCodeLength = _countof(STR_RESOURCE_PREFIX) - 1;
-    const int iNumDriveLetters = (chrCapZ - chrCapA) + 1;
+    constexpr int iLangCodeLength = _countof(STR_RESOURCE_PREFIX) - 1;
+    constexpr int iNumDriveLetters = chrCapZ - chrCapA + 1;
 }

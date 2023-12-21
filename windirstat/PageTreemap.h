@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -29,14 +29,14 @@
 //
 // CPageTreemap. "Settings" property page "Treemap".
 //
-class CPageTreemap : public CPropertyPage
+class CPageTreemap final : public CPropertyPage
 {
     DECLARE_DYNAMIC(CPageTreemap)
     enum { IDD = IDD_PAGE_TREEMAP };
 
 public:
     CPageTreemap();
-    virtual ~CPageTreemap();
+    ~CPageTreemap() override = default;
 
 protected:
     void UpdateOptions(bool save = true);
@@ -44,9 +44,9 @@ protected:
     void OnSomethingChanged();
     void ValuesAltered(bool altered = true);
 
-    virtual void DoDataExchange(CDataExchange* pDX);
-    virtual BOOL OnInitDialog();
-    virtual void OnOK();
+    void DoDataExchange(CDataExchange* pDX) override;
+    BOOL OnInitDialog() override;
+    void OnOK() override;
 
     CTreemap::Options m_options;    // Current options
 

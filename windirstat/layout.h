@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2019 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -40,7 +40,7 @@ class CLayout
         CRect originalRectangle;
 
         SControlInfoT()
-            : control(NULL)
+            : control(nullptr)
             , movex(std::numeric_limits<T>::quiet_NaN())
             , movey(std::numeric_limits<T>::quiet_NaN())
             , stretchx(std::numeric_limits<T>::quiet_NaN())
@@ -58,7 +58,7 @@ class CLayout
         }
 
     private:
-        SControlInfoT(SControlInfoT&); // hide copy ctor
+        SControlInfoT(SControlInfoT&) = default; // hide copy ctor
     };
 	typedef SControlInfoT<double> SControlInfo;
 
@@ -67,11 +67,11 @@ class CLayout
     public:
         static const int _width;
 
-        CSizeGripper();
+        CSizeGripper() = default;
         void Create(CWnd *parent, CRect rc);
 
     private:
-        void DrawShadowLine(CDC *pdc, CPoint start, CPoint end);
+        static void DrawShadowLine(CDC *pdc, CPoint start, CPoint end);
 
         DECLARE_MESSAGE_MAP()
         afx_msg void OnPaint();
@@ -95,8 +95,8 @@ public:
 
     void OnInitDialog(bool centerWindow);
     void OnSize();
-    void OnGetMinMaxInfo(MINMAXINFO *mmi);
-    void OnDestroy();
+    void OnGetMinMaxInfo(MINMAXINFO *mmi) const;
+    void OnDestroy() const;
 
 protected:
     CWnd *m_dialog;

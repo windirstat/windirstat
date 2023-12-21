@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -23,14 +23,10 @@
 #include "selectobject.h"
 #include "pacman.h"
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#endif
-
 namespace
 {
-    const ULONGLONG UPDATEINTERVAL = 40;  // ms
-    const double MOUTHSPEED = 0.0030; // aperture alteration / ms
+	constexpr ULONGLONG UPDATEINTERVAL = 40;  // ms
+	constexpr double MOUTHSPEED = 0.0030; // aperture alteration / ms
 }
 
 CPacman::CPacman()
@@ -73,7 +69,7 @@ void CPacman::Start(bool start)
 
 bool CPacman::Drive(ULONGLONG readJobs)
 {
-    m_readJobs = (double)readJobs;
+    m_readJobs = static_cast<double>(readJobs);
 
     if(!m_moving)
     {
@@ -96,7 +92,7 @@ bool CPacman::Drive(ULONGLONG readJobs)
     return true;
 }
 
-void CPacman::Draw(CDC *pdc, const CRect& rect)
+void CPacman::Draw(CDC *pdc, const CRect& rect) const
 {
     pdc->FillSolidRect(rect, m_bgcolor);
 
@@ -108,9 +104,9 @@ void CPacman::Draw(CDC *pdc, const CRect& rect)
         rc.bottom--;
     }
 
-    int diameter = rc.Height();
+    const int diameter = rc.Height();
 
-    int left = rc.left + (int)(m_position * (rc.Width() - diameter));
+    const int left = rc.left + static_cast<int>(m_position * (rc.Width() - diameter));
     rc.left = left;
     rc.right = left + diameter;
 
@@ -122,11 +118,11 @@ void CPacman::Draw(CDC *pdc, const CRect& rect)
 
     CPoint ptStart;
     CPoint ptEnd;
-    int hmiddle = rc.top + diameter / 2;
+    const int hmiddle = rc.top + diameter / 2;
 
-    int mouthcy = (int)(m_aperture * m_aperture * diameter);
-    int upperMouthcy = mouthcy;
-    int lowerMouthcy = mouthcy;
+    const int mouthcy = static_cast<int>(m_aperture * m_aperture * diameter);
+    const int upperMouthcy = mouthcy;
+    const int lowerMouthcy = mouthcy;
 
     if(m_toTheRight)
     {
@@ -184,12 +180,12 @@ void CPacman::UpdatePosition(double& position, bool& up, double diff)
     }
 }
 
-COLORREF CPacman::CalculateColor()
+COLORREF CPacman::CalculateColor() const
 {
-    static const double pi2 = (3.1415926535897932384626433832795 / 2);
+    static constexpr double pi2 = 3.1415926535897932384626433832795 / 2;
 
     ASSERT(m_readJobs >= 0);
-    double a = atan(m_readJobs / 18) / pi2;
+    const double a = atan(m_readJobs / 18) / pi2;
     ASSERT(a >= 0.0);
     ASSERT(a <= 1.0);
 
@@ -204,9 +200,9 @@ COLORREF CPacman::CalculateColor()
     // a == 1 --> yellow
     // a == 0 --> bgcolor
 
-    int red     = (int)(a * 255 + (1 - a) * RGB_GET_RVALUE(m_bgcolor));
-    int green   = (int)(a * 255 + (1 - a) * RGB_GET_GVALUE(m_bgcolor));
-    int blue    = (int)(          (1 - a) * RGB_GET_BVALUE(m_bgcolor));
+    const int red     = static_cast<int>(a * 255 + (1 - a) * RGB_GET_RVALUE(m_bgcolor));
+    const int green   = static_cast<int>(a * 255 + (1 - a) * RGB_GET_GVALUE(m_bgcolor));
+    const int blue    = static_cast<int>((1 - a) * RGB_GET_BVALUE(m_bgcolor));
 
     return RGB(red, green, blue);
 }

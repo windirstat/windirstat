@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -25,29 +25,17 @@
 #include "selectobject.h"
 #include "ownerdrawnlistcontrol.h"
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#endif
-
 namespace
 {
-    const int TEXT_X_MARGIN = 6;    // Horizontal distance of the text from the edge of the item rectangle
+	constexpr int TEXT_X_MARGIN = 6;    // Horizontal distance of the text from the edge of the item rectangle
 
-    const UINT LABEL_INFLATE_CX = 3;// How much the label is enlarged, to get the selection and focus rectangle
-    const UINT LABEL_Y_MARGIN = 2;
+	constexpr UINT LABEL_INFLATE_CX = 3;// How much the label is enlarged, to get the selection and focus rectangle
+	constexpr UINT LABEL_Y_MARGIN = 2;
 
-    const UINT GENERAL_INDENT = 5;
+	constexpr UINT GENERAL_INDENT = 5;
 }
 
 /////////////////////////////////////////////////////////////////////////////
-
-COwnerDrawnListItem::COwnerDrawnListItem()
-{
-}
-
-COwnerDrawnListItem::~COwnerDrawnListItem()
-{
-}
 
 // Draws an item label (icon, text) in all parts of the WinDirStat view
 // the rest is drawn by DrawItem()
@@ -65,12 +53,12 @@ void COwnerDrawnListItem::DrawLabel(COwnerDrawnListControl *list, CImageList *il
 
     IMAGEINFO ii;
     il->GetImageInfo(GetImage(), &ii);
-    CRect rcImage(ii.rcImage);
+    const CRect rcImage(ii.rcImage);
 
-    if(width == NULL)
+    if(width == nullptr)
     {
         // Draw the color with transparent background
-        CPoint pt(rcRest.left, rcRest.top + rcRest.Height() / 2 - rcImage.Height() / 2);
+        const CPoint pt(rcRest.left, rcRest.top + rcRest.Height() / 2 - rcImage.Height() / 2);
         il->SetBkColor(CLR_NONE);
         il->Draw(pdc, GetImage(), pt, ILD_NORMAL);
     }
@@ -91,7 +79,7 @@ void COwnerDrawnListItem::DrawLabel(COwnerDrawnListControl *list, CImageList *il
 
     CSetBkMode bk(pdc, TRANSPARENT);
     COLORREF textColor = ::GetSysColor(COLOR_WINDOWTEXT);
-    if(width == NULL && (state & ODS_SELECTED) != 0 && (list->HasFocus() || list->IsShowSelectionAlways()))
+    if(width == nullptr && (state & ODS_SELECTED) != 0 && (list->HasFocus() || list->IsShowSelectionAlways()))
     {
         // Color for the text in a highlighted item (usually white)
         textColor = list->GetHighlightTextColor();
@@ -115,7 +103,7 @@ void COwnerDrawnListItem::DrawLabel(COwnerDrawnListControl *list, CImageList *il
     // Set text color for device context
     CSetTextColor stc(pdc, textColor);
 
-    if(width == NULL)
+    if(width == nullptr)
     {
         // Draw the actual text
         pdc->DrawText(GetText(0), rcRest, DT_SINGLELINE | DT_VCENTER | DT_WORD_ELLIPSIS | DT_NOPREFIX);
@@ -125,12 +113,12 @@ void COwnerDrawnListItem::DrawLabel(COwnerDrawnListControl *list, CImageList *il
 
     *focusLeft = rcLabel.left;
 
-    if((state & ODS_FOCUS) != 0 && list->HasFocus() && width == NULL && !list->IsFullRowSelection())
+    if((state & ODS_FOCUS) != 0 && list->HasFocus() && width == nullptr && !list->IsFullRowSelection())
     {
         pdc->DrawFocusRect(rcLabel);
     }
 
-    if(width == NULL)
+    if(width == nullptr)
     {
         DrawAdditionalState(pdc, rcLabel);
     }
@@ -138,7 +126,7 @@ void COwnerDrawnListItem::DrawLabel(COwnerDrawnListControl *list, CImageList *il
     rcLabel.left = rc.left;
     rc = rcLabel;
 
-    if(width != NULL)
+    if(width != nullptr)
     {
         *width = rcLabel.Width() + 5; // Don't know, why +5
     }
@@ -165,16 +153,16 @@ void COwnerDrawnListItem::DrawSelection(COwnerDrawnListControl *list, CDC *pdc, 
 
 void COwnerDrawnListItem::DrawPercentage(CDC *pdc, CRect rc, double fraction, COLORREF color) const
 {
-    const int LIGHT = 198;  // light edge
-    const int DARK = 118;   // dark edge
-    const int BG = 225;     // background (lighter than light edge)
+	constexpr int LIGHT = 198;  // light edge
+	constexpr int DARK = 118;   // dark edge
+	constexpr int BG = 225;     // background (lighter than light edge)
 
-    const COLORREF light    = RGB(LIGHT, LIGHT, LIGHT);
-    const COLORREF dark     = RGB(DARK, DARK, DARK);
-    const COLORREF bg       = RGB(BG, BG, BG);
+	constexpr COLORREF light    = RGB(LIGHT, LIGHT, LIGHT);
+	constexpr COLORREF dark     = RGB(DARK, DARK, DARK);
+	constexpr COLORREF bg       = RGB(BG, BG, BG);
 
     CRect rcLeft = rc;
-    rcLeft.right = (int)(rcLeft.left + rc.Width() * fraction);
+    rcLeft.right = static_cast<int>(rcLeft.left + rc.Width() * fraction);
 
     CRect rcRight = rc;
     rcRight.left = rcLeft.right;
@@ -218,10 +206,6 @@ COwnerDrawnListControl::COwnerDrawnListControl(LPCWSTR name, int rowHeight)
     InitializeColors();
 }
 
-COwnerDrawnListControl::~COwnerDrawnListControl()
-{
-}
-
 // This method MUST be called before the Control is shown.
 void COwnerDrawnListControl::OnColumnsInserted()
 {
@@ -252,7 +236,7 @@ void COwnerDrawnListControl::SysColorChanged()
     InitializeColors();
 }
 
-int COwnerDrawnListControl::GetRowHeight()
+int COwnerDrawnListControl::GetRowHeight() const
 {
     return m_rowHeight;
 }
@@ -262,7 +246,7 @@ void COwnerDrawnListControl::ShowGrid(bool show)
     m_showGrid = show;
     if(::IsWindow(m_hWnd))
     {
-        InvalidateRect(NULL);
+        InvalidateRect(nullptr);
     }
 }
 
@@ -271,7 +255,7 @@ void COwnerDrawnListControl::ShowStripes(bool show)
     m_showStripes = show;
     if(::IsWindow(m_hWnd))
     {
-        InvalidateRect(NULL);
+        InvalidateRect(nullptr);
     }
 }
 
@@ -280,11 +264,11 @@ void COwnerDrawnListControl::ShowFullRowSelection(bool show)
     m_showFullRowSelection = show;
     if(::IsWindow(m_hWnd))
     {
-        InvalidateRect(NULL);
+        InvalidateRect(nullptr);
     }
 }
 
-bool COwnerDrawnListControl::IsFullRowSelection()
+bool COwnerDrawnListControl::IsFullRowSelection() const
 {
     return m_showFullRowSelection;
 }
@@ -319,10 +303,8 @@ COLORREF COwnerDrawnListControl::GetHighlightColor()
     {
         return ::GetSysColor(COLOR_HIGHLIGHT);
     }
-    else
-    {
-        return GetNonFocusHighlightColor();
-    }
+
+    return GetNonFocusHighlightColor();
 }
 
 COLORREF COwnerDrawnListControl::GetHighlightTextColor()
@@ -331,15 +313,13 @@ COLORREF COwnerDrawnListControl::GetHighlightTextColor()
     {
         return ::GetSysColor(COLOR_HIGHLIGHTTEXT);
     }
-    else
-    {
-        return GetNonFocusHighlightTextColor();
-    }
+    
+    return GetNonFocusHighlightTextColor();
 }
 
 bool COwnerDrawnListControl::IsItemStripeColor(int i)
 {
-    return (m_showStripes && (i % 2 != 0));
+    return m_showStripes && i % 2 != 0;
 }
 
 bool COwnerDrawnListControl::IsItemStripeColor(const COwnerDrawnListItem *item)
@@ -349,7 +329,7 @@ bool COwnerDrawnListControl::IsItemStripeColor(const COwnerDrawnListItem *item)
 
 COLORREF COwnerDrawnListControl::GetItemBackgroundColor(int i)
 {
-    return (IsItemStripeColor(i) ? GetStripeColor() : GetWindowColor());
+    return IsItemStripeColor(i) ? GetStripeColor() : GetWindowColor();
 }
 
 COLORREF COwnerDrawnListControl::GetItemBackgroundColor(const COwnerDrawnListItem *item)
@@ -359,15 +339,13 @@ COLORREF COwnerDrawnListControl::GetItemBackgroundColor(const COwnerDrawnListIte
 
 COLORREF COwnerDrawnListControl::GetItemSelectionBackgroundColor(int i)
 {
-    bool selected = (GetItemState(i, LVIS_SELECTED) & LVIS_SELECTED) != 0;
+	const bool selected = (GetItemState(i, LVIS_SELECTED) & LVIS_SELECTED) != 0;
     if(selected && IsFullRowSelection() && (HasFocus() || IsShowSelectionAlways()))
     {
         return GetHighlightColor();
     }
-    else
-    {
-        return GetItemBackgroundColor(i);
-    }
+    
+    return GetItemBackgroundColor(i);
 }
 
 COLORREF COwnerDrawnListControl::GetItemSelectionBackgroundColor(const COwnerDrawnListItem *item)
@@ -377,15 +355,13 @@ COLORREF COwnerDrawnListControl::GetItemSelectionBackgroundColor(const COwnerDra
 
 COLORREF COwnerDrawnListControl::GetItemSelectionTextColor(int i)
 {
-    bool selected = (GetItemState(i, LVIS_SELECTED) & LVIS_SELECTED) != 0;
+	const bool selected = (GetItemState(i, LVIS_SELECTED) & LVIS_SELECTED) != 0;
     if(selected && IsFullRowSelection() && (HasFocus() || IsShowSelectionAlways()))
     {
         return GetHighlightTextColor();
     }
-    else
-    {
-        return ::GetSysColor(COLOR_WINDOWTEXT);
-    }
+    
+    return ::GetSysColor(COLOR_WINDOWTEXT);
 }
 
 int COwnerDrawnListControl::GetTextXMargin()
@@ -411,7 +387,7 @@ int COwnerDrawnListControl::FindListItem(const COwnerDrawnListItem *item)
     fi.flags = LVFI_PARAM;
     fi.lParam = (LPARAM)item;
 
-    int i = FindItem(&fi);
+    const int i = FindItem(&fi);
 
     return i;
 }
@@ -421,8 +397,8 @@ void COwnerDrawnListControl::InitializeColors()
     // I try to find a good contrast to COLOR_WINDOW (usually white or light grey).
     // This is a result of experiments.
 
-    const double diff = 0.07;       // Try to alter the brightness by diff.
-    const double threshold = 1.04;  // If result would be brighter, make color darker.
+    constexpr double diff = 0.07;       // Try to alter the brightness by diff.
+    constexpr double threshold = 1.04;  // If result would be brighter, make color darker.
 
     m_windowColor = ::GetSysColor(COLOR_WINDOW);
 
@@ -446,7 +422,7 @@ void COwnerDrawnListControl::InitializeColors()
 
 void COwnerDrawnListControl::DrawItem(LPDRAWITEMSTRUCT pdis)
 {
-    COwnerDrawnListItem *item = (COwnerDrawnListItem *)(pdis->itemData);
+	const COwnerDrawnListItem *item = (COwnerDrawnListItem *)pdis->itemData;
     CDC *pdc = CDC::FromHandle(pdis->hDC);
     CRect rcItem(pdis->rcItem);
     if(m_showGrid)
@@ -464,25 +440,25 @@ void COwnerDrawnListControl::DrawItem(LPDRAWITEMSTRUCT pdis)
 
     dcmem.FillSolidRect(rcItem - rcItem.TopLeft(), GetItemBackgroundColor(pdis->itemID));
 
-    bool drawFocus = (pdis->itemState & ODS_FOCUS) != 0 && HasFocus() && IsFullRowSelection();
+    const bool drawFocus = (pdis->itemState & ODS_FOCUS) != 0 && HasFocus() && IsFullRowSelection();
 
     CArray<int, int> order;
     order.SetSize(GetHeaderCtrl()->GetItemCount());
-    GetHeaderCtrl()->GetOrderArray(order.GetData(), int(order.GetSize()));
+    GetHeaderCtrl()->GetOrderArray(order.GetData(), static_cast<int>(order.GetSize()));
 
     CRect rcFocus = rcItem;
     rcFocus.DeflateRect(0, LABEL_Y_MARGIN - 1);
 
     for(int i = 0; i < order.GetSize(); i++)
     {
-        int subitem = order[i];
+	    const int subitem = order[i];
 
         CRect rc = GetWholeSubitemRect(pdis->itemID, subitem);
 
         CRect rcDraw = rc - rcItem.TopLeft();
 
         int focusLeft = rcDraw.left;
-        if(!item->DrawSubitem(subitem, &dcmem, rcDraw, pdis->itemState, NULL, &focusLeft))
+        if(!item->DrawSubitem(subitem, &dcmem, rcDraw, pdis->itemState, nullptr, &focusLeft))
         {
             item->DrawSelection(this, &dcmem, rcDraw, pdis->itemState);
 
@@ -491,13 +467,13 @@ void COwnerDrawnListControl::DrawItem(LPDRAWITEMSTRUCT pdis)
             CSetBkMode bk(&dcmem, TRANSPARENT);
             CSelectObject sofont(&dcmem, GetFont());
             CStringW s = item->GetText(subitem);
-            UINT align = IsColumnRightAligned(subitem) ? DT_RIGHT : DT_LEFT;
+            const UINT align = IsColumnRightAligned(subitem) ? DT_RIGHT : DT_LEFT;
 
             // Get the correct color in case of compressed or encrypted items
             COLORREF textColor = item->GetItemTextColor();
 
             // Except if the item is selected - in this case just use standard colors
-            if((pdis->itemState & ODS_SELECTED) && (HasFocus() || IsShowSelectionAlways()) && (IsFullRowSelection()))
+            if(pdis->itemState & ODS_SELECTED && (HasFocus() || IsShowSelectionAlways()) && IsFullRowSelection())
             {
                 textColor = GetItemSelectionTextColor(pdis->itemID);
             }
@@ -591,7 +567,7 @@ int COwnerDrawnListControl::GetSubItemWidth(COwnerDrawnListItem *item, int subit
         return width;
     }
 
-    CStringW s = item->GetText(subitem);
+    const CStringW s = item->GetText(subitem);
     if(s.IsEmpty())
     {
         // DrawText(..DT_CALCRECT) seems to stumble about empty strings
@@ -599,7 +575,7 @@ int COwnerDrawnListControl::GetSubItemWidth(COwnerDrawnListItem *item, int subit
     }
 
     CSelectObject sofont(&dc, GetFont());
-    UINT align = IsColumnRightAligned(subitem) ? DT_RIGHT : DT_LEFT;
+    const UINT align = IsColumnRightAligned(subitem) ? DT_RIGHT : DT_LEFT;
     dc.DrawText(s, rc, DT_SINGLELINE | DT_VCENTER | DT_CALCRECT | DT_NOPREFIX | align);
 
     rc.InflateRect(TEXT_X_MARGIN, 0);
@@ -637,7 +613,7 @@ BOOL COwnerDrawnListControl::OnEraseBkgnd(CDC* pDC)
     // else: if we did the same thing as in OnColumnsCreated(), we get
     // repaint problems.
 
-    const COLORREF gridColor = RGB(212,208,200);
+    constexpr COLORREF gridColor = RGB(212,208,200);
 
     CRect rcClient;
     GetClientRect(rcClient);
@@ -743,7 +719,7 @@ void COwnerDrawnListControl::OnHdnDividerdblclick(NMHDR *pNMHDR, LRESULT *pResul
     CWaitCursor wc;
     LPNMHEADER phdr = reinterpret_cast<LPNMHEADER>(pNMHDR);
 
-    int subitem = phdr->iItem;
+    const int subitem = phdr->iItem;
 
     AdjustColumnWidth(subitem);
 
@@ -757,7 +733,7 @@ void COwnerDrawnListControl::AdjustColumnWidth(int col)
     int width = 10;
     for(int i = 0; i < GetItemCount(); i++)
     {
-        int w = GetSubItemWidth(GetItem(i), col);
+	    const int w = GetSubItemWidth(GetItem(i), col);
         if(w > width)
         {
             width = w;
@@ -772,14 +748,14 @@ void COwnerDrawnListControl::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScr
 
     // Owner drawn list controls with LVS_EX_GRIDLINES don't repaint correctly
     // when scrolled (under Windows XP). So we force a complete repaint here.
-    InvalidateRect(NULL);
+    InvalidateRect(nullptr);
 }
 
 void COwnerDrawnListControl::OnHdnItemchanging(NMHDR * /*pNMHDR*/, LRESULT *pResult)
 {
     // Unused: LPNMHEADER phdr = reinterpret_cast<LPNMHEADER>(pNMHDR);
     Default();
-    InvalidateRect(NULL);
+    InvalidateRect(nullptr);
 
     *pResult = 0;
 }

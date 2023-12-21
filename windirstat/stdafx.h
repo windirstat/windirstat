@@ -4,7 +4,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -35,7 +35,6 @@
 #include <afxcmn.h>         // MFC Common Controls
 #include <afxtempl.h>       // MFC Container classes
 #include <afxmt.h>          // MFC Multi-threading
-#include <afxinet.h>        // For CInternet* classes
 
 #include <io.h>             // _access()
 #include <cmath>            // floor(), fmod(), sqrt() etc.
@@ -45,14 +44,14 @@
 
 #include <atlbase.h>        // ComPtr<>
 
-#define RGB_GET_RVALUE(rgb) (rgb & 0xFF)
-#define RGB_GET_GVALUE(rgb) ((rgb & 0xFF00) >> 8)
-#define RGB_GET_BVALUE(rgb) ((rgb & 0xFF0000) >> 16)
+#define RGB_GET_RVALUE(rgb) ((rgb) & 0xFF)
+#define RGB_GET_GVALUE(rgb) (((rgb) & 0xFF00) >> 8)
+#define RGB_GET_BVALUE(rgb) (((rgb) & 0xFF0000) >> 16)
 
-template<typename T> int signum(T x) { return (x) < 0 ? -1 : (x) == 0 ? 0 : 1; }
+template<typename T> int signum(T x) { return x < 0 ? -1 : x == 0 ? 0 : 1; }
 
 /// signum function for unsigned numbers.
-template<typename T> int usignum(T x, T y) { return (x) < (y) ? -1 : (x) == (y) ? 0 : 1; }
+template<typename T> int usignum(T x, T y) { return x < y ? -1 : x == y ? 0 : 1; }
 
 #if defined _M_IX86
 #    pragma comment(linker, "/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='x86' publicKeyToken='6595b64144ccf1df' language='*'\"")

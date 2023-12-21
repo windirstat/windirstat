@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -24,10 +24,6 @@
 #include "options.h"
 #include "PageTreelist.h"
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#endif
-
 IMPLEMENT_DYNAMIC(CPageTreelist, CPropertyPage)
 
 CPageTreelist::CPageTreelist()
@@ -35,10 +31,6 @@ CPageTreelist::CPageTreelist()
     , m_pacmanAnimation(FALSE)
     , m_showTimeSpent(FALSE)
     , m_treelistColorCount(TREELISTCOLORCOUNT)
-{
-}
-
-CPageTreelist::~CPageTreelist()
 {
 }
 
@@ -129,9 +121,9 @@ void CPageTreelist::EnableButtons()
 
 void CPageTreelist::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 {
-    if((CSliderCtrl *)pScrollBar == &m_slider)
+    if(reinterpret_cast<CSliderCtrl*>(pScrollBar) == &m_slider)
     {
-        int pos = m_slider.GetPos();
+	    const int pos = m_slider.GetPos();
         ASSERT(pos > 0);
         ASSERT(pos <= TREELISTCOLORCOUNT);
 

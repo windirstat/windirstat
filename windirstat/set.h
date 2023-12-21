@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -26,11 +26,11 @@
 // a set of assocs (x->y) and ignore the ys.
 //
 template<class KEY, class ARG_KEY>
-class CSet
+class CSet final
 {
 public:
     CSet(int nBlockSize = 10): m_map(nBlockSize) { }
-    ~CSet() { }
+    ~CSet() = default;
     void Serialize(CArchive& ar) { m_map.Serialize(ar); }
 
     int GetCount() const { return m_map.GetCount(); }

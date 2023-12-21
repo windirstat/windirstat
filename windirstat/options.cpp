@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -25,13 +25,9 @@
 #include <common/commonhelpers.h>
 #include "options.h"
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#endif
-
 namespace
 {
-    static COptions _theOptions;
+	COptions _theOptions;
 
     const LPCWSTR sectionPersistence        = L"persistence";
     const LPCWSTR entryShowFreeSpace        = L"showFreeSpace";
@@ -177,7 +173,7 @@ void CPersistence::SetShowStatusbar(bool show)
 void CPersistence::GetMainWindowPlacement(/* [in/out] */ WINDOWPLACEMENT& wp)
 {
     ASSERT(wp.length == sizeof(wp));
-    CStringW s = getProfileString(sectionPersistence, entryMainWindowPlacement);
+    const CStringW s = getProfileString(sectionPersistence, entryMainWindowPlacement);
     DecodeWindowPlacement(s, wp);
     CRect rc(wp.rcNormalPosition);
     SanitizeRect(rc);
@@ -186,7 +182,7 @@ void CPersistence::GetMainWindowPlacement(/* [in/out] */ WINDOWPLACEMENT& wp)
 
 void CPersistence::SetMainWindowPlacement(const WINDOWPLACEMENT& wp)
 {
-    CStringW s = EncodeWindowPlacement(wp);
+	const CStringW s = EncodeWindowPlacement(wp);
     setProfileString(sectionPersistence, entryMainWindowPlacement, s);
 }
 
@@ -195,7 +191,7 @@ void CPersistence::SetSplitterPos(LPCWSTR name, bool valid, double userpos)
     int pos;
     if(valid)
     {
-        pos = (int)(userpos * 100);
+        pos = static_cast<int>(userpos * 100);
     }
     else
     {
@@ -207,7 +203,7 @@ void CPersistence::SetSplitterPos(LPCWSTR name, bool valid, double userpos)
 
 void CPersistence::GetSplitterPos(LPCWSTR name, bool& valid, double& userpos)
 {
-    int pos = getProfileInt(sectionPersistence, MakeSplitterPosEntry(name), -1);
+	const int pos = getProfileInt(sectionPersistence, MakeSplitterPosEntry(name), -1);
     if(pos < 0 || pos > 100)
     {
         valid = false;
@@ -216,7 +212,7 @@ void CPersistence::GetSplitterPos(LPCWSTR name, bool& valid, double& userpos)
     else
     {
         valid = true;
-        userpos = (double)pos / 100;
+        userpos = static_cast<double>(pos) / 100;
     }
 }
 
@@ -329,7 +325,7 @@ void CPersistence::SetSelectDrivesFolder(LPCWSTR folder)
 void CPersistence::GetSelectDrivesDrives(CStringArray& drives)
 {
     drives.RemoveAll();
-    CStringW s = getProfileString(sectionPersistence, entrySelectDrivesDrives);
+    const CStringW s = getProfileString(sectionPersistence, entrySelectDrivesDrives);
     int i = 0;
     while(i < s.GetLength())
     {
@@ -389,7 +385,7 @@ void CPersistence::SetArray(LPCWSTR entry, const CArray<int, int>& arr)
 
 void CPersistence::GetArray(LPCWSTR entry, /* in/out */ CArray<int, int>& rarr)
 {
-    CStringW s = getProfileString(sectionPersistence, entry);
+	const CStringW s = getProfileString(sectionPersistence, entry);
     CArray<int, int> arr;
     int i = 0;
     while(i < s.GetLength())
@@ -422,9 +418,9 @@ void CPersistence::SetRect(LPCWSTR entry, const CRect& rc)
 
 void CPersistence::GetRect(LPCWSTR entry, CRect& rc)
 {
-    CStringW s = getProfileString(sectionPersistence, entry);
+	const CStringW s = getProfileString(sectionPersistence, entry);
     CRect tmp;
-    int r = _stscanf_s(s, L"%d,%d,%d,%d", &tmp.left, &tmp.top, &tmp.right, &tmp.bottom);
+	const int r = _stscanf_s(s, L"%d,%d,%d,%d", &tmp.left, &tmp.top, &tmp.right, &tmp.bottom);
     if(r == 4)
     {
         rc = tmp;
@@ -433,7 +429,7 @@ void CPersistence::GetRect(LPCWSTR entry, CRect& rc)
 
 void CPersistence::SanitizeRect(CRect& rc)
 {
-    const int visible = 30;
+	constexpr int visible = 30;
 
     rc.NormalizeRect();
 
@@ -531,13 +527,13 @@ void CPersistence::DecodeWindowPlacement(const CStringW& s, WINDOWPLACEMENT& rwp
     WINDOWPLACEMENT wp;
     wp.length = sizeof(wp);
 
-    int r = _stscanf_s(s,
-        L"%u,%u,"
-        L"%ld,%ld,%ld,%ld,"
-        L"%ld,%ld,%ld,%ld",
-        &wp.flags, &wp.showCmd,
-        &wp.ptMinPosition.x, &wp.ptMinPosition.y, &wp.ptMaxPosition.x, &wp.ptMaxPosition.y,
-        &wp.rcNormalPosition.left, &wp.rcNormalPosition.right, &wp.rcNormalPosition.top, &wp.rcNormalPosition.bottom
+    const int r = _stscanf_s(s,
+                             L"%u,%u,"
+                             L"%ld,%ld,%ld,%ld,"
+                             L"%ld,%ld,%ld,%ld",
+                             &wp.flags, &wp.showCmd,
+                             &wp.ptMinPosition.x, &wp.ptMinPosition.y, &wp.ptMaxPosition.x, &wp.ptMaxPosition.y,
+                             &wp.rcNormalPosition.left, &wp.rcNormalPosition.right, &wp.rcNormalPosition.top, &wp.rcNormalPosition.bottom
     );
 
     if(r == 10)
@@ -549,8 +545,8 @@ void CPersistence::DecodeWindowPlacement(const CStringW& s, WINDOWPLACEMENT& rwp
 
 LANGID CLanguageOptions::GetLanguage()
 {
-    LANGID defaultLangid = LANGIDFROMLCID(GetUserDefaultLCID());
-    LANGID id = (LANGID)getProfileInt(sectionOptions, entryLanguage, defaultLangid);
+	const LANGID defaultLangid = LANGIDFROMLCID(GetUserDefaultLCID());
+	const LANGID id = static_cast<LANGID>(getProfileInt(sectionOptions, entryLanguage, defaultLangid));
     return id;
 }
 
@@ -567,11 +563,7 @@ COptions *GetOptions()
 }
 
 
-COptions::COptions()
-{
-}
-
-bool COptions::IsListGrid()
+bool COptions::IsListGrid() const
 {
     return m_listGrid;
 }
@@ -581,11 +573,11 @@ void COptions::SetListGrid(bool show)
     if(m_listGrid != show)
     {
         m_listGrid = show;
-        GetDocument()->UpdateAllViews(NULL, HINT_LISTSTYLECHANGED);
+        GetDocument()->UpdateAllViews(nullptr, HINT_LISTSTYLECHANGED);
     }
 }
 
-bool COptions::IsListStripes()
+bool COptions::IsListStripes() const
 {
     return m_listStripes;
 }
@@ -595,7 +587,7 @@ void COptions::SetListStripes(bool show)
     if(m_listStripes != show)
     {
         m_listStripes = show;
-        GetDocument()->UpdateAllViews(NULL, HINT_LISTSTYLECHANGED);
+        GetDocument()->UpdateAllViews(nullptr, HINT_LISTSTYLECHANGED);
     }
 }
 
@@ -609,7 +601,7 @@ void COptions::SetListFullRowSelection(bool show)
     if(m_listFullRowSelection != show)
     {
         m_listFullRowSelection = show;
-        GetDocument()->UpdateAllViews(NULL, HINT_LISTSTYLECHANGED);
+        GetDocument()->UpdateAllViews(nullptr, HINT_LISTSTYLECHANGED);
     }
 }
 
@@ -627,7 +619,7 @@ void COptions::SetTreelistColors(const COLORREF color[TREELISTCOLORCOUNT])
     {
         m_treelistColor[i]= color[i];
     }
-    GetDocument()->UpdateAllViews(NULL, HINT_LISTSTYLECHANGED);
+    GetDocument()->UpdateAllViews(nullptr, HINT_LISTSTYLECHANGED);
 }
 
 COLORREF COptions::GetTreelistColor(int i)
@@ -647,7 +639,7 @@ void COptions::SetTreelistColorCount(int count)
     if(m_treelistColorCount != count)
     {
         m_treelistColorCount = count;
-        GetDocument()->UpdateAllViews(NULL, HINT_LISTSTYLECHANGED);
+        GetDocument()->UpdateAllViews(nullptr, HINT_LISTSTYLECHANGED);
     }
 }
 
@@ -661,7 +653,7 @@ void COptions::SetHumanFormat(bool human)
     if(m_humanFormat != human)
     {
         m_humanFormat = human;
-        GetDocument()->UpdateAllViews(NULL, HINT_NULL);
+        GetDocument()->UpdateAllViews(nullptr, HINT_NULL);
         GetWDSApp()->UpdateRamUsage();
     }
 }
@@ -702,7 +694,7 @@ void COptions::SetTreemapHighlightColor(COLORREF color)
     if(m_treemapHighlightColor != color)
     {
         m_treemapHighlightColor = color;
-        GetDocument()->UpdateAllViews(NULL, HINT_SELECTIONSTYLECHANGED);
+        GetDocument()->UpdateAllViews(nullptr, HINT_SELECTIONSTYLECHANGED);
     }
 }
 
@@ -725,7 +717,7 @@ void COptions::SetTreemapOptions(const CTreemap::Options& options)
     )
     {
         m_treemapOptions = options;
-        GetDocument()->UpdateAllViews(NULL, HINT_TREEMAPSTYLECHANGED);
+        GetDocument()->UpdateAllViews(nullptr, HINT_TREEMAPSTYLECHANGED);
     }
 }
 
@@ -811,7 +803,7 @@ void COptions::SetUseWdsLocale(bool use)
     if(m_useWdsLocale != use)
     {
         m_useWdsLocale = use;
-        GetDocument()->UpdateAllViews(NULL, HINT_NULL);
+        GetDocument()->UpdateAllViews(nullptr, HINT_NULL);
     }
 }
 
@@ -1047,7 +1039,7 @@ void COptions::ReadUserDefinedCleanup(int i)
     m_userDefinedCleanup[i].waitForCompletion = getProfileBool(section, entryWaitForCompletion, true);
     int r = getProfileInt(section, entryRefreshPolicy, RP_NO_REFRESH);
     checkRange(r, 0, REFRESHPOLICYCOUNT);
-    m_userDefinedCleanup[i].refreshPolicy = (REFRESHPOLICY)r;
+    m_userDefinedCleanup[i].refreshPolicy = static_cast<REFRESHPOLICY>(r);
 }
 
 void COptions::SaveUserDefinedCleanup(int i)
@@ -1086,7 +1078,7 @@ void COptions::ReadTreemapOptions()
     {
         style = CTreemap::KDirStatStyle;
     }
-    m_treemapOptions.style = (CTreemap::STYLE)style;
+    m_treemapOptions.style = static_cast<CTreemap::STYLE>(style);
 
     m_treemapOptions.grid = getProfileBool(sectionOptions, entryTreemapGrid, standard.grid);
 

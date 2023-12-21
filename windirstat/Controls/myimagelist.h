@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -31,31 +31,31 @@
 //
 class CMyImageList: public CImageList
 {
-    static const UINT WDS_SHGFI_DEFAULTS = SHGFI_SYSICONINDEX | SHGFI_SMALLICON | SHGFI_ICON;
+    static constexpr UINT WDS_SHGFI_DEFAULTS = SHGFI_SYSICONINDEX | SHGFI_SMALLICON | SHGFI_ICON;
     static COLORREF greenify_(COLORREF c);
     static COLORREF blueify_(COLORREF c);
     static COLORREF yellowify_(COLORREF c);
 
 public:
     CMyImageList();
-    virtual ~CMyImageList();
+    ~CMyImageList() override = default;
 
     void initialize();
 
     int getMyComputerImage();
     int getMountPointImage();
-    int getJunctionImage();
+    int getJunctionImage() const;
     int getFolderImage();
     int getFileImage(LPCWSTR path);
     int getExtImageAndDescription(LPCWSTR ext, CStringW& description);
 
-    int getFilesFolderImage();
+    int getFilesFolderImage() const;
     int getFreeSpaceImage();
     int getUnknownImage();
     int getEmptyImage();
 
 protected:
-    int cacheIcon(LPCWSTR path, UINT flags, CStringW *psTypeName = NULL);
+    int cacheIcon(LPCWSTR path, UINT flags, CStringW *psTypeName = nullptr);
     CStringW getADriveSpec();
     void addCustomImages();
 

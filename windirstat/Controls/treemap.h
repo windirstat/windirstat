@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2019 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@
 //
 // CColorSpace. Helper class for manipulating colors. Static members only.
 //
-class CColorSpace
+class CColorSpace final
 {
 public:
     // Returns the brightness of color. Brightness is a value between 0 and 1.0.
@@ -53,16 +53,16 @@ typedef CArray<COLORREF, COLORREF&> CColorRefRArray;
 //
 // This class is fairly reusable.
 //
-class CTreemap
+class CTreemap final
 {
 public:
     // One of these flags can be added to the COLORREF returned
     // by TmiGetGraphColor(). Used for <Free space> (darker)
     // and <Unknown> (brighter).
     //
-    static const DWORD COLORFLAG_DARKER  = 0x01000000;
-    static const DWORD COLORFLAG_LIGHTER = 0x02000000;
-    static const DWORD COLORFLAG_MASK    = 0x03000000;
+    static constexpr DWORD COLORFLAG_DARKER  = 0x01000000;
+    static constexpr DWORD COLORFLAG_LIGHTER = 0x02000000;
+    static constexpr DWORD COLORFLAG_MASK    = 0x03000000;
 
     //
     // Item. Interface which must be supported by the tree items.
@@ -79,7 +79,7 @@ public:
         virtual     COLORREF TmiGetGraphColor()         const = 0;
         virtual          int TmiGetChildrenCount()      const = 0;
         virtual        Item *TmiGetChild(int c)         const = 0;
-        virtual     ULONGLONG TmiGetSize()               const = 0;
+        virtual    ULONGLONG TmiGetSize()               const = 0;
     };
 
     //
@@ -139,7 +139,7 @@ public:
         void SetLightSourceYPercent(int n)  { lightSourceY = n / 100.0; }
         void SetLightSourcePoint(CPoint pt) { SetLightSourceXPercent(pt.x); SetLightSourceYPercent(pt.y); }
 
-        int RoundDouble(double d) { return signum(d) * (int)(fabs(d) + 0.5); }
+        int RoundDouble(double d) { return signum(d) * static_cast<int>(fabs(d) + 0.5); }
     };
 
 public:
@@ -157,11 +157,11 @@ public:
 
 public:
     // Construct the treemap generator and register the callback interface.
-    CTreemap(Callback *callback = NULL);
+    CTreemap(Callback *callback = nullptr);
 
     // Alter the options
     void SetOptions(const Options *options);
-    Options GetOptions();
+    Options GetOptions() const;
 
 #ifdef _DEBUG
     // DEBUG function
@@ -169,17 +169,17 @@ public:
 #endif // _DEBUG
 
     // Create and draw a treemap
-    void DrawTreemap(CDC *pdc, CRect rc, Item *root, const Options *options =NULL);
+    void DrawTreemap(CDC *pdc, CRect rc, Item *root, const Options *options = nullptr);
 
     // Same as above but double buffered
-    void DrawTreemapDoubleBuffered(CDC *pdc, const CRect& rc, Item *root, const Options *options =NULL);
+    void DrawTreemapDoubleBuffered(CDC *pdc, const CRect& rc, Item *root, const Options *options = nullptr);
 
     // In the resulting treemap, find the item below a given coordinate.
     // Return value can be NULL, iff point is outside root rect.
     Item *FindItemByPoint(Item *root, CPoint point);
 
     // Draws a sample rectangle in the given style (for color legend)
-    void DrawColorPreview(CDC *pdc, const CRect& rc, COLORREF color, const Options *options =NULL);
+    void DrawColorPreview(CDC *pdc, const CRect& rc, COLORREF color, const Options *options = nullptr);
 
 protected:
     // The recursive drawing function
@@ -210,14 +210,11 @@ protected:
     // Classical SequoiaView-like squarification
     void SequoiaView_DrawChildren(CColorRefArray &bitmap, Item *parent, const double *surface, double h, DWORD flags);
 
-    // No squarification (simple style, not used in WinDirStat)
-    void Simple_DrawChildren(CColorRefArray &bitmap, Item *parent, const double *surface, double h, DWORD flags);
-
     // Sets brightness to a good value, if system has only 256 colors
     void SetBrightnessFor256();
 
     // Returns true, if height and scaleFactor are > 0 and ambientLight is < 1.0
-    bool IsCushionShading();
+    bool IsCushionShading() const;
 
     // Leaves space for grid and then calls RenderRectangle()
     void RenderLeaf(CColorRefArray &bitmap, Item *item, const double *surface);
@@ -276,7 +273,7 @@ class CTreemapPreview: public CStatic
             for(int i = 0; i < children.GetSize(); i++)
             {
                 m_children.Add(children[i]);
-                m_size += (int)children[i]->TmiGetSize();
+                m_size += static_cast<int>(children[i]->TmiGetSize());
             }
             qsort(m_children.GetData(), m_children.GetSize(), sizeof(CItem *), &_compareItems);
         }
@@ -287,18 +284,18 @@ class CTreemapPreview: public CStatic
         }
         static int _compareItems(const void *p1, const void *p2)
         {
-            CItem *item1 = *(CItem **)p1;
-            CItem *item2 = *(CItem **)p2;
+	        const CItem *item1 = *(CItem **)p1;
+	        const CItem *item2 = *(CItem **)p2;
             return signum(item2->m_size - item1->m_size);
         }
 
-        virtual         bool TmiIsLeaf()                const   { return m_children.GetSize() == 0; }
-        virtual        CRect TmiGetRectangle()          const   { return m_rect; }
-        virtual         void TmiSetRectangle(const CRect& rc)   { m_rect = rc; }
-        virtual     COLORREF TmiGetGraphColor()         const   { return m_color; }
-        virtual          int TmiGetChildrenCount()      const   { return (int)m_children.GetSize(); }
-        virtual        Item *TmiGetChild(int c)         const   { return m_children[c]; }
-        virtual     ULONGLONG TmiGetSize()              const   { return m_size; }
+        bool TmiIsLeaf()                const override { return m_children.GetSize() == 0; }
+        CRect TmiGetRectangle()          const override { return m_rect; }
+        void TmiSetRectangle(const CRect& rc) override { m_rect = rc; }
+        COLORREF TmiGetGraphColor()         const override { return m_color; }
+        int TmiGetChildrenCount()      const override { return static_cast<int>(m_children.GetSize()); }
+        Item *TmiGetChild(int c)         const override { return m_children[c]; }
+        ULONGLONG TmiGetSize()              const override { return m_size; }
 
     private:
         CArray<CItem *, CItem *> m_children;    // Our children
@@ -309,7 +306,7 @@ class CTreemapPreview: public CStatic
 
 public:
     CTreemapPreview();
-    ~CTreemapPreview();
+    ~CTreemapPreview() override;
     void SetOptions(const CTreemap::Options *options);
 
 protected:

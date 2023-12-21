@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -25,23 +25,24 @@
 #include "options.h"
 #include "PageTreemap.h"
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#endif
-
 namespace
 {
-    const UINT _maxHeight = 200;
+	constexpr UINT _maxHeight = 200;
 }
 
 IMPLEMENT_DYNAMIC(CPageTreemap, CPropertyPage)
 
 CPageTreemap::CPageTreemap()
-    : CPropertyPage(CPageTreemap::IDD)
-{
-}
-
-CPageTreemap::~CPageTreemap()
+	: CPropertyPage(CPageTreemap::IDD)
+    , m_options()
+    , m_altered(false)
+    , m_undo()
+    , m_style(0)
+    , m_grid(0)
+    , m_nBrightness(0)
+    , m_nCushionShading(0)
+    , m_nHeight(0)
+	, m_nScaleFactor(0)
 {
 }
 
@@ -142,8 +143,8 @@ void CPageTreemap::UpdateOptions(bool save)
         m_options.SetHeightPercent(_maxHeight - m_nHeight);
         m_options.SetScaleFactorPercent(100 - m_nScaleFactor);
         m_options.SetLightSourcePoint(m_ptLightSource);
-        m_options.style = (m_style == 0 ? CTreemap::KDirStatStyle : CTreemap::SequoiaViewStyle);
-        m_options.grid = (FALSE != m_grid);
+        m_options.style = m_style == 0 ? CTreemap::KDirStatStyle : CTreemap::SequoiaViewStyle;
+        m_options.grid = FALSE != m_grid;
         m_options.gridColor = m_gridColor.GetColor();
     }
     else
@@ -153,7 +154,7 @@ void CPageTreemap::UpdateOptions(bool save)
         m_nHeight = _maxHeight - m_options.GetHeightPercent();
         m_nScaleFactor = 100 - m_options.GetScaleFactorPercent();
         m_ptLightSource = m_options.GetLightSourcePoint();
-        m_style = (m_options.style == CTreemap::KDirStatStyle ? 0 : 1);
+        m_style = m_options.style == CTreemap::KDirStatStyle ? 0 : 1;
         m_grid = m_options.grid;
         m_gridColor.SetColor(m_options.gridColor);
     }
@@ -177,7 +178,7 @@ void CPageTreemap::OnSomethingChanged()
 void CPageTreemap::ValuesAltered(bool altered)
 {
     m_altered = altered;
-    CStringW s = LoadString(m_altered ? IDS_RESETTO_DEFAULTS : IDS_BACKTO_USERSETTINGS);
+    const CStringW s = LoadString(m_altered ? IDS_RESETTO_DEFAULTS : IDS_BACKTO_USERSETTINGS);
     m_resetButton.SetWindowText(s);
 }
 

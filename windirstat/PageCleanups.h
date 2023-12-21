@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -25,19 +25,19 @@
 //
 // CPageCleanups. "Settings" property page "User defined cleanups".
 //
-class CPageCleanups : public CPropertyPage
+class CPageCleanups final : public CPropertyPage
 {
     DECLARE_DYNAMIC(CPageCleanups)
     enum { IDD = IDD_PAGE_CLEANUPS };
 
 public:
     CPageCleanups();
-    virtual ~CPageCleanups();
+    ~CPageCleanups() override;
 
 protected:
-    virtual void DoDataExchange(CDataExchange* pDX);
-    virtual BOOL OnInitDialog();
-    virtual void OnOK();
+    void DoDataExchange(CDataExchange* pDX) override;
+    BOOL OnInitDialog() override;
+    void OnOK() override;
 
     void CurrentUdcToDialog();
     void DialogToCurrentUdc();

@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -28,14 +28,9 @@
 #include "typeview.h"
 #include "globalhelpers.h"
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#endif
-
-
 /////////////////////////////////////////////////////////////////////////////
 
-CExtensionListControl::CListItem::CListItem(CExtensionListControl *list, LPCWSTR extension, SExtensionRecord r)
+CExtensionListControl::CListItem::CListItem(CExtensionListControl *list, LPCWSTR extension, const SExtensionRecord& r)
 {
     m_list = list;
     m_extension = extension;
@@ -63,7 +58,7 @@ bool CExtensionListControl::CListItem::DrawSubitem(int subitem, CDC *pdc, CRect 
 
 void CExtensionListControl::CListItem::DrawColor(CDC *pdc, CRect rc, UINT state, int *width) const
 {
-    if(width != NULL)
+    if(width != nullptr)
     {
         *width = 40;
         return;
@@ -161,14 +156,14 @@ double CExtensionListControl::CListItem::GetBytesFraction() const
         return 0;
     }
 
-    return (double)(m_record.bytes / m_list->GetRootSize());
+    return static_cast<double>(m_record.bytes / m_list->GetRootSize());
 }
 
 int CExtensionListControl::CListItem::Compare(const CSortingListItem *baseOther, int subitem) const
 {
     int r = 0;
 
-    const CListItem *other = (const CListItem *)baseOther;
+    const CListItem *other = reinterpret_cast<const CListItem*>(baseOther);
 
     switch (subitem)
     {
@@ -287,7 +282,7 @@ void CExtensionListControl::SetExtensionData(const CExtensionData *ed)
 
     int i = 0;
     POSITION pos = ed->GetStartPosition();
-    while(pos != NULL)
+    while(pos != nullptr)
     {
         CStringW ext;
         SExtensionRecord r;
@@ -305,7 +300,7 @@ void CExtensionListControl::SetRootSize(ULONGLONG totalBytes)
     m_rootSize = totalBytes;
 }
 
-ULONGLONG CExtensionListControl::GetRootSize()
+ULONGLONG CExtensionListControl::GetRootSize() const
 {
     return m_rootSize;
 }
@@ -330,27 +325,27 @@ void CExtensionListControl::SelectExtension(LPCWSTR ext)
 CStringW CExtensionListControl::GetSelectedExtension()
 {
     POSITION pos = GetFirstSelectedItemPosition();
-    if(pos == NULL)
+    if(pos == nullptr)
     {
         return wds::strEmpty;
     }
     else
     {
-        int i = GetNextSelectedItem(pos);
-        CListItem *item = GetListItem(i);
+	    const int i = GetNextSelectedItem(pos);
+	    const CListItem *item = GetListItem(i);
         return item->GetExtension();
     }
 }
 
-CExtensionListControl::CListItem *CExtensionListControl::GetListItem(int i)
+CExtensionListControl::CListItem *CExtensionListControl::GetListItem(int i) const
 {
     return (CListItem *)GetItemData(i);
 }
 
 void CExtensionListControl::OnLvnDeleteitem(NMHDR *pNMHDR, LRESULT *pResult)
 {
-    LPNMLISTVIEW lv = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
-    delete (CListItem *)(lv->lParam);
+	const LPNMLISTVIEW lv = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
+    delete (CListItem *)lv->lParam;
     *pResult = 0;
 }
 
@@ -367,7 +362,7 @@ void CExtensionListControl::OnSetFocus(CWnd* pOldWnd)
 
 void CExtensionListControl::OnLvnItemchanged(NMHDR *pNMHDR, LRESULT *pResult)
 {
-    LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
+	const LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
     if((pNMLV->uNewState & LVIS_SELECTED) != 0)
     {
         m_typeView->SetHighlightExtension(GetSelectedExtension());
@@ -409,10 +404,6 @@ CTypeView::CTypeView()
     m_showTypes = true;
 }
 
-CTypeView::~CTypeView()
-{
-}
-
 void CTypeView::SysColorChanged()
 {
     m_extensionListControl.SysColorChanged();
@@ -426,7 +417,7 @@ bool CTypeView::IsShowTypes()
 void CTypeView::ShowTypes(bool show)
 {
     m_showTypes = show;
-    OnUpdate(NULL, 0, NULL);
+    OnUpdate(nullptr, 0, nullptr);
 }
 
 void CTypeView::SetHighlightExtension(LPCWSTR ext)
@@ -450,7 +441,7 @@ int CTypeView::OnCreate(LPCREATESTRUCT lpCreateStruct)
         return -1;
     }
 
-    RECT rect = { 0, 0, 0, 0 };
+    constexpr RECT rect = { 0, 0, 0, 0 };
     VERIFY(m_extensionListControl.Create(LVS_SINGLESEL | LVS_OWNERDRAWFIXED | LVS_SHOWSELALWAYS | WS_CHILD | WS_VISIBLE | LVS_REPORT, rect, this, _nIdExtensionListControl));
     m_extensionListControl.SetExtendedStyle(m_extensionListControl.GetExtendedStyle() | LVS_EX_HEADERDRAGDROP);
 
@@ -480,7 +471,7 @@ void CTypeView::OnUpdate(CView * /*pSender*/, LPARAM lHint, CObject *)
 
             // If there is no vertical scroll bar, the header control doen't repaint
             // correctly. Don't know why. But this helps:
-            m_extensionListControl.GetHeaderCtrl()->InvalidateRect(NULL);
+            m_extensionListControl.GetHeaderCtrl()->InvalidateRect(nullptr);
         }
         else
         {
@@ -508,9 +499,9 @@ void CTypeView::OnUpdate(CView * /*pSender*/, LPARAM lHint, CObject *)
 
     case HINT_TREEMAPSTYLECHANGED:
         {
-            InvalidateRect(NULL);
-            m_extensionListControl.InvalidateRect(NULL);
-            m_extensionListControl.GetHeaderCtrl()->InvalidateRect(NULL);
+            InvalidateRect(nullptr);
+            m_extensionListControl.InvalidateRect(nullptr);
+            m_extensionListControl.GetHeaderCtrl()->InvalidateRect(nullptr);
         }
         break;
 
@@ -529,8 +520,8 @@ void CTypeView::OnUpdate(CView * /*pSender*/, LPARAM lHint, CObject *)
 void CTypeView::SetSelection()
 {
     // FIXME: Multi-select
-    CItem *item = GetDocument()->GetSelection(0);
-    if(item == NULL || item->GetType() != IT_FILE)
+    const CItem *item = GetDocument()->GetSelection(0);
+    if(item == nullptr || item->GetType() != IT_FILE)
     {
         m_extensionListControl.EnsureVisible(0, false);
     }
@@ -554,7 +545,7 @@ void CTypeView::Dump(CDumpContext& dc) const
 CDirstatDoc* CTypeView::GetDocument() const // Nicht-Debugversion ist inline
 {
     ASSERT(m_pDocument->IsKindOf(RUNTIME_CLASS(CDirstatDoc)));
-    return (CDirstatDoc*)m_pDocument;
+    return reinterpret_cast<CDirstatDoc*>(m_pDocument);
 }
 #endif //_DEBUG
 

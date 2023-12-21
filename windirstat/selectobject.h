@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@
 
 #include "stdafx.h"
 
-class CSelectObject
+class CSelectObject final
 {
 public:
     CSelectObject(CDC *pdc, CGdiObject *pObject)
@@ -43,7 +43,7 @@ protected:
     CGdiObject *m_pOldObject;
 };
 
-class CSelectStockObject
+class CSelectStockObject final
 {
 public:
     CSelectStockObject(CDC *pdc, int nIndex)
@@ -55,7 +55,7 @@ protected:
     CGdiObject *m_pOldObject;
 };
 
-class CSetBkMode
+class CSetBkMode final
 {
 public:
     CSetBkMode(CDC *pdc, int mode)
@@ -67,7 +67,7 @@ protected:
     int m_oldMode;
 };
 
-class CSetTextColor
+class CSetTextColor final
 {
 public:
     CSetTextColor(CDC *pdc, COLORREF color)
@@ -79,7 +79,7 @@ protected:
     COLORREF m_oldColor;
 };
 
-class CSetBkColor
+class CSetBkColor final
 {
 public:
     CSetBkColor(CDC *pdc, COLORREF color)
@@ -91,7 +91,7 @@ protected:
     COLORREF m_oldColor;
 };
 
-class CSaveDC
+class CSaveDC final
 {
 public:
     CSaveDC(CDC *pdc) { m_pdc = pdc; m_save = pdc->SaveDC(); }

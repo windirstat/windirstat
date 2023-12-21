@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -46,14 +46,14 @@ protected:
     class CListItem: public COwnerDrawnListItem
     {
     public:
-        CListItem(CExtensionListControl *list, LPCWSTR extension, SExtensionRecord r);
+        CListItem(CExtensionListControl *list, LPCWSTR extension, const SExtensionRecord& r);
 
-        virtual bool DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *width, int *focusLeft) const;
-        virtual CStringW GetText(int subitem) const;
+        bool DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *width, int *focusLeft) const override;
+        CStringW GetText(int subitem) const override;
 
         CStringW GetExtension() const;
-        int GetImage() const;
-        int Compare(const CSortingListItem *other, int subitem) const;
+        int GetImage() const override;
+        int Compare(const CSortingListItem *other, int subitem) const override;
 
     private:
         void DrawColor(CDC *pdc, CRect rc, UINT state, int *width) const;
@@ -72,16 +72,16 @@ protected:
 
 public:
     CExtensionListControl(CTypeView *typeView);
-    virtual bool GetAscendingDefault(int column);
+    bool GetAscendingDefault(int column) override;
     void Initialize();
     void SetExtensionData(const CExtensionData *ed);
     void SetRootSize(ULONGLONG totalBytes);
-    ULONGLONG GetRootSize();
+    ULONGLONG GetRootSize() const;
     void SelectExtension(LPCWSTR ext);
     CStringW GetSelectedExtension();
 
 protected:
-    CListItem *GetListItem(int i);
+    CListItem *GetListItem(int i) const;
 
     CTypeView *m_typeView;
     ULONGLONG m_rootSize;
@@ -107,11 +107,11 @@ protected:
     DECLARE_DYNCREATE(CTypeView)
 
 public:
-    virtual ~CTypeView();
+    ~CTypeView() override = default;
     CDirstatDoc* GetDocument() const;
     void SysColorChanged();
 
-    virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
+    BOOL PreCreateWindow(CREATESTRUCT& cs) override;
 
     bool IsShowTypes();
     void ShowTypes(bool show);
@@ -119,9 +119,9 @@ public:
     void SetHighlightExtension(LPCWSTR ext);
 
 protected:
-    virtual void OnInitialUpdate();
-    virtual void OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint);
-    virtual void OnDraw(CDC* pDC);
+    void OnInitialUpdate() override;
+    void OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint) override;
+    void OnDraw(CDC* pDC) override;
     void SetSelection();
 
     bool m_showTypes;   // Whether this view shall be shown (F8 option)
@@ -134,8 +134,8 @@ protected:
     afx_msg void OnSetFocus(CWnd* pOldWnd);
 public:
     #ifdef _DEBUG
-        virtual void AssertValid() const;
-        virtual void Dump(CDumpContext& dc) const;
+    void AssertValid() const override;
+    void Dump(CDumpContext& dc) const override;
     #endif
 };
 

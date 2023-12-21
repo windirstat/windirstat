@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -26,22 +26,25 @@
 #include "options.h"
 #include "globalhelpers.h"
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#endif
-
 IMPLEMENT_DYNAMIC(CPageGeneral, CPropertyPage)
 
 CPageGeneral::CPageGeneral()
     : CPropertyPage(CPageGeneral::IDD)
+    , m_followMountPoints(0)
+    , m_followJunctionPoints(0)
+    , m_useWdsLocale(0)
+    , m_humanFormat(0)
+    , m_listGrid(0)
+    , m_listStripes(0)
+    , m_listFullRowSelection(0)
+    , m_skipHidden(0),
+    m_originalLanguage(0)
 {
 }
 
-CPageGeneral::~CPageGeneral()
-{
-}
+CPageGeneral::~CPageGeneral() = default;
 
-COptionsPropertySheet *CPageGeneral::GetSheet()
+COptionsPropertySheet *CPageGeneral::GetSheet() const
 {
     COptionsPropertySheet *sheet = DYNAMIC_DOWNCAST(COptionsPropertySheet, GetParent());
     ASSERT(sheet != NULL);
@@ -80,7 +83,6 @@ END_MESSAGE_MAP()
 
 BOOL CPageGeneral::OnInitDialog()
 {
-    int i = 0;
     CPropertyPage::OnInitDialog();
 
     m_humanFormat = GetOptions()->IsHumanFormat();
@@ -105,14 +107,14 @@ BOOL CPageGeneral::OnInitDialog()
     CArray<LANGID, LANGID> langid;
     GetWDSApp()->GetAvailableResourceDllLangids(langid);
 
-    for(i = 0; i < langid.GetSize(); i++)
+    for(int i = 0; i < langid.GetSize(); i++)
     {
         k = m_combo.AddString(GetLocaleLanguage(langid[i]));
         m_combo.SetItemData(k, langid[i]);
     }
 
     m_originalLanguage = 0;
-    for(i = 0; i < m_combo.GetCount(); i++)
+    for(int i = 0; i < m_combo.GetCount(); i++)
     {
         if(m_combo.GetItemData(i) == CLanguageOptions::GetLanguage())
         {
@@ -138,7 +140,7 @@ void CPageGeneral::OnOK()
     GetOptions()->SetListFullRowSelection(FALSE != m_listFullRowSelection);
     GetOptions()->SetSkipHidden(FALSE != m_skipHidden);
 
-    LANGID id = (LANGID)m_combo.GetItemData(m_combo.GetCurSel());
+    const LANGID id = static_cast<LANGID>(m_combo.GetItemData(m_combo.GetCurSel()));
     CLanguageOptions::SetLanguage(id);
 
     CPropertyPage::OnOK();
@@ -181,7 +183,7 @@ void CPageGeneral::OnBnClickedListFullRowSelection()
 
 void CPageGeneral::OnCbnSelendokCombo()
 {
-    int i = m_combo.GetCurSel();
+	const int i = m_combo.GetCurSel();
     GetSheet()->SetLanguageChanged(i != m_originalLanguage);
     SetModified();
 }

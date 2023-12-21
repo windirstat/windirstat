@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -21,14 +21,11 @@
 
 #pragma once
 
-#ifndef __NOT_WDS
 #include "treemap.h"
-#endif // __NOT_WDS
 #include <common/wds_constants.h>
 #include <atlbase.h> // CRegKey
 #include <memory>
 
-#ifndef __NOT_WDS
 class COptions;
 
 enum REFRESHPOLICY
@@ -40,7 +37,7 @@ enum REFRESHPOLICY
     REFRESHPOLICYCOUNT
 };
 
-struct USERDEFINEDCLEANUP
+typedef struct USERDEFINEDCLEANUP
 {
     bool enabled;
     bool virginTitle;
@@ -56,12 +53,12 @@ struct USERDEFINEDCLEANUP
     bool showConsoleWindow;
     bool waitForCompletion;
     REFRESHPOLICY refreshPolicy;
-};
-#endif // __NOT_WDS
+}
+USERDEFINEDCLEANUP;
 
-#define USERDEFINEDCLEANUPCOUNT 10
+constexpr auto USERDEFINEDCLEANUPCOUNT = 10;
 
-#define TREELISTCOLORCOUNT 8
+constexpr auto TREELISTCOLORCOUNT = 8;
 
 // Base interface for retrieving/storing configuration
 // The ctor of derived classes is allowed to throw an HRESULT if something
@@ -85,38 +82,37 @@ public:
     virtual long getLastError() const = 0;
 };
 
-class CRegistryStg : public ICfgStorage
+class CRegistryStg final : public ICfgStorage
 {
     CRegistryStg(); // hide
     CRegistryStg& operator=(const CRegistryStg&); // hide
 public:
     CRegistryStg(HKEY hKeyParent, LPCWSTR lpszKeyName);
 
-    virtual void setString(LPCWSTR section, LPCWSTR entry, LPCWSTR value);
-    virtual CStringW getString(LPCWSTR section, LPCWSTR entry, LPCWSTR defaultValue);
+    void setString(LPCWSTR section, LPCWSTR entry, LPCWSTR value) override;
+    CStringW getString(LPCWSTR section, LPCWSTR entry, LPCWSTR defaultValue) override;
 
-    virtual void setInt(LPCWSTR section, LPCWSTR entry, int value);
-    virtual int getInt(LPCWSTR section, LPCWSTR entry, int defaultValue);
+    void setInt(LPCWSTR section, LPCWSTR entry, int value) override;
+    int getInt(LPCWSTR section, LPCWSTR entry, int defaultValue) override;
 
-    virtual void setUint(LPCWSTR section, LPCWSTR entry, unsigned int value);
-    virtual unsigned int getUint(LPCWSTR section, LPCWSTR entry, unsigned int defaultValue);
+    void setUint(LPCWSTR section, LPCWSTR entry, unsigned int value) override;
+    unsigned int getUint(LPCWSTR section, LPCWSTR entry, unsigned int defaultValue) override;
 
-    virtual void setBool(LPCWSTR section, LPCWSTR entry, bool value);
-    virtual bool getBool(LPCWSTR section, LPCWSTR entry, bool defaultValue);
+    void setBool(LPCWSTR section, LPCWSTR entry, bool value) override;
+    bool getBool(LPCWSTR section, LPCWSTR entry, bool defaultValue) override;
 
-    virtual void flush();
-    virtual long getLastError() const;
+    void flush() override;
+    long getLastError() const override;
 
 private:
     mutable long m_lastError;
-    REGSAM const m_sam;
     HKEY m_parentKey;
     CStringW m_lpszKeyName;
 
     CRegKey m_key;
 };
 
-class CIniFileStg : public ICfgStorage
+class CIniFileStg final : public ICfgStorage
 {
     CIniFileStg(); // hide
     CIniFileStg& operator=(const CIniFileStg&); // hide
@@ -124,20 +120,20 @@ public:
     CIniFileStg(LPCWSTR lpszFilePath);
     ~CIniFileStg();
 
-    virtual void setString(LPCWSTR section, LPCWSTR entry, LPCWSTR value);
-    virtual CStringW getString(LPCWSTR section, LPCWSTR entry, LPCWSTR defaultValue);
+    void setString(LPCWSTR section, LPCWSTR entry, LPCWSTR value) override;
+    CStringW getString(LPCWSTR section, LPCWSTR entry, LPCWSTR defaultValue) override;
 
-    virtual void setInt(LPCWSTR section, LPCWSTR entry, int value);
-    virtual int getInt(LPCWSTR section, LPCWSTR entry, int defaultValue);
+    void setInt(LPCWSTR section, LPCWSTR entry, int value) override;
+    int getInt(LPCWSTR section, LPCWSTR entry, int defaultValue) override;
 
-    virtual void setUint(LPCWSTR section, LPCWSTR entry, unsigned int value);
-    virtual unsigned int getUint(LPCWSTR section, LPCWSTR entry, unsigned int defaultValue);
+    void setUint(LPCWSTR section, LPCWSTR entry, unsigned int value) override;
+    unsigned int getUint(LPCWSTR section, LPCWSTR entry, unsigned int defaultValue) override;
 
-    virtual void setBool(LPCWSTR section, LPCWSTR entry, bool value);
-    virtual bool getBool(LPCWSTR section, LPCWSTR entry, bool defaultValue);
+    void setBool(LPCWSTR section, LPCWSTR entry, bool value) override;
+    bool getBool(LPCWSTR section, LPCWSTR entry, bool defaultValue) override;
 
-    virtual void flush();
-    virtual long getLastError() const;
+    void flush() override;
+    long getLastError() const override;
 
 private:
     mutable long m_lastError;
@@ -145,24 +141,24 @@ private:
 };
 
 // It's an aggregate, but provides the same interface
-class CConfigStorage : public ICfgStorage
+class CConfigStorage final : public ICfgStorage
 {
 public:
     // primary *must* be given, secondary is optional
     CConfigStorage(ICfgStorage* primary, ICfgStorage* secondary);
     ~CConfigStorage();
 
-    virtual void setString(LPCWSTR section, LPCWSTR entry, LPCWSTR value);
-    virtual CStringW getString(LPCWSTR section, LPCWSTR entry, LPCWSTR defaultValue);
+    void setString(LPCWSTR section, LPCWSTR entry, LPCWSTR value) override;
+    CStringW getString(LPCWSTR section, LPCWSTR entry, LPCWSTR defaultValue) override;
 
-    virtual void setInt(LPCWSTR section, LPCWSTR entry, int value);
-    virtual int getInt(LPCWSTR section, LPCWSTR entry, int defaultValue);
+    void setInt(LPCWSTR section, LPCWSTR entry, int value) override;
+    int getInt(LPCWSTR section, LPCWSTR entry, int defaultValue) override;
 
-    virtual void setUint(LPCWSTR section, LPCWSTR entry, unsigned int value);
-    virtual unsigned int getUint(LPCWSTR section, LPCWSTR entry, unsigned int defaultValue);
+    void setUint(LPCWSTR section, LPCWSTR entry, unsigned int value) override;
+    unsigned int getUint(LPCWSTR section, LPCWSTR entry, unsigned int defaultValue) override;
 
-    virtual void setBool(LPCWSTR section, LPCWSTR entry, bool value);
-    virtual bool getBool(LPCWSTR section, LPCWSTR entry, bool defaultValue);
+    void setBool(LPCWSTR section, LPCWSTR entry, bool value) override;
+    bool getBool(LPCWSTR section, LPCWSTR entry, bool defaultValue) override;
 };
 
 class CRegistryUser
@@ -182,7 +178,6 @@ public:
 };
 
 
-#ifndef __NOT_WDS
 //
 // CPersistence. Reads from and writes to the registry all the persistent settings
 // like window position, column order etc.
@@ -294,15 +289,15 @@ COptions *GetOptions();
 class COptions: private CRegistryUser
 {
 public:
-    COptions();
+    COptions() = default;
 
     void LoadFromRegistry();
     void SaveToRegistry();
 
-    bool IsListGrid();
+    bool IsListGrid() const;
     void SetListGrid(bool show);
 
-    bool IsListStripes();
+    bool IsListStripes() const;
     void SetListStripes(bool show);
 
     bool IsListFullRowSelection();
@@ -335,7 +330,7 @@ public:
 
     // Option to ignore junction points which are not volume mount points
     bool IsFollowJunctionPoints();
-    void SetFollowJunctionPoints(bool ignore);
+    void SetFollowJunctionPoints(bool follow);
 
     // Option to use CDirStatApp::m_langid for date/time and number formatting
     bool IsUseWdsLocale();
@@ -393,4 +388,3 @@ private:
     CStringW m_reportPrefix;
     CStringW m_reportSuffix;
 };
-#endif // __NOT_WDS

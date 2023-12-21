@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -26,10 +26,6 @@
 #include <common/commonhelpers.h>
 #include "aboutdlg.h"
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#endif
-
 namespace
 {
     enum
@@ -51,16 +47,16 @@ namespace
     {
         CStringW s;
 
-        HGLOBAL hresource = NULL;
+        HGLOBAL hresource = nullptr;
         try
         {
-            HRSRC hrsrc = ::FindResource(dll, MAKEINTRESOURCE(id), L"TEXT");
-            if(NULL == hrsrc)
+	        const HRSRC hrsrc = ::FindResource(dll, MAKEINTRESOURCE(id), L"TEXT");
+            if(nullptr == hrsrc)
             {
                 MdThrowLastWinerror();
             }
 
-            DWORD dwSize = ::SizeofResource(dll, hrsrc);
+	        const DWORD dwSize = ::SizeofResource(dll, hrsrc);
             if(0 == dwSize)
             {
                 MdThrowLastWinerror();
@@ -72,9 +68,9 @@ namespace
                 MdThrowLastWinerror();
             }
 
-            const BYTE *pData = (const BYTE *)::LockResource(hresource);
+            const BYTE *pData = static_cast<const BYTE*>(::LockResource(hresource));
 
-            CComBSTR bstr(dwSize, (LPCSTR)pData);
+	        const CComBSTR bstr(dwSize, (LPCSTR)pData);
 
             s = bstr;
         }
@@ -84,7 +80,7 @@ namespace
             pe->Delete();
         }
 
-        if(hresource != NULL)
+        if(hresource != nullptr)
         {
             ::FreeResource(hresource);
         }
@@ -120,10 +116,10 @@ void CAboutDlg::CMyTabControl::Initialize()
 {
     ModifyStyle(0, WS_CLIPCHILDREN);
 
-    InsertItem(TAB_ABOUT, LPCWSTR(LoadString(IDS_ABOUT_ABOUT)));
-    InsertItem(TAB_AUTHORS, LPCWSTR(LoadString(IDS_ABOUT_AUTHORS)));
-    InsertItem(TAB_THANKSTO, LPCWSTR(LoadString(IDS_ABOUT_THANKSTO)));
-    InsertItem(TAB_LICENSE, LPCWSTR(LoadString(IDS_ABOUT_LICENSEAGREEMENT)));
+    InsertItem(TAB_ABOUT, static_cast<LPCWSTR>(LoadString(IDS_ABOUT_ABOUT)));
+    InsertItem(TAB_AUTHORS, static_cast<LPCWSTR>(LoadString(IDS_ABOUT_AUTHORS)));
+    InsertItem(TAB_THANKSTO, static_cast<LPCWSTR>(LoadString(IDS_ABOUT_THANKSTO)));
+    InsertItem(TAB_LICENSE, static_cast<LPCWSTR>(LoadString(IDS_ABOUT_LICENSEAGREEMENT)));
 
     CRect rc;
     GetClientRect(rc);
@@ -163,7 +159,7 @@ void CAboutDlg::CMyTabControl::SetPageText(int tab)
         break;
     case TAB_LICENSE:
         {
-            text = GetTextResource(IDR_LICENSE, NULL);
+            text = GetTextResource(IDR_LICENSE, nullptr);
             newStyle = ES_LEFT;
         }
         break;
@@ -181,7 +177,7 @@ void CAboutDlg::CMyTabControl::SetPageText(int tab)
     style &= ~ES_CENTER;
     style |= newStyle | WS_VSCROLL;
 
-    DWORD exstyle = m_text.GetExStyle();
+    const DWORD exstyle = m_text.GetExStyle();
 
     m_text.DestroyWindow();
 
@@ -208,7 +204,7 @@ END_MESSAGE_MAP()
 
 void CAboutDlg::CMyTabControl::OnEnLinkText(NMHDR *pNMHDR, LRESULT *pResult)
 {
-    ENLINK *el = reinterpret_cast<ENLINK *>(pNMHDR);
+	const ENLINK *el = reinterpret_cast<ENLINK *>(pNMHDR);
     *pResult = 0;
 
     if(WM_LBUTTONDOWN == el->msg)
@@ -217,13 +213,13 @@ void CAboutDlg::CMyTabControl::OnEnLinkText(NMHDR *pNMHDR, LRESULT *pResult)
         m_text.GetTextRange(el->chrg.cpMin, el->chrg.cpMax, link);
 
         // FIXME: should probably one of the helper variants of this function
-        ::ShellExecute(*this, NULL, link, NULL, wds::strEmpty, SW_SHOWNORMAL);
+        ::ShellExecute(*this, nullptr, link, nullptr, wds::strEmpty, SW_SHOWNORMAL);
     }
 }
 
 void CAboutDlg::CMyTabControl::OnEnMsgFilter(NMHDR *pNMHDR, LRESULT *pResult)
 {
-    MSGFILTER *mf = reinterpret_cast<MSGFILTER *>(pNMHDR);
+	const MSGFILTER *mf = reinterpret_cast<MSGFILTER *>(pNMHDR);
     *pResult = 0;
 
     if(WM_KEYDOWN == mf->msg && (VK_ESCAPE == mf->wParam || VK_TAB == mf->wParam))
@@ -274,71 +270,12 @@ CStringW CAboutDlg::GetAppVersion()
 CStringW CAboutDlg::GetDevelList()
 {
     CStringW retval;
-#if 0
-    using wds::authors;
-    using wds::contact_t;
-    
-    for(size_t i = 0; authors[i].name; i++)
-    {
-        contact_t* c = &authors[i];
-        if(c->name)
-        {
-            CStringW tmp;
-            if(c->mail && c->weburl)
-                tmp.Format(L"\r\n%s\r\n(mailto:%s)\r\n%s\r\n", c->name, c->mail, c->weburl);
-            else if(c->mail)
-                tmp.Format(L"\r\n%s\r\n(mailto:%s)\r\n", c->name, c->mail);
-            else if(c->weburl)
-                tmp.Format(L"\r\n%s\r\n%s\r\n", c->name, c->weburl);
-            else
-                tmp.Format(L"\r\n%s\r\n", c->name);
-            if(!tmp.IsEmpty())
-            {
-                retval += tmp;
-            }
-        }
-    }
-#endif // 0
     return retval;
 }
 
 CStringW CAboutDlg::GetTranslatorList()
 {
     CStringW retval;
-#if 0
-    using wds::translators;
-    using wds::translator_t;
-
-    for(size_t i = 0; translators[i].id && translators[i].lngNative; i++)
-    {
-        translator_t* t = &translators[i];
-        if(t->lngNative && t->lngEnglish && t->lngISO639_1)
-        {
-            CStringW tmp;
-            tmp.Format(L"--- %s/%s (%s) ---\n\n", t->lngNative, t->lngEnglish, t->lngISO639_1);
-            for(size_t j = 0; t->translators[j].name; j++)
-            {
-                CStringW tmp2;
-                const wds::contact_t& c = t->translators[j];
-                if(c.mail && c.weburl)
-                    tmp2.Format(L"%s\n(mailto:%s)\n%s\n", c.name, c.mail, c.weburl);
-                else if(c.mail)
-                    tmp2.Format(L"%s\n(mailto:%s)\n", c.name, c.mail);
-                else if(c.weburl)
-                    tmp2.Format(L"%s\n%s\n", c.name, c.weburl);
-                else
-                    tmp2.Format(L"%s\n", c.name);
-                if(!tmp2.IsEmpty())
-                    tmp += tmp2;
-            }
-            if(!tmp.IsEmpty())
-            {
-                tmp += L"\n";
-                retval += tmp;
-            }
-        }
-    }
-#endif // 0
     return retval;
 }
 

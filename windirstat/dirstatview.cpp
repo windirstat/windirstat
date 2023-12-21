@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -30,13 +30,9 @@
 #include "osspecific.h"
 #include "globalhelpers.h"
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#endif
-
 namespace
 {
-    const UINT _nIdTreeListControl = 4711;
+	constexpr UINT _nIdTreeListControl = 4711;
 }
 
 CMyTreeListControl::CMyTreeListControl(CDirstatView *dirstatView)
@@ -46,7 +42,7 @@ CMyTreeListControl::CMyTreeListControl(CDirstatView *dirstatView)
 
 bool CMyTreeListControl::GetAscendingDefault(int column)
 {
-    return (column == COL_NAME || column == COL_LASTCHANGE);
+    return column == COL_NAME || column == COL_LASTCHANGE;
 }
 
 BEGIN_MESSAGE_MAP(CMyTreeListControl, CTreeListControl)
@@ -58,7 +54,7 @@ END_MESSAGE_MAP()
 
 void CMyTreeListControl::OnContextMenu(CWnd* /*pWnd*/, CPoint pt)
 {
-    int i = GetSelectedItem();
+	const int i = GetSelectedItem();
     if(i == -1)
     {
         return;
@@ -67,13 +63,13 @@ void CMyTreeListControl::OnContextMenu(CWnd* /*pWnd*/, CPoint pt)
     CTreeListItem *item = GetItem(i);
 
     CRect rc = GetWholeSubitemRect(i, 0);
-    CRect rcTitle = item->GetTitleRect() + rc.TopLeft();
+	const CRect rcTitle = item->GetTitleRect() + rc.TopLeft();
 
     CMenu menu;
     menu.LoadMenu(IDR_POPUPLIST);
     CMenu *sub = menu.GetSubMenu(0);
 
-    PrepareDefaultMenu(sub, (CItem *)item);
+    PrepareDefaultMenu(sub, reinterpret_cast<CItem*>(item));
     GetMainFrame()->AppendUserDefinedCleanups(sub);
 
     // Show popup menu and act accordingly.
@@ -99,7 +95,7 @@ void CMyTreeListControl::OnContextMenu(CWnd* /*pWnd*/, CPoint pt)
     tp.rcExclude.left = desktop.left;
     tp.rcExclude.right = desktop.right;
 
-    const int overlap = 2;  // a little vertical overlapping
+	constexpr int overlap = 2;  // a little vertical overlapping
     tp.rcExclude.top += overlap;
     tp.rcExclude.bottom -= overlap;
 
@@ -108,7 +104,7 @@ void CMyTreeListControl::OnContextMenu(CWnd* /*pWnd*/, CPoint pt)
 
 void CMyTreeListControl::OnItemDoubleClick(int i)
 {
-    const CItem *item = (const CItem *)GetItem(i);
+    const CItem *item = reinterpret_cast<const CItem*>(GetItem(i));
     if(item->GetType() == IT_FILE)
     {
         GetDocument()->OpenItem(item);
@@ -129,7 +125,7 @@ void CMyTreeListControl::PrepareDefaultMenu(CMenu *menu, const CItem *item)
     }
     else
     {
-        CStringW command = LoadString(item->IsExpanded() && item->HasChildren() ? IDS_COLLAPSE : IDS_EXPAND);
+	    const CStringW command = LoadString(item->IsExpanded() && item->HasChildren() ? IDS_COLLAPSE : IDS_EXPAND);
         VERIFY(menu->ModifyMenu(ID_POPUP_TOGGLE, MF_BYCOMMAND | MF_STRING, ID_POPUP_TOGGLE, command));
         menu->SetDefaultItem(ID_POPUP_TOGGLE, false);
     }
@@ -164,21 +160,17 @@ CDirstatView::CDirstatView()
     m_treeListControl.SetSorting(COL_SUBTREETOTAL, false);
 }
 
-CDirstatView::~CDirstatView()
-{
-}
-
 CStringW CDirstatView::GenerateReport()
 {
     CStringW report = GetOptions()->GetReportPrefix() + L"\r\n";
 
     for(size_t j = 0; j < GetDocument()->GetSelectionCount(); j++)
     {
-        CItem *root = GetDocument()->GetSelection(j);
+	    const CItem *root = GetDocument()->GetSelection(j);
         ASSERT(root != NULL);
         ASSERT(root->IsVisible());
 
-        int r = m_treeListControl.FindTreeItem(root);
+	    const int r = m_treeListControl.FindTreeItem(root);
 
         for(
             int i = r;
@@ -187,7 +179,7 @@ CStringW CDirstatView::GenerateReport()
         i++
             )
         {
-            CItem *item = (CItem *)m_treeListControl.GetItem(i);
+	        const CItem *item = reinterpret_cast<CItem*>(m_treeListControl.GetItem(i));
 
             if(item->GetType() == IT_MYCOMPUTER)
             {
@@ -205,7 +197,7 @@ CStringW CDirstatView::GenerateReport()
 
 // Just a shortcut for CMainFrame to obtain
 // the small font for the suspend button.
-CFont *CDirstatView::GetSmallFont()
+CFont *CDirstatView::GetSmallFont() const
 {
     return m_treeListControl.GetFont();
 }
@@ -233,7 +225,7 @@ void CDirstatView::OnDraw(CDC* pDC)
 CDirstatDoc* CDirstatView::GetDocument() const // Non debug version is inline
 {
     ASSERT(m_pDocument->IsKindOf(RUNTIME_CLASS(CDirstatDoc)));
-    return (CDirstatDoc*)m_pDocument;
+    return reinterpret_cast<CDirstatDoc*>(m_pDocument);
 }
 #endif
 
@@ -267,7 +259,7 @@ int CDirstatView::OnCreate(LPCREATESTRUCT lpCreateStruct)
         return -1;
     }
 
-    RECT rect = { 0, 0, 0, 0 };
+    constexpr RECT rect = { 0, 0, 0, 0 };
     VERIFY(m_treeListControl.CreateEx(LVS_EX_HEADERDRAGDROP, WS_CHILD | WS_VISIBLE | LVS_REPORT | LVS_SHOWSELALWAYS, rect, this, _nIdTreeListControl));
 
     m_treeListControl.ShowGrid(GetOptions()->IsListGrid());
@@ -298,7 +290,7 @@ BOOL CDirstatView::OnEraseBkgnd(CDC* /*pDC*/)
 
 void CDirstatView::OnDestroy()
 {
-    m_treeListControl.MySetImageList(NULL);
+    m_treeListControl.MySetImageList(nullptr);
     CView::OnDestroy();
 }
 
@@ -318,7 +310,7 @@ void CDirstatView::OnSettingChange(UINT uFlags, LPCWSTR lpszSection)
 
 void CDirstatView::OnLvnItemchanged(NMHDR *pNMHDR, LRESULT *pResult)
 {
-    LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
+	const LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
 
     if((pNMLV->uChanged & LVIF_STATE) != 0)
     {
@@ -329,8 +321,8 @@ void CDirstatView::OnLvnItemchanged(NMHDR *pNMHDR, LRESULT *pResult)
         else
         {
             // This is not true (don't know why): ASSERT(m_treeListControl.GetItemState(pNMLV->iItem, LVIS_SELECTED) == pNMLV->uNewState);
-            bool selected = ((m_treeListControl.GetItemState(pNMLV->iItem, LVIS_SELECTED) & LVIS_SELECTED) != 0);
-            CItem *item = (CItem *)m_treeListControl.GetItem(pNMLV->iItem);
+            const bool selected = (m_treeListControl.GetItemState(pNMLV->iItem, LVIS_SELECTED) & LVIS_SELECTED) != 0;
+            const CItem *item = reinterpret_cast<CItem*>(m_treeListControl.GetItem(pNMLV->iItem));
             ASSERT(item != NULL);
             if(selected)
             {
@@ -368,7 +360,7 @@ void CDirstatView::OnUpdate(CView *pSender, LPARAM lHint, CObject *pHint)
 
     case HINT_EXTENDSELECTION:
         {
-            CItem *item = (CItem *)pHint;
+	        const CItem *item = (CItem *)pHint;
             m_treeListControl.ExtendSelection(item);
         }
 
@@ -406,7 +398,7 @@ void CDirstatView::OnUpdate(CView *pSender, LPARAM lHint, CObject *pHint)
             {
                 if(msg.message == WM_QUIT)
                 {
-                    ::PostQuitMessage(int(msg.wParam));
+                    ::PostQuitMessage(static_cast<int>(msg.wParam));
                     break;
                 }
                 ::TranslateMessage(&msg);

@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2019 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -25,10 +25,6 @@
 #include "selectobject.h"
 #include "layout.h"
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#endif
-
 CLayout::CLayout(CWnd *dialog, LPCWSTR name)
 {
     ASSERT(dialog != NULL);
@@ -45,7 +41,7 @@ int CLayout::AddControl(CWnd *control, double movex, double movey, double stretc
 {
     SControlInfo info(control, movex, movey, stretchx, stretchy);
 
-    return int(m_control.Add(info));
+    return static_cast<int>(m_control.Add(info));
 }
 
 void CLayout::AddControl(UINT id, double movex, double movey, double stretchx, double stretchy)
@@ -58,11 +54,10 @@ void CLayout::OnInitDialog(bool centerWindow)
     m_dialog->SetIcon(GetWDSApp()->LoadIcon(IDR_MAINFRAME), false);
 
     CRect rcDialog;
-    int i = 0;
     m_dialog->GetWindowRect(rcDialog);
     m_originalDialogSize = rcDialog.Size();
 
-    for(i = 0; i < m_control.GetSize(); i++)
+    for(int i = 0; i < m_control.GetSize(); i++)
     {
         CRect rc;
         m_control[i].control->GetWindowRect(rc);
@@ -76,7 +71,7 @@ void CLayout::OnInitDialog(bool centerWindow)
     sg.top = sg.bottom - m_sizeGripper._width;
     m_sizeGripper.Create(m_dialog, sg);
 
-    i = AddControl(&m_sizeGripper, 1, 1, 0, 0);
+    const int i = AddControl(&m_sizeGripper, 1, 1, 0, 0);
     m_control[i].originalRectangle = sg;
 
     CPersistence::GetDialogRectangle(m_name, rcDialog);
@@ -87,7 +82,7 @@ void CLayout::OnInitDialog(bool centerWindow)
     }
 }
 
-void CLayout::OnDestroy()
+void CLayout::OnDestroy() const
 {
     CRect rc;
     m_dialog->GetWindowRect(rc);
@@ -98,18 +93,18 @@ void CLayout::OnSize()
 {
     CRect wrc;
     m_dialog->GetWindowRect(wrc);
-    CSize newDialogSize = wrc.Size();
+    const CSize newDialogSize = wrc.Size();
 
-    CSize diff = newDialogSize - m_originalDialogSize;
+    const CSize diff = newDialogSize - m_originalDialogSize;
 
-    CPositioner pos(int(m_control.GetSize()));
+    CPositioner pos(static_cast<int>(m_control.GetSize()));
 
     for(int i = 0; i < m_control.GetSize(); i++)
     {
         CRect rc = m_control[i].originalRectangle;
 
-        CSize move(int(diff.cx * m_control[i].movex), int(diff.cy * m_control[i].movey));
-        CRect stretch(0, 0, int(diff.cx * m_control[i].stretchx), int(diff.cy * m_control[i].stretchy));
+        const CSize move(static_cast<int>(diff.cx * m_control[i].movex), static_cast<int>(diff.cy * m_control[i].movey));
+        CRect stretch(0, 0, static_cast<int>(diff.cx * m_control[i].stretchx), static_cast<int>(diff.cy * m_control[i].stretchy));
 
         rc += move;
         rc += stretch;
@@ -118,7 +113,7 @@ void CLayout::OnSize()
     }
 }
 
-void CLayout::OnGetMinMaxInfo(MINMAXINFO *mmi)
+void CLayout::OnGetMinMaxInfo(MINMAXINFO *mmi) const
 {
     mmi->ptMinTrackSize.x = m_originalDialogSize.cx;
     mmi->ptMinTrackSize.y = m_originalDialogSize.cy;
@@ -129,10 +124,6 @@ void CLayout::OnGetMinMaxInfo(MINMAXINFO *mmi)
 
 const int CLayout::CSizeGripper::_width = 14;
 
-CLayout::CSizeGripper::CSizeGripper()
-{
-}
-
 void CLayout::CSizeGripper::Create(CWnd *parent, CRect rc)
 {
     VERIFY(CWnd::Create(
@@ -140,7 +131,7 @@ void CLayout::CSizeGripper::Create(CWnd *parent, CRect rc)
             0,
             AfxGetApp()->LoadStandardCursor(IDC_ARROW),
             (HBRUSH)(COLOR_BTNFACE + 1),
-            0
+            nullptr
         ),
         wds::strEmpty,
         WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS,
@@ -224,10 +215,8 @@ LRESULT CLayout::CSizeGripper::OnNcHitTest(CPoint point)
     {
         return HTBOTTOMRIGHT;
     }
-    else
-    {
-        return 0;
-    }
+
+    return 0;
 }
 
 CLayout::CPositioner::CPositioner(int nNumWindows)
@@ -242,5 +231,5 @@ CLayout::CPositioner::~CPositioner()
 
 void CLayout::CPositioner::SetWindowPos(HWND hWnd, int x, int y, int cx, int cy, UINT uFlags)
 {
-    m_wdp = ::DeferWindowPos(m_wdp, hWnd, NULL, x, y, cx, cy, uFlags | SWP_NOZORDER);
+    m_wdp = ::DeferWindowPos(m_wdp, hWnd, nullptr, x, y, cx, cy, uFlags | SWP_NOZORDER);
 }

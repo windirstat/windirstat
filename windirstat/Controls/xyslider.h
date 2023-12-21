@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -36,10 +36,10 @@ public:
 
     CXySlider();
 
-    void GetRange(CSize& range);
+    void GetRange(CSize& range) const;
     void SetRange(CSize range);
 
-    CPoint GetPos();
+    CPoint GetPos() const;
     void SetPos(CPoint pt);
 
     // "Line size" is always 1 Pixel

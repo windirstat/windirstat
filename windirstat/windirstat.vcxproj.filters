@@ -219,9 +219,6 @@
     <ClCompile Include="..\common\commonhelpers.cpp">
       <Filter>Source Files\Common</Filter>
     </ClCompile>
-    <ClCompile Include="..\common\wds_constants.cpp">
-      <Filter>Source Files\Common</Filter>
-    </ClCompile>
     <ClCompile Include="dirstatdoc.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

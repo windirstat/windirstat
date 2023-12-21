@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2019 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -25,10 +25,6 @@
 #include "globalhelpers.h"
 #include <common/tracer.h>
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#endif
-
 CReparsePoints::~CReparsePoints()
 {
     Clear();
@@ -39,10 +35,10 @@ void CReparsePoints::Clear()
     m_drive.RemoveAll();
 
     POSITION pos = m_volume.GetStartPosition();
-    while(pos != NULL)
+    while(pos != nullptr)
     {
         CStringW volume;
-        PointVolumeArray *pva = NULL;
+        PointVolumeArray *pva = nullptr;
         m_volume.GetNextAssoc(pos, volume, pva);
         ASSERT_VALID(pva);
         delete pva;
@@ -62,12 +58,11 @@ void CReparsePoints::GetDriveVolumes()
 {
     m_drive.SetSize(wds::iNumDriveLetters);
 
-    DWORD drives = ::GetLogicalDrives();
-    int i;
+    const DWORD drives = ::GetLogicalDrives();
     DWORD mask = 0x00000001;
-    for(i = 0; i < wds::iNumDriveLetters; i++, mask <<= 1)
+    for(int i = 0; i < wds::iNumDriveLetters; i++, mask <<= 1)
     {
-        TCHAR volume[_MAX_PATH];
+        WCHAR volume[_MAX_PATH];
         volume[0] = 0;
 
         if((drives & mask) != 0)
@@ -75,7 +70,7 @@ void CReparsePoints::GetDriveVolumes()
             CStringW s;
             s.Format(L"%c:\\", i + wds::chrCapA);
 
-            BOOL b = ::GetVolumeNameForVolumeMountPoint(s, volume, _countof(volume));
+            const BOOL b = ::GetVolumeNameForVolumeMountPoint(s, volume, _countof(volume));
 
             if(!b)
             {
@@ -95,8 +90,8 @@ void CReparsePoints::GetDriveVolumes()
 
 void CReparsePoints::GetAllMountPoints()
 {
-    TCHAR volume[_MAX_PATH];
-    HANDLE hvol = ::FindFirstVolume(volume, _countof(volume));
+    WCHAR volume[_MAX_PATH];
+    const HANDLE hvol = ::FindFirstVolume(volume, _countof(volume));
     if(hvol == INVALID_HANDLE_VALUE)
     {
         VTRACE(L"No volumes found.");
@@ -105,12 +100,12 @@ void CReparsePoints::GetAllMountPoints()
 
     for(BOOL bContinue = true; bContinue; bContinue = ::FindNextVolume(hvol, volume, _countof(volume)))
     {
-        TCHAR fsname[_MAX_PATH], vname[_MAX_PATH];
+        WCHAR fsname[_MAX_PATH], vname[_MAX_PATH];
         PointVolumeArray *pva = new PointVolumeArray;
         ASSERT_VALID(pva);
 
         DWORD fsflags;
-        BOOL b = ::GetVolumeInformation(volume, vname, _countof(vname), NULL, NULL, &fsflags, fsname, _countof(fsname));
+        const BOOL b = ::GetVolumeInformation(volume, vname, _countof(vname), nullptr, nullptr, &fsflags, fsname, _countof(fsname));
 
         if(!b)
         {
@@ -133,8 +128,8 @@ void CReparsePoints::GetAllMountPoints()
             continue;
         }
 
-        TCHAR point[_MAX_PATH];
-        HANDLE h = ::FindFirstVolumeMountPoint(volume, point, _countof(point));
+        WCHAR point[_MAX_PATH];
+        const HANDLE h = ::FindFirstVolumeMountPoint(volume, point, _countof(point));
         if(h == INVALID_HANDLE_VALUE)
         {
 #           ifdef _DEBUG
@@ -158,7 +153,7 @@ void CReparsePoints::GetAllMountPoints()
         {
             CStringW uniquePath = volume;
             uniquePath += point;
-            TCHAR mountedVolume[_MAX_PATH];
+            WCHAR mountedVolume[_MAX_PATH];
 
             const BOOL bGotMountPoints = ::GetVolumeNameForVolumeMountPoint(uniquePath, mountedVolume, _countof(mountedVolume));
 
@@ -187,10 +182,10 @@ void CReparsePoints::GetAllMountPoints()
 
 #ifdef _DEBUG
     POSITION pos = m_volume.GetStartPosition();
-    while(pos != NULL)
+    while(pos != nullptr)
     {
         CStringW lvolume;
-        PointVolumeArray *pva = NULL;
+        PointVolumeArray *pva = nullptr;
         m_volume.GetNextAssoc(pos, lvolume, pva);
         pva->AssertValid();
     }
@@ -217,7 +212,7 @@ bool CReparsePoints::IsVolumeMountPoint(CStringW path)
 
     path.MakeLower();
 
-    CStringW volume = m_drive[path[0] - wds::chrSmallA];
+    const CStringW volume = m_drive[path[0] - wds::chrSmallA];
     path = path.Mid(3);
 
     return IsVolumeMountPoint(volume, path);
@@ -232,11 +227,11 @@ bool CReparsePoints::IsFolderJunction(DWORD attr)
         return false;
     }
 
-    return ((attr & FILE_ATTRIBUTE_REPARSE_POINT) != 0);
+    return (attr & FILE_ATTRIBUTE_REPARSE_POINT) != 0;
 }
 
 // ... same as before, but based on the full path
-bool CReparsePoints::IsFolderJunction(CStringW path)
+bool CReparsePoints::IsFolderJunction(const CStringW& path)
 {
     if(IsVolumeMountPoint(path))
     {
@@ -246,7 +241,7 @@ bool CReparsePoints::IsFolderJunction(CStringW path)
     return IsFolderJunction(::GetFileAttributes(path));
 }
 
-bool CReparsePoints::IsVolumeMountPoint(CStringW volume, CStringW path)
+bool CReparsePoints::IsVolumeMountPoint(CStringW volume, CStringW path) const
 {
     while(true)
     {

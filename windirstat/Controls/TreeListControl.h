@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -63,14 +63,14 @@ class CTreeListItem: public COwnerDrawnListItem
 
 public:
     CTreeListItem();
-    virtual ~CTreeListItem();
+    ~CTreeListItem() override;
 
     virtual int CompareSibling(const CTreeListItem *tlib, int subitem) const =0;
 
-    virtual bool DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *width, int *focusLeft) const;
-    virtual CStringW GetText(int subitem) const;
-    virtual int GetImage() const;
-    virtual int Compare(const CSortingListItem *other, int subitem) const;
+    bool DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *width, int *focusLeft) const override;
+    CStringW GetText(int subitem) const override;
+    int GetImage() const override;
+    int Compare(const CSortingListItem *other, int subitem) const override;
     virtual CTreeListItem *GetTreeListChild(int i) const =0;
     virtual int GetChildrenCount() const =0;
     virtual int GetImageToCache() const =0;
@@ -97,8 +97,8 @@ public:
 protected:
     static int __cdecl _compareProc(const void *p1, const void *p2);
     static CTreeListControl *GetTreeListControl();
-    void StartPacman(bool start);
-    bool DrivePacman(ULONGLONG readJobs);
+    void StartPacman(bool start) const;
+    bool DrivePacman(ULONGLONG readJobs) const;
     int GetScrollPosition();
     void SetScrollPosition(int top);
 
@@ -123,10 +123,10 @@ public:
     static CTreeListControl *GetTheTreeListControl();
 
     CTreeListControl(CDirstatView *dirstatView, int rowHeight = -1);
-    virtual ~CTreeListControl();
+    ~CTreeListControl() override = default;
     void MySetImageList(CImageList *il);
     virtual BOOL CreateEx(DWORD dwExStyle, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID);
-    virtual void SysColorChanged();
+    void SysColorChanged() override;
     void SetRootItem(CTreeListItem *root);
     void OnChildAdded(CTreeListItem *parent, CTreeListItem *child);
     void OnChildRemoved(CTreeListItem *parent, CTreeListItem *childdata);
@@ -147,8 +147,8 @@ public:
     void ToggleSelectedItem();
     void ExtendSelection(const CTreeListItem *item);
 
-    virtual void SortItems();
-    virtual bool HasImages();
+    void SortItems() override;
+    bool HasImages() override;
 
 protected:
     virtual void OnItemDoubleClick(int i);

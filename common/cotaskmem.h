@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -33,7 +33,7 @@
 // This template does that in its destructor.
 //
 template<class T>
-class CCoTaskMem
+class CCoTaskMem final
 {
 // construction
 public:
@@ -52,7 +52,7 @@ public:
     { _ASSERTE(NULL != p); return p; }
     T operator= ( T lp )
     { if(NULL != p) ::CoTaskMemFree(p); p = lp; return p;}
-    bool operator!() { return (NULL == p); }
+    bool operator!() { return NULL == p; }
 
 private:
     CCoTaskMem(const CCoTaskMem<T>&); // operator not allowed for CCoTaskMem

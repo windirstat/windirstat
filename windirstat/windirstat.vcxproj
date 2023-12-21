@@ -307,8 +307,6 @@
   <ItemGroup>
     <ClCompile Include="..\common\commonhelpers.cpp">
     </ClCompile>
-    <ClCompile Include="..\common\wds_constants.cpp">
-    </ClCompile>
     <ClCompile Include="dirstatdoc.cpp">
     </ClCompile>
     <ClCompile Include="dirstatview.cpp">

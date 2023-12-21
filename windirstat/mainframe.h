@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -57,12 +57,12 @@ class COptionsPropertySheet: public CPropertySheet
 public:
     COptionsPropertySheet();
     void SetLanguageChanged(bool changed);
-    virtual BOOL OnInitDialog();
+    BOOL OnInitDialog() override;
 
     bool m_restartApplication;  // [out]
 
 protected:
-    virtual BOOL OnCommand(WPARAM wParam, LPARAM lParam);
+    BOOL OnCommand(WPARAM wParam, LPARAM lParam) override;
 
     bool m_languageChanged;
     bool m_alreadyAsked;
@@ -77,8 +77,8 @@ class CMySplitterWnd: public CSplitterWnd
 {
 public:
     CMySplitterWnd(LPCWSTR name);
-    virtual void StopTracking(BOOL bAccept);
-    double GetSplitterPos();
+    void StopTracking(BOOL bAccept) override;
+    double GetSplitterPos() const;
     void SetSplitterPos(double pos);
     void RestoreSplitterPos(double posIfVirgin);
 
@@ -124,9 +124,9 @@ protected:
 class CDeadFocusWnd: public CWnd
 {
 public:
-    CDeadFocusWnd();
+    CDeadFocusWnd() = default;
     void Create(CWnd *parent);
-    ~CDeadFocusWnd();
+    ~CDeadFocusWnd() override;
 
 protected:
     DECLARE_MESSAGE_MAP()
@@ -147,7 +147,7 @@ protected:
 
 public:
     static CMainFrame *GetTheFrame();
-    virtual ~CMainFrame();
+    ~CMainFrame() override;
     void InitialShowWindow();
 
     void RestoreGraphView();
@@ -164,7 +164,7 @@ public:
     void HideProgress();
     void SetProgressPos(ULONGLONG pos);
     void SetProgressPos100();
-    bool IsProgressSuspended();
+    bool IsProgressSuspended() const;
     void DrivePacman();
 
     void UpdateProgress();
@@ -179,8 +179,8 @@ public:
     static void queryRecycleBin(ULONGLONG& items, ULONGLONG& bytes);
 
 protected:
-    virtual BOOL OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext* pContext);
-    virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
+    BOOL OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext* pContext) override;
+    BOOL PreCreateWindow(CREATESTRUCT& cs) override;
     void MakeSaneShowCmd(UINT& u);
 
     void CreateStatusProgress();
@@ -229,8 +229,8 @@ protected:
 
 public:
     #ifdef _DEBUG
-        virtual void AssertValid() const;
-        virtual void Dump(CDumpContext& dc) const;
+    void AssertValid() const override;
+    void Dump(CDumpContext& dc) const override;
     #endif
         afx_msg void OnSysColorChange();
 };

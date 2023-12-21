@@ -45,28 +45,26 @@ static void luaWDS_openlibs_(lua_State* L)
 
 static void printOther_(lua_State *L, int i)
 {
-    char const* str = NULL;
-    lua_getglobal(L, "tostring");
+	lua_getglobal(L, "tostring");
     lua_pushvalue(L, i); /* value to convert to string representation */
     lua_call(L, 1, 1);
-    str = lua_tostring(L, -1); /* get result */
+    char const* str = lua_tostring(L, -1); /* get result */
     printf("<%s>", str ? str : "<null>");
     lua_pop(L, 1);  /* pop result */
 }
 
 EXTERN_C void stackDump(lua_State *L, char* description) /* from the Programming Lua book */
 {
-    int i;
-    int top = lua_gettop(L);
+	const int top = lua_gettop(L);
     printf("[STACK:% 3i] ", lua_gettop(L));
     if (description)
     {
         printf("===== %s =====\n", description);
     }
-    for (i = 1; i <= top; i++)
+    for (int i = 1; i <= top; i++)
     {
         /* repeat for each level */
-        int t = lua_type(L, i);
+        const int t = lua_type(L, i);
         switch (t) {
 
         case LUA_TSTRING:  /* strings */

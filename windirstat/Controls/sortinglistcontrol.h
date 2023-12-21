@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -63,7 +63,7 @@ class CSortingListControl: public CListCtrl
 public:
     // Construction
     CSortingListControl(LPCWSTR name);
-    virtual ~CSortingListControl();
+    ~CSortingListControl() override = default;
 
     // Public methods
     void LoadPersistentAttributes();
@@ -71,7 +71,7 @@ public:
     void AddExtendedStyle(DWORD exStyle);
     void RemoveExtendedStyle(DWORD exStyle);
 
-    const SSorting& GetSorting();
+    const SSorting& GetSorting() const;
     void GetSorting(int& sortColumn1, bool& ascending1, int& sortColumn2, bool& ascending2);
 
     void SetSorting(const SSorting& sorting);
@@ -91,7 +91,7 @@ public:
 #   endif
 
 private:
-    void SavePersistentAttributes();
+    void SavePersistentAttributes() const;
     static int CALLBACK _CompareFunc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
 
     CStringW m_name; // for persistence

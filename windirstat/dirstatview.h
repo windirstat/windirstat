@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -36,10 +36,10 @@ class CMyTreeListControl: public CTreeListControl
 {
 public:
     CMyTreeListControl(CDirstatView *dirstatView);
-    virtual bool GetAscendingDefault(int column);
+    bool GetAscendingDefault(int column) override;
 
 protected:
-    virtual void OnItemDoubleClick(int i);
+    void OnItemDoubleClick(int i) override;
 
     void PrepareDefaultMenu(CMenu *menu, const CItem *item);
 
@@ -60,17 +60,17 @@ protected:
     DECLARE_DYNCREATE(CDirstatView)
 
 public:
-    virtual ~CDirstatView();
+    ~CDirstatView() override = default;
     CStringW GenerateReport();
-    CFont *GetSmallFont();
+    CFont *GetSmallFont() const;
     void SysColorChanged();
 
 protected:
-    virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
-    virtual void OnInitialUpdate();
-    virtual void OnDraw(CDC* pDC);
+    BOOL PreCreateWindow(CREATESTRUCT& cs) override;
+    void OnInitialUpdate() override;
+    void OnDraw(CDC* pDC) override;
     CDirstatDoc* GetDocument() const;
-    virtual void OnUpdate(CView *pSender, LPARAM lHint, CObject *pHint);
+    void OnUpdate(CView *pSender, LPARAM lHint, CObject *pHint) override;
 
     CMyTreeListControl m_treeListControl;   // The tree list
 
@@ -88,8 +88,8 @@ protected:
 
 public:
     #ifdef _DEBUG
-        virtual void AssertValid() const;
-        virtual void Dump(CDumpContext& dc) const;
+    void AssertValid() const override;
+    void Dump(CDumpContext& dc) const override;
     #endif
 };
 

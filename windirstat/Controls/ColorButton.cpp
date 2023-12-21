@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -19,13 +19,10 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 
+// ReSharper disable All
 #include "stdafx.h"
 #include "colorbutton.h"
 #include <common/wds_constants.h>
-
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#endif
 
 /////////////////////////////////////////////////////////////////////////////
 

@@ -16,11 +16,7 @@ extern "C"
 #endif // __cplusplus
 
 // Modules/Packages headers
-#include "modules/winreg.h"
 #include "modules/lua-winreg/src/lua_tstring.h"
-#include "modules/isadmin.h"
-#include "modules/wow64.h"
-#include "modules/dbgprint.h"
 #include "modules/w32resembed.h"
 
 #ifndef lua_pushtstring_lowercase

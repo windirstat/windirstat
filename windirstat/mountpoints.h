@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2019 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
 
 #include <common/wds_constants.h>
 
-class CReparsePoints
+class CReparsePoints final
 {
     struct SPointVolume
     {
@@ -40,7 +40,7 @@ public:
     ~CReparsePoints();
     void Initialize();
     bool IsVolumeMountPoint(CStringW path);
-    bool IsFolderJunction(CStringW path);
+    bool IsFolderJunction(const CStringW& path);
     bool IsFolderJunction(DWORD attr);
 
 private:
@@ -48,7 +48,7 @@ private:
     void GetDriveVolumes();
     void GetAllMountPoints();
 
-    bool IsVolumeMountPoint(CStringW volume, CStringW path);
+    bool IsVolumeMountPoint(CStringW volume, CStringW path) const;
 
     // m_drive contains the volume identifiers of the Drives A:, B: etc.
     // mdrive[0] = Volume identifier of A:\.

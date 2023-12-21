@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -36,11 +36,11 @@ class COwnerDrawnListControl;
 class COwnerDrawnListItem: public CSortingListItem
 {
 public:
-    COwnerDrawnListItem();
-    virtual ~COwnerDrawnListItem();
+    COwnerDrawnListItem() = default;
+    virtual ~COwnerDrawnListItem() = default;
 
     // This text is drawn, if DrawSubitem returns false
-    virtual CStringW GetText(int subitem) const = 0;
+    CStringW GetText(int subitem) const override = 0;
     // This color is used for the  current item
     virtual COLORREF GetItemTextColor() const { return ::GetSysColor(COLOR_WINDOWTEXT); }
 
@@ -68,15 +68,15 @@ class COwnerDrawnListControl: public CSortingListControl
     DECLARE_DYNAMIC(COwnerDrawnListControl)
 public:
     COwnerDrawnListControl(LPCWSTR name, int rowHeight);
-    virtual ~COwnerDrawnListControl();
+    ~COwnerDrawnListControl() override = default;
     void OnColumnsInserted();
     virtual void SysColorChanged();
 
-    int GetRowHeight();
+    int GetRowHeight() const;
     void ShowGrid(bool show);
     void ShowStripes(bool show);
     void ShowFullRowSelection(bool show);
-    bool IsFullRowSelection();
+    bool IsFullRowSelection() const;
 
     COLORREF GetWindowColor();
     COLORREF GetStripeColor();
@@ -105,7 +105,7 @@ public:
 
 protected:
     void InitializeColors();
-    virtual void DrawItem(LPDRAWITEMSTRUCT pdis);
+    void DrawItem(LPDRAWITEMSTRUCT pdis) override;
     int GetSubItemWidth(COwnerDrawnListItem *item, int subitem);
     bool IsColumnRightAligned(int col);
 

@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -59,19 +59,19 @@ enum ITEMTYPE
 };
 
 // Whether an item type is a leaf type
-inline bool IsLeaf(ITEMTYPE t) { return ((t == IT_FILE) | (t == IT_FREESPACE) | (t == IT_UNKNOWN)); }
+inline bool IsLeaf(ITEMTYPE t) { return t == IT_FILE || t == IT_FREESPACE || t == IT_UNKNOWN; }
 
 // Compare FILETIMEs
 inline bool operator< (const FILETIME& t1, const FILETIME& t2)
 {
-    return (t1.dwHighDateTime < t2.dwHighDateTime)
-        || (t1.dwHighDateTime == t2.dwHighDateTime) && (t1.dwLowDateTime < t2.dwLowDateTime);
+    return t1.dwHighDateTime < t2.dwHighDateTime
+        || t1.dwHighDateTime == t2.dwHighDateTime && t1.dwLowDateTime < t2.dwLowDateTime;
 }
 
 // Compare FILETIMEs
 inline bool operator== (const FILETIME& t1, const FILETIME& t2)
 {
-    return (t1.dwLowDateTime == t2.dwLowDateTime) && (t1.dwHighDateTime == t2.dwHighDateTime);
+    return t1.dwLowDateTime == t2.dwLowDateTime && t1.dwHighDateTime == t2.dwHighDateTime;
 }
 
 //
@@ -107,26 +107,26 @@ class CItem: public CTreeListItem, public CTreemap::Item
 
 public:
     CItem(ITEMTYPE type, LPCWSTR name, bool dontFollow = false);
-    ~CItem();
+    ~CItem() override;
 
     // CTreeListItem Interface
-    virtual bool DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *width, int *focusLeft) const;
-    virtual CStringW GetText(int subitem) const;
-    virtual COLORREF GetItemTextColor() const;
-    virtual int CompareSibling(const CTreeListItem *tlib, int subitem) const;
-    virtual int GetChildrenCount() const;
-    virtual CTreeListItem *GetTreeListChild(int i) const;
-    virtual int GetImageToCache() const;
-    virtual void DrawAdditionalState(CDC *pdc, const CRect& rcLabel) const;
+    bool DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *width, int *focusLeft) const override;
+    CStringW GetText(int subitem) const override;
+    COLORREF GetItemTextColor() const override;
+    int CompareSibling(const CTreeListItem *tlib, int subitem) const override;
+    int GetChildrenCount() const override;
+    CTreeListItem *GetTreeListChild(int i) const override;
+    int GetImageToCache() const override;
+    void DrawAdditionalState(CDC *pdc, const CRect& rcLabel) const override;
 
     // CTreemap::Item interface
-    virtual            bool TmiIsLeaf()                const { return IsLeaf(GetType()); }
-    virtual           CRect TmiGetRectangle()          const;
-    virtual            void TmiSetRectangle(const CRect& rc);
-    virtual        COLORREF TmiGetGraphColor()         const { return GetGraphColor(); }
-    virtual             int TmiGetChildrenCount()      const { return GetChildrenCount(); }
-    virtual CTreemap::Item *TmiGetChild(int c)         const { return GetChild(c); }
-    virtual       ULONGLONG TmiGetSize()               const { return GetSize(); }
+    bool TmiIsLeaf()                const override { return IsLeaf(GetType()); }
+    CRect TmiGetRectangle()          const override;
+    void TmiSetRectangle(const CRect& rc) override;
+    COLORREF TmiGetGraphColor()         const override { return GetGraphColor(); }
+    int TmiGetChildrenCount()      const override { return GetChildrenCount(); }
+    CTreemap::Item *TmiGetChild(int c)         const override { return GetChild(c); }
+    ULONGLONG TmiGetSize()               const override { return GetSize(); }
 
     // CItem
     static int GetSubtreePercentageWidth();
@@ -183,10 +183,10 @@ public:
     void DoSomeWork(CWorkLimiter* limiter);
     bool StartRefresh();
     void UpwardSetUndone();
-    void RefreshRecycler();
+    void RefreshRecycler() const;
     void CreateFreeSpaceItem();
     CItem *FindFreeSpaceItem() const;
-    void UpdateFreeSpaceItem();
+    void UpdateFreeSpaceItem() const;
     void RemoveFreeSpaceItem();
     void CreateUnknownItem();
     CItem *FindUnknownItem() const;

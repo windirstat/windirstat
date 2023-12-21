@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -23,10 +23,6 @@
 #include "windirstat.h"
 #include "ModalShellApi.h"
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#endif
-
 namespace
 {
     enum
@@ -36,7 +32,7 @@ namespace
 }
 
 
-CModalShellApi::CModalShellApi()
+CModalShellApi::CModalShellApi(): m_operation(0), m_toRecycleBin(false)
 {
 }
 
@@ -63,8 +59,8 @@ void CModalShellApi::DoOperation()
 
 void CModalShellApi::DoDeleteFile()
 {
-    int len = m_fileName.GetLength();
-    LPWSTR psz = m_fileName.GetBuffer(len + 2);
+	const int len = m_fileName.GetLength();
+	const LPWSTR psz = m_fileName.GetBuffer(len + 2);
     psz[len + 1]= 0;
 
     SHFILEOPSTRUCT sfos;

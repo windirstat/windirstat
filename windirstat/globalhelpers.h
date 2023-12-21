@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
 // Copyright (C) 2010 Chris Wimmer
 //
 // This program is free software; you can redistribute it and/or modify
@@ -39,9 +39,9 @@ CStringW GetParseNameOfMyComputer();
 void GetPidlOfMyComputer(LPITEMIDLIST *ppidl);
 void ShellExecuteWithAssocDialog(HWND hwnd, LPCWSTR filename);
 bool GetVolumeName(LPCWSTR rootPath, CStringW& volumeName);
-CStringW FormatVolumeNameOfRootPath(CStringW rootPath);
-CStringW FormatVolumeName(CStringW rootPath, CStringW volumeName);
-CStringW PathFromVolumeName(CStringW name);
+CStringW FormatVolumeNameOfRootPath(const CStringW& rootPath);
+CStringW FormatVolumeName(const CStringW& rootPath, const CStringW& volumeName);
+CStringW PathFromVolumeName(const CStringW& name);
 CStringW GetFolderNameFromPath(LPCWSTR path);
 CStringW GetCOMSPEC();
 DWORD WaitForHandleWithRepainting(HANDLE h, DWORD TimeOut = INFINITE);
