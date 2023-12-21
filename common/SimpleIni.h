@@ -191,12 +191,7 @@
     CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#ifndef INCLUDED_SimpleIni_h
-#define INCLUDED_SimpleIni_h
-
-#if defined(_MSC_VER) && (_MSC_VER >= 1020)
 # pragma once
-#endif
 
 // Disable these warnings in MSVC:
 //  4127 "conditional expression is constant" as the conversion classes trigger
@@ -317,12 +312,6 @@ public:
             nOrder   = rhs.nOrder;
             return *this;
         }
-
-#if defined(_MSC_VER) && _MSC_VER <= 1200
-        /** STL of VC6 doesn't allow me to specify my own comparator for list::sort() */
-        bool operator<(const Entry & rhs) const { return LoadOrder()(*this, rhs); }
-        bool operator>(const Entry & rhs) const { return LoadOrder()(rhs, *this); }
-#endif
 
         /** Strict less ordering by name of key only */
         struct KeyOrder : std::binary_function<Entry, Entry, bool> {
@@ -2381,13 +2370,7 @@ CSimpleIniTempl<SI_CHAR,SI_STRLESS,SI_CONVERTER>::Save(
     // get all of the sections sorted in load order
     TNamesDepend oSections;
     GetAllSections(oSections);
-#if defined(_MSC_VER) && _MSC_VER <= 1200
-    oSections.sort();
-#elif defined(__BORLANDC__)
-    oSections.sort(Entry::LoadOrder());
-#else
     oSections.sort(typename Entry::LoadOrder());
-#endif
 
     // write the file comment if we have one
     bool bNeedNewLine = false;
@@ -2433,13 +2416,7 @@ CSimpleIniTempl<SI_CHAR,SI_STRLESS,SI_CONVERTER>::Save(
         // get all of the keys sorted in load order
         TNamesDepend oKeys;
         GetAllKeys(iSection->pItem, oKeys);
-#if defined(_MSC_VER) && _MSC_VER <= 1200
-        oKeys.sort();
-#elif defined(__BORLANDC__)
-        oKeys.sort(Entry::LoadOrder());
-#else
         oKeys.sort(typename Entry::LoadOrder());
-#endif
 
         // write all keys and values
         typename TNamesDepend::const_iterator iKey = oKeys.begin();
@@ -3372,6 +3349,3 @@ typedef CSimpleIniTempl<wchar_t,
 #ifdef _MSC_VER
 # pragma warning (pop)
 #endif
-
-#endif // INCLUDED_SimpleIni_h
-

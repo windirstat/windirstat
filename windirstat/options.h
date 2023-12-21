@@ -19,8 +19,6 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 
-#ifndef __WDS_OPTIONS_H__
-#define __WDS_OPTIONS_H__
 #pragma once
 
 #ifndef __NOT_WDS
@@ -404,5 +402,3 @@ private:
     CString m_reportSuffix;
 };
 #endif // __NOT_WDS
-
-#endif // __WDS_OPTIONS_H__

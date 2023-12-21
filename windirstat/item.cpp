@@ -1060,7 +1060,7 @@ void CItem::DoSomeWork(CWorkLimiter* limiter)
 
     DriveVisualUpdateDuringWork();
 
-    const ULONGLONG start = _GetTickCount64();
+    const ULONGLONG start = GetTickCount64();
 
     if(GetType() == IT_DRIVE || GetType() == IT_DIRECTORY)
     {
@@ -1119,7 +1119,7 @@ void CItem::DoSomeWork(CWorkLimiter* limiter)
 
             UpwardAddSubdirs(dirCount);
             SetReadJobDone();
-            AddTicksWorked(_GetTickCount64() - start);
+            AddTicksWorked(GetTickCount64() - start);
         }
         if(GetType() == IT_DRIVE)
         {
@@ -1148,7 +1148,7 @@ void CItem::DoSomeWork(CWorkLimiter* limiter)
             return;
         }
 
-        const ULONGLONG startChildren = _GetTickCount64();
+        const ULONGLONG startChildren = GetTickCount64();
         while(!limiter->IsDone())
         {
             ULONGLONG minticks = ULONGLONG_MAX;
@@ -1176,7 +1176,7 @@ void CItem::DoSomeWork(CWorkLimiter* limiter)
                 minchild->DoSomeWork(limiter);
             }
         }
-        AddTicksWorked(_GetTickCount64() - startChildren);
+        AddTicksWorked(GetTickCount64() - startChildren);
     }
     else
     {

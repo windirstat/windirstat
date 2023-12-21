@@ -19,8 +19,6 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 
-#ifndef __WDS_PAGETREELIST_H__
-#define __WDS_PAGETREELIST_H__
 #pragma once
 
 #include "colorbutton.h"
@@ -59,5 +57,3 @@ protected:
     afx_msg void OnBnClickedPacmananimation();
     afx_msg void OnBnClickedShowTimeSpent();
 };
-
-#endif // __WDS_PAGETREELIST_H__

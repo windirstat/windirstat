@@ -19,8 +19,6 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 
-#ifndef __WDS_TREELISTCONTROL_H__
-#define __WDS_TREELISTCONTROL_H__
 #pragma once
 
 #include "ownerdrawnlistcontrol.h"
@@ -193,5 +191,3 @@ protected:
     afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
     // afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 };
-
-#endif // __WDS_TREELISTCONTROL_H__

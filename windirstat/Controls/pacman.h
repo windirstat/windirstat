@@ -19,8 +19,6 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 
-#ifndef __WDS_PACMAN_H__
-#define __WDS_PACMAN_H__
 #pragma once
 
 //
@@ -51,5 +49,3 @@ private:
     double m_aperture;      // 0...1
     ULONGLONG m_lastUpdate; // TickCount
 };
-
-#endif // __WDS_PACMAN_H__

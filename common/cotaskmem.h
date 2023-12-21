@@ -24,8 +24,6 @@
 // 08.09.1998 - JR
 //
 
-#ifndef __WDS_COTASKMEM_H__
-#define __WDS_COTASKMEM_H__
 #pragma once
 
 // return type for 'CCoTaskMem<char *>::operator ->' is not a UDT or reference to a UDT.  Will produce errors if applied using infix notation
@@ -54,12 +52,7 @@ public:
     { _ASSERTE(NULL != p); return p; }
     T operator= ( T lp )
     { if(NULL != p) ::CoTaskMemFree(p); p = lp; return p;}
-
-#if _MSC_VER>1020
     bool operator!() { return (NULL == p); }
-#else
-    BOOL operator!() { return (NULL == p) ? TRUE : FALSE; }
-#endif
 
 private:
     CCoTaskMem(const CCoTaskMem<T>&); // operator not allowed for CCoTaskMem
@@ -67,5 +60,3 @@ private:
 
     T p;
 };
-
-#endif // __WDS_COTASKMEM_H__

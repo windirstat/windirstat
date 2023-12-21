@@ -26,11 +26,8 @@
 // Author(s): - oliver   -> http://windirstat.net/contact/oliver/
 //
 
-#ifndef __TRACER_CPP_VER__
-#define __TRACER_CPP_VER__ 2014012617
-#if defined(_MSC_VER) && (_MSC_VER >= 1020)
 #pragma once
-#endif // Check for "#pragma once" support
+
 #include "tracer.h"
 #include <cstdarg>
 #include <fcntl.h>
@@ -128,4 +125,3 @@ void CWDSTracer::operator()(LPCWSTR format, ...) // Unicode
     wprintf(strDbg.GetBuffer());
 #   endif // VTRACE_TO_CONSOLE
 }
-#endif // __TRACER_CPP_VER__

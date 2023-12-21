@@ -19,8 +19,6 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 
-#ifndef __WDS_XYSLIDER_H__
-#define __WDS_XYSLIDER_H__
 #pragma once
 
 #define XYSLIDER_CHANGED    0x88    // this is a value, I hope, that is nowhere used as notification code.
@@ -103,5 +101,3 @@ protected:
 };
 
 void AFXAPI DDX_XySlider(CDataExchange* pDX, int nIDC, CPoint& value);
-
-#endif // __WDS_XYSLIDER_H__

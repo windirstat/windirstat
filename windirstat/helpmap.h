@@ -19,12 +19,8 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 
-#ifndef __WDS_HELPMAP_H__
-#define __WDS_HELPMAP_H__
 #pragma once
 
 #define IDH_StartPage                   1001
 #define IDH_UserDefinedCleanups         1002
 #define IDH_Treemap                     1003
-
-#endif // __WDS_HELPMAP_H__

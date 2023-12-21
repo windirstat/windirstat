@@ -19,8 +19,6 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 
-#ifndef __WDS_ABOUTDLG_H__
-#define __WDS_ABOUTDLG_H__
 #pragma once
 
 #include "layout.h"
@@ -77,5 +75,3 @@ protected:
     afx_msg void OnGetMinMaxInfo(MINMAXINFO* lpMMI);
     afx_msg void OnDestroy();
 };
-
-#endif // __WDS_ABOUTDLG_H__

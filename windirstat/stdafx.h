@@ -21,25 +21,7 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 
-#ifndef __STDAFX_H_VER__
-#define __STDAFX_H_VER__ 2018100918
-#if (defined(_MSC_VER) && (_MSC_VER >= 1020)) || defined(__MCPP)
 #pragma once
-#endif /* Check for "#pragma once" support */
-
-#if (defined(HAVE_WIN7_SDK) && HAVE_WIN7_SDK) || (_MSC_VER >= 1600)
-#   define SUPPORT_W7_TASKBAR 1
-#   define SUPPORT_ELEVATION  1
-#endif // HAVE_WIN7_SDK
-
-#ifndef _WIN32_WINNT
-#   ifdef WINVER
-#       define _WIN32_WINNT WINVER
-#   else
-#       define _WIN32_WINNT _WIN32_WINNT_WINXP
-#       define WINVER       _WIN32_WINNT_WINXP
-#   endif // WINVER
-#endif // !_WIN32_WINNT
 
 #define _ATL_CSTRING_EXPLICIT_CONSTRUCTORS  // some CString constructors will be explicit
 
@@ -72,24 +54,12 @@ template<typename T> int signum(T x) { return (x) < 0 ? -1 : (x) == 0 ? 0 : 1; }
 /// signum function for unsigned numbers.
 template<typename T> int usignum(T x, T y) { return (x) < (y) ? -1 : (x) == (y) ? 0 : 1; }
 
-#if (_WIN32_WINNT >= _WIN32_WINNT_VISTA)
-#define _GetTickCount64 GetTickCount64
+#if defined _M_IX86
+#    pragma comment(linker, "/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='x86' publicKeyToken='6595b64144ccf1df' language='*'\"")
+#elif defined _M_IA64
+#    pragma comment(linker, "/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='ia64' publicKeyToken='6595b64144ccf1df' language='*'\"")
+#elif defined _M_X64
+#    pragma comment(linker, "/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='amd64' publicKeyToken='6595b64144ccf1df' language='*'\"")
 #else
-typedef ULONGLONG(WINAPI *GetTickCount64_t)(void);
-EXTERN_C GetTickCount64_t _GetTickCount64;
-void InitGetTickCount64();
-#endif /* (_WIN32_WINNT >= _WIN32_WINNT_VISTA) */
-
-#if (_MSC_VER >= 1400)
-#   if defined _M_IX86
-#       pragma comment(linker, "/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='x86' publicKeyToken='6595b64144ccf1df' language='*'\"")
-#   elif defined _M_IA64
-#       pragma comment(linker, "/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='ia64' publicKeyToken='6595b64144ccf1df' language='*'\"")
-#   elif defined _M_X64
-#       pragma comment(linker, "/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='amd64' publicKeyToken='6595b64144ccf1df' language='*'\"")
-#   else
-#       pragma comment(linker, "/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
-#   endif
+#    pragma comment(linker, "/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 #endif
-
-#endif /* __STDAFX_H_VER__ */

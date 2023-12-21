@@ -19,8 +19,6 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 
-#ifndef __WDS_DIRSTATDOC_H__
-#define __WDS_DIRSTATDOC_H__
 #pragma once
 
 #include "selectdrivesdlg.h"
@@ -230,5 +228,3 @@ public:
 // The document is needed in many places.
 //
 extern CDirstatDoc *GetDocument();
-
-#endif // __WDS_DIRSTATDOC_H__

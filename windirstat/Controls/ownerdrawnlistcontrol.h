@@ -19,8 +19,6 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 
-#ifndef __WDS_OWNERDRAWNLISTCONTROL_H__
-#define __WDS_OWNERDRAWNLISTCONTROL_H__
 #pragma once
 
 #include "sortinglistcontrol.h"
@@ -125,5 +123,3 @@ protected:
     afx_msg void OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
     afx_msg void OnHdnItemchanging(NMHDR *pNMHDR, LRESULT *pResult);
 };
-
-#endif // __WDS_OWNERDRAWNLISTCONTROL_H__

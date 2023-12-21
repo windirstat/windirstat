@@ -19,8 +19,6 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 
-#ifndef __WDS_SELECTDRIVESDLG_H__
-#define __WDS_SELECTDRIVESDLG_H__
 #pragma once
 
 #include "ownerdrawnlistcontrol.h"
@@ -190,5 +188,3 @@ protected:
     afx_msg LRESULT OnWmuThreadFinished(WPARAM, LPARAM lparam);
     afx_msg void OnSysColorChange();
 };
-
-#endif // __WDS_SELECTDRIVESDLG_H__

@@ -76,10 +76,8 @@ CMyImageList* GetMyImageList()
 BEGIN_MESSAGE_MAP(CDirstatApp, CWinApp)
     ON_COMMAND(ID_APP_ABOUT, OnAppAbout)
     ON_COMMAND(ID_FILE_OPEN, OnFileOpen)
-#if SUPPORT_ELEVATION
     ON_COMMAND(ID_RUNELEVATED, OnRunElevated)
     ON_UPDATE_COMMAND_UI(ID_RUNELEVATED, OnUpdateRunElevated)
-#endif // SUPPORT_ELEVATION
     ON_COMMAND(ID_HELP_MANUAL, OnHelpManual)
 END_MESSAGE_MAP()
 
@@ -92,17 +90,11 @@ CDirstatApp::CDirstatApp()
     , m_langid(0)
     , m_workingSet(0)
     , m_pageFaults(0)
-#   if (_WIN32_WINNT < _WIN32_WINNT_VISTA)
-    , m_lastPeriodicalRamUsageUpdate(0)
-#   else
-    , m_lastPeriodicalRamUsageUpdate(_GetTickCount64())
-#   endif /* (_WIN32_WINNT < _WIN32_WINNT_VISTA) */
+    , m_lastPeriodicalRamUsageUpdate(GetTickCount64())
     , m_altColor(GetAlternativeColor(RGB(0x00, 0x00, 0xFF), _T("AltColor")))
     , m_altEncryptionColor(GetAlternativeColor(RGB(0x00, 0x80, 0x00), _T("AltEncryptionColor")))
-#   if SUPPORT_ELEVATION
     , m_ElevationEvent(NULL)
     , m_ElevationEventName()
-#   endif // SUPPORT_ELEVATION
 #   ifdef VTRACE_TO_CONSOLE
     , m_vtrace_console(new CWDSTracerConsole())
 #   endif // VTRACE_TO_CONSOLE
@@ -111,25 +103,16 @@ CDirstatApp::CDirstatApp()
     TestScanResourceDllName();
 #   endif
 
-#   if (_WIN32_WINNT < _WIN32_WINNT_VISTA)
-    InitGetTickCount64();
-    m_lastPeriodicalRamUsageUpdate = _GetTickCount64();
-#   endif /* (_WIN32_WINNT < _WIN32_WINNT_VISTA) */
-
-#   if SUPPORT_ELEVATION
     m_ElevationEventName.Format(WINDIRSTAT_EVENT_NAME_FMT, GetCurrentDesktopName().GetBuffer(), GetCurrentWinstaName().GetBuffer());
     VTRACE(_T("Elevation event: %s"), m_ElevationEventName.GetBuffer());
-#   endif // SUPPORT_ELEVATION
 }
 
 CDirstatApp::~CDirstatApp()
 {
-#if SUPPORT_ELEVATION
     if (m_ElevationEvent)
     {
         ::CloseHandle(m_ElevationEvent); //make sure this is the very last thing that is destroyed (way after WM_CLOSE)
     }
-#endif // SUPPORT_ELEVATION
 }
 
 CMyImageList* CDirstatApp::GetMyImageList()
@@ -145,10 +128,10 @@ void CDirstatApp::UpdateRamUsage()
 
 void CDirstatApp::PeriodicalUpdateRamUsage()
 {
-    if(_GetTickCount64() - m_lastPeriodicalRamUsageUpdate > 1200)
+    if(GetTickCount64() - m_lastPeriodicalRamUsageUpdate > 1200)
     {
         UpdateRamUsage();
-        m_lastPeriodicalRamUsageUpdate = _GetTickCount64();
+        m_lastPeriodicalRamUsageUpdate = GetTickCount64();
     }
 }
 
@@ -546,7 +529,6 @@ BOOL CDirstatApp::InitInstance()
         CLanguageOptions::SetLanguage(m_langid);
     }
 
-#if SUPPORT_ELEVATION
     //check for an elevation event
     m_ElevationEvent = ::OpenEvent(SYNCHRONIZE, FALSE, m_ElevationEventName);
 
@@ -561,7 +543,6 @@ BOOL CDirstatApp::InitInstance()
     {
         VTRACE(_T("OpenEvent failed with %d"), GetLastError());
     }
-#endif // SUPPORT_ELEVATION
 
     GetOptions()->LoadFromRegistry();
 
@@ -639,7 +620,6 @@ void CDirstatApp::OnFileOpen()
     }
 }
 
-#if SUPPORT_ELEVATION
 BOOL CDirstatApp::IsUACEnabled()
 {
     OSVERSIONINFOEX osInfo;
@@ -744,7 +724,6 @@ void CDirstatApp::OnRunElevated()
         m_ElevationEvent = NULL;
     }
 }
-#endif // SUPPORT_ELEVATION
 
 BOOL CDirstatApp::OnIdle(LONG lCount)
 {

@@ -19,8 +19,6 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 
-#ifndef __WDS_LAYOUT_H__
-#define __WDS_LAYOUT_H__
 #pragma once
 
 #include <limits>
@@ -107,5 +105,3 @@ protected:
     CArray<SControlInfo, SControlInfo&> m_control;
     CSizeGripper m_sizeGripper;
 };
-
-#endif // __WDS_LAYOUT_H__

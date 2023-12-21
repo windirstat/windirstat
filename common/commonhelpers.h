@@ -19,8 +19,6 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 
-#ifndef __WDS_COMMONHELPERS_H__
-#define __WDS_COMMONHELPERS_H__
 #pragma once
 
 #include <common/wds_constants.h>
@@ -32,5 +30,3 @@ CString GetBaseNameFromPath(LPCTSTR path);
 CString LoadString(UINT resId);
 CString GetAppFileName();
 CString GetAppFolder();
-
-#endif // __WDS_COMMONHELPERS_H__

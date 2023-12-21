@@ -20,9 +20,8 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 
-#ifndef __WDS_OSSPECIFIC_H__
-#define __WDS_OSSPECIFIC_H__
 #pragma once
+
 #include <Windows.h>
 #include <ShellAPI.h>
 
@@ -148,5 +147,3 @@ public:
 public:
     FctType pfnFct;
 };
-
-#endif // __WDS_OSSPECIFIC_H__

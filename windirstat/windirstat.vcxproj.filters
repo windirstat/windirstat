@@ -115,9 +115,6 @@
     <ClInclude Include="FileFindWDS.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="getosplatformstring.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="globalhelpers.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -235,9 +232,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="FileFindWDS.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="getosplatformstring.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="globalhelpers.cpp">

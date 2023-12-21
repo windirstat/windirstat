@@ -20,8 +20,6 @@
 //
 //
 
-#ifndef __WDS_DIRSTATVIEW_H__
-#define __WDS_DIRSTATVIEW_H__
 #pragma once
 
 #include "TreeListControl.h"
@@ -101,5 +99,3 @@ inline CDirstatDoc* CDirstatView::GetDocument() const
     return reinterpret_cast<CDirstatDoc*>(m_pDocument);
 }
 #endif
-
-#endif // __WDS_DIRSTATVIEW_H__

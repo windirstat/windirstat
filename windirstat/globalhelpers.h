@@ -20,8 +20,6 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 
-#ifndef __WDS_GLOBALHELPERS_H__
-#define __WDS_GLOBALHELPERS_H__
 #pragma once
 #include <common/wds_constants.h>
 
@@ -58,5 +56,3 @@ CString GetSpec_MB();
 CString GetSpec_GB();
 CString GetSpec_TB();
 BOOL IsAdmin(); 
-
-#endif // __WDS_GLOBALHELPERS_H__

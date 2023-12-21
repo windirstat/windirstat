@@ -19,8 +19,6 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 
-#ifndef __WDS_GRAPHVIEW_H__
-#define __WDS_GRAPHVIEW_H__
 #pragma once
 
 #include "treemap.h"
@@ -101,5 +99,3 @@ public:
 inline CDirstatDoc* CGraphView::GetDocument()
    { return reinterpret_cast<CDirstatDoc*>(m_pDocument); }
 #endif
-
-#endif // __WDS_GRAPHVIEW_H__

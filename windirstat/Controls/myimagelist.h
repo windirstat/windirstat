@@ -19,8 +19,6 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 
-#ifndef __WDS_MYIMAGELIST_H__
-#define __WDS_MYIMAGELIST_H__
 #pragma once
 
 #include <common/wds_constants.h>
@@ -71,5 +69,3 @@ protected:
     // Junction point
     int m_junctionImage;
 };
-
-#endif __WDS_MYIMAGELIST_H__

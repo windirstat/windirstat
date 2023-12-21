@@ -20,8 +20,6 @@
 //
 //
 
-#ifndef __WDS_MAINFRAME_H__
-#define __WDS_MAINFRAME_H__
 #pragma once
 
 #include "pacman.h"
@@ -142,9 +140,7 @@ protected:
 class CMainFrame: public CFrameWnd
 {
 protected:
-#ifdef SUPPORT_W7_TASKBAR
     static UINT CMainFrame::s_taskBarMessage;
-#endif // SUPPORT_W7_TASKBAR
     static CMainFrame *_theFrame;
     CMainFrame();   // Created by MFC only
     DECLARE_DYNCREATE(CMainFrame)
@@ -209,10 +205,9 @@ protected:
 
     LOGICAL_FOCUS   m_logicalFocus; // Which view has the logical focus
     CDeadFocusWnd   m_wndDeadFocus; // Zero-size window which holds the focus if logical focus is "NONE"
-#ifdef SUPPORT_W7_TASKBAR
+
     CComPtr<ITaskbarList3> m_TaskbarList;
     TBPFLAG m_TaskbarButtonState, m_TaskbarButtonPreviousState;
-#endif // SUPPORT_W7_TASKBAR
 
     DECLARE_MESSAGE_MAP()
     afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
@@ -230,9 +225,7 @@ protected:
     afx_msg void OnDestroy();
     afx_msg void OnBnClickedSuspend();
     afx_msg void OnTreemapHelpabouttreemaps();
-#ifdef SUPPORT_W7_TASKBAR
     afx_msg LRESULT OnTaskButtonCreated(WPARAM, LPARAM);
-#endif // SUPPORT_W7_TASKBAR
 
 public:
     #ifdef _DEBUG
@@ -241,5 +234,3 @@ public:
     #endif
         afx_msg void OnSysColorChange();
 };
-
-#endif // __WDS_MAINFRAME_H__

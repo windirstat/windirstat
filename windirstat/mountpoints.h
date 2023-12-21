@@ -19,8 +19,6 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 
-#ifndef __WDS_MOUNTPOINTS_H__
-#define __WDS_MOUNTPOINTS_H__
 #pragma once
 
 #include <common/wds_constants.h>
@@ -59,5 +57,3 @@ private:
     // m_volume maps all volume identifiers to PointVolumeArrays
     CMap<CString, LPCTSTR, PointVolumeArray *, PointVolumeArray *> m_volume;
 };
-
-#endif // __WDS_MOUNTPOINTS_H__

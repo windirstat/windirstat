@@ -52,5 +52,5 @@ bool CWorkLimiter::IsDone() const
 
 inline ULONGLONG CWorkLimiter::Now()
 {
-    return _GetTickCount64();
+    return GetTickCount64();
 }

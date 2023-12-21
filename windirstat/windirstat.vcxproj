@@ -101,10 +101,10 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>..;.;..\common;Controls;Dialogs;..\3rdparty\lua\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>_DEBUG;VTRACE_TO_CONSOLE=1;VTRACE_DETAIL=2;WINVER=0x0501;LUA_REG_NO_WINTRACE;LUA_REG_NO_HIVEOPS;LUA_REG_NO_DLL;_ALLOW_RTCc_IN_STL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;VTRACE_TO_CONSOLE=1;VTRACE_DETAIL=2;WINVER=_WIN32_WINNT_WIN7;_WIN32_WINNT=_WIN32_WINNT_WIN7;LUA_REG_NO_WINTRACE;LUA_REG_NO_HIVEOPS;LUA_REG_NO_DLL;_ALLOW_RTCc_IN_STL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
-      <SmallerTypeCheck>true</SmallerTypeCheck>
+      <SmallerTypeCheck>false</SmallerTypeCheck>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <PrecompiledHeader>
@@ -117,17 +117,17 @@
       <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <ResourceCompile>
-      <PreprocessorDefinitions>_DEBUG;VTRACE_TO_CONSOLE=1;VTRACE_DETAIL=2;WINVER=0x0501;LUA_REG_NO_WINTRACE;LUA_REG_NO_HIVEOPS;LUA_REG_NO_DLL;_ALLOW_RTCc_IN_STL;MODNAME=wds32D;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;VTRACE_TO_CONSOLE=1;VTRACE_DETAIL=2;WINVER=_WIN32_WINNT_WIN7;_WIN32_WINNT=_WIN32_WINNT_WIN7;LUA_REG_NO_WINTRACE;LUA_REG_NO_HIVEOPS;LUA_REG_NO_DLL;_ALLOW_RTCc_IN_STL;MODNAME=wds32D;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..;.;..\common;Controls;Dialogs;..\3rdparty\lua\src;..;$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>DebugFull</GenerateDebugInformation>
       <FullProgramDatabaseFile>true</FullProgramDatabaseFile>
-      <AdditionalDependencies>psapi.lib;delayimp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>delayimp.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)wds32D.exe</OutputFile>
       <TargetMachine>MachineX86</TargetMachine>
-      <AdditionalOptions>/delayload:psapi.dll /pdbaltpath:%_PDB% /nodefaultlib:libcmt %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/pdbaltpath:%_PDB% /nodefaultlib:libcmt %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PreBuildEvent>
       <Command>if not exist "$(SolutionDir)common\hgid.h" call "$(SolutionDir)\common\hgid.cmd"</Command>
@@ -140,10 +140,10 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>..;.;..\common;Controls;Dialogs;..\3rdparty\lua\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>_DEBUG;VTRACE_TO_CONSOLE=1;VTRACE_DETAIL=2;WINVER=0x0501;LUA_REG_NO_WINTRACE;LUA_REG_NO_HIVEOPS;LUA_REG_NO_DLL;_ALLOW_RTCc_IN_STL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;VTRACE_TO_CONSOLE=1;VTRACE_DETAIL=2;WINVER=_WIN32_WINNT_WIN7;_WIN32_WINNT=_WIN32_WINNT_WIN7;LUA_REG_NO_WINTRACE;LUA_REG_NO_HIVEOPS;LUA_REG_NO_DLL;_ALLOW_RTCc_IN_STL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
-      <SmallerTypeCheck>true</SmallerTypeCheck>
+      <SmallerTypeCheck>false</SmallerTypeCheck>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <PrecompiledHeader>
@@ -156,23 +156,24 @@
       <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <ResourceCompile>
-      <PreprocessorDefinitions>_DEBUG;VTRACE_TO_CONSOLE=1;VTRACE_DETAIL=2;WINVER=0x0501;LUA_REG_NO_WINTRACE;LUA_REG_NO_HIVEOPS;LUA_REG_NO_DLL;_ALLOW_RTCc_IN_STL;MODNAME=wds64D;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;VTRACE_TO_CONSOLE=1;VTRACE_DETAIL=2;WINVER=_WIN32_WINNT_WIN7;_WIN32_WINNT=_WIN32_WINNT_WIN7;LUA_REG_NO_WINTRACE;LUA_REG_NO_HIVEOPS;LUA_REG_NO_DLL;_ALLOW_RTCc_IN_STL;MODNAME=wds64D;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..;.;..\common;Controls;Dialogs;..\3rdparty\lua\src;..;$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>DebugFull</GenerateDebugInformation>
       <FullProgramDatabaseFile>true</FullProgramDatabaseFile>
-      <AdditionalDependencies>psapi.lib;delayimp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>delayimp.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)wds64D.exe</OutputFile>
       <TargetMachine>MachineX64</TargetMachine>
-      <AdditionalOptions>/delayload:psapi.dll /pdbaltpath:%_PDB% /nodefaultlib:libcmt %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/pdbaltpath:%_PDB% /nodefaultlib:libcmt %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PreBuildEvent>
       <Command>if not exist "$(SolutionDir)common\hgid.h" call "$(SolutionDir)\common\hgid.cmd"</Command>
     </PreBuildEvent>
     <Manifest>
       <AdditionalManifestFiles>res\windirstat.manifest</AdditionalManifestFiles>
+      <EnableDpiAwareness>true</EnableDpiAwareness>
     </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -180,7 +181,7 @@
       <AdditionalOptions>/Oi /Ot %(AdditionalOptions)</AdditionalOptions>
       <Optimization>Full</Optimization>
       <AdditionalIncludeDirectories>..;.;..\common;Controls;Dialogs;..\3rdparty\lua\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>NDEBUG;WINVER=0x0501;LUA_REG_NO_WINTRACE;LUA_REG_NO_HIVEOPS;LUA_REG_NO_DLL;_ALLOW_RTCc_IN_STL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;WINVER=_WIN32_WINNT_WIN7;_WIN32_WINNT=_WIN32_WINNT_WIN7;LUA_REG_NO_WINTRACE;LUA_REG_NO_HIVEOPS;LUA_REG_NO_DLL;_ALLOW_RTCc_IN_STL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -195,7 +196,7 @@
       <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <ResourceCompile>
-      <PreprocessorDefinitions>NDEBUG;WINVER=0x0501;LUA_REG_NO_WINTRACE;LUA_REG_NO_HIVEOPS;LUA_REG_NO_DLL;_ALLOW_RTCc_IN_STL;MODNAME=wds32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;WINVER=_WIN32_WINNT_WIN7;_WIN32_WINNT=_WIN32_WINNT_WIN7;LUA_REG_NO_WINTRACE;LUA_REG_NO_HIVEOPS;LUA_REG_NO_DLL;_ALLOW_RTCc_IN_STL;MODNAME=wds32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..;.;..\common;Controls;Dialogs;..\3rdparty\lua\src;..;$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
@@ -204,10 +205,10 @@
       <FullProgramDatabaseFile>true</FullProgramDatabaseFile>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>psapi.lib;delayimp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>delayimp.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)wds32.exe</OutputFile>
       <TargetMachine>MachineX86</TargetMachine>
-      <AdditionalOptions>/delayload:psapi.dll /pdbaltpath:%_PDB% /release %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/pdbaltpath:%_PDB% /release %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PreBuildEvent>
       <Command>if not exist "$(SolutionDir)common\hgid.h" call "$(SolutionDir)\common\hgid.cmd"</Command>
@@ -221,7 +222,7 @@
       <AdditionalOptions>/Oi /Ot %(AdditionalOptions)</AdditionalOptions>
       <Optimization>Full</Optimization>
       <AdditionalIncludeDirectories>..;.;..\common;Controls;Dialogs;..\3rdparty\lua\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>NDEBUG;WINVER=0x0501;LUA_REG_NO_WINTRACE;LUA_REG_NO_HIVEOPS;LUA_REG_NO_DLL;_ALLOW_RTCc_IN_STL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;WINVER=_WIN32_WINNT_WIN7;_WIN32_WINNT=_WIN32_WINNT_WIN7;LUA_REG_NO_WINTRACE;LUA_REG_NO_HIVEOPS;LUA_REG_NO_DLL;_ALLOW_RTCc_IN_STL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -236,7 +237,7 @@
       <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <ResourceCompile>
-      <PreprocessorDefinitions>NDEBUG;WINVER=0x0501;LUA_REG_NO_WINTRACE;LUA_REG_NO_HIVEOPS;LUA_REG_NO_DLL;_ALLOW_RTCc_IN_STL;MODNAME=wds64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;WINVER=_WIN32_WINNT_WIN7;_WIN32_WINNT=_WIN32_WINNT_WIN7;LUA_REG_NO_WINTRACE;LUA_REG_NO_HIVEOPS;LUA_REG_NO_DLL;_ALLOW_RTCc_IN_STL;MODNAME=wds64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..;.;..\common;Controls;Dialogs;..\3rdparty\lua\src;..;$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
@@ -245,10 +246,10 @@
       <FullProgramDatabaseFile>true</FullProgramDatabaseFile>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>psapi.lib;delayimp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>delayimp.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)wds64.exe</OutputFile>
       <TargetMachine>MachineX64</TargetMachine>
-      <AdditionalOptions>/delayload:psapi.dll /pdbaltpath:%_PDB% /release %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/pdbaltpath:%_PDB% /release %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PreBuildEvent>
       <Command>if not exist "$(SolutionDir)common\hgid.h" call "$(SolutionDir)\common\hgid.cmd"</Command>
@@ -269,7 +270,6 @@
     <ClInclude Include="dirstatdoc.h" />
     <ClInclude Include="dirstatview.h" />
     <ClInclude Include="FileFindWDS.h" />
-    <ClInclude Include="getosplatformstring.h" />
     <ClInclude Include="globalhelpers.h" />
     <ClInclude Include="helpmap.h" />
     <ClInclude Include="item.h" />
@@ -315,8 +315,6 @@
     <ClCompile Include="dirstatview.cpp">
     </ClCompile>
     <ClCompile Include="FileFindWDS.cpp">
-    </ClCompile>
-    <ClCompile Include="getosplatformstring.cpp">
     </ClCompile>
     <ClCompile Include="globalhelpers.cpp">
     </ClCompile>

@@ -27,11 +27,8 @@
 //     CSelectObject sobrush(pdc, &brush);
 // and the destructor will reselect the old object.
 
-#ifndef __SELECTOBJECT_H_VER__
-#define __SELECTOBJECT_H_VER__ 2017112219
-#if (defined(_MSC_VER) && (_MSC_VER >= 1020)) || defined(__MCPP)
 #pragma once
-#endif /* Check for "#pragma once" support */
+
 #include "stdafx.h"
 
 class CSelectObject
@@ -117,5 +114,3 @@ inline COLORREF MakeShadowColor(COLORREF c, int percent)
         RGB_GET_BVALUE(c) * percent / 100
     );
 }
-
-#endif /* __SELECTOBJECT_H_VER__ */

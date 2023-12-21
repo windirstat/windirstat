@@ -19,10 +19,7 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 
-#ifndef __WDS_MODALAPISHUTTLE_H__
-#define __WDS_MODALAPISHUTTLE_H__
 #pragma once
-
 
 //
 // CModalApiShuttle. (Base class for CModalShellApi and CModalSendMail.)
@@ -60,5 +57,3 @@ protected:
 
     virtual void DoOperation() =0;
 };
-
-#endif // __WDS_MODALAPISHUTTLE_H__

@@ -19,10 +19,7 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 
-#ifndef __WDS_SET_H__
-#define __WDS_SET_H__
 #pragma once
-
 
 //
 // CSet. A set class. I simply use the CMap class, which is in fact
@@ -56,5 +53,3 @@ public:
     void AssertValid() const { m_map.AssertValid(); }
 #endif
 };
-
-#endif // __WDS_SET_H__

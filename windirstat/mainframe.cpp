@@ -383,9 +383,7 @@ void CDeadFocusWnd::OnKeyDown(UINT nChar, UINT /* nRepCnt */, UINT /* nFlags */)
 }
 
 /////////////////////////////////////////////////////////////////////////////
-#ifdef SUPPORT_W7_TASKBAR
 UINT CMainFrame::s_taskBarMessage = ::RegisterWindowMessage(TEXT("TaskbarButtonCreated"));
-#endif // SUPPORT_W7_TASKBAR
 
 IMPLEMENT_DYNCREATE(CMainFrame, CFrameWnd)
 
@@ -406,9 +404,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWnd)
     ON_COMMAND(ID_TREEMAP_HELPABOUTTREEMAPS, OnTreemapHelpabouttreemaps)
     ON_BN_CLICKED(IDC_SUSPEND, OnBnClickedSuspend)
     ON_WM_SYSCOLORCHANGE()
-#ifdef SUPPORT_W7_TASKBAR
     ON_REGISTERED_MESSAGE(s_taskBarMessage, OnTaskButtonCreated)
-#endif // SUPPORT_W7_TASKBAR
 END_MESSAGE_MAP()
 
 static UINT indicators[] =
@@ -443,10 +439,8 @@ CMainFrame::CMainFrame()
     , m_progressRange(100)
     , m_progressPos(0)
     , m_logicalFocus(LF_NONE)
-#ifdef SUPPORT_W7_TASKBAR
     , m_TaskbarButtonState(TBPF_INDETERMINATE)
     , m_TaskbarButtonPreviousState(TBPF_INDETERMINATE)
-#endif // SUPPORT_W7_TASKBAR
 {
     _theFrame = this;
 }
@@ -456,7 +450,6 @@ CMainFrame::~CMainFrame()
     _theFrame = NULL;
 }
 
-#ifdef SUPPORT_W7_TASKBAR
 LRESULT CMainFrame::OnTaskButtonCreated(WPARAM, LPARAM)
 {
     if(!m_TaskbarList)
@@ -469,7 +462,6 @@ LRESULT CMainFrame::OnTaskButtonCreated(WPARAM, LPARAM)
     }
     return 0;
 }
-#endif // SUPPORT_W7_TASKBAR
 
 void CMainFrame::ShowProgress(ULONGLONG range)
 {
@@ -526,12 +518,10 @@ void CMainFrame::SetProgressPos100() // called by CDirstatDoc
     {
         SetProgressPos(m_progressRange);
     }
-#ifdef SUPPORT_W7_TASKBAR
     if(m_TaskbarList)
     {
         m_TaskbarList->SetProgressState(*this, m_TaskbarButtonState = TBPF_NOPROGRESS);
     }
-#endif // SUPPORT_W7_TASKBAR
 }
 
 bool CMainFrame::IsProgressSuspended()
@@ -565,7 +555,6 @@ void CMainFrame::UpdateProgress()
             int pos = (int)((double) m_progressPos * 100 / m_progressRange);
             m_progress.SetPos(pos);
             titlePrefix.Format(_T("%d%% %s"), pos, suspended.GetString());
-#ifdef SUPPORT_W7_TASKBAR
             if(m_TaskbarList && (m_TaskbarButtonState != TBPF_PAUSED))
             {
                 switch(pos)
@@ -580,7 +569,6 @@ void CMainFrame::UpdateProgress()
                     break;
                 }
             }
-#endif // SUPPORT_W7_TASKBAR
         }
         else
         {
@@ -601,12 +589,10 @@ void CMainFrame::CreateStatusProgress()
         m_progress.Create(WS_CHILD | WS_VISIBLE, rc, &m_wndStatusBar, 4711);
         m_progress.ModifyStyle(WS_BORDER, 0); // Doesn't help with XP-style control.
     }
-#ifdef SUPPORT_W7_TASKBAR
     if(m_TaskbarList)
     {
         m_TaskbarList->SetProgressState(*this, m_TaskbarButtonState = TBPF_INDETERMINATE);
     }
-#endif // SUPPORT_W7_TASKBAR
 }
 
 void CMainFrame::CreatePacmanProgress()
@@ -656,7 +642,6 @@ void CMainFrame::OnBnClickedSuspend()
 {
     bool const isSuspended = IsProgressSuspended();
     m_pacman.Start(!isSuspended);
-#ifdef SUPPORT_W7_TASKBAR
     if(m_TaskbarList)
     {
         switch(m_TaskbarButtonState)
@@ -670,7 +655,6 @@ void CMainFrame::OnBnClickedSuspend()
             break;
         }
     }
-#endif // SUPPORT_W7_TASKBAR
     UpdateProgress();
 }
 

@@ -19,8 +19,6 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 
-#ifndef __WDS_TYPEVIEW_H__
-#define __WDS_TYPEVIEW_H__
 #pragma once
 
 #include "dirstatdoc.h" // SExtensionRecord
@@ -145,5 +143,3 @@ public:
 inline CDirstatDoc* CTypeView::GetDocument() const
    { return reinterpret_cast<CDirstatDoc*>(m_pDocument); }
 #endif
-
-#endif // __WDS_TYPEVIEW_H__

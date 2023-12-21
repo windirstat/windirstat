@@ -20,8 +20,6 @@
 //
 //
 
-#ifndef __WDS_SORTINGLISTCONTROL_H__
-#define __WDS_SORTINGLISTCONTROL_H__
 #pragma once
 
 //
@@ -107,5 +105,3 @@ private:
     afx_msg void OnHdnItemdblclick(NMHDR *pNMHDR, LRESULT *pResult);
     afx_msg void OnDestroy();
 };
-
-#endif // __WDS_SORTINGLISTCONTROL_H__

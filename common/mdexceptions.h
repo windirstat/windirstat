@@ -25,8 +25,6 @@
 
 // Note: Md is just a prefix.
 
-#ifndef __WDS_MDEXCEPTIONS_H__
-#define __WDS_MDEXCEPTIONS_H__
 #pragma once
 
 #ifndef _INC_STDARG
@@ -180,5 +178,3 @@ inline void MdThrowFailed(HRESULT hr, LPCTSTR pszPrefix = NULL)
         MdThrowHresult(hr, pszPrefix);
     }
 }
-
-#endif // __WDS_MDEXCEPTIONS_H__

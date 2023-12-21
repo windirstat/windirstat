@@ -19,8 +19,6 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 
-#ifndef __WDS_ITEM_H__
-#define __WDS_ITEM_H__
 #pragma once
 
 #include "Treelistcontrol.h"
@@ -237,5 +235,3 @@ private:
     // For GraphView:
     RECT m_rect;                // Finally, this is our coordinates in the Treemap view.
 };
-
-#endif // __WDS_ITEM_H__

@@ -1,8 +1,4 @@
-#ifndef __WDS_LUA_C_H_VER__
-#define __WDS_LUA_C_H_VER__ 2018040522
-#if (defined(_MSC_VER) && (_MSC_VER >= 1020)) || defined(__MCPP)
 #pragma once
-#endif // Check for "#pragma once" support
 
 #define LNUM_INT64
 #define WDS_LUA_NO_LUAC
@@ -38,5 +34,3 @@ extern "C"
 #endif // lua_pushtstring_lowercase
 
 EXTERN_C void stackDump(lua_State *L, char* description);
-
-#endif // __WDS_LUA_C_H_VER__

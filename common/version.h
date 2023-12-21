@@ -17,11 +17,7 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 
-#ifndef __VERSION_H_VER__
-#define __VERSION_H_VER__ 2017110223
-#if (defined(_MSC_VER) && (_MSC_VER >= 1020)) || defined(__MCPP)
 #pragma once
-#endif /* Check for "#pragma once" support */
 
 #include "hgid.h"
 
@@ -95,5 +91,3 @@
 #define TEXT_COPYRIGHT              \xA9 2003-2005 Bernhard Seifert, \xA9 2004-2017 WinDirStat Team // copyright information
 #define HG_REPOSITORY               "https://bitbucket.org/windirstat/windirstat"
 #define STRING_REPORT_DEFECT_URL    HG_REPOSITORY "/issues?status=new&status=open"
-
-#endif /* __VERSION_H_VER__ */

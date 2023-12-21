@@ -19,8 +19,6 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 
-#ifndef __WDS_PAGECLEANUPS_H__
-#define __WDS_PAGECLEANUPS_H__
 #pragma once
 #include "afxwin.h"
 
@@ -102,5 +100,3 @@ protected:
     afx_msg void OnBnClickedDown();
     afx_msg void OnBnClickedHelpbutton();
 };
-
-#endif // __WDS_PAGECLEANUPS_H__

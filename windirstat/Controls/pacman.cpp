@@ -68,7 +68,7 @@ void CPacman::SetSpeed(double speed)
 void CPacman::Start(bool start)
 {
     m_moving = start;
-    m_lastUpdate = _GetTickCount64();
+    m_lastUpdate = GetTickCount64();
 }
 
 bool CPacman::Drive(ULONGLONG readJobs)
@@ -80,7 +80,7 @@ bool CPacman::Drive(ULONGLONG readJobs)
         return false;
     }
 
-    const ULONGLONG now = _GetTickCount64();
+    const ULONGLONG now = GetTickCount64();
     const ULONGLONG delta = now - m_lastUpdate;
 
     if(delta < UPDATEINTERVAL)

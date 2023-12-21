@@ -19,12 +19,9 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 
-#ifndef __WDS_MODALSHELLAPI_H__
-#define __WDS_MODALSHELLAPI_H__
 #pragma once
 
 #include "modalapishuttle.h"
-
 
 //
 // CModalShellApi. Modal version of the shell functions
@@ -48,5 +45,3 @@ protected:
     CString m_fileName;     // File name to be deleted
     bool m_toRecycleBin;    // True if file shall only be move to the recycle bin
 };
-
-#endif // __WDS_MODALSHELLAPI_H__

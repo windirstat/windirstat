@@ -19,8 +19,6 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 
-#ifndef __WDS_PAGEGENERAL_H__
-#define __WDS_PAGEGENERAL_H__
 #pragma once
 
 class COptionsPropertySheet;
@@ -71,5 +69,3 @@ protected:
     afx_msg void OnBnClickedListFullRowSelection();
     afx_msg void OnBnClickedSkipHidden();
 };
-
-#endif // __WDS_PAGEGENERAL_H__

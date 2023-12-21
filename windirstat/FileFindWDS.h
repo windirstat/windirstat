@@ -19,10 +19,7 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 
-#ifndef __WDS_FILEFINDWDS_H__
-#define __WDS_FILEFINDWDS_H__
 #pragma once
-#include <afx.h> // Declaration of prototype for CFileFind
 
 class CFileFindWDS : public CFileFind
 {
@@ -30,5 +27,3 @@ public:
     DWORD GetAttributes() const;
     ULONGLONG GetCompressedLength() const;
 };
-
-#endif // __WDS_FILEFINDWDS_H__

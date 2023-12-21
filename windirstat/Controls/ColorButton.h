@@ -19,8 +19,6 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 
-#ifndef __WDS_COLORBUTTON_H__
-#define __WDS_COLORBUTTON_H__
 #pragma once
 
 #define COLBN_CHANGED   0x87    // this is a value, I hope, that is nowhere used as notification code.
@@ -68,5 +66,3 @@ protected:
     afx_msg void OnBnClicked();
     afx_msg void OnEnable(BOOL bEnable);
 };
-
-#endif // __WDS_COLORBUTTON_H__
