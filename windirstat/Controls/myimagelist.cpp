@@ -28,16 +28,16 @@
 
 CMyImageList::CMyImageList()
     : m_filesFolderImage(-1)
-    , m_freeSpaceImage(-1)
-    , m_unknownImage(-1)
-    , m_emptyImage(-1)
-    , m_junctionImage(-1)
+      , m_freeSpaceImage(-1)
+      , m_unknownImage(-1)
+      , m_emptyImage(-1)
+      , m_junctionImage(-1)
 {
 }
 
 void CMyImageList::initialize()
 {
-    if(m_hImageList == nullptr)
+    if (m_hImageList == nullptr)
     {
         CStringW s;
         ::GetSystemDirectory(s.GetBuffer(_MAX_PATH), _MAX_PATH);
@@ -45,12 +45,12 @@ void CMyImageList::initialize()
         VTRACE(L"GetSystemDirectory() -> %s", s.GetString());
 
         SHFILEINFO sfi = {nullptr};
-        const HIMAGELIST hil = (HIMAGELIST)::SHGetFileInfo(s, 0, &sfi, sizeof(sfi), WDS_SHGFI_DEFAULTS);
+        const auto hil = (HIMAGELIST)::SHGetFileInfo(s, 0, &sfi, sizeof(sfi), WDS_SHGFI_DEFAULTS);
 
         this->Attach(ImageList_Duplicate(hil));
 
         VTRACE(L"System image list has %i icons", this->GetImageCount());
-        for(int i = 0; i < this->GetImageCount(); i++)
+        for (int i = 0; i < this->GetImageCount(); i++)
         {
             m_indexMap.SetAt(i, i);
         }
@@ -61,18 +61,18 @@ void CMyImageList::initialize()
 
 COLORREF CMyImageList::greenify_(COLORREF c)
 {
-    if(c == RGB(255,255,255))
+    if (c == RGB(255, 255, 255))
     {
         return c;
     }
     double b = CColorSpace::GetColorBrightness(c);
-    b = b * b;
+    b        = b * b;
     return CColorSpace::MakeBrightColor(RGB(0, 255, 0), b);
 }
 
 COLORREF CMyImageList::blueify_(COLORREF c)
 {
-    if(c == RGB(255,255,255))
+    if (c == RGB(255, 255, 255))
     {
         return c;
     }
@@ -82,45 +82,45 @@ COLORREF CMyImageList::blueify_(COLORREF c)
 
 COLORREF CMyImageList::yellowify_(COLORREF c)
 {
-    if(c == RGB(255,255,255))
+    if (c == RGB(255, 255, 255))
     {
         return c;
     }
     double b = CColorSpace::GetColorBrightness(c);
-    b = b * b;
+    b        = b * b;
     return CColorSpace::MakeBrightColor(RGB(255, 255, 0), b);
 }
 
 // Returns the index of the added icon
-int CMyImageList::cacheIcon(LPCWSTR path, UINT flags, CStringW *psTypeName)
+int CMyImageList::cacheIcon(LPCWSTR path, UINT flags, CStringW* psTypeName)
 {
     ASSERT(m_hImageList != NULL); // should have been initialize()ed.
 
     flags |= WDS_SHGFI_DEFAULTS;
-    if(psTypeName != nullptr)
+    if (psTypeName != nullptr)
     {
         // Also retrieve the file type description
         flags |= SHGFI_TYPENAME;
     }
 
     SHFILEINFO sfi = {nullptr};
-    const HIMAGELIST hil = (HIMAGELIST)::SHGetFileInfo(path, 0, &sfi, sizeof(sfi), flags);
-    if(hil == nullptr)
+    const auto hil = (HIMAGELIST)::SHGetFileInfo(path, 0, &sfi, sizeof(sfi), flags);
+    if (hil == nullptr)
     {
         VTRACE(L"SHGetFileInfo() failed");
         return getEmptyImage();
     }
 
-    if(psTypeName != nullptr)
+    if (psTypeName != nullptr)
     {
         *psTypeName = sfi.szTypeName;
     }
 
     int i;
-    if(!m_indexMap.Lookup(sfi.iIcon, i)) // part of the system image list?
+    if (!m_indexMap.Lookup(sfi.iIcon, i)) // part of the system image list?
     {
-        CImageList *sil = CImageList::FromHandle(hil); // does not have to be destroyed
-        i = this->Add(sil->ExtractIcon(sfi.iIcon));
+        CImageList* sil = CImageList::FromHandle(hil); // does not have to be destroyed
+        i               = this->Add(sil->ExtractIcon(sfi.iIcon));
         m_indexMap.SetAt(sfi.iIcon, i);
     }
 
@@ -131,7 +131,7 @@ int CMyImageList::getMyComputerImage()
 {
     CCoTaskMem<LPITEMIDLIST> pidl;
     const HRESULT hr = ::SHGetSpecialFolderLocation(nullptr, CSIDL_DRIVES, &pidl);
-    if(FAILED(hr))
+    if (FAILED(hr))
     {
         VTRACE(L"SHGetSpecialFolderLocation(CSIDL_DRIVES) failed!");
         return 0;
@@ -202,7 +202,7 @@ CStringW CMyImageList::getADriveSpec()
     CStringW s;
     const UINT u = ::GetWindowsDirectory(s.GetBuffer(_MAX_PATH), _MAX_PATH);
     s.ReleaseBuffer();
-    if(u == 0 || s.GetLength() < 3 || s[1] != wds::chrColon || s[2] != wds::chrBackslash)
+    if (u == 0 || s.GetLength() < 3 || s[1] != wds::chrColon || s[2] != wds::chrBackslash)
     {
         return L"C:\\";
     }
@@ -211,11 +211,11 @@ CStringW CMyImageList::getADriveSpec()
 
 void CMyImageList::addCustomImages()
 {
-	constexpr int CUSTOM_IMAGE_COUNT = 5;
-	constexpr COLORREF bgcolor = RGB(255,255,255);
+    constexpr int CUSTOM_IMAGE_COUNT = 5;
+    constexpr COLORREF bgcolor       = RGB(255, 255, 255);
 
     const int folderImage = getFolderImage();
-    const int driveImage = getMountPointImage();
+    const int driveImage  = getMountPointImage();
 
     IMAGEINFO ii;
     ZeroMemory(&ii, sizeof(ii));
@@ -254,9 +254,9 @@ void CMyImageList::addCustomImages()
         this->SetBkColor(savedClr);
 
         // Now we re-color the images
-        for(int i = 0; i < rc.Width(); i++)
+        for (int i = 0; i < rc.Width(); i++)
         {
-            for(int j = 0; j < rc.Height(); j++)
+            for (int j = 0; j < rc.Height(); j++)
             {
                 int idx = 0;
 
@@ -280,10 +280,10 @@ void CMyImageList::addCustomImages()
 
                 c = dcmem.GetPixel(idx * rc.Width() + i, j);
                 dcmem.SetPixel(idx * rc.Width() + i, j, c); // I don't know why this statement is required.
-                if(i < bmjunc.bmWidth && jjunc >= 0)
+                if (i < bmjunc.bmWidth && jjunc >= 0)
                 {
-	                const COLORREF cjunc = dcjunc.GetPixel(i, jjunc);
-                    if(cjunc != RGB(255,0,255))
+                    const COLORREF cjunc = dcjunc.GetPixel(i, jjunc);
+                    if (cjunc != RGB(255, 0, 255))
                     {
                         dcmem.SetPixel(idx * rc.Width() + i, j, cjunc);
                     }
@@ -294,8 +294,8 @@ void CMyImageList::addCustomImages()
     int k = this->Add(&target, bgcolor);
     VTRACE(L"k == %i", k);
     m_filesFolderImage = k++;
-    m_freeSpaceImage = k++;
-    m_unknownImage = k++;
-    m_junctionImage = k++;
-    m_emptyImage = k;
+    m_freeSpaceImage   = k++;
+    m_unknownImage     = k++;
+    m_junctionImage    = k++;
+    m_emptyImage       = k;
 }

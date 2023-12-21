@@ -34,70 +34,114 @@
 class CSelectObject final
 {
 public:
-    CSelectObject(CDC *pdc, CGdiObject *pObject)
-    { m_pOldObject = pdc->SelectObject(pObject); m_pdc = pdc; }
+    CSelectObject(CDC* pdc, CGdiObject* pObject)
+    {
+        m_pOldObject = pdc->SelectObject(pObject);
+        m_pdc        = pdc;
+    }
+
     ~CSelectObject()
-    { m_pdc->SelectObject(m_pOldObject); }
+    {
+        m_pdc->SelectObject(m_pOldObject);
+    }
+
 protected:
-    CDC *m_pdc;
-    CGdiObject *m_pOldObject;
+    CDC* m_pdc;
+    CGdiObject* m_pOldObject;
 };
 
 class CSelectStockObject final
 {
 public:
-    CSelectStockObject(CDC *pdc, int nIndex)
-    { m_pOldObject = pdc->SelectStockObject(nIndex); m_pdc = pdc; }
+    CSelectStockObject(CDC* pdc, int nIndex)
+    {
+        m_pOldObject = pdc->SelectStockObject(nIndex);
+        m_pdc        = pdc;
+    }
+
     ~CSelectStockObject()
-    { m_pdc->SelectObject(m_pOldObject); }
+    {
+        m_pdc->SelectObject(m_pOldObject);
+    }
+
 protected:
-    CDC *m_pdc;
-    CGdiObject *m_pOldObject;
+    CDC* m_pdc;
+    CGdiObject* m_pOldObject;
 };
 
 class CSetBkMode final
 {
 public:
-    CSetBkMode(CDC *pdc, int mode)
-    { m_pdc = pdc; m_oldMode = pdc->SetBkMode(mode); }
+    CSetBkMode(CDC* pdc, int mode)
+    {
+        m_pdc     = pdc;
+        m_oldMode = pdc->SetBkMode(mode);
+    }
+
     ~CSetBkMode()
-    { m_pdc->SetBkMode(m_oldMode); }
+    {
+        m_pdc->SetBkMode(m_oldMode);
+    }
+
 protected:
-    CDC *m_pdc;
+    CDC* m_pdc;
     int m_oldMode;
 };
 
 class CSetTextColor final
 {
 public:
-    CSetTextColor(CDC *pdc, COLORREF color)
-    { m_pdc = pdc; m_oldColor = pdc->SetTextColor(color); }
+    CSetTextColor(CDC* pdc, COLORREF color)
+    {
+        m_pdc      = pdc;
+        m_oldColor = pdc->SetTextColor(color);
+    }
+
     ~CSetTextColor()
-    { m_pdc->SetTextColor(m_oldColor); }
+    {
+        m_pdc->SetTextColor(m_oldColor);
+    }
+
 protected:
-    CDC *m_pdc;
+    CDC* m_pdc;
     COLORREF m_oldColor;
 };
 
 class CSetBkColor final
 {
 public:
-    CSetBkColor(CDC *pdc, COLORREF color)
-    { m_pdc = pdc; m_oldColor = pdc->SetBkColor(color); }
+    CSetBkColor(CDC* pdc, COLORREF color)
+    {
+        m_pdc      = pdc;
+        m_oldColor = pdc->SetBkColor(color);
+    }
+
     ~CSetBkColor()
-    { m_pdc->SetBkColor(m_oldColor); }
+    {
+        m_pdc->SetBkColor(m_oldColor);
+    }
+
 protected:
-    CDC *m_pdc;
+    CDC* m_pdc;
     COLORREF m_oldColor;
 };
 
 class CSaveDC final
 {
 public:
-    CSaveDC(CDC *pdc) { m_pdc = pdc; m_save = pdc->SaveDC(); }
-    ~CSaveDC() { m_pdc->RestoreDC(m_save); }
+    CSaveDC(CDC* pdc)
+    {
+        m_pdc  = pdc;
+        m_save = pdc->SaveDC();
+    }
+
+    ~CSaveDC()
+    {
+        m_pdc->RestoreDC(m_save);
+    }
+
 protected:
-    CDC *m_pdc;
+    CDC* m_pdc;
     int m_save;
 };
 

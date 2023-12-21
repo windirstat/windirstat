@@ -32,16 +32,16 @@ class CItem;
 // CMyTreeListControl. I had to derive from CTreeListControl because
 // CTreeListControl doesn't know about the column constants (COL_***).
 //
-class CMyTreeListControl: public CTreeListControl
+class CMyTreeListControl : public CTreeListControl
 {
 public:
-    CMyTreeListControl(CDirstatView *dirstatView);
+    CMyTreeListControl(CDirstatView* dirstatView);
     bool GetAscendingDefault(int column) override;
 
 protected:
     void OnItemDoubleClick(int i) override;
 
-    void PrepareDefaultMenu(CMenu *menu, const CItem *item);
+    void PrepareDefaultMenu(CMenu* menu, const CItem* item);
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnContextMenu(CWnd* /*pWnd*/, CPoint /*point*/);
@@ -53,16 +53,16 @@ protected:
 //
 // CDirstatView. The upper left view, which consists of the TreeList.
 //
-class CDirstatView: public CView
+class CDirstatView : public CView
 {
 protected:
-    CDirstatView();     // Created by MFC only
+    CDirstatView(); // Created by MFC only
     DECLARE_DYNCREATE(CDirstatView)
 
 public:
     ~CDirstatView() override = default;
     CStringW GenerateReport();
-    CFont *GetSmallFont() const;
+    CFont* GetSmallFont() const;
     void SysColorChanged();
 
 protected:
@@ -70,9 +70,9 @@ protected:
     void OnInitialUpdate() override;
     void OnDraw(CDC* pDC) override;
     CDirstatDoc* GetDocument() const;
-    void OnUpdate(CView *pSender, LPARAM lHint, CObject *pHint) override;
+    void OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint) override;
 
-    CMyTreeListControl m_treeListControl;   // The tree list
+    CMyTreeListControl m_treeListControl; // The tree list
 
 protected:
     DECLARE_MESSAGE_MAP()
@@ -82,15 +82,15 @@ protected:
     afx_msg void OnDestroy();
     afx_msg void OnSetFocus(CWnd* pOldWnd);
     afx_msg void OnSettingChange(UINT uFlags, LPCWSTR lpszSection);
-    afx_msg void OnLvnItemchanged(NMHDR *pNMHDR, LRESULT *pResult);
-    afx_msg void OnUpdatePopupToggle(CCmdUI *pCmdUI);
+    afx_msg void OnLvnItemchanged(NMHDR* pNMHDR, LRESULT* pResult);
+    afx_msg void OnUpdatePopupToggle(CCmdUI* pCmdUI);
     afx_msg void OnPopupToggle();
 
 public:
-    #ifdef _DEBUG
+#ifdef _DEBUG
     void AssertValid() const override;
     void Dump(CDumpContext& dc) const override;
-    #endif
+#endif
 };
 
 #ifndef _DEBUG  // Debug version in dirstatview.cpp

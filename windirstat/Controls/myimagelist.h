@@ -29,7 +29,7 @@
 // and adds a few special images at initialization.
 // This is because I don't want to deal with two images lists.
 //
-class CMyImageList: public CImageList
+class CMyImageList : public CImageList
 {
     static constexpr UINT WDS_SHGFI_DEFAULTS = SHGFI_SYSICONINDEX | SHGFI_SMALLICON | SHGFI_ICON;
     static COLORREF greenify_(COLORREF c);
@@ -55,11 +55,11 @@ public:
     int getEmptyImage();
 
 protected:
-    int cacheIcon(LPCWSTR path, UINT flags, CStringW *psTypeName = nullptr);
+    int cacheIcon(LPCWSTR path, UINT flags, CStringW* psTypeName = nullptr);
     CStringW getADriveSpec();
     void addCustomImages();
 
-    CMap<int, int, int, int> m_indexMap;    // system image list index -> our index
+    CMap<int, int, int, int> m_indexMap; // system image list index -> our index
 
     int m_filesFolderImage; // <Files>
     int m_freeSpaceImage;   // <Free Space>

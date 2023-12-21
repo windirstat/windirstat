@@ -28,6 +28,7 @@
 class CPageCleanups final : public CPropertyPage
 {
     DECLARE_DYNAMIC(CPageCleanups)
+
     enum { IDD = IDD_PAGE_CLEANUPS };
 
 public:
@@ -46,7 +47,7 @@ protected:
     void CheckEmptyTitle();
 
     USERDEFINEDCLEANUP m_udc[USERDEFINEDCLEANUPCOUNT];
-    int m_current;  // currently selected user defined cleanup
+    int m_current; // currently selected user defined cleanup
 
     // Dialog data
     CListBox m_list;

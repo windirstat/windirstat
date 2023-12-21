@@ -29,12 +29,15 @@ class CReparsePoints final
     {
         CStringW point;  // Path like "mount\backup\"
         CStringW volume; // Volume identifier
-        DWORD   flags;  // File system flags (see GetVolumeInformation documentation)
+        DWORD flags;     // File system flags (see GetVolumeInformation documentation)
 
-        SPointVolume() : flags(0) {}
+        SPointVolume()
+            : flags(0)
+        {
+        }
     };
 
-    typedef CArray<SPointVolume, SPointVolume&> PointVolumeArray;
+    using PointVolumeArray = CArray<SPointVolume, SPointVolume&>;
 
 public:
     ~CReparsePoints();
@@ -55,5 +58,5 @@ private:
     CArray<CStringW, LPCWSTR> m_drive;
 
     // m_volume maps all volume identifiers to PointVolumeArrays
-    CMap<CStringW, LPCWSTR, PointVolumeArray *, PointVolumeArray *> m_volume;
+    CMap<CStringW, LPCWSTR, PointVolumeArray*, PointVolumeArray*> m_volume;
 };

@@ -44,7 +44,7 @@ COLORREF CColorButton::CPreview::GetColor()
 void CColorButton::CPreview::SetColor(COLORREF color)
 {
     m_color = color;
-    if(::IsWindow(m_hWnd))
+    if (::IsWindow(m_hWnd))
     {
         InvalidateRect(NULL);
     }
@@ -60,7 +60,7 @@ void CColorButton::CPreview::OnPaint()
     dc.DrawEdge(rc, EDGE_BUMP, BF_RECT | BF_ADJUST);
 
     COLORREF color = m_color;
-    if((GetParent()->GetStyle() & WS_DISABLED) != 0)
+    if ((GetParent()->GetStyle() & WS_DISABLED) != 0)
     {
         color = ::GetSysColor(COLOR_BTNFACE);
     }
@@ -73,7 +73,6 @@ void CColorButton::CPreview::OnLButtonDown(UINT nFlags, CPoint point)
     GetParent()->ScreenToClient(&point);
     GetParent()->SendMessage(WM_LBUTTONDOWN, nFlags, MAKELPARAM(point.x, point.y));
 }
-
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -97,7 +96,7 @@ void CColorButton::SetColor(COLORREF color)
 
 void CColorButton::OnPaint()
 {
-    if(NULL == m_preview.m_hWnd)
+    if (NULL == m_preview.m_hWnd)
     {
         CRect rc;
         GetClientRect(rc);
@@ -114,7 +113,7 @@ void CColorButton::OnPaint()
 
 void CColorButton::OnDestroy()
 {
-    if(::IsWindow(m_preview.m_hWnd))
+    if (::IsWindow(m_preview.m_hWnd))
     {
         m_preview.DestroyWindow();
     }
@@ -124,13 +123,13 @@ void CColorButton::OnDestroy()
 void CColorButton::OnBnClicked()
 {
     CColorDialog dlg(GetColor());
-    if(IDOK == dlg.DoModal())
+    if (IDOK == dlg.DoModal())
     {
         SetColor(dlg.GetColor());
         NMHDR hdr;
         hdr.hwndFrom = m_hWnd;
-        hdr.idFrom = GetDlgCtrlID();
-        hdr.code = COLBN_CHANGED;
+        hdr.idFrom   = GetDlgCtrlID();
+        hdr.code     = COLBN_CHANGED;
 
         GetParent()->SendMessage(WM_NOTIFY, GetDlgCtrlID(), (LPARAM)&hdr);
     }
@@ -139,7 +138,7 @@ void CColorButton::OnBnClicked()
 
 void CColorButton::OnEnable(BOOL bEnable)
 {
-    if(::IsWindow(m_preview.m_hWnd))
+    if (::IsWindow(m_preview.m_hWnd))
     {
         m_preview.InvalidateRect(NULL);
     }

@@ -37,7 +37,7 @@ enum REFRESHPOLICY
     REFRESHPOLICYCOUNT
 };
 
-typedef struct USERDEFINEDCLEANUP
+using USERDEFINEDCLEANUP = struct USERDEFINEDCLEANUP
 {
     bool enabled;
     bool virginTitle;
@@ -53,8 +53,7 @@ typedef struct USERDEFINEDCLEANUP
     bool showConsoleWindow;
     bool waitForCompletion;
     REFRESHPOLICY refreshPolicy;
-}
-USERDEFINEDCLEANUP;
+};
 
 constexpr auto USERDEFINEDCLEANUPCOUNT = 10;
 
@@ -84,7 +83,7 @@ public:
 
 class CRegistryStg final : public ICfgStorage
 {
-    CRegistryStg(); // hide
+    CRegistryStg();                               // hide
     CRegistryStg& operator=(const CRegistryStg&); // hide
 public:
     CRegistryStg(HKEY hKeyParent, LPCWSTR lpszKeyName);
@@ -114,7 +113,7 @@ private:
 
 class CIniFileStg final : public ICfgStorage
 {
-    CIniFileStg(); // hide
+    CIniFileStg();                              // hide
     CIniFileStg& operator=(const CIniFileStg&); // hide
 public:
     CIniFileStg(LPCWSTR lpszFilePath);
@@ -182,7 +181,7 @@ public:
 // CPersistence. Reads from and writes to the registry all the persistent settings
 // like window position, column order etc.
 //
-class CPersistence: private CRegistryUser
+class CPersistence : private CRegistryUser
 {
 public:
     static bool GetShowFreeSpace();
@@ -218,8 +217,8 @@ public:
     static void SetDialogRectangle(LPCWSTR name, const CRect& rc);
     static void GetDialogRectangle(LPCWSTR name, CRect& rc);
 
-//   static void SetSorting(LPCWSTR name, int column1, bool ascending1, int column2, bool ascending2);
-//   static void GetSorting(LPCWSTR name, int columnCount, int& column1, bool& ascending1, int& column2, bool& ascending2);
+    //   static void SetSorting(LPCWSTR name, int column1, bool ascending1, int column2, bool ascending2);
+    //   static void GetSorting(LPCWSTR name, int columnCount, int& column1, bool& ascending1, int& column2, bool& ascending2);
 
     static int GetConfigPage(int max);
     static void SetConfigPage(int page);
@@ -256,8 +255,6 @@ private:
     //static CStringW MakeSortingColumnEntry(LPCWSTR name, int n);
     //static CStringW MakeSortingAscendingEntry(LPCWSTR name, int n);
     static CStringW MakeDialogRectangleEntry(LPCWSTR name);
-
-
 };
 
 //
@@ -265,7 +262,7 @@ private:
 // must be loaded earlier.
 //
 
-class CLanguageOptions: private CRegistryUser
+class CLanguageOptions : private CRegistryUser
 {
 public:
     static LANGID GetLanguage();
@@ -284,9 +281,9 @@ public:
 //
 
 // COptions is a singleton.
-COptions *GetOptions();
+COptions* GetOptions();
 
-class COptions: private CRegistryUser
+class COptions : private CRegistryUser
 {
 public:
     COptions() = default;
@@ -322,7 +319,7 @@ public:
     COLORREF GetTreemapHighlightColor();
     void SetTreemapHighlightColor(COLORREF color);
 
-    const CTreemap::Options *GetTreemapOptions();
+    const CTreemap::Options* GetTreemapOptions();
     void SetTreemapOptions(const CTreemap::Options& options);
 
     bool IsFollowMountPoints();
@@ -345,7 +342,7 @@ public:
 
     void GetEnabledUserDefinedCleanups(CArray<int, int>& indices);
     bool IsUserDefinedCleanupEnabled(int i);
-    const USERDEFINEDCLEANUP *GetUserDefinedCleanup(int i);
+    const USERDEFINEDCLEANUP* GetUserDefinedCleanup(int i);
 
     CStringW GetReportSubject();
     CStringW GetReportDefaultSubject();

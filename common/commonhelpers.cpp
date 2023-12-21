@@ -23,7 +23,7 @@
 #include <common/mdexceptions.h>
 #include <common/wds_constants.h>
 
-CStringW MyStrRetToString(const LPITEMIDLIST pidl, const STRRET *strret)
+CStringW MyStrRetToString(const LPITEMIDLIST pidl, const STRRET* strret)
 {
     CStringW s;
 
@@ -32,11 +32,11 @@ CStringW MyStrRetToString(const LPITEMIDLIST pidl, const STRRET *strret)
     case STRRET_CSTR:
         {
             s.Format(L"%hs", strret->cStr);
-    }
+        }
         break;
     case STRRET_OFFSET:
         {
-            s.Format(L"%hs", (char *)pidl + strret->uOffset);
+            s.Format(L"%hs", (char*)pidl + strret->uOffset);
         }
         break;
     case STRRET_WSTR:
@@ -48,6 +48,7 @@ CStringW MyStrRetToString(const LPITEMIDLIST pidl, const STRRET *strret)
 
     return s;
 }
+
 BOOL ShellExecuteNoThrow(HWND hwnd, LPCWSTR lpVerb, LPCWSTR lpFile, LPCWSTR lpParameters, LPCWSTR lpDirectory, INT nShowCmd)
 {
     SHELLEXECUTEINFO sei = {
@@ -66,7 +67,7 @@ BOOL ShellExecuteNoThrow(HWND hwnd, LPCWSTR lpVerb, LPCWSTR lpFile, LPCWSTR lpPa
         0, // dwHotKey
         {},
         nullptr
-        };
+    };
 
     return ::ShellExecuteEx(&sei);
 }
@@ -76,7 +77,7 @@ BOOL ShellExecuteThrow(HWND hwnd, LPCWSTR lpVerb, LPCWSTR lpFile, LPCWSTR lpPara
     CWaitCursor wc;
 
     BOOL bResult = ShellExecuteNoThrow(hwnd, lpVerb, lpFile, lpParameters, lpDirectory, nShowCmd);
-    if(!bResult)
+    if (!bResult)
     {
         MdThrowStringExceptionF(L"ShellExecute failed: %1!s!", MdGetWinErrorText(::GetLastError()).GetString());
     }
@@ -85,9 +86,9 @@ BOOL ShellExecuteThrow(HWND hwnd, LPCWSTR lpVerb, LPCWSTR lpFile, LPCWSTR lpPara
 
 CStringW GetBaseNameFromPath(LPCWSTR path)
 {
-    CStringW s = path;
+    CStringW s  = path;
     const int i = s.ReverseFind(wds::chrBackslash);
-    if(i < 0)
+    if (i < 0)
     {
         return s;
     }
@@ -109,7 +110,7 @@ CStringW GetAppFileName()
 
 CStringW GetAppFolder()
 {
-    CStringW s = GetAppFileName();
+    CStringW s  = GetAppFileName();
     const int i = s.ReverseFind(wds::chrBackslash);
     ASSERT(i >= 0);
     s = s.Left(i);

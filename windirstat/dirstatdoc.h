@@ -57,19 +57,30 @@ typedef CMap<CStringW, LPCWSTR, SExtensionRecord, SExtensionRecord&> CExtensionD
 //
 enum
 {
-    HINT_NULL,                      // General update
-    HINT_NEWROOT,                   // Root item has changed - clear everything.
-    HINT_SELECTIONCHANGED,          // The selection has changed, EnsureVisible.
-    HINT_EXTENDSELECTION,           // DirstatView shall expand selection. pHint = CItem *
-    HINT_SHOWNEWSELECTION,          // The selection has changed, Show Path
-    HINT_SELECTIONSTYLECHANGED,     // Only update selection in Graphview
-    HINT_EXTENSIONSELECTIONCHANGED, // Type list selected a new extension
-    HINT_ZOOMCHANGED,               // Only zoom item has changed.
-    HINT_REDRAWWINDOW,              // Only graphically redraw views.
-    HINT_SOMEWORKDONE,              // Directory list shall process mouse messages first, then re-sort.
+    HINT_NULL,
+    // General update
+    HINT_NEWROOT,
+    // Root item has changed - clear everything.
+    HINT_SELECTIONCHANGED,
+    // The selection has changed, EnsureVisible.
+    HINT_EXTENDSELECTION,
+    // DirstatView shall expand selection. pHint = CItem *
+    HINT_SHOWNEWSELECTION,
+    // The selection has changed, Show Path
+    HINT_SELECTIONSTYLECHANGED,
+    // Only update selection in Graphview
+    HINT_EXTENSIONSELECTIONCHANGED,
+    // Type list selected a new extension
+    HINT_ZOOMCHANGED,
+    // Only zoom item has changed.
+    HINT_REDRAWWINDOW,
+    // Only graphically redraw views.
+    HINT_SOMEWORKDONE,
+    // Directory list shall process mouse messages first, then re-sort.
 
-    HINT_LISTSTYLECHANGED,          // Options: List style (grid/stripes) or treelist colors changed
-    HINT_TREEMAPSTYLECHANGED        // Options: Treemap style (grid, colors etc.) changed
+    HINT_LISTSTYLECHANGED,
+    // Options: List style (grid/stripes) or treelist colors changed
+    HINT_TREEMAPSTYLECHANGED // Options: Treemap style (grid, colors etc.) changed
 };
 
 //
@@ -79,7 +90,7 @@ enum
 class CDirstatDoc final : public CDocument
 {
 protected:
-    CDirstatDoc();  // Created by MFC only
+    CDirstatDoc(); // Created by MFC only
     DECLARE_DYNCREATE(CDirstatDoc)
 
 public:
@@ -103,7 +114,7 @@ public:
     bool OptionShowFreeSpace() const;
     bool OptionShowUnknown();
 
-    const CExtensionData *GetExtensionData();
+    const CExtensionData* GetExtensionData();
     ULONGLONG GetRootSize();
 
     void ForgetItemTree();
@@ -113,119 +124,119 @@ public:
     void RefreshJunctionItems();
 
     bool IsRootDone();
-    CItem *GetRootItem();
-    CItem *GetZoomItem();
+    CItem* GetRootItem();
+    CItem* GetZoomItem();
     bool IsZoomed();
 
     void RemoveAllSelections();
-    bool CanAddSelection(const CItem *item);
-    void AddSelection(const CItem *item);
-    void RemoveSelection(const CItem *item);
+    bool CanAddSelection(const CItem* item);
+    void AddSelection(const CItem* item);
+    void RemoveSelection(const CItem* item);
     void AssertSelectionValid();
     size_t GetSelectionCount();
-    bool IsSelected(const CItem *item);
+    bool IsSelected(const CItem* item);
     // FIXME: Multi-select
-    CItem *GetSelection(size_t i);
-    void SetSelection(const CItem *item, bool keepReselectChildStack = false);
+    CItem* GetSelection(size_t i);
+    void SetSelection(const CItem* item, bool keepReselectChildStack = false);
 
     void SetHighlightExtension(LPCWSTR ext);
     CStringW GetHighlightExtension();
 
     void UnlinkRoot();
-    bool UserDefinedCleanupWorksForItem(const USERDEFINEDCLEANUP *udc, const CItem *item);
+    bool UserDefinedCleanupWorksForItem(const USERDEFINEDCLEANUP* udc, const CItem* item);
     ULONGLONG GetWorkingItemReadJobs();
 
-    void OpenItem(const CItem *item);
+    void OpenItem(const CItem* item);
 
 protected:
-    void RecurseRefreshMountPointItems(CItem *item);
-    void RecurseRefreshJunctionItems(CItem *item);
-    void GetDriveItems(CArray<CItem *, CItem *>& drives);
+    void RecurseRefreshMountPointItems(CItem* item);
+    void RecurseRefreshJunctionItems(CItem* item);
+    void GetDriveItems(CArray<CItem*, CItem*>& drives);
     void RefreshRecyclers();
     void RebuildExtensionData();
     void SortExtensionData(CStringArray& sortedExtensions);
     void SetExtensionColors(const CStringArray& sortedExtensions);
-    static CExtensionData *_pqsortExtensionData;
-    static int __cdecl _compareExtensions(const void *ext1, const void *ext2);
-    void SetWorkingItemAncestor(CItem *item);
-    void SetWorkingItem(CItem *item);
-    bool DeletePhysicalItem(CItem *item, bool toTrashBin);
-    void SetZoomItem(CItem *item);
-    void RefreshItem(CItem *item);
-    void AskForConfirmation(const USERDEFINEDCLEANUP *udc, CItem *item);
-    void PerformUserDefinedCleanup(const USERDEFINEDCLEANUP *udc, CItem *item);
-    void RefreshAfterUserDefinedCleanup(const USERDEFINEDCLEANUP *udc, CItem *item);
-    void RecursiveUserDefinedCleanup(const USERDEFINEDCLEANUP *udc, const CStringW& rootPath, const CStringW& currentPath);
+    static CExtensionData* _pqsortExtensionData;
+    static int __cdecl _compareExtensions(const void* ext1, const void* ext2);
+    void SetWorkingItemAncestor(CItem* item);
+    void SetWorkingItem(CItem* item);
+    bool DeletePhysicalItem(CItem* item, bool toTrashBin);
+    void SetZoomItem(CItem* item);
+    void RefreshItem(CItem* item);
+    void AskForConfirmation(const USERDEFINEDCLEANUP* udc, CItem* item);
+    void PerformUserDefinedCleanup(const USERDEFINEDCLEANUP* udc, CItem* item);
+    void RefreshAfterUserDefinedCleanup(const USERDEFINEDCLEANUP* udc, CItem* item);
+    void RecursiveUserDefinedCleanup(const USERDEFINEDCLEANUP* udc, const CStringW& rootPath, const CStringW& currentPath);
     void CallUserDefinedCleanup(bool isDirectory, const CStringW& format, const CStringW& rootPath, const CStringW& currentPath, bool showConsoleWindow, bool wait);
     CStringW BuildUserDefinedCleanupCommandLine(LPCWSTR format, LPCWSTR rootPath, LPCWSTR currentPath);
-    void PushReselectChild(CItem *item);
-    CItem *PopReselectChild();
+    void PushReselectChild(CItem* item);
+    CItem* PopReselectChild();
     void ClearReselectChildStack();
     bool IsReselectChildAvailable();
     bool DirectoryListHasFocus();
-    CItem *GetSelectionParent();
+    CItem* GetSelectionParent();
 
-    bool m_showFreeSpace;       // Whether to show the <Free Space> item
-    bool m_showUnknown;         // Whether to show the <Unknown> item
+    bool m_showFreeSpace; // Whether to show the <Free Space> item
+    bool m_showUnknown;   // Whether to show the <Unknown> item
 
-    bool m_showMyComputer;      // True, if the user selected more than one drive for scanning.
-                                // In this case, we need a root pseudo item ("My Computer").
+    bool m_showMyComputer; // True, if the user selected more than one drive for scanning.
+    // In this case, we need a root pseudo item ("My Computer").
 
-    CItem *m_rootItem;          // The very root item
-    CArray<CItem *, CItem *> m_selectedItems;   // The currently selected items
+    CItem* m_rootItem;                      // The very root item
+    CArray<CItem*, CItem*> m_selectedItems; // The currently selected items
 
-    CStringW m_highlightExtension;   // Currently highlighted extension
-    CItem *m_zoomItem;              // Current "zoom root"
-    CItem *m_workingItem;           // Current item we are working on. For progress indication
+    CStringW m_highlightExtension; // Currently highlighted extension
+    CItem* m_zoomItem;             // Current "zoom root"
+    CItem* m_workingItem;          // Current item we are working on. For progress indication
 
     bool m_extensionDataValid;      // If this is false, m_extensionData must be rebuilt
     CExtensionData m_extensionData; // Base for the extension view and cushion colors
 
-    CList<CItem *, CItem *> m_reselectChildStack; // Stack for the "Re-select Child"-Feature
+    CList<CItem*, CItem*> m_reselectChildStack; // Stack for the "Re-select Child"-Feature
 
 protected:
     DECLARE_MESSAGE_MAP()
-    afx_msg void OnUpdateRefreshselected(CCmdUI *pCmdUI);
+    afx_msg void OnUpdateRefreshselected(CCmdUI* pCmdUI);
     afx_msg void OnRefreshselected();
-    afx_msg void OnUpdateRefreshall(CCmdUI *pCmdUI);
+    afx_msg void OnUpdateRefreshall(CCmdUI* pCmdUI);
     afx_msg void OnRefreshall();
-    afx_msg void OnUpdateEditCopy(CCmdUI *pCmdUI);
+    afx_msg void OnUpdateEditCopy(CCmdUI* pCmdUI);
     afx_msg void OnEditCopy();
-    afx_msg void OnUpdateViewShowfreespace(CCmdUI *pCmdUI);
+    afx_msg void OnUpdateViewShowfreespace(CCmdUI* pCmdUI);
     afx_msg void OnViewShowfreespace();
-    afx_msg void OnUpdateViewShowunknown(CCmdUI *pCmdUI);
+    afx_msg void OnUpdateViewShowunknown(CCmdUI* pCmdUI);
     afx_msg void OnViewShowunknown();
-    afx_msg void OnUpdateTreemapZoomin(CCmdUI *pCmdUI);
+    afx_msg void OnUpdateTreemapZoomin(CCmdUI* pCmdUI);
     afx_msg void OnTreemapZoomin();
-    afx_msg void OnUpdateTreemapZoomout(CCmdUI *pCmdUI);
+    afx_msg void OnUpdateTreemapZoomout(CCmdUI* pCmdUI);
     afx_msg void OnTreemapZoomout();
-    afx_msg void OnUpdateExplorerHere(CCmdUI *pCmdUI);
+    afx_msg void OnUpdateExplorerHere(CCmdUI* pCmdUI);
     afx_msg void OnExplorerHere();
-    afx_msg void OnUpdateCommandPromptHere(CCmdUI *pCmdUI);
+    afx_msg void OnUpdateCommandPromptHere(CCmdUI* pCmdUI);
     afx_msg void OnCommandPromptHere();
-    afx_msg void OnUpdateCleanupDeletetotrashbin(CCmdUI *pCmdUI);
+    afx_msg void OnUpdateCleanupDeletetotrashbin(CCmdUI* pCmdUI);
     afx_msg void OnCleanupDeletetotrashbin();
-    afx_msg void OnUpdateCleanupDelete(CCmdUI *pCmdUI);
+    afx_msg void OnUpdateCleanupDelete(CCmdUI* pCmdUI);
     afx_msg void OnCleanupDelete();
-    afx_msg void OnUpdateUserdefinedcleanup(CCmdUI *pCmdUI);
+    afx_msg void OnUpdateUserdefinedcleanup(CCmdUI* pCmdUI);
     afx_msg void OnUserdefinedcleanup(UINT id);
-    afx_msg void OnUpdateTreemapSelectparent(CCmdUI *pCmdUI);
+    afx_msg void OnUpdateTreemapSelectparent(CCmdUI* pCmdUI);
     afx_msg void OnTreemapSelectparent();
-    afx_msg void OnUpdateTreemapReselectchild(CCmdUI *pCmdUI);
+    afx_msg void OnUpdateTreemapReselectchild(CCmdUI* pCmdUI);
     afx_msg void OnTreemapReselectchild();
-    afx_msg void OnUpdateCleanupOpen(CCmdUI *pCmdUI);
+    afx_msg void OnUpdateCleanupOpen(CCmdUI* pCmdUI);
     afx_msg void OnCleanupOpen();
-    afx_msg void OnUpdateCleanupProperties(CCmdUI *pCmdUI);
+    afx_msg void OnUpdateCleanupProperties(CCmdUI* pCmdUI);
     afx_msg void OnCleanupProperties();
 
 public:
-    #ifdef _DEBUG
+#ifdef _DEBUG
     void AssertValid() const override;
     void Dump(CDumpContext& dc) const override;
-    #endif
+#endif
 };
 
 //
 // The document is needed in many places.
 //
-extern CDirstatDoc *GetDocument();
+extern CDirstatDoc* GetDocument();

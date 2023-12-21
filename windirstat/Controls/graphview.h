@@ -30,7 +30,7 @@ class CItem;
 //
 // CGraphView. The treemap window.
 //
-class CGraphView: public CView, public CTreemap::Callback
+class CGraphView : public CView, public CTreemap::Callback
 {
 protected:
     CGraphView();
@@ -55,47 +55,49 @@ protected:
     bool IsDrawn();
     void Inactivate();
     void EmptyView();
-    void DrawEmptyView(CDC *pDC);
+    void DrawEmptyView(CDC* pDC);
 
-    void DrawZoomFrame(CDC *pdc, CRect& rc);
-    void DrawHighlights(CDC *pdc);
+    void DrawZoomFrame(CDC* pdc, CRect& rc);
+    void DrawHighlights(CDC* pdc);
 
-    void DrawHighlightExtension(CDC *pdc);
-    void RecurseHighlightExtension(CDC *pdc, const CItem *item);
+    void DrawHighlightExtension(CDC* pdc);
+    void RecurseHighlightExtension(CDC* pdc, const CItem* item);
 
-    void DrawSelection(CDC *pdc);
+    void DrawSelection(CDC* pdc);
 
-    void HighlightSelectedItem(CDC *pdc, const CItem *item, bool single);
-    void RenderHighlightRectangle(CDC *pdc, CRect& rc);
+    void HighlightSelectedItem(CDC* pdc, const CItem* item, bool single);
+    void RenderHighlightRectangle(CDC* pdc, CRect& rc);
 
-    bool m_recalculationSuspended;  // True while the user is resizing the window.
-    bool m_showTreemap;             // False, if the user switched off the treemap (by F9).
-    CSize m_size;                   // Current size of view
-    CTreemap m_treemap;             // Treemap generator
-    CBitmap m_bitmap;               // Cached view. If m_hObject is NULL, the view must be recalculated.
-    CSize m_dimmedSize;             // Size of bitmap m_dimmed
-    CBitmap m_dimmed;               // Dimmed view. Used during refresh to avoid the ooops-effect.
-    UINT_PTR m_timer;               // We need a timer to realize when the mouse left our window.
+    bool m_recalculationSuspended; // True while the user is resizing the window.
+    bool m_showTreemap;            // False, if the user switched off the treemap (by F9).
+    CSize m_size;                  // Current size of view
+    CTreemap m_treemap;            // Treemap generator
+    CBitmap m_bitmap;              // Cached view. If m_hObject is NULL, the view must be recalculated.
+    CSize m_dimmedSize;            // Size of bitmap m_dimmed
+    CBitmap m_dimmed;              // Dimmed view. Used during refresh to avoid the ooops-effect.
+    UINT_PTR m_timer;              // We need a timer to realize when the mouse left our window.
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnSize(UINT nType, int cx, int cy);
     afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
     afx_msg void OnSetFocus(CWnd* pOldWnd);
-    void OnUpdate(CView * pSender, LPARAM lHint, CObject *pHint) override;
-    afx_msg void OnContextMenu(CWnd *pWnd, CPoint point);
+    void OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint) override;
+    afx_msg void OnContextMenu(CWnd* pWnd, CPoint point);
     afx_msg void OnMouseMove(UINT nFlags, CPoint point);
     afx_msg void OnDestroy();
     afx_msg void OnTimer(UINT_PTR nIDEvent);
 
 public:
-    #ifdef _DEBUG
+#ifdef _DEBUG
     void AssertValid() const override;
     void Dump(CDumpContext& dc) const override;
-    #endif
-        afx_msg void OnPopupCancel();
+#endif
+    afx_msg void OnPopupCancel();
 };
 
 #ifndef _DEBUG  // Debugversion in graphview.cpp
 inline CDirstatDoc* CGraphView::GetDocument() const
-   { return reinterpret_cast<CDirstatDoc*>(m_pDocument); }
+{
+    return reinterpret_cast<CDirstatDoc*>(m_pDocument);
+}
 #endif

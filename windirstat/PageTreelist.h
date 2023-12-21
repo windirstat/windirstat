@@ -30,11 +30,12 @@
 class CPageTreelist final : public CPropertyPage
 {
     DECLARE_DYNAMIC(CPageTreelist)
+
     enum { IDD = IDD_PAGE_TREELIST };
 
 public:
     CPageTreelist();
-    ~CPageTreelist() = default;
+    ~CPageTreelist() override = default;
 
 protected:
     void DoDataExchange(CDataExchange* pDX) override;
@@ -52,7 +53,7 @@ protected:
     CSliderCtrl m_slider;
 
     DECLARE_MESSAGE_MAP()
-    afx_msg void OnColorChanged(UINT id, NMHDR *, LRESULT *);
+    afx_msg void OnColorChanged(UINT id, NMHDR*, LRESULT*);
     afx_msg void OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
     afx_msg void OnBnClickedPacmananimation();
     afx_msg void OnBnClickedShowTimeSpent();

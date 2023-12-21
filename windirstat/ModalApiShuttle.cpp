@@ -40,7 +40,7 @@ BOOL CModalApiShuttle::OnInitDialog()
 
     CRect rc;
     AfxGetMainWnd()->GetWindowRect(rc);
-    rc.right = rc.left;
+    rc.right  = rc.left;
     rc.bottom = rc.top;
 
     MoveWindow(rc, false);

@@ -24,6 +24,6 @@
 
 #include <Windows.h>
 
-BOOL FileIconInit(__in  BOOL fRestoreCache);
+BOOL FileIconInit(__in BOOL fRestoreCache);
 CStringW GetCurrentDesktopName();
 CStringW GetCurrentWinstaName();

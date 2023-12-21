@@ -28,9 +28,10 @@
 void StartAboutDialog();
 
 
-class CAboutThread: public CWinThread
+class CAboutThread : public CWinThread
 {
     DECLARE_DYNCREATE(CAboutThread);
+
 protected:
     BOOL InitInstance() override;
 };
@@ -40,7 +41,7 @@ class CAboutDlg final : public CDialog
 {
     enum { IDD = IDD_ABOUTBOX };
 
-    class CMyTabControl: public CTabCtrl
+    class CMyTabControl : public CTabCtrl
     {
     public:
         void Initialize();
@@ -50,8 +51,8 @@ class CAboutDlg final : public CDialog
         CRichEditCtrl m_text;
 
         DECLARE_MESSAGE_MAP()
-        afx_msg void OnEnLinkText(NMHDR *pNMHDR, LRESULT *pResult);
-        afx_msg void OnEnMsgFilter(NMHDR *pNMHDR, LRESULT *pResult);
+        afx_msg void OnEnLinkText(NMHDR* pNMHDR, LRESULT* pResult);
+        afx_msg void OnEnMsgFilter(NMHDR* pNMHDR, LRESULT* pResult);
         afx_msg void OnSize(UINT nType, int cx, int cy);
     };
 
@@ -70,7 +71,7 @@ protected:
     CLayout m_layout;
 
     DECLARE_MESSAGE_MAP()
-    afx_msg void OnTcnSelchangeTab(NMHDR *pNMHDR, LRESULT *pResult);
+    afx_msg void OnTcnSelchangeTab(NMHDR* pNMHDR, LRESULT* pResult);
     afx_msg void OnSize(UINT nType, int cx, int cy);
     afx_msg void OnGetMinMaxInfo(MINMAXINFO* lpMMI);
     afx_msg void OnDestroy();

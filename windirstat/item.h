@@ -46,30 +46,40 @@ enum
 // Item types
 enum ITEMTYPE
 {
-    IT_MYCOMPUTER,      // Pseudo Container "My Computer"
-    IT_DRIVE,           // C:\, D:\ etc.
-    IT_DIRECTORY,       // Folder
-    IT_FILE,            // Regular file
-    IT_FILESFOLDER,     // Pseudo Folder "<Files>"
-    IT_FREESPACE,       // Pseudo File "<Free Space>"
-    IT_UNKNOWN,         // Pseudo File "<Unknown>"
+    IT_MYCOMPUTER,
+    // Pseudo Container "My Computer"
+    IT_DRIVE,
+    // C:\, D:\ etc.
+    IT_DIRECTORY,
+    // Folder
+    IT_FILE,
+    // Regular file
+    IT_FILESFOLDER,
+    // Pseudo Folder "<Files>"
+    IT_FREESPACE,
+    // Pseudo File "<Free Space>"
+    IT_UNKNOWN,
+    // Pseudo File "<Unknown>"
 
     ITF_FLAGS    = 0xF000,
-    ITF_ROOTITEM = 0x8000   // This is an additional flag, not a type.
+    ITF_ROOTITEM = 0x8000 // This is an additional flag, not a type.
 };
 
 // Whether an item type is a leaf type
-inline bool IsLeaf(ITEMTYPE t) { return t == IT_FILE || t == IT_FREESPACE || t == IT_UNKNOWN; }
-
-// Compare FILETIMEs
-inline bool operator< (const FILETIME& t1, const FILETIME& t2)
+inline bool IsLeaf(ITEMTYPE t)
 {
-    return t1.dwHighDateTime < t2.dwHighDateTime
-        || t1.dwHighDateTime == t2.dwHighDateTime && t1.dwLowDateTime < t2.dwLowDateTime;
+    return t == IT_FILE || t == IT_FREESPACE || t == IT_UNKNOWN;
 }
 
 // Compare FILETIMEs
-inline bool operator== (const FILETIME& t1, const FILETIME& t2)
+inline bool operator<(const FILETIME& t1, const FILETIME& t2)
+{
+    return t1.dwHighDateTime < t2.dwHighDateTime
+    || t1.dwHighDateTime == t2.dwHighDateTime && t1.dwLowDateTime < t2.dwLowDateTime;
+}
+
+// Compare FILETIMEs
+inline bool operator==(const FILETIME& t1, const FILETIME& t2)
 {
     return t1.dwLowDateTime == t2.dwLowDateTime && t1.dwHighDateTime == t2.dwHighDateTime;
 }
@@ -91,7 +101,7 @@ inline bool operator== (const FILETIME& t1, const FILETIME& t2)
 // Methods which recurse down to every child (expensive) are named "RecurseDoSomething".
 // Methods which recurse up to the parent (not so expensive) are named "UpwardDoSomething".
 //
-class CItem: public CTreeListItem, public CTreemap::Item
+class CItem : public CTreeListItem, public CTreemap::Item
 {
     // We collect data of files in FILEINFOs before we create items for them,
     // because we need to know their count before we can decide whether or not
@@ -110,37 +120,57 @@ public:
     ~CItem() override;
 
     // CTreeListItem Interface
-    bool DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *width, int *focusLeft) const override;
+    bool DrawSubitem(int subitem, CDC* pdc, CRect rc, UINT state, int* width, int* focusLeft) const override;
     CStringW GetText(int subitem) const override;
     COLORREF GetItemTextColor() const override;
-    int CompareSibling(const CTreeListItem *tlib, int subitem) const override;
+    int CompareSibling(const CTreeListItem* tlib, int subitem) const override;
     int GetChildrenCount() const override;
-    CTreeListItem *GetTreeListChild(int i) const override;
+    CTreeListItem* GetTreeListChild(int i) const override;
     int GetImageToCache() const override;
-    void DrawAdditionalState(CDC *pdc, const CRect& rcLabel) const override;
+    void DrawAdditionalState(CDC* pdc, const CRect& rcLabel) const override;
 
     // CTreemap::Item interface
-    bool TmiIsLeaf()                const override { return IsLeaf(GetType()); }
-    CRect TmiGetRectangle()          const override;
+    bool TmiIsLeaf() const override
+    {
+        return IsLeaf(GetType());
+    }
+
+    CRect TmiGetRectangle() const override;
     void TmiSetRectangle(const CRect& rc) override;
-    COLORREF TmiGetGraphColor()         const override { return GetGraphColor(); }
-    int TmiGetChildrenCount()      const override { return GetChildrenCount(); }
-    CTreemap::Item *TmiGetChild(int c)         const override { return GetChild(c); }
-    ULONGLONG TmiGetSize()               const override { return GetSize(); }
+
+    COLORREF TmiGetGraphColor() const override
+    {
+        return GetGraphColor();
+    }
+
+    int TmiGetChildrenCount() const override
+    {
+        return GetChildrenCount();
+    }
+
+    CTreemap::Item* TmiGetChild(int c) const override
+    {
+        return GetChild(c);
+    }
+
+    ULONGLONG TmiGetSize() const override
+    {
+        return GetSize();
+    }
 
     // CItem
     static int GetSubtreePercentageWidth();
-    static CItem *FindCommonAncestor(const CItem *item1, const CItem *item2);
+    static CItem* FindCommonAncestor(const CItem* item1, const CItem* item2);
 
-    bool IsAncestorOf(const CItem *item) const;
+    bool IsAncestorOf(const CItem* item) const;
     ULONGLONG GetProgressRange() const;
     ULONGLONG GetProgressPos() const;
-    const CItem *UpwardGetRoot() const;
+    const CItem* UpwardGetRoot() const;
     void UpdateLastChange();
-    CItem *GetChild(int i) const;
-    CItem *GetParent() const;
-    int FindChildIndex(const CItem *child) const;
-    void AddChild(CItem *child);
+    CItem* GetChild(int i) const;
+    CItem* GetParent() const;
+    int FindChildIndex(const CItem* child) const;
+    void AddChild(CItem* child);
     void RemoveChild(int i);
     void RemoveAllChildren();
     void UpwardAddSubdirs(ULONGLONG dirCount);
@@ -185,17 +215,17 @@ public:
     void UpwardSetUndone();
     void RefreshRecycler() const;
     void CreateFreeSpaceItem();
-    CItem *FindFreeSpaceItem() const;
+    CItem* FindFreeSpaceItem() const;
     void UpdateFreeSpaceItem() const;
     void RemoveFreeSpaceItem();
     void CreateUnknownItem();
-    CItem *FindUnknownItem() const;
+    CItem* FindUnknownItem() const;
     void RemoveUnknownItem();
-    CItem *FindDirectoryByPath(const CStringW& path);
-    void RecurseCollectExtensionData(CExtensionData *ed);
+    CItem* FindDirectoryByPath(const CStringW& path);
+    void RecurseCollectExtensionData(CExtensionData* ed);
 
 private:
-    static int __cdecl _compareBySize(const void *p1, const void *p2);
+    static int __cdecl _compareBySize(const void* p1, const void* p2);
     ULONGLONG GetProgressRangeMyComputer() const;
     ULONGLONG GetProgressPosMyComputer() const;
     ULONGLONG GetProgressRangeDrive() const;
@@ -212,10 +242,10 @@ private:
     void UpwardDrivePacman();
     void DrivePacman();
 
-    ITEMTYPE m_type;            // Indicates our type. See ITEMTYPE.
-    ITEMTYPE m_etype;           
-    CStringW m_name;             // Display name
-    mutable CStringW m_extension;		// Cache of extension (it's used often)
+    ITEMTYPE m_type; // Indicates our type. See ITEMTYPE.
+    ITEMTYPE m_etype;
+    CStringW m_name;              // Display name
+    mutable CStringW m_extension; // Cache of extension (it's used often)
     mutable bool m_extension_cached;
     ULONGLONG m_size;           // OwnSize, if IT_FILE or IT_FREESPACE, or IT_UNKNOWN; SubtreeTotal else.
     ULONGLONG m_files;          // # Files in subtree
@@ -223,15 +253,15 @@ private:
     FILETIME m_lastChange;      // Last modification time OF SUBTREE
     unsigned char m_attributes; // Packed file attributes of the item
 
-    bool m_readJobDone;         // FindFiles() (our own read job) is finished.
-    bool m_done;                // Whole Subtree is done.
-    ULONGLONG m_ticksWorked;        // ms time spent on this item.
-    ULONGLONG m_readJobs;       // # "read jobs" in subtree.
+    bool m_readJobDone;      // FindFiles() (our own read job) is finished.
+    bool m_done;             // Whole Subtree is done.
+    ULONGLONG m_ticksWorked; // ms time spent on this item.
+    ULONGLONG m_readJobs;    // # "read jobs" in subtree.
 
 
     // Our children. When "this" is set to "done", this array is sorted by child size.
-    CArray<CItem *, CItem *> m_children;
+    CArray<CItem*, CItem*> m_children;
 
     // For GraphView:
-    RECT m_rect;                // Finally, this is our coordinates in the Treemap view.
+    RECT m_rect; // Finally, this is our coordinates in the Treemap view.
 };

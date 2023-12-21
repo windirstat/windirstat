@@ -30,21 +30,21 @@
 
 /////////////////////////////////////////////////////////////////////////////
 
-CExtensionListControl::CListItem::CListItem(CExtensionListControl *list, LPCWSTR extension, const SExtensionRecord& r)
+CExtensionListControl::CListItem::CListItem(CExtensionListControl* list, LPCWSTR extension, const SExtensionRecord& r)
 {
-    m_list = list;
+    m_list      = list;
     m_extension = extension;
-    m_record = r;
-    m_image = -1;
+    m_record    = r;
+    m_image     = -1;
 }
 
-bool CExtensionListControl::CListItem::DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *width, int *focusLeft) const
+bool CExtensionListControl::CListItem::DrawSubitem(int subitem, CDC* pdc, CRect rc, UINT state, int* width, int* focusLeft) const
 {
-    if(subitem == COL_EXTENSION)
+    if (subitem == COL_EXTENSION)
     {
         DrawLabel(m_list, GetMyImageList(), pdc, rc, state, width, focusLeft);
     }
-    else if(subitem == COL_COLOR)
+    else if (subitem == COL_COLOR)
     {
         DrawColor(pdc, rc, state, width);
     }
@@ -56,9 +56,9 @@ bool CExtensionListControl::CListItem::DrawSubitem(int subitem, CDC *pdc, CRect 
     return true;
 }
 
-void CExtensionListControl::CListItem::DrawColor(CDC *pdc, CRect rc, UINT state, int *width) const
+void CExtensionListControl::CListItem::DrawColor(CDC* pdc, CRect rc, UINT state, int* width) const
 {
-    if(width != nullptr)
+    if (width != nullptr)
     {
         *width = 40;
         return;
@@ -68,7 +68,7 @@ void CExtensionListControl::CListItem::DrawColor(CDC *pdc, CRect rc, UINT state,
 
     rc.DeflateRect(2, 3);
 
-    if(rc.right <= rc.left || rc.bottom <= rc.top)
+    if (rc.right <= rc.left || rc.bottom <= rc.top)
     {
         return;
     }
@@ -126,7 +126,7 @@ CStringW CExtensionListControl::CListItem::GetExtension() const
 
 int CExtensionListControl::CListItem::GetImage() const
 {
-    if(m_image == -1)
+    if (m_image == -1)
     {
         m_image = GetMyImageList()->getExtImageAndDescription(m_extension, m_description);
     }
@@ -135,7 +135,7 @@ int CExtensionListControl::CListItem::GetImage() const
 
 CStringW CExtensionListControl::CListItem::GetDescription() const
 {
-    if(m_description.IsEmpty())
+    if (m_description.IsEmpty())
     {
         m_image = GetMyImageList()->getExtImageAndDescription(m_extension, m_description);
     }
@@ -151,7 +151,7 @@ CStringW CExtensionListControl::CListItem::GetBytesPercent() const
 
 double CExtensionListControl::CListItem::GetBytesFraction() const
 {
-    if(m_list->GetRootSize() == 0)
+    if (m_list->GetRootSize() == 0)
     {
         return 0;
     }
@@ -159,11 +159,11 @@ double CExtensionListControl::CListItem::GetBytesFraction() const
     return static_cast<double>(m_record.bytes / m_list->GetRootSize());
 }
 
-int CExtensionListControl::CListItem::Compare(const CSortingListItem *baseOther, int subitem) const
+int CExtensionListControl::CListItem::Compare(const CSortingListItem* baseOther, int subitem) const
 {
     int r = 0;
 
-    const CListItem *other = reinterpret_cast<const CListItem*>(baseOther);
+    auto other = reinterpret_cast<const CListItem*>(baseOther);
 
     switch (subitem)
     {
@@ -220,9 +220,9 @@ BEGIN_MESSAGE_MAP(CExtensionListControl, COwnerDrawnListControl)
     ON_WM_KEYDOWN()
 END_MESSAGE_MAP()
 
-CExtensionListControl::CExtensionListControl(CTypeView *typeView)
+CExtensionListControl::CExtensionListControl(CTypeView* typeView)
     : COwnerDrawnListControl(L"types", 19) // FIXME: hardcoded value
-    , m_typeView(typeView)
+      , m_typeView(typeView)
 {
     m_rootSize = 0;
 }
@@ -257,12 +257,12 @@ void CExtensionListControl::Initialize()
 {
     SetSorting(COL_BYTES, false);
 
-    InsertColumn(COL_EXTENSION,     LoadString(IDS_EXTCOL_EXTENSION),   LVCFMT_LEFT, 60, COL_EXTENSION);
-    InsertColumn(COL_COLOR,         LoadString(IDS_EXTCOL_COLOR),       LVCFMT_LEFT, 40, COL_COLOR);
-    InsertColumn(COL_BYTES,         LoadString(IDS_EXTCOL_BYTES),       LVCFMT_RIGHT, 60, COL_BYTES);
-    InsertColumn(COL_BYTESPERCENT,  L"% " + LoadString(IDS_EXTCOL_BYTES), LVCFMT_RIGHT, 50, COL_BYTESPERCENT);
-    InsertColumn(COL_FILES,         LoadString(IDS_EXTCOL_FILES),       LVCFMT_RIGHT, 50, COL_FILES);
-    InsertColumn(COL_DESCRIPTION,   LoadString(IDS_EXTCOL_DESCRIPTION), LVCFMT_LEFT, 170, COL_DESCRIPTION);
+    InsertColumn(COL_EXTENSION, LoadString(IDS_EXTCOL_EXTENSION), LVCFMT_LEFT, 60, COL_EXTENSION);
+    InsertColumn(COL_COLOR, LoadString(IDS_EXTCOL_COLOR), LVCFMT_LEFT, 40, COL_COLOR);
+    InsertColumn(COL_BYTES, LoadString(IDS_EXTCOL_BYTES), LVCFMT_RIGHT, 60, COL_BYTES);
+    InsertColumn(COL_BYTESPERCENT, L"% " + LoadString(IDS_EXTCOL_BYTES), LVCFMT_RIGHT, 50, COL_BYTESPERCENT);
+    InsertColumn(COL_FILES, LoadString(IDS_EXTCOL_FILES), LVCFMT_RIGHT, 50, COL_FILES);
+    InsertColumn(COL_DESCRIPTION, LoadString(IDS_EXTCOL_DESCRIPTION), LVCFMT_LEFT, 170, COL_DESCRIPTION);
 
     OnColumnsInserted();
 
@@ -276,19 +276,19 @@ void CExtensionListControl::OnDestroy()
     COwnerDrawnListControl::OnDestroy();
 }
 
-void CExtensionListControl::SetExtensionData(const CExtensionData *ed)
+void CExtensionListControl::SetExtensionData(const CExtensionData* ed)
 {
     DeleteAllItems();
 
-    int i = 0;
+    int i        = 0;
     POSITION pos = ed->GetStartPosition();
-    while(pos != nullptr)
+    while (pos != nullptr)
     {
         CStringW ext;
         SExtensionRecord r;
         ed->GetNextAssoc(pos, ext, r);
 
-        CListItem *item = new CListItem(this, ext, r);
+        auto item = new CListItem(this, ext, r);
         InsertListItem(i++, item);
     }
 
@@ -308,14 +308,14 @@ ULONGLONG CExtensionListControl::GetRootSize() const
 void CExtensionListControl::SelectExtension(LPCWSTR ext)
 {
     int i = 0;
-    for(i = 0; i < GetItemCount(); i++)
+    for (i = 0; i < GetItemCount(); i++)
     {
-        if(GetListItem(i)->GetExtension().CompareNoCase(ext) == 0)
+        if (GetListItem(i)->GetExtension().CompareNoCase(ext) == 0)
         {
             break;
         }
     }
-    if(i < GetItemCount())
+    if (i < GetItemCount())
     {
         SetItemState(i, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
         EnsureVisible(i, false);
@@ -325,27 +325,27 @@ void CExtensionListControl::SelectExtension(LPCWSTR ext)
 CStringW CExtensionListControl::GetSelectedExtension()
 {
     POSITION pos = GetFirstSelectedItemPosition();
-    if(pos == nullptr)
+    if (pos == nullptr)
     {
         return wds::strEmpty;
     }
     else
     {
-	    const int i = GetNextSelectedItem(pos);
-	    const CListItem *item = GetListItem(i);
+        const int i           = GetNextSelectedItem(pos);
+        const CListItem* item = GetListItem(i);
         return item->GetExtension();
     }
 }
 
-CExtensionListControl::CListItem *CExtensionListControl::GetListItem(int i) const
+CExtensionListControl::CListItem* CExtensionListControl::GetListItem(int i) const
 {
-    return (CListItem *)GetItemData(i);
+    return (CListItem*)GetItemData(i);
 }
 
-void CExtensionListControl::OnLvnDeleteitem(NMHDR *pNMHDR, LRESULT *pResult)
+void CExtensionListControl::OnLvnDeleteitem(NMHDR* pNMHDR, LRESULT* pResult)
 {
-	const LPNMLISTVIEW lv = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
-    delete (CListItem *)lv->lParam;
+    const auto lv = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
+    delete (CListItem*)lv->lParam;
     *pResult = 0;
 }
 
@@ -360,10 +360,10 @@ void CExtensionListControl::OnSetFocus(CWnd* pOldWnd)
     GetMainFrame()->SetLogicalFocus(LF_EXTENSIONLIST);
 }
 
-void CExtensionListControl::OnLvnItemchanged(NMHDR *pNMHDR, LRESULT *pResult)
+void CExtensionListControl::OnLvnItemchanged(NMHDR* pNMHDR, LRESULT* pResult)
 {
-	const LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
-    if((pNMLV->uNewState & LVIS_SELECTED) != 0)
+    const auto pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
+    if ((pNMLV->uNewState & LVIS_SELECTED) != 0)
     {
         m_typeView->SetHighlightExtension(GetSelectedExtension());
     }
@@ -372,11 +372,11 @@ void CExtensionListControl::OnLvnItemchanged(NMHDR *pNMHDR, LRESULT *pResult)
 
 void CExtensionListControl::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 {
-    if(nChar == VK_TAB)
+    if (nChar == VK_TAB)
     {
         GetMainFrame()->MoveFocus(LF_DIRECTORYLIST);
     }
-    else if(nChar == VK_ESCAPE)
+    else if (nChar == VK_ESCAPE)
     {
         GetMainFrame()->MoveFocus(LF_NONE);
     }
@@ -423,7 +423,7 @@ void CTypeView::ShowTypes(bool show)
 void CTypeView::SetHighlightExtension(LPCWSTR ext)
 {
     GetDocument()->SetHighlightExtension(ext);
-    if(GetFocus() == &m_extensionListControl)
+    if (GetFocus() == &m_extensionListControl)
     {
         GetDocument()->UpdateAllViews(this, HINT_EXTENSIONSELECTIONCHANGED);
     }
@@ -436,12 +436,12 @@ BOOL CTypeView::PreCreateWindow(CREATESTRUCT& cs)
 
 int CTypeView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 {
-    if(CView::OnCreate(lpCreateStruct) == -1)
+    if (CView::OnCreate(lpCreateStruct) == -1)
     {
         return -1;
     }
 
-    constexpr RECT rect = { 0, 0, 0, 0 };
+    constexpr RECT rect = {0, 0, 0, 0};
     VERIFY(m_extensionListControl.Create(LVS_SINGLESEL | LVS_OWNERDRAWFIXED | LVS_SHOWSELALWAYS | WS_CHILD | WS_VISIBLE | LVS_REPORT, rect, this, _nIdExtensionListControl));
     m_extensionListControl.SetExtendedStyle(m_extensionListControl.GetExtendedStyle() | LVS_EX_HEADERDRAGDROP);
 
@@ -458,13 +458,13 @@ void CTypeView::OnInitialUpdate()
     CView::OnInitialUpdate();
 }
 
-void CTypeView::OnUpdate(CView * /*pSender*/, LPARAM lHint, CObject *)
+void CTypeView::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject*)
 {
     switch (lHint)
     {
     case HINT_NEWROOT:
     case 0:
-        if(IsShowTypes() && GetDocument()->IsRootDone())
+        if (IsShowTypes() && GetDocument()->IsRootDone())
         {
             m_extensionListControl.SetRootSize(GetDocument()->GetRootSize());
             m_extensionListControl.SetExtensionData(GetDocument()->GetExtensionData());
@@ -478,11 +478,11 @@ void CTypeView::OnUpdate(CView * /*pSender*/, LPARAM lHint, CObject *)
             m_extensionListControl.DeleteAllItems();
         }
 
-        // fall through
+    // fall through
 
     case HINT_SELECTIONCHANGED:
     case HINT_SHOWNEWSELECTION:
-        if(IsShowTypes())
+        if (IsShowTypes())
         {
             SetSelection();
         }
@@ -520,8 +520,8 @@ void CTypeView::OnUpdate(CView * /*pSender*/, LPARAM lHint, CObject *)
 void CTypeView::SetSelection()
 {
     // FIXME: Multi-select
-    const CItem *item = GetDocument()->GetSelection(0);
-    if(item == nullptr || item->GetType() != IT_FILE)
+    const CItem* item = GetDocument()->GetSelection(0);
+    if (item == nullptr || item->GetType() != IT_FILE)
     {
         m_extensionListControl.EnsureVisible(0, false);
     }
@@ -564,7 +564,7 @@ BOOL CTypeView::OnEraseBkgnd(CDC* pDC)
 void CTypeView::OnSize(UINT nType, int cx, int cy)
 {
     CView::OnSize(nType, cx, cy);
-    if(::IsWindow(m_extensionListControl.m_hWnd))
+    if (::IsWindow(m_extensionListControl.m_hWnd))
     {
         CRect rc(0, 0, cx, cy);
         m_extensionListControl.MoveWindow(rc);

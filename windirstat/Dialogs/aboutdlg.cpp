@@ -30,7 +30,7 @@ namespace
 {
     enum
     {
-        RE_CONTROL = 4711   // Id of the RichEdit Control
+        RE_CONTROL = 4711 // Id of the RichEdit Control
     };
 
     // Tabs
@@ -50,14 +50,14 @@ namespace
         HGLOBAL hresource = nullptr;
         try
         {
-	        const HRSRC hrsrc = ::FindResource(dll, MAKEINTRESOURCE(id), L"TEXT");
-            if(nullptr == hrsrc)
+            const HRSRC hrsrc = ::FindResource(dll, MAKEINTRESOURCE(id), L"TEXT");
+            if (nullptr == hrsrc)
             {
                 MdThrowLastWinerror();
             }
 
-	        const DWORD dwSize = ::SizeofResource(dll, hrsrc);
-            if(0 == dwSize)
+            const DWORD dwSize = ::SizeofResource(dll, hrsrc);
+            if (0 == dwSize)
             {
                 MdThrowLastWinerror();
             }
@@ -68,19 +68,19 @@ namespace
                 MdThrowLastWinerror();
             }
 
-            const BYTE *pData = static_cast<const BYTE*>(::LockResource(hresource));
+            auto pData = static_cast<const BYTE*>(::LockResource(hresource));
 
-	        const CComBSTR bstr(dwSize, (LPCSTR)pData);
+            const CComBSTR bstr(dwSize, (LPCSTR)pData);
 
             s = bstr;
         }
-        catch (CException *pe)
+        catch (CException* pe)
         {
             pe->ReportError();
             pe->Delete();
         }
 
-        if(hresource != nullptr)
+        if (hresource != nullptr)
         {
             ::FreeResource(hresource);
         }
@@ -159,7 +159,7 @@ void CAboutDlg::CMyTabControl::SetPageText(int tab)
         break;
     case TAB_LICENSE:
         {
-            text = GetTextResource(IDR_LICENSE, nullptr);
+            text     = GetTextResource(IDR_LICENSE, nullptr);
             newStyle = ES_LEFT;
         }
         break;
@@ -182,7 +182,7 @@ void CAboutDlg::CMyTabControl::SetPageText(int tab)
     m_text.DestroyWindow();
 
     m_text.Create(style, rc, this, RE_CONTROL);
-    if(exstyle)
+    if (exstyle)
     {
         m_text.ModifyStyleEx(0, exstyle);
     }
@@ -202,12 +202,12 @@ BEGIN_MESSAGE_MAP(CAboutDlg::CMyTabControl, CTabCtrl)
     ON_WM_SIZE()
 END_MESSAGE_MAP()
 
-void CAboutDlg::CMyTabControl::OnEnLinkText(NMHDR *pNMHDR, LRESULT *pResult)
+void CAboutDlg::CMyTabControl::OnEnLinkText(NMHDR* pNMHDR, LRESULT* pResult)
 {
-	const ENLINK *el = reinterpret_cast<ENLINK *>(pNMHDR);
-    *pResult = 0;
+    const ENLINK* el = reinterpret_cast<ENLINK*>(pNMHDR);
+    *pResult         = 0;
 
-    if(WM_LBUTTONDOWN == el->msg)
+    if (WM_LBUTTONDOWN == el->msg)
     {
         CStringW link;
         m_text.GetTextRange(el->chrg.cpMin, el->chrg.cpMax, link);
@@ -217,12 +217,12 @@ void CAboutDlg::CMyTabControl::OnEnLinkText(NMHDR *pNMHDR, LRESULT *pResult)
     }
 }
 
-void CAboutDlg::CMyTabControl::OnEnMsgFilter(NMHDR *pNMHDR, LRESULT *pResult)
+void CAboutDlg::CMyTabControl::OnEnMsgFilter(NMHDR* pNMHDR, LRESULT* pResult)
 {
-	const MSGFILTER *mf = reinterpret_cast<MSGFILTER *>(pNMHDR);
-    *pResult = 0;
+    const MSGFILTER* mf = reinterpret_cast<MSGFILTER*>(pNMHDR);
+    *pResult            = 0;
 
-    if(WM_KEYDOWN == mf->msg && (VK_ESCAPE == mf->wParam || VK_TAB == mf->wParam))
+    if (WM_KEYDOWN == mf->msg && (VK_ESCAPE == mf->wParam || VK_TAB == mf->wParam))
     {
         // Move the focus back to the Tab control
         SetFocus();
@@ -237,7 +237,7 @@ void CAboutDlg::CMyTabControl::OnSize(UINT nType, int cx, int cy)
 {
     CTabCtrl::OnSize(nType, cx, cy);
 
-    if(::IsWindow(m_text.m_hWnd))
+    if (::IsWindow(m_text.m_hWnd))
     {
         CRect rc;
         GetClientRect(rc);
@@ -256,7 +256,7 @@ void CAboutDlg::CMyTabControl::OnSize(UINT nType, int cx, int cy)
 
 CAboutDlg::CAboutDlg()
     : CDialog(CAboutDlg::IDD)
-    , m_layout(this, L"aboutdlg")
+      , m_layout(this, L"aboutdlg")
 {
 }
 
@@ -298,9 +298,9 @@ BOOL CAboutDlg::OnInitDialog()
 {
     CDialog::OnInitDialog();
 
-    m_layout.AddControl(IDC_CAPTION,    0.5, 0, 0, 0);
-    m_layout.AddControl(IDC_TAB,        0,   0, 1, 1);
-    m_layout.AddControl(IDOK,           0.5, 1, 0, 0);
+    m_layout.AddControl(IDC_CAPTION, 0.5, 0, 0, 0);
+    m_layout.AddControl(IDC_TAB, 0, 0, 1, 1);
+    m_layout.AddControl(IDOK, 0.5, 1, 0, 0);
 
     m_layout.OnInitDialog(true);
 
@@ -310,7 +310,7 @@ BOOL CAboutDlg::OnInitDialog()
     return true;
 }
 
-void CAboutDlg::OnTcnSelchangeTab(NMHDR * /* pNMHDR */, LRESULT *pResult)
+void CAboutDlg::OnTcnSelchangeTab(NMHDR* /* pNMHDR */, LRESULT* pResult)
 {
     *pResult = 0;
     m_tab.SetPageText(m_tab.GetCurSel());

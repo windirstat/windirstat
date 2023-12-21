@@ -48,10 +48,18 @@
 #define RGB_GET_GVALUE(rgb) (((rgb) & 0xFF00) >> 8)
 #define RGB_GET_BVALUE(rgb) (((rgb) & 0xFF0000) >> 16)
 
-template<typename T> int signum(T x) { return x < 0 ? -1 : x == 0 ? 0 : 1; }
+template <typename T>
+int signum(T x)
+{
+    return x < 0 ? -1 : x == 0 ? 0 : 1;
+}
 
 /// signum function for unsigned numbers.
-template<typename T> int usignum(T x, T y) { return x < y ? -1 : x == y ? 0 : 1; }
+template <typename T>
+int usignum(T x, T y)
+{
+    return x < y ? -1 : x == y ? 0 : 1;
+}
 
 #if defined _M_IX86
 #    pragma comment(linker, "/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='x86' publicKeyToken='6595b64144ccf1df' language='*'\"")

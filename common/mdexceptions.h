@@ -31,7 +31,7 @@
 #include <stdarg.h>
 #endif
 
-class CMdStringException: public CException
+class CMdStringException : public CException
 {
 public:
     CMdStringException(LPCWSTR pszText)
@@ -39,14 +39,15 @@ public:
     {
     }
 
-    BOOL GetErrorMessage(LPWSTR lpszError, UINT nMaxError, UINT *pnHelpContext = nullptr) override
+    BOOL GetErrorMessage(LPWSTR lpszError, UINT nMaxError, UINT* pnHelpContext = nullptr) override
     {
-        if(pnHelpContext != nullptr)
+        if (pnHelpContext != nullptr)
         {
             *pnHelpContext = 0;
         }
-        if(nMaxError != 0 && lpszError != nullptr)
-        {// TODO, fix parameters
+        if (nMaxError != 0 && lpszError != nullptr)
+        {
+            // TODO, fix parameters
             wcscpy_s(lpszError, nMaxError, m_sText);
         }
         return true;
@@ -56,14 +57,14 @@ protected:
     CStringW m_sText;
 };
 
-inline CStringW MdGetExceptionMessage(const CException *pe)
+inline CStringW MdGetExceptionMessage(const CException* pe)
 {
-	constexpr INT ccBufferSize = 0x400;
+    constexpr INT ccBufferSize = 0x400;
     CStringW s;
     const BOOL b = pe->GetErrorMessage(s.GetBuffer(ccBufferSize), ccBufferSize);
     s.ReleaseBuffer();
 
-    if(!b)
+    if (!b)
     {
         s = "(no error message available)";
     }
@@ -84,9 +85,9 @@ inline CStringW MdGetWinErrorText(HRESULT hr)
         0,
         nullptr
     );
-    if(NULL == dw)
+    if (NULL == dw)
     {
-	    const CStringW s(MAKEINTRESOURCE(AFX_IDP_NO_ERROR_AVAILABLE));
+        const CStringW s(MAKEINTRESOURCE(AFX_IDP_NO_ERROR_AVAILABLE));
         sRet.Format(L"%s (0x%08lx)", s.GetString(), hr);
     }
     else
@@ -109,7 +110,7 @@ inline void MdThrowStringException(LPCWSTR pszText)
 
 inline void __MdFormatStringExceptionV(CStringW& rsText, LPCWSTR pszFormat, va_list vlist)
 {
-// CStringW sFormat(); // may be a MAKEINTRESOURCE
+    // CStringW sFormat(); // may be a MAKEINTRESOURCE
     rsText.FormatMessageV(CStringW(pszFormat), &vlist);
 }
 
@@ -173,7 +174,7 @@ inline void MdThrowLastWinerror(LPCWSTR pszPrefix = nullptr)
 
 inline void MdThrowFailed(HRESULT hr, LPCWSTR pszPrefix = nullptr)
 {
-    if(FAILED(hr))
+    if (FAILED(hr))
     {
         MdThrowHresult(hr, pszPrefix);
     }

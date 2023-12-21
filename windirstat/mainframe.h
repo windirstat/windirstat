@@ -50,7 +50,7 @@ enum LOGICAL_FOCUS
 //
 // COptionsPropertySheet. The options dialog.
 //
-class COptionsPropertySheet: public CPropertySheet
+class COptionsPropertySheet : public CPropertySheet
 {
     DECLARE_DYNAMIC(COptionsPropertySheet)
 
@@ -59,7 +59,7 @@ public:
     void SetLanguageChanged(bool changed);
     BOOL OnInitDialog() override;
 
-    bool m_restartApplication;  // [out]
+    bool m_restartApplication; // [out]
 
 protected:
     BOOL OnCommand(WPARAM wParam, LPARAM lParam) override;
@@ -73,7 +73,7 @@ protected:
 // CMySplitterWnd. A CSplitterWnd with 2 columns or rows, which
 // knows about the current split ratio and retains it even when resized.
 //
-class CMySplitterWnd: public CSplitterWnd
+class CMySplitterWnd : public CSplitterWnd
 {
 public:
     CMySplitterWnd(LPCWSTR name);
@@ -83,13 +83,14 @@ public:
     void RestoreSplitterPos(double posIfVirgin);
 
 protected:
-    CStringW m_persistenceName;  // Name of object for CPersistence
+    CStringW m_persistenceName; // Name of object for CPersistence
     double m_splitterPos;       // Current split ratio
     bool m_wasTrackedByUser;    // True as soon as user has modified the splitter position
     double m_userSplitterPos;   // Split ratio as set by the user
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnSize(UINT nType, int cx, int cy);
+
 public:
     afx_msg void OnDestroy();
 };
@@ -97,7 +98,7 @@ public:
 //
 // CPacmanControl. Pacman on the status bar.
 //
-class CPacmanControl: public CStatic
+class CPacmanControl : public CStatic
 {
 public:
     CPacmanControl();
@@ -121,11 +122,11 @@ protected:
 // On VK_TAB CDeadFocusWnd moves the focus to the
 // directory list then.
 //
-class CDeadFocusWnd: public CWnd
+class CDeadFocusWnd : public CWnd
 {
 public:
     CDeadFocusWnd() = default;
-    void Create(CWnd *parent);
+    void Create(CWnd* parent);
     ~CDeadFocusWnd() override;
 
 protected:
@@ -137,16 +138,16 @@ protected:
 //
 // CMainFrame. The main application window.
 //
-class CMainFrame: public CFrameWnd
+class CMainFrame : public CFrameWnd
 {
 protected:
     static UINT s_taskBarMessage;
-    static CMainFrame *_theFrame;
-    CMainFrame();   // Created by MFC only
+    static CMainFrame* _theFrame;
+    CMainFrame(); // Created by MFC only
     DECLARE_DYNCREATE(CMainFrame)
 
 public:
-    static CMainFrame *GetTheFrame();
+    static CMainFrame* GetTheFrame();
     ~CMainFrame() override;
     void InitialShowWindow();
 
@@ -156,9 +157,9 @@ public:
     void MinimizeTypeView();
     void CopyToClipboard(LPCWSTR psz);
 
-    CDirstatView *GetDirstatView();
-    CGraphView *GetGraphView();
-    CTypeView *GetTypeView();
+    CDirstatView* GetDirstatView();
+    CGraphView* GetGraphView();
+    CTypeView* GetTypeView();
 
     void ShowProgress(ULONGLONG range);
     void HideProgress();
@@ -168,7 +169,7 @@ public:
     void DrivePacman();
 
     void UpdateProgress();
-    void AppendUserDefinedCleanups(CMenu *menu);
+    void AppendUserDefinedCleanups(CMenu* menu);
 
     void SetLogicalFocus(LOGICAL_FOCUS lf);
     LOGICAL_FOCUS GetLogicalFocus();
@@ -188,23 +189,23 @@ protected:
     void CreateSuspendButton(CRect& rc);
     void DestroyProgress();
 
-    void UpdateCleanupMenu(CMenu *menu);
+    void UpdateCleanupMenu(CMenu* menu);
 
-    bool m_progressVisible;     // True while progress must be shown (either pacman or progress bar)
-    ULONGLONG m_progressRange;  // Progress range. A range of 0 means that we have no range available. In this case we should display pacman.
-    ULONGLONG m_progressPos;    // Progress position (<= progressRange, or an item count in case of m_progressRang == 0)
+    bool m_progressVisible;    // True while progress must be shown (either pacman or progress bar)
+    ULONGLONG m_progressRange; // Progress range. A range of 0 means that we have no range available. In this case we should display pacman.
+    ULONGLONG m_progressPos;   // Progress position (<= progressRange, or an item count in case of m_progressRang == 0)
 
-    CMySplitterWnd m_wndSubSplitter;    // Contains the two upper views
-    CMySplitterWnd m_wndSplitter;       // Contains (a) m_wndSubSplitter and (b) the graph view.
+    CMySplitterWnd m_wndSubSplitter; // Contains the two upper views
+    CMySplitterWnd m_wndSplitter;    // Contains (a) m_wndSubSplitter and (b) the graph view.
 
-    CStatusBar  m_wndStatusBar;     // Status bar
-    CToolBar    m_wndToolBar;       // Tool bar
-    CProgressCtrl   m_progress;     // Progress control. Is Create()ed and Destroy()ed again every time.
-    CPacmanControl  m_pacman;       // Static control for Pacman.
-    CButton         m_suspendButton;// Progress-Suspend-Button
+    CStatusBar m_wndStatusBar; // Status bar
+    CToolBar m_wndToolBar;     // Tool bar
+    CProgressCtrl m_progress;  // Progress control. Is Create()ed and Destroy()ed again every time.
+    CPacmanControl m_pacman;   // Static control for Pacman.
+    CButton m_suspendButton;   // Progress-Suspend-Button
 
-    LOGICAL_FOCUS   m_logicalFocus; // Which view has the logical focus
-    CDeadFocusWnd   m_wndDeadFocus; // Zero-size window which holds the focus if logical focus is "NONE"
+    LOGICAL_FOCUS m_logicalFocus; // Which view has the logical focus
+    CDeadFocusWnd m_wndDeadFocus; // Zero-size window which holds the focus if logical focus is "NONE"
 
     CComPtr<ITaskbarList3> m_TaskbarList;
     TBPFLAG m_TaskbarButtonState, m_TaskbarButtonPreviousState;
@@ -215,11 +216,11 @@ protected:
     afx_msg LRESULT OnExitSizeMove(WPARAM, LPARAM);
     afx_msg void OnClose();
     afx_msg void OnInitMenuPopup(CMenu* pPopupMenu, UINT nIndex, BOOL bSysMenu);
-    afx_msg void OnUpdateMemoryUsage(CCmdUI *pCmdUI);
+    afx_msg void OnUpdateMemoryUsage(CCmdUI* pCmdUI);
     afx_msg void OnSize(UINT nType, int cx, int cy);
-    afx_msg void OnUpdateViewShowtreemap(CCmdUI *pCmdUI);
+    afx_msg void OnUpdateViewShowtreemap(CCmdUI* pCmdUI);
     afx_msg void OnViewShowtreemap();
-    afx_msg void OnUpdateViewShowfiletypes(CCmdUI *pCmdUI);
+    afx_msg void OnUpdateViewShowfiletypes(CCmdUI* pCmdUI);
     afx_msg void OnViewShowfiletypes();
     afx_msg void OnConfigure();
     afx_msg void OnDestroy();
@@ -228,9 +229,9 @@ protected:
     afx_msg LRESULT OnTaskButtonCreated(WPARAM, LPARAM);
 
 public:
-    #ifdef _DEBUG
+#ifdef _DEBUG
     void AssertValid() const override;
     void Dump(CDumpContext& dc) const override;
-    #endif
-        afx_msg void OnSysColorChange();
+#endif
+    afx_msg void OnSysColorChange();
 };

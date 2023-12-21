@@ -32,14 +32,15 @@ namespace
 }
 
 
-CModalShellApi::CModalShellApi(): m_operation(0), m_toRecycleBin(false)
+CModalShellApi::CModalShellApi()
+    : m_operation(0), m_toRecycleBin(false)
 {
 }
 
 void CModalShellApi::DeleteFile(LPCWSTR fileName, bool toRecycleBin)
 {
-    m_operation = DELETE_FILE;
-    m_fileName = fileName;
+    m_operation    = DELETE_FILE;
+    m_fileName     = fileName;
     m_toRecycleBin = toRecycleBin;
 
     DoModal();
@@ -59,14 +60,14 @@ void CModalShellApi::DoOperation()
 
 void CModalShellApi::DoDeleteFile()
 {
-	const int len = m_fileName.GetLength();
-	const LPWSTR psz = m_fileName.GetBuffer(len + 2);
-    psz[len + 1]= 0;
+    const int len    = m_fileName.GetLength();
+    const LPWSTR psz = m_fileName.GetBuffer(len + 2);
+    psz[len + 1]     = 0;
 
     SHFILEOPSTRUCT sfos;
     ZeroMemory(&sfos, sizeof(sfos));
-    sfos.wFunc = FO_DELETE;
-    sfos.pFrom = psz;
+    sfos.wFunc  = FO_DELETE;
+    sfos.pFrom  = psz;
     sfos.fFlags = m_toRecycleBin ? FOF_ALLOWUNDO : 0;
 
     sfos.hwnd = *AfxGetMainWnd();

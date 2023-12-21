@@ -32,6 +32,7 @@
 class CPageTreemap final : public CPropertyPage
 {
     DECLARE_DYNAMIC(CPageTreemap)
+
     enum { IDD = IDD_PAGE_TREEMAP };
 
 public:
@@ -48,10 +49,10 @@ protected:
     BOOL OnInitDialog() override;
     void OnOK() override;
 
-    CTreemap::Options m_options;    // Current options
+    CTreemap::Options m_options; // Current options
 
-    bool m_altered;                 // Values have been altered. Button reads "Reset to defaults".
-    CTreemap::Options m_undo;       // Valid, if m_altered = false
+    bool m_altered;           // Values have been altered. Button reads "Reset to defaults".
+    CTreemap::Options m_undo; // Valid, if m_altered = false
 
     CTreemapPreview m_preview;
 
@@ -82,13 +83,12 @@ protected:
     CButton m_resetButton;
 
     DECLARE_MESSAGE_MAP()
-    afx_msg void OnColorChangedTreemapGrid(NMHDR *, LRESULT *);
-    afx_msg void OnColorChangedTreemapHighlight(NMHDR *, LRESULT *);
+    afx_msg void OnColorChangedTreemapGrid(NMHDR*, LRESULT*);
+    afx_msg void OnColorChangedTreemapHighlight(NMHDR*, LRESULT*);
     afx_msg void OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
-    afx_msg void OnLightSourceChanged(NMHDR *, LRESULT *);
+    afx_msg void OnLightSourceChanged(NMHDR*, LRESULT*);
     afx_msg void OnBnClickedKdirstat();
     afx_msg void OnBnClickedSequoiaview();
     afx_msg void OnBnClickedTreemapgrid();
     afx_msg void OnBnClickedReset();
-
 };

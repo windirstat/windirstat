@@ -25,11 +25,11 @@
 #include "selectobject.h"
 #include "layout.h"
 
-CLayout::CLayout(CWnd *dialog, LPCWSTR name)
+CLayout::CLayout(CWnd* dialog, LPCWSTR name)
 {
     ASSERT(dialog != NULL);
     m_dialog = dialog;
-    m_name = name;
+    m_name   = name;
 
     // This is necessary because OnGetMinMaxInfo() will be called
     // before OnInitDialog!
@@ -37,7 +37,7 @@ CLayout::CLayout(CWnd *dialog, LPCWSTR name)
     m_originalDialogSize.cy = 0;
 }
 
-int CLayout::AddControl(CWnd *control, double movex, double movey, double stretchx, double stretchy)
+int CLayout::AddControl(CWnd* control, double movex, double movey, double stretchx, double stretchy)
 {
     SControlInfo info(control, movex, movey, stretchx, stretchy);
 
@@ -57,7 +57,7 @@ void CLayout::OnInitDialog(bool centerWindow)
     m_dialog->GetWindowRect(rcDialog);
     m_originalDialogSize = rcDialog.Size();
 
-    for(int i = 0; i < m_control.GetSize(); i++)
+    for (int i = 0; i < m_control.GetSize(); i++)
     {
         CRect rc;
         m_control[i].control->GetWindowRect(rc);
@@ -68,15 +68,15 @@ void CLayout::OnInitDialog(bool centerWindow)
     CRect sg;
     m_dialog->GetClientRect(sg);
     sg.left = sg.right - m_sizeGripper._width;
-    sg.top = sg.bottom - m_sizeGripper._width;
+    sg.top  = sg.bottom - m_sizeGripper._width;
     m_sizeGripper.Create(m_dialog, sg);
 
-    const int i = AddControl(&m_sizeGripper, 1, 1, 0, 0);
+    const int i                    = AddControl(&m_sizeGripper, 1, 1, 0, 0);
     m_control[i].originalRectangle = sg;
 
     CPersistence::GetDialogRectangle(m_name, rcDialog);
     m_dialog->MoveWindow(rcDialog);
-    if(centerWindow)
+    if (centerWindow)
     {
         m_dialog->CenterWindow();
     }
@@ -99,7 +99,7 @@ void CLayout::OnSize()
 
     CPositioner pos(static_cast<int>(m_control.GetSize()));
 
-    for(int i = 0; i < m_control.GetSize(); i++)
+    for (int i = 0; i < m_control.GetSize(); i++)
     {
         CRect rc = m_control[i].originalRectangle;
 
@@ -113,7 +113,7 @@ void CLayout::OnSize()
     }
 }
 
-void CLayout::OnGetMinMaxInfo(MINMAXINFO *mmi) const
+void CLayout::OnGetMinMaxInfo(MINMAXINFO* mmi) const
 {
     mmi->ptMinTrackSize.x = m_originalDialogSize.cx;
     mmi->ptMinTrackSize.y = m_originalDialogSize.cy;
@@ -124,7 +124,7 @@ void CLayout::OnGetMinMaxInfo(MINMAXINFO *mmi) const
 
 const int CLayout::CSizeGripper::_width = 14;
 
-void CLayout::CSizeGripper::Create(CWnd *parent, CRect rc)
+void CLayout::CSizeGripper::Create(CWnd* parent, CRect rc)
 {
     VERIFY(CWnd::Create(
         AfxRegisterWndClass(
@@ -161,8 +161,8 @@ void CLayout::CSizeGripper::OnPaint()
 
     start.x = 1;
     start.y = _width;
-    end.x = _width;
-    end.y = 1;
+    end.x   = _width;
+    end.y   = 1;
 
     DrawShadowLine(&dc, start, end);
 
@@ -179,7 +179,7 @@ void CLayout::CSizeGripper::OnPaint()
     // Do not call CWnd::OnPaint() for painting messages
 }
 
-void CLayout::CSizeGripper::DrawShadowLine(CDC *pdc, CPoint start, CPoint end)
+void CLayout::CSizeGripper::DrawShadowLine(CDC* pdc, CPoint start, CPoint end)
 {
     {
         CPen lightPen(PS_SOLID, 1, ::GetSysColor(COLOR_3DHIGHLIGHT));
@@ -211,7 +211,7 @@ LRESULT CLayout::CSizeGripper::OnNcHitTest(CPoint point)
 {
     ScreenToClient(&point);
 
-    if(point.x + point.y >= _width)
+    if (point.x + point.y >= _width)
     {
         return HTBOTTOMRIGHT;
     }
@@ -220,7 +220,7 @@ LRESULT CLayout::CSizeGripper::OnNcHitTest(CPoint point)
 }
 
 CLayout::CPositioner::CPositioner(int nNumWindows)
-: m_wdp(::BeginDeferWindowPos(nNumWindows))
+    : m_wdp(::BeginDeferWindowPos(nNumWindows))
 {
 }
 

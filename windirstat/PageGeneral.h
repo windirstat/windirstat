@@ -29,6 +29,7 @@ class COptionsPropertySheet;
 class CPageGeneral final : public CPropertyPage
 {
     DECLARE_DYNAMIC(CPageGeneral)
+
     enum { IDD = IDD_PAGE_GENERAL };
 
 public:
@@ -36,7 +37,7 @@ public:
     ~CPageGeneral() override;
 
 protected:
-    COptionsPropertySheet *GetSheet() const;
+    COptionsPropertySheet* GetSheet() const;
 
     void DoDataExchange(CDataExchange* pDX) override;
     BOOL OnInitDialog() override;

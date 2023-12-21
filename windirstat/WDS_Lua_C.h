@@ -10,7 +10,7 @@ extern "C"
 #   include <lua.h>
 #   include <lauxlib.h>
 #   include <lualib.h>
-    lua_State* luaWDS_open();
+lua_State* luaWDS_open();
 #ifdef __cplusplus
 };
 #endif // __cplusplus
@@ -29,4 +29,4 @@ extern "C"
         lua_call(L, 1, 1)
 #endif // lua_pushtstring_lowercase
 
-EXTERN_C void stackDump(lua_State *L, char* description);
+EXTERN_C void stackDump(lua_State* L, char* description);

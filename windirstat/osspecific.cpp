@@ -25,20 +25,20 @@
 // Required to use the system image lists
 // - http://www.catch22.net/tuts/sysimg
 // - http://msdn.microsoft.com/en-us/library/bb776418(VS.85).aspx
-BOOL FileIconInit(__in  BOOL fRestoreCache)
+BOOL FileIconInit(__in BOOL fRestoreCache)
 {
-    typedef BOOL (WINAPI * TFNFileIconInit)(BOOL);
-    static HMODULE hShell32 = nullptr;
+    using TFNFileIconInit = BOOL(WINAPI *)(BOOL);
+    static HMODULE hShell32                = nullptr;
     static TFNFileIconInit pfnFileIconInit = nullptr;
-    if(!hShell32)
+    if (!hShell32)
     {
         hShell32 = ::LoadLibrary(TEXT("shell32.dll"));
     }
-    if(hShell32 && !pfnFileIconInit)
+    if (hShell32 && !pfnFileIconInit)
     {
         pfnFileIconInit = reinterpret_cast<TFNFileIconInit>(::GetProcAddress(hShell32, reinterpret_cast<LPCSTR>(660)));
     }
-    if(pfnFileIconInit)
+    if (pfnFileIconInit)
     {
         return pfnFileIconInit(fRestoreCache);
     }
@@ -47,15 +47,15 @@ BOOL FileIconInit(__in  BOOL fRestoreCache)
 
 CStringW GetCurrentDesktopName()
 {
-    if(const HDESK hDesktop = ::GetThreadDesktop(::GetCurrentThreadId()))
+    if (const HDESK hDesktop = ::GetThreadDesktop(::GetCurrentThreadId()))
     {
         DWORD dwNeeded = 0;
-        if(!::GetUserObjectInformation(hDesktop, UOI_NAME, nullptr, 0, &dwNeeded) && dwNeeded)
+        if (!::GetUserObjectInformation(hDesktop, UOI_NAME, nullptr, 0, &dwNeeded) && dwNeeded)
         {
             CStringW retval;
             dwNeeded += sizeof(WCHAR);
             const LPWSTR buf = retval.GetBuffer(dwNeeded);
-            if(::GetUserObjectInformation(hDesktop, UOI_NAME, buf, dwNeeded, &dwNeeded))
+            if (::GetUserObjectInformation(hDesktop, UOI_NAME, buf, dwNeeded, &dwNeeded))
             {
                 retval.ReleaseBuffer();
                 return retval;
@@ -67,15 +67,15 @@ CStringW GetCurrentDesktopName()
 
 CStringW GetCurrentWinstaName()
 {
-    if(const HWINSTA hWinsta = GetProcessWindowStation())
+    if (const HWINSTA hWinsta = GetProcessWindowStation())
     {
         DWORD dwNeeded = 0;
-        if(!GetUserObjectInformation(hWinsta, UOI_NAME, nullptr, 0, &dwNeeded) && dwNeeded)
+        if (!GetUserObjectInformation(hWinsta, UOI_NAME, nullptr, 0, &dwNeeded) && dwNeeded)
         {
             CStringW retval;
             dwNeeded += sizeof(WCHAR);
             const LPWSTR buf = retval.GetBuffer(dwNeeded);
-            if(GetUserObjectInformation(hWinsta, UOI_NAME, buf, dwNeeded, &dwNeeded))
+            if (GetUserObjectInformation(hWinsta, UOI_NAME, buf, dwNeeded, &dwNeeded))
             {
                 retval.ReleaseBuffer();
                 return retval;

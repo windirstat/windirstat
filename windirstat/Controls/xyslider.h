@@ -26,13 +26,13 @@
 //
 // CXySlider. A two-dimensional slider.
 //
-class CXySlider: public CStatic
+class CXySlider : public CStatic
 {
     DECLARE_DYNAMIC(CXySlider)
 
 public:
-    static const UINT XY_SETPOS;    // lparam = POINT *
-    static const UINT XY_GETPOS;    // lparam = POINT *
+    static const UINT XY_SETPOS; // lparam = POINT *
+    static const UINT XY_GETPOS; // lparam = POINT *
 
     CXySlider();
 
@@ -54,9 +54,9 @@ protected:
     void ExternToIntern();
     void NotifyParent();
 
-    void PaintBackground(CDC *pdc);
+    void PaintBackground(CDC* pdc);
     // void PaintValues(CDC *pdc); This is too noisy
-    void PaintGripper(CDC *pdc);
+    void PaintGripper(CDC* pdc);
     void DoMoveBy(int cx, int cy);
     void DoDrag(CPoint point);
     void DoPage(CPoint point);
@@ -72,7 +72,7 @@ protected:
 
     // These are in pixels
     CSize m_range;
-    CPoint m_pos;   // relative to m_zero
+    CPoint m_pos; // relative to m_zero
 
     // Constants (in pixels)
     CRect m_rcAll;

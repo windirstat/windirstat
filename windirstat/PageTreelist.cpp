@@ -28,9 +28,9 @@ IMPLEMENT_DYNAMIC(CPageTreelist, CPropertyPage)
 
 CPageTreelist::CPageTreelist()
     : CPropertyPage(CPageTreelist::IDD)
-    , m_pacmanAnimation(FALSE)
-    , m_showTimeSpent(FALSE)
-    , m_treelistColorCount(TREELISTCOLORCOUNT)
+      , m_pacmanAnimation(FALSE)
+      , m_showTimeSpent(FALSE)
+      , m_treelistColorCount(TREELISTCOLORCOUNT)
 {
 }
 
@@ -39,12 +39,12 @@ void CPageTreelist::DoDataExchange(CDataExchange* pDX)
     CPropertyPage::DoDataExchange(pDX);
     DDX_Check(pDX, IDC_PACMANANIMATION, m_pacmanAnimation);
     DDX_Check(pDX, IDC_SHOWTIMESPENT, m_showTimeSpent);
-    for(int i = 0; i < TREELISTCOLORCOUNT; i++)
+    for (int i = 0; i < TREELISTCOLORCOUNT; i++)
     {
         DDX_Control(pDX, IDC_COLORBUTTON0 + i, m_colorButton[i]);
-        if(pDX->m_bSaveAndValidate)
+        if (pDX->m_bSaveAndValidate)
         {
-            m_treelistColor[i]= m_colorButton[i].GetColor();
+            m_treelistColor[i] = m_colorButton[i].GetColor();
         }
         else
         {
@@ -67,8 +67,8 @@ BOOL CPageTreelist::OnInitDialog()
 {
     CPropertyPage::OnInitDialog();
 
-    m_pacmanAnimation = GetOptions()->IsPacmanAnimation();
-    m_showTimeSpent = GetOptions()->IsShowTimeSpent();
+    m_pacmanAnimation    = GetOptions()->IsPacmanAnimation();
+    m_showTimeSpent      = GetOptions()->IsShowTimeSpent();
     m_treelistColorCount = GetOptions()->GetTreelistColorCount();
     GetOptions()->GetTreelistColors(m_treelistColor);
 
@@ -101,7 +101,7 @@ void CPageTreelist::OnBnClickedShowTimeSpent()
     SetModified();
 }
 
-void CPageTreelist::OnColorChanged(UINT, NMHDR *, LRESULT *)
+void CPageTreelist::OnColorChanged(UINT, NMHDR*, LRESULT*)
 {
     SetModified();
 }
@@ -109,11 +109,11 @@ void CPageTreelist::OnColorChanged(UINT, NMHDR *, LRESULT *)
 void CPageTreelist::EnableButtons()
 {
     int i = 0;
-    for(i = 0; i < m_treelistColorCount; i++)
+    for (i = 0; i < m_treelistColorCount; i++)
     {
         m_colorButton[i].EnableWindow(true);
     }
-    for(; i < TREELISTCOLORCOUNT; i++)
+    for (; i < TREELISTCOLORCOUNT; i++)
     {
         m_colorButton[i].EnableWindow(false);
     }
@@ -121,9 +121,9 @@ void CPageTreelist::EnableButtons()
 
 void CPageTreelist::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 {
-    if(reinterpret_cast<CSliderCtrl*>(pScrollBar) == &m_slider)
+    if (reinterpret_cast<CSliderCtrl*>(pScrollBar) == &m_slider)
     {
-	    const int pos = m_slider.GetPos();
+        const int pos = m_slider.GetPos();
         ASSERT(pos > 0);
         ASSERT(pos <= TREELISTCOLORCOUNT);
 

@@ -41,7 +41,7 @@ protected:
 
     void DoDeleteFile();
 
-    int m_operation;        // Enum specifying the desired operation
-    CStringW m_fileName;     // File name to be deleted
-    bool m_toRecycleBin;    // True if file shall only be move to the recycle bin
+    int m_operation;     // Enum specifying the desired operation
+    CStringW m_fileName; // File name to be deleted
+    bool m_toRecycleBin; // True if file shall only be move to the recycle bin
 };

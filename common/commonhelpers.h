@@ -25,7 +25,7 @@
 
 BOOL ShellExecuteThrow(HWND hwnd, LPCWSTR lpVerb, LPCWSTR lpFile, LPCWSTR lpParameters, LPCWSTR lpDirectory, INT nShowCmd);
 BOOL ShellExecuteNoThrow(HWND hwnd, LPCWSTR lpVerb, LPCWSTR lpFile, LPCWSTR lpParameters, LPCWSTR lpDirectory, INT nShowCmd);
-CStringW MyStrRetToString(const LPITEMIDLIST pidl, const STRRET *strret);
+CStringW MyStrRetToString(const LPITEMIDLIST pidl, const STRRET* strret);
 CStringW GetBaseNameFromPath(LPCWSTR path);
 CStringW LoadString(UINT resId);
 CStringW GetAppFileName();

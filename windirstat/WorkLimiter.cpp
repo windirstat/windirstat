@@ -3,17 +3,17 @@
 
 CWorkLimiter::CWorkLimiter()
     : m_done()
-    , m_tickLimit()
-    , m_prevTicks()
+      , m_tickLimit()
+      , m_prevTicks()
 {
 }
 
 void CWorkLimiter::Start(ULONGLONG ticks)
 {
-	const ULONGLONG start = CWorkLimiter::Now();
-    m_done = false;
-    m_tickLimit = start + ticks;
-    m_prevTicks = start;
+    const ULONGLONG start = CWorkLimiter::Now();
+    m_done                = false;
+    m_tickLimit           = start + ticks;
+    m_prevTicks           = start;
 }
 
 bool CWorkLimiter::IsDone() const

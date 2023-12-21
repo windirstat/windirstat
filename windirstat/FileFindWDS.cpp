@@ -33,7 +33,7 @@ DWORD CFileFindWDS::GetAttributes() const
     {
         return INVALID_FILE_ATTRIBUTES;
     }
-        
+
     return static_cast<LPWIN32_FIND_DATA>(m_pFoundInfo)->dwFileAttributes;
 }
 

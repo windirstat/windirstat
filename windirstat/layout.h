@@ -29,9 +29,10 @@
 //
 class CLayout
 {
-	template<typename T> struct SControlInfoT
+    template <typename T>
+    struct SControlInfoT
     {
-        CWnd *control;
+        CWnd* control;
         T movex;
         T movey;
         T stretchx;
@@ -41,37 +42,38 @@ class CLayout
 
         SControlInfoT()
             : control(nullptr)
-            , movex(std::numeric_limits<T>::quiet_NaN())
-            , movey(std::numeric_limits<T>::quiet_NaN())
-            , stretchx(std::numeric_limits<T>::quiet_NaN())
-            , stretchy(std::numeric_limits<T>::quiet_NaN())
+              , movex(std::numeric_limits<T>::quiet_NaN())
+              , movey(std::numeric_limits<T>::quiet_NaN())
+              , stretchx(std::numeric_limits<T>::quiet_NaN())
+              , stretchy(std::numeric_limits<T>::quiet_NaN())
         {
         }
 
         SControlInfoT(CWnd* ctl, T& x, T& y, T& w, T& h)
             : control(ctl)
-            , movex(x)
-            , movey(y)
-            , stretchx(w)
-            , stretchy(h)
+              , movex(x)
+              , movey(y)
+              , stretchx(w)
+              , stretchy(h)
         {
         }
 
     private:
         SControlInfoT(SControlInfoT&) = default; // hide copy ctor
     };
-	typedef SControlInfoT<double> SControlInfo;
 
-    class CSizeGripper: public CWnd
+    using SControlInfo = SControlInfoT<double>;
+
+    class CSizeGripper : public CWnd
     {
     public:
         static const int _width;
 
         CSizeGripper() = default;
-        void Create(CWnd *parent, CRect rc);
+        void Create(CWnd* parent, CRect rc);
 
     private:
-        static void DrawShadowLine(CDC *pdc, CPoint start, CPoint end);
+        static void DrawShadowLine(CDC* pdc, CPoint start, CPoint end);
 
         DECLARE_MESSAGE_MAP()
         afx_msg void OnPaint();
@@ -84,22 +86,23 @@ class CLayout
         CPositioner(int nNumWindows = 10);
         virtual ~CPositioner();
         void SetWindowPos(HWND hWnd, int x, int y, int cx, int cy, UINT uFlags);
+
     private:
         HDWP m_wdp;
     };
 
 public:
-    CLayout(CWnd *dialog, LPCWSTR name);
-    int AddControl(CWnd *control, double movex, double movey, double stretchx, double stretchy);
+    CLayout(CWnd* dialog, LPCWSTR name);
+    int AddControl(CWnd* control, double movex, double movey, double stretchx, double stretchy);
     void AddControl(UINT id, double movex, double movey, double stretchx, double stretchy);
 
     void OnInitDialog(bool centerWindow);
     void OnSize();
-    void OnGetMinMaxInfo(MINMAXINFO *mmi) const;
+    void OnGetMinMaxInfo(MINMAXINFO* mmi) const;
     void OnDestroy() const;
 
 protected:
-    CWnd *m_dialog;
+    CWnd* m_dialog;
     CStringW m_name;
     CSize m_originalDialogSize;
     CArray<SControlInfo, SControlInfo&> m_control;

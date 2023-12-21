@@ -32,31 +32,61 @@
 // CCoTaskMem<>. Some Windows APIs return memory which must be freed with CoTaskMemFree().
 // This template does that in its destructor.
 //
-template<class T>
+template <class T>
 class CCoTaskMem final
 {
-// construction
+    // construction
 public:
-    CCoTaskMem( T lp = 0 )
-    { p = lp; }
-    ~CCoTaskMem()
-    { if( p ) ::CoTaskMemFree( p ); }
+    CCoTaskMem(T lp = 0)
+    {
+        p = lp;
+    }
 
-    operator T() { return p; }
-    T& operator*() { _ASSERTE( p != NULL ); return p; }
+    ~CCoTaskMem()
+    {
+        if (p) ::CoTaskMemFree(p);
+    }
+
+    operator T()
+    {
+        return p;
+    }
+
+    T& operator*()
+    {
+        _ASSERTE(p != NULL);
+        return p;
+    }
+
     //The assert on operator& usually indicates a bug.  If this is really
     //what is needed, however, take the address of the p member explicitly.
     T* operator&()
-    { _ASSERTE(NULL == p); return &p; }
+    {
+        _ASSERTE(NULL == p);
+        return &p;
+    }
+
     T operator->()
-    { _ASSERTE(NULL != p); return p; }
-    T operator= ( T lp )
-    { if(NULL != p) ::CoTaskMemFree(p); p = lp; return p;}
-    bool operator!() { return NULL == p; }
+    {
+        _ASSERTE(NULL != p);
+        return p;
+    }
+
+    T operator=(T lp)
+    {
+        if (NULL != p) ::CoTaskMemFree(p);
+        p = lp;
+        return p;
+    }
+
+    bool operator!()
+    {
+        return NULL == p;
+    }
 
 private:
-    CCoTaskMem(const CCoTaskMem<T>&); // operator not allowed for CCoTaskMem
-    T operator= ( const CCoTaskMem<T>& lp ); // operator not allowed for CCoTaskMem
+    CCoTaskMem(const CCoTaskMem<T>&);     // operator not allowed for CCoTaskMem
+    T operator=(const CCoTaskMem<T>& lp); // operator not allowed for CCoTaskMem
 
     T p;
 };

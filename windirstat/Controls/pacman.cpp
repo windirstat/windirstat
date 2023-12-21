@@ -25,30 +25,30 @@
 
 namespace
 {
-	constexpr ULONGLONG UPDATEINTERVAL = 40;  // ms
-	constexpr double MOUTHSPEED = 0.0030; // aperture alteration / ms
+    constexpr ULONGLONG UPDATEINTERVAL = 40;     // ms
+    constexpr double MOUTHSPEED        = 0.0030; // aperture alteration / ms
 }
 
 CPacman::CPacman()
     : m_bgcolor(::GetSysColor(COLOR_WINDOW))
-    , m_speed(0.0005)
-    , m_moving(false)
-    , m_readJobs(0)
-    , m_toTheRight(true)
-    , m_position(0)
-    , m_mouthOpening(false)
-    , m_aperture(0)
-    , m_lastUpdate(0)
+      , m_speed(0.0005)
+      , m_moving(false)
+      , m_readJobs(0)
+      , m_toTheRight(true)
+      , m_position(0)
+      , m_mouthOpening(false)
+      , m_aperture(0)
+      , m_lastUpdate(0)
 {
     Reset();
 }
 
 void CPacman::Reset()
 {
-    m_toTheRight = true;
-    m_position = 0;
+    m_toTheRight   = true;
+    m_position     = 0;
     m_mouthOpening = true;
-    m_aperture = 0;
+    m_aperture     = 0;
 }
 
 void CPacman::SetBackgroundColor(COLORREF color)
@@ -63,7 +63,7 @@ void CPacman::SetSpeed(double speed)
 
 void CPacman::Start(bool start)
 {
-    m_moving = start;
+    m_moving     = start;
     m_lastUpdate = GetTickCount64();
 }
 
@@ -71,15 +71,15 @@ bool CPacman::Drive(ULONGLONG readJobs)
 {
     m_readJobs = static_cast<double>(readJobs);
 
-    if(!m_moving)
+    if (!m_moving)
     {
         return false;
     }
 
-    const ULONGLONG now = GetTickCount64();
+    const ULONGLONG now   = GetTickCount64();
     const ULONGLONG delta = now - m_lastUpdate;
 
-    if(delta < UPDATEINTERVAL)
+    if (delta < UPDATEINTERVAL)
     {
         return false;
     }
@@ -92,14 +92,14 @@ bool CPacman::Drive(ULONGLONG readJobs)
     return true;
 }
 
-void CPacman::Draw(CDC *pdc, const CRect& rect) const
+void CPacman::Draw(CDC* pdc, const CRect& rect) const
 {
     pdc->FillSolidRect(rect, m_bgcolor);
 
     CRect rc = rect;
     rc.DeflateRect(5, 1);
 
-    if(rc.Height() % 2 == 0)
+    if (rc.Height() % 2 == 0)
     {
         rc.bottom--;
     }
@@ -107,10 +107,10 @@ void CPacman::Draw(CDC *pdc, const CRect& rect) const
     const int diameter = rc.Height();
 
     const int left = rc.left + static_cast<int>(m_position * (rc.Width() - diameter));
-    rc.left = left;
-    rc.right = left + diameter;
+    rc.left        = left;
+    rc.right       = left + diameter;
 
-    CPen pen(PS_SOLID, 1, RGB(0,0,0));
+    CPen pen(PS_SOLID, 1, RGB(0, 0, 0));
     CSelectObject sopen(pdc, &pen);
 
     CBrush brush(CalculateColor());
@@ -120,21 +120,21 @@ void CPacman::Draw(CDC *pdc, const CRect& rect) const
     CPoint ptEnd;
     const int hmiddle = rc.top + diameter / 2;
 
-    const int mouthcy = static_cast<int>(m_aperture * m_aperture * diameter);
+    const int mouthcy      = static_cast<int>(m_aperture * m_aperture * diameter);
     const int upperMouthcy = mouthcy;
     const int lowerMouthcy = mouthcy;
 
-    if(m_toTheRight)
+    if (m_toTheRight)
     {
         ptStart.x = ptEnd.x = rc.right;
-        ptStart.y   = hmiddle - upperMouthcy;
-        ptEnd.y     = hmiddle + lowerMouthcy;
+        ptStart.y = hmiddle - upperMouthcy;
+        ptEnd.y   = hmiddle + lowerMouthcy;
     }
     else
     {
         ptStart.x = ptEnd.x = rc.left;
-        ptStart.y   = hmiddle + lowerMouthcy;
-        ptEnd.y     = hmiddle - upperMouthcy;
+        ptStart.y = hmiddle + lowerMouthcy;
+        ptEnd.y   = hmiddle - upperMouthcy;
     }
 
     pdc->Pie(rc, ptStart, ptEnd);
@@ -147,15 +147,15 @@ void CPacman::UpdatePosition(double& position, bool& up, double diff)
     ASSERT(position >= 0.0);
     ASSERT(position <= 1.0);
 
-    while(diff > 0.0)
+    while (diff > 0.0)
     {
-        if(up)
+        if (up)
         {
-            if(position + diff > 1.0)
+            if (position + diff > 1.0)
             {
-                diff = position + diff - 1.0;
+                diff     = position + diff - 1.0;
                 position = 1.0;
-                up = false;
+                up       = false;
             }
             else
             {
@@ -165,11 +165,11 @@ void CPacman::UpdatePosition(double& position, bool& up, double diff)
         }
         else
         {
-            if(position - diff < 0.0)
+            if (position - diff < 0.0)
             {
-                diff = - (position - diff);
+                diff     = -(position - diff);
                 position = 0.0;
-                up = true;
+                up       = true;
             }
             else
             {
@@ -189,20 +189,20 @@ COLORREF CPacman::CalculateColor() const
     ASSERT(a >= 0.0);
     ASSERT(a <= 1.0);
 
-/*
-    // a == 1 --> yellow
-    // a == 0 --> green
-
-    int red = (int)(a * 255);
-
-    return RGB(red, 255, 0);
-*/
+    /*
+        // a == 1 --> yellow
+        // a == 0 --> green
+    
+        int red = (int)(a * 255);
+    
+        return RGB(red, 255, 0);
+    */
     // a == 1 --> yellow
     // a == 0 --> bgcolor
 
-    const int red     = static_cast<int>(a * 255 + (1 - a) * RGB_GET_RVALUE(m_bgcolor));
-    const int green   = static_cast<int>(a * 255 + (1 - a) * RGB_GET_GVALUE(m_bgcolor));
-    const int blue    = static_cast<int>((1 - a) * RGB_GET_BVALUE(m_bgcolor));
+    const int red   = static_cast<int>(a * 255 + (1 - a) * RGB_GET_RVALUE(m_bgcolor));
+    const int green = static_cast<int>(a * 255 + (1 - a) * RGB_GET_GVALUE(m_bgcolor));
+    const int blue  = static_cast<int>((1 - a) * RGB_GET_BVALUE(m_bgcolor));
 
     return RGB(red, green, blue);
 }

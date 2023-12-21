@@ -64,41 +64,42 @@ namespace
 
     enum
     {
-        IDC_SUSPEND = 4712, // ID of "Suspend"-Button
-        IDC_DEADFOCUS       // ID of dead-focus window
+        IDC_SUSPEND = 4712,
+        // ID of "Suspend"-Button
+        IDC_DEADFOCUS // ID of dead-focus window
     };
 
     // Clipboard-Opener
     class COpenClipboard final
     {
     public:
-        COpenClipboard(CWnd *owner, bool empty =true)
+        COpenClipboard(CWnd* owner, bool empty = true)
         {
             m_open = owner->OpenClipboard();
-            if(!m_open)
+            if (!m_open)
             {
                 MdThrowStringException(IDS_CANNOTOPENCLIPBOARD);
             }
-            if(empty)
+            if (empty)
             {
-                if(!EmptyClipboard())
+                if (!EmptyClipboard())
                 {
                     MdThrowStringException(IDS_CANNOTEMTPYCLIPBOARD);
                 }
             }
         }
+
         ~COpenClipboard()
         {
-            if(m_open)
+            if (m_open)
             {
                 CloseClipboard();
             }
         }
+
     private:
         BOOL m_open;
     };
-
-
 }
 
 
@@ -108,9 +109,9 @@ IMPLEMENT_DYNAMIC(COptionsPropertySheet, CPropertySheet)
 
 COptionsPropertySheet::COptionsPropertySheet()
     : CPropertySheet(IDS_WINDIRSTAT_SETTINGS)
-    , m_restartApplication(false)
-    , m_languageChanged(false)
-    , m_alreadyAsked(false)
+      , m_restartApplication(false)
+      , m_languageChanged(false)
+      , m_alreadyAsked(false)
 {
 }
 
@@ -121,7 +122,7 @@ void COptionsPropertySheet::SetLanguageChanged(bool changed)
 
 BOOL COptionsPropertySheet::OnInitDialog()
 {
-	const BOOL bResult = CPropertySheet::OnInitDialog();
+    const BOOL bResult = CPropertySheet::OnInitDialog();
 
     CRect rc;
     GetWindowRect(rc);
@@ -143,16 +144,16 @@ BOOL COptionsPropertySheet::OnCommand(WPARAM wParam, LPARAM lParam)
     CPersistence::SetConfigPosition(rc.TopLeft());
 
     const int cmd = LOWORD(wParam);
-    if(IDOK == cmd || ID_APPLY_NOW == cmd)
+    if (IDOK == cmd || ID_APPLY_NOW == cmd)
     {
-        if(m_languageChanged && (IDOK == cmd || !m_alreadyAsked))
+        if (m_languageChanged && (IDOK == cmd || !m_alreadyAsked))
         {
-	        const int r = AfxMessageBox(IDS_LANGUAGERESTARTNOW, MB_YESNOCANCEL);
-            if(IDCANCEL == r)
+            const int r = AfxMessageBox(IDS_LANGUAGERESTARTNOW, MB_YESNOCANCEL);
+            if (IDCANCEL == r)
             {
-                return true;    // "Message handled". Don't proceed.
+                return true; // "Message handled". Don't proceed.
             }
-            else if(IDNO == r)
+            else if (IDNO == r)
             {
                 m_alreadyAsked = true; // Don't ask twice.
             }
@@ -161,7 +162,7 @@ BOOL COptionsPropertySheet::OnCommand(WPARAM wParam, LPARAM lParam)
                 ASSERT(IDYES == r);
                 m_restartApplication = true;
 
-                if(ID_APPLY_NOW == cmd)
+                if (ID_APPLY_NOW == cmd)
                 {
                     // This _posts_ a message...
                     EndDialog(IDOK);
@@ -179,7 +180,7 @@ BOOL COptionsPropertySheet::OnCommand(WPARAM wParam, LPARAM lParam)
 
 CMySplitterWnd::CMySplitterWnd(LPCWSTR name)
     : m_persistenceName(name)
-    , m_splitterPos(0.5)
+      , m_splitterPos(0.5)
 {
     CPersistence::GetSplitterPos(m_persistenceName, m_wasTrackedByUser, m_userSplitterPos);
 }
@@ -193,18 +194,18 @@ void CMySplitterWnd::StopTracking(BOOL bAccept)
 {
     CSplitterWnd::StopTracking(bAccept);
 
-    if(bAccept)
+    if (bAccept)
     {
         CRect rcClient;
         GetClientRect(rcClient);
 
-        if(GetColumnCount() > 1)
+        if (GetColumnCount() > 1)
         {
             int dummy;
             int cxLeft;
             GetColumnInfo(0, cxLeft, dummy);
 
-            if(rcClient.Width() > 0)
+            if (rcClient.Width() > 0)
             {
                 m_splitterPos = static_cast<double>(cxLeft) / rcClient.Width();
             }
@@ -215,13 +216,13 @@ void CMySplitterWnd::StopTracking(BOOL bAccept)
             int cyUpper;
             GetRowInfo(0, cyUpper, dummy);
 
-            if(rcClient.Height() > 0)
+            if (rcClient.Height() > 0)
             {
                 m_splitterPos = static_cast<double>(cyUpper) / rcClient.Height();
             }
         }
         m_wasTrackedByUser = true;
-        m_userSplitterPos = m_splitterPos;
+        m_userSplitterPos  = m_splitterPos;
     }
 }
 
@@ -237,12 +238,12 @@ void CMySplitterWnd::SetSplitterPos(double pos)
     CRect rcClient;
     GetClientRect(rcClient);
 
-    if(GetColumnCount() > 1)
+    if (GetColumnCount() > 1)
     {
-        if(m_pColInfo != nullptr)
+        if (m_pColInfo != nullptr)
         {
-	        const int cxLeft = static_cast<int>(pos * rcClient.Width());
-            if(cxLeft >= 0)
+            const int cxLeft = static_cast<int>(pos * rcClient.Width());
+            if (cxLeft >= 0)
             {
                 SetColumnInfo(0, cxLeft, 0);
                 RecalcLayout();
@@ -251,10 +252,10 @@ void CMySplitterWnd::SetSplitterPos(double pos)
     }
     else
     {
-        if(m_pRowInfo != nullptr)
+        if (m_pRowInfo != nullptr)
         {
-	        const int cyUpper = static_cast<int>(pos * rcClient.Height());
-            if(cyUpper >= 0)
+            const int cyUpper = static_cast<int>(pos * rcClient.Height());
+            if (cyUpper >= 0)
             {
                 SetRowInfo(0, cyUpper, 0);
                 RecalcLayout();
@@ -265,7 +266,7 @@ void CMySplitterWnd::SetSplitterPos(double pos)
 
 void CMySplitterWnd::RestoreSplitterPos(double posIfVirgin)
 {
-    if(m_wasTrackedByUser)
+    if (m_wasTrackedByUser)
     {
         SetSplitterPos(m_userSplitterPos);
     }
@@ -277,18 +278,18 @@ void CMySplitterWnd::RestoreSplitterPos(double posIfVirgin)
 
 void CMySplitterWnd::OnSize(UINT nType, int cx, int cy)
 {
-    if(GetColumnCount() > 1)
+    if (GetColumnCount() > 1)
     {
-	    const int cxLeft = static_cast<int>(cx * m_splitterPos);
-        if(cxLeft > 0)
+        const int cxLeft = static_cast<int>(cx * m_splitterPos);
+        if (cxLeft > 0)
         {
             SetColumnInfo(0, cxLeft, 0);
         }
     }
     else
     {
-	    const int cyUpper = static_cast<int>(cy * m_splitterPos);
-        if(cyUpper > 0)
+        const int cyUpper = static_cast<int>(cy * m_splitterPos);
+        if (cyUpper > 0)
         {
             SetRowInfo(0, cyUpper, 0);
         }
@@ -313,7 +314,7 @@ CPacmanControl::CPacmanControl()
 
 void CPacmanControl::Drive(ULONGLONG readJobs)
 {
-    if(::IsWindow(m_hWnd) && m_pacman.Drive(readJobs))
+    if (::IsWindow(m_hWnd) && m_pacman.Drive(readJobs))
     {
         RedrawWindow();
     }
@@ -331,7 +332,7 @@ END_MESSAGE_MAP()
 
 int CPacmanControl::OnCreate(LPCREATESTRUCT lpCreateStruct)
 {
-    if(CStatic::OnCreate(lpCreateStruct) == -1)
+    if (CStatic::OnCreate(lpCreateStruct) == -1)
     {
         return -1;
     }
@@ -351,9 +352,9 @@ void CPacmanControl::OnPaint()
 
 /////////////////////////////////////////////////////////////////////////////
 
-void CDeadFocusWnd::Create(CWnd *parent)
+void CDeadFocusWnd::Create(CWnd* parent)
 {
-	const CRect rc(0,0,0,0);
+    const CRect rc(0, 0, 0, 0);
     VERIFY(CWnd::Create(AfxRegisterWndClass(0, 0, 0, 0), L"_deadfocus", WS_CHILD, rc, parent, IDC_DEADFOCUS));
 }
 
@@ -368,7 +369,7 @@ END_MESSAGE_MAP()
 
 void CDeadFocusWnd::OnKeyDown(UINT nChar, UINT /* nRepCnt */, UINT /* nFlags */)
 {
-    if(nChar == VK_TAB)
+    if (nChar == VK_TAB)
     {
         GetMainFrame()->MoveFocus(LF_DIRECTORYLIST);
     }
@@ -417,22 +418,22 @@ static UINT indicatorsWithoutMemoryUsage[] =
 };
 
 
-CMainFrame *CMainFrame::_theFrame;
+CMainFrame* CMainFrame::_theFrame;
 
-CMainFrame *CMainFrame::GetTheFrame()
+CMainFrame* CMainFrame::GetTheFrame()
 {
     return _theFrame;
 }
 
 CMainFrame::CMainFrame()
     : m_progressVisible(false)
-    , m_progressRange(100)
-    , m_progressPos(0)
-    , m_wndSubSplitter(L"sub")
-    , m_wndSplitter(L"main")
-    , m_logicalFocus(LF_NONE)
-    , m_TaskbarButtonState(TBPF_INDETERMINATE)
-    , m_TaskbarButtonPreviousState(TBPF_INDETERMINATE)
+      , m_progressRange(100)
+      , m_progressPos(0)
+      , m_wndSubSplitter(L"sub")
+      , m_wndSplitter(L"main")
+      , m_logicalFocus(LF_NONE)
+      , m_TaskbarButtonState(TBPF_INDETERMINATE)
+      , m_TaskbarButtonPreviousState(TBPF_INDETERMINATE)
 {
     _theFrame = this;
 }
@@ -444,10 +445,10 @@ CMainFrame::~CMainFrame()
 
 LRESULT CMainFrame::OnTaskButtonCreated(WPARAM, LPARAM)
 {
-    if(!m_TaskbarList)
+    if (!m_TaskbarList)
     {
-	    const HRESULT hr = ::CoCreateInstance(CLSID_TaskbarList, nullptr, CLSCTX_ALL, IID_ITaskbarList3, reinterpret_cast<LPVOID*>(&m_TaskbarList));
-        if(FAILED(hr))
+        const HRESULT hr = ::CoCreateInstance(CLSID_TaskbarList, nullptr, CLSCTX_ALL, IID_ITaskbarList3, reinterpret_cast<LPVOID*>(&m_TaskbarList));
+        if (FAILED(hr))
         {
             VTRACE(L"CoCreateInstance(CLSID_TaskbarList, NULL, CLSCTX_ALL) failed %08X", hr);
         }
@@ -461,14 +462,14 @@ void CMainFrame::ShowProgress(ULONGLONG range)
     // In this case we display pacman.
     HideProgress();
 
-    if(GetOptions()->IsFollowMountPoints() || GetOptions()->IsFollowJunctionPoints())
+    if (GetOptions()->IsFollowMountPoints() || GetOptions()->IsFollowJunctionPoints())
     {
         range = 0;
     }
-    m_progressRange = range;
-    m_progressPos = 0;
+    m_progressRange   = range;
+    m_progressPos     = 0;
     m_progressVisible = true;
-    if(range > 0)
+    if (range > 0)
     {
         CreateStatusProgress();
     }
@@ -482,10 +483,10 @@ void CMainFrame::ShowProgress(ULONGLONG range)
 void CMainFrame::HideProgress()
 {
     DestroyProgress();
-    if(m_progressVisible)
+    if (m_progressVisible)
     {
         m_progressVisible = false;
-        if(::IsWindow(*GetMainFrame()))
+        if (::IsWindow(*GetMainFrame()))
         {
             GetDocument()->SetTitlePrefix(wds::strEmpty);
             SetMessageText(AFX_IDS_IDLEMESSAGE);
@@ -495,7 +496,7 @@ void CMainFrame::HideProgress()
 
 void CMainFrame::SetProgressPos(ULONGLONG pos)
 {
-    if(m_progressRange > 0 && pos > m_progressRange)
+    if (m_progressRange > 0 && pos > m_progressRange)
     {
         pos = m_progressRange;
     }
@@ -506,11 +507,11 @@ void CMainFrame::SetProgressPos(ULONGLONG pos)
 
 void CMainFrame::SetProgressPos100() // called by CDirstatDoc
 {
-    if(m_progressRange > 0)
+    if (m_progressRange > 0)
     {
         SetProgressPos(m_progressRange);
     }
-    if(m_TaskbarList)
+    if (m_TaskbarList)
     {
         m_TaskbarList->SetProgressState(*this, m_TaskbarButtonState = TBPF_NOPROGRESS);
     }
@@ -518,7 +519,7 @@ void CMainFrame::SetProgressPos100() // called by CDirstatDoc
 
 bool CMainFrame::IsProgressSuspended() const
 {
-    if(!::IsWindow(m_suspendButton.m_hWnd))
+    if (!::IsWindow(m_suspendButton.m_hWnd))
     {
         return false;
     }
@@ -532,22 +533,22 @@ void CMainFrame::DrivePacman()
 
 void CMainFrame::UpdateProgress()
 {
-    if(m_progressVisible)
+    if (m_progressVisible)
     {
         CStringW titlePrefix;
         CStringW suspended;
 
-        if(IsProgressSuspended())
+        if (IsProgressSuspended())
         {
             VERIFY(suspended.LoadString(IDS_SUSPENDED_));
         }
 
-        if(m_progressRange > 0)
+        if (m_progressRange > 0)
         {
-	        const int pos = static_cast<int>((double)m_progressPos * 100 / m_progressRange);
+            const int pos = static_cast<int>((double)m_progressPos * 100 / m_progressRange);
             m_progress.SetPos(pos);
             titlePrefix.Format(L"%d%% %s", pos, suspended.GetString());
-            if(m_TaskbarList && m_TaskbarButtonState != TBPF_PAUSED)
+            if (m_TaskbarList && m_TaskbarButtonState != TBPF_PAUSED)
             {
                 // FIXME: hardcoded value here and elsewhere in this file
                 if (pos == 100)
@@ -572,7 +573,7 @@ void CMainFrame::UpdateProgress()
 
 void CMainFrame::CreateStatusProgress()
 {
-    if(m_progress.m_hWnd == nullptr)
+    if (m_progress.m_hWnd == nullptr)
     {
         CRect rc;
         m_wndStatusBar.GetItemRect(0, rc);
@@ -580,7 +581,7 @@ void CMainFrame::CreateStatusProgress()
         m_progress.Create(WS_CHILD | WS_VISIBLE, rc, &m_wndStatusBar, 4711);
         m_progress.ModifyStyle(WS_BORDER, 0); // Doesn't help with XP-style control.
     }
-    if(m_TaskbarList)
+    if (m_TaskbarList)
     {
         m_TaskbarList->SetProgressState(*this, m_TaskbarButtonState = TBPF_INDETERMINATE);
     }
@@ -588,7 +589,7 @@ void CMainFrame::CreateStatusProgress()
 
 void CMainFrame::CreatePacmanProgress()
 {
-    if(m_pacman.m_hWnd == nullptr)
+    if (m_pacman.m_hWnd == nullptr)
     {
         CRect rc;
         m_wndStatusBar.GetItemRect(0, rc);
@@ -612,17 +613,17 @@ void CMainFrame::CreateSuspendButton(CRect& rc)
 
 void CMainFrame::DestroyProgress()
 {
-    if(::IsWindow(m_progress.m_hWnd))
+    if (::IsWindow(m_progress.m_hWnd))
     {
         m_progress.DestroyWindow();
         m_progress.m_hWnd = nullptr;
     }
-    else if(::IsWindow(m_pacman.m_hWnd))
+    else if (::IsWindow(m_pacman.m_hWnd))
     {
         m_pacman.DestroyWindow();
         m_pacman.m_hWnd = nullptr;
     }
-    if(::IsWindow(m_suspendButton.m_hWnd))
+    if (::IsWindow(m_suspendButton.m_hWnd))
     {
         m_suspendButton.DestroyWindow();
         m_suspendButton.m_hWnd = nullptr;
@@ -631,11 +632,11 @@ void CMainFrame::DestroyProgress()
 
 void CMainFrame::OnBnClickedSuspend()
 {
-    bool const isSuspended = IsProgressSuspended();
+    const bool isSuspended = IsProgressSuspended();
     m_pacman.Start(!isSuspended);
-    if(m_TaskbarList)
+    if (m_TaskbarList)
     {
-        switch(m_TaskbarButtonState)
+        switch (m_TaskbarButtonState)
         {
         case TBPF_PAUSED:
             m_TaskbarList->SetProgressState(*this, m_TaskbarButtonState = m_TaskbarButtonPreviousState);
@@ -651,7 +652,7 @@ void CMainFrame::OnBnClickedSuspend()
 
 int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 {
-    if(CFrameWnd::OnCreate(lpCreateStruct) == -1)
+    if (CFrameWnd::OnCreate(lpCreateStruct) == -1)
     {
         return -1;
     }
@@ -659,14 +660,14 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
     VERIFY(m_wndToolBar.CreateEx(this, TBSTYLE_FLAT, WS_CHILD | WS_VISIBLE | CBRS_TOP | CBRS_GRIPPER | CBRS_TOOLTIPS | CBRS_FLYBY | CBRS_SIZE_DYNAMIC));
     VERIFY(m_wndToolBar.LoadToolBar(IDR_MAINFRAME));
 
-    const UINT *indic = indicators;
-    UINT size = _countof(indicators);
+    const UINT* indic = indicators;
+    UINT size         = _countof(indicators);
 
     // If psapi is not supported, don't show that pane.
-    if(GetWDSApp()->GetCurrentProcessMemoryInfo() == wds::strEmpty)
+    if (GetWDSApp()->GetCurrentProcessMemoryInfo() == wds::strEmpty)
     {
         indic = indicatorsWithoutMemoryUsage;
-        size = _countof(indicatorsWithoutMemoryUsage);
+        size  = _countof(indicatorsWithoutMemoryUsage);
     }
 
     VERIFY(m_wndStatusBar.Create(this));
@@ -771,7 +772,7 @@ BOOL CMainFrame::OnCreateClient(LPCREATESTRUCT /*lpcs*/, CCreateContext* pContex
 
 BOOL CMainFrame::PreCreateWindow(CREATESTRUCT& cs)
 {
-    if( !CFrameWnd::PreCreateWindow(cs) )
+    if (!CFrameWnd::PreCreateWindow(cs))
     {
         return FALSE;
     }
@@ -802,7 +803,7 @@ void CMainFrame::MinimizeTypeView()
 
 void CMainFrame::RestoreTypeView()
 {
-    if(GetTypeView()->IsShowTypes())
+    if (GetTypeView()->IsShowTypes())
     {
         m_wndSubSplitter.RestoreSplitterPos(0.72);
         GetTypeView()->RedrawWindow();
@@ -816,7 +817,7 @@ void CMainFrame::MinimizeGraphView()
 
 void CMainFrame::RestoreGraphView()
 {
-    if(GetGraphView()->IsShowTreemap())
+    if (GetGraphView()->IsShowTreemap())
     {
         m_wndSplitter.RestoreSplitterPos(0.4);
         GetGraphView()->DrawEmptyView();
@@ -827,21 +828,21 @@ void CMainFrame::RestoreGraphView()
 CDirstatView* CMainFrame::GetDirstatView()
 {
     CWnd* pWnd = m_wndSubSplitter.GetPane(0, 0);
-    CDirstatView* pView = DYNAMIC_DOWNCAST(CDirstatView, pWnd);
+    auto pView = DYNAMIC_DOWNCAST(CDirstatView, pWnd);
     return pView;
 }
 
-CGraphView *CMainFrame::GetGraphView()
+CGraphView* CMainFrame::GetGraphView()
 {
-    CWnd *pWnd = m_wndSplitter.GetPane(1, 0);
-    CGraphView *pView = DYNAMIC_DOWNCAST(CGraphView, pWnd);
+    CWnd* pWnd = m_wndSplitter.GetPane(1, 0);
+    auto pView = DYNAMIC_DOWNCAST(CGraphView, pWnd);
     return pView;
 }
 
-CTypeView *CMainFrame::GetTypeView()
+CTypeView* CMainFrame::GetTypeView()
 {
-    CWnd *pWnd = m_wndSubSplitter.GetPane(0, 1);
-    CTypeView *pView = DYNAMIC_DOWNCAST(CTypeView, pWnd);
+    CWnd* pWnd = m_wndSubSplitter.GetPane(0, 1);
+    auto pView = DYNAMIC_DOWNCAST(CTypeView, pWnd);
     return pView;
 }
 
@@ -865,7 +866,7 @@ void CMainFrame::CopyToClipboard(LPCWSTR psz)
         const SIZE_T cchBufLen = _tcslen(psz) + 1;
 
         const HGLOBAL h = ::GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT, cchBufLen * sizeof(WCHAR));
-        if(h == nullptr)
+        if (h == nullptr)
         {
             MdThrowStringException(L"GlobalAlloc failed.");
         }
@@ -883,12 +884,12 @@ void CMainFrame::CopyToClipboard(LPCWSTR psz)
         ::GlobalUnlock(h);
 
         UINT uFormat = CF_UNICODETEXT;
-        if(nullptr == ::SetClipboardData(uFormat, h))
+        if (nullptr == ::SetClipboardData(uFormat, h))
         {
             MdThrowStringException(IDS_CANNOTSETCLIPBAORDDATA);
         }
     }
-    catch (CException *pe)
+    catch (CException* pe)
     {
         pe->ReportError();
         pe->Delete();
@@ -899,7 +900,7 @@ void CMainFrame::OnInitMenuPopup(CMenu* pPopupMenu, UINT nIndex, BOOL bSysMenu)
 {
     CFrameWnd::OnInitMenuPopup(pPopupMenu, nIndex, bSysMenu);
 
-    if(!bSysMenu)
+    if (!bSysMenu)
     {
         if (nIndex == TLM_CLEANUP)
         {
@@ -908,7 +909,7 @@ void CMainFrame::OnInitMenuPopup(CMenu* pPopupMenu, UINT nIndex, BOOL bSysMenu)
     }
 }
 
-void CMainFrame::UpdateCleanupMenu(CMenu *menu)
+void CMainFrame::UpdateCleanupMenu(CMenu* menu)
 {
     CStringW s = LoadString(IDS_EMPTYRECYCLEBIN);
     VERIFY(menu->ModifyMenu(ID_CLEANUP_EMPTYRECYCLEBIN, MF_BYCOMMAND | MF_STRING, ID_CLEANUP_EMPTYRECYCLEBIN, s));
@@ -921,7 +922,7 @@ void CMainFrame::UpdateCleanupMenu(CMenu *menu)
     queryRecycleBin(items, bytes);
 
     CStringW info;
-    if(items == 1)
+    if (items == 1)
     {
         info.FormatMessage(IDS__ONEITEMss, FormatBytes(bytes).GetString(), GetOptions()->IsHumanFormat() && bytes != 0 ? wds::strEmpty : (wds::strBlankSpace + GetSpec_Bytes()).GetString());
     }
@@ -941,7 +942,7 @@ void CMainFrame::UpdateCleanupMenu(CMenu *menu)
     menu->EnableMenuItem(ID_CLEANUP_EMPTYRECYCLEBIN, flags);
 
     const UINT toRemove = menu->GetMenuItemCount() - MAINMENU_USERDEFINEDCLEANUP_POSITION;
-    for(UINT i = 0; i < toRemove; i++)
+    for (UINT i = 0; i < toRemove; i++)
     {
         menu->RemoveMenu(MAINMENU_USERDEFINEDCLEANUP_POSITION, MF_BYPOSITION);
     }
@@ -958,10 +959,10 @@ void CMainFrame::queryRecycleBin(ULONGLONG& items, ULONGLONG& bytes)
     bytes = 0;
 
     const DWORD drives = ::GetLogicalDrives();
-    DWORD mask = 0x00000001;
-    for(int i = 0; i < wds::iNumDriveLetters; i++, mask <<= 1)
+    DWORD mask         = 0x00000001;
+    for (int i = 0; i < wds::iNumDriveLetters; i++, mask <<= 1)
     {
-        if((drives & mask) == 0)
+        if ((drives & mask) == 0)
         {
             continue;
         }
@@ -970,12 +971,12 @@ void CMainFrame::queryRecycleBin(ULONGLONG& items, ULONGLONG& bytes)
         s.Format(L"%c:\\", i + wds::chrCapA);
 
         const UINT type = ::GetDriveType(s);
-        if(type == DRIVE_UNKNOWN || type == DRIVE_NO_ROOT_DIR)
+        if (type == DRIVE_UNKNOWN || type == DRIVE_NO_ROOT_DIR)
         {
             continue;
         }
 
-        if(type == DRIVE_REMOTE)
+        if (type == DRIVE_REMOTE)
         {
             continue;
         }
@@ -986,7 +987,7 @@ void CMainFrame::queryRecycleBin(ULONGLONG& items, ULONGLONG& bytes)
 
         const HRESULT hr = ::SHQueryRecycleBin(s, &qbi);
 
-        if(FAILED(hr))
+        if (FAILED(hr))
         {
             continue;
         }
@@ -996,27 +997,27 @@ void CMainFrame::queryRecycleBin(ULONGLONG& items, ULONGLONG& bytes)
     }
 }
 
-void CMainFrame::AppendUserDefinedCleanups(CMenu *menu)
+void CMainFrame::AppendUserDefinedCleanups(CMenu* menu)
 {
     CArray<int, int> indices;
     GetOptions()->GetEnabledUserDefinedCleanups(indices);
-    if(indices.GetSize() > 0)
+    if (indices.GetSize() > 0)
     {
-        for(int i = 0; i < indices.GetSize(); i++)
+        for (int i = 0; i < indices.GetSize(); i++)
         {
             CStringW string;
             string.FormatMessage(IDS_UDCsCTRLd, GetOptions()->GetUserDefinedCleanup(indices[i])->title.GetString(), indices[i]);
 
             UINT flags = MF_GRAYED | MF_DISABLED;
-            if(
-            GetLogicalFocus() == LF_DIRECTORYLIST
-            // FIXME: Multi-select
-            && GetDocument()->UserDefinedCleanupWorksForItem(GetOptions()->GetUserDefinedCleanup(indices[i]), GetDocument()->GetSelection(0))
+            if (
+                GetLogicalFocus() == LF_DIRECTORYLIST
+                // FIXME: Multi-select
+                && GetDocument()->UserDefinedCleanupWorksForItem(GetOptions()->GetUserDefinedCleanup(indices[i]), GetDocument()->GetSelection(0))
             )
             {
                 flags = MF_ENABLED;
             }
-            menu->AppendMenu(flags|MF_STRING, ID_USERDEFINEDCLEANUP0 + indices[i], string);
+            menu->AppendMenu(flags | MF_STRING, ID_USERDEFINEDCLEANUP0 + indices[i], string);
         }
     }
     else
@@ -1028,7 +1029,7 @@ void CMainFrame::AppendUserDefinedCleanups(CMenu *menu)
 
 void CMainFrame::SetLogicalFocus(LOGICAL_FOCUS lf)
 {
-    if(lf != m_logicalFocus)
+    if (lf != m_logicalFocus)
     {
         m_logicalFocus = lf;
         SetSelectionMessageText();
@@ -1076,7 +1077,7 @@ void CMainFrame::SetSelectionMessageText()
         break;
     case LF_DIRECTORYLIST:
         // FIXME: Multi-select
-        if(GetDocument()->GetSelection(0) != nullptr)
+        if (GetDocument()->GetSelection(0) != nullptr)
         {
             // FIXME: Multi-select
             SetMessageText(GetDocument()->GetSelection(0)->GetPath());
@@ -1094,7 +1095,7 @@ void CMainFrame::SetSelectionMessageText()
     }
 }
 
-void CMainFrame::OnUpdateMemoryUsage(CCmdUI *pCmdUI)
+void CMainFrame::OnUpdateMemoryUsage(CCmdUI* pCmdUI)
 {
     pCmdUI->Enable(true);
     pCmdUI->SetText(GetWDSApp()->GetCurrentProcessMemoryInfo());
@@ -1104,7 +1105,7 @@ void CMainFrame::OnSize(UINT nType, int cx, int cy)
 {
     CFrameWnd::OnSize(nType, cx, cy);
 
-    if(!::IsWindow(m_wndStatusBar.m_hWnd))
+    if (!::IsWindow(m_wndStatusBar.m_hWnd))
     {
         return;
     }
@@ -1112,24 +1113,24 @@ void CMainFrame::OnSize(UINT nType, int cx, int cy)
     CRect rc;
     m_wndStatusBar.GetItemRect(0, rc);
 
-    if(m_suspendButton.m_hWnd != nullptr)
+    if (m_suspendButton.m_hWnd != nullptr)
     {
         CRect suspend;
         m_suspendButton.GetClientRect(suspend);
         rc.left = suspend.right;
     }
 
-    if(m_progress.m_hWnd != nullptr)
+    if (m_progress.m_hWnd != nullptr)
     {
         m_progress.MoveWindow(rc);
     }
-    else if(m_pacman.m_hWnd != nullptr)
+    else if (m_pacman.m_hWnd != nullptr)
     {
         m_pacman.MoveWindow(rc);
     }
 }
 
-void CMainFrame::OnUpdateViewShowtreemap(CCmdUI *pCmdUI)
+void CMainFrame::OnUpdateViewShowtreemap(CCmdUI* pCmdUI)
 {
     pCmdUI->SetCheck(GetGraphView()->IsShowTreemap());
 }
@@ -1137,7 +1138,7 @@ void CMainFrame::OnUpdateViewShowtreemap(CCmdUI *pCmdUI)
 void CMainFrame::OnViewShowtreemap()
 {
     GetGraphView()->ShowTreemap(!GetGraphView()->IsShowTreemap());
-    if(GetGraphView()->IsShowTreemap())
+    if (GetGraphView()->IsShowTreemap())
     {
         RestoreGraphView();
     }
@@ -1147,7 +1148,7 @@ void CMainFrame::OnViewShowtreemap()
     }
 }
 
-void CMainFrame::OnUpdateViewShowfiletypes(CCmdUI *pCmdUI)
+void CMainFrame::OnUpdateViewShowfiletypes(CCmdUI* pCmdUI)
 {
     pCmdUI->SetCheck(GetTypeView()->IsShowTypes());
 }
@@ -1155,7 +1156,7 @@ void CMainFrame::OnUpdateViewShowfiletypes(CCmdUI *pCmdUI)
 void CMainFrame::OnViewShowfiletypes()
 {
     GetTypeView()->ShowTypes(!GetTypeView()->IsShowTypes());
-    if(GetTypeView()->IsShowTypes())
+    if (GetTypeView()->IsShowTypes())
     {
         RestoreTypeView();
     }
@@ -1183,7 +1184,7 @@ void CMainFrame::OnConfigure()
 
     GetOptions()->SaveToRegistry();
 
-    if(sheet.m_restartApplication)
+    if (sheet.m_restartApplication)
     {
         GetWDSApp()->RestartApplication();
     }

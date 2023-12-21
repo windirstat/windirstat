@@ -29,14 +29,15 @@
 class CDeleteWarningDlg final : public CDialog
 {
     DECLARE_DYNAMIC(CDeleteWarningDlg)
+
     enum { IDD = IDD_DELETE_WARNING };
 
 public:
     CDeleteWarningDlg(CWnd* pParent = nullptr);
     ~CDeleteWarningDlg() override = default;
 
-    CStringW m_fileName;             // [in] file name for feedback
-    BOOL m_dontShowAgain;           // [out]
+    CStringW m_fileName;  // [in] file name for feedback
+    BOOL m_dontShowAgain; // [out]
 
 protected:
     void DoDataExchange(CDataExchange* pDX) override;

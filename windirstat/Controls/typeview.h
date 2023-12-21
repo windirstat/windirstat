@@ -28,7 +28,7 @@ class CTypeView;
 //
 // CExtensionListControl.
 //
-class CExtensionListControl: public COwnerDrawnListControl
+class CExtensionListControl : public COwnerDrawnListControl
 {
 protected:
     // Columns
@@ -43,27 +43,27 @@ protected:
     };
 
     // CListItem. The items of the CExtensionListControl.
-    class CListItem: public COwnerDrawnListItem
+    class CListItem : public COwnerDrawnListItem
     {
     public:
-        CListItem(CExtensionListControl *list, LPCWSTR extension, const SExtensionRecord& r);
+        CListItem(CExtensionListControl* list, LPCWSTR extension, const SExtensionRecord& r);
 
-        bool DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *width, int *focusLeft) const override;
+        bool DrawSubitem(int subitem, CDC* pdc, CRect rc, UINT state, int* width, int* focusLeft) const override;
         CStringW GetText(int subitem) const override;
 
         CStringW GetExtension() const;
         int GetImage() const override;
-        int Compare(const CSortingListItem *other, int subitem) const override;
+        int Compare(const CSortingListItem* other, int subitem) const override;
 
     private:
-        void DrawColor(CDC *pdc, CRect rc, UINT state, int *width) const;
+        void DrawColor(CDC* pdc, CRect rc, UINT state, int* width) const;
 
         CStringW GetDescription() const;
         CStringW GetBytesPercent() const;
 
         double GetBytesFraction() const;
 
-        CExtensionListControl *m_list;
+        CExtensionListControl* m_list;
         CStringW m_extension;
         SExtensionRecord m_record;
         mutable CStringW m_description;
@@ -71,27 +71,27 @@ protected:
     };
 
 public:
-    CExtensionListControl(CTypeView *typeView);
+    CExtensionListControl(CTypeView* typeView);
     bool GetAscendingDefault(int column) override;
     void Initialize();
-    void SetExtensionData(const CExtensionData *ed);
+    void SetExtensionData(const CExtensionData* ed);
     void SetRootSize(ULONGLONG totalBytes);
     ULONGLONG GetRootSize() const;
     void SelectExtension(LPCWSTR ext);
     CStringW GetSelectedExtension();
 
 protected:
-    CListItem *GetListItem(int i) const;
+    CListItem* GetListItem(int i) const;
 
-    CTypeView *m_typeView;
+    CTypeView* m_typeView;
     ULONGLONG m_rootSize;
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnDestroy();
-    afx_msg void OnLvnDeleteitem(NMHDR *pNMHDR, LRESULT *pResult);
+    afx_msg void OnLvnDeleteitem(NMHDR* pNMHDR, LRESULT* pResult);
     afx_msg void MeasureItem(LPMEASUREITEMSTRUCT mis);
     afx_msg void OnSetFocus(CWnd* pOldWnd);
-    afx_msg void OnLvnItemchanged(NMHDR *pNMHDR, LRESULT *pResult);
+    afx_msg void OnLvnItemchanged(NMHDR* pNMHDR, LRESULT* pResult);
     afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
 };
 
@@ -100,7 +100,7 @@ protected:
 // CTypeView. The upper right view, which shows the extensions and their
 // cushion colors.
 //
-class CTypeView: public CView
+class CTypeView : public CView
 {
 protected:
     CTypeView();
@@ -124,22 +124,25 @@ protected:
     void OnDraw(CDC* pDC) override;
     void SetSelection();
 
-    bool m_showTypes;   // Whether this view shall be shown (F8 option)
-    CExtensionListControl m_extensionListControl;   // The list control
+    bool m_showTypes;                             // Whether this view shall be shown (F8 option)
+    CExtensionListControl m_extensionListControl; // The list control
 
     DECLARE_MESSAGE_MAP()
     afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
     afx_msg BOOL OnEraseBkgnd(CDC* pDC);
     afx_msg void OnSize(UINT nType, int cx, int cy);
     afx_msg void OnSetFocus(CWnd* pOldWnd);
+
 public:
-    #ifdef _DEBUG
+#ifdef _DEBUG
     void AssertValid() const override;
     void Dump(CDumpContext& dc) const override;
-    #endif
+#endif
 };
 
 #ifndef _DEBUG  // Debugversion in typeview.cpp
 inline CDirstatDoc* CTypeView::GetDocument() const
-   { return reinterpret_cast<CDirstatDoc*>(m_pDocument); }
+{
+    return reinterpret_cast<CDirstatDoc*>(m_pDocument);
+}
 #endif

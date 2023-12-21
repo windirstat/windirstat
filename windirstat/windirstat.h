@@ -29,14 +29,14 @@
 #include "helpmap.h"
 #include <common/tracer.h>
 
-typedef CMap<CStringW, LPCWSTR, COLORREF, COLORREF> CExtensionColorMap;  // ".bmp" -> color
+using CExtensionColorMap = CMap<CStringW, LPCWSTR, COLORREF, COLORREF>; // ".bmp" -> color
 
 class CMainFrame;
 class CDirstatApp;
 
 // Frequently used "globals"
-CMainFrame *GetMainFrame();
-CDirstatApp *GetWDSApp();
+CMainFrame* GetMainFrame();
+CDirstatApp* GetWDSApp();
 CMyImageList* GetMyImageList();
 
 // Other application related globals
@@ -51,7 +51,8 @@ CStringW GetWinDirStatHomepage();
 //
 class CDirstatApp final : public CWinApp
 {
-    typedef CWinApp Inherited;
+    using Inherited = CWinApp;
+
 public:
     CDirstatApp();
     ~CDirstatApp() override;
@@ -60,15 +61,15 @@ public:
     int ExitInstance() override;
 
     LANGID GetBuiltInLanguage();
-    LANGID GetLangid();             // Language as selected in PageGeneral
-    LANGID GetEffectiveLangid();    // Language to be used for date/time and number formatting
+    LANGID GetLangid();          // Language as selected in PageGeneral
+    LANGID GetEffectiveLangid(); // Language to be used for date/time and number formatting
 
     void ReReadMountPoints();
     bool IsVolumeMountPoint(const CStringW& path);
     bool IsFolderJunction(DWORD attr);
 
-    COLORREF AltColor() const;                    // Coloring of compressed items
-    COLORREF AltEncryptionColor() const;          // Coloring of encrypted items
+    COLORREF AltColor() const;           // Coloring of compressed items
+    COLORREF AltEncryptionColor() const; // Coloring of encrypted items
 
     CStringW GetCurrentProcessMemoryInfo();
     CMyImageList* GetMyImageList();
@@ -100,19 +101,19 @@ protected:
     // Get the alternative color from Explorer configuration
     COLORREF GetAlternativeColor(COLORREF clrDefault, LPCWSTR which);
 
-    BOOL OnIdle(LONG lCount) override;       // This is, where scanning is done.
+    BOOL OnIdle(LONG lCount) override; // This is, where scanning is done.
     static BOOL IsUACEnabled();
 
-    CSingleDocTemplate* m_pDocTemplate;     // MFC voodoo.
+    CSingleDocTemplate* m_pDocTemplate; // MFC voodoo.
 
-    LANGID m_langid;                        // Language we are running
-    CReparsePoints m_mountPoints;           // Mount point information
-    CMyImageList m_myImageList;             // Our central image list
-    ULONGLONG m_workingSet;                 // Current working set (RAM usage)
-    ULONGLONG m_pageFaults;                 // Page faults so far (unused)
+    LANGID m_langid;                          // Language we are running
+    CReparsePoints m_mountPoints;             // Mount point information
+    CMyImageList m_myImageList;               // Our central image list
+    ULONGLONG m_workingSet;                   // Current working set (RAM usage)
+    ULONGLONG m_pageFaults;                   // Page faults so far (unused)
     ULONGLONG m_lastPeriodicalRamUsageUpdate; // Tick count
-    COLORREF m_altColor;                    // Coloring of compressed items
-    COLORREF m_altEncryptionColor;          // Coloring of encrypted items
+    COLORREF m_altColor;                      // Coloring of compressed items
+    COLORREF m_altEncryptionColor;            // Coloring of encrypted items
     HANDLE m_ElevationEvent;
     CStringW m_ElevationEventName;
 #ifdef VTRACE_TO_CONSOLE
@@ -122,7 +123,7 @@ protected:
     DECLARE_MESSAGE_MAP()
     afx_msg void OnFileOpen();
     afx_msg void OnRunElevated();
-    afx_msg void OnUpdateRunElevated(CCmdUI *pCmdUI);
+    afx_msg void OnUpdateRunElevated(CCmdUI* pCmdUI);
     afx_msg void OnHelpManual();
     afx_msg void OnAppAbout();
 };

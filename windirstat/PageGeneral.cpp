@@ -30,23 +30,23 @@ IMPLEMENT_DYNAMIC(CPageGeneral, CPropertyPage)
 
 CPageGeneral::CPageGeneral()
     : CPropertyPage(CPageGeneral::IDD)
-    , m_followMountPoints(0)
-    , m_followJunctionPoints(0)
-    , m_useWdsLocale(0)
-    , m_humanFormat(0)
-    , m_listGrid(0)
-    , m_listStripes(0)
-    , m_listFullRowSelection(0)
-    , m_skipHidden(0),
-    m_originalLanguage(0)
+      , m_followMountPoints(0)
+      , m_followJunctionPoints(0)
+      , m_useWdsLocale(0)
+      , m_humanFormat(0)
+      , m_listGrid(0)
+      , m_listStripes(0)
+      , m_listFullRowSelection(0)
+      , m_skipHidden(0),
+      m_originalLanguage(0)
 {
 }
 
 CPageGeneral::~CPageGeneral() = default;
 
-COptionsPropertySheet *CPageGeneral::GetSheet() const
+COptionsPropertySheet* CPageGeneral::GetSheet() const
 {
-    COptionsPropertySheet *sheet = DYNAMIC_DOWNCAST(COptionsPropertySheet, GetParent());
+    auto sheet = DYNAMIC_DOWNCAST(COptionsPropertySheet, GetParent());
     ASSERT(sheet != NULL);
     return sheet;
 }
@@ -85,20 +85,20 @@ BOOL CPageGeneral::OnInitDialog()
 {
     CPropertyPage::OnInitDialog();
 
-    m_humanFormat = GetOptions()->IsHumanFormat();
-    m_listGrid = GetOptions()->IsListGrid();
-    m_listStripes = GetOptions()->IsListStripes();
+    m_humanFormat          = GetOptions()->IsHumanFormat();
+    m_listGrid             = GetOptions()->IsListGrid();
+    m_listStripes          = GetOptions()->IsListStripes();
     m_listFullRowSelection = GetOptions()->IsListFullRowSelection();
 
-    m_followMountPoints = GetOptions()->IsFollowMountPoints();
+    m_followMountPoints    = GetOptions()->IsFollowMountPoints();
     m_followJunctionPoints = GetOptions()->IsFollowJunctionPoints();
-    m_useWdsLocale = GetOptions()->IsUseWdsLocale();
-    m_skipHidden = GetOptions()->IsSkipHidden();
+    m_useWdsLocale         = GetOptions()->IsUseWdsLocale();
+    m_skipHidden           = GetOptions()->IsSkipHidden();
 
-    m_followMountPoints = false;    // Otherwise we would see pacman only.
+    m_followMountPoints = false;                // Otherwise we would see pacman only.
     m_ctlFollowMountPoints.ShowWindow(SW_HIDE); // Ignorance is bliss.
     // The same for junction points
-    m_followJunctionPoints = false; // Otherwise we would see pacman only.
+    m_followJunctionPoints = false;                // Otherwise we would see pacman only.
     m_ctlFollowJunctionPoints.ShowWindow(SW_HIDE); // Ignorance is bliss.
 
     int k = m_combo.AddString(GetLocaleLanguage(GetWDSApp()->GetBuiltInLanguage()));
@@ -107,16 +107,16 @@ BOOL CPageGeneral::OnInitDialog()
     CArray<LANGID, LANGID> langid;
     GetWDSApp()->GetAvailableResourceDllLangids(langid);
 
-    for(int i = 0; i < langid.GetSize(); i++)
+    for (int i = 0; i < langid.GetSize(); i++)
     {
         k = m_combo.AddString(GetLocaleLanguage(langid[i]));
         m_combo.SetItemData(k, langid[i]);
     }
 
     m_originalLanguage = 0;
-    for(int i = 0; i < m_combo.GetCount(); i++)
+    for (int i = 0; i < m_combo.GetCount(); i++)
     {
-        if(m_combo.GetItemData(i) == CLanguageOptions::GetLanguage())
+        if (m_combo.GetItemData(i) == CLanguageOptions::GetLanguage())
         {
             m_combo.SetCurSel(i);
             m_originalLanguage = i;
@@ -183,7 +183,7 @@ void CPageGeneral::OnBnClickedListFullRowSelection()
 
 void CPageGeneral::OnCbnSelendokCombo()
 {
-	const int i = m_combo.GetCurSel();
+    const int i = m_combo.GetCurSel();
     GetSheet()->SetLanguageChanged(i != m_originalLanguage);
     SetModified();
 }
