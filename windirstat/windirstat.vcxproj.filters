@@ -94,9 +94,6 @@
     <ClInclude Include="..\common\mdexceptions.h">
       <Filter>Header Files\Common</Filter>
     </ClInclude>
-    <ClInclude Include="..\common\SimpleIni.h">
-      <Filter>Header Files\Common</Filter>
-    </ClInclude>
     <ClInclude Include="..\common\tracer.h">
       <Filter>Header Files\Common</Filter>
     </ClInclude>

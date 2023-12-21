@@ -939,11 +939,11 @@ void CMainFrame::UpdateCleanupMenu(CMenu *menu)
     CStringW info;
     if(items == 1)
     {
-        info.FormatMessage(IDS__ONEITEMss, FormatBytes(bytes).GetString(), GetOptions()->IsHumanFormat() && bytes != 0 ? wds::strEmpty : wds::strBlankSpace + GetSpec_Bytes());
+        info.FormatMessage(IDS__ONEITEMss, FormatBytes(bytes).GetString(), GetOptions()->IsHumanFormat() && bytes != 0 ? wds::strEmpty : (wds::strBlankSpace + GetSpec_Bytes()).GetString());
     }
     else
     {
-        info.FormatMessage(IDS__sITEMSss, FormatCount(items).GetString(), FormatBytes(bytes).GetString(), GetOptions()->IsHumanFormat() && bytes != 0 ? wds::strEmpty : wds::strBlankSpace + GetSpec_Bytes());
+        info.FormatMessage(IDS__sITEMSss, FormatCount(items).GetString(), FormatBytes(bytes).GetString(), GetOptions()->IsHumanFormat() && bytes != 0 ? wds::strEmpty : (wds::strBlankSpace + GetSpec_Bytes()).GetString());
     }
 
     s += info;

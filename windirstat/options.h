@@ -25,7 +25,6 @@
 #include "treemap.h"
 #endif // __NOT_WDS
 #include <common/wds_constants.h>
-#include <common/SimpleIni.h>
 #include <atlbase.h> // CRegKey
 #include <memory>
 
@@ -143,9 +142,6 @@ public:
 private:
     mutable long m_lastError;
     CStringW m_lpszFilePath;
-    CSimpleIni m_ini;
-
-    static HRESULT siErrorToHR_(SI_Error err);
 };
 
 // It's an aggregate, but provides the same interface
@@ -167,10 +163,6 @@ public:
 
     virtual void setBool(LPCWSTR section, LPCWSTR entry, bool value);
     virtual bool getBool(LPCWSTR section, LPCWSTR entry, bool defaultValue);
-
-private:
-    std::auto_ptr<ICfgStorage> m_primaryStore;
-    std::auto_ptr<ICfgStorage> m_secondaryStore;
 };
 
 class CRegistryUser
