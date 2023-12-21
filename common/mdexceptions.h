@@ -34,12 +34,12 @@
 class CMdStringException: public CException
 {
 public:
-    CMdStringException(LPCTSTR pszText)
+    CMdStringException(LPCWSTR pszText)
         : m_sText(pszText) // pszText may be an ordinal resource (MAKEINTRESOURCE)
     {
     }
 
-    virtual BOOL GetErrorMessage(LPTSTR lpszError, UINT nMaxError, UINT *pnHelpContext = NULL)
+    virtual BOOL GetErrorMessage(LPWSTR lpszError, UINT nMaxError, UINT *pnHelpContext = NULL)
     {
         if(pnHelpContext != NULL)
         {
@@ -47,51 +47,51 @@ public:
         }
         if((nMaxError != 0) && (lpszError != NULL))
         {// TODO, fix parameters
-            _tcscpy_s(lpszError, nMaxError, m_sText);
+            wcscpy_s(lpszError, nMaxError, m_sText);
         }
         return true;
     }
 
 protected:
-    CString m_sText;
+    CStringW m_sText;
 };
 
-inline CString MdGetExceptionMessage(const CException *pe)
+inline CStringW MdGetExceptionMessage(const CException *pe)
 {
     const INT ccBufferSize = 0x400;
-    CString s;
+    CStringW s;
     BOOL b = pe->GetErrorMessage(s.GetBuffer(ccBufferSize), ccBufferSize);
     s.ReleaseBuffer();
 
     if(!b)
     {
-        s = _T("(no error message available)");
+        s = "(no error message available)";
     }
 
     return s;
 }
 
-inline CString MdGetWinErrorText(HRESULT hr)
+inline CStringW MdGetWinErrorText(HRESULT hr)
 {
-    CString sRet;
+    CStringW sRet;
     LPVOID lpMsgBuf;
     DWORD dw = FormatMessage(
         FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
         NULL,
         hr,
         MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-        (LPTSTR)&lpMsgBuf,
+        (LPWSTR)&lpMsgBuf,
         0,
         NULL
         );
     if(NULL == dw)
     {
-        CString s(MAKEINTRESOURCE(AFX_IDP_NO_ERROR_AVAILABLE));
-        sRet.Format(_T("%s (0x%08lx)"), s.GetString(), hr);
+        CStringW s(MAKEINTRESOURCE(AFX_IDP_NO_ERROR_AVAILABLE));
+        sRet.Format(L"%s (0x%08lx)", s.GetString(), hr);
     }
     else
     {
-        sRet = CString(static_cast<LPCTSTR>(lpMsgBuf));
+        sRet = CStringW(static_cast<LPCWSTR>(lpMsgBuf));
         ::LocalFree(lpMsgBuf);
     }
     return sRet;
@@ -102,20 +102,20 @@ inline void MdThrowStringException(UINT resId)
     throw new CMdStringException(MAKEINTRESOURCE(resId));
 }
 
-inline void MdThrowStringException(LPCTSTR pszText)
+inline void MdThrowStringException(LPCWSTR pszText)
 {
     throw new CMdStringException(pszText);
 }
 
-inline void __MdFormatStringExceptionV(CString& rsText, LPCTSTR pszFormat, va_list vlist)
+inline void __MdFormatStringExceptionV(CStringW& rsText, LPCWSTR pszFormat, va_list vlist)
 {
-// CString sFormat(); // may be a MAKEINTRESOURCE
-    rsText.FormatMessageV(CString(pszFormat), &vlist);
+// CStringW sFormat(); // may be a MAKEINTRESOURCE
+    rsText.FormatMessageV(CStringW(pszFormat), &vlist);
 }
 
-inline void AFX_CDECL MdThrowStringExceptionF(LPCTSTR pszFormat, ...)
+inline void AFX_CDECL MdThrowStringExceptionF(LPCWSTR pszFormat, ...)
 {
-    CString sText;
+    CStringW sText;
 
     va_list vlist;
     va_start(vlist, pszFormat);
@@ -125,16 +125,16 @@ inline void AFX_CDECL MdThrowStringExceptionF(LPCTSTR pszFormat, ...)
     MdThrowStringException(sText);
 }
 
-inline void MdThrowStringExceptionV(LPCTSTR pszFormat, va_list vlist)
+inline void MdThrowStringExceptionV(LPCWSTR pszFormat, va_list vlist)
 {
-    CString sText;
+    CStringW sText;
     __MdFormatStringExceptionV(sText, pszFormat, vlist);
     MdThrowStringException(sText);
 }
 
 inline void AFX_CDECL MdThrowStringExceptionF(UINT nResIdFormat, ...)
 {
-    CString sText;
+    CStringW sText;
 
     va_list vlist;
     va_start(vlist, nResIdFormat);
@@ -146,32 +146,32 @@ inline void AFX_CDECL MdThrowStringExceptionF(UINT nResIdFormat, ...)
 
 inline void MdThrowStringExceptionF(UINT nResIdFormat, va_list vlist)
 {
-    CString sText;
+    CStringW sText;
     __MdFormatStringExceptionV(sText, MAKEINTRESOURCE(nResIdFormat), vlist);
     MdThrowStringException(sText);
 }
 
-inline void MdThrowWinError(DWORD dw, LPCTSTR pszPrefix =NULL)
+inline void MdThrowWinError(DWORD dw, LPCWSTR pszPrefix =NULL)
 {
-    CString sMsg = pszPrefix;
-    sMsg += _T(": ") + MdGetWinErrorText(dw);
+    CStringW sMsg = pszPrefix;
+    sMsg += L": " + MdGetWinErrorText(dw);
     MdThrowStringException(sMsg);
 }
 
-inline void MdThrowHresult(HRESULT hr, LPCTSTR pszPrefix =NULL)
+inline void MdThrowHresult(HRESULT hr, LPCWSTR pszPrefix =NULL)
 {
-    CString sMsg = pszPrefix;
-    sMsg += _T(": ") + MdGetWinErrorText(hr);
+    CStringW sMsg = pszPrefix;
+    sMsg += L": " + MdGetWinErrorText(hr);
     MdThrowStringException(sMsg);
 }
 
 
-inline void MdThrowLastWinerror(LPCTSTR pszPrefix = NULL)
+inline void MdThrowLastWinerror(LPCWSTR pszPrefix = NULL)
 {
     MdThrowWinError(::GetLastError(), pszPrefix);
 }
 
-inline void MdThrowFailed(HRESULT hr, LPCTSTR pszPrefix = NULL)
+inline void MdThrowFailed(HRESULT hr, LPCWSTR pszPrefix = NULL)
 {
     if(FAILED(hr))
     {

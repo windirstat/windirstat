@@ -31,11 +31,11 @@
 
 /////////////////////////////////////////////////////////////////////////////
 
-CString CSortingListItem::GetText(int subitem) const
+CStringW CSortingListItem::GetText(int subitem) const
 {
     // Dummy implementation
-    CString s;
-    s.Format(_T("subitem %d"), subitem);
+    CStringW s;
+    s.Format(L"subitem %d", subitem);
     return s;
 }
 
@@ -84,7 +84,7 @@ int CSortingListItem::CompareS(const CSortingListItem *other, const SSorting& so
 
 IMPLEMENT_DYNAMIC(CSortingListControl, CListCtrl)
 
-CSortingListControl::CSortingListControl(LPCTSTR name)
+CSortingListControl::CSortingListControl(LPCWSTR name)
 {
     m_name = name;
     m_indicatedColumn = -1;
@@ -210,25 +210,25 @@ void CSortingListControl::SortItems()
 
     if(m_indicatedColumn != -1)
     {
-        CString text;
+        CStringW text;
         hditem.mask = HDI_TEXT;
         hditem.pszText = text.GetBuffer(256);
         hditem.cchTextMax = 256;
         GetHeaderCtrl()->GetItem(m_indicatedColumn, &hditem);
         text.ReleaseBuffer();
         text = text.Mid(2);
-        hditem.pszText = (LPTSTR)(LPCTSTR)text;
+        hditem.pszText = (LPTSTR)(LPCWSTR)text;
         GetHeaderCtrl()->SetItem(m_indicatedColumn, &hditem);
     }
 
-    CString text;
+    CStringW text;
     hditem.mask = HDI_TEXT;
     hditem.pszText = text.GetBuffer(256);
     hditem.cchTextMax = 256;
     GetHeaderCtrl()->GetItem(m_sorting.column1, &hditem);
     text.ReleaseBuffer();
-    text = (m_sorting.ascending1 ? _T("< ") : _T("> ")) + text;
-    hditem.pszText = (LPTSTR)(LPCTSTR)text;
+    text = (m_sorting.ascending1 ? L"< " : L"> ") + text;
+    hditem.pszText = (LPTSTR)(LPCWSTR)text;
     GetHeaderCtrl()->SetItem(m_sorting.column1, &hditem);
     m_indicatedColumn = m_sorting.column1;
 }
@@ -283,7 +283,7 @@ void CSortingListControl::OnLvnGetdispinfo(NMHDR *pNMHDR, LRESULT *pResult)
 
     if((di->item.mask & LVIF_TEXT) != 0)
     {
-        _tcscpy_s(di->item.pszText, di->item.cchTextMax, item->GetText(di->item.iSubItem));
+        wcscpy_s(di->item.pszText, di->item.cchTextMax, item->GetText(di->item.iSubItem));
     }
 
     if((di->item.mask & LVIF_IMAGE) != 0)

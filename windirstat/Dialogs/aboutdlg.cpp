@@ -47,14 +47,14 @@ namespace
     };
 
     // Retrieve the GPL text from our resources
-    CString GetTextResource(UINT id, HMODULE dll = AfxGetResourceHandle())
+    CStringW GetTextResource(UINT id, HMODULE dll = AfxGetResourceHandle())
     {
-        CString s;
+        CStringW s;
 
         HGLOBAL hresource = NULL;
         try
         {
-            HRSRC hrsrc = ::FindResource(dll, MAKEINTRESOURCE(id), _T("TEXT"));
+            HRSRC hrsrc = ::FindResource(dll, MAKEINTRESOURCE(id), L"TEXT");
             if(NULL == hrsrc)
             {
                 MdThrowLastWinerror();
@@ -120,10 +120,10 @@ void CAboutDlg::CMyTabControl::Initialize()
 {
     ModifyStyle(0, WS_CLIPCHILDREN);
 
-    InsertItem(TAB_ABOUT, LPCTSTR(LoadString(IDS_ABOUT_ABOUT)));
-    InsertItem(TAB_AUTHORS, LPCTSTR(LoadString(IDS_ABOUT_AUTHORS)));
-    InsertItem(TAB_THANKSTO, LPCTSTR(LoadString(IDS_ABOUT_THANKSTO)));
-    InsertItem(TAB_LICENSE, LPCTSTR(LoadString(IDS_ABOUT_LICENSEAGREEMENT)));
+    InsertItem(TAB_ABOUT, LPCWSTR(LoadString(IDS_ABOUT_ABOUT)));
+    InsertItem(TAB_AUTHORS, LPCWSTR(LoadString(IDS_ABOUT_AUTHORS)));
+    InsertItem(TAB_THANKSTO, LPCWSTR(LoadString(IDS_ABOUT_THANKSTO)));
+    InsertItem(TAB_LICENSE, LPCWSTR(LoadString(IDS_ABOUT_LICENSEAGREEMENT)));
 
     CRect rc;
     GetClientRect(rc);
@@ -139,7 +139,7 @@ void CAboutDlg::CMyTabControl::Initialize()
 
 void CAboutDlg::CMyTabControl::SetPageText(int tab)
 {
-    CString text;
+    CStringW text;
     DWORD newStyle = ES_CENTER;
 
     switch (tab)
@@ -151,7 +151,7 @@ void CAboutDlg::CMyTabControl::SetPageText(int tab)
         break;
     case TAB_AUTHORS:
         {
-            CString translators;
+            CStringW translators;
             text.FormatMessage(IDS_ABOUT_AUTHORSTEXTs, GetDevelList().GetString());
             text += GetTranslatorList();
         }
@@ -213,7 +213,7 @@ void CAboutDlg::CMyTabControl::OnEnLinkText(NMHDR *pNMHDR, LRESULT *pResult)
 
     if(WM_LBUTTONDOWN == el->msg)
     {
-        CString link;
+        CStringW link;
         m_text.GetTextRange(el->chrg.cpMin, el->chrg.cpMax, link);
 
         // FIXME: should probably one of the helper variants of this function
@@ -260,20 +260,20 @@ void CAboutDlg::CMyTabControl::OnSize(UINT nType, int cx, int cy)
 
 CAboutDlg::CAboutDlg()
     : CDialog(CAboutDlg::IDD)
-    , m_layout(this, _T("aboutdlg"))
+    , m_layout(this, L"aboutdlg")
 {
 }
 
-CString CAboutDlg::GetAppVersion()
+CStringW CAboutDlg::GetAppVersion()
 {
-    CString s;
-    s.Format(_T("WinDirStat %s"), _T("1.x.y.z")); // FIXME
+    CStringW s;
+    s.Format(L"WinDirStat %s", L"1.x.y.z"); // FIXME
     return s;
 }
 
-CString CAboutDlg::GetDevelList()
+CStringW CAboutDlg::GetDevelList()
 {
-    CString retval;
+    CStringW retval;
 #if 0
     using wds::authors;
     using wds::contact_t;
@@ -283,15 +283,15 @@ CString CAboutDlg::GetDevelList()
         contact_t* c = &authors[i];
         if(c->name)
         {
-            CString tmp;
+            CStringW tmp;
             if(c->mail && c->weburl)
-                tmp.Format(_T("\r\n%s\r\n(mailto:%s)\r\n%s\r\n"), c->name, c->mail, c->weburl);
+                tmp.Format(L"\r\n%s\r\n(mailto:%s)\r\n%s\r\n", c->name, c->mail, c->weburl);
             else if(c->mail)
-                tmp.Format(_T("\r\n%s\r\n(mailto:%s)\r\n"), c->name, c->mail);
+                tmp.Format(L"\r\n%s\r\n(mailto:%s)\r\n", c->name, c->mail);
             else if(c->weburl)
-                tmp.Format(_T("\r\n%s\r\n%s\r\n"), c->name, c->weburl);
+                tmp.Format(L"\r\n%s\r\n%s\r\n", c->name, c->weburl);
             else
-                tmp.Format(_T("\r\n%s\r\n"), c->name);
+                tmp.Format(L"\r\n%s\r\n", c->name);
             if(!tmp.IsEmpty())
             {
                 retval += tmp;
@@ -302,9 +302,9 @@ CString CAboutDlg::GetDevelList()
     return retval;
 }
 
-CString CAboutDlg::GetTranslatorList()
+CStringW CAboutDlg::GetTranslatorList()
 {
-    CString retval;
+    CStringW retval;
 #if 0
     using wds::translators;
     using wds::translator_t;
@@ -314,26 +314,26 @@ CString CAboutDlg::GetTranslatorList()
         translator_t* t = &translators[i];
         if(t->lngNative && t->lngEnglish && t->lngISO639_1)
         {
-            CString tmp;
-            tmp.Format(_T("--- %s/%s (%s) ---\n\n"), t->lngNative, t->lngEnglish, t->lngISO639_1);
+            CStringW tmp;
+            tmp.Format(L"--- %s/%s (%s) ---\n\n", t->lngNative, t->lngEnglish, t->lngISO639_1);
             for(size_t j = 0; t->translators[j].name; j++)
             {
-                CString tmp2;
+                CStringW tmp2;
                 const wds::contact_t& c = t->translators[j];
                 if(c.mail && c.weburl)
-                    tmp2.Format(_T("%s\n(mailto:%s)\n%s\n"), c.name, c.mail, c.weburl);
+                    tmp2.Format(L"%s\n(mailto:%s)\n%s\n", c.name, c.mail, c.weburl);
                 else if(c.mail)
-                    tmp2.Format(_T("%s\n(mailto:%s)\n"), c.name, c.mail);
+                    tmp2.Format(L"%s\n(mailto:%s)\n", c.name, c.mail);
                 else if(c.weburl)
-                    tmp2.Format(_T("%s\n%s\n"), c.name, c.weburl);
+                    tmp2.Format(L"%s\n%s\n", c.name, c.weburl);
                 else
-                    tmp2.Format(_T("%s\n"), c.name);
+                    tmp2.Format(L"%s\n", c.name);
                 if(!tmp2.IsEmpty())
                     tmp += tmp2;
             }
             if(!tmp.IsEmpty())
             {
-                tmp += _T("\n");
+                tmp += L"\n";
                 retval += tmp;
             }
         }

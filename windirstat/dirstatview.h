@@ -61,7 +61,7 @@ protected:
 
 public:
     virtual ~CDirstatView();
-    CString GenerateReport();
+    CStringW GenerateReport();
     CFont *GetSmallFont();
     void SysColorChanged();
 
@@ -81,7 +81,7 @@ protected:
     afx_msg BOOL OnEraseBkgnd(CDC* pDC);
     afx_msg void OnDestroy();
     afx_msg void OnSetFocus(CWnd* pOldWnd);
-    afx_msg void OnSettingChange(UINT uFlags, LPCTSTR lpszSection);
+    afx_msg void OnSettingChange(UINT uFlags, LPCWSTR lpszSection);
     afx_msg void OnLvnItemchanged(NMHDR *pNMHDR, LRESULT *pResult);
     afx_msg void OnUpdatePopupToggle(CCmdUI *pCmdUI);
     afx_msg void OnPopupToggle();

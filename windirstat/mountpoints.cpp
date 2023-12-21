@@ -41,7 +41,7 @@ void CReparsePoints::Clear()
     POSITION pos = m_volume.GetStartPosition();
     while(pos != NULL)
     {
-        CString volume;
+        CStringW volume;
         PointVolumeArray *pva = NULL;
         m_volume.GetNextAssoc(pos, volume, pva);
         ASSERT_VALID(pva);
@@ -72,8 +72,8 @@ void CReparsePoints::GetDriveVolumes()
 
         if((drives & mask) != 0)
         {
-            CString s;
-            s.Format(_T("%c:\\"), i + wds::chrCapA);
+            CStringW s;
+            s.Format(L"%c:\\", i + wds::chrCapA);
 
             BOOL b = ::GetVolumeNameForVolumeMountPoint(s, volume, _countof(volume));
 
@@ -81,9 +81,9 @@ void CReparsePoints::GetDriveVolumes()
             {
 #               ifdef _DEBUG
                 if(ERROR_NOT_READY == ::GetLastError())
-                    VTRACE(_T("GetVolumeNameForVolumeMountPoint(%s): not ready (%d)."), volume, ::GetLastError());
+                    VTRACE(L"GetVolumeNameForVolumeMountPoint(%s): not ready (%d).", volume, ::GetLastError());
                 else
-                    VTRACE(_T("GetVolumeNameForVolumeMountPoint(%s): unexpected error (%d)."), volume, ::GetLastError());
+                    VTRACE(L"GetVolumeNameForVolumeMountPoint(%s): unexpected error (%d).", volume, ::GetLastError());
 #               endif // _DEBUG
                 volume[0] = 0;
             }
@@ -99,7 +99,7 @@ void CReparsePoints::GetAllMountPoints()
     HANDLE hvol = ::FindFirstVolume(volume, _countof(volume));
     if(hvol == INVALID_HANDLE_VALUE)
     {
-        VTRACE(_T("No volumes found."));
+        VTRACE(L"No volumes found.");
         return;
     }
 
@@ -116,9 +116,9 @@ void CReparsePoints::GetAllMountPoints()
         {
 #           ifdef _DEBUG
             if(ERROR_NOT_READY == ::GetLastError())
-                VTRACE(_T("%s (%s) is not ready (%d)."), vname, volume, ::GetLastError());
+                VTRACE(L"%s (%s) is not ready (%d).", vname, volume, ::GetLastError());
             else
-                VTRACE(_T("Unexpected error on %s (%s, %d)."), vname, volume, ::GetLastError());
+                VTRACE(L"Unexpected error on %s (%s, %d).", vname, volume, ::GetLastError());
 #           endif // _DEBUG
             m_volume.SetAt(volume, pva);
             continue;
@@ -128,7 +128,7 @@ void CReparsePoints::GetAllMountPoints()
         {
             // No support for reparse points, and therefore for volume
             // mount points, which are implemented using reparse points.
-            VTRACE(_T("%s, %s, does not support reparse points (%d)."), volume, fsname, ::GetLastError());
+            VTRACE(L"%s, %s, does not support reparse points (%d).", volume, fsname, ::GetLastError());
             m_volume.SetAt(volume, pva);
             continue;
         }
@@ -141,13 +141,13 @@ void CReparsePoints::GetAllMountPoints()
             if(ERROR_ACCESS_DENIED == ::GetLastError())
             {
                 if(IsAdmin())
-                    VTRACE(_T("Access denied for admin to %s (%d)."), volume, ::GetLastError());
+                    VTRACE(L"Access denied for admin to %s (%d).", volume, ::GetLastError());
                 else
-                    VTRACE(_T("Access denied to %s (%d)."), volume, ::GetLastError());
+                    VTRACE(L"Access denied to %s (%d).", volume, ::GetLastError());
             }
             else if(ERROR_NO_MORE_FILES != ::GetLastError())
             {
-                VTRACE(_T("Unexpected error for %s (%d)."), volume, ::GetLastError());
+                VTRACE(L"Unexpected error for %s (%d).", volume, ::GetLastError());
             }
 #           endif // _DEBUG
             m_volume.SetAt(volume, pva);
@@ -156,7 +156,7 @@ void CReparsePoints::GetAllMountPoints()
 
         for(BOOL bCont = TRUE; bCont; bCont = ::FindNextVolumeMountPoint(h, point, _countof(point)))
         {
-            CString uniquePath = volume;
+            CStringW uniquePath = volume;
             uniquePath += point;
             TCHAR mountedVolume[_MAX_PATH];
 
@@ -164,7 +164,7 @@ void CReparsePoints::GetAllMountPoints()
 
             if(!bGotMountPoints)
             {
-                VTRACE(_T("GetVolumeNameForVolumeMountPoint(%s) failed (%d)."), uniquePath.GetBuffer(), ::GetLastError());
+                VTRACE(L"GetVolumeNameForVolumeMountPoint(%s) failed (%d).", uniquePath.GetBuffer(), ::GetLastError());
                 continue;
             }
 
@@ -172,7 +172,7 @@ void CReparsePoints::GetAllMountPoints()
             pv.point = point;
             pv.volume = mountedVolume;
             pv.flags = fsflags;
-            VTRACE(_T("%s (%s) -> %08X"), point, mountedVolume, fsflags);
+            VTRACE(L"%s (%s) -> %08X", point, mountedVolume, fsflags);
 
             pv.point.MakeLower();
 
@@ -189,7 +189,7 @@ void CReparsePoints::GetAllMountPoints()
     POSITION pos = m_volume.GetStartPosition();
     while(pos != NULL)
     {
-        CString lvolume;
+        CStringW lvolume;
         PointVolumeArray *pva = NULL;
         m_volume.GetNextAssoc(pos, lvolume, pva);
         pva->AssertValid();
@@ -198,7 +198,7 @@ void CReparsePoints::GetAllMountPoints()
 }
 
 
-bool CReparsePoints::IsVolumeMountPoint(CString path)
+bool CReparsePoints::IsVolumeMountPoint(CStringW path)
 {
     if(path.GetLength() < 3 || path[1] != wds::chrColon || path[2] != wds::chrBackslash)
     {
@@ -212,12 +212,12 @@ bool CReparsePoints::IsVolumeMountPoint(CString path)
 
     if(path.Right(1) != wds::chrBackslash)
     {
-        path += _T("\\");
+        path += L"\\";
     }
 
     path.MakeLower();
 
-    CString volume = m_drive[path[0] - wds::chrSmallA];
+    CStringW volume = m_drive[path[0] - wds::chrSmallA];
     path = path.Mid(3);
 
     return IsVolumeMountPoint(volume, path);
@@ -236,7 +236,7 @@ bool CReparsePoints::IsFolderJunction(DWORD attr)
 }
 
 // ... same as before, but based on the full path
-bool CReparsePoints::IsFolderJunction(CString path)
+bool CReparsePoints::IsFolderJunction(CStringW path)
 {
     if(IsVolumeMountPoint(path))
     {
@@ -246,7 +246,7 @@ bool CReparsePoints::IsFolderJunction(CString path)
     return IsFolderJunction(::GetFileAttributes(path));
 }
 
-bool CReparsePoints::IsVolumeMountPoint(CString volume, CString path)
+bool CReparsePoints::IsVolumeMountPoint(CStringW volume, CStringW path)
 {
     while(true)
     {
@@ -254,11 +254,11 @@ bool CReparsePoints::IsVolumeMountPoint(CString volume, CString path)
         PointVolumeArray *pva;
         if(!m_volume.Lookup(volume, pva))
         {
-            VTRACE(_T("CMountPoints: Volume(%s) unknown!"), volume.GetString());
+            VTRACE(L"CMountPoints: Volume(%s) unknown!", volume.GetString());
             return false;
         }
 
-        CString point;
+        CStringW point;
         for(i  =  0; i < pva->GetSize(); i++)
         {
             point = (*pva)[i].point;

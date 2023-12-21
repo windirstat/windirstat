@@ -26,15 +26,6 @@
 #define new DEBUG_NEW
 #endif
 
-#ifdef UNICODE
-#define TSPEC "W"
-#else
-#define TSPEC "A"
-#endif
-
-#define PROCNAME(name) #name
-#define TPROCNAME(name) #name TSPEC
-
 // Required to use the system image lists
 // - http://www.catch22.net/tuts/sysimg
 // - http://msdn.microsoft.com/en-us/library/bb776418(VS.85).aspx
@@ -58,16 +49,16 @@ BOOL FileIconInit(__in  BOOL fRestoreCache)
     return FALSE;
 }
 
-CString GetCurrentDesktopName()
+CStringW GetCurrentDesktopName()
 {
     if(HDESK hDesktop = ::GetThreadDesktop(::GetCurrentThreadId()))
     {
         DWORD dwNeeded = 0;
         if(!::GetUserObjectInformation(hDesktop, UOI_NAME, NULL, 0, &dwNeeded) && dwNeeded)
         {
-            CString retval;
+            CStringW retval;
             dwNeeded += sizeof(TCHAR);
-            LPTSTR buf = retval.GetBuffer(dwNeeded);
+            LPWSTR buf = retval.GetBuffer(dwNeeded);
             if(::GetUserObjectInformation(hDesktop, UOI_NAME, buf, dwNeeded, &dwNeeded))
             {
                 retval.ReleaseBuffer();
@@ -75,19 +66,19 @@ CString GetCurrentDesktopName()
             }
         }
     }
-    return CString();
+    return CStringW();
 }
 
-CString GetCurrentWinstaName()
+CStringW GetCurrentWinstaName()
 {
     if(HWINSTA hWinsta = GetProcessWindowStation())
     {
         DWORD dwNeeded = 0;
         if(!GetUserObjectInformation(hWinsta, UOI_NAME, NULL, 0, &dwNeeded) && dwNeeded)
         {
-            CString retval;
+            CStringW retval;
             dwNeeded += sizeof(TCHAR);
-            LPTSTR buf = retval.GetBuffer(dwNeeded);
+            LPWSTR buf = retval.GetBuffer(dwNeeded);
             if(GetUserObjectInformation(hWinsta, UOI_NAME, buf, dwNeeded, &dwNeeded))
             {
                 retval.ReleaseBuffer();
@@ -95,5 +86,5 @@ CString GetCurrentWinstaName()
             }
         }
     }
-    return CString();
+    return CStringW();
 }

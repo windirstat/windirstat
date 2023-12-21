@@ -40,7 +40,7 @@ CWDSTracerConsole::CWDSTracerConsole()
     int hCrt;
     FILE *hf;
     ::AllocConsole();
-    ::SetConsoleTitle(_T("WinDirStat debug trace output"));
+    ::SetConsoleTitle(L"WinDirStat debug trace output");
     // Standard output
     hCrt = _open_osfhandle((intptr_t)::GetStdHandle(STD_OUTPUT_HANDLE), _O_TEXT);
     hf = _fdopen(hCrt, "w");
@@ -55,7 +55,7 @@ CWDSTracerConsole::CWDSTracerConsole()
 
 CWDSTracerConsole::~CWDSTracerConsole()
 {
-    _tprintf(_T("Press a key to continue/close.\n"));
+    _tprintf(L"Press a key to continue/close.\n");
     (void)_getch();
     ::FreeConsole();
 }

@@ -46,27 +46,27 @@ protected:
     class CListItem: public COwnerDrawnListItem
     {
     public:
-        CListItem(CExtensionListControl *list, LPCTSTR extension, SExtensionRecord r);
+        CListItem(CExtensionListControl *list, LPCWSTR extension, SExtensionRecord r);
 
         virtual bool DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *width, int *focusLeft) const;
-        virtual CString GetText(int subitem) const;
+        virtual CStringW GetText(int subitem) const;
 
-        CString GetExtension() const;
+        CStringW GetExtension() const;
         int GetImage() const;
         int Compare(const CSortingListItem *other, int subitem) const;
 
     private:
         void DrawColor(CDC *pdc, CRect rc, UINT state, int *width) const;
 
-        CString GetDescription() const;
-        CString GetBytesPercent() const;
+        CStringW GetDescription() const;
+        CStringW GetBytesPercent() const;
 
         double GetBytesFraction() const;
 
         CExtensionListControl *m_list;
-        CString m_extension;
+        CStringW m_extension;
         SExtensionRecord m_record;
-        mutable CString m_description;
+        mutable CStringW m_description;
         mutable int m_image;
     };
 
@@ -77,8 +77,8 @@ public:
     void SetExtensionData(const CExtensionData *ed);
     void SetRootSize(ULONGLONG totalBytes);
     ULONGLONG GetRootSize();
-    void SelectExtension(LPCTSTR ext);
-    CString GetSelectedExtension();
+    void SelectExtension(LPCWSTR ext);
+    CStringW GetSelectedExtension();
 
 protected:
     CListItem *GetListItem(int i);
@@ -116,7 +116,7 @@ public:
     bool IsShowTypes();
     void ShowTypes(bool show);
 
-    void SetHighlightExtension(LPCTSTR ext);
+    void SetHighlightExtension(LPCWSTR ext);
 
 protected:
     virtual void OnInitialUpdate();

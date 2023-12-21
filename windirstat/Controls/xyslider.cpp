@@ -245,10 +245,10 @@ void CXySlider::PaintValues(CDC *pdc)
 
     CSelectObject sofont(pdc, GetParent()->GetFont());
 
-    CString s;
-    s.Format(_T("%d"), m_externalPos.x);
+    CStringW s;
+    s.Format(L"%d", m_externalPos.x);
     pdc->DrawText(s, rcLeft, DT_SINGLELINE | DT_CENTER | DT_VCENTER); // @ | DT_NOPREFIX
-    s.Format(_T("%d"), m_externalPos.y);
+    s.Format(L"%d", m_externalPos.y);
     pdc->DrawText(s, rcRight, DT_SINGLELINE | DT_CENTER | DT_VCENTER); // @ | DT_NOPREFIX
 }
 */

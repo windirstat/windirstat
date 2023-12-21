@@ -129,7 +129,7 @@ void CMyTreeListControl::PrepareDefaultMenu(CMenu *menu, const CItem *item)
     }
     else
     {
-        CString command = LoadString(item->IsExpanded() && item->HasChildren() ? IDS_COLLAPSE : IDS_EXPAND);
+        CStringW command = LoadString(item->IsExpanded() && item->HasChildren() ? IDS_COLLAPSE : IDS_EXPAND);
         VERIFY(menu->ModifyMenu(ID_POPUP_TOGGLE, MF_BYCOMMAND | MF_STRING, ID_POPUP_TOGGLE, command));
         menu->SetDefaultItem(ID_POPUP_TOGGLE, false);
     }
@@ -168,9 +168,9 @@ CDirstatView::~CDirstatView()
 {
 }
 
-CString CDirstatView::GenerateReport()
+CStringW CDirstatView::GenerateReport()
 {
-    CString report = GetOptions()->GetReportPrefix() + _T("\r\n");
+    CStringW report = GetOptions()->GetReportPrefix() + L"\r\n";
 
     for(size_t j = 0; j < GetDocument()->GetSelectionCount(); j++)
     {
@@ -194,10 +194,10 @@ CString CDirstatView::GenerateReport()
                 continue;
             }
 
-            report.AppendFormat(_T("%s %s\r\n"), PadWidthBlanks(FormatLongLongHuman(item->GetSize()), 11).GetString(), item->GetReportPath().GetString());
+            report.AppendFormat(L"%s %s\r\n", PadWidthBlanks(FormatLongLongHuman(item->GetSize()), 11).GetString(), item->GetReportPath().GetString());
         }
     }
-    report += _T("\r\n\r\n");
+    report += L"\r\n\r\n";
     report += GetOptions()->GetReportSuffix();
 
     return report;
@@ -307,7 +307,7 @@ void CDirstatView::OnSetFocus(CWnd* /*pOldWnd*/)
     m_treeListControl.SetFocus();
 }
 
-void CDirstatView::OnSettingChange(UINT uFlags, LPCTSTR lpszSection)
+void CDirstatView::OnSettingChange(UINT uFlags, LPCWSTR lpszSection)
 {
     if(uFlags & SPI_SETNONCLIENTMETRICS)
     {

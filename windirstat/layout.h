@@ -89,7 +89,7 @@ class CLayout
     };
 
 public:
-    CLayout(CWnd *dialog, LPCTSTR name);
+    CLayout(CWnd *dialog, LPCWSTR name);
     int AddControl(CWnd *control, double movex, double movey, double stretchx, double stretchy);
     void AddControl(UINT id, double movex, double movey, double stretchx, double stretchy);
 
@@ -100,7 +100,7 @@ public:
 
 protected:
     CWnd *m_dialog;
-    CString m_name;
+    CStringW m_name;
     CSize m_originalDialogSize;
     CArray<SControlInfo, SControlInfo&> m_control;
     CSizeGripper m_sizeGripper;

@@ -99,19 +99,19 @@ class CItem: public CTreeListItem, public CTreemap::Item
     // (a) there are more than one files and (b) there are subdirectories.)
     struct FILEINFO
     {
-        CString name;
+        CStringW name;
         ULONGLONG length;
         FILETIME lastWriteTime;
         DWORD attributes;
     };
 
 public:
-    CItem(ITEMTYPE type, LPCTSTR name, bool dontFollow = false);
+    CItem(ITEMTYPE type, LPCWSTR name, bool dontFollow = false);
     ~CItem();
 
     // CTreeListItem Interface
     virtual bool DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *width, int *focusLeft) const;
-    virtual CString GetText(int subitem) const;
+    virtual CStringW GetText(int subitem) const;
     virtual COLORREF GetItemTextColor() const;
     virtual int CompareSibling(const CTreeListItem *tlib, int subitem) const;
     virtual int GetChildrenCount() const;
@@ -164,13 +164,13 @@ public:
     double GetFraction() const;
     ITEMTYPE GetType() const;
     bool IsRootItem() const;
-    CString GetPath() const;
+    CStringW GetPath() const;
     bool HasUncPath() const;
-    CString GetFindPattern() const;
-    CString GetFolderPath() const;
-    CString GetReportPath() const;
-    CString GetName() const;
-    CString GetExtension() const;
+    CStringW GetFindPattern() const;
+    CStringW GetFolderPath() const;
+    CStringW GetReportPath() const;
+    CStringW GetName() const;
+    CStringW GetExtension() const;
     ULONGLONG GetFilesCount() const;
     ULONGLONG GetSubdirsCount() const;
     ULONGLONG GetItemsCount() const;
@@ -191,7 +191,7 @@ public:
     void CreateUnknownItem();
     CItem *FindUnknownItem() const;
     void RemoveUnknownItem();
-    CItem *FindDirectoryByPath(const CString& path);
+    CItem *FindDirectoryByPath(const CStringW& path);
     void RecurseCollectExtensionData(CExtensionData *ed);
 
 private:
@@ -205,7 +205,7 @@ private:
     COLORREF GetPercentageColor() const;
     int FindFreeSpaceItemIndex() const;
     int FindUnknownItemIndex() const;
-    CString UpwardGetPathWithoutBackslash() const;
+    CStringW UpwardGetPathWithoutBackslash() const;
     void AddDirectory(CFileFindWDS& finder);
     void AddFile(const FILEINFO& fi);
     void DriveVisualUpdateDuringWork();
@@ -214,8 +214,8 @@ private:
 
     ITEMTYPE m_type;            // Indicates our type. See ITEMTYPE.
     ITEMTYPE m_etype;           
-    CString m_name;             // Display name
-    mutable CString m_extension;		// Cache of extension (it's used often)
+    CStringW m_name;             // Display name
+    mutable CStringW m_extension;		// Cache of extension (it's used often)
     mutable bool m_extension_cached;
     ULONGLONG m_size;           // OwnSize, if IT_FILE or IT_FREESPACE, or IT_UNKNOWN; SubtreeTotal else.
     ULONGLONG m_files;          // # Files in subtree

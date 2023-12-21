@@ -33,72 +33,72 @@ namespace
 {
     static COptions _theOptions;
 
-    const LPCTSTR sectionPersistence        = _T("persistence");
-    const LPCTSTR entryShowFreeSpace        = _T("showFreeSpace");
-    const LPCTSTR entryShowUnknown          = _T("showUnknown");
-    const LPCTSTR entryShowFileTypes        = _T("showFileTypes");
-    const LPCTSTR entryShowTreemap          = _T("showTreemap");
-    const LPCTSTR entryShowToolbar          = _T("showToolbar");
-    const LPCTSTR entryShowStatusbar        = _T("showStatusbar");
-    const LPCTSTR entryMainWindowPlacement  = _T("mainWindowPlacement");
-    const LPCTSTR entrySplitterPosS         = _T("%s-splitterPos");
-    const LPCTSTR entryColumnOrderS         = _T("%s-columnOrder");
-    const LPCTSTR entryColumnWidthsS        = _T("%s-columnWidths");
-    const LPCTSTR entryDialogRectangleS     = _T("%s-rectangle");
-//     const LPCTSTR entrySortingColumnSN      = _T("%s-sortColumn%d");
-//     const LPCTSTR entrySortingAscendingSN   = _T("%s-sortAscending%d");
-    const LPCTSTR entryConfigPage           = _T("configPage");
-    const LPCTSTR entryConfigPositionX      = _T("configPositionX");
-    const LPCTSTR entryConfigPositionY      = _T("configPositionY");
-    const LPCTSTR entrySelectDrivesRadio    = _T("selectDrivesRadio");
-    const LPCTSTR entrySelectDrivesFolder   = _T("selectDrivesFolder");
-    const LPCTSTR entrySelectDrivesDrives   = _T("selectDrivesDrives");
-    const LPCTSTR entryShowDeleteWarning    = _T("showDeleteWarning");
-    const LPCTSTR sectionBarState           = _T("persistence\\barstate");
+    const LPCWSTR sectionPersistence        = L"persistence";
+    const LPCWSTR entryShowFreeSpace        = L"showFreeSpace";
+    const LPCWSTR entryShowUnknown          = L"showUnknown";
+    const LPCWSTR entryShowFileTypes        = L"showFileTypes";
+    const LPCWSTR entryShowTreemap          = L"showTreemap";
+    const LPCWSTR entryShowToolbar          = L"showToolbar";
+    const LPCWSTR entryShowStatusbar        = L"showStatusbar";
+    const LPCWSTR entryMainWindowPlacement  = L"mainWindowPlacement";
+    const LPCWSTR entrySplitterPosS         = L"%s-splitterPos";
+    const LPCWSTR entryColumnOrderS         = L"%s-columnOrder";
+    const LPCWSTR entryColumnWidthsS        = L"%s-columnWidths";
+    const LPCWSTR entryDialogRectangleS     = L"%s-rectangle";
+//     const LPCWSTR entrySortingColumnSN      = L"%s-sortColumn%d";
+//     const LPCWSTR entrySortingAscendingSN   = L"%s-sortAscending%d";
+    const LPCWSTR entryConfigPage           = L"configPage";
+    const LPCWSTR entryConfigPositionX      = L"configPositionX";
+    const LPCWSTR entryConfigPositionY      = L"configPositionY";
+    const LPCWSTR entrySelectDrivesRadio    = L"selectDrivesRadio";
+    const LPCWSTR entrySelectDrivesFolder   = L"selectDrivesFolder";
+    const LPCWSTR entrySelectDrivesDrives   = L"selectDrivesDrives";
+    const LPCWSTR entryShowDeleteWarning    = L"showDeleteWarning";
+    const LPCWSTR sectionBarState           = L"persistence\\barstate";
 
-    const LPCTSTR entryLanguage             = _T("language");
+    const LPCWSTR entryLanguage             = L"language";
 
-    const LPCTSTR sectionOptions            = _T("options");
-    const LPCTSTR entryListGrid             = _T("treelistGrid"); // for compatibility with 1.0.1, this entry is named treelistGrid.
-    const LPCTSTR entryListStripes          = _T("listStripes");
-    const LPCTSTR entryListFullRowSelection = _T("listFullRowSelection");
-    const LPCTSTR entryTreelistColorCount   = _T("treelistColorCount");
-    const LPCTSTR entryTreelistColorN       = _T("treelistColor%d");
-    const LPCTSTR entryHumanFormat          = _T("humanFormat");
-    const LPCTSTR entryPacmanAnimation      = _T("pacmanAnimation");
-    const LPCTSTR entryShowTimeSpent        = _T("showTimeSpent");
-    const LPCTSTR entryTreemapHighlightColor= _T("treemapHighlightColor");
-    const LPCTSTR entryTreemapStyle         = _T("treemapStyle");
-    const LPCTSTR entryTreemapGrid          = _T("treemapGrid");
-    const LPCTSTR entryTreemapGridColor     = _T("treemapGridColor");
-    const LPCTSTR entryBrightness           = _T("brightness");
-    const LPCTSTR entryHeightFactor         = _T("heightFactor");
-    const LPCTSTR entryScaleFactor          = _T("scaleFactor");
-    const LPCTSTR entryAmbientLight         = _T("ambientLight");
-    const LPCTSTR entryLightSourceX         = _T("lightSourceX");
-    const LPCTSTR entryLightSourceY         = _T("lightSourceY");
-    const LPCTSTR entryFollowMountPoints    = _T("followMountPoints");
-    const LPCTSTR entryFollowJunctionPoints = _T("followJunctionPoints");
-    const LPCTSTR entrySkipHidden           = _T("skipHidden");
-    const LPCTSTR entryUseWdsLocale         = _T("useWdsLocale");
+    const LPCWSTR sectionOptions            = L"options";
+    const LPCWSTR entryListGrid             = L"treelistGrid"; // for compatibility with 1.0.1, this entry is named treelistGrid.
+    const LPCWSTR entryListStripes          = L"listStripes";
+    const LPCWSTR entryListFullRowSelection = L"listFullRowSelection";
+    const LPCWSTR entryTreelistColorCount   = L"treelistColorCount";
+    const LPCWSTR entryTreelistColorN       = L"treelistColor%d";
+    const LPCWSTR entryHumanFormat          = L"humanFormat";
+    const LPCWSTR entryPacmanAnimation      = L"pacmanAnimation";
+    const LPCWSTR entryShowTimeSpent        = L"showTimeSpent";
+    const LPCWSTR entryTreemapHighlightColor= L"treemapHighlightColor";
+    const LPCWSTR entryTreemapStyle         = L"treemapStyle";
+    const LPCWSTR entryTreemapGrid          = L"treemapGrid";
+    const LPCWSTR entryTreemapGridColor     = L"treemapGridColor";
+    const LPCWSTR entryBrightness           = L"brightness";
+    const LPCWSTR entryHeightFactor         = L"heightFactor";
+    const LPCWSTR entryScaleFactor          = L"scaleFactor";
+    const LPCWSTR entryAmbientLight         = L"ambientLight";
+    const LPCWSTR entryLightSourceX         = L"lightSourceX";
+    const LPCWSTR entryLightSourceY         = L"lightSourceY";
+    const LPCWSTR entryFollowMountPoints    = L"followMountPoints";
+    const LPCWSTR entryFollowJunctionPoints = L"followJunctionPoints";
+    const LPCWSTR entrySkipHidden           = L"skipHidden";
+    const LPCWSTR entryUseWdsLocale         = L"useWdsLocale";
 
-    const LPCTSTR sectionUserDefinedCleanupD= _T("options\\userDefinedCleanup%02d");
-    const LPCTSTR entryEnabled              = _T("enabled");
-    const LPCTSTR entryTitle                = _T("title");
-    const LPCTSTR entryWorksForDrives       = _T("worksForDrives");
-    const LPCTSTR entryWorksForDirectories  = _T("worksForDirectories");
-    const LPCTSTR entryWorksForFilesFolder  = _T("worksForFilesFolder");
-    const LPCTSTR entryWorksForFiles        = _T("worksForFiles");
-    const LPCTSTR entryWorksForUncPaths     = _T("worksForUncPaths");
-    const LPCTSTR entryCommandLine          = _T("commandLine");
-    const LPCTSTR entryRecurseIntoSubdirectories = _T("recurseIntoSubdirectories");
-    const LPCTSTR entryAskForConfirmation   = _T("askForConfirmation");
-    const LPCTSTR entryShowConsoleWindow    = _T("showConsoleWindow");
-    const LPCTSTR entryWaitForCompletion    = _T("waitForCompletion");
-    const LPCTSTR entryRefreshPolicy        = _T("refreshPolicy");
-    const LPCTSTR entryReportSubject        = _T("reportSubject");
-    const LPCTSTR entryReportPrefix         = _T("reportPrefix");
-    const LPCTSTR entryReportSuffix         = _T("reportSuffix");
+    const LPCWSTR sectionUserDefinedCleanupD= L"options\\userDefinedCleanup%02d";
+    const LPCWSTR entryEnabled              = L"enabled";
+    const LPCWSTR entryTitle                = L"title";
+    const LPCWSTR entryWorksForDrives       = L"worksForDrives";
+    const LPCWSTR entryWorksForDirectories  = L"worksForDirectories";
+    const LPCWSTR entryWorksForFilesFolder  = L"worksForFilesFolder";
+    const LPCWSTR entryWorksForFiles        = L"worksForFiles";
+    const LPCWSTR entryWorksForUncPaths     = L"worksForUncPaths";
+    const LPCWSTR entryCommandLine          = L"commandLine";
+    const LPCWSTR entryRecurseIntoSubdirectories = L"recurseIntoSubdirectories";
+    const LPCWSTR entryAskForConfirmation   = L"askForConfirmation";
+    const LPCWSTR entryShowConsoleWindow    = L"showConsoleWindow";
+    const LPCWSTR entryWaitForCompletion    = L"waitForCompletion";
+    const LPCWSTR entryRefreshPolicy        = L"refreshPolicy";
+    const LPCWSTR entryReportSubject        = L"reportSubject";
+    const LPCWSTR entryReportPrefix         = L"reportPrefix";
+    const LPCWSTR entryReportSuffix         = L"reportSuffix";
 
     COLORREF treelistColorDefault[TREELISTCOLORCOUNT] = {
         RGB(64, 64, 140),
@@ -177,7 +177,7 @@ void CPersistence::SetShowStatusbar(bool show)
 void CPersistence::GetMainWindowPlacement(/* [in/out] */ WINDOWPLACEMENT& wp)
 {
     ASSERT(wp.length == sizeof(wp));
-    CString s = getProfileString(sectionPersistence, entryMainWindowPlacement);
+    CStringW s = getProfileString(sectionPersistence, entryMainWindowPlacement);
     DecodeWindowPlacement(s, wp);
     CRect rc(wp.rcNormalPosition);
     SanitizeRect(rc);
@@ -186,11 +186,11 @@ void CPersistence::GetMainWindowPlacement(/* [in/out] */ WINDOWPLACEMENT& wp)
 
 void CPersistence::SetMainWindowPlacement(const WINDOWPLACEMENT& wp)
 {
-    CString s = EncodeWindowPlacement(wp);
+    CStringW s = EncodeWindowPlacement(wp);
     setProfileString(sectionPersistence, entryMainWindowPlacement, s);
 }
 
-void CPersistence::SetSplitterPos(LPCTSTR name, bool valid, double userpos)
+void CPersistence::SetSplitterPos(LPCWSTR name, bool valid, double userpos)
 {
     int pos;
     if(valid)
@@ -205,7 +205,7 @@ void CPersistence::SetSplitterPos(LPCTSTR name, bool valid, double userpos)
     setProfileInt(sectionPersistence, MakeSplitterPosEntry(name), pos);
 }
 
-void CPersistence::GetSplitterPos(LPCTSTR name, bool& valid, double& userpos)
+void CPersistence::GetSplitterPos(LPCWSTR name, bool& valid, double& userpos)
 {
     int pos = getProfileInt(sectionPersistence, MakeSplitterPosEntry(name), -1);
     if(pos < 0 || pos > 100)
@@ -220,38 +220,38 @@ void CPersistence::GetSplitterPos(LPCTSTR name, bool& valid, double& userpos)
     }
 }
 
-void CPersistence::SetColumnOrder(LPCTSTR name, const CArray<int, int>& arr)
+void CPersistence::SetColumnOrder(LPCWSTR name, const CArray<int, int>& arr)
 {
     SetArray(MakeColumnOrderEntry(name), arr);
 }
 
-void CPersistence::GetColumnOrder(LPCTSTR name, /* in/out */ CArray<int, int>& arr)
+void CPersistence::GetColumnOrder(LPCWSTR name, /* in/out */ CArray<int, int>& arr)
 {
     GetArray(MakeColumnOrderEntry(name), arr);
 }
 
-void CPersistence::SetColumnWidths(LPCTSTR name, const CArray<int, int>& arr)
+void CPersistence::SetColumnWidths(LPCWSTR name, const CArray<int, int>& arr)
 {
     SetArray(MakeColumnWidthsEntry(name), arr);
 }
 
-void CPersistence::GetColumnWidths(LPCTSTR name, /* in/out */ CArray<int, int>& arr)
+void CPersistence::GetColumnWidths(LPCWSTR name, /* in/out */ CArray<int, int>& arr)
 {
     GetArray(MakeColumnWidthsEntry(name), arr);
 }
 
-void CPersistence::SetDialogRectangle(LPCTSTR name, const CRect& rc)
+void CPersistence::SetDialogRectangle(LPCWSTR name, const CRect& rc)
 {
     SetRect(MakeDialogRectangleEntry(name), rc);
 }
 
-void CPersistence::GetDialogRectangle(LPCTSTR name, CRect& rc)
+void CPersistence::GetDialogRectangle(LPCWSTR name, CRect& rc)
 {
     GetRect(MakeDialogRectangleEntry(name), rc);
     SanitizeRect(rc);
 }
 /*
-void CPersistence::SetSorting(LPCTSTR name, int column1, bool ascending1, int column2, bool ascending2)
+void CPersistence::SetSorting(LPCWSTR name, int column1, bool ascending1, int column2, bool ascending2)
 {
     setProfileInt(sectionPersistence, MakeSortingColumnEntry(name, 1), column1);
     getProfileBool(sectionPersistence, MakeSortingAscendingEntry(name, 1), ascending1);
@@ -259,7 +259,7 @@ void CPersistence::SetSorting(LPCTSTR name, int column1, bool ascending1, int co
     getProfileBool(sectionPersistence, MakeSortingAscendingEntry(name, 2), ascending2);
 }
 
-void CPersistence::GetSorting(LPCTSTR name, int columnCount, int& column1, bool& ascending1, int& column2, bool& ascending2)
+void CPersistence::GetSorting(LPCWSTR name, int columnCount, int& column1, bool& ascending1, int& column2, bool& ascending2)
 {
     column1 = getProfileInt(sectionPersistence, MakeSortingColumnEntry(name, 1), column1);
     checkRange(column1, 0, columnCount - 1);
@@ -299,7 +299,7 @@ void CPersistence::SetConfigPosition(CPoint pt)
     setProfileInt(sectionPersistence, entryConfigPositionY, pt.y);
 }
 
-CString CPersistence::GetBarStateSection()
+CStringW CPersistence::GetBarStateSection()
 {
     return sectionBarState;
 }
@@ -316,12 +316,12 @@ void CPersistence::SetSelectDrivesRadio(int radio)
     setProfileInt(sectionPersistence, entrySelectDrivesRadio, radio);
 }
 
-CString CPersistence::GetSelectDrivesFolder()
+CStringW CPersistence::GetSelectDrivesFolder()
 {
     return getProfileString(sectionPersistence, entrySelectDrivesFolder);
 }
 
-void CPersistence::SetSelectDrivesFolder(LPCTSTR folder)
+void CPersistence::SetSelectDrivesFolder(LPCWSTR folder)
 {
     setProfileString(sectionPersistence, entrySelectDrivesFolder, folder);
 }
@@ -329,11 +329,11 @@ void CPersistence::SetSelectDrivesFolder(LPCTSTR folder)
 void CPersistence::GetSelectDrivesDrives(CStringArray& drives)
 {
     drives.RemoveAll();
-    CString s = getProfileString(sectionPersistence, entrySelectDrivesDrives);
+    CStringW s = getProfileString(sectionPersistence, entrySelectDrivesDrives);
     int i = 0;
     while(i < s.GetLength())
     {
-        CString drive;
+        CStringW drive;
         while(i < s.GetLength() && s[i] != wds::chrPipe)
         {
             drive += s[i];
@@ -349,12 +349,12 @@ void CPersistence::GetSelectDrivesDrives(CStringArray& drives)
 
 void CPersistence::SetSelectDrivesDrives(const CStringArray& drives)
 {
-    CString s;
+    CStringW s;
     for(int i = 0; i < drives.GetSize(); i++)
     {
         if(i > 0)
         {
-            s += _T("|");
+            s += L"|";
         }
         s += drives[i];
     }
@@ -371,25 +371,25 @@ void CPersistence::SetShowDeleteWarning(bool show)
     getProfileBool(sectionPersistence, entryShowDeleteWarning, show);
 }
 
-void CPersistence::SetArray(LPCTSTR entry, const CArray<int, int>& arr)
+void CPersistence::SetArray(LPCWSTR entry, const CArray<int, int>& arr)
 {
-    CString value;
+    CStringW value;
     for(int i = 0; i < arr.GetSize(); i++)
     {
-        CString s;
-        s.Format(_T("%d"), arr[i]);
+        CStringW s;
+        s.Format(L"%d", arr[i]);
         if(i > 0)
         {
-            value += _T(",");
+            value += L",";
         }
         value += s;
     }
     setProfileString(sectionPersistence, entry, value);
 }
 
-void CPersistence::GetArray(LPCTSTR entry, /* in/out */ CArray<int, int>& rarr)
+void CPersistence::GetArray(LPCWSTR entry, /* in/out */ CArray<int, int>& rarr)
 {
-    CString s = getProfileString(sectionPersistence, entry);
+    CStringW s = getProfileString(sectionPersistence, entry);
     CArray<int, int> arr;
     int i = 0;
     while(i < s.GetLength())
@@ -413,18 +413,18 @@ void CPersistence::GetArray(LPCTSTR entry, /* in/out */ CArray<int, int>& rarr)
     }
 }
 
-void CPersistence::SetRect(LPCTSTR entry, const CRect& rc)
+void CPersistence::SetRect(LPCWSTR entry, const CRect& rc)
 {
-    CString s;
-    s.Format(_T("%d,%d,%d,%d"), rc.left, rc.top, rc.right, rc.bottom);
+    CStringW s;
+    s.Format(L"%d,%d,%d,%d", rc.left, rc.top, rc.right, rc.bottom);
     setProfileString(sectionPersistence, entry, s);
 }
 
-void CPersistence::GetRect(LPCTSTR entry, CRect& rc)
+void CPersistence::GetRect(LPCWSTR entry, CRect& rc)
 {
-    CString s = getProfileString(sectionPersistence, entry);
+    CStringW s = getProfileString(sectionPersistence, entry);
     CRect tmp;
-    int r = _stscanf_s(s, _T("%d,%d,%d,%d"), &tmp.left, &tmp.top, &tmp.right, &tmp.bottom);
+    int r = _stscanf_s(s, L"%d,%d,%d,%d", &tmp.left, &tmp.top, &tmp.right, &tmp.bottom);
     if(r == 4)
     {
         rc = tmp;
@@ -468,57 +468,57 @@ void CPersistence::SanitizeRect(CRect& rc)
     }
 }
 
-CString CPersistence::MakeSplitterPosEntry(LPCTSTR name)
+CStringW CPersistence::MakeSplitterPosEntry(LPCWSTR name)
 {
-    CString entry;
+    CStringW entry;
     entry.Format(entrySplitterPosS, name);
     return entry;
 }
 
-CString CPersistence::MakeColumnOrderEntry(LPCTSTR name)
+CStringW CPersistence::MakeColumnOrderEntry(LPCWSTR name)
 {
-    CString entry;
+    CStringW entry;
     entry.Format(entryColumnOrderS, name);
     return entry;
 }
 
-CString CPersistence::MakeDialogRectangleEntry(LPCTSTR name)
+CStringW CPersistence::MakeDialogRectangleEntry(LPCWSTR name)
 {
-    CString entry;
+    CStringW entry;
     entry.Format(entryDialogRectangleS, name);
     return entry;
 }
 
-CString CPersistence::MakeColumnWidthsEntry(LPCTSTR name)
+CStringW CPersistence::MakeColumnWidthsEntry(LPCWSTR name)
 {
-    CString entry;
+    CStringW entry;
     entry.Format(entryColumnWidthsS, name);
     return entry;
 }
 
 /*
-CString CPersistence::MakeSortingColumnEntry(LPCTSTR name, int n)
+CStringW CPersistence::MakeSortingColumnEntry(LPCWSTR name, int n)
 {
-    CString entry;
+    CStringW entry;
     entry.Format(entrySortingColumnSN, name, n);
     return entry;
 }
 
-CString CPersistence::MakeSortingAscendingEntry(LPCTSTR name, int n)
+CStringW CPersistence::MakeSortingAscendingEntry(LPCWSTR name, int n)
 {
-    CString entry;
+    CStringW entry;
     entry.Format(entrySortingAscendingSN, name, n);
     return entry;
 }
 */
 
-CString CPersistence::EncodeWindowPlacement(const WINDOWPLACEMENT& wp)
+CStringW CPersistence::EncodeWindowPlacement(const WINDOWPLACEMENT& wp)
 {
-    CString s;
+    CStringW s;
     s.Format(
-        _T("%u,%u,")
-        _T("%ld,%ld,%ld,%ld,")
-        _T("%ld,%ld,%ld,%ld"),
+        L"%u,%u,"
+        L"%ld,%ld,%ld,%ld,"
+        L"%ld,%ld,%ld,%ld",
         wp.flags, wp.showCmd,
         wp.ptMinPosition.x, wp.ptMinPosition.y, wp.ptMaxPosition.x, wp.ptMaxPosition.y,
         wp.rcNormalPosition.left, wp.rcNormalPosition.right, wp.rcNormalPosition.top, wp.rcNormalPosition.bottom
@@ -526,15 +526,15 @@ CString CPersistence::EncodeWindowPlacement(const WINDOWPLACEMENT& wp)
     return s;
 }
 
-void CPersistence::DecodeWindowPlacement(const CString& s, WINDOWPLACEMENT& rwp)
+void CPersistence::DecodeWindowPlacement(const CStringW& s, WINDOWPLACEMENT& rwp)
 {
     WINDOWPLACEMENT wp;
     wp.length = sizeof(wp);
 
     int r = _stscanf_s(s,
-        _T("%u,%u,")
-        _T("%ld,%ld,%ld,%ld,")
-        _T("%ld,%ld,%ld,%ld"),
+        L"%u,%u,"
+        L"%ld,%ld,%ld,%ld,"
+        L"%ld,%ld,%ld,%ld",
         &wp.flags, &wp.showCmd,
         &wp.ptMinPosition.x, &wp.ptMinPosition.y, &wp.ptMaxPosition.x, &wp.ptMaxPosition.y,
         &wp.rcNormalPosition.left, &wp.rcNormalPosition.right, &wp.rcNormalPosition.top, &wp.rcNormalPosition.bottom
@@ -828,49 +828,49 @@ void COptions::SetSkipHidden(bool skip)
     }
 }
 
-CString COptions::GetReportSubject()
+CStringW COptions::GetReportSubject()
 {
     return m_reportSubject;
 }
 
-CString COptions::GetReportDefaultSubject()
+CStringW COptions::GetReportDefaultSubject()
 {
     return LoadString(IDS_REPORT_DISKUSAGE);
 }
 
-void COptions::SetReportSubject(LPCTSTR subject)
+void COptions::SetReportSubject(LPCWSTR subject)
 {
     m_reportSubject = subject;
 }
 
-CString COptions::GetReportPrefix()
+CStringW COptions::GetReportPrefix()
 {
     return m_reportPrefix;
 }
 
-CString COptions::GetReportDefaultPrefix()
+CStringW COptions::GetReportDefaultPrefix()
 {
     return LoadString(IDS_PLEASECHECKYOURDISKUSAGE);
 }
 
-void COptions::SetReportPrefix(LPCTSTR prefix)
+void COptions::SetReportPrefix(LPCWSTR prefix)
 {
     m_reportPrefix = prefix;
 }
 
-CString COptions::GetReportSuffix()
+CStringW COptions::GetReportSuffix()
 {
     return m_reportSuffix;
 }
 
-CString COptions::GetReportDefaultSuffix()
+CStringW COptions::GetReportDefaultSuffix()
 {
-    CString suffix = LoadString(IDS_DISKUSAGEREPORTGENERATEDBYWINDIRSTAT);
-    suffix.AppendFormat(_T("https://%s/\r\n"), GetWinDirStatHomepage().GetString());
+    CStringW suffix = LoadString(IDS_DISKUSAGEREPORTGENERATEDBYWINDIRSTAT);
+    suffix.AppendFormat(L"https://%s/\r\n", GetWinDirStatHomepage().GetString());
     return suffix;
 }
 
-void COptions::SetReportSuffix(LPCTSTR suffix)
+void COptions::SetReportSuffix(LPCWSTR suffix)
 {
     m_reportSuffix = suffix;
 }
@@ -887,7 +887,7 @@ void COptions::SaveToRegistry()
     setProfileInt(sectionOptions, entryTreelistColorCount, m_treelistColorCount);
     for(i  =  0; i < TREELISTCOLORCOUNT; i++)
     {
-        CString entry;
+        CStringW entry;
         entry.Format(entryTreelistColorN, i);
         setProfileInt(sectionOptions, entry, m_treelistColor[i]);
     }
@@ -913,9 +913,9 @@ void COptions::SaveToRegistry()
     // 'Default' will read ""
     // 'Empty' will read "$"
     // Others will read "$text.."
-    const LPCTSTR stringPrefix = _T("$");
+    const LPCWSTR stringPrefix = L"$";
 
-    CString s;
+    CStringW s;
 
     if(m_reportSubject == GetReportDefaultSubject())
     {
@@ -961,7 +961,7 @@ void COptions::LoadFromRegistry()
     checkRange(m_treelistColorCount, 1, TREELISTCOLORCOUNT);
     for(i  =  0; i < TREELISTCOLORCOUNT; i++)
     {
-        CString entry;
+        CStringW entry;
         entry.Format(entryTreelistColorN, i);
         m_treelistColor[i]= getProfileInt(sectionOptions, entry, treelistColorDefault[i]);
     }
@@ -985,7 +985,7 @@ void COptions::LoadFromRegistry()
     }
 
 
-    CString s = getProfileString(sectionOptions, entryReportSubject);
+    CStringW s = getProfileString(sectionOptions, entryReportSubject);
     if(s.IsEmpty())
     {
         m_reportSubject = GetReportDefaultSubject();
@@ -1018,10 +1018,10 @@ void COptions::LoadFromRegistry()
 
 void COptions::ReadUserDefinedCleanup(int i)
 {
-    CString section;
+    CStringW section;
     section.Format(sectionUserDefinedCleanupD, i);
 
-    CString defaultTitle;
+    CStringW defaultTitle;
     defaultTitle.FormatMessage(IDS_USERDEFINEDCLEANUPd, i);
 
     m_userDefinedCleanup[i].enabled = getProfileBool(section, entryEnabled, false);
@@ -1052,7 +1052,7 @@ void COptions::ReadUserDefinedCleanup(int i)
 
 void COptions::SaveUserDefinedCleanup(int i)
 {
-    CString section;
+    CStringW section;
     section.Format(sectionUserDefinedCleanupD, i);
 
     getProfileBool(section, entryEnabled, m_userDefinedCleanup[i].enabled);
@@ -1133,32 +1133,32 @@ void COptions::SaveTreemapOptions()
 
 /////////////////////////////////////////////////////////////////////////////
 
-void CRegistryUser::setProfileString(LPCTSTR section, LPCTSTR entry, LPCTSTR value)
+void CRegistryUser::setProfileString(LPCWSTR section, LPCWSTR entry, LPCWSTR value)
 {
     AfxGetApp()->WriteProfileString(section, entry, value);
 }
 
-CString CRegistryUser::getProfileString(LPCTSTR section, LPCTSTR entry, LPCTSTR defaultValue)
+CStringW CRegistryUser::getProfileString(LPCWSTR section, LPCWSTR entry, LPCWSTR defaultValue)
 {
     return AfxGetApp()->GetProfileString(section, entry, defaultValue);
 }
 
-void CRegistryUser::setProfileInt(LPCTSTR section, LPCTSTR entry, int value)
+void CRegistryUser::setProfileInt(LPCWSTR section, LPCWSTR entry, int value)
 {
     AfxGetApp()->WriteProfileInt(section, entry, value);
 }
 
-int CRegistryUser::getProfileInt(LPCTSTR section, LPCTSTR entry, int defaultValue)
+int CRegistryUser::getProfileInt(LPCWSTR section, LPCWSTR entry, int defaultValue)
 {
     return AfxGetApp()->GetProfileInt(section, entry, defaultValue);
 }
 
-void CRegistryUser::setProfileBool(LPCTSTR section, LPCTSTR entry, bool value)
+void CRegistryUser::setProfileBool(LPCWSTR section, LPCWSTR entry, bool value)
 {
     setProfileInt(section, entry, (int)value);
 }
 
-bool CRegistryUser::getProfileBool(LPCTSTR section, LPCTSTR entry, bool defaultValue)
+bool CRegistryUser::getProfileBool(LPCWSTR section, LPCWSTR entry, bool defaultValue)
 {
     return getProfileInt(section, entry, defaultValue) != 0;
 }

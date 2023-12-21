@@ -34,7 +34,7 @@ class CModalShellApi : public CModalApiShuttle
 public:
     CModalShellApi();
 
-    void DeleteFile(LPCTSTR fileName, bool toRecycleBin);
+    void DeleteFile(LPCWSTR fileName, bool toRecycleBin);
 
 protected:
     virtual void DoOperation();
@@ -42,6 +42,6 @@ protected:
     void DoDeleteFile();
 
     int m_operation;        // Enum specifying the desired operation
-    CString m_fileName;     // File name to be deleted
+    CStringW m_fileName;     // File name to be deleted
     bool m_toRecycleBin;    // True if file shall only be move to the recycle bin
 };

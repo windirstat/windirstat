@@ -92,9 +92,9 @@ bool CTreeListItem::DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int
     return true;
 }
 
-CString CTreeListItem::GetText(int /*subitem*/) const
+CStringW CTreeListItem::GetText(int /*subitem*/) const
 {
-    return _T("test");
+    return L"test";
 }
 
 int CTreeListItem::GetImage() const
@@ -322,7 +322,7 @@ CTreeListControl *CTreeListControl::GetTheTreeListControl()
 IMPLEMENT_DYNAMIC(CTreeListControl, COwnerDrawnListControl)
 
 CTreeListControl::CTreeListControl(CDirstatView *dirstatView, int rowHeight)
-    : COwnerDrawnListControl(_T("treelist"), rowHeight)
+    : COwnerDrawnListControl(L"treelist", rowHeight)
     , m_dirstatView(dirstatView)
 {
     ASSERT(_theTreeListControl == NULL);

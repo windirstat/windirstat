@@ -46,17 +46,17 @@ void CMyImageList::initialize()
 {
     if(m_hImageList == NULL)
     {
-        CString s;
+        CStringW s;
         ::GetSystemDirectory(s.GetBuffer(_MAX_PATH), _MAX_PATH);
         s.ReleaseBuffer();
-        VTRACE(_T("GetSystemDirectory() -> %s"), s.GetString());
+        VTRACE(L"GetSystemDirectory() -> %s", s.GetString());
 
         SHFILEINFO sfi = {0};
         HIMAGELIST hil = (HIMAGELIST)::SHGetFileInfo(s, 0, &sfi, sizeof(sfi), WDS_SHGFI_DEFAULTS);
 
         this->Attach(ImageList_Duplicate(hil));
 
-        VTRACE(_T("System image list has %i icons"), this->GetImageCount());
+        VTRACE(L"System image list has %i icons", this->GetImageCount());
         for(int i = 0; i < this->GetImageCount(); i++)
         {
             m_indexMap.SetAt(i, i);
@@ -99,7 +99,7 @@ COLORREF CMyImageList::yellowify_(COLORREF c)
 }
 
 // Returns the index of the added icon
-int CMyImageList::cacheIcon(LPCTSTR path, UINT flags, CString *psTypeName)
+int CMyImageList::cacheIcon(LPCWSTR path, UINT flags, CStringW *psTypeName)
 {
     ASSERT(m_hImageList != NULL); // should have been initialize()ed.
 
@@ -114,7 +114,7 @@ int CMyImageList::cacheIcon(LPCTSTR path, UINT flags, CString *psTypeName)
     HIMAGELIST hil = (HIMAGELIST)::SHGetFileInfo(path, 0, &sfi, sizeof(sfi), flags);
     if(hil == NULL)
     {
-        VTRACE(_T("SHGetFileInfo() failed"));
+        VTRACE(L"SHGetFileInfo() failed");
         return getEmptyImage();
     }
 
@@ -141,11 +141,11 @@ int CMyImageList::getMyComputerImage()
     HRESULT hr = ::SHGetSpecialFolderLocation(NULL, CSIDL_DRIVES, &pidl);
     if(FAILED(hr))
     {
-        VTRACE(_T("SHGetSpecialFolderLocation(CSIDL_DRIVES) failed!"));
+        VTRACE(L"SHGetSpecialFolderLocation(CSIDL_DRIVES) failed!");
         return 0;
     }
 
-    int i = cacheIcon((LPCTSTR)pidl, SHGFI_PIDL);
+    int i = cacheIcon((LPCWSTR)pidl, SHGFI_PIDL);
 
     ::CoTaskMemFree(pidl);
 
@@ -165,19 +165,19 @@ int CMyImageList::getJunctionImage()
 
 int CMyImageList::getFolderImage()
 {
-    CString s;
+    CStringW s;
     ::GetSystemDirectory(s.GetBuffer(_MAX_PATH), _MAX_PATH);
     s.ReleaseBuffer();
 
     return cacheIcon(s, 0);
 }
 
-int CMyImageList::getFileImage(LPCTSTR path)
+int CMyImageList::getFileImage(LPCWSTR path)
 {
     return cacheIcon(path, 0);
 }
 
-int CMyImageList::getExtImageAndDescription(LPCTSTR ext, CString& description)
+int CMyImageList::getExtImageAndDescription(LPCWSTR ext, CStringW& description)
 {
     return cacheIcon(ext, SHGFI_USEFILEATTRIBUTES, &description);
 }
@@ -209,14 +209,14 @@ int CMyImageList::getEmptyImage()
 
 // Returns an arbitrary present drive
 // TODO: doesn't work on Vista and up because the system drive has a different icon
-CString CMyImageList::getADriveSpec()
+CStringW CMyImageList::getADriveSpec()
 {
-    CString s;
+    CStringW s;
     UINT u = ::GetWindowsDirectory(s.GetBuffer(_MAX_PATH), _MAX_PATH);
     s.ReleaseBuffer();
     if(u == 0 || s.GetLength() < 3 || s[1] != wds::chrColon || s[2] != wds::chrBackslash)
     {
-        return _T("C:\\");
+        return L"C:\\";
     }
     return s.Left(3);
 }
@@ -304,7 +304,7 @@ void CMyImageList::addCustomImages()
         }
     }
     int k = this->Add(&target, bgcolor);
-    VTRACE(_T("k == %i"), k);
+    VTRACE(L"k == %i", k);
     m_filesFolderImage = k++;
     m_freeSpaceImage = k++;
     m_unknownImage = k++;

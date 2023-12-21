@@ -35,7 +35,7 @@
 
 /////////////////////////////////////////////////////////////////////////////
 
-CExtensionListControl::CListItem::CListItem(CExtensionListControl *list, LPCTSTR extension, SExtensionRecord r)
+CExtensionListControl::CListItem::CListItem(CExtensionListControl *list, LPCWSTR extension, SExtensionRecord r)
 {
     m_list = list;
     m_extension = extension;
@@ -82,7 +82,7 @@ void CExtensionListControl::CListItem::DrawColor(CDC *pdc, CRect rc, UINT state,
     treemap.DrawColorPreview(pdc, rc, m_record.color, GetOptions()->GetTreemapOptions());
 }
 
-CString CExtensionListControl::CListItem::GetText(int subitem) const
+CStringW CExtensionListControl::CListItem::GetText(int subitem) const
 {
     switch (subitem)
     {
@@ -93,7 +93,7 @@ CString CExtensionListControl::CListItem::GetText(int subitem) const
 
     case COL_COLOR:
         {
-            return _T("(color)");
+            return L"(color)";
         }
 
     case COL_BYTES:
@@ -124,7 +124,7 @@ CString CExtensionListControl::CListItem::GetText(int subitem) const
     }
 }
 
-CString CExtensionListControl::CListItem::GetExtension() const
+CStringW CExtensionListControl::CListItem::GetExtension() const
 {
     return m_extension;
 }
@@ -138,7 +138,7 @@ int CExtensionListControl::CListItem::GetImage() const
     return m_image;
 }
 
-CString CExtensionListControl::CListItem::GetDescription() const
+CStringW CExtensionListControl::CListItem::GetDescription() const
 {
     if(m_description.IsEmpty())
     {
@@ -147,10 +147,10 @@ CString CExtensionListControl::CListItem::GetDescription() const
     return m_description;
 }
 
-CString CExtensionListControl::CListItem::GetBytesPercent() const
+CStringW CExtensionListControl::CListItem::GetBytesPercent() const
 {
-    CString s;
-    s.Format(_T("%s%%"), FormatDouble(GetBytesFraction() * 100).GetString());
+    CStringW s;
+    s.Format(L"%s%%", FormatDouble(GetBytesFraction() * 100).GetString());
     return s;
 }
 
@@ -226,7 +226,7 @@ BEGIN_MESSAGE_MAP(CExtensionListControl, COwnerDrawnListControl)
 END_MESSAGE_MAP()
 
 CExtensionListControl::CExtensionListControl(CTypeView *typeView)
-    : COwnerDrawnListControl(_T("types"), 19) // FIXME: hardcoded value
+    : COwnerDrawnListControl(L"types", 19) // FIXME: hardcoded value
     , m_typeView(typeView)
 {
     m_rootSize = 0;
@@ -265,7 +265,7 @@ void CExtensionListControl::Initialize()
     InsertColumn(COL_EXTENSION,     LoadString(IDS_EXTCOL_EXTENSION),   LVCFMT_LEFT, 60, COL_EXTENSION);
     InsertColumn(COL_COLOR,         LoadString(IDS_EXTCOL_COLOR),       LVCFMT_LEFT, 40, COL_COLOR);
     InsertColumn(COL_BYTES,         LoadString(IDS_EXTCOL_BYTES),       LVCFMT_RIGHT, 60, COL_BYTES);
-    InsertColumn(COL_BYTESPERCENT,  _T("% ") + LoadString(IDS_EXTCOL_BYTES), LVCFMT_RIGHT, 50, COL_BYTESPERCENT);
+    InsertColumn(COL_BYTESPERCENT,  L"% " + LoadString(IDS_EXTCOL_BYTES), LVCFMT_RIGHT, 50, COL_BYTESPERCENT);
     InsertColumn(COL_FILES,         LoadString(IDS_EXTCOL_FILES),       LVCFMT_RIGHT, 50, COL_FILES);
     InsertColumn(COL_DESCRIPTION,   LoadString(IDS_EXTCOL_DESCRIPTION), LVCFMT_LEFT, 170, COL_DESCRIPTION);
 
@@ -289,7 +289,7 @@ void CExtensionListControl::SetExtensionData(const CExtensionData *ed)
     POSITION pos = ed->GetStartPosition();
     while(pos != NULL)
     {
-        CString ext;
+        CStringW ext;
         SExtensionRecord r;
         ed->GetNextAssoc(pos, ext, r);
 
@@ -310,7 +310,7 @@ ULONGLONG CExtensionListControl::GetRootSize()
     return m_rootSize;
 }
 
-void CExtensionListControl::SelectExtension(LPCTSTR ext)
+void CExtensionListControl::SelectExtension(LPCWSTR ext)
 {
     int i = 0;
     for(i = 0; i < GetItemCount(); i++)
@@ -327,7 +327,7 @@ void CExtensionListControl::SelectExtension(LPCTSTR ext)
     }
 }
 
-CString CExtensionListControl::GetSelectedExtension()
+CStringW CExtensionListControl::GetSelectedExtension()
 {
     POSITION pos = GetFirstSelectedItemPosition();
     if(pos == NULL)
@@ -429,7 +429,7 @@ void CTypeView::ShowTypes(bool show)
     OnUpdate(NULL, 0, NULL);
 }
 
-void CTypeView::SetHighlightExtension(LPCTSTR ext)
+void CTypeView::SetHighlightExtension(LPCWSTR ext)
 {
     GetDocument()->SetHighlightExtension(ext);
     if(GetFocus() == &m_extensionListControl)

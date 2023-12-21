@@ -78,7 +78,7 @@ CDirstatDoc::CDirstatDoc()
     ASSERT(NULL == _theDocument);
     _theDocument = this;
 
-    VTRACE(_T("sizeof(CItem) = %d"), sizeof(CItem));
+    VTRACE(L"sizeof(CItem) = %d", sizeof(CItem));
 }
 
 CDirstatDoc::~CDirstatDoc()
@@ -93,9 +93,9 @@ CDirstatDoc::~CDirstatDoc()
 // Encodes a selection from the CSelectDrivesDlg into a string which can be routed as a pseudo
 // document "path" through MFC and finally arrives in OnOpenDocument().
 //
-CString CDirstatDoc::EncodeSelection(RADIO radio, CString folder, const CStringArray& drives)
+CStringW CDirstatDoc::EncodeSelection(RADIO radio, CStringW folder, const CStringArray& drives)
 {
-    CString ret;
+    CStringW ret;
     switch (radio)
     {
     case RADIO_ALLLOCALDRIVES:
@@ -105,7 +105,7 @@ CString CDirstatDoc::EncodeSelection(RADIO radio, CString folder, const CStringA
             {
                 if(i > 0)
                 {
-                    ret += CString(GetEncodingSeparator());
+                    ret += CStringW(GetEncodingSeparator());
                 }
                 ret += drives[i];
             }
@@ -123,7 +123,7 @@ CString CDirstatDoc::EncodeSelection(RADIO radio, CString folder, const CStringA
 
 // The inverse of EncodeSelection
 //
-void CDirstatDoc::DecodeSelection(CString s, CString& folder, CStringArray& drives)
+void CDirstatDoc::DecodeSelection(CStringW s, CStringW& folder, CStringArray& drives)
 {
     folder.Empty();
     drives.RemoveAll();
@@ -136,7 +136,7 @@ void CDirstatDoc::DecodeSelection(CString s, CString& folder, CStringArray& driv
 
     while(i < s.GetLength())
     {
-        CString token;
+        CStringW token;
         while(i < s.GetLength() && s[i] != GetEncodingSeparator())
         {
             token += s[i++];
@@ -159,19 +159,19 @@ void CDirstatDoc::DecodeSelection(CString s, CString& folder, CStringArray& driv
     {
         for(int j = 0; j < sa.GetSize(); j++)
         {
-            CString d = sa[j];
+            CStringW d = sa[j];
             ASSERT(2 == d.GetLength());
             ASSERT(wds::chrColon == d[1]);
 
-            drives.Add(d + _T("\\"));
+            drives.Add(d + L"\\");
         }
     }
     else
     {
-        CString f = sa[0];
+        CStringW f = sa[0];
         if(2 == f.GetLength() && wds::chrColon == f[1])
         {
-            drives.Add(f + _T("\\"));
+            drives.Add(f + L"\\");
         }
         else
         {
@@ -212,12 +212,12 @@ BOOL CDirstatDoc::OnNewDocument()
     return TRUE;
 }
 
-BOOL CDirstatDoc::OnOpenDocument(LPCTSTR lpszPathName)
+BOOL CDirstatDoc::OnOpenDocument(LPCWSTR lpszPathName)
 {
     CDocument::OnNewDocument(); // --> DeleteContents()
 
-    CString spec = lpszPathName;
-    CString folder;
+    CStringW spec = lpszPathName;
+    CStringW folder;
     CStringArray drives;
     DecodeSelection(spec, folder, drives);
 
@@ -285,7 +285,7 @@ BOOL CDirstatDoc::OnOpenDocument(LPCTSTR lpszPathName)
 // We don't want MFCs AfxFullPath()-Logic, because lpszPathName
 // is not a path. So we have overridden this.
 //
-void CDirstatDoc::SetPathName(LPCTSTR lpszPathName, BOOL /*bAddToMRU*/)
+void CDirstatDoc::SetPathName(LPCWSTR lpszPathName, BOOL /*bAddToMRU*/)
 {
     // MRU would be fine but is not implemented yet.
 
@@ -303,13 +303,13 @@ void CDirstatDoc::Serialize(CArchive& /*ar*/)
 
 // Prefix the window title (with percentage or "Scanning")
 //
-void CDirstatDoc::SetTitlePrefix(CString prefix)
+void CDirstatDoc::SetTitlePrefix(CStringW prefix)
 {
-    CString docName = prefix + GetTitle();
+    CStringW docName = prefix + GetTitle();
     GetMainFrame()->UpdateFrameTitleForDocument(docName);
 }
 
-COLORREF CDirstatDoc::GetCushionColor(LPCTSTR ext)
+COLORREF CDirstatDoc::GetCushionColor(LPCWSTR ext)
 {
     SExtensionRecord r;
     VERIFY(GetExtensionData()->Lookup(ext, r));
@@ -410,7 +410,7 @@ bool CDirstatDoc::Work(CWorkLimiter* limiter)
     }
 }
 
-bool CDirstatDoc::IsDrive(CString spec)
+bool CDirstatDoc::IsDrive(CStringW spec)
 {
     return (3 == spec.GetLength() && wds::chrColon == spec[1] && wds::chrBackslash == spec[2]);
 }
@@ -543,13 +543,13 @@ bool CDirstatDoc::IsSelected(const CItem *item)
     return false;
 }
 
-void CDirstatDoc::SetHighlightExtension(LPCTSTR ext)
+void CDirstatDoc::SetHighlightExtension(LPCWSTR ext)
 {
     m_highlightExtension = ext;
     GetMainFrame()->SetSelectionMessageText();
 }
 
-CString CDirstatDoc::GetHighlightExtension()
+CStringW CDirstatDoc::GetHighlightExtension()
 {
     return m_highlightExtension;
 }
@@ -626,7 +626,7 @@ void CDirstatDoc::OpenItem(const CItem *item)
 
     try
     {
-        CString path;
+        CStringW path;
 
         switch (item->GetType())
         {
@@ -636,7 +636,7 @@ void CDirstatDoc::OpenItem(const CItem *item)
                 ZeroMemory(&sei, sizeof(sei));
                 sei.cbSize = sizeof(sei);
                 sei.hwnd = *AfxGetMainWnd();
-                sei.lpVerb = _T("open");
+                sei.lpVerb = L"open";
                 //sei.fMask = SEE_MASK_INVOKEIDLIST;
                 sei.nShow = SW_SHOWNORMAL;
                 CCoTaskMem<LPITEMIDLIST> pidl;
@@ -770,7 +770,7 @@ void CDirstatDoc::SortExtensionData(CStringArray& sortedExtensions)
     POSITION pos = m_extensionData.GetStartPosition();
     while(pos != NULL)
     {
-        CString ext;
+        CStringW ext;
         SExtensionRecord r;
         m_extensionData.GetNextAssoc(pos, ext, r);
 
@@ -778,7 +778,7 @@ void CDirstatDoc::SortExtensionData(CStringArray& sortedExtensions)
     }
 
     _pqsortExtensionData = &m_extensionData;
-    qsort(sortedExtensions.GetData(), sortedExtensions.GetSize(), sizeof(CString), &_compareExtensions);
+    qsort(sortedExtensions.GetData(), sortedExtensions.GetSize(), sizeof(CStringW), &_compareExtensions);
     _pqsortExtensionData = NULL;
 }
 
@@ -806,8 +806,8 @@ CExtensionData *CDirstatDoc::_pqsortExtensionData;
 
 int __cdecl CDirstatDoc::_compareExtensions(const void *item1, const void *item2)
 {
-    CString *ext1 = (CString *)item1;
-    CString *ext2 = (CString *)item2;
+    CStringW *ext1 = (CStringW *)item1;
+    CStringW *ext2 = (CStringW *)item2;
     SExtensionRecord r1;
     SExtensionRecord r2;
     VERIFY(_pqsortExtensionData->Lookup(*ext1, r1));
@@ -932,7 +932,7 @@ void CDirstatDoc::AskForConfirmation(const USERDEFINEDCLEANUP *udc, CItem *item)
         return;
     }
 
-    CString msg;
+    CStringW msg;
     msg.FormatMessage(udc->recurseIntoSubdirectories ? IDS_RUDC_CONFIRMATIONss : IDS_UDC_CONFIRMATIONss, udc->title.GetString(), item->GetPath().GetString());
 
     if(IDYES != AfxMessageBox(msg, MB_YESNO))
@@ -945,7 +945,7 @@ void CDirstatDoc::PerformUserDefinedCleanup(const USERDEFINEDCLEANUP *udc, CItem
 {
     CWaitCursor wc;
 
-    CString path = item->GetPath();
+    CStringW path = item->GetPath();
 
     bool isDirectory = IT_DRIVE == item->GetType() || IT_DIRECTORY == item->GetType() || IT_FILESFOLDER == item->GetType();
 
@@ -1007,12 +1007,12 @@ void CDirstatDoc::RefreshAfterUserDefinedCleanup(const USERDEFINEDCLEANUP *udc, 
     }
 }
 
-void CDirstatDoc::RecursiveUserDefinedCleanup(const USERDEFINEDCLEANUP *udc, const CString& rootPath, const CString& currentPath)
+void CDirstatDoc::RecursiveUserDefinedCleanup(const USERDEFINEDCLEANUP *udc, const CStringW& rootPath, const CStringW& currentPath)
 {
     // (Depth first.)
 
     CFileFindWDS finder;
-    BOOL b = finder.FindFile(currentPath + _T("\\*.*"));
+    BOOL b = finder.FindFile(currentPath + L"\\*.*");
     while(b)
     {
         b = finder.FindNextFile();
@@ -1035,14 +1035,14 @@ void CDirstatDoc::RecursiveUserDefinedCleanup(const USERDEFINEDCLEANUP *udc, con
     CallUserDefinedCleanup(true, udc->commandLine, rootPath, currentPath, udc->showConsoleWindow, true);
 }
 
-void CDirstatDoc::CallUserDefinedCleanup(bool isDirectory, const CString& format, const CString& rootPath, const CString& currentPath, bool showConsoleWindow, bool wait)
+void CDirstatDoc::CallUserDefinedCleanup(bool isDirectory, const CStringW& format, const CStringW& rootPath, const CStringW& currentPath, bool showConsoleWindow, bool wait)
 {
-    CString userCommandLine = BuildUserDefinedCleanupCommandLine(format, rootPath, currentPath);
+    CStringW userCommandLine = BuildUserDefinedCleanupCommandLine(format, rootPath, currentPath);
 
-    CString app = GetCOMSPEC();
-    CString cmdline;
-    cmdline.Format(_T("%s /C %s"), GetBaseNameFromPath(app).GetString(), userCommandLine.GetString());
-    CString directory = isDirectory ? currentPath : GetFolderNameFromPath(currentPath);
+    CStringW app = GetCOMSPEC();
+    CStringW cmdline;
+    cmdline.Format(L"%s /C %s", GetBaseNameFromPath(app).GetString(), userCommandLine.GetString());
+    CStringW directory = isDirectory ? currentPath : GetFolderNameFromPath(currentPath);
 
     STARTUPINFO si;
     ZeroMemory(&si, sizeof(si));
@@ -1085,25 +1085,25 @@ void CDirstatDoc::CallUserDefinedCleanup(bool isDirectory, const CString& format
 }
 
 
-CString CDirstatDoc::BuildUserDefinedCleanupCommandLine(LPCTSTR format, LPCTSTR rootPath, LPCTSTR currentPath)
+CStringW CDirstatDoc::BuildUserDefinedCleanupCommandLine(LPCWSTR format, LPCWSTR rootPath, LPCWSTR currentPath)
 {
-    CString rootName = GetBaseNameFromPath(rootPath);
-    CString currentName = GetBaseNameFromPath(currentPath);
+    CStringW rootName = GetBaseNameFromPath(rootPath);
+    CStringW currentName = GetBaseNameFromPath(currentPath);
 
-    CString s = format;
+    CStringW s = format;
 
     // Because file names can contain "%", we first replace our placeholders with
     // strings which contain a forbidden character.
-    s.Replace(_T("%p"), _T(">p"));
-    s.Replace(_T("%n"), _T(">n"));
-    s.Replace(_T("%sp"), _T(">sp"));
-    s.Replace(_T("%sn"), _T(">sn"));
+    s.Replace(L"%p", L">p");
+    s.Replace(L"%n", L">n");
+    s.Replace(L"%sp", L">sp");
+    s.Replace(L"%sn", L">sn");
 
     // Now substitute
-    s.Replace(_T(">p"), rootPath);
-    s.Replace(_T(">n"), rootName);
-    s.Replace(_T(">sp"), currentPath);
-    s.Replace(_T(">sn"), currentName);
+    s.Replace(L">p", rootPath);
+    s.Replace(L">n", rootName);
+    s.Replace(L">sp", currentPath);
+    s.Replace(L">sn", currentName);
 
     return s;
 }
@@ -1215,11 +1215,11 @@ void CDirstatDoc::OnUpdateEditCopy(CCmdUI *pCmdUI)
 
 void CDirstatDoc::OnEditCopy()
 {
-    CString paths;
+    CStringW paths;
     for (size_t i = 0; i < GetSelectionCount(); i++)
     {
         if (i > 0)
-            paths += _T("\r\n");
+            paths += L"\r\n";
 
         paths += GetSelection(i)->GetPath();
     }
@@ -1390,7 +1390,7 @@ void CDirstatDoc::OnExplorerHere()
             ZeroMemory(&sei, sizeof(sei));
             sei.cbSize = sizeof(sei);
             sei.hwnd = *AfxGetMainWnd();
-            sei.lpVerb = _T("explore");
+            sei.lpVerb = L"explore";
             sei.nShow = SW_SHOWNORMAL;
 
             CCoTaskMem<LPITEMIDLIST> pidl;
@@ -1404,7 +1404,7 @@ void CDirstatDoc::OnExplorerHere()
         }
         else
         {
-            ShellExecuteThrow(*AfxGetMainWnd(), _T("explore"), item->GetFolderPath(), NULL, NULL, SW_SHOWNORMAL);
+            ShellExecuteThrow(*AfxGetMainWnd(), L"explore", item->GetFolderPath(), NULL, NULL, SW_SHOWNORMAL);
         }
     }
     catch (CException *pe)
@@ -1439,9 +1439,9 @@ void CDirstatDoc::OnCommandPromptHere()
         CItem *item = GetSelection(0);
         ASSERT(item != NULL);
 
-        CString cmd = GetCOMSPEC();
+        CStringW cmd = GetCOMSPEC();
 
-        ShellExecuteThrow(*AfxGetMainWnd(), _T("open"), cmd, NULL, item->GetFolderPath(), SW_SHOWNORMAL);
+        ShellExecuteThrow(*AfxGetMainWnd(), L"open", cmd, NULL, item->GetFolderPath(), SW_SHOWNORMAL);
     }
     catch (CException *pe)
     {
@@ -1624,11 +1624,11 @@ void CDirstatDoc::OnCleanupProperties()
 //         ZeroMemory(&sei, sizeof(sei));
 //         sei.cbSize = sizeof(sei);
 //         sei.hwnd = *AfxGetMainWnd();
-//         sei.lpVerb = _T("properties");
+//         sei.lpVerb = L"properties";
 //         sei.fMask = SEE_MASK_INVOKEIDLIST;
 // 
 //         CCoTaskMem<LPITEMIDLIST> pidl;
-//         CString path;
+//         CStringW path;
 // 
 //         const CItem *item = GetSelection();
 //         ASSERT(item != NULL);

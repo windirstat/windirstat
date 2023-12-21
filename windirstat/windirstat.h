@@ -29,7 +29,7 @@
 #include "helpmap.h"
 #include <common/tracer.h>
 
-typedef CMap<CString, LPCTSTR, COLORREF, COLORREF> CExtensionColorMap;  // ".bmp" -> color
+typedef CMap<CStringW, LPCWSTR, COLORREF, COLORREF> CExtensionColorMap;  // ".bmp" -> color
 
 class CMainFrame;
 class CDirstatApp;
@@ -40,8 +40,8 @@ CDirstatApp *GetWDSApp();
 CMyImageList* GetMyImageList();
 
 // Other application related globals
-CString GetAuthorEmail();
-CString GetWinDirStatHomepage();
+CStringW GetAuthorEmail();
+CStringW GetWinDirStatHomepage();
 
 #   define WINDIRSTAT_EVENT_NAME_FMT L"WinDirStat_ElevationEvent_{72D223E3-1539-461D-980E-0863FE480E84}.%s.%s"
 
@@ -64,13 +64,13 @@ public:
     LANGID GetEffectiveLangid();    // Language to be used for date/time and number formatting
 
     void ReReadMountPoints();
-    bool IsVolumeMountPoint(CString path);
+    bool IsVolumeMountPoint(CStringW path);
     bool IsFolderJunction(DWORD attr);
 
     COLORREF AltColor();                    // Coloring of compressed items
     COLORREF AltEncryptionColor();          // Coloring of encrypted items
 
-    CString GetCurrentProcessMemoryInfo();
+    CStringW GetCurrentProcessMemoryInfo();
     CMyImageList* GetMyImageList();
     void UpdateRamUsage();
 
@@ -82,23 +82,23 @@ public:
 
     void RestartApplication();
 
-    static bool getDiskFreeSpace(LPCTSTR pszRootPath, ULONGLONG& total, ULONGLONG& unused);
+    static bool getDiskFreeSpace(LPCWSTR pszRootPath, ULONGLONG& total, ULONGLONG& unused);
 
 protected:
-    CString FindResourceDllPathByLangid(LANGID& langid);
-    CString FindHelpfilePathByLangid(LANGID langid);
-    CString FindAuxiliaryFileByLangid(LPCTSTR prefix, LPCTSTR suffix, LANGID& langid, bool checkResource);
-    bool ScanResourceDllName(LPCTSTR name, LANGID& langid);
-    bool ScanAuxiliaryFileName(LPCTSTR prefix, LPCTSTR suffix, LPCTSTR name, LANGID& langid);
+    CStringW FindResourceDllPathByLangid(LANGID& langid);
+    CStringW FindHelpfilePathByLangid(LANGID langid);
+    CStringW FindAuxiliaryFileByLangid(LPCWSTR prefix, LPCWSTR suffix, LANGID& langid, bool checkResource);
+    bool ScanResourceDllName(LPCWSTR name, LANGID& langid);
+    bool ScanAuxiliaryFileName(LPCWSTR prefix, LPCWSTR suffix, LPCWSTR name, LANGID& langid);
 #   ifdef _DEBUG
     void TestScanResourceDllName();
 #   endif
-    bool IsCorrectResourceDll(LPCTSTR path);
+    bool IsCorrectResourceDll(LPCWSTR path);
 
     bool UpdateMemoryInfo();
 
     // Get the alternative color from Explorer configuration
-    COLORREF GetAlternativeColor(COLORREF clrDefault, LPCTSTR which);
+    COLORREF GetAlternativeColor(COLORREF clrDefault, LPCWSTR which);
 
     virtual BOOL OnIdle(LONG lCount);       // This is, where scanning is done.
     static BOOL IsUACEnabled();
@@ -114,7 +114,7 @@ protected:
     COLORREF m_altColor;                    // Coloring of compressed items
     COLORREF m_altEncryptionColor;          // Coloring of encrypted items
     HANDLE m_ElevationEvent;
-    CString m_ElevationEventName;
+    CStringW m_ElevationEventName;
 #ifdef VTRACE_TO_CONSOLE
     CAutoPtr<CWDSTracerConsole> m_vtrace_console;
 #endif // VTRACE_TO_CONSOLE

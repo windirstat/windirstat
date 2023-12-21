@@ -35,8 +35,8 @@
 
 namespace
 {
-    CString GetFreeSpaceItemName()  { return LoadString(IDS_FREESPACE_ITEM); }
-    CString GetUnknownItemName()    { return LoadString(IDS_UNKNOWN_ITEM); }
+    CStringW GetFreeSpaceItemName()  { return LoadString(IDS_FREESPACE_ITEM); }
+    CStringW GetUnknownItemName()    { return LoadString(IDS_UNKNOWN_ITEM); }
 
     const SIZE sizeDeflatePacman = { 1, 2 };
 
@@ -45,7 +45,7 @@ namespace
 }
 
 
-CItem::CItem(ITEMTYPE type, LPCTSTR name, bool dontFollow)
+CItem::CItem(ITEMTYPE type, LPCWSTR name, bool dontFollow)
     : m_type(type)
     , m_etype(static_cast<ITEMTYPE>(type & ~ITF_FLAGS))
     , m_name(name)
@@ -144,9 +144,9 @@ bool CItem::DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *width,
     return true;
 }
 
-CString CItem::GetText(int subitem) const
+CStringW CItem::GetText(int subitem) const
 {
-    CString s;
+    CStringW s;
     switch (subitem)
     {
     case COL_NAME:
@@ -173,11 +173,11 @@ CString CItem::GetText(int subitem) const
     case COL_PERCENTAGE:
         if(GetOptions()->IsShowTimeSpent() && MustShowReadJobs() || IsRootItem())
         {
-            s.Format(_T("[%s s]"), FormatMilliseconds(GetTicksWorked()).GetString());
+            s.Format(L"[%s s]", FormatMilliseconds(GetTicksWorked()).GetString());
         }
         else
         {
-            s.Format(_T("%s%%"), FormatDouble(GetFraction() * 100).GetString());
+            s.Format(L"%s%%", FormatDouble(GetFraction() * 100).GetString());
         }
         break;
 
@@ -384,7 +384,7 @@ int CItem::GetImageToCache() const
     }
     else
     {
-        CString path = GetPath();
+        CStringW path = GetPath();
 
         if(GetType() == IT_DIRECTORY && GetWDSApp()->IsVolumeMountPoint(path))
         {
@@ -527,12 +527,12 @@ void CItem::UpdateLastChange()
     ZeroMemory(&m_lastChange, sizeof(m_lastChange));
     if(GetType() == IT_DIRECTORY || GetType() == IT_FILE)
     {
-        CString path = GetPath();
+        CStringW path = GetPath();
 
         int i = path.ReverseFind(wds::chrBackslash);
-        CString basename = path.Mid(i + 1);
-        CString pattern;
-        pattern.Format(_T("%s\\..\\%s"), path.GetString(), basename.GetString());
+        CStringW basename = path.Mid(i + 1);
+        CStringW pattern;
+        pattern.Format(L"%s\\..\\%s", path.GetString(), basename.GetString());
         CFileFindWDS finder;
         BOOL b = finder.FindFile(pattern);
         if(!b)
@@ -841,37 +841,37 @@ bool CItem::IsRootItem() const
     return ((m_type & ITF_ROOTITEM) != 0);
 }
 
-CString CItem::GetPath()  const
+CStringW CItem::GetPath()  const
 {
-    CString path = UpwardGetPathWithoutBackslash();
+    CStringW path = UpwardGetPathWithoutBackslash();
     if(GetType() == IT_DRIVE || GetType() == IT_FILESFOLDER && GetParent()->GetType() == IT_DRIVE)
     {
-        path += _T("\\");
+        path += L"\\";
     }
     return path;
 }
 
 bool CItem::HasUncPath() const
 {
-    CString path = GetPath();
-    return (path.GetLength() >= 2 && path.Left(2) == _T("\\\\"));
+    CStringW path = GetPath();
+    return (path.GetLength() >= 2 && path.Left(2) == L"\\\\");
 }
 
-CString CItem::GetFindPattern() const
+CStringW CItem::GetFindPattern() const
 {
-    CString pattern = GetPath();
+    CStringW pattern = GetPath();
     if(pattern.Right(1) != wds::chrBackslash)
     {
-        pattern += _T("\\");
+        pattern += L"\\";
     }
-    pattern += _T("*.*");
+    pattern += L"*.*";
     return pattern;
 }
 
 // Returns the path for "Explorer here" or "Command Prompt here"
-CString CItem::GetFolderPath() const
+CStringW CItem::GetFolderPath() const
 {
-    CString path;
+    CStringW path;
 
     if(GetType() == IT_MYCOMPUTER)
     {
@@ -891,12 +891,12 @@ CString CItem::GetFolderPath() const
 }
 
 // returns the path for the mail-report
-CString CItem::GetReportPath() const
+CStringW CItem::GetReportPath() const
 {
-    CString path = UpwardGetPathWithoutBackslash();
+    CStringW path = UpwardGetPathWithoutBackslash();
     if(GetType() == IT_DRIVE || GetType() == IT_FILESFOLDER)
     {
-        path += _T("\\");
+        path += L"\\";
     }
     if((GetType() == IT_FILESFOLDER) || (GetType() == IT_FREESPACE) || (GetType() == IT_UNKNOWN))
     {
@@ -906,19 +906,19 @@ CString CItem::GetReportPath() const
     return path;
 }
 
-CString CItem::GetName() const
+CStringW CItem::GetName() const
 {
     return m_name;
 }
 
-CString CItem::GetExtension() const
+CStringW CItem::GetExtension() const
 {
     if (m_extension_cached)
         return m_extension;
 
-    CString ext;
+    CStringW ext;
 
-    CString name = GetName();
+    CStringW name = GetName();
 
     switch (GetType())
     {
@@ -932,7 +932,7 @@ CString CItem::GetExtension() const
             else
             {
                 // Faster than name.Mid(i);
-                LPCTSTR alpha = static_cast<LPCTSTR>(name);
+                LPCWSTR alpha = static_cast<LPCWSTR>(name);
                 ext = &alpha[i];
             }
             ext.MakeLower();
@@ -1412,28 +1412,28 @@ void CItem::RefreshRecycler()
 {
     ASSERT(GetType() == IT_DRIVE);
     DWORD dummy;
-    CString system;
+    CStringW system;
     int i = 0;
     BOOL b = GetVolumeInformation(GetPath(), NULL, 0, NULL, &dummy, &dummy, system.GetBuffer(128), 128);
     system.ReleaseBuffer();
     if(!b)
     {
-        VTRACE(_T("GetVolumeInformation(%s) failed."), GetPath().GetString());
+        VTRACE(L"GetVolumeInformation(%s) failed.", GetPath().GetString());
         return; // nix zu machen
     }
 
-    CString recycler;
-    if(system.CompareNoCase(_T("NTFS")) == 0)
+    CStringW recycler;
+    if(system.CompareNoCase(L"NTFS") == 0)
     {
-        recycler = _T("recycler");
+        recycler = L"recycler";
     }
-    else if(system.CompareNoCase(_T("FAT32")) == 0)
+    else if(system.CompareNoCase(L"FAT32") == 0)
     {
-        recycler = _T("recycled");
+        recycler = L"recycled";
     }
     else
     {
-        VTRACE(_T("%s: unknown file system type %s"), GetPath().GetString(), system.GetString());
+        VTRACE(L"%s: unknown file system type %s", GetPath().GetString(), system.GetString());
         return; // nix zu machen.
     }
 
@@ -1446,7 +1446,7 @@ void CItem::RefreshRecycler()
     }
     if(i >= GetChildrenCount())
     {
-        VTRACE(_T("%s: Recycler(%s) not found."), GetPath().GetString(), recycler.GetString());
+        VTRACE(L"%s: Recycler(%s) not found.", GetPath().GetString(), recycler.GetString());
         return; // nicht gefunden
     }
 
@@ -1565,9 +1565,9 @@ void CItem::RemoveUnknownItem()
     RemoveChild(i);
 }
 
-CItem *CItem::FindDirectoryByPath(const CString& path)
+CItem *CItem::FindDirectoryByPath(const CStringW& path)
 {
-    CString myPath = GetPath();
+    CStringW myPath = GetPath();
     myPath.MakeLower();
 
     int i = 0;
@@ -1608,7 +1608,7 @@ void CItem::RecurseCollectExtensionData(CExtensionData *ed)
     {
         if(type == IT_FILE)
         {
-            CString ext = GetExtension();
+            CStringW ext = GetExtension();
             SExtensionRecord r;
             if(ed->Lookup(ext, r))
             {
@@ -1772,9 +1772,9 @@ int CItem::FindUnknownItemIndex() const
     return i; // maybe == GetChildrenCount() (=> not found)
 }
 
-CString CItem::UpwardGetPathWithoutBackslash() const
+CStringW CItem::UpwardGetPathWithoutBackslash() const
 {
-    CString path;
+    CStringW path;
     if(GetParent() != NULL)
     {
         path = GetParent()->UpwardGetPathWithoutBackslash();
@@ -1799,7 +1799,7 @@ CString CItem::UpwardGetPathWithoutBackslash() const
         {
             if(!path.IsEmpty())
             {
-                path += _T("\\");
+                path += L"\\";
             }
             path += m_name;
         }
@@ -1807,7 +1807,7 @@ CString CItem::UpwardGetPathWithoutBackslash() const
 
     case IT_FILE:
         {
-            path += _T("\\") + m_name;
+            path += L"\\" + m_name;
         }
         break;
 

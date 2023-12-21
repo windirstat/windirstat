@@ -45,12 +45,12 @@ namespace
 
     const UINT WMU_OK = WM_USER + 100;
 
-    static UINT WMU_THREADFINISHED = ::RegisterWindowMessage(_T("{F03D3293-86E0-4c87-B559-5FD103F5AF58}"));
+    static UINT WMU_THREADFINISHED = ::RegisterWindowMessage(L"{F03D3293-86E0-4c87-B559-5FD103F5AF58}");
 
     // Return: false, if drive not accessible
-    bool RetrieveDriveInformation(LPCTSTR path, CString& name, ULONGLONG& total, ULONGLONG& free)
+    bool RetrieveDriveInformation(LPCWSTR path, CStringW& name, ULONGLONG& total, ULONGLONG& free)
     {
-        CString volumeName;
+        CStringW volumeName;
 
         if(!GetVolumeName(path, volumeName))
         {
@@ -75,7 +75,7 @@ namespace
 
 /////////////////////////////////////////////////////////////////////////////
 
-CDriveItem::CDriveItem(CDrivesList *list, LPCTSTR pszPath)
+CDriveItem::CDriveItem(CDrivesList *list, LPCWSTR pszPath)
     : m_list(list)
     , m_path(pszPath)
     , m_success(false)
@@ -93,7 +93,7 @@ CDriveItem::CDriveItem(CDrivesList *list, LPCTSTR pszPath)
         {
             m_querying = false;
 
-            CString name = m_name;
+            CStringW name = m_name;
             ULONGLONG total = 0;
             ULONGLONG free = 0;
 
@@ -116,7 +116,7 @@ void CDriveItem::StartQuery(HWND dialog, UINT serial)
     }
 }
 
-void CDriveItem::SetDriveInformation(bool success, LPCTSTR name, ULONGLONG total, ULONGLONG free)
+void CDriveItem::SetDriveInformation(bool success, LPCWSTR name, ULONGLONG total, ULONGLONG free)
 {
     m_querying = false;
     m_success = success;
@@ -231,9 +231,9 @@ bool CDriveItem::DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *w
     }
 }
 
-CString CDriveItem::GetText(int subitem) const
+CStringW CDriveItem::GetText(int subitem) const
 {
-    CString s;
+    CStringW s;
 
     switch (subitem)
     {
@@ -271,7 +271,7 @@ CString CDriveItem::GetText(int subitem) const
     case COL_PERCENTUSED:
         if(m_success)
         {
-            s = FormatDouble(m_used * 100) + _T("%");
+            s = FormatDouble(m_used * 100) + L"%";
         }
         break;
 
@@ -282,12 +282,12 @@ CString CDriveItem::GetText(int subitem) const
     return s;
 }
 
-CString CDriveItem::GetPath() const
+CStringW CDriveItem::GetPath() const
 {
     return m_path;
 }
 
-CString CDriveItem::GetDrive() const
+CStringW CDriveItem::GetDrive() const
 {
     return m_path.Left(2);
 }
@@ -337,7 +337,7 @@ void CDriveInformationThread::OnAppExit()
 
 // The constructor starts the thread.
 //
-CDriveInformationThread::CDriveInformationThread(LPCTSTR path, LPARAM driveItem, HWND dialog, UINT serial)
+CDriveInformationThread::CDriveInformationThread(LPCWSTR path, LPARAM driveItem, HWND dialog, UINT serial)
     : m_path(path)
     , m_driveItem(driveItem)
     , m_serial(serial)
@@ -393,7 +393,7 @@ BOOL CDriveInformationThread::InitInstance()
 // in SendMessage(dialog, WMU_THREADFINISHED, 0, this).
 // So we need no synchronization.
 //
-LPARAM CDriveInformationThread::GetDriveInformation(bool& success, CString& name, ULONGLONG& total, ULONGLONG& free)
+LPARAM CDriveInformationThread::GetDriveInformation(bool& success, CStringW& name, ULONGLONG& total, ULONGLONG& free)
 {
     name = m_name;
     total = m_totalBytes;
@@ -409,7 +409,7 @@ LPARAM CDriveInformationThread::GetDriveInformation(bool& success, CString& name
 IMPLEMENT_DYNAMIC(CDrivesList, COwnerDrawnListControl)
 
 CDrivesList::CDrivesList()
-    : COwnerDrawnListControl(_T("drives"), 20)
+    : COwnerDrawnListControl(L"drives", 20)
 {
 }
 
@@ -511,7 +511,7 @@ UINT CSelectDrivesDlg::_serial;
 
 CSelectDrivesDlg::CSelectDrivesDlg(CWnd* pParent /*=NULL*/)
     : CDialog(CSelectDrivesDlg::IDD, pParent)
-    , m_layout(this, _T("sddlg"))
+    , m_layout(this, L"sddlg")
 {
     _serial++;
 }
@@ -556,7 +556,7 @@ BOOL CSelectDrivesDlg::OnInitDialog()
 
     if(WMU_THREADFINISHED == 0)
     {
-        VTRACE(_T("RegisterMessage() failed. Using WM_USER + 123"));
+        VTRACE(L"RegisterMessage() failed. Using WM_USER + 123");
         WMU_THREADFINISHED = WM_USER + 123;
     }
 
@@ -604,8 +604,8 @@ BOOL CSelectDrivesDlg::OnInitDialog()
             continue;
         }
 
-        CString s;
-        s.Format(_T("%c:\\"), i + wds::chrCapA);
+        CStringW s;
+        s.Format(L"%c:\\", i + wds::chrCapA);
 
         UINT type = ::GetDriveType(s);
         if(type == DRIVE_UNKNOWN || type == DRIVE_NO_ROOT_DIR)
@@ -660,14 +660,14 @@ BOOL CSelectDrivesDlg::OnInitDialog()
 void CSelectDrivesDlg::OnBnClickedBrowsefolder()
 {
     // Buffer, because SHBrowseForFolder() wants a buffer
-    CString sDisplayName, sSelectedFolder = m_folderName;
+    CStringW sDisplayName, sSelectedFolder = m_folderName;
     BROWSEINFO bi;
     ZeroMemory(&bi, sizeof(bi));
 
     // Load a meaningful title for the browse dialog
-    CString title = LoadString(IDS_SELECTFOLDER);
+    CStringW title = LoadString(IDS_SELECTFOLDER);
     bi.hwndOwner = m_hWnd;
-    // Use the CString as buffer (minimum is MAX_PATH as length)
+    // Use the CStringW as buffer (minimum is MAX_PATH as length)
     bi.pszDisplayName = sDisplayName.GetBuffer(_MAX_PATH);
     bi.lpszTitle = title;
     // Set a callback function to pre-select a folder
@@ -683,7 +683,7 @@ void CSelectDrivesDlg::OnBnClickedBrowsefolder()
 
     if(pidl != NULL)
     {
-        CString sDir;
+        CStringW sDir;
 
         CComPtr<IShellFolder> pshf;
         HRESULT hr = ::SHGetDesktopFolder(&pshf);
@@ -755,18 +755,18 @@ void CSelectDrivesDlg::UpdateButtons()
     case RADIO_AFOLDER:
         if(!m_folderName.IsEmpty())
         {
-            if(m_folderName.GetLength() >= 2 && m_folderName.Left(2) == _T("\\\\"))
+            if(m_folderName.GetLength() >= 2 && m_folderName.Left(2) == L"\\\\")
             {
                 enableOk = true;
             }
             else
             {
-                CString pattern = m_folderName;
-                if(pattern.Right(1) != _T("\\"))
+                CStringW pattern = m_folderName;
+                if(pattern.Right(1) != L"\\")
                 {
-                    pattern += _T("\\");
+                    pattern += L"\\";
                 }
-                pattern += _T("*.*");
+                pattern += L"*.*";
                 enableOk = FALSE != CFileFind().FindFile(pattern);
             }
         }
@@ -856,14 +856,14 @@ LRESULT CSelectDrivesDlg::OnWmuThreadFinished(WPARAM serial, LPARAM lparam)
 {
     if(serial != _serial)
     {
-        VTRACE(_T("OnWmuThreadFinished: invalid serial (window handle recycled?)"));
+        VTRACE(L"OnWmuThreadFinished: invalid serial (window handle recycled?)");
         return 0;
     }
 
     CDriveInformationThread *thread = (CDriveInformationThread *)lparam;
 
     bool success;
-    CString name;
+    CStringW name;
     ULONGLONG total;
     ULONGLONG free;
 
@@ -879,7 +879,7 @@ LRESULT CSelectDrivesDlg::OnWmuThreadFinished(WPARAM serial, LPARAM lparam)
     int i = m_list.FindItem(&fi);
     if(i == -1)
     {
-        VTRACE(_T("OnWmuThreadFinished: item not found!"));
+        VTRACE(L"OnWmuThreadFinished: item not found!");
         return 0;
     }
 
@@ -914,10 +914,10 @@ int CALLBACK CSelectDrivesDlg::BrowseCallbackProc(HWND hWnd, UINT uMsg, LPARAM l
     return 0;
 }
 
-CString CSelectDrivesDlg::getFullPathName_(LPCTSTR relativePath)
+CStringW CSelectDrivesDlg::getFullPathName_(LPCWSTR relativePath)
 {
-    LPTSTR dummy;
-    CString buffer;
+    LPWSTR dummy;
+    CStringW buffer;
 
     DWORD len = _MAX_PATH;
 
@@ -933,7 +933,7 @@ CString CSelectDrivesDlg::getFullPathName_(LPCTSTR relativePath)
 
     if(0 == dw)
     {
-        VTRACE(_T("GetFullPathName(%s) failed: GetLastError returns %u"), relativePath, ::GetLastError());
+        VTRACE(L"GetFullPathName(%s) failed: GetLastError returns %u", relativePath, ::GetLastError());
         return relativePath;
     }
 

@@ -57,9 +57,9 @@ class CAboutDlg : public CDialog
 
 public:
     CAboutDlg();
-    static CString GetAppVersion();
-    static CString GetDevelList();
-    static CString GetTranslatorList();
+    static CStringW GetAppVersion();
+    static CStringW GetDevelList();
+    static CStringW GetTranslatorList();
 
 protected:
     virtual BOOL OnInitDialog();

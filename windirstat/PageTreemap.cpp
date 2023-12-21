@@ -161,10 +161,10 @@ void CPageTreemap::UpdateOptions(bool save)
 
 void CPageTreemap::UpdateStatics()
 {
-    m_sBrightness       .Format(_T("%d"), 100 - m_nBrightness);
-    m_sCushionShading   .Format(_T("%d"), 100 - m_nCushionShading);
-    m_sHeight           .Format(_T("%d"), (_maxHeight - m_nHeight) / (_maxHeight / 100));
-    m_sScaleFactor      .Format(_T("%d"), 100 - m_nScaleFactor);
+    m_sBrightness       .Format(L"%d", 100 - m_nBrightness);
+    m_sCushionShading   .Format(L"%d", 100 - m_nCushionShading);
+    m_sHeight           .Format(L"%d", (_maxHeight - m_nHeight) / (_maxHeight / 100));
+    m_sScaleFactor      .Format(L"%d", 100 - m_nScaleFactor);
 }
 
 void CPageTreemap::OnSomethingChanged()
@@ -177,7 +177,7 @@ void CPageTreemap::OnSomethingChanged()
 void CPageTreemap::ValuesAltered(bool altered)
 {
     m_altered = altered;
-    CString s = LoadString(m_altered ? IDS_RESETTO_DEFAULTS : IDS_BACKTO_USERSETTINGS);
+    CStringW s = LoadString(m_altered ? IDS_RESETTO_DEFAULTS : IDS_BACKTO_USERSETTINGS);
     m_resetButton.SetWindowText(s);
 }
 

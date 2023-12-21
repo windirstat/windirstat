@@ -204,7 +204,7 @@ void COwnerDrawnListItem::DrawPercentage(CDC *pdc, CRect rc, double fraction, CO
 
 IMPLEMENT_DYNAMIC(COwnerDrawnListControl, CSortingListControl)
 
-COwnerDrawnListControl::COwnerDrawnListControl(LPCTSTR name, int rowHeight)
+COwnerDrawnListControl::COwnerDrawnListControl(LPCWSTR name, int rowHeight)
     : CSortingListControl(name)
     , m_rowHeight(rowHeight)
     , m_showGrid(false)
@@ -237,7 +237,7 @@ void COwnerDrawnListControl::OnColumnsInserted()
     }
     else
     {
-        InsertItem(0, _T("_tmp"), 0);
+        InsertItem(0, L"_tmp", 0);
         CRect rc;
         GetItemRect(0, rc, LVIR_BOUNDS);
         DeleteItem(0);
@@ -490,7 +490,7 @@ void COwnerDrawnListControl::DrawItem(LPDRAWITEMSTRUCT pdis)
             rcText.DeflateRect(TEXT_X_MARGIN, 0);
             CSetBkMode bk(&dcmem, TRANSPARENT);
             CSelectObject sofont(&dcmem, GetFont());
-            CString s = item->GetText(subitem);
+            CStringW s = item->GetText(subitem);
             UINT align = IsColumnRightAligned(subitem) ? DT_RIGHT : DT_LEFT;
 
             // Get the correct color in case of compressed or encrypted items
@@ -591,7 +591,7 @@ int COwnerDrawnListControl::GetSubItemWidth(COwnerDrawnListItem *item, int subit
         return width;
     }
 
-    CString s = item->GetText(subitem);
+    CStringW s = item->GetText(subitem);
     if(s.IsEmpty())
     {
         // DrawText(..DT_CALCRECT) seems to stumble about empty strings

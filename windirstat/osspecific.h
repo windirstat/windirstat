@@ -26,8 +26,8 @@
 #include <ShellAPI.h>
 
 BOOL FileIconInit(__in  BOOL fRestoreCache);
-CString GetCurrentDesktopName();
-CString GetCurrentWinstaName();
+CStringW GetCurrentDesktopName();
+CStringW GetCurrentWinstaName();
 
 class CAbstractionLayer
 {
@@ -36,9 +36,9 @@ class CAbstractionLayer
     }
 };
 
-const LPCTSTR nameKernel32 = _T("kernel32.dll");
-const LPCTSTR nameShell32 = _T("shell32.dll");
-const LPCTSTR namePsApi = _T("psapi.dll");
+const LPCWSTR nameKernel32 = L"kernel32.dll";
+const LPCWSTR nameShell32 = L"shell32.dll";
+const LPCWSTR namePsApi = L"psapi.dll";
 
 ///////////////////////////////////////////////////////////////////////////////
 ///  CDllModule
@@ -54,11 +54,11 @@ public:
     ///  inline public constructor  CDllModule
     ///  Ctor for the CDllModule wrapper class
     ///
-    ///  @param [in]       DllName LPCTSTR    Name of the DLL of which we want the handle
+    ///  @param [in]       DllName LPCWSTR    Name of the DLL of which we want the handle
     ///
     ///  This function doesn't return a value
     ///////////////////////////////////////////////////////////////////////////////
-    CDllModule(LPCTSTR DllName)
+    CDllModule(LPCWSTR DllName)
     {
         m_hDll = LoadLibrary(DllName);
     }

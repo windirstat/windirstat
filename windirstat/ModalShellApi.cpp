@@ -40,7 +40,7 @@ CModalShellApi::CModalShellApi()
 {
 }
 
-void CModalShellApi::DeleteFile(LPCTSTR fileName, bool toRecycleBin)
+void CModalShellApi::DeleteFile(LPCWSTR fileName, bool toRecycleBin)
 {
     m_operation = DELETE_FILE;
     m_fileName = fileName;
@@ -64,7 +64,7 @@ void CModalShellApi::DoOperation()
 void CModalShellApi::DoDeleteFile()
 {
     int len = m_fileName.GetLength();
-    LPTSTR psz = m_fileName.GetBuffer(len + 2);
+    LPWSTR psz = m_fileName.GetBuffer(len + 2);
     psz[len + 1]= 0;
 
     SHFILEOPSTRUCT sfos;

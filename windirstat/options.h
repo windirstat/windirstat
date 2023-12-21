@@ -45,13 +45,13 @@ struct USERDEFINEDCLEANUP
 {
     bool enabled;
     bool virginTitle;
-    CString title;
+    CStringW title;
     bool worksForDrives;
     bool worksForDirectories;
     bool worksForFilesFolder;
     bool worksForFiles;
     bool worksForUncPaths;
-    CString commandLine;
+    CStringW commandLine;
     bool recurseIntoSubdirectories;
     bool askForConfirmation;
     bool showConsoleWindow;
@@ -70,17 +70,17 @@ struct USERDEFINEDCLEANUP
 class ICfgStorage
 {
 public:
-    virtual void setString(LPCTSTR section, LPCTSTR entry, LPCTSTR value) = 0;
-    virtual CString getString(LPCTSTR section, LPCTSTR entry, LPCTSTR defaultValue) = 0;
+    virtual void setString(LPCWSTR section, LPCWSTR entry, LPCWSTR value) = 0;
+    virtual CStringW getString(LPCWSTR section, LPCWSTR entry, LPCWSTR defaultValue) = 0;
 
-    virtual void setInt(LPCTSTR section, LPCTSTR entry, int value) = 0;
-    virtual int getInt(LPCTSTR section, LPCTSTR entry, int defaultValue) = 0;
+    virtual void setInt(LPCWSTR section, LPCWSTR entry, int value) = 0;
+    virtual int getInt(LPCWSTR section, LPCWSTR entry, int defaultValue) = 0;
 
-    virtual void setUint(LPCTSTR section, LPCTSTR entry, unsigned int value) = 0;
-    virtual unsigned int getUint(LPCTSTR section, LPCTSTR entry, unsigned int defaultValue) = 0;
+    virtual void setUint(LPCWSTR section, LPCWSTR entry, unsigned int value) = 0;
+    virtual unsigned int getUint(LPCWSTR section, LPCWSTR entry, unsigned int defaultValue) = 0;
 
-    virtual void setBool(LPCTSTR section, LPCTSTR entry, bool value) = 0;
-    virtual bool getBool(LPCTSTR section, LPCTSTR entry, bool defaultValue) = 0;
+    virtual void setBool(LPCWSTR section, LPCWSTR entry, bool value) = 0;
+    virtual bool getBool(LPCWSTR section, LPCWSTR entry, bool defaultValue) = 0;
 
     virtual void flush() = 0;
     virtual long getLastError() const = 0;
@@ -91,19 +91,19 @@ class CRegistryStg : public ICfgStorage
     CRegistryStg(); // hide
     CRegistryStg& operator=(const CRegistryStg&); // hide
 public:
-    CRegistryStg(HKEY hKeyParent, LPCTSTR lpszKeyName);
+    CRegistryStg(HKEY hKeyParent, LPCWSTR lpszKeyName);
 
-    virtual void setString(LPCTSTR section, LPCTSTR entry, LPCTSTR value);
-    virtual CString getString(LPCTSTR section, LPCTSTR entry, LPCTSTR defaultValue);
+    virtual void setString(LPCWSTR section, LPCWSTR entry, LPCWSTR value);
+    virtual CStringW getString(LPCWSTR section, LPCWSTR entry, LPCWSTR defaultValue);
 
-    virtual void setInt(LPCTSTR section, LPCTSTR entry, int value);
-    virtual int getInt(LPCTSTR section, LPCTSTR entry, int defaultValue);
+    virtual void setInt(LPCWSTR section, LPCWSTR entry, int value);
+    virtual int getInt(LPCWSTR section, LPCWSTR entry, int defaultValue);
 
-    virtual void setUint(LPCTSTR section, LPCTSTR entry, unsigned int value);
-    virtual unsigned int getUint(LPCTSTR section, LPCTSTR entry, unsigned int defaultValue);
+    virtual void setUint(LPCWSTR section, LPCWSTR entry, unsigned int value);
+    virtual unsigned int getUint(LPCWSTR section, LPCWSTR entry, unsigned int defaultValue);
 
-    virtual void setBool(LPCTSTR section, LPCTSTR entry, bool value);
-    virtual bool getBool(LPCTSTR section, LPCTSTR entry, bool defaultValue);
+    virtual void setBool(LPCWSTR section, LPCWSTR entry, bool value);
+    virtual bool getBool(LPCWSTR section, LPCWSTR entry, bool defaultValue);
 
     virtual void flush();
     virtual long getLastError() const;
@@ -112,7 +112,7 @@ private:
     mutable long m_lastError;
     REGSAM const m_sam;
     HKEY m_parentKey;
-    CString m_lpszKeyName;
+    CStringW m_lpszKeyName;
 
     CRegKey m_key;
 };
@@ -122,27 +122,27 @@ class CIniFileStg : public ICfgStorage
     CIniFileStg(); // hide
     CIniFileStg& operator=(const CIniFileStg&); // hide
 public:
-    CIniFileStg(LPCTSTR lpszFilePath);
+    CIniFileStg(LPCWSTR lpszFilePath);
     ~CIniFileStg();
 
-    virtual void setString(LPCTSTR section, LPCTSTR entry, LPCTSTR value);
-    virtual CString getString(LPCTSTR section, LPCTSTR entry, LPCTSTR defaultValue);
+    virtual void setString(LPCWSTR section, LPCWSTR entry, LPCWSTR value);
+    virtual CStringW getString(LPCWSTR section, LPCWSTR entry, LPCWSTR defaultValue);
 
-    virtual void setInt(LPCTSTR section, LPCTSTR entry, int value);
-    virtual int getInt(LPCTSTR section, LPCTSTR entry, int defaultValue);
+    virtual void setInt(LPCWSTR section, LPCWSTR entry, int value);
+    virtual int getInt(LPCWSTR section, LPCWSTR entry, int defaultValue);
 
-    virtual void setUint(LPCTSTR section, LPCTSTR entry, unsigned int value);
-    virtual unsigned int getUint(LPCTSTR section, LPCTSTR entry, unsigned int defaultValue);
+    virtual void setUint(LPCWSTR section, LPCWSTR entry, unsigned int value);
+    virtual unsigned int getUint(LPCWSTR section, LPCWSTR entry, unsigned int defaultValue);
 
-    virtual void setBool(LPCTSTR section, LPCTSTR entry, bool value);
-    virtual bool getBool(LPCTSTR section, LPCTSTR entry, bool defaultValue);
+    virtual void setBool(LPCWSTR section, LPCWSTR entry, bool value);
+    virtual bool getBool(LPCWSTR section, LPCWSTR entry, bool defaultValue);
 
     virtual void flush();
     virtual long getLastError() const;
 
 private:
     mutable long m_lastError;
-    CString m_lpszFilePath;
+    CStringW m_lpszFilePath;
     CSimpleIni m_ini;
 
     static HRESULT siErrorToHR_(SI_Error err);
@@ -156,17 +156,17 @@ public:
     CConfigStorage(ICfgStorage* primary, ICfgStorage* secondary);
     ~CConfigStorage();
 
-    virtual void setString(LPCTSTR section, LPCTSTR entry, LPCTSTR value);
-    virtual CString getString(LPCTSTR section, LPCTSTR entry, LPCTSTR defaultValue);
+    virtual void setString(LPCWSTR section, LPCWSTR entry, LPCWSTR value);
+    virtual CStringW getString(LPCWSTR section, LPCWSTR entry, LPCWSTR defaultValue);
 
-    virtual void setInt(LPCTSTR section, LPCTSTR entry, int value);
-    virtual int getInt(LPCTSTR section, LPCTSTR entry, int defaultValue);
+    virtual void setInt(LPCWSTR section, LPCWSTR entry, int value);
+    virtual int getInt(LPCWSTR section, LPCWSTR entry, int defaultValue);
 
-    virtual void setUint(LPCTSTR section, LPCTSTR entry, unsigned int value);
-    virtual unsigned int getUint(LPCTSTR section, LPCTSTR entry, unsigned int defaultValue);
+    virtual void setUint(LPCWSTR section, LPCWSTR entry, unsigned int value);
+    virtual unsigned int getUint(LPCWSTR section, LPCWSTR entry, unsigned int defaultValue);
 
-    virtual void setBool(LPCTSTR section, LPCTSTR entry, bool value);
-    virtual bool getBool(LPCTSTR section, LPCTSTR entry, bool defaultValue);
+    virtual void setBool(LPCWSTR section, LPCWSTR entry, bool value);
+    virtual bool getBool(LPCWSTR section, LPCWSTR entry, bool defaultValue);
 
 private:
     std::auto_ptr<ICfgStorage> m_primaryStore;
@@ -176,14 +176,14 @@ private:
 class CRegistryUser
 {
 public:
-    static void setProfileString(LPCTSTR section, LPCTSTR entry, LPCTSTR value);
-    static CString getProfileString(LPCTSTR section, LPCTSTR entry, LPCTSTR defaultValue = wds::strEmpty);
+    static void setProfileString(LPCWSTR section, LPCWSTR entry, LPCWSTR value);
+    static CStringW getProfileString(LPCWSTR section, LPCWSTR entry, LPCWSTR defaultValue = wds::strEmpty);
 
-    static void setProfileInt(LPCTSTR section, LPCTSTR entry, int value);
-    static int getProfileInt(LPCTSTR section, LPCTSTR entry, int defaultValue);
+    static void setProfileInt(LPCWSTR section, LPCWSTR entry, int value);
+    static int getProfileInt(LPCWSTR section, LPCWSTR entry, int defaultValue);
 
-    static void setProfileBool(LPCTSTR section, LPCTSTR entry, bool value);
-    static bool getProfileBool(LPCTSTR section, LPCTSTR entry, bool defaultValue);
+    static void setProfileBool(LPCWSTR section, LPCWSTR entry, bool value);
+    static bool getProfileBool(LPCWSTR section, LPCWSTR entry, bool defaultValue);
 
     static void checkRange(int& value, int min, int max);
     static void checkRange(unsigned int& value, unsigned int min, unsigned int max);
@@ -219,20 +219,20 @@ public:
     static void GetMainWindowPlacement(/* [in/out] */ WINDOWPLACEMENT& wp);
     static void SetMainWindowPlacement(const WINDOWPLACEMENT& wp);
 
-    static void SetSplitterPos(LPCTSTR name, bool valid, double userpos);
-    static void GetSplitterPos(LPCTSTR name, bool& valid, double& userpos);
+    static void SetSplitterPos(LPCWSTR name, bool valid, double userpos);
+    static void GetSplitterPos(LPCWSTR name, bool& valid, double& userpos);
 
-    static void SetColumnOrder(LPCTSTR name, const CArray<int, int>& arr);
-    static void GetColumnOrder(LPCTSTR name, /* in/out */ CArray<int, int>& arr);
+    static void SetColumnOrder(LPCWSTR name, const CArray<int, int>& arr);
+    static void GetColumnOrder(LPCWSTR name, /* in/out */ CArray<int, int>& arr);
 
-    static void SetColumnWidths(LPCTSTR name, const CArray<int, int>& arr);
-    static void GetColumnWidths(LPCTSTR name, /* in/out */ CArray<int, int>& arr);
+    static void SetColumnWidths(LPCWSTR name, const CArray<int, int>& arr);
+    static void GetColumnWidths(LPCWSTR name, /* in/out */ CArray<int, int>& arr);
 
-    static void SetDialogRectangle(LPCTSTR name, const CRect& rc);
-    static void GetDialogRectangle(LPCTSTR name, CRect& rc);
+    static void SetDialogRectangle(LPCWSTR name, const CRect& rc);
+    static void GetDialogRectangle(LPCWSTR name, CRect& rc);
 
-//   static void SetSorting(LPCTSTR name, int column1, bool ascending1, int column2, bool ascending2);
-//   static void GetSorting(LPCTSTR name, int columnCount, int& column1, bool& ascending1, int& column2, bool& ascending2);
+//   static void SetSorting(LPCWSTR name, int column1, bool ascending1, int column2, bool ascending2);
+//   static void GetSorting(LPCWSTR name, int columnCount, int& column1, bool& ascending1, int& column2, bool& ascending2);
 
     static int GetConfigPage(int max);
     static void SetConfigPage(int page);
@@ -240,13 +240,13 @@ public:
     static void GetConfigPosition(/* in/out */ CPoint& pt);
     static void SetConfigPosition(CPoint pt);
 
-    static CString GetBarStateSection();
+    static CStringW GetBarStateSection();
 
     static int GetSelectDrivesRadio();
     static void SetSelectDrivesRadio(int radio);
 
-    static CString GetSelectDrivesFolder();
-    static void SetSelectDrivesFolder(LPCTSTR folder);
+    static CStringW GetSelectDrivesFolder();
+    static void SetSelectDrivesFolder(LPCWSTR folder);
 
     static void GetSelectDrivesDrives(CStringArray& drives);
     static void SetSelectDrivesDrives(const CStringArray& drives);
@@ -255,20 +255,20 @@ public:
     static void SetShowDeleteWarning(bool show);
 
 private:
-    static void SetArray(LPCTSTR entry, const CArray<int, int>& arr);
-    static void GetArray(LPCTSTR entry, /* in/out */ CArray<int, int>& arr);
-    static void SetRect(LPCTSTR entry, const CRect& rc);
-    static void GetRect(LPCTSTR entry, CRect& rc);
+    static void SetArray(LPCWSTR entry, const CArray<int, int>& arr);
+    static void GetArray(LPCWSTR entry, /* in/out */ CArray<int, int>& arr);
+    static void SetRect(LPCWSTR entry, const CRect& rc);
+    static void GetRect(LPCWSTR entry, CRect& rc);
     static void SanitizeRect(CRect& rc);
 
-    static CString EncodeWindowPlacement(const WINDOWPLACEMENT& wp);
-    static void DecodeWindowPlacement(const CString& s, WINDOWPLACEMENT& wp);
-    static CString MakeSplitterPosEntry(LPCTSTR name);
-    static CString MakeColumnOrderEntry(LPCTSTR name);
-    static CString MakeColumnWidthsEntry(LPCTSTR name);
-    //static CString MakeSortingColumnEntry(LPCTSTR name, int n);
-    //static CString MakeSortingAscendingEntry(LPCTSTR name, int n);
-    static CString MakeDialogRectangleEntry(LPCTSTR name);
+    static CStringW EncodeWindowPlacement(const WINDOWPLACEMENT& wp);
+    static void DecodeWindowPlacement(const CStringW& s, WINDOWPLACEMENT& wp);
+    static CStringW MakeSplitterPosEntry(LPCWSTR name);
+    static CStringW MakeColumnOrderEntry(LPCWSTR name);
+    static CStringW MakeColumnWidthsEntry(LPCWSTR name);
+    //static CStringW MakeSortingColumnEntry(LPCWSTR name, int n);
+    //static CStringW MakeSortingAscendingEntry(LPCWSTR name, int n);
+    static CStringW MakeDialogRectangleEntry(LPCWSTR name);
 
 
 };
@@ -360,17 +360,17 @@ public:
     bool IsUserDefinedCleanupEnabled(int i);
     const USERDEFINEDCLEANUP *GetUserDefinedCleanup(int i);
 
-    CString GetReportSubject();
-    CString GetReportDefaultSubject();
-    void SetReportSubject(LPCTSTR subject);
+    CStringW GetReportSubject();
+    CStringW GetReportDefaultSubject();
+    void SetReportSubject(LPCWSTR subject);
 
-    CString GetReportPrefix();
-    CString GetReportDefaultPrefix();
-    void SetReportPrefix(LPCTSTR prefix);
+    CStringW GetReportPrefix();
+    CStringW GetReportDefaultPrefix();
+    void SetReportPrefix(LPCWSTR prefix);
 
-    CString GetReportSuffix();
-    CString GetReportDefaultSuffix();
-    void SetReportSuffix(LPCTSTR suffix);
+    CStringW GetReportSuffix();
+    CStringW GetReportDefaultSuffix();
+    void SetReportSuffix(LPCWSTR suffix);
 
 private:
     void ReadUserDefinedCleanup(int i);
@@ -397,8 +397,8 @@ private:
 
     USERDEFINEDCLEANUP m_userDefinedCleanup[USERDEFINEDCLEANUPCOUNT];
 
-    CString m_reportSubject;
-    CString m_reportPrefix;
-    CString m_reportSuffix;
+    CStringW m_reportSubject;
+    CStringW m_reportPrefix;
+    CStringW m_reportSuffix;
 };
 #endif // __NOT_WDS

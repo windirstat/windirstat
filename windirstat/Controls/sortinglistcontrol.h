@@ -41,7 +41,7 @@ struct SSorting
 class CSortingListItem
 {
 public:
-    virtual CString GetText(int subitem) const;
+    virtual CStringW GetText(int subitem) const;
     virtual int GetImage() const;
     virtual int Compare(const CSortingListItem *other, int subitem) const;
     int CompareS(const CSortingListItem *other, const SSorting& sorting) const;
@@ -62,7 +62,7 @@ class CSortingListControl: public CListCtrl
     DECLARE_DYNAMIC(CSortingListControl)
 public:
     // Construction
-    CSortingListControl(LPCTSTR name);
+    CSortingListControl(LPCWSTR name);
     virtual ~CSortingListControl();
 
     // Public methods
@@ -94,7 +94,7 @@ private:
     void SavePersistentAttributes();
     static int CALLBACK _CompareFunc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
 
-    CString m_name; // for persistence
+    CStringW m_name; // for persistence
     SSorting m_sorting;
 
     int m_indicatedColumn;

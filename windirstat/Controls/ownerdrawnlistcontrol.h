@@ -40,7 +40,7 @@ public:
     virtual ~COwnerDrawnListItem();
 
     // This text is drawn, if DrawSubitem returns false
-    virtual CString GetText(int subitem) const = 0;
+    virtual CStringW GetText(int subitem) const = 0;
     // This color is used for the  current item
     virtual COLORREF GetItemTextColor() const { return ::GetSysColor(COLOR_WINDOWTEXT); }
 
@@ -67,7 +67,7 @@ class COwnerDrawnListControl: public CSortingListControl
 {
     DECLARE_DYNAMIC(COwnerDrawnListControl)
 public:
-    COwnerDrawnListControl(LPCTSTR name, int rowHeight);
+    COwnerDrawnListControl(LPCWSTR name, int rowHeight);
     virtual ~COwnerDrawnListControl();
     void OnColumnsInserted();
     virtual void SysColorChanged();

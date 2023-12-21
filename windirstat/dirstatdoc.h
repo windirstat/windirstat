@@ -49,7 +49,7 @@ struct SExtensionRecord
 //
 // Maps an extension (".bmp") to an SExtensionRecord.
 //
-typedef CMap<CString, LPCTSTR, SExtensionRecord, SExtensionRecord&> CExtensionData;
+typedef CMap<CStringW, LPCWSTR, SExtensionRecord, SExtensionRecord&> CExtensionData;
 
 //
 // Hints for UpdateAllViews()
@@ -84,19 +84,19 @@ protected:
 public:
     virtual ~CDirstatDoc();
 
-    static CString EncodeSelection(RADIO radio, CString folder, const CStringArray& drives);
-    static void DecodeSelection(CString s, CString& folder, CStringArray& drives);
+    static CStringW EncodeSelection(RADIO radio, CStringW folder, const CStringArray& drives);
+    static void DecodeSelection(CStringW s, CStringW& folder, CStringArray& drives);
     static TCHAR GetEncodingSeparator();
 
     virtual void DeleteContents();
     virtual BOOL OnNewDocument();
-    virtual BOOL OnOpenDocument(LPCTSTR lpszPathName);
-    virtual void SetPathName(LPCTSTR lpszPathName, BOOL bAddToMRU);
+    virtual BOOL OnOpenDocument(LPCWSTR lpszPathName);
+    virtual void SetPathName(LPCWSTR lpszPathName, BOOL bAddToMRU);
     virtual void Serialize(CArchive& ar);
 
-    void SetTitlePrefix(CString prefix);
+    void SetTitlePrefix(CStringW prefix);
 
-    COLORREF GetCushionColor(LPCTSTR ext);
+    COLORREF GetCushionColor(LPCWSTR ext);
     COLORREF GetZoomColor();
 
     bool OptionShowFreeSpace();
@@ -107,7 +107,7 @@ public:
 
     void ForgetItemTree();
     bool Work(CWorkLimiter* limiter); // return: true if done.
-    bool IsDrive(CString spec);
+    bool IsDrive(CStringW spec);
     void RefreshMountPointItems();
     void RefreshJunctionItems();
 
@@ -127,8 +127,8 @@ public:
     CItem *GetSelection(size_t i);
     void SetSelection(const CItem *item, bool keepReselectChildStack = false);
 
-    void SetHighlightExtension(LPCTSTR ext);
-    CString GetHighlightExtension();
+    void SetHighlightExtension(LPCWSTR ext);
+    CStringW GetHighlightExtension();
 
     void UnlinkRoot();
     bool UserDefinedCleanupWorksForItem(const USERDEFINEDCLEANUP *udc, const CItem *item);
@@ -154,9 +154,9 @@ protected:
     void AskForConfirmation(const USERDEFINEDCLEANUP *udc, CItem *item);
     void PerformUserDefinedCleanup(const USERDEFINEDCLEANUP *udc, CItem *item);
     void RefreshAfterUserDefinedCleanup(const USERDEFINEDCLEANUP *udc, CItem *item);
-    void RecursiveUserDefinedCleanup(const USERDEFINEDCLEANUP *udc, const CString& rootPath, const CString& currentPath);
-    void CallUserDefinedCleanup(bool isDirectory, const CString& format, const CString& rootPath, const CString& currentPath, bool showConsoleWindow, bool wait);
-    CString BuildUserDefinedCleanupCommandLine(LPCTSTR format, LPCTSTR rootPath, LPCTSTR currentPath);
+    void RecursiveUserDefinedCleanup(const USERDEFINEDCLEANUP *udc, const CStringW& rootPath, const CStringW& currentPath);
+    void CallUserDefinedCleanup(bool isDirectory, const CStringW& format, const CStringW& rootPath, const CStringW& currentPath, bool showConsoleWindow, bool wait);
+    CStringW BuildUserDefinedCleanupCommandLine(LPCWSTR format, LPCWSTR rootPath, LPCWSTR currentPath);
     void PushReselectChild(CItem *item);
     CItem *PopReselectChild();
     void ClearReselectChildStack();
@@ -173,7 +173,7 @@ protected:
     CItem *m_rootItem;          // The very root item
     CArray<CItem *, CItem *> m_selectedItems;   // The currently selected items
 
-    CString m_highlightExtension;   // Currently highlighted extension
+    CStringW m_highlightExtension;   // Currently highlighted extension
     CItem *m_zoomItem;              // Current "zoom root"
     CItem *m_workingItem;           // Current item we are working on. For progress indication
 

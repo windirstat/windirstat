@@ -23,20 +23,20 @@
 #include <common/mdexceptions.h>
 #include <common/wds_constants.h>
 
-CString MyStrRetToString(const LPITEMIDLIST pidl, const STRRET *strret)
+CStringW MyStrRetToString(const LPITEMIDLIST pidl, const STRRET *strret)
 {
-    CString s;
+    CStringW s;
 
     switch (strret->uType)
     {
     case STRRET_CSTR:
         {
-            s.Format(_T("%hs"), strret->cStr);
+            s.Format(L"%hs", strret->cStr);
     }
         break;
     case STRRET_OFFSET:
         {
-            s.Format(_T("%hs"), (char *)pidl + strret->uOffset);
+            s.Format(L"%hs", (char *)pidl + strret->uOffset);
         }
         break;
     case STRRET_WSTR:
@@ -48,7 +48,7 @@ CString MyStrRetToString(const LPITEMIDLIST pidl, const STRRET *strret)
 
     return s;
 }
-BOOL ShellExecuteNoThrow(HWND hwnd, LPCTSTR lpVerb, LPCTSTR lpFile, LPCTSTR lpParameters, LPCTSTR lpDirectory, INT nShowCmd)
+BOOL ShellExecuteNoThrow(HWND hwnd, LPCWSTR lpVerb, LPCWSTR lpFile, LPCWSTR lpParameters, LPCWSTR lpDirectory, INT nShowCmd)
 {
     SHELLEXECUTEINFO sei = {
         sizeof(SHELLEXECUTEINFO),
@@ -71,7 +71,7 @@ BOOL ShellExecuteNoThrow(HWND hwnd, LPCTSTR lpVerb, LPCTSTR lpFile, LPCTSTR lpPa
     return ::ShellExecuteEx(&sei);
 }
 
-BOOL ShellExecuteThrow(HWND hwnd, LPCTSTR lpVerb, LPCTSTR lpFile, LPCTSTR lpParameters, LPCTSTR lpDirectory, INT nShowCmd)
+BOOL ShellExecuteThrow(HWND hwnd, LPCWSTR lpVerb, LPCWSTR lpFile, LPCWSTR lpParameters, LPCWSTR lpDirectory, INT nShowCmd)
 {
     CWaitCursor wc;
     BOOL bResult = FALSE;
@@ -79,14 +79,14 @@ BOOL ShellExecuteThrow(HWND hwnd, LPCTSTR lpVerb, LPCTSTR lpFile, LPCTSTR lpPara
     bResult = ShellExecuteNoThrow(hwnd, lpVerb, lpFile, lpParameters, lpDirectory, nShowCmd);
     if(!bResult)
     {
-        MdThrowStringExceptionF(_T("ShellExecute failed: %1!s!"), MdGetWinErrorText(::GetLastError()).GetString());
+        MdThrowStringExceptionF(L"ShellExecute failed: %1!s!", MdGetWinErrorText(::GetLastError()).GetString());
     }
     return bResult;
 }
 
-CString GetBaseNameFromPath(LPCTSTR path)
+CStringW GetBaseNameFromPath(LPCWSTR path)
 {
-    CString s = path;
+    CStringW s = path;
     int i = s.ReverseFind(wds::chrBackslash);
     if(i < 0)
     {
@@ -95,22 +95,22 @@ CString GetBaseNameFromPath(LPCTSTR path)
     return s.Mid(i + 1);
 }
 
-CString LoadString(UINT resId)
+CStringW LoadString(UINT resId)
 {
     return MAKEINTRESOURCE(resId);
 }
 
-CString GetAppFileName()
+CStringW GetAppFileName()
 {
-    CString s;
+    CStringW s;
     VERIFY(::GetModuleFileName(NULL, s.GetBuffer(_MAX_PATH), _MAX_PATH));
     s.ReleaseBuffer();
     return s;
 }
 
-CString GetAppFolder()
+CStringW GetAppFolder()
 {
-    CString s = GetAppFileName();
+    CStringW s = GetAppFileName();
     int i = s.ReverseFind(wds::chrBackslash);
     ASSERT(i >= 0);
     s = s.Left(i);

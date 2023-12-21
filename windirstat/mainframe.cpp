@@ -181,7 +181,7 @@ BOOL COptionsPropertySheet::OnCommand(WPARAM wParam, LPARAM lParam)
 
 /////////////////////////////////////////////////////////////////////////////
 
-CMySplitterWnd::CMySplitterWnd(LPCTSTR name)
+CMySplitterWnd::CMySplitterWnd(LPCWSTR name)
     : m_persistenceName(name)
     , m_splitterPos(0.5)
 {
@@ -362,7 +362,7 @@ CDeadFocusWnd::CDeadFocusWnd()
 void CDeadFocusWnd::Create(CWnd *parent)
 {
     CRect rc(0,0,0,0);
-    VERIFY(CWnd::Create(AfxRegisterWndClass(0, 0, 0, 0), _T("_deadfocus"), WS_CHILD, rc, parent, IDC_DEADFOCUS));
+    VERIFY(CWnd::Create(AfxRegisterWndClass(0, 0, 0, 0), L"_deadfocus", WS_CHILD, rc, parent, IDC_DEADFOCUS));
 }
 
 CDeadFocusWnd::~CDeadFocusWnd()
@@ -433,8 +433,8 @@ CMainFrame *CMainFrame::GetTheFrame()
 }
 
 CMainFrame::CMainFrame()
-    : m_wndSplitter(_T("main"))
-    , m_wndSubSplitter(_T("sub"))
+    : m_wndSplitter(L"main")
+    , m_wndSubSplitter(L"sub")
     , m_progressVisible(false)
     , m_progressRange(100)
     , m_progressPos(0)
@@ -457,7 +457,7 @@ LRESULT CMainFrame::OnTaskButtonCreated(WPARAM, LPARAM)
         HRESULT hr = ::CoCreateInstance(CLSID_TaskbarList, NULL, CLSCTX_ALL, IID_ITaskbarList3, reinterpret_cast<LPVOID*>(&m_TaskbarList));
         if(FAILED(hr))
         {
-            VTRACE(_T("CoCreateInstance(CLSID_TaskbarList, NULL, CLSCTX_ALL) failed %08X"), hr);
+            VTRACE(L"CoCreateInstance(CLSID_TaskbarList, NULL, CLSCTX_ALL) failed %08X", hr);
         }
     }
     return 0;
@@ -542,8 +542,8 @@ void CMainFrame::UpdateProgress()
 {
     if(m_progressVisible)
     {
-        CString titlePrefix;
-        CString suspended;
+        CStringW titlePrefix;
+        CStringW suspended;
 
         if(IsProgressSuspended())
         {
@@ -554,7 +554,7 @@ void CMainFrame::UpdateProgress()
         {
             int pos = (int)((double) m_progressPos * 100 / m_progressRange);
             m_progress.SetPos(pos);
-            titlePrefix.Format(_T("%d%% %s"), pos, suspended.GetString());
+            titlePrefix.Format(L"%d%% %s", pos, suspended.GetString());
             if(m_TaskbarList && (m_TaskbarButtonState != TBPF_PAUSED))
             {
                 switch(pos)
@@ -866,7 +866,7 @@ LRESULT CMainFrame::OnExitSizeMove(WPARAM, LPARAM)
     return 0;
 }
 
-void CMainFrame::CopyToClipboard(LPCTSTR psz)
+void CMainFrame::CopyToClipboard(LPCWSTR psz)
 {
     try
     {
@@ -876,7 +876,7 @@ void CMainFrame::CopyToClipboard(LPCTSTR psz)
         HGLOBAL h = ::GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT, (cchBufLen) * sizeof(TCHAR));
         if(h == NULL)
         {
-            MdThrowStringException(_T("GlobalAlloc failed."));
+            MdThrowStringException(L"GlobalAlloc failed.");
         }
 
         LPVOID lp = ::GlobalLock(h);
@@ -884,10 +884,10 @@ void CMainFrame::CopyToClipboard(LPCTSTR psz)
 
         if (!lp)
         {
-            MdThrowStringException(_T("GlobalLock failed."));
+            MdThrowStringException(L"GlobalLock failed.");
         }
 
-        _tcscpy_s((LPTSTR)lp, cchBufLen, psz);
+        wcscpy_s((LPWSTR)lp, cchBufLen, psz);
 
         ::GlobalUnlock(h);
 
@@ -926,7 +926,7 @@ void CMainFrame::OnInitMenuPopup(CMenu* pPopupMenu, UINT nIndex, BOOL bSysMenu)
 
 void CMainFrame::UpdateCleanupMenu(CMenu *menu)
 {
-    CString s = LoadString(IDS_EMPTYRECYCLEBIN);
+    CStringW s = LoadString(IDS_EMPTYRECYCLEBIN);
     VERIFY(menu->ModifyMenu(ID_CLEANUP_EMPTYRECYCLEBIN, MF_BYCOMMAND | MF_STRING, ID_CLEANUP_EMPTYRECYCLEBIN, s));
     // TODO: can be cleaned, so that we don't disable and then enable the menu item
     menu->EnableMenuItem(ID_CLEANUP_EMPTYRECYCLEBIN, MF_BYCOMMAND | MF_DISABLED | MF_GRAYED);
@@ -936,7 +936,7 @@ void CMainFrame::UpdateCleanupMenu(CMenu *menu)
 
     queryRecycleBin(items, bytes);
 
-    CString info;
+    CStringW info;
     if(items == 1)
     {
         info.FormatMessage(IDS__ONEITEMss, FormatBytes(bytes).GetString(), GetOptions()->IsHumanFormat() && bytes != 0 ? wds::strEmpty : wds::strBlankSpace + GetSpec_Bytes());
@@ -983,8 +983,8 @@ void CMainFrame::queryRecycleBin(ULONGLONG& items, ULONGLONG& bytes)
             continue;
         }
 
-        CString s;
-        s.Format(_T("%c:\\"), i + wds::chrCapA);
+        CStringW s;
+        s.Format(L"%c:\\", i + wds::chrCapA);
 
         UINT type = ::GetDriveType(s);
         if(type == DRIVE_UNKNOWN || type == DRIVE_NO_ROOT_DIR)
@@ -1021,7 +1021,7 @@ void CMainFrame::AppendUserDefinedCleanups(CMenu *menu)
     {
         for(int i = 0; i < indices.GetSize(); i++)
         {
-            CString string;
+            CStringW string;
             string.FormatMessage(IDS_UDCsCTRLd, GetOptions()->GetUserDefinedCleanup(indices[i])->title.GetString(), indices[i]);
 
             UINT flags = MF_GRAYED | MF_DISABLED;

@@ -23,10 +23,10 @@
 
 #include <common/wds_constants.h>
 
-BOOL ShellExecuteThrow(HWND hwnd, LPCTSTR lpVerb, LPCTSTR lpFile, LPCTSTR lpParameters, LPCTSTR lpDirectory, INT nShowCmd);
-BOOL ShellExecuteNoThrow(HWND hwnd, LPCTSTR lpVerb, LPCTSTR lpFile, LPCTSTR lpParameters, LPCTSTR lpDirectory, INT nShowCmd);
-CString MyStrRetToString(const LPITEMIDLIST pidl, const STRRET *strret);
-CString GetBaseNameFromPath(LPCTSTR path);
-CString LoadString(UINT resId);
-CString GetAppFileName();
-CString GetAppFolder();
+BOOL ShellExecuteThrow(HWND hwnd, LPCWSTR lpVerb, LPCWSTR lpFile, LPCWSTR lpParameters, LPCWSTR lpDirectory, INT nShowCmd);
+BOOL ShellExecuteNoThrow(HWND hwnd, LPCWSTR lpVerb, LPCWSTR lpFile, LPCWSTR lpParameters, LPCWSTR lpDirectory, INT nShowCmd);
+CStringW MyStrRetToString(const LPITEMIDLIST pidl, const STRRET *strret);
+CStringW GetBaseNameFromPath(LPCWSTR path);
+CStringW LoadString(UINT resId);
+CStringW GetAppFileName();
+CStringW GetAppFolder();

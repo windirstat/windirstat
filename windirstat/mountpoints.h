@@ -27,8 +27,8 @@ class CReparsePoints
 {
     struct SPointVolume
     {
-        CString point;  // Path like "mount\backup\"
-        CString volume; // Volume identifier
+        CStringW point;  // Path like "mount\backup\"
+        CStringW volume; // Volume identifier
         DWORD   flags;  // File system flags (see GetVolumeInformation documentation)
 
         SPointVolume() : flags(0) {}
@@ -39,8 +39,8 @@ class CReparsePoints
 public:
     ~CReparsePoints();
     void Initialize();
-    bool IsVolumeMountPoint(CString path);
-    bool IsFolderJunction(CString path);
+    bool IsVolumeMountPoint(CStringW path);
+    bool IsFolderJunction(CStringW path);
     bool IsFolderJunction(DWORD attr);
 
 private:
@@ -48,12 +48,12 @@ private:
     void GetDriveVolumes();
     void GetAllMountPoints();
 
-    bool IsVolumeMountPoint(CString volume, CString path);
+    bool IsVolumeMountPoint(CStringW volume, CStringW path);
 
     // m_drive contains the volume identifiers of the Drives A:, B: etc.
     // mdrive[0] = Volume identifier of A:\.
-    CArray<CString, LPCTSTR> m_drive;
+    CArray<CStringW, LPCWSTR> m_drive;
 
     // m_volume maps all volume identifiers to PointVolumeArrays
-    CMap<CString, LPCTSTR, PointVolumeArray *, PointVolumeArray *> m_volume;
+    CMap<CStringW, LPCWSTR, PointVolumeArray *, PointVolumeArray *> m_volume;
 };

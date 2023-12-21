@@ -51,13 +51,13 @@ protected:
     // Dialog data
     CListBox m_list;
     BOOL m_enabled;
-    CString m_title;
+    CStringW m_title;
     BOOL m_worksForDrives;
     BOOL m_worksForDirectories;
     BOOL m_worksForFilesFolder;
     BOOL m_worksForFiles;
     BOOL m_worksForUncPaths;
-    CString m_commandLine;
+    CStringW m_commandLine;
     BOOL m_recurseIntoSubdirectories;
     BOOL m_askForConfirmation;
     BOOL m_showConsoleWindow;

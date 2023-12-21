@@ -61,19 +61,19 @@ protected:
     CColorButton m_gridColor;
 
     CSliderCtrl m_brightness;
-    CString m_sBrightness;
+    CStringW m_sBrightness;
     int m_nBrightness;
 
     CSliderCtrl m_cushionShading;
-    CString m_sCushionShading;
+    CStringW m_sCushionShading;
     int m_nCushionShading;
 
     CSliderCtrl m_height;
-    CString m_sHeight;
+    CStringW m_sHeight;
     int m_nHeight;
 
     CSliderCtrl m_scaleFactor;
-    CString m_sScaleFactor;
+    CStringW m_sScaleFactor;
     int m_nScaleFactor;
 
     CXySlider m_lightSource;

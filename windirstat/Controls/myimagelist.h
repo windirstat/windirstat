@@ -46,8 +46,8 @@ public:
     int getMountPointImage();
     int getJunctionImage();
     int getFolderImage();
-    int getFileImage(LPCTSTR path);
-    int getExtImageAndDescription(LPCTSTR ext, CString& description);
+    int getFileImage(LPCWSTR path);
+    int getExtImageAndDescription(LPCWSTR ext, CStringW& description);
 
     int getFilesFolderImage();
     int getFreeSpaceImage();
@@ -55,8 +55,8 @@ public:
     int getEmptyImage();
 
 protected:
-    int cacheIcon(LPCTSTR path, UINT flags, CString *psTypeName = NULL);
-    CString getADriveSpec();
+    int cacheIcon(LPCWSTR path, UINT flags, CStringW *psTypeName = NULL);
+    CStringW getADriveSpec();
     void addCustomImages();
 
     CMap<int, int, int, int> m_indexMap;    // system image list index -> our index

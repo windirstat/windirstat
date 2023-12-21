@@ -24,7 +24,11 @@
 // THE SOFTWARE.
 //
 
+#ifndef __TRACER_H_VER__
+#define __TRACER_H_VER__ 2017112219
+#if defined(_MSC_VER) && (_MSC_VER >= 1020)
 #pragma once
+#endif // Check for "#pragma once" support
 
 #ifdef _DEBUG
 #define VTRACE_FILE_LINE_FUNC   3
@@ -63,3 +67,5 @@ private:
 #else
 #   define VTRACE __noop
 #endif // _DEBUG
+
+#endif // __TRACER_H_VER__

@@ -76,14 +76,14 @@ protected:
 class CMySplitterWnd: public CSplitterWnd
 {
 public:
-    CMySplitterWnd(LPCTSTR name);
+    CMySplitterWnd(LPCWSTR name);
     virtual void StopTracking(BOOL bAccept);
     double GetSplitterPos();
     void SetSplitterPos(double pos);
     void RestoreSplitterPos(double posIfVirgin);
 
 protected:
-    CString m_persistenceName;  // Name of object for CPersistence
+    CStringW m_persistenceName;  // Name of object for CPersistence
     double m_splitterPos;       // Current split ratio
     bool m_wasTrackedByUser;    // True as soon as user has modified the splitter position
     double m_userSplitterPos;   // Split ratio as set by the user
@@ -154,7 +154,7 @@ public:
     void RestoreTypeView();
     void MinimizeGraphView();
     void MinimizeTypeView();
-    void CopyToClipboard(LPCTSTR psz);
+    void CopyToClipboard(LPCWSTR psz);
 
     CDirstatView *GetDirstatView();
     CGraphView *GetGraphView();
