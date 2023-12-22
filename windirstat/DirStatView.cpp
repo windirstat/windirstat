@@ -226,7 +226,7 @@ void CDirstatView::OnDraw(CDC* pDC)
 CDirstatDoc* CDirstatView::GetDocument() const // Non debug version is inline
 {
     ASSERT(m_pDocument->IsKindOf(RUNTIME_CLASS(CDirstatDoc)));
-    return static_cast<CDirstatDoc*>(m_pDocument);
+    return reinterpret_cast<CDirstatDoc*>(m_pDocument);
 }
 #endif
 

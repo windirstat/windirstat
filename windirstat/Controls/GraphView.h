@@ -98,6 +98,6 @@ public:
 #ifndef _DEBUG  // Debugversion in graphview.cpp
 inline CDirstatDoc* CGraphView::GetDocument() const
 {
-    return static_cast<CDirstatDoc*>(m_pDocument);
+    return reinterpret_cast<CDirstatDoc*>(m_pDocument);
 }
 #endif

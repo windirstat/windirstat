@@ -359,10 +359,9 @@ void CGraphView::Dump(CDumpContext& dc) const
 }
 
 CDirstatDoc* CGraphView::GetDocument() const
-// Nicht-Debugversion ist inline
 {
     ASSERT(m_pDocument->IsKindOf(RUNTIME_CLASS(CDirstatDoc)));
-    return static_cast<CDirstatDoc*>(m_pDocument);
+    return reinterpret_cast<CDirstatDoc*>(m_pDocument);
 }
 #endif //_DEBUG
 

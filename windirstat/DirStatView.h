@@ -96,6 +96,6 @@ public:
 #ifndef _DEBUG  // Debug version in dirstatview.cpp
 inline CDirstatDoc* CDirstatView::GetDocument() const
 {
-    return static_cast<CDirstatDoc*>(m_pDocument);
+    return reinterpret_cast<CDirstatDoc*>(m_pDocument);
 }
 #endif
