@@ -25,7 +25,7 @@
 #include "MainFrame.h"
 #include "GlobalHelpers.h"
 #include "deletewarningdlg.h"
-#include "modalshellapi.h"
+#include "ModalShellApi.h"
 #include <common/MdExceptions.h>
 #include <common/cotaskmem.h>
 #include <common/CommonHelpers.h>
@@ -1108,10 +1108,11 @@ BEGIN_MESSAGE_MAP(CDirstatDoc, CDocument)
     ON_COMMAND(ID_REFRESHALL, OnRefreshall)
     ON_UPDATE_COMMAND_UI(ID_EDIT_COPY, OnUpdateEditCopy)
     ON_COMMAND(ID_EDIT_COPY, OnEditCopy)
-    ON_UPDATE_COMMAND_UI(ID_VIEW_SHOWFREESPACE, OnUpdateViewShowfreespace)
+    ON_COMMAND(ID_CLEANUP_EMPTYRECYCLEBIN, OnCleanupEmptyRecycleBin)
+    ON_UPDATE_COMMAND_UI(ID_VIEW_SHOWFREESPACE, OnUpdateViewShowFreeSpace)
     ON_COMMAND(ID_VIEW_SHOWFREESPACE, OnViewShowfreespace)
-    ON_UPDATE_COMMAND_UI(ID_VIEW_SHOWUNKNOWN, OnUpdateViewShowunknown)
-    ON_COMMAND(ID_VIEW_SHOWUNKNOWN, OnViewShowunknown)
+    ON_UPDATE_COMMAND_UI(ID_VIEW_SHOWUNKNOWN, OnUpdateViewShowUnknown)
+    ON_COMMAND(ID_VIEW_SHOWUNKNOWN, OnViewShowUnknown)
     ON_UPDATE_COMMAND_UI(ID_TREEMAP_SELECTPARENT, OnUpdateTreemapSelectparent)
     ON_COMMAND(ID_TREEMAP_SELECTPARENT, OnTreemapSelectparent)
     ON_UPDATE_COMMAND_UI(ID_TREEMAP_ZOOMIN, OnUpdateTreemapZoomin)
@@ -1196,7 +1197,17 @@ void CDirstatDoc::OnEditCopy()
     AfxMessageBox(paths);
 }
 
-void CDirstatDoc::OnUpdateViewShowfreespace(CCmdUI* pCmdUI)
+void CDirstatDoc::OnCleanupEmptyRecycleBin()
+{
+    CModalShellApi msa;
+
+    SHEmptyRecycleBin(*AfxGetMainWnd(), NULL, 0);
+
+    RefreshRecyclers();
+    UpdateAllViews(NULL);
+}
+
+void CDirstatDoc::OnUpdateViewShowFreeSpace(CCmdUI* pCmdUI)
 {
     pCmdUI->SetCheck(m_showFreeSpace);
 }
@@ -1245,12 +1256,12 @@ void CDirstatDoc::OnViewShowfreespace()
     UpdateAllViews(nullptr);
 }
 
-void CDirstatDoc::OnUpdateViewShowunknown(CCmdUI* pCmdUI)
+void CDirstatDoc::OnUpdateViewShowUnknown(CCmdUI* pCmdUI)
 {
     pCmdUI->SetCheck(m_showUnknown);
 }
 
-void CDirstatDoc::OnViewShowunknown()
+void CDirstatDoc::OnViewShowUnknown()
 {
     CArray<CItem*, CItem*> drives;
     GetDriveItems(drives);

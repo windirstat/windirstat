@@ -202,10 +202,11 @@ protected:
     afx_msg void OnRefreshall();
     afx_msg void OnUpdateEditCopy(CCmdUI* pCmdUI);
     afx_msg void OnEditCopy();
-    afx_msg void OnUpdateViewShowfreespace(CCmdUI* pCmdUI);
+    afx_msg void OnCleanupEmptyRecycleBin();
+    afx_msg void OnUpdateViewShowFreeSpace(CCmdUI* pCmdUI);
     afx_msg void OnViewShowfreespace();
-    afx_msg void OnUpdateViewShowunknown(CCmdUI* pCmdUI);
-    afx_msg void OnViewShowunknown();
+    afx_msg void OnUpdateViewShowUnknown(CCmdUI* pCmdUI);
+    afx_msg void OnViewShowUnknown();
     afx_msg void OnUpdateTreemapZoomin(CCmdUI* pCmdUI);
     afx_msg void OnTreemapZoomin();
     afx_msg void OnUpdateTreemapZoomout(CCmdUI* pCmdUI);
