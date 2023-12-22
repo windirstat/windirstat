@@ -24,7 +24,7 @@
 #include "TreeListControl.h"
 #include "TreeMap.h"
 #include "DirStatDoc.h" // CExtensionData
-#include "FileFind.h" // CFileFindWDS
+#include "FileFind.h" // FileFindEnhanced
 
 class CWorkLimiter;
 
@@ -235,7 +235,7 @@ private:
     int FindFreeSpaceItemIndex() const;
     int FindUnknownItemIndex() const;
     CStringW UpwardGetPathWithoutBackslash() const;
-    void AddDirectory(CFileFindWDS& finder);
+    void AddDirectory(FileFindEnhanced& finder);
     void AddFile(const FILEINFO& fi);
     void DriveVisualUpdateDuringWork();
     void UpwardDrivePacman();

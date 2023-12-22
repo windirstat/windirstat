@@ -525,23 +525,14 @@ const CItem* CItem::UpwardGetRoot() const
 void CItem::UpdateLastChange()
 {
     ZeroMemory(&m_lastChange, sizeof(m_lastChange));
-    if (GetType() == IT_DIRECTORY || GetType() == IT_FILE)
+    if (const ITEMTYPE type = GetType(); type == IT_DIRECTORY || type == IT_FILE)
     {
-        const CStringW path = GetPath();
-
-        const int i             = path.ReverseFind(wds::chrBackslash);
-        const CStringW basename = path.Mid(i + 1);
-        CStringW pattern;
-        pattern.Format(L"%s\\..\\%s", path.GetString(), basename.GetString());
-        CFileFindWDS finder;
-        const BOOL b = finder.FindFile(pattern);
-        if (!b)
+        FileFindEnhanced finder;
+        if (finder.FindFile(GetPath()))
         {
-            return; // no chance
+            finder.GetLastWriteTime(&m_lastChange);
+            SetAttributes(finder.GetAttributes());
         }
-        finder.FindNextFile();
-        finder.GetLastWriteTime(&m_lastChange);
-        SetAttributes(finder.GetAttributes());
     }
 }
 
@@ -1070,14 +1061,11 @@ void CItem::DoSomeWork(CWorkLimiter* limiter)
 
             CList<FILEINFO, FILEINFO> files;
 
-
-            CFileFindWDS finder;
-            BOOL b = finder.FindFile(GetFindPattern());
-            while (b)
+            FileFindEnhanced finder;
+            for (BOOL b = finder.FindFile(GetPath()); b; b = finder.FindNextFile())
             {
                 DriveVisualUpdateDuringWork();
 
-                b = finder.FindNextFile();
                 if (finder.IsDots())
                 {
                     continue;
@@ -1247,18 +1235,17 @@ bool CItem::StartRefresh()
     // Special case IT_FILESFOLDER
     if (GetType() == IT_FILESFOLDER)
     {
-        CFileFindWDS finder;
-        BOOL b = finder.FindFile(GetFindPattern());
-        while (b)
+        FileFindEnhanced finder;
+        for (BOOL b = finder.FindFile(GetFindPattern()); b; b = finder.FindNextFile())
         {
-            b = finder.FindNextFile();
             if (finder.IsDirectory())
+            {
                 continue;
+            }
 
             FILEINFO fi;
             fi.name       = finder.GetFileName();
             fi.attributes = finder.GetAttributes();
-            // Retrieve file size
             fi.length = finder.GetCompressedLength();
             finder.GetLastWriteTime(&fi.lastWriteTime);
 
@@ -1307,25 +1294,25 @@ bool CItem::StartRefresh()
     // Case IT_FILE
     if (GetType() == IT_FILE)
     {
-        CFileFindWDS finder;
-        if (finder.FindFile(GetPath()))
+        FileFindEnhanced finder;
+        for (BOOL b = finder.FindFile(GetPath()); b; b = finder.FindNextFile())
         {
-            finder.FindNextFile();
-            if (!finder.IsDirectory())
+            if (finder.IsDirectory())
             {
-                FILEINFO fi;
-                fi.name       = finder.GetFileName();
-                fi.attributes = finder.GetAttributes();
-                // Retrieve file size
-                fi.length = finder.GetCompressedLength();
-                finder.GetLastWriteTime(&fi.lastWriteTime);
-
-                SetLastChange(fi.lastWriteTime);
-
-                UpwardAddSize(fi.length);
-                UpwardUpdateLastChange(GetLastChange());
-                GetParent()->UpwardAddFiles(1);
+                continue;
             }
+
+            FILEINFO fi;
+            fi.name       = finder.GetFileName();
+            fi.attributes = finder.GetAttributes();
+            fi.length = finder.GetCompressedLength();
+            finder.GetLastWriteTime(&fi.lastWriteTime);
+
+            SetLastChange(fi.lastWriteTime);
+
+            UpwardAddSize(fi.length);
+            UpwardUpdateLastChange(GetLastChange());
+            GetParent()->UpwardAddFiles(1);
         }
         SetDone();
         return true;
@@ -1822,7 +1809,7 @@ CStringW CItem::UpwardGetPathWithoutBackslash() const
     return path;
 }
 
-void CItem::AddDirectory(CFileFindWDS& finder)
+void CItem::AddDirectory(FileFindEnhanced& finder)
 {
     bool dontFollow = GetWDSApp()->IsVolumeMountPoint(finder.GetFilePath()) && !GetOptions()->IsFollowMountPoints();
 

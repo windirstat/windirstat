@@ -1,4 +1,4 @@
-// FileFindWDS.cpp - Implementation of CFileFindWDS
+// FileFindWDS.h - Declaration of CFileFindWDS
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
@@ -19,44 +19,133 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 
-#include "StdAfx.h"
+#include <stdafx.h>
+#include <winternl.h>
+
 #include "FileFind.h"
-#include "WinDirStat.h"
+#include <common/Tracer.h>
 
-// Function to access the file attributes from outside
-DWORD CFileFindWDS::GetAttributes() const
+#pragma comment(lib,"ntdll.lib")
+
+static HMODULE rtl_library = LoadLibrary(L"ntdll.dll");
+
+static NTSTATUS(WINAPI* NtQueryDirectoryFile)(HANDLE FileHandle, HANDLE Event, PVOID ApcRoutine,
+    PVOID ApcContext, PIO_STATUS_BLOCK IoStatusBlock, PVOID FileInformation,
+    ULONG Length, FILE_INFORMATION_CLASS FileInformationClass, BOOLEAN ReturnSingleEntry,
+    PUNICODE_STRING FileName, BOOLEAN RestartScan) = (decltype(NtQueryDirectoryFile))GetProcAddress(rtl_library, "NtQueryDirectoryFile");
+
+FileFindEnhanced::FileFindEnhanced()
 {
-    ASSERT(m_hContext != NULL);
-    ASSERT_VALID(this);
-
-    if (m_pFoundInfo == nullptr)
-    {
-        return INVALID_FILE_ATTRIBUTES;
-    }
-
-    return static_cast<LPWIN32_FIND_DATA>(m_pFoundInfo)->dwFileAttributes;
+    m_directory_info = new BYTE[BUFFER_SIZE];
 }
 
-// Wrapper for file size retrieval
-// This function tries to return compressed file size whenever possible.
-// If the file is not compressed the uncompressed size is being returned.
-ULONGLONG CFileFindWDS::GetCompressedLength() const
+FileFindEnhanced::~FileFindEnhanced()
 {
-#if 0 // TODO: make this an option (the compressed size instead of "normal" size
-    ULARGE_INTEGER ret;
-    ret.LowPart = ::GetCompressedFileSize(GetFilePath(), &ret.HighPart);
+    delete [] m_directory_info;
+    if (m_handle != nullptr) NtClose(m_handle);
+}
 
-    // Check for error
-    if((::GetLastError() != ERROR_SUCCESS) && (ret.LowPart == INVALID_FILE_SIZE))
+BOOL FileFindEnhanced::GetLastWriteTime(FILETIME* pTimeStamp) const
+{
+    pTimeStamp->dwLowDateTime = m_current_info->LastWriteTime.LowPart;
+    pTimeStamp->dwHighDateTime = m_current_info->LastWriteTime.HighPart;
+    return true;
+}
+
+BOOL FileFindEnhanced::FindNextFile()
+{
+    BOOL success = FALSE;
+    if (m_firstrun || m_current_info->NextEntryOffset == 0)
     {
-        // In case of an error return size from CFileFind object
-        return GetLength();
+        // enumerate files in the directory
+        constexpr auto FileDirectoryInformation = 1;
+        IO_STATUS_BLOCK IoStatusBlock;
+        const NTSTATUS Status = NtQueryDirectoryFile(m_handle, nullptr, nullptr, nullptr, &IoStatusBlock,
+            m_directory_info, BUFFER_SIZE, static_cast<FILE_INFORMATION_CLASS>(FileDirectoryInformation),
+            FALSE, nullptr, (m_firstrun) ? TRUE : FALSE);
+
+        // disable for next run
+        m_current_info = reinterpret_cast<FILE_DIRECTORY_INFORMATION*>(m_directory_info);
+        m_firstrun     = false;
+        success        = (Status == 0);
     }
     else
     {
-        return ret.QuadPart;
+        m_current_info = (FILE_DIRECTORY_INFORMATION*)(&((BYTE*)(m_current_info))[m_current_info->NextEntryOffset]);
+        success = true;
     }
-#endif // 0
-    // Use the file size already found by the finder object
-    return GetLength();
+
+    if (success)
+    {
+        const LPWSTR tmp = m_name.GetBufferSetLength(m_current_info->FileNameLength / sizeof(WCHAR));
+        memcpy(tmp, m_current_info->FileName, m_current_info->FileNameLength);
+    }
+
+
+    return success;
+}
+
+BOOL FileFindEnhanced::FindFile(const CStringW & strName)
+{
+    // convert the path to a long path that is compatible with the other call
+    m_base = strName;
+    if (m_base.Find(L":\\", 1) == 1) m_base = L"\\??\\" + m_base;
+    else if (m_base.Find(L"\\\\") == 0) m_base = L"\\??\\UNC\\" + m_base.Mid(2);
+    UNICODE_STRING u_path = {};
+    u_path.Length = static_cast<USHORT>(m_base.GetLength() * sizeof(WCHAR));
+    u_path.MaximumLength = static_cast<USHORT>(m_base.GetLength() + 1) * sizeof(WCHAR);
+    u_path.Buffer = m_base.GetBuffer();
+
+    // update object attributes object
+    OBJECT_ATTRIBUTES attributes = {};
+    InitializeObjectAttributes(&attributes, nullptr, OBJ_CASE_INSENSITIVE, nullptr, nullptr);
+    attributes.ObjectName = &u_path;
+
+    // get an open file handle
+    IO_STATUS_BLOCK status_block = {};
+    if (const NTSTATUS status = NtOpenFile(&m_handle, FILE_LIST_DIRECTORY | SYNCHRONIZE,
+        &attributes, &status_block, FILE_SHARE_READ | FILE_SHARE_WRITE,
+        FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT | FILE_OPEN_FOR_BACKUP_INTENT); status != 0)
+    {
+        VTRACE(L"File Access Error (%08X): %s", status, m_base.GetBuffer());
+        return FALSE;
+    }
+
+    // do initial search
+    return FindNextFile();
+}
+
+BOOL FileFindEnhanced::IsDirectory() const
+{
+    return (m_current_info->FileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
+}
+
+BOOL FileFindEnhanced::IsDots() const
+{
+    return (m_name == L"." || m_name == L"..");
+}
+
+BOOL FileFindEnhanced::IsHidden() const
+{
+    return (m_current_info->FileAttributes & FILE_ATTRIBUTE_HIDDEN) != 0;
+}
+
+DWORD FileFindEnhanced::GetAttributes() const
+{
+    return m_current_info->FileAttributes;
+}
+
+CString FileFindEnhanced::GetFileName() const
+{
+    return m_name;
+}
+
+ULONGLONG FileFindEnhanced::GetCompressedLength() const
+{
+    return m_current_info->AllocationSize.QuadPart;
+}
+
+CString FileFindEnhanced::GetFilePath() const
+{
+    return m_base;
 }

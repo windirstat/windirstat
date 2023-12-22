@@ -21,9 +21,48 @@
 
 #pragma once
 
-class CFileFindWDS final : public CFileFind
+#include <stdafx.h>
+
+class FileFindEnhanced final
 {
+private:
+
+    typedef struct _FILE_DIRECTORY_INFORMATION {
+        ULONG         NextEntryOffset;
+        ULONG         FileIndex;
+        LARGE_INTEGER CreationTime;
+        LARGE_INTEGER LastAccessTime;
+        LARGE_INTEGER LastWriteTime;
+        LARGE_INTEGER ChangeTime;
+        LARGE_INTEGER EndOfFile;
+        LARGE_INTEGER AllocationSize;
+        ULONG         FileAttributes;
+        ULONG         FileNameLength;
+        WCHAR         FileName[1];
+    } FILE_DIRECTORY_INFORMATION, * PFILE_DIRECTORY_INFORMATION;
+
+    static const auto BUFFER_SIZE = 64 * 1024;
+    BYTE * m_directory_info = nullptr;
+    CString m_base;
+    CString m_name;
+    HANDLE m_handle = nullptr;
+    bool m_firstrun = true;
+    FILE_DIRECTORY_INFORMATION* m_current_info = nullptr;
+
 public:
+
+    FileFindEnhanced();
+    ~FileFindEnhanced();
+
+    BOOL GetLastWriteTime(FILETIME* pTimeStamp) const;
+
+    BOOL FindNextFile();
+    BOOL FindFile(const CStringW& strName);
+    BOOL IsDirectory() const;
+    BOOL IsDots() const;
+    BOOL IsHidden() const;
     DWORD GetAttributes() const;
+    CString GetFileName() const;
     ULONGLONG GetCompressedLength() const;
+    CString GetFilePath() const;
 };

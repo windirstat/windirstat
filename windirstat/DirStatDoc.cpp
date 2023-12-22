@@ -981,11 +981,9 @@ void CDirstatDoc::RecursiveUserDefinedCleanup(const USERDEFINEDCLEANUP* udc, con
 {
     // (Depth first.)
 
-    CFileFindWDS finder;
-    BOOL b = finder.FindFile(currentPath + L"\\*.*");
-    while (b)
+    FileFindEnhanced finder;
+    for (BOOL b = finder.FindFile(currentPath + L"\\*.*"); b; b = finder.FindNextFile())
     {
-        b = finder.FindNextFile();
         if (finder.IsDots() || !finder.IsDirectory())
         {
             continue;
