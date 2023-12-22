@@ -21,25 +21,24 @@
 //
 
 #include "stdafx.h"
-#include "windirstat.h"
+#include "WinDirStat.h"
 
 #include "graphview.h"
-#include "dirstatview.h"
-#include "typeview.h"
-#include "dirstatdoc.h"
-#include "osspecific.h"
-#include "globalhelpers.h"
-#include "item.h"
+#include "DirStatView.h"
+#include "TypeView.h"
+#include "DirStatDoc.h"
+#include "GlobalHelpers.h"
+#include "Item.h"
 
-#include "pagecleanups.h"
-#include "pagetreelist.h"
-#include "pagetreemap.h"
-#include "pagegeneral.h"
+#include "PageCleanups.h"
+#include "PageTreeList.h"
+#include "PageTreeMap.h"
+#include "PageGeneral.h"
 
-#include <common/mdexceptions.h>
-#include <common/commonhelpers.h>
+#include <common/MdExceptions.h>
+#include <common/CommonHelpers.h>
 
-#include "mainframe.h"
+#include "MainFrame.h"
 
 namespace
 {
@@ -687,8 +686,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 void CMainFrame::InitialShowWindow()
 {
-    WINDOWPLACEMENT wp;
-    wp.length = sizeof(wp);
+    WINDOWPLACEMENT wp = { .length = sizeof(wp) };
     GetWindowPlacement(&wp);
     CPersistence::GetMainWindowPlacement(wp);
     MakeSaneShowCmd(wp.showCmd);
@@ -742,8 +740,7 @@ void CMainFrame::OnClose()
 
 void CMainFrame::OnDestroy()
 {
-    WINDOWPLACEMENT wp;
-    wp.length = sizeof(wp);
+    WINDOWPLACEMENT wp = { .length = sizeof(wp) };
     GetWindowPlacement(&wp);
     CPersistence::SetMainWindowPlacement(wp);
 
@@ -1038,7 +1035,7 @@ void CMainFrame::SetLogicalFocus(LOGICAL_FOCUS lf)
     }
 }
 
-LOGICAL_FOCUS CMainFrame::GetLogicalFocus()
+LOGICAL_FOCUS CMainFrame::GetLogicalFocus() const
 {
     return m_logicalFocus;
 }

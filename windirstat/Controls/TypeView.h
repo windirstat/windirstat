@@ -1,4 +1,4 @@
-// typeview.h - Declaration of CExtensionListControl and CTypeView
+// TypeView.h - Declaration of CExtensionListControl and CTypeView
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
@@ -21,14 +21,14 @@
 
 #pragma once
 
-#include "dirstatdoc.h" // SExtensionRecord
+#include "DirStatDoc.h" // SExtensionRecord
 
 class CTypeView;
 
 //
 // CExtensionListControl.
 //
-class CExtensionListControl : public COwnerDrawnListControl
+class CExtensionListControl final : public COwnerDrawnListControl
 {
 protected:
     // Columns
@@ -43,7 +43,7 @@ protected:
     };
 
     // CListItem. The items of the CExtensionListControl.
-    class CListItem : public COwnerDrawnListItem
+    class CListItem final : public COwnerDrawnListItem
     {
     public:
         CListItem(CExtensionListControl* list, LPCWSTR extension, const SExtensionRecord& r);
@@ -100,7 +100,7 @@ protected:
 // CTypeView. The upper right view, which shows the extensions and their
 // cushion colors.
 //
-class CTypeView : public CView
+class CTypeView final : public CView
 {
 protected:
     CTypeView();
@@ -113,7 +113,7 @@ public:
 
     BOOL PreCreateWindow(CREATESTRUCT& cs) override;
 
-    bool IsShowTypes();
+    bool IsShowTypes() const;
     void ShowTypes(bool show);
 
     void SetHighlightExtension(LPCWSTR ext);
@@ -143,6 +143,6 @@ public:
 #ifndef _DEBUG  // Debugversion in typeview.cpp
 inline CDirstatDoc* CTypeView::GetDocument() const
 {
-    return reinterpret_cast<CDirstatDoc*>(m_pDocument);
+    return static_cast<CDirstatDoc*>(m_pDocument);
 }
 #endif

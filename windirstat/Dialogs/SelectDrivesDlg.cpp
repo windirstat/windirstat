@@ -20,11 +20,11 @@
 //
 
 #include "stdafx.h"
-#include "windirstat.h"
+#include "WinDirStat.h"
 #include <common/cotaskmem.h>
-#include <common/commonhelpers.h>
-#include "options.h"
-#include "globalhelpers.h"
+#include <common/CommonHelpers.h>
+#include "Options.h"
+#include "GlobalHelpers.h"
 #include "SelectDrivesDlg.h"
 
 namespace

@@ -20,8 +20,8 @@
 //
 
 #include "stdafx.h"
-#include "selectobject.h"
-#include "treemap.h"
+#include "SelectObject.h"
+#include "TreeMap.h"
 
 #define BGR(b,g,r)          ((COLORREF)(((BYTE)(b)|((WORD)((BYTE)(g))<<8))|(((DWORD)(BYTE)(r))<<16)))
 

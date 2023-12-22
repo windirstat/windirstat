@@ -20,11 +20,11 @@
 //
 
 #include "stdafx.h"
-#include "windirstat.h"
+#include "WinDirStat.h"
 #include <common/Constants.h>
-#include <common/mdexceptions.h>
-#include <common/commonhelpers.h>
-#include "aboutdlg.h"
+#include <common/MdExceptions.h>
+#include <common/CommonHelpers.h>
+#include "AboutDlg.h"
 
 namespace
 {

@@ -1,4 +1,4 @@
-// dirstatdoc.h - Declaration of the CDirstatDoc class
+// DirStatDoc.h - Declaration of the CDirstatDoc class
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
@@ -24,7 +24,7 @@
 
 #include "selectdrivesdlg.h"
 #include <common/Constants.h>
-#include "options.h"
+#include "Options.h"
 
 class CItem;
 class CWorkLimiter;
@@ -112,7 +112,7 @@ public:
     COLORREF GetZoomColor();
 
     bool OptionShowFreeSpace() const;
-    bool OptionShowUnknown();
+    bool OptionShowUnknown() const;
 
     const CExtensionData* GetExtensionData();
     ULONGLONG GetRootSize();

@@ -1,4 +1,4 @@
-// mainframe.h - Declaration of CMySplitterWnd and CMainFrame
+// MainFrame.h - Declaration of CMySplitterWnd and CMainFrame
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
@@ -50,7 +50,7 @@ enum LOGICAL_FOCUS
 //
 // COptionsPropertySheet. The options dialog.
 //
-class COptionsPropertySheet : public CPropertySheet
+class COptionsPropertySheet final : public CPropertySheet
 {
     DECLARE_DYNAMIC(COptionsPropertySheet)
 
@@ -73,7 +73,7 @@ protected:
 // CMySplitterWnd. A CSplitterWnd with 2 columns or rows, which
 // knows about the current split ratio and retains it even when resized.
 //
-class CMySplitterWnd : public CSplitterWnd
+class CMySplitterWnd final : public CSplitterWnd
 {
 public:
     CMySplitterWnd(LPCWSTR name);
@@ -98,7 +98,7 @@ public:
 //
 // CPacmanControl. Pacman on the status bar.
 //
-class CPacmanControl : public CStatic
+class CPacmanControl final : public CStatic
 {
 public:
     CPacmanControl();
@@ -122,7 +122,7 @@ protected:
 // On VK_TAB CDeadFocusWnd moves the focus to the
 // directory list then.
 //
-class CDeadFocusWnd : public CWnd
+class CDeadFocusWnd final : public CWnd
 {
 public:
     CDeadFocusWnd() = default;
@@ -138,7 +138,7 @@ protected:
 //
 // CMainFrame. The main application window.
 //
-class CMainFrame : public CFrameWnd
+class CMainFrame final : public CFrameWnd
 {
 protected:
     static UINT s_taskBarMessage;
@@ -172,7 +172,7 @@ public:
     void AppendUserDefinedCleanups(CMenu* menu);
 
     void SetLogicalFocus(LOGICAL_FOCUS lf);
-    LOGICAL_FOCUS GetLogicalFocus();
+    LOGICAL_FOCUS GetLogicalFocus() const;
     void MoveFocus(LOGICAL_FOCUS lf);
 
     void SetSelectionMessageText();

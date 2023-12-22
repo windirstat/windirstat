@@ -64,7 +64,7 @@ class CLayout
 
     using SControlInfo = SControlInfoT<double>;
 
-    class CSizeGripper : public CWnd
+    class CSizeGripper final : public CWnd
     {
     public:
         static const int _width;
@@ -80,7 +80,7 @@ class CLayout
         afx_msg LRESULT OnNcHitTest(CPoint point);
     };
 
-    class CPositioner
+    class CPositioner final
     {
     public:
         CPositioner(int nNumWindows = 10);
@@ -98,7 +98,7 @@ public:
 
     void OnInitDialog(bool centerWindow);
     void OnSize();
-    void OnGetMinMaxInfo(MINMAXINFO* mmi) const;
+    void OnGetMinMaxInfo(MINMAXINFO* mmi);
     void OnDestroy() const;
 
 protected:

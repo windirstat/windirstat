@@ -21,9 +21,9 @@
 //
 
 #include "stdafx.h"
-#include "windirstat.h"
-#include "options.h"
-#include "sortinglistcontrol.h"
+#include "WinDirStat.h"
+#include "Options.h"
+#include "SortingListControl.h"
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -208,7 +208,7 @@ void CSortingListControl::SortItems()
         GetHeaderCtrl()->GetItem(m_indicatedColumn, &hditem);
         text.ReleaseBuffer();
         text           = text.Mid(2);
-        hditem.pszText = (LPTSTR)static_cast<LPCWSTR>(text);
+        hditem.pszText = const_cast<LPWSTR>(static_cast<LPCWSTR>(text));
         GetHeaderCtrl()->SetItem(m_indicatedColumn, &hditem);
     }
 
@@ -219,7 +219,7 @@ void CSortingListControl::SortItems()
     GetHeaderCtrl()->GetItem(m_sorting.column1, &hditem);
     text.ReleaseBuffer();
     text           = (m_sorting.ascending1 ? L"< " : L"> ") + text;
-    hditem.pszText = (LPTSTR)static_cast<LPCWSTR>(text);
+    hditem.pszText = const_cast<LPWSTR>(static_cast<LPCWSTR>(text));
     GetHeaderCtrl()->SetItem(m_sorting.column1, &hditem);
     m_indicatedColumn = m_sorting.column1;
 }
@@ -233,14 +233,6 @@ bool CSortingListControl::HasImages()
 {
     return false;
 }
-
-#   if (_MFC_VER <=0x0800)
-BOOL CSortingListControl::GetColumnOrderArray(LPINT piArray, INT_PTR iCount)
-{
-    ASSERT(iCount <= INT_MAX);
-    return dynamic_cast<CListCtrl*>(this)->GetColumnOrderArray(piArray, (int)iCount);
-}
-#   endif
 
 int CALLBACK CSortingListControl::_CompareFunc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
 {

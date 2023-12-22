@@ -1,4 +1,4 @@
-// helpmap.h - Definition of contextual help ids
+// HelpMap.h - Definition of contextual help ids
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert

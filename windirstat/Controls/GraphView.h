@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "treemap.h"
+#include "TreeMap.h"
 
 class CDirstatDoc;
 class CItem;
@@ -30,7 +30,7 @@ class CItem;
 //
 // CGraphView. The treemap window.
 //
-class CGraphView : public CView, public CTreemap::Callback
+class CGraphView final : public CView, public CTreemap::Callback
 {
 protected:
     CGraphView();
@@ -98,6 +98,6 @@ public:
 #ifndef _DEBUG  // Debugversion in graphview.cpp
 inline CDirstatDoc* CGraphView::GetDocument() const
 {
-    return reinterpret_cast<CDirstatDoc*>(m_pDocument);
+    return static_cast<CDirstatDoc*>(m_pDocument);
 }
 #endif

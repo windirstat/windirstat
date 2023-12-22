@@ -1,4 +1,4 @@
-// aboutdlg.h - Declaration of StartAboutDialog(), CAboutThread and CAboutDlg
+// AboutDlg.h - Declaration of StartAboutDialog(), CAboutThread and CAboutDlg
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
@@ -22,13 +22,10 @@
 #pragma once
 
 #include "layout.h"
-#include <common/Constants.h>
-
 
 void StartAboutDialog();
 
-
-class CAboutThread : public CWinThread
+class CAboutThread final : public CWinThread
 {
     DECLARE_DYNCREATE(CAboutThread);
 
@@ -41,7 +38,7 @@ class CAboutDlg final : public CDialog
 {
     enum { IDD = IDD_ABOUTBOX };
 
-    class CMyTabControl : public CTabCtrl
+    class CMyTabControl final : public CTabCtrl
     {
     public:
         void Initialize();

@@ -20,7 +20,7 @@
 //
 
 #include "stdafx.h"
-#include "windirstat.h"
+#include "WinDirStat.h"
 #include "DeleteWarningDlg.h"
 
 IMPLEMENT_DYNAMIC(CDeleteWarningDlg, CDialog)

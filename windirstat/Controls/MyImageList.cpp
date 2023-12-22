@@ -20,10 +20,10 @@
 //
 
 #include "stdafx.h"
-#include "windirstat.h"
-#include "selectobject.h"
-#include "treemap.h"
-#include "myimagelist.h"
+#include "WinDirStat.h"
+#include "SelectObject.h"
+#include "TreeMap.h"
+#include "MyImageList.h"
 #include "cotaskmem.h"
 
 CMyImageList::CMyImageList()

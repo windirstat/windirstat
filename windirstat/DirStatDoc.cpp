@@ -20,16 +20,16 @@
 //
 
 #include "stdafx.h"
-#include "windirstat.h"
-#include "item.h"
-#include "mainframe.h"
-#include "globalhelpers.h"
+#include "WinDirStat.h"
+#include "Item.h"
+#include "MainFrame.h"
+#include "GlobalHelpers.h"
 #include "deletewarningdlg.h"
 #include "modalshellapi.h"
-#include <common/mdexceptions.h>
+#include <common/MdExceptions.h>
 #include <common/cotaskmem.h>
-#include <common/commonhelpers.h>
-#include "dirstatdoc.h"
+#include <common/CommonHelpers.h>
+#include "DirStatDoc.h"
 
 CDirstatDoc* _theDocument;
 
@@ -300,7 +300,7 @@ bool CDirstatDoc::OptionShowFreeSpace() const
     return m_showFreeSpace;
 }
 
-bool CDirstatDoc::OptionShowUnknown()
+bool CDirstatDoc::OptionShowUnknown() const
 {
     return m_showUnknown;
 }

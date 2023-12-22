@@ -1,4 +1,4 @@
-// pagecleanups.h - Declaration of CPageCleanups
+// PageCleanups.h - Declaration of CPageCleanups
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert

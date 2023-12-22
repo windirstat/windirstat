@@ -1,4 +1,4 @@
-// windirstat.h - Main header for the windirstat application
+// WinDirStat.h - Main header for the windirstat application
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
@@ -24,10 +24,11 @@
 
 #include <Windows.h>
 #include "resource.h"
-#include "myimagelist.h"
-#include "mountpoints.h"
-#include "helpmap.h"
-#include <common/tracer.h>
+#include "MyImageList.h"
+#include "MountPoints.h"
+#include "HelpMap.h"
+#include <common/Constants.h>
+#include <common/Tracer.h>
 
 using CExtensionColorMap = CMap<CStringW, LPCWSTR, COLORREF, COLORREF>; // ".bmp" -> color
 
@@ -61,7 +62,7 @@ public:
     int ExitInstance() override;
 
     LANGID GetBuiltInLanguage();
-    LANGID GetLangid();          // Language as selected in PageGeneral
+    LANGID GetLangid() const;          // Language as selected in PageGeneral
     LANGID GetEffectiveLangid(); // Language to be used for date/time and number formatting
 
     void ReReadMountPoints();

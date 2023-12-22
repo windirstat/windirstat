@@ -1,4 +1,4 @@
-// dirstatview.h - Declaration of CMyTreeListControl and CDirstatView
+// DirStatView.h - Declaration of CMyTreeListControl and CDirstatView
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
@@ -32,7 +32,7 @@ class CItem;
 // CMyTreeListControl. I had to derive from CTreeListControl because
 // CTreeListControl doesn't know about the column constants (COL_***).
 //
-class CMyTreeListControl : public CTreeListControl
+class CMyTreeListControl final : public CTreeListControl
 {
 public:
     CMyTreeListControl(CDirstatView* dirstatView);
@@ -53,7 +53,7 @@ protected:
 //
 // CDirstatView. The upper left view, which consists of the TreeList.
 //
-class CDirstatView : public CView
+class CDirstatView final : public CView
 {
 protected:
     CDirstatView(); // Created by MFC only
@@ -96,6 +96,6 @@ public:
 #ifndef _DEBUG  // Debug version in dirstatview.cpp
 inline CDirstatDoc* CDirstatView::GetDocument() const
 {
-    return reinterpret_cast<CDirstatDoc*>(m_pDocument);
+    return static_cast<CDirstatDoc*>(m_pDocument);
 }
 #endif

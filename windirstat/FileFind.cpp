@@ -21,7 +21,7 @@
 
 #include "StdAfx.h"
 #include "FileFind.h"
-#include "windirstat.h"
+#include "WinDirStat.h"
 
 // Function to access the file attributes from outside
 DWORD CFileFindWDS::GetAttributes() const

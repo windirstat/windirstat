@@ -1,4 +1,4 @@
-// xyslider.h - Declaration of CXySlider
+// XYSlider.h - Declaration of CXySlider
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
@@ -26,7 +26,7 @@
 //
 // CXySlider. A two-dimensional slider.
 //
-class CXySlider : public CStatic
+class CXySlider final : public CStatic
 {
     DECLARE_DYNAMIC(CXySlider)
 

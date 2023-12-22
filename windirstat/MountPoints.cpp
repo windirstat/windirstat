@@ -21,9 +21,9 @@
 
 #include "stdafx.h"
 #include "osspecific.h"
-#include "mountpoints.h"
-#include "globalhelpers.h"
-#include <common/tracer.h>
+#include "MountPoints.h"
+#include "GlobalHelpers.h"
+#include <common/Tracer.h>
 
 CReparsePoints::~CReparsePoints()
 {
@@ -62,8 +62,7 @@ void CReparsePoints::GetDriveVolumes()
     DWORD mask         = 0x00000001;
     for (int i = 0; i < wds::iNumDriveLetters; i++, mask <<= 1)
     {
-        WCHAR volume[_MAX_PATH];
-        volume[0] = 0;
+        WCHAR volume[_MAX_PATH] = L"";
 
         if ((drives & mask) != 0)
         {
@@ -245,7 +244,6 @@ bool CReparsePoints::IsVolumeMountPoint(CStringW volume, CStringW path) const
 {
     while (true)
     {
-        int i = 0;
         PointVolumeArray* pva;
         if (!m_volume.Lookup(volume, pva))
         {
@@ -254,7 +252,8 @@ bool CReparsePoints::IsVolumeMountPoint(CStringW volume, CStringW path) const
         }
 
         CStringW point;
-        for (i = 0; i < pva->GetSize(); i++)
+        int i = 0;
+        for (; i < pva->GetSize(); i++)
         {
             point = (*pva)[i].point;
             if (path.Left(point.GetLength()) == point)

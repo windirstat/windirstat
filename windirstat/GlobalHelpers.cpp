@@ -21,12 +21,12 @@
 //
 
 #include "stdafx.h"
-#include "windirstat.h"
-#include <common/mdexceptions.h>
+#include "WinDirStat.h"
+#include <common/MdExceptions.h>
 #include <common/cotaskmem.h>
-#include <common/commonhelpers.h>
-#include "globalhelpers.h"
-#include "options.h"
+#include <common/CommonHelpers.h>
+#include "GlobalHelpers.h"
+#include "Options.h"
 
 namespace
 {

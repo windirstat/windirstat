@@ -22,16 +22,16 @@
 //
 
 #include "stdafx.h"
-#include "windirstat.h"
-#include <common/mdexceptions.h>
-#include <common/commonhelpers.h>
-#include "mainframe.h"
+#include "WinDirStat.h"
+#include <common/MdExceptions.h>
+#include <common/CommonHelpers.h>
+#include "MainFrame.h"
 #include "selectdrivesdlg.h"
-#include "aboutdlg.h"
-#include "dirstatdoc.h"
+#include "AboutDlg.h"
+#include "DirStatDoc.h"
 #include "graphview.h"
 #include "osspecific.h"
-#include "globalhelpers.h"
+#include "GlobalHelpers.h"
 #include "WorkLimiter.h"
 #pragma warning(push)
 #pragma warning(disable : 4091)
@@ -51,7 +51,7 @@ CMainFrame* GetMainFrame()
 
 CDirstatApp* GetWDSApp()
 {
-    return reinterpret_cast<CDirstatApp*>(AfxGetApp());
+    return static_cast<CDirstatApp*>(AfxGetApp());
 }
 
 CStringW GetAuthorEmail()
@@ -511,8 +511,7 @@ BOOL CDirstatApp::InitInstance()
         if (!resourceDllPath.IsEmpty())
         {
             // Load language resource DLL
-            const HINSTANCE dll = ::LoadLibrary(resourceDllPath);
-            if (dll)
+            if (const HINSTANCE dll = ::LoadLibrary(resourceDllPath))
             {
                 // Set default module handle for loading of resources
                 AfxSetResourceHandle(dll);
@@ -587,7 +586,7 @@ int CDirstatApp::ExitInstance()
     return Inherited::ExitInstance();
 }
 
-LANGID CDirstatApp::GetLangid()
+LANGID CDirstatApp::GetLangid() const
 {
     return m_langid;
 }

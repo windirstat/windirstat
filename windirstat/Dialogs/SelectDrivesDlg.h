@@ -43,7 +43,7 @@ class CDrivesList;
 // CDriveItem. An item in the CDrivesList Control.
 // All methods are called by the gui thread.
 //
-class CDriveItem : public COwnerDrawnListItem
+class CDriveItem final : public COwnerDrawnListItem
 {
 public:
     CDriveItem(CDrivesList* list, LPCWSTR pszPath);
@@ -80,7 +80,7 @@ private:
 // CDriveInformationThread. Does the GetVolumeInformation() call, which
 // may hang for ca. 30 sec, it a network drive is not accessible.
 //
-class CDriveInformationThread : public CWinThread
+class CDriveInformationThread final : public CWinThread
 {
     // Set of all running CDriveInformationThreads.
     // Used by InvalidateDialogHandle().
@@ -118,7 +118,7 @@ private:
 //
 // CDrivesList.
 //
-class CDrivesList : public COwnerDrawnListControl
+class CDrivesList final : public COwnerDrawnListControl
 {
     DECLARE_DYNAMIC(CDrivesList)
 

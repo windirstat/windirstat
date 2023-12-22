@@ -20,9 +20,9 @@
 //
 
 #include "stdafx.h"
-#include "windirstat.h"
-#include <common/commonhelpers.h>
-#include "options.h"
+#include "WinDirStat.h"
+#include <common/CommonHelpers.h>
+#include "Options.h"
 #include "PageCleanups.h"
 
 IMPLEMENT_DYNAMIC(CPageCleanups, CPropertyPage)

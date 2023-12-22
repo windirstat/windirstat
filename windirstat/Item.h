@@ -21,11 +21,10 @@
 
 #pragma once
 
-#include "Treelistcontrol.h"
-#include "treemap.h"
-#include "dirstatdoc.h" // CExtensionData
+#include "TreeListControl.h"
+#include "TreeMap.h"
+#include "DirStatDoc.h" // CExtensionData
 #include "FileFind.h" // CFileFindWDS
-#include <common/Constants.h>
 
 class CWorkLimiter;
 
@@ -101,7 +100,7 @@ inline bool operator==(const FILETIME& t1, const FILETIME& t2)
 // Methods which recurse down to every child (expensive) are named "RecurseDoSomething".
 // Methods which recurse up to the parent (not so expensive) are named "UpwardDoSomething".
 //
-class CItem : public CTreeListItem, public CTreemap::Item
+class CItem final : public CTreeListItem, public CTreemap::Item
 {
     // We collect data of files in FILEINFOs before we create items for them,
     // because we need to know their count before we can decide whether or not

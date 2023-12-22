@@ -20,7 +20,7 @@
 //
 
 #include "stdafx.h"
-#include "windirstat.h"
+#include "WinDirStat.h"
 #include "ModalApiShuttle.h"
 
 IMPLEMENT_DYNAMIC(CModalApiShuttle, CDialog)

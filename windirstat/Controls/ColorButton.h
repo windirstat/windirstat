@@ -33,7 +33,7 @@
 // When the user chose a color, the parent is notified via WM_NOTIFY
 // and the notification code COLBN_CHANGED.
 //
-class CColorButton : public CButton
+class CColorButton final : public CButton
 {
 public:
     COLORREF GetColor();
@@ -41,7 +41,7 @@ public:
 
 private:
     // The color preview is an own little child window of the button.
-    class CPreview : public CWnd
+    class CPreview final : public CWnd
     {
     public:
         CPreview();

@@ -21,14 +21,14 @@
 //
 
 #include "stdafx.h"
-#include "windirstat.h"
-#include "dirstatdoc.h"
-#include "item.h"
-#include "mainframe.h"
-#include <common/commonhelpers.h>
-#include "dirstatview.h"
+#include "WinDirStat.h"
+#include "DirStatDoc.h"
+#include "Item.h"
+#include "MainFrame.h"
+#include <common/CommonHelpers.h>
+#include "DirStatView.h"
 #include "osspecific.h"
-#include "globalhelpers.h"
+#include "GlobalHelpers.h"
 
 namespace
 {
@@ -69,7 +69,7 @@ void CMyTreeListControl::OnContextMenu(CWnd* /*pWnd*/, CPoint pt)
     menu.LoadMenu(IDR_POPUPLIST);
     CMenu* sub = menu.GetSubMenu(0);
 
-    PrepareDefaultMenu(sub, reinterpret_cast<CItem*>(item));
+    PrepareDefaultMenu(sub, static_cast<CItem*>(item));
     GetMainFrame()->AppendUserDefinedCleanups(sub);
 
     // Show popup menu and act accordingly.
@@ -104,7 +104,7 @@ void CMyTreeListControl::OnContextMenu(CWnd* /*pWnd*/, CPoint pt)
 
 void CMyTreeListControl::OnItemDoubleClick(int i)
 {
-    auto item = reinterpret_cast<const CItem*>(GetItem(i));
+    auto item = static_cast<const CItem*>(GetItem(i));
     if (item->GetType() == IT_FILE)
     {
         GetDocument()->OpenItem(item);
@@ -179,7 +179,7 @@ CStringW CDirstatView::GenerateReport()
             i++
         )
         {
-            const CItem* item = reinterpret_cast<CItem*>(m_treeListControl.GetItem(i));
+            const CItem* item = static_cast<CItem*>(m_treeListControl.GetItem(i));
 
             if (item->GetType() == IT_MYCOMPUTER)
             {
@@ -226,7 +226,7 @@ void CDirstatView::OnDraw(CDC* pDC)
 CDirstatDoc* CDirstatView::GetDocument() const // Non debug version is inline
 {
     ASSERT(m_pDocument->IsKindOf(RUNTIME_CLASS(CDirstatDoc)));
-    return reinterpret_cast<CDirstatDoc*>(m_pDocument);
+    return static_cast<CDirstatDoc*>(m_pDocument);
 }
 #endif
 
@@ -323,7 +323,7 @@ void CDirstatView::OnLvnItemchanged(NMHDR* pNMHDR, LRESULT* pResult)
         {
             // This is not true (don't know why): ASSERT(m_treeListControl.GetItemState(pNMLV->iItem, LVIS_SELECTED) == pNMLV->uNewState);
             const bool selected = (m_treeListControl.GetItemState(pNMLV->iItem, LVIS_SELECTED) & LVIS_SELECTED) != 0;
-            const CItem* item   = reinterpret_cast<CItem*>(m_treeListControl.GetItem(pNMLV->iItem));
+            const CItem* item   = static_cast<CItem*>(m_treeListControl.GetItem(pNMLV->iItem));
             ASSERT(item != NULL);
             if (selected)
             {

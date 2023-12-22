@@ -20,8 +20,8 @@
 //
 
 #include "stdafx.h"
-#include "selectobject.h"
-#include "xyslider.h"
+#include "SelectObject.h"
+#include "XYSlider.h"
 
 IMPLEMENT_DYNAMIC(CXySlider, CStatic)
 

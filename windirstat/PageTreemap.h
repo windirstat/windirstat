@@ -1,4 +1,4 @@
-// pagetreemap.h - Declaration of CDemoControl and CPageTreemap
+// PageTreeMap.h - Declaration of CDemoControl and CPageTreemap
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
@@ -22,8 +22,8 @@
 #pragma once
 
 #include "colorbutton.h"
-#include "treemap.h"
-#include "xyslider.h"
+#include "TreeMap.h"
+#include "XYSlider.h"
 #include "afxwin.h"
 
 //

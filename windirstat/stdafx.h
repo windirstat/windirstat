@@ -36,7 +36,6 @@
 #include <afxtempl.h>       // MFC Container classes
 #include <afxmt.h>          // MFC Multi-threading
 
-#include <io.h>             // _access()
 #include <cmath>            // floor(), fmod(), sqrt() etc.
 #include <cfloat>           // DBL_MAX
 #include <psapi.h>          // PROCESS_MEMORY_INFO

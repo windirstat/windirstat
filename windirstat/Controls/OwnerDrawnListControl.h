@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "sortinglistcontrol.h"
+#include "SortingListControl.h"
 
 class COwnerDrawnListItem;
 class COwnerDrawnListControl;
@@ -85,36 +85,36 @@ public:
     void ShowFullRowSelection(bool show);
     bool IsFullRowSelection() const;
 
-    COLORREF GetWindowColor();
-    COLORREF GetStripeColor();
+    COLORREF GetWindowColor() const;
+    COLORREF GetStripeColor() const;
     COLORREF GetNonFocusHighlightColor();
     COLORREF GetNonFocusHighlightTextColor();
     COLORREF GetHighlightColor();
     COLORREF GetHighlightTextColor();
 
-    bool IsItemStripeColor(int i);
-    bool IsItemStripeColor(const COwnerDrawnListItem* item);
-    COLORREF GetItemBackgroundColor(int i);
-    COLORREF GetItemBackgroundColor(const COwnerDrawnListItem* item);
+    bool IsItemStripeColor(int i) const;
+    bool IsItemStripeColor(const COwnerDrawnListItem* item) const;
+    COLORREF GetItemBackgroundColor(int i) const;
+    COLORREF GetItemBackgroundColor(const COwnerDrawnListItem* item) const;
     COLORREF GetItemSelectionBackgroundColor(int i);
     COLORREF GetItemSelectionBackgroundColor(const COwnerDrawnListItem* item);
     COLORREF GetItemSelectionTextColor(int i);
 
-    COwnerDrawnListItem* GetItem(int i);
-    int FindListItem(const COwnerDrawnListItem* item);
+    COwnerDrawnListItem* GetItem(int i) const;
+    int FindListItem(const COwnerDrawnListItem* item) const;
     int GetTextXMargin();
     int GetGeneralLeftIndent();
     void AdjustColumnWidth(int col);
-    CRect GetWholeSubitemRect(int item, int subitem);
+    CRect GetWholeSubitemRect(int item, int subitem) const;
 
-    bool HasFocus();
-    bool IsShowSelectionAlways();
+    bool HasFocus() const;
+    bool IsShowSelectionAlways() const;
 
 protected:
     void InitializeColors();
     void DrawItem(LPDRAWITEMSTRUCT pdis) override;
     int GetSubItemWidth(COwnerDrawnListItem* item, int subitem);
-    bool IsColumnRightAligned(int col);
+    bool IsColumnRightAligned(int col) const;
 
     int m_rowHeight;             // Height of an item
     bool m_showGrid;             // Whether to draw a grid

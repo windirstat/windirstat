@@ -1,4 +1,4 @@
-// treemap.h - Declaration of CColorSpace, CTreemap and CTreemapPreview
+// TreeMap.h - Declaration of CColorSpace, CTreemap and CTreemapPreview
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
@@ -312,7 +312,7 @@ protected:
 // CTreemapPreview. A child window, which demonstrates the options
 // with an own little demo tree.
 //
-class CTreemapPreview : public CStatic
+class CTreemapPreview final : public CStatic
 {
     //
     // CItem. Element of the demo tree.

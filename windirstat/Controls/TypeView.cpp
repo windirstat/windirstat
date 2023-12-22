@@ -20,13 +20,13 @@
 //
 
 #include "stdafx.h"
-#include "windirstat.h"
-#include "item.h"
-#include "mainframe.h"
-#include "dirstatdoc.h"
-#include <common/commonhelpers.h>
-#include "typeview.h"
-#include "globalhelpers.h"
+#include "WinDirStat.h"
+#include "Item.h"
+#include "MainFrame.h"
+#include "DirStatDoc.h"
+#include <common/CommonHelpers.h>
+#include "TypeView.h"
+#include "GlobalHelpers.h"
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -163,7 +163,7 @@ int CExtensionListControl::CListItem::Compare(const CSortingListItem* baseOther,
 {
     int r = 0;
 
-    auto other = reinterpret_cast<const CListItem*>(baseOther);
+    auto other = static_cast<const CListItem*>(baseOther);
 
     switch (subitem)
     {
@@ -409,7 +409,7 @@ void CTypeView::SysColorChanged()
     m_extensionListControl.SysColorChanged();
 }
 
-bool CTypeView::IsShowTypes()
+bool CTypeView::IsShowTypes() const
 {
     return m_showTypes;
 }
@@ -478,8 +478,7 @@ void CTypeView::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject*)
             m_extensionListControl.DeleteAllItems();
         }
 
-    // fall through
-
+        [[fallthrough]];
     case HINT_SELECTIONCHANGED:
     case HINT_SHOWNEWSELECTION:
         if (IsShowTypes())
@@ -545,7 +544,7 @@ void CTypeView::Dump(CDumpContext& dc) const
 CDirstatDoc* CTypeView::GetDocument() const // Nicht-Debugversion ist inline
 {
     ASSERT(m_pDocument->IsKindOf(RUNTIME_CLASS(CDirstatDoc)));
-    return reinterpret_cast<CDirstatDoc*>(m_pDocument);
+    return static_cast<CDirstatDoc*>(m_pDocument);
 }
 #endif //_DEBUG
 

@@ -1,4 +1,4 @@
-// pagetreelist.h - Declaration of CPageTreelist
+// PageTreeList.h - Declaration of CPageTreelist
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert

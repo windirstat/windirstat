@@ -20,7 +20,7 @@
 //
 
 #include "stdafx.h"
-#include "selectobject.h"
+#include "SelectObject.h"
 #include "pacman.h"
 
 namespace

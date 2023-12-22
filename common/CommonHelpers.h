@@ -1,4 +1,4 @@
-// commonhelpers.h - Functions used by windirstat.exe and setup.exe
+// CommonHelpers.h - Functions used by windirstat.exe and setup.exe
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert

@@ -20,12 +20,12 @@
 //
 
 #include "stdafx.h"
-#include "windirstat.h"
-#include "mainframe.h"
-#include "dirstatdoc.h"
-#include "dirstatview.h"
-#include "item.h"
-#include "selectobject.h"
+#include "WinDirStat.h"
+#include "MainFrame.h"
+#include "DirStatDoc.h"
+#include "DirStatView.h"
+#include "Item.h"
+#include "SelectObject.h"
 
 #include "graphview.h"
 
@@ -362,7 +362,7 @@ CDirstatDoc* CGraphView::GetDocument() const
 // Nicht-Debugversion ist inline
 {
     ASSERT(m_pDocument->IsKindOf(RUNTIME_CLASS(CDirstatDoc)));
-    return reinterpret_cast<CDirstatDoc*>(m_pDocument);
+    return static_cast<CDirstatDoc*>(m_pDocument);
 }
 #endif //_DEBUG
 
@@ -383,7 +383,7 @@ void CGraphView::OnLButtonDown(UINT nFlags, CPoint point)
     const CItem* root = GetDocument()->GetRootItem();
     if (root != nullptr && root->IsDone() && IsDrawn())
     {
-        auto item = reinterpret_cast<const CItem*>(m_treemap.FindItemByPoint(GetDocument()->GetZoomItem(), point));
+        auto item = static_cast<const CItem*>(m_treemap.FindItemByPoint(GetDocument()->GetZoomItem(), point));
         if (item == nullptr)
         {
             return;
@@ -549,7 +549,7 @@ void CGraphView::OnMouseMove(UINT /*nFlags*/, CPoint point)
     const CItem* root = GetDocument()->GetRootItem();
     if (root != nullptr && root->IsDone() && IsDrawn())
     {
-        auto item = reinterpret_cast<const CItem*>(m_treemap.FindItemByPoint(GetDocument()->GetZoomItem(), point));
+        auto item = static_cast<const CItem*>(m_treemap.FindItemByPoint(GetDocument()->GetZoomItem(), point));
         if (item != nullptr)
         {
             GetMainFrame()->SetMessageText(item->GetPath());

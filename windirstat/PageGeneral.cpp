@@ -20,11 +20,11 @@
 //
 
 #include "stdafx.h"
-#include "windirstat.h"
-#include "mainframe.h" // COptionsPropertySheet
+#include "WinDirStat.h"
+#include "MainFrame.h" // COptionsPropertySheet
 #include "PageGeneral.h"
-#include "options.h"
-#include "globalhelpers.h"
+#include "Options.h"
+#include "GlobalHelpers.h"
 
 IMPLEMENT_DYNAMIC(CPageGeneral, CPropertyPage)
 

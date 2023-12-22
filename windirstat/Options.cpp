@@ -20,10 +20,10 @@
 //
 
 #include "stdafx.h"
-#include "windirstat.h"
-#include "dirstatdoc.h"
-#include <common/commonhelpers.h>
-#include "options.h"
+#include "WinDirStat.h"
+#include "DirStatDoc.h"
+#include <common/CommonHelpers.h>
+#include "Options.h"
 
 namespace
 {

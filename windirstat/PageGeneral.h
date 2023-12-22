@@ -1,4 +1,4 @@
-// pagegeneral.h - Declaration of CPageGeneral
+// PageGeneral.h - Declaration of CPageGeneral
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert

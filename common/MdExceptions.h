@@ -1,4 +1,4 @@
-// mdexceptions.h
+// MdExceptions.h
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
@@ -31,7 +31,7 @@
 #include <stdarg.h>
 #endif
 
-class CMdStringException : public CException
+class CMdStringException final : public CException
 {
 public:
     CMdStringException(LPCWSTR pszText)
@@ -75,7 +75,7 @@ inline CStringW MdGetExceptionMessage(const CException* pe)
 inline CStringW MdGetWinErrorText(HRESULT hr)
 {
     CStringW sRet;
-    LPVOID lpMsgBuf;
+    LPVOID lpMsgBuf = nullptr;
     const DWORD dw = FormatMessage(
         FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
         nullptr,

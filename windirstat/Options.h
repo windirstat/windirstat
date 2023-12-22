@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "treemap.h"
+#include "TreeMap.h"
 #include <common/Constants.h>
 #include <atlbase.h> // CRegKey
 #include <memory>

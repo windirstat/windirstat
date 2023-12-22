@@ -20,9 +20,9 @@
 //
 
 #include "stdafx.h"
-#include "windirstat.h"
-#include "options.h"
-#include "selectobject.h"
+#include "WinDirStat.h"
+#include "Options.h"
+#include "SelectObject.h"
 #include "layout.h"
 
 CLayout::CLayout(CWnd* dialog, LPCWSTR name)
@@ -113,7 +113,7 @@ void CLayout::OnSize()
     }
 }
 
-void CLayout::OnGetMinMaxInfo(MINMAXINFO* mmi) const
+void CLayout::OnGetMinMaxInfo(MINMAXINFO* mmi)
 {
     mmi->ptMinTrackSize.x = m_originalDialogSize.cx;
     mmi->ptMinTrackSize.y = m_originalDialogSize.cy;

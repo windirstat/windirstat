@@ -20,8 +20,8 @@
 //
 
 #include "stdafx.h"
-#include "windirstat.h"
-#include "options.h"
+#include "WinDirStat.h"
+#include "Options.h"
 #include "PageTreelist.h"
 
 IMPLEMENT_DYNAMIC(CPageTreelist, CPropertyPage)
@@ -31,6 +31,7 @@ CPageTreelist::CPageTreelist()
       , m_pacmanAnimation(FALSE)
       , m_showTimeSpent(FALSE)
       , m_treelistColorCount(TREELISTCOLORCOUNT)
+      , m_treelistColor{0}
 {
 }
 

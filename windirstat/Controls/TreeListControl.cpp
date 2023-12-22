@@ -20,10 +20,10 @@
 //
 
 #include "stdafx.h"
-#include "windirstat.h"
-#include "dirstatdoc.h"
-#include "dirstatview.h"
-#include "selectobject.h"
+#include "WinDirStat.h"
+#include "DirStatDoc.h"
+#include "DirStatView.h"
+#include "SelectObject.h"
 #include "TreeListControl.h"
 
 namespace
@@ -198,14 +198,13 @@ int CTreeListItem::Compare(const CSortingListItem* baseOther, int subitem) const
     {
         return Compare(other->m_parent, subitem);
     }
-    else if (GetIndent() > other->GetIndent())
+
+    if (GetIndent() > other->GetIndent())
     {
         return m_parent->Compare(other, subitem);
     }
-    else
-    {
-        return m_parent->Compare(other->m_parent, subitem);
-    }
+    
+     return m_parent->Compare(other->m_parent, subitem);
 }
 
 int CTreeListItem::FindSortedChild(const CTreeListItem* child)

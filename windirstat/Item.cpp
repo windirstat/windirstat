@@ -20,14 +20,14 @@
 //
 
 #include "stdafx.h"
-#include "windirstat.h"
-#include "dirstatdoc.h" // GetItemColor()
-#include "mainframe.h"
-#include <common/commonhelpers.h>
-#include "selectobject.h"
+#include "WinDirStat.h"
+#include "DirStatDoc.h" // GetItemColor()
+#include "MainFrame.h"
+#include <common/CommonHelpers.h>
+#include "SelectObject.h"
 #include "WorkLimiter.h"
-#include "item.h"
-#include "globalhelpers.h"
+#include "Item.h"
+#include "GlobalHelpers.h"
 
 namespace
 {
@@ -251,15 +251,14 @@ COLORREF CItem::GetItemTextColor() const
     {
         return GetWDSApp()->AltColor();
     }
-    else if (attr & FILE_ATTRIBUTE_ENCRYPTED)
+
+    if (attr & FILE_ATTRIBUTE_ENCRYPTED)
     {
         return GetWDSApp()->AltEncryptionColor();
     }
-    else
-    {
-        // The rest is not colored
-        return CTreeListItem::GetItemTextColor();
-    }
+
+    // The rest is not colored
+    return CTreeListItem::GetItemTextColor();
 }
 
 int CItem::CompareSibling(const CTreeListItem* tlib, int subitem) const
@@ -328,14 +327,12 @@ int CItem::CompareSibling(const CTreeListItem* tlib, int subitem) const
             {
                 return -1;
             }
-            else if (m_lastChange == other->m_lastChange)
+            if (m_lastChange == other->m_lastChange)
             {
                 return 0;
             }
-            else
-            {
-                return 1;
-            }
+            
+            return 1;
         }
         break;
     case COL_ATTRIBUTES:
@@ -555,7 +552,7 @@ CItem* CItem::GetChild(int i) const
 
 CItem* CItem::GetParent() const
 {
-    return reinterpret_cast<CItem*>(CTreeListItem::GetParent());
+    return static_cast<CItem*>(CTreeListItem::GetParent());
 }
 
 int CItem::FindChildIndex(const CItem* child) const

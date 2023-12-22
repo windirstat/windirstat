@@ -20,10 +20,10 @@
 //
 
 #include "stdafx.h"
-#include "windirstat.h"
-#include <common/commonhelpers.h>
-#include "options.h"
-#include "PageTreemap.h"
+#include "WinDirStat.h"
+#include <common/CommonHelpers.h>
+#include "Options.h"
+#include "PageTreeMap.h"
 
 namespace
 {

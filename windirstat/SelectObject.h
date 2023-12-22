@@ -1,4 +1,4 @@
-// selectobject.h - Declaration and implementation of Device Context helper classes.
+// SelectObject.h - Declaration and implementation of Device Context helper classes.
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert

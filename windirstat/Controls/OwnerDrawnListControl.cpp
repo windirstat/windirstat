@@ -20,9 +20,9 @@
 //
 
 #include "stdafx.h"
-#include "windirstat.h"
-#include "treemap.h"    // CColorSpace
-#include "selectobject.h"
+#include "WinDirStat.h"
+#include "TreeMap.h"    // CColorSpace
+#include "SelectObject.h"
 #include "ownerdrawnlistcontrol.h"
 
 namespace
@@ -274,13 +274,13 @@ bool COwnerDrawnListControl::IsFullRowSelection() const
 }
 
 // Normal window background color
-COLORREF COwnerDrawnListControl::GetWindowColor()
+COLORREF COwnerDrawnListControl::GetWindowColor() const
 {
     return m_windowColor;
 }
 
 // Shaded window background color (for stripes)
-COLORREF COwnerDrawnListControl::GetStripeColor()
+COLORREF COwnerDrawnListControl::GetStripeColor() const
 {
     return m_stripeColor;
 }
@@ -317,22 +317,22 @@ COLORREF COwnerDrawnListControl::GetHighlightTextColor()
     return GetNonFocusHighlightTextColor();
 }
 
-bool COwnerDrawnListControl::IsItemStripeColor(int i)
+bool COwnerDrawnListControl::IsItemStripeColor(int i) const
 {
     return m_showStripes && i % 2 != 0;
 }
 
-bool COwnerDrawnListControl::IsItemStripeColor(const COwnerDrawnListItem* item)
+bool COwnerDrawnListControl::IsItemStripeColor(const COwnerDrawnListItem* item) const
 {
     return IsItemStripeColor(FindListItem(item));
 }
 
-COLORREF COwnerDrawnListControl::GetItemBackgroundColor(int i)
+COLORREF COwnerDrawnListControl::GetItemBackgroundColor(int i) const
 {
     return IsItemStripeColor(i) ? GetStripeColor() : GetWindowColor();
 }
 
-COLORREF COwnerDrawnListControl::GetItemBackgroundColor(const COwnerDrawnListItem* item)
+COLORREF COwnerDrawnListControl::GetItemBackgroundColor(const COwnerDrawnListItem* item) const
 {
     return GetItemBackgroundColor(FindListItem(item));
 }
@@ -374,13 +374,13 @@ int COwnerDrawnListControl::GetGeneralLeftIndent()
     return GENERAL_INDENT;
 }
 
-COwnerDrawnListItem* COwnerDrawnListControl::GetItem(int i)
+COwnerDrawnListItem* COwnerDrawnListControl::GetItem(int i) const
 {
     auto item = (COwnerDrawnListItem*)GetItemData(i);
     return item;
 }
 
-int COwnerDrawnListControl::FindListItem(const COwnerDrawnListItem* item)
+int COwnerDrawnListControl::FindListItem(const COwnerDrawnListItem* item) const
 {
     LVFINDINFO fi;
     ZeroMemory(&fi, sizeof(fi));
@@ -504,7 +504,7 @@ void COwnerDrawnListControl::DrawItem(LPDRAWITEMSTRUCT pdis)
     }
 }
 
-bool COwnerDrawnListControl::IsColumnRightAligned(int col)
+bool COwnerDrawnListControl::IsColumnRightAligned(int col) const
 {
     HDITEM hditem;
     ZeroMemory(&hditem, sizeof(hditem));
@@ -515,7 +515,7 @@ bool COwnerDrawnListControl::IsColumnRightAligned(int col)
     return (hditem.fmt & HDF_RIGHT) != 0;
 }
 
-CRect COwnerDrawnListControl::GetWholeSubitemRect(int item, int subitem)
+CRect COwnerDrawnListControl::GetWholeSubitemRect(int item, int subitem) const
 {
     CRect rc;
     if (subitem == 0)
@@ -524,7 +524,7 @@ CRect COwnerDrawnListControl::GetWholeSubitemRect(int item, int subitem)
         // If we did GetSubItemRect(item 0, LVIR_LABEL, rc)
         // and we have an image list, then we would get the rectangle
         // excluding the image.
-        HDITEM hditem;
+        HDITEM hditem = {};
         hditem.mask = HDI_WIDTH;
         GetHeaderCtrl()->GetItem(0, &hditem);
 
@@ -544,12 +544,12 @@ CRect COwnerDrawnListControl::GetWholeSubitemRect(int item, int subitem)
     return rc;
 }
 
-bool COwnerDrawnListControl::HasFocus()
+bool COwnerDrawnListControl::HasFocus() const
 {
     return ::GetFocus() == m_hWnd;
 }
 
-bool COwnerDrawnListControl::IsShowSelectionAlways()
+bool COwnerDrawnListControl::IsShowSelectionAlways() const
 {
     return (GetStyle() & LVS_SHOWSELALWAYS) != 0;
 }

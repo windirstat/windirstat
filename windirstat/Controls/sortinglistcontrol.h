@@ -1,4 +1,4 @@
-// sortinglistcontrol.h - Declaration of CSortingListItem and CSortingListControl
+// SortingListControl.h - Declaration of CSortingListItem and CSortingListControl
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
@@ -91,10 +91,6 @@ public:
     virtual void SortItems();
     virtual bool GetAscendingDefault(int column);
     virtual bool HasImages();
-
-#   if (_MFC_VER <=0x0800)
-    BOOL GetColumnOrderArray(LPINT piArray, INT_PTR iCount = -1);
-#   endif
 
 private:
     void SavePersistentAttributes() const;

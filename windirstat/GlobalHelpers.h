@@ -1,4 +1,4 @@
-// globalhelpers.h - Declaration of global helper functions
+// GlobalHelpers.h - Declaration of global helper functions
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
@@ -21,6 +21,7 @@
 //
 
 #pragma once
+
 #include <common/Constants.h>
 
 CStringW GetLocaleString(LCTYPE lctype, LANGID langid);
