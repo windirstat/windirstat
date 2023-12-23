@@ -1,0 +1,8 @@
+*.aps
+*.vcxproj.user
+*.lastcodeanalysissucceeded
+common/hg.id
+intermediate/
+build/
+.git/
+.vs/
