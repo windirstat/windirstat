@@ -330,7 +330,8 @@ void CTreemap::DrawTreemap(CDC* pdc, CRect rc, Item* root, const Options* option
 
         // Recursively draw the tree graph
         double surface[4] = {0, 0, 0, 0};
-        RecurseDrawGraph(bitmap_bits, root, rc, true, surface, m_options.height, 0);
+        CRect baserc({ 0,0 }, rc.Size());
+        RecurseDrawGraph(bitmap_bits, root, baserc, true, surface, m_options.height, 0);
 
         // Fill the bitmap with the array
         VERIFY(bmp.CreateBitmap(rc.Width(), rc.Height(), 1, 32, &bitmap_bits[0]));
