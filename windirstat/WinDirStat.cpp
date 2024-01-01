@@ -740,13 +740,6 @@ BOOL CDirstatApp::OnIdle(LONG lCount)
         more = true;
     }
 
-    // The status bar (RAM usage) is updated only when count == 0.
-    // That's why we call an extra OnIdle(0) here.
-    if (CWinThread::OnIdle(0))
-    {
-        more = true;
-    }
-
     return more;
 }
 
