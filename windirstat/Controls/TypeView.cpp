@@ -520,7 +520,7 @@ void CTypeView::SetSelection()
 {
     // FIXME: Multi-select
     const CItem* item = GetDocument()->GetSelection(0);
-    if (item == nullptr || item->GetType() != IT_FILE)
+    if (item == nullptr || !item->IsType(IT_FILE))
     {
         m_extensionListControl.EnsureVisible(0, false);
     }

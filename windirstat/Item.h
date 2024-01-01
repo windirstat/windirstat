@@ -43,32 +43,17 @@ enum
 };
 
 // Item types
-enum ITEMTYPE
+enum ITEMTYPE : unsigned short
 {
-    IT_MYCOMPUTER,
-    // Pseudo Container "My Computer"
-    IT_DRIVE,
-    // C:\, D:\ etc.
-    IT_DIRECTORY,
-    // Folder
-    IT_FILE,
-    // Regular file
-    IT_FILESFOLDER,
-    // Pseudo Folder "<Files>"
-    IT_FREESPACE,
-    // Pseudo File "<Free Space>"
-    IT_UNKNOWN,
-    // Pseudo File "<Unknown>"
-
-    ITF_FLAGS    = 0xF000,
-    ITF_ROOTITEM = 0x8000 // This is an additional flag, not a type.
+    IT_MYCOMPUTER = 1 << 0, // Pseudo Container "My Computer"
+    IT_DRIVE      = 1 << 1, // C:\, D:\ etc.
+    IT_DIRECTORY  = 1 << 2, // Folder
+    IT_FILE       = 1 << 3, // Regular file
+    IT_FREESPACE  = 1 << 4, // Pseudo File "<Free Space>"
+    IT_UNKNOWN    = 1 << 5, // Pseudo File "<Unknown>"
+    ITF_ROOTITEM  = 1 << 8, // Indicates root item
+    ITF_FLAGS     = 0xFF00, // All potential flag items
 };
-
-// Whether an item type is a leaf type
-inline bool IsLeaf(ITEMTYPE t)
-{
-    return t == IT_FILE || t == IT_FREESPACE || t == IT_UNKNOWN;
-}
 
 // Compare FILETIMEs
 inline bool operator<(const FILETIME& t1, const FILETIME& t2)
@@ -131,7 +116,7 @@ public:
     // CTreemap::Item interface
     bool TmiIsLeaf() const override
     {
-        return IsLeaf(GetType());
+        return IsType(IT_FILE | IT_FREESPACE | IT_UNKNOWN);
     }
 
     CRect TmiGetRectangle() const override;
@@ -192,6 +177,7 @@ public:
     int GetSortAttributes() const;
     double GetFraction() const;
     ITEMTYPE GetType() const;
+    bool IsType(unsigned short type) const;
     bool IsRootItem() const;
     CStringW GetPath() const;
     bool HasUncPath() const;
@@ -242,7 +228,6 @@ private:
     void DrivePacman();
 
     ITEMTYPE m_type; // Indicates our type. See ITEMTYPE.
-    ITEMTYPE m_etype;
     CStringW m_name;              // Display name
     mutable CStringW m_extension; // Cache of extension (it's used often)
     mutable bool m_extension_cached;

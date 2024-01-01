@@ -105,7 +105,7 @@ void CMyTreeListControl::OnContextMenu(CWnd* /*pWnd*/, CPoint pt)
 void CMyTreeListControl::OnItemDoubleClick(int i)
 {
     auto item = static_cast<const CItem*>(GetItem(i));
-    if (item->GetType() == IT_FILE)
+    if (item->IsType(IT_FILE))
     {
         GetDocument()->OpenItem(item);
     }
@@ -117,7 +117,7 @@ void CMyTreeListControl::OnItemDoubleClick(int i)
 
 void CMyTreeListControl::PrepareDefaultMenu(CMenu* menu, const CItem* item)
 {
-    if (IsLeaf(item->GetType()))
+    if (item->TmiIsLeaf())
     {
         menu->DeleteMenu(0, MF_BYPOSITION); // Remove "Expand/Collapse" item
         menu->DeleteMenu(0, MF_BYPOSITION); // Remove separator
@@ -181,7 +181,7 @@ CStringW CDirstatView::GenerateReport()
         {
             const CItem* item = static_cast<CItem*>(m_treeListControl.GetItem(i));
 
-            if (item->GetType() == IT_MYCOMPUTER)
+            if (item->IsType(IT_MYCOMPUTER))
             {
                 continue;
             }

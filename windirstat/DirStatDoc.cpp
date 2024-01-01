@@ -227,7 +227,7 @@ BOOL CDirstatDoc::OnOpenDocument(LPCWSTR lpszPathName)
     {
         const ITEMTYPE type = IsDrive(rootFolders[0]) ? IT_DRIVE : IT_DIRECTORY;
         m_rootItem          = new CItem(static_cast<ITEMTYPE>(type | ITF_ROOTITEM), rootFolders[0], false);
-        if (IT_DRIVE == m_rootItem->GetType())
+        if (m_rootItem->IsType(IT_DRIVE))
         {
             driveItems.Add(m_rootItem);
         }
@@ -562,12 +562,6 @@ bool CDirstatDoc::UserDefinedCleanupWorksForItem(const USERDEFINEDCLEANUP* udc, 
             }
             break;
 
-        case IT_FILESFOLDER:
-            {
-                works = udc->worksForFilesFolder;
-            }
-            break;
-
         case IT_FILE:
             {
                 works = udc->worksForFiles;
@@ -653,7 +647,7 @@ void CDirstatDoc::OpenItem(const CItem* item)
 
 void CDirstatDoc::RecurseRefreshMountPointItems(CItem* item)
 {
-    if (IT_DIRECTORY == item->GetType() && item != GetRootItem() && GetWDSApp()->IsVolumeMountPoint(item->GetPath()))
+    if (item->IsType(IT_DIRECTORY) && item != GetRootItem() && GetWDSApp()->IsVolumeMountPoint(item->GetPath()))
     {
         RefreshItem(item);
     }
@@ -665,7 +659,7 @@ void CDirstatDoc::RecurseRefreshMountPointItems(CItem* item)
 
 void CDirstatDoc::RecurseRefreshJunctionItems(CItem* item)
 {
-    if (IT_DIRECTORY == item->GetType() && item != GetRootItem() && GetWDSApp()->IsFolderJunction(item->GetAttributes()))
+    if (item->IsType(IT_DIRECTORY) && item != GetRootItem() && GetWDSApp()->IsFolderJunction(item->GetAttributes()))
     {
         RefreshItem(item);
     }
@@ -688,16 +682,16 @@ void CDirstatDoc::GetDriveItems(CArray<CItem*, CItem*>& drives)
         return;
     }
 
-    if (IT_MYCOMPUTER == root->GetType())
+    if (root->IsType(IT_MYCOMPUTER))
     {
         for (int i = 0; i < root->GetChildrenCount(); i++)
         {
             CItem* drive = root->GetChild(i);
-            ASSERT(IT_DRIVE == drive->GetType());
+            ASSERT(drive->IsType(IT_DRIVE));
             drives.Add(drive);
         }
     }
-    else if (IT_DRIVE == root->GetType())
+    else if (root->IsType(IT_DRIVE))
     {
         drives.Add(root);
     }
@@ -917,7 +911,7 @@ void CDirstatDoc::PerformUserDefinedCleanup(const USERDEFINEDCLEANUP* udc, CItem
 
     const CStringW path = item->GetPath();
 
-    const bool isDirectory = IT_DRIVE == item->GetType() || IT_DIRECTORY == item->GetType() || IT_FILESFOLDER == item->GetType();
+    const bool isDirectory = item->IsType(IT_DRIVE | IT_DIRECTORY);
 
     // Verify that path still exists
     if (isDirectory)
@@ -929,7 +923,7 @@ void CDirstatDoc::PerformUserDefinedCleanup(const USERDEFINEDCLEANUP* udc, CItem
     }
     else
     {
-        ASSERT(IT_FILE == item->GetType());
+        ASSERT(item->IsType(IT_FILE));
 
         if (!::PathFileExists(path))
         {
@@ -937,9 +931,9 @@ void CDirstatDoc::PerformUserDefinedCleanup(const USERDEFINEDCLEANUP* udc, CItem
         }
     }
 
-    if (udc->recurseIntoSubdirectories && item->GetType() != IT_FILESFOLDER)
+    if (udc->recurseIntoSubdirectories)
     {
-        ASSERT(IT_DRIVE == item->GetType() || IT_DIRECTORY == item->GetType());
+        ASSERT(item->IsType(IT_DRIVE | IT_DIRECTORY));
 
         RecursiveUserDefinedCleanup(udc, path, path);
     }
@@ -1146,9 +1140,7 @@ void CDirstatDoc::OnUpdateRefreshselected(CCmdUI* pCmdUI)
         // FIXME: Multi-select
         && GetSelection(0) != nullptr
         // FIXME: Multi-select
-        && GetSelection(0)->GetType() != IT_FREESPACE
-        // FIXME: Multi-select
-        && GetSelection(0)->GetType() != IT_UNKNOWN
+        && !GetSelection(0)->IsType(IT_FREESPACE | IT_UNKNOWN)
     );
 }
 
@@ -1175,10 +1167,7 @@ void CDirstatDoc::OnUpdateEditCopy(CCmdUI* pCmdUI)
     pCmdUI->Enable(
         DirectoryListHasFocus() &&
         item != nullptr &&
-        item->GetType() != IT_MYCOMPUTER &&
-        item->GetType() != IT_FILESFOLDER &&
-        item->GetType() != IT_FREESPACE &&
-        item->GetType() != IT_UNKNOWN
+        item->IsType(IT_FILE | IT_DIRECTORY | IT_DRIVE)
     );
 }
 
@@ -1349,9 +1338,7 @@ void CDirstatDoc::OnUpdateExplorerHere(CCmdUI* pCmdUI)
         // FIXME: Multi-select
         && GetSelection(0) != nullptr
         // FIXME: Multi-select
-        && GetSelection(0)->GetType() != IT_FREESPACE
-        // FIXME: Multi-select
-        && GetSelection(0)->GetType() != IT_UNKNOWN
+        && GetSelection(0)->IsType(IT_FILE | IT_DIRECTORY | IT_DRIVE)
     );
 }
 
@@ -1363,7 +1350,7 @@ void CDirstatDoc::OnExplorerHere()
         const CItem* item = GetSelection(0);
         ASSERT(item != NULL);
 
-        if (IT_MYCOMPUTER == item->GetType())
+        if (item->IsType(IT_MYCOMPUTER))
         {
             SHELLEXECUTEINFO sei;
             ZeroMemory(&sei, sizeof(sei));
@@ -1400,11 +1387,7 @@ void CDirstatDoc::OnUpdateCommandPromptHere(CCmdUI* pCmdUI)
         // FIXME: Multi-select
         && GetSelection(0) != nullptr
         // FIXME: Multi-select
-        && GetSelection(0)->GetType() != IT_MYCOMPUTER
-        // FIXME: Multi-select
-        && GetSelection(0)->GetType() != IT_FREESPACE
-        // FIXME: Multi-select
-        && GetSelection(0)->GetType() != IT_UNKNOWN
+        && GetSelection(0)->IsType(IT_FILE | IT_DIRECTORY | IT_DRIVE)
         // FIXME: Multi-select
         && !GetSelection(0)->HasUncPath()
     );
@@ -1437,7 +1420,7 @@ void CDirstatDoc::OnUpdateCleanupDeletetotrashbin(CCmdUI* pCmdUI)
     pCmdUI->Enable(
         DirectoryListHasFocus()
         && item != nullptr
-        && (IT_DIRECTORY == item->GetType() || IT_FILE == item->GetType())
+        && (item->IsType(IT_DIRECTORY) || item->IsType(IT_FILE))
         && !item->IsRootItem()
     );
 }
@@ -1447,7 +1430,7 @@ void CDirstatDoc::OnCleanupDeletetotrashbin()
     // FIXME: Multi-select
     CItem* item = GetSelection(0);
 
-    if (nullptr == item || item->GetType() != IT_DIRECTORY && item->GetType() != IT_FILE || item->IsRootItem())
+    if (nullptr == item || !item->IsType(IT_DIRECTORY | IT_FILE) || !item->IsRootItem())
     {
         return;
     }
@@ -1467,7 +1450,7 @@ void CDirstatDoc::OnUpdateCleanupDelete(CCmdUI* pCmdUI)
     pCmdUI->Enable(
         DirectoryListHasFocus()
         && item != nullptr
-        && (IT_DIRECTORY == item->GetType() || IT_FILE == item->GetType())
+        && (item->IsType(IT_DIRECTORY) || item->IsType(IT_FILE))
         && !item->IsRootItem()
     );
 }
@@ -1477,7 +1460,7 @@ void CDirstatDoc::OnCleanupDelete()
     // FIXME: Multi-select
     CItem* item = GetSelection(0);
 
-    if (nullptr == item || item->GetType() != IT_DIRECTORY && item->GetType() != IT_FILE || item->IsRootItem())
+    if (nullptr == item || !item->IsType(IT_DIRECTORY | IT_FILE))
     {
         return;
     }
