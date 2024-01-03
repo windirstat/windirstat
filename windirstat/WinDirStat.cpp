@@ -231,13 +231,10 @@ void CDirstatApp::RestartApplication()
 
 bool CDirstatApp::getDiskFreeSpace(LPCWSTR pszRootPath, ULONGLONG& total, ULONGLONG& unused)
 {
-    static ULARGE_INTEGER u64available = {0};
-    ULARGE_INTEGER u64total            = {0};
-    ULARGE_INTEGER u64free             = {0};
+    ULARGE_INTEGER u64total = {0};
+    ULARGE_INTEGER u64free = {0};
 
-    // On NT 4.0, the 2nd Parameter to this function must NOT be NULL.
-    // TODO: verify whether Windows 2000 behaves correctly
-    const BOOL b = GetDiskFreeSpaceEx(pszRootPath, &u64available, &u64total, &u64free);
+    const BOOL b = GetDiskFreeSpaceEx(pszRootPath, nullptr, &u64total, &u64free);
     if (!b)
     {
         VTRACE(L"GetDiskFreeSpaceEx(%s) failed.", pszRootPath);

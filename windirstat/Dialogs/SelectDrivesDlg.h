@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "ownerdrawnlistcontrol.h"
+#include "OwnerDrawnListControl.h"
 #include "layout.h"
 #include "resource.h"
 #include "set.h"

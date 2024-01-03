@@ -93,14 +93,9 @@ CStringW GetLocaleLanguage(LANGID langid)
 {
     CStringW s = GetLocaleString(LOCALE_SNATIVELANGNAME, langid);
 
-    // In the French case, the system returns "francais",
-    // but we want "Francais".
-
-    // TODO: need a Unicode version for this function
-
     if (s.GetLength() > 0)
     {
-        s.SetAt(0, static_cast<WCHAR>(_totupper(s[0]))); // FIXME: same holds for Russian, but _toupper won't work there ...
+        s.SetAt(0, static_cast<WCHAR>(towupper(s[0])));
     }
 
     return s + L" - " + GetLocaleString(LOCALE_SNATIVECTRYNAME, langid);

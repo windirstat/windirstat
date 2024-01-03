@@ -54,7 +54,6 @@ int CSortingListItem::Compare(const CSortingListItem* other, int subitem) const
     return signum(GetText(subitem).CompareNoCase(other->GetText(subitem)));
 }
 
-// TODO: check how suitable those are for Unicode-only strings (say Russian)
 int CSortingListItem::CompareS(const CSortingListItem* other, const SSorting& sorting) const
 {
     int r = Compare(other, sorting.column1);

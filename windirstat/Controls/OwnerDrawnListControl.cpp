@@ -23,7 +23,7 @@
 #include "WinDirStat.h"
 #include "TreeMap.h"    // CColorSpace
 #include "SelectObject.h"
-#include "ownerdrawnlistcontrol.h"
+#include "OwnerDrawnListControl.h"
 
 namespace
 {
