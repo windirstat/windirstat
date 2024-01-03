@@ -27,6 +27,9 @@
 #include "SelectObject.h"
 #include "WorkLimiter.h"
 #include "Item.h"
+
+#include <algorithm>
+
 #include "GlobalHelpers.h"
 
 namespace
@@ -429,20 +432,6 @@ CItem* CItem::FindCommonAncestor(const CItem* item1, const CItem* item2)
     return const_cast<CItem*>(parent);
 }
 
-bool CItem::IsAncestorOf(const CItem* item) const
-{
-    const CItem* p = item;
-    while (p != nullptr)
-    {
-        if (p == this)
-        {
-            break;
-        }
-        p = p->GetParent();
-    }
-    return p != nullptr;
-}
-
 ULONGLONG CItem::GetProgressRange() const
 {
     switch (GetType())
@@ -820,7 +809,7 @@ ITEMTYPE CItem::GetType() const
     return static_cast<ITEMTYPE>(m_type & ~ITF_FLAGS);
 }
 
-bool CItem::IsType(unsigned short type) const
+bool CItem::IsType(const ITEMTYPE type) const
 {
     return (m_type & type) != 0;
 }
@@ -887,7 +876,7 @@ CStringW CItem::GetReportPath() const
     {
         path += L"\\";
     }
-    if (IsType(IT_FREESPACE) || IsType(IT_UNKNOWN))
+    if (IsType(IT_FREESPACE | IT_UNKNOWN))
     {
         path += GetName();
     }
@@ -1012,15 +1001,12 @@ void CItem::SetDone()
         }
     }
 
-    // #ifdef _DEBUG
-    //     for(int i = 0; i < GetChildrenCount(); i++)
-    //     {
-    //         ASSERT(GetChild(i)->IsDone());
-    //     }
-    // #endif // _DEBUG
-
-    //m_children.FreeExtra(); // Doesn't help much.
-    qsort(m_children.GetData(), m_children.GetSize(), sizeof(CItem*), &_compareBySize);
+    // sort by size
+    std::sort(m_children.GetData(), m_children.GetData() + m_children.GetSize(),
+        [](const CItem* item1, const CItem* item2)
+        {
+            return item1->GetSize() > item2->GetSize(); // biggest first
+        });
 
     ZeroMemory(&m_rect, sizeof(m_rect));
 
@@ -1050,7 +1036,7 @@ void CItem::DoSomeWork(CWorkLimiter* limiter)
 
     const ULONGLONG start = GetTickCount64();
 
-    if (IsType(IT_DRIVE) || IsType(IT_DIRECTORY))
+    if (IsType(IT_DRIVE | IT_DIRECTORY))
     {
         if (!IsReadJobDone())
         {
@@ -1117,7 +1103,7 @@ void CItem::DoSomeWork(CWorkLimiter* limiter)
             return;
         }
     }
-    if (IsType(IT_DRIVE) || IsType(IT_DIRECTORY) || IsType(IT_MYCOMPUTER))
+    if (IsType(IT_DRIVE | IT_DIRECTORY | IT_MYCOMPUTER))
     {
         ASSERT(IsReadJobDone());
         if (IsDone())
@@ -1189,7 +1175,7 @@ bool CItem::StartRefresh()
 
         return true;
     }
-    ASSERT(IsType(IT_FILE) || IsType(IT_DRIVE) || IsType(IT_DIRECTORY));
+    ASSERT(IsType(IT_FILE | IT_DRIVE | IT_DIRECTORY));
 
     const bool wasExpanded = IsVisible() && IsExpanded();
     int oldScrollPosition  = 0;
@@ -1218,7 +1204,7 @@ bool CItem::StartRefresh()
     }
     ASSERT(GetFilesCount() == 0);
 
-    if (IsType(IT_DIRECTORY) || IsType(IT_DRIVE))
+    if (IsType(IT_DIRECTORY | IT_DRIVE))
     {
         UpwardSubtractSubdirs(GetSubdirsCount());
     }
@@ -1230,7 +1216,7 @@ bool CItem::StartRefresh()
     RemoveAllChildren();
     UpwardRecalcLastChange();
 
-    ASSERT(IsType(IT_FILE) || IsType(IT_DRIVE) || IsType(IT_DIRECTORY));
+    ASSERT(IsType(IT_FILE | IT_DRIVE | IT_DIRECTORY));
 
     // The item may have been deleted.
     bool deleted = false;
@@ -1288,7 +1274,7 @@ bool CItem::StartRefresh()
         return true;
     }
 
-    ASSERT(IsType(IT_DRIVE) || IsType(IT_DIRECTORY));
+    ASSERT(IsType(IT_DRIVE | IT_DIRECTORY));
 
     if (IsType(IT_DIRECTORY) && !IsRootItem() && GetWDSApp()->IsVolumeMountPoint(GetPath()) && !GetOptions()->IsFollowMountPoints())
     {
@@ -1583,19 +1569,6 @@ void CItem::RecurseCollectExtensionData(CExtensionData* ed)
             GetChild(i)->RecurseCollectExtensionData(ed);
         }
     }
-}
-
-int __cdecl CItem::_compareBySize(const void* p1, const void* p2)
-{
-    const CItem* item1 = *(CItem**)p1;
-    const CItem* item2 = *(CItem**)p2;
-
-    const ULONGLONG size1 = item1->GetSize();
-    const ULONGLONG size2 = item2->GetSize();
-
-    // TODO: Use 2nd sort column (as set in our TreeListView?)
-
-    return usignum(size2, size1); // biggest first
 }
 
 ULONGLONG CItem::GetProgressRangeMyComputer() const

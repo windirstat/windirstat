@@ -388,44 +388,7 @@ void CGraphView::OnLButtonDown(UINT nFlags, CPoint point)
             return;
         }
 
-        GetDocument()->UpdateAllViews(this, HINT_EXTENDSELECTION, (CObject*)item);
-        /*
-        const bool shift = (0x8000 & ::GetKeyState(VK_SHIFT)) != 0;
-        const bool control = (0x8000 & ::GetKeyState(VK_CONTROL)) != 0;
-
-        if (shift)
-        {
-        ::MessageBeep(0);
-        return;
-        }
-
-        if (control)
-        {
-        if (GetDocument()->IsSelected(item))
-        {
-        GetDocument()->RemoveSelection(item);
-
-        GetDocument()->UpdateAllViews(NULL, HINT_SELECTIONCHANGED);
-        }
-        else if (GetDocument()->CanAddSelection(item))
-        {
-        GetDocument()->AddSelection(item);
-
-        GetDocument()->UpdateAllViews(NULL, HINT_SHOWNEWSELECTION, (CObject *)item);
-        }
-        else
-        {
-        ::MessageBeep(0);
-        }
-        }
-        else
-        {
-        GetDocument()->RemoveAllSelections();
-        GetDocument()->AddSelection(item);
-
-        GetDocument()->UpdateAllViews(NULL, HINT_SHOWNEWSELECTION, (CObject *)item);
-        }
-        */
+        GetDocument()->UpdateAllViews(this, HINT_SELECTIONACTION, (CObject*)item);
     }
     CView::OnLButtonDown(nFlags, point);
 }
@@ -491,8 +454,8 @@ void CGraphView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
         }
         break;
 
-    case HINT_SELECTIONCHANGED:
-    case HINT_SHOWNEWSELECTION:
+    case HINT_SELECTIONACTION:
+    case HINT_SELECTIONREFRESH:
     case HINT_SELECTIONSTYLECHANGED:
     case HINT_EXTENSIONSELECTIONCHANGED:
         {
@@ -520,7 +483,7 @@ void CGraphView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
         }
         break;
 
-    case 0:
+    case HINT_NULL:
         {
             CView::OnUpdate(pSender, lHint, pHint);
         }

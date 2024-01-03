@@ -54,15 +54,14 @@ END_MESSAGE_MAP()
 
 void CMyTreeListControl::OnContextMenu(CWnd* /*pWnd*/, CPoint pt)
 {
-    const int i = GetSelectedItem();
+    const int i = GetSelectionMark();
     if (i == -1)
     {
         return;
     }
 
     CTreeListItem* item = GetItem(i);
-
-    CRect rc            = GetWholeSubitemRect(i, 0);
+    CRect rc = GetWholeSubitemRect(i, 0);
     const CRect rcTitle = item->GetTitleRect() + rc.TopLeft();
 
     CMenu menu;
@@ -71,7 +70,7 @@ void CMyTreeListControl::OnContextMenu(CWnd* /*pWnd*/, CPoint pt)
 
     PrepareDefaultMenu(sub, static_cast<CItem*>(item));
     GetMainFrame()->AppendUserDefinedCleanups(sub);
-
+    
     // Show popup menu and act accordingly.
     //
     // The menu shall not overlap the label but appear
@@ -117,6 +116,8 @@ void CMyTreeListControl::OnItemDoubleClick(int i)
 
 void CMyTreeListControl::PrepareDefaultMenu(CMenu* menu, const CItem* item)
 {
+    GetDocument()->UpdateMenuOptions(menu);
+
     if (item->TmiIsLeaf())
     {
         menu->DeleteMenu(0, MF_BYPOSITION); // Remove "Expand/Collapse" item
@@ -231,6 +232,7 @@ CDirstatDoc* CDirstatView::GetDocument() const // Non debug version is inline
 #endif
 
 BEGIN_MESSAGE_MAP(CDirstatView, CView)
+    ON_WM_INITMENUPOPUP()
     ON_WM_SIZE()
     ON_WM_CREATE()
     ON_WM_ERASEBKGND()
@@ -308,32 +310,20 @@ void CDirstatView::OnSettingChange(UINT uFlags, LPCWSTR lpszSection)
     }
     CView::OnSettingChange(uFlags, lpszSection);
 }
-
 void CDirstatView::OnLvnItemchanged(NMHDR* pNMHDR, LRESULT* pResult)
 {
-    const auto pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
+    auto pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
 
-    if ((pNMLV->uChanged & LVIF_STATE) != 0)
+    // only process state changes
+    if ((pNMLV->uChanged & LVIF_STATE) == 0)
     {
-        if (pNMLV->iItem == -1)
-        {
-            ASSERT(false); // mal gucken
-        }
-        else
-        {
-            // This is not true (don't know why): ASSERT(m_treeListControl.GetItemState(pNMLV->iItem, LVIS_SELECTED) == pNMLV->uNewState);
-            const bool selected = (m_treeListControl.GetItemState(pNMLV->iItem, LVIS_SELECTED) & LVIS_SELECTED) != 0;
-            const CItem* item   = static_cast<CItem*>(m_treeListControl.GetItem(pNMLV->iItem));
-            ASSERT(item != NULL);
-            if (selected)
-            {
-                GetDocument()->SetSelection(item);
-                GetDocument()->UpdateAllViews(this, HINT_SELECTIONCHANGED);
-            }
-        }
+        return;
     }
-
-    *pResult = 0;
+  
+    // Signal to listeners that selection has changed
+    GetDocument()->UpdateAllViews(this, HINT_SELECTIONREFRESH);
+     
+    *pResult = FALSE;
 }
 
 void CDirstatView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
@@ -348,27 +338,9 @@ void CDirstatView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
         }
         break;
 
-    case HINT_SELECTIONCHANGED:
+    case HINT_SELECTIONACTION:
         {
-            // FIXME: Multi-select
-            m_treeListControl.DeselectAll();
-            for (size_t i = 0; i < GetDocument()->GetSelectionCount(); i++)
-            {
-                m_treeListControl.SelectItem(GetDocument()->GetSelection(i));
-            }
-        }
-        break;
-
-    case HINT_EXTENDSELECTION:
-        {
-            const CItem* item = (CItem*)pHint;
-            m_treeListControl.ExtendSelection(item);
-        }
-
-    case HINT_SHOWNEWSELECTION:
-        {
-            // FIXME: Multi-select
-            //             const CItem *item = (const CItem *)pHint;
+            m_treeListControl.EmulateInteractiveSelection(reinterpret_cast<const CItem*>(pHint));
         }
         break;
 
@@ -407,7 +379,7 @@ void CDirstatView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
             }
         }
     // fall through
-    case 0:
+    case HINT_NULL:
         {
             m_treeListControl.Sort();
 

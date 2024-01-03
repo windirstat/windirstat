@@ -31,6 +31,12 @@
 #include <common/CommonHelpers.h>
 #include "DirStatDoc.h"
 
+#include <filesystem>
+#include <functional>
+#include <map>
+#include <string>
+#include <unordered_set>
+
 CDirstatDoc* _theDocument;
 
 CDirstatDoc* GetDocument()
@@ -171,7 +177,6 @@ void CDirstatDoc::DeleteContents()
     m_rootItem = nullptr;
     SetWorkingItem(nullptr);
     m_zoomItem = nullptr;
-    m_selectedItems.RemoveAll();
     GetWDSApp()->ReReadMountPoints();
 }
 
@@ -218,7 +223,7 @@ BOOL CDirstatDoc::OnOpenDocument(LPCWSTR lpszPathName)
         m_rootItem = new CItem(static_cast<ITEMTYPE>(IT_MYCOMPUTER | ITF_ROOTITEM), LoadString(IDS_MYCOMPUTER));
         for (int i = 0; i < rootFolders.GetSize(); i++)
         {
-            auto drive = new CItem(IT_DRIVE, rootFolders[i]);
+            const auto drive = new CItem(IT_DRIVE, rootFolders[i]);
             driveItems.Add(drive);
             m_rootItem->AddChild(drive);
         }
@@ -319,18 +324,6 @@ ULONGLONG CDirstatDoc::GetRootSize()
     ASSERT(m_rootItem != NULL);
     ASSERT(IsRootDone());
     return m_rootItem->GetSize();
-}
-
-void CDirstatDoc::ForgetItemTree()
-{
-    // The program is closing.
-    // As "delete m_rootItem" can last a long time (many minutes), if
-    // we have been paged out, we simply forget our item tree here and
-    // hope that the system will free all our memory anyway.
-    m_rootItem = nullptr;
-
-    m_zoomItem = nullptr;
-    m_selectedItems.RemoveAll();
 }
 
 // This method does some work for ticks ms.
@@ -440,80 +433,15 @@ bool CDirstatDoc::IsZoomed()
     return GetZoomItem() != GetRootItem();
 }
 
-void CDirstatDoc::RemoveAllSelections()
-{
-    m_selectedItems.RemoveAll();
-}
-
-CItem* CDirstatDoc::GetSelectionParent()
-{
-    ASSERT(m_selectedItems.GetCount() > 0);
-    const CItem* item = m_selectedItems[0];
-    return item->GetParent();
-}
-
-bool CDirstatDoc::CanAddSelection(const CItem* item)
-{
-    if (m_selectedItems.GetCount() == 0)
-        return true;
-
-    return item->GetParent() == GetSelectionParent();
-}
-
-void CDirstatDoc::AddSelection(const CItem* item)
-{
-    ASSERT(CanAddSelection(item));
-    m_selectedItems.Add(const_cast<CItem*>(item));
-}
-
-void CDirstatDoc::RemoveSelection(const CItem* item)
-{
-    for (int i = 0; i < m_selectedItems.GetCount(); i++)
-    {
-        if (m_selectedItems[i] == item)
-        {
-            m_selectedItems.RemoveAt(i);
-            return;
-        }
-    }
-    ASSERT(!m_selectedItems.GetCount()); // Must never reach this point
-}
-
-#ifdef _DEBUG
-void CDirstatDoc::AssertSelectionValid()
-{
-    if (m_selectedItems.GetCount() == 0)
-        return;
-    const CItem *parent = GetSelectionParent();
-    for (int i=0; i < m_selectedItems.GetCount(); i++)
-        ASSERT(m_selectedItems[i]->GetParent() == parent);
-}
-#endif
-
-void CDirstatDoc::SetSelection(const CItem* /*item*/, bool /*keepReselectChildStack*/)
-{
-}
-
 CItem* CDirstatDoc::GetSelection(size_t i)
 {
-    return m_selectedItems.GetCount() ? m_selectedItems[i] : nullptr;
+    const auto & items = CTreeListControl::GetTheTreeListControl()->GetAllSelected<CItem>();
+    return items.empty() ? nullptr : items.at(i);
 }
 
 size_t CDirstatDoc::GetSelectionCount()
 {
-    return m_selectedItems.GetCount();
-}
-
-bool CDirstatDoc::IsSelected(const CItem* item)
-{
-    for (int i = 0; i < m_selectedItems.GetCount(); i++)
-    {
-        if (m_selectedItems[i] == item)
-        {
-            return true;
-        }
-    }
-    return false;
+    return CTreeListControl::GetTheTreeListControl()->GetAllSelected().size();
 }
 
 void CDirstatDoc::SetHighlightExtension(LPCWSTR ext)
@@ -585,64 +513,31 @@ ULONGLONG CDirstatDoc::GetWorkingItemReadJobs()
     }
 }
 
-void CDirstatDoc::OpenItem(const CItem* item)
+void CDirstatDoc::OpenItem(const CItem* item, LPCWSTR verb)
 {
     ASSERT(item != NULL);
 
-    CWaitCursor wc;
-
-    try
+    // determine path to feed into shell function
+    CCoTaskMem<LPITEMIDLIST> pidl;
+    if (item->IsType(IT_MYCOMPUTER))
     {
-        CStringW path;
-
-        switch (item->GetType())
-        {
-        case IT_MYCOMPUTER:
-            {
-                SHELLEXECUTEINFO sei;
-                ZeroMemory(&sei, sizeof(sei));
-                sei.cbSize = sizeof(sei);
-                sei.hwnd   = *AfxGetMainWnd();
-                sei.lpVerb = L"open";
-                //sei.fMask = SEE_MASK_INVOKEIDLIST;
-                sei.nShow = SW_SHOWNORMAL;
-                CCoTaskMem<LPITEMIDLIST> pidl;
-
-                GetPidlOfMyComputer(&pidl);
-                sei.lpIDList = pidl;
-                sei.fMask |= SEE_MASK_IDLIST;
-
-                ShellExecuteEx(&sei);
-                // ShellExecuteEx seems to display its own Messagebox, if failed.
-            }
-            break;
-
-        case IT_DRIVE:
-        case IT_DIRECTORY:
-            {
-                path = item->GetFolderPath();
-            }
-            break;
-
-        case IT_FILE:
-            {
-                path = item->GetPath();
-            }
-            break;
-
-        default:
-            {
-                ASSERT(0);
-            }
-        }
-
-        ShellExecuteWithAssocDialog(*AfxGetMainWnd(), path);
+        (void) SHGetSpecialFolderLocation(nullptr, CSIDL_DRIVES, &pidl);
     }
-    catch (CException* pe)
+    else
     {
-        pe->ReportError();
-        pe->Delete();
+        pidl = ILCreateFromPath(item->GetPath());
     }
+
+    // launch properties dialog
+    SHELLEXECUTEINFO sei;
+    ZeroMemory(&sei, sizeof(sei));
+    sei.cbSize = sizeof(sei);
+    sei.hwnd = *AfxGetMainWnd();
+    sei.lpVerb = verb;
+    sei.fMask = SEE_MASK_INVOKEIDLIST | SEE_MASK_IDLIST;
+    sei.lpIDList = pidl;
+    sei.nShow = sei.nShow = SW_SHOWNORMAL;
+    ShellExecuteEx(&sei);
 }
 
 void CDirstatDoc::RecurseRefreshMountPointItems(CItem* item)
@@ -730,15 +625,14 @@ void CDirstatDoc::SortExtensionData(CStringArray& sortedExtensions)
 {
     sortedExtensions.SetSize(m_extensionData.GetCount());
 
-    int i        = 0;
     POSITION pos = m_extensionData.GetStartPosition();
-    while (pos != nullptr)
+    for (int i = 0; pos != nullptr; i++)
     {
         CStringW ext;
         SExtensionRecord r;
         m_extensionData.GetNextAssoc(pos, ext, r);
 
-        sortedExtensions[i++] = ext;
+        sortedExtensions[i] = ext;
     }
 
     _pqsortExtensionData = &m_extensionData;
@@ -750,7 +644,7 @@ void CDirstatDoc::SetExtensionColors(const CStringArray& sortedExtensions)
 {
     static CArray<COLORREF, COLORREF&> colors;
 
-    if (0 == colors.GetSize())
+    if (colors.IsEmpty())
     {
         CTreemap::GetDefaultPalette(colors);
     }
@@ -855,13 +749,6 @@ void CDirstatDoc::RefreshItem(CItem* item)
         SetZoomItem(item);
     }
 
-    // FIXME: Multi-select
-    if (item->IsAncestorOf(GetSelection(0)))
-    {
-        SetSelection(item);
-        UpdateAllViews(nullptr, HINT_SELECTIONCHANGED);
-    }
-
     SetWorkingItemAncestor(item);
 
     CItem* parent = item->GetParent();
@@ -872,11 +759,9 @@ void CDirstatDoc::RefreshItem(CItem* item)
         {
             SetZoomItem(parent);
         }
-        // FIXME: Multi-select
-        if (GetSelection(0) == item)
+        if (CTreeListControl::GetTheTreeListControl()->IsItemSelected(parent))
         {
-            SetSelection(parent);
-            UpdateAllViews(nullptr, HINT_SELECTIONCHANGED);
+            UpdateAllViews(nullptr, HINT_SELECTIONREFRESH);
         }
         if (m_workingItem == item)
         {
@@ -911,10 +796,8 @@ void CDirstatDoc::PerformUserDefinedCleanup(const USERDEFINEDCLEANUP* udc, CItem
 
     const CStringW path = item->GetPath();
 
-    const bool isDirectory = item->IsType(IT_DRIVE | IT_DIRECTORY);
-
     // Verify that path still exists
-    if (isDirectory)
+    if (item->IsType(IT_DIRECTORY | IT_DRIVE))
     {
         if (!FolderExists(path) && !DriveExists(path))
         {
@@ -939,7 +822,7 @@ void CDirstatDoc::PerformUserDefinedCleanup(const USERDEFINEDCLEANUP* udc, CItem
     }
     else
     {
-        CallUserDefinedCleanup(isDirectory, udc->commandLine, path, path, udc->showConsoleWindow, udc->waitForCompletion);
+        CallUserDefinedCleanup(item->IsType(IT_DIRECTORY | IT_DRIVE), udc->commandLine, path, path, udc->showConsoleWindow, udc->waitForCompletion);
     }
 }
 
@@ -1096,94 +979,111 @@ bool CDirstatDoc::DirectoryListHasFocus()
     return LF_DIRECTORYLIST == GetMainFrame()->GetLogicalFocus();
 }
 
+void CDirstatDoc::UpdateMenuOptions(CMenu* menu)
+{
+    struct command_filter
+    {
+        unsigned int id;      // id of the control
+        bool allow_none;      // allow display when nothing is selected
+        bool allow_many;      // allow display when multiple items are selected
+        bool allow_early;     // allow display before processing is finished
+        bool tree_focus;      // only display in tree view
+        ITEMTYPE types_allow; // only display if these types are allowed
+        bool (*extra)(CItem*) = [](CItem *) { return true; }; // extra checks
+    };
+
+    // special cases
+    static auto doc = this;
+    static bool (*can_zoom_out)(CItem*) = [](CItem*) { return doc->GetZoomItem() != doc->GetRootItem(); };
+    static bool (*parent_not_null)(CItem*) = [](CItem*item) { return item->GetParent() != nullptr; };
+    static bool (*reslect_avail)(CItem*) = [](CItem*) { return doc->IsReselectChildAvailable(); };
+    
+    static std::vector<command_filter> filters =
+    {
+        // ID                             none   many   early  focus  types
+        { ID_REFRESHALL,                  true,  true,  false, false, IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY},
+        { ID_REFRESHSELECTED,             false, true,  false, true,  IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY} ,
+        { ID_EDIT_COPY,                   false, true,  true,  false, IT_DRIVE | IT_DIRECTORY | IT_FILE} ,
+        { ID_CLEANUP_EMPTYRECYCLEBIN,     true,  true,  false, false, IT_ANY} ,
+        { ID_TREEMAP_RESELECTCHILD,       true,  true,  true,  false, IT_ANY, reslect_avail },
+        { ID_TREEMAP_SELECTPARENT,        false, false, true,  false, IT_ANY, parent_not_null },
+        { ID_TREEMAP_ZOOMIN,              false, false, false, false, IT_DRIVE | IT_DIRECTORY} ,
+        { ID_TREEMAP_ZOOMOUT,             false, false, false, false, IT_DIRECTORY, can_zoom_out } ,
+        { ID_CLEANUP_OPENINEXPLORER,      false, true,  true,  false, IT_DIRECTORY | IT_FILE } ,
+        { ID_CLEANUP_OPENINCONSOLE,       false, true,  false, false, IT_DRIVE | IT_DIRECTORY | IT_FILE} ,
+        { ID_CLEANUP_DELETETORECYCLEBIN,  false, true,  false, true,  IT_DIRECTORY | IT_FILE} ,
+        { ID_CLEANUP_DELETE,              false, true,  false, true,  IT_DIRECTORY | IT_FILE} ,
+        { ID_CLEANUP_OPEN,                false, true,  true,  false, IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY | IT_FILE} ,
+        { ID_CLEANUP_PROPERTIES,          false, true,  true,  false, IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY}
+    };
+
+    const auto & items = CTreeListControl::GetTheTreeListControl()->GetAllSelected<CItem>();
+    for (const auto & filter : filters)
+    {
+        bool allow = true;
+        allow &= !filter.tree_focus || DirectoryListHasFocus();
+        allow &= filter.allow_none || !items.empty();
+        allow &= filter.allow_many || items.size() <= 1;
+        allow &= filter.allow_early || GetDocument()->GetZoomItem()->IsDone();
+        for (const auto & item : items)
+        {
+            allow &= filter.extra(item);
+            allow &= item->IsType(filter.types_allow);
+        }
+
+        menu->EnableMenuItem(filter.id, (allow) ? MF_ENABLED : MF_DISABLED);
+    }
+}
+
 BEGIN_MESSAGE_MAP(CDirstatDoc, CDocument)
-    ON_COMMAND(ID_REFRESHSELECTED, OnRefreshselected)
-    ON_UPDATE_COMMAND_UI(ID_REFRESHSELECTED, OnUpdateRefreshselected)
-    ON_COMMAND(ID_REFRESHALL, OnRefreshall)
-    ON_UPDATE_COMMAND_UI(ID_EDIT_COPY, OnUpdateEditCopy)
+    ON_COMMAND(ID_REFRESHSELECTED, OnRefreshSelected)
+    ON_COMMAND(ID_REFRESHALL, OnRefreshAll)
     ON_COMMAND(ID_EDIT_COPY, OnEditCopy)
     ON_COMMAND(ID_CLEANUP_EMPTYRECYCLEBIN, OnCleanupEmptyRecycleBin)
     ON_UPDATE_COMMAND_UI(ID_VIEW_SHOWFREESPACE, OnUpdateViewShowFreeSpace)
-    ON_COMMAND(ID_VIEW_SHOWFREESPACE, OnViewShowfreespace)
+    ON_COMMAND(ID_VIEW_SHOWFREESPACE, OnViewShowFreeSpace)
     ON_UPDATE_COMMAND_UI(ID_VIEW_SHOWUNKNOWN, OnUpdateViewShowUnknown)
     ON_COMMAND(ID_VIEW_SHOWUNKNOWN, OnViewShowUnknown)
-    ON_UPDATE_COMMAND_UI(ID_TREEMAP_SELECTPARENT, OnUpdateTreemapSelectparent)
-    ON_COMMAND(ID_TREEMAP_SELECTPARENT, OnTreemapSelectparent)
-    ON_UPDATE_COMMAND_UI(ID_TREEMAP_ZOOMIN, OnUpdateTreemapZoomin)
-    ON_COMMAND(ID_TREEMAP_ZOOMIN, OnTreemapZoomin)
-    ON_UPDATE_COMMAND_UI(ID_TREEMAP_ZOOMOUT, OnUpdateTreemapZoomout)
-    ON_COMMAND(ID_TREEMAP_ZOOMOUT, OnTreemapZoomout)
-    ON_UPDATE_COMMAND_UI(ID_CLEANUP_OPENINEXPLORER, OnUpdateExplorerHere)
+    ON_COMMAND(ID_TREEMAP_ZOOMIN, OnTreemapZoomIn)
+    ON_COMMAND(ID_TREEMAP_ZOOMOUT, OnTreemapZoomOut)
     ON_COMMAND(ID_CLEANUP_OPENINEXPLORER, OnExplorerHere)
-    ON_UPDATE_COMMAND_UI(ID_CLEANUP_OPENINCONSOLE, OnUpdateCommandPromptHere)
     ON_COMMAND(ID_CLEANUP_OPENINCONSOLE, OnCommandPromptHere)
-    ON_UPDATE_COMMAND_UI(ID_CLEANUP_DELETETOTRASHBIN, OnUpdateCleanupDeletetotrashbin)
-    ON_COMMAND(ID_CLEANUP_DELETETOTRASHBIN, OnCleanupDeletetotrashbin)
-    ON_UPDATE_COMMAND_UI(ID_CLEANUP_DELETE, OnUpdateCleanupDelete)
+    ON_COMMAND(ID_CLEANUP_DELETETORECYCLEBIN, OnCleanupDeleteToRecycleBin)
     ON_COMMAND(ID_CLEANUP_DELETE, OnCleanupDelete)
-    ON_UPDATE_COMMAND_UI_RANGE(ID_USERDEFINEDCLEANUP0, ID_USERDEFINEDCLEANUP9, OnUpdateUserdefinedcleanup)
-    ON_COMMAND_RANGE(ID_USERDEFINEDCLEANUP0, ID_USERDEFINEDCLEANUP9, OnUserdefinedcleanup)
-    ON_UPDATE_COMMAND_UI(ID_REFRESHALL, OnUpdateRefreshall)
-    ON_UPDATE_COMMAND_UI(ID_TREEMAP_RESELECTCHILD, OnUpdateTreemapReselectchild)
-    ON_COMMAND(ID_TREEMAP_RESELECTCHILD, OnTreemapReselectchild)
-    ON_UPDATE_COMMAND_UI(ID_CLEANUP_OPEN, OnUpdateCleanupOpen)
+    ON_UPDATE_COMMAND_UI_RANGE(ID_USERDEFINEDCLEANUP0, ID_USERDEFINEDCLEANUP9, OnUpdateUserDefinedCleanup)
+    ON_COMMAND_RANGE(ID_USERDEFINEDCLEANUP0, ID_USERDEFINEDCLEANUP9, OnUserDefinedCleanup)
+    ON_COMMAND(ID_TREEMAP_SELECTPARENT, OnTreemapSelectParent)
+    ON_COMMAND(ID_TREEMAP_RESELECTCHILD, OnTreemapReselectChild)
     ON_COMMAND(ID_CLEANUP_OPEN, OnCleanupOpen)
-    ON_UPDATE_COMMAND_UI(ID_CLEANUP_PROPERTIES, OnUpdateCleanupProperties)
     ON_COMMAND(ID_CLEANUP_PROPERTIES, OnCleanupProperties)
 END_MESSAGE_MAP()
 
-
-void CDirstatDoc::OnUpdateRefreshselected(CCmdUI* pCmdUI)
+void CDirstatDoc::OnRefreshSelected()
 {
-    pCmdUI->Enable(
-        DirectoryListHasFocus()
-        // FIXME: Multi-select
-        && GetSelection(0) != nullptr
-        // FIXME: Multi-select
-        && !GetSelection(0)->IsType(IT_FREESPACE | IT_UNKNOWN)
-    );
+    const auto & items = CTreeListControl::GetTheTreeListControl()->GetAllSelected<CItem>();
+    for (const auto & item : items)
+    {
+        RefreshItem(item);
+    }
 }
 
-void CDirstatDoc::OnRefreshselected()
-{
-    // FIXME: Multi-select
-    RefreshItem(GetSelection(0));
-}
-
-void CDirstatDoc::OnUpdateRefreshall(CCmdUI* pCmdUI)
-{
-    pCmdUI->Enable(GetRootItem() != nullptr);
-}
-
-void CDirstatDoc::OnRefreshall()
+void CDirstatDoc::OnRefreshAll()
 {
     RefreshItem(GetRootItem());
 }
 
-void CDirstatDoc::OnUpdateEditCopy(CCmdUI* pCmdUI)
-{
-    // FIXME: Multi-select
-    const CItem* item = GetSelection(0);
-    pCmdUI->Enable(
-        DirectoryListHasFocus() &&
-        item != nullptr &&
-        item->IsType(IT_FILE | IT_DIRECTORY | IT_DRIVE)
-    );
-}
-
 void CDirstatDoc::OnEditCopy()
 {
+    // create concatenated paths
     CStringW paths;
-    for (size_t i = 0; i < GetSelectionCount(); i++)
+    const auto & items = CTreeListControl::GetTheTreeListControl()->GetAllSelected<CItem>();
+    for (const auto & item : items)
     {
-        if (i > 0)
-            paths += L"\r\n";
-
-        paths += GetSelection(i)->GetPath();
+        if (paths.GetLength() > 0) paths += L"\r\n";
+        paths += item->GetPath();
     }
 
-    // FIXME: Need to fix the clipboard code!!!
-    AfxMessageBox(paths);
+    CMainFrame::GetTheFrame()->CopyToClipboard(paths.GetBuffer());
 }
 
 void CDirstatDoc::OnCleanupEmptyRecycleBin()
@@ -1201,7 +1101,7 @@ void CDirstatDoc::OnUpdateViewShowFreeSpace(CCmdUI* pCmdUI)
     pCmdUI->SetCheck(m_showFreeSpace);
 }
 
-void CDirstatDoc::OnViewShowfreespace()
+void CDirstatDoc::OnViewShowFreeSpace()
 {
     CArray<CItem*, CItem*> drives;
     GetDriveItems(drives);
@@ -1212,12 +1112,6 @@ void CDirstatDoc::OnViewShowfreespace()
         {
             const CItem* free = drives[i]->FindFreeSpaceItem();
             ASSERT(free != NULL);
-
-            // FIXME: Multi-select
-            if (GetSelection(0) == free)
-            {
-                SetSelection(free->GetParent());
-            }
 
             if (GetZoomItem() == free)
             {
@@ -1262,12 +1156,6 @@ void CDirstatDoc::OnViewShowUnknown()
             const CItem* unknown = drives[i]->FindUnknownItem();
             ASSERT(unknown != NULL);
 
-            // FIXME: Multi-select
-            if (GetSelection(0) == unknown)
-            {
-                SetSelection(unknown->GetParent());
-            }
-
             if (GetZoomItem() == unknown)
             {
                 m_zoomItem = unknown->GetParent();
@@ -1294,116 +1182,83 @@ void CDirstatDoc::OnViewShowUnknown()
     UpdateAllViews(nullptr);
 }
 
-void CDirstatDoc::OnUpdateTreemapZoomin(CCmdUI* pCmdUI)
+void CDirstatDoc::OnTreemapZoomIn()
 {
-    pCmdUI->Enable(
-        m_rootItem != nullptr && m_rootItem->IsDone()
-        // FIXME: Multi-select (2x)
-        && GetSelection(0) != nullptr && GetSelection(0) != GetZoomItem()
-    );
-}
-
-void CDirstatDoc::OnTreemapZoomin()
-{
-    // FIXME: Multi-select
-    CItem* p = GetSelection(0);
-    CItem* z = nullptr;
-    while (p != GetZoomItem())
+    const auto & item = CTreeListControl::GetTheTreeListControl()->GetFirstSelectedItem<CItem>(true);
+    if (item != nullptr)
     {
-        z = p;
-        p = p->GetParent();
+        SetZoomItem(item);
     }
-    ASSERT(z != NULL);
-    SetZoomItem(z);
 }
 
-void CDirstatDoc::OnUpdateTreemapZoomout(CCmdUI* pCmdUI)
+void CDirstatDoc::OnTreemapZoomOut()
 {
-    pCmdUI->Enable(
-        m_rootItem != nullptr && m_rootItem->IsDone()
-        && GetZoomItem() != m_rootItem
-    );
-}
-
-void CDirstatDoc::OnTreemapZoomout()
-{
-    SetZoomItem(GetZoomItem()->GetParent());
-}
-
-
-void CDirstatDoc::OnUpdateExplorerHere(CCmdUI* pCmdUI)
-{
-    pCmdUI->Enable(
-        DirectoryListHasFocus()
-        // FIXME: Multi-select
-        && GetSelection(0) != nullptr
-        // FIXME: Multi-select
-        && GetSelection(0)->IsType(IT_FILE | IT_DIRECTORY | IT_DRIVE)
-    );
+    if (GetZoomItem() != nullptr)
+    {
+        SetZoomItem(GetZoomItem()->GetParent());
+    }
 }
 
 void CDirstatDoc::OnExplorerHere()
 {
-    try
+    // accumulate a unique set of paths
+    const auto& items = CTreeListControl::GetTheTreeListControl()->GetAllSelected<CItem>();
+    std::unordered_set<std::wstring>paths;
+    for (const auto& item : items)
     {
-        // FIXME: Multi-select
-        const CItem* item = GetSelection(0);
-        ASSERT(item != NULL);
+        // use function to determine parent to address non-drive rooted paths
+        std::filesystem::path target(item->GetPath().GetString());
+        paths.insert(target.parent_path());
+    }
+    
+    for (const auto& path : paths)
+    {
+        // create path pidl
+        CCoTaskMem<LPITEMIDLIST> parent = ILCreateFromPath(path.c_str());
 
-        if (item->IsType(IT_MYCOMPUTER))
+        // structures to hold and track pidls for children
+        auto pidl_tracker = std::make_unique<CCoTaskMem<LPITEMIDLIST>[]>(items.size());
+        auto pidl = std::make_unique<LPITEMIDLIST[]>(items.size());
+
+        // create list of children from paths
+        int total = 0;
+        for (auto & item : items)
         {
-            SHELLEXECUTEINFO sei;
-            ZeroMemory(&sei, sizeof(sei));
-            sei.cbSize = sizeof(sei);
-            sei.hwnd   = *AfxGetMainWnd();
-            sei.lpVerb = L"explore";
-            sei.nShow  = SW_SHOWNORMAL;
-
-            CCoTaskMem<LPITEMIDLIST> pidl;
-            GetPidlOfMyComputer(&pidl);
-
-            sei.lpIDList = pidl;
-            sei.fMask |= SEE_MASK_IDLIST;
-
-            ShellExecuteEx(&sei);
-            // ShellExecuteEx seems to display its own MessageBox on error.
+            // not processing this path yet
+            std::filesystem::path target(item->GetPath().GetString());
+            if (target.parent_path() == path)
+            {
+                pidl[total] = ILCreateFromPath(item->GetPath());
+                pidl_tracker[total++] = pidl[total];
+            }
         }
-        else
+
+        // attempt to open the items in the shell
+        if (pidl != nullptr)
         {
-            ShellExecuteThrow(*AfxGetMainWnd(), L"explore", item->GetFolderPath(), nullptr, nullptr, SW_SHOWNORMAL);
+            SHOpenFolderAndSelectItems(parent, total, (LPCITEMIDLIST*) &pidl[0], 0);
         }
     }
-    catch (CException* pe)
-    {
-        pe->ReportError();
-        pe->Delete();
-    }
-}
-
-void CDirstatDoc::OnUpdateCommandPromptHere(CCmdUI* pCmdUI)
-{
-    pCmdUI->Enable(
-        DirectoryListHasFocus()
-        // FIXME: Multi-select
-        && GetSelection(0) != nullptr
-        // FIXME: Multi-select
-        && GetSelection(0)->IsType(IT_FILE | IT_DIRECTORY | IT_DRIVE)
-        // FIXME: Multi-select
-        && !GetSelection(0)->HasUncPath()
-    );
 }
 
 void CDirstatDoc::OnCommandPromptHere()
 {
     try
     {
-        // FIXME: Multi-select
-        const CItem* item = GetSelection(0);
-        ASSERT(item != NULL);
+        // accumulate a unique set of paths
+        const auto& items = CTreeListControl::GetTheTreeListControl()->GetAllSelected<CItem>();
+        std::unordered_set<std::wstring>paths;
+        for (const auto& item : items)
+        {
+            paths.insert(item->GetFolderPath().GetString());
+        }
 
+        // launch a command prompt for each path
         const CStringW cmd = GetCOMSPEC();
-
-        ShellExecuteThrow(*AfxGetMainWnd(), L"open", cmd, nullptr, item->GetFolderPath(), SW_SHOWNORMAL);
+        for (const auto& path : paths)
+        {
+            ShellExecuteThrow(*AfxGetMainWnd(), L"open", cmd, nullptr, path.c_str(), SW_SHOWNORMAL);
+        }
     }
     catch (CException* pe)
     {
@@ -1412,228 +1267,106 @@ void CDirstatDoc::OnCommandPromptHere()
     }
 }
 
-void CDirstatDoc::OnUpdateCleanupDeletetotrashbin(CCmdUI* pCmdUI)
+void CDirstatDoc::OnCleanupDeleteToRecycleBin()
 {
-    // FIXME: Multi-select
-    const CItem* item = GetSelection(0);
-
-    pCmdUI->Enable(
-        DirectoryListHasFocus()
-        && item != nullptr
-        && (item->IsType(IT_DIRECTORY) || item->IsType(IT_FILE))
-        && !item->IsRootItem()
-    );
-}
-
-void CDirstatDoc::OnCleanupDeletetotrashbin()
-{
-    // FIXME: Multi-select
-    CItem* item = GetSelection(0);
-
-    if (nullptr == item || !item->IsType(IT_DIRECTORY | IT_FILE) || !item->IsRootItem())
+    const auto & items = CTreeListControl::GetTheTreeListControl()->GetAllSelected<CItem>();
+    for (const auto & item : items)
     {
-        return;
+        if (DeletePhysicalItem(item, true))
+        {
+            RefreshRecyclers();
+            UpdateAllViews(nullptr);
+        }
     }
-
-    if (DeletePhysicalItem(item, true))
-    {
-        RefreshRecyclers();
-        UpdateAllViews(nullptr);
-    }
-}
-
-void CDirstatDoc::OnUpdateCleanupDelete(CCmdUI* pCmdUI)
-{
-    // FIXME: Multi-select
-    const CItem* item = GetSelection(0);
-
-    pCmdUI->Enable(
-        DirectoryListHasFocus()
-        && item != nullptr
-        && (item->IsType(IT_DIRECTORY) || item->IsType(IT_FILE))
-        && !item->IsRootItem()
-    );
 }
 
 void CDirstatDoc::OnCleanupDelete()
 {
-    // FIXME: Multi-select
-    CItem* item = GetSelection(0);
-
-    if (nullptr == item || !item->IsType(IT_DIRECTORY | IT_FILE))
+    const auto & items = CTreeListControl::GetTheTreeListControl()->GetAllSelected<CItem>();
+    for (const auto & item : items)
     {
-        return;
-    }
-
-    if (DeletePhysicalItem(item, false))
-    {
-        SetWorkingItem(GetRootItem());
-        UpdateAllViews(nullptr);
+        if (DeletePhysicalItem(item, false))
+        {
+            SetWorkingItem(GetRootItem());
+            UpdateAllViews(nullptr);
+        }
     }
 }
 
-void CDirstatDoc::OnUpdateUserdefinedcleanup(CCmdUI* pCmdUI)
+void CDirstatDoc::OnUpdateUserDefinedCleanup(CCmdUI* pCmdUI)
 {
     const int i = pCmdUI->m_nID - ID_USERDEFINEDCLEANUP0;
-    // FIXME: Multi-select
-    const CItem* item = GetSelection(0);
+    const auto & items = CTreeListControl::GetTheTreeListControl()->GetAllSelected<CItem>();
+    bool allow_control = DirectoryListHasFocus() && GetOptions()->IsUserDefinedCleanupEnabled(i) && items.size() > 1;
+    for (const auto & item : items)
+    {
+        allow_control &= UserDefinedCleanupWorksForItem(GetOptions()->GetUserDefinedCleanup(i), item);
+    }
 
-    pCmdUI->Enable(
-        DirectoryListHasFocus()
-        && GetOptions()->IsUserDefinedCleanupEnabled(i)
-        && UserDefinedCleanupWorksForItem(GetOptions()->GetUserDefinedCleanup(i), item)
-    );
+    pCmdUI->Enable(allow_control);
 }
 
-void CDirstatDoc::OnUserdefinedcleanup(UINT id)
+void CDirstatDoc::OnUserDefinedCleanup(UINT id)
 {
     const USERDEFINEDCLEANUP* udc = GetOptions()->GetUserDefinedCleanup(id - ID_USERDEFINEDCLEANUP0);
-    // FIXME: Multi-select
-    CItem* item = GetSelection(0);
+    const auto & items = CTreeListControl::GetTheTreeListControl()->GetAllSelected<CItem>();
+    for (const auto & item : items)
+    {
+        ASSERT(UserDefinedCleanupWorksForItem(udc, item));
+        if (!UserDefinedCleanupWorksForItem(udc, item))
+        {
+            return;
+        }
 
-    ASSERT(UserDefinedCleanupWorksForItem(udc, item));
-    if (!UserDefinedCleanupWorksForItem(udc, item))
-    {
-        return;
-    }
-
-    ASSERT(item != NULL);
-
-    try
-    {
-        AskForConfirmation(udc, item);
-        PerformUserDefinedCleanup(udc, item);
-        RefreshAfterUserDefinedCleanup(udc, item);
-    }
-    catch (CUserException* pe)
-    {
-        pe->Delete();
-    }
-    catch (CException* pe)
-    {
-        pe->ReportError();
-        pe->Delete();
+        try
+        {
+            AskForConfirmation(udc, item);
+            PerformUserDefinedCleanup(udc, item);
+            RefreshAfterUserDefinedCleanup(udc, item);
+        }
+        catch (CUserException* pe)
+        {
+            pe->Delete();
+        }
+        catch (CException* pe)
+        {
+            pe->ReportError();
+            pe->Delete();
+        }
     }
 }
 
-void CDirstatDoc::OnUpdateTreemapSelectparent(CCmdUI* pCmdUI)
+void CDirstatDoc::OnTreemapSelectParent()
 {
-    // FIXME: Multi-select
-    pCmdUI->Enable(GetSelection(0) != nullptr && GetSelection(0)->GetParent() != nullptr);
+    const auto & item = CTreeListControl::GetTheTreeListControl()->GetFirstSelectedItem<CItem>(true);
+    PushReselectChild(item);
+    CTreeListControl::GetTheTreeListControl()->SelectItem(item->GetParent(), true, true);
+    UpdateAllViews(nullptr, HINT_SELECTIONREFRESH);
 }
 
-void CDirstatDoc::OnTreemapSelectparent()
-{
-    // FIXME: Multi-select
-    PushReselectChild(GetSelection(0));
-    // FIXME: Multi-select
-    const CItem* p = GetSelection(0)->GetParent();
-    SetSelection(p, true);
-    UpdateAllViews(nullptr, HINT_SHOWNEWSELECTION);
-}
-
-void CDirstatDoc::OnUpdateTreemapReselectchild(CCmdUI* pCmdUI)
-{
-    pCmdUI->Enable(IsReselectChildAvailable());
-}
-
-void CDirstatDoc::OnTreemapReselectchild()
+void CDirstatDoc::OnTreemapReselectChild()
 {
     CItem* item = PopReselectChild();
-    SetSelection(item, true);
-    UpdateAllViews(nullptr, HINT_SHOWNEWSELECTION, reinterpret_cast<CObject*>(item));
-}
-
-void CDirstatDoc::OnUpdateCleanupOpen(CCmdUI* /*pCmdUI*/)
-{
-    // FIXME: Multi-select
-    //     pCmdUI->Enable(
-    //         DirectoryListHasFocus()
-    //         && GetSelection() != NULL
-    //         && GetSelection()->GetType() != IT_FILESFOLDER
-    //         && GetSelection()->GetType() != IT_FREESPACE
-    //         && GetSelection()->GetType() != IT_UNKNOWN
-    //     );
+    CTreeListControl::GetTheTreeListControl()->SelectItem(item, true, true);
+    UpdateAllViews(nullptr, HINT_SELECTIONREFRESH);
 }
 
 void CDirstatDoc::OnCleanupOpen()
 {
-    // FIXME: Multi-select
-    //     const CItem *item = GetSelection();
-    //     ASSERT(item != NULL);
-    // 
-    //     OpenItem(item);
-}
-
-void CDirstatDoc::OnUpdateCleanupProperties(CCmdUI* /*pCmdUI*/)
-{
-    // FIXME: Multi-select
-    //     pCmdUI->Enable(
-    //         DirectoryListHasFocus()
-    //         && GetSelection() != NULL
-    //         && GetSelection()->GetType() != IT_FREESPACE
-    //         && GetSelection()->GetType() != IT_UNKNOWN
-    //         && GetSelection()->GetType() != IT_FILESFOLDER
-    //     );
+    const auto & items = CTreeListControl::GetTheTreeListControl()->GetAllSelected<CItem>();
+    for (const auto & item : items)
+    {
+        OpenItem(item);
+    }
 }
 
 void CDirstatDoc::OnCleanupProperties()
 {
-    // FIXME: Multi-select
-    //     try
-    //     {
-    //         SHELLEXECUTEINFO sei;
-    //         ZeroMemory(&sei, sizeof(sei));
-    //         sei.cbSize = sizeof(sei);
-    //         sei.hwnd = *AfxGetMainWnd();
-    //         sei.lpVerb = L"properties";
-    //         sei.fMask = SEE_MASK_INVOKEIDLIST;
-    // 
-    //         CCoTaskMem<LPITEMIDLIST> pidl;
-    //         CStringW path;
-    // 
-    //         const CItem *item = GetSelection();
-    //         ASSERT(item != NULL);
-    // 
-    //         switch (item->GetType())
-    //         {
-    //         case IT_MYCOMPUTER:
-    //             {
-    //                 GetPidlOfMyComputer(&pidl);
-    //                 sei.lpIDList = pidl;
-    //                 sei.fMask |= SEE_MASK_IDLIST;
-    //             }
-    //             break;
-    // 
-    //         case IT_DRIVE:
-    //         case IT_DIRECTORY:
-    //             {
-    //                 path = item->GetFolderPath();
-    //                 sei.lpFile = path; // Must not be a temporary variable
-    //             }
-    //             break;
-    // 
-    //         case IT_FILE:
-    //             {
-    //                 path = item->GetPath();
-    //                 sei.lpFile = path; // Must not be temporary variable
-    //             }
-    //             break;
-    // 
-    //         default:
-    //             {
-    //                 ASSERT(0);
-    //             }
-    //         }
-    // 
-    //         ShellExecuteEx(&sei);
-    //         // BUGBUG: ShellExecuteEx seems to display its own MessageBox on error.
-    //     }
-    //     catch (CException *pe)
-    //     {
-    //         pe->ReportError();
-    //         pe->Delete();
-    //     }
+    const auto & items = CTreeListControl::GetTheTreeListControl()->GetAllSelected<CItem>();
+    for (const auto & item : items)
+    {
+        OpenItem(item, L"properties");
+    }
 }
 
 // CDirstatDoc Diagnostics

@@ -19,7 +19,6 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 
-// ReSharper disable All
 #pragma once
 
 #include "selectdrivesdlg.h"
@@ -57,30 +56,17 @@ typedef CMap<CStringW, LPCWSTR, SExtensionRecord, SExtensionRecord&> CExtensionD
 //
 enum
 {
-    HINT_NULL,
-    // General update
-    HINT_NEWROOT,
-    // Root item has changed - clear everything.
-    HINT_SELECTIONCHANGED,
-    // The selection has changed, EnsureVisible.
-    HINT_EXTENDSELECTION,
-    // DirstatView shall expand selection. pHint = CItem *
-    HINT_SHOWNEWSELECTION,
-    // The selection has changed, Show Path
-    HINT_SELECTIONSTYLECHANGED,
-    // Only update selection in Graphview
-    HINT_EXTENSIONSELECTIONCHANGED,
-    // Type list selected a new extension
-    HINT_ZOOMCHANGED,
-    // Only zoom item has changed.
-    HINT_REDRAWWINDOW,
-    // Only graphically redraw views.
-    HINT_SOMEWORKDONE,
-    // Directory list shall process mouse messages first, then re-sort.
-
-    HINT_LISTSTYLECHANGED,
-    // Options: List style (grid/stripes) or treelist colors changed
-    HINT_TREEMAPSTYLECHANGED // Options: Treemap style (grid, colors etc.) changed
+    HINT_NULL,                      // General update
+    HINT_NEWROOT,                   // Root item has changed - clear everything.
+    HINT_SELECTIONACTION,           // Inform central selection handler to update selection (uses pHint)
+    HINT_SELECTIONREFRESH,          // Inform all views to redraw based on current selections
+    HINT_SELECTIONSTYLECHANGED,     // Only update selection in Graphview
+    HINT_EXTENSIONSELECTIONCHANGED, // Type list selected a new extension
+    HINT_ZOOMCHANGED,               // Only zoom item has changed.
+    HINT_REDRAWWINDOW,              // Update menu controls
+    HINT_SOMEWORKDONE,              // Directory list shall process mouse messages first, then re-sort.
+    HINT_LISTSTYLECHANGED,          // Options: List style (grid/stripes) or treelist colors changed
+    HINT_TREEMAPSTYLECHANGED        // Options: Treemap style (grid, colors etc.) changed
 };
 
 //
@@ -117,7 +103,6 @@ public:
     const CExtensionData* GetExtensionData();
     ULONGLONG GetRootSize();
 
-    void ForgetItemTree();
     bool Work(CWorkLimiter* limiter); // return: true if done.
     bool IsDrive(const CStringW& spec);
     void RefreshMountPointItems();
@@ -128,16 +113,9 @@ public:
     CItem* GetZoomItem();
     bool IsZoomed();
 
-    void RemoveAllSelections();
-    bool CanAddSelection(const CItem* item);
-    void AddSelection(const CItem* item);
-    void RemoveSelection(const CItem* item);
-    void AssertSelectionValid();
     size_t GetSelectionCount();
-    bool IsSelected(const CItem* item);
-    // FIXME: Multi-select
     CItem* GetSelection(size_t i);
-    void SetSelection(const CItem* item, bool keepReselectChildStack = false);
+    void UpdateMenuOptions(CMenu* menu);
 
     void SetHighlightExtension(LPCWSTR ext);
     CStringW GetHighlightExtension();
@@ -146,7 +124,7 @@ public:
     bool UserDefinedCleanupWorksForItem(const USERDEFINEDCLEANUP* udc, const CItem* item);
     ULONGLONG GetWorkingItemReadJobs();
 
-    void OpenItem(const CItem* item);
+    void OpenItem(const CItem* item, LPCWSTR verb = L"open");
 
 protected:
     void RecurseRefreshMountPointItems(CItem* item);
@@ -173,8 +151,7 @@ protected:
     CItem* PopReselectChild();
     void ClearReselectChildStack();
     bool IsReselectChildAvailable();
-    bool DirectoryListHasFocus();
-    CItem* GetSelectionParent();
+    static bool DirectoryListHasFocus();
 
     bool m_showFreeSpace; // Whether to show the <Free Space> item
     bool m_showUnknown;   // Whether to show the <Unknown> item
@@ -183,7 +160,6 @@ protected:
     // In this case, we need a root pseudo item ("My Computer").
 
     CItem* m_rootItem;                      // The very root item
-    CArray<CItem*, CItem*> m_selectedItems; // The currently selected items
 
     CStringW m_highlightExtension; // Currently highlighted extension
     CItem* m_zoomItem;             // Current "zoom root"
@@ -196,39 +172,31 @@ protected:
 
 protected:
     DECLARE_MESSAGE_MAP()
-    afx_msg void OnUpdateRefreshselected(CCmdUI* pCmdUI);
-    afx_msg void OnRefreshselected();
-    afx_msg void OnUpdateRefreshall(CCmdUI* pCmdUI);
-    afx_msg void OnRefreshall();
-    afx_msg void OnUpdateEditCopy(CCmdUI* pCmdUI);
+    afx_msg void OnRefreshSelected();
+    afx_msg void OnRefreshAll();
     afx_msg void OnEditCopy();
     afx_msg void OnCleanupEmptyRecycleBin();
     afx_msg void OnUpdateViewShowFreeSpace(CCmdUI* pCmdUI);
-    afx_msg void OnViewShowfreespace();
+    afx_msg void OnViewShowFreeSpace();
     afx_msg void OnUpdateViewShowUnknown(CCmdUI* pCmdUI);
     afx_msg void OnViewShowUnknown();
-    afx_msg void OnUpdateTreemapZoomin(CCmdUI* pCmdUI);
-    afx_msg void OnTreemapZoomin();
-    afx_msg void OnUpdateTreemapZoomout(CCmdUI* pCmdUI);
-    afx_msg void OnTreemapZoomout();
-    afx_msg void OnUpdateExplorerHere(CCmdUI* pCmdUI);
+    afx_msg void OnUpdateTreemapZoomIn(CCmdUI* pCmdUI);
+    afx_msg void OnTreemapZoomIn();
+    afx_msg void OnTreemapZoomOut();
     afx_msg void OnExplorerHere();
-    afx_msg void OnUpdateCommandPromptHere(CCmdUI* pCmdUI);
     afx_msg void OnCommandPromptHere();
-    afx_msg void OnUpdateCleanupDeletetotrashbin(CCmdUI* pCmdUI);
-    afx_msg void OnCleanupDeletetotrashbin();
-    afx_msg void OnUpdateCleanupDelete(CCmdUI* pCmdUI);
+    afx_msg void OnCleanupDeleteToRecycleBin();
     afx_msg void OnCleanupDelete();
-    afx_msg void OnUpdateUserdefinedcleanup(CCmdUI* pCmdUI);
-    afx_msg void OnUserdefinedcleanup(UINT id);
-    afx_msg void OnUpdateTreemapSelectparent(CCmdUI* pCmdUI);
-    afx_msg void OnTreemapSelectparent();
-    afx_msg void OnUpdateTreemapReselectchild(CCmdUI* pCmdUI);
-    afx_msg void OnTreemapReselectchild();
+    afx_msg void OnUpdateUserDefinedCleanup(CCmdUI* pCmdUI);
+    afx_msg void OnUserDefinedCleanup(UINT id);
+    afx_msg void OnUpdateTreemapSelectParent(CCmdUI* pCmdUI);
+    afx_msg void OnTreemapSelectParent();
+    afx_msg void OnUpdateTreemapReselectChild(CCmdUI* pCmdUI);
+    afx_msg void OnTreemapReselectChild();
     afx_msg void OnUpdateCleanupOpen(CCmdUI* pCmdUI);
     afx_msg void OnCleanupOpen();
-    afx_msg void OnUpdateCleanupProperties(CCmdUI* pCmdUI);
     afx_msg void OnCleanupProperties();
+    afx_msg void OnUpdateFilter(CCmdUI* pCmdUI);
 
 public:
 #ifdef _DEBUG

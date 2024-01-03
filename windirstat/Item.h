@@ -51,9 +51,15 @@ enum ITEMTYPE : unsigned short
     IT_FILE       = 1 << 3, // Regular file
     IT_FREESPACE  = 1 << 4, // Pseudo File "<Free Space>"
     IT_UNKNOWN    = 1 << 5, // Pseudo File "<Unknown>"
+    IT_ANY        = 0x00FF, // Indicates any item type
     ITF_ROOTITEM  = 1 << 8, // Indicates root item
     ITF_FLAGS     = 0xFF00, // All potential flag items
 };
+
+inline ITEMTYPE operator|(const ITEMTYPE & a, const ITEMTYPE & b)
+{
+    return static_cast<ITEMTYPE>(static_cast<unsigned short>(a) | static_cast<unsigned short>(b));
+}
 
 // Compare FILETIMEs
 inline bool operator<(const FILETIME& t1, const FILETIME& t2)
@@ -146,7 +152,6 @@ public:
     static int GetSubtreePercentageWidth();
     static CItem* FindCommonAncestor(const CItem* item1, const CItem* item2);
 
-    bool IsAncestorOf(const CItem* item) const;
     ULONGLONG GetProgressRange() const;
     ULONGLONG GetProgressPos() const;
     const CItem* UpwardGetRoot() const;
@@ -177,7 +182,7 @@ public:
     int GetSortAttributes() const;
     double GetFraction() const;
     ITEMTYPE GetType() const;
-    bool IsType(unsigned short type) const;
+    bool IsType(const ITEMTYPE type) const;
     bool IsRootItem() const;
     CStringW GetPath() const;
     bool HasUncPath() const;
@@ -210,7 +215,6 @@ public:
     void RecurseCollectExtensionData(CExtensionData* ed);
 
 private:
-    static int __cdecl _compareBySize(const void* p1, const void* p2);
     ULONGLONG GetProgressRangeMyComputer() const;
     ULONGLONG GetProgressPosMyComputer() const;
     ULONGLONG GetProgressRangeDrive() const;

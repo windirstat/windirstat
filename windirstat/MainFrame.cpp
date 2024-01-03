@@ -734,7 +734,6 @@ void CMainFrame::OnClose()
     GetDocument()->OnNewDocument();
 #endif
 
-    GetDocument()->ForgetItemTree();
     CFrameWnd::OnClose();
 }
 
@@ -862,7 +861,7 @@ void CMainFrame::CopyToClipboard(LPCWSTR psz)
         COpenClipboard clipboard(this);
         const SIZE_T cchBufLen = _tcslen(psz) + 1;
 
-        const HGLOBAL h = ::GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT, cchBufLen * sizeof(WCHAR));
+        const HGLOBAL h = ::GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE | GMEM_ZEROINIT, cchBufLen * sizeof(WCHAR));
         if (h == nullptr)
         {
             MdThrowStringException(L"GlobalAlloc failed.");
@@ -904,6 +903,9 @@ void CMainFrame::OnInitMenuPopup(CMenu* pPopupMenu, UINT nIndex, BOOL bSysMenu)
             UpdateCleanupMenu(pPopupMenu);
         }
     }
+
+    // Dynamically update controls
+    GetDocument()->UpdateMenuOptions(pPopupMenu);
 }
 
 void CMainFrame::UpdateCleanupMenu(CMenu* menu)
@@ -1005,15 +1007,14 @@ void CMainFrame::AppendUserDefinedCleanups(CMenu* menu)
             CStringW string;
             string.FormatMessage(IDS_UDCsCTRLd, GetOptions()->GetUserDefinedCleanup(indices[i])->title.GetString(), indices[i]);
 
-            UINT flags = MF_GRAYED | MF_DISABLED;
-            if (
-                GetLogicalFocus() == LF_DIRECTORYLIST
-                // FIXME: Multi-select
-                && GetDocument()->UserDefinedCleanupWorksForItem(GetOptions()->GetUserDefinedCleanup(indices[i]), GetDocument()->GetSelection(0))
-            )
+            bool udc_valid = GetLogicalFocus() == LF_DIRECTORYLIST;
+            const auto & items = CTreeListControl::GetTheTreeListControl()->GetAllSelected<CItem>();
+            for (auto item : items)
             {
-                flags = MF_ENABLED;
+                udc_valid &= GetDocument()->UserDefinedCleanupWorksForItem(GetOptions()->GetUserDefinedCleanup(indices[i]), item);
             }
+
+            UINT flags = udc_valid ? MF_ENABLED : (MF_GRAYED | MF_DISABLED);
             menu->AppendMenu(flags | MF_STRING, ID_USERDEFINEDCLEANUP0 + indices[i], string);
         }
     }
@@ -1073,15 +1074,17 @@ void CMainFrame::SetSelectionMessageText()
         }
         break;
     case LF_DIRECTORYLIST:
-        // FIXME: Multi-select
-        if (GetDocument()->GetSelection(0) != nullptr)
         {
-            // FIXME: Multi-select
-            SetMessageText(GetDocument()->GetSelection(0)->GetPath());
-        }
-        else
-        {
-            SetMessageText(AFX_IDS_IDLEMESSAGE);
+            // display file name in bottom left corner if only one item is selected
+            auto item = CTreeListControl::GetTheTreeListControl()->GetFirstSelectedItem<CItem>(true);
+            if (item != nullptr)
+            {
+                SetMessageText(item->GetPath());
+            }
+            else
+            {
+                SetMessageText(AFX_IDS_IDLEMESSAGE);
+            }
         }
         break;
     case LF_EXTENSIONLIST:

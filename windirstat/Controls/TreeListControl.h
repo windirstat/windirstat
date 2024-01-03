@@ -21,8 +21,9 @@
 
 #pragma once
 
-#include "ownerdrawnlistcontrol.h"
+#include "OwnerDrawnListControl.h"
 #include "pacman.h"
+#include <vector>
 
 class CDirstatView;
 class CTreeListItem;
@@ -72,9 +73,9 @@ public:
     CStringW GetText(int subitem) const override;
     int GetImage() const override;
     int Compare(const CSortingListItem* other, int subitem) const override;
-    virtual CTreeListItem* GetTreeListChild(int i) const =0;
-    virtual int GetChildrenCount() const =0;
-    virtual int GetImageToCache() const =0;
+    virtual CTreeListItem* GetTreeListChild(int i) const = 0;
+    virtual int GetChildrenCount() const = 0;
+    virtual int GetImageToCache() const = 0;
 
     void DrawPacman(CDC* pdc, const CRect& rc, COLORREF bgColor) const;
     void UncacheImage();
@@ -83,6 +84,7 @@ public:
     int FindSortedChild(const CTreeListItem* child);
     CTreeListItem* GetParent() const;
     void SetParent(CTreeListItem* parent);
+    bool IsAncestorOf(const CTreeListItem* item) const;
     bool HasSiblings() const;
     bool HasChildren() const;
     bool IsExpanded() const;
@@ -133,11 +135,11 @@ public:
     void OnChildRemoved(CTreeListItem* parent, CTreeListItem* childdata);
     void OnRemovingAllChildren(CTreeListItem* parent);
     CTreeListItem* GetItem(int i);
+    bool IsItemSelected(const CTreeListItem* item);
+    void SelectItem(const CTreeListItem* item, bool deselect = false, bool focus = false);
     void DeselectAll();
     void ExpandPathToItem(const CTreeListItem* item);
     void DrawNode(CDC* pdc, CRect& rc, CRect& rcPlusMinus, const CTreeListItem* item, int* width);
-    void SelectItem(const CTreeListItem* item);
-    void SelectSingleItem(const CTreeListItem* item);
     void Sort();
     void EnsureItemVisible(const CTreeListItem* item);
     void ExpandItem(CTreeListItem* item);
@@ -146,33 +148,40 @@ public:
     void SetItemScrollPosition(CTreeListItem* item, int top);
     bool SelectedItemCanToggle();
     void ToggleSelectedItem();
-    void ExtendSelection(const CTreeListItem* item);
+    void EmulateInteractiveSelection(const CTreeListItem* item);
 
     void SortItems() override;
     bool HasImages() override;
 
+    template <class T = CTreeListItem> std::vector<T*> GetAllSelected()
+    {
+        std::vector<T*> array;
+        for (POSITION pos = GetFirstSelectedItemPosition(); pos != nullptr;)
+        {
+            const int i = GetNextSelectedItem(pos);
+            array.push_back(reinterpret_cast<T*>(GetItem(i)));
+        }
+        return array;
+    }
+    template <class T = CTreeListItem> T* GetFirstSelectedItem(const bool enforce_single = false)
+    {
+        POSITION pos = GetFirstSelectedItemPosition();
+        if (pos == nullptr) return nullptr;
+        const int i = GetNextSelectedItem(pos);
+        if (enforce_single && GetNextSelectedItem(pos) != -1) return nullptr;
+
+        return reinterpret_cast<T*>(GetItem(i));
+    }
+
 protected:
     virtual void OnItemDoubleClick(int i);
     void InitializeNodeBitmaps();
-
-
     void InsertItem(int i, CTreeListItem* item);
     void DeleteItem(int i);
     void CollapseItem(int i);
     void ExpandItem(int i, bool scroll = true);
     void ToggleExpansion(int i);
-    void SelectItem(int i);
-    void DeselectItem(int i);
-    void FocusItem(int i);
-    void SelectSingleItem(int i);
-    int GetSelectedItem();
 
-    /////////////////////////////////////////////////////
-    // Selection management
-    void ExtendSelection(int i);
-    void UpdateDocumentSelection();
-
-    CTreeListItem* m_selectionAnchor;
     //
     /////////////////////////////////////////////////////
 
@@ -189,6 +198,5 @@ protected:
     afx_msg void MeasureItem(LPMEASUREITEMSTRUCT mis);
     afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
     afx_msg void OnLButtonDblClk(UINT nFlags, CPoint point);
-    afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
-    // afx_msg BOOL OnEraseBkgnd(CDC* pDC);
+    afx_msg void OnLvnItemchangingList(NMHDR* pNMHDR, LRESULT* pResult);
 };

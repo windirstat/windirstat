@@ -223,7 +223,7 @@
 #define ID_FILE_OPENRECENT_0            32806
 #define ID_FILE_OPENRECENT_1            32807
 #define ID_CLEANUP_OPENINCONSOLE        32808
-#define ID_CLEANUP_DELETETOTRASHBIN     32809
+#define ID_CLEANUP_DELETETORECYCLEBIN     32809
 #define ID_CLEANUP_DELETE               32810
 #define ID_CONFIGURE                    32813
 #define ID_HELP_MANUAL                  32814

@@ -463,7 +463,7 @@ void CTypeView::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject*)
     switch (lHint)
     {
     case HINT_NEWROOT:
-    case 0:
+    case HINT_NULL:
         if (IsShowTypes() && GetDocument()->IsRootDone())
         {
             m_extensionListControl.SetRootSize(GetDocument()->GetRootSize());
@@ -479,8 +479,7 @@ void CTypeView::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject*)
         }
 
         [[fallthrough]];
-    case HINT_SELECTIONCHANGED:
-    case HINT_SHOWNEWSELECTION:
+    case HINT_SELECTIONREFRESH:
         if (IsShowTypes())
         {
             SetSelection();
@@ -518,15 +517,17 @@ void CTypeView::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject*)
 
 void CTypeView::SetSelection()
 {
-    // FIXME: Multi-select
-    const CItem* item = GetDocument()->GetSelection(0);
-    if (item == nullptr || !item->IsType(IT_FILE))
+    const auto & items = CTreeListControl::GetTheTreeListControl()->GetAllSelected<CItem>();
+    for (const auto & item : items)
     {
-        m_extensionListControl.EnsureVisible(0, false);
-    }
-    else
-    {
-        m_extensionListControl.SelectExtension(item->GetExtension());
+        if (item->GetType() != IT_FILE)
+        {
+            m_extensionListControl.EnsureVisible(0, false);
+        }
+        else
+        {
+            m_extensionListControl.SelectExtension(item->GetExtension());
+        }
     }
 }
 
