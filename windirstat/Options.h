@@ -44,7 +44,6 @@ using USERDEFINEDCLEANUP = struct USERDEFINEDCLEANUP
     CStringW title;
     bool worksForDrives;
     bool worksForDirectories;
-    bool worksForFilesFolder;
     bool worksForFiles;
     bool worksForUncPaths;
     CStringW commandLine;

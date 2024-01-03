@@ -55,7 +55,6 @@ protected:
     CStringW m_title;
     BOOL m_worksForDrives;
     BOOL m_worksForDirectories;
-    BOOL m_worksForFilesFolder;
     BOOL m_worksForFiles;
     BOOL m_worksForUncPaths;
     CStringW m_commandLine;
@@ -69,7 +68,6 @@ protected:
     CEdit m_ctlTitle;
     CButton m_ctlWorksForDrives;
     CButton m_ctlWorksForDirectories;
-    CButton m_ctlWorksForFilesFolder;
     CButton m_ctlWorksForFiles;
     CButton m_ctlWorksForUncPaths;
     CEdit m_ctlCommandLine;
@@ -88,7 +86,6 @@ protected:
     afx_msg void OnEnChangeTitle();
     afx_msg void OnBnClickedWorksfordrives();
     afx_msg void OnBnClickedWorksfordirectories();
-    afx_msg void OnBnClickedWorksforfilesfolder();
     afx_msg void OnBnClickedWorksforfiles();
     afx_msg void OnBnClickedWorksforuncpaths();
     afx_msg void OnEnChangeCommandline();

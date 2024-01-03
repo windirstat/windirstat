@@ -83,7 +83,6 @@ namespace
     const LPCWSTR entryTitle                     = L"title";
     const LPCWSTR entryWorksForDrives            = L"worksForDrives";
     const LPCWSTR entryWorksForDirectories       = L"worksForDirectories";
-    const LPCWSTR entryWorksForFilesFolder       = L"worksForFilesFolder";
     const LPCWSTR entryWorksForFiles             = L"worksForFiles";
     const LPCWSTR entryWorksForUncPaths          = L"worksForUncPaths";
     const LPCWSTR entryCommandLine               = L"commandLine";
@@ -1028,7 +1027,6 @@ void COptions::ReadUserDefinedCleanup(int i)
     }
     m_userDefinedCleanup[i].worksForDrives            = getProfileBool(section, entryWorksForDrives, false);
     m_userDefinedCleanup[i].worksForDirectories       = getProfileBool(section, entryWorksForDirectories, false);
-    m_userDefinedCleanup[i].worksForFilesFolder       = getProfileBool(section, entryWorksForFilesFolder, false);
     m_userDefinedCleanup[i].worksForFiles             = getProfileBool(section, entryWorksForFiles, false);
     m_userDefinedCleanup[i].worksForUncPaths          = getProfileBool(section, entryWorksForUncPaths, false);
     m_userDefinedCleanup[i].commandLine               = getProfileString(section, entryCommandLine);
@@ -1056,8 +1054,7 @@ void COptions::SaveUserDefinedCleanup(int i)
         setProfileString(section, entryTitle, m_userDefinedCleanup[i].title);
     }
     getProfileBool(section, entryWorksForDrives, m_userDefinedCleanup[i].worksForDrives);
-    getProfileBool(section, entryWorksForDirectories, m_userDefinedCleanup[i].worksForDirectories);
-    getProfileBool(section, entryWorksForFilesFolder, m_userDefinedCleanup[i].worksForFilesFolder);
+    getProfileBool(section, entryWorksForDirectories, m_userDefinedCleanup[i].worksForDirectories);;
     getProfileBool(section, entryWorksForFiles, m_userDefinedCleanup[i].worksForFiles);
     getProfileBool(section, entryWorksForUncPaths, m_userDefinedCleanup[i].worksForUncPaths);
     setProfileString(section, entryCommandLine, m_userDefinedCleanup[i].commandLine);

@@ -35,7 +35,6 @@ CPageCleanups::CPageCleanups()
       , m_title(wds::strEmpty)
       , m_worksForDrives(FALSE)
       , m_worksForDirectories(FALSE)
-      , m_worksForFilesFolder(FALSE)
       , m_worksForFiles(FALSE)
       , m_worksForUncPaths(FALSE)
       , m_commandLine(wds::strEmpty)
@@ -57,7 +56,6 @@ void CPageCleanups::DoDataExchange(CDataExchange* pDX)
     DDX_Text(pDX, IDC_TITLE, m_title);
     DDX_Check(pDX, IDC_WORKSFORDRIVES, m_worksForDrives);
     DDX_Check(pDX, IDC_WORKSFORDIRECTORIES, m_worksForDirectories);
-    DDX_Check(pDX, IDC_WORKSFORFILESFOLDER, m_worksForFilesFolder);
     DDX_Check(pDX, IDC_WORKSFORFILES, m_worksForFiles);
     DDX_Check(pDX, IDC_WORKSFORUNCPATHS, m_worksForUncPaths);
     DDX_Text(pDX, IDC_COMMANDLINE, m_commandLine);
@@ -71,7 +69,6 @@ void CPageCleanups::DoDataExchange(CDataExchange* pDX)
     DDX_Control(pDX, IDC_TITLE, m_ctlTitle);
     DDX_Control(pDX, IDC_WORKSFORDRIVES, m_ctlWorksForDrives);
     DDX_Control(pDX, IDC_WORKSFORDIRECTORIES, m_ctlWorksForDirectories);
-    DDX_Control(pDX, IDC_WORKSFORFILESFOLDER, m_ctlWorksForFilesFolder);
     DDX_Control(pDX, IDC_WORKSFORFILES, m_ctlWorksForFiles);
     DDX_Control(pDX, IDC_WORKSFORUNCPATHS, m_ctlWorksForUncPaths);
     DDX_Control(pDX, IDC_COMMANDLINE, m_ctlCommandLine);
@@ -92,7 +89,6 @@ BEGIN_MESSAGE_MAP(CPageCleanups, CPropertyPage)
     ON_EN_CHANGE(IDC_TITLE, OnEnChangeTitle)
     ON_BN_CLICKED(IDC_WORKSFORDRIVES, OnBnClickedWorksfordrives)
     ON_BN_CLICKED(IDC_WORKSFORDIRECTORIES, OnBnClickedWorksfordirectories)
-    ON_BN_CLICKED(IDC_WORKSFORFILESFOLDER, OnBnClickedWorksforfilesfolder)
     ON_BN_CLICKED(IDC_WORKSFORFILES, OnBnClickedWorksforfiles)
     ON_BN_CLICKED(IDC_WORKSFORUNCPATHS, OnBnClickedWorksforuncpaths)
     ON_EN_CHANGE(IDC_COMMANDLINE, OnEnChangeCommandline)
@@ -180,7 +176,6 @@ void CPageCleanups::CurrentUdcToDialog()
     m_title                     = m_udc[m_current].title;
     m_worksForDrives            = m_udc[m_current].worksForDrives;
     m_worksForDirectories       = m_udc[m_current].worksForDirectories;
-    m_worksForFilesFolder       = m_udc[m_current].worksForFilesFolder;
     m_worksForFiles             = m_udc[m_current].worksForFiles;
     m_worksForUncPaths          = m_udc[m_current].worksForUncPaths;
     m_commandLine               = m_udc[m_current].commandLine;
@@ -202,7 +197,6 @@ void CPageCleanups::DialogToCurrentUdc()
     m_udc[m_current].title                     = m_title;
     m_udc[m_current].worksForDrives            = FALSE != m_worksForDrives;
     m_udc[m_current].worksForDirectories       = FALSE != m_worksForDirectories;
-    m_udc[m_current].worksForFilesFolder       = FALSE != m_worksForFilesFolder;
     m_udc[m_current].worksForFiles             = FALSE != m_worksForFiles;
     m_udc[m_current].worksForUncPaths          = FALSE != m_worksForUncPaths;
     m_udc[m_current].commandLine               = m_commandLine;
@@ -242,7 +236,6 @@ void CPageCleanups::UpdateControlStatus()
     m_ctlTitle.EnableWindow(m_enabled);
     m_ctlWorksForDrives.EnableWindow(m_enabled);
     m_ctlWorksForDirectories.EnableWindow(m_enabled);
-    m_ctlWorksForFilesFolder.EnableWindow(m_enabled);
     m_ctlWorksForFiles.EnableWindow(m_enabled);
     m_ctlWorksForUncPaths.EnableWindow(m_enabled);
     m_ctlCommandLine.EnableWindow(m_enabled);
@@ -293,11 +286,6 @@ void CPageCleanups::OnBnClickedWorksfordirectories()
 {
     OnSomethingChanged();
     UpdateControlStatus();
-}
-
-void CPageCleanups::OnBnClickedWorksforfilesfolder()
-{
-    OnSomethingChanged();
 }
 
 void CPageCleanups::OnBnClickedWorksforfiles()
