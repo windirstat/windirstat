@@ -218,7 +218,9 @@ CStringW PadWidthBlanks(CStringW n, int width)
 CStringW FormatFileTime(const FILETIME& t)
 {
     SYSTEMTIME st;
-    if (!::FileTimeToSystemTime(&t, &st))
+    FILETIME ft;
+    if (::FileTimeToLocalFileTime(&t, &ft) == 0 ||
+        ::FileTimeToSystemTime(&ft, &st) == 0)
     {
         return MdGetWinErrorText(::GetLastError());
     }
@@ -226,11 +228,11 @@ CStringW FormatFileTime(const FILETIME& t)
     const LCID lcid = MAKELCID(GetWDSApp()->GetEffectiveLangid(), SORT_DEFAULT);
 
     CStringW date;
-    VERIFY(0 < ::GetDateFormat(lcid, DATE_SHORTDATE, &st, NULL, date.GetBuffer(256), 256));
+    VERIFY(0 < ::GetDateFormat(lcid, DATE_SHORTDATE, &st, NULL, date.GetBuffer(64), 64));
     date.ReleaseBuffer();
 
     CStringW time;
-    VERIFY(0 < GetTimeFormat(lcid, 0, &st, NULL, time.GetBuffer(256), 256));
+    VERIFY(0 < GetTimeFormat(lcid, TIME_NOSECONDS, &st, NULL, time.GetBuffer(64), 64));
     time.ReleaseBuffer();
 
     return date + L"  " + time;
