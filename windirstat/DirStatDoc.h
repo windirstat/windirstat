@@ -115,7 +115,7 @@ public:
 
     size_t GetSelectionCount();
     CItem* GetSelection(size_t i);
-    void UpdateMenuOptions(CMenu* menu);
+    void OnUpdateCentralHandler(CCmdUI* pCmdUI);
 
     void SetHighlightExtension(LPCWSTR ext);
     CStringW GetHighlightExtension();

@@ -39,7 +39,7 @@ public:
 protected:
     void DoOperation() override;
 
-    void DoDeleteFile();
+    void DoDeleteItem();
 
     int m_operation;     // Enum specifying the desired operation
     CStringW m_fileName; // File name to be deleted

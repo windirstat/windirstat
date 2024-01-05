@@ -908,9 +908,6 @@ void CMainFrame::OnInitMenuPopup(CMenu* pPopupMenu, UINT nIndex, BOOL bSysMenu)
             UpdateCleanupMenu(pPopupMenu);
         }
     }
-
-    // Dynamically update controls
-    GetDocument()->UpdateMenuOptions(pPopupMenu);
 }
 
 void CMainFrame::UpdateCleanupMenu(CMenu* menu)

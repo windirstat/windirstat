@@ -980,83 +980,89 @@ bool CDirstatDoc::DirectoryListHasFocus()
     return LF_DIRECTORYLIST == GetMainFrame()->GetLogicalFocus();
 }
 
-void CDirstatDoc::UpdateMenuOptions(CMenu* menu)
+void CDirstatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
 {
     struct command_filter
     {
-        unsigned int id;      // id of the control
         bool allow_none;      // allow display when nothing is selected
         bool allow_many;      // allow display when multiple items are selected
         bool allow_early;     // allow display before processing is finished
         bool tree_focus;      // only display in tree view
         ITEMTYPE types_allow; // only display if these types are allowed
-        bool (*extra)(CItem*) = [](CItem *) { return true; }; // extra checks
+        bool (*extra)(CItem*) = [](CItem*) { return true; }; // extra checks
     };
 
-    // special cases
+    // special conditions
     static auto doc = this;
     static bool (*can_zoom_out)(CItem*) = [](CItem*) { return doc->GetZoomItem() != doc->GetRootItem(); };
-    static bool (*parent_not_null)(CItem*) = [](CItem*item) { return item->GetParent() != nullptr; };
+    static bool (*parent_not_null)(CItem*) = [](CItem* item) { return item->GetParent() != nullptr; };
     static bool (*reslect_avail)(CItem*) = [](CItem*) { return doc->IsReselectChildAvailable(); };
-    
-    static std::vector<command_filter> filters =
+    static bool (*not_root)(CItem*) = [](CItem* item) { return !item->IsRootItem(); };
+
+    static std::map<UINT, const command_filter> filters
     {
-        // ID                             none   many   early  focus  types
-        { ID_REFRESHALL,                  true,  true,  false, false, IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY},
-        { ID_REFRESHSELECTED,             false, true,  false, true,  IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY} ,
-        { ID_EDIT_COPY,                   false, true,  true,  false, IT_DRIVE | IT_DIRECTORY | IT_FILE} ,
-        { ID_CLEANUP_EMPTYRECYCLEBIN,     true,  true,  false, false, IT_ANY} ,
-        { ID_TREEMAP_RESELECTCHILD,       true,  true,  true,  false, IT_ANY, reslect_avail },
-        { ID_TREEMAP_SELECTPARENT,        false, false, true,  false, IT_ANY, parent_not_null },
-        { ID_TREEMAP_ZOOMIN,              false, false, false, false, IT_DRIVE | IT_DIRECTORY} ,
-        { ID_TREEMAP_ZOOMOUT,             false, false, false, false, IT_DIRECTORY, can_zoom_out } ,
-        { ID_CLEANUP_OPENINEXPLORER,      false, true,  true,  false, IT_DIRECTORY | IT_FILE } ,
-        { ID_CLEANUP_OPENINCONSOLE,       false, true,  false, false, IT_DRIVE | IT_DIRECTORY | IT_FILE} ,
-        { ID_CLEANUP_DELETETORECYCLEBIN,  false, true,  false, true,  IT_DIRECTORY | IT_FILE} ,
-        { ID_CLEANUP_DELETE,              false, true,  false, true,  IT_DIRECTORY | IT_FILE} ,
-        { ID_CLEANUP_OPEN,                false, true,  true,  false, IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY | IT_FILE} ,
-        { ID_CLEANUP_PROPERTIES,          false, true,  true,  false, IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY}
+        // ID                              none   many   early  focus  types
+        { ID_REFRESHALL,                 { true,  true,  false, false, IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY} },
+        { ID_REFRESHSELECTED,            { false, true,  false, true,  IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY} },
+        { ID_EDIT_COPY,                  { false, true,  true,  false, IT_DRIVE | IT_DIRECTORY | IT_FILE} },
+        { ID_CLEANUP_EMPTYRECYCLEBIN,    { true,  true,  false, false, IT_ANY} },
+        { ID_TREEMAP_RESELECTCHILD,      { true,  true,  true,  false, IT_ANY, reslect_avail } },
+        { ID_TREEMAP_SELECTPARENT,       { false, false, true,  false, IT_ANY, parent_not_null } },
+        { ID_TREEMAP_ZOOMIN,             { false, false, false, false, IT_DRIVE | IT_DIRECTORY} },
+        { ID_TREEMAP_ZOOMOUT,            { false, false, false, false, IT_DIRECTORY, can_zoom_out } },
+        { ID_CLEANUP_OPENINEXPLORER,     { false, true,  true,  false, IT_DIRECTORY | IT_FILE } },
+        { ID_CLEANUP_OPENINCONSOLE,      { false, true,  false, false, IT_DRIVE | IT_DIRECTORY | IT_FILE} },
+        { ID_CLEANUP_DELETETORECYCLEBIN, { false, true,  true,  true,  IT_DIRECTORY | IT_FILE, not_root } },
+        { ID_CLEANUP_DELETE,             { false, true,  true,  true,  IT_DIRECTORY | IT_FILE, not_root } },
+        { ID_CLEANUP_OPEN,               { false, true,  true,  false, IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY | IT_FILE} },
+        { ID_CLEANUP_PROPERTIES,         { false, true,  true,  false, IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY} }
     };
 
-    const auto & items = CTreeListControl::GetTheTreeListControl()->GetAllSelected<CItem>();
-    for (const auto & filter : filters)
+    if (!filters.contains(pCmdUI->m_nID))
     {
-        bool allow = true;
-        allow &= !filter.tree_focus || DirectoryListHasFocus();
-        allow &= filter.allow_none || !items.empty();
-        allow &= filter.allow_many || items.size() <= 1;
-        allow &= filter.allow_early || GetDocument()->GetZoomItem()->IsDone();
-        for (const auto & item : items)
-        {
-            allow &= filter.extra(item);
-            allow &= item->IsType(filter.types_allow);
-        }
-
-        menu->EnableMenuItem(filter.id, (allow) ? MF_ENABLED : MF_DISABLED);
+        ASSERT(0);
+        return;
     }
+
+    const auto& filter = filters[pCmdUI->m_nID];
+    const auto& items = CTreeListControl::GetTheTreeListControl()->GetAllSelected<CItem>();
+
+    bool allow = true;
+    allow &= !filter.tree_focus || DirectoryListHasFocus();
+    allow &= filter.allow_none || !items.empty();
+    allow &= filter.allow_many || items.size() <= 1;
+    allow &= filter.allow_early || IsRootDone();
+    for (const auto& item : items)
+    {
+        allow &= filter.extra(item);
+        allow &= item->IsType(filter.types_allow);
+    }
+
+    pCmdUI->Enable(allow);
 }
 
-BEGIN_MESSAGE_MAP(CDirstatDoc, CDocument)
-    ON_COMMAND(ID_REFRESHSELECTED, OnRefreshSelected)
-    ON_COMMAND(ID_REFRESHALL, OnRefreshAll)
-    ON_COMMAND(ID_EDIT_COPY, OnEditCopy)
-    ON_COMMAND(ID_CLEANUP_EMPTYRECYCLEBIN, OnCleanupEmptyRecycleBin)
+#define ON_COMMAMD_UPDATE_WRAPPER(x,y) ON_COMMAND(x, y) ON_UPDATE_COMMAND_UI(x, OnUpdateCentralHandler)
+BEGIN_MESSAGE_MAP(CDirstatDoc, CDocument) 
+    ON_COMMAMD_UPDATE_WRAPPER(ID_REFRESHSELECTED, OnRefreshSelected)
+    ON_COMMAMD_UPDATE_WRAPPER(ID_REFRESHALL, OnRefreshAll)
+    ON_COMMAMD_UPDATE_WRAPPER(ID_EDIT_COPY, OnEditCopy)
+    ON_COMMAMD_UPDATE_WRAPPER(ID_CLEANUP_EMPTYRECYCLEBIN, OnCleanupEmptyRecycleBin)
     ON_UPDATE_COMMAND_UI(ID_VIEW_SHOWFREESPACE, OnUpdateViewShowFreeSpace)
     ON_COMMAND(ID_VIEW_SHOWFREESPACE, OnViewShowFreeSpace)
     ON_UPDATE_COMMAND_UI(ID_VIEW_SHOWUNKNOWN, OnUpdateViewShowUnknown)
     ON_COMMAND(ID_VIEW_SHOWUNKNOWN, OnViewShowUnknown)
-    ON_COMMAND(ID_TREEMAP_ZOOMIN, OnTreemapZoomIn)
-    ON_COMMAND(ID_TREEMAP_ZOOMOUT, OnTreemapZoomOut)
-    ON_COMMAND(ID_CLEANUP_OPENINEXPLORER, OnExplorerHere)
-    ON_COMMAND(ID_CLEANUP_OPENINCONSOLE, OnCommandPromptHere)
-    ON_COMMAND(ID_CLEANUP_DELETETORECYCLEBIN, OnCleanupDeleteToRecycleBin)
-    ON_COMMAND(ID_CLEANUP_DELETE, OnCleanupDelete)
+    ON_COMMAMD_UPDATE_WRAPPER(ID_TREEMAP_ZOOMIN, OnTreemapZoomIn)
+    ON_COMMAMD_UPDATE_WRAPPER(ID_TREEMAP_ZOOMOUT, OnTreemapZoomOut)
+    ON_COMMAMD_UPDATE_WRAPPER(ID_CLEANUP_OPENINEXPLORER, OnExplorerHere)
+    ON_COMMAMD_UPDATE_WRAPPER(ID_CLEANUP_OPENINCONSOLE, OnCommandPromptHere)
+    ON_COMMAMD_UPDATE_WRAPPER(ID_CLEANUP_DELETETORECYCLEBIN, OnCleanupDeleteToRecycleBin)
+    ON_COMMAMD_UPDATE_WRAPPER(ID_CLEANUP_DELETE, OnCleanupDelete)
     ON_UPDATE_COMMAND_UI_RANGE(ID_USERDEFINEDCLEANUP0, ID_USERDEFINEDCLEANUP9, OnUpdateUserDefinedCleanup)
     ON_COMMAND_RANGE(ID_USERDEFINEDCLEANUP0, ID_USERDEFINEDCLEANUP9, OnUserDefinedCleanup)
-    ON_COMMAND(ID_TREEMAP_SELECTPARENT, OnTreemapSelectParent)
-    ON_COMMAND(ID_TREEMAP_RESELECTCHILD, OnTreemapReselectChild)
-    ON_COMMAND(ID_CLEANUP_OPEN, OnCleanupOpen)
-    ON_COMMAND(ID_CLEANUP_PROPERTIES, OnCleanupProperties)
+    ON_COMMAMD_UPDATE_WRAPPER(ID_TREEMAP_SELECTPARENT, OnTreemapSelectParent)
+    ON_COMMAMD_UPDATE_WRAPPER(ID_TREEMAP_RESELECTCHILD, OnTreemapReselectChild)
+    ON_COMMAMD_UPDATE_WRAPPER(ID_CLEANUP_OPEN, OnCleanupOpen)
+    ON_COMMAMD_UPDATE_WRAPPER(ID_CLEANUP_PROPERTIES, OnCleanupProperties)
 END_MESSAGE_MAP()
 
 void CDirstatDoc::OnRefreshSelected()

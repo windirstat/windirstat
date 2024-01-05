@@ -116,8 +116,6 @@ void CMyTreeListControl::OnItemDoubleClick(int i)
 
 void CMyTreeListControl::PrepareDefaultMenu(CMenu* menu, const CItem* item)
 {
-    GetDocument()->UpdateMenuOptions(menu);
-
     if (item->TmiIsLeaf())
     {
         menu->DeleteMenu(0, MF_BYPOSITION); // Remove "Expand/Collapse" item

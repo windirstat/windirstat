@@ -149,3 +149,16 @@ CString FileFindEnhanced::GetFilePath() const
 {
     return m_base;
 }
+
+CString FileFindEnhanced::GetLongPathCompatible(const CStringW & path)
+{
+    CStringW ret;
+    if (path.Find(L":\\", 1) == 1) ret = L"\\\\?\\" + path;
+    else if (path.Find(L"\\\\") == 0) ret = L"\\\\?\\UNC\\" + path.Mid(2);
+    else
+    {
+        ASSERT(0);
+    }
+
+    return ret;
+}

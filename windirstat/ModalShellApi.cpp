@@ -22,6 +22,11 @@
 #include "stdafx.h"
 #include "WinDirStat.h"
 #include "ModalShellApi.h"
+#include "SmartPointer.h"
+#include "FileFind.h"
+
+#include <VersionHelpers.h>
+#include <filesystem>
 
 namespace
 {
@@ -52,27 +57,39 @@ void CModalShellApi::DoOperation()
     {
     case DELETE_FILE:
         {
-            DoDeleteFile();
+            DoDeleteItem();
         }
         break;
     }
 }
 
-void CModalShellApi::DoDeleteFile()
+void CModalShellApi::DoDeleteItem()
 {
-    const int len    = m_fileName.GetLength();
-    const LPWSTR psz = m_fileName.GetBuffer(len + 2);
-    psz[len + 1]     = 0;
+    if (m_toRecycleBin)
+    {
+        // Determine flags to use for deletion
+        const auto flags = FOF_NOCONFIRMATION | FOFX_EARLYFAILURE | FOFX_SHOWELEVATIONPROMPT |
+            (IsWindows8OrGreater() ? (FOFX_ADDUNDORECORD | FOFX_RECYCLEONDELETE) : FOF_ALLOWUNDO);
 
-    SHFILEOPSTRUCT sfos;
-    ZeroMemory(&sfos, sizeof(sfos));
-    sfos.wFunc  = FO_DELETE;
-    sfos.pFrom  = psz;
-    sfos.fFlags = m_toRecycleBin ? FOF_ALLOWUNDO : 0;
+        // Do deletion operation
+        SmartPointer<LPITEMIDLIST> pidl(CoTaskMemFree, ILCreateFromPath(m_fileName));
+        CComPtr<IShellItem> shellitem = nullptr;
+        SHCreateItemFromIDList(pidl, IID_PPV_ARGS(&shellitem));
 
-    sfos.hwnd = *AfxGetMainWnd();
+        ::CComPtr<IFileOperation> pFileOperation;
+        if (FAILED(::CoCreateInstance(CLSID_FileOperation, nullptr, CLSCTX_ALL, IID_PPV_ARGS(&pFileOperation))) ||
+            FAILED(pFileOperation->SetOperationFlags(flags)) ||
+            FAILED(pFileOperation->DeleteItem(shellitem, nullptr)) ||
+            FAILED(pFileOperation->PerformOperations()))
+        {
+            return;
+        }
+    }
+    else
+    {
+        CString path = FileFindEnhanced::GetLongPathCompatible(m_fileName);
+        std::filesystem::remove_all(std::filesystem::path(path.GetBuffer()));
+    }
 
-    ::SHFileOperation(&sfos); // FIXME: use return value
-
-    m_fileName.ReleaseBuffer();
+    return;
 }

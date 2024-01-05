@@ -65,4 +65,5 @@ public:
     CString GetFileName() const;
     ULONGLONG GetCompressedLength() const;
     CString GetFilePath() const;
+    static CString GetLongPathCompatible(const CStringW& path);
 };
