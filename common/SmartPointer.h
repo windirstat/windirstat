@@ -50,7 +50,7 @@ public:
         }
     }
 
-    SmartPointer(SmartPointer<T>&& src)
+    SmartPointer(SmartPointer<T>&& src) noexcept
     {
         m_cleanup = src.m_cleanup;
         m_data = src.m_data;

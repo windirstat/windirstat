@@ -29,23 +29,23 @@ class CPacman final
 public:
     CPacman();
     void SetBackgroundColor(COLORREF color);
-    void SetSpeed(double speed);
+    void SetSpeed(float speed);
     void Reset();
     void Start(bool start);
     bool Drive(ULONGLONG readJobs); // return: true -> should be redrawn.
     void Draw(CDC* pdc, const CRect& rect) const;
 
 private:
-    void UpdatePosition(double& position, bool& up, double diff);
+    void UpdatePosition(float& position, bool& up, float diff);
     COLORREF CalculateColor() const;
 
-    COLORREF m_bgcolor;     // Background color
-    double m_speed;         // Speed in full width / ms
-    bool m_moving;          // Whether pacman is moving
-    double m_readJobs;      // # of read jobs determines our color
-    bool m_toTheRight;      // moving right
-    double m_position;      // 0...1
-    bool m_mouthOpening;    // Mouth is opening
-    double m_aperture;      // 0...1
     ULONGLONG m_lastUpdate; // TickCount
+    COLORREF m_bgcolor;     // Background color
+    float m_speed;         // Speed in full width / ms
+    float m_readJobs;      // # of read jobs determines our color
+    float m_position;      // 0...1
+    float m_aperture;      // 0...1
+    bool m_moving;          // Whether pacman is moving
+    bool m_toTheRight;      // moving right
+    bool m_mouthOpening;    // Mouth is opening
 };

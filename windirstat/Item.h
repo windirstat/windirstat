@@ -231,25 +231,20 @@ private:
     void UpwardDrivePacman();
     void DrivePacman();
 
-    ITEMTYPE m_type; // Indicates our type. See ITEMTYPE.
-    CStringW m_name;              // Display name
-    mutable CStringW m_extension; // Cache of extension (it's used often)
-    mutable bool m_extension_cached;
-    ULONGLONG m_size;           // OwnSize, if IT_FILE or IT_FREESPACE, or IT_UNKNOWN; SubtreeTotal else.
-    ULONGLONG m_files;          // # Files in subtree
-    ULONGLONG m_subdirs;        // # Folder in subtree
-    FILETIME m_lastChange;      // Last modification time OF SUBTREE
-    unsigned char m_attributes; // Packed file attributes of the item
-
-    bool m_readJobDone;      // FindFiles() (our own read job) is finished.
-    bool m_done;             // Whole Subtree is done.
-    ULONGLONG m_ticksWorked; // ms time spent on this item.
-    ULONGLONG m_readJobs;    // # "read jobs" in subtree.
-
-
     // Our children. When "this" is set to "done", this array is sorted by child size.
     CArray<CItem*, CItem*> m_children;
 
-    // For GraphView:
-    RECT m_rect; // Finally, this is our coordinates in the Treemap view.
+    CStringW m_name;              // Display name
+    LPCWSTR m_extension;          // Cache of extension (it's used often)
+    RECT m_rect;                  // To support GraphView
+    FILETIME m_lastChange;        // Last modification time OF SUBTREE
+    ULONGLONG m_size;             // OwnSize, if IT_FILE or IT_FREESPACE, or IT_UNKNOWN; SubtreeTotal else.
+    ULONGLONG m_files;            // # Files in subtree
+    ULONGLONG m_subdirs;          // # Folder in subtree
+    ULONGLONG m_ticksWorked;      // ms time spent on this item.
+    ULONGLONG m_readJobs;         // # "read jobs" in subtree.
+    ITEMTYPE m_type;              // Indicates our type.
+    bool m_readJobDone;           // FindFiles() (our own read job) is finished.
+    bool m_done;                  // Whole Subtree is done.
+    unsigned char m_attributes;   // Packed file attributes of the item
 };

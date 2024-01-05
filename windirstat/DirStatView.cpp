@@ -376,7 +376,7 @@ void CDirstatView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
                 ::DispatchMessage(&msg);
             }
         }
-    // fall through
+        [[fallthrough]];
     case HINT_NULL:
         {
             m_treeListControl.Sort();

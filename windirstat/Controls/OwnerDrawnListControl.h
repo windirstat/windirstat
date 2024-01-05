@@ -116,13 +116,13 @@ protected:
     int GetSubItemWidth(COwnerDrawnListItem* item, int subitem);
     bool IsColumnRightAligned(int col) const;
 
+    COLORREF m_windowColor;      // The default background color if !m_showStripes
+    COLORREF m_stripeColor;      // The stripe color, used for every other item if m_showStripes
     int m_rowHeight;             // Height of an item
+    int m_yFirstItem;            // Top of a first list item
     bool m_showGrid;             // Whether to draw a grid
     bool m_showStripes;          // Whether to show stripes
     bool m_showFullRowSelection; // Whether to draw full row selection
-    int m_yFirstItem;            // Top of a first list item
-    COLORREF m_windowColor;      // The default background color if !m_showStripes
-    COLORREF m_stripeColor;      // The stripe color, used for every other item if m_showStripes
 
     DECLARE_MESSAGE_MAP()
     afx_msg BOOL OnEraseBkgnd(CDC* pDC);

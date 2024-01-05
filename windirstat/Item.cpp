@@ -28,7 +28,9 @@
 #include "WorkLimiter.h"
 #include "Item.h"
 
+#include <string>
 #include <algorithm>
+#include <unordered_set>
 
 #include "GlobalHelpers.h"
 
@@ -52,17 +54,17 @@ namespace
 
 
 CItem::CItem(ITEMTYPE type, LPCWSTR name, bool dontFollow)
-    : m_type(type)
-      , m_name(name)
-      , m_extension_cached(false)
+    : m_name(name)
+      , m_lastChange{0,0}
       , m_size(0)
       , m_files(0)
       , m_subdirs(0)
-      , m_attributes(0)
-      , m_readJobDone(false)
-      , m_done(false)
       , m_ticksWorked(0)
       , m_readJobs(0)
+      , m_type(type)
+      , m_readJobDone(false)
+      , m_done(false)
+      , m_attributes(0)
 {
     if (IsType(IT_FILE | IT_FREESPACE | IT_UNKNOWN | IT_MYCOMPUTER) || dontFollow)
     {
@@ -79,7 +81,27 @@ CItem::CItem(ITEMTYPE type, LPCWSTR name, bool dontFollow)
         m_name = FormatVolumeNameOfRootPath(m_name);
     }
 
-    ZeroMemory(&m_lastChange, sizeof(m_lastChange));
+    if (IsType(IT_FILE))
+    {
+        const LPCWSTR ext = wcsrchr(name, L'.');
+        if (ext == nullptr)
+        {
+            static LPCWSTR noext = L".";
+            m_extension = noext;
+        }
+        else
+        {
+            static std::unordered_set<std::wstring> extcache;
+            std::wstring exttoadd(&ext[0]);
+            _wcslwr_s(exttoadd.data(), exttoadd.size() + 1);
+            const auto cached = extcache.insert(std::move(exttoadd));
+            m_extension = cached.first->c_str();
+        }
+    }
+    else
+    {
+        m_extension = m_name.GetString();
+    }
 }
 
 CItem::~CItem()
@@ -525,7 +547,7 @@ CItem* CItem::GetChild(int i) const
 
 CItem* CItem::GetParent() const
 {
-    return static_cast<CItem*>(CTreeListItem::GetParent());
+    return reinterpret_cast<CItem*>(CTreeListItem::GetParent());
 }
 
 int CItem::FindChildIndex(const CItem* child) const
@@ -891,46 +913,7 @@ CStringW CItem::GetName() const
 
 CStringW CItem::GetExtension() const
 {
-    if (m_extension_cached)
-        return m_extension;
-
-    CStringW ext;
-
-    const CStringW name = GetName();
-
-    switch (GetType())
-    {
-    case IT_FILE:
-        {
-            const int i = name.ReverseFind(wds::chrDot);
-            if (i == -1)
-            {
-                ext = L".";
-            }
-            else
-            {
-                // Faster than name.Mid(i);
-                const auto alpha = static_cast<LPCWSTR>(name);
-                ext              = &alpha[i];
-            }
-            ext.MakeLower();
-            break;
-        }
-    case IT_FREESPACE:
-    case IT_UNKNOWN:
-        {
-            ext = name;
-        }
-        break;
-
-    default:
-        ASSERT(0);
-    }
-
-    m_extension        = ext;
-    m_extension_cached = true;
-
-    return ext;
+    return m_extension;
 }
 
 ULONGLONG CItem::GetFilesCount() const
@@ -1547,7 +1530,7 @@ void CItem::RecurseCollectExtensionData(CExtensionData* ed)
     {
         if (IsType(IT_FILE))
         {
-            const CStringW ext = GetExtension();
+            const CStringW & ext = GetExtension();
             SExtensionRecord r;
             if (ed->Lookup(ext, r))
             {

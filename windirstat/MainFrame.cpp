@@ -308,7 +308,7 @@ void CMySplitterWnd::OnDestroy()
 CPacmanControl::CPacmanControl()
 {
     m_pacman.SetBackgroundColor(::GetSysColor(COLOR_BTNFACE));
-    m_pacman.SetSpeed(0.00005);
+    m_pacman.SetSpeed(0.00005f);
 }
 
 void CPacmanControl::Drive(ULONGLONG readJobs)

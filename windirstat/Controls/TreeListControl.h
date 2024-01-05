@@ -41,12 +41,6 @@ class CTreeListItem : public COwnerDrawnListItem
     // Data needed to display the item.
     struct VISIBLEINFO
     {
-        int indent;        // 0 for the root item, 1 for its children, and so on.
-        int image;         // -1 as long as not needed, >= 0: valid index in MyImageList.
-        CRect rcPlusMinus; // Coordinates of the little +/- rectangle, relative to the upper left corner of the item.
-        CRect rcTitle;     // Coordinates of the label, relative to the upper left corner of the item.
-        bool isExpanded;   // Whether item is expanded.
-
         // sortedChildren: This member contains our children (the same set of
         // children as in CItem::m_children) and is initialized as soon as
         // we are expanded. In contrast to CItem::m_children, this array is always
@@ -54,6 +48,11 @@ class CTreeListItem : public COwnerDrawnListItem
         CArray<CTreeListItem*, CTreeListItem*> sortedChildren;
 
         CPacman pacman;
+        CRect rcPlusMinus; // Coordinates of the little +/- rectangle, relative to the upper left corner of the item.
+        CRect rcTitle;     // Coordinates of the label, relative to the upper left corner of the item.
+        int indent;        // 0 for the root item, 1 for its children, and so on.
+        int image;         // -1 as long as not needed, >= 0: valid index in MyImageList.
+        bool isExpanded;   // Whether item is expanded.
 
         VISIBLEINFO(int iIndent)
             : indent(iIndent)

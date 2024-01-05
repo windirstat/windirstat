@@ -25,20 +25,20 @@
 
 namespace
 {
-    constexpr ULONGLONG UPDATEINTERVAL = 40;     // ms
-    constexpr double MOUTHSPEED        = 0.0030; // aperture alteration / ms
+    constexpr ULONGLONG UPDATEINTERVAL = 40; // ms
+    constexpr float MOUTHSPEED = 0.0030f;    // aperture alteration / ms
 }
 
 CPacman::CPacman()
-    : m_bgcolor(::GetSysColor(COLOR_WINDOW))
-      , m_speed(0.0005)
-      , m_moving(false)
+    : m_lastUpdate(0)
+      , m_bgcolor(::GetSysColor(COLOR_WINDOW))
+      , m_speed(0.0005f)
       , m_readJobs(0)
-      , m_toTheRight(true)
       , m_position(0)
-      , m_mouthOpening(false)
       , m_aperture(0)
-      , m_lastUpdate(0)
+      , m_moving(false)
+      , m_toTheRight(true)
+      , m_mouthOpening(false)
 {
     Reset();
 }
@@ -56,7 +56,7 @@ void CPacman::SetBackgroundColor(COLORREF color)
     m_bgcolor = color;
 }
 
-void CPacman::SetSpeed(double speed)
+void CPacman::SetSpeed(float speed)
 {
     m_speed = speed;
 }
@@ -69,7 +69,7 @@ void CPacman::Start(bool start)
 
 bool CPacman::Drive(ULONGLONG readJobs)
 {
-    m_readJobs = static_cast<double>(readJobs);
+    m_readJobs = static_cast<float>(readJobs);
 
     if (!m_moving)
     {
@@ -141,7 +141,7 @@ void CPacman::Draw(CDC* pdc, const CRect& rect) const
 }
 
 
-void CPacman::UpdatePosition(double& position, bool& up, double diff)
+void CPacman::UpdatePosition(float& position, bool& up, float diff)
 {
     ASSERT(diff >= 0.0);
     ASSERT(position >= 0.0);
@@ -153,7 +153,7 @@ void CPacman::UpdatePosition(double& position, bool& up, double diff)
         {
             if (position + diff > 1.0)
             {
-                diff     = position + diff - 1.0;
+                diff     = position + diff - 1.0f;
                 position = 1.0;
                 up       = false;
             }
