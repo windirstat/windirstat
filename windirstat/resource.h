@@ -109,7 +109,6 @@
 #define IDR_TEXT1                       900
 #define IDR_AUTHORS                     900
 #define IDR_TEXT2                       901
-
 #define IDB_JUNCTIONPOINT               902
 #define IDD_CHECKFORUPDATE              903
 #define IDC_ALLDRIVES                   1000
@@ -202,7 +201,6 @@
 #define ID_FILE_REFRESHALL              32773
 #define ID_CLEANUP_OPENINEXPLORER       32774
 #define ID_CLEANUP_COMPRESS             32776
-#define ID_CLEANUP_DELETETRASHFILES     32777
 #define ID_Menu                         32781
 #define ID_TREEMAP_ZOOMIN               32783
 #define ID_TREEMAP_ZOOMOUT              32784
@@ -219,11 +217,10 @@
 #define ID_HELP_SENDFEEDBACKMAIL        32797
 #define ID_FILE_REFRESHSELECTED         32801
 #define ID_FILE_CONTINUEREADINGATMOUNTPOINT 32802
-#define ID_CLEANUP_MAKECLEAN            32803
 #define ID_FILE_OPENRECENT_0            32806
 #define ID_FILE_OPENRECENT_1            32807
 #define ID_CLEANUP_OPENINCONSOLE        32808
-#define ID_CLEANUP_DELETETORECYCLEBIN     32809
+#define ID_CLEANUP_DELETETORECYCLEBIN   32809
 #define ID_CLEANUP_DELETE               32810
 #define ID_CONFIGURE                    32813
 #define ID_HELP_MANUAL                  32814
@@ -262,7 +259,7 @@
 #define ID_POPUP_TOGGLE                 33023
 #define ID_HELP_CHECKFORUPDATES         33024
 #define ID_FILE_RUNWINDIRSTATELEVATED   33025
-#define ID_RUNELEVATED                  33026
+#define ID_RUN_ELEVATED                 33027
 #define ID_INDICATOR_MEMORYUSAGE        59142
 
 // Next default values for new objects
@@ -270,7 +267,7 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        910
-#define _APS_NEXT_COMMAND_VALUE         33027
+#define _APS_NEXT_COMMAND_VALUE         33028
 #define _APS_NEXT_CONTROL_VALUE         1230
 #define _APS_NEXT_SYMED_VALUE           104
 #endif

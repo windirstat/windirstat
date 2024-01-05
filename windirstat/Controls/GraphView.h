@@ -51,6 +51,7 @@ public:
 protected:
     BOOL PreCreateWindow(CREATESTRUCT& cs) override;
     void OnInitialUpdate() override;
+    void OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint) override;
     void OnDraw(CDC* pDC) override;
     bool IsDrawn();
     void Inactivate();
@@ -81,7 +82,6 @@ protected:
     afx_msg void OnSize(UINT nType, int cx, int cy);
     afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
     afx_msg void OnSetFocus(CWnd* pOldWnd);
-    void OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint) override;
     afx_msg void OnContextMenu(CWnd* pWnd, CPoint point);
     afx_msg void OnMouseMove(UINT nFlags, CPoint point);
     afx_msg void OnDestroy();

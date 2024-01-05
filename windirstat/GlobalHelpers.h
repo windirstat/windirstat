@@ -57,3 +57,4 @@ CStringW GetSpec_MB();
 CStringW GetSpec_GB();
 CStringW GetSpec_TB();
 BOOL IsAdmin();
+bool EnableReadPrivileges();

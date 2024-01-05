@@ -88,7 +88,7 @@
     <ClInclude Include="..\common\CommonHelpers.h">
       <Filter>Header Files\Common</Filter>
     </ClInclude>
-    <ClInclude Include="..\common\CoTaskMem.h">
+    <ClInclude Include="..\common\SmartPointer.h">
       <Filter>Header Files\Common</Filter>
     </ClInclude>
     <ClInclude Include="..\common\MdExceptions.h">
@@ -326,5 +326,8 @@
     <ResourceCompile Include="..\common\version.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\common\WinDirStat.ico" />
   </ItemGroup>
 </Project>

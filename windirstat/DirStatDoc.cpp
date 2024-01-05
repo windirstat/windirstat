@@ -27,7 +27,7 @@
 #include "deletewarningdlg.h"
 #include "ModalShellApi.h"
 #include <common/MdExceptions.h>
-#include <common/cotaskmem.h>
+#include <common/SmartPointer.h>
 #include <common/CommonHelpers.h>
 #include "DirStatDoc.h"
 
@@ -284,7 +284,8 @@ void CDirstatDoc::Serialize(CArchive& /*ar*/)
 //
 void CDirstatDoc::SetTitlePrefix(const CStringW& prefix) const
 {
-    const CStringW docName = prefix + GetTitle();
+    static CStringW suffix = IsAdmin() ? L" (Administrator)" : L"";
+    const CStringW docName = prefix + GetTitle() + suffix;
     GetMainFrame()->UpdateFrameTitleForDocument(docName);
 }
 
@@ -518,7 +519,7 @@ void CDirstatDoc::OpenItem(const CItem* item, LPCWSTR verb)
     ASSERT(item != NULL);
 
     // determine path to feed into shell function
-    CCoTaskMem<LPITEMIDLIST> pidl;
+    SmartPointer<LPITEMIDLIST> pidl(CoTaskMemFree, nullptr);
     if (item->IsType(IT_MYCOMPUTER))
     {
         (void) SHGetSpecialFolderLocation(nullptr, CSIDL_DRIVES, &pidl);
@@ -1214,30 +1215,27 @@ void CDirstatDoc::OnExplorerHere()
     for (const auto& path : paths)
     {
         // create path pidl
-        CCoTaskMem<LPITEMIDLIST> parent = ILCreateFromPath(path.c_str());
+        SmartPointer<LPITEMIDLIST> parent(CoTaskMemFree);
+        parent = ILCreateFromPath(path.c_str());
 
         // structures to hold and track pidls for children
-        auto pidl_tracker = std::make_unique<CCoTaskMem<LPITEMIDLIST>[]>(items.size());
-        auto pidl = std::make_unique<LPITEMIDLIST[]>(items.size());
+        std::vector<SmartPointer<LPITEMIDLIST>> pidl_cleanup;
+        std::vector<LPITEMIDLIST> pidl;
 
         // create list of children from paths
-        int total = 0;
         for (auto & item : items)
         {
             // not processing this path yet
             std::filesystem::path target(item->GetPath().GetString());
             if (target.parent_path() == path)
             {
-                pidl[total] = ILCreateFromPath(item->GetPath());
-                pidl_tracker[total++] = pidl[total];
+                pidl.push_back(ILCreateFromPath(item->GetPath()));
+                pidl_cleanup.emplace_back(CoTaskMemFree, pidl.back());
             }
         }
 
         // attempt to open the items in the shell
-        if (pidl != nullptr)
-        {
-            SHOpenFolderAndSelectItems(parent, total, (LPCITEMIDLIST*) &pidl[0], 0);
-        }
+        SHOpenFolderAndSelectItems(parent, static_cast<UINT>(pidl.size()), const_cast<LPCITEMIDLIST*>(pidl.data()), 0);
     }
 }
 

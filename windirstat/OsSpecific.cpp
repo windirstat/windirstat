@@ -32,7 +32,7 @@ BOOL FileIconInit(__in BOOL fRestoreCache)
     static TFNFileIconInit pfnFileIconInit = nullptr;
     if (!hShell32)
     {
-        hShell32 = ::LoadLibrary(TEXT("shell32.dll"));
+        hShell32 = ::LoadLibrary(L"shell32.dll");
     }
     if (hShell32 && !pfnFileIconInit)
     {
@@ -43,44 +43,4 @@ BOOL FileIconInit(__in BOOL fRestoreCache)
         return pfnFileIconInit(fRestoreCache);
     }
     return FALSE;
-}
-
-CStringW GetCurrentDesktopName()
-{
-    if (const HDESK hDesktop = ::GetThreadDesktop(::GetCurrentThreadId()))
-    {
-        DWORD dwNeeded = 0;
-        if (!::GetUserObjectInformation(hDesktop, UOI_NAME, nullptr, 0, &dwNeeded) && dwNeeded)
-        {
-            CStringW retval;
-            dwNeeded += sizeof(WCHAR);
-            const LPWSTR buf = retval.GetBuffer(dwNeeded);
-            if (::GetUserObjectInformation(hDesktop, UOI_NAME, buf, dwNeeded, &dwNeeded))
-            {
-                retval.ReleaseBuffer();
-                return retval;
-            }
-        }
-    }
-    return {};
-}
-
-CStringW GetCurrentWinstaName()
-{
-    if (const HWINSTA hWinsta = GetProcessWindowStation())
-    {
-        DWORD dwNeeded = 0;
-        if (!GetUserObjectInformation(hWinsta, UOI_NAME, nullptr, 0, &dwNeeded) && dwNeeded)
-        {
-            CStringW retval;
-            dwNeeded += sizeof(WCHAR);
-            const LPWSTR buf = retval.GetBuffer(dwNeeded);
-            if (GetUserObjectInformation(hWinsta, UOI_NAME, buf, dwNeeded, &dwNeeded))
-            {
-                retval.ReleaseBuffer();
-                return retval;
-            }
-        }
-    }
-    return {};
 }

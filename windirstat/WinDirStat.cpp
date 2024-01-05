@@ -36,6 +36,8 @@
 #pragma warning(push)
 #pragma warning(disable : 4091)
 #include <Dbghelp.h> // for mini dumps
+
+#include "SmartPointer.h"
 #pragma warning(pop)
 
 #ifdef _DEBUG
@@ -75,8 +77,8 @@ CMyImageList* GetMyImageList()
 BEGIN_MESSAGE_MAP(CDirstatApp, CWinApp)
     ON_COMMAND(ID_APP_ABOUT, OnAppAbout)
     ON_COMMAND(ID_FILE_OPEN, OnFileOpen)
-    ON_COMMAND(ID_RUNELEVATED, OnRunElevated)
-    ON_UPDATE_COMMAND_UI(ID_RUNELEVATED, OnUpdateRunElevated)
+    ON_COMMAND(ID_RUN_ELEVATED, OnRunElevated)
+    ON_UPDATE_COMMAND_UI(ID_RUN_ELEVATED, OnUpdateRunElevated)
     ON_COMMAND(ID_HELP_MANUAL, OnHelpManual)
 END_MESSAGE_MAP()
 
@@ -91,7 +93,6 @@ CDirstatApp::CDirstatApp()
       , m_lastPeriodicalRamUsageUpdate(GetTickCount64())
       , m_altColor(GetAlternativeColor(RGB(0x00, 0x00, 0xFF), L"AltColor"))
       , m_altEncryptionColor(GetAlternativeColor(RGB(0x00, 0x80, 0x00), L"AltEncryptionColor"))
-      , m_ElevationEvent(nullptr)
 #   ifdef VTRACE_TO_CONSOLE
       , m_vtrace_console(new CWDSTracerConsole())
 #   endif // VTRACE_TO_CONSOLE
@@ -99,17 +100,6 @@ CDirstatApp::CDirstatApp()
 #   ifdef _DEBUG
     TestScanResourceDllName();
 #   endif
-
-    m_ElevationEventName.Format(WINDIRSTAT_EVENT_NAME_FMT, GetCurrentDesktopName().GetBuffer(), GetCurrentWinstaName().GetBuffer());
-    VTRACE(L"Elevation event: %s", m_ElevationEventName.GetBuffer());
-}
-
-CDirstatApp::~CDirstatApp()
-{
-    if (m_ElevationEvent)
-    {
-        ::CloseHandle(m_ElevationEvent); //make sure this is the very last thing that is destroyed (way after WM_CLOSE)
-    }
 }
 
 CMyImageList* CDirstatApp::GetMyImageList()
@@ -489,11 +479,14 @@ BOOL CDirstatApp::InitInstance()
 {
     Inherited::InitInstance();
 
-    ::InitCommonControls();      // InitCommonControls() is necessary for Windows XP.
-    VERIFY(AfxOleInit());        // For ::SHBrowseForFolder()
-    AfxEnableControlContainer(); // For our rich edit controls in the about dialog
-    VERIFY(AfxInitRichEdit());   // Rich edit control in out about box
-    VERIFY(AfxInitRichEdit2());  // On NT, this helps.
+    // Initialize visual controls
+    constexpr INITCOMMONCONTROLSEX ctrls = { sizeof(INITCOMMONCONTROLSEX) , ICC_STANDARD_CLASSES };
+    (void)::InitCommonControlsEx(&ctrls);
+    (void)::OleInitialize(nullptr);
+    (void)::AfxOleInit();
+    (void)::AfxEnableControlContainer();
+    (void)::AfxInitRichEdit2();
+
     Inherited::EnableHtmlHelp();
 
     Inherited::SetRegistryKey(L"Seifert");
@@ -524,21 +517,6 @@ BOOL CDirstatApp::InitInstance()
         CLanguageOptions::SetLanguage(m_langid);
     }
 
-    //check for an elevation event
-    m_ElevationEvent = ::OpenEvent(SYNCHRONIZE, FALSE, m_ElevationEventName);
-
-    if (m_ElevationEvent)
-    {
-        //and if so, wait for it, so previous instance can store its config that we reload next
-        ::WaitForSingleObject(m_ElevationEvent, 20 * 1000);
-        ::CloseHandle(m_ElevationEvent);
-        m_ElevationEvent = nullptr;
-    }
-    else
-    {
-        VTRACE(L"OpenEvent failed with %d", GetLastError());
-    }
-
     GetOptions()->LoadFromRegistry();
 
     m_pDocTemplate = new CSingleDocTemplate(
@@ -554,23 +532,53 @@ BOOL CDirstatApp::InitInstance()
 
     CCommandLineInfo cmdInfo;
     ParseCommandLine(cmdInfo);
-
-    m_nCmdShow = SW_HIDE;
-    if (!ProcessShellCommand(cmdInfo))
+    if (cmdInfo.m_nShellCommand == CCommandLineInfo::FileOpen)
     {
-        return FALSE;
+        // Use the default a new document since the shell processor will fault
+        // interpreting the complex configuration string we pass as a document name
+        CCommandLineInfo cmdAlt;
+        ProcessShellCommand(cmdAlt);
     }
+    else
+    {
+        if (!ProcessShellCommand(cmdInfo))
+            return FALSE;
+    }
+
     FileIconInit(TRUE);
 
     GetMainFrame()->InitialShowWindow();
     m_pMainWnd->UpdateWindow();
 
     // When called by setup.exe, WinDirStat remained in the
-    // background, so we do a
+    // background, so force it to the foreground
     m_pMainWnd->BringWindowToTop();
     m_pMainWnd->SetForegroundWindow();
 
-    if (cmdInfo.m_nShellCommand != CCommandLineInfo::FileOpen)
+    // Attempt to enable backup / restore privileges if running as admin
+    if (IsAdmin())
+    {
+        if (!EnableReadPrivileges())
+        {
+            VTRACE(L"Failed to enable additional privileges.");
+        }
+    }
+
+    if (cmdInfo.m_nShellCommand == CCommandLineInfo::FileOpen)
+    {
+        // Terminate parent process that called us
+        int token = 0;
+        const DWORD parent = wcstoul(cmdInfo.m_strFileName.Tokenize(L"|", token), nullptr, 10);
+        cmdInfo.m_strFileName = cmdInfo.m_strFileName.Right(cmdInfo.m_strFileName.GetLength() - token);
+        SmartPointer<HANDLE> handle(CloseHandle, OpenProcess(PROCESS_TERMINATE, FALSE, parent));
+        if (handle != nullptr)
+        {
+            TerminateProcess(handle, 0);
+        }
+        
+        m_pDocTemplate->OpenDocumentFile(cmdInfo.m_strFileName, true);
+    }
+    else
     {
         OnFileOpen();
     }
@@ -615,108 +623,31 @@ void CDirstatApp::OnFileOpen()
     }
 }
 
-BOOL CDirstatApp::IsUACEnabled()
-{
-    OSVERSIONINFOEX osInfo;
-    DWORDLONG conditionMask = 0;
-
-    ZeroMemory(&osInfo, sizeof(osInfo));
-    osInfo.dwOSVersionInfoSize = sizeof(osInfo);
-    osInfo.dwMajorVersion      = 6;
-    osInfo.dwMinorVersion      = 0;
-    VER_SET_CONDITION(conditionMask, VER_MAJORVERSION, VER_GREATER_EQUAL);
-    VER_SET_CONDITION(conditionMask, VER_MINORVERSION, VER_GREATER_EQUAL);
-
-    if (::VerifyVersionInfo(&osInfo, VER_MAJORVERSION | VER_MINORVERSION, conditionMask))
-    {
-        HKEY hKey;
-        if (::RegOpenKeyW(HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\System", &hKey) == ERROR_SUCCESS)
-        {
-            DWORD value = 0;
-            if (::RegQueryValueExW(hKey, L"EnableLUA", nullptr, nullptr, nullptr, &value) == ERROR_SUCCESS)
-            {
-                return value != 0;
-            }
-            else
-            {
-                VTRACE(L"IsUACEnabled::RegQueryValueExW failed");
-            }
-
-            ::RegCloseKey(hKey);
-        }
-        else
-        {
-            VTRACE(L"IsUACEnabled::RegOpenKeyW failed");
-        }
-    }
-
-    return FALSE;
-}
-
 void CDirstatApp::OnUpdateRunElevated(CCmdUI* pCmdUI)
 {
-    pCmdUI->Enable(!IsAdmin() && IsUACEnabled());
+    pCmdUI->Enable(!IsAdmin());
 }
-
-#ifndef SEE_MASK_DEFAULT
-#   define SEE_MASK_DEFAULT           0x00000000
-#endif
 
 void CDirstatApp::OnRunElevated()
 {
-    if (IsAdmin() || !IsUACEnabled())
-    {
-        return;
-    }
-
+    // For the configuration to launch, include the parent process so we can
+    // terminate it once launched from the child process
     const CStringW sAppName = GetAppFileName();
+    CStringW launchConfig;
+    launchConfig.Format(L"%lu|%s", GetCurrentProcessId(), GetDocument()->GetPathName().GetString());
 
     SHELLEXECUTEINFO shellInfo;
     ZeroMemory(&shellInfo, sizeof(shellInfo));
     shellInfo.cbSize = sizeof(shellInfo);
     shellInfo.fMask  = SEE_MASK_DEFAULT;
     shellInfo.lpFile = sAppName;
-    shellInfo.lpVerb = L"runas"; //DO NOT LOCALIZE!
+    shellInfo.lpVerb = L"runas";
     shellInfo.nShow  = SW_NORMAL;
-
-
-    if (m_ElevationEvent)
-    {
-        ::CloseHandle(m_ElevationEvent);
-    }
-    m_ElevationEvent = ::CreateEvent(nullptr, TRUE, FALSE, m_ElevationEventName);
-    if (!m_ElevationEvent)
-    {
-        VTRACE(L"CreateEvent failed with %d", GetLastError());
-        m_ElevationEvent = nullptr;
-        return;
-    }
-    if (ERROR_ALREADY_EXISTS == ::GetLastError())
-    {
-        VTRACE(L"Event already exists");
-        ::CloseHandle(m_ElevationEvent);
-        m_ElevationEvent = nullptr;
-        return;
-    }
-
+    shellInfo.lpParameters = launchConfig.GetString();
+    
     if (!::ShellExecuteEx(&shellInfo))
     {
         VTRACE(L"ShellExecuteEx failed to elevate %d", GetLastError());
-
-        ::CloseHandle(m_ElevationEvent);
-        m_ElevationEvent = nullptr;
-
-        //TODO: Display message to user?
-    }
-    else
-    {
-        //TODO: Store configurations for the new app
-
-        (void)GetMainFrame()->SendMessage(WM_CLOSE);
-        ::SetEvent(m_ElevationEvent); //Tell other process that we finished saving data (it waits only 20s)
-
-        ::CloseHandle(m_ElevationEvent);
-        m_ElevationEvent = nullptr;
     }
 }
 

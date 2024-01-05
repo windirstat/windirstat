@@ -21,7 +21,7 @@
 
 #include "stdafx.h"
 #include "WinDirStat.h"
-#include <common/cotaskmem.h>
+#include <common/SmartPointer.h>
 #include <common/CommonHelpers.h>
 #include "Options.h"
 #include "GlobalHelpers.h"
@@ -664,7 +664,7 @@ void CSelectDrivesDlg::OnBnClickedBrowsefolder()
     // Set the required flags
     bi.ulFlags = BIF_RETURNONLYFSDIRS | BIF_EDITBOX | BIF_NEWDIALOGSTYLE | BIF_NONEWFOLDERBUTTON;
 
-    CCoTaskMem<LPITEMIDLIST> pidl = ::SHBrowseForFolder(&bi);
+    SmartPointer<LPITEMIDLIST> pidl(CoTaskMemFree, SHBrowseForFolder(&bi));
     // Release the actual buffer
     sDisplayName.ReleaseBuffer();
     sSelectedFolder.ReleaseBuffer();

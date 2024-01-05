@@ -24,7 +24,7 @@
 #include "SelectObject.h"
 #include "TreeMap.h"
 #include "MyImageList.h"
-#include "cotaskmem.h"
+#include "SmartPointer.h"
 
 CMyImageList::CMyImageList()
     : m_filesFolderImage(-1)
@@ -129,7 +129,7 @@ int CMyImageList::cacheIcon(LPCWSTR path, UINT flags, CStringW* psTypeName)
 
 int CMyImageList::getMyComputerImage()
 {
-    CCoTaskMem<LPITEMIDLIST> pidl;
+    SmartPointer<LPITEMIDLIST> pidl(CoTaskMemFree);
     const HRESULT hr = ::SHGetSpecialFolderLocation(nullptr, CSIDL_DRIVES, &pidl);
     if (FAILED(hr))
     {

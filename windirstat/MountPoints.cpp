@@ -134,10 +134,7 @@ void CReparsePoints::GetAllMountPoints()
 #           ifdef _DEBUG
             if(ERROR_ACCESS_DENIED == ::GetLastError())
             {
-                if(IsAdmin())
-                    VTRACE(L"Access denied for admin to %s (%d).", volume, ::GetLastError());
-                else
-                    VTRACE(L"Access denied to %s (%d).", volume, ::GetLastError());
+                VTRACE(L"Access denied to %s (%d).", volume, ::GetLastError());
             }
             else if(ERROR_NO_MORE_FILES != ::GetLastError())
             {

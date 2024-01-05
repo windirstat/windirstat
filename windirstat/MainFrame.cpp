@@ -375,7 +375,7 @@ void CDeadFocusWnd::OnKeyDown(UINT nChar, UINT /* nRepCnt */, UINT /* nFlags */)
 }
 
 /////////////////////////////////////////////////////////////////////////////
-UINT CMainFrame::s_taskBarMessage = ::RegisterWindowMessage(TEXT("TaskbarButtonCreated"));
+UINT CMainFrame::s_taskBarMessage = ::RegisterWindowMessage(L"TaskbarButtonCreated");
 
 IMPLEMENT_DYNCREATE(CMainFrame, CFrameWnd)
 
@@ -768,6 +768,11 @@ BOOL CMainFrame::OnCreateClient(LPCREATESTRUCT /*lpcs*/, CCreateContext* pContex
 
 BOOL CMainFrame::PreCreateWindow(CREATESTRUCT& cs)
 {
+    // seed initial title bar text
+    static CStringW title = LoadString(AFX_IDS_APP_TITLE) + (IsAdmin() ? L" (Administrator)" : L"");
+    cs.style &= ~FWS_ADDTOTITLE;
+    cs.lpszName = title.GetString();
+
     if (!CFrameWnd::PreCreateWindow(cs))
     {
         return FALSE;

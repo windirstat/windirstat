@@ -1,4 +1,4 @@
-// cotaskmem.h
+// SmartPointer.h
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
@@ -25,68 +25,75 @@
 //
 
 #pragma once
-
-// return type for 'CCoTaskMem<char *>::operator ->' is not a UDT or reference to a UDT.  Will produce errors if applied using infix notation
+#include <functional>
 
 //
-// CCoTaskMem<>. Some Windows APIs return memory which must be freed with CoTaskMemFree().
+// SmartPointer<>. Custom template for WinApi cleanup.
 // This template does that in its destructor.
 //
-template <class T>
-class CCoTaskMem final
+template <typename T>
+class SmartPointer final
 {
-    // construction
 public:
-    CCoTaskMem(T lp = 0)
+
+    SmartPointer(const SmartPointer<T>&) = delete; // operator not allowed for SmartPointer
+    T operator=(const SmartPointer<T>& lp) = delete; // operator not allowed for SmartPointer
+
+    SmartPointer(std::function<void(T)> cleanup) : m_cleanup(cleanup), m_data(nullptr) {}
+    SmartPointer(std::function<void(T)> cleanup, T data) : m_cleanup(cleanup), m_data(data) {}
+
+    ~SmartPointer()
     {
-        p = lp;
+        if (m_data != nullptr)
+        {
+            m_cleanup(m_data);
+        }
     }
 
-    ~CCoTaskMem()
+    SmartPointer(SmartPointer<T>&& src)
     {
-        if (p) ::CoTaskMemFree(p);
+        m_cleanup = src.m_cleanup;
+        m_data = src.m_data;
+        src.m_data = nullptr;
     }
 
     operator T()
     {
-        return p;
+        return m_data;
     }
 
     T& operator*()
     {
-        _ASSERTE(p != NULL);
-        return p;
+        return m_data;
     }
 
-    //The assert on operator& usually indicates a bug.  If this is really
-    //what is needed, however, take the address of the p member explicitly.
     T* operator&()
     {
-        _ASSERTE(NULL == p);
-        return &p;
+        return &m_data;
     }
 
     T operator->()
     {
-        _ASSERTE(NULL != p);
-        return p;
+        return m_data;
     }
 
     T operator=(T lp)
     {
-        if (NULL != p) ::CoTaskMemFree(p);
-        p = lp;
-        return p;
+        if (m_data != nullptr)
+        {
+            m_cleanup(m_data);
+        }
+        m_data = lp;
+        return m_data;
     }
 
     bool operator!()
     {
-        return NULL == p;
+        return m_data == nullptr;
     }
 
 private:
-    CCoTaskMem(const CCoTaskMem<T>&);     // operator not allowed for CCoTaskMem
-    T operator=(const CCoTaskMem<T>& lp); // operator not allowed for CCoTaskMem
 
-    T p;
+    std::function<void(T)> m_cleanup;
+    T m_data;
 };

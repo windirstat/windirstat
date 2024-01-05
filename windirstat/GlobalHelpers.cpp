@@ -23,7 +23,7 @@
 #include "stdafx.h"
 #include "WinDirStat.h"
 #include <common/MdExceptions.h>
-#include <common/cotaskmem.h>
+#include <common/SmartPointer.h>
 #include <common/CommonHelpers.h>
 #include "GlobalHelpers.h"
 #include "Options.h"
@@ -393,7 +393,7 @@ CStringW GetParseNameOfMyComputer()
     HRESULT hr = ::SHGetDesktopFolder(&sf);
     MdThrowFailed(hr, L"::SHGetDesktopFolder");
 
-    CCoTaskMem<LPITEMIDLIST> pidl;
+    SmartPointer<LPITEMIDLIST> pidl(CoTaskMemFree);
     hr = ::SHGetSpecialFolderLocation(nullptr, CSIDL_DRIVES, &pidl);
     MdThrowFailed(hr, L"SHGetSpecialFolderLocation(CSIDL_DRIVES)");
 
@@ -655,7 +655,7 @@ CStringW GetSpec_TB()
 BOOL IsAdmin()
 {
     SID_IDENTIFIER_AUTHORITY NtAuthority = SECURITY_NT_AUTHORITY;
-    PSID pSid;
+    SmartPointer<PSID> pSid(FreeSid);
     if (::AllocateAndInitializeSid(&NtAuthority,
                                    2,
                                    SECURITY_BUILTIN_DOMAIN_RID,
@@ -666,12 +666,57 @@ BOOL IsAdmin()
         BOOL bResult = FALSE;
         if (!::CheckTokenMembership(nullptr, pSid, &bResult))
         {
-            ::FreeSid(pSid);
             return FALSE;
         }
-        ::FreeSid(pSid);
         return bResult;
     }
 
     return FALSE;
+}
+
+bool EnableReadPrivileges()
+{
+    // Open a connection to the currently running process token and request
+    // we have the ability to look at and adjust our privileges
+
+    SmartPointer<HANDLE> token(CloseHandle);
+    if (OpenProcessToken(GetCurrentProcess(),
+        TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &token) == 0)
+    {
+        return false;
+    }
+
+    bool ret = true;
+    for (LPCWSTR priv : { SE_RESTORE_NAME, SE_BACKUP_NAME })
+    {
+        // Populate the privilege adjustment structure
+        TOKEN_PRIVILEGES priv_entry = {};
+        priv_entry.PrivilegeCount = 1;
+        priv_entry.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+
+        // Translate the privilege name into the binary representation
+        if (LookupPrivilegeValue(nullptr, priv,
+            &priv_entry.Privileges[0].Luid) == 0)
+        {
+            ret = false;
+            break;
+        }
+
+        // Adjust the process to change the privilege
+        if (AdjustTokenPrivileges(token, FALSE, &priv_entry,
+            sizeof(TOKEN_PRIVILEGES), nullptr, nullptr) == 0)
+        {
+            ret = false;
+            break;
+        }
+
+        // Error if not all items were assigned
+        if (GetLastError() == ERROR_NOT_ALL_ASSIGNED)
+        {
+            ret = false;
+            break;
+        }
+    }
+
+    return ret;
 }

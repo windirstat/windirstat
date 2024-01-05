@@ -44,8 +44,6 @@ CMyImageList* GetMyImageList();
 CStringW GetAuthorEmail();
 CStringW GetWinDirStatHomepage();
 
-#   define WINDIRSTAT_EVENT_NAME_FMT L"WinDirStat_ElevationEvent_{72D223E3-1539-461D-980E-0863FE480E84}.%s.%s"
-
 //
 // CDirstatApp. The MFC application object.
 // Knows about RAM Usage, Mount points, Help files and the CMyImageList.
@@ -56,7 +54,6 @@ class CDirstatApp final : public CWinApp
 
 public:
     CDirstatApp();
-    ~CDirstatApp() override;
 
     BOOL InitInstance() override;
     int ExitInstance() override;
@@ -103,7 +100,6 @@ protected:
     COLORREF GetAlternativeColor(COLORREF clrDefault, LPCWSTR which);
 
     BOOL OnIdle(LONG lCount) override; // This is, where scanning is done.
-    static BOOL IsUACEnabled();
 
     CSingleDocTemplate* m_pDocTemplate; // MFC voodoo.
 
@@ -115,8 +111,6 @@ protected:
     ULONGLONG m_lastPeriodicalRamUsageUpdate; // Tick count
     COLORREF m_altColor;                      // Coloring of compressed items
     COLORREF m_altEncryptionColor;            // Coloring of encrypted items
-    HANDLE m_ElevationEvent;
-    CStringW m_ElevationEventName;
 #ifdef VTRACE_TO_CONSOLE
     CAutoPtr<CWDSTracerConsole> m_vtrace_console;
 #endif // VTRACE_TO_CONSOLE
