@@ -45,7 +45,7 @@ END_MESSAGE_MAP()
 
 CGraphView::CGraphView()
 {
-    m_recalculationSuspended = false;
+    m_recalculationDrawingSuspended = false;
     m_showTreemap            = true;
     m_size.cx                = m_size.cy       = 0;
     m_dimmedSize.cx          = m_dimmedSize.cy = 0;
@@ -57,9 +57,9 @@ void CGraphView::TreemapDrawingCallback()
     GetWDSApp()->PeriodicalUpdateRamUsage();
 }
 
-void CGraphView::SuspendRecalculation(bool suspend)
+void CGraphView::SuspendRecalculationDrawing(bool suspend)
 {
-    m_recalculationSuspended = suspend;
+    m_recalculationDrawingSuspended = suspend;
     if (!suspend)
     {
         Invalidate();
@@ -142,7 +142,7 @@ void CGraphView::OnDraw(CDC* pDC)
     const CItem* root = GetDocument()->GetRootItem();
     if (root != nullptr && root->IsDone())
     {
-        if (m_recalculationSuspended || !m_showTreemap)
+        if (m_recalculationDrawingSuspended || !m_showTreemap)
         {
             // TODO: draw something interesting, e.g. outline of the first level.
             DrawEmptyView(pDC);
@@ -435,7 +435,7 @@ void CGraphView::EmptyView()
 
 void CGraphView::OnSetFocus(CWnd* /*pOldWnd*/)
 {
-    GetMainFrame()->GetDirstatView()->SetFocus();
+    GetMainFrame()->GetDirStatView()->SetFocus();
 }
 
 void CGraphView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)

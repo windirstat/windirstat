@@ -138,7 +138,7 @@ protected:
 //
 // CMainFrame. The main application window.
 //
-class CMainFrame final : public CFrameWnd
+class CMainFrame final : public CFrameWndEx
 {
 protected:
     static UINT s_taskBarMessage;
@@ -157,7 +157,7 @@ public:
     void MinimizeTypeView();
     void CopyToClipboard(LPCWSTR psz);
 
-    CDirstatView* GetDirstatView();
+    CDirstatView* GetDirStatView();
     CGraphView* GetGraphView();
     CTypeView* GetTypeView();
 
@@ -165,7 +165,8 @@ public:
     void HideProgress();
     void SetProgressPos(ULONGLONG pos);
     void SetProgressPos100();
-    bool IsProgressSuspended() const;
+    void SuspendScan(bool suspend);
+    bool IsScanSuspended() const;
     void DrivePacman();
 
     void UpdateProgress();
@@ -177,32 +178,30 @@ public:
 
     void SetSelectionMessageText();
 
-    static void queryRecycleBin(ULONGLONG& items, ULONGLONG& bytes);
+    static void QueryRecycleBin(ULONGLONG& items, ULONGLONG& bytes);
 
 protected:
     BOOL OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext* pContext) override;
     BOOL PreCreateWindow(CREATESTRUCT& cs) override;
-    void MakeSaneShowCmd(UINT& u);
 
     void CreateStatusProgress();
     void CreatePacmanProgress();
-    void CreateSuspendButton(CRect& rc);
     void DestroyProgress();
 
     void UpdateCleanupMenu(CMenu* menu);
 
     bool m_progressVisible;    // True while progress must be shown (either pacman or progress bar)
+    bool m_scanSuspend;        // True if the scan has been suspended
     ULONGLONG m_progressRange; // Progress range. A range of 0 means that we have no range available. In this case we should display pacman.
     ULONGLONG m_progressPos;   // Progress position (<= progressRange, or an item count in case of m_progressRang == 0)
 
     CMySplitterWnd m_wndSubSplitter; // Contains the two upper views
     CMySplitterWnd m_wndSplitter;    // Contains (a) m_wndSubSplitter and (b) the graph view.
 
-    CStatusBar m_wndStatusBar; // Status bar
-    CToolBar m_wndToolBar;     // Tool bar
-    CProgressCtrl m_progress;  // Progress control. Is Create()ed and Destroy()ed again every time.
-    CPacmanControl m_pacman;   // Static control for Pacman.
-    CButton m_suspendButton;   // Progress-Suspend-Button
+    CMFCStatusBar m_wndStatusBar; // Status bar
+    CMFCToolBar m_wndToolBar;     // Tool bar
+    CProgressCtrl m_progress;     // Progress control. Is Create()ed and Destroy()ed again every time.
+    CPacmanControl m_pacman;      // Static control for Pacman.
 
     LOGICAL_FOCUS m_logicalFocus; // Which view has the logical focus
     CDeadFocusWnd m_wndDeadFocus; // Zero-size window which holds the focus if logical focus is "NONE"
@@ -220,18 +219,13 @@ protected:
     afx_msg void OnSize(UINT nType, int cx, int cy);
     afx_msg void OnUpdateViewShowtreemap(CCmdUI* pCmdUI);
     afx_msg void OnViewShowtreemap();
-    afx_msg void OnUpdateViewShowfiletypes(CCmdUI* pCmdUI);
-    afx_msg void OnViewShowfiletypes();
+    afx_msg void OnUpdateViewShowFileTypes(CCmdUI* pCmdUI);
+    afx_msg void OnViewShowFileTypes();
     afx_msg void OnConfigure();
     afx_msg void OnDestroy();
-    afx_msg void OnBnClickedSuspend();
-    afx_msg void OnTreemapHelpabouttreemaps();
+    afx_msg void OnTreemapHelpAboutTreeMaps();
     afx_msg LRESULT OnTaskButtonCreated(WPARAM, LPARAM);
 
 public:
-#ifdef _DEBUG
-    void AssertValid() const override;
-    void Dump(CDumpContext& dc) const override;
-#endif
     afx_msg void OnSysColorChange();
 };

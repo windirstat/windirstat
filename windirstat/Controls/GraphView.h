@@ -43,7 +43,7 @@ public:
     void TreemapDrawingCallback() override;
 
     CDirstatDoc* GetDocument() const;
-    void SuspendRecalculation(bool suspend);
+    void SuspendRecalculationDrawing(bool suspend);
     bool IsShowTreemap() const;
     void ShowTreemap(bool show);
     void DrawEmptyView();
@@ -69,7 +69,7 @@ protected:
     void HighlightSelectedItem(CDC* pdc, const CItem* item, bool single);
     void RenderHighlightRectangle(CDC* pdc, CRect& rc);
 
-    bool m_recalculationSuspended; // True while the user is resizing the window.
+    bool m_recalculationDrawingSuspended; // True while the user is resizing the window.
     bool m_showTreemap;            // False, if the user switched off the treemap (by F9).
     CSize m_size;                  // Current size of view
     CTreemap m_treemap;            // Treemap generator

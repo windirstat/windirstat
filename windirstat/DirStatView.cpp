@@ -103,10 +103,10 @@ void CMyTreeListControl::OnContextMenu(CWnd* /*pWnd*/, CPoint pt)
 
 void CMyTreeListControl::OnItemDoubleClick(int i)
 {
-    auto item = static_cast<const CItem*>(GetItem(i));
+    const auto item = reinterpret_cast<const CItem*>(GetItem(i));
     if (item->IsType(IT_FILE))
     {
-        GetDocument()->OpenItem(item);
+        CDirstatDoc::OpenItem(item);
     }
     else
     {
@@ -120,7 +120,7 @@ void CMyTreeListControl::PrepareDefaultMenu(CMenu* menu, const CItem* item)
     {
         menu->DeleteMenu(0, MF_BYPOSITION); // Remove "Expand/Collapse" item
         menu->DeleteMenu(0, MF_BYPOSITION); // Remove separator
-        menu->SetDefaultItem(ID_CLEANUP_OPEN, false);
+        menu->SetDefaultItem(ID_CLEANUP_OPEN_SELECTED, false);
     }
     else
     {
@@ -192,13 +192,6 @@ CStringW CDirstatView::GenerateReport()
     report += GetOptions()->GetReportSuffix();
 
     return report;
-}
-
-// Just a shortcut for CMainFrame to obtain
-// the small font for the suspend button.
-CFont* CDirstatView::GetSmallFont() const
-{
-    return m_treeListControl.GetFont();
 }
 
 void CDirstatView::SysColorChanged()

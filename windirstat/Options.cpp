@@ -957,7 +957,7 @@ void COptions::LoadFromRegistry()
     }
     m_humanFormat           = getProfileBool(sectionOptions, entryHumanFormat, true);
     m_skipHidden            = getProfileBool(sectionOptions, entrySkipHidden, false);
-    m_pacmanAnimation       = getProfileBool(sectionOptions, entryPacmanAnimation, false);
+    m_pacmanAnimation       = getProfileBool(sectionOptions, entryPacmanAnimation, true);
     m_showTimeSpent         = getProfileBool(sectionOptions, entryShowTimeSpent, false);
     m_treemapHighlightColor = getProfileInt(sectionOptions, entryTreemapHighlightColor, RGB(255, 255, 255));
 

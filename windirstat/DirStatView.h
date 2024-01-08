@@ -62,7 +62,6 @@ protected:
 public:
     ~CDirstatView() override = default;
     CStringW GenerateReport();
-    CFont* GetSmallFont() const;
     void SysColorChanged();
 
 protected:

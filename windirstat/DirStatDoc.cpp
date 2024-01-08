@@ -37,6 +37,8 @@
 #include <string>
 #include <unordered_set>
 
+#include "graphview.h"
+
 CDirstatDoc* _theDocument;
 
 CDirstatDoc* GetDocument()
@@ -337,7 +339,7 @@ bool CDirstatDoc::Work(CWorkLimiter* limiter)
         return true;
     }
 
-    if (GetMainFrame()->IsProgressSuspended())
+    if (GetMainFrame()->IsScanSuspended())
     {
         return true;
     }
@@ -984,38 +986,42 @@ void CDirstatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
 {
     struct command_filter
     {
-        bool allow_none;      // allow display when nothing is selected
-        bool allow_many;      // allow display when multiple items are selected
-        bool allow_early;     // allow display before processing is finished
-        bool tree_focus;      // only display in tree view
-        ITEMTYPE types_allow; // only display if these types are allowed
+        bool allow_none = false;       // allow display when nothing is selected
+        bool allow_many = false;       // allow display when multiple items are selected
+        bool allow_early = false;      // allow display before processing is finished
+        bool tree_focus = false;       // only display in tree view
+        ITEMTYPE types_allow = IT_ANY; // only display if these types are allowed
         bool (*extra)(CItem*) = [](CItem*) { return true; }; // extra checks
     };
 
     // special conditions
     static auto doc = this;
     static bool (*can_zoom_out)(CItem*) = [](CItem*) { return doc->GetZoomItem() != doc->GetRootItem(); };
-    static bool (*parent_not_null)(CItem*) = [](CItem* item) { return item->GetParent() != nullptr; };
+    static bool (*parent_not_null)(CItem*) = [](CItem* item) { return item != nullptr && item->GetParent() != nullptr; };
     static bool (*reslect_avail)(CItem*) = [](CItem*) { return doc->IsReselectChildAvailable(); };
-    static bool (*not_root)(CItem*) = [](CItem* item) { return !item->IsRootItem(); };
+    static bool (*not_root)(CItem*) = [](CItem* item) { return item != nullptr && !item->IsRootItem(); };
+    static bool (*is_suspended)(CItem*) = [](CItem*) { return GetMainFrame()->IsScanSuspended(); };
+    static bool (*is_not_suspended)(CItem*) = [](CItem*) { return !doc->IsRootDone() && !GetMainFrame()->IsScanSuspended(); };
 
     static std::map<UINT, const command_filter> filters
     {
-        // ID                              none   many   early  focus  types
-        { ID_REFRESHALL,                 { true,  true,  false, false, IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY} },
-        { ID_REFRESHSELECTED,            { false, true,  false, true,  IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY} },
-        { ID_EDIT_COPY,                  { false, true,  true,  false, IT_DRIVE | IT_DIRECTORY | IT_FILE} },
-        { ID_CLEANUP_EMPTYRECYCLEBIN,    { true,  true,  false, false, IT_ANY} },
-        { ID_TREEMAP_RESELECTCHILD,      { true,  true,  true,  false, IT_ANY, reslect_avail } },
-        { ID_TREEMAP_SELECTPARENT,       { false, false, true,  false, IT_ANY, parent_not_null } },
-        { ID_TREEMAP_ZOOMIN,             { false, false, false, false, IT_DRIVE | IT_DIRECTORY} },
-        { ID_TREEMAP_ZOOMOUT,            { false, false, false, false, IT_DIRECTORY, can_zoom_out } },
-        { ID_CLEANUP_OPENINEXPLORER,     { false, true,  true,  false, IT_DIRECTORY | IT_FILE } },
-        { ID_CLEANUP_OPENINCONSOLE,      { false, true,  false, false, IT_DRIVE | IT_DIRECTORY | IT_FILE} },
-        { ID_CLEANUP_DELETETORECYCLEBIN, { false, true,  true,  true,  IT_DIRECTORY | IT_FILE, not_root } },
-        { ID_CLEANUP_DELETE,             { false, true,  true,  true,  IT_DIRECTORY | IT_FILE, not_root } },
-        { ID_CLEANUP_OPEN,               { false, true,  true,  false, IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY | IT_FILE} },
-        { ID_CLEANUP_PROPERTIES,         { false, true,  true,  false, IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY} }
+        // ID                           none   many   early  focus  types
+        { ID_REFRESH_ALL,             { true,  true,  false, false, IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY} },
+        { ID_REFRESH_SELECTED,        { false, true,  false, true,  IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY} },
+        { ID_EDIT_COPY_CLIPBOARD,     { false, true,  true,  false, IT_DRIVE | IT_DIRECTORY | IT_FILE } },
+        { ID_CLEANUP_EMPTY_BIN,       { true,  true,  false, false, IT_ANY} },
+        { ID_TREEMAP_RESELECT_CHILD,  { true,  true,  true,  false, IT_ANY, reslect_avail } },
+        { ID_TREEMAP_SELECT_PARENT,   { false, false, true,  false, IT_ANY, parent_not_null } },
+        { ID_TREEMAP_ZOOMIN,          { false, false, false, false, IT_DRIVE | IT_DIRECTORY} },
+        { ID_TREEMAP_ZOOMOUT,         { false, false, false, false, IT_DIRECTORY, can_zoom_out } },
+        { ID_CLEANUP_EXPLORER_SELECT, { false, true,  true,  false, IT_DIRECTORY | IT_FILE } },
+        { ID_CLEANUP_OPEN_IN_CONSOLE, { false, true,  true,  false, IT_DRIVE | IT_DIRECTORY | IT_FILE } },
+        { ID_SCAN_RESUME,             { true,  true,  true,  false, IT_ANY, is_suspended } },
+        { ID_SCAN_SUSPEND,            { true,  true,  true,  false, IT_ANY, is_not_suspended } },
+        { ID_CLEANUP_DELETE_BIN,      { false, true,  true,  true,  IT_DIRECTORY | IT_FILE, not_root } },
+        { ID_CLEANUP_DELETE,          { false, true,  true,  true,  IT_DIRECTORY | IT_FILE, not_root } },
+        { ID_CLEANUP_OPEN_SELECTED,     { false, true,  true,  false, IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY | IT_FILE } },
+        { ID_CLEANUP_PROPERTIES,      { false, true,  true,  false, IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY | IT_FILE } }
     };
 
     if (!filters.contains(pCmdUI->m_nID))
@@ -1032,37 +1038,40 @@ void CDirstatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
     allow &= filter.allow_none || !items.empty();
     allow &= filter.allow_many || items.size() <= 1;
     allow &= filter.allow_early || IsRootDone();
+    if (items.empty()) allow &= filter.extra(nullptr);
     for (const auto& item : items)
     {
         allow &= filter.extra(item);
         allow &= item->IsType(filter.types_allow);
     }
 
-    pCmdUI->Enable(allow);
+    pCmdUI->Enable(allow); 
 }
 
 #define ON_COMMAMD_UPDATE_WRAPPER(x,y) ON_COMMAND(x, y) ON_UPDATE_COMMAND_UI(x, OnUpdateCentralHandler)
 BEGIN_MESSAGE_MAP(CDirstatDoc, CDocument) 
-    ON_COMMAMD_UPDATE_WRAPPER(ID_REFRESHSELECTED, OnRefreshSelected)
-    ON_COMMAMD_UPDATE_WRAPPER(ID_REFRESHALL, OnRefreshAll)
+    ON_COMMAMD_UPDATE_WRAPPER(ID_REFRESH_SELECTED, OnRefreshSelected)
+    ON_COMMAMD_UPDATE_WRAPPER(ID_REFRESH_ALL, OnRefreshAll)
     ON_COMMAMD_UPDATE_WRAPPER(ID_EDIT_COPY, OnEditCopy)
-    ON_COMMAMD_UPDATE_WRAPPER(ID_CLEANUP_EMPTYRECYCLEBIN, OnCleanupEmptyRecycleBin)
+    ON_COMMAMD_UPDATE_WRAPPER(ID_CLEANUP_EMPTY_BIN, OnCleanupEmptyRecycleBin)
     ON_UPDATE_COMMAND_UI(ID_VIEW_SHOWFREESPACE, OnUpdateViewShowFreeSpace)
     ON_COMMAND(ID_VIEW_SHOWFREESPACE, OnViewShowFreeSpace)
     ON_UPDATE_COMMAND_UI(ID_VIEW_SHOWUNKNOWN, OnUpdateViewShowUnknown)
     ON_COMMAND(ID_VIEW_SHOWUNKNOWN, OnViewShowUnknown)
     ON_COMMAMD_UPDATE_WRAPPER(ID_TREEMAP_ZOOMIN, OnTreemapZoomIn)
     ON_COMMAMD_UPDATE_WRAPPER(ID_TREEMAP_ZOOMOUT, OnTreemapZoomOut)
-    ON_COMMAMD_UPDATE_WRAPPER(ID_CLEANUP_OPENINEXPLORER, OnExplorerHere)
-    ON_COMMAMD_UPDATE_WRAPPER(ID_CLEANUP_OPENINCONSOLE, OnCommandPromptHere)
-    ON_COMMAMD_UPDATE_WRAPPER(ID_CLEANUP_DELETETORECYCLEBIN, OnCleanupDeleteToRecycleBin)
+    ON_COMMAMD_UPDATE_WRAPPER(ID_CLEANUP_EXPLORER_SELECT, OnExplorerSelect)
+    ON_COMMAMD_UPDATE_WRAPPER(ID_CLEANUP_OPEN_IN_CONSOLE, OnCommandPromptHere)
+    ON_COMMAMD_UPDATE_WRAPPER(ID_CLEANUP_DELETE_BIN, OnCleanupDeleteToBin)
     ON_COMMAMD_UPDATE_WRAPPER(ID_CLEANUP_DELETE, OnCleanupDelete)
     ON_UPDATE_COMMAND_UI_RANGE(ID_USERDEFINEDCLEANUP0, ID_USERDEFINEDCLEANUP9, OnUpdateUserDefinedCleanup)
     ON_COMMAND_RANGE(ID_USERDEFINEDCLEANUP0, ID_USERDEFINEDCLEANUP9, OnUserDefinedCleanup)
-    ON_COMMAMD_UPDATE_WRAPPER(ID_TREEMAP_SELECTPARENT, OnTreemapSelectParent)
-    ON_COMMAMD_UPDATE_WRAPPER(ID_TREEMAP_RESELECTCHILD, OnTreemapReselectChild)
-    ON_COMMAMD_UPDATE_WRAPPER(ID_CLEANUP_OPEN, OnCleanupOpen)
+    ON_COMMAMD_UPDATE_WRAPPER(ID_TREEMAP_SELECT_PARENT, OnTreemapSelectParent)
+    ON_COMMAMD_UPDATE_WRAPPER(ID_TREEMAP_RESELECT_CHILD, OnTreemapReselectChild)
+    ON_COMMAMD_UPDATE_WRAPPER(ID_CLEANUP_OPEN_SELECTED, OnCleanupOpenTarget)
     ON_COMMAMD_UPDATE_WRAPPER(ID_CLEANUP_PROPERTIES, OnCleanupProperties)
+    ON_COMMAMD_UPDATE_WRAPPER(ID_SCAN_RESUME, OnScanResume)
+    ON_COMMAMD_UPDATE_WRAPPER(ID_SCAN_SUSPEND, OnScanSuspend)
 END_MESSAGE_MAP()
 
 void CDirstatDoc::OnRefreshSelected()
@@ -1206,7 +1215,7 @@ void CDirstatDoc::OnTreemapZoomOut()
     }
 }
 
-void CDirstatDoc::OnExplorerHere()
+void CDirstatDoc::OnExplorerSelect()
 {
     // accumulate a unique set of paths
     const auto& items = CTreeListControl::GetTheTreeListControl()->GetAllSelected<CItem>();
@@ -1271,7 +1280,7 @@ void CDirstatDoc::OnCommandPromptHere()
     }
 }
 
-void CDirstatDoc::OnCleanupDeleteToRecycleBin()
+void CDirstatDoc::OnCleanupDeleteToBin()
 {
     const auto & items = CTreeListControl::GetTheTreeListControl()->GetAllSelected<CItem>();
     for (const auto & item : items)
@@ -1355,7 +1364,7 @@ void CDirstatDoc::OnTreemapReselectChild()
     UpdateAllViews(nullptr, HINT_SELECTIONREFRESH);
 }
 
-void CDirstatDoc::OnCleanupOpen()
+void CDirstatDoc::OnCleanupOpenTarget()
 {
     const auto & items = CTreeListControl::GetTheTreeListControl()->GetAllSelected<CItem>();
     for (const auto & item : items)
@@ -1371,6 +1380,16 @@ void CDirstatDoc::OnCleanupProperties()
     {
         OpenItem(item, L"properties");
     }
+}
+
+void CDirstatDoc::OnScanSuspend()
+{
+    GetMainFrame()->SuspendScan(true);
+}
+
+void CDirstatDoc::OnScanResume()
+{
+    GetMainFrame()->SuspendScan(false);
 }
 
 // CDirstatDoc Diagnostics

@@ -124,7 +124,7 @@ public:
     bool UserDefinedCleanupWorksForItem(const USERDEFINEDCLEANUP* udc, const CItem* item);
     ULONGLONG GetWorkingItemReadJobs();
 
-    void OpenItem(const CItem* item, LPCWSTR verb = L"open");
+    static void OpenItem(const CItem* item, LPCWSTR verb = L"open");
 
 protected:
     void RecurseRefreshMountPointItems(CItem* item);
@@ -180,23 +180,20 @@ protected:
     afx_msg void OnViewShowFreeSpace();
     afx_msg void OnUpdateViewShowUnknown(CCmdUI* pCmdUI);
     afx_msg void OnViewShowUnknown();
-    afx_msg void OnUpdateTreemapZoomIn(CCmdUI* pCmdUI);
     afx_msg void OnTreemapZoomIn();
     afx_msg void OnTreemapZoomOut();
-    afx_msg void OnExplorerHere();
+    afx_msg void OnExplorerSelect();
     afx_msg void OnCommandPromptHere();
-    afx_msg void OnCleanupDeleteToRecycleBin();
+    afx_msg void OnCleanupDeleteToBin();
     afx_msg void OnCleanupDelete();
     afx_msg void OnUpdateUserDefinedCleanup(CCmdUI* pCmdUI);
     afx_msg void OnUserDefinedCleanup(UINT id);
-    afx_msg void OnUpdateTreemapSelectParent(CCmdUI* pCmdUI);
     afx_msg void OnTreemapSelectParent();
-    afx_msg void OnUpdateTreemapReselectChild(CCmdUI* pCmdUI);
     afx_msg void OnTreemapReselectChild();
-    afx_msg void OnUpdateCleanupOpen(CCmdUI* pCmdUI);
-    afx_msg void OnCleanupOpen();
+    afx_msg void OnCleanupOpenTarget();
     afx_msg void OnCleanupProperties();
-    afx_msg void OnUpdateFilter(CCmdUI* pCmdUI);
+    afx_msg void OnScanSuspend();
+    afx_msg void OnScanResume();
 
 public:
 #ifdef _DEBUG

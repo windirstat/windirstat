@@ -117,7 +117,7 @@
       <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <ResourceCompile>
-      <PreprocessorDefinitions>_DEBUG;VTRACE_TO_CONSOLE=1;VTRACE_DETAIL=2;WINVER=_WIN32_WINNT_WIN7;_WIN32_WINNT=_WIN32_WINNT_WIN7;LUA_REG_NO_WINTRACE;LUA_REG_NO_HIVEOPS;LUA_REG_NO_DLL;_ALLOW_RTCc_IN_STL;MODNAME=wds32D;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;VTRACE_TO_CONSOLE=1;VTRACE_DETAIL=2;WINVER=0x0601;_WIN32_WINNT=0x0601;LUA_REG_NO_WINTRACE;LUA_REG_NO_HIVEOPS;LUA_REG_NO_DLL;_ALLOW_RTCc_IN_STL;MODNAME=wds32D;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..;.;..\common;Controls;Dialogs;..\3rdparty\lua\src;..;$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
@@ -157,7 +157,7 @@
       <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <ResourceCompile>
-      <PreprocessorDefinitions>_DEBUG;VTRACE_TO_CONSOLE=1;VTRACE_DETAIL=2;WINVER=_WIN32_WINNT_WIN7;_WIN32_WINNT=_WIN32_WINNT_WIN7;LUA_REG_NO_WINTRACE;LUA_REG_NO_HIVEOPS;LUA_REG_NO_DLL;_ALLOW_RTCc_IN_STL;MODNAME=wds64D;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;VTRACE_TO_CONSOLE=1;VTRACE_DETAIL=2;WINVER=0x0601;_WIN32_WINNT=0x0601;LUA_REG_NO_WINTRACE;LUA_REG_NO_HIVEOPS;LUA_REG_NO_DLL;_ALLOW_RTCc_IN_STL;MODNAME=wds64D;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..;.;..\common;Controls;Dialogs;..\3rdparty\lua\src;..;$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
@@ -168,9 +168,11 @@
       <OutputFile>$(OutDir)WinDirStat64D.exe</OutputFile>
       <TargetMachine>MachineX64</TargetMachine>
       <AdditionalOptions>/pdbaltpath:%_PDB% /nodefaultlib:libcmt %(AdditionalOptions)</AdditionalOptions>
+      <Profile>false</Profile>
     </Link>
     <PreBuildEvent>
-      <Command>if not exist "$(SolutionDir)common\hgid.h" call "$(SolutionDir)\common\hgid.cmd"</Command>
+      <Command>
+      </Command>
     </PreBuildEvent>
     <Manifest>
       <AdditionalManifestFiles>res\windirstat.manifest</AdditionalManifestFiles>
@@ -197,7 +199,7 @@
       <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <ResourceCompile>
-      <PreprocessorDefinitions>NDEBUG;WINVER=_WIN32_WINNT_WIN7;_WIN32_WINNT=_WIN32_WINNT_WIN7;LUA_REG_NO_WINTRACE;LUA_REG_NO_HIVEOPS;LUA_REG_NO_DLL;_ALLOW_RTCc_IN_STL;MODNAME=wds32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;WINVER=0x0601;_WIN32_WINNT=0x0601;LUA_REG_NO_WINTRACE;LUA_REG_NO_HIVEOPS;LUA_REG_NO_DLL;_ALLOW_RTCc_IN_STL;MODNAME=wds32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..;.;..\common;Controls;Dialogs;..\3rdparty\lua\src;..;$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
@@ -237,14 +239,18 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
+      <StructMemberAlignment>Default</StructMemberAlignment>
     </ClCompile>
     <ResourceCompile>
-      <PreprocessorDefinitions>NDEBUG;WINVER=_WIN32_WINNT_WIN7;_WIN32_WINNT=_WIN32_WINNT_WIN7;LUA_REG_NO_WINTRACE;LUA_REG_NO_HIVEOPS;LUA_REG_NO_DLL;_ALLOW_RTCc_IN_STL;MODNAME=wds64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;WINVER=0x0601;_WIN32_WINNT=0x0601;LUA_REG_NO_WINTRACE;LUA_REG_NO_HIVEOPS;LUA_REG_NO_DLL;_ALLOW_RTCc_IN_STL;MODNAME=wds64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..;.;..\common;Controls;Dialogs;..\3rdparty\lua\src;..;$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
-      <GenerateDebugInformation>DebugFull</GenerateDebugInformation>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
       <FullProgramDatabaseFile>true</FullProgramDatabaseFile>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
@@ -252,6 +258,8 @@
       <OutputFile>$(OutDir)WinDirStat64.exe</OutputFile>
       <TargetMachine>MachineX64</TargetMachine>
       <AdditionalOptions>/pdbaltpath:%_PDB% /release %(AdditionalOptions)</AdditionalOptions>
+      <Profile>true</Profile>
+      <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>
     </Link>
     <PreBuildEvent>
       <Command>if not exist "$(SolutionDir)common\hgid.h" call "$(SolutionDir)\common\hgid.cmd"</Command>
@@ -264,7 +272,7 @@
   <ItemGroup>
     <ClInclude Include="..\common\hgid.h" />
     <ClInclude Include="..\common\CommonHelpers.h" />
-    <ClInclude Include="..\common\CoTaskMem.h" />
+    <ClInclude Include="..\common\SmartPointer.h" />
     <ClInclude Include="..\common\MdExceptions.h" />
     <ClInclude Include="..\common\Tracer.h" />
     <ClInclude Include="..\common\version.h" />
@@ -374,9 +382,6 @@
     </ClCompile>
     <ClCompile Include="Dialogs\SelectDrivesDlg.cpp">
     </ClCompile>
-    <ClCompile Include="LuaWds.c">
-      <CompileAs>CompileAsC</CompileAs>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="res\bitmap1.bmp" />
@@ -384,7 +389,7 @@
     <None Include="res\license.rtf" />
     <None Include="res\license.txt" />
     <None Include="res\linkhand.cur" />
-    <None Include="res\Toolbar.bmp" />
+    <None Include="res\toolbar.bmp" />
     <None Include="res\windirstat.manifest" />
     <None Include="res\windirstat.rc2" />
     <None Include="..\CONTRIBUTORS.md" />
@@ -400,9 +405,27 @@
     <ResourceCompile Include="..\common\version.rc" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\3rdparty\lua\src\luajit2.vcxproj">
-      <Project>{9F35C2BB-DF1E-400A-A829-AE34E1C91A70}</Project>
-    </ProjectReference>
+    <Image Include="..\common\WinDirStat.ico" />
+    <Image Include="res\toolbar\IDB_CLEANUP_DELETE.bmp" />
+    <Image Include="res\toolbar\IDB_CLEANUP_DELETE_BIN.bmp" />
+    <Image Include="res\toolbar\IDB_CLEANUP_EXPLORER_SELECT.bmp" />
+    <Image Include="res\toolbar\IDB_CLEANUP_OPEN_IN_CONSOLE.bmp" />
+    <Image Include="res\toolbar\IDB_CLEANUP_OPEN_SELECTED.bmp" />
+    <Image Include="res\toolbar\IDB_CLEANUP_PROPERTIES.bmp" />
+    <Image Include="res\toolbar\IDB_EDIT_COPY_CLIPBOARD.bmp" />
+    <Image Include="res\toolbar\IDB_FILE_SELECT.bmp" />
+    <Image Include="res\toolbar\IDB_HELP_MANUAL.bmp" />
+    <Image Include="res\toolbar\IDB_REFRESH_ALL.bmp" />
+    <Image Include="res\toolbar\IDB_REFRESH_SELECTED.bmp" />
+    <Image Include="res\toolbar\IDB_SCAN_RESUME.bmp" />
+    <Image Include="res\toolbar\IDB_SCAN_SUSPEND.bmp" />
+    <Image Include="res\toolbar\IDB_SELECTION_EXPLORE.bmp" />
+    <Image Include="res\toolbar\IDB_TREEMAP_ZOOMIN.bmp" />
+    <Image Include="res\toolbar\IDB_TREEMAP_ZOOMOUT.bmp" />
+    <Image Include="res\toolbar\IDM_EDIT_COPY_CLIPBOARD.bmp" />
+    <Image Include="res\toolbar\ID_EDIT_COPY_CLIPBOARD.bmp" />
+    <Image Include="res\toolbar\ID_TREEMAP_ZOOMIN.bmp" />
+    <Image Include="res\toolbar\ID_TREEMAP_ZOOMOUT.bmp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
