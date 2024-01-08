@@ -22,7 +22,7 @@
 #pragma once
 
 //
-// CMyImageList. Both CDirstatView and CTypeView use this central
+// CMyImageList. Both CDirStatView and CTypeView use this central
 // image list. It caches the system image list images as needed,
 // and adds a few special images at initialization.
 // This is because I don't want to deal with two images lists.

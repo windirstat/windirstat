@@ -1,4 +1,4 @@
-// DirStatView.h - Declaration of CMyTreeListControl and CDirstatView
+// DirStatView.h - Declaration of CMyTreeListControl and CDirStatView
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
@@ -24,8 +24,8 @@
 
 #include "TreeListControl.h"
 
-class CDirstatView;
-class CDirstatDoc;
+class CDirStatView;
+class CDirStatDoc;
 class CItem;
 
 //
@@ -35,7 +35,7 @@ class CItem;
 class CMyTreeListControl final : public CTreeListControl
 {
 public:
-    CMyTreeListControl(CDirstatView* dirstatView);
+    CMyTreeListControl(CDirStatView* dirstatView);
     bool GetAscendingDefault(int column) override;
 
 protected:
@@ -49,26 +49,26 @@ protected:
     afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
 };
 
-
 //
-// CDirstatView. The upper left view, which consists of the TreeList.
+// CDirStatView. The upper left view, which consists of the TreeList.
 //
-class CDirstatView final : public CView
+class CDirStatView final : public CView
 {
 protected:
-    CDirstatView(); // Created by MFC only
-    DECLARE_DYNCREATE(CDirstatView)
+    CDirStatView(); // Created by MFC only
+    DECLARE_DYNCREATE(CDirStatView)
 
 public:
-    ~CDirstatView() override = default;
+    ~CDirStatView() override = default;
     CStringW GenerateReport();
     void SysColorChanged();
 
 protected:
-    BOOL PreCreateWindow(CREATESTRUCT& cs) override;
-    void OnInitialUpdate() override;
     void OnDraw(CDC* pDC) override;
-    CDirstatDoc* GetDocument() const;
+    CDirStatDoc* GetDocument() const
+    {
+        return reinterpret_cast<CDirStatDoc*>(m_pDocument);
+    }
     void OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint) override;
 
     CMyTreeListControl m_treeListControl; // The tree list
@@ -84,17 +84,4 @@ protected:
     afx_msg void OnLvnItemchanged(NMHDR* pNMHDR, LRESULT* pResult);
     afx_msg void OnUpdatePopupToggle(CCmdUI* pCmdUI);
     afx_msg void OnPopupToggle();
-
-public:
-#ifdef _DEBUG
-    void AssertValid() const override;
-    void Dump(CDumpContext& dc) const override;
-#endif
 };
-
-#ifndef _DEBUG  // Debug version in dirstatview.cpp
-inline CDirstatDoc* CDirstatView::GetDocument() const
-{
-    return reinterpret_cast<CDirstatDoc*>(m_pDocument);
-}
-#endif

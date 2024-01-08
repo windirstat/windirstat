@@ -326,7 +326,6 @@ CTreeListControl* CTreeListItem::GetTreeListControl()
     return CTreeListControl::GetTheTreeListControl();
 }
 
-
 /////////////////////////////////////////////////////////////////////////////
 // CTreeListControl
 
@@ -340,7 +339,7 @@ CTreeListControl* CTreeListControl::GetTheTreeListControl()
 
 IMPLEMENT_DYNAMIC(CTreeListControl, COwnerDrawnListControl)
 
-CTreeListControl::CTreeListControl(CDirstatView* dirstatView, int rowHeight)
+CTreeListControl::CTreeListControl(CDirStatView* dirstatView, int rowHeight)
     : COwnerDrawnListControl(L"treelist", rowHeight)
       , m_dirstatView(dirstatView)
 {
@@ -518,7 +517,6 @@ BEGIN_MESSAGE_MAP(CTreeListControl, COwnerDrawnListControl)
     ON_WM_LBUTTONDBLCLK()
     ON_WM_DESTROY()
 END_MESSAGE_MAP()
-
 
 void CTreeListControl::DrawNode(CDC* pdc, CRect& rc, CRect& rcPlusMinus, const CTreeListItem* item, int* width)
 {
@@ -735,7 +733,6 @@ void CTreeListControl::SetItemScrollPosition(CTreeListItem* item, int top)
     const int old = GetItemScrollPosition(item);
     Scroll(CSize(0, top - old));
 }
-
 
 bool CTreeListControl::SelectedItemCanToggle()
 {

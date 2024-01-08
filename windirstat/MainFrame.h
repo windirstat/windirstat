@@ -28,7 +28,7 @@
 class CMySplitterWnd;
 class CMainFrame;
 
-class CDirstatView;
+class CDirStatView;
 class CGraphView;
 class CTypeView;
 
@@ -45,7 +45,6 @@ enum LOGICAL_FOCUS
     LF_DIRECTORYLIST,
     LF_EXTENSIONLIST
 };
-
 
 //
 // COptionsPropertySheet. The options dialog.
@@ -67,7 +66,6 @@ protected:
     bool m_languageChanged;
     bool m_alreadyAsked;
 };
-
 
 //
 // CMySplitterWnd. A CSplitterWnd with 2 columns or rows, which
@@ -134,7 +132,6 @@ protected:
     afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
 };
 
-
 //
 // CMainFrame. The main application window.
 //
@@ -157,7 +154,7 @@ public:
     void MinimizeTypeView();
     void CopyToClipboard(LPCWSTR psz);
 
-    CDirstatView* GetDirStatView();
+    CDirStatView* GetDirStatView();
     CGraphView* GetGraphView();
     CTypeView* GetTypeView();
 

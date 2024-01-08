@@ -174,7 +174,6 @@ CStringW FormatLongLongHuman(ULONGLONG n)
     return s;
 }
 
-
 CStringW FormatCount(const ULONGLONG& n)
 {
     return FormatLongLongNormal(n);
@@ -275,7 +274,6 @@ CStringW FormatAttributes(DWORD attr)
     {
         attributes.Append(wds::strAttributeSystem);
     }
-
 
     if (attr & FILE_ATTRIBUTE_ARCHIVE)
     {

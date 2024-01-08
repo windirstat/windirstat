@@ -52,7 +52,6 @@ public:
     int CompareS(const CSortingListItem* other, const SSorting& sorting) const;
 };
 
-
 //
 // CSortingListControl. The base class for all our ListControls.
 // The lParams of the items are pointers to CSortingListItems.

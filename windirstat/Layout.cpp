@@ -119,7 +119,6 @@ void CLayout::OnGetMinMaxInfo(MINMAXINFO* mmi)
     mmi->ptMinTrackSize.y = m_originalDialogSize.cy;
 }
 
-
 /////////////////////////////////////////////////////////////////////////////
 
 const int CLayout::CSizeGripper::_width = 14;

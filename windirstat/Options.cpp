@@ -539,7 +539,6 @@ void CPersistence::DecodeWindowPlacement(const CStringW& s, WINDOWPLACEMENT& rwp
         rwp = wp;
 }
 
-
 /////////////////////////////////////////////////////////////////////////////
 
 LANGID CLanguageOptions::GetLanguage()
@@ -554,13 +553,11 @@ void CLanguageOptions::SetLanguage(LANGID langid)
     setProfileInt(sectionOptions, entryLanguage, langid);
 }
 
-
 /////////////////////////////////////////////////////////////////////////////
 COptions* GetOptions()
 {
     return &_theOptions;
 }
-
 
 bool COptions::IsListGrid() const
 {
@@ -866,7 +863,6 @@ void COptions::SetReportSuffix(LPCWSTR suffix)
     m_reportSuffix = suffix;
 }
 
-
 void COptions::SaveToRegistry()
 {
     int i = 0;
@@ -898,7 +894,6 @@ void COptions::SaveToRegistry()
         SaveUserDefinedCleanup(i);
     }
 
-
     // We must distinguish between 'empty' and 'default'.
     // 'Default' will read ""
     // 'Empty' will read "$"
@@ -917,7 +912,6 @@ void COptions::SaveToRegistry()
     }
     setProfileString(sectionOptions, entryReportSubject, s);
 
-
     if (m_reportPrefix == GetReportDefaultPrefix())
     {
         s.Empty();
@@ -927,7 +921,6 @@ void COptions::SaveToRegistry()
         s = stringPrefix + m_reportPrefix;
     }
     setProfileString(sectionOptions, entryReportPrefix, s);
-
 
     if (m_reportSuffix == GetReportDefaultSuffix())
     {
@@ -973,7 +966,6 @@ void COptions::LoadFromRegistry()
     {
         ReadUserDefinedCleanup(i);
     }
-
 
     CStringW s = getProfileString(sectionOptions, entryReportSubject);
     if (s.IsEmpty())
@@ -1117,7 +1109,6 @@ void COptions::SaveTreemapOptions()
     setProfileInt(sectionOptions, entryLightSourceX, m_treemapOptions.GetLightSourceXPercent());
     setProfileInt(sectionOptions, entryLightSourceY, m_treemapOptions.GetLightSourceYPercent());
 }
-
 
 /////////////////////////////////////////////////////////////////////////////
 

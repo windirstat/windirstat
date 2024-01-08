@@ -33,7 +33,6 @@ protected:
     BOOL InitInstance() override;
 };
 
-
 class CAboutDlg final : public CDialog
 {
     enum { IDD = IDD_ABOUTBOX };

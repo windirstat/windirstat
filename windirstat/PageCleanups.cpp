@@ -82,7 +82,6 @@ void CPageCleanups::DoDataExchange(CDataExchange* pDX)
     DDX_Control(pDX, IDC_DOWN, m_ctlDown);
 }
 
-
 BEGIN_MESSAGE_MAP(CPageCleanups, CPropertyPage)
     ON_LBN_SELCHANGE(IDC_LIST, OnLbnSelchangeList)
     ON_BN_CLICKED(IDC_ENABLED, OnBnClickedEnabled)
@@ -101,7 +100,6 @@ BEGIN_MESSAGE_MAP(CPageCleanups, CPropertyPage)
     ON_BN_CLICKED(IDC_DOWN, OnBnClickedDown)
     ON_BN_CLICKED(IDC_HELPBUTTON, OnBnClickedHelpbutton)
 END_MESSAGE_MAP()
-
 
 BOOL CPageCleanups::OnInitDialog()
 {
@@ -328,7 +326,6 @@ void CPageCleanups::OnCbnSelendokRefreshpolicy()
 {
     OnSomethingChanged();
 }
-
 
 void CPageCleanups::OnBnClickedUp()
 {

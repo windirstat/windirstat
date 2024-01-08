@@ -90,7 +90,6 @@ void CPageTreemap::DoDataExchange(CDataExchange* pDX)
     }
 }
 
-
 BEGIN_MESSAGE_MAP(CPageTreemap, CPropertyPage)
     ON_WM_VSCROLL()
     ON_NOTIFY(COLBN_CHANGED, IDC_TREEMAPGRIDCOLOR, OnColorChangedTreemapGrid)
@@ -101,7 +100,6 @@ BEGIN_MESSAGE_MAP(CPageTreemap, CPropertyPage)
     ON_BN_CLICKED(IDC_RESET, OnBnClickedReset)
     ON_NOTIFY(XYSLIDER_CHANGED, IDC_LIGHTSOURCE, OnLightSourceChanged)
 END_MESSAGE_MAP()
-
 
 BOOL CPageTreemap::OnInitDialog()
 {

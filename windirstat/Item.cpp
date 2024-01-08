@@ -52,7 +52,6 @@ namespace
     constexpr unsigned char INVALID_m_attributes = 0x80;
 }
 
-
 CItem::CItem(ITEMTYPE type, LPCWSTR name, bool dontFollow)
     : m_name(name)
       , m_lastChange{0,0}
@@ -662,7 +661,6 @@ void CItem::UpwardAddReadJobs(ULONGLONG count)
     }
 }
 
-
 void CItem::UpwardSubtractReadJobs(ULONGLONG count)
 {
     m_readJobs -= count;
@@ -971,7 +969,7 @@ void CItem::SetDone()
 
             ULONGLONG total;
             ULONGLONG free;
-            CDirstatApp::getDiskFreeSpace(GetPath(), total, free);
+            CDirStatApp::getDiskFreeSpace(GetPath(), total, free);
 
             ULONGLONG unknownspace = total - GetSize();
             if (!GetDocument()->OptionShowFreeSpace())
@@ -1384,7 +1382,7 @@ void CItem::CreateFreeSpaceItem()
 
     ULONGLONG total;
     ULONGLONG free;
-    CDirstatApp::getDiskFreeSpace(GetPath(), total, free);
+    CDirStatApp::getDiskFreeSpace(GetPath(), total, free);
 
     auto freespace = new CItem(IT_FREESPACE, GetFreeSpaceItemName());
     freespace->SetSize(free);
@@ -1406,7 +1404,6 @@ CItem* CItem::FindFreeSpaceItem() const
     }
 }
 
-
 void CItem::UpdateFreeSpaceItem() const
 {
     ASSERT(IsType(IT_DRIVE));
@@ -1421,7 +1418,7 @@ void CItem::UpdateFreeSpaceItem() const
 
     ULONGLONG total;
     ULONGLONG free;
-    CDirstatApp::getDiskFreeSpace(GetPath(), total, free);
+    CDirStatApp::getDiskFreeSpace(GetPath(), total, free);
 
     const ULONGLONG before = freeSpaceItem->GetSize();
     const ULONGLONG diff   = free - before;
@@ -1582,7 +1579,7 @@ ULONGLONG CItem::GetProgressRangeDrive() const
 {
     ULONGLONG total;
     ULONGLONG free;
-    CDirstatApp::getDiskFreeSpace(GetPath(), total, free);
+    CDirStatApp::getDiskFreeSpace(GetPath(), total, free);
 
     total -= free;
 

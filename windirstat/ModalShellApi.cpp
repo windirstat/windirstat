@@ -36,7 +36,6 @@ namespace
     };
 }
 
-
 CModalShellApi::CModalShellApi()
     : m_operation(0), m_toRecycleBin(false)
 {

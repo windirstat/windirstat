@@ -73,7 +73,6 @@ int CSortingListItem::CompareS(const CSortingListItem* other, const SSorting& so
     return r;
 }
 
-
 /////////////////////////////////////////////////////////////////////////////
 
 IMPLEMENT_DYNAMIC(CSortingListControl, CListCtrl)
@@ -139,7 +138,6 @@ void CSortingListControl::RemoveExtendedStyle(DWORD exStyle)
 {
     SetExtendedStyle(GetExtendedStyle() & ~exStyle);
 }
-
 
 const SSorting& CSortingListControl::GetSorting() const
 {
@@ -291,7 +289,6 @@ void CSortingListControl::OnHdnItemclick(NMHDR* pNMHDR, LRESULT* pResult)
 
     SortItems();
 }
-
 
 void CSortingListControl::OnHdnItemdblclick(NMHDR* pNMHDR, LRESULT* pResult)
 {

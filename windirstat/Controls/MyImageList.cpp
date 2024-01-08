@@ -194,7 +194,6 @@ int CMyImageList::getEmptyImage()
     return m_emptyImage;
 }
 
-
 // Returns an arbitrary present drive
 // TODO: doesn't work on Vista and up because the system drive has a different icon
 CStringW CMyImageList::getADriveSpec()

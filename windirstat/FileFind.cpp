@@ -81,7 +81,6 @@ BOOL FileFindEnhanced::FindNextFile()
         memcpy(tmp, m_current_info->FileName, m_current_info->FileNameLength);
     }
 
-
     return success;
 }
 

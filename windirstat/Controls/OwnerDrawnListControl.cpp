@@ -582,7 +582,6 @@ int COwnerDrawnListControl::GetSubItemWidth(COwnerDrawnListItem* item, int subit
     return rc.Width();
 }
 
-
 BEGIN_MESSAGE_MAP(COwnerDrawnListControl, CSortingListControl)
     ON_WM_ERASEBKGND()
 #pragma warning(suppress: 26454)

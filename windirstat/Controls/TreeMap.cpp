@@ -33,7 +33,6 @@
 
 static constexpr double PALETTE_BRIGHTNESS = 0.6;
 
-
 /////////////////////////////////////////////////////////////////////////////
 
 double CColorSpace::GetColorBrightness(COLORREF color)
@@ -115,7 +114,6 @@ void CColorSpace::DistributeFirst(int& first, int& second, int& third)
         ASSERT(second <= 255);
     }
 }
-
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -259,7 +257,7 @@ void CTreemap::RecurseCheckTree(Item *item)
     }
     else
     {
-// TODO: check that children are sorted by size.
+        // TODO: check that children are sorted by size.
         ULONGLONG sum = 0;
         for(int i = 0; i < item->TmiGetChildrenCount(); i++)
         {
@@ -345,7 +343,6 @@ void CTreemap::DrawTreemap(CDC* pdc, CRect rc, Item* root, const Options* option
         // Free memory
         VERIFY(bmp.DeleteObject());
         VERIFY(dcTreeView.DeleteDC());
-
 
 #ifdef STRONGDEBUG  // slow, but finds bugs!
 #ifdef _DEBUG
@@ -627,7 +624,6 @@ void CTreemap::DrawChildren(
     }
 }
 
-
 // I learned this squarification style from the KDirStat executable.
 // It's the most complex one here but also the clearest, imho.
 //
@@ -722,7 +718,6 @@ void CTreemap::KDirStat_DrawChildren(CColorRefArray& bitmap, Item* parent, const
     }
     // This asserts due to rounding error: ASSERT(top == (horizontalRows ? rc.bottom : rc.right));
 }
-
 
 // return: whether the rows are horizontal.
 //
@@ -851,7 +846,6 @@ double CTreemap::KDirStat_CalcutateNextRow(Item* parent, const int nextChild, do
 
     return rowHeight;
 }
-
 
 // The classical squarification method.
 //
@@ -1221,7 +1215,6 @@ void CTreemap::AddRidge(const CRect& rc, double* surface, double h)
     surface[3] += hf * (rc.bottom + rc.top);
     surface[1] -= hf;
 }
-
 
 /////////////////////////////////////////////////////////////////////////////
 

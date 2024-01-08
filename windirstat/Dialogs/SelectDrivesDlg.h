@@ -36,7 +36,6 @@ enum RADIO
     RADIO_AFOLDER
 };
 
-
 class CDrivesList;
 
 //
@@ -136,7 +135,6 @@ public:
     afx_msg void MeasureItem(LPMEASUREITEMSTRUCT mis);
     afx_msg void OnNMDblclk(NMHDR* pNMHDR, LRESULT* pResult);
 };
-
 
 //
 // CSelectDrivesDlg. The initial dialog, where the user can select

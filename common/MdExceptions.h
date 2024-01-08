@@ -166,7 +166,6 @@ inline void MdThrowHresult(HRESULT hr, LPCWSTR pszPrefix = nullptr)
     MdThrowStringException(sMsg);
 }
 
-
 inline void MdThrowLastWinerror(LPCWSTR pszPrefix = nullptr)
 {
     MdThrowWinError(::GetLastError(), pszPrefix);

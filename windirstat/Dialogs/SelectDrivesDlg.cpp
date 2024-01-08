@@ -55,7 +55,7 @@ namespace
 
         name = FormatVolumeName(path, volumeName);
 
-        if (!CDirstatApp::getDiskFreeSpace(path, total, free))
+        if (!CDirStatApp::getDiskFreeSpace(path, total, free))
         {
             return false;
         }
@@ -66,7 +66,6 @@ namespace
         return true;
     }
 }
-
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -184,7 +183,6 @@ int CDriveItem::Compare(const CSortingListItem* baseOther, int subitem) const
     return r;
 }
 
-
 int CDriveItem::GetImage() const
 {
     return GetMyImageList()->getFileImage(m_path);
@@ -204,7 +202,6 @@ bool CDriveItem::DrawSubitem(int subitem, CDC* pdc, CRect rc, UINT state, int* w
         {
             return false;
         }
-
 
         if (width != nullptr)
         {
@@ -285,7 +282,6 @@ CStringW CDriveItem::GetDrive() const
     return m_path.Left(2);
 }
 
-
 /////////////////////////////////////////////////////////////////////////////
 
 CSet<CDriveInformationThread*, CDriveInformationThread*> CDriveInformationThread::_runningThreads;
@@ -302,7 +298,6 @@ void CDriveInformationThread::RemoveRunningThread()
     CSingleLock lock(&_csRunningThreads, true);
     _runningThreads.RemoveKey(this);
 }
-
 
 // This static method is called by the dialog when the dialog gets closed.
 // We set the m_dialog members of all running threads to null, so that
@@ -395,7 +390,6 @@ LPARAM CDriveInformationThread::GetDriveInformation(bool& success, CStringW& nam
 
     return m_driveItem;
 }
-
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -495,7 +489,6 @@ void CDrivesList::MeasureItem(LPMEASUREITEMSTRUCT mis)
     mis->itemHeight = GetRowHeight();
 }
 
-
 /////////////////////////////////////////////////////////////////////////////
 
 IMPLEMENT_DYNAMIC(CSelectDrivesDlg, CDialog)
@@ -518,7 +511,6 @@ void CSelectDrivesDlg::DoDataExchange(CDataExchange* pDX)
     DDX_Control(pDX, IDOK, m_okButton);
 }
 
-
 BEGIN_MESSAGE_MAP(CSelectDrivesDlg, CDialog)
     ON_BN_CLICKED(IDC_BROWSEFOLDER, OnBnClickedBrowsefolder)
     ON_BN_CLICKED(IDC_AFOLDER, OnBnClickedAfolder)
@@ -535,7 +527,6 @@ BEGIN_MESSAGE_MAP(CSelectDrivesDlg, CDialog)
     ON_REGISTERED_MESSAGE(WMU_THREADFINISHED, OnWmuThreadFinished)
     ON_WM_SYSCOLORCHANGE()
 END_MESSAGE_MAP()
-
 
 BOOL CSelectDrivesDlg::OnInitDialog()
 {

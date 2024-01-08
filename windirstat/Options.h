@@ -175,7 +175,6 @@ public:
     static void checkRange(unsigned int& value, unsigned int min, unsigned int max);
 };
 
-
 //
 // CPersistence. Reads from and writes to the registry all the persistent settings
 // like window position, column order etc.
@@ -272,7 +271,6 @@ public:
 // CWinApp::SetRegistryKey
 // CWinApp::DelRegTree
 // CWinApp::WriteProfileBinary
-
 
 //
 // COptions. Represents all the data which can be viewed

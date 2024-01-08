@@ -96,7 +96,6 @@ namespace
     };
 }
 
-
 /////////////////////////////////////////////////////////////////////////////
 
 IMPLEMENT_DYNAMIC(COptionsPropertySheet, CPropertySheet)
@@ -297,7 +296,6 @@ void CMySplitterWnd::OnDestroy()
     CSplitterWnd::OnDestroy();
 }
 
-
 /////////////////////////////////////////////////////////////////////////////
 
 CPacmanControl::CPacmanControl()
@@ -410,7 +408,6 @@ static UINT indicatorsWithoutMemoryUsage[] =
     ID_INDICATOR_SCRL,
 };
 
-
 CMainFrame* CMainFrame::_theFrame;
 
 CMainFrame* CMainFrame::GetTheFrame()
@@ -499,7 +496,7 @@ void CMainFrame::SetProgressPos(ULONGLONG pos)
     UpdateProgress();
 }
 
-void CMainFrame::SetProgressPos100() // called by CDirstatDoc
+void CMainFrame::SetProgressPos100() // called by CDirStatDoc
 {
     if (m_progressRange > 0)
     {
@@ -736,7 +733,7 @@ BOOL CMainFrame::OnCreateClient(LPCREATESTRUCT /*lpcs*/, CCreateContext* pContex
     VERIFY(m_wndSplitter.CreateStatic(this, 2, 1));
     VERIFY(m_wndSplitter.CreateView(1, 0, RUNTIME_CLASS(CGraphView), CSize(100, 100), pContext));
     VERIFY(m_wndSubSplitter.CreateStatic(&m_wndSplitter, 1, 2, WS_CHILD | WS_VISIBLE | WS_BORDER, m_wndSplitter.IdFromRowCol(0, 0)));
-    VERIFY(m_wndSubSplitter.CreateView(0, 0, RUNTIME_CLASS(CDirstatView), CSize(700, 500), pContext));
+    VERIFY(m_wndSubSplitter.CreateView(0, 0, RUNTIME_CLASS(CDirStatView), CSize(700, 500), pContext));
     VERIFY(m_wndSubSplitter.CreateView(0, 1, RUNTIME_CLASS(CTypeView), CSize(100, 500), pContext));
 
     MinimizeGraphView();
@@ -792,10 +789,10 @@ void CMainFrame::RestoreGraphView()
     }
 }
 
-CDirstatView* CMainFrame::GetDirStatView()
+CDirStatView* CMainFrame::GetDirStatView()
 {
     CWnd* pWnd = m_wndSubSplitter.GetPane(0, 0);
-    auto pView = DYNAMIC_DOWNCAST(CDirstatView, pWnd);
+    auto pView = DYNAMIC_DOWNCAST(CDirStatView, pWnd);
     return pView;
 }
 

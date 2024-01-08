@@ -307,7 +307,6 @@ protected:
     Callback* m_callback; // Current callback
 };
 
-
 //
 // CTreemapPreview. A child window, which demonstrates the options
 // with an own little demo tree.

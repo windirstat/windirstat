@@ -188,7 +188,6 @@ void CReparsePoints::GetAllMountPoints()
 #endif
 }
 
-
 bool CReparsePoints::IsVolumeMountPoint(CStringW path)
 {
     if (path.GetLength() < 3 || path[1] != wds::chrColon || path[2] != wds::chrBackslash)

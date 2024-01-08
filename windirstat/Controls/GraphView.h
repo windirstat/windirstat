@@ -23,9 +23,8 @@
 
 #include "TreeMap.h"
 
-class CDirstatDoc;
+class CDirStatDoc;
 class CItem;
-
 
 //
 // CGraphView. The treemap window.
@@ -41,8 +40,11 @@ public:
 
     // CTreemap::Callback
     void TreemapDrawingCallback() override;
+    CDirStatDoc* GetDocument() const
+    {
+        return reinterpret_cast<CDirStatDoc*>(m_pDocument);
+    }
 
-    CDirstatDoc* GetDocument() const;
     void SuspendRecalculationDrawing(bool suspend);
     bool IsShowTreemap() const;
     void ShowTreemap(bool show);
@@ -50,10 +52,9 @@ public:
 
 protected:
     BOOL PreCreateWindow(CREATESTRUCT& cs) override;
-    void OnInitialUpdate() override;
     void OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint) override;
     void OnDraw(CDC* pDC) override;
-    bool IsDrawn();
+    bool IsDrawn() const;
     void Inactivate();
     void EmptyView();
     void DrawEmptyView(CDC* pDC);
@@ -86,18 +87,6 @@ protected:
     afx_msg void OnMouseMove(UINT nFlags, CPoint point);
     afx_msg void OnDestroy();
     afx_msg void OnTimer(UINT_PTR nIDEvent);
-
-public:
-#ifdef _DEBUG
-    void AssertValid() const override;
-    void Dump(CDumpContext& dc) const override;
-#endif
-    afx_msg void OnPopupCancel();
 };
 
-#ifndef _DEBUG  // Debugversion in graphview.cpp
-inline CDirstatDoc* CGraphView::GetDocument() const
-{
-    return reinterpret_cast<CDirstatDoc*>(m_pDocument);
-}
-#endif
+

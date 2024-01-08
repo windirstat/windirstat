@@ -1,4 +1,4 @@
-// dirstatview.cpp - Implementation of CDirstatView
+// dirstatview.cpp - Implementation of CDirStatView
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
@@ -35,7 +35,7 @@ namespace
     constexpr UINT _nIdTreeListControl = 4711;
 }
 
-CMyTreeListControl::CMyTreeListControl(CDirstatView* dirstatView)
+CMyTreeListControl::CMyTreeListControl(CDirStatView* dirstatView)
     : CTreeListControl(dirstatView, 20)
 {
 }
@@ -50,7 +50,6 @@ BEGIN_MESSAGE_MAP(CMyTreeListControl, CTreeListControl)
     ON_WM_SETFOCUS()
     ON_WM_KEYDOWN()
 END_MESSAGE_MAP()
-
 
 void CMyTreeListControl::OnContextMenu(CWnd* /*pWnd*/, CPoint pt)
 {
@@ -106,7 +105,7 @@ void CMyTreeListControl::OnItemDoubleClick(int i)
     const auto item = reinterpret_cast<const CItem*>(GetItem(i));
     if (item->IsType(IT_FILE))
     {
-        CDirstatDoc::OpenItem(item);
+        CDirStatDoc::OpenItem(item);
     }
     else
     {
@@ -151,22 +150,21 @@ void CMyTreeListControl::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 
 /////////////////////////////////////////////////////////////////////////////
 
-IMPLEMENT_DYNCREATE(CDirstatView, CView)
+IMPLEMENT_DYNCREATE(CDirStatView, CView)
 
-CDirstatView::CDirstatView()
+CDirStatView::CDirStatView()
     : m_treeListControl(this)
 {
     m_treeListControl.SetSorting(COL_SUBTREETOTAL, false);
 }
 
-CStringW CDirstatView::GenerateReport()
+CStringW CDirStatView::GenerateReport()
 {
     CStringW report = GetOptions()->GetReportPrefix() + L"\r\n";
 
-    for (size_t j = 0; j < GetDocument()->GetSelectionCount(); j++)
+    const auto& items = CTreeListControl::GetTheTreeListControl()->GetAllSelected<CItem>();
+    for (const auto& root : items)
     {
-        const CItem* root = GetDocument()->GetSelection(j);
-        ASSERT(root != NULL);
         ASSERT(root->IsVisible());
 
         const int r = m_treeListControl.FindTreeItem(root);
@@ -176,7 +174,7 @@ CStringW CDirstatView::GenerateReport()
             i < m_treeListControl.GetItemCount()
             && (i == r || m_treeListControl.GetItem(i)->GetIndent() > root->GetIndent());
             i++
-        )
+            )
         {
             const CItem* item = static_cast<CItem*>(m_treeListControl.GetItem(i));
 
@@ -188,41 +186,24 @@ CStringW CDirstatView::GenerateReport()
             report.AppendFormat(L"%s %s\r\n", PadWidthBlanks(FormatLongLongHuman(item->GetSize()), 11).GetString(), item->GetReportPath().GetString());
         }
     }
+
     report += L"\r\n\r\n";
     report += GetOptions()->GetReportSuffix();
 
     return report;
 }
 
-void CDirstatView::SysColorChanged()
+void CDirStatView::SysColorChanged()
 {
     m_treeListControl.SysColorChanged();
 }
 
-BOOL CDirstatView::PreCreateWindow(CREATESTRUCT& cs)
+void CDirStatView::OnDraw(CDC* pDC)
 {
-    return CView::PreCreateWindow(cs);
+    UNREFERENCED_PARAMETER(pDC);
 }
 
-void CDirstatView::OnInitialUpdate()
-{
-    CView::OnInitialUpdate();
-}
-
-void CDirstatView::OnDraw(CDC* pDC)
-{
-    CView::OnDraw(pDC);
-}
-
-#ifdef _DEBUG
-CDirstatDoc* CDirstatView::GetDocument() const // Non debug version is inline
-{
-    ASSERT(m_pDocument->IsKindOf(RUNTIME_CLASS(CDirstatDoc)));
-    return reinterpret_cast<CDirstatDoc*>(m_pDocument);
-}
-#endif
-
-BEGIN_MESSAGE_MAP(CDirstatView, CView)
+BEGIN_MESSAGE_MAP(CDirStatView, CView)
     ON_WM_INITMENUPOPUP()
     ON_WM_SIZE()
     ON_WM_CREATE()
@@ -236,7 +217,7 @@ BEGIN_MESSAGE_MAP(CDirstatView, CView)
     ON_COMMAND(ID_POPUP_TOGGLE, OnPopupToggle)
 END_MESSAGE_MAP()
 
-void CDirstatView::OnSize(UINT nType, int cx, int cy)
+void CDirStatView::OnSize(UINT nType, int cx, int cy)
 {
     CView::OnSize(nType, cx, cy);
     if (::IsWindow(m_treeListControl.m_hWnd))
@@ -246,7 +227,7 @@ void CDirstatView::OnSize(UINT nType, int cx, int cy)
     }
 }
 
-int CDirstatView::OnCreate(LPCREATESTRUCT lpCreateStruct)
+int CDirStatView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 {
     if (CView::OnCreate(lpCreateStruct) == -1)
     {
@@ -277,23 +258,23 @@ int CDirstatView::OnCreate(LPCREATESTRUCT lpCreateStruct)
     return 0;
 }
 
-BOOL CDirstatView::OnEraseBkgnd(CDC* /*pDC*/)
+BOOL CDirStatView::OnEraseBkgnd(CDC* /*pDC*/)
 {
     return true;
 }
 
-void CDirstatView::OnDestroy()
+void CDirStatView::OnDestroy()
 {
     m_treeListControl.MySetImageList(nullptr);
     CView::OnDestroy();
 }
 
-void CDirstatView::OnSetFocus(CWnd* /*pOldWnd*/)
+void CDirStatView::OnSetFocus(CWnd* /*pOldWnd*/)
 {
     m_treeListControl.SetFocus();
 }
 
-void CDirstatView::OnSettingChange(UINT uFlags, LPCWSTR lpszSection)
+void CDirStatView::OnSettingChange(UINT uFlags, LPCWSTR lpszSection)
 {
     if (uFlags & SPI_SETNONCLIENTMETRICS)
     {
@@ -301,7 +282,7 @@ void CDirstatView::OnSettingChange(UINT uFlags, LPCWSTR lpszSection)
     }
     CView::OnSettingChange(uFlags, lpszSection);
 }
-void CDirstatView::OnLvnItemchanged(NMHDR* pNMHDR, LRESULT* pResult)
+void CDirStatView::OnLvnItemchanged(NMHDR* pNMHDR, LRESULT* pResult)
 {
     auto pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
 
@@ -317,7 +298,7 @@ void CDirstatView::OnLvnItemchanged(NMHDR* pNMHDR, LRESULT* pResult)
     *pResult = FALSE;
 }
 
-void CDirstatView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
+void CDirStatView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 {
     switch (lHint)
     {
@@ -386,25 +367,12 @@ void CDirstatView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
     }
 }
 
-void CDirstatView::OnUpdatePopupToggle(CCmdUI* pCmdUI)
+void CDirStatView::OnUpdatePopupToggle(CCmdUI* pCmdUI)
 {
     pCmdUI->Enable(m_treeListControl.SelectedItemCanToggle());
 }
 
-void CDirstatView::OnPopupToggle()
+void CDirStatView::OnPopupToggle()
 {
     m_treeListControl.ToggleSelectedItem();
 }
-
-#ifdef _DEBUG
-void CDirstatView::AssertValid() const
-{
-    CView::AssertValid();
-}
-
-void CDirstatView::Dump(CDumpContext& dc) const
-{
-    CView::Dump(dc);
-}
-
-#endif //_DEBUG

@@ -39,9 +39,7 @@ BEGIN_MESSAGE_MAP(CGraphView, CView)
     ON_WM_MOUSEMOVE()
     ON_WM_DESTROY()
     ON_WM_TIMER()
-    ON_COMMAND(ID_POPUP_CANCEL, OnPopupCancel)
 END_MESSAGE_MAP()
-
 
 CGraphView::CGraphView()
 {
@@ -88,11 +86,6 @@ BOOL CGraphView::PreCreateWindow(CREATESTRUCT& cs)
     cs.lpszClass     = (LPCWSTR)::RegisterClass(&wc);
 
     return true;
-}
-
-void CGraphView::OnInitialUpdate()
-{
-    CView::OnInitialUpdate();
 }
 
 void CGraphView::DrawEmptyView()
@@ -277,11 +270,10 @@ void CGraphView::DrawSelection(CDC* pdc)
     CPen pen(PS_SOLID, 1, GetOptions()->GetTreemapHighlightColor());
     CSelectObject sopen(pdc, &pen);
 
-    const bool single = GetDocument()->GetSelectionCount() <= 1;
-
-    for (size_t i = 0; i < GetDocument()->GetSelectionCount(); i++)
+    const auto& items = CTreeListControl::GetTheTreeListControl()->GetAllSelected<CItem>();
+    for (const auto& item : items)
     {
-        HighlightSelectedItem(pdc, GetDocument()->GetSelection(i), single);
+        HighlightSelectedItem(pdc, item, items.size() == 1);
     }
 }
 
@@ -347,25 +339,6 @@ void CGraphView::RenderHighlightRectangle(CDC* pdc, CRect& rc)
     }
 }
 
-#ifdef _DEBUG
-void CGraphView::AssertValid() const
-{
-    CView::AssertValid();
-}
-
-void CGraphView::Dump(CDumpContext& dc) const
-{
-    CView::Dump(dc);
-}
-
-CDirstatDoc* CGraphView::GetDocument() const
-{
-    ASSERT(m_pDocument->IsKindOf(RUNTIME_CLASS(CDirstatDoc)));
-    return reinterpret_cast<CDirstatDoc*>(m_pDocument);
-}
-#endif //_DEBUG
-
-
 void CGraphView::OnSize(UINT nType, int cx, int cy)
 {
     CView::OnSize(nType, cx, cy);
@@ -382,18 +355,18 @@ void CGraphView::OnLButtonDown(UINT nFlags, CPoint point)
     const CItem* root = GetDocument()->GetRootItem();
     if (root != nullptr && root->IsDone() && IsDrawn())
     {
-        auto item = static_cast<const CItem*>(m_treemap.FindItemByPoint(GetDocument()->GetZoomItem(), point));
+        const auto item = static_cast<CItem*>(m_treemap.FindItemByPoint(GetDocument()->GetZoomItem(), point));
         if (item == nullptr)
         {
             return;
         }
 
-        GetDocument()->UpdateAllViews(this, HINT_SELECTIONACTION, (CObject*)item);
+        GetDocument()->UpdateAllViews(this, HINT_SELECTIONACTION, reinterpret_cast<CObject*>(item));
     }
     CView::OnLButtonDown(nFlags, point);
 }
 
-bool CGraphView::IsDrawn()
+bool CGraphView::IsDrawn() const
 {
     return m_bitmap.m_hObject != nullptr;
 }
@@ -549,8 +522,4 @@ void CGraphView::OnTimer(UINT_PTR /*nIDEvent*/)
         KillTimer(m_timer);
         m_timer = 0;
     }
-}
-
-void CGraphView::OnPopupCancel()
-{
 }

@@ -33,11 +33,11 @@
 using CExtensionColorMap = CMap<CStringW, LPCWSTR, COLORREF, COLORREF>; // ".bmp" -> color
 
 class CMainFrame;
-class CDirstatApp;
+class CDirStatApp;
 
 // Frequently used "globals"
 CMainFrame* GetMainFrame();
-CDirstatApp* GetWDSApp();
+CDirStatApp* GetWDSApp();
 CMyImageList* GetMyImageList();
 
 // Other application related globals
@@ -45,15 +45,15 @@ CStringW GetAuthorEmail();
 CStringW GetWinDirStatHomepage();
 
 //
-// CDirstatApp. The MFC application object.
+// CDirStatApp. The MFC application object.
 // Knows about RAM Usage, Mount points, Help files and the CMyImageList.
 //
-class CDirstatApp final : public CWinApp
+class CDirStatApp final : public CWinApp
 {
     using Inherited = CWinApp;
 
 public:
-    CDirstatApp();
+    CDirStatApp();
 
     BOOL InitInstance() override;
     int ExitInstance() override;

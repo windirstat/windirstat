@@ -1,4 +1,4 @@
-// DirStatDoc.h - Declaration of the CDirstatDoc class
+// DirStatDoc.h - Declaration of the CDirStatDoc class
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
@@ -29,7 +29,7 @@ class CItem;
 class CWorkLimiter;
 
 //
-// The treemap colors as calculated in CDirstatDoc::SetExtensionColors()
+// The treemap colors as calculated in CDirStatDoc::SetExtensionColors()
 // all have the "brightness" BASE_BRIGHTNESS.
 // I define brightness as a number from 0 to 3.0: (r+g+b)/255.
 // RGB(127, 255, 0), for example, has a brightness of 2.5.
@@ -70,17 +70,17 @@ enum
 };
 
 //
-// CDirstatDoc. The "Document" class.
+// CDirStatDoc. The "Document" class.
 // Owner of the root item and various other data (see data members).
 //
-class CDirstatDoc final : public CDocument
+class CDirStatDoc final : public CDocument
 {
 protected:
-    CDirstatDoc(); // Created by MFC only
-    DECLARE_DYNCREATE(CDirstatDoc)
+    CDirStatDoc(); // Created by MFC only
+    DECLARE_DYNCREATE(CDirStatDoc)
 
 public:
-    ~CDirstatDoc() override;
+    ~CDirStatDoc() override;
 
     static CStringW EncodeSelection(RADIO radio, const CStringW& folder, const CStringArray& drives);
     static void DecodeSelection(const CStringW& s, CStringW& folder, CStringArray& drives);
@@ -101,21 +101,17 @@ public:
     bool OptionShowUnknown() const;
 
     const CExtensionData* GetExtensionData();
-    ULONGLONG GetRootSize();
+    ULONGLONG GetRootSize() const;
 
     bool Work(CWorkLimiter* limiter); // return: true if done.
-    bool IsDrive(const CStringW& spec);
+    static bool IsDrive(const CStringW& spec);
     void RefreshMountPointItems();
     void RefreshJunctionItems();
 
-    bool IsRootDone();
-    CItem* GetRootItem();
-    CItem* GetZoomItem();
-    bool IsZoomed();
-
-    size_t GetSelectionCount();
-    CItem* GetSelection(size_t i);
-    void OnUpdateCentralHandler(CCmdUI* pCmdUI);
+    bool IsRootDone() const;
+    CItem* GetRootItem() const;
+    CItem* GetZoomItem() const;
+    bool IsZoomed() const;
 
     void SetHighlightExtension(LPCWSTR ext);
     CStringW GetHighlightExtension();
@@ -135,22 +131,22 @@ protected:
     void SortExtensionData(CStringArray& sortedExtensions);
     void SetExtensionColors(const CStringArray& sortedExtensions);
     static CExtensionData* _pqsortExtensionData;
-    static int __cdecl _compareExtensions(const void* ext1, const void* ext2);
+    static int __cdecl _compareExtensions(const void* item1, const void* item2);
     void SetWorkingItemAncestor(CItem* item);
     void SetWorkingItem(CItem* item);
     bool DeletePhysicalItem(CItem* item, bool toTrashBin);
     void SetZoomItem(CItem* item);
     void RefreshItem(CItem* item);
-    void AskForConfirmation(const USERDEFINEDCLEANUP* udc, CItem* item);
+    static void AskForConfirmation(const USERDEFINEDCLEANUP* udc, CItem* item);
     void PerformUserDefinedCleanup(const USERDEFINEDCLEANUP* udc, CItem* item);
     void RefreshAfterUserDefinedCleanup(const USERDEFINEDCLEANUP* udc, CItem* item);
     void RecursiveUserDefinedCleanup(const USERDEFINEDCLEANUP* udc, const CStringW& rootPath, const CStringW& currentPath);
-    void CallUserDefinedCleanup(bool isDirectory, const CStringW& format, const CStringW& rootPath, const CStringW& currentPath, bool showConsoleWindow, bool wait);
-    CStringW BuildUserDefinedCleanupCommandLine(LPCWSTR format, LPCWSTR rootPath, LPCWSTR currentPath);
+    static void CallUserDefinedCleanup(bool isDirectory, const CStringW& format, const CStringW& rootPath, const CStringW& currentPath, bool showConsoleWindow, bool wait);
+    static CStringW BuildUserDefinedCleanupCommandLine(LPCWSTR format, LPCWSTR rootPath, LPCWSTR currentPath);
     void PushReselectChild(CItem* item);
     CItem* PopReselectChild();
     void ClearReselectChildStack();
-    bool IsReselectChildAvailable();
+    bool IsReselectChildAvailable() const;
     static bool DirectoryListHasFocus();
 
     bool m_showFreeSpace; // Whether to show the <Free Space> item
@@ -176,6 +172,7 @@ protected:
     afx_msg void OnRefreshAll();
     afx_msg void OnEditCopy();
     afx_msg void OnCleanupEmptyRecycleBin();
+    afx_msg void OnUpdateCentralHandler(CCmdUI* pCmdUI);
     afx_msg void OnUpdateViewShowFreeSpace(CCmdUI* pCmdUI);
     afx_msg void OnViewShowFreeSpace();
     afx_msg void OnUpdateViewShowUnknown(CCmdUI* pCmdUI);
@@ -194,15 +191,9 @@ protected:
     afx_msg void OnCleanupProperties();
     afx_msg void OnScanSuspend();
     afx_msg void OnScanResume();
-
-public:
-#ifdef _DEBUG
-    void AssertValid() const override;
-    void Dump(CDumpContext& dc) const override;
-#endif
 };
 
 //
 // The document is needed in many places.
 //
-extern CDirstatDoc* GetDocument();
+extern CDirStatDoc* GetDocument();

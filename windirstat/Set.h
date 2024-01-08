@@ -95,10 +95,4 @@ public:
 
 protected:
     CMap<KEY, ARG_KEY, int, int> m_map;
-
-public:
-#ifdef _DEBUG
-    void Dump(CDumpContext& dc) const { m_map.Dump(dc); }
-    void AssertValid() const { m_map.AssertValid(); }
-#endif
 };

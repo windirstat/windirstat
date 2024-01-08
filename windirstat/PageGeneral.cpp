@@ -67,7 +67,6 @@ void CPageGeneral::DoDataExchange(CDataExchange* pDX)
     DDX_Check(pDX, IDC_SKIPHIDDEN, m_skipHidden);
 }
 
-
 BEGIN_MESSAGE_MAP(CPageGeneral, CPropertyPage)
     ON_BN_CLICKED(IDC_HUMANFORMAT, OnBnClickedHumanformat)
     ON_BN_CLICKED(IDC_FOLLOWMOUNTPOINTS, OnBnClickedFollowmountpoints)
@@ -79,7 +78,6 @@ BEGIN_MESSAGE_MAP(CPageGeneral, CPropertyPage)
     ON_BN_CLICKED(IDC_FULLROWSELECTION, OnBnClickedListFullRowSelection)
     ON_BN_CLICKED(IDC_SKIPHIDDEN, OnBnClickedSkipHidden)
 END_MESSAGE_MAP()
-
 
 BOOL CPageGeneral::OnInitDialog()
 {
@@ -187,7 +185,6 @@ void CPageGeneral::OnCbnSelendokCombo()
     GetSheet()->SetLanguageChanged(i != m_originalLanguage);
     SetModified();
 }
-
 
 void CPageGeneral::OnBnClickedSkipHidden()
 {

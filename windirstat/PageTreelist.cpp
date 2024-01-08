@@ -55,14 +55,12 @@ void CPageTreelist::DoDataExchange(CDataExchange* pDX)
     DDX_Control(pDX, IDC_SLIDER, m_slider);
 }
 
-
 BEGIN_MESSAGE_MAP(CPageTreelist, CPropertyPage)
     ON_NOTIFY_RANGE(COLBN_CHANGED, IDC_COLORBUTTON0, IDC_COLORBUTTON7, OnColorChanged)
     ON_WM_VSCROLL()
     ON_BN_CLICKED(IDC_PACMANANIMATION, OnBnClickedPacmananimation)
     ON_BN_CLICKED(IDC_SHOWTIMESPENT, OnBnClickedShowTimeSpent)
 END_MESSAGE_MAP()
-
 
 BOOL CPageTreelist::OnInitDialog()
 {

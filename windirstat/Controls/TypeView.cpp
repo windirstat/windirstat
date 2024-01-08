@@ -387,7 +387,6 @@ void CExtensionListControl::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 
 static UINT _nIdExtensionListControl = 4711;
 
-
 IMPLEMENT_DYNCREATE(CTypeView, CView)
 
 BEGIN_MESSAGE_MAP(CTypeView, CView)
@@ -396,7 +395,6 @@ BEGIN_MESSAGE_MAP(CTypeView, CView)
     ON_WM_SIZE()
     ON_WM_SETFOCUS()
 END_MESSAGE_MAP()
-
 
 CTypeView::CTypeView()
     : m_extensionListControl(this)
@@ -429,11 +427,6 @@ void CTypeView::SetHighlightExtension(LPCWSTR ext)
     }
 }
 
-BOOL CTypeView::PreCreateWindow(CREATESTRUCT& cs)
-{
-    return CView::PreCreateWindow(cs);
-}
-
 int CTypeView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 {
     if (CView::OnCreate(lpCreateStruct) == -1)
@@ -451,11 +444,6 @@ int CTypeView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
     m_extensionListControl.Initialize();
     return 0;
-}
-
-void CTypeView::OnInitialUpdate()
-{
-    CView::OnInitialUpdate();
 }
 
 void CTypeView::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject*)
@@ -531,35 +519,10 @@ void CTypeView::SetSelection()
     }
 }
 
-#ifdef _DEBUG
-void CTypeView::AssertValid() const
-{
-    CView::AssertValid();
-}
-
-void CTypeView::Dump(CDumpContext& dc) const
-{
-    CView::Dump(dc);
-}
-
-CDirstatDoc* CTypeView::GetDocument() const // Nicht-Debugversion ist inline
-{
-    ASSERT(m_pDocument->IsKindOf(RUNTIME_CLASS(CDirstatDoc)));
-    return static_cast<CDirstatDoc*>(m_pDocument);
-}
-#endif //_DEBUG
-
-
 void CTypeView::OnDraw(CDC* pDC)
 {
     CView::OnDraw(pDC);
 }
-
-BOOL CTypeView::OnEraseBkgnd(CDC* pDC)
-{
-    return CView::OnEraseBkgnd(pDC);
-}
-
 
 void CTypeView::OnSize(UINT nType, int cx, int cy)
 {

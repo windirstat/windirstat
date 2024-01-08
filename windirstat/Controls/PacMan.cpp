@@ -140,7 +140,6 @@ void CPacman::Draw(CDC* pdc, const CRect& rect) const
     pdc->Pie(rc, ptStart, ptEnd);
 }
 
-
 void CPacman::UpdatePosition(float& position, bool& up, float diff)
 {
     ASSERT(diff >= 0.0);

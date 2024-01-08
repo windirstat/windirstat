@@ -96,7 +96,6 @@ void StartAboutDialog()
     AfxBeginThread(RUNTIME_CLASS(CAboutThread), NULL);
 }
 
-
 /////////////////////////////////////////////////////////////////////////////
 
 IMPLEMENT_DYNCREATE(CAboutThread, CWinThread);
@@ -251,7 +250,6 @@ void CAboutDlg::CMyTabControl::OnSize(UINT nType, int cx, int cy)
     }
 }
 
-
 ////////////////////////////////////////////////////////////////////////////
 
 CAboutDlg::CAboutDlg()
@@ -321,7 +319,6 @@ void CAboutDlg::OnSize(UINT nType, int cx, int cy)
     CDialog::OnSize(nType, cx, cy);
     m_layout.OnSize();
 }
-
 
 void CAboutDlg::OnGetMinMaxInfo(MINMAXINFO* mmi)
 {

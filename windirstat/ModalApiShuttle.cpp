@@ -33,7 +33,6 @@ CModalApiShuttle::CModalApiShuttle(CWnd* pParent /*=NULL*/)
 BEGIN_MESSAGE_MAP(CModalApiShuttle, CDialog)
 END_MESSAGE_MAP()
 
-
 BOOL CModalApiShuttle::OnInitDialog()
 {
     CDialog::OnInitDialog();

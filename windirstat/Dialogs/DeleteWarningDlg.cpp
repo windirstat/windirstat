@@ -39,12 +39,10 @@ void CDeleteWarningDlg::DoDataExchange(CDataExchange* pDX)
     DDX_Text(pDX, IDC_FILENAME, m_fileName);
 }
 
-
 BEGIN_MESSAGE_MAP(CDeleteWarningDlg, CDialog)
     ON_BN_CLICKED(IDNO, OnBnClickedNo)
     ON_BN_CLICKED(IDYES, OnBnClickedYes)
 END_MESSAGE_MAP()
-
 
 void CDeleteWarningDlg::OnBnClickedNo()
 {

@@ -95,7 +95,6 @@ protected:
     afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
 };
 
-
 //
 // CTypeView. The upper right view, which shows the extensions and their
 // cushion colors.
@@ -108,18 +107,17 @@ protected:
 
 public:
     ~CTypeView() override = default;
-    CDirstatDoc* GetDocument() const;
+    CDirStatDoc* GetDocument() const
+    {
+        return static_cast<CDirStatDoc*>(m_pDocument);
+    }
     void SysColorChanged();
-
-    BOOL PreCreateWindow(CREATESTRUCT& cs) override;
-
     bool IsShowTypes() const;
     void ShowTypes(bool show);
 
     void SetHighlightExtension(LPCWSTR ext);
 
 protected:
-    void OnInitialUpdate() override;
     void OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint) override;
     void OnDraw(CDC* pDC) override;
     void SetSelection();
@@ -129,20 +127,6 @@ protected:
 
     DECLARE_MESSAGE_MAP()
     afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
-    afx_msg BOOL OnEraseBkgnd(CDC* pDC);
     afx_msg void OnSize(UINT nType, int cx, int cy);
     afx_msg void OnSetFocus(CWnd* pOldWnd);
-
-public:
-#ifdef _DEBUG
-    void AssertValid() const override;
-    void Dump(CDumpContext& dc) const override;
-#endif
 };
-
-#ifndef _DEBUG  // Debugversion in typeview.cpp
-inline CDirstatDoc* CTypeView::GetDocument() const
-{
-    return static_cast<CDirstatDoc*>(m_pDocument);
-}
-#endif

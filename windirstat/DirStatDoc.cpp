@@ -1,4 +1,4 @@
-// dirstatdoc.cpp - Implementation of CDirstatDoc
+// dirstatdoc.cpp - Implementation of CDirStatDoc
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
@@ -39,16 +39,16 @@
 
 #include "graphview.h"
 
-CDirstatDoc* _theDocument;
+CDirStatDoc* _theDocument;
 
-CDirstatDoc* GetDocument()
+CDirStatDoc* GetDocument()
 {
     return _theDocument;
 }
 
-IMPLEMENT_DYNCREATE(CDirstatDoc, CDocument)
+IMPLEMENT_DYNCREATE(CDirStatDoc, CDocument)
 
-CDirstatDoc::CDirstatDoc()
+CDirStatDoc::CDirStatDoc()
     : m_showFreeSpace(CPersistence::GetShowFreeSpace())
       , m_showUnknown(CPersistence::GetShowUnknown())
       , m_showMyComputer(false)
@@ -63,7 +63,7 @@ CDirstatDoc::CDirstatDoc()
     VTRACE(L"sizeof(CItem) = %d", sizeof(CItem));
 }
 
-CDirstatDoc::~CDirstatDoc()
+CDirStatDoc::~CDirStatDoc()
 {
     CPersistence::SetShowFreeSpace(m_showFreeSpace);
     CPersistence::SetShowUnknown(m_showUnknown);
@@ -75,7 +75,7 @@ CDirstatDoc::~CDirstatDoc()
 // Encodes a selection from the CSelectDrivesDlg into a string which can be routed as a pseudo
 // document "path" through MFC and finally arrives in OnOpenDocument().
 //
-CStringW CDirstatDoc::EncodeSelection(RADIO radio, const CStringW& folder, const CStringArray& drives)
+CStringW CDirStatDoc::EncodeSelection(RADIO radio, const CStringW& folder, const CStringArray& drives)
 {
     CStringW ret;
     switch (radio)
@@ -105,7 +105,7 @@ CStringW CDirstatDoc::EncodeSelection(RADIO radio, const CStringW& folder, const
 
 // The inverse of EncodeSelection
 //
-void CDirstatDoc::DecodeSelection(const CStringW& s, CStringW& folder, CStringArray& drives)
+void CDirStatDoc::DecodeSelection(const CStringW& s, CStringW& folder, CStringArray& drives)
 {
     folder.Empty();
     drives.RemoveAll();
@@ -168,12 +168,12 @@ void CDirstatDoc::DecodeSelection(const CStringW& s, CStringW& folder, CStringAr
     }
 }
 
-WCHAR CDirstatDoc::GetEncodingSeparator()
+WCHAR CDirStatDoc::GetEncodingSeparator()
 {
     return wds::chrPipe; // This character must be one, which is not allowed in file names.
 }
 
-void CDirstatDoc::DeleteContents()
+void CDirStatDoc::DeleteContents()
 {
     delete m_rootItem;
     m_rootItem = nullptr;
@@ -182,7 +182,7 @@ void CDirstatDoc::DeleteContents()
     GetWDSApp()->ReReadMountPoints();
 }
 
-BOOL CDirstatDoc::OnNewDocument()
+BOOL CDirStatDoc::OnNewDocument()
 {
     if (!CDocument::OnNewDocument())
     {
@@ -193,7 +193,7 @@ BOOL CDirstatDoc::OnNewDocument()
     return TRUE;
 }
 
-BOOL CDirstatDoc::OnOpenDocument(LPCWSTR lpszPathName)
+BOOL CDirStatDoc::OnOpenDocument(LPCWSTR lpszPathName)
 {
     CDocument::OnNewDocument(); // --> DeleteContents()
 
@@ -266,7 +266,7 @@ BOOL CDirstatDoc::OnOpenDocument(LPCWSTR lpszPathName)
 // We don't want MFCs AfxFullPath()-Logic, because lpszPathName
 // is not a path. So we have overridden this.
 //
-void CDirstatDoc::SetPathName(LPCWSTR lpszPathName, BOOL /*bAddToMRU*/)
+void CDirStatDoc::SetPathName(LPCWSTR lpszPathName, BOOL /*bAddToMRU*/)
 {
     // MRU would be fine but is not implemented yet.
 
@@ -278,42 +278,42 @@ void CDirstatDoc::SetPathName(LPCWSTR lpszPathName, BOOL /*bAddToMRU*/)
     ASSERT_VALID(this);
 }
 
-void CDirstatDoc::Serialize(CArchive& /*ar*/)
+void CDirStatDoc::Serialize(CArchive& /*ar*/)
 {
 }
 
 // Prefix the window title (with percentage or "Scanning")
 //
-void CDirstatDoc::SetTitlePrefix(const CStringW& prefix) const
+void CDirStatDoc::SetTitlePrefix(const CStringW& prefix) const
 {
     static CStringW suffix = IsAdmin() ? L" (Administrator)" : L"";
     const CStringW docName = prefix + GetTitle() + suffix;
     GetMainFrame()->UpdateFrameTitleForDocument(docName);
 }
 
-COLORREF CDirstatDoc::GetCushionColor(LPCWSTR ext)
+COLORREF CDirStatDoc::GetCushionColor(LPCWSTR ext)
 {
     SExtensionRecord r;
     VERIFY(GetExtensionData()->Lookup(ext, r));
     return r.color;
 }
 
-COLORREF CDirstatDoc::GetZoomColor()
+COLORREF CDirStatDoc::GetZoomColor()
 {
     return RGB(0, 0, 255);
 }
 
-bool CDirstatDoc::OptionShowFreeSpace() const
+bool CDirStatDoc::OptionShowFreeSpace() const
 {
     return m_showFreeSpace;
 }
 
-bool CDirstatDoc::OptionShowUnknown() const
+bool CDirStatDoc::OptionShowUnknown() const
 {
     return m_showUnknown;
 }
 
-const CExtensionData* CDirstatDoc::GetExtensionData()
+const CExtensionData* CDirStatDoc::GetExtensionData()
 {
     if (!m_extensionDataValid)
     {
@@ -322,7 +322,7 @@ const CExtensionData* CDirstatDoc::GetExtensionData()
     return &m_extensionData;
 }
 
-ULONGLONG CDirstatDoc::GetRootSize()
+ULONGLONG CDirStatDoc::GetRootSize() const
 {
     ASSERT(m_rootItem != NULL);
     ASSERT(IsRootDone());
@@ -332,7 +332,7 @@ ULONGLONG CDirstatDoc::GetRootSize()
 // This method does some work for ticks ms.
 // return: true if done or suspended.
 //
-bool CDirstatDoc::Work(CWorkLimiter* limiter)
+bool CDirStatDoc::Work(CWorkLimiter* limiter)
 {
     if (nullptr == m_rootItem)
     {
@@ -379,7 +379,7 @@ bool CDirstatDoc::Work(CWorkLimiter* limiter)
     }
 }
 
-bool CDirstatDoc::IsDrive(const CStringW& spec)
+bool CDirStatDoc::IsDrive(const CStringW& spec)
 {
     return 3 == spec.GetLength() && wds::chrColon == spec[1] && wds::chrBackslash == spec[2];
 }
@@ -387,7 +387,7 @@ bool CDirstatDoc::IsDrive(const CStringW& spec)
 // Starts a refresh of all mount points in our tree.
 // Called when the user changes the follow mount points option.
 //
-void CDirstatDoc::RefreshMountPointItems()
+void CDirStatDoc::RefreshMountPointItems()
 {
     CWaitCursor wc;
 
@@ -403,7 +403,7 @@ void CDirstatDoc::RefreshMountPointItems()
 // Starts a refresh of all junction points in our tree.
 // Called when the user changes the ignore junction points option.
 //
-void CDirstatDoc::RefreshJunctionItems()
+void CDirStatDoc::RefreshJunctionItems()
 {
     CWaitCursor wc;
 
@@ -416,51 +416,40 @@ void CDirstatDoc::RefreshJunctionItems()
     RecurseRefreshJunctionItems(root);
 }
 
-bool CDirstatDoc::IsRootDone()
+bool CDirStatDoc::IsRootDone() const
 {
     return m_rootItem != nullptr && m_rootItem->IsDone();
 }
 
-CItem* CDirstatDoc::GetRootItem()
+CItem* CDirStatDoc::GetRootItem() const
 {
     return m_rootItem;
 }
 
-CItem* CDirstatDoc::GetZoomItem()
+CItem* CDirStatDoc::GetZoomItem() const
 {
     return m_zoomItem;
 }
 
-bool CDirstatDoc::IsZoomed()
+bool CDirStatDoc::IsZoomed() const
 {
     return GetZoomItem() != GetRootItem();
 }
 
-CItem* CDirstatDoc::GetSelection(size_t i)
-{
-    const auto & items = CTreeListControl::GetTheTreeListControl()->GetAllSelected<CItem>();
-    return items.empty() ? nullptr : items.at(i);
-}
-
-size_t CDirstatDoc::GetSelectionCount()
-{
-    return CTreeListControl::GetTheTreeListControl()->GetAllSelected().size();
-}
-
-void CDirstatDoc::SetHighlightExtension(LPCWSTR ext)
+void CDirStatDoc::SetHighlightExtension(LPCWSTR ext)
 {
     m_highlightExtension = ext;
     GetMainFrame()->SetSelectionMessageText();
 }
 
-CStringW CDirstatDoc::GetHighlightExtension()
+CStringW CDirStatDoc::GetHighlightExtension()
 {
     return m_highlightExtension;
 }
 
 // The very root has been deleted.
 //
-void CDirstatDoc::UnlinkRoot()
+void CDirStatDoc::UnlinkRoot()
 {
     DeleteContents();
     UpdateAllViews(nullptr, HINT_NEWROOT);
@@ -468,7 +457,7 @@ void CDirstatDoc::UnlinkRoot()
 
 // Determines, whether an UDC works for a given item.
 //
-bool CDirstatDoc::UserDefinedCleanupWorksForItem(const USERDEFINEDCLEANUP* udc, const CItem* item)
+bool CDirStatDoc::UserDefinedCleanupWorksForItem(const USERDEFINEDCLEANUP* udc, const CItem* item)
 {
     bool works = false;
 
@@ -504,7 +493,7 @@ bool CDirstatDoc::UserDefinedCleanupWorksForItem(const USERDEFINEDCLEANUP* udc, 
     return works;
 }
 
-ULONGLONG CDirstatDoc::GetWorkingItemReadJobs()
+ULONGLONG CDirStatDoc::GetWorkingItemReadJobs()
 {
     if (m_workingItem != nullptr)
     {
@@ -516,7 +505,7 @@ ULONGLONG CDirstatDoc::GetWorkingItemReadJobs()
     }
 }
 
-void CDirstatDoc::OpenItem(const CItem* item, LPCWSTR verb)
+void CDirStatDoc::OpenItem(const CItem* item, LPCWSTR verb)
 {
     ASSERT(item != NULL);
 
@@ -543,7 +532,7 @@ void CDirstatDoc::OpenItem(const CItem* item, LPCWSTR verb)
     ShellExecuteEx(&sei);
 }
 
-void CDirstatDoc::RecurseRefreshMountPointItems(CItem* item)
+void CDirStatDoc::RecurseRefreshMountPointItems(CItem* item)
 {
     if (item->IsType(IT_DIRECTORY) && item != GetRootItem() && GetWDSApp()->IsVolumeMountPoint(item->GetPath()))
     {
@@ -555,7 +544,7 @@ void CDirstatDoc::RecurseRefreshMountPointItems(CItem* item)
     }
 }
 
-void CDirstatDoc::RecurseRefreshJunctionItems(CItem* item)
+void CDirStatDoc::RecurseRefreshJunctionItems(CItem* item)
 {
     if (item->IsType(IT_DIRECTORY) && item != GetRootItem() && GetWDSApp()->IsFolderJunction(item->GetAttributes()))
     {
@@ -569,7 +558,7 @@ void CDirstatDoc::RecurseRefreshJunctionItems(CItem* item)
 
 // Gets all items of type IT_DRIVE.
 //
-void CDirstatDoc::GetDriveItems(CArray<CItem*, CItem*>& drives)
+void CDirStatDoc::GetDriveItems(CArray<CItem*, CItem*>& drives)
 {
     drives.RemoveAll();
 
@@ -595,7 +584,7 @@ void CDirstatDoc::GetDriveItems(CArray<CItem*, CItem*>& drives)
     }
 }
 
-void CDirstatDoc::RefreshRecyclers()
+void CDirStatDoc::RefreshRecyclers()
 {
     CArray<CItem*, CItem*> drives;
     GetDriveItems(drives);
@@ -608,7 +597,7 @@ void CDirstatDoc::RefreshRecyclers()
     SetWorkingItem(GetRootItem());
 }
 
-void CDirstatDoc::RebuildExtensionData()
+void CDirStatDoc::RebuildExtensionData()
 {
     CWaitCursor wc;
 
@@ -624,7 +613,7 @@ void CDirstatDoc::RebuildExtensionData()
     m_extensionDataValid = true;
 }
 
-void CDirstatDoc::SortExtensionData(CStringArray& sortedExtensions)
+void CDirStatDoc::SortExtensionData(CStringArray& sortedExtensions)
 {
     sortedExtensions.SetSize(m_extensionData.GetCount());
 
@@ -643,7 +632,7 @@ void CDirstatDoc::SortExtensionData(CStringArray& sortedExtensions)
     _pqsortExtensionData = nullptr;
 }
 
-void CDirstatDoc::SetExtensionColors(const CStringArray& sortedExtensions)
+void CDirStatDoc::SetExtensionColors(const CStringArray& sortedExtensions)
 {
     static CArray<COLORREF, COLORREF&> colors;
 
@@ -663,9 +652,9 @@ void CDirstatDoc::SetExtensionColors(const CStringArray& sortedExtensions)
     }
 }
 
-CExtensionData* CDirstatDoc::_pqsortExtensionData;
+CExtensionData* CDirStatDoc::_pqsortExtensionData;
 
-int __cdecl CDirstatDoc::_compareExtensions(const void* item1, const void* item2)
+int __cdecl CDirStatDoc::_compareExtensions(const void* item1, const void* item2)
 {
     const CStringW* ext1 = (CStringW*)item1;
     const CStringW* ext2 = (CStringW*)item2;
@@ -676,7 +665,7 @@ int __cdecl CDirstatDoc::_compareExtensions(const void* item1, const void* item2
     return usignum(r2.bytes, r1.bytes);
 }
 
-void CDirstatDoc::SetWorkingItemAncestor(CItem* item)
+void CDirStatDoc::SetWorkingItemAncestor(CItem* item)
 {
     if (m_workingItem != nullptr)
     {
@@ -688,7 +677,7 @@ void CDirstatDoc::SetWorkingItemAncestor(CItem* item)
     }
 }
 
-void CDirstatDoc::SetWorkingItem(CItem* item)
+void CDirStatDoc::SetWorkingItem(CItem* item)
 {
     if (GetMainFrame() != nullptr)
     {
@@ -707,7 +696,7 @@ void CDirstatDoc::SetWorkingItem(CItem* item)
 // Deletes a file or directory via SHFileOperation.
 // Return: false, if canceled
 //
-bool CDirstatDoc::DeletePhysicalItem(CItem* item, bool toTrashBin)
+bool CDirStatDoc::DeletePhysicalItem(CItem* item, bool toTrashBin)
 {
     if (CPersistence::GetShowDeleteWarning())
     {
@@ -729,7 +718,7 @@ bool CDirstatDoc::DeletePhysicalItem(CItem* item, bool toTrashBin)
     return true;
 }
 
-void CDirstatDoc::SetZoomItem(CItem* item)
+void CDirStatDoc::SetZoomItem(CItem* item)
 {
     m_zoomItem = item;
     UpdateAllViews(nullptr, HINT_ZOOMCHANGED);
@@ -739,7 +728,7 @@ void CDirstatDoc::SetZoomItem(CItem* item)
 // If the physical item has been deleted,
 // updates selection, zoom and working item accordingly.
 //
-void CDirstatDoc::RefreshItem(CItem* item)
+void CDirStatDoc::RefreshItem(CItem* item)
 {
     ASSERT(item != NULL);
 
@@ -777,7 +766,7 @@ void CDirstatDoc::RefreshItem(CItem* item)
 
 // UDC confirmation Dialog.
 //
-void CDirstatDoc::AskForConfirmation(const USERDEFINEDCLEANUP* udc, CItem* item)
+void CDirStatDoc::AskForConfirmation(const USERDEFINEDCLEANUP* udc, CItem* item)
 {
     if (!udc->askForConfirmation)
     {
@@ -793,7 +782,7 @@ void CDirstatDoc::AskForConfirmation(const USERDEFINEDCLEANUP* udc, CItem* item)
     }
 }
 
-void CDirstatDoc::PerformUserDefinedCleanup(const USERDEFINEDCLEANUP* udc, CItem* item)
+void CDirStatDoc::PerformUserDefinedCleanup(const USERDEFINEDCLEANUP* udc, CItem* item)
 {
     CWaitCursor wc;
 
@@ -829,7 +818,7 @@ void CDirstatDoc::PerformUserDefinedCleanup(const USERDEFINEDCLEANUP* udc, CItem
     }
 }
 
-void CDirstatDoc::RefreshAfterUserDefinedCleanup(const USERDEFINEDCLEANUP* udc, CItem* item)
+void CDirStatDoc::RefreshAfterUserDefinedCleanup(const USERDEFINEDCLEANUP* udc, CItem* item)
 {
     switch (udc->refreshPolicy)
     {
@@ -857,7 +846,7 @@ void CDirstatDoc::RefreshAfterUserDefinedCleanup(const USERDEFINEDCLEANUP* udc, 
     }
 }
 
-void CDirstatDoc::RecursiveUserDefinedCleanup(const USERDEFINEDCLEANUP* udc, const CStringW& rootPath, const CStringW& currentPath)
+void CDirStatDoc::RecursiveUserDefinedCleanup(const USERDEFINEDCLEANUP* udc, const CStringW& rootPath, const CStringW& currentPath)
 {
     // (Depth first.)
 
@@ -883,7 +872,7 @@ void CDirstatDoc::RecursiveUserDefinedCleanup(const USERDEFINEDCLEANUP* udc, con
     CallUserDefinedCleanup(true, udc->commandLine, rootPath, currentPath, udc->showConsoleWindow, true);
 }
 
-void CDirstatDoc::CallUserDefinedCleanup(bool isDirectory, const CStringW& format, const CStringW& rootPath, const CStringW& currentPath, bool showConsoleWindow, bool wait)
+void CDirStatDoc::CallUserDefinedCleanup(bool isDirectory, const CStringW& format, const CStringW& rootPath, const CStringW& currentPath, bool showConsoleWindow, bool wait)
 {
     const CStringW userCommandLine = BuildUserDefinedCleanupCommandLine(format, rootPath, currentPath);
 
@@ -932,8 +921,7 @@ void CDirstatDoc::CallUserDefinedCleanup(bool isDirectory, const CStringW& forma
     CloseHandle(pi.hProcess);
 }
 
-
-CStringW CDirstatDoc::BuildUserDefinedCleanupCommandLine(LPCWSTR format, LPCWSTR rootPath, LPCWSTR currentPath)
+CStringW CDirStatDoc::BuildUserDefinedCleanupCommandLine(LPCWSTR format, LPCWSTR rootPath, LPCWSTR currentPath)
 {
     const CStringW rootName    = GetBaseNameFromPath(rootPath);
     const CStringW currentName = GetBaseNameFromPath(currentPath);
@@ -956,33 +944,32 @@ CStringW CDirstatDoc::BuildUserDefinedCleanupCommandLine(LPCWSTR format, LPCWSTR
     return s;
 }
 
-
-void CDirstatDoc::PushReselectChild(CItem* item)
+void CDirStatDoc::PushReselectChild(CItem* item)
 {
     m_reselectChildStack.AddHead(item);
 }
 
-CItem* CDirstatDoc::PopReselectChild()
+CItem* CDirStatDoc::PopReselectChild()
 {
     return m_reselectChildStack.RemoveHead();
 }
 
-void CDirstatDoc::ClearReselectChildStack()
+void CDirStatDoc::ClearReselectChildStack()
 {
     m_reselectChildStack.RemoveAll();
 }
 
-bool CDirstatDoc::IsReselectChildAvailable()
+bool CDirStatDoc::IsReselectChildAvailable() const
 {
     return !m_reselectChildStack.IsEmpty();
 }
 
-bool CDirstatDoc::DirectoryListHasFocus()
+bool CDirStatDoc::DirectoryListHasFocus()
 {
     return LF_DIRECTORYLIST == GetMainFrame()->GetLogicalFocus();
 }
 
-void CDirstatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
+void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
 {
     struct command_filter
     {
@@ -1049,7 +1036,7 @@ void CDirstatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
 }
 
 #define ON_COMMAMD_UPDATE_WRAPPER(x,y) ON_COMMAND(x, y) ON_UPDATE_COMMAND_UI(x, OnUpdateCentralHandler)
-BEGIN_MESSAGE_MAP(CDirstatDoc, CDocument) 
+BEGIN_MESSAGE_MAP(CDirStatDoc, CDocument) 
     ON_COMMAMD_UPDATE_WRAPPER(ID_REFRESH_SELECTED, OnRefreshSelected)
     ON_COMMAMD_UPDATE_WRAPPER(ID_REFRESH_ALL, OnRefreshAll)
     ON_COMMAMD_UPDATE_WRAPPER(ID_EDIT_COPY, OnEditCopy)
@@ -1074,7 +1061,7 @@ BEGIN_MESSAGE_MAP(CDirstatDoc, CDocument)
     ON_COMMAMD_UPDATE_WRAPPER(ID_SCAN_SUSPEND, OnScanSuspend)
 END_MESSAGE_MAP()
 
-void CDirstatDoc::OnRefreshSelected()
+void CDirStatDoc::OnRefreshSelected()
 {
     const auto & items = CTreeListControl::GetTheTreeListControl()->GetAllSelected<CItem>();
     for (const auto & item : items)
@@ -1083,12 +1070,12 @@ void CDirstatDoc::OnRefreshSelected()
     }
 }
 
-void CDirstatDoc::OnRefreshAll()
+void CDirStatDoc::OnRefreshAll()
 {
     RefreshItem(GetRootItem());
 }
 
-void CDirstatDoc::OnEditCopy()
+void CDirStatDoc::OnEditCopy()
 {
     // create concatenated paths
     CStringW paths;
@@ -1102,7 +1089,7 @@ void CDirstatDoc::OnEditCopy()
     CMainFrame::GetTheFrame()->CopyToClipboard(paths.GetBuffer());
 }
 
-void CDirstatDoc::OnCleanupEmptyRecycleBin()
+void CDirStatDoc::OnCleanupEmptyRecycleBin()
 {
     CModalShellApi msa;
 
@@ -1112,12 +1099,12 @@ void CDirstatDoc::OnCleanupEmptyRecycleBin()
     UpdateAllViews(NULL);
 }
 
-void CDirstatDoc::OnUpdateViewShowFreeSpace(CCmdUI* pCmdUI)
+void CDirStatDoc::OnUpdateViewShowFreeSpace(CCmdUI* pCmdUI)
 {
     pCmdUI->SetCheck(m_showFreeSpace);
 }
 
-void CDirstatDoc::OnViewShowFreeSpace()
+void CDirStatDoc::OnViewShowFreeSpace()
 {
     CArray<CItem*, CItem*> drives;
     GetDriveItems(drives);
@@ -1155,12 +1142,12 @@ void CDirstatDoc::OnViewShowFreeSpace()
     UpdateAllViews(nullptr);
 }
 
-void CDirstatDoc::OnUpdateViewShowUnknown(CCmdUI* pCmdUI)
+void CDirStatDoc::OnUpdateViewShowUnknown(CCmdUI* pCmdUI)
 {
     pCmdUI->SetCheck(m_showUnknown);
 }
 
-void CDirstatDoc::OnViewShowUnknown()
+void CDirStatDoc::OnViewShowUnknown()
 {
     CArray<CItem*, CItem*> drives;
     GetDriveItems(drives);
@@ -1198,7 +1185,7 @@ void CDirstatDoc::OnViewShowUnknown()
     UpdateAllViews(nullptr);
 }
 
-void CDirstatDoc::OnTreemapZoomIn()
+void CDirStatDoc::OnTreemapZoomIn()
 {
     const auto & item = CTreeListControl::GetTheTreeListControl()->GetFirstSelectedItem<CItem>(true);
     if (item != nullptr)
@@ -1207,7 +1194,7 @@ void CDirstatDoc::OnTreemapZoomIn()
     }
 }
 
-void CDirstatDoc::OnTreemapZoomOut()
+void CDirStatDoc::OnTreemapZoomOut()
 {
     if (GetZoomItem() != nullptr)
     {
@@ -1215,7 +1202,7 @@ void CDirstatDoc::OnTreemapZoomOut()
     }
 }
 
-void CDirstatDoc::OnExplorerSelect()
+void CDirStatDoc::OnExplorerSelect()
 {
     // accumulate a unique set of paths
     const auto& items = CTreeListControl::GetTheTreeListControl()->GetAllSelected<CItem>();
@@ -1254,7 +1241,7 @@ void CDirstatDoc::OnExplorerSelect()
     }
 }
 
-void CDirstatDoc::OnCommandPromptHere()
+void CDirStatDoc::OnCommandPromptHere()
 {
     try
     {
@@ -1280,7 +1267,7 @@ void CDirstatDoc::OnCommandPromptHere()
     }
 }
 
-void CDirstatDoc::OnCleanupDeleteToBin()
+void CDirStatDoc::OnCleanupDeleteToBin()
 {
     const auto & items = CTreeListControl::GetTheTreeListControl()->GetAllSelected<CItem>();
     for (const auto & item : items)
@@ -1293,7 +1280,7 @@ void CDirstatDoc::OnCleanupDeleteToBin()
     }
 }
 
-void CDirstatDoc::OnCleanupDelete()
+void CDirStatDoc::OnCleanupDelete()
 {
     const auto & items = CTreeListControl::GetTheTreeListControl()->GetAllSelected<CItem>();
     for (const auto & item : items)
@@ -1306,7 +1293,7 @@ void CDirstatDoc::OnCleanupDelete()
     }
 }
 
-void CDirstatDoc::OnUpdateUserDefinedCleanup(CCmdUI* pCmdUI)
+void CDirStatDoc::OnUpdateUserDefinedCleanup(CCmdUI* pCmdUI)
 {
     const int i = pCmdUI->m_nID - ID_USERDEFINEDCLEANUP0;
     const auto & items = CTreeListControl::GetTheTreeListControl()->GetAllSelected<CItem>();
@@ -1319,7 +1306,7 @@ void CDirstatDoc::OnUpdateUserDefinedCleanup(CCmdUI* pCmdUI)
     pCmdUI->Enable(allow_control);
 }
 
-void CDirstatDoc::OnUserDefinedCleanup(UINT id)
+void CDirStatDoc::OnUserDefinedCleanup(UINT id)
 {
     const USERDEFINEDCLEANUP* udc = GetOptions()->GetUserDefinedCleanup(id - ID_USERDEFINEDCLEANUP0);
     const auto & items = CTreeListControl::GetTheTreeListControl()->GetAllSelected<CItem>();
@@ -1349,7 +1336,7 @@ void CDirstatDoc::OnUserDefinedCleanup(UINT id)
     }
 }
 
-void CDirstatDoc::OnTreemapSelectParent()
+void CDirStatDoc::OnTreemapSelectParent()
 {
     const auto & item = CTreeListControl::GetTheTreeListControl()->GetFirstSelectedItem<CItem>(true);
     PushReselectChild(item);
@@ -1357,14 +1344,14 @@ void CDirstatDoc::OnTreemapSelectParent()
     UpdateAllViews(nullptr, HINT_SELECTIONREFRESH);
 }
 
-void CDirstatDoc::OnTreemapReselectChild()
+void CDirStatDoc::OnTreemapReselectChild()
 {
     CItem* item = PopReselectChild();
     CTreeListControl::GetTheTreeListControl()->SelectItem(item, true, true);
     UpdateAllViews(nullptr, HINT_SELECTIONREFRESH);
 }
 
-void CDirstatDoc::OnCleanupOpenTarget()
+void CDirStatDoc::OnCleanupOpenTarget()
 {
     const auto & items = CTreeListControl::GetTheTreeListControl()->GetAllSelected<CItem>();
     for (const auto & item : items)
@@ -1373,7 +1360,7 @@ void CDirstatDoc::OnCleanupOpenTarget()
     }
 }
 
-void CDirstatDoc::OnCleanupProperties()
+void CDirStatDoc::OnCleanupProperties()
 {
     const auto & items = CTreeListControl::GetTheTreeListControl()->GetAllSelected<CItem>();
     for (const auto & item : items)
@@ -1382,25 +1369,12 @@ void CDirstatDoc::OnCleanupProperties()
     }
 }
 
-void CDirstatDoc::OnScanSuspend()
+void CDirStatDoc::OnScanSuspend()
 {
     GetMainFrame()->SuspendScan(true);
 }
 
-void CDirstatDoc::OnScanResume()
+void CDirStatDoc::OnScanResume()
 {
     GetMainFrame()->SuspendScan(false);
 }
-
-// CDirstatDoc Diagnostics
-#ifdef _DEBUG
-void CDirstatDoc::AssertValid() const
-{
-    CDocument::AssertValid();
-}
-
-void CDirstatDoc::Dump(CDumpContext& dc) const
-{
-    CDocument::Dump(dc);
-}
-#endif //_DEBUG

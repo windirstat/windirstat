@@ -25,10 +25,9 @@
 #include "pacman.h"
 #include <vector>
 
-class CDirstatView;
+class CDirStatView;
 class CTreeListItem;
 class CTreeListControl;
-
 
 //
 // CTreeListItem. An item in the CTreeListControl. (CItem is derived from CTreeListItem.)
@@ -109,7 +108,6 @@ private:
     mutable VISIBLEINFO* m_vi;
 };
 
-
 //
 // CTreeListControl. A CListCtrl, which additionally behaves an looks like a tree control.
 //
@@ -124,7 +122,7 @@ class CTreeListControl : public COwnerDrawnListControl
 public:
     static CTreeListControl* GetTheTreeListControl();
 
-    CTreeListControl(CDirstatView* dirstatView, int rowHeight = -1);
+    CTreeListControl(CDirStatView* dirstatView, int rowHeight = -1);
     ~CTreeListControl() override = default;
     void MySetImageList(CImageList* il);
     virtual BOOL CreateEx(DWORD dwExStyle, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID);
@@ -184,7 +182,7 @@ protected:
     //
     /////////////////////////////////////////////////////
 
-    CDirstatView* m_dirstatView; // backpointer to the directory list
+    CDirStatView* m_dirstatView; // backpointer to the directory list
 
     CBitmap m_bmNodes0;                // The bitmaps needed to draw the treecontrol-like branches
     CBitmap m_bmNodes1;                // The same bitmaps with stripe-background color

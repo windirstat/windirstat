@@ -1,4 +1,4 @@
-// windirstat.cpp - Implementation of CDirstatApp and some globals
+// windirstat.cpp - Implementation of CDirStatApp and some globals
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
@@ -51,9 +51,9 @@ CMainFrame* GetMainFrame()
     return CMainFrame::GetTheFrame();
 }
 
-CDirstatApp* GetWDSApp()
+CDirStatApp* GetWDSApp()
 {
-    return static_cast<CDirstatApp*>(AfxGetApp());
+    return static_cast<CDirStatApp*>(AfxGetApp());
 }
 
 CStringW GetAuthorEmail()
@@ -71,10 +71,9 @@ CMyImageList* GetMyImageList()
     return GetWDSApp()->GetMyImageList();
 }
 
+// CDirStatApp
 
-// CDirstatApp
-
-BEGIN_MESSAGE_MAP(CDirstatApp, CWinApp)
+BEGIN_MESSAGE_MAP(CDirStatApp, CWinApp)
     ON_COMMAND(ID_APP_ABOUT, OnAppAbout)
     ON_COMMAND(ID_FILE_SELECT, OnFileOpen)
     ON_COMMAND(ID_RUN_ELEVATED, OnRunElevated)
@@ -82,10 +81,9 @@ BEGIN_MESSAGE_MAP(CDirstatApp, CWinApp)
     ON_COMMAND(ID_HELP_MANUAL, OnHelpManual)
 END_MESSAGE_MAP()
 
+CDirStatApp _theApp;
 
-CDirstatApp _theApp;
-
-CDirstatApp::CDirstatApp()
+CDirStatApp::CDirStatApp()
     : m_pDocTemplate(nullptr)
       , m_langid(0)
       , m_workingSet(0)
@@ -102,18 +100,18 @@ CDirstatApp::CDirstatApp()
 #   endif
 }
 
-CMyImageList* CDirstatApp::GetMyImageList()
+CMyImageList* CDirStatApp::GetMyImageList()
 {
     m_myImageList.initialize();
     return &m_myImageList;
 }
 
-void CDirstatApp::UpdateRamUsage()
+void CDirStatApp::UpdateRamUsage()
 {
     CWinThread::OnIdle(0);
 }
 
-void CDirstatApp::PeriodicalUpdateRamUsage()
+void CDirStatApp::PeriodicalUpdateRamUsage()
 {
     if (GetTickCount64() - m_lastPeriodicalRamUsageUpdate > 1200)
     {
@@ -122,7 +120,7 @@ void CDirstatApp::PeriodicalUpdateRamUsage()
     }
 }
 
-CStringW CDirstatApp::FindResourceDllPathByLangid(LANGID& langid)
+CStringW CDirStatApp::FindResourceDllPathByLangid(LANGID& langid)
 {
     return FindAuxiliaryFileByLangid(
         wds::strLangPrefix
@@ -132,7 +130,7 @@ CStringW CDirstatApp::FindResourceDllPathByLangid(LANGID& langid)
     );
 }
 
-CStringW CDirstatApp::FindHelpfilePathByLangid(LANGID langid)
+CStringW CDirStatApp::FindHelpfilePathByLangid(LANGID langid)
 {
     CStringW s;
     if (langid == GetBuiltInLanguage())
@@ -163,7 +161,7 @@ CStringW CDirstatApp::FindHelpfilePathByLangid(LANGID langid)
     return wds::strEmpty;
 }
 
-void CDirstatApp::GetAvailableResourceDllLangids(CArray<LANGID, LANGID>& arr)
+void CDirStatApp::GetAvailableResourceDllLangids(CArray<LANGID, LANGID>& arr)
 {
     arr.RemoveAll();
 
@@ -185,7 +183,7 @@ void CDirstatApp::GetAvailableResourceDllLangids(CArray<LANGID, LANGID>& arr)
     }
 }
 
-void CDirstatApp::RestartApplication()
+void CDirStatApp::RestartApplication()
 {
     // First, try to create the suspended process
     STARTUPINFO si;
@@ -219,7 +217,7 @@ void CDirstatApp::RestartApplication()
     ::CloseHandle(pi.hThread);
 }
 
-bool CDirstatApp::getDiskFreeSpace(LPCWSTR pszRootPath, ULONGLONG& total, ULONGLONG& unused)
+bool CDirStatApp::getDiskFreeSpace(LPCWSTR pszRootPath, ULONGLONG& total, ULONGLONG& unused)
 {
     ULARGE_INTEGER u64total = {0};
     ULARGE_INTEGER u64free = {0};
@@ -239,7 +237,7 @@ bool CDirstatApp::getDiskFreeSpace(LPCWSTR pszRootPath, ULONGLONG& total, ULONGL
     return FALSE != b;
 }
 
-bool CDirstatApp::ScanResourceDllName(LPCWSTR name, LANGID& langid)
+bool CDirStatApp::ScanResourceDllName(LPCWSTR name, LANGID& langid)
 {
     return ScanAuxiliaryFileName(
         wds::strLangPrefix
@@ -250,7 +248,7 @@ bool CDirstatApp::ScanResourceDllName(LPCWSTR name, LANGID& langid)
 }
 
 // suffix contains the dot (e.g. ".chm")
-bool CDirstatApp::ScanAuxiliaryFileName(LPCWSTR prefix, LPCWSTR suffix, LPCWSTR name, LANGID& langid)
+bool CDirStatApp::ScanAuxiliaryFileName(LPCWSTR prefix, LPCWSTR suffix, LPCWSTR name, LANGID& langid)
 {
     using wds::iLangCodeLength;
     ASSERT(wcslen(prefix) == wcslen(wds::strLangPrefix)); // FIXME: Also add .chm part or split
@@ -292,7 +290,7 @@ bool CDirstatApp::ScanAuxiliaryFileName(LPCWSTR prefix, LPCWSTR suffix, LPCWSTR 
 }
 
 #ifdef _DEBUG
-void CDirstatApp::TestScanResourceDllName()
+void CDirStatApp::TestScanResourceDllName()
 {
     LANGID id;
     ASSERT(!ScanResourceDllName(wds::strEmpty, id));
@@ -307,7 +305,7 @@ void CDirstatApp::TestScanResourceDllName()
 }
 #endif
 
-CStringW CDirstatApp::FindAuxiliaryFileByLangid(LPCWSTR prefix, LPCWSTR suffix, LANGID& langid, bool checkResource)
+CStringW CDirStatApp::FindAuxiliaryFileByLangid(LPCWSTR prefix, LPCWSTR suffix, LANGID& langid, bool checkResource)
 {
     CStringW number;
     number.Format(L"%04x", langid);
@@ -350,7 +348,7 @@ CStringW CDirstatApp::FindAuxiliaryFileByLangid(LPCWSTR prefix, LPCWSTR suffix, 
     return wds::strEmpty;
 }
 
-bool CDirstatApp::IsCorrectResourceDll(LPCWSTR path)
+bool CDirStatApp::IsCorrectResourceDll(LPCWSTR path)
 {
     const HMODULE module = ::LoadLibraryEx(path, nullptr, LOAD_LIBRARY_AS_DATAFILE);
     if (module == nullptr)
@@ -377,17 +375,17 @@ bool CDirstatApp::IsCorrectResourceDll(LPCWSTR path)
     return true;
 }
 
-void CDirstatApp::ReReadMountPoints()
+void CDirStatApp::ReReadMountPoints()
 {
     m_mountPoints.Initialize();
 }
 
-bool CDirstatApp::IsVolumeMountPoint(const CStringW& path)
+bool CDirStatApp::IsVolumeMountPoint(const CStringW& path)
 {
     return m_mountPoints.IsVolumeMountPoint(path);
 }
 
-bool CDirstatApp::IsFolderJunction(DWORD attr)
+bool CDirStatApp::IsFolderJunction(DWORD attr)
 {
     return m_mountPoints.IsFolderJunction(attr);
 }
@@ -395,7 +393,7 @@ bool CDirstatApp::IsFolderJunction(DWORD attr)
 // Get the alternative colors for compressed and encrypted files/folders.
 // This function uses either the value defined in the Explorer configuration
 // or the default color values.
-COLORREF CDirstatApp::GetAlternativeColor(COLORREF clrDefault, LPCWSTR which)
+COLORREF CDirStatApp::GetAlternativeColor(COLORREF clrDefault, LPCWSTR which)
 {
     COLORREF x;
     DWORD cbValue = sizeof(x);
@@ -417,19 +415,19 @@ COLORREF CDirstatApp::GetAlternativeColor(COLORREF clrDefault, LPCWSTR which)
     }
 }
 
-COLORREF CDirstatApp::AltColor() const
+COLORREF CDirStatApp::AltColor() const
 {
     // Return property value
     return m_altColor;
 }
 
-COLORREF CDirstatApp::AltEncryptionColor() const
+COLORREF CDirStatApp::AltEncryptionColor() const
 {
     // Return property value
     return m_altEncryptionColor;
 }
 
-CStringW CDirstatApp::GetCurrentProcessMemoryInfo()
+CStringW CDirStatApp::GetCurrentProcessMemoryInfo()
 {
     UpdateMemoryInfo();
 
@@ -446,7 +444,7 @@ CStringW CDirstatApp::GetCurrentProcessMemoryInfo()
     return s;
 }
 
-bool CDirstatApp::UpdateMemoryInfo()
+bool CDirStatApp::UpdateMemoryInfo()
 {
     PROCESS_MEMORY_COUNTERS pmc;
     ZeroMemory(&pmc, sizeof(pmc));
@@ -470,12 +468,12 @@ bool CDirstatApp::UpdateMemoryInfo()
     return ret;
 }
 
-LANGID CDirstatApp::GetBuiltInLanguage()
+LANGID CDirStatApp::GetBuiltInLanguage()
 {
     return MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US);
 }
 
-BOOL CDirstatApp::InitInstance()
+BOOL CDirStatApp::InitInstance()
 {
     Inherited::InitInstance();
 
@@ -521,7 +519,7 @@ BOOL CDirstatApp::InitInstance()
 
     m_pDocTemplate = new CSingleDocTemplate(
         IDR_MAINFRAME,
-        RUNTIME_CLASS(CDirstatDoc),
+        RUNTIME_CLASS(CDirStatDoc),
         RUNTIME_CLASS(CMainFrame),
         RUNTIME_CLASS(CGraphView));
     if (!m_pDocTemplate)
@@ -586,17 +584,17 @@ BOOL CDirstatApp::InitInstance()
     return TRUE;
 }
 
-int CDirstatApp::ExitInstance()
+int CDirStatApp::ExitInstance()
 {
     return Inherited::ExitInstance();
 }
 
-LANGID CDirstatApp::GetLangid() const
+LANGID CDirStatApp::GetLangid() const
 {
     return m_langid;
 }
 
-LANGID CDirstatApp::GetEffectiveLangid()
+LANGID CDirStatApp::GetEffectiveLangid()
 {
     if (GetOptions()->IsUseWdsLocale())
     {
@@ -608,27 +606,27 @@ LANGID CDirstatApp::GetEffectiveLangid()
     }
 }
 
-void CDirstatApp::OnAppAbout()
+void CDirStatApp::OnAppAbout()
 {
     StartAboutDialog();
 }
 
-void CDirstatApp::OnFileOpen()
+void CDirStatApp::OnFileOpen()
 {
     CSelectDrivesDlg dlg;
     if (IDOK == dlg.DoModal())
     {
-        const CStringW path = CDirstatDoc::EncodeSelection(static_cast<RADIO>(dlg.m_radio), dlg.m_folderName, dlg.m_drives);
+        const CStringW path = CDirStatDoc::EncodeSelection(static_cast<RADIO>(dlg.m_radio), dlg.m_folderName, dlg.m_drives);
         m_pDocTemplate->OpenDocumentFile(path, true);
     }
 }
 
-void CDirstatApp::OnUpdateRunElevated(CCmdUI* pCmdUI)
+void CDirStatApp::OnUpdateRunElevated(CCmdUI* pCmdUI)
 {
     pCmdUI->Enable(!IsAdmin());
 }
 
-void CDirstatApp::OnRunElevated()
+void CDirStatApp::OnRunElevated()
 {
     // For the configuration to launch, include the parent process so we can
     // terminate it once launched from the child process
@@ -651,11 +649,11 @@ void CDirstatApp::OnRunElevated()
     }
 }
 
-BOOL CDirstatApp::OnIdle(LONG lCount)
+BOOL CDirStatApp::OnIdle(LONG lCount)
 {
     bool more = false;
 
-    CDirstatDoc* doc = GetDocument();
+    CDirStatDoc* doc = GetDocument();
     CWorkLimiter limiter;
     limiter.Start(600);
     if (doc && !doc->Work(&limiter))
@@ -671,13 +669,13 @@ BOOL CDirstatApp::OnIdle(LONG lCount)
     return more;
 }
 
-void CDirstatApp::OnHelpManual()
+void CDirStatApp::OnHelpManual()
 {
     // FIXME: open browser, point to Wiki (via windirstat.net short link), based on current language
     DoContextHelp(IDH_StartPage);
 }
 
-void CDirstatApp::DoContextHelp(DWORD)
+void CDirStatApp::DoContextHelp(DWORD)
 {
     CStringW msg;
     msg.FormatMessage(IDS_HELPFILEsCOULDNOTBEFOUND, L"windirstat.chm");

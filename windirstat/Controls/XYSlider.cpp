@@ -28,7 +28,6 @@ IMPLEMENT_DYNAMIC(CXySlider, CStatic)
 const UINT CXySlider::XY_SETPOS = WM_USER + 100;
 const UINT CXySlider::XY_GETPOS = WM_USER + 101;
 
-
 void AFXAPI DDX_XySlider(CDataExchange* pDX, int nIDC, CPoint& value)
 {
     pDX->PrepareCtrl(nIDC);
@@ -107,7 +106,6 @@ LRESULT CXySlider::OnGetPos(WPARAM, LPARAM lparam)
     *point     = GetPos();
     return 0;
 }
-
 
 void CXySlider::SetPos(CPoint pt)
 {
@@ -384,7 +382,6 @@ void CXySlider::RemoveTimer()
     }
     m_timer = 0;
 }
-
 
 BEGIN_MESSAGE_MAP(CXySlider, CStatic)
     ON_WM_DESTROY()
