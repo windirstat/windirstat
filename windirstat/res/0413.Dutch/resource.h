@@ -126,7 +126,6 @@
 #define IDC_CAPTION                     1014
 #define IDC_FILENAME                    1016
 #define IDC_DONTSHOWAGAIN               1017
-#define IDC_HANDCURSOR                  1017
 #define IDC_FOLLOWMOUNTPOINTS           1020
 #define IDC_PACMANANIMATION             1021
 #define IDC_FOLLOWJUNCTIONS             1021
