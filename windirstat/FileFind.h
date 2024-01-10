@@ -41,8 +41,6 @@ private:
         WCHAR         FileName[1];
     } FILE_DIRECTORY_INFORMATION, * PFILE_DIRECTORY_INFORMATION;
 
-    static const auto BUFFER_SIZE = 64 * 1024;
-    BYTE * m_directory_info = nullptr;
     CStringW m_base;
     CStringW m_name;
     HANDLE m_handle = nullptr;

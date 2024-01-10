@@ -36,12 +36,10 @@ static NTSTATUS(WINAPI* NtQueryDirectoryFile)(HANDLE FileHandle, HANDLE Event, P
 
 FileFindEnhanced::FileFindEnhanced()
 {
-    m_directory_info = new BYTE[BUFFER_SIZE];
 }
 
 FileFindEnhanced::~FileFindEnhanced()
 {
-    delete [] m_directory_info;
     if (m_handle != nullptr) NtClose(m_handle);
 }
 
@@ -57,6 +55,9 @@ BOOL FileFindEnhanced::FindNextFile()
     BOOL success = FALSE;
     if (m_firstrun || m_current_info->NextEntryOffset == 0)
     {
+        constexpr auto BUFFER_SIZE = 64 * 1024;
+        thread_local BYTE m_directory_info[BUFFER_SIZE];
+
         // enumerate files in the directory
         constexpr auto FileDirectoryInformation = 1;
         IO_STATUS_BLOCK IoStatusBlock;
