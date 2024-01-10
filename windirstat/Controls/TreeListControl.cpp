@@ -289,7 +289,7 @@ void CTreeListItem::SetVisible(bool visible)
     }
 }
 
-int CTreeListItem::GetIndent() const
+unsigned char CTreeListItem::GetIndent() const
 {
     ASSERT(IsVisible());
     return m_vi->indent;

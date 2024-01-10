@@ -116,7 +116,7 @@ public:
     int CompareSibling(const CTreeListItem* tlib, int subitem) const override;
     int GetChildrenCount() const override;
     CTreeListItem* GetTreeListChild(int i) const override;
-    int GetImageToCache() const override;
+    short GetImageToCache() const override;
     void DrawAdditionalState(CDC* pdc, const CRect& rcLabel) const override;
 
     // CTreemap::Item interface
@@ -181,8 +181,6 @@ public:
     DWORD GetAttributes() const;
     int GetSortAttributes() const;
     double GetFraction() const;
-    ITEMTYPE GetType() const;
-    bool IsType(const ITEMTYPE type) const;
     bool IsRootItem() const;
     CStringW GetPath() const;
     bool HasUncPath() const;
@@ -196,7 +194,6 @@ public:
     ULONGLONG GetItemsCount() const;
     bool IsReadJobDone() const;
     void SetReadJobDone(bool done = true);
-    bool IsDone() const;
     void SetDone();
     ULONGLONG GetTicksWorked() const;
     void AddTicksWorked(ULONGLONG more);
@@ -212,7 +209,22 @@ public:
     CItem* FindUnknownItem() const;
     void RemoveUnknownItem();
     CItem* FindDirectoryByPath(const CStringW& path);
-    void RecurseCollectExtensionData(CExtensionData* ed);
+    void RecurseCollectExtensionData(CExtensionData* ed) const;
+
+    bool IsDone() const
+    {
+        return m_done;
+    }
+
+    ITEMTYPE GetType() const
+    {
+        return static_cast<ITEMTYPE>(m_type & ~ITF_FLAGS);
+    }
+
+    bool IsType(const ITEMTYPE type) const
+    {
+        return (m_type & type) != 0;
+    }
 
 private:
     ULONGLONG GetProgressRangeMyComputer() const;
@@ -227,9 +239,9 @@ private:
     CStringW UpwardGetPathWithoutBackslash() const;
     void AddDirectory(FileFindEnhanced& finder);
     void AddFile(const FILEINFO& fi);
-    void DriveVisualUpdateDuringWork();
-    void UpwardDrivePacman();
-    void DrivePacman();
+    void DriveVisualUpdateDuringWork() const;
+    void UpwardDrivePacman() const;
+    void DrivePacman() const;
 
     // Our children. When "this" is set to "done", this array is sorted by child size.
     CArray<CItem*, CItem*> m_children;

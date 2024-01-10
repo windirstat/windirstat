@@ -21,6 +21,7 @@
 //
 
 #pragma once
+#include <string>
 
 //
 // SSorting. A sorting specification. We sort by column1, and if two items
@@ -95,7 +96,7 @@ private:
     void SavePersistentAttributes() const;
     static int CALLBACK _CompareFunc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
 
-    CStringW m_name; // for persistence
+    std::wstring m_name; // for persistence
     SSorting m_sorting;
 
     int m_indicatedColumn;

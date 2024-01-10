@@ -50,7 +50,7 @@ void CMyImageList::initialize()
         this->Attach(ImageList_Duplicate(hil));
 
         VTRACE(L"System image list has %i icons", this->GetImageCount());
-        for (int i = 0; i < this->GetImageCount(); i++)
+        for (short i = 0; i < this->GetImageCount(); i++)
         {
             m_indexMap.SetAt(i, i);
         }
@@ -92,7 +92,7 @@ COLORREF CMyImageList::yellowify_(COLORREF c)
 }
 
 // Returns the index of the added icon
-int CMyImageList::cacheIcon(LPCWSTR path, UINT flags, CStringW* psTypeName)
+short CMyImageList::cacheIcon(LPCWSTR path, UINT flags, CStringW* psTypeName)
 {
     ASSERT(m_hImageList != NULL); // should have been initialize()ed.
 
@@ -104,7 +104,7 @@ int CMyImageList::cacheIcon(LPCWSTR path, UINT flags, CStringW* psTypeName)
     }
 
     SHFILEINFO sfi = {nullptr};
-    const auto hil = (HIMAGELIST)::SHGetFileInfo(path, 0, &sfi, sizeof(sfi), flags);
+    const auto hil = reinterpret_cast<HIMAGELIST>(::SHGetFileInfo(path, 0, &sfi, sizeof(sfi), flags));
     if (hil == nullptr)
     {
         VTRACE(L"SHGetFileInfo() failed");
@@ -116,18 +116,18 @@ int CMyImageList::cacheIcon(LPCWSTR path, UINT flags, CStringW* psTypeName)
         *psTypeName = sfi.szTypeName;
     }
 
-    int i;
+    short i;
     if (!m_indexMap.Lookup(sfi.iIcon, i)) // part of the system image list?
     {
         CImageList* sil = CImageList::FromHandle(hil); // does not have to be destroyed
-        i               = this->Add(sil->ExtractIcon(sfi.iIcon));
+        i = static_cast<short>(this->Add(sil->ExtractIcon(sfi.iIcon)));
         m_indexMap.SetAt(sfi.iIcon, i);
     }
 
     return i;
 }
 
-int CMyImageList::getMyComputerImage()
+short CMyImageList::getMyComputerImage()
 {
     SmartPointer<LPITEMIDLIST> pidl(CoTaskMemFree);
     const HRESULT hr = ::SHGetSpecialFolderLocation(nullptr, CSIDL_DRIVES, &pidl);
@@ -140,18 +140,18 @@ int CMyImageList::getMyComputerImage()
     return cacheIcon(static_cast<LPCWSTR>(static_cast<LPVOID>(pidl)), SHGFI_PIDL);
 }
 
-int CMyImageList::getMountPointImage()
+short CMyImageList::getMountPointImage()
 {
     return cacheIcon(getADriveSpec(), 0); // The flag SHGFI_USEFILEATTRIBUTES doesn't work on W95.
 }
 
-int CMyImageList::getJunctionImage() const
+short CMyImageList::getJunctionImage() const
 {
     // Intermediate solution until we find a nice icon for junction points
     return m_junctionImage;
 }
 
-int CMyImageList::getFolderImage()
+short CMyImageList::getFolderImage()
 {
     CStringW s;
     ::GetSystemDirectory(s.GetBuffer(_MAX_PATH), _MAX_PATH);
@@ -160,35 +160,35 @@ int CMyImageList::getFolderImage()
     return cacheIcon(s, 0);
 }
 
-int CMyImageList::getFileImage(LPCWSTR path)
+short CMyImageList::getFileImage(LPCWSTR path)
 {
     return cacheIcon(path, 0);
 }
 
-int CMyImageList::getExtImageAndDescription(LPCWSTR ext, CStringW& description)
+short CMyImageList::getExtImageAndDescription(LPCWSTR ext, CStringW& description)
 {
     return cacheIcon(ext, SHGFI_USEFILEATTRIBUTES, &description);
 }
 
-int CMyImageList::getFilesFolderImage() const
+short CMyImageList::getFilesFolderImage() const
 {
     ASSERT(m_hImageList != NULL); // should have been initialize()ed.
     return m_filesFolderImage;
 }
 
-int CMyImageList::getFreeSpaceImage()
+short CMyImageList::getFreeSpaceImage()
 {
     ASSERT(m_hImageList != NULL); // should have been initialize()ed.
     return m_freeSpaceImage;
 }
 
-int CMyImageList::getUnknownImage()
+short CMyImageList::getUnknownImage()
 {
     ASSERT(m_hImageList != NULL); // should have been initialize()ed.
     return m_unknownImage;
 }
 
-int CMyImageList::getEmptyImage()
+short CMyImageList::getEmptyImage()
 {
     ASSERT(m_hImageList != NULL);
     return m_emptyImage;
@@ -290,7 +290,7 @@ void CMyImageList::addCustomImages()
             }
         }
     }
-    int k = this->Add(&target, bgcolor);
+    short k = static_cast<short>(this->Add(&target, bgcolor));
     VTRACE(L"k == %i", k);
     m_filesFolderImage = k++;
     m_freeSpaceImage   = k++;

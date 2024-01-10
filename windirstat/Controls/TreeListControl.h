@@ -47,15 +47,15 @@ class CTreeListItem : public COwnerDrawnListItem
         CArray<CTreeListItem*, CTreeListItem*> sortedChildren;
 
         CPacman pacman;
-        CRect rcPlusMinus; // Coordinates of the little +/- rectangle, relative to the upper left corner of the item.
-        CRect rcTitle;     // Coordinates of the label, relative to the upper left corner of the item.
-        int indent;        // 0 for the root item, 1 for its children, and so on.
-        int image;         // -1 as long as not needed, >= 0: valid index in MyImageList.
-        bool isExpanded;   // Whether item is expanded.
+        CRect rcPlusMinus;    // Coordinates of the little +/- rectangle, relative to the upper left corner of the item.
+        CRect rcTitle;        // Coordinates of the label, relative to the upper left corner of the item.
+        short image;          // -1 as long as not needed, >= 0: valid index in MyImageList.
+        unsigned char indent; // 0 for the root item, 1 for its children, and so on.
+        bool isExpanded;      // Whether item is expanded.
 
-        VISIBLEINFO(int iIndent)
-            : indent(iIndent)
-              , image(-1)
+        VISIBLEINFO(unsigned char iIndent)
+            : image(-1)
+              , indent(iIndent)
               , isExpanded(false)
         {
         }
@@ -73,7 +73,7 @@ public:
     int Compare(const CSortingListItem* other, int subitem) const override;
     virtual CTreeListItem* GetTreeListChild(int i) const = 0;
     virtual int GetChildrenCount() const = 0;
-    virtual int GetImageToCache() const = 0;
+    virtual short GetImageToCache() const = 0;
 
     void DrawPacman(CDC* pdc, const CRect& rc, COLORREF bgColor) const;
     void UncacheImage();
@@ -89,7 +89,7 @@ public:
     void SetExpanded(bool expanded = true);
     bool IsVisible() const;
     void SetVisible(bool visible = true);
-    int GetIndent() const;
+    unsigned char GetIndent() const;
     CRect GetPlusMinusRect() const;
     void SetPlusMinusRect(const CRect& rc) const;
     CRect GetTitleRect() const;

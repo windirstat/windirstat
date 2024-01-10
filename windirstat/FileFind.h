@@ -43,8 +43,8 @@ private:
 
     static const auto BUFFER_SIZE = 64 * 1024;
     BYTE * m_directory_info = nullptr;
-    CString m_base;
-    CString m_name;
+    CStringW m_base;
+    CStringW m_name;
     HANDLE m_handle = nullptr;
     bool m_firstrun = true;
     FILE_DIRECTORY_INFORMATION* m_current_info = nullptr;
@@ -62,8 +62,8 @@ public:
     BOOL IsDots() const;
     BOOL IsHidden() const;
     DWORD GetAttributes() const;
-    CString GetFileName() const;
+    CStringW GetFileName() const;
     ULONGLONG GetCompressedLength() const;
-    CString GetFilePath() const;
-    static CString GetLongPathCompatible(const CStringW& path);
+    CStringW GetFilePath() const;
+    static CStringW GetLongPathCompatible(const CStringW& path);
 };

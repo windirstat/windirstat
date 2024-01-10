@@ -40,30 +40,30 @@ public:
 
     void initialize();
 
-    int getMyComputerImage();
-    int getMountPointImage();
-    int getJunctionImage() const;
-    int getFolderImage();
-    int getFileImage(LPCWSTR path);
-    int getExtImageAndDescription(LPCWSTR ext, CStringW& description);
+    short getMyComputerImage();
+    short getMountPointImage();
+    short getJunctionImage() const;
+    short getFolderImage();
+    short getFileImage(LPCWSTR path);
+    short getExtImageAndDescription(LPCWSTR ext, CStringW& description);
 
-    int getFilesFolderImage() const;
-    int getFreeSpaceImage();
-    int getUnknownImage();
-    int getEmptyImage();
+    short getFilesFolderImage() const;
+    short getFreeSpaceImage();
+    short getUnknownImage();
+    short getEmptyImage();
 
 protected:
-    int cacheIcon(LPCWSTR path, UINT flags, CStringW* psTypeName = nullptr);
+    short cacheIcon(LPCWSTR path, UINT flags, CStringW* psTypeName = nullptr);
     CStringW getADriveSpec();
     void addCustomImages();
 
-    CMap<int, int, int, int> m_indexMap; // system image list index -> our index
+    CMap<int, int, short, short> m_indexMap; // system image list index -> our index
 
-    int m_filesFolderImage; // <Files>
-    int m_freeSpaceImage;   // <Free Space>
-    int m_unknownImage;     // <Unknown>
-    int m_emptyImage;       // For items whose image cannot be found
+    short m_filesFolderImage; // <Files>
+    short m_freeSpaceImage;   // <Free Space>
+    short m_unknownImage;     // <Unknown>
+    short m_emptyImage;       // For items whose image cannot be found
 
     // Junction point
-    int m_junctionImage;
+    short m_junctionImage;
 };

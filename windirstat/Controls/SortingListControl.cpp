@@ -90,14 +90,14 @@ void CSortingListControl::LoadPersistentAttributes()
     arr.SetSize(GetHeaderCtrl()->GetItemCount());
 
     GetColumnOrderArray(arr.GetData(), static_cast<int>(arr.GetSize()));
-    CPersistence::GetColumnOrder(m_name, arr);
+    CPersistence::GetColumnOrder(m_name.c_str(), arr);
     SetColumnOrderArray(static_cast<int>(arr.GetSize()), arr.GetData());
 
     for (i = 0; i < arr.GetSize(); i++)
     {
         arr[i] = GetColumnWidth(i);
     }
-    CPersistence::GetColumnWidths(m_name, arr);
+    CPersistence::GetColumnWidths(m_name.c_str(), arr);
     for (i = 0; i < arr.GetSize(); i++)
     {
         // To avoid "insane" settings we set the column width to
@@ -118,13 +118,13 @@ void CSortingListControl::SavePersistentAttributes() const
     arr.SetSize(GetHeaderCtrl()->GetItemCount());
 
     GetColumnOrderArray(arr.GetData(), static_cast<int>(arr.GetSize()));
-    CPersistence::SetColumnOrder(m_name, arr);
+    CPersistence::SetColumnOrder(m_name.c_str(), arr);
 
     for (int i = 0; i < arr.GetSize(); i++)
     {
         arr[i] = GetColumnWidth(i);
     }
-    CPersistence::SetColumnWidths(m_name, arr);
+    CPersistence::SetColumnWidths(m_name.c_str(), arr);
 
     // Not so good: CPersistence::SetSorting(m_name, m_sorting.column1, m_sorting.ascending1, m_sorting.column2, m_sorting.ascending2);
 }

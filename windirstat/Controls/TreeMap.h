@@ -265,7 +265,7 @@ protected:
     // KDirStat-like squarification
     void KDirStat_DrawChildren(CColorRefArray& bitmap, Item* parent, const double* surface, double h, DWORD flags);
     bool KDirStat_ArrangeChildren(Item* parent, CArray<double, double>& childWidth, CArray<double, double>& rows, CArray<int, int>& childrenPerRow);
-    double KDirStat_CalcutateNextRow(Item* parent, const int nextChild, double width, int& childrenUsed, CArray<double, double>& childWidth);
+    double KDirStat_CalcutateNextRow(Item* parent, int nextChild, double width, int& childrenUsed, CArray<double, double>& childWidth);
 
     // Classical SequoiaView-like squarification
     void SequoiaView_DrawChildren(CColorRefArray& bitmap, Item* parent, const double* surface, double h, DWORD flags);

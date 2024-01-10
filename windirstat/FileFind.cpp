@@ -134,7 +134,7 @@ DWORD FileFindEnhanced::GetAttributes() const
     return m_current_info->FileAttributes;
 }
 
-CString FileFindEnhanced::GetFileName() const
+CStringW FileFindEnhanced::GetFileName() const
 {
     return m_name;
 }
@@ -144,12 +144,12 @@ ULONGLONG FileFindEnhanced::GetCompressedLength() const
     return m_current_info->AllocationSize.QuadPart;
 }
 
-CString FileFindEnhanced::GetFilePath() const
+CStringW FileFindEnhanced::GetFilePath() const
 {
     return m_base;
 }
 
-CString FileFindEnhanced::GetLongPathCompatible(const CStringW & path)
+CStringW FileFindEnhanced::GetLongPathCompatible(const CStringW & path)
 {
     CStringW ret;
     if (path.Find(L":\\", 1) == 1) ret = L"\\\\?\\" + path;
