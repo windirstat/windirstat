@@ -39,10 +39,10 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="res\bitmap1.bmp">
+    <None Include="res\IDB_NODES.bmp">
       <Filter>Resource Files\Resources</Filter>
     </None>
-    <None Include="res\junctionpoint.bmp">
+    <None Include="res\IDB_JUNCTIONPOINT.bmp">
       <Filter>Resource Files\Resources</Filter>
     </None>
     <None Include="res\license.rtf">
@@ -54,7 +54,7 @@
     <None Include="res\linkhand.cur">
       <Filter>Resource Files\Resources</Filter>
     </None>
-    <None Include="res\Toolbar.bmp">
+    <None Include="res\IDR_MAINFRAME.bmp">
       <Filter>Resource Files\Resources</Filter>
     </None>
     <None Include="res\windirstat.manifest">
@@ -365,12 +365,26 @@
     <Image Include="res\toolbar\IDM_EDIT_COPY_CLIPBOARD.bmp">
       <Filter>Resource Files\Resources</Filter>
     </Image>
-    <Image Include="res\toolbar\IDB_CLEANUP_OPEN_IN_CONSOLE.bmp" />
-    <Image Include="res\toolbar\IDB_REFRESH_SELECTED.bmp" />
-    <Image Include="res\toolbar\IDB_HELP_MANUAL.bmp" />
-    <Image Include="res\toolbar\IDB_SCAN_RESUME.bmp" />
-    <Image Include="res\toolbar\IDB_SELECTION_EXPLORE.bmp" />
-    <Image Include="res\toolbar\IDB_CLEANUP_EXPLORER_SELECT.bmp" />
-    <Image Include="res\toolbar\IDB_CLEANUP_OPEN_SELECTED.bmp" />
+    <Image Include="res\toolbar\IDB_CLEANUP_EXPLORER_SELECT.bmp">
+      <Filter>Resource Files\Resources</Filter>
+    </Image>
+    <Image Include="res\toolbar\IDB_CLEANUP_OPEN_IN_CONSOLE.bmp">
+      <Filter>Resource Files\Resources</Filter>
+    </Image>
+    <Image Include="res\toolbar\IDB_CLEANUP_OPEN_SELECTED.bmp">
+      <Filter>Resource Files\Resources</Filter>
+    </Image>
+    <Image Include="res\toolbar\IDB_HELP_MANUAL.bmp">
+      <Filter>Resource Files\Resources</Filter>
+    </Image>
+    <Image Include="res\toolbar\IDB_REFRESH_SELECTED.bmp">
+      <Filter>Resource Files\Resources</Filter>
+    </Image>
+    <Image Include="res\toolbar\IDB_SCAN_RESUME.bmp">
+      <Filter>Resource Files\Resources</Filter>
+    </Image>
+    <Image Include="res\toolbar\IDB_SELECTION_EXPLORE.bmp">
+      <Filter>Resource Files\Resources</Filter>
+    </Image>
   </ItemGroup>
 </Project>
