@@ -23,7 +23,9 @@
 
 #include "OwnerDrawnListControl.h"
 #include "pacman.h"
+
 #include <vector>
+#include <shared_mutex>
 
 class CDirStatView;
 class CTreeListItem;
@@ -44,7 +46,7 @@ class CTreeListItem : public COwnerDrawnListItem
         // children as in CItem::m_children) and is initialized as soon as
         // we are expanded. In contrast to CItem::m_children, this array is always
         // sorted depending on the current user-defined sort column and -order.
-        CArray<CTreeListItem*, CTreeListItem*> sortedChildren;
+        std::vector<CTreeListItem*> sortedChildren;
 
         CPacman pacman;
         CRect rcPlusMinus;    // Coordinates of the little +/- rectangle, relative to the upper left corner of the item.
@@ -78,8 +80,8 @@ public:
     void DrawPacman(CDC* pdc, const CRect& rc, COLORREF bgColor) const;
     void UncacheImage();
     void SortChildren();
-    CTreeListItem* GetSortedChild(int i);
-    int FindSortedChild(const CTreeListItem* child);
+    CTreeListItem* GetSortedChild(int i) const;
+    int FindSortedChild(const CTreeListItem* child) const;
     CTreeListItem* GetParent() const;
     void SetParent(CTreeListItem* parent);
     bool IsAncestorOf(const CTreeListItem* item) const;
@@ -94,14 +96,14 @@ public:
     void SetPlusMinusRect(const CRect& rc) const;
     CRect GetTitleRect() const;
     void SetTitleRect(const CRect& rc) const;
-
-protected:
-    static int __cdecl _compareProc(const void* p1, const void* p2);
-    static CTreeListControl* GetTreeListControl();
-    void StartPacman(bool start) const;
-    bool DrivePacman(ULONGLONG readJobs) const;
     int GetScrollPosition();
     void SetScrollPosition(int top);
+    void StartPacman() const;
+    void StopPacman() const;
+    void DrivePacman() const;
+
+protected:
+    static CTreeListControl* GetTreeListControl();
 
 private:
     CTreeListItem* m_parent;
@@ -131,8 +133,8 @@ public:
     void OnChildAdded(CTreeListItem* parent, CTreeListItem* child);
     void OnChildRemoved(CTreeListItem* parent, CTreeListItem* childdata);
     void OnRemovingAllChildren(CTreeListItem* parent);
-    CTreeListItem* GetItem(int i);
-    bool IsItemSelected(const CTreeListItem* item);
+    CTreeListItem* GetItem(int i) const;
+    bool IsItemSelected(const CTreeListItem* item) const;
     void SelectItem(const CTreeListItem* item, bool deselect = false, bool focus = false);
     void DeselectAll();
     void ExpandPathToItem(const CTreeListItem* item);
@@ -140,14 +142,13 @@ public:
     void Sort();
     void EnsureItemVisible(const CTreeListItem* item);
     void ExpandItem(CTreeListItem* item);
-    int FindTreeItem(const CTreeListItem* item);
-    int GetItemScrollPosition(CTreeListItem* item);
+    int FindTreeItem(const CTreeListItem* item) const;
+    int GetItemScrollPosition(CTreeListItem* item) const;
     void SetItemScrollPosition(CTreeListItem* item, int top);
     bool SelectedItemCanToggle();
     void ToggleSelectedItem();
     void EmulateInteractiveSelection(const CTreeListItem* item);
 
-    void SortItems() override;
     bool HasImages() override;
 
     template <class T = CTreeListItem> std::vector<T*> GetAllSelected()
@@ -160,13 +161,19 @@ public:
         }
         return array;
     }
-    template <class T = CTreeListItem> T* GetFirstSelectedItem(const bool enforce_single = false)
+    template <class T = CTreeListItem> T* GetFirstSelectedItem()
     {
         POSITION pos = GetFirstSelectedItemPosition();
         if (pos == nullptr) return nullptr;
         const int i = GetNextSelectedItem(pos);
-        if (enforce_single && GetNextSelectedItem(pos) != -1) return nullptr;
+        if (GetNextSelectedItem(pos) != -1) return nullptr;
 
+        return reinterpret_cast<T*>(GetItem(i));
+    }
+    template <class T = CTreeListItem> T* GetRecentSelectedItem()
+    {
+        const int i = GetSelectionMark();
+        if (i == -1) return nullptr;
         return reinterpret_cast<T*>(GetItem(i));
     }
 

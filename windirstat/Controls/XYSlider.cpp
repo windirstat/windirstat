@@ -23,6 +23,8 @@
 #include "SelectObject.h"
 #include "XYSlider.h"
 
+#include "resource.h"
+
 IMPLEMENT_DYNAMIC(CXySlider, CStatic)
 
 const UINT CXySlider::XY_SETPOS = WM_USER + 100;
@@ -222,30 +224,6 @@ void CXySlider::PaintBackground(CDC* pdc)
     }
 }
 
-/* This is too noisy
-void CXySlider::PaintValues(CDC *pdc)
-{
-    CRect rc = m_rcAll;
-    rc.DeflateRect(m_gripperRadius);
-    if(m_pos.y >= 0)
-        rc.bottom = rc.top + rc.Height() / 4;
-    else
-        rc.top = rc.bottom - rc.Height() / 4;
-
-    CRect rcLeft = rc;
-    rcLeft.right = rcLeft.left + rc.Width() / 2;
-    CRect rcRight = rc;
-    rcRight.left = rcRight.right - rc.Width() / 2;
-
-    CSelectObject sofont(pdc, GetParent()->GetFont());
-
-    CStringW s;
-    s.Format(L"%d", m_externalPos.x);
-    pdc->DrawText(s, rcLeft, DT_SINGLELINE | DT_CENTER | DT_VCENTER); // @ | DT_NOPREFIX
-    s.Format(L"%d", m_externalPos.y);
-    pdc->DrawText(s, rcRight, DT_SINGLELINE | DT_CENTER | DT_VCENTER); // @ | DT_NOPREFIX
-}
-*/
 
 void CXySlider::PaintGripper(CDC* pdc)
 {
@@ -371,7 +349,7 @@ void CXySlider::HighlightGripper(bool on)
 void CXySlider::InstallTimer()
 {
     RemoveTimer();
-    m_timer = SetTimer(4711, 500, nullptr); // FIXME: hardcoded values
+    m_timer = SetTimer(ID_WDS_CONTROL, 500, nullptr);
 }
 
 void CXySlider::RemoveTimer()

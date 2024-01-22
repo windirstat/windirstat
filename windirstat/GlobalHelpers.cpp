@@ -414,29 +414,6 @@ void GetPidlOfMyComputer(LPITEMIDLIST* ppidl)
     MdThrowFailed(hr, L"SHGetSpecialFolderLocation(CSIDL_DRIVES)");
 }
 
-void ShellExecuteWithAssocDialog(HWND hwnd, LPCWSTR filename)
-{
-    CWaitCursor wc;
-
-    BOOL bExecuted = ShellExecuteNoThrow(hwnd, nullptr, filename, nullptr, nullptr, SW_SHOWNORMAL);
-    if (!bExecuted && ERROR_NO_ASSOCIATION == ::GetLastError())
-    {
-        // Q192352
-        CStringW sysDir;
-        //-- Get the system directory so that we know where Rundll32.exe resides.
-        ::GetSystemDirectory(sysDir.GetBuffer(_MAX_PATH), _MAX_PATH);
-        sysDir.ReleaseBuffer();
-
-        const CStringW parameters = L"shell32.dll,OpenAs_RunDLL ";
-        bExecuted                 = ShellExecuteNoThrow(hwnd, L"open", L"RUNDLL32.EXE", parameters + filename, sysDir, SW_SHOWNORMAL);
-    }
-
-    if (!bExecuted)
-    {
-        MdThrowStringExceptionF(L"ShellExecute failed: %1!s!", MdGetWinErrorText(::GetLastError()).GetString());
-    }
-}
-
 CStringW GetFolderNameFromPath(LPCWSTR path)
 {
     CStringW s  = path;
@@ -451,7 +428,6 @@ CStringW GetFolderNameFromPath(LPCWSTR path)
 CStringW GetCOMSPEC()
 {
     CStringW cmd;
-
     const DWORD dw = ::GetEnvironmentVariable(L"COMSPEC", cmd.GetBuffer(_MAX_PATH), _MAX_PATH);
     cmd.ReleaseBuffer();
 
@@ -540,19 +516,6 @@ bool DriveExists(const CStringW& path)
     }
 
     return true;
-}
-
-#ifndef UNLEN
-#   define UNLEN MAX_PATH
-#endif
-
-CStringW GetUserName()
-{
-    CStringW s;
-    DWORD size = UNLEN + 1;
-    (void)::GetUserName(s.GetBuffer(size), &size);
-    s.ReleaseBuffer();
-    return s;
 }
 
 // drive is a drive spec like C: or C:\ or C:\path (path is ignored).

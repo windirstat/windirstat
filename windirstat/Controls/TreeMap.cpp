@@ -202,17 +202,11 @@ CTreemap::Options CTreemap::GetDefaultOptions()
     return _defaultOptions;
 }
 
-CTreemap::Options CTreemap::GetOldDefaultOptions()
-{
-    return _defaultOptionsOld;
-}
-
-CTreemap::CTreemap(Callback* callback)
+CTreemap::CTreemap()
     : m_Lx(0.)
       , m_Ly(0.)
       , m_Lz(0.)
 {
-    m_callback = callback;
     SetOptions(&_defaultOptions);
     SetBrightnessFor256();
 }
@@ -257,12 +251,15 @@ void CTreemap::RecurseCheckTree(Item *item)
     }
     else
     {
-        // TODO: check that children are sorted by size.
         ULONGLONG sum = 0;
+        ULONGLONG last = static_cast<ULONGLONG>(-1);
         for(int i = 0; i < item->TmiGetChildrenCount(); i++)
         {
             Item *child = item->TmiGetChild(i);
-            sum += child->TmiGetSize();
+            const ULONGLONG size = child->TmiGetSize();
+            ASSERT(size <= last);
+            sum += size;
+            last = size;
             RecurseCheckTree(child);
         }
         ASSERT(sum == item->TmiGetSize());
@@ -553,11 +550,6 @@ void CTreemap::RecurseDrawGraph(
     ASSERT(rc.Height() >= 0);
 
     ASSERT(item->TmiGetSize() > 0);
-
-    if (m_callback != nullptr)
-    {
-        m_callback->TreemapDrawingCallback();
-    }
 
     item->TmiSetRectangle(rc);
 

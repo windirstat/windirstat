@@ -3,11 +3,9 @@
 // Used by windirstat.rc
 //
 #define IDD_ABOUTBOX                    100
-#define ID_VIEW_ARRANGE                 127
+#define IDD_PAGE_ADVANCED               102
 #define IDR_MAINFRAME                   128
-#define IDR_windirstatTYPE              129
 #define IDS_QUERYING                    129
-#define IDR_MAINFRAME1                  129
 #define IDS_NOTACCESSIBLE               130
 #define IDB_NODES                       131
 #define IDS_TREECOL_ATTRIBUTES          131
@@ -16,14 +14,11 @@
 #define IDR_POPUPGRAPH                  136
 #define IDR_LICENSE                     137
 #define IDD_DELETE_WARNING              138
-#define IDD_INVISIBLE                   140
-#define IDD_MODALSHELLAPI               140
 #define IDD_MODALAPISHUTTLE             140
 #define IDD_PAGE_CLEANUPS               141
 #define IDD_PAGE_TREELIST               142
 #define IDD_PAGE_TREEMAP                143
 #define IDD_PAGE_GENERAL                144
-#define IDD_PAGE_REPORT                 146
 #define IDS_RESOURCEVERSION             199
 #define IDS_ABOUT_ABOUTTEXTss           200
 #define IDS_ABOUT_THANKSTOTEXT          201
@@ -69,12 +64,6 @@
 #define IDS_POLICY_REFRESHPARENT        241
 #define IDS_BUGREPORTHINT               242
 #define IDS_FEEDBACKHINT                243
-#define IDS_FROMsPLATFORMs              244
-#define IDS_SEV_CRITICAL                245
-#define IDS_SEV_GRAVE                   246
-#define IDS_SEV_NORMAL                  247
-#define IDS_SEV_WISH                    248
-#define IDS_SEV_FEEDBACK                249
 #define IDS_DRIVECOL_NAME               250
 #define IDS_DRIVECOL_TOTAL              251
 #define IDS_DRIVECOL_FREE               252
@@ -105,15 +94,8 @@
 #define IDS_LANGUAGERESTARTNOW          277
 #define IDS_ABOUT_AUTHORS               278
 #define IDS_ABOUT_AUTHORSTEXTs          279
-#define IDS_TRANSLATORS                 899
-#define IDR_TEXT1                       900
-#define IDR_AUTHORS                     900
-#define IDR_TEXT2                       901
 #define IDB_JUNCTIONPOINT               902
-#define IDD_CHECKFORUPDATE              903
-#define IDB_BITMAP2                     922
 #define IDB_FILE_SELECT                 922
-#define IDB_BITMAP3                     927
 #define IDB_CLEANUP_DELETE_BIN          927
 #define IDB_EDIT_COPY_CLIPBOARD         928
 #define IDB_SCAN_SUSPEND                930
@@ -126,15 +108,17 @@
 #define IDB_HELP_MANUAL                 939
 #define IDB_SCAN_RESUME                 940
 #define IDB_CLEANUP_EXPLORER_SELECT     941
-#define IDB_BITMAP1                     942
 #define IDB_CLEANUP_OPEN_SELECTED       942
-#define IDC_ALLDRIVES                   1000
-#define IDC_GROUPS                      1000
+#define IDI_JUNCTION                    943
+#define IDI_UNKNOWN                     944
+#define IDI_JUNCTION_PROTECTED          946
+#define IDI_FREE_SPACE                  947
+#define IDI_ICON1                       948
+#define IDI_EMPTY                       948
 #define IDC_ALLLOCALDRIVES              1000
+#define IDC_ALLDRIVES                   1000
 #define IDC_SOMEDRIVES                  1001
-#define IDC_EXTENSIONS                  1001
 #define IDC_AFOLDER                     1002
-#define IDC_MEMBERS                     1002
 #define IDC_FOLDERNAME                  1003
 #define IDC_BROWSEFOLDER                1004
 #define IDC_DRIVES                      1005
@@ -150,15 +134,11 @@
 #define IDC_TREEMAPGRID                 1022
 #define IDC_SHOWCONSOLEWINDOW           1023
 #define IDC_WAITFORCOMPLETION           1024
-#define IDC_TREELISTGRID                1028
 #define IDC_SHOWGRID                    1028
 #define IDC_HUMANFORMAT                 1029
 #define IDC_TREEMAPGRIDCOLOR            1030
-#define IDC_SHOWGRID2                   1030
 #define IDC_SHOWSTRIPES                 1030
-#define IDC_SHOWGRID3                   1031
 #define IDC_FULLROWSELECTION            1031
-#define IDC_HUMANFORMAT2                1032
 #define IDC_SKIPHIDDEN                  1032
 #define IDC_RESET                       1034
 #define IDC_LIST                        1036
@@ -186,8 +166,6 @@
 #define IDC_COLORBUTTON6                1106
 #define IDC_COLORBUTTON7                1107
 #define IDC_SLIDER                      1200
-#define IDC_BUTTON8                     1201
-#define IDC_BUTTON_ACTION               1201
 #define IDC_TREEMAPHIGHLIGHTCOLOR       1202
 #define IDC_COMBO                       1203
 #define IDC_SIZEGRIPPER                 1208
@@ -203,15 +181,10 @@
 #define IDC_STATICHEIGHT                1218
 #define IDC_STATICSCALEFACTOR           1219
 #define IDC_LIGHTSOURCE                 1220
-#define IDC_SUBJECT                     1221
-#define IDC_PREFIX                      1222
-#define IDC_SUFFIX                      1223
-#define IDC_CHECK1                      1225
 #define IDC_USEWDSLOCALE                1225
-#define IDC_LIST1                       1226
-#define IDC_STATIC_URL                  1227
-#define IDC_STATIC_TEXT                 1228
-#define IDC_BUTTON1                     1229
+#define IDC_COMBO1                      1230
+#define IDC_COMBO_THREADS               1230
+#define ID_WDS_CONTROL                  4711
 #define ID_FILE_REFRESHALL              32773
 #define ID_CLEANUP_EXPLORER_SELECT      32774
 #define ID_CLEANUP_COMPRESS             32776
@@ -263,15 +236,16 @@
 #define ID_FILE_SELECT                  33030
 #define ID_SCAN_SUSPEND                 33031
 #define ID_SCAN_RESUME                  33032
+#define ID_POPUP_REFRESHSELECTED        33033
 #define ID_INDICATOR_MEMORYUSAGE        59142
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        943
-#define _APS_NEXT_COMMAND_VALUE         33033
-#define _APS_NEXT_CONTROL_VALUE         1230
-#define _APS_NEXT_SYMED_VALUE           104
+#define _APS_NEXT_RESOURCE_VALUE        951
+#define _APS_NEXT_COMMAND_VALUE         33034
+#define _APS_NEXT_CONTROL_VALUE         1231
+#define _APS_NEXT_SYMED_VALUE           108
 #endif
 #endif

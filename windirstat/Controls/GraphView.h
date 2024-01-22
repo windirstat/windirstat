@@ -1,4 +1,4 @@
-// graphview.h - Declaration of CGraphView (the Treemap view)
+// GraphView.h - Declaration of CGraphView (the Treemap view)
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
@@ -29,7 +29,7 @@ class CItem;
 //
 // CGraphView. The treemap window.
 //
-class CGraphView final : public CView, public CTreemap::Callback
+class CGraphView final : public CView
 {
 protected:
     CGraphView();
@@ -39,7 +39,6 @@ public:
     ~CGraphView() override = default;
 
     // CTreemap::Callback
-    void TreemapDrawingCallback() override;
     CDirStatDoc* GetDocument() const
     {
         return reinterpret_cast<CDirStatDoc*>(m_pDocument);

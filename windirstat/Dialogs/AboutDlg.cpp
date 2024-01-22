@@ -28,11 +28,6 @@
 
 namespace
 {
-    enum
-    {
-        RE_CONTROL = 4711 // Id of the RichEdit Control
-    };
-
     // Tabs
     enum
     {
@@ -115,10 +110,10 @@ void CAboutDlg::CMyTabControl::Initialize()
 {
     ModifyStyle(0, WS_CLIPCHILDREN);
 
-    InsertItem(TAB_ABOUT, static_cast<LPCWSTR>(LoadString(IDS_ABOUT_ABOUT)));
-    InsertItem(TAB_AUTHORS, static_cast<LPCWSTR>(LoadString(IDS_ABOUT_AUTHORS)));
-    InsertItem(TAB_THANKSTO, static_cast<LPCWSTR>(LoadString(IDS_ABOUT_THANKSTO)));
-    InsertItem(TAB_LICENSE, static_cast<LPCWSTR>(LoadString(IDS_ABOUT_LICENSEAGREEMENT)));
+    InsertItem(TAB_ABOUT, LoadString(IDS_ABOUT_ABOUT));
+    InsertItem(TAB_AUTHORS, LoadString(IDS_ABOUT_AUTHORS));
+    InsertItem(TAB_THANKSTO, LoadString(IDS_ABOUT_THANKSTO));
+    InsertItem(TAB_LICENSE, LoadString(IDS_ABOUT_LICENSEAGREEMENT));
 
     CRect rc;
     GetClientRect(rc);
@@ -128,7 +123,7 @@ void CAboutDlg::CMyTabControl::Initialize()
 
     rc.top = rcItem.bottom;
 
-    VERIFY(m_text.Create(WS_CHILD | WS_VISIBLE | WS_BORDER | ES_CENTER | ES_MULTILINE | ES_READONLY, rc, this, RE_CONTROL));
+    VERIFY(m_text.Create(WS_CHILD | WS_VISIBLE | WS_BORDER | ES_CENTER | ES_MULTILINE | ES_READONLY, rc, this, ID_WDS_CONTROL));
     SetPageText(TAB_ABOUT);
 }
 
@@ -180,7 +175,7 @@ void CAboutDlg::CMyTabControl::SetPageText(int tab)
 
     m_text.DestroyWindow();
 
-    m_text.Create(style, rc, this, RE_CONTROL);
+    m_text.Create(style, rc, this, ID_WDS_CONTROL);
     if (exstyle)
     {
         m_text.ModifyStyleEx(0, exstyle);
@@ -196,8 +191,8 @@ void CAboutDlg::CMyTabControl::SetPageText(int tab)
 }
 
 BEGIN_MESSAGE_MAP(CAboutDlg::CMyTabControl, CTabCtrl)
-    ON_NOTIFY(EN_LINK, RE_CONTROL, OnEnLinkText)
-    ON_NOTIFY(EN_MSGFILTER, RE_CONTROL, OnEnMsgFilter)
+    ON_NOTIFY(EN_LINK, ID_WDS_CONTROL, OnEnLinkText)
+    ON_NOTIFY(EN_MSGFILTER, ID_WDS_CONTROL, OnEnMsgFilter)
     ON_WM_SIZE()
 END_MESSAGE_MAP()
 

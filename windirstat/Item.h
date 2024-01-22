@@ -25,8 +25,9 @@
 #include "TreeMap.h"
 #include "DirStatDoc.h" // CExtensionData
 #include "FileFind.h" // FileFindEnhanced
+#include "BlockingQueue.h"
 
-class CWorkLimiter;
+#include <mutex>
 
 // Columns
 enum
@@ -52,13 +53,19 @@ enum ITEMTYPE : unsigned short
     IT_FREESPACE  = 1 << 4, // Pseudo File "<Free Space>"
     IT_UNKNOWN    = 1 << 5, // Pseudo File "<Unknown>"
     IT_ANY        = 0x00FF, // Indicates any item type
-    ITF_ROOTITEM  = 1 << 8, // Indicates root item
+    ITF_DONE      = 1 << 8, // Indicates done processing
+    ITF_ROOTITEM  = 1 << 9, // Indicates root item
     ITF_FLAGS     = 0xFF00, // All potential flag items
 };
 
 inline ITEMTYPE operator|(const ITEMTYPE & a, const ITEMTYPE & b)
 {
     return static_cast<ITEMTYPE>(static_cast<unsigned short>(a) | static_cast<unsigned short>(b));
+}
+
+inline ITEMTYPE operator-(const ITEMTYPE& a, const ITEMTYPE& b)
+{
+    return static_cast<ITEMTYPE>(static_cast<unsigned short>(a) & ~static_cast<unsigned short>(b));
 }
 
 // Compare FILETIMEs
@@ -93,20 +100,12 @@ inline bool operator==(const FILETIME& t1, const FILETIME& t2)
 //
 class CItem final : public CTreeListItem, public CTreemap::Item
 {
-    // We collect data of files in FILEINFOs before we create items for them,
-    // because we need to know their count before we can decide whether or not
-    // we have to create a <Files> item. (A <Files> item is only created, when
-    // (a) there are more than one files and (b) there are subdirectories.)
-    struct FILEINFO
-    {
-        CStringW name;
-        ULONGLONG length;
-        FILETIME lastWriteTime;
-        DWORD attributes;
-    };
-
 public:
-    CItem(ITEMTYPE type, LPCWSTR name, bool dontFollow = false);
+    CItem(const CItem&) = delete;
+    CItem(CItem&&) = delete;
+    CItem& operator=(const CItem&) = delete;
+    CItem& operator=(CItem&&) = delete;
+    CItem(ITEMTYPE type, LPCWSTR name);
     ~CItem() override;
 
     // CTreeListItem Interface
@@ -155,26 +154,26 @@ public:
     ULONGLONG GetProgressRange() const;
     ULONGLONG GetProgressPos() const;
     const CItem* UpwardGetRoot() const;
-    void UpdateLastChange();
+    void UpdateStatsFromDisk();
     CItem* GetChild(int i) const;
     CItem* GetParent() const;
-    int FindChildIndex(const CItem* child) const;
     void AddChild(CItem* child);
-    void RemoveChild(int i);
+    void RemoveChild(CItem* child);
     void RemoveAllChildren();
-    void UpwardAddSubdirs(ULONGLONG dirCount);
-    void UpwardSubtractSubdirs(ULONGLONG dirCount);
-    void UpwardAddFiles(ULONGLONG fileCount);
-    void UpwardSubtractFiles(ULONGLONG fileCount);
+    void UpwardAddSubdirs(ULONG dirCount);
+    void UpwardSubtractSubdirs(ULONG dirCount);
+    void UpwardAddFiles(ULONG fileCount);
+    void UpwardSubtractFiles(ULONG fileCount);
     void UpwardAddSize(ULONGLONG bytes);
     void UpwardSubtractSize(ULONGLONG bytes);
-    void UpwardAddReadJobs(ULONGLONG count);
-    void UpwardSubtractReadJobs(ULONGLONG count);
+    void UpwardAddReadJobs(ULONG count);
+    void UpwardSubtractReadJobs(ULONG count);
     void UpwardUpdateLastChange(const FILETIME& t);
-    void UpwardRecalcLastChange();
+    void UpwardRecalcLastChange(bool without_item = false);
+    void UpwardAddTicksWorked(ULONG delta);
     ULONGLONG GetSize() const;
     void SetSize(ULONGLONG ownSize);
-    ULONGLONG GetReadJobs() const;
+    ULONG GetReadJobs() const;
     FILETIME GetLastChange() const;
     void SetLastChange(const FILETIME& t);
     void SetAttributes(DWORD attr);
@@ -189,16 +188,14 @@ public:
     CStringW GetReportPath() const;
     CStringW GetName() const;
     CStringW GetExtension() const;
-    ULONGLONG GetFilesCount() const;
-    ULONGLONG GetSubdirsCount() const;
+    ULONG GetFilesCount() const;
+    ULONG GetSubdirsCount() const;
     ULONGLONG GetItemsCount() const;
-    bool IsReadJobDone() const;
-    void SetReadJobDone(bool done = true);
     void SetDone();
     ULONGLONG GetTicksWorked() const;
-    void AddTicksWorked(ULONGLONG more);
-    void DoSomeWork(CWorkLimiter* limiter);
-    bool StartRefresh();
+    static void ScanItems(BlockingQueue<CItem*> *);
+    static void ScanItemsFinalize(CItem* item);
+    void UpwardSetDone();
     void UpwardSetUndone();
     void RefreshRecycler() const;
     void CreateFreeSpaceItem();
@@ -207,13 +204,13 @@ public:
     void RemoveFreeSpaceItem();
     void CreateUnknownItem();
     CItem* FindUnknownItem() const;
+    void UpdateUnknownItem();
     void RemoveUnknownItem();
-    CItem* FindDirectoryByPath(const CStringW& path);
     void RecurseCollectExtensionData(CExtensionData* ed) const;
 
     bool IsDone() const
     {
-        return m_done;
+        return IsType(ITF_DONE);
     }
 
     ITEMTYPE GetType() const
@@ -221,42 +218,41 @@ public:
         return static_cast<ITEMTYPE>(m_type & ~ITF_FLAGS);
     }
 
-    bool IsType(const ITEMTYPE type) const
+    constexpr bool IsType(const ITEMTYPE type) const
     {
         return (m_type & type) != 0;
     }
 
+    constexpr void SetType(const ITEMTYPE type, bool set = true)
+    {
+        if (set) m_type = m_type | type;
+        else m_type = m_type - type;
+    }
+
 private:
     ULONGLONG GetProgressRangeMyComputer() const;
-    ULONGLONG GetProgressPosMyComputer() const;
     ULONGLONG GetProgressRangeDrive() const;
-    ULONGLONG GetProgressPosDrive() const;
     COLORREF GetGraphColor() const;
     bool MustShowReadJobs() const;
     COLORREF GetPercentageColor() const;
-    int FindFreeSpaceItemIndex() const;
-    int FindUnknownItemIndex() const;
     CStringW UpwardGetPathWithoutBackslash() const;
-    void AddDirectory(FileFindEnhanced& finder);
-    void AddFile(const FILEINFO& fi);
-    void DriveVisualUpdateDuringWork() const;
-    void UpwardDrivePacman() const;
-    void DrivePacman() const;
+    CItem* AddDirectory(const FileFindEnhanced& finder);
+    void AddFile(const FileFindEnhanced& finder);
+    void UpwardDrivePacman();
 
     // Our children. When "this" is set to "done", this array is sorted by child size.
-    CArray<CItem*, CItem*> m_children;
+    std::shared_mutex m_protect;
+    std::vector<CItem*> m_children;
 
-    CStringW m_name;              // Display name
-    LPCWSTR m_extension;          // Cache of extension (it's used often)
-    RECT m_rect;                  // To support GraphView
-    FILETIME m_lastChange;        // Last modification time OF SUBTREE
-    ULONGLONG m_size;             // OwnSize, if IT_FILE or IT_FREESPACE, or IT_UNKNOWN; SubtreeTotal else.
-    ULONGLONG m_files;            // # Files in subtree
-    ULONGLONG m_subdirs;          // # Folder in subtree
-    ULONGLONG m_ticksWorked;      // ms time spent on this item.
-    ULONGLONG m_readJobs;         // # "read jobs" in subtree.
-    ITEMTYPE m_type;              // Indicates our type.
-    bool m_readJobDone;           // FindFiles() (our own read job) is finished.
-    bool m_done;                  // Whole Subtree is done.
-    unsigned char m_attributes;   // Packed file attributes of the item
+    RECT m_rect;                   // To support GraphView
+    CStringW m_name;               // Display name
+    LPCWSTR m_extension;           // Cache of extension (it's used often)
+    FILETIME m_lastChange;         // Last modification time OF SUBTREE
+    std::atomic<ULONGLONG> m_size; // OwnSize, if IT_FILE or IT_FREESPACE, or IT_UNKNOWN; SubtreeTotal else.
+    std::atomic<ULONG> m_files;    // # Files in subtree
+    std::atomic<ULONG> m_subdirs;  // # Folder in subtree
+    std::atomic<ULONG> m_ticks;    // ms time spent on this item.
+    std::atomic<ULONG> m_jobs;     // # "read jobs" in subtree.
+    DWORD m_attributes;            // Packed file attributes of the item
+    ITEMTYPE m_type;               // Indicates our type.
 };

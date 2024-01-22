@@ -1,4 +1,4 @@
-// options.cpp - Implementation of CPersistence, COptions and CRegistryUser
+// Options.cpp - Implementation of CPersistence, COptions and CRegistryUser
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
@@ -75,6 +75,7 @@ namespace
     const LPCWSTR entryLightSourceY          = L"lightSourceY";
     const LPCWSTR entryFollowMountPoints     = L"followMountPoints";
     const LPCWSTR entryFollowJunctionPoints  = L"followJunctionPoints";
+    const LPCWSTR entryScanningThreads       = L"scanningThreads";
     const LPCWSTR entrySkipHidden            = L"skipHidden";
     const LPCWSTR entryUseWdsLocale          = L"useWdsLocale";
 
@@ -625,7 +626,7 @@ COLORREF COptions::GetTreelistColor(int i)
     return m_treelistColor[i];
 }
 
-int COptions::GetTreelistColorCount()
+int COptions::GetTreelistColorCount() const
 {
     return m_treelistColorCount;
 }
@@ -639,7 +640,7 @@ void COptions::SetTreelistColorCount(int count)
     }
 }
 
-bool COptions::IsHumanFormat()
+bool COptions::IsHumanFormat() const
 {
     return m_humanFormat;
 }
@@ -650,11 +651,10 @@ void COptions::SetHumanFormat(bool human)
     {
         m_humanFormat = human;
         GetDocument()->UpdateAllViews(nullptr, HINT_NULL);
-        GetWDSApp()->UpdateRamUsage();
     }
 }
 
-bool COptions::IsPacmanAnimation()
+bool COptions::IsPacmanAnimation() const
 {
     return m_pacmanAnimation;
 }
@@ -667,7 +667,7 @@ void COptions::SetPacmanAnimation(bool animate)
     }
 }
 
-bool COptions::IsShowTimeSpent()
+bool COptions::IsShowTimeSpent() const
 {
     return m_showTimeSpent;
 }
@@ -680,7 +680,7 @@ void COptions::SetShowTimeSpent(bool show)
     }
 }
 
-COLORREF COptions::GetTreemapHighlightColor()
+COLORREF COptions::GetTreemapHighlightColor() const
 {
     return m_treemapHighlightColor;
 }
@@ -694,7 +694,7 @@ void COptions::SetTreemapHighlightColor(COLORREF color)
     }
 }
 
-const CTreemap::Options* COptions::GetTreemapOptions()
+const CTreemap::Options* COptions::GetTreemapOptions() const
 {
     return &m_treemapOptions;
 }
@@ -717,7 +717,7 @@ void COptions::SetTreemapOptions(const CTreemap::Options& options)
     }
 }
 
-void COptions::GetUserDefinedCleanups(USERDEFINEDCLEANUP udc[USERDEFINEDCLEANUPCOUNT])
+void COptions::GetUserDefinedCleanups(USERDEFINEDCLEANUP udc[USERDEFINEDCLEANUPCOUNT]) const
 {
     for (int i = 0; i < USERDEFINEDCLEANUPCOUNT; i++)
     {
@@ -745,14 +745,14 @@ void COptions::GetEnabledUserDefinedCleanups(CArray<int, int>& indices)
     }
 }
 
-bool COptions::IsUserDefinedCleanupEnabled(int i)
+bool COptions::IsUserDefinedCleanupEnabled(const int i) const
 {
     ASSERT(i >= 0);
     ASSERT(i < USERDEFINEDCLEANUPCOUNT);
     return m_userDefinedCleanup[i].enabled;
 }
 
-const USERDEFINEDCLEANUP* COptions::GetUserDefinedCleanup(int i)
+const USERDEFINEDCLEANUP* COptions::GetUserDefinedCleanup(int i) const
 {
     ASSERT(i >= 0);
     ASSERT(i < USERDEFINEDCLEANUPCOUNT);
@@ -761,7 +761,7 @@ const USERDEFINEDCLEANUP* COptions::GetUserDefinedCleanup(int i)
     return &m_userDefinedCleanup[i];
 }
 
-bool COptions::IsFollowMountPoints()
+bool COptions::IsFollowMountPoints() const
 {
     return m_followMountPoints;
 }
@@ -775,9 +775,19 @@ void COptions::SetFollowMountPoints(bool follow)
     }
 }
 
-bool COptions::IsFollowJunctionPoints()
+bool COptions::IsFollowJunctionPoints() const
 {
     return m_followJunctionPoints;
+}
+
+int COptions::GetScanningThreads() const
+{
+    return m_scanningThreads;
+}
+
+void COptions::SetScanningThreads(int threads)
+{
+    m_scanningThreads = threads;
 }
 
 void COptions::SetFollowJunctionPoints(bool follow)
@@ -789,7 +799,7 @@ void COptions::SetFollowJunctionPoints(bool follow)
     }
 }
 
-bool COptions::IsUseWdsLocale()
+bool COptions::IsUseWdsLocale() const
 {
     return m_useWdsLocale;
 }
@@ -803,7 +813,7 @@ void COptions::SetUseWdsLocale(bool use)
     }
 }
 
-bool COptions::IsSkipHidden()
+bool COptions::IsSkipHidden() const
 {
     return m_skipHidden;
 }
@@ -885,8 +895,9 @@ void COptions::SaveToRegistry()
 
     SaveTreemapOptions();
 
-    getProfileBool(sectionOptions, entryFollowMountPoints, m_followMountPoints);
-    getProfileBool(sectionOptions, entryFollowJunctionPoints, m_followJunctionPoints);
+    setProfileInt(sectionOptions, entryScanningThreads, m_scanningThreads);
+    setProfileBool(sectionOptions, entryFollowMountPoints, m_followMountPoints);
+    setProfileBool(sectionOptions, entryFollowJunctionPoints, m_followJunctionPoints);
     setProfileBool(sectionOptions, entryUseWdsLocale, m_useWdsLocale);
 
     for (i = 0; i < USERDEFINEDCLEANUPCOUNT; i++)
@@ -957,9 +968,8 @@ void COptions::LoadFromRegistry()
     ReadTreemapOptions();
 
     m_followMountPoints = getProfileBool(sectionOptions, entryFollowMountPoints, false);
-    // Ignore junctions by default
     m_followJunctionPoints = getProfileBool(sectionOptions, entryFollowJunctionPoints, false);
-    // use user locale by default
+    m_scanningThreads = getProfileInt(sectionOptions, entryScanningThreads, 4);
     m_useWdsLocale = getProfileBool(sectionOptions, entryUseWdsLocale, false);
 
     for (i = 0; i < USERDEFINEDCLEANUPCOUNT; i++)
@@ -1129,12 +1139,12 @@ void CRegistryUser::setProfileInt(LPCWSTR section, LPCWSTR entry, int value)
 
 int CRegistryUser::getProfileInt(LPCWSTR section, LPCWSTR entry, int defaultValue)
 {
-    return AfxGetApp()->GetProfileInt(section, entry, defaultValue);
+    return static_cast<int>(AfxGetApp()->GetProfileInt(section, entry, defaultValue));
 }
 
 void CRegistryUser::setProfileBool(LPCWSTR section, LPCWSTR entry, bool value)
 {
-    setProfileInt(section, entry, (int)value);
+    setProfileInt(section, entry, value);
 }
 
 bool CRegistryUser::getProfileBool(LPCWSTR section, LPCWSTR entry, bool defaultValue)

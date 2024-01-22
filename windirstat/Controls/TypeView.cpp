@@ -156,7 +156,8 @@ double CExtensionListControl::CListItem::GetBytesFraction() const
         return 0;
     }
 
-    return static_cast<double>(m_record.bytes / m_list->GetRootSize());
+    return static_cast<double>(m_record.bytes) /
+        static_cast<double>(m_list->GetRootSize());
 }
 
 int CExtensionListControl::CListItem::Compare(const CSortingListItem* baseOther, int subitem) const
@@ -385,8 +386,6 @@ void CExtensionListControl::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 
 /////////////////////////////////////////////////////////////////////////////
 
-static UINT _nIdExtensionListControl = 4711;
-
 IMPLEMENT_DYNCREATE(CTypeView, CView)
 
 BEGIN_MESSAGE_MAP(CTypeView, CView)
@@ -435,7 +434,7 @@ int CTypeView::OnCreate(LPCREATESTRUCT lpCreateStruct)
     }
 
     constexpr RECT rect = {0, 0, 0, 0};
-    VERIFY(m_extensionListControl.Create(LVS_SINGLESEL | LVS_OWNERDRAWFIXED | LVS_SHOWSELALWAYS | WS_CHILD | WS_VISIBLE | LVS_REPORT, rect, this, _nIdExtensionListControl));
+    VERIFY(m_extensionListControl.Create(LVS_SINGLESEL | LVS_OWNERDRAWFIXED | LVS_SHOWSELALWAYS | WS_CHILD | WS_VISIBLE | LVS_REPORT, rect, this, ID_WDS_CONTROL));
     m_extensionListControl.SetExtendedStyle(m_extensionListControl.GetExtendedStyle() | LVS_EX_HEADERDRAGDROP);
 
     m_extensionListControl.ShowGrid(GetOptions()->IsListGrid());
@@ -475,12 +474,6 @@ void CTypeView::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject*)
         break;
 
     case HINT_ZOOMCHANGED:
-        break;
-
-    case HINT_REDRAWWINDOW:
-        {
-            m_extensionListControl.RedrawWindow();
-        }
         break;
 
     case HINT_TREEMAPSTYLECHANGED:

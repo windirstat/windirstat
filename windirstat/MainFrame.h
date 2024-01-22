@@ -25,6 +25,8 @@
 #include "pacman.h"
 #include <common/Constants.h>
 
+#include <functional>
+
 class CMySplitterWnd;
 class CMainFrame;
 
@@ -100,8 +102,8 @@ class CPacmanControl final : public CStatic
 {
 public:
     CPacmanControl();
-    void Drive(ULONGLONG readJobs);
-    void Start(bool start);
+    void Drive();
+    void Start();
 
 protected:
     CPacman m_pacman;
@@ -138,6 +140,7 @@ protected:
 class CMainFrame final : public CFrameWndEx
 {
 protected:
+    static constexpr DWORD WM_CALLBACKUI = WM_USER + 1;
     static UINT s_taskBarMessage;
     static CMainFrame* _theFrame;
     CMainFrame(); // Created by MFC only
@@ -147,6 +150,7 @@ public:
     static CMainFrame* GetTheFrame();
     ~CMainFrame() override;
     void InitialShowWindow();
+    void InvokeInMessageThread(std::function<void()> callback);
 
     void RestoreGraphView();
     void RestoreTypeView();
@@ -154,15 +158,15 @@ public:
     void MinimizeTypeView();
     void CopyToClipboard(LPCWSTR psz);
 
-    CDirStatView* GetDirStatView();
-    CGraphView* GetGraphView();
-    CTypeView* GetTypeView();
+    CDirStatView* GetDirStatView() const;
+    CGraphView* GetGraphView() const;
+    CTypeView* GetTypeView() const;
 
     void ShowProgress(ULONGLONG range);
     void HideProgress();
     void SetProgressPos(ULONGLONG pos);
     void SetProgressPos100();
-    void SuspendScan(bool suspend);
+    void SuspendState(bool suspend);
     bool IsScanSuspended() const;
     void DrivePacman();
 
@@ -210,6 +214,8 @@ protected:
     afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
     afx_msg LRESULT OnEnterSizeMove(WPARAM, LPARAM);
     afx_msg LRESULT OnExitSizeMove(WPARAM, LPARAM);
+    afx_msg LRESULT OnCallbackRequest(WPARAM, LPARAM lParam);
+    afx_msg void OnTimer(UINT_PTR nIDEvent);
     afx_msg void OnClose();
     afx_msg void OnInitMenuPopup(CMenu* pPopupMenu, UINT nIndex, BOOL bSysMenu);
     afx_msg void OnUpdateMemoryUsage(CCmdUI* pCmdUI);

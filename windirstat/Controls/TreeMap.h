@@ -83,27 +83,10 @@ public:
     };
 
     //
-    // Callback. Interface with 1 "callback" method. Can be given
-    // to the CTreemap-constructor. The CTreemap will call the
-    // method very frequently during building the treemap.
-    // It's because, if the tree has been paged out by the system,
-    // building the treemap can last long (> 30 seconds).
-    // TreemapDrawingCallback() gives the chance to provide at
-    // least a little visual feedback (Update of RAM usage
-    // indicator, for instance).
-    //
-    class Callback
-    {
-    public:
-        virtual void TreemapDrawingCallback() = 0;
-    };
-
-    //
     // Treemap squarification style.
     //
     enum STYLE
     {
-        SimpleStyle,
         // This style is not used in WinDirStat (it's rather uninteresting).
         KDirStatStyle,
         // Children are layed out in rows. Similar to the style used by KDirStat.
@@ -196,7 +179,7 @@ public:
             SetLightSourceYPercent(pt.y);
         }
 
-        int RoundDouble(double d)
+        static int RoundDouble(double d)
         {
             return signum(d) * static_cast<int>(fabs(d) + 0.5);
         }
@@ -212,12 +195,9 @@ public:
     // Good values
     static Options GetDefaultOptions();
 
-    // WinDirStat <= 1.0.1 default options
-    static Options GetOldDefaultOptions();
-
 public:
     // Construct the treemap generator and register the callback interface.
-    CTreemap(Callback* callback = nullptr);
+    CTreemap();
 
     // Alter the options
     void SetOptions(const Options* options);
@@ -303,8 +283,6 @@ protected:
     double m_Lx;       // Derived parameters
     double m_Ly;
     double m_Lz;
-
-    Callback* m_callback; // Current callback
 };
 
 //

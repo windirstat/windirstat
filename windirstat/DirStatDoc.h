@@ -25,8 +25,11 @@
 #include <common/Constants.h>
 #include "Options.h"
 
+#include <vector>
+
+#include "BlockingQueue.h"
+
 class CItem;
-class CWorkLimiter;
 
 //
 // The treemap colors as calculated in CDirStatDoc::SetExtensionColors()
@@ -63,8 +66,6 @@ enum
     HINT_SELECTIONSTYLECHANGED,     // Only update selection in Graphview
     HINT_EXTENSIONSELECTIONCHANGED, // Type list selected a new extension
     HINT_ZOOMCHANGED,               // Only zoom item has changed.
-    HINT_REDRAWWINDOW,              // Update menu controls
-    HINT_SOMEWORKDONE,              // Directory list shall process mouse messages first, then re-sort.
     HINT_LISTSTYLECHANGED,          // Options: List style (grid/stripes) or treelist colors changed
     HINT_TREEMAPSTYLECHANGED        // Options: Treemap style (grid, colors etc.) changed
 };
@@ -90,8 +91,6 @@ public:
     BOOL OnNewDocument() override;
     BOOL OnOpenDocument(LPCWSTR lpszPathName) override;
     void SetPathName(LPCWSTR lpszPathName, BOOL bAddToMRU) override;
-    void Serialize(CArchive& ar) override;
-
     void SetTitlePrefix(const CStringW& prefix) const;
 
     COLORREF GetCushionColor(LPCWSTR ext);
@@ -103,7 +102,6 @@ public:
     const CExtensionData* GetExtensionData();
     ULONGLONG GetRootSize() const;
 
-    bool Work(CWorkLimiter* limiter); // return: true if done.
     static bool IsDrive(const CStringW& spec);
     void RefreshMountPointItems();
     void RefreshJunctionItems();
@@ -118,25 +116,24 @@ public:
 
     void UnlinkRoot();
     bool UserDefinedCleanupWorksForItem(const USERDEFINEDCLEANUP* udc, const CItem* item);
-    ULONGLONG GetWorkingItemReadJobs();
+    void StartCoordinator(std::vector<CItem*> items);
+    void ShutdownCoordinator(bool wait = true);
 
     static void OpenItem(const CItem* item, LPCWSTR verb = L"open");
 
 protected:
     void RecurseRefreshMountPointItems(CItem* item);
     void RecurseRefreshJunctionItems(CItem* item);
-    void GetDriveItems(CArray<CItem*, CItem*>& drives);
+    void GetDriveItems(CArray<CItem*, CItem*>& drives) const;
     void RefreshRecyclers();
     void RebuildExtensionData();
     void SortExtensionData(CStringArray& sortedExtensions);
     void SetExtensionColors(const CStringArray& sortedExtensions);
     static CExtensionData* _pqsortExtensionData;
-    static int __cdecl _compareExtensions(const void* item1, const void* item2);
-    void SetWorkingItemAncestor(CItem* item);
-    void SetWorkingItem(CItem* item);
     bool DeletePhysicalItem(CItem* item, bool toTrashBin);
     void SetZoomItem(CItem* item);
-    void RefreshItem(CItem* item);
+    static void RefreshItem(std::vector<CItem*> item);
+    static void RefreshItem(CItem* item) { RefreshItem(std::vector{item}); }
     static void AskForConfirmation(const USERDEFINEDCLEANUP* udc, CItem* item);
     void PerformUserDefinedCleanup(const USERDEFINEDCLEANUP* udc, CItem* item);
     void RefreshAfterUserDefinedCleanup(const USERDEFINEDCLEANUP* udc, CItem* item);
@@ -155,16 +152,18 @@ protected:
     bool m_showMyComputer; // True, if the user selected more than one drive for scanning.
     // In this case, we need a root pseudo item ("My Computer").
 
-    CItem* m_rootItem;                      // The very root item
+    CItem* m_rootItem; // The very root item
 
     CStringW m_highlightExtension; // Currently highlighted extension
     CItem* m_zoomItem;             // Current "zoom root"
-    CItem* m_workingItem;          // Current item we are working on. For progress indication
 
     bool m_extensionDataValid;      // If this is false, m_extensionData must be rebuilt
     CExtensionData m_extensionData; // Base for the extension view and cushion colors
 
     CList<CItem*, CItem*> m_reselectChildStack; // Stack for the "Re-select Child"-Feature
+
+    BlockingQueue<CItem*> queue;      // The scanning queue
+    std::vector<std::thread> threads; // For tracking threads
 
 protected:
     DECLARE_MESSAGE_MAP()

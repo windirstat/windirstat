@@ -21,13 +21,11 @@
 
 #include "stdafx.h"
 #include "WinDirStat.h"
-#include "SelectObject.h"
-#include "TreeMap.h"
 #include "MyImageList.h"
 #include "SmartPointer.h"
 
 CMyImageList::CMyImageList()
-    : m_filesFolderImage(-1)
+    : m_junctionProtected(-1)
       , m_freeSpaceImage(-1)
       , m_unknownImage(-1)
       , m_emptyImage(-1)
@@ -45,7 +43,7 @@ void CMyImageList::initialize()
         VTRACE(L"GetSystemDirectory() -> %s", s.GetString());
 
         SHFILEINFO sfi = {nullptr};
-        const auto hil = (HIMAGELIST)::SHGetFileInfo(s, 0, &sfi, sizeof(sfi), WDS_SHGFI_DEFAULTS);
+        const auto hil = reinterpret_cast<HIMAGELIST>(::SHGetFileInfo(s, 0, &sfi, sizeof(sfi), WDS_SHGFI_DEFAULTS));
 
         this->Attach(ImageList_Duplicate(hil));
 
@@ -57,38 +55,6 @@ void CMyImageList::initialize()
 
         this->addCustomImages();
     }
-}
-
-COLORREF CMyImageList::greenify_(COLORREF c)
-{
-    if (c == RGB(255, 255, 255))
-    {
-        return c;
-    }
-    double b = CColorSpace::GetColorBrightness(c);
-    b        = b * b;
-    return CColorSpace::MakeBrightColor(RGB(0, 255, 0), b);
-}
-
-COLORREF CMyImageList::blueify_(COLORREF c)
-{
-    if (c == RGB(255, 255, 255))
-    {
-        return c;
-    }
-    const double b = CColorSpace::GetColorBrightness(c);
-    return CColorSpace::MakeBrightColor(RGB(0, 0, 255), b);
-}
-
-COLORREF CMyImageList::yellowify_(COLORREF c)
-{
-    if (c == RGB(255, 255, 255))
-    {
-        return c;
-    }
-    double b = CColorSpace::GetColorBrightness(c);
-    b        = b * b;
-    return CColorSpace::MakeBrightColor(RGB(255, 255, 0), b);
 }
 
 // Returns the index of the added icon
@@ -142,13 +108,19 @@ short CMyImageList::getMyComputerImage()
 
 short CMyImageList::getMountPointImage()
 {
-    return cacheIcon(getADriveSpec(), 0); // The flag SHGFI_USEFILEATTRIBUTES doesn't work on W95.
+    return cacheIcon(getADriveSpec(), 0);
 }
 
 short CMyImageList::getJunctionImage() const
 {
     // Intermediate solution until we find a nice icon for junction points
     return m_junctionImage;
+}
+
+short CMyImageList::getJunctionProtectedImage() const
+{
+    ASSERT(m_hImageList != NULL); // should have been initialize()ed.
+    return m_junctionProtected;
 }
 
 short CMyImageList::getFolderImage()
@@ -170,25 +142,19 @@ short CMyImageList::getExtImageAndDescription(LPCWSTR ext, CStringW& description
     return cacheIcon(ext, SHGFI_USEFILEATTRIBUTES, &description);
 }
 
-short CMyImageList::getFilesFolderImage() const
-{
-    ASSERT(m_hImageList != NULL); // should have been initialize()ed.
-    return m_filesFolderImage;
-}
-
-short CMyImageList::getFreeSpaceImage()
+short CMyImageList::getFreeSpaceImage() const
 {
     ASSERT(m_hImageList != NULL); // should have been initialize()ed.
     return m_freeSpaceImage;
 }
 
-short CMyImageList::getUnknownImage()
+short CMyImageList::getUnknownImage() const
 {
     ASSERT(m_hImageList != NULL); // should have been initialize()ed.
     return m_unknownImage;
 }
 
-short CMyImageList::getEmptyImage()
+short CMyImageList::getEmptyImage() const
 {
     ASSERT(m_hImageList != NULL);
     return m_emptyImage;
@@ -210,91 +176,9 @@ CStringW CMyImageList::getADriveSpec()
 
 void CMyImageList::addCustomImages()
 {
-    constexpr int CUSTOM_IMAGE_COUNT = 5;
-    constexpr COLORREF bgcolor       = RGB(255, 255, 255);
-
-    const int folderImage = getFolderImage();
-    const int driveImage  = getMountPointImage();
-
-    IMAGEINFO ii;
-    ZeroMemory(&ii, sizeof(ii));
-    VERIFY(this->GetImageInfo(folderImage, &ii));
-    const CRect rc(ii.rcImage);
-
-    CClientDC dcClient(CWnd::GetDesktopWindow());
-
-    CDC dcmem;
-    dcmem.CreateCompatibleDC(&dcClient);
-    CBitmap target;
-    target.CreateCompatibleBitmap(&dcClient, rc.Width() * CUSTOM_IMAGE_COUNT, rc.Height());
-
-    // Junction point
-    CBitmap junc;
-    junc.LoadBitmap(IDB_JUNCTIONPOINT);
-    BITMAP bmjunc;
-    junc.GetBitmap(&bmjunc);
-    CDC dcjunc;
-    dcjunc.CreateCompatibleDC(&dcClient);
-
-    {
-        CSelectObject sotarget(&dcmem, &target);
-        CSelectObject sojunc(&dcjunc, &junc);
-
-        dcmem.FillSolidRect(0, 0, rc.Width() * CUSTOM_IMAGE_COUNT, rc.Height(), bgcolor);
-        CPoint pt(0, 0);
-        const COLORREF savedClr = this->SetBkColor(CLR_NONE);
-        VERIFY(Draw(&dcmem, folderImage, pt, ILD_NORMAL));
-        pt.x += rc.Width();
-        VERIFY(Draw(&dcmem, driveImage, pt, ILD_NORMAL));
-        pt.x += rc.Width();
-        VERIFY(Draw(&dcmem, driveImage, pt, ILD_NORMAL));
-        pt.x += rc.Width();
-        VERIFY(Draw(&dcmem, folderImage, pt, ILD_NORMAL));
-        this->SetBkColor(savedClr);
-
-        // Now we re-color the images
-        for (int i = 0; i < rc.Width(); i++)
-        {
-            for (int j = 0; j < rc.Height(); j++)
-            {
-                int idx = 0;
-
-                // We "blueify" the folder image ("<Files>")
-                COLORREF c = dcmem.GetPixel(idx * rc.Width() + i, j);
-                dcmem.SetPixel(idx * rc.Width() + i, j, blueify_(c));
-                idx++;
-
-                // ... "greenify" the drive image ("<Free Space>")
-                c = dcmem.GetPixel(idx * rc.Width() + i, j);
-                dcmem.SetPixel(idx * rc.Width() + i, j, greenify_(c));
-                idx++;
-
-                // ...and "yellowify" the drive image ("<Unknown>")
-                c = dcmem.GetPixel(idx * rc.Width() + i, j);
-                dcmem.SetPixel(idx * rc.Width() + i, j, yellowify_(c));
-                idx++;
-
-                // ...and overlay the junction point image with the link symbol.
-                const int jjunc = j - (rc.Height() - bmjunc.bmHeight);
-
-                c = dcmem.GetPixel(idx * rc.Width() + i, j);
-                dcmem.SetPixel(idx * rc.Width() + i, j, c); // I don't know why this statement is required.
-                if (i < bmjunc.bmWidth && jjunc >= 0)
-                {
-                    const COLORREF cjunc = dcjunc.GetPixel(i, jjunc);
-                    if (cjunc != RGB(255, 0, 255))
-                    {
-                        dcmem.SetPixel(idx * rc.Width() + i, j, cjunc);
-                    }
-                }
-            }
-        }
-    }
-    short k = static_cast<short>(this->Add(&target, bgcolor));
-    VTRACE(L"k == %i", k);
-    m_filesFolderImage = k++;
-    m_freeSpaceImage   = k++;
-    m_unknownImage     = k++;
-    m_junctionImage    = k++;
-    m_emptyImage       = k;
+    m_junctionImage = static_cast<short>(this->Add(GetWDSApp()->LoadIcon(IDI_JUNCTION)));
+    m_junctionProtected = static_cast<short>(this->Add(GetWDSApp()->LoadIcon(IDI_JUNCTION_PROTECTED)));
+    m_freeSpaceImage = static_cast<short>(this->Add(GetWDSApp()->LoadIcon(IDI_FREE_SPACE)));
+    m_unknownImage = static_cast<short>(this->Add(GetWDSApp()->LoadIcon(IDI_UNKNOWN)));
+    m_emptyImage = static_cast<short>(this->Add(GetWDSApp()->LoadIcon(IDI_EMPTY)));
 }

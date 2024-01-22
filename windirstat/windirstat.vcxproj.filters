@@ -51,9 +51,6 @@
     <None Include="res\license.txt">
       <Filter>Resource Files\Resources</Filter>
     </None>
-    <None Include="res\linkhand.cur">
-      <Filter>Resource Files\Resources</Filter>
-    </None>
     <None Include="res\IDR_MAINFRAME.bmp">
       <Filter>Resource Files\Resources</Filter>
     </None>
@@ -172,9 +169,6 @@
     <ClInclude Include="WinDirStat.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="WorkLimiter.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Controls\ColorButton.h">
       <Filter>Header Files\Controls</Filter>
     </ClInclude>
@@ -214,6 +208,12 @@
     <ClInclude Include="Dialogs\SelectDrivesDlg.h">
       <Filter>Header Files\Dialogs</Filter>
     </ClInclude>
+    <ClInclude Include="BlockingQueue.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PageAdvanced.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\common\CommonHelpers.cpp">
@@ -223,9 +223,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="DirStatView.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="FileFind.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="GlobalHelpers.cpp">
@@ -273,9 +270,6 @@
     <ClCompile Include="WinDirStat.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="WorkLimiter.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Controls\ColorButton.cpp">
       <Filter>Source Files\Controls</Filter>
     </ClCompile>
@@ -314,6 +308,12 @@
     </ClCompile>
     <ClCompile Include="Dialogs\SelectDrivesDlg.cpp">
       <Filter>Source Files\Dialogs</Filter>
+    </ClCompile>
+    <ClCompile Include="FileFind.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PageAdvanced.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -384,6 +384,24 @@
       <Filter>Resource Files\Resources</Filter>
     </Image>
     <Image Include="res\toolbar\IDB_SELECTION_EXPLORE.bmp">
+      <Filter>Resource Files\Resources</Filter>
+    </Image>
+    <Image Include="res\nodes\IDB_JUNCTION.ico">
+      <Filter>Resource Files\Resources</Filter>
+    </Image>
+    <Image Include="res\nodes\IDI_EMPTY.ico">
+      <Filter>Resource Files\Resources</Filter>
+    </Image>
+    <Image Include="res\nodes\IDI_FREE_SPACE.ico">
+      <Filter>Resource Files\Resources</Filter>
+    </Image>
+    <Image Include="res\nodes\IDI_JUNCTION.ico">
+      <Filter>Resource Files\Resources</Filter>
+    </Image>
+    <Image Include="res\nodes\IDI_JUNCTION_PROTECTED.ico">
+      <Filter>Resource Files\Resources</Filter>
+    </Image>
+    <Image Include="res\nodes\IDI_UNKNOWN.ico">
       <Filter>Resource Files\Resources</Filter>
     </Image>
   </ItemGroup>

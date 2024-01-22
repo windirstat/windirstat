@@ -23,11 +23,12 @@
 #include "stdafx.h"
 #include "WinDirStat.h"
 
-#include "graphview.h"
+#include "GraphView.h"
 #include "DirStatView.h"
 #include "TypeView.h"
 #include "DirStatDoc.h"
 #include "GlobalHelpers.h"
+#include "TreeListControl.h"
 #include "Item.h"
 
 #include "PageCleanups.h"
@@ -40,7 +41,11 @@
 
 #include "MainFrame.h"
 
+#include <complex.h>
+#include <functional>
 #include <unordered_map>
+
+#include "PageAdvanced.h"
 
 namespace
 {
@@ -304,17 +309,17 @@ CPacmanControl::CPacmanControl()
     m_pacman.SetSpeed(0.00005f);
 }
 
-void CPacmanControl::Drive(ULONGLONG readJobs)
+void CPacmanControl::Drive()
 {
-    if (::IsWindow(m_hWnd) && m_pacman.Drive(readJobs))
+    if (::IsWindow(m_hWnd))
     {
         RedrawWindow();
     }
 }
 
-void CPacmanControl::Start(bool start)
+void CPacmanControl::Start()
 {
-    m_pacman.Start(start);
+    m_pacman.Start();
 }
 
 BEGIN_MESSAGE_MAP(CPacmanControl, CStatic)
@@ -330,7 +335,7 @@ int CPacmanControl::OnCreate(LPCREATESTRUCT lpCreateStruct)
     }
 
     m_pacman.Reset();
-    m_pacman.Start(true);
+    m_pacman.Start();
     return 0;
 }
 
@@ -373,22 +378,24 @@ UINT CMainFrame::s_taskBarMessage = ::RegisterWindowMessage(L"TaskbarButtonCreat
 IMPLEMENT_DYNCREATE(CMainFrame, CFrameWndEx)
 
 BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
-    ON_WM_CREATE()
+    ON_COMMAND(ID_CONFIGURE, OnConfigure)
+    ON_COMMAND(ID_TREEMAP_HELPABOUTTREEMAPS, OnTreemapHelpAboutTreeMaps)
+    ON_COMMAND(ID_VIEW_SHOWFILETYPES, OnViewShowFileTypes)
+    ON_COMMAND(ID_VIEW_SHOWTREEMAP, OnViewShowtreemap)
     ON_MESSAGE(WM_ENTERSIZEMOVE, OnEnterSizeMove)
     ON_MESSAGE(WM_EXITSIZEMOVE, OnExitSizeMove)
-    ON_WM_CLOSE()
-    ON_WM_INITMENUPOPUP()
-    ON_UPDATE_COMMAND_UI(ID_INDICATOR_MEMORYUSAGE, OnUpdateMemoryUsage)
-    ON_WM_SIZE()
-    ON_UPDATE_COMMAND_UI(ID_VIEW_SHOWTREEMAP, OnUpdateViewShowtreemap)
-    ON_COMMAND(ID_VIEW_SHOWTREEMAP, OnViewShowtreemap)
-    ON_UPDATE_COMMAND_UI(ID_VIEW_SHOWFILETYPES, OnUpdateViewShowFileTypes)
-    ON_COMMAND(ID_VIEW_SHOWFILETYPES, OnViewShowFileTypes)
-    ON_COMMAND(ID_CONFIGURE, OnConfigure)
-    ON_WM_DESTROY()
-    ON_COMMAND(ID_TREEMAP_HELPABOUTTREEMAPS, OnTreemapHelpAboutTreeMaps)
-    ON_WM_SYSCOLORCHANGE()
+    ON_MESSAGE(WM_CALLBACKUI, OnCallbackRequest)
     ON_REGISTERED_MESSAGE(s_taskBarMessage, OnTaskButtonCreated)
+    ON_UPDATE_COMMAND_UI(ID_VIEW_SHOWFILETYPES, OnUpdateViewShowFileTypes)
+    ON_UPDATE_COMMAND_UI(ID_VIEW_SHOWTREEMAP, OnUpdateViewShowtreemap)
+    ON_UPDATE_COMMAND_UI(ID_INDICATOR_MEMORYUSAGE, OnUpdateMemoryUsage)
+    ON_WM_CLOSE()
+    ON_WM_CREATE()
+    ON_WM_DESTROY()
+    ON_WM_INITMENUPOPUP()
+    ON_WM_SIZE()
+    ON_WM_SYSCOLORCHANGE()
+    ON_WM_TIMER()
 END_MESSAGE_MAP()
 
 static UINT indicators[] =
@@ -513,30 +520,28 @@ bool CMainFrame::IsScanSuspended() const
     return m_scanSuspend;
 }
 
-void CMainFrame::SuspendScan(bool suspend)
+void CMainFrame::SuspendState(bool suspend)
 {
-    const bool isSuspended = m_scanSuspend;
     m_scanSuspend = suspend;
-    m_pacman.Start(!isSuspended);
     if (m_TaskbarList)
     {
-        switch (m_TaskbarButtonState)
+        if (m_TaskbarButtonState == TBPF_PAUSED)
         {
-        case TBPF_PAUSED:
             m_TaskbarList->SetProgressState(*this, m_TaskbarButtonState = m_TaskbarButtonPreviousState);
-            break;
-        default:
+        }
+        else
+        {
             m_TaskbarButtonPreviousState = m_TaskbarButtonState;
             m_TaskbarList->SetProgressState(*this, m_TaskbarButtonState = TBPF_PAUSED);
-            break;
         }
     }
+    CPacman::SetGlobalSuspendState(suspend);
     UpdateProgress();
 }
 
 void CMainFrame::DrivePacman()
 {
-    m_pacman.Drive(GetDocument()->GetWorkingItemReadJobs());
+    m_pacman.Drive();
 }
 
 void CMainFrame::UpdateProgress()
@@ -585,7 +590,7 @@ void CMainFrame::CreateStatusProgress()
     {
         CRect rc;
         m_wndStatusBar.GetItemRect(0, rc);
-        m_progress.Create(WS_CHILD | WS_VISIBLE, rc, &m_wndStatusBar, 4711);
+        m_progress.Create(WS_CHILD | WS_VISIBLE, rc, &m_wndStatusBar, ID_WDS_CONTROL);
         m_progress.ModifyStyle(WS_BORDER, 0); // Doesn't help with XP-style control.
     }
     if (m_TaskbarList)
@@ -600,7 +605,7 @@ void CMainFrame::CreatePacmanProgress()
     {
         CRect rc;
         m_wndStatusBar.GetItemRect(0, rc);
-        m_pacman.Create(wds::strEmpty, WS_CHILD | WS_VISIBLE, rc, &m_wndStatusBar, 4711); // FIXME: hard-coded value out
+        m_pacman.Create(wds::strEmpty, WS_CHILD | WS_VISIBLE, rc, &m_wndStatusBar, ID_WDS_CONTROL);
     }
 }
 
@@ -650,7 +655,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
     {
         { ID_FILE_SELECT, IDB_FILE_SELECT },
         { ID_CLEANUP_OPEN_SELECTED, IDB_CLEANUP_OPEN_SELECTED },
-        { ID_EDIT_COPY_CLIPBOARD, IDB_SCAN_SUSPEND },
+        { ID_EDIT_COPY_CLIPBOARD, IDB_EDIT_COPY_CLIPBOARD },
         { ID_CLEANUP_EXPLORER_SELECT, IDB_CLEANUP_EXPLORER_SELECT },
         { ID_CLEANUP_OPEN_IN_CONSOLE, IDB_CLEANUP_OPEN_IN_CONSOLE },
         { ID_REFRESH_SELECTED, IDB_REFRESH_SELECTED },
@@ -700,11 +705,21 @@ void CMainFrame::InitialShowWindow()
     GetWindowPlacement(&wp);
     CPersistence::GetMainWindowPlacement(wp);
     SetWindowPlacement(&wp);
+    SetTimer(ID_INDICATOR_MEMORYUSAGE, 25, nullptr);
+}
+
+void CMainFrame::InvokeInMessageThread(std::function<void()> callback)
+{
+    if (AfxGetApp()->m_nThreadID == GetCurrentThreadId()) callback();
+    else GetMainFrame()->SendMessage(WM_CALLBACKUI, 0, reinterpret_cast<LPARAM>(&callback));
 }
 
 void CMainFrame::OnClose()
 {
     CWaitCursor wc;
+
+    // Suspend the scan and wait for scan to complete
+    GetDocument()->ShutdownCoordinator();
 
     // It's too late, to do this in OnDestroy(). Because the toolbar, if undocked,
     // is already destroyed in OnDestroy(). So we must save the toolbar state here
@@ -789,25 +804,22 @@ void CMainFrame::RestoreGraphView()
     }
 }
 
-CDirStatView* CMainFrame::GetDirStatView()
+CDirStatView* CMainFrame::GetDirStatView() const
 {
     CWnd* pWnd = m_wndSubSplitter.GetPane(0, 0);
-    auto pView = DYNAMIC_DOWNCAST(CDirStatView, pWnd);
-    return pView;
+    return DYNAMIC_DOWNCAST(CDirStatView, pWnd);
 }
 
-CGraphView* CMainFrame::GetGraphView()
+CGraphView* CMainFrame::GetGraphView() const
 {
     CWnd* pWnd = m_wndSplitter.GetPane(1, 0);
-    auto pView = DYNAMIC_DOWNCAST(CGraphView, pWnd);
-    return pView;
+    return DYNAMIC_DOWNCAST(CGraphView, pWnd);
 }
 
-CTypeView* CMainFrame::GetTypeView()
+CTypeView* CMainFrame::GetTypeView() const
 {
     CWnd* pWnd = m_wndSubSplitter.GetPane(0, 1);
-    auto pView = DYNAMIC_DOWNCAST(CTypeView, pWnd);
-    return pView;
+    return DYNAMIC_DOWNCAST(CTypeView, pWnd);
 }
 
 LRESULT CMainFrame::OnEnterSizeMove(WPARAM, LPARAM)
@@ -819,6 +831,29 @@ LRESULT CMainFrame::OnEnterSizeMove(WPARAM, LPARAM)
 LRESULT CMainFrame::OnExitSizeMove(WPARAM, LPARAM)
 {
     GetGraphView()->SuspendRecalculationDrawing(false);
+    return 0;
+}
+
+void CMainFrame::OnTimer(UINT_PTR nIDEvent)
+{
+    // Update memory usage
+    m_wndStatusBar.UpdateWindow();
+
+    // Update tree control
+    if (!GetDocument()->IsRootDone())
+    {
+        // By sorting items, items will be redrawn which will
+        // also force pacman to update with recent position
+        CTreeListControl::GetTheTreeListControl()->SortItems();
+    }
+
+    CFrameWndEx::OnTimer(nIDEvent);
+}
+
+LRESULT CMainFrame::OnCallbackRequest(WPARAM, LPARAM lParam)
+{
+    const auto & callback = *static_cast<std::function<void()>*>(reinterpret_cast<LPVOID>(lParam));
+    callback();
     return 0;
 }
 
@@ -967,12 +1002,12 @@ void CMainFrame::AppendUserDefinedCleanups(CMenu* menu)
 
             bool udc_valid = GetLogicalFocus() == LF_DIRECTORYLIST;
             const auto & items = CTreeListControl::GetTheTreeListControl()->GetAllSelected<CItem>();
-            for (auto item : items)
+            for (const auto& item : items)
             {
                 udc_valid &= GetDocument()->UserDefinedCleanupWorksForItem(GetOptions()->GetUserDefinedCleanup(indices[i]), item);
             }
 
-            UINT flags = udc_valid ? MF_ENABLED : (MF_DISABLED | MF_GRAYED);
+            const UINT flags = udc_valid ? MF_ENABLED : (MF_DISABLED | MF_GRAYED);
             menu->AppendMenu(flags | MF_STRING, ID_USERDEFINEDCLEANUP0 + indices[i], string);
         }
     }
@@ -1034,9 +1069,10 @@ void CMainFrame::SetSelectionMessageText()
     case LF_DIRECTORYLIST:
         {
             // display file name in bottom left corner if only one item is selected
-            auto item = CTreeListControl::GetTheTreeListControl()->GetFirstSelectedItem<CItem>(true);
+            auto item = CTreeListControl::GetTheTreeListControl()->GetFirstSelectedItem<CItem>();
             if (item != nullptr)
             {
+                // decide when to do this
                 SetMessageText(item->GetPath());
             }
             else
@@ -1125,11 +1161,13 @@ void CMainFrame::OnConfigure()
     CPageTreelist treelist;
     CPageTreemap treemap;
     CPageCleanups cleanups;
+    CPageAdvanced advanced;
 
     sheet.AddPage(&general);
     sheet.AddPage(&treelist);
     sheet.AddPage(&treemap);
     sheet.AddPage(&cleanups);
+    sheet.AddPage(&advanced);
 
     sheet.DoModal();
 
@@ -1152,3 +1190,4 @@ void CMainFrame::OnSysColorChange()
     GetDirStatView()->SysColorChanged();
     GetTypeView()->SysColorChanged();
 }
+

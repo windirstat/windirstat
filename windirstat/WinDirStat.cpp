@@ -29,19 +29,19 @@
 #include "selectdrivesdlg.h"
 #include "AboutDlg.h"
 #include "DirStatDoc.h"
-#include "graphview.h"
-#include "osspecific.h"
+#include "GraphView.h"
+#include "OsSpecific.h"
 #include "GlobalHelpers.h"
-#include "WorkLimiter.h"
-#pragma warning(push)
-#pragma warning(disable : 4091)
-#include <Dbghelp.h> // for mini dumps
-
+#include "BlockingQueue.h"
+#include "Item.h"
 #include "SmartPointer.h"
-#pragma warning(pop)
 
 #ifdef _DEBUG
+#   pragma warning(push)
+#   pragma warning(disable : 4091)
+#   include <Dbghelp.h> // for mini dumps
 #   include <common/tracer.cpp>
+#   pragma warning(pop)
 #endif
 
 CMainFrame* GetMainFrame()
@@ -58,7 +58,7 @@ CDirStatApp* GetWDSApp()
 
 CStringW GetAuthorEmail()
 {
-    return L"team" L"\x40" L"windirstat.net"; // FIXME into common string file
+    return L"team@windirstat.net"; // FIXME into common string file
 }
 
 CStringW GetWinDirStatHomepage()
@@ -88,7 +88,6 @@ CDirStatApp::CDirStatApp()
       , m_langid(0)
       , m_workingSet(0)
       , m_pageFaults(0)
-      , m_lastPeriodicalRamUsageUpdate(GetTickCount64())
       , m_altColor(GetAlternativeColor(RGB(0x00, 0x00, 0xFF), L"AltColor"))
       , m_altEncryptionColor(GetAlternativeColor(RGB(0x00, 0x80, 0x00), L"AltEncryptionColor"))
 #   ifdef VTRACE_TO_CONSOLE
@@ -104,20 +103,6 @@ CMyImageList* CDirStatApp::GetMyImageList()
 {
     m_myImageList.initialize();
     return &m_myImageList;
-}
-
-void CDirStatApp::UpdateRamUsage()
-{
-    CWinThread::OnIdle(0);
-}
-
-void CDirStatApp::PeriodicalUpdateRamUsage()
-{
-    if (GetTickCount64() - m_lastPeriodicalRamUsageUpdate > 1200)
-    {
-        UpdateRamUsage();
-        m_lastPeriodicalRamUsageUpdate = GetTickCount64();
-    }
 }
 
 CStringW CDirStatApp::FindResourceDllPathByLangid(LANGID& langid)
@@ -482,7 +467,7 @@ BOOL CDirStatApp::InitInstance()
     (void)::InitCommonControlsEx(&ctrls);
     (void)::OleInitialize(nullptr);
     (void)::AfxOleInit();
-    (void)::AfxEnableControlContainer();
+    ::AfxEnableControlContainer();
     (void)::AfxInitRichEdit2();
 
     Inherited::EnableHtmlHelp();
@@ -647,26 +632,6 @@ void CDirStatApp::OnRunElevated()
     {
         VTRACE(L"ShellExecuteEx failed to elevate %d", GetLastError());
     }
-}
-
-BOOL CDirStatApp::OnIdle(LONG lCount)
-{
-    bool more = false;
-
-    CDirStatDoc* doc = GetDocument();
-    CWorkLimiter limiter;
-    limiter.Start(600);
-    if (doc && !doc->Work(&limiter))
-    {
-        more = true;
-    }
-
-    if (Inherited::OnIdle(lCount))
-    {
-        more = true;
-    }
-
-    return more;
 }
 
 void CDirStatApp::OnHelpManual()

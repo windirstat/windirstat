@@ -30,15 +30,12 @@ IMPLEMENT_DYNAMIC(CPageGeneral, CPropertyPage)
 
 CPageGeneral::CPageGeneral()
     : CPropertyPage(CPageGeneral::IDD)
-      , m_followMountPoints(0)
-      , m_followJunctionPoints(0)
       , m_useWdsLocale(0)
       , m_humanFormat(0)
       , m_listGrid(0)
       , m_listStripes(0)
       , m_listFullRowSelection(0)
-      , m_skipHidden(0),
-      m_originalLanguage(0)
+      , m_originalLanguage(0)
 {
 }
 
@@ -55,28 +52,20 @@ void CPageGeneral::DoDataExchange(CDataExchange* pDX)
 {
     CPropertyPage::DoDataExchange(pDX);
     DDX_Check(pDX, IDC_HUMANFORMAT, m_humanFormat);
-    DDX_Check(pDX, IDC_FOLLOWMOUNTPOINTS, m_followMountPoints);
-    DDX_Check(pDX, IDC_FOLLOWJUNCTIONS, m_followJunctionPoints);
     DDX_Check(pDX, IDC_USEWDSLOCALE, m_useWdsLocale);
     DDX_Control(pDX, IDC_COMBO, m_combo);
-    DDX_Control(pDX, IDC_FOLLOWMOUNTPOINTS, m_ctlFollowMountPoints);
-    DDX_Control(pDX, IDC_FOLLOWJUNCTIONS, m_ctlFollowJunctionPoints);
     DDX_Check(pDX, IDC_SHOWGRID, m_listGrid);
     DDX_Check(pDX, IDC_SHOWSTRIPES, m_listStripes);
     DDX_Check(pDX, IDC_FULLROWSELECTION, m_listFullRowSelection);
-    DDX_Check(pDX, IDC_SKIPHIDDEN, m_skipHidden);
 }
 
 BEGIN_MESSAGE_MAP(CPageGeneral, CPropertyPage)
     ON_BN_CLICKED(IDC_HUMANFORMAT, OnBnClickedHumanformat)
-    ON_BN_CLICKED(IDC_FOLLOWMOUNTPOINTS, OnBnClickedFollowmountpoints)
-    ON_BN_CLICKED(IDC_FOLLOWJUNCTIONS, OnBnClickedFollowjunctionpoints)
     ON_BN_CLICKED(IDC_USEWDSLOCALE, OnBnClickedUseWdsLocale)
     ON_CBN_SELENDOK(IDC_COMBO, OnCbnSelendokCombo)
     ON_BN_CLICKED(IDC_SHOWGRID, OnBnClickedListGrid)
     ON_BN_CLICKED(IDC_SHOWSTRIPES, OnBnClickedListStripes)
     ON_BN_CLICKED(IDC_FULLROWSELECTION, OnBnClickedListFullRowSelection)
-    ON_BN_CLICKED(IDC_SKIPHIDDEN, OnBnClickedSkipHidden)
 END_MESSAGE_MAP()
 
 BOOL CPageGeneral::OnInitDialog()
@@ -87,17 +76,7 @@ BOOL CPageGeneral::OnInitDialog()
     m_listGrid             = GetOptions()->IsListGrid();
     m_listStripes          = GetOptions()->IsListStripes();
     m_listFullRowSelection = GetOptions()->IsListFullRowSelection();
-
-    m_followMountPoints    = GetOptions()->IsFollowMountPoints();
-    m_followJunctionPoints = GetOptions()->IsFollowJunctionPoints();
     m_useWdsLocale         = GetOptions()->IsUseWdsLocale();
-    m_skipHidden           = GetOptions()->IsSkipHidden();
-
-    m_followMountPoints = false;                // Otherwise we would see pacman only.
-    m_ctlFollowMountPoints.ShowWindow(SW_HIDE); // Ignorance is bliss.
-    // The same for junction points
-    m_followJunctionPoints = false;                // Otherwise we would see pacman only.
-    m_ctlFollowJunctionPoints.ShowWindow(SW_HIDE); // Ignorance is bliss.
 
     int k = m_combo.AddString(GetLocaleLanguage(GetWDSApp()->GetBuiltInLanguage()));
     m_combo.SetItemData(k, GetWDSApp()->GetBuiltInLanguage());
@@ -130,13 +109,10 @@ void CPageGeneral::OnOK()
 {
     UpdateData();
     GetOptions()->SetHumanFormat(FALSE != m_humanFormat);
-    GetOptions()->SetFollowMountPoints(FALSE != m_followMountPoints);
-    GetOptions()->SetFollowJunctionPoints(FALSE != m_followJunctionPoints);
     GetOptions()->SetUseWdsLocale(FALSE != m_useWdsLocale);
     GetOptions()->SetListGrid(FALSE != m_listGrid);
     GetOptions()->SetListStripes(FALSE != m_listStripes);
     GetOptions()->SetListFullRowSelection(FALSE != m_listFullRowSelection);
-    GetOptions()->SetSkipHidden(FALSE != m_skipHidden);
 
     const LANGID id = static_cast<LANGID>(m_combo.GetItemData(m_combo.GetCurSel()));
     CLanguageOptions::SetLanguage(id);
@@ -145,16 +121,6 @@ void CPageGeneral::OnOK()
 }
 
 void CPageGeneral::OnBnClickedHumanformat()
-{
-    SetModified();
-}
-
-void CPageGeneral::OnBnClickedFollowmountpoints()
-{
-    SetModified();
-}
-
-void CPageGeneral::OnBnClickedFollowjunctionpoints()
 {
     SetModified();
 }
@@ -183,10 +149,5 @@ void CPageGeneral::OnCbnSelendokCombo()
 {
     const int i = m_combo.GetCurSel();
     GetSheet()->SetLanguageChanged(i != m_originalLanguage);
-    SetModified();
-}
-
-void CPageGeneral::OnBnClickedSkipHidden()
-{
     SetModified();
 }

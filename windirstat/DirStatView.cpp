@@ -27,13 +27,8 @@
 #include "MainFrame.h"
 #include <common/CommonHelpers.h>
 #include "DirStatView.h"
-#include "osspecific.h"
+#include "OsSpecific.h"
 #include "GlobalHelpers.h"
-
-namespace
-{
-    constexpr UINT _nIdTreeListControl = 4711;
-}
 
 CMyTreeListControl::CMyTreeListControl(CDirStatView* dirstatView)
     : CTreeListControl(dirstatView, 20)
@@ -212,7 +207,7 @@ BEGIN_MESSAGE_MAP(CDirStatView, CView)
     ON_WM_SETFOCUS()
     ON_WM_SETTINGCHANGE()
 #pragma warning(suppress: 26454)
-    ON_NOTIFY(LVN_ITEMCHANGED, _nIdTreeListControl, OnLvnItemchanged)
+    ON_NOTIFY(LVN_ITEMCHANGED, ID_WDS_CONTROL, OnLvnItemchanged)
     ON_UPDATE_COMMAND_UI(ID_POPUP_TOGGLE, OnUpdatePopupToggle)
     ON_COMMAND(ID_POPUP_TOGGLE, OnPopupToggle)
 END_MESSAGE_MAP()
@@ -235,7 +230,7 @@ int CDirStatView::OnCreate(LPCREATESTRUCT lpCreateStruct)
     }
 
     constexpr RECT rect = {0, 0, 0, 0};
-    VERIFY(m_treeListControl.CreateEx(LVS_EX_HEADERDRAGDROP, WS_CHILD | WS_VISIBLE | LVS_REPORT | LVS_SHOWSELALWAYS, rect, this, _nIdTreeListControl));
+    VERIFY(m_treeListControl.CreateEx(LVS_EX_HEADERDRAGDROP, WS_CHILD | WS_VISIBLE | LVS_REPORT | LVS_SHOWSELALWAYS, rect, this, ID_WDS_CONTROL));
 
     m_treeListControl.ShowGrid(GetOptions()->IsListGrid());
     m_treeListControl.ShowStripes(GetOptions()->IsListStripes());
@@ -300,25 +295,21 @@ void CDirStatView::OnLvnItemchanged(NMHDR* pNMHDR, LRESULT* pResult)
 
 void CDirStatView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 {
+    ASSERT(AfxGetThread() != nullptr);
+
     switch (lHint)
     {
     case HINT_NEWROOT:
         {
             m_treeListControl.SetRootItem(GetDocument()->GetRootItem());
             m_treeListControl.Sort();
-            m_treeListControl.RedrawItems(0, m_treeListControl.GetItemCount() - 1);
+            m_treeListControl.Invalidate();
         }
         break;
 
     case HINT_SELECTIONACTION:
         {
             m_treeListControl.EmulateInteractiveSelection(reinterpret_cast<const CItem*>(pHint));
-        }
-        break;
-
-    case HINT_REDRAWWINDOW:
-        {
-            m_treeListControl.RedrawWindow();
         }
         break;
 
@@ -336,28 +327,9 @@ void CDirStatView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
         }
         break;
 
-    case HINT_SOMEWORKDONE:
-        {
-            MSG msg;
-            while (::PeekMessage(&msg, m_treeListControl, 0, 0, PM_REMOVE))
-            {
-                if (msg.message == WM_QUIT)
-                {
-                    ::PostQuitMessage(static_cast<int>(msg.wParam));
-                    break;
-                }
-                ::TranslateMessage(&msg);
-                ::DispatchMessage(&msg);
-            }
-        }
-        [[fallthrough]];
     case HINT_NULL:
         {
             m_treeListControl.Sort();
-
-            // I decided (from 1.0.1 to 1.0.2) that this is not so good:
-            // m_treeListControl.EnsureItemVisible(GetDocument()->GetSelection());
-
             CView::OnUpdate(pSender, lHint, pHint);
         }
         break;

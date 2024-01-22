@@ -1,4 +1,4 @@
-// options.h - Declaration of CRegistryUser, COptions and CPersistence
+// Options.h - Declaration of CRegistryUser, COptions and CPersistence
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
@@ -301,52 +301,56 @@ public:
     void SetTreelistColors(const COLORREF color[TREELISTCOLORCOUNT]);
     COLORREF GetTreelistColor(int i);
 
-    int GetTreelistColorCount();
+    int GetTreelistColorCount() const;
     void SetTreelistColorCount(int count);
 
-    bool IsHumanFormat();
+    bool IsHumanFormat() const;
     void SetHumanFormat(bool human);
 
-    bool IsPacmanAnimation();
+    bool IsPacmanAnimation() const;
     void SetPacmanAnimation(bool animate);
 
-    bool IsShowTimeSpent();
+    bool IsShowTimeSpent() const;
     void SetShowTimeSpent(bool show);
 
-    COLORREF GetTreemapHighlightColor();
+    COLORREF GetTreemapHighlightColor() const;
     void SetTreemapHighlightColor(COLORREF color);
 
-    const CTreemap::Options* GetTreemapOptions();
+    const CTreemap::Options* GetTreemapOptions() const;
     void SetTreemapOptions(const CTreemap::Options& options);
 
-    bool IsFollowMountPoints();
+    bool IsFollowMountPoints() const;
     void SetFollowMountPoints(bool follow);
 
     // Option to ignore junction points which are not volume mount points
-    bool IsFollowJunctionPoints();
+    bool IsFollowJunctionPoints() const;
     void SetFollowJunctionPoints(bool follow);
 
+    // Option to control how many threads to use when scanning
+    int GetScanningThreads() const;
+    void SetScanningThreads(int threads);
+
     // Option to use CDirStatApp::m_langid for date/time and number formatting
-    bool IsUseWdsLocale();
+    bool IsUseWdsLocale() const;
     void SetUseWdsLocale(bool use);
 
     // Option to ignore hidden files and folders
-    bool IsSkipHidden();
+    bool IsSkipHidden() const;
     void SetSkipHidden(bool skip);
 
-    void GetUserDefinedCleanups(USERDEFINEDCLEANUP udc[USERDEFINEDCLEANUPCOUNT]);
+    void GetUserDefinedCleanups(USERDEFINEDCLEANUP udc[USERDEFINEDCLEANUPCOUNT]) const;
     void SetUserDefinedCleanups(const USERDEFINEDCLEANUP udc[USERDEFINEDCLEANUPCOUNT]);
 
     void GetEnabledUserDefinedCleanups(CArray<int, int>& indices);
-    bool IsUserDefinedCleanupEnabled(int i);
-    const USERDEFINEDCLEANUP* GetUserDefinedCleanup(int i);
+    bool IsUserDefinedCleanupEnabled(int i) const;
+    const USERDEFINEDCLEANUP* GetUserDefinedCleanup(int i) const;
 
     CStringW GetReportSubject();
-    CStringW GetReportDefaultSubject();
+    static CStringW GetReportDefaultSubject();
     void SetReportSubject(LPCWSTR subject);
 
     CStringW GetReportPrefix();
-    CStringW GetReportDefaultPrefix();
+    static CStringW GetReportDefaultPrefix();
     void SetReportPrefix(LPCWSTR prefix);
 
     CStringW GetReportSuffix();
@@ -373,6 +377,7 @@ private:
 
     bool m_followMountPoints;
     bool m_followJunctionPoints;
+    int m_scanningThreads;
     bool m_useWdsLocale;
     bool m_skipHidden;
 

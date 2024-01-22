@@ -1,4 +1,4 @@
-// colorbutton.cpp - Implementation of CColorButton
+// ColorButton.cpp - Implementation of CColorButton
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
@@ -20,6 +20,7 @@
 //
 
 #include "stdafx.h"
+#include "resource.h"
 #include "colorbutton.h"
 #include <common/Constants.h>
 
@@ -35,7 +36,7 @@ CColorButton::CPreview::CPreview()
     m_color = 0;
 }
 
-COLORREF CColorButton::CPreview::GetColor()
+COLORREF CColorButton::CPreview::GetColor() const
 {
     return m_color;
 }
@@ -45,7 +46,7 @@ void CColorButton::CPreview::SetColor(COLORREF color)
     m_color = color;
     if (::IsWindow(m_hWnd))
     {
-        InvalidateRect(NULL);
+        InvalidateRect(nullptr);
     }
 }
 
@@ -82,7 +83,7 @@ BEGIN_MESSAGE_MAP(CColorButton, CButton)
     ON_WM_ENABLE()
 END_MESSAGE_MAP()
 
-COLORREF CColorButton::GetColor()
+COLORREF CColorButton::GetColor() const
 {
     return m_preview.GetColor();
 }
@@ -94,7 +95,7 @@ void CColorButton::SetColor(COLORREF color)
 
 void CColorButton::OnPaint()
 {
-    if (NULL == m_preview.m_hWnd)
+    if (nullptr == m_preview.m_hWnd)
     {
         CRect rc;
         GetClientRect(rc);
@@ -102,7 +103,7 @@ void CColorButton::OnPaint()
         rc.right = rc.left + rc.Width() / 3;
         rc.DeflateRect(4, 4);
 
-        VERIFY(m_preview.Create(AfxRegisterWndClass(0, 0, 0, 0), wds::strEmpty, WS_CHILD | WS_VISIBLE, rc, this, 4711));
+        VERIFY(m_preview.Create(AfxRegisterWndClass(0, 0, 0, 0), wds::strEmpty, WS_CHILD | WS_VISIBLE, rc, this, ID_WDS_CONTROL));
 
         ModifyStyle(0, WS_CLIPCHILDREN);
     }
@@ -129,7 +130,7 @@ void CColorButton::OnBnClicked()
         hdr.idFrom   = GetDlgCtrlID();
         hdr.code     = COLBN_CHANGED;
 
-        GetParent()->SendMessage(WM_NOTIFY, GetDlgCtrlID(), (LPARAM)&hdr);
+        GetParent()->SendMessage(WM_NOTIFY, GetDlgCtrlID(), reinterpret_cast<LPARAM>(&hdr));
     }
 }
 
@@ -137,7 +138,7 @@ void CColorButton::OnEnable(BOOL bEnable)
 {
     if (::IsWindow(m_preview.m_hWnd))
     {
-        m_preview.InvalidateRect(NULL);
+        m_preview.InvalidateRect(nullptr);
     }
     CButton::OnEnable(bEnable);
 }

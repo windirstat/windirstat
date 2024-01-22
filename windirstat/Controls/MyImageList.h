@@ -30,9 +30,6 @@
 class CMyImageList final : public CImageList
 {
     static constexpr UINT WDS_SHGFI_DEFAULTS = SHGFI_SYSICONINDEX | SHGFI_SMALLICON | SHGFI_ICON;
-    static COLORREF greenify_(COLORREF c);
-    static COLORREF blueify_(COLORREF c);
-    static COLORREF yellowify_(COLORREF c);
 
 public:
     CMyImageList();
@@ -43,23 +40,23 @@ public:
     short getMyComputerImage();
     short getMountPointImage();
     short getJunctionImage() const;
+    short getJunctionProtectedImage() const;
     short getFolderImage();
     short getFileImage(LPCWSTR path);
     short getExtImageAndDescription(LPCWSTR ext, CStringW& description);
 
-    short getFilesFolderImage() const;
-    short getFreeSpaceImage();
-    short getUnknownImage();
-    short getEmptyImage();
+    short getFreeSpaceImage() const;
+    short getUnknownImage() const;
+    short getEmptyImage() const;
 
 protected:
     short cacheIcon(LPCWSTR path, UINT flags, CStringW* psTypeName = nullptr);
-    CStringW getADriveSpec();
+    static CStringW getADriveSpec();
     void addCustomImages();
 
     CMap<int, int, short, short> m_indexMap; // system image list index -> our index
 
-    short m_filesFolderImage; // <Files>
+    short m_junctionProtected; // <Files>
     short m_freeSpaceImage;   // <Free Space>
     short m_unknownImage;     // <Unknown>
     short m_emptyImage;       // For items whose image cannot be found

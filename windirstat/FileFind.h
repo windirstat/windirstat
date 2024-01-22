@@ -27,7 +27,7 @@ class FileFindEnhanced final
 {
 private:
 
-    typedef struct _FILE_DIRECTORY_INFORMATION {
+    typedef struct FILE_DIRECTORY_INFORMATION {
         ULONG         NextEntryOffset;
         ULONG         FileIndex;
         LARGE_INTEGER CreationTime;
@@ -41,6 +41,7 @@ private:
         WCHAR         FileName[1];
     } FILE_DIRECTORY_INFORMATION, * PFILE_DIRECTORY_INFORMATION;
 
+    CStringW m_search;
     CStringW m_base;
     CStringW m_name;
     HANDLE m_handle = nullptr;
@@ -52,16 +53,17 @@ public:
     FileFindEnhanced();
     ~FileFindEnhanced();
 
-    BOOL GetLastWriteTime(FILETIME* pTimeStamp) const;
-
-    BOOL FindNextFile();
-    BOOL FindFile(const CStringW& strName);
-    BOOL IsDirectory() const;
-    BOOL IsDots() const;
-    BOOL IsHidden() const;
+    bool FindNextFile();
+    bool FindFile(const CStringW& strFolder,const CStringW& strName = L"");
+    bool IsDirectory() const;
+    bool IsDots() const;
+    bool IsHidden() const;
+    bool IsProtectedReparsePoint() const;
     DWORD GetAttributes() const;
     CStringW GetFileName() const;
     ULONGLONG GetCompressedLength() const;
+    FILETIME GetLastWriteTime() const;
     CStringW GetFilePath() const;
+    static bool DoesFileExist(const CStringW& folder, const CStringW& file);
     static CStringW GetLongPathCompatible(const CStringW& path);
 };

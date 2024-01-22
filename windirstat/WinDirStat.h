@@ -71,9 +71,6 @@ public:
 
     CStringW GetCurrentProcessMemoryInfo();
     CMyImageList* GetMyImageList();
-    void UpdateRamUsage();
-
-    void PeriodicalUpdateRamUsage();
 
     void DoContextHelp(DWORD topic);
 
@@ -99,8 +96,6 @@ protected:
     // Get the alternative color from Explorer configuration
     COLORREF GetAlternativeColor(COLORREF clrDefault, LPCWSTR which);
 
-    BOOL OnIdle(LONG lCount) override; // This is, where scanning is done.
-
     CSingleDocTemplate* m_pDocTemplate; // MFC voodoo.
 
     LANGID m_langid;                          // Language we are running
@@ -108,7 +103,6 @@ protected:
     CMyImageList m_myImageList;               // Our central image list
     ULONGLONG m_workingSet;                   // Current working set (RAM usage)
     ULONGLONG m_pageFaults;                   // Page faults so far (unused)
-    ULONGLONG m_lastPeriodicalRamUsageUpdate; // Tick count
     COLORREF m_altColor;                      // Coloring of compressed items
     COLORREF m_altEncryptionColor;            // Coloring of encrypted items
 #ifdef VTRACE_TO_CONSOLE

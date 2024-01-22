@@ -21,6 +21,8 @@
 
 #pragma once
 
+#include <shared_mutex>
+
 //
 // CPacman. Pacman animation.
 //
@@ -28,24 +30,27 @@ class CPacman final
 {
 public:
     CPacman();
+    static void SetGlobalSuspendState(bool suspend = true);
     void SetBackgroundColor(COLORREF color);
     void SetSpeed(float speed);
     void Reset();
-    void Start(bool start);
-    bool Drive(ULONGLONG readJobs); // return: true -> should be redrawn.
-    void Draw(CDC* pdc, const CRect& rect) const;
+    void Start();
+    void Stop();
+    void UpdatePosition();
+    void Draw(CDC* pdc, const CRect& rect);
 
 private:
-    void UpdatePosition(float& position, bool& up, float diff);
-    COLORREF CalculateColor() const;
+    static void UpdatePosition(float& position, bool& up, float diff);
+    static bool m_suspended;
 
     ULONGLONG m_lastUpdate; // TickCount
+    ULONGLONG m_lastDraw;   // Last time drawn
     COLORREF m_bgcolor;     // Background color
-    float m_speed;         // Speed in full width / ms
-    float m_readJobs;      // # of read jobs determines our color
-    float m_position;      // 0...1
-    float m_aperture;      // 0...1
+    float m_speed;          // Speed in full width / ms
+    float m_position;       // 0...1
+    float m_aperture;       // 0...1
+    bool m_done;            // Whether pacman should be done
     bool m_moving;          // Whether pacman is moving
-    bool m_toTheRight;      // moving right
+    bool m_toTheRight;      // Moving right
     bool m_mouthOpening;    // Mouth is opening
 };

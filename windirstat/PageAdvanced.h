@@ -1,4 +1,4 @@
-// PageGeneral.h - Declaration of CPageGeneral
+// PageAdvanced.h - Declaration of CPageAdvanced
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
@@ -24,17 +24,17 @@
 class COptionsPropertySheet;
 
 //
-// CPageGeneral. "Settings" property page "General".
+// CPageAdvanced. "Settings" property page "General".
 //
-class CPageGeneral final : public CPropertyPage
+class CPageAdvanced final : public CPropertyPage
 {
-    DECLARE_DYNAMIC(CPageGeneral)
+    DECLARE_DYNAMIC(CPageAdvanced)
 
-    enum { IDD = IDD_PAGE_GENERAL };
+    enum { IDD = IDD_PAGE_ADVANCED };
 
 public:
-    CPageGeneral();
-    ~CPageGeneral() override;
+    CPageAdvanced();
+    ~CPageAdvanced() override;
 
 protected:
     COptionsPropertySheet* GetSheet() const;
@@ -43,21 +43,19 @@ protected:
     BOOL OnInitDialog() override;
     void OnOK() override;
 
-    BOOL m_useWdsLocale;
-    BOOL m_humanFormat;
-    BOOL m_listGrid;
-    BOOL m_listStripes;
-    BOOL m_listFullRowSelection;
+    BOOL m_followMountPoints;
+    BOOL m_followJunctionPoints;
+    BOOL m_skipHidden;
+    int m_scanningThreads;
 
     CComboBox m_combo;
-
-    int m_originalLanguage;
+    CButton m_ctlFollowMountPoints;
+    CButton m_ctlFollowJunctionPoints;
+    CButton m_ctlSkipHidden;
 
     DECLARE_MESSAGE_MAP()
-    afx_msg void OnBnClickedHumanformat();
-    afx_msg void OnBnClickedUseWdsLocale();
-    afx_msg void OnCbnSelendokCombo();
-    afx_msg void OnBnClickedListGrid();
-    afx_msg void OnBnClickedListStripes();
-    afx_msg void OnBnClickedListFullRowSelection();
+    afx_msg void OnBnClickedFollowmountpoints();
+    afx_msg void OnBnClickedFollowjunctionpoints();
+    afx_msg void OnCbnSelThreadsCombo();
+    afx_msg void OnBnClickedSkipHidden();
 };

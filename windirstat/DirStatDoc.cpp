@@ -31,13 +31,16 @@
 #include <common/CommonHelpers.h>
 #include "DirStatDoc.h"
 
-#include <filesystem>
+#include <algorithm>
 #include <functional>
+#include <unordered_map>
 #include <map>
 #include <string>
 #include <unordered_set>
+#include <vector>
+#include <filesystem>
 
-#include "graphview.h"
+#include "GraphView.h"
 
 CDirStatDoc* _theDocument;
 
@@ -54,7 +57,6 @@ CDirStatDoc::CDirStatDoc()
       , m_showMyComputer(false)
       , m_rootItem(nullptr)
       , m_zoomItem(nullptr)
-      , m_workingItem(nullptr)
       , m_extensionDataValid(false)
 {
     ASSERT(NULL == _theDocument);
@@ -177,7 +179,6 @@ void CDirStatDoc::DeleteContents()
 {
     delete m_rootItem;
     m_rootItem = nullptr;
-    SetWorkingItem(nullptr);
     m_zoomItem = nullptr;
     GetWDSApp()->ReReadMountPoints();
 }
@@ -222,7 +223,7 @@ BOOL CDirStatDoc::OnOpenDocument(LPCWSTR lpszPathName)
 
     if (m_showMyComputer)
     {
-        m_rootItem = new CItem(static_cast<ITEMTYPE>(IT_MYCOMPUTER | ITF_ROOTITEM), LoadString(IDS_MYCOMPUTER));
+        m_rootItem = new CItem(IT_MYCOMPUTER | ITF_ROOTITEM, LoadString(IDS_MYCOMPUTER));
         for (int i = 0; i < rootFolders.GetSize(); i++)
         {
             const auto drive = new CItem(IT_DRIVE, rootFolders[i]);
@@ -233,33 +234,20 @@ BOOL CDirStatDoc::OnOpenDocument(LPCWSTR lpszPathName)
     else
     {
         const ITEMTYPE type = IsDrive(rootFolders[0]) ? IT_DRIVE : IT_DIRECTORY;
-        m_rootItem          = new CItem(static_cast<ITEMTYPE>(type | ITF_ROOTITEM), rootFolders[0], false);
+        m_rootItem = new CItem(type | ITF_ROOTITEM, rootFolders[0]);
         if (m_rootItem->IsType(IT_DRIVE))
         {
             driveItems.Add(m_rootItem);
         }
-        m_rootItem->UpdateLastChange();
+        m_rootItem->UpdateStatsFromDisk();
     }
     m_zoomItem = m_rootItem;
-
-    for (int i = 0; i < driveItems.GetSize(); i++)
-    {
-        if (OptionShowFreeSpace())
-        {
-            driveItems[i]->CreateFreeSpaceItem();
-        }
-        if (OptionShowUnknown())
-        {
-            driveItems[i]->CreateUnknownItem();
-        }
-    }
-
-    SetWorkingItem(m_rootItem);
 
     GetMainFrame()->MinimizeGraphView();
     GetMainFrame()->MinimizeTypeView();
 
     UpdateAllViews(nullptr, HINT_NEWROOT);
+    StartCoordinator(std::vector({ GetDocument()->GetRootItem() }));
     return true;
 }
 
@@ -276,10 +264,6 @@ void CDirStatDoc::SetPathName(LPCWSTR lpszPathName, BOOL /*bAddToMRU*/)
     SetTitle(lpszPathName);
 
     ASSERT_VALID(this);
-}
-
-void CDirStatDoc::Serialize(CArchive& /*ar*/)
-{
 }
 
 // Prefix the window title (with percentage or "Scanning")
@@ -327,56 +311,6 @@ ULONGLONG CDirStatDoc::GetRootSize() const
     ASSERT(m_rootItem != NULL);
     ASSERT(IsRootDone());
     return m_rootItem->GetSize();
-}
-
-// This method does some work for ticks ms.
-// return: true if done or suspended.
-//
-bool CDirStatDoc::Work(CWorkLimiter* limiter)
-{
-    if (nullptr == m_rootItem)
-    {
-        return true;
-    }
-
-    if (GetMainFrame()->IsScanSuspended())
-    {
-        return true;
-    }
-
-    if (!m_rootItem->IsDone())
-    {
-        m_rootItem->DoSomeWork(limiter);
-        if (m_rootItem->IsDone())
-        {
-            m_extensionDataValid = false;
-
-            GetMainFrame()->SetProgressPos100();
-            GetMainFrame()->RestoreTypeView();
-            GetMainFrame()->RestoreGraphView();
-
-            UpdateAllViews(nullptr);
-        }
-        else
-        {
-            ASSERT(m_workingItem != NULL);
-            if (m_workingItem != nullptr) // to be honest, "defensive programming" is stupid, but c'est la vie: it's safer.
-            {
-                GetMainFrame()->SetProgressPos(m_workingItem->GetProgressPos());
-            }
-
-            UpdateAllViews(nullptr, HINT_SOMEWORKDONE);
-        }
-    }
-    if (m_rootItem->IsDone())
-    {
-        SetWorkingItem(nullptr);
-        return true;
-    }
-    else
-    {
-        return false;
-    }
 }
 
 bool CDirStatDoc::IsDrive(const CStringW& spec)
@@ -451,8 +385,11 @@ CStringW CDirStatDoc::GetHighlightExtension()
 //
 void CDirStatDoc::UnlinkRoot()
 {
-    DeleteContents();
-    UpdateAllViews(nullptr, HINT_NEWROOT);
+    GetMainFrame()->InvokeInMessageThread([this]()
+    {
+        DeleteContents();
+        UpdateAllViews(nullptr, HINT_NEWROOT);
+    });
 }
 
 // Determines, whether an UDC works for a given item.
@@ -491,18 +428,6 @@ bool CDirStatDoc::UserDefinedCleanupWorksForItem(const USERDEFINEDCLEANUP* udc, 
     }
 
     return works;
-}
-
-ULONGLONG CDirStatDoc::GetWorkingItemReadJobs()
-{
-    if (m_workingItem != nullptr)
-    {
-        return m_workingItem->GetReadJobs();
-    }
-    else
-    {
-        return 0;
-    }
 }
 
 void CDirStatDoc::OpenItem(const CItem* item, LPCWSTR verb)
@@ -558,7 +483,7 @@ void CDirStatDoc::RecurseRefreshJunctionItems(CItem* item)
 
 // Gets all items of type IT_DRIVE.
 //
-void CDirStatDoc::GetDriveItems(CArray<CItem*, CItem*>& drives)
+void CDirStatDoc::GetDriveItems(CArray<CItem*, CItem*>& drives) const
 {
     drives.RemoveAll();
 
@@ -593,8 +518,6 @@ void CDirStatDoc::RefreshRecyclers()
     {
         drives[i]->RefreshRecycler();
     }
-
-    SetWorkingItem(GetRootItem());
 }
 
 void CDirStatDoc::RebuildExtensionData()
@@ -602,8 +525,6 @@ void CDirStatDoc::RebuildExtensionData()
     CWaitCursor wc;
 
     m_extensionData.RemoveAll();
-    // 2048 is a rough estimate for amount of different extensions
-    m_extensionData.InitHashTable(2048);
     m_rootItem->RecurseCollectExtensionData(&m_extensionData);
 
     CStringArray sortedExtensions;
@@ -628,7 +549,16 @@ void CDirStatDoc::SortExtensionData(CStringArray& sortedExtensions)
     }
 
     _pqsortExtensionData = &m_extensionData;
-    qsort(sortedExtensions.GetData(), sortedExtensions.GetSize(), sizeof(CStringW), &_compareExtensions);
+    qsort(sortedExtensions.GetData(), sortedExtensions.GetSize(), sizeof(CStringW), [](LPCVOID item1, LPCVOID item2)
+    {
+        const CStringW* ext1 = static_cast<const CStringW*>(item1);
+        const CStringW* ext2 = static_cast<const CStringW*>(item2);
+        SExtensionRecord r1;
+        SExtensionRecord r2;
+        VERIFY(_pqsortExtensionData->Lookup(*ext1, r1));
+        VERIFY(_pqsortExtensionData->Lookup(*ext2, r2));
+        return usignum(r2.bytes, r1.bytes);
+    });
     _pqsortExtensionData = nullptr;
 }
 
@@ -653,45 +583,6 @@ void CDirStatDoc::SetExtensionColors(const CStringArray& sortedExtensions)
 }
 
 CExtensionData* CDirStatDoc::_pqsortExtensionData;
-
-int __cdecl CDirStatDoc::_compareExtensions(const void* item1, const void* item2)
-{
-    const CStringW* ext1 = (CStringW*)item1;
-    const CStringW* ext2 = (CStringW*)item2;
-    SExtensionRecord r1;
-    SExtensionRecord r2;
-    VERIFY(_pqsortExtensionData->Lookup(*ext1, r1));
-    VERIFY(_pqsortExtensionData->Lookup(*ext2, r2));
-    return usignum(r2.bytes, r1.bytes);
-}
-
-void CDirStatDoc::SetWorkingItemAncestor(CItem* item)
-{
-    if (m_workingItem != nullptr)
-    {
-        SetWorkingItem(CItem::FindCommonAncestor(m_workingItem, item));
-    }
-    else
-    {
-        SetWorkingItem(item);
-    }
-}
-
-void CDirStatDoc::SetWorkingItem(CItem* item)
-{
-    if (GetMainFrame() != nullptr)
-    {
-        if (item != nullptr)
-        {
-            GetMainFrame()->ShowProgress(item->GetProgressRange());
-        }
-        else
-        {
-            GetMainFrame()->HideProgress();
-        }
-    }
-    m_workingItem = item;
-}
 
 // Deletes a file or directory via SHFileOperation.
 // Return: false, if canceled
@@ -728,40 +619,9 @@ void CDirStatDoc::SetZoomItem(CItem* item)
 // If the physical item has been deleted,
 // updates selection, zoom and working item accordingly.
 //
-void CDirStatDoc::RefreshItem(CItem* item)
+void CDirStatDoc::RefreshItem(std::vector<CItem*> item)
 {
-    ASSERT(item != NULL);
-
-    CWaitCursor wc;
-
-    ClearReselectChildStack();
-
-    if (item->IsAncestorOf(GetZoomItem()))
-    {
-        SetZoomItem(item);
-    }
-
-    SetWorkingItemAncestor(item);
-
-    CItem* parent = item->GetParent();
-
-    if (!item->StartRefresh())
-    {
-        if (GetZoomItem() == item)
-        {
-            SetZoomItem(parent);
-        }
-        if (CTreeListControl::GetTheTreeListControl()->IsItemSelected(parent))
-        {
-            UpdateAllViews(nullptr, HINT_SELECTIONREFRESH);
-        }
-        if (m_workingItem == item)
-        {
-            SetWorkingItem(parent);
-        }
-    }
-
-    UpdateAllViews(nullptr);
+    GetDocument()->StartCoordinator(item);
 }
 
 // UDC confirmation Dialog.
@@ -851,7 +711,7 @@ void CDirStatDoc::RecursiveUserDefinedCleanup(const USERDEFINEDCLEANUP* udc, con
     // (Depth first.)
 
     FileFindEnhanced finder;
-    for (BOOL b = finder.FindFile(currentPath + L"\\*.*"); b; b = finder.FindNextFile())
+    for (BOOL b = finder.FindFile(currentPath); b; b = finder.FindNextFile())
     {
         if (finder.IsDots() || !finder.IsDirectory())
         {
@@ -988,15 +848,16 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
     static bool (*reslect_avail)(CItem*) = [](CItem*) { return doc->IsReselectChildAvailable(); };
     static bool (*not_root)(CItem*) = [](CItem* item) { return item != nullptr && !item->IsRootItem(); };
     static bool (*is_suspended)(CItem*) = [](CItem*) { return GetMainFrame()->IsScanSuspended(); };
-    static bool (*is_not_suspended)(CItem*) = [](CItem*) { return !doc->IsRootDone() && !GetMainFrame()->IsScanSuspended(); };
+    static bool (*is_not_suspended)(CItem*) = [](CItem*) { return doc->GetRootItem() != nullptr && !doc->IsRootDone() && !GetMainFrame()->IsScanSuspended(); };
 
     static std::map<UINT, const command_filter> filters
     {
         // ID                           none   many   early  focus  types
-        { ID_REFRESH_ALL,             { true,  true,  false, false, IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY} },
-        { ID_REFRESH_SELECTED,        { false, true,  false, true,  IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY} },
+        { ID_REFRESH_ALL,             { true,  true,  false, false, IT_ANY} },
+        { ID_REFRESH_SELECTED,        { false, true,  false, false, IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY | IT_FILE } },
         { ID_EDIT_COPY_CLIPBOARD,     { false, true,  true,  false, IT_DRIVE | IT_DIRECTORY | IT_FILE } },
         { ID_CLEANUP_EMPTY_BIN,       { true,  true,  false, false, IT_ANY} },
+        { ID_TREEMAP_RESELECT_CHILD,  { true,  true,  true,  false, IT_ANY, reslect_avail } },
         { ID_TREEMAP_RESELECT_CHILD,  { true,  true,  true,  false, IT_ANY, reslect_avail } },
         { ID_TREEMAP_SELECT_PARENT,   { false, false, true,  false, IT_ANY, parent_not_null } },
         { ID_TREEMAP_ZOOMIN,          { false, false, false, false, IT_DRIVE | IT_DIRECTORY} },
@@ -1005,9 +866,9 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
         { ID_CLEANUP_OPEN_IN_CONSOLE, { false, true,  true,  false, IT_DRIVE | IT_DIRECTORY | IT_FILE } },
         { ID_SCAN_RESUME,             { true,  true,  true,  false, IT_ANY, is_suspended } },
         { ID_SCAN_SUSPEND,            { true,  true,  true,  false, IT_ANY, is_not_suspended } },
-        { ID_CLEANUP_DELETE_BIN,      { false, true,  true,  true,  IT_DIRECTORY | IT_FILE, not_root } },
-        { ID_CLEANUP_DELETE,          { false, true,  true,  true,  IT_DIRECTORY | IT_FILE, not_root } },
-        { ID_CLEANUP_OPEN_SELECTED,     { false, true,  true,  false, IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY | IT_FILE } },
+        { ID_CLEANUP_DELETE_BIN,      { false, true,  false,  true, IT_DIRECTORY | IT_FILE, not_root } },
+        { ID_CLEANUP_DELETE,          { false, true,  false,  true, IT_DIRECTORY | IT_FILE, not_root } },
+        { ID_CLEANUP_OPEN_SELECTED,   { false, true,  true,  false, IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY | IT_FILE } },
         { ID_CLEANUP_PROPERTIES,      { false, true,  true,  false, IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY | IT_FILE } }
     };
 
@@ -1039,7 +900,7 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
 BEGIN_MESSAGE_MAP(CDirStatDoc, CDocument) 
     ON_COMMAMD_UPDATE_WRAPPER(ID_REFRESH_SELECTED, OnRefreshSelected)
     ON_COMMAMD_UPDATE_WRAPPER(ID_REFRESH_ALL, OnRefreshAll)
-    ON_COMMAMD_UPDATE_WRAPPER(ID_EDIT_COPY, OnEditCopy)
+    ON_COMMAMD_UPDATE_WRAPPER(ID_EDIT_COPY_CLIPBOARD, OnEditCopy)
     ON_COMMAMD_UPDATE_WRAPPER(ID_CLEANUP_EMPTY_BIN, OnCleanupEmptyRecycleBin)
     ON_UPDATE_COMMAND_UI(ID_VIEW_SHOWFREESPACE, OnUpdateViewShowFreeSpace)
     ON_COMMAND(ID_VIEW_SHOWFREESPACE, OnViewShowFreeSpace)
@@ -1063,11 +924,7 @@ END_MESSAGE_MAP()
 
 void CDirStatDoc::OnRefreshSelected()
 {
-    const auto & items = CTreeListControl::GetTheTreeListControl()->GetAllSelected<CItem>();
-    for (const auto & item : items)
-    {
-        RefreshItem(item);
-    }
+    RefreshItem(CTreeListControl::GetTheTreeListControl()->GetAllSelected<CItem>());
 }
 
 void CDirStatDoc::OnRefreshAll()
@@ -1096,7 +953,7 @@ void CDirStatDoc::OnCleanupEmptyRecycleBin()
     SHEmptyRecycleBin(*AfxGetMainWnd(), NULL, 0);
 
     RefreshRecyclers();
-    UpdateAllViews(NULL);
+    UpdateAllViews(nullptr);
 }
 
 void CDirStatDoc::OnUpdateViewShowFreeSpace(CCmdUI* pCmdUI)
@@ -1109,9 +966,9 @@ void CDirStatDoc::OnViewShowFreeSpace()
     CArray<CItem*, CItem*> drives;
     GetDriveItems(drives);
 
-    if (m_showFreeSpace)
+    for (int i = 0; i < drives.GetSize(); i++)
     {
-        for (int i = 0; i < drives.GetSize(); i++)
+        if (m_showFreeSpace)
         {
             const CItem* free = drives[i]->FindFreeSpaceItem();
             ASSERT(free != NULL);
@@ -1123,23 +980,17 @@ void CDirStatDoc::OnViewShowFreeSpace()
 
             drives[i]->RemoveFreeSpaceItem();
         }
-        m_showFreeSpace = false;
-    }
-    else
-    {
-        for (int i = 0; i < drives.GetSize(); i++)
+        else
         {
             drives[i]->CreateFreeSpaceItem();
         }
-        m_showFreeSpace = true;
     }
 
-    if (drives.GetSize() > 0)
-    {
-        SetWorkingItem(GetRootItem());
-    }
+    // Toogle value
+    m_showFreeSpace = !m_showFreeSpace;
 
-    UpdateAllViews(nullptr);
+    // Force recalculation and graph refresh
+    StartCoordinator({});
 }
 
 void CDirStatDoc::OnUpdateViewShowUnknown(CCmdUI* pCmdUI)
@@ -1152,9 +1003,10 @@ void CDirStatDoc::OnViewShowUnknown()
     CArray<CItem*, CItem*> drives;
     GetDriveItems(drives);
 
-    if (m_showUnknown)
+
+    for (int i = 0; i < drives.GetSize(); i++)
     {
-        for (int i = 0; i < drives.GetSize(); i++)
+        if (m_showUnknown)
         {
             const CItem* unknown = drives[i]->FindUnknownItem();
             ASSERT(unknown != NULL);
@@ -1166,28 +1018,22 @@ void CDirStatDoc::OnViewShowUnknown()
 
             drives[i]->RemoveUnknownItem();
         }
-        m_showUnknown = false;
-    }
-    else
-    {
-        for (int i = 0; i < drives.GetSize(); i++)
+        else
         {
             drives[i]->CreateUnknownItem();
         }
-        m_showUnknown = true;
     }
 
-    if (drives.GetSize() > 0)
-    {
-        SetWorkingItem(GetRootItem());
-    }
+    // Toogle value
+    m_showUnknown = !m_showUnknown;
 
-    UpdateAllViews(nullptr);
+    // Force recalculation and graph refresh
+    StartCoordinator({});
 }
 
 void CDirStatDoc::OnTreemapZoomIn()
 {
-    const auto & item = CTreeListControl::GetTheTreeListControl()->GetFirstSelectedItem<CItem>(true);
+    const auto & item = CTreeListControl::GetTheTreeListControl()->GetFirstSelectedItem<CItem>();
     if (item != nullptr)
     {
         SetZoomItem(item);
@@ -1287,7 +1133,6 @@ void CDirStatDoc::OnCleanupDelete()
     {
         if (DeletePhysicalItem(item, false))
         {
-            SetWorkingItem(GetRootItem());
             UpdateAllViews(nullptr);
         }
     }
@@ -1338,7 +1183,7 @@ void CDirStatDoc::OnUserDefinedCleanup(UINT id)
 
 void CDirStatDoc::OnTreemapSelectParent()
 {
-    const auto & item = CTreeListControl::GetTheTreeListControl()->GetFirstSelectedItem<CItem>(true);
+    const auto & item = CTreeListControl::GetTheTreeListControl()->GetFirstSelectedItem<CItem>();
     PushReselectChild(item);
     CTreeListControl::GetTheTreeListControl()->SelectItem(item->GetParent(), true, true);
     UpdateAllViews(nullptr, HINT_SELECTIONREFRESH);
@@ -1354,7 +1199,7 @@ void CDirStatDoc::OnTreemapReselectChild()
 void CDirStatDoc::OnCleanupOpenTarget()
 {
     const auto & items = CTreeListControl::GetTheTreeListControl()->GetAllSelected<CItem>();
-    for (const auto & item : items)
+   for (const auto & item : items)
     {
         OpenItem(item);
     }
@@ -1371,10 +1216,180 @@ void CDirStatDoc::OnCleanupProperties()
 
 void CDirStatDoc::OnScanSuspend()
 {
-    GetMainFrame()->SuspendScan(true);
+    queue.suspend();
+    GetMainFrame()->SuspendState(true);
 }
 
 void CDirStatDoc::OnScanResume()
 {
-    GetMainFrame()->SuspendScan(false);
+    queue.resume();
+    GetMainFrame()->SuspendState(false);
+}
+
+void CDirStatDoc::ShutdownCoordinator(bool wait)
+{
+    if (queue.drain(nullptr) && wait)
+    {
+        for (auto& thread : threads)
+        {
+            thread.join();
+        }
+    }
+}
+
+void CDirStatDoc::StartCoordinator(std::vector<CItem*> items)
+{
+    // Stop any previous executions
+    ShutdownCoordinator(true);
+
+    // Clear any reselection options since they may be invalidated
+    ClearReselectChildStack();
+
+    // Address currently zoomed / selected item conflicts
+    const auto zoom_item = GetZoomItem();
+    const auto selected_items = CTreeListControl::GetTheTreeListControl()->GetAllSelected<CItem>();
+    for (const auto& item : std::vector(items))
+    {
+        // Bring the zoom out if it would be invalidated
+        if (item->IsAncestorOf(zoom_item))
+        {
+            SetZoomItem(item);
+        }
+
+        // Special case for my computer - just replace the 
+        // item in the queue with its current children
+        if (item->IsType(IT_MYCOMPUTER))
+        {
+            items.erase(std::ranges::find(items, item));
+            for (int i = 0; i < item->GetChildrenCount(); i++)
+                items.push_back(item->GetChild(i));
+        }
+    }
+
+    // Start a thread so we do not hang the message loop
+    // Lambda captures assume document exists for duration of thread
+    std::thread([this,items] () mutable
+    {
+        const auto selected_items = CTreeListControl::GetTheTreeListControl()->GetAllSelected<CItem>();
+        using visual_info = struct { bool wasExpanded; bool isSelected; int oldScrollPosition; };
+        std::unordered_map<CItem *,visual_info> visualInfo;
+        for (auto item : std::vector(items))
+        {
+            // Record current visual arrangement to reapply afterward
+            visualInfo[item].isSelected = std::ranges::find(selected_items, item) != selected_items.end();
+            visualInfo[item].wasExpanded = item->IsExpanded();
+
+            // Skip pruning if it is a new element
+            if (!item->IsDone()) continue;
+
+            item->UncacheImage();
+            item->UpwardRecalcLastChange(true);
+            item->UpwardSubtractSize(item->GetSize());
+            item->UpwardSubtractFiles(item->GetFilesCount());
+            item->UpwardSubtractSubdirs(item->GetSubdirsCount());
+            item->RemoveAllChildren();
+            item->SetExpanded(visualInfo[item].wasExpanded);
+            item->UpwardSetUndone();
+  
+            // Handle if item to be refreshed has been removed
+            if (item->IsType(IT_FILE | IT_DIRECTORY | IT_DRIVE) &&
+                !FileFindEnhanced::DoesFileExist(item->GetFolderPath(),
+                    item->IsType(IT_FILE) ? item->GetName() : CStringW(L"")))
+            {
+                // Remove item from list so we do not rescan it
+                items.erase(std::ranges::find(items, item));
+
+                if (item->IsRootItem())
+                {
+                    // Handle deleted root item
+                    GetMainFrame()->InvokeInMessageThread([&item]()
+                    {
+                        GetDocument()->UnlinkRoot();
+                        GetMainFrame()->MinimizeGraphView();
+                        GetMainFrame()->MinimizeTypeView();
+                    });
+                    return;
+                }
+                else
+                {
+                    // Handle non-root item by removing from parent
+                    item->UpwardSubtractFiles(item->IsType(IT_FILE) ? 1 : 0);
+                    item->UpwardSubtractSubdirs(item->IsType(IT_FILE) ? 0 : 1);
+                    item->GetParent()->RemoveChild(item);     
+                }
+            }
+        }
+
+        // Reset queue from last interation
+        const int max_threads = GetOptions()->GetScanningThreads();
+        queue.reset(max_threads);
+
+        // Add items to processing queue
+        for (const auto item : std::vector(items))
+        {
+            item->UpwardAddReadJobs(1);
+            item->UpwardSetUndone();
+            queue.push(item);
+        }
+
+        // Create subordinate threads if there is work to do
+        if (queue.has_items())
+        {
+            threads.clear();
+            for (int i = 0; i < max_threads; i++)
+            {
+                threads.emplace_back([this]
+                {
+                    CItem::ScanItems(&queue);
+                });
+            }
+
+            // Wait for all threads to run out of work
+            if (queue.wait_for_all())
+            {
+                // Exit here if drained by an outside actor
+                return;
+            }
+
+            // Flag workers to exit and wait for threads
+            queue.drain(nullptr);
+            for (auto& thread : threads)
+            {
+                thread.join();
+            }
+        }
+
+        // Restore unknown and freespace items
+        for (const auto& item : items)
+        {
+            if (!item->IsType(IT_DRIVE)) continue;
+            
+            if (GetDocument()->OptionShowFreeSpace())
+            {
+                item->CreateFreeSpaceItem();
+            }
+            if (GetDocument()->OptionShowUnknown())
+            {
+                item->CreateUnknownItem();
+            }
+        }
+
+        // Sorting and other finalization tasks
+        CItem::ScanItemsFinalize(GetRootItem());
+
+        // Invoke a UI thread to do updates
+        GetMainFrame()->InvokeInMessageThread([&items,&visualInfo]
+        {
+            for (const auto& item : items)
+            {
+                item->SetScrollPosition(visualInfo[item].oldScrollPosition);
+            }
+
+            GetDocument()->RebuildExtensionData();
+            GetDocument()->UpdateAllViews(nullptr);
+            GetMainFrame()->SetProgressPos100();
+            GetMainFrame()->RestoreTypeView();
+            GetMainFrame()->RestoreGraphView();
+        });
+    }).detach();
 }

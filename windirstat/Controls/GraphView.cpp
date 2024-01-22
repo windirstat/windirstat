@@ -27,7 +27,7 @@
 #include "Item.h"
 #include "SelectObject.h"
 
-#include "graphview.h"
+#include "GraphView.h"
 
 IMPLEMENT_DYNCREATE(CGraphView, CView)
 
@@ -48,11 +48,6 @@ CGraphView::CGraphView()
     m_size.cx                = m_size.cy       = 0;
     m_dimmedSize.cx          = m_dimmedSize.cy = 0;
     m_timer                  = 0;
-}
-
-void CGraphView::TreemapDrawingCallback()
-{
-    GetWDSApp()->PeriodicalUpdateRamUsage();
 }
 
 void CGraphView::SuspendRecalculationDrawing(bool suspend)
@@ -235,8 +230,6 @@ void CGraphView::RecurseHighlightExtension(CDC* pdc, const CItem* item)
     {
         return;
     }
-
-    GetWDSApp()->PeriodicalUpdateRamUsage();
 
     if (item->TmiIsLeaf())
     {
@@ -443,12 +436,6 @@ void CGraphView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
         }
         break;
 
-    case HINT_REDRAWWINDOW:
-        {
-            RedrawWindow();
-        }
-        break;
-
     case HINT_TREEMAPSTYLECHANGED:
         {
             Inactivate();
@@ -481,10 +468,9 @@ void CGraphView::OnContextMenu(CWnd* /*pWnd*/, CPoint ptscreen)
 
 void CGraphView::OnMouseMove(UINT /*nFlags*/, CPoint point)
 {
-    const CItem* root = GetDocument()->GetRootItem();
-    if (root != nullptr && root->IsDone() && IsDrawn())
+    if (GetDocument()->IsRootDone() && IsDrawn())
     {
-        auto item = static_cast<const CItem*>(m_treemap.FindItemByPoint(GetDocument()->GetZoomItem(), point));
+        const auto item = static_cast<const CItem*>(m_treemap.FindItemByPoint(GetDocument()->GetZoomItem(), point));
         if (item != nullptr)
         {
             GetMainFrame()->SetMessageText(item->GetPath());
@@ -492,7 +478,7 @@ void CGraphView::OnMouseMove(UINT /*nFlags*/, CPoint point)
     }
     if (m_timer == 0)
     {
-        m_timer = SetTimer(4711, 100, nullptr);
+        m_timer = SetTimer(ID_WDS_CONTROL, 100, nullptr);
     }
 }
 

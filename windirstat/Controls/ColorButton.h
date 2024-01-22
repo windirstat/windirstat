@@ -36,7 +36,7 @@
 class CColorButton final : public CButton
 {
 public:
-    COLORREF GetColor();
+    COLORREF GetColor() const;
     void SetColor(COLORREF color);
 
 private:
@@ -45,7 +45,7 @@ private:
     {
     public:
         CPreview();
-        COLORREF GetColor();
+        COLORREF GetColor() const;
         void SetColor(COLORREF color);
 
     private:
