@@ -1,4 +1,4 @@
-// osspecific.h - Declaration of CVolumeApi, CRecycleBinApi, CPsapi,
+// OsSpecific.h - Declaration of CVolumeApi, CRecycleBinApi, CPsapi,
 //                CGetDiskFreeSpaceApi, CGetCompressedFileSizeApi
 //
 // WinDirStat - Directory Statistics

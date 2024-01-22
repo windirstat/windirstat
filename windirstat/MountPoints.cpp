@@ -1,4 +1,4 @@
-// mountpoints.cpp - Implementation of CMountPoints
+// MountPoints.cpp - Implementation of CMountPoints
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
@@ -20,7 +20,7 @@
 //
 
 #include "stdafx.h"
-#include "osspecific.h"
+#include "OsSpecific.h"
 #include "MountPoints.h"
 #include "GlobalHelpers.h"
 #include <common/Tracer.h>

@@ -376,7 +376,7 @@ int COwnerDrawnListControl::GetGeneralLeftIndent()
 
 COwnerDrawnListItem* COwnerDrawnListControl::GetItem(int i) const
 {
-    auto item = (COwnerDrawnListItem*)GetItemData(i);
+    auto item = reinterpret_cast<COwnerDrawnListItem*>(GetItemData(i));
     return item;
 }
 
@@ -422,8 +422,8 @@ void COwnerDrawnListControl::InitializeColors()
 
 void COwnerDrawnListControl::DrawItem(LPDRAWITEMSTRUCT pdis)
 {
-    const COwnerDrawnListItem* item = (COwnerDrawnListItem*)pdis->itemData;
-    CDC* pdc                        = CDC::FromHandle(pdis->hDC);
+    const COwnerDrawnListItem* item = reinterpret_cast<COwnerDrawnListItem*>(pdis->itemData);
+    CDC* pdc = CDC::FromHandle(pdis->hDC);
     CRect rcItem(pdis->rcItem);
     if (m_showGrid)
     {
@@ -669,7 +669,7 @@ BOOL COwnerDrawnListControl::OnEraseBkgnd(CDC* pDC)
     const int lineCount = GetCountPerPage() + 1;
     const int firstItem = GetTopIndex();
     const int lastItem  = min(firstItem + lineCount, GetItemCount()) - 1;
-
+    
     ASSERT(GetItemCount() == 0 || firstItem < GetItemCount());
     ASSERT(GetItemCount() == 0 || lastItem < GetItemCount());
     ASSERT(GetItemCount() == 0 || lastItem >= firstItem);

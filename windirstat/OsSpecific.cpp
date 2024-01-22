@@ -1,4 +1,4 @@
-// osspecific.cpp - Implementation of the platform-specific classes
+// OsSpecific.cpp - Implementation of the platform-specific classes
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
@@ -20,25 +20,15 @@
 //
 
 #include "stdafx.h"
-#include "osspecific.h"
+#include "OsSpecific.h"
 
 // Required to use the system image lists
-// - http://www.catch22.net/tuts/sysimg
-// - http://msdn.microsoft.com/en-us/library/bb776418(VS.85).aspx
 BOOL FileIconInit(__in BOOL fRestoreCache)
 {
     using TFNFileIconInit = BOOL(WINAPI *)(BOOL);
-    static HMODULE hShell32                = nullptr;
-    static TFNFileIconInit pfnFileIconInit = nullptr;
-    if (!hShell32)
-    {
-        hShell32 = ::LoadLibrary(L"shell32.dll");
-    }
-    if (hShell32 && !pfnFileIconInit)
-    {
-        pfnFileIconInit = reinterpret_cast<TFNFileIconInit>(::GetProcAddress(hShell32, reinterpret_cast<LPCSTR>(660)));
-    }
-    if (pfnFileIconInit)
+    static HMODULE hShell32 = LoadLibrary(L"shell32.dll");
+    static auto pfnFileIconInit = reinterpret_cast<TFNFileIconInit>(::GetProcAddress(hShell32, reinterpret_cast<LPCSTR>(660)));
+    if (hShell32 != nullptr && pfnFileIconInit != nullptr)
     {
         return pfnFileIconInit(fRestoreCache);
     }

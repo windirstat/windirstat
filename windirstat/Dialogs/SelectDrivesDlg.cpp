@@ -318,11 +318,6 @@ void CDriveInformationThread::InvalidateDialogHandle()
     }
 }
 
-void CDriveInformationThread::OnAppExit()
-{
-    // We need not do anything here.
-}
-
 // The constructor starts the thread.
 //
 CDriveInformationThread::CDriveInformationThread(LPCWSTR path, LPARAM driveItem, HWND dialog, UINT serial)
@@ -344,11 +339,6 @@ CDriveInformationThread::CDriveInformationThread(LPCWSTR path, LPARAM driveItem,
 BOOL CDriveInformationThread::InitInstance()
 {
     m_success = RetrieveDriveInformation(m_path, m_name, m_totalBytes, m_freeBytes);
-
-#ifdef TESTTHREADS
-    srand(::GetTickCount());
-    ::Sleep((rand() & 0x07) * 1000);
-#endif
 
     HWND dialog = nullptr;
 

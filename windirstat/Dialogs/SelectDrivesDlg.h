@@ -92,7 +92,6 @@ class CDriveInformationThread final : public CWinThread
 
 public:
     static void InvalidateDialogHandle();
-    static void OnAppExit();
 
     CDriveInformationThread(LPCWSTR path, LPARAM driveItem, HWND dialog, UINT serial);
     BOOL InitInstance() override;
