@@ -75,6 +75,7 @@ namespace
     const LPCWSTR entryLightSourceY          = L"lightSourceY";
     const LPCWSTR entryFollowMountPoints     = L"followMountPoints";
     const LPCWSTR entryFollowJunctionPoints  = L"followJunctionPoints";
+    const LPCWSTR entryUseBackupRestore      = L"useBackupRestore";
     const LPCWSTR entryScanningThreads       = L"scanningThreads";
     const LPCWSTR entrySkipHidden            = L"skipHidden";
     const LPCWSTR entryUseWdsLocale          = L"useWdsLocale";
@@ -826,6 +827,19 @@ void COptions::SetSkipHidden(bool skip)
     }
 }
 
+bool COptions::IsUseBackupRestore() const
+{
+    return m_useBackupRestore;
+}
+
+void COptions::SetUseBackupRestore(bool enable)
+{
+    if (m_useBackupRestore != enable)
+    {
+        m_useBackupRestore = enable;
+    }
+}
+
 CStringW COptions::GetReportSubject()
 {
     return m_reportSubject;
@@ -898,6 +912,7 @@ void COptions::SaveToRegistry()
     setProfileInt(sectionOptions, entryScanningThreads, m_scanningThreads);
     setProfileBool(sectionOptions, entryFollowMountPoints, m_followMountPoints);
     setProfileBool(sectionOptions, entryFollowJunctionPoints, m_followJunctionPoints);
+    setProfileBool(sectionOptions, entryUseBackupRestore, m_useBackupRestore);
     setProfileBool(sectionOptions, entryUseWdsLocale, m_useWdsLocale);
 
     for (i = 0; i < USERDEFINEDCLEANUPCOUNT; i++)
@@ -969,6 +984,7 @@ void COptions::LoadFromRegistry()
 
     m_followMountPoints = getProfileBool(sectionOptions, entryFollowMountPoints, false);
     m_followJunctionPoints = getProfileBool(sectionOptions, entryFollowJunctionPoints, false);
+    m_useBackupRestore = getProfileBool(sectionOptions, entryUseBackupRestore, true);
     m_scanningThreads = getProfileInt(sectionOptions, entryScanningThreads, 4);
     m_useWdsLocale = getProfileBool(sectionOptions, entryUseWdsLocale, false);
 

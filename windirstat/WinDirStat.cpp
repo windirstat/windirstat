@@ -539,12 +539,9 @@ BOOL CDirStatApp::InitInstance()
     m_pMainWnd->SetForegroundWindow();
 
     // Attempt to enable backup / restore privileges if running as admin
-    if (IsAdmin())
+    if (GetOptions()->IsUseBackupRestore() && !EnableReadPrivileges())
     {
-        if (!EnableReadPrivileges())
-        {
-            VTRACE(L"Failed to enable additional privileges.");
-        }
+        VTRACE(L"Failed to enable additional privileges.");
     }
 
     if (cmdInfo.m_nShellCommand == CCommandLineInfo::FileOpen)

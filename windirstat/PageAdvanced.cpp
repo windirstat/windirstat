@@ -33,6 +33,7 @@ CPageAdvanced::CPageAdvanced()
     , m_followMountPoints(FALSE)
     , m_followJunctionPoints(FALSE)
     , m_skipHidden(FALSE)
+    , m_useBackupRestore(FALSE)
     , m_scanningThreads(0)
 {
 }
@@ -49,10 +50,10 @@ void CPageAdvanced::DoDataExchange(CDataExchange* pDX)
     CPropertyPage::DoDataExchange(pDX);
     DDX_Check(pDX, IDC_FOLLOWMOUNTPOINTS, m_followMountPoints);
     DDX_Check(pDX, IDC_FOLLOWJUNCTIONS, m_followJunctionPoints);
-    DDX_Control(pDX, IDC_COMBO_THREADS, m_combo);
     DDX_Control(pDX, IDC_FOLLOWMOUNTPOINTS, m_ctlFollowMountPoints);
     DDX_Control(pDX, IDC_FOLLOWJUNCTIONS, m_ctlFollowJunctionPoints);
     DDX_Check(pDX, IDC_SKIPHIDDEN, m_skipHidden);
+    DDX_Check(pDX, IDC_BACKUP_RESTORE, m_useBackupRestore);
     DDX_CBIndex(pDX, IDC_COMBO_THREADS, m_scanningThreads);
 }
 
@@ -70,6 +71,7 @@ BOOL CPageAdvanced::OnInitDialog()
     m_followMountPoints = GetOptions()->IsFollowMountPoints();
     m_followJunctionPoints = GetOptions()->IsFollowJunctionPoints();
     m_skipHidden = GetOptions()->IsSkipHidden();
+    m_useBackupRestore = GetOptions()->IsUseBackupRestore();
     m_scanningThreads = GetOptions()->GetScanningThreads() - 1;
 
     UpdateData(false);
@@ -82,10 +84,8 @@ void CPageAdvanced::OnOK()
     GetOptions()->SetFollowMountPoints(FALSE != m_followMountPoints);
     GetOptions()->SetFollowJunctionPoints(FALSE != m_followJunctionPoints);
     GetOptions()->SetSkipHidden(FALSE != m_skipHidden);
+    GetOptions()->SetUseBackupRestore(FALSE != m_useBackupRestore);
     GetOptions()->SetScanningThreads(m_scanningThreads + 1);
-
-    const LANGID id = static_cast<LANGID>(m_combo.GetItemData(m_combo.GetCurSel()));
-    CLanguageOptions::SetLanguage(id);
 
     CPropertyPage::OnOK();
 }

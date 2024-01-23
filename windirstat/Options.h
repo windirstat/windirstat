@@ -338,6 +338,10 @@ public:
     bool IsSkipHidden() const;
     void SetSkipHidden(bool skip);
 
+    // Option to enable backup / restore privileges
+    bool IsUseBackupRestore() const;
+    void SetUseBackupRestore(bool enable);
+
     void GetUserDefinedCleanups(USERDEFINEDCLEANUP udc[USERDEFINEDCLEANUPCOUNT]) const;
     void SetUserDefinedCleanups(const USERDEFINEDCLEANUP udc[USERDEFINEDCLEANUPCOUNT]);
 
@@ -380,6 +384,7 @@ private:
     int m_scanningThreads;
     bool m_useWdsLocale;
     bool m_skipHidden;
+    bool m_useBackupRestore;
 
     USERDEFINEDCLEANUP m_userDefinedCleanup[USERDEFINEDCLEANUPCOUNT];
 

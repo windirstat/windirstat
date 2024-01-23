@@ -46,9 +46,9 @@ protected:
     BOOL m_followMountPoints;
     BOOL m_followJunctionPoints;
     BOOL m_skipHidden;
+    BOOL m_useBackupRestore;
     int m_scanningThreads;
 
-    CComboBox m_combo;
     CButton m_ctlFollowMountPoints;
     CButton m_ctlFollowJunctionPoints;
     CButton m_ctlSkipHidden;

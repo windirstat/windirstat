@@ -28,6 +28,8 @@
 #include "GlobalHelpers.h"
 #include "Options.h"
 
+#include <algorithm>
+
 namespace
 {
     CStringW FormatLongLongNormal(ULONGLONG n)
@@ -639,7 +641,6 @@ bool EnableReadPrivileges()
 {
     // Open a connection to the currently running process token and request
     // we have the ability to look at and adjust our privileges
-
     SmartPointer<HANDLE> token(CloseHandle);
     if (OpenProcessToken(GetCurrentProcess(),
         TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &token) == 0)
@@ -647,6 +648,16 @@ bool EnableReadPrivileges()
         return false;
     }
 
+    // Fetch a list of privileges we currently have
+    std::vector<BYTE> privs_bytes(64 * sizeof(LUID_AND_ATTRIBUTES) + sizeof(DWORD), 0);
+    PTOKEN_PRIVILEGES privs_available = reinterpret_cast<PTOKEN_PRIVILEGES>(privs_bytes.data());
+    DWORD priv_length = 0;
+    if (GetTokenInformation(token, TokenPrivileges, privs_bytes.data(),
+        static_cast<DWORD>(privs_bytes.size()), &priv_length) == 0)
+    {
+        return false;
+    }
+    
     bool ret = true;
     for (LPCWSTR priv : { SE_RESTORE_NAME, SE_BACKUP_NAME })
     {
@@ -656,11 +667,20 @@ bool EnableReadPrivileges()
         priv_entry.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
 
         // Translate the privilege name into the binary representation
-        if (LookupPrivilegeValue(nullptr, priv,
-            &priv_entry.Privileges[0].Luid) == 0)
+        if (LookupPrivilegeValue(nullptr, priv, &priv_entry.Privileges[0].Luid) == 0)
         {
             ret = false;
             break;
+        }
+
+        // Check if privilege is in the list of ones we have
+        if (std::count_if(privs_available[0].Privileges, &privs_available->Privileges[privs_available->PrivilegeCount],
+            [&](const LUID_AND_ATTRIBUTES& element) {
+                return element.Luid.HighPart == priv_entry.Privileges[0].Luid.HighPart &&
+                    element.Luid.LowPart == priv_entry.Privileges[0].Luid.LowPart;}) == 0)
+        {
+            ret = false;
+            continue;
         }
 
         // Adjust the process to change the privilege
