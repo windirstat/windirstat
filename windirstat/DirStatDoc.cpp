@@ -1310,13 +1310,11 @@ void CDirStatDoc::StartCoordinator(std::vector<CItem*> items)
                     });
                     return;
                 }
-                else
-                {
-                    // Handle non-root item by removing from parent
-                    item->UpwardSubtractFiles(item->IsType(IT_FILE) ? 1 : 0);
-                    item->UpwardSubtractSubdirs(item->IsType(IT_FILE) ? 0 : 1);
-                    item->GetParent()->RemoveChild(item);     
-                }
+
+                // Handle non-root item by removing from parent
+                item->UpwardSubtractFiles(item->IsType(IT_FILE) ? 1 : 0);
+                item->UpwardSubtractSubdirs(item->IsType(IT_FILE) ? 0 : 1);
+                item->GetParent()->RemoveChild(item);
             }
         }
 
@@ -1357,6 +1355,7 @@ void CDirStatDoc::StartCoordinator(std::vector<CItem*> items)
             {
                 thread.join();
             }
+            threads.clear();
         }
 
         // Restore unknown and freespace items

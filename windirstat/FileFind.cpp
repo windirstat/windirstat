@@ -32,7 +32,7 @@ static HMODULE rtl_library = LoadLibrary(L"ntdll.dll");
 static NTSTATUS(WINAPI* NtQueryDirectoryFile)(HANDLE FileHandle, HANDLE Event, PVOID ApcRoutine,
     PVOID ApcContext, PIO_STATUS_BLOCK IoStatusBlock, PVOID FileInformation,
     ULONG Length, FILE_INFORMATION_CLASS FileInformationClass, BOOLEAN ReturnSingleEntry,
-    PUNICODE_STRING FileName, BOOLEAN RestartScan) = (decltype(NtQueryDirectoryFile))GetProcAddress(rtl_library, "NtQueryDirectoryFile");
+    PUNICODE_STRING FileName, BOOLEAN RestartScan) = reinterpret_cast<decltype(NtQueryDirectoryFile)>(GetProcAddress(rtl_library, "NtQueryDirectoryFile"));
 
 FileFindEnhanced::FileFindEnhanced() = default;
 

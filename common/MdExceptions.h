@@ -30,6 +30,7 @@
 #ifndef _INC_STDARG
 #include <stdarg.h>
 #endif
+#include "SmartPointer.h"
 
 class CMdStringException final : public CException
 {
@@ -75,13 +76,13 @@ inline CStringW MdGetExceptionMessage(const CException* pe)
 inline CStringW MdGetWinErrorText(HRESULT hr)
 {
     CStringW sRet;
-    LPVOID lpMsgBuf = nullptr;
+    SmartPointer<LPVOID> lpMsgBuf(LocalFree);
     const DWORD dw = FormatMessage(
         FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
         nullptr,
         hr,
         MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-        (LPWSTR)&lpMsgBuf,
+        reinterpret_cast<LPWSTR>(&lpMsgBuf),
         0,
         nullptr
     );
@@ -92,8 +93,7 @@ inline CStringW MdGetWinErrorText(HRESULT hr)
     }
     else
     {
-        sRet = CStringW(static_cast<LPCWSTR>(lpMsgBuf));
-        ::LocalFree(lpMsgBuf);
+        sRet = CStringW(reinterpret_cast<LPWSTR>(&lpMsgBuf));
     }
     return sRet;
 }

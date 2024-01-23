@@ -32,7 +32,6 @@
 #include "GraphView.h"
 #include "OsSpecific.h"
 #include "GlobalHelpers.h"
-#include "BlockingQueue.h"
 #include "Item.h"
 #include "SmartPointer.h"
 
@@ -393,11 +392,9 @@ COLORREF CDirStatApp::GetAlternativeColor(COLORREF clrDefault, LPCWSTR which)
         // Return the read value upon success
         return x;
     }
-    else
-    {
-        // Return the default upon failure
-        return clrDefault;
-    }
+
+    // Return the default upon failure
+    return clrDefault;
 }
 
 COLORREF CDirStatApp::AltColor() const
@@ -582,10 +579,8 @@ LANGID CDirStatApp::GetEffectiveLangid()
     {
         return GetLangid();
     }
-    else
-    {
-        return ::GetUserDefaultLangID();
-    }
+
+    return ::GetUserDefaultLangID();
 }
 
 void CDirStatApp::OnAppAbout()

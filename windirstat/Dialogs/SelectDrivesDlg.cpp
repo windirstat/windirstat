@@ -797,10 +797,10 @@ void CSelectDrivesDlg::OnSize(UINT nType, int cx, int cy)
     m_layout.OnSize();
 }
 
-void CSelectDrivesDlg::OnGetMinMaxInfo(MINMAXINFO* mmi)
+void CSelectDrivesDlg::OnGetMinMaxInfo(MINMAXINFO* lpMMI)
 {
-    m_layout.OnGetMinMaxInfo(mmi);
-    CDialog::OnGetMinMaxInfo(mmi);
+    m_layout.OnGetMinMaxInfo(lpMMI);
+    CDialog::OnGetMinMaxInfo(lpMMI);
 }
 
 void CSelectDrivesDlg::OnDestroy()

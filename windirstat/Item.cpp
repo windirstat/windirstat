@@ -51,9 +51,6 @@ namespace
     }
 
     constexpr SIZE sizeDeflatePacman = {1, 2};
-
-    // File attribute packing
-    constexpr unsigned char INVALID_m_attributes = 0x80;
 }
 
 CItem::CItem(ITEMTYPE type, LPCWSTR name)
@@ -486,17 +483,11 @@ ULONGLONG CItem::GetProgressPos() const
     }
     if (IsType(IT_DIRECTORY))
     {
-        return m_files + m_subdirs;
+        return GetItemsCount();
     }
 
     ASSERT(FALSE);
     return 0;
-}
-
-const CItem* CItem::UpwardGetRoot() const
-{
-    for (auto p = this; p != nullptr; p = p->GetParent());
-    return this;
 }
 
 void CItem::UpdateStatsFromDisk()
@@ -850,7 +841,7 @@ ULONG CItem::GetSubdirsCount() const
 
 ULONGLONG CItem::GetItemsCount() const
 {
-    return m_files + m_subdirs;
+    return static_cast<ULONGLONG>(m_files) + static_cast<ULONGLONG>(m_subdirs);
 }
 
 void CItem::SetDone()

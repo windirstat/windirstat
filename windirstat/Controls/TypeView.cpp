@@ -330,12 +330,10 @@ CStringW CExtensionListControl::GetSelectedExtension()
     {
         return wds::strEmpty;
     }
-    else
-    {
-        const int i           = GetNextSelectedItem(pos);
-        const CListItem* item = GetListItem(i);
-        return item->GetExtension();
-    }
+
+    const int i = GetNextSelectedItem(pos);
+    const CListItem* item = GetListItem(i);
+    return item->GetExtension();
 }
 
 CExtensionListControl::CListItem* CExtensionListControl::GetListItem(int i) const

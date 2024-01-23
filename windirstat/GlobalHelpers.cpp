@@ -119,10 +119,9 @@ CStringW FormatBytes(const ULONGLONG& n)
     {
         return FormatLongLongHuman(n);
     }
-    else
-    {
-        return FormatLongLongNormal(n);
-    }
+
+    return FormatLongLongNormal(n);
+
 }
 
 CStringW FormatLongLongHuman(ULONGLONG n)

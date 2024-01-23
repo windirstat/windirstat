@@ -27,7 +27,6 @@
 
 #include <algorithm>
 #include <mutex>
-#include <queue>
 #include <stack>
 
 namespace

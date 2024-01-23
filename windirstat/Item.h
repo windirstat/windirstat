@@ -153,7 +153,6 @@ public:
 
     ULONGLONG GetProgressRange() const;
     ULONGLONG GetProgressPos() const;
-    const CItem* UpwardGetRoot() const;
     void UpdateStatsFromDisk();
     CItem* GetChild(int i) const;
     CItem* GetParent() const;

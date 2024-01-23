@@ -33,7 +33,7 @@ public:
         // Push another entry onto the queue
         std::lock_guard lock(x);
         if (m_draining) return;
-        (back) ? q.push_back(value) : q.push_front(value);
+        back ? q.push_back(value) : q.push_front(value);
         pushed.notify_one();
     }
 
@@ -52,8 +52,8 @@ public:
         // Worker now has something to work on so pop it off the queue
         if (!m_draining) m_started = true;
         m_workers_waiting--;
-        T& i = (front) ? q.front() : q.back();
-        (front) ? q.pop_front() : q.pop_back();
+        T& i = front ? q.front() : q.back();
+        front ? q.pop_front() : q.pop_back();
         popped.notify_one();
         return i;
     }
