@@ -708,6 +708,7 @@ void CTreeListControl::CollapseItem(int i)
     }
 
     CWaitCursor wc;
+    LockWindowUpdate();
 
     int todelete = 0;
     for (int k = i + 1; k < GetItemCount(); k++)
@@ -719,12 +720,14 @@ void CTreeListControl::CollapseItem(int i)
         }
         todelete++;
     }
-    for (int m = 0; m < todelete; m++)
+
+    for (int m = i + todelete; m > i; m--)
     {
-        DeleteItem(i + 1);;
+        DeleteItem(m);
     }
     item->SetExpanded(false);
 
+    UnlockWindowUpdate();
     RedrawItems(i, i);
 }
 
