@@ -42,23 +42,24 @@ DWORD CFileFindWDS::GetAttributes() const
 // Wrapper for file size retrieval
 // This function tries to return compressed file size whenever possible.
 // If the file is not compressed the uncompressed size is being returned.
-ULONGLONG CFileFindWDS::GetCompressedLength() const
+ULONGLONG CFileFindWDS::GetCompressedLength(DWORD FileAttributes) const
 {
-#if 0 // TODO: make this an option (the compressed size instead of "normal" size
-    ULARGE_INTEGER ret;
-    ret.LowPart = ::GetCompressedFileSize(GetFilePath(), &ret.HighPart);
+    // if it is possible for disk-size to differ from reported-size
+    if (FileAttributes & (FILE_ATTRIBUTE_COMPRESSED | FILE_ATTRIBUTE_SPARSE_FILE)) {
+        ULARGE_INTEGER ret;
+        ret.LowPart = ::GetCompressedFileSize(GetFilePath(), &ret.HighPart);
 
-    // Check for error
-    if((::GetLastError() != ERROR_SUCCESS) && (ret.LowPart == INVALID_FILE_SIZE))
-    {
-        // In case of an error return size from CFileFind object
-        return GetLength();
-    }
-    else
-    {
-        return ret.QuadPart;
-    }
-#endif // 0
+        // Check for error
+        if ((::GetLastError() != ERROR_SUCCESS) && (ret.LowPart == INVALID_FILE_SIZE))
+        {
+            // In case of an error return size from CFileFind object
+            return GetLength();
+        }
+        else
+        {
+            return ret.QuadPart;
+        }
+    } 
     // Use the file size already found by the finder object
     return GetLength();
 }

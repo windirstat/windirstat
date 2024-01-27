@@ -1100,7 +1100,7 @@ void CItem::DoSomeWork(CWorkLimiter* limiter)
                     fi.name = finder.GetFileName();
                     fi.attributes = finder.GetAttributes();
                     // Retrieve file size
-                    fi.length = finder.GetCompressedLength();
+                    fi.length = finder.GetCompressedLength(fi.attributes);
                     finder.GetLastWriteTime(&fi.lastWriteTime);
                     // (We don't use GetLastWriteTime(CTime&) here, because, if the file has
                     // an invalid timestamp, that function would ASSERT and throw an Exception.)
@@ -1261,7 +1261,7 @@ bool CItem::StartRefresh()
             fi.name = finder.GetFileName();
             fi.attributes = finder.GetAttributes();
             // Retrieve file size
-            fi.length = finder.GetCompressedLength();
+            fi.length = finder.GetCompressedLength(fi.attributes);
             finder.GetLastWriteTime(&fi.lastWriteTime);
 
             AddFile(fi);
@@ -1320,7 +1320,7 @@ bool CItem::StartRefresh()
                 fi.name = finder.GetFileName();
                 fi.attributes = finder.GetAttributes();
                 // Retrieve file size
-                fi.length = finder.GetCompressedLength();
+                fi.length = finder.GetCompressedLength(fi.attributes);
                 finder.GetLastWriteTime(&fi.lastWriteTime);
 
                 SetLastChange(fi.lastWriteTime);

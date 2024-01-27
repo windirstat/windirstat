@@ -28,7 +28,7 @@ class CFileFindWDS : public CFileFind
 {
 public:
     DWORD GetAttributes() const;
-    ULONGLONG GetCompressedLength() const;
+    ULONGLONG GetCompressedLength(DWORD FileAttributes) const;
 };
 
 #endif // __WDS_FILEFINDWDS_H__
