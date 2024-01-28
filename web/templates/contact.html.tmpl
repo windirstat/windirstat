@@ -1,0 +1,33 @@
+[% WRAPPER 'html-body.tt'
+   title = 'Contact'
+   description = 'Contact the team or a team member'
+   uuid = '6dcfe529-89ef-44f1-903c-2614d8d56432'
+   norder = '8000'
+%]
+[%- PROCESS 'constants.tt' -%]
+<h3>Report an issue or defect ("bug")?</h3>
+<p>
+Please use <a class="wdslnk" href="[%- tracker_url -%]">the issue tracker over on GitHub</a> or for
+security-related reports use a PGP-encrypted email. See below for public keys available.
+</p>
+<h3>Email from your own client?</h3>
+<p>
+If you prefer to send an email, i.e. not use this contact form, you can use the lowercase form of the team
+member's first name and append the at sign and then <tt>windirstat.net</tt> to it to get the email address
+of that team member (i.e. <tt>&lt;name&gt;@windirstat.net</tt>).
+If you can't remember the names, use the dropdown box above to receive a clue ;)
+</p>
+<h3>Using PGP to encrypt communication or to verify emails we send out</h3>
+<p>
+You are encouraged to use the following <a class="wdslnk" href="https://en.wikipedia.org/wiki/Pretty_Good_Privacy">PGP</a>
+public keys to encrypt communication <em>to</em> us. The keys will be available from commonly used key servers such as
+pgp.mit.edu or subkeys.pgp.net.
+</p>
+<ul>
+[%- FOREACH key IN gpg_keys.sort('name') -%]
+[%- IF key.id -%]
+<li><strong>[%- key.name -%]:</strong><br />&nbsp;&nbsp;PGP key ID: <a class="wdslnk" href="[%- key.id | format(gpg_search_fmt) -%]">[%- key.id -%]</a>,<br />&nbsp;&nbsp;&nbsp;&nbsp;key fingerprint: <tt>[%- key.fingerprint -%]</tt></li>
+[%- END -%]
+[%- END -%]
+</ul>
+[% END %]
