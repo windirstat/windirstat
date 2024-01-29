@@ -1,4 +1,4 @@
-// dirstatview.cpp - Implementation of CDirStatView
+// DirStatView.cpp - Implementation of CDirStatView
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
@@ -17,7 +17,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-//
 //
 
 #include "stdafx.h"
@@ -155,7 +154,7 @@ CDirStatView::CDirStatView()
 
 CStringW CDirStatView::GenerateReport()
 {
-    CStringW report = GetOptions()->GetReportPrefix() + L"\r\n";
+    CStringW report = CStringW(COptions::ReportPrefix.Obj().c_str()) + L"\r\n";
 
     const auto& items = CTreeListControl::GetTheTreeListControl()->GetAllSelected<CItem>();
     for (const auto& root : items)
@@ -183,7 +182,7 @@ CStringW CDirStatView::GenerateReport()
     }
 
     report += L"\r\n\r\n";
-    report += GetOptions()->GetReportSuffix();
+    report += COptions::ReportSuffix.Obj().c_str();
 
     return report;
 }
@@ -222,6 +221,38 @@ void CDirStatView::OnSize(UINT nType, int cx, int cy)
     }
 }
 
+void CDirStatView::CreateColumns(bool all)
+{
+    if (all)
+    {
+        m_treeListControl.InsertColumn(COL_NAME, LoadString(IDS_TREECOL_NAME), LVCFMT_LEFT, 200, COL_NAME);
+        m_treeListControl.InsertColumn(COL_SUBTREEPERCENTAGE, LoadString(IDS_TREECOL_SUBTREEPERCENTAGE), LVCFMT_RIGHT, CItem::GetSubtreePercentageWidth(), COL_SUBTREEPERCENTAGE);
+        m_treeListControl.InsertColumn(COL_PERCENTAGE, LoadString(IDS_TREECOL_PERCENTAGE), LVCFMT_RIGHT, 55, COL_PERCENTAGE);
+        m_treeListControl.InsertColumn(COL_SUBTREETOTAL, LoadString(IDS_TREECOL_SIZE), LVCFMT_RIGHT, 90, COL_SUBTREETOTAL);
+    }
+
+    // reset sort and remove optional
+    m_treeListControl.SetSorting(COL_SUBTREETOTAL, m_treeListControl.GetAscendingDefault(COL_SUBTREETOTAL));
+    m_treeListControl.SortItems();
+    while (m_treeListControl.DeleteColumn(COL_ITEMS));
+
+    // readd optional columns based on settings
+    if (COptions::ShowColumnItems)
+        m_treeListControl.InsertColumn(COL_ITEMS, LoadString(IDS_TREECOL_ITEMS), LVCFMT_RIGHT, 55, COL_ITEMS);
+    if (COptions::ShowColumnFiles)
+        m_treeListControl.InsertColumn(COL_FILES, LoadString(IDS_TREECOL_FILES), LVCFMT_RIGHT, 55, COL_FILES);
+    if (COptions::ShowColumnSubdirs)
+        m_treeListControl.InsertColumn(COL_SUBDIRS, LoadString(IDS_TREECOL_SUBDIRS), LVCFMT_RIGHT, 55, COL_SUBDIRS);
+    if (COptions::ShowColumnLastChange)
+        m_treeListControl.InsertColumn(COL_LASTCHANGE, LoadString(IDS_TREECOL_LASTCHANGE), LVCFMT_LEFT, 120, COL_LASTCHANGE);
+    if (COptions::ShowColumnAttributes)
+        m_treeListControl.InsertColumn(COL_ATTRIBUTES, LoadString(IDS_TREECOL_ATTRIBUTES), LVCFMT_LEFT, 50, COL_ATTRIBUTES);
+    if (COptions::ShowColumnOwner)
+        m_treeListControl.InsertColumn(COL_OWNER, LoadString(IDS_TREECOL_OWNER), LVCFMT_LEFT, 120, COL_OWNER);
+    m_treeListControl.OnColumnsInserted();
+    
+}
+
 int CDirStatView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 {
     if (CView::OnCreate(lpCreateStruct) == -1)
@@ -232,21 +263,11 @@ int CDirStatView::OnCreate(LPCREATESTRUCT lpCreateStruct)
     constexpr RECT rect = {0, 0, 0, 0};
     VERIFY(m_treeListControl.CreateEx(LVS_EX_HEADERDRAGDROP, WS_CHILD | WS_VISIBLE | LVS_REPORT | LVS_SHOWSELALWAYS, rect, this, ID_WDS_CONTROL));
 
-    m_treeListControl.ShowGrid(GetOptions()->IsListGrid());
-    m_treeListControl.ShowStripes(GetOptions()->IsListStripes());
-    m_treeListControl.ShowFullRowSelection(GetOptions()->IsListFullRowSelection());
+    m_treeListControl.ShowGrid(COptions::ListGrid);
+    m_treeListControl.ShowStripes(COptions::ListStripes);
+    m_treeListControl.ShowFullRowSelection(COptions::ListFullRowSelection);
 
-    m_treeListControl.InsertColumn(COL_NAME, LoadString(IDS_TREECOL_NAME), LVCFMT_LEFT, 200, COL_NAME);
-    m_treeListControl.InsertColumn(COL_SUBTREEPERCENTAGE, LoadString(IDS_TREECOL_SUBTREEPERCENTAGE), LVCFMT_RIGHT, CItem::GetSubtreePercentageWidth(), COL_SUBTREEPERCENTAGE);
-    m_treeListControl.InsertColumn(COL_PERCENTAGE, LoadString(IDS_TREECOL_PERCENTAGE), LVCFMT_RIGHT, 55, COL_PERCENTAGE);
-    m_treeListControl.InsertColumn(COL_SUBTREETOTAL, LoadString(IDS_TREECOL_SIZE), LVCFMT_RIGHT, 90, COL_SUBTREETOTAL);
-    m_treeListControl.InsertColumn(COL_ITEMS, LoadString(IDS_TREECOL_ITEMS), LVCFMT_RIGHT, 55, COL_ITEMS);
-    m_treeListControl.InsertColumn(COL_FILES, LoadString(IDS_TREECOL_FILES), LVCFMT_RIGHT, 55, COL_FILES);
-    m_treeListControl.InsertColumn(COL_SUBDIRS, LoadString(IDS_TREECOL_SUBDIRS), LVCFMT_RIGHT, 55, COL_SUBDIRS);
-    m_treeListControl.InsertColumn(COL_LASTCHANGE, LoadString(IDS_TREECOL_LASTCHANGE), LVCFMT_LEFT, 120, COL_LASTCHANGE);
-    m_treeListControl.InsertColumn(COL_ATTRIBUTES, LoadString(IDS_TREECOL_ATTRIBUTES), LVCFMT_LEFT, 50, COL_ATTRIBUTES);
-
-    m_treeListControl.OnColumnsInserted();
+    CreateColumns(true);
 
     m_treeListControl.MySetImageList(GetMyImageList());
 
@@ -321,9 +342,9 @@ void CDirStatView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 
     case HINT_LISTSTYLECHANGED:
         {
-            m_treeListControl.ShowGrid(GetOptions()->IsListGrid());
-            m_treeListControl.ShowStripes(GetOptions()->IsListStripes());
-            m_treeListControl.ShowFullRowSelection(GetOptions()->IsListFullRowSelection());
+            m_treeListControl.ShowGrid(COptions::ListGrid);
+            m_treeListControl.ShowStripes(COptions::ListStripes);
+            m_treeListControl.ShowFullRowSelection(COptions::ListFullRowSelection);
         }
         break;
 

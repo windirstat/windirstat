@@ -1,4 +1,4 @@
-// sortinglistcontrol.cpp - Implementation of CSortingListItem and CSortingListControl
+// SortingListControl.cpp - Implementation of CSortingListItem and CSortingListControl
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
@@ -77,56 +77,47 @@ int CSortingListItem::CompareS(const CSortingListItem* other, const SSorting& so
 
 IMPLEMENT_DYNAMIC(CSortingListControl, CListCtrl)
 
-CSortingListControl::CSortingListControl(LPCWSTR name)
+CSortingListControl::CSortingListControl(std::vector<int>* column_order, std::vector<int>* column_widths)
 {
-    m_name            = name;
+    m_column_order = column_order;
+    m_column_widths = column_widths;
     m_indicatedColumn = -1;
 }
 
 void CSortingListControl::LoadPersistentAttributes()
 {
-    int i = 0;
-    CArray<int, int> arr;
-    arr.SetSize(GetHeaderCtrl()->GetItemCount());
-
-    GetColumnOrderArray(arr.GetData(), static_cast<int>(arr.GetSize()));
-    CPersistence::GetColumnOrder(m_name.c_str(), arr);
-    SetColumnOrderArray(static_cast<int>(arr.GetSize()), arr.GetData());
-
-    for (i = 0; i < arr.GetSize(); i++)
+    // Load default column order values from resource
+    if (m_column_order->size() != GetHeaderCtrl()->GetItemCount())
     {
-        arr[i] = GetColumnWidth(i);
-    }
-    CPersistence::GetColumnWidths(m_name.c_str(), arr);
-    for (i = 0; i < arr.GetSize(); i++)
-    {
-        // To avoid "insane" settings we set the column width to
-        // maximal twice the default width.
-        int maxWidth = GetColumnWidth(i) * 2;
-        const int w  = min(arr[i], maxWidth);
-        SetColumnWidth(i, w);
+        m_column_order->resize(GetHeaderCtrl()->GetItemCount());
+        GetColumnOrderArray(m_column_order->data(), static_cast<int>(m_column_order->size()));
     }
 
-    // Not so good: CPersistence::GetSorting(m_name, GetHeaderCtrl()->GetItemCount(), m_sorting.column1, m_sorting.ascending1, m_sorting.column2, m_sorting.ascending2);
-    // We refrain from saving the sorting because it is too likely, that
-    // users start up with insane settings and don't get it.
+    // Load default column width values from resource
+    if (m_column_widths->size() != GetHeaderCtrl()->GetItemCount())
+    {
+        m_column_widths->resize(GetHeaderCtrl()->GetItemCount(),0);
+        for (int i = 0; i < static_cast<int>(m_column_widths->size()); i++)
+        {
+            (*m_column_widths)[i] = GetColumnWidth(i);
+        }
+    }
+    
+    // Set based on persisted values
+    SetColumnOrderArray(static_cast<int>(m_column_order->size()), m_column_order->data());
+    for (int i = 0; i < static_cast<int>(m_column_widths->size()); i++)
+    {
+        SetColumnWidth(i, min((*m_column_widths)[i], (*m_column_widths)[i] * 2));
+    }
 }
 
 void CSortingListControl::SavePersistentAttributes() const
 {
-    CArray<int, int> arr;
-    arr.SetSize(GetHeaderCtrl()->GetItemCount());
-
-    GetColumnOrderArray(arr.GetData(), static_cast<int>(arr.GetSize()));
-    CPersistence::SetColumnOrder(m_name.c_str(), arr);
-
-    for (int i = 0; i < arr.GetSize(); i++)
+    GetColumnOrderArray(m_column_order->data(), static_cast<int>(m_column_order->size()));
+    for (int i = 0; i < static_cast<int>(m_column_widths->size()); i++)
     {
-        arr[i] = GetColumnWidth(i);
+        (*m_column_widths)[i] = GetColumnWidth(i);
     }
-    CPersistence::SetColumnWidths(m_name.c_str(), arr);
-
-    // Not so good: CPersistence::SetSorting(m_name, m_sorting.column1, m_sorting.ascending1, m_sorting.column2, m_sorting.ascending2);
 }
 
 void CSortingListControl::AddExtendedStyle(DWORD exStyle)
@@ -186,7 +177,7 @@ void CSortingListControl::InsertListItem(int i, CSortingListItem* item)
 
 CSortingListItem* CSortingListControl::GetSortingListItem(int i)
 {
-    return (CSortingListItem*)GetItemData(i);
+    return reinterpret_cast<CSortingListItem*>(GetItemData(i));
 }
 
 void CSortingListControl::SortItems()
@@ -233,9 +224,9 @@ bool CSortingListControl::HasImages()
 
 int CALLBACK CSortingListControl::_CompareFunc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
 {
-    const CSortingListItem* item1 = (CSortingListItem*)lParam1;
-    const CSortingListItem* item2 = (CSortingListItem*)lParam2;
-    const SSorting* sorting       = (SSorting*)lParamSort;
+    const CSortingListItem* item1 = reinterpret_cast<CSortingListItem*>(lParam1);
+    const CSortingListItem* item2 = reinterpret_cast<CSortingListItem*>(lParam2);
+    const SSorting* sorting       = reinterpret_cast<SSorting*>(lParamSort);
 
     return item1->CompareS(item2, *sorting);
 }

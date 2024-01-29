@@ -1,4 +1,4 @@
-// myimagelist.cpp - Implementation of CMyImageList
+// MyImageList.cpp - Implementation of CMyImageList
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert

@@ -76,17 +76,15 @@ protected:
 class CMySplitterWnd final : public CSplitterWnd
 {
 public:
-    CMySplitterWnd(LPCWSTR name);
+    CMySplitterWnd(double * splitterPos);
     void StopTracking(BOOL bAccept) override;
-    double GetSplitterPos() const;
     void SetSplitterPos(double pos);
     void RestoreSplitterPos(double posIfVirgin);
 
 protected:
-    CStringW m_persistenceName; // Name of object for CPersistence
     double m_splitterPos;       // Current split ratio
     bool m_wasTrackedByUser;    // True as soon as user has modified the splitter position
-    double m_userSplitterPos;   // Split ratio as set by the user
+    double * m_userSplitterPos; // Split ratio as set by the user
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnSize(UINT nType, int cx, int cy);

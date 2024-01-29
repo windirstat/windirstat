@@ -87,8 +87,6 @@ protected:
     afx_msg void OnColorChangedTreemapHighlight(NMHDR*, LRESULT*);
     afx_msg void OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
     afx_msg void OnLightSourceChanged(NMHDR*, LRESULT*);
-    afx_msg void OnBnClickedKdirstat();
-    afx_msg void OnBnClickedSequoiaview();
-    afx_msg void OnBnClickedTreemapgrid();
+    afx_msg void OnSetModified();
     afx_msg void OnBnClickedReset();
 };

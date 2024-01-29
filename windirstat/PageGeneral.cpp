@@ -23,6 +23,8 @@
 #include "WinDirStat.h"
 #include "MainFrame.h" // COptionsPropertySheet
 #include "PageGeneral.h"
+
+#include "DirStatDoc.h"
 #include "Options.h"
 #include "GlobalHelpers.h"
 
@@ -57,29 +59,32 @@ void CPageGeneral::DoDataExchange(CDataExchange* pDX)
     DDX_Check(pDX, IDC_SHOWGRID, m_listGrid);
     DDX_Check(pDX, IDC_SHOWSTRIPES, m_listStripes);
     DDX_Check(pDX, IDC_FULLROWSELECTION, m_listFullRowSelection);
+    DDX_Check(pDX, IDC_PORTABLE_MODE, m_portableMode);
 }
 
 BEGIN_MESSAGE_MAP(CPageGeneral, CPropertyPage)
-    ON_BN_CLICKED(IDC_HUMANFORMAT, OnBnClickedHumanformat)
-    ON_BN_CLICKED(IDC_USEWDSLOCALE, OnBnClickedUseWdsLocale)
+    ON_BN_CLICKED(IDC_HUMANFORMAT, OnBnClickedSetModified)
+    ON_BN_CLICKED(IDC_USEWDSLOCALE, OnBnClickedSetModified)
     ON_CBN_SELENDOK(IDC_COMBO, OnCbnSelendokCombo)
-    ON_BN_CLICKED(IDC_SHOWGRID, OnBnClickedListGrid)
-    ON_BN_CLICKED(IDC_SHOWSTRIPES, OnBnClickedListStripes)
-    ON_BN_CLICKED(IDC_FULLROWSELECTION, OnBnClickedListFullRowSelection)
+    ON_BN_CLICKED(IDC_SHOWGRID, OnBnClickedSetModified)
+    ON_BN_CLICKED(IDC_SHOWSTRIPES, OnBnClickedSetModified)
+    ON_BN_CLICKED(IDC_FULLROWSELECTION, OnBnClickedSetModified)
+    ON_BN_CLICKED(IDC_PORTABLE_MODE, OnBnClickedSetModified)
 END_MESSAGE_MAP()
 
 BOOL CPageGeneral::OnInitDialog()
 {
     CPropertyPage::OnInitDialog();
 
-    m_humanFormat          = GetOptions()->IsHumanFormat();
-    m_listGrid             = GetOptions()->IsListGrid();
-    m_listStripes          = GetOptions()->IsListStripes();
-    m_listFullRowSelection = GetOptions()->IsListFullRowSelection();
-    m_useWdsLocale         = GetOptions()->IsUseWdsLocale();
+    m_humanFormat = COptions::HumanFormat;
+    m_listGrid = COptions::ListGrid;
+    m_listStripes = COptions::ListStripes;
+    m_listFullRowSelection = COptions::ListFullRowSelection;
+    m_useWdsLocale= COptions::UseWdsLocale;
+    m_portableMode = GetWDSApp()->InPortableMode();
 
-    int k = m_combo.AddString(GetLocaleLanguage(GetWDSApp()->GetBuiltInLanguage()));
-    m_combo.SetItemData(k, GetWDSApp()->GetBuiltInLanguage());
+    int k = m_combo.AddString(GetLocaleLanguage(COptions::GetBuiltInLanguage()));
+    m_combo.SetItemData(k, COptions::GetBuiltInLanguage());
 
     CArray<LANGID, LANGID> langid;
     GetWDSApp()->GetAvailableResourceDllLangids(langid);
@@ -93,7 +98,7 @@ BOOL CPageGeneral::OnInitDialog()
     m_originalLanguage = 0;
     for (int i = 0; i < m_combo.GetCount(); i++)
     {
-        if (m_combo.GetItemData(i) == CLanguageOptions::GetLanguage())
+        if (m_combo.GetItemData(i) == COptions::LanguageId)
         {
             m_combo.SetCurSel(i);
             m_originalLanguage = i;
@@ -108,39 +113,38 @@ BOOL CPageGeneral::OnInitDialog()
 void CPageGeneral::OnOK()
 {
     UpdateData();
-    GetOptions()->SetHumanFormat(FALSE != m_humanFormat);
-    GetOptions()->SetUseWdsLocale(FALSE != m_useWdsLocale);
-    GetOptions()->SetListGrid(FALSE != m_listGrid);
-    GetOptions()->SetListStripes(FALSE != m_listStripes);
-    GetOptions()->SetListFullRowSelection(FALSE != m_listFullRowSelection);
+
+    const bool wds_changed = static_cast<bool>(m_useWdsLocale) != COptions::UseWdsLocale;
+    const bool lg_changed = static_cast<bool>(m_listGrid) != COptions::ListGrid ||
+        static_cast<bool>(m_listStripes) != COptions::ListStripes ||
+        static_cast<bool>(m_listFullRowSelection) != COptions::ListFullRowSelection;
+
+    COptions::HumanFormat = (FALSE != m_humanFormat);
+    COptions::UseWdsLocale = (FALSE != m_useWdsLocale);
+    COptions::ListGrid = (FALSE != m_listGrid);
+    COptions::ListStripes = (FALSE != m_listStripes);
+    COptions::ListFullRowSelection = (FALSE != m_listFullRowSelection);
+    if (!GetWDSApp()->SetPortableMode(m_portableMode))
+    {
+        AfxMessageBox(L"Could not toggle WinDirStat portable mode. Check your permissions.", MB_OK | MB_ICONERROR);
+    }
+
+    if (lg_changed)
+    {
+        GetDocument()->UpdateAllViews(nullptr, HINT_LISTSTYLECHANGED);
+    }
+    if (wds_changed)
+    {
+        GetDocument()->UpdateAllViews(nullptr, HINT_NULL);
+    }
 
     const LANGID id = static_cast<LANGID>(m_combo.GetItemData(m_combo.GetCurSel()));
-    CLanguageOptions::SetLanguage(id);
+    COptions::LanguageId = static_cast<int>(id);
 
     CPropertyPage::OnOK();
 }
 
-void CPageGeneral::OnBnClickedHumanformat()
-{
-    SetModified();
-}
-
-void CPageGeneral::OnBnClickedUseWdsLocale()
-{
-    SetModified();
-}
-
-void CPageGeneral::OnBnClickedListGrid()
-{
-    SetModified();
-}
-
-void CPageGeneral::OnBnClickedListStripes()
-{
-    SetModified();
-}
-
-void CPageGeneral::OnBnClickedListFullRowSelection()
+void CPageGeneral::OnBnClickedSetModified()
 {
     SetModified();
 }

@@ -64,6 +64,7 @@
 #define IDS_POLICY_REFRESHPARENT        241
 #define IDS_BUGREPORTHINT               242
 #define IDS_FEEDBACKHINT                243
+#define IDS_TREECOL_OWNER               244
 #define IDS_DRIVECOL_NAME               250
 #define IDS_DRIVECOL_TOTAL              251
 #define IDS_DRIVECOL_FREE               252
@@ -94,7 +95,6 @@
 #define IDS_LANGUAGERESTARTNOW          277
 #define IDS_ABOUT_AUTHORS               278
 #define IDS_ABOUT_AUTHORSTEXTs          279
-#define IDB_JUNCTIONPOINT               902
 #define IDB_FILE_SELECT                 922
 #define IDB_CLEANUP_DELETE_BIN          927
 #define IDB_EDIT_COPY_CLIPBOARD         928
@@ -113,7 +113,6 @@
 #define IDI_UNKNOWN                     944
 #define IDI_JUNCTION_PROTECTED          946
 #define IDI_FREE_SPACE                  947
-#define IDI_ICON1                       948
 #define IDI_EMPTY                       948
 #define IDC_ALLLOCALDRIVES              1000
 #define IDC_ALLDRIVES                   1000
@@ -133,13 +132,22 @@
 #define IDC_SHOWTIMESPENT               1022
 #define IDC_TREEMAPGRID                 1022
 #define IDC_SHOWCONSOLEWINDOW           1023
+#define IDC_TREECOL_OWNER               1023
 #define IDC_WAITFORCOMPLETION           1024
+#define IDC_LABEL_SUBFOLDERS            1024
+#define IDC_TREECOL_SUBDIRS             1024
+#define IDC_TREECOL_LASTCHANGE          1025
+#define IDC_LABEL_ITEMS                 1026
+#define IDC_TREECOL_ITEMS               1026
 #define IDC_SHOWGRID                    1028
+#define IDC_LABEL_FILES                 1028
+#define IDC_TREECOL_FILES               1028
 #define IDC_HUMANFORMAT                 1029
 #define IDC_TREEMAPGRIDCOLOR            1030
 #define IDC_SHOWSTRIPES                 1030
 #define IDC_FULLROWSELECTION            1031
 #define IDC_SKIPHIDDEN                  1032
+#define IDC_PORTABLE_MODE               1032
 #define IDC_BACKUP_RESTORE              1033
 #define IDC_RESET                       1034
 #define IDC_LIST                        1036
@@ -147,7 +155,6 @@
 #define IDC_COMMANDLINE                 1038
 #define IDC_WORKSFORFILES               1039
 #define IDC_WORKSFORDIRECTORIES         1040
-#define IDC_WORKSFORFILESFOLDER         1041
 #define IDC_WORKSFORDRIVES              1042
 #define IDC_REFRESHPOLICY               1043
 #define IDC_HELPBUTTON                  1044
@@ -183,8 +190,8 @@
 #define IDC_STATICSCALEFACTOR           1219
 #define IDC_LIGHTSOURCE                 1220
 #define IDC_USEWDSLOCALE                1225
-#define IDC_COMBO1                      1230
 #define IDC_COMBO_THREADS               1230
+#define IDC_TREECOL_ATTRIBUTES          1231
 #define ID_WDS_CONTROL                  4711
 #define ID_FILE_REFRESHALL              32773
 #define ID_CLEANUP_EXPLORER_SELECT      32774
@@ -232,7 +239,6 @@
 #define ID_CLEANUP_OPEN_SELECTED        33015
 #define ID_CLEANUP_PROPERTIES           33019
 #define ID_POPUP_TOGGLE                 33023
-#define ID_HELP_CHECKFORUPDATES         33024
 #define ID_RUN_ELEVATED                 33027
 #define ID_FILE_SELECT                  33030
 #define ID_SCAN_SUSPEND                 33031
@@ -244,9 +250,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        951
+#define _APS_NEXT_RESOURCE_VALUE        952
 #define _APS_NEXT_COMMAND_VALUE         33034
-#define _APS_NEXT_CONTROL_VALUE         1231
+#define _APS_NEXT_CONTROL_VALUE         1232
 #define _APS_NEXT_SYMED_VALUE           108
 #endif
 #endif

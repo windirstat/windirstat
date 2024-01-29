@@ -309,9 +309,9 @@
     <ClInclude Include="PageGeneral.h" />
     <ClInclude Include="PageTreelist.h" />
     <ClInclude Include="PageTreemap.h" />
+    <ClInclude Include="Properties.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="SelectObject.h" />
-    <ClInclude Include="Set.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="LuaWds.h" />
     <ClInclude Include="WinDirStat.h" />
@@ -364,6 +364,7 @@
     </ClCompile>
     <ClCompile Include="PageTreemap.cpp">
     </ClCompile>
+    <ClCompile Include="Property.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>

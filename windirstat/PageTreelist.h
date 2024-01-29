@@ -45,6 +45,12 @@ protected:
 
     BOOL m_pacmanAnimation;
     BOOL m_showTimeSpent;
+    BOOL m_showColumnSubdirs;
+    BOOL m_showColumnItems;
+    BOOL m_showColumnFiles;
+    BOOL m_showColumnAttributes;
+    BOOL m_showColumnLastChange;
+    BOOL m_showColumnOwner;
 
     int m_treelistColorCount;
     COLORREF m_treelistColor[TREELISTCOLORCOUNT];
@@ -55,6 +61,5 @@ protected:
     DECLARE_MESSAGE_MAP()
     afx_msg void OnColorChanged(UINT id, NMHDR*, LRESULT*);
     afx_msg void OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
-    afx_msg void OnBnClickedPacmananimation();
-    afx_msg void OnBnClickedShowTimeSpent();
+    afx_msg void OnBnClickedSetModified();
 };

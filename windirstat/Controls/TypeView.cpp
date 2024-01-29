@@ -1,4 +1,4 @@
-// typeview.cpp - Implementation of CExtensionListControl and CTypeView
+// TypeView.cpp - Implementation of CExtensionListControl and CTypeView
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
@@ -74,7 +74,7 @@ void CExtensionListControl::CListItem::DrawColor(CDC* pdc, CRect rc, UINT state,
     }
 
     CTreemap treemap;
-    treemap.DrawColorPreview(pdc, rc, m_record.color, GetOptions()->GetTreemapOptions());
+    treemap.DrawColorPreview(pdc, rc, m_record.color, &COptions::TreemapOptions);
 }
 
 CStringW CExtensionListControl::CListItem::GetText(int subitem) const
@@ -222,7 +222,7 @@ BEGIN_MESSAGE_MAP(CExtensionListControl, COwnerDrawnListControl)
 END_MESSAGE_MAP()
 
 CExtensionListControl::CExtensionListControl(CTypeView* typeView)
-    : COwnerDrawnListControl(L"types", 19) // FIXME: hardcoded value
+    : COwnerDrawnListControl(19, COptions::TypesColumnOrder.Ptr(), COptions::TypesColumnWidths.Ptr()) // FIXME: Harcoded value
       , m_typeView(typeView)
 {
     m_rootSize = 0;
@@ -435,9 +435,9 @@ int CTypeView::OnCreate(LPCREATESTRUCT lpCreateStruct)
     VERIFY(m_extensionListControl.Create(LVS_SINGLESEL | LVS_OWNERDRAWFIXED | LVS_SHOWSELALWAYS | WS_CHILD | WS_VISIBLE | LVS_REPORT, rect, this, ID_WDS_CONTROL));
     m_extensionListControl.SetExtendedStyle(m_extensionListControl.GetExtendedStyle() | LVS_EX_HEADERDRAGDROP);
 
-    m_extensionListControl.ShowGrid(GetOptions()->IsListGrid());
-    m_extensionListControl.ShowStripes(GetOptions()->IsListStripes());
-    m_extensionListControl.ShowFullRowSelection(GetOptions()->IsListFullRowSelection());
+    m_extensionListControl.ShowGrid(COptions::ListGrid);
+    m_extensionListControl.ShowStripes(COptions::ListStripes);
+    m_extensionListControl.ShowFullRowSelection(COptions::ListFullRowSelection);
 
     m_extensionListControl.Initialize();
     return 0;
@@ -484,9 +484,9 @@ void CTypeView::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject*)
 
     case HINT_LISTSTYLECHANGED:
         {
-            m_extensionListControl.ShowGrid(GetOptions()->IsListGrid());
-            m_extensionListControl.ShowStripes(GetOptions()->IsListStripes());
-            m_extensionListControl.ShowFullRowSelection(GetOptions()->IsListFullRowSelection());
+            m_extensionListControl.ShowGrid(COptions::ListGrid);
+            m_extensionListControl.ShowStripes(COptions::ListStripes);
+            m_extensionListControl.ShowFullRowSelection(COptions::ListFullRowSelection);
         }
         break;
     default:

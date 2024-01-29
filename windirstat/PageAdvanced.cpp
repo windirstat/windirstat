@@ -23,6 +23,8 @@
 #include "WinDirStat.h"
 #include "MainFrame.h" // COptionsPropertySheet
 #include "PageAdvanced.h"
+
+#include "DirStatDoc.h"
 #include "Options.h"
 #include "GlobalHelpers.h"
 
@@ -58,21 +60,21 @@ void CPageAdvanced::DoDataExchange(CDataExchange* pDX)
 }
 
 BEGIN_MESSAGE_MAP(CPageAdvanced, CPropertyPage)
-    ON_BN_CLICKED(IDC_FOLLOWMOUNTPOINTS, OnBnClickedFollowmountpoints)
-    ON_BN_CLICKED(IDC_FOLLOWJUNCTIONS, OnBnClickedFollowjunctionpoints)
-    ON_CBN_SELENDOK(IDC_COMBO_THREADS, OnCbnSelThreadsCombo)
-    ON_BN_CLICKED(IDC_SKIPHIDDEN, OnBnClickedSkipHidden)
+    ON_BN_CLICKED(IDC_FOLLOWMOUNTPOINTS, OnSettingChanged)
+    ON_BN_CLICKED(IDC_FOLLOWJUNCTIONS, OnSettingChanged)
+    ON_CBN_SELENDOK(IDC_COMBO_THREADS, OnSettingChanged)
+    ON_BN_CLICKED(IDC_SKIPHIDDEN, OnSettingChanged)
 END_MESSAGE_MAP()
 
 BOOL CPageAdvanced::OnInitDialog()
 {
     CPropertyPage::OnInitDialog();
 
-    m_followMountPoints = GetOptions()->IsFollowMountPoints();
-    m_followJunctionPoints = GetOptions()->IsFollowJunctionPoints();
-    m_skipHidden = GetOptions()->IsSkipHidden();
-    m_useBackupRestore = GetOptions()->IsUseBackupRestore();
-    m_scanningThreads = GetOptions()->GetScanningThreads() - 1;
+    m_followMountPoints = COptions::FollowMountPoints;
+    m_followJunctionPoints = COptions::FollowJunctionPoints;
+    m_skipHidden = COptions::SkipHidden;
+    m_useBackupRestore = COptions::UseBackupRestore;
+    m_scanningThreads = COptions::ScanningThreads - 1;
 
     UpdateData(false);
     return TRUE;
@@ -81,31 +83,27 @@ BOOL CPageAdvanced::OnInitDialog()
 void CPageAdvanced::OnOK()
 {
     UpdateData();
-    GetOptions()->SetFollowMountPoints(FALSE != m_followMountPoints);
-    GetOptions()->SetFollowJunctionPoints(FALSE != m_followJunctionPoints);
-    GetOptions()->SetSkipHidden(FALSE != m_skipHidden);
-    GetOptions()->SetUseBackupRestore(FALSE != m_useBackupRestore);
-    GetOptions()->SetScanningThreads(m_scanningThreads + 1);
+
+    if (m_followMountPoints && COptions::FollowMountPoints != static_cast<bool>(m_followMountPoints))
+    {
+        GetDocument()->RefreshMountPointItems();
+    }
+    
+    if (m_followJunctionPoints && COptions::FollowJunctionPoints != static_cast<bool>(m_followJunctionPoints))
+    {
+        GetDocument()->RefreshJunctionItems();
+    }
+
+    COptions::FollowMountPoints = (FALSE != m_followMountPoints);
+    COptions::FollowJunctionPoints = (FALSE != m_followJunctionPoints);
+    COptions::SkipHidden = (FALSE != m_skipHidden);
+    COptions::UseBackupRestore = (FALSE != m_useBackupRestore);
+    COptions::ScanningThreads = m_scanningThreads + 1;
 
     CPropertyPage::OnOK();
 }
 
-void CPageAdvanced::OnBnClickedFollowmountpoints()
-{
-    SetModified();
-}
-
-void CPageAdvanced::OnBnClickedFollowjunctionpoints()
-{
-    SetModified();
-}
-
-void CPageAdvanced::OnCbnSelThreadsCombo()
-{
-    SetModified();
-}
-
-void CPageAdvanced::OnBnClickedSkipHidden()
+void CPageAdvanced::OnSettingChanged()
 {
     SetModified();
 }

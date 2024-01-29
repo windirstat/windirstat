@@ -1,4 +1,4 @@
-// dirstatdoc.cpp - Implementation of CDirStatDoc
+// DirStatDoc.cpp - Implementation of CDirStatDoc
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
@@ -52,8 +52,8 @@ CDirStatDoc* GetDocument()
 IMPLEMENT_DYNCREATE(CDirStatDoc, CDocument)
 
 CDirStatDoc::CDirStatDoc()
-    : m_showFreeSpace(CPersistence::GetShowFreeSpace())
-      , m_showUnknown(CPersistence::GetShowUnknown())
+    : m_showFreeSpace(COptions::ShowFreeSpace)
+      , m_showUnknown(COptions::ShowUnknown)
       , m_showMyComputer(false)
       , m_rootItem(nullptr)
       , m_zoomItem(nullptr)
@@ -67,8 +67,8 @@ CDirStatDoc::CDirStatDoc()
 
 CDirStatDoc::~CDirStatDoc()
 {
-    CPersistence::SetShowFreeSpace(m_showFreeSpace);
-    CPersistence::SetShowUnknown(m_showUnknown);
+    COptions::ShowFreeSpace = m_showFreeSpace;
+    COptions::ShowUnknown = m_showUnknown;
 
     delete m_rootItem;
     _theDocument = nullptr;
@@ -287,16 +287,6 @@ COLORREF CDirStatDoc::GetZoomColor()
     return RGB(0, 0, 255);
 }
 
-bool CDirStatDoc::OptionShowFreeSpace() const
-{
-    return m_showFreeSpace;
-}
-
-bool CDirStatDoc::OptionShowUnknown() const
-{
-    return m_showUnknown;
-}
-
 const CExtensionData* CDirStatDoc::GetExtensionData()
 {
     if (!m_extensionDataValid)
@@ -394,7 +384,7 @@ void CDirStatDoc::UnlinkRoot()
 
 // Determines, whether an UDC works for a given item.
 //
-bool CDirStatDoc::UserDefinedCleanupWorksForItem(const USERDEFINEDCLEANUP* udc, const CItem* item)
+bool CDirStatDoc::UserDefinedCleanupWorksForItem(USERDEFINEDCLEANUP* udc, const CItem* item)
 {
     bool works = false;
 
@@ -525,8 +515,11 @@ void CDirStatDoc::RebuildExtensionData()
     CWaitCursor wc;
 
     m_extensionData.RemoveAll();
-    m_rootItem->RecurseCollectExtensionData(&m_extensionData);
-
+    if (IsRootDone())
+    {
+        m_rootItem->RecurseCollectExtensionData(&m_extensionData);
+    }
+    
     CStringArray sortedExtensions;
     SortExtensionData(sortedExtensions);
     SetExtensionColors(sortedExtensions);
@@ -589,7 +582,7 @@ CExtensionData* CDirStatDoc::_pqsortExtensionData;
 //
 bool CDirStatDoc::DeletePhysicalItem(CItem* item, bool toTrashBin)
 {
-    if (CPersistence::GetShowDeleteWarning())
+    if (COptions::ShowDeleteWarning)
     {
         CDeleteWarningDlg warning;
         warning.m_fileName = item->GetPath();
@@ -597,7 +590,7 @@ bool CDirStatDoc::DeletePhysicalItem(CItem* item, bool toTrashBin)
         {
             return false;
         }
-        CPersistence::SetShowDeleteWarning(!warning.m_dontShowAgain);
+        COptions::ShowDeleteWarning = !warning.m_dontShowAgain;
     }
 
     ASSERT(item->GetParent() != NULL);
@@ -626,7 +619,7 @@ void CDirStatDoc::RefreshItem(std::vector<CItem*> item)
 
 // UDC confirmation Dialog.
 //
-void CDirStatDoc::AskForConfirmation(const USERDEFINEDCLEANUP* udc, CItem* item)
+void CDirStatDoc::AskForConfirmation(USERDEFINEDCLEANUP* udc, CItem* item)
 {
     if (!udc->askForConfirmation)
     {
@@ -634,7 +627,7 @@ void CDirStatDoc::AskForConfirmation(const USERDEFINEDCLEANUP* udc, CItem* item)
     }
 
     CStringW msg;
-    msg.FormatMessage(udc->recurseIntoSubdirectories ? IDS_RUDC_CONFIRMATIONss : IDS_UDC_CONFIRMATIONss, udc->title.GetString(), item->GetPath().GetString());
+    msg.FormatMessage(udc->recurseIntoSubdirectories ? IDS_RUDC_CONFIRMATIONss : IDS_UDC_CONFIRMATIONss, udc->title.Obj().c_str(), item->GetPath().GetString());
 
     if (IDYES != AfxMessageBox(msg, MB_YESNO))
     {
@@ -642,7 +635,7 @@ void CDirStatDoc::AskForConfirmation(const USERDEFINEDCLEANUP* udc, CItem* item)
     }
 }
 
-void CDirStatDoc::PerformUserDefinedCleanup(const USERDEFINEDCLEANUP* udc, CItem* item)
+void CDirStatDoc::PerformUserDefinedCleanup(USERDEFINEDCLEANUP* udc, CItem* item)
 {
     CWaitCursor wc;
 
@@ -674,13 +667,13 @@ void CDirStatDoc::PerformUserDefinedCleanup(const USERDEFINEDCLEANUP* udc, CItem
     }
     else
     {
-        CallUserDefinedCleanup(item->IsType(IT_DIRECTORY | IT_DRIVE), udc->commandLine, path, path, udc->showConsoleWindow, udc->waitForCompletion);
+        CallUserDefinedCleanup(item->IsType(IT_DIRECTORY | IT_DRIVE), udc->commandLine.Obj().c_str(), path, path, udc->showConsoleWindow, udc->waitForCompletion);
     }
 }
 
 void CDirStatDoc::RefreshAfterUserDefinedCleanup(const USERDEFINEDCLEANUP* udc, CItem* item)
 {
-    switch (udc->refreshPolicy)
+    switch (static_cast<REFRESHPOLICY>(udc->refreshPolicy.Obj()))
     {
     case RP_NO_REFRESH:
         break;
@@ -706,7 +699,7 @@ void CDirStatDoc::RefreshAfterUserDefinedCleanup(const USERDEFINEDCLEANUP* udc, 
     }
 }
 
-void CDirStatDoc::RecursiveUserDefinedCleanup(const USERDEFINEDCLEANUP* udc, const CStringW& rootPath, const CStringW& currentPath)
+void CDirStatDoc::RecursiveUserDefinedCleanup(USERDEFINEDCLEANUP* udc, const CStringW& rootPath, const CStringW& currentPath)
 {
     // (Depth first.)
 
@@ -717,11 +710,11 @@ void CDirStatDoc::RecursiveUserDefinedCleanup(const USERDEFINEDCLEANUP* udc, con
         {
             continue;
         }
-        if (GetWDSApp()->IsVolumeMountPoint(finder.GetFilePath()) && !GetOptions()->IsFollowMountPoints())
+        if (GetWDSApp()->IsVolumeMountPoint(finder.GetFilePath()) && !COptions::FollowMountPoints)
         {
             continue;
         }
-        if (GetWDSApp()->IsFolderJunction(finder.GetAttributes()) && !GetOptions()->IsFollowJunctionPoints())
+        if (GetWDSApp()->IsFolderJunction(finder.GetAttributes()) && !COptions::FollowJunctionPoints)
         {
             continue;
         }
@@ -729,7 +722,7 @@ void CDirStatDoc::RecursiveUserDefinedCleanup(const USERDEFINEDCLEANUP* udc, con
         RecursiveUserDefinedCleanup(udc, rootPath, finder.GetFilePath());
     }
 
-    CallUserDefinedCleanup(true, udc->commandLine, rootPath, currentPath, udc->showConsoleWindow, true);
+    CallUserDefinedCleanup(true, udc->commandLine.Obj().c_str(), rootPath, currentPath, udc->showConsoleWindow, true);
 }
 
 void CDirStatDoc::CallUserDefinedCleanup(bool isDirectory, const CStringW& format, const CStringW& rootPath, const CStringW& currentPath, bool showConsoleWindow, bool wait)
@@ -1142,10 +1135,10 @@ void CDirStatDoc::OnUpdateUserDefinedCleanup(CCmdUI* pCmdUI)
 {
     const int i = pCmdUI->m_nID - ID_USERDEFINEDCLEANUP0;
     const auto & items = CTreeListControl::GetTheTreeListControl()->GetAllSelected<CItem>();
-    bool allow_control = DirectoryListHasFocus() && GetOptions()->IsUserDefinedCleanupEnabled(i) && items.size() > 1;
-    for (const auto & item : items)
+    bool allow_control = DirectoryListHasFocus() && COptions::UserDefinedCleanups.at(i).enabled && !items.empty();
+    if (allow_control) for (const auto & item : items)
     {
-        allow_control &= UserDefinedCleanupWorksForItem(GetOptions()->GetUserDefinedCleanup(i), item);
+        allow_control &= UserDefinedCleanupWorksForItem(&COptions::UserDefinedCleanups[i], item);
     }
 
     pCmdUI->Enable(allow_control);
@@ -1153,7 +1146,7 @@ void CDirStatDoc::OnUpdateUserDefinedCleanup(CCmdUI* pCmdUI)
 
 void CDirStatDoc::OnUserDefinedCleanup(UINT id)
 {
-    const USERDEFINEDCLEANUP* udc = GetOptions()->GetUserDefinedCleanup(id - ID_USERDEFINEDCLEANUP0);
+    USERDEFINEDCLEANUP* udc = &COptions::UserDefinedCleanups[id - ID_USERDEFINEDCLEANUP0];
     const auto & items = CTreeListControl::GetTheTreeListControl()->GetAllSelected<CItem>();
     for (const auto & item : items)
     {
@@ -1260,7 +1253,7 @@ void CDirStatDoc::StartCoordinator(std::vector<CItem*> items)
         // item in the queue with its current children
         if (item->IsType(IT_MYCOMPUTER))
         {
-            items.erase(std::ranges::find(items, item));
+            std::erase(items, item);
             for (int i = 0; i < item->GetChildrenCount(); i++)
                 items.push_back(item->GetChild(i));
         }
@@ -1297,7 +1290,7 @@ void CDirStatDoc::StartCoordinator(std::vector<CItem*> items)
                     item->IsType(IT_FILE) ? item->GetName() : CStringW(L"")))
             {
                 // Remove item from list so we do not rescan it
-                items.erase(std::ranges::find(items, item));
+                std::erase(items, item);
 
                 if (item->IsRootItem())
                 {
@@ -1318,8 +1311,8 @@ void CDirStatDoc::StartCoordinator(std::vector<CItem*> items)
             }
         }
 
-        // Reset queue from last interation
-        const int max_threads = GetOptions()->GetScanningThreads();
+        // Reset queue from last iteration
+        const int max_threads = COptions::ScanningThreads;
         queue.reset(max_threads);
 
         // Add items to processing queue
@@ -1363,11 +1356,11 @@ void CDirStatDoc::StartCoordinator(std::vector<CItem*> items)
         {
             if (!item->IsType(IT_DRIVE)) continue;
             
-            if (GetDocument()->OptionShowFreeSpace())
+            if (COptions::ShowFreeSpace)
             {
                 item->CreateFreeSpaceItem();
             }
-            if (GetDocument()->OptionShowUnknown())
+            if (COptions::ShowUnknown)
             {
                 item->CreateUnknownItem();
             }

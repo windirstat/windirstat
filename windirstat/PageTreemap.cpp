@@ -21,9 +21,10 @@
 
 #include "stdafx.h"
 #include "WinDirStat.h"
-#include <common/CommonHelpers.h>
+#include "DirStatDoc.h"
 #include "Options.h"
 #include "PageTreeMap.h"
+#include <common/CommonHelpers.h>
 
 namespace
 {
@@ -94,9 +95,9 @@ BEGIN_MESSAGE_MAP(CPageTreemap, CPropertyPage)
     ON_WM_VSCROLL()
     ON_NOTIFY(COLBN_CHANGED, IDC_TREEMAPGRIDCOLOR, OnColorChangedTreemapGrid)
     ON_NOTIFY(COLBN_CHANGED, IDC_TREEMAPHIGHLIGHTCOLOR, OnColorChangedTreemapHighlight)
-    ON_BN_CLICKED(IDC_KDIRSTAT, OnBnClickedKdirstat)
-    ON_BN_CLICKED(IDC_SEQUOIAVIEW, OnBnClickedSequoiaview)
-    ON_BN_CLICKED(IDC_TREEMAPGRID, OnBnClickedTreemapgrid)
+    ON_BN_CLICKED(IDC_KDIRSTAT, OnSetModified)
+    ON_BN_CLICKED(IDC_SEQUOIAVIEW, OnSetModified)
+    ON_BN_CLICKED(IDC_TREEMAPGRID, OnSetModified)
     ON_BN_CLICKED(IDC_RESET, OnBnClickedReset)
     ON_NOTIFY(XYSLIDER_CHANGED, IDC_LIGHTSOURCE, OnLightSourceChanged)
 END_MESSAGE_MAP()
@@ -114,8 +115,8 @@ BOOL CPageTreemap::OnInitDialog()
     m_scaleFactor.SetPageSize(10);
     m_lightSource.SetRange(CSize(400, 400));
 
-    m_options = *GetOptions()->GetTreemapOptions();
-    m_highlightColor.SetColor(GetOptions()->GetTreemapHighlightColor());
+    m_options = COptions::TreemapOptions;
+    m_highlightColor.SetColor(COptions::TreeMapHighlightColor);
 
     UpdateData(false);
 
@@ -126,8 +127,9 @@ void CPageTreemap::OnOK()
 {
     UpdateData();
 
-    GetOptions()->SetTreemapOptions(m_options);
-    GetOptions()->SetTreemapHighlightColor(m_highlightColor.GetColor());
+    COptions::SetTreemapOptions(m_options);
+    COptions::TreeMapHighlightColor = m_highlightColor.GetColor();
+    GetDocument()->UpdateAllViews(nullptr, HINT_SELECTIONSTYLECHANGED);
 
     CPropertyPage::OnOK();
 }
@@ -204,17 +206,7 @@ void CPageTreemap::OnLightSourceChanged(NMHDR*, LRESULT*)
     ValuesAltered();
 }
 
-void CPageTreemap::OnBnClickedKdirstat()
-{
-    OnSomethingChanged();
-}
-
-void CPageTreemap::OnBnClickedSequoiaview()
-{
-    OnSomethingChanged();
-}
-
-void CPageTreemap::OnBnClickedTreemapgrid()
+void CPageTreemap::OnSetModified()
 {
     OnSomethingChanged();
 }

@@ -284,19 +284,20 @@ CStringW CDriveItem::GetDrive() const
 
 /////////////////////////////////////////////////////////////////////////////
 
-CSet<CDriveInformationThread*, CDriveInformationThread*> CDriveInformationThread::_runningThreads;
-CCriticalSection CDriveInformationThread::_csRunningThreads;
+
+std::unordered_set<CDriveInformationThread*> CDriveInformationThread::_runningThreads;
+std::shared_mutex CDriveInformationThread::_mutexRunningThreads;
 
 void CDriveInformationThread::AddRunningThread()
 {
-    CSingleLock lock(&_csRunningThreads, true);
-    _runningThreads.SetKey(this);
+    std::lock_guard lock(_mutexRunningThreads);
+    _runningThreads.insert(this);
 }
 
 void CDriveInformationThread::RemoveRunningThread()
 {
-    CSingleLock lock(&_csRunningThreads, true);
-    _runningThreads.RemoveKey(this);
+    std::lock_guard lock(_mutexRunningThreads);
+    _runningThreads.erase(this);
 }
 
 // This static method is called by the dialog when the dialog gets closed.
@@ -305,15 +306,10 @@ void CDriveInformationThread::RemoveRunningThread()
 //
 void CDriveInformationThread::InvalidateDialogHandle()
 {
-    CSingleLock lock(&_csRunningThreads, true);
-
-    POSITION pos = _runningThreads.GetStartPosition();
-    while (pos != nullptr)
+    std::lock_guard lock(_mutexRunningThreads);
+    for (const auto & thread : _runningThreads)
     {
-        CDriveInformationThread* thread;
-        _runningThreads.GetNextAssoc(pos, thread);
-
-        CSingleLock lockObj(&thread->m_cs, true);
+        std::lock_guard lockd(thread->m_mutex);
         thread->m_dialog = nullptr;
     }
 }
@@ -343,9 +339,8 @@ BOOL CDriveInformationThread::InitInstance()
     HWND dialog = nullptr;
 
     {
-        CSingleLock lock(&m_cs, true);
+        std::lock_guard lock(m_mutex);
         dialog = m_dialog;
-        // Of course, we must release m_cs here to avoid deadlocks.
     }
 
     if (dialog != nullptr)
@@ -385,8 +380,9 @@ LPARAM CDriveInformationThread::GetDriveInformation(bool& success, CStringW& nam
 
 IMPLEMENT_DYNAMIC(CDrivesList, COwnerDrawnListControl)
 
+// TODO: Persist Settings?
 CDrivesList::CDrivesList()
-    : COwnerDrawnListControl(L"drives", 20)
+    : COwnerDrawnListControl(20, COptions::DriveListColumnOrder.Ptr(), COptions::DriveListColumnWidths.Ptr())
 {
 }
 
@@ -487,7 +483,7 @@ UINT CSelectDrivesDlg::_serial;
 
 CSelectDrivesDlg::CSelectDrivesDlg(CWnd* pParent /*=NULL*/)
     : CDialog(CSelectDrivesDlg::IDD, pParent)
-      , m_radio(0), m_layout(this, L"sddlg")
+      , m_radio(0), m_layout(this, COptions::DriveWindowRect.Ptr())
 {
     _serial++;
 }
@@ -541,9 +537,9 @@ BOOL CSelectDrivesDlg::OnInitDialog()
 
     m_layout.OnInitDialog(true);
 
-    m_list.ShowGrid(GetOptions()->IsListGrid());
-    m_list.ShowStripes(GetOptions()->IsListStripes());
-    m_list.ShowFullRowSelection(GetOptions()->IsListFullRowSelection());
+    m_list.ShowGrid(COptions::ListGrid);
+    m_list.ShowStripes(COptions::ListStripes);
+    m_list.ShowFullRowSelection(COptions::ListFullRowSelection);
 
     m_list.SetExtendedStyle(m_list.GetExtendedStyle() | LVS_EX_HEADERDRAGDROP);
     // If we set an ImageList here, OnMeasureItem will have no effect ?!
@@ -556,8 +552,8 @@ BOOL CSelectDrivesDlg::OnInitDialog()
 
     m_list.OnColumnsInserted();
 
-    m_folderName = CPersistence::GetSelectDrivesFolder();
-    CPersistence::GetSelectDrivesDrives(m_selectedDrives);
+    m_folderName = COptions::SelectDrivesFolder.Obj().c_str();
+    m_selectedDrives = COptions::SelectDrivesDrives;
 
     ShowWindow(SW_SHOWNORMAL);
     UpdateWindow();
@@ -592,9 +588,9 @@ BOOL CSelectDrivesDlg::OnInitDialog()
         m_list.InsertListItem(m_list.GetItemCount(), item);
         item->StartQuery(m_hWnd, _serial);
 
-        for (int k = 0; k < m_selectedDrives.GetSize(); k++)
+        for (const auto & drive : m_selectedDrives)
         {
-            if (item->GetDrive() == m_selectedDrives[k])
+            if (std::wstring(item->GetDrive()) == drive)
             {
                 m_list.SelectItem(item);
                 break;
@@ -604,7 +600,7 @@ BOOL CSelectDrivesDlg::OnInitDialog()
 
     m_list.SortItems();
 
-    m_radio = CPersistence::GetSelectDrivesRadio();
+    m_radio = COptions::SelectDrivesRadio;
     UpdateData(false);
 
     switch (m_radio)
@@ -674,7 +670,7 @@ void CSelectDrivesDlg::OnOK()
     UpdateData();
 
     m_drives.RemoveAll();
-    m_selectedDrives.RemoveAll();
+    m_selectedDrives.clear();
     if (m_radio == RADIO_AFOLDER)
     {
         m_folderName = getFullPathName_(m_folderName);
@@ -692,13 +688,12 @@ void CSelectDrivesDlg::OnOK()
         }
         if (m_list.IsItemSelected(i))
         {
-            m_selectedDrives.Add(item->GetDrive());
+            m_selectedDrives.emplace_back(item->GetDrive().GetString());
         }
     }
 
-    CPersistence::SetSelectDrivesRadio(m_radio);
-    CPersistence::SetSelectDrivesFolder(m_folderName);
-    CPersistence::SetSelectDrivesDrives(m_selectedDrives);
+    COptions::SelectDrivesRadio = m_radio;
+    COptions::SelectDrivesFolder = std::wstring(m_folderName);
 
     CDialog::OnOK();
 }
@@ -776,8 +771,6 @@ void CSelectDrivesDlg::OnMeasureItem(int nIDCtl, LPMEASUREITEMSTRUCT mis)
 
 void CSelectDrivesDlg::OnLvnItemchangedDrives(NMHDR* /*pNMHDR*/, LRESULT* pResult)
 {
-    // unused: LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
-
     m_radio = RADIO_SOMEDRIVES;
 
     UpdateData(false);

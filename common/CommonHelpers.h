@@ -23,10 +23,13 @@
 
 #include <common/Constants.h>
 
+#include <string>
+
 BOOL ShellExecuteThrow(HWND hwnd, LPCWSTR lpVerb, LPCWSTR lpFile, LPCWSTR lpParameters, LPCWSTR lpDirectory, INT nShowCmd);
 BOOL ShellExecuteNoThrow(HWND hwnd, LPCWSTR lpVerb, LPCWSTR lpFile, LPCWSTR lpParameters, LPCWSTR lpDirectory, INT nShowCmd);
 CStringW MyStrRetToString(const LPITEMIDLIST pidl, const STRRET* strret);
 CStringW GetBaseNameFromPath(LPCWSTR path);
 CStringW LoadString(UINT resId);
-CStringW GetAppFileName();
+CStringW GetAppFileName(CStringW ext = L"");
 CStringW GetAppFolder();
+std::wstring GetNameFromSid(const PSID sid);

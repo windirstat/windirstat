@@ -1,4 +1,4 @@
-// item.h - Declaration of CItem
+// Item.h - Declaration of CItem
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
@@ -40,7 +40,8 @@ enum
     COL_FILES,
     COL_SUBDIRS,
     COL_LASTCHANGE,
-    COL_ATTRIBUTES
+    COL_ATTRIBUTES,
+    COL_OWNER
 };
 
 // Item types
@@ -181,6 +182,7 @@ public:
     double GetFraction() const;
     bool IsRootItem() const;
     CStringW GetPath() const;
+    CStringW GetOwner(bool force = false) const;
     bool HasUncPath() const;
     CStringW GetFindPattern() const;
     CStringW GetFolderPath() const;

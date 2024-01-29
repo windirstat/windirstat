@@ -51,6 +51,7 @@ class CTreeListItem : public COwnerDrawnListItem
         CPacman pacman;
         CRect rcPlusMinus;    // Coordinates of the little +/- rectangle, relative to the upper left corner of the item.
         CRect rcTitle;        // Coordinates of the label, relative to the upper left corner of the item.
+        CStringW owner;       // Owner of file or folder
         short image;          // -1 as long as not needed, >= 0: valid index in MyImageList.
         unsigned char indent; // 0 for the root item, 1 for its children, and so on.
         bool isExpanded;      // Whether item is expanded.
@@ -104,10 +105,10 @@ public:
 
 protected:
     static CTreeListControl* GetTreeListControl();
+    mutable VISIBLEINFO* m_vi;
 
 private:
     CTreeListItem* m_parent;
-    mutable VISIBLEINFO* m_vi;
 };
 
 //

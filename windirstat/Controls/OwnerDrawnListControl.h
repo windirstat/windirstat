@@ -21,6 +21,8 @@
 
 #pragma once
 
+#include <vector>
+
 #include "SortingListControl.h"
 
 class COwnerDrawnListItem;
@@ -72,7 +74,7 @@ class COwnerDrawnListControl : public CSortingListControl
     DECLARE_DYNAMIC(COwnerDrawnListControl)
 
 public:
-    COwnerDrawnListControl(LPCWSTR name, int rowHeight);
+    COwnerDrawnListControl(int rowHeight, std::vector<int>* column_order, std::vector<int>* column_widths);
     ~COwnerDrawnListControl() override = default;
     void OnColumnsInserted();
     virtual void SysColorChanged();
@@ -103,7 +105,7 @@ public:
     int GetTextXMargin();
     int GetGeneralLeftIndent();
     void AdjustColumnWidth(int col);
-    CRect GetWholeSubitemRect(int item, int subitem) const;
+    CRect GetWholeSubitemRect(int item, int subitem);
 
     bool HasFocus() const;
     bool IsShowSelectionAlways() const;
@@ -112,7 +114,7 @@ protected:
     void InitializeColors();
     void DrawItem(LPDRAWITEMSTRUCT pdis) override;
     int GetSubItemWidth(COwnerDrawnListItem* item, int subitem);
-    bool IsColumnRightAligned(int col) const;
+    bool IsColumnRightAligned(int col);
 
     COLORREF m_windowColor;      // The default background color if !m_showStripes
     COLORREF m_stripeColor;      // The stripe color, used for every other item if m_showStripes

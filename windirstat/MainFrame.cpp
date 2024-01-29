@@ -1,4 +1,4 @@
-// mainframe.cpp - Implementation of CMySplitterWnd, CPacmanControl and CMainFrame
+// MainFrame.cpp - Implementation of CMySplitterWnd, CPacmanControl and CMainFrame
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
@@ -35,6 +35,7 @@
 #include "PageTreeList.h"
 #include "PageTreeMap.h"
 #include "PageGeneral.h"
+#include "Properties.h"
 
 #include <common/MdExceptions.h>
 #include <common/CommonHelpers.h>
@@ -46,6 +47,7 @@
 #include <unordered_map>
 
 #include "PageAdvanced.h"
+#include "Properties.h"
 
 namespace
 {
@@ -121,25 +123,13 @@ void COptionsPropertySheet::SetLanguageChanged(bool changed)
 BOOL COptionsPropertySheet::OnInitDialog()
 {
     const BOOL bResult = CPropertySheet::OnInitDialog();
-
-    CRect rc;
-    GetWindowRect(rc);
-    CPoint pt = rc.TopLeft();
-    CPersistence::GetConfigPosition(pt);
-    CRect rc2(pt, rc.Size());
-    MoveWindow(rc2);
-
-    SetActivePage(CPersistence::GetConfigPage(GetPageCount() - 1));
+    SetActivePage(min(COptions::ConfigPage, GetPageCount() - 1));
     return bResult;
 }
 
 BOOL COptionsPropertySheet::OnCommand(WPARAM wParam, LPARAM lParam)
 {
-    CPersistence::SetConfigPage(GetActiveIndex());
-
-    CRect rc;
-    GetWindowRect(rc);
-    CPersistence::SetConfigPosition(rc.TopLeft());
+    COptions::ConfigPage = GetActiveIndex();
 
     const int cmd = LOWORD(wParam);
     if (IDOK == cmd || ID_APPLY_NOW == cmd)
@@ -176,11 +166,11 @@ BOOL COptionsPropertySheet::OnCommand(WPARAM wParam, LPARAM lParam)
 
 /////////////////////////////////////////////////////////////////////////////
 
-CMySplitterWnd::CMySplitterWnd(LPCWSTR name)
-    : m_persistenceName(name)
-      , m_splitterPos(0.5)
+CMySplitterWnd::CMySplitterWnd(double * splitterPos) :
+    m_splitterPos(0),
+    m_userSplitterPos(splitterPos)
 {
-    CPersistence::GetSplitterPos(m_persistenceName, m_wasTrackedByUser, m_userSplitterPos);
+    m_wasTrackedByUser = (*m_userSplitterPos > 0 && *m_userSplitterPos < 1);
 }
 
 BEGIN_MESSAGE_MAP(CMySplitterWnd, CSplitterWnd)
@@ -220,13 +210,8 @@ void CMySplitterWnd::StopTracking(BOOL bAccept)
             }
         }
         m_wasTrackedByUser = true;
-        m_userSplitterPos  = m_splitterPos;
+        *m_userSplitterPos = m_splitterPos;
     }
-}
-
-double CMySplitterWnd::GetSplitterPos() const
-{
-    return m_splitterPos;
 }
 
 void CMySplitterWnd::SetSplitterPos(double pos)
@@ -266,7 +251,7 @@ void CMySplitterWnd::RestoreSplitterPos(double posIfVirgin)
 {
     if (m_wasTrackedByUser)
     {
-        SetSplitterPos(m_userSplitterPos);
+        SetSplitterPos(*m_userSplitterPos);
     }
     else
     {
@@ -297,7 +282,6 @@ void CMySplitterWnd::OnSize(UINT nType, int cx, int cy)
 
 void CMySplitterWnd::OnDestroy()
 {
-    CPersistence::SetSplitterPos(m_persistenceName, m_wasTrackedByUser, m_userSplitterPos);
     CSplitterWnd::OnDestroy();
 }
 
@@ -427,8 +411,8 @@ CMainFrame::CMainFrame()
       , m_scanSuspend(false)
       , m_progressRange(100)
       , m_progressPos(0)
-      , m_wndSubSplitter(L"sub")
-      , m_wndSplitter(L"main")
+      , m_wndSubSplitter(COptions::SubSplitterPos.Ptr())
+      , m_wndSplitter(COptions::MainSplitterPos.Ptr())
       , m_logicalFocus(LF_NONE)
       , m_TaskbarButtonState(TBPF_INDETERMINATE)
       , m_TaskbarButtonPreviousState(TBPF_INDETERMINATE)
@@ -460,7 +444,7 @@ void CMainFrame::ShowProgress(ULONGLONG range)
     // In this case we display pacman.
     HideProgress();
 
-    if (GetOptions()->IsFollowMountPoints() || GetOptions()->IsFollowJunctionPoints())
+    if (COptions::FollowMountPoints || COptions::FollowJunctionPoints)
     {
         range = 0;
     }
@@ -701,10 +685,12 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 void CMainFrame::InitialShowWindow()
 {
-    WINDOWPLACEMENT wp = { .length = sizeof(wp) };
-    GetWindowPlacement(&wp);
-    CPersistence::GetMainWindowPlacement(wp);
-    SetWindowPlacement(&wp);
+    WINDOWPLACEMENT wpsetting = COptions::MainWindowPlacement;
+    if (wpsetting.length != 0)
+    {
+        SetWindowPlacement(&wpsetting);
+    }
+
     SetTimer(ID_INDICATOR_MEMORYUSAGE, 25, nullptr);
 }
 
@@ -724,9 +710,8 @@ void CMainFrame::OnClose()
     // It's too late, to do this in OnDestroy(). Because the toolbar, if undocked,
     // is already destroyed in OnDestroy(). So we must save the toolbar state here
     // in OnClose().
-    SaveBarState(CPersistence::GetBarStateSection());
-    CPersistence::SetShowToolbar((m_wndToolBar.GetStyle() & WS_VISIBLE) != 0);
-    CPersistence::SetShowStatusbar((m_wndStatusBar.GetStyle() & WS_VISIBLE) != 0);
+    COptions::ShowToolbar = (m_wndToolBar.GetStyle() & WS_VISIBLE) != 0;
+    COptions::ShowStatusbar = (m_wndStatusBar.GetStyle() & WS_VISIBLE) != 0;
 
     CFrameWndEx::OnClose();
 }
@@ -735,11 +720,12 @@ void CMainFrame::OnDestroy()
 {
     WINDOWPLACEMENT wp = { .length = sizeof(wp) };
     GetWindowPlacement(&wp);
-    CPersistence::SetMainWindowPlacement(wp);
+    COptions::MainWindowPlacement = wp;
 
-    CPersistence::SetShowFileTypes(GetTypeView()->IsShowTypes());
-    CPersistence::SetShowTreemap(GetGraphView()->IsShowTreemap());
+    COptions::ShowFileTypes = GetTypeView()->IsShowTypes();
+    COptions::ShowTreemap = GetGraphView()->IsShowTreemap();
 
+    PersistedSetting::WritePersistedProperties();
     CFrameWndEx::OnDestroy();
 }
 
@@ -754,8 +740,8 @@ BOOL CMainFrame::OnCreateClient(LPCREATESTRUCT /*lpcs*/, CCreateContext* pContex
     MinimizeGraphView();
     MinimizeTypeView();
 
-    GetTypeView()->ShowTypes(CPersistence::GetShowFileTypes());
-    GetGraphView()->ShowTreemap(CPersistence::GetShowTreemap());
+    GetTypeView()->ShowTypes(COptions::ShowFileTypes);
+    GetGraphView()->ShowTreemap(COptions::ShowTreemap);
 
     return TRUE;
 }
@@ -921,11 +907,11 @@ void CMainFrame::UpdateCleanupMenu(CMenu* menu)
     CStringW info;
     if (items == 1)
     {
-        info.FormatMessage(IDS__ONEITEMss, FormatBytes(bytes).GetString(), GetOptions()->IsHumanFormat() && bytes != 0 ? wds::strEmpty : (wds::strBlankSpace + GetSpec_Bytes()).GetString());
+        info.FormatMessage(IDS__ONEITEMss, FormatBytes(bytes).GetString(), COptions::HumanFormat && bytes != 0 ? wds::strEmpty : (wds::strBlankSpace + GetSpec_Bytes()).GetString());
     }
     else
     {
-        info.FormatMessage(IDS__sITEMSss, FormatCount(items).GetString(), FormatBytes(bytes).GetString(), GetOptions()->IsHumanFormat() && bytes != 0 ? wds::strEmpty : (wds::strBlankSpace + GetSpec_Bytes()).GetString());
+        info.FormatMessage(IDS__sITEMSss, FormatCount(items).GetString(), FormatBytes(bytes).GetString(), COptions::HumanFormat && bytes != 0 ? wds::strEmpty : (wds::strBlankSpace + GetSpec_Bytes()).GetString());
     }
 
     s += info;
@@ -991,27 +977,28 @@ void CMainFrame::QueryRecycleBin(ULONGLONG& items, ULONGLONG& bytes)
 
 void CMainFrame::AppendUserDefinedCleanups(CMenu* menu)
 {
-    CArray<int, int> indices;
-    GetOptions()->GetEnabledUserDefinedCleanups(indices);
-    if (indices.GetSize() > 0)
+    bool bHasItem = false;
+    for (size_t iCurrent = 0; iCurrent < COptions::UserDefinedCleanups.size(); iCurrent++)
     {
-        for (int i = 0; i < indices.GetSize(); i++)
+        auto& udc = COptions::UserDefinedCleanups[iCurrent];
+        if (!udc.enabled) continue;
+
+        CStringW string;
+        string.FormatMessage(IDS_UDCsCTRLd, udc.title.Obj().c_str(), iCurrent);
+
+        const auto& items = CTreeListControl::GetTheTreeListControl()->GetAllSelected<CItem>();
+        bool udc_valid = GetLogicalFocus() == LF_DIRECTORYLIST && !items.empty();
+        if (udc_valid) for (const auto& item : items)
         {
-            CStringW string;
-            string.FormatMessage(IDS_UDCsCTRLd, GetOptions()->GetUserDefinedCleanup(indices[i])->title.GetString(), indices[i]);
-
-            bool udc_valid = GetLogicalFocus() == LF_DIRECTORYLIST;
-            const auto & items = CTreeListControl::GetTheTreeListControl()->GetAllSelected<CItem>();
-            for (const auto& item : items)
-            {
-                udc_valid &= GetDocument()->UserDefinedCleanupWorksForItem(GetOptions()->GetUserDefinedCleanup(indices[i]), item);
-            }
-
-            const UINT flags = udc_valid ? MF_ENABLED : (MF_DISABLED | MF_GRAYED);
-            menu->AppendMenu(flags | MF_STRING, ID_USERDEFINEDCLEANUP0 + indices[i], string);
+            udc_valid &= GetDocument()->UserDefinedCleanupWorksForItem(&udc, item);
         }
+
+        bHasItem = true;
+        const UINT flags = udc_valid ? MF_ENABLED : (MF_DISABLED | MF_GRAYED);
+        menu->AppendMenu(flags | MF_STRING, ID_USERDEFINEDCLEANUP0 + iCurrent, string);
     }
-    else
+   
+    if (!bHasItem)
     {
         // This is just to show new users, that they can configure user defined cleanups.
         menu->AppendMenu(MF_GRAYED, 0, LoadString(IDS_USERDEFINEDCLEANUP0));
@@ -1170,8 +1157,6 @@ void CMainFrame::OnConfigure()
     sheet.AddPage(&advanced);
 
     sheet.DoModal();
-
-    GetOptions()->SaveToRegistry();
 
     if (sheet.m_restartApplication)
     {

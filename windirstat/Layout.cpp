@@ -1,4 +1,4 @@
-// layout.cpp - Implementation of CLayout
+// Layout.cpp - Implementation of CLayout
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
@@ -23,13 +23,13 @@
 #include "WinDirStat.h"
 #include "Options.h"
 #include "SelectObject.h"
-#include "layout.h"
+#include "Layout.h"
 
-CLayout::CLayout(CWnd* dialog, LPCWSTR name)
+CLayout::CLayout(CWnd* dialog, RECT* wp)
 {
     ASSERT(dialog != NULL);
+    m_wp = wp;
     m_dialog = dialog;
-    m_name   = name;
 
     // This is necessary because OnGetMinMaxInfo() will be called
     // before OnInitDialog!
@@ -74,8 +74,7 @@ void CLayout::OnInitDialog(bool centerWindow)
     const int i                    = AddControl(&m_sizeGripper, 1, 1, 0, 0);
     m_control[i].originalRectangle = sg;
 
-    CPersistence::GetDialogRectangle(m_name, rcDialog);
-    m_dialog->MoveWindow(rcDialog);
+    m_dialog->MoveWindow(m_wp);
     if (centerWindow)
     {
         m_dialog->CenterWindow();
@@ -84,9 +83,7 @@ void CLayout::OnInitDialog(bool centerWindow)
 
 void CLayout::OnDestroy() const
 {
-    CRect rc;
-    m_dialog->GetWindowRect(rc);
-    CPersistence::SetDialogRectangle(m_name, rc);
+    m_dialog->GetWindowRect(m_wp);
 }
 
 void CLayout::OnSize()

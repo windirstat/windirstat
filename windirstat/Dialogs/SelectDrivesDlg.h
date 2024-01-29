@@ -22,9 +22,11 @@
 #pragma once
 
 #include "OwnerDrawnListControl.h"
-#include "layout.h"
+#include "Layout.h"
 #include "resource.h"
-#include "set.h"
+
+#include <shared_mutex>
+#include <unordered_set>
 
 //
 // The dialog has these three radio buttons.
@@ -83,8 +85,8 @@ class CDriveInformationThread final : public CWinThread
 {
     // Set of all running CDriveInformationThreads.
     // Used by InvalidateDialogHandle().
-    static CSet<CDriveInformationThread*, CDriveInformationThread*> _runningThreads;
-    static CCriticalSection _csRunningThreads;
+    static std::unordered_set<CDriveInformationThread*> _runningThreads;
+    static std::shared_mutex _mutexRunningThreads;
 
     // The objects register and unregister themselves in _runningThreads
     void AddRunningThread();
@@ -102,9 +104,9 @@ private:
     const CStringW m_path;    // Path like "C:\"
     const LPARAM m_driveItem; // The list item, we belong to
 
-    CCriticalSection m_cs; // for m_dialog
-    HWND m_dialog;         // synchronized by m_cs
-    const UINT m_serial;   // serial number of m_dialog
+    std::shared_mutex m_mutex; // for m_dialog
+    HWND m_dialog;             // synchronized by m_cs
+    const UINT m_serial;       // serial number of m_dialog
 
     // "[out]"-parameters
     CStringW m_name;        // Result: name like "BOOT (C:)", valid if m_success
@@ -166,7 +168,7 @@ protected:
     static UINT _serial; // Each Instance of this dialog gets a serial number
     CDrivesList m_list;
     CButton m_okButton;
-    CStringArray m_selectedDrives;
+    std::vector<std::wstring> m_selectedDrives;
     CLayout m_layout;
     // Callback function for the dialog shown by SHBrowseForFolder()
     // MUST be static!

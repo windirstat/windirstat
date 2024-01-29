@@ -1,4 +1,4 @@
-// graphview.cpp - Implementation of CGraphView
+// GraphView.cpp - Implementation of CGraphView
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
@@ -158,7 +158,7 @@ void CGraphView::OnDraw(CDC* pDC)
                     DrawZoomFrame(&dcmem, rc);
                 }
 
-                m_treemap.DrawTreemap(&dcmem, rc, GetDocument()->GetZoomItem(), GetOptions()->GetTreemapOptions());
+                m_treemap.DrawTreemap(&dcmem, rc, GetDocument()->GetZoomItem(), &COptions::TreemapOptions);
 
                 // Cause OnIdle() to be called once.
                 ::PostThreadMessage(::GetCurrentThreadId(), WM_NULL, 0, 0);
@@ -217,7 +217,7 @@ void CGraphView::DrawHighlightExtension(CDC* pdc)
 {
     CWaitCursor wc;
 
-    CPen pen(PS_SOLID, 1, GetOptions()->GetTreemapHighlightColor());
+    CPen pen(PS_SOLID, 1, COptions::TreeMapHighlightColor);
     CSelectObject sopen(pdc, &pen);
     CSelectStockObject sobrush(pdc, NULL_BRUSH);
     RecurseHighlightExtension(pdc, GetDocument()->GetZoomItem());
@@ -260,7 +260,7 @@ void CGraphView::DrawSelection(CDC* pdc)
 {
     CSelectStockObject sobrush(pdc, NULL_BRUSH);
 
-    CPen pen(PS_SOLID, 1, GetOptions()->GetTreemapHighlightColor());
+    CPen pen(PS_SOLID, 1, COptions::TreeMapHighlightColor);
     CSelectObject sopen(pdc, &pen);
 
     const auto& items = CTreeListControl::GetTheTreeListControl()->GetAllSelected<CItem>();
@@ -328,7 +328,7 @@ void CGraphView::RenderHighlightRectangle(CDC* pdc, CRect& rc)
     }
     else
     {
-        pdc->FillSolidRect(rc, GetOptions()->GetTreemapHighlightColor());
+        pdc->FillSolidRect(rc, COptions::TreeMapHighlightColor);
     }
 }
 

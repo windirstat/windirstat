@@ -58,9 +58,8 @@ public:
     BOOL InitInstance() override;
     int ExitInstance() override;
 
-    LANGID GetBuiltInLanguage();
-    LANGID GetLangid() const;          // Language as selected in PageGeneral
-    LANGID GetEffectiveLangid(); // Language to be used for date/time and number formatting
+    bool InPortableMode() const;
+    bool SetPortableMode(bool enable, bool only_open = false);
 
     void ReReadMountPoints();
     bool IsVolumeMountPoint(const CStringW& path);
@@ -80,16 +79,18 @@ public:
 
     static bool getDiskFreeSpace(LPCWSTR pszRootPath, ULONGLONG& total, ULONGLONG& unused);
 
-protected:
-    CStringW FindResourceDllPathByLangid(LANGID& langid);
-    CStringW FindHelpfilePathByLangid(LANGID langid);
-    CStringW FindAuxiliaryFileByLangid(LPCWSTR prefix, LPCWSTR suffix, LANGID& langid, bool checkResource);
-    bool ScanResourceDllName(LPCWSTR name, LANGID& langid);
-    bool ScanAuxiliaryFileName(LPCWSTR prefix, LPCWSTR suffix, LPCWSTR name, LANGID& langid);
+    // Language resource processing
+    static CStringW FindResourceDllPathByLangid(LANGID& langid);
+    static CStringW FindHelpfilePathByLangid(LANGID langid);
+    static CStringW FindAuxiliaryFileByLangid(LPCWSTR prefix, LPCWSTR suffix, LANGID& langid, bool checkResource);
+    static bool ScanResourceDllName(LPCWSTR name, LANGID& langid);
+    static bool ScanAuxiliaryFileName(LPCWSTR prefix, LPCWSTR suffix, LPCWSTR name, LANGID& langid);
 #   ifdef _DEBUG
-    void TestScanResourceDllName();
+    static void TestScanResourceDllName();
 #   endif
-    bool IsCorrectResourceDll(LPCWSTR path);
+    static bool IsCorrectResourceDll(LPCWSTR path);
+
+protected:
 
     bool UpdateMemoryInfo();
 

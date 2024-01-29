@@ -157,9 +157,6 @@
     <ClInclude Include="SelectObject.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Set.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="stdafx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -213,6 +210,9 @@
     </ClInclude>
     <ClInclude Include="PageAdvanced.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Properties.h">
+      <Filter>Header Files\Common</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -314,6 +314,9 @@
     </ClCompile>
     <ClCompile Include="PageAdvanced.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Property.cpp">
+      <Filter>Source Files\Common</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

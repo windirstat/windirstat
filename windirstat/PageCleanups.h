@@ -86,14 +86,8 @@ protected:
     afx_msg void OnEnChangeTitle();
     afx_msg void OnBnClickedWorksfordrives();
     afx_msg void OnBnClickedWorksfordirectories();
-    afx_msg void OnBnClickedWorksforfiles();
-    afx_msg void OnBnClickedWorksforuncpaths();
-    afx_msg void OnEnChangeCommandline();
+    afx_msg void OnBnClickedModified();
     afx_msg void OnBnClickedRecurseintosubdirectories();
-    afx_msg void OnBnClickedAskforconfirmation();
-    afx_msg void OnBnClickedShowconsolewindow();
-    afx_msg void OnBnClickedWaitforcompletion();
-    afx_msg void OnCbnSelendokRefreshpolicy();
     afx_msg void OnBnClickedUp();
     afx_msg void OnBnClickedDown();
     afx_msg void OnBnClickedHelpbutton();

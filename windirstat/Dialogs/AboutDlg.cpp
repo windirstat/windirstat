@@ -26,6 +26,8 @@
 #include <common/CommonHelpers.h>
 #include "AboutDlg.h"
 
+#include "Options.h"
+
 namespace
 {
     // Tabs
@@ -249,7 +251,7 @@ void CAboutDlg::CMyTabControl::OnSize(UINT nType, int cx, int cy)
 
 CAboutDlg::CAboutDlg()
     : CDialog(CAboutDlg::IDD)
-      , m_layout(this, L"aboutdlg")
+      , m_layout(this, COptions::AboutWindowRect.Ptr())
 {
 }
 

@@ -192,8 +192,8 @@ void COwnerDrawnListItem::DrawPercentage(CDC* pdc, CRect rc, double fraction, CO
 
 IMPLEMENT_DYNAMIC(COwnerDrawnListControl, CSortingListControl)
 
-COwnerDrawnListControl::COwnerDrawnListControl(LPCWSTR name, int rowHeight)
-    : CSortingListControl(name)
+COwnerDrawnListControl::COwnerDrawnListControl(int rowHeight, std::vector<int>* column_order, std::vector<int>* column_widths)
+    : CSortingListControl(column_order, column_widths)
       , m_rowHeight(rowHeight)
       , m_showGrid(false)
       , m_showStripes(false)
@@ -451,9 +451,12 @@ void COwnerDrawnListControl::DrawItem(LPDRAWITEMSTRUCT pdis)
 
     for (int i = 0; i < order.GetSize(); i++)
     {
-        const int subitem = order[i];
+        // The subitem tracks the identifer that maps the column enum
+        LVCOLUMN info = { LVCF_SUBITEM };
+        GetColumn(order[i], &info);
+        const int subitem = info.iSubItem;
 
-        CRect rc = GetWholeSubitemRect(pdis->itemID, subitem);
+        CRect rc = GetWholeSubitemRect(pdis->itemID, order[i]);
 
         CRect rcDraw = rc - rcItem.TopLeft();
 
@@ -504,7 +507,7 @@ void COwnerDrawnListControl::DrawItem(LPDRAWITEMSTRUCT pdis)
     }
 }
 
-bool COwnerDrawnListControl::IsColumnRightAligned(int col) const
+bool COwnerDrawnListControl::IsColumnRightAligned(int col)
 {
     HDITEM hditem;
     ZeroMemory(&hditem, sizeof(hditem));
@@ -515,7 +518,7 @@ bool COwnerDrawnListControl::IsColumnRightAligned(int col) const
     return (hditem.fmt & HDF_RIGHT) != 0;
 }
 
-CRect COwnerDrawnListControl::GetWholeSubitemRect(int item, int subitem) const
+CRect COwnerDrawnListControl::GetWholeSubitemRect(int item, int subitem)
 {
     CRect rc;
     if (subitem == 0)

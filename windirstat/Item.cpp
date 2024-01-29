@@ -20,8 +20,11 @@
 //
 
 #include "stdafx.h"
+#include "aclapi.h"
+#include "sddl.h"
+
 #include "WinDirStat.h"
-#include "DirStatDoc.h" // GetItemColor()
+#include "DirStatDoc.h"
 #include "MainFrame.h"
 #include <common/CommonHelpers.h>
 #include "GlobalHelpers.h"
@@ -37,6 +40,8 @@
 #include <queue>
 #include <shared_mutex>
 #include <stack>
+
+#include "SmartPointer.h"
 
 namespace
 {
@@ -127,7 +132,7 @@ bool CItem::DrawSubitem(int subitem, CDC* pdc, CRect rc, UINT state, int* width,
 
     const bool showReadJobs = MustShowReadJobs();
 
-    if (showReadJobs && !GetOptions()->IsPacmanAnimation())
+    if (showReadJobs && !COptions::PacmanAnimation)
     {
         return false;
     }
@@ -190,7 +195,7 @@ CStringW CItem::GetText(int subitem) const
         break;
 
     case COL_PERCENTAGE:
-        if (GetOptions()->IsShowTimeSpent() && MustShowReadJobs() || IsRootItem())
+        if (COptions::ShowTimeSpent && MustShowReadJobs() || IsRootItem())
         {
             s.Format(L"[%s s]", FormatMilliseconds(GetTicksWorked()).GetString());
         }
@@ -238,6 +243,13 @@ CStringW CItem::GetText(int subitem) const
         if (!IsType(IT_FREESPACE | IT_UNKNOWN | IT_MYCOMPUTER))
         {
             s = FormatAttributes(GetAttributes());
+        }
+        break;
+
+    case COL_OWNER:
+        if (IsType(IT_FILE | IT_DIRECTORY))
+        {
+            s = GetOwner();
         }
         break;
 
@@ -351,11 +363,19 @@ int CItem::CompareSibling(const CTreeListItem* tlib, int subitem) const
             return 1;
         }
         break;
+
     case COL_ATTRIBUTES:
         {
             r = signum(GetSortAttributes() - other->GetSortAttributes());
         }
         break;
+
+    case COL_OWNER:
+        {
+            r = signum(GetOwner().CompareNoCase(other->GetOwner()));
+        }
+        break;
+
 
     default:
         {
@@ -542,7 +562,7 @@ void CItem::AddChild(CItem* child)
 void CItem::RemoveChild(CItem* child)
 {
     std::lock_guard m_guard(m_protect);
-    m_children.erase(std::ranges::find(m_children, child));
+    std::erase(m_children, child);
 
     if (IsVisible())
     {
@@ -764,6 +784,28 @@ CStringW CItem::GetPath() const
     return path;
 }
 
+
+CStringW CItem::GetOwner(bool force) const
+{
+    if (!IsVisible() && !force)
+    {
+        return L"";
+    }
+
+    // If visible, use cached variable
+    CStringW tmp;
+    CStringW & ret = (force) ? tmp : m_vi->owner;
+    if (!ret.IsEmpty()) return ret;
+
+    // Fetch owner information from disk
+    SmartPointer<PSECURITY_DESCRIPTOR> ps(LocalFree);
+    PSID sid = nullptr;
+    GetNamedSecurityInfo(GetPath(), SE_FILE_OBJECT, OWNER_SECURITY_INFORMATION,
+        &sid, nullptr, nullptr, nullptr, &ps);
+    ret = GetNameFromSid(sid).c_str();
+    return ret;
+}
+
 bool CItem::HasUncPath() const
 {
     const CStringW path = GetPath();
@@ -878,6 +920,7 @@ ULONGLONG CItem::GetTicksWorked() const
 
 void CItem::ScanItemsFinalize(CItem* item)
 {
+    if (item == nullptr) return;
     std::stack<CItem*> queue;
     queue.push(item);
     while (!queue.empty())
@@ -894,7 +937,7 @@ void CItem::ScanItemsFinalize(CItem* item)
 
 void CItem::ScanItems(BlockingQueue<CItem*> * queue)
 {
-    const bool skip_hidden = GetOptions()->IsSkipHidden();
+    const bool skip_hidden = COptions::SkipHidden;
 
     while (CItem * item = queue->pop())
     {
@@ -1086,7 +1129,7 @@ void CItem::UpdateUnknownItem()
     CDirStatApp::getDiskFreeSpace(GetPath(), total, free);
 
     ULONGLONG unknownspace = total - GetSize();
-    if (!GetDocument()->OptionShowFreeSpace())
+    if (!COptions::ShowUnknown)
     {
         unknownspace -= free;
     }
@@ -1229,8 +1272,18 @@ bool CItem::MustShowReadJobs() const
 
 COLORREF CItem::GetPercentageColor() const
 {
-    const int i = GetIndent() % GetOptions()->GetTreelistColorCount();
-    return GetOptions()->GetTreelistColor(i);
+    const int i = GetIndent() % COptions::TreeListColorCount;
+    return std::vector<COLORREF>
+    {
+        COptions::TreeListColor0,
+        COptions::TreeListColor1,
+        COptions::TreeListColor2,
+        COptions::TreeListColor3,
+        COptions::TreeListColor4,
+        COptions::TreeListColor5,
+        COptions::TreeListColor6,
+        COptions::TreeListColor7
+    } [i] ;
 }
 
 CStringW CItem::UpwardGetPathWithoutBackslash() const
@@ -1261,8 +1314,8 @@ CStringW CItem::UpwardGetPathWithoutBackslash() const
 CItem* CItem::AddDirectory(const FileFindEnhanced& finder)
 {
     const bool dontFollow = finder.IsProtectedReparsePoint() ||
-        GetWDSApp()->IsVolumeMountPoint(finder.GetFilePath()) && !GetOptions()->IsFollowMountPoints() ||
-        GetWDSApp()->IsFolderJunction(finder.GetAttributes()) && !GetOptions()->IsFollowJunctionPoints();
+        GetWDSApp()->IsVolumeMountPoint(finder.GetFilePath()) && !COptions::FollowMountPoints ||
+        GetWDSApp()->IsFolderJunction(finder.GetAttributes()) && !COptions::FollowJunctionPoints;
 
     const auto & child = new CItem(IT_DIRECTORY, finder.GetFileName());
     child->SetLastChange(finder.GetLastWriteTime());
@@ -1284,7 +1337,7 @@ void CItem::AddFile(const FileFindEnhanced& finder)
 
 void CItem::UpwardDrivePacman()
 {
-    if (!GetOptions()->IsPacmanAnimation())
+    if (!COptions::PacmanAnimation)
     {
         return;
     }

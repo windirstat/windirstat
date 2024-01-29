@@ -1,4 +1,4 @@
-// XySlider.cpp - Implementation of CXySlider
+// XYSlider.cpp - Implementation of CXySlider
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert

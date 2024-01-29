@@ -20,7 +20,7 @@
 //
 
 #include "stdafx.h"
-#include "pacman.h"
+#include "PacMan.h"
 
 namespace
 {

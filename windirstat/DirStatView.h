@@ -62,6 +62,7 @@ public:
     ~CDirStatView() override = default;
     CStringW GenerateReport();
     void SysColorChanged();
+    void CreateColumns(bool all = false);
 
 protected:
     void OnDraw(CDC* pDC) override;

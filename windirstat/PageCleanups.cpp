@@ -88,14 +88,14 @@ BEGIN_MESSAGE_MAP(CPageCleanups, CPropertyPage)
     ON_EN_CHANGE(IDC_TITLE, OnEnChangeTitle)
     ON_BN_CLICKED(IDC_WORKSFORDRIVES, OnBnClickedWorksfordrives)
     ON_BN_CLICKED(IDC_WORKSFORDIRECTORIES, OnBnClickedWorksfordirectories)
-    ON_BN_CLICKED(IDC_WORKSFORFILES, OnBnClickedWorksforfiles)
-    ON_BN_CLICKED(IDC_WORKSFORUNCPATHS, OnBnClickedWorksforuncpaths)
-    ON_EN_CHANGE(IDC_COMMANDLINE, OnEnChangeCommandline)
+    ON_BN_CLICKED(IDC_WORKSFORFILES, OnBnClickedModified)
+    ON_BN_CLICKED(IDC_WORKSFORUNCPATHS, OnBnClickedModified)
+    ON_EN_CHANGE(IDC_COMMANDLINE, OnBnClickedModified)
     ON_BN_CLICKED(IDC_RECURSEINTOSUBDIRECTORIES, OnBnClickedRecurseintosubdirectories)
-    ON_BN_CLICKED(IDC_ASKFORCONFIRMATION, OnBnClickedAskforconfirmation)
-    ON_BN_CLICKED(IDC_SHOWCONSOLEWINDOW, OnBnClickedShowconsolewindow)
-    ON_BN_CLICKED(IDC_WAITFORCOMPLETION, OnBnClickedWaitforcompletion)
-    ON_CBN_SELENDOK(IDC_REFRESHPOLICY, OnCbnSelendokRefreshpolicy)
+    ON_BN_CLICKED(IDC_ASKFORCONFIRMATION, OnBnClickedModified)
+    ON_BN_CLICKED(IDC_SHOWCONSOLEWINDOW, OnBnClickedModified)
+    ON_BN_CLICKED(IDC_WAITFORCOMPLETION, OnBnClickedModified)
+    ON_CBN_SELENDOK(IDC_REFRESHPOLICY, OnBnClickedModified)
     ON_BN_CLICKED(IDC_UP, OnBnClickedUp)
     ON_BN_CLICKED(IDC_DOWN, OnBnClickedDown)
     ON_BN_CLICKED(IDC_HELPBUTTON, OnBnClickedHelpbutton)
@@ -109,14 +109,11 @@ BOOL CPageCleanups::OnInitDialog()
     m_ctlRefreshPolicy.AddString(LoadString(IDS_POLICY_NOREFRESH));
     m_ctlRefreshPolicy.AddString(LoadString(IDS_POLICY_REFRESHTHISENTRY));
     m_ctlRefreshPolicy.AddString(LoadString(IDS_POLICY_REFRESHPARENT));
-    // We don't do this: m_ctlRefreshPolicy.AddString("Assume entry has been deleted");
-    // That conflicts with "works for <Files> Pseudoentries".
 
-    GetOptions()->GetUserDefinedCleanups(m_udc);
-
-    for (USERDEFINEDCLEANUP& udc : m_udc)
+    for (size_t i = 0; i < COptions::UserDefinedCleanups.size(); i++)
     {
-        m_list.AddString(udc.title);
+        m_udc[i] = COptions::UserDefinedCleanups[i];
+        m_list.AddString(m_udc[i].title.Obj().c_str());
     }
 
     m_list.SetCurSel(0);
@@ -129,7 +126,22 @@ void CPageCleanups::OnOK()
 {
     CheckEmptyTitle();
 
-    GetOptions()->SetUserDefinedCleanups(m_udc);
+    for (size_t i = 0; i < COptions::UserDefinedCleanups.size(); i++)
+    {
+        COptions::UserDefinedCleanups[i].askForConfirmation = m_udc[i].askForConfirmation.Obj();
+        COptions::UserDefinedCleanups[i].commandLine = m_udc[i].commandLine.Obj();
+        COptions::UserDefinedCleanups[i].enabled = m_udc[i].enabled.Obj();
+        COptions::UserDefinedCleanups[i].recurseIntoSubdirectories = m_udc[i].recurseIntoSubdirectories.Obj();
+        COptions::UserDefinedCleanups[i].refreshPolicy = m_udc[i].refreshPolicy.Obj();
+        COptions::UserDefinedCleanups[i].showConsoleWindow = m_udc[i].showConsoleWindow.Obj();
+        COptions::UserDefinedCleanups[i].title = m_udc[i].title.Obj();
+        COptions::UserDefinedCleanups[i].virginTitle = m_udc[i].virginTitle.Obj();
+        COptions::UserDefinedCleanups[i].waitForCompletion = m_udc[i].waitForCompletion.Obj();
+        COptions::UserDefinedCleanups[i].worksForDirectories = m_udc[i].worksForDirectories.Obj();
+        COptions::UserDefinedCleanups[i].worksForDrives = m_udc[i].worksForDrives.Obj();
+        COptions::UserDefinedCleanups[i].worksForFiles = m_udc[i].worksForFiles.Obj();
+        COptions::UserDefinedCleanups[i].worksForUncPaths = m_udc[i].worksForUncPaths.Obj();
+    }
 
     CPropertyPage::OnOK();
 }
@@ -170,18 +182,18 @@ void CPageCleanups::CheckEmptyTitle()
 
 void CPageCleanups::CurrentUdcToDialog()
 {
+    m_askForConfirmation        = m_udc[m_current].askForConfirmation;
+    m_commandLine               = m_udc[m_current].commandLine.Obj().c_str();
     m_enabled                   = m_udc[m_current].enabled;
-    m_title                     = m_udc[m_current].title;
-    m_worksForDrives            = m_udc[m_current].worksForDrives;
+    m_recurseIntoSubdirectories = m_udc[m_current].recurseIntoSubdirectories;
+    m_refreshPolicy             = m_udc[m_current].refreshPolicy;
+    m_showConsoleWindow         = m_udc[m_current].showConsoleWindow;
+    m_title                     = m_udc[m_current].title.Obj().c_str();
+    m_waitForCompletion         = m_udc[m_current].waitForCompletion;
     m_worksForDirectories       = m_udc[m_current].worksForDirectories;
+    m_worksForDrives            = m_udc[m_current].worksForDrives;
     m_worksForFiles             = m_udc[m_current].worksForFiles;
     m_worksForUncPaths          = m_udc[m_current].worksForUncPaths;
-    m_commandLine               = m_udc[m_current].commandLine;
-    m_recurseIntoSubdirectories = m_udc[m_current].recurseIntoSubdirectories;
-    m_askForConfirmation        = m_udc[m_current].askForConfirmation;
-    m_showConsoleWindow         = m_udc[m_current].showConsoleWindow;
-    m_waitForCompletion         = m_udc[m_current].waitForCompletion;
-    m_refreshPolicy             = m_udc[m_current].refreshPolicy;
 
     UpdateControlStatus();
     UpdateData(false);
@@ -192,17 +204,17 @@ void CPageCleanups::DialogToCurrentUdc()
     UpdateData();
 
     m_udc[m_current].enabled                   = FALSE != m_enabled;
-    m_udc[m_current].title                     = m_title;
+    m_udc[m_current].title                     = std::wstring(m_title.GetString());
     m_udc[m_current].worksForDrives            = FALSE != m_worksForDrives;
     m_udc[m_current].worksForDirectories       = FALSE != m_worksForDirectories;
     m_udc[m_current].worksForFiles             = FALSE != m_worksForFiles;
     m_udc[m_current].worksForUncPaths          = FALSE != m_worksForUncPaths;
-    m_udc[m_current].commandLine               = m_commandLine;
+    m_udc[m_current].commandLine               = std::wstring(m_commandLine.GetString());
     m_udc[m_current].recurseIntoSubdirectories = FALSE != m_recurseIntoSubdirectories;
     m_udc[m_current].askForConfirmation        = FALSE != m_askForConfirmation;
     m_udc[m_current].showConsoleWindow         = FALSE != m_showConsoleWindow;
     m_udc[m_current].waitForCompletion         = FALSE != m_waitForCompletion;
-    m_udc[m_current].refreshPolicy             = static_cast<REFRESHPOLICY>(m_refreshPolicy);
+    m_udc[m_current].refreshPolicy             = m_refreshPolicy;
 }
 
 void CPageCleanups::OnSomethingChanged()
@@ -286,17 +298,7 @@ void CPageCleanups::OnBnClickedWorksfordirectories()
     UpdateControlStatus();
 }
 
-void CPageCleanups::OnBnClickedWorksforfiles()
-{
-    OnSomethingChanged();
-}
-
-void CPageCleanups::OnBnClickedWorksforuncpaths()
-{
-    OnSomethingChanged();
-}
-
-void CPageCleanups::OnEnChangeCommandline()
+void CPageCleanups::OnBnClickedModified()
 {
     OnSomethingChanged();
 }
@@ -307,35 +309,15 @@ void CPageCleanups::OnBnClickedRecurseintosubdirectories()
     UpdateControlStatus();
 }
 
-void CPageCleanups::OnBnClickedAskforconfirmation()
-{
-    OnSomethingChanged();
-}
-
-void CPageCleanups::OnBnClickedShowconsolewindow()
-{
-    OnSomethingChanged();
-}
-
-void CPageCleanups::OnBnClickedWaitforcompletion()
-{
-    OnSomethingChanged();
-}
-
-void CPageCleanups::OnCbnSelendokRefreshpolicy()
-{
-    OnSomethingChanged();
-}
-
 void CPageCleanups::OnBnClickedUp()
 {
     ASSERT(m_current > 0);
 
     UpdateData();
 
-    const USERDEFINEDCLEANUP h = m_udc[m_current - 1];
-    m_udc[m_current - 1]       = m_udc[m_current];
-    m_udc[m_current]           = h;
+    USERDEFINEDCLEANUP h = m_udc[m_current - 1];
+    m_udc[m_current - 1] = m_udc[m_current];
+    m_udc[m_current] = h;
 
     m_list.DeleteString(m_current);
     m_list.InsertString(m_current - 1, m_title);
@@ -353,9 +335,9 @@ void CPageCleanups::OnBnClickedDown()
 
     UpdateData();
 
-    const USERDEFINEDCLEANUP h = m_udc[m_current + 1];
-    m_udc[m_current + 1]       = m_udc[m_current];
-    m_udc[m_current]           = h;
+    USERDEFINEDCLEANUP h = m_udc[m_current + 1];
+    m_udc[m_current + 1] = m_udc[m_current];
+    m_udc[m_current] = h;
 
     m_list.DeleteString(m_current);
     m_list.InsertString(m_current + 1, m_title);

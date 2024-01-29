@@ -92,7 +92,7 @@ class CLayout
     };
 
 public:
-    CLayout(CWnd* dialog, LPCWSTR name);
+    CLayout(CWnd* dialog, RECT* placement);
     int AddControl(CWnd* control, double movex, double movey, double stretchx, double stretchy);
     void AddControl(UINT id, double movex, double movey, double stretchx, double stretchy);
 
@@ -102,8 +102,8 @@ public:
     void OnDestroy() const;
 
 protected:
+    RECT* m_wp;
     CWnd* m_dialog;
-    CStringW m_name;
     CSize m_originalDialogSize;
     CArray<SControlInfo, SControlInfo&> m_control;
     CSizeGripper m_sizeGripper;

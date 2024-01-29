@@ -352,7 +352,7 @@ CTreeListControl* CTreeListControl::GetTheTreeListControl()
 IMPLEMENT_DYNAMIC(CTreeListControl, COwnerDrawnListControl)
 
 CTreeListControl::CTreeListControl(CDirStatView* dirstatView, int rowHeight)
-    : COwnerDrawnListControl(L"treelist", rowHeight)
+    : COwnerDrawnListControl(rowHeight, COptions::TreeListColumnOrder.Ptr(), COptions::TreeListColumnWidths.Ptr())
       , m_dirstatView(dirstatView)
 {
     _theTreeListControl = this;

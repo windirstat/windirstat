@@ -45,6 +45,7 @@ protected:
 
     BOOL m_useWdsLocale;
     BOOL m_humanFormat;
+    BOOL m_portableMode;
     BOOL m_listGrid;
     BOOL m_listStripes;
     BOOL m_listFullRowSelection;
@@ -54,10 +55,6 @@ protected:
     int m_originalLanguage;
 
     DECLARE_MESSAGE_MAP()
-    afx_msg void OnBnClickedHumanformat();
-    afx_msg void OnBnClickedUseWdsLocale();
+    afx_msg void OnBnClickedSetModified();
     afx_msg void OnCbnSelendokCombo();
-    afx_msg void OnBnClickedListGrid();
-    afx_msg void OnBnClickedListStripes();
-    afx_msg void OnBnClickedListFullRowSelection();
 };

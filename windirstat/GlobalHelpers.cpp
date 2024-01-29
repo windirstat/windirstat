@@ -1,4 +1,4 @@
-// globalhelpers.cpp - Implementation of global helper functions
+// GlobalHelpers.cpp - Implementation of global helper functions
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
@@ -105,17 +105,17 @@ CStringW GetLocaleLanguage(LANGID langid)
 
 CStringW GetLocaleThousandSeparator()
 {
-    return GetLocaleString(LOCALE_STHOUSAND, GetWDSApp()->GetEffectiveLangid());
+    return GetLocaleString(LOCALE_STHOUSAND, COptions::GetEffectiveLangId());
 }
 
 CStringW GetLocaleDecimalSeparator()
 {
-    return GetLocaleString(LOCALE_SDECIMAL, GetWDSApp()->GetEffectiveLangid());
+    return GetLocaleString(LOCALE_SDECIMAL, COptions::GetEffectiveLangId());
 }
 
 CStringW FormatBytes(const ULONGLONG& n)
 {
-    if (GetOptions()->IsHumanFormat())
+    if (COptions::HumanFormat)
     {
         return FormatLongLongHuman(n);
     }
@@ -225,7 +225,7 @@ CStringW FormatFileTime(const FILETIME& t)
         return MdGetWinErrorText(::GetLastError());
     }
 
-    const LCID lcid = MAKELCID(GetWDSApp()->GetEffectiveLangid(), SORT_DEFAULT);
+    const LCID lcid = MAKELCID(COptions::LanguageId.Obj(), SORT_DEFAULT);
 
     CStringW date;
     VERIFY(0 < ::GetDateFormat(lcid, DATE_SHORTDATE, &st, NULL, date.GetBuffer(64), 64));

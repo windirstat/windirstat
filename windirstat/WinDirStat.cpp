@@ -1,4 +1,4 @@
-// windirstat.cpp - Implementation of CDirStatApp and some globals
+// WinDirStat.cpp - Implementation of CDirStatApp and some globals
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
@@ -117,7 +117,7 @@ CStringW CDirStatApp::FindResourceDllPathByLangid(LANGID& langid)
 CStringW CDirStatApp::FindHelpfilePathByLangid(LANGID langid)
 {
     CStringW s;
-    if (langid == GetBuiltInLanguage())
+    if (langid == COptions::GetBuiltInLanguage())
     {
         // The English help file is named windirstat.chm.
         s = GetAppFolder() + L"\\windirstat.chm";
@@ -186,7 +186,7 @@ void CDirStatApp::RestartApplication()
         return;
     }
 
-    // We _send_ the WM_CLOSE here to ensure that all CPersistence-Settings
+    // We _send_ the WM_CLOSE here to ensure that all COptions-Settings
     // like column widths an so on are saved before the new instance is resumed.
     // This will post a WM_QUIT message.
     (void)GetMainFrame()->SendMessage(WM_CLOSE);
@@ -450,9 +450,54 @@ bool CDirStatApp::UpdateMemoryInfo()
     return ret;
 }
 
-LANGID CDirStatApp::GetBuiltInLanguage()
+bool CDirStatApp::InPortableMode() const
 {
-    return MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US);
+    return m_pszProfileName == GetAppFileName(L"ini");
+}
+
+bool CDirStatApp::SetPortableMode(bool enable, bool only_open)
+{
+    // Do nothing is already done this way
+    if (enable && InPortableMode() ||
+        !enable && !InPortableMode()) return true;
+
+    // Cleanup previous configuration
+    if (m_pszRegistryKey != nullptr) free(LPVOID(m_pszRegistryKey));
+    if (m_pszProfileName != nullptr) free(LPVOID(m_pszProfileName));
+    m_pszProfileName = nullptr;
+    m_pszRegistryKey = nullptr;
+
+    const CStringW ini = GetAppFileName(L"ini");
+    if (enable)
+    {
+        // Enable portable mode by creating the file
+        const HANDLE ini_handle = CreateFile(ini, GENERIC_WRITE | GENERIC_WRITE, FILE_SHARE_READ,
+            nullptr, only_open ? OPEN_EXISTING : OPEN_ALWAYS , 0, nullptr);
+        if (ini_handle != INVALID_HANDLE_VALUE)
+        {
+            // Open successful, setup settings to store to file
+            CloseHandle(ini_handle);
+            m_pszProfileName = _wcsdup(ini);
+            return true;
+        }
+
+        // Fallback to registry mode for any failures
+        SetRegistryKey(LoadString(AFX_IDS_APP_TITLE));
+        return false;
+    }
+    else
+    {
+        // Attempt to remove file succeeded
+        if (DeleteFile(ini) == 0)
+        {
+            SetRegistryKey(LoadString(AFX_IDS_APP_TITLE));
+            return true;
+        }
+
+        // Deletion failed  - go back to ini mode
+        m_pszProfileName = _wcsdup(ini);
+        return false;
+    }
 }
 
 BOOL CDirStatApp::InitInstance()
@@ -466,38 +511,13 @@ BOOL CDirStatApp::InitInstance()
     (void)::AfxOleInit();
     ::AfxEnableControlContainer();
     (void)::AfxInitRichEdit2();
-
     Inherited::EnableHtmlHelp();
 
-    Inherited::SetRegistryKey(L"Seifert");
+    // If a local config file is available, use that for settings
+    SetPortableMode(true, true);
+    
+    COptions::LoadAppSettings();
     Inherited::LoadStdProfileSettings(4);
-
-    m_langid = GetBuiltInLanguage();
-
-    LANGID langid = CLanguageOptions::GetLanguage();
-    if (langid != GetBuiltInLanguage())
-    {
-        const CStringW resourceDllPath = FindResourceDllPathByLangid(langid);
-        if (!resourceDllPath.IsEmpty())
-        {
-            // Load language resource DLL
-            if (const HINSTANCE dll = ::LoadLibrary(resourceDllPath))
-            {
-                // Set default module handle for loading of resources
-                AfxSetResourceHandle(dll);
-                m_langid = langid;
-            }
-            else
-            {
-                VTRACE(L"LoadLibrary(%s) failed: %u", resourceDllPath.GetString(), ::GetLastError());
-            }
-        }
-        // else: We use our built-in English resources.
-
-        CLanguageOptions::SetLanguage(m_langid);
-    }
-
-    GetOptions()->LoadFromRegistry();
 
     m_pDocTemplate = new CSingleDocTemplate(
         IDR_MAINFRAME,
@@ -536,7 +556,7 @@ BOOL CDirStatApp::InitInstance()
     m_pMainWnd->SetForegroundWindow();
 
     // Attempt to enable backup / restore privileges if running as admin
-    if (GetOptions()->IsUseBackupRestore() && !EnableReadPrivileges())
+    if (COptions::UseBackupRestore && !EnableReadPrivileges())
     {
         VTRACE(L"Failed to enable additional privileges.");
     }
@@ -566,21 +586,6 @@ BOOL CDirStatApp::InitInstance()
 int CDirStatApp::ExitInstance()
 {
     return Inherited::ExitInstance();
-}
-
-LANGID CDirStatApp::GetLangid() const
-{
-    return m_langid;
-}
-
-LANGID CDirStatApp::GetEffectiveLangid()
-{
-    if (GetOptions()->IsUseWdsLocale())
-    {
-        return GetLangid();
-    }
-
-    return ::GetUserDefaultLangID();
 }
 
 void CDirStatApp::OnAppAbout()

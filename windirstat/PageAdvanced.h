@@ -54,8 +54,5 @@ protected:
     CButton m_ctlSkipHidden;
 
     DECLARE_MESSAGE_MAP()
-    afx_msg void OnBnClickedFollowmountpoints();
-    afx_msg void OnBnClickedFollowjunctionpoints();
-    afx_msg void OnCbnSelThreadsCombo();
-    afx_msg void OnBnClickedSkipHidden();
+    afx_msg void OnSettingChanged();
 };

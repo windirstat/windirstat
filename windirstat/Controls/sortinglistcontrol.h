@@ -66,9 +66,12 @@ class CSortingListControl : public CListCtrl
 {
     DECLARE_DYNAMIC(CSortingListControl)
 
+    std::vector<int>* m_column_order;
+    std::vector<int>* m_column_widths;
+
 public:
     // Construction
-    CSortingListControl(LPCWSTR name);
+    CSortingListControl(std::vector<int>* column_order, std::vector<int>* column_widths);
     ~CSortingListControl() override = default;
 
     // Public methods

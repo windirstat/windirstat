@@ -96,9 +96,6 @@ public:
     COLORREF GetCushionColor(LPCWSTR ext);
     COLORREF GetZoomColor();
 
-    bool OptionShowFreeSpace() const;
-    bool OptionShowUnknown() const;
-
     const CExtensionData* GetExtensionData();
     ULONGLONG GetRootSize() const;
 
@@ -115,7 +112,7 @@ public:
     CStringW GetHighlightExtension();
 
     void UnlinkRoot();
-    bool UserDefinedCleanupWorksForItem(const USERDEFINEDCLEANUP* udc, const CItem* item);
+    bool UserDefinedCleanupWorksForItem(USERDEFINEDCLEANUP* udc, const CItem* item);
     void StartCoordinator(std::vector<CItem*> items);
     void ShutdownCoordinator(bool wait = true);
 
@@ -134,10 +131,10 @@ protected:
     void SetZoomItem(CItem* item);
     static void RefreshItem(std::vector<CItem*> item);
     static void RefreshItem(CItem* item) { RefreshItem(std::vector{item}); }
-    static void AskForConfirmation(const USERDEFINEDCLEANUP* udc, CItem* item);
-    void PerformUserDefinedCleanup(const USERDEFINEDCLEANUP* udc, CItem* item);
+    static void AskForConfirmation(USERDEFINEDCLEANUP* udc, CItem* item);
+    void PerformUserDefinedCleanup(USERDEFINEDCLEANUP* udc, CItem* item);
     void RefreshAfterUserDefinedCleanup(const USERDEFINEDCLEANUP* udc, CItem* item);
-    void RecursiveUserDefinedCleanup(const USERDEFINEDCLEANUP* udc, const CStringW& rootPath, const CStringW& currentPath);
+    void RecursiveUserDefinedCleanup(USERDEFINEDCLEANUP* udc, const CStringW& rootPath, const CStringW& currentPath);
     static void CallUserDefinedCleanup(bool isDirectory, const CStringW& format, const CStringW& rootPath, const CStringW& currentPath, bool showConsoleWindow, bool wait);
     static CStringW BuildUserDefinedCleanupCommandLine(LPCWSTR format, LPCWSTR rootPath, LPCWSTR currentPath);
     void PushReselectChild(CItem* item);
