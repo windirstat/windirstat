@@ -1,8 +1,8 @@
-// pagetreelist.h - Declaration of CPageTreelist
+// PageTreeList.h - Declaration of CPageTreelist
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -19,8 +19,6 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 
-#ifndef __WDS_PAGETREELIST_H__
-#define __WDS_PAGETREELIST_H__
 #pragma once
 
 #include "colorbutton.h"
@@ -29,23 +27,30 @@
 //
 // CPageTreelist. "Settings" property page "Treelist".
 //
-class CPageTreelist : public CPropertyPage
+class CPageTreelist final : public CPropertyPage
 {
     DECLARE_DYNAMIC(CPageTreelist)
+
     enum { IDD = IDD_PAGE_TREELIST };
 
 public:
     CPageTreelist();
-    virtual ~CPageTreelist();
+    ~CPageTreelist() override = default;
 
 protected:
-    virtual void DoDataExchange(CDataExchange* pDX);
-    virtual BOOL OnInitDialog();
-    virtual void OnOK();
+    void DoDataExchange(CDataExchange* pDX) override;
+    BOOL OnInitDialog() override;
+    void OnOK() override;
     void EnableButtons();
 
     BOOL m_pacmanAnimation;
     BOOL m_showTimeSpent;
+    BOOL m_showColumnSubdirs;
+    BOOL m_showColumnItems;
+    BOOL m_showColumnFiles;
+    BOOL m_showColumnAttributes;
+    BOOL m_showColumnLastChange;
+    BOOL m_showColumnOwner;
 
     int m_treelistColorCount;
     COLORREF m_treelistColor[TREELISTCOLORCOUNT];
@@ -54,10 +59,7 @@ protected:
     CSliderCtrl m_slider;
 
     DECLARE_MESSAGE_MAP()
-    afx_msg void OnColorChanged(UINT id, NMHDR *, LRESULT *);
+    afx_msg void OnColorChanged(UINT id, NMHDR*, LRESULT*);
     afx_msg void OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
-    afx_msg void OnBnClickedPacmananimation();
-    afx_msg void OnBnClickedShowTimeSpent();
+    afx_msg void OnBnClickedSetModified();
 };
-
-#endif // __WDS_PAGETREELIST_H__

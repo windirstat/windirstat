@@ -1,8 +1,8 @@
-// pagecleanups.h - Declaration of CPageCleanups
+// PageCleanups.h - Declaration of CPageCleanups
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -19,27 +19,26 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 
-#ifndef __WDS_PAGECLEANUPS_H__
-#define __WDS_PAGECLEANUPS_H__
 #pragma once
 #include "afxwin.h"
 
 //
 // CPageCleanups. "Settings" property page "User defined cleanups".
 //
-class CPageCleanups : public CPropertyPage
+class CPageCleanups final : public CPropertyPage
 {
     DECLARE_DYNAMIC(CPageCleanups)
+
     enum { IDD = IDD_PAGE_CLEANUPS };
 
 public:
     CPageCleanups();
-    virtual ~CPageCleanups();
+    ~CPageCleanups() override;
 
 protected:
-    virtual void DoDataExchange(CDataExchange* pDX);
-    virtual BOOL OnInitDialog();
-    virtual void OnOK();
+    void DoDataExchange(CDataExchange* pDX) override;
+    BOOL OnInitDialog() override;
+    void OnOK() override;
 
     void CurrentUdcToDialog();
     void DialogToCurrentUdc();
@@ -48,18 +47,17 @@ protected:
     void CheckEmptyTitle();
 
     USERDEFINEDCLEANUP m_udc[USERDEFINEDCLEANUPCOUNT];
-    int m_current;  // currently selected user defined cleanup
+    int m_current; // currently selected user defined cleanup
 
     // Dialog data
     CListBox m_list;
     BOOL m_enabled;
-    CString m_title;
+    CStringW m_title;
     BOOL m_worksForDrives;
     BOOL m_worksForDirectories;
-    BOOL m_worksForFilesFolder;
     BOOL m_worksForFiles;
     BOOL m_worksForUncPaths;
-    CString m_commandLine;
+    CStringW m_commandLine;
     BOOL m_recurseIntoSubdirectories;
     BOOL m_askForConfirmation;
     BOOL m_showConsoleWindow;
@@ -70,7 +68,6 @@ protected:
     CEdit m_ctlTitle;
     CButton m_ctlWorksForDrives;
     CButton m_ctlWorksForDirectories;
-    CButton m_ctlWorksForFilesFolder;
     CButton m_ctlWorksForFiles;
     CButton m_ctlWorksForUncPaths;
     CEdit m_ctlCommandLine;
@@ -89,18 +86,9 @@ protected:
     afx_msg void OnEnChangeTitle();
     afx_msg void OnBnClickedWorksfordrives();
     afx_msg void OnBnClickedWorksfordirectories();
-    afx_msg void OnBnClickedWorksforfilesfolder();
-    afx_msg void OnBnClickedWorksforfiles();
-    afx_msg void OnBnClickedWorksforuncpaths();
-    afx_msg void OnEnChangeCommandline();
+    afx_msg void OnBnClickedModified();
     afx_msg void OnBnClickedRecurseintosubdirectories();
-    afx_msg void OnBnClickedAskforconfirmation();
-    afx_msg void OnBnClickedShowconsolewindow();
-    afx_msg void OnBnClickedWaitforcompletion();
-    afx_msg void OnCbnSelendokRefreshpolicy();
     afx_msg void OnBnClickedUp();
     afx_msg void OnBnClickedDown();
     afx_msg void OnBnClickedHelpbutton();
 };
-
-#endif // __WDS_PAGECLEANUPS_H__

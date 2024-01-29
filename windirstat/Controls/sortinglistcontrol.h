@@ -1,8 +1,8 @@
-// sortinglistcontrol.h - Declaration of CSortingListItem and CSortingListControl
+// SortingListControl.h - Declaration of CSortingListItem and CSortingListControl
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -20,9 +20,8 @@
 //
 //
 
-#ifndef __WDS_SORTINGLISTCONTROL_H__
-#define __WDS_SORTINGLISTCONTROL_H__
 #pragma once
+#include <string>
 
 //
 // SSorting. A sorting specification. We sort by column1, and if two items
@@ -30,10 +29,15 @@
 //
 struct SSorting
 {
-    SSorting() { column1 = column2 = 0; ascending1 = ascending2 = true; }
-    int  column1;
+    SSorting()
+    {
+        column1    = column2    = 0;
+        ascending1 = ascending2 = true;
+    }
+
+    int column1;
     bool ascending1;
-    int  column2;
+    int column2;
     bool ascending2;
 };
 
@@ -43,12 +47,11 @@ struct SSorting
 class CSortingListItem
 {
 public:
-    virtual CString GetText(int subitem) const;
+    virtual CStringW GetText(int subitem) const;
     virtual int GetImage() const;
-    virtual int Compare(const CSortingListItem *other, int subitem) const;
-    int CompareS(const CSortingListItem *other, const SSorting& sorting) const;
+    virtual int Compare(const CSortingListItem* other, int subitem) const;
+    int CompareS(const CSortingListItem* other, const SSorting& sorting) const;
 };
-
 
 //
 // CSortingListControl. The base class for all our ListControls.
@@ -59,13 +62,17 @@ public:
 // on the header items. It also indicates the sorting to the user
 // by adding a "<" or ">" to the header items.
 //
-class CSortingListControl: public CListCtrl
+class CSortingListControl : public CListCtrl
 {
     DECLARE_DYNAMIC(CSortingListControl)
+
+    std::vector<int>* m_column_order;
+    std::vector<int>* m_column_widths;
+
 public:
     // Construction
-    CSortingListControl(LPCTSTR name);
-    virtual ~CSortingListControl();
+    CSortingListControl(std::vector<int>* column_order, std::vector<int>* column_widths);
+    ~CSortingListControl() override = default;
 
     // Public methods
     void LoadPersistentAttributes();
@@ -73,39 +80,33 @@ public:
     void AddExtendedStyle(DWORD exStyle);
     void RemoveExtendedStyle(DWORD exStyle);
 
-    const SSorting& GetSorting();
+    const SSorting& GetSorting() const;
     void GetSorting(int& sortColumn1, bool& ascending1, int& sortColumn2, bool& ascending2);
 
     void SetSorting(const SSorting& sorting);
     void SetSorting(int sortColumn1, bool ascending1, int sortColumn2, bool ascending2);
     void SetSorting(int sortColumn, bool ascending);
 
-    void InsertListItem(int i, CSortingListItem *item);
-    CSortingListItem *GetSortingListItem(int i);
+    void InsertListItem(int i, CSortingListItem* item);
+    CSortingListItem* GetSortingListItem(int i);
 
     // Overridables
     virtual void SortItems();
     virtual bool GetAscendingDefault(int column);
     virtual bool HasImages();
 
-#   if (_MFC_VER <=0x0800)
-    BOOL GetColumnOrderArray(LPINT piArray, INT_PTR iCount = -1);
-#   endif
-
 private:
-    void SavePersistentAttributes();
+    void SavePersistentAttributes() const;
     static int CALLBACK _CompareFunc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
 
-    CString m_name; // for persistence
+    std::wstring m_name; // for persistence
     SSorting m_sorting;
 
     int m_indicatedColumn;
 
     DECLARE_MESSAGE_MAP()
-    afx_msg void OnLvnGetdispinfo(NMHDR *pNMHDR, LRESULT *pResult);
-    afx_msg void OnHdnItemclick(NMHDR *pNMHDR, LRESULT *pResult);
-    afx_msg void OnHdnItemdblclick(NMHDR *pNMHDR, LRESULT *pResult);
+    afx_msg void OnLvnGetdispinfo(NMHDR* pNMHDR, LRESULT* pResult);
+    afx_msg void OnHdnItemclick(NMHDR* pNMHDR, LRESULT* pResult);
+    afx_msg void OnHdnItemdblclick(NMHDR* pNMHDR, LRESULT* pResult);
     afx_msg void OnDestroy();
 };
-
-#endif // __WDS_SORTINGLISTCONTROL_H__

@@ -1,0 +1,59 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{937D02D3-A6F2-B4A7-1FA7-1C2D36AEBF3D}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\0407.German">
+      <UniqueIdentifier>{63818175-56F7-7536-DDDF-BB5CB88AABE3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\embedded">
+      <UniqueIdentifier>{CF8E463A-D035-BB1B-E397-030A4F9977DE}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\embedded\..">
+      <UniqueIdentifier>{84F49FCC-A1B0-096D-7844-DDCBD8E082A9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\embedded\..\..">
+      <UniqueIdentifier>{74F3ED9D-0263-359B-6A00-5AB8B6A7CEE4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\embedded\..\..\common">
+      <UniqueIdentifier>{31DCBA87-9D25-3F64-BB53-A0CABCE42380}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="res\windirstat.rc2">
+      <Filter>Resource Files\0407.German</Filter>
+    </None>
+    <None Include="..\bitmap1.bmp">
+      <Filter>Resource Files\embedded</Filter>
+    </None>
+    <None Include="..\junctionpoint.bmp">
+      <Filter>Resource Files\embedded</Filter>
+    </None>
+    <None Include="..\Toolbar.bmp">
+      <Filter>Resource Files\embedded</Filter>
+    </None>
+    <None Include="..\linkhand.cur">
+      <Filter>Resource Files\embedded</Filter>
+    </None>
+    <None Include="..\license.txt">
+      <Filter>Resource Files\embedded</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\common\version.h">
+      <Filter>Resource Files\embedded\..\..\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\resource.h">
+      <Filter>Resource Files\embedded\..</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="windirstat.rc">
+      <Filter>Resource Files\0407.German</Filter>
+    </ResourceCompile>
+    <ResourceCompile Include="..\..\..\common\version.rc">
+      <Filter>Resource Files\embedded\..\..\common</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>

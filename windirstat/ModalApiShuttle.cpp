@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -20,12 +20,8 @@
 //
 
 #include "stdafx.h"
-#include "windirstat.h"
+#include "WinDirStat.h"
 #include "ModalApiShuttle.h"
-
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#endif
 
 IMPLEMENT_DYNAMIC(CModalApiShuttle, CDialog)
 
@@ -34,13 +30,8 @@ CModalApiShuttle::CModalApiShuttle(CWnd* pParent /*=NULL*/)
 {
 }
 
-CModalApiShuttle::~CModalApiShuttle()
-{
-}
-
 BEGIN_MESSAGE_MAP(CModalApiShuttle, CDialog)
 END_MESSAGE_MAP()
-
 
 BOOL CModalApiShuttle::OnInitDialog()
 {
@@ -48,7 +39,7 @@ BOOL CModalApiShuttle::OnInitDialog()
 
     CRect rc;
     AfxGetMainWnd()->GetWindowRect(rc);
-    rc.right = rc.left;
+    rc.right  = rc.left;
     rc.bottom = rc.top;
 
     MoveWindow(rc, false);

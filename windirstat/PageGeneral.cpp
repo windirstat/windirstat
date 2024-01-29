@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -20,30 +20,32 @@
 //
 
 #include "stdafx.h"
-#include "windirstat.h"
-#include "mainframe.h" // COptionsPropertySheet
+#include "WinDirStat.h"
+#include "MainFrame.h" // COptionsPropertySheet
 #include "PageGeneral.h"
-#include "options.h"
-#include "globalhelpers.h"
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#endif
+#include "DirStatDoc.h"
+#include "Options.h"
+#include "GlobalHelpers.h"
 
 IMPLEMENT_DYNAMIC(CPageGeneral, CPropertyPage)
 
 CPageGeneral::CPageGeneral()
     : CPropertyPage(CPageGeneral::IDD)
+      , m_useWdsLocale(0)
+      , m_humanFormat(0)
+      , m_listGrid(0)
+      , m_listStripes(0)
+      , m_listFullRowSelection(0)
+      , m_originalLanguage(0)
 {
 }
 
-CPageGeneral::~CPageGeneral()
-{
-}
+CPageGeneral::~CPageGeneral() = default;
 
-COptionsPropertySheet *CPageGeneral::GetSheet()
+COptionsPropertySheet* CPageGeneral::GetSheet() const
 {
-    COptionsPropertySheet *sheet = DYNAMIC_DOWNCAST(COptionsPropertySheet, GetParent());
+    auto sheet = DYNAMIC_DOWNCAST(COptionsPropertySheet, GetParent());
     ASSERT(sheet != NULL);
     return sheet;
 }
@@ -52,69 +54,51 @@ void CPageGeneral::DoDataExchange(CDataExchange* pDX)
 {
     CPropertyPage::DoDataExchange(pDX);
     DDX_Check(pDX, IDC_HUMANFORMAT, m_humanFormat);
-    DDX_Check(pDX, IDC_FOLLOWMOUNTPOINTS, m_followMountPoints);
-    DDX_Check(pDX, IDC_FOLLOWJUNCTIONS, m_followJunctionPoints);
     DDX_Check(pDX, IDC_USEWDSLOCALE, m_useWdsLocale);
     DDX_Control(pDX, IDC_COMBO, m_combo);
-    DDX_Control(pDX, IDC_FOLLOWMOUNTPOINTS, m_ctlFollowMountPoints);
-    DDX_Control(pDX, IDC_FOLLOWJUNCTIONS, m_ctlFollowJunctionPoints);
     DDX_Check(pDX, IDC_SHOWGRID, m_listGrid);
     DDX_Check(pDX, IDC_SHOWSTRIPES, m_listStripes);
     DDX_Check(pDX, IDC_FULLROWSELECTION, m_listFullRowSelection);
-    DDX_Check(pDX, IDC_SKIPHIDDEN, m_skipHidden);
+    DDX_Check(pDX, IDC_PORTABLE_MODE, m_portableMode);
 }
 
-
 BEGIN_MESSAGE_MAP(CPageGeneral, CPropertyPage)
-    ON_BN_CLICKED(IDC_HUMANFORMAT, OnBnClickedHumanformat)
-    ON_BN_CLICKED(IDC_FOLLOWMOUNTPOINTS, OnBnClickedFollowmountpoints)
-    ON_BN_CLICKED(IDC_FOLLOWJUNCTIONS, OnBnClickedFollowjunctionpoints)
-    ON_BN_CLICKED(IDC_USEWDSLOCALE, OnBnClickedUseWdsLocale)
+    ON_BN_CLICKED(IDC_HUMANFORMAT, OnBnClickedSetModified)
+    ON_BN_CLICKED(IDC_USEWDSLOCALE, OnBnClickedSetModified)
     ON_CBN_SELENDOK(IDC_COMBO, OnCbnSelendokCombo)
-    ON_BN_CLICKED(IDC_SHOWGRID, OnBnClickedListGrid)
-    ON_BN_CLICKED(IDC_SHOWSTRIPES, OnBnClickedListStripes)
-    ON_BN_CLICKED(IDC_FULLROWSELECTION, OnBnClickedListFullRowSelection)
-    ON_BN_CLICKED(IDC_SKIPHIDDEN, OnBnClickedSkipHidden)
+    ON_BN_CLICKED(IDC_SHOWGRID, OnBnClickedSetModified)
+    ON_BN_CLICKED(IDC_SHOWSTRIPES, OnBnClickedSetModified)
+    ON_BN_CLICKED(IDC_FULLROWSELECTION, OnBnClickedSetModified)
+    ON_BN_CLICKED(IDC_PORTABLE_MODE, OnBnClickedSetModified)
 END_MESSAGE_MAP()
-
 
 BOOL CPageGeneral::OnInitDialog()
 {
-    int i = 0;
     CPropertyPage::OnInitDialog();
 
-    m_humanFormat = GetOptions()->IsHumanFormat();
-    m_listGrid = GetOptions()->IsListGrid();
-    m_listStripes = GetOptions()->IsListStripes();
-    m_listFullRowSelection = GetOptions()->IsListFullRowSelection();
+    m_humanFormat = COptions::HumanFormat;
+    m_listGrid = COptions::ListGrid;
+    m_listStripes = COptions::ListStripes;
+    m_listFullRowSelection = COptions::ListFullRowSelection;
+    m_useWdsLocale= COptions::UseWdsLocale;
+    m_portableMode = GetWDSApp()->InPortableMode();
 
-    m_followMountPoints = GetOptions()->IsFollowMountPoints();
-    m_followJunctionPoints = GetOptions()->IsFollowJunctionPoints();
-    m_useWdsLocale = GetOptions()->IsUseWdsLocale();
-    m_skipHidden = GetOptions()->IsSkipHidden();
-
-    m_followMountPoints = false;    // Otherwise we would see pacman only.
-    m_ctlFollowMountPoints.ShowWindow(SW_HIDE); // Ignorance is bliss.
-    // The same for junction points
-    m_followJunctionPoints = false; // Otherwise we would see pacman only.
-    m_ctlFollowJunctionPoints.ShowWindow(SW_HIDE); // Ignorance is bliss.
-
-    int k = m_combo.AddString(GetLocaleLanguage(GetWDSApp()->GetBuiltInLanguage()));
-    m_combo.SetItemData(k, GetWDSApp()->GetBuiltInLanguage());
+    int k = m_combo.AddString(GetLocaleLanguage(COptions::GetBuiltInLanguage()));
+    m_combo.SetItemData(k, COptions::GetBuiltInLanguage());
 
     CArray<LANGID, LANGID> langid;
     GetWDSApp()->GetAvailableResourceDllLangids(langid);
 
-    for(i = 0; i < langid.GetSize(); i++)
+    for (int i = 0; i < langid.GetSize(); i++)
     {
         k = m_combo.AddString(GetLocaleLanguage(langid[i]));
         m_combo.SetItemData(k, langid[i]);
     }
 
     m_originalLanguage = 0;
-    for(i = 0; i < m_combo.GetCount(); i++)
+    for (int i = 0; i < m_combo.GetCount(); i++)
     {
-        if(m_combo.GetItemData(i) == CLanguageOptions::GetLanguage())
+        if (m_combo.GetItemData(i) == COptions::LanguageId)
         {
             m_combo.SetCurSel(i);
             m_originalLanguage = i;
@@ -129,65 +113,45 @@ BOOL CPageGeneral::OnInitDialog()
 void CPageGeneral::OnOK()
 {
     UpdateData();
-    GetOptions()->SetHumanFormat(FALSE != m_humanFormat);
-    GetOptions()->SetFollowMountPoints(FALSE != m_followMountPoints);
-    GetOptions()->SetFollowJunctionPoints(FALSE != m_followJunctionPoints);
-    GetOptions()->SetUseWdsLocale(FALSE != m_useWdsLocale);
-    GetOptions()->SetListGrid(FALSE != m_listGrid);
-    GetOptions()->SetListStripes(FALSE != m_listStripes);
-    GetOptions()->SetListFullRowSelection(FALSE != m_listFullRowSelection);
-    GetOptions()->SetSkipHidden(FALSE != m_skipHidden);
 
-    LANGID id = (LANGID)m_combo.GetItemData(m_combo.GetCurSel());
-    CLanguageOptions::SetLanguage(id);
+    const bool wds_changed = static_cast<bool>(m_useWdsLocale) != COptions::UseWdsLocale;
+    const bool lg_changed = static_cast<bool>(m_listGrid) != COptions::ListGrid ||
+        static_cast<bool>(m_listStripes) != COptions::ListStripes ||
+        static_cast<bool>(m_listFullRowSelection) != COptions::ListFullRowSelection;
+
+    COptions::HumanFormat = (FALSE != m_humanFormat);
+    COptions::UseWdsLocale = (FALSE != m_useWdsLocale);
+    COptions::ListGrid = (FALSE != m_listGrid);
+    COptions::ListStripes = (FALSE != m_listStripes);
+    COptions::ListFullRowSelection = (FALSE != m_listFullRowSelection);
+    if (!GetWDSApp()->SetPortableMode(m_portableMode))
+    {
+        AfxMessageBox(L"Could not toggle WinDirStat portable mode. Check your permissions.", MB_OK | MB_ICONERROR);
+    }
+
+    if (lg_changed)
+    {
+        GetDocument()->UpdateAllViews(nullptr, HINT_LISTSTYLECHANGED);
+    }
+    if (wds_changed)
+    {
+        GetDocument()->UpdateAllViews(nullptr, HINT_NULL);
+    }
+
+    const LANGID id = static_cast<LANGID>(m_combo.GetItemData(m_combo.GetCurSel()));
+    COptions::LanguageId = static_cast<int>(id);
 
     CPropertyPage::OnOK();
 }
 
-void CPageGeneral::OnBnClickedHumanformat()
-{
-    SetModified();
-}
-
-void CPageGeneral::OnBnClickedFollowmountpoints()
-{
-    SetModified();
-}
-
-void CPageGeneral::OnBnClickedFollowjunctionpoints()
-{
-    SetModified();
-}
-
-void CPageGeneral::OnBnClickedUseWdsLocale()
-{
-    SetModified();
-}
-
-void CPageGeneral::OnBnClickedListGrid()
-{
-    SetModified();
-}
-
-void CPageGeneral::OnBnClickedListStripes()
-{
-    SetModified();
-}
-
-void CPageGeneral::OnBnClickedListFullRowSelection()
+void CPageGeneral::OnBnClickedSetModified()
 {
     SetModified();
 }
 
 void CPageGeneral::OnCbnSelendokCombo()
 {
-    int i = m_combo.GetCurSel();
+    const int i = m_combo.GetCurSel();
     GetSheet()->SetLanguageChanged(i != m_originalLanguage);
-    SetModified();
-}
-
-
-void CPageGeneral::OnBnClickedSkipHidden()
-{
     SetModified();
 }

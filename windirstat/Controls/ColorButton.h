@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -19,8 +19,6 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 
-#ifndef __WDS_COLORBUTTON_H__
-#define __WDS_COLORBUTTON_H__
 #pragma once
 
 #define COLBN_CHANGED   0x87    // this is a value, I hope, that is nowhere used as notification code.
@@ -35,19 +33,19 @@
 // When the user chose a color, the parent is notified via WM_NOTIFY
 // and the notification code COLBN_CHANGED.
 //
-class CColorButton: public CButton
+class CColorButton final : public CButton
 {
 public:
-    COLORREF GetColor();
+    COLORREF GetColor() const;
     void SetColor(COLORREF color);
 
 private:
     // The color preview is an own little child window of the button.
-    class CPreview: public CWnd
+    class CPreview final : public CWnd
     {
     public:
         CPreview();
-        COLORREF GetColor();
+        COLORREF GetColor() const;
         void SetColor(COLORREF color);
 
     private:
@@ -55,6 +53,7 @@ private:
 
         DECLARE_MESSAGE_MAP()
         afx_msg void OnPaint();
+
     public:
         afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
     };
@@ -68,5 +67,3 @@ protected:
     afx_msg void OnBnClicked();
     afx_msg void OnEnable(BOOL bEnable);
 };
-
-#endif // __WDS_COLORBUTTON_H__

@@ -1,8 +1,8 @@
-// pagetreemap.h - Declaration of CDemoControl and CPageTreemap
+// PageTreeMap.h - Declaration of CDemoControl and CPageTreemap
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -19,26 +19,25 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 
-#ifndef __WDS_PAGETREEMAP_H__
-#define __WDS_PAGETREEMAP_H__
 #pragma once
 
 #include "colorbutton.h"
-#include "treemap.h"
-#include "xyslider.h"
+#include "TreeMap.h"
+#include "XYSlider.h"
 #include "afxwin.h"
 
 //
 // CPageTreemap. "Settings" property page "Treemap".
 //
-class CPageTreemap : public CPropertyPage
+class CPageTreemap final : public CPropertyPage
 {
     DECLARE_DYNAMIC(CPageTreemap)
+
     enum { IDD = IDD_PAGE_TREEMAP };
 
 public:
     CPageTreemap();
-    virtual ~CPageTreemap();
+    ~CPageTreemap() override = default;
 
 protected:
     void UpdateOptions(bool save = true);
@@ -46,14 +45,14 @@ protected:
     void OnSomethingChanged();
     void ValuesAltered(bool altered = true);
 
-    virtual void DoDataExchange(CDataExchange* pDX);
-    virtual BOOL OnInitDialog();
-    virtual void OnOK();
+    void DoDataExchange(CDataExchange* pDX) override;
+    BOOL OnInitDialog() override;
+    void OnOK() override;
 
-    CTreemap::Options m_options;    // Current options
+    CTreemap::Options m_options; // Current options
 
-    bool m_altered;                 // Values have been altered. Button reads "Reset to defaults".
-    CTreemap::Options m_undo;       // Valid, if m_altered = false
+    bool m_altered;           // Values have been altered. Button reads "Reset to defaults".
+    CTreemap::Options m_undo; // Valid, if m_altered = false
 
     CTreemapPreview m_preview;
 
@@ -63,19 +62,19 @@ protected:
     CColorButton m_gridColor;
 
     CSliderCtrl m_brightness;
-    CString m_sBrightness;
+    CStringW m_sBrightness;
     int m_nBrightness;
 
     CSliderCtrl m_cushionShading;
-    CString m_sCushionShading;
+    CStringW m_sCushionShading;
     int m_nCushionShading;
 
     CSliderCtrl m_height;
-    CString m_sHeight;
+    CStringW m_sHeight;
     int m_nHeight;
 
     CSliderCtrl m_scaleFactor;
-    CString m_sScaleFactor;
+    CStringW m_sScaleFactor;
     int m_nScaleFactor;
 
     CXySlider m_lightSource;
@@ -84,15 +83,10 @@ protected:
     CButton m_resetButton;
 
     DECLARE_MESSAGE_MAP()
-    afx_msg void OnColorChangedTreemapGrid(NMHDR *, LRESULT *);
-    afx_msg void OnColorChangedTreemapHighlight(NMHDR *, LRESULT *);
+    afx_msg void OnColorChangedTreemapGrid(NMHDR*, LRESULT*);
+    afx_msg void OnColorChangedTreemapHighlight(NMHDR*, LRESULT*);
     afx_msg void OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
-    afx_msg void OnLightSourceChanged(NMHDR *, LRESULT *);
-    afx_msg void OnBnClickedKdirstat();
-    afx_msg void OnBnClickedSequoiaview();
-    afx_msg void OnBnClickedTreemapgrid();
+    afx_msg void OnLightSourceChanged(NMHDR*, LRESULT*);
+    afx_msg void OnSetModified();
     afx_msg void OnBnClickedReset();
-
 };
-
-#endif // __WDS_PAGETREEMAP_H__

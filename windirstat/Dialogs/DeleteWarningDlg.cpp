@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -20,24 +20,15 @@
 //
 
 #include "stdafx.h"
-#include "windirstat.h"
+#include "WinDirStat.h"
 #include "DeleteWarningDlg.h"
-
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#endif
-
 
 IMPLEMENT_DYNAMIC(CDeleteWarningDlg, CDialog)
 
 CDeleteWarningDlg::CDeleteWarningDlg(CWnd* pParent /*=NULL*/)
     : CDialog(CDeleteWarningDlg::IDD, pParent)
-    , m_fileName(wds::strEmpty)
-    , m_dontShowAgain(false)
-{
-}
-
-CDeleteWarningDlg::~CDeleteWarningDlg()
+      , m_fileName(wds::strEmpty)
+      , m_dontShowAgain(false)
 {
 }
 
@@ -48,12 +39,10 @@ void CDeleteWarningDlg::DoDataExchange(CDataExchange* pDX)
     DDX_Text(pDX, IDC_FILENAME, m_fileName);
 }
 
-
 BEGIN_MESSAGE_MAP(CDeleteWarningDlg, CDialog)
     ON_BN_CLICKED(IDNO, OnBnClickedNo)
     ON_BN_CLICKED(IDYES, OnBnClickedYes)
 END_MESSAGE_MAP()
-
 
 void CDeleteWarningDlg::OnBnClickedNo()
 {

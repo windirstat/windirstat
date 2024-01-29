@@ -1,8 +1,8 @@
-// aboutdlg.h - Declaration of StartAboutDialog(), CAboutThread and CAboutDlg
+// AboutDlg.h - Declaration of StartAboutDialog(), CAboutThread and CAboutDlg
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -19,30 +19,25 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 
-#ifndef __WDS_ABOUTDLG_H__
-#define __WDS_ABOUTDLG_H__
 #pragma once
 
 #include "layout.h"
-#include <common/wds_constants.h>
-
 
 void StartAboutDialog();
 
-
-class CAboutThread: public CWinThread
+class CAboutThread final : public CWinThread
 {
     DECLARE_DYNCREATE(CAboutThread);
+
 protected:
-    virtual BOOL InitInstance();
+    BOOL InitInstance() override;
 };
 
-
-class CAboutDlg : public CDialog
+class CAboutDlg final : public CDialog
 {
     enum { IDD = IDD_ABOUTBOX };
 
-    class CMyTabControl: public CTabCtrl
+    class CMyTabControl final : public CTabCtrl
     {
     public:
         void Initialize();
@@ -52,30 +47,28 @@ class CAboutDlg : public CDialog
         CRichEditCtrl m_text;
 
         DECLARE_MESSAGE_MAP()
-        afx_msg void OnEnLinkText(NMHDR *pNMHDR, LRESULT *pResult);
-        afx_msg void OnEnMsgFilter(NMHDR *pNMHDR, LRESULT *pResult);
+        afx_msg void OnEnLinkText(NMHDR* pNMHDR, LRESULT* pResult);
+        afx_msg void OnEnMsgFilter(NMHDR* pNMHDR, LRESULT* pResult);
         afx_msg void OnSize(UINT nType, int cx, int cy);
     };
 
 public:
     CAboutDlg();
-    static CString GetAppVersion();
-    static CString GetDevelList();
-    static CString GetTranslatorList();
+    static CStringW GetAppVersion();
+    static CStringW GetDevelList();
+    static CStringW GetTranslatorList();
 
 protected:
-    virtual BOOL OnInitDialog();
-    virtual void DoDataExchange(CDataExchange* pDX);
+    BOOL OnInitDialog() override;
+    void DoDataExchange(CDataExchange* pDX) override;
 
     CStatic m_caption;
     CMyTabControl m_tab;
     CLayout m_layout;
 
     DECLARE_MESSAGE_MAP()
-    afx_msg void OnTcnSelchangeTab(NMHDR *pNMHDR, LRESULT *pResult);
+    afx_msg void OnTcnSelchangeTab(NMHDR* pNMHDR, LRESULT* pResult);
     afx_msg void OnSize(UINT nType, int cx, int cy);
     afx_msg void OnGetMinMaxInfo(MINMAXINFO* lpMMI);
     afx_msg void OnDestroy();
 };
-
-#endif // __WDS_ABOUTDLG_H__

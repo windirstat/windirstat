@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -19,14 +19,14 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 
-#ifndef __WDS_SELECTDRIVESDLG_H__
-#define __WDS_SELECTDRIVESDLG_H__
 #pragma once
 
-#include "ownerdrawnlistcontrol.h"
-#include "layout.h"
+#include "OwnerDrawnListControl.h"
+#include "Layout.h"
 #include "resource.h"
-#include "set.h"
+
+#include <shared_mutex>
+#include <unordered_set>
 
 //
 // The dialog has these three radio buttons.
@@ -38,56 +38,55 @@ enum RADIO
     RADIO_AFOLDER
 };
 
-
 class CDrivesList;
 
 //
 // CDriveItem. An item in the CDrivesList Control.
 // All methods are called by the gui thread.
 //
-class CDriveItem: public COwnerDrawnListItem
+class CDriveItem final : public COwnerDrawnListItem
 {
 public:
-    CDriveItem(CDrivesList *list, LPCTSTR pszPath);
+    CDriveItem(CDrivesList* list, LPCWSTR pszPath);
     void StartQuery(HWND dialog, UINT serial);
 
-    void SetDriveInformation(bool success, LPCTSTR name, ULONGLONG total, ULONGLONG free);
+    void SetDriveInformation(bool success, LPCWSTR name, ULONGLONG total, ULONGLONG free);
 
-    virtual int Compare(const CSortingListItem *other, int subitem) const;
+    int Compare(const CSortingListItem* other, int subitem) const override;
 
-    CString GetPath() const;
-    CString GetDrive() const;
+    CStringW GetPath() const;
+    CStringW GetDrive() const;
     bool IsRemote() const;
     bool IsSUBSTed() const;
-    virtual bool DrawSubitem(int subitem, CDC *pdc, CRect rc, UINT state, int *width, int *focusLeft) const;
-    virtual CString GetText(int subitem) const;
-    int GetImage() const;
+    bool DrawSubitem(int subitem, CDC* pdc, CRect rc, UINT state, int* width, int* focusLeft) const override;
+    CStringW GetText(int subitem) const override;
+    int GetImage() const override;
 
 private:
-    CDrivesList *m_list;    // Backpointer
-    CString m_path;         // e.g. "C:\"
-    bool m_isRemote;        // Whether the drive type is DRIVE_REMOTE (network drive)
+    CDrivesList* m_list; // Backpointer
+    CStringW m_path;     // e.g. "C:\"
+    bool m_isRemote;     // Whether the drive type is DRIVE_REMOTE (network drive)
 
-    bool m_querying;        // Information thread is running.
-    bool m_success;         // Drive is accessible. false while m_querying is true.
+    bool m_querying; // Information thread is running.
+    bool m_success;  // Drive is accessible. false while m_querying is true.
 
-    CString m_name;         // e.g. "BOOT (C:)"
+    CStringW m_name;        // e.g. "BOOT (C:)"
     ULONGLONG m_totalBytes; // Capacity
     ULONGLONG m_freeBytes;  // Free space
 
-    double m_used;          // used space / total space
+    double m_used; // used space / total space
 };
 
 //
 // CDriveInformationThread. Does the GetVolumeInformation() call, which
 // may hang for ca. 30 sec, it a network drive is not accessible.
 //
-class CDriveInformationThread: public CWinThread
+class CDriveInformationThread final : public CWinThread
 {
     // Set of all running CDriveInformationThreads.
     // Used by InvalidateDialogHandle().
-    static CSet<CDriveInformationThread *, CDriveInformationThread *> _runningThreads;
-    static CCriticalSection _csRunningThreads;
+    static std::unordered_set<CDriveInformationThread*> _runningThreads;
+    static std::shared_mutex _mutexRunningThreads;
 
     // The objects register and unregister themselves in _runningThreads
     void AddRunningThread();
@@ -95,23 +94,22 @@ class CDriveInformationThread: public CWinThread
 
 public:
     static void InvalidateDialogHandle();
-    static void OnAppExit();
 
-    CDriveInformationThread(LPCTSTR path, LPARAM driveItem, HWND dialog, UINT serial);
-    virtual BOOL InitInstance();
+    CDriveInformationThread(LPCWSTR path, LPARAM driveItem, HWND dialog, UINT serial);
+    BOOL InitInstance() override;
 
-    LPARAM GetDriveInformation(bool& success, CString& name, ULONGLONG& total, ULONGLONG& free);
+    LPARAM GetDriveInformation(bool& success, CStringW& name, ULONGLONG& total, ULONGLONG& free) const;
 
 private:
-    const CString m_path;       // Path like "C:\"
-    const LPARAM m_driveItem;   // The list item, we belong to
+    const CStringW m_path;    // Path like "C:\"
+    const LPARAM m_driveItem; // The list item, we belong to
 
-    CCriticalSection m_cs;  // for m_dialog
-    HWND m_dialog;          // synchronized by m_cs
-    const UINT m_serial;    // serial number of m_dialog
+    std::shared_mutex m_mutex; // for m_dialog
+    HWND m_dialog;             // synchronized by m_cs
+    const UINT m_serial;       // serial number of m_dialog
 
     // "[out]"-parameters
-    CString m_name;         // Result: name like "BOOT (C:)", valid if m_success
+    CStringW m_name;        // Result: name like "BOOT (C:)", valid if m_success
     ULONGLONG m_totalBytes; // Result: capacity of the drive, valid if m_success
     ULONGLONG m_freeBytes;  // Result: free space on the drive, valid if m_success
     bool m_success;         // Result: false, iff drive is unaccessible.
@@ -120,55 +118,57 @@ private:
 //
 // CDrivesList.
 //
-class CDrivesList: public COwnerDrawnListControl
+class CDrivesList final : public COwnerDrawnListControl
 {
     DECLARE_DYNAMIC(CDrivesList)
+
 public:
     CDrivesList();
-    CDriveItem *GetItem(int i);
-    void SelectItem(CDriveItem *item);
+    CDriveItem* GetItem(int i) const;
+    void SelectItem(CDriveItem* item);
     bool IsItemSelected(int i);
 
-    virtual bool HasImages();
+    bool HasImages() override;
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
-    afx_msg void OnLvnDeleteitem(NMHDR *pNMHDR, LRESULT *pResult);
-    afx_msg void MeasureItem(LPMEASUREITEMSTRUCT lpMeasureItemStruct);
-    afx_msg void OnNMDblclk(NMHDR *pNMHDR, LRESULT *pResult);
+    afx_msg void OnLvnDeleteitem(NMHDR* pNMHDR, LRESULT* pResult);
+    afx_msg void MeasureItem(LPMEASUREITEMSTRUCT mis);
+    afx_msg void OnNMDblclk(NMHDR* pNMHDR, LRESULT* pResult);
 };
-
 
 //
 // CSelectDrivesDlg. The initial dialog, where the user can select
 // one or more drives or a folder for scanning.
 //
-class CSelectDrivesDlg : public CDialog
+class CSelectDrivesDlg final : public CDialog
 {
     DECLARE_DYNAMIC(CSelectDrivesDlg)
+
     enum { IDD = IDD_SELECTDRIVES };
-    static CString getFullPathName_(LPCTSTR relativePath);
+
+    static CStringW getFullPathName_(LPCWSTR relativePath);
 
 public:
-    CSelectDrivesDlg(CWnd* pParent = NULL);
-    virtual ~CSelectDrivesDlg();
+    CSelectDrivesDlg(CWnd* pParent = nullptr);
+    ~CSelectDrivesDlg() override = default;
 
     // Dialog Data
-    int m_radio;            // out.
-    CString m_folderName;   // out. Valid if m_radio = RADIO_AFOLDER
-    CStringArray m_drives;  // out. Valid if m_radio != RADIO_AFOLDER
+    int m_radio;           // out.
+    CStringW m_folderName; // out. Valid if m_radio = RADIO_AFOLDER
+    CStringArray m_drives; // out. Valid if m_radio != RADIO_AFOLDER
 
 protected:
-    virtual void DoDataExchange(CDataExchange* pDX);
-    virtual BOOL OnInitDialog();
-    virtual void OnOK();
+    void DoDataExchange(CDataExchange* pDX) override;
+    BOOL OnInitDialog() override;
+    void OnOK() override;
 
     void UpdateButtons();
 
-    static UINT _serial;    // Each Instance of this dialog gets a serial number
+    static UINT _serial; // Each Instance of this dialog gets a serial number
     CDrivesList m_list;
     CButton m_okButton;
-    CStringArray m_selectedDrives;
+    std::vector<std::wstring> m_selectedDrives;
     CLayout m_layout;
     // Callback function for the dialog shown by SHBrowseForFolder()
     // MUST be static!
@@ -181,8 +181,8 @@ protected:
     afx_msg void OnBnClickedAfolder();
     afx_msg void OnBnClickedSomedrives();
     afx_msg void OnEnChangeFoldername();
-    afx_msg void OnMeasureItem(int nIDCtl, LPMEASUREITEMSTRUCT lpMeasureItemStruct);
-    afx_msg void OnLvnItemchangedDrives(NMHDR *pNMHDR, LRESULT *pResult);
+    afx_msg void OnMeasureItem(int nIDCtl, LPMEASUREITEMSTRUCT mis);
+    afx_msg void OnLvnItemchangedDrives(NMHDR* pNMHDR, LRESULT* pResult);
     afx_msg void OnSize(UINT nType, int cx, int cy);
     afx_msg void OnGetMinMaxInfo(MINMAXINFO* lpMMI);
     afx_msg void OnDestroy();
@@ -190,5 +190,3 @@ protected:
     afx_msg LRESULT OnWmuThreadFinished(WPARAM, LPARAM lparam);
     afx_msg void OnSysColorChange();
 };
-
-#endif // __WDS_SELECTDRIVESDLG_H__

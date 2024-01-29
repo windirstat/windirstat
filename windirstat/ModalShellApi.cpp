@@ -2,7 +2,7 @@
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -20,12 +20,13 @@
 //
 
 #include "stdafx.h"
-#include "windirstat.h"
+#include "WinDirStat.h"
 #include "ModalShellApi.h"
+#include "SmartPointer.h"
+#include "FileFind.h"
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#endif
+#include <VersionHelpers.h>
+#include <filesystem>
 
 namespace
 {
@@ -35,15 +36,15 @@ namespace
     };
 }
 
-
 CModalShellApi::CModalShellApi()
+    : m_operation(0), m_toRecycleBin(false)
 {
 }
 
-void CModalShellApi::DeleteFile(LPCTSTR fileName, bool toRecycleBin)
+void CModalShellApi::DeleteFile(LPCWSTR fileName, bool toRecycleBin)
 {
-    m_operation = DELETE_FILE;
-    m_fileName = fileName;
+    m_operation    = DELETE_FILE;
+    m_fileName     = fileName;
     m_toRecycleBin = toRecycleBin;
 
     DoModal();
@@ -55,27 +56,39 @@ void CModalShellApi::DoOperation()
     {
     case DELETE_FILE:
         {
-            DoDeleteFile();
+            DoDeleteItem();
         }
         break;
     }
 }
 
-void CModalShellApi::DoDeleteFile()
+void CModalShellApi::DoDeleteItem()
 {
-    int len = m_fileName.GetLength();
-    LPTSTR psz = m_fileName.GetBuffer(len + 2);
-    psz[len + 1]= 0;
+    if (m_toRecycleBin)
+    {
+        // Determine flags to use for deletion
+        const auto flags = FOF_NOCONFIRMATION | FOFX_EARLYFAILURE | FOFX_SHOWELEVATIONPROMPT |
+            (IsWindows8OrGreater() ? (FOFX_ADDUNDORECORD | FOFX_RECYCLEONDELETE) : FOF_ALLOWUNDO);
 
-    SHFILEOPSTRUCT sfos;
-    ZeroMemory(&sfos, sizeof(sfos));
-    sfos.wFunc = FO_DELETE;
-    sfos.pFrom = psz;
-    sfos.fFlags = m_toRecycleBin ? FOF_ALLOWUNDO : 0;
+        // Do deletion operation
+        SmartPointer<LPITEMIDLIST> pidl(CoTaskMemFree, ILCreateFromPath(m_fileName));
+        CComPtr<IShellItem> shellitem = nullptr;
+        SHCreateItemFromIDList(pidl, IID_PPV_ARGS(&shellitem));
 
-    sfos.hwnd = *AfxGetMainWnd();
+        ::CComPtr<IFileOperation> pFileOperation;
+        if (FAILED(::CoCreateInstance(CLSID_FileOperation, nullptr, CLSCTX_ALL, IID_PPV_ARGS(&pFileOperation))) ||
+            FAILED(pFileOperation->SetOperationFlags(flags)) ||
+            FAILED(pFileOperation->DeleteItem(shellitem, nullptr)) ||
+            FAILED(pFileOperation->PerformOperations()))
+        {
+            return;
+        }
+    }
+    else
+    {
+        CStringW path = FileFindEnhanced::GetLongPathCompatible(m_fileName);
+        std::filesystem::remove_all(std::filesystem::path(path.GetBuffer()));
+    }
 
-    ::SHFileOperation(&sfos); // FIXME: use return value
-
-    m_fileName.ReleaseBuffer();
+    return;
 }

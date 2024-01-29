@@ -1,8 +1,8 @@
-// modalshellapi.h - Declaration of CModalShellApi
+// ModalShellApi.h - Declaration of CModalShellApi
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2017 WinDirStat Team (windirstat.net)
+// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -19,12 +19,9 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 
-#ifndef __WDS_MODALSHELLAPI_H__
-#define __WDS_MODALSHELLAPI_H__
 #pragma once
 
 #include "modalapishuttle.h"
-
 
 //
 // CModalShellApi. Modal version of the shell functions
@@ -32,21 +29,19 @@
 // 
 // See comment on CModalApiShuttle.
 //
-class CModalShellApi : public CModalApiShuttle
+class CModalShellApi final : public CModalApiShuttle
 {
 public:
     CModalShellApi();
 
-    void DeleteFile(LPCTSTR fileName, bool toRecycleBin);
+    void DeleteFile(LPCWSTR fileName, bool toRecycleBin);
 
 protected:
-    virtual void DoOperation();
+    void DoOperation() override;
 
-    void DoDeleteFile();
+    void DoDeleteItem();
 
-    int m_operation;        // Enum specifying the desired operation
-    CString m_fileName;     // File name to be deleted
-    bool m_toRecycleBin;    // True if file shall only be move to the recycle bin
+    int m_operation;     // Enum specifying the desired operation
+    CStringW m_fileName; // File name to be deleted
+    bool m_toRecycleBin; // True if file shall only be move to the recycle bin
 };
-
-#endif // __WDS_MODALSHELLAPI_H__
