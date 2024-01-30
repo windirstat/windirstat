@@ -35,7 +35,7 @@ class CItem;
 class CMyTreeListControl final : public CTreeListControl
 {
 public:
-    CMyTreeListControl(CDirStatView* dirstatView);
+    CMyTreeListControl();
     bool GetAscendingDefault(int column) override;
 
 protected:
@@ -47,6 +47,7 @@ protected:
     afx_msg void OnContextMenu(CWnd* /*pWnd*/, CPoint /*point*/);
     afx_msg void OnSetFocus(CWnd* pOldWnd);
     afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
+    afx_msg BOOL OnHeaderEndDrag(UINT, NMHDR* pNMHDR, LRESULT* pResult);
 };
 
 //

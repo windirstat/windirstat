@@ -43,13 +43,13 @@ namespace
         NODE_LINE
     };
 
-    constexpr UINT NODE_WIDTH   = 15; // Width of a node within IDB_NODES
-    constexpr UINT NODE_HEIGHT  = 24; // Height of IDB_NODES
-    constexpr UINT INDENT_WIDTH = 18;
+    constexpr auto NODE_WIDTH   = 15; // Width of a node within IDB_NODES
+    constexpr auto NODE_HEIGHT  = 24; // Height of IDB_NODES
+    constexpr auto INDENT_WIDTH = 18;
 
-    constexpr UINT HOTNODE_CX = 9; // Size and position of the +/- buttons
-    constexpr UINT HOTNODE_CY = 9;
-    constexpr UINT HOTNODE_X  = 0;
+    constexpr auto HOTNODE_CX = 9; // Size and position of the +/- buttons
+    constexpr auto HOTNODE_CY = 9;
+    constexpr auto HOTNODE_X  = 0;
 }
 
 CTreeListItem::CTreeListItem()
@@ -93,7 +93,7 @@ bool CTreeListItem::DrawSubitem(int subitem, CDC* pdc, CRect rc, UINT state, int
 
 CStringW CTreeListItem::GetText(int /*subitem*/) const
 {
-    return L"test";
+    return {};
 }
 
 int CTreeListItem::GetImage() const
@@ -351,9 +351,8 @@ CTreeListControl* CTreeListControl::GetTheTreeListControl()
 
 IMPLEMENT_DYNAMIC(CTreeListControl, COwnerDrawnListControl)
 
-CTreeListControl::CTreeListControl(CDirStatView* dirstatView, int rowHeight)
+CTreeListControl::CTreeListControl(int rowHeight)
     : COwnerDrawnListControl(rowHeight, COptions::TreeListColumnOrder.Ptr(), COptions::TreeListColumnWidths.Ptr())
-      , m_dirstatView(dirstatView)
 {
     _theTreeListControl = this;
     ASSERT(rowHeight <= NODE_HEIGHT); // can't be higher
@@ -380,7 +379,7 @@ BOOL CTreeListControl::CreateEx(DWORD dwExStyle, DWORD dwStyle, const RECT& rect
     VERIFY(bRet);
     if (bRet && dwExStyle)
     {
-        bRet = COwnerDrawnListControl::ModifyStyleEx(0, dwExStyle);
+        AddExtendedStyle(dwExStyle);
     }
     return bRet;
 }
@@ -791,11 +790,7 @@ void CTreeListControl::ExpandItem(int i, bool scroll)
         // first few bunch of visible items
         if (scroll && c < 100)
         {
-            const int w = GetSubItemWidth(child, 0);
-            if (w > maxwidth)
-            {
-                maxwidth = w;
-            }
+            maxwidth = max(maxwidth, GetSubItemWidth(child, 0));
         }
     }
 

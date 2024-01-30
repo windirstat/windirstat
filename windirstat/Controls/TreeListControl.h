@@ -125,7 +125,7 @@ class CTreeListControl : public COwnerDrawnListControl
 public:
     static CTreeListControl* GetTheTreeListControl();
 
-    CTreeListControl(CDirStatView* dirstatView, int rowHeight = -1);
+    CTreeListControl(int rowHeight = -1);
     ~CTreeListControl() override = default;
     void MySetImageList(CImageList* il);
     virtual BOOL CreateEx(DWORD dwExStyle, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID);
@@ -189,8 +189,6 @@ protected:
 
     //
     /////////////////////////////////////////////////////
-
-    CDirStatView* m_dirstatView; // backpointer to the directory list
 
     CBitmap m_bmNodes0;                // The bitmaps needed to draw the treecontrol-like branches
     CBitmap m_bmNodes1;                // The same bitmaps with stripe-background color

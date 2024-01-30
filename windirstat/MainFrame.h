@@ -22,7 +22,8 @@
 
 #pragma once
 
-#include "pacman.h"
+#include "PacMan.h"
+#include "Item.h"
 #include <common/Constants.h>
 
 #include <functional>
@@ -102,6 +103,7 @@ public:
     CPacmanControl();
     void Drive();
     void Start();
+    void Stop();
 
 protected:
     CPacman m_pacman;
@@ -160,13 +162,11 @@ public:
     CGraphView* GetGraphView() const;
     CTypeView* GetTypeView() const;
 
-    void ShowProgress(ULONGLONG range);
-    void HideProgress();
+    void CreateProgress(ULONGLONG range);
     void SetProgressPos(ULONGLONG pos);
-    void SetProgressPos100();
+    void SetProgressComplete();
     void SuspendState(bool suspend);
     bool IsScanSuspended() const;
-    void DrivePacman();
 
     void UpdateProgress();
     void AppendUserDefinedCleanups(CMenu* menu);
@@ -193,6 +193,7 @@ protected:
     bool m_scanSuspend;        // True if the scan has been suspended
     ULONGLONG m_progressRange; // Progress range. A range of 0 means that we have no range available. In this case we should display pacman.
     ULONGLONG m_progressPos;   // Progress position (<= progressRange, or an item count in case of m_progressRang == 0)
+    CItem* m_workingItem;
 
     CMySplitterWnd m_wndSubSplitter; // Contains the two upper views
     CMySplitterWnd m_wndSplitter;    // Contains (a) m_wndSubSplitter and (b) the graph view.
