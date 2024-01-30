@@ -309,7 +309,7 @@
     <ClInclude Include="PageGeneral.h" />
     <ClInclude Include="PageTreelist.h" />
     <ClInclude Include="PageTreemap.h" />
-    <ClInclude Include="Properties.h" />
+    <ClInclude Include="Property.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="SelectObject.h" />
     <ClInclude Include="stdafx.h" />

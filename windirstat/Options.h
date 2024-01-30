@@ -22,7 +22,7 @@
 #pragma once
 
 #include "TreeMap.h"
-#include "Properties.h"
+#include "Property.h"
 #include <common/Constants.h>
 
 class COptions;

@@ -24,7 +24,7 @@
 #include "DirStatDoc.h"
 #include <common/CommonHelpers.h>
 #include "Options.h"
-#include "Properties.h"
+#include "Property.h"
 
 #include <format>
 

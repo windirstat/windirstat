@@ -211,7 +211,7 @@
     <ClInclude Include="PageAdvanced.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Properties.h">
+    <ClInclude Include="Property.h">
       <Filter>Header Files\Common</Filter>
     </ClInclude>
   </ItemGroup>

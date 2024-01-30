@@ -35,7 +35,7 @@
 #include "PageTreeList.h"
 #include "PageTreeMap.h"
 #include "PageGeneral.h"
-#include "Properties.h"
+#include "Property.h"
 
 #include <common/MdExceptions.h>
 #include <common/CommonHelpers.h>
@@ -47,7 +47,7 @@
 #include <unordered_map>
 
 #include "PageAdvanced.h"
-#include "Properties.h"
+#include "Property.h"
 
 namespace
 {
@@ -717,6 +717,7 @@ void CMainFrame::OnClose()
 
 void CMainFrame::OnDestroy()
 {
+    // Save our window position
     WINDOWPLACEMENT wp = { .length = sizeof(wp) };
     GetWindowPlacement(&wp);
     COptions::MainWindowPlacement = wp;
@@ -724,8 +725,11 @@ void CMainFrame::OnDestroy()
     COptions::ShowFileTypes = GetTypeView()->IsShowTypes();
     COptions::ShowTreemap = GetGraphView()->IsShowTreemap();
 
-    PersistedSetting::WritePersistedProperties();
+    // Close all artifacts and our child windows
     CFrameWndEx::OnDestroy();
+
+    // Persist values at very end after all children have closed
+    PersistedSetting::WritePersistedProperties();
 }
 
 BOOL CMainFrame::OnCreateClient(LPCREATESTRUCT /*lpcs*/, CCreateContext* pContext)

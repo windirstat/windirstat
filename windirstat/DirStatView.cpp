@@ -42,7 +42,17 @@ BEGIN_MESSAGE_MAP(CMyTreeListControl, CTreeListControl)
     ON_WM_CONTEXTMENU()
     ON_WM_SETFOCUS()
     ON_WM_KEYDOWN()
+    ON_NOTIFY_EX(HDN_ENDDRAG, 0, OnHeaderEndDrag)
 END_MESSAGE_MAP()
+
+BOOL CMyTreeListControl::OnHeaderEndDrag(UINT, NMHDR* pNMHDR, LRESULT* pResult)
+{
+    // Do not allow first column to be re-ordered
+    const LPNMHEADERW hdr = reinterpret_cast<LPNMHEADERW>(pNMHDR);
+    const BOOL block = (hdr->iItem == COL_NAME || hdr->pitem->iOrder == COL_NAME);
+    *pResult = block;
+    return block;
+}
 
 void CMyTreeListControl::OnContextMenu(CWnd* /*pWnd*/, CPoint pt)
 {

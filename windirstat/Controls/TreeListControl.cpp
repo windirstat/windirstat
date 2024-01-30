@@ -379,7 +379,7 @@ BOOL CTreeListControl::CreateEx(DWORD dwExStyle, DWORD dwStyle, const RECT& rect
     VERIFY(bRet);
     if (bRet && dwExStyle)
     {
-        bRet = COwnerDrawnListControl::ModifyStyleEx(0, dwExStyle);
+        AddExtendedStyle(dwExStyle);
     }
     return bRet;
 }

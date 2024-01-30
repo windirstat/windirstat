@@ -19,7 +19,7 @@
 //
 
 #include "stdafx.h"
-#include "Properties.h"
+#include "Property.h"
 
 #include <sstream>
 
