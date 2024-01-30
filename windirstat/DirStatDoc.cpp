@@ -40,6 +40,7 @@
 #include <vector>
 #include <filesystem>
 
+#include "DirStatView.h"
 #include "GraphView.h"
 
 CDirStatDoc* _theDocument;
@@ -1377,11 +1378,13 @@ void CDirStatDoc::StartCoordinator(std::vector<CItem*> items)
                 item->SetScrollPosition(visualInfo[item].oldScrollPosition);
             }
 
+            GetMainFrame()->LockWindowUpdate();
             GetDocument()->RebuildExtensionData();
             GetDocument()->UpdateAllViews(nullptr);
-            GetMainFrame()->SetProgressPos100();
+            GetMainFrame()->SetProgressComplete();
             GetMainFrame()->RestoreTypeView();
             GetMainFrame()->RestoreGraphView();
+            GetMainFrame()-> UnlockWindowUpdate();
         });
     }).detach();
 }

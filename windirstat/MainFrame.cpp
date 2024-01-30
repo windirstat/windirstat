@@ -306,6 +306,11 @@ void CPacmanControl::Start()
     m_pacman.Start();
 }
 
+void CPacmanControl::Stop()
+{
+    m_pacman.Stop();
+}
+
 BEGIN_MESSAGE_MAP(CPacmanControl, CStatic)
     ON_WM_PAINT()
     ON_WM_CREATE()
@@ -411,6 +416,7 @@ CMainFrame::CMainFrame()
       , m_scanSuspend(false)
       , m_progressRange(100)
       , m_progressPos(0)
+      , m_workingItem(nullptr)
       , m_wndSubSplitter(COptions::SubSplitterPos.Ptr())
       , m_wndSplitter(COptions::MainSplitterPos.Ptr())
       , m_logicalFocus(LF_NONE)
@@ -438,12 +444,11 @@ LRESULT CMainFrame::OnTaskButtonCreated(WPARAM, LPARAM)
     return 0;
 }
 
-void CMainFrame::ShowProgress(ULONGLONG range)
+void CMainFrame::CreateProgress(ULONGLONG range)
 {
     // A range of 0 means that we have no range.
     // In this case we display pacman.
-    HideProgress();
-
+    
     if (COptions::FollowMountPoints || COptions::FollowJunctionPoints)
     {
         range = 0;
@@ -459,21 +464,6 @@ void CMainFrame::ShowProgress(ULONGLONG range)
     {
         CreatePacmanProgress();
     }
-    UpdateProgress();
-}
-
-void CMainFrame::HideProgress()
-{
-    DestroyProgress();
-    if (m_progressVisible)
-    {
-        m_progressVisible = false;
-        if (::IsWindow(*GetMainFrame()))
-        {
-            GetDocument()->SetTitlePrefix(wds::strEmpty);
-            SetMessageText(AFX_IDS_IDLEMESSAGE);
-        }
-    }
 }
 
 void CMainFrame::SetProgressPos(ULONGLONG pos)
@@ -487,16 +477,17 @@ void CMainFrame::SetProgressPos(ULONGLONG pos)
     UpdateProgress();
 }
 
-void CMainFrame::SetProgressPos100() // called by CDirStatDoc
+void CMainFrame::SetProgressComplete() // called by CDirStatDoc
 {
-    if (m_progressRange > 0)
-    {
-        SetProgressPos(m_progressRange);
-    }
     if (m_TaskbarList)
     {
         m_TaskbarList->SetProgressState(*this, m_TaskbarButtonState = TBPF_NOPROGRESS);
     }
+    UpdateProgress();
+    DestroyProgress();
+
+    GetDocument()->SetTitlePrefix(wds::strEmpty);
+    SetMessageText(AFX_IDS_IDLEMESSAGE);
 }
 
 bool CMainFrame::IsScanSuspended() const
@@ -523,49 +514,56 @@ void CMainFrame::SuspendState(bool suspend)
     UpdateProgress();
 }
 
-void CMainFrame::DrivePacman()
-{
-    m_pacman.Drive();
-}
-
 void CMainFrame::UpdateProgress()
 {
-    if (m_progressVisible)
+    // Update working item tracker if changed
+    CItem* workingItem = GetDocument()->GetRootItem();
+    if (workingItem != m_workingItem)
     {
-        CStringW titlePrefix;
-        CStringW suspended;
+        m_workingItem = workingItem;
+        CreateProgress(m_workingItem->GetProgressRange());
+    }
 
-        if (IsScanSuspended())
-        {
-            VERIFY(suspended.LoadString(IDS_SUSPENDED_));
-        }
+    // Exit early if we not ready for visual updates
+    if (!m_progressVisible || m_workingItem == nullptr) return;
 
-        if (m_progressRange > 0)
+    // Update pacman graphic (does nothing if hidden)
+    m_progressPos = m_workingItem->GetProgressPos();
+    m_pacman.Drive();
+
+    CStringW titlePrefix;
+    CStringW suspended;
+
+    // Display the suspend text in the bar if suspended
+    if (IsScanSuspended())
+    {
+        VERIFY(suspended.LoadString(IDS_SUSPENDED_));
+    }
+
+    if (m_progressRange > 0 && m_progress.m_hWnd != nullptr)
+    {
+        const int pos = static_cast<int>((double)m_progressPos * 100 / m_progressRange);
+        m_progress.SetPos(pos);
+        titlePrefix.Format(L"%d%% %s", pos, suspended.GetString());
+        if (m_TaskbarList && m_TaskbarButtonState != TBPF_PAUSED)
         {
-            const int pos = static_cast<int>((double)m_progressPos * 100 / m_progressRange);
-            m_progress.SetPos(pos);
-            titlePrefix.Format(L"%d%% %s", pos, suspended.GetString());
-            if (m_TaskbarList && m_TaskbarButtonState != TBPF_PAUSED)
+            if (pos == 100)
             {
-                // FIXME: hardcoded value here and elsewhere in this file
-                if (pos == 100)
-                {
-                    m_TaskbarList->SetProgressState(*this, m_TaskbarButtonState = TBPF_INDETERMINATE); // often happens before we're finished
-                }
-                else
-                {
-                    m_TaskbarList->SetProgressState(*this, m_TaskbarButtonState = TBPF_NORMAL); // often happens before we're finished
-                    m_TaskbarList->SetProgressValue(*this, m_progressPos, m_progressRange);
-                }
+                m_TaskbarList->SetProgressState(*this, m_TaskbarButtonState = TBPF_INDETERMINATE); // often happens before we're finished
+            }
+            else
+            {
+                m_TaskbarList->SetProgressState(*this, m_TaskbarButtonState = TBPF_NORMAL); // often happens before we're finished
+                m_TaskbarList->SetProgressValue(*this, m_progressPos, m_progressRange);
             }
         }
-        else
-        {
-            titlePrefix = LoadString(IDS_SCANNING_) + suspended;
-        }
-
-        GetDocument()->SetTitlePrefix(titlePrefix);
     }
+    else
+    {
+        titlePrefix = LoadString(IDS_SCANNING_) + suspended;
+    }
+
+    GetDocument()->SetTitlePrefix(titlePrefix);
 }
 
 void CMainFrame::CreateStatusProgress()
@@ -590,6 +588,7 @@ void CMainFrame::CreatePacmanProgress()
         CRect rc;
         m_wndStatusBar.GetItemRect(0, rc);
         m_pacman.Create(wds::strEmpty, WS_CHILD | WS_VISIBLE, rc, &m_wndStatusBar, ID_WDS_CONTROL);
+        m_pacman.Start();
     }
 }
 
@@ -635,7 +634,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
     DockPane(&m_wndToolBar);
 
     // map from toolbar resources to specific icons
-    std::unordered_map<UINT, UINT> toolbar_map =
+    const std::unordered_map<UINT, UINT> toolbar_map =
     {
         { ID_FILE_SELECT, IDB_FILE_SELECT },
         { ID_CLEANUP_OPEN_SELECTED, IDB_CLEANUP_OPEN_SELECTED },
@@ -828,6 +827,9 @@ void CMainFrame::OnTimer(UINT_PTR nIDEvent)
     // Update tree control
     if (!GetDocument()->IsRootDone())
     {
+        // Update the visual progress on the bottom of the screen
+        UpdateProgress();
+
         // By sorting items, items will be redrawn which will
         // also force pacman to update with recent position
         CTreeListControl::GetTheTreeListControl()->SortItems();

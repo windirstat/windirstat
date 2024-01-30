@@ -35,7 +35,7 @@ class CItem;
 class CMyTreeListControl final : public CTreeListControl
 {
 public:
-    CMyTreeListControl(CDirStatView* dirstatView);
+    CMyTreeListControl();
     bool GetAscendingDefault(int column) override;
 
 protected:

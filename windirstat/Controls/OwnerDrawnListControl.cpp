@@ -194,13 +194,13 @@ IMPLEMENT_DYNAMIC(COwnerDrawnListControl, CSortingListControl)
 
 COwnerDrawnListControl::COwnerDrawnListControl(int rowHeight, std::vector<int>* column_order, std::vector<int>* column_widths)
     : CSortingListControl(column_order, column_widths)
+      , m_windowColor(CLR_NONE)
+      , m_stripeColor(CLR_NONE)
       , m_rowHeight(rowHeight)
+      , m_yFirstItem(-1)
       , m_showGrid(false)
       , m_showStripes(false)
       , m_showFullRowSelection(false)
-      , m_yFirstItem(-1)
-      , m_windowColor(CLR_NONE)
-      , m_stripeColor(CLR_NONE)
 {
     ASSERT(rowHeight > 0);
     InitializeColors();
@@ -601,7 +601,6 @@ END_MESSAGE_MAP()
 
 BOOL COwnerDrawnListControl::OnEraseBkgnd(CDC* pDC)
 {
-    int i = 0;
     ASSERT(GetHeaderCtrl()->GetItemCount() > 0);
 
     // We should recalculate m_yFirstItem here (could have changed e.g. when
@@ -640,7 +639,7 @@ BOOL COwnerDrawnListControl::OnEraseBkgnd(CDC* pDC)
     HDITEM hdi;
     ZeroMemory(&hdi, sizeof(hdi));
     hdi.mask = HDI_WIDTH;
-    for (i = 0; i < GetHeaderCtrl()->GetItemCount(); i++)
+    for (int i = 0; i < GetHeaderCtrl()->GetItemCount(); i++)
     {
         GetHeaderCtrl()->GetItem(columnOrder[i], &hdi);
         x += hdi.cxy;
@@ -659,7 +658,7 @@ BOOL COwnerDrawnListControl::OnEraseBkgnd(CDC* pDC)
         }
 
         // BUGBUG: re-using i could be a potential bug!
-        for (i = 0; i < vertical.GetSize(); i++)
+        for (int i = 0; i < vertical.GetSize(); i++)
         {
             pDC->MoveTo(vertical[i] - 1, rcClient.top);
             pDC->LineTo(vertical[i] - 1, rcClient.bottom);
@@ -684,7 +683,7 @@ BOOL COwnerDrawnListControl::OnEraseBkgnd(CDC* pDC)
     fill.right  = rcClient.right;
     fill.top    = m_yFirstItem;
     fill.bottom = fill.top + GetRowHeight() - gridWidth;
-    for (i = 0; i < itemCount; i++)
+    for (int i = 0; i < itemCount; i++)
     {
         pDC->FillSolidRect(fill, bgcolor);
         fill.OffsetRect(0, GetRowHeight());

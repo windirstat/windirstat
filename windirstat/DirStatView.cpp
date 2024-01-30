@@ -29,8 +29,7 @@
 #include "OsSpecific.h"
 #include "GlobalHelpers.h"
 
-CMyTreeListControl::CMyTreeListControl(CDirStatView* dirstatView)
-    : CTreeListControl(dirstatView, 20)
+CMyTreeListControl::CMyTreeListControl() : CTreeListControl(20)
 {
 }
 
@@ -147,7 +146,6 @@ void CMyTreeListControl::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 IMPLEMENT_DYNCREATE(CDirStatView, CView)
 
 CDirStatView::CDirStatView()
-    : m_treeListControl(this)
 {
     m_treeListControl.SetSorting(COL_SUBTREETOTAL, false);
 }
@@ -236,7 +234,7 @@ void CDirStatView::CreateColumns(bool all)
     m_treeListControl.SortItems();
     while (m_treeListControl.DeleteColumn(COL_ITEMS));
 
-    // readd optional columns based on settings
+    // add optional columns based on settings
     if (COptions::ShowColumnItems)
         m_treeListControl.InsertColumn(COL_ITEMS, LoadString(IDS_TREECOL_ITEMS), LVCFMT_RIGHT, 55, COL_ITEMS);
     if (COptions::ShowColumnFiles)
@@ -249,6 +247,7 @@ void CDirStatView::CreateColumns(bool all)
         m_treeListControl.InsertColumn(COL_ATTRIBUTES, LoadString(IDS_TREECOL_ATTRIBUTES), LVCFMT_LEFT, 50, COL_ATTRIBUTES);
     if (COptions::ShowColumnOwner)
         m_treeListControl.InsertColumn(COL_OWNER, LoadString(IDS_TREECOL_OWNER), LVCFMT_LEFT, 120, COL_OWNER);
+
     m_treeListControl.OnColumnsInserted();
     
 }
