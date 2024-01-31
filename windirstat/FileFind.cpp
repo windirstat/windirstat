@@ -23,6 +23,7 @@
 #include <winternl.h>
 
 #include "FileFind.h"
+#include "Options.h"
 #include <common/Tracer.h>
 
 #pragma comment(lib,"ntdll.lib")
@@ -146,8 +147,14 @@ CStringW FileFindEnhanced::GetFileName() const
     return m_name;
 }
 
-ULONGLONG FileFindEnhanced::GetCompressedLength() const
+ULONGLONG FileFindEnhanced::GetFileSize() const
 {
+    // Optionally retrieve the compressed file size
+    if (m_current_info->FileAttributes & (FILE_ATTRIBUTE_COMPRESSED | FILE_ATTRIBUTE_SPARSE_FILE) && COptions::ShowUncompressedFileSizes)
+    {
+        return m_current_info->EndOfFile.QuadPart;
+    }
+
     return m_current_info->AllocationSize.QuadPart;
 }
 
@@ -159,7 +166,7 @@ FILETIME FileFindEnhanced::GetLastWriteTime() const
 
 CStringW FileFindEnhanced::GetFilePath() const
 {
-    return m_base;
+    return m_base + L"\\" + m_name;
 }
 
 CStringW FileFindEnhanced::GetLongPathCompatible(const CStringW & path)

@@ -139,6 +139,7 @@
 #define IDC_TREECOL_LASTCHANGE          1025
 #define IDC_LABEL_ITEMS                 1026
 #define IDC_TREECOL_ITEMS               1026
+#define IDC_TREECOL_UNCOMPRESS_SIZE     1027
 #define IDC_SHOWGRID                    1028
 #define IDC_LABEL_FILES                 1028
 #define IDC_TREECOL_FILES               1028
@@ -150,6 +151,7 @@
 #define IDC_PORTABLE_MODE               1032
 #define IDC_BACKUP_RESTORE              1033
 #define IDC_RESET                       1034
+#define IDC_UNCOMPRESSED_FILE_SIZES     1034
 #define IDC_LIST                        1036
 #define IDC_TITLE                       1037
 #define IDC_COMMANDLINE                 1038
@@ -195,7 +197,6 @@
 #define ID_WDS_CONTROL                  4711
 #define ID_FILE_REFRESHALL              32773
 #define ID_CLEANUP_EXPLORER_SELECT      32774
-#define ID_CLEANUP_COMPRESS             32776
 #define ID_TREEMAP_ZOOMIN               32783
 #define ID_TREEMAP_ZOOMOUT              32784
 #define IDB_TREEMAP_ZOOMIN              32784

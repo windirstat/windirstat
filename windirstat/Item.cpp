@@ -523,7 +523,7 @@ void CItem::UpdateStatsFromDisk()
             if (IsType(IT_FILE))
             {
                 UpwardSubtractSize(m_size);
-                UpwardAddSize(finder.GetCompressedLength());
+                UpwardAddSize(finder.GetFileSize());
             }
         }
     }
@@ -1328,7 +1328,7 @@ CItem* CItem::AddDirectory(const FileFindEnhanced& finder)
 void CItem::AddFile(const FileFindEnhanced& finder)
 {
     const auto & child = new CItem(IT_FILE, finder.GetFileName());
-    child->SetSize(finder.GetCompressedLength());
+    child->SetSize(finder.GetFileSize());
     child->SetLastChange(finder.GetLastWriteTime());
     child->SetAttributes(finder.GetAttributes());
     AddChild(child);

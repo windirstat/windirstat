@@ -59,6 +59,7 @@ Setting<bool> COptions::HumanFormat(L"options", L"showTimeSpent", true);
 Setting<bool> COptions::FollowMountPoints(L"options", L"followMountPoint", false);
 Setting<bool> COptions::FollowJunctionPoints(L"options", L"followJunctionPoints", false);
 Setting<bool> COptions::UseBackupRestore(L"options", L"useBackupRestore", true);
+Setting<bool> COptions::ShowUncompressedFileSizes(L"options", L"showUncompressedFileSizes", false);
 Setting<int> COptions::ScanningThreads(L"options", L"scanningThreads", 4, 1, 16);
 
 Setting<bool> COptions::SkipHidden(L"options", L"skipHidden", false);

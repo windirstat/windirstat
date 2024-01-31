@@ -131,6 +131,7 @@ public:
     static Setting<bool> FollowMountPoints;
     static Setting<bool> FollowJunctionPoints;
     static Setting<bool> UseBackupRestore;
+    static Setting<bool> ShowUncompressedFileSizes;
     static Setting<int> ScanningThreads;
 
     static Setting<bool> SkipHidden;
