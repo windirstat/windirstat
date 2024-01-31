@@ -68,7 +68,7 @@ public:
     COLORREF AltColor() const;           // Coloring of compressed items
     COLORREF AltEncryptionColor() const; // Coloring of encrypted items
 
-    CStringW GetCurrentProcessMemoryInfo();
+    static CStringW GetCurrentProcessMemoryInfo();
     CMyImageList* GetMyImageList();
 
     void DoContextHelp(DWORD topic);
@@ -92,8 +92,6 @@ public:
 
 protected:
 
-    bool UpdateMemoryInfo();
-
     // Get the alternative color from Explorer configuration
     COLORREF GetAlternativeColor(COLORREF clrDefault, LPCWSTR which);
 
@@ -102,8 +100,6 @@ protected:
     LANGID m_langid;                          // Language we are running
     CReparsePoints m_mountPoints;             // Mount point information
     CMyImageList m_myImageList;               // Our central image list
-    ULONGLONG m_workingSet;                   // Current working set (RAM usage)
-    ULONGLONG m_pageFaults;                   // Page faults so far (unused)
     COLORREF m_altColor;                      // Coloring of compressed items
     COLORREF m_altEncryptionColor;            // Coloring of encrypted items
 #ifdef VTRACE_TO_CONSOLE
