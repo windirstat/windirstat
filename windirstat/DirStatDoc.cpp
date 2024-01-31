@@ -466,6 +466,7 @@ void CDirStatDoc::RecurseRefreshJunctionItems(CItem* item)
     {
         RefreshItem(item);
     }
+
     for (int i = 0; i < item->GetChildrenCount(); i++)
     {
         RecurseRefreshJunctionItems(item->GetChild(i));
@@ -1236,14 +1237,17 @@ void CDirStatDoc::StartCoordinator(std::vector<CItem*> items)
     // Stop any previous executions
     ShutdownCoordinator(true);
 
-    // Clear any reselection options since they may be invalidated
-    ClearReselectChildStack();
-
     // Address currently zoomed / selected item conflicts
     const auto zoom_item = GetZoomItem();
     const auto selected_items = CTreeListControl::GetTheTreeListControl()->GetAllSelected<CItem>();
     for (const auto& item : std::vector(items))
     {
+        // Abort if bad entry detected
+        if (item == nullptr)
+        {
+            return;
+        }
+
         // Bring the zoom out if it would be invalidated
         if (item->IsAncestorOf(zoom_item))
         {
@@ -1259,6 +1263,12 @@ void CDirStatDoc::StartCoordinator(std::vector<CItem*> items)
                 items.push_back(item->GetChild(i));
         }
     }
+
+    // Clear any reselection options since they may be invalidated
+    ClearReselectChildStack();
+
+    // Do not attempt to update graph while scanning
+    GetMainFrame()->GetGraphView()->SuspendRecalculationDrawing(true);
 
     // Start a thread so we do not hang the message loop
     // Lambda captures assume document exists for duration of thread
@@ -1384,6 +1394,7 @@ void CDirStatDoc::StartCoordinator(std::vector<CItem*> items)
             GetMainFrame()->SetProgressComplete();
             GetMainFrame()->RestoreTypeView();
             GetMainFrame()->RestoreGraphView();
+            GetMainFrame()->GetGraphView()->SuspendRecalculationDrawing(false);
             GetMainFrame()-> UnlockWindowUpdate();
         });
     }).detach();

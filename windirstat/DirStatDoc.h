@@ -115,6 +115,8 @@ public:
     bool UserDefinedCleanupWorksForItem(USERDEFINEDCLEANUP* udc, const CItem* item);
     void StartCoordinator(std::vector<CItem*> items);
     void ShutdownCoordinator(bool wait = true);
+    void RefreshItem(std::vector<CItem*> item);
+    void RefreshItem(CItem* item) { RefreshItem(std::vector{ item }); }
 
     static void OpenItem(const CItem* item, LPCWSTR verb = L"open");
 
@@ -129,8 +131,6 @@ protected:
     static CExtensionData* _pqsortExtensionData;
     bool DeletePhysicalItem(CItem* item, bool toTrashBin);
     void SetZoomItem(CItem* item);
-    static void RefreshItem(std::vector<CItem*> item);
-    static void RefreshItem(CItem* item) { RefreshItem(std::vector{item}); }
     static void AskForConfirmation(USERDEFINEDCLEANUP* udc, CItem* item);
     void PerformUserDefinedCleanup(USERDEFINEDCLEANUP* udc, CItem* item);
     void RefreshAfterUserDefinedCleanup(const USERDEFINEDCLEANUP* udc, CItem* item);
