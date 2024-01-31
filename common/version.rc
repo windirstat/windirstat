@@ -26,6 +26,7 @@
 
 #ifdef RC_INVOKED
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+#pragma code_page(65001)
 #include "version.h"
 
 #define _ANSISTRING(text) #text
@@ -88,14 +89,14 @@ BEGIN
 #ifdef TEXT_WEBSITE
             VALUE "Website", ANSISTRING(TEXT_WEBSITE)
 #endif
-#if defined(HG_REV_ID) && defined(HG_REV_NO)
-            VALUE "Mercurial revision", HG_REV_ID " (" ANSISTRING(HG_REV_NO) ")"
-#endif
-#if defined(HG_FULLID)
-            VALUE "Mercurial revision URL", HG_REPOSITORY "/src/" HG_FULLID
-#endif
-#ifdef HG_REPOSITORY
-            VALUE "Mercurial repository", HG_REPOSITORY
+// #if defined(HG_REV_ID) && defined(HG_REV_NO)
+//             VALUE "Mercurial revision", HG_REV_ID " (" ANSISTRING(HG_REV_NO) ")"
+// #endif
+// #if defined(HG_FULLID)
+//             VALUE "Mercurial revision URL", HG_REPOSITORY "/src/" HG_FULLID
+// #endif
+#ifdef SOURCE_REPOSITORY
+            VALUE "Source repository", SOURCE_REPOSITORY
 #endif
 #ifdef STRING_REPORT_DEFECT_URL
             VALUE "Defect report URL", STRING_REPORT_DEFECT_URL

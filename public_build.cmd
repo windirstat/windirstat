@@ -4,11 +4,8 @@ set TGTNAME=wds
 set PRJNAME=%TGTNAME%_release
 set SIGURL=https://windirstat.net
 set SIGDESC=WinDirStat
-call "%~dp0common\hgid.cmd"
-premake4.exe --release vs2005
-call "setvcvars.cmd" 2005
-:: premake4.exe --release --xp vs2017
-:: call "setvcvars.cmd" 2017
+premake4.exe --release vs2022
+call "setvcvars.cmd" 2022
 echo %VCVER_FRIENDLY%
 vcbuild.exe /time /rebuild /showenv /M1 /nologo "/htmllog:$(SolutionDir)buildlog.html" "%~dp0%PRJNAME%.vs8.sln" "$ALL"
 del /f %PRJNAME%\*.idb

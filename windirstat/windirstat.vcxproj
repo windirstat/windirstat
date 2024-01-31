@@ -130,9 +130,6 @@
       <TargetMachine>MachineX86</TargetMachine>
       <AdditionalOptions>/pdbaltpath:%_PDB% /nodefaultlib:libcmt %(AdditionalOptions)</AdditionalOptions>
     </Link>
-    <PreBuildEvent>
-      <Command>if not exist "$(SolutionDir)common\hgid.h" call "$(SolutionDir)\common\hgid.cmd"</Command>
-    </PreBuildEvent>
     <Manifest>
       <AdditionalManifestFiles>res\windirstat.manifest</AdditionalManifestFiles>
       <EnableDpiAwareness>false</EnableDpiAwareness>
@@ -222,9 +219,6 @@
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <Profile>true</Profile>
     </Link>
-    <PreBuildEvent>
-      <Command>if not exist "$(SolutionDir)common\hgid.h" call "$(SolutionDir)\common\hgid.cmd"</Command>
-    </PreBuildEvent>
     <Manifest>
       <AdditionalManifestFiles>res\windirstat.manifest</AdditionalManifestFiles>
       <EnableDpiAwareness>false</EnableDpiAwareness>
@@ -274,16 +268,12 @@
       <Profile>true</Profile>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
-    <PreBuildEvent>
-      <Command>if not exist "$(SolutionDir)common\hgid.h" call "$(SolutionDir)\common\hgid.cmd"</Command>
-    </PreBuildEvent>
     <Manifest>
       <AdditionalManifestFiles>res\windirstat.manifest</AdditionalManifestFiles>
       <EnableDpiAwareness>false</EnableDpiAwareness>
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\common\hgid.h" />
     <ClInclude Include="..\common\CommonHelpers.h" />
     <ClInclude Include="..\common\resource.h" />
     <ClInclude Include="..\common\SmartPointer.h" />
@@ -411,7 +401,6 @@
     <None Include="..\CONTRIBUTORS.md" />
     <None Include="..\README.md" />
     <None Include="..\common\build_luajit.cmd" />
-    <None Include="..\common\hgid.cmd" />
     <None Include="..\common\produce_vsprojects.cmd" />
     <None Include="..\common\setvcvars.cmd" />
     <None Include="..\premake4.lua" />

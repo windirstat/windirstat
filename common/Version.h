@@ -19,8 +19,6 @@
 
 #pragma once
 
-#include "hgid.h"
-
 #if defined(WDS_RESLANG) && (WDS_RESLANG > 0)
 #   if (WDS_RESLANG == 0x0405)
 #       define TEXT_RESLANG             Czech
@@ -56,8 +54,8 @@
 #define PRD_MAJVER                  1 // major product version
 #define PRD_MINVER                  3 // minor product version
 #define PRD_PATCH                   0 // patch number
-#define PRD_BUILD                   HG_REV_NO // build number for product
-#define PRD_BUILD_NUMERIC           HG_REV_NO_NUMERIC // build number for product
+#define PRD_BUILD                   0 // build number for product
+#define PRD_BUILD_NUMERIC           0 // build number for product
 #if defined(WDS_RESLANG) && (WDS_RESLANG > 0)
 #   define FILE_MAJVER              1 // resource language version, changing this denotes incompatibilities
 #   define FILE_MINVER              0
@@ -88,6 +86,6 @@
 #endif
 
 #define TEXT_COMPANY                WinDirStat Team (windirstat.net) // company
-#define TEXT_COPYRIGHT              \xA9 2003-2005 Bernhard Seifert, \xA9 2004-2024 WinDirStat Team // copyright information
-#define HG_REPOSITORY               "https://bitbucket.org/windirstat/windirstat"
-#define STRING_REPORT_DEFECT_URL    HG_REPOSITORY "/issues?status=new&status=open"
+#define TEXT_COPYRIGHT              \u24B8 2003-2005 Bernhard Seifert, \u24B8 2004-2024 WinDirStat Team // copyright information
+#define SOURCE_REPOSITORY           "https://github.com/windirstat/windirstat"
+#define STRING_REPORT_DEFECT_URL    "https://github.com/windirstat/windirstat/issues/new/choose"

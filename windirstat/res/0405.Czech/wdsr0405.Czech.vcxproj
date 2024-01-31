@@ -66,9 +66,6 @@
       <TargetMachine>MachineX86</TargetMachine>
       <AdditionalOptions>/noentry %(AdditionalOptions)</AdditionalOptions>
     </Link>
-    <PreBuildEvent>
-      <Command>if not exist "$(SolutionDir)common\hgid.h" call "$(SolutionDir)\common\hgid.cmd"</Command>
-    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\common\version.h" />
