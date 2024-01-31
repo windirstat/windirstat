@@ -449,7 +449,7 @@ void CMainFrame::CreateProgress(ULONGLONG range)
     // A range of 0 means that we have no range.
     // In this case we display pacman.
     
-    if (COptions::FollowMountPoints || COptions::FollowJunctionPoints)
+    if (COptions::FollowMountPoints || COptions::FollowJunctionPoints || COptions::ShowUncompressedFileSizes)
     {
         range = 0;
     }

@@ -61,7 +61,7 @@ public:
     bool IsProtectedReparsePoint() const;
     DWORD GetAttributes() const;
     CStringW GetFileName() const;
-    ULONGLONG GetCompressedLength() const;
+    ULONGLONG GetFileSize() const;
     FILETIME GetLastWriteTime() const;
     CStringW GetFilePath() const;
     static bool DoesFileExist(const CStringW& folder, const CStringW& file);

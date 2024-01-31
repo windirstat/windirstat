@@ -214,6 +214,7 @@
     <ClInclude Include="Property.h">
       <Filter>Header Files\Common</Filter>
     </ClInclude>
+    <ClInclude Include="..\common\resource.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\common\CommonHelpers.cpp">

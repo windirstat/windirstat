@@ -36,6 +36,7 @@ CPageAdvanced::CPageAdvanced()
     , m_followJunctionPoints(FALSE)
     , m_skipHidden(FALSE)
     , m_useBackupRestore(FALSE)
+    , m_showUncompressedFileSizes(FALSE)
     , m_scanningThreads(0)
 {
 }
@@ -56,12 +57,15 @@ void CPageAdvanced::DoDataExchange(CDataExchange* pDX)
     DDX_Control(pDX, IDC_FOLLOWJUNCTIONS, m_ctlFollowJunctionPoints);
     DDX_Check(pDX, IDC_SKIPHIDDEN, m_skipHidden);
     DDX_Check(pDX, IDC_BACKUP_RESTORE, m_useBackupRestore);
+    DDX_Check(pDX, IDC_UNCOMPRESSED_FILE_SIZES, m_showUncompressedFileSizes);
     DDX_CBIndex(pDX, IDC_COMBO_THREADS, m_scanningThreads);
 }
 
 BEGIN_MESSAGE_MAP(CPageAdvanced, CPropertyPage)
     ON_BN_CLICKED(IDC_FOLLOWMOUNTPOINTS, OnSettingChanged)
     ON_BN_CLICKED(IDC_FOLLOWJUNCTIONS, OnSettingChanged)
+    ON_BN_CLICKED(IDC_BACKUP_RESTORE, OnSettingChanged)
+    ON_BN_CLICKED(IDC_UNCOMPRESSED_FILE_SIZES, OnSettingChanged)
     ON_CBN_SELENDOK(IDC_COMBO_THREADS, OnSettingChanged)
     ON_BN_CLICKED(IDC_SKIPHIDDEN, OnSettingChanged)
 END_MESSAGE_MAP()
@@ -74,6 +78,7 @@ BOOL CPageAdvanced::OnInitDialog()
     m_followJunctionPoints = COptions::FollowJunctionPoints;
     m_skipHidden = COptions::SkipHidden;
     m_useBackupRestore = COptions::UseBackupRestore;
+    m_showUncompressedFileSizes = COptions::ShowUncompressedFileSizes;
     m_scanningThreads = COptions::ScanningThreads - 1;
 
     UpdateData(false);
@@ -98,6 +103,7 @@ void CPageAdvanced::OnOK()
     COptions::FollowJunctionPoints = (FALSE != m_followJunctionPoints);
     COptions::SkipHidden = (FALSE != m_skipHidden);
     COptions::UseBackupRestore = (FALSE != m_useBackupRestore);
+    COptions::ShowUncompressedFileSizes = (FALSE != m_showUncompressedFileSizes);
     COptions::ScanningThreads = m_scanningThreads + 1;
 
     CPropertyPage::OnOK();

@@ -285,6 +285,7 @@
   <ItemGroup>
     <ClInclude Include="..\common\hgid.h" />
     <ClInclude Include="..\common\CommonHelpers.h" />
+    <ClInclude Include="..\common\resource.h" />
     <ClInclude Include="..\common\SmartPointer.h" />
     <ClInclude Include="..\common\MdExceptions.h" />
     <ClInclude Include="..\common\Tracer.h" />
