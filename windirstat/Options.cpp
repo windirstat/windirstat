@@ -188,6 +188,12 @@ void COptions::PostProcessPersistedSettings()
     SanitizeRect(AboutWindowRect.Obj());
     SanitizeRect(DriveWindowRect.Obj());
 
+    // Validate locale is valie
+    if (!IsValidLocale(MAKELCID(LanguageId, SORT_DEFAULT), LCID_INSTALLED))
+    {
+        LanguageId.Obj() = GetUserDefaultLangID();
+    }
+
     // Load treemap settings 
     TreemapOptions.style = static_cast<CTreemap::STYLE>(static_cast<int>(TreeMapStyle));
     TreemapOptions.grid = TreeMapGrid;
