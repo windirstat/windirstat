@@ -35,7 +35,7 @@
 class CMdStringException final : public CException
 {
 public:
-    CMdStringException(LPCWSTR pszText)
+    explicit CMdStringException(LPCWSTR pszText)
         : m_sText(pszText) // pszText may be an ordinal resource (MAKEINTRESOURCE)
     {
     }
@@ -100,12 +100,12 @@ inline CStringW MdGetWinErrorText(HRESULT hr)
 
 inline void MdThrowStringException(UINT resId)
 {
-    throw new CMdStringException(MAKEINTRESOURCE(resId));
+    throw new CMdStringException(MAKEINTRESOURCE(resId)); //-V1022
 }
 
 inline void MdThrowStringException(LPCWSTR pszText)
 {
-    throw new CMdStringException(pszText);
+    throw new CMdStringException(pszText); //-V1022
 }
 
 inline void __MdFormatStringExceptionV(CStringW& rsText, LPCWSTR pszFormat, va_list vlist)

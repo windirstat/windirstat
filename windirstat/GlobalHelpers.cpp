@@ -319,7 +319,6 @@ CStringW FormatMilliseconds(ULONGLONG ms)
 
 bool GetVolumeName(LPCWSTR rootPath, CStringW& volumeName)
 {
-    CStringW ret;
     DWORD dummy;
 
     const UINT old = SetErrorMode(SEM_FAILCRITICALERRORS);

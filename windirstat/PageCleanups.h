@@ -46,7 +46,7 @@ protected:
     void UpdateControlStatus();
     void CheckEmptyTitle();
 
-    USERDEFINEDCLEANUP m_udc[USERDEFINEDCLEANUPCOUNT];
+    USERDEFINEDCLEANUP m_udc[USERDEFINEDCLEANUPCOUNT]; // FIXME: should probably go to the heap
     int m_current; // currently selected user defined cleanup
 
     // Dialog data

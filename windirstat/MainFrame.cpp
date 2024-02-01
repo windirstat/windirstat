@@ -441,7 +441,7 @@ void CMainFrame::CreateProgress(ULONGLONG range)
 {
     // A range of 0 means that we have no range.
     // In this case we display pacman.
-    
+
     if (COptions::FollowMountPoints || COptions::FollowJunctionPoints || COptions::ShowUncompressedFileSizes)
     {
         range = 0;
@@ -499,7 +499,7 @@ void CMainFrame::SuspendState(bool suspend)
         else
         {
             m_TaskbarButtonPreviousState = m_TaskbarButtonState;
-            m_TaskbarList->SetProgressState(*this, m_TaskbarButtonState = TBPF_PAUSED);
+            m_TaskbarList->SetProgressState(*this, m_TaskbarButtonState |= TBPF_PAUSED);
         }
     }
     CPacman::SetGlobalSuspendState(suspend);
@@ -968,7 +968,7 @@ void CMainFrame::QueryRecycleBin(ULONGLONG& items, ULONGLONG& bytes)
     }
 }
 
-void CMainFrame::AppendUserDefinedCleanups(CMenu* menu)
+void CMainFrame::AppendUserDefinedCleanups(CMenu* menu) const
 {
     bool bHasItem = false;
     for (size_t iCurrent = 0; iCurrent < COptions::UserDefinedCleanups.size(); iCurrent++)
@@ -990,7 +990,7 @@ void CMainFrame::AppendUserDefinedCleanups(CMenu* menu)
         const UINT flags = udc_valid ? MF_ENABLED : (MF_DISABLED | MF_GRAYED);
         menu->AppendMenu(flags | MF_STRING, ID_USERDEFINEDCLEANUP0 + iCurrent, string);
     }
-   
+
     if (!bHasItem)
     {
         // This is just to show new users, that they can configure user defined cleanups.

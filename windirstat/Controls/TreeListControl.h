@@ -36,7 +36,7 @@ class CTreeListControl;
 // In order to save memory, once the item is actually inserted in the List,
 // we allocate the VISIBLEINFO structure (m_vi).
 // m_vi is freed as soon as the item is removed from the List.
-// 
+//
 class CTreeListItem : public COwnerDrawnListItem
 {
     // Data needed to display the item.
@@ -192,9 +192,9 @@ protected:
 
     CBitmap m_bmNodes0;                // The bitmaps needed to draw the treecontrol-like branches
     CBitmap m_bmNodes1;                // The same bitmaps with stripe-background color
-    CImageList* m_imageList;           // We don't use the system-supplied SetImageList(), but MySetImageList().
-    int m_lButtonDownItem;             // Set in OnLButtonDown(). -1 if not item hit.
-    bool m_lButtonDownOnPlusMinusRect; // Set in OnLButtonDown(). True, if plus-minus-rect hit.
+    CImageList* m_imageList = nullptr; // We don't use the system-supplied SetImageList(), but MySetImageList().
+    int m_lButtonDownItem = -1;        // Set in OnLButtonDown(). -1 if not item hit.
+    bool m_lButtonDownOnPlusMinusRect = false; // Set in OnLButtonDown(). True, if plus-minus-rect hit.
 
     DECLARE_MESSAGE_MAP()
 

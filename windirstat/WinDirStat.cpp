@@ -433,8 +433,10 @@ bool CDirStatApp::InPortableMode() const
 bool CDirStatApp::SetPortableMode(bool enable, bool only_open)
 {
     // Do nothing is already done this way
-    if (enable && InPortableMode() ||
-        !enable && !InPortableMode()) return true;
+    if (enable == InPortableMode())
+    {
+        return true;
+    }
 
     // Cleanup previous configuration
     if (m_pszRegistryKey != nullptr) free(LPVOID(m_pszRegistryKey));

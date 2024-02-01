@@ -143,7 +143,6 @@ void CAboutDlg::CMyTabControl::SetPageText(int tab)
         break;
     case TAB_AUTHORS:
         {
-            CStringW translators;
             text.FormatMessage(IDS_ABOUT_AUTHORSTEXTs, GetDevelList().GetString());
             text += GetTranslatorList();
         }

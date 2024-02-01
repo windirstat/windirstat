@@ -941,9 +941,6 @@ void CItem::ScanItems(BlockingQueue<CItem*> * queue)
 
     while (CItem * item = queue->pop())
     {
-        // Used to trigger thread exit condition
-        if (item == nullptr) return;
-
         const ULONGLONG start = GetTickCount64();
 
         if (item->IsType(IT_DRIVE | IT_DIRECTORY))
