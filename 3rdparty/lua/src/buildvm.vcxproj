@@ -32,6 +32,10 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(SolutionDir)project.early.props" Condition="exists('$(SolutionDir)project.early.props')" Label="ProjectSpecific (solution/early)" />
+    <Import Project="$(ProjectDir)project.early.props" Condition="exists('$(ProjectDir)project.early.props') AND '$(SolutionDir)' != '$(ProjectDir)'" Label="Project-specific (local/early)" />
+  </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
@@ -129,6 +133,10 @@ minilua ..\dynasm\dynasm.lua -LN -D WIN -D JIT -D FFI -o "..\..\..\intermediate\
 minilua ..\dynasm\dynasm.lua -LN -D WIN -D JIT -D FFI -D P64 -o "..\..\..\intermediate\.vcxproj$(Platform)_$(Configuration)\$(ProjectName)\inc\buildvm_arch.h" vm_x86.dasc</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(SolutionDir)project.late.props" Condition="exists('$(SolutionDir)project.late.props')" Label="ProjectSpecific (solution/late)" />
+    <Import Project="$(ProjectDir)project.late.props" Condition="exists('$(ProjectDir)project.late.props') AND '$(SolutionDir)' != '$(ProjectDir)'" Label="Project-specific (local/late)" />
+  </ImportGroup>
   <ItemGroup>
     <ClInclude Include="host\buildvm.h" />
   </ItemGroup>
@@ -150,6 +158,10 @@ minilua ..\dynasm\dynasm.lua -LN -D WIN -D JIT -D FFI -D P64 -o "..\..\..\interm
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(SolutionDir)project.targets" Condition="exists('$(SolutionDir)project.targets')" Label="ProjectSpecific (solution/targets)" />
+    <Import Project="$(ProjectDir)project.targets" Condition="exists('$(ProjectDir)project.targets') AND '$(SolutionDir)' != '$(ProjectDir)'" Label="Project-specific (local/targets)" />
+  </ImportGroup>
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
 </Project>

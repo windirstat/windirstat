@@ -492,7 +492,7 @@ BOOL CDirStatApp::InitInstance()
 
     // If a local config file is available, use that for settings
     SetPortableMode(true, true);
-    
+
     COptions::LoadAppSettings();
     Inherited::LoadStdProfileSettings(4);
 
@@ -549,7 +549,7 @@ BOOL CDirStatApp::InitInstance()
         {
             TerminateProcess(handle, 0);
         }
-        
+
         m_pDocTemplate->OpenDocumentFile(cmdInfo.m_strFileName, true);
     }
     else
@@ -601,7 +601,7 @@ void CDirStatApp::OnRunElevated()
     shellInfo.lpVerb = L"runas";
     shellInfo.nShow  = SW_NORMAL;
     shellInfo.lpParameters = launchConfig.GetString();
-    
+
     if (!::ShellExecuteEx(&shellInfo))
     {
         VTRACE(L"ShellExecuteEx failed to elevate %d", GetLastError());

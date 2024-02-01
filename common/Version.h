@@ -74,18 +74,8 @@
 #else
 #define TEXT_FILEDESC               Windows Directory Statistics visualizes disk space usage // component description
 #endif
-#if defined(MODNAME)
-#   define TEXT_MODULE              MODNAME
-#   if (WDS_RESLANG)
-#       define TEXT_INTERNALNAME    MODNAME.wdslng
-#   else
-#       define TEXT_INTERNALNAME    MODNAME.exe
-#   endif
-#else
-#   error You must define MODNAME in the project!
-#endif
 
-#define TEXT_COMPANY                WinDirStat Team (windirstat.net) // company
-#define TEXT_COPYRIGHT              \u24B8 2003-2005 Bernhard Seifert, \u24B8 2004-2024 WinDirStat Team // copyright information
+#define STRING_COMPANY              "WinDirStat Team (windirstat.net)"
+#define STRING_COPYRIGHT            "© 2003-2005 Bernhard Seifert, © 2004-2024 WinDirStat Team"
 #define SOURCE_REPOSITORY           "https://github.com/windirstat/windirstat"
 #define STRING_REPORT_DEFECT_URL    "https://github.com/windirstat/windirstat/issues/new/choose"

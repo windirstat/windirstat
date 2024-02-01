@@ -58,6 +58,10 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(SolutionDir)project.early.props" Condition="exists('$(SolutionDir)project.early.props')" Label="ProjectSpecific (solution/early)" />
+    <Import Project="$(ProjectDir)project.early.props" Condition="exists('$(ProjectDir)project.early.props') AND '$(SolutionDir)' != '$(ProjectDir)'" Label="Project-specific (local/early)" />
+  </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
@@ -118,7 +122,7 @@
       <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <ResourceCompile>
-      <PreprocessorDefinitions>_DEBUG;VTRACE_TO_CONSOLE=1;VTRACE_DETAIL=2;WINVER=0x0601;_WIN32_WINNT=0x0601;LUA_REG_NO_WINTRACE;LUA_REG_NO_HIVEOPS;LUA_REG_NO_DLL;_ALLOW_RTCc_IN_STL;MODNAME=wds32D;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;VTRACE_TO_CONSOLE=1;VTRACE_DETAIL=2;WINVER=0x0601;_WIN32_WINNT=0x0601;LUA_REG_NO_WINTRACE;LUA_REG_NO_HIVEOPS;LUA_REG_NO_DLL;_ALLOW_RTCc_IN_STL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..;.;..\common;Controls;Dialogs;..\3rdparty\lua\src;..;$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
@@ -154,7 +158,7 @@
       <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <ResourceCompile>
-      <PreprocessorDefinitions>_DEBUG;VTRACE_TO_CONSOLE=1;VTRACE_DETAIL=2;WINVER=0x0601;_WIN32_WINNT=0x0601;LUA_REG_NO_WINTRACE;LUA_REG_NO_HIVEOPS;LUA_REG_NO_DLL;_ALLOW_RTCc_IN_STL;MODNAME=wds64D;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;VTRACE_TO_CONSOLE=1;VTRACE_DETAIL=2;WINVER=0x0601;_WIN32_WINNT=0x0601;LUA_REG_NO_WINTRACE;LUA_REG_NO_HIVEOPS;LUA_REG_NO_DLL;_ALLOW_RTCc_IN_STL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..;.;..\common;Controls;Dialogs;..\3rdparty\lua\src;..;$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
@@ -203,7 +207,7 @@
       <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
     </ClCompile>
     <ResourceCompile>
-      <PreprocessorDefinitions>NDEBUG;WINVER=0x0601;_WIN32_WINNT=0x0601;LUA_REG_NO_WINTRACE;LUA_REG_NO_HIVEOPS;LUA_REG_NO_DLL;_ALLOW_RTCc_IN_STL;MODNAME=wds32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;WINVER=0x0601;_WIN32_WINNT=0x0601;LUA_REG_NO_WINTRACE;LUA_REG_NO_HIVEOPS;LUA_REG_NO_DLL;_ALLOW_RTCc_IN_STL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..;.;..\common;Controls;Dialogs;..\3rdparty\lua\src;..;$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
@@ -252,7 +256,7 @@
       <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
     </ClCompile>
     <ResourceCompile>
-      <PreprocessorDefinitions>NDEBUG;WINVER=0x0601;_WIN32_WINNT=0x0601;LUA_REG_NO_WINTRACE;LUA_REG_NO_HIVEOPS;LUA_REG_NO_DLL;_ALLOW_RTCc_IN_STL;MODNAME=wds64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;WINVER=0x0601;_WIN32_WINNT=0x0601;LUA_REG_NO_WINTRACE;LUA_REG_NO_HIVEOPS;LUA_REG_NO_DLL;_ALLOW_RTCc_IN_STL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..;.;..\common;Controls;Dialogs;..\3rdparty\lua\src;..;$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
@@ -273,6 +277,10 @@
       <EnableDpiAwareness>false</EnableDpiAwareness>
     </Manifest>
   </ItemDefinitionGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(SolutionDir)project.late.props" Condition="exists('$(SolutionDir)project.late.props')" Label="ProjectSpecific (solution/late)" />
+    <Import Project="$(ProjectDir)project.late.props" Condition="exists('$(ProjectDir)project.late.props') AND '$(SolutionDir)' != '$(ProjectDir)'" Label="Project-specific (local/late)" />
+  </ImportGroup>
   <ItemGroup>
     <ClInclude Include="..\common\CommonHelpers.h" />
     <ClInclude Include="..\common\resource.h" />
@@ -439,6 +447,10 @@
     <Image Include="res\toolbar\ID_TREEMAP_ZOOMOUT.bmp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(SolutionDir)project.targets" Condition="exists('$(SolutionDir)project.targets')" Label="ProjectSpecific (solution/targets)" />
+    <Import Project="$(ProjectDir)project.targets" Condition="exists('$(ProjectDir)project.targets') AND '$(SolutionDir)' != '$(ProjectDir)'" Label="Project-specific (local/targets)" />
+  </ImportGroup>
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
 </Project>

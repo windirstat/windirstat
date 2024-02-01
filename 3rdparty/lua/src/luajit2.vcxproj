@@ -32,6 +32,10 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(SolutionDir)project.early.props" Condition="exists('$(SolutionDir)project.early.props')" Label="ProjectSpecific (solution/early)" />
+    <Import Project="$(ProjectDir)project.early.props" Condition="exists('$(ProjectDir)project.early.props') AND '$(SolutionDir)' != '$(ProjectDir)'" Label="Project-specific (local/early)" />
+  </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
@@ -137,6 +141,10 @@ buildvm64 -m recdef -o "..\..\..\intermediate\.vcxproj$(Platform)_$(Configuratio
 buildvm64 -m folddef -o "..\..\..\intermediate\.vcxproj$(Platform)_$(Configuration)\$(ProjectName)\inc\lj_folddef.h" lj_opt_fold.c</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(SolutionDir)project.late.props" Condition="exists('$(SolutionDir)project.late.props')" Label="ProjectSpecific (solution/late)" />
+    <Import Project="$(ProjectDir)project.late.props" Condition="exists('$(ProjectDir)project.late.props') AND '$(SolutionDir)' != '$(ProjectDir)'" Label="Project-specific (local/late)" />
+  </ImportGroup>
   <ItemGroup>
     <ClInclude Include="lauxlib.h" />
     <ClInclude Include="lj_alloc.h" />
@@ -337,6 +345,10 @@ buildvm64 -m folddef -o "..\..\..\intermediate\.vcxproj$(Platform)_$(Configurati
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(SolutionDir)project.targets" Condition="exists('$(SolutionDir)project.targets')" Label="ProjectSpecific (solution/targets)" />
+    <Import Project="$(ProjectDir)project.targets" Condition="exists('$(ProjectDir)project.targets') AND '$(SolutionDir)' != '$(ProjectDir)'" Label="Project-specific (local/targets)" />
+  </ImportGroup>
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
 </Project>
