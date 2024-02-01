@@ -113,7 +113,7 @@ public:
 
     void UnlinkRoot();
     bool UserDefinedCleanupWorksForItem(USERDEFINEDCLEANUP* udc, const CItem* item);
-    void StartCoordinator(std::vector<CItem*> items);
+    void StartupCoordinator(std::vector<CItem*> items);
     void ShutdownCoordinator(bool wait = true);
     void RefreshItem(std::vector<CItem*> item);
     void RefreshItem(CItem* item) { RefreshItem(std::vector{ item }); }

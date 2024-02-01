@@ -476,9 +476,8 @@ void CMainFrame::SetProgressComplete() // called by CDirStatDoc
     {
         m_TaskbarList->SetProgressState(*this, m_TaskbarButtonState = TBPF_NOPROGRESS);
     }
-    UpdateProgress();
-    DestroyProgress();
 
+    DestroyProgress();
     GetDocument()->SetTitlePrefix(wds::strEmpty);
     SetMessageText(AFX_IDS_IDLEMESSAGE);
 }
@@ -595,6 +594,7 @@ void CMainFrame::DestroyProgress()
     }
     else if (::IsWindow(m_pacman.m_hWnd))
     {
+        m_pacman.Stop();
         m_pacman.DestroyWindow();
         m_pacman.m_hWnd = nullptr;
         m_workingItem = nullptr;

@@ -178,6 +178,7 @@ WCHAR CDirStatDoc::GetEncodingSeparator()
 
 void CDirStatDoc::DeleteContents()
 {
+    ShutdownCoordinator();
     delete m_rootItem;
     m_rootItem = nullptr;
     m_zoomItem = nullptr;
@@ -248,7 +249,7 @@ BOOL CDirStatDoc::OnOpenDocument(LPCWSTR lpszPathName)
     GetMainFrame()->MinimizeTypeView();
 
     UpdateAllViews(nullptr, HINT_NEWROOT);
-    StartCoordinator(std::vector({ GetDocument()->GetRootItem() }));
+    StartupCoordinator(std::vector({ GetDocument()->GetRootItem() }));
     return true;
 }
 
@@ -616,7 +617,7 @@ void CDirStatDoc::SetZoomItem(CItem* item)
 //
 void CDirStatDoc::RefreshItem(std::vector<CItem*> item)
 {
-    GetDocument()->StartCoordinator(item);
+    GetDocument()->StartupCoordinator(item);
 }
 
 // UDC confirmation Dialog.
@@ -985,7 +986,7 @@ void CDirStatDoc::OnViewShowFreeSpace()
     m_showFreeSpace = !m_showFreeSpace;
 
     // Force recalculation and graph refresh
-    StartCoordinator({});
+    StartupCoordinator({});
 }
 
 void CDirStatDoc::OnUpdateViewShowUnknown(CCmdUI* pCmdUI)
@@ -1023,7 +1024,7 @@ void CDirStatDoc::OnViewShowUnknown()
     m_showUnknown = !m_showUnknown;
 
     // Force recalculation and graph refresh
-    StartCoordinator({});
+    StartupCoordinator({});
 }
 
 void CDirStatDoc::OnTreemapZoomIn()
@@ -1232,7 +1233,7 @@ void CDirStatDoc::ShutdownCoordinator(bool wait)
     }
 }
 
-void CDirStatDoc::StartCoordinator(std::vector<CItem*> items)
+void CDirStatDoc::StartupCoordinator(std::vector<CItem*> items)
 {
     // Stop any previous executions
     ShutdownCoordinator(true);
@@ -1274,6 +1275,10 @@ void CDirStatDoc::StartCoordinator(std::vector<CItem*> items)
     // Lambda captures assume document exists for duration of thread
     std::thread([this,items] () mutable
     {
+        // Wait for other threads to finish if this was scheduled in parallel
+        static std::shared_mutex mutex;
+        std::lock_guard lock(mutex);
+
         const auto selected_items = CTreeListControl::GetTheTreeListControl()->GetAllSelected<CItem>();
         using visual_info = struct { bool wasExpanded; bool isSelected; int oldScrollPosition; };
         std::unordered_map<CItem *,visual_info> visualInfo;
@@ -1349,7 +1354,13 @@ void CDirStatDoc::StartCoordinator(std::vector<CItem*> items)
             // Wait for all threads to run out of work
             if (queue.wait_for_all())
             {
-                // Exit here if drained by an outside actor
+                // Exit here and stop progress if drained by an outside actor
+                GetMainFrame()->InvokeInMessageThread([]()
+                {
+                    GetMainFrame()->SetProgressComplete();
+                    GetMainFrame()->MinimizeGraphView();
+                    GetMainFrame()->MinimizeTypeView();
+                });
                 return;
             }
 

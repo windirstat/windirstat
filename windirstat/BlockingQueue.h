@@ -65,8 +65,8 @@ public:
         std::unique_lock lock(x);
         waiting.wait(lock, [&]
         {
-            return m_started && !m_suspended &&
-                m_workers_waiting == m_initial_workers;
+            return m_started && m_draining && q.empty() ||
+                !m_suspended && m_workers_waiting == m_initial_workers;
         });
         return m_draining;
     }
@@ -98,6 +98,7 @@ public:
         {
             return q.empty();
         });
+        waiting.notify_all();
         return true;
     }
 
