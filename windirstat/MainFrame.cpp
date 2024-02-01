@@ -387,18 +387,11 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
     ON_WM_TIMER()
 END_MESSAGE_MAP()
 
+constexpr auto ID_INDICATOR_MEMORYUSAGE_INDEX = 1;
 static UINT indicators[] =
 {
     ID_SEPARATOR,
     ID_INDICATOR_MEMORYUSAGE,
-    ID_INDICATOR_CAPS,
-    ID_INDICATOR_NUM,
-    ID_INDICATOR_SCRL,
-};
-
-static UINT indicatorsWithoutMemoryUsage[] =
-{
-    ID_SEPARATOR,
     ID_INDICATOR_CAPS,
     ID_INDICATOR_NUM,
     ID_INDICATOR_SCRL,
@@ -483,9 +476,8 @@ void CMainFrame::SetProgressComplete() // called by CDirStatDoc
     {
         m_TaskbarList->SetProgressState(*this, m_TaskbarButtonState = TBPF_NOPROGRESS);
     }
-    UpdateProgress();
-    DestroyProgress();
 
+    DestroyProgress();
     GetDocument()->SetTitlePrefix(wds::strEmpty);
     SetMessageText(AFX_IDS_IDLEMESSAGE);
 }
@@ -598,11 +590,14 @@ void CMainFrame::DestroyProgress()
     {
         m_progress.DestroyWindow();
         m_progress.m_hWnd = nullptr;
+        m_workingItem = nullptr;
     }
     else if (::IsWindow(m_pacman.m_hWnd))
     {
+        m_pacman.Stop();
         m_pacman.DestroyWindow();
         m_pacman.m_hWnd = nullptr;
+        m_workingItem = nullptr;
     }
 }
 
@@ -616,17 +611,9 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
     VERIFY(m_wndToolBar.CreateEx(this, TBSTYLE_FLAT, WS_CHILD | WS_VISIBLE | CBRS_TOP | CBRS_GRIPPER | CBRS_TOOLTIPS | CBRS_FLYBY | CBRS_SIZE_DYNAMIC));
     VERIFY(m_wndToolBar.LoadToolBar(IDR_MAINFRAME));
 
-    const UINT* indic = indicators;
-    UINT size = _countof(indicators);
-
-    if (GetWDSApp()->GetCurrentProcessMemoryInfo() == wds::strEmpty)
-    {
-        indic = indicatorsWithoutMemoryUsage;
-        size = _countof(indicatorsWithoutMemoryUsage);
-    }
-
     VERIFY(m_wndStatusBar.Create(this));
-    VERIFY(m_wndStatusBar.SetIndicators(indic, size));
+    VERIFY(m_wndStatusBar.SetIndicators(indicators, _countof(indicators)));
+
     m_wndDeadFocus.Create(this);
 
     m_wndToolBar.EnableDocking(CBRS_ALIGN_ANY);
@@ -826,7 +813,7 @@ LRESULT CMainFrame::OnExitSizeMove(WPARAM, LPARAM)
 void CMainFrame::OnTimer(UINT_PTR nIDEvent)
 {
     // Update memory usage
-    m_wndStatusBar.UpdateWindow();
+    m_wndStatusBar.SetPaneText(ID_INDICATOR_MEMORYUSAGE_INDEX, CDirStatApp::GetCurrentProcessMemoryInfo());
 
     // Update tree control
     if (!GetDocument()->IsRootDone())
@@ -1085,7 +1072,6 @@ void CMainFrame::SetSelectionMessageText()
 void CMainFrame::OnUpdateMemoryUsage(CCmdUI* pCmdUI)
 {
     pCmdUI->Enable(true);
-    pCmdUI->SetText(GetWDSApp()->GetCurrentProcessMemoryInfo());
 }
 
 void CMainFrame::OnSize(UINT nType, int cx, int cy)

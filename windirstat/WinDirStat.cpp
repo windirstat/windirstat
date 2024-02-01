@@ -85,8 +85,6 @@ CDirStatApp _theApp;
 CDirStatApp::CDirStatApp()
     : m_pDocTemplate(nullptr)
       , m_langid(0)
-      , m_workingSet(0)
-      , m_pageFaults(0)
       , m_altColor(GetAlternativeColor(RGB(0x00, 0x00, 0xFF), L"AltColor"))
       , m_altEncryptionColor(GetAlternativeColor(RGB(0x00, 0x80, 0x00), L"AltEncryptionColor"))
 #   ifdef VTRACE_TO_CONSOLE
@@ -411,43 +409,20 @@ COLORREF CDirStatApp::AltEncryptionColor() const
 
 CStringW CDirStatApp::GetCurrentProcessMemoryInfo()
 {
-    UpdateMemoryInfo();
-
-    if (m_workingSet == 0)
+    // Fetch current working set
+    PROCESS_MEMORY_COUNTERS pmc = { sizeof(pmc) };
+    if (!::GetProcessMemoryInfo(GetCurrentProcess(), &pmc, sizeof(pmc)))
     {
         return wds::strEmpty;
     }
 
-    const CStringW n = PadWidthBlanks(FormatBytes(m_workingSet), 11);
+    // Format with size suffix
+    const CStringW n = PadWidthBlanks(FormatBytes(pmc.WorkingSetSize), 11);
 
+    // Append label prefix
     CStringW s;
     s.FormatMessage(IDS_RAMUSAGEs, n.GetString());
-
     return s;
-}
-
-bool CDirStatApp::UpdateMemoryInfo()
-{
-    PROCESS_MEMORY_COUNTERS pmc;
-    ZeroMemory(&pmc, sizeof(pmc));
-    pmc.cb = sizeof(pmc);
-
-    if (!::GetProcessMemoryInfo(GetCurrentProcess(), &pmc, sizeof(pmc)))
-    {
-        return false;
-    }
-
-    m_workingSet = pmc.WorkingSetSize;
-
-    bool ret = false;
-    if (pmc.PageFaultCount > m_pageFaults + 500)
-    {
-        ret = true;
-    }
-
-    m_pageFaults = pmc.PageFaultCount;
-
-    return ret;
 }
 
 bool CDirStatApp::InPortableMode() const

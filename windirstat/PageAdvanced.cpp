@@ -89,15 +89,9 @@ void CPageAdvanced::OnOK()
 {
     UpdateData();
 
-    if (m_followMountPoints && COptions::FollowMountPoints != static_cast<bool>(m_followMountPoints))
-    {
-        GetDocument()->RefreshMountPointItems();
-    }
-    
-    if (m_followJunctionPoints && COptions::FollowJunctionPoints != static_cast<bool>(m_followJunctionPoints))
-    {
-        GetDocument()->RefreshJunctionItems();
-    }
+    const bool refresh_mpoints = m_followMountPoints && COptions::FollowMountPoints != static_cast<bool>(m_followMountPoints);
+    const bool refresh_jpoints = m_followJunctionPoints && COptions::FollowJunctionPoints != static_cast<bool>(m_followJunctionPoints);
+    const bool refresh_all = COptions::ShowUncompressedFileSizes != static_cast<bool>(m_showUncompressedFileSizes);
 
     COptions::FollowMountPoints = (FALSE != m_followMountPoints);
     COptions::FollowJunctionPoints = (FALSE != m_followJunctionPoints);
@@ -105,6 +99,16 @@ void CPageAdvanced::OnOK()
     COptions::UseBackupRestore = (FALSE != m_useBackupRestore);
     COptions::ShowUncompressedFileSizes = (FALSE != m_showUncompressedFileSizes);
     COptions::ScanningThreads = m_scanningThreads + 1;
+
+    if (refresh_all)
+    {
+        GetDocument()->RefreshItem(GetDocument()->GetRootItem());
+    }
+    else
+    {
+        if (refresh_mpoints) GetDocument()->RefreshMountPointItems();
+        if (refresh_jpoints) GetDocument()->RefreshJunctionItems();
+    }
 
     CPropertyPage::OnOK();
 }

@@ -886,10 +886,12 @@ void CTreeListControl::OnChildRemoved(CTreeListItem* parent, CTreeListItem* chil
 
     if (parent->IsExpanded())
     {
+        LockWindowUpdate();
         for (int i = 0; i < child->GetChildrenCount(); i++)
         {
             OnChildRemoved(child, child->GetTreeListChild(i));
         }
+        UnlockWindowUpdate();
 
         const int c = FindTreeItem(child);
         ASSERT(c != -1);
