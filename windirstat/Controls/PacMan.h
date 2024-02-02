@@ -37,7 +37,7 @@ public:
     void Start();
     void Stop();
     void UpdatePosition();
-    void Draw(CDC* pdc, const CRect& rect);
+    void Draw(const CDC* pdc, const CRect& rect);
 
 private:
     static void UpdatePosition(float& position, bool& up, float diff);
