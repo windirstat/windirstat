@@ -1212,7 +1212,7 @@ void CDirStatDoc::OnCleanupProperties()
 
 void CDirStatDoc::OnScanSuspend()
 {
-    queue.suspend();
+    queue.suspend(false);
     GetMainFrame()->SuspendState(true);
 }
 
