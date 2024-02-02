@@ -183,7 +183,7 @@ CTreeListItem* CTreeListItem::GetSortedChild(int i) const
 
 int CTreeListItem::Compare(const CSortingListItem* baseOther, int subitem) const
 {
-    const auto other = static_cast<const CTreeListItem*>(baseOther);
+    const auto other = reinterpret_cast<const CTreeListItem*>(baseOther);
 
     if (other == this)
     {
@@ -778,7 +778,8 @@ void CTreeListControl::ExpandItem(int i, bool scroll)
     CWaitCursor wc;
 
     item->SortChildren();
-    
+
+    LockWindowUpdate();
     int maxwidth = GetSubItemWidth(item, 0);
     for (int c = 0; c < item->GetChildrenCount(); c++)
     {
@@ -793,6 +794,7 @@ void CTreeListControl::ExpandItem(int i, bool scroll)
             maxwidth = max(maxwidth, GetSubItemWidth(child, 0));
         }
     }
+    UnlockWindowUpdate();
 
     if (scroll && GetColumnWidth(0) < maxwidth)
     {
