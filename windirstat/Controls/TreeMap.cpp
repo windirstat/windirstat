@@ -734,21 +734,23 @@ bool CTreemap::KDirStat_ArrangeChildren(
         return true;
     }
 
-    const bool horizontalRows = parent->TmiGetRectangle().Width() >= parent->TmiGetRectangle().Height();
+    auto const& parentRect = parent->TmiGetRectangle();
+    const bool horizontalRows = parentRect.Width() >= parentRect.Height();
+
 
     double width = 1.0;
     if (horizontalRows)
     {
-        if (parent->TmiGetRectangle().Height() > 0)
+        if (parentRect.Height() > 0)
         {
-            width = static_cast<double>(parent->TmiGetRectangle().Width()) / parent->TmiGetRectangle().Height();
+            width = static_cast<double>(parentRect.Width()) / parentRect.Height();
         }
     }
     else
     {
-        if (parent->TmiGetRectangle().Width() > 0)
+        if (parentRect.Width() > 0)
         {
-            width = static_cast<double>(parent->TmiGetRectangle().Height()) / parent->TmiGetRectangle().Width();
+            width = static_cast<double>(parentRect.Height()) / parentRect.Width();
         }
     }
 
@@ -756,7 +758,7 @@ bool CTreemap::KDirStat_ArrangeChildren(
     while (nextChild < parent->TmiGetChildCount())
     {
         int childrenUsed;
-        rows.Add(KDirStat_CalcutateNextRow(parent, nextChild, width, childrenUsed, childWidth));
+        rows.Add(KDirStat_CalculateNextRow(parent, nextChild, width, childrenUsed, childWidth));
         childrenPerRow.Add(childrenUsed);
         nextChild += childrenUsed;
     }
@@ -764,11 +766,11 @@ bool CTreemap::KDirStat_ArrangeChildren(
     return horizontalRows;
 }
 
-double CTreemap::KDirStat_CalcutateNextRow(Item* parent, const int nextChild, double width, int& childrenUsed, CArray<double, double>& childWidth)
+double CTreemap::KDirStat_CalculateNextRow(Item* parent, const int nextChild, double width, int& childrenUsed, CArray<double, double>& childWidth)
 {
     int i                                  = 0;
     static constexpr double _minProportion = 0.4;
-    ASSERT(_minProportion < 1);
+    ASSERT(_minProportion < 1.);
 
     ASSERT(nextChild < parent->TmiGetChildCount());
     ASSERT(width >= 1.0);

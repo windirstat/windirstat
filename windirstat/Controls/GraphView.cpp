@@ -78,7 +78,7 @@ BOOL CGraphView::PreCreateWindow(CREATESTRUCT& cs)
     VERIFY(GetClassInfo(AfxGetInstanceHandle(), cs.lpszClass, &wc));
     wc.hbrBackground = nullptr;
     wc.lpszClassName = L"windirstat_graphview_class-{E0BE4F6F-3904-4c99-A3D4-2F11DE629740}";
-    cs.lpszClass     = (LPCWSTR)::RegisterClass(&wc);
+    cs.lpszClass     = (LPCWSTR)::RegisterClass(&wc); //-V542
 
     return true;
 }

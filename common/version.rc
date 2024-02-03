@@ -26,6 +26,7 @@
 
 #ifdef RC_INVOKED
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+#pragma code_page(65001)
 #include "version.h"
 
 #define _ANSISTRING(text) #text
@@ -71,12 +72,16 @@ BEGIN
 #ifdef TEXT_COMMENTS
             VALUE "Comments", ANSISTRING(TEXT_COMMENTS)
 #endif
-            VALUE "CompanyName", ANSISTRING(TEXT_COMPANY)
+            VALUE "CompanyName", STRING_COMPANY
             VALUE "FileDescription", ANSISTRING(TEXT_FILEDESC)
             VALUE "FileVersion", ANSISTRING(CREATE_FVER(FILE_MAJVER, FILE_MINVER, FILE_PATCH, FILE_BUILD))
+#ifdef TEXT_INTERNALNAME
             VALUE "InternalName", ANSISTRING(TEXT_INTERNALNAME)
-            VALUE "LegalCopyright", ANSISTRING(TEXT_COPYRIGHT)
-            VALUE "OriginalFilename", ANSISTRING(TEXT_MODULE)
+#endif
+            VALUE "LegalCopyright", STRING_COPYRIGHT
+#ifdef MODNAME
+            VALUE "OriginalFilename", ANSISTRING(MODNAME)
+#endif
             VALUE "ProductName", ANSISTRING(TEXT_PRODUCTNAME)
             VALUE "ProductVersion", ANSISTRING(CREATE_PVER(PRD_MAJVER, PRD_MINVER, PRD_PATCH, PRD_BUILD))
 #ifdef TEXT_PORTIONSCOPYRIGHT
@@ -88,14 +93,14 @@ BEGIN
 #ifdef TEXT_WEBSITE
             VALUE "Website", ANSISTRING(TEXT_WEBSITE)
 #endif
-#if defined(HG_REV_ID) && defined(HG_REV_NO)
-            VALUE "Mercurial revision", HG_REV_ID " (" ANSISTRING(HG_REV_NO) ")"
+#if defined(GIT_COMMIT)
+            VALUE "Git revision", ANSISTRING(GIT_COMMIT)
+            VALUE "GitHub revision URL", "https://github.com/windirstat/windirstat/commit/" ANSISTRING(GIT_COMMIT)
+            VALUE "GitLab revision URL", "https://gitlab.com/windirstat/windirstat/-/commit/" ANSISTRING(GIT_COMMIT)
+            VALUE "SourceForge revision URL", "https://sourceforge.net/p/windirstat/code/ci/d6f6dbbbeb26a755927c2f221317e76ee503de46/" ANSISTRING(GIT_COMMIT) "/"
 #endif
-#if defined(HG_FULLID)
-            VALUE "Mercurial revision URL", HG_REPOSITORY "/src/" HG_FULLID
-#endif
-#ifdef HG_REPOSITORY
-            VALUE "Mercurial repository", HG_REPOSITORY
+#ifdef SOURCE_REPOSITORY
+            VALUE "Source repository", SOURCE_REPOSITORY
 #endif
 #ifdef STRING_REPORT_DEFECT_URL
             VALUE "Defect report URL", STRING_REPORT_DEFECT_URL

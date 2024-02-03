@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -57,6 +57,10 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(SolutionDir)project.early.props" Condition="exists('$(SolutionDir)project.early.props')" Label="ProjectSpecific (solution/early)" />
+    <Import Project="$(ProjectDir)project.early.props" Condition="exists('$(ProjectDir)project.early.props') AND '$(SolutionDir)' != '$(ProjectDir)'" Label="Project-specific (local/early)" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
@@ -118,7 +122,7 @@
       <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <ResourceCompile>
-      <PreprocessorDefinitions>_DEBUG;VTRACE_TO_CONSOLE=1;VTRACE_DETAIL=2;WINVER=0x0601;_WIN32_WINNT=0x0601;LUA_REG_NO_WINTRACE;LUA_REG_NO_HIVEOPS;LUA_REG_NO_DLL;_ALLOW_RTCc_IN_STL;MODNAME=wds32D;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;VTRACE_TO_CONSOLE=1;VTRACE_DETAIL=2;WINVER=0x0601;_WIN32_WINNT=0x0601;LUA_REG_NO_WINTRACE;LUA_REG_NO_HIVEOPS;LUA_REG_NO_DLL;_ALLOW_RTCc_IN_STL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..;.;..\common;Controls;Dialogs;..\3rdparty\lua\src;..;$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
@@ -130,9 +134,6 @@
       <TargetMachine>MachineX86</TargetMachine>
       <AdditionalOptions>/pdbaltpath:%_PDB% /nodefaultlib:libcmt %(AdditionalOptions)</AdditionalOptions>
     </Link>
-    <PreBuildEvent>
-      <Command>if not exist "$(SolutionDir)common\hgid.h" call "$(SolutionDir)\common\hgid.cmd"</Command>
-    </PreBuildEvent>
     <Manifest>
       <AdditionalManifestFiles>res\windirstat.manifest</AdditionalManifestFiles>
       <EnableDpiAwareness>false</EnableDpiAwareness>
@@ -157,7 +158,7 @@
       <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <ResourceCompile>
-      <PreprocessorDefinitions>_DEBUG;VTRACE_TO_CONSOLE=1;VTRACE_DETAIL=2;WINVER=0x0601;_WIN32_WINNT=0x0601;LUA_REG_NO_WINTRACE;LUA_REG_NO_HIVEOPS;LUA_REG_NO_DLL;_ALLOW_RTCc_IN_STL;MODNAME=wds64D;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;VTRACE_TO_CONSOLE=1;VTRACE_DETAIL=2;WINVER=0x0601;_WIN32_WINNT=0x0601;LUA_REG_NO_WINTRACE;LUA_REG_NO_HIVEOPS;LUA_REG_NO_DLL;_ALLOW_RTCc_IN_STL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..;.;..\common;Controls;Dialogs;..\3rdparty\lua\src;..;$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
@@ -206,7 +207,7 @@
       <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
     </ClCompile>
     <ResourceCompile>
-      <PreprocessorDefinitions>NDEBUG;WINVER=0x0601;_WIN32_WINNT=0x0601;LUA_REG_NO_WINTRACE;LUA_REG_NO_HIVEOPS;LUA_REG_NO_DLL;_ALLOW_RTCc_IN_STL;MODNAME=wds32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;WINVER=0x0601;_WIN32_WINNT=0x0601;LUA_REG_NO_WINTRACE;LUA_REG_NO_HIVEOPS;LUA_REG_NO_DLL;_ALLOW_RTCc_IN_STL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..;.;..\common;Controls;Dialogs;..\3rdparty\lua\src;..;$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
@@ -222,9 +223,6 @@
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <Profile>true</Profile>
     </Link>
-    <PreBuildEvent>
-      <Command>if not exist "$(SolutionDir)common\hgid.h" call "$(SolutionDir)\common\hgid.cmd"</Command>
-    </PreBuildEvent>
     <Manifest>
       <AdditionalManifestFiles>res\windirstat.manifest</AdditionalManifestFiles>
       <EnableDpiAwareness>false</EnableDpiAwareness>
@@ -258,7 +256,7 @@
       <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
     </ClCompile>
     <ResourceCompile>
-      <PreprocessorDefinitions>NDEBUG;WINVER=0x0601;_WIN32_WINNT=0x0601;LUA_REG_NO_WINTRACE;LUA_REG_NO_HIVEOPS;LUA_REG_NO_DLL;_ALLOW_RTCc_IN_STL;MODNAME=wds64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;WINVER=0x0601;_WIN32_WINNT=0x0601;LUA_REG_NO_WINTRACE;LUA_REG_NO_HIVEOPS;LUA_REG_NO_DLL;_ALLOW_RTCc_IN_STL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..;.;..\common;Controls;Dialogs;..\3rdparty\lua\src;..;$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
@@ -274,16 +272,16 @@
       <Profile>true</Profile>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
-    <PreBuildEvent>
-      <Command>if not exist "$(SolutionDir)common\hgid.h" call "$(SolutionDir)\common\hgid.cmd"</Command>
-    </PreBuildEvent>
     <Manifest>
       <AdditionalManifestFiles>res\windirstat.manifest</AdditionalManifestFiles>
       <EnableDpiAwareness>false</EnableDpiAwareness>
     </Manifest>
   </ItemDefinitionGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(SolutionDir)project.late.props" Condition="exists('$(SolutionDir)project.late.props')" Label="ProjectSpecific (solution/late)" />
+    <Import Project="$(ProjectDir)project.late.props" Condition="exists('$(ProjectDir)project.late.props') AND '$(SolutionDir)' != '$(ProjectDir)'" Label="Project-specific (local/late)" />
+  </ImportGroup>
   <ItemGroup>
-    <ClInclude Include="..\common\hgid.h" />
     <ClInclude Include="..\common\CommonHelpers.h" />
     <ClInclude Include="..\common\resource.h" />
     <ClInclude Include="..\common\SmartPointer.h" />
@@ -370,7 +368,6 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="WinDirStat.cpp">
     </ClCompile>
@@ -412,7 +409,6 @@
     <None Include="..\CONTRIBUTORS.md" />
     <None Include="..\README.md" />
     <None Include="..\common\build_luajit.cmd" />
-    <None Include="..\common\hgid.cmd" />
     <None Include="..\common\produce_vsprojects.cmd" />
     <None Include="..\common\setvcvars.cmd" />
     <None Include="..\premake4.lua" />
@@ -452,6 +448,10 @@
     <Image Include="res\toolbar\ID_TREEMAP_ZOOMOUT.bmp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(SolutionDir)project.targets" Condition="exists('$(SolutionDir)project.targets')" Label="ProjectSpecific (solution/targets)" />
+    <Import Project="$(ProjectDir)project.targets" Condition="exists('$(ProjectDir)project.targets') AND '$(SolutionDir)' != '$(ProjectDir)'" Label="Project-specific (local/targets)" />
+  </ImportGroup>
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
 </Project>

@@ -63,7 +63,7 @@ CDirStatDoc::CDirStatDoc()
     ASSERT(NULL == _theDocument);
     _theDocument = this;
 
-    VTRACE(L"sizeof(CItem) = %d", sizeof(CItem));
+    VTRACE(L"sizeof(CItem) = %zd", sizeof(CItem));
 }
 
 CDirStatDoc::~CDirStatDoc()
@@ -445,7 +445,7 @@ void CDirStatDoc::OpenItem(const CItem* item, LPCWSTR verb)
     sei.lpVerb = verb;
     sei.fMask = SEE_MASK_INVOKEIDLIST | SEE_MASK_IDLIST;
     sei.lpIDList = pidl;
-    sei.nShow = sei.nShow = SW_SHOWNORMAL;
+    sei.nShow = SW_SHOWNORMAL;
     ShellExecuteEx(&sei);
 }
 
@@ -857,7 +857,6 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
         { ID_REFRESH_SELECTED,        { false, true,  false, false, IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY | IT_FILE } },
         { ID_EDIT_COPY_CLIPBOARD,     { false, true,  true,  false, IT_DRIVE | IT_DIRECTORY | IT_FILE } },
         { ID_CLEANUP_EMPTY_BIN,       { true,  true,  false, false, IT_ANY} },
-        { ID_TREEMAP_RESELECT_CHILD,  { true,  true,  true,  false, IT_ANY, reslect_avail } },
         { ID_TREEMAP_RESELECT_CHILD,  { true,  true,  true,  false, IT_ANY, reslect_avail } },
         { ID_TREEMAP_SELECT_PARENT,   { false, false, true,  false, IT_ANY, parent_not_null } },
         { ID_TREEMAP_ZOOMIN,          { false, false, false, false, IT_DRIVE | IT_DIRECTORY} },

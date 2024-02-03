@@ -433,8 +433,10 @@ bool CDirStatApp::InPortableMode() const
 bool CDirStatApp::SetPortableMode(bool enable, bool only_open)
 {
     // Do nothing is already done this way
-    if (enable && InPortableMode() ||
-        !enable && !InPortableMode()) return true;
+    if (enable == InPortableMode())
+    {
+        return true;
+    }
 
     // Cleanup previous configuration
     if (m_pszRegistryKey != nullptr) free(LPVOID(m_pszRegistryKey));
@@ -490,7 +492,7 @@ BOOL CDirStatApp::InitInstance()
 
     // If a local config file is available, use that for settings
     SetPortableMode(true, true);
-    
+
     COptions::LoadAppSettings();
     Inherited::LoadStdProfileSettings(4);
 
@@ -547,7 +549,7 @@ BOOL CDirStatApp::InitInstance()
         {
             TerminateProcess(handle, 0);
         }
-        
+
         m_pDocTemplate->OpenDocumentFile(cmdInfo.m_strFileName, true);
     }
     else
@@ -599,7 +601,7 @@ void CDirStatApp::OnRunElevated()
     shellInfo.lpVerb = L"runas";
     shellInfo.nShow  = SW_NORMAL;
     shellInfo.lpParameters = launchConfig.GetString();
-    
+
     if (!::ShellExecuteEx(&shellInfo))
     {
         VTRACE(L"ShellExecuteEx failed to elevate %d", GetLastError());

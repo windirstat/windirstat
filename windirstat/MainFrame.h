@@ -169,7 +169,7 @@ public:
     bool IsScanSuspended() const;
 
     void UpdateProgress();
-    void AppendUserDefinedCleanups(CMenu* menu);
+    void AppendUserDefinedCleanups(CMenu* menu) const;
 
     void SetLogicalFocus(LOGICAL_FOCUS lf);
     LOGICAL_FOCUS GetLogicalFocus() const;

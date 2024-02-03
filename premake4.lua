@@ -422,7 +422,6 @@ solution (iif(release, slnname, "windirstat"))
         resoptions      {"/nologo", "/l409"}
         resincludedirs  {".", "$(IntDir)"}
         linkoptions     {"/delayload:psapi.dll", "/pdbaltpath:%_PDB%"}
-        prebuildcommands{"if not exist \"$(SolutionDir)common\\hgid.h\" call \"$(SolutionDir)\\common\\hgid.cmd\"",}
         if release then
             postbuildcommands
             {
@@ -431,7 +430,6 @@ solution (iif(release, slnname, "windirstat"))
         end
         files
         {
-            "common/hgid.h",
             "common/*.h",
             "common/*.cpp",
             "windirstat/*.cpp",
@@ -622,8 +620,6 @@ solution (iif(release, slnname, "windirstat"))
                         {
                             "ollisign.cmd -a \"$(TargetPath)\" \"https://windirstat.net\" \"WinDirStat\""
                         }
-                    else
-                        prebuildcommands{"if not exist \"$(SolutionDir)common\\hgid.h\" call \"$(SolutionDir)\\common\\hgid.cmd\"",}
                     end
                     files
                     {

@@ -58,12 +58,12 @@ We're not aware of an alternative using treemaps for Windows at this moment, but
 
 ## Building from source
 
-Please refer to the project Wiki page [Building](https://bitbucket.org/windirstat/windirstat/wiki/Building).
+Please refer to the project Wiki page [Building](https://github.com/windirstat/windirstat/wiki/Building).
 
 ## Contributing
 
-The project [Wiki](https://bitbucket.org/windirstat/windirstat/wiki/Home) on
-Bitbucket features a whole section on the topic of contributing. If you don't
+The project [Wiki](https://github.com/windirstat/windirstat/wiki) on
+GitHub features a whole section on the topic of contributing. If you don't
 agree with the requirements, feel free to contact a project member regardless
 before you put any substantial effort into your potential contribution.
 

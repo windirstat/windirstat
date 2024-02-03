@@ -84,7 +84,7 @@ class CLayout
     {
     public:
         CPositioner(int nNumWindows = 10);
-        virtual ~CPositioner();
+        ~CPositioner();
         void SetWindowPos(HWND hWnd, int x, int y, int cx, int cy, UINT uFlags);
 
     private:

@@ -36,8 +36,8 @@ struct SSorting
     }
 
     int column1;
-    bool ascending1;
     int column2;
+    bool ascending1;
     bool ascending2;
 };
 
