@@ -131,6 +131,12 @@ bool FileFindEnhanced::IsHidden() const
     return (m_current_info->FileAttributes & FILE_ATTRIBUTE_HIDDEN) != 0;
 }
 
+bool FileFindEnhanced::IsHiddenSystem() const
+{
+    constexpr DWORD hidden_system = FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM;
+    return (m_current_info->FileAttributes & hidden_system) == hidden_system;
+}
+
 bool FileFindEnhanced::IsProtectedReparsePoint() const
 {
     constexpr DWORD protect = FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM | FILE_ATTRIBUTE_REPARSE_POINT;

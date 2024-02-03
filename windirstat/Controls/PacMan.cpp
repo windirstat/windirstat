@@ -89,15 +89,18 @@ void CPacman::UpdatePosition()
     m_done = false;
 }
 
-void CPacman::Draw(CDC* pdc, const CRect& rect)
+void CPacman::Draw(const CDC* pdc, const CRect& rect)
 {
     const ULONGLONG now = GetTickCount64();
-    if (m_suspended || now - m_lastUpdate > HIDE_THRESHOLD)
+    if (m_suspended)
     {
         // Rebase time based if suspended
         m_lastUpdate = now;
         m_lastDraw = now;
     }
+
+    // See if we should still consider ourselves movies
+    if (now - m_lastUpdate > HIDE_THRESHOLD) m_moving = false;
 
     // Update position
     const float delta = static_cast<float>(now - m_lastDraw);
@@ -120,8 +123,8 @@ void CPacman::Draw(CDC* pdc, const CRect& rect)
     Gdiplus::Color bgColor;
     bgColor.SetFromCOLORREF(m_bgcolor);
     const Gdiplus::SolidBrush bgPen(bgColor);
-    const Gdiplus::Pen blackPen(Gdiplus::Color(0xFF, 0x00, 0x00, 0x00), 1);
-    const Gdiplus::SolidBrush yellowPen(Gdiplus::Color(0xFF, 0xFC, 0xC9, 0x2F));
+    static const Gdiplus::Pen blackPen(Gdiplus::Color(0xFF, 0x00, 0x00, 0x00), 1);
+    static const Gdiplus::SolidBrush yellowPen(Gdiplus::Color(0xFF, 0xFC, 0xC9, 0x2F));
 
     // Determine the share of the figure
     const float slice = m_aperture * 90.0f;
@@ -136,9 +139,16 @@ void CPacman::Draw(CDC* pdc, const CRect& rect)
     if (m_done) return;
 
     // Draw filled shape if we started and recently updated
-    const bool timed_out = (now - m_lastUpdate) > HIDE_THRESHOLD;
-    if (m_moving && !timed_out) graphics.FillPie(&yellowPen, grect, startAngle, sweepAngle);
+    graphics.FillPie(&yellowPen, grect, startAngle, sweepAngle);
     graphics.DrawPie(&blackPen, grect, startAngle, sweepAngle);
+    if (m_moving) return;
+
+    // Draw sleepy graphic
+    static const Gdiplus::Font font(L"Arial", 6.0f, Gdiplus::FontStyleBold);
+    static const Gdiplus::SolidBrush blackBrush(Gdiplus::Color(0xFF, 0, 0, 0));
+    graphics.DrawString(L"z",1, &font, {rc.left + 5.0f, rc.top- 3.0f}, &blackBrush);
+    graphics.DrawString(L"z", 1, &font, { rc.left + 10.0f, rc.top - 4.5f }, &blackBrush);
+    graphics.DrawString(L"z", 1, &font, { rc.left + 15.0f, rc.top - 6.0f }, &blackBrush);
 }
 
 void CPacman::UpdatePosition(float& position, bool& up, float diff)

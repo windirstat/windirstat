@@ -247,13 +247,13 @@ void CTreemap::RecurseCheckTree(Item *item)
 {
     if(item->TmiIsLeaf())
     {
-        ASSERT(item->TmiGetChildrenCount() == 0);
+        ASSERT(item->TmiGetChildCount() == 0);
     }
     else
     {
         ULONGLONG sum = 0;
         ULONGLONG last = static_cast<ULONGLONG>(-1);
-        for(int i = 0; i < item->TmiGetChildrenCount(); i++)
+        for(int i = 0; i < item->TmiGetChildCount(); i++)
         {
             Item *child = item->TmiGetChild(i);
             const ULONGLONG size = child->TmiGetSize();
@@ -422,9 +422,9 @@ CTreemap::Item* CTreemap::FindItemByPoint(Item* item, CPoint point)
     else
     {
         ASSERT(item->TmiGetSize() > 0);
-        ASSERT(item->TmiGetChildrenCount() > 0);
+        ASSERT(item->TmiGetChildCount() > 0);
 
-        for (int i = 0; i < item->TmiGetChildrenCount(); i++)
+        for (int i = 0; i < item->TmiGetChildCount(); i++)
         {
             Item* child = item->TmiGetChild(i);
 
@@ -445,7 +445,7 @@ CTreemap::Item* CTreemap::FindItemByPoint(Item* item, CPoint point)
                 ASSERT(ret != NULL);
 #ifdef STRONGDEBUG
 #ifdef _DEBUG
-                for(i++; i < item->TmiGetChildrenCount(); i++)
+                for(i++; i < item->TmiGetChildCount(); i++)
                 {
                     child = item->TmiGetChild(i);
 
@@ -580,7 +580,7 @@ void CTreemap::RecurseDrawGraph(
     }
     else
     {
-        ASSERT(item->TmiGetChildrenCount() > 0);
+        ASSERT(item->TmiGetChildCount() > 0);
         ASSERT(item->TmiGetSize() > 0);
 
         DrawChildren(bitmap, item, surface, h, flags);
@@ -621,7 +621,7 @@ void CTreemap::DrawChildren(
 //
 void CTreemap::KDirStat_DrawChildren(CColorRefArray& bitmap, Item* parent, const double* surface, double h, DWORD /*flags*/)
 {
-    ASSERT(parent->TmiGetChildrenCount() > 0);
+    ASSERT(parent->TmiGetChildCount() > 0);
 
     const CRect& rc = parent->TmiGetRectangle();
 
@@ -629,7 +629,7 @@ void CTreemap::KDirStat_DrawChildren(CColorRefArray& bitmap, Item* parent, const
     CArray<int, int> childrenPerRow; // childrenPerRow[i] = # of children in rows[i]
 
     CArray<double, double> childWidth; // Widths of the children (fraction of row width).
-    childWidth.SetSize(parent->TmiGetChildrenCount());
+    childWidth.SetSize(parent->TmiGetChildCount());
 
     const bool horizontalRows = KDirStat_ArrangeChildren(parent, childWidth, rows, childrenPerRow);
 
@@ -721,15 +721,15 @@ bool CTreemap::KDirStat_ArrangeChildren(
 )
 {
     ASSERT(!parent->TmiIsLeaf());
-    ASSERT(parent->TmiGetChildrenCount() > 0);
+    ASSERT(parent->TmiGetChildCount() > 0);
 
     if (parent->TmiGetSize() == 0)
     {
         rows.Add(1.0);
-        childrenPerRow.Add(parent->TmiGetChildrenCount());
-        for (int i = 0; i < parent->TmiGetChildrenCount(); i++)
+        childrenPerRow.Add(parent->TmiGetChildCount());
+        for (int i = 0; i < parent->TmiGetChildCount(); i++)
         {
-            childWidth[i] = 1.0 / parent->TmiGetChildrenCount();
+            childWidth[i] = 1.0 / parent->TmiGetChildCount();
         }
         return true;
     }
@@ -755,7 +755,7 @@ bool CTreemap::KDirStat_ArrangeChildren(
     }
 
     int nextChild = 0;
-    while (nextChild < parent->TmiGetChildrenCount())
+    while (nextChild < parent->TmiGetChildCount())
     {
         int childrenUsed;
         rows.Add(KDirStat_CalculateNextRow(parent, nextChild, width, childrenUsed, childWidth));
@@ -772,7 +772,7 @@ double CTreemap::KDirStat_CalculateNextRow(Item* parent, const int nextChild, do
     static constexpr double _minProportion = 0.4;
     ASSERT(_minProportion < 1.);
 
-    ASSERT(nextChild < parent->TmiGetChildrenCount());
+    ASSERT(nextChild < parent->TmiGetChildCount());
     ASSERT(width >= 1.0);
 
     const double mySize = static_cast<double>(parent->TmiGetSize());
@@ -780,7 +780,7 @@ double CTreemap::KDirStat_CalculateNextRow(Item* parent, const int nextChild, do
     ULONGLONG sizeUsed = 0;
     double rowHeight   = 0;
 
-    for (i = nextChild; i < parent->TmiGetChildrenCount(); i++)
+    for (i = nextChild; i < parent->TmiGetChildCount(); i++)
     {
         const ULONGLONG childSize = parent->TmiGetChild(i)->TmiGetSize();
         if (childSize == 0)
@@ -820,7 +820,7 @@ double CTreemap::KDirStat_CalculateNextRow(Item* parent, const int nextChild, do
     // and rowHeight is the height of the row.
 
     // We add the rest of the children, if their size is 0.
-    while (i < parent->TmiGetChildrenCount() && parent->TmiGetChild(i)->TmiGetSize() == 0)
+    while (i < parent->TmiGetChildCount() && parent->TmiGetChild(i)->TmiGetSize() == 0)
     {
         i++;
     }
@@ -862,7 +862,7 @@ void CTreemap::SequoiaView_DrawChildren(CColorRefArray& bitmap, Item* parent, co
     int head = 0;
 
     // At least one child left
-    while (head < parent->TmiGetChildrenCount())
+    while (head < parent->TmiGetChildCount())
     {
         ASSERT(remaining.Width() > 0);
         ASSERT(remaining.Height() > 0);
@@ -891,7 +891,7 @@ void CTreemap::SequoiaView_DrawChildren(CColorRefArray& bitmap, Item* parent, co
         ULONGLONG sum = 0;
 
         // This condition will hold at least once.
-        while (rowEnd < parent->TmiGetChildrenCount())
+        while (rowEnd < parent->TmiGetChildCount())
         {
             // We check a virtual row made up of child(rowBegin)...child(rowEnd) here.
 
@@ -901,7 +901,7 @@ void CTreemap::SequoiaView_DrawChildren(CColorRefArray& bitmap, Item* parent, co
             // If sizes of the rest of the children is zero, we add all of them
             if (rmin == 0)
             {
-                rowEnd = parent->TmiGetChildrenCount();
+                rowEnd = parent->TmiGetChildCount();
                 break;
             }
 
@@ -1027,7 +1027,7 @@ void CTreemap::SequoiaView_DrawChildren(CColorRefArray& bitmap, Item* parent, co
 
         if (remaining.Width() <= 0 || remaining.Height() <= 0)
         {
-            if (head < parent->TmiGetChildrenCount())
+            if (head < parent->TmiGetChildCount())
             {
                 parent->TmiGetChild(head)->TmiSetRectangle(CRect(-1, -1, -1, -1));
             }

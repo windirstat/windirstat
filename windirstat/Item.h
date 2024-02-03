@@ -114,7 +114,7 @@ public:
     CStringW GetText(int subitem) const override;
     COLORREF GetItemTextColor() const override;
     int CompareSibling(const CTreeListItem* tlib, int subitem) const override;
-    int GetChildrenCount() const override;
+    int GetTreeListChildCount() const override;
     CTreeListItem* GetTreeListChild(int i) const override;
     short GetImageToCache() const override;
     void DrawAdditionalState(CDC* pdc, const CRect& rcLabel) const override;
@@ -133,14 +133,15 @@ public:
         return GetGraphColor();
     }
 
-    int TmiGetChildrenCount() const override
+    int TmiGetChildCount() const override
     {
-        return GetChildrenCount();
+        if (!m_ci) return 0;
+        return static_cast<int>(m_ci->m_children.size());
     }
 
     CTreemap::Item* TmiGetChild(int c) const override
     {
-        return GetChild(c);
+        return m_ci->m_children[c];
     }
 
     ULONGLONG TmiGetSize() const override
@@ -155,7 +156,7 @@ public:
     ULONGLONG GetProgressRange() const;
     ULONGLONG GetProgressPos() const;
     void UpdateStatsFromDisk();
-    CItem* GetChild(int i) const;
+    const std::vector<CItem*>& GetChildren() const;
     CItem* GetParent() const;
     void AddChild(CItem* child);
     void RemoveChild(CItem* child);
@@ -170,7 +171,6 @@ public:
     void UpwardSubtractReadJobs(ULONG count);
     void UpwardUpdateLastChange(const FILETIME& t);
     void UpwardRecalcLastChange(bool without_item = false);
-    void UpwardAddTicksWorked(ULONG delta);
     ULONGLONG GetSize() const;
     void SetSize(ULONGLONG ownSize);
     ULONG GetReadJobs() const;
@@ -198,7 +198,7 @@ public:
     static void ScanItemsFinalize(CItem* item);
     void UpwardSetDone();
     void UpwardSetUndone();
-    void RefreshRecycler() const;
+    CItem* FindRecyclerItem() const;
     void CreateFreeSpaceItem();
     CItem* FindFreeSpaceItem() const;
     void UpdateFreeSpaceItem() const;
@@ -241,19 +241,27 @@ private:
     void AddFile(const FileFindEnhanced& finder);
     void UpwardDrivePacman();
 
-    // Our children. When "this" is set to "done", this array is sorted by child size.
-    std::shared_mutex m_protect;
-    std::vector<CItem*> m_children;
+    // Special structure for container items that is separately allocated to
+    // reduce memory usage.  This operates under the assumption that most
+    // containers have files in them.
+    typedef struct CHILDINFO
+    {
+        std::vector<CItem*> m_children;
+        std::shared_mutex m_protect;
+        std::atomic<ULONG> m_tstart = 0;  // initial time this node started enumerating
+        std::atomic<ULONG> m_tfinish = 0; // initial time this node started enumerating
+        std::atomic<ULONG> m_files = 0;   // # Files in subtree
+        std::atomic<ULONG> m_subdirs = 0; // # Folder in subtree
+        std::atomic<ULONG> m_jobs = 0;    // # "read jobs" in subtree.
+    }
+    CHILDINFO;
 
     RECT m_rect;                   // To support GraphView
     CStringW m_name;               // Display name
     LPCWSTR m_extension;           // Cache of extension (it's used often)
     FILETIME m_lastChange;         // Last modification time OF SUBTREE
+    CHILDINFO* m_ci;               // Child information for non-files
     std::atomic<ULONGLONG> m_size; // OwnSize, if IT_FILE or IT_FREESPACE, or IT_UNKNOWN; SubtreeTotal else.
-    std::atomic<ULONG> m_files;    // # Files in subtree
-    std::atomic<ULONG> m_subdirs;  // # Folder in subtree
-    std::atomic<ULONG> m_ticks;    // ms time spent on this item.
-    std::atomic<ULONG> m_jobs;     // # "read jobs" in subtree.
     DWORD m_attributes;            // Packed file attributes of the item
     ITEMTYPE m_type;               // Indicates our type.
 };

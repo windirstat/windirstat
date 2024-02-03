@@ -46,6 +46,7 @@ protected:
     BOOL m_followMountPoints;
     BOOL m_followJunctionPoints;
     BOOL m_skipHidden;
+    BOOL m_skipProtected;
     BOOL m_useBackupRestore;
     BOOL m_showUncompressedFileSizes;
     int m_scanningThreads;

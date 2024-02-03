@@ -77,7 +77,7 @@ public:
         virtual CRect TmiGetRectangle() const = 0;
         virtual void TmiSetRectangle(const CRect& rc) = 0;
         virtual COLORREF TmiGetGraphColor() const = 0;
-        virtual int TmiGetChildrenCount() const = 0;
+        virtual int TmiGetChildCount() const = 0;
         virtual Item* TmiGetChild(int c) const = 0;
         virtual ULONGLONG TmiGetSize() const = 0;
     };
@@ -349,7 +349,7 @@ class CTreemapPreview final : public CStatic
             return m_color;
         }
 
-        int TmiGetChildrenCount() const override
+        int TmiGetChildCount() const override
         {
             return static_cast<int>(m_children.GetSize());
         }

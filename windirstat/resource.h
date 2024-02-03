@@ -152,6 +152,7 @@
 #define IDC_BACKUP_RESTORE              1033
 #define IDC_RESET                       1034
 #define IDC_UNCOMPRESSED_FILE_SIZES     1034
+#define IDC_SKIPPROTECTED               1035
 #define IDC_LIST                        1036
 #define IDC_TITLE                       1037
 #define IDC_COMMANDLINE                 1038

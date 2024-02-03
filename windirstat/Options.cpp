@@ -63,6 +63,7 @@ Setting<bool> COptions::ShowUncompressedFileSizes(L"options", L"showUncompressed
 Setting<int> COptions::ScanningThreads(L"options", L"scanningThreads", 4, 1, 16);
 
 Setting<bool> COptions::SkipHidden(L"options", L"skipHidden", false);
+Setting<bool> COptions::SkipProtected(L"options", L"skipProtected", true);
 Setting<bool> COptions::UseWdsLocale(L"options", L"useWdsLocale", false);
 Setting<bool> COptions::ListGrid(L"options", L"treelistGrid", false);
 Setting<bool> COptions::ListStripes(L"options", L"listStripes", false);

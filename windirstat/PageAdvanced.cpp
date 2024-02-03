@@ -35,6 +35,7 @@ CPageAdvanced::CPageAdvanced()
     , m_followMountPoints(FALSE)
     , m_followJunctionPoints(FALSE)
     , m_skipHidden(FALSE)
+    , m_skipProtected(FALSE)
     , m_useBackupRestore(FALSE)
     , m_showUncompressedFileSizes(FALSE)
     , m_scanningThreads(0)
@@ -77,6 +78,7 @@ BOOL CPageAdvanced::OnInitDialog()
     m_followMountPoints = COptions::FollowMountPoints;
     m_followJunctionPoints = COptions::FollowJunctionPoints;
     m_skipHidden = COptions::SkipHidden;
+    m_skipProtected = COptions::SkipProtected;
     m_useBackupRestore = COptions::UseBackupRestore;
     m_showUncompressedFileSizes = COptions::ShowUncompressedFileSizes;
     m_scanningThreads = COptions::ScanningThreads - 1;
@@ -96,6 +98,7 @@ void CPageAdvanced::OnOK()
     COptions::FollowMountPoints = (FALSE != m_followMountPoints);
     COptions::FollowJunctionPoints = (FALSE != m_followJunctionPoints);
     COptions::SkipHidden = (FALSE != m_skipHidden);
+    COptions::SkipProtected = (FALSE != m_skipProtected);
     COptions::UseBackupRestore = (FALSE != m_useBackupRestore);
     COptions::ShowUncompressedFileSizes = (FALSE != m_showUncompressedFileSizes);
     COptions::ScanningThreads = m_scanningThreads + 1;

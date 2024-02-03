@@ -58,6 +58,7 @@ public:
     bool IsDirectory() const;
     bool IsDots() const;
     bool IsHidden() const;
+    bool IsHiddenSystem() const;
     bool IsProtectedReparsePoint() const;
     DWORD GetAttributes() const;
     CStringW GetFileName() const;

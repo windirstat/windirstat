@@ -74,7 +74,7 @@ public:
     bool drain(T drain_object)
     {
         // Stop current proocessing
-        suspend();
+        suspend(true);
 
         // Return early if queue is already draining or never started
         std::unique_lock lock(x);
@@ -112,12 +112,12 @@ public:
         return m_suspended;
     }
 
-    void suspend()
+    void suspend(bool wait)
     {
         std::unique_lock lock(x);
         if (m_suspended || m_draining || !m_started) return;
         m_suspended = true;
-        waiting.wait(lock, [&]
+        if (wait) waiting.wait(lock, [&]
         {
             return m_workers_waiting == m_initial_workers;
         });

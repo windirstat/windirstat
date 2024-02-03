@@ -461,17 +461,19 @@ STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION | WS_SYSMEN
 CAPTION "Advanced"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    LTEXT           "&Threads:",IDC_STATIC,7,88,54,8
-    COMBOBOX        IDC_COMBO_THREADS,64,87,36,52,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "&Threads:",IDC_STATIC,7,102,54,8
+    COMBOBOX        IDC_COMBO_THREADS,64,101,36,52,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
     CONTROL         "&Cross File System Boundaries",IDC_FOLLOWMOUNTPOINTS,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,7,229,10
     CONTROL         "Follow &Junction Points (except Volume Mount Points)",IDC_FOLLOWJUNCTIONS,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,22,229,10
-    CONTROL         "&Skip Hidden",IDC_SKIPHIDDEN,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,37,229,10
+    CONTROL         "&Skip Hidden Items",IDC_SKIPHIDDEN,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,37,229,10
     CONTROL         "&Use Backup / Restore Privilege",IDC_BACKUP_RESTORE,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,52,229,10
-    CONTROL         "&Show Uncompressed File Sizes",IDC_UNCOMPRESSED_FILE_SIZES,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,67,229,10
+    CONTROL         "&Show Uncompressed File Sizes",IDC_UNCOMPRESSED_FILE_SIZES,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,82,229,10
+    CONTROL         "Skip &Protected Items (Hidden && System)",IDC_SKIPPROTECTED,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,52,229,10
 END
 
 

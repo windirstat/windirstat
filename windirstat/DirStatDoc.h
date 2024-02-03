@@ -123,8 +123,8 @@ public:
 protected:
     void RecurseRefreshMountPointItems(CItem* item);
     void RecurseRefreshJunctionItems(CItem* item);
-    void GetDriveItems(CArray<CItem*, CItem*>& drives) const;
-    void RefreshRecyclers();
+    std::vector<CItem*> GetDriveItems() const;
+    void RefreshRecyclers() const;
     void RebuildExtensionData();
     void SortExtensionData(CStringArray& sortedExtensions);
     void SetExtensionColors(const CStringArray& sortedExtensions);

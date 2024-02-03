@@ -455,9 +455,9 @@ void CDirStatDoc::RecurseRefreshMountPointItems(CItem* item)
     {
         RefreshItem(item);
     }
-    for (int i = 0; i < item->GetChildrenCount(); i++)
+    for (const auto & child : item->GetChildren())
     {
-        RecurseRefreshMountPointItems(item->GetChild(i));
+        RecurseRefreshMountPointItems(child);
     }
 }
 
@@ -468,49 +468,53 @@ void CDirStatDoc::RecurseRefreshJunctionItems(CItem* item)
         RefreshItem(item);
     }
 
-    for (int i = 0; i < item->GetChildrenCount(); i++)
+    for (const auto& child : item->GetChildren())
     {
-        RecurseRefreshJunctionItems(item->GetChild(i));
+        RecurseRefreshJunctionItems(child);
     }
 }
 
 // Gets all items of type IT_DRIVE.
 //
-void CDirStatDoc::GetDriveItems(CArray<CItem*, CItem*>& drives) const
+std::vector<CItem*> CDirStatDoc::GetDriveItems() const
 {
-    drives.RemoveAll();
-
+    std::vector<CItem*> drives;
     CItem* root = GetRootItem();
 
     if (nullptr == root)
     {
-        return;
+        return drives;
     }
+
 
     if (root->IsType(IT_MYCOMPUTER))
     {
-        for (int i = 0; i < root->GetChildrenCount(); i++)
+        for (const auto& child : root->GetChildren())
         {
-            CItem* drive = root->GetChild(i);
-            ASSERT(drive->IsType(IT_DRIVE));
-            drives.Add(drive);
+            ASSERT(child->IsType(IT_DRIVE));
+            drives.push_back(child);
         }
     }
     else if (root->IsType(IT_DRIVE))
     {
-        drives.Add(root);
+        drives.push_back(root);
     }
+
+    return drives;
 }
 
-void CDirStatDoc::RefreshRecyclers()
+void CDirStatDoc::RefreshRecyclers() const
 {
-    CArray<CItem*, CItem*> drives;
-    GetDriveItems(drives);
-
-    for (int i = 0; i < drives.GetSize(); i++)
+    std::vector<CItem*> to_refresh;
+    for (const auto & drive : GetDriveItems())
     {
-        drives[i]->RefreshRecycler();
+        if (CItem* recycler = drive->FindRecyclerItem(); recycler != nullptr)
+        {
+            to_refresh.push_back(recycler);
+        }
     }
+
+    if (!to_refresh.empty()) GetDocument()->StartupCoordinator(to_refresh);
 }
 
 void CDirStatDoc::RebuildExtensionData()
@@ -958,14 +962,11 @@ void CDirStatDoc::OnUpdateViewShowFreeSpace(CCmdUI* pCmdUI)
 
 void CDirStatDoc::OnViewShowFreeSpace()
 {
-    CArray<CItem*, CItem*> drives;
-    GetDriveItems(drives);
-
-    for (int i = 0; i < drives.GetSize(); i++)
+    for (const auto& drive : GetDriveItems())
     {
         if (m_showFreeSpace)
         {
-            const CItem* free = drives[i]->FindFreeSpaceItem();
+            const CItem* free = drive->FindFreeSpaceItem();
             ASSERT(free != NULL);
 
             if (GetZoomItem() == free)
@@ -973,11 +974,11 @@ void CDirStatDoc::OnViewShowFreeSpace()
                 m_zoomItem = free->GetParent();
             }
 
-            drives[i]->RemoveFreeSpaceItem();
+            drive->RemoveFreeSpaceItem();
         }
         else
         {
-            drives[i]->CreateFreeSpaceItem();
+            drive->CreateFreeSpaceItem();
         }
     }
 
@@ -995,15 +996,11 @@ void CDirStatDoc::OnUpdateViewShowUnknown(CCmdUI* pCmdUI)
 
 void CDirStatDoc::OnViewShowUnknown()
 {
-    CArray<CItem*, CItem*> drives;
-    GetDriveItems(drives);
-
-
-    for (int i = 0; i < drives.GetSize(); i++)
+    for (const auto& drive : GetDriveItems())
     {
         if (m_showUnknown)
         {
-            const CItem* unknown = drives[i]->FindUnknownItem();
+            const CItem* unknown = drive->FindUnknownItem();
             ASSERT(unknown != NULL);
 
             if (GetZoomItem() == unknown)
@@ -1011,11 +1008,11 @@ void CDirStatDoc::OnViewShowUnknown()
                 m_zoomItem = unknown->GetParent();
             }
 
-            drives[i]->RemoveUnknownItem();
+            drive->RemoveUnknownItem();
         }
         else
         {
-            drives[i]->CreateUnknownItem();
+            drive->CreateUnknownItem();
         }
     }
 
@@ -1211,7 +1208,7 @@ void CDirStatDoc::OnCleanupProperties()
 
 void CDirStatDoc::OnScanSuspend()
 {
-    queue.suspend();
+    queue.suspend(false);
     GetMainFrame()->SuspendState(true);
 }
 
@@ -1252,15 +1249,6 @@ void CDirStatDoc::StartupCoordinator(std::vector<CItem*> items)
         if (item->IsAncestorOf(zoom_item))
         {
             SetZoomItem(item);
-        }
-
-        // Special case for my computer - just replace the 
-        // item in the queue with its current children
-        if (item->IsType(IT_MYCOMPUTER))
-        {
-            std::erase(items, item);
-            for (int i = 0; i < item->GetChildrenCount(); i++)
-                items.push_back(item->GetChild(i));
         }
     }
 

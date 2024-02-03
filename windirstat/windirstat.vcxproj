@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -419,6 +419,7 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\common\WinDirStat.ico" />
+    <Image Include="res\IDB_PACMAN_SLEEP.ico" />
     <Image Include="res\nodes\IDB_JUNCTION.ico" />
     <Image Include="res\nodes\IDI_EMPTY.ico" />
     <Image Include="res\nodes\IDI_FREE_SPACE.ico" />

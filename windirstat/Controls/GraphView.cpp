@@ -240,9 +240,8 @@ void CGraphView::RecurseHighlightExtension(CDC* pdc, const CItem* item)
     }
     else
     {
-        for (int i = 0; i < item->TmiGetChildrenCount(); i++)
+        for (const auto& child : item->GetChildren())
         {
-            const CItem* child = item->GetChild(i);
             if (child->TmiGetSize() == 0)
             {
                 break;
