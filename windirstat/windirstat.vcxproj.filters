@@ -408,5 +408,6 @@
     <Image Include="res\nodes\IDI_UNKNOWN.ico">
       <Filter>Resource Files\Resources</Filter>
     </Image>
+    <Image Include="res\IDB_PACMAN_SLEEP.ico" />
   </ItemGroup>
 </Project>

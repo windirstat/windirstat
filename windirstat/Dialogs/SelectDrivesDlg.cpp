@@ -119,18 +119,12 @@ void CDriveItem::SetDriveInformation(bool success, LPCWSTR name, ULONGLONG total
         m_name       = name;
         m_totalBytes = total;
         m_freeBytes  = free;
+        m_used       = 0.0;
 
-        m_used = 0;
-        if (m_totalBytes > 0)
+        // guard against cases where free bytes might be limited (.e.g, quotas)
+        if (m_totalBytes > 0 && m_totalBytes >= m_freeBytes)
         {
-            if (m_totalBytes < m_freeBytes) // can happen with quotas enabled
-            {
-                m_used = 0.0; // always return 0% in this case
-            }
-            else
-            {
-                m_used = static_cast<double>(m_totalBytes - m_freeBytes) / m_totalBytes;
-            }
+            m_used = static_cast<double>(m_totalBytes - m_freeBytes) / m_totalBytes;
         }
     }
 }

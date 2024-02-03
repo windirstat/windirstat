@@ -75,7 +75,7 @@ public:
     int GetImage() const override;
     int Compare(const CSortingListItem* other, int subitem) const override;
     virtual CTreeListItem* GetTreeListChild(int i) const = 0;
-    virtual int GetChildrenCount() const = 0;
+    virtual int GetTreeListChildCount() const = 0;
     virtual short GetImageToCache() const = 0;
 
     void DrawPacman(CDC* pdc, const CRect& rc, COLORREF bgColor) const;

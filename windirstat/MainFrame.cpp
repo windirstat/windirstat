@@ -887,14 +887,8 @@ void CMainFrame::OnInitMenuPopup(CMenu* pPopupMenu, UINT nIndex, BOOL bSysMenu)
 
 void CMainFrame::UpdateCleanupMenu(CMenu* menu)
 {
-    CStringW s = LoadString(IDS_EMPTYRECYCLEBIN);
-    VERIFY(menu->ModifyMenu(ID_CLEANUP_EMPTY_BIN, MF_BYCOMMAND | MF_STRING, ID_CLEANUP_EMPTY_BIN, s));
-    // TODO: can be cleaned, so that we don't disable and then enable the menu item
-    menu->EnableMenuItem(ID_CLEANUP_EMPTY_BIN, MF_BYCOMMAND | MF_DISABLED | MF_GRAYED);
-
     ULONGLONG items;
     ULONGLONG bytes;
-
     QueryRecycleBin(items, bytes);
 
     CStringW info;
@@ -907,13 +901,11 @@ void CMainFrame::UpdateCleanupMenu(CMenu* menu)
         info.FormatMessage(IDS__sITEMSss, FormatCount(items).GetString(), FormatBytes(bytes).GetString(), COptions::HumanFormat && bytes != 0 ? wds::strEmpty : (wds::strBlankSpace + GetSpec_Bytes()).GetString());
     }
 
+    CStringW s = LoadString(IDS_EMPTYRECYCLEBIN);
     s += info;
+    const UINT state = menu->GetMenuState(ID_CLEANUP_EMPTY_BIN, MF_BYCOMMAND);
     VERIFY(menu->ModifyMenu(ID_CLEANUP_EMPTY_BIN, MF_BYCOMMAND | MF_STRING, ID_CLEANUP_EMPTY_BIN, s));
-
-    // ModifyMenu() re-enables the item. So we disable (or enable) it again.
-
-    const UINT flags = items > 0 ? MF_ENABLED : (MF_DISABLED | MF_GRAYED);
-    menu->EnableMenuItem(ID_CLEANUP_EMPTY_BIN, flags);
+    menu->EnableMenuItem(ID_CLEANUP_EMPTY_BIN, state);
 
     const UINT toRemove = menu->GetMenuItemCount() - MAINMENU_USERDEFINEDCLEANUP_POSITION;
     for (UINT i = 0; i < toRemove; i++)

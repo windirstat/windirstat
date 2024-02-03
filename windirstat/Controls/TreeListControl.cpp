@@ -162,7 +162,7 @@ void CTreeListItem::SortChildren()
         return;
     }
 
-    const int children = GetChildrenCount();
+    const int children = GetTreeListChildCount();
     m_vi->sortedChildren.resize(children, nullptr);
     for (int i = 0; i < children; i++)
     {
@@ -221,7 +221,7 @@ int CTreeListItem::Compare(const CSortingListItem* baseOther, int subitem) const
 
 int CTreeListItem::FindSortedChild(const CTreeListItem* child) const
 {
-    for (int i = 0; i < GetChildrenCount(); i++)
+    for (int i = 0; i < GetTreeListChildCount(); i++)
     {
         if (child == GetSortedChild(i))
         {
@@ -261,12 +261,12 @@ bool CTreeListItem::HasSiblings() const
         return false;
     }
     const int i = m_parent->FindSortedChild(this);
-    return i < m_parent->GetChildrenCount() - 1;
+    return i < m_parent->GetTreeListChildCount() - 1;
 }
 
 bool CTreeListItem::HasChildren() const
 {
-    return GetChildrenCount() > 0;
+    return GetTreeListChildCount() > 0;
 }
 
 bool CTreeListItem::IsExpanded() const
@@ -781,7 +781,7 @@ void CTreeListControl::ExpandItem(int i, bool scroll)
 
     LockWindowUpdate();
     int maxwidth = GetSubItemWidth(item, 0);
-    for (int c = 0; c < item->GetChildrenCount(); c++)
+    for (int c = 0; c < item->GetTreeListChildCount(); c++)
     {
         CTreeListItem* child = item->GetSortedChild(c);
         InsertItem(i + 1 + c, child);
@@ -808,7 +808,7 @@ void CTreeListControl::ExpandItem(int i, bool scroll)
     {
         // Scroll up so far, that i is still visible
         // and the first child becomes visible, if possible.
-        if (item->GetChildrenCount() > 0)
+        if (item->GetTreeListChildCount() > 0)
         {
             EnsureVisible(i + 1, false);
         }
@@ -889,7 +889,7 @@ void CTreeListControl::OnChildRemoved(CTreeListItem* parent, CTreeListItem* chil
     if (parent->IsExpanded())
     {
         LockWindowUpdate();
-        for (int i = 0; i < child->GetChildrenCount(); i++)
+        for (int i = 0; i < child->GetTreeListChildCount(); i++)
         {
             OnChildRemoved(child, child->GetTreeListChild(i));
         }

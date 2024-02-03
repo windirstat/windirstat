@@ -135,6 +135,7 @@ public:
     static Setting<int> ScanningThreads;
 
     static Setting<bool> SkipHidden;
+    static Setting<bool> SkipProtected;
     static Setting<bool> UseWdsLocale;
     static Setting<bool> ListGrid;
     static Setting<bool> ListStripes;
