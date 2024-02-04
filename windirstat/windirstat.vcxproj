@@ -419,7 +419,6 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\common\WinDirStat.ico" />
-    <Image Include="res\IDB_PACMAN_SLEEP.ico" />
     <Image Include="res\nodes\IDB_JUNCTION.ico" />
     <Image Include="res\nodes\IDI_EMPTY.ico" />
     <Image Include="res\nodes\IDI_FREE_SPACE.ico" />
