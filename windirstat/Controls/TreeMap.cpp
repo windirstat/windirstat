@@ -907,7 +907,7 @@ void CTreemap::SequoiaView_DrawChildren(CColorRefArray& bitmap, Item* parent, co
 
             // Calculate the worst ratio in virtual row.
             // Formula taken from the "Squarified Treemaps" paper.
-            // (http://http://www.win.tue.nl/~vanwijk/)
+            // (https://www.win.tue.nl/~vanwijk/)
 
             const double ss     = (static_cast<double>(sum) + rmin) * (static_cast<double>(sum) + rmin);
             const double ratio1 = hh * rmax / ss;

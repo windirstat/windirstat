@@ -90,7 +90,7 @@ public:
         // This style is not used in WinDirStat (it's rather uninteresting).
         KDirStatStyle,
         // Children are layed out in rows. Similar to the style used by KDirStat.
-        SequoiaViewStyle // The 'classical' squarification as described in at http://www.win.tue.nl/~vanwijk/.
+        SequoiaViewStyle // The 'classical' squarification as described in at https://www.win.tue.nl/~vanwijk/.
     };
 
     //
