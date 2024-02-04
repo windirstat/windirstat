@@ -57,6 +57,7 @@ void CPageAdvanced::DoDataExchange(CDataExchange* pDX)
     DDX_Control(pDX, IDC_FOLLOWMOUNTPOINTS, m_ctlFollowMountPoints);
     DDX_Control(pDX, IDC_FOLLOWJUNCTIONS, m_ctlFollowJunctionPoints);
     DDX_Check(pDX, IDC_SKIPHIDDEN, m_skipHidden);
+    DDX_Check(pDX, IDC_SKIPPROTECTED, m_skipProtected);
     DDX_Check(pDX, IDC_BACKUP_RESTORE, m_useBackupRestore);
     DDX_Check(pDX, IDC_UNCOMPRESSED_FILE_SIZES, m_showUncompressedFileSizes);
     DDX_CBIndex(pDX, IDC_COMBO_THREADS, m_scanningThreads);
@@ -69,6 +70,7 @@ BEGIN_MESSAGE_MAP(CPageAdvanced, CPropertyPage)
     ON_BN_CLICKED(IDC_UNCOMPRESSED_FILE_SIZES, OnSettingChanged)
     ON_CBN_SELENDOK(IDC_COMBO_THREADS, OnSettingChanged)
     ON_BN_CLICKED(IDC_SKIPHIDDEN, OnSettingChanged)
+    ON_BN_CLICKED(IDC_SKIPPROTECTED, OnSettingChanged)
 END_MESSAGE_MAP()
 
 BOOL CPageAdvanced::OnInitDialog()

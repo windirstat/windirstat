@@ -902,10 +902,6 @@ void CItem::SetDone()
         {
             return item1->GetSize() > item2->GetSize(); // biggest first
         });
-        if (IsType(IT_DRIVE))
-        {
-            int q = 0;
-        }
         m_ci->m_tfinish = static_cast<ULONG>(GetTickCount64() / 1000ull);
     }
 
