@@ -22,6 +22,7 @@
 #include "stdafx.h"
 #include "WinDirStat.h"
 #include "DeleteWarningDlg.h"
+#include "Localization.h"
 
 IMPLEMENT_DYNAMIC(CDeleteWarningDlg, CDialog)
 
@@ -54,4 +55,13 @@ void CDeleteWarningDlg::OnBnClickedYes()
 {
     UpdateData();
     EndDialog(IDYES);
+}
+
+BOOL CDeleteWarningDlg::OnInitDialog()
+{
+    CDialog::OnInitDialog();
+
+    Localization::UpdateDialogs(*this);
+
+    return TRUE;
 }

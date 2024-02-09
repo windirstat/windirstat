@@ -24,6 +24,7 @@
 
 #include <Windows.h>
 #include "resource.h"
+#include "langs.h"
 #include "MyImageList.h"
 #include "MountPoints.h"
 #include "HelpMap.h"
@@ -73,22 +74,12 @@ public:
 
     void DoContextHelp(DWORD topic);
 
-    void GetAvailableResourceDllLangids(CArray<LANGID, LANGID>& arr);
-
     static void RestartApplication();
 
     static bool getDiskFreeSpace(LPCWSTR pszRootPath, ULONGLONG& total, ULONGLONG& unused);
 
     // Language resource processing
-    static CStringW FindResourceDllPathByLangid(LANGID& langid);
     static CStringW FindHelpfilePathByLangid(LANGID langid);
-    static CStringW FindAuxiliaryFileByLangid(LPCWSTR prefix, LPCWSTR suffix, LANGID& langid, bool checkResource);
-    static bool ScanResourceDllName(LPCWSTR name, LANGID& langid);
-    static bool ScanAuxiliaryFileName(LPCWSTR prefix, LPCWSTR suffix, LPCWSTR name, LANGID& langid);
-#   ifdef _DEBUG
-    static void TestScanResourceDllName();
-#   endif
-    static bool IsCorrectResourceDll(LPCWSTR path);
 
 protected:
 

@@ -27,6 +27,8 @@
 #include "GlobalHelpers.h"
 #include "SelectDrivesDlg.h"
 
+#include "Localization.h"
+
 namespace
 {
     enum
@@ -244,11 +246,11 @@ CStringW CDriveItem::GetText(int subitem) const
     case COL_GRAPH:
         if (m_querying)
         {
-            VERIFY(s.LoadString(IDS_QUERYING));
+            s = Localization::Lookup(IDS_QUERYING);
         }
         else if (!m_success)
         {
-            VERIFY(s.LoadString(IDS_NOTACCESSIBLE));
+            s = Localization::Lookup(IDS_NOTACCESSIBLE);
         }
         break;
 
@@ -514,6 +516,8 @@ BOOL CSelectDrivesDlg::OnInitDialog()
 
     CDialog::OnInitDialog();
 
+    Localization::UpdateDialogs(*this);
+
     if (WMU_THREADFINISHED == 0)
     {
         VTRACE(L"RegisterMessage() failed. Using WM_USER + 123");
@@ -538,11 +542,11 @@ BOOL CSelectDrivesDlg::OnInitDialog()
     m_list.SetExtendedStyle(m_list.GetExtendedStyle() | LVS_EX_HEADERDRAGDROP);
     // If we set an ImageList here, OnMeasureItem will have no effect ?!
 
-    m_list.InsertColumn(COL_NAME, LoadString(IDS_DRIVECOL_NAME), LVCFMT_LEFT, 120, COL_NAME);
-    m_list.InsertColumn(COL_TOTAL, LoadString(IDS_DRIVECOL_TOTAL), LVCFMT_RIGHT, 55, COL_TOTAL);
-    m_list.InsertColumn(COL_FREE, LoadString(IDS_DRIVECOL_FREE), LVCFMT_RIGHT, 55, COL_FREE);
-    m_list.InsertColumn(COL_GRAPH, LoadString(IDS_DRIVECOL_GRAPH), LVCFMT_LEFT, 100, COL_GRAPH);
-    m_list.InsertColumn(COL_PERCENTUSED,LoadString(IDS_DRIVECOL_PERCENTUSED),LVCFMT_RIGHT, 55, COL_PERCENTUSED);
+    m_list.InsertColumn(COL_NAME, Localization::Lookup(IDS_DRIVECOL_NAME), LVCFMT_LEFT, 120, COL_NAME);
+    m_list.InsertColumn(COL_TOTAL, Localization::Lookup(IDS_DRIVECOL_TOTAL), LVCFMT_RIGHT, 55, COL_TOTAL);
+    m_list.InsertColumn(COL_FREE, Localization::Lookup(IDS_DRIVECOL_FREE), LVCFMT_RIGHT, 55, COL_FREE);
+    m_list.InsertColumn(COL_GRAPH, Localization::Lookup(IDS_DRIVECOL_GRAPH), LVCFMT_LEFT, 100, COL_GRAPH);
+    m_list.InsertColumn(COL_PERCENTUSED,Localization::Lookup(IDS_DRIVECOL_PERCENTUSED),LVCFMT_RIGHT, 55, COL_PERCENTUSED);
 
     m_list.OnColumnsInserted();
 
@@ -624,7 +628,7 @@ void CSelectDrivesDlg::OnBnClickedBrowsefolder()
     ZeroMemory(&bi, sizeof(bi));
 
     // Load a meaningful title for the browse dialog
-    const CStringW title = LoadString(IDS_SELECTFOLDER);
+    const CStringW title = Localization::Lookup(IDS_SELECTFOLDER);
     bi.hwndOwner         = m_hWnd;
     // Use the CStringW as buffer (minimum is MAX_PATH as length)
     bi.pszDisplayName = sDisplayName.GetBuffer(_MAX_PATH);

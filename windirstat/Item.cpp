@@ -41,18 +41,19 @@
 #include <shared_mutex>
 #include <stack>
 
+#include "Localization.h"
 #include "SmartPointer.h"
 
 namespace
 {
     CStringW GetFreeSpaceItemName()
     {
-        return LoadString(IDS_FREESPACE_ITEM);
+        return Localization::Lookup(IDS_FREESPACE_ITEM);
     }
 
     CStringW GetUnknownItemName()
     {
-        return LoadString(IDS_UNKNOWN_ITEM);
+        return Localization::Lookup(IDS_UNKNOWN_ITEM);
     }
 
     constexpr SIZE sizeDeflatePacman = {1, 2};
@@ -184,9 +185,9 @@ CStringW CItem::GetText(int subitem) const
         if (!IsDone())
         {
             if (GetReadJobs() == 1)
-                VERIFY(s.LoadString(IDS_ONEREADJOB));
+                s = Localization::Lookup(IDS_ONEREADJOB);
             else
-                s.FormatMessage(IDS_sREADJOBS, FormatCount(GetReadJobs()).GetString());
+                s.FormatMessage(Localization::Lookup(IDS_sREADJOBS), FormatCount(GetReadJobs()).GetString());
         }
         break;
 
@@ -624,8 +625,8 @@ void CItem::UpwardSubtractFiles(const ULONG fileCount)
     if (fileCount == 0) return;
     for (auto p = this; p != nullptr; p = p->GetParent())
     {
-        ASSERT(p->m_ci->m_files - fileCount >= 0);
         if (p->IsType(IT_FILE)) continue;
+        ASSERT(p->m_ci->m_files - fileCount >= 0);
         p->m_ci->m_files -= fileCount;
     }
 }

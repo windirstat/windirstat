@@ -33,6 +33,7 @@
 #include "OsSpecific.h"
 #include "GlobalHelpers.h"
 #include "Item.h"
+#include "Localization.h"
 #include "SmartPointer.h"
 
 #ifdef _DEBUG
@@ -91,9 +92,6 @@ CDirStatApp::CDirStatApp()
       , m_vtrace_console(new CWDSTracerConsole())
 #   endif // VTRACE_TO_CONSOLE
 {
-#   ifdef _DEBUG
-    TestScanResourceDllName();
-#   endif
 }
 
 CMyImageList* CDirStatApp::GetMyImageList()
@@ -102,20 +100,10 @@ CMyImageList* CDirStatApp::GetMyImageList()
     return &m_myImageList;
 }
 
-CStringW CDirStatApp::FindResourceDllPathByLangid(LANGID& langid)
-{
-    return FindAuxiliaryFileByLangid(
-        wds::strLangPrefix
-        , wds::strLangSuffix
-        , langid
-        , true
-    );
-}
-
 CStringW CDirStatApp::FindHelpfilePathByLangid(LANGID langid)
 {
     CStringW s;
-    if (langid == COptions::GetBuiltInLanguage())
+    if (langid == COptions::GetFallbackLanguage())
     {
         // The English help file is named windirstat.chm.
         s = GetAppFolder() + L"\\windirstat.chm";
@@ -126,7 +114,8 @@ CStringW CDirStatApp::FindHelpfilePathByLangid(LANGID langid)
     }
 
     // Help files for other languages are named wdshxxxx.chm (xxxx = LANGID).
-    s = FindAuxiliaryFileByLangid(L"wdsh", L".chm", langid, false);
+    // TODO: Fix CHM file lookup
+    s = L"";// FindAuxiliaryFileByLangid(L"wdsh", L".chm", langid, false);
     if (!s.IsEmpty())
     {
         return s;
@@ -143,28 +132,6 @@ CStringW CDirStatApp::FindHelpfilePathByLangid(LANGID langid)
     return wds::strEmpty;
 }
 
-void CDirStatApp::GetAvailableResourceDllLangids(CArray<LANGID, LANGID>& arr)
-{
-    arr.RemoveAll();
-
-    CFileFind finder;
-    BOOL b = finder.FindFile(GetAppFolder() + L"\\wdsr*" STR_LANG_SUFFIX);
-    while (b)
-    {
-        b = finder.FindNextFile();
-        if (finder.IsDirectory())
-        {
-            continue;
-        }
-
-        LANGID langid;
-        if (ScanResourceDllName(finder.GetFileName(), langid) && IsCorrectResourceDll(finder.GetFilePath()))
-        {
-            arr.Add(langid);
-        }
-    }
-}
-
 void CDirStatApp::RestartApplication()
 {
     // First, try to create the suspended process
@@ -179,7 +146,7 @@ void CDirStatApp::RestartApplication()
     if (!success)
     {
         CStringW s;
-        s.FormatMessage(IDS_CREATEPROCESSsFAILEDs, GetAppFileName().GetString(), MdGetWinErrorText(::GetLastError()).GetString());
+        s.FormatMessage(Localization::Lookup(IDS_CREATEPROCESSsFAILEDs), GetAppFileName().GetString(), MdGetWinErrorText(::GetLastError()).GetString());
         AfxMessageBox(s);
         return;
     }
@@ -217,144 +184,6 @@ bool CDirStatApp::getDiskFreeSpace(LPCWSTR pszRootPath, ULONGLONG& total, ULONGL
     // Race condition ...
     ASSERT(unused <= total);
     return FALSE != b;
-}
-
-bool CDirStatApp::ScanResourceDllName(LPCWSTR name, LANGID& langid)
-{
-    return ScanAuxiliaryFileName(
-        wds::strLangPrefix
-        , wds::strLangSuffix
-        , name
-        , langid
-    );
-}
-
-// suffix contains the dot (e.g. ".chm")
-bool CDirStatApp::ScanAuxiliaryFileName(LPCWSTR prefix, LPCWSTR suffix, LPCWSTR name, LANGID& langid)
-{
-    using wds::iLangCodeLength;
-    ASSERT(wcslen(prefix) == wcslen(wds::strLangPrefix)); // FIXME: Also add .chm part or split
-    ASSERT(wcslen(suffix) == wcslen(wds::strLangSuffix)); // FIXME: see above
-
-    CStringW s(name); // [prefix][lngcode].[suffix]
-    s.MakeLower();
-    if (s.Left(static_cast<int>(wcslen(prefix))) != prefix)
-    {
-        return false;
-    }
-    s = s.Mid(static_cast<int>(wcslen(prefix))); // remove prefix from the front -> [lngcode].[suffix]
-
-    if (s.GetLength() != iLangCodeLength + static_cast<int>(wcslen(suffix)))
-    {
-        return false;
-    }
-
-    if (s.Mid(iLangCodeLength) != CStringW(suffix).MakeLower())
-    {
-        return false;
-    }
-
-    s = s.Left(iLangCodeLength); // retain the language code -> [lngcode]
-
-    for (int i = 0; i < iLangCodeLength; i++)
-    {
-        if (!_istxdigit(s[i]))
-        {
-            return false;
-        }
-    }
-
-    int id;
-    VERIFY(1 == _stscanf_s(s, L"%04x", &id));
-    langid = static_cast<LANGID>(id);
-
-    return true;
-}
-
-#ifdef _DEBUG
-void CDirStatApp::TestScanResourceDllName()
-{
-    LANGID id;
-    ASSERT(!ScanResourceDllName(wds::strEmpty, id));
-    ASSERT(!ScanResourceDllName(STR_RESOURCE_PREFIX STR_LANG_SUFFIX, id));
-    ASSERT(!ScanResourceDllName(STR_RESOURCE_PREFIX L"123" STR_LANG_SUFFIX, id));
-    ASSERT(!ScanResourceDllName(STR_RESOURCE_PREFIX L"12345" STR_LANG_SUFFIX, id));
-    ASSERT(!ScanResourceDllName(STR_RESOURCE_PREFIX L"1234.exe", id));
-    ASSERT(ScanResourceDllName (STR_RESOURCE_PREFIX L"0123" STR_LANG_SUFFIX, id));
-    ASSERT(id == 0x0123);
-    ASSERT(ScanResourceDllName (CStringW(STR_RESOURCE_PREFIX L"a13F" STR_LANG_SUFFIX).MakeUpper(), id));
-    ASSERT(id == 0xa13f);
-}
-#endif
-
-CStringW CDirStatApp::FindAuxiliaryFileByLangid(LPCWSTR prefix, LPCWSTR suffix, LANGID& langid, bool checkResource)
-{
-    CStringW number;
-    number.Format(L"%04x", langid);
-
-    CStringW exactName;
-    exactName.Format(L"%s%s%s", prefix, number.GetString(), suffix);
-
-    CStringW exactPath = GetAppFolder() + L"\\" + exactName;
-    if (::PathFileExists(exactPath) && (!checkResource || IsCorrectResourceDll(exactPath)))
-    {
-        return exactPath;
-    }
-
-    CStringW search;
-    search.Format(L"%s*%s", prefix, suffix);
-
-    CFileFind finder;
-    BOOL b = finder.FindFile(GetAppFolder() + L"\\" + search);
-    while (b)
-    {
-        b = finder.FindNextFile();
-        if (finder.IsDirectory())
-        {
-            continue;
-        }
-
-        LANGID id;
-        if (!ScanAuxiliaryFileName(prefix, suffix, finder.GetFileName(), id))
-        {
-            continue;
-        }
-
-        if (PRIMARYLANGID(id) == PRIMARYLANGID(langid) && (!checkResource || IsCorrectResourceDll(finder.GetFilePath())))
-        {
-            langid = id;
-            return finder.GetFilePath();
-        }
-    }
-
-    return wds::strEmpty;
-}
-
-bool CDirStatApp::IsCorrectResourceDll(LPCWSTR path)
-{
-    const HMODULE module = ::LoadLibraryEx(path, nullptr, LOAD_LIBRARY_AS_DATAFILE);
-    if (module == nullptr)
-    {
-        return false;
-    }
-
-    // TODO/FIXME: introduce some method of checking the resource version
-
-    const CStringW reference = LoadString(IDS_RESOURCEVERSION);
-
-    const int bufsize = reference.GetLength() * 2;
-    CStringW s;
-    const int r = LoadString(module, IDS_RESOURCEVERSION, s.GetBuffer(bufsize), bufsize);
-    s.ReleaseBuffer();
-
-    FreeLibrary(module);
-
-    if (r == 0 || s != reference)
-    {
-        return false;
-    }
-
-    return true;
 }
 
 void CDirStatApp::ReReadMountPoints()
@@ -416,13 +245,10 @@ CStringW CDirStatApp::GetCurrentProcessMemoryInfo()
         return wds::strEmpty;
     }
 
-    // Format with size suffix
-    const CStringW n = PadWidthBlanks(FormatBytes(pmc.WorkingSetSize), 11);
-
-    // Append label prefix
-    CStringW s;
-    s.FormatMessage(IDS_RAMUSAGEs, n.GetString());
-    return s;
+    static CStringW memformat = Localization::Lookup(IDS_RAMUSAGEs);
+    CStringW formatted;
+    formatted.FormatMessage(memformat, FormatBytes(pmc.WorkingSetSize).GetString());
+    return L"    " + formatted;
 }
 
 bool CDirStatApp::InPortableMode() const
@@ -459,7 +285,7 @@ bool CDirStatApp::SetPortableMode(bool enable, bool only_open)
         }
 
         // Fallback to registry mode for any failures
-        SetRegistryKey(LoadString(AFX_IDS_APP_TITLE));
+        SetRegistryKey(Localization::Lookup(IDS_APP_TITLE));
         return false;
     }
     else
@@ -467,7 +293,7 @@ bool CDirStatApp::SetPortableMode(bool enable, bool only_open)
         // Attempt to remove file succeeded
         if (DeleteFile(ini) == 0)
         {
-            SetRegistryKey(LoadString(AFX_IDS_APP_TITLE));
+            SetRegistryKey(Localization::Lookup(IDS_APP_TITLE));
             return true;
         }
 
@@ -480,6 +306,9 @@ bool CDirStatApp::SetPortableMode(bool enable, bool only_open)
 BOOL CDirStatApp::InitInstance()
 {
     Inherited::InitInstance();
+
+    // Load default language just to get bootstrapped
+    Localization::LoadResource(MAKELANGID(LANG_ENGLISH, SUBLANG_NEUTRAL));
 
     // Initialize visual controls
     constexpr INITCOMMONCONTROLSEX ctrls = { sizeof(INITCOMMONCONTROLSEX) , ICC_STANDARD_CLASSES };
@@ -617,6 +446,6 @@ void CDirStatApp::OnHelpManual()
 void CDirStatApp::DoContextHelp(DWORD)
 {
     CStringW msg;
-    msg.FormatMessage(IDS_HELPFILEsCOULDNOTBEFOUND, L"windirstat.chm");
+    msg.FormatMessage(Localization::Lookup(IDS_HELPFILEsCOULDNOTBEFOUND), L"windirstat.chm");
     AfxMessageBox(msg);
 }

@@ -29,6 +29,8 @@ protected:
 
     static std::vector<PersistedSetting*>& GetPropertySet();
     static bool ReadBinaryProperty(std::wstring & section, std::wstring & entry, LPVOID dest, size_t size);
+    std::wstring _entry;
+    std::wstring _section;
 
 public:
 
@@ -57,6 +59,7 @@ public:
     {
         for (auto p : GetPropertySet())
         {
+            if (p->_section.empty()) continue;
             p->WritePersistedProperty();
         }
     }
@@ -70,8 +73,6 @@ protected:
     T _value;
     T _min;
     T _max;
-    std::wstring _entry;
-    std::wstring _section;
 
 public:
 

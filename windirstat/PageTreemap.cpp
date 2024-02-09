@@ -26,6 +26,8 @@
 #include "PageTreeMap.h"
 #include <common/CommonHelpers.h>
 
+#include "Localization.h"
+
 namespace
 {
     constexpr UINT _maxHeight = 200;
@@ -106,6 +108,8 @@ BOOL CPageTreemap::OnInitDialog()
 {
     CPropertyPage::OnInitDialog();
 
+    Localization::UpdateDialogs(*this);
+
     ValuesAltered(); // m_undo is invalid
 
     m_brightness.SetPageSize(10);
@@ -178,7 +182,7 @@ void CPageTreemap::OnSomethingChanged()
 void CPageTreemap::ValuesAltered(bool altered)
 {
     m_altered        = altered;
-    const CStringW s = LoadString(m_altered ? IDS_RESETTO_DEFAULTS : IDS_BACKTO_USERSETTINGS);
+    const CStringW s = m_altered ? Localization::Lookup(IDS_RESETTO_DEFAULTS) : Localization::Lookup(IDS_BACKTO_USERSETTINGS);
     m_resetButton.SetWindowText(s);
 }
 

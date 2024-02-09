@@ -19,9 +19,6 @@
     <Filter Include="Source Files\Dialogs">
       <UniqueIdentifier>{ED9704D9-CF24-8B4E-26A4-D7DDA6351EDB}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\Lua">
-      <UniqueIdentifier>{4556325F-FBA9-4E61-8B92-CB3E0ADCEDA8}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\Controls">
       <UniqueIdentifier>{463565AC-33C1-91A1-6035-48A265809213}</UniqueIdentifier>
     </Filter>
@@ -36,6 +33,9 @@
     </Filter>
     <Filter Include="Special Files">
       <UniqueIdentifier>{38E10655-D178-C918-DFD7-45CB0E3F34CF}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\Languages">
+      <UniqueIdentifier>{ca41237d-3469-4146-909c-126f62a5c504}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -208,7 +208,12 @@
     <ClInclude Include="Property.h">
       <Filter>Header Files\Common</Filter>
     </ClInclude>
-    <ClInclude Include="..\common\resource.h" />
+    <ClInclude Include="Localization.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="langs.h">
+      <Filter>Resource Files\Languages</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\common\CommonHelpers.cpp">
@@ -313,6 +318,9 @@
     <ClCompile Include="Property.cpp">
       <Filter>Source Files\Common</Filter>
     </ClCompile>
+    <ClCompile Include="Localization.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="windirstat.rc">
@@ -320,6 +328,9 @@
     </ResourceCompile>
     <ResourceCompile Include="..\common\version.rc">
       <Filter>Resource Files</Filter>
+    </ResourceCompile>
+    <ResourceCompile Include="langs.rc">
+      <Filter>Resource Files\Languages</Filter>
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
@@ -402,5 +413,46 @@
     <Image Include="res\nodes\IDI_UNKNOWN.ico">
       <Filter>Resource Files\Resources</Filter>
     </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="res\langs\cz.txt">
+      <Filter>Resource Files\Languages</Filter>
+    </Text>
+    <Text Include="res\langs\ee.txt">
+      <Filter>Resource Files\Languages</Filter>
+    </Text>
+    <Text Include="res\langs\es.txt">
+      <Filter>Resource Files\Languages</Filter>
+    </Text>
+    <Text Include="res\langs\fl.txt">
+      <Filter>Resource Files\Languages</Filter>
+    </Text>
+    <Text Include="res\langs\fr.txt">
+      <Filter>Resource Files\Languages</Filter>
+    </Text>
+    <Text Include="res\langs\hu.txt">
+      <Filter>Resource Files\Languages</Filter>
+    </Text>
+    <Text Include="res\langs\it.txt">
+      <Filter>Resource Files\Languages</Filter>
+    </Text>
+    <Text Include="res\langs\pl.txt">
+      <Filter>Resource Files\Languages</Filter>
+    </Text>
+    <Text Include="res\langs\pt.txt">
+      <Filter>Resource Files\Languages</Filter>
+    </Text>
+    <Text Include="res\langs\ru.txt">
+      <Filter>Resource Files\Languages</Filter>
+    </Text>
+    <Text Include="res\langs\de.txt">
+      <Filter>Resource Files\Languages</Filter>
+    </Text>
+    <Text Include="res\langs\en.txt">
+      <Filter>Resource Files\Languages</Filter>
+    </Text>
+    <Text Include="res\langs\nl.txt">
+      <Filter>Resource Files\Languages</Filter>
+    </Text>
   </ItemGroup>
 </Project>

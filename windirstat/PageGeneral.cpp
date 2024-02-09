@@ -27,6 +27,7 @@
 #include "DirStatDoc.h"
 #include "Options.h"
 #include "GlobalHelpers.h"
+#include "Localization.h"
 
 IMPLEMENT_DYNAMIC(CPageGeneral, CPropertyPage)
 
@@ -77,6 +78,8 @@ BOOL CPageGeneral::OnInitDialog()
 {
     CPropertyPage::OnInitDialog();
 
+    Localization::UpdateDialogs(*this);
+
     m_humanFormat = COptions::HumanFormat;
     m_listGrid = COptions::ListGrid;
     m_listStripes = COptions::ListStripes;
@@ -84,26 +87,15 @@ BOOL CPageGeneral::OnInitDialog()
     m_useWdsLocale= COptions::UseWdsLocale;
     m_portableMode = GetWDSApp()->InPortableMode();
 
-    int k = m_combo.AddString(GetLocaleLanguage(COptions::GetBuiltInLanguage()));
-    m_combo.SetItemData(k, COptions::GetBuiltInLanguage());
-
-    CArray<LANGID, LANGID> langid;
-    GetWDSApp()->GetAvailableResourceDllLangids(langid);
-
-    for (int i = 0; i < langid.GetSize(); i++)
+    const auto languages = Localization::GetLanguageList();
+    for (const auto & language : languages)
     {
-        k = m_combo.AddString(GetLocaleLanguage(langid[i]));
-        m_combo.SetItemData(k, langid[i]);
-    }
-
-    m_originalLanguage = 0;
-    for (int i = 0; i < m_combo.GetCount(); i++)
-    {
-        if (m_combo.GetItemData(i) == COptions::LanguageId)
+        int i = m_combo.AddString(GetLocaleLanguage(language));
+        m_combo.SetItemData(i, language);
+        if (language == COptions::LanguageId)
         {
-            m_combo.SetCurSel(i);
             m_originalLanguage = i;
-            break;
+            m_combo.SetCurSel(i);
         }
     }
 

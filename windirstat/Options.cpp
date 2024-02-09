@@ -28,6 +28,8 @@
 
 #include <format>
 
+#include "Localization.h"
+
 Setting<bool> COptions::ShowFreeSpace(L"persistence", L"showFreeSpace", false);
 Setting<bool> COptions::ShowUnknown(L"persistence", L"showUnknown", false);
 Setting<bool> COptions::ShowFileTypes(L"persistence", L"showFileTypes", true);
@@ -44,7 +46,7 @@ Setting<std::wstring> COptions::SelectDrivesFolder(L"persistence", L"selectDrive
 Setting<std::vector<std::wstring>> COptions::SelectDrivesDrives(L"persistence", L"selectDrivesDrives");
 Setting<double> COptions::MainSplitterPos(L"persistence", L"MainSplitterPos", -1, 0, 1);
 Setting<double> COptions::SubSplitterPos(L"persistence", L"SubSplitterPos", -1, 0, 1);
-Setting<int> COptions::LanguageId(L"persistence", L"language", LANGIDFROMLCID(GetUserDefaultLCID()));
+Setting<int> COptions::LanguageId(L"persistence", L"language", 0);
 
 Setting<std::vector<int>> COptions::TypesColumnWidths(L"persistence", L"typesColumnWidths");
 Setting<std::vector<int>> COptions::TypesColumnOrder(L"persistence", L"typesColumnOrder");
@@ -168,17 +170,12 @@ void COptions::PreProcessPersistedSettings()
     for (int i = 0; i < USERDEFINEDCLEANUPCOUNT; i++)
     {
         UserDefinedCleanups.emplace_back(L"cleanups\\userDefinedCleanup" + std::format(L"{:02}", i));
-
-        // Add default title
-        CStringW s;
-        s.FormatMessage(LoadString(IDS_USERDEFINEDCLEANUPd), i);
-        UserDefinedCleanups[i].title = std::wstring(s.GetString());
     }
 
     // Set defaults for reports
-    ReportSubject.Obj() = LoadString(IDS_REPORT_DISKUSAGE).GetString();
-    ReportSuffix.Obj() = LoadString(IDS_DISKUSAGEREPORTGENERATEDBYWINDIRSTAT).GetString();
-    ReportPrefix.Obj() = LoadString(IDS_PLEASECHECKYOURDISKUSAGE).GetString();
+    ReportSubject.Obj() = Localization::Lookup(IDS_REPORT_DISKUSAGE).GetString();
+    ReportSuffix.Obj() = Localization::Lookup(IDS_DISKUSAGEREPORTGENERATEDBYWINDIRSTAT).GetString();
+    ReportPrefix.Obj() = Localization::Lookup(IDS_PLEASECHECKYOURDISKUSAGE).GetString();
 
 }
 
@@ -189,11 +186,15 @@ void COptions::PostProcessPersistedSettings()
     SanitizeRect(AboutWindowRect.Obj());
     SanitizeRect(DriveWindowRect.Obj());
 
-    // Validate locale is valie
-    if (!IsValidLocale(MAKELCID(LanguageId, SORT_DEFAULT), LCID_INSTALLED))
+    // Setup the language for the environment
+    const LANGID langid = static_cast<LANGID>(LanguageId);
+    const auto& languages = Localization::GetLanguageList();
+    if (std::ranges::find(languages, langid) == languages.end())
     {
-        LanguageId.Obj() = GetUserDefaultLangID();
+        const LANGID best = MAKELANGID(PRIMARYLANGID(GetUserDefaultLangID()), SUBLANG_NEUTRAL);
+        LanguageId.Obj() = (std::ranges::find(languages, best) != languages.end()) ? best : GetFallbackLanguage();
     }
+    Localization::LoadResource(static_cast<LANGID>(LanguageId));
 
     // Load treemap settings 
     TreemapOptions.style = static_cast<CTreemap::STYLE>(static_cast<int>(TreeMapStyle));
@@ -205,18 +206,29 @@ void COptions::PostProcessPersistedSettings()
     TreemapOptions.SetAmbientLightPercent(TreeMapAmbientLightPercent);
     TreemapOptions.SetLightSourceXPercent(TreeMapLightSourceX);
     TreemapOptions.SetLightSourceYPercent(TreeMapLightSourceY);
+
+    // Adjust title to language default title
+    for (int i = 0; i < USERDEFINEDCLEANUPCOUNT; i++)
+    {
+        if (UserDefinedCleanups[i].title.Obj().empty() || UserDefinedCleanups[i].virginTitle)
+        {
+            CStringW s;
+            s.FormatMessage(Localization::Lookup(IDS_USERDEFINEDCLEANUPd), i);
+            UserDefinedCleanups[i].title = std::wstring(s.GetString());
+        }
+    }
 }
 
-LANGID COptions::GetBuiltInLanguage()
+LANGID COptions::GetFallbackLanguage()
 {
-    return MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US);
+    return MAKELANGID(LANG_ENGLISH, SUBLANG_NEUTRAL);
 }
 
 LANGID COptions::GetEffectiveLangId()
 {
     if (UseWdsLocale)
     {
-        return GetBuiltInLanguage();
+        return GetFallbackLanguage();
     }
 
     return static_cast<LANGID>(LanguageId);
@@ -224,31 +236,7 @@ LANGID COptions::GetEffectiveLangId()
 
 void COptions::LoadAppSettings()
 {
-    // Load settings from persisted store
     PreProcessPersistedSettings();
     PersistedSetting::ReadPersistedProperties();
-
-    // Setup the language for the environment
-    LANGID langid = static_cast<LANGID>(COptions::LanguageId.Obj());
-    if (langid != GetBuiltInLanguage())
-    {
-        const CStringW resourceDllPath = CDirStatApp::FindResourceDllPathByLangid(langid);
-        if (!resourceDllPath.IsEmpty())
-        {
-            // Load language resource DLL
-            if (const HINSTANCE dll = ::LoadLibrary(resourceDllPath))
-            {
-                // Set default module handle for loading of resources
-                AfxSetResourceHandle(dll);
-                COptions::LanguageId = static_cast<int>(langid);
-            }
-            else
-            {
-                VTRACE(L"LoadLibrary(%s) failed: %u", resourceDllPath.GetString(), ::GetLastError());
-            }
-        }
-    }
-
-    // Post-process settings now that language is loaded
     PostProcessPersistedSettings();
 }

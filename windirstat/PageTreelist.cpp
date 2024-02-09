@@ -26,6 +26,7 @@
 #include "CommonHelpers.h"
 #include "DirStatDoc.h"
 #include "DirStatView.h"
+#include "Localization.h"
 #include "MainFrame.h"
 
 IMPLEMENT_DYNAMIC(CPageTreelist, CPropertyPage)
@@ -88,6 +89,8 @@ BOOL CPageTreelist::OnInitDialog()
 {
     CPropertyPage::OnInitDialog();
 
+    Localization::UpdateDialogs(*this);
+
     m_pacmanAnimation= COptions::PacmanAnimation;
     m_showTimeSpent = COptions::ShowTimeSpent;
     m_showColumnSubdirs = COptions::ShowColumnSubdirs;
@@ -111,14 +114,6 @@ BOOL CPageTreelist::OnInitDialog()
     m_slider.SetPos(m_treelistColorCount);
 
     EnableButtons();
-
-    SetDlgItemText(IDC_TREECOL_SUBDIRS, LoadString(IDS_TREECOL_SUBDIRS));
-    SetDlgItemText(IDC_TREECOL_ITEMS, LoadString(IDS_TREECOL_ITEMS));
-    SetDlgItemText(IDC_TREECOL_FILES, LoadString(IDS_TREECOL_FILES));
-    SetDlgItemText(IDC_TREECOL_ATTRIBUTES, LoadString(IDS_TREECOL_ATTRIBUTES));
-    SetDlgItemText(IDC_TREECOL_LASTCHANGE, LoadString(IDS_TREECOL_LASTCHANGE));
-    SetDlgItemText(IDC_TREECOL_OWNER, LoadString(IDS_TREECOL_OWNER));
-
     UpdateData(false);
     return TRUE;
 }

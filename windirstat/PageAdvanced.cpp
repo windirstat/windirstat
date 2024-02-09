@@ -27,6 +27,7 @@
 #include "DirStatDoc.h"
 #include "Options.h"
 #include "GlobalHelpers.h"
+#include "Localization.h"
 
 IMPLEMENT_DYNAMIC(CPageAdvanced, CPropertyPage)
 
@@ -76,6 +77,8 @@ END_MESSAGE_MAP()
 BOOL CPageAdvanced::OnInitDialog()
 {
     CPropertyPage::OnInitDialog();
+
+    Localization::UpdateDialogs(*this);
 
     m_followMountPoints = COptions::FollowMountPoints;
     m_followJunctionPoints = COptions::FollowJunctionPoints;

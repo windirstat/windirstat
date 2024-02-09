@@ -28,6 +28,7 @@
 #include "DirStatView.h"
 #include "OsSpecific.h"
 #include "GlobalHelpers.h"
+#include "Localization.h"
 
 CMyTreeListControl::CMyTreeListControl() : CTreeListControl(20)
 {
@@ -68,6 +69,7 @@ void CMyTreeListControl::OnContextMenu(CWnd* /*pWnd*/, CPoint pt)
 
     CMenu menu;
     menu.LoadMenu(IDR_POPUPLIST);
+    Localization::UpdateMenu(menu);
     CMenu* sub = menu.GetSubMenu(0);
 
     PrepareDefaultMenu(sub, static_cast<CItem*>(item));
@@ -126,7 +128,7 @@ void CMyTreeListControl::PrepareDefaultMenu(CMenu* menu, const CItem* item)
     }
     else
     {
-        const CStringW command = LoadString(item->IsExpanded() && item->HasChildren() ? IDS_COLLAPSE : IDS_EXPAND);
+        const CStringW command = item->IsExpanded() && item->HasChildren() ? Localization::Lookup(IDS_COLLAPSE) : Localization::Lookup(IDS_EXPAND);
         VERIFY(menu->ModifyMenu(ID_POPUP_TOGGLE, MF_BYCOMMAND | MF_STRING, ID_POPUP_TOGGLE, command));
         menu->SetDefaultItem(ID_POPUP_TOGGLE, false);
     }
@@ -233,10 +235,10 @@ void CDirStatView::CreateColumns(bool all)
 {
     if (all)
     {
-        m_treeListControl.InsertColumn(COL_NAME, LoadString(IDS_TREECOL_NAME), LVCFMT_LEFT, 200, COL_NAME);
-        m_treeListControl.InsertColumn(COL_SUBTREEPERCENTAGE, LoadString(IDS_TREECOL_SUBTREEPERCENTAGE), LVCFMT_RIGHT, CItem::GetSubtreePercentageWidth(), COL_SUBTREEPERCENTAGE);
-        m_treeListControl.InsertColumn(COL_PERCENTAGE, LoadString(IDS_TREECOL_PERCENTAGE), LVCFMT_RIGHT, 55, COL_PERCENTAGE);
-        m_treeListControl.InsertColumn(COL_SUBTREETOTAL, LoadString(IDS_TREECOL_SIZE), LVCFMT_RIGHT, 90, COL_SUBTREETOTAL);
+        m_treeListControl.InsertColumn(COL_NAME, Localization::Lookup(IDS_TREECOL_NAME), LVCFMT_LEFT, 200, COL_NAME);
+        m_treeListControl.InsertColumn(COL_SUBTREEPERCENTAGE, Localization::Lookup(IDS_TREECOL_SUBTREEPERCENTAGE), LVCFMT_RIGHT, CItem::GetSubtreePercentageWidth(), COL_SUBTREEPERCENTAGE);
+        m_treeListControl.InsertColumn(COL_PERCENTAGE, Localization::Lookup(IDS_TREECOL_PERCENTAGE), LVCFMT_RIGHT, 55, COL_PERCENTAGE);
+        m_treeListControl.InsertColumn(COL_SUBTREETOTAL, Localization::Lookup(IDS_TREECOL_SIZE), LVCFMT_RIGHT, 90, COL_SUBTREETOTAL);
     }
 
     // reset sort and remove optional
@@ -246,17 +248,17 @@ void CDirStatView::CreateColumns(bool all)
 
     // add optional columns based on settings
     if (COptions::ShowColumnItems)
-        m_treeListControl.InsertColumn(COL_ITEMS, LoadString(IDS_TREECOL_ITEMS), LVCFMT_RIGHT, 55, COL_ITEMS);
+        m_treeListControl.InsertColumn(COL_ITEMS, Localization::Lookup(IDS_TREECOL_ITEMS), LVCFMT_RIGHT, 55, COL_ITEMS);
     if (COptions::ShowColumnFiles)
-        m_treeListControl.InsertColumn(COL_FILES, LoadString(IDS_TREECOL_FILES), LVCFMT_RIGHT, 55, COL_FILES);
+        m_treeListControl.InsertColumn(COL_FILES, Localization::Lookup(IDS_TREECOL_FILES), LVCFMT_RIGHT, 55, COL_FILES);
     if (COptions::ShowColumnSubdirs)
-        m_treeListControl.InsertColumn(COL_SUBDIRS, LoadString(IDS_TREECOL_SUBDIRS), LVCFMT_RIGHT, 55, COL_SUBDIRS);
+        m_treeListControl.InsertColumn(COL_SUBDIRS, Localization::Lookup(IDS_TREECOL_SUBDIRS), LVCFMT_RIGHT, 55, COL_SUBDIRS);
     if (COptions::ShowColumnLastChange)
-        m_treeListControl.InsertColumn(COL_LASTCHANGE, LoadString(IDS_TREECOL_LASTCHANGE), LVCFMT_LEFT, 120, COL_LASTCHANGE);
+        m_treeListControl.InsertColumn(COL_LASTCHANGE, Localization::Lookup(IDS_TREECOL_LASTCHANGE), LVCFMT_LEFT, 120, COL_LASTCHANGE);
     if (COptions::ShowColumnAttributes)
-        m_treeListControl.InsertColumn(COL_ATTRIBUTES, LoadString(IDS_TREECOL_ATTRIBUTES), LVCFMT_LEFT, 50, COL_ATTRIBUTES);
+        m_treeListControl.InsertColumn(COL_ATTRIBUTES, Localization::Lookup(IDS_TREECOL_ATTRIBUTES), LVCFMT_LEFT, 50, COL_ATTRIBUTES);
     if (COptions::ShowColumnOwner)
-        m_treeListControl.InsertColumn(COL_OWNER, LoadString(IDS_TREECOL_OWNER), LVCFMT_LEFT, 120, COL_OWNER);
+        m_treeListControl.InsertColumn(COL_OWNER, Localization::Lookup(IDS_TREECOL_OWNER), LVCFMT_LEFT, 120, COL_OWNER);
 
     m_treeListControl.OnColumnsInserted();
     

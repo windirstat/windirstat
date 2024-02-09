@@ -27,6 +27,7 @@
 #include <common/CommonHelpers.h>
 #include "GlobalHelpers.h"
 #include "Options.h"
+#include "Localization.h"
 
 #include <algorithm>
 
@@ -68,7 +69,7 @@ namespace
 
         if (s.IsEmpty())
         {
-            s = LoadString(resId);
+            s = Localization::Lookup(resId);
 
             if (s.IsEmpty())
             {
@@ -93,24 +94,34 @@ CStringW GetLocaleString(LCTYPE lctype, LANGID langid)
 
 CStringW GetLocaleLanguage(LANGID langid)
 {
-    CStringW s = GetLocaleString(LOCALE_SNATIVELANGNAME, langid);
-
-    if (s.GetLength() > 0)
-    {
-        s.SetAt(0, static_cast<WCHAR>(towupper(s[0])));
-    }
-
-    return s + L" - " + GetLocaleString(LOCALE_SNATIVECTRYNAME, langid);
+    if (langid == MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL)) return L"-- Test Language File --";
+    const CStringW s = GetLocaleString(LOCALE_SLOCALIZEDLANGUAGENAME, langid);
+    const CStringW n = GetLocaleString(LOCALE_SNATIVELANGNAME, langid);
+    return s + L" (" + n + L")";
 }
 
 CStringW GetLocaleThousandSeparator()
 {
-    return GetLocaleString(LOCALE_STHOUSAND, COptions::GetEffectiveLangId());
+    static LANGID cached_lang = static_cast<LANGID>(-1);
+    static CStringW cached_string;
+    if (cached_lang != COptions::GetEffectiveLangId())
+    {
+        cached_lang = COptions::GetEffectiveLangId();
+        cached_string = GetLocaleString(LOCALE_STHOUSAND, cached_lang);
+    }
+    return cached_string;
 }
 
 CStringW GetLocaleDecimalSeparator()
 {
-    return GetLocaleString(LOCALE_SDECIMAL, COptions::GetEffectiveLangId());
+    static LANGID cached_lang = static_cast<LANGID>(-1);
+    static CStringW cached_string;
+    if (cached_lang != COptions::GetEffectiveLangId())
+    {
+        cached_lang = COptions::GetEffectiveLangId();
+        cached_string = GetLocaleString(LOCALE_SDECIMAL, cached_lang);
+    }
+    return cached_string;
 }
 
 CStringW FormatBytes(const ULONGLONG& n)

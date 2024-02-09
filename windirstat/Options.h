@@ -45,7 +45,7 @@ struct USERDEFINEDCLEANUP
         title(Setting<std::wstring>(sEntry, L"title", L"")),
         commandLine(Setting<std::wstring>(sEntry, L"commandLine", L"")),
         enabled(Setting<bool>(sEntry, L"enable", false)),
-        virginTitle(Setting<bool>(sEntry, L"virginTitle", false)),
+        virginTitle(Setting<bool>(sEntry, L"virginTitle", true)),
         worksForDrives(Setting<bool>(sEntry, L"worksForDrives", false)),
         worksForDirectories(Setting<bool>(sEntry, L"worksForDirectories", false)),
         worksForFiles(Setting<bool>(sEntry, L"worksForFiles", false)),
@@ -187,6 +187,6 @@ public:
     static CTreemap::Options TreemapOptions;
     static std::vector<USERDEFINEDCLEANUP> UserDefinedCleanups;
 
-    static LANGID GetBuiltInLanguage();
+    static LANGID GetFallbackLanguage();
     static LANGID GetEffectiveLangId(); // Language to be used for date/time and number formatting
 };

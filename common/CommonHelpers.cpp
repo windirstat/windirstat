@@ -23,6 +23,7 @@
 #include <common/MdExceptions.h>
 #include <common/Constants.h>
 #include <common/CommonHelpers.h>
+#include "Localization.h"
 
 #include <map>
 #include <sddl.h>
@@ -98,11 +99,6 @@ CStringW GetBaseNameFromPath(LPCWSTR path)
         return s;
     }
     return s.Mid(i + 1);
-}
-
-CStringW LoadString(UINT resId)
-{
-    return MAKEINTRESOURCE(resId);
 }
 
 CStringW GetAppFileName(CStringW ext)

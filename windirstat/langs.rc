@@ -1,0 +1,631 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "langs.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+#include "verrsrc.h"
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// Czech (Neutral) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_CSY)
+LANGUAGE LANG_CZECH, SUBLANG_NEUTRAL
+#pragma code_page(1250)
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// RT_LANG
+//
+
+IDR_RT_LANG             RT_LANG                 "res\\langs\\cz.txt"
+
+#endif    // Czech (Neutral) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
+// Hungarian (Neutral) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_HUN)
+LANGUAGE LANG_HUNGARIAN, SUBLANG_NEUTRAL
+#pragma code_page(1250)
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// RT_LANG
+//
+
+IDR_RT_LANG             RT_LANG                 "res\\langs\\hu.txt"
+
+#endif    // Hungarian (Neutral) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
+// Polish (Neutral) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_PLK)
+LANGUAGE LANG_POLISH, SUBLANG_NEUTRAL
+#pragma code_page(1250)
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// RT_LANG
+//
+
+IDR_RT_LANG             RT_LANG                 "res\\langs\\pl.txt"
+
+#endif    // Polish (Neutral) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
+// Russian (Neutral) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_RUS)
+LANGUAGE LANG_RUSSIAN, SUBLANG_NEUTRAL
+#pragma code_page(1251)
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// RT_LANG
+//
+
+IDR_RT_LANG             RT_LANG                 "res\\langs\\ru.txt"
+
+#endif    // Russian (Neutral) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
+// Neutral resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_NEU)
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+#pragma code_page(1252)
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE
+BEGIN
+    IDS_APP_TITLE           "IDS_APP_TITLE"
+    IDS_IDLEMESSAGE         "IDS_IDLEMESSAGE"
+    IDS_GENERIC_BLANK       "IDS_GENERIC_BLANK"
+    IDS_MAINFRAME           "IDS_MAINFRAME"
+    IDS_ABOUT_ABOUT         "IDS_ABOUT_ABOUT"
+    IDS_ABOUT_ABOUTTEXTss   "IDS_ABOUT_ABOUTTEXTss"
+    IDS_ABOUT_AUTHORS       "IDS_ABOUT_AUTHORS"
+    IDS_ABOUT_AUTHORSTEXTs  "IDS_ABOUT_AUTHORSTEXTs"
+    IDS_ABOUT_LICENSEAGREEMENT "IDS_ABOUT_LICENSEAGREEMENT"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_ABOUT_THANKSTO      "IDS_ABOUT_THANKSTO"
+    IDS_ABOUT_THANKSTOTEXT  "IDS_ABOUT_THANKSTOTEXT"
+    IDS_BACKTOUSERSETTINGS  "IDS_BACKTOUSERSETTINGS"
+    IDS_BACKTO_USERSETTINGS "IDS_BACKTO_USERSETTINGS"
+    IDS_BUGREPORTHINT       "IDS_BUGREPORTHINT"
+    IDS_CANNOTEMTPYCLIPBOARD "IDS_CANNOTEMTPYCLIPBOARD"
+    IDS_CANNOTOPENCLIPBOARD "IDS_CANNOTOPENCLIPBOARD"
+    IDS_CANNOTSETCLIPBAORDDATA "IDS_CANNOTSETCLIPBAORDDATA"
+    IDS_COLLAPSE            "IDS_COLLAPSE"
+    IDS_COULDNOTCREATEPROCESSssss "IDS_COULDNOTCREATEPROCESSssss"
+    IDS_CREATEPROCESSsFAILEDs "IDS_CREATEPROCESSsFAILEDs"
+    IDS_DISKUSAGEREPORTGENERATEDBYWINDIRSTAT 
+                            "IDS_DISKUSAGEREPORTGENERATEDBYWINDIRSTAT"
+    IDS_DRIVECOL_FREE       "IDS_DRIVECOL_FREE"
+    IDS_DRIVECOL_GRAPH      "IDS_DRIVECOL_GRAPH"
+    IDS_DRIVECOL_NAME       "IDS_DRIVECOL_NAME"
+    IDS_DRIVECOL_PERCENTUSED "IDS_DRIVECOL_PERCENTUSED"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_DRIVECOL_TOTAL      "IDS_DRIVECOL_TOTAL"
+    IDS_EMPTYRECYCLEBIN     "IDS_EMPTYRECYCLEBIN"
+    IDS_EXPAND              "IDS_EXPAND"
+    IDS_EXTCOL_BYTES        "IDS_EXTCOL_BYTES"
+    IDS_EXTCOL_COLOR        "IDS_EXTCOL_COLOR"
+    IDS_EXTCOL_DESCRIPTION  "IDS_EXTCOL_DESCRIPTION"
+    IDS_EXTCOL_EXTENSION    "IDS_EXTCOL_EXTENSION"
+    IDS_EXTCOL_FILES        "IDS_EXTCOL_FILES"
+    IDS_FEEDBACKHINT        "IDS_FEEDBACKHINT"
+    IDS_FILES_ITEM          "IDS_FILES_ITEM"
+    IDS_FREESPACE_ITEM      "IDS_FREESPACE_ITEM"
+    IDS_HELPFILEsCOULDNOTBEFOUND "IDS_HELPFILEsCOULDNOTBEFOUND"
+    IDS_LANGUAGERESTARTNOW  "IDS_LANGUAGERESTARTNOW"
+    IDS_MYCOMPUTER          "IDS_MYCOMPUTER"
+    IDS_NOTACCESSIBLE       "IDS_NOTACCESSIBLE"
+    IDS_ONEREADJOB          "IDS_ONEREADJOB"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_PLEASECHECKYOURDISKUSAGE "IDS_PLEASECHECKYOURDISKUSAGE"
+    IDS_POLICY_NOREFRESH    "IDS_POLICY_NOREFRESH"
+    IDS_POLICY_REFRESHPARENT "IDS_POLICY_REFRESHPARENT"
+    IDS_POLICY_REFRESHTHISENTRY "IDS_POLICY_REFRESHTHISENTRY"
+    IDS_QUERYING            "IDS_QUERYING"
+    IDS_RAMUSAGEs           "IDS_RAMUSAGEs"
+    IDS_REPORT_DISKUSAGE    "IDS_REPORT_DISKUSAGE"
+    IDS_RESETTODEFAULTS     "IDS_RESETTODEFAULTS"
+    IDS_RESETTO_DEFAULTS    "IDS_RESETTO_DEFAULTS"
+    IDS_RUDC_CONFIRMATIONss "IDS_RUDC_CONFIRMATIONss"
+    IDS_SCANNING            "IDS_SCANNING"
+    IDS_SELECTFOLDER        "IDS_SELECTFOLDER"
+    IDS_SPEC_BYTES          "IDS_SPEC_BYTES"
+    IDS_SPEC_GB             "IDS_SPEC_GB"
+    IDS_SPEC_KB             "IDS_SPEC_KB"
+    IDS_SPEC_MB             "IDS_SPEC_MB"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_SPEC_TB             "IDS_SPEC_TB"
+    IDS_SUSPEND             "IDS_SUSPEND"
+    IDS_SUSPENDED           "IDS_SUSPENDED"
+    IDS_THEDIRECTORYsDOESNOTEXIST "IDS_THEDIRECTORYsDOESNOTEXIST"
+    IDS_THEFILEsDOESNOTEXIST "IDS_THEFILEsDOESNOTEXIST"
+    IDS_TREECOL_ATTRIBUTES  "IDS_TREECOL_ATTRIBUTES"
+    IDS_TREECOL_FILES       "IDS_TREECOL_FILES"
+    IDS_TREECOL_ITEMS       "IDS_TREECOL_ITEMS"
+    IDS_TREECOL_LASTCHANGE  "IDS_TREECOL_LASTCHANGE"
+    IDS_TREECOL_NAME        "IDS_TREECOL_NAME"
+    IDS_TREECOL_OWNER       "IDS_TREECOL_OWNER"
+    IDS_TREECOL_PERCENTAGE  "IDS_TREECOL_PERCENTAGE"
+    IDS_TREECOL_SIZE        "IDS_TREECOL_SIZE"
+    IDS_TREECOL_SUBDIRS     "IDS_TREECOL_SUBDIRS"
+    IDS_TREECOL_SUBTREEPERCENTAGE "IDS_TREECOL_SUBTREEPERCENTAGE"
+    IDS_UDC_CONFIRMATIONss  "IDS_UDC_CONFIRMATIONss"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_UDCsCTRLd           "IDS_UDCsCTRLd"
+    IDS_UNKNOWN_ITEM        "IDS_UNKNOWN_ITEM"
+    IDS_USERDEFINEDCLEANUP0 "IDS_USERDEFINEDCLEANUP0"
+    IDS_USERDEFINEDCLEANUPd "IDS_USERDEFINEDCLEANUPd"
+    IDS_WINDIRSTAT_SETTINGS "IDS_WINDIRSTAT_SETTINGS"
+    IDS__ONEITEMss          "IDS__ONEITEMss"
+    IDS__UNKNOWN_           "IDS__UNKNOWN_"
+    IDS__sITEMSss           "IDS__sITEMSss"
+    IDS_sREADJOBS           "IDS_sREADJOBS"
+    IDS_APP_ABOUT           "IDS_APP_ABOUT"
+    IDS_APP_EXIT            "IDS_APP_EXIT"
+    IDS_CLEANUP_DELETE      "IDS_CLEANUP_DELETE"
+    IDS_CLEANUP_DELETE_BIN  "IDS_CLEANUP_DELETE_BIN"
+    IDS_CLEANUP_EMPTY_BIN   "IDS_CLEANUP_EMPTY_BIN"
+    IDS_CLEANUP_EXPLORER_SELECT "IDS_CLEANUP_EXPLORER_SELECT"
+    IDS_CLEANUP_OPEN_IN_CONSOLE "IDS_CLEANUP_OPEN_IN_CONSOLE"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_CLEANUP_OPEN_SELECTED "IDS_CLEANUP_OPEN_SELECTED"
+    IDS_CLEANUP_PROPERTIES  "IDS_CLEANUP_PROPERTIES"
+    IDS_CONFIGURE           "IDS_CONFIGURE"
+    IDS_DUMMY_USERDEFINEDCLEANUP "IDS_DUMMY_USERDEFINEDCLEANUP"
+    IDS_EDIT_COPY_CLIPBOARD "IDS_EDIT_COPY_CLIPBOARD"
+    IDS_FILE_REFRESHALL     "IDS_FILE_REFRESHALL"
+    IDS_FILE_REFRESHSELECTED "IDS_FILE_REFRESHSELECTED"
+    IDS_FILE_SELECT         "IDS_FILE_SELECT"
+    IDS_HELP_MANUAL         "IDS_HELP_MANUAL"
+    IDS_HELP_REPORTBUG      "IDS_HELP_REPORTBUG"
+    IDS_INDICATOR_CAPS      "IDS_INDICATOR_CAPS"
+    IDS_INDICATOR_MEMORYUSAGE "IDS_INDICATOR_MEMORYUSAGE"
+    IDS_INDICATOR_NUM       "IDS_INDICATOR_NUM"
+    IDS_INDICATOR_SCRL      "IDS_INDICATOR_SCRL"
+    IDS_REFRESH_ALL         "IDS_REFRESH_ALL"
+    IDS_REFRESH_SELECTED    "IDS_REFRESH_SELECTED"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_SENDMAILTOOWNER     "IDS_SENDMAILTOOWNER"
+    IDS_TREEMAP_HELPABOUTTREEMAPS "IDS_TREEMAP_HELPABOUTTREEMAPS"
+    IDS_TREEMAP_RESELECT_CHILD "IDS_TREEMAP_RESELECT_CHILD"
+    IDS_TREEMAP_SELECT_PARENT "IDS_TREEMAP_SELECT_PARENT"
+    IDS_TREEMAP_ZOOMIN      "IDS_TREEMAP_ZOOMIN"
+    IDS_TREEMAP_ZOOMOUT     "IDS_TREEMAP_ZOOMOUT"
+    IDS_VIEW_SHOWFILETYPES  "IDS_VIEW_SHOWFILETYPES"
+    IDS_VIEW_SHOWFREESPACE  "IDS_VIEW_SHOWFREESPACE"
+    IDS_VIEW_SHOWTREEMAP    "IDS_VIEW_SHOWTREEMAP"
+    IDS_VIEW_SHOWUNKNOWN    "IDS_VIEW_SHOWUNKNOWN"
+    IDS_VIEW_STATUS_BAR     "IDS_VIEW_STATUS_BAR"
+    IDS_VIEW_TOOLBAR        "IDS_VIEW_TOOLBAR"
+    IDS_MENU_FILE           "IDS_MENU_FILE"
+    IDS_MENU_EDIT           "IDS_MENU_EDIT"
+    IDS_MENU_CLEANUP        "IDS_MENU_CLEANUP"
+    IDS_MENU_TREEMAP        "IDS_MENU_TREEMAP"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_MENU_REPORT         "IDS_MENU_REPORT"
+    IDS_MENU_OPTIONS        "IDS_MENU_OPTIONS"
+    IDS_MENU_HELP           "IDS_MENU_HELP"
+    IDS_MENU_FILE_SELECT    "IDS_MENU_FILE_SELECT"
+    IDS_MENU_FILE_REFRESH_ALL "IDS_MENU_FILE_REFRESH_ALL"
+    IDS_MENU_FILE_REFRESH_SELECTED "IDS_MENU_FILE_REFRESH_SELECTED"
+    IDS_MENU_FILE_ELEVATED  "IDS_MENU_FILE_ELEVATED"
+    IDS_MENU_FILE_EXIT      "IDS_MENU_FILE_EXIT"
+    IDS_MENU_EDIT_COPY_CLIPBOARD "IDS_MENU_EDIT_COPY_CLIPBOARD"
+    IDS_MENU_CLEANUP_OPEN   "IDS_MENU_CLEANUP_OPEN"
+    IDS_MENU_CLEANUP_EXPLORER_SELECT "IDS_MENU_CLEANUP_EXPLORER_SELECT"
+    IDS_MENU_CLEANUP_CONSOLE "IDS_MENU_CLEANUP_CONSOLE"
+    IDS_MENU_CLEANUP_DELETE_BIN "IDS_MENU_CLEANUP_DELETE_BIN"
+    IDS_MENU_CLEANUP_DELETE "IDS_MENU_CLEANUP_DELETE"
+    IDS_MENU_CLEANUP_PROPERTIES "IDS_MENU_CLEANUP_PROPERTIES"
+    IDS_MENU_CLEANUP_EMPTY_BIN "IDS_MENU_CLEANUP_EMPTY_BIN"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_MENU_CLEANUP_USERDEFINEDCLEANUP "IDS_MENU_CLEANUP_USERDEFINEDCLEANUP"
+    IDS_MENU_TREEMAP_SHOW   "IDS_MENU_TREEMAP_SHOW"
+    IDS_MENU_TREEMAP_ZOOMIN "IDS_MENU_TREEMAP_ZOOMIN"
+    IDS_MENU_TREEMAP_ZOOMOUT "IDS_MENU_TREEMAP_ZOOMOUT"
+    IDS_MENU_TREEMAP_RESELECT_CHILD "IDS_MENU_TREEMAP_RESELECT_CHILD"
+    IDS_MENU_TREEMAP_SELECT_PARENT "IDS_MENU_TREEMAP_SELECT_PARENT"
+    IDS_MENU_TREEMAP_HELP   "IDS_MENU_TREEMAP_HELP"
+    IDS_MENU_REPORT_SEND    "IDS_MENU_REPORT_SEND"
+    IDS_MENU_OPTIONS_FREE_SPACE "IDS_MENU_OPTIONS_FREE_SPACE"
+    IDS_MENU_OPTIONS_UNKNOWN "IDS_MENU_OPTIONS_UNKNOWN"
+    IDS_MENU_OPTIONS_FILE_TYPES "IDS_MENU_OPTIONS_FILE_TYPES"
+    IDS_MENU_OPTIONS_TREEMAP "IDS_MENU_OPTIONS_TREEMAP"
+    IDS_MENU_OPTIONS_TOOL_BAR "IDS_MENU_OPTIONS_TOOL_BAR"
+    IDS_MENU_OPTIONS_STATUS_BAR "IDS_MENU_OPTIONS_STATUS_BAR"
+    IDS_MENU_OPTIONS_SETTINGS "IDS_MENU_OPTIONS_SETTINGS"
+    IDS_MENU_HELP_OPEN      "IDS_MENU_HELP_OPEN"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_MENU_HELP_REPORT    "IDS_MENU_HELP_REPORT"
+    IDS_MENU_HELP_ABOUT     "IDS_MENU_HELP_ABOUT"
+    IDS_POPUP_LIST_TOGGLE   "IDS_POPUP_LIST_TOGGLE"
+    IDS_POPUP_LIST_OPEN     "IDS_POPUP_LIST_OPEN"
+    IDS_POPUP_LIST_COPY_CLIPBOARD "IDS_POPUP_LIST_COPY_CLIPBOARD"
+    IDS_POPUP_LIST_EXPLORER_SELECT "IDS_POPUP_LIST_EXPLORER_SELECT"
+    IDS_POPUP_LIST_CONSOLE  "IDS_POPUP_LIST_CONSOLE"
+    IDS_POPUP_LIST_REFRESH_SELECTED "IDS_POPUP_LIST_REFRESH_SELECTED"
+    IDS_POPUP_LIST_DELETE_BIN "IDS_POPUP_LIST_DELETE_BIN"
+    IDS_POPUP_LIST_DELETE   "IDS_POPUP_LIST_DELETE"
+    IDS_POPUP_LIST_PROPERTIES "IDS_POPUP_LIST_PROPERTIES"
+    IDS_POPUP_GRAPH_ZOOMIN  "IDS_POPUP_GRAPH_ZOOMIN"
+    IDS_POPUP_GRAPH_ZOOMOUT "IDS_POPUP_GRAPH_ZOOMOUT"
+    IDS_POPUP_GRAPH_RESELECT_CHILD "IDS_POPUP_GRAPH_RESELECT_CHILD"
+    IDS_POPUP_GRAPH_SELECT_PARENT "IDS_POPUP_GRAPH_SELECT_PARENT"
+    IDS_POPUP_GRAPH_COPY_CLIPBOARD "IDS_POPUP_GRAPH_COPY_CLIPBOARD"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_POPUP_GRAPH_EXPLORER_SELECT "IDS_POPUP_GRAPH_EXPLORER_SELECT"
+    IDS_POPUP_GRAPH_CONSOLE "IDS_POPUP_GRAPH_CONSOLE"
+    IDS_POPUP_GRAPH_CANCEL  "IDS_POPUP_GRAPH_CANCEL"
+    IDS_ABOUT_TITLE         "IDS_ABOUT_TITLE"
+    IDS_DISKS_TITLE         "IDS_DISKS_TITLE"
+    IDS_DISKS_ALL_LOCAL     "IDS_DISKS_ALL_LOCAL"
+    IDS_DISKS_LOCAL         "IDS_DISKS_LOCAL"
+    IDS_DISKS_FOLDER        "IDS_DISKS_FOLDER"
+    IDS_DELETE_TITLE        "IDS_DELETE_TITLE"
+    IDS_DELETE_DONT_SHOW    "IDS_DELETE_DONT_SHOW"
+    IDS_DELETE_DO_YOU_KNOW  "IDS_DELETE_DO_YOU_KNOW"
+    IDS_DELETE_ABOUT_TO_DELETE "IDS_DELETE_ABOUT_TO_DELETE"
+    IDS_DELETE_FROM_YOUR_COMPUTER "IDS_DELETE_FROM_YOUR_COMPUTER"
+    IDS_DELETE_SYSTEM_WARNING "IDS_DELETE_SYSTEM_WARNING"
+    IDS_DELETE_CONTINUE     "IDS_DELETE_CONTINUE"
+    IDS_PAGE_CLEANUPS_TITLE "IDS_PAGE_CLEANUPS_TITLE"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_PAGE_CLEANUPS_ENABLED "IDS_PAGE_CLEANUPS_ENABLED"
+    IDS_PAGE_CLEANUPS_PP    "IDS_PAGE_CLEANUPS_PP"
+    IDS_PAGE_CLEANUPS_PN    "IDS_PAGE_CLEANUPS_PN"
+    IDS_PAGE_CLEANUPS_SP    "IDS_PAGE_CLEANUPS_SP"
+    IDS_PAGE_CLEANUPS_SN    "IDS_PAGE_CLEANUPS_SN"
+    IDS_PAGE_CLEANUPS_DISKS "IDS_PAGE_CLEANUPS_DISKS"
+    IDS_PAGE_CLEANUPS_FOLDERS "IDS_PAGE_CLEANUPS_FOLDERS"
+    IDS_PAGE_CLEANUPS_UNC   "IDS_PAGE_CLEANUPS_UNC"
+    IDS_PAGE_CLEANUPS_FILES "IDS_PAGE_CLEANUPS_FILES"
+    IDS_PAGE_CLEANUPS_HELP  "IDS_PAGE_CLEANUPS_HELP"
+    IDS_PAGE_CLEANUPS_RECURSE "IDS_PAGE_CLEANUPS_RECURSE"
+    IDS_PAGE_CLEANUPS_ASK   "IDS_PAGE_CLEANUPS_ASK"
+    IDS_PAGE_CLEANUPS_CONSOLE "IDS_PAGE_CLEANUPS_CONSOLE"
+    IDS_PAGE_CLEANUPS_WAIT  "IDS_PAGE_CLEANUPS_WAIT"
+    IDS_PAGE_CLEANUPS_UP    "IDS_PAGE_CLEANUPS_UP"
+    IDS_PAGE_CLEANUPS_DOWN  "IDS_PAGE_CLEANUPS_DOWN"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_PAGE_CLEANUPS_REFRESH "IDS_PAGE_CLEANUPS_REFRESH"
+    IDS_PAGE_CLEANUPS_NAME  "IDS_PAGE_CLEANUPS_NAME"
+    IDS_PAGE_CLEANUPS_COMMAND_LINE "IDS_PAGE_CLEANUPS_COMMAND_LINE"
+    IDS_PAGE_CLEANUPS_WORKS_FOR "IDS_PAGE_CLEANUPS_WORKS_FOR"
+    IDS_PAGE_TREELIST_TITLE "IDS_PAGE_TREELIST_TITLE"
+    IDS_PAGE_TREELIST_PACMAN "IDS_PAGE_TREELIST_PACMAN"
+    IDS_PAGE_TREELIST_SPENT "IDS_PAGE_TREELIST_SPENT"
+    IDS_PAGE_TREELIST_COLORS "IDS_PAGE_TREELIST_COLORS"
+    IDS_PAGE_TREELIST_TREE_L1 "IDS_PAGE_TREELIST_TREE_L1"
+    IDS_PAGE_TREELIST_TREE_L2 "IDS_PAGE_TREELIST_TREE_L2"
+    IDS_PAGE_TREELIST_TREE_L3 "IDS_PAGE_TREELIST_TREE_L3"
+    IDS_PAGE_TREELIST_TREE_L4 "IDS_PAGE_TREELIST_TREE_L4"
+    IDS_PAGE_TREELIST_TREE_L5 "IDS_PAGE_TREELIST_TREE_L5"
+    IDS_PAGE_TREELIST_TREE_L6 "IDS_PAGE_TREELIST_TREE_L6"
+    IDS_PAGE_TREELIST_TREE_L7 "IDS_PAGE_TREELIST_TREE_L7"
+    IDS_PAGE_TREELIST_TREE_L8 "IDS_PAGE_TREELIST_TREE_L8"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_PAGE_TREELIST_OPTIONAL "IDS_PAGE_TREELIST_OPTIONAL"
+    IDS_PAGE_TREEMAP_TITLE  "IDS_PAGE_TREEMAP_TITLE"
+    IDS_PAGE_TREEMAP_BRIGHTNESS "IDS_PAGE_TREEMAP_BRIGHTNESS"
+    IDS_PAGE_TREEMAP_CUSHION "IDS_PAGE_TREEMAP_CUSHION"
+    IDS_PAGE_TREEMAP_HEIGHT "IDS_PAGE_TREEMAP_HEIGHT"
+    IDS_PAGE_TREEMAP_SCALE  "IDS_PAGE_TREEMAP_SCALE"
+    IDS_PAGE_TREEMAP_INCIDENCE "IDS_PAGE_TREEMAP_INCIDENCE"
+    IDS_PAGE_TREEMAP_STYLE  "IDS_PAGE_TREEMAP_STYLE"
+    IDS_PAGE_TREEMAP_KDIRSTAT "IDS_PAGE_TREEMAP_KDIRSTAT"
+    IDS_PAGE_TREEMAP_SEQUOIA "IDS_PAGE_TREEMAP_SEQUOIA"
+    IDS_PAGE_TREEMAP_SHOW_GRID "IDS_PAGE_TREEMAP_SHOW_GRID"
+    IDS_PAGE_TREEMAP_GRID_COLOR "IDS_PAGE_TREEMAP_GRID_COLOR"
+    IDS_PAGE_TREEMAP_BORDER_COLOR "IDS_PAGE_TREEMAP_BORDER_COLOR"
+    IDS_PAGE_GENERAL_TITLE  "IDS_PAGE_GENERAL_TITLE"
+    IDS_PAGE_GENERAL_SHOW_SIZES "IDS_PAGE_GENERAL_SHOW_SIZES"
+    IDS_PAGE_GENERAL_LIST_STYLE "IDS_PAGE_GENERAL_LIST_STYLE"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_PAGE_GENERAL_FULL_ROW "IDS_PAGE_GENERAL_FULL_ROW"
+    IDS_PAGE_GENERAL_SHOW_GRID "IDS_PAGE_GENERAL_SHOW_GRID"
+    IDS_PAGE_GENERAL_SHOW_STRIPES "IDS_PAGE_GENERAL_SHOW_STRIPES"
+    IDS_PAGE_GENERAL_LANGUAGE "IDS_PAGE_GENERAL_LANGUAGE"
+    IDS_PAGE_GENERAL_FORMATTING "IDS_PAGE_GENERAL_FORMATTING"
+    IDS_PAGE_GENERAL_PORTABLE "IDS_PAGE_GENERAL_PORTABLE"
+    IDS_PAGE_ADVANCED_TITLE "IDS_PAGE_ADVANCED_TITLE"
+    IDS_PAGE_ADVANCED_THREADS "IDS_PAGE_ADVANCED_THREADS"
+    IDS_PAGE_ADVANCED_BOUNDARIES "IDS_PAGE_ADVANCED_BOUNDARIES"
+    IDS_PAGE_ADVANCED_JUNCTION "IDS_PAGE_ADVANCED_JUNCTION"
+    IDS_PAGE_ADVANCED_SKIP_HIDDEN "IDS_PAGE_ADVANCED_SKIP_HIDDEN"
+    IDS_PAGE_ADVANCED_USE_PRIVILEGES "IDS_PAGE_ADVANCED_USE_PRIVILEGES"
+    IDS_PAGE_ADVANCED_SHOW_UNCOMPRESSED "IDS_PAGE_ADVANCED_SHOW_UNCOMPRESSED"
+    IDS_PAGE_ADVANCED_SKIP_PROTECTED "IDS_PAGE_ADVANCED_SKIP_PROTECTED"
+    IDS_GENERIC_YES         "IDS_GENERIC_YES"
+    IDS_GENERIC_NO          "IDS_GENERIC_NO"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_GENERIC_OK          "IDS_GENERIC_OK"
+    IDS_GENERIC_CANCEL      "IDS_GENERIC_CANCEL"
+END
+
+#endif    // Neutral resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
+// German (Neutral) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_DEU)
+LANGUAGE LANG_GERMAN, SUBLANG_NEUTRAL
+#pragma code_page(1252)
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// RT_LANG
+//
+
+IDR_RT_LANG             RT_LANG                 "res\\langs\\de.txt"
+
+#endif    // German (Neutral) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
+// English (Neutral) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+LANGUAGE LANG_ENGLISH, SUBLANG_NEUTRAL
+#pragma code_page(1252)
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// RT_LANG
+//
+
+IDR_RT_LANG             RT_LANG                 "res\\langs\\en.txt"
+
+#endif    // English (Neutral) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
+// Spanish (Neutral) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ESN)
+LANGUAGE LANG_SPANISH, SUBLANG_NEUTRAL
+#pragma code_page(1252)
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// RT_LANG
+//
+
+IDR_RT_LANG             RT_LANG                 "res\\langs\\es.txt"
+
+#endif    // Spanish (Neutral) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
+// Finnish (Neutral) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_FIN)
+LANGUAGE LANG_FINNISH, SUBLANG_NEUTRAL
+#pragma code_page(1252)
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// RT_LANG
+//
+
+IDR_RT_LANG             RT_LANG                 "res\\langs\\fl.txt"
+
+#endif    // Finnish (Neutral) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
+// French (Neutral) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_FRA)
+LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
+#pragma code_page(1252)
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// RT_LANG
+//
+
+IDR_RT_LANG             RT_LANG                 "res\\langs\\fr.txt"
+
+#endif    // French (Neutral) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
+// Italian (Neutral) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ITA)
+LANGUAGE LANG_ITALIAN, SUBLANG_NEUTRAL
+#pragma code_page(1252)
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// RT_LANG
+//
+
+IDR_RT_LANG             RT_LANG                 "res\\langs\\it.txt"
+
+#endif    // Italian (Neutral) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
+// Dutch (Neutral) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_NLD)
+LANGUAGE LANG_DUTCH, SUBLANG_NEUTRAL
+#pragma code_page(1252)
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// RT_LANG
+//
+
+IDR_RT_LANG             RT_LANG                 "res\\langs\\nl.txt"
+
+#endif    // Dutch (Neutral) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
+// Portuguese (Neutral) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_PTB)
+LANGUAGE LANG_PORTUGUESE, SUBLANG_NEUTRAL
+#pragma code_page(1252)
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// RT_LANG
+//
+
+IDR_RT_LANG             RT_LANG                 "res\\langs\\pt.txt"
+
+#endif    // Portuguese (Neutral) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
+// English (United States) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "langs.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "#include ""verrsrc.h""\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+#endif    // English (United States) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
+// Estonian (Neutral) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ETI)
+LANGUAGE LANG_ESTONIAN, SUBLANG_NEUTRAL
+#pragma code_page(1257)
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// RT_LANG
+//
+
+IDR_RT_LANG             RT_LANG                 "res\\langs\\ee.txt"
+
+#endif    // Estonian (Neutral) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

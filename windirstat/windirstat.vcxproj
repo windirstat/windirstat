@@ -283,7 +283,6 @@
   </ImportGroup>
   <ItemGroup>
     <ClInclude Include="..\common\CommonHelpers.h" />
-    <ClInclude Include="..\common\resource.h" />
     <ClInclude Include="..\common\SmartPointer.h" />
     <ClInclude Include="..\common\MdExceptions.h" />
     <ClInclude Include="..\common\Tracer.h" />
@@ -297,6 +296,7 @@
     <ClInclude Include="HelpMap.h" />
     <ClInclude Include="Item.h" />
     <ClInclude Include="Layout.h" />
+    <ClInclude Include="Localization.h" />
     <ClInclude Include="MainFrame.h" />
     <ClInclude Include="ModalApiShuttle.h" />
     <ClInclude Include="ModalShellApi.h" />
@@ -310,6 +310,7 @@
     <ClInclude Include="PageTreemap.h" />
     <ClInclude Include="Property.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="langs.h" />
     <ClInclude Include="SelectObject.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="LuaWds.h" />
@@ -342,6 +343,7 @@
     </ClCompile>
     <ClCompile Include="Layout.cpp">
     </ClCompile>
+    <ClCompile Include="Localization.cpp" />
     <ClCompile Include="MainFrame.cpp">
     </ClCompile>
     <ClCompile Include="ModalApiShuttle.cpp">
@@ -414,6 +416,7 @@
     <None Include="..\premake4.lua" />
   </ItemGroup>
   <ItemGroup>
+    <ResourceCompile Include="langs.rc" />
     <ResourceCompile Include="windirstat.rc" />
     <ResourceCompile Include="..\common\version.rc" />
   </ItemGroup>
@@ -445,6 +448,21 @@
     <Image Include="res\toolbar\ID_EDIT_COPY_CLIPBOARD.bmp" />
     <Image Include="res\toolbar\ID_TREEMAP_ZOOMIN.bmp" />
     <Image Include="res\toolbar\ID_TREEMAP_ZOOMOUT.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="res\langs\cz.txt" />
+    <Text Include="res\langs\de.txt" />
+    <Text Include="res\langs\ee.txt" />
+    <Text Include="res\langs\en.txt" />
+    <Text Include="res\langs\es.txt" />
+    <Text Include="res\langs\fl.txt" />
+    <Text Include="res\langs\fr.txt" />
+    <Text Include="res\langs\hu.txt" />
+    <Text Include="res\langs\it.txt" />
+    <Text Include="res\langs\nl.txt" />
+    <Text Include="res\langs\pl.txt" />
+    <Text Include="res\langs\pt.txt" />
+    <Text Include="res\langs\ru.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="PropertySheets">

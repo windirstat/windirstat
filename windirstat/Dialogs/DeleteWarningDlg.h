@@ -41,6 +41,8 @@ public:
 
 protected:
     void DoDataExchange(CDataExchange* pDX) override;
+    BOOL OnInitDialog() override;
+
     DECLARE_MESSAGE_MAP()
     afx_msg void OnBnClickedNo();
     afx_msg void OnBnClickedYes();

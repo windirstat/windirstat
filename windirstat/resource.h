@@ -5,10 +5,7 @@
 #define IDD_ABOUTBOX                    100
 #define IDD_PAGE_ADVANCED               102
 #define IDR_MAINFRAME                   128
-#define IDS_QUERYING                    129
-#define IDS_NOTACCESSIBLE               130
 #define IDB_NODES                       131
-#define IDS_TREECOL_ATTRIBUTES          131
 #define IDD_SELECTDRIVES                133
 #define IDR_POPUPLIST                   134
 #define IDR_POPUPGRAPH                  136
@@ -20,81 +17,6 @@
 #define IDD_PAGE_TREEMAP                143
 #define IDD_PAGE_GENERAL                144
 #define IDS_RESOURCEVERSION             199
-#define IDS_ABOUT_ABOUTTEXTss           200
-#define IDS_ABOUT_THANKSTOTEXT          201
-#define IDS_ABOUT_ABOUT                 202
-#define IDS_ABOUT_THANKSTO              203
-#define IDS_ABOUT_LICENSEAGREEMENT      204
-#define IDS_MYCOMPUTER                  205
-#define IDS_UDC_CONFIRMATIONss          206
-#define IDS_RUDC_CONFIRMATIONss         207
-#define IDS_THEDIRECTORYsDOESNOTEXIST   208
-#define IDS_THEFILEsDOESNOTEXIST        209
-#define IDS_COULDNOTCREATEPROCESSssss   210
-#define IDS_TREECOL_NAME                211
-#define IDS_TREECOL_SUBTREEPERCENTAGE   212
-#define IDS_TREECOL_PERCENTAGE          213
-#define IDS_TREECOL_SIZE                214
-#define IDS_TREECOL_ITEMS               215
-#define IDS_TREECOL_FILES               216
-#define IDS_TREECOL_SUBDIRS             217
-#define IDS_TREECOL_LASTCHANGE          218
-#define IDS_PLEASECHECKYOURDISKUSAGE    219
-#define IDS_DISKUSAGEREPORTGENERATEDBYWINDIRSTAT 220
-#define IDS__UNKNOWN_                   221
-#define IDS_FREESPACE_ITEM              222
-#define IDS_UNKNOWN_ITEM                223
-#define IDS_FILES_ITEM                  224
-#define IDS_ONEREADJOB                  225
-#define IDS_sREADJOBS                   226
-#define IDS_CANNOTOPENCLIPBOARD         227
-#define IDS_CANNOTEMTPYCLIPBOARD        228
-#define IDS_CANNOTSETCLIPBAORDDATA      229
-#define IDS_WINDIRSTAT_SETTINGS         230
-#define IDS_SCANNING_                   231
-#define IDS_EMPTYRECYCLEBIN             232
-#define IDS__ONEITEMss                  233
-#define IDS__sITEMSss                   234
-#define IDS_UDCsCTRLd                   235
-#define IDS_USERDEFINEDCLEANUP0         236
-#define IDS_REPORT_DISKUSAGE            237
-#define IDS_USERDEFINEDCLEANUPd         238
-#define IDS_POLICY_NOREFRESH            239
-#define IDS_POLICY_REFRESHTHISENTRY     240
-#define IDS_POLICY_REFRESHPARENT        241
-#define IDS_BUGREPORTHINT               242
-#define IDS_FEEDBACKHINT                243
-#define IDS_TREECOL_OWNER               244
-#define IDS_DRIVECOL_NAME               250
-#define IDS_DRIVECOL_TOTAL              251
-#define IDS_DRIVECOL_FREE               252
-#define IDS_DRIVECOL_GRAPH              253
-#define IDS_DRIVECOL_PERCENTUSED        254
-#define IDS_SELECTFOLDER                255
-#define IDS_EXTCOL_EXTENSION            256
-#define IDS_EXTCOL_COLOR                257
-#define IDS_EXTCOL_BYTES                258
-#define IDS_EXTCOL_FILES                259
-#define IDS_EXTCOL_DESCRIPTION          260
-#define IDS_RAMUSAGEs                   261
-#define IDS_HELPFILEsCOULDNOTBEFOUND    262
-#define IDS_SUSPENDED_                  263
-#define IDS_SUSPEND                     264
-#define IDS_SPEC_BYTES                  265
-#define IDS_SPEC_KB                     266
-#define IDS_SPEC_MB                     267
-#define IDS_SPEC_GB                     268
-#define IDS_SPEC_TB                     269
-#define IDS_RESETTO_DEFAULTS            270
-#define IDS_BACKTO_USERSETTINGS         271
-#define IDS_RESETTODEFAULTS             272
-#define IDS_BACKTOUSERSETTINGS          273
-#define IDS_COLLAPSE                    274
-#define IDS_EXPAND                      275
-#define IDS_CREATEPROCESSsFAILEDs       276
-#define IDS_LANGUAGERESTARTNOW          277
-#define IDS_ABOUT_AUTHORS               278
-#define IDS_ABOUT_AUTHORSTEXTs          279
 #define IDB_FILE_SELECT                 922
 #define IDB_CLEANUP_DELETE_BIN          927
 #define IDB_EDIT_COPY_CLIPBOARD         928
@@ -114,6 +36,7 @@
 #define IDI_JUNCTION_PROTECTED          946
 #define IDI_FREE_SPACE                  947
 #define IDI_EMPTY                       948
+#define ID_INDICATOR_MEMORYUSAGE        952
 #define IDC_ALLLOCALDRIVES              1000
 #define IDC_ALLDRIVES                   1000
 #define IDC_SOMEDRIVES                  1001
@@ -139,7 +62,6 @@
 #define IDC_TREECOL_LASTCHANGE          1025
 #define IDC_LABEL_ITEMS                 1026
 #define IDC_TREECOL_ITEMS               1026
-#define IDC_TREECOL_UNCOMPRESS_SIZE     1027
 #define IDC_SHOWGRID                    1028
 #define IDC_LABEL_FILES                 1028
 #define IDC_TREECOL_FILES               1028
@@ -196,7 +118,6 @@
 #define IDC_COMBO_THREADS               1230
 #define IDC_TREECOL_ATTRIBUTES          1231
 #define ID_WDS_CONTROL                  4711
-#define ID_FILE_REFRESHALL              32773
 #define ID_CLEANUP_EXPLORER_SELECT      32774
 #define ID_TREEMAP_ZOOMIN               32783
 #define ID_TREEMAP_ZOOMOUT              32784
@@ -210,7 +131,6 @@
 #define ID_VIEW_SHOWTREEMAP             32792
 #define ID_SETTINGS_CONFIGUREWINDIRSTAT 32793
 #define ID_HELP_REPORTBUG               32796
-#define ID_FILE_REFRESHSELECTED         32801
 #define ID_CLEANUP_OPEN_IN_CONSOLE      32808
 #define ID_CLEANUP_DELETE_BIN           32809
 #define ID_CLEANUP_DELETE               32810
@@ -246,15 +166,14 @@
 #define ID_SCAN_SUSPEND                 33031
 #define ID_SCAN_RESUME                  33032
 #define ID_POPUP_REFRESHSELECTED        33033
-#define ID_INDICATOR_MEMORYUSAGE        59142
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        952
+#define _APS_NEXT_RESOURCE_VALUE        953
 #define _APS_NEXT_COMMAND_VALUE         33034
 #define _APS_NEXT_CONTROL_VALUE         1232
-#define _APS_NEXT_SYMED_VALUE           108
+#define _APS_NEXT_SYMED_VALUE           109
 #endif
 #endif

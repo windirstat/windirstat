@@ -187,6 +187,7 @@ protected:
     void CreatePacmanProgress();
     void DestroyProgress();
 
+    void SetStatusPaneText(int pos, const CStringW& text);
     void UpdateCleanupMenu(CMenu* menu);
 
     bool m_progressVisible;    // True while progress must be shown (either pacman or progress bar)
@@ -230,4 +231,5 @@ protected:
 
 public:
     afx_msg void OnSysColorChange();
+    virtual BOOL LoadFrame(UINT nIDResource, DWORD dwDefaultStyle = WS_OVERLAPPEDWINDOW | FWS_ADDTOTITLE, CWnd* pParentWnd = NULL, CCreateContext* pContext = NULL);
 };

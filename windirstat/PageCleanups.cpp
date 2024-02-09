@@ -25,6 +25,8 @@
 #include "Options.h"
 #include "PageCleanups.h"
 
+#include "Localization.h"
+
 IMPLEMENT_DYNAMIC(CPageCleanups, CPropertyPage)
 
 CPageCleanups::CPageCleanups()
@@ -105,10 +107,12 @@ BOOL CPageCleanups::OnInitDialog()
 {
     CPropertyPage::OnInitDialog();
 
+    Localization::UpdateDialogs(*this);
+
     // Combobox data correspond to enum REFRESHPOLICY:
-    m_ctlRefreshPolicy.AddString(LoadString(IDS_POLICY_NOREFRESH));
-    m_ctlRefreshPolicy.AddString(LoadString(IDS_POLICY_REFRESHTHISENTRY));
-    m_ctlRefreshPolicy.AddString(LoadString(IDS_POLICY_REFRESHPARENT));
+    m_ctlRefreshPolicy.AddString(Localization::Lookup(IDS_POLICY_NOREFRESH));
+    m_ctlRefreshPolicy.AddString(Localization::Lookup(IDS_POLICY_REFRESHTHISENTRY));
+    m_ctlRefreshPolicy.AddString(Localization::Lookup(IDS_POLICY_REFRESHPARENT));
 
     for (size_t i = 0; i < COptions::UserDefinedCleanups.size(); i++)
     {
@@ -169,7 +173,7 @@ void CPageCleanups::CheckEmptyTitle()
     UpdateData();
     if (m_title.IsEmpty())
     {
-        m_title.FormatMessage(IDS_USERDEFINEDCLEANUPd, m_current);
+        m_title.FormatMessage(Localization::Lookup(IDS_USERDEFINEDCLEANUPd), m_current);
         UpdateData(false);
 
         m_list.DeleteString(m_current);

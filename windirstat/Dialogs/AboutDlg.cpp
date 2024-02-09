@@ -25,7 +25,7 @@
 #include <common/MdExceptions.h>
 #include <common/CommonHelpers.h>
 #include "AboutDlg.h"
-
+#include "Localization.h"
 #include "Options.h"
 
 namespace
@@ -112,10 +112,10 @@ void CAboutDlg::CMyTabControl::Initialize()
 {
     ModifyStyle(0, WS_CLIPCHILDREN);
 
-    InsertItem(TAB_ABOUT, LoadString(IDS_ABOUT_ABOUT));
-    InsertItem(TAB_AUTHORS, LoadString(IDS_ABOUT_AUTHORS));
-    InsertItem(TAB_THANKSTO, LoadString(IDS_ABOUT_THANKSTO));
-    InsertItem(TAB_LICENSE, LoadString(IDS_ABOUT_LICENSEAGREEMENT));
+    InsertItem(TAB_ABOUT, Localization::Lookup(IDS_ABOUT_ABOUT));
+    InsertItem(TAB_AUTHORS, Localization::Lookup(IDS_ABOUT_AUTHORS));
+    InsertItem(TAB_THANKSTO, Localization::Lookup(IDS_ABOUT_THANKSTO));
+    InsertItem(TAB_LICENSE, Localization::Lookup(IDS_ABOUT_LICENSEAGREEMENT));
 
     CRect rc;
     GetClientRect(rc);
@@ -138,18 +138,18 @@ void CAboutDlg::CMyTabControl::SetPageText(int tab)
     {
     case TAB_ABOUT:
         {
-            text.FormatMessage(IDS_ABOUT_ABOUTTEXTss, GetAuthorEmail().GetString(), GetWinDirStatHomepage().GetString());
+            text.FormatMessage(Localization::Lookup(IDS_ABOUT_ABOUTTEXTss), GetAuthorEmail().GetString(), GetWinDirStatHomepage().GetString());
         }
         break;
     case TAB_AUTHORS:
         {
-            text.FormatMessage(IDS_ABOUT_AUTHORSTEXTs, GetDevelList().GetString());
+        text.FormatMessage(Localization::Lookup(IDS_ABOUT_AUTHORSTEXTs), GetDevelList().GetString());
             text += GetTranslatorList();
         }
         break;
     case TAB_THANKSTO:
         {
-            VERIFY(text.LoadString(IDS_ABOUT_THANKSTOTEXT));
+            text =Localization::Lookup(IDS_ABOUT_THANKSTOTEXT);
         }
         break;
     case TAB_LICENSE:
@@ -292,6 +292,8 @@ BOOL CAboutDlg::OnInitDialog()
 {
     CDialog::OnInitDialog();
 
+    Localization::UpdateDialogs(*this);
+
     m_layout.AddControl(IDC_CAPTION, 0.5, 0, 0, 0);
     m_layout.AddControl(IDC_TAB, 0, 0, 1, 1);
     m_layout.AddControl(IDOK, 0.5, 1, 0, 0);
@@ -301,7 +303,7 @@ BOOL CAboutDlg::OnInitDialog()
     m_tab.Initialize();
     m_caption.SetWindowText(GetAppVersion());
 
-    return true;
+    return TRUE;
 }
 
 void CAboutDlg::OnTcnSelchangeTab(NMHDR* /* pNMHDR */, LRESULT* pResult)

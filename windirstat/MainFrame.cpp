@@ -46,6 +46,7 @@
 #include <functional>
 #include <unordered_map>
 
+#include "Localization.h"
 #include "PageAdvanced.h"
 #include "Property.h"
 
@@ -79,13 +80,13 @@ namespace
             m_open = owner->OpenClipboard();
             if (!m_open)
             {
-                MdThrowStringException(IDS_CANNOTOPENCLIPBOARD);
+                MdThrowStringException(Localization::Lookup(IDS_CANNOTOPENCLIPBOARD));
             }
             if (empty)
             {
                 if (!EmptyClipboard())
                 {
-                    MdThrowStringException(IDS_CANNOTEMTPYCLIPBOARD);
+                    MdThrowStringException(Localization::Lookup(IDS_CANNOTEMTPYCLIPBOARD));
                 }
             }
         }
@@ -108,7 +109,7 @@ namespace
 IMPLEMENT_DYNAMIC(COptionsPropertySheet, CPropertySheet)
 
 COptionsPropertySheet::COptionsPropertySheet()
-    : CPropertySheet(IDS_WINDIRSTAT_SETTINGS)
+    : CPropertySheet(Localization::Lookup(IDS_WINDIRSTAT_SETTINGS))
       , m_restartApplication(false)
       , m_languageChanged(false)
       , m_alreadyAsked(false)
@@ -123,6 +124,9 @@ void COptionsPropertySheet::SetLanguageChanged(bool changed)
 BOOL COptionsPropertySheet::OnInitDialog()
 {
     const BOOL bResult = CPropertySheet::OnInitDialog();
+    Localization::UpdateDialogs(*this);
+    Localization::UpdateTabControl(*GetTabControl());
+
     SetActivePage(min(COptions::ConfigPage, GetPageCount() - 1));
     return bResult;
 }
@@ -136,7 +140,7 @@ BOOL COptionsPropertySheet::OnCommand(WPARAM wParam, LPARAM lParam)
     {
         if (m_languageChanged && (IDOK == cmd || !m_alreadyAsked))
         {
-            const int r = AfxMessageBox(IDS_LANGUAGERESTARTNOW, MB_YESNOCANCEL);
+            const int r = AfxMessageBox(Localization::Lookup(IDS_LANGUAGERESTARTNOW), MB_YESNOCANCEL);
             if (IDCANCEL == r)
             {
                 return true; // "Message handled". Don't proceed.
@@ -297,6 +301,7 @@ void CPacmanControl::Drive()
 {
     if (::IsWindow(m_hWnd))
     {
+        m_pacman.UpdatePosition();
         RedrawWindow();
     }
 }
@@ -387,11 +392,16 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
     ON_WM_TIMER()
 END_MESSAGE_MAP()
 
+constexpr auto ID_INDICATOR_IDLEMESSAGE = 0;
 constexpr auto ID_INDICATOR_MEMORYUSAGE_INDEX = 1;
+constexpr auto ID_INDICATOR_CAPS_INDEX = 2;
+constexpr auto ID_INDICATOR_NUM_INDEX = 3;
+constexpr auto ID_INDICATOR_SCRL_INDEX = 4;
+
 static UINT indicators[] =
 {
-    ID_SEPARATOR,
-    ID_INDICATOR_MEMORYUSAGE,
+    IDS_IDLEMESSAGE,
+    IDS_APP_TITLE, // Used For Memory Usage
     ID_INDICATOR_CAPS,
     ID_INDICATOR_NUM,
     ID_INDICATOR_SCRL,
@@ -479,7 +489,7 @@ void CMainFrame::SetProgressComplete() // called by CDirStatDoc
 
     DestroyProgress();
     GetDocument()->SetTitlePrefix(wds::strEmpty);
-    SetMessageText(AFX_IDS_IDLEMESSAGE);
+    SetMessageText(Localization::Lookup(IDS_IDLEMESSAGE));
 }
 
 bool CMainFrame::IsScanSuspended() const
@@ -529,7 +539,8 @@ void CMainFrame::UpdateProgress()
     // Display the suspend text in the bar if suspended
     if (IsScanSuspended())
     {
-        VERIFY(suspended.LoadString(IDS_SUSPENDED_));
+        static const CStringW suspend_string = Localization::Lookup(IDS_SCANNING);
+        suspended = suspend_string;
     }
 
     if (m_progressRange > 0 && m_progress.m_hWnd != nullptr)
@@ -552,7 +563,8 @@ void CMainFrame::UpdateProgress()
     }
     else
     {
-        titlePrefix = LoadString(IDS_SCANNING_) + suspended;
+        static const CStringW scanning_string = Localization::Lookup(IDS_SCANNING);
+        titlePrefix = scanning_string + L" " + suspended;
     }
 
     GetDocument()->SetTitlePrefix(titlePrefix);
@@ -601,6 +613,13 @@ void CMainFrame::DestroyProgress()
     }
 }
 
+void CMainFrame::SetStatusPaneText(int pos, const CStringW & text)
+{
+    const int cx = GetDC()->GetTextExtent(text, text.GetLength()).cx;
+    m_wndStatusBar.SetPaneWidth(pos, cx);
+    m_wndStatusBar.SetPaneText(pos, text);
+}
+
 int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 {
     if (CFrameWndEx::OnCreate(lpCreateStruct) == -1)
@@ -612,7 +631,11 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
     VERIFY(m_wndToolBar.LoadToolBar(IDR_MAINFRAME));
 
     VERIFY(m_wndStatusBar.Create(this));
-    VERIFY(m_wndStatusBar.SetIndicators(indicators, _countof(indicators)));
+    m_wndStatusBar.SetIndicators(indicators, _countof(indicators));
+    m_wndStatusBar.SetPaneStyle(0, SBPS_STRETCH);
+    SetStatusPaneText(ID_INDICATOR_CAPS_INDEX, Localization::Lookup(IDS_INDICATOR_CAPS));
+    SetStatusPaneText(ID_INDICATOR_NUM_INDEX, Localization::Lookup(IDS_INDICATOR_NUM));
+    SetStatusPaneText(ID_INDICATOR_SCRL_INDEX, Localization::Lookup(IDS_INDICATOR_SCRL));
 
     m_wndDeadFocus.Create(this);
 
@@ -621,23 +644,23 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
     DockPane(&m_wndToolBar);
 
     // map from toolbar resources to specific icons
-    const std::unordered_map<UINT, UINT> toolbar_map =
+    const std::unordered_map<UINT, std::pair<UINT, UINT>> toolbar_map =
     {
-        { ID_FILE_SELECT, IDB_FILE_SELECT },
-        { ID_CLEANUP_OPEN_SELECTED, IDB_CLEANUP_OPEN_SELECTED },
-        { ID_EDIT_COPY_CLIPBOARD, IDB_EDIT_COPY_CLIPBOARD },
-        { ID_CLEANUP_EXPLORER_SELECT, IDB_CLEANUP_EXPLORER_SELECT },
-        { ID_CLEANUP_OPEN_IN_CONSOLE, IDB_CLEANUP_OPEN_IN_CONSOLE },
-        { ID_REFRESH_SELECTED, IDB_REFRESH_SELECTED },
-        { ID_REFRESH_ALL, IDB_REFRESH_ALL },
-        { ID_SCAN_RESUME, IDB_SCAN_RESUME },
-        { ID_SCAN_SUSPEND, IDB_SCAN_SUSPEND },
-        { ID_CLEANUP_DELETE_BIN, IDB_CLEANUP_DELETE_BIN },
-        { ID_CLEANUP_DELETE, IDB_CLEANUP_DELETE },
-        { ID_CLEANUP_PROPERTIES, IDB_CLEANUP_PROPERTIES },
-        { ID_TREEMAP_ZOOMIN, IDB_TREEMAP_ZOOMIN },
-        { ID_TREEMAP_ZOOMOUT, IDB_TREEMAP_ZOOMOUT },
-        { ID_HELP_MANUAL, IDB_HELP_MANUAL } };
+        { ID_FILE_SELECT, {IDB_FILE_SELECT, IDS_FILE_SELECT}},
+        { ID_CLEANUP_OPEN_SELECTED, {IDB_CLEANUP_OPEN_SELECTED, IDS_CLEANUP_OPEN_SELECTED}},
+        { ID_EDIT_COPY_CLIPBOARD, {IDB_EDIT_COPY_CLIPBOARD, IDS_EDIT_COPY_CLIPBOARD}},
+        { ID_CLEANUP_EXPLORER_SELECT, {IDB_CLEANUP_EXPLORER_SELECT, IDS_CLEANUP_EXPLORER_SELECT}},
+        { ID_CLEANUP_OPEN_IN_CONSOLE, {IDB_CLEANUP_OPEN_IN_CONSOLE, IDS_CLEANUP_OPEN_IN_CONSOLE}},
+        { ID_REFRESH_SELECTED, {IDB_REFRESH_SELECTED, IDS_REFRESH_SELECTED}},
+        { ID_REFRESH_ALL, {IDB_REFRESH_ALL, IDS_REFRESH_ALL}},
+        { ID_SCAN_RESUME, {IDB_SCAN_RESUME, IDS_GENERIC_BLANK}},
+        { ID_SCAN_SUSPEND, {IDB_SCAN_SUSPEND, IDS_GENERIC_BLANK}},
+        { ID_CLEANUP_DELETE_BIN, {IDB_CLEANUP_DELETE_BIN, IDS_CLEANUP_DELETE_BIN}},
+        { ID_CLEANUP_DELETE, {IDB_CLEANUP_DELETE, IDS_CLEANUP_DELETE_BIN}},
+        { ID_CLEANUP_PROPERTIES, {IDB_CLEANUP_PROPERTIES, IDS_CLEANUP_PROPERTIES}},
+        { ID_TREEMAP_ZOOMIN, {IDB_TREEMAP_ZOOMIN, IDS_TREEMAP_ZOOMIN}},
+        { ID_TREEMAP_ZOOMOUT, {IDB_TREEMAP_ZOOMOUT, IDS_TREEMAP_ZOOMOUT}},
+        { ID_HELP_MANUAL, {IDB_HELP_MANUAL, IDS_HELP_MANUAL}}};
 
     // update toolbar images with high resolution versions
     CMFCToolBarImages* images = new CMFCToolBarImages();
@@ -651,14 +674,14 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
         // load high quality bitmap from resource
         CBitmap bitmap;
-        bitmap.LoadBitmapW(toolbar_map.at(button->m_nID));
+        bitmap.LoadBitmapW(toolbar_map.at(button->m_nID).first);
         const int image = images->AddImage(bitmap, TRUE);
         CMFCToolBar::SetUserImages(images);
 
         // copy button into new toolbar control
         CMFCToolBarButton new_button(button->m_nID, image, nullptr, TRUE, TRUE);
         new_button.m_nStyle = button->m_nStyle | TBBS_DISABLED;
-        new_button.m_strText = button->m_strText;
+        new_button.m_strText = Localization::Lookup(toolbar_map.at(button->m_nID).second);
         m_wndToolBar.ReplaceButton(button->m_nID, new_button);
     }
 
@@ -677,7 +700,7 @@ void CMainFrame::InitialShowWindow()
         SetWindowPlacement(&wpsetting);
     }
 
-    SetTimer(ID_INDICATOR_MEMORYUSAGE, 25, nullptr);
+    SetTimer(0, 25, nullptr);
 }
 
 void CMainFrame::InvokeInMessageThread(std::function<void()> callback)
@@ -739,7 +762,7 @@ BOOL CMainFrame::OnCreateClient(LPCREATESTRUCT /*lpcs*/, CCreateContext* pContex
 BOOL CMainFrame::PreCreateWindow(CREATESTRUCT& cs)
 {
     // seed initial title bar text
-    static CStringW title = LoadString(AFX_IDS_APP_TITLE) + (IsAdmin() ? L" (Administrator)" : L"");
+    static CStringW title = Localization::Lookup(IDS_APP_TITLE) + (IsAdmin() ? L" (Administrator)" : L"");
     cs.style &= ~FWS_ADDTOTITLE;
     cs.lpszName = title.GetString();
 
@@ -812,8 +835,17 @@ LRESULT CMainFrame::OnExitSizeMove(WPARAM, LPARAM)
 
 void CMainFrame::OnTimer(UINT_PTR nIDEvent)
 {
+    if (static bool first_run = true; first_run)
+    {
+        SetStatusPaneText(ID_INDICATOR_IDLEMESSAGE, Localization::Lookup(IDS_IDLEMESSAGE));
+        first_run = false;
+    }
+    
     // Update memory usage
-    m_wndStatusBar.SetPaneText(ID_INDICATOR_MEMORYUSAGE_INDEX, CDirStatApp::GetCurrentProcessMemoryInfo());
+    SetStatusPaneText(ID_INDICATOR_MEMORYUSAGE_INDEX, CDirStatApp::GetCurrentProcessMemoryInfo());
+
+    // Force toolbar updates since they do not appear to always receive onidle commands
+    m_wndToolBar.OnUpdateCmdUI(this, FALSE);
 
     // Update tree control
     if (!GetDocument()->IsRootDone())
@@ -863,7 +895,7 @@ void CMainFrame::CopyToClipboard(LPCWSTR psz)
 
         if (nullptr == ::SetClipboardData(CF_UNICODETEXT, h))
         {
-            MdThrowStringException(IDS_CANNOTSETCLIPBAORDDATA);
+            MdThrowStringException(Localization::Lookup(IDS_CANNOTSETCLIPBAORDDATA));
         }
     }
     catch (CException& pe)
@@ -894,14 +926,14 @@ void CMainFrame::UpdateCleanupMenu(CMenu* menu)
     CStringW info;
     if (items == 1)
     {
-        info.FormatMessage(IDS__ONEITEMss, FormatBytes(bytes).GetString(), COptions::HumanFormat && bytes != 0 ? wds::strEmpty : (wds::strBlankSpace + GetSpec_Bytes()).GetString());
+        info.FormatMessage(Localization::Lookup(IDS__ONEITEMss), FormatBytes(bytes).GetString(), COptions::HumanFormat && bytes != 0 ? wds::strEmpty : (wds::strBlankSpace + GetSpec_Bytes()).GetString());
     }
     else
     {
-        info.FormatMessage(IDS__sITEMSss, FormatCount(items).GetString(), FormatBytes(bytes).GetString(), COptions::HumanFormat && bytes != 0 ? wds::strEmpty : (wds::strBlankSpace + GetSpec_Bytes()).GetString());
+        info.FormatMessage(Localization::Lookup(IDS__sITEMSss), FormatCount(items).GetString(), FormatBytes(bytes).GetString(), COptions::HumanFormat && bytes != 0 ? wds::strEmpty : (wds::strBlankSpace + GetSpec_Bytes()).GetString());
     }
 
-    CStringW s = LoadString(IDS_EMPTYRECYCLEBIN);
+    CStringW s = Localization::Lookup(IDS_EMPTYRECYCLEBIN);
     s += info;
     const UINT state = menu->GetMenuState(ID_CLEANUP_EMPTY_BIN, MF_BYCOMMAND);
     VERIFY(menu->ModifyMenu(ID_CLEANUP_EMPTY_BIN, MF_BYCOMMAND | MF_STRING, ID_CLEANUP_EMPTY_BIN, s));
@@ -969,7 +1001,7 @@ void CMainFrame::AppendUserDefinedCleanups(CMenu* menu) const
         if (!udc.enabled) continue;
 
         CStringW string;
-        string.FormatMessage(IDS_UDCsCTRLd, udc.title.Obj().c_str(), iCurrent);
+        string.FormatMessage(Localization::Lookup(IDS_UDCsCTRLd), udc.title.Obj().c_str(), iCurrent);
 
         const auto& items = CTreeListControl::GetTheTreeListControl()->GetAllSelected<CItem>();
         bool udc_valid = GetLogicalFocus() == LF_DIRECTORYLIST && !items.empty();
@@ -986,7 +1018,7 @@ void CMainFrame::AppendUserDefinedCleanups(CMenu* menu) const
     if (!bHasItem)
     {
         // This is just to show new users, that they can configure user defined cleanups.
-        menu->AppendMenu(MF_GRAYED, 0, LoadString(IDS_USERDEFINEDCLEANUP0));
+        menu->AppendMenu(MF_GRAYED, 0, Localization::Lookup(IDS_USERDEFINEDCLEANUP0));
     }
 }
 
@@ -1035,7 +1067,7 @@ void CMainFrame::SetSelectionMessageText()
     {
     case LF_NONE:
         {
-            SetMessageText(AFX_IDS_IDLEMESSAGE);
+            SetMessageText(Localization::Lookup(IDS_IDLEMESSAGE));
         }
         break;
     case LF_DIRECTORYLIST:
@@ -1049,7 +1081,7 @@ void CMainFrame::SetSelectionMessageText()
             }
             else
             {
-                SetMessageText(AFX_IDS_IDLEMESSAGE);
+                SetMessageText(Localization::Lookup(IDS_IDLEMESSAGE));
             }
         }
         break;
@@ -1160,3 +1192,16 @@ void CMainFrame::OnSysColorChange()
     GetTypeView()->SysColorChanged();
 }
 
+BOOL CMainFrame::LoadFrame(UINT nIDResource, DWORD dwDefaultStyle, CWnd* pParentWnd, CCreateContext* pContext)
+{
+    if (!CFrameWndEx::LoadFrame(nIDResource, dwDefaultStyle, pParentWnd, pContext))
+    {
+        return FALSE;
+    }
+
+    Localization::UpdateMenu(*GetMenu());
+    Localization::UpdateDialogs(*this);
+    SetTitle(Localization::Lookup(IDS_APP_TITLE));
+
+    return TRUE;
+}

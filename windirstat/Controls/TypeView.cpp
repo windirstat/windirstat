@@ -27,6 +27,7 @@
 #include <common/CommonHelpers.h>
 #include "TypeView.h"
 #include "GlobalHelpers.h"
+#include "Localization.h"
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -258,12 +259,12 @@ void CExtensionListControl::Initialize()
 {
     SetSorting(COL_BYTES, false);
 
-    InsertColumn(COL_EXTENSION, LoadString(IDS_EXTCOL_EXTENSION), LVCFMT_LEFT, 60, COL_EXTENSION);
-    InsertColumn(COL_COLOR, LoadString(IDS_EXTCOL_COLOR), LVCFMT_LEFT, 40, COL_COLOR);
-    InsertColumn(COL_BYTES, LoadString(IDS_EXTCOL_BYTES), LVCFMT_RIGHT, 60, COL_BYTES);
-    InsertColumn(COL_BYTESPERCENT, L"% " + LoadString(IDS_EXTCOL_BYTES), LVCFMT_RIGHT, 50, COL_BYTESPERCENT);
-    InsertColumn(COL_FILES, LoadString(IDS_EXTCOL_FILES), LVCFMT_RIGHT, 50, COL_FILES);
-    InsertColumn(COL_DESCRIPTION, LoadString(IDS_EXTCOL_DESCRIPTION), LVCFMT_LEFT, 170, COL_DESCRIPTION);
+    InsertColumn(COL_EXTENSION, Localization::Lookup(IDS_EXTCOL_EXTENSION), LVCFMT_LEFT, 60, COL_EXTENSION);
+    InsertColumn(COL_COLOR, Localization::Lookup(IDS_EXTCOL_COLOR), LVCFMT_LEFT, 40, COL_COLOR);
+    InsertColumn(COL_BYTES, Localization::Lookup(IDS_EXTCOL_BYTES), LVCFMT_RIGHT, 60, COL_BYTES);
+    InsertColumn(COL_BYTESPERCENT, L"% " + Localization::Lookup(IDS_EXTCOL_BYTES), LVCFMT_RIGHT, 50, COL_BYTESPERCENT);
+    InsertColumn(COL_FILES, Localization::Lookup(IDS_EXTCOL_FILES), LVCFMT_RIGHT, 50, COL_FILES);
+    InsertColumn(COL_DESCRIPTION, Localization::Lookup(IDS_EXTCOL_DESCRIPTION), LVCFMT_LEFT, 170, COL_DESCRIPTION);
 
     OnColumnsInserted();
 

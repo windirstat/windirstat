@@ -26,8 +26,8 @@
 #include "DirStatView.h"
 #include "Item.h"
 #include "SelectObject.h"
-
 #include "GraphView.h"
+#include "Localization.h"
 
 IMPLEMENT_DYNCREATE(CGraphView, CView)
 
@@ -460,6 +460,7 @@ void CGraphView::OnContextMenu(CWnd* /*pWnd*/, CPoint ptscreen)
     {
         CMenu menu;
         menu.LoadMenu(IDR_POPUPGRAPH);
+        Localization::UpdateMenu(menu);
         CMenu* sub = menu.GetSubMenu(0);
         sub->TrackPopupMenu(TPM_LEFTALIGN | TPM_LEFTBUTTON, ptscreen.x, ptscreen.y, AfxGetMainWnd());
     }

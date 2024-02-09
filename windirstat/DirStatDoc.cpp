@@ -42,6 +42,7 @@
 
 #include "DirStatView.h"
 #include "GraphView.h"
+#include "Localization.h"
 
 CDirStatDoc* _theDocument;
 
@@ -225,7 +226,7 @@ BOOL CDirStatDoc::OnOpenDocument(LPCWSTR lpszPathName)
 
     if (m_showMyComputer)
     {
-        m_rootItem = new CItem(IT_MYCOMPUTER | ITF_ROOTITEM, LoadString(IDS_MYCOMPUTER));
+        m_rootItem = new CItem(IT_MYCOMPUTER | ITF_ROOTITEM, Localization::Lookup(IDS_MYCOMPUTER));
         for (int i = 0; i < rootFolders.GetSize(); i++)
         {
             const auto drive = new CItem(IT_DRIVE, rootFolders[i]);
@@ -273,7 +274,7 @@ void CDirStatDoc::SetPathName(LPCWSTR lpszPathName, BOOL /*bAddToMRU*/)
 void CDirStatDoc::SetTitlePrefix(const CStringW& prefix) const
 {
     static CStringW suffix = IsAdmin() ? L" (Administrator)" : L"";
-    const CStringW docName = prefix + GetTitle() + suffix;
+    const CStringW docName = prefix + L" " + GetTitle() + L" " + suffix;
     GetMainFrame()->UpdateFrameTitleForDocument(docName);
 }
 
@@ -634,7 +635,8 @@ void CDirStatDoc::AskForConfirmation(USERDEFINEDCLEANUP* udc, CItem* item)
     }
 
     CStringW msg;
-    msg.FormatMessage(udc->recurseIntoSubdirectories ? IDS_RUDC_CONFIRMATIONss : IDS_UDC_CONFIRMATIONss, udc->title.Obj().c_str(), item->GetPath().GetString());
+    msg.FormatMessage(udc->recurseIntoSubdirectories ? Localization::Lookup(IDS_RUDC_CONFIRMATIONss) :
+        Localization::Lookup(IDS_UDC_CONFIRMATIONss), udc->title.Obj().c_str(), item->GetPath().GetString());
 
     if (IDYES != AfxMessageBox(msg, MB_YESNO))
     {
@@ -653,7 +655,7 @@ void CDirStatDoc::PerformUserDefinedCleanup(USERDEFINEDCLEANUP* udc, CItem* item
     {
         if (!FolderExists(path) && !DriveExists(path))
         {
-            MdThrowStringExceptionF(IDS_THEDIRECTORYsDOESNOTEXIST, path.GetString());
+            MdThrowStringExceptionF(Localization::Lookup(IDS_THEDIRECTORYsDOESNOTEXIST), path.GetString());
         }
     }
     else
@@ -662,7 +664,7 @@ void CDirStatDoc::PerformUserDefinedCleanup(USERDEFINEDCLEANUP* udc, CItem* item
 
         if (!::PathFileExists(path))
         {
-            MdThrowStringExceptionF(IDS_THEFILEsDOESNOTEXIST, path.GetString());
+            MdThrowStringExceptionF(Localization::Lookup(IDS_THEFILEsDOESNOTEXIST), path.GetString());
         }
     }
 
@@ -765,7 +767,7 @@ void CDirStatDoc::CallUserDefinedCleanup(bool isDirectory, const CStringW& forma
     cmdline.ReleaseBuffer();
     if (!b)
     {
-        MdThrowStringExceptionF(IDS_COULDNOTCREATEPROCESSssss,
+        MdThrowStringExceptionF(Localization::Lookup(IDS_COULDNOTCREATEPROCESSssss),
                                 app.GetString(), cmdline.GetString(), directory.GetString(), MdGetWinErrorText(::GetLastError()).GetString()
         );
         return;
