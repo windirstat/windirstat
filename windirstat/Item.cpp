@@ -989,7 +989,7 @@ void CItem::ScanItems(BlockingQueue<CItem*> * queue)
             for (const auto & child : item->GetChildren())
             {
                 child->UpwardAddReadJobs(1);
-                queue->push(item, false);
+                queue->push(child, false);
             }
         }
         item->UpwardSubtractReadJobs(1);
