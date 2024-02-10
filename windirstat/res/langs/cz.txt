@@ -5,24 +5,18 @@ IDS_ABOUT_AUTHORSTEXTs==== Programátori ===\n\n%1!s!\n\n\n=== Prekladatelé ===
 IDS_ABOUT_LICENSEAGREEMENT=Licence
 IDS_ABOUT_THANKSTO=Díky patrí:
 IDS_ABOUT_THANKSTOTEXT=\nStefanu Hundhammerovi za skvelou linuxovou utilitku KDirStat.\nPoužití KDirStat (2.3.7) mi ušetrilo mnoho casu pri návrhu.\nhttps://kdirstat.sourceforge.net/\n\nAutorum SequoiaView za ukázku, jak užitecné mohou být stromové mapy.\nhttps://www.win.tue.nl/sequoiaview/\n\nJarke J. van Wijkovi, Huub van de Weteringovi, Marku Brulsovi a Kees Huizingovi\n za jejich informace o polštárových a hranatých stromových mapách.\nhttps://www.win.tue.nl/~vanwijk/\n\nBenu Shneidermanovi za geniální myšlenku o stromových mapách -\nopravdu intuitivním zpusobu vizualizace stromových dat.\nhttps://www.cs.umd.edu/hcil/TreeMap.history/\n\nMým kolegum za zpetnou vazbu k prvním verzím WinDirStat.\n\nBeatrix Lödige a Nicku Linesovi za betatestování.\n
-IDS_APP_ABOUT=Zobrazí informace o programu, verzi a autorských právech.\nO programu
-IDS_APP_EXIT=Ukoncí WinDirStat.\nKonec
 IDS_APP_TITLE=WinDirStat
-IDS_BACKTOUSERSETTINGS=&Zpet k uživatelskému nastavení
 IDS_BACKTO_USERSETTINGS=Zpet na &uživ.\nnastavení
-IDS_BUGREPORTHINT=U chyb prosím popište, jak se projevují, vcetne presného znení chybové hlášky a pokud je to možné i zpusob jak ji reprodukovat.
 IDS_CANNOTEMTPYCLIPBOARD=Nemohu vyprázdnit schránku.
 IDS_CANNOTOPENCLIPBOARD=Nemohu otevrít schránku.
 IDS_CANNOTSETCLIPBAORDDATA=Nemohu zapisovat do schránky.
 IDS_CLEANUP_DELETE=Smaže zvolenou položku bez možnosti obnovení!\nSmazat (bez možnosti obnovení!)
 IDS_CLEANUP_DELETE_BIN Presune vybranou položku do koše.\nSmazat (do koše)"
-IDS_CLEANUP_EMPTY_BIN=Vysype odpadkový koš.\nVysypat koš
 IDS_CLEANUP_EXPLORER_SELECT Otevre pruzkumníka ve vybrané složce.\nPruzkumník"
 IDS_CLEANUP_OPEN=Otevre zvolenou položku.\nOtevrít
 IDS_CLEANUP_OPEN_IN_CONSOLE Otevre príkazový rádek ve vybrané složce.\nPríkazový rádek"
 IDS_CLEANUP_PROPERTIES=Zobrazí vlastnosti zvolené položky.\nVlastnosti
 IDS_COLLAPSE=&Sbalit
-IDS_CONFIGURE=Otevre okno s nastavením programu.\nNastavení
 IDS_COULDNOTCREATEPROCESSssss Nepodarilo se vytvorit proces.\n\nProgram: '%1!s!',\nPríkazový rádek: '%2!s!',\nPracovní složka: '%3!s!'\nChybová hláška:\n%4!s!\n(Neprobehne žádná aktualizace.)"
 IDS_CREATEPROCESSsFAILEDs=Vytvorení procesu (%1!s!) selhalo: %2!s!
 IDS_DISKUSAGEREPORTGENERATEDBYWINDIRSTAT Využití disku generované programem WinDirStat.\n"
@@ -31,7 +25,6 @@ IDS_DRIVECOL_GRAPH=Využité/Celkem
 IDS_DRIVECOL_NAME=Název
 IDS_DRIVECOL_PERCENTUSED=Využité/Celkem
 IDS_DRIVECOL_TOTAL=Celkem
-IDS_DUMMY_USERDEFINEDCLEANUP Spustí uživatelem definovaný nástroj #0\nUživatelský nástroj"
 IDS_EDIT_COPY=Zkopíruje vybranou cestu do schránky.\nKopírovat cestu
 IDS_EMPTYRECYCLEBIN=&Vysypat koš
 IDS_EXPAND=&Rozbalit
@@ -40,21 +33,15 @@ IDS_EXTCOL_COLOR=Barva
 IDS_EXTCOL_DESCRIPTION=Popis
 IDS_EXTCOL_EXTENSION=Prípona
 IDS_EXTCOL_FILES=Soubory
-IDS_FEEDBACKHINT=Zpetné reakce jsou vždy vítány.
-IDS_FILE_REFRESHALL=Znovu nacte celý strom
-IDS_FILE_REFRESHSELECTED=Znovu nacte zvolenou podsložku
 IDS_FILE_SELECT=Otevre seznam disku.\nOtevrít
 IDS_FREESPACE_ITEM=<Free Space>
 IDS_HELPFILEsCOULDNOTBEFOUND Soubor s nápovedou %1!s! nebyl nalezen.\nMel by být ve stejné složce jako WinDirStat.exe,\nse kterým byl spolecne dodán.\nMužete jej stáhnout z domovské stránky WinDirStat (viz dialog O programu...)."
 IDS_HELP_MANUAL=Otevre nápovedu programu WinDirStat.\nNápoveda
-IDS_HELP_REPORTBUG=Vytvorí mail s hlášením chyby nebo zpetnou reakcí.\nOhlásit chybu
 IDS_IDLEMESSAGE=Pripraven
 IDS_INDICATOR_CAPS=CAP
-IDS_INDICATOR_MEMORYUSAGE=Využití RAM: 123.456.789
 IDS_INDICATOR_NUM=NUM
 IDS_INDICATOR_SCRL=SCRL
 IDS_LANGUAGERESTARTNOW=Zmena jazyka se projeví až pri príštím spuštení programu.\n\nRestartovat WinDirStat nyní?
-IDS_MAINFRAME=WinDirStat\n\nWinDirStat\n\n\n\n
 IDS_MYCOMPUTER=Tento pocítac
 IDS_NOTACCESSIBLE=(není k dispozici)
 IDS_ONEREADJOB=[1 ctecí úloha]
@@ -67,12 +54,10 @@ IDS_RAMUSAGEs=Využití RAM: %1!s!
 IDS_REFRESH_ALL=Znovu prohledá/nacte celý strom.\nObnovit vše
 IDS_REFRESH_SELECTED=Znovu prohledá/nacte zvolenou podsložku.\nObnovit vybrané
 IDS_REPORT_DISKUSAGE=Využití disku
-IDS_RESETTODEFAULTS=&Nastavit výchozí
 IDS_RESETTO_DEFAULTS=&Nastavit\nvýchozí
 IDS_RUDC_CONFIRMATIONss=Chystáte se spustit rekurzivní uživatelsky definovaný nástroj\n'%1!s!'\n\nna '%2!s!'.\n\nPokracovat?
 IDS_SCANNING=Procházím 
 IDS_SELECTFOLDER=WinDirStat - výber složky
-IDS_SENDMAILTOOWNER=Vytvorí e-mail k práve zvolené položce.\nOdeslat mail
 IDS_SPEC_BYTES=Bytu
 IDS_SPEC_GB=GB
 IDS_SPEC_KB=KB
@@ -91,9 +76,6 @@ IDS_TREECOL_PERCENTAGE=Podíl
 IDS_TREECOL_SIZE=Velikost
 IDS_TREECOL_SUBDIRS=Podsložky
 IDS_TREECOL_SUBTREEPERCENTAGE=Podíl podsložky
-IDS_TREEMAP_HELPABOUTTREEMAPS Zobrazí nápovedu ke stromovým mapám.\nO stromových mapách"
-IDS_TREEMAP_RESELECT_CHILD=Znovu oznací potomka.\nZnovuoznacit potomka
-IDS_TREEMAP_SELECT_PARENT=Oznací rodice práve vybrané položky.\nVybrat rodice
 IDS_TREEMAP_ZOOMIN=Zvetší stromovou mapu.\nZvetšit
 IDS_TREEMAP_ZOOMOUT=Zmenší stromovou mapu.\nZmenšit
 IDS_UDC_CONFIRMATIONss=Chystáte se spustit uživatelsky definovaný nástroj\n'%1!s!'\n\nna '%2!s!'.\n\nPokracovat?
@@ -101,15 +83,8 @@ IDS_UDCsCTRLd=%1!s!\tCtrl+%2!d!
 IDS_UNKNOWN_ITEM=<Unknown>
 IDS_USERDEFINEDCLEANUP0=Uživatelský nástroj #0
 IDS_USERDEFINEDCLEANUPd=Uživatelský nástroj #%1!d!
-IDS_VIEW_SHOWFILETYPES=Zobrazí/skryje seznam typu souboru.\nZobrazit typy souboru
-IDS_VIEW_SHOWFREESPACE=Zobrazí/skryje položku <Free Space>.\nZobrazit volné místo
-IDS_VIEW_SHOWTREEMAP=Zobrazí/skryje stromovou mapu.\nStromová mapa
-IDS_VIEW_SHOWUNKNOWN=Zobrazí/skryje položku <Unknown>.\nZobrazit neznámé
-IDS_VIEW_STATUS_BAR=Zobrazí/skryje stavový rádek.\nStavový rádek
-IDS_VIEW_TOOLBAR=Zobrazí/skryje nástrojovou lištu\nNástrojová lišta
 IDS_WINDIRSTAT_SETTINGS=WinDirStat - nastavení
 IDS__ONEITEMss= (1 položka, %1!s!%2!s!)
-IDS__UNKNOWN_=<unknown>
 IDS__sITEMSss= (%1!s! položek, %2!s!%3!s!)
 IDS_sREADJOBS=[%1!s! ctecích úloh]
 IDS_MENU_FILE=&Soubor

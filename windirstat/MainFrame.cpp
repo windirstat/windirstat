@@ -539,7 +539,7 @@ void CMainFrame::UpdateProgress()
     // Display the suspend text in the bar if suspended
     if (IsScanSuspended())
     {
-        static const CStringW suspend_string = Localization::Lookup(IDS_SCANNING);
+        static const CStringW suspend_string = Localization::Lookup(IDS_SUSPENDED);
         suspended = suspend_string;
     }
 
@@ -654,9 +654,9 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
         { ID_REFRESH_SELECTED, {IDB_REFRESH_SELECTED, IDS_REFRESH_SELECTED}},
         { ID_REFRESH_ALL, {IDB_REFRESH_ALL, IDS_REFRESH_ALL}},
         { ID_SCAN_RESUME, {IDB_SCAN_RESUME, IDS_GENERIC_BLANK}},
-        { ID_SCAN_SUSPEND, {IDB_SCAN_SUSPEND, IDS_GENERIC_BLANK}},
+        { ID_SCAN_SUSPEND, {IDB_SCAN_SUSPEND, IDS_SUSPEND}},
         { ID_CLEANUP_DELETE_BIN, {IDB_CLEANUP_DELETE_BIN, IDS_CLEANUP_DELETE_BIN}},
-        { ID_CLEANUP_DELETE, {IDB_CLEANUP_DELETE, IDS_CLEANUP_DELETE_BIN}},
+        { ID_CLEANUP_DELETE, {IDB_CLEANUP_DELETE, IDS_CLEANUP_DELETE}},
         { ID_CLEANUP_PROPERTIES, {IDB_CLEANUP_PROPERTIES, IDS_CLEANUP_PROPERTIES}},
         { ID_TREEMAP_ZOOMIN, {IDB_TREEMAP_ZOOMIN, IDS_TREEMAP_ZOOMIN}},
         { ID_TREEMAP_ZOOMOUT, {IDB_TREEMAP_ZOOMOUT, IDS_TREEMAP_ZOOMOUT}},
