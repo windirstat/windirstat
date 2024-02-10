@@ -175,6 +175,7 @@ public:
     LOGICAL_FOCUS GetLogicalFocus() const;
     void MoveFocus(LOGICAL_FOCUS lf);
 
+    void SetMessageText(const CStringW& text) { SetStatusPaneText(0, text); };
     void SetSelectionMessageText();
 
     static void QueryRecycleBin(ULONGLONG& items, ULONGLONG& bytes);

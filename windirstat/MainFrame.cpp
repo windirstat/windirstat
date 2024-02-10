@@ -382,7 +382,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
     ON_REGISTERED_MESSAGE(s_taskBarMessage, OnTaskButtonCreated)
     ON_UPDATE_COMMAND_UI(ID_VIEW_SHOWFILETYPES, OnUpdateViewShowFileTypes)
     ON_UPDATE_COMMAND_UI(ID_VIEW_SHOWTREEMAP, OnUpdateViewShowtreemap)
-    ON_UPDATE_COMMAND_UI(ID_INDICATOR_MEMORYUSAGE, OnUpdateMemoryUsage)
+    ON_UPDATE_COMMAND_UI(IDS_RAMUSAGEs, OnUpdateMemoryUsage)
     ON_WM_CLOSE()
     ON_WM_CREATE()
     ON_WM_DESTROY()
@@ -392,7 +392,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
     ON_WM_TIMER()
 END_MESSAGE_MAP()
 
-constexpr auto ID_INDICATOR_IDLEMESSAGE = 0;
+constexpr auto ID_INDICATOR_IDLEMESSAGE_INDEX = 0;
 constexpr auto ID_INDICATOR_MEMORYUSAGE_INDEX = 1;
 constexpr auto ID_INDICATOR_CAPS_INDEX = 2;
 constexpr auto ID_INDICATOR_NUM_INDEX = 3;
@@ -401,7 +401,7 @@ constexpr auto ID_INDICATOR_SCRL_INDEX = 4;
 static UINT indicators[] =
 {
     IDS_IDLEMESSAGE,
-    IDS_APP_TITLE, // Used For Memory Usage
+    IDS_RAMUSAGEs,
     ID_INDICATOR_CAPS,
     ID_INDICATOR_NUM,
     ID_INDICATOR_SCRL,
@@ -632,7 +632,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
     VERIFY(m_wndStatusBar.Create(this));
     m_wndStatusBar.SetIndicators(indicators, _countof(indicators));
-    m_wndStatusBar.SetPaneStyle(0, SBPS_STRETCH);
+    m_wndStatusBar.SetPaneStyle(ID_INDICATOR_IDLEMESSAGE_INDEX, SBPS_STRETCH);
     SetStatusPaneText(ID_INDICATOR_CAPS_INDEX, Localization::Lookup(IDS_INDICATOR_CAPS));
     SetStatusPaneText(ID_INDICATOR_NUM_INDEX, Localization::Lookup(IDS_INDICATOR_NUM));
     SetStatusPaneText(ID_INDICATOR_SCRL_INDEX, Localization::Lookup(IDS_INDICATOR_SCRL));
@@ -837,7 +837,7 @@ void CMainFrame::OnTimer(UINT_PTR nIDEvent)
 {
     if (static bool first_run = true; first_run)
     {
-        SetStatusPaneText(ID_INDICATOR_IDLEMESSAGE, Localization::Lookup(IDS_IDLEMESSAGE));
+        SetStatusPaneText(ID_INDICATOR_IDLEMESSAGE_INDEX, Localization::Lookup(IDS_IDLEMESSAGE));
         first_run = false;
     }
     
