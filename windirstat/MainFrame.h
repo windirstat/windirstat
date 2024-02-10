@@ -219,7 +219,7 @@ protected:
     afx_msg void OnTimer(UINT_PTR nIDEvent);
     afx_msg void OnClose();
     afx_msg void OnInitMenuPopup(CMenu* pPopupMenu, UINT nIndex, BOOL bSysMenu);
-    afx_msg void OnUpdateMemoryUsage(CCmdUI* pCmdUI);
+    afx_msg void OnUpdateEnableControl(CCmdUI* pCmdUI);
     afx_msg void OnSize(UINT nType, int cx, int cy);
     afx_msg void OnUpdateViewShowtreemap(CCmdUI* pCmdUI);
     afx_msg void OnViewShowtreemap();

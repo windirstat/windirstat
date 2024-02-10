@@ -30,25 +30,20 @@
 #include "GlobalHelpers.h"
 #include "TreeListControl.h"
 #include "Item.h"
-
+#include "Localization.h"
+#include "Property.h"
+#include "PageAdvanced.h"
 #include "PageCleanups.h"
 #include "PageTreeList.h"
 #include "PageTreeMap.h"
 #include "PageGeneral.h"
-#include "Property.h"
+#include "MainFrame.h"
 
 #include <common/MdExceptions.h>
 #include <common/CommonHelpers.h>
 
-#include "MainFrame.h"
-
-#include <complex.h>
 #include <functional>
 #include <unordered_map>
-
-#include "Localization.h"
-#include "PageAdvanced.h"
-#include "Property.h"
 
 namespace
 {
@@ -363,7 +358,8 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
     ON_REGISTERED_MESSAGE(s_taskBarMessage, OnTaskButtonCreated)
     ON_UPDATE_COMMAND_UI(ID_VIEW_SHOWFILETYPES, OnUpdateViewShowFileTypes)
     ON_UPDATE_COMMAND_UI(ID_VIEW_SHOWTREEMAP, OnUpdateViewShowtreemap)
-    ON_UPDATE_COMMAND_UI(IDS_RAMUSAGEs, OnUpdateMemoryUsage)
+    ON_UPDATE_COMMAND_UI(IDS_RAMUSAGEs, OnUpdateEnableControl)
+    ON_UPDATE_COMMAND_UI(IDS_IDLEMESSAGE, OnUpdateEnableControl)
     ON_WM_CLOSE()
     ON_WM_CREATE()
     ON_WM_DESTROY()
@@ -1075,7 +1071,7 @@ void CMainFrame::SetSelectionMessageText()
     }
 }
 
-void CMainFrame::OnUpdateMemoryUsage(CCmdUI* pCmdUI)
+void CMainFrame::OnUpdateEnableControl(CCmdUI* pCmdUI)
 {
     pCmdUI->Enable(true);
 }
