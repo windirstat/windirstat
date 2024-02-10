@@ -592,8 +592,13 @@ void CMainFrame::DestroyProgress()
 
 void CMainFrame::SetStatusPaneText(int pos, const CStringW & text)
 {
-    const int cx = GetDC()->GetTextExtent(text, text.GetLength()).cx;
-    m_wndStatusBar.SetPaneWidth(pos, cx);
+    // attempt to update width if dc is accessible
+    if (const CDC* dc = GetDC(); dc != nullptr)
+    {
+        const int cx = dc->GetTextExtent(text, text.GetLength()).cx;
+        m_wndStatusBar.SetPaneWidth(pos, cx);
+    }
+
     m_wndStatusBar.SetPaneText(pos, text);
 }
 
