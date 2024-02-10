@@ -69,9 +69,6 @@ CDirStatDoc::CDirStatDoc()
 
 CDirStatDoc::~CDirStatDoc()
 {
-    COptions::ShowFreeSpace = m_showFreeSpace;
-    COptions::ShowUnknown = m_showUnknown;
-
     delete m_rootItem;
     _theDocument = nullptr;
 }
@@ -986,6 +983,7 @@ void CDirStatDoc::OnViewShowFreeSpace()
 
     // Toogle value
     m_showFreeSpace = !m_showFreeSpace;
+    COptions::ShowFreeSpace = m_showFreeSpace;
 
     // Force recalculation and graph refresh
     StartupCoordinator({});
@@ -1020,6 +1018,7 @@ void CDirStatDoc::OnViewShowUnknown()
 
     // Toogle value
     m_showUnknown = !m_showUnknown;
+    COptions::ShowUnknown = m_showUnknown;
 
     // Force recalculation and graph refresh
     StartupCoordinator({});
