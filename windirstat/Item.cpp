@@ -44,25 +44,10 @@
 #include "Localization.h"
 #include "SmartPointer.h"
 
-namespace
-{
-    CStringW GetFreeSpaceItemName()
-    {
-        return Localization::Lookup(IDS_FREESPACE_ITEM);
-    }
-
-    CStringW GetUnknownItemName()
-    {
-        return Localization::Lookup(IDS_UNKNOWN_ITEM);
-    }
-
-    constexpr SIZE sizeDeflatePacman = {1, 2};
-}
-
 CItem::CItem(ITEMTYPE type, LPCWSTR name)
     : m_name(name)
+      , m_lastChange{0, 0}
       , m_ci(nullptr)
-      , m_lastChange{0,0}
       , m_size(0)
       , m_attributes(0)
       , m_type(type)
@@ -154,6 +139,7 @@ bool CItem::DrawSubitem(int subitem, CDC* pdc, CRect rc, UINT state, int* width,
 
     if (showReadJobs)
     {
+        constexpr SIZE sizeDeflatePacman = { 1, 2 };
         rc.DeflateRect(sizeDeflatePacman);
         DrawPacman(pdc, rc, GetTreeListControl()->GetItemSelectionBackgroundColor(this));
     }
@@ -539,7 +525,7 @@ CItem* CItem::GetParent() const
 
 void CItem::AddChild(CItem* child)
 {
-    ASSERT(!IsDone()); // SetDone() computed m_childrenBySize
+    ASSERT(!IsDone());
 
     UpwardAddSize(child->m_size);
     UpwardUpdateLastChange(child->m_lastChange);
@@ -1051,7 +1037,7 @@ void CItem::CreateFreeSpaceItem()
     ULONGLONG free;
     CDirStatApp::getDiskFreeSpace(GetPath(), total, free);
 
-    const auto freespace = new CItem(IT_FREESPACE, GetFreeSpaceItemName());
+    const auto freespace = new CItem(IT_FREESPACE, Localization::Lookup(IDS_FREESPACE_ITEM));
     freespace->SetSize(free);
     freespace->SetDone();
 
@@ -1134,7 +1120,7 @@ void CItem::CreateUnknownItem()
 
     UpwardSetUndone();
 
-    const auto unknown = new CItem(IT_UNKNOWN, GetUnknownItemName());
+    const auto unknown = new CItem(IT_UNKNOWN, Localization::Lookup(IDS_UNKNOWN_ITEM));
     unknown->SetDone();
 
     AddChild(unknown);
@@ -1166,30 +1152,31 @@ void CItem::RemoveUnknownItem()
 
 void CItem::RecurseCollectExtensionData(CExtensionData* ed) const
 {
-    if (TmiIsLeaf())
+    std::stack<const CItem*> queue;
+    queue.push(this);
+    while (!queue.empty())
     {
-        if (IsType(IT_FILE))
+        const auto& qitem = queue.top();
+        queue.pop();
+        if (qitem->IsType(IT_FILE))
         {
-            const CStringW & ext = GetExtension();
+            const CStringW& ext = qitem->GetExtension();
             SExtensionRecord r;
             if (ed->Lookup(ext, r))
             {
-                r.bytes += GetSize();
+                r.bytes += qitem->GetSize();
                 r.files++;
             }
             else
             {
-                r.bytes = GetSize();
+                r.bytes = qitem->GetSize();
                 r.files = 1;
             }
             ed->SetAt(ext, r);
         }
-    }
-    else
-    {
-        for (const auto& child : m_ci->m_children)
+        else for (const auto& child : qitem->m_ci->m_children)
         {
-            child->RecurseCollectExtensionData(ed);
+            queue.push(child);
         }
     }
 }
