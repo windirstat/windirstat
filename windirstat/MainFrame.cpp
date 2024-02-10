@@ -52,25 +52,6 @@
 
 namespace
 {
-    // This must be synchronized with the IDR_MAINFRAME menu
-    enum TOPLEVELMENU
-    {
-        TLM_FILE,
-        TLM_EDIT,
-        TLM_CLEANUP,
-        TLM_TREEMAP,
-        TLM_REPORT,
-        TLM_VIEW,
-        TLM_HELP
-    };
-
-    enum
-    {
-        // This is the position of the first "User defined cleanup" menu item in the "Cleanup" menu.
-        // !!! MUST BE SYNCHRONIZED WITH THE MENU RESOURCE !!!
-        MAINMENU_USERDEFINEDCLEANUP_POSITION = 11
-    };
-
     // Clipboard-Opener
     class COpenClipboard final
     {
@@ -907,13 +888,13 @@ void CMainFrame::CopyToClipboard(LPCWSTR psz)
 void CMainFrame::OnInitMenuPopup(CMenu* pPopupMenu, UINT nIndex, BOOL bSysMenu)
 {
     CFrameWndEx::OnInitMenuPopup(pPopupMenu, nIndex, bSysMenu);
-
-    if (!bSysMenu)
+    if (bSysMenu) return;
+    
+    CString menu_text;
+    GetMenu()->GetMenuStringW(nIndex, menu_text, MF_BYPOSITION);
+    if (menu_text.CompareNoCase(Localization::Lookup(IDS_MENU_CLEANUP)) == 0)
     {
-        if (nIndex == TLM_CLEANUP)
-        {
-            UpdateCleanupMenu(pPopupMenu);
-        }
+        UpdateCleanupMenu(pPopupMenu);
     }
 }
 
@@ -939,10 +920,11 @@ void CMainFrame::UpdateCleanupMenu(CMenu* menu)
     VERIFY(menu->ModifyMenu(ID_CLEANUP_EMPTY_BIN, MF_BYCOMMAND | MF_STRING, ID_CLEANUP_EMPTY_BIN, s));
     menu->EnableMenuItem(ID_CLEANUP_EMPTY_BIN, state);
 
-    const UINT toRemove = menu->GetMenuItemCount() - MAINMENU_USERDEFINEDCLEANUP_POSITION;
-    for (UINT i = 0; i < toRemove; i++)
+    // remove everything after the last separator
+    for (int i = menu->GetMenuItemCount() - 1; i >= 0; i--)
     {
-        menu->RemoveMenu(MAINMENU_USERDEFINEDCLEANUP_POSITION, MF_BYPOSITION);
+        if ((menu->GetMenuState(i, MF_BYPOSITION) & MF_SEPARATOR) != 0) break;
+        menu->RemoveMenu(i, MF_BYPOSITION);
     }
 
     AppendUserDefinedCleanups(menu);
