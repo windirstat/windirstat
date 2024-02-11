@@ -28,6 +28,8 @@
 #include "Localization.h"
 #include "Options.h"
 
+#pragma comment(lib,"version.lib")
+
 namespace
 {
     // Tabs
@@ -256,9 +258,20 @@ CAboutDlg::CAboutDlg()
 
 CStringW CAboutDlg::GetAppVersion()
 {
-    CStringW s;
-    s.Format(L"WinDirStat %s", L"1.x.y.z"); // FIXME
-    return s;
+    const CStringW file = GetAppFileName();
+    const DWORD iVersionSize = GetFileVersionInfoSize(file, nullptr);
+    UINT iQueriedSize = 0;
+    std::vector<BYTE> tVersionInfo = std::vector<BYTE>(iVersionSize);
+    VS_FIXEDFILEINFO* pVersion = nullptr;
+    if (GetFileVersionInfo(file, 0, iVersionSize, tVersionInfo.data()) != 0 &&
+        VerQueryValue(tVersionInfo.data(), L"\\", reinterpret_cast<LPVOID*>(&pVersion), &iQueriedSize) != 0)
+    {
+        CStringW version;
+        version.Format(L"WinDirStat %hu.%hu.%hu.%hu", HIWORD(pVersion->dwFileVersionMS), LOWORD(pVersion->dwFileVersionMS), HIWORD(pVersion->dwFileVersionLS), LOWORD(pVersion->dwFileVersionLS));
+        return version;
+    }
+
+    return L"WinDirStat";
 }
 
 CStringW CAboutDlg::GetDevelList()
