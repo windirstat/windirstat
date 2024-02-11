@@ -39,11 +39,13 @@
 #include <afxwin.h>         // MFC Core
 #include <afxext.h>         // MFC Extensions
 
-#include <afxdtctl.h>       // MFC IE 4
 #include <afxcmn.h>         // MFC Common Controls
 #include <afxtempl.h>       // MFC Container classes
 #include <afxmt.h>          // MFC Multi-threading
-#include <afxcontrolbars.h> // MFC support for ribbons and control bars
+#include "afxframewndex.h"  // MFC Frame Controls
+#include "afxtoolbar.h"     // MFC Toolbar
+#include "afxstatusbar.h"   // MFC Status Bar
+#include "afxvisualmanagerwindows7.h" // MFC Visual Style
 
 #include <cmath>            // floor(), fmod(), sqrt() etc.
 #include <cfloat>           // DBL_MAX
