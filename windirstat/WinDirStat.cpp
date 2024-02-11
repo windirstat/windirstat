@@ -58,12 +58,12 @@ CDirStatApp* GetWDSApp()
 
 CStringW GetAuthorEmail()
 {
-    return L"team@windirstat.net"; // FIXME into common string file
+    return Localization::LookupNeutral(IDS_AUTHOR_EMAIL);
 }
 
 CStringW GetWinDirStatHomepage()
 {
-    return L"windirstat.net"; // FIXME into common string file
+    return Localization::LookupNeutral(IDS_AUTHOR_WEBSITE);
 }
 
 CMyImageList* GetMyImageList()

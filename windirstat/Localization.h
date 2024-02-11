@@ -68,6 +68,13 @@ public:
         return Contains(name) ? Lookup(name) : def;
     }
 
+    static CStringW LookupNeutral(const UINT res)
+    {
+        CString name;
+        name.LoadStringW(nullptr, res, MAKELANGID(LANG_NEUTRAL,SUBLANG_NEUTRAL));
+        return name;
+    }
+
     static void UpdateMenu(CMenu& menu);
     static void UpdateTabControl(CTabCtrl& tab);
     static void UpdateDialogs(CWnd& wnd);

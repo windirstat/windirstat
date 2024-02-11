@@ -13,6 +13,36 @@
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
+// Neutral resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_NEU)
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+#pragma code_page(1252)
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE
+BEGIN
+    AFX_IDS_APP_TITLE       "WinDirStat"
+    IDS_AUTHOR_EMAIL        "team@windirstat.net"
+    IDS_AUTHOR_WEBSITE      "windirstat.net"
+END
+
+STRINGTABLE
+BEGIN
+    ID_INDICATOR_CAPS       "-"
+    ID_INDICATOR_NUM        "-"
+    ID_INDICATOR_SCRL       "-"
+END
+
+#endif    // Neutral resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
 // English (United States) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
@@ -655,24 +685,6 @@ BEGIN
 0x3e65, 0x3c32, 0x4d2f, 0x4346, 0x6445, 0x7469, 0x7242, 0x776f, 0x6573, 
 0x4d5f, 0x646f, 0x3e65, 
     0
-END
-
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// String Table
-//
-
-STRINGTABLE
-BEGIN
-    AFX_IDS_APP_TITLE       "WinDirStat"
-END
-
-STRINGTABLE
-BEGIN
-    ID_INDICATOR_CAPS       "-"
-    ID_INDICATOR_NUM        "-"
-    ID_INDICATOR_SCRL       "-"
 END
 
 #endif    // English (United States) resources

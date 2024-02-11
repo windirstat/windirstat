@@ -114,7 +114,6 @@
 #define IDC_USEWDSLOCALE                1225
 #define IDC_COMBO_THREADS               1230
 #define IDC_TREECOL_ATTRIBUTES          1231
-#define IDC_BROWSE_FOLDER              1232
 #define IDC_BROWSE_FOLDER               1232
 #define ID_WDS_CONTROL                  4711
 #define ID_CLEANUP_EXPLORER_SELECT      32774
@@ -162,6 +161,8 @@
 #define ID_FILE_SELECT                  33030
 #define ID_SCAN_SUSPEND                 33031
 #define ID_SCAN_RESUME                  33032
+#define IDS_AUTHOR_EMAIL                57345
+#define IDS_AUTHOR_WEBSITE              57346
 
 // Next default values for new objects
 // 
