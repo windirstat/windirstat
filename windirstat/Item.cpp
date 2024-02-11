@@ -1033,8 +1033,7 @@ void CItem::CreateFreeSpaceItem()
 
     UpwardSetUndone();
 
-    ULONGLONG total;
-    ULONGLONG free;
+    ULONGLONG total, free;
     CDirStatApp::getDiskFreeSpace(GetPath(), total, free);
 
     const auto freespace = new CItem(IT_FREESPACE, Localization::Lookup(IDS_FREESPACE_ITEM));
@@ -1066,16 +1065,12 @@ void CItem::UpdateFreeSpaceItem() const
         return;
     }
 
-    ULONGLONG total;
-    ULONGLONG free;
+    // Rebaseline as if freespace was not shown
+    freeSpaceItem->UpwardSubtractSize(freeSpaceItem->GetSize());
+
+    ULONGLONG total, free;
     CDirStatApp::getDiskFreeSpace(GetPath(), total, free);
-
-    const ULONGLONG before = freeSpaceItem->GetSize();
-    const ULONGLONG diff   = free - before;
-
-    freeSpaceItem->UpwardAddSize(diff);
-
-    ASSERT(freeSpaceItem->GetSize() == free);
+    freeSpaceItem->UpwardAddSize(free);
 }
 
 void CItem::UpdateUnknownItem()
@@ -1088,18 +1083,17 @@ void CItem::UpdateUnknownItem()
         return;
     }
 
+    // Rebaseline as if unknown size was not shown
+    unknown->UpwardSubtractSize(unknown->GetSize());
+
+    // Get the tallied size, account for whether the freespace item is part of it
+    const CItem* freeSpaceItem = FindFreeSpaceItem();
+    const ULONGLONG tallied = GetSize() - (freeSpaceItem ? freeSpaceItem->GetSize() : 0);
+
     ULONGLONG total;
     ULONGLONG free;
     CDirStatApp::getDiskFreeSpace(GetPath(), total, free);
-
-    ULONGLONG unknownspace = total - GetSize();
-    if (!COptions::ShowUnknown)
-    {
-        unknownspace -= free;
-    }
-    unknown->SetSize(unknownspace);
-
-    UpwardAddSize(unknownspace);
+    unknown->UpwardAddSize(total - free - tallied);
 }
 
 void CItem::RemoveFreeSpaceItem()
