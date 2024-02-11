@@ -121,7 +121,7 @@ void CColorButton::OnDestroy()
 
 void CColorButton::OnBnClicked()
 {
-    CColorDialog dlg(GetColor());
+    CMFCColorDialog dlg(GetColor());
     if (IDOK == dlg.DoModal())
     {
         SetColor(dlg.GetColor());
