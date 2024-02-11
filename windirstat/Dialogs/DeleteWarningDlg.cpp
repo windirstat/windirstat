@@ -24,10 +24,10 @@
 #include "DeleteWarningDlg.h"
 #include "Localization.h"
 
-IMPLEMENT_DYNAMIC(CDeleteWarningDlg, CDialog)
+IMPLEMENT_DYNAMIC(CDeleteWarningDlg, CDialogEx)
 
 CDeleteWarningDlg::CDeleteWarningDlg(CWnd* pParent /*=NULL*/)
-    : CDialog(CDeleteWarningDlg::IDD, pParent)
+    : CDialogEx(CDeleteWarningDlg::IDD, pParent)
       , m_fileName(wds::strEmpty)
       , m_dontShowAgain(false)
 {
@@ -35,12 +35,12 @@ CDeleteWarningDlg::CDeleteWarningDlg(CWnd* pParent /*=NULL*/)
 
 void CDeleteWarningDlg::DoDataExchange(CDataExchange* pDX)
 {
-    CDialog::DoDataExchange(pDX);
+    CDialogEx::DoDataExchange(pDX);
     DDX_Check(pDX, IDC_DONTSHOWAGAIN, m_dontShowAgain);
     DDX_Text(pDX, IDC_FILENAME, m_fileName);
 }
 
-BEGIN_MESSAGE_MAP(CDeleteWarningDlg, CDialog)
+BEGIN_MESSAGE_MAP(CDeleteWarningDlg, CDialogEx)
     ON_BN_CLICKED(IDNO, OnBnClickedNo)
     ON_BN_CLICKED(IDYES, OnBnClickedYes)
 END_MESSAGE_MAP()
@@ -59,7 +59,7 @@ void CDeleteWarningDlg::OnBnClickedYes()
 
 BOOL CDeleteWarningDlg::OnInitDialog()
 {
-    CDialog::OnInitDialog();
+    CDialogEx::OnInitDialog();
 
     Localization::UpdateDialogs(*this);
 

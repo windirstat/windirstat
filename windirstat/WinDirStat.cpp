@@ -47,7 +47,7 @@
 CMainFrame* GetMainFrame()
 {
     // Not: return (CMainFrame *)AfxGetMainWnd();
-    // because CWinApp::m_pMainWnd is set too late.
+    // because CWinAppEx::m_pMainWnd is set too late.
     return CMainFrame::GetTheFrame();
 }
 
@@ -73,7 +73,7 @@ CMyImageList* GetMyImageList()
 
 // CDirStatApp
 
-BEGIN_MESSAGE_MAP(CDirStatApp, CWinApp)
+BEGIN_MESSAGE_MAP(CDirStatApp, CWinAppEx)
     ON_COMMAND(ID_APP_ABOUT, OnAppAbout)
     ON_COMMAND(ID_FILE_SELECT, OnFileOpen)
     ON_COMMAND(ID_RUN_ELEVATED, OnRunElevated)
@@ -305,7 +305,8 @@ bool CDirStatApp::SetPortableMode(bool enable, bool only_open)
 
 BOOL CDirStatApp::InitInstance()
 {
-    Inherited::InitInstance();
+    CWinAppEx::InitInstance();
+    CWinAppEx::InitShellManager();
 
     // Load default language just to get bootstrapped
     Localization::LoadResource(MAKELANGID(LANG_ENGLISH, SUBLANG_NEUTRAL));
@@ -317,13 +318,13 @@ BOOL CDirStatApp::InitInstance()
     (void)::AfxOleInit();
     ::AfxEnableControlContainer();
     (void)::AfxInitRichEdit2();
-    Inherited::EnableHtmlHelp();
+    CWinAppEx::EnableHtmlHelp();
 
     // If a local config file is available, use that for settings
     SetPortableMode(true, true);
 
     COptions::LoadAppSettings();
-    Inherited::LoadStdProfileSettings(4);
+    CWinAppEx::LoadStdProfileSettings(4);
 
     m_pDocTemplate = new CSingleDocTemplate(
         IDR_MAINFRAME,
@@ -391,7 +392,7 @@ BOOL CDirStatApp::InitInstance()
 
 int CDirStatApp::ExitInstance()
 {
-    return Inherited::ExitInstance();
+    return CWinAppEx::ExitInstance();
 }
 
 void CDirStatApp::OnAppAbout()

@@ -36,13 +36,10 @@
 #define IDI_JUNCTION_PROTECTED          946
 #define IDI_FREE_SPACE                  947
 #define IDI_EMPTY                       948
-#define ID_INDICATOR_MEMORYUSAGE        952
 #define IDC_ALLLOCALDRIVES              1000
 #define IDC_ALLDRIVES                   1000
 #define IDC_SOMEDRIVES                  1001
 #define IDC_AFOLDER                     1002
-#define IDC_FOLDERNAME                  1003
-#define IDC_BROWSEFOLDER                1004
 #define IDC_DRIVES                      1005
 #define IDC_TAB                         1013
 #define IDC_CAPTION                     1014
@@ -117,6 +114,8 @@
 #define IDC_USEWDSLOCALE                1225
 #define IDC_COMBO_THREADS               1230
 #define IDC_TREECOL_ATTRIBUTES          1231
+#define IDC_BROWSE_FOLDER              1232
+#define IDC_BROWSE_FOLDER               1232
 #define ID_WDS_CONTROL                  4711
 #define ID_CLEANUP_EXPLORER_SELECT      32774
 #define ID_TREEMAP_ZOOMIN               32783
@@ -125,8 +124,6 @@
 #define ID_TREEMAP_SELECT_PARENT        32785
 #define ID_TREEMAP_REBUILDTREEMAP       32786
 #define ID_TREEMAP_HELPABOUTTREEMAPS    32787
-#define ID_SETTINGS_SHOWTREEMAP         32789
-#define ID_SETTINGS_SHOWTOOLBAR         32790
 #define ID_SETTINGS_SHOW                32791
 #define ID_VIEW_SHOWTREEMAP             32792
 #define ID_SETTINGS_CONFIGUREWINDIRSTAT 32793
@@ -165,15 +162,14 @@
 #define ID_FILE_SELECT                  33030
 #define ID_SCAN_SUSPEND                 33031
 #define ID_SCAN_RESUME                  33032
-#define ID_POPUP_REFRESHSELECTED        33033
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        953
+#define _APS_NEXT_RESOURCE_VALUE        954
 #define _APS_NEXT_COMMAND_VALUE         33034
-#define _APS_NEXT_CONTROL_VALUE         1232
+#define _APS_NEXT_CONTROL_VALUE         1233
 #define _APS_NEXT_SYMED_VALUE           109
 #endif
 #endif

@@ -23,19 +23,19 @@
 #include "WinDirStat.h"
 #include "ModalApiShuttle.h"
 
-IMPLEMENT_DYNAMIC(CModalApiShuttle, CDialog)
+IMPLEMENT_DYNAMIC(CModalApiShuttle, CDialogEx)
 
 CModalApiShuttle::CModalApiShuttle(CWnd* pParent /*=NULL*/)
-    : CDialog(CModalApiShuttle::IDD, pParent)
+    : CDialogEx(CModalApiShuttle::IDD, pParent)
 {
 }
 
-BEGIN_MESSAGE_MAP(CModalApiShuttle, CDialog)
+BEGIN_MESSAGE_MAP(CModalApiShuttle, CDialogEx)
 END_MESSAGE_MAP()
 
 BOOL CModalApiShuttle::OnInitDialog()
 {
-    CDialog::OnInitDialog();
+    CDialogEx::OnInitDialog();
 
     CRect rc;
     AfxGetMainWnd()->GetWindowRect(rc);

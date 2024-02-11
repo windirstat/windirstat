@@ -26,7 +26,7 @@
 // e.g. C:\Windows, we show an additional warning, when the user
 // selects "Delete" (before the shell shows its warning).
 //
-class CDeleteWarningDlg final : public CDialog
+class CDeleteWarningDlg final : public CDialogEx
 {
     DECLARE_DYNAMIC(CDeleteWarningDlg)
 

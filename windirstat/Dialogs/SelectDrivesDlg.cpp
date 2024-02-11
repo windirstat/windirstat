@@ -473,12 +473,12 @@ void CDrivesList::MeasureItem(LPMEASUREITEMSTRUCT mis)
 
 /////////////////////////////////////////////////////////////////////////////
 
-IMPLEMENT_DYNAMIC(CSelectDrivesDlg, CDialog)
+IMPLEMENT_DYNAMIC(CSelectDrivesDlg, CDialogEx)
 
 UINT CSelectDrivesDlg::_serial;
 
 CSelectDrivesDlg::CSelectDrivesDlg(CWnd* pParent /*=NULL*/)
-    : CDialog(CSelectDrivesDlg::IDD, pParent)
+    : CDialogEx(CSelectDrivesDlg::IDD, pParent)
       , m_radio(0), m_layout(this, COptions::DriveWindowRect.Ptr())
 {
     _serial++;
@@ -486,18 +486,17 @@ CSelectDrivesDlg::CSelectDrivesDlg(CWnd* pParent /*=NULL*/)
 
 void CSelectDrivesDlg::DoDataExchange(CDataExchange* pDX)
 {
-    CDialog::DoDataExchange(pDX);
+    CDialogEx::DoDataExchange(pDX);
     DDX_Control(pDX, IDC_DRIVES, m_list);
     DDX_Radio(pDX, IDC_ALLDRIVES, m_radio);
-    DDX_Text(pDX, IDC_FOLDERNAME, m_folderName);
     DDX_Control(pDX, IDOK, m_okButton);
+    DDX_Control(pDX, IDC_BROWSE_FOLDER, m_browse);
 }
 
-BEGIN_MESSAGE_MAP(CSelectDrivesDlg, CDialog)
-    ON_BN_CLICKED(IDC_BROWSEFOLDER, OnBnClickedBrowsefolder)
+BEGIN_MESSAGE_MAP(CSelectDrivesDlg, CDialogEx)
     ON_BN_CLICKED(IDC_AFOLDER, OnBnClickedAfolder)
     ON_BN_CLICKED(IDC_SOMEDRIVES, OnBnClickedSomedrives)
-    ON_EN_CHANGE(IDC_FOLDERNAME, OnEnChangeFoldername)
+    ON_EN_CHANGE(IDC_BROWSE_FOLDER, OnEnChangeFoldername)
     ON_WM_MEASUREITEM()
 #pragma warning(suppress: 26454)
     ON_NOTIFY(LVN_ITEMCHANGED, IDC_DRIVES, OnLvnItemchangedDrives)
@@ -514,7 +513,7 @@ BOOL CSelectDrivesDlg::OnInitDialog()
 {
     CWaitCursor wc;
 
-    CDialog::OnInitDialog();
+    CDialogEx::OnInitDialog();
 
     Localization::UpdateDialogs(*this);
 
@@ -530,8 +529,7 @@ BOOL CSelectDrivesDlg::OnInitDialog()
     m_layout.AddControl(IDCANCEL, 1, 0, 0, 0);
     m_layout.AddControl(IDC_DRIVES, 0, 0, 1, 1);
     m_layout.AddControl(IDC_AFOLDER, 0, 1, 0, 0);
-    m_layout.AddControl(IDC_FOLDERNAME, 0, 1, 1, 0);
-    m_layout.AddControl(IDC_BROWSEFOLDER, 1, 1, 0, 0);
+    m_layout.AddControl(IDC_BROWSE_FOLDER, 1, 1, 0, 0);
 
     m_layout.OnInitDialog(true);
 
@@ -552,6 +550,11 @@ BOOL CSelectDrivesDlg::OnInitDialog()
 
     m_folderName = COptions::SelectDrivesFolder.Obj().c_str();
     m_selectedDrives = COptions::SelectDrivesDrives;
+
+    CBitmap bitmap;
+    bitmap.LoadBitmapW(IDB_FILE_SELECT);
+    m_browse.SetBrowseButtonImage(bitmap, TRUE);
+    m_browse.SetWindowTextW(m_folderName);
 
     ShowWindow(SW_SHOWNORMAL);
     UpdateWindow();
@@ -620,49 +623,6 @@ BOOL CSelectDrivesDlg::OnInitDialog()
     return false; // we have set the focus.
 }
 
-void CSelectDrivesDlg::OnBnClickedBrowsefolder()
-{
-    // Buffer, because SHBrowseForFolder() wants a buffer
-    CStringW sDisplayName, sSelectedFolder = m_folderName;
-    BROWSEINFO bi;
-    ZeroMemory(&bi, sizeof(bi));
-
-    // Load a meaningful title for the browse dialog
-    const CStringW title = Localization::Lookup(IDS_SELECTFOLDER);
-    bi.hwndOwner         = m_hWnd;
-    // Use the CStringW as buffer (minimum is MAX_PATH as length)
-    bi.pszDisplayName = sDisplayName.GetBuffer(_MAX_PATH);
-    bi.lpszTitle      = title;
-    // Set a callback function to pre-select a folder
-    bi.lpfn   = static_cast<BFFCALLBACK>(BrowseCallbackProc);
-    bi.lParam = LPARAM(sSelectedFolder.GetBuffer());
-    // Set the required flags
-    bi.ulFlags = BIF_RETURNONLYFSDIRS | BIF_EDITBOX | BIF_NEWDIALOGSTYLE | BIF_NONEWFOLDERBUTTON;
-
-    SmartPointer<LPITEMIDLIST> pidl(CoTaskMemFree, SHBrowseForFolder(&bi));
-    // Release the actual buffer
-    sDisplayName.ReleaseBuffer();
-    sSelectedFolder.ReleaseBuffer();
-
-    if (pidl != nullptr)
-    {
-        CComPtr<IShellFolder> pshf;
-        HRESULT hr = ::SHGetDesktopFolder(&pshf);
-        ASSERT(SUCCEEDED(hr));
-
-        STRRET strret;
-        strret.uType = STRRET_CSTR;
-        hr           = pshf->GetDisplayNameOf(pidl, SHGDN_FORPARSING, &strret);
-        ASSERT(SUCCEEDED(hr));
-        CStringW sDir = MyStrRetToString(pidl, &strret);
-
-        m_folderName = sDir;
-        m_radio      = RADIO_AFOLDER;
-        UpdateData(false);
-        UpdateButtons();
-    }
-}
-
 void CSelectDrivesDlg::OnOK()
 {
     UpdateData();
@@ -693,7 +653,7 @@ void CSelectDrivesDlg::OnOK()
     COptions::SelectDrivesRadio = m_radio;
     COptions::SelectDrivesFolder = std::wstring(m_folderName);
 
-    CDialog::OnOK();
+    CDialogEx::OnOK();
 }
 
 void CSelectDrivesDlg::UpdateButtons()
@@ -752,6 +712,10 @@ void CSelectDrivesDlg::OnBnClickedSomedrives()
 
 void CSelectDrivesDlg::OnEnChangeFoldername()
 {
+    m_radio = 2;
+    UpdateData(FALSE);
+
+    m_browse.GetWindowText(m_folderName);
     UpdateButtons();
 }
 
@@ -763,7 +727,7 @@ void CSelectDrivesDlg::OnMeasureItem(int nIDCtl, LPMEASUREITEMSTRUCT mis)
     }
     else
     {
-        CDialog::OnMeasureItem(nIDCtl, mis);
+        CDialogEx::OnMeasureItem(nIDCtl, mis);
     }
 }
 
@@ -784,14 +748,14 @@ void CSelectDrivesDlg::OnBnClickedAlllocaldrives()
 
 void CSelectDrivesDlg::OnSize(UINT nType, int cx, int cy)
 {
-    CDialog::OnSize(nType, cx, cy);
+    CDialogEx::OnSize(nType, cx, cy);
     m_layout.OnSize();
 }
 
 void CSelectDrivesDlg::OnGetMinMaxInfo(MINMAXINFO* lpMMI)
 {
     m_layout.OnGetMinMaxInfo(lpMMI);
-    CDialog::OnGetMinMaxInfo(lpMMI);
+    CDialogEx::OnGetMinMaxInfo(lpMMI);
 }
 
 void CSelectDrivesDlg::OnDestroy()
@@ -799,7 +763,7 @@ void CSelectDrivesDlg::OnDestroy()
     CDriveInformationThread::InvalidateDialogHandle();
 
     m_layout.OnDestroy();
-    CDialog::OnDestroy();
+    CDialogEx::OnDestroy();
 }
 
 LRESULT CSelectDrivesDlg::OnWmuOk(WPARAM, LPARAM)
@@ -854,7 +818,7 @@ LRESULT CSelectDrivesDlg::OnWmuThreadFinished(WPARAM serial, LPARAM lparam)
 
 void CSelectDrivesDlg::OnSysColorChange()
 {
-    CDialog::OnSysColorChange();
+    CDialogEx::OnSysColorChange();
     m_list.SysColorChanged();
 }
 

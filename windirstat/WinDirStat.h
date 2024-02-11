@@ -49,10 +49,8 @@ CStringW GetWinDirStatHomepage();
 // CDirStatApp. The MFC application object.
 // Knows about RAM Usage, Mount points, Help files and the CMyImageList.
 //
-class CDirStatApp final : public CWinApp
+class CDirStatApp final : public CWinAppEx
 {
-    using Inherited = CWinApp;
-
 public:
     CDirStatApp();
 

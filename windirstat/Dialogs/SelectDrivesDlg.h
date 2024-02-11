@@ -141,7 +141,7 @@ public:
 // CSelectDrivesDlg. The initial dialog, where the user can select
 // one or more drives or a folder for scanning.
 //
-class CSelectDrivesDlg final : public CDialog
+class CSelectDrivesDlg final : public CDialogEx
 {
     DECLARE_DYNAMIC(CSelectDrivesDlg)
 
@@ -167,6 +167,7 @@ protected:
 
     static UINT _serial; // Each Instance of this dialog gets a serial number
     CDrivesList m_list;
+    CMFCEditBrowseCtrl m_browse;
     CButton m_okButton;
     std::vector<std::wstring> m_selectedDrives;
     CLayout m_layout;

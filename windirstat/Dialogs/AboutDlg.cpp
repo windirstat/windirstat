@@ -251,7 +251,7 @@ void CAboutDlg::CMyTabControl::OnSize(UINT nType, int cx, int cy)
 ////////////////////////////////////////////////////////////////////////////
 
 CAboutDlg::CAboutDlg()
-    : CDialog(CAboutDlg::IDD)
+    : CDialogEx(CAboutDlg::IDD)
       , m_layout(this, COptions::AboutWindowRect.Ptr())
 {
 }
@@ -288,12 +288,12 @@ CStringW CAboutDlg::GetTranslatorList()
 
 void CAboutDlg::DoDataExchange(CDataExchange* pDX)
 {
-    CDialog::DoDataExchange(pDX);
+    CDialogEx::DoDataExchange(pDX);
     DDX_Control(pDX, IDC_CAPTION, m_caption);
     DDX_Control(pDX, IDC_TAB, m_tab);
 }
 
-BEGIN_MESSAGE_MAP(CAboutDlg, CDialog)
+BEGIN_MESSAGE_MAP(CAboutDlg, CDialogEx)
 #pragma warning(suppress: 26454)
     ON_NOTIFY(TCN_SELCHANGE, IDC_TAB, OnTcnSelchangeTab)
     ON_WM_SIZE()
@@ -303,7 +303,7 @@ END_MESSAGE_MAP()
 
 BOOL CAboutDlg::OnInitDialog()
 {
-    CDialog::OnInitDialog();
+    CDialogEx::OnInitDialog();
 
     Localization::UpdateDialogs(*this);
 
@@ -327,18 +327,18 @@ void CAboutDlg::OnTcnSelchangeTab(NMHDR* /* pNMHDR */, LRESULT* pResult)
 
 void CAboutDlg::OnSize(UINT nType, int cx, int cy)
 {
-    CDialog::OnSize(nType, cx, cy);
+    CDialogEx::OnSize(nType, cx, cy);
     m_layout.OnSize();
 }
 
 void CAboutDlg::OnGetMinMaxInfo(MINMAXINFO* mmi)
 {
     m_layout.OnGetMinMaxInfo(mmi);
-    CDialog::OnGetMinMaxInfo(mmi);
+    CDialogEx::OnGetMinMaxInfo(mmi);
 }
 
 void CAboutDlg::OnDestroy()
 {
     m_layout.OnDestroy();
-    CDialog::OnDestroy();
+    CDialogEx::OnDestroy();
 }
