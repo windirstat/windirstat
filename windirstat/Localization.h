@@ -51,11 +51,11 @@ public:
         return map.contains(name);
     }
 
-    static CStringW Lookup(const UINT res, const CStringW & def = L"")
+    static CStringW Lookup(const UINT res)
     {
-        CString name;
+        CStringW name;
         name.LoadStringW(nullptr, res, static_cast<LANGID>(COptions::LanguageId.Obj()));
-        return Contains(name) ? Lookup(name) : def;
+        return Contains(name) ? Lookup(name) : CStringW(L"");
     }
 
     static CStringW Lookup(const CStringW& name)

@@ -161,6 +161,10 @@
 #define ID_FILE_SELECT                  33030
 #define ID_SCAN_SUSPEND                 33031
 #define ID_SCAN_RESUME                  33032
+#define ID_MENU_FILE_SAVE_RESULTS       33035
+#define ID_MENU_FILE_LOAD_RESULTS       33036
+#define ID_LOAD_RESULTS                 33037
+#define ID_SAVE_RESULTS                 33038
 #define IDS_AUTHOR_EMAIL                57345
 #define IDS_AUTHOR_WEBSITE              57346
 
@@ -169,7 +173,7 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        954
-#define _APS_NEXT_COMMAND_VALUE         33034
+#define _APS_NEXT_COMMAND_VALUE         33039
 #define _APS_NEXT_CONTROL_VALUE         1233
 #define _APS_NEXT_SYMED_VALUE           109
 #endif

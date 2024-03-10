@@ -90,6 +90,7 @@ public:
     void DeleteContents() override;
     BOOL OnNewDocument() override;
     BOOL OnOpenDocument(LPCWSTR lpszPathName) override;
+    BOOL OnOpenDocument(CItem* newroot);
     void SetPathName(LPCWSTR lpszPathName, BOOL bAddToMRU) override;
     void SetTitlePrefix(const CStringW& prefix) const;
 
@@ -166,6 +167,8 @@ protected:
     DECLARE_MESSAGE_MAP()
     afx_msg void OnRefreshSelected();
     afx_msg void OnRefreshAll();
+    afx_msg void OnSaveResults();
+    afx_msg void OnLoadResults();
     afx_msg void OnEditCopy();
     afx_msg void OnCleanupEmptyRecycleBin();
     afx_msg void OnUpdateCentralHandler(CCmdUI* pCmdUI);

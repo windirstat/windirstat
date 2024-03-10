@@ -107,6 +107,7 @@ public:
     CItem& operator=(const CItem&) = delete;
     CItem& operator=(CItem&&) = delete;
     CItem(ITEMTYPE type, LPCWSTR name);
+    CItem(ITEMTYPE type, LPCWSTR name, FILETIME lastChange, ULONGLONG size, DWORD attributes, ULONG files, ULONG subdirs);
     ~CItem() override;
 
     // CTreeListItem Interface
@@ -158,7 +159,7 @@ public:
     void UpdateStatsFromDisk();
     const std::vector<CItem*>& GetChildren() const;
     CItem* GetParent() const;
-    void AddChild(CItem* child);
+    void AddChild(CItem* child, bool add_only = false);
     void RemoveChild(CItem* child);
     void RemoveAllChildren();
     void UpwardAddSubdirs(ULONG dirCount);
@@ -217,6 +218,11 @@ public:
     ITEMTYPE GetType() const
     {
         return static_cast<ITEMTYPE>(m_type & ~ITF_FLAGS);
+    }
+
+    ITEMTYPE GetRawType() const
+    {
+        return m_type;
     }
 
     constexpr bool IsType(const ITEMTYPE type) const

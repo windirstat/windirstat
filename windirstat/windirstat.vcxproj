@@ -289,6 +289,7 @@
     <ClInclude Include="..\common\version.h" />
     <ClInclude Include="..\common\Constants.h" />
     <ClInclude Include="BlockingQueue.h" />
+    <ClInclude Include="CsvLoader.h" />
     <ClInclude Include="DirStatDoc.h" />
     <ClInclude Include="DirStatView.h" />
     <ClInclude Include="FileFind.h" />
@@ -332,6 +333,7 @@
   <ItemGroup>
     <ClCompile Include="..\common\CommonHelpers.cpp">
     </ClCompile>
+    <ClCompile Include="CsvLoader.cpp" />
     <ClCompile Include="DirStatDoc.cpp">
     </ClCompile>
     <ClCompile Include="DirStatView.cpp">

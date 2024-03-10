@@ -214,6 +214,7 @@
     <ClInclude Include="langs.h">
       <Filter>Resource Files\Languages</Filter>
     </ClInclude>
+    <ClInclude Include="CsvLoader.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\common\CommonHelpers.cpp">
@@ -319,6 +320,9 @@
       <Filter>Source Files\Common</Filter>
     </ClCompile>
     <ClCompile Include="Localization.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CsvLoader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -52,7 +52,7 @@ bool Localization::CrackStrings(std::basic_istream<char>& stream, unsigned int s
         // Convert to wide strings
         if (line.empty() || line[0] == L'#') continue;
         int sz = MultiByteToWideChar(CP_UTF8, 0, line.c_str(), static_cast<int>(line.size()),
-            buffer_wide.data(), static_cast<int>(buffer_wide.capacity()));
+            buffer_wide.data(), static_cast<int>(buffer_wide.size()));
         ASSERT(sz != 0);
         std::wstring line_wide = buffer_wide.substr(0, sz);
 

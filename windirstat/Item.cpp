@@ -84,6 +84,19 @@ CItem::CItem(ITEMTYPE type, LPCWSTR name)
     }
 }
 
+CItem::CItem(ITEMTYPE type, LPCWSTR name, FILETIME lastChange,
+    ULONGLONG size, DWORD attributes, ULONG files, ULONG subdirs) : CItem(type, name)
+{
+    m_lastChange = lastChange;
+    m_size = size;
+    m_attributes = attributes;
+    if (m_ci)
+    {
+        m_ci->m_subdirs = subdirs;
+        m_ci->m_files = files;
+    }
+}
+
 CItem::~CItem()
 {
     if (m_ci)
@@ -523,12 +536,14 @@ CItem* CItem::GetParent() const
     return reinterpret_cast<CItem*>(CTreeListItem::GetParent());
 }
 
-void CItem::AddChild(CItem* child)
+void CItem::AddChild(CItem* child, bool add_only)
 {
-    ASSERT(!IsDone());
+    if (!add_only)
+    {
+        UpwardAddSize(child->m_size);
+        UpwardUpdateLastChange(child->m_lastChange);
+    }
 
-    UpwardAddSize(child->m_size);
-    UpwardUpdateLastChange(child->m_lastChange);
     child->SetParent(this);
 
     std::lock_guard m_guard(m_ci->m_protect);
@@ -690,7 +705,6 @@ ULONGLONG CItem::GetSize() const
 
 void CItem::SetSize(const ULONGLONG ownSize)
 {
-    ASSERT(TmiIsLeaf());
     ASSERT(ownSize >= 0);
     m_size = ownSize;
 }

@@ -39,10 +39,12 @@
 #include <unordered_set>
 #include <vector>
 #include <filesystem>
+#include <fstream>
 
 #include "DirStatView.h"
 #include "GraphView.h"
 #include "Localization.h"
+#include <CsvLoader.h>
 
 CDirStatDoc* _theDocument;
 
@@ -248,6 +250,21 @@ BOOL CDirStatDoc::OnOpenDocument(LPCWSTR lpszPathName)
 
     UpdateAllViews(nullptr, HINT_NEWROOT);
     StartupCoordinator(std::vector({ GetDocument()->GetRootItem() }));
+    return true;
+}
+
+BOOL CDirStatDoc::OnOpenDocument(CItem * newroot)
+{
+    CDocument::OnNewDocument(); // --> DeleteContents()
+
+    m_rootItem = newroot;
+    m_zoomItem = m_rootItem;
+
+    GetMainFrame()->MinimizeGraphView();
+    GetMainFrame()->MinimizeTypeView();
+
+    UpdateAllViews(nullptr, HINT_NEWROOT);
+    StartupCoordinator({});
     return true;
 }
 
@@ -849,11 +866,12 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
     static bool (*is_suspended)(CItem*) = [](CItem*) { return GetMainFrame()->IsScanSuspended(); };
     static bool (*is_not_suspended)(CItem*) = [](CItem*) { return doc->GetRootItem() != nullptr && !doc->IsRootDone() && !GetMainFrame()->IsScanSuspended(); };
 
-    static std::map<UINT, const command_filter> filters
+    static std::unordered_map<UINT, const command_filter> filters
     {
         // ID                           none   many   early  focus  types
         { ID_REFRESH_ALL,             { true,  true,  false, false, IT_ANY} },
         { ID_REFRESH_SELECTED,        { false, true,  false, false, IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY | IT_FILE } },
+        { ID_SAVE_RESULTS,            { true,  true,  false, false, IT_ANY} },
         { ID_EDIT_COPY_CLIPBOARD,     { false, true,  true,  false, IT_DRIVE | IT_DIRECTORY | IT_FILE } },
         { ID_CLEANUP_EMPTY_BIN,       { true,  true,  false, false, IT_ANY} },
         { ID_TREEMAP_RESELECT_CHILD,  { true,  true,  true,  false, IT_ANY, reslect_avail } },
@@ -898,6 +916,8 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
 BEGIN_MESSAGE_MAP(CDirStatDoc, CDocument) 
     ON_COMMAMD_UPDATE_WRAPPER(ID_REFRESH_SELECTED, OnRefreshSelected)
     ON_COMMAMD_UPDATE_WRAPPER(ID_REFRESH_ALL, OnRefreshAll)
+    ON_COMMAND(ID_LOAD_RESULTS, OnLoadResults)
+    ON_COMMAMD_UPDATE_WRAPPER(ID_SAVE_RESULTS, OnSaveResults)
     ON_COMMAMD_UPDATE_WRAPPER(ID_EDIT_COPY_CLIPBOARD, OnEditCopy)
     ON_COMMAMD_UPDATE_WRAPPER(ID_CLEANUP_EMPTY_BIN, OnCleanupEmptyRecycleBin)
     ON_UPDATE_COMMAND_UI(ID_VIEW_SHOWFREESPACE, OnUpdateViewShowFreeSpace)
@@ -928,6 +948,32 @@ void CDirStatDoc::OnRefreshSelected()
 void CDirStatDoc::OnRefreshAll()
 {
     RefreshItem(GetRootItem());
+}
+
+
+void CDirStatDoc::OnSaveResults()
+{
+    // Request the file path from the user
+    CStringW file_select_string;
+    file_select_string.Format(L"%s (*.csv)|*.csv|%s (*.*)|*.*||",
+        Localization::Lookup(IDS_CSV_FILES).GetString(), Localization::Lookup(IDS_ALL_FILES).GetString());
+    CFileDialog dlg(FALSE, L"csv", nullptr, OFN_EXPLORER | OFN_DONTADDTORECENT, file_select_string.GetString());
+    if (dlg.DoModal() != IDOK) return;
+    
+    SaveResults(dlg.GetPathName().GetString(), GetRootItem());
+}
+
+void CDirStatDoc::OnLoadResults()
+{
+    // Request the file path from the user
+    CStringW file_select_string;
+    file_select_string.Format(L"%s (*.csv)|*.csv|%s (*.*)|*.*||",
+        Localization::Lookup(IDS_CSV_FILES).GetString(), Localization::Lookup(IDS_ALL_FILES).GetString());
+    CFileDialog dlg(TRUE, L"csv", nullptr, OFN_EXPLORER | OFN_DONTADDTORECENT | OFN_PATHMUSTEXIST, file_select_string.GetString());
+    if (dlg.DoModal() != IDOK) return;
+
+    CItem* newroot = LoadResults(dlg.GetPathName().GetString());
+    GetDocument()->OnOpenDocument(newroot);
 }
 
 void CDirStatDoc::OnEditCopy()
