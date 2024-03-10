@@ -816,6 +816,27 @@ void CTreeListControl::ExpandItem(int i, bool scroll)
     }
 }
 
+void CTreeListControl::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
+{
+    if (nChar == VK_RIGHT)
+    {
+        const auto& items = GetAllSelected();
+        if (items.size() == 1 && !items[0]->IsExpanded())
+        {
+            ExpandItem(FindTreeItem(items[0]));
+        }
+    }
+    else if (nChar == VK_LEFT)
+    {
+        const auto& items = GetAllSelected();
+        if (items.size() == 1 && items[0]->IsExpanded())
+        {
+            CollapseItem(FindTreeItem(items[0]));
+        }
+    }
+    COwnerDrawnListControl::OnKeyDown(nChar, nRepCnt, nFlags);
+}
+
 void CTreeListControl::OnLvnItemchangingList(NMHDR* pNMHDR, LRESULT* pResult)
 {
     const auto pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);

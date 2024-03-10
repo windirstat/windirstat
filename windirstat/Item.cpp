@@ -1107,7 +1107,7 @@ void CItem::UpdateUnknownItem()
     ULONGLONG total;
     ULONGLONG free;
     CDirStatApp::getDiskFreeSpace(GetPath(), total, free);
-    unknown->UpwardAddSize(total - free - tallied);
+    unknown->UpwardAddSize((tallied > total - free) ? 0 : total - free - tallied);
 }
 
 void CItem::RemoveFreeSpaceItem()

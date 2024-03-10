@@ -171,12 +171,6 @@ public:
 
         return reinterpret_cast<T*>(GetItem(i));
     }
-    template <class T = CTreeListItem> T* GetRecentSelectedItem()
-    {
-        const int i = GetSelectionMark();
-        if (i == -1) return nullptr;
-        return reinterpret_cast<T*>(GetItem(i));
-    }
 
 protected:
     virtual void OnItemDoubleClick(int i);
@@ -202,4 +196,5 @@ protected:
     afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
     afx_msg void OnLButtonDblClk(UINT nFlags, CPoint point);
     afx_msg void OnLvnItemchangingList(NMHDR* pNMHDR, LRESULT* pResult);
+    afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
 };
