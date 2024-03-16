@@ -314,7 +314,6 @@
     <ClInclude Include="langs.h" />
     <ClInclude Include="SelectObject.h" />
     <ClInclude Include="stdafx.h" />
-    <ClInclude Include="LuaWds.h" />
     <ClInclude Include="WinDirStat.h" />
     <ClInclude Include="Controls\ColorButton.h" />
     <ClInclude Include="Controls\GraphView.h" />

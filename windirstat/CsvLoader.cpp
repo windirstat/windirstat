@@ -107,7 +107,7 @@ static std::string QuoteAndConvert(const CStringW& inc)
     return out;
 }
 
-CItem * LoadResults(std::wstring path)
+CItem* LoadResults(std::wstring path)
 {
     std::ifstream reader(path);
     if (!reader.is_open()) return nullptr;
@@ -163,34 +163,43 @@ CItem * LoadResults(std::wstring path)
             continue;
         }
 
+        // Decode item type
+        const ITEMTYPE type = static_cast<ITEMTYPE>(wcstoul(fields[order_map[FIELD_ATTRIBUTES_WDS]].c_str(), nullptr, 16));
+
         // Determine how to store the path if it was the root or not
-        const bool is_root_item = parent_map.size() == 0;
+        const bool is_root = (type & ITF_ROOTITEM);
+        const bool is_in_root = (type & IT_DRIVE) || (type & IT_UNKNOWN) || (type & IT_FREESPACE);
+        const bool use_full_path = is_root || is_in_root;
         const std::wstring map_path = fields[order_map[FIELD_NAME]];
         LPWSTR lookup_path = fields[order_map[FIELD_NAME]].data();
-        LPWSTR constructor_path = is_root_item ? lookup_path : wcsrchr(lookup_path, L'\\');
-        if (!is_root_item && constructor_path != nullptr)
+        LPWSTR display_name = use_full_path ? lookup_path : wcsrchr(lookup_path, L'\\');
+        if (!use_full_path && display_name != nullptr)
         {
-            constructor_path[0] = L'\0';
-            constructor_path = &constructor_path[1];
+            display_name[0] = L'\0';
+            display_name = &display_name[1];
         }
 
         // Create the tree item
         CItem* newitem = new CItem(
-            static_cast<ITEMTYPE>(wcstoul(fields[order_map[FIELD_ATTRIBUTES_WDS]].c_str(), nullptr, 16)),
-            constructor_path,
+            type,
+            display_name,
             FromTimeString(fields[order_map[FIELD_LASTCHANGE]]),
             _wcstoui64(fields[order_map[FIELD_SIZE]].c_str(), nullptr, 10),
             wcstoul(fields[order_map[FIELD_ATTRIBUTES]].c_str(), nullptr, 16),
             wcstoul(fields[order_map[FIELD_FILES]].c_str(), nullptr, 10),
             wcstoul(fields[order_map[FIELD_SUBDIRS]].c_str(), nullptr, 10));
-        if (is_root_item) newroot = newitem;
- 
+        if (is_root) newroot = newitem;
+
         auto parent = parent_map.find(lookup_path);
-        if (!is_root_item && parent != parent_map.end())
+        if (parent != parent_map.end())
         {
             parent->second->AddChild(newitem, true);
         }
-        else ASSERT(is_root_item);
+        else if (is_in_root)
+        {
+            newroot->AddChild(newitem, true);
+        }
+        else ASSERT(FALSE);
 
         if (!newitem->TmiIsLeaf())
         {
@@ -216,16 +225,31 @@ bool SaveResults(std::wstring path, CItem * item)
     // Output header line to file
     std::ofstream outf;
     outf.open(path, std::ios::binary);
-    outf << QuoteAndConvert(Localization::Lookup(IDS_TREECOL_NAME)) << ",";
-    outf << QuoteAndConvert(Localization::Lookup(IDS_TREECOL_FILES)) << ",";
-    outf << QuoteAndConvert(Localization::Lookup(IDS_TREECOL_SUBDIRS)) << ",";
-    outf << QuoteAndConvert(Localization::Lookup(IDS_TREECOL_SIZE)) << ",";
-    outf << QuoteAndConvert(Localization::Lookup(IDS_TREECOL_ATTRIBUTES)) << ",";
-    outf << QuoteAndConvert(Localization::Lookup(IDS_TREECOL_LASTCHANGE)) << ",";
-    outf << QuoteAndConvert(Localization::Lookup(IDS_APP_TITLE) + L" " + Localization::Lookup(IDS_TREECOL_ATTRIBUTES)) << ",";
-    outf << QuoteAndConvert(Localization::Lookup(IDS_TREECOL_OWNER)) << "\r\n";
+
+    // Determine columns
+    std::vector<CStringW> cols =
+    {
+        Localization::Lookup(IDS_TREECOL_NAME),
+        Localization::Lookup(IDS_TREECOL_FILES),
+        Localization::Lookup(IDS_TREECOL_SUBDIRS),
+        Localization::Lookup(IDS_TREECOL_SIZE),
+        Localization::Lookup(IDS_TREECOL_ATTRIBUTES),
+        Localization::Lookup(IDS_TREECOL_LASTCHANGE),
+        Localization::Lookup(IDS_APP_TITLE) + L" " + Localization::Lookup(IDS_TREECOL_ATTRIBUTES)
+    };
+    if (COptions::ShowColumnOwner)
+    {
+        cols.push_back(Localization::Lookup(IDS_TREECOL_OWNER));
+    }
+
+    // Output columns to file
+    for (unsigned int i = 0; i < cols.size(); i++)
+    {
+        outf << QuoteAndConvert(cols[i]) << ((i < cols.size() - 1) ? "," : "");
+    }
 
     // Output all items to file
+    outf << "\r\n";
     std::stack<CItem*> queue;
     queue.push(item);
     while (!queue.empty())
@@ -234,17 +258,27 @@ bool SaveResults(std::wstring path, CItem * item)
         const CItem* qitem = queue.top();
         queue.pop();
 
-        // Output item
-        outf << std::format("{},{},{},{},0x{:08X},{:%FT%TZ},0x{:04X},{}\r\n",
-            QuoteAndConvert(qitem->GetPath()),
+        // Output primary columns
+        const bool non_path_item = qitem->IsType(ITF_ROOTITEM | IT_UNKNOWN | IT_FREESPACE);
+        outf << std::format("{},{},{},{},0x{:08X},{:%FT%TZ},0x{:04X}",
+            QuoteAndConvert(non_path_item ? qitem->GetName() : qitem->GetPath()),
             qitem->GetFilesCount(),
             qitem->GetSubdirsCount(),
             qitem->GetSize(),
             qitem->GetAttributes(),
             ToTimePoint(qitem->GetLastChange()),
-            static_cast<unsigned short>(qitem->GetRawType()),
-            QuoteAndConvert(qitem->GetOwner(COptions::ShowColumnOwner)));
+            static_cast<unsigned short>(qitem->GetRawType()));
 
+        // Output additional columns
+        if (COptions::ShowColumnOwner)
+        {
+            outf << "," << QuoteAndConvert(qitem->GetOwner(true));
+        }
+
+        // Finalize lines
+        outf << "\r\n";
+
+        // Descend into childitems
         if (qitem->IsType(IT_FILE)) continue;
         for (const auto& child : qitem->GetChildren())
         {

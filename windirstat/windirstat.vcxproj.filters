@@ -154,9 +154,6 @@
     <ClInclude Include="stdafx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="LuaWds.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="WinDirStat.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -214,7 +211,9 @@
     <ClInclude Include="langs.h">
       <Filter>Resource Files\Languages</Filter>
     </ClInclude>
-    <ClInclude Include="CsvLoader.h" />
+    <ClInclude Include="CsvLoader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\common\CommonHelpers.cpp">
