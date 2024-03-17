@@ -418,43 +418,43 @@
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="res\langs\cz.txt">
+    <Text Include="res\langs\lang_cz.txt">
       <Filter>Resource Files\Languages</Filter>
     </Text>
-    <Text Include="res\langs\ee.txt">
+    <Text Include="res\langs\lang_ee.txt">
       <Filter>Resource Files\Languages</Filter>
     </Text>
-    <Text Include="res\langs\es.txt">
+    <Text Include="res\langs\lang_es.txt">
       <Filter>Resource Files\Languages</Filter>
     </Text>
-    <Text Include="res\langs\fl.txt">
+    <Text Include="res\langs\lang_fl.txt">
       <Filter>Resource Files\Languages</Filter>
     </Text>
-    <Text Include="res\langs\fr.txt">
+    <Text Include="res\langs\lang_fr.txt">
       <Filter>Resource Files\Languages</Filter>
     </Text>
-    <Text Include="res\langs\hu.txt">
+    <Text Include="res\langs\lang_hu.txt">
       <Filter>Resource Files\Languages</Filter>
     </Text>
-    <Text Include="res\langs\it.txt">
+    <Text Include="res\langs\lang_it.txt">
       <Filter>Resource Files\Languages</Filter>
     </Text>
-    <Text Include="res\langs\pl.txt">
+    <Text Include="res\langs\lang_pl.txt">
       <Filter>Resource Files\Languages</Filter>
     </Text>
-    <Text Include="res\langs\pt.txt">
+    <Text Include="res\langs\lang_pt.txt">
       <Filter>Resource Files\Languages</Filter>
     </Text>
-    <Text Include="res\langs\ru.txt">
+    <Text Include="res\langs\lang_ru.txt">
       <Filter>Resource Files\Languages</Filter>
     </Text>
-    <Text Include="res\langs\de.txt">
+    <Text Include="res\langs\lang_de.txt">
       <Filter>Resource Files\Languages</Filter>
     </Text>
-    <Text Include="res\langs\en.txt">
+    <Text Include="res\langs\lang_en.txt">
       <Filter>Resource Files\Languages</Filter>
     </Text>
-    <Text Include="res\langs\nl.txt">
+    <Text Include="res\langs\lang_nl.txt">
       <Filter>Resource Files\Languages</Filter>
     </Text>
   </ItemGroup>
