@@ -94,7 +94,6 @@ CStringW GetLocaleString(LCTYPE lctype, LANGID langid)
 
 CStringW GetLocaleLanguage(LANGID langid)
 {
-    if (langid == MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL)) return L"-- Test Language File --";
     const CStringW s = GetLocaleString(LOCALE_SLOCALIZEDLANGUAGENAME, langid);
     const CStringW n = GetLocaleString(LOCALE_SNATIVELANGNAME, langid);
     return s + L" (" + n + L")";

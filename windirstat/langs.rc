@@ -24,7 +24,7 @@ LANGUAGE LANG_CZECH, SUBLANG_NEUTRAL
 // RT_LANG
 //
 
-IDR_RT_LANG             RT_LANG                 "res\\langs\\cz.txt"
+IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_cz.txt"
 
 #endif    // Czech (Neutral) resources
 /////////////////////////////////////////////////////////////////////////////
@@ -42,7 +42,7 @@ LANGUAGE LANG_HUNGARIAN, SUBLANG_NEUTRAL
 // RT_LANG
 //
 
-IDR_RT_LANG             RT_LANG                 "res\\langs\\hu.txt"
+IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_hu.txt"
 
 #endif    // Hungarian (Neutral) resources
 /////////////////////////////////////////////////////////////////////////////
@@ -60,7 +60,7 @@ LANGUAGE LANG_POLISH, SUBLANG_NEUTRAL
 // RT_LANG
 //
 
-IDR_RT_LANG             RT_LANG                 "res\\langs\\pl.txt"
+IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_pl.txt"
 
 #endif    // Polish (Neutral) resources
 /////////////////////////////////////////////////////////////////////////////
@@ -78,7 +78,7 @@ LANGUAGE LANG_RUSSIAN, SUBLANG_NEUTRAL
 // RT_LANG
 //
 
-IDR_RT_LANG             RT_LANG                 "res\\langs\\ru.txt"
+IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_ru.txt"
 
 #endif    // Russian (Neutral) resources
 /////////////////////////////////////////////////////////////////////////////
@@ -403,7 +403,7 @@ LANGUAGE LANG_GERMAN, SUBLANG_NEUTRAL
 // RT_LANG
 //
 
-IDR_RT_LANG             RT_LANG                 "res\\langs\\de.txt"
+IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_de.txt"
 
 #endif    // German (Neutral) resources
 /////////////////////////////////////////////////////////////////////////////
@@ -421,7 +421,7 @@ LANGUAGE LANG_ENGLISH, SUBLANG_NEUTRAL
 // RT_LANG
 //
 
-IDR_RT_LANG             RT_LANG                 "res\\langs\\en.txt"
+IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_en.txt"
 
 #endif    // English (Neutral) resources
 /////////////////////////////////////////////////////////////////////////////
@@ -439,7 +439,7 @@ LANGUAGE LANG_SPANISH, SUBLANG_NEUTRAL
 // RT_LANG
 //
 
-IDR_RT_LANG             RT_LANG                 "res\\langs\\es.txt"
+IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_es.txt"
 
 #endif    // Spanish (Neutral) resources
 /////////////////////////////////////////////////////////////////////////////
@@ -457,7 +457,7 @@ LANGUAGE LANG_FINNISH, SUBLANG_NEUTRAL
 // RT_LANG
 //
 
-IDR_RT_LANG             RT_LANG                 "res\\langs\\fl.txt"
+IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_fl.txt"
 
 #endif    // Finnish (Neutral) resources
 /////////////////////////////////////////////////////////////////////////////
@@ -475,7 +475,7 @@ LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
 // RT_LANG
 //
 
-IDR_RT_LANG             RT_LANG                 "res\\langs\\fr.txt"
+IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_fr.txt"
 
 #endif    // French (Neutral) resources
 /////////////////////////////////////////////////////////////////////////////
@@ -493,7 +493,7 @@ LANGUAGE LANG_ITALIAN, SUBLANG_NEUTRAL
 // RT_LANG
 //
 
-IDR_RT_LANG             RT_LANG                 "res\\langs\\it.txt"
+IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_it.txt"
 
 #endif    // Italian (Neutral) resources
 /////////////////////////////////////////////////////////////////////////////
@@ -511,7 +511,7 @@ LANGUAGE LANG_DUTCH, SUBLANG_NEUTRAL
 // RT_LANG
 //
 
-IDR_RT_LANG             RT_LANG                 "res\\langs\\nl.txt"
+IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_nl.txt"
 
 #endif    // Dutch (Neutral) resources
 /////////////////////////////////////////////////////////////////////////////
@@ -529,7 +529,7 @@ LANGUAGE LANG_PORTUGUESE, SUBLANG_NEUTRAL
 // RT_LANG
 //
 
-IDR_RT_LANG             RT_LANG                 "res\\langs\\pt.txt"
+IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_pt.txt"
 
 #endif    // Portuguese (Neutral) resources
 /////////////////////////////////////////////////////////////////////////////
@@ -583,7 +583,7 @@ LANGUAGE LANG_ESTONIAN, SUBLANG_NEUTRAL
 // RT_LANG
 //
 
-IDR_RT_LANG             RT_LANG                 "res\\langs\\ee.txt"
+IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_ee.txt"
 
 #endif    // Estonian (Neutral) resources
 /////////////////////////////////////////////////////////////////////////////

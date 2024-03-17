@@ -118,7 +118,8 @@ CStringW GetAppFileName(CStringW ext)
 
 CStringW GetAppFolder()
 {
-    return GetBaseNameFromPath(GetAppFileName());
+    CStringW folder = GetAppFileName();
+    return folder.Left(folder.ReverseFind(wds::chrBackslash));
 }
 
 constexpr DWORD SidGetLength(PSID x)

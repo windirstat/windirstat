@@ -100,38 +100,6 @@ CMyImageList* CDirStatApp::GetMyImageList()
     return &m_myImageList;
 }
 
-CStringW CDirStatApp::FindHelpfilePathByLangid(LANGID langid)
-{
-    CStringW s;
-    if (langid == COptions::GetFallbackLanguage())
-    {
-        // The English help file is named windirstat.chm.
-        s = GetAppFolder() + L"\\windirstat.chm";
-        if (::PathFileExists(s))
-        {
-            return s;
-        }
-    }
-
-    // Help files for other languages are named wdshxxxx.chm (xxxx = LANGID).
-    // TODO: Fix CHM file lookup
-    s = L"";// FindAuxiliaryFileByLangid(L"wdsh", L".chm", langid, false);
-    if (!s.IsEmpty())
-    {
-        return s;
-    }
-
-    // Else, try windirstat.chm again.
-    s = GetAppFolder() + L"\\windirstat.chm";
-    if (::PathFileExists(s))
-    {
-        return s;
-    }
-
-    // Not found.
-    return wds::strEmpty;
-}
-
 void CDirStatApp::RestartApplication()
 {
     // First, try to create the suspended process

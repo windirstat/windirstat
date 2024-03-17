@@ -1,4 +1,4 @@
-// Localization.cpp - Implementation of CDirStatApp and some globals
+// Localization.cpp
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2024 WinDirStat Team (windirstat.net)
@@ -22,6 +22,8 @@
 #include "stdafx.h"
 #include "Localization.h"
 #include "CommonHelpers.h"
+#include "GlobalHelpers.h"
+#include "FileFind.h"
 #include "resource.h"
 #include "langs.h"
 
@@ -72,11 +74,6 @@ bool Localization::CrackStrings(std::basic_istream<char>& stream, unsigned int s
 std::vector<LANGID> Localization::GetLanguageList()
 {
     std::vector<LANGID> results;
-    if (::PathFileExists(GetAppFileName(L"lang.txt")))
-    {
-        results.push_back(MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL));
-    }
-
     EnumResourceLanguagesExW(nullptr, LANG_RESOURCE_TYPE, MAKEINTRESOURCE(IDR_RT_LANG), [](HMODULE, LPCWSTR, LPCWSTR, WORD wIDLanguage, LONG_PTR lParam)->BOOL
     {
         reinterpret_cast<std::vector<LANGID>*>(lParam)->push_back(wIDLanguage);
@@ -84,15 +81,29 @@ std::vector<LANGID> Localization::GetLanguageList()
 
     }, reinterpret_cast<LONG_PTR>(&results), 0, 0);
 
+    FileFindEnhanced finder;
+    for (BOOL b = finder.FindFile(GetAppFolder(), L"lang_??.txt"); b; b = finder.FindNextFile())
+    {
+        const std::wstring lang = finder.GetFileName().Mid(5, 2).GetString();
+        const LCID lcid = LocaleNameToLCID(lang.c_str(), LOCALE_ALLOW_NEUTRAL_NAMES);
+        if (lcid == LOCALE_NEUTRAL || lcid == LOCALE_CUSTOM_UNSPECIFIED) continue;
+
+        const LANGID langid = LANGIDFROMLCID(lcid);
+        const LANGID langidn = MAKELANGID(PRIMARYLANGID(langid), SUBLANG_NEUTRAL);
+        if (std::find(results.begin(), results.end(), langidn) == results.end()) results.push_back(langidn);
+    }
+
     return results;
 }
 
 bool Localization::LoadResource(WORD language)
 {
-    // Load local file for customization
-    if (language == MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL))
+    FileFindEnhanced finder;
+    CStringW lang = GetLocaleString(LOCALE_SISO639LANGNAME, language);
+    CStringW name = L"lang_" + lang + L".txt";
+    if (FileFindEnhanced::DoesFileExist(GetAppFolder(), name))
     {
-        return LoadFile(GetAppFileName(L"lang.txt").GetString());
+        return LoadFile((GetAppFolder() + L"\\" + name).GetString());
     }
 
     // Find the resource in the loaded module
@@ -165,7 +176,6 @@ void Localization::UpdateWindowText(HWND hwnd)
         ::SetWindowText(hwnd, map[buffer].c_str());
     }
 }
-
 
 void Localization::UpdateDialogs(CWnd& wnd)
 {

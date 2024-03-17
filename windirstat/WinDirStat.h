@@ -76,9 +76,6 @@ public:
 
     static bool getDiskFreeSpace(LPCWSTR pszRootPath, ULONGLONG& total, ULONGLONG& unused);
 
-    // Language resource processing
-    static CStringW FindHelpfilePathByLangid(LANGID langid);
-
 protected:
 
     // Get the alternative color from Explorer configuration
