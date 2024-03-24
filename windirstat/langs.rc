@@ -24,7 +24,7 @@ LANGUAGE LANG_CZECH, SUBLANG_NEUTRAL
 // RT_LANG
 //
 
-IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_cz.txt"
+IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_cs.txt"
 
 #endif    // Czech (Neutral) resources
 /////////////////////////////////////////////////////////////////////////////
