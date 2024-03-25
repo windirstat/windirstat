@@ -273,6 +273,9 @@ bool CDirStatApp::SetPortableMode(bool enable, bool only_open)
 
 BOOL CDirStatApp::InitInstance()
 {
+    // Prevent state saving
+    m_bSaveState = FALSE;
+
     CWinAppEx::InitInstance();
     CWinAppEx::InitShellManager();
 
