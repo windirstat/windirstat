@@ -1,4 +1,4 @@
-// deletewarningdlg.h - Declaration of CDeleteWarningDlg
+// DeleteWarningDlg.h - Declaration of CDeleteWarningDlg
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
@@ -21,6 +21,10 @@
 
 #pragma once
 
+#include "Item.h"
+
+#include <vector>
+
 //
 // CDeleteWarningDlg. As WinDirStat can delete all files and folders,
 // e.g. C:\Windows, we show an additional warning, when the user
@@ -33,10 +37,11 @@ class CDeleteWarningDlg final : public CDialogEx
     enum { IDD = IDD_DELETE_WARNING };
 
 public:
-    CDeleteWarningDlg(CWnd* pParent = nullptr);
+    CDeleteWarningDlg(std::vector<CItem*> items, CWnd* pParent = nullptr);
     ~CDeleteWarningDlg() override = default;
 
-    CStringW m_fileName;  // [in] file name for feedback
+    CListBox m_files;
+    std::vector<CItem*> m_items;
     BOOL m_dontShowAgain; // [out]
 
 protected:
@@ -45,5 +50,5 @@ protected:
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnBnClickedNo();
-    afx_msg void OnBnClickedYes();
+    afx_msg void OnBnClickedYes();    
 };

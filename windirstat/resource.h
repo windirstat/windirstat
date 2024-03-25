@@ -43,7 +43,6 @@
 #define IDC_DRIVES                      1005
 #define IDC_TAB                         1013
 #define IDC_CAPTION                     1014
-#define IDC_FILENAME                    1016
 #define IDC_DONTSHOWAGAIN               1017
 #define IDC_FOLLOWMOUNTPOINTS           1020
 #define IDC_PACMANANIMATION             1021
@@ -115,6 +114,7 @@
 #define IDC_COMBO_THREADS               1230
 #define IDC_TREECOL_ATTRIBUTES          1231
 #define IDC_BROWSE_FOLDER               1232
+#define IDC_FILENAMES                   1233
 #define ID_WDS_CONTROL                  4711
 #define ID_CLEANUP_EXPLORER_SELECT      32774
 #define ID_TREEMAP_ZOOMIN               32783
@@ -174,7 +174,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        954
 #define _APS_NEXT_COMMAND_VALUE         33039
-#define _APS_NEXT_CONTROL_VALUE         1233
+#define _APS_NEXT_CONTROL_VALUE         1234
 #define _APS_NEXT_SYMED_VALUE           109
 #endif
 #endif

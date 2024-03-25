@@ -602,12 +602,11 @@ CExtensionData* CDirStatDoc::_pqsortExtensionData;
 // Deletes a file or directory via SHFileOperation.
 // Return: false, if canceled
 //
-bool CDirStatDoc::DeletePhysicalItem(CItem* item, bool toTrashBin)
+bool CDirStatDoc::DeletePhysicalItems(std::vector<CItem*> items, bool toTrashBin)
 {
     if (COptions::ShowDeleteWarning)
     {
-        CDeleteWarningDlg warning;
-        warning.m_fileName = item->GetPath();
+        CDeleteWarningDlg warning(items);
         if (IDYES != warning.DoModal())
         {
             return false;
@@ -615,12 +614,13 @@ bool CDirStatDoc::DeletePhysicalItem(CItem* item, bool toTrashBin)
         COptions::ShowDeleteWarning = !warning.m_dontShowAgain;
     }
 
-    ASSERT(item->GetParent() != NULL);
-
     CModalShellApi msa;
-    msa.DeleteFile(item->GetPath(), toTrashBin);
+    for (const auto& item : items)
+    {
+        msa.DeleteFile(item->GetPath(), toTrashBin);
+    }
 
-    RefreshItem(item);
+    RefreshItem(items);
     return true;
 }
 
@@ -1155,25 +1155,19 @@ void CDirStatDoc::OnCommandPromptHere()
 void CDirStatDoc::OnCleanupDeleteToBin()
 {
     const auto & items = CTreeListControl::GetTheTreeListControl()->GetAllSelected<CItem>();
-    for (const auto & item : items)
+    if (DeletePhysicalItems(items, true))
     {
-        if (DeletePhysicalItem(item, true))
-        {
-            RefreshRecyclers();
-            UpdateAllViews(nullptr);
-        }
+        RefreshRecyclers();
+        UpdateAllViews(nullptr);
     }
 }
 
 void CDirStatDoc::OnCleanupDelete()
 {
     const auto & items = CTreeListControl::GetTheTreeListControl()->GetAllSelected<CItem>();
-    for (const auto & item : items)
+    if (DeletePhysicalItems(items, false))
     {
-        if (DeletePhysicalItem(item, false))
-        {
-            UpdateAllViews(nullptr);
-        }
+        UpdateAllViews(nullptr);
     }
 }
 

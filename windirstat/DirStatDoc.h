@@ -130,7 +130,7 @@ protected:
     void SortExtensionData(CStringArray& sortedExtensions);
     void SetExtensionColors(const CStringArray& sortedExtensions);
     static CExtensionData* _pqsortExtensionData;
-    bool DeletePhysicalItem(CItem* item, bool toTrashBin);
+    bool DeletePhysicalItems(std::vector<CItem*> items, bool toTrashBin);
     void SetZoomItem(CItem* item);
     static void AskForConfirmation(USERDEFINEDCLEANUP* udc, CItem* item);
     void PerformUserDefinedCleanup(USERDEFINEDCLEANUP* udc, CItem* item);
