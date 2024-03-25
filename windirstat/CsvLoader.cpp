@@ -99,7 +99,7 @@ static FILETIME FromTimeString(std::wstring s)
 
 static std::string QuoteAndConvert(const CStringW& inc)
 {
-    const int sz = WideCharToMultiByte(CP_UTF8, 0, inc.GetString(), -1, nullptr, 0, NULL, NULL);
+    const int sz = WideCharToMultiByte(CP_UTF8, WC_NO_BEST_FIT_CHARS, inc.GetString(), -1, nullptr, 0, NULL, NULL);
     std::string out = "\"";
     out.resize(sz + 1);
     WideCharToMultiByte(CP_UTF8, 0, inc.GetString(), -1, &out[1], sz, NULL, NULL);
