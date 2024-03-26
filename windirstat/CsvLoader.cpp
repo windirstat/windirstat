@@ -91,7 +91,7 @@ static FILETIME FromTimeString(std::wstring s)
         std::ratio_multiply<std::hecto, std::nano>>>(tp.time_since_epoch()).count();
 
     // Load into file time structure
-    FILETIME ft;
+    FILETIME ft{};
     ft.dwLowDateTime = static_cast<ULONG>(tmp);
     ft.dwHighDateTime = tmp >> 32;
     return ft;

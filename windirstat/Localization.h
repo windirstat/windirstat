@@ -45,12 +45,6 @@ public:
         return map.contains(name.GetString());
     }
 
-    static bool Contains(const std::wstring& name)
-    {
-        ASSERT(map.contains(name));
-        return map.contains(name);
-    }
-
     static CStringW Lookup(const UINT res)
     {
         CStringW name;

@@ -524,6 +524,16 @@ void CItem::UpdateStatsFromDisk()
             }
         }
     }
+    else if (IsType(IT_DRIVE))
+    {
+        const HANDLE handle = CreateFile(GetPath(), GENERIC_READ, FILE_SHARE_READ,
+            nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, nullptr);
+        if (handle != INVALID_HANDLE_VALUE)
+        {
+            GetFileTime(handle, NULL, NULL, &m_lastChange);
+            CloseHandle(handle);
+        }
+    }
 }
 
 const std::vector<CItem*>& CItem::GetChildren() const

@@ -93,7 +93,7 @@ inline CStringW MdGetWinErrorText(HRESULT hr)
     }
     else
     {
-        sRet = CStringW(reinterpret_cast<LPWSTR>(&lpMsgBuf));
+        sRet = CStringW(reinterpret_cast<LPWSTR>(*lpMsgBuf));
     }
     return sRet;
 }

@@ -151,7 +151,7 @@ void Localization::UpdateTabControl(CTabCtrl& tab)
 {
     for (int i = 0; i < tab.GetItemCount(); i++)
     {
-        WCHAR buffer[MAX_VALUE_SIZE];
+        WCHAR buffer[MAX_VALUE_SIZE] = L"";
         TCITEMW ti{ sizeof(TCITEMW) };
         ti.cchTextMax = _countof(buffer);
         ti.mask = TCIF_TEXT;

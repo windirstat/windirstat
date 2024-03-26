@@ -244,7 +244,7 @@ bool CDirStatApp::SetPortableMode(bool enable, bool only_open)
     if (enable)
     {
         // Enable portable mode by creating the file
-        const HANDLE ini_handle = CreateFile(ini, GENERIC_WRITE | GENERIC_WRITE, FILE_SHARE_READ,
+        const HANDLE ini_handle = CreateFile(ini, GENERIC_WRITE | GENERIC_READ, FILE_SHARE_READ,
             nullptr, only_open ? OPEN_EXISTING : OPEN_ALWAYS , 0, nullptr);
         if (ini_handle != INVALID_HANDLE_VALUE)
         {
@@ -273,7 +273,7 @@ bool CDirStatApp::SetPortableMode(bool enable, bool only_open)
     }
 }
 
-CString AFXGetRegPath(LPCTSTR lpszPostFix, LPCTSTR lpszProfileName = NULL)
+CString AFXGetRegPath(LPCTSTR lpszPostFix, LPCTSTR)
 {
     // This overrides an internal MFC function that causes CWinAppEx
     // to malfunction when operated in portable mode

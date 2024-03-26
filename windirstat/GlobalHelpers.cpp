@@ -232,7 +232,7 @@ CStringW FormatFileTime(const FILETIME& t)
     if (::FileTimeToLocalFileTime(&t, &ft) == 0 ||
         ::FileTimeToSystemTime(&ft, &st) == 0)
     {
-        return MdGetWinErrorText(::GetLastError());
+        return L"";
     }
 
     const LCID lcid = MAKELCID(COptions::LanguageId.Obj(), SORT_DEFAULT);
