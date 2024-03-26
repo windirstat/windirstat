@@ -129,7 +129,6 @@ IDS_MENU_HELP=&Ayuda
 IDS_MENU_HELP_OPEN=&Ayuda\tF1
 IDS_MENU_HELP_REPORT=&Informar Errores/Retroalimentación...
 IDS_MENU_HELP_ABOUT=&Acerca de WinDirStat...
-IDS_POPUP_LIST_TOGGLE=<toggle>
 IDS_POPUP_LIST_OPEN=&Abrir\tEnter
 IDS_POPUP_LIST_COPY_CLIPBOARD=&Copiar Path\tCtrl+C
 IDS_POPUP_LIST_EXPLORER_SELECT=&Explorador Aquí\tCtrl+E

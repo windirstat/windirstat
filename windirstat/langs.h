@@ -33,7 +33,6 @@
 #define IDS_EXTCOL_DESCRIPTION          20029
 #define IDS_EXTCOL_EXTENSION            20030
 #define IDS_EXTCOL_FILES                20031
-#define IDS_FILES_ITEM                  20032
 #define IDS_FREESPACE_ITEM              20033
 #define IDS_HELPFILEsCOULDNOTBEFOUND    20034
 #define IDS_LANGUAGERESTARTNOW          20035
@@ -137,7 +136,6 @@
 #define IDS_MENU_HELP_OPEN              20133
 #define IDS_MENU_HELP_REPORT            20134
 #define IDS_MENU_HELP_ABOUT             20135
-#define IDS_POPUP_LIST_TOGGLE           20136
 #define IDS_POPUP_LIST_OPEN             20137
 #define IDS_POPUP_LIST_COPY_CLIPBOARD   20138
 #define IDS_POPUP_LIST_EXPLORER_SELECT  20139
