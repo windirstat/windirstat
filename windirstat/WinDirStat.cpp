@@ -227,10 +227,10 @@ bool CDirStatApp::InPortableMode() const
 bool CDirStatApp::SetPortableMode(bool enable, bool only_open)
 {
     // If portable mode is enabled, then just ensure the full path is used
-    if (enable == InPortableMode())
+    const CStringW ini = GetAppFileName(L"ini");
+    if (ini == m_pszProfileName &&
+        enable == InPortableMode())
     {
-        if (m_pszProfileName != nullptr) free(LPVOID(m_pszProfileName));
-        m_pszProfileName = _wcsdup(GetAppFileName(L"ini"));
         return true;
     }
 
@@ -239,8 +239,7 @@ bool CDirStatApp::SetPortableMode(bool enable, bool only_open)
     if (m_pszProfileName != nullptr) free(LPVOID(m_pszProfileName));
     m_pszProfileName = nullptr;
     m_pszRegistryKey = nullptr;
-
-    const CStringW ini = GetAppFileName(L"ini");
+    
     if (enable)
     {
         // Enable portable mode by creating the file
