@@ -56,6 +56,7 @@ public:
 
     BOOL InitInstance() override;
     int ExitInstance() override;
+    BOOL LoadState(LPCTSTR, CFrameImpl*) override { return TRUE; };
 
     bool InPortableMode() const;
     bool SetPortableMode(bool enable, bool only_open = false);

@@ -221,14 +221,16 @@ CStringW CDirStatApp::GetCurrentProcessMemoryInfo()
 
 bool CDirStatApp::InPortableMode() const
 {
-    return m_pszProfileName == GetAppFileName(L"ini");
+    return GetFileAttributes(GetAppFileName(L"ini")) != INVALID_FILE_ATTRIBUTES;
 }
 
 bool CDirStatApp::SetPortableMode(bool enable, bool only_open)
 {
-    // Do nothing is already done this way
+    // If portable mode is enabled, then just ensure the full path is used
     if (enable == InPortableMode())
     {
+        if (m_pszProfileName != nullptr) free(LPVOID(m_pszProfileName));
+        m_pszProfileName = _wcsdup(GetAppFileName(L"ini"));
         return true;
     }
 
@@ -259,7 +261,7 @@ bool CDirStatApp::SetPortableMode(bool enable, bool only_open)
     else
     {
         // Attempt to remove file succeeded
-        if (DeleteFile(ini) == 0)
+        if (DeleteFile(ini) != 0)
         {
             SetRegistryKey(Localization::Lookup(IDS_APP_TITLE));
             return true;
@@ -271,8 +273,18 @@ bool CDirStatApp::SetPortableMode(bool enable, bool only_open)
     }
 }
 
+CString AFXGetRegPath(LPCTSTR lpszPostFix, LPCTSTR lpszProfileName = NULL)
+{
+    // This overrides an internal MFC function that causes CWinAppEx
+    // to malfunction when operated in portable mode
+    return CStringW(L"Software\\WinDirStat\\WinDirStat\\") + lpszPostFix + L"\\";
+}
+
 BOOL CDirStatApp::InitInstance()
 {
+    // Prevent state saving
+    m_bSaveState = FALSE;
+
     CWinAppEx::InitInstance();
     CWinAppEx::InitShellManager();
 
