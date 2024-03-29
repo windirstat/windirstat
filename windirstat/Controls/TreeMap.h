@@ -33,9 +33,6 @@ public:
     // Gives a color a defined brightness.
     static COLORREF MakeBrightColor(COLORREF color, double brightness);
 
-    // Returns true, if the system has <= 256 colors
-    static bool Is256Colors();
-
     // Swaps values above 255 to the other two values
     static void NormalizeColor(int& red, int& green, int& blue);
 
@@ -250,9 +247,6 @@ protected:
     // Classical SequoiaView-like squarification
     void SequoiaView_DrawChildren(CColorRefArray& bitmap, Item* parent, const double* surface, double h, DWORD flags);
 
-    // Sets brightness to a good value, if system has only 256 colors
-    void SetBrightnessFor256();
-
     // Returns true, if height and scaleFactor are > 0 and ambientLight is < 1.0
     bool IsCushionShading() const;
 
@@ -275,7 +269,6 @@ protected:
     static const Options _defaultOptions;             // Good values. Default for WinDirStat 1.0.2
     static const Options _defaultOptionsOld;          // WinDirStat 1.0.1 default options
     static const COLORREF _defaultCushionColors[];    // Standard palette for WinDirStat
-    static const COLORREF _defaultCushionColors256[]; // Palette for 256-colors mode
 
     CRect m_renderArea;
 

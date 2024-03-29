@@ -64,16 +64,6 @@ COLORREF CColorSpace::MakeBrightColor(COLORREF color, double brightness)
     return RGB(red, green, blue);
 }
 
-// Returns true, if the System has 256 Colors or less.
-// In this case options.brightness is ignored (and the
-// slider should be disabled).
-//
-bool CColorSpace::Is256Colors()
-{
-    const CClientDC dc(CWnd::GetDesktopWindow());
-    return dc.GetDeviceCaps(NUMCOLORS) != -1;
-}
-
 void CColorSpace::NormalizeColor(int& red, int& green, int& blue)
 {
     ASSERT(red + green + blue <= 3 * 255);
@@ -157,34 +147,9 @@ const COLORREF CTreemap::_defaultCushionColors[] = {
     RGB(255, 255, 255)
 };
 
-const COLORREF CTreemap::_defaultCushionColors256[] = {
-    RGB(0, 0, 255),
-    RGB(255, 0, 0),
-    RGB(0, 255, 0),
-    RGB(0, 255, 255),
-    RGB(255, 0, 255),
-    RGB(255, 255, 0),
-    RGB(100, 100, 100)
-};
-
 void CTreemap::GetDefaultPalette(CArray<COLORREF, COLORREF&>& palette)
 {
-    if (CColorSpace::Is256Colors())
-    {
-        palette.SetSize(_countof(_defaultCushionColors256));
-        for (int i = 0; i < _countof(_defaultCushionColors256); i++)
-        {
-            palette[i] = _defaultCushionColors256[i];
-        }
-
-        // We don't do
-        // EqualizeColors(_defaultCushionColors256, _countof(_defaultCushionColors256), palette);
-        // because on 256 color screens, the resulting colors are not distinguishable.
-    }
-    else
-    {
-        EqualizeColors(_defaultCushionColors, _countof(_defaultCushionColors), palette);
-    }
+    EqualizeColors(_defaultCushionColors, _countof(_defaultCushionColors), palette);
 }
 
 void CTreemap::EqualizeColors(const COLORREF* colors, int count, CArray<COLORREF, COLORREF&>& out)
@@ -208,7 +173,6 @@ CTreemap::CTreemap()
       , m_Lz(0.)
 {
     SetOptions(&_defaultOptions);
-    SetBrightnessFor256();
 }
 
 void CTreemap::SetOptions(const Options* options)
@@ -225,21 +189,11 @@ void CTreemap::SetOptions(const Options* options)
     m_Lx             = lx / len;
     m_Ly             = ly / len;
     m_Lz             = lz / len;
-
-    SetBrightnessFor256();
 }
 
 CTreemap::Options CTreemap::GetOptions() const
 {
     return m_options;
-}
-
-void CTreemap::SetBrightnessFor256()
-{
-    if (CColorSpace::Is256Colors())
-    {
-        m_options.brightness = PALETTE_BRIGHTNESS;
-    }
 }
 
 #ifdef _DEBUG
