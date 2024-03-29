@@ -529,7 +529,7 @@ BOOL CSelectDrivesDlg::OnInitDialog()
     m_layout.AddControl(IDCANCEL, 1, 0, 0, 0);
     m_layout.AddControl(IDC_DRIVES, 0, 0, 1, 1);
     m_layout.AddControl(IDC_AFOLDER, 0, 1, 0, 0);
-    m_layout.AddControl(IDC_BROWSE_FOLDER, 1, 1, 0, 0);
+    m_layout.AddControl(IDC_BROWSE_FOLDER, 0, 1, 1, 0);
 
     m_layout.OnInitDialog(true);
 
