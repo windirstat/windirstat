@@ -592,6 +592,11 @@ void CMainFrame::DestroyProgress()
 
 void CMainFrame::SetStatusPaneText(int pos, const CStringW & text)
 {
+    // do not process the update if text is the same
+    static CString last = text;
+    if (last == text) return;
+    last = text;
+
     // attempt to update width if dc is accessible
     if (const CDC* dc = GetDC(); dc != nullptr)
     {

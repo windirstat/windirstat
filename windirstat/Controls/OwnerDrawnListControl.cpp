@@ -628,18 +628,20 @@ BOOL COwnerDrawnListControl::OnEraseBkgnd(CDC* pDC)
     rcBetween.bottom = m_yFirstItem;
     pDC->FillSolidRect(rcBetween, gridColor);
 
+    const auto header_item_count = GetHeaderCtrl()->GetItemCount();
     CArray<int, int> columnOrder;
-    columnOrder.SetSize(GetHeaderCtrl()->GetItemCount());
+    columnOrder.SetSize(header_item_count);
     GetColumnOrderArray(columnOrder.GetData(), static_cast<int>(columnOrder.GetSize()));
 
     CArray<int, int> vertical;
-    vertical.SetSize(GetHeaderCtrl()->GetItemCount());
+    vertical.SetSize(header_item_count);
 
     int x = -GetScrollPos(SB_HORZ);
     HDITEM hdi;
     ZeroMemory(&hdi, sizeof(hdi));
     hdi.mask = HDI_WIDTH;
-    for (int i = 0; i < GetHeaderCtrl()->GetItemCount(); i++)
+
+    for (int i = 0; i < header_item_count; i++)
     {
         GetHeaderCtrl()->GetItem(columnOrder[i], &hdi);
         x += hdi.cxy;
