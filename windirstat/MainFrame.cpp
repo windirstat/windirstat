@@ -593,7 +593,7 @@ void CMainFrame::DestroyProgress()
 void CMainFrame::SetStatusPaneText(int pos, const CStringW & text)
 {
     // do not process the update if text is the same
-    static CString last = text;
+    static CString last;
     if (last == text) return;
     last = text;
 
