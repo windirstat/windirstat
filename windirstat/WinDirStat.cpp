@@ -260,7 +260,7 @@ bool CDirStatApp::SetPortableMode(bool enable, bool only_open)
     else
     {
         // Attempt to remove file succeeded
-        if (DeleteFile(ini) != 0)
+        if (DeleteFile(ini) != 0 || GetLastError() == ERROR_FILE_NOT_FOUND)
         {
             SetRegistryKey(Localization::Lookup(IDS_APP_TITLE));
             return true;
