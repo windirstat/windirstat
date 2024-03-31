@@ -84,7 +84,6 @@ protected:
 
     CSingleDocTemplate* m_pDocTemplate; // MFC voodoo.
 
-    LANGID m_langid;                          // Language we are running
     CReparsePoints m_mountPoints;             // Mount point information
     CMyImageList m_myImageList;               // Our central image list
     COLORREF m_altColor;                      // Coloring of compressed items

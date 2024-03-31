@@ -104,6 +104,7 @@ public:
     void RefreshMountPointItems();
     void RefreshJunctionItems();
 
+    bool HasRootItem() const;
     bool IsRootDone() const;
     CItem* GetRootItem() const;
     CItem* GetZoomItem() const;

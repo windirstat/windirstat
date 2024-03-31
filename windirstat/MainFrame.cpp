@@ -394,7 +394,7 @@ CMainFrame* CMainFrame::GetTheFrame()
 CMainFrame::CMainFrame()
     : m_progressVisible(false)
       , m_scanSuspend(false)
-      , m_progressRange(100)
+      , m_progressRange(0)
       , m_progressPos(0)
       , m_workingItem(nullptr)
       , m_wndSubSplitter(COptions::SubSplitterPos.Ptr())
@@ -500,7 +500,12 @@ void CMainFrame::UpdateProgress()
     if (workingItem != m_workingItem)
     {
         m_workingItem = workingItem;
-        CreateProgress(m_workingItem->GetProgressRange());
+
+        // Create progress display elements if now actively working item
+        if (m_workingItem != nullptr && !m_workingItem->IsDone())
+        {
+            CreateProgress(m_workingItem->GetProgressRange());
+        }
     }
 
     // Exit early if we not ready for visual updates
@@ -510,7 +515,7 @@ void CMainFrame::UpdateProgress()
     m_progressPos = m_workingItem->GetProgressPos();
     m_pacman.Drive();
 
-    CStringW titlePrefix;
+    CStringW title_prefix;
     CStringW suspended;
 
     // Display the suspend text in the bar if suspended
@@ -524,7 +529,8 @@ void CMainFrame::UpdateProgress()
     {
         const int pos = static_cast<int>((double)m_progressPos * 100 / m_progressRange);
         m_progress.SetPos(pos);
-        titlePrefix.Format(L"%d%% %s", pos, suspended.GetString());
+
+        title_prefix.Format(L"%d%% %s", pos, suspended.GetString());
         if (m_TaskbarList && m_TaskbarButtonState != TBPF_PAUSED)
         {
             if (pos == 100)
@@ -541,10 +547,10 @@ void CMainFrame::UpdateProgress()
     else
     {
         static const CStringW scanning_string = Localization::Lookup(IDS_SCANNING);
-        titlePrefix = scanning_string + L" " + suspended;
+        title_prefix = scanning_string + L" " + suspended;
     }
 
-    GetDocument()->SetTitlePrefix(titlePrefix);
+    GetDocument()->SetTitlePrefix(title_prefix.Trim());
 }
 
 void CMainFrame::CreateStatusProgress()
@@ -579,15 +585,16 @@ void CMainFrame::DestroyProgress()
     {
         m_progress.DestroyWindow();
         m_progress.m_hWnd = nullptr;
-        m_workingItem = nullptr;
     }
     else if (::IsWindow(m_pacman.m_hWnd))
     {
         m_pacman.Stop();
         m_pacman.DestroyWindow();
         m_pacman.m_hWnd = nullptr;
-        m_workingItem = nullptr;
     }
+
+    m_workingItem = nullptr;
+    m_progressVisible = false;
 }
 
 void CMainFrame::SetStatusPaneText(int pos, const CStringW & text)
@@ -827,15 +834,26 @@ void CMainFrame::OnTimer(UINT_PTR nIDEvent)
         SetStatusPaneText(ID_INDICATOR_IDLEMESSAGE_INDEX, Localization::Lookup(IDS_IDLEMESSAGE));
         first_run = false;
     }
-    
-    // Update memory usage
-    SetStatusPaneText(ID_INDICATOR_MEMORYUSAGE_INDEX, CDirStatApp::GetCurrentProcessMemoryInfo());
 
-    // Force toolbar updates since they do not appear to always receive onidle commands
-    m_wndToolBar.OnUpdateCmdUI(this, FALSE);
+    // Determine whether we should be doing a fast UI update or not
+    static unsigned int update_counter = 0;
+    const bool do_slow_update = update_counter % 10 == 0;
+    const bool do_fast_update = do_slow_update ||
+        GetDocument()->HasRootItem() && !GetDocument()->IsRootDone() && !IsScanSuspended();
+    update_counter++;
 
-    // Update tree control
-    if (!GetDocument()->IsRootDone())
+    // UI updates that do not need to processed frequently
+    if (do_slow_update)
+    {
+        // Update memory usage
+        SetStatusPaneText(ID_INDICATOR_MEMORYUSAGE_INDEX, CDirStatApp::GetCurrentProcessMemoryInfo());
+
+        // Force toolbar updates since they do not appear to always receive onidle commands
+        m_wndToolBar.OnUpdateCmdUI(this, FALSE);
+    }
+
+    // UI updates that do need to processed frequently
+    if (do_fast_update)
     {
         // Update the visual progress on the bottom of the screen
         UpdateProgress();

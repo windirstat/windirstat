@@ -85,7 +85,6 @@ CDirStatApp _theApp;
 
 CDirStatApp::CDirStatApp()
     : m_pDocTemplate(nullptr)
-      , m_langid(0)
       , m_altColor(GetAlternativeColor(RGB(0x00, 0x00, 0xFF), L"AltColor"))
       , m_altEncryptionColor(GetAlternativeColor(RGB(0x00, 0x80, 0x00), L"AltEncryptionColor"))
 #   ifdef VTRACE_TO_CONSOLE

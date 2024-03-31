@@ -288,8 +288,8 @@ void CDirStatDoc::SetPathName(LPCWSTR lpszPathName, BOOL /*bAddToMRU*/)
 void CDirStatDoc::SetTitlePrefix(const CStringW& prefix) const
 {
     static CStringW suffix = IsAdmin() ? L" (Administrator)" : L"";
-    const CStringW docName = prefix + L" " + GetTitle() + L" " + suffix;
-    GetMainFrame()->UpdateFrameTitleForDocument(docName);
+    CStringW docName = prefix + L" " + GetTitle() + L" " + suffix;
+    GetMainFrame()->UpdateFrameTitleForDocument(docName.Trim());
 }
 
 COLORREF CDirStatDoc::GetCushionColor(LPCWSTR ext)
@@ -357,9 +357,14 @@ void CDirStatDoc::RefreshJunctionItems()
     RecurseRefreshJunctionItems(root);
 }
 
+bool CDirStatDoc::HasRootItem() const
+{
+    return m_rootItem != nullptr;
+}
+
 bool CDirStatDoc::IsRootDone() const
 {
-    return m_rootItem != nullptr && m_rootItem->IsDone();
+    return HasRootItem() && m_rootItem->IsDone();
 }
 
 CItem* CDirStatDoc::GetRootItem() const
@@ -864,7 +869,7 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
     static bool (*reslect_avail)(CItem*) = [](CItem*) { return doc->IsReselectChildAvailable(); };
     static bool (*not_root)(CItem*) = [](CItem* item) { return item != nullptr && !item->IsRootItem(); };
     static bool (*is_suspended)(CItem*) = [](CItem*) { return GetMainFrame()->IsScanSuspended(); };
-    static bool (*is_not_suspended)(CItem*) = [](CItem*) { return doc->GetRootItem() != nullptr && !doc->IsRootDone() && !GetMainFrame()->IsScanSuspended(); };
+    static bool (*is_not_suspended)(CItem*) = [](CItem*) { return doc->HasRootItem() && !doc->IsRootDone() && !GetMainFrame()->IsScanSuspended(); };
 
     static std::unordered_map<UINT, const command_filter> filters
     {

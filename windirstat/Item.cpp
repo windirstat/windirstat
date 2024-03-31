@@ -498,12 +498,7 @@ ULONGLONG CItem::GetProgressPos() const
         pos -= (fs != nullptr) ? fs->GetSize() : 0;
         return pos;
     }
-    if (IsType(IT_DIRECTORY))
-    {
-        return GetItemsCount();
-    }
 
-    ASSERT(FALSE);
     return 0;
 }
 
@@ -559,7 +554,7 @@ void CItem::AddChild(CItem* child, bool add_only)
     std::lock_guard m_guard(m_ci->m_protect);
     m_ci->m_children.push_back(child);
 
-    if (IsVisible())
+    if (IsVisible() && IsExpanded())
     {
         GetMainFrame()->InvokeInMessageThread([this, child]
         {

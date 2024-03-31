@@ -877,24 +877,18 @@ void CTreeListControl::OnLvnItemchangingList(NMHDR* pNMHDR, LRESULT* pResult)
 
 void CTreeListControl::OnChildAdded(CTreeListItem* parent, CTreeListItem* child)
 {
-    if (!parent->IsVisible())
+    if (!parent->IsVisible() || !parent->IsExpanded())
     {
         return;
     }
 
     const int p = FindTreeItem(parent);
     ASSERT(p != -1);
-    
-    if (parent->IsExpanded())
-    {
-        InsertItem(p + 1, child);
-        RedrawItems(p, p);
-        Sort();
-    }
-    else
-    {
-        RedrawItems(p, p);
-    }
+    InsertItem(p + 1, child);
+    Sort();
+
+    // NOTE: Redrawing is deffered to UI thread timer for performance
+
 }
 
 void CTreeListControl::OnChildRemoved(CTreeListItem* parent, CTreeListItem* child)
