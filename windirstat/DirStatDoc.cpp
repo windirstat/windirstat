@@ -615,6 +615,10 @@ bool CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, bool toT
         COptions::ShowDeleteWarning = !warning.m_dontShowAgain;
     }
 
+    // Fetch the parent item of the current focus / selected item so we can reselect
+    const auto reselect = CTreeListControl::GetTheTreeListControl()->GetItem(
+        CTreeListControl::GetTheTreeListControl()->GetSelectionMark())->GetParent();
+
     CModalShellApi msa;
     for (const auto& item : items)
     {
@@ -622,6 +626,10 @@ bool CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, bool toT
     }
 
     RefreshItem(items);
+
+    // Attempt to reselect the item
+    CTreeListControl::GetTheTreeListControl()->SelectItem(reselect, true, true);
+
     return true;
 }
 
