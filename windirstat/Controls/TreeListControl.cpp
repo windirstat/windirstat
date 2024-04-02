@@ -833,7 +833,7 @@ void CTreeListControl::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
             CollapseItem(FindTreeItem(items[0]));
         }
     }
-    COwnerDrawnListControl::OnKeyDown(nChar, nRepCnt, nFlags);
+    else COwnerDrawnListControl::OnKeyDown(nChar, nRepCnt, nFlags);
 }
 
 void CTreeListControl::OnLvnItemchangingList(NMHDR* pNMHDR, LRESULT* pResult)
