@@ -34,14 +34,13 @@ enum REFRESHPOLICY
 {
     RP_NO_REFRESH,
     RP_REFRESH_THIS_ENTRY,
-    RP_REFRESH_THIS_ENTRYS_PARENT,
-    REFRESHPOLICYCOUNT
+    RP_REFRESH_THIS_ENTRYS_PARENT
 };
 
 struct USERDEFINEDCLEANUP
 {
-    USERDEFINEDCLEANUP() : USERDEFINEDCLEANUP(L"") {};
-    USERDEFINEDCLEANUP(std::wstring sEntry) :
+    USERDEFINEDCLEANUP() : USERDEFINEDCLEANUP(L"") {}
+    USERDEFINEDCLEANUP(const std::wstring & sEntry) :
         title(Setting<std::wstring>(sEntry, L"title", L"")),
         commandLine(Setting<std::wstring>(sEntry, L"commandLine", L"")),
         enabled(Setting<bool>(sEntry, L"enable", false)),

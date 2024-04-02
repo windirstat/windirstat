@@ -21,10 +21,9 @@
 
 #pragma once
 
-#include "colorbutton.h"
+#include "ColorButton.h"
 #include "TreeMap.h"
 #include "XYSlider.h"
-#include "afxwin.h"
 
 //
 // CPageTreemap. "Settings" property page "Treemap".
@@ -35,7 +34,6 @@ class CPageTreemap final : public CPropertyPage
 
     enum { IDD = IDD_PAGE_TREEMAP };
 
-public:
     CPageTreemap();
     ~CPageTreemap() override = default;
 

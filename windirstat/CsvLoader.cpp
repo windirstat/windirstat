@@ -24,7 +24,6 @@
 #include "Item.h"
 #include "Localization.h"
 #include "CsvLoader.h"
-#include "GlobalHelpers.h"
 
 #include <fstream>
 #include <string>
@@ -48,10 +47,10 @@ enum
 };
 
 CHAR order_map[FIELD_COUNT];
-static void ParseHeaderLine(std::vector<std::wstring> header)
+static void ParseHeaderLine(const std::vector<std::wstring>& header)
 {
-    std::fill_n(order_map, FIELD_COUNT, (CHAR) -1);
-    for (bool neutral: { true, false })
+    std::fill_n(order_map, FIELD_COUNT, static_cast<CHAR>(-1));
+    for (const bool neutral: { true, false })
     {
         CStringW(*Lookup)(const UINT) = (neutral) ? Localization::LookupNeutral : static_cast<CStringW(*)(const UINT)>(&Localization::Lookup);
         std::map<std::wstring, DWORD> res_map =
@@ -75,11 +74,11 @@ static void ParseHeaderLine(std::vector<std::wstring> header)
 
 static std::chrono::file_clock::time_point ToTimePoint(const FILETIME& ft)
 {
-    std::chrono::file_clock::duration d{ (static_cast<int64_t>(ft.dwHighDateTime) << 32) | ft.dwLowDateTime };
+    const std::chrono::file_clock::duration d{ (static_cast<int64_t>(ft.dwHighDateTime) << 32) | ft.dwLowDateTime };
     return std::chrono::file_clock::time_point { d };
 }
 
-static FILETIME FromTimeString(std::wstring s)
+static FILETIME FromTimeString(const std::wstring & s)
 {
     // Parse date string
     std::wistringstream in{ s };
@@ -87,8 +86,8 @@ static FILETIME FromTimeString(std::wstring s)
     in >> std::chrono::parse(L"%Y-%m-%dT%H:%M:%S%Z", tp);
 
     // Adjust time divisor to 100ns 
-    auto tmp = std::chrono::duration_cast<std::chrono::duration<int64_t,
-        std::ratio_multiply<std::hecto, std::nano>>>(tp.time_since_epoch()).count();
+    const auto tmp = std::chrono::duration_cast<std::chrono::duration<int64_t,
+                                                                      std::ratio_multiply<std::hecto, std::nano>>>(tp.time_since_epoch()).count();
 
     // Load into file time structure
     FILETIME ft{};
@@ -99,15 +98,15 @@ static FILETIME FromTimeString(std::wstring s)
 
 static std::string QuoteAndConvert(const CStringW& inc)
 {
-    const int sz = WideCharToMultiByte(CP_UTF8, WC_NO_BEST_FIT_CHARS, inc.GetString(), -1, nullptr, 0, NULL, NULL);
+    const int sz = WideCharToMultiByte(CP_UTF8, WC_NO_BEST_FIT_CHARS, inc.GetString(), -1, nullptr, 0, nullptr, nullptr);
     std::string out = "\"";
     out.resize(sz + 1);
-    WideCharToMultiByte(CP_UTF8, 0, inc.GetString(), -1, &out[1], sz, NULL, NULL);
+    WideCharToMultiByte(CP_UTF8, 0, inc.GetString(), -1, &out[1], sz, nullptr, nullptr);
     out[sz] = '"';
     return out;
 }
 
-CItem* LoadResults(std::wstring path)
+CItem* LoadResults(const std::wstring & path)
 {
     std::ifstream reader(path);
     if (!reader.is_open()) return nullptr;
@@ -156,9 +155,9 @@ CItem* LoadResults(std::wstring path)
             header_processed = true;
 
             // Validate all necessary fields are present
-            for (int i = 0; i < _countof(order_map); i++)
+            for (auto i = 0; i < _countof(order_map); i++)
             {
-                if (i != FIELD_OWNER && order_map[i] == -1) return NULL;
+                if (i != FIELD_OWNER && order_map[i] == -1) return nullptr;
             }
             continue;
         }
@@ -220,7 +219,7 @@ CItem* LoadResults(std::wstring path)
     return newroot;
 }
 
-bool SaveResults(std::wstring path, CItem * item)
+bool SaveResults(const std::wstring& path, CItem * item)
 {
     // Output header line to file
     std::ofstream outf;

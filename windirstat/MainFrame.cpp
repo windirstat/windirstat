@@ -40,7 +40,6 @@
 #include "MainFrame.h"
 
 #include <common/MdExceptions.h>
-#include <common/CommonHelpers.h>
 
 #include <functional>
 #include <unordered_map>
@@ -86,9 +85,6 @@ IMPLEMENT_DYNAMIC(COptionsPropertySheet, CPropertySheet)
 
 COptionsPropertySheet::COptionsPropertySheet()
     : CPropertySheet(Localization::Lookup(IDS_WINDIRSTAT_SETTINGS))
-      , m_restartApplication(false)
-      , m_languageChanged(false)
-      , m_alreadyAsked(false)
 {
 }
 
@@ -146,11 +142,10 @@ BOOL COptionsPropertySheet::OnCommand(WPARAM wParam, LPARAM lParam)
 
 /////////////////////////////////////////////////////////////////////////////
 
-CMySplitterWnd::CMySplitterWnd(double * splitterPos) :
-    m_splitterPos(0),
+CMySplitterWnd::CMySplitterWnd(double * splitterPos) : 
     m_userSplitterPos(splitterPos)
 {
-    m_wasTrackedByUser = (*m_userSplitterPos > 0 && *m_userSplitterPos < 1);
+    m_wasTrackedByUser = (*splitterPos > 0 && *splitterPos < 1);
 }
 
 BEGIN_MESSAGE_MAP(CMySplitterWnd, CSplitterWnd)
@@ -311,7 +306,7 @@ int CPacmanControl::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 void CPacmanControl::OnPaint()
 {
-    CPaintDC dc(this);
+    const CPaintDC dc(this);
     CRect rc;
     GetClientRect(rc);
     m_pacman.Draw(&dc, rc);
@@ -322,12 +317,12 @@ void CPacmanControl::OnPaint()
 void CDeadFocusWnd::Create(CWnd* parent)
 {
     const CRect rc(0, 0, 0, 0);
-    VERIFY(CWnd::Create(AfxRegisterWndClass(0, 0, 0, 0), L"_deadfocus", WS_CHILD, rc, parent, 0));
+    VERIFY(CWnd::Create(AfxRegisterWndClass(0, nullptr, nullptr, nullptr), L"_deadfocus", WS_CHILD, rc, parent, 0));
 }
 
 CDeadFocusWnd::~CDeadFocusWnd()
 {
-    DestroyWindow();
+    CWnd::DestroyWindow();
 }
 
 BEGIN_MESSAGE_MAP(CDeadFocusWnd, CWnd)
@@ -391,17 +386,9 @@ CMainFrame* CMainFrame::GetTheFrame()
     return _theFrame;
 }
 
-CMainFrame::CMainFrame()
-    : m_progressVisible(false)
-      , m_scanSuspend(false)
-      , m_progressRange(0)
-      , m_progressPos(0)
-      , m_workingItem(nullptr)
-      , m_wndSubSplitter(COptions::SubSplitterPos.Ptr())
+CMainFrame::CMainFrame() :
+        m_wndSubSplitter(COptions::SubSplitterPos.Ptr())
       , m_wndSplitter(COptions::MainSplitterPos.Ptr())
-      , m_logicalFocus(LF_NONE)
-      , m_TaskbarButtonState(TBPF_INDETERMINATE)
-      , m_TaskbarButtonPreviousState(TBPF_INDETERMINATE)
 {
     _theFrame = this;
 }
@@ -474,7 +461,7 @@ bool CMainFrame::IsScanSuspended() const
     return m_scanSuspend;
 }
 
-void CMainFrame::SuspendState(bool suspend)
+void CMainFrame::SuspendState(const bool suspend)
 {
     m_scanSuspend = suspend;
     if (m_TaskbarList)
@@ -527,7 +514,7 @@ void CMainFrame::UpdateProgress()
 
     if (m_progressRange > 0 && m_progress.m_hWnd != nullptr)
     {
-        const int pos = static_cast<int>((double)m_progressPos * 100 / m_progressRange);
+        const int pos = static_cast<int>((m_progressPos * 100ull) / m_progressRange);
         m_progress.SetPos(pos);
 
         title_prefix.Format(L"%d%% %s", pos, suspended.GetString());
@@ -688,7 +675,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 void CMainFrame::InitialShowWindow()
 {
-    WINDOWPLACEMENT wpsetting = COptions::MainWindowPlacement;
+    const WINDOWPLACEMENT wpsetting = COptions::MainWindowPlacement;
     if (wpsetting.length != 0)
     {
         SetWindowPlacement(&wpsetting);
@@ -873,7 +860,7 @@ LRESULT CMainFrame::OnCallbackRequest(WPARAM, LPARAM lParam)
     return 0;
 }
 
-void CMainFrame::CopyToClipboard(LPCWSTR psz)
+void CMainFrame::CopyToClipboard(const LPCWSTR psz)
 {
     try
     {
@@ -986,9 +973,7 @@ void CMainFrame::QueryRecycleBin(ULONGLONG& items, ULONGLONG& bytes)
         ZeroMemory(&qbi, sizeof(qbi));
         qbi.cbSize = sizeof(qbi);
 
-        const HRESULT hr = ::SHQueryRecycleBin(s, &qbi);
-
-        if (FAILED(hr))
+        if (FAILED(::SHQueryRecycleBin(s, &qbi)))
         {
             continue;
         }
@@ -1028,7 +1013,7 @@ void CMainFrame::AppendUserDefinedCleanups(CMenu* menu) const
     }
 }
 
-void CMainFrame::SetLogicalFocus(LOGICAL_FOCUS lf)
+void CMainFrame::SetLogicalFocus(const LOGICAL_FOCUS lf)
 {
     if (lf != m_logicalFocus)
     {
@@ -1044,7 +1029,7 @@ LOGICAL_FOCUS CMainFrame::GetLogicalFocus() const
     return m_logicalFocus;
 }
 
-void CMainFrame::MoveFocus(LOGICAL_FOCUS lf)
+void CMainFrame::MoveFocus(const LOGICAL_FOCUS lf)
 {
     switch (lf)
     {
@@ -1079,7 +1064,7 @@ void CMainFrame::SetSelectionMessageText()
     case LF_DIRECTORYLIST:
         {
             // display file name in bottom left corner if only one item is selected
-            auto item = CTreeListControl::GetTheTreeListControl()->GetFirstSelectedItem<CItem>();
+            const auto item = CTreeListControl::GetTheTreeListControl()->GetFirstSelectedItem<CItem>();
             if (item != nullptr)
             {
                 // decide when to do this

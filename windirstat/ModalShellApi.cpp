@@ -36,10 +36,7 @@ namespace
     };
 }
 
-CModalShellApi::CModalShellApi()
-    : m_operation(0), m_toRecycleBin(false)
-{
-}
+CModalShellApi::CModalShellApi() = default;
 
 void CModalShellApi::DeleteFile(LPCWSTR fileName, bool toRecycleBin)
 {
@@ -52,13 +49,10 @@ void CModalShellApi::DeleteFile(LPCWSTR fileName, bool toRecycleBin)
 
 void CModalShellApi::DoOperation()
 {
-    switch (m_operation)
+    if (m_operation == DELETE_FILE)
     {
-    case DELETE_FILE:
-        {
-            DoDeleteItem();
-        }
-        break;
+
+        DoDeleteItem();
     }
 }
 
@@ -90,6 +84,4 @@ void CModalShellApi::DoDeleteItem()
         std::error_code ec;
         std::filesystem::remove_all(std::filesystem::path(path.GetBuffer()), ec);
     }
-
-    return;
 }

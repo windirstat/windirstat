@@ -106,7 +106,7 @@ int CTreeListItem::GetImage() const
     return m_vi->image;
 }
 
-void CTreeListItem::DrawPacman(CDC* pdc, const CRect& rc, COLORREF bgColor) const
+void CTreeListItem::DrawPacman(const CDC* pdc, const CRect& rc, COLORREF bgColor) const
 {
     ASSERT(IsVisible());
     m_vi->pacman.SetBackgroundColor(bgColor);
@@ -209,14 +209,13 @@ int CTreeListItem::Compare(const CSortingListItem* baseOther, int subitem) const
     {
         return Compare(other->m_parent, subitem);
     }
-    else if (GetIndent() > other->GetIndent())
+
+    if (GetIndent() > other->GetIndent())
     {
         return m_parent->Compare(other, subitem);
     }
-    else
-    {
-        return m_parent->Compare(other->m_parent, subitem);
-    }
+
+    return m_parent->Compare(other->m_parent, subitem);
 }
 
 int CTreeListItem::FindSortedChild(const CTreeListItem* child) const
@@ -334,7 +333,7 @@ void CTreeListItem::SetTitleRect(const CRect& rc) const
 CTreeListControl* CTreeListItem::GetTreeListControl()
 {
     // As we only have 1 TreeListControl and want to economize memory
-    // we simple made the TreeListControl global.
+    // we simply made the TreeListControl global.
     return CTreeListControl::GetTheTreeListControl();
 }
 
@@ -375,7 +374,7 @@ BOOL CTreeListControl::CreateEx(DWORD dwExStyle, DWORD dwStyle, const RECT& rect
 
     dwStyle |= LVS_OWNERDRAWFIXED;
 
-    BOOL bRet = COwnerDrawnListControl::Create(dwStyle, rect, pParentWnd, nID);
+    const BOOL bRet = COwnerDrawnListControl::Create(dwStyle, rect, pParentWnd, nID);
     VERIFY(bRet);
     if (bRet && dwExStyle)
     {
@@ -397,14 +396,14 @@ CTreeListItem* CTreeListControl::GetItem(int i) const
 
 bool CTreeListControl::IsItemSelected(const CTreeListItem* item) const
 {
-    for (POSITION pos = GetFirstSelectedItemPosition(); pos != NULL;)
+    for (POSITION pos = GetFirstSelectedItemPosition(); pos != nullptr;)
     {
         if (GetItem(GetNextSelectedItem(pos)) == item) return true;
     }
     return false;
 }
 
-void CTreeListControl::SelectItem(const CTreeListItem* item, bool deselect, bool focus)
+void CTreeListControl::SelectItem(const CTreeListItem* item, bool deselect, const bool focus)
 {
     const int itempos = FindTreeItem(item);
     if (deselect) DeselectAll();
@@ -426,9 +425,9 @@ void CTreeListControl::SetRootItem(CTreeListItem* root)
 
 void CTreeListControl::DeselectAll()
 {
-    for (POSITION pos = GetFirstSelectedItemPosition(); pos != NULL;)
+    for (POSITION pos = GetFirstSelectedItemPosition(); pos != nullptr;)
     {
-        int i = GetNextSelectedItem(pos);
+        const int i = GetNextSelectedItem(pos);
         SetItemState(i, 0, LVIS_SELECTED);
     }
 }

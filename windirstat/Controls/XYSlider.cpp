@@ -37,23 +37,18 @@ void AFXAPI DDX_XySlider(CDataExchange* pDX, int nIDC, CPoint& value)
     pDX->m_pDlgWnd->GetDlgItem(nIDC, &hWndCtrl);
     if (pDX->m_bSaveAndValidate)
     {
-        ::SendMessage(hWndCtrl, CXySlider::XY_GETPOS, 0, (LPARAM)&value);
+        ::SendMessage(hWndCtrl, CXySlider::XY_GETPOS, 0, reinterpret_cast<LPARAM>(&value));
     }
     else
     {
-        ::SendMessage(hWndCtrl, CXySlider::XY_SETPOS, 0, (LPARAM)&value);
+        ::SendMessage(hWndCtrl, CXySlider::XY_SETPOS, 0, reinterpret_cast<LPARAM>(&value));
     }
 }
 
-CXySlider::CXySlider()
-    : m_inited(false)
-      , m_externalRange(CSize(100, 100))
+CXySlider::CXySlider() : 
+        m_externalRange(CSize(100, 100))
       , m_externalPos(CPoint(0, 0))
-      , m_pos(CPoint(0, 0))
-      , m_timer(0)
-      , m_gripperHighlight(false)
-{
-}
+      , m_pos(CPoint(0, 0)) {}
 
 void CXySlider::Initialize()
 {
@@ -97,15 +92,15 @@ CPoint CXySlider::GetPos() const
 
 LRESULT CXySlider::OnSetPos(WPARAM, LPARAM lparam)
 {
-    const POINT* point = (POINT*)lparam;
+    const POINT* point = reinterpret_cast<POINT*>(lparam);
     SetPos(*point);
     return 0;
 }
 
 LRESULT CXySlider::OnGetPos(WPARAM, LPARAM lparam)
 {
-    auto point = (POINT*)lparam;
-    *point     = GetPos();
+    const auto point = reinterpret_cast<POINT*>(lparam);
+    *point = GetPos();
     return 0;
 }
 
@@ -146,7 +141,7 @@ void CXySlider::CalcSizes()
     m_range = m_radius - m_gripperRadius;
 }
 
-CRect CXySlider::GetGripperRect()
+CRect CXySlider::GetGripperRect() const
 {
     CRect rc(
         -m_gripperRadius.cx,
@@ -175,14 +170,14 @@ void CXySlider::CheckMinMax(LONG& val, int min, int max)
 
 void CXySlider::InternToExtern()
 {
-    m_externalPos.x = static_cast<int>((double)abs(m_pos.x) * m_externalRange.cx / m_range.cx + 0.5) * signum(m_pos.x);
-    m_externalPos.y = static_cast<int>((double)abs(m_pos.y) * m_externalRange.cy / m_range.cy + 0.5) * signum(m_pos.y);
+    m_externalPos.x = static_cast<int>(static_cast<double>(abs(m_pos.x)) * m_externalRange.cx / m_range.cx + 0.5) * signum(m_pos.x);
+    m_externalPos.y = static_cast<int>(static_cast<double>(abs(m_pos.y)) * m_externalRange.cy / m_range.cy + 0.5) * signum(m_pos.y);
 }
 
 void CXySlider::ExternToIntern()
 {
-    m_pos.x = static_cast<int>((double)abs(m_externalPos.x) * m_range.cx / m_externalRange.cx + 0.5) * signum(m_externalPos.x);
-    m_pos.y = static_cast<int>((double)abs(m_externalPos.y) * m_range.cy / m_externalRange.cy + 0.5) * signum(m_externalPos.y);
+    m_pos.x = static_cast<int>(static_cast<double>(abs(m_externalPos.x)) * m_range.cx / m_externalRange.cx + 0.5) * signum(m_externalPos.x);
+    m_pos.y = static_cast<int>(static_cast<double>(abs(m_externalPos.y)) * m_range.cy / m_externalRange.cy + 0.5) * signum(m_externalPos.y);
 }
 
 void CXySlider::NotifyParent()
@@ -192,7 +187,7 @@ void CXySlider::NotifyParent()
     hdr.idFrom   = GetDlgCtrlID();
     hdr.code     = XYSLIDER_CHANGED;
 
-    GetParent()->SendMessage(WM_NOTIFY, GetDlgCtrlID(), (LPARAM)&hdr);
+    GetParent()->SendMessage(WM_NOTIFY, GetDlgCtrlID(), reinterpret_cast<LPARAM>(&hdr));
 }
 
 void CXySlider::PaintBackground(CDC* pdc)

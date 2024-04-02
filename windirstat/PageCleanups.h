@@ -31,7 +31,6 @@ class CPageCleanups final : public CPropertyPage
 
     enum { IDD = IDD_PAGE_CLEANUPS };
 
-public:
     CPageCleanups();
     ~CPageCleanups() override;
 
@@ -46,23 +45,23 @@ protected:
     void UpdateControlStatus();
     void CheckEmptyTitle();
 
-    USERDEFINEDCLEANUP m_udc[USERDEFINEDCLEANUPCOUNT]; // FIXME: should probably go to the heap
-    int m_current; // currently selected user defined cleanup
+    USERDEFINEDCLEANUP m_udc[USERDEFINEDCLEANUPCOUNT]{}; // FIXME: should probably go to the heap
+    int m_current = -1; // currently selected user defined cleanup
 
     // Dialog data
     CListBox m_list;
-    BOOL m_enabled;
+    BOOL m_enabled = FALSE;
     CStringW m_title;
-    BOOL m_worksForDrives;
-    BOOL m_worksForDirectories;
-    BOOL m_worksForFiles;
-    BOOL m_worksForUncPaths;
+    BOOL m_worksForDrives = FALSE;
+    BOOL m_worksForDirectories = FALSE;
+    BOOL m_worksForFiles = FALSE;
+    BOOL m_worksForUncPaths = FALSE;
     CStringW m_commandLine;
-    BOOL m_recurseIntoSubdirectories;
-    BOOL m_askForConfirmation;
-    BOOL m_showConsoleWindow;
-    BOOL m_waitForCompletion;
-    int m_refreshPolicy;
+    BOOL m_recurseIntoSubdirectories = FALSE;
+    BOOL m_askForConfirmation = FALSE;
+    BOOL m_showConsoleWindow = FALSE;
+    BOOL m_waitForCompletion = FALSE;
+    int m_refreshPolicy = 0;
     CComboBox m_ctlRefreshPolicy;
 
     CEdit m_ctlTitle;

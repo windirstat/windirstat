@@ -170,19 +170,19 @@ void CSortingListControl::InsertListItem(int i, CSortingListItem* item)
     lvitem.iItem   = i;
     lvitem.pszText = LPSTR_TEXTCALLBACK;
     lvitem.iImage  = I_IMAGECALLBACK;
-    lvitem.lParam  = (LPARAM)item;
+    lvitem.lParam  = reinterpret_cast<LPARAM>(item);
 
     VERIFY(i == CListCtrl::InsertItem(&lvitem));
 }
 
-CSortingListItem* CSortingListControl::GetSortingListItem(int i)
+CSortingListItem* CSortingListControl::GetSortingListItem(int i) const
 {
     return reinterpret_cast<CSortingListItem*>(GetItemData(i));
 }
 
 void CSortingListControl::SortItems()
 {
-    VERIFY(CListCtrl::SortItems(&_CompareFunc, (DWORD_PTR)&m_sorting));
+    VERIFY(CListCtrl::SortItems(&_CompareFunc, reinterpret_cast<DWORD_PTR>(&m_sorting)));
 
     HDITEM hditem;
     ZeroMemory(&hditem, sizeof(hditem));
@@ -250,7 +250,7 @@ void CSortingListControl::OnLvnGetdispinfo(NMHDR* pNMHDR, LRESULT* pResult)
     NMLVDISPINFO* di = reinterpret_cast<NMLVDISPINFO*>(pNMHDR);
     *pResult         = 0;
 
-    const CSortingListItem* item = (CSortingListItem*)di->item.lParam;
+    const CSortingListItem* item = reinterpret_cast<CSortingListItem*>(di->item.lParam);
 
     if ((di->item.mask & LVIF_TEXT) != 0)
     {

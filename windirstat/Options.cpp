@@ -22,7 +22,6 @@
 #include "stdafx.h"
 #include "WinDirStat.h"
 #include "DirStatDoc.h"
-#include <common/CommonHelpers.h>
 #include "Options.h"
 #include "Property.h"
 

@@ -157,23 +157,23 @@ CStringW FormatLongLongHuman(ULONGLONG n)
 
     const double TB = static_cast<int>(n);
 
-    if (TB != 0 || GB == base - 1 && MB >= half)
+    if (TB != 0.0 || GB == base - 1 && MB >= half)
     {
         s.Format(L"%s %s", FormatDouble(TB + GB / base).GetString(), GetSpec_TB().GetString());
     }
-    else if (GB != 0 || MB == base - 1 && KB >= half)
+    else if (GB != 0.0 || MB == base - 1 && KB >= half)
     {
         s.Format(L"%s %s", FormatDouble(GB + MB / base).GetString(), GetSpec_GB().GetString());
     }
-    else if (MB != 0 || KB == base - 1 && B >= half)
+    else if (MB != 0.0 || KB == base - 1 && B >= half)
     {
         s.Format(L"%s %s", FormatDouble(MB + KB / base).GetString(), GetSpec_MB().GetString());
     }
-    else if (KB != 0)
+    else if (KB != 0.0)
     {
         s.Format(L"%s %s", FormatDouble(KB + B / base).GetString(), GetSpec_KB().GetString());
     }
-    else if (B != 0)
+    else if (B != 0.0)
     {
         s.Format(L"%d %s", static_cast<int>(B), GetSpec_Bytes().GetString());
     }
@@ -212,8 +212,8 @@ CStringW PadWidthBlanks(CStringW n, int width)
     {
         CStringW b;
         const LPWSTR psz = b.GetBuffer(blankCount + 1);
-        int i            = 0;
-        for (i; i < blankCount; i++)
+        int i = 0;
+        for (; i < blankCount; i++)
         {
             psz[i] = L' ';
         }
@@ -228,8 +228,8 @@ CStringW PadWidthBlanks(CStringW n, int width)
 CStringW FormatFileTime(const FILETIME& t)
 {
     SYSTEMTIME st;
-    FILETIME ft;
-    if (::FileTimeToLocalFileTime(&t, &ft) == 0 ||
+    if (FILETIME ft;
+        ::FileTimeToLocalFileTime(&t, &ft) == 0 ||
         ::FileTimeToSystemTime(&ft, &st) == 0)
     {
         return L"";
@@ -238,11 +238,11 @@ CStringW FormatFileTime(const FILETIME& t)
     const LCID lcid = MAKELCID(COptions::LanguageId.Obj(), SORT_DEFAULT);
 
     CStringW date;
-    VERIFY(0 < ::GetDateFormat(lcid, DATE_SHORTDATE, &st, NULL, date.GetBuffer(64), 64));
+    VERIFY(0 < ::GetDateFormat(lcid, DATE_SHORTDATE, &st, nullptr, date.GetBuffer(64), 64));
     date.ReleaseBuffer();
 
     CStringW time;
-    VERIFY(0 < GetTimeFormat(lcid, TIME_NOSECONDS, &st, NULL, time.GetBuffer(64), 64));
+    VERIFY(0 < GetTimeFormat(lcid, TIME_NOSECONDS, &st, nullptr, time.GetBuffer(64), 64));
     time.ReleaseBuffer();
 
     return date + L"  " + time;
@@ -314,9 +314,8 @@ CStringW FormatMilliseconds(ULONGLONG ms)
 
     const ULONGLONG m = min % 60;
 
-    const ULONGLONG h = min / 60;
 
-    if (h > 0)
+    if (const ULONGLONG h = min / 60; h > 0)
     {
         ret.Format(L"%I64u:%02I64u:%02I64u", h, m, s);
     }
@@ -424,7 +423,7 @@ void GetPidlOfMyComputer(LPITEMIDLIST* ppidl)
     MdThrowFailed(hr, L"SHGetSpecialFolderLocation(CSIDL_DRIVES)");
 }
 
-CStringW GetFolderNameFromPath(LPCWSTR path)
+CStringW GetFolderNameFromPath(const LPCWSTR path)
 {
     CStringW s  = path;
     const int i = s.ReverseFind(wds::chrBackslash);
@@ -449,14 +448,11 @@ CStringW GetCOMSPEC()
     return cmd;
 }
 
-DWORD WaitForHandleWithRepainting(HANDLE h, DWORD TimeOut /*= INFINITE*/)
+void WaitForHandleWithRepainting(const HANDLE h, const DWORD TimeOut)
 {
-    DWORD r = 0;
-    // Code derived from MSDN sample "Waiting in a Message Loop".
-
     while (true)
     {
-        // Read all of the messages in this next loop, removing each message as we read it.
+        // Read all messages in this next loop, removing each message as we read it.
         MSG msg;
         while (::PeekMessage(&msg, nullptr, WM_PAINT, WM_PAINT, PM_REMOVE))
         {
@@ -464,8 +460,8 @@ DWORD WaitForHandleWithRepainting(HANDLE h, DWORD TimeOut /*= INFINITE*/)
         }
 
         // Wait for WM_PAINT message sent or posted to this queue
-        // or for one of the passed handles be set to signaled.
-        r = ::MsgWaitForMultipleObjects(1, &h, FALSE, TimeOut, QS_PAINT);
+        // or for one of the passed handles be set to signal.
+        const DWORD r = ::MsgWaitForMultipleObjects(1, &h, FALSE, TimeOut, QS_PAINT);
 
         // The result tells us the type of event we have.
         if (r == WAIT_OBJECT_0 + 1)
@@ -474,31 +470,24 @@ DWORD WaitForHandleWithRepainting(HANDLE h, DWORD TimeOut /*= INFINITE*/)
             // Continue to the top of the always while loop to dispatch them and resume waiting.
             continue;
         }
-        else
-        {
-            // The handle became signaled.
-            break;
-        }
-    }
 
-    return r;
+        // The handle became signaled.
+        break;
+    }
 }
 
 bool FolderExists(LPCWSTR path)
 {
     CFileFind finder;
-    if (BOOL b = finder.FindFile(path))
+    if (finder.FindFile(path))
     {
         finder.FindNextFile();
         return FALSE != finder.IsDirectory();
     }
-    else
-    {
-        // Here we land, if path is an UNC drive. In this case we
-        // try another FindFile:
-        b = finder.FindFile(CStringW(path) + L"\\*.*");
-        return b != false;
-    }
+
+    // Here we land, if path is a UNC drive. In this case we
+    // try another FindFile:
+    return finder.FindFile(CStringW(path) + L"\\*.*") != false;
 }
 
 bool DriveExists(const CStringW& path)
@@ -511,10 +500,7 @@ bool DriveExists(const CStringW& path)
     CStringW letter = path.Left(1);
     letter.MakeLower();
     const int d = letter[0] - wds::chrSmallA;
-
-    const DWORD mask = 0x1 << d;
-
-    if ((mask & ::GetLogicalDrives()) == 0)
+    if (const DWORD mask = 0x1 << d; (mask & ::GetLogicalDrives()) == 0)
     {
         return false;
     }
@@ -542,7 +528,7 @@ bool DriveExists(const CStringW& path)
 // \??\UNC\spock\temp                                     for a SUBSTed UNC path
 //
 // As always, I had to experimentally determine these strings, Microsoft
-// didn't think it necessary to document them. (Sometimes I think, they
+// didn't think it was necessary to document them. (Sometimes I think, they
 // even don't document such things internally...)
 //
 // I hope that a drive is SUBSTed iff this string starts with \??\.
@@ -553,7 +539,7 @@ bool DriveExists(const CStringW& path)
 //   SUBST only works per session by definition whereas volume mount points
 //   work across sessions (after restarts).
 //
-CStringW MyQueryDosDevice(LPCWSTR drive)
+CStringW MyQueryDosDevice(const LPCWSTR drive)
 {
     CStringW d = drive;
 
@@ -626,13 +612,8 @@ CStringW GetSpec_TB()
 BOOL IsAdmin()
 {
     SID_IDENTIFIER_AUTHORITY NtAuthority = SECURITY_NT_AUTHORITY;
-    SmartPointer<PSID> pSid(FreeSid);
-    if (::AllocateAndInitializeSid(&NtAuthority,
-                                   2,
-                                   SECURITY_BUILTIN_DOMAIN_RID,
-                                   DOMAIN_ALIAS_RID_ADMINS,
-                                   0, 0, 0, 0, 0, 0,
-                                   &pSid))
+    if (SmartPointer<PSID> pSid(FreeSid); ::AllocateAndInitializeSid(&NtAuthority, 2,
+        SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_ADMINS, 0, 0, 0, 0, 0, 0, &pSid))
     {
         BOOL bResult = FALSE;
         if (!::CheckTokenMembership(nullptr, pSid, &bResult))
@@ -658,7 +639,7 @@ bool EnableReadPrivileges()
 
     // Fetch a list of privileges we currently have
     std::vector<BYTE> privs_bytes(64 * sizeof(LUID_AND_ATTRIBUTES) + sizeof(DWORD), 0);
-    PTOKEN_PRIVILEGES privs_available = reinterpret_cast<PTOKEN_PRIVILEGES>(privs_bytes.data());
+    const PTOKEN_PRIVILEGES privs_available = reinterpret_cast<PTOKEN_PRIVILEGES>(privs_bytes.data());
     DWORD priv_length = 0;
     if (GetTokenInformation(token, TokenPrivileges, privs_bytes.data(),
         static_cast<DWORD>(privs_bytes.size()), &priv_length) == 0)
@@ -667,7 +648,7 @@ bool EnableReadPrivileges()
     }
     
     bool ret = true;
-    for (LPCWSTR priv : { SE_RESTORE_NAME, SE_BACKUP_NAME })
+    for (const LPCWSTR priv : { SE_RESTORE_NAME, SE_BACKUP_NAME })
     {
         // Populate the privilege adjustment structure
         TOKEN_PRIVILEGES priv_entry = {};
@@ -678,7 +659,7 @@ bool EnableReadPrivileges()
         if (LookupPrivilegeValue(nullptr, priv, &priv_entry.Privileges[0].Luid) == 0)
         {
             ret = false;
-            break;
+            continue;
         }
 
         // Check if privilege is in the list of ones we have

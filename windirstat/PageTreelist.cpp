@@ -23,7 +23,6 @@
 #include "WinDirStat.h"
 #include "Options.h"
 #include "PageTreelist.h"
-#include "CommonHelpers.h"
 #include "DirStatDoc.h"
 #include "DirStatView.h"
 #include "Localization.h"
@@ -31,20 +30,7 @@
 
 IMPLEMENT_DYNAMIC(CPageTreelist, CPropertyPage)
 
-CPageTreelist::CPageTreelist()
-    : CPropertyPage(CPageTreelist::IDD)
-      , m_pacmanAnimation(FALSE)
-      , m_showTimeSpent(FALSE)
-      , m_showColumnSubdirs(0)
-      , m_showColumnItems(0)
-      , m_showColumnFiles(0)
-      , m_showColumnAttributes(0)
-      , m_showColumnLastChange(0)
-      , m_showColumnOwner(0)
-      , m_treelistColorCount(TREELISTCOLORCOUNT)
-      , m_treelistColor{0}
-{
-}
+CPageTreelist::CPageTreelist() : CPropertyPage(CPageTreelist::IDD) {}
 
 void CPageTreelist::DoDataExchange(CDataExchange* pDX)
 {
@@ -164,7 +150,7 @@ void CPageTreelist::OnColorChanged(UINT, NMHDR*, LRESULT*)
 void CPageTreelist::EnableButtons()
 {
     int i = 0;
-    for (i = 0; i < m_treelistColorCount; i++)
+    for (; i < m_treelistColorCount; i++)
     {
         m_colorButton[i].EnableWindow(true);
     }

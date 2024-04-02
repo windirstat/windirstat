@@ -32,7 +32,7 @@ class CMyImageList final : public CImageList
     static constexpr UINT WDS_SHGFI_DEFAULTS = SHGFI_SYSICONINDEX | SHGFI_SMALLICON | SHGFI_ICON;
 
 public:
-    CMyImageList();
+    CMyImageList() = default;
     ~CMyImageList() override = default;
 
     void initialize();
@@ -49,18 +49,18 @@ public:
     short getUnknownImage() const;
     short getEmptyImage() const;
 
-protected:
     short cacheIcon(LPCWSTR path, UINT flags, CStringW* psTypeName = nullptr);
     static CStringW getADriveSpec();
     void addCustomImages();
 
     CMap<int, int, short, short> m_indexMap; // system image list index -> our index
 
-    short m_junctionProtected; // <Files>
-    short m_freeSpaceImage;   // <Free Space>
-    short m_unknownImage;     // <Unknown>
-    short m_emptyImage;       // For items whose image cannot be found
+
+    short m_freeSpaceImage = -1;    // <Free Space>
+    short m_unknownImage = -1;      // <Unknown>
+    short m_emptyImage = -1;        // For items whose image cannot be found
 
     // Junction point
-    short m_junctionImage;
+    short m_junctionImage = -1;     // For normal functions
+    short m_junctionProtected = -1; // For protected junctions
 };

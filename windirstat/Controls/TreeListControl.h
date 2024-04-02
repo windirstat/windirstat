@@ -52,16 +52,11 @@ class CTreeListItem : public COwnerDrawnListItem
         CRect rcPlusMinus;    // Coordinates of the little +/- rectangle, relative to the upper left corner of the item.
         CRect rcTitle;        // Coordinates of the label, relative to the upper left corner of the item.
         CStringW owner;       // Owner of file or folder
-        short image;          // -1 as long as not needed, >= 0: valid index in MyImageList.
+        short image = -1;     // -1 as long as not needed, >= 0: valid index in MyImageList.
         unsigned char indent; // 0 for the root item, 1 for its children, and so on.
-        bool isExpanded;      // Whether item is expanded.
+        bool isExpanded = false; // Whether item is expanded.
 
-        VISIBLEINFO(unsigned char iIndent)
-            : image(-1)
-              , indent(iIndent)
-              , isExpanded(false)
-        {
-        }
+        VISIBLEINFO(unsigned char iIndent) : indent(iIndent) {}
     };
 
 public:
@@ -73,12 +68,12 @@ public:
     bool DrawSubitem(int subitem, CDC* pdc, CRect rc, UINT state, int* width, int* focusLeft) const override;
     CStringW GetText(int subitem) const override;
     int GetImage() const override;
-    int Compare(const CSortingListItem* other, int subitem) const override;
+    int Compare(const CSortingListItem* baseOther, int subitem) const override;
     virtual CTreeListItem* GetTreeListChild(int i) const = 0;
     virtual int GetTreeListChildCount() const = 0;
     virtual short GetImageToCache() const = 0;
 
-    void DrawPacman(CDC* pdc, const CRect& rc, COLORREF bgColor) const;
+    void DrawPacman(const CDC* pdc, const CRect& rc, COLORREF bgColor) const;
     void UncacheImage();
     void SortChildren();
     CTreeListItem* GetSortedChild(int i) const;
@@ -122,7 +117,6 @@ class CTreeListControl : public COwnerDrawnListControl
     // this is global.
     static CTreeListControl* _theTreeListControl;
 
-public:
     static CTreeListControl* GetTheTreeListControl();
 
     CTreeListControl(int rowHeight = -1);
@@ -132,7 +126,7 @@ public:
     void SysColorChanged() override;
     void SetRootItem(CTreeListItem* root);
     void OnChildAdded(CTreeListItem* parent, CTreeListItem* child);
-    void OnChildRemoved(CTreeListItem* parent, CTreeListItem* childdata);
+    void OnChildRemoved(CTreeListItem* parent, CTreeListItem* child);
     void OnRemovingAllChildren(CTreeListItem* parent);
     CTreeListItem* GetItem(int i) const;
     bool IsItemSelected(const CTreeListItem* item) const;

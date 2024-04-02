@@ -31,23 +31,13 @@
 
 IMPLEMENT_DYNAMIC(CPageGeneral, CPropertyPage)
 
-CPageGeneral::CPageGeneral()
-    : CPropertyPage(CPageGeneral::IDD)
-      , m_useWdsLocale(0)
-      , m_humanFormat(0)
-      , m_portableMode(0)
-      , m_listGrid(0)
-      , m_listStripes(0)
-      , m_listFullRowSelection(0)
-      , m_originalLanguage(0)
-{
-}
+CPageGeneral::CPageGeneral() : CPropertyPage(CPageGeneral::IDD) {}
 
 CPageGeneral::~CPageGeneral() = default;
 
 COptionsPropertySheet* CPageGeneral::GetSheet() const
 {
-    auto sheet = DYNAMIC_DOWNCAST(COptionsPropertySheet, GetParent());
+    const auto sheet = DYNAMIC_DOWNCAST(COptionsPropertySheet, GetParent());
     ASSERT(sheet != NULL);
     return sheet;
 }
@@ -87,10 +77,9 @@ BOOL CPageGeneral::OnInitDialog()
     m_useWdsLocale= COptions::UseWdsLocale;
     m_portableMode = GetWDSApp()->InPortableMode();
 
-    const auto languages = Localization::GetLanguageList();
-    for (const auto & language : languages)
+    for (const auto & language : Localization::GetLanguageList())
     {
-        int i = m_combo.AddString(GetLocaleLanguage(language));
+        const int i = m_combo.AddString(GetLocaleLanguage(language));
         m_combo.SetItemData(i, language);
         if (language == COptions::LanguageId)
         {

@@ -59,9 +59,8 @@ protected:
     CDirStatView(); // Created by MFC only
     DECLARE_DYNCREATE(CDirStatView)
 
-public:
     ~CDirStatView() override = default;
-    CStringW GenerateReport();
+    CStringW GenerateReport() const;
     void SysColorChanged();
     void CreateColumns(bool all = false);
 
@@ -75,7 +74,6 @@ protected:
 
     CMyTreeListControl m_treeListControl; // The tree list
 
-protected:
     DECLARE_MESSAGE_MAP()
     afx_msg void OnSize(UINT nType, int cx, int cy);
     afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);

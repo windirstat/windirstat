@@ -39,7 +39,7 @@ class CTypeView;
 // The "logical focus" can be
 // - on the Directory List
 // - on the Extension List
-// Although these windows can loose the real focus, for instance
+// Although these windows can lose the real focus, for instance
 // when a dialog box is opened, the logical focus will not be lost.
 //
 enum LOGICAL_FOCUS
@@ -56,18 +56,17 @@ class COptionsPropertySheet final : public CPropertySheet
 {
     DECLARE_DYNAMIC(COptionsPropertySheet)
 
-public:
     COptionsPropertySheet();
     void SetLanguageChanged(bool changed);
     BOOL OnInitDialog() override;
 
-    bool m_restartApplication; // [out]
+    bool m_restartApplication = false; // [out]
 
 protected:
     BOOL OnCommand(WPARAM wParam, LPARAM lParam) override;
 
-    bool m_languageChanged;
-    bool m_alreadyAsked;
+    bool m_languageChanged = false;
+    bool m_alreadyAsked = false;
 };
 
 //
@@ -83,7 +82,7 @@ public:
     void RestoreSplitterPos(double posIfVirgin);
 
 protected:
-    double m_splitterPos;       // Current split ratio
+    double m_splitterPos{0};    // Current split ratio
     bool m_wasTrackedByUser;    // True as soon as user has modified the splitter position
     double * m_userSplitterPos; // Split ratio as set by the user
 
@@ -146,11 +145,10 @@ protected:
     CMainFrame(); // Created by MFC only
     DECLARE_DYNCREATE(CMainFrame)
 
-public:
     static CMainFrame* GetTheFrame();
     ~CMainFrame() override;
     void InitialShowWindow();
-    void InvokeInMessageThread(std::function<void()> callback);
+    static void InvokeInMessageThread(std::function<void()> callback);
 
     void RestoreGraphView();
     void RestoreTypeView();
@@ -175,7 +173,7 @@ public:
     LOGICAL_FOCUS GetLogicalFocus() const;
     void MoveFocus(LOGICAL_FOCUS lf);
 
-    void SetMessageText(const CStringW& text) { SetStatusPaneText(0, text); };
+    void SetMessageText(const CStringW& text) { SetStatusPaneText(0, text); }
     void SetSelectionMessageText();
 
     static void QueryRecycleBin(ULONGLONG& items, ULONGLONG& bytes);
@@ -191,11 +189,11 @@ protected:
     void SetStatusPaneText(int pos, const CStringW& text);
     void UpdateCleanupMenu(CMenu* menu);
 
-    bool m_progressVisible;    // True while progress must be shown (either pacman or progress bar)
-    bool m_scanSuspend;        // True if the scan has been suspended
-    ULONGLONG m_progressRange; // Progress range. A range of 0 means that we have no range available. In this case we should display pacman.
-    ULONGLONG m_progressPos;   // Progress position (<= progressRange, or an item count in case of m_progressRang == 0)
-    CItem* m_workingItem;
+    bool m_progressVisible = false; // True while progress must be shown (either pacman or progress bar)
+    bool m_scanSuspend = false;     // True if the scan has been suspended
+    ULONGLONG m_progressRange = 0;  // Progress range. A range of 0 means Pacman should be used.
+    ULONGLONG m_progressPos = 0;    // Progress position (<= progressRange, or an item count in case of m_progressRang == 0)
+    CItem* m_workingItem = nullptr;
 
     CMySplitterWnd m_wndSubSplitter; // Contains the two upper views
     CMySplitterWnd m_wndSplitter;    // Contains (a) m_wndSubSplitter and (b) the graph view.
@@ -205,11 +203,12 @@ protected:
     CProgressCtrl m_progress;     // Progress control. Is Create()ed and Destroy()ed again every time.
     CPacmanControl m_pacman;      // Static control for Pacman.
 
-    LOGICAL_FOCUS m_logicalFocus; // Which view has the logical focus
+    LOGICAL_FOCUS m_logicalFocus = LF_NONE; // Which view has the logical focus
     CDeadFocusWnd m_wndDeadFocus; // Zero-size window which holds the focus if logical focus is "NONE"
 
     CComPtr<ITaskbarList3> m_TaskbarList;
-    TBPFLAG m_TaskbarButtonState, m_TaskbarButtonPreviousState;
+    TBPFLAG m_TaskbarButtonState = TBPF_INDETERMINATE;
+    TBPFLAG m_TaskbarButtonPreviousState = TBPF_INDETERMINATE;
 
     DECLARE_MESSAGE_MAP()
     afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
@@ -232,5 +231,5 @@ protected:
 
 public:
     afx_msg void OnSysColorChange();
-    virtual BOOL LoadFrame(UINT nIDResource, DWORD dwDefaultStyle = WS_OVERLAPPEDWINDOW | FWS_ADDTOTITLE, CWnd* pParentWnd = NULL, CCreateContext* pContext = NULL);
+    virtual BOOL LoadFrame(UINT nIDResource, DWORD dwDefaultStyle = WS_OVERLAPPEDWINDOW | FWS_ADDTOTITLE, CWnd* pParentWnd = nullptr, CCreateContext* pContext = nullptr) override;
 };

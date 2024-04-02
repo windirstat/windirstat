@@ -32,7 +32,6 @@ class CPageGeneral final : public CPropertyPage
 
     enum { IDD = IDD_PAGE_GENERAL };
 
-public:
     CPageGeneral();
     ~CPageGeneral() override;
 
@@ -43,16 +42,16 @@ protected:
     BOOL OnInitDialog() override;
     void OnOK() override;
 
-    BOOL m_useWdsLocale;
-    BOOL m_humanFormat;
-    BOOL m_portableMode;
-    BOOL m_listGrid;
-    BOOL m_listStripes;
-    BOOL m_listFullRowSelection;
+    BOOL m_useWdsLocale = FALSE;
+    BOOL m_humanFormat = FALSE;
+    BOOL m_portableMode = FALSE;
+    BOOL m_listGrid = FALSE;
+    BOOL m_listStripes = FALSE;
+    BOOL m_listFullRowSelection = FALSE;
 
     CComboBox m_combo;
 
-    int m_originalLanguage;
+    int m_originalLanguage = 0;
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnBnClickedSetModified();

@@ -53,7 +53,7 @@ protected:
 
         CStringW GetExtension() const;
         int GetImage() const override;
-        int Compare(const CSortingListItem* other, int subitem) const override;
+        int Compare(const CSortingListItem* baseOther, int subitem) const override;
 
     private:
         void DrawColor(CDC* pdc, CRect rc, UINT state, int* width) const;
@@ -78,7 +78,7 @@ public:
     void SetRootSize(ULONGLONG totalBytes);
     ULONGLONG GetRootSize() const;
     void SelectExtension(LPCWSTR ext);
-    CStringW GetSelectedExtension();
+    CStringW GetSelectedExtension() const;
 
 protected:
     CListItem* GetListItem(int i) const;
@@ -105,7 +105,6 @@ protected:
     CTypeView();
     DECLARE_DYNCREATE(CTypeView)
 
-public:
     ~CTypeView() override = default;
     CDirStatDoc* GetDocument() const
     {

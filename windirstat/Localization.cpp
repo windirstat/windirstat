@@ -24,7 +24,6 @@
 #include "CommonHelpers.h"
 #include "GlobalHelpers.h"
 #include "FileFind.h"
-#include "resource.h"
 #include "langs.h"
 
 #include <filesystem>
@@ -33,9 +32,9 @@
 
 std::unordered_map<std::wstring, std::wstring> Localization::map;
 
-void Localization::SearchReplace(std::wstring& input, const std::wstring& search, const std::wstring& replace)
+void Localization::SearchReplace(std::wstring& input, const std::wstring_view& search, const std::wstring_view& replace)
 {
-    for (size_t i = 0; (i = input.find(search)) != std::wstring::npos;)
+    for (size_t i = input.find(search); i != std::wstring::npos; i = input.find(search))
     {
         input.replace(i, search.size(), replace);
     }
@@ -53,7 +52,7 @@ bool Localization::CrackStrings(std::basic_istream<char>& stream, unsigned int s
     {
         // Convert to wide strings
         if (line.empty() || line[0] == L'#') continue;
-        int sz = MultiByteToWideChar(CP_UTF8, 0, line.c_str(), static_cast<int>(line.size()),
+        const int sz = MultiByteToWideChar(CP_UTF8, 0, line.c_str(), static_cast<int>(line.size()),
             buffer_wide.data(), static_cast<int>(buffer_wide.size()));
         ASSERT(sz != 0);
         std::wstring line_wide = buffer_wide.substr(0, sz);
@@ -90,7 +89,7 @@ std::vector<LANGID> Localization::GetLanguageList()
 
         const LANGID langid = LANGIDFROMLCID(lcid);
         const LANGID langidn = MAKELANGID(PRIMARYLANGID(langid), SUBLANG_NEUTRAL);
-        if (std::find(results.begin(), results.end(), langidn) == results.end()) results.push_back(langidn);
+        if (std::ranges::find(results, langidn) == results.end()) results.push_back(langidn);
     }
 
     return results;
@@ -99,8 +98,8 @@ std::vector<LANGID> Localization::GetLanguageList()
 bool Localization::LoadResource(WORD language)
 {
     FileFindEnhanced finder;
-    CStringW lang = GetLocaleString(LOCALE_SISO639LANGNAME, language);
-    CStringW name = L"lang_" + lang + L".txt";
+    const CStringW lang = GetLocaleString(LOCALE_SISO639LANGNAME, language);
+    const CStringW name = L"lang_" + lang + L".txt";
     if (FileFindEnhanced::DoesFileExist(GetAppFolder(), name))
     {
         return LoadFile((GetAppFolder() + L"\\" + name).GetString());
@@ -177,7 +176,7 @@ void Localization::UpdateWindowText(HWND hwnd)
     }
 }
 
-void Localization::UpdateDialogs(CWnd& wnd)
+void Localization::UpdateDialogs(const CWnd& wnd)
 {
     UpdateWindowText(wnd.m_hWnd);
 

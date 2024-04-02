@@ -1,4 +1,4 @@
-// FileFindWDS.h - Declaration of CFileFindWDS
+// FileFindEnhanced.h - Declaration of CFileFindEnhanced
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
@@ -70,7 +70,8 @@ bool FileFindEnhanced::FindNextFile()
     }
     else
     {
-        m_current_info = reinterpret_cast<FILE_DIRECTORY_INFORMATION*>(&((BYTE*)(m_current_info))[m_current_info->NextEntryOffset]);
+        m_current_info = reinterpret_cast<FILE_DIRECTORY_INFORMATION*>(
+            &reinterpret_cast<BYTE*>(m_current_info)[m_current_info->NextEntryOffset]);
         success        = true;
     }
 

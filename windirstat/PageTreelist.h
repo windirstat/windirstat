@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "colorbutton.h"
+#include "ColorButton.h"
 #include "afxcmn.h"
 
 //
@@ -33,7 +33,6 @@ class CPageTreelist final : public CPropertyPage
 
     enum { IDD = IDD_PAGE_TREELIST };
 
-public:
     CPageTreelist();
     ~CPageTreelist() override = default;
 
@@ -43,17 +42,17 @@ protected:
     void OnOK() override;
     void EnableButtons();
 
-    BOOL m_pacmanAnimation;
-    BOOL m_showTimeSpent;
-    BOOL m_showColumnSubdirs;
-    BOOL m_showColumnItems;
-    BOOL m_showColumnFiles;
-    BOOL m_showColumnAttributes;
-    BOOL m_showColumnLastChange;
-    BOOL m_showColumnOwner;
+    BOOL m_pacmanAnimation = FALSE;
+    BOOL m_showTimeSpent = FALSE;
+    BOOL m_showColumnSubdirs = FALSE;
+    BOOL m_showColumnItems = FALSE;
+    BOOL m_showColumnFiles = FALSE;
+    BOOL m_showColumnAttributes = FALSE;
+    BOOL m_showColumnLastChange = FALSE;
+    BOOL m_showColumnOwner = FALSE;
 
-    int m_treelistColorCount;
-    COLORREF m_treelistColor[TREELISTCOLORCOUNT];
+    int m_treelistColorCount = TREELISTCOLORCOUNT;
+    COLORREF m_treelistColor[TREELISTCOLORCOUNT] = {};
 
     CColorButton m_colorButton[TREELISTCOLORCOUNT];
     CSliderCtrl m_slider;

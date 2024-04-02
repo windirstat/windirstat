@@ -32,7 +32,6 @@ class CPageAdvanced final : public CPropertyPage
 
     enum { IDD = IDD_PAGE_ADVANCED };
 
-public:
     CPageAdvanced();
     ~CPageAdvanced() override;
 
@@ -43,13 +42,13 @@ protected:
     BOOL OnInitDialog() override;
     void OnOK() override;
 
-    BOOL m_followMountPoints;
-    BOOL m_followJunctionPoints;
-    BOOL m_skipHidden;
-    BOOL m_skipProtected;
-    BOOL m_useBackupRestore;
-    BOOL m_showUncompressedFileSizes;
-    int m_scanningThreads;
+    BOOL m_followMountPoints = FALSE;
+    BOOL m_followJunctionPoints = FALSE;
+    BOOL m_skipHidden = FALSE;
+    BOOL m_skipProtected = FALSE;
+    BOOL m_useBackupRestore = FALSE;
+    BOOL m_showUncompressedFileSizes = FALSE;
+    int m_scanningThreads = 0;
 
     CButton m_ctlFollowMountPoints;
     CButton m_ctlFollowJunctionPoints;

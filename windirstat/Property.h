@@ -28,7 +28,7 @@ class PersistedSetting
 protected:
 
     static std::vector<PersistedSetting*>& GetPropertySet();
-    static bool ReadBinaryProperty(std::wstring & section, std::wstring & entry, LPVOID dest, size_t size);
+    static bool ReadBinaryProperty(const std::wstring & section, const std::wstring & entry, LPVOID dest, size_t size);
     std::wstring _entry;
     std::wstring _section;
 
@@ -49,7 +49,7 @@ public:
 
     static void ReadPersistedProperties()
     {
-        for (auto p : GetPropertySet())
+        for (const auto & p : GetPropertySet())
         {
             p->ReadPersistedProperty();
         }
@@ -57,7 +57,7 @@ public:
 
     static void WritePersistedProperties()
     {
-        for (auto p : GetPropertySet())
+        for (const auto & p : GetPropertySet())
         {
             if (p->_section.empty()) continue;
             p->WritePersistedProperty();
@@ -68,8 +68,6 @@ public:
 template <typename T = void>
 class Setting final : PersistedSetting
 {
-protected:
-
     T _value;
     T _min;
     T _max;
@@ -89,7 +87,7 @@ public:
 
     // Copy assignment operators
     T operator=(T other) { return (_value = other); }
-    T operator=(Setting<T> other) { return (_value == other._value); }
+    T operator=(Setting<T> other) { return (_value = other._value); }
 
     // Math operators
     T operator++() { return ++_value; }
@@ -104,19 +102,17 @@ public:
     T operator/(const T& other) { return _value / other; }
 
     // Forces identical type assignment
-    template <typename T2> T2& operator=(const T2& other)
+    template <typename T2> T2& operator=(const T2&)
     {
-        T2& guard = _value;
+        const T2& guard = _value;
         throw guard; // Never reached.
     }
 
-    Setting(const std::wstring& section, const std::wstring& entry, const T& default_value = {}, const T& check_min = {}, const T& check_max = {}) : PersistedSetting()
+    Setting(const std::wstring& section, const std::wstring& entry, const T& default_value = {}, const T& check_min = {}, const T& check_max = {}) :
+        _value(default_value), _min(check_min), _max(check_max)
     {
-        _value = default_value;
         _entry = entry;
         _section = section;
-        _min = check_min;
-        _max = check_max;
     }
 
     // Default constructor (used by non-persisted properties)

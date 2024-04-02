@@ -26,22 +26,11 @@
 
 #include "DirStatDoc.h"
 #include "Options.h"
-#include "GlobalHelpers.h"
 #include "Localization.h"
 
 IMPLEMENT_DYNAMIC(CPageAdvanced, CPropertyPage)
 
-CPageAdvanced::CPageAdvanced()
-    : CPropertyPage(CPageAdvanced::IDD)
-    , m_followMountPoints(FALSE)
-    , m_followJunctionPoints(FALSE)
-    , m_skipHidden(FALSE)
-    , m_skipProtected(FALSE)
-    , m_useBackupRestore(FALSE)
-    , m_showUncompressedFileSizes(FALSE)
-    , m_scanningThreads(0)
-{
-}
+CPageAdvanced::CPageAdvanced() : CPropertyPage(CPageAdvanced::IDD) {}
 
 CPageAdvanced::~CPageAdvanced() = default;
 

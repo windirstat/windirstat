@@ -67,9 +67,9 @@ namespace
                 MdThrowLastWinerror();
             }
 
-            auto pData = static_cast<const BYTE*>(::LockResource(hresource));
+            const auto pData = static_cast<const BYTE*>(::LockResource(hresource));
 
-            const CComBSTR bstr(dwSize, (LPCSTR)pData);
+            const CComBSTR bstr(dwSize, reinterpret_cast<LPCSTR>(pData));
 
             s = bstr;
         }
@@ -331,10 +331,10 @@ void CAboutDlg::OnSize(UINT nType, int cx, int cy)
     m_layout.OnSize();
 }
 
-void CAboutDlg::OnGetMinMaxInfo(MINMAXINFO* mmi)
+void CAboutDlg::OnGetMinMaxInfo(MINMAXINFO* lpMMI)
 {
-    m_layout.OnGetMinMaxInfo(mmi);
-    CDialogEx::OnGetMinMaxInfo(mmi);
+    m_layout.OnGetMinMaxInfo(lpMMI);
+    CDialogEx::OnGetMinMaxInfo(lpMMI);
 }
 
 void CAboutDlg::OnDestroy()

@@ -30,7 +30,6 @@ class CXySlider final : public CStatic
 {
     DECLARE_DYNAMIC(CXySlider)
 
-public:
     static const UINT XY_SETPOS; // lparam = POINT *
     static const UINT XY_GETPOS; // lparam = POINT *
 
@@ -48,7 +47,7 @@ public:
 protected:
     void Initialize();
     void CalcSizes();
-    CRect GetGripperRect();
+    CRect GetGripperRect() const;
     void CheckMinMax(LONG& val, int min, int max);
     void InternToExtern();
     void ExternToIntern();
@@ -64,7 +63,7 @@ protected:
     void InstallTimer();
     void RemoveTimer();
 
-    bool m_inited;
+    bool m_inited = false;
 
     // These are in external scale
     CSize m_externalRange;
@@ -81,8 +80,8 @@ protected:
     CSize m_radius;
     CSize m_gripperRadius;
 
-    UINT_PTR m_timer;
-    bool m_gripperHighlight;
+    UINT_PTR m_timer = 0;
+    bool m_gripperHighlight = false;
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnDestroy();

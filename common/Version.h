@@ -19,52 +19,14 @@
 
 #pragma once
 
-#if defined(WDS_RESLANG) && (WDS_RESLANG > 0)
-#   if (WDS_RESLANG == 0x0405)
-#       define TEXT_RESLANG             Czech
-#   elif (WDS_RESLANG == 0x0407)
-#       define TEXT_RESLANG             German
-#   elif (WDS_RESLANG == 0x0409)
-#       define TEXT_RESLANG             English (US)
-#   elif (WDS_RESLANG == 0x040a)
-#       define TEXT_RESLANG             Spanish
-#   elif (WDS_RESLANG == 0x040b)
-#       define TEXT_RESLANG             Finnish
-#   elif (WDS_RESLANG == 0x040c)
-#       define TEXT_RESLANG             French
-#   elif (WDS_RESLANG == 0x040e)
-#       define TEXT_RESLANG             Hungarian
-#   elif (WDS_RESLANG == 0x0410)
-#       define TEXT_RESLANG             Italian
-#   elif (WDS_RESLANG == 0x0413)
-#       define TEXT_RESLANG             Dutch
-#   elif (WDS_RESLANG == 0x0415)
-#       define TEXT_RESLANG             Polish
-#   elif (WDS_RESLANG == 0x0416)
-#       define TEXT_RESLANG             Portuguese (Brazil)
-#   elif (WDS_RESLANG == 0x0419)
-#       define TEXT_RESLANG             Russian
-#   elif (WDS_RESLANG == 0x0425)
-#       define TEXT_RESLANG             Estonian
-#   else
-#       error The language you defined does not have a name yet. Adjust the file with this error to include a name.
-#   endif
-#endif
-
 #define PRD_MAJVER                  1 // major product version
 #define PRD_MINVER                  3 // minor product version
 #define PRD_PATCH                   0 // patch number
 #define PRD_BUILD                   0 // build number for product
 #define PRD_BUILD_NUMERIC           0 // build number for product
-#if defined(WDS_RESLANG) && (WDS_RESLANG > 0)
-#   define FILE_MAJVER              1 // resource language version, changing this denotes incompatibilities
-#   define FILE_MINVER              0
-#   define FILE_PATCH               0
-#else
-#   define FILE_MAJVER              PRD_MAJVER // major file version
-#   define FILE_MINVER              PRD_MINVER // minor file version
-#   define FILE_PATCH               PRD_PATCH // patch number
-#endif
+#define FILE_MAJVER                 PRD_MAJVER // major file version
+#define FILE_MINVER                 PRD_MINVER // minor file version
+#define FILE_PATCH                  PRD_PATCH // patch number
 #define FILE_BUILD                  PRD_BUILD // build number
 #define FILE_BUILD_NUMERIC          PRD_BUILD_NUMERIC // build number for product
 #define TEXT_WEBSITE                https:/##/windirstat.net // website

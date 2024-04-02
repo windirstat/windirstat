@@ -69,7 +69,6 @@ class CSortingListControl : public CListCtrl
     std::vector<int>* m_column_order;
     std::vector<int>* m_column_widths;
 
-public:
     // Construction
     CSortingListControl(std::vector<int>* column_order, std::vector<int>* column_widths);
     ~CSortingListControl() override = default;
@@ -81,14 +80,13 @@ public:
     void RemoveExtendedStyle(DWORD exStyle);
 
     const SSorting& GetSorting() const;
-    void GetSorting(int& sortColumn1, bool& ascending1, int& sortColumn2, bool& ascending2);
 
     void SetSorting(const SSorting& sorting);
     void SetSorting(int sortColumn1, bool ascending1, int sortColumn2, bool ascending2);
     void SetSorting(int sortColumn, bool ascending);
 
     void InsertListItem(int i, CSortingListItem* item);
-    CSortingListItem* GetSortingListItem(int i);
+    CSortingListItem* GetSortingListItem(int i) const;
 
     // Overridables
     virtual void SortItems();

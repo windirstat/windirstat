@@ -44,7 +44,7 @@ CStringW FormatVolumeName(const CStringW& rootPath, const CStringW& volumeName);
 CStringW PathFromVolumeName(const CStringW& name);
 CStringW GetFolderNameFromPath(LPCWSTR path);
 CStringW GetCOMSPEC();
-DWORD WaitForHandleWithRepainting(HANDLE h, DWORD TimeOut = INFINITE);
+void WaitForHandleWithRepainting(HANDLE h, DWORD TimeOut = INFINITE);
 bool FolderExists(LPCWSTR path);
 bool DriveExists(const CStringW& path);
 CStringW MyQueryDosDevice(LPCWSTR drive);

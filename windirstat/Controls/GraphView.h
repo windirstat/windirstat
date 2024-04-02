@@ -35,7 +35,6 @@ protected:
     CGraphView();
     DECLARE_DYNCREATE(CGraphView)
 
-public:
     ~CGraphView() override = default;
 
     // CTreemap::Callback

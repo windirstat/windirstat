@@ -105,39 +105,39 @@ public:
         double lightSourceX; // -4.0..+4.0 (default = -1.0), negative = left
         double lightSourceY; // -4.0..+4.0 (default = -1.0), negative = top
 
-        int GetBrightnessPercent()
+        int GetBrightnessPercent() const
         {
             return RoundDouble(brightness * 100);
         }
 
-        int GetHeightPercent()
+        int GetHeightPercent() const
         {
             return RoundDouble(height * 100);
         }
 
-        int GetScaleFactorPercent()
+        int GetScaleFactorPercent() const
         {
             return RoundDouble(scaleFactor * 100);
         }
 
-        int GetAmbientLightPercent()
+        int GetAmbientLightPercent() const
         {
             return RoundDouble(ambientLight * 100);
         }
 
-        int GetLightSourceXPercent()
+        int GetLightSourceXPercent() const
         {
             return RoundDouble(lightSourceX * 100);
         }
 
-        int GetLightSourceYPercent()
+        int GetLightSourceYPercent() const
         {
             return RoundDouble(lightSourceY * 100);
         }
 
-        CPoint GetLightSourcePoint()
+        CPoint GetLightSourcePoint() const
         {
-            return CPoint(GetLightSourceXPercent(), GetLightSourceYPercent());
+            return { GetLightSourceXPercent(), GetLightSourceYPercent() };
         }
 
         void SetBrightnessPercent(int n)
@@ -182,7 +182,6 @@ public:
         }
     };
 
-public:
     // Get a good palette of 13 colors (7 if system has 256 colors)
     static void GetDefaultPalette(CColorRefRArray& palette);
 
@@ -192,7 +191,6 @@ public:
     // Good values
     static Options GetDefaultOptions();
 
-public:
     // Construct the treemap generator and register the callback interface.
     CTreemap();
 
@@ -213,7 +211,7 @@ public:
 
     // In the resulting treemap, find the item below a given coordinate.
     // Return value can be NULL, iff point is outside root rect.
-    Item* FindItemByPoint(Item* root, CPoint point);
+    Item* FindItemByPoint(Item* item, CPoint point);
 
     // Draws a sample rectangle in the given style (for color legend)
     void DrawColorPreview(CDC* pdc, const CRect& rc, COLORREF color, const Options* options = nullptr);
@@ -242,7 +240,7 @@ protected:
     // KDirStat-like squarification
     void KDirStat_DrawChildren(CColorRefArray& bitmap, Item* parent, const double* surface, double h, DWORD flags);
     bool KDirStat_ArrangeChildren(Item* parent, CArray<double, double>& childWidth, CArray<double, double>& rows, CArray<int, int>& childrenPerRow);
-    double KDirStat_CalculateNextRow(Item* parent, int nextChild, double width, int& childrenUsed, CArray<double, double>& childWidth);
+    double KDirStat_CalculateNextRow(const Item* parent, int nextChild, double width, int& childrenUsed, CArray<double, double>& childWidth);
 
     // Classical SequoiaView-like squarification
     void SequoiaView_DrawChildren(CColorRefArray& bitmap, Item* parent, const double* surface, double h, DWORD flags);
@@ -261,7 +259,7 @@ protected:
     void DrawCushion(CColorRefArray& bitmap, const CRect& rc, const double* surface, COLORREF col, double brightness);
 
     // Draws the surface using FillSolidRect()
-    void DrawSolidRect(CColorRefArray& bitmap, const CRect& rc, COLORREF col, double brightness);
+    void DrawSolidRect(CColorRefArray& bitmap, const CRect& rc, COLORREF col, double brightness) const;
 
     // Adds a new ridge to surface
     static void AddRidge(const CRect& rc, double* surface, double h);
@@ -273,9 +271,9 @@ protected:
     CRect m_renderArea;
 
     Options m_options; // Current options
-    double m_Lx;       // Derived parameters
-    double m_Ly;
-    double m_Lz;
+    double m_Lx = 0.0; // Derived parameters
+    double m_Ly = 0.0;
+    double m_Lz = 0.0;
 };
 
 //
@@ -377,7 +375,6 @@ protected:
     CItem* m_root;                        // Demo tree
     CTreemap m_treemap;                   // Our treemap creator
 
-protected:
     DECLARE_MESSAGE_MAP()
     afx_msg void OnPaint();
 };

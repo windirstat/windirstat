@@ -19,5 +19,7 @@
 //
 //
 
-bool SaveResults(std::wstring path, CItem* item);
-CItem* LoadResults(std::wstring path);
+#pragma once
+
+bool SaveResults(const std::wstring& path, CItem* item);
+CItem* LoadResults(const std::wstring& path);

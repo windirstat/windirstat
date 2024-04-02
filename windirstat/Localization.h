@@ -31,7 +31,7 @@
 class Localization
 {
     static bool CrackStrings(std::basic_istream<char>& stream, unsigned int stream_size);
-    static void SearchReplace(std::wstring& input, const std::wstring& search, const std::wstring& replace);
+    static void SearchReplace(std::wstring& input, const std::wstring_view& search, const std::wstring_view& replace);
     static void UpdateWindowText(HWND hwnd);
 
 public:
@@ -71,7 +71,7 @@ public:
 
     static void UpdateMenu(CMenu& menu);
     static void UpdateTabControl(CTabCtrl& tab);
-    static void UpdateDialogs(CWnd& wnd);
+    static void UpdateDialogs(const CWnd& wnd);
     static bool LoadFile(const std::wstring& file);
     static bool LoadResource(WORD language);
     static std::vector<LANGID> GetLanguageList();

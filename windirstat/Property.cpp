@@ -27,9 +27,9 @@ std::vector<PersistedSetting*>& PersistedSetting::GetPropertySet()
 {
     static std::vector<PersistedSetting*> _properties;
     return _properties;
-};
+}
 
-bool PersistedSetting::ReadBinaryProperty(std::wstring& section, std::wstring& entry, LPVOID dest, size_t size)
+bool PersistedSetting::ReadBinaryProperty(const std::wstring& section, const std::wstring& entry, LPVOID dest, size_t size)
 {
     LPBYTE data = nullptr;
     UINT data_size = 0;
@@ -94,7 +94,7 @@ template <> void Setting<WINDOWPLACEMENT>::WritePersistedProperty()
 
 template <> void Setting<std::vector<std::wstring>>::ReadPersistedProperty()
 {
-    std::wstring s = AfxGetApp()->GetProfileString(_section.c_str(), _entry.c_str()).GetBuffer();
+    const std::wstring s = AfxGetApp()->GetProfileString(_section.c_str(), _entry.c_str()).GetBuffer();
     std::wstringstream iss(s);
 
     _value.clear();
@@ -107,7 +107,7 @@ template <> void Setting<std::vector<std::wstring>>::ReadPersistedProperty()
 template <> void Setting<std::vector<std::wstring>>::WritePersistedProperty()
 {
     std::wstring result;
-    for (auto part : _value)
+    for (const auto & part : _value)
     {
         result += part + L'|';
     }
@@ -120,7 +120,7 @@ template <> void Setting<std::vector<std::wstring>>::WritePersistedProperty()
 
 template <> void Setting<std::vector<int>>::ReadPersistedProperty()
 {
-    std::wstring s = AfxGetApp()->GetProfileString(_section.c_str(), _entry.c_str()).GetBuffer();
+    const std::wstring s = AfxGetApp()->GetProfileString(_section.c_str(), _entry.c_str()).GetBuffer();
     std::wstringstream iss(s);
 
     _value.clear();
@@ -133,7 +133,7 @@ template <> void Setting<std::vector<int>>::ReadPersistedProperty()
 template <> void Setting<std::vector<int>>::WritePersistedProperty()
 {
     std::wstring result;
-    for (auto part : _value)
+    for (const auto part : _value)
     {
         result += std::to_wstring(part) + L',';
     }

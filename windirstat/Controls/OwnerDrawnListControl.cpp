@@ -39,7 +39,7 @@ namespace
 
 // Draws an item label (icon, text) in all parts of the WinDirStat view
 // the rest is drawn by DrawItem()
-void COwnerDrawnListItem::DrawLabel(COwnerDrawnListControl* list, CImageList* il, CDC* pdc, CRect& rc, UINT state, int* width, int* focusLeft, bool indent) const
+void COwnerDrawnListItem::DrawLabel(const COwnerDrawnListControl* list, CImageList* il, CDC* pdc, CRect& rc, UINT state, int* width, int* focusLeft, bool indent) const
 {
     CRect rcRest = rc;
     // Increase indentation according to tree-level
@@ -132,7 +132,7 @@ void COwnerDrawnListItem::DrawLabel(COwnerDrawnListControl* list, CImageList* il
     }
 }
 
-void COwnerDrawnListItem::DrawSelection(COwnerDrawnListControl* list, CDC* pdc, CRect rc, UINT state) const
+void COwnerDrawnListItem::DrawSelection(const COwnerDrawnListControl* list, CDC* pdc, CRect rc, UINT state) const
 {
     if (!list->IsFullRowSelection())
     {
@@ -194,13 +194,7 @@ IMPLEMENT_DYNAMIC(COwnerDrawnListControl, CSortingListControl)
 
 COwnerDrawnListControl::COwnerDrawnListControl(int rowHeight, std::vector<int>* column_order, std::vector<int>* column_widths)
     : CSortingListControl(column_order, column_widths)
-      , m_windowColor(CLR_NONE)
-      , m_stripeColor(CLR_NONE)
       , m_rowHeight(rowHeight)
-      , m_yFirstItem(-1)
-      , m_showGrid(false)
-      , m_showStripes(false)
-      , m_showFullRowSelection(false)
 {
     ASSERT(rowHeight > 0);
     InitializeColors();
@@ -261,7 +255,7 @@ void COwnerDrawnListControl::ShowStripes(bool show)
 
 void COwnerDrawnListControl::ShowFullRowSelection(bool show)
 {
-    m_showFullRowSelection = show;
+    m_showFullRowSelect = show;
     if (::IsWindow(m_hWnd))
     {
         InvalidateRect(nullptr);
@@ -270,7 +264,7 @@ void COwnerDrawnListControl::ShowFullRowSelection(bool show)
 
 bool COwnerDrawnListControl::IsFullRowSelection() const
 {
-    return m_showFullRowSelection;
+    return m_showFullRowSelect;
 }
 
 // Normal window background color
@@ -286,18 +280,18 @@ COLORREF COwnerDrawnListControl::GetStripeColor() const
 }
 
 // Highlight color if we have no focus
-COLORREF COwnerDrawnListControl::GetNonFocusHighlightColor()
+COLORREF COwnerDrawnListControl::GetNonFocusHighlightColor() const
 {
-    return RGB(190, 190, 190); //RGB(120, 120, 120): more contrast
+    return RGB(190, 190, 190);
 }
 
 // Highlight text color if we have no focus
-COLORREF COwnerDrawnListControl::GetNonFocusHighlightTextColor()
+COLORREF COwnerDrawnListControl::GetNonFocusHighlightTextColor() const
 {
-    return RGB(0, 0, 0); // RGB(255,255,255): more contrast
+    return RGB(0, 0, 0);
 }
 
-COLORREF COwnerDrawnListControl::GetHighlightColor()
+COLORREF COwnerDrawnListControl::GetHighlightColor() const
 {
     if (HasFocus())
     {
@@ -307,7 +301,7 @@ COLORREF COwnerDrawnListControl::GetHighlightColor()
     return GetNonFocusHighlightColor();
 }
 
-COLORREF COwnerDrawnListControl::GetHighlightTextColor()
+COLORREF COwnerDrawnListControl::GetHighlightTextColor() const
 {
     if (HasFocus())
     {
@@ -337,7 +331,7 @@ COLORREF COwnerDrawnListControl::GetItemBackgroundColor(const COwnerDrawnListIte
     return GetItemBackgroundColor(FindListItem(item));
 }
 
-COLORREF COwnerDrawnListControl::GetItemSelectionBackgroundColor(int i)
+COLORREF COwnerDrawnListControl::GetItemSelectionBackgroundColor(int i) const
 {
     const bool selected = (GetItemState(i, LVIS_SELECTED) & LVIS_SELECTED) != 0;
     if (selected && IsFullRowSelection() && (HasFocus() || IsShowSelectionAlways()))
@@ -348,12 +342,12 @@ COLORREF COwnerDrawnListControl::GetItemSelectionBackgroundColor(int i)
     return GetItemBackgroundColor(i);
 }
 
-COLORREF COwnerDrawnListControl::GetItemSelectionBackgroundColor(const COwnerDrawnListItem* item)
+COLORREF COwnerDrawnListControl::GetItemSelectionBackgroundColor(const COwnerDrawnListItem* item) const
 {
     return GetItemSelectionBackgroundColor(FindListItem(item));
 }
 
-COLORREF COwnerDrawnListControl::GetItemSelectionTextColor(int i)
+COLORREF COwnerDrawnListControl::GetItemSelectionTextColor(int i) const
 {
     const bool selected = (GetItemState(i, LVIS_SELECTED) & LVIS_SELECTED) != 0;
     if (selected && IsFullRowSelection() && (HasFocus() || IsShowSelectionAlways()))
@@ -364,19 +358,19 @@ COLORREF COwnerDrawnListControl::GetItemSelectionTextColor(int i)
     return ::GetSysColor(COLOR_WINDOWTEXT);
 }
 
-int COwnerDrawnListControl::GetTextXMargin()
+int COwnerDrawnListControl::GetTextXMargin() const
 {
     return TEXT_X_MARGIN;
 }
 
-int COwnerDrawnListControl::GetGeneralLeftIndent()
+int COwnerDrawnListControl::GetGeneralLeftIndent() const
 {
     return GENERAL_INDENT;
 }
 
 COwnerDrawnListItem* COwnerDrawnListControl::GetItem(int i) const
 {
-    auto item = reinterpret_cast<COwnerDrawnListItem*>(GetItemData(i));
+    const auto item = reinterpret_cast<COwnerDrawnListItem*>(GetItemData(i));
     return item;
 }
 
@@ -385,7 +379,7 @@ int COwnerDrawnListControl::FindListItem(const COwnerDrawnListItem* item) const
     LVFINDINFO fi;
     ZeroMemory(&fi, sizeof(fi));
     fi.flags  = LVFI_PARAM;
-    fi.lParam = (LPARAM)item;
+    fi.lParam = reinterpret_cast<LPARAM>(item);
 
     const int i = FindItem(&fi);
 
@@ -507,7 +501,7 @@ void COwnerDrawnListControl::DrawItem(LPDRAWITEMSTRUCT pdis)
     }
 }
 
-bool COwnerDrawnListControl::IsColumnRightAligned(int col)
+bool COwnerDrawnListControl::IsColumnRightAligned(int col) const
 {
     HDITEM hditem;
     ZeroMemory(&hditem, sizeof(hditem));
@@ -557,7 +551,7 @@ bool COwnerDrawnListControl::IsShowSelectionAlways() const
     return (GetStyle() & LVS_SHOWSELALWAYS) != 0;
 }
 
-int COwnerDrawnListControl::GetSubItemWidth(COwnerDrawnListItem* item, int subitem)
+int COwnerDrawnListControl::GetSubItemWidth(const COwnerDrawnListItem* item, int subitem)
 {
     int width;
 
@@ -719,20 +713,13 @@ BOOL COwnerDrawnListControl::OnEraseBkgnd(CDC* pDC)
 
 void COwnerDrawnListControl::OnHdnDividerdblclick(NMHDR* pNMHDR, LRESULT* pResult)
 {
-    CWaitCursor wc;
-    LPNMHEADER phdr = reinterpret_cast<LPNMHEADER>(pNMHDR);
-
-    const int subitem = phdr->iItem;
-
+    const int subitem = reinterpret_cast<LPNMHEADER>(pNMHDR)->iItem;
     AdjustColumnWidth(subitem);
-
     *pResult = 0;
 }
 
 void COwnerDrawnListControl::AdjustColumnWidth(int col)
 {
-    CWaitCursor wc;
-
     int width = 10;
     for (int i = 0; i < GetItemCount(); i++)
     {

@@ -1,4 +1,4 @@
-// treemap.cpp - Implementation of CColorSpace, CTreemap and CTreemapPreview
+// TreeMap.cpp - Implementation of CColorSpace, CTreemap and CTreemapPreview
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
@@ -23,7 +23,11 @@
 #include "SelectObject.h"
 #include "TreeMap.h"
 
-#define BGR(b,g,r)          ((COLORREF)(((BYTE)(b)|((WORD)((BYTE)(g))<<8))|(((DWORD)(BYTE)(r))<<16)))
+ 
+constexpr COLORREF BGR(auto b, auto g, auto r)
+{
+    return static_cast<BYTE>(b) | static_cast<BYTE>(g) << 8 | static_cast<BYTE>(r) << 16;
+}
 
 // I define the "brightness" of an rgb value as (r+b+g)/3/255.
 // The EqualizeColors() method creates a palette with colors
@@ -85,21 +89,21 @@ void CColorSpace::NormalizeColor(int& red, int& green, int& blue)
 void CColorSpace::DistributeFirst(int& first, int& second, int& third)
 {
     const int h = (first - 255) / 2;
-    first       = 255;
+    first = 255;
     second += h;
     third += h;
 
     if (second > 255)
     {
         const int j = second - 255;
-        second      = 255;
+        second = 255;
         third += j;
         ASSERT(third <= 255);
     }
     else if (third > 255)
     {
         const int j = third - 255;
-        third       = 255;
+        third = 255;
         second += j;
         ASSERT(second <= 255);
     }
@@ -168,9 +172,6 @@ CTreemap::Options CTreemap::GetDefaultOptions()
 }
 
 CTreemap::CTreemap()
-    : m_Lx(0.)
-      , m_Ly(0.)
-      , m_Lz(0.)
 {
     SetOptions(&_defaultOptions);
 }
@@ -181,8 +182,8 @@ void CTreemap::SetOptions(const Options* options)
     m_options = *options;
 
     // Derive normalized vector here for performance
-    const double lx            = m_options.lightSourceX; // negative = left
-    const double ly            = m_options.lightSourceY; // negative = top
+    const double lx = m_options.lightSourceX; // negative = left
+    const double ly = m_options.lightSourceY; // negative = top
     static constexpr double lz = 10;
 
     const double len = sqrt(lx * lx + ly * ly + lz * lz);
@@ -278,8 +279,8 @@ void CTreemap::DrawTreemap(CDC* pdc, CRect rc, Item* root, const Options* option
         bitmap_bits.SetSize(rc.Width() * rc.Height());
 
         // Recursively draw the tree graph
-        double surface[4] = {0, 0, 0, 0};
-        CRect baserc({ 0,0 }, rc.Size());
+        const double surface[4] = {0, 0, 0, 0};
+        const CRect baserc({ 0,0 }, rc.Size());
         RecurseDrawGraph(bitmap_bits, root, baserc, true, surface, m_options.height, 0);
 
         // Fill the bitmap with the array
@@ -340,7 +341,7 @@ void CTreemap::DrawTreemapDoubleBuffered(CDC* pdc, const CRect& rc, Item* root, 
     VERIFY(pdc->BitBlt(rc.left, rc.top, rc.Width(), rc.Height(), &dc, 0, 0, SRCCOPY));
 }
 
-CTreemap::Item* CTreemap::FindItemByPoint(Item* item, CPoint point)
+CTreemap::Item* CTreemap::FindItemByPoint(Item* item, const CPoint point)
 {
     ASSERT(item != NULL);
     const CRect& rc = item->TmiGetRectangle();
@@ -494,7 +495,7 @@ void CTreemap::RecurseDrawGraph(
     CColorRefArray& bitmap,
     Item* item,
     const CRect& rc,
-    bool asroot,
+    const bool asroot,
     const double* psurface,
     double h,
     DWORD flags
@@ -720,7 +721,7 @@ bool CTreemap::KDirStat_ArrangeChildren(
     return horizontalRows;
 }
 
-double CTreemap::KDirStat_CalculateNextRow(Item* parent, const int nextChild, double width, int& childrenUsed, CArray<double, double>& childWidth)
+double CTreemap::KDirStat_CalculateNextRow(const Item* parent, const int nextChild, double width, int& childrenUsed, CArray<double, double>& childWidth)
 {
     int i                                  = 0;
     static constexpr double _minProportion = 0.4;
@@ -897,7 +898,7 @@ void CTreemap::SequoiaView_DrawChildren(CColorRefArray& bitmap, Item* parent, co
         ASSERT(width > 0);
 
         if (sum < remainingSize)
-            width = static_cast<int>((double)sum / remainingSize * width);
+            width = static_cast<int>(static_cast<double>(sum) / remainingSize * width);
         // else: use up the whole width
         // width may be 0 here.
 
@@ -1050,7 +1051,7 @@ void CTreemap::RenderRectangle(CColorRefArray& bitmap, const CRect& rc, const do
     }
 }
 
-void CTreemap::DrawSolidRect(CColorRefArray& bitmap, const CRect& rc, COLORREF col, double brightness)
+void CTreemap::DrawSolidRect(CColorRefArray& bitmap, const CRect& rc, COLORREF col, double brightness) const
 {
     int red   = RGB_GET_RVALUE(col);
     int green = RGB_GET_GVALUE(col);
@@ -1130,24 +1131,6 @@ void CTreemap::DrawCushion(CColorRefArray& bitmap, const CRect& rc, const double
 
 void CTreemap::AddRidge(const CRect& rc, double* surface, double h)
 {
-    /*
-    Unoptimized:
-
-    if(rc.Width() > 0)
-    {
-        surface[2]+= 4 * h * (rc.right + rc.left) / (rc.right - rc.left);
-        surface[0]-= 4 * h / (rc.right - rc.left);
-    }
-
-    if(rc.Height() > 0)
-    {
-        surface[3]+= 4 * h * (rc.bottom + rc.top) / (rc.bottom - rc.top);
-        surface[1]-= 4 * h / (rc.bottom - rc.top);
-    }
-    */
-
-    // Optimized (gained 15 ms of 1030):
-
     const int width  = rc.Width();
     const int height = rc.Height();
 

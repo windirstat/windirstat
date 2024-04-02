@@ -55,13 +55,9 @@ CDirStatDoc* GetDocument()
 
 IMPLEMENT_DYNCREATE(CDirStatDoc, CDocument)
 
-CDirStatDoc::CDirStatDoc()
-    : m_showFreeSpace(COptions::ShowFreeSpace)
+CDirStatDoc::CDirStatDoc() :
+        m_showFreeSpace(COptions::ShowFreeSpace)
       , m_showUnknown(COptions::ShowUnknown)
-      , m_showMyComputer(false)
-      , m_rootItem(nullptr)
-      , m_zoomItem(nullptr)
-      , m_extensionDataValid(false)
 {
     ASSERT(NULL == _theDocument);
     _theDocument = this;
@@ -271,7 +267,7 @@ BOOL CDirStatDoc::OnOpenDocument(CItem * newroot)
 // We don't want MFCs AfxFullPath()-Logic, because lpszPathName
 // is not a path. So we have overridden this.
 //
-void CDirStatDoc::SetPathName(LPCWSTR lpszPathName, BOOL /*bAddToMRU*/)
+void CDirStatDoc::SetPathName(const LPCWSTR lpszPathName, BOOL /*bAddToMRU*/)
 {
     // MRU would be fine but is not implemented yet.
 
@@ -382,7 +378,7 @@ bool CDirStatDoc::IsZoomed() const
     return GetZoomItem() != GetRootItem();
 }
 
-void CDirStatDoc::SetHighlightExtension(LPCWSTR ext)
+void CDirStatDoc::SetHighlightExtension(const LPCWSTR ext)
 {
     m_highlightExtension = ext;
     GetMainFrame()->SetSelectionMessageText();
@@ -397,7 +393,7 @@ CStringW CDirStatDoc::GetHighlightExtension()
 //
 void CDirStatDoc::UnlinkRoot()
 {
-    GetMainFrame()->InvokeInMessageThread([this]()
+    GetMainFrame()->InvokeInMessageThread([this]
     {
         DeleteContents();
         UpdateAllViews(nullptr, HINT_NEWROOT);
@@ -607,7 +603,7 @@ CExtensionData* CDirStatDoc::_pqsortExtensionData;
 // Deletes a file or directory via SHFileOperation.
 // Return: false, if canceled
 //
-bool CDirStatDoc::DeletePhysicalItems(std::vector<CItem*> items, bool toTrashBin)
+bool CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, bool toTrashBin)
 {
     if (COptions::ShowDeleteWarning)
     {
@@ -639,14 +635,14 @@ void CDirStatDoc::SetZoomItem(CItem* item)
 // If the physical item has been deleted,
 // updates selection, zoom and working item accordingly.
 //
-void CDirStatDoc::RefreshItem(std::vector<CItem*> item)
+void CDirStatDoc::RefreshItem(const std::vector<CItem*>& item)
 {
     GetDocument()->StartupCoordinator(item);
 }
 
 // UDC confirmation Dialog.
 //
-void CDirStatDoc::AskForConfirmation(USERDEFINEDCLEANUP* udc, CItem* item)
+void CDirStatDoc::AskForConfirmation(USERDEFINEDCLEANUP* udc, const CItem* item)
 {
     if (!udc->askForConfirmation)
     {
@@ -663,7 +659,7 @@ void CDirStatDoc::AskForConfirmation(USERDEFINEDCLEANUP* udc, CItem* item)
     }
 }
 
-void CDirStatDoc::PerformUserDefinedCleanup(USERDEFINEDCLEANUP* udc, CItem* item)
+void CDirStatDoc::PerformUserDefinedCleanup(USERDEFINEDCLEANUP* udc, const CItem* item)
 {
     CWaitCursor wc;
 
@@ -999,7 +995,7 @@ void CDirStatDoc::OnCleanupEmptyRecycleBin()
 {
     CModalShellApi msa;
 
-    SHEmptyRecycleBin(*AfxGetMainWnd(), NULL, 0);
+    SHEmptyRecycleBin(*AfxGetMainWnd(), nullptr, 0);
 
     RefreshRecyclers();
     UpdateAllViews(nullptr);
@@ -1189,7 +1185,7 @@ void CDirStatDoc::OnUpdateUserDefinedCleanup(CCmdUI* pCmdUI)
     pCmdUI->Enable(allow_control);
 }
 
-void CDirStatDoc::OnUserDefinedCleanup(UINT id)
+void CDirStatDoc::OnUserDefinedCleanup(const UINT id)
 {
     USERDEFINEDCLEANUP* udc = &COptions::UserDefinedCleanups[id - ID_USERDEFINEDCLEANUP0];
     const auto & items = CTreeListControl::GetTheTreeListControl()->GetAllSelected<CItem>();
@@ -1229,7 +1225,7 @@ void CDirStatDoc::OnTreemapSelectParent()
 
 void CDirStatDoc::OnTreemapReselectChild()
 {
-    CItem* item = PopReselectChild();
+    const CItem* item = PopReselectChild();
     CTreeListControl::GetTheTreeListControl()->SelectItem(item, true, true);
     UpdateAllViews(nullptr, HINT_SELECTIONREFRESH);
 }
@@ -1237,7 +1233,7 @@ void CDirStatDoc::OnTreemapReselectChild()
 void CDirStatDoc::OnCleanupOpenTarget()
 {
     const auto & items = CTreeListControl::GetTheTreeListControl()->GetAllSelected<CItem>();
-   for (const auto & item : items)
+    for (const auto & item : items)
     {
         OpenItem(item);
     }
@@ -1264,7 +1260,7 @@ void CDirStatDoc::OnScanResume()
     GetMainFrame()->SuspendState(false);
 }
 
-void CDirStatDoc::ShutdownCoordinator(bool wait)
+void CDirStatDoc::ShutdownCoordinator(const bool wait)
 {
     if (queue.drain(nullptr) && wait)
     {
@@ -1282,7 +1278,6 @@ void CDirStatDoc::StartupCoordinator(std::vector<CItem*> items)
 
     // Address currently zoomed / selected item conflicts
     const auto zoom_item = GetZoomItem();
-    const auto selected_items = CTreeListControl::GetTheTreeListControl()->GetAllSelected<CItem>();
     for (const auto& item : std::vector(items))
     {
         // Abort if bad entry detected
@@ -1344,7 +1339,7 @@ void CDirStatDoc::StartupCoordinator(std::vector<CItem*> items)
                 if (item->IsRootItem())
                 {
                     // Handle deleted root item
-                    GetMainFrame()->InvokeInMessageThread([&item]()
+                    GetMainFrame()->InvokeInMessageThread([]
                     {
                         GetDocument()->UnlinkRoot();
                         GetMainFrame()->MinimizeGraphView();
@@ -1388,7 +1383,7 @@ void CDirStatDoc::StartupCoordinator(std::vector<CItem*> items)
             if (queue.wait_for_all())
             {
                 // Exit here and stop progress if drained by an outside actor
-                GetMainFrame()->InvokeInMessageThread([]()
+                GetMainFrame()->InvokeInMessageThread([]
                 {
                     GetMainFrame()->SetProgressComplete();
                     GetMainFrame()->MinimizeGraphView();

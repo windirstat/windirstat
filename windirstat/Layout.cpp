@@ -25,10 +25,10 @@
 #include "SelectObject.h"
 #include "Layout.h"
 
-CLayout::CLayout(CWnd* dialog, RECT* wp)
+CLayout::CLayout(CWnd* dialog, RECT* placement)
 {
     ASSERT(dialog != NULL);
-    m_wp = wp;
+    m_wp = placement;
     m_dialog = dialog;
 
     // This is necessary because OnGetMinMaxInfo() will be called
@@ -126,7 +126,7 @@ void CLayout::CSizeGripper::Create(CWnd* parent, CRect rc)
         AfxRegisterWndClass(
             0,
             AfxGetApp()->LoadStandardCursor(IDC_ARROW),
-            (HBRUSH)(COLOR_BTNFACE + 1),
+            reinterpret_cast<HBRUSH>(COLOR_BTNFACE + 1),
             nullptr
         ),
         wds::strEmpty,

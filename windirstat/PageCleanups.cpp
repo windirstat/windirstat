@@ -21,7 +21,6 @@
 
 #include "stdafx.h"
 #include "WinDirStat.h"
-#include <common/CommonHelpers.h>
 #include "Options.h"
 #include "PageCleanups.h"
 
@@ -29,24 +28,7 @@
 
 IMPLEMENT_DYNAMIC(CPageCleanups, CPropertyPage)
 
-CPageCleanups::CPageCleanups()
-    : CPropertyPage(CPageCleanups::IDD)
-      , m_udc{}
-      , m_current(-1)
-      , m_enabled(FALSE)
-      , m_title(wds::strEmpty)
-      , m_worksForDrives(FALSE)
-      , m_worksForDirectories(FALSE)
-      , m_worksForFiles(FALSE)
-      , m_worksForUncPaths(FALSE)
-      , m_commandLine(wds::strEmpty)
-      , m_recurseIntoSubdirectories(FALSE)
-      , m_askForConfirmation(FALSE)
-      , m_showConsoleWindow(FALSE)
-      , m_waitForCompletion(FALSE)
-      , m_refreshPolicy(0)
-{
-}
+CPageCleanups::CPageCleanups() : CPropertyPage(CPageCleanups::IDD) {}
 
 CPageCleanups::~CPageCleanups() = default;
 
@@ -319,7 +301,7 @@ void CPageCleanups::OnBnClickedUp()
 
     UpdateData();
 
-    USERDEFINEDCLEANUP h = m_udc[m_current - 1];
+    const USERDEFINEDCLEANUP h = m_udc[m_current - 1];
     m_udc[m_current - 1] = m_udc[m_current];
     m_udc[m_current] = h;
 
@@ -339,7 +321,7 @@ void CPageCleanups::OnBnClickedDown()
 
     UpdateData();
 
-    USERDEFINEDCLEANUP h = m_udc[m_current + 1];
+    const USERDEFINEDCLEANUP h = m_udc[m_current + 1];
     m_udc[m_current + 1] = m_udc[m_current];
     m_udc[m_current] = h;
 

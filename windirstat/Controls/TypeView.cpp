@@ -165,7 +165,7 @@ int CExtensionListControl::CListItem::Compare(const CSortingListItem* baseOther,
 {
     int r = 0;
 
-    auto other = static_cast<const CListItem*>(baseOther);
+    const auto other = static_cast<const CListItem*>(baseOther);
 
     switch (subitem)
     {
@@ -290,7 +290,7 @@ void CExtensionListControl::SetExtensionData(const CExtensionData* ed)
         SExtensionRecord r;
         ed->GetNextAssoc(pos, ext, r);
 
-        auto item = new CListItem(this, ext, r);
+        const auto item = new CListItem(this, ext, r);
         InsertListItem(i++, item);
     }
 
@@ -307,7 +307,7 @@ ULONGLONG CExtensionListControl::GetRootSize() const
     return m_rootSize;
 }
 
-void CExtensionListControl::SelectExtension(LPCWSTR ext)
+void CExtensionListControl::SelectExtension(const LPCWSTR ext)
 {
     int i = 0;
     for (i = 0; i < GetItemCount(); i++)
@@ -324,7 +324,7 @@ void CExtensionListControl::SelectExtension(LPCWSTR ext)
     }
 }
 
-CStringW CExtensionListControl::GetSelectedExtension()
+CStringW CExtensionListControl::GetSelectedExtension() const
 {
     POSITION pos = GetFirstSelectedItemPosition();
     if (pos == nullptr)
@@ -339,13 +339,13 @@ CStringW CExtensionListControl::GetSelectedExtension()
 
 CExtensionListControl::CListItem* CExtensionListControl::GetListItem(int i) const
 {
-    return (CListItem*)GetItemData(i);
+    return reinterpret_cast<CListItem*>(GetItemData(i));
 }
 
 void CExtensionListControl::OnLvnDeleteitem(NMHDR* pNMHDR, LRESULT* pResult)
 {
     const auto lv = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
-    delete (CListItem*)lv->lParam;
+    delete reinterpret_cast<CListItem*>(lv->lParam);
     *pResult = 0;
 }
 
@@ -416,7 +416,7 @@ void CTypeView::ShowTypes(bool show)
     OnUpdate(nullptr, 0, nullptr);
 }
 
-void CTypeView::SetHighlightExtension(LPCWSTR ext)
+void CTypeView::SetHighlightExtension(const LPCWSTR ext)
 {
     GetDocument()->SetHighlightExtension(ext);
     if (GetFocus() == &m_extensionListControl)

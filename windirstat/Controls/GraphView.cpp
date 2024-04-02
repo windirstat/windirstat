@@ -78,7 +78,7 @@ BOOL CGraphView::PreCreateWindow(CREATESTRUCT& cs)
     VERIFY(GetClassInfo(AfxGetInstanceHandle(), cs.lpszClass, &wc));
     wc.hbrBackground = nullptr;
     wc.lpszClassName = L"windirstat_graphview_class-{E0BE4F6F-3904-4c99-A3D4-2F11DE629740}";
-    cs.lpszClass     = (LPCWSTR)::RegisterClass(&wc); //-V542
+    cs.lpszClass     = reinterpret_cast<LPCWSTR>(::RegisterClass(&wc)); //-V542
 
     return true;
 }
@@ -183,19 +183,19 @@ void CGraphView::DrawZoomFrame(CDC* pdc, CRect& rc)
 
     CRect r  = rc;
     r.bottom = r.top + w;
-    pdc->FillSolidRect(r, GetDocument()->GetZoomColor());
+    pdc->FillSolidRect(r, CDirStatDoc::GetZoomColor());
 
     r     = rc;
     r.top = r.bottom - w;
-    pdc->FillSolidRect(r, GetDocument()->GetZoomColor());
+    pdc->FillSolidRect(r, CDirStatDoc::GetZoomColor());
 
     r       = rc;
     r.right = r.left + w;
-    pdc->FillSolidRect(r, GetDocument()->GetZoomColor());
+    pdc->FillSolidRect(r, CDirStatDoc::GetZoomColor());
 
     r      = rc;
     r.left = r.right - w;
-    pdc->FillSolidRect(r, GetDocument()->GetZoomColor());
+    pdc->FillSolidRect(r, CDirStatDoc::GetZoomColor());
 
     rc.DeflateRect(w, w);
 }
@@ -209,6 +209,8 @@ void CGraphView::DrawHighlights(CDC* pdc)
         break;
     case LF_EXTENSIONLIST:
         DrawHighlightExtension(pdc);
+        break;
+    case LF_NONE:
         break;
     }
 }
@@ -273,7 +275,7 @@ void CGraphView::DrawSelection(CDC* pdc)
 // Draws the highlight rectangle of item. If single, the rectangle is slightly
 // bigger than the item rect, else it fits inside.
 //
-void CGraphView::HighlightSelectedItem(CDC* pdc, const CItem* item, bool single)
+void CGraphView::HighlightSelectedItem(CDC* pdc, const CItem* item, const bool single)
 {
     CRect rc(item->TmiGetRectangle());
 
@@ -428,14 +430,8 @@ void CGraphView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
         }
         break;
 
-    case HINT_ZOOMCHANGED:
-        {
-            Inactivate();
-            CView::OnUpdate(pSender, lHint, pHint);
-        }
-        break;
-
     case HINT_TREEMAPSTYLECHANGED:
+    case HINT_ZOOMCHANGED:
         {
             Inactivate();
             CView::OnUpdate(pSender, lHint, pHint);
@@ -453,7 +449,7 @@ void CGraphView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
     }
 }
 
-void CGraphView::OnContextMenu(CWnd* /*pWnd*/, CPoint ptscreen)
+void CGraphView::OnContextMenu(CWnd* /*pWnd*/, CPoint point)
 {
     const CItem* root = GetDocument()->GetRootItem();
     if (root != nullptr && root->IsDone())
@@ -462,7 +458,7 @@ void CGraphView::OnContextMenu(CWnd* /*pWnd*/, CPoint ptscreen)
         menu.LoadMenu(IDR_POPUPGRAPH);
         Localization::UpdateMenu(menu);
         CMenu* sub = menu.GetSubMenu(0);
-        sub->TrackPopupMenu(TPM_LEFTALIGN | TPM_LEFTBUTTON, ptscreen.x, ptscreen.y, AfxGetMainWnd());
+        sub->TrackPopupMenu(TPM_LEFTALIGN | TPM_LEFTBUTTON, point.x, point.y, AfxGetMainWnd());
     }
 }
 

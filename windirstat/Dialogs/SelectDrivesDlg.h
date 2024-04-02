@@ -52,7 +52,7 @@ public:
 
     void SetDriveInformation(bool success, LPCWSTR name, ULONGLONG total, ULONGLONG free);
 
-    int Compare(const CSortingListItem* other, int subitem) const override;
+    int Compare(const CSortingListItem* baseOther, int subitem) const override;
 
     CStringW GetPath() const;
     CStringW GetDrive() const;
@@ -67,14 +67,14 @@ private:
     CStringW m_path;     // e.g. "C:\"
     bool m_isRemote;     // Whether the drive type is DRIVE_REMOTE (network drive)
 
-    bool m_querying; // Information thread is running.
-    bool m_success;  // Drive is accessible. false while m_querying is true.
+    bool m_querying = true; // Information thread is running.
+    bool m_success = false; // Drive is accessible. false while m_querying is true.
 
-    CStringW m_name;        // e.g. "BOOT (C:)"
-    ULONGLONG m_totalBytes; // Capacity
-    ULONGLONG m_freeBytes;  // Free space
+    CStringW m_name;            // e.g. "BOOT (C:)"
+    ULONGLONG m_totalBytes = 0; // Capacity
+    ULONGLONG m_freeBytes = 0;  // Free space
 
-    double m_used; // used space / total space
+    double m_used = 0.0; // used space / total space
 };
 
 //
@@ -109,10 +109,10 @@ private:
     const UINT m_serial;       // serial number of m_dialog
 
     // "[out]"-parameters
-    CStringW m_name;        // Result: name like "BOOT (C:)", valid if m_success
-    ULONGLONG m_totalBytes; // Result: capacity of the drive, valid if m_success
-    ULONGLONG m_freeBytes;  // Result: free space on the drive, valid if m_success
-    bool m_success;         // Result: false, iff drive is unaccessible.
+    CStringW m_name;            // Result: name like "BOOT (C:)", valid if m_success
+    ULONGLONG m_totalBytes = 0; // Result: capacity of the drive, valid if m_success
+    ULONGLONG m_freeBytes = 0;  // Result: free space on the drive, valid if m_success
+    bool m_success = false;     // Result: false, iff drive is unaccessible.
 };
 
 //
@@ -122,11 +122,10 @@ class CDrivesList final : public COwnerDrawnListControl
 {
     DECLARE_DYNAMIC(CDrivesList)
 
-public:
     CDrivesList();
     CDriveItem* GetItem(int i) const;
     void SelectItem(CDriveItem* item);
-    bool IsItemSelected(int i);
+    bool IsItemSelected(int i) const;
 
     bool HasImages() override;
 
@@ -154,11 +153,10 @@ public:
     ~CSelectDrivesDlg() override = default;
 
     // Dialog Data
-    int m_radio;           // out.
+    int m_radio = 0;       // out.
     CStringW m_folderName; // out. Valid if m_radio = RADIO_AFOLDER
     CStringArray m_drives; // out. Valid if m_radio != RADIO_AFOLDER
 
-protected:
     void DoDataExchange(CDataExchange* pDX) override;
     BOOL OnInitDialog() override;
     void OnOK() override;
@@ -176,12 +174,10 @@ protected:
     static int CALLBACK BrowseCallbackProc(HWND hWnd, UINT uMsg, LPARAM lParam, LPARAM lpData);
 
     DECLARE_MESSAGE_MAP()
-    afx_msg void OnBnClickedBrowsefolder();
-    // afx_msg void OnLbnSelchangeDrives();
-    afx_msg void OnBnClickedAlllocaldrives();
-    afx_msg void OnBnClickedAfolder();
-    afx_msg void OnBnClickedSomedrives();
-    afx_msg void OnEnChangeFoldername();
+    afx_msg void OnBnClickedAllLocalDrives();
+    afx_msg void OnBnClickedFolder();
+    afx_msg void OnBnClickedSomeDrives();
+    afx_msg void OnEnChangeFolderName();
     afx_msg void OnMeasureItem(int nIDCtl, LPMEASUREITEMSTRUCT mis);
     afx_msg void OnLvnItemchangedDrives(NMHDR* pNMHDR, LRESULT* pResult);
     afx_msg void OnSize(UINT nType, int cx, int cy);

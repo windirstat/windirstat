@@ -27,9 +27,6 @@
 
 #pragma once
 
-#ifndef _INC_STDARG
-#include <stdarg.h>
-#endif
 #include "SmartPointer.h"
 
 class CMdStringException final : public CException
@@ -93,7 +90,7 @@ inline CStringW MdGetWinErrorText(HRESULT hr)
     }
     else
     {
-        sRet = CStringW(reinterpret_cast<LPWSTR>(*lpMsgBuf));
+        sRet = CStringW(static_cast<LPWSTR>(*lpMsgBuf));
     }
     return sRet;
 }

@@ -26,7 +26,6 @@
 #include "Options.h"
 #include "GlobalHelpers.h"
 #include "SelectDrivesDlg.h"
-
 #include "Localization.h"
 
 namespace
@@ -37,8 +36,7 @@ namespace
         COL_TOTAL,
         COL_FREE,
         COL_GRAPH,
-        COL_PERCENTUSED,
-        COLUMN_COUNT
+        COL_PERCENTUSED
     };
 
     constexpr UINT WMU_OK = WM_USER + 100;
@@ -73,34 +71,13 @@ namespace
 
 CDriveItem::CDriveItem(CDrivesList* list, LPCWSTR pszPath)
     : m_list(list)
-      , m_path(pszPath)
-      , m_isRemote(DRIVE_REMOTE == ::GetDriveType(m_path))
-      , m_querying(true)
-      , m_success(false)
-      , m_name(m_path)
-      , m_totalBytes(0)
-      , m_freeBytes(0)
-      , m_used(0)
-{
-    /*
-    For local drives we could do this synchronously:
-        if(!m_isRemote)
-        {
-            m_querying = false;
-
-            CStringW name = m_name;
-            ULONGLONG total = 0;
-            ULONGLONG free = 0;
-
-            bool success = RetrieveDriveInformation(m_path, name, total, free);
-            SetDriveInformation(success, name, total, free);
-        }
-    */
-}
+    , m_path(pszPath)
+    , m_isRemote(DRIVE_REMOTE == ::GetDriveType(m_path))
+    , m_name(m_path) {}
 
 void CDriveItem::StartQuery(HWND dialog, UINT serial)
 {
-    ASSERT(dialog != NULL);
+    ASSERT(dialog != nullptr);
 
     ASSERT(m_querying); // The synchronous query in the constructor is commented out.
 
@@ -143,7 +120,7 @@ bool CDriveItem::IsSUBSTed() const
 
 int CDriveItem::Compare(const CSortingListItem* baseOther, int subitem) const
 {
-    const CDriveItem* other = (CDriveItem*)baseOther;
+    const CDriveItem* other = reinterpret_cast<const CDriveItem*>(baseOther);
 
     int r = 0;
 
@@ -317,9 +294,6 @@ CDriveInformationThread::CDriveInformationThread(LPCWSTR path, LPARAM driveItem,
       , m_driveItem(driveItem)
       , m_dialog(dialog)
       , m_serial(serial)
-      , m_totalBytes(0)
-      , m_freeBytes(0)
-      , m_success(false)
 {
     ASSERT(m_bAutoDelete);
 
@@ -349,7 +323,7 @@ BOOL CDriveInformationThread::InitInstance()
         // (Well if the other process crashes because of our message, there is nothing we can do about it.)
         // If the window handle is recycled by a new Select drives dialog,
         // its new serial will prevent it from reacting.
-        ::SendMessage(dialog, WMU_THREADFINISHED, m_serial, (LPARAM)this);
+        ::SendMessage(dialog, WMU_THREADFINISHED, m_serial, reinterpret_cast<LPARAM>(this));
     }
 
     RemoveRunningThread();
@@ -384,7 +358,7 @@ CDrivesList::CDrivesList()
 
 CDriveItem* CDrivesList::GetItem(int i) const
 {
-    return (CDriveItem*)GetItemData(i);
+    return reinterpret_cast<CDriveItem*>(GetItemData(i));
 }
 
 bool CDrivesList::HasImages()
@@ -398,7 +372,7 @@ void CDrivesList::SelectItem(CDriveItem* item)
     SetItemState(i, LVIS_SELECTED, LVIS_SELECTED);
 }
 
-bool CDrivesList::IsItemSelected(int i)
+bool CDrivesList::IsItemSelected(int i) const
 {
     return LVIS_SELECTED == GetItemState(i, LVIS_SELECTED);
 }
@@ -424,7 +398,7 @@ void CDrivesList::OnLButtonDown(UINT /*nFlags*/, CPoint /*point*/)
         lv.hdr.idFrom   = GetDlgCtrlID();
 #pragma warning(suppress: 26454)
         lv.hdr.code = LVN_ITEMCHANGED;
-        GetParent()->SendMessage(WM_NOTIFY, GetDlgCtrlID(), (LPARAM)&lv);
+        GetParent()->SendMessage(WM_NOTIFY, GetDlgCtrlID(), reinterpret_cast<LPARAM>(&lv));
 
         // no further action
     }
@@ -452,10 +426,8 @@ void CDrivesList::OnNMDblclk(NMHDR* /*pNMHDR*/, LRESULT* pResult)
 
 BEGIN_MESSAGE_MAP(CDrivesList, COwnerDrawnListControl)
     ON_WM_LBUTTONDOWN()
-#pragma warning(suppress: 26454)
     ON_NOTIFY_REFLECT(LVN_DELETEITEM, OnLvnDeleteitem)
     ON_WM_MEASUREITEM_REFLECT()
-#pragma warning(suppress: 26454)
     ON_NOTIFY_REFLECT(NM_DBLCLK, OnNMDblclk)
 END_MESSAGE_MAP()
 
@@ -479,7 +451,7 @@ UINT CSelectDrivesDlg::_serial;
 
 CSelectDrivesDlg::CSelectDrivesDlg(CWnd* pParent /*=NULL*/)
     : CDialogEx(CSelectDrivesDlg::IDD, pParent)
-      , m_radio(0), m_layout(this, COptions::DriveWindowRect.Ptr())
+      , m_layout(this, COptions::DriveWindowRect.Ptr())
 {
     _serial++;
 }
@@ -494,13 +466,13 @@ void CSelectDrivesDlg::DoDataExchange(CDataExchange* pDX)
 }
 
 BEGIN_MESSAGE_MAP(CSelectDrivesDlg, CDialogEx)
-    ON_BN_CLICKED(IDC_AFOLDER, OnBnClickedAfolder)
-    ON_BN_CLICKED(IDC_SOMEDRIVES, OnBnClickedSomedrives)
-    ON_EN_CHANGE(IDC_BROWSE_FOLDER, OnEnChangeFoldername)
+    ON_BN_CLICKED(IDC_AFOLDER, OnBnClickedFolder)
+    ON_BN_CLICKED(IDC_SOMEDRIVES, OnBnClickedSomeDrives)
+    ON_EN_CHANGE(IDC_BROWSE_FOLDER, OnEnChangeFolderName)
     ON_WM_MEASUREITEM()
 #pragma warning(suppress: 26454)
     ON_NOTIFY(LVN_ITEMCHANGED, IDC_DRIVES, OnLvnItemchangedDrives)
-    ON_BN_CLICKED(IDC_ALLLOCALDRIVES, OnBnClickedAlllocaldrives)
+    ON_BN_CLICKED(IDC_ALLLOCALDRIVES, OnBnClickedAllLocalDrives)
     ON_WM_SIZE()
     ON_WM_GETMINMAXINFO()
     ON_WM_DESTROY()
@@ -585,7 +557,7 @@ BOOL CSelectDrivesDlg::OnInitDialog()
             continue;
         }
 
-        auto item = new CDriveItem(&m_list, s);
+        const auto item = new CDriveItem(&m_list, s);
         m_list.InsertListItem(m_list.GetItemCount(), item);
         item->StartQuery(m_hWnd, _serial);
 
@@ -699,18 +671,18 @@ void CSelectDrivesDlg::UpdateButtons()
     m_okButton.EnableWindow(enableOk);
 }
 
-void CSelectDrivesDlg::OnBnClickedAfolder()
+void CSelectDrivesDlg::OnBnClickedFolder()
 {
     UpdateButtons();
 }
 
-void CSelectDrivesDlg::OnBnClickedSomedrives()
+void CSelectDrivesDlg::OnBnClickedSomeDrives()
 {
     m_list.SetFocus();
     UpdateButtons();
 }
 
-void CSelectDrivesDlg::OnEnChangeFoldername()
+void CSelectDrivesDlg::OnEnChangeFolderName()
 {
     m_radio = 2;
     UpdateData(FALSE);
@@ -741,7 +713,7 @@ void CSelectDrivesDlg::OnLvnItemchangedDrives(NMHDR* /*pNMHDR*/, LRESULT* pResul
     *pResult = 0;
 }
 
-void CSelectDrivesDlg::OnBnClickedAlllocaldrives()
+void CSelectDrivesDlg::OnBnClickedAllLocalDrives()
 {
     UpdateButtons();
 }
@@ -782,7 +754,7 @@ LRESULT CSelectDrivesDlg::OnWmuThreadFinished(WPARAM serial, LPARAM lparam)
         return 0;
     }
 
-    auto thread = (CDriveInformationThread*)lparam;
+    const auto thread = reinterpret_cast<CDriveInformationThread*>(lparam);
 
     bool success;
     CStringW name;
@@ -805,7 +777,7 @@ LRESULT CSelectDrivesDlg::OnWmuThreadFinished(WPARAM serial, LPARAM lparam)
         return 0;
     }
 
-    auto item = (CDriveItem*)driveItem;
+    const auto item = reinterpret_cast<CDriveItem*>(driveItem);
 
     item->SetDriveInformation(success, name, total, free);
 

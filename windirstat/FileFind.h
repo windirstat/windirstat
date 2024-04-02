@@ -1,4 +1,4 @@
-// FileFindWDS.h - Declaration of CFileFindWDS
+// FileFindEnhanced.h - Declaration of CFileFindEnhanced
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
@@ -25,8 +25,6 @@
 
 class FileFindEnhanced final
 {
-private:
-
     typedef struct FILE_DIRECTORY_INFORMATION {
         ULONG         NextEntryOffset;
         ULONG         FileIndex;

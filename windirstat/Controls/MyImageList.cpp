@@ -24,15 +24,6 @@
 #include "MyImageList.h"
 #include "SmartPointer.h"
 
-CMyImageList::CMyImageList()
-    : m_junctionProtected(-1)
-      , m_freeSpaceImage(-1)
-      , m_unknownImage(-1)
-      , m_emptyImage(-1)
-      , m_junctionImage(-1)
-{
-}
-
 void CMyImageList::initialize()
 {
     if (m_hImageList == nullptr)
@@ -60,7 +51,7 @@ void CMyImageList::initialize()
 // Returns the index of the added icon
 short CMyImageList::cacheIcon(LPCWSTR path, UINT flags, CStringW* psTypeName)
 {
-    ASSERT(m_hImageList != NULL); // should have been initialize()ed.
+    ASSERT(m_hImageList != nullptr); // should have been initialize()ed.
 
     flags |= WDS_SHGFI_DEFAULTS;
     if (psTypeName != nullptr)
@@ -96,8 +87,7 @@ short CMyImageList::cacheIcon(LPCWSTR path, UINT flags, CStringW* psTypeName)
 short CMyImageList::getMyComputerImage()
 {
     SmartPointer<LPITEMIDLIST> pidl(CoTaskMemFree);
-    const HRESULT hr = ::SHGetSpecialFolderLocation(nullptr, CSIDL_DRIVES, &pidl);
-    if (FAILED(hr))
+    if (FAILED(::SHGetSpecialFolderLocation(nullptr, CSIDL_DRIVES, &pidl)))
     {
         VTRACE(L"SHGetSpecialFolderLocation(CSIDL_DRIVES) failed!");
         return 0;
@@ -119,7 +109,7 @@ short CMyImageList::getJunctionImage() const
 
 short CMyImageList::getJunctionProtectedImage() const
 {
-    ASSERT(m_hImageList != NULL); // should have been initialize()ed.
+    ASSERT(m_hImageList != nullptr); // should have been initialize()ed.
     return m_junctionProtected;
 }
 
@@ -144,19 +134,19 @@ short CMyImageList::getExtImageAndDescription(LPCWSTR ext, CStringW& description
 
 short CMyImageList::getFreeSpaceImage() const
 {
-    ASSERT(m_hImageList != NULL); // should have been initialize()ed.
+    ASSERT(m_hImageList != nullptr); // should have been initialize()ed.
     return m_freeSpaceImage;
 }
 
 short CMyImageList::getUnknownImage() const
 {
-    ASSERT(m_hImageList != NULL); // should have been initialize()ed.
+    ASSERT(m_hImageList != nullptr); // should have been initialize()ed.
     return m_unknownImage;
 }
 
 short CMyImageList::getEmptyImage() const
 {
-    ASSERT(m_hImageList != NULL);
+    ASSERT(m_hImageList != nullptr);
     return m_emptyImage;
 }
 

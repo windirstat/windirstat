@@ -27,12 +27,7 @@ class CReparsePoints final
     {
         CStringW point;  // Path like "mount\backup\"
         CStringW volume; // Volume identifier
-        DWORD flags;     // File system flags (see GetVolumeInformation documentation)
-
-        SPointVolume()
-            : flags(0)
-        {
-        }
+        DWORD flags = 0; // File system flags (see GetVolumeInformation documentation)
     };
 
     using PointVolumeArray = CArray<SPointVolume, SPointVolume&>;
@@ -40,9 +35,9 @@ class CReparsePoints final
 public:
     ~CReparsePoints();
     void Initialize();
-    bool IsVolumeMountPoint(CStringW path);
-    bool IsFolderJunction(const CStringW& path);
-    bool IsFolderJunction(DWORD attr);
+    bool IsVolumeMountPoint(CStringW path) const;
+    bool IsFolderJunction(const CStringW& path) const;
+    bool IsFolderJunction(DWORD attr) const;
 
 private:
     void Clear();

@@ -307,7 +307,7 @@ int CItem::CompareSibling(const CTreeListItem* tlib, int subitem) const
     case COL_SUBTREEPERCENTAGE:
         if (MustShowReadJobs())
         {
-            r = usignum(static_cast<ULONG>(GetReadJobs()), static_cast<ULONG>(other->GetReadJobs()));
+            r = usignum(GetReadJobs(), other->GetReadJobs());
         }
         else
         {
@@ -525,7 +525,7 @@ void CItem::UpdateStatsFromDisk()
             nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, nullptr);
         if (handle != INVALID_HANDLE_VALUE)
         {
-            GetFileTime(handle, NULL, NULL, &m_lastChange);
+            GetFileTime(handle, nullptr, nullptr, &m_lastChange);
             CloseHandle(handle);
         }
     }
@@ -742,9 +742,9 @@ DWORD CItem::GetAttributes() const
 }
 
 // Returns a value which resembles sorting of RHSACE considering gaps
-int CItem::GetSortAttributes() const
+unsigned short CItem::GetSortAttributes() const
 {
-    DWORD ret = 0;
+    unsigned short ret = 0;
 
     // We want to enforce the order RHSACE with R being the highest priority
     // attribute and E being the lowest priority attribute.

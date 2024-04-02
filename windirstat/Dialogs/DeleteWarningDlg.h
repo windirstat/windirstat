@@ -36,8 +36,7 @@ class CDeleteWarningDlg final : public CDialogEx
 
     enum { IDD = IDD_DELETE_WARNING };
 
-public:
-    CDeleteWarningDlg(std::vector<CItem*> items, CWnd* pParent = nullptr);
+    CDeleteWarningDlg(const std::vector<CItem*> & items, CWnd* pParent = nullptr);
     ~CDeleteWarningDlg() override = default;
 
     CListBox m_files;

@@ -21,7 +21,7 @@
 
 #include "stdafx.h"
 #include "resource.h"
-#include "colorbutton.h"
+#include "ColorButton.h"
 #include <common/Constants.h>
 
 /////////////////////////////////////////////////////////////////////////////
@@ -103,7 +103,7 @@ void CColorButton::OnPaint()
         rc.right = rc.left + rc.Width() / 3;
         rc.DeflateRect(4, 4);
 
-        VERIFY(m_preview.Create(AfxRegisterWndClass(0, 0, 0, 0), wds::strEmpty, WS_CHILD | WS_VISIBLE, rc, this, ID_WDS_CONTROL));
+        VERIFY(m_preview.Create(AfxRegisterWndClass(0, nullptr, nullptr, nullptr), wds::strEmpty, WS_CHILD | WS_VISIBLE, rc, this, ID_WDS_CONTROL));
 
         ModifyStyle(0, WS_CLIPCHILDREN);
     }

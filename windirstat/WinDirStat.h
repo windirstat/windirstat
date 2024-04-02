@@ -55,15 +55,14 @@ public:
     CDirStatApp();
 
     BOOL InitInstance() override;
-    int ExitInstance() override;
     BOOL LoadState(LPCTSTR, CFrameImpl*) override { return TRUE; };
 
     bool InPortableMode() const;
     bool SetPortableMode(bool enable, bool only_open = false);
 
     void ReReadMountPoints();
-    bool IsVolumeMountPoint(const CStringW& path);
-    bool IsFolderJunction(DWORD attr);
+    bool IsVolumeMountPoint(const CStringW& path) const;
+    bool IsFolderJunction(DWORD attr) const;
 
     COLORREF AltColor() const;           // Coloring of compressed items
     COLORREF AltEncryptionColor() const; // Coloring of encrypted items
@@ -82,7 +81,7 @@ protected:
     // Get the alternative color from Explorer configuration
     COLORREF GetAlternativeColor(COLORREF clrDefault, LPCWSTR which);
 
-    CSingleDocTemplate* m_pDocTemplate; // MFC voodoo.
+    CSingleDocTemplate* m_pDocTemplate{nullptr}; // MFC voodoo.
 
     CReparsePoints m_mountPoints;             // Mount point information
     CMyImageList m_myImageList;               // Our central image list

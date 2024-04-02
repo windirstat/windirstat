@@ -69,9 +69,7 @@ void CReparsePoints::GetDriveVolumes()
             CStringW s;
             s.Format(L"%c:\\", i + wds::chrCapA);
 
-            const BOOL b = ::GetVolumeNameForVolumeMountPoint(s, volume, _countof(volume));
-
-            if (!b)
+            if (!::GetVolumeNameForVolumeMountPoint(s, volume, _countof(volume)))
             {
 #               ifdef _DEBUG
                 if(ERROR_NOT_READY == ::GetLastError())
@@ -99,14 +97,13 @@ void CReparsePoints::GetAllMountPoints()
 
     for (BOOL bContinue = true; bContinue; bContinue = ::FindNextVolume(hvol, volume, _countof(volume)))
     {
-        WCHAR fsname[_MAX_PATH], vname[_MAX_PATH];
-        auto pva = new PointVolumeArray;
+        WCHAR fsname[_MAX_PATH];
+        WCHAR vname[_MAX_PATH];
+        const auto pva = new PointVolumeArray;
         ASSERT_VALID(pva);
 
-        DWORD fsflags;
-        const BOOL b = ::GetVolumeInformation(volume, vname, _countof(vname), nullptr, nullptr, &fsflags, fsname, _countof(fsname));
-
-        if (!b)
+        DWORD fsflags = 0;
+        if (const BOOL b = ::GetVolumeInformation(volume, vname, _countof(vname), nullptr, nullptr, &fsflags, fsname, _countof(fsname)); !b)
         {
 #           ifdef _DEBUG
             if(ERROR_NOT_READY == ::GetLastError())
@@ -188,7 +185,7 @@ void CReparsePoints::GetAllMountPoints()
 #endif
 }
 
-bool CReparsePoints::IsVolumeMountPoint(CStringW path)
+bool CReparsePoints::IsVolumeMountPoint(CStringW path) const
 {
     if (path.GetLength() < 3 || path[1] != wds::chrColon || path[2] != wds::chrBackslash)
     {
@@ -208,14 +205,14 @@ bool CReparsePoints::IsVolumeMountPoint(CStringW path)
     path.MakeLower();
 
     const CStringW volume = m_drive[path[0] - wds::chrSmallA];
-    path                  = path.Mid(3);
+    path = path.Mid(3);
 
     return IsVolumeMountPoint(volume, path);
 }
 
 // Check whether the current item is a junction point but no volume mount point
 // as the latter ones are treated differently (see above).
-bool CReparsePoints::IsFolderJunction(DWORD attr)
+bool CReparsePoints::IsFolderJunction(const DWORD attr) const
 {
     if (attr == INVALID_FILE_ATTRIBUTES)
     {
@@ -226,7 +223,7 @@ bool CReparsePoints::IsFolderJunction(DWORD attr)
 }
 
 // ... same as before, but based on the full path
-bool CReparsePoints::IsFolderJunction(const CStringW& path)
+bool CReparsePoints::IsFolderJunction(const CStringW& path) const
 {
     if (IsVolumeMountPoint(path))
     {

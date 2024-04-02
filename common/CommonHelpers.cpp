@@ -23,7 +23,6 @@
 #include <common/MdExceptions.h>
 #include <common/Constants.h>
 #include <common/CommonHelpers.h>
-#include "Localization.h"
 
 #include <map>
 #include <sddl.h>
@@ -42,7 +41,7 @@ CStringW MyStrRetToString(const LPITEMIDLIST pidl, const STRRET* strret)
         break;
     case STRRET_OFFSET:
         {
-            s.Format(L"%hs", (char*)pidl + strret->uOffset);
+            s.Format(L"%hs", reinterpret_cast<char*>(pidl) + strret->uOffset);
         }
         break;
     case STRRET_WSTR:
@@ -82,7 +81,7 @@ BOOL ShellExecuteThrow(HWND hwnd, LPCWSTR lpVerb, LPCWSTR lpFile, LPCWSTR lpPara
 {
     CWaitCursor wc;
 
-    BOOL bResult = ShellExecuteNoThrow(hwnd, lpVerb, lpFile, lpParameters, lpDirectory, nShowCmd);
+    const BOOL bResult = ShellExecuteNoThrow(hwnd, lpVerb, lpFile, lpParameters, lpDirectory, nShowCmd);
     if (!bResult)
     {
         MdThrowStringExceptionF(L"ShellExecute failed: %1!s!", MdGetWinErrorText(::GetLastError()).GetString());
@@ -101,10 +100,10 @@ CStringW GetBaseNameFromPath(LPCWSTR path)
     return s.Mid(i + 1);
 }
 
-CStringW GetAppFileName(CStringW ext)
+CStringW GetAppFileName(const CStringW& ext)
 {
     CStringW s;
-    VERIFY(::GetModuleFileName(NULL, s.GetBuffer(_MAX_PATH), _MAX_PATH));
+    VERIFY(::GetModuleFileName(nullptr, s.GetBuffer(_MAX_PATH), _MAX_PATH));
     s.ReleaseBuffer();
 
     // optional substitute extension
@@ -118,14 +117,14 @@ CStringW GetAppFileName(CStringW ext)
 
 CStringW GetAppFolder()
 {
-    CStringW folder = GetAppFileName();
+    const CStringW folder = GetAppFileName();
     return folder.Left(folder.ReverseFind(wds::chrBackslash));
 }
 
 constexpr DWORD SidGetLength(PSID x)
 {
     return sizeof(SID) + (static_cast<SID*>(x)->SubAuthorityCount - 1) * sizeof(static_cast<SID*>(x)->SubAuthority);
-};
+}
 
 std::wstring GetNameFromSid(const PSID sid)
 {
@@ -155,7 +154,7 @@ std::wstring GetNameFromSid(const PSID sid)
 
     // lookup the name for this sid
     SID_NAME_USE name_use;
-    WCHAR account_name[UNLEN + 1], domain_name[UNLEN + 1];;
+    WCHAR account_name[UNLEN + 1], domain_name[UNLEN + 1];
     DWORD iAccountNameSize = _countof(account_name), iDomainName = _countof(domain_name);
     if (LookupAccountSid(nullptr, sid, account_name,
         &iAccountNameSize, domain_name, &iDomainName, &name_use) == 0)

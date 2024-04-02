@@ -46,7 +46,6 @@ class CModalApiShuttle : public CDialogEx
 {
     DECLARE_DYNAMIC(CModalApiShuttle)
 
-public:
     CModalApiShuttle(CWnd* pParent = nullptr);
     ~CModalApiShuttle() override = default;
 

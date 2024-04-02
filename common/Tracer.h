@@ -55,7 +55,7 @@ private:
     unsigned int   m_srcline;
     LPCSTR         m_srcbasename;
     LPCSTR         m_srcfunc;
-    CWDSTracer&    operator=(const CWDSTracer&); // hide it
+    CWDSTracer&    operator=(const CWDSTracer&) = delete; // hide it
 };
 
 // Use as VTRACE(format, ...) ... *must* be on one long line ;)

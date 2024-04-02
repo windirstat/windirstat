@@ -58,10 +58,10 @@ public:
     {
     }
 
-    void DrawSelection(COwnerDrawnListControl* list, CDC* pdc, CRect rc, UINT state) const;
+    void DrawSelection(const COwnerDrawnListControl* list, CDC* pdc, CRect rc, UINT state) const;
 
 protected:
-    void DrawLabel(COwnerDrawnListControl* list, CImageList* il, CDC* pdc, CRect& rc, UINT state, int* width, int* focusLeft, bool indent = true) const;
+    void DrawLabel(const COwnerDrawnListControl* list, CImageList* il, CDC* pdc, CRect& rc, UINT state, int* width, int* focusLeft, bool indent = true) const;
     void DrawPercentage(CDC* pdc, CRect rc, double fraction, COLORREF color) const;
 };
 
@@ -87,23 +87,23 @@ public:
 
     COLORREF GetWindowColor() const;
     COLORREF GetStripeColor() const;
-    COLORREF GetNonFocusHighlightColor();
-    COLORREF GetNonFocusHighlightTextColor();
-    COLORREF GetHighlightColor();
-    COLORREF GetHighlightTextColor();
+    COLORREF GetNonFocusHighlightColor() const;
+    COLORREF GetNonFocusHighlightTextColor() const;
+    COLORREF GetHighlightColor() const;
+    COLORREF GetHighlightTextColor() const;
 
     bool IsItemStripeColor(int i) const;
     bool IsItemStripeColor(const COwnerDrawnListItem* item) const;
     COLORREF GetItemBackgroundColor(int i) const;
     COLORREF GetItemBackgroundColor(const COwnerDrawnListItem* item) const;
-    COLORREF GetItemSelectionBackgroundColor(int i);
-    COLORREF GetItemSelectionBackgroundColor(const COwnerDrawnListItem* item);
-    COLORREF GetItemSelectionTextColor(int i);
+    COLORREF GetItemSelectionBackgroundColor(int i) const;
+    COLORREF GetItemSelectionBackgroundColor(const COwnerDrawnListItem* item) const;
+    COLORREF GetItemSelectionTextColor(int i) const;
 
     COwnerDrawnListItem* GetItem(int i) const;
     int FindListItem(const COwnerDrawnListItem* item) const;
-    int GetTextXMargin();
-    int GetGeneralLeftIndent();
+    int GetTextXMargin() const;
+    int GetGeneralLeftIndent() const;
     void AdjustColumnWidth(int col);
     CRect GetWholeSubitemRect(int item, int subitem);
 
@@ -113,16 +113,16 @@ public:
 protected:
     void InitializeColors();
     void DrawItem(LPDRAWITEMSTRUCT pdis) override;
-    int GetSubItemWidth(COwnerDrawnListItem* item, int subitem);
-    bool IsColumnRightAligned(int col);
+    int GetSubItemWidth(const COwnerDrawnListItem* item, int subitem);
+    bool IsColumnRightAligned(int col) const;
 
-    COLORREF m_windowColor;      // The default background color if !m_showStripes
-    COLORREF m_stripeColor;      // The stripe color, used for every other item if m_showStripes
-    int m_rowHeight;             // Height of an item
-    int m_yFirstItem;            // Top of a first list item
-    bool m_showGrid;             // Whether to draw a grid
-    bool m_showStripes;          // Whether to show stripes
-    bool m_showFullRowSelection; // Whether to draw full row selection
+    COLORREF m_windowColor = CLR_NONE; // The default background color if !m_showStripes
+    COLORREF m_stripeColor = CLR_NONE; // The stripe color, used for every other item if m_showStripes
+    int m_rowHeight;                   // Height of an item
+    int m_yFirstItem = -1;             // Top of a first list item
+    bool m_showGrid = false;           // Whether to draw a grid
+    bool m_showStripes = false;        // Whether to show stripes
+    bool m_showFullRowSelect = false;  // Whether to draw full row selection
 
     DECLARE_MESSAGE_MAP()
     afx_msg BOOL OnEraseBkgnd(CDC* pDC);

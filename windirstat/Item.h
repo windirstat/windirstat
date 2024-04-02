@@ -179,7 +179,7 @@ public:
     void SetLastChange(const FILETIME& t);
     void SetAttributes(DWORD attr);
     DWORD GetAttributes() const;
-    int GetSortAttributes() const;
+    unsigned short GetSortAttributes() const;
     double GetFraction() const;
     bool IsRootItem() const;
     CStringW GetPath() const;

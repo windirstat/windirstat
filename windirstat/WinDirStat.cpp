@@ -37,11 +37,7 @@
 #include "SmartPointer.h"
 
 #ifdef _DEBUG
-#   pragma warning(push)
-#   pragma warning(disable : 4091)
-#   include <Dbghelp.h> // for mini dumps
 #   include <common/tracer.cpp>
-#   pragma warning(pop)
 #endif
 
 CMainFrame* GetMainFrame()
@@ -81,11 +77,10 @@ BEGIN_MESSAGE_MAP(CDirStatApp, CWinAppEx)
     ON_COMMAND(ID_HELP_MANUAL, OnHelpManual)
 END_MESSAGE_MAP()
 
-CDirStatApp _theApp;
+const CDirStatApp _theApp;
 
-CDirStatApp::CDirStatApp()
-    : m_pDocTemplate(nullptr)
-      , m_altColor(GetAlternativeColor(RGB(0x00, 0x00, 0xFF), L"AltColor"))
+CDirStatApp::CDirStatApp() :
+        m_altColor(GetAlternativeColor(RGB(0x00, 0x00, 0xFF), L"AltColor"))
       , m_altEncryptionColor(GetAlternativeColor(RGB(0x00, 0x80, 0x00), L"AltEncryptionColor"))
 #   ifdef VTRACE_TO_CONSOLE
       , m_vtrace_console(new CWDSTracerConsole())
@@ -109,8 +104,7 @@ void CDirStatApp::RestartApplication()
     PROCESS_INFORMATION pi;
     ZeroMemory(&pi, sizeof(pi));
 
-    const BOOL success = CreateProcess(GetAppFileName(), nullptr, nullptr, nullptr, false, CREATE_SUSPENDED, nullptr, nullptr, &si, &pi);
-    if (!success)
+    if (const BOOL success = CreateProcess(GetAppFileName(), nullptr, nullptr, nullptr, false, CREATE_SUSPENDED, nullptr, nullptr, &si, &pi); !success)
     {
         CStringW s;
         s.FormatMessage(Localization::Lookup(IDS_CREATEPROCESSsFAILEDs), GetAppFileName().GetString(), MdGetWinErrorText(::GetLastError()).GetString());
@@ -122,9 +116,7 @@ void CDirStatApp::RestartApplication()
     // like column widths an so on are saved before the new instance is resumed.
     // This will post a WM_QUIT message.
     (void)GetMainFrame()->SendMessage(WM_CLOSE);
-
-    const DWORD dw = ::ResumeThread(pi.hThread);
-    if (dw != 1)
+    if (const DWORD dw = ::ResumeThread(pi.hThread); dw != 1)
     {
         VTRACE(L"ResumeThread() didn't return 1");
     }
@@ -135,8 +127,8 @@ void CDirStatApp::RestartApplication()
 
 bool CDirStatApp::getDiskFreeSpace(LPCWSTR pszRootPath, ULONGLONG& total, ULONGLONG& unused)
 {
-    ULARGE_INTEGER u64total = {0};
-    ULARGE_INTEGER u64free = {0};
+    ULARGE_INTEGER u64total = {{0, 0}};
+    ULARGE_INTEGER u64free = {{0, 0}};
 
     const BOOL b = GetDiskFreeSpaceEx(pszRootPath, nullptr, &u64total, &u64free);
     if (!b)
@@ -158,12 +150,12 @@ void CDirStatApp::ReReadMountPoints()
     m_mountPoints.Initialize();
 }
 
-bool CDirStatApp::IsVolumeMountPoint(const CStringW& path)
+bool CDirStatApp::IsVolumeMountPoint(const CStringW& path) const
 {
     return m_mountPoints.IsVolumeMountPoint(path);
 }
 
-bool CDirStatApp::IsFolderJunction(DWORD attr)
+bool CDirStatApp::IsFolderJunction(DWORD attr) const
 {
     return m_mountPoints.IsFolderJunction(attr);
 }
@@ -256,19 +248,17 @@ bool CDirStatApp::SetPortableMode(bool enable, bool only_open)
         SetRegistryKey(Localization::Lookup(IDS_APP_TITLE));
         return false;
     }
-    else
-    {
-        // Attempt to remove file succeeded
-        if (DeleteFile(ini) != 0 || GetLastError() == ERROR_FILE_NOT_FOUND)
-        {
-            SetRegistryKey(Localization::Lookup(IDS_APP_TITLE));
-            return true;
-        }
 
-        // Deletion failed  - go back to ini mode
-        m_pszProfileName = _wcsdup(ini);
-        return false;
+    // Attempt to remove file succeeded
+    if (DeleteFile(ini) != 0 || GetLastError() == ERROR_FILE_NOT_FOUND)
+    {
+        SetRegistryKey(Localization::Lookup(IDS_APP_TITLE));
+        return true;
     }
+
+    // Deletion failed  - go back to ini mode
+    m_pszProfileName = _wcsdup(ini);
+    return false;
 }
 
 CString AFXGetRegPath(LPCTSTR lpszPostFix, LPCTSTR)
@@ -352,8 +342,7 @@ BOOL CDirStatApp::InitInstance()
         int token = 0;
         const DWORD parent = wcstoul(cmdInfo.m_strFileName.Tokenize(L"|", token), nullptr, 10);
         cmdInfo.m_strFileName = cmdInfo.m_strFileName.Right(cmdInfo.m_strFileName.GetLength() - token);
-        SmartPointer<HANDLE> handle(CloseHandle, OpenProcess(PROCESS_TERMINATE, FALSE, parent));
-        if (handle != nullptr)
+        if (SmartPointer<HANDLE> handle(CloseHandle, OpenProcess(PROCESS_TERMINATE, FALSE, parent)); handle != nullptr)
         {
             TerminateProcess(handle, 0);
         }
@@ -366,11 +355,6 @@ BOOL CDirStatApp::InitInstance()
     }
 
     return TRUE;
-}
-
-int CDirStatApp::ExitInstance()
-{
-    return CWinAppEx::ExitInstance();
 }
 
 void CDirStatApp::OnAppAbout()

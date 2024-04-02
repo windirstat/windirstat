@@ -24,7 +24,7 @@ public:
     BlockingQueue& operator=(const BlockingQueue&) = delete;
     BlockingQueue& operator=(BlockingQueue&&) = delete;
     ~BlockingQueue() = default;
-    BlockingQueue(unsigned int workers) :
+    BlockingQueue(const unsigned int workers) :
         m_initial_workers(workers), m_workers_waiting(0) {}
     BlockingQueue() : BlockingQueue(1) {}
 

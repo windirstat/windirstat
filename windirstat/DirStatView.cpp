@@ -162,7 +162,7 @@ CDirStatView::CDirStatView()
     m_treeListControl.SetSorting(COL_SUBTREETOTAL, false);
 }
 
-CStringW CDirStatView::GenerateReport()
+CStringW CDirStatView::GenerateReport() const
 {
     CStringW report = CStringW(COptions::ReportPrefix.Obj().c_str()) + L"\r\n";
 
@@ -244,7 +244,7 @@ void CDirStatView::CreateColumns(bool all)
     // reset sort and remove optional
     m_treeListControl.SetSorting(COL_SUBTREETOTAL, m_treeListControl.GetAscendingDefault(COL_SUBTREETOTAL));
     m_treeListControl.SortItems();
-    while (m_treeListControl.DeleteColumn(COL_ITEMS));
+    while (m_treeListControl.DeleteColumn(COL_ITEMS)) {}
 
     // add optional columns based on settings
     if (COptions::ShowColumnItems)
@@ -311,7 +311,7 @@ void CDirStatView::OnSettingChange(UINT uFlags, LPCWSTR lpszSection)
 }
 void CDirStatView::OnLvnItemchanged(NMHDR* pNMHDR, LRESULT* pResult)
 {
-    auto pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
+    const auto pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
 
     // only process state changes
     if ((pNMLV->uChanged & LVIF_STATE) == 0)

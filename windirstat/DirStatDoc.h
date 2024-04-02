@@ -80,7 +80,6 @@ protected:
     CDirStatDoc(); // Created by MFC only
     DECLARE_DYNCREATE(CDirStatDoc)
 
-public:
     ~CDirStatDoc() override;
 
     static CStringW EncodeSelection(RADIO radio, const CStringW& folder, const CStringArray& drives);
@@ -95,7 +94,7 @@ public:
     void SetTitlePrefix(const CStringW& prefix) const;
 
     COLORREF GetCushionColor(LPCWSTR ext);
-    COLORREF GetZoomColor();
+    static COLORREF GetZoomColor();
 
     const CExtensionData* GetExtensionData();
     ULONGLONG GetRootSize() const;
@@ -117,7 +116,7 @@ public:
     bool UserDefinedCleanupWorksForItem(USERDEFINEDCLEANUP* udc, const CItem* item);
     void StartupCoordinator(std::vector<CItem*> items);
     void ShutdownCoordinator(bool wait = true);
-    void RefreshItem(std::vector<CItem*> item);
+    void RefreshItem(const std::vector<CItem*>& item);
     void RefreshItem(CItem* item) { RefreshItem(std::vector{ item }); }
 
     static void OpenItem(const CItem* item, LPCWSTR verb = L"open");
@@ -131,10 +130,10 @@ protected:
     void SortExtensionData(CStringArray& sortedExtensions);
     void SetExtensionColors(const CStringArray& sortedExtensions);
     static CExtensionData* _pqsortExtensionData;
-    bool DeletePhysicalItems(std::vector<CItem*> items, bool toTrashBin);
+    bool DeletePhysicalItems(const std::vector<CItem*>& items, bool toTrashBin);
     void SetZoomItem(CItem* item);
-    static void AskForConfirmation(USERDEFINEDCLEANUP* udc, CItem* item);
-    void PerformUserDefinedCleanup(USERDEFINEDCLEANUP* udc, CItem* item);
+    static void AskForConfirmation(USERDEFINEDCLEANUP* udc, const CItem* item);
+    void PerformUserDefinedCleanup(USERDEFINEDCLEANUP* udc, const CItem* item);
     void RefreshAfterUserDefinedCleanup(const USERDEFINEDCLEANUP* udc, CItem* item);
     void RecursiveUserDefinedCleanup(USERDEFINEDCLEANUP* udc, const CStringW& rootPath, const CStringW& currentPath);
     static void CallUserDefinedCleanup(bool isDirectory, const CStringW& format, const CStringW& rootPath, const CStringW& currentPath, bool showConsoleWindow, bool wait);
@@ -148,23 +147,22 @@ protected:
     bool m_showFreeSpace; // Whether to show the <Free Space> item
     bool m_showUnknown;   // Whether to show the <Unknown> item
 
-    bool m_showMyComputer; // True, if the user selected more than one drive for scanning.
+    bool m_showMyComputer = false; // True, if the user selected more than one drive for scanning.
     // In this case, we need a root pseudo item ("My Computer").
 
-    CItem* m_rootItem; // The very root item
+    CItem* m_rootItem = nullptr;    // The very root item
 
     CStringW m_highlightExtension; // Currently highlighted extension
-    CItem* m_zoomItem;             // Current "zoom root"
+    CItem* m_zoomItem = nullptr;   // Current "zoom root"
 
-    bool m_extensionDataValid;      // If this is false, m_extensionData must be rebuilt
-    CExtensionData m_extensionData; // Base for the extension view and cushion colors
+    bool m_extensionDataValid = false; // If this is false, m_extensionData must be rebuilt
+    CExtensionData m_extensionData;    // Base for the extension view and cushion colors
 
     CList<CItem*, CItem*> m_reselectChildStack; // Stack for the "Re-select Child"-Feature
 
     BlockingQueue<CItem*> queue;      // The scanning queue
     std::vector<std::thread> threads; // For tracking threads
 
-protected:
     DECLARE_MESSAGE_MAP()
     afx_msg void OnRefreshSelected();
     afx_msg void OnRefreshAll();
