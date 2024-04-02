@@ -55,5 +55,5 @@ protected:
     BOOL OnInitDialog() override;
     DECLARE_MESSAGE_MAP()
 
-    virtual void DoOperation() =0;
+    virtual bool DoOperation() = 0;
 };

@@ -47,16 +47,18 @@ void CModalShellApi::DeleteFile(LPCWSTR fileName, bool toRecycleBin)
     DoModal();
 }
 
-void CModalShellApi::DoOperation()
+bool CModalShellApi::DoOperation()
 {
     if (m_operation == DELETE_FILE)
     {
 
-        DoDeleteItem();
+        return DoDeleteItem();
     }
+
+    return false;
 }
 
-void CModalShellApi::DoDeleteItem()
+bool CModalShellApi::DoDeleteItem()
 {
     if (m_toRecycleBin)
     {
@@ -67,15 +69,15 @@ void CModalShellApi::DoDeleteItem()
         // Do deletion operation
         SmartPointer<LPITEMIDLIST> pidl(CoTaskMemFree, ILCreateFromPath(m_fileName));
         CComPtr<IShellItem> shellitem = nullptr;
-        SHCreateItemFromIDList(pidl, IID_PPV_ARGS(&shellitem));
-
+        if (SHCreateItemFromIDList(pidl, IID_PPV_ARGS(&shellitem)) != S_OK) return false;
+        
         ::CComPtr<IFileOperation> pFileOperation;
         if (FAILED(::CoCreateInstance(CLSID_FileOperation, nullptr, CLSCTX_ALL, IID_PPV_ARGS(&pFileOperation))) ||
             FAILED(pFileOperation->SetOperationFlags(flags)) ||
             FAILED(pFileOperation->DeleteItem(shellitem, nullptr)) ||
             FAILED(pFileOperation->PerformOperations()))
         {
-            return;
+            return false;
         }
     }
     else
@@ -84,4 +86,6 @@ void CModalShellApi::DoDeleteItem()
         std::error_code ec;
         std::filesystem::remove_all(std::filesystem::path(path.GetBuffer()), ec);
     }
+
+    return true;
 }

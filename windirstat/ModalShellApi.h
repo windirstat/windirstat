@@ -37,9 +37,9 @@ public:
     void DeleteFile(LPCWSTR fileName, bool toRecycleBin);
 
 protected:
-    void DoOperation() override;
+    bool DoOperation() override;
 
-    void DoDeleteItem();
+    bool DoDeleteItem();
 
     int m_operation = 0;         // Enum specifying the desired operation
     CStringW m_fileName;         // File name to be deleted
