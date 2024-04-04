@@ -32,6 +32,8 @@
 #include <map>
 #include <format>
 #include <chrono>
+#include <array>
+#include <ranges>
 
 enum
 {
@@ -46,10 +48,10 @@ enum
     FIELD_COUNT
 };
 
-CHAR order_map[FIELD_COUNT];
+std::array<CHAR, FIELD_COUNT> order_map{};
 static void ParseHeaderLine(const std::vector<std::wstring>& header)
 {
-    std::fill_n(order_map, FIELD_COUNT, static_cast<CHAR>(-1));
+    order_map.fill(-1);
     for (const bool neutral: { true, false })
     {
         CStringW(*Lookup)(const UINT) = (neutral) ? Localization::LookupNeutral : static_cast<CStringW(*)(const UINT)>(&Localization::Lookup);
@@ -155,7 +157,7 @@ CItem* LoadResults(const std::wstring & path)
             header_processed = true;
 
             // Validate all necessary fields are present
-            for (auto i = 0; i < _countof(order_map); i++)
+            for (auto i = 0; i < static_cast<char>(order_map.size()); i++)
             {
                 if (i != FIELD_OWNER && order_map[i] == -1) return nullptr;
             }
@@ -187,33 +189,35 @@ CItem* LoadResults(const std::wstring & path)
             wcstoul(fields[order_map[FIELD_ATTRIBUTES]].c_str(), nullptr, 16),
             wcstoul(fields[order_map[FIELD_FILES]].c_str(), nullptr, 10),
             wcstoul(fields[order_map[FIELD_SUBDIRS]].c_str(), nullptr, 10));
-        if (is_root) newroot = newitem;
 
-        auto parent = parent_map.find(lookup_path);
-        if (parent != parent_map.end())
+
+        if (is_root)
         {
-            parent->second->AddChild(newitem, true);
+            newroot = newitem;
         }
         else if (is_in_root)
         {
             newroot->AddChild(newitem, true);
         }
+        else if (auto parent = parent_map.find(lookup_path); parent != parent_map.end())
+        {
+            parent->second->AddChild(newitem, true);
+        }
         else ASSERT(FALSE);
 
-        if (!newitem->TmiIsLeaf())
+        if (!newitem->TmiIsLeaf() && newitem->GetItemsCount() > 0)
         {
             parent_map[map_path] = newitem;
 
             // Special case: also add mapping for drive without backslash
-            if (newitem->IsType(IT_DRIVE)) parent_map[map_path.substr(0,2)] = newitem;
+            if (newitem->IsType(IT_DRIVE)) parent_map[map_path.substr(0, 2)] = newitem;
         }
     }
 
     // Sort all parent items
-    for (auto const& item : parent_map)
+    for (const auto& val : parent_map | std::views::values)
     {
-        item.second->UpwardSetUndone();
-        item.second->SetDone();
+        val->SortItemsBySize();
     }
 
     return newroot;
@@ -258,7 +262,7 @@ bool SaveResults(const std::wstring& path, CItem * item)
         queue.pop();
 
         // Output primary columns
-        const bool non_path_item = qitem->IsType(ITF_ROOTITEM | IT_UNKNOWN | IT_FREESPACE);
+        const bool non_path_item = qitem->IsType(IT_MYCOMPUTER | IT_UNKNOWN | IT_FREESPACE);
         outf << std::format("{},{},{},{},0x{:08X},{:%FT%TZ},0x{:04X}",
             QuoteAndConvert(non_path_item ? qitem->GetName() : qitem->GetPath()),
             qitem->GetFilesCount(),
