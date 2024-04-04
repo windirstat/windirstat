@@ -75,8 +75,8 @@
 #define IDS_USERDEFINEDCLEANUP0         20072
 #define IDS_USERDEFINEDCLEANUPd         20073
 #define IDS_WINDIRSTAT_SETTINGS         20074
-#define IDS__ONEITEMss                  20075
-#define IDS__sITEMSss                   20076
+#define IDS_ONEITEMss                   20075
+#define IDS_sITEMSss                    20076
 #define IDS_sREADJOBS                   20077
 #define IDS_CLEANUP_DELETE              20078
 #define IDS_CLEANUP_DELETE_BIN          20079

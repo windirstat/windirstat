@@ -22,10 +22,9 @@
 #pragma once
 
 #include "OwnerDrawnListControl.h"
-#include "pacman.h"
+#include "PacMan.h"
 
 #include <vector>
-#include <shared_mutex>
 
 class CDirStatView;
 class CTreeListItem;
@@ -85,7 +84,7 @@ public:
     bool HasChildren() const;
     bool IsExpanded() const;
     void SetExpanded(bool expanded = true);
-    bool IsVisible() const;
+    bool IsVisible() const { return m_vi != nullptr; }
     void SetVisible(bool visible = true);
     unsigned char GetIndent() const;
     CRect GetPlusMinusRect() const;
@@ -100,10 +99,10 @@ public:
 
 protected:
     static CTreeListControl* GetTreeListControl();
-    mutable VISIBLEINFO* m_vi;
+    mutable VISIBLEINFO* m_vi = nullptr;
 
 private:
-    CTreeListItem* m_parent;
+    CTreeListItem* m_parent = nullptr;
 };
 
 //
@@ -127,7 +126,7 @@ class CTreeListControl : public COwnerDrawnListControl
     void SetRootItem(CTreeListItem* root);
     void OnChildAdded(CTreeListItem* parent, CTreeListItem* child);
     void OnChildRemoved(CTreeListItem* parent, CTreeListItem* child);
-    void OnRemovingAllChildren(CTreeListItem* parent);
+    void OnRemovingAllChildren(const CTreeListItem* parent);
     CTreeListItem* GetItem(int i) const;
     bool IsItemSelected(const CTreeListItem* item) const;
     void SelectItem(const CTreeListItem* item, bool deselect = false, bool focus = false);
@@ -136,9 +135,9 @@ class CTreeListControl : public COwnerDrawnListControl
     void DrawNode(CDC* pdc, CRect& rc, CRect& rcPlusMinus, const CTreeListItem* item, int* width);
     void Sort();
     void EnsureItemVisible(const CTreeListItem* item);
-    void ExpandItem(CTreeListItem* item);
+    void ExpandItem(const CTreeListItem* item);
     int FindTreeItem(const CTreeListItem* item) const;
-    int GetItemScrollPosition(CTreeListItem* item) const;
+    int GetItemScrollPosition(const CTreeListItem* item) const;
     void SetItemScrollPosition(CTreeListItem* item, int top);
     bool SelectedItemCanToggle();
     void ToggleSelectedItem();

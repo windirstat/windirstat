@@ -30,7 +30,7 @@
 #include <mutex>
 
 // Columns
-enum
+enum ITEMCOLUMNS
 {
     COL_NAME,
     COL_SUBTREEPERCENTAGE,
@@ -194,6 +194,7 @@ public:
     ULONG GetSubdirsCount() const;
     ULONGLONG GetItemsCount() const;
     void SetDone();
+    void SortItemsBySize() const;
     ULONGLONG GetTicksWorked() const;
     static void ScanItems(BlockingQueue<CItem*> *);
     static void ScanItemsFinalize(CItem* item);
@@ -250,7 +251,7 @@ private:
     // Special structure for container items that is separately allocated to
     // reduce memory usage.  This operates under the assumption that most
     // containers have files in them.
-    typedef struct CHILDINFO
+    using CHILDINFO = struct CHILDINFO
     {
         std::vector<CItem*> m_children;
         std::shared_mutex m_protect;
@@ -259,15 +260,14 @@ private:
         std::atomic<ULONG> m_files = 0;   // # Files in subtree
         std::atomic<ULONG> m_subdirs = 0; // # Folder in subtree
         std::atomic<ULONG> m_jobs = 0;    // # "read jobs" in subtree.
-    }
-    CHILDINFO;
+    };
 
-    RECT m_rect;                   // To support GraphView
-    CStringW m_name;               // Display name
-    LPCWSTR m_extension;           // Cache of extension (it's used often)
-    FILETIME m_lastChange;         // Last modification time OF SUBTREE
-    CHILDINFO* m_ci;               // Child information for non-files
-    std::atomic<ULONGLONG> m_size; // OwnSize, if IT_FILE or IT_FREESPACE, or IT_UNKNOWN; SubtreeTotal else.
-    DWORD m_attributes;            // Packed file attributes of the item
-    ITEMTYPE m_type;               // Indicates our type.
+    RECT m_rect;                       // To support GraphView
+    CStringW m_name;                   // Display name
+    LPCWSTR m_extension;               // Cache of extension (it's used often)
+    FILETIME m_lastChange = {0, 0};    // Last modification time OF SUBTREE
+    CHILDINFO* m_ci = nullptr;         // Child information for non-files
+    std::atomic<ULONGLONG> m_size = 0; // OwnSize, if IT_FILE or IT_FREESPACE, or IT_UNKNOWN; SubtreeTotal else.
+    DWORD m_attributes = 0;            // Packed file attributes of the item
+    ITEMTYPE m_type;                   // Indicates our type.
 };

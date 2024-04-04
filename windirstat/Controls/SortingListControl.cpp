@@ -1,4 +1,3 @@
-// SortingListControl.cpp - Implementation of CSortingListItem and CSortingListControl
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
@@ -86,17 +85,20 @@ CSortingListControl::CSortingListControl(std::vector<int>* column_order, std::ve
 
 void CSortingListControl::LoadPersistentAttributes()
 {
+    // Fetch casted column count to avoid signed comparison warnings
+    const auto column_count = static_cast<size_t>(GetHeaderCtrl()->GetItemCount());
+
     // Load default column order values from resource
-    if (m_column_order->size() != GetHeaderCtrl()->GetItemCount())
+    if (m_column_order->size() != column_count)
     {
-        m_column_order->resize(GetHeaderCtrl()->GetItemCount());
+        m_column_order->resize(column_count);
         GetColumnOrderArray(m_column_order->data(), static_cast<int>(m_column_order->size()));
     }
 
     // Load default column width values from resource
-    if (m_column_widths->size() != GetHeaderCtrl()->GetItemCount())
+    if (m_column_widths->size() != column_count)
     {
-        m_column_widths->resize(GetHeaderCtrl()->GetItemCount(),0);
+        m_column_widths->resize(column_count,0);
         for (int i = 0; i < static_cast<int>(m_column_widths->size()); i++)
         {
             (*m_column_widths)[i] = GetColumnWidth(i);
@@ -232,15 +234,10 @@ int CALLBACK CSortingListControl::_CompareFunc(LPARAM lParam1, LPARAM lParam2, L
 }
 
 BEGIN_MESSAGE_MAP(CSortingListControl, CListCtrl)
-#pragma warning(suppress: 26454)
     ON_NOTIFY_REFLECT(LVN_GETDISPINFO, OnLvnGetdispinfo)
-#pragma warning(suppress: 26454)
     ON_NOTIFY(HDN_ITEMCLICKA, 0, OnHdnItemclick)
-#pragma warning(suppress: 26454)
     ON_NOTIFY(HDN_ITEMCLICKW, 0, OnHdnItemclick)
-#pragma warning(suppress: 26454)
     ON_NOTIFY(HDN_ITEMDBLCLICKA, 0, OnHdnItemdblclick)
-#pragma warning(suppress: 26454)
     ON_NOTIFY(HDN_ITEMDBLCLICKW, 0, OnHdnItemdblclick)
     ON_WM_DESTROY()
 END_MESSAGE_MAP()
@@ -265,7 +262,7 @@ void CSortingListControl::OnLvnGetdispinfo(NMHDR* pNMHDR, LRESULT* pResult)
 
 void CSortingListControl::OnHdnItemclick(NMHDR* pNMHDR, LRESULT* pResult)
 {
-    LPNMHEADER phdr = reinterpret_cast<LPNMHEADER>(pNMHDR);
+    const LPNMHEADER phdr = reinterpret_cast<LPNMHEADER>(pNMHDR);
     *pResult        = 0;
     const int col   = phdr->iItem;
 

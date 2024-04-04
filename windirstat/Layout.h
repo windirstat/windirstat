@@ -67,7 +67,7 @@ class CLayout
     class CSizeGripper final : public CWnd
     {
     public:
-        static const int _width;
+        const int _width = 14;
 
         CSizeGripper() = default;
         void Create(CWnd* parent, CRect rc);

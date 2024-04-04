@@ -27,7 +27,7 @@
 
 CLayout::CLayout(CWnd* dialog, RECT* placement)
 {
-    ASSERT(dialog != NULL);
+    ASSERT(dialog != nullptr);
     m_wp = placement;
     m_dialog = dialog;
 
@@ -117,8 +117,6 @@ void CLayout::OnGetMinMaxInfo(MINMAXINFO* mmi)
 }
 
 /////////////////////////////////////////////////////////////////////////////
-
-const int CLayout::CSizeGripper::_width = 14;
 
 void CLayout::CSizeGripper::Create(CWnd* parent, CRect rc)
 {

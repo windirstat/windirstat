@@ -39,7 +39,7 @@ void CMyImageList::initialize()
         this->Attach(ImageList_Duplicate(hil));
 
         VTRACE(L"System image list has %i icons", this->GetImageCount());
-        for (short i = 0; i < this->GetImageCount(); i++)
+        for (short i = 0; i < static_cast<short>(this->GetImageCount()); i++)
         {
             m_indexMap.SetAt(i, i);
         }

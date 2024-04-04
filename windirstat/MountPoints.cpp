@@ -59,7 +59,7 @@ void CReparsePoints::GetDriveVolumes()
     m_drive.SetSize(wds::iNumDriveLetters);
 
     const DWORD drives = ::GetLogicalDrives();
-    DWORD mask         = 0x00000001;
+    DWORD mask = 0x00000001;
     for (int i = 0; i < wds::iNumDriveLetters; i++, mask <<= 1)
     {
         WCHAR volume[_MAX_PATH] = L"";

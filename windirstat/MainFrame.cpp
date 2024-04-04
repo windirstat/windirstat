@@ -370,7 +370,7 @@ constexpr auto ID_INDICATOR_CAPS_INDEX = 2;
 constexpr auto ID_INDICATOR_NUM_INDEX = 3;
 constexpr auto ID_INDICATOR_SCRL_INDEX = 4;
 
-static UINT indicators[] =
+constexpr UINT indicators[]
 {
     IDS_IDLEMESSAGE,
     IDS_RAMUSAGEs,
@@ -405,7 +405,7 @@ LRESULT CMainFrame::OnTaskButtonCreated(WPARAM, LPARAM)
         const HRESULT hr = ::CoCreateInstance(CLSID_TaskbarList, nullptr, CLSCTX_ALL, IID_ITaskbarList3, reinterpret_cast<LPVOID*>(&m_TaskbarList));
         if (FAILED(hr))
         {
-            VTRACE(L"CoCreateInstance(CLSID_TaskbarList, NULL, CLSCTX_ALL) failed %08X", hr);
+            VTRACE(L"CoCreateInstance(CLSID_TaskbarList, nullptr, CLSCTX_ALL) failed %08X", hr);
         }
     }
     return 0;
@@ -874,7 +874,7 @@ void CMainFrame::CopyToClipboard(const LPCWSTR psz)
         }
 
         const LPVOID lp = ::GlobalLock(h);
-        ASSERT(lp != NULL);
+        ASSERT(lp != nullptr);
 
         if (!lp)
         {
@@ -918,11 +918,11 @@ void CMainFrame::UpdateCleanupMenu(CMenu* menu)
     CStringW info;
     if (items == 1)
     {
-        info.FormatMessage(Localization::Lookup(IDS__ONEITEMss), FormatBytes(bytes).GetString(), COptions::HumanFormat && bytes != 0 ? wds::strEmpty : (wds::strBlankSpace + GetSpec_Bytes()).GetString());
+        info.FormatMessage(Localization::Lookup(IDS_ONEITEMss), FormatBytes(bytes).GetString(), COptions::HumanFormat && bytes != 0 ? wds::strEmpty : (wds::strBlankSpace + GetSpec_Bytes()).GetString());
     }
     else
     {
-        info.FormatMessage(Localization::Lookup(IDS__sITEMSss), FormatCount(items).GetString(), FormatBytes(bytes).GetString(), COptions::HumanFormat && bytes != 0 ? wds::strEmpty : (wds::strBlankSpace + GetSpec_Bytes()).GetString());
+        info.FormatMessage(Localization::Lookup(IDS_sITEMSss), FormatCount(items).GetString(), FormatBytes(bytes).GetString(), COptions::HumanFormat && bytes != 0 ? wds::strEmpty : (wds::strBlankSpace + GetSpec_Bytes()).GetString());
     }
 
     CStringW s = Localization::Lookup(IDS_EMPTYRECYCLEBIN);

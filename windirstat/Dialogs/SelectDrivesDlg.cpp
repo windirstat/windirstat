@@ -83,7 +83,7 @@ void CDriveItem::StartQuery(HWND dialog, UINT serial)
 
     if (m_querying)
     {
-        new CDriveInformationThread(m_path, (LPARAM)this, dialog, serial);
+        new CDriveInformationThread(m_path, reinterpret_cast<LPARAM>(this), dialog, serial);
         // (will delete itself when finished.)
     }
 }
@@ -366,7 +366,7 @@ bool CDrivesList::HasImages()
     return true;
 }
 
-void CDrivesList::SelectItem(CDriveItem* item)
+void CDrivesList::SelectItem(const CDriveItem* item)
 {
     const int i = FindListItem(item);
     SetItemState(i, LVIS_SELECTED, LVIS_SELECTED);
@@ -396,7 +396,6 @@ void CDrivesList::OnLButtonDown(UINT /*nFlags*/, CPoint /*point*/)
         ZeroMemory(&lv, sizeof(lv));
         lv.hdr.hwndFrom = m_hWnd;
         lv.hdr.idFrom   = GetDlgCtrlID();
-#pragma warning(suppress: 26454)
         lv.hdr.code = LVN_ITEMCHANGED;
         GetParent()->SendMessage(WM_NOTIFY, GetDlgCtrlID(), reinterpret_cast<LPARAM>(&lv));
 
@@ -421,7 +420,7 @@ void CDrivesList::OnNMDblclk(NMHDR* /*pNMHDR*/, LRESULT* pResult)
         SetItemState(k, k == i ? LVIS_SELECTED : 0, LVIS_SELECTED);
     }
 
-    GetParent()->SendMessage(WMU_OK);
+    (void) GetParent()->SendMessage(WMU_OK);
 }
 
 BEGIN_MESSAGE_MAP(CDrivesList, COwnerDrawnListControl)
@@ -449,8 +448,7 @@ IMPLEMENT_DYNAMIC(CSelectDrivesDlg, CDialogEx)
 
 UINT CSelectDrivesDlg::_serial;
 
-CSelectDrivesDlg::CSelectDrivesDlg(CWnd* pParent /*=NULL*/)
-    : CDialogEx(CSelectDrivesDlg::IDD, pParent)
+CSelectDrivesDlg::CSelectDrivesDlg(CWnd* pParent) : CDialogEx(CSelectDrivesDlg::IDD, pParent)
       , m_layout(this, COptions::DriveWindowRect.Ptr())
 {
     _serial++;
@@ -470,7 +468,6 @@ BEGIN_MESSAGE_MAP(CSelectDrivesDlg, CDialogEx)
     ON_BN_CLICKED(IDC_SOMEDRIVES, OnBnClickedSomeDrives)
     ON_EN_CHANGE(IDC_BROWSE_FOLDER, OnEnChangeFolderName)
     ON_WM_MEASUREITEM()
-#pragma warning(suppress: 26454)
     ON_NOTIFY(LVN_ITEMCHANGED, IDC_DRIVES, OnLvnItemchangedDrives)
     ON_BN_CLICKED(IDC_ALLLOCALDRIVES, OnBnClickedAllLocalDrives)
     ON_WM_SIZE()

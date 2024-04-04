@@ -145,9 +145,6 @@
     <ClInclude Include="PageTreemap.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="resource.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="SelectObject.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -213,6 +210,9 @@
     </ClInclude>
     <ClInclude Include="CsvLoader.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Resource Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -418,16 +418,13 @@
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="res\langs\lang_cz.txt">
-      <Filter>Resource Files\Languages</Filter>
-    </Text>
     <Text Include="res\langs\lang_ee.txt">
       <Filter>Resource Files\Languages</Filter>
     </Text>
     <Text Include="res\langs\lang_es.txt">
       <Filter>Resource Files\Languages</Filter>
     </Text>
-    <Text Include="res\langs\lang_fl.txt">
+    <Text Include="res\langs\lang_fi.txt">
       <Filter>Resource Files\Languages</Filter>
     </Text>
     <Text Include="res\langs\lang_fr.txt">
@@ -455,6 +452,9 @@
       <Filter>Resource Files\Languages</Filter>
     </Text>
     <Text Include="res\langs\lang_nl.txt">
+      <Filter>Resource Files\Languages</Filter>
+    </Text>
+    <Text Include="res\langs\lang_cs.txt">
       <Filter>Resource Files\Languages</Filter>
     </Text>
   </ItemGroup>

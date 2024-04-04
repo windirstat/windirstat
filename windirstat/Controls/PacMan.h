@@ -43,14 +43,14 @@ private:
     static void UpdatePosition(float& position, bool& up, float diff);
     static bool m_suspended;
 
-    ULONGLONG m_lastUpdate; // TickCount
-    ULONGLONG m_lastDraw;   // Last time drawn
-    COLORREF m_bgcolor;     // Background color
-    float m_speed;          // Speed in full width / ms
-    float m_position;       // 0...1
-    float m_aperture;       // 0...1
-    bool m_done;            // Whether pacman should be done
-    bool m_moving;          // Whether pacman is moving
-    bool m_toTheRight;      // Moving right
-    bool m_mouthOpening;    // Mouth is opening
+    ULONGLONG m_lastUpdate = 0;  // TickCount
+    ULONGLONG m_lastDraw = 0;    // Last time drawn
+    COLORREF m_bgcolor;          // Background color
+    float m_speed = 0.0006f;     // Speed in full width / ms
+    float m_position = 0.0f;     // 0...1
+    float m_aperture = 0.0f;     // 0...1
+    bool m_done = false;         // Whether pacman should be done
+    bool m_moving = false;       // Whether pacman is moving
+    bool m_toTheRight = true;    // Moving right
+    bool m_mouthOpening = false; // Mouth is opening
 };

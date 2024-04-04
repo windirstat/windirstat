@@ -24,7 +24,7 @@
 
 #include <Windows.h>
 #include "resource.h"
-#include "langs.h"
+#include "Langs.h"
 #include "MyImageList.h"
 #include "MountPoints.h"
 #include "HelpMap.h"
@@ -55,7 +55,7 @@ public:
     CDirStatApp();
 
     BOOL InitInstance() override;
-    BOOL LoadState(LPCTSTR, CFrameImpl*) override { return TRUE; };
+    BOOL LoadState(LPCTSTR, CFrameImpl*) override { return TRUE; }
 
     bool InPortableMode() const;
     bool SetPortableMode(bool enable, bool only_open = false);

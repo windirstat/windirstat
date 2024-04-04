@@ -31,6 +31,8 @@
 #include "SelectObject.h"
 #include "Item.h"
 #include "BlockingQueue.h"
+#include "Localization.h"
+#include "SmartPointer.h"
 
 #include <string>
 #include <algorithm>
@@ -41,15 +43,9 @@
 #include <shared_mutex>
 #include <stack>
 
-#include "Localization.h"
-#include "SmartPointer.h"
 
-CItem::CItem(ITEMTYPE type, LPCWSTR name)
-    : m_name(name)
-      , m_lastChange{0, 0}
-      , m_ci(nullptr)
-      , m_size(0)
-      , m_attributes(0)
+CItem::CItem(ITEMTYPE type, LPCWSTR name) :
+        m_name(name)
       , m_type(type)
 {
     if (IsType(IT_DRIVE))
@@ -899,20 +895,29 @@ void CItem::SetDone()
         UpdateFreeSpaceItem();
         UpdateUnknownItem();
     }
-    if (IsType(IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY))
+
+    // Sort and set finish time
+    if (m_ci != nullptr)
     {
-        // sort by size for proper treemap rendering
-        std::lock_guard m_guard(m_ci->m_protect);
-        m_ci->m_children.shrink_to_fit();
-        std::ranges::sort(m_ci->m_children, [](auto item1, auto item2)
-        {
-            return item1->GetSize() > item2->GetSize(); // biggest first
-        });
+        SortItemsBySize();
         m_ci->m_tfinish = static_cast<ULONG>(GetTickCount64() / 1000ull);
     }
 
     ZeroMemory(&m_rect, sizeof(m_rect));
     SetType(ITF_DONE, true);
+}
+
+void CItem::SortItemsBySize() const
+{
+    if (m_ci == nullptr) return;
+    
+    // sort by size for proper treemap rendering
+    std::lock_guard m_guard(m_ci->m_protect);
+    m_ci->m_children.shrink_to_fit();
+    std::ranges::sort(m_ci->m_children, [](auto item1, auto item2)
+    {
+        return item1->GetSize() > item2->GetSize(); // biggest first
+    });
 }
 
 ULONGLONG CItem::GetTicksWorked() const

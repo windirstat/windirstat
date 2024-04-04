@@ -200,7 +200,7 @@ public:
 
 #ifdef _DEBUG
     // DEBUG function
-    void RecurseCheckTree(Item *item);
+    void RecurseCheckTree(const Item *item);
 #endif // _DEBUG
 
     // Create and draw a treemap
@@ -239,17 +239,17 @@ protected:
 
     // KDirStat-like squarification
     void KDirStat_DrawChildren(CColorRefArray& bitmap, Item* parent, const double* surface, double h, DWORD flags);
-    bool KDirStat_ArrangeChildren(Item* parent, CArray<double, double>& childWidth, CArray<double, double>& rows, CArray<int, int>& childrenPerRow);
+    bool KDirStat_ArrangeChildren(const Item* parent, CArray<double, double>& childWidth, CArray<double, double>& rows, CArray<int, int>& childrenPerRow);
     double KDirStat_CalculateNextRow(const Item* parent, int nextChild, double width, int& childrenUsed, CArray<double, double>& childWidth);
 
     // Classical SequoiaView-like squarification
-    void SequoiaView_DrawChildren(CColorRefArray& bitmap, Item* parent, const double* surface, double h, DWORD flags);
+    void SequoiaView_DrawChildren(CColorRefArray& bitmap, const Item* parent, const double* surface, double h, DWORD flags);
 
     // Returns true, if height and scaleFactor are > 0 and ambientLight is < 1.0
     bool IsCushionShading() const;
 
     // Leaves space for grid and then calls RenderRectangle()
-    void RenderLeaf(CColorRefArray& bitmap, Item* item, const double* surface);
+    void RenderLeaf(CColorRefArray& bitmap, const Item* item, const double* surface);
 
     // Either calls DrawCushion() or DrawSolidRect()
     void RenderRectangle(CColorRefArray& bitmap, const CRect& rc, const double* surface, DWORD color);
@@ -285,7 +285,7 @@ class CTreemapPreview final : public CStatic
     //
     // CItem. Element of the demo tree.
     //
-    class CItem : public CTreemap::Item
+    class CItem final : public CTreemap::Item
     {
     public:
         CItem(int size, COLORREF color)

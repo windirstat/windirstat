@@ -52,12 +52,7 @@ namespace
     constexpr auto HOTNODE_X  = 0;
 }
 
-CTreeListItem::CTreeListItem()
-{
-    m_parent = nullptr;
-    m_vi     = nullptr;
-}
-
+CTreeListItem::CTreeListItem() = default;
 CTreeListItem::~CTreeListItem()
 {
     delete m_vi;
@@ -280,11 +275,6 @@ void CTreeListItem::SetExpanded(bool expanded)
     m_vi->isExpanded = expanded;
 }
 
-bool CTreeListItem::IsVisible() const
-{
-    return m_vi != nullptr;
-}
-
 void CTreeListItem::SetVisible(bool visible)
 {
     if (visible)
@@ -344,7 +334,7 @@ CTreeListControl* CTreeListControl::_theTreeListControl;
 
 CTreeListControl* CTreeListControl::GetTheTreeListControl()
 {
-    ASSERT(_theTreeListControl != NULL);
+    ASSERT(_theTreeListControl != nullptr);
     return _theTreeListControl;
 }
 
@@ -374,7 +364,7 @@ BOOL CTreeListControl::CreateEx(DWORD dwExStyle, DWORD dwStyle, const RECT& rect
 
     dwStyle |= LVS_OWNERDRAWFIXED;
 
-    const BOOL bRet = COwnerDrawnListControl::Create(dwStyle, rect, pParentWnd, nID);
+    const BOOL bRet = Create(dwStyle, rect, pParentWnd, nID);
     VERIFY(bRet);
     if (bRet && dwExStyle)
     {
@@ -462,7 +452,7 @@ void CTreeListControl::ExpandPathToItem(const CTreeListItem* item)
             for (int k = parent + 1; k < index; k++)
             {
                 // Do not collapse if in multiple selection mode (holding control) 
-                if ((HSHELL_HIGHBIT & ::GetKeyState(VK_CONTROL)) == 0) CollapseItem(k);
+                if ((HSHELL_HIGHBIT & GetKeyState(VK_CONTROL)) == 0) CollapseItem(k);
                 index = FindTreeItem(path[i]);
             }
         }
@@ -498,7 +488,7 @@ void CTreeListControl::InitializeNodeBitmaps()
 
 void CTreeListControl::InsertItem(int i, CTreeListItem* item)
 {
-    COwnerDrawnListControl::InsertListItem(i, item);
+    InsertListItem(i, item);
     item->SetVisible(true);
 }
 
@@ -511,7 +501,7 @@ void CTreeListControl::DeleteItem(int i)
 
 int CTreeListControl::FindTreeItem(const CTreeListItem* item) const
 {
-    return COwnerDrawnListControl::FindListItem(item);
+    return FindListItem(item);
 }
 
 BEGIN_MESSAGE_MAP(CTreeListControl, COwnerDrawnListControl)
@@ -665,8 +655,8 @@ void CTreeListControl::OnLButtonDblClk(UINT nFlags, CPoint point)
 void CTreeListControl::EmulateInteractiveSelection(const CTreeListItem* item)
 {
     // see if any special keys are set so we can emulate them
-    const auto shift_flag = (HSHELL_HIGHBIT & ::GetKeyState(VK_SHIFT)) ? MK_SHIFT : 0;
-    const auto control_flag = (HSHELL_HIGHBIT & ::GetKeyState(VK_CONTROL)) ? MK_CONTROL : 0;
+    const auto shift_flag = (HSHELL_HIGHBIT & GetKeyState(VK_SHIFT)) ? MK_SHIFT : 0;
+    const auto control_flag = (HSHELL_HIGHBIT & GetKeyState(VK_CONTROL)) ? MK_CONTROL : 0;
     const auto vk_flag = shift_flag | control_flag;
 
     // make sure the item is selectable
@@ -728,7 +718,7 @@ void CTreeListControl::CollapseItem(int i)
     RedrawItems(i, i);
 }
 
-int CTreeListControl::GetItemScrollPosition(CTreeListItem* item) const
+int CTreeListControl::GetItemScrollPosition(const CTreeListItem* item) const
 {
     CRect rc;
     VERIFY(GetItemRect(FindTreeItem(item), rc, LVIR_BOUNDS));
@@ -761,7 +751,7 @@ void CTreeListControl::ToggleSelectedItem()
     }
 }
 
-void CTreeListControl::ExpandItem(CTreeListItem* item)
+void CTreeListControl::ExpandItem(const CTreeListItem* item)
 {
     ExpandItem(FindTreeItem(item), false);
 }
@@ -846,7 +836,7 @@ void CTreeListControl::OnLvnItemchangingList(NMHDR* pNMHDR, LRESULT* pResult)
         (pNMLV->uNewState & LVIS_SELECTED) != 0;
 
     // if in shift-extend mode, prevent selecting of non-adjacent nodes
-    const auto shift_pressed = (HSHELL_HIGHBIT & ::GetKeyState(VK_SHIFT)) != 0;
+    const auto shift_pressed = (HSHELL_HIGHBIT & GetKeyState(VK_SHIFT)) != 0;
     if (shift_pressed && requesting_selection)
     {
         const auto & potential_selection = GetItem(pNMLV->iItem);
@@ -856,7 +846,7 @@ void CTreeListControl::OnLvnItemchangingList(NMHDR* pNMHDR, LRESULT* pResult)
     }
 
     // if in ctrl-extend mode, do not allow selection of parent of child of existing collection
-    const auto ctrl_pressed = (HSHELL_HIGHBIT & ::GetKeyState(VK_CONTROL)) != 0;
+    const auto ctrl_pressed = (HSHELL_HIGHBIT & GetKeyState(VK_CONTROL)) != 0;
     if (ctrl_pressed && requesting_selection)
     {
         const auto & items = GetAllSelected();
@@ -918,7 +908,7 @@ void CTreeListControl::OnChildRemoved(CTreeListItem* parent, CTreeListItem* chil
     RedrawItems(p, p);
 }
 
-void CTreeListControl::OnRemovingAllChildren(CTreeListItem* parent)
+void CTreeListControl::OnRemovingAllChildren(const CTreeListItem* parent)
 {
     if (!parent->IsVisible())
     {

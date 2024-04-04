@@ -59,8 +59,6 @@ public:
     short m_freeSpaceImage = -1;    // <Free Space>
     short m_unknownImage = -1;      // <Unknown>
     short m_emptyImage = -1;        // For items whose image cannot be found
-
-    // Junction point
     short m_junctionImage = -1;     // For normal functions
     short m_junctionProtected = -1; // For protected junctions
 };

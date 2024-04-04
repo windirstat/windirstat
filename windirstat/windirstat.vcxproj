@@ -452,12 +452,12 @@
     <Image Include="res\toolbar\ID_TREEMAP_ZOOMOUT.bmp" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="res\langs\lang_cz.txt" />
+    <Text Include="res\langs\lang_cs.txt" />
     <Text Include="res\langs\lang_de.txt" />
     <Text Include="res\langs\lang_ee.txt" />
     <Text Include="res\langs\lang_en.txt" />
     <Text Include="res\langs\lang_es.txt" />
-    <Text Include="res\langs\lang_fl.txt" />
+    <Text Include="res\langs\lang_fi.txt" />
     <Text Include="res\langs\lang_fr.txt" />
     <Text Include="res\langs\lang_hu.txt" />
     <Text Include="res\langs\lang_it.txt" />

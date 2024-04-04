@@ -210,6 +210,7 @@ IDS_PAGE_GENERAL_SHOW_STRIPES=Zobrazit &pruhy
 IDS_PAGE_GENERAL_LANGUAGE=&Jazyk
 IDS_PAGE_GENERAL_FORMATTING=Použít tento jazyk pro &formátování data, casu a císel
 IDS_PAGE_GENERAL_PORTABLE=Spustit v přenosném režimu (pro nastavení použijte soubor WinDirStat.ini)
+IDS_PAGE_GENERAL_DELETION_WARNING=Před smazáním souborů zobrazit varovnou zprávu
 IDS_PAGE_ADVANCED_TITLE=Pokročilý
 IDS_PAGE_ADVANCED_THREADS=Vlákna
 IDS_PAGE_ADVANCED_BOUNDARIES=Prekracovat &hranice souborového systému

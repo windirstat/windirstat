@@ -198,7 +198,7 @@ CTreemap::Options CTreemap::GetOptions() const
 }
 
 #ifdef _DEBUG
-void CTreemap::RecurseCheckTree(Item *item)
+void CTreemap::RecurseCheckTree(const Item *item)
 {
     if(item->TmiIsLeaf())
     {
@@ -647,7 +647,8 @@ void CTreemap::KDirStat_DrawChildren(CColorRefArray& bitmap, Item* parent, const
 
             if (lastChild)
             {
-                i++, c++;
+                i++;
+                c++;
 
                 if (i < childrenPerRow[row])
                 {
@@ -669,7 +670,7 @@ void CTreemap::KDirStat_DrawChildren(CColorRefArray& bitmap, Item* parent, const
 // return: whether the rows are horizontal.
 //
 bool CTreemap::KDirStat_ArrangeChildren(
-    Item* parent,
+    const Item* parent,
     CArray<double, double>& childWidth,
     CArray<double, double>& rows,
     CArray<int, int>& childrenPerRow
@@ -798,7 +799,7 @@ double CTreemap::KDirStat_CalculateNextRow(const Item* parent, const int nextChi
 
 // The classical squarification method.
 //
-void CTreemap::SequoiaView_DrawChildren(CColorRefArray& bitmap, Item* parent, const double* surface, double h, DWORD /*flags*/)
+void CTreemap::SequoiaView_DrawChildren(CColorRefArray& bitmap, const Item* parent, const double* surface, double h, DWORD /*flags*/)
 {
     // Rest rectangle to fill
     CRect remaining(parent->TmiGetRectangle());
@@ -1001,7 +1002,7 @@ bool CTreemap::IsCushionShading() const
     && m_options.scaleFactor > 0.0;
 }
 
-void CTreemap::RenderLeaf(CColorRefArray& bitmap, Item* item, const double* surface)
+void CTreemap::RenderLeaf(CColorRefArray& bitmap, const Item* item, const double* surface)
 {
     CRect rc = item->TmiGetRectangle();
 

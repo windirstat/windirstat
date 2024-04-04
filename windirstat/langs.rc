@@ -187,8 +187,8 @@ BEGIN
     IDS_USERDEFINEDCLEANUP0 "IDS_USERDEFINEDCLEANUP0"
     IDS_USERDEFINEDCLEANUPd "IDS_USERDEFINEDCLEANUPd"
     IDS_WINDIRSTAT_SETTINGS "IDS_WINDIRSTAT_SETTINGS"
-    IDS__ONEITEMss          "IDS__ONEITEMss"
-    IDS__sITEMSss           "IDS__sITEMSss"
+    IDS_ONEITEMss          "IDS_ONEITEMss"
+    IDS_sITEMSss           "IDS_sITEMSss"
     IDS_sREADJOBS           "IDS_sREADJOBS"
     IDS_CLEANUP_DELETE      "IDS_CLEANUP_DELETE"
     IDS_CLEANUP_DELETE_BIN  "IDS_CLEANUP_DELETE_BIN"
@@ -455,7 +455,7 @@ LANGUAGE LANG_FINNISH, SUBLANG_NEUTRAL
 // RT_LANG
 //
 
-IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_fl.txt"
+IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_fi.txt"
 
 #endif    // Finnish (Neutral) resources
 /////////////////////////////////////////////////////////////////////////////

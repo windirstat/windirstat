@@ -124,7 +124,7 @@ class CDrivesList final : public COwnerDrawnListControl
 
     CDrivesList();
     CDriveItem* GetItem(int i) const;
-    void SelectItem(CDriveItem* item);
+    void SelectItem(const CDriveItem* item);
     bool IsItemSelected(int i) const;
 
     bool HasImages() override;

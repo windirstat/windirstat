@@ -38,29 +38,31 @@ CPageGeneral::~CPageGeneral() = default;
 COptionsPropertySheet* CPageGeneral::GetSheet() const
 {
     const auto sheet = DYNAMIC_DOWNCAST(COptionsPropertySheet, GetParent());
-    ASSERT(sheet != NULL);
+    ASSERT(sheet != nullptr);
     return sheet;
 }
 
 void CPageGeneral::DoDataExchange(CDataExchange* pDX)
 {
     CPropertyPage::DoDataExchange(pDX);
-    DDX_Check(pDX, IDC_HUMANFORMAT, m_humanFormat);
-    DDX_Check(pDX, IDC_USEWDSLOCALE, m_useWdsLocale);
+    DDX_Check(pDX, IDC_HUMAN_FORMAT, m_humanFormat);
+    DDX_Check(pDX, IDC_USE_WDS_LOCALE, m_useWdsLocale);
     DDX_Control(pDX, IDC_COMBO, m_combo);
-    DDX_Check(pDX, IDC_SHOWGRID, m_listGrid);
-    DDX_Check(pDX, IDC_SHOWSTRIPES, m_listStripes);
-    DDX_Check(pDX, IDC_FULLROWSELECTION, m_listFullRowSelection);
+    DDX_Check(pDX, IDC_SHOW_GRID, m_listGrid);
+    DDX_Check(pDX, IDC_SHOW_STRIPES, m_listStripes);
+    DDX_Check(pDX, IDC_DELETION_WARNING, m_showDeletionWarning);
+    DDX_Check(pDX, IDC_FULL_ROW_SELECTION, m_listFullRowSelection);
     DDX_Check(pDX, IDC_PORTABLE_MODE, m_portableMode);
 }
 
 BEGIN_MESSAGE_MAP(CPageGeneral, CPropertyPage)
-    ON_BN_CLICKED(IDC_HUMANFORMAT, OnBnClickedSetModified)
-    ON_BN_CLICKED(IDC_USEWDSLOCALE, OnBnClickedSetModified)
+    ON_BN_CLICKED(IDC_HUMAN_FORMAT, OnBnClickedSetModified)
+    ON_BN_CLICKED(IDC_USE_WDS_LOCALE, OnBnClickedSetModified)
     ON_CBN_SELENDOK(IDC_COMBO, OnCbnSelendokCombo)
-    ON_BN_CLICKED(IDC_SHOWGRID, OnBnClickedSetModified)
-    ON_BN_CLICKED(IDC_SHOWSTRIPES, OnBnClickedSetModified)
-    ON_BN_CLICKED(IDC_FULLROWSELECTION, OnBnClickedSetModified)
+    ON_BN_CLICKED(IDC_SHOW_GRID, OnBnClickedSetModified)
+    ON_BN_CLICKED(IDC_SHOW_STRIPES, OnBnClickedSetModified)
+    ON_BN_CLICKED(IDC_DELETION_WARNING, OnBnClickedSetModified)
+    ON_BN_CLICKED(IDC_FULL_ROW_SELECTION, OnBnClickedSetModified)
     ON_BN_CLICKED(IDC_PORTABLE_MODE, OnBnClickedSetModified)
 END_MESSAGE_MAP()
 
@@ -73,6 +75,7 @@ BOOL CPageGeneral::OnInitDialog()
     m_humanFormat = COptions::HumanFormat;
     m_listGrid = COptions::ListGrid;
     m_listStripes = COptions::ListStripes;
+    m_showDeletionWarning = COptions::ShowDeleteWarning;
     m_listFullRowSelection = COptions::ListFullRowSelection;
     m_useWdsLocale= COptions::UseWdsLocale;
     m_portableMode = GetWDSApp()->InPortableMode();
@@ -105,6 +108,7 @@ void CPageGeneral::OnOK()
     COptions::UseWdsLocale = (FALSE != m_useWdsLocale);
     COptions::ListGrid = (FALSE != m_listGrid);
     COptions::ListStripes = (FALSE != m_listStripes);
+    COptions::ShowDeleteWarning = (FALSE != m_showDeletionWarning);
     COptions::ListFullRowSelection = (FALSE != m_listFullRowSelection);
     if (!GetWDSApp()->SetPortableMode(m_portableMode))
     {

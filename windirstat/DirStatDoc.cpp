@@ -20,16 +20,20 @@
 //
 
 #include "stdafx.h"
-#include "WinDirStat.h"
-#include "Item.h"
-#include "MainFrame.h"
-#include "GlobalHelpers.h"
+#include "CsvLoader.h"
 #include "deletewarningdlg.h"
+#include "DirStatDoc.h"
+#include "DirStatView.h"
+#include "GlobalHelpers.h"
+#include "GraphView.h"
+#include "Item.h"
+#include "Localization.h"
+#include "MainFrame.h"
 #include "ModalShellApi.h"
+#include "WinDirStat.h"
+#include <common/CommonHelpers.h>
 #include <common/MdExceptions.h>
 #include <common/SmartPointer.h>
-#include <common/CommonHelpers.h>
-#include "DirStatDoc.h"
 
 #include <algorithm>
 #include <functional>
@@ -40,11 +44,6 @@
 #include <vector>
 #include <filesystem>
 #include <fstream>
-
-#include "DirStatView.h"
-#include "GraphView.h"
-#include "Localization.h"
-#include <CsvLoader.h>
 
 CDirStatDoc* _theDocument;
 
@@ -59,7 +58,7 @@ CDirStatDoc::CDirStatDoc() :
         m_showFreeSpace(COptions::ShowFreeSpace)
       , m_showUnknown(COptions::ShowUnknown)
 {
-    ASSERT(NULL == _theDocument);
+    ASSERT(nullptr == _theDocument);
     _theDocument = this;
 
     VTRACE(L"sizeof(CItem) = %zd", sizeof(CItem));
@@ -311,7 +310,7 @@ const CExtensionData* CDirStatDoc::GetExtensionData()
 
 ULONGLONG CDirStatDoc::GetRootSize() const
 {
-    ASSERT(m_rootItem != NULL);
+    ASSERT(m_rootItem != nullptr);
     ASSERT(IsRootDone());
     return m_rootItem->GetSize();
 }
@@ -404,43 +403,16 @@ void CDirStatDoc::UnlinkRoot()
 //
 bool CDirStatDoc::UserDefinedCleanupWorksForItem(USERDEFINEDCLEANUP* udc, const CItem* item)
 {
-    bool works = false;
-
-    if (item != nullptr)
-    {
-        if (!udc->worksForUncPaths && item->HasUncPath())
-        {
-            return false;
-        }
-
-        switch (item->GetType())
-        {
-        case IT_DRIVE:
-            {
-                works = udc->worksForDrives;
-            }
-            break;
-
-        case IT_DIRECTORY:
-            {
-                works = udc->worksForDirectories;
-            }
-            break;
-
-        case IT_FILE:
-            {
-                works = udc->worksForFiles;
-            }
-            break;
-        }
-    }
-
-    return works;
+    return item != nullptr &&
+        item->IsType(IT_DRIVE) && udc->worksForDrives ||
+        item->IsType(IT_DIRECTORY) && udc->worksForDirectories ||
+        item->IsType(IT_FILE) && udc->worksForFiles ||
+        item->HasUncPath() && udc->worksForUncPaths;
 }
 
 void CDirStatDoc::OpenItem(const CItem* item, LPCWSTR verb)
 {
-    ASSERT(item != NULL);
+    ASSERT(item != nullptr);
 
     // determine path to feed into shell function
     SmartPointer<LPITEMIDLIST> pidl(CoTaskMemFree, nullptr);
@@ -775,24 +747,12 @@ void CDirStatDoc::CallUserDefinedCleanup(bool isDirectory, const CStringW& forma
     PROCESS_INFORMATION pi;
     ZeroMemory(&pi, sizeof(pi));
 
-    const BOOL b = CreateProcess(
-        app,
-        cmdline.GetBuffer(),
-        nullptr,
-        nullptr,
-        false,
-        0,
-        nullptr,
-        directory,
-        &si,
-        &pi
-    );
-    cmdline.ReleaseBuffer();
-    if (!b)
+    if (CreateProcess(app, cmdline.GetBuffer(), nullptr,
+        nullptr, false, 0, nullptr,
+        directory, &si, &pi))
     {
-        MdThrowStringExceptionF(Localization::Lookup(IDS_COULDNOTCREATEPROCESSssss),
-                                app.GetString(), cmdline.GetString(), directory.GetString(), MdGetWinErrorText(::GetLastError()).GetString()
-        );
+        MdThrowStringExceptionF(Localization::Lookup(IDS_COULDNOTCREATEPROCESSssss), app.GetString(),
+            cmdline.GetString(), directory.GetString(), MdGetWinErrorText(::GetLastError()).GetString());
         return;
     }
 
@@ -1021,7 +981,7 @@ void CDirStatDoc::OnViewShowFreeSpace()
         if (m_showFreeSpace)
         {
             const CItem* free = drive->FindFreeSpaceItem();
-            ASSERT(free != NULL);
+            ASSERT(free != nullptr);
 
             if (GetZoomItem() == free)
             {
@@ -1056,7 +1016,7 @@ void CDirStatDoc::OnViewShowUnknown()
         if (m_showUnknown)
         {
             const CItem* unknown = drive->FindUnknownItem();
-            ASSERT(unknown != NULL);
+            ASSERT(unknown != nullptr);
 
             if (GetZoomItem() == unknown)
             {

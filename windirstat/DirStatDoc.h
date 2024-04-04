@@ -52,7 +52,7 @@ struct SExtensionRecord
 //
 // Maps an extension (".bmp") to an SExtensionRecord.
 //
-typedef CMap<CStringW, LPCWSTR, SExtensionRecord, SExtensionRecord&> CExtensionData;
+using CExtensionData = CMap<CStringW, LPCWSTR, SExtensionRecord, SExtensionRecord&>;
 
 //
 // Hints for UpdateAllViews()

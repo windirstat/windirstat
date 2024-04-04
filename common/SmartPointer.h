@@ -21,10 +21,9 @@
 // This general purpose header is published under GPL with
 // the friendly permission of D'accord (www.daccord.net).
 //
-// 08.09.1998 - JR
-//
 
 #pragma once
+
 #include <functional>
 
 //

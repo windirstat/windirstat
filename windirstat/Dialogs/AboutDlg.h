@@ -21,13 +21,13 @@
 
 #pragma once
 
-#include "layout.h"
+#include "Layout.h"
 
 void StartAboutDialog();
 
 class CAboutThread final : public CWinThread
 {
-    DECLARE_DYNCREATE(CAboutThread);
+    DECLARE_DYNCREATE(CAboutThread)
 
 protected:
     BOOL InitInstance() override;

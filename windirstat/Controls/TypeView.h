@@ -32,7 +32,7 @@ class CExtensionListControl final : public COwnerDrawnListControl
 {
 protected:
     // Columns
-    enum
+    enum ListColumns
     {
         COL_EXTENSION,
         COL_COLOR,

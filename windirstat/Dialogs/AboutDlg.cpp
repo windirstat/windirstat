@@ -294,7 +294,6 @@ void CAboutDlg::DoDataExchange(CDataExchange* pDX)
 }
 
 BEGIN_MESSAGE_MAP(CAboutDlg, CDialogEx)
-#pragma warning(suppress: 26454)
     ON_NOTIFY(TCN_SELCHANGE, IDC_TAB, OnTcnSelchangeTab)
     ON_WM_SIZE()
     ON_WM_GETMINMAXINFO()

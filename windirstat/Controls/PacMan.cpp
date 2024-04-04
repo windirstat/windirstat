@@ -28,17 +28,8 @@ namespace
     constexpr float MOUTHSPEED = 0.0030f;      // aperture alteration / ms
 }
 
-CPacman::CPacman()
-    : m_lastUpdate(0)
-      , m_lastDraw(0)
-      , m_bgcolor(::GetSysColor(COLOR_WINDOW))
-      , m_speed(0.0006f)
-      , m_position(0)
-      , m_aperture(0)
-      , m_done(false)
-      , m_moving(false)
-      , m_toTheRight(true)
-      , m_mouthOpening(false)
+CPacman::CPacman() :
+    m_bgcolor(::GetSysColor(COLOR_WINDOW))
 {
     Reset();
 }

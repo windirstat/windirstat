@@ -47,6 +47,7 @@ protected:
     BOOL m_portableMode = FALSE;
     BOOL m_listGrid = FALSE;
     BOOL m_listStripes = FALSE;
+    BOOL m_showDeletionWarning = FALSE;
     BOOL m_listFullRowSelection = FALSE;
 
     CComboBox m_combo;

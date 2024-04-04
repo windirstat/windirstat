@@ -83,7 +83,7 @@ inline CStringW MdGetWinErrorText(HRESULT hr)
         0,
         nullptr
     );
-    if (NULL == dw)
+    if (0 == dw)
     {
         const CStringW s(MAKEINTRESOURCE(AFX_IDP_NO_ERROR_AVAILABLE));
         sRet.Format(L"%s (0x%08lx)", s.GetString(), hr);
@@ -105,7 +105,7 @@ inline void MdThrowStringException(LPCWSTR pszText)
     throw new CMdStringException(pszText); //-V1022
 }
 
-inline void __MdFormatStringExceptionV(CStringW& rsText, LPCWSTR pszFormat, va_list vlist)
+inline void MdFormatStringExceptionV(CStringW& rsText, LPCWSTR pszFormat, va_list vlist)
 {
     // CStringW sFormat(); // may be a MAKEINTRESOURCE
     rsText.FormatMessageV(CStringW(pszFormat), &vlist);
@@ -117,7 +117,7 @@ inline void AFX_CDECL MdThrowStringExceptionF(LPCWSTR pszFormat, ...)
 
     va_list vlist;
     va_start(vlist, pszFormat);
-    __MdFormatStringExceptionV(sText, pszFormat, vlist);
+    MdFormatStringExceptionV(sText, pszFormat, vlist);
     va_end(vlist);
 
     MdThrowStringException(sText);
@@ -126,7 +126,7 @@ inline void AFX_CDECL MdThrowStringExceptionF(LPCWSTR pszFormat, ...)
 inline void MdThrowStringExceptionV(LPCWSTR pszFormat, va_list vlist)
 {
     CStringW sText;
-    __MdFormatStringExceptionV(sText, pszFormat, vlist);
+    MdFormatStringExceptionV(sText, pszFormat, vlist);
     MdThrowStringException(sText);
 }
 
@@ -136,7 +136,7 @@ inline void AFX_CDECL MdThrowStringExceptionF(UINT nResIdFormat, ...)
 
     va_list vlist;
     va_start(vlist, nResIdFormat);
-    __MdFormatStringExceptionV(sText, MAKEINTRESOURCE(nResIdFormat), vlist);
+    MdFormatStringExceptionV(sText, MAKEINTRESOURCE(nResIdFormat), vlist);
     va_end(vlist);
 
     MdThrowStringException(sText);
@@ -145,7 +145,7 @@ inline void AFX_CDECL MdThrowStringExceptionF(UINT nResIdFormat, ...)
 inline void MdThrowStringExceptionF(UINT nResIdFormat, va_list vlist)
 {
     CStringW sText;
-    __MdFormatStringExceptionV(sText, MAKEINTRESOURCE(nResIdFormat), vlist);
+    MdFormatStringExceptionV(sText, MAKEINTRESOURCE(nResIdFormat), vlist);
     MdThrowStringException(sText);
 }
 

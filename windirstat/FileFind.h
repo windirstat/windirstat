@@ -37,7 +37,7 @@ class FileFindEnhanced final
         ULONG         FileAttributes;
         ULONG         FileNameLength;
         WCHAR         FileName[1];
-    } FILE_DIRECTORY_INFORMATION, * PFILE_DIRECTORY_INFORMATION;
+    } FILE_DIRECTORY_INFORMATION;
 
     CStringW m_search;
     CStringW m_base;

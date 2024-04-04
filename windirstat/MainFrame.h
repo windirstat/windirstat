@@ -148,7 +148,7 @@ protected:
     static CMainFrame* GetTheFrame();
     ~CMainFrame() override;
     void InitialShowWindow();
-    static void InvokeInMessageThread(std::function<void()> callback);
+    void InvokeInMessageThread(std::function<void()> callback);
 
     void RestoreGraphView();
     void RestoreTypeView();
@@ -231,5 +231,5 @@ protected:
 
 public:
     afx_msg void OnSysColorChange();
-    virtual BOOL LoadFrame(UINT nIDResource, DWORD dwDefaultStyle = WS_OVERLAPPEDWINDOW | FWS_ADDTOTITLE, CWnd* pParentWnd = nullptr, CCreateContext* pContext = nullptr) override;
+    BOOL LoadFrame(UINT nIDResource, DWORD dwDefaultStyle = WS_OVERLAPPEDWINDOW | FWS_ADDTOTITLE, CWnd* pParentWnd = nullptr, CCreateContext* pContext = nullptr) override;
 };

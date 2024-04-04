@@ -43,8 +43,8 @@ Setting<RECT> COptions::DriveWindowRect(L"persistence", L"driveWindowRect");
 Setting<int> COptions::SelectDrivesRadio(L"persistence", L"selectDrivesRadio", 0, 0, 2);
 Setting<std::wstring> COptions::SelectDrivesFolder(L"persistence", L"selectDrivesFolder");
 Setting<std::vector<std::wstring>> COptions::SelectDrivesDrives(L"persistence", L"selectDrivesDrives");
-Setting<double> COptions::MainSplitterPos(L"persistence", L"MainSplitterPos", -1, 0, 1);
-Setting<double> COptions::SubSplitterPos(L"persistence", L"SubSplitterPos", -1, 0, 1);
+Setting<double> COptions::MainSplitterPos(L"persistence", L"MainSplitterPos", -1.0, 0.0, 1.0);
+Setting<double> COptions::SubSplitterPos(L"persistence", L"SubSplitterPos", -1.0, 0.0, 1.0);
 Setting<int> COptions::LanguageId(L"persistence", L"language", 0);
 
 Setting<std::vector<int>> COptions::TypesColumnWidths(L"persistence", L"typesColumnWidths");
