@@ -928,7 +928,8 @@ void CDirStatDoc::OnSaveResults()
         Localization::Lookup(IDS_CSV_FILES).GetString(), Localization::Lookup(IDS_ALL_FILES).GetString());
     CFileDialog dlg(FALSE, L"csv", nullptr, OFN_EXPLORER | OFN_DONTADDTORECENT, file_select_string.GetString());
     if (dlg.DoModal() != IDOK) return;
-    
+
+    CWaitCursor wc;
     SaveResults(dlg.GetPathName().GetString(), GetRootItem());
 }
 
@@ -941,6 +942,7 @@ void CDirStatDoc::OnLoadResults()
     CFileDialog dlg(TRUE, L"csv", nullptr, OFN_EXPLORER | OFN_DONTADDTORECENT | OFN_PATHMUSTEXIST, file_select_string.GetString());
     if (dlg.DoModal() != IDOK) return;
 
+    CWaitCursor wc;
     CItem* newroot = LoadResults(dlg.GetPathName().GetString());
     GetDocument()->OnOpenDocument(newroot);
 }
