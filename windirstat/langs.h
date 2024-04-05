@@ -8,8 +8,6 @@
 #define IDS_GENERIC_BLANK               20004
 #define IDS_ABOUT_ABOUT                 20005
 #define IDS_ABOUT_ABOUTTEXTss           20006
-#define IDS_ABOUT_AUTHORS               20007
-#define IDS_ABOUT_AUTHORSTEXTs          20008
 #define IDS_ABOUT_LICENSEAGREEMENT      20009
 #define IDS_ABOUT_THANKSTO              20010
 #define IDS_ABOUT_THANKSTOTEXT          20011

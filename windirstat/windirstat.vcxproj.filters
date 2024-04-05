@@ -42,9 +42,6 @@
     <None Include="res\IDB_NODES.bmp">
       <Filter>Resource Files\Resources</Filter>
     </None>
-    <None Include="res\license.rtf">
-      <Filter>Resource Files\Resources</Filter>
-    </None>
     <None Include="res\license.txt">
       <Filter>Resource Files\Resources</Filter>
     </None>

@@ -276,7 +276,7 @@ void CTreemap::DrawTreemap(CDC* pdc, CRect rc, Item* root, const Options* option
 
         // That bitmap in turn will be created from this array
         CColorRefArray bitmap_bits;
-        bitmap_bits.SetSize(rc.Width() * rc.Height());
+        bitmap_bits.SetSize(static_cast<UINT_PTR>(rc.Width() * rc.Height()));
 
         // Recursively draw the tree graph
         const double surface[4] = {0, 0, 0, 0};
@@ -366,11 +366,9 @@ CTreemap::Item* CTreemap::FindItemByPoint(Item* item, const CPoint point)
 
     const int gridWidth = m_options.grid ? 1 : 0;
 
-    if (rc.Width() <= gridWidth || rc.Height() <= gridWidth)
-    {
-        ret = item;
-    }
-    else if (item->TmiIsLeaf())
+    if (rc.Width() <= gridWidth ||
+        rc.Height() <= gridWidth ||
+        item->TmiIsLeaf())
     {
         ret = item;
     }
@@ -464,7 +462,7 @@ void CTreemap::DrawColorPreview(CDC* pdc, const CRect& rc, COLORREF color, const
 
     // That bitmap in turn will be created from this array
     CColorRefArray bitmap_bits;
-    bitmap_bits.SetSize(rc.Width() * rc.Height());
+    bitmap_bits.SetSize(static_cast<UINT_PTR>(rc.Width() * rc.Height()));
 
     // Recursively draw the tree graph
     RenderRectangle(bitmap_bits, CRect(0, 0, rc.Width(), rc.Height()), surface, color);
@@ -518,7 +516,7 @@ void CTreemap::RecurseDrawGraph(
     double surface[4] = {0, 0, 0, 0};
     if (IsCushionShading())
     {
-        for (int i = 0; i < _countof(surface); i++)
+        for (unsigned int i = 0; i < _countof(surface); i++)
         {
             surface[i] = psurface[i];
         }

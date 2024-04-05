@@ -36,13 +36,12 @@ namespace
     enum
     {
         TAB_ABOUT,
-        TAB_AUTHORS,
         TAB_THANKSTO,
         TAB_LICENSE
     };
 
     // Retrieve the GPL text from our resources
-    CStringW GetTextResource(UINT id, HMODULE dll = AfxGetResourceHandle())
+    CStringW GetTextResource(const UINT id, const HMODULE dll = AfxGetResourceHandle())
     {
         CStringW s;
 
@@ -115,7 +114,6 @@ void CAboutDlg::CMyTabControl::Initialize()
     ModifyStyle(0, WS_CLIPCHILDREN);
 
     InsertItem(TAB_ABOUT, Localization::Lookup(IDS_ABOUT_ABOUT));
-    InsertItem(TAB_AUTHORS, Localization::Lookup(IDS_ABOUT_AUTHORS));
     InsertItem(TAB_THANKSTO, Localization::Lookup(IDS_ABOUT_THANKSTO));
     InsertItem(TAB_LICENSE, Localization::Lookup(IDS_ABOUT_LICENSEAGREEMENT));
 
@@ -131,7 +129,7 @@ void CAboutDlg::CMyTabControl::Initialize()
     SetPageText(TAB_ABOUT);
 }
 
-void CAboutDlg::CMyTabControl::SetPageText(int tab)
+void CAboutDlg::CMyTabControl::SetPageText(const int tab)
 {
     CStringW text;
     DWORD newStyle = ES_CENTER;
@@ -143,12 +141,6 @@ void CAboutDlg::CMyTabControl::SetPageText(int tab)
             text.FormatMessage(Localization::Lookup(IDS_ABOUT_ABOUTTEXTss),
                 Localization::LookupNeutral(IDS_AUTHOR_EMAIL).GetString(),
                 Localization::LookupNeutral(IDS_URL_WEBSITE).GetString());
-        }
-        break;
-    case TAB_AUTHORS:
-        {
-        text.FormatMessage(Localization::Lookup(IDS_ABOUT_AUTHORSTEXTs), GetDevelList().GetString());
-            text += GetTranslatorList();
         }
         break;
     case TAB_THANKSTO:
@@ -232,7 +224,7 @@ void CAboutDlg::CMyTabControl::OnEnMsgFilter(NMHDR* pNMHDR, LRESULT* pResult)
     }
 }
 
-void CAboutDlg::CMyTabControl::OnSize(UINT nType, int cx, int cy)
+void CAboutDlg::CMyTabControl::OnSize(const UINT nType, const int cx, const int cy)
 {
     CTabCtrl::OnSize(nType, cx, cy);
 
@@ -326,7 +318,7 @@ void CAboutDlg::OnTcnSelchangeTab(NMHDR* /* pNMHDR */, LRESULT* pResult)
     m_tab.SetPageText(m_tab.GetCurSel());
 }
 
-void CAboutDlg::OnSize(UINT nType, int cx, int cy)
+void CAboutDlg::OnSize(const UINT nType, const int cx, const int cy)
 {
     CDialogEx::OnSize(nType, cx, cy);
     m_layout.OnSize();

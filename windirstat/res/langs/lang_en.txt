@@ -1,10 +1,8 @@
 IDS_ABOUT_ABOUT=About
-IDS_ABOUT_ABOUTTEXTss=\nWinDirStat - Directory Statistics\n\n""Shows where all your disk space has gone\nand helps you clean it up.""\n\nRe-programmed for MS Windows by\nBernhard Seifert (mailto:%1!s!),\n\nBased on Stefan Hundhammer's KDE (Linux) application KDirStat\n(https://kdirstat.sourceforge.net/).\n\nWinDirStat's home is %2!s!/\n\nCopyright (c) 2003-2024 The authors of WinDirStat
-IDS_ABOUT_AUTHORS=Authors
-IDS_ABOUT_AUTHORSTEXTs==== Programmers ===\n\n%1!s!\n\n\n=== Translators ===\n\n
+IDS_ABOUT_ABOUTTEXTss=\nWinDirStat - Directory Statistics\n\n"Shows where all your disk space has gone\nand helps you clean it up."\n\nProgrammed for Microsoft Windows by\nBernhard Seifert, Oliver Schneider, Bryan Berns\n(mailto:%1!s!),\n\nBased on Stefan Hundhammer's KDE (Linux) application KDirStat\n(https://kdirstat.sourceforge.net/).\n\nWinDirStat's home is %2!s!/\n\nCopyright (c) 2003-2024 The authors of WinDirStat
 IDS_ABOUT_LICENSEAGREEMENT=License
 IDS_ABOUT_THANKSTO=Thanks To
-IDS_ABOUT_THANKSTOTEXT=\nStefan Hundhammer for his superb Linux tool KDirStat.\nUsing KDirStat (2.3.7) as a specification saved me a lot of time.\nhttps://kdirstat.sourceforge.net/\n\nThe authors of SequoiaView for showing just how useful treemaps really can be.\nhttps://www.win.tue.nl/sequoiaview/\n\nJarke J. van Wijk, Huub van de Wetering, Mark Bruls and Kees Huizing\nfor their papers about cushion treemaps and squarified treemaps.\nhttps://www.win.tue.nl/~vanwijk/\n\nBen Shneiderman for his ingenious idea of treemaps -\na truly intuitive way of visualizing tree contents.\nhttps://www.cs.umd.edu/hcil/TreeMap.history/\n\nMy colleagues for their feedback on the early releases of WinDirStat.\n\nBeatrix Lödige and Nick Lines for beta testing.\n
+IDS_ABOUT_THANKSTOTEXT=\nStefan Hundhammer for his superb Linux tool KDirStat.\nUsing KDirStat (2.3.7) as a specification saved me a lot of time.\nhttps://kdirstat.sourceforge.net/\n\nThe authors of SequoiaView for showing just how useful treemaps really can be.\nhttps://www.win.tue.nl/sequoiaview/\n\nJarke J. van Wijk, Huub van de Wetering, Mark Bruls and Kees Huizing\nfor their papers about cushion treemaps and squarified treemaps.\nhttps://www.win.tue.nl/~vanwijk/\n\nBen Shneiderman for his ingenious idea of treemaps -\na truly intuitive way of visualizing tree contents.\nhttps://www.cs.umd.edu/hcil/TreeMap.history/\n
 IDS_ABOUT_TITLE=About WinDirStat
 IDS_ALL_FILES=All Files
 IDS_APP_TITLE=WinDirStat
