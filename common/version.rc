@@ -102,9 +102,6 @@ BEGIN
 #ifdef SOURCE_REPOSITORY
             VALUE "Source repository", SOURCE_REPOSITORY
 #endif
-#ifdef STRING_REPORT_DEFECT_URL
-            VALUE "Defect report URL", STRING_REPORT_DEFECT_URL
-#endif
 #if defined(WDS_RESLANG) && (WDS_RESLANG) && defined(TEXT_RESLANG)
             VALUE "Language", ANSISTRING(TEXT_RESLANG) " (" ANSISTRING(WDS_RESLANG) ")"
 #endif

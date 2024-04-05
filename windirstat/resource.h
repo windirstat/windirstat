@@ -16,7 +16,6 @@
 #define IDD_PAGE_TREELIST               142
 #define IDD_PAGE_TREEMAP                143
 #define IDD_PAGE_GENERAL                144
-#define IDS_RESOURCEVERSION             199
 #define IDB_FILE_SELECT                 922
 #define IDB_CLEANUP_DELETE_BIN          927
 #define IDB_EDIT_COPY_CLIPBOARD         928
@@ -36,7 +35,6 @@
 #define IDI_JUNCTION_PROTECTED          946
 #define IDI_FREE_SPACE                  947
 #define IDI_EMPTY                       948
-#define IDC_ALLLOCALDRIVES              1000
 #define IDC_ALLDRIVES                   1000
 #define IDC_SOMEDRIVES                  1001
 #define IDC_AFOLDER                     1002
@@ -53,22 +51,18 @@
 #define IDC_SHOWCONSOLEWINDOW           1023
 #define IDC_TREECOL_OWNER               1023
 #define IDC_WAITFORCOMPLETION           1024
-#define IDC_LABEL_SUBFOLDERS            1024
 #define IDC_TREECOL_SUBDIRS             1024
 #define IDC_TREECOL_LASTCHANGE          1025
-#define IDC_LABEL_ITEMS                 1026
 #define IDC_TREECOL_ITEMS               1026
-#define IDC_SHOW_GRID                    1028
-#define IDC_LABEL_FILES                 1028
+#define IDC_SHOW_GRID                   1028
 #define IDC_TREECOL_FILES               1028
-#define IDC_HUMAN_FORMAT                 1029
+#define IDC_HUMAN_FORMAT                1029
 #define IDC_TREEMAPGRIDCOLOR            1030
-#define IDC_SHOW_STRIPES                 1030
-#define IDC_FULL_ROW_SELECTION            1031
+#define IDC_SHOW_STRIPES                1030
+#define IDC_FULL_ROW_SELECTION          1031
 #define IDC_SKIPHIDDEN                  1032
 #define IDC_PORTABLE_MODE               1032
 #define IDC_BACKUP_RESTORE              1033
-#define IDC_PORTABLE_MODE2              1033
 #define IDC_DELETION_WARNING            1033
 #define IDC_RESET                       1034
 #define IDC_UNCOMPRESSED_FILE_SIZES     1034
@@ -112,7 +106,7 @@
 #define IDC_STATICHEIGHT                1218
 #define IDC_STATICSCALEFACTOR           1219
 #define IDC_LIGHTSOURCE                 1220
-#define IDC_USE_WDS_LOCALE                1225
+#define IDC_USE_WDS_LOCALE              1225
 #define IDC_COMBO_THREADS               1230
 #define IDC_TREECOL_ATTRIBUTES          1231
 #define IDC_BROWSE_FOLDER               1232
@@ -123,11 +117,7 @@
 #define ID_TREEMAP_ZOOMOUT              32784
 #define IDB_TREEMAP_ZOOMIN              32784
 #define ID_TREEMAP_SELECT_PARENT        32785
-#define ID_TREEMAP_REBUILDTREEMAP       32786
-#define ID_TREEMAP_HELPABOUTTREEMAPS    32787
-#define ID_SETTINGS_SHOW                32791
 #define ID_VIEW_SHOWTREEMAP             32792
-#define ID_SETTINGS_CONFIGUREWINDIRSTAT 32793
 #define ID_HELP_REPORTBUG               32796
 #define ID_CLEANUP_OPEN_IN_CONSOLE      32808
 #define ID_CLEANUP_DELETE_BIN           32809
@@ -139,9 +129,7 @@
 #define ID_CLEANUP_EMPTY_BIN            32818
 #define ID_VIEW_SHOWFREESPACE           32819
 #define ID_VIEW_SHOWUNKNOWN             32820
-#define ID_POPUP                        32826
 #define ID_VIEW_SHOWFILETYPES           32846
-#define ID_SENDMAILTOOWNER              32856
 #define ID_USERDEFINEDCLEANUP0          32900
 #define ID_USERDEFINEDCLEANUP1          32901
 #define ID_USERDEFINEDCLEANUP2          32902
@@ -163,12 +151,13 @@
 #define ID_FILE_SELECT                  33030
 #define ID_SCAN_SUSPEND                 33031
 #define ID_SCAN_RESUME                  33032
-#define ID_MENU_FILE_SAVE_RESULTS       33035
-#define ID_MENU_FILE_LOAD_RESULTS       33036
 #define ID_LOAD_RESULTS                 33037
 #define ID_SAVE_RESULTS                 33038
 #define IDS_AUTHOR_EMAIL                57345
 #define IDS_AUTHOR_WEBSITE              57346
+#define IDS_URL_WEBSITE                 57346
+#define IDS_URL_HELP                    57347
+#define IDS_URL_REPORT_BUG              57348
 
 // Next default values for new objects
 // 

@@ -52,16 +52,6 @@ CDirStatApp* GetWDSApp()
     return static_cast<CDirStatApp*>(AfxGetApp());
 }
 
-CStringW GetAuthorEmail()
-{
-    return Localization::LookupNeutral(IDS_AUTHOR_EMAIL);
-}
-
-CStringW GetWinDirStatHomepage()
-{
-    return Localization::LookupNeutral(IDS_AUTHOR_WEBSITE);
-}
-
 CMyImageList* GetMyImageList()
 {
     return GetWDSApp()->GetMyImageList();
@@ -75,6 +65,7 @@ BEGIN_MESSAGE_MAP(CDirStatApp, CWinAppEx)
     ON_COMMAND(ID_RUN_ELEVATED, OnRunElevated)
     ON_UPDATE_COMMAND_UI(ID_RUN_ELEVATED, OnUpdateRunElevated)
     ON_COMMAND(ID_HELP_MANUAL, OnHelpManual)
+    ON_COMMAND(ID_HELP_REPORTBUG, OnReportBug)
 END_MESSAGE_MAP()
 
 const CDirStatApp _theApp;
@@ -400,15 +391,20 @@ void CDirStatApp::OnRunElevated()
     }
 }
 
-void CDirStatApp::OnHelpManual()
+void CDirStatApp::LaunchHelp()
 {
-    // FIXME: open browser, point to Wiki (via windirstat.net short link), based on current language
-    DoContextHelp(IDH_StartPage);
+    ShellExecute(*AfxGetMainWnd(), L"open", Localization::LookupNeutral(IDS_URL_HELP),
+        nullptr, nullptr, SW_SHOWNORMAL);
 }
 
-void CDirStatApp::DoContextHelp(DWORD)
+void CDirStatApp::OnHelpManual()
 {
-    CStringW msg;
-    msg.FormatMessage(Localization::Lookup(IDS_HELPFILEsCOULDNOTBEFOUND), L"windirstat.chm");
-    AfxMessageBox(msg);
+    LaunchHelp();
+}
+
+
+void CDirStatApp::OnReportBug()
+{
+    ShellExecute(*AfxGetMainWnd(), L"open", Localization::LookupNeutral(IDS_URL_REPORT_BUG),
+        nullptr, nullptr, SW_SHOWNORMAL);
 }

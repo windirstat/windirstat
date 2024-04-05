@@ -22,12 +22,11 @@
 
 #pragma once
 
-#include <Windows.h>
+#include "stdafx.h"
 #include "resource.h"
 #include "Langs.h"
 #include "MyImageList.h"
 #include "MountPoints.h"
-#include "HelpMap.h"
 #include <common/Constants.h>
 #include <common/Tracer.h>
 
@@ -40,10 +39,6 @@ class CDirStatApp;
 CMainFrame* GetMainFrame();
 CDirStatApp* GetWDSApp();
 CMyImageList* GetMyImageList();
-
-// Other application related globals
-CStringW GetAuthorEmail();
-CStringW GetWinDirStatHomepage();
 
 //
 // CDirStatApp. The MFC application object.
@@ -70,8 +65,7 @@ public:
     static CStringW GetCurrentProcessMemoryInfo();
     CMyImageList* GetMyImageList();
 
-    void DoContextHelp(DWORD topic);
-
+    static void LaunchHelp();
     static void RestartApplication();
 
     static bool getDiskFreeSpace(LPCWSTR pszRootPath, ULONGLONG& total, ULONGLONG& unused);
@@ -96,5 +90,6 @@ protected:
     afx_msg void OnRunElevated();
     afx_msg void OnUpdateRunElevated(CCmdUI* pCmdUI);
     afx_msg void OnHelpManual();
+    afx_msg void OnReportBug();
     afx_msg void OnAppAbout();
 };

@@ -40,4 +40,3 @@
 #define STRING_COMPANY              "WinDirStat Team (windirstat.net)"
 #define STRING_COPYRIGHT            "© 2003-2005 Bernhard Seifert, © 2004-2024 WinDirStat Team"
 #define SOURCE_REPOSITORY           "https://github.com/windirstat/windirstat"
-#define STRING_REPORT_DEFECT_URL    "https://github.com/windirstat/windirstat/issues/new/choose"

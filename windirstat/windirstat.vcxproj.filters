@@ -42,9 +42,6 @@
     <None Include="res\IDB_NODES.bmp">
       <Filter>Resource Files\Resources</Filter>
     </None>
-    <None Include="res\IDB_JUNCTIONPOINT.bmp">
-      <Filter>Resource Files\Resources</Filter>
-    </None>
     <None Include="res\license.rtf">
       <Filter>Resource Files\Resources</Filter>
     </None>
@@ -104,9 +101,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="GlobalHelpers.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="HelpMap.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Item.h">
@@ -338,15 +332,6 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\common\WinDirStat.ico" />
-    <Image Include="res\toolbar\ID_EDIT_COPY_CLIPBOARD.bmp">
-      <Filter>Resource Files\Resources</Filter>
-    </Image>
-    <Image Include="res\toolbar\ID_TREEMAP_ZOOMIN.bmp">
-      <Filter>Resource Files\Resources</Filter>
-    </Image>
-    <Image Include="res\toolbar\ID_TREEMAP_ZOOMOUT.bmp">
-      <Filter>Resource Files\Resources</Filter>
-    </Image>
     <Image Include="res\toolbar\IDB_CLEANUP_DELETE.bmp">
       <Filter>Resource Files\Resources</Filter>
     </Image>
@@ -374,9 +359,6 @@
     <Image Include="res\toolbar\IDB_TREEMAP_ZOOMOUT.bmp">
       <Filter>Resource Files\Resources</Filter>
     </Image>
-    <Image Include="res\toolbar\IDM_EDIT_COPY_CLIPBOARD.bmp">
-      <Filter>Resource Files\Resources</Filter>
-    </Image>
     <Image Include="res\toolbar\IDB_CLEANUP_EXPLORER_SELECT.bmp">
       <Filter>Resource Files\Resources</Filter>
     </Image>
@@ -393,12 +375,6 @@
       <Filter>Resource Files\Resources</Filter>
     </Image>
     <Image Include="res\toolbar\IDB_SCAN_RESUME.bmp">
-      <Filter>Resource Files\Resources</Filter>
-    </Image>
-    <Image Include="res\toolbar\IDB_SELECTION_EXPLORE.bmp">
-      <Filter>Resource Files\Resources</Filter>
-    </Image>
-    <Image Include="res\nodes\IDB_JUNCTION.ico">
       <Filter>Resource Files\Resources</Filter>
     </Image>
     <Image Include="res\nodes\IDI_EMPTY.ico">

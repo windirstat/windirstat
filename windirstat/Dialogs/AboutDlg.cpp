@@ -140,7 +140,9 @@ void CAboutDlg::CMyTabControl::SetPageText(int tab)
     {
     case TAB_ABOUT:
         {
-            text.FormatMessage(Localization::Lookup(IDS_ABOUT_ABOUTTEXTss), GetAuthorEmail().GetString(), GetWinDirStatHomepage().GetString());
+            text.FormatMessage(Localization::Lookup(IDS_ABOUT_ABOUTTEXTss),
+                Localization::LookupNeutral(IDS_AUTHOR_EMAIL).GetString(),
+                Localization::LookupNeutral(IDS_URL_WEBSITE).GetString());
         }
         break;
     case TAB_AUTHORS:

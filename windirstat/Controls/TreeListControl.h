@@ -124,7 +124,7 @@ class CTreeListControl : public COwnerDrawnListControl
     virtual BOOL CreateEx(DWORD dwExStyle, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID);
     void SysColorChanged() override;
     void SetRootItem(CTreeListItem* root);
-    void OnChildAdded(CTreeListItem* parent, CTreeListItem* child);
+    void OnChildAdded(const CTreeListItem* parent, CTreeListItem* child);
     void OnChildRemoved(CTreeListItem* parent, CTreeListItem* child);
     void OnRemovingAllChildren(const CTreeListItem* parent);
     CTreeListItem* GetItem(int i) const;
@@ -138,7 +138,7 @@ class CTreeListControl : public COwnerDrawnListControl
     void ExpandItem(const CTreeListItem* item);
     int FindTreeItem(const CTreeListItem* item) const;
     int GetItemScrollPosition(const CTreeListItem* item) const;
-    void SetItemScrollPosition(CTreeListItem* item, int top);
+    void SetItemScrollPosition(const CTreeListItem* item, int top);
     bool SelectedItemCanToggle();
     void ToggleSelectedItem();
     void EmulateInteractiveSelection(const CTreeListItem* item);

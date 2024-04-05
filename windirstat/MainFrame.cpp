@@ -344,7 +344,6 @@ IMPLEMENT_DYNCREATE(CMainFrame, CFrameWndEx)
 
 BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
     ON_COMMAND(ID_CONFIGURE, OnConfigure)
-    ON_COMMAND(ID_TREEMAP_HELPABOUTTREEMAPS, OnTreemapHelpAboutTreeMaps)
     ON_COMMAND(ID_VIEW_SHOWFILETYPES, OnViewShowFileTypes)
     ON_COMMAND(ID_VIEW_SHOWTREEMAP, OnViewShowtreemap)
     ON_MESSAGE(WM_ENTERSIZEMOVE, OnEnterSizeMove)
@@ -1169,11 +1168,6 @@ void CMainFrame::OnConfigure()
     {
         GetWDSApp()->RestartApplication();
     }
-}
-
-void CMainFrame::OnTreemapHelpAboutTreeMaps()
-{
-    GetWDSApp()->DoContextHelp(IDH_Treemap);
 }
 
 void CMainFrame::OnSysColorChange()

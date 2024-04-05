@@ -226,7 +226,6 @@ protected:
     afx_msg void OnViewShowFileTypes();
     afx_msg void OnConfigure();
     afx_msg void OnDestroy();
-    afx_msg void OnTreemapHelpAboutTreeMaps();
     afx_msg LRESULT OnTaskButtonCreated(WPARAM, LPARAM);
 
 public:

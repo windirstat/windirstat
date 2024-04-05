@@ -25,7 +25,7 @@
 
 class FileFindEnhanced final
 {
-    typedef struct FILE_DIRECTORY_INFORMATION {
+    using FILE_DIRECTORY_INFORMATION = struct {
         ULONG         NextEntryOffset;
         ULONG         FileIndex;
         LARGE_INTEGER CreationTime;
@@ -37,7 +37,7 @@ class FileFindEnhanced final
         ULONG         FileAttributes;
         ULONG         FileNameLength;
         WCHAR         FileName[1];
-    } FILE_DIRECTORY_INFORMATION;
+    };
 
     CStringW m_search;
     CStringW m_base;

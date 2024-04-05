@@ -725,7 +725,7 @@ int CTreeListControl::GetItemScrollPosition(const CTreeListItem* item) const
     return rc.top;
 }
 
-void CTreeListControl::SetItemScrollPosition(CTreeListItem* item, int top)
+void CTreeListControl::SetItemScrollPosition(const CTreeListItem* item, int top)
 {
     const int old = GetItemScrollPosition(item);
     Scroll(CSize(0, top - old));
@@ -864,7 +864,7 @@ void CTreeListControl::OnLvnItemchangingList(NMHDR* pNMHDR, LRESULT* pResult)
     *pResult = FALSE;
 }
 
-void CTreeListControl::OnChildAdded(CTreeListItem* parent, CTreeListItem* child)
+void CTreeListControl::OnChildAdded(const CTreeListItem* parent, CTreeListItem* child)
 {
     if (!parent->IsVisible() || !parent->IsExpanded())
     {
