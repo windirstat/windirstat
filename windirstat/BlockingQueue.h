@@ -13,7 +13,7 @@ class BlockingQueue
     std::condition_variable waiting;
     std::condition_variable popped;
     unsigned int m_initial_workers;
-    unsigned int m_workers_waiting;
+    unsigned int m_workers_waiting = 0;
     bool m_started = false;
     bool m_suspended = false;
     bool m_draining = false;
@@ -24,9 +24,8 @@ public:
     BlockingQueue& operator=(const BlockingQueue&) = delete;
     BlockingQueue& operator=(BlockingQueue&&) = delete;
     ~BlockingQueue() = default;
-    BlockingQueue(const unsigned int workers) :
-        m_initial_workers(workers), m_workers_waiting(0) {}
-    BlockingQueue() : BlockingQueue(1) {}
+    BlockingQueue(const unsigned int workers = 1) :
+        m_initial_workers(workers) {}
 
     void push(T const& value, bool back = true)
     {
