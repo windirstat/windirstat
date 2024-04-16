@@ -1,4 +1,4 @@
-// MyImageList.cpp - Implementation of CMyImageList
+// IconImageList.cpp - Implementation of CIconImageList
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
@@ -21,10 +21,10 @@
 
 #include "stdafx.h"
 #include "WinDirStat.h"
-#include "MyImageList.h"
+#include "IconImageList.h"
 #include "SmartPointer.h"
 
-void CMyImageList::initialize()
+void CIconImageList::initialize()
 {
     if (m_hImageList == nullptr)
     {
@@ -49,7 +49,7 @@ void CMyImageList::initialize()
 }
 
 // Returns the index of the added icon
-short CMyImageList::cacheIcon(LPCWSTR path, UINT flags, CStringW* psTypeName)
+short CIconImageList::cacheIcon(LPCWSTR path, UINT flags, CStringW* psTypeName)
 {
     ASSERT(m_hImageList != nullptr); // should have been initialize()ed.
 
@@ -60,7 +60,7 @@ short CMyImageList::cacheIcon(LPCWSTR path, UINT flags, CStringW* psTypeName)
         flags |= SHGFI_TYPENAME;
     }
 
-    SHFILEINFO sfi = {nullptr};
+    SHFILEINFO sfi{};
     const auto hil = reinterpret_cast<HIMAGELIST>(::SHGetFileInfo(path, 0, &sfi, sizeof(sfi), flags));
     if (hil == nullptr)
     {
@@ -84,7 +84,7 @@ short CMyImageList::cacheIcon(LPCWSTR path, UINT flags, CStringW* psTypeName)
     return i;
 }
 
-short CMyImageList::getMyComputerImage()
+short CIconImageList::getMyComputerImage()
 {
     SmartPointer<LPITEMIDLIST> pidl(CoTaskMemFree);
     if (FAILED(::SHGetSpecialFolderLocation(nullptr, CSIDL_DRIVES, &pidl)))
@@ -96,24 +96,24 @@ short CMyImageList::getMyComputerImage()
     return cacheIcon(static_cast<LPCWSTR>(static_cast<LPVOID>(pidl)), SHGFI_PIDL);
 }
 
-short CMyImageList::getMountPointImage()
+short CIconImageList::getMountPointImage()
 {
     return cacheIcon(getADriveSpec(), 0);
 }
 
-short CMyImageList::getJunctionImage() const
+short CIconImageList::getJunctionImage() const
 {
     // Intermediate solution until we find a nice icon for junction points
     return m_junctionImage;
 }
 
-short CMyImageList::getJunctionProtectedImage() const
+short CIconImageList::getJunctionProtectedImage() const
 {
     ASSERT(m_hImageList != nullptr); // should have been initialize()ed.
     return m_junctionProtected;
 }
 
-short CMyImageList::getFolderImage()
+short CIconImageList::getFolderImage()
 {
     CStringW s;
     ::GetSystemDirectory(s.GetBuffer(_MAX_PATH), _MAX_PATH);
@@ -122,37 +122,36 @@ short CMyImageList::getFolderImage()
     return cacheIcon(s, 0);
 }
 
-short CMyImageList::getFileImage(LPCWSTR path)
+short CIconImageList::getFileImage(LPCWSTR path)
 {
     return cacheIcon(path, 0);
 }
 
-short CMyImageList::getExtImageAndDescription(LPCWSTR ext, CStringW& description)
+short CIconImageList::getExtImageAndDescription(LPCWSTR ext, CStringW& description)
 {
     return cacheIcon(ext, SHGFI_USEFILEATTRIBUTES, &description);
 }
 
-short CMyImageList::getFreeSpaceImage() const
+short CIconImageList::getFreeSpaceImage() const
 {
     ASSERT(m_hImageList != nullptr); // should have been initialize()ed.
     return m_freeSpaceImage;
 }
 
-short CMyImageList::getUnknownImage() const
+short CIconImageList::getUnknownImage() const
 {
     ASSERT(m_hImageList != nullptr); // should have been initialize()ed.
     return m_unknownImage;
 }
 
-short CMyImageList::getEmptyImage() const
+short CIconImageList::getEmptyImage() const
 {
     ASSERT(m_hImageList != nullptr);
     return m_emptyImage;
 }
 
-// Returns an arbitrary present drive
-// TODO: doesn't work on Vista and up because the system drive has a different icon
-CStringW CMyImageList::getADriveSpec()
+// Returns the boot drive icon
+CStringW CIconImageList::getADriveSpec()
 {
     CStringW s;
     const UINT u = ::GetWindowsDirectory(s.GetBuffer(_MAX_PATH), _MAX_PATH);
@@ -164,11 +163,11 @@ CStringW CMyImageList::getADriveSpec()
     return s.Left(3);
 }
 
-void CMyImageList::addCustomImages()
+void CIconImageList::addCustomImages()
 {
-    m_junctionImage = static_cast<short>(this->Add(GetWDSApp()->LoadIcon(IDI_JUNCTION)));
-    m_junctionProtected = static_cast<short>(this->Add(GetWDSApp()->LoadIcon(IDI_JUNCTION_PROTECTED)));
-    m_freeSpaceImage = static_cast<short>(this->Add(GetWDSApp()->LoadIcon(IDI_FREE_SPACE)));
-    m_unknownImage = static_cast<short>(this->Add(GetWDSApp()->LoadIcon(IDI_UNKNOWN)));
-    m_emptyImage = static_cast<short>(this->Add(GetWDSApp()->LoadIcon(IDI_EMPTY)));
+    m_junctionImage = static_cast<short>(this->Add(CDirStatApp::Get()->LoadIcon(IDI_JUNCTION)));
+    m_junctionProtected = static_cast<short>(this->Add(CDirStatApp::Get()->LoadIcon(IDI_JUNCTION_PROTECTED)));
+    m_freeSpaceImage = static_cast<short>(this->Add(CDirStatApp::Get()->LoadIcon(IDI_FREE_SPACE)));
+    m_unknownImage = static_cast<short>(this->Add(CDirStatApp::Get()->LoadIcon(IDI_UNKNOWN)));
+    m_emptyImage = static_cast<short>(this->Add(CDirStatApp::Get()->LoadIcon(IDI_EMPTY)));
 }

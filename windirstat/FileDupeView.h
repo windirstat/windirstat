@@ -1,4 +1,4 @@
-// DirStatView.h - Declaration of CMyTreeListControl and CDirStatView
+// FileDupeView.h - Declaration of CFileDupeControl and CFileDupeView
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
@@ -18,51 +18,22 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
-//
 
 #pragma once
 
-#include "TreeListControl.h"
-
-class CDirStatView;
-class CDirStatDoc;
-class CItem;
+#include "FileDupeControl.h"
 
 //
-// CMyTreeListControl. I had to derive from CTreeListControl because
-// CTreeListControl doesn't know about the column constants (COL_***).
+// CFileDupeView. The upper left view, which consists of the TreeList.
 //
-class CMyTreeListControl final : public CTreeListControl
-{
-public:
-    CMyTreeListControl();
-    bool GetAscendingDefault(int column) override;
-
-protected:
-    void OnItemDoubleClick(int i) override;
-
-    void PrepareDefaultMenu(CMenu* menu, const CItem* item);
-
-    DECLARE_MESSAGE_MAP()
-    afx_msg void OnContextMenu(CWnd* /*pWnd*/, CPoint /*point*/);
-    afx_msg void OnSetFocus(CWnd* pOldWnd);
-    afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
-    afx_msg BOOL OnHeaderEndDrag(UINT, NMHDR* pNMHDR, LRESULT* pResult);
-};
-
-//
-// CDirStatView. The upper left view, which consists of the TreeList.
-//
-class CDirStatView final : public CView
+class CFileDupeView final : public CView
 {
 protected:
-    CDirStatView(); // Created by MFC only
-    DECLARE_DYNCREATE(CDirStatView)
+    CFileDupeView(); // Created by MFC only
+    DECLARE_DYNCREATE(CFileDupeView)
 
-    ~CDirStatView() override = default;
-    CStringW GenerateReport() const;
+    ~CFileDupeView() override = default;
     void SysColorChanged();
-    void CreateColumns(bool all = false);
 
 protected:
     void OnDraw(CDC* pDC) override;
@@ -72,7 +43,7 @@ protected:
     }
     void OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint) override;
 
-    CMyTreeListControl m_treeListControl; // The tree list
+    CFileDupeControl m_control;
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnSize(UINT nType, int cx, int cy);

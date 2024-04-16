@@ -51,7 +51,7 @@ void CLayout::AddControl(UINT id, double movex, double movey, double stretchx, d
 
 void CLayout::OnInitDialog(bool centerWindow)
 {
-    m_dialog->SetIcon(GetWDSApp()->LoadIcon(IDR_MAINFRAME), false);
+    m_dialog->SetIcon(CDirStatApp::Get()->LoadIcon(IDR_MAINFRAME), false);
 
     CRect rcDialog;
     m_dialog->GetWindowRect(rcDialog);
@@ -123,7 +123,7 @@ void CLayout::CSizeGripper::Create(CWnd* parent, CRect rc)
     VERIFY(CWnd::Create(
         AfxRegisterWndClass(
             0,
-            AfxGetApp()->LoadStandardCursor(IDC_ARROW),
+            CDirStatApp::Get()->LoadStandardCursor(IDC_ARROW),
             reinterpret_cast<HBRUSH>(COLOR_BTNFACE + 1),
             nullptr
         ),

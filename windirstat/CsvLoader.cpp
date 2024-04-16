@@ -17,7 +17,6 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
-//
 
 #include "stdafx.h"
 #include "langs.h"
@@ -52,25 +51,21 @@ std::array<CHAR, FIELD_COUNT> order_map{};
 static void ParseHeaderLine(const std::vector<std::wstring>& header)
 {
     order_map.fill(-1);
-    for (const bool neutral: { true, false })
+    std::map<std::wstring, DWORD> res_map =
     {
-        CStringW(*Lookup)(const UINT) = (neutral) ? Localization::LookupNeutral : static_cast<CStringW(*)(const UINT)>(&Localization::Lookup);
-        std::map<std::wstring, DWORD> res_map =
-        {
-            { Lookup(IDS_TREECOL_NAME).GetString(), FIELD_NAME},
-            { Lookup(IDS_TREECOL_FILES).GetString(), FIELD_FILES },
-            { Lookup(IDS_TREECOL_SUBDIRS).GetString(), FIELD_SUBDIRS },
-            { Lookup(IDS_TREECOL_SIZE).GetString(), FIELD_SIZE },
-            { Lookup(IDS_TREECOL_ATTRIBUTES).GetString(), FIELD_ATTRIBUTES },
-            { Lookup(IDS_TREECOL_LASTCHANGE).GetString(), FIELD_LASTCHANGE },
-            { (Lookup(IDS_APP_TITLE) + L" " + Lookup(IDS_TREECOL_ATTRIBUTES)).GetString(), FIELD_ATTRIBUTES_WDS },
-            { Lookup(IDS_TREECOL_OWNER).GetString(), FIELD_OWNER }
-        };
+        { Localization::Lookup(IDS_COL_NAME).GetString(), FIELD_NAME},
+        { Localization::Lookup(IDS_COL_FILES).GetString(), FIELD_FILES },
+        { Localization::Lookup(IDS_COL_SUBDIRS).GetString(), FIELD_SUBDIRS },
+        { Localization::Lookup(IDS_COL_SIZE).GetString(), FIELD_SIZE },
+        { Localization::Lookup(IDS_COL_ATTRIBUTES).GetString(), FIELD_ATTRIBUTES },
+        { Localization::Lookup(IDS_COL_LASTCHANGE).GetString(), FIELD_LASTCHANGE },
+        { (Localization::Lookup(IDS_APP_TITLE) + L" " + Localization::Lookup(IDS_COL_ATTRIBUTES)).GetString(), FIELD_ATTRIBUTES_WDS },
+        { Localization::Lookup(IDS_COL_OWNER).GetString(), FIELD_OWNER }
+    };
 
-        for (std::vector<std::wstring>::size_type c = 0; c < header.size(); c++)
-        {
-            if (res_map.contains(header.at(c))) order_map[res_map[header.at(c)]] = static_cast<BYTE>(c);
-        }
+    for (std::vector<std::wstring>::size_type c = 0; c < header.size(); c++)
+    {
+        if (res_map.contains(header.at(c))) order_map[res_map[header.at(c)]] = static_cast<BYTE>(c);
     }
 }
 
@@ -102,7 +97,7 @@ static std::string QuoteAndConvert(const CStringW& inc)
 {
     const int sz = WideCharToMultiByte(CP_UTF8, WC_NO_BEST_FIT_CHARS, inc.GetString(), -1, nullptr, 0, nullptr, nullptr);
     std::string out = "\"";
-    out.resize(sz + 1);
+    out.resize(static_cast<size_t>(sz) + 1);
     WideCharToMultiByte(CP_UTF8, 0, inc.GetString(), -1, &out[1], sz, nullptr, nullptr);
     out[sz] = '"';
     return out;
@@ -232,17 +227,17 @@ bool SaveResults(const std::wstring& path, CItem * item)
     // Determine columns
     std::vector<CStringW> cols =
     {
-        Localization::Lookup(IDS_TREECOL_NAME),
-        Localization::Lookup(IDS_TREECOL_FILES),
-        Localization::Lookup(IDS_TREECOL_SUBDIRS),
-        Localization::Lookup(IDS_TREECOL_SIZE),
-        Localization::Lookup(IDS_TREECOL_ATTRIBUTES),
-        Localization::Lookup(IDS_TREECOL_LASTCHANGE),
-        Localization::Lookup(IDS_APP_TITLE) + L" " + Localization::Lookup(IDS_TREECOL_ATTRIBUTES)
+        Localization::Lookup(IDS_COL_NAME),
+        Localization::Lookup(IDS_COL_FILES),
+        Localization::Lookup(IDS_COL_SUBDIRS),
+        Localization::Lookup(IDS_COL_SIZE),
+        Localization::Lookup(IDS_COL_ATTRIBUTES),
+        Localization::Lookup(IDS_COL_LASTCHANGE),
+        Localization::Lookup(IDS_APP_TITLE) + L" " + Localization::Lookup(IDS_COL_ATTRIBUTES)
     };
     if (COptions::ShowColumnOwner)
     {
-        cols.push_back(Localization::Lookup(IDS_TREECOL_OWNER));
+        cols.push_back(Localization::Lookup(IDS_COL_OWNER));
     }
 
     // Output columns to file
@@ -253,8 +248,7 @@ bool SaveResults(const std::wstring& path, CItem * item)
 
     // Output all items to file
     outf << "\r\n";
-    std::stack<CItem*> queue;
-    queue.push(item);
+    std::stack<CItem*> queue({ item });
     while (!queue.empty())
     {
         // Grab item from queue

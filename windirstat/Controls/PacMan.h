@@ -21,8 +21,6 @@
 
 #pragma once
 
-#include <shared_mutex>
-
 //
 // CPacman. Pacman animation.
 //

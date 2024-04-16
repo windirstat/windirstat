@@ -45,11 +45,6 @@ void AFXAPI DDX_XySlider(CDataExchange* pDX, int nIDC, CPoint& value)
     }
 }
 
-CXySlider::CXySlider() : 
-        m_externalRange(CSize(100, 100))
-      , m_externalPos(CPoint(0, 0))
-      , m_pos(CPoint(0, 0)) {}
-
 void CXySlider::Initialize()
 {
     if (!m_inited && ::IsWindow(m_hWnd))
@@ -420,46 +415,25 @@ void CXySlider::OnPaint()
     dc.BitBlt(0, 0, w, h, &dcmem, 0, 0, SRCCOPY);
 }
 
-void CXySlider::OnKeyDown(UINT nChar, UINT /*nRepCnt*/, UINT /*nFlags*/)
+void CXySlider::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 {
     switch (nChar)
     {
-    case VK_LEFT:
-        {
-            DoMoveBy(-1, 0);
-        }
-        break;
-    case VK_RIGHT:
-        {
-            DoMoveBy(1, 0);
-        }
-        break;
-    case VK_UP:
-        {
-            DoMoveBy(0, -1);
-        }
-        break;
-    case VK_DOWN:
-        {
-            DoMoveBy(0, 1);
-        }
-        break;
+        case VK_LEFT:  DoMoveBy(-1, 0); break;
+        case VK_RIGHT: DoMoveBy(1, 0);  break;
+        case VK_UP:    DoMoveBy(0, -1); break;
+        case VK_DOWN:  DoMoveBy(0, 1);  break;
+        default: CStatic::OnKeyDown(nChar, nRepCnt, nFlags);
     }
 }
 
 void CXySlider::OnLButtonDown(UINT /*nFlags*/, CPoint point)
 {
     SetFocus();
+    DoDrag(point);
 
-    const CRect rc = GetGripperRect();
-
-    if (rc.PtInRect(point))
+    if (const CRect rc = GetGripperRect(); !rc.PtInRect(point))
     {
-        DoDrag(point);
-    }
-    else
-    {
-        DoPage(point);
         InstallTimer();
     }
 }

@@ -287,12 +287,15 @@ void CAboutDlg::DoDataExchange(CDataExchange* pDX)
     DDX_Control(pDX, IDC_TAB, m_tab);
 }
 
+#pragma warning(push)
+#pragma warning(disable:26454)
 BEGIN_MESSAGE_MAP(CAboutDlg, CDialogEx)
     ON_NOTIFY(TCN_SELCHANGE, IDC_TAB, OnTcnSelchangeTab)
     ON_WM_SIZE()
     ON_WM_GETMINMAXINFO()
     ON_WM_DESTROY()
 END_MESSAGE_MAP()
+#pragma warning(pop)
 
 BOOL CAboutDlg::OnInitDialog()
 {
@@ -312,7 +315,7 @@ BOOL CAboutDlg::OnInitDialog()
     return TRUE;
 }
 
-void CAboutDlg::OnTcnSelchangeTab(NMHDR* /* pNMHDR */, LRESULT* pResult)
+void CAboutDlg::OnTcnSelchangeTab(NMHDR* /*pNMHDR*/, LRESULT* pResult)
 {
     *pResult = 0;
     m_tab.SetPageText(m_tab.GetCurSel());

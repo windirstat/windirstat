@@ -49,31 +49,31 @@ protected:
 
     CTreemap::Options m_options; // Current options
 
-    bool m_altered;           // Values have been altered. Button reads "Reset to defaults".
+    bool m_altered = false;   // Values have been altered. Button reads "Reset to defaults".
     CTreemap::Options m_undo; // Valid, if m_altered = false
 
     CTreemapPreview m_preview;
 
-    int m_style;
+    int m_style = 0;
     CColorButton m_highlightColor;
-    BOOL m_grid;
+    BOOL m_grid = 0;
     CColorButton m_gridColor;
 
     CSliderCtrl m_brightness;
     CStringW m_sBrightness;
-    int m_nBrightness;
+    int m_nBrightness = 0;
 
     CSliderCtrl m_cushionShading;
     CStringW m_sCushionShading;
-    int m_nCushionShading;
+    int m_nCushionShading = 0;
 
     CSliderCtrl m_height;
     CStringW m_sHeight;
-    int m_nHeight;
+    int m_nHeight = 0;
 
     CSliderCtrl m_scaleFactor;
     CStringW m_sScaleFactor;
-    int m_nScaleFactor;
+    int m_nScaleFactor = 0;
 
     CXySlider m_lightSource;
     CPoint m_ptLightSource;

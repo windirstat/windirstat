@@ -18,7 +18,6 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
-//
 
 #pragma once
 
@@ -48,8 +47,8 @@ struct SSorting
 class CSortingListItem
 {
 public:
-    virtual CStringW GetText(int subitem) const;
-    virtual int GetImage() const;
+    virtual CStringW GetText(int subitem) const = 0;
+    virtual int GetImage() const = 0;
     virtual int Compare(const CSortingListItem* other, int subitem) const;
     int CompareS(const CSortingListItem* other, const SSorting& sorting) const;
 };
@@ -96,12 +95,11 @@ class CSortingListControl : public CListCtrl
 
 private:
     void SavePersistentAttributes() const;
-    static int CALLBACK _CompareFunc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
-
+ 
     std::wstring m_name; // for persistence
     SSorting m_sorting;
 
-    int m_indicatedColumn;
+    int m_indicatedColumn = -1;
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnLvnGetdispinfo(NMHDR* pNMHDR, LRESULT* pResult);

@@ -27,7 +27,7 @@
 IMPLEMENT_DYNAMIC(CDeleteWarningDlg, CDialogEx)
 
 CDeleteWarningDlg::CDeleteWarningDlg(const std::vector<CItem*> & items, CWnd* pParent)
-    : CDialogEx(CDeleteWarningDlg::IDD, pParent), m_items(items), m_dontShowAgain(false)
+    : CDialogEx(CDeleteWarningDlg::IDD, pParent), m_items(items)
 {
 }
 

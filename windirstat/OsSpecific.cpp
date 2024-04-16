@@ -27,7 +27,8 @@ BOOL FileIconInit(__in BOOL fRestoreCache)
 {
     using TFNFileIconInit = BOOL(WINAPI *)(BOOL);
     static HMODULE hShell32 = LoadLibrary(L"shell32.dll");
-    static auto pfnFileIconInit = reinterpret_cast<TFNFileIconInit>(::GetProcAddress(hShell32, reinterpret_cast<LPCSTR>(660)));
+    static auto pfnFileIconInit = reinterpret_cast<TFNFileIconInit>(
+        static_cast<LPVOID>(::GetProcAddress(hShell32, reinterpret_cast<LPCSTR>(660))));
     if (hShell32 != nullptr && pfnFileIconInit != nullptr)
     {
         return pfnFileIconInit(fRestoreCache);

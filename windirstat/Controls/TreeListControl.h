@@ -26,7 +26,7 @@
 
 #include <vector>
 
-class CDirStatView;
+class CFileTreeView;
 class CTreeListItem;
 class CTreeListControl;
 
@@ -51,18 +51,19 @@ class CTreeListItem : public COwnerDrawnListItem
         CRect rcPlusMinus;    // Coordinates of the little +/- rectangle, relative to the upper left corner of the item.
         CRect rcTitle;        // Coordinates of the label, relative to the upper left corner of the item.
         CStringW owner;       // Owner of file or folder
-        short image = -1;     // -1 as long as not needed, >= 0: valid index in MyImageList.
+        short image = -1;     // -1 as long as not needed, >= 0: valid index in IconImageList.
         unsigned char indent; // 0 for the root item, 1 for its children, and so on.
         bool isExpanded = false; // Whether item is expanded.
+        CTreeListControl* control = nullptr;
 
         VISIBLEINFO(unsigned char iIndent) : indent(iIndent) {}
     };
 
 public:
-    CTreeListItem();
+    CTreeListItem() = default;
     ~CTreeListItem() override;
 
-    virtual int CompareSibling(const CTreeListItem* tlib, int subitem) const =0;
+    virtual int CompareSibling(const CTreeListItem* tlib, int subitem) const = 0;
 
     bool DrawSubitem(int subitem, CDC* pdc, CRect rc, UINT state, int* width, int* focusLeft) const override;
     CStringW GetText(int subitem) const override;
@@ -74,7 +75,7 @@ public:
 
     void DrawPacman(const CDC* pdc, const CRect& rc, COLORREF bgColor) const;
     void UncacheImage();
-    void SortChildren();
+    void SortChildren(const SSorting& sorting);
     CTreeListItem* GetSortedChild(int i) const;
     int FindSortedChild(const CTreeListItem* child) const;
     CTreeListItem* GetParent() const;
@@ -85,8 +86,9 @@ public:
     bool IsExpanded() const;
     void SetExpanded(bool expanded = true);
     bool IsVisible() const { return m_vi != nullptr; }
-    void SetVisible(bool visible = true);
+    void SetVisible(CTreeListControl * control, bool visible = true);
     unsigned char GetIndent() const;
+    void SetIndent(unsigned char indent);
     CRect GetPlusMinusRect() const;
     void SetPlusMinusRect(const CRect& rc) const;
     CRect GetTitleRect() const;
@@ -98,7 +100,6 @@ public:
     void DrivePacman() const;
 
 protected:
-    static CTreeListControl* GetTreeListControl();
     mutable VISIBLEINFO* m_vi = nullptr;
 
 private:
@@ -112,18 +113,12 @@ class CTreeListControl : public COwnerDrawnListControl
 {
     DECLARE_DYNAMIC(CTreeListControl)
 
-    // In order to save memory, and as we have only one CTreeListControl in the application,
-    // this is global.
-    static CTreeListControl* _theTreeListControl;
-
-    static CTreeListControl* GetTheTreeListControl();
-
-    CTreeListControl(int rowHeight = -1);
+    CTreeListControl(int rowHeight = -1, std::vector<int>* column_order = {}, std::vector<int>* column_widths = {});
     ~CTreeListControl() override = default;
     void MySetImageList(CImageList* il);
     virtual BOOL CreateEx(DWORD dwExStyle, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID);
     void SysColorChanged() override;
-    void SetRootItem(CTreeListItem* root);
+    virtual void SetRootItem(CTreeListItem* root);
     void OnChildAdded(const CTreeListItem* parent, CTreeListItem* child);
     void OnChildRemoved(CTreeListItem* parent, CTreeListItem* child);
     void OnRemovingAllChildren(const CTreeListItem* parent);

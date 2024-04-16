@@ -1,4 +1,4 @@
-// TypeView.h - Declaration of CExtensionListControl and CTypeView
+// ExtensionView.h - Declaration of CExtensionListControl and CExtensionView
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
@@ -21,9 +21,9 @@
 
 #pragma once
 
-#include "DirStatDoc.h" // SExtensionRecord
+#include "DirStatDoc.h"
 
-class CTypeView;
+class CExtensionView;
 
 //
 // CExtensionListControl.
@@ -67,11 +67,11 @@ protected:
         CStringW m_extension;
         SExtensionRecord m_record;
         mutable CStringW m_description;
-        mutable int m_image;
+        mutable int m_image = -1;
     };
 
 public:
-    CExtensionListControl(CTypeView* typeView);
+    CExtensionListControl(CExtensionView* extensionView);
     bool GetAscendingDefault(int column) override;
     void Initialize();
     void SetExtensionData(const CExtensionData* ed);
@@ -83,8 +83,8 @@ public:
 protected:
     CListItem* GetListItem(int i) const;
 
-    CTypeView* m_typeView;
-    ULONGLONG m_rootSize;
+    CExtensionView* m_extensionView;
+    ULONGLONG m_rootSize = 0;
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnDestroy();
@@ -93,39 +93,4 @@ protected:
     afx_msg void OnSetFocus(CWnd* pOldWnd);
     afx_msg void OnLvnItemchanged(NMHDR* pNMHDR, LRESULT* pResult);
     afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
-};
-
-//
-// CTypeView. The upper right view, which shows the extensions and their
-// cushion colors.
-//
-class CTypeView final : public CView
-{
-protected:
-    CTypeView();
-    DECLARE_DYNCREATE(CTypeView)
-
-    ~CTypeView() override = default;
-    CDirStatDoc* GetDocument() const
-    {
-        return static_cast<CDirStatDoc*>(m_pDocument);
-    }
-    void SysColorChanged();
-    bool IsShowTypes() const;
-    void ShowTypes(bool show);
-
-    void SetHighlightExtension(LPCWSTR ext);
-
-protected:
-    void OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint) override;
-    void OnDraw(CDC* pDC) override;
-    void SetSelection();
-
-    bool m_showTypes;                             // Whether this view shall be shown (F8 option)
-    CExtensionListControl m_extensionListControl; // The list control
-
-    DECLARE_MESSAGE_MAP()
-    afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
-    afx_msg void OnSize(UINT nType, int cx, int cy);
-    afx_msg void OnSetFocus(CWnd* pOldWnd);
 };

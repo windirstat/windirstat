@@ -29,7 +29,11 @@
 #include "Options.h"
 #include "Localization.h"
 
+#include <array>
 #include <algorithm>
+
+#pragma comment(lib, "bcrypt.lib")
+#pragma comment(lib, "crypt32.lib")
 
 namespace
 {
@@ -61,21 +65,6 @@ namespace
         while (n > 0);
 
         return all;
-    }
-
-    void CacheString(CStringW& s, UINT resId, LPCWSTR defaultVal)
-    {
-        ASSERT(wcslen(defaultVal) > 0);
-
-        if (s.IsEmpty())
-        {
-            s = Localization::Lookup(resId);
-
-            if (s.IsEmpty())
-            {
-                s = defaultVal;
-            }
-        }
     }
 }
 
@@ -190,7 +179,7 @@ CStringW FormatCount(const ULONGLONG& n)
     return FormatLongLongNormal(n);
 }
 
-CStringW FormatDouble(double d) // "98,4" or "98.4"
+CStringW FormatDouble(double d)
 {
     ASSERT(d >= 0);
 
@@ -304,7 +293,7 @@ CStringW FormatAttributes(DWORD attr)
     return attributes;
 }
 
-CStringW FormatMilliseconds(ULONGLONG ms)
+CStringW FormatMilliseconds(const ULONGLONG ms)
 {
     CStringW ret;
     const ULONGLONG sec = (ms + 500) / 1000;
@@ -328,19 +317,13 @@ CStringW FormatMilliseconds(ULONGLONG ms)
 
 bool GetVolumeName(LPCWSTR rootPath, CStringW& volumeName)
 {
-    DWORD dummy;
-
-    const UINT old = SetErrorMode(SEM_FAILCRITICALERRORS);
-
-    const bool b = FALSE != GetVolumeInformation(rootPath, volumeName.GetBuffer(256), 256, &dummy, &dummy, &dummy, nullptr, 0);
+    const bool b = FALSE != GetVolumeInformation(rootPath, volumeName.GetBuffer(256), 256, nullptr, nullptr, nullptr, nullptr, 0);
     volumeName.ReleaseBuffer();
 
     if (!b)
     {
         VTRACE(L"GetVolumeInformation(%s) failed: %u", rootPath, ::GetLastError());
     }
-
-    ::SetErrorMode(old);
 
     return b;
 }
@@ -407,7 +390,7 @@ CStringW GetParseNameOfMyComputer()
     STRRET name;
     ZeroMemory(&name, sizeof(name));
     name.uType = STRRET_CSTR;
-    hr         = sf->GetDisplayNameOf(pidl, SHGDN_FORPARSING, &name);
+    hr = sf->GetDisplayNameOf(pidl, SHGDN_FORPARSING, &name);
     MdThrowFailed(hr, L"GetDisplayNameOf(My Computer)");
 
     return MyStrRetToString(pidl, &name);
@@ -576,36 +559,31 @@ bool IsSUBSTedDrive(LPCWSTR drive)
 
 CStringW GetSpec_Bytes()
 {
-    static CStringW s;
-    CacheString(s, IDS_SPEC_BYTES, L"Bytes");
+    static CStringW s = Localization::Lookup(IDS_SPEC_BYTES, L"Bytes");
     return s;
 }
 
 CStringW GetSpec_KB()
 {
-    static CStringW s;
-    CacheString(s, IDS_SPEC_KB, L"KiB");
+    static CStringW s = Localization::Lookup(IDS_SPEC_KB, L"KiB");
     return s;
 }
 
 CStringW GetSpec_MB()
 {
-    static CStringW s;
-    CacheString(s, IDS_SPEC_MB, L"MiB");
+    static CStringW s = Localization::Lookup(IDS_SPEC_MB, L"MiB");
     return s;
 }
 
 CStringW GetSpec_GB()
 {
-    static CStringW s;
-    CacheString(s, IDS_SPEC_GB, L"GiB");
+    static CStringW s = Localization::Lookup(IDS_SPEC_GB, L"GiB");
     return s;
 }
 
 CStringW GetSpec_TB()
 {
-    static CStringW s;
-    CacheString(s, IDS_SPEC_TB, L"TiB");
+    static CStringW s = Localization::Lookup(IDS_SPEC_TB, L"TiB");
     return s;
 }
 

@@ -43,25 +43,28 @@ Setting<RECT> COptions::DriveWindowRect(L"persistence", L"driveWindowRect");
 Setting<int> COptions::SelectDrivesRadio(L"persistence", L"selectDrivesRadio", 0, 0, 2);
 Setting<std::wstring> COptions::SelectDrivesFolder(L"persistence", L"selectDrivesFolder");
 Setting<std::vector<std::wstring>> COptions::SelectDrivesDrives(L"persistence", L"selectDrivesDrives");
+Setting<bool> COptions::ScanForDuplicates(L"persistence", L"scanForDuplicates", false);
 Setting<double> COptions::MainSplitterPos(L"persistence", L"MainSplitterPos", -1.0, 0.0, 1.0);
 Setting<double> COptions::SubSplitterPos(L"persistence", L"SubSplitterPos", -1.0, 0.0, 1.0);
 Setting<int> COptions::LanguageId(L"persistence", L"language", 0);
 
 Setting<std::vector<int>> COptions::TypesColumnWidths(L"persistence", L"typesColumnWidths");
 Setting<std::vector<int>> COptions::TypesColumnOrder(L"persistence", L"typesColumnOrder");
-Setting<std::vector<int>> COptions::TreeListColumnWidths(L"persistence", L"treelistColumnWidths");
-Setting<std::vector<int>> COptions::TreeListColumnOrder(L"persistence", L"treelistColumnOrder");
-Setting<std::vector<int>> COptions::DriveListColumnWidths(L"persistence", L"drivelistColumnOrder");
-Setting<std::vector<int>> COptions::DriveListColumnOrder(L"persistence", L"drivelistColumnWidths");
+Setting<std::vector<int>> COptions::FileTreeColumnWidths(L"persistence", L"fileTreeColumnWidths");
+Setting<std::vector<int>> COptions::FileTreeColumnOrder(L"persistence", L"fileTreeColumnOrder");
+Setting<std::vector<int>> COptions::DriveListColumnWidths(L"persistence", L"driveListColumnOrder");
+Setting<std::vector<int>> COptions::DriveListColumnOrder(L"persistence", L"driveListColumnWidths");
+Setting<std::vector<int>> COptions::DupeTreeColumnWidths(L"persistence", L"dupeTreeColumnWidths");
+Setting<std::vector<int>> COptions::DupeTreeColumnOrder(L"persistence", L"dupeTreeColumnOrder");
 
 Setting<bool> COptions::PacmanAnimation(L"options", L"pacmanAnimation", true);
 Setting<bool> COptions::ShowTimeSpent(L"options", L"humanFormat", true);
 Setting<bool> COptions::HumanFormat(L"options", L"showTimeSpent", true);
 Setting<bool> COptions::FollowMountPoints(L"options", L"followMountPoint", false);
-Setting<bool> COptions::FollowJunctionPoints(L"options", L"followJunctionPoints", false);
+Setting<bool> COptions::FollowJunctions(L"options", L"FollowJunctions", false);
 Setting<bool> COptions::UseBackupRestore(L"options", L"useBackupRestore", true);
 Setting<bool> COptions::ShowUncompressedFileSizes(L"options", L"showUncompressedFileSizes", false);
-Setting<int> COptions::ScanningThreads(L"options", L"scanningThreads", 4, 1, 16);
+Setting<int> COptions::ScanningThreads(L"options", L"scanningThreads", 6, 1, 16);
 
 Setting<bool> COptions::SkipHidden(L"options", L"skipHidden", false);
 Setting<bool> COptions::SkipProtected(L"options", L"skipProtected", true);
@@ -97,10 +100,6 @@ Setting<int> COptions::TreeMapLightSourceY(L"options", L"lightSourceY", CTreemap
 Setting<bool> COptions::TreeMapGrid(L"options", L"treemapGrid", (CTreemap::GetDefaultOptions().grid));
 Setting<COLORREF> COptions::TreeMapGridColor(L"options", L"treemapGridColor", CTreemap::GetDefaultOptions().gridColor);
 Setting<COLORREF> COptions::TreeMapHighlightColor(L"options", L"treemapHighlightColor", RGB(255, 255, 255));
-
-Setting<std::wstring> COptions::ReportSubject(L"options", L"reportSubject");
-Setting<std::wstring> COptions::ReportSuffix(L"options", L"reportSuffix");
-Setting<std::wstring> COptions::ReportPrefix(L"options", L"reportPrefix");
 
 CTreemap::Options COptions::TreemapOptions;
 std::vector<USERDEFINEDCLEANUP> COptions::UserDefinedCleanups;
@@ -170,12 +169,6 @@ void COptions::PreProcessPersistedSettings()
     {
         UserDefinedCleanups.emplace_back(L"cleanups\\userDefinedCleanup" + std::format(L"{:02}", i));
     }
-
-    // Set defaults for reports
-    ReportSubject.Obj() = Localization::Lookup(IDS_REPORT_DISKUSAGE).GetString();
-    ReportSuffix.Obj() = Localization::Lookup(IDS_DISKUSAGEREPORTGENERATEDBYWINDIRSTAT).GetString();
-    ReportPrefix.Obj() = Localization::Lookup(IDS_PLEASECHECKYOURDISKUSAGE).GetString();
-
 }
 
 void COptions::PostProcessPersistedSettings()

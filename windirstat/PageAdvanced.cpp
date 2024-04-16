@@ -43,9 +43,9 @@ void CPageAdvanced::DoDataExchange(CDataExchange* pDX)
 {
     CPropertyPage::DoDataExchange(pDX);
     DDX_Check(pDX, IDC_FOLLOWMOUNTPOINTS, m_followMountPoints);
-    DDX_Check(pDX, IDC_FOLLOWJUNCTIONS, m_followJunctionPoints);
+    DDX_Check(pDX, IDC_FOLLOWJUNCTIONS, m_followJunctions);
     DDX_Control(pDX, IDC_FOLLOWMOUNTPOINTS, m_ctlFollowMountPoints);
-    DDX_Control(pDX, IDC_FOLLOWJUNCTIONS, m_ctlFollowJunctionPoints);
+    DDX_Control(pDX, IDC_FOLLOWJUNCTIONS, m_ctlFollowJunctions);
     DDX_Check(pDX, IDC_SKIPHIDDEN, m_skipHidden);
     DDX_Check(pDX, IDC_SKIPPROTECTED, m_skipProtected);
     DDX_Check(pDX, IDC_BACKUP_RESTORE, m_useBackupRestore);
@@ -70,7 +70,7 @@ BOOL CPageAdvanced::OnInitDialog()
     Localization::UpdateDialogs(*this);
 
     m_followMountPoints = COptions::FollowMountPoints;
-    m_followJunctionPoints = COptions::FollowJunctionPoints;
+    m_followJunctions = COptions::FollowJunctions;
     m_skipHidden = COptions::SkipHidden;
     m_skipProtected = COptions::SkipProtected;
     m_useBackupRestore = COptions::UseBackupRestore;
@@ -85,12 +85,13 @@ void CPageAdvanced::OnOK()
 {
     UpdateData();
 
-    const bool refresh_mpoints = m_followMountPoints && COptions::FollowMountPoints != static_cast<bool>(m_followMountPoints);
-    const bool refresh_jpoints = m_followJunctionPoints && COptions::FollowJunctionPoints != static_cast<bool>(m_followJunctionPoints);
+    const bool refresh_reprasepoints =
+        m_followMountPoints && COptions::FollowMountPoints != static_cast<bool>(m_followMountPoints) ||
+        m_followJunctions && COptions::FollowJunctions != static_cast<bool>(m_followJunctions);
     const bool refresh_all = COptions::ShowUncompressedFileSizes != static_cast<bool>(m_showUncompressedFileSizes);
 
     COptions::FollowMountPoints = (FALSE != m_followMountPoints);
-    COptions::FollowJunctionPoints = (FALSE != m_followJunctionPoints);
+    COptions::FollowJunctions = (FALSE != m_followJunctions);
     COptions::SkipHidden = (FALSE != m_skipHidden);
     COptions::SkipProtected = (FALSE != m_skipProtected);
     COptions::UseBackupRestore = (FALSE != m_useBackupRestore);
@@ -101,10 +102,9 @@ void CPageAdvanced::OnOK()
     {
         GetDocument()->RefreshItem(GetDocument()->GetRootItem());
     }
-    else
+    else if (refresh_reprasepoints)
     {
-        if (refresh_mpoints) GetDocument()->RefreshMountPointItems();
-        if (refresh_jpoints) GetDocument()->RefreshJunctionItems();
+        GetDocument()->RefreshReparsePointItems();
     }
 
     CPropertyPage::OnOK();

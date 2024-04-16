@@ -337,5 +337,5 @@ void CPageCleanups::OnBnClickedDown()
 
 void CPageCleanups::OnBnClickedHelpbutton()
 {
-    GetWDSApp()->LaunchHelp();
+    CDirStatApp::Get()->LaunchHelp();
 }

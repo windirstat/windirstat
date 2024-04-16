@@ -25,7 +25,7 @@
 #include "stdafx.h"
 #include "resource.h"
 #include "Langs.h"
-#include "MyImageList.h"
+#include "IconImageList.h"
 #include "MountPoints.h"
 #include <common/Constants.h>
 #include <common/Tracer.h>
@@ -36,19 +36,17 @@ class CMainFrame;
 class CDirStatApp;
 
 // Frequently used "globals"
-CMainFrame* GetMainFrame();
-CDirStatApp* GetWDSApp();
-CMyImageList* GetMyImageList();
+CIconImageList* GetIconImageList();
 
 //
 // CDirStatApp. The MFC application object.
-// Knows about RAM Usage, Mount points, Help files and the CMyImageList.
+// Knows about RAM Usage, Mount points, Help files and the CIconImageList.
 //
 class CDirStatApp final : public CWinAppEx
 {
 public:
-    CDirStatApp();
 
+    CDirStatApp();
     BOOL InitInstance() override;
     BOOL LoadState(LPCTSTR, CFrameImpl*) override { return TRUE; }
 
@@ -56,19 +54,21 @@ public:
     bool SetPortableMode(bool enable, bool only_open = false);
 
     void ReReadMountPoints();
-    bool IsVolumeMountPoint(const CStringW& path) const;
-    bool IsFolderJunction(DWORD attr) const;
+    bool IsFollowingAllowed(const CStringW& path, DWORD attr = 1) const;
+    bool IsMountPoint(const CStringW& path, DWORD attr = -1) const;
+    bool IsJunction(const CStringW& path, DWORD attr = -1) const;
 
     COLORREF AltColor() const;           // Coloring of compressed items
     COLORREF AltEncryptionColor() const; // Coloring of encrypted items
 
     static CStringW GetCurrentProcessMemoryInfo();
-    CMyImageList* GetMyImageList();
+    CIconImageList* GetIconImageList();
 
     static void LaunchHelp();
     static void RestartApplication();
 
-    static bool getDiskFreeSpace(LPCWSTR pszRootPath, ULONGLONG& total, ULONGLONG& unused);
+    static std::tuple<ULONGLONG, ULONGLONG> getDiskFreeSpace(LPCWSTR pszRootPath);
+    static CDirStatApp* Get() { return _singleton; }
 
 protected:
 
@@ -77,10 +77,11 @@ protected:
 
     CSingleDocTemplate* m_pDocTemplate{nullptr}; // MFC voodoo.
 
-    CReparsePoints m_mountPoints;             // Mount point information
-    CMyImageList m_myImageList;               // Our central image list
-    COLORREF m_altColor;                      // Coloring of compressed items
-    COLORREF m_altEncryptionColor;            // Coloring of encrypted items
+    CReparsePoints m_reparsePoints;   // Mount point information
+    CIconImageList m_myImageList;     // Our central image list
+    COLORREF m_altColor;              // Coloring of compressed items
+    COLORREF m_altEncryptionColor;    // Coloring of encrypted items
+    static CDirStatApp * _singleton;  // Singleton application instance
 #ifdef VTRACE_TO_CONSOLE
     CAutoPtr<CWDSTracerConsole> m_vtrace_console;
 #endif // VTRACE_TO_CONSOLE

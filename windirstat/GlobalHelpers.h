@@ -22,8 +22,6 @@
 
 #pragma once
 
-#include <common/Constants.h>
-
 CStringW GetLocaleString(LCTYPE lctype, LANGID langid);
 CStringW GetLocaleLanguage(LANGID langid);
 CStringW GetLocaleThousandSeparator();

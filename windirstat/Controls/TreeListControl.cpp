@@ -52,7 +52,6 @@ namespace
     constexpr auto HOTNODE_X  = 0;
 }
 
-CTreeListItem::CTreeListItem() = default;
 CTreeListItem::~CTreeListItem()
 {
     delete m_vi;
@@ -67,11 +66,11 @@ bool CTreeListItem::DrawSubitem(int subitem, CDC* pdc, CRect rc, UINT state, int
 
     CRect rcNode = rc;
     CRect rcPlusMinus;
-    GetTreeListControl()->DrawNode(pdc, rcNode, rcPlusMinus, this, width);
+    m_vi->control->DrawNode(pdc, rcNode, rcPlusMinus, this, width);
 
     CRect rcLabel = rc;
     rcLabel.left  = rcNode.right;
-    DrawLabel(GetTreeListControl(), GetMyImageList(), pdc, rcLabel, state, width, focusLeft, false);
+    DrawLabel(m_vi->control, GetIconImageList(), pdc, rcLabel, state, width, focusLeft, false);
 
     if (width)
     {
@@ -134,12 +133,12 @@ void CTreeListItem::DrivePacman() const
 
 int CTreeListItem::GetScrollPosition()
 {
-    return GetTreeListControl()->GetItemScrollPosition(this);
+    return m_vi->control->GetItemScrollPosition(this);
 }
 
 void CTreeListItem::SetScrollPosition(int top)
 {
-    GetTreeListControl()->SetItemScrollPosition(this, top);
+    m_vi->control->SetItemScrollPosition(this, top);
 }
 
 void CTreeListItem::UncacheImage()
@@ -150,7 +149,7 @@ void CTreeListItem::UncacheImage()
     }
 }
 
-void CTreeListItem::SortChildren()
+void CTreeListItem::SortChildren(const SSorting & sorting)
 {
     if (!IsVisible())
     {
@@ -165,9 +164,9 @@ void CTreeListItem::SortChildren()
     }
 
     // sort by size for proper treemap rendering
-    std::ranges::sort(m_vi->sortedChildren, [](auto item1, auto item2)
+    std::ranges::sort(m_vi->sortedChildren, [sorting](auto item1, auto item2)
     {
-        return item1->CompareS(item2, GetTreeListControl()->GetSorting()) < 0;
+        return item1->CompareS(item2, sorting) < 0;
     });
 }
 
@@ -275,12 +274,13 @@ void CTreeListItem::SetExpanded(bool expanded)
     m_vi->isExpanded = expanded;
 }
 
-void CTreeListItem::SetVisible(bool visible)
+void CTreeListItem::SetVisible(CTreeListControl* control, const bool visible)
 {
     if (visible)
     {
         ASSERT(!IsVisible());
         m_vi = new VISIBLEINFO(GetParent() == nullptr ? 0 : GetParent()->GetIndent() + 1);
+        m_vi->control = control;
     }
     else
     {
@@ -294,6 +294,12 @@ unsigned char CTreeListItem::GetIndent() const
 {
     ASSERT(IsVisible());
     return m_vi->indent;
+}
+
+void CTreeListItem::SetIndent(unsigned char indent)
+{
+    ASSERT(IsVisible());
+    m_vi->indent = indent;
 }
 
 CRect CTreeListItem::GetPlusMinusRect() const
@@ -320,30 +326,14 @@ void CTreeListItem::SetTitleRect(const CRect& rc) const
     m_vi->rcTitle = rc;
 }
 
-CTreeListControl* CTreeListItem::GetTreeListControl()
-{
-    // As we only have 1 TreeListControl and want to economize memory
-    // we simply made the TreeListControl global.
-    return CTreeListControl::GetTheTreeListControl();
-}
-
 /////////////////////////////////////////////////////////////////////////////
 // CTreeListControl
 
-CTreeListControl* CTreeListControl::_theTreeListControl;
-
-CTreeListControl* CTreeListControl::GetTheTreeListControl()
-{
-    ASSERT(_theTreeListControl != nullptr);
-    return _theTreeListControl;
-}
-
 IMPLEMENT_DYNAMIC(CTreeListControl, COwnerDrawnListControl)
 
-CTreeListControl::CTreeListControl(int rowHeight)
-    : COwnerDrawnListControl(rowHeight, COptions::TreeListColumnOrder.Ptr(), COptions::TreeListColumnWidths.Ptr())
+CTreeListControl::CTreeListControl(int rowHeight, std::vector<int>* column_order, std::vector<int>* column_widths)
+    : COwnerDrawnListControl(rowHeight, column_order, column_widths)
 {
-    _theTreeListControl = this;
     ASSERT(rowHeight <= NODE_HEIGHT); // can't be higher
     ASSERT(rowHeight % 2 == 0);       // must be an even number
 }
@@ -424,7 +414,6 @@ void CTreeListControl::DeselectAll()
 
 void CTreeListControl::ExpandPathToItem(const CTreeListItem* item)
 {
-    int i = 0;
     if (item == nullptr)
     {
         return;
@@ -438,7 +427,7 @@ void CTreeListControl::ExpandPathToItem(const CTreeListItem* item)
     }
 
     int parent = 0;
-    for (i = static_cast<int>(path.size()) - 1; i >= 0; i--)
+    for (int i = static_cast<int>(path.size()) - 1; i >= 0; i--)
     {
         int index = FindTreeItem(path[i]);
         if (index == -1)
@@ -459,9 +448,7 @@ void CTreeListControl::ExpandPathToItem(const CTreeListItem* item)
         parent = index;
     }
 
-    i = FindTreeItem(path[0]);
-
-    const int w = GetSubItemWidth(GetItem(i), 0) + 5;
+    const int w = GetSubItemWidth(GetItem(FindTreeItem(path[0])), 0) + 5;
     if (GetColumnWidth(0) < w)
     {
         SetColumnWidth(0, w);
@@ -489,13 +476,13 @@ void CTreeListControl::InitializeNodeBitmaps()
 void CTreeListControl::InsertItem(int i, CTreeListItem* item)
 {
     InsertListItem(i, item);
-    item->SetVisible(true);
+    item->SetVisible(this, true);
 }
 
 void CTreeListControl::DeleteItem(int i)
 {
     GetItem(i)->SetExpanded(false);
-    GetItem(i)->SetVisible(false);
+    GetItem(i)->SetVisible(this, false);
     COwnerDrawnListControl::DeleteItem(i);
 }
 
@@ -504,6 +491,8 @@ int CTreeListControl::FindTreeItem(const CTreeListItem* item) const
     return FindListItem(item);
 }
 
+#pragma warning(push)
+#pragma warning(disable:26454)
 BEGIN_MESSAGE_MAP(CTreeListControl, COwnerDrawnListControl)
     ON_WM_MEASUREITEM_REFLECT()
     ON_NOTIFY_REFLECT(LVN_ITEMCHANGING, OnLvnItemchangingList)
@@ -512,6 +501,7 @@ BEGIN_MESSAGE_MAP(CTreeListControl, COwnerDrawnListControl)
     ON_WM_LBUTTONDBLCLK()
     ON_WM_DESTROY()
 END_MESSAGE_MAP()
+#pragma warning(pop)
 
 void CTreeListControl::DrawNode(CDC* pdc, CRect& rc, CRect& rcPlusMinus, const CTreeListItem* item, int* width)
 {
@@ -766,7 +756,7 @@ void CTreeListControl::ExpandItem(int i, bool scroll)
 
     CWaitCursor wc;
 
-    item->SortChildren();
+    item->SortChildren(GetSorting());
 
     LockWindowUpdate();
     int maxwidth = GetSubItemWidth(item, 0);
@@ -778,7 +768,7 @@ void CTreeListControl::ExpandItem(int i, bool scroll)
         // The calculation of item width is very expensive for
         // very large lists so limit calculation based on the
         // first few bunch of visible items
-        if (scroll && c < 100)
+        if (scroll && c < 50)
         {
             maxwidth = max(maxwidth, GetSubItemWidth(child, 0));
         }
@@ -877,7 +867,6 @@ void CTreeListControl::OnChildAdded(const CTreeListItem* parent, CTreeListItem* 
     Sort();
 
     // NOTE: Redrawing is deffered to UI thread timer for performance
-
 }
 
 void CTreeListControl::OnChildRemoved(CTreeListItem* parent, CTreeListItem* child)
@@ -902,7 +891,7 @@ void CTreeListControl::OnChildRemoved(CTreeListItem* parent, CTreeListItem* chil
         const int c = FindTreeItem(child);
         ASSERT(c != -1);
         DeleteItem(c);
-        parent->SortChildren();
+        parent->SortChildren(GetSorting());
     }
 
     RedrawItems(p, p);
@@ -923,11 +912,12 @@ void CTreeListControl::OnRemovingAllChildren(const CTreeListItem* parent)
 
 void CTreeListControl::Sort()
 {
-    for (int i = 0; i < GetItemCount(); i++)
+    const int count = GetItemCount();
+    for (int i = 0; i < count; i++)
     {
         if (GetItem(i)->IsExpanded())
         {
-            GetItem(i)->SortChildren();
+            GetItem(i)->SortChildren(GetSorting());
         }
     }
     COwnerDrawnListControl::SortItems();

@@ -24,7 +24,6 @@
 #include "DirStatDoc.h"
 #include "Options.h"
 #include "PageTreeMap.h"
-#include <common/CommonHelpers.h>
 
 #include "Localization.h"
 
@@ -38,14 +37,7 @@ IMPLEMENT_DYNAMIC(CPageTreemap, CPropertyPage)
 CPageTreemap::CPageTreemap()
     : CPropertyPage(CPageTreemap::IDD)
       , m_options()
-      , m_altered(false)
       , m_undo()
-      , m_style(0)
-      , m_grid(0)
-      , m_nBrightness(0)
-      , m_nCushionShading(0)
-      , m_nHeight(0)
-      , m_nScaleFactor(0)
 {
 }
 

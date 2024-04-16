@@ -1,4 +1,4 @@
-// tracer.h - Implementation of tracer class for debugging purposes
+// Ttracer.h - Implementation of tracer class for debugging purposes
 //
 // NOTE: this file is under MIT license as opposed to the project as a whole.
 //
@@ -26,80 +26,51 @@
 // Author(s): - Oliver
 //
 
-#pragma once
-
-#include "tracer.h"
+#include "stdafx.h"
+#include "Tracer.h"
 #include <cstdarg>
 #include <fcntl.h>
 #include <io.h>
 #include <conio.h>
 
+#ifdef _DEBUG
 #if VTRACE_TO_CONSOLE
 CWDSTracerConsole::CWDSTracerConsole()
 {
-    int hCrt;
-    FILE *hf;
     ::AllocConsole();
-    ::SetConsoleTitle(L"WinDirStat debug trace output");
+    ::SetConsoleTitle(L"WinDirStat Debug Trace Output");
     // Standard output
-    hCrt = _open_osfhandle((intptr_t)::GetStdHandle(STD_OUTPUT_HANDLE), _O_TEXT);
-    hf = _fdopen(hCrt, "w");
+    int hCrt = _open_osfhandle(reinterpret_cast<intptr_t>(::GetStdHandle(STD_OUTPUT_HANDLE)), _O_TEXT);
+    FILE * hf = _fdopen(hCrt, "w");
     *stdout = *hf;
-    setvbuf(stdout, NULL, _IONBF, 0);
+    setvbuf(stdout, nullptr, _IONBF, 0);
     // Standard error
-    hCrt = _open_osfhandle((intptr_t)::GetStdHandle(STD_ERROR_HANDLE), _O_TEXT);
+    hCrt = _open_osfhandle(reinterpret_cast<intptr_t>(::GetStdHandle(STD_ERROR_HANDLE)), _O_TEXT);
     hf = _fdopen(hCrt, "w");
     *stderr = *hf;
-    setvbuf(stderr, NULL, _IONBF, 0);
+    setvbuf(stderr, nullptr, _IONBF, 0);
 }
 
 CWDSTracerConsole::~CWDSTracerConsole()
 {
-    _tprintf(L"Press a key to continue/close.\n");
+    wprintf(L"Press a key to continue/close.\n");
     (void)_getch();
     ::FreeConsole();
 }
 #endif // VTRACE_TO_CONSOLE
 
-CWDSTracer::CWDSTracer(LPCSTR srcfile, LPCSTR fctname, unsigned int srcline)
+CWDSTracer::CWDSTracer(LPCWSTR srcfile, LPCWSTR fctname, unsigned int srcline)
     : m_srcfile(srcfile)
     , m_srcline(srcline)
     , m_srcfunc(fctname)
     // we can rely on the format with back slashes, no need to check forward slashes here
-    , m_srcbasename((srcfile) ? strrchr(srcfile, '\\') : NULL)
+    , m_srcbasename((srcfile) ? wcsrchr(srcfile, '\\') : nullptr)
 {
     // Skip over the backslash
     m_srcbasename = (m_srcbasename) ? m_srcbasename + 1 : srcfile;
 }
 
-void CWDSTracer::operator()(LPCSTR format, ...) // ANSI
-{
-    CStringA str;
-    va_list args;
-    va_start(args, format);
-    str.FormatV(format, args);
-    va_end(args);
-    CStringA strDbg, strPfx;
-#   if (VTRACE_DETAIL == VTRACE_FILE_LINE_FUNC)
-    strPfx.Format("%hs:%u|%hs", m_srcbasename, m_srcline, m_srcfunc);
-#   elif (VTRACE_DETAIL == VTRACE_FILE_LINE)
-    strPfx.Format("%hs:%u", m_srcbasename, m_srcline);
-#   elif (VTRACE_DETAIL == VTRACE_FUNC)
-    strPfx = m_srcfunc;
-#   endif
-    if(strPfx.IsEmpty())
-        strDbg.Format("%hs\n", str.GetBuffer());
-    else
-        strDbg.Format("[%hs] %hs\n", strPfx.GetBuffer(), str.GetBuffer());
-#   if !VTRACE_TO_CONSOLE || (VTRACE_TO_CONSOLE && !VTRACE_NO_OUTPUTDEBUGSTRING)
-    OutputDebugStringA(strDbg.GetBuffer());
-#   endif
-#   if VTRACE_TO_CONSOLE
-    printf(strDbg.GetBuffer());
-#   endif // VTRACE_TO_CONSOLE
-}
-
-void CWDSTracer::operator()(LPCWSTR format, ...) // Unicode
+void CWDSTracer::operator()(LPCWSTR format, ...) const
 {
     CStringW str;
     va_list args;
@@ -108,20 +79,21 @@ void CWDSTracer::operator()(LPCWSTR format, ...) // Unicode
     va_end(args);
     CStringW strDbg, strPfx;
 #   if (VTRACE_DETAIL == VTRACE_FILE_LINE_FUNC)
-    strPfx.Format(L"%hs:%u|%hs", m_srcbasename, m_srcline, m_srcfunc);
+    strPfx.Format(L"%s:%u|%s", m_srcbasename, m_srcline, m_srcfunc);
 #   elif (VTRACE_DETAIL == VTRACE_FILE_LINE)
-    strPfx.Format(L"%hs:%u", m_srcbasename, m_srcline);
+    strPfx.Format(L"%s:%u", m_srcbasename, m_srcline);
 #   elif (VTRACE_DETAIL == VTRACE_FUNC)
     strPfx = m_srcfunc;
 #   endif
     if(strPfx.IsEmpty())
-        strDbg.Format(L"%ws\n", str.GetBuffer());
+        strDbg.Format(L"%s\n", str.GetBuffer());
     else
-        strDbg.Format(L"[%ws] %ws\n", strPfx.GetBuffer(), str.GetBuffer());
+        strDbg.Format(L"[%s] %s\n", strPfx.GetBuffer(), str.GetBuffer());
 #   if !VTRACE_TO_CONSOLE || (VTRACE_TO_CONSOLE && !VTRACE_NO_OUTPUTDEBUGSTRING)
     OutputDebugStringW(strDbg.GetBuffer());
 #   endif
-#   ifdef VTRACE_TO_CONSOLE
+#   if VTRACE_TO_CONSOLE
     wprintf(strDbg.GetBuffer());
 #   endif // VTRACE_TO_CONSOLE
 }
+#endif

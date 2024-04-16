@@ -1,4 +1,4 @@
-// tracer.h - Implementation of tracer class for debugging purposes
+// Tracer.h - Implementation of tracer class for debugging purposes
 //
 // NOTE: this file is under MIT license as opposed to the project as a whole.
 //
@@ -47,19 +47,18 @@ public:
 class CWDSTracer final
 {
 public:
-    CWDSTracer(LPCSTR srcfile, LPCSTR fctname, unsigned int srcline);
-    void operator()(LPCSTR format, ...);
-    void operator()(LPCWSTR format, ...);
+    CWDSTracer(LPCWSTR srcfile, LPCWSTR fctname, unsigned int srcline);
+    CWDSTracer& operator=(const CWDSTracer&) = delete; // hide it
+    void operator()(LPCWSTR format, ...) const;
 private:
-    const CStringA m_srcfile;
+    const CStringW m_srcfile;
     unsigned int   m_srcline;
-    LPCSTR         m_srcbasename;
-    LPCSTR         m_srcfunc;
-    CWDSTracer&    operator=(const CWDSTracer&) = delete; // hide it
+    LPCWSTR        m_srcbasename;
+    LPCWSTR        m_srcfunc;
 };
 
 // Use as VTRACE(format, ...) ... *must* be on one long line ;)
-#   define VTRACE CWDSTracer(__##FILE##__, __##FUNCTION##__, __##LINE##__)
+#   define VTRACE CWDSTracer(__##FILEW##__, __##FUNCTIONW__, __##LINE##__)
 #else
 #   define VTRACE __noop
 #endif // _DEBUG

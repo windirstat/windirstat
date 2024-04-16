@@ -33,9 +33,8 @@ static HMODULE rtl_library = LoadLibrary(L"ntdll.dll");
 static NTSTATUS(WINAPI* NtQueryDirectoryFile)(HANDLE FileHandle, HANDLE Event, PVOID ApcRoutine,
     PVOID ApcContext, PIO_STATUS_BLOCK IoStatusBlock, PVOID FileInformation,
     ULONG Length, FILE_INFORMATION_CLASS FileInformationClass, BOOLEAN ReturnSingleEntry,
-    PUNICODE_STRING FileName, BOOLEAN RestartScan) = reinterpret_cast<decltype(NtQueryDirectoryFile)>(GetProcAddress(rtl_library, "NtQueryDirectoryFile"));
-
-FileFindEnhanced::FileFindEnhanced() = default;
+    PUNICODE_STRING FileName, BOOLEAN RestartScan) = reinterpret_cast<decltype(NtQueryDirectoryFile)>(
+        static_cast<LPVOID>(GetProcAddress(rtl_library, "NtQueryDirectoryFile")));
 
 FileFindEnhanced::~FileFindEnhanced()
 {
@@ -63,21 +62,27 @@ bool FileFindEnhanced::FindNextFile()
             m_directory_info, BUFFER_SIZE, static_cast<FILE_INFORMATION_CLASS>(FileDirectoryInformation),
             FALSE, (u_search.Length > 0) ? &u_search : nullptr, (m_firstrun) ? TRUE : FALSE);
 
-        // disable for next run
+        // fetch point to current node 
+        success = (Status == 0);
         m_current_info = reinterpret_cast<FILE_DIRECTORY_INFORMATION*>(m_directory_info);
-        m_firstrun     = false;
-        success        = (Status == 0);
+
+        // special case for reparse on initial run points - update attributes
+        if (success && m_firstrun) m_current_info->FileAttributes = GetFileAttributes(GetFilePath());
+
+        // disable for next run
+        m_firstrun = false;
+        
     }
     else
     {
         m_current_info = reinterpret_cast<FILE_DIRECTORY_INFORMATION*>(
             &reinterpret_cast<BYTE*>(m_current_info)[m_current_info->NextEntryOffset]);
-        success        = true;
+        success = true;
     }
 
     if (success)
     {
-        const LPWSTR tmp = m_name.GetBufferSetLength(m_current_info->FileNameLength / sizeof(WCHAR));
+        LPWSTR tmp = m_name.GetBufferSetLength(m_current_info->FileNameLength / sizeof(WCHAR));
         memcpy(tmp, m_current_info->FileName, m_current_info->FileNameLength);
     }
 
@@ -86,13 +91,13 @@ bool FileFindEnhanced::FindNextFile()
 
 bool FileFindEnhanced::FindFile(const CStringW & strFolder, const CStringW& strName)
 {
-    // stash the search pattern for later user
+    // stash the search pattern for later use
     m_search = strName;
 
     // convert the path to a long path that is compatible with the other call
     m_base = strFolder;
-    if (m_base.Find(L":\\", 1) == 1) m_base = L"\\??\\" + m_base;
-    else if (m_base.Find(L"\\\\") == 0) m_base = L"\\??\\UNC\\" + m_base.Mid(2);
+    if (m_base.Find(L":\\", 1) == 1) m_base = m_dos + m_base;
+    else if (m_base.Find(L"\\\\") == 0) m_base = m_dosunc + m_base.Mid(2);
     UNICODE_STRING u_path = {};
     u_path.Length = static_cast<USHORT>(m_base.GetLength() * sizeof(WCHAR));
     u_path.MaximumLength = static_cast<USHORT>(m_base.GetLength() + 1) * sizeof(WCHAR);
@@ -154,6 +159,11 @@ CStringW FileFindEnhanced::GetFileName() const
     return m_name;
 }
 
+ULONGLONG FileFindEnhanced::GetLogicalFileSize() const
+{
+    return m_current_info->EndOfFile.QuadPart;
+}
+
 ULONGLONG FileFindEnhanced::GetFileSize() const
 {
     // Optionally retrieve the compressed file size
@@ -173,20 +183,31 @@ FILETIME FileFindEnhanced::GetLastWriteTime() const
 
 CStringW FileFindEnhanced::GetFilePath() const
 {
+    if (m_base.GetAt(m_base.GetLength() - 1) == L'\\') return m_base + m_name;
     return m_base + L"\\" + m_name;
+}
+
+CStringW FileFindEnhanced::GetFileLongPath() const
+{
+    return GetLongPathCompatible(StripDosPathCharts(GetFilePath()));
+}
+
+CStringW FileFindEnhanced::StripDosPathCharts(const CStringW& path)
+{
+    if (wcsncmp(path.GetString(), m_dos, wcslen(m_dos) - 1) == 0)
+        return path.Mid(static_cast<int>(wcslen(m_dos)));
+
+    if (wcsncmp(path.GetString(), m_dosunc, wcslen(m_dosunc) - 1) == 0)
+        return path.Mid(static_cast<int>(wcslen(m_dosunc)));
+    return path;
 }
 
 CStringW FileFindEnhanced::GetLongPathCompatible(const CStringW & path)
 {
     CStringW ret;
-    if (path.Find(L":\\", 1) == 1) ret = L"\\\\?\\" + path;
-    else if (path.Find(L"\\\\") == 0) ret = L"\\\\?\\UNC\\" + path.Mid(2);
-    else
-    {
-        ASSERT(0);
-    }
-
-    return ret;
+    if (path.Find(L":\\", 1) == 1) return { L"\\\\?\\" + path };
+    if (path.Find(L"\\\\") == 0) return { L"\\\\?\\UNC\\" + path.Mid(2) };
+    return path;
 }
 
 bool FileFindEnhanced::DoesFileExist(const CStringW& folder, const CStringW& file)

@@ -23,9 +23,9 @@
 #include "CsvLoader.h"
 #include "deletewarningdlg.h"
 #include "DirStatDoc.h"
-#include "DirStatView.h"
+#include "FileTreeView.h"
 #include "GlobalHelpers.h"
-#include "GraphView.h"
+#include "TreeMapView.h"
 #include "Item.h"
 #include "Localization.h"
 #include "MainFrame.h"
@@ -44,6 +44,7 @@
 #include <vector>
 #include <filesystem>
 #include <fstream>
+#include <stack>
 
 CDirStatDoc* _theDocument;
 
@@ -173,11 +174,17 @@ WCHAR CDirStatDoc::GetEncodingSeparator()
 
 void CDirStatDoc::DeleteContents()
 {
+    CWaitCursor wc;
+
+    // Wait for system to fully shutdown
     ShutdownCoordinator();
+
+    // Cleanup structures
+    delete m_rootItemDupe;
     delete m_rootItem;
     m_rootItem = nullptr;
     m_zoomItem = nullptr;
-    GetWDSApp()->ReReadMountPoints();
+    CDirStatApp::Get()->ReReadMountPoints();
 }
 
 BOOL CDirStatDoc::OnNewDocument()
@@ -193,13 +200,20 @@ BOOL CDirStatDoc::OnNewDocument()
 
 BOOL CDirStatDoc::OnOpenDocument(LPCWSTR lpszPathName)
 {
-    CDocument::OnNewDocument(); // --> DeleteContents()
+    // Temporary minimize extra reviews
+    CMainFrame::Get()->MinimizeTreeMapView();
+    CMainFrame::Get()->MinimizeExtensionView();
 
+    // Prepare for new root and delete any existing data
+    CDocument::OnNewDocument();
+
+    // Decode list of folders to scan
     const CStringW spec = lpszPathName;
     CStringW folder;
     CStringArray drives;
     DecodeSelection(spec, folder, drives);
 
+    // Determine if we should add multiple drives under a single node
     CStringArray rootFolders;
     if (drives.GetSize() > 0)
     {
@@ -240,9 +254,10 @@ BOOL CDirStatDoc::OnOpenDocument(LPCWSTR lpszPathName)
     }
     m_zoomItem = m_rootItem;
 
-    GetMainFrame()->MinimizeGraphView();
-    GetMainFrame()->MinimizeTypeView();
+    // Set new node for duplicate view
+    m_rootItemDupe = new CItemDupe();
 
+    // Update new root for display
     UpdateAllViews(nullptr, HINT_NEWROOT);
     StartupCoordinator(std::vector({ GetDocument()->GetRootItem() }));
     return true;
@@ -250,13 +265,14 @@ BOOL CDirStatDoc::OnOpenDocument(LPCWSTR lpszPathName)
 
 BOOL CDirStatDoc::OnOpenDocument(CItem * newroot)
 {
+    CMainFrame::Get()->MinimizeTreeMapView();
+    CMainFrame::Get()->MinimizeExtensionView();
+
     CDocument::OnNewDocument(); // --> DeleteContents()
 
+    m_rootItemDupe = new CItemDupe();
     m_rootItem = newroot;
     m_zoomItem = m_rootItem;
-
-    GetMainFrame()->MinimizeGraphView();
-    GetMainFrame()->MinimizeTypeView();
 
     UpdateAllViews(nullptr, HINT_NEWROOT);
     StartupCoordinator({});
@@ -284,7 +300,7 @@ void CDirStatDoc::SetTitlePrefix(const CStringW& prefix) const
 {
     static CStringW suffix = IsAdmin() ? L" (Administrator)" : L"";
     CStringW docName = prefix + L" " + GetTitle() + L" " + suffix;
-    GetMainFrame()->UpdateFrameTitleForDocument(docName.Trim());
+    CMainFrame::Get()->UpdateFrameTitleForDocument(docName.Trim());
 }
 
 COLORREF CDirStatDoc::GetCushionColor(LPCWSTR ext)
@@ -323,33 +339,14 @@ bool CDirStatDoc::IsDrive(const CStringW& spec)
 // Starts a refresh of all mount points in our tree.
 // Called when the user changes the follow mount points option.
 //
-void CDirStatDoc::RefreshMountPointItems()
+void CDirStatDoc::RefreshReparsePointItems()
 {
     CWaitCursor wc;
-
-    CItem* root = GetRootItem();
-    if (nullptr == root)
+    
+    if (CItem* root = GetRootItem(); nullptr != root)
     {
-        return;
+        RecurseRefreshReparsePoints(root);
     }
-
-    RecurseRefreshMountPointItems(root);
-}
-
-// Starts a refresh of all junction points in our tree.
-// Called when the user changes the ignore junction points option.
-//
-void CDirStatDoc::RefreshJunctionItems()
-{
-    CWaitCursor wc;
-
-    CItem* root = GetRootItem();
-    if (nullptr == root)
-    {
-        return;
-    }
-
-    RecurseRefreshJunctionItems(root);
 }
 
 bool CDirStatDoc::HasRootItem() const
@@ -372,6 +369,11 @@ CItem* CDirStatDoc::GetZoomItem() const
     return m_zoomItem;
 }
 
+CItemDupe* CDirStatDoc::GetRootItemDupe() const
+{
+    return m_rootItemDupe;
+}
+
 bool CDirStatDoc::IsZoomed() const
 {
     return GetZoomItem() != GetRootItem();
@@ -380,7 +382,7 @@ bool CDirStatDoc::IsZoomed() const
 void CDirStatDoc::SetHighlightExtension(const LPCWSTR ext)
 {
     m_highlightExtension = ext;
-    GetMainFrame()->SetSelectionMessageText();
+    CMainFrame::Get()->SetSelectionMessageText();
 }
 
 CStringW CDirStatDoc::GetHighlightExtension()
@@ -392,7 +394,7 @@ CStringW CDirStatDoc::GetHighlightExtension()
 //
 void CDirStatDoc::UnlinkRoot()
 {
-    GetMainFrame()->InvokeInMessageThread([this]
+    CMainFrame::Get()->InvokeInMessageThread([this]
     {
         DeleteContents();
         UpdateAllViews(nullptr, HINT_NEWROOT);
@@ -404,10 +406,10 @@ void CDirStatDoc::UnlinkRoot()
 bool CDirStatDoc::UserDefinedCleanupWorksForItem(USERDEFINEDCLEANUP* udc, const CItem* item)
 {
     return item != nullptr &&
-        item->IsType(IT_DRIVE) && udc->worksForDrives ||
-        item->IsType(IT_DIRECTORY) && udc->worksForDirectories ||
-        item->IsType(IT_FILE) && udc->worksForFiles ||
-        item->HasUncPath() && udc->worksForUncPaths;
+        (item->IsType(IT_DRIVE) && udc->worksForDrives) ||
+        (item->IsType(IT_DIRECTORY) && udc->worksForDirectories) ||
+        (item->IsType(IT_FILE) && udc->worksForFiles) ||
+        (item->HasUncPath() && udc->worksForUncPaths);
 }
 
 void CDirStatDoc::OpenItem(const CItem* item, LPCWSTR verb)
@@ -437,28 +439,40 @@ void CDirStatDoc::OpenItem(const CItem* item, LPCWSTR verb)
     ShellExecuteEx(&sei);
 }
 
-void CDirStatDoc::RecurseRefreshMountPointItems(CItem* item)
+void CDirStatDoc::RecurseRefreshReparsePoints(CItem* item)
 {
-    if (item->IsType(IT_DIRECTORY) && item != GetRootItem() && GetWDSApp()->IsVolumeMountPoint(item->GetPath()))
-    {
-        RefreshItem(item);
-    }
-    for (const auto & child : item->GetChildren())
-    {
-        RecurseRefreshMountPointItems(child);
-    }
-}
+    std::vector<CItem*> to_refresh;
 
-void CDirStatDoc::RecurseRefreshJunctionItems(CItem* item)
-{
-    if (item->IsType(IT_DIRECTORY) && item != GetRootItem() && GetWDSApp()->IsFolderJunction(item->GetAttributes()))
+    if (item == nullptr) return;
+    std::stack<CItem*> reparse_stack({item});
+    while (!reparse_stack.empty())
     {
-        RefreshItem(item);
+        const auto& qitem = reparse_stack.top();
+        reparse_stack.pop();
+
+        if (!item->IsType(IT_DIRECTORY | IT_DRIVE)) continue;
+        for (const auto& child : qitem->GetChildren())
+        {
+            if (!child->IsType(IT_DIRECTORY | IT_DRIVE | ITF_ROOTITEM))
+            {
+                continue;
+            }
+
+            if (CDirStatApp::Get()->IsMountPoint(child->GetPath(), child->GetAttributes()) ||
+                CDirStatApp::Get()->IsJunction(child->GetPath(), child->GetAttributes()))
+            {
+                to_refresh.push_back(child);
+            }
+            else
+            {
+                reparse_stack.push(child);
+            }
+        }
     }
 
-    for (const auto& child : item->GetChildren())
+    if (!to_refresh.empty())
     {
-        RecurseRefreshJunctionItems(child);
+        RefreshItem(to_refresh);
     }
 }
 
@@ -512,7 +526,7 @@ void CDirStatDoc::RebuildExtensionData()
     m_extensionData.RemoveAll();
     if (IsRootDone())
     {
-        m_rootItem->RecurseCollectExtensionData(&m_extensionData);
+        m_rootItem->CollectExtensionData(&m_extensionData);
     }
     
     CStringArray sortedExtensions;
@@ -588,8 +602,8 @@ bool CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, bool toT
     }
 
     // Fetch the parent item of the current focus / selected item so we can reselect
-    const auto reselect = CTreeListControl::GetTheTreeListControl()->GetItem(
-        CTreeListControl::GetTheTreeListControl()->GetSelectionMark())->GetParent();
+    const auto reselect = CFileTreeControl::Get()->GetItem(
+        CFileTreeControl::Get()->GetSelectionMark())->GetParent();
 
     CModalShellApi msa;
     for (const auto& item : items)
@@ -600,7 +614,7 @@ bool CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, bool toT
     RefreshItem(items);
 
     // Attempt to reselect the item
-    CTreeListControl::GetTheTreeListControl()->SelectItem(reselect, true, true);
+    CFileTreeControl::Get()->SelectItem(reselect, true, true);
 
     return true;
 }
@@ -714,11 +728,11 @@ void CDirStatDoc::RecursiveUserDefinedCleanup(USERDEFINEDCLEANUP* udc, const CSt
         {
             continue;
         }
-        if (GetWDSApp()->IsVolumeMountPoint(finder.GetFilePath()) && !COptions::FollowMountPoints)
+        if (CDirStatApp::Get()->IsMountPoint(finder.GetFilePath(), finder.GetAttributes()) && !COptions::FollowMountPoints)
         {
             continue;
         }
-        if (GetWDSApp()->IsFolderJunction(finder.GetAttributes()) && !COptions::FollowJunctionPoints)
+        if (CDirStatApp::Get()->IsJunction(finder.GetFilePath(), finder.GetAttributes()) && !COptions::FollowJunctions)
         {
             continue;
         }
@@ -811,7 +825,18 @@ bool CDirStatDoc::IsReselectChildAvailable() const
 
 bool CDirStatDoc::DirectoryListHasFocus()
 {
-    return LF_DIRECTORYLIST == GetMainFrame()->GetLogicalFocus();
+    return LF_DIRECTORYLIST == CMainFrame::Get()->GetLogicalFocus();
+}
+
+bool CDirStatDoc::DuplicateListHasFocus()
+{
+    return LF_DUPLICATELIST == CMainFrame::Get()->GetLogicalFocus();
+}
+
+std::vector<CItem*> CDirStatDoc::GetAllSelected()
+{
+    return DuplicateListHasFocus() ? CFileDupeControl::Get()->GetAllSelected<CItem>() :
+        CFileTreeControl::Get()->GetAllSelected<CItem>();
 }
 
 void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
@@ -832,8 +857,8 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
     static bool (*parent_not_null)(CItem*) = [](CItem* item) { return item != nullptr && item->GetParent() != nullptr; };
     static bool (*reslect_avail)(CItem*) = [](CItem*) { return doc->IsReselectChildAvailable(); };
     static bool (*not_root)(CItem*) = [](CItem* item) { return item != nullptr && !item->IsRootItem(); };
-    static bool (*is_suspended)(CItem*) = [](CItem*) { return GetMainFrame()->IsScanSuspended(); };
-    static bool (*is_not_suspended)(CItem*) = [](CItem*) { return doc->HasRootItem() && !doc->IsRootDone() && !GetMainFrame()->IsScanSuspended(); };
+    static bool (*is_suspended)(CItem*) = [](CItem*) { return CMainFrame::Get()->IsScanSuspended(); };
+    static bool (*is_not_suspended)(CItem*) = [](CItem*) { return doc->HasRootItem() && !doc->IsRootDone() && !CMainFrame::Get()->IsScanSuspended(); };
 
     static std::unordered_map<UINT, const command_filter> filters
     {
@@ -864,10 +889,10 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
     }
 
     const auto& filter = filters[pCmdUI->m_nID];
-    const auto& items = CTreeListControl::GetTheTreeListControl()->GetAllSelected<CItem>();
+    const auto& items = GetAllSelected();
 
     bool allow = true;
-    allow &= !filter.tree_focus || DirectoryListHasFocus();
+    allow &= !filter.tree_focus || DirectoryListHasFocus() || DuplicateListHasFocus();
     allow &= filter.allow_none || !items.empty();
     allow &= filter.allow_many || items.size() <= 1;
     allow &= filter.allow_early || IsRootDone();
@@ -911,14 +936,13 @@ END_MESSAGE_MAP()
 
 void CDirStatDoc::OnRefreshSelected()
 {
-    RefreshItem(CTreeListControl::GetTheTreeListControl()->GetAllSelected<CItem>());
+    RefreshItem(GetAllSelected());
 }
 
 void CDirStatDoc::OnRefreshAll()
 {
     RefreshItem(GetRootItem());
 }
-
 
 void CDirStatDoc::OnSaveResults()
 {
@@ -951,14 +975,14 @@ void CDirStatDoc::OnEditCopy()
 {
     // create concatenated paths
     CStringW paths;
-    const auto & items = CTreeListControl::GetTheTreeListControl()->GetAllSelected<CItem>();
+    const auto & items = GetAllSelected();
     for (const auto & item : items)
     {
         if (paths.GetLength() > 0) paths += L"\r\n";
         paths += item->GetPath();
     }
 
-    CMainFrame::GetTheFrame()->CopyToClipboard(paths.GetBuffer());
+    CMainFrame::Get()->CopyToClipboard(paths.GetBuffer());
 }
 
 void CDirStatDoc::OnCleanupEmptyRecycleBin()
@@ -1043,7 +1067,7 @@ void CDirStatDoc::OnViewShowUnknown()
 
 void CDirStatDoc::OnTreemapZoomIn()
 {
-    const auto & item = CTreeListControl::GetTheTreeListControl()->GetFirstSelectedItem<CItem>();
+    const auto & item = CFileTreeControl::Get()->GetFirstSelectedItem<CItem>();
     if (item != nullptr)
     {
         SetZoomItem(item);
@@ -1061,7 +1085,7 @@ void CDirStatDoc::OnTreemapZoomOut()
 void CDirStatDoc::OnExplorerSelect()
 {
     // accumulate a unique set of paths
-    const auto& items = CTreeListControl::GetTheTreeListControl()->GetAllSelected<CItem>();
+    const auto& items = GetAllSelected();
     std::unordered_set<std::wstring>paths;
     for (const auto& item : items)
     {
@@ -1102,7 +1126,7 @@ void CDirStatDoc::OnCommandPromptHere()
     try
     {
         // accumulate a unique set of paths
-        const auto& items = CTreeListControl::GetTheTreeListControl()->GetAllSelected<CItem>();
+        const auto& items = GetAllSelected();
         std::unordered_set<std::wstring>paths;
         for (const auto& item : items)
         {
@@ -1125,7 +1149,7 @@ void CDirStatDoc::OnCommandPromptHere()
 
 void CDirStatDoc::OnCleanupDeleteToBin()
 {
-    const auto & items = CTreeListControl::GetTheTreeListControl()->GetAllSelected<CItem>();
+    const auto & items = GetAllSelected();
     if (DeletePhysicalItems(items, true))
     {
         RefreshRecyclers();
@@ -1135,7 +1159,7 @@ void CDirStatDoc::OnCleanupDeleteToBin()
 
 void CDirStatDoc::OnCleanupDelete()
 {
-    const auto & items = CTreeListControl::GetTheTreeListControl()->GetAllSelected<CItem>();
+    const auto & items = GetAllSelected();
     if (DeletePhysicalItems(items, false))
     {
         UpdateAllViews(nullptr);
@@ -1145,7 +1169,7 @@ void CDirStatDoc::OnCleanupDelete()
 void CDirStatDoc::OnUpdateUserDefinedCleanup(CCmdUI* pCmdUI)
 {
     const int i = pCmdUI->m_nID - ID_USERDEFINEDCLEANUP0;
-    const auto & items = CTreeListControl::GetTheTreeListControl()->GetAllSelected<CItem>();
+    const auto & items = GetAllSelected();
     bool allow_control = DirectoryListHasFocus() && COptions::UserDefinedCleanups.at(i).enabled && !items.empty();
     if (allow_control) for (const auto & item : items)
     {
@@ -1158,7 +1182,7 @@ void CDirStatDoc::OnUpdateUserDefinedCleanup(CCmdUI* pCmdUI)
 void CDirStatDoc::OnUserDefinedCleanup(const UINT id)
 {
     USERDEFINEDCLEANUP* udc = &COptions::UserDefinedCleanups[id - ID_USERDEFINEDCLEANUP0];
-    const auto & items = CTreeListControl::GetTheTreeListControl()->GetAllSelected<CItem>();
+    const auto & items = GetAllSelected();
     for (const auto & item : items)
     {
         ASSERT(UserDefinedCleanupWorksForItem(udc, item));
@@ -1187,22 +1211,22 @@ void CDirStatDoc::OnUserDefinedCleanup(const UINT id)
 
 void CDirStatDoc::OnTreemapSelectParent()
 {
-    const auto & item = CTreeListControl::GetTheTreeListControl()->GetFirstSelectedItem<CItem>();
+    const auto & item = CFileTreeControl::Get()->GetFirstSelectedItem<CItem>();
     PushReselectChild(item);
-    CTreeListControl::GetTheTreeListControl()->SelectItem(item->GetParent(), true, true);
+    CFileTreeControl::Get()->SelectItem(item->GetParent(), true, true);
     UpdateAllViews(nullptr, HINT_SELECTIONREFRESH);
 }
 
 void CDirStatDoc::OnTreemapReselectChild()
 {
     const CItem* item = PopReselectChild();
-    CTreeListControl::GetTheTreeListControl()->SelectItem(item, true, true);
+    CFileTreeControl::Get()->SelectItem(item, true, true);
     UpdateAllViews(nullptr, HINT_SELECTIONREFRESH);
 }
 
 void CDirStatDoc::OnCleanupOpenTarget()
 {
-    const auto & items = CTreeListControl::GetTheTreeListControl()->GetAllSelected<CItem>();
+    const auto & items = GetAllSelected();
     for (const auto & item : items)
     {
         OpenItem(item);
@@ -1211,7 +1235,7 @@ void CDirStatDoc::OnCleanupOpenTarget()
 
 void CDirStatDoc::OnCleanupProperties()
 {
-    const auto & items = CTreeListControl::GetTheTreeListControl()->GetAllSelected<CItem>();
+    const auto & items = GetAllSelected();
     for (const auto & item : items)
     {
         OpenItem(item, L"properties");
@@ -1220,18 +1244,40 @@ void CDirStatDoc::OnCleanupProperties()
 
 void CDirStatDoc::OnScanSuspend()
 {
-    queue.suspend(false);
-    GetMainFrame()->SuspendState(true);
+    CWaitCursor wc;
+
+    // Wait for system to fully shutdown
+    std::thread([this]() mutable
+    {
+        queue.suspend(true);
+        PostMessage(CMainFrame::Get()->GetSafeHwnd(), WM_USER + 1, 0, 0);
+    }).detach();
+
+    // Read all messages in this next loop, removing each message as we read it.
+    for (MSG msg; ::GetMessage(&msg, nullptr, 0, 0); )
+    {
+        if (msg.message == WM_USER + 1) break;
+        ::TranslateMessage(&msg);
+        ::DispatchMessage(&msg);
+    }
+
+    // Mark as suspended
+    if (CMainFrame::Get() != nullptr)
+        CMainFrame::Get()->SuspendState(true);
 }
 
 void CDirStatDoc::OnScanResume()
 {
     queue.resume();
-    GetMainFrame()->SuspendState(false);
+
+    if (CMainFrame::Get() != nullptr)
+        CMainFrame::Get()->SuspendState(false);
 }
 
 void CDirStatDoc::ShutdownCoordinator(const bool wait)
 {
+    if (wait) OnScanSuspend();
+
     if (queue.drain(nullptr) && wait)
     {
         for (auto& thread : threads)
@@ -1244,7 +1290,8 @@ void CDirStatDoc::ShutdownCoordinator(const bool wait)
 void CDirStatDoc::StartupCoordinator(std::vector<CItem*> items)
 {
     // Stop any previous executions
-    ShutdownCoordinator(true);
+    ShutdownCoordinator();
+    OnScanResume();
 
     // Address currently zoomed / selected item conflicts
     const auto zoom_item = GetZoomItem();
@@ -1267,7 +1314,7 @@ void CDirStatDoc::StartupCoordinator(std::vector<CItem*> items)
     ClearReselectChildStack();
 
     // Do not attempt to update graph while scanning
-    GetMainFrame()->GetGraphView()->SuspendRecalculationDrawing(true);
+    CMainFrame::Get()->GetTreeMapView()->SuspendRecalculationDrawing(true);
 
     // Start a thread so we do not hang the message loop
     // Lambda captures assume document exists for duration of thread
@@ -1277,7 +1324,7 @@ void CDirStatDoc::StartupCoordinator(std::vector<CItem*> items)
         static std::shared_mutex mutex;
         std::lock_guard lock(mutex);
 
-        const auto selected_items = CTreeListControl::GetTheTreeListControl()->GetAllSelected<CItem>();
+        const auto selected_items = GetAllSelected();
         using visual_info = struct { bool wasExpanded; bool isSelected; int oldScrollPosition; };
         std::unordered_map<CItem *,visual_info> visualInfo;
         for (auto item : std::vector(items))
@@ -1309,11 +1356,11 @@ void CDirStatDoc::StartupCoordinator(std::vector<CItem*> items)
                 if (item->IsRootItem())
                 {
                     // Handle deleted root item
-                    GetMainFrame()->InvokeInMessageThread([]
+                    CMainFrame::Get()->InvokeInMessageThread([]
                     {
                         GetDocument()->UnlinkRoot();
-                        GetMainFrame()->MinimizeGraphView();
-                        GetMainFrame()->MinimizeTypeView();
+                        CMainFrame::Get()->MinimizeTreeMapView();
+                        CMainFrame::Get()->MinimizeExtensionView();
                     });
                     return;
                 }
@@ -1332,6 +1379,12 @@ void CDirStatDoc::StartupCoordinator(std::vector<CItem*> items)
         // Add items to processing queue
         for (const auto item : std::vector(items))
         {
+            // Skip any items we should not follow
+            if (!item->IsType(ITF_ROOTITEM) && !CDirStatApp::Get()->IsFollowingAllowed(item->GetPath(), item->GetAttributes()))
+            {
+                continue;
+            }
+
             item->UpwardAddReadJobs(1);
             item->UpwardSetUndone();
             queue.push(item);
@@ -1353,11 +1406,11 @@ void CDirStatDoc::StartupCoordinator(std::vector<CItem*> items)
             if (queue.wait_for_all())
             {
                 // Exit here and stop progress if drained by an outside actor
-                GetMainFrame()->InvokeInMessageThread([]
+                CMainFrame::Get()->InvokeInMessageThread([]
                 {
-                    GetMainFrame()->SetProgressComplete();
-                    GetMainFrame()->MinimizeGraphView();
-                    GetMainFrame()->MinimizeTypeView();
+                    CMainFrame::Get()->SetProgressComplete();
+                    CMainFrame::Get()->MinimizeTreeMapView();
+                    CMainFrame::Get()->MinimizeExtensionView();
                 });
                 return;
             }
@@ -1390,21 +1443,21 @@ void CDirStatDoc::StartupCoordinator(std::vector<CItem*> items)
         CItem::ScanItemsFinalize(GetRootItem());
 
         // Invoke a UI thread to do updates
-        GetMainFrame()->InvokeInMessageThread([&items,&visualInfo]
+        CMainFrame::Get()->InvokeInMessageThread([&items,&visualInfo]
         {
             for (const auto& item : items)
             {
                 item->SetScrollPosition(visualInfo[item].oldScrollPosition);
             }
 
-            GetMainFrame()->LockWindowUpdate();
+            CMainFrame::Get()->LockWindowUpdate();
             GetDocument()->RebuildExtensionData();
             GetDocument()->UpdateAllViews(nullptr);
-            GetMainFrame()->SetProgressComplete();
-            GetMainFrame()->RestoreTypeView();
-            GetMainFrame()->RestoreGraphView();
-            GetMainFrame()->GetGraphView()->SuspendRecalculationDrawing(false);
-            GetMainFrame()-> UnlockWindowUpdate();
+            CMainFrame::Get()->SetProgressComplete();
+            CMainFrame::Get()->RestoreExtensionView();
+            CMainFrame::Get()->RestoreTreeMapView();
+            CMainFrame::Get()->GetTreeMapView()->SuspendRecalculationDrawing(false);
+            CMainFrame::Get()-> UnlockWindowUpdate();
         });
     }).detach();
 }

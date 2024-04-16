@@ -24,7 +24,7 @@
 #include "Options.h"
 #include "PageTreelist.h"
 #include "DirStatDoc.h"
-#include "DirStatView.h"
+#include "FileTreeView.h"
 #include "Localization.h"
 #include "MainFrame.h"
 
@@ -132,7 +132,7 @@ void CPageTreelist::OnOK()
     COptions::TreeListColor5 = m_treelistColor[5];
     COptions::TreeListColor6 = m_treelistColor[6];
     COptions::TreeListColor7 = m_treelistColor[7];
-    if (cols_changed) GetMainFrame()->GetDirStatView()->CreateColumns();
+    if (cols_changed) CMainFrame::Get()->GetFileTreeView()->CreateColumns();
     GetDocument()->UpdateAllViews(nullptr, HINT_LISTSTYLECHANGED);
     CPropertyPage::OnOK();
 }

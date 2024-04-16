@@ -178,7 +178,7 @@ CTreemap::CTreemap()
 
 void CTreemap::SetOptions(const Options* options)
 {
-    ASSERT(options != NULL);
+    ASSERT(options != nullptr);
     m_options = *options;
 
     // Derive normalized vector here for performance
@@ -279,7 +279,7 @@ void CTreemap::DrawTreemap(CDC* pdc, CRect rc, Item* root, const Options* option
         bitmap_bits.SetSize(static_cast<UINT_PTR>(rc.Width() * rc.Height()));
 
         // Recursively draw the tree graph
-        const double surface[4] = {0, 0, 0, 0};
+        constexpr double surface[4] = {0, 0, 0, 0};
         const CRect baserc({ 0,0 }, rc.Size());
         RecurseDrawGraph(bitmap_bits, root, baserc, true, surface, m_options.height, 0);
 
@@ -343,7 +343,7 @@ void CTreemap::DrawTreemapDoubleBuffered(CDC* pdc, const CRect& rc, Item* root, 
 
 CTreemap::Item* CTreemap::FindItemByPoint(Item* item, const CPoint point)
 {
-    ASSERT(item != NULL);
+    ASSERT(item != nullptr);
     const CRect& rc = item->TmiGetRectangle();
 
     if (!rc.PtInRect(point))
@@ -395,7 +395,7 @@ CTreemap::Item* CTreemap::FindItemByPoint(Item* item, const CPoint point)
             if (child->TmiGetRectangle().PtInRect(point))
             {
                 ret = FindItemByPoint(child, point);
-                ASSERT(ret != NULL);
+                ASSERT(ret != nullptr);
 #ifdef STRONGDEBUG
 #ifdef _DEBUG
                 for(i++; i < item->TmiGetChildCount(); i++)
@@ -431,7 +431,7 @@ CTreemap::Item* CTreemap::FindItemByPoint(Item* item, const CPoint point)
         }
     }
 
-    ASSERT(ret != NULL);
+    ASSERT(ret != nullptr);
 
     if (ret == nullptr)
     {
@@ -489,15 +489,8 @@ void CTreemap::DrawColorPreview(CDC* pdc, const CRect& rc, COLORREF color, const
     VERIFY(dcTreeView.DeleteDC());
 }
 
-void CTreemap::RecurseDrawGraph(
-    CColorRefArray& bitmap,
-    Item* item,
-    const CRect& rc,
-    const bool asroot,
-    const double* psurface,
-    double h,
-    DWORD flags
-)
+void CTreemap::RecurseDrawGraph(CColorRefArray& bitmap, Item* item, const CRect& rc,
+    const bool asroot, const double* psurface, double h, DWORD flags)
 {
     ASSERT(rc.Width() >= 0);
     ASSERT(rc.Height() >= 0);
@@ -545,13 +538,8 @@ void CTreemap::RecurseDrawGraph(
 // simply have a member variable of type CTreemap but have to deal with
 // pointers, factory methods and explicit destruction. It's not worth.
 
-void CTreemap::DrawChildren(
-    CColorRefArray& bitmap,
-    Item* parent,
-    const double* surface,
-    double h,
-    DWORD flags
-)
+void CTreemap::DrawChildren(CColorRefArray& bitmap, Item* parent,
+    const double* surface, double h, DWORD flags)
 {
     switch (m_options.style)
     {
@@ -722,7 +710,6 @@ bool CTreemap::KDirStat_ArrangeChildren(
 
 double CTreemap::KDirStat_CalculateNextRow(const Item* parent, const int nextChild, double width, int& childrenUsed, CArray<double, double>& childWidth)
 {
-    int i                                  = 0;
     static constexpr double _minProportion = 0.4;
     ASSERT(_minProportion < 1.);
 
@@ -734,6 +721,7 @@ double CTreemap::KDirStat_CalculateNextRow(const Item* parent, const int nextChi
     ULONGLONG sizeUsed = 0;
     double rowHeight   = 0;
 
+    int i = 0;
     for (i = nextChild; i < parent->TmiGetChildCount(); i++)
     {
         const ULONGLONG childSize = parent->TmiGetChild(i)->TmiGetSize();

@@ -18,17 +18,15 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
-//
 
 #include "stdafx.h"
 #include "WinDirStat.h"
-
-#include "GraphView.h"
-#include "DirStatView.h"
-#include "TypeView.h"
+#include "TreeMapView.h"
+#include "FileTabbedView.h"
+#include "FileTreeView.h"
+#include "ExtensionView.h"
 #include "DirStatDoc.h"
 #include "GlobalHelpers.h"
-#include "TreeListControl.h"
 #include "Item.h"
 #include "Localization.h"
 #include "Property.h"
@@ -329,11 +327,11 @@ BEGIN_MESSAGE_MAP(CDeadFocusWnd, CWnd)
     ON_WM_KEYDOWN()
 END_MESSAGE_MAP()
 
-void CDeadFocusWnd::OnKeyDown(UINT nChar, UINT /* nRepCnt */, UINT /* nFlags */)
+void CDeadFocusWnd::OnKeyDown(UINT nChar, UINT /*nRepCnt*/, UINT /*nFlags*/ )
 {
     if (nChar == VK_TAB)
     {
-        GetMainFrame()->MoveFocus(LF_DIRECTORYLIST);
+        CMainFrame::Get()->MoveFocus(LF_DIRECTORYLIST);
     }
 }
 
@@ -378,23 +376,18 @@ constexpr UINT indicators[]
     ID_INDICATOR_SCRL,
 };
 
-CMainFrame* CMainFrame::_theFrame;
-
-CMainFrame* CMainFrame::GetTheFrame()
-{
-    return _theFrame;
-}
+CMainFrame* CMainFrame::_singleton;
 
 CMainFrame::CMainFrame() :
-        m_wndSubSplitter(COptions::SubSplitterPos.Ptr())
-      , m_wndSplitter(COptions::MainSplitterPos.Ptr())
+        m_SubSplitter(COptions::SubSplitterPos.Ptr())
+      , m_Splitter(COptions::MainSplitterPos.Ptr())
 {
-    _theFrame = this;
+    _singleton = this;
 }
 
 CMainFrame::~CMainFrame()
 {
-    _theFrame = nullptr;
+    _singleton = nullptr;
 }
 
 LRESULT CMainFrame::OnTaskButtonCreated(WPARAM, LPARAM)
@@ -415,12 +408,12 @@ void CMainFrame::CreateProgress(ULONGLONG range)
     // A range of 0 means that we have no range.
     // In this case we display pacman.
 
-    if (COptions::FollowMountPoints || COptions::FollowJunctionPoints || COptions::ShowUncompressedFileSizes)
+    if (COptions::FollowMountPoints || COptions::FollowJunctions || COptions::ShowUncompressedFileSizes)
     {
         range = 0;
     }
-    m_progressRange   = range;
-    m_progressPos     = 0;
+    m_progressRange = range;
+    m_progressPos = 0;
     m_progressVisible = true;
     if (range > 0)
     {
@@ -546,7 +539,7 @@ void CMainFrame::CreateStatusProgress()
         CRect rc;
         m_wndStatusBar.GetItemRect(0, rc);
         m_progress.Create(WS_CHILD | WS_VISIBLE, rc, &m_wndStatusBar, ID_WDS_CONTROL);
-        m_progress.ModifyStyle(WS_BORDER, 0); // Doesn't help with XP-style control.
+        m_progress.ModifyStyle(WS_BORDER, 0);
     }
     if (m_TaskbarList)
     {
@@ -561,6 +554,7 @@ void CMainFrame::CreatePacmanProgress()
         CRect rc;
         m_wndStatusBar.GetItemRect(0, rc);
         m_pacman.Create(wds::strEmpty, WS_CHILD | WS_VISIBLE, rc, &m_wndStatusBar, ID_WDS_CONTROL);
+        m_pacman.ModifyStyleEx(0, WS_EX_COMPOSITED, 0);
         m_pacman.Start();
     }
 }
@@ -680,13 +674,13 @@ void CMainFrame::InitialShowWindow()
         SetWindowPlacement(&wpsetting);
     }
 
-    SetTimer(0, 25, nullptr);
+    SetTimer(ID_WDS_CONTROL, 25, nullptr);
 }
 
 void CMainFrame::InvokeInMessageThread(std::function<void()> callback)
 {
-    if (AfxGetApp()->m_nThreadID == GetCurrentThreadId()) callback();
-    else GetMainFrame()->SendMessage(WM_CALLBACKUI, 0, reinterpret_cast<LPARAM>(&callback));
+    if (CDirStatApp::Get()->m_nThreadID == GetCurrentThreadId()) callback();
+    else CMainFrame::Get()->SendMessage(WM_CALLBACKUI, 0, reinterpret_cast<LPARAM>(&callback));
 }
 
 void CMainFrame::OnClose()
@@ -695,6 +689,9 @@ void CMainFrame::OnClose()
 
     // Suspend the scan and wait for scan to complete
     GetDocument()->ShutdownCoordinator();
+
+    // Stop the timer so we are not updating elements during shutdown
+    KillTimer(ID_WDS_CONTROL);
 
     // It's too late, to do this in OnDestroy(). Because the toolbar, if undocked,
     // is already destroyed in OnDestroy(). So we must save the toolbar state here
@@ -712,8 +709,8 @@ void CMainFrame::OnDestroy()
     GetWindowPlacement(&wp);
     COptions::MainWindowPlacement = wp;
 
-    COptions::ShowFileTypes = GetTypeView()->IsShowTypes();
-    COptions::ShowTreemap = GetGraphView()->IsShowTreemap();
+    COptions::ShowFileTypes = GetExtensionView()->IsShowTypes();
+    COptions::ShowTreemap = GetTreeMapView()->IsShowTreemap();
 
     // Close all artifacts and our child windows
     CFrameWndEx::OnDestroy();
@@ -724,17 +721,21 @@ void CMainFrame::OnDestroy()
 
 BOOL CMainFrame::OnCreateClient(LPCREATESTRUCT /*lpcs*/, CCreateContext* pContext)
 {
-    VERIFY(m_wndSplitter.CreateStatic(this, 2, 1));
-    VERIFY(m_wndSplitter.CreateView(1, 0, RUNTIME_CLASS(CGraphView), CSize(100, 100), pContext));
-    VERIFY(m_wndSubSplitter.CreateStatic(&m_wndSplitter, 1, 2, WS_CHILD | WS_VISIBLE | WS_BORDER, m_wndSplitter.IdFromRowCol(0, 0)));
-    VERIFY(m_wndSubSplitter.CreateView(0, 0, RUNTIME_CLASS(CDirStatView), CSize(700, 500), pContext));
-    VERIFY(m_wndSubSplitter.CreateView(0, 1, RUNTIME_CLASS(CTypeView), CSize(100, 500), pContext));
+    m_Splitter.CreateStatic(this, 2, 1);
+    m_Splitter.CreateView(1, 0, RUNTIME_CLASS(CTreeMapView), CSize(100, 100), pContext);
+    m_SubSplitter.CreateStatic(&m_Splitter, 1, 2,WS_CHILD  | WS_VISIBLE | WS_BORDER, m_Splitter.IdFromRowCol(0, 0));
+    m_SubSplitter.CreateView(0, 0, RUNTIME_CLASS(CFileTabbedView), CSize(700, 500), pContext);
+    m_SubSplitter.CreateView(0, 1, RUNTIME_CLASS(CExtensionView), CSize(100, 500), pContext);
 
-    MinimizeGraphView();
-    MinimizeTypeView();
+    m_TreeMapView = DYNAMIC_DOWNCAST(CTreeMapView, m_Splitter.GetPane(1, 0));
+    m_FileTabbedView = DYNAMIC_DOWNCAST(CFileTabbedView, m_SubSplitter.GetPane(0, 0));
+    m_ExtensionView = DYNAMIC_DOWNCAST(CExtensionView, m_SubSplitter.GetPane(0, 1));
 
-    GetTypeView()->ShowTypes(COptions::ShowFileTypes);
-    GetGraphView()->ShowTreemap(COptions::ShowTreemap);
+    MinimizeTreeMapView();
+    MinimizeExtensionView();
+
+    GetExtensionView()->ShowTypes(COptions::ShowFileTypes);
+    GetTreeMapView()->ShowTreemap(COptions::ShowTreemap);
 
     return TRUE;
 }
@@ -754,62 +755,44 @@ BOOL CMainFrame::PreCreateWindow(CREATESTRUCT& cs)
     return TRUE;
 }
 
-void CMainFrame::MinimizeTypeView()
+void CMainFrame::MinimizeExtensionView()
 {
-    m_wndSubSplitter.SetSplitterPos(1.0);
+    m_SubSplitter.SetSplitterPos(1.0);
 }
 
-void CMainFrame::RestoreTypeView()
+void CMainFrame::RestoreExtensionView()
 {
-    if (GetTypeView()->IsShowTypes())
+    if (GetExtensionView()->IsShowTypes())
     {
-        m_wndSubSplitter.RestoreSplitterPos(0.72);
-        GetTypeView()->RedrawWindow();
+        m_SubSplitter.RestoreSplitterPos(0.72);
+        GetExtensionView()->RedrawWindow();
     }
 }
 
-void CMainFrame::MinimizeGraphView()
+void CMainFrame::MinimizeTreeMapView()
 {
-    m_wndSplitter.SetSplitterPos(1.0);
+    m_Splitter.SetSplitterPos(1.0);
 }
 
-void CMainFrame::RestoreGraphView()
+void CMainFrame::RestoreTreeMapView()
 {
-    if (GetGraphView()->IsShowTreemap())
+    if (GetTreeMapView()->IsShowTreemap())
     {
-        m_wndSplitter.RestoreSplitterPos(0.4);
-        GetGraphView()->DrawEmptyView();
-        GetGraphView()->RedrawWindow();
+        m_Splitter.RestoreSplitterPos(0.4);
+        GetTreeMapView()->DrawEmptyView();
+        GetTreeMapView()->RedrawWindow();
     }
-}
-
-CDirStatView* CMainFrame::GetDirStatView() const
-{
-    CWnd* pWnd = m_wndSubSplitter.GetPane(0, 0);
-    return DYNAMIC_DOWNCAST(CDirStatView, pWnd);
-}
-
-CGraphView* CMainFrame::GetGraphView() const
-{
-    CWnd* pWnd = m_wndSplitter.GetPane(1, 0);
-    return DYNAMIC_DOWNCAST(CGraphView, pWnd);
-}
-
-CTypeView* CMainFrame::GetTypeView() const
-{
-    CWnd* pWnd = m_wndSubSplitter.GetPane(0, 1);
-    return DYNAMIC_DOWNCAST(CTypeView, pWnd);
 }
 
 LRESULT CMainFrame::OnEnterSizeMove(WPARAM, LPARAM)
 {
-    GetGraphView()->SuspendRecalculationDrawing(true);
+    GetTreeMapView()->SuspendRecalculationDrawing(true);
     return 0;
 }
 
 LRESULT CMainFrame::OnExitSizeMove(WPARAM, LPARAM)
 {
-    GetGraphView()->SuspendRecalculationDrawing(false);
+    GetTreeMapView()->SuspendRecalculationDrawing(false);
     return 0;
 }
 
@@ -824,8 +807,8 @@ void CMainFrame::OnTimer(UINT_PTR nIDEvent)
     // Determine whether we should be doing a fast UI update or not
     static unsigned int update_counter = 0;
     const bool do_slow_update = update_counter % 10 == 0;
-    const bool do_fast_update = do_slow_update ||
-        GetDocument()->HasRootItem() && !GetDocument()->IsRootDone() && !IsScanSuspended();
+    const bool do_fast_update = GetDocument()->HasRootItem() && (do_slow_update ||
+        !GetDocument()->IsRootDone() && !IsScanSuspended());
     update_counter++;
 
     // UI updates that do not need to processed frequently
@@ -846,7 +829,7 @@ void CMainFrame::OnTimer(UINT_PTR nIDEvent)
 
         // By sorting items, items will be redrawn which will
         // also force pacman to update with recent position
-        CTreeListControl::GetTheTreeListControl()->SortItems();
+        CFileTreeControl::Get()->SortItems();
     }
 
     CFrameWndEx::OnTimer(nIDEvent);
@@ -908,7 +891,7 @@ void CMainFrame::OnInitMenuPopup(CMenu* pPopupMenu, UINT nIndex, BOOL bSysMenu)
     }
 }
 
-void CMainFrame::UpdateCleanupMenu(CMenu* menu)
+void CMainFrame::UpdateCleanupMenu(CMenu* menu) const
 {
     ULONGLONG items;
     ULONGLONG bytes;
@@ -993,7 +976,7 @@ void CMainFrame::AppendUserDefinedCleanups(CMenu* menu) const
         CStringW string;
         string.FormatMessage(Localization::Lookup(IDS_UDCsCTRLd), udc.title.Obj().c_str(), iCurrent);
 
-        const auto& items = CTreeListControl::GetTheTreeListControl()->GetAllSelected<CItem>();
+        const auto& items = CFileTreeControl::Get()->GetAllSelected<CItem>();
         bool udc_valid = GetLogicalFocus() == LF_DIRECTORYLIST && !items.empty();
         if (udc_valid) for (const auto& item : items)
         {
@@ -1040,12 +1023,12 @@ void CMainFrame::MoveFocus(const LOGICAL_FOCUS lf)
         break;
     case LF_DIRECTORYLIST:
         {
-            GetDirStatView()->SetFocus();
+            GetFileTreeView()->SetFocus();
         }
         break;
     case LF_EXTENSIONLIST:
         {
-            GetTypeView()->SetFocus();
+            GetExtensionView()->SetFocus();
         }
         break;
     }
@@ -1063,7 +1046,7 @@ void CMainFrame::SetSelectionMessageText()
     case LF_DIRECTORYLIST:
         {
             // display file name in bottom left corner if only one item is selected
-            const auto item = CTreeListControl::GetTheTreeListControl()->GetFirstSelectedItem<CItem>();
+            const auto item = CFileTreeControl::Get()->GetFirstSelectedItem<CItem>();
             if (item != nullptr)
             {
                 // decide when to do this
@@ -1112,37 +1095,37 @@ void CMainFrame::OnSize(UINT nType, int cx, int cy)
 
 void CMainFrame::OnUpdateViewShowtreemap(CCmdUI* pCmdUI)
 {
-    pCmdUI->SetCheck(GetGraphView()->IsShowTreemap());
+    pCmdUI->SetCheck(GetTreeMapView()->IsShowTreemap());
 }
 
 void CMainFrame::OnViewShowtreemap()
 {
-    GetGraphView()->ShowTreemap(!GetGraphView()->IsShowTreemap());
-    if (GetGraphView()->IsShowTreemap())
+    GetTreeMapView()->ShowTreemap(!GetTreeMapView()->IsShowTreemap());
+    if (GetTreeMapView()->IsShowTreemap())
     {
-        RestoreGraphView();
+        RestoreTreeMapView();
     }
     else
     {
-        MinimizeGraphView();
+        MinimizeTreeMapView();
     }
 }
 
 void CMainFrame::OnUpdateViewShowFileTypes(CCmdUI* pCmdUI)
 {
-    pCmdUI->SetCheck(GetTypeView()->IsShowTypes());
+    pCmdUI->SetCheck(GetExtensionView()->IsShowTypes());
 }
 
 void CMainFrame::OnViewShowFileTypes()
 {
-    GetTypeView()->ShowTypes(!GetTypeView()->IsShowTypes());
-    if (GetTypeView()->IsShowTypes())
+    GetExtensionView()->ShowTypes(!GetExtensionView()->IsShowTypes());
+    if (GetExtensionView()->IsShowTypes())
     {
-        RestoreTypeView();
+        RestoreExtensionView();
     }
     else
     {
-        MinimizeTypeView();
+        MinimizeExtensionView();
     }
 }
 
@@ -1166,15 +1149,15 @@ void CMainFrame::OnConfigure()
 
     if (sheet.m_restartApplication)
     {
-        GetWDSApp()->RestartApplication();
+        CDirStatApp::Get()->RestartApplication();
     }
 }
 
 void CMainFrame::OnSysColorChange()
 {
     CFrameWndEx::OnSysColorChange();
-    GetDirStatView()->SysColorChanged();
-    GetTypeView()->SysColorChanged();
+    GetFileTreeView()->SysColorChanged();
+    GetExtensionView()->SysColorChanged();
 }
 
 BOOL CMainFrame::LoadFrame(UINT nIDResource, DWORD dwDefaultStyle, CWnd* pParentWnd, CCreateContext* pContext)

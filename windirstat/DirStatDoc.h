@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "selectdrivesdlg.h"
+#include "SelectDrivesDlg.h"
 #include <common/Constants.h>
 #include "Options.h"
 
@@ -30,6 +30,7 @@
 #include "BlockingQueue.h"
 
 class CItem;
+class CItemDupe;
 
 //
 // The treemap colors as calculated in CDirStatDoc::SetExtensionColors()
@@ -100,13 +101,13 @@ protected:
     ULONGLONG GetRootSize() const;
 
     static bool IsDrive(const CStringW& spec);
-    void RefreshMountPointItems();
-    void RefreshJunctionItems();
+    void RefreshReparsePointItems();
 
     bool HasRootItem() const;
     bool IsRootDone() const;
     CItem* GetRootItem() const;
     CItem* GetZoomItem() const;
+    CItemDupe* GetRootItemDupe() const;
     bool IsZoomed() const;
 
     void SetHighlightExtension(LPCWSTR ext);
@@ -122,8 +123,7 @@ protected:
     static void OpenItem(const CItem* item, LPCWSTR verb = L"open");
 
 protected:
-    void RecurseRefreshMountPointItems(CItem* item);
-    void RecurseRefreshJunctionItems(CItem* item);
+    void RecurseRefreshReparsePoints(CItem* items);
     std::vector<CItem*> GetDriveItems() const;
     void RefreshRecyclers() const;
     void RebuildExtensionData();
@@ -143,6 +143,8 @@ protected:
     void ClearReselectChildStack();
     bool IsReselectChildAvailable() const;
     static bool DirectoryListHasFocus();
+    static bool DuplicateListHasFocus();
+    static std::vector<CItem *> GetAllSelected();
 
     bool m_showFreeSpace; // Whether to show the <Free Space> item
     bool m_showUnknown;   // Whether to show the <Unknown> item
@@ -150,7 +152,8 @@ protected:
     bool m_showMyComputer = false; // True, if the user selected more than one drive for scanning.
     // In this case, we need a root pseudo item ("My Computer").
 
-    CItem* m_rootItem = nullptr;    // The very root item
+    CItem* m_rootItem = nullptr;       // The very root item
+    CItemDupe* m_rootItemDupe = nullptr; // The very root dup item
 
     CStringW m_highlightExtension; // Currently highlighted extension
     CItem* m_zoomItem = nullptr;   // Current "zoom root"

@@ -21,35 +21,19 @@
 
 #pragma once
 
+#include <string>
+#include <vector>
+
 class CReparsePoints final
 {
-    struct SPointVolume
-    {
-        CStringW point;  // Path like "mount\backup\"
-        CStringW volume; // Volume identifier
-        DWORD flags = 0; // File system flags (see GetVolumeInformation documentation)
-    };
+    static bool IsReparseType(const std::wstring& path, DWORD tag_type);
 
-    using PointVolumeArray = CArray<SPointVolume, SPointVolume&>;
+    std::vector<std::wstring> m_mountpoints;
 
 public:
-    ~CReparsePoints();
+
     void Initialize();
-    bool IsVolumeMountPoint(CStringW path) const;
-    bool IsFolderJunction(const CStringW& path) const;
-    bool IsFolderJunction(DWORD attr) const;
-
-private:
-    void Clear();
-    void GetDriveVolumes();
-    void GetAllMountPoints();
-
-    bool IsVolumeMountPoint(CStringW volume, CStringW path) const;
-
-    // m_drive contains the volume identifiers of the Drives A:, B: etc.
-    // mdrive[0] = Volume identifier of A:\.
-    CArray<CStringW, LPCWSTR> m_drive;
-
-    // m_volume maps all volume identifiers to PointVolumeArrays
-    CMap<CStringW, LPCWSTR, PointVolumeArray*, PointVolumeArray*> m_volume;
+    bool IsMountPoint(const CStringW& path, DWORD attr = INVALID_FILE_ATTRIBUTES) const;
+    bool IsJunction(const CStringW& path, DWORD attr = INVALID_FILE_ATTRIBUTES) const;
+    static bool IsReparsePoint(DWORD attr);
 };

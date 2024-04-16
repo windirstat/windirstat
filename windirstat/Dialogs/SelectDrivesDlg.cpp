@@ -55,13 +55,11 @@ namespace
 
         name = FormatVolumeName(path, volumeName);
 
-        if (!CDirStatApp::getDiskFreeSpace(path, total, free))
+        std::tie(total, free) = CDirStatApp::getDiskFreeSpace(path);
+        if (total == 0)
         {
             return false;
         }
-
-        // This condition *can* become true if quotas exist!
-        //ASSERT(free <= total);
 
         return true;
     }
@@ -75,7 +73,7 @@ CDriveItem::CDriveItem(CDrivesList* list, LPCWSTR pszPath)
     , m_isRemote(DRIVE_REMOTE == ::GetDriveType(m_path))
     , m_name(m_path) {}
 
-void CDriveItem::StartQuery(HWND dialog, UINT serial)
+void CDriveItem::StartQuery(HWND dialog, UINT serial) const
 {
     ASSERT(dialog != nullptr);
 
@@ -158,14 +156,14 @@ int CDriveItem::Compare(const CSortingListItem* baseOther, int subitem) const
 
 int CDriveItem::GetImage() const
 {
-    return GetMyImageList()->getFileImage(m_path);
+    return GetIconImageList()->getFileImage(m_path);
 }
 
 bool CDriveItem::DrawSubitem(int subitem, CDC* pdc, CRect rc, UINT state, int* width, int* focusLeft) const
 {
     if (subitem == COL_NAME)
     {
-        DrawLabel(m_list, GetMyImageList(), pdc, rc, state, width, focusLeft);
+        DrawLabel(m_list, GetIconImageList(), pdc, rc, state, width, focusLeft);
         return true;
     }
 
@@ -377,7 +375,7 @@ bool CDrivesList::IsItemSelected(int i) const
     return LVIS_SELECTED == GetItemState(i, LVIS_SELECTED);
 }
 
-void CDrivesList::OnLButtonDown(UINT /*nFlags*/, CPoint /*point*/)
+void CDrivesList::OnLButtonDown(UINT /*nFlags*/ , CPoint/*point*/)
 {
     if (GetFocus() == this || GetSelectedCount() == 0)
     {
@@ -396,7 +394,7 @@ void CDrivesList::OnLButtonDown(UINT /*nFlags*/, CPoint /*point*/)
         ZeroMemory(&lv, sizeof(lv));
         lv.hdr.hwndFrom = m_hWnd;
         lv.hdr.idFrom   = GetDlgCtrlID();
-        lv.hdr.code = LVN_ITEMCHANGED;
+        lv.hdr.code = static_cast<UINT>(LVN_ITEMCHANGED);
         GetParent()->SendMessage(WM_NOTIFY, GetDlgCtrlID(), reinterpret_cast<LPARAM>(&lv));
 
         // no further action
@@ -423,12 +421,15 @@ void CDrivesList::OnNMDblclk(NMHDR* /*pNMHDR*/, LRESULT* pResult)
     (void) GetParent()->SendMessage(WMU_OK);
 }
 
+#pragma warning(push)
+#pragma warning(disable:26454)
 BEGIN_MESSAGE_MAP(CDrivesList, COwnerDrawnListControl)
     ON_WM_LBUTTONDOWN()
     ON_NOTIFY_REFLECT(LVN_DELETEITEM, OnLvnDeleteitem)
     ON_WM_MEASUREITEM_REFLECT()
     ON_NOTIFY_REFLECT(NM_DBLCLK, OnNMDblclk)
 END_MESSAGE_MAP()
+#pragma warning(pop)
 
 void CDrivesList::OnLvnDeleteitem(NMHDR* pNMHDR, LRESULT* pResult)
 {
@@ -459,10 +460,13 @@ void CSelectDrivesDlg::DoDataExchange(CDataExchange* pDX)
     CDialogEx::DoDataExchange(pDX);
     DDX_Control(pDX, IDC_DRIVES, m_list);
     DDX_Radio(pDX, IDC_ALLDRIVES, m_radio);
+    DDX_Check(pDX, IDC_SCAN_DUPLICATES, m_scanDuplicates);
     DDX_Control(pDX, IDOK, m_okButton);
     DDX_Control(pDX, IDC_BROWSE_FOLDER, m_browse);
 }
 
+#pragma warning(push)
+#pragma warning(disable:26454)
 BEGIN_MESSAGE_MAP(CSelectDrivesDlg, CDialogEx)
     ON_BN_CLICKED(IDC_AFOLDER, OnBnClickedFolder)
     ON_BN_CLICKED(IDC_SOMEDRIVES, OnBnClickedSomeDrives)
@@ -477,6 +481,7 @@ BEGIN_MESSAGE_MAP(CSelectDrivesDlg, CDialogEx)
     ON_REGISTERED_MESSAGE(WMU_THREADFINISHED, OnWmuThreadFinished)
     ON_WM_SYSCOLORCHANGE()
 END_MESSAGE_MAP()
+#pragma warning(pop)
 
 BOOL CSelectDrivesDlg::OnInitDialog()
 {
@@ -499,26 +504,25 @@ BOOL CSelectDrivesDlg::OnInitDialog()
     m_layout.AddControl(IDC_DRIVES, 0, 0, 1, 1);
     m_layout.AddControl(IDC_AFOLDER, 0, 1, 0, 0);
     m_layout.AddControl(IDC_BROWSE_FOLDER, 0, 1, 1, 0);
+    m_layout.AddControl(IDC_SCAN_DUPLICATES, 0, 1, 1, 0);
 
     m_layout.OnInitDialog(true);
 
     m_list.ShowGrid(COptions::ListGrid);
     m_list.ShowStripes(COptions::ListStripes);
     m_list.ShowFullRowSelection(COptions::ListFullRowSelection);
-
     m_list.SetExtendedStyle(m_list.GetExtendedStyle() | LVS_EX_HEADERDRAGDROP);
-    // If we set an ImageList here, OnMeasureItem will have no effect ?!
-
-    m_list.InsertColumn(COL_NAME, Localization::Lookup(IDS_DRIVECOL_NAME), LVCFMT_LEFT, 120, COL_NAME);
-    m_list.InsertColumn(COL_TOTAL, Localization::Lookup(IDS_DRIVECOL_TOTAL), LVCFMT_RIGHT, 55, COL_TOTAL);
-    m_list.InsertColumn(COL_FREE, Localization::Lookup(IDS_DRIVECOL_FREE), LVCFMT_RIGHT, 55, COL_FREE);
-    m_list.InsertColumn(COL_GRAPH, Localization::Lookup(IDS_DRIVECOL_GRAPH), LVCFMT_LEFT, 100, COL_GRAPH);
-    m_list.InsertColumn(COL_PERCENTUSED,Localization::Lookup(IDS_DRIVECOL_PERCENTUSED),LVCFMT_RIGHT, 55, COL_PERCENTUSED);
+    m_list.InsertColumn(COL_NAME, Localization::Lookup(IDS_COL_NAME), LVCFMT_LEFT, 120, COL_NAME);
+    m_list.InsertColumn(COL_TOTAL, Localization::Lookup(IDS_COL_TOTAL), LVCFMT_RIGHT, 55, COL_TOTAL);
+    m_list.InsertColumn(COL_FREE, Localization::Lookup(IDS_COL_FREE), LVCFMT_RIGHT, 55, COL_FREE);
+    m_list.InsertColumn(COL_GRAPH, Localization::Lookup(IDS_COL_GRAPH), LVCFMT_LEFT, 100, COL_GRAPH);
+    m_list.InsertColumn(COL_PERCENTUSED,Localization::Lookup(IDS_COL_PERCENTUSED),LVCFMT_RIGHT, 55, COL_PERCENTUSED);
 
     m_list.OnColumnsInserted();
 
     m_folderName = COptions::SelectDrivesFolder.Obj().c_str();
     m_selectedDrives = COptions::SelectDrivesDrives;
+    m_scanDuplicates = COptions::ScanForDuplicates;
 
     CBitmap bitmap;
     bitmap.LoadBitmapW(IDB_FILE_SELECT);
@@ -531,7 +535,7 @@ BOOL CSelectDrivesDlg::OnInitDialog()
     SetForegroundWindow();
 
     const DWORD drives = ::GetLogicalDrives();
-    DWORD mask         = 0x00000001;
+    DWORD mask = 0x00000001;
     for (int i = 0; i < wds::iNumDriveLetters; i++, mask <<= 1)
     {
         if ((drives & mask) == 0)
@@ -621,6 +625,7 @@ void CSelectDrivesDlg::OnOK()
 
     COptions::SelectDrivesRadio = m_radio;
     COptions::SelectDrivesFolder = std::wstring(m_folderName);
+    COptions::ScanForDuplicates = (FALSE != m_scanDuplicates);
 
     CDialogEx::OnOK();
 }
@@ -806,26 +811,6 @@ int CALLBACK CSelectDrivesDlg::BrowseCallbackProc(HWND hWnd, UINT uMsg, LPARAM l
 
 CStringW CSelectDrivesDlg::getFullPathName_(LPCWSTR relativePath)
 {
-    LPWSTR dummy;
-    CStringW buffer;
-
-    DWORD len = _MAX_PATH;
-
-    DWORD dw = ::GetFullPathName(relativePath, len, buffer.GetBuffer(len), &dummy);
-    buffer.ReleaseBuffer();
-
-    while (dw >= len)
-    {
-        len += _MAX_PATH;
-        dw = ::GetFullPathName(relativePath, len, buffer.GetBuffer(len), &dummy);
-        buffer.ReleaseBuffer();
-    }
-
-    if (0 == dw)
-    {
-        VTRACE(L"GetFullPathName(%s) failed: GetLastError returns %u", relativePath, ::GetLastError());
-        return relativePath;
-    }
-
-    return buffer;
+    SmartPointer<LPWSTR> path(free, _wfullpath(nullptr, relativePath, 0));
+    return path != nullptr ? static_cast<LPWSTR>(path) : relativePath;
 }

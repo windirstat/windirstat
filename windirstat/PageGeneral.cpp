@@ -78,7 +78,7 @@ BOOL CPageGeneral::OnInitDialog()
     m_showDeletionWarning = COptions::ShowDeleteWarning;
     m_listFullRowSelection = COptions::ListFullRowSelection;
     m_useWdsLocale= COptions::UseWdsLocale;
-    m_portableMode = GetWDSApp()->InPortableMode();
+    m_portableMode = CDirStatApp::Get()->InPortableMode();
 
     for (const auto & language : Localization::GetLanguageList())
     {
@@ -110,7 +110,7 @@ void CPageGeneral::OnOK()
     COptions::ListStripes = (FALSE != m_listStripes);
     COptions::ShowDeleteWarning = (FALSE != m_showDeletionWarning);
     COptions::ListFullRowSelection = (FALSE != m_listFullRowSelection);
-    if (!GetWDSApp()->SetPortableMode(m_portableMode))
+    if (!CDirStatApp::Get()->SetPortableMode(m_portableMode))
     {
         AfxMessageBox(L"Could not toggle WinDirStat portable mode. Check your permissions.", MB_OK | MB_ICONERROR);
     }

@@ -45,10 +45,12 @@ class FileFindEnhanced final
     HANDLE m_handle = nullptr;
     bool m_firstrun = true;
     FILE_DIRECTORY_INFORMATION* m_current_info = nullptr;
+    static constexpr auto m_dos = L"\\??\\";
+    static constexpr auto m_dosunc = L"\\??\\UNC\\";
 
 public:
 
-    FileFindEnhanced();
+    FileFindEnhanced() = default;
     ~FileFindEnhanced();
 
     bool FindNextFile();
@@ -60,9 +62,12 @@ public:
     bool IsProtectedReparsePoint() const;
     DWORD GetAttributes() const;
     CStringW GetFileName() const;
+    ULONGLONG GetLogicalFileSize() const;
     ULONGLONG GetFileSize() const;
     FILETIME GetLastWriteTime() const;
     CStringW GetFilePath() const;
+    CStringW GetFileLongPath() const;
     static bool DoesFileExist(const CStringW& folder, const CStringW& file);
+    static CStringW StripDosPathCharts(const CStringW& path);
     static CStringW GetLongPathCompatible(const CStringW& path);
 };

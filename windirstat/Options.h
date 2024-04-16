@@ -114,20 +114,23 @@ public:
     static Setting<int> SelectDrivesRadio;
     static Setting<std::wstring> SelectDrivesFolder;
     static Setting<std::vector<std::wstring>> SelectDrivesDrives;
+    static Setting<bool> ScanForDuplicates;
 
     static Setting<std::vector<int>> TypesColumnWidths;
     static Setting<std::vector<int>> TypesColumnOrder;
-    static Setting<std::vector<int>> TreeListColumnWidths;
-    static Setting<std::vector<int>> TreeListColumnOrder;
+    static Setting<std::vector<int>> FileTreeColumnWidths;
+    static Setting<std::vector<int>> FileTreeColumnOrder;
     static Setting<std::vector<int>> DriveListColumnWidths;
     static Setting<std::vector<int>> DriveListColumnOrder;
+    static Setting<std::vector<int>> DupeTreeColumnWidths;
+    static Setting<std::vector<int>> DupeTreeColumnOrder;
 
     static Setting<bool> PacmanAnimation;
     static Setting<bool> ShowTimeSpent;
     static Setting<bool> HumanFormat;
 
     static Setting<bool> FollowMountPoints;
-    static Setting<bool> FollowJunctionPoints;
+    static Setting<bool> FollowJunctions;
     static Setting<bool> UseBackupRestore;
     static Setting<bool> ShowUncompressedFileSizes;
     static Setting<int> ScanningThreads;
@@ -169,10 +172,6 @@ public:
     static Setting<double> MainSplitterPos;
     static Setting<double> SubSplitterPos;
     static Setting<int> LanguageId;
-
-    static Setting<std::wstring> ReportSubject;
-    static Setting<std::wstring> ReportSuffix;
-    static Setting<std::wstring> ReportPrefix;
 
     static void SanitizeRect(RECT& rect);
 

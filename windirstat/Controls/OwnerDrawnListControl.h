@@ -25,7 +25,6 @@
 
 #include "SortingListControl.h"
 
-class COwnerDrawnListItem;
 class COwnerDrawnListControl;
 
 //
@@ -52,11 +51,9 @@ public:
     // width != NULL -> only determine width, do not draw.
     // If focus rectangle shall not begin leftmost, set *focusLeft
     // to the left edge of the desired focus rectangle.
-    virtual bool DrawSubitem(int subitem, CDC* pdc, CRect rc, UINT state, int* width, int* focusLeft) const =0;
+    virtual bool DrawSubitem(int subitem, CDC* pdc, CRect rc, UINT state, int* width, int* focusLeft) const = 0;
 
-    virtual void DrawAdditionalState(CDC* /*pdc*/, const CRect& /*rcLabel*/) const
-    {
-    }
+    virtual void DrawAdditionalState(CDC* /*pdc*/, const CRect & /*rcLabel*/) const {}
 
     void DrawSelection(const COwnerDrawnListControl* list, CDC* pdc, CRect rc, UINT state) const;
 
@@ -105,7 +102,7 @@ public:
     int GetTextXMargin() const;
     int GetGeneralLeftIndent() const;
     void AdjustColumnWidth(int col);
-    CRect GetWholeSubitemRect(int item, int subitem);
+    CRect GetWholeSubitemRect(int item, int subitem) const;
 
     bool HasFocus() const;
     bool IsShowSelectionAlways() const;
@@ -119,7 +116,6 @@ protected:
     COLORREF m_windowColor = CLR_NONE; // The default background color if !m_showStripes
     COLORREF m_stripeColor = CLR_NONE; // The stripe color, used for every other item if m_showStripes
     int m_rowHeight;                   // Height of an item
-    int m_yFirstItem = -1;             // Top of a first list item
     bool m_showGrid = false;           // Whether to draw a grid
     bool m_showStripes = false;        // Whether to show stripes
     bool m_showFullRowSelect = false;  // Whether to draw full row selection
@@ -127,6 +123,5 @@ protected:
     DECLARE_MESSAGE_MAP()
     afx_msg BOOL OnEraseBkgnd(CDC* pDC);
     afx_msg void OnHdnDividerdblclick(NMHDR* pNMHDR, LRESULT* pResult);
-    afx_msg void OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
     afx_msg void OnHdnItemchanging(NMHDR* pNMHDR, LRESULT* pResult);
 };

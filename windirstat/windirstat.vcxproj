@@ -289,12 +289,18 @@
     <ClInclude Include="..\common\version.h" />
     <ClInclude Include="..\common\Constants.h" />
     <ClInclude Include="BlockingQueue.h" />
+    <ClInclude Include="ExtensionListControl.h" />
     <ClInclude Include="CsvLoader.h" />
     <ClInclude Include="DirStatDoc.h" />
-    <ClInclude Include="DirStatView.h" />
+    <ClInclude Include="FileDupeControl.h" />
+    <ClInclude Include="FileDupeView.h" />
+    <ClInclude Include="FileTabbedView.h" />
+    <ClInclude Include="FileTreeControl.h" />
+    <ClInclude Include="FileTreeView.h" />
     <ClInclude Include="FileFind.h" />
     <ClInclude Include="GlobalHelpers.h" />
     <ClInclude Include="Item.h" />
+    <ClInclude Include="ItemDupe.h" />
     <ClInclude Include="Layout.h" />
     <ClInclude Include="Localization.h" />
     <ClInclude Include="MainFrame.h" />
@@ -315,14 +321,14 @@
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="WinDirStat.h" />
     <ClInclude Include="Controls\ColorButton.h" />
-    <ClInclude Include="Controls\GraphView.h" />
-    <ClInclude Include="Controls\MyImageList.h" />
+    <ClInclude Include="Controls\TreeMapView.h" />
+    <ClInclude Include="Controls\IconImageList.h" />
     <ClInclude Include="Controls\OwnerDrawnListControl.h" />
     <ClInclude Include="Controls\PacMan.h" />
     <ClInclude Include="Controls\SortingListControl.h" />
     <ClInclude Include="Controls\TreeListControl.h" />
     <ClInclude Include="Controls\TreeMap.h" />
-    <ClInclude Include="Controls\TypeView.h" />
+    <ClInclude Include="Controls\ExtensionView.h" />
     <ClInclude Include="Controls\XYSlider.h" />
     <ClInclude Include="Dialogs\AboutDlg.h" />
     <ClInclude Include="Dialogs\DeleteWarningDlg.h" />
@@ -331,16 +337,23 @@
   <ItemGroup>
     <ClCompile Include="..\common\CommonHelpers.cpp">
     </ClCompile>
+    <ClCompile Include="..\common\Tracer.cpp" />
+    <ClCompile Include="ExtensionListControl.cpp" />
     <ClCompile Include="CsvLoader.cpp" />
     <ClCompile Include="DirStatDoc.cpp">
     </ClCompile>
-    <ClCompile Include="DirStatView.cpp">
+    <ClCompile Include="FileDupeControl.cpp" />
+    <ClCompile Include="FileDupeView.cpp" />
+    <ClCompile Include="FileTabbedView.cpp" />
+    <ClCompile Include="FileTreeControl.cpp" />
+    <ClCompile Include="FileTreeView.cpp">
     </ClCompile>
     <ClCompile Include="FileFind.cpp" />
     <ClCompile Include="GlobalHelpers.cpp">
     </ClCompile>
     <ClCompile Include="Item.cpp">
     </ClCompile>
+    <ClCompile Include="ItemDupe.cpp" />
     <ClCompile Include="Layout.cpp">
     </ClCompile>
     <ClCompile Include="Localization.cpp" />
@@ -376,9 +389,9 @@
     </ClCompile>
     <ClCompile Include="Controls\ColorButton.cpp">
     </ClCompile>
-    <ClCompile Include="Controls\GraphView.cpp">
+    <ClCompile Include="Controls\TreeMapView.cpp">
     </ClCompile>
-    <ClCompile Include="Controls\MyImageList.cpp">
+    <ClCompile Include="Controls\IconImageList.cpp">
     </ClCompile>
     <ClCompile Include="Controls\OwnerDrawnListControl.cpp">
     </ClCompile>
@@ -390,7 +403,7 @@
     </ClCompile>
     <ClCompile Include="Controls\TreeMap.cpp">
     </ClCompile>
-    <ClCompile Include="Controls\TypeView.cpp">
+    <ClCompile Include="Controls\ExtensionView.cpp">
     </ClCompile>
     <ClCompile Include="Controls\XYSlider.cpp">
     </ClCompile>
@@ -456,6 +469,7 @@
     <Text Include="res\langs\lang_pl.txt" />
     <Text Include="res\langs\lang_pt.txt" />
     <Text Include="res\langs\lang_ru.txt" />
+    <Text Include="res\langs\lang_zh.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="PropertySheets">

@@ -18,12 +18,12 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
-//
 
 #pragma once
 
 #include "PacMan.h"
 #include "Item.h"
+#include "FileTabbedView.h"
 #include <common/Constants.h>
 
 #include <functional>
@@ -31,9 +31,9 @@
 class CMySplitterWnd;
 class CMainFrame;
 
-class CDirStatView;
-class CGraphView;
-class CTypeView;
+class CFileTreeView;
+class CTreeMapView;
+class CExtensionView;
 
 //
 // The "logical focus" can be
@@ -46,6 +46,7 @@ enum LOGICAL_FOCUS
 {
     LF_NONE,
     LF_DIRECTORYLIST,
+    LF_DUPLICATELIST,
     LF_EXTENSIONLIST
 };
 
@@ -141,24 +142,29 @@ class CMainFrame final : public CFrameWndEx
 protected:
     static constexpr DWORD WM_CALLBACKUI = WM_USER + 1;
     static UINT s_taskBarMessage;
-    static CMainFrame* _theFrame;
-    CMainFrame(); // Created by MFC only
+    static CMainFrame* _singleton;
+
+    CMainFrame();
+    ~CMainFrame() override;
     DECLARE_DYNCREATE(CMainFrame)
 
-    static CMainFrame* GetTheFrame();
-    ~CMainFrame() override;
     void InitialShowWindow();
     void InvokeInMessageThread(std::function<void()> callback);
 
-    void RestoreGraphView();
-    void RestoreTypeView();
-    void MinimizeGraphView();
-    void MinimizeTypeView();
+    void RestoreTreeMapView();
+    void RestoreExtensionView();
+    void MinimizeTreeMapView();
+    void MinimizeExtensionView();
     void CopyToClipboard(LPCWSTR psz);
 
-    CDirStatView* GetDirStatView() const;
-    CGraphView* GetGraphView() const;
-    CTypeView* GetTypeView() const;
+    // Used for storing and retrieving the various views
+    CFileTabbedView* m_FileTabbedView = nullptr;
+    CExtensionView* m_ExtensionView = nullptr;
+    CTreeMapView* m_TreeMapView = nullptr;
+    CFileTreeView* GetFileTreeView() const { return m_FileTabbedView->GetFileTreeView(); }
+    CFileTabbedView* GetFileTabbedView() const { return m_FileTabbedView; }
+    CTreeMapView* GetTreeMapView() const { return m_TreeMapView; }
+    CExtensionView* GetExtensionView() const { return m_ExtensionView; }
 
     void CreateProgress(ULONGLONG range);
     void SetProgressPos(ULONGLONG pos);
@@ -178,7 +184,6 @@ protected:
 
     static void QueryRecycleBin(ULONGLONG& items, ULONGLONG& bytes);
 
-protected:
     BOOL OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext* pContext) override;
     BOOL PreCreateWindow(CREATESTRUCT& cs) override;
 
@@ -187,16 +192,17 @@ protected:
     void DestroyProgress();
 
     void SetStatusPaneText(int pos, const CStringW& text);
-    void UpdateCleanupMenu(CMenu* menu);
+    void UpdateCleanupMenu(CMenu* menu) const;
 
+    UINT_PTR m_timer = 0;           // Timer for updating the display
     bool m_progressVisible = false; // True while progress must be shown (either pacman or progress bar)
     bool m_scanSuspend = false;     // True if the scan has been suspended
     ULONGLONG m_progressRange = 0;  // Progress range. A range of 0 means Pacman should be used.
     ULONGLONG m_progressPos = 0;    // Progress position (<= progressRange, or an item count in case of m_progressRang == 0)
     CItem* m_workingItem = nullptr;
 
-    CMySplitterWnd m_wndSubSplitter; // Contains the two upper views
-    CMySplitterWnd m_wndSplitter;    // Contains (a) m_wndSubSplitter and (b) the graph view.
+    CMySplitterWnd m_SubSplitter; // Contains the two upper views
+    CMySplitterWnd m_Splitter;    // Contains (a) m_wndSubSplitter and (b) the graph view.
 
     CMFCStatusBar m_wndStatusBar; // Status bar
     CMFCToolBar m_wndToolBar;     // Tool bar
@@ -227,8 +233,9 @@ protected:
     afx_msg void OnConfigure();
     afx_msg void OnDestroy();
     afx_msg LRESULT OnTaskButtonCreated(WPARAM, LPARAM);
+    afx_msg void OnSysColorChange();
 
 public:
-    afx_msg void OnSysColorChange();
+    static CMainFrame* Get() { return _singleton; }
     BOOL LoadFrame(UINT nIDResource, DWORD dwDefaultStyle = WS_OVERLAPPEDWINDOW | FWS_ADDTOTITLE, CWnd* pParentWnd = nullptr, CCreateContext* pContext = nullptr) override;
 };

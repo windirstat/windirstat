@@ -1,4 +1,4 @@
-// MyImageList.h - Declaration of CMyImageList
+// IconImageList.h - Declaration of CIconImageList
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
@@ -22,18 +22,18 @@
 #pragma once
 
 //
-// CMyImageList. Both CDirStatView and CTypeView use this central
+// CIconImageList. Both CFileTreeView and CExtensionView use this central
 // image list. It caches the system image list images as needed,
 // and adds a few special images at initialization.
 // This is because I don't want to deal with two images lists.
 //
-class CMyImageList final : public CImageList
+class CIconImageList final : public CImageList
 {
     static constexpr UINT WDS_SHGFI_DEFAULTS = SHGFI_SYSICONINDEX | SHGFI_SMALLICON | SHGFI_ICON;
 
 public:
-    CMyImageList() = default;
-    ~CMyImageList() override = default;
+    CIconImageList() = default;
+    ~CIconImageList() override = default;
 
     void initialize();
 

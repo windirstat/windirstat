@@ -12,7 +12,7 @@ class BlockingQueue
     std::condition_variable pushed;
     std::condition_variable waiting;
     std::condition_variable popped;
-    unsigned int m_initial_workers;
+    unsigned int m_initial_workers = 1;
     unsigned int m_workers_waiting = 0;
     bool m_started = false;
     bool m_suspended = false;
@@ -111,7 +111,7 @@ public:
         return m_suspended;
     }
 
-    void suspend(bool wait)
+    void suspend(const bool wait)
     {
         std::unique_lock lock(x);
         if (m_suspended || m_draining || !m_started) return;
@@ -131,7 +131,7 @@ public:
         pushed.notify_all();
     }
 
-    void reset(int initial_workers = -1)
+    void reset(const int initial_workers = -1)
     {
         std::lock_guard lock(x);
         q.clear();

@@ -22,249 +22,90 @@
 #include "stdafx.h"
 #include "OsSpecific.h"
 #include "MountPoints.h"
-#include "GlobalHelpers.h"
-#include <common/Tracer.h>
+#include "SmartPointer.h"
+#include "FileFind.h"
 
-CReparsePoints::~CReparsePoints()
+#include <algorithm>
+
+bool CReparsePoints::IsReparseType(const std::wstring& path, DWORD tag_type)
 {
-    Clear();
-}
-
-void CReparsePoints::Clear()
-{
-    m_drive.RemoveAll();
-
-    POSITION pos = m_volume.GetStartPosition();
-    while (pos != nullptr)
+    SmartPointer<HANDLE> handle(CloseHandle, CreateFile(path.c_str(), GENERIC_READ, FILE_SHARE_READ,
+        nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT, nullptr));
+    if (handle == INVALID_HANDLE_VALUE)
     {
-        CStringW volume;
-        PointVolumeArray* pva = nullptr;
-        m_volume.GetNextAssoc(pos, volume, pva);
-        ASSERT_VALID(pva);
-        delete pva;
+        return false;
     }
-    m_volume.RemoveAll();
+
+    std::vector<BYTE> buf(MAXIMUM_REPARSE_DATA_BUFFER_SIZE);
+    DWORD dwRet = MAXIMUM_REPARSE_DATA_BUFFER_SIZE;
+    if (DeviceIoControl(handle, FSCTL_GET_REPARSE_POINT,
+        nullptr, 0, buf.data(), MAXIMUM_REPARSE_DATA_BUFFER_SIZE, &dwRet, nullptr) == FALSE)
+    {
+        return false;
+    }
+
+    return reinterpret_cast<PREPARSE_GUID_DATA_BUFFER>(buf.data())->ReparseTag == tag_type;
 }
 
 void CReparsePoints::Initialize()
 {
-    Clear();
+    m_mountpoints.clear();
 
-    GetDriveVolumes();
-    GetAllMountPoints();
-}
-
-void CReparsePoints::GetDriveVolumes()
-{
-    m_drive.SetSize(wds::iNumDriveLetters);
-
-    const DWORD drives = ::GetLogicalDrives();
-    DWORD mask = 0x00000001;
-    for (int i = 0; i < wds::iNumDriveLetters; i++, mask <<= 1)
-    {
-        WCHAR volume[_MAX_PATH] = L"";
-
-        if ((drives & mask) != 0)
-        {
-            CStringW s;
-            s.Format(L"%c:\\", i + wds::chrCapA);
-
-            if (!::GetVolumeNameForVolumeMountPoint(s, volume, _countof(volume)))
-            {
-#               ifdef _DEBUG
-                if(ERROR_NOT_READY == ::GetLastError())
-                    VTRACE(L"GetVolumeNameForVolumeMountPoint(%s): not ready (%d).", volume, ::GetLastError());
-                else
-                    VTRACE(L"GetVolumeNameForVolumeMountPoint(%s): unexpected error (%d).", volume, ::GetLastError());
-#               endif // _DEBUG
-                volume[0] = 0;
-            }
-        }
-
-        m_drive[i] = volume;
-    }
-}
-
-void CReparsePoints::GetAllMountPoints()
-{
     WCHAR volume[_MAX_PATH];
-    const HANDLE hvol = ::FindFirstVolume(volume, _countof(volume));
-    if (hvol == INVALID_HANDLE_VALUE)
-    {
-        VTRACE(L"No volumes found.");
-        return;
-    }
+    SmartPointer<HANDLE> hvol(FindVolumeClose, ::FindFirstVolume(volume, _countof(volume)));
 
-    for (BOOL bContinue = true; bContinue; bContinue = ::FindNextVolume(hvol, volume, _countof(volume)))
+    for (BOOL bContinue = hvol != INVALID_HANDLE_VALUE; bContinue; bContinue = ::FindNextVolume(hvol, volume, _countof(volume)))
     {
-        WCHAR fsname[_MAX_PATH];
-        WCHAR vname[_MAX_PATH];
-        const auto pva = new PointVolumeArray;
-        ASSERT_VALID(pva);
+        // Fetch required buffer size
+        DWORD buf_size = 0;
+        GetVolumePathNamesForVolumeNameW(volume, nullptr, 0, &buf_size);
+        if (buf_size == 0) continue;
 
-        DWORD fsflags = 0;
-        if (const BOOL b = ::GetVolumeInformation(volume, vname, _countof(vname), nullptr, nullptr, &fsflags, fsname, _countof(fsname)); !b)
+        // Get names of all volumes
+        std::wstring buf;
+        buf.resize(buf_size);
+        if (GetVolumePathNamesForVolumeNameW(volume, buf.data(), buf_size, &buf_size) == 0)
         {
-#           ifdef _DEBUG
-            if(ERROR_NOT_READY == ::GetLastError())
-                VTRACE(L"%s (%s) is not ready (%d).", vname, volume, ::GetLastError());
-            else
-                VTRACE(L"Unexpected error on %s (%s, %d).", vname, volume, ::GetLastError());
-#           endif // _DEBUG
-            m_volume.SetAt(volume, pva);
             continue;
         }
 
-        if ((fsflags & FILE_SUPPORTS_REPARSE_POINTS) == 0)
+        // Enumerate double null-terminated list of names
+        for (LPWSTR name = buf.data(); *name != L'\0'; name += wcslen(name) + 1 + 1)
         {
-            // No support for reparse points, and therefore for volume
-            // mount points, which are implemented using reparse points.
-            VTRACE(L"%s, %s, does not support reparse points (%d).", volume, fsname, ::GetLastError());
-            m_volume.SetAt(volume, pva);
-            continue;
-        }
-
-        WCHAR point[_MAX_PATH];
-        const HANDLE h = ::FindFirstVolumeMountPoint(volume, point, _countof(point));
-        if (h == INVALID_HANDLE_VALUE)
-        {
-#           ifdef _DEBUG
-            if(ERROR_ACCESS_DENIED == ::GetLastError())
+            // Remove training backslash
+            const auto len = wcslen(name);
+            if (name[len - 1] == L'\\')
             {
-                VTRACE(L"Access denied to %s (%d).", volume, ::GetLastError());
-            }
-            else if(ERROR_NO_MORE_FILES != ::GetLastError())
-            {
-                VTRACE(L"Unexpected error for %s (%d).", volume, ::GetLastError());
-            }
-#           endif // _DEBUG
-            m_volume.SetAt(volume, pva);
-            continue;
-        }
-
-        for (BOOL bCont = TRUE; bCont; bCont = ::FindNextVolumeMountPoint(h, point, _countof(point)))
-        {
-            CStringW uniquePath = volume;
-            uniquePath += point;
-            WCHAR mountedVolume[_MAX_PATH];
-
-            const BOOL bGotMountPoints = ::GetVolumeNameForVolumeMountPoint(uniquePath, mountedVolume, _countof(mountedVolume));
-
-            if (!bGotMountPoints)
-            {
-                VTRACE(L"GetVolumeNameForVolumeMountPoint(%s) failed (%d).", uniquePath.GetBuffer(), ::GetLastError());
-                continue;
+                name[len - 1] = L'\0';
             }
 
-            SPointVolume pv;
-            pv.point  = point;
-            pv.volume = mountedVolume;
-            pv.flags  = fsflags;
-            VTRACE(L"%s (%s) -> %08X", point, mountedVolume, fsflags);
-
-            pv.point.MakeLower();
-
-            pva->Add(pv);
-        }
-        ::FindVolumeMountPointClose(h);
-
-        m_volume.SetAt(volume, pva);
-    }
-
-    (void)::FindVolumeClose(hvol);
-
-#ifdef _DEBUG
-    POSITION pos = m_volume.GetStartPosition();
-    while(pos != nullptr)
-    {
-        CStringW lvolume;
-        PointVolumeArray *pva = nullptr;
-        m_volume.GetNextAssoc(pos, lvolume, pva);
-        pva->AssertValid();
-    }
-#endif
-}
-
-bool CReparsePoints::IsVolumeMountPoint(CStringW path) const
-{
-    if (path.GetLength() < 3 || path[1] != wds::chrColon || path[2] != wds::chrBackslash)
-    {
-        // Don't know how to make out mount points on UNC paths ###
-        return false;
-    }
-
-    ASSERT(path.GetLength() >= 3);
-    ASSERT(path[1] == wds::chrColon);
-    ASSERT(path[2] == wds::chrBackslash);
-
-    if (path.Right(1) != wds::chrBackslash)
-    {
-        path += L"\\";
-    }
-
-    path.MakeLower();
-
-    const CStringW volume = m_drive[path[0] - wds::chrSmallA];
-    path = path.Mid(3);
-
-    return IsVolumeMountPoint(volume, path);
-}
-
-// Check whether the current item is a junction point but no volume mount point
-// as the latter ones are treated differently (see above).
-bool CReparsePoints::IsFolderJunction(const DWORD attr) const
-{
-    if (attr == INVALID_FILE_ATTRIBUTES)
-    {
-        return false;
-    }
-
-    return (attr & FILE_ATTRIBUTE_REPARSE_POINT) != 0;
-}
-
-// ... same as before, but based on the full path
-bool CReparsePoints::IsFolderJunction(const CStringW& path) const
-{
-    if (IsVolumeMountPoint(path))
-    {
-        return false;
-    }
-
-    return IsFolderJunction(::GetFileAttributes(path));
-}
-
-bool CReparsePoints::IsVolumeMountPoint(CStringW volume, CStringW path) const
-{
-    while (true)
-    {
-        PointVolumeArray* pva;
-        if (!m_volume.Lookup(volume, pva))
-        {
-            VTRACE(L"CMountPoints: Volume(%s) unknown!", volume.GetString());
-            return false;
-        }
-
-        CStringW point;
-        int i = 0;
-        for (; i < pva->GetSize(); i++)
-        {
-            point = (*pva)[i].point;
-            if (path.Left(point.GetLength()) == point)
+            if (IsReparseType(name, IO_REPARSE_TAG_MOUNT_POINT))
             {
-                break;
+                _wcslwr_s(name, len + 1);
+                m_mountpoints.emplace_back(name);
             }
         }
-        if (i >= pva->GetSize())
-        {
-            return false;
-        }
-
-        if (path.GetLength() == point.GetLength())
-        {
-            return true;
-        }
-
-        volume = (*pva)[i].volume;
-        path   = path.Mid(point.GetLength());
     }
+}
+
+bool CReparsePoints::IsReparsePoint(const DWORD attr)
+{
+    return attr != INVALID_FILE_ATTRIBUTES &&
+        (attr & FILE_ATTRIBUTE_REPARSE_POINT) != 0;
+}
+
+bool CReparsePoints::IsMountPoint(const CStringW& path, DWORD attr) const
+{
+    if (attr == INVALID_FILE_ATTRIBUTES) attr = ::GetFileAttributes(path);
+    if (!IsReparsePoint(attr)) return false;
+    CStringW lookup_path = FileFindEnhanced::StripDosPathCharts(path);
+    _wcslwr_s(lookup_path.GetBuffer(), static_cast<size_t>(lookup_path.GetLength()) + 1);
+    return std::ranges::find(m_mountpoints, lookup_path.GetString()) != m_mountpoints.end();
+}
+
+bool CReparsePoints::IsJunction(const CStringW& path, DWORD attr) const
+{
+    if (attr == INVALID_FILE_ATTRIBUTES) attr = ::GetFileAttributes(path);
+    if (!IsReparsePoint(attr)) return false;
+    return !IsMountPoint(path) && IsReparseType(path.GetString(), IO_REPARSE_TAG_MOUNT_POINT);
 }

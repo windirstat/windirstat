@@ -48,7 +48,7 @@ class CDriveItem final : public COwnerDrawnListItem
 {
 public:
     CDriveItem(CDrivesList* list, LPCWSTR pszPath);
-    void StartQuery(HWND dialog, UINT serial);
+    void StartQuery(HWND dialog, UINT serial) const;
 
     void SetDriveInformation(bool success, LPCWSTR name, ULONGLONG total, ULONGLONG free);
 
@@ -67,8 +67,8 @@ private:
     CStringW m_path;     // e.g. "C:\"
     bool m_isRemote;     // Whether the drive type is DRIVE_REMOTE (network drive)
 
-    bool m_querying = true; // Information thread is running.
-    bool m_success = false; // Drive is accessible. false while m_querying is true.
+    bool m_querying = true;  // Information thread is running.
+    bool m_success = false;  // Drive is accessible. false while m_querying is true.
 
     CStringW m_name;            // e.g. "BOOT (C:)"
     ULONGLONG m_totalBytes = 0; // Capacity
@@ -153,9 +153,10 @@ public:
     ~CSelectDrivesDlg() override = default;
 
     // Dialog Data
-    int m_radio = 0;       // out.
-    CStringW m_folderName; // out. Valid if m_radio = RADIO_AFOLDER
-    CStringArray m_drives; // out. Valid if m_radio != RADIO_AFOLDER
+    BOOL m_scanDuplicates = false; // whether duplicate scanning is enable
+    int m_radio = 0;          // out.
+    CStringW m_folderName;    // out. Valid if m_radio = RADIO_AFOLDER
+    CStringArray m_drives;    // out. Valid if m_radio != RADIO_AFOLDER
 
     void DoDataExchange(CDataExchange* pDX) override;
     BOOL OnInitDialog() override;

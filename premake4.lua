@@ -449,7 +449,6 @@ solution (iif(release, slnname, "windirstat"))
 
         excludes
         {
-            "common/tracer.cpp", -- this one gets an #include via windirstat.cpp
         }
         
         vpaths

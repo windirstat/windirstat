@@ -17,7 +17,6 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
-//
 
 #pragma once
 
@@ -45,21 +44,16 @@ public:
         return map.contains(name.GetString());
     }
 
-    static CStringW Lookup(const UINT res)
+    static CStringW Lookup(const UINT res, const CStringW& def = CString())
     {
         CStringW name;
         name.LoadStringW(nullptr, res, static_cast<LANGID>(COptions::LanguageId.Obj()));
-        return Contains(name) ? Lookup(name) : CStringW(L"");
+        return Lookup(name, def);
     }
 
-    static CStringW Lookup(const CStringW& name)
+    static CStringW Lookup(const CStringW& name, const CStringW & def = CString())
     {
-        return { map[name.GetString()].c_str() };
-    }
-
-    static CStringW Lookup(const CStringW& name, const CStringW & def)
-    {
-        return Contains(name) ? Lookup(name) : def;
+        return Contains(name) ? CString{ map[name.GetString()].c_str() } : def;
     }
 
     static CStringW LookupNeutral(const UINT res)

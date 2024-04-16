@@ -19,7 +19,6 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
-//
 
 #include "stdafx.h"
 #include "WinDirStat.h"
@@ -29,32 +28,16 @@
 #include "selectdrivesdlg.h"
 #include "AboutDlg.h"
 #include "DirStatDoc.h"
-#include "GraphView.h"
+#include "TreeMapView.h"
 #include "OsSpecific.h"
 #include "GlobalHelpers.h"
 #include "Item.h"
 #include "Localization.h"
 #include "SmartPointer.h"
 
-#ifdef _DEBUG
-#   include <common/tracer.cpp>
-#endif
-
-CMainFrame* GetMainFrame()
+CIconImageList* GetIconImageList()
 {
-    // Not: return (CMainFrame *)AfxGetMainWnd();
-    // because CWinAppEx::m_pMainWnd is set too late.
-    return CMainFrame::GetTheFrame();
-}
-
-CDirStatApp* GetWDSApp()
-{
-    return static_cast<CDirStatApp*>(AfxGetApp());
-}
-
-CMyImageList* GetMyImageList()
-{
-    return GetWDSApp()->GetMyImageList();
+    return CDirStatApp::Get()->GetIconImageList();
 }
 
 // CDirStatApp
@@ -69,17 +52,20 @@ BEGIN_MESSAGE_MAP(CDirStatApp, CWinAppEx)
 END_MESSAGE_MAP()
 
 const CDirStatApp _theApp;
+CDirStatApp * CDirStatApp::_singleton;
 
-CDirStatApp::CDirStatApp() :
-        m_altColor(GetAlternativeColor(RGB(0x00, 0x00, 0xFF), L"AltColor"))
-      , m_altEncryptionColor(GetAlternativeColor(RGB(0x00, 0x80, 0x00), L"AltEncryptionColor"))
-#   ifdef VTRACE_TO_CONSOLE
-      , m_vtrace_console(new CWDSTracerConsole())
-#   endif // VTRACE_TO_CONSOLE
+CDirStatApp::CDirStatApp()
 {
+#ifdef VTRACE_TO_CONSOLE
+    m_vtrace_console.Attach(new CWDSTracerConsole);
+#endif
+
+    m_altColor = GetAlternativeColor(RGB(0x00, 0x00, 0xFF), L"AltColor");
+    m_altEncryptionColor = GetAlternativeColor(RGB(0x00, 0x80, 0x00), L"AltEncryptionColor");
+    _singleton = this;
 }
 
-CMyImageList* CDirStatApp::GetMyImageList()
+CIconImageList* CDirStatApp::GetIconImageList()
 {
     m_myImageList.initialize();
     return &m_myImageList;
@@ -106,7 +92,7 @@ void CDirStatApp::RestartApplication()
     // We _send_ the WM_CLOSE here to ensure that all COptions-Settings
     // like column widths an so on are saved before the new instance is resumed.
     // This will post a WM_QUIT message.
-    (void)GetMainFrame()->SendMessage(WM_CLOSE);
+    (void)CMainFrame::Get()->SendMessage(WM_CLOSE);
     if (const DWORD dw = ::ResumeThread(pi.hThread); dw != 1)
     {
         VTRACE(L"ResumeThread() didn't return 1");
@@ -116,39 +102,40 @@ void CDirStatApp::RestartApplication()
     ::CloseHandle(pi.hThread);
 }
 
-bool CDirStatApp::getDiskFreeSpace(LPCWSTR pszRootPath, ULONGLONG& total, ULONGLONG& unused)
+std::tuple<ULONGLONG, ULONGLONG> CDirStatApp::getDiskFreeSpace(LPCWSTR pszRootPath)
 {
     ULARGE_INTEGER u64total = {{0, 0}};
     ULARGE_INTEGER u64free = {{0, 0}};
 
-    const BOOL b = GetDiskFreeSpaceEx(pszRootPath, nullptr, &u64total, &u64free);
-    if (!b)
+    if (GetDiskFreeSpaceEx(pszRootPath, nullptr, &u64total, &u64free) == 0)
     {
         VTRACE(L"GetDiskFreeSpaceEx(%s) failed.", pszRootPath);
     }
 
-    // FIXME: need to retrieve total via IOCTL_DISK_GET_PARTITION_INFO instead
-    total  = u64total.QuadPart;
-    unused = u64free.QuadPart;
-
-    // Race condition ...
-    ASSERT(unused <= total);
-    return FALSE != b;
+    ASSERT(u64free.QuadPart <= u64total.QuadPart);
+    return { u64total.QuadPart, u64free.QuadPart };
 }
 
 void CDirStatApp::ReReadMountPoints()
 {
-    m_mountPoints.Initialize();
+    m_reparsePoints.Initialize();
 }
 
-bool CDirStatApp::IsVolumeMountPoint(const CStringW& path) const
+bool CDirStatApp::IsFollowingAllowed(const CStringW& path, DWORD attr) const
 {
-    return m_mountPoints.IsVolumeMountPoint(path);
+    return !CReparsePoints::IsReparsePoint(attr) ||
+        IsMountPoint(path, attr) && COptions::FollowMountPoints ||
+        IsJunction(path, attr) && COptions::FollowJunctions;
 }
 
-bool CDirStatApp::IsFolderJunction(DWORD attr) const
+bool CDirStatApp::IsMountPoint(const CStringW& path, DWORD attr) const
 {
-    return m_mountPoints.IsFolderJunction(attr);
+    return m_reparsePoints.IsMountPoint(path, attr);
+}
+
+bool CDirStatApp::IsJunction(const CStringW& path, DWORD attr) const
+{
+    return m_reparsePoints.IsJunction(path, attr);
 }
 
 // Get the alternative colors for compressed and encrypted files/folders.
@@ -217,20 +204,19 @@ bool CDirStatApp::SetPortableMode(bool enable, bool only_open)
     }
 
     // Cleanup previous configuration
-    if (m_pszRegistryKey != nullptr) free(LPVOID(m_pszRegistryKey));
-    if (m_pszProfileName != nullptr) free(LPVOID(m_pszProfileName));
+    if (m_pszRegistryKey != nullptr) free(const_cast<LPVOID>(static_cast<LPCVOID>(m_pszRegistryKey)));
+    if (m_pszProfileName != nullptr) free(const_cast<LPVOID>(static_cast<LPCVOID>(m_pszProfileName)));
     m_pszProfileName = nullptr;
     m_pszRegistryKey = nullptr;
     
     if (enable)
     {
         // Enable portable mode by creating the file
-        const HANDLE ini_handle = CreateFile(ini, GENERIC_WRITE | GENERIC_READ, FILE_SHARE_READ,
-            nullptr, only_open ? OPEN_EXISTING : OPEN_ALWAYS , 0, nullptr);
+        SmartPointer<HANDLE> ini_handle(CloseHandle, CreateFile(ini, GENERIC_WRITE | GENERIC_READ, FILE_SHARE_READ,
+            nullptr, only_open ? OPEN_EXISTING : OPEN_ALWAYS , 0, nullptr));
         if (ini_handle != INVALID_HANDLE_VALUE)
         {
             // Open successful, setup settings to store to file
-            CloseHandle(ini_handle);
             m_pszProfileName = _wcsdup(ini);
             return true;
         }
@@ -277,7 +263,6 @@ BOOL CDirStatApp::InitInstance()
     (void)::AfxOleInit();
     ::AfxEnableControlContainer();
     (void)::AfxInitRichEdit2();
-    CWinAppEx::EnableHtmlHelp();
 
     // If a local config file is available, use that for settings
     SetPortableMode(true, true);
@@ -289,7 +274,7 @@ BOOL CDirStatApp::InitInstance()
         IDR_MAINFRAME,
         RUNTIME_CLASS(CDirStatDoc),
         RUNTIME_CLASS(CMainFrame),
-        RUNTIME_CLASS(CGraphView));
+        RUNTIME_CLASS(CTreeMapView));
     if (!m_pDocTemplate)
     {
         return FALSE;
@@ -313,7 +298,7 @@ BOOL CDirStatApp::InitInstance()
 
     FileIconInit(TRUE);
 
-    GetMainFrame()->InitialShowWindow();
+    CMainFrame::Get()->InitialShowWindow();
     m_pMainWnd->UpdateWindow();
 
     // When called by setup.exe, WinDirStat remained in the
@@ -401,7 +386,6 @@ void CDirStatApp::OnHelpManual()
 {
     LaunchHelp();
 }
-
 
 void CDirStatApp::OnReportBug()
 {

@@ -17,7 +17,6 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
-//
 
 #include "stdafx.h"
 #include "WinDirStat.h"
@@ -25,20 +24,6 @@
 #include "SortingListControl.h"
 
 /////////////////////////////////////////////////////////////////////////////
-
-CStringW CSortingListItem::GetText(int subitem) const
-{
-    // Dummy implementation
-    CStringW s;
-    s.Format(L"subitem %d", subitem);
-    return s;
-}
-
-int CSortingListItem::GetImage() const
-{
-    // Dummy implementation
-    return 0;
-}
 
 // Return value:
 // <= -2:   this is less than other regardless of ascending flag
@@ -80,7 +65,6 @@ CSortingListControl::CSortingListControl(std::vector<int>* column_order, std::ve
 {
     m_column_order = column_order;
     m_column_widths = column_widths;
-    m_indicatedColumn = -1;
 }
 
 void CSortingListControl::LoadPersistentAttributes()
@@ -161,19 +145,13 @@ void CSortingListControl::SetSorting(int sortColumn, bool ascending)
 void CSortingListControl::InsertListItem(int i, CSortingListItem* item)
 {
     LVITEM lvitem;
-    ZeroMemory(&lvitem, sizeof(lvitem));
-
-    lvitem.mask = LVIF_TEXT | LVIF_PARAM;
-    if (HasImages())
-    {
-        lvitem.mask |= LVIF_IMAGE;
-    }
-
-    lvitem.iItem   = i;
+    lvitem.mask = LVIF_TEXT | LVIF_PARAM | (HasImages() ? LVIF_IMAGE : 0);
+    lvitem.iItem = i;
     lvitem.pszText = LPSTR_TEXTCALLBACK;
-    lvitem.iImage  = I_IMAGECALLBACK;
-    lvitem.lParam  = reinterpret_cast<LPARAM>(item);
-
+    lvitem.iImage = I_IMAGECALLBACK;
+    lvitem.lParam = reinterpret_cast<LPARAM>(item);
+    lvitem.stateMask = 0;
+    lvitem.iSubItem = 0;
     VERIFY(i == CListCtrl::InsertItem(&lvitem));
 }
 
@@ -184,31 +162,34 @@ CSortingListItem* CSortingListControl::GetSortingListItem(int i) const
 
 void CSortingListControl::SortItems()
 {
-    VERIFY(CListCtrl::SortItems(&_CompareFunc, reinterpret_cast<DWORD_PTR>(&m_sorting)));
-
-    HDITEM hditem;
-    ZeroMemory(&hditem, sizeof(hditem));
+    VERIFY(CListCtrl::SortItems([](LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort) {
+        const CSortingListItem* item1 = reinterpret_cast<CSortingListItem*>(lParam1);
+        const CSortingListItem* item2 = reinterpret_cast<CSortingListItem*>(lParam2);
+        const SSorting* sorting = reinterpret_cast<SSorting*>(lParamSort);
+        return item1->CompareS(item2, *sorting); }, reinterpret_cast<DWORD_PTR>(&m_sorting)));
 
     if (m_indicatedColumn != -1)
     {
+        HDITEM hditem;
         CStringW text;
-        hditem.mask       = HDI_TEXT;
-        hditem.pszText    = text.GetBuffer(256);
+        hditem.mask = HDI_TEXT;
+        hditem.pszText = text.GetBuffer(256);
         hditem.cchTextMax = 256;
         GetHeaderCtrl()->GetItem(m_indicatedColumn, &hditem);
         text.ReleaseBuffer();
-        text           = text.Mid(2);
+        text = text.Mid(2);
         hditem.pszText = const_cast<LPWSTR>(static_cast<LPCWSTR>(text));
         GetHeaderCtrl()->SetItem(m_indicatedColumn, &hditem);
     }
 
+    HDITEM hditem;
     CStringW text;
-    hditem.mask       = HDI_TEXT;
-    hditem.pszText    = text.GetBuffer(256);
+    hditem.mask = HDI_TEXT;
+    hditem.pszText = text.GetBuffer(256);
     hditem.cchTextMax = 256;
     GetHeaderCtrl()->GetItem(m_sorting.column1, &hditem);
     text.ReleaseBuffer();
-    text           = (m_sorting.ascending1 ? L"< " : L"> ") + text;
+    text = (m_sorting.ascending1 ? L"< " : L"> ") + text;
     hditem.pszText = const_cast<LPWSTR>(static_cast<LPCWSTR>(text));
     GetHeaderCtrl()->SetItem(m_sorting.column1, &hditem);
     m_indicatedColumn = m_sorting.column1;
@@ -224,28 +205,20 @@ bool CSortingListControl::HasImages()
     return false;
 }
 
-int CALLBACK CSortingListControl::_CompareFunc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
-{
-    const CSortingListItem* item1 = reinterpret_cast<CSortingListItem*>(lParam1);
-    const CSortingListItem* item2 = reinterpret_cast<CSortingListItem*>(lParam2);
-    const SSorting* sorting       = reinterpret_cast<SSorting*>(lParamSort);
-
-    return item1->CompareS(item2, *sorting);
-}
-
+#pragma warning(push)
+#pragma warning(disable:26454)
 BEGIN_MESSAGE_MAP(CSortingListControl, CListCtrl)
     ON_NOTIFY_REFLECT(LVN_GETDISPINFO, OnLvnGetdispinfo)
-    ON_NOTIFY(HDN_ITEMCLICKA, 0, OnHdnItemclick)
-    ON_NOTIFY(HDN_ITEMCLICKW, 0, OnHdnItemclick)
-    ON_NOTIFY(HDN_ITEMDBLCLICKA, 0, OnHdnItemdblclick)
-    ON_NOTIFY(HDN_ITEMDBLCLICKW, 0, OnHdnItemdblclick)
+    ON_NOTIFY(HDN_ITEMCLICK, 0, OnHdnItemclick)
+    ON_NOTIFY(HDN_ITEMDBLCLICK, 0, OnHdnItemdblclick)
     ON_WM_DESTROY()
 END_MESSAGE_MAP()
+#pragma warning(pop)
 
 void CSortingListControl::OnLvnGetdispinfo(NMHDR* pNMHDR, LRESULT* pResult)
 {
     NMLVDISPINFO* di = reinterpret_cast<NMLVDISPINFO*>(pNMHDR);
-    *pResult         = 0;
+    *pResult = FALSE;
 
     const CSortingListItem* item = reinterpret_cast<CSortingListItem*>(di->item.lParam);
 
@@ -263,8 +236,8 @@ void CSortingListControl::OnLvnGetdispinfo(NMHDR* pNMHDR, LRESULT* pResult)
 void CSortingListControl::OnHdnItemclick(NMHDR* pNMHDR, LRESULT* pResult)
 {
     const LPNMHEADER phdr = reinterpret_cast<LPNMHEADER>(pNMHDR);
-    *pResult        = 0;
-    const int col   = phdr->iItem;
+    *pResult = FALSE;
+    const int col = phdr->iItem;
 
     if (col == m_sorting.column1)
     {

@@ -43,7 +43,7 @@ protected:
     void OnOK() override;
 
     BOOL m_followMountPoints = FALSE;
-    BOOL m_followJunctionPoints = FALSE;
+    BOOL m_followJunctions = FALSE;
     BOOL m_skipHidden = FALSE;
     BOOL m_skipProtected = FALSE;
     BOOL m_useBackupRestore = FALSE;
@@ -51,7 +51,7 @@ protected:
     int m_scanningThreads = 0;
 
     CButton m_ctlFollowMountPoints;
-    CButton m_ctlFollowJunctionPoints;
+    CButton m_ctlFollowJunctions;
     CButton m_ctlSkipHidden;
 
     DECLARE_MESSAGE_MAP()

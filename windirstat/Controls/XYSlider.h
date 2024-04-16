@@ -33,7 +33,7 @@ class CXySlider final : public CStatic
     static const UINT XY_SETPOS; // lparam = POINT *
     static const UINT XY_GETPOS; // lparam = POINT *
 
-    CXySlider();
+    CXySlider() = default;
 
     void GetRange(CSize& range) const;
     void SetRange(CSize range);
@@ -66,17 +66,17 @@ protected:
     bool m_inited = false;
 
     // These are in external scale
-    CSize m_externalRange;
-    CPoint m_externalPos;
+    CSize m_externalRange{ 100, 100 };
+    CPoint m_externalPos{ 0, 0 };
 
     // These are in pixels
     CSize m_range;
-    CPoint m_pos; // relative to m_zero
+    CPoint m_pos{ 0, 0 }; // relative to m_zero
 
     // Constants (in pixels)
     CRect m_rcAll;
     CRect m_rcInner;
-    CPoint m_zero;
+    CPoint m_zero{ 0, 0 };
     CSize m_radius;
     CSize m_gripperRadius;
 

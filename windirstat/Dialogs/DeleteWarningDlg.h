@@ -41,7 +41,7 @@ class CDeleteWarningDlg final : public CDialogEx
 
     CListBox m_files;
     std::vector<CItem*> m_items;
-    BOOL m_dontShowAgain; // [out]
+    BOOL m_dontShowAgain = FALSE; // [out]
 
 protected:
     void DoDataExchange(CDataExchange* pDX) override;

@@ -27,6 +27,7 @@
 #include "FileFind.h" // FileFindEnhanced
 #include "BlockingQueue.h"
 
+#include <algorithm>
 #include <mutex>
 
 // Columns
@@ -35,7 +36,7 @@ enum ITEMCOLUMNS
     COL_NAME,
     COL_SUBTREEPERCENTAGE,
     COL_PERCENTAGE,
-    COL_SUBTREETOTAL,
+    COL_SIZE,
     COL_ITEMS,
     COL_FILES,
     COL_SUBDIRS,
@@ -47,16 +48,18 @@ enum ITEMCOLUMNS
 // Item types
 enum ITEMTYPE : unsigned short
 {
-    IT_MYCOMPUTER = 1 << 0, // Pseudo Container "My Computer"
-    IT_DRIVE      = 1 << 1, // C:\, D:\ etc.
-    IT_DIRECTORY  = 1 << 2, // Folder
-    IT_FILE       = 1 << 3, // Regular file
-    IT_FREESPACE  = 1 << 4, // Pseudo File "<Free Space>"
-    IT_UNKNOWN    = 1 << 5, // Pseudo File "<Unknown>"
-    IT_ANY        = 0x00FF, // Indicates any item type
-    ITF_DONE      = 1 << 8, // Indicates done processing
-    ITF_ROOTITEM  = 1 << 9, // Indicates root item
-    ITF_FLAGS     = 0xFF00, // All potential flag items
+    IT_MYCOMPUTER = 1 << 0,  // Pseudo Container "My Computer"
+    IT_DRIVE      = 1 << 1,  // C:\, D:\ etc.
+    IT_DIRECTORY  = 1 << 2,  // Folder
+    IT_FILE       = 1 << 3,  // Regular file
+    IT_FREESPACE  = 1 << 4,  // Pseudo File "<Free Space>"
+    IT_UNKNOWN    = 1 << 5,  // Pseudo File "<Unknown>"
+    IT_ANY        = 0x00FF,  // Indicates any item type
+    ITF_DONE      = 1 << 8,  // Indicates done processing
+    ITF_ROOTITEM  = 1 << 9,  // Indicates root item
+    ITF_PARTHASH  = 1 << 10, // Indicates a partial hash
+    ITF_FULLHASH  = 1 << 11, // Indicates a full hash
+    ITF_FLAGS     = 0xFF00,  // All potential flag items
 };
 
 inline ITEMTYPE operator|(const ITEMTYPE & a, const ITEMTYPE & b)
@@ -207,9 +210,10 @@ public:
     void RemoveFreeSpaceItem();
     void CreateUnknownItem();
     CItem* FindUnknownItem() const;
-    void UpdateUnknownItem();
+    void UpdateUnknownItem() const;
     void RemoveUnknownItem();
-    void RecurseCollectExtensionData(CExtensionData* ed) const;
+    void CollectExtensionData(CExtensionData* ed) const;
+    std::wstring GetFileHash(bool partial);
 
     bool IsDone() const
     {
@@ -245,7 +249,7 @@ private:
     COLORREF GetPercentageColor() const;
     CStringW UpwardGetPathWithoutBackslash() const;
     CItem* AddDirectory(const FileFindEnhanced& finder);
-    void AddFile(const FileFindEnhanced& finder);
+    CItem* AddFile(const FileFindEnhanced& finder);
     void UpwardDrivePacman();
 
     // Special structure for container items that is separately allocated to
@@ -262,9 +266,9 @@ private:
         std::atomic<ULONG> m_jobs = 0;    // # "read jobs" in subtree.
     };
 
-    RECT m_rect;                       // To support GraphView
+    RECT m_rect;                       // To support TreeMapView
     CStringW m_name;                   // Display name
-    LPCWSTR m_extension;               // Cache of extension (it's used often)
+    LPCWSTR m_extension = nullptr;     // Cache of extension (it's used often)
     FILETIME m_lastChange = {0, 0};    // Last modification time OF SUBTREE
     CHILDINFO* m_ci = nullptr;         // Child information for non-files
     std::atomic<ULONGLONG> m_size = 0; // OwnSize, if IT_FILE or IT_FREESPACE, or IT_UNKNOWN; SubtreeTotal else.

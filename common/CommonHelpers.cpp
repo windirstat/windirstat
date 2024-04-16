@@ -54,34 +54,23 @@ CStringW MyStrRetToString(const LPITEMIDLIST pidl, const STRRET* strret)
     return s;
 }
 
-BOOL ShellExecuteNoThrow(HWND hwnd, LPCWSTR lpVerb, LPCWSTR lpFile, LPCWSTR lpParameters, LPCWSTR lpDirectory, INT nShowCmd)
-{
-    SHELLEXECUTEINFO sei = {
-        sizeof(SHELLEXECUTEINFO),
-        0,
-        hwnd,
-        lpVerb,
-        lpFile,
-        lpParameters,
-        lpDirectory,
-        nShowCmd,
-        nullptr, // hInstApp
-        nullptr,
-        nullptr,
-        nullptr,
-        0, // dwHotKey
-        {},
-        nullptr
-    };
-
-    return ::ShellExecuteEx(&sei);
-}
-
-BOOL ShellExecuteThrow(HWND hwnd, LPCWSTR lpVerb, LPCWSTR lpFile, LPCWSTR lpParameters, LPCWSTR lpDirectory, INT nShowCmd)
+BOOL ShellExecuteThrow(HWND hwnd, const LPCWSTR lpVerb, const LPCWSTR lpFile,
+    const LPCWSTR lpParameters, const LPCWSTR lpDirectory, const INT nShowCmd)
 {
     CWaitCursor wc;
 
-    const BOOL bResult = ShellExecuteNoThrow(hwnd, lpVerb, lpFile, lpParameters, lpDirectory, nShowCmd);
+    SHELLEXECUTEINFO sei;
+    ZeroMemory(&sei, sizeof(SHELLEXECUTEINFO));
+    sei.cbSize = sizeof(SHELLEXECUTEINFO);
+    sei.fMask = 0;
+    sei.hwnd = hwnd;
+    sei.lpVerb = lpVerb;
+    sei.lpFile = lpFile;
+    sei.lpParameters = lpParameters;
+    sei.lpDirectory = lpDirectory;
+    sei.nShow = nShowCmd;
+
+    const BOOL bResult = ::ShellExecuteEx(&sei);
     if (!bResult)
     {
         MdThrowStringExceptionF(L"ShellExecute failed: %1!s!", MdGetWinErrorText(::GetLastError()).GetString());

@@ -44,6 +44,10 @@
 #include <cmath>            // floor(), fmod(), sqrt() etc.
 #include <cfloat>           // DBL_MAX
 #include <psapi.h>
+#include <winioctl.h>
+#include <bcrypt.h>
+#include <sal.h>
+#include <wincrypt.h>
 
 constexpr auto RGB_GET_RVALUE(auto rgb) { return (rgb >>  0) & 0xFF; }
 constexpr auto RGB_GET_GVALUE(auto rgb) { return (rgb >>  8) & 0xFF; }
@@ -51,13 +55,3 @@ constexpr auto RGB_GET_BVALUE(auto rgb) { return (rgb >> 16) & 0xFF; }
 
 constexpr auto signum(auto x) { return x < 0 ? -1 : x == 0 ? 0 : 1; };
 constexpr auto usignum(auto x, auto y) { return x < y ? -1 : x == y ? 0 : 1; };
-
-#ifdef _UNICODE
-#if defined _M_IX86
-#pragma comment(linker,"/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='x86' publicKeyToken='6595b64144ccf1df' language='*'\"")
-#elif defined _M_X64
-#pragma comment(linker,"/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='amd64' publicKeyToken='6595b64144ccf1df' language='*'\"")
-#else
-#pragma comment(linker,"/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
-#endif
-#endif

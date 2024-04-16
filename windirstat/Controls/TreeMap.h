@@ -295,8 +295,6 @@ class CTreemapPreview final : public CStatic
         }
 
         CItem(const CArray<CItem*, CItem*>& children)
-            : m_size(0)
-              , m_color(CLR_INVALID)
         {
             m_size = 0;
             for (int i = 0; i < children.GetSize(); i++)
@@ -357,8 +355,8 @@ class CTreemapPreview final : public CStatic
 
     private:
         CArray<CItem*, CItem*> m_children; // Our children
-        int m_size;                        // Our size (in fantasy units)
-        COLORREF m_color;                  // Our color
+        int m_size = 0;                    // Our size (in fantasy units)
+        COLORREF m_color = CLR_INVALID;    // Our color
         CRect m_rect;                      // Our Rectangle in the treemap
     };
 

@@ -19,6 +19,7 @@
 //
 
 #include "stdafx.h"
+#include "WinDirStat.h"
 #include "Property.h"
 
 #include <sstream>
@@ -33,7 +34,7 @@ bool PersistedSetting::ReadBinaryProperty(const std::wstring& section, const std
 {
     LPBYTE data = nullptr;
     UINT data_size = 0;
-    AfxGetApp()->GetProfileBinary(section.c_str(), entry.c_str(), &data, &data_size);
+    CDirStatApp::Get()->GetProfileBinary(section.c_str(), entry.c_str(), &data, &data_size);
     const bool success = (data_size == size);
     if (success) memcpy(dest, data, data_size);
     delete[] data;
@@ -45,37 +46,37 @@ bool PersistedSetting::ReadBinaryProperty(const std::wstring& section, const std
 template <> void Setting<int>::ReadPersistedProperty()
 {
     const int def = _value;
-    _value = AfxGetApp()->GetProfileInt(_section.c_str(), _entry.c_str(), _value);
+    _value = CDirStatApp::Get()->GetProfileInt(_section.c_str(), _entry.c_str(), _value);
     if (_value != def && _min != _max) _value = max(min(_value, _max), _min);
 }
 
 template <> void Setting<int>::WritePersistedProperty()
 {
-    AfxGetApp()->WriteProfileInt(_section.c_str(), _entry.c_str(), _value);
+    CDirStatApp::Get()->WriteProfileInt(_section.c_str(), _entry.c_str(), _value);
 }
 
 // Setting<bool> Processing
 
 template <> void Setting<bool>::ReadPersistedProperty()
 {
-    _value = AfxGetApp()->GetProfileInt(_section.c_str(), _entry.c_str(), _value == 0 ? 0 : 1) != 0;
+    _value = CDirStatApp::Get()->GetProfileInt(_section.c_str(), _entry.c_str(), _value == 0 ? 0 : 1) != 0;
 }
 
 template <> void Setting<bool>::WritePersistedProperty()
 {
-    AfxGetApp()->WriteProfileInt(_section.c_str(), _entry.c_str(), _value == 0 ? 0 : 1);
+    CDirStatApp::Get()->WriteProfileInt(_section.c_str(), _entry.c_str(), _value == 0 ? 0 : 1);
 }
 
 // Setting<std::wstring> Processing
 
 template <> void Setting<std::wstring>::ReadPersistedProperty()
 {
-    _value = AfxGetApp()->GetProfileString(_section.c_str(), _entry.c_str(), _value.c_str()).GetBuffer();
+    _value = CDirStatApp::Get()->GetProfileString(_section.c_str(), _entry.c_str(), _value.c_str()).GetBuffer();
 }
 
 template <> void Setting<std::wstring>::WritePersistedProperty()
 {
-    AfxGetApp()->WriteProfileString(_section.c_str(), _entry.c_str(), _value.c_str());
+    CDirStatApp::Get()->WriteProfileString(_section.c_str(), _entry.c_str(), _value.c_str());
 }
 
 // Setting<WINDOWPLACEMENT> Processing
@@ -87,14 +88,15 @@ template <> void Setting<WINDOWPLACEMENT>::ReadPersistedProperty()
 
 template <> void Setting<WINDOWPLACEMENT>::WritePersistedProperty()
 {
-    AfxGetApp()->WriteProfileBinary(_section.c_str(), _entry.c_str(), LPBYTE(&_value), sizeof(WINDOWPLACEMENT));
+    CDirStatApp::Get()->WriteProfileBinary(_section.c_str(), _entry.c_str(),
+        reinterpret_cast<LPBYTE>(&_value), sizeof(WINDOWPLACEMENT));
 }
 
 // Setting<std::vector<std::wstring>> Processing
 
 template <> void Setting<std::vector<std::wstring>>::ReadPersistedProperty()
 {
-    const std::wstring s = AfxGetApp()->GetProfileString(_section.c_str(), _entry.c_str()).GetBuffer();
+    const std::wstring s = CDirStatApp::Get()->GetProfileString(_section.c_str(), _entry.c_str()).GetBuffer();
     std::wstringstream iss(s);
 
     _value.clear();
@@ -113,14 +115,14 @@ template <> void Setting<std::vector<std::wstring>>::WritePersistedProperty()
     }
     if (result.ends_with(L'|')) result.pop_back();
 
-    AfxGetApp()->WriteProfileString(_section.c_str(), _entry.c_str(), result.c_str());
+    CDirStatApp::Get()->WriteProfileString(_section.c_str(), _entry.c_str(), result.c_str());
 }
 
 // Setting<std::vector<int>> Processing
 
 template <> void Setting<std::vector<int>>::ReadPersistedProperty()
 {
-    const std::wstring s = AfxGetApp()->GetProfileString(_section.c_str(), _entry.c_str()).GetBuffer();
+    const std::wstring s = CDirStatApp::Get()->GetProfileString(_section.c_str(), _entry.c_str()).GetBuffer();
     std::wstringstream iss(s);
 
     _value.clear();
@@ -139,7 +141,7 @@ template <> void Setting<std::vector<int>>::WritePersistedProperty()
     }
     if (result.ends_with(L',')) result.pop_back();
 
-    AfxGetApp()->WriteProfileString(_section.c_str(), _entry.c_str(), result.c_str());
+    CDirStatApp::Get()->WriteProfileString(_section.c_str(), _entry.c_str(), result.c_str());
 }
 
 // Setting<COLORREF> Processing
@@ -151,7 +153,7 @@ template <> void Setting<COLORREF>::ReadPersistedProperty()
 
 template <> void Setting<COLORREF>::WritePersistedProperty()
 {
-    AfxGetApp()->WriteProfileBinary(_section.c_str(), _entry.c_str(), reinterpret_cast<LPBYTE>(&_value), sizeof(COLORREF));
+    CDirStatApp::Get()->WriteProfileBinary(_section.c_str(), _entry.c_str(), reinterpret_cast<LPBYTE>(&_value), sizeof(COLORREF));
 }
 
 // Setting<double> Processing
@@ -165,7 +167,7 @@ template <> void Setting<double>::ReadPersistedProperty()
 
 template <> void Setting<double>::WritePersistedProperty()
 {
-    AfxGetApp()->WriteProfileBinary(_section.c_str(), _entry.c_str(), reinterpret_cast<LPBYTE>(&_value), sizeof(double));
+    CDirStatApp::Get()->WriteProfileBinary(_section.c_str(), _entry.c_str(), reinterpret_cast<LPBYTE>(&_value), sizeof(double));
 }
 
 // Setting<RECT> Processing
@@ -177,6 +179,6 @@ template <> void Setting<RECT>::ReadPersistedProperty()
 
 template <> void Setting<RECT>::WritePersistedProperty()
 {
-    AfxGetApp()->WriteProfileBinary(_section.c_str(), _entry.c_str(), reinterpret_cast<LPBYTE>(&_value), sizeof(RECT));
+    CDirStatApp::Get()->WriteProfileBinary(_section.c_str(), _entry.c_str(), reinterpret_cast<LPBYTE>(&_value), sizeof(RECT));
 }
 
