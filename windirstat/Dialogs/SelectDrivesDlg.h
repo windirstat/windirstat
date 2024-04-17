@@ -146,7 +146,7 @@ class CSelectDrivesDlg final : public CDialogEx
 
     enum { IDD = IDD_SELECTDRIVES };
 
-    static CStringW getFullPathName_(LPCWSTR relativePath);
+    static CStringW GetFullPathName(LPCWSTR relativePath);
 
 public:
     CSelectDrivesDlg(CWnd* pParent = nullptr);
@@ -179,6 +179,7 @@ public:
     afx_msg void OnBnClickedFolder();
     afx_msg void OnBnClickedSomeDrives();
     afx_msg void OnEnChangeFolderName();
+    afx_msg void OnScanDuplicatesChecked();
     afx_msg void OnMeasureItem(int nIDCtl, LPMEASUREITEMSTRUCT mis);
     afx_msg void OnLvnItemchangedDrives(NMHDR* pNMHDR, LRESULT* pResult);
     afx_msg void OnSize(UINT nType, int cx, int cy);

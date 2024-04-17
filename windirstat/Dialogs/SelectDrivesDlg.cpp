@@ -147,7 +147,7 @@ int CDriveItem::Compare(const CSortingListItem* baseOther, int subitem) const
         break;
     default:
         {
-            ASSERT(0);
+            ASSERT(FALSE);
         }
     }
 
@@ -237,7 +237,7 @@ CStringW CDriveItem::GetText(int subitem) const
         break;
 
     default:
-        ASSERT(0);
+        ASSERT(FALSE);
     }
 
     return s;
@@ -470,7 +470,9 @@ void CSelectDrivesDlg::DoDataExchange(CDataExchange* pDX)
 BEGIN_MESSAGE_MAP(CSelectDrivesDlg, CDialogEx)
     ON_BN_CLICKED(IDC_AFOLDER, OnBnClickedFolder)
     ON_BN_CLICKED(IDC_SOMEDRIVES, OnBnClickedSomeDrives)
+    ON_BN_CLICKED(IDC_SOMEDRIVES, OnBnClickedSomeDrives)
     ON_EN_CHANGE(IDC_BROWSE_FOLDER, OnEnChangeFolderName)
+    ON_COMMAND(IDC_SCAN_DUPLICATES, OnScanDuplicatesChecked)
     ON_WM_MEASUREITEM()
     ON_NOTIFY(LVN_ITEMCHANGED, IDC_DRIVES, OnLvnItemchangedDrives)
     ON_BN_CLICKED(IDC_ALLDRIVES, OnBnClickedAllLocalDrives)
@@ -575,7 +577,7 @@ BOOL CSelectDrivesDlg::OnInitDialog()
     m_list.SortItems();
 
     m_radio = COptions::SelectDrivesRadio;
-    UpdateData(false);
+    UpdateData(FALSE);
 
     switch (m_radio)
     {
@@ -604,7 +606,7 @@ void CSelectDrivesDlg::OnOK()
     m_selectedDrives.clear();
     if (m_radio == RADIO_AFOLDER)
     {
-        m_folderName = getFullPathName_(m_folderName);
+        m_folderName = GetFullPathName(m_folderName);
         UpdateData(false);
     }
 
@@ -667,7 +669,7 @@ void CSelectDrivesDlg::UpdateButtons()
         break;
     default:
         {
-            ASSERT(0);
+            ASSERT(FALSE);
         }
     }
     m_okButton.EnableWindow(enableOk);
@@ -693,6 +695,11 @@ void CSelectDrivesDlg::OnEnChangeFolderName()
     UpdateButtons();
 }
 
+void CSelectDrivesDlg::OnScanDuplicatesChecked()
+{
+    UpdateButtons();
+}
+
 void CSelectDrivesDlg::OnMeasureItem(int nIDCtl, LPMEASUREITEMSTRUCT mis)
 {
     if (nIDCtl == IDC_DRIVES)
@@ -709,10 +716,10 @@ void CSelectDrivesDlg::OnLvnItemchangedDrives(NMHDR* /*pNMHDR*/, LRESULT* pResul
 {
     m_radio = RADIO_SOMEDRIVES;
 
-    UpdateData(false);
+    UpdateData(FALSE);
     UpdateButtons();
 
-    *pResult = 0;
+    *pResult = FALSE;
 }
 
 void CSelectDrivesDlg::OnBnClickedAllLocalDrives()
@@ -809,7 +816,7 @@ int CALLBACK CSelectDrivesDlg::BrowseCallbackProc(HWND hWnd, UINT uMsg, LPARAM l
     return 0;
 }
 
-CStringW CSelectDrivesDlg::getFullPathName_(LPCWSTR relativePath)
+CStringW CSelectDrivesDlg::GetFullPathName(LPCWSTR relativePath)
 {
     SmartPointer<LPWSTR> path(free, _wfullpath(nullptr, relativePath, 0));
     return path != nullptr ? static_cast<LPWSTR>(path) : relativePath;
