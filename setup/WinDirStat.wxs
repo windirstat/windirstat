@@ -4,127 +4,35 @@
   <Product Id="$(var.ProductID)" Name="$(var.ProductName)" Language="1033" Version="$(var.ProductVersion)" Manufacturer="$(var.Manufacturer)" UpgradeCode="$(var.UpgradeCode)">
     <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
 
+    <Icon Id="WinDirStat.ico" SourceFile="$(var.IconFilePath)"/>
+    <Property Id="ARPPRODUCTICON" Value="WinDirStat.ico" />
+	
     <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." Schedule="afterInstallInitialize" />
     <MediaTemplate EmbedCab="yes" />
 
     <UIRef Id="WixUI_FeatureTree" />
     <WixVariable Id="WixUILicenseRtf" Value="$(var.LicenseRtf)" />
 
-    <Feature Id="FT_Core" Title="Unicode Application" Absent="disallow" Description="Includes WinDirStat in English and Help file in English.">
-      <ComponentRef Id="Comp_Main_Help" />
-      <ComponentRef Id="Comp_Main_Unicode" />
+    <Feature Id="FT_Core" Title="Application" Absent="disallow" Description="Includes WinDirStat">
+      <ComponentRef Id="Comp_Main" />
     </Feature>
-    <Feature Id="FT_Ansi" Title="ANSI (95/98/ME)" Level="10">
-      <ComponentRef Id="Comp_Main_Ansi" />
-    </Feature>
-    <Feature Id="FT_Languages" Display="collapse" Level="10"
-             Title="Additional Languages" 
-             Description="Additional languages, some including localized helpfiles.">
-      <Feature Id="FT_Lang_Czech" Title="Czech" InstallDefault="followParent">
-        <ComponentRef Id="Comp_LangRes_1029" />
-      </Feature>
-      <Feature Id="FT_Lang_German" Title="German" InstallDefault="followParent">
-        <ComponentRef Id="Comp_LangRes_1031" />
-        <ComponentRef Id="Comp_LangHelp_1031" />
-      </Feature>
-      <Feature Id="FT_Lang_Spanish" Title="Spanish" InstallDefault="followParent">
-        <ComponentRef Id="Comp_LangRes_1034" />
-      </Feature>
-      <Feature Id="FT_Lang_Estonian" Title="Estonian" InstallDefault="followParent">
-        <ComponentRef Id="Comp_LangRes_1061" />
-      </Feature>
-      <Feature Id="FT_Lang_Finnish" Title="Finnish" InstallDefault="followParent">
-        <ComponentRef Id="Comp_LangRes_1035" />
-      </Feature>
-      <Feature Id="FT_Lang_French" Title="French" InstallDefault="followParent">
-        <ComponentRef Id="Comp_LangRes_1036" />
-      </Feature>
-      <Feature Id="FT_Lang_Hungarian" Title="Hungarian" InstallDefault="followParent">
-        <ComponentRef Id="Comp_LangRes_1038" />
-        <ComponentRef Id="Comp_LangHelp_1038" />
-      </Feature>
-      <Feature Id="FT_Lang_Italian" Title="Italian" InstallDefault="followParent">
-        <ComponentRef Id="Comp_LangRes_1040" />
-      </Feature>
-      <Feature Id="FT_Lang_Dutch" Title="Dutch" InstallDefault="followParent">
-        <ComponentRef Id="Comp_LangRes_1043" />
-      </Feature>
-      <Feature Id="FT_Lang_Polish" Title="Polish" InstallDefault="followParent">
-        <ComponentRef Id="Comp_LangRes_1045" />
-        <ComponentRef Id="Comp_LangHelp_1045" />
-      </Feature>
-      <Feature Id="FT_Lang_Russian" Title="Russian" InstallDefault="followParent">
-        <ComponentRef Id="Comp_LangRes_1049" />
-      </Feature>
-    </Feature>
-    
   </Product>
 
   <Fragment>
     <Directory Id="TARGETDIR" Name="SourceDir">
-      <Directory Id="ProgramFilesFolder">
-        <Directory Id="INSTALLFOLDER" Name="ABC-WinDirStat" />
+      <Directory Id="$(var.ProgramFilesNative)">
+        <Directory Id="INSTALLFOLDER" Name="WinDirStat" />
       </Directory>
     </Directory>
   </Fragment>
 
   <Fragment>
-    <DirectoryRef Id="INSTALLFOLDER" FileSource="$(var.ProductBinariesDir)">
-      <Component Id="Comp_Main_Unicode" Guid="{48E1104D-2466-4ADC-8BC0-521B6EBA8621}">
-        <File Id="File_Main_Unicode" KeyPath="yes" Name="windirstat.exe" />
-      </Component>
-      <Component Id="Comp_Main_Ansi" Guid="{C88F45C2-1DCE-4293-932B-6811EECD4FF0}">
-        <File Id="File_Main_Ansi" KeyPath="yes" Name="windirstatA.exe" />
-      </Component>
-      <Component Id="Comp_LangRes_1029" Guid="{B58F2B06-C005-414A-AEA9-114FC77E961D}">
-        <File Id="File_LangRes_1029" KeyPath="yes" Name="wdsr0405.dll" />
-      </Component>
-      <Component Id="Comp_LangRes_1031" Guid="{BB839F63-56F4-4173-8C73-8FD026CA5031}">
-        <File Id="File_LangRes_1031" KeyPath="yes" Name="wdsr0407.dll" />
-      </Component>
-      <Component Id="Comp_LangRes_1034" Guid="{C355DFAB-41B3-4653-9232-62E84AF339A0}">
-        <File Id="File_LangRes_1034" KeyPath="yes" Name="wdsr040a.dll" />
-      </Component>
-      <Component Id="Comp_LangRes_1035" Guid="{2DD35EA8-03E2-4B26-96A0-BD60C0357F9C}">
-        <File Id="File_LangRes_1035" KeyPath="yes" Name="wdsr040b.dll" />
-      </Component>
-      <Component Id="Comp_LangRes_1036" Guid="{10700A5F-A07B-4AE9-89C5-6550F7E12698}">
-        <File Id="File_LangRes_1036" KeyPath="yes" Name="wdsr040c.dll" />
-      </Component>
-      <Component Id="Comp_LangRes_1038" Guid="{68B17D8F-348D-47CF-8A7B-72014AC351C6}">
-        <File Id="File_LangRes_1038" KeyPath="yes" Name="wdsr040e.dll" />
-      </Component>
-      <Component Id="Comp_LangRes_1040" Guid="{4FA834D0-344A-4D14-A414-524B81A08D8F}">
-        <File Id="File_LangRes_1040" KeyPath="yes" Name="wdsr0410.dll" />
-      </Component>
-      <Component Id="Comp_LangRes_1043" Guid="{E0F57358-25DB-44C3-869A-5A87A525BB6B}">
-        <File Id="File_LangRes_1043" KeyPath="yes" Name="wdsr0413.dll" />
-      </Component>
-      <Component Id="Comp_LangRes_1045" Guid="{AC788E21-02F4-4772-B011-C1ABA506B9AB}">
-        <File Id="File_LangRes_1045" KeyPath="yes" Name="wdsr0415.dll" />
-      </Component>
-      <Component Id="Comp_LangRes_1049" Guid="{39942B8E-88D9-47F8-921B-8B79038ECE72}">
-        <File Id="File_LangRes_1049" KeyPath="yes" Name="wdsr0419.dll" />
-      </Component>
-      <Component Id="Comp_LangRes_1061" Guid="{55BF83E2-17AA-478B-AF5A-97A005AAE766}">
-        <File Id="File_LangRes_1061" KeyPath="yes" Name="wdsr0425.dll" />
+    <DirectoryRef Id="INSTALLFOLDER">
+      <Component Id="Comp_Main" Guid="{48E1104D-2466-4ADC-8BC0-521B6EBA8621}">
+        <File Id="File_Main" KeyPath="yes" Source="$(var.ProductBinariesDir)\$(var.WinDirStatExe)" Name="WinDirStat.exe" />
       </Component>
     </DirectoryRef>
 
-    <DirectoryRef Id="INSTALLFOLDER" FileSource="$(var.ProductHelpDir)">
-      <Component Id="Comp_LangHelp_1031" Guid="{AA7FA712-87D6-4EAD-8F31-C7E9477C71BD}">
-        <File Id="File_LangHelp_1031" KeyPath="yes" Name="wdsh0407.chm" />
-      </Component>
-      <Component Id="Comp_LangHelp_1038" Guid="{0143EE3D-4FA2-4CC1-B53F-19F1D4115199}">
-        <File Id="File_LangHelp_1038" KeyPath="yes" Name="wdsh040e.chm" />
-      </Component>
-      <Component Id="Comp_LangHelp_1045" Guid="{92B76B7C-5075-4CA0-9226-FDFA6E9D1E23}">
-        <File Id="File_LangHelp_1045" KeyPath="yes" Name="wdsh0415.chm" />
-      </Component>
-      <Component Id="Comp_Main_Help" Guid="{193BB93E-E810-4F71-8BD1-5D62EB6769E7}">
-        <File Id="File_Main_Help" KeyPath="yes" Name="windirstat.chm" />
-      </Component>
-    </DirectoryRef>
   </Fragment>
 
 </Wix>

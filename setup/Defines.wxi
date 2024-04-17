@@ -9,49 +9,23 @@
     <?define ProductFolder =            "WinDirStat"?>
     <?define Manufacturer =             "WinDirStat Team"?>
     <?define ARPContact =               "WinDirStat Team"?>
-    <?define ARPHelpLink =              "http://windirstat.net"?>
-    <!--  <?define ARPTelephone =             "N/A"?> -->
+    <?define ARPHelpLink =              "https://windirstat.net"?>
     <?define IconFilePath =             "..\common\WinDirStat.ico" ?>
 
-    <?define ProductBinariesDir =       "..\wds_release\Debug"?>
-    <?define ProductHelpDir =           "..\..\help"?>
-    <?define LicenseRtf =               "..\windirstat\res\license.rtf"?>
-
-    <!--  <?define SetupBanner =              "..\images\banner.jpg"?>-->
-    <!--  <?define SetupDialog =              "..\images\dialog.jpg"?>-->
-
-
+    <?define ProductBinariesDir =       "..\build"?>
+    <?define LicenseRtf =               "license.rtf"?>
+	
+	<?if $(sys.BUILDARCH) = x64 ?>
+	<?define Win64 = "yes" ?>
+	<?define WinDirStatExe = "WinDirStat64.exe" ?>
+	<?define ProgramFilesNative = "ProgramFiles64Folder" ?>
+	<?else ?>
+	<?define Win64 = "no" ?>
+	<?define WinDirStatExe = "WinDirStat32.exe" ?>
+	<?define ProgramFilesNative = "ProgramFilesFolder" ?>	
+	<?endif ?>	
+	
     <!-- Default Registry Key, in which most registry settings are saved. -->
-    <?define ProductRegKeyPath = "SOFTWARE\Seifert\WinDirStat"?>
-
-    <!-- List of languages (LCIDs) to include for the product 
-  <?define LanguageList =   ""?>
-  -->
-    <!-- The LanguageList array is used to include language fragments. 
-       
-      Here's the list of the languages besides 1033(en-US) which is built-in:
-      
-      
-      Czech                 0405	1029	cs-CZ
-      German                0407	1031	de-DE
-      English United States 0409	1033	en-US
-      Spanish               040a	1034	es-ES
-      Finnish               040b 	1035	fi-FI
-      French                040c 	1036	fr-FR
-      Hungarian             040e	1038	hu-HU
-      Icelandic             040f	1039	is-IS
-      Italian               0410	1040	it-IT
-      Dutch                 0413	1043	nl-NL
-      Polish                0415	1045	pl-PL
-      Russian               0419	1049	ru-RU
-      Estonian              0425	1061	et-EE
-      
-      
-      For updates, here's a good page for reference:
-      http://www.science.co.il/language/locale-codes.asp
-       
-      NOTE: For adding new languages, remember also to configure a new 
-            fragment!
-  -->
-
+    <?define ProductRegKeyPath = "SOFTWARE\WinDirStat\WinDirStat"?>
+	
 </Include>

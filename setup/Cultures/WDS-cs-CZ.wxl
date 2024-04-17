@@ -1,4 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<WixLocalization Culture="cs-cz" xmlns="http://schemas.microsoft.com/wix/2006/localization">
-  <String Id="YOURLOCID">Your localized string</String>
-</WixLocalization>
