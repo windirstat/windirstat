@@ -405,20 +405,20 @@ short CItem::GetImageToCache() const
         return GetIconImageList()->getUnknownImage();
     }
 
-    const CStringW path = GetPath();
-    if (CDirStatApp::Get()->GetReparseInfo()->IsVolumeMountPoint(path, m_attributes))
+    const CStringW longpath = GetPathLong();
+    if (CDirStatApp::Get()->GetReparseInfo()->IsVolumeMountPoint(longpath, m_attributes))
     {
         return GetIconImageList()->getMountPointImage();
     }
-    if (CDirStatApp::Get()->GetReparseInfo()->IsSymbolicLink(path, m_attributes) ||
-        CDirStatApp::Get()->GetReparseInfo()->IsJunction(path, m_attributes))
+    if (CDirStatApp::Get()->GetReparseInfo()->IsSymbolicLink(longpath, m_attributes) ||
+        CDirStatApp::Get()->GetReparseInfo()->IsJunction(longpath, m_attributes))
     {
         constexpr DWORD mask = FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM;
         const bool os_file = (GetAttributes() & mask) == mask;
         return os_file ? GetIconImageList()->getJunctionProtectedImage() : GetIconImageList()->getJunctionImage();
     }
 
-    return GetIconImageList()->getFileImage(path);
+    return GetIconImageList()->getFileImage(GetPath());
 }
 
 void CItem::DrawAdditionalState(CDC* pdc, const CRect& rcLabel) const
@@ -808,7 +808,7 @@ CStringW CItem::GetPath() const
 
 CStringW CItem::GetPathLong() const
 {
-    return FileFindEnhanced::GetLongPathCompatible(GetPath());
+    return FileFindEnhanced::MakeLongPathCompatible(GetPath());
 }
 
 CStringW CItem::GetOwner(bool force) const
@@ -1294,7 +1294,7 @@ CStringW CItem::UpwardGetPathWithoutBackslash() const
 CItem* CItem::AddDirectory(const FileFindEnhanced& finder)
 {
     const bool follow = !finder.IsProtectedReparsePoint() &&
-        CDirStatApp::Get()->IsFollowingAllowed(finder.GetFilePath(), finder.GetAttributes());
+        CDirStatApp::Get()->IsFollowingAllowed(finder.GetFilePathLong(), finder.GetAttributes());
 
     const auto & child = new CItem(IT_DIRECTORY, finder.GetFileName());
     child->SetLastChange(finder.GetLastWriteTime());
@@ -1336,14 +1336,10 @@ std::wstring CItem::GetFileHash(bool const partial)
     // Initialize hash for this thread
     constexpr auto BufferSizePartial = 1024ul * 1024ul;
     constexpr auto BufferSizeFull = 4ul * 1024ul * 1024ul;
-    thread_local std::vector<BYTE> FileBuffer;
+    thread_local std::vector<BYTE> FileBuffer(partial ? BufferSizePartial : BufferSizeFull);
     thread_local std::vector<BYTE> Hash;
     thread_local SmartPointer<BCRYPT_HASH_HANDLE> HashHandle(BCryptDestroyHash);
     thread_local DWORD HashLength = 0;
-
-    // Resize array to fit our maximum buffer size
-    const auto BufferSize = partial ? BufferSizePartial : BufferSizeFull;
-    FileBuffer.resize(BufferSizeFull);
 
     if (HashLength == 0)
     {
@@ -1370,7 +1366,8 @@ std::wstring CItem::GetFileHash(bool const partial)
     DWORD iHashResult = 0;
     DWORD iReadBytes = 0;
     Hash.resize(HashLength);
-    while ((iReadResult = ReadFile(hFile, FileBuffer.data(), BufferSize, &iReadBytes, nullptr)) != 0 && iReadBytes > 0)
+    while ((iReadResult = ReadFile(hFile, FileBuffer.data(), static_cast<DWORD>(FileBuffer.size()),
+        &iReadBytes, nullptr)) != 0 && iReadBytes > 0)
     {
         UpwardDrivePacman();
         iHashResult = BCryptHashData(HashHandle, FileBuffer.data(), iReadBytes, 0);

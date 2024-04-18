@@ -56,12 +56,10 @@
 #define IDC_SHOW_GRID                   1028
 #define IDC_TREECOL_FILES               1028
 #define IDC_HUMAN_FORMAT                1029
-#define IDC_COL_SIZE_PHYSICAL           1029
 #define IDC_EXCLUDE_JUNCTIONS           1029
 #define IDC_TREECOL_SIZE_PHYSICAL       1029
 #define IDC_TREEMAPGRIDCOLOR            1030
 #define IDC_SHOW_STRIPES                1030
-#define IDC_COL_SIZE_LOGICAL            1030
 #define IDC_EXCLUDE_SYMLINKS            1030
 #define IDC_TREECOL_SIZE_LOGICAL        1030
 #define IDC_FULL_ROW_SELECTION          1031
@@ -160,7 +158,6 @@
 #define ID_LOAD_RESULTS                 33037
 #define ID_SAVE_RESULTS                 33038
 #define IDS_AUTHOR_EMAIL                57345
-#define IDS_AUTHOR_WEBSITE              57346
 #define IDS_URL_WEBSITE                 57346
 #define IDS_URL_HELP                    57347
 #define IDS_URL_REPORT_BUG              57348

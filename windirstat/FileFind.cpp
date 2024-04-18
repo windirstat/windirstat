@@ -47,8 +47,7 @@ bool FileFindEnhanced::FindNextFile()
     if (m_firstrun || m_current_info->NextEntryOffset == 0)
     {
         constexpr auto BUFFER_SIZE = 64 * 1024;
-        thread_local std::vector<BYTE> m_directory_info;
-        m_directory_info.resize(BUFFER_SIZE);
+        thread_local std::vector<BYTE> m_directory_info(BUFFER_SIZE);
 
         // handle optional pattern mask
         UNICODE_STRING u_search = {};
@@ -68,7 +67,7 @@ bool FileFindEnhanced::FindNextFile()
         m_current_info = reinterpret_cast<FILE_DIRECTORY_INFORMATION*>(m_directory_info.data());
 
         // special case for reparse on initial run points - update attributes
-        if (success && m_firstrun) m_current_info->FileAttributes = GetFileAttributes(GetFilePath());
+        if (success && m_firstrun) m_current_info->FileAttributes = GetFileAttributes(GetFilePathLong());
 
         // disable for next run
         m_firstrun = false;
@@ -182,30 +181,27 @@ FILETIME FileFindEnhanced::GetLastWriteTime() const
 
 CStringW FileFindEnhanced::GetFilePath() const
 {
-    if (m_base.GetAt(m_base.GetLength() - 1) == L'\\') return m_base + m_name;
-    return m_base + L"\\" + m_name;
-}
+    // Get full path to folder or file
+    CStringW path = (m_base.GetAt(m_base.GetLength() - 1) == L'\\') ?
+        (m_base + m_name) : (m_base + L"\\" + m_name);
 
-CStringW FileFindEnhanced::GetFileLongPath() const
-{
-    return GetLongPathCompatible(StripDosPathCharts(GetFilePath()));
-}
-
-CStringW FileFindEnhanced::StripDosPathCharts(const CStringW& path)
-{
+    // Strip special dos chars
     if (wcsncmp(path.GetString(), m_dos, wcslen(m_dos) - 1) == 0)
-        return path.Mid(static_cast<int>(wcslen(m_dos)));
-
+        path = path.Mid(static_cast<int>(wcslen(m_dos)));
     if (wcsncmp(path.GetString(), m_dosunc, wcslen(m_dosunc) - 1) == 0)
-        return path.Mid(static_cast<int>(wcslen(m_dosunc)));
+        path = path.Mid(static_cast<int>(wcslen(m_dosunc)));
     return path;
 }
 
-CStringW FileFindEnhanced::GetLongPathCompatible(const CStringW & path)
+CStringW FileFindEnhanced::GetFilePathLong() const
 {
-    CStringW ret;
-    if (path.Find(L":\\", 1) == 1) return { L"\\\\?\\" + path };
-    if (path.Find(L"\\\\") == 0) return { L"\\\\?\\UNC\\" + path.Mid(2) };
+    return MakeLongPathCompatible(GetFilePath());
+}
+
+CStringW FileFindEnhanced::MakeLongPathCompatible(const CStringW & path)
+{
+    if (path.Find(L":\\", 1) == 1) return { m_long + path };
+    if (path.Find(L"\\\\") == 0) return { m_longunc + path.Mid(2) };
     return path;
 }
 

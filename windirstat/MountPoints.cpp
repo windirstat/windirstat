@@ -27,9 +27,9 @@
 
 #include <algorithm>
 
-bool CReparsePoints::IsReparseType(const std::wstring& path, DWORD tag_type, bool mask)
+bool CReparsePoints::IsReparseType(const CStringW & longpath, DWORD tag_type, bool mask)
 {
-    SmartPointer<HANDLE> handle(CloseHandle, CreateFile(path.c_str(), GENERIC_READ, FILE_SHARE_READ,
+    SmartPointer<HANDLE> handle(CloseHandle, CreateFile(longpath.GetString(), GENERIC_READ, FILE_SHARE_READ,
         nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT, nullptr));
     if (handle == INVALID_HANDLE_VALUE)
     {
@@ -84,6 +84,7 @@ void CReparsePoints::Initialize()
             {
                 _wcslwr_s(name, len + 1);
                 m_mountpoints.emplace_back(name);
+                m_mountpoints.emplace_back(FileFindEnhanced::MakeLongPathCompatible(name));
             }
         }
     }
@@ -96,32 +97,31 @@ bool CReparsePoints::IsReparsePoint(const DWORD attr)
         (attr & FILE_ATTRIBUTE_REPARSE_POINT) != 0;
 }
 
-bool CReparsePoints::IsVolumeMountPoint(const CStringW& path, DWORD attr) const
+bool CReparsePoints::IsVolumeMountPoint(const CStringW& longpath, DWORD attr) const
 {
-    if (attr == INVALID_FILE_ATTRIBUTES) attr = ::GetFileAttributes(path);
+    if (attr == INVALID_FILE_ATTRIBUTES) attr = ::GetFileAttributes(longpath);
     if (!IsReparsePoint(attr)) return false;
-    CStringW lookup_path = FileFindEnhanced::StripDosPathCharts(path);
-    _wcslwr_s(lookup_path.GetBuffer(), static_cast<size_t>(lookup_path.GetLength()) + 1);
+    CStringW lookup_path = CStringW(longpath).MakeLower();
     return std::ranges::find(m_mountpoints, lookup_path.GetString()) != m_mountpoints.end();
 }
 
-bool CReparsePoints::IsJunction(const CStringW& path, DWORD attr) const
+bool CReparsePoints::IsJunction(const CStringW& longpath, DWORD attr) const
 {
-    if (attr == INVALID_FILE_ATTRIBUTES) attr = ::GetFileAttributes(path);
+    if (attr == INVALID_FILE_ATTRIBUTES) attr = ::GetFileAttributes(longpath);
     if (!IsReparsePoint(attr)) return false;
-    return !IsVolumeMountPoint(path) && IsReparseType(path.GetString(), IO_REPARSE_TAG_MOUNT_POINT);
+    return !IsVolumeMountPoint(longpath) && IsReparseType(longpath.GetString(), IO_REPARSE_TAG_MOUNT_POINT);
 }
 
-bool CReparsePoints::IsSymbolicLink(const CStringW& path, DWORD attr) const
+bool CReparsePoints::IsSymbolicLink(const CStringW& longpath, DWORD attr) const
 {
-    if (attr == INVALID_FILE_ATTRIBUTES) attr = ::GetFileAttributes(path);
+    if (attr == INVALID_FILE_ATTRIBUTES) attr = ::GetFileAttributes(longpath);
     if (!IsReparsePoint(attr)) return false;
-    return IsReparseType(path.GetString(), IO_REPARSE_TAG_SYMLINK);
+    return IsReparseType(longpath.GetString(), IO_REPARSE_TAG_SYMLINK);
 }
 
-bool CReparsePoints::IsCloudLink(const CStringW& path, DWORD attr) const
+bool CReparsePoints::IsCloudLink(const CStringW& longpath, DWORD attr) const
 {
-    if (attr == INVALID_FILE_ATTRIBUTES) attr = ::GetFileAttributes(path);
+    if (attr == INVALID_FILE_ATTRIBUTES) attr = ::GetFileAttributes(longpath);
     if (!IsReparsePoint(attr)) return false;
-    return IsReparseType(path.GetString(), IO_REPARSE_TAG_CLOUD_MASK, true);
+    return IsReparseType(longpath.GetString(), IO_REPARSE_TAG_CLOUD_MASK, true);
 }

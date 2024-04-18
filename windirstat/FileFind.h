@@ -47,6 +47,8 @@ class FileFindEnhanced final
     FILE_DIRECTORY_INFORMATION* m_current_info = nullptr;
     static constexpr auto m_dos = L"\\??\\";
     static constexpr auto m_dosunc = L"\\??\\UNC\\";
+    static constexpr auto m_long = L"\\\\?\\";
+    static constexpr auto m_longunc = L"\\\\?\\UNC\\";
 
 public:
 
@@ -67,8 +69,7 @@ public:
     ULONGLONG GetFileSizeLogical() const;
     FILETIME GetLastWriteTime() const;
     CStringW GetFilePath() const;
-    CStringW GetFileLongPath() const;
+    CStringW GetFilePathLong() const;
     static bool DoesFileExist(const CStringW& folder, const CStringW& file);
-    static CStringW StripDosPathCharts(const CStringW& path);
-    static CStringW GetLongPathCompatible(const CStringW& path);
+    static CStringW MakeLongPathCompatible(const CStringW& path);
 };

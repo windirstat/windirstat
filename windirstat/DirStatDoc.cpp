@@ -728,7 +728,7 @@ void CDirStatDoc::RecursiveUserDefinedCleanup(USERDEFINEDCLEANUP* udc, const CSt
         {
             continue;
         }
-        if (!CDirStatApp::Get()->IsFollowingAllowed(finder.GetFilePath(), finder.GetAttributes()))
+        if (!CDirStatApp::Get()->IsFollowingAllowed(finder.GetFilePathLong(), finder.GetAttributes()))
         {
             continue;
         }
@@ -1240,11 +1240,10 @@ void CDirStatDoc::OnCleanupProperties()
 
 void CDirStatDoc::OnScanSuspend()
 {
-    CWaitCursor wc;
-
     // Wait for system to fully shutdown
     std::thread([this]() mutable
     {
+        CWaitCursor wc;
         queue.suspend(true);
         PostMessage(CMainFrame::Get()->GetSafeHwnd(), WM_USER + 1, 0, 0);
     }).detach();

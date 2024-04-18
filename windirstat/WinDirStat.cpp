@@ -121,12 +121,15 @@ void CDirStatApp::ReReadMountPoints()
     m_reparsePoints.Initialize();
 }
 
-bool CDirStatApp::IsFollowingAllowed(const CStringW& path, DWORD attr) const
+bool CDirStatApp::IsFollowingAllowed(const CStringW& longpath, DWORD attr) const
 {
+    // Allow following if not a reparse point, is a reparse point without exclusion controls,
+    // or is a reparse point with exclusion controls but are not excluded
     return !CReparsePoints::IsReparsePoint(attr) ||
-        m_reparsePoints.IsVolumeMountPoint(path, attr) && !COptions::ExcludeVolumeMountPoints ||
-        m_reparsePoints.IsJunction(path, attr) && !COptions::ExcludeJunctions ||
-        m_reparsePoints.IsSymbolicLink(path, attr) && !COptions::ExcludeSymbolicLinks;
+        !CReparsePoints::IsReparseType(longpath, IO_REPARSE_TAG_SYMLINK | IO_REPARSE_TAG_MOUNT_POINT, true) ||
+        !COptions::ExcludeVolumeMountPoints && m_reparsePoints.IsVolumeMountPoint(longpath, attr) ||
+        !COptions::ExcludeJunctions && m_reparsePoints.IsJunction(longpath, attr) ||
+        !COptions::ExcludeSymbolicLinks && m_reparsePoints.IsSymbolicLink(longpath, attr);
 }
 
 // Get the alternative colors for compressed and encrypted files/folders.

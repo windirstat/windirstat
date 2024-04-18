@@ -106,7 +106,8 @@ void CFileDupeControl::OnContextMenu(CWnd* /*pWnd*/, CPoint pt)
 void CFileDupeControl::ProcessDuplicate(CItem * item)
 {
     if (!COptions::ScanForDuplicates) return;
-    if (COptions::SkipDuplicationDetectionCloudLinks.Obj() && CDirStatApp::Get()->GetReparseInfo()->IsCloudLink(item->GetPathLong()))
+    if (COptions::SkipDuplicationDetectionCloudLinks.Obj() &&
+        CDirStatApp::Get()->GetReparseInfo()->IsCloudLink(item->GetPathLong())) return;
 
     std::lock_guard lock(m_Mutex);
     const auto size_entry = m_SizeTracker.find(item->GetSizePhysical());
@@ -121,63 +122,43 @@ void CFileDupeControl::ProcessDuplicate(CItem * item)
     // Add to the list of items to track
     size_entry->second.insert(item);
 
-    // Attempt to hash the file partially
     std::wstring hash_for_this_item;
-    std::unordered_map<std::wstring, std::unordered_set<CItem*>> hashes_to_display;
-    for (auto& item_to_hash : size_entry->second)
+    auto items_to_hash = size_entry->second;
+    for (const ITEMTYPE & hash_type : {ITF_PARTHASH, ITF_FULLHASH })
     {
-        if (item_to_hash->IsType(ITF_PARTHASH)) continue;
+        // Attempt to hash the file partially
+        std::unordered_map<std::wstring, std::unordered_set<CItem*>> hashes_to_display;
+        for (auto& item_to_hash : items_to_hash)
+        {
+            if (item_to_hash->IsType(hash_type)) continue;
 
-        // Compute the hash for the file
-        m_Mutex.unlock();
-        std::wstring hash = item_to_hash->GetFileHash(true);
-        m_Mutex.lock();
-        item_to_hash->SetType(item_to_hash->GetRawType() | ITF_PARTHASH);
-        if (item_to_hash == item) hash_for_this_item = hash;
+            // Compute the hash for the file
+            m_Mutex.unlock();
+            std::wstring hash = item_to_hash->GetFileHash(hash_type == ITF_PARTHASH);
+            m_Mutex.lock();
+            item_to_hash->SetType(item_to_hash->GetRawType() | hash_type);
+            if (item_to_hash == item) hash_for_this_item = hash;
 
-        // Skip if not hashable
-        if (hash.empty()) continue;
+            // Skip if not hashable
+            if (hash.empty()) continue;
 
-        // Mark as the full being completed as well
-        if (item_to_hash->GetSizePhysical() <= 1024ull * 1024ull)
-            item_to_hash->SetType(item_to_hash->GetRawType() | ITF_FULLHASH);
+            // Mark as the full being completed as well
+            if (item_to_hash->GetSizePhysical() <= 1024ull * 1024ull)
+                item_to_hash->SetType(item_to_hash->GetRawType() | ITF_FULLHASH);
 
-        // See if hash is already in tracking
-        const auto hash_entry = m_HashTracker.find(hash);
-        if (hash_entry != m_HashTracker.end()) hash_entry->second.insert(item_to_hash);
-        else m_HashTracker.emplace(hash, std::initializer_list<CItem*> { item_to_hash });
+            // See if hash is already in tracking
+            const auto hash_entry = m_HashTracker.find(hash);
+            if (hash_entry != m_HashTracker.end()) hash_entry->second.insert(item_to_hash);
+            else m_HashTracker.emplace(hash, std::initializer_list<CItem*> { item_to_hash });
+        }
+
+        // Return if no hash conflicts
+        auto hashes_result = m_HashTracker.find(hash_for_this_item) ;
+        if (hashes_result == m_HashTracker.end() || hashes_result->second.size() <= 1) return;
+        items_to_hash = hashes_result->second;
     }
 
-    // Return if no hash conflicts
-    auto partial_hashes = m_HashTracker.find(hash_for_this_item);
-    if (partial_hashes == m_HashTracker.end() || partial_hashes->second.size() <= 1) return;
-
-    // Attempt to hash the file fully
-    for (auto& item_to_hash : partial_hashes->second)
-    {
-        if (item_to_hash->IsType(ITF_FULLHASH)) continue;
-
-        // Compute the hash for the file
-        m_Mutex.unlock();
-        std::wstring hash = item_to_hash->GetFileHash(false);
-        m_Mutex.lock();
-        item_to_hash->SetType(item_to_hash->GetRawType() | ITF_FULLHASH);
-        if (item_to_hash == item) hash_for_this_item = hash;
-
-        // Skip if not hashable
-        if (hash.empty()) continue;
-
-        // See if hash is already in tracking
-        const auto hash_entry = m_HashTracker.find(hash);
-        if (hash_entry != m_HashTracker.end()) hash_entry->second.insert(item_to_hash);
-        else m_HashTracker.emplace(hash, std::initializer_list<CItem*> { item_to_hash });
-    }
-
-    // Return if no hash conflicts
-    auto full_hashes = m_HashTracker.find(hash_for_this_item);
-    if (full_hashes == m_HashTracker.end() || full_hashes->second.size() <= 1) return;
-
-    for (const auto& item_to_add : full_hashes->second)
+    for (const auto& item_to_add : items_to_hash)
     {
         CMainFrame::Get()->InvokeInMessageThread([&]
         {
@@ -199,7 +180,7 @@ void CFileDupeControl::ProcessDuplicate(CItem * item)
                 { return child->GetItem() == item_to_add; }) != children.end()) return;
 
             // Add new item
-            auto dup_child = new CItemDupe(item_to_add);
+            const auto dup_child = new CItemDupe(item_to_add);
             dupe_parent->AddChild(dup_child);
 
             SortItems();

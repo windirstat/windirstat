@@ -54,7 +54,7 @@ public:
     bool SetPortableMode(bool enable, bool only_open = false);
 
     void ReReadMountPoints();
-    bool IsFollowingAllowed(const CStringW& path, DWORD attr = 1) const;
+    bool IsFollowingAllowed(const CStringW& longpath, DWORD attr = 1) const;
     CReparsePoints* GetReparseInfo() { return &m_reparsePoints; }
 
     COLORREF AltColor() const;           // Coloring of compressed items
