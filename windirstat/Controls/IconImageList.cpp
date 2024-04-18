@@ -49,7 +49,7 @@ void CIconImageList::initialize()
 }
 
 // Returns the index of the added icon
-short CIconImageList::cacheIcon(LPCWSTR path, UINT flags, CStringW* psTypeName)
+short CIconImageList::cacheIcon(LPCWSTR path, UINT flags, DWORD attr, CStringW* psTypeName)
 {
     ASSERT(m_hImageList != nullptr);
     flags |= WDS_SHGFI_DEFAULTS;
@@ -61,7 +61,7 @@ short CIconImageList::cacheIcon(LPCWSTR path, UINT flags, CStringW* psTypeName)
     }
 
     SHFILEINFO sfi{};
-    const auto hil = reinterpret_cast<HIMAGELIST>(::SHGetFileInfo(path, 0, &sfi, sizeof(sfi), flags));
+    const auto hil = reinterpret_cast<HIMAGELIST>(::SHGetFileInfo(path, attr, &sfi, sizeof(sfi), flags));
     if (hil == nullptr)
     {
         VTRACE(L"SHGetFileInfo() failed");
@@ -98,18 +98,16 @@ short CIconImageList::getMyComputerImage()
 
 short CIconImageList::getMountPointImage()
 {
-    return cacheIcon(getADriveSpec());
+    return cacheIcon(getADriveSpec(), 0, FILE_ATTRIBUTE_REPARSE_POINT);
 }
 
 short CIconImageList::getJunctionImage() const
 {
-    // Intermediate solution until we find a nice icon for junction points
     return m_junctionImage;
 }
 
 short CIconImageList::getJunctionProtectedImage() const
 {
-    ASSERT(m_hImageList != nullptr); // should have been initialize()ed.
     return m_junctionProtected;
 }
 
@@ -119,17 +117,17 @@ short CIconImageList::getFolderImage()
     ::GetSystemDirectory(s.GetBuffer(_MAX_PATH), _MAX_PATH);
     s.ReleaseBuffer();
 
-    return cacheIcon(s);
+    return cacheIcon(s, 0, FILE_ATTRIBUTE_DIRECTORY);
 }
 
-short CIconImageList::getFileImage(LPCWSTR path)
+short CIconImageList::getFileImage(LPCWSTR path, DWORD attr)
 {
-    return cacheIcon(path);
+    return cacheIcon(path, 0, attr);
 }
 
-short CIconImageList::getExtImageAndDescription(LPCWSTR ext, CStringW& description)
+short CIconImageList::getExtImageAndDescription(LPCWSTR ext, CStringW& description, DWORD attr)
 {
-    return cacheIcon(ext, 0, &description);
+    return cacheIcon(ext, 0, attr, &description);
 }
 
 short CIconImageList::getFreeSpaceImage() const

@@ -418,7 +418,7 @@ short CItem::GetImageToCache() const
         return os_file ? GetIconImageList()->getJunctionProtectedImage() : GetIconImageList()->getJunctionImage();
     }
 
-    return GetIconImageList()->getFileImage(GetPath());
+    return GetIconImageList()->getFileImage(GetPath(), GetAttributes());
 }
 
 void CItem::DrawAdditionalState(CDC* pdc, const CRect& rcLabel) const

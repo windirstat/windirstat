@@ -42,14 +42,14 @@ public:
     short getJunctionImage() const;
     short getJunctionProtectedImage() const;
     short getFolderImage();
-    short getFileImage(LPCWSTR path);
-    short getExtImageAndDescription(LPCWSTR ext, CStringW& description);
+    short getFileImage(LPCWSTR path, DWORD attr = 0);
+    short getExtImageAndDescription(LPCWSTR ext, CStringW& description, DWORD attr = 0);
 
     short getFreeSpaceImage() const;
     short getUnknownImage() const;
     short getEmptyImage() const;
 
-    short cacheIcon(LPCWSTR path, UINT flags = 0, CStringW* psTypeName = nullptr);
+    short cacheIcon(LPCWSTR path, UINT flags = 0, DWORD attr = 0, CStringW* psTypeName = nullptr);
     static CStringW getADriveSpec();
     void addCustomImages();
 
