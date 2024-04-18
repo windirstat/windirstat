@@ -27,7 +27,7 @@
 
 #include <algorithm>
 
-bool CReparsePoints::IsReparseType(const CStringW & longpath, DWORD tag_type, bool mask)
+bool CReparsePoints::IsReparseType(const CStringW & longpath, const std::unordered_set<DWORD>& tag_types)
 {
     SmartPointer<HANDLE> handle(CloseHandle, CreateFile(longpath.GetString(), GENERIC_READ, FILE_SHARE_READ,
         nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT, nullptr));
@@ -44,8 +44,14 @@ bool CReparsePoints::IsReparseType(const CStringW & longpath, DWORD tag_type, bo
         return false;
     }
 
-    if (mask) return (reinterpret_cast<PREPARSE_GUID_DATA_BUFFER>(buf.data())->ReparseTag & tag_type) != 0;
-    return reinterpret_cast<PREPARSE_GUID_DATA_BUFFER>(buf.data())->ReparseTag == tag_type;
+    // Test if the tag matches the types or mask that was passed
+    const DWORD tag = reinterpret_cast<PREPARSE_GUID_DATA_BUFFER>(buf.data())->ReparseTag;
+    for (const auto & tag_type : tag_types)
+    {
+        if ((tag & tag_type) == tag) return true;
+    }
+
+    return true;
 }
 
 void CReparsePoints::Initialize()
@@ -92,7 +98,7 @@ void CReparsePoints::Initialize()
                 name[len - 1] = L'\0';
             }
 
-            if (IsReparseType(name, IO_REPARSE_TAG_MOUNT_POINT))
+            if (IsReparseType(name, { IO_REPARSE_TAG_MOUNT_POINT }))
             {
                 _wcslwr_s(name, len + 1);
                 m_mountpoints.emplace_back(name);
@@ -121,19 +127,19 @@ bool CReparsePoints::IsJunction(const CStringW& longpath, DWORD attr) const
 {
     if (attr == INVALID_FILE_ATTRIBUTES) attr = ::GetFileAttributes(longpath);
     if (!IsReparsePoint(attr)) return false;
-    return !IsVolumeMountPoint(longpath) && IsReparseType(longpath.GetString(), IO_REPARSE_TAG_MOUNT_POINT);
+    return !IsVolumeMountPoint(longpath) && IsReparseType(longpath.GetString(), { IO_REPARSE_TAG_MOUNT_POINT });
 }
 
 bool CReparsePoints::IsSymbolicLink(const CStringW& longpath, DWORD attr) const
 {
     if (attr == INVALID_FILE_ATTRIBUTES) attr = ::GetFileAttributes(longpath);
     if (!IsReparsePoint(attr)) return false;
-    return IsReparseType(longpath.GetString(), IO_REPARSE_TAG_SYMLINK);
+    return IsReparseType(longpath.GetString(), { IO_REPARSE_TAG_SYMLINK });
 }
 
 bool CReparsePoints::IsCloudLink(const CStringW& longpath, DWORD attr) const
 {
     if (attr == INVALID_FILE_ATTRIBUTES) attr = ::GetFileAttributes(longpath);
     if (!IsReparsePoint(attr)) return false;
-    return IsReparseType(longpath.GetString(), IO_REPARSE_TAG_CLOUD_MASK, true);
+    return IsReparseType(longpath.GetString(), { IO_REPARSE_TAG_CLOUD_MASK });
 }

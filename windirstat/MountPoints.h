@@ -22,6 +22,7 @@
 #pragma once
 
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 class CReparsePoints final
@@ -35,6 +36,6 @@ public:
     bool IsJunction(const CStringW& longpath, DWORD attr = INVALID_FILE_ATTRIBUTES) const;
     bool IsSymbolicLink(const CStringW& longpath, DWORD attr = INVALID_FILE_ATTRIBUTES) const;
     bool IsCloudLink(const CStringW& longpath, DWORD attr = INVALID_FILE_ATTRIBUTES) const;
-    static bool IsReparseType(const CStringW& longpath, DWORD tag_type, bool mask = false);
+    static bool IsReparseType(const CStringW& longpath, const std::unordered_set<DWORD>& tag_types);
     static bool IsReparsePoint(DWORD attr);
 };
