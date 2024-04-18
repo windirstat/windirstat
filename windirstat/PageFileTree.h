@@ -1,4 +1,4 @@
-// PageTreeList.h - Declaration of CPageTreelist
+// PageFileTree.h - Declaration of CPageFileTree
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
@@ -25,16 +25,16 @@
 #include "afxcmn.h"
 
 //
-// CPageTreelist. "Settings" property page "Treelist".
+// CPageFileTree. "Settings" property page "Treelist".
 //
-class CPageTreelist final : public CPropertyPage
+class CPageFileTree final : public CPropertyPage
 {
-    DECLARE_DYNAMIC(CPageTreelist)
+    DECLARE_DYNAMIC(CPageFileTree)
 
     enum { IDD = IDD_PAGE_TREELIST };
 
-    CPageTreelist();
-    ~CPageTreelist() override = default;
+    CPageFileTree();
+    ~CPageFileTree() override = default;
 
 protected:
     void DoDataExchange(CDataExchange* pDX) override;

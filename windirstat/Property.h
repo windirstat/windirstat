@@ -1,4 +1,4 @@
-// Property.h - Implementation of CPageTreelist
+// Property.h - Implementation of CPageFileTree
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2024 WinDirStat Team (windirstat.net)

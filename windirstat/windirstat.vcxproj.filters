@@ -133,10 +133,10 @@
     <ClInclude Include="PageGeneral.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="PageTreelist.h">
+    <ClInclude Include="PageFileTree.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="PageTreemap.h">
+    <ClInclude Include="PageTreeMap.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="SelectObject.h">
@@ -270,10 +270,10 @@
     <ClCompile Include="PageGeneral.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="PageTreelist.cpp">
+    <ClCompile Include="PageFileTree.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="PageTreemap.cpp">
+    <ClCompile Include="PageTreeMap.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="stdafx.cpp">

@@ -32,7 +32,7 @@
 #include "Property.h"
 #include "PageAdvanced.h"
 #include "PageCleanups.h"
-#include "PageTreeList.h"
+#include "PageFileTree.h"
 #include "PageTreeMap.h"
 #include "PageGeneral.h"
 #include "MainFrame.h"
@@ -1138,8 +1138,8 @@ void CMainFrame::OnConfigure()
     COptionsPropertySheet sheet;
 
     CPageGeneral general;
-    CPageTreelist treelist;
-    CPageTreemap treemap;
+    CPageFileTree treelist;
+    CPageTreeMap treemap;
     CPageCleanups cleanups;
     CPageAdvanced advanced;
 
@@ -1151,6 +1151,9 @@ void CMainFrame::OnConfigure()
 
     sheet.DoModal();
 
+    // Save settings in case the application exits abnormally
+    PersistedSetting::WritePersistedProperties();
+    
     if (sheet.m_restartApplication)
     {
         CDirStatApp::Get()->RestartApplication();

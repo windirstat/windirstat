@@ -1,4 +1,4 @@
-// PageTreemap.cpp - Implementation of CDemoControl and CPageTreemap
+// PageTreeMap.cpp - Implementation of CPageTreeMap
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
@@ -32,16 +32,16 @@ namespace
     constexpr UINT _maxHeight = 200;
 }
 
-IMPLEMENT_DYNAMIC(CPageTreemap, CPropertyPage)
+IMPLEMENT_DYNAMIC(CPageTreeMap, CPropertyPage)
 
-CPageTreemap::CPageTreemap()
-    : CPropertyPage(CPageTreemap::IDD)
+CPageTreeMap::CPageTreeMap()
+    : CPropertyPage(CPageTreeMap::IDD)
       , m_options()
       , m_undo()
 {
 }
 
-void CPageTreemap::DoDataExchange(CDataExchange* pDX)
+void CPageTreeMap::DoDataExchange(CDataExchange* pDX)
 {
     CPropertyPage::DoDataExchange(pDX);
 
@@ -85,7 +85,7 @@ void CPageTreemap::DoDataExchange(CDataExchange* pDX)
     }
 }
 
-BEGIN_MESSAGE_MAP(CPageTreemap, CPropertyPage)
+BEGIN_MESSAGE_MAP(CPageTreeMap, CPropertyPage)
     ON_WM_VSCROLL()
     ON_NOTIFY(COLBN_CHANGED, IDC_TREEMAPGRIDCOLOR, OnColorChangedTreemapGrid)
     ON_NOTIFY(COLBN_CHANGED, IDC_TREEMAPHIGHLIGHTCOLOR, OnColorChangedTreemapHighlight)
@@ -96,7 +96,7 @@ BEGIN_MESSAGE_MAP(CPageTreemap, CPropertyPage)
     ON_NOTIFY(XYSLIDER_CHANGED, IDC_LIGHTSOURCE, OnLightSourceChanged)
 END_MESSAGE_MAP()
 
-BOOL CPageTreemap::OnInitDialog()
+BOOL CPageTreeMap::OnInitDialog()
 {
     CPropertyPage::OnInitDialog();
 
@@ -119,7 +119,7 @@ BOOL CPageTreemap::OnInitDialog()
     return TRUE;
 }
 
-void CPageTreemap::OnOK()
+void CPageTreeMap::OnOK()
 {
     UpdateData();
 
@@ -130,7 +130,7 @@ void CPageTreemap::OnOK()
     CPropertyPage::OnOK();
 }
 
-void CPageTreemap::UpdateOptions(bool save)
+void CPageTreeMap::UpdateOptions(bool save)
 {
     if (save)
     {
@@ -156,7 +156,7 @@ void CPageTreemap::UpdateOptions(bool save)
     }
 }
 
-void CPageTreemap::UpdateStatics()
+void CPageTreeMap::UpdateStatics()
 {
     m_sBrightness.Format(L"%d", 100 - m_nBrightness);
     m_sCushionShading.Format(L"%d", 100 - m_nCushionShading);
@@ -164,50 +164,50 @@ void CPageTreemap::UpdateStatics()
     m_sScaleFactor.Format(L"%d", 100 - m_nScaleFactor);
 }
 
-void CPageTreemap::OnSomethingChanged()
+void CPageTreeMap::OnSomethingChanged()
 {
     UpdateData();
     UpdateData(false);
     SetModified();
 }
 
-void CPageTreemap::ValuesAltered(bool altered)
+void CPageTreeMap::ValuesAltered(bool altered)
 {
     m_altered        = altered;
     const CStringW s = m_altered ? Localization::Lookup(IDS_RESETTO_DEFAULTS) : Localization::Lookup(IDS_BACKTO_USERSETTINGS);
     m_resetButton.SetWindowText(s);
 }
 
-void CPageTreemap::OnColorChangedTreemapGrid(NMHDR*, LRESULT* result)
+void CPageTreeMap::OnColorChangedTreemapGrid(NMHDR*, LRESULT* result)
 {
     *result = 0;
     OnSomethingChanged();
 }
 
-void CPageTreemap::OnColorChangedTreemapHighlight(NMHDR*, LRESULT* result)
+void CPageTreeMap::OnColorChangedTreemapHighlight(NMHDR*, LRESULT* result)
 {
     *result = 0;
     OnSomethingChanged();
 }
 
-void CPageTreemap::OnVScroll(UINT, UINT, CScrollBar*)
+void CPageTreeMap::OnVScroll(UINT, UINT, CScrollBar*)
 {
     OnSomethingChanged();
     ValuesAltered();
 }
 
-void CPageTreemap::OnLightSourceChanged(NMHDR*, LRESULT*)
+void CPageTreeMap::OnLightSourceChanged(NMHDR*, LRESULT*)
 {
     OnSomethingChanged();
     ValuesAltered();
 }
 
-void CPageTreemap::OnSetModified()
+void CPageTreeMap::OnSetModified()
 {
     OnSomethingChanged();
 }
 
-void CPageTreemap::OnBnClickedReset()
+void CPageTreeMap::OnBnClickedReset()
 {
     CTreemap::Options o;
     if (m_altered)

@@ -1,4 +1,4 @@
-// PageTreelist.cpp - Implementation of CPageTreelist
+// PageFileTree.cpp - Implementation of CPageFileTree
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
@@ -22,17 +22,17 @@
 #include "stdafx.h"
 #include "WinDirStat.h"
 #include "Options.h"
-#include "PageTreelist.h"
+#include "PageFileTree.h"
 #include "DirStatDoc.h"
 #include "FileTreeView.h"
 #include "Localization.h"
 #include "MainFrame.h"
 
-IMPLEMENT_DYNAMIC(CPageTreelist, CPropertyPage)
+IMPLEMENT_DYNAMIC(CPageFileTree, CPropertyPage)
 
-CPageTreelist::CPageTreelist() : CPropertyPage(CPageTreelist::IDD) {}
+CPageFileTree::CPageFileTree() : CPropertyPage(CPageFileTree::IDD) {}
 
-void CPageTreelist::DoDataExchange(CDataExchange* pDX)
+void CPageFileTree::DoDataExchange(CDataExchange* pDX)
 {
     CPropertyPage::DoDataExchange(pDX);
     DDX_Check(pDX, IDC_PACMANANIMATION, m_pacmanAnimation);
@@ -60,7 +60,7 @@ void CPageTreelist::DoDataExchange(CDataExchange* pDX)
     DDX_Control(pDX, IDC_SLIDER, m_slider);
 }
 
-BEGIN_MESSAGE_MAP(CPageTreelist, CPropertyPage)
+BEGIN_MESSAGE_MAP(CPageFileTree, CPropertyPage)
     ON_NOTIFY_RANGE(COLBN_CHANGED, IDC_COLORBUTTON0, IDC_COLORBUTTON7, OnColorChanged)
     ON_WM_VSCROLL()
     ON_BN_CLICKED(IDC_PACMANANIMATION, OnBnClickedSetModified)
@@ -75,7 +75,7 @@ BEGIN_MESSAGE_MAP(CPageTreelist, CPropertyPage)
     ON_BN_CLICKED(IDC_TREECOL_SIZE_PHYSICAL, OnBnClickedSetModified)
 END_MESSAGE_MAP()
 
-BOOL CPageTreelist::OnInitDialog()
+BOOL CPageFileTree::OnInitDialog()
 {
     CPropertyPage::OnInitDialog();
 
@@ -110,7 +110,7 @@ BOOL CPageTreelist::OnInitDialog()
     return TRUE;
 }
 
-void CPageTreelist::OnOK()
+void CPageFileTree::OnOK()
 {
     const bool cols_changed =
         COptions::ShowColumnFolders != (FALSE != m_showColumnFolders) ||
@@ -147,17 +147,17 @@ void CPageTreelist::OnOK()
     CPropertyPage::OnOK();
 }
 
-void CPageTreelist::OnBnClickedSetModified()
+void CPageFileTree::OnBnClickedSetModified()
 {
     SetModified();
 }
 
-void CPageTreelist::OnColorChanged(UINT, NMHDR*, LRESULT*)
+void CPageFileTree::OnColorChanged(UINT, NMHDR*, LRESULT*)
 {
     SetModified();
 }
 
-void CPageTreelist::EnableButtons()
+void CPageFileTree::EnableButtons()
 {
     int i = 0;
     for (; i < m_treeListColorCount; i++)
@@ -170,7 +170,7 @@ void CPageTreelist::EnableButtons()
     }
 }
 
-void CPageTreelist::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
+void CPageFileTree::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 {
     if (reinterpret_cast<CSliderCtrl*>(pScrollBar) == &m_slider)
     {

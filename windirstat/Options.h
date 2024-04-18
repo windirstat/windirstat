@@ -98,62 +98,38 @@ class COptions
 {
 public:
 
-    static Setting<bool> ShowFreeSpace;
-    static Setting<bool> ShowUnknown;
-    static Setting<bool> ShowFileTypes;
-    static Setting<bool> ShowToolbar;
-    static Setting<bool> ShowTreemap;
-    static Setting<bool> ShowStatusbar;
-    static Setting<WINDOWPLACEMENT> MainWindowPlacement;
-    static Setting<RECT> AboutWindowRect;
-    static Setting<RECT> DriveWindowRect;
-
-    static Setting<bool> ShowDeleteWarning;
-    static Setting<int> ConfigPage;
-
-    static Setting<int> SelectDrivesRadio;
-    static Setting<std::wstring> SelectDrivesFolder;
-    static Setting<std::vector<std::wstring>> SelectDrivesDrives;
-    static Setting<bool> ScanForDuplicates;
-
-    static Setting<std::vector<int>> TypesColumnWidths;
-    static Setting<std::vector<int>> TypesColumnOrder;
-    static Setting<std::vector<int>> FileTreeColumnWidths;
-    static Setting<std::vector<int>> FileTreeColumnOrder;
-    static Setting<std::vector<int>> DriveListColumnWidths;
-    static Setting<std::vector<int>> DriveListColumnOrder;
-    static Setting<std::vector<int>> DupeTreeColumnWidths;
-    static Setting<std::vector<int>> DupeTreeColumnOrder;
-
-    static Setting<bool> PacmanAnimation;
-    static Setting<bool> ShowTimeSpent;
-    static Setting<bool> HumanFormat;
-
-    static Setting<bool> SkipDuplicationDetectionCloudLinks;
-    static Setting<bool> ExcludeVolumeMountPoints;
     static Setting<bool> ExcludeJunctions;
     static Setting<bool> ExcludeSymbolicLinks;
-    static Setting<int> FollowReparsePointMask;
+    static Setting<bool> ExcludeVolumeMountPoints;
     static Setting<bool> FollowVolumeMountPoints;
-    static Setting<bool> UseBackupRestore;
-    static Setting<int> ScanningThreads;
-
-    static Setting<bool> SkipHidden;
-    static Setting<bool> SkipProtected;
-    static Setting<bool> UseFallbackLocale;
+    static Setting<bool> HumanFormat;
+    static Setting<bool> ListFullRowSelection;
     static Setting<bool> ListGrid;
     static Setting<bool> ListStripes;
-    static Setting<bool> ListFullRowSelection;
-
+    static Setting<bool> PacmanAnimation;
+    static Setting<bool> ScanForDuplicates;
+    static Setting<bool> ShowColumnAttributes;
+    static Setting<bool> ShowColumnFiles;
     static Setting<bool> ShowColumnFolders;
     static Setting<bool> ShowColumnItems;
-    static Setting<bool> ShowColumnFiles;
-    static Setting<bool> ShowColumnAttributes;
     static Setting<bool> ShowColumnLastChange;
     static Setting<bool> ShowColumnOwner;
-    static Setting<bool> ShowColumnSizePhysical;
     static Setting<bool> ShowColumnSizeLogical;
-
+    static Setting<bool> ShowColumnSizePhysical;
+    static Setting<bool> ShowDeleteWarning;
+    static Setting<bool> ShowFileTypes;
+    static Setting<bool> ShowFreeSpace;
+    static Setting<bool> ShowStatusbar;
+    static Setting<bool> ShowTimeSpent;
+    static Setting<bool> ShowToolbar;
+    static Setting<bool> ShowTreemap;
+    static Setting<bool> ShowUnknown;
+    static Setting<bool> SkipDupeDetectionCloudLinks;
+    static Setting<bool> SkipHidden;
+    static Setting<bool> SkipProtected;
+    static Setting<bool> TreeMapGrid;
+    static Setting<bool> UseBackupRestore;
+    static Setting<bool> UseFallbackLocale;
     static Setting<COLORREF> TreeListColor0;
     static Setting<COLORREF> TreeListColor1;
     static Setting<COLORREF> TreeListColor2;
@@ -162,33 +138,46 @@ public:
     static Setting<COLORREF> TreeListColor5;
     static Setting<COLORREF> TreeListColor6;
     static Setting<COLORREF> TreeListColor7;
-    static Setting<int> TreeListColorCount;
-
-    static Setting<int> TreeMapStyle;
-    static Setting<int> TreeMapHeightFactor;
-    static Setting<int> TreeMapBrightness;
-    static Setting<int> TreeMapScaleFactor;
-    static Setting<int> TreeMapAmbientLightPercent;
-    static Setting<int> TreeMapLightSourceX;
-    static Setting<int> TreeMapLightSourceY;
-    static Setting<bool> TreeMapGrid;
     static Setting<COLORREF> TreeMapGridColor;
     static Setting<COLORREF> TreeMapHighlightColor;
     static Setting<double> MainSplitterPos;
     static Setting<double> SubSplitterPos;
+    static Setting<int> ConfigPage;
+    static Setting<int> FollowReparsePointMask;
     static Setting<int> LanguageId;
-
-    static void SanitizeRect(RECT& rect);
-
-    static void LoadAppSettings();
-    static void PreProcessPersistedSettings();
-    static void PostProcessPersistedSettings();
-
-    static void SetTreemapOptions(const CTreemap::Options& options);
+    static Setting<int> ScanningThreads;
+    static Setting<int> SelectDrivesRadio;
+    static Setting<int> TreeListColorCount;
+    static Setting<int> TreeMapAmbientLightPercent;
+    static Setting<int> TreeMapBrightness;
+    static Setting<int> TreeMapHeightFactor;
+    static Setting<int> TreeMapLightSourceX;
+    static Setting<int> TreeMapLightSourceY;
+    static Setting<int> TreeMapScaleFactor;
+    static Setting<int> TreeMapStyle;
+    static Setting<RECT> AboutWindowRect;
+    static Setting<RECT> DriveWindowRect;
+    static Setting<std::vector<int>> DriveListColumnOrder;
+    static Setting<std::vector<int>> DriveListColumnWidths;
+    static Setting<std::vector<int>> DupeTreeColumnOrder;
+    static Setting<std::vector<int>> DupeTreeColumnWidths;
+    static Setting<std::vector<int>> FileTreeColumnOrder;
+    static Setting<std::vector<int>> FileTreeColumnWidths;
+    static Setting<std::vector<int>> TypesColumnOrder;
+    static Setting<std::vector<int>> TypesColumnWidths;
+    static Setting<std::vector<std::wstring>> SelectDrivesDrives;
+    static Setting<std::wstring> SelectDrivesFolder;
+    static Setting<WINDOWPLACEMENT> MainWindowPlacement;
 
     static CTreemap::Options TreemapOptions;
     static std::vector<USERDEFINEDCLEANUP> UserDefinedCleanups;
 
+    static void SanitizeRect(RECT& rect);
+    static void LoadAppSettings();
+    static void PreProcessPersistedSettings();
+    static void PostProcessPersistedSettings();
+    static void SetTreemapOptions(const CTreemap::Options& options);
+
     static LANGID GetFallbackLanguage();
-    static LANGID GetEffectiveLangId(); // Language to be used for date/time and number formatting
+    static LANGID GetEffectiveLangId();
 };

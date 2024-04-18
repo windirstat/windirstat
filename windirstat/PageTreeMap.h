@@ -1,4 +1,4 @@
-// PageTreeMap.h - Declaration of CDemoControl and CPageTreemap
+// PageTreeMap.h - Declaration of CPageTreeMap
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
@@ -26,16 +26,16 @@
 #include "XYSlider.h"
 
 //
-// CPageTreemap. "Settings" property page "Treemap".
+// CPageTreeMap. "Settings" property page "Treemap".
 //
-class CPageTreemap final : public CPropertyPage
+class CPageTreeMap final : public CPropertyPage
 {
-    DECLARE_DYNAMIC(CPageTreemap)
+    DECLARE_DYNAMIC(CPageTreeMap)
 
     enum { IDD = IDD_PAGE_TREEMAP };
 
-    CPageTreemap();
-    ~CPageTreemap() override = default;
+    CPageTreeMap();
+    ~CPageTreeMap() override = default;
 
 protected:
     void UpdateOptions(bool save = true);

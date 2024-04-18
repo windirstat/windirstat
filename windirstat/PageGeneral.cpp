@@ -46,7 +46,7 @@ void CPageGeneral::DoDataExchange(CDataExchange* pDX)
 {
     CPropertyPage::DoDataExchange(pDX);
     DDX_Check(pDX, IDC_HUMAN_FORMAT, m_humanFormat);
-    DDX_Check(pDX, IDC_USE_WDS_LOCALE, m_useWdsLocale);
+    DDX_Check(pDX, IDC_USE_WDS_LOCALE, m_useFallbackLocale);
     DDX_Control(pDX, IDC_COMBO, m_combo);
     DDX_Check(pDX, IDC_SHOW_GRID, m_listGrid);
     DDX_Check(pDX, IDC_SHOW_STRIPES, m_listStripes);
@@ -77,7 +77,7 @@ BOOL CPageGeneral::OnInitDialog()
     m_listStripes = COptions::ListStripes;
     m_showDeletionWarning = COptions::ShowDeleteWarning;
     m_listFullRowSelection = COptions::ListFullRowSelection;
-    m_useWdsLocale= COptions::UseFallbackLocale;
+    m_useFallbackLocale= COptions::UseFallbackLocale;
     m_portableMode = CDirStatApp::Get()->InPortableMode();
 
     for (const auto & language : Localization::GetLanguageList())
@@ -99,13 +99,13 @@ void CPageGeneral::OnOK()
 {
     UpdateData();
 
-    const bool wds_changed = static_cast<bool>(m_useWdsLocale) != COptions::UseFallbackLocale;
+    const bool wds_changed = static_cast<bool>(m_useFallbackLocale) != COptions::UseFallbackLocale;
     const bool lg_changed = static_cast<bool>(m_listGrid) != COptions::ListGrid ||
         static_cast<bool>(m_listStripes) != COptions::ListStripes ||
         static_cast<bool>(m_listFullRowSelection) != COptions::ListFullRowSelection;
 
     COptions::HumanFormat = (FALSE != m_humanFormat);
-    COptions::UseFallbackLocale = (FALSE != m_useWdsLocale);
+    COptions::UseFallbackLocale = (FALSE != m_useFallbackLocale);
     COptions::ListGrid = (FALSE != m_listGrid);
     COptions::ListStripes = (FALSE != m_listStripes);
     COptions::ShowDeleteWarning = (FALSE != m_showDeletionWarning);

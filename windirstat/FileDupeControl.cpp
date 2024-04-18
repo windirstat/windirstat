@@ -106,7 +106,7 @@ void CFileDupeControl::OnContextMenu(CWnd* /*pWnd*/, CPoint pt)
 void CFileDupeControl::ProcessDuplicate(CItem * item)
 {
     if (!COptions::ScanForDuplicates) return;
-    if (COptions::SkipDuplicationDetectionCloudLinks.Obj() &&
+    if (COptions::SkipDupeDetectionCloudLinks.Obj() &&
         CDirStatApp::Get()->GetReparseInfo()->IsCloudLink(item->GetPathLong(), item->GetAttributes())) return;
 
     std::lock_guard lock(m_Mutex);

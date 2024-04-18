@@ -72,7 +72,7 @@ BOOL CPageAdvanced::OnInitDialog()
     m_excludeVolumeMountPoints = COptions::ExcludeVolumeMountPoints;
     m_excludeJunctions = COptions::ExcludeJunctions;
     m_excludeSymbolicLinks = COptions::ExcludeSymbolicLinks;
-    m_skipDupeDetectionCloudLinks = COptions::SkipDuplicationDetectionCloudLinks;
+    m_skipDupeDetectionCloudLinks = COptions::SkipDupeDetectionCloudLinks;
     m_skipHidden = COptions::SkipHidden;
     m_skipProtected = COptions::SkipProtected;
     m_useBackupRestore = COptions::UseBackupRestore;
@@ -96,7 +96,7 @@ void CPageAdvanced::OnOK()
     COptions::ExcludeJunctions = (FALSE != m_excludeJunctions);
     COptions::ExcludeSymbolicLinks = (FALSE != m_excludeSymbolicLinks);
     COptions::ExcludeVolumeMountPoints = (FALSE != m_excludeVolumeMountPoints);
-    COptions::SkipDuplicationDetectionCloudLinks = (FALSE != m_skipDupeDetectionCloudLinks);
+    COptions::SkipDupeDetectionCloudLinks = (FALSE != m_skipDupeDetectionCloudLinks);
     COptions::SkipHidden = (FALSE != m_skipHidden);
     COptions::SkipProtected = (FALSE != m_skipProtected);
     COptions::UseBackupRestore = (FALSE != m_useBackupRestore);
