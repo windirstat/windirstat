@@ -38,8 +38,9 @@ enum
 {
     FIELD_NAME,
     FIELD_FILES,
-    FIELD_SUBDIRS,
-    FIELD_SIZE,
+    FIELDS_FOLDERS,
+    FIELD_SIZE_LOGICAL,
+    FIELD_SIZE_PHYSICAL,
     FIELD_ATTRIBUTES,
     FIELD_LASTCHANGE,
     FIELD_ATTRIBUTES_WDS,
@@ -55,8 +56,9 @@ static void ParseHeaderLine(const std::vector<std::wstring>& header)
     {
         { Localization::Lookup(IDS_COL_NAME).GetString(), FIELD_NAME},
         { Localization::Lookup(IDS_COL_FILES).GetString(), FIELD_FILES },
-        { Localization::Lookup(IDS_COL_SUBDIRS).GetString(), FIELD_SUBDIRS },
-        { Localization::Lookup(IDS_COL_SIZE).GetString(), FIELD_SIZE },
+        { Localization::Lookup(IDS_COL_FOLDERS).GetString(), FIELDS_FOLDERS },
+        { Localization::Lookup(IDS_COL_SIZE_LOGICAL).GetString(), FIELD_SIZE_LOGICAL },
+        { Localization::Lookup(IDS_COL_SIZE_PHYSICAL).GetString(), FIELD_SIZE_LOGICAL },
         { Localization::Lookup(IDS_COL_ATTRIBUTES).GetString(), FIELD_ATTRIBUTES },
         { Localization::Lookup(IDS_COL_LASTCHANGE).GetString(), FIELD_LASTCHANGE },
         { (Localization::Lookup(IDS_APP_TITLE) + L" " + Localization::Lookup(IDS_COL_ATTRIBUTES)).GetString(), FIELD_ATTRIBUTES_WDS },
@@ -180,10 +182,11 @@ CItem* LoadResults(const std::wstring & path)
             type,
             display_name,
             FromTimeString(fields[order_map[FIELD_LASTCHANGE]]),
-            _wcstoui64(fields[order_map[FIELD_SIZE]].c_str(), nullptr, 10),
+            _wcstoui64(fields[order_map[FIELD_SIZE_LOGICAL]].c_str(), nullptr, 10),
+            _wcstoui64(fields[order_map[FIELD_SIZE_PHYSICAL]].c_str(), nullptr, 10),
             wcstoul(fields[order_map[FIELD_ATTRIBUTES]].c_str(), nullptr, 16),
             wcstoul(fields[order_map[FIELD_FILES]].c_str(), nullptr, 10),
-            wcstoul(fields[order_map[FIELD_SUBDIRS]].c_str(), nullptr, 10));
+            wcstoul(fields[order_map[FIELDS_FOLDERS]].c_str(), nullptr, 10));
 
 
         if (is_root)
@@ -212,7 +215,7 @@ CItem* LoadResults(const std::wstring & path)
     // Sort all parent items
     for (const auto& val : parent_map | std::views::values)
     {
-        val->SortItemsBySize();
+        val->SortItemsBySizePhysical();
     }
 
     return newroot;
@@ -229,8 +232,8 @@ bool SaveResults(const std::wstring& path, CItem * item)
     {
         Localization::Lookup(IDS_COL_NAME),
         Localization::Lookup(IDS_COL_FILES),
-        Localization::Lookup(IDS_COL_SUBDIRS),
-        Localization::Lookup(IDS_COL_SIZE),
+        Localization::Lookup(IDS_COL_FOLDERS),
+        Localization::Lookup(IDS_COL_SIZE_PHYSICAL),
         Localization::Lookup(IDS_COL_ATTRIBUTES),
         Localization::Lookup(IDS_COL_LASTCHANGE),
         Localization::Lookup(IDS_APP_TITLE) + L" " + Localization::Lookup(IDS_COL_ATTRIBUTES)
@@ -260,8 +263,8 @@ bool SaveResults(const std::wstring& path, CItem * item)
         outf << std::format("{},{},{},{},0x{:08X},{:%FT%TZ},0x{:04X}",
             QuoteAndConvert(non_path_item ? qitem->GetName() : qitem->GetPath()),
             qitem->GetFilesCount(),
-            qitem->GetSubdirsCount(),
-            qitem->GetSize(),
+            qitem->GetFoldersCount(),
+            qitem->GetSizePhysical(),
             qitem->GetAttributes(),
             ToTimePoint(qitem->GetLastChange()),
             static_cast<unsigned short>(qitem->GetRawType()));

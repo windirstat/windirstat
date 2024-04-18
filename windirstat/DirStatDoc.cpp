@@ -328,7 +328,7 @@ ULONGLONG CDirStatDoc::GetRootSize() const
 {
     ASSERT(m_rootItem != nullptr);
     ASSERT(IsRootDone());
-    return m_rootItem->GetSize();
+    return m_rootItem->GetSizePhysical();
 }
 
 bool CDirStatDoc::IsDrive(const CStringW& spec)
@@ -458,8 +458,8 @@ void CDirStatDoc::RecurseRefreshReparsePoints(CItem* item)
                 continue;
             }
 
-            if (CDirStatApp::Get()->IsMountPoint(child->GetPath(), child->GetAttributes()) ||
-                CDirStatApp::Get()->IsJunction(child->GetPath(), child->GetAttributes()))
+            if (CDirStatApp::Get()->GetReparseInfo()->IsReparsePoint(child->GetAttributes()) &&
+                CDirStatApp::Get()->IsFollowingAllowed(child->GetPathLong(), child->GetAttributes()))
             {
                 to_refresh.push_back(child);
             }
@@ -713,7 +713,7 @@ void CDirStatDoc::RefreshAfterUserDefinedCleanup(const USERDEFINEDCLEANUP* udc, 
     // break;
 
     default:
-        ASSERT(0);
+        ASSERT(FALSE);
     }
 }
 
@@ -728,11 +728,7 @@ void CDirStatDoc::RecursiveUserDefinedCleanup(USERDEFINEDCLEANUP* udc, const CSt
         {
             continue;
         }
-        if (CDirStatApp::Get()->IsMountPoint(finder.GetFilePath(), finder.GetAttributes()) && !COptions::FollowMountPoints)
-        {
-            continue;
-        }
-        if (CDirStatApp::Get()->IsJunction(finder.GetFilePath(), finder.GetAttributes()) && !COptions::FollowJunctions)
+        if (!CDirStatApp::Get()->IsFollowingAllowed(finder.GetFilePath(), finder.GetAttributes()))
         {
             continue;
         }
@@ -884,7 +880,7 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
 
     if (!filters.contains(pCmdUI->m_nID))
     {
-        ASSERT(0);
+        ASSERT(FALSE);
         return;
     }
 
@@ -1330,20 +1326,27 @@ void CDirStatDoc::StartupCoordinator(std::vector<CItem*> items)
         for (auto item : std::vector(items))
         {
             // Record current visual arrangement to reapply afterward
-            visualInfo[item].isSelected = std::ranges::find(selected_items, item) != selected_items.end();
-            visualInfo[item].wasExpanded = item->IsExpanded();
+            if (item->IsVisible())
+            {
+                visualInfo[item].isSelected = std::ranges::find(selected_items, item) != selected_items.end();
+                visualInfo[item].wasExpanded = item->IsExpanded();
+            }
 
             // Skip pruning if it is a new element
             if (!item->IsDone()) continue;
 
             item->UncacheImage();
             item->UpwardRecalcLastChange(true);
-            item->UpwardSubtractSize(item->GetSize());
+            item->UpwardSubtractSizePhysical(item->GetSizePhysical());
+            item->UpwardSubtractSizeLogical(item->GetSizeLogical());
             item->UpwardSubtractFiles(item->GetFilesCount());
-            item->UpwardSubtractSubdirs(item->GetSubdirsCount());
+            item->UpwardSubtractFolders(item->GetFoldersCount());
             item->RemoveAllChildren();
-            item->SetExpanded(visualInfo[item].wasExpanded);
             item->UpwardSetUndone();
+
+            // children removal will collapse item so re-expand it
+            if (visualInfo.contains(item) && item->IsVisible())
+                item->SetExpanded(visualInfo[item].wasExpanded);
   
             // Handle if item to be refreshed has been removed
             if (item->IsType(IT_FILE | IT_DIRECTORY | IT_DRIVE) &&
@@ -1367,7 +1370,7 @@ void CDirStatDoc::StartupCoordinator(std::vector<CItem*> items)
 
                 // Handle non-root item by removing from parent
                 item->UpwardSubtractFiles(item->IsType(IT_FILE) ? 1 : 0);
-                item->UpwardSubtractSubdirs(item->IsType(IT_FILE) ? 0 : 1);
+                item->UpwardSubtractFolders(item->IsType(IT_FILE) ? 0 : 1);
                 item->GetParent()->RemoveChild(item);
             }
         }
@@ -1447,7 +1450,9 @@ void CDirStatDoc::StartupCoordinator(std::vector<CItem*> items)
         {
             for (const auto& item : items)
             {
-                item->SetScrollPosition(visualInfo[item].oldScrollPosition);
+                // restore scroll position if previously set
+                if (visualInfo.contains(item) && item->IsVisible())
+                    item->SetScrollPosition(visualInfo[item].oldScrollPosition);
             }
 
             CMainFrame::Get()->LockWindowUpdate();

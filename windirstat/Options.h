@@ -129,25 +129,30 @@ public:
     static Setting<bool> ShowTimeSpent;
     static Setting<bool> HumanFormat;
 
-    static Setting<bool> FollowMountPoints;
-    static Setting<bool> FollowJunctions;
+    static Setting<bool> SkipDuplicationDetectionCloudLinks;
+    static Setting<bool> ExcludeVolumeMountPoints;
+    static Setting<bool> ExcludeJunctions;
+    static Setting<bool> ExcludeSymbolicLinks;
+    static Setting<int> FollowReparsePointMask;
+    static Setting<bool> FollowVolumeMountPoints;
     static Setting<bool> UseBackupRestore;
-    static Setting<bool> ShowUncompressedFileSizes;
     static Setting<int> ScanningThreads;
 
     static Setting<bool> SkipHidden;
     static Setting<bool> SkipProtected;
-    static Setting<bool> UseWdsLocale;
+    static Setting<bool> UseFallbackLocale;
     static Setting<bool> ListGrid;
     static Setting<bool> ListStripes;
     static Setting<bool> ListFullRowSelection;
 
-    static Setting<bool> ShowColumnSubdirs;
+    static Setting<bool> ShowColumnFolders;
     static Setting<bool> ShowColumnItems;
     static Setting<bool> ShowColumnFiles;
     static Setting<bool> ShowColumnAttributes;
     static Setting<bool> ShowColumnLastChange;
     static Setting<bool> ShowColumnOwner;
+    static Setting<bool> ShowColumnSizePhysical;
+    static Setting<bool> ShowColumnSizeLogical;
 
     static Setting<COLORREF> TreeListColor0;
     static Setting<COLORREF> TreeListColor1;

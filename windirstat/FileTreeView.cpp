@@ -36,7 +36,7 @@ IMPLEMENT_DYNCREATE(CFileTreeView, CView)
 
 CFileTreeView::CFileTreeView()
 {
-    m_control.SetSorting(COL_SIZE, false);
+    m_control.SetSorting(COL_SIZE_PHYSICAL, false);
 }
 
 void CFileTreeView::SysColorChanged()
@@ -79,30 +79,33 @@ void CFileTreeView::CreateColumns(bool all)
 {
     if (all)
     {
-        m_control.InsertColumn(COL_NAME, Localization::Lookup(IDS_COL_NAME), LVCFMT_LEFT, 200, COL_NAME);
-        m_control.InsertColumn(COL_SUBTREEPERCENTAGE, Localization::Lookup(IDS_COL_SUBTREEPERCENTAGE), LVCFMT_RIGHT, CItem::GetSubtreePercentageWidth(), COL_SUBTREEPERCENTAGE);
-        m_control.InsertColumn(COL_PERCENTAGE, Localization::Lookup(IDS_COL_PERCENTAGE), LVCFMT_RIGHT, 55, COL_PERCENTAGE);
-        m_control.InsertColumn(COL_SIZE, Localization::Lookup(IDS_COL_SIZE), LVCFMT_RIGHT, 90, COL_SIZE);
+        m_control.InsertColumn(SHORT_MAX, Localization::Lookup(IDS_COL_NAME), LVCFMT_LEFT, 200, COL_NAME);
+        m_control.InsertColumn(SHORT_MAX, Localization::Lookup(IDS_COL_SUBTREEPERCENTAGE), LVCFMT_RIGHT, CItem::GetSubtreePercentageWidth(), COL_SUBTREEPERCENTAGE);
+        m_control.InsertColumn(SHORT_MAX, Localization::Lookup(IDS_COL_PERCENTAGE), LVCFMT_RIGHT, 55, COL_PERCENTAGE);
     }
 
     // reset sort and remove optional
-    m_control.SetSorting(COL_SIZE, m_control.GetAscendingDefault(COL_SIZE));
+    m_control.SetSorting(COL_PERCENTAGE, m_control.GetAscendingDefault(COL_PERCENTAGE));
     m_control.SortItems();
-    while (m_control.DeleteColumn(COL_ITEMS)) {}
+    while (m_control.DeleteColumn(COL_SIZE_PHYSICAL)) {}
 
     // add optional columns based on settings
+    if (COptions::ShowColumnSizePhysical)
+        m_control.InsertColumn(SHORT_MAX, Localization::Lookup(IDS_COL_SIZE_PHYSICAL), LVCFMT_RIGHT, 80, COL_SIZE_PHYSICAL);
+    if (COptions::ShowColumnSizeLogical)
+        m_control.InsertColumn(SHORT_MAX, Localization::Lookup(IDS_COL_SIZE_LOGICAL), LVCFMT_RIGHT, 80, COL_SIZE_LOGICAL);
     if (COptions::ShowColumnItems)
-        m_control.InsertColumn(COL_ITEMS, Localization::Lookup(IDS_COL_ITEMS), LVCFMT_RIGHT, 55, COL_ITEMS);
+        m_control.InsertColumn(SHORT_MAX, Localization::Lookup(IDS_COL_ITEMS), LVCFMT_RIGHT, 60, COL_ITEMS);
     if (COptions::ShowColumnFiles)
-        m_control.InsertColumn(COL_FILES, Localization::Lookup(IDS_COL_FILES), LVCFMT_RIGHT, 55, COL_FILES);
-    if (COptions::ShowColumnSubdirs)
-        m_control.InsertColumn(COL_SUBDIRS, Localization::Lookup(IDS_COL_SUBDIRS), LVCFMT_RIGHT, 55, COL_SUBDIRS);
+        m_control.InsertColumn(SHORT_MAX, Localization::Lookup(IDS_COL_FILES), LVCFMT_RIGHT, 60, COL_FILES);
+    if (COptions::ShowColumnFolders)
+        m_control.InsertColumn(SHORT_MAX, Localization::Lookup(IDS_COL_FOLDERS), LVCFMT_RIGHT, 60, COL_FOLDERS);
     if (COptions::ShowColumnLastChange)
-        m_control.InsertColumn(COL_LASTCHANGE, Localization::Lookup(IDS_COL_LASTCHANGE), LVCFMT_LEFT, 120, COL_LASTCHANGE);
+        m_control.InsertColumn(SHORT_MAX, Localization::Lookup(IDS_COL_LASTCHANGE), LVCFMT_LEFT, 120, COL_LASTCHANGE);
     if (COptions::ShowColumnAttributes)
-        m_control.InsertColumn(COL_ATTRIBUTES, Localization::Lookup(IDS_COL_ATTRIBUTES), LVCFMT_LEFT, 50, COL_ATTRIBUTES);
+        m_control.InsertColumn(SHORT_MAX, Localization::Lookup(IDS_COL_ATTRIBUTES), LVCFMT_LEFT, 50, COL_ATTRIBUTES);
     if (COptions::ShowColumnOwner)
-        m_control.InsertColumn(COL_OWNER, Localization::Lookup(IDS_COL_OWNER), LVCFMT_LEFT, 120, COL_OWNER);
+        m_control.InsertColumn(SHORT_MAX, Localization::Lookup(IDS_COL_OWNER), LVCFMT_LEFT, 120, COL_OWNER);
 
     m_control.OnColumnsInserted();
     

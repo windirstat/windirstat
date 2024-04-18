@@ -405,13 +405,15 @@ LRESULT CMainFrame::OnTaskButtonCreated(WPARAM, LPARAM)
 
 void CMainFrame::CreateProgress(ULONGLONG range)
 {
-    // A range of 0 means that we have no range.
-    // In this case we display pacman.
-
-    if (COptions::FollowMountPoints || COptions::FollowJunctions || COptions::ShowUncompressedFileSizes)
+    // Directory structure may contain other volume or interanl loops
+    // so set range to indicate these is no range so display pacman
+    if (!COptions::ExcludeVolumeMountPoints ||
+        !COptions::ExcludeJunctions ||
+        !COptions::ExcludeSymbolicLinks)
     {
         range = 0;
     }
+
     m_progressRange = range;
     m_progressPos = 0;
     m_progressVisible = true;
@@ -778,7 +780,7 @@ void CMainFrame::RestoreTreeMapView()
 {
     if (GetTreeMapView()->IsShowTreemap())
     {
-        m_Splitter.RestoreSplitterPos(0.4);
+        m_Splitter.RestoreSplitterPos(0.5);
         GetTreeMapView()->DrawEmptyView();
         GetTreeMapView()->RedrawWindow();
     }
@@ -1021,6 +1023,7 @@ void CMainFrame::MoveFocus(const LOGICAL_FOCUS lf)
             m_wndDeadFocus.SetFocus();
         }
         break;
+    case LF_DUPLICATELIST:
     case LF_DIRECTORYLIST:
         {
             GetFileTreeView()->SetFocus();
@@ -1038,6 +1041,7 @@ void CMainFrame::SetSelectionMessageText()
 {
     switch (GetLogicalFocus())
     {
+    case LF_DUPLICATELIST:
     case LF_NONE:
         {
             SetMessageText(Localization::Lookup(IDS_IDLEMESSAGE));

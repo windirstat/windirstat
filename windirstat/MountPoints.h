@@ -26,14 +26,16 @@
 
 class CReparsePoints final
 {
-    static bool IsReparseType(const std::wstring& path, DWORD tag_type);
+    static bool IsReparseType(const std::wstring& path, DWORD tag_type, bool mask = false);
 
     std::vector<std::wstring> m_mountpoints;
 
 public:
 
     void Initialize();
-    bool IsMountPoint(const CStringW& path, DWORD attr = INVALID_FILE_ATTRIBUTES) const;
+    bool IsVolumeMountPoint(const CStringW& path, DWORD attr = INVALID_FILE_ATTRIBUTES) const;
     bool IsJunction(const CStringW& path, DWORD attr = INVALID_FILE_ATTRIBUTES) const;
+    bool IsSymbolicLink(const CStringW& path, DWORD attr = INVALID_FILE_ATTRIBUTES) const;
+    bool IsCloudLink(const CStringW& path, DWORD attr = INVALID_FILE_ATTRIBUTES) const;
     static bool IsReparsePoint(DWORD attr);
 };

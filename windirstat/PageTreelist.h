@@ -44,15 +44,17 @@ protected:
 
     BOOL m_pacmanAnimation = FALSE;
     BOOL m_showTimeSpent = FALSE;
-    BOOL m_showColumnSubdirs = FALSE;
+    BOOL m_showColumnFolders = FALSE;
     BOOL m_showColumnItems = FALSE;
     BOOL m_showColumnFiles = FALSE;
     BOOL m_showColumnAttributes = FALSE;
     BOOL m_showColumnLastChange = FALSE;
     BOOL m_showColumnOwner = FALSE;
+    BOOL m_showColumnSizePhysical = FALSE;
+    BOOL m_showColumnSizeLogical = FALSE;
 
-    int m_treelistColorCount = TREELISTCOLORCOUNT;
-    COLORREF m_treelistColor[TREELISTCOLORCOUNT] = {};
+    int m_treeListColorCount = TREELISTCOLORCOUNT;
+    COLORREF m_treeListColor[TREELISTCOLORCOUNT] = {};
 
     CColorButton m_colorButton[TREELISTCOLORCOUNT];
     CSliderCtrl m_slider;

@@ -156,7 +156,7 @@ void CAboutDlg::CMyTabControl::SetPageText(const int tab)
         break;
     default:
         {
-            ASSERT(0);
+            ASSERT(FALSE);
         }
         break;
     }
@@ -317,7 +317,7 @@ BOOL CAboutDlg::OnInitDialog()
 
 void CAboutDlg::OnTcnSelchangeTab(NMHDR* /*pNMHDR*/, LRESULT* pResult)
 {
-    *pResult = 0;
+    *pResult = FALSE;
     m_tab.SetPageText(m_tab.GetCurSel());
 }
 

@@ -124,18 +124,9 @@ void CDirStatApp::ReReadMountPoints()
 bool CDirStatApp::IsFollowingAllowed(const CStringW& path, DWORD attr) const
 {
     return !CReparsePoints::IsReparsePoint(attr) ||
-        IsMountPoint(path, attr) && COptions::FollowMountPoints ||
-        IsJunction(path, attr) && COptions::FollowJunctions;
-}
-
-bool CDirStatApp::IsMountPoint(const CStringW& path, DWORD attr) const
-{
-    return m_reparsePoints.IsMountPoint(path, attr);
-}
-
-bool CDirStatApp::IsJunction(const CStringW& path, DWORD attr) const
-{
-    return m_reparsePoints.IsJunction(path, attr);
+        m_reparsePoints.IsVolumeMountPoint(path, attr) && !COptions::ExcludeVolumeMountPoints ||
+        m_reparsePoints.IsJunction(path, attr) && !COptions::ExcludeJunctions ||
+        m_reparsePoints.IsSymbolicLink(path, attr) && !COptions::ExcludeSymbolicLinks;
 }
 
 // Get the alternative colors for compressed and encrypted files/folders.
@@ -143,14 +134,13 @@ bool CDirStatApp::IsJunction(const CStringW& path, DWORD attr) const
 // or the default color values.
 COLORREF CDirStatApp::GetAlternativeColor(COLORREF clrDefault, LPCWSTR which)
 {
-    COLORREF x;
-    DWORD cbValue = sizeof(x);
-    CRegKey key;
-
     // Open the explorer key
+    CRegKey key;
     key.Open(HKEY_CURRENT_USER, wds::strExplorerKey, KEY_READ);
 
     // Try to read the REG_BINARY value
+    COLORREF x;
+    DWORD cbValue = sizeof(x);
     if (ERROR_SUCCESS == key.QueryBinaryValue(which, &x, &cbValue))
     {
         // Return the read value upon success

@@ -40,7 +40,7 @@ CFileDupeControl::CFileDupeControl() : CTreeListControl(20, COptions::DupeTreeCo
 
 bool CFileDupeControl::GetAscendingDefault(int column)
 {
-    return column == COL_ITEMDUP_SIZE || column == COL_ITEMDUP_LASTCHANGE;
+    return column == COL_ITEMDUP_SIZE_PHYSICAL || column == COL_ITEMDUP_LASTCHANGE;
 }
 
 #pragma warning(push)
@@ -106,14 +106,15 @@ void CFileDupeControl::OnContextMenu(CWnd* /*pWnd*/, CPoint pt)
 void CFileDupeControl::ProcessDuplicate(CItem * item)
 {
     if (!COptions::ScanForDuplicates) return;
+    if (COptions::SkipDuplicationDetectionCloudLinks.Obj() && CDirStatApp::Get()->GetReparseInfo()->IsCloudLink(item->GetPathLong()))
 
     std::lock_guard lock(m_Mutex);
-    const auto size_entry = m_SizeTracker.find(item->GetSize());
+    const auto size_entry = m_SizeTracker.find(item->GetSizePhysical());
     if (size_entry == m_SizeTracker.end())
     {
         // Add first entry to list
         const auto set = { item };
-        m_SizeTracker.emplace(item->GetSize(), set);
+        m_SizeTracker.emplace(item->GetSizePhysical(), set);
         return;
     }
 
@@ -138,7 +139,7 @@ void CFileDupeControl::ProcessDuplicate(CItem * item)
         if (hash.empty()) continue;
 
         // Mark as the full being completed as well
-        if (item_to_hash->GetSize() <= 1024ull * 1024ull)
+        if (item_to_hash->GetSizePhysical() <= 1024ull * 1024ull)
             item_to_hash->SetType(item_to_hash->GetRawType() | ITF_FULLHASH);
 
         // See if hash is already in tracking
@@ -187,7 +188,7 @@ void CFileDupeControl::ProcessDuplicate(CItem * item)
             if (dupe_parent == nullptr)
             {
                 // Create new root item to hold these duplicates
-                dupe_parent = new CItemDupe(hash_for_this_item.c_str(), item_to_add->GetSize());
+                dupe_parent = new CItemDupe(hash_for_this_item.c_str(), item_to_add->GetSizePhysical());
                 root->AddChild(dupe_parent);
                 m_NodeTracker.emplace(hash_for_this_item.c_str(), dupe_parent);
             }

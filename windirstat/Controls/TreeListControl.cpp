@@ -221,7 +221,7 @@ int CTreeListItem::FindSortedChild(const CTreeListItem* child) const
             return i;
         }
     }
-    ASSERT(0);
+    ASSERT(FALSE);
     return 0;
 }
 

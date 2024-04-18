@@ -47,7 +47,8 @@ bool FileFindEnhanced::FindNextFile()
     if (m_firstrun || m_current_info->NextEntryOffset == 0)
     {
         constexpr auto BUFFER_SIZE = 64 * 1024;
-        thread_local BYTE m_directory_info[BUFFER_SIZE];
+        thread_local std::vector<BYTE> m_directory_info;
+        m_directory_info.resize(BUFFER_SIZE);
 
         // handle optional pattern mask
         UNICODE_STRING u_search = {};
@@ -59,19 +60,18 @@ bool FileFindEnhanced::FindNextFile()
         constexpr auto FileDirectoryInformation = 1;
         IO_STATUS_BLOCK IoStatusBlock;
         const NTSTATUS Status = NtQueryDirectoryFile(m_handle, nullptr, nullptr, nullptr, &IoStatusBlock,
-            m_directory_info, BUFFER_SIZE, static_cast<FILE_INFORMATION_CLASS>(FileDirectoryInformation),
+            m_directory_info.data(), BUFFER_SIZE, static_cast<FILE_INFORMATION_CLASS>(FileDirectoryInformation),
             FALSE, (u_search.Length > 0) ? &u_search : nullptr, (m_firstrun) ? TRUE : FALSE);
 
         // fetch point to current node 
         success = (Status == 0);
-        m_current_info = reinterpret_cast<FILE_DIRECTORY_INFORMATION*>(m_directory_info);
+        m_current_info = reinterpret_cast<FILE_DIRECTORY_INFORMATION*>(m_directory_info.data());
 
         // special case for reparse on initial run points - update attributes
         if (success && m_firstrun) m_current_info->FileAttributes = GetFileAttributes(GetFilePath());
 
         // disable for next run
         m_firstrun = false;
-        
     }
     else
     {
@@ -164,15 +164,14 @@ ULONGLONG FileFindEnhanced::GetLogicalFileSize() const
     return m_current_info->EndOfFile.QuadPart;
 }
 
-ULONGLONG FileFindEnhanced::GetFileSize() const
+ULONGLONG FileFindEnhanced::GetFileSizePhysical() const
 {
-    // Optionally retrieve the compressed file size
-    if (m_current_info->FileAttributes & (FILE_ATTRIBUTE_COMPRESSED | FILE_ATTRIBUTE_SPARSE_FILE) && COptions::ShowUncompressedFileSizes)
-    {
-        return m_current_info->EndOfFile.QuadPart;
-    }
-
     return m_current_info->AllocationSize.QuadPart;
+}
+
+ULONGLONG FileFindEnhanced::GetFileSizeLogical() const
+{
+    return m_current_info->EndOfFile.QuadPart;
 }
 
 FILETIME FileFindEnhanced::GetLastWriteTime() const

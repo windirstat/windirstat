@@ -417,7 +417,7 @@ void COwnerDrawnListControl::DrawItem(LPDRAWITEMSTRUCT pdis)
         LVCOLUMN info = { LVCF_SUBITEM };
         GetColumn(i, &info);
         const int subitem = info.iSubItem;
-
+        
         CRect rc = GetWholeSubitemRect(pdis->itemID, i);
         const CRect rcDraw = rc - rcItem.TopLeft();
 
@@ -430,7 +430,7 @@ void COwnerDrawnListControl::DrawItem(LPDRAWITEMSTRUCT pdis)
             CSetBkMode bk(&dc_mem, TRANSPARENT);
             CSelectObject sofont(&dc_mem, GetFont());
             const CStringW s = item->GetText(subitem);
-            const UINT align = IsColumnRightAligned(subitem) ? DT_RIGHT : DT_LEFT;
+            const UINT align = IsColumnRightAligned(i) ? DT_RIGHT : DT_LEFT;
 
             // Get the correct color in case of compressed or encrypted items
             COLORREF textColor = item->GetItemTextColor();
@@ -472,14 +472,13 @@ void COwnerDrawnListControl::DrawItem(LPDRAWITEMSTRUCT pdis)
         rcItem.Width(), rcItem.Height(), &dc_mem, 0, 0, SRCCOPY);
 }
 
-bool COwnerDrawnListControl::IsColumnRightAligned(int col) const
+bool COwnerDrawnListControl::IsColumnRightAligned(const int col) const
 {
     HDITEM hditem;
     ZeroMemory(&hditem, sizeof(hditem));
     hditem.mask = HDI_FORMAT;
 
     GetHeaderCtrl()->GetItem(col, &hditem);
-
     return (hditem.fmt & HDF_RIGHT) != 0;
 }
 
@@ -540,8 +539,7 @@ int COwnerDrawnListControl::GetSubItemWidth(const COwnerDrawnListItem* item, int
     }
 
     CSelectObject sofont(&dc, GetFont());
-    const UINT align = IsColumnRightAligned(subitem) ? DT_RIGHT : DT_LEFT;
-    dc.DrawText(s, rc, DT_SINGLELINE | DT_VCENTER | DT_CALCRECT | DT_NOPREFIX | align);
+    dc.DrawText(s, rc, DT_SINGLELINE | DT_CALCRECT | DT_NOPREFIX | DT_NOCLIP);
 
     rc.InflateRect(TEXT_X_MARGIN, 0);
     return rc.Width();
@@ -608,7 +606,7 @@ void COwnerDrawnListControl::OnHdnDividerdblclick(NMHDR* pNMHDR, LRESULT* pResul
 {
     const int subitem = reinterpret_cast<LPNMHEADER>(pNMHDR)->iItem;
     AdjustColumnWidth(subitem);
-    *pResult = 0;
+    *pResult = FALSE;
 }
 
 void COwnerDrawnListControl::AdjustColumnWidth(int col)
@@ -630,5 +628,5 @@ void COwnerDrawnListControl::OnHdnItemchanging(NMHDR* /*pNMHDR*/, LRESULT* pResu
     Default();
     InvalidateRect(nullptr);
 
-    *pResult = 0;
+    *pResult = FALSE;
 }

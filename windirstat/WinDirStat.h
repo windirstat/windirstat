@@ -55,8 +55,7 @@ public:
 
     void ReReadMountPoints();
     bool IsFollowingAllowed(const CStringW& path, DWORD attr = 1) const;
-    bool IsMountPoint(const CStringW& path, DWORD attr = -1) const;
-    bool IsJunction(const CStringW& path, DWORD attr = -1) const;
+    CReparsePoints* GetReparseInfo() { return &m_reparsePoints; }
 
     COLORREF AltColor() const;           // Coloring of compressed items
     COLORREF AltEncryptionColor() const; // Coloring of encrypted items

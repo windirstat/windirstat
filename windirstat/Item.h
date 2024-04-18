@@ -36,10 +36,11 @@ enum ITEMCOLUMNS
     COL_NAME,
     COL_SUBTREEPERCENTAGE,
     COL_PERCENTAGE,
-    COL_SIZE,
+    COL_SIZE_PHYSICAL,
+    COL_SIZE_LOGICAL,
     COL_ITEMS,
     COL_FILES,
-    COL_SUBDIRS,
+    COL_FOLDERS,
     COL_LASTCHANGE,
     COL_ATTRIBUTES,
     COL_OWNER
@@ -110,7 +111,8 @@ public:
     CItem& operator=(const CItem&) = delete;
     CItem& operator=(CItem&&) = delete;
     CItem(ITEMTYPE type, LPCWSTR name);
-    CItem(ITEMTYPE type, LPCWSTR name, FILETIME lastChange, ULONGLONG size, DWORD attributes, ULONG files, ULONG subdirs);
+    CItem(ITEMTYPE type, LPCWSTR name, FILETIME lastChange, ULONGLONG size_physical,
+        ULONGLONG size_logical, DWORD attributes, ULONG files, ULONG subdirs);
     ~CItem() override;
 
     // CTreeListItem Interface
@@ -150,7 +152,7 @@ public:
 
     ULONGLONG TmiGetSize() const override
     {
-        return GetSize();
+        return GetSizePhysical();
     }
 
     // CItem
@@ -165,18 +167,22 @@ public:
     void AddChild(CItem* child, bool add_only = false);
     void RemoveChild(CItem* child);
     void RemoveAllChildren();
-    void UpwardAddSubdirs(ULONG dirCount);
-    void UpwardSubtractSubdirs(ULONG dirCount);
+    void UpwardAddFolders(ULONG dirCount);
+    void UpwardSubtractFolders(ULONG dirCount);
     void UpwardAddFiles(ULONG fileCount);
     void UpwardSubtractFiles(ULONG fileCount);
-    void UpwardAddSize(ULONGLONG bytes);
-    void UpwardSubtractSize(ULONGLONG bytes);
+    void UpwardAddSizePhysical(ULONGLONG bytes);
+    void UpwardSubtractSizePhysical(ULONGLONG bytes);
+    void UpwardAddSizeLogical(ULONGLONG bytes);
+    void UpwardSubtractSizeLogical(ULONGLONG bytes);
     void UpwardAddReadJobs(ULONG count);
     void UpwardSubtractReadJobs(ULONG count);
     void UpwardUpdateLastChange(const FILETIME& t);
     void UpwardRecalcLastChange(bool without_item = false);
-    ULONGLONG GetSize() const;
-    void SetSize(ULONGLONG ownSize);
+    ULONGLONG GetSizePhysical() const;
+    ULONGLONG GetSizeLogical() const;
+    void SetSizePhysical(ULONGLONG size);
+    void SetSizeLogical(ULONGLONG size);
     ULONG GetReadJobs() const;
     FILETIME GetLastChange() const;
     void SetLastChange(const FILETIME& t);
@@ -186,18 +192,17 @@ public:
     double GetFraction() const;
     bool IsRootItem() const;
     CStringW GetPath() const;
+    CStringW GetPathLong() const;
     CStringW GetOwner(bool force = false) const;
     bool HasUncPath() const;
-    CStringW GetFindPattern() const;
     CStringW GetFolderPath() const;
-    CStringW GetReportPath() const;
     CStringW GetName() const;
     CStringW GetExtension() const;
     ULONG GetFilesCount() const;
-    ULONG GetSubdirsCount() const;
+    ULONG GetFoldersCount() const;
     ULONGLONG GetItemsCount() const;
     void SetDone();
-    void SortItemsBySize() const;
+    void SortItemsBySizePhysical() const;
     ULONGLONG GetTicksWorked() const;
     static void ScanItems(BlockingQueue<CItem*> *);
     static void ScanItemsFinalize(CItem* item);
@@ -266,12 +271,13 @@ private:
         std::atomic<ULONG> m_jobs = 0;    // # "read jobs" in subtree.
     };
 
-    RECT m_rect;                       // To support TreeMapView
-    CStringW m_name;                   // Display name
-    LPCWSTR m_extension = nullptr;     // Cache of extension (it's used often)
-    FILETIME m_lastChange = {0, 0};    // Last modification time OF SUBTREE
-    CHILDINFO* m_ci = nullptr;         // Child information for non-files
-    std::atomic<ULONGLONG> m_size = 0; // OwnSize, if IT_FILE or IT_FREESPACE, or IT_UNKNOWN; SubtreeTotal else.
-    DWORD m_attributes = 0;            // Packed file attributes of the item
-    ITEMTYPE m_type;                   // Indicates our type.
+    RECT m_rect;                                // To support TreeMapView
+    CStringW m_name;                            // Display name
+    LPCWSTR m_extension = nullptr;              // Cache of extension (it's used often)
+    FILETIME m_lastChange = {0, 0};             // Last modification time of self or subtree
+    CHILDINFO* m_ci = nullptr;                  // Child information for non-files
+    std::atomic<ULONGLONG> m_size_physical = 0; // Total physical size of self or subtree
+    std::atomic<ULONGLONG> m_size_logical = 0;  // Total local size of self or subtree
+    DWORD m_attributes = 0;                     // Packed file attributes of the item
+    ITEMTYPE m_type;                            // Indicates our type.
 };

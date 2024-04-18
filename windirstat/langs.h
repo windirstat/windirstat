@@ -21,6 +21,7 @@
 #define IDS_COLLAPSE                    20016
 #define IDS_COULDNOTCREATEPROCESSssss   20017
 #define IDS_CREATEPROCESSsFAILEDs       20018
+#define IDS_COL_SIZE_LOGICAL            20019
 #define IDS_COL_FREE                    20020
 #define IDS_COL_GRAPH                   20021
 #define IDS_COL_NAME                    20022
@@ -63,8 +64,8 @@
 #define IDS_COL_LASTCHANGE              20062
 #define IDS_COL_OWNER                   20064
 #define IDS_COL_PERCENTAGE              20065
-#define IDS_COL_SIZE                    20066
-#define IDS_COL_SUBDIRS                 20067
+#define IDS_COL_SIZE_PHYSICAL           20066
+#define IDS_COL_FOLDERS                 20067
 #define IDS_COL_SUBTREEPERCENTAGE       20068
 #define IDS_UDC_CONFIRMATIONss          20069
 #define IDS_UDCsCTRLd                   20070

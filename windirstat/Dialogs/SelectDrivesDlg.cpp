@@ -120,38 +120,17 @@ int CDriveItem::Compare(const CSortingListItem* baseOther, int subitem) const
 {
     const CDriveItem* other = reinterpret_cast<const CDriveItem*>(baseOther);
 
-    int r = 0;
-
     switch (subitem)
     {
-    case COL_NAME:
-        {
-            r = signum(GetPath().CompareNoCase(other->GetPath()));
-        }
-        break;
-    case COL_TOTAL:
-        {
-            r = usignum(m_totalBytes, other->m_totalBytes);
-        }
-        break;
-    case COL_FREE:
-        {
-            r = usignum(m_freeBytes, other->m_freeBytes);
-        }
-        break;
-    case COL_GRAPH:
-    case COL_PERCENTUSED:
-        {
-            r = signum(m_used - other->m_used);
-        }
-        break;
-    default:
-        {
-            ASSERT(FALSE);
-        }
+        case COL_NAME: return signum(GetPath().CompareNoCase(other->GetPath()));
+        case COL_TOTAL: return usignum(m_totalBytes, other->m_totalBytes);
+        case COL_FREE: return usignum(m_freeBytes, other->m_freeBytes);
+        case COL_GRAPH:
+        case COL_PERCENTUSED: return signum(m_used - other->m_used);
+        default: ASSERT(FALSE);
     }
 
-    return r;
+    return 0;
 }
 
 int CDriveItem::GetImage() const
@@ -396,14 +375,12 @@ void CDrivesList::OnLButtonDown(UINT /*nFlags*/ , CPoint/*point*/)
         lv.hdr.idFrom   = GetDlgCtrlID();
         lv.hdr.code = static_cast<UINT>(LVN_ITEMCHANGED);
         GetParent()->SendMessage(WM_NOTIFY, GetDlgCtrlID(), reinterpret_cast<LPARAM>(&lv));
-
-        // no further action
     }
 }
 
 void CDrivesList::OnNMDblclk(NMHDR* /*pNMHDR*/, LRESULT* pResult)
 {
-    *pResult = 0;
+    *pResult = FALSE;
 
     CPoint point = GetCurrentMessage()->pt;
     ScreenToClient(&point);
@@ -435,7 +412,7 @@ void CDrivesList::OnLvnDeleteitem(NMHDR* pNMHDR, LRESULT* pResult)
 {
     const auto pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
     delete GetItem(pNMLV->iItem);
-    *pResult = 0;
+    *pResult = FALSE;
 }
 
 void CDrivesList::MeasureItem(LPMEASUREITEMSTRUCT mis)
@@ -579,19 +556,14 @@ BOOL CSelectDrivesDlg::OnInitDialog()
     m_radio = COptions::SelectDrivesRadio;
     UpdateData(FALSE);
 
-    switch (m_radio)
+    if (m_radio == RADIO_ALLLOCALDRIVES ||
+        m_radio == RADIO_AFOLDER)
     {
-    case RADIO_ALLLOCALDRIVES:
-    case RADIO_AFOLDER:
-        {
-            m_okButton.SetFocus();
-        }
-        break;
-    case RADIO_SOMEDRIVES:
-        {
-            m_list.SetFocus();
-        }
-        break;
+        m_okButton.SetFocus();
+    }
+    else if (m_radio == RADIO_SOMEDRIVES)
+    {
+        m_list.SetFocus();
     }
 
     UpdateButtons();

@@ -24,11 +24,11 @@
 #include "FileDupeControl.h"
 #include "WinDirStat.h"
 #include "MainFrame.h"
+#include "GlobalHelpers.h"
+#include "Localization.h"
 
 #include <functional>
 #include <queue>
-
-#include "GlobalHelpers.h"
 
 CItemDupe::CItemDupe(const CStringW& hash, ULONGLONG size) : m_hash(hash), m_size(size) {}
 
@@ -54,14 +54,15 @@ bool CItemDupe::DrawSubitem(int subitem, CDC* pdc, CRect rc, UINT state, int* wi
 CStringW CItemDupe::GetText(int subitem) const
 {
     // Root node
-    if (GetParent() == nullptr) return subitem == COL_ITEMDUP_NAME ? L"Duplicates" : L"";
+    static CStringW duplicates = Localization::Lookup(IDS_DUPLICATE_FILES);
+    if (GetParent() == nullptr) return subitem == COL_ITEMDUP_NAME ? duplicates : CStringW{};
 
     // Parent hash nodes
     if (m_item == nullptr)
     {
         // Handle top-level hash collection nodes
         if (subitem == COL_ITEMDUP_NAME) return m_hash;
-        if (subitem == COL_ITEMDUP_SIZE) return FormatBytes(m_size * GetChildren().size());
+        if (subitem == COL_ITEMDUP_SIZE_PHYSICAL) return FormatBytes(m_size * GetChildren().size());
         if (subitem == COL_ITEMDUP_ITEMS) return FormatCount(GetChildren().size());
         return {};
     }
@@ -82,7 +83,7 @@ int CItemDupe::CompareSibling(const CTreeListItem* tlib, int subitem) const
     {
         // Handle top-level hash collection nodes
         if (subitem == COL_ITEMDUP_NAME) return signum(m_hash.CompareNoCase(other->m_hash));
-        if (subitem == COL_ITEMDUP_SIZE) return usignum(m_size * m_children.size(), other->m_size * other->m_children.size());
+        if (subitem == COL_ITEMDUP_SIZE_PHYSICAL) return usignum(m_size * m_children.size(), other->m_size * other->m_children.size());
         if (subitem == COL_ITEMDUP_ITEMS) return usignum(m_children.size(), other->m_children.size());
         return 0;
     }

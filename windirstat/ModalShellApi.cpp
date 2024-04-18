@@ -84,7 +84,7 @@ bool CModalShellApi::DoDeleteItem()
     {
         CStringW path = FileFindEnhanced::GetLongPathCompatible(m_fileName);
         std::error_code ec;
-        std::filesystem::remove_all(std::filesystem::path(path.GetBuffer()), ec);
+        remove_all(std::filesystem::path(path.GetBuffer()), ec);
     }
 
     return true;

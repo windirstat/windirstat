@@ -42,25 +42,25 @@ COptionsPropertySheet* CPageAdvanced::GetSheet() const
 void CPageAdvanced::DoDataExchange(CDataExchange* pDX)
 {
     CPropertyPage::DoDataExchange(pDX);
-    DDX_Check(pDX, IDC_FOLLOWMOUNTPOINTS, m_followMountPoints);
-    DDX_Check(pDX, IDC_FOLLOWJUNCTIONS, m_followJunctions);
-    DDX_Control(pDX, IDC_FOLLOWMOUNTPOINTS, m_ctlFollowMountPoints);
-    DDX_Control(pDX, IDC_FOLLOWJUNCTIONS, m_ctlFollowJunctions);
+    DDX_Check(pDX, IDC_EXCLUDE_VOLUME_MOUNT_POINTS, m_excludeVolumeMountPoints);
+    DDX_Check(pDX, IDC_EXCLUDE_JUNCTIONS, m_excludeJunctions);
+    DDX_Check(pDX, IDC_EXCLUDE_SYMLINKS, m_excludeSymbolicLinks);
+    DDX_Check(pDX, IDC_PAGE_ADVANCED_SKIP_CLOUD_LINKS, m_skipDupeDetectionCloudLinks);
     DDX_Check(pDX, IDC_SKIPHIDDEN, m_skipHidden);
     DDX_Check(pDX, IDC_SKIPPROTECTED, m_skipProtected);
     DDX_Check(pDX, IDC_BACKUP_RESTORE, m_useBackupRestore);
-    DDX_Check(pDX, IDC_UNCOMPRESSED_FILE_SIZES, m_showUncompressedFileSizes);
     DDX_CBIndex(pDX, IDC_COMBO_THREADS, m_scanningThreads);
 }
 
 BEGIN_MESSAGE_MAP(CPageAdvanced, CPropertyPage)
-    ON_BN_CLICKED(IDC_FOLLOWMOUNTPOINTS, OnSettingChanged)
-    ON_BN_CLICKED(IDC_FOLLOWJUNCTIONS, OnSettingChanged)
     ON_BN_CLICKED(IDC_BACKUP_RESTORE, OnSettingChanged)
-    ON_BN_CLICKED(IDC_UNCOMPRESSED_FILE_SIZES, OnSettingChanged)
-    ON_CBN_SELENDOK(IDC_COMBO_THREADS, OnSettingChanged)
     ON_BN_CLICKED(IDC_SKIPHIDDEN, OnSettingChanged)
     ON_BN_CLICKED(IDC_SKIPPROTECTED, OnSettingChanged)
+    ON_CBN_SELENDOK(IDC_COMBO_THREADS, OnSettingChanged)
+    ON_BN_CLICKED(IDC_EXCLUDE_VOLUME_MOUNT_POINTS, OnSettingChanged)
+    ON_BN_CLICKED(IDC_EXCLUDE_JUNCTIONS, OnSettingChanged)
+    ON_BN_CLICKED(IDC_EXCLUDE_SYMLINKS, OnSettingChanged)
+    ON_BN_CLICKED(IDC_PAGE_ADVANCED_SKIP_CLOUD_LINKS, OnSettingChanged)
 END_MESSAGE_MAP()
 
 BOOL CPageAdvanced::OnInitDialog()
@@ -69,12 +69,13 @@ BOOL CPageAdvanced::OnInitDialog()
 
     Localization::UpdateDialogs(*this);
 
-    m_followMountPoints = COptions::FollowMountPoints;
-    m_followJunctions = COptions::FollowJunctions;
+    m_excludeVolumeMountPoints = COptions::ExcludeVolumeMountPoints;
+    m_excludeJunctions = COptions::ExcludeJunctions;
+    m_excludeSymbolicLinks = COptions::ExcludeSymbolicLinks;
+    m_skipDupeDetectionCloudLinks = COptions::SkipDuplicationDetectionCloudLinks;
     m_skipHidden = COptions::SkipHidden;
     m_skipProtected = COptions::SkipProtected;
     m_useBackupRestore = COptions::UseBackupRestore;
-    m_showUncompressedFileSizes = COptions::ShowUncompressedFileSizes;
     m_scanningThreads = COptions::ScanningThreads - 1;
 
     UpdateData(false);
@@ -86,16 +87,19 @@ void CPageAdvanced::OnOK()
     UpdateData();
 
     const bool refresh_reprasepoints =
-        m_followMountPoints && COptions::FollowMountPoints != static_cast<bool>(m_followMountPoints) ||
-        m_followJunctions && COptions::FollowJunctions != static_cast<bool>(m_followJunctions);
-    const bool refresh_all = COptions::ShowUncompressedFileSizes != static_cast<bool>(m_showUncompressedFileSizes);
+        COptions::ExcludeJunctions && COptions::ExcludeJunctions != static_cast<bool>(m_excludeJunctions) ||
+        COptions::ExcludeSymbolicLinks && COptions::ExcludeSymbolicLinks != static_cast<bool>(m_excludeSymbolicLinks) ||
+        COptions::ExcludeVolumeMountPoints && COptions::ExcludeVolumeMountPoints != static_cast<bool>(m_excludeVolumeMountPoints);
+    const bool refresh_all = COptions::SkipHidden != static_cast<bool>(m_skipHidden) ||
+        COptions::SkipProtected != static_cast<bool>(m_skipProtected);
 
-    COptions::FollowMountPoints = (FALSE != m_followMountPoints);
-    COptions::FollowJunctions = (FALSE != m_followJunctions);
+    COptions::ExcludeJunctions = (FALSE != m_excludeJunctions);
+    COptions::ExcludeSymbolicLinks = (FALSE != m_excludeSymbolicLinks);
+    COptions::ExcludeVolumeMountPoints = (FALSE != m_excludeVolumeMountPoints);
+    COptions::SkipDuplicationDetectionCloudLinks = (FALSE != m_skipDupeDetectionCloudLinks);
     COptions::SkipHidden = (FALSE != m_skipHidden);
     COptions::SkipProtected = (FALSE != m_skipProtected);
     COptions::UseBackupRestore = (FALSE != m_useBackupRestore);
-    COptions::ShowUncompressedFileSizes = (FALSE != m_showUncompressedFileSizes);
     COptions::ScanningThreads = m_scanningThreads + 1;
 
     if (refresh_all)

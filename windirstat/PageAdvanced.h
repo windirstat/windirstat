@@ -42,17 +42,26 @@ protected:
     BOOL OnInitDialog() override;
     void OnOK() override;
 
-    BOOL m_followMountPoints = FALSE;
-    BOOL m_followJunctions = FALSE;
+    BOOL m_excludeJunctions = TRUE;
+    BOOL m_excludeVolumeMountPoints = TRUE;
+    BOOL m_excludeSymbolicLinks = TRUE;
+    BOOL m_skipDupeDetectionCloudLinks = TRUE;
     BOOL m_skipHidden = FALSE;
     BOOL m_skipProtected = FALSE;
     BOOL m_useBackupRestore = FALSE;
-    BOOL m_showUncompressedFileSizes = FALSE;
     int m_scanningThreads = 0;
+
+    /*
+    CButton m_ctlFollowReparseDfs;
+    CButton m_ctlFollowReparseJunctions;
+    CButton m_ctlFollowReparseOneDrive;
+    CButton m_ctlFollowReparseSymlinks;
+    CButton m_ctlFollowReparseMountPoints;
+    CButton m_ctlFollowReparseOthers;
 
     CButton m_ctlFollowMountPoints;
     CButton m_ctlFollowJunctions;
-    CButton m_ctlSkipHidden;
+    CButton m_ctlSkipHidden;*/
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnSettingChanged();

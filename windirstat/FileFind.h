@@ -63,7 +63,8 @@ public:
     DWORD GetAttributes() const;
     CStringW GetFileName() const;
     ULONGLONG GetLogicalFileSize() const;
-    ULONGLONG GetFileSize() const;
+    ULONGLONG GetFileSizePhysical() const;
+    ULONGLONG GetFileSizeLogical() const;
     FILETIME GetLastWriteTime() const;
     CStringW GetFilePath() const;
     CStringW GetFileLongPath() const;

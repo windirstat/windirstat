@@ -27,7 +27,7 @@
 
 #include <algorithm>
 
-bool CReparsePoints::IsReparseType(const std::wstring& path, DWORD tag_type)
+bool CReparsePoints::IsReparseType(const std::wstring& path, DWORD tag_type, bool mask)
 {
     SmartPointer<HANDLE> handle(CloseHandle, CreateFile(path.c_str(), GENERIC_READ, FILE_SHARE_READ,
         nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT, nullptr));
@@ -44,6 +44,7 @@ bool CReparsePoints::IsReparseType(const std::wstring& path, DWORD tag_type)
         return false;
     }
 
+    if (mask) return (reinterpret_cast<PREPARSE_GUID_DATA_BUFFER>(buf.data())->ReparseTag & tag_type) != 0;
     return reinterpret_cast<PREPARSE_GUID_DATA_BUFFER>(buf.data())->ReparseTag == tag_type;
 }
 
@@ -91,10 +92,11 @@ void CReparsePoints::Initialize()
 bool CReparsePoints::IsReparsePoint(const DWORD attr)
 {
     return attr != INVALID_FILE_ATTRIBUTES &&
+        (attr & FILE_ATTRIBUTE_DIRECTORY) &&
         (attr & FILE_ATTRIBUTE_REPARSE_POINT) != 0;
 }
 
-bool CReparsePoints::IsMountPoint(const CStringW& path, DWORD attr) const
+bool CReparsePoints::IsVolumeMountPoint(const CStringW& path, DWORD attr) const
 {
     if (attr == INVALID_FILE_ATTRIBUTES) attr = ::GetFileAttributes(path);
     if (!IsReparsePoint(attr)) return false;
@@ -107,5 +109,19 @@ bool CReparsePoints::IsJunction(const CStringW& path, DWORD attr) const
 {
     if (attr == INVALID_FILE_ATTRIBUTES) attr = ::GetFileAttributes(path);
     if (!IsReparsePoint(attr)) return false;
-    return !IsMountPoint(path) && IsReparseType(path.GetString(), IO_REPARSE_TAG_MOUNT_POINT);
+    return !IsVolumeMountPoint(path) && IsReparseType(path.GetString(), IO_REPARSE_TAG_MOUNT_POINT);
+}
+
+bool CReparsePoints::IsSymbolicLink(const CStringW& path, DWORD attr) const
+{
+    if (attr == INVALID_FILE_ATTRIBUTES) attr = ::GetFileAttributes(path);
+    if (!IsReparsePoint(attr)) return false;
+    return IsReparseType(path.GetString(), IO_REPARSE_TAG_SYMLINK);
+}
+
+bool CReparsePoints::IsCloudLink(const CStringW& path, DWORD attr) const
+{
+    if (attr == INVALID_FILE_ATTRIBUTES) attr = ::GetFileAttributes(path);
+    if (!IsReparsePoint(attr)) return false;
+    return IsReparseType(path.GetString(), IO_REPARSE_TAG_CLOUD_MASK, true);
 }
