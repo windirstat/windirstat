@@ -51,9 +51,9 @@ void CIconImageList::initialize()
 // Returns the index of the added icon
 short CIconImageList::cacheIcon(LPCWSTR path, UINT flags, CStringW* psTypeName)
 {
-    ASSERT(m_hImageList != nullptr); // should have been initialize()ed.
-
+    ASSERT(m_hImageList != nullptr);
     flags |= WDS_SHGFI_DEFAULTS;
+
     if (psTypeName != nullptr)
     {
         // Also retrieve the file type description
@@ -98,7 +98,7 @@ short CIconImageList::getMyComputerImage()
 
 short CIconImageList::getMountPointImage()
 {
-    return cacheIcon(getADriveSpec(), 0);
+    return cacheIcon(getADriveSpec());
 }
 
 short CIconImageList::getJunctionImage() const
@@ -119,17 +119,17 @@ short CIconImageList::getFolderImage()
     ::GetSystemDirectory(s.GetBuffer(_MAX_PATH), _MAX_PATH);
     s.ReleaseBuffer();
 
-    return cacheIcon(s, 0);
+    return cacheIcon(s);
 }
 
 short CIconImageList::getFileImage(LPCWSTR path)
 {
-    return cacheIcon(path, 0);
+    return cacheIcon(path);
 }
 
 short CIconImageList::getExtImageAndDescription(LPCWSTR ext, CStringW& description)
 {
-    return cacheIcon(ext, SHGFI_USEFILEATTRIBUTES, &description);
+    return cacheIcon(ext, 0, &description);
 }
 
 short CIconImageList::getFreeSpaceImage() const

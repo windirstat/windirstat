@@ -29,7 +29,7 @@
 //
 class CIconImageList final : public CImageList
 {
-    static constexpr UINT WDS_SHGFI_DEFAULTS = SHGFI_SYSICONINDEX | SHGFI_SMALLICON | SHGFI_ICON;
+    static constexpr UINT WDS_SHGFI_DEFAULTS = SHGFI_USEFILEATTRIBUTES | SHGFI_SYSICONINDEX | SHGFI_SMALLICON | SHGFI_ICON;
 
 public:
     CIconImageList() = default;
@@ -49,7 +49,7 @@ public:
     short getUnknownImage() const;
     short getEmptyImage() const;
 
-    short cacheIcon(LPCWSTR path, UINT flags, CStringW* psTypeName = nullptr);
+    short cacheIcon(LPCWSTR path, UINT flags = 0, CStringW* psTypeName = nullptr);
     static CStringW getADriveSpec();
     void addCustomImages();
 
