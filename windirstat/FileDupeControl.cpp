@@ -107,7 +107,7 @@ void CFileDupeControl::ProcessDuplicate(CItem * item)
 {
     if (!COptions::ScanForDuplicates) return;
     if (COptions::SkipDuplicationDetectionCloudLinks.Obj() &&
-        CDirStatApp::Get()->GetReparseInfo()->IsCloudLink(item->GetPathLong())) return;
+        CDirStatApp::Get()->GetReparseInfo()->IsCloudLink(item->GetPathLong(), item->GetAttributes())) return;
 
     std::lock_guard lock(m_Mutex);
     const auto size_entry = m_SizeTracker.find(item->GetSizePhysical());

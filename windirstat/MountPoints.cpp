@@ -50,11 +50,23 @@ bool CReparsePoints::IsReparseType(const CStringW & longpath, DWORD tag_type, bo
 
 void CReparsePoints::Initialize()
 {
-    m_mountpoints.clear();
+    // Enable reading of reparse data for cloud links
+    SmartPointer<HMODULE> hmod(FreeLibrary, LoadLibrary(L"ntdll.dll"));
+    if (hmod != nullptr)
+    {
+        CHAR(*RtlSetProcessPlaceholderCompatibilityMode)(CHAR Mode) =
+            reinterpret_cast<decltype(RtlSetProcessPlaceholderCompatibilityMode)>(
+                static_cast<LPVOID>(GetProcAddress(hmod, "RtlSetProcessPlaceholderCompatibilityMode")));
+        if (RtlSetProcessPlaceholderCompatibilityMode != nullptr)
+        {
+            constexpr CHAR PHCM_EXPOSE_PLACEHOLDERS = 2;
+            RtlSetProcessPlaceholderCompatibilityMode(PHCM_EXPOSE_PLACEHOLDERS);
+        }
+    }
 
+    m_mountpoints.clear();
     WCHAR volume[_MAX_PATH];
     SmartPointer<HANDLE> hvol(FindVolumeClose, ::FindFirstVolume(volume, _countof(volume)));
-
     for (BOOL bContinue = hvol != INVALID_HANDLE_VALUE; bContinue; bContinue = ::FindNextVolume(hvol, volume, _countof(volume)))
     {
         // Fetch required buffer size
