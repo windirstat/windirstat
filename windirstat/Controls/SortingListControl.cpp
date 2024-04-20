@@ -40,15 +40,15 @@ int CSortingListItem::Compare(const CSortingListItem* other, const int subitem) 
 
 int CSortingListItem::CompareS(const CSortingListItem* other, const SSorting& sorting) const
 {
-    int r = Compare(other, sorting.column1);
+    int r = Compare(other, sorting.subitem1);
     if (abs(r) < 2 && !sorting.ascending1)
     {
         r = -r;
     }
 
-    if (r == 0 && sorting.column2 != sorting.column1)
+    if (r == 0 && sorting.subitem1 != sorting.subitem2)
     {
-        r = Compare(other, sorting.column2);
+        r = Compare(other, sorting.subitem2);
         if (abs(r) < 2 && !sorting.ascending2)
         {
             r = -r;
@@ -121,6 +121,14 @@ const SSorting& CSortingListControl::GetSorting() const
     return m_Sorting;
 }
 
+int CSortingListControl::ColumnToSubItem(const int col) const
+{
+    LVCOLUMN column_info;
+    column_info.mask = LVCF_SUBITEM;
+    GetColumn(col, &column_info);
+    return column_info.iSubItem;
+}
+
 void CSortingListControl::SetSorting(const SSorting& sorting)
 {
     m_Sorting = sorting;
@@ -129,17 +137,21 @@ void CSortingListControl::SetSorting(const SSorting& sorting)
 void CSortingListControl::SetSorting(const int sortColumn1, const bool ascending1, const int sortColumn2, const bool ascending2)
 {
     m_Sorting.column1    = sortColumn1;
+    m_Sorting.subitem1   = ColumnToSubItem(sortColumn1);
     m_Sorting.ascending1 = ascending1;
     m_Sorting.column2    = sortColumn2;
+    m_Sorting.subitem2   = ColumnToSubItem(sortColumn2);
     m_Sorting.ascending2 = ascending2;
 }
 
 void CSortingListControl::SetSorting(const int sortColumn, const bool ascending)
 {
     m_Sorting.column2    = m_Sorting.column1;
+    m_Sorting.subitem2   = m_Sorting.subitem1;
     m_Sorting.ascending2 = m_Sorting.ascending1;
     m_Sorting.column1    = sortColumn;
     m_Sorting.ascending1 = ascending;
+    m_Sorting.subitem1   = ColumnToSubItem(sortColumn);
 }
 
 void CSortingListControl::InsertListItem(const int i, CSortingListItem* item)
@@ -247,7 +259,7 @@ void CSortingListControl::OnHdnItemclick(NMHDR* pNMHDR, LRESULT* pResult)
     }
     else
     {
-        SetSorting(col, GetAscendingDefault(col));
+        SetSorting(col, GetAscendingDefault(ColumnToSubItem(col)));
     }
 
     SortItems();

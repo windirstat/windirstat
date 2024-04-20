@@ -72,7 +72,7 @@ protected:
 
 public:
     CExtensionListControl(CExtensionView* extensionView);
-    bool GetAscendingDefault(int column) override;
+    bool GetAscendingDefault(int subitem) override;
     void Initialize();
     void SetExtensionData(const CExtensionData* ed);
     void SetRootSize(ULONGLONG totalBytes);

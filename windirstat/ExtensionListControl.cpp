@@ -174,9 +174,9 @@ CExtensionListControl::CExtensionListControl(CExtensionView* extensionView)
     : COwnerDrawnListControl(19, COptions::TypesColumnOrder.Ptr(), COptions::TypesColumnWidths.Ptr()) // FIXME: Harcoded value
     , m_ExtensionView(extensionView) {}
 
-bool CExtensionListControl::GetAscendingDefault(const int column)
+bool CExtensionListControl::GetAscendingDefault(const int subitem)
 {
-    switch (column)
+    switch (subitem)
     {
         case COL_EXT_EXTENSION:
         case COL_EXT_BYTESPERCENT:
@@ -192,14 +192,15 @@ bool CExtensionListControl::GetAscendingDefault(const int column)
 // in this extra method. The counterpart is OnDestroy().
 void CExtensionListControl::Initialize()
 {
-    SetSorting(COL_EXT_BYTES, false);
+    // Columns should be in the order of definition in order for sort to work
+    InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_EXTENSION).c_str(), LVCFMT_LEFT, 60, COL_EXT_EXTENSION);
+    InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_COLOR).c_str(), LVCFMT_LEFT, 40, COL_EXT_COLOR);
+    InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_DESCRIPTION).c_str(), LVCFMT_LEFT, 170, COL_EXT_DESCRIPTION);
+    InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_BYTES).c_str(), LVCFMT_RIGHT, 60, COL_EXT_BYTES);
+    InsertColumn(CHAR_MAX, (L"% " + Localization::Lookup(IDS_COL_BYTES)).c_str(), LVCFMT_RIGHT, 50, COL_EXT_BYTESPERCENT);
+    InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_FILES).c_str(), LVCFMT_RIGHT, 50, COL_EXT_FILES);
 
-    InsertColumn(SHORT_MAX, Localization::Lookup(IDS_COL_EXTENSION).c_str(), LVCFMT_LEFT, 60, COL_EXT_EXTENSION);
-    InsertColumn(SHORT_MAX, Localization::Lookup(IDS_COL_COLOR).c_str(), LVCFMT_LEFT, 40, COL_EXT_COLOR);
-    InsertColumn(SHORT_MAX, Localization::Lookup(IDS_COL_BYTES).c_str(), LVCFMT_RIGHT, 60, COL_EXT_BYTES);
-    InsertColumn(SHORT_MAX, (L"% " + Localization::Lookup(IDS_COL_BYTES)).c_str(), LVCFMT_RIGHT, 50, COL_EXT_BYTESPERCENT);
-    InsertColumn(SHORT_MAX, Localization::Lookup(IDS_COL_FILES).c_str(), LVCFMT_RIGHT, 50, COL_EXT_FILES);
-    InsertColumn(SHORT_MAX, Localization::Lookup(IDS_COL_DESCRIPTION).c_str(), LVCFMT_LEFT, 170, COL_EXT_DESCRIPTION);
+    SetSorting(COL_EXT_BYTES, GetAscendingDefault(COL_EXT_BYTES));
 
     OnColumnsInserted();
 

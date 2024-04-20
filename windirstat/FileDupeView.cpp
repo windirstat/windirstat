@@ -32,10 +32,7 @@
 
 IMPLEMENT_DYNCREATE(CFileDupeView, CView)
 
-CFileDupeView::CFileDupeView()
-{
-    m_Control.SetSorting(COL_ITEMDUP_SIZE_PHYSICAL, false);
-}
+CFileDupeView::CFileDupeView() {}
 
 void CFileDupeView::SysColorChanged()
 {
@@ -87,11 +84,13 @@ int CFileDupeView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
     m_Control.ShowStripes(COptions::ListStripes);
     m_Control.ShowFullRowSelection(COptions::ListFullRowSelection);
 
-    m_Control.InsertColumn(SHORT_MAX, Localization::Lookup(IDS_COL_HASH).c_str(), LVCFMT_LEFT, 500, COL_ITEMDUP_NAME);
-    m_Control.InsertColumn(SHORT_MAX, Localization::Lookup(IDS_COL_ITEMS).c_str(), LVCFMT_RIGHT, 70, COL_ITEMDUP_ITEMS);
-    m_Control.InsertColumn(SHORT_MAX, Localization::Lookup(IDS_COL_SIZE_LOGICAL).c_str(), LVCFMT_RIGHT, 90, COL_ITEMDUP_SIZE_LOGICAL);
-    m_Control.InsertColumn(SHORT_MAX, Localization::Lookup(IDS_COL_SIZE_PHYSICAL).c_str(), LVCFMT_RIGHT, 90, COL_ITEMDUP_SIZE_PHYSICAL);
-    m_Control.InsertColumn(SHORT_MAX, Localization::Lookup(IDS_COL_LASTCHANGE).c_str(), LVCFMT_RIGHT, 100, COL_ITEMDUP_LASTCHANGE);
+    // Columns should be in enumeration order so initial sort will work
+    m_Control.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_HASH).c_str(), LVCFMT_LEFT, 500, COL_ITEMDUP_NAME);
+    m_Control.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_ITEMS).c_str(), LVCFMT_RIGHT, 70, COL_ITEMDUP_ITEMS);
+    m_Control.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_SIZE_LOGICAL).c_str(), LVCFMT_RIGHT, 90, COL_ITEMDUP_SIZE_LOGICAL);
+    m_Control.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_SIZE_PHYSICAL).c_str(), LVCFMT_RIGHT, 90, COL_ITEMDUP_SIZE_PHYSICAL);
+    m_Control.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_LASTCHANGE).c_str(), LVCFMT_RIGHT, 100, COL_ITEMDUP_LASTCHANGE);
+    m_Control.SetSorting(COL_SIZE_PHYSICAL, false);
 
     m_Control.OnColumnsInserted();
 

@@ -493,11 +493,12 @@ BOOL CSelectDrivesDlg::OnInitDialog()
     m_List.ShowStripes(COptions::ListStripes);
     m_List.ShowFullRowSelection(COptions::ListFullRowSelection);
     m_List.SetExtendedStyle(m_List.GetExtendedStyle() | LVS_EX_HEADERDRAGDROP);
-    m_List.InsertColumn(USHORT_MAX, Localization::Lookup(IDS_COL_NAME).c_str(), LVCFMT_LEFT, 120, COL_NAME);
-    m_List.InsertColumn(USHORT_MAX, Localization::Lookup(IDS_COL_TOTAL).c_str(), LVCFMT_RIGHT, 55, COL_TOTAL);
-    m_List.InsertColumn(USHORT_MAX, Localization::Lookup(IDS_COL_FREE).c_str(), LVCFMT_RIGHT, 55, COL_FREE);
-    m_List.InsertColumn(USHORT_MAX, Localization::Lookup(IDS_COL_GRAPH).c_str(), LVCFMT_LEFT, 100, COL_GRAPH);
-    m_List.InsertColumn(USHORT_MAX,Localization::Lookup(IDS_COL_PERCENTUSED).c_str(),LVCFMT_RIGHT, 55, COL_PERCENTUSED);
+
+    m_List.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_NAME).c_str(), LVCFMT_LEFT, 120, COL_NAME);
+    m_List.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_TOTAL).c_str(), LVCFMT_RIGHT, 55, COL_TOTAL);
+    m_List.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_FREE).c_str(), LVCFMT_RIGHT, 55, COL_FREE);
+    m_List.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_GRAPH).c_str(), LVCFMT_LEFT, 100, COL_GRAPH);
+    m_List.InsertColumn(CHAR_MAX,Localization::Lookup(IDS_COL_PERCENTUSED).c_str(),LVCFMT_RIGHT, 55, COL_PERCENTUSED);
 
     m_List.OnColumnsInserted();
 

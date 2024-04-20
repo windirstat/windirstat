@@ -29,16 +29,12 @@
 //
 struct SSorting
 {
-    SSorting()
-    {
-        column1    = column2    = 0;
-        ascending1 = ascending2 = true;
-    }
-
-    int column1;
-    int column2;
-    bool ascending1;
-    bool ascending2;
+    int column1 = 0;
+    int column2 = 0;
+    int subitem1 = 0;
+    int subitem2 = 0;
+    bool ascending1 = true;
+    bool ascending2 = true;
 };
 
 //
@@ -81,6 +77,7 @@ class CSortingListControl : public CListCtrl
 
     const SSorting& GetSorting() const;
 
+    int ColumnToSubItem(int col) const;
     void SetSorting(const SSorting& sorting);
     void SetSorting(int sortColumn1, bool ascending1, int sortColumn2, bool ascending2);
     void SetSorting(int sortColumn, bool ascending);
