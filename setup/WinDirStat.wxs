@@ -2,37 +2,34 @@
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
   <?include Defines.wxi?>
   <Product Id="$(var.ProductID)" Name="$(var.ProductName)" Language="1033" Version="$(var.ProductVersion)" Manufacturer="$(var.Manufacturer)" UpgradeCode="$(var.UpgradeCode)">
-    <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
-
+    <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine"/>
     <Icon Id="WinDirStat.ico" SourceFile="$(var.IconFilePath)"/>
-    <Property Id="ARPPRODUCTICON" Value="WinDirStat.ico" />
-	
-    <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." Schedule="afterInstallInitialize" />
-    <MediaTemplate EmbedCab="yes" />
-
-    <UIRef Id="WixUI_FeatureTree" />
-    <WixVariable Id="WixUILicenseRtf" Value="$(var.LicenseRtf)" />
-
+    <Property Id="ARPPRODUCTICON" Value="WinDirStat.ico"/>
+    <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." Schedule="afterInstallInitialize"/>
+    <MediaTemplate EmbedCab="yes"/>
+    <UIRef Id="WixUI_FeatureTree"/>
+    <WixVariable Id="WixUILicenseRtf" Value="$(var.LicenseRtf)"/>
     <Feature Id="FT_Core" Title="Application" Absent="disallow" Description="Includes WinDirStat">
-      <ComponentRef Id="Comp_Main" />
+      <ComponentRef Id="Comp_Main"/>
     </Feature>
   </Product>
-
   <Fragment>
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="$(var.ProgramFilesNative)">
-        <Directory Id="INSTALLFOLDER" Name="WinDirStat" />
+        <Directory Id="INSTALLFOLDER" Name="WinDirStat"/>
       </Directory>
+      <Directory Id="ProgramMenuFolder" />
     </Directory>
   </Fragment>
-
   <Fragment>
     <DirectoryRef Id="INSTALLFOLDER">
       <Component Id="Comp_Main" Guid="{48E1104D-2466-4ADC-8BC0-521B6EBA8621}">
-        <File Id="File_Main" KeyPath="yes" Source="$(var.ProductBinariesDir)\$(var.WinDirStatExe)" Name="WinDirStat.exe" />
+        <File Id="File_Main" KeyPath="yes" Source="$(var.ProductBinariesDir)\$(var.WinDirStatExe)" Name="WinDirStat.exe">
+          <Shortcut Id="File_Main_Shortcut" Directory="ProgramMenuFolder" WorkingDirectory="INSTALLFOLDER" Name="WinDirStat" Advertise="no">
+            <ShortcutProperty Key="{9F4C2855-9F79-4B39-A8D0-E1D42DE1D5F3}, 5" Value="WinDirStat"/>
+          </Shortcut>
+        </File>
       </Component>
     </DirectoryRef>
-
   </Fragment>
-
 </Wix>
