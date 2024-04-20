@@ -31,14 +31,14 @@ BEGIN_MESSAGE_MAP(CFileTabbedView, CTabView)
     ON_WM_ERASEBKGND()
 END_MESSAGE_MAP()
 
-int CFileTabbedView::OnCreate(LPCREATESTRUCT lpCreateStruct)
+int CFileTabbedView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
 {
     if (CTabView::OnCreate(lpCreateStruct) == -1)
         return -1;
 
-    const int v1 = AddView(RUNTIME_CLASS(CFileTreeView), Localization::Lookup(IDS_ALL_FILES), 100);
+    const int v1 = AddView(RUNTIME_CLASS(CFileTreeView), Localization::Lookup(IDS_ALL_FILES).c_str(), 100);
     m_FileTreeView = DYNAMIC_DOWNCAST(CFileTreeView, GetTabControl().GetTabWnd(v1));
-    const int v2 = AddView(RUNTIME_CLASS(CFileDupeView), Localization::Lookup(IDS_DUPLICATE_FILES), 100);
+    const int v2 = AddView(RUNTIME_CLASS(CFileDupeView), Localization::Lookup(IDS_DUPLICATE_FILES).c_str(), 100);
     m_FileDupeView = DYNAMIC_DOWNCAST(CFileDupeView, GetTabControl().GetTabWnd(v2));
 
     return 0;

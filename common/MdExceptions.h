@@ -29,15 +29,17 @@
 
 #include "SmartPointer.h"
 
+#include <string>
+
 class CMdStringException final : public CException
 {
 public:
-    explicit CMdStringException(LPCWSTR pszText)
-        : m_sText(pszText) // pszText may be an ordinal resource (MAKEINTRESOURCE)
+    explicit CMdStringException(const std::wstring & pszText)
+        : m_SText(pszText) // pszText may be an ordinal resource (MAKEINTRESOURCE)
     {
     }
 
-    BOOL GetErrorMessage(LPWSTR lpszError, UINT nMaxError, UINT* pnHelpContext = nullptr) override
+    BOOL GetErrorMessage(LPWSTR lpszError, const UINT nMaxError, UINT* pnHelpContext = nullptr) override
     {
         if (pnHelpContext != nullptr)
         {
@@ -46,33 +48,33 @@ public:
         if (nMaxError != 0 && lpszError != nullptr)
         {
             // TODO, fix parameters
-            wcscpy_s(lpszError, nMaxError, m_sText);
+            wcscpy_s(lpszError, nMaxError, m_SText.data());
         }
         return true;
     }
 
 protected:
-    CStringW m_sText;
+    std::wstring m_SText;
 };
 
-inline CStringW MdGetExceptionMessage(const CException* pe)
+inline std::wstring MdGetExceptionMessage(const CException* pe)
 {
     constexpr INT ccBufferSize = 0x400;
-    CStringW s;
-    const BOOL b = pe->GetErrorMessage(s.GetBuffer(ccBufferSize), ccBufferSize);
-    s.ReleaseBuffer();
+    std::wstring s(ccBufferSize, L' ');
+    const BOOL b = pe->GetErrorMessage(s.data(), ccBufferSize);
+    s.resize(wcslen(s.data()));
 
     if (!b)
     {
-        s = "(no error message available)";
+        s = L"(no error message available)";
     }
 
     return s;
 }
 
-inline CStringW MdGetWinErrorText(HRESULT hr)
+inline std::wstring MdGetWinErrorText(const HRESULT hr)
 {
-    CStringW sRet;
+    std::wstring sRet;
     SmartPointer<LPVOID> lpMsgBuf(LocalFree);
     const DWORD dw = FormatMessage(
         FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
@@ -86,34 +88,37 @@ inline CStringW MdGetWinErrorText(HRESULT hr)
     if (0 == dw)
     {
         const CStringW s(MAKEINTRESOURCE(AFX_IDP_NO_ERROR_AVAILABLE));
-        sRet.Format(L"%s (0x%08lx)", s.GetString(), hr);
+        CString s2; s2.Format(L"%s (0x%08lx)", s.GetString(), hr);
+        sRet = s2;
     }
     else
     {
-        sRet = CStringW(static_cast<LPWSTR>(*lpMsgBuf));
+        sRet = static_cast<LPWSTR>(*lpMsgBuf);
     }
     return sRet;
 }
 
-inline void MdThrowStringException(UINT resId)
+inline void MdThrowStringException(const UINT resId)
 {
     throw new CMdStringException(MAKEINTRESOURCE(resId)); //-V1022
 }
 
-inline void MdThrowStringException(LPCWSTR pszText)
+inline void MdThrowStringException(const std::wstring & pszText)
 {
     throw new CMdStringException(pszText); //-V1022
 }
 
-inline void MdFormatStringExceptionV(CStringW& rsText, LPCWSTR pszFormat, va_list vlist)
+inline void MdFormatStringExceptionV(std::wstring& rsText, const std::wstring & pszFormat, va_list vlist)
 {
-    // CStringW sFormat(); // may be a MAKEINTRESOURCE
-    rsText.FormatMessageV(CStringW(pszFormat), &vlist);
+    // std::wstring sFormat(); // may be a MAKEINTRESOURCE
+    CStringW format;
+    format.FormatMessageV(pszFormat.c_str(), &vlist);
+    rsText = format;
 }
 
 inline void AFX_CDECL MdThrowStringExceptionF(LPCWSTR pszFormat, ...)
 {
-    CStringW sText;
+    std::wstring sText;
 
     va_list vlist;
     va_start(vlist, pszFormat);
@@ -123,16 +128,16 @@ inline void AFX_CDECL MdThrowStringExceptionF(LPCWSTR pszFormat, ...)
     MdThrowStringException(sText);
 }
 
-inline void MdThrowStringExceptionV(LPCWSTR pszFormat, va_list vlist)
+inline void MdThrowStringExceptionV(const std::wstring & pszFormat, va_list vlist)
 {
-    CStringW sText;
+    std::wstring sText;
     MdFormatStringExceptionV(sText, pszFormat, vlist);
     MdThrowStringException(sText);
 }
 
 inline void AFX_CDECL MdThrowStringExceptionF(UINT nResIdFormat, ...)
 {
-    CStringW sText;
+    std::wstring sText;
 
     va_list vlist;
     va_start(vlist, nResIdFormat);
@@ -142,33 +147,33 @@ inline void AFX_CDECL MdThrowStringExceptionF(UINT nResIdFormat, ...)
     MdThrowStringException(sText);
 }
 
-inline void MdThrowStringExceptionF(UINT nResIdFormat, va_list vlist)
+inline void MdThrowStringExceptionF(const UINT nResIdFormat, va_list vlist)
 {
-    CStringW sText;
+    std::wstring sText;
     MdFormatStringExceptionV(sText, MAKEINTRESOURCE(nResIdFormat), vlist);
     MdThrowStringException(sText);
 }
 
-inline void MdThrowWinError(DWORD dw, LPCWSTR pszPrefix = nullptr)
+inline void MdThrowWinError(const DWORD dw, const std::wstring & pszPrefix = {})
 {
-    CStringW sMsg = pszPrefix;
+    std::wstring sMsg = pszPrefix;
     sMsg += L": " + MdGetWinErrorText(dw);
     MdThrowStringException(sMsg);
 }
 
-inline void MdThrowHresult(HRESULT hr, LPCWSTR pszPrefix = nullptr)
+inline void MdThrowHresult(const HRESULT hr, const std::wstring & pszPrefix = {})
 {
-    CStringW sMsg = pszPrefix;
+    std::wstring sMsg = pszPrefix;
     sMsg += L": " + MdGetWinErrorText(hr);
     MdThrowStringException(sMsg);
 }
 
-inline void MdThrowLastWinerror(LPCWSTR pszPrefix = nullptr)
+inline void MdThrowLastWinerror(const std::wstring & pszPrefix = {})
 {
     MdThrowWinError(::GetLastError(), pszPrefix);
 }
 
-inline void MdThrowFailed(HRESULT hr, LPCWSTR pszPrefix = nullptr)
+inline void MdThrowFailed(const HRESULT hr, const std::wstring & pszPrefix = {})
 {
     if (FAILED(hr))
     {

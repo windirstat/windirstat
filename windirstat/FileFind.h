@@ -22,6 +22,7 @@
 #pragma once
 
 #include <stdafx.h>
+#include <string>
 
 class FileFindEnhanced final
 {
@@ -39,16 +40,16 @@ class FileFindEnhanced final
         WCHAR         FileName[1];
     };
 
-    CStringW m_search;
-    CStringW m_base;
-    CStringW m_name;
-    HANDLE m_handle = nullptr;
-    bool m_firstrun = true;
-    FILE_DIRECTORY_INFORMATION* m_current_info = nullptr;
-    static constexpr auto m_dos = L"\\??\\";
-    static constexpr auto m_dosunc = L"\\??\\UNC\\";
-    static constexpr auto m_long = L"\\\\?\\";
-    static constexpr auto m_longunc = L"\\\\?\\UNC\\";
+    std::wstring m_Search;
+    std::wstring m_Base;
+    std::wstring m_Name;
+    HANDLE m_Handle = nullptr;
+    bool m_Firstrun = true;
+    FILE_DIRECTORY_INFORMATION* m_CurrentInfo = nullptr;
+    static constexpr auto m_Dos = L"\\??\\";
+    static constexpr auto m_Dosunc = L"\\??\\UNC\\";
+    static constexpr auto m_Long = L"\\\\?\\";
+    static constexpr auto m_Longunc = L"\\\\?\\UNC\\";
 
 public:
 
@@ -56,20 +57,20 @@ public:
     ~FileFindEnhanced();
 
     bool FindNextFile();
-    bool FindFile(const CStringW& strFolder,const CStringW& strName = L"");
+    bool FindFile(const std::wstring& strFolder,const std::wstring& strName = L"");
     bool IsDirectory() const;
     bool IsDots() const;
     bool IsHidden() const;
     bool IsHiddenSystem() const;
     bool IsProtectedReparsePoint() const;
     DWORD GetAttributes() const;
-    CStringW GetFileName() const;
+    std::wstring GetFileName() const;
     ULONGLONG GetLogicalFileSize() const;
     ULONGLONG GetFileSizePhysical() const;
     ULONGLONG GetFileSizeLogical() const;
     FILETIME GetLastWriteTime() const;
-    CStringW GetFilePath() const;
-    CStringW GetFilePathLong() const;
-    static bool DoesFileExist(const CStringW& folder, const CStringW& file);
-    static CStringW MakeLongPathCompatible(const CStringW& path);
+    std::wstring GetFilePath() const;
+    std::wstring GetFilePathLong() const;
+    static bool DoesFileExist(const std::wstring& folder, const std::wstring& file);
+    static std::wstring MakeLongPathCompatible(const std::wstring& path);
 };

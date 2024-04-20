@@ -33,17 +33,17 @@ END_MESSAGE_MAP()
 
 CColorButton::CPreview::CPreview()
 {
-    m_color = 0;
+    m_Color = 0;
 }
 
 COLORREF CColorButton::CPreview::GetColor() const
 {
-    return m_color;
+    return m_Color;
 }
 
-void CColorButton::CPreview::SetColor(COLORREF color)
+void CColorButton::CPreview::SetColor(const COLORREF color)
 {
-    m_color = color;
+    m_Color = color;
     if (::IsWindow(m_hWnd))
     {
         InvalidateRect(nullptr);
@@ -59,7 +59,7 @@ void CColorButton::CPreview::OnPaint()
 
     dc.DrawEdge(rc, EDGE_BUMP, BF_RECT | BF_ADJUST);
 
-    COLORREF color = m_color;
+    COLORREF color = m_Color;
     if ((GetParent()->GetStyle() & WS_DISABLED) != 0)
     {
         color = ::GetSysColor(COLOR_BTNFACE);
@@ -67,7 +67,7 @@ void CColorButton::CPreview::OnPaint()
     dc.FillSolidRect(rc, color);
 }
 
-void CColorButton::CPreview::OnLButtonDown(UINT nFlags, CPoint point)
+void CColorButton::CPreview::OnLButtonDown(const UINT nFlags, CPoint point)
 {
     ClientToScreen(&point);
     GetParent()->ScreenToClient(&point);
@@ -85,17 +85,17 @@ END_MESSAGE_MAP()
 
 COLORREF CColorButton::GetColor() const
 {
-    return m_preview.GetColor();
+    return m_Preview.GetColor();
 }
 
-void CColorButton::SetColor(COLORREF color)
+void CColorButton::SetColor(const COLORREF color)
 {
-    m_preview.SetColor(color);
+    m_Preview.SetColor(color);
 }
 
 void CColorButton::OnPaint()
 {
-    if (nullptr == m_preview.m_hWnd)
+    if (nullptr == m_Preview.m_hWnd)
     {
         CRect rc;
         GetClientRect(rc);
@@ -103,7 +103,7 @@ void CColorButton::OnPaint()
         rc.right = rc.left + rc.Width() / 3;
         rc.DeflateRect(4, 4);
 
-        VERIFY(m_preview.Create(AfxRegisterWndClass(0, nullptr, nullptr, nullptr), wds::strEmpty, WS_CHILD | WS_VISIBLE, rc, this, ID_WDS_CONTROL));
+        VERIFY(m_Preview.Create(AfxRegisterWndClass(0, nullptr, nullptr, nullptr), wds::strEmpty, WS_CHILD | WS_VISIBLE, rc, this, ID_WDS_CONTROL));
 
         ModifyStyle(0, WS_CLIPCHILDREN);
     }
@@ -112,9 +112,9 @@ void CColorButton::OnPaint()
 
 void CColorButton::OnDestroy()
 {
-    if (::IsWindow(m_preview.m_hWnd))
+    if (::IsWindow(m_Preview.m_hWnd))
     {
-        m_preview.DestroyWindow();
+        m_Preview.DestroyWindow();
     }
     CButton::OnDestroy();
 }
@@ -134,11 +134,11 @@ void CColorButton::OnBnClicked()
     }
 }
 
-void CColorButton::OnEnable(BOOL bEnable)
+void CColorButton::OnEnable(const BOOL bEnable)
 {
-    if (::IsWindow(m_preview.m_hWnd))
+    if (::IsWindow(m_Preview.m_hWnd))
     {
-        m_preview.InvalidateRect(nullptr);
+        m_Preview.InvalidateRect(nullptr);
     }
     CButton::OnEnable(bEnable);
 }

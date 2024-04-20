@@ -21,6 +21,9 @@
 
 #pragma once
 
+#include <string>
+#include <unordered_map>
+
 //
 // CIconImageList. Both CFileTreeView and CExtensionView use this central
 // image list. It caches the system image list images as needed,
@@ -35,30 +38,29 @@ public:
     CIconImageList() = default;
     ~CIconImageList() override = default;
 
-    void initialize();
+    void Initialize();
 
-    short getMyComputerImage();
-    short getMountPointImage();
-    short getJunctionImage() const;
-    short getJunctionProtectedImage() const;
-    short getFolderImage();
-    short getFileImage(LPCWSTR path, DWORD attr = 0);
-    short getExtImageAndDescription(LPCWSTR ext, CStringW& description, DWORD attr = 0);
+    short GetMyComputerImage();
+    short GetMountPointImage();
+    short GetJunctionImage() const;
+    short GetJunctionProtectedImage() const;
+    short GetFolderImage();
+    short GetFileImage(const std::wstring& path, DWORD attr = 0);
+    short GetExtImageAndDescription(const std::wstring& ext, std::wstring& description, DWORD attr = 0);
 
-    short getFreeSpaceImage() const;
-    short getUnknownImage() const;
-    short getEmptyImage() const;
+    short GetFreeSpaceImage() const;
+    short GetUnknownImage() const;
+    short GetEmptyImage() const;
 
-    short cacheIcon(LPCWSTR path, UINT flags = 0, DWORD attr = 0, CStringW* psTypeName = nullptr);
-    static CStringW getADriveSpec();
-    void addCustomImages();
+    short CacheIcon(const std::wstring& path, UINT flags = 0, DWORD attr = 0, std::wstring* psTypeName = nullptr);
+    static std::wstring GetADriveSpec();
+    void AddCustomImages();
 
-    CMap<int, int, short, short> m_indexMap; // system image list index -> our index
+    std::unordered_map<int, short> m_IndexMap; // system image list index -> our index
 
-
-    short m_freeSpaceImage = -1;    // <Free Space>
-    short m_unknownImage = -1;      // <Unknown>
-    short m_emptyImage = -1;        // For items whose image cannot be found
-    short m_junctionImage = -1;     // For normal functions
-    short m_junctionProtected = -1; // For protected junctions
+    short m_FreeSpaceImage = -1;    // <Free Space>
+    short m_UnknownImage = -1;      // <Unknown>
+    short m_EmptyImage = -1;        // For items whose image cannot be found
+    short m_JunctionImage = -1;     // For normal functions
+    short m_JunctionProtected = -1; // For protected junctions
 };

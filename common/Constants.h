@@ -1,4 +1,4 @@
-// wds_constants.h
+// Constants.h
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
@@ -21,6 +21,8 @@
 
 #pragma once
 
+#include <string>
+
 namespace wds
 {
     // Single character constants
@@ -41,44 +43,34 @@ namespace wds
     constexpr WCHAR chrCapZ         = L'Z';
 
     // Constants strings
-    const LPCWSTR strEmpty      = L"";
-    const LPCWSTR strBlankSpace = L" ";
-    const LPCWSTR strStar       = L"*";
-    const LPCWSTR strComma      = L",";
-    const LPCWSTR strDot        = L".";
-    const LPCWSTR strBackslash  = L"\\";
-    const LPCWSTR strPipe       = L"|";
-    const LPCWSTR strDollar     = L"$";
-    const LPCWSTR strPercent    = L"%";
+    inline auto strEmpty      = L"";
+    inline auto strBlankSpace = L' ';
+    inline auto strStar       = L'*';
+    inline auto strComma      = L',';
+    inline auto strDot        = L'.';
+    inline auto strBackslash  = L'\\';
+    inline auto strPipe       = L'|';
+    inline auto strDollar     = L'$';
+    inline auto strPercent    = L'%';
 
-    const LPCWSTR strExplorerKey = L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer";
+    inline auto strExplorerKey = L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer";
 
-#define STR_LANG_SUFFIX L".wdslng"
-    const LPCWSTR strLangSuffix = STR_LANG_SUFFIX;
+    inline auto strInvalidAttributes          = L"??????";
+    inline auto strAttributeReadonly          = L"R"; /*FILE_ATTRIBUTE_READONLY*/
+    inline auto strAttributeHidden            = L"H"; /*FILE_ATTRIBUTE_HIDDEN*/
+    inline auto strAttributeSystem            = L"S"; /*FILE_ATTRIBUTE_SYSTEM*/
+    inline auto strAttributeArchive           = L"A"; /*FILE_ATTRIBUTE_ARCHIVE*/
+    inline auto strAttributeTemporary         = L"T"; /*FILE_ATTRIBUTE_TEMPORARY*/
+    inline auto strAttributeSparse            = L"~"; /*FILE_ATTRIBUTE_SPARSE_FILE*/
+    inline auto strAttributeReparsePoint      = L"@"; /*FILE_ATTRIBUTE_REPARSE_POINT*/
+    inline auto strAttributeCompressed        = L"C"; /*FILE_ATTRIBUTE_COMPRESSED*/
+    inline auto strAttributeOffline           = L"_"; /*FILE_ATTRIBUTE_OFFLINE*/
+    inline auto strAttributeNotContentIndexed = L"i"; /*FILE_ATTRIBUTE_NOT_CONTENT_INDEXED*/
+    inline auto strAttributeEncrypted         = L"E"; /*FILE_ATTRIBUTE_ENCRYPTED*/
+    inline auto strAttributeIntegrityStream   = L"I"; /*FILE_ATTRIBUTE_INTEGRITY_STREAM*/
+    inline auto strAttributeVirtual           = L"V"; /*FILE_ATTRIBUTE_VIRTUAL*/
+    inline auto strAttributeEA                = L"+"; /*FILE_ATTRIBUTE_EA*/
 
-#   define STR_RESOURCE_PREFIX L"wdsr"
-    const LPCWSTR strLangPrefix = STR_RESOURCE_PREFIX;
-
-    const LPCWSTR strInvalidAttributes = L"??????";
-    const LPCWSTR strAttributeReadonly = L"R"; /*FILE_ATTRIBUTE_READONLY*/
-    const LPCWSTR strAttributeHidden   = L"H"; /*FILE_ATTRIBUTE_HIDDEN*/
-    const LPCWSTR strAttributeSystem   = L"S"; /*FILE_ATTRIBUTE_SYSTEM*/
-    /* don't need FILE_ATTRIBUTE_DIRECTORY, directories are visualized in other ways */
-    const LPCWSTR strAttributeArchive = L"A"; /*FILE_ATTRIBUTE_ARCHIVE*/
-    /* don't need FILE_ATTRIBUTE_DEVICE */
-    /* don't need FILE_ATTRIBUTE_NORMAL */
-    const LPCWSTR strAttributeTemporary         = L"T"; /*FILE_ATTRIBUTE_TEMPORARY*/
-    const LPCWSTR strAttributeSparse            = L"~"; /*FILE_ATTRIBUTE_SPARSE_FILE*/
-    const LPCWSTR strAttributeReparsePoint      = L"@"; /*FILE_ATTRIBUTE_REPARSE_POINT*/
-    const LPCWSTR strAttributeCompressed        = L"C"; /*FILE_ATTRIBUTE_COMPRESSED*/
-    const LPCWSTR strAttributeOffline           = L"_"; /*FILE_ATTRIBUTE_OFFLINE*/
-    const LPCWSTR strAttributeNotContentIndexed = L"i"; /*FILE_ATTRIBUTE_NOT_CONTENT_INDEXED*/
-    const LPCWSTR strAttributeEncrypted         = L"E"; /*FILE_ATTRIBUTE_ENCRYPTED*/
-    const LPCWSTR strAttributeIntegrityStream   = L"I"; /*FILE_ATTRIBUTE_INTEGRITY_STREAM*/
-    const LPCWSTR strAttributeVirtual           = L"V"; /*FILE_ATTRIBUTE_VIRTUAL*/
-    /* don't need FILE_ATTRIBUTE_NO_SCRUB_DATA */
-    const LPCWSTR strAttributeEA = L"+"; /*FILE_ATTRIBUTE_EA*/
-
-    constexpr int iLangCodeLength  = _countof(STR_RESOURCE_PREFIX) - 1;
+    const std::wstring albet{ L"ABCDEFGHIJKLMNOPQRSTUVWXYZ" };
     constexpr int iNumDriveLetters = chrCapZ - chrCapA + 1;
 }

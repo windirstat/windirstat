@@ -29,7 +29,6 @@
 #include "AboutDlg.h"
 #include "DirStatDoc.h"
 #include "TreeMapView.h"
-#include "OsSpecific.h"
 #include "GlobalHelpers.h"
 #include "Item.h"
 #include "Localization.h"
@@ -57,18 +56,18 @@ CDirStatApp * CDirStatApp::_singleton;
 CDirStatApp::CDirStatApp()
 {
 #ifdef VTRACE_TO_CONSOLE
-    m_vtrace_console.Attach(new CWDSTracerConsole);
+    m_VtraceConsole.Attach(new CWDSTracerConsole);
 #endif
 
-    m_altColor = GetAlternativeColor(RGB(0x00, 0x00, 0xFF), L"AltColor");
-    m_altEncryptionColor = GetAlternativeColor(RGB(0x00, 0x80, 0x00), L"AltEncryptionColor");
+    m_AltColor = GetAlternativeColor(RGB(0x00, 0x00, 0xFF), L"AltColor");
+    m_AltEncryptionColor = GetAlternativeColor(RGB(0x00, 0x80, 0x00), L"AltEncryptionColor");
     _singleton = this;
 }
 
 CIconImageList* CDirStatApp::GetIconImageList()
 {
-    m_myImageList.initialize();
-    return &m_myImageList;
+    m_MyImageList.Initialize();
+    return &m_MyImageList;
 }
 
 void CDirStatApp::RestartApplication()
@@ -81,10 +80,10 @@ void CDirStatApp::RestartApplication()
     PROCESS_INFORMATION pi;
     ZeroMemory(&pi, sizeof(pi));
 
-    if (const BOOL success = CreateProcess(GetAppFileName(), nullptr, nullptr, nullptr, false, CREATE_SUSPENDED, nullptr, nullptr, &si, &pi); !success)
+    if (const BOOL success = CreateProcess(GetAppFileName().c_str(), nullptr, nullptr, nullptr, false, CREATE_SUSPENDED, nullptr, nullptr, &si, &pi); !success)
     {
         CStringW s;
-        s.FormatMessage(Localization::Lookup(IDS_CREATEPROCESSsFAILEDs), GetAppFileName().GetString(), MdGetWinErrorText(::GetLastError()).GetString());
+        s.FormatMessage(Localization::Lookup(IDS_CREATEPROCESSsFAILEDs).c_str(), GetAppFileName().c_str(), MdGetWinErrorText(::GetLastError()).c_str());
         AfxMessageBox(s);
         return;
     }
@@ -102,14 +101,14 @@ void CDirStatApp::RestartApplication()
     ::CloseHandle(pi.hThread);
 }
 
-std::tuple<ULONGLONG, ULONGLONG> CDirStatApp::getDiskFreeSpace(LPCWSTR pszRootPath)
+std::tuple<ULONGLONG, ULONGLONG> CDirStatApp::GetFreeDiskSpace(const std::wstring & pszRootPath)
 {
     ULARGE_INTEGER u64total = {{0, 0}};
     ULARGE_INTEGER u64free = {{0, 0}};
 
-    if (GetDiskFreeSpaceEx(pszRootPath, nullptr, &u64total, &u64free) == 0)
+    if (GetDiskFreeSpaceEx(pszRootPath.c_str(), nullptr, &u64total, &u64free) == 0)
     {
-        VTRACE(L"GetDiskFreeSpaceEx(%s) failed.", pszRootPath);
+        VTRACE(L"GetDiskFreeSpaceEx(%s) failed.", pszRootPath.c_str());
     }
 
     ASSERT(u64free.QuadPart <= u64total.QuadPart);
@@ -118,24 +117,24 @@ std::tuple<ULONGLONG, ULONGLONG> CDirStatApp::getDiskFreeSpace(LPCWSTR pszRootPa
 
 void CDirStatApp::ReReadMountPoints()
 {
-    m_reparsePoints.Initialize();
+    m_ReparsePoints.Initialize();
 }
 
-bool CDirStatApp::IsFollowingAllowed(const CStringW& longpath, DWORD attr) const
+bool CDirStatApp::IsFollowingAllowed(const std::wstring& longpath, const DWORD attr) const
 {
     // Allow following if not a reparse point, is a reparse point without exclusion controls,
     // or is a reparse point with exclusion controls but are not excluded
     return !CReparsePoints::IsReparsePoint(attr) ||
         !CReparsePoints::IsReparseType(longpath, { IO_REPARSE_TAG_SYMLINK, IO_REPARSE_TAG_MOUNT_POINT }) ||
-        !COptions::ExcludeVolumeMountPoints && m_reparsePoints.IsVolumeMountPoint(longpath, attr) ||
-        !COptions::ExcludeJunctions && m_reparsePoints.IsJunction(longpath, attr) ||
-        !COptions::ExcludeSymbolicLinks && m_reparsePoints.IsSymbolicLink(longpath, attr);
+        !COptions::ExcludeVolumeMountPoints && m_ReparsePoints.IsVolumeMountPoint(longpath, attr) ||
+        !COptions::ExcludeJunctions && m_ReparsePoints.IsJunction(longpath, attr) ||
+        !COptions::ExcludeSymbolicLinks && m_ReparsePoints.IsSymbolicLink(longpath, attr);
 }
 
 // Get the alternative colors for compressed and encrypted files/folders.
 // This function uses either the value defined in the Explorer configuration
 // or the default color values.
-COLORREF CDirStatApp::GetAlternativeColor(COLORREF clrDefault, LPCWSTR which)
+COLORREF CDirStatApp::GetAlternativeColor(const COLORREF clrDefault, const std::wstring & which)
 {
     // Open the explorer key
     CRegKey key;
@@ -144,7 +143,7 @@ COLORREF CDirStatApp::GetAlternativeColor(COLORREF clrDefault, LPCWSTR which)
     // Try to read the REG_BINARY value
     COLORREF x;
     DWORD cbValue = sizeof(x);
-    if (ERROR_SUCCESS == key.QueryBinaryValue(which, &x, &cbValue))
+    if (ERROR_SUCCESS == key.QueryBinaryValue(which.c_str(), &x, &cbValue))
     {
         // Return the read value upon success
         return x;
@@ -157,16 +156,16 @@ COLORREF CDirStatApp::GetAlternativeColor(COLORREF clrDefault, LPCWSTR which)
 COLORREF CDirStatApp::AltColor() const
 {
     // Return property value
-    return m_altColor;
+    return m_AltColor;
 }
 
 COLORREF CDirStatApp::AltEncryptionColor() const
 {
     // Return property value
-    return m_altEncryptionColor;
+    return m_AltEncryptionColor;
 }
 
-CStringW CDirStatApp::GetCurrentProcessMemoryInfo()
+std::wstring CDirStatApp::GetCurrentProcessMemoryInfo()
 {
     // Fetch current working set
     PROCESS_MEMORY_COUNTERS pmc = { sizeof(pmc) };
@@ -175,21 +174,21 @@ CStringW CDirStatApp::GetCurrentProcessMemoryInfo()
         return wds::strEmpty;
     }
 
-    static CStringW memformat = Localization::Lookup(IDS_RAMUSAGEs);
+    static std::wstring memformat = L"    " + Localization::Lookup(IDS_RAMUSAGEs);
     CStringW formatted;
-    formatted.FormatMessage(memformat, FormatBytes(pmc.WorkingSetSize).GetString());
-    return L"    " + formatted;
+    formatted.FormatMessage(memformat.c_str(), FormatBytes(pmc.WorkingSetSize).c_str());
+    return formatted.GetString();
 }
 
 bool CDirStatApp::InPortableMode() const
 {
-    return GetFileAttributes(GetAppFileName(L"ini")) != INVALID_FILE_ATTRIBUTES;
+    return GetFileAttributes(GetAppFileName(L"ini").c_str()) != INVALID_FILE_ATTRIBUTES;
 }
 
-bool CDirStatApp::SetPortableMode(bool enable, bool only_open)
+bool CDirStatApp::SetPortableMode(const bool enable, const bool onlyOpen)
 {
     // If portable mode is enabled, then just ensure the full path is used
-    const CStringW ini = GetAppFileName(L"ini");
+    const std::wstring ini = GetAppFileName(L"ini");
     if (ini == m_pszProfileName &&
         enable == InPortableMode())
     {
@@ -205,37 +204,37 @@ bool CDirStatApp::SetPortableMode(bool enable, bool only_open)
     if (enable)
     {
         // Enable portable mode by creating the file
-        SmartPointer<HANDLE> ini_handle(CloseHandle, CreateFile(ini, GENERIC_WRITE | GENERIC_READ, FILE_SHARE_READ,
-            nullptr, only_open ? OPEN_EXISTING : OPEN_ALWAYS , 0, nullptr));
-        if (ini_handle != INVALID_HANDLE_VALUE)
+        SmartPointer<HANDLE> iniHandle(CloseHandle, CreateFile(ini.c_str(), GENERIC_WRITE | GENERIC_READ, FILE_SHARE_READ,
+            nullptr, onlyOpen ? OPEN_EXISTING : OPEN_ALWAYS , 0, nullptr));
+        if (iniHandle != INVALID_HANDLE_VALUE)
         {
             // Open successful, setup settings to store to file
-            m_pszProfileName = _wcsdup(ini);
+            m_pszProfileName = _wcsdup(ini.c_str());
             return true;
         }
 
         // Fallback to registry mode for any failures
-        SetRegistryKey(Localization::Lookup(IDS_APP_TITLE));
+        SetRegistryKey(Localization::Lookup(IDS_APP_TITLE).c_str());
         return false;
     }
 
     // Attempt to remove file succeeded
-    if (DeleteFile(ini) != 0 || GetLastError() == ERROR_FILE_NOT_FOUND)
+    if (DeleteFile(ini.c_str()) != 0 || GetLastError() == ERROR_FILE_NOT_FOUND)
     {
-        SetRegistryKey(Localization::Lookup(IDS_APP_TITLE));
+        SetRegistryKey(Localization::Lookup(IDS_APP_TITLE).c_str());
         return true;
     }
 
     // Deletion failed  - go back to ini mode
-    m_pszProfileName = _wcsdup(ini);
+    m_pszProfileName = _wcsdup(ini.c_str());
     return false;
 }
 
-CString AFXGetRegPath(LPCTSTR lpszPostFix, LPCTSTR)
+std::wstring AFXGetRegPath(const LPCTSTR lpszPostFix, LPCTSTR)
 {
     // This overrides an internal MFC function that causes CWinAppEx
     // to malfunction when operated in portable mode
-    return CStringW(L"Software\\WinDirStat\\WinDirStat\\") + lpszPostFix + L"\\";
+    return std::wstring(L"Software\\WinDirStat\\WinDirStat\\") + lpszPostFix + L"\\";
 }
 
 BOOL CDirStatApp::InitInstance()
@@ -263,16 +262,16 @@ BOOL CDirStatApp::InitInstance()
     COptions::LoadAppSettings();
     CWinAppEx::LoadStdProfileSettings(4);
 
-    m_pDocTemplate = new CSingleDocTemplate(
+    m_PDocTemplate = new CSingleDocTemplate(
         IDR_MAINFRAME,
         RUNTIME_CLASS(CDirStatDoc),
         RUNTIME_CLASS(CMainFrame),
         RUNTIME_CLASS(CTreeMapView));
-    if (!m_pDocTemplate)
+    if (!m_PDocTemplate)
     {
         return FALSE;
     }
-    AddDocTemplate(m_pDocTemplate);
+    AddDocTemplate(m_PDocTemplate);
 
     CCommandLineInfo cmdInfo;
     ParseCommandLine(cmdInfo);
@@ -289,7 +288,7 @@ BOOL CDirStatApp::InitInstance()
             return FALSE;
     }
 
-    FileIconInit(TRUE);
+    FileIconInit();
 
     CMainFrame::Get()->InitialShowWindow();
     m_pMainWnd->UpdateWindow();
@@ -316,7 +315,7 @@ BOOL CDirStatApp::InitInstance()
             TerminateProcess(handle, 0);
         }
 
-        m_pDocTemplate->OpenDocumentFile(cmdInfo.m_strFileName, true);
+        m_PDocTemplate->OpenDocumentFile(cmdInfo.m_strFileName, true);
     }
     else
     {
@@ -336,8 +335,9 @@ void CDirStatApp::OnFileOpen()
     CSelectDrivesDlg dlg;
     if (IDOK == dlg.DoModal())
     {
-        const CStringW path = CDirStatDoc::EncodeSelection(static_cast<RADIO>(dlg.m_radio), dlg.m_folderName, dlg.m_drives);
-        m_pDocTemplate->OpenDocumentFile(path, true);
+        const std::wstring path = CDirStatDoc::EncodeSelection(static_cast<RADIO>(dlg.m_Radio),
+            dlg.m_FolderName.GetString(), dlg.m_Drives);
+        m_PDocTemplate->OpenDocumentFile(path.c_str(), true);
     }
 }
 
@@ -350,18 +350,17 @@ void CDirStatApp::OnRunElevated()
 {
     // For the configuration to launch, include the parent process so we can
     // terminate it once launched from the child process
-    const CStringW sAppName = GetAppFileName();
-    CStringW launchConfig;
-    launchConfig.Format(L"%lu|%s", GetCurrentProcessId(), GetDocument()->GetPathName().GetString());
+    const std::wstring sAppName = GetAppFileName();
+    std::wstring launchConfig = std::to_wstring(GetCurrentProcessId()) + GetDocument()->GetPathName().GetString();
 
     SHELLEXECUTEINFO shellInfo;
     ZeroMemory(&shellInfo, sizeof(shellInfo));
     shellInfo.cbSize = sizeof(shellInfo);
     shellInfo.fMask  = SEE_MASK_DEFAULT;
-    shellInfo.lpFile = sAppName;
+    shellInfo.lpFile = sAppName.c_str();
     shellInfo.lpVerb = L"runas";
     shellInfo.nShow  = SW_NORMAL;
-    shellInfo.lpParameters = launchConfig.GetString();
+    shellInfo.lpParameters = launchConfig.c_str();
 
     if (!::ShellExecuteEx(&shellInfo))
     {
@@ -371,7 +370,7 @@ void CDirStatApp::OnRunElevated()
 
 void CDirStatApp::LaunchHelp()
 {
-    ShellExecute(*AfxGetMainWnd(), L"open", Localization::LookupNeutral(IDS_URL_HELP),
+    ShellExecute(*AfxGetMainWnd(), L"open", Localization::LookupNeutral(IDS_URL_HELP).c_str(),
         nullptr, nullptr, SW_SHOWNORMAL);
 }
 
@@ -382,6 +381,6 @@ void CDirStatApp::OnHelpManual()
 
 void CDirStatApp::OnReportBug()
 {
-    ShellExecute(*AfxGetMainWnd(), L"open", Localization::LookupNeutral(IDS_URL_REPORT_BUG),
+    ShellExecute(*AfxGetMainWnd(), L"open", Localization::LookupNeutral(IDS_URL_REPORT_BUG).c_str(),
         nullptr, nullptr, SW_SHOWNORMAL);
 }

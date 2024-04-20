@@ -28,34 +28,8 @@
 #include <sddl.h>
 #include <string>
 
-CStringW MyStrRetToString(const LPITEMIDLIST pidl, const STRRET* strret)
-{
-    CStringW s;
-
-    switch (strret->uType)
-    {
-    case STRRET_CSTR:
-        {
-            s.Format(L"%hs", strret->cStr);
-        }
-        break;
-    case STRRET_OFFSET:
-        {
-            s.Format(L"%hs", reinterpret_cast<char*>(pidl) + strret->uOffset);
-        }
-        break;
-    case STRRET_WSTR:
-        {
-            s = strret->pOleStr;
-        }
-        break;
-    }
-
-    return s;
-}
-
-BOOL ShellExecuteThrow(HWND hwnd, const LPCWSTR lpVerb, const LPCWSTR lpFile,
-    const LPCWSTR lpParameters, const LPCWSTR lpDirectory, const INT nShowCmd)
+BOOL ShellExecuteThrow(HWND hwnd, const std::wstring & lpVerb, const std::wstring & lpFile,
+    const std::wstring & lpDirectory, const INT nShowCmd)
 {
     CWaitCursor wc;
 
@@ -64,53 +38,52 @@ BOOL ShellExecuteThrow(HWND hwnd, const LPCWSTR lpVerb, const LPCWSTR lpFile,
     sei.cbSize = sizeof(SHELLEXECUTEINFO);
     sei.fMask = 0;
     sei.hwnd = hwnd;
-    sei.lpVerb = lpVerb;
-    sei.lpFile = lpFile;
-    sei.lpParameters = lpParameters;
-    sei.lpDirectory = lpDirectory;
+    sei.lpVerb = lpVerb.c_str();
+    sei.lpFile = lpFile.c_str();
+    sei.lpDirectory = lpDirectory.c_str();
     sei.nShow = nShowCmd;
 
     const BOOL bResult = ::ShellExecuteEx(&sei);
     if (!bResult)
     {
-        MdThrowStringExceptionF(L"ShellExecute failed: %1!s!", MdGetWinErrorText(::GetLastError()).GetString());
+        MdThrowStringExceptionF(L"ShellExecute failed: %1!s!", MdGetWinErrorText(::GetLastError()).c_str());
     }
     return bResult;
 }
 
-CStringW GetBaseNameFromPath(LPCWSTR path)
+std::wstring GetBaseNameFromPath(const std::wstring & path)
 {
-    CStringW s  = path;
-    const int i = s.ReverseFind(wds::chrBackslash);
-    if (i < 0)
+    std::wstring s  = path;
+    const auto i = s.find_last_of(wds::chrBackslash);
+    if (i == std::wstring::npos)
     {
         return s;
     }
-    return s.Mid(i + 1);
+    return s.substr(i + 1);
 }
 
-CStringW GetAppFileName(const CStringW& ext)
+std::wstring GetAppFileName(const std::wstring& ext)
 {
-    CStringW s;
-    VERIFY(::GetModuleFileName(nullptr, s.GetBuffer(_MAX_PATH), _MAX_PATH));
-    s.ReleaseBuffer();
+    std::wstring s(_MAX_PATH, L'\0');
+    VERIFY(::GetModuleFileName(nullptr, s.data(), _MAX_PATH));
+    s.resize(wcslen(s.data()));
 
     // optional substitute extension
-    if (!ext.IsEmpty())
+    if (!ext.empty())
     {
-        s = s.Left(s.ReverseFind(wds::chrDot) + 1) + ext;
+        s = s.substr(0,s.find_last_of(wds::chrDot) + 1) + ext;
     }
 
     return s;
 }
 
-CStringW GetAppFolder()
+std::wstring GetAppFolder()
 {
-    const CStringW folder = GetAppFileName();
-    return folder.Left(folder.ReverseFind(wds::chrBackslash));
+    const std::wstring folder = GetAppFileName();
+    return folder.substr(0, folder.find_last_of(wds::chrBackslash));
 }
 
-constexpr DWORD SidGetLength(PSID x)
+constexpr DWORD SidGetLength(const PSID x)
 {
     return sizeof(SID) + (static_cast<SID*>(x)->SubAuthorityCount - 1) * sizeof(static_cast<SID*>(x)->SubAuthority);
 }
@@ -130,35 +103,35 @@ std::wstring GetNameFromSid(const PSID sid)
     };
 
     // attempt to lookup sid in cache
-    static std::map<PSID, std::wstring, decltype(comp)> name_map(comp);
-    const auto iter = name_map.find(sid);
-    if (iter != name_map.end())
+    static std::map<PSID, std::wstring, decltype(comp)> nameMap(comp);
+    const auto iter = nameMap.find(sid);
+    if (iter != nameMap.end())
     {
         return iter->second;
     }
 
     // copy the sid for storage in our cache table
-    const DWORD sid_length = SidGetLength(sid);
-    const auto sid_copy = memcpy(malloc(sid_length), sid, sid_length);
+    const DWORD sidLength = SidGetLength(sid);
+    const auto sidCopy = memcpy(malloc(sidLength), sid, sidLength);
 
     // lookup the name for this sid
-    SID_NAME_USE name_use;
-    WCHAR account_name[UNLEN + 1], domain_name[UNLEN + 1];
-    DWORD iAccountNameSize = _countof(account_name), iDomainName = _countof(domain_name);
-    if (LookupAccountSid(nullptr, sid, account_name,
-        &iAccountNameSize, domain_name, &iDomainName, &name_use) == 0)
+    SID_NAME_USE nameUse;
+    WCHAR accountName[UNLEN + 1], domainName[UNLEN + 1];
+    DWORD iAccountNameSize = _countof(accountName), iDomainName = _countof(domainName);
+    if (LookupAccountSid(nullptr, sid, accountName,
+        &iAccountNameSize, domainName, &iDomainName, &nameUse) == 0)
     {
-        SmartPointer<LPWSTR> sid_buff(LocalFree);
-        ConvertSidToStringSid(sid, &sid_buff);
-        name_map[sid_copy] = sid_buff;
+        SmartPointer<LPWSTR> sidBuff(LocalFree);
+        ConvertSidToStringSid(sid, &sidBuff);
+        nameMap[sidCopy] = sidBuff;
     }
     else
     {
         // generate full name in domain\name format
-        name_map[sid_copy] = std::wstring(domain_name) +
-            L"\\" + std::wstring(account_name);
+        nameMap[sidCopy] = std::wstring(domainName) +
+            L"\\" + std::wstring(accountName);
     }
 
     // return name
-    return name_map[sid_copy];
+    return nameMap[sidCopy];
 }

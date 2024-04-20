@@ -29,110 +29,110 @@ namespace
 }
 
 CPacman::CPacman() :
-    m_bgcolor(::GetSysColor(COLOR_WINDOW))
+    m_Bgcolor(::GetSysColor(COLOR_WINDOW))
 {
     Reset();
 }
 
 void CPacman::Reset()
 {
-    m_lastUpdate   = 0;
-    m_lastDraw     = 0;
-    m_toTheRight   = true;
-    m_position     = 0;
-    m_mouthOpening = true;
-    m_aperture     = 0;
-    m_done         = false;
+    m_LastUpdate   = 0;
+    m_LastDraw     = 0;
+    m_ToTheRight   = true;
+    m_Position     = 0;
+    m_MouthOpening = true;
+    m_Aperture     = 0;
+    m_Done         = false;
 }
 
-bool CPacman::m_suspended = false;
+bool CPacman::m_Suspended = false;
 
-void CPacman::SetGlobalSuspendState(bool suspend)
+void CPacman::SetGlobalSuspendState(const bool suspend)
 {
-    m_suspended = suspend;
+    m_Suspended = suspend;
 }
 
-void CPacman::SetBackgroundColor(COLORREF color)
+void CPacman::SetBackgroundColor(const COLORREF color)
 {
-    m_bgcolor = color;
+    m_Bgcolor = color;
 }
 
-void CPacman::SetSpeed(float speed)
+void CPacman::SetSpeed(const float speed)
 {
-    m_speed = speed;
+    m_Speed = speed;
 }
 
 void CPacman::Start()
 {
-    m_moving = true;
+    m_Moving = true;
 }
 
 void CPacman::Stop()
 {
-    m_done = true;
+    m_Done = true;
 }
 
 void CPacman::UpdatePosition()
 {
-    m_lastUpdate = GetTickCount64();
-    if (m_lastDraw == 0) m_lastDraw = m_lastUpdate;
-    m_moving = true;
-    m_done = false;
+    m_LastUpdate = GetTickCount64();
+    if (m_LastDraw == 0) m_LastDraw = m_LastUpdate;
+    m_Moving = true;
+    m_Done = false;
 }
 
 void CPacman::Draw(const CDC* pdc, const CRect& rect)
 {
     const ULONGLONG now = GetTickCount64();
-    if (m_suspended)
+    if (m_Suspended)
     {
         // Rebase time based if suspended
-        m_lastUpdate = now;
-        m_lastDraw = now;
+        m_LastUpdate = now;
+        m_LastDraw = now;
     }
 
     // See if we should still consider ourselves movies
-    if (now - m_lastUpdate > HIDE_THRESHOLD) m_moving = false;
+    if (now - m_LastUpdate > HIDE_THRESHOLD) m_Moving = false;
 
     // Update position
-    const float delta = static_cast<float>(now - m_lastDraw);
-    m_lastDraw = now;
-    if (m_moving)
+    const float delta = static_cast<float>(now - m_LastDraw);
+    m_LastDraw = now;
+    if (m_Moving)
     {
-        UpdatePosition(m_position, m_toTheRight, m_speed * delta);
-        UpdatePosition(m_aperture, m_mouthOpening, MOUTHSPEED * delta);
+        UpdatePosition(m_Position, m_ToTheRight, m_Speed * delta);
+        UpdatePosition(m_Aperture, m_MouthOpening, MOUTHSPEED * delta);
     }
 
     // Calculate rectangle to display graphic
     CRect rc(rect);
     rc.DeflateRect(5, 1);
     rc.bottom -= rc.Height() % 2;
-    rc.left += static_cast<int>(m_position * (rc.Width() - rc.Height() / 2.0f));
+    rc.left += static_cast<int>(m_Position * (rc.Width() - rc.Height() / 2.0f));
     rc.right = rc.left + rc.Height();
     const Gdiplus::Rect grect(rc.left, rc.top, rc.Width(), rc.Height());
 
     // Create pens and brushes
     Gdiplus::Color bgColor;
-    bgColor.SetFromCOLORREF(m_bgcolor);
+    bgColor.SetFromCOLORREF(m_Bgcolor);
     const Gdiplus::SolidBrush bgPen(bgColor);
     const Gdiplus::Pen blackPen(Gdiplus::Color(0xFF, 0x00, 0x00, 0x00), 1);
     const Gdiplus::SolidBrush yellowPen(Gdiplus::Color(0xFF, 0xFC, 0xC9, 0x2F));
 
     // Determine the share of the figure
-    const float slice = m_aperture * 90.0f;
+    const float slice = m_Aperture * 90.0f;
     const Gdiplus::REAL sweepAngle = 360.0f - slice;
-    Gdiplus::REAL startAngle = m_aperture * slice / 2.0f;
-    if (!m_toTheRight) startAngle += 180.0f;
+    Gdiplus::REAL startAngle = m_Aperture * slice / 2.0f;
+    if (!m_ToTheRight) startAngle += 180.0f;
 
     // Draw the background
     Gdiplus::Graphics graphics(pdc->GetSafeHdc());
     graphics.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
     graphics.FillRectangle(&bgPen, rect.left, rect.top, rect.Width(), rect.Height());
-    if (m_done) return;
+    if (m_Done) return;
 
     // Draw filled shape if we started and recently updated
     graphics.FillPie(&yellowPen, grect, startAngle, sweepAngle);
     graphics.DrawPie(&blackPen, grect, startAngle, sweepAngle);
-    if (m_moving) return;
+    if (m_Moving) return;
 
     // Draw sleepy graphic
     const Gdiplus::Font font(L"Arial", 6.0f, Gdiplus::FontStyleBold);
@@ -142,7 +142,7 @@ void CPacman::Draw(const CDC* pdc, const CRect& rect)
     graphics.DrawString(L"z", 1, &font, { rc.left + 15.0f, rc.top - 6.0f }, &blackBrush);
 }
 
-void CPacman::UpdatePosition(float& position, bool& up, float diff)
+void CPacman::UpdatePosition(float& position, bool& up, const float diff)
 {
     ASSERT(diff >= 0.0f);
     ASSERT(position >= 0.0f);

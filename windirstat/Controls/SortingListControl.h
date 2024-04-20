@@ -47,7 +47,7 @@ struct SSorting
 class CSortingListItem
 {
 public:
-    virtual CStringW GetText(int subitem) const = 0;
+    virtual std::wstring GetText(int subitem) const = 0;
     virtual int GetImage() const = 0;
     virtual int Compare(const CSortingListItem* other, int subitem) const;
     int CompareS(const CSortingListItem* other, const SSorting& sorting) const;
@@ -66,11 +66,11 @@ class CSortingListControl : public CListCtrl
 {
     DECLARE_DYNAMIC(CSortingListControl)
 
-    std::vector<int>* m_column_order;
-    std::vector<int>* m_column_widths;
+    std::vector<int>* m_ColumnOrder;
+    std::vector<int>* m_ColumnWidths;
 
     // Construction
-    CSortingListControl(std::vector<int>* column_order, std::vector<int>* column_widths);
+    CSortingListControl(std::vector<int>* columnOrder, std::vector<int>* columnWidths);
     ~CSortingListControl() override = default;
 
     // Public methods
@@ -96,10 +96,10 @@ class CSortingListControl : public CListCtrl
 private:
     void SavePersistentAttributes() const;
  
-    std::wstring m_name; // for persistence
-    SSorting m_sorting;
+    std::wstring m_Name; // for persistence
+    SSorting m_Sorting;
 
-    int m_indicatedColumn = -1;
+    int m_IndicatedColumn = -1;
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnLvnGetdispinfo(NMHDR* pNMHDR, LRESULT* pResult);

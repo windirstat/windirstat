@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "modalapishuttle.h"
+#include "ModalApiShuttle.h"
 
 //
 // CModalShellApi. Modal version of the shell functions
@@ -34,14 +34,14 @@ class CModalShellApi final : public CModalApiShuttle
 public:
     CModalShellApi();
 
-    void DeleteFile(LPCWSTR fileName, bool toRecycleBin);
+    void DeleteFile(const std::wstring & fileName, bool toRecycleBin);
 
 protected:
     bool DoOperation() override;
 
     bool DoDeleteItem();
 
-    int m_operation = 0;         // Enum specifying the desired operation
-    CStringW m_fileName;         // File name to be deleted
-    bool m_toRecycleBin = false; // True if file shall only be moved to the recycle bin
+    int m_Operation = 0;         // Enum specifying the desired operation
+    std::wstring m_FileName;         // File name to be deleted
+    bool m_ToRecycleBin = false; // True if file shall only be moved to the recycle bin
 };

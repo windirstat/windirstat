@@ -308,7 +308,6 @@
     <ClInclude Include="ModalShellApi.h" />
     <ClInclude Include="MountPoints.h" />
     <ClInclude Include="Options.h" />
-    <ClInclude Include="OsSpecific.h" />
     <ClInclude Include="PageAdvanced.h" />
     <ClInclude Include="PageCleanups.h" />
     <ClInclude Include="PageGeneral.h" />
@@ -366,8 +365,6 @@
     <ClCompile Include="MountPoints.cpp">
     </ClCompile>
     <ClCompile Include="Options.cpp">
-    </ClCompile>
-    <ClCompile Include="OsSpecific.cpp">
     </ClCompile>
     <ClCompile Include="PageAdvanced.cpp" />
     <ClCompile Include="PageCleanups.cpp">

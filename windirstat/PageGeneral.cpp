@@ -21,9 +21,8 @@
 
 #include "stdafx.h"
 #include "WinDirStat.h"
-#include "MainFrame.h" // COptionsPropertySheet
+#include "MainFrame.h"
 #include "PageGeneral.h"
-
 #include "DirStatDoc.h"
 #include "Options.h"
 #include "GlobalHelpers.h"
@@ -45,14 +44,14 @@ COptionsPropertySheet* CPageGeneral::GetSheet() const
 void CPageGeneral::DoDataExchange(CDataExchange* pDX)
 {
     CPropertyPage::DoDataExchange(pDX);
-    DDX_Check(pDX, IDC_HUMAN_FORMAT, m_humanFormat);
-    DDX_Check(pDX, IDC_USE_WDS_LOCALE, m_useFallbackLocale);
-    DDX_Control(pDX, IDC_COMBO, m_combo);
-    DDX_Check(pDX, IDC_SHOW_GRID, m_listGrid);
-    DDX_Check(pDX, IDC_SHOW_STRIPES, m_listStripes);
-    DDX_Check(pDX, IDC_DELETION_WARNING, m_showDeletionWarning);
-    DDX_Check(pDX, IDC_FULL_ROW_SELECTION, m_listFullRowSelection);
-    DDX_Check(pDX, IDC_PORTABLE_MODE, m_portableMode);
+    DDX_Check(pDX, IDC_HUMAN_FORMAT, m_HumanFormat);
+    DDX_Check(pDX, IDC_USE_WDS_LOCALE, m_UseFallbackLocale);
+    DDX_Control(pDX, IDC_COMBO, m_Combo);
+    DDX_Check(pDX, IDC_SHOW_GRID, m_ListGrid);
+    DDX_Check(pDX, IDC_SHOW_STRIPES, m_ListStripes);
+    DDX_Check(pDX, IDC_DELETION_WARNING, m_ShowDeletionWarning);
+    DDX_Check(pDX, IDC_FULL_ROW_SELECTION, m_ListFullRowSelection);
+    DDX_Check(pDX, IDC_PORTABLE_MODE, m_PortableMode);
 }
 
 BEGIN_MESSAGE_MAP(CPageGeneral, CPropertyPage)
@@ -72,22 +71,22 @@ BOOL CPageGeneral::OnInitDialog()
 
     Localization::UpdateDialogs(*this);
 
-    m_humanFormat = COptions::HumanFormat;
-    m_listGrid = COptions::ListGrid;
-    m_listStripes = COptions::ListStripes;
-    m_showDeletionWarning = COptions::ShowDeleteWarning;
-    m_listFullRowSelection = COptions::ListFullRowSelection;
-    m_useFallbackLocale= COptions::UseFallbackLocale;
-    m_portableMode = CDirStatApp::Get()->InPortableMode();
+    m_HumanFormat = COptions::HumanFormat;
+    m_ListGrid = COptions::ListGrid;
+    m_ListStripes = COptions::ListStripes;
+    m_ShowDeletionWarning = COptions::ShowDeleteWarning;
+    m_ListFullRowSelection = COptions::ListFullRowSelection;
+    m_UseFallbackLocale= COptions::UseFallbackLocale;
+    m_PortableMode = CDirStatApp::Get()->InPortableMode();
 
     for (const auto & language : Localization::GetLanguageList())
     {
-        const int i = m_combo.AddString(GetLocaleLanguage(language));
-        m_combo.SetItemData(i, language);
+        const int i = m_Combo.AddString(GetLocaleLanguage(language).c_str());
+        m_Combo.SetItemData(i, language);
         if (language == COptions::LanguageId)
         {
-            m_originalLanguage = i;
-            m_combo.SetCurSel(i);
+            m_OriginalLanguage = i;
+            m_Combo.SetCurSel(i);
         }
     }
 
@@ -99,32 +98,32 @@ void CPageGeneral::OnOK()
 {
     UpdateData();
 
-    const bool wds_changed = static_cast<bool>(m_useFallbackLocale) != COptions::UseFallbackLocale;
-    const bool lg_changed = static_cast<bool>(m_listGrid) != COptions::ListGrid ||
-        static_cast<bool>(m_listStripes) != COptions::ListStripes ||
-        static_cast<bool>(m_listFullRowSelection) != COptions::ListFullRowSelection;
+    const bool wdsChanged = static_cast<bool>(m_UseFallbackLocale) != COptions::UseFallbackLocale;
+    const bool lgChanged = static_cast<bool>(m_ListGrid) != COptions::ListGrid ||
+        static_cast<bool>(m_ListStripes) != COptions::ListStripes ||
+        static_cast<bool>(m_ListFullRowSelection) != COptions::ListFullRowSelection;
 
-    COptions::HumanFormat = (FALSE != m_humanFormat);
-    COptions::UseFallbackLocale = (FALSE != m_useFallbackLocale);
-    COptions::ListGrid = (FALSE != m_listGrid);
-    COptions::ListStripes = (FALSE != m_listStripes);
-    COptions::ShowDeleteWarning = (FALSE != m_showDeletionWarning);
-    COptions::ListFullRowSelection = (FALSE != m_listFullRowSelection);
-    if (!CDirStatApp::Get()->SetPortableMode(m_portableMode))
+    COptions::HumanFormat = (FALSE != m_HumanFormat);
+    COptions::UseFallbackLocale = (FALSE != m_UseFallbackLocale);
+    COptions::ListGrid = (FALSE != m_ListGrid);
+    COptions::ListStripes = (FALSE != m_ListStripes);
+    COptions::ShowDeleteWarning = (FALSE != m_ShowDeletionWarning);
+    COptions::ListFullRowSelection = (FALSE != m_ListFullRowSelection);
+    if (!CDirStatApp::Get()->SetPortableMode(m_PortableMode))
     {
         AfxMessageBox(L"Could not toggle WinDirStat portable mode. Check your permissions.", MB_OK | MB_ICONERROR);
     }
 
-    if (lg_changed)
+    if (lgChanged)
     {
         GetDocument()->UpdateAllViews(nullptr, HINT_LISTSTYLECHANGED);
     }
-    if (wds_changed)
+    if (wdsChanged)
     {
         GetDocument()->UpdateAllViews(nullptr, HINT_NULL);
     }
 
-    const LANGID id = static_cast<LANGID>(m_combo.GetItemData(m_combo.GetCurSel()));
+    const LANGID id = static_cast<LANGID>(m_Combo.GetItemData(m_Combo.GetCurSel()));
     COptions::LanguageId = static_cast<int>(id);
 
     CPropertyPage::OnOK();
@@ -137,7 +136,7 @@ void CPageGeneral::OnBnClickedSetModified()
 
 void CPageGeneral::OnCbnSelendokCombo()
 {
-    const int i = m_combo.GetCurSel();
-    GetSheet()->SetLanguageChanged(i != m_originalLanguage);
+    const int i = m_Combo.GetCurSel();
+    GetSheet()->SetLanguageChanged(i != m_OriginalLanguage);
     SetModified();
 }

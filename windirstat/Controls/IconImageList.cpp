@@ -22,34 +22,31 @@
 #include "stdafx.h"
 #include "WinDirStat.h"
 #include "IconImageList.h"
+#include "GlobalHelpers.h"
 #include "SmartPointer.h"
 
-void CIconImageList::initialize()
+void CIconImageList::Initialize()
 {
     if (m_hImageList == nullptr)
     {
-        CStringW s;
-        ::GetSystemDirectory(s.GetBuffer(_MAX_PATH), _MAX_PATH);
-        s.ReleaseBuffer();
-        VTRACE(L"GetSystemDirectory() -> %s", s.GetString());
-
+        const std::wstring & s = GetSysDirectory();
         SHFILEINFO sfi = {nullptr};
-        const auto hil = reinterpret_cast<HIMAGELIST>(::SHGetFileInfo(s, 0, &sfi, sizeof(sfi), WDS_SHGFI_DEFAULTS));
+        const auto hil = reinterpret_cast<HIMAGELIST>(::SHGetFileInfo(s.c_str(), 0, &sfi, sizeof(sfi), WDS_SHGFI_DEFAULTS));
 
         this->Attach(ImageList_Duplicate(hil));
 
         VTRACE(L"System image list has %i icons", this->GetImageCount());
         for (short i = 0; i < static_cast<short>(this->GetImageCount()); i++)
         {
-            m_indexMap.SetAt(i, i);
+            m_IndexMap[i] = i;
         }
 
-        this->addCustomImages();
+        this->AddCustomImages();
     }
 }
 
 // Returns the index of the added icon
-short CIconImageList::cacheIcon(LPCWSTR path, UINT flags, DWORD attr, CStringW* psTypeName)
+short CIconImageList::CacheIcon(const std::wstring & path, UINT flags, const DWORD attr, std::wstring* psTypeName)
 {
     ASSERT(m_hImageList != nullptr);
     flags |= WDS_SHGFI_DEFAULTS;
@@ -61,11 +58,11 @@ short CIconImageList::cacheIcon(LPCWSTR path, UINT flags, DWORD attr, CStringW* 
     }
 
     SHFILEINFO sfi{};
-    const auto hil = reinterpret_cast<HIMAGELIST>(::SHGetFileInfo(path, attr, &sfi, sizeof(sfi), flags));
+    const auto hil = reinterpret_cast<HIMAGELIST>(::SHGetFileInfo(path.c_str(), attr, &sfi, sizeof(sfi), flags));
     if (hil == nullptr)
     {
         VTRACE(L"SHGetFileInfo() failed");
-        return getEmptyImage();
+        return GetEmptyImage();
     }
 
     if (psTypeName != nullptr)
@@ -73,18 +70,18 @@ short CIconImageList::cacheIcon(LPCWSTR path, UINT flags, DWORD attr, CStringW* 
         *psTypeName = sfi.szTypeName;
     }
 
-    short i;
-    if (!m_indexMap.Lookup(sfi.iIcon, i)) // part of the system image list?
+    const auto i = m_IndexMap.find(sfi.iIcon);
+    if (i == m_IndexMap.end()) // part of the system image list?
     {
         CImageList* sil = CImageList::FromHandle(hil); // does not have to be destroyed
-        i = static_cast<short>(this->Add(sil->ExtractIcon(sfi.iIcon)));
-        m_indexMap.SetAt(sfi.iIcon, i);
+        m_IndexMap[sfi.iIcon] = static_cast<short>(this->Add(sil->ExtractIcon(sfi.iIcon)));
+        return static_cast<short>(sfi.iIcon);
     }
 
-    return i;
+    return i->second;
 }
 
-short CIconImageList::getMyComputerImage()
+short CIconImageList::GetMyComputerImage()
 {
     SmartPointer<LPITEMIDLIST> pidl(CoTaskMemFree);
     if (FAILED(::SHGetSpecialFolderLocation(nullptr, CSIDL_DRIVES, &pidl)))
@@ -93,79 +90,76 @@ short CIconImageList::getMyComputerImage()
         return 0;
     }
 
-    return cacheIcon(static_cast<LPCWSTR>(static_cast<LPVOID>(pidl)), SHGFI_PIDL);
+    return CacheIcon(static_cast<LPCWSTR>(static_cast<LPVOID>(pidl)), SHGFI_PIDL);
 }
 
-short CIconImageList::getMountPointImage()
+short CIconImageList::GetMountPointImage()
 {
-    return cacheIcon(getADriveSpec(), 0, FILE_ATTRIBUTE_REPARSE_POINT);
+    return CacheIcon(GetADriveSpec(), 0, FILE_ATTRIBUTE_REPARSE_POINT);
 }
 
-short CIconImageList::getJunctionImage() const
+short CIconImageList::GetJunctionImage() const
 {
-    return m_junctionImage;
+    return m_JunctionImage;
 }
 
-short CIconImageList::getJunctionProtectedImage() const
+short CIconImageList::GetJunctionProtectedImage() const
 {
-    return m_junctionProtected;
+    return m_JunctionProtected;
 }
 
-short CIconImageList::getFolderImage()
+short CIconImageList::GetFolderImage()
 {
-    CStringW s;
-    ::GetSystemDirectory(s.GetBuffer(_MAX_PATH), _MAX_PATH);
-    s.ReleaseBuffer();
-
-    return cacheIcon(s, 0, FILE_ATTRIBUTE_DIRECTORY);
+    const std::wstring s = GetSysDirectory();
+    return CacheIcon(s, 0, FILE_ATTRIBUTE_DIRECTORY);
 }
 
-short CIconImageList::getFileImage(LPCWSTR path, DWORD attr)
+short CIconImageList::GetFileImage(const std::wstring & path, const DWORD attr)
 {
-    return cacheIcon(path, 0, attr);
+    return CacheIcon(path, 0, attr);
 }
 
-short CIconImageList::getExtImageAndDescription(LPCWSTR ext, CStringW& description, DWORD attr)
+short CIconImageList::GetExtImageAndDescription(const std::wstring & ext, std::wstring& description, const DWORD attr)
 {
-    return cacheIcon(ext, 0, attr, &description);
+    return CacheIcon(ext, 0, attr, &description);
 }
 
-short CIconImageList::getFreeSpaceImage() const
+short CIconImageList::GetFreeSpaceImage() const
 {
     ASSERT(m_hImageList != nullptr); // should have been initialize()ed.
-    return m_freeSpaceImage;
+    return m_FreeSpaceImage;
 }
 
-short CIconImageList::getUnknownImage() const
+short CIconImageList::GetUnknownImage() const
 {
     ASSERT(m_hImageList != nullptr); // should have been initialize()ed.
-    return m_unknownImage;
+    return m_UnknownImage;
 }
 
-short CIconImageList::getEmptyImage() const
+short CIconImageList::GetEmptyImage() const
 {
     ASSERT(m_hImageList != nullptr);
-    return m_emptyImage;
+    return m_EmptyImage;
 }
 
 // Returns the boot drive icon
-CStringW CIconImageList::getADriveSpec()
+std::wstring CIconImageList::GetADriveSpec()
 {
-    CStringW s;
-    const UINT u = ::GetWindowsDirectory(s.GetBuffer(_MAX_PATH), _MAX_PATH);
-    s.ReleaseBuffer();
-    if (u == 0 || s.GetLength() < 3 || s[1] != wds::chrColon || s[2] != wds::chrBackslash)
+    std::wstring s(_MAX_PATH, L'\0');
+    const UINT u = ::GetWindowsDirectory(s.data(), _MAX_PATH);
+    s.resize(wcslen(s.data()));
+    if (u == 0 || s.size() < 3 || s[1] != wds::chrColon || s[2] != wds::chrBackslash)
     {
         return L"C:\\";
     }
-    return s.Left(3);
+    return s.substr(0, 3);
 }
 
-void CIconImageList::addCustomImages()
+void CIconImageList::AddCustomImages()
 {
-    m_junctionImage = static_cast<short>(this->Add(CDirStatApp::Get()->LoadIcon(IDI_JUNCTION)));
-    m_junctionProtected = static_cast<short>(this->Add(CDirStatApp::Get()->LoadIcon(IDI_JUNCTION_PROTECTED)));
-    m_freeSpaceImage = static_cast<short>(this->Add(CDirStatApp::Get()->LoadIcon(IDI_FREE_SPACE)));
-    m_unknownImage = static_cast<short>(this->Add(CDirStatApp::Get()->LoadIcon(IDI_UNKNOWN)));
-    m_emptyImage = static_cast<short>(this->Add(CDirStatApp::Get()->LoadIcon(IDI_EMPTY)));
+    m_JunctionImage = static_cast<short>(this->Add(CDirStatApp::Get()->LoadIcon(IDI_JUNCTION)));
+    m_JunctionProtected = static_cast<short>(this->Add(CDirStatApp::Get()->LoadIcon(IDI_JUNCTION_PROTECTED)));
+    m_FreeSpaceImage = static_cast<short>(this->Add(CDirStatApp::Get()->LoadIcon(IDI_FREE_SPACE)));
+    m_UnknownImage = static_cast<short>(this->Add(CDirStatApp::Get()->LoadIcon(IDI_UNKNOWN)));
+    m_EmptyImage = static_cast<short>(this->Add(CDirStatApp::Get()->LoadIcon(IDI_EMPTY)));
 }

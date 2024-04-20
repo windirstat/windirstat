@@ -30,8 +30,6 @@
 #include <common/Constants.h>
 #include <common/Tracer.h>
 
-using CExtensionColorMap = CMap<CStringW, LPCWSTR, COLORREF, COLORREF>; // ".bmp" -> color
-
 class CMainFrame;
 class CDirStatApp;
 
@@ -51,38 +49,38 @@ public:
     BOOL LoadState(LPCTSTR, CFrameImpl*) override { return TRUE; }
 
     bool InPortableMode() const;
-    bool SetPortableMode(bool enable, bool only_open = false);
+    bool SetPortableMode(bool enable, bool onlyOpen = false);
 
     void ReReadMountPoints();
-    bool IsFollowingAllowed(const CStringW& longpath, DWORD attr = 1) const;
-    CReparsePoints* GetReparseInfo() { return &m_reparsePoints; }
+    bool IsFollowingAllowed(const std::wstring& longpath, DWORD attr = 1) const;
+    CReparsePoints* GetReparseInfo() { return &m_ReparsePoints; }
 
     COLORREF AltColor() const;           // Coloring of compressed items
     COLORREF AltEncryptionColor() const; // Coloring of encrypted items
 
-    static CStringW GetCurrentProcessMemoryInfo();
+    static std::wstring GetCurrentProcessMemoryInfo();
     CIconImageList* GetIconImageList();
 
     static void LaunchHelp();
     static void RestartApplication();
 
-    static std::tuple<ULONGLONG, ULONGLONG> getDiskFreeSpace(LPCWSTR pszRootPath);
+    static std::tuple<ULONGLONG, ULONGLONG> GetFreeDiskSpace(const std::wstring& pszRootPath);
     static CDirStatApp* Get() { return _singleton; }
 
 protected:
 
     // Get the alternative color from Explorer configuration
-    COLORREF GetAlternativeColor(COLORREF clrDefault, LPCWSTR which);
+    COLORREF GetAlternativeColor(COLORREF clrDefault, const std::wstring& which);
 
-    CSingleDocTemplate* m_pDocTemplate{nullptr}; // MFC voodoo.
+    CSingleDocTemplate* m_PDocTemplate{nullptr}; // MFC voodoo.
 
-    CReparsePoints m_reparsePoints;   // Mount point information
-    CIconImageList m_myImageList;     // Our central image list
-    COLORREF m_altColor;              // Coloring of compressed items
-    COLORREF m_altEncryptionColor;    // Coloring of encrypted items
+    CReparsePoints m_ReparsePoints;   // Mount point information
+    CIconImageList m_MyImageList;     // Our central image list
+    COLORREF m_AltColor;              // Coloring of compressed items
+    COLORREF m_AltEncryptionColor;    // Coloring of encrypted items
     static CDirStatApp * _singleton;  // Singleton application instance
 #ifdef VTRACE_TO_CONSOLE
-    CAutoPtr<CWDSTracerConsole> m_vtrace_console;
+    CAutoPtr<CWDSTracerConsole> m_VtraceConsole;
 #endif // VTRACE_TO_CONSOLE
 
     DECLARE_MESSAGE_MAP()

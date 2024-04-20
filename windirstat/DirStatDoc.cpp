@@ -44,6 +44,7 @@
 #include <vector>
 #include <filesystem>
 #include <fstream>
+#include <ranges>
 #include <stack>
 
 CDirStatDoc* _theDocument;
@@ -56,8 +57,8 @@ CDirStatDoc* GetDocument()
 IMPLEMENT_DYNCREATE(CDirStatDoc, CDocument)
 
 CDirStatDoc::CDirStatDoc() :
-        m_showFreeSpace(COptions::ShowFreeSpace)
-      , m_showUnknown(COptions::ShowUnknown)
+        m_ShowFreeSpace(COptions::ShowFreeSpace)
+      , m_ShowUnknown(COptions::ShowUnknown)
 {
     ASSERT(nullptr == _theDocument);
     _theDocument = this;
@@ -67,26 +68,26 @@ CDirStatDoc::CDirStatDoc() :
 
 CDirStatDoc::~CDirStatDoc()
 {
-    delete m_rootItem;
+    delete m_RootItem;
     _theDocument = nullptr;
 }
 
 // Encodes a selection from the CSelectDrivesDlg into a string which can be routed as a pseudo
 // document "path" through MFC and finally arrives in OnOpenDocument().
 //
-CStringW CDirStatDoc::EncodeSelection(RADIO radio, const CStringW& folder, const CStringArray& drives)
+std::wstring CDirStatDoc::EncodeSelection(const RADIO radio, const std::wstring& folder, const std::vector<std::wstring>& drives)
 {
-    CStringW ret;
+    std::wstring ret;
     switch (radio)
     {
     case RADIO_ALLLOCALDRIVES:
     case RADIO_SOMEDRIVES:
         {
-            for (int i = 0; i < drives.GetSize(); i++)
+            for (std::size_t i = 0; i < drives.size(); i++)
             {
                 if (i > 0)
                 {
-                    ret += CStringW(GetEncodingSeparator());
+                    ret += GetEncodingSeparator();
                 }
                 ret += drives[i];
             }
@@ -104,62 +105,59 @@ CStringW CDirStatDoc::EncodeSelection(RADIO radio, const CStringW& folder, const
 
 // The inverse of EncodeSelection
 //
-void CDirStatDoc::DecodeSelection(const CStringW& s, CStringW& folder, CStringArray& drives)
+void CDirStatDoc::DecodeSelection(const std::wstring& s, std::wstring& folder, std::vector<std::wstring>& drives)
 {
-    folder.Empty();
-    drives.RemoveAll();
+    folder.clear();
+    drives.clear();
 
     // s is either something like "C:\programme"
     // or something like "C:|D:|E:".
 
-    CStringArray sa;
-    int i = 0;
+    std::vector<std::wstring> selections;
+    std::size_t i = 0;
 
-    while (i < s.GetLength())
+    while (i < s.size())
     {
-        CStringW token;
-        while (i < s.GetLength() && s[i] != GetEncodingSeparator())
+        std::wstring token;
+        while (i < s.size() && s[i] != GetEncodingSeparator())
         {
             token += s[i++];
         }
 
-        token.TrimLeft();
-        token.TrimRight();
-        ASSERT(!token.IsEmpty());
-        sa.Add(token);
+        TrimString(token);
+        ASSERT(!token.empty());
+        selections.emplace_back(token);
 
-        if (i < s.GetLength())
+        if (i < s.size())
         {
             i++;
         }
     }
 
-    ASSERT(sa.GetSize() > 0);
+    ASSERT(!selections.empty());
 
-    if (sa.GetSize() > 1)
+    if (selections.size() > 1)
     {
-        for (int j = 0; j < sa.GetSize(); j++)
+        for (const auto & selection : selections)
         {
-            CStringW d = sa[j];
-            ASSERT(2 == d.GetLength());
-            ASSERT(wds::chrColon == d[1]);
-
-            drives.Add(d + L"\\");
+            ASSERT(2 == selection.size());
+            ASSERT(wds::chrColon == selection[1]);
+            drives.emplace_back(selection + L"\\");
         }
     }
     else
     {
-        CStringW f = sa[0];
-        if (2 == f.GetLength() && wds::chrColon == f[1])
+        std::wstring f = selections[0];
+        if (2 == f.size() && wds::chrColon == f[1])
         {
-            drives.Add(f + L"\\");
+            drives.emplace_back(f + L'\\');
         }
         else
         {
             // Remove trailing backslash, if any and not drive-root.
-            if (f.GetLength() > 0 && wds::strBackslash == f.Right(1) && (f.GetLength() != 3 || f[1] != wds::chrColon))
+            if (!f.empty() && wds::strBackslash == f.back() && (f.size() != 3 || f[1] != wds::chrColon))
             {
-                f = f.Left(f.GetLength() - 1);
+                f = f.substr(0, f.size() - 1);
             }
 
             folder = f;
@@ -180,10 +178,11 @@ void CDirStatDoc::DeleteContents()
     ShutdownCoordinator();
 
     // Cleanup structures
-    delete m_rootItemDupe;
-    delete m_rootItem;
-    m_rootItem = nullptr;
-    m_zoomItem = nullptr;
+    delete m_RootItemDupe;
+    delete m_RootItem;
+    m_RootItemDupe = nullptr;
+    m_RootItem = nullptr;
+    m_ZoomItem = nullptr;
     CDirStatApp::Get()->ReReadMountPoints();
 }
 
@@ -208,54 +207,54 @@ BOOL CDirStatDoc::OnOpenDocument(LPCWSTR lpszPathName)
     CDocument::OnNewDocument();
 
     // Decode list of folders to scan
-    const CStringW spec = lpszPathName;
-    CStringW folder;
-    CStringArray drives;
+    const std::wstring spec = lpszPathName;
+    std::wstring folder;
+    std::vector<std::wstring> drives;
     DecodeSelection(spec, folder, drives);
 
     // Determine if we should add multiple drives under a single node
-    CStringArray rootFolders;
-    if (drives.GetSize() > 0)
+    std::vector<std::wstring> rootFolders;
+    if (drives.empty())
     {
-        m_showMyComputer = drives.GetSize() > 1;
-        for (int i = 0; i < drives.GetSize(); i++)
-        {
-            rootFolders.Add(drives[i]);
-        }
+        ASSERT(!folder.empty());
+        m_ShowMyComputer = false;
+        rootFolders.emplace_back(folder);
     }
     else
     {
-        ASSERT(!folder.IsEmpty());
-        m_showMyComputer = false;
-        rootFolders.Add(folder);
+        m_ShowMyComputer = drives.size() > 1;
+        for (const auto & drive : drives)
+        {
+            rootFolders.emplace_back(drive);
+        }
     }
 
-    CArray<CItem*, CItem*> driveItems;
+    std::vector<CItem*> driveItems;
 
-    if (m_showMyComputer)
+    if (m_ShowMyComputer)
     {
-        m_rootItem = new CItem(IT_MYCOMPUTER | ITF_ROOTITEM, Localization::Lookup(IDS_MYCOMPUTER));
-        for (int i = 0; i < rootFolders.GetSize(); i++)
+        m_RootItem = new CItem(IT_MYCOMPUTER | ITF_ROOTITEM, Localization::Lookup(IDS_MYCOMPUTER));
+        for (const auto & rootFolder : rootFolders)
         {
-            const auto drive = new CItem(IT_DRIVE, rootFolders[i]);
-            driveItems.Add(drive);
-            m_rootItem->AddChild(drive);
+            const auto drive = new CItem(IT_DRIVE, rootFolder);
+            driveItems.emplace_back(drive);
+            m_RootItem->AddChild(drive);
         }
     }
     else
     {
         const ITEMTYPE type = IsDrive(rootFolders[0]) ? IT_DRIVE : IT_DIRECTORY;
-        m_rootItem = new CItem(type | ITF_ROOTITEM, rootFolders[0]);
-        if (m_rootItem->IsType(IT_DRIVE))
+        m_RootItem = new CItem(type | ITF_ROOTITEM, rootFolders[0]);
+        if (m_RootItem->IsType(IT_DRIVE))
         {
-            driveItems.Add(m_rootItem);
+            driveItems.emplace_back(m_RootItem);
         }
-        m_rootItem->UpdateStatsFromDisk();
+        m_RootItem->UpdateStatsFromDisk();
     }
-    m_zoomItem = m_rootItem;
+    m_ZoomItem = m_RootItem;
 
     // Set new node for duplicate view
-    m_rootItemDupe = new CItemDupe();
+    m_RootItemDupe = new CItemDupe();
 
     // Update new root for display
     UpdateAllViews(nullptr, HINT_NEWROOT);
@@ -270,9 +269,9 @@ BOOL CDirStatDoc::OnOpenDocument(CItem * newroot)
 
     CDocument::OnNewDocument(); // --> DeleteContents()
 
-    m_rootItemDupe = new CItemDupe();
-    m_rootItem = newroot;
-    m_zoomItem = m_rootItem;
+    m_RootItemDupe = new CItemDupe();
+    m_RootItem = newroot;
+    m_ZoomItem = m_RootItem;
 
     UpdateAllViews(nullptr, HINT_NEWROOT);
     StartupCoordinator({});
@@ -282,32 +281,32 @@ BOOL CDirStatDoc::OnOpenDocument(CItem * newroot)
 // We don't want MFCs AfxFullPath()-Logic, because lpszPathName
 // is not a path. So we have overridden this.
 //
-void CDirStatDoc::SetPathName(const LPCWSTR lpszPathName, BOOL /*bAddToMRU*/)
+void CDirStatDoc::SetPathName(LPCWSTR lpszPathName, BOOL /*bAddToMRU*/)
 {
     // MRU would be fine but is not implemented yet.
 
     m_strPathName = lpszPathName;
     ASSERT(!m_strPathName.IsEmpty()); // must be set to something
     m_bEmbedded = FALSE;
-    SetTitle(lpszPathName);
+    SetTitle(m_strPathName);
 
     ASSERT_VALID(this);
 }
 
 // Prefix the window title (with percentage or "Scanning")
 //
-void CDirStatDoc::SetTitlePrefix(const CStringW& prefix) const
+void CDirStatDoc::SetTitlePrefix(const std::wstring& prefix) const
 {
-    static CStringW suffix = IsAdmin() ? L" (Administrator)" : L"";
-    CStringW docName = prefix + L" " + GetTitle() + L" " + suffix;
-    CMainFrame::Get()->UpdateFrameTitleForDocument(docName.Trim());
+    static std::wstring suffix = IsAdmin() ? L" (Administrator)" : L"";
+    std::wstring docName = prefix + L" " + GetTitle().GetString() + L" " + suffix;
+    CMainFrame::Get()->UpdateFrameTitleForDocument(TrimString(docName).c_str());
 }
 
-COLORREF CDirStatDoc::GetCushionColor(LPCWSTR ext)
+COLORREF CDirStatDoc::GetCushionColor(const std::wstring & ext)
 {
-    SExtensionRecord r;
-    VERIFY(GetExtensionData()->Lookup(ext, r));
-    return r.color;
+    const auto& record = GetExtensionData()->find(ext);
+    VERIFY(record != GetExtensionData()->end());
+    return record->second.color;
 }
 
 COLORREF CDirStatDoc::GetZoomColor()
@@ -317,23 +316,23 @@ COLORREF CDirStatDoc::GetZoomColor()
 
 const CExtensionData* CDirStatDoc::GetExtensionData()
 {
-    if (!m_extensionDataValid)
+    if (!m_ExtensionDataValid)
     {
         RebuildExtensionData();
     }
-    return &m_extensionData;
+    return &m_ExtensionData;
 }
 
 ULONGLONG CDirStatDoc::GetRootSize() const
 {
-    ASSERT(m_rootItem != nullptr);
+    ASSERT(m_RootItem != nullptr);
     ASSERT(IsRootDone());
-    return m_rootItem->GetSizePhysical();
+    return m_RootItem->GetSizePhysical();
 }
 
-bool CDirStatDoc::IsDrive(const CStringW& spec)
+bool CDirStatDoc::IsDrive(const std::wstring& spec)
 {
-    return 3 == spec.GetLength() && wds::chrColon == spec[1] && wds::chrBackslash == spec[2];
+    return 3 == spec.size() && wds::chrColon == spec[1] && wds::chrBackslash == spec[2];
 }
 
 // Starts a refresh of all mount points in our tree.
@@ -351,27 +350,27 @@ void CDirStatDoc::RefreshReparsePointItems()
 
 bool CDirStatDoc::HasRootItem() const
 {
-    return m_rootItem != nullptr;
+    return m_RootItem != nullptr;
 }
 
 bool CDirStatDoc::IsRootDone() const
 {
-    return HasRootItem() && m_rootItem->IsDone();
+    return HasRootItem() && m_RootItem->IsDone();
 }
 
 CItem* CDirStatDoc::GetRootItem() const
 {
-    return m_rootItem;
+    return m_RootItem;
 }
 
 CItem* CDirStatDoc::GetZoomItem() const
 {
-    return m_zoomItem;
+    return m_ZoomItem;
 }
 
 CItemDupe* CDirStatDoc::GetRootItemDupe() const
 {
-    return m_rootItemDupe;
+    return m_RootItemDupe;
 }
 
 bool CDirStatDoc::IsZoomed() const
@@ -379,15 +378,15 @@ bool CDirStatDoc::IsZoomed() const
     return GetZoomItem() != GetRootItem();
 }
 
-void CDirStatDoc::SetHighlightExtension(const LPCWSTR ext)
+void CDirStatDoc::SetHighlightExtension(const std::wstring & ext)
 {
-    m_highlightExtension = ext;
+    m_HighlightExtension = ext;
     CMainFrame::Get()->SetSelectionMessageText();
 }
 
-CStringW CDirStatDoc::GetHighlightExtension()
+std::wstring CDirStatDoc::GetHighlightExtension()
 {
-    return m_highlightExtension;
+    return m_HighlightExtension;
 }
 
 // The very root has been deleted.
@@ -412,7 +411,7 @@ bool CDirStatDoc::UserDefinedCleanupWorksForItem(USERDEFINEDCLEANUP* udc, const 
         (item->HasUncPath() && udc->worksForUncPaths);
 }
 
-void CDirStatDoc::OpenItem(const CItem* item, LPCWSTR verb)
+void CDirStatDoc::OpenItem(const CItem* item, const std::wstring & verb)
 {
     ASSERT(item != nullptr);
 
@@ -424,7 +423,7 @@ void CDirStatDoc::OpenItem(const CItem* item, LPCWSTR verb)
     }
     else
     {
-        pidl = ILCreateFromPath(item->GetPath());
+        pidl = ILCreateFromPath(item->GetPath().c_str());
     }
 
     // launch properties dialog
@@ -432,7 +431,7 @@ void CDirStatDoc::OpenItem(const CItem* item, LPCWSTR verb)
     ZeroMemory(&sei, sizeof(sei));
     sei.cbSize = sizeof(sei);
     sei.hwnd = *AfxGetMainWnd();
-    sei.lpVerb = verb;
+    sei.lpVerb = verb.c_str();
     sei.fMask = SEE_MASK_INVOKEIDLIST | SEE_MASK_IDLIST;
     sei.lpIDList = pidl;
     sei.nShow = SW_SHOWNORMAL;
@@ -441,14 +440,14 @@ void CDirStatDoc::OpenItem(const CItem* item, LPCWSTR verb)
 
 void CDirStatDoc::RecurseRefreshReparsePoints(CItem* item)
 {
-    std::vector<CItem*> to_refresh;
+    std::vector<CItem*> toRefresh;
 
     if (item == nullptr) return;
-    std::stack<CItem*> reparse_stack({item});
-    while (!reparse_stack.empty())
+    std::stack<CItem*> reparseStack({item});
+    while (!reparseStack.empty())
     {
-        const auto& qitem = reparse_stack.top();
-        reparse_stack.pop();
+        const auto& qitem = reparseStack.top();
+        reparseStack.pop();
 
         if (!item->IsType(IT_DIRECTORY | IT_DRIVE)) continue;
         for (const auto& child : qitem->GetChildren())
@@ -458,21 +457,21 @@ void CDirStatDoc::RecurseRefreshReparsePoints(CItem* item)
                 continue;
             }
 
-            if (CDirStatApp::Get()->GetReparseInfo()->IsReparsePoint(child->GetAttributes()) &&
+            if (CReparsePoints::IsReparsePoint(child->GetAttributes()) &&
                 CDirStatApp::Get()->IsFollowingAllowed(child->GetPathLong(), child->GetAttributes()))
             {
-                to_refresh.push_back(child);
+                toRefresh.push_back(child);
             }
             else
             {
-                reparse_stack.push(child);
+                reparseStack.push(child);
             }
         }
     }
 
-    if (!to_refresh.empty())
+    if (!toRefresh.empty())
     {
-        RefreshItem(to_refresh);
+        RefreshItem(toRefresh);
     }
 }
 
@@ -507,80 +506,75 @@ std::vector<CItem*> CDirStatDoc::GetDriveItems() const
 
 void CDirStatDoc::RefreshRecyclers() const
 {
-    std::vector<CItem*> to_refresh;
+    std::vector<CItem*> toRefresh;
     for (const auto & drive : GetDriveItems())
     {
         if (CItem* recycler = drive->FindRecyclerItem(); recycler != nullptr)
         {
-            to_refresh.push_back(recycler);
+            toRefresh.push_back(recycler);
         }
     }
 
-    if (!to_refresh.empty()) GetDocument()->StartupCoordinator(to_refresh);
+    if (!toRefresh.empty()) GetDocument()->StartupCoordinator(toRefresh);
 }
 
 void CDirStatDoc::RebuildExtensionData()
 {
     CWaitCursor wc;
 
-    m_extensionData.RemoveAll();
+    m_ExtensionData.clear();
     if (IsRootDone())
     {
-        m_rootItem->CollectExtensionData(&m_extensionData);
+        m_RootItem->CollectExtensionData(&m_ExtensionData);
     }
     
-    CStringArray sortedExtensions;
+    std::vector<std::wstring> sortedExtensions;
     SortExtensionData(sortedExtensions);
     SetExtensionColors(sortedExtensions);
 
-    m_extensionDataValid = true;
+    m_ExtensionDataValid = true;
 }
 
-void CDirStatDoc::SortExtensionData(CStringArray& sortedExtensions)
+void CDirStatDoc::SortExtensionData(std::vector<std::wstring>& sortedExtensions)
 {
-    sortedExtensions.SetSize(m_extensionData.GetCount());
+    sortedExtensions.resize(m_ExtensionData.size());
 
-    POSITION pos = m_extensionData.GetStartPosition();
-    for (int i = 0; pos != nullptr; i++)
+    for (int i = 0; const auto& ext : m_ExtensionData | std::views::keys)
     {
-        CStringW ext;
-        SExtensionRecord r;
-        m_extensionData.GetNextAssoc(pos, ext, r);
-
-        sortedExtensions[i] = ext;
+        sortedExtensions[i++] = ext;
     }
 
-    _pqsortExtensionData = &m_extensionData;
-    qsort(sortedExtensions.GetData(), sortedExtensions.GetSize(), sizeof(CStringW), [](LPCVOID item1, LPCVOID item2)
+    _pqsortExtensionData = &m_ExtensionData;
+    qsort(sortedExtensions.data(), sortedExtensions.size(), sizeof(std::wstring), [](const LPCVOID item1, const LPCVOID item2)
     {
-        const CStringW* ext1 = static_cast<const CStringW*>(item1);
-        const CStringW* ext2 = static_cast<const CStringW*>(item2);
-        SExtensionRecord r1;
-        SExtensionRecord r2;
-        VERIFY(_pqsortExtensionData->Lookup(*ext1, r1));
-        VERIFY(_pqsortExtensionData->Lookup(*ext2, r2));
-        return usignum(r2.bytes, r1.bytes);
+        const std::wstring &ext1 = *static_cast<const std::wstring*>(item1);
+        const std::wstring &ext2 = *static_cast<const std::wstring*>(item2);
+        const auto& r1 = _pqsortExtensionData->find(ext1);
+        const auto& r2 = _pqsortExtensionData->find(ext2);
+        ASSERT(r1 != _pqsortExtensionData->end());
+        ASSERT(r2 != _pqsortExtensionData->end());
+        return usignum(r2->second.bytes, r1->second.bytes);
     });
     _pqsortExtensionData = nullptr;
 }
 
-void CDirStatDoc::SetExtensionColors(const CStringArray& sortedExtensions)
+void CDirStatDoc::SetExtensionColors(const std::vector<std::wstring>& sortedExtensions)
 {
-    static CArray<COLORREF, COLORREF&> colors;
+    static std::vector<COLORREF> colors;
 
-    if (colors.IsEmpty())
+    if (colors.empty())
     {
         CTreemap::GetDefaultPalette(colors);
     }
 
-    for (int i = 0; i < sortedExtensions.GetSize(); i++)
+    for (std::size_t i = 0; i < sortedExtensions.size(); i++)
     {
-        COLORREF c = colors[colors.GetSize() - 1];
-        if (i < colors.GetSize())
+        COLORREF c = colors[colors.size() - 1];
+        if (i < colors.size())
         {
             c = colors[i];
         }
-        m_extensionData[sortedExtensions[i]].color = c;
+        m_ExtensionData[sortedExtensions[i]].color = c;
     }
 }
 
@@ -589,7 +583,7 @@ CExtensionData* CDirStatDoc::_pqsortExtensionData;
 // Deletes a file or directory via SHFileOperation.
 // Return: false, if canceled
 //
-bool CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, bool toTrashBin)
+bool CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, const bool toTrashBin)
 {
     if (COptions::ShowDeleteWarning)
     {
@@ -598,7 +592,7 @@ bool CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, bool toT
         {
             return false;
         }
-        COptions::ShowDeleteWarning = !warning.m_dontShowAgain;
+        COptions::ShowDeleteWarning = !warning.m_DontShowAgain;
     }
 
     // Fetch the parent item of the current focus / selected item so we can reselect
@@ -621,7 +615,7 @@ bool CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, bool toT
 
 void CDirStatDoc::SetZoomItem(CItem* item)
 {
-    m_zoomItem = item;
+    m_ZoomItem = item;
     UpdateAllViews(nullptr, HINT_ZOOMCHANGED);
 }
 
@@ -644,8 +638,8 @@ void CDirStatDoc::AskForConfirmation(USERDEFINEDCLEANUP* udc, const CItem* item)
     }
 
     CStringW msg;
-    msg.FormatMessage(udc->recurseIntoSubdirectories ? Localization::Lookup(IDS_RUDC_CONFIRMATIONss) :
-        Localization::Lookup(IDS_UDC_CONFIRMATIONss), udc->title.Obj().c_str(), item->GetPath().GetString());
+    msg.FormatMessage(udc->recurseIntoSubdirectories ? Localization::Lookup(IDS_RUDC_CONFIRMATIONss).c_str() :
+        Localization::Lookup(IDS_UDC_CONFIRMATIONss).c_str(), udc->title.Obj().c_str(), item->GetPath().c_str());
 
     if (IDYES != AfxMessageBox(msg, MB_YESNO))
     {
@@ -657,23 +651,23 @@ void CDirStatDoc::PerformUserDefinedCleanup(USERDEFINEDCLEANUP* udc, const CItem
 {
     CWaitCursor wc;
 
-    const CStringW path = item->GetPath();
+    const std::wstring path = item->GetPath();
 
     // Verify that path still exists
     if (item->IsType(IT_DIRECTORY | IT_DRIVE))
     {
         if (!FolderExists(path) && !DriveExists(path))
         {
-            MdThrowStringExceptionF(Localization::Lookup(IDS_THEDIRECTORYsDOESNOTEXIST), path.GetString());
+            MdThrowStringExceptionF(Localization::Lookup(IDS_THEDIRECTORYsDOESNOTEXIST).c_str(), path.c_str());
         }
     }
     else
     {
         ASSERT(item->IsType(IT_FILE));
 
-        if (!::PathFileExists(path))
+        if (!::PathFileExists(path.c_str()))
         {
-            MdThrowStringExceptionF(Localization::Lookup(IDS_THEFILEsDOESNOTEXIST), path.GetString());
+            MdThrowStringExceptionF(Localization::Lookup(IDS_THEFILEsDOESNOTEXIST).c_str(), path.c_str());
         }
     }
 
@@ -685,7 +679,7 @@ void CDirStatDoc::PerformUserDefinedCleanup(USERDEFINEDCLEANUP* udc, const CItem
     }
     else
     {
-        CallUserDefinedCleanup(item->IsType(IT_DIRECTORY | IT_DRIVE), udc->commandLine.Obj().c_str(), path, path, udc->showConsoleWindow, udc->waitForCompletion);
+        CallUserDefinedCleanup(item->IsType(IT_DIRECTORY | IT_DRIVE), udc->commandLine.Obj(), path, path, udc->showConsoleWindow, udc->waitForCompletion);
     }
 }
 
@@ -717,7 +711,7 @@ void CDirStatDoc::RefreshAfterUserDefinedCleanup(const USERDEFINEDCLEANUP* udc, 
     }
 }
 
-void CDirStatDoc::RecursiveUserDefinedCleanup(USERDEFINEDCLEANUP* udc, const CStringW& rootPath, const CStringW& currentPath)
+void CDirStatDoc::RecursiveUserDefinedCleanup(USERDEFINEDCLEANUP* udc, const std::wstring& rootPath, const std::wstring& currentPath)
 {
     // (Depth first.)
 
@@ -736,17 +730,16 @@ void CDirStatDoc::RecursiveUserDefinedCleanup(USERDEFINEDCLEANUP* udc, const CSt
         RecursiveUserDefinedCleanup(udc, rootPath, finder.GetFilePath());
     }
 
-    CallUserDefinedCleanup(true, udc->commandLine.Obj().c_str(), rootPath, currentPath, udc->showConsoleWindow, true);
+    CallUserDefinedCleanup(true, udc->commandLine.Obj(), rootPath, currentPath, udc->showConsoleWindow, true);
 }
 
-void CDirStatDoc::CallUserDefinedCleanup(bool isDirectory, const CStringW& format, const CStringW& rootPath, const CStringW& currentPath, bool showConsoleWindow, bool wait)
+void CDirStatDoc::CallUserDefinedCleanup(const bool isDirectory, const std::wstring& format, const std::wstring& rootPath, const std::wstring& currentPath, const bool showConsoleWindow, const bool wait)
 {
-    const CStringW userCommandLine = BuildUserDefinedCleanupCommandLine(format, rootPath, currentPath);
+    const std::wstring userCommandLine = BuildUserDefinedCleanupCommandLine(format, rootPath, currentPath);
 
-    const CStringW app = GetCOMSPEC();
-    CStringW cmdline;
-    cmdline.Format(L"%s /C %s", GetBaseNameFromPath(app).GetString(), userCommandLine.GetString());
-    const CStringW directory = isDirectory ? currentPath : GetFolderNameFromPath(currentPath);
+    const std::wstring app = GetCOMSPEC();
+    std::wstring cmdline = GetBaseNameFromPath(app) + L" /C " + userCommandLine;
+    const std::wstring directory = isDirectory ? currentPath : GetFolderNameFromPath(currentPath);
 
     STARTUPINFO si;
     ZeroMemory(&si, sizeof(si));
@@ -757,12 +750,12 @@ void CDirStatDoc::CallUserDefinedCleanup(bool isDirectory, const CStringW& forma
     PROCESS_INFORMATION pi;
     ZeroMemory(&pi, sizeof(pi));
 
-    if (CreateProcess(app, cmdline.GetBuffer(), nullptr,
+    if (CreateProcess(app.c_str(), cmdline.data(), nullptr,
         nullptr, false, 0, nullptr,
-        directory, &si, &pi))
+        directory.c_str(), &si, &pi))
     {
-        MdThrowStringExceptionF(Localization::Lookup(IDS_COULDNOTCREATEPROCESSssss), app.GetString(),
-            cmdline.GetString(), directory.GetString(), MdGetWinErrorText(::GetLastError()).GetString());
+        MdThrowStringExceptionF(Localization::Lookup(IDS_COULDNOTCREATEPROCESSssss).c_str(), app.c_str(),
+            cmdline.c_str(), directory.c_str(), MdGetWinErrorText(::GetLastError()).c_str());
         return;
     }
 
@@ -776,47 +769,47 @@ void CDirStatDoc::CallUserDefinedCleanup(bool isDirectory, const CStringW& forma
     CloseHandle(pi.hProcess);
 }
 
-CStringW CDirStatDoc::BuildUserDefinedCleanupCommandLine(LPCWSTR format, LPCWSTR rootPath, LPCWSTR currentPath)
+std::wstring CDirStatDoc::BuildUserDefinedCleanupCommandLine(const std::wstring & format, const std::wstring & rootPath, const std::wstring & currentPath)
 {
-    const CStringW rootName    = GetBaseNameFromPath(rootPath);
-    const CStringW currentName = GetBaseNameFromPath(currentPath);
+    const std::wstring rootName    = GetBaseNameFromPath(rootPath);
+    const std::wstring currentName = GetBaseNameFromPath(currentPath);
 
-    CStringW s = format;
+    std::wstring s = format;
 
     // Because file names can contain "%", we first replace our placeholders with
     // strings which contain a forbidden character.
-    s.Replace(L"%p", L">p");
-    s.Replace(L"%n", L">n");
-    s.Replace(L"%sp", L">sp");
-    s.Replace(L"%sn", L">sn");
+    ReplaceString(s, L"%p", L">p");
+    ReplaceString(s, L"%n", L">n");
+    ReplaceString(s, L"%sp", L">sp");
+    ReplaceString(s, L"%sn", L">sn");
 
     // Now substitute
-    s.Replace(L">p", rootPath);
-    s.Replace(L">n", rootName);
-    s.Replace(L">sp", currentPath);
-    s.Replace(L">sn", currentName);
+    ReplaceString(s, L">p", rootPath);
+    ReplaceString(s, L">n", rootName);
+    ReplaceString(s, L">sp", currentPath);
+    ReplaceString(s,L">sn", currentName);
 
     return s;
 }
 
 void CDirStatDoc::PushReselectChild(CItem* item)
 {
-    m_reselectChildStack.AddHead(item);
+    m_ReselectChildStack.AddHead(item);
 }
 
 CItem* CDirStatDoc::PopReselectChild()
 {
-    return m_reselectChildStack.RemoveHead();
+    return m_ReselectChildStack.RemoveHead();
 }
 
 void CDirStatDoc::ClearReselectChildStack()
 {
-    m_reselectChildStack.RemoveAll();
+    m_ReselectChildStack.RemoveAll();
 }
 
 bool CDirStatDoc::IsReselectChildAvailable() const
 {
-    return !m_reselectChildStack.IsEmpty();
+    return !m_ReselectChildStack.IsEmpty();
 }
 
 bool CDirStatDoc::DirectoryListHasFocus()
@@ -837,26 +830,26 @@ std::vector<CItem*> CDirStatDoc::GetAllSelected()
 
 void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
 {
-    struct command_filter
+    struct commandFilter
     {
-        bool allow_none = false;       // allow display when nothing is selected
-        bool allow_many = false;       // allow display when multiple items are selected
-        bool allow_early = false;      // allow display before processing is finished
-        bool tree_focus = false;       // only display in tree view
-        ITEMTYPE types_allow = IT_ANY; // only display if these types are allowed
+        bool allowNone = false;       // allow display when nothing is selected
+        bool allowMany = false;       // allow display when multiple items are selected
+        bool allowEarly = false;      // allow display before processing is finished
+        bool treeFocus = false;       // only display in tree view
+        ITEMTYPE typesAllow = IT_ANY; // only display if these types are allowed
         bool (*extra)(CItem*) = [](CItem*) { return true; }; // extra checks
     };
 
     // special conditions
     static auto doc = this;
-    static bool (*can_zoom_out)(CItem*) = [](CItem*) { return doc->GetZoomItem() != doc->GetRootItem(); };
-    static bool (*parent_not_null)(CItem*) = [](CItem* item) { return item != nullptr && item->GetParent() != nullptr; };
-    static bool (*reslect_avail)(CItem*) = [](CItem*) { return doc->IsReselectChildAvailable(); };
-    static bool (*not_root)(CItem*) = [](CItem* item) { return item != nullptr && !item->IsRootItem(); };
-    static bool (*is_suspended)(CItem*) = [](CItem*) { return CMainFrame::Get()->IsScanSuspended(); };
-    static bool (*is_not_suspended)(CItem*) = [](CItem*) { return doc->HasRootItem() && !doc->IsRootDone() && !CMainFrame::Get()->IsScanSuspended(); };
+    static bool (*canZoomOut)(CItem*) = [](CItem*) { return doc->GetZoomItem() != doc->GetRootItem(); };
+    static bool (*parentNotNull)(CItem*) = [](CItem* item) { return item != nullptr && item->GetParent() != nullptr; };
+    static bool (*reslectAvail)(CItem*) = [](CItem*) { return doc->IsReselectChildAvailable(); };
+    static bool (*notRoot)(CItem*) = [](CItem* item) { return item != nullptr && !item->IsRootItem(); };
+    static bool (*isSuspended)(CItem*) = [](CItem*) { return CMainFrame::Get()->IsScanSuspended(); };
+    static bool (*isNotSuspended)(CItem*) = [](CItem*) { return doc->HasRootItem() && !doc->IsRootDone() && !CMainFrame::Get()->IsScanSuspended(); };
 
-    static std::unordered_map<UINT, const command_filter> filters
+    static std::unordered_map<UINT, const commandFilter> filters
     {
         // ID                           none   many   early  focus  types
         { ID_REFRESH_ALL,             { true,  true,  false, false, IT_ANY} },
@@ -864,16 +857,16 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
         { ID_SAVE_RESULTS,            { true,  true,  false, false, IT_ANY} },
         { ID_EDIT_COPY_CLIPBOARD,     { false, true,  true,  false, IT_DRIVE | IT_DIRECTORY | IT_FILE } },
         { ID_CLEANUP_EMPTY_BIN,       { true,  true,  false, false, IT_ANY} },
-        { ID_TREEMAP_RESELECT_CHILD,  { true,  true,  true,  false, IT_ANY, reslect_avail } },
-        { ID_TREEMAP_SELECT_PARENT,   { false, false, true,  false, IT_ANY, parent_not_null } },
+        { ID_TREEMAP_RESELECT_CHILD,  { true,  true,  true,  false, IT_ANY, reslectAvail } },
+        { ID_TREEMAP_SELECT_PARENT,   { false, false, true,  false, IT_ANY, parentNotNull } },
         { ID_TREEMAP_ZOOMIN,          { false, false, false, false, IT_DRIVE | IT_DIRECTORY} },
-        { ID_TREEMAP_ZOOMOUT,         { false, false, false, false, IT_DIRECTORY, can_zoom_out } },
+        { ID_TREEMAP_ZOOMOUT,         { false, false, false, false, IT_DIRECTORY, canZoomOut } },
         { ID_CLEANUP_EXPLORER_SELECT, { false, true,  true,  false, IT_DIRECTORY | IT_FILE } },
         { ID_CLEANUP_OPEN_IN_CONSOLE, { false, true,  true,  false, IT_DRIVE | IT_DIRECTORY | IT_FILE } },
-        { ID_SCAN_RESUME,             { true,  true,  true,  false, IT_ANY, is_suspended } },
-        { ID_SCAN_SUSPEND,            { true,  true,  true,  false, IT_ANY, is_not_suspended } },
-        { ID_CLEANUP_DELETE_BIN,      { false, true,  false,  true, IT_DIRECTORY | IT_FILE, not_root } },
-        { ID_CLEANUP_DELETE,          { false, true,  false,  true, IT_DIRECTORY | IT_FILE, not_root } },
+        { ID_SCAN_RESUME,             { true,  true,  true,  false, IT_ANY, isSuspended } },
+        { ID_SCAN_SUSPEND,            { true,  true,  true,  false, IT_ANY, isNotSuspended } },
+        { ID_CLEANUP_DELETE_BIN,      { false, true,  false,  true, IT_DIRECTORY | IT_FILE, notRoot } },
+        { ID_CLEANUP_DELETE,          { false, true,  false,  true, IT_DIRECTORY | IT_FILE, notRoot } },
         { ID_CLEANUP_OPEN_SELECTED,   { false, true,  true,  false, IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY | IT_FILE } },
         { ID_CLEANUP_PROPERTIES,      { false, true,  true,  false, IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY | IT_FILE } }
     };
@@ -888,15 +881,15 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
     const auto& items = GetAllSelected();
 
     bool allow = true;
-    allow &= !filter.tree_focus || DirectoryListHasFocus() || DuplicateListHasFocus();
-    allow &= filter.allow_none || !items.empty();
-    allow &= filter.allow_many || items.size() <= 1;
-    allow &= filter.allow_early || IsRootDone();
+    allow &= !filter.treeFocus || DirectoryListHasFocus() || DuplicateListHasFocus();
+    allow &= filter.allowNone || !items.empty();
+    allow &= filter.allowMany || items.size() <= 1;
+    allow &= filter.allowEarly || IsRootDone();
     if (items.empty()) allow &= filter.extra(nullptr);
     for (const auto& item : items)
     {
         allow &= filter.extra(item);
-        allow &= item->IsType(filter.types_allow);
+        allow &= item->IsType(filter.typesAllow);
     }
 
     pCmdUI->Enable(allow); 
@@ -943,10 +936,10 @@ void CDirStatDoc::OnRefreshAll()
 void CDirStatDoc::OnSaveResults()
 {
     // Request the file path from the user
-    CStringW file_select_string;
-    file_select_string.Format(L"%s (*.csv)|*.csv|%s (*.*)|*.*||",
-        Localization::Lookup(IDS_CSV_FILES).GetString(), Localization::Lookup(IDS_ALL_FILES).GetString());
-    CFileDialog dlg(FALSE, L"csv", nullptr, OFN_EXPLORER | OFN_DONTADDTORECENT, file_select_string.GetString());
+    CStringW fileSelectString;
+    fileSelectString.Format(L"%s (*.csv)|*.csv|%s (*.*)|*.*||",
+        Localization::Lookup(IDS_CSV_FILES).c_str(), Localization::Lookup(IDS_ALL_FILES).c_str());
+    CFileDialog dlg(FALSE, L"csv", nullptr, OFN_EXPLORER | OFN_DONTADDTORECENT, fileSelectString.GetString());
     if (dlg.DoModal() != IDOK) return;
 
     CWaitCursor wc;
@@ -956,10 +949,10 @@ void CDirStatDoc::OnSaveResults()
 void CDirStatDoc::OnLoadResults()
 {
     // Request the file path from the user
-    CStringW file_select_string;
-    file_select_string.Format(L"%s (*.csv)|*.csv|%s (*.*)|*.*||",
-        Localization::Lookup(IDS_CSV_FILES).GetString(), Localization::Lookup(IDS_ALL_FILES).GetString());
-    CFileDialog dlg(TRUE, L"csv", nullptr, OFN_EXPLORER | OFN_DONTADDTORECENT | OFN_PATHMUSTEXIST, file_select_string.GetString());
+    CStringW fileSelectString;
+    fileSelectString.Format(L"%s (*.csv)|*.csv|%s (*.*)|*.*||",
+        Localization::Lookup(IDS_CSV_FILES).c_str(), Localization::Lookup(IDS_ALL_FILES).c_str());
+    CFileDialog dlg(TRUE, L"csv", nullptr, OFN_EXPLORER | OFN_DONTADDTORECENT | OFN_PATHMUSTEXIST, fileSelectString.GetString());
     if (dlg.DoModal() != IDOK) return;
 
     CWaitCursor wc;
@@ -970,15 +963,15 @@ void CDirStatDoc::OnLoadResults()
 void CDirStatDoc::OnEditCopy()
 {
     // create concatenated paths
-    CStringW paths;
+    std::wstring paths;
     const auto & items = GetAllSelected();
     for (const auto & item : items)
     {
-        if (paths.GetLength() > 0) paths += L"\r\n";
+        if (!paths.empty()) paths += L"\r\n";
         paths += item->GetPath();
     }
 
-    CMainFrame::Get()->CopyToClipboard(paths.GetBuffer());
+    CMainFrame::Get()->CopyToClipboard(paths);
 }
 
 void CDirStatDoc::OnCleanupEmptyRecycleBin()
@@ -993,21 +986,21 @@ void CDirStatDoc::OnCleanupEmptyRecycleBin()
 
 void CDirStatDoc::OnUpdateViewShowFreeSpace(CCmdUI* pCmdUI)
 {
-    pCmdUI->SetCheck(m_showFreeSpace);
+    pCmdUI->SetCheck(m_ShowFreeSpace);
 }
 
 void CDirStatDoc::OnViewShowFreeSpace()
 {
     for (const auto& drive : GetDriveItems())
     {
-        if (m_showFreeSpace)
+        if (m_ShowFreeSpace)
         {
             const CItem* free = drive->FindFreeSpaceItem();
             ASSERT(free != nullptr);
 
             if (GetZoomItem() == free)
             {
-                m_zoomItem = free->GetParent();
+                m_ZoomItem = free->GetParent();
             }
 
             drive->RemoveFreeSpaceItem();
@@ -1019,8 +1012,8 @@ void CDirStatDoc::OnViewShowFreeSpace()
     }
 
     // Toogle value
-    m_showFreeSpace = !m_showFreeSpace;
-    COptions::ShowFreeSpace = m_showFreeSpace;
+    m_ShowFreeSpace = !m_ShowFreeSpace;
+    COptions::ShowFreeSpace = m_ShowFreeSpace;
 
     // Force recalculation and graph refresh
     StartupCoordinator({});
@@ -1028,21 +1021,21 @@ void CDirStatDoc::OnViewShowFreeSpace()
 
 void CDirStatDoc::OnUpdateViewShowUnknown(CCmdUI* pCmdUI)
 {
-    pCmdUI->SetCheck(m_showUnknown);
+    pCmdUI->SetCheck(m_ShowUnknown);
 }
 
 void CDirStatDoc::OnViewShowUnknown()
 {
     for (const auto& drive : GetDriveItems())
     {
-        if (m_showUnknown)
+        if (m_ShowUnknown)
         {
             const CItem* unknown = drive->FindUnknownItem();
             ASSERT(unknown != nullptr);
 
             if (GetZoomItem() == unknown)
             {
-                m_zoomItem = unknown->GetParent();
+                m_ZoomItem = unknown->GetParent();
             }
 
             drive->RemoveUnknownItem();
@@ -1054,8 +1047,8 @@ void CDirStatDoc::OnViewShowUnknown()
     }
 
     // Toogle value
-    m_showUnknown = !m_showUnknown;
-    COptions::ShowUnknown = m_showUnknown;
+    m_ShowUnknown = !m_ShowUnknown;
+    COptions::ShowUnknown = m_ShowUnknown;
 
     // Force recalculation and graph refresh
     StartupCoordinator({});
@@ -1086,7 +1079,7 @@ void CDirStatDoc::OnExplorerSelect()
     for (const auto& item : items)
     {
         // use function to determine parent to address non-drive rooted paths
-        std::filesystem::path target(item->GetPath().GetString());
+        std::filesystem::path target(item->GetPath());
         paths.insert(target.parent_path());
     }
     
@@ -1097,18 +1090,18 @@ void CDirStatDoc::OnExplorerSelect()
         parent = ILCreateFromPath(path.c_str());
 
         // structures to hold and track pidls for children
-        std::vector<SmartPointer<LPITEMIDLIST>> pidl_cleanup;
+        std::vector<SmartPointer<LPITEMIDLIST>> pidlCleanup;
         std::vector<LPITEMIDLIST> pidl;
 
         // create list of children from paths
         for (auto & item : items)
         {
             // not processing this path yet
-            std::filesystem::path target(item->GetPath().GetString());
+            std::filesystem::path target(item->GetPath());
             if (target.parent_path() == path)
             {
-                pidl.push_back(ILCreateFromPath(item->GetPath()));
-                pidl_cleanup.emplace_back(CoTaskMemFree, pidl.back());
+                pidl.push_back(ILCreateFromPath(item->GetPath().c_str()));
+                pidlCleanup.emplace_back(CoTaskMemFree, pidl.back());
             }
         }
 
@@ -1126,14 +1119,14 @@ void CDirStatDoc::OnCommandPromptHere()
         std::unordered_set<std::wstring>paths;
         for (const auto& item : items)
         {
-            paths.insert(item->GetFolderPath().GetString());
+            paths.insert(item->GetFolderPath());
         }
 
         // launch a command prompt for each path
-        const CStringW cmd = GetCOMSPEC();
+        const std::wstring cmd = GetCOMSPEC();
         for (const auto& path : paths)
         {
-            ShellExecuteThrow(*AfxGetMainWnd(), L"open", cmd, nullptr, path.c_str(), SW_SHOWNORMAL);
+            ShellExecuteThrow(*AfxGetMainWnd(), L"open", cmd, path, SW_SHOWNORMAL);
         }
     }
     catch (CException* pe)
@@ -1166,13 +1159,13 @@ void CDirStatDoc::OnUpdateUserDefinedCleanup(CCmdUI* pCmdUI)
 {
     const int i = pCmdUI->m_nID - ID_USERDEFINEDCLEANUP0;
     const auto & items = GetAllSelected();
-    bool allow_control = DirectoryListHasFocus() && COptions::UserDefinedCleanups.at(i).enabled && !items.empty();
-    if (allow_control) for (const auto & item : items)
+    bool allowControl = DirectoryListHasFocus() && COptions::UserDefinedCleanups.at(i).enabled && !items.empty();
+    if (allowControl) for (const auto & item : items)
     {
-        allow_control &= UserDefinedCleanupWorksForItem(&COptions::UserDefinedCleanups[i], item);
+        allowControl &= UserDefinedCleanupWorksForItem(&COptions::UserDefinedCleanups[i], item);
     }
 
-    pCmdUI->Enable(allow_control);
+    pCmdUI->Enable(allowControl);
 }
 
 void CDirStatDoc::OnUserDefinedCleanup(const UINT id)
@@ -1245,13 +1238,13 @@ void CDirStatDoc::OnScanSuspend()
     {
         CWaitCursor wc;
         queue.suspend(true);
-        PostMessage(CMainFrame::Get()->GetSafeHwnd(), WM_USER + 1, 0, 0);
+        PostMessage(CMainFrame::Get()->GetSafeHwnd(), WM_USER, 0, 0);
     }).detach();
 
     // Read all messages in this next loop, removing each message as we read it.
     for (MSG msg; ::GetMessage(&msg, nullptr, 0, 0); )
     {
-        if (msg.message == WM_USER + 1) break;
+        if (msg.message == WM_USER) break;
         ::TranslateMessage(&msg);
         ::DispatchMessage(&msg);
     }
@@ -1289,7 +1282,7 @@ void CDirStatDoc::StartupCoordinator(std::vector<CItem*> items)
     OnScanResume();
 
     // Address currently zoomed / selected item conflicts
-    const auto zoom_item = GetZoomItem();
+    const auto zoomItem = GetZoomItem();
     for (const auto& item : std::vector(items))
     {
         // Abort if bad entry detected
@@ -1299,7 +1292,7 @@ void CDirStatDoc::StartupCoordinator(std::vector<CItem*> items)
         }
 
         // Bring the zoom out if it would be invalidated
-        if (item->IsAncestorOf(zoom_item))
+        if (item->IsAncestorOf(zoomItem))
         {
             SetZoomItem(item);
         }
@@ -1319,22 +1312,22 @@ void CDirStatDoc::StartupCoordinator(std::vector<CItem*> items)
         static std::shared_mutex mutex;
         std::lock_guard lock(mutex);
 
-        const auto selected_items = GetAllSelected();
-        using visual_info = struct { bool wasExpanded; bool isSelected; int oldScrollPosition; };
-        std::unordered_map<CItem *,visual_info> visualInfo;
+        const auto selectedItems = GetAllSelected();
+        using VisualInfo = struct { bool wasExpanded; bool isSelected; int oldScrollPosition; };
+        std::unordered_map<CItem *,VisualInfo> visualInfo;
         for (auto item : std::vector(items))
         {
             // Record current visual arrangement to reapply afterward
             if (item->IsVisible())
             {
-                visualInfo[item].isSelected = std::ranges::find(selected_items, item) != selected_items.end();
+                visualInfo[item].isSelected = std::ranges::find(selectedItems, item) != selectedItems.end();
                 visualInfo[item].wasExpanded = item->IsExpanded();
             }
 
             // Skip pruning if it is a new element
             if (!item->IsDone()) continue;
 
-            item->UncacheImage();
+            item->UnCacheImage();
             item->UpwardRecalcLastChange(true);
             item->UpwardSubtractSizePhysical(item->GetSizePhysical());
             item->UpwardSubtractSizeLogical(item->GetSizeLogical());
@@ -1350,7 +1343,7 @@ void CDirStatDoc::StartupCoordinator(std::vector<CItem*> items)
             // Handle if item to be refreshed has been removed
             if (item->IsType(IT_FILE | IT_DIRECTORY | IT_DRIVE) &&
                 !FileFindEnhanced::DoesFileExist(item->GetFolderPath(),
-                    item->IsType(IT_FILE) ? item->GetName() : CStringW(L"")))
+                    item->IsType(IT_FILE) ? item->GetName() : std::wstring()))
             {
                 // Remove item from list so we do not rescan it
                 std::erase(items, item);
@@ -1375,8 +1368,8 @@ void CDirStatDoc::StartupCoordinator(std::vector<CItem*> items)
         }
 
         // Reset queue from last iteration
-        const int max_threads = COptions::ScanningThreads;
-        queue.reset(max_threads);
+        const int maxThreads = COptions::ScanningThreads;
+        queue.reset(maxThreads);
 
         // Add items to processing queue
         for (const auto item : std::vector(items))
@@ -1393,10 +1386,10 @@ void CDirStatDoc::StartupCoordinator(std::vector<CItem*> items)
         }
 
         // Create subordinate threads if there is work to do
-        if (queue.has_items())
+        if (queue.hasItems())
         {
             threads.clear();
-            for (int i = 0; i < max_threads; i++)
+            for (int i = 0; i < maxThreads; i++)
             {
                 threads.emplace_back([this]
                 {
@@ -1405,7 +1398,7 @@ void CDirStatDoc::StartupCoordinator(std::vector<CItem*> items)
             }
 
             // Wait for all threads to run out of work
-            if (queue.wait_for_all())
+            if (queue.waitForAll())
             {
                 // Exit here and stop progress if drained by an outside actor
                 CMainFrame::Get()->InvokeInMessageThread([]

@@ -26,7 +26,6 @@
 #include "MainFrame.h"
 #include <common/CommonHelpers.h>
 #include "FileTreeView.h"
-#include "OsSpecific.h"
 #include "GlobalHelpers.h"
 #include "Localization.h"
 
@@ -36,12 +35,12 @@ IMPLEMENT_DYNCREATE(CFileTreeView, CView)
 
 CFileTreeView::CFileTreeView()
 {
-    m_control.SetSorting(COL_SIZE_PHYSICAL, false);
+    m_Control.SetSorting(COL_SIZE_PHYSICAL, false);
 }
 
 void CFileTreeView::SysColorChanged()
 {
-    m_control.SysColorChanged();
+    m_Control.SysColorChanged();
 }
 
 void CFileTreeView::OnDraw(CDC* pDC)
@@ -65,53 +64,53 @@ BEGIN_MESSAGE_MAP(CFileTreeView, CView)
 END_MESSAGE_MAP()
 #pragma warning(pop)
 
-void CFileTreeView::OnSize(UINT nType, int cx, int cy)
+void CFileTreeView::OnSize(const UINT nType, const int cx, const int cy)
 {
     CView::OnSize(nType, cx, cy);
-    if (::IsWindow(m_control.m_hWnd))
+    if (::IsWindow(m_Control.m_hWnd))
     {
         CRect rc(0, 0, cx, cy);
-        m_control.MoveWindow(rc);
+        m_Control.MoveWindow(rc);
     }
 }
 
-void CFileTreeView::CreateColumns(bool all)
+void CFileTreeView::CreateColumns(const bool all)
 {
     if (all)
     {
-        m_control.InsertColumn(SHORT_MAX, Localization::Lookup(IDS_COL_NAME), LVCFMT_LEFT, 200, COL_NAME);
-        m_control.InsertColumn(SHORT_MAX, Localization::Lookup(IDS_COL_SUBTREEPERCENTAGE), LVCFMT_RIGHT, CItem::GetSubtreePercentageWidth(), COL_SUBTREEPERCENTAGE);
-        m_control.InsertColumn(SHORT_MAX, Localization::Lookup(IDS_COL_PERCENTAGE), LVCFMT_RIGHT, 55, COL_PERCENTAGE);
+        m_Control.InsertColumn(SHORT_MAX, Localization::Lookup(IDS_COL_NAME).c_str(), LVCFMT_LEFT, 200, COL_NAME);
+        m_Control.InsertColumn(SHORT_MAX, Localization::Lookup(IDS_COL_SUBTREEPERCENTAGE).c_str(), LVCFMT_RIGHT, CItem::GetSubtreePercentageWidth(), COL_SUBTREEPERCENTAGE);
+        m_Control.InsertColumn(SHORT_MAX, Localization::Lookup(IDS_COL_PERCENTAGE).c_str(), LVCFMT_RIGHT, 55, COL_PERCENTAGE);
     }
 
     // reset sort and remove optional
-    m_control.SetSorting(COL_PERCENTAGE, m_control.GetAscendingDefault(COL_PERCENTAGE));
-    m_control.SortItems();
-    while (m_control.DeleteColumn(COL_SIZE_PHYSICAL)) {}
+    m_Control.SetSorting(COL_PERCENTAGE, m_Control.GetAscendingDefault(COL_PERCENTAGE));
+    m_Control.SortItems();
+    while (m_Control.DeleteColumn(COL_SIZE_PHYSICAL)) {}
 
     // add optional columns based on settings
     if (COptions::ShowColumnSizePhysical)
-        m_control.InsertColumn(SHORT_MAX, Localization::Lookup(IDS_COL_SIZE_PHYSICAL), LVCFMT_RIGHT, 80, COL_SIZE_PHYSICAL);
+        m_Control.InsertColumn(SHORT_MAX, Localization::Lookup(IDS_COL_SIZE_PHYSICAL).c_str(), LVCFMT_RIGHT, 80, COL_SIZE_PHYSICAL);
     if (COptions::ShowColumnSizeLogical)
-        m_control.InsertColumn(SHORT_MAX, Localization::Lookup(IDS_COL_SIZE_LOGICAL), LVCFMT_RIGHT, 80, COL_SIZE_LOGICAL);
+        m_Control.InsertColumn(SHORT_MAX, Localization::Lookup(IDS_COL_SIZE_LOGICAL).c_str(), LVCFMT_RIGHT, 80, COL_SIZE_LOGICAL);
     if (COptions::ShowColumnItems)
-        m_control.InsertColumn(SHORT_MAX, Localization::Lookup(IDS_COL_ITEMS), LVCFMT_RIGHT, 60, COL_ITEMS);
+        m_Control.InsertColumn(SHORT_MAX, Localization::Lookup(IDS_COL_ITEMS).c_str(), LVCFMT_RIGHT, 60, COL_ITEMS);
     if (COptions::ShowColumnFiles)
-        m_control.InsertColumn(SHORT_MAX, Localization::Lookup(IDS_COL_FILES), LVCFMT_RIGHT, 60, COL_FILES);
+        m_Control.InsertColumn(SHORT_MAX, Localization::Lookup(IDS_COL_FILES).c_str(), LVCFMT_RIGHT, 60, COL_FILES);
     if (COptions::ShowColumnFolders)
-        m_control.InsertColumn(SHORT_MAX, Localization::Lookup(IDS_COL_FOLDERS), LVCFMT_RIGHT, 60, COL_FOLDERS);
+        m_Control.InsertColumn(SHORT_MAX, Localization::Lookup(IDS_COL_FOLDERS).c_str(), LVCFMT_RIGHT, 60, COL_FOLDERS);
     if (COptions::ShowColumnLastChange)
-        m_control.InsertColumn(SHORT_MAX, Localization::Lookup(IDS_COL_LASTCHANGE), LVCFMT_LEFT, 120, COL_LASTCHANGE);
+        m_Control.InsertColumn(SHORT_MAX, Localization::Lookup(IDS_COL_LASTCHANGE).c_str(), LVCFMT_LEFT, 120, COL_LASTCHANGE);
     if (COptions::ShowColumnAttributes)
-        m_control.InsertColumn(SHORT_MAX, Localization::Lookup(IDS_COL_ATTRIBUTES), LVCFMT_LEFT, 50, COL_ATTRIBUTES);
+        m_Control.InsertColumn(SHORT_MAX, Localization::Lookup(IDS_COL_ATTRIBUTES).c_str(), LVCFMT_LEFT, 50, COL_ATTRIBUTES);
     if (COptions::ShowColumnOwner)
-        m_control.InsertColumn(SHORT_MAX, Localization::Lookup(IDS_COL_OWNER), LVCFMT_LEFT, 120, COL_OWNER);
+        m_Control.InsertColumn(SHORT_MAX, Localization::Lookup(IDS_COL_OWNER).c_str(), LVCFMT_LEFT, 120, COL_OWNER);
 
-    m_control.OnColumnsInserted();
+    m_Control.OnColumnsInserted();
     
 }
 
-int CFileTreeView::OnCreate(LPCREATESTRUCT lpCreateStruct)
+int CFileTreeView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
 {
     if (CView::OnCreate(lpCreateStruct) == -1)
     {
@@ -119,15 +118,15 @@ int CFileTreeView::OnCreate(LPCREATESTRUCT lpCreateStruct)
     }
 
     constexpr RECT rect = {0, 0, 0, 0};
-    VERIFY(m_control.CreateEx(LVS_EX_HEADERDRAGDROP, WS_CHILD | WS_VISIBLE | LVS_REPORT | LVS_SHOWSELALWAYS, rect, this, ID_WDS_CONTROL));
+    VERIFY(m_Control.CreateEx(LVS_EX_HEADERDRAGDROP, WS_CHILD | WS_VISIBLE | LVS_REPORT | LVS_SHOWSELALWAYS, rect, this, ID_WDS_CONTROL));
 
-    m_control.ShowGrid(COptions::ListGrid);
-    m_control.ShowStripes(COptions::ListStripes);
-    m_control.ShowFullRowSelection(COptions::ListFullRowSelection);
+    m_Control.ShowGrid(COptions::ListGrid);
+    m_Control.ShowStripes(COptions::ListStripes);
+    m_Control.ShowFullRowSelection(COptions::ListFullRowSelection);
 
     CreateColumns(true);
 
-    m_control.MySetImageList(GetIconImageList());
+    m_Control.MySetImageList(GetIconImageList());
 
     return 0;
 }
@@ -139,20 +138,20 @@ BOOL CFileTreeView::OnEraseBkgnd(CDC* /*pDC*/)
 
 void CFileTreeView::OnDestroy()
 {
-    m_control.MySetImageList(nullptr);
+    m_Control.MySetImageList(nullptr);
     CView::OnDestroy();
 }
 
 void CFileTreeView::OnSetFocus(CWnd* /*pOldWnd*/)
 {
-    m_control.SetFocus();
+    m_Control.SetFocus();
 }
 
-void CFileTreeView::OnSettingChange(UINT uFlags, LPCWSTR lpszSection)
+void CFileTreeView::OnSettingChange(const UINT uFlags, LPCWSTR lpszSection)
 {
     if (uFlags & SPI_SETNONCLIENTMETRICS)
     {
-        FileIconInit(TRUE);
+        FileIconInit();
     }
     CView::OnSettingChange(uFlags, lpszSection);
 }
@@ -172,7 +171,7 @@ void CFileTreeView::OnLvnItemchanged(NMHDR* pNMHDR, LRESULT* pResult)
     *pResult = FALSE;
 }
 
-void CFileTreeView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
+void CFileTreeView::OnUpdate(CView* pSender, const LPARAM lHint, CObject* pHint)
 {
     ASSERT(AfxGetThread() != nullptr);
 
@@ -180,15 +179,15 @@ void CFileTreeView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
     {
     case HINT_NEWROOT:
         {
-            m_control.SetRootItem(GetDocument()->GetRootItem());
-            m_control.Sort();
-            m_control.Invalidate();
+            m_Control.SetRootItem(GetDocument()->GetRootItem());
+            m_Control.Sort();
+            m_Control.Invalidate();
         }
         break;
 
     case HINT_SELECTIONACTION:
         {
-            m_control.EmulateInteractiveSelection(reinterpret_cast<const CItem*>(pHint));
+            m_Control.EmulateInteractiveSelection(reinterpret_cast<const CItem*>(pHint));
         }
         break;
 
@@ -200,15 +199,15 @@ void CFileTreeView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 
     case HINT_LISTSTYLECHANGED:
         {
-            m_control.ShowGrid(COptions::ListGrid);
-            m_control.ShowStripes(COptions::ListStripes);
-            m_control.ShowFullRowSelection(COptions::ListFullRowSelection);
+            m_Control.ShowGrid(COptions::ListGrid);
+            m_Control.ShowStripes(COptions::ListStripes);
+            m_Control.ShowFullRowSelection(COptions::ListFullRowSelection);
         }
         break;
 
     case HINT_NULL:
         {
-            m_control.Sort();
+            m_Control.Sort();
             CView::OnUpdate(pSender, lHint, pHint);
         }
         break;
@@ -220,10 +219,10 @@ void CFileTreeView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 
 void CFileTreeView::OnUpdatePopupToggle(CCmdUI* pCmdUI)
 {
-    pCmdUI->Enable(m_control.SelectedItemCanToggle());
+    pCmdUI->Enable(m_Control.SelectedItemCanToggle());
 }
 
 void CFileTreeView::OnPopupToggle()
 {
-    m_control.ToggleSelectedItem();
+    m_Control.ToggleSelectedItem();
 }

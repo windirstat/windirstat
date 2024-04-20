@@ -29,11 +29,11 @@ class CFileTreeControl final : public CTreeListControl
 public:
     CFileTreeControl();
     bool GetAscendingDefault(int column) override;
-    static CFileTreeControl* Get() { return m_singleton; }
+    static CFileTreeControl* Get() { return m_Singleton; }
 
 protected:
 
-    static CFileTreeControl * m_singleton;
+    static CFileTreeControl * m_Singleton;
 
     void OnItemDoubleClick(int i) override;
     void PrepareDefaultMenu(CMenu* menu, const CItem* item);

@@ -34,40 +34,40 @@ protected:
     // Columns
     enum ListColumns
     {
-        COL_EXTENSION,
-        COL_COLOR,
-        COL_DESCRIPTION,
-        COL_BYTES,
-        COL_BYTESPERCENT,
-        COL_FILES
+        COL_EXT_EXTENSION,
+        COL_EXT_COLOR,
+        COL_EXT_DESCRIPTION,
+        COL_EXT_BYTES,
+        COL_EXT_BYTESPERCENT,
+        COL_EXT_FILES
     };
 
     // CListItem. The items of the CExtensionListControl.
     class CListItem final : public COwnerDrawnListItem
     {
     public:
-        CListItem(CExtensionListControl* list, LPCWSTR extension, const SExtensionRecord& r);
+        CListItem(CExtensionListControl* list, const std::wstring & extension, const SExtensionRecord& r);
 
         bool DrawSubitem(int subitem, CDC* pdc, CRect rc, UINT state, int* width, int* focusLeft) const override;
-        CStringW GetText(int subitem) const override;
+        std::wstring GetText(int subitem) const override;
 
-        CStringW GetExtension() const;
+        std::wstring GetExtension() const;
         int GetImage() const override;
         int Compare(const CSortingListItem* baseOther, int subitem) const override;
 
     private:
         void DrawColor(CDC* pdc, CRect rc, UINT state, int* width) const;
 
-        CStringW GetDescription() const;
-        CStringW GetBytesPercent() const;
+        std::wstring GetDescription() const;
+        std::wstring GetBytesPercent() const;
 
         double GetBytesFraction() const;
 
-        CExtensionListControl* m_list;
-        CStringW m_extension;
-        SExtensionRecord m_record;
-        mutable CStringW m_description;
-        mutable int m_image = -1;
+        CExtensionListControl* m_List;
+        std::wstring m_Extension;
+        SExtensionRecord m_Record;
+        mutable std::wstring m_Description;
+        mutable int m_Image = -1;
     };
 
 public:
@@ -77,14 +77,14 @@ public:
     void SetExtensionData(const CExtensionData* ed);
     void SetRootSize(ULONGLONG totalBytes);
     ULONGLONG GetRootSize() const;
-    void SelectExtension(LPCWSTR ext);
-    CStringW GetSelectedExtension() const;
+    void SelectExtension(const std::wstring& ext);
+    std::wstring GetSelectedExtension() const;
 
 protected:
     CListItem* GetListItem(int i) const;
 
-    CExtensionView* m_extensionView;
-    ULONGLONG m_rootSize = 0;
+    CExtensionView* m_ExtensionView;
+    ULONGLONG m_RootSize = 0;
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnDestroy();

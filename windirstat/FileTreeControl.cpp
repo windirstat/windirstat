@@ -26,15 +26,14 @@
 #include "MainFrame.h"
 #include <common/CommonHelpers.h>
 #include "FileTreeView.h"
-#include "OsSpecific.h"
 #include "Localization.h"
 
 CFileTreeControl::CFileTreeControl() : CTreeListControl(20, COptions::FileTreeColumnOrder.Ptr(), COptions::FileTreeColumnWidths.Ptr())
 {
-    m_singleton = this;
+    m_Singleton = this;
 }
 
-bool CFileTreeControl::GetAscendingDefault(int column)
+bool CFileTreeControl::GetAscendingDefault(const int column)
 {
     return column == COL_NAME || column == COL_LASTCHANGE;
 }
@@ -49,7 +48,7 @@ BEGIN_MESSAGE_MAP(CFileTreeControl, CTreeListControl)
 END_MESSAGE_MAP()
 #pragma warning(pop)
 
-CFileTreeControl* CFileTreeControl::m_singleton = nullptr;
+CFileTreeControl* CFileTreeControl::m_Singleton = nullptr;
 
 BOOL CFileTreeControl::OnHeaderEndDrag(UINT, NMHDR* pNMHDR, LRESULT* pResult)
 {
@@ -60,7 +59,7 @@ BOOL CFileTreeControl::OnHeaderEndDrag(UINT, NMHDR* pNMHDR, LRESULT* pResult)
     return block;
 }
 
-void CFileTreeControl::OnContextMenu(CWnd* /*pWnd*/, CPoint pt)
+void CFileTreeControl::OnContextMenu(CWnd* /*pWnd*/, const CPoint pt)
 {
     const int i = GetSelectionMark();
     if (i == -1)
@@ -106,7 +105,7 @@ void CFileTreeControl::OnContextMenu(CWnd* /*pWnd*/, CPoint pt)
     sub->TrackPopupMenuEx(TPM_LEFTALIGN | TPM_LEFTBUTTON, pt.x, pt.y, AfxGetMainWnd(), &tp);
 }
 
-void CFileTreeControl::OnItemDoubleClick(int i)
+void CFileTreeControl::OnItemDoubleClick(const int i)
 {
     const auto item = reinterpret_cast<const CItem*>(GetItem(i));
     if (item->IsType(IT_FILE))
@@ -129,8 +128,8 @@ void CFileTreeControl::PrepareDefaultMenu(CMenu* menu, const CItem* item)
     }
     else
     {
-        const CStringW command = item->IsExpanded() && item->HasChildren() ? Localization::Lookup(IDS_COLLAPSE) : Localization::Lookup(IDS_EXPAND);
-        VERIFY(menu->ModifyMenu(ID_POPUP_TOGGLE, MF_BYCOMMAND | MF_STRING, ID_POPUP_TOGGLE, command));
+        const std::wstring command = item->IsExpanded() && item->HasChildren() ? Localization::Lookup(IDS_COLLAPSE) : Localization::Lookup(IDS_EXPAND);
+        VERIFY(menu->ModifyMenu(ID_POPUP_TOGGLE, MF_BYCOMMAND | MF_STRING, ID_POPUP_TOGGLE, command.c_str()));
         menu->SetDefaultItem(ID_POPUP_TOGGLE, false);
     }
 }
@@ -141,7 +140,7 @@ void CFileTreeControl::OnSetFocus(CWnd* pOldWnd)
     CMainFrame::Get()->SetLogicalFocus(LF_DIRECTORYLIST);
 }
 
-void CFileTreeControl::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
+void CFileTreeControl::OnKeyDown(const UINT nChar, const UINT nRepCnt, const UINT nFlags)
 {
     if (nChar == VK_TAB)
     {

@@ -39,9 +39,9 @@ class CDeleteWarningDlg final : public CDialogEx
     CDeleteWarningDlg(const std::vector<CItem*> & items, CWnd* pParent = nullptr);
     ~CDeleteWarningDlg() override = default;
 
-    CListBox m_files;
-    std::vector<CItem*> m_items;
-    BOOL m_dontShowAgain = FALSE; // [out]
+    CListBox m_Files;
+    std::vector<CItem*> m_Items;
+    BOOL m_DontShowAgain = FALSE; // [out]
 
 protected:
     void DoDataExchange(CDataExchange* pDX) override;

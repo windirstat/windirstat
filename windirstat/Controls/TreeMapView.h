@@ -68,14 +68,14 @@ protected:
     void HighlightSelectedItem(CDC* pdc, const CItem* item, bool single);
     void RenderHighlightRectangle(CDC* pdc, CRect& rc);
 
-    bool m_drawingSuspended = false; // True while the user is resizing the window.
-    bool m_showTreemap = true;       // False, if the user switched off the treemap (by F9).
-    CSize m_size{ 0, 0 };            // Current size of view
-    CTreemap m_treemap;              // Treemap generator
-    CBitmap m_bitmap;                // Cached view. If m_hObject is NULL, the view must be recalculated.
-    CSize m_dimmedSize{ 0,0 };       // Size of bitmap m_dimmed
-    CBitmap m_dimmed;                // Dimmed view. Used during refresh to avoid the ooops-effect.
-    UINT_PTR m_timer = 0;            // We need a timer to realize when the mouse left our window.
+    bool m_DrawingSuspended = false; // True while the user is resizing the window.
+    bool m_ShowTreemap = true;       // False, if the user switched off the treemap (by F9).
+    CSize m_Size{ 0, 0 };            // Current size of view
+    CTreemap m_Treemap;              // Treemap generator
+    CBitmap m_Bitmap;                // Cached view. If m_hObject is NULL, the view must be recalculated.
+    CSize m_DimmedSize{ 0,0 };       // Size of bitmap m_Dimmed
+    CBitmap m_Dimmed;                // Dimmed view. Used during refresh to avoid the ooops-effect.
+    UINT_PTR m_Timer = 0;            // We need a timer to realize when the mouse left our window.
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnSize(UINT nType, int cx, int cy);

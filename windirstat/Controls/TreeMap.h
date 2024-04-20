@@ -21,6 +21,8 @@
 
 #pragma once
 
+#include <vector>
+
 //
 // CColorSpace. Helper class for manipulating colors. Static members only.
 //
@@ -40,9 +42,6 @@ protected:
     // Helper function for NormalizeColor()
     static void DistributeFirst(int& first, int& second, int& third);
 };
-
-using CColorRefArray = CArray<COLORREF, COLORREF>;
-using CColorRefRArray = CArray<COLORREF, COLORREF&>;
 
 //
 // CTreemap. Can create a treemap. Knows 3 squarification methods:
@@ -84,9 +83,7 @@ public:
     //
     enum STYLE
     {
-        // This style is not used in WinDirStat (it's rather uninteresting).
-        KDirStatStyle,
-        // Children are layed out in rows. Similar to the style used by KDirStat.
+        KDirStatStyle,   // Children are layed out in rows. Similar to the style used by KDirStat.
         SequoiaViewStyle // The 'classical' squarification as described in at https://www.win.tue.nl/~vanwijk/.
     };
 
@@ -140,53 +137,53 @@ public:
             return { GetLightSourceXPercent(), GetLightSourceYPercent() };
         }
 
-        void SetBrightnessPercent(int n)
+        void SetBrightnessPercent(const int n)
         {
             brightness = n / 100.0;
         }
 
-        void SetHeightPercent(int n)
+        void SetHeightPercent(const int n)
         {
             height = n / 100.0;
         }
 
-        void SetScaleFactorPercent(int n)
+        void SetScaleFactorPercent(const int n)
         {
             scaleFactor = n / 100.0;
         }
 
-        void SetAmbientLightPercent(int n)
+        void SetAmbientLightPercent(const int n)
         {
             ambientLight = n / 100.0;
         }
 
-        void SetLightSourceXPercent(int n)
+        void SetLightSourceXPercent(const int n)
         {
             lightSourceX = n / 100.0;
         }
 
-        void SetLightSourceYPercent(int n)
+        void SetLightSourceYPercent(const int n)
         {
             lightSourceY = n / 100.0;
         }
 
-        void SetLightSourcePoint(CPoint pt)
+        void SetLightSourcePoint(const CPoint pt)
         {
             SetLightSourceXPercent(pt.x);
             SetLightSourceYPercent(pt.y);
         }
 
-        static int RoundDouble(double d)
+        static int RoundDouble(const double d)
         {
             return signum(d) * static_cast<int>(fabs(d) + 0.5);
         }
     };
 
     // Get a good palette of 13 colors (7 if system has 256 colors)
-    static void GetDefaultPalette(CColorRefRArray& palette);
+    static void GetDefaultPalette(std::vector<COLORREF>& palette);
 
     // Create a equally-bright palette from a set of arbitrary colors
-    static void EqualizeColors(const COLORREF* colors, int count, CColorRefRArray& out);
+    static void EqualizeColors(const COLORREF* colors, int count, std::vector<COLORREF>& out);
 
     // Good values
     static Options GetDefaultOptions();
@@ -219,7 +216,7 @@ public:
 protected:
     // The recursive drawing function
     void RecurseDrawGraph(
-        CColorRefArray& bitmap,
+        std::vector<COLORREF>& bitmap,
         Item* item,
         const CRect& rc,
         bool asroot,
@@ -230,36 +227,36 @@ protected:
 
     // This function switches to KDirStat-, SequoiaView- or Simple_DrawChildren
     void DrawChildren(
-        CColorRefArray& bitmap,
-        Item* parent,
+        std::vector<COLORREF>& bitmap,
+        const Item* parent,
         const double* surface,
         double h,
         DWORD flags
     );
 
     // KDirStat-like squarification
-    void KDirStat_DrawChildren(CColorRefArray& bitmap, Item* parent, const double* surface, double h, DWORD flags);
-    bool KDirStat_ArrangeChildren(const Item* parent, CArray<double, double>& childWidth, CArray<double, double>& rows, CArray<int, int>& childrenPerRow);
-    double KDirStat_CalculateNextRow(const Item* parent, int nextChild, double width, int& childrenUsed, CArray<double, double>& childWidth);
+    void KDirStat_DrawChildren(std::vector<COLORREF>& bitmap, const Item* parent, const double* surface, double h, DWORD flags);
+    bool KDirStat_ArrangeChildren(const Item* parent, std::vector<double>& childWidth, std::vector<double>& rows, std::vector<int>& childrenPerRow);
+    double KDirStat_CalculateNextRow(const Item* parent, int nextChild, double width, int& childrenUsed, std::vector<double>& childWidth);
 
     // Classical SequoiaView-like squarification
-    void SequoiaView_DrawChildren(CColorRefArray& bitmap, const Item* parent, const double* surface, double h, DWORD flags);
+    void SequoiaView_DrawChildren(std::vector<COLORREF>& bitmap, const Item* parent, const double* surface, double h, DWORD flags);
 
     // Returns true, if height and scaleFactor are > 0 and ambientLight is < 1.0
     bool IsCushionShading() const;
 
     // Leaves space for grid and then calls RenderRectangle()
-    void RenderLeaf(CColorRefArray& bitmap, const Item* item, const double* surface);
+    void RenderLeaf(std::vector<COLORREF>& bitmap, const Item* item, const double* surface);
 
     // Either calls DrawCushion() or DrawSolidRect()
-    void RenderRectangle(CColorRefArray& bitmap, const CRect& rc, const double* surface, DWORD color);
+    void RenderRectangle(std::vector<COLORREF>& bitmap, const CRect& rc, const double* surface, DWORD color);
     // void RenderRectangle(CDC *pdc, const CRect& rc, const double *surface, DWORD color);
 
     // Draws the surface using SetPixel()
-    void DrawCushion(CColorRefArray& bitmap, const CRect& rc, const double* surface, COLORREF col, double brightness);
+    void DrawCushion(std::vector<COLORREF>& bitmap, const CRect& rc, const double* surface, COLORREF col, double brightness);
 
     // Draws the surface using FillSolidRect()
-    void DrawSolidRect(CColorRefArray& bitmap, const CRect& rc, COLORREF col, double brightness) const;
+    void DrawSolidRect(std::vector<COLORREF>& bitmap, const CRect& rc, COLORREF col, double brightness) const;
 
     // Adds a new ridge to surface
     static void AddRidge(const CRect& rc, double* surface, double h);
@@ -268,9 +265,9 @@ protected:
     static const Options _defaultOptionsOld;          // WinDirStat 1.0.1 default options
     static const COLORREF _defaultCushionColors[];    // Standard palette for WinDirStat
 
-    CRect m_renderArea;
+    CRect m_RenderArea;
 
-    Options m_options; // Current options
+    Options m_Options; // Current options
     double m_Lx = 0.0; // Derived parameters
     double m_Ly = 0.0;
     double m_Lz = 0.0;
@@ -288,76 +285,76 @@ class CTreemapPreview final : public CStatic
     class CItem final : public CTreemap::Item
     {
     public:
-        CItem(int size, COLORREF color)
-            : m_size(size)
-              , m_color(color)
+        CItem(const int size, const COLORREF color)
+            : m_Size(size)
+              , m_Color(color)
         {
         }
 
-        CItem(const CArray<CItem*, CItem*>& children)
+        CItem(const std::vector<CItem*>& children)
         {
-            m_size = 0;
-            for (int i = 0; i < children.GetSize(); i++)
+            m_Size = 0;
+            for (const auto & child : children)
             {
-                m_children.Add(children[i]);
-                m_size += static_cast<int>(children[i]->TmiGetSize());
+                m_Children.emplace_back(child);
+                m_Size += static_cast<int>(child->TmiGetSize());
             }
-            qsort(m_children.GetData(), m_children.GetSize(), sizeof(CItem*), &_compareItems);
+            qsort(m_Children.data(), m_Children.size(), sizeof(CItem*), [](const void* p1, const void* p2)->int
+            {
+                const CItem* item1 = *(CItem**)p1;
+                const CItem* item2 = *(CItem**)p2;
+                return signum(item2->m_Size - item1->m_Size);
+            });
         }
 
         ~CItem()
         {
-            for (int i = 0; i < m_children.GetSize(); i++)
-                delete m_children[i];
-        }
-
-        static int _compareItems(const void* p1, const void* p2)
-        {
-            const CItem* item1 = *(CItem**)p1;
-            const CItem* item2 = *(CItem**)p2;
-            return signum(item2->m_size - item1->m_size);
+            for (const auto & child : m_Children)
+            {
+                delete child;
+            }
         }
 
         bool TmiIsLeaf() const override
         {
-            return m_children.GetSize() == 0;
+            return m_Children.size() == 0;
         }
 
         CRect TmiGetRectangle() const override
         {
-            return m_rect;
+            return m_Rect;
         }
 
         void TmiSetRectangle(const CRect& rc) override
         {
-            m_rect = rc;
+            m_Rect = rc;
         }
 
         COLORREF TmiGetGraphColor() const override
         {
-            return m_color;
+            return m_Color;
         }
 
         int TmiGetChildCount() const override
         {
-            return static_cast<int>(m_children.GetSize());
+            return static_cast<int>(m_Children.size());
         }
 
-        Item* TmiGetChild(int c) const override
+        Item* TmiGetChild(const int c) const override
         {
-            return m_children[c];
+            return m_Children[c];
         }
 
         ULONGLONG TmiGetSize() const override
         {
-            return m_size;
+            return m_Size;
         }
 
     private:
-        CArray<CItem*, CItem*> m_children; // Our children
-        int m_size = 0;                    // Our size (in fantasy units)
-        COLORREF m_color = CLR_INVALID;    // Our color
-        CRect m_rect;                      // Our Rectangle in the treemap
+        std::vector<CItem*> m_Children; // Our children
+        int m_Size = 0;                    // Our size (in fantasy units)
+        COLORREF m_Color = CLR_INVALID;    // Our color
+        CRect m_Rect;                      // Our Rectangle in the treemap
     };
 
 public:
@@ -369,9 +366,9 @@ protected:
     void BuildDemoData();
     COLORREF GetNextColor(int& i);
 
-    CArray<COLORREF, COLORREF&> m_colors; // Our color palette
-    CItem* m_root;                        // Demo tree
-    CTreemap m_treemap;                   // Our treemap creator
+    std::vector<COLORREF> m_Colors; // Our color palette
+    CItem* m_Root;                  // Demo tree
+    CTreemap m_Treemap;             // Our treemap creator
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnPaint();

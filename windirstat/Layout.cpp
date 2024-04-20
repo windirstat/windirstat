@@ -28,97 +28,96 @@
 CLayout::CLayout(CWnd* dialog, RECT* placement)
 {
     ASSERT(dialog != nullptr);
-    m_wp = placement;
-    m_dialog = dialog;
+    m_Wp = placement;
+    m_Dialog = dialog;
 
     // This is necessary because OnGetMinMaxInfo() will be called
     // before OnInitDialog!
-    m_originalDialogSize.cx = 0;
-    m_originalDialogSize.cy = 0;
+    m_OriginalDialogSize.cx = 0;
+    m_OriginalDialogSize.cy = 0;
 }
 
 int CLayout::AddControl(CWnd* control, double movex, double movey, double stretchx, double stretchy)
 {
-    SControlInfo info(control, movex, movey, stretchx, stretchy);
-
-    return static_cast<int>(m_control.Add(info));
+    m_Control.emplace_back(control, movex, movey, stretchx, stretchy);
+    return static_cast<int>(m_Control.size() - 1);
 }
 
-void CLayout::AddControl(UINT id, double movex, double movey, double stretchx, double stretchy)
+void CLayout::AddControl(const UINT id, const double movex, const double movey, const double stretchx, const double stretchy)
 {
-    AddControl(m_dialog->GetDlgItem(id), movex, movey, stretchx, stretchy);
+    AddControl(m_Dialog->GetDlgItem(id), movex, movey, stretchx, stretchy);
 }
 
-void CLayout::OnInitDialog(bool centerWindow)
+void CLayout::OnInitDialog(const bool centerWindow)
 {
-    m_dialog->SetIcon(CDirStatApp::Get()->LoadIcon(IDR_MAINFRAME), false);
+    m_Dialog->SetIcon(CDirStatApp::Get()->LoadIcon(IDR_MAINFRAME), false);
 
     CRect rcDialog;
-    m_dialog->GetWindowRect(rcDialog);
-    m_originalDialogSize = rcDialog.Size();
+    m_Dialog->GetWindowRect(rcDialog);
+    m_OriginalDialogSize = rcDialog.Size();
 
-    for (int i = 0; i < m_control.GetSize(); i++)
+    for (auto & info : m_Control)
     {
         CRect rc;
-        m_control[i].control->GetWindowRect(rc);
-        m_dialog->ScreenToClient(rc);
-        m_control[i].originalRectangle = rc;
+        info.control->GetWindowRect(rc);
+        m_Dialog->ScreenToClient(rc);
+        info.originalRectangle = rc;
     }
 
     CRect sg;
-    m_dialog->GetClientRect(sg);
-    sg.left = sg.right - m_sizeGripper._width;
-    sg.top  = sg.bottom - m_sizeGripper._width;
-    m_sizeGripper.Create(m_dialog, sg);
+    m_Dialog->GetClientRect(sg);
+    sg.left = sg.right - m_SizeGripper.m_Width;
+    sg.top  = sg.bottom - m_SizeGripper.m_Width;
+    m_SizeGripper.Create(m_Dialog, sg);
 
-    const int i                    = AddControl(&m_sizeGripper, 1, 1, 0, 0);
-    m_control[i].originalRectangle = sg;
+    const int i                    = AddControl(&m_SizeGripper, 1, 1, 0, 0);
+    m_Control[i].originalRectangle = sg;
 
-    m_dialog->MoveWindow(m_wp);
+    m_Dialog->MoveWindow(m_Wp);
     if (centerWindow)
     {
-        m_dialog->CenterWindow();
+        m_Dialog->CenterWindow();
     }
 }
 
 void CLayout::OnDestroy() const
 {
-    m_dialog->GetWindowRect(m_wp);
+    m_Dialog->GetWindowRect(m_Wp);
 }
 
 void CLayout::OnSize()
 {
     CRect wrc;
-    m_dialog->GetWindowRect(wrc);
+    m_Dialog->GetWindowRect(wrc);
     const CSize newDialogSize = wrc.Size();
 
-    const CSize diff = newDialogSize - m_originalDialogSize;
+    const CSize diff = newDialogSize - m_OriginalDialogSize;
 
-    CPositioner pos(static_cast<int>(m_control.GetSize()));
+    CPositioner pos(static_cast<int>(m_Control.size()));
 
-    for (int i = 0; i < m_control.GetSize(); i++)
+    for (const auto& info : m_Control)
     {
-        CRect rc = m_control[i].originalRectangle;
+        CRect rc = info.originalRectangle;
 
-        const CSize move(static_cast<int>(diff.cx * m_control[i].movex), static_cast<int>(diff.cy * m_control[i].movey));
-        CRect stretch(0, 0, static_cast<int>(diff.cx * m_control[i].stretchx), static_cast<int>(diff.cy * m_control[i].stretchy));
+        const CSize move(static_cast<int>(diff.cx * info.movex), static_cast<int>(diff.cy * info.movey));
+        CRect stretch(0, 0, static_cast<int>(diff.cx * info.stretchx), static_cast<int>(diff.cy * info.stretchy));
 
         rc += move;
         rc += stretch;
 
-        pos.SetWindowPos(*m_control[i].control, rc.left, rc.top, rc.Width(), rc.Height(), SWP_NOOWNERZORDER | SWP_NOZORDER);
+        pos.SetWindowPos(*info.control, rc.left, rc.top, rc.Width(), rc.Height(), SWP_NOOWNERZORDER | SWP_NOZORDER);
     }
 }
 
 void CLayout::OnGetMinMaxInfo(MINMAXINFO* mmi)
 {
-    mmi->ptMinTrackSize.x = m_originalDialogSize.cx;
-    mmi->ptMinTrackSize.y = m_originalDialogSize.cy;
+    mmi->ptMinTrackSize.x = m_OriginalDialogSize.cx;
+    mmi->ptMinTrackSize.y = m_OriginalDialogSize.cy;
 }
 
 /////////////////////////////////////////////////////////////////////////////
 
-void CLayout::CSizeGripper::Create(CWnd* parent, CRect rc)
+void CLayout::CSizeGripper::Create(CWnd* parent, const CRect rc)
 {
     VERIFY(CWnd::Create(
         AfxRegisterWndClass(
@@ -147,15 +146,15 @@ void CLayout::CSizeGripper::OnPaint()
     CRect rc;
     GetClientRect(rc);
 
-    ASSERT(rc.Width() == _width);
-    ASSERT(rc.Height() == _width);
+    ASSERT(rc.Width() == m_Width);
+    ASSERT(rc.Height() == m_Width);
 
     CPoint start;
     CPoint end;
 
     start.x = 1;
-    start.y = _width;
-    end.x   = _width;
+    start.y = m_Width;
+    end.x   = m_Width;
     end.y   = 1;
 
     DrawShadowLine(&dc, start, end);
@@ -205,7 +204,7 @@ LRESULT CLayout::CSizeGripper::OnNcHitTest(CPoint point)
 {
     ScreenToClient(&point);
 
-    if (point.x + point.y >= _width)
+    if (point.x + point.y >= m_Width)
     {
         return HTBOTTOMRIGHT;
     }
@@ -213,17 +212,17 @@ LRESULT CLayout::CSizeGripper::OnNcHitTest(CPoint point)
     return 0;
 }
 
-CLayout::CPositioner::CPositioner(int nNumWindows)
-    : m_wdp(::BeginDeferWindowPos(nNumWindows))
+CLayout::CPositioner::CPositioner(const int nNumWindows)
+    : m_Wdp(::BeginDeferWindowPos(nNumWindows))
 {
 }
 
 CLayout::CPositioner::~CPositioner()
 {
-    ::EndDeferWindowPos(m_wdp);
+    ::EndDeferWindowPos(m_Wdp);
 }
 
-void CLayout::CPositioner::SetWindowPos(HWND hWnd, int x, int y, int cx, int cy, UINT uFlags)
+void CLayout::CPositioner::SetWindowPos(HWND hWnd, const int x, const int y, const int cx, const int cy, const UINT uFlags)
 {
-    m_wdp = ::DeferWindowPos(m_wdp, hWnd, nullptr, x, y, cx, cy, uFlags | SWP_NOZORDER);
+    m_Wdp = ::DeferWindowPos(m_Wdp, hWnd, nullptr, x, y, cx, cy, uFlags | SWP_NOZORDER);
 }

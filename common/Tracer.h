@@ -26,6 +26,8 @@
 
 #pragma once
 
+#include <string>
+
 #ifdef _DEBUG
 #define VTRACE_FILE_LINE_FUNC   3
 #define VTRACE_FILE_LINE        2
@@ -47,14 +49,14 @@ public:
 class CWDSTracer final
 {
 public:
-    CWDSTracer(LPCWSTR srcfile, LPCWSTR fctname, unsigned int srcline);
+    CWDSTracer(const std::wstring& srcfile, const std::wstring& fctname, unsigned int srcline);
     CWDSTracer& operator=(const CWDSTracer&) = delete; // hide it
-    void operator()(LPCWSTR format, ...) const;
+    void operator()(const std::wstring& format, ...) const;
 private:
-    const CStringW m_srcfile;
-    unsigned int   m_srcline;
-    LPCWSTR        m_srcbasename;
-    LPCWSTR        m_srcfunc;
+    std::wstring m_Srcfile;
+    unsigned int m_Srcline;
+    std::wstring m_Srcfunc;
+    std::wstring m_Srcbasename;
 };
 
 // Use as VTRACE(format, ...) ... *must* be on one long line ;)

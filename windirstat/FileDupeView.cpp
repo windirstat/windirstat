@@ -22,12 +22,11 @@
 #include "stdafx.h"
 #include "WinDirStat.h"
 #include "DirStatDoc.h"
-#include "Item.h"
 #include "MainFrame.h"
 #include <common/CommonHelpers.h>
 #include "FileDupeView.h"
+#include "GlobalHelpers.h"
 #include "Localization.h"
-#include "OsSpecific.h"
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -35,12 +34,12 @@ IMPLEMENT_DYNCREATE(CFileDupeView, CView)
 
 CFileDupeView::CFileDupeView()
 {
-    m_control.SetSorting(COL_ITEMDUP_SIZE_PHYSICAL, false);
+    m_Control.SetSorting(COL_ITEMDUP_SIZE_PHYSICAL, false);
 }
 
 void CFileDupeView::SysColorChanged()
 {
-    m_control.SysColorChanged();
+    m_Control.SysColorChanged();
 }
 
 void CFileDupeView::OnDraw(CDC* pDC)
@@ -64,17 +63,17 @@ BEGIN_MESSAGE_MAP(CFileDupeView, CView)
 END_MESSAGE_MAP()
 #pragma warning(pop)
 
-void CFileDupeView::OnSize(UINT nType, int cx, int cy)
+void CFileDupeView::OnSize(const UINT nType, const int cx, const int cy)
 {
     CView::OnSize(nType, cx, cy);
-    if (::IsWindow(m_control.m_hWnd))
+    if (::IsWindow(m_Control.m_hWnd))
     {
         CRect rc(0, 0, cx, cy);
-        m_control.MoveWindow(rc);
+        m_Control.MoveWindow(rc);
     }
 }
 
-int CFileDupeView::OnCreate(LPCREATESTRUCT lpCreateStruct)
+int CFileDupeView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
 {
     if (CView::OnCreate(lpCreateStruct) == -1)
     {
@@ -82,21 +81,21 @@ int CFileDupeView::OnCreate(LPCREATESTRUCT lpCreateStruct)
     }
 
     constexpr RECT rect = {0, 0, 0, 0};
-    VERIFY(m_control.CreateEx(0, WS_CHILD | WS_VISIBLE | LVS_REPORT | LVS_SHOWSELALWAYS, rect, this, ID_WDS_CONTROL));
+    VERIFY(m_Control.CreateEx(0, WS_CHILD | WS_VISIBLE | LVS_REPORT | LVS_SHOWSELALWAYS, rect, this, ID_WDS_CONTROL));
 
-    m_control.ShowGrid(COptions::ListGrid);
-    m_control.ShowStripes(COptions::ListStripes);
-    m_control.ShowFullRowSelection(COptions::ListFullRowSelection);
+    m_Control.ShowGrid(COptions::ListGrid);
+    m_Control.ShowStripes(COptions::ListStripes);
+    m_Control.ShowFullRowSelection(COptions::ListFullRowSelection);
 
-    m_control.InsertColumn(SHORT_MAX, Localization::Lookup(IDS_COL_HASH), LVCFMT_LEFT, 500, COL_ITEMDUP_NAME);
-    m_control.InsertColumn(SHORT_MAX, Localization::Lookup(IDS_COL_ITEMS), LVCFMT_RIGHT, 70, COL_ITEMDUP_ITEMS);
-    m_control.InsertColumn(SHORT_MAX, Localization::Lookup(IDS_COL_SIZE_LOGICAL), LVCFMT_RIGHT, 90, COL_ITEMDUP_SIZE_LOGICAL);
-    m_control.InsertColumn(SHORT_MAX, Localization::Lookup(IDS_COL_SIZE_PHYSICAL), LVCFMT_RIGHT, 90, COL_ITEMDUP_SIZE_PHYSICAL);
-    m_control.InsertColumn(SHORT_MAX, Localization::Lookup(IDS_COL_LASTCHANGE), LVCFMT_RIGHT, 100, COL_ITEMDUP_LASTCHANGE);
+    m_Control.InsertColumn(SHORT_MAX, Localization::Lookup(IDS_COL_HASH).c_str(), LVCFMT_LEFT, 500, COL_ITEMDUP_NAME);
+    m_Control.InsertColumn(SHORT_MAX, Localization::Lookup(IDS_COL_ITEMS).c_str(), LVCFMT_RIGHT, 70, COL_ITEMDUP_ITEMS);
+    m_Control.InsertColumn(SHORT_MAX, Localization::Lookup(IDS_COL_SIZE_LOGICAL).c_str(), LVCFMT_RIGHT, 90, COL_ITEMDUP_SIZE_LOGICAL);
+    m_Control.InsertColumn(SHORT_MAX, Localization::Lookup(IDS_COL_SIZE_PHYSICAL).c_str(), LVCFMT_RIGHT, 90, COL_ITEMDUP_SIZE_PHYSICAL);
+    m_Control.InsertColumn(SHORT_MAX, Localization::Lookup(IDS_COL_LASTCHANGE).c_str(), LVCFMT_RIGHT, 100, COL_ITEMDUP_LASTCHANGE);
 
-    m_control.OnColumnsInserted();
+    m_Control.OnColumnsInserted();
 
-    m_control.MySetImageList(GetIconImageList());
+    m_Control.MySetImageList(GetIconImageList());
 
     return 0;
 }
@@ -108,20 +107,20 @@ BOOL CFileDupeView::OnEraseBkgnd(CDC* /*pDC*/)
 
 void CFileDupeView::OnDestroy()
 {
-    m_control.MySetImageList(nullptr);
+    m_Control.MySetImageList(nullptr);
     CView::OnDestroy();
 }
 
 void CFileDupeView::OnSetFocus(CWnd* /*pOldWnd*/)
 {
-    m_control.SetFocus();
+    m_Control.SetFocus();
 }
 
-void CFileDupeView::OnSettingChange(UINT uFlags, LPCWSTR lpszSection)
+void CFileDupeView::OnSettingChange(const UINT uFlags, LPCWSTR lpszSection)
 {
     if (uFlags & SPI_SETNONCLIENTMETRICS)
     {
-        FileIconInit(TRUE);
+        FileIconInit();
     }
     CView::OnSettingChange(uFlags, lpszSection);
 }
@@ -142,7 +141,7 @@ void CFileDupeView::OnLvnItemchanged(NMHDR* pNMHDR, LRESULT* pResult)
     *pResult = FALSE;
 }
 
-void CFileDupeView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
+void CFileDupeView::OnUpdate(CView* pSender, const LPARAM lHint, CObject* pHint)
 {
     ASSERT(AfxGetThread() != nullptr);
 
@@ -150,23 +149,23 @@ void CFileDupeView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
     {
         case HINT_NEWROOT:
         {
-            m_control.SetRootItem(GetDocument()->GetRootItemDupe());
-            m_control.Sort();
-            m_control.Invalidate();
+            m_Control.SetRootItem(GetDocument()->GetRootItemDupe());
+            m_Control.Sort();
+            m_Control.Invalidate();
         }
         break;
 
         case HINT_LISTSTYLECHANGED:
         {
-            m_control.ShowGrid(COptions::ListGrid);
-            m_control.ShowStripes(COptions::ListStripes);
-            m_control.ShowFullRowSelection(COptions::ListFullRowSelection);
+            m_Control.ShowGrid(COptions::ListGrid);
+            m_Control.ShowStripes(COptions::ListStripes);
+            m_Control.ShowFullRowSelection(COptions::ListFullRowSelection);
         }
         break;
 
         case HINT_NULL:
         {
-            m_control.Sort();
+            m_Control.Sort();
             CView::OnUpdate(pSender, lHint, pHint);
         }
         break;
@@ -178,10 +177,10 @@ void CFileDupeView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 
 void CFileDupeView::OnUpdatePopupToggle(CCmdUI* pCmdUI)
 {
-    pCmdUI->Enable(m_control.SelectedItemCanToggle());
+    pCmdUI->Enable(m_Control.SelectedItemCanToggle());
 }
 
 void CFileDupeView::OnPopupToggle()
 {
-    m_control.ToggleSelectedItem();
+    m_Control.ToggleSelectedItem();
 }

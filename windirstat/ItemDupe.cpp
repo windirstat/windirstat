@@ -30,93 +30,93 @@
 #include <functional>
 #include <queue>
 
-CItemDupe::CItemDupe(const CStringW& hash, ULONGLONG size) : m_hash(hash), m_size(size) {}
+CItemDupe::CItemDupe(const std::wstring& hash, const ULONGLONG size) : m_Hash(hash), m_Size(size) {}
 
-CItemDupe::CItemDupe(CItem* item) : m_item(item) {}
+CItemDupe::CItemDupe(CItem* item) : m_Item(item) {}
 
 CItemDupe::~CItemDupe()
 {
-    std::lock_guard m_guard(m_protect);
-    for (const auto& child : m_children)
+    std::lock_guard guard(m_Protect);
+    for (const auto& child : m_Children)
     {
         delete child;
     }
-    m_children.clear();
+    m_Children.clear();
 }
 
-bool CItemDupe::DrawSubitem(int subitem, CDC* pdc, CRect rc, UINT state, int* width, int* focusLeft) const
+bool CItemDupe::DrawSubitem(const int subitem, CDC* pdc, const CRect rc, const UINT state, int* width, int* focusLeft) const
 {
     // Handle individual file items
     if (subitem != COL_ITEMDUP_NAME) return false;
-    return CTreeListItem::DrawSubitem(column_map.at(subitem), pdc, rc, state, width, focusLeft);
+    return CTreeListItem::DrawSubitem(columnMap.at(subitem), pdc, rc, state, width, focusLeft);
 }
 
-CStringW CItemDupe::GetText(int subitem) const
+std::wstring CItemDupe::GetText(const int subitem) const
 {
     // Root node
-    static CStringW duplicates = Localization::Lookup(IDS_DUPLICATE_FILES);
-    if (GetParent() == nullptr) return subitem == COL_ITEMDUP_NAME ? duplicates : CStringW{};
+    static std::wstring duplicates = Localization::Lookup(IDS_DUPLICATE_FILES);
+    if (GetParent() == nullptr) return subitem == COL_ITEMDUP_NAME ? duplicates : std::wstring{};
 
     // Parent hash nodes
-    if (m_item == nullptr)
+    if (m_Item == nullptr)
     {
         // Handle top-level hash collection nodes
-        if (subitem == COL_ITEMDUP_NAME) return m_hash;
-        if (subitem == COL_ITEMDUP_SIZE_PHYSICAL) return FormatBytes(m_size * GetChildren().size());
+        if (subitem == COL_ITEMDUP_NAME) return m_Hash;
+        if (subitem == COL_ITEMDUP_SIZE_PHYSICAL) return FormatBytes(m_Size * GetChildren().size());
         if (subitem == COL_ITEMDUP_ITEMS) return FormatCount(GetChildren().size());
         return {};
     }
 
     // Individual file names
-    if (subitem == COL_ITEMDUP_NAME) return m_item->GetPath();
-    return m_item->GetText(column_map.at(subitem));
+    if (subitem == COL_ITEMDUP_NAME) return m_Item->GetPath();
+    return m_Item->GetText(columnMap.at(subitem));
 }
 
-int CItemDupe::CompareSibling(const CTreeListItem* tlib, int subitem) const
+int CItemDupe::CompareSibling(const CTreeListItem* tlib, const int subitem) const
 {
     // Root node
     if (GetParent() == nullptr) return 0;
 
     // Parent hash nodes
     const auto* other = reinterpret_cast<const CItemDupe*>(tlib);
-    if (m_item == nullptr)
+    if (m_Item == nullptr)
     {
         // Handle top-level hash collection nodes
-        if (subitem == COL_ITEMDUP_NAME) return signum(m_hash.CompareNoCase(other->m_hash));
-        if (subitem == COL_ITEMDUP_SIZE_PHYSICAL) return usignum(m_size * m_children.size(), other->m_size * other->m_children.size());
-        if (subitem == COL_ITEMDUP_ITEMS) return usignum(m_children.size(), other->m_children.size());
+        if (subitem == COL_ITEMDUP_NAME) return signum(_wcsicmp(m_Hash.c_str(),other->m_Hash.c_str()));
+        if (subitem == COL_ITEMDUP_SIZE_PHYSICAL) return usignum(m_Size * m_Children.size(), other->m_Size * other->m_Children.size());
+        if (subitem == COL_ITEMDUP_ITEMS) return usignum(m_Children.size(), other->m_Children.size());
         return 0;
     }
 
     // Individual file names
-    return m_item->CompareSibling(other->m_item, column_map.at(subitem));
+    return m_Item->CompareSibling(other->m_Item, columnMap.at(subitem));
 }
 
 int CItemDupe::GetTreeListChildCount()const
 {
-    return static_cast<int>(m_children.size());
+    return static_cast<int>(m_Children.size());
 }
 
-CTreeListItem* CItemDupe::GetTreeListChild(int i) const
+CTreeListItem* CItemDupe::GetTreeListChild(const int i) const
 {
-    return m_children[i];
+    return m_Children[i];
 }
 
 short CItemDupe::GetImageToCache() const
 {
     // Root node
-    if (GetParent() == nullptr) return GetIconImageList()->getFreeSpaceImage();
+    if (GetParent() == nullptr) return GetIconImageList()->GetFreeSpaceImage();
 
     // Parent hash nodes
-    if (m_item == nullptr) return GetIconImageList()->getFreeSpaceImage();
+    if (m_Item == nullptr) return GetIconImageList()->GetFreeSpaceImage();
 
     // Individual file names
-    return m_item->GetImageToCache();
+    return m_Item->GetImageToCache();
 }
 
 const std::vector<CItemDupe*>& CItemDupe::GetChildren() const
 {
-    return m_children;
+    return m_Children;
 }
 
 CItemDupe* CItemDupe::GetParent() const
@@ -128,22 +128,23 @@ void CItemDupe::AddChild(CItemDupe* child)
 {
     child->SetParent(this);
 
-    std::lock_guard m_guard(m_protect);
-    m_children.push_back(child);
+    std::lock_guard guard(m_Protect);
+    m_Children.push_back(child);
 
     if (IsVisible() && IsExpanded())
     {
+        (void) GetImage();
         CMainFrame::Get()->InvokeInMessageThread([this, child]
         {
-            m_vi->control->OnChildAdded(this, child);
+            m_VisualInfo->control->OnChildAdded(this, child);
         });
     }
 }
 
 void CItemDupe::RemoveChild(CItemDupe* child)
 {
-    std::lock_guard m_guard(m_protect);
-    std::erase(m_children, child);
+    std::lock_guard guard(m_Protect);
+    std::erase(m_Children, child);
 
     if (IsVisible())
     {
@@ -163,10 +164,10 @@ void CItemDupe::RemoveAllChildren()
         CFileTreeControl::Get()->OnRemovingAllChildren(this);
     });
 
-    std::lock_guard m_guard(m_protect);
-    for (const auto& child : m_children)
+    std::lock_guard guard(m_Protect);
+    for (const auto& child : m_Children)
     {
         delete child;
     }
-    m_children.clear();
+    m_Children.clear();
 }

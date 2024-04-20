@@ -47,34 +47,34 @@ class CDrivesList;
 class CDriveItem final : public COwnerDrawnListItem
 {
 public:
-    CDriveItem(CDrivesList* list, LPCWSTR pszPath);
+    CDriveItem(CDrivesList* list, const std::wstring& pszPath);
     void StartQuery(HWND dialog, UINT serial) const;
 
-    void SetDriveInformation(bool success, LPCWSTR name, ULONGLONG total, ULONGLONG free);
+    void SetDriveInformation(bool success, const std::wstring& name, ULONGLONG total, ULONGLONG free);
 
     int Compare(const CSortingListItem* baseOther, int subitem) const override;
 
-    CStringW GetPath() const;
-    CStringW GetDrive() const;
+    std::wstring GetPath() const;
+    std::wstring GetDrive() const;
     bool IsRemote() const;
     bool IsSUBSTed() const;
     bool DrawSubitem(int subitem, CDC* pdc, CRect rc, UINT state, int* width, int* focusLeft) const override;
-    CStringW GetText(int subitem) const override;
+    std::wstring GetText(int subitem) const override;
     int GetImage() const override;
 
 private:
-    CDrivesList* m_list; // Backpointer
-    CStringW m_path;     // e.g. "C:\"
-    bool m_isRemote;     // Whether the drive type is DRIVE_REMOTE (network drive)
+    CDrivesList* m_List; // Backpointer
+    std::wstring m_Path;     // e.g. "C:\"
+    bool m_IsRemote;     // Whether the drive type is DRIVE_REMOTE (network drive)
 
-    bool m_querying = true;  // Information thread is running.
-    bool m_success = false;  // Drive is accessible. false while m_querying is true.
+    bool m_Querying = true;  // Information thread is running.
+    bool m_Success = false;  // Drive is accessible. false while m_Querying is true.
 
-    CStringW m_name;            // e.g. "BOOT (C:)"
-    ULONGLONG m_totalBytes = 0; // Capacity
-    ULONGLONG m_freeBytes = 0;  // Free space
+    std::wstring m_Name;            // e.g. "BOOT (C:)"
+    ULONGLONG m_TotalBytes = 0; // Capacity
+    ULONGLONG m_FreeBytes = 0;  // Free space
 
-    double m_used = 0.0; // used space / total space
+    double m_Used = 0.0; // used space / total space
 };
 
 //
@@ -95,24 +95,24 @@ class CDriveInformationThread final : public CWinThread
 public:
     static void InvalidateDialogHandle();
 
-    CDriveInformationThread(LPCWSTR path, LPARAM driveItem, HWND dialog, UINT serial);
+    CDriveInformationThread(const std::wstring& path, LPARAM driveItem, HWND dialog, UINT serial);
     BOOL InitInstance() override;
 
-    LPARAM GetDriveInformation(bool& success, CStringW& name, ULONGLONG& total, ULONGLONG& free) const;
+    LPARAM GetDriveInformation(bool& success, std::wstring& name, ULONGLONG& total, ULONGLONG& free) const;
 
 private:
-    const CStringW m_path;    // Path like "C:\"
-    const LPARAM m_driveItem; // The list item, we belong to
+    const std::wstring m_Path; // Path like "C:\"
+    const LPARAM m_DriveItem;  // The list item, we belong to
 
-    std::shared_mutex m_mutex; // for m_dialog
-    HWND m_dialog;             // synchronized by m_cs
-    const UINT m_serial;       // serial number of m_dialog
+    std::shared_mutex m_Mutex; // for m_Dialog
+    HWND m_Dialog;             // synchronized by m_Cs
+    const UINT m_Serial;       // serial number of m_Dialog
 
     // "[out]"-parameters
-    CStringW m_name;            // Result: name like "BOOT (C:)", valid if m_success
-    ULONGLONG m_totalBytes = 0; // Result: capacity of the drive, valid if m_success
-    ULONGLONG m_freeBytes = 0;  // Result: free space on the drive, valid if m_success
-    bool m_success = false;     // Result: false, iff drive is unaccessible.
+    std::wstring m_Name;            // Result: name like "BOOT (C:)", valid if m_Success
+    ULONGLONG m_TotalBytes = 0; // Result: capacity of the drive, valid if m_Success
+    ULONGLONG m_FreeBytes = 0;  // Result: free space on the drive, valid if m_Success
+    bool m_Success = false;     // Result: false, iff drive is unaccessible.
 };
 
 //
@@ -146,17 +146,17 @@ class CSelectDrivesDlg final : public CDialogEx
 
     enum { IDD = IDD_SELECTDRIVES };
 
-    static CStringW GetFullPathName(LPCWSTR relativePath);
+    static std::wstring GetFullPathName(const std::wstring& relativePath);
 
 public:
     CSelectDrivesDlg(CWnd* pParent = nullptr);
     ~CSelectDrivesDlg() override = default;
 
     // Dialog Data
-    BOOL m_scanDuplicates = false; // whether duplicate scanning is enable
-    int m_radio = 0;          // out.
-    CStringW m_folderName;    // out. Valid if m_radio = RADIO_AFOLDER
-    CStringArray m_drives;    // out. Valid if m_radio != RADIO_AFOLDER
+    BOOL m_ScanDuplicates = false; // whether duplicate scanning is enable
+    int m_Radio = 0;          // out.
+    CStringW m_FolderName;    // out. Valid if m_Radio = RADIO_AFOLDER
+    std::vector<std::wstring> m_Drives;    // out. Valid if m_Radio != RADIO_AFOLDER
 
     void DoDataExchange(CDataExchange* pDX) override;
     BOOL OnInitDialog() override;
@@ -165,14 +165,11 @@ public:
     void UpdateButtons();
 
     static UINT _serial; // Each Instance of this dialog gets a serial number
-    CDrivesList m_list;
-    CMFCEditBrowseCtrl m_browse;
-    CButton m_okButton;
-    std::vector<std::wstring> m_selectedDrives;
-    CLayout m_layout;
-    // Callback function for the dialog shown by SHBrowseForFolder()
-    // MUST be static!
-    static int CALLBACK BrowseCallbackProc(HWND hWnd, UINT uMsg, LPARAM lParam, LPARAM lpData);
+    CDrivesList m_List;
+    CMFCEditBrowseCtrl m_Browse;
+    CButton m_OkButton;
+    std::vector<std::wstring> m_SelectedDrives;
+    CLayout m_Layout;
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnBnClickedAllLocalDrives();

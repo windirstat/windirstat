@@ -42,17 +42,17 @@ protected:
     BOOL OnInitDialog() override;
     void OnOK() override;
 
-    BOOL m_useFallbackLocale = FALSE;
-    BOOL m_humanFormat = FALSE;
-    BOOL m_portableMode = FALSE;
-    BOOL m_listGrid = FALSE;
-    BOOL m_listStripes = FALSE;
-    BOOL m_showDeletionWarning = FALSE;
-    BOOL m_listFullRowSelection = FALSE;
+    BOOL m_UseFallbackLocale = FALSE;
+    BOOL m_HumanFormat = FALSE;
+    BOOL m_PortableMode = FALSE;
+    BOOL m_ListGrid = FALSE;
+    BOOL m_ListStripes = FALSE;
+    BOOL m_ShowDeletionWarning = FALSE;
+    BOOL m_ListFullRowSelection = FALSE;
 
-    CComboBox m_combo;
+    CComboBox m_Combo;
 
-    int m_originalLanguage = 0;
+    int m_OriginalLanguage = 0;
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnBnClickedSetModified();

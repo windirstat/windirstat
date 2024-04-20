@@ -22,35 +22,43 @@
 
 #pragma once
 
-CStringW GetLocaleString(LCTYPE lctype, LANGID langid);
-CStringW GetLocaleLanguage(LANGID langid);
-CStringW GetLocaleThousandSeparator();
-CStringW GetLocaleDecimalSeparator();
-CStringW FormatBytes(const ULONGLONG& n);
-CStringW FormatLongLongHuman(ULONGLONG n);
-CStringW FormatCount(const ULONGLONG& n);
-CStringW FormatDouble(double d);
-CStringW PadWidthBlanks(CStringW n, int width);
-CStringW FormatFileTime(const FILETIME& t);
-CStringW FormatAttributes(DWORD attr);
-CStringW FormatMilliseconds(ULONGLONG ms);
-CStringW GetParseNameOfMyComputer();
+#include <string>
+#include <ranges>
+
+std::wstring GetLocaleString(LCTYPE lctype, LANGID langid);
+std::wstring GetLocaleLanguage(LANGID langid);
+std::wstring GetLocaleThousandSeparator();
+std::wstring GetLocaleDecimalSeparator();
+std::wstring FormatBytes(const ULONGLONG& n);
+std::wstring FormatLongLongHuman(ULONGLONG n);
+std::wstring FormatCount(const ULONGLONG& n);
+std::wstring FormatDouble(double d);
+std::wstring PadWidthBlanks(std::wstring n, int width);
+std::wstring FormatFileTime(const FILETIME& t);
+std::wstring FormatAttributes(DWORD attr);
+std::wstring FormatMilliseconds(ULONGLONG ms);
+std::wstring GetParseNameOfMyComputer();
 void GetPidlOfMyComputer(LPITEMIDLIST* ppidl);
-bool GetVolumeName(LPCWSTR rootPath, CStringW& volumeName);
-CStringW FormatVolumeNameOfRootPath(const CStringW& rootPath);
-CStringW FormatVolumeName(const CStringW& rootPath, const CStringW& volumeName);
-CStringW PathFromVolumeName(const CStringW& name);
-CStringW GetFolderNameFromPath(LPCWSTR path);
-CStringW GetCOMSPEC();
+bool GetVolumeName(const std::wstring & rootPath, std::wstring& volumeName);
+std::wstring FormatVolumeNameOfRootPath(const std::wstring& rootPath);
+std::wstring FormatVolumeName(const std::wstring& rootPath, const std::wstring& volumeName);
+std::wstring PathFromVolumeName(const std::wstring& name);
+std::wstring GetFolderNameFromPath(const std::wstring & path);
+std::wstring GetCOMSPEC();
 void WaitForHandleWithRepainting(HANDLE h, DWORD TimeOut = INFINITE);
-bool FolderExists(LPCWSTR path);
-bool DriveExists(const CStringW& path);
-CStringW MyQueryDosDevice(LPCWSTR drive);
-bool IsSUBSTedDrive(LPCWSTR drive);
-CStringW GetSpec_Bytes();
-CStringW GetSpec_KB();
-CStringW GetSpec_MB();
-CStringW GetSpec_GB();
-CStringW GetSpec_TB();
-BOOL IsAdmin();
+bool FolderExists(const std::wstring & path);
+bool DriveExists(const std::wstring& path);
+std::wstring MyQueryDosDevice(const std::wstring & drive);
+bool IsSUBSTedDrive(const std::wstring & drive);
+const std::wstring& GetSpec_Bytes();
+const std::wstring& GetSpec_KB();
+const std::wstring& GetSpec_MB();
+const std::wstring& GetSpec_GB();
+const std::wstring& GetSpec_TB();
+bool IsAdmin();
+bool FileIconInit();
 bool EnableReadPrivileges();
+void ReplaceString(std::wstring& subject, const std::wstring& search, const std::wstring& replace);
+std::wstring& TrimString(std::wstring& s, wchar_t c = L' ');
+std::wstring& MakeLower(std::wstring& s);
+const std::wstring& GetSysDirectory();

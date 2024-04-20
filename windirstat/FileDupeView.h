@@ -43,7 +43,7 @@ protected:
     }
     void OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint) override;
 
-    CFileDupeControl m_control;
+    CFileDupeControl m_Control;
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnSize(UINT nType, int cx, int cy);

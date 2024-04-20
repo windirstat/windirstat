@@ -22,10 +22,9 @@
 #pragma once
 
 #include "stdafx.h"
+#include "Item.h"
 
 #include <unordered_map>
-
-#include "Item.h"
 
 // Columns
 using ITEMDUPCOLUMNS = enum
@@ -39,11 +38,11 @@ using ITEMDUPCOLUMNS = enum
 
 class CItemDupe final : public CTreeListItem
 {
-    CStringW m_hash;
-    ULONGLONG m_size = 0;
-    CItem* m_item = nullptr;
-    std::shared_mutex m_protect;
-    std::vector<CItemDupe*> m_children;
+    std::wstring m_Hash;
+    ULONGLONG m_Size = 0;
+    CItem* m_Item = nullptr;
+    std::shared_mutex m_Protect;
+    std::vector<CItemDupe*> m_Children;
 
 public:
     CItemDupe(const CItemDupe&) = delete;
@@ -51,12 +50,12 @@ public:
     CItemDupe& operator=(const CItemDupe&) = delete;
     CItemDupe& operator=(CItemDupe&&) = delete;
     CItemDupe() = default;
-    CItemDupe(const CStringW & hash, ULONGLONG size);
+    CItemDupe(const std::wstring & hash, ULONGLONG size);
     CItemDupe(CItem* item);
     ~CItemDupe() override;
 
     // Translation map for leveraging Item routines
-    const std::unordered_map<int, int> column_map =
+    const std::unordered_map<int, int> columnMap =
     {
         { COL_ITEMDUP_NAME, COL_NAME },
         { COL_ITEMDUP_ITEMS, COL_ITEMS },
@@ -67,13 +66,13 @@ public:
 
     // CTreeListItem Interface
     bool DrawSubitem(int subitem, CDC* pdc, CRect rc, UINT state, int* width, int* focusLeft) const override;
-    CStringW GetText(int subitem) const override;
+    std::wstring GetText(int subitem) const override;
     int CompareSibling(const CTreeListItem* tlib, int subitem) const override;
     int GetTreeListChildCount() const override;
     CTreeListItem* GetTreeListChild(int i) const override;
     short GetImageToCache() const override;
 
-    CItem* GetItem() const { return m_item; }
+    CItem* GetItem() const { return m_Item; }
     const std::vector<CItemDupe*>& GetChildren() const;
     CItemDupe* GetParent() const;
     void AddChild(CItemDupe* child);

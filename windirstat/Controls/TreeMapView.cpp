@@ -41,9 +41,9 @@ BEGIN_MESSAGE_MAP(CTreeMapView, CView)
     ON_WM_TIMER()
 END_MESSAGE_MAP()
 
-void CTreeMapView::SuspendRecalculationDrawing(bool suspend)
+void CTreeMapView::SuspendRecalculationDrawing(const bool suspend)
 {
-    m_drawingSuspended = suspend;
+    m_DrawingSuspended = suspend;
     if (!suspend)
     {
         Invalidate();
@@ -52,12 +52,12 @@ void CTreeMapView::SuspendRecalculationDrawing(bool suspend)
 
 bool CTreeMapView::IsShowTreemap() const
 {
-    return m_showTreemap;
+    return m_ShowTreemap;
 }
 
-void CTreeMapView::ShowTreemap(bool show)
+void CTreeMapView::ShowTreemap(const bool show)
 {
-    m_showTreemap = show;
+    m_ShowTreemap = show;
 }
 
 BOOL CTreeMapView::PreCreateWindow(CREATESTRUCT& cs)
@@ -68,7 +68,7 @@ BOOL CTreeMapView::PreCreateWindow(CREATESTRUCT& cs)
     WNDCLASS wc;
     VERIFY(GetClassInfo(AfxGetInstanceHandle(), cs.lpszClass, &wc));
     wc.hbrBackground = nullptr;
-    wc.lpszClassName = L"windirstat_graphview_class-{E0BE4F6F-3904-4c99-A3D4-2F11DE629740}";
+    wc.lpszClassName = L"windirstatGraphviewClass-{E0BE4F6F-3904-4c99-A3D4-2F11DE629740}";
     cs.lpszClass     = reinterpret_cast<LPCWSTR>(::RegisterClass(&wc)); //-V542
 
     return true;
@@ -89,7 +89,7 @@ void CTreeMapView::DrawEmptyView(CDC* pDC)
     CRect rc;
     GetClientRect(rc);
 
-    if (m_dimmed.m_hObject == nullptr)
+    if (m_Dimmed.m_hObject == nullptr)
     {
         pDC->FillSolidRect(rc, gray);
     }
@@ -97,20 +97,20 @@ void CTreeMapView::DrawEmptyView(CDC* pDC)
     {
         CDC dcmem;
         dcmem.CreateCompatibleDC(pDC);
-        CSelectObject sobmp(&dcmem, &m_dimmed);
-        pDC->BitBlt(rc.left, rc.top, m_dimmedSize.cx, m_dimmedSize.cy, &dcmem, 0, 0, SRCCOPY);
+        CSelectObject sobmp(&dcmem, &m_Dimmed);
+        pDC->BitBlt(rc.left, rc.top, m_DimmedSize.cx, m_DimmedSize.cy, &dcmem, 0, 0, SRCCOPY);
 
-        if (rc.Width() > m_dimmedSize.cx)
+        if (rc.Width() > m_DimmedSize.cx)
         {
             CRect r = rc;
-            r.left  = r.left + m_dimmedSize.cx;
+            r.left  = r.left + m_DimmedSize.cx;
             pDC->FillSolidRect(r, gray);
         }
 
-        if (rc.Height() > m_dimmedSize.cy)
+        if (rc.Height() > m_DimmedSize.cy)
         {
             CRect r = rc;
-            r.top   = r.top + m_dimmedSize.cy;
+            r.top   = r.top + m_DimmedSize.cy;
             pDC->FillSolidRect(r, gray);
         }
     }
@@ -119,7 +119,7 @@ void CTreeMapView::DrawEmptyView(CDC* pDC)
 void CTreeMapView::OnDraw(CDC * pDC)
 {
     const CItem* root = GetDocument()->GetRootItem();
-    if (root == nullptr || !root->IsDone() || m_drawingSuspended || !m_showTreemap)
+    if (root == nullptr || !root->IsDone() || m_DrawingSuspended || !m_ShowTreemap)
     {
         DrawEmptyView(pDC);
         return;
@@ -127,7 +127,7 @@ void CTreeMapView::OnDraw(CDC * pDC)
 
     CRect rc;
     GetClientRect(rc);
-    ASSERT(m_size == rc.Size());
+    ASSERT(m_Size == rc.Size());
     ASSERT(rc.TopLeft() == CPoint(0, 0));
 
     CDC dcmem;
@@ -137,21 +137,21 @@ void CTreeMapView::OnDraw(CDC * pDC)
     {
         CWaitCursor wc;
 
-        m_bitmap.CreateCompatibleBitmap(pDC, m_size.cx, m_size.cy);
+        m_Bitmap.CreateCompatibleBitmap(pDC, m_Size.cx, m_Size.cy);
 
-        CSelectObject sobmp(&dcmem, &m_bitmap);
+        CSelectObject sobmp(&dcmem, &m_Bitmap);
 
         if (GetDocument()->IsZoomed())
         {
             DrawZoomFrame(&dcmem, rc);
         }
 
-        m_treemap.DrawTreemap(&dcmem, rc, GetDocument()->GetZoomItem(), &COptions::TreemapOptions);
+        m_Treemap.DrawTreemap(&dcmem, rc, GetDocument()->GetZoomItem(), &COptions::TreemapOptions);
     }
 
-    CSelectObject sobmp2(&dcmem, &m_bitmap);
+    CSelectObject sobmp2(&dcmem, &m_Bitmap);
 
-    pDC->BitBlt(0, 0, m_size.cx, m_size.cy, &dcmem, 0, 0, SRCCOPY);
+    pDC->BitBlt(0, 0, m_Size.cx, m_Size.cy, &dcmem, 0, 0, SRCCOPY);
 
     DrawHighlights(pDC);
 }
@@ -162,19 +162,19 @@ void CTreeMapView::DrawZoomFrame(CDC* pdc, CRect& rc)
 
     CRect r  = rc;
     r.bottom = r.top + w;
-    pdc->FillSolidRect(r, CDirStatDoc::GetZoomColor());
+    pdc->FillSolidRect(r, GetDocument()->GetZoomColor());
 
     r = rc;
     r.top = r.bottom - w;
-    pdc->FillSolidRect(r, CDirStatDoc::GetZoomColor());
+    pdc->FillSolidRect(r, GetDocument()->GetZoomColor());
 
     r = rc;
     r.right = r.left + w;
-    pdc->FillSolidRect(r, CDirStatDoc::GetZoomColor());
+    pdc->FillSolidRect(r, GetDocument()->GetZoomColor());
 
     r = rc;
     r.left = r.right - w;
-    pdc->FillSolidRect(r, CDirStatDoc::GetZoomColor());
+    pdc->FillSolidRect(r, GetDocument()->GetZoomColor());
 
     rc.DeflateRect(w, w);
 }
@@ -183,6 +183,7 @@ void CTreeMapView::DrawHighlights(CDC* pdc)
 {
     switch (CMainFrame::Get()->GetLogicalFocus())
     {
+    case LF_DUPLICATELIST:
     case LF_DIRECTORYLIST:
         DrawSelection(pdc);
         break;
@@ -214,7 +215,7 @@ void CTreeMapView::RecurseHighlightExtension(CDC* pdc, const CItem* item)
 
     if (item->TmiIsLeaf())
     {
-        if (item->IsType(IT_FILE) && item->GetExtension().CompareNoCase(GetDocument()->GetHighlightExtension()) == 0)
+        if (item->IsType(IT_FILE) && _wcsicmp(item->GetExtension().c_str(), GetDocument()->GetHighlightExtension().c_str()) == 0)
         {
             RenderHighlightRectangle(pdc, rc);
         }
@@ -260,7 +261,7 @@ void CTreeMapView::HighlightSelectedItem(CDC* pdc, const CItem* item, const bool
         CRect rcClient;
         GetClientRect(rcClient);
 
-        if (m_treemap.GetOptions().grid)
+        if (m_Treemap.GetOptions().grid)
         {
             rc.right++;
             rc.bottom++;
@@ -309,23 +310,23 @@ void CTreeMapView::RenderHighlightRectangle(CDC* pdc, CRect& rc)
     }
 }
 
-void CTreeMapView::OnSize(UINT nType, int cx, int cy)
+void CTreeMapView::OnSize(const UINT nType, const int cx, const int cy)
 {
     CView::OnSize(nType, cx, cy);
     const CSize sz(cx, cy);
-    if (sz != m_size)
+    if (sz != m_Size)
     {
         Inactivate();
-        m_size = sz;
+        m_Size = sz;
     }
 }
 
-void CTreeMapView::OnLButtonDown(UINT nFlags, CPoint point)
+void CTreeMapView::OnLButtonDown(const UINT nFlags, const CPoint point)
 {
     const CItem* root = GetDocument()->GetRootItem();
     if (root != nullptr && root->IsDone() && IsDrawn())
     {
-        const auto item = static_cast<CItem*>(m_treemap.FindItemByPoint(GetDocument()->GetZoomItem(), point));
+        const auto item = static_cast<CItem*>(m_Treemap.FindItemByPoint(GetDocument()->GetZoomItem(), point));
         if (item == nullptr)
         {
             return;
@@ -338,25 +339,25 @@ void CTreeMapView::OnLButtonDown(UINT nFlags, CPoint point)
 
 bool CTreeMapView::IsDrawn() const
 {
-    return m_bitmap.m_hObject != nullptr;
+    return m_Bitmap.m_hObject != nullptr;
 }
 
 void CTreeMapView::Inactivate()
 {
-    if (m_bitmap.m_hObject != nullptr)
+    if (m_Bitmap.m_hObject != nullptr)
     {
-        // Move the old bitmap to m_dimmed
-        m_dimmed.DeleteObject();
-        m_dimmed.Attach(m_bitmap.Detach());
-        m_dimmedSize = m_size;
+        // Move the old bitmap to m_Dimmed
+        m_Dimmed.DeleteObject();
+        m_Dimmed.Attach(m_Bitmap.Detach());
+        m_DimmedSize = m_Size;
 
-        // Dim m_inactive
+        // Dim m_Inactive
         CClientDC dc(this);
         CDC dcmem;
         dcmem.CreateCompatibleDC(&dc);
-        CSelectObject sobmp(&dcmem, &m_dimmed);
-        for (int x = 0; x < m_dimmedSize.cx; x += 2)
-            for (int y = 0; y < m_dimmedSize.cy; y += 2)
+        CSelectObject sobmp(&dcmem, &m_Dimmed);
+        for (int x = 0; x < m_DimmedSize.cx; x += 2)
+            for (int y = 0; y < m_DimmedSize.cy; y += 2)
             {
                 dcmem.SetPixel(x, y, RGB(100, 100, 100));
             }
@@ -365,14 +366,14 @@ void CTreeMapView::Inactivate()
 
 void CTreeMapView::EmptyView()
 {
-    if (m_bitmap.m_hObject != nullptr)
+    if (m_Bitmap.m_hObject != nullptr)
     {
-        m_bitmap.DeleteObject();
+        m_Bitmap.DeleteObject();
     }
 
-    if (m_dimmed.m_hObject != nullptr)
+    if (m_Dimmed.m_hObject != nullptr)
     {
-        m_dimmed.DeleteObject();
+        m_Dimmed.DeleteObject();
     }
 }
 
@@ -381,7 +382,7 @@ void CTreeMapView::OnSetFocus(CWnd* /*pOldWnd*/)
     CMainFrame::Get()->GetFileTreeView()->SetFocus();
 }
 
-void CTreeMapView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
+void CTreeMapView::OnUpdate(CView* pSender, const LPARAM lHint, CObject* pHint)
 {
     if (!GetDocument()->IsRootDone())
     {
@@ -425,7 +426,7 @@ void CTreeMapView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
     }
 }
 
-void CTreeMapView::OnContextMenu(CWnd* /*pWnd*/, CPoint point)
+void CTreeMapView::OnContextMenu(CWnd* /*pWnd*/, const CPoint point)
 {
     const CItem* root = GetDocument()->GetRootItem();
     if (root != nullptr && root->IsDone())
@@ -438,29 +439,29 @@ void CTreeMapView::OnContextMenu(CWnd* /*pWnd*/, CPoint point)
     }
 }
 
-void CTreeMapView::OnMouseMove(UINT /*nFlags*/, CPoint point)
+void CTreeMapView::OnMouseMove(UINT /*nFlags*/, const CPoint point)
 {
     if (GetDocument()->IsRootDone() && IsDrawn())
     {
-        const auto item = static_cast<const CItem*>(m_treemap.FindItemByPoint(GetDocument()->GetZoomItem(), point));
+        const auto item = static_cast<const CItem*>(m_Treemap.FindItemByPoint(GetDocument()->GetZoomItem(), point));
         if (item != nullptr)
         {
             CMainFrame::Get()->SetMessageText(item->GetPath());
         }
     }
-    if (m_timer == 0)
+    if (m_Timer == 0)
     {
-        m_timer = SetTimer(ID_WDS_CONTROL, 100, nullptr);
+        m_Timer = SetTimer(ID_WDS_CONTROL, 100, nullptr);
     }
 }
 
 void CTreeMapView::OnDestroy()
 {
-    if (m_timer != NULL)
+    if (m_Timer != NULL)
     {
-        KillTimer(m_timer);
+        KillTimer(m_Timer);
     }
-    m_timer = 0;
+    m_Timer = 0;
 
     CView::OnDestroy();
 }
@@ -477,7 +478,7 @@ void CTreeMapView::OnTimer(UINT_PTR /*nIDEvent*/)
     if (!rc.PtInRect(point))
     {
         CMainFrame::Get()->SetSelectionMessageText();
-        KillTimer(m_timer);
-        m_timer = 0;
+        KillTimer(m_Timer);
+        m_Timer = 0;
     }
 }

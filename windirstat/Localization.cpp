@@ -27,9 +27,10 @@
 
 #include <filesystem>
 #include <fstream>
-#include <map>
+#include <array>
+#include <unordered_map>
 
-std::unordered_map<std::wstring, std::wstring> Localization::map;
+std::unordered_map<std::wstring, std::wstring> Localization::m_Map;
 
 void Localization::SearchReplace(std::wstring& input, const std::wstring_view& search, const std::wstring_view& replace)
 {
@@ -39,11 +40,11 @@ void Localization::SearchReplace(std::wstring& input, const std::wstring_view& s
     }
 }
 
-bool Localization::CrackStrings(std::basic_istream<char>& stream, unsigned int stream_size)
+bool Localization::CrackStrings(std::basic_istream<char>& stream, const unsigned int streamSize)
 {
     // Size a buffer to the largest string it will contain
-    std::wstring buffer_wide;
-    buffer_wide.resize((stream_size + 1) * sizeof(WCHAR));
+    std::wstring bufferWide;
+    bufferWide.resize((streamSize + 1) * sizeof(WCHAR));
 
     // Read the file line by line
     std::string line;
@@ -52,17 +53,17 @@ bool Localization::CrackStrings(std::basic_istream<char>& stream, unsigned int s
         // Convert to wide strings
         if (line.empty() || line[0] == L'#') continue;
         const int sz = MultiByteToWideChar(CP_UTF8, 0, line.c_str(), static_cast<int>(line.size()),
-            buffer_wide.data(), static_cast<int>(buffer_wide.size()));
+            bufferWide.data(), static_cast<int>(bufferWide.size()));
         ASSERT(sz != 0);
-        std::wstring line_wide = buffer_wide.substr(0, sz);
+        std::wstring lineWide = bufferWide.substr(0, sz);
 
         // Parse the string after the first equals
-        SearchReplace(line_wide, L"\r", L"");
-        SearchReplace(line_wide, L"\\n", L"\n");
-        SearchReplace(line_wide, L"\\t", L"\t");
-        if (const auto e = line_wide.find_first_of('='); e != std::string::npos)
+        SearchReplace(lineWide, L"\r", L"");
+        SearchReplace(lineWide, L"\\n", L"\n");
+        SearchReplace(lineWide, L"\\t", L"\t");
+        if (const auto e = lineWide.find_first_of('='); e != std::string::npos)
         {
-            map[line_wide.substr(0, e)] = line_wide.substr(e + 1);
+            m_Map[lineWide.substr(0, e)] = lineWide.substr(e + 1);
         }
     }
 
@@ -72,7 +73,7 @@ bool Localization::CrackStrings(std::basic_istream<char>& stream, unsigned int s
 std::vector<LANGID> Localization::GetLanguageList()
 {
     std::vector<LANGID> results;
-    EnumResourceLanguagesExW(nullptr, LANG_RESOURCE_TYPE, MAKEINTRESOURCE(IDR_RT_LANG), [](HMODULE, LPCWSTR, LPCWSTR, WORD wIDLanguage, LONG_PTR lParam)->BOOL
+    EnumResourceLanguagesExW(nullptr, LANG_RESOURCE_TYPE, MAKEINTRESOURCE(IDR_RT_LANG), [](HMODULE, LPCWSTR, LPCWSTR, const WORD wIDLanguage, const LONG_PTR lParam)->BOOL
     {
         reinterpret_cast<std::vector<LANGID>*>(lParam)->push_back(wIDLanguage);
         return TRUE;
@@ -82,7 +83,7 @@ std::vector<LANGID> Localization::GetLanguageList()
     FileFindEnhanced finder;
     for (BOOL b = finder.FindFile(GetAppFolder(), L"lang_??.txt"); b; b = finder.FindNextFile())
     {
-        const std::wstring lang = finder.GetFileName().Mid(5, 2).GetString();
+        const std::wstring lang = finder.GetFileName().substr(5, 2);
         const LCID lcid = LocaleNameToLCID(lang.c_str(), LOCALE_ALLOW_NEUTRAL_NAMES);
         if (lcid == LOCALE_NEUTRAL || lcid == LOCALE_CUSTOM_UNSPECIFIED) continue;
 
@@ -94,14 +95,14 @@ std::vector<LANGID> Localization::GetLanguageList()
     return results;
 }
 
-bool Localization::LoadResource(WORD language)
+bool Localization::LoadResource(const WORD language)
 {
     FileFindEnhanced finder;
-    const CStringW lang = GetLocaleString(LOCALE_SISO639LANGNAME, language);
-    const CStringW name = L"lang_" + lang + L".txt";
+    const std::wstring lang = GetLocaleString(LOCALE_SISO639LANGNAME, language);
+    const std::wstring name = L"lang_" + lang + L".txt";
     if (FileFindEnhanced::DoesFileExist(GetAppFolder(), name))
     {
-        return LoadFile((GetAppFolder() + L"\\" + name).GetString());
+        return LoadFile((GetAppFolder() + L"\\" + name));
     }
 
     // Find the resource in the loaded module
@@ -109,15 +110,15 @@ bool Localization::LoadResource(WORD language)
     if (resource == nullptr) return false;
 
     // Establish the resource
-    const HGLOBAL resource_data = ::LoadResource(nullptr, resource);
-    if (resource_data == nullptr) return false;
+    const HGLOBAL resourceData = ::LoadResource(nullptr, resource);
+    if (resourceData == nullptr) return false;
 
     // Fetch a pointer to the data
-    const LPVOID binary_data = ::LockResource(resource_data);
-    if (binary_data == nullptr) return false;
+    const LPVOID binaryData = ::LockResource(resourceData);
+    if (binaryData == nullptr) return false;
 
     // Organize the data into a string
-    const std::string file(static_cast<LPCSTR>(binary_data), SizeofResource(nullptr, resource));
+    const std::string file(static_cast<LPCSTR>(binaryData), SizeofResource(nullptr, resource));
     std::istringstream is(file);
 
     // Process the data
@@ -128,17 +129,17 @@ void Localization::UpdateMenu(CMenu& menu)
 {
     for (int i = 0; i < menu.GetMenuItemCount(); i++)
     {
-        WCHAR buffer[MAX_VALUE_SIZE];
+        std::array<WCHAR, MAX_VALUE_SIZE> buffer;
         MENUITEMINFOW mi{ sizeof(MENUITEMINFO) };
-        mi.cch = _countof(buffer);
-        mi.dwTypeData = &buffer[0];
+        mi.cch = static_cast<UINT>(buffer.size());
+        mi.dwTypeData = buffer.data();
         mi.fMask = MIIM_STRING | MIIM_FTYPE | MIIM_SUBMENU;
         menu.GetMenuItemInfoW(i, &mi, TRUE);
         if (mi.fType == MFT_STRING && wcsstr(mi.dwTypeData, L"ID") == mi.dwTypeData &&
-            Contains(CStringW(mi.dwTypeData)))
+            Contains(mi.dwTypeData))
         {
             mi.fMask = MIIM_STRING;
-            mi.dwTypeData = const_cast<LPWSTR>(map[mi.dwTypeData].c_str());
+            mi.dwTypeData = const_cast<LPWSTR>(m_Map[mi.dwTypeData].c_str());
             menu.SetMenuItemInfoW(i, &mi, TRUE);
         }
         if (IsMenu(mi.hSubMenu)) UpdateMenu(*menu.GetSubMenu(i));
@@ -149,16 +150,16 @@ void Localization::UpdateTabControl(CTabCtrl& tab)
 {
     for (int i = 0; i < tab.GetItemCount(); i++)
     {
-        WCHAR buffer[MAX_VALUE_SIZE] = L"";
+        std::array<WCHAR, MAX_VALUE_SIZE> buffer;
         TCITEMW ti{ sizeof(TCITEMW) };
-        ti.cchTextMax = _countof(buffer);
+        ti.cchTextMax = static_cast<int>(buffer.size());
         ti.mask = TCIF_TEXT;
-        ti.pszText = &buffer[0];
+        ti.pszText = buffer.data();
         if (tab.GetItem(i, &ti) && wcsstr(ti.pszText, L"ID") == ti.pszText &&
-            Contains(CStringW(ti.pszText)))
+            Contains(ti.pszText))
         {
             ti.mask = TCIF_TEXT;
-            ti.pszText = const_cast<LPWSTR>(map[ti.pszText].c_str());
+            ti.pszText = const_cast<LPWSTR>(m_Map[ti.pszText].c_str());
             tab.SetItem(i, &ti);
         }
     }
@@ -166,12 +167,12 @@ void Localization::UpdateTabControl(CTabCtrl& tab)
 
 void Localization::UpdateWindowText(HWND hwnd)
 {
-    WCHAR buffer[MAX_VALUE_SIZE];
-    if (GetWindowText(hwnd, buffer, _countof(buffer)) > 0 &&
-        wcsstr(&buffer[0], L"ID") == &buffer[0] &&
-        Contains(CStringW(&buffer[0])))
+    std::array<WCHAR, MAX_VALUE_SIZE> buffer;
+    if (GetWindowText(hwnd, buffer.data(), static_cast<int>(buffer.size())) > 0 &&
+        wcsstr(buffer.data(), L"ID") == buffer.data() &&
+        Contains(buffer.data()))
     {
-        ::SetWindowText(hwnd, map[buffer].c_str());
+        ::SetWindowText(hwnd, m_Map[buffer.data()].c_str());
     }
 }
 
@@ -180,19 +181,19 @@ void Localization::UpdateDialogs(const CWnd& wnd)
     UpdateWindowText(wnd.m_hWnd);
 
     EnumChildWindows(wnd.m_hWnd, [](HWND hwnd, LPARAM)
-        {
-            UpdateWindowText(hwnd);
-            return TRUE;
-        },
-        reinterpret_cast<LPARAM>(nullptr));
+    {
+        UpdateWindowText(hwnd);
+        return TRUE;
+    },
+    reinterpret_cast<LPARAM>(nullptr));
 }
 
 bool Localization::LoadFile(const std::wstring& file)
 {
     // Open the file
-    std::ifstream fFile(file);
-    if (!fFile.good()) return false;
+    std::ifstream fileStream(file);
+    if (!fileStream.good()) return false;
 
     // Process the data
-    return CrackStrings(fFile, static_cast<unsigned int>(std::filesystem::file_size(file)));
+    return CrackStrings(fileStream, static_cast<unsigned int>(std::filesystem::file_size(file)));
 }

@@ -29,38 +29,38 @@
 
 class Localization
 {
-    static bool CrackStrings(std::basic_istream<char>& stream, unsigned int stream_size);
+    static bool CrackStrings(std::basic_istream<char>& stream, unsigned int streamSize);
     static void SearchReplace(std::wstring& input, const std::wstring_view& search, const std::wstring_view& replace);
     static void UpdateWindowText(HWND hwnd);
 
 public:
     static constexpr auto MAX_VALUE_SIZE = 1024;
     static constexpr auto LANG_RESOURCE_TYPE = L"RT_LANG";
-    static std::unordered_map<std::wstring, std::wstring> map;
+    static std::unordered_map<std::wstring, std::wstring> m_Map;
 
-    static bool Contains(const CStringW& name)
+    static bool Contains(const std::wstring& name)
     {
-        ASSERT(map.contains(name.GetString()));
-        return map.contains(name.GetString());
+        ASSERT(m_Map.contains(name));
+        return m_Map.contains(name);
     }
 
-    static CStringW Lookup(const UINT res, const CStringW& def = CString())
+    static std::wstring Lookup(const UINT res, const std::wstring& def = std::wstring())
     {
         CStringW name;
         name.LoadStringW(nullptr, res, static_cast<LANGID>(COptions::LanguageId.Obj()));
-        return Lookup(name, def);
+        return Lookup(name.GetString(), def);
     }
 
-    static CStringW Lookup(const CStringW& name, const CStringW & def = CString())
+    static std::wstring Lookup(const std::wstring& name, const std::wstring & def = std::wstring())
     {
-        return Contains(name) ? CString{ map[name.GetString()].c_str() } : def;
+        return Contains(name) ? std::wstring{ m_Map[name].c_str() } : def;
     }
 
-    static CStringW LookupNeutral(const UINT res)
+    static std::wstring LookupNeutral(const UINT res)
     {
-        CString name;
+        CStringW name;
         name.LoadStringW(nullptr, res, MAKELANGID(LANG_NEUTRAL,SUBLANG_NEUTRAL));
-        return name;
+        return name.GetString();
     }
 
     static void UpdateMenu(CMenu& menu);

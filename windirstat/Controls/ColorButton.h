@@ -49,7 +49,7 @@ private:
         void SetColor(COLORREF color);
 
     private:
-        COLORREF m_color;
+        COLORREF m_Color;
 
         DECLARE_MESSAGE_MAP()
         afx_msg void OnPaint();
@@ -58,7 +58,7 @@ private:
         afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
     };
 
-    CPreview m_preview;
+    CPreview m_Preview;
 
 protected:
     DECLARE_MESSAGE_MAP()

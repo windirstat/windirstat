@@ -33,8 +33,8 @@ class CTreeListControl;
 //
 // CTreeListItem. An item in the CTreeListControl. (CItem is derived from CTreeListItem.)
 // In order to save memory, once the item is actually inserted in the List,
-// we allocate the VISIBLEINFO structure (m_vi).
-// m_vi is freed as soon as the item is removed from the List.
+// we allocate the VISIBLEINFO structure (m_VisualInfo).
+// m_VisualInfo is freed as soon as the item is removed from the List.
 //
 class CTreeListItem : public COwnerDrawnListItem
 {
@@ -42,21 +42,21 @@ class CTreeListItem : public COwnerDrawnListItem
     struct VISIBLEINFO
     {
         // sortedChildren: This member contains our children (the same set of
-        // children as in CItem::m_children) and is initialized as soon as
-        // we are expanded. In contrast to CItem::m_children, this array is always
+        // children as in CItem::m_Children) and is initialized as soon as
+        // we are expanded. In contrast to CItem::m_Children, this array is always
         // sorted depending on the current user-defined sort column and -order.
         std::vector<CTreeListItem*> sortedChildren;
 
         CPacman pacman;
         CRect rcPlusMinus;    // Coordinates of the little +/- rectangle, relative to the upper left corner of the item.
         CRect rcTitle;        // Coordinates of the label, relative to the upper left corner of the item.
-        CStringW owner;       // Owner of file or folder
+        std::wstring owner;       // Owner of file or folder
         short image = -1;     // -1 as long as not needed, >= 0: valid index in IconImageList.
         unsigned char indent; // 0 for the root item, 1 for its children, and so on.
         bool isExpanded = false; // Whether item is expanded.
         CTreeListControl* control = nullptr;
 
-        VISIBLEINFO(unsigned char iIndent) : indent(iIndent) {}
+        VISIBLEINFO(const unsigned char iIndent) : indent(iIndent) {}
     };
 
 public:
@@ -66,7 +66,7 @@ public:
     virtual int CompareSibling(const CTreeListItem* tlib, int subitem) const = 0;
 
     bool DrawSubitem(int subitem, CDC* pdc, CRect rc, UINT state, int* width, int* focusLeft) const override;
-    CStringW GetText(int subitem) const override;
+    std::wstring GetText(int subitem) const override;
     int GetImage() const override;
     int Compare(const CSortingListItem* baseOther, int subitem) const override;
     virtual CTreeListItem* GetTreeListChild(int i) const = 0;
@@ -74,7 +74,7 @@ public:
     virtual short GetImageToCache() const = 0;
 
     void DrawPacman(const CDC* pdc, const CRect& rc, COLORREF bgColor) const;
-    void UncacheImage();
+    void UnCacheImage();
     void SortChildren(const SSorting& sorting);
     CTreeListItem* GetSortedChild(int i) const;
     int FindSortedChild(const CTreeListItem* child) const;
@@ -85,7 +85,7 @@ public:
     bool HasChildren() const;
     bool IsExpanded() const;
     void SetExpanded(bool expanded = true);
-    bool IsVisible() const { return m_vi != nullptr; }
+    bool IsVisible() const { return m_VisualInfo != nullptr; }
     void SetVisible(CTreeListControl * control, bool visible = true);
     unsigned char GetIndent() const;
     void SetIndent(unsigned char indent);
@@ -93,17 +93,17 @@ public:
     void SetPlusMinusRect(const CRect& rc) const;
     CRect GetTitleRect() const;
     void SetTitleRect(const CRect& rc) const;
-    int GetScrollPosition();
+    int GetScrollPosition() const;
     void SetScrollPosition(int top);
     void StartPacman() const;
     void StopPacman() const;
     void DrivePacman() const;
 
 protected:
-    mutable VISIBLEINFO* m_vi = nullptr;
+    mutable VISIBLEINFO* m_VisualInfo = nullptr;
 
 private:
-    CTreeListItem* m_parent = nullptr;
+    CTreeListItem* m_Parent = nullptr;
 };
 
 //
@@ -113,7 +113,7 @@ class CTreeListControl : public COwnerDrawnListControl
 {
     DECLARE_DYNAMIC(CTreeListControl)
 
-    CTreeListControl(int rowHeight = -1, std::vector<int>* column_order = {}, std::vector<int>* column_widths = {});
+    CTreeListControl(int rowHeight = -1, std::vector<int>* columnOrder = {}, std::vector<int>* columnWidths = {});
     ~CTreeListControl() override = default;
     void MySetImageList(CImageList* il);
     virtual BOOL CreateEx(DWORD dwExStyle, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID);
@@ -172,11 +172,11 @@ protected:
     //
     /////////////////////////////////////////////////////
 
-    CBitmap m_bmNodes0;                // The bitmaps needed to draw the treecontrol-like branches
-    CBitmap m_bmNodes1;                // The same bitmaps with stripe-background color
-    CImageList* m_imageList = nullptr; // We don't use the system-supplied SetImageList(), but MySetImageList().
-    int m_lButtonDownItem = -1;        // Set in OnLButtonDown(). -1 if not item hit.
-    bool m_lButtonDownOnPlusMinusRect = false; // Set in OnLButtonDown(). True, if plus-minus-rect hit.
+    CBitmap m_BmNodes0;                // The bitmaps needed to draw the treecontrol-like branches
+    CBitmap m_BmNodes1;                // The same bitmaps with stripe-background color
+    CImageList* m_ImageList = nullptr; // We don't use the system-supplied SetImageList(), but MySetImageList().
+    int m_LButtonDownItem = -1;        // Set in OnLButtonDown(). -1 if not item hit.
+    bool m_LButtonDownOnPlusMinusRect = false; // Set in OnLButtonDown(). True, if plus-minus-rect hit.
 
     DECLARE_MESSAGE_MAP()
 

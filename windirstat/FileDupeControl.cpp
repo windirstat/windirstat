@@ -21,24 +21,23 @@
 
 #include "stdafx.h"
 
-#include <execution>
-#include <ranges>
-
 #include "WinDirStat.h"
 #include "DirStatDoc.h"
 #include "ItemDupe.h"
 #include "MainFrame.h"
 #include "FileDupeView.h"
 #include "GlobalHelpers.h"
-#include "OsSpecific.h"
 #include "Localization.h"
+
+#include <execution>
+#include <ranges>
 
 CFileDupeControl::CFileDupeControl() : CTreeListControl(20, COptions::DupeTreeColumnOrder.Ptr(), COptions::DupeTreeColumnWidths.Ptr())
 {
-    m_singleton = this;
+    m_Singleton = this;
 }
 
-bool CFileDupeControl::GetAscendingDefault(int column)
+bool CFileDupeControl::GetAscendingDefault(const int column)
 {
     return column == COL_ITEMDUP_SIZE_PHYSICAL || column == COL_ITEMDUP_LASTCHANGE;
 }
@@ -53,9 +52,9 @@ BEGIN_MESSAGE_MAP(CFileDupeControl, CTreeListControl)
 END_MESSAGE_MAP()
 #pragma warning(pop)
 
-CFileDupeControl* CFileDupeControl::m_singleton = nullptr;
+CFileDupeControl* CFileDupeControl::m_Singleton = nullptr;
 
-void CFileDupeControl::OnContextMenu(CWnd* /*pWnd*/, CPoint pt)
+void CFileDupeControl::OnContextMenu(CWnd* /*pWnd*/, const CPoint pt)
 {
     const int i = GetSelectionMark();
     if (i == -1)
@@ -110,85 +109,85 @@ void CFileDupeControl::ProcessDuplicate(CItem * item)
         CDirStatApp::Get()->GetReparseInfo()->IsCloudLink(item->GetPathLong(), item->GetAttributes())) return;
 
     std::lock_guard lock(m_Mutex);
-    const auto size_entry = m_SizeTracker.find(item->GetSizePhysical());
-    if (size_entry == m_SizeTracker.end())
+    const auto sizeEntry = m_SizeTracker.find(item->GetSizeLogical());
+    if (sizeEntry == m_SizeTracker.end())
     {
         // Add first entry to list
         const auto set = { item };
-        m_SizeTracker.emplace(item->GetSizePhysical(), set);
+        m_SizeTracker.emplace(item->GetSizeLogical(), set);
         return;
     }
 
     // Add to the list of items to track
-    size_entry->second.insert(item);
+    sizeEntry->second.insert(item);
 
-    std::wstring hash_for_this_item;
-    auto items_to_hash = size_entry->second;
-    for (const ITEMTYPE & hash_type : {ITF_PARTHASH, ITF_FULLHASH })
+    std::wstring hashForThisItem;
+    auto itemsToHash = sizeEntry->second;
+    for (const ITEMTYPE & hashType : {ITF_PARTHASH, ITF_FULLHASH })
     {
         // Attempt to hash the file partially
-        std::unordered_map<std::wstring, std::unordered_set<CItem*>> hashes_to_display;
-        for (auto& item_to_hash : items_to_hash)
+        std::unordered_map<std::wstring, std::unordered_set<CItem*>> hashesToDisplay;
+        for (auto& itemToHash : itemsToHash)
         {
-            if (item_to_hash->IsType(hash_type)) continue;
+            if (itemToHash->IsType(hashType)) continue;
 
             // Compute the hash for the file
             m_Mutex.unlock();
-            std::wstring hash = item_to_hash->GetFileHash(hash_type == ITF_PARTHASH);
+            std::wstring hash = itemToHash->GetFileHash(hashType == ITF_PARTHASH);
             m_Mutex.lock();
-            item_to_hash->SetType(item_to_hash->GetRawType() | hash_type);
-            if (item_to_hash == item) hash_for_this_item = hash;
+            itemToHash->SetType(itemToHash->GetRawType() | hashType);
+            if (itemToHash == item) hashForThisItem = hash;
 
             // Skip if not hashable
             if (hash.empty()) continue;
 
             // Mark as the full being completed as well
-            if (item_to_hash->GetSizePhysical() <= 1024ull * 1024ull)
-                item_to_hash->SetType(item_to_hash->GetRawType() | ITF_FULLHASH);
+            if (itemToHash->GetSizePhysical() <= 1024ull * 1024ull)
+                itemToHash->SetType(itemToHash->GetRawType() | ITF_FULLHASH);
 
             // See if hash is already in tracking
-            const auto hash_entry = m_HashTracker.find(hash);
-            if (hash_entry != m_HashTracker.end()) hash_entry->second.insert(item_to_hash);
-            else m_HashTracker.emplace(hash, std::initializer_list<CItem*> { item_to_hash });
+            const auto hashEntry = m_HashTracker.find(hash);
+            if (hashEntry != m_HashTracker.end()) hashEntry->second.insert(itemToHash);
+            else m_HashTracker.emplace(hash, std::initializer_list<CItem*> { itemToHash });
         }
 
         // Return if no hash conflicts
-        auto hashes_result = m_HashTracker.find(hash_for_this_item) ;
-        if (hashes_result == m_HashTracker.end() || hashes_result->second.size() <= 1) return;
-        items_to_hash = hashes_result->second;
+        auto hashesResult = m_HashTracker.find(hashForThisItem) ;
+        if (hashesResult == m_HashTracker.end() || hashesResult->second.size() <= 1) return;
+        itemsToHash = hashesResult->second;
     }
 
-    for (const auto& item_to_add : items_to_hash)
+    for (const auto& itemToAdd : itemsToHash)
     {
         CMainFrame::Get()->InvokeInMessageThread([&]
         {
             const auto root = reinterpret_cast<CItemDupe*>(GetItem(0));
-            const auto node_entry = m_NodeTracker.find(hash_for_this_item);
-            auto dupe_parent = node_entry != m_NodeTracker.end() ? node_entry->second : nullptr;
+            const auto nodeEntry = m_NodeTracker.find(hashForThisItem);
+            auto dupeParent = nodeEntry != m_NodeTracker.end() ? nodeEntry->second : nullptr;
 
-            if (dupe_parent == nullptr)
+            if (dupeParent == nullptr)
             {
                 // Create new root item to hold these duplicates
-                dupe_parent = new CItemDupe(hash_for_this_item.c_str(), item_to_add->GetSizePhysical());
-                root->AddChild(dupe_parent);
-                m_NodeTracker.emplace(hash_for_this_item.c_str(), dupe_parent);
+                dupeParent = new CItemDupe(hashForThisItem, itemToAdd->GetSizePhysical());
+                root->AddChild(dupeParent);
+                m_NodeTracker.emplace(hashForThisItem, dupeParent);
             }
 
             // See if child is already in list parent
-            const auto& children = dupe_parent->GetChildren();
-            if (std::ranges::find_if(children, [item_to_add](const auto& child)
-                { return child->GetItem() == item_to_add; }) != children.end()) return;
+            const auto& children = dupeParent->GetChildren();
+            if (std::ranges::find_if(children, [itemToAdd](const auto& child)
+                { return child->GetItem() == itemToAdd; }) != children.end()) return;
 
             // Add new item
-            const auto dup_child = new CItemDupe(item_to_add);
-            dupe_parent->AddChild(dup_child);
+            const auto dupChild = new CItemDupe(itemToAdd);
+            dupeParent->AddChild(dupChild);
 
             SortItems();
         });
     }
 }
 
-void CFileDupeControl::OnItemDoubleClick(int i)
+void CFileDupeControl::OnItemDoubleClick(const int i)
 {
     if (const auto item = reinterpret_cast<const CItemDupe*>(GetItem(i))->GetItem();
         item != nullptr && item->IsType(IT_FILE))
@@ -211,8 +210,8 @@ void CFileDupeControl::PrepareDefaultMenu(CMenu* menu, const CItemDupe* item)
     }
     else
     {
-        const CStringW command = item->IsExpanded() && item->HasChildren() ? Localization::Lookup(IDS_COLLAPSE) : Localization::Lookup(IDS_EXPAND);
-        VERIFY(menu->ModifyMenu(ID_POPUP_TOGGLE, MF_BYCOMMAND | MF_STRING, ID_POPUP_TOGGLE, command));
+        const std::wstring command = item->IsExpanded() && item->HasChildren() ? Localization::Lookup(IDS_COLLAPSE) : Localization::Lookup(IDS_EXPAND);
+        VERIFY(menu->ModifyMenu(ID_POPUP_TOGGLE, MF_BYCOMMAND | MF_STRING, ID_POPUP_TOGGLE, command.c_str()));
         menu->SetDefaultItem(ID_POPUP_TOGGLE, false);
     }
 }
@@ -222,11 +221,11 @@ void CFileDupeControl::OnLvnItemchangingList(NMHDR* pNMHDR, LRESULT* pResult)
     const auto pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
 
     // determine if a new selection is being made
-    const bool requesting_selection =
+    const bool requestingSelection =
         (pNMLV->uOldState & LVIS_SELECTED) == 0 &&
         (pNMLV->uNewState & LVIS_SELECTED) != 0;
 
-    if (requesting_selection && reinterpret_cast<CItemDupe*>(GetItem(pNMLV->iItem))->GetItem() == nullptr)
+    if (requestingSelection && reinterpret_cast<CItemDupe*>(GetItem(pNMLV->iItem))->GetItem() == nullptr)
     {
         *pResult = TRUE;
         return;
@@ -235,7 +234,7 @@ void CFileDupeControl::OnLvnItemchangingList(NMHDR* pNMHDR, LRESULT* pResult)
     return CTreeListControl::OnLvnItemchangingList(pNMHDR, pResult);
 }
 
-void CFileDupeControl::InsertItem(int i, CTreeListItem* item)
+void CFileDupeControl::InsertItem(const int i, CTreeListItem* item)
 {
     InsertListItem(i, item);
     item->SetVisible(this, true);
@@ -256,7 +255,7 @@ void CFileDupeControl::OnSetFocus(CWnd* pOldWnd)
     CMainFrame::Get()->SetLogicalFocus(LF_DUPLICATELIST);
 }
 
-void CFileDupeControl::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
+void CFileDupeControl::OnKeyDown(const UINT nChar, const UINT nRepCnt, const UINT nFlags)
 {
     if (nChar == VK_TAB)
     {

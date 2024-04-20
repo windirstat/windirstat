@@ -32,20 +32,20 @@
 
 /////////////////////////////////////////////////////////////////////////////
 
-CExtensionListControl::CListItem::CListItem(CExtensionListControl* list, LPCWSTR extension, const SExtensionRecord& r)
+CExtensionListControl::CListItem::CListItem(CExtensionListControl* list, const std::wstring & extension, const SExtensionRecord& r)
 {
-    m_list = list;
-    m_extension = extension;
-    m_record = r;
+    m_List = list;
+    m_Extension = extension;
+    m_Record = r;
 }
 
-bool CExtensionListControl::CListItem::DrawSubitem(int subitem, CDC* pdc, CRect rc, UINT state, int* width, int* focusLeft) const
+bool CExtensionListControl::CListItem::DrawSubitem(const int subitem, CDC* pdc, CRect rc, const UINT state, int* width, int* focusLeft) const
 {
-    if (subitem == COL_EXTENSION)
+    if (subitem == COL_EXT_EXTENSION)
     {
-        DrawLabel(m_list, GetIconImageList(), pdc, rc, state, width, focusLeft);
+        DrawLabel(m_List, GetIconImageList(), pdc, rc, state, width, focusLeft);
     }
-    else if (subitem == COL_COLOR)
+    else if (subitem == COL_EXT_COLOR)
     {
         DrawColor(pdc, rc, state, width);
     }
@@ -57,7 +57,7 @@ bool CExtensionListControl::CListItem::DrawSubitem(int subitem, CDC* pdc, CRect 
     return true;
 }
 
-void CExtensionListControl::CListItem::DrawColor(CDC* pdc, CRect rc, UINT state, int* width) const
+void CExtensionListControl::CListItem::DrawColor(CDC* pdc, CRect rc, const UINT state, int* width) const
 {
     if (width != nullptr)
     {
@@ -65,7 +65,7 @@ void CExtensionListControl::CListItem::DrawColor(CDC* pdc, CRect rc, UINT state,
         return;
     }
 
-    DrawSelection(m_list, pdc, rc, state);
+    DrawSelection(m_List, pdc, rc, state);
 
     rc.DeflateRect(2, 3);
 
@@ -75,83 +75,83 @@ void CExtensionListControl::CListItem::DrawColor(CDC* pdc, CRect rc, UINT state,
     }
 
     CTreemap treemap;
-    treemap.DrawColorPreview(pdc, rc, m_record.color, &COptions::TreemapOptions);
+    treemap.DrawColorPreview(pdc, rc, m_Record.color, &COptions::TreemapOptions);
 }
 
-CStringW CExtensionListControl::CListItem::GetText(int subitem) const
+std::wstring CExtensionListControl::CListItem::GetText(const int subitem) const
 {
     switch (subitem)
     {
-        case COL_EXTENSION: return GetExtension();
-        case COL_COLOR: return {};
-        case COL_BYTES: return FormatBytes(m_record.bytes);
-        case COL_FILES: return FormatCount(m_record.files);
-        case COL_DESCRIPTION: return GetDescription();
-        case COL_BYTESPERCENT: return GetBytesPercent();
+        case COL_EXT_EXTENSION: return GetExtension();
+        case COL_EXT_COLOR: return {};
+        case COL_EXT_BYTES: return FormatBytes(m_Record.bytes);
+        case COL_EXT_FILES: return FormatCount(m_Record.files);
+        case COL_EXT_DESCRIPTION: return GetDescription();
+        case COL_EXT_BYTESPERCENT: return GetBytesPercent();
         default: ASSERT(FALSE); return {};
     }
 }
 
-CStringW CExtensionListControl::CListItem::GetExtension() const
+std::wstring CExtensionListControl::CListItem::GetExtension() const
 {
-    return m_extension;
+    return m_Extension;
 }
 
 int CExtensionListControl::CListItem::GetImage() const
 {
-    if (m_image == -1)
+    if (m_Image == -1)
     {
-        m_image = GetIconImageList()->getExtImageAndDescription(m_extension, m_description, 0);
+        m_Image = GetIconImageList()->GetExtImageAndDescription(m_Extension, m_Description, 0);
     }
-    return m_image;
+    return m_Image;
 }
 
-CStringW CExtensionListControl::CListItem::GetDescription() const
+std::wstring CExtensionListControl::CListItem::GetDescription() const
 {
-    if (m_description.IsEmpty())
+    if (m_Description.empty())
     {
-        m_image = GetIconImageList()->getExtImageAndDescription(m_extension, m_description, 0);
+        m_Image = GetIconImageList()->GetExtImageAndDescription(m_Extension, m_Description, 0);
     }
 
-    if (m_extension.IsEmpty())
+    if (m_Extension.empty())
     {
-        m_image = GetIconImageList()->getUnknownImage();
-        m_description = Localization::Lookup(IDS_EXTENSION_MISSING);
+        m_Image = GetIconImageList()->GetUnknownImage();
+        m_Description = Localization::Lookup(IDS_EXTENSION_MISSING);
     }
 
-    return m_description;
+    return m_Description;
 }
 
-CStringW CExtensionListControl::CListItem::GetBytesPercent() const
+std::wstring CExtensionListControl::CListItem::GetBytesPercent() const
 {
     CStringW s;
-    s.Format(L"%s%%", FormatDouble(GetBytesFraction() * 100).GetString());
-    return s;
+    s.Format(L"%s%%", FormatDouble(GetBytesFraction() * 100).c_str());
+    return s.GetString();
 }
 
 double CExtensionListControl::CListItem::GetBytesFraction() const
 {
-    if (m_list->GetRootSize() == 0)
+    if (m_List->GetRootSize() == 0)
     {
         return 0;
     }
 
-    return static_cast<double>(m_record.bytes) /
-        static_cast<double>(m_list->GetRootSize());
+    return static_cast<double>(m_Record.bytes) /
+        static_cast<double>(m_List->GetRootSize());
 }
 
-int CExtensionListControl::CListItem::Compare(const CSortingListItem* baseOther, int subitem) const
+int CExtensionListControl::CListItem::Compare(const CSortingListItem* baseOther, const int subitem) const
 {
     const auto other = static_cast<const CListItem*>(baseOther);
 
     switch (subitem)
     {
-        case COL_COLOR:
-        case COL_BYTES: return usignum(m_record.bytes, other->m_record.bytes);
-        case COL_EXTENSION: return signum(GetExtension().CompareNoCase(other->GetExtension()));
-        case COL_FILES: return usignum(m_record.files, other->m_record.files);
-        case COL_DESCRIPTION: return signum(GetDescription().CompareNoCase(other->GetDescription()));
-        case COL_BYTESPERCENT: return signum(GetBytesFraction() - other->GetBytesFraction());
+        case COL_EXT_COLOR:
+        case COL_EXT_BYTES: return usignum(m_Record.bytes, other->m_Record.bytes);
+        case COL_EXT_EXTENSION: return signum(_wcsicmp(GetExtension().c_str(),other->GetExtension().c_str()));
+        case COL_EXT_FILES: return usignum(m_Record.files, other->m_Record.files);
+        case COL_EXT_DESCRIPTION: return signum(_wcsicmp(GetDescription().c_str(), other->GetDescription().c_str()));
+        case COL_EXT_BYTESPERCENT: return signum(GetBytesFraction() - other->GetBytesFraction());
         default: ASSERT(FALSE); return 0;
     }
 }
@@ -172,18 +172,18 @@ END_MESSAGE_MAP()
 
 CExtensionListControl::CExtensionListControl(CExtensionView* extensionView)
     : COwnerDrawnListControl(19, COptions::TypesColumnOrder.Ptr(), COptions::TypesColumnWidths.Ptr()) // FIXME: Harcoded value
-    , m_extensionView(extensionView) {}
+    , m_ExtensionView(extensionView) {}
 
 bool CExtensionListControl::GetAscendingDefault(const int column)
 {
     switch (column)
     {
-        case COL_EXTENSION: 
-        case COL_BYTESPERCENT: 
-        case COL_DESCRIPTION: return true;
-        case COL_COLOR: 
-        case COL_BYTES: 
-        case COL_FILES: return false;
+        case COL_EXT_EXTENSION:
+        case COL_EXT_BYTESPERCENT:
+        case COL_EXT_DESCRIPTION: return true;
+        case COL_EXT_COLOR:
+        case COL_EXT_BYTES:
+        case COL_EXT_FILES: return false;
         default: ASSERT(FALSE); return true;
     }
 }
@@ -192,14 +192,14 @@ bool CExtensionListControl::GetAscendingDefault(const int column)
 // in this extra method. The counterpart is OnDestroy().
 void CExtensionListControl::Initialize()
 {
-    SetSorting(COL_BYTES, false);
+    SetSorting(COL_EXT_BYTES, false);
 
-    InsertColumn(SHORT_MAX, Localization::Lookup(IDS_COL_EXTENSION), LVCFMT_LEFT, 60, COL_EXTENSION);
-    InsertColumn(SHORT_MAX, Localization::Lookup(IDS_COL_COLOR), LVCFMT_LEFT, 40, COL_COLOR);
-    InsertColumn(SHORT_MAX, Localization::Lookup(IDS_COL_BYTES), LVCFMT_RIGHT, 60, COL_BYTES);
-    InsertColumn(SHORT_MAX, L"% " + Localization::Lookup(IDS_COL_BYTES), LVCFMT_RIGHT, 50, COL_BYTESPERCENT);
-    InsertColumn(SHORT_MAX, Localization::Lookup(IDS_COL_FILES), LVCFMT_RIGHT, 50, COL_FILES);
-    InsertColumn(SHORT_MAX, Localization::Lookup(IDS_COL_DESCRIPTION), LVCFMT_LEFT, 170, COL_DESCRIPTION);
+    InsertColumn(SHORT_MAX, Localization::Lookup(IDS_COL_EXTENSION).c_str(), LVCFMT_LEFT, 60, COL_EXT_EXTENSION);
+    InsertColumn(SHORT_MAX, Localization::Lookup(IDS_COL_COLOR).c_str(), LVCFMT_LEFT, 40, COL_EXT_COLOR);
+    InsertColumn(SHORT_MAX, Localization::Lookup(IDS_COL_BYTES).c_str(), LVCFMT_RIGHT, 60, COL_EXT_BYTES);
+    InsertColumn(SHORT_MAX, (L"% " + Localization::Lookup(IDS_COL_BYTES)).c_str(), LVCFMT_RIGHT, 50, COL_EXT_BYTESPERCENT);
+    InsertColumn(SHORT_MAX, Localization::Lookup(IDS_COL_FILES).c_str(), LVCFMT_RIGHT, 50, COL_EXT_FILES);
+    InsertColumn(SHORT_MAX, Localization::Lookup(IDS_COL_DESCRIPTION).c_str(), LVCFMT_LEFT, 170, COL_EXT_DESCRIPTION);
 
     OnColumnsInserted();
 
@@ -217,36 +217,30 @@ void CExtensionListControl::SetExtensionData(const CExtensionData* ed)
 {
     DeleteAllItems();
 
-    int i = 0;
-    POSITION pos = ed->GetStartPosition();
-    while (pos != nullptr)
+    for (int i = 0; const auto & ext : *ed)
     {
-        CStringW ext;
-        SExtensionRecord r;
-        ed->GetNextAssoc(pos, ext, r);
-
-        const auto item = new CListItem(this, ext, r);
+        const auto item = new CListItem(this, ext.first, ext.second);
         InsertListItem(i++, item);
     }
 
     SortItems();
 }
 
-void CExtensionListControl::SetRootSize(ULONGLONG totalBytes)
+void CExtensionListControl::SetRootSize(const ULONGLONG totalBytes)
 {
-    m_rootSize = totalBytes;
+    m_RootSize = totalBytes;
 }
 
 ULONGLONG CExtensionListControl::GetRootSize() const
 {
-    return m_rootSize;
+    return m_RootSize;
 }
 
-void CExtensionListControl::SelectExtension(const LPCWSTR ext)
+void CExtensionListControl::SelectExtension(const std::wstring & ext)
 {
     for (int i = 0; i < GetItemCount(); i++)
     {
-        if (GetListItem(i)->GetExtension().CompareNoCase(ext) == 0)
+        if (_wcsicmp(GetListItem(i)->GetExtension().c_str(), ext.c_str()) == 0)
         {
             SetItemState(i, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
             EnsureVisible(i, false);
@@ -255,7 +249,7 @@ void CExtensionListControl::SelectExtension(const LPCWSTR ext)
     }
 }
 
-CStringW CExtensionListControl::GetSelectedExtension() const
+std::wstring CExtensionListControl::GetSelectedExtension() const
 {
     POSITION pos = GetFirstSelectedItemPosition();
     if (pos == nullptr)
@@ -268,7 +262,7 @@ CStringW CExtensionListControl::GetSelectedExtension() const
     return item->GetExtension();
 }
 
-CExtensionListControl::CListItem* CExtensionListControl::GetListItem(int i) const
+CExtensionListControl::CListItem* CExtensionListControl::GetListItem(const int i) const
 {
     return reinterpret_cast<CListItem*>(GetItemData(i));
 }
@@ -296,12 +290,12 @@ void CExtensionListControl::OnLvnItemchanged(NMHDR* pNMHDR, LRESULT* pResult)
     const auto pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
     if ((pNMLV->uNewState & LVIS_SELECTED) != 0)
     {
-        m_extensionView->SetHighlightExtension(GetSelectedExtension());
+        m_ExtensionView->SetHighlightExtension(GetSelectedExtension());
     }
     *pResult = FALSE;
 }
 
-void CExtensionListControl::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
+void CExtensionListControl::OnKeyDown(const UINT nChar, const UINT nRepCnt, const UINT nFlags)
 {
     if (nChar == VK_TAB)
     {

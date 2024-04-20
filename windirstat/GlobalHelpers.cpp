@@ -32,18 +32,20 @@
 #include <array>
 #include <algorithm>
 
+#include "FileFind.h"
+
 #pragma comment(lib, "bcrypt.lib")
 #pragma comment(lib, "crypt32.lib")
 
 namespace
 {
-    CStringW FormatLongLongNormal(ULONGLONG n)
+    std::wstring FormatLongLongNormal(ULONGLONG n)
     {
         // Returns formatted number like "123.456.789".
 
         ASSERT(n >= 0);
 
-        CStringW all;
+        std::wstring all;
 
         do
         {
@@ -53,14 +55,14 @@ namespace
             CStringW s;
             if (n > 0)
             {
-                s.Format(L"%s%03d", GetLocaleThousandSeparator().GetString(), rest);
+                s.Format(L"%s%03d", GetLocaleThousandSeparator().c_str(), rest);
             }
             else
             {
                 s.Format(L"%d", rest);
             }
 
-            all = s + all;
+            all = s.GetString() + all;
         }
         while (n > 0);
 
@@ -68,51 +70,51 @@ namespace
     }
 }
 
-CStringW GetLocaleString(LCTYPE lctype, LANGID langid)
+std::wstring GetLocaleString(const LCTYPE lctype, const LANGID langid)
 {
     const LCID lcid = MAKELCID(langid, SORT_DEFAULT);
-
     const int len = ::GetLocaleInfo(lcid, lctype, nullptr, 0);
-    CStringW s;
 
-    ::GetLocaleInfo(lcid, lctype, s.GetBuffer(len), len);
-    s.ReleaseBuffer();
+    std::wstring s;
+    s.resize(len);
+    ::GetLocaleInfo(lcid, lctype, s.data(), len);
+    s.resize(wcslen(s.data()));
 
     return s;
 }
 
-CStringW GetLocaleLanguage(LANGID langid)
+std::wstring GetLocaleLanguage(const LANGID langid)
 {
-    const CStringW s = GetLocaleString(LOCALE_SLOCALIZEDLANGUAGENAME, langid);
-    const CStringW n = GetLocaleString(LOCALE_SNATIVELANGNAME, langid);
+    const std::wstring s = GetLocaleString(LOCALE_SLOCALIZEDLANGUAGENAME, langid);
+    const std::wstring n = GetLocaleString(LOCALE_SNATIVELANGNAME, langid);
     return s + L" (" + n + L")";
 }
 
-CStringW GetLocaleThousandSeparator()
+std::wstring GetLocaleThousandSeparator()
 {
-    static LANGID cached_lang = static_cast<LANGID>(-1);
-    static CStringW cached_string;
-    if (cached_lang != COptions::GetEffectiveLangId())
+    static LANGID cachedLang = static_cast<LANGID>(-1);
+    static std::wstring cachedString;
+    if (cachedLang != COptions::GetEffectiveLangId())
     {
-        cached_lang = COptions::GetEffectiveLangId();
-        cached_string = GetLocaleString(LOCALE_STHOUSAND, cached_lang);
+        cachedLang = COptions::GetEffectiveLangId();
+        cachedString = GetLocaleString(LOCALE_STHOUSAND, cachedLang);
     }
-    return cached_string;
+    return cachedString;
 }
 
-CStringW GetLocaleDecimalSeparator()
+std::wstring GetLocaleDecimalSeparator()
 {
-    static LANGID cached_lang = static_cast<LANGID>(-1);
-    static CStringW cached_string;
-    if (cached_lang != COptions::GetEffectiveLangId())
+    static LANGID cachedLang = static_cast<LANGID>(-1);
+    static std::wstring cachedString;
+    if (cachedLang != COptions::GetEffectiveLangId())
     {
-        cached_lang = COptions::GetEffectiveLangId();
-        cached_string = GetLocaleString(LOCALE_SDECIMAL, cached_lang);
+        cachedLang = COptions::GetEffectiveLangId();
+        cachedString = GetLocaleString(LOCALE_SDECIMAL, cachedLang);
     }
-    return cached_string;
+    return cachedString;
 }
 
-CStringW FormatBytes(const ULONGLONG& n)
+std::wstring FormatBytes(const ULONGLONG& n)
 {
     if (COptions::HumanFormat)
     {
@@ -123,7 +125,7 @@ CStringW FormatBytes(const ULONGLONG& n)
 
 }
 
-CStringW FormatLongLongHuman(ULONGLONG n)
+std::wstring FormatLongLongHuman(ULONGLONG n)
 {
     // Returns formatted number like "12,4 GB".
     ASSERT(n >= 0);
@@ -148,38 +150,34 @@ CStringW FormatLongLongHuman(ULONGLONG n)
 
     if (TB != 0.0 || GB == base - 1 && MB >= half)
     {
-        s.Format(L"%s %s", FormatDouble(TB + GB / base).GetString(), GetSpec_TB().GetString());
+        return FormatDouble(TB + GB / base) + L" " + GetSpec_TB();
     }
-    else if (GB != 0.0 || MB == base - 1 && KB >= half)
+    if (GB != 0.0 || MB == base - 1 && KB >= half)
     {
-        s.Format(L"%s %s", FormatDouble(GB + MB / base).GetString(), GetSpec_GB().GetString());
+        return FormatDouble(GB + MB / base) + L" " + GetSpec_GB();
     }
-    else if (MB != 0.0 || KB == base - 1 && B >= half)
+    if (MB != 0.0 || KB == base - 1 && B >= half)
     {
-        s.Format(L"%s %s", FormatDouble(MB + KB / base).GetString(), GetSpec_MB().GetString());
+        return FormatDouble(MB + KB / base) + L" " + GetSpec_MB();
     }
-    else if (KB != 0.0)
+    if (KB != 0.0)
     {
-        s.Format(L"%s %s", FormatDouble(KB + B / base).GetString(), GetSpec_KB().GetString());
+        return FormatDouble(KB + B / base) + L" " + GetSpec_KB();
     }
-    else if (B != 0.0)
+    if (B != 0.0)
     {
-        s.Format(L"%d %s", static_cast<int>(B), GetSpec_Bytes().GetString());
-    }
-    else
-    {
-        s = L"0";
+        return std::to_wstring(static_cast<ULONG>(B)) + L" " + GetSpec_Bytes();
     }
 
-    return s;
+    return L"0";
 }
 
-CStringW FormatCount(const ULONGLONG& n)
+std::wstring FormatCount(const ULONGLONG& n)
 {
     return FormatLongLongNormal(n);
 }
 
-CStringW FormatDouble(double d)
+std::wstring FormatDouble(double d)
 {
     ASSERT(d >= 0);
 
@@ -188,33 +186,17 @@ CStringW FormatDouble(double d)
     const int i = static_cast<int>(floor(d));
     const int r = static_cast<int>(10 * fmod(d, 1));
 
-    CStringW s;
-    s.Format(L"%d%s%d", i, GetLocaleDecimalSeparator().GetString(), r);
-
-    return s;
+    return std::to_wstring(i) + GetLocaleDecimalSeparator() + std::to_wstring(r);
 }
 
-CStringW PadWidthBlanks(CStringW n, int width)
+std::wstring PadWidthBlanks(std::wstring n, const int width)
 {
-    const int blankCount = width - n.GetLength();
-    if (blankCount > 0)
-    {
-        CStringW b;
-        const LPWSTR psz = b.GetBuffer(blankCount + 1);
-        int i = 0;
-        for (; i < blankCount; i++)
-        {
-            psz[i] = L' ';
-        }
-        psz[i] = 0;
-        b.ReleaseBuffer();
-
-        n = b + n;
-    }
-    return n;
+    const auto blankCount = width - n.size();
+    if (blankCount <= 0) return n;
+    return n + std::wstring(L" ", blankCount);
 }
 
-CStringW FormatFileTime(const FILETIME& t)
+std::wstring FormatFileTime(const FILETIME& t)
 {
     SYSTEMTIME st;
     if (FILETIME ft;
@@ -226,18 +208,16 @@ CStringW FormatFileTime(const FILETIME& t)
 
     const LCID lcid = MAKELCID(COptions::LanguageId.Obj(), SORT_DEFAULT);
 
-    CStringW date;
-    VERIFY(0 < ::GetDateFormat(lcid, DATE_SHORTDATE, &st, nullptr, date.GetBuffer(64), 64));
-    date.ReleaseBuffer();
+    std::array<WCHAR, 64> date;
+    VERIFY(0 < ::GetDateFormat(lcid, DATE_SHORTDATE, &st, nullptr, date.data(), static_cast<int>(date.size())));
 
-    CStringW time;
-    VERIFY(0 < GetTimeFormat(lcid, TIME_NOSECONDS, &st, nullptr, time.GetBuffer(64), 64));
-    time.ReleaseBuffer();
-
-    return date + L"  " + time;
+    std::array<WCHAR, 64> time;
+    VERIFY(0 < GetTimeFormat(lcid, TIME_NOSECONDS, &st, nullptr, time.data(), static_cast<int>(time.size())));
+ 
+    return date.data() + std::wstring(L"  ") + time.data();
 }
 
-CStringW FormatAttributes(DWORD attr)
+std::wstring FormatAttributes(const DWORD attr)
 {
     // order:
     // strAttributeReadonly
@@ -259,41 +239,41 @@ CStringW FormatAttributes(DWORD attr)
         return wds::strInvalidAttributes;
     }
 
-    CStringW attributes;
+    std::wstring attributes;
     if (attr & FILE_ATTRIBUTE_READONLY)
     {
-        attributes.Append(wds::strAttributeReadonly);
+        attributes.append(wds::strAttributeReadonly);
     }
 
     if (attr & FILE_ATTRIBUTE_HIDDEN)
     {
-        attributes.Append(wds::strAttributeHidden);
+        attributes.append(wds::strAttributeHidden);
     }
 
     if (attr & FILE_ATTRIBUTE_SYSTEM)
     {
-        attributes.Append(wds::strAttributeSystem);
+        attributes.append(wds::strAttributeSystem);
     }
 
     if (attr & FILE_ATTRIBUTE_ARCHIVE)
     {
-        attributes.Append(wds::strAttributeArchive);
+        attributes.append(wds::strAttributeArchive);
     }
 
     if (attr & FILE_ATTRIBUTE_COMPRESSED)
     {
-        attributes.Append(wds::strAttributeCompressed);
+        attributes.append(wds::strAttributeCompressed);
     }
 
     if (attr & FILE_ATTRIBUTE_ENCRYPTED)
     {
-        attributes.Append(wds::strAttributeEncrypted);
+        attributes.append(wds::strAttributeEncrypted);
     }
 
     return attributes;
 }
 
-CStringW FormatMilliseconds(const ULONGLONG ms)
+std::wstring FormatMilliseconds(const ULONGLONG ms)
 {
     CStringW ret;
     const ULONGLONG sec = (ms + 500) / 1000;
@@ -312,29 +292,31 @@ CStringW FormatMilliseconds(const ULONGLONG ms)
     {
         ret.Format(L"%I64u:%02I64u", m, s);
     }
-    return ret;
+    return ret.GetString();
 }
 
-bool GetVolumeName(LPCWSTR rootPath, CStringW& volumeName)
+bool GetVolumeName(const std::wstring & rootPath, std::wstring& volumeName)
 {
-    const bool b = FALSE != GetVolumeInformation(rootPath, volumeName.GetBuffer(256), 256, nullptr, nullptr, nullptr, nullptr, 0);
-    volumeName.ReleaseBuffer();
+    volumeName.resize(256);
+    const bool success = GetVolumeInformation(rootPath.c_str(), volumeName.data(),
+        static_cast<DWORD>(volumeName.size()), nullptr, nullptr, nullptr, nullptr, 0) != FALSE;
+    volumeName.resize(wcslen(volumeName.data()));
 
-    if (!b)
+    if (!success)
     {
-        VTRACE(L"GetVolumeInformation(%s) failed: %u", rootPath, ::GetLastError());
+        VTRACE(L"GetVolumeInformation(%s) failed: %u", rootPath.c_str(), ::GetLastError());
     }
 
-    return b;
+    return success;
 }
 
 // Given a root path like "C:\", this function
 // obtains the volume name and returns a complete display string
 // like "BOOT (C:)".
-CStringW FormatVolumeNameOfRootPath(const CStringW& rootPath)
+std::wstring FormatVolumeNameOfRootPath(const std::wstring& rootPath)
 {
-    CStringW ret;
-    CStringW volumeName;
+    std::wstring ret;
+    std::wstring volumeName;
     if (GetVolumeName(rootPath, volumeName))
     {
         ret = FormatVolumeName(rootPath, volumeName);
@@ -346,38 +328,36 @@ CStringW FormatVolumeNameOfRootPath(const CStringW& rootPath)
     return ret;
 }
 
-CStringW FormatVolumeName(const CStringW& rootPath, const CStringW& volumeName)
+std::wstring FormatVolumeName(const std::wstring& rootPath, const std::wstring& volumeName)
 {
-    CStringW ret;
-    ret.Format(L"%s (%s)", volumeName.GetString(), rootPath.Left(2).GetString());
-    return ret;
+    return volumeName + L" (" + rootPath.substr(0, 2) + L")";
 }
 
 // The inverse of FormatVolumeNameOfRootPath().
 // Given a name like "BOOT (C:)", it returns "C:" (without trailing backslash).
 // Or, if name like "C:\", it returns "C:".
-CStringW PathFromVolumeName(const CStringW& name)
+std::wstring PathFromVolumeName(const std::wstring& name)
 {
-    const int i = name.ReverseFind(wds::chrBracketClose);
-    if (i == -1)
+    const auto i = name.find_last_of(wds::chrBracketClose);
+    if (i == std::wstring::npos)
     {
-        ASSERT(name.GetLength() == 3);
-        return name.Left(2);
+        ASSERT(name.size() == 3);
+        return name.substr(0, 2);
     }
 
-    ASSERT(i != -1);
-    const int k = name.ReverseFind(wds::chrBracketOpen);
-    ASSERT(k != -1);
+    ASSERT(i != std::wstring::npos);
+    const auto k = name.find_last_of(wds::chrBracketOpen);
+    ASSERT(k != std::wstring::npos);
     ASSERT(k < i);
-    CStringW path = name.Mid(k + 1, i - k - 1);
-    ASSERT(path.GetLength() == 2);
+    std::wstring path = name.substr(k + 1, i - k - 1);
+    ASSERT(path.size() == 2);
     ASSERT(path[1] == wds::chrColon);
 
     return path;
 }
 
 // Retrieve the "fully qualified parse name" of "My Computer"
-CStringW GetParseNameOfMyComputer()
+std::wstring GetParseNameOfMyComputer()
 {
     CComPtr<IShellFolder> sf;
     HRESULT hr = ::SHGetDesktopFolder(&sf);
@@ -389,11 +369,10 @@ CStringW GetParseNameOfMyComputer()
 
     STRRET name;
     ZeroMemory(&name, sizeof(name));
-    name.uType = STRRET_CSTR;
+    name.uType = STRRET_WSTR;
     hr = sf->GetDisplayNameOf(pidl, SHGDN_FORPARSING, &name);
     MdThrowFailed(hr, L"GetDisplayNameOf(My Computer)");
-
-    return MyStrRetToString(pidl, &name);
+    return name.pOleStr;
 }
 
 void GetPidlOfMyComputer(LPITEMIDLIST* ppidl)
@@ -406,29 +385,23 @@ void GetPidlOfMyComputer(LPITEMIDLIST* ppidl)
     MdThrowFailed(hr, L"SHGetSpecialFolderLocation(CSIDL_DRIVES)");
 }
 
-CStringW GetFolderNameFromPath(const LPCWSTR path)
+std::wstring GetFolderNameFromPath(const std::wstring & path)
 {
-    CStringW s  = path;
-    const int i = s.ReverseFind(wds::chrBackslash);
-    if (i < 0)
-    {
-        return s;
-    }
-    return s.Left(i);
+    std::wstring s  = path;
+    const auto i = s.find_last_of(wds::chrBackslash);
+    return i == std::wstring::npos ? s : s.substr(0, i);
 }
 
-CStringW GetCOMSPEC()
+std::wstring GetCOMSPEC()
 {
-    CStringW cmd;
-    const DWORD dw = ::GetEnvironmentVariable(L"COMSPEC", cmd.GetBuffer(_MAX_PATH), _MAX_PATH);
-    cmd.ReleaseBuffer();
-
-    if (dw == 0)
+    std::array<WCHAR, _MAX_PATH> cmd;
+    if (::GetEnvironmentVariable(L"COMSPEC", cmd.data(), static_cast<DWORD>(cmd.size())) == 0)
     {
         VTRACE(L"COMSPEC not set.");
-        cmd = L"cmd.exe";
+        return L"cmd.exe";
     }
-    return cmd;
+
+    return cmd.data();
 }
 
 void WaitForHandleWithRepainting(const HANDLE h, const DWORD TimeOut)
@@ -459,36 +432,26 @@ void WaitForHandleWithRepainting(const HANDLE h, const DWORD TimeOut)
     }
 }
 
-bool FolderExists(LPCWSTR path)
+bool FolderExists(const std::wstring & path)
 {
-    CFileFind finder;
-    if (finder.FindFile(path))
-    {
-        finder.FindNextFile();
-        return FALSE != finder.IsDirectory();
-    }
-
-    // Here we land, if path is a UNC drive. In this case we
-    // try another FindFile:
-    return finder.FindFile(CStringW(path) + L"\\*.*") != false;
+    DWORD result = GetFileAttributes(FileFindEnhanced::MakeLongPathCompatible(path).c_str());
+    return result != INVALID_FILE_ATTRIBUTES && (result & FILE_ATTRIBUTE_DIRECTORY) != 0;
 }
 
-bool DriveExists(const CStringW& path)
+bool DriveExists(const std::wstring& path)
 {
-    if (path.GetLength() != 3 || path[1] != wds::chrColon || path[2] != wds::chrBackslash)
+    if (path.size() != 3 || path[1] != wds::chrColon || path[2] != wds::chrBackslash)
     {
         return false;
     }
 
-    CStringW letter = path.Left(1);
-    letter.MakeLower();
-    const int d = letter[0] - wds::chrSmallA;
+    const int d = std::tolower(path.at(0)) - wds::chrSmallA;
     if (const DWORD mask = 0x1 << d; (mask & ::GetLogicalDrives()) == 0)
     {
         return false;
     }
 
-    CStringW dummy;
+    std::wstring dummy;
     if (!::GetVolumeName(path, dummy))
     {
         return false;
@@ -522,28 +485,25 @@ bool DriveExists(const CStringW& path)
 //   SUBST only works per session by definition whereas volume mount points
 //   work across sessions (after restarts).
 //
-CStringW MyQueryDosDevice(const LPCWSTR drive)
+std::wstring MyQueryDosDevice(const std::wstring & drive)
 {
-    CStringW d = drive;
+    std::wstring d = drive;
 
-    if (d.GetLength() < 2 || d[1] != wds::chrColon)
+    if (d.size() < 2 || d[1] != wds::chrColon)
     {
         return wds::strEmpty;
     }
 
-    d = d.Left(2);
+    d = d.substr(0, 2);
 
-    CStringW info;
-    const DWORD dw = ::QueryDosDevice(d, info.GetBuffer(512), 512);
-    info.ReleaseBuffer();
-
-    if (dw == 0)
+    std::array<WCHAR, 512> info;
+    if (::QueryDosDevice(d.c_str(), info.data(), static_cast<DWORD>(info.size())) == 0)
     {
-        VTRACE(L"QueryDosDevice(%s) failed: %s", d.GetString(), MdGetWinErrorText(::GetLastError()).GetString());
-        return wds::strEmpty;
+        VTRACE(L"QueryDosDevice(%s) failed: %s", d.c_str(), MdGetWinErrorText(::GetLastError()).c_str());
+        return {};
     }
 
-    return info;
+    return info.data();
 }
 
 // drive is a drive spec like C: or C:\ or C:\path (path is ignored).
@@ -551,43 +511,43 @@ CStringW MyQueryDosDevice(const LPCWSTR drive)
 // This function returnes true, if QueryDosDevice() is supported
 // and drive is a SUBSTed drive.
 //
-bool IsSUBSTedDrive(LPCWSTR drive)
+bool IsSUBSTedDrive(const std::wstring & drive)
 {
-    const CStringW info = MyQueryDosDevice(drive);
-    return info.GetLength() >= 4 && info.Left(4) == "\\??\\";
+    const std::wstring info = MyQueryDosDevice(drive);
+    return info.size() >= 4 && info.substr(0, 4) == L"\\??\\";
 }
 
-CStringW GetSpec_Bytes()
+const std::wstring & GetSpec_Bytes()
 {
-    static CStringW s = Localization::Lookup(IDS_SPEC_BYTES, L"Bytes");
+    static std::wstring s = Localization::Lookup(IDS_SPEC_BYTES, L"Bytes");
     return s;
 }
 
-CStringW GetSpec_KB()
+const std::wstring& GetSpec_KB()
 {
-    static CStringW s = Localization::Lookup(IDS_SPEC_KB, L"KiB");
+    static std::wstring s = Localization::Lookup(IDS_SPEC_KB, L"KiB");
     return s;
 }
 
-CStringW GetSpec_MB()
+const std::wstring& GetSpec_MB()
 {
-    static CStringW s = Localization::Lookup(IDS_SPEC_MB, L"MiB");
+    static std::wstring s = Localization::Lookup(IDS_SPEC_MB, L"MiB");
     return s;
 }
 
-CStringW GetSpec_GB()
+const std::wstring& GetSpec_GB()
 {
-    static CStringW s = Localization::Lookup(IDS_SPEC_GB, L"GiB");
+    static std::wstring s = Localization::Lookup(IDS_SPEC_GB, L"GiB");
     return s;
 }
 
-CStringW GetSpec_TB()
+const std::wstring& GetSpec_TB()
 {
-    static CStringW s = Localization::Lookup(IDS_SPEC_TB, L"TiB");
+    static std::wstring s = Localization::Lookup(IDS_SPEC_TB, L"TiB");
     return s;
 }
 
-BOOL IsAdmin()
+bool IsAdmin()
 {
     SID_IDENTIFIER_AUTHORITY NtAuthority = SECURITY_NT_AUTHORITY;
     if (SmartPointer<PSID> pSid(FreeSid); ::AllocateAndInitializeSid(&NtAuthority, 2,
@@ -596,12 +556,30 @@ BOOL IsAdmin()
         BOOL bResult = FALSE;
         if (!::CheckTokenMembership(nullptr, pSid, &bResult))
         {
-            return FALSE;
+            return false;
         }
-        return bResult;
+        return bResult != FALSE;
     }
 
-    return FALSE;
+    return false;
+}
+
+bool FileIconInit()
+{
+    // Required to use the system image lists
+    SmartPointer<HMODULE> hmod(FreeLibrary, LoadLibrary(L"shell32.dll"));
+    if (hmod != nullptr)
+    {
+        BOOL(WINAPI * FileIconInitFunc)(BOOL) =
+            reinterpret_cast<decltype(FileIconInitFunc)>(
+                static_cast<LPVOID>(GetProcAddress(hmod, reinterpret_cast<LPCSTR>(660))));
+        if (FileIconInitFunc != nullptr)
+        {
+            return FileIconInitFunc(TRUE);
+        }
+    }
+
+    return true;
 }
 
 bool EnableReadPrivileges()
@@ -616,42 +594,42 @@ bool EnableReadPrivileges()
     }
 
     // Fetch a list of privileges we currently have
-    std::vector<BYTE> privs_bytes(64 * sizeof(LUID_AND_ATTRIBUTES) + sizeof(DWORD), 0);
-    const PTOKEN_PRIVILEGES privs_available = reinterpret_cast<PTOKEN_PRIVILEGES>(privs_bytes.data());
-    DWORD priv_length = 0;
-    if (GetTokenInformation(token, TokenPrivileges, privs_bytes.data(),
-        static_cast<DWORD>(privs_bytes.size()), &priv_length) == 0)
+    std::vector<BYTE> privsBytes(64 * sizeof(LUID_AND_ATTRIBUTES) + sizeof(DWORD), 0);
+    const PTOKEN_PRIVILEGES privsAvailable = reinterpret_cast<PTOKEN_PRIVILEGES>(privsBytes.data());
+    DWORD privLength = 0;
+    if (GetTokenInformation(token, TokenPrivileges, privsBytes.data(),
+        static_cast<DWORD>(privsBytes.size()), &privLength) == 0)
     {
         return false;
     }
     
     bool ret = true;
-    for (const LPCWSTR priv : { SE_RESTORE_NAME, SE_BACKUP_NAME })
+    for (const std::wstring & priv : { SE_RESTORE_NAME, SE_BACKUP_NAME })
     {
         // Populate the privilege adjustment structure
-        TOKEN_PRIVILEGES priv_entry = {};
-        priv_entry.PrivilegeCount = 1;
-        priv_entry.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+        TOKEN_PRIVILEGES privEntry = {};
+        privEntry.PrivilegeCount = 1;
+        privEntry.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
 
         // Translate the privilege name into the binary representation
-        if (LookupPrivilegeValue(nullptr, priv, &priv_entry.Privileges[0].Luid) == 0)
+        if (LookupPrivilegeValue(nullptr, priv.c_str(), &privEntry.Privileges[0].Luid) == 0)
         {
             ret = false;
             continue;
         }
 
         // Check if privilege is in the list of ones we have
-        if (std::count_if(privs_available[0].Privileges, &privs_available->Privileges[privs_available->PrivilegeCount],
+        if (std::count_if(privsAvailable[0].Privileges, &privsAvailable->Privileges[privsAvailable->PrivilegeCount],
             [&](const LUID_AND_ATTRIBUTES& element) {
-                return element.Luid.HighPart == priv_entry.Privileges[0].Luid.HighPart &&
-                    element.Luid.LowPart == priv_entry.Privileges[0].Luid.LowPart;}) == 0)
+                return element.Luid.HighPart == privEntry.Privileges[0].Luid.HighPart &&
+                    element.Luid.LowPart == privEntry.Privileges[0].Luid.LowPart;}) == 0)
         {
             ret = false;
             continue;
         }
 
         // Adjust the process to change the privilege
-        if (AdjustTokenPrivileges(token, FALSE, &priv_entry,
+        if (AdjustTokenPrivileges(token, FALSE, &privEntry,
             sizeof(TOKEN_PRIVILEGES), nullptr, nullptr) == 0)
         {
             ret = false;
@@ -667,4 +645,35 @@ bool EnableReadPrivileges()
     }
 
     return ret;
+}
+
+void ReplaceString(std::wstring& subject, const std::wstring& search, const std::wstring& replace)
+{
+    size_t pos = 0;
+    while ((pos = subject.find(search, pos)) != std::string::npos) {
+        subject.replace(pos, search.length(), replace);
+        pos += replace.length();
+    }
+}
+
+std::wstring& TrimString(std::wstring& s, wchar_t c)
+{
+    while (!s.empty() && s.back() == c) s.pop_back();
+    while (!s.empty() && s.front() == c) s.erase();
+    return s;
+}
+
+std::wstring& MakeLower(std::wstring& s)
+{
+    _wcslwr_s(s.data(), s.size() + 1);
+    return s;
+}
+
+const std::wstring & GetSysDirectory()
+{
+    static std::wstring s;
+    if (!s.empty()) return s;
+    s.resize(_MAX_PATH), ::GetSystemDirectory(s.data(), _MAX_PATH);
+    s.resize(wcslen(s.data()));
+    return s;
 }

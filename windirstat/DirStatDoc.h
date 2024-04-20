@@ -22,12 +22,11 @@
 #pragma once
 
 #include "SelectDrivesDlg.h"
-#include <common/Constants.h>
+#include "BlockingQueue.h"
 #include "Options.h"
 
+#include <unordered_map>
 #include <vector>
-
-#include "BlockingQueue.h"
 
 class CItem;
 class CItemDupe;
@@ -53,7 +52,7 @@ struct SExtensionRecord
 //
 // Maps an extension (".bmp") to an SExtensionRecord.
 //
-using CExtensionData = CMap<CStringW, LPCWSTR, SExtensionRecord, SExtensionRecord&>;
+using CExtensionData = std::unordered_map<std::wstring, SExtensionRecord>;
 
 //
 // Hints for UpdateAllViews()
@@ -83,8 +82,8 @@ protected:
 
     ~CDirStatDoc() override;
 
-    static CStringW EncodeSelection(RADIO radio, const CStringW& folder, const CStringArray& drives);
-    static void DecodeSelection(const CStringW& s, CStringW& folder, CStringArray& drives);
+    static std::wstring EncodeSelection(RADIO radio, const std::wstring& folder, const std::vector<std::wstring>& drives);
+    static void DecodeSelection(const std::wstring& s, std::wstring& folder, std::vector<std::wstring>& drives);
     static WCHAR GetEncodingSeparator();
 
     void DeleteContents() override;
@@ -92,15 +91,15 @@ protected:
     BOOL OnOpenDocument(LPCWSTR lpszPathName) override;
     BOOL OnOpenDocument(CItem* newroot);
     void SetPathName(LPCWSTR lpszPathName, BOOL bAddToMRU) override;
-    void SetTitlePrefix(const CStringW& prefix) const;
+    void SetTitlePrefix(const std::wstring& prefix) const;
 
-    COLORREF GetCushionColor(LPCWSTR ext);
-    static COLORREF GetZoomColor();
+    COLORREF GetCushionColor(const std::wstring& ext);
+    COLORREF GetZoomColor();
 
     const CExtensionData* GetExtensionData();
     ULONGLONG GetRootSize() const;
 
-    static bool IsDrive(const CStringW& spec);
+    static bool IsDrive(const std::wstring& spec);
     void RefreshReparsePointItems();
 
     bool HasRootItem() const;
@@ -110,8 +109,8 @@ protected:
     CItemDupe* GetRootItemDupe() const;
     bool IsZoomed() const;
 
-    void SetHighlightExtension(LPCWSTR ext);
-    CStringW GetHighlightExtension();
+    void SetHighlightExtension(const std::wstring& ext);
+    std::wstring GetHighlightExtension();
 
     void UnlinkRoot();
     bool UserDefinedCleanupWorksForItem(USERDEFINEDCLEANUP* udc, const CItem* item);
@@ -120,24 +119,24 @@ protected:
     void RefreshItem(const std::vector<CItem*>& item);
     void RefreshItem(CItem* item) { RefreshItem(std::vector{ item }); }
 
-    static void OpenItem(const CItem* item, LPCWSTR verb = L"open");
+    static void OpenItem(const CItem* item, const std::wstring& verb = L"open");
 
 protected:
     void RecurseRefreshReparsePoints(CItem* items);
     std::vector<CItem*> GetDriveItems() const;
     void RefreshRecyclers() const;
     void RebuildExtensionData();
-    void SortExtensionData(CStringArray& sortedExtensions);
-    void SetExtensionColors(const CStringArray& sortedExtensions);
+    void SortExtensionData(std::vector<std::wstring>& sortedExtensions);
+    void SetExtensionColors(const std::vector<std::wstring>& sortedExtensions);
     static CExtensionData* _pqsortExtensionData;
     bool DeletePhysicalItems(const std::vector<CItem*>& items, bool toTrashBin);
     void SetZoomItem(CItem* item);
     static void AskForConfirmation(USERDEFINEDCLEANUP* udc, const CItem* item);
     void PerformUserDefinedCleanup(USERDEFINEDCLEANUP* udc, const CItem* item);
     void RefreshAfterUserDefinedCleanup(const USERDEFINEDCLEANUP* udc, CItem* item);
-    void RecursiveUserDefinedCleanup(USERDEFINEDCLEANUP* udc, const CStringW& rootPath, const CStringW& currentPath);
-    static void CallUserDefinedCleanup(bool isDirectory, const CStringW& format, const CStringW& rootPath, const CStringW& currentPath, bool showConsoleWindow, bool wait);
-    static CStringW BuildUserDefinedCleanupCommandLine(LPCWSTR format, LPCWSTR rootPath, LPCWSTR currentPath);
+    void RecursiveUserDefinedCleanup(USERDEFINEDCLEANUP* udc, const std::wstring& rootPath, const std::wstring& currentPath);
+    static void CallUserDefinedCleanup(bool isDirectory, const std::wstring& format, const std::wstring& rootPath, const std::wstring& currentPath, bool showConsoleWindow, bool wait);
+    static std::wstring BuildUserDefinedCleanupCommandLine(const std::wstring& format, const std::wstring& rootPath, const std::wstring& currentPath);
     void PushReselectChild(CItem* item);
     CItem* PopReselectChild();
     void ClearReselectChildStack();
@@ -146,22 +145,22 @@ protected:
     static bool DuplicateListHasFocus();
     static std::vector<CItem *> GetAllSelected();
 
-    bool m_showFreeSpace; // Whether to show the <Free Space> item
-    bool m_showUnknown;   // Whether to show the <Unknown> item
+    bool m_ShowFreeSpace; // Whether to show the <Free Space> item
+    bool m_ShowUnknown;   // Whether to show the <Unknown> item
 
-    bool m_showMyComputer = false; // True, if the user selected more than one drive for scanning.
+    bool m_ShowMyComputer = false; // True, if the user selected more than one drive for scanning.
     // In this case, we need a root pseudo item ("My Computer").
 
-    CItem* m_rootItem = nullptr;       // The very root item
-    CItemDupe* m_rootItemDupe = nullptr; // The very root dup item
+    CItem* m_RootItem = nullptr;       // The very root item
+    CItemDupe* m_RootItemDupe = nullptr; // The very root dup item
 
-    CStringW m_highlightExtension; // Currently highlighted extension
-    CItem* m_zoomItem = nullptr;   // Current "zoom root"
+    std::wstring m_HighlightExtension; // Currently highlighted extension
+    CItem* m_ZoomItem = nullptr;   // Current "zoom root"
 
-    bool m_extensionDataValid = false; // If this is false, m_extensionData must be rebuilt
-    CExtensionData m_extensionData;    // Base for the extension view and cushion colors
+    bool m_ExtensionDataValid = false; // If this is false, m_ExtensionData must be rebuilt
+    CExtensionData m_ExtensionData;    // Base for the extension view and cushion colors
 
-    CList<CItem*, CItem*> m_reselectChildStack; // Stack for the "Re-select Child"-Feature
+    CList<CItem*, CItem*> m_ReselectChildStack; // Stack for the "Re-select Child"-Feature
 
     BlockingQueue<CItem*> queue;      // The scanning queue
     std::vector<std::thread> threads; // For tracking threads

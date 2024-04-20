@@ -27,15 +27,15 @@
 IMPLEMENT_DYNAMIC(CDeleteWarningDlg, CDialogEx)
 
 CDeleteWarningDlg::CDeleteWarningDlg(const std::vector<CItem*> & items, CWnd* pParent)
-    : CDialogEx(CDeleteWarningDlg::IDD, pParent), m_items(items)
+    : CDialogEx(CDeleteWarningDlg::IDD, pParent), m_Items(items)
 {
 }
 
 void CDeleteWarningDlg::DoDataExchange(CDataExchange* pDX)
 {
     CDialogEx::DoDataExchange(pDX);
-    DDX_Check(pDX, IDC_DONTSHOWAGAIN, m_dontShowAgain);
-    DDX_Control(pDX, IDC_FILENAMES, m_files);
+    DDX_Check(pDX, IDC_DONTSHOWAGAIN, m_DontShowAgain);
+    DDX_Control(pDX, IDC_FILENAMES, m_Files);
 }
 
 BEGIN_MESSAGE_MAP(CDeleteWarningDlg, CDialogEx)
@@ -62,14 +62,14 @@ BOOL CDeleteWarningDlg::OnInitDialog()
     Localization::UpdateDialogs(*this);
 
     int extent = 0;
-    CDC* dc = m_files.GetDC();
-    for (const auto& item : m_items)
+    CDC* dc = m_Files.GetDC();
+    for (const auto& item : m_Items)
     {
-        extent = max(extent, dc->GetTextExtent(item->GetPath()).cx);
-        m_files.AddString(item->GetPath());
+        extent = max(extent, dc->GetTextExtent(item->GetPath().c_str()).cx);
+        m_Files.AddString(item->GetPath().c_str());
     }
     ReleaseDC(dc);
-    m_files.SetHorizontalExtent(extent);
+    m_Files.SetHorizontalExtent(extent);
 
     return TRUE;
 }

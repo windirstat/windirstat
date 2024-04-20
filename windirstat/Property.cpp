@@ -30,13 +30,13 @@ std::vector<PersistedSetting*>& PersistedSetting::GetPropertySet()
     return _properties;
 }
 
-bool PersistedSetting::ReadBinaryProperty(const std::wstring& section, const std::wstring& entry, LPVOID dest, size_t size)
+bool PersistedSetting::ReadBinaryProperty(const std::wstring& section, const std::wstring& entry, LPVOID dest, const size_t size)
 {
     LPBYTE data = nullptr;
-    UINT data_size = 0;
-    CDirStatApp::Get()->GetProfileBinary(section.c_str(), entry.c_str(), &data, &data_size);
-    const bool success = (data_size == size);
-    if (success) memcpy(dest, data, data_size);
+    UINT dataSize = 0;
+    CDirStatApp::Get()->GetProfileBinary(section.c_str(), entry.c_str(), &data, &dataSize);
+    const bool success = (dataSize == size);
+    if (success) memcpy(dest, data, dataSize);
     delete[] data;
     return success;
 }
@@ -45,140 +45,140 @@ bool PersistedSetting::ReadBinaryProperty(const std::wstring& section, const std
 
 template <> void Setting<int>::ReadPersistedProperty()
 {
-    const int def = _value;
-    _value = CDirStatApp::Get()->GetProfileInt(_section.c_str(), _entry.c_str(), _value);
-    if (_value != def && _min != _max) _value = max(min(_value, _max), _min);
+    const int def = m_Value;
+    m_Value = CDirStatApp::Get()->GetProfileInt(m_Section.c_str(), m_Entry.c_str(), m_Value);
+    if (m_Value != def && m_Min != m_Max) m_Value = max(min(m_Value, m_Max), m_Min);
 }
 
 template <> void Setting<int>::WritePersistedProperty()
 {
-    CDirStatApp::Get()->WriteProfileInt(_section.c_str(), _entry.c_str(), _value);
+    CDirStatApp::Get()->WriteProfileInt(m_Section.c_str(), m_Entry.c_str(), m_Value);
 }
 
 // Setting<bool> Processing
 
 template <> void Setting<bool>::ReadPersistedProperty()
 {
-    _value = CDirStatApp::Get()->GetProfileInt(_section.c_str(), _entry.c_str(), _value == 0 ? 0 : 1) != 0;
+    m_Value = CDirStatApp::Get()->GetProfileInt(m_Section.c_str(), m_Entry.c_str(), m_Value == 0 ? 0 : 1) != 0;
 }
 
 template <> void Setting<bool>::WritePersistedProperty()
 {
-    CDirStatApp::Get()->WriteProfileInt(_section.c_str(), _entry.c_str(), _value == 0 ? 0 : 1);
+    CDirStatApp::Get()->WriteProfileInt(m_Section.c_str(), m_Entry.c_str(), m_Value == 0 ? 0 : 1);
 }
 
 // Setting<std::wstring> Processing
 
 template <> void Setting<std::wstring>::ReadPersistedProperty()
 {
-    _value = CDirStatApp::Get()->GetProfileString(_section.c_str(), _entry.c_str(), _value.c_str()).GetBuffer();
+    m_Value = CDirStatApp::Get()->GetProfileString(m_Section.c_str(), m_Entry.c_str(), m_Value.c_str());
 }
 
 template <> void Setting<std::wstring>::WritePersistedProperty()
 {
-    CDirStatApp::Get()->WriteProfileString(_section.c_str(), _entry.c_str(), _value.c_str());
+    CDirStatApp::Get()->WriteProfileString(m_Section.c_str(), m_Entry.c_str(), m_Value.c_str());
 }
 
 // Setting<WINDOWPLACEMENT> Processing
 
 template <> void Setting<WINDOWPLACEMENT>::ReadPersistedProperty()
 {
-    ReadBinaryProperty(_section, _entry, &_value, sizeof(WINDOWPLACEMENT));
+    ReadBinaryProperty(m_Section, m_Entry, &m_Value, sizeof(WINDOWPLACEMENT));
 }
 
 template <> void Setting<WINDOWPLACEMENT>::WritePersistedProperty()
 {
-    CDirStatApp::Get()->WriteProfileBinary(_section.c_str(), _entry.c_str(),
-        reinterpret_cast<LPBYTE>(&_value), sizeof(WINDOWPLACEMENT));
+    CDirStatApp::Get()->WriteProfileBinary(m_Section.c_str(), m_Entry.c_str(),
+        reinterpret_cast<LPBYTE>(&m_Value), sizeof(WINDOWPLACEMENT));
 }
 
 // Setting<std::vector<std::wstring>> Processing
 
 template <> void Setting<std::vector<std::wstring>>::ReadPersistedProperty()
 {
-    const std::wstring s = CDirStatApp::Get()->GetProfileString(_section.c_str(), _entry.c_str()).GetBuffer();
+    const std::wstring s = CDirStatApp::Get()->GetProfileString(m_Section.c_str(), m_Entry.c_str()).GetString();
     std::wstringstream iss(s);
 
-    _value.clear();
+    m_Value.clear();
     for (std::wstring part; std::getline(iss, part, L'|');)
     {
-        _value.push_back(part);
+        m_Value.push_back(part);
     }
 }
 
 template <> void Setting<std::vector<std::wstring>>::WritePersistedProperty()
 {
     std::wstring result;
-    for (const auto & part : _value)
+    for (const auto & part : m_Value)
     {
         result += part + L'|';
     }
     if (result.ends_with(L'|')) result.pop_back();
 
-    CDirStatApp::Get()->WriteProfileString(_section.c_str(), _entry.c_str(), result.c_str());
+    CDirStatApp::Get()->WriteProfileString(m_Section.c_str(), m_Entry.c_str(), result.c_str());
 }
 
 // Setting<std::vector<int>> Processing
 
 template <> void Setting<std::vector<int>>::ReadPersistedProperty()
 {
-    const std::wstring s = CDirStatApp::Get()->GetProfileString(_section.c_str(), _entry.c_str()).GetBuffer();
+    const std::wstring s = CDirStatApp::Get()->GetProfileString(m_Section.c_str(), m_Entry.c_str()).GetString();
     std::wstringstream iss(s);
 
-    _value.clear();
+    m_Value.clear();
     for (std::wstring part; std::getline(iss, part, L',');)
     {
-        _value.push_back(_wtoi(part.c_str()));
+        m_Value.push_back(_wtoi(part.c_str()));
     }
 }
 
 template <> void Setting<std::vector<int>>::WritePersistedProperty()
 {
     std::wstring result;
-    for (const auto part : _value)
+    for (const auto part : m_Value)
     {
         result += std::to_wstring(part) + L',';
     }
     if (result.ends_with(L',')) result.pop_back();
 
-    CDirStatApp::Get()->WriteProfileString(_section.c_str(), _entry.c_str(), result.c_str());
+    CDirStatApp::Get()->WriteProfileString(m_Section.c_str(), m_Entry.c_str(), result.c_str());
 }
 
 // Setting<COLORREF> Processing
 
 template <> void Setting<COLORREF>::ReadPersistedProperty()
 {
-    ReadBinaryProperty(_section, _entry, &_value, sizeof(COLORREF));
+    ReadBinaryProperty(m_Section, m_Entry, &m_Value, sizeof(COLORREF));
 }
 
 template <> void Setting<COLORREF>::WritePersistedProperty()
 {
-    CDirStatApp::Get()->WriteProfileBinary(_section.c_str(), _entry.c_str(), reinterpret_cast<LPBYTE>(&_value), sizeof(COLORREF));
+    CDirStatApp::Get()->WriteProfileBinary(m_Section.c_str(), m_Entry.c_str(), reinterpret_cast<LPBYTE>(&m_Value), sizeof(COLORREF));
 }
 
 // Setting<double> Processing
 
 template <> void Setting<double>::ReadPersistedProperty()
 {
-    const double def = _value;
-    ReadBinaryProperty(_section, _entry, &_value, sizeof(double));
-    if (_value != def && _min != _max) _value = max(min(_value, _max), _min);
+    const double def = m_Value;
+    ReadBinaryProperty(m_Section, m_Entry, &m_Value, sizeof(double));
+    if (m_Value != def && m_Min != m_Max) m_Value = max(min(m_Value, m_Max), m_Min);
 }
 
 template <> void Setting<double>::WritePersistedProperty()
 {
-    CDirStatApp::Get()->WriteProfileBinary(_section.c_str(), _entry.c_str(), reinterpret_cast<LPBYTE>(&_value), sizeof(double));
+    CDirStatApp::Get()->WriteProfileBinary(m_Section.c_str(), m_Entry.c_str(), reinterpret_cast<LPBYTE>(&m_Value), sizeof(double));
 }
 
 // Setting<RECT> Processing
 
 template <> void Setting<RECT>::ReadPersistedProperty()
 {
-    ReadBinaryProperty(_section, _entry, &_value, sizeof(RECT));
+    ReadBinaryProperty(m_Section, m_Entry, &m_Value, sizeof(RECT));
 }
 
 template <> void Setting<RECT>::WritePersistedProperty()
 {
-    CDirStatApp::Get()->WriteProfileBinary(_section.c_str(), _entry.c_str(), reinterpret_cast<LPBYTE>(&_value), sizeof(RECT));
+    CDirStatApp::Get()->WriteProfileBinary(m_Section.c_str(), m_Entry.c_str(), reinterpret_cast<LPBYTE>(&m_Value), sizeof(RECT));
 }
 

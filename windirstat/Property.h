@@ -29,8 +29,8 @@ protected:
 
     static std::vector<PersistedSetting*>& GetPropertySet();
     static bool ReadBinaryProperty(const std::wstring & section, const std::wstring & entry, LPVOID dest, size_t size);
-    std::wstring _entry;
-    std::wstring _section;
+    std::wstring m_Entry;
+    std::wstring m_Section;
 
 public:
 
@@ -59,7 +59,7 @@ public:
     {
         for (const auto & p : GetPropertySet())
         {
-            if (p->_section.empty()) continue;
+            if (p->m_Section.empty()) continue;
             p->WritePersistedProperty();
         }
     }
@@ -68,51 +68,51 @@ public:
 template <typename T = void>
 class Setting final : PersistedSetting
 {
-    T _value;
-    T _min;
-    T _max;
+    T m_Value;
+    T m_Min;
+    T m_Max;
 
 public:
 
-    T* Ptr() { return &_value; }
-    T& Obj() { return _value; }
-    const T& Obj() const { return _value; }
+    T* Ptr() { return &m_Value; }
+    T& Obj() { return m_Value; }
+    const T& Obj() const { return m_Value; }
 
     // Member persistence read/write settings
     void ReadPersistedProperty() override;
     void WritePersistedProperty() override;
 
     // Implicit conversion back to T.
-    operator const T& () { return _value; }
+    operator const T& () { return m_Value; }
 
     // Copy assignment operators
-    T operator=(T other) { return (_value = other); }
-    T operator=(Setting<T> other) { return (_value = other._value); }
+    T operator=(T other) { return (m_Value = other); }
+    T operator=(Setting<T> other) { return (m_Value = other._value); }
 
     // Math operators
-    T operator++() { return ++_value; }
-    T operator--() { return --_value; }
-    T operator++(int) { return _value++; }
-    T operator--(int) { return _value--; }
-    T operator+=(const T& other) { return _value = _value + other; }
-    T operator-=(const T& other) { return _value = _value - other; }
-    T operator+(const T& other) { return _value + other; }
-    T operator-(const T& other) { return _value - other; }
-    T operator*(const T& other) { return _value * other; }
-    T operator/(const T& other) { return _value / other; }
+    T operator++() { return ++m_Value; }
+    T operator--() { return --m_Value; }
+    T operator++(int) { return m_Value++; }
+    T operator--(int) { return m_Value--; }
+    T operator+=(const T& other) { return m_Value = m_Value + other; }
+    T operator-=(const T& other) { return m_Value = m_Value - other; }
+    T operator+(const T& other) { return m_Value + other; }
+    T operator-(const T& other) { return m_Value - other; }
+    T operator*(const T& other) { return m_Value * other; }
+    T operator/(const T& other) { return m_Value / other; }
 
     // Forces identical type assignment
     template <typename T2> T2& operator=(const T2&)
     {
-        const T2& guard = _value;
+        const T2& guard = m_Value;
         throw guard; // Never reached.
     }
 
-    Setting(const std::wstring& section, const std::wstring& entry, const T& default_value = {}, const T& check_min = {}, const T& check_max = {}) :
-        _value(default_value), _min(check_min), _max(check_max)
+    Setting(const std::wstring& section, const std::wstring& entry, const T& defaultValue = {}, const T& checkMin = {}, const T& checkMax = {}) :
+        m_Value(defaultValue), m_Min(checkMin), m_Max(checkMax)
     {
-        _entry = entry;
-        _section = section;
+        m_Entry = entry;
+        m_Section = section;
     }
 
     // Default constructor (used by non-persisted properties)

@@ -7,16 +7,16 @@
 template <typename T>
 class BlockingQueue
 {
-    std::deque<T> q;
-    std::mutex x;
-    std::condition_variable pushed;
-    std::condition_variable waiting;
-    std::condition_variable popped;
-    unsigned int m_initial_workers = 1;
-    unsigned int m_workers_waiting = 0;
-    bool m_started = false;
-    bool m_suspended = false;
-    bool m_draining = false;
+    std::deque<T> m_Queue;
+    std::mutex m_Mutex;
+    std::condition_variable m_Pushed;
+    std::condition_variable m_Waiting;
+    std::condition_variable m_Popped;
+    unsigned int m_InitialWorkers = 1;
+    unsigned int m_WorkersWaiting = 0;
+    bool m_Started = false;
+    bool m_Suspended = false;
+    bool m_Draining = false;
 
 public:
     BlockingQueue(const BlockingQueue&) = delete;
@@ -25,123 +25,123 @@ public:
     BlockingQueue& operator=(BlockingQueue&&) = delete;
     ~BlockingQueue() = default;
     BlockingQueue(const unsigned int workers = 1) :
-        m_initial_workers(workers) {}
+        m_InitialWorkers(workers) {}
 
     void push(T const& value, bool back = true)
     {
         // Push another entry onto the queue
-        std::lock_guard lock(x);
-        if (m_draining) return;
-        back ? q.push_back(value) : q.push_front(value);
-        pushed.notify_one();
+        std::lock_guard lock(m_Mutex);
+        if (m_Draining) return;
+        back ? m_Queue.push_back(value) : m_Queue.push_front(value);
+        m_Pushed.notify_one();
     }
 
     T pop(bool front = true)
     {
-        // Record the worker is waiting for an item until
+        // Record the worker is m_Waiting for an item until
         // the queue has something in it and we are not suspended
-        std::unique_lock lock(x);
-        m_workers_waiting++;
-        waiting.notify_all();
-        pushed.wait(lock, [&]
+        std::unique_lock lock(m_Mutex);
+        m_WorkersWaiting++;
+        m_Waiting.notify_all();
+        m_Pushed.wait(lock, [&]
         {
-            return (!m_suspended || m_draining) && !q.empty();
+            return (!m_Suspended || m_Draining) && !m_Queue.empty();
         });
 
         // Worker now has something to work on so pop it off the queue
-        if (!m_draining) m_started = true;
-        m_workers_waiting--;
-        T& i = front ? q.front() : q.back();
-        front ? q.pop_front() : q.pop_back();
-        popped.notify_one();
+        if (!m_Draining) m_Started = true;
+        m_WorkersWaiting--;
+        T& i = front ? m_Queue.front() : m_Queue.back();
+        front ? m_Queue.pop_front() : m_Queue.pop_back();
+        m_Popped.notify_one();
         return i;
     }
 
-    bool wait_for_all()
+    bool waitForAll()
     {
         // Wait for all workers threads to be
-        // waiting for more work to do 
-        std::unique_lock lock(x);
-        waiting.wait(lock, [&]
+        // m_Waiting for more work to do 
+        std::unique_lock lock(m_Mutex);
+        m_Waiting.wait(lock, [&]
         {
-            return m_started && m_draining && q.empty() ||
-                !m_suspended && m_workers_waiting == m_initial_workers;
+            return m_Started && m_Draining && m_Queue.empty() ||
+                !m_Suspended && m_WorkersWaiting == m_InitialWorkers;
         });
-        return m_draining;
+        return m_Draining;
     }
 
-    bool drain(T drain_object)
+    bool drain(T drainObject)
     {
         // Stop current proocessing
         suspend(true);
 
         // Return early if queue is already draining or never started
-        std::unique_lock lock(x);
-        if (!m_started || m_draining)
+        std::unique_lock lock(m_Mutex);
+        if (!m_Started || m_Draining)
         {
             return false;
         }
 
         // Start draining process by feeding some special
         // draining objects into the queue (implementation dependent)
-        m_draining = true;
-        q.clear();
-        for (unsigned int i = 0; i < m_initial_workers; i++)
+        m_Draining = true;
+        m_Queue.clear();
+        for (unsigned int i = 0; i < m_InitialWorkers; i++)
         {
-            q.push_back(drain_object);
-            pushed.notify_one();
+            m_Queue.push_back(drainObject);
+            m_Pushed.notify_one();
         }
 
         // Wait until draining objects have been processed
-        popped.wait(lock, [&]
+        m_Popped.wait(lock, [&]
         {
-            return q.empty();
+            return m_Queue.empty();
         });
-        waiting.notify_all();
+        m_Waiting.notify_all();
         return true;
     }
 
-    bool has_items() const
+    bool hasItems() const
     {
-        return !q.empty();
+        return !m_Queue.empty();
     }
 
-    bool is_suspended() const
+    bool isSuspended() const
     {
-        return m_suspended;
+        return m_Suspended;
     }
 
     void suspend(const bool wait)
     {
-        std::unique_lock lock(x);
-        if (m_suspended || m_draining || !m_started) return;
-        m_suspended = true;
-        if (wait) waiting.wait(lock, [&]
+        std::unique_lock lock(m_Mutex);
+        if (m_Suspended || m_Draining || !m_Started) return;
+        m_Suspended = true;
+        if (wait) m_Waiting.wait(lock, [&]
         {
-            return m_workers_waiting == m_initial_workers;
+            return m_WorkersWaiting == m_InitialWorkers;
         });
     }
 
     void resume()
     {
-        std::lock_guard lock(x);
-        m_started = false;
-        m_suspended = false;
-        m_draining = false;
-        pushed.notify_all();
+        std::lock_guard lock(m_Mutex);
+        m_Started = false;
+        m_Suspended = false;
+        m_Draining = false;
+        m_Pushed.notify_all();
     }
 
-    void reset(const int initial_workers = -1)
+    void reset(const int initialWorkers = -1)
     {
-        std::lock_guard lock(x);
-        q.clear();
-        m_workers_waiting = 0;
-        m_suspended = false;
-        m_started = false;
-        m_draining = false;
-        if (initial_workers > 0)
+        std::lock_guard lock(m_Mutex);
+        m_Queue.clear();
+        m_WorkersWaiting = 0;
+        m_Suspended = false;
+        m_Started = false;
+        m_Draining = false;
+        if (initialWorkers > 0)
         {
-            m_initial_workers = initial_workers;
+            m_InitialWorkers = initialWorkers;
         }
     }
 };

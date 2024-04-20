@@ -61,13 +61,13 @@ class COptionsPropertySheet final : public CPropertySheet
     void SetLanguageChanged(bool changed);
     BOOL OnInitDialog() override;
 
-    bool m_restartApplication = false; // [out]
+    bool m_RestartApplication = false; // [out]
 
 protected:
     BOOL OnCommand(WPARAM wParam, LPARAM lParam) override;
 
-    bool m_languageChanged = false;
-    bool m_alreadyAsked = false;
+    bool m_LanguageChanged = false;
+    bool m_AlreadyAsked = false;
 };
 
 //
@@ -83,9 +83,9 @@ public:
     void RestoreSplitterPos(double posIfVirgin);
 
 protected:
-    double m_splitterPos{0};    // Current split ratio
-    bool m_wasTrackedByUser;    // True as soon as user has modified the splitter position
-    double * m_userSplitterPos; // Split ratio as set by the user
+    double m_SplitterPos{0};    // Current split ratio
+    bool m_WasTrackedByUser;    // True as soon as user has modified the splitter position
+    double * m_UserSplitterPos; // Split ratio as set by the user
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnSize(UINT nType, int cx, int cy);
@@ -106,7 +106,7 @@ public:
     void Stop();
 
 protected:
-    CPacman m_pacman;
+    CPacman m_Pacman;
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnPaint();
@@ -141,8 +141,8 @@ class CMainFrame final : public CFrameWndEx
 {
 protected:
     static constexpr DWORD WM_CALLBACKUI = WM_USER + 1;
-    static UINT s_taskBarMessage;
-    static CMainFrame* _singleton;
+    static UINT s_TaskBarMessage;
+    static CMainFrame* s_Singleton;
 
     CMainFrame();
     ~CMainFrame() override;
@@ -155,7 +155,7 @@ protected:
     void RestoreExtensionView();
     void MinimizeTreeMapView();
     void MinimizeExtensionView();
-    void CopyToClipboard(LPCWSTR psz);
+    void CopyToClipboard(const std::wstring& psz);
 
     // Used for storing and retrieving the various views
     CFileTabbedView* m_FileTabbedView = nullptr;
@@ -179,7 +179,7 @@ protected:
     LOGICAL_FOCUS GetLogicalFocus() const;
     void MoveFocus(LOGICAL_FOCUS lf);
 
-    void SetMessageText(const CStringW& text) { SetStatusPaneText(0, text); }
+    void SetMessageText(const std::wstring& text) { SetStatusPaneText(0, text); }
     void SetSelectionMessageText();
 
     static void QueryRecycleBin(ULONGLONG& items, ULONGLONG& bytes);
@@ -191,26 +191,26 @@ protected:
     void CreatePacmanProgress();
     void DestroyProgress();
 
-    void SetStatusPaneText(int pos, const CStringW& text);
+    void SetStatusPaneText(int pos, const std::wstring& text);
     void UpdateCleanupMenu(CMenu* menu) const;
 
-    UINT_PTR m_timer = 0;           // Timer for updating the display
-    bool m_progressVisible = false; // True while progress must be shown (either pacman or progress bar)
-    bool m_scanSuspend = false;     // True if the scan has been suspended
-    ULONGLONG m_progressRange = 0;  // Progress range. A range of 0 means Pacman should be used.
-    ULONGLONG m_progressPos = 0;    // Progress position (<= progressRange, or an item count in case of m_progressRang == 0)
-    CItem* m_workingItem = nullptr;
+    UINT_PTR m_Timer = 0;           // Timer for updating the display
+    bool m_ProgressVisible = false; // True while progress must be shown (either pacman or progress bar)
+    bool m_ScanSuspend = false;     // True if the scan has been suspended
+    ULONGLONG m_ProgressRange = 0;  // Progress range. A range of 0 means Pacman should be used.
+    ULONGLONG m_ProgressPos = 0;    // Progress position (<= progressRange, or an item count in case of m_ProgressRang == 0)
+    CItem* m_WorkingItem = nullptr;
 
     CMySplitterWnd m_SubSplitter; // Contains the two upper views
-    CMySplitterWnd m_Splitter;    // Contains (a) m_wndSubSplitter and (b) the graph view.
+    CMySplitterWnd m_Splitter;    // Contains (a) m_WndSubSplitter and (b) the graph view.
 
-    CMFCStatusBar m_wndStatusBar; // Status bar
-    CMFCToolBar m_wndToolBar;     // Tool bar
-    CProgressCtrl m_progress;     // Progress control. Is Create()ed and Destroy()ed again every time.
-    CPacmanControl m_pacman;      // Static control for Pacman.
+    CMFCStatusBar m_WndStatusBar; // Status bar
+    CMFCToolBar m_WndToolBar;     // Tool bar
+    CProgressCtrl m_Progress;     // Progress control. Is Create()ed and Destroy()ed again every time.
+    CPacmanControl m_Pacman;      // Static control for Pacman.
 
-    LOGICAL_FOCUS m_logicalFocus = LF_NONE; // Which view has the logical focus
-    CDeadFocusWnd m_wndDeadFocus; // Zero-size window which holds the focus if logical focus is "NONE"
+    LOGICAL_FOCUS m_LogicalFocus = LF_NONE; // Which view has the logical focus
+    CDeadFocusWnd m_WndDeadFocus; // Zero-size window which holds the focus if logical focus is "NONE"
 
     CComPtr<ITaskbarList3> m_TaskbarList;
     TBPFLAG m_TaskbarButtonState = TBPF_INDETERMINATE;
@@ -236,6 +236,6 @@ protected:
     afx_msg void OnSysColorChange();
 
 public:
-    static CMainFrame* Get() { return _singleton; }
+    static CMainFrame* Get() { return s_Singleton; }
     BOOL LoadFrame(UINT nIDResource, DWORD dwDefaultStyle = WS_OVERLAPPEDWINDOW | FWS_ADDTOTITLE, CWnd* pParentWnd = nullptr, CCreateContext* pContext = nullptr) override;
 };

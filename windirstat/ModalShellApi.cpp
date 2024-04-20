@@ -38,18 +38,18 @@ namespace
 
 CModalShellApi::CModalShellApi() = default;
 
-void CModalShellApi::DeleteFile(LPCWSTR fileName, bool toRecycleBin)
+void CModalShellApi::DeleteFile(const std::wstring & fileName, const bool toRecycleBin)
 {
-    m_operation    = DELETE_FILE;
-    m_fileName     = fileName;
-    m_toRecycleBin = toRecycleBin;
+    m_Operation    = DELETE_FILE;
+    m_FileName     = fileName;
+    m_ToRecycleBin = toRecycleBin;
 
     DoModal();
 }
 
 bool CModalShellApi::DoOperation()
 {
-    if (m_operation == DELETE_FILE)
+    if (m_Operation == DELETE_FILE)
     {
 
         return DoDeleteItem();
@@ -60,31 +60,31 @@ bool CModalShellApi::DoOperation()
 
 bool CModalShellApi::DoDeleteItem()
 {
-    if (m_toRecycleBin)
+    if (m_ToRecycleBin)
     {
         // Determine flags to use for deletion
         const auto flags = FOF_NOCONFIRMATION | FOFX_EARLYFAILURE | FOFX_SHOWELEVATIONPROMPT |
             (IsWindows8OrGreater() ? (FOFX_ADDUNDORECORD | FOFX_RECYCLEONDELETE) : FOF_ALLOWUNDO);
 
         // Do deletion operation
-        SmartPointer<LPITEMIDLIST> pidl(CoTaskMemFree, ILCreateFromPath(m_fileName));
+        SmartPointer<LPITEMIDLIST> pidl(CoTaskMemFree, ILCreateFromPath(m_FileName.c_str()));
         CComPtr<IShellItem> shellitem = nullptr;
         if (SHCreateItemFromIDList(pidl, IID_PPV_ARGS(&shellitem)) != S_OK) return false;
         
-        ::CComPtr<IFileOperation> pFileOperation;
-        if (FAILED(::CoCreateInstance(CLSID_FileOperation, nullptr, CLSCTX_ALL, IID_PPV_ARGS(&pFileOperation))) ||
-            FAILED(pFileOperation->SetOperationFlags(flags)) ||
-            FAILED(pFileOperation->DeleteItem(shellitem, nullptr)) ||
-            FAILED(pFileOperation->PerformOperations()))
+        ::CComPtr<IFileOperation> fileOperation;
+        if (FAILED(::CoCreateInstance(CLSID_FileOperation, nullptr, CLSCTX_ALL, IID_PPV_ARGS(&fileOperation))) ||
+            FAILED(fileOperation->SetOperationFlags(flags)) ||
+            FAILED(fileOperation->DeleteItem(shellitem, nullptr)) ||
+            FAILED(fileOperation->PerformOperations()))
         {
             return false;
         }
     }
     else
     {
-        CStringW path = FileFindEnhanced::MakeLongPathCompatible(m_fileName);
+        std::wstring path = FileFindEnhanced::MakeLongPathCompatible(m_FileName);
         std::error_code ec;
-        remove_all(std::filesystem::path(path.GetBuffer()), ec);
+        remove_all(std::filesystem::path(path.data()), ec);
     }
 
     return true;

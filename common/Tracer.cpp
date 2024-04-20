@@ -32,6 +32,7 @@
 #include <fcntl.h>
 #include <io.h>
 #include <conio.h>
+#include <string>
 
 #ifdef _DEBUG
 #if VTRACE_TO_CONSOLE
@@ -59,41 +60,40 @@ CWDSTracerConsole::~CWDSTracerConsole()
 }
 #endif // VTRACE_TO_CONSOLE
 
-CWDSTracer::CWDSTracer(LPCWSTR srcfile, LPCWSTR fctname, unsigned int srcline)
-    : m_srcfile(srcfile)
-    , m_srcline(srcline)
-    , m_srcfunc(fctname)
-    // we can rely on the format with back slashes, no need to check forward slashes here
-    , m_srcbasename((srcfile) ? wcsrchr(srcfile, '\\') : nullptr)
+CWDSTracer::CWDSTracer(const std::wstring & srcfile, const std::wstring & fctname, const unsigned int srcline)
+    : m_Srcfile(srcfile)
+    , m_Srcline(srcline)
+    , m_Srcfunc(fctname)
 {
     // Skip over the backslash
-    m_srcbasename = (m_srcbasename) ? m_srcbasename + 1 : srcfile;
+    auto i = srcfile.find_last_of(L'\\');
+    if (i != std::wstring::npos) m_Srcbasename = srcfile.substr(i);
 }
 
-void CWDSTracer::operator()(LPCWSTR format, ...) const
+void CWDSTracer::operator()(const std::wstring& format, ...) const
 {
     CStringW str;
     va_list args;
-    va_start(args, format);
-    str.FormatV(format, args);
+    va_start(args, &format);
+    str.FormatV(format.c_str(), args);
     va_end(args);
     CStringW strDbg, strPfx;
 #   if (VTRACE_DETAIL == VTRACE_FILE_LINE_FUNC)
-    strPfx.Format(L"%s:%u|%s", m_srcbasename, m_srcline, m_srcfunc);
+    strPfx.Format(L"%s:%u|%s", m_Srcbasename, m_Srcline, m_Srcfunc);
 #   elif (VTRACE_DETAIL == VTRACE_FILE_LINE)
-    strPfx.Format(L"%s:%u", m_srcbasename, m_srcline);
+    strPfx.Format(L"%s:%u", m_Srcbasename.c_str(), m_Srcline);
 #   elif (VTRACE_DETAIL == VTRACE_FUNC)
-    strPfx = m_srcfunc;
+    strPfx = m_Srcfunc;
 #   endif
     if(strPfx.IsEmpty())
-        strDbg.Format(L"%s\n", str.GetBuffer());
+        strDbg.Format(L"%s\n", str.GetString());
     else
-        strDbg.Format(L"[%s] %s\n", strPfx.GetBuffer(), str.GetBuffer());
+        strDbg.Format(L"[%s] %s\n", strPfx.GetString(), str.GetString());
 #   if !VTRACE_TO_CONSOLE || (VTRACE_TO_CONSOLE && !VTRACE_NO_OUTPUTDEBUGSTRING)
-    OutputDebugStringW(strDbg.GetBuffer());
+    OutputDebugStringW(strDbg);
 #   endif
 #   if VTRACE_TO_CONSOLE
-    wprintf(strDbg.GetBuffer());
+    wprintf(strDbg);
 #   endif // VTRACE_TO_CONSOLE
 }
 #endif

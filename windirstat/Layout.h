@@ -22,6 +22,7 @@
 #pragma once
 
 #include <limits>
+#include <vector>
 
 //
 // CLayout. A poor men's dialog layout mechanism.
@@ -40,15 +41,6 @@ class CLayout
 
         CRect originalRectangle;
 
-        SControlInfoT()
-            : control(nullptr)
-              , movex(std::numeric_limits<T>::quiet_NaN())
-              , movey(std::numeric_limits<T>::quiet_NaN())
-              , stretchx(std::numeric_limits<T>::quiet_NaN())
-              , stretchy(std::numeric_limits<T>::quiet_NaN())
-        {
-        }
-
         SControlInfoT(CWnd* ctl, T& x, T& y, T& w, T& h)
             : control(ctl)
               , movex(x)
@@ -57,9 +49,6 @@ class CLayout
               , stretchy(h)
         {
         }
-
-    private:
-        SControlInfoT(SControlInfoT&) = default; // hide copy ctor
     };
 
     using SControlInfo = SControlInfoT<double>;
@@ -67,7 +56,7 @@ class CLayout
     class CSizeGripper final : public CWnd
     {
     public:
-        const int _width = 14;
+        const int m_Width = 14;
 
         CSizeGripper() = default;
         void Create(CWnd* parent, CRect rc);
@@ -88,7 +77,7 @@ class CLayout
         void SetWindowPos(HWND hWnd, int x, int y, int cx, int cy, UINT uFlags);
 
     private:
-        HDWP m_wdp;
+        HDWP m_Wdp;
     };
 
 public:
@@ -102,9 +91,9 @@ public:
     void OnDestroy() const;
 
 protected:
-    RECT* m_wp;
-    CWnd* m_dialog;
-    CSize m_originalDialogSize;
-    CArray<SControlInfo, SControlInfo&> m_control;
-    CSizeGripper m_sizeGripper;
+    RECT* m_Wp;
+    CWnd* m_Dialog;
+    CSize m_OriginalDialogSize;
+    std::vector<SControlInfo> m_Control;
+    CSizeGripper m_SizeGripper;
 };

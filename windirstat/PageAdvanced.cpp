@@ -42,14 +42,14 @@ COptionsPropertySheet* CPageAdvanced::GetSheet() const
 void CPageAdvanced::DoDataExchange(CDataExchange* pDX)
 {
     CPropertyPage::DoDataExchange(pDX);
-    DDX_Check(pDX, IDC_EXCLUDE_VOLUME_MOUNT_POINTS, m_excludeVolumeMountPoints);
-    DDX_Check(pDX, IDC_EXCLUDE_JUNCTIONS, m_excludeJunctions);
-    DDX_Check(pDX, IDC_EXCLUDE_SYMLINKS, m_excludeSymbolicLinks);
-    DDX_Check(pDX, IDC_PAGE_ADVANCED_SKIP_CLOUD_LINKS, m_skipDupeDetectionCloudLinks);
-    DDX_Check(pDX, IDC_SKIPHIDDEN, m_skipHidden);
-    DDX_Check(pDX, IDC_SKIPPROTECTED, m_skipProtected);
-    DDX_Check(pDX, IDC_BACKUP_RESTORE, m_useBackupRestore);
-    DDX_CBIndex(pDX, IDC_COMBO_THREADS, m_scanningThreads);
+    DDX_Check(pDX, IDC_EXCLUDE_VOLUME_MOUNT_POINTS, m_ExcludeVolumeMountPoints);
+    DDX_Check(pDX, IDC_EXCLUDE_JUNCTIONS, m_ExcludeJunctions);
+    DDX_Check(pDX, IDC_EXCLUDE_SYMLINKS, m_ExcludeSymbolicLinks);
+    DDX_Check(pDX, IDC_PAGE_ADVANCED_SKIP_CLOUD_LINKS, m_SkipDupeDetectionCloudLinks);
+    DDX_Check(pDX, IDC_SKIPHIDDEN, m_SkipHidden);
+    DDX_Check(pDX, IDC_SKIPPROTECTED, m_SkipProtected);
+    DDX_Check(pDX, IDC_BACKUP_RESTORE, m_UseBackupRestore);
+    DDX_CBIndex(pDX, IDC_COMBO_THREADS, m_ScanningThreads);
 }
 
 BEGIN_MESSAGE_MAP(CPageAdvanced, CPropertyPage)
@@ -69,14 +69,14 @@ BOOL CPageAdvanced::OnInitDialog()
 
     Localization::UpdateDialogs(*this);
 
-    m_excludeVolumeMountPoints = COptions::ExcludeVolumeMountPoints;
-    m_excludeJunctions = COptions::ExcludeJunctions;
-    m_excludeSymbolicLinks = COptions::ExcludeSymbolicLinks;
-    m_skipDupeDetectionCloudLinks = COptions::SkipDupeDetectionCloudLinks;
-    m_skipHidden = COptions::SkipHidden;
-    m_skipProtected = COptions::SkipProtected;
-    m_useBackupRestore = COptions::UseBackupRestore;
-    m_scanningThreads = COptions::ScanningThreads - 1;
+    m_ExcludeVolumeMountPoints = COptions::ExcludeVolumeMountPoints;
+    m_ExcludeJunctions = COptions::ExcludeJunctions;
+    m_ExcludeSymbolicLinks = COptions::ExcludeSymbolicLinks;
+    m_SkipDupeDetectionCloudLinks = COptions::SkipDupeDetectionCloudLinks;
+    m_SkipHidden = COptions::SkipHidden;
+    m_SkipProtected = COptions::SkipProtected;
+    m_UseBackupRestore = COptions::UseBackupRestore;
+    m_ScanningThreads = COptions::ScanningThreads - 1;
 
     UpdateData(false);
     return TRUE;
@@ -86,27 +86,27 @@ void CPageAdvanced::OnOK()
 {
     UpdateData();
 
-    const bool refresh_reprasepoints =
-        COptions::ExcludeJunctions && COptions::ExcludeJunctions != static_cast<bool>(m_excludeJunctions) ||
-        COptions::ExcludeSymbolicLinks && COptions::ExcludeSymbolicLinks != static_cast<bool>(m_excludeSymbolicLinks) ||
-        COptions::ExcludeVolumeMountPoints && COptions::ExcludeVolumeMountPoints != static_cast<bool>(m_excludeVolumeMountPoints);
-    const bool refresh_all = COptions::SkipHidden != static_cast<bool>(m_skipHidden) ||
-        COptions::SkipProtected != static_cast<bool>(m_skipProtected);
+    const bool refreshReprasepoints =
+        COptions::ExcludeJunctions && COptions::ExcludeJunctions != static_cast<bool>(m_ExcludeJunctions) ||
+        COptions::ExcludeSymbolicLinks && COptions::ExcludeSymbolicLinks != static_cast<bool>(m_ExcludeSymbolicLinks) ||
+        COptions::ExcludeVolumeMountPoints && COptions::ExcludeVolumeMountPoints != static_cast<bool>(m_ExcludeVolumeMountPoints);
+    const bool refreshAll = COptions::SkipHidden != static_cast<bool>(m_SkipHidden) ||
+        COptions::SkipProtected != static_cast<bool>(m_SkipProtected);
 
-    COptions::ExcludeJunctions = (FALSE != m_excludeJunctions);
-    COptions::ExcludeSymbolicLinks = (FALSE != m_excludeSymbolicLinks);
-    COptions::ExcludeVolumeMountPoints = (FALSE != m_excludeVolumeMountPoints);
-    COptions::SkipDupeDetectionCloudLinks = (FALSE != m_skipDupeDetectionCloudLinks);
-    COptions::SkipHidden = (FALSE != m_skipHidden);
-    COptions::SkipProtected = (FALSE != m_skipProtected);
-    COptions::UseBackupRestore = (FALSE != m_useBackupRestore);
-    COptions::ScanningThreads = m_scanningThreads + 1;
+    COptions::ExcludeJunctions = (FALSE != m_ExcludeJunctions);
+    COptions::ExcludeSymbolicLinks = (FALSE != m_ExcludeSymbolicLinks);
+    COptions::ExcludeVolumeMountPoints = (FALSE != m_ExcludeVolumeMountPoints);
+    COptions::SkipDupeDetectionCloudLinks = (FALSE != m_SkipDupeDetectionCloudLinks);
+    COptions::SkipHidden = (FALSE != m_SkipHidden);
+    COptions::SkipProtected = (FALSE != m_SkipProtected);
+    COptions::UseBackupRestore = (FALSE != m_UseBackupRestore);
+    COptions::ScanningThreads = m_ScanningThreads + 1;
 
-    if (refresh_all)
+    if (refreshAll)
     {
         GetDocument()->RefreshItem(GetDocument()->GetRootItem());
     }
-    else if (refresh_reprasepoints)
+    else if (refreshReprasepoints)
     {
         GetDocument()->RefreshReparsePointItems();
     }

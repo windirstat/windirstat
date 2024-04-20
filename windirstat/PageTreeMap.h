@@ -47,38 +47,38 @@ protected:
     BOOL OnInitDialog() override;
     void OnOK() override;
 
-    CTreemap::Options m_options; // Current options
+    CTreemap::Options m_Options; // Current options
 
-    bool m_altered = false;   // Values have been altered. Button reads "Reset to defaults".
-    CTreemap::Options m_undo; // Valid, if m_altered = false
+    bool m_Altered = false;   // Values have been altered. Button reads "Reset to defaults".
+    CTreemap::Options m_Undo; // Valid, if m_Altered = false
 
-    CTreemapPreview m_preview;
+    CTreemapPreview m_Preview;
 
-    int m_style = 0;
-    CColorButton m_highlightColor;
-    BOOL m_grid = 0;
-    CColorButton m_gridColor;
+    int m_Style = 0;
+    CColorButton m_HighlightColor;
+    BOOL m_Grid = 0;
+    CColorButton m_GridColor;
 
-    CSliderCtrl m_brightness;
-    CStringW m_sBrightness;
-    int m_nBrightness = 0;
+    CSliderCtrl m_Brightness;
+    CStringW m_SBrightness;
+    int m_NBrightness = 0;
 
-    CSliderCtrl m_cushionShading;
-    CStringW m_sCushionShading;
-    int m_nCushionShading = 0;
+    CSliderCtrl m_CushionShading;
+    CStringW m_SCushionShading;
+    int m_NCushionShading = 0;
 
-    CSliderCtrl m_height;
-    CStringW m_sHeight;
-    int m_nHeight = 0;
+    CSliderCtrl m_Height;
+    CStringW m_SHeight;
+    int m_NHeight = 0;
 
-    CSliderCtrl m_scaleFactor;
-    CStringW m_sScaleFactor;
-    int m_nScaleFactor = 0;
+    CSliderCtrl m_ScaleFactor;
+    CStringW m_SScaleFactor;
+    int m_NScaleFactor = 0;
 
-    CXySlider m_lightSource;
-    CPoint m_ptLightSource;
+    CXySlider m_LightSource;
+    CPoint m_PtLightSource;
 
-    CButton m_resetButton;
+    CButton m_ResetButton;
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnColorChangedTreemapGrid(NMHDR*, LRESULT*);

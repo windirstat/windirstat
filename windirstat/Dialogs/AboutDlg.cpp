@@ -41,9 +41,9 @@ namespace
     };
 
     // Retrieve the GPL text from our resources
-    CStringW GetTextResource(const UINT id, const HMODULE dll = AfxGetResourceHandle())
+    std::wstring GetTextResource(const UINT id, const HMODULE dll = AfxGetResourceHandle())
     {
-        CStringW s;
+        std::wstring s;
 
         HGLOBAL hresource = nullptr;
         try
@@ -113,9 +113,9 @@ void CAboutDlg::CMyTabControl::Initialize()
 {
     ModifyStyle(0, WS_CLIPCHILDREN);
 
-    InsertItem(TAB_ABOUT, Localization::Lookup(IDS_ABOUT_ABOUT));
-    InsertItem(TAB_THANKSTO, Localization::Lookup(IDS_ABOUT_THANKSTO));
-    InsertItem(TAB_LICENSE, Localization::Lookup(IDS_ABOUT_LICENSEAGREEMENT));
+    InsertItem(TAB_ABOUT, Localization::Lookup(IDS_ABOUT_ABOUT).c_str());
+    InsertItem(TAB_THANKSTO, Localization::Lookup(IDS_ABOUT_THANKSTO).c_str());
+    InsertItem(TAB_LICENSE, Localization::Lookup(IDS_ABOUT_LICENSEAGREEMENT).c_str());
 
     CRect rc;
     GetClientRect(rc);
@@ -125,7 +125,7 @@ void CAboutDlg::CMyTabControl::Initialize()
 
     rc.top = rcItem.bottom;
 
-    VERIFY(m_text.Create(WS_CHILD | WS_VISIBLE | WS_BORDER | ES_CENTER | ES_MULTILINE | ES_READONLY, rc, this, ID_WDS_CONTROL));
+    VERIFY(m_Text.Create(WS_CHILD | WS_VISIBLE | WS_BORDER | ES_CENTER | ES_MULTILINE | ES_READONLY, rc, this, ID_WDS_CONTROL));
     SetPageText(TAB_ABOUT);
 }
 
@@ -138,19 +138,19 @@ void CAboutDlg::CMyTabControl::SetPageText(const int tab)
     {
     case TAB_ABOUT:
         {
-            text.FormatMessage(Localization::Lookup(IDS_ABOUT_ABOUTTEXTss),
-                Localization::LookupNeutral(IDS_AUTHOR_EMAIL).GetString(),
-                Localization::LookupNeutral(IDS_URL_WEBSITE).GetString());
+            text.FormatMessage(Localization::Lookup(IDS_ABOUT_ABOUTTEXTss).c_str(),
+                Localization::LookupNeutral(IDS_AUTHOR_EMAIL).c_str(),
+                Localization::LookupNeutral(IDS_URL_WEBSITE).c_str());
         }
         break;
     case TAB_THANKSTO:
         {
-            text =Localization::Lookup(IDS_ABOUT_THANKSTOTEXT);
+            text = Localization::Lookup(IDS_ABOUT_THANKSTOTEXT).c_str();
         }
         break;
     case TAB_LICENSE:
         {
-            text     = GetTextResource(IDR_LICENSE, nullptr);
+            text = GetTextResource(IDR_LICENSE, nullptr).c_str();
             newStyle = ES_LEFT;
         }
         break;
@@ -161,30 +161,30 @@ void CAboutDlg::CMyTabControl::SetPageText(const int tab)
         break;
     }
     CRect rc;
-    m_text.GetWindowRect(rc);
+    m_Text.GetWindowRect(rc);
     ScreenToClient(rc);
 
-    DWORD style = m_text.GetStyle();
+    DWORD style = m_Text.GetStyle();
     style &= ~ES_CENTER;
     style |= newStyle | WS_VSCROLL;
 
-    const DWORD exstyle = m_text.GetExStyle();
+    const DWORD exstyle = m_Text.GetExStyle();
 
-    m_text.DestroyWindow();
+    m_Text.DestroyWindow();
 
-    m_text.Create(style, rc, this, ID_WDS_CONTROL);
+    m_Text.Create(style, rc, this, ID_WDS_CONTROL);
     if (exstyle)
     {
-        m_text.ModifyStyleEx(0, exstyle);
+        m_Text.ModifyStyleEx(0, exstyle);
     }
 
-    m_text.SetAutoURLDetect();
-    m_text.SetEventMask(ENM_LINK | ENM_KEYEVENTS);
-    m_text.SetFont(GetFont());
+    m_Text.SetAutoURLDetect();
+    m_Text.SetEventMask(ENM_LINK | ENM_KEYEVENTS);
+    m_Text.SetFont(GetFont());
 
-    m_text.SetWindowText(text);
+    m_Text.SetWindowText(text);
 
-    m_text.HideCaret();
+    m_Text.HideCaret();
 }
 
 BEGIN_MESSAGE_MAP(CAboutDlg::CMyTabControl, CTabCtrl)
@@ -201,7 +201,7 @@ void CAboutDlg::CMyTabControl::OnEnLinkText(NMHDR* pNMHDR, LRESULT* pResult)
     if (WM_LBUTTONDOWN == el->msg)
     {
         CStringW link;
-        m_text.GetTextRange(el->chrg.cpMin, el->chrg.cpMax, link);
+        m_Text.GetTextRange(el->chrg.cpMin, el->chrg.cpMax, link);
 
         // FIXME: should probably one of the helper variants of this function
         ::ShellExecute(*this, nullptr, link, nullptr, wds::strEmpty, SW_SHOWNORMAL);
@@ -219,7 +219,7 @@ void CAboutDlg::CMyTabControl::OnEnMsgFilter(NMHDR* pNMHDR, LRESULT* pResult)
         SetFocus();
 
         // If we didn't ignore VK_ESCAPE here, strange things happen:
-        // both m_text and the Tab control would disappear.
+        // both m_Text and the Tab control would disappear.
         *pResult = 1;
     }
 }
@@ -228,7 +228,7 @@ void CAboutDlg::CMyTabControl::OnSize(const UINT nType, const int cx, const int 
 {
     CTabCtrl::OnSize(nType, cx, cy);
 
-    if (::IsWindow(m_text.m_hWnd))
+    if (::IsWindow(m_Text.m_hWnd))
     {
         CRect rc;
         GetClientRect(rc);
@@ -238,7 +238,7 @@ void CAboutDlg::CMyTabControl::OnSize(const UINT nType, const int cx, const int 
 
         rc.top = rcItem.bottom;
 
-        m_text.MoveWindow(rc);
+        m_Text.MoveWindow(rc);
     }
 }
 
@@ -246,45 +246,47 @@ void CAboutDlg::CMyTabControl::OnSize(const UINT nType, const int cx, const int 
 
 CAboutDlg::CAboutDlg()
     : CDialogEx(CAboutDlg::IDD)
-      , m_layout(this, COptions::AboutWindowRect.Ptr())
+      , m_Layout(this, COptions::AboutWindowRect.Ptr())
 {
 }
 
-CStringW CAboutDlg::GetAppVersion()
+std::wstring CAboutDlg::GetAppVersion()
 {
-    const CStringW file = GetAppFileName();
-    const DWORD iVersionSize = GetFileVersionInfoSize(file, nullptr);
+    const std::wstring file = GetAppFileName();
+    const DWORD iVersionSize = GetFileVersionInfoSize(file.c_str(), nullptr);
     UINT iQueriedSize = 0;
     std::vector<BYTE> tVersionInfo = std::vector<BYTE>(iVersionSize);
     VS_FIXEDFILEINFO* pVersion = nullptr;
-    if (GetFileVersionInfo(file, 0, iVersionSize, tVersionInfo.data()) != 0 &&
+    if (GetFileVersionInfo(file.c_str(), 0, iVersionSize, tVersionInfo.data()) != 0 &&
         VerQueryValue(tVersionInfo.data(), L"\\", reinterpret_cast<LPVOID*>(&pVersion), &iQueriedSize) != 0)
     {
-        CStringW version;
-        version.Format(L"WinDirStat %hu.%hu.%hu.%hu", HIWORD(pVersion->dwFileVersionMS), LOWORD(pVersion->dwFileVersionMS), HIWORD(pVersion->dwFileVersionLS), LOWORD(pVersion->dwFileVersionLS));
-        return version;
+        return L"WinDirStat" +
+            std::to_wstring(HIWORD(pVersion->dwFileVersionMS)) + L"." +
+            std::to_wstring(LOWORD(pVersion->dwFileVersionMS)) + L"." +
+            std::to_wstring(HIWORD(pVersion->dwFileVersionLS)) + L"." +
+            std::to_wstring(LOWORD(pVersion->dwFileVersionLS));
     }
 
     return L"WinDirStat";
 }
 
-CStringW CAboutDlg::GetDevelList()
+std::wstring CAboutDlg::GetDevelList()
 {
-    CStringW retval;
+    std::wstring retval;
     return retval;
 }
 
-CStringW CAboutDlg::GetTranslatorList()
+std::wstring CAboutDlg::GetTranslatorList()
 {
-    CStringW retval;
+    std::wstring retval;
     return retval;
 }
 
 void CAboutDlg::DoDataExchange(CDataExchange* pDX)
 {
     CDialogEx::DoDataExchange(pDX);
-    DDX_Control(pDX, IDC_CAPTION, m_caption);
-    DDX_Control(pDX, IDC_TAB, m_tab);
+    DDX_Control(pDX, IDC_CAPTION, m_Caption);
+    DDX_Control(pDX, IDC_TAB, m_Tab);
 }
 
 #pragma warning(push)
@@ -303,14 +305,14 @@ BOOL CAboutDlg::OnInitDialog()
 
     Localization::UpdateDialogs(*this);
 
-    m_layout.AddControl(IDC_CAPTION, 0.5, 0, 0, 0);
-    m_layout.AddControl(IDC_TAB, 0, 0, 1, 1);
-    m_layout.AddControl(IDOK, 0.5, 1, 0, 0);
+    m_Layout.AddControl(IDC_CAPTION, 0.5, 0, 0, 0);
+    m_Layout.AddControl(IDC_TAB, 0, 0, 1, 1);
+    m_Layout.AddControl(IDOK, 0.5, 1, 0, 0);
 
-    m_layout.OnInitDialog(true);
+    m_Layout.OnInitDialog(true);
 
-    m_tab.Initialize();
-    m_caption.SetWindowText(GetAppVersion());
+    m_Tab.Initialize();
+    m_Caption.SetWindowText(GetAppVersion().c_str());
 
     return TRUE;
 }
@@ -318,23 +320,23 @@ BOOL CAboutDlg::OnInitDialog()
 void CAboutDlg::OnTcnSelchangeTab(NMHDR* /*pNMHDR*/, LRESULT* pResult)
 {
     *pResult = FALSE;
-    m_tab.SetPageText(m_tab.GetCurSel());
+    m_Tab.SetPageText(m_Tab.GetCurSel());
 }
 
 void CAboutDlg::OnSize(const UINT nType, const int cx, const int cy)
 {
     CDialogEx::OnSize(nType, cx, cy);
-    m_layout.OnSize();
+    m_Layout.OnSize();
 }
 
 void CAboutDlg::OnGetMinMaxInfo(MINMAXINFO* lpMMI)
 {
-    m_layout.OnGetMinMaxInfo(lpMMI);
+    m_Layout.OnGetMinMaxInfo(lpMMI);
     CDialogEx::OnGetMinMaxInfo(lpMMI);
 }
 
 void CAboutDlg::OnDestroy()
 {
-    m_layout.OnDestroy();
+    m_Layout.OnDestroy();
     CDialogEx::OnDestroy();
 }

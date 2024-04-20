@@ -44,7 +44,7 @@ class CAboutDlg final : public CDialogEx
         void SetPageText(int tab);
 
     protected:
-        CRichEditCtrl m_text;
+        CRichEditCtrl m_Text;
 
         DECLARE_MESSAGE_MAP()
         afx_msg void OnEnLinkText(NMHDR* pNMHDR, LRESULT* pResult);
@@ -54,17 +54,17 @@ class CAboutDlg final : public CDialogEx
 
 public:
     CAboutDlg();
-    static CStringW GetAppVersion();
-    static CStringW GetDevelList();
-    static CStringW GetTranslatorList();
+    static std::wstring GetAppVersion();
+    static std::wstring GetDevelList();
+    static std::wstring GetTranslatorList();
 
 protected:
     BOOL OnInitDialog() override;
     void DoDataExchange(CDataExchange* pDX) override;
 
-    CStatic m_caption;
-    CMyTabControl m_tab;
-    CLayout m_layout;
+    CStatic m_Caption;
+    CMyTabControl m_Tab;
+    CLayout m_Layout;
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnTcnSelchangeTab(NMHDR* pNMHDR, LRESULT* pResult);

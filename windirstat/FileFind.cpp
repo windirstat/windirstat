@@ -28,92 +28,90 @@
 
 #pragma comment(lib,"ntdll.lib")
 
-static HMODULE rtl_library = LoadLibrary(L"ntdll.dll");
-
-static NTSTATUS(WINAPI* NtQueryDirectoryFile)(HANDLE FileHandle, HANDLE Event, PVOID ApcRoutine,
+NTSTATUS(WINAPI* NtQueryDirectoryFile)(HANDLE FileHandle, HANDLE Event, PVOID ApcRoutine,
     PVOID ApcContext, PIO_STATUS_BLOCK IoStatusBlock, PVOID FileInformation,
     ULONG Length, FILE_INFORMATION_CLASS FileInformationClass, BOOLEAN ReturnSingleEntry,
     PUNICODE_STRING FileName, BOOLEAN RestartScan) = reinterpret_cast<decltype(NtQueryDirectoryFile)>(
-        static_cast<LPVOID>(GetProcAddress(rtl_library, "NtQueryDirectoryFile")));
+        static_cast<LPVOID>(GetProcAddress(LoadLibrary(L"ntdll.dll"), "NtQueryDirectoryFile")));
 
 FileFindEnhanced::~FileFindEnhanced()
 {
-    if (m_handle != nullptr) NtClose(m_handle);
+    if (m_Handle != nullptr) NtClose(m_Handle);
 }
 
 bool FileFindEnhanced::FindNextFile()
 {
-    BOOL success = FALSE;
-    if (m_firstrun || m_current_info->NextEntryOffset == 0)
+    bool success = false;
+    if (m_Firstrun || m_CurrentInfo->NextEntryOffset == 0)
     {
         constexpr auto BUFFER_SIZE = 64 * 1024;
-        thread_local std::vector<BYTE> m_directory_info(BUFFER_SIZE);
+        thread_local std::vector<BYTE> m_DirectoryInfo(BUFFER_SIZE);
 
         // handle optional pattern mask
-        UNICODE_STRING u_search = {};
-        u_search.Length = static_cast<USHORT>(m_search.GetLength() * sizeof(WCHAR));
-        u_search.MaximumLength = static_cast<USHORT>(m_search.GetLength() + 1) * sizeof(WCHAR);
-        u_search.Buffer = m_search.GetBuffer();
+        UNICODE_STRING uSearch;
+        uSearch.Length = static_cast<USHORT>(m_Search.size() * sizeof(WCHAR));
+        uSearch.MaximumLength = static_cast<USHORT>(m_Search.size() + 1) * sizeof(WCHAR);
+        uSearch.Buffer = m_Search.data();
 
         // enumerate files in the directory
         constexpr auto FileDirectoryInformation = 1;
         IO_STATUS_BLOCK IoStatusBlock;
-        const NTSTATUS Status = NtQueryDirectoryFile(m_handle, nullptr, nullptr, nullptr, &IoStatusBlock,
-            m_directory_info.data(), BUFFER_SIZE, static_cast<FILE_INFORMATION_CLASS>(FileDirectoryInformation),
-            FALSE, (u_search.Length > 0) ? &u_search : nullptr, (m_firstrun) ? TRUE : FALSE);
+        const NTSTATUS Status = NtQueryDirectoryFile(m_Handle, nullptr, nullptr, nullptr, &IoStatusBlock,
+            m_DirectoryInfo.data(), BUFFER_SIZE, static_cast<FILE_INFORMATION_CLASS>(FileDirectoryInformation),
+            FALSE, (uSearch.Length > 0) ? &uSearch : nullptr, (m_Firstrun) ? TRUE : FALSE);
 
         // fetch point to current node 
         success = (Status == 0);
-        m_current_info = reinterpret_cast<FILE_DIRECTORY_INFORMATION*>(m_directory_info.data());
+        m_CurrentInfo = reinterpret_cast<FILE_DIRECTORY_INFORMATION*>(m_DirectoryInfo.data());
 
         // special case for reparse on initial run points - update attributes
-        if (success && m_firstrun) m_current_info->FileAttributes = GetFileAttributes(GetFilePathLong());
+        if (success && m_Firstrun) m_CurrentInfo->FileAttributes = GetFileAttributes(GetFilePathLong().c_str());
 
         // disable for next run
-        m_firstrun = false;
+        m_Firstrun = false;
     }
     else
     {
-        m_current_info = reinterpret_cast<FILE_DIRECTORY_INFORMATION*>(
-            &reinterpret_cast<BYTE*>(m_current_info)[m_current_info->NextEntryOffset]);
+        m_CurrentInfo = reinterpret_cast<FILE_DIRECTORY_INFORMATION*>(
+            &reinterpret_cast<BYTE*>(m_CurrentInfo)[m_CurrentInfo->NextEntryOffset]);
         success = true;
     }
 
     if (success)
     {
-        LPWSTR tmp = m_name.GetBufferSetLength(m_current_info->FileNameLength / sizeof(WCHAR));
-        memcpy(tmp, m_current_info->FileName, m_current_info->FileNameLength);
+        m_Name.resize(m_CurrentInfo->FileNameLength / sizeof(WCHAR));
+        memcpy(m_Name.data(), m_CurrentInfo->FileName, m_CurrentInfo->FileNameLength);
     }
 
     return success;
 }
 
-bool FileFindEnhanced::FindFile(const CStringW & strFolder, const CStringW& strName)
+bool FileFindEnhanced::FindFile(const std::wstring & strFolder, const std::wstring& strName)
 {
     // stash the search pattern for later use
-    m_search = strName;
+    m_Search = strName;
 
     // convert the path to a long path that is compatible with the other call
-    m_base = strFolder;
-    if (m_base.Find(L":\\", 1) == 1) m_base = m_dos + m_base;
-    else if (m_base.Find(L"\\\\") == 0) m_base = m_dosunc + m_base.Mid(2);
-    UNICODE_STRING u_path = {};
-    u_path.Length = static_cast<USHORT>(m_base.GetLength() * sizeof(WCHAR));
-    u_path.MaximumLength = static_cast<USHORT>(m_base.GetLength() + 1) * sizeof(WCHAR);
-    u_path.Buffer = m_base.GetBuffer();
+    m_Base = strFolder;
+    if (m_Base.find_first_of(L":\\", 1) == 1) m_Base = m_Dos + m_Base;
+    else if (m_Base.find_first_of(L"\\\\") == 0) m_Base = m_Dosunc + m_Base.substr(2);
+    UNICODE_STRING path;
+    path.Length = static_cast<USHORT>(m_Base.size() * sizeof(WCHAR));
+    path.MaximumLength = static_cast<USHORT>(m_Base.size() + 1) * sizeof(WCHAR);
+    path.Buffer = m_Base.data();
 
     // update object attributes object
     OBJECT_ATTRIBUTES attributes;
     InitializeObjectAttributes(&attributes, nullptr, OBJ_CASE_INSENSITIVE, nullptr, nullptr);
-    attributes.ObjectName = &u_path;
+    attributes.ObjectName = &path;
 
     // get an open file handle
-    IO_STATUS_BLOCK status_block = {};
-    if (const NTSTATUS status = NtOpenFile(&m_handle, FILE_LIST_DIRECTORY | SYNCHRONIZE,
-        &attributes, &status_block, FILE_SHARE_READ | FILE_SHARE_WRITE, 
+    IO_STATUS_BLOCK statusBlock = {};
+    if (const NTSTATUS status = NtOpenFile(&m_Handle, FILE_LIST_DIRECTORY | SYNCHRONIZE,
+        &attributes, &statusBlock, FILE_SHARE_READ | FILE_SHARE_WRITE, 
         FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT | FILE_OPEN_FOR_BACKUP_INTENT); status != 0)
     {
-        VTRACE(L"File Access Error (%08X): %s", status, m_base.GetBuffer());
+        VTRACE(L"File Access Error (%08X): %s", status, m_Base.data());
         return FALSE;
     }
 
@@ -123,90 +121,90 @@ bool FileFindEnhanced::FindFile(const CStringW & strFolder, const CStringW& strN
 
 bool FileFindEnhanced::IsDirectory() const
 {
-    return (m_current_info->FileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
+    return (m_CurrentInfo->FileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
 }
 
 bool FileFindEnhanced::IsDots() const
 {
-    return m_name == L"." || m_name == L"..";
+    return m_Name == L"." || m_Name == L"..";
 }
 
 bool FileFindEnhanced::IsHidden() const
 {
-    return (m_current_info->FileAttributes & FILE_ATTRIBUTE_HIDDEN) != 0;
+    return (m_CurrentInfo->FileAttributes & FILE_ATTRIBUTE_HIDDEN) != 0;
 }
 
 bool FileFindEnhanced::IsHiddenSystem() const
 {
-    constexpr DWORD hidden_system = FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM;
-    return (m_current_info->FileAttributes & hidden_system) == hidden_system;
+    constexpr DWORD hiddenSystem = FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM;
+    return (m_CurrentInfo->FileAttributes & hiddenSystem) == hiddenSystem;
 }
 
 bool FileFindEnhanced::IsProtectedReparsePoint() const
 {
     constexpr DWORD protect = FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM | FILE_ATTRIBUTE_REPARSE_POINT;
-    return (m_current_info->FileAttributes & protect) == protect;
+    return (m_CurrentInfo->FileAttributes & protect) == protect;
 }
 
 DWORD FileFindEnhanced::GetAttributes() const
 {
-    return m_current_info->FileAttributes;
+    return m_CurrentInfo->FileAttributes;
 }
 
-CStringW FileFindEnhanced::GetFileName() const
+std::wstring FileFindEnhanced::GetFileName() const
 {
-    return m_name;
+    return m_Name;
 }
 
 ULONGLONG FileFindEnhanced::GetLogicalFileSize() const
 {
-    return m_current_info->EndOfFile.QuadPart;
+    return m_CurrentInfo->EndOfFile.QuadPart;
 }
 
 ULONGLONG FileFindEnhanced::GetFileSizePhysical() const
 {
-    return m_current_info->AllocationSize.QuadPart;
+    return m_CurrentInfo->AllocationSize.QuadPart;
 }
 
 ULONGLONG FileFindEnhanced::GetFileSizeLogical() const
 {
-    return m_current_info->EndOfFile.QuadPart;
+    return m_CurrentInfo->EndOfFile.QuadPart;
 }
 
 FILETIME FileFindEnhanced::GetLastWriteTime() const
 {
-    return { m_current_info->LastWriteTime.LowPart,
-        static_cast<DWORD>(m_current_info->LastWriteTime.HighPart) };
+    return { m_CurrentInfo->LastWriteTime.LowPart,
+        static_cast<DWORD>(m_CurrentInfo->LastWriteTime.HighPart) };
 }
 
-CStringW FileFindEnhanced::GetFilePath() const
+std::wstring FileFindEnhanced::GetFilePath() const
 {
     // Get full path to folder or file
-    CStringW path = (m_base.GetAt(m_base.GetLength() - 1) == L'\\') ?
-        (m_base + m_name) : (m_base + L"\\" + m_name);
+    std::wstring path = (m_Base.at(m_Base.size() - 1) == L'\\') ?
+        (m_Base + m_Name) : (m_Base + L"\\" + m_Name);
 
     // Strip special dos chars
-    if (wcsncmp(path.GetString(), m_dos, wcslen(m_dos) - 1) == 0)
-        path = path.Mid(static_cast<int>(wcslen(m_dos)));
-    if (wcsncmp(path.GetString(), m_dosunc, wcslen(m_dosunc) - 1) == 0)
-        path = path.Mid(static_cast<int>(wcslen(m_dosunc)));
+    if (wcsncmp(path.data(), m_Dos, wcslen(m_Dos) - 1) == 0)
+        path = path.substr(static_cast<int>(wcslen(m_Dos)));
+    if (wcsncmp(path.data(), m_Dosunc, wcslen(m_Dosunc) - 1) == 0)
+        path = path.substr(static_cast<int>(wcslen(m_Dosunc)));
     return path;
 }
 
-CStringW FileFindEnhanced::GetFilePathLong() const
+std::wstring FileFindEnhanced::GetFilePathLong() const
 {
     return MakeLongPathCompatible(GetFilePath());
 }
 
-CStringW FileFindEnhanced::MakeLongPathCompatible(const CStringW & path)
+std::wstring FileFindEnhanced::MakeLongPathCompatible(const std::wstring & path)
 {
-    if (path.Find(L":\\", 1) == 1) return { m_long + path };
-    if (path.Find(L"\\\\") == 0) return { m_longunc + path.Mid(2) };
+    if (path.find_first_of(L":\\", 1) == 1) return { m_Long + path };
+    if (path.find_first_of(L"\\\\") == 0) return { m_Longunc + path.substr(2) };
     return path;
 }
 
-bool FileFindEnhanced::DoesFileExist(const CStringW& folder, const CStringW& file)
+bool FileFindEnhanced::DoesFileExist(const std::wstring& folder, const std::wstring& file)
 {
     FileFindEnhanced finder;
-    return finder.FindFile(folder, file);
+    return finder.FindFile(MakeLongPathCompatible(folder), file);
 }

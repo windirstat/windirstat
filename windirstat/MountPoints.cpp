@@ -20,16 +20,14 @@
 //
 
 #include "stdafx.h"
-#include "OsSpecific.h"
 #include "MountPoints.h"
 #include "SmartPointer.h"
 #include "FileFind.h"
+#include "GlobalHelpers.h"
 
-#include <algorithm>
-
-bool CReparsePoints::IsReparseType(const CStringW & longpath, const std::unordered_set<DWORD>& tag_types)
+bool CReparsePoints::IsReparseType(const std::wstring & longpath, const std::unordered_set<DWORD>& tagTypes)
 {
-    SmartPointer<HANDLE> handle(CloseHandle, CreateFile(longpath.GetString(), GENERIC_READ, FILE_SHARE_READ,
+    SmartPointer<HANDLE> handle(CloseHandle, CreateFile(longpath.c_str(), GENERIC_READ, FILE_SHARE_READ,
         nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT, nullptr));
     if (handle == INVALID_HANDLE_VALUE)
     {
@@ -46,9 +44,9 @@ bool CReparsePoints::IsReparseType(const CStringW & longpath, const std::unorder
 
     // Test if the tag matches the types or mask that was passed
     const DWORD tag = reinterpret_cast<PREPARSE_GUID_DATA_BUFFER>(buf.data())->ReparseTag;
-    for (const auto & tag_type : tag_types)
+    for (const auto & tagType : tagTypes)
     {
-        if ((tag & tag_type) == tag) return true;
+        if ((tag & tagType) == tag) return true;
     }
 
     return true;
@@ -70,20 +68,20 @@ void CReparsePoints::Initialize()
         }
     }
 
-    m_mountpoints.clear();
+    m_Mountpoints.clear();
     WCHAR volume[_MAX_PATH];
     SmartPointer<HANDLE> hvol(FindVolumeClose, ::FindFirstVolume(volume, _countof(volume)));
     for (BOOL bContinue = hvol != INVALID_HANDLE_VALUE; bContinue; bContinue = ::FindNextVolume(hvol, volume, _countof(volume)))
     {
         // Fetch required buffer size
-        DWORD buf_size = 0;
-        GetVolumePathNamesForVolumeNameW(volume, nullptr, 0, &buf_size);
-        if (buf_size == 0) continue;
+        DWORD bufSize = 0;
+        GetVolumePathNamesForVolumeNameW(volume, nullptr, 0, &bufSize);
+        if (bufSize == 0) continue;
 
         // Get names of all volumes
         std::wstring buf;
-        buf.resize(buf_size);
-        if (GetVolumePathNamesForVolumeNameW(volume, buf.data(), buf_size, &buf_size) == 0)
+        buf.resize(bufSize);
+        if (GetVolumePathNamesForVolumeNameW(volume, buf.data(), bufSize, &bufSize) == 0)
         {
             continue;
         }
@@ -101,8 +99,8 @@ void CReparsePoints::Initialize()
             if (IsReparseType(name, { IO_REPARSE_TAG_MOUNT_POINT }))
             {
                 _wcslwr_s(name, len + 1);
-                m_mountpoints.emplace_back(name);
-                m_mountpoints.emplace_back(FileFindEnhanced::MakeLongPathCompatible(name));
+                m_Mountpoints.emplace_back(name);
+                m_Mountpoints.emplace_back(FileFindEnhanced::MakeLongPathCompatible(name));
             }
         }
     }
@@ -115,31 +113,31 @@ bool CReparsePoints::IsReparsePoint(const DWORD attr)
         (attr & FILE_ATTRIBUTE_REPARSE_POINT) != 0;
 }
 
-bool CReparsePoints::IsVolumeMountPoint(const CStringW& longpath, DWORD attr) const
+bool CReparsePoints::IsVolumeMountPoint(const std::wstring& longpath, DWORD attr) const
 {
-    if (attr == INVALID_FILE_ATTRIBUTES) attr = ::GetFileAttributes(longpath);
+    if (attr == INVALID_FILE_ATTRIBUTES) attr = ::GetFileAttributes(longpath.c_str());
     if (!IsReparsePoint(attr)) return false;
-    CStringW lookup_path = CStringW(longpath).MakeLower();
-    return std::ranges::find(m_mountpoints, lookup_path.GetString()) != m_mountpoints.end();
+    std::wstring lowerpath = longpath;
+    return std::ranges::find(m_Mountpoints, MakeLower(lowerpath)) != m_Mountpoints.end();
 }
 
-bool CReparsePoints::IsJunction(const CStringW& longpath, DWORD attr) const
+bool CReparsePoints::IsJunction(const std::wstring& longpath, DWORD attr) const
 {
-    if (attr == INVALID_FILE_ATTRIBUTES) attr = ::GetFileAttributes(longpath);
+    if (attr == INVALID_FILE_ATTRIBUTES) attr = ::GetFileAttributes(longpath.c_str());
     if (!IsReparsePoint(attr)) return false;
-    return !IsVolumeMountPoint(longpath) && IsReparseType(longpath.GetString(), { IO_REPARSE_TAG_MOUNT_POINT });
+    return !IsVolumeMountPoint(longpath) && IsReparseType(longpath, { IO_REPARSE_TAG_MOUNT_POINT });
 }
 
-bool CReparsePoints::IsSymbolicLink(const CStringW& longpath, DWORD attr) const
+bool CReparsePoints::IsSymbolicLink(const std::wstring& longpath, DWORD attr) const
 {
-    if (attr == INVALID_FILE_ATTRIBUTES) attr = ::GetFileAttributes(longpath);
+    if (attr == INVALID_FILE_ATTRIBUTES) attr = ::GetFileAttributes(longpath.c_str());
     if (!IsReparsePoint(attr)) return false;
-    return IsReparseType(longpath.GetString(), { IO_REPARSE_TAG_SYMLINK });
+    return IsReparseType(longpath, { IO_REPARSE_TAG_SYMLINK });
 }
 
-bool CReparsePoints::IsCloudLink(const CStringW& longpath, DWORD attr) const
+bool CReparsePoints::IsCloudLink(const std::wstring& longpath, DWORD attr) const
 {
-    if (attr == INVALID_FILE_ATTRIBUTES) attr = ::GetFileAttributes(longpath);
+    if (attr == INVALID_FILE_ATTRIBUTES) attr = ::GetFileAttributes(longpath.c_str());
     if (!IsReparsePoint(attr)) return false;
-    return IsReparseType(longpath.GetString(), { IO_REPARSE_TAG_CLOUD_MASK });
+    return IsReparseType(longpath, { IO_REPARSE_TAG_CLOUD_MASK });
 }

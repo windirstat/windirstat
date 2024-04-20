@@ -33,7 +33,7 @@ class CFileDupeControl final : public CTreeListControl
 public:
     CFileDupeControl();
     bool GetAscendingDefault(int column) override;
-    static CFileDupeControl* Get() { return m_singleton; }
+    static CFileDupeControl* Get() { return m_Singleton; }
     void InsertItem(int i, CTreeListItem* item);
     void SetRootItem(CTreeListItem* root) override;
     void ProcessDuplicate(CItem* item);
@@ -57,7 +57,7 @@ public:
 
 protected:
 
-    static CFileDupeControl* m_singleton;
+    static CFileDupeControl* m_Singleton;
     
     void OnItemDoubleClick(int i) override;
     void PrepareDefaultMenu(CMenu* menu, const CItemDupe* item);

@@ -32,10 +32,10 @@
 // +1:      this is greater than other
 // >= +1:   this is greater than other regardless of ascending flag.
 //
-int CSortingListItem::Compare(const CSortingListItem* other, int subitem) const
+int CSortingListItem::Compare(const CSortingListItem* other, const int subitem) const
 {
     // Default implementation compares strings
-    return signum(GetText(subitem).CompareNoCase(other->GetText(subitem)));
+    return signum(_wcsicmp(GetText(subitem).c_str(),other->GetText(subitem).c_str()));
 }
 
 int CSortingListItem::CompareS(const CSortingListItem* other, const SSorting& sorting) const
@@ -61,88 +61,88 @@ int CSortingListItem::CompareS(const CSortingListItem* other, const SSorting& so
 
 IMPLEMENT_DYNAMIC(CSortingListControl, CListCtrl)
 
-CSortingListControl::CSortingListControl(std::vector<int>* column_order, std::vector<int>* column_widths)
+CSortingListControl::CSortingListControl(std::vector<int>* columnOrder, std::vector<int>* columnWidths)
 {
-    m_column_order = column_order;
-    m_column_widths = column_widths;
+    m_ColumnOrder = columnOrder;
+    m_ColumnWidths = columnWidths;
 }
 
 void CSortingListControl::LoadPersistentAttributes()
 {
     // Fetch casted column count to avoid signed comparison warnings
-    const auto column_count = static_cast<size_t>(GetHeaderCtrl()->GetItemCount());
+    const auto columnCount = static_cast<size_t>(GetHeaderCtrl()->GetItemCount());
 
     // Load default column order values from resource
-    if (m_column_order->size() != column_count)
+    if (m_ColumnOrder->size() != columnCount)
     {
-        m_column_order->resize(column_count);
-        GetColumnOrderArray(m_column_order->data(), static_cast<int>(m_column_order->size()));
+        m_ColumnOrder->resize(columnCount);
+        GetColumnOrderArray(m_ColumnOrder->data(), static_cast<int>(m_ColumnOrder->size()));
     }
 
     // Load default column width values from resource
-    if (m_column_widths->size() != column_count)
+    if (m_ColumnWidths->size() != columnCount)
     {
-        m_column_widths->resize(column_count,0);
-        for (int i = 0; i < static_cast<int>(m_column_widths->size()); i++)
+        m_ColumnWidths->resize(columnCount,0);
+        for (int i = 0; i < static_cast<int>(m_ColumnWidths->size()); i++)
         {
-            (*m_column_widths)[i] = GetColumnWidth(i);
+            (*m_ColumnWidths)[i] = GetColumnWidth(i);
         }
     }
     
     // Set based on persisted values
-    SetColumnOrderArray(static_cast<int>(m_column_order->size()), m_column_order->data());
-    for (int i = 0; i < static_cast<int>(m_column_widths->size()); i++)
+    SetColumnOrderArray(static_cast<int>(m_ColumnOrder->size()), m_ColumnOrder->data());
+    for (int i = 0; i < static_cast<int>(m_ColumnWidths->size()); i++)
     {
-        SetColumnWidth(i, min((*m_column_widths)[i], (*m_column_widths)[i] * 2));
+        SetColumnWidth(i, min((*m_ColumnWidths)[i], (*m_ColumnWidths)[i] * 2));
     }
 }
 
 void CSortingListControl::SavePersistentAttributes() const
 {
-    GetColumnOrderArray(m_column_order->data(), static_cast<int>(m_column_order->size()));
-    for (int i = 0; i < static_cast<int>(m_column_widths->size()); i++)
+    GetColumnOrderArray(m_ColumnOrder->data(), static_cast<int>(m_ColumnOrder->size()));
+    for (int i = 0; i < static_cast<int>(m_ColumnWidths->size()); i++)
     {
-        (*m_column_widths)[i] = GetColumnWidth(i);
+        (*m_ColumnWidths)[i] = GetColumnWidth(i);
     }
 }
 
-void CSortingListControl::AddExtendedStyle(DWORD exStyle)
+void CSortingListControl::AddExtendedStyle(const DWORD exStyle)
 {
     SetExtendedStyle(GetExtendedStyle() | exStyle);
 }
 
-void CSortingListControl::RemoveExtendedStyle(DWORD exStyle)
+void CSortingListControl::RemoveExtendedStyle(const DWORD exStyle)
 {
     SetExtendedStyle(GetExtendedStyle() & ~exStyle);
 }
 
 const SSorting& CSortingListControl::GetSorting() const
 {
-    return m_sorting;
+    return m_Sorting;
 }
 
 void CSortingListControl::SetSorting(const SSorting& sorting)
 {
-    m_sorting = sorting;
+    m_Sorting = sorting;
 }
 
-void CSortingListControl::SetSorting(int sortColumn1, bool ascending1, int sortColumn2, bool ascending2)
+void CSortingListControl::SetSorting(const int sortColumn1, const bool ascending1, const int sortColumn2, const bool ascending2)
 {
-    m_sorting.column1    = sortColumn1;
-    m_sorting.ascending1 = ascending1;
-    m_sorting.column2    = sortColumn2;
-    m_sorting.ascending2 = ascending2;
+    m_Sorting.column1    = sortColumn1;
+    m_Sorting.ascending1 = ascending1;
+    m_Sorting.column2    = sortColumn2;
+    m_Sorting.ascending2 = ascending2;
 }
 
-void CSortingListControl::SetSorting(int sortColumn, bool ascending)
+void CSortingListControl::SetSorting(const int sortColumn, const bool ascending)
 {
-    m_sorting.column2    = m_sorting.column1;
-    m_sorting.ascending2 = m_sorting.ascending1;
-    m_sorting.column1    = sortColumn;
-    m_sorting.ascending1 = ascending;
+    m_Sorting.column2    = m_Sorting.column1;
+    m_Sorting.ascending2 = m_Sorting.ascending1;
+    m_Sorting.column1    = sortColumn;
+    m_Sorting.ascending1 = ascending;
 }
 
-void CSortingListControl::InsertListItem(int i, CSortingListItem* item)
+void CSortingListControl::InsertListItem(const int i, CSortingListItem* item)
 {
     LVITEM lvitem;
     lvitem.mask = LVIF_TEXT | LVIF_PARAM | (HasImages() ? LVIF_IMAGE : 0);
@@ -155,7 +155,7 @@ void CSortingListControl::InsertListItem(int i, CSortingListItem* item)
     VERIFY(i == CListCtrl::InsertItem(&lvitem));
 }
 
-CSortingListItem* CSortingListControl::GetSortingListItem(int i) const
+CSortingListItem* CSortingListControl::GetSortingListItem(const int i) const
 {
     return reinterpret_cast<CSortingListItem*>(GetItemData(i));
 }
@@ -166,33 +166,35 @@ void CSortingListControl::SortItems()
         const CSortingListItem* item1 = reinterpret_cast<CSortingListItem*>(lParam1);
         const CSortingListItem* item2 = reinterpret_cast<CSortingListItem*>(lParam2);
         const SSorting* sorting = reinterpret_cast<SSorting*>(lParamSort);
-        return item1->CompareS(item2, *sorting); }, reinterpret_cast<DWORD_PTR>(&m_sorting)));
+        return item1->CompareS(item2, *sorting); }, reinterpret_cast<DWORD_PTR>(&m_Sorting)));
 
-    if (m_indicatedColumn != -1)
+    if (m_IndicatedColumn != -1)
     {
         HDITEM hditem;
-        CStringW text;
+        std::wstring text;
+        text.resize(256);
         hditem.mask = HDI_TEXT;
-        hditem.pszText = text.GetBuffer(256);
+        hditem.pszText = text.data();
         hditem.cchTextMax = 256;
-        GetHeaderCtrl()->GetItem(m_indicatedColumn, &hditem);
-        text.ReleaseBuffer();
-        text = text.Mid(2);
-        hditem.pszText = const_cast<LPWSTR>(static_cast<LPCWSTR>(text));
-        GetHeaderCtrl()->SetItem(m_indicatedColumn, &hditem);
+        GetHeaderCtrl()->GetItem(m_IndicatedColumn, &hditem);
+        text.resize(wcslen(text.data()));
+        text = text.substr(2);
+        hditem.pszText = text.data();
+        GetHeaderCtrl()->SetItem(m_IndicatedColumn, &hditem);
     }
 
     HDITEM hditem;
-    CStringW text;
+    std::wstring text;
+    text.resize(256);
     hditem.mask = HDI_TEXT;
-    hditem.pszText = text.GetBuffer(256);
+    hditem.pszText = text.data();
     hditem.cchTextMax = 256;
-    GetHeaderCtrl()->GetItem(m_sorting.column1, &hditem);
-    text.ReleaseBuffer();
-    text = (m_sorting.ascending1 ? L"< " : L"> ") + text;
-    hditem.pszText = const_cast<LPWSTR>(static_cast<LPCWSTR>(text));
-    GetHeaderCtrl()->SetItem(m_sorting.column1, &hditem);
-    m_indicatedColumn = m_sorting.column1;
+    GetHeaderCtrl()->GetItem(m_Sorting.column1, &hditem);
+    text.resize(wcslen(text.data()));
+    text = (m_Sorting.ascending1 ? L"< " : L"> ") + text;
+    hditem.pszText = text.data();
+    GetHeaderCtrl()->SetItem(m_Sorting.column1, &hditem);
+    m_IndicatedColumn = m_Sorting.column1;
 }
 
 bool CSortingListControl::GetAscendingDefault(int /*column*/)
@@ -224,7 +226,7 @@ void CSortingListControl::OnLvnGetdispinfo(NMHDR* pNMHDR, LRESULT* pResult)
 
     if ((di->item.mask & LVIF_TEXT) != 0)
     {
-        wcscpy_s(di->item.pszText, di->item.cchTextMax, item->GetText(di->item.iSubItem));
+        wcscpy_s(di->item.pszText, di->item.cchTextMax, item->GetText(di->item.iSubItem).c_str());
     }
 
     if ((di->item.mask & LVIF_IMAGE) != 0)
@@ -239,9 +241,9 @@ void CSortingListControl::OnHdnItemclick(NMHDR* pNMHDR, LRESULT* pResult)
     *pResult = FALSE;
     const int col = phdr->iItem;
 
-    if (col == m_sorting.column1)
+    if (col == m_Sorting.column1)
     {
-        m_sorting.ascending1 = !m_sorting.ascending1;
+        m_Sorting.ascending1 = !m_Sorting.ascending1;
     }
     else
     {

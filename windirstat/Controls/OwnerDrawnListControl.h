@@ -40,7 +40,7 @@ public:
     virtual ~COwnerDrawnListItem() = default;
 
     // This text is drawn, if DrawSubitem returns false
-    CStringW GetText(int subitem) const override = 0;
+    std::wstring GetText(int subitem) const override = 0;
     // This color is used for the  current item
     virtual COLORREF GetItemTextColor() const
     {
@@ -71,7 +71,7 @@ class COwnerDrawnListControl : public CSortingListControl
     DECLARE_DYNAMIC(COwnerDrawnListControl)
 
 public:
-    COwnerDrawnListControl(int rowHeight, std::vector<int>* column_order, std::vector<int>* column_widths);
+    COwnerDrawnListControl(int rowHeight, std::vector<int>* columnOrder, std::vector<int>* columnWidths);
     ~COwnerDrawnListControl() override = default;
     void OnColumnsInserted();
     virtual void SysColorChanged();
@@ -89,8 +89,8 @@ public:
     COLORREF GetHighlightColor() const;
     COLORREF GetHighlightTextColor() const;
 
-    bool IsItemStripeColor(int i) const;
-    bool IsItemStripeColor(const COwnerDrawnListItem* item) const;
+    bool IsItem_stripeColor(int i) const;
+    bool IsItem_stripeColor(const COwnerDrawnListItem* item) const;
     COLORREF GetItemBackgroundColor(int i) const;
     COLORREF GetItemBackgroundColor(const COwnerDrawnListItem* item) const;
     COLORREF GetItemSelectionBackgroundColor(int i) const;
@@ -113,12 +113,12 @@ protected:
     int GetSubItemWidth(const COwnerDrawnListItem* item, int subitem);
     bool IsColumnRightAligned(int col) const;
 
-    COLORREF m_windowColor = CLR_NONE; // The default background color if !m_showStripes
-    COLORREF m_stripeColor = CLR_NONE; // The stripe color, used for every other item if m_showStripes
-    int m_rowHeight;                   // Height of an item
-    bool m_showGrid = false;           // Whether to draw a grid
-    bool m_showStripes = false;        // Whether to show stripes
-    bool m_showFullRowSelect = false;  // Whether to draw full row selection
+    COLORREF m_WindowColor = CLR_NONE; // The default background color if !m_ShowStripes
+    COLORREF m_StripeColor = CLR_NONE; // The stripe color, used for every other item if m_ShowStripes
+    int m_RowHeight;                   // Height of an item
+    bool m_ShowGrid = false;           // Whether to draw a grid
+    bool m_ShowStripes = false;        // Whether to show stripes
+    bool m_ShowFullRowSelect = false;  // Whether to draw full row selection
 
     DECLARE_MESSAGE_MAP()
     afx_msg BOOL OnEraseBkgnd(CDC* pDC);

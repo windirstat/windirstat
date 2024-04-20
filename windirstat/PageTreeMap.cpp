@@ -24,20 +24,19 @@
 #include "DirStatDoc.h"
 #include "Options.h"
 #include "PageTreeMap.h"
-
 #include "Localization.h"
 
 namespace
 {
-    constexpr UINT _maxHeight = 200;
+    constexpr UINT c_MaxHeight = 200;
 }
 
 IMPLEMENT_DYNAMIC(CPageTreeMap, CPropertyPage)
 
 CPageTreeMap::CPageTreeMap()
     : CPropertyPage(CPageTreeMap::IDD)
-      , m_options()
-      , m_undo()
+      , m_Options()
+      , m_Undo()
 {
 }
 
@@ -45,39 +44,39 @@ void CPageTreeMap::DoDataExchange(CDataExchange* pDX)
 {
     CPropertyPage::DoDataExchange(pDX);
 
-    DDX_Control(pDX, IDC_PREVIEW, m_preview);
-    DDX_Control(pDX, IDC_TREEMAPHIGHLIGHTCOLOR, m_highlightColor);
-    DDX_Control(pDX, IDC_TREEMAPGRIDCOLOR, m_gridColor);
-    DDX_Control(pDX, IDC_BRIGHTNESS, m_brightness);
-    DDX_Control(pDX, IDC_CUSHIONSHADING, m_cushionShading);
-    DDX_Control(pDX, IDC_HEIGHT, m_height);
-    DDX_Control(pDX, IDC_SCALEFACTOR, m_scaleFactor);
-    DDX_Control(pDX, IDC_LIGHTSOURCE, m_lightSource);
-    DDX_Control(pDX, IDC_RESET, m_resetButton);
+    DDX_Control(pDX, IDC_PREVIEW, m_Preview);
+    DDX_Control(pDX, IDC_TREEMAPHIGHLIGHTCOLOR, m_HighlightColor);
+    DDX_Control(pDX, IDC_TREEMAPGRIDCOLOR, m_GridColor);
+    DDX_Control(pDX, IDC_BRIGHTNESS, m_Brightness);
+    DDX_Control(pDX, IDC_CUSHIONSHADING, m_CushionShading);
+    DDX_Control(pDX, IDC_HEIGHT, m_Height);
+    DDX_Control(pDX, IDC_SCALEFACTOR, m_ScaleFactor);
+    DDX_Control(pDX, IDC_LIGHTSOURCE, m_LightSource);
+    DDX_Control(pDX, IDC_RESET, m_ResetButton);
 
     if (!pDX->m_bSaveAndValidate)
     {
         UpdateOptions(false);
         UpdateStatics();
-        m_preview.SetOptions(&m_options);
+        m_Preview.SetOptions(&m_Options);
     }
 
-    DDX_Radio(pDX, IDC_KDIRSTAT, m_style);
-    DDX_Check(pDX, IDC_TREEMAPGRID, m_grid);
+    DDX_Radio(pDX, IDC_KDIRSTAT, m_Style);
+    DDX_Check(pDX, IDC_TREEMAPGRID, m_Grid);
 
-    DDX_Text(pDX, IDC_STATICBRIGHTNESS, m_sBrightness);
-    DDX_Slider(pDX, IDC_BRIGHTNESS, m_nBrightness);
+    DDX_Text(pDX, IDC_STATICBRIGHTNESS, m_SBrightness);
+    DDX_Slider(pDX, IDC_BRIGHTNESS, m_NBrightness);
 
-    DDX_Text(pDX, IDC_STATICCUSHIONSHADING, m_sCushionShading);
-    DDX_Slider(pDX, IDC_CUSHIONSHADING, m_nCushionShading);
+    DDX_Text(pDX, IDC_STATICCUSHIONSHADING, m_SCushionShading);
+    DDX_Slider(pDX, IDC_CUSHIONSHADING, m_NCushionShading);
 
-    DDX_Text(pDX, IDC_STATICHEIGHT, m_sHeight);
-    DDX_Slider(pDX, IDC_HEIGHT, m_nHeight);
+    DDX_Text(pDX, IDC_STATICHEIGHT, m_SHeight);
+    DDX_Slider(pDX, IDC_HEIGHT, m_NHeight);
 
-    DDX_Text(pDX, IDC_STATICSCALEFACTOR, m_sScaleFactor);
-    DDX_Slider(pDX, IDC_SCALEFACTOR, m_nScaleFactor);
+    DDX_Text(pDX, IDC_STATICSCALEFACTOR, m_SScaleFactor);
+    DDX_Slider(pDX, IDC_SCALEFACTOR, m_NScaleFactor);
 
-    DDX_XySlider(pDX, IDC_LIGHTSOURCE, m_ptLightSource);
+    DDX_XySlider(pDX, IDC_LIGHTSOURCE, m_PtLightSource);
 
     if (pDX->m_bSaveAndValidate)
     {
@@ -102,17 +101,17 @@ BOOL CPageTreeMap::OnInitDialog()
 
     Localization::UpdateDialogs(*this);
 
-    ValuesAltered(); // m_undo is invalid
+    ValuesAltered(); // m_Undo is invalid
 
-    m_brightness.SetPageSize(10);
-    m_cushionShading.SetPageSize(10);
-    m_height.SetRange(0, _maxHeight, true);
-    m_height.SetPageSize(_maxHeight / 10);
-    m_scaleFactor.SetPageSize(10);
-    m_lightSource.SetRange(CSize(400, 400));
+    m_Brightness.SetPageSize(10);
+    m_CushionShading.SetPageSize(10);
+    m_Height.SetRange(0, c_MaxHeight, true);
+    m_Height.SetPageSize(c_MaxHeight / 10);
+    m_ScaleFactor.SetPageSize(10);
+    m_LightSource.SetRange(CSize(400, 400));
 
-    m_options = COptions::TreemapOptions;
-    m_highlightColor.SetColor(COptions::TreeMapHighlightColor);
+    m_Options = COptions::TreemapOptions;
+    m_HighlightColor.SetColor(COptions::TreeMapHighlightColor);
 
     UpdateData(false);
 
@@ -123,45 +122,45 @@ void CPageTreeMap::OnOK()
 {
     UpdateData();
 
-    COptions::SetTreemapOptions(m_options);
-    COptions::TreeMapHighlightColor = m_highlightColor.GetColor();
+    COptions::SetTreemapOptions(m_Options);
+    COptions::TreeMapHighlightColor = m_HighlightColor.GetColor();
     GetDocument()->UpdateAllViews(nullptr, HINT_SELECTIONSTYLECHANGED);
 
     CPropertyPage::OnOK();
 }
 
-void CPageTreeMap::UpdateOptions(bool save)
+void CPageTreeMap::UpdateOptions(const bool save)
 {
     if (save)
     {
-        m_options.SetBrightnessPercent(100 - m_nBrightness);
-        m_options.SetAmbientLightPercent(m_nCushionShading);
-        m_options.SetHeightPercent(_maxHeight - m_nHeight);
-        m_options.SetScaleFactorPercent(100 - m_nScaleFactor);
-        m_options.SetLightSourcePoint(m_ptLightSource);
-        m_options.style     = m_style == 0 ? CTreemap::KDirStatStyle : CTreemap::SequoiaViewStyle;
-        m_options.grid      = FALSE != m_grid;
-        m_options.gridColor = m_gridColor.GetColor();
+        m_Options.SetBrightnessPercent(100 - m_NBrightness);
+        m_Options.SetAmbientLightPercent(m_NCushionShading);
+        m_Options.SetHeightPercent(c_MaxHeight - m_NHeight);
+        m_Options.SetScaleFactorPercent(100 - m_NScaleFactor);
+        m_Options.SetLightSourcePoint(m_PtLightSource);
+        m_Options.style = m_Style == 0 ? CTreemap::KDirStatStyle : CTreemap::SequoiaViewStyle;
+        m_Options.grid = FALSE != m_Grid;
+        m_Options.gridColor = m_GridColor.GetColor();
     }
     else
     {
-        m_nBrightness     = 100 - m_options.GetBrightnessPercent();
-        m_nCushionShading = m_options.GetAmbientLightPercent();
-        m_nHeight         = _maxHeight - m_options.GetHeightPercent();
-        m_nScaleFactor    = 100 - m_options.GetScaleFactorPercent();
-        m_ptLightSource   = m_options.GetLightSourcePoint();
-        m_style           = m_options.style == CTreemap::KDirStatStyle ? 0 : 1;
-        m_grid            = m_options.grid;
-        m_gridColor.SetColor(m_options.gridColor);
+        m_NBrightness = 100 - m_Options.GetBrightnessPercent();
+        m_NCushionShading = m_Options.GetAmbientLightPercent();
+        m_NHeight = c_MaxHeight - m_Options.GetHeightPercent();
+        m_NScaleFactor = 100 - m_Options.GetScaleFactorPercent();
+        m_PtLightSource = m_Options.GetLightSourcePoint();
+        m_Style = m_Options.style == CTreemap::KDirStatStyle ? 0 : 1;
+        m_Grid = m_Options.grid;
+        m_GridColor.SetColor(m_Options.gridColor);
     }
 }
 
 void CPageTreeMap::UpdateStatics()
 {
-    m_sBrightness.Format(L"%d", 100 - m_nBrightness);
-    m_sCushionShading.Format(L"%d", 100 - m_nCushionShading);
-    m_sHeight.Format(L"%d", (_maxHeight - m_nHeight) / (_maxHeight / 100));
-    m_sScaleFactor.Format(L"%d", 100 - m_nScaleFactor);
+    m_SBrightness.Format(L"%d", 100 - m_NBrightness);
+    m_SCushionShading.Format(L"%d", 100 - m_NCushionShading);
+    m_SHeight.Format(L"%d", (c_MaxHeight - m_NHeight) / (c_MaxHeight / 100));
+    m_SScaleFactor.Format(L"%d", 100 - m_NScaleFactor);
 }
 
 void CPageTreeMap::OnSomethingChanged()
@@ -171,11 +170,11 @@ void CPageTreeMap::OnSomethingChanged()
     SetModified();
 }
 
-void CPageTreeMap::ValuesAltered(bool altered)
+void CPageTreeMap::ValuesAltered(const bool altered)
 {
-    m_altered        = altered;
-    const CStringW s = m_altered ? Localization::Lookup(IDS_RESETTO_DEFAULTS) : Localization::Lookup(IDS_BACKTO_USERSETTINGS);
-    m_resetButton.SetWindowText(s);
+    m_Altered= altered;
+    const std::wstring s = m_Altered ? Localization::Lookup(IDS_RESETTO_DEFAULTS) : Localization::Lookup(IDS_BACKTO_USERSETTINGS);
+    m_ResetButton.SetWindowText(s.c_str());
 }
 
 void CPageTreeMap::OnColorChangedTreemapGrid(NMHDR*, LRESULT* result)
@@ -210,24 +209,24 @@ void CPageTreeMap::OnSetModified()
 void CPageTreeMap::OnBnClickedReset()
 {
     CTreemap::Options o;
-    if (m_altered)
+    if (m_Altered)
     {
-        o      = CTreemap::GetDefaultOptions();
-        m_undo = m_options;
+        o = CTreemap::GetDefaultOptions();
+        m_Undo = m_Options;
     }
     else
     {
-        o = m_undo;
+        o = m_Undo;
     }
 
-    m_options.brightness   = o.brightness;
-    m_options.ambientLight = o.ambientLight;
-    m_options.height       = o.height;
-    m_options.scaleFactor  = o.scaleFactor;
-    m_options.lightSourceX = o.lightSourceX;
-    m_options.lightSourceY = o.lightSourceY;
+    m_Options.brightness   = o.brightness;
+    m_Options.ambientLight = o.ambientLight;
+    m_Options.height       = o.height;
+    m_Options.scaleFactor  = o.scaleFactor;
+    m_Options.lightSourceX = o.lightSourceX;
+    m_Options.lightSourceY = o.lightSourceY;
 
-    ValuesAltered(!m_altered);
+    ValuesAltered(!m_Altered);
     UpdateData(false);
     SetModified();
 }

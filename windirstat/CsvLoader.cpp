@@ -48,26 +48,26 @@ enum
     FIELD_COUNT
 };
 
-std::array<CHAR, FIELD_COUNT> order_map{};
+std::array<CHAR, FIELD_COUNT> orderMap{};
 static void ParseHeaderLine(const std::vector<std::wstring>& header)
 {
-    order_map.fill(-1);
-    std::map<std::wstring, DWORD> res_map =
+    orderMap.fill(-1);
+    std::map<std::wstring, DWORD> resMap =
     {
-        { Localization::Lookup(IDS_COL_NAME).GetString(), FIELD_NAME},
-        { Localization::Lookup(IDS_COL_FILES).GetString(), FIELD_FILES },
-        { Localization::Lookup(IDS_COL_FOLDERS).GetString(), FIELDS_FOLDERS },
-        { Localization::Lookup(IDS_COL_SIZE_LOGICAL).GetString(), FIELD_SIZE_LOGICAL },
-        { Localization::Lookup(IDS_COL_SIZE_PHYSICAL).GetString(), FIELD_SIZE_LOGICAL },
-        { Localization::Lookup(IDS_COL_ATTRIBUTES).GetString(), FIELD_ATTRIBUTES },
-        { Localization::Lookup(IDS_COL_LASTCHANGE).GetString(), FIELD_LASTCHANGE },
-        { (Localization::Lookup(IDS_APP_TITLE) + L" " + Localization::Lookup(IDS_COL_ATTRIBUTES)).GetString(), FIELD_ATTRIBUTES_WDS },
-        { Localization::Lookup(IDS_COL_OWNER).GetString(), FIELD_OWNER }
+        { Localization::Lookup(IDS_COL_NAME), FIELD_NAME},
+        { Localization::Lookup(IDS_COL_FILES), FIELD_FILES },
+        { Localization::Lookup(IDS_COL_FOLDERS), FIELDS_FOLDERS },
+        { Localization::Lookup(IDS_COL_SIZE_LOGICAL), FIELD_SIZE_LOGICAL },
+        { Localization::Lookup(IDS_COL_SIZE_PHYSICAL), FIELD_SIZE_PHYSICAL },
+        { Localization::Lookup(IDS_COL_ATTRIBUTES), FIELD_ATTRIBUTES },
+        { Localization::Lookup(IDS_COL_LASTCHANGE), FIELD_LASTCHANGE },
+        { (Localization::Lookup(IDS_APP_TITLE) + L" " + Localization::Lookup(IDS_COL_ATTRIBUTES)), FIELD_ATTRIBUTES_WDS },
+        { Localization::Lookup(IDS_COL_OWNER), FIELD_OWNER }
     };
 
     for (std::vector<std::wstring>::size_type c = 0; c < header.size(); c++)
     {
-        if (res_map.contains(header.at(c))) order_map[res_map[header.at(c)]] = static_cast<BYTE>(c);
+        if (resMap.contains(header.at(c))) orderMap[resMap[header.at(c)]] = static_cast<BYTE>(c);
     }
 }
 
@@ -95,12 +95,12 @@ static FILETIME FromTimeString(const std::wstring & s)
     return ft;
 }
 
-static std::string QuoteAndConvert(const CStringW& inc)
+static std::string QuoteAndConvert(const std::wstring& inc)
 {
-    const int sz = WideCharToMultiByte(CP_UTF8, WC_NO_BEST_FIT_CHARS, inc.GetString(), -1, nullptr, 0, nullptr, nullptr);
+    const int sz = WideCharToMultiByte(CP_UTF8, WC_NO_BEST_FIT_CHARS, inc.c_str(), -1, nullptr, 0, nullptr, nullptr);
     std::string out = "\"";
     out.resize(static_cast<size_t>(sz) + 1);
-    WideCharToMultiByte(CP_UTF8, 0, inc.GetString(), -1, &out[1], sz, nullptr, nullptr);
+    WideCharToMultiByte(CP_UTF8, 0, inc.data(), -1, &out[1], sz, nullptr, nullptr);
     out[sz] = '"';
     return out;
 }
@@ -113,9 +113,9 @@ CItem* LoadResults(const std::wstring & path)
     CItem* newroot = nullptr;
     std::string linebuf;
     std::wstring line;
-    std::unordered_map<const std::wstring, CItem*, std::hash<std::wstring>> parent_map;
+    std::unordered_map<const std::wstring, CItem*, std::hash<std::wstring>> parentMap;
 
-    bool header_processed = false;
+    bool headerProcessed = false;
     while (std::getline(reader, linebuf))
     {
         if (linebuf.empty()) continue;
@@ -148,56 +148,56 @@ CItem* LoadResults(const std::wstring & path)
         }
 
         // Process the header if not done already
-        if (!header_processed)
+        if (!headerProcessed)
         {
             ParseHeaderLine(fields);
-            header_processed = true;
+            headerProcessed = true;
 
             // Validate all necessary fields are present
-            for (auto i = 0; i < static_cast<char>(order_map.size()); i++)
+            for (auto i = 0; i < static_cast<char>(orderMap.size()); i++)
             {
-                if (i != FIELD_OWNER && order_map[i] == -1) return nullptr;
+                if (i != FIELD_OWNER && orderMap[i] == -1) return nullptr;
             }
             continue;
         }
 
         // Decode item type
-        const ITEMTYPE type = static_cast<ITEMTYPE>(wcstoul(fields[order_map[FIELD_ATTRIBUTES_WDS]].c_str(), nullptr, 16));
+        const ITEMTYPE type = static_cast<ITEMTYPE>(wcstoul(fields[orderMap[FIELD_ATTRIBUTES_WDS]].c_str(), nullptr, 16));
 
         // Determine how to store the path if it was the root or not
-        const bool is_root = (type & ITF_ROOTITEM);
-        const bool is_in_root = (type & IT_DRIVE) || (type & IT_UNKNOWN) || (type & IT_FREESPACE);
-        const bool use_full_path = is_root || is_in_root;
-        const std::wstring map_path = fields[order_map[FIELD_NAME]];
-        LPWSTR lookup_path = fields[order_map[FIELD_NAME]].data();
-        LPWSTR display_name = use_full_path ? lookup_path : wcsrchr(lookup_path, L'\\');
-        if (!use_full_path && display_name != nullptr)
+        const bool isRoot = (type & ITF_ROOTITEM);
+        const bool isInRoot = (type & IT_DRIVE) || (type & IT_UNKNOWN) || (type & IT_FREESPACE);
+        const bool useFullPath = isRoot || isInRoot;
+        const std::wstring mapPath = fields[orderMap[FIELD_NAME]];
+        LPWSTR lookupPath = fields[orderMap[FIELD_NAME]].data();
+        LPWSTR displayName = useFullPath ? lookupPath : wcsrchr(lookupPath, L'\\');
+        if (!useFullPath && displayName != nullptr)
         {
-            display_name[0] = L'\0';
-            display_name = &display_name[1];
+            displayName[0] = L'\0';
+            displayName = &displayName[1];
         }
 
         // Create the tree item
         CItem* newitem = new CItem(
             type,
-            display_name,
-            FromTimeString(fields[order_map[FIELD_LASTCHANGE]]),
-            _wcstoui64(fields[order_map[FIELD_SIZE_LOGICAL]].c_str(), nullptr, 10),
-            _wcstoui64(fields[order_map[FIELD_SIZE_PHYSICAL]].c_str(), nullptr, 10),
-            wcstoul(fields[order_map[FIELD_ATTRIBUTES]].c_str(), nullptr, 16),
-            wcstoul(fields[order_map[FIELD_FILES]].c_str(), nullptr, 10),
-            wcstoul(fields[order_map[FIELDS_FOLDERS]].c_str(), nullptr, 10));
+            displayName,
+            FromTimeString(fields[orderMap[FIELD_LASTCHANGE]]),
+            _wcstoui64(fields[orderMap[FIELD_SIZE_LOGICAL]].c_str(), nullptr, 10),
+            _wcstoui64(fields[orderMap[FIELD_SIZE_PHYSICAL]].c_str(), nullptr, 10),
+            wcstoul(fields[orderMap[FIELD_ATTRIBUTES]].c_str(), nullptr, 16),
+            wcstoul(fields[orderMap[FIELD_FILES]].c_str(), nullptr, 10),
+            wcstoul(fields[orderMap[FIELDS_FOLDERS]].c_str(), nullptr, 10));
 
 
-        if (is_root)
+        if (isRoot)
         {
             newroot = newitem;
         }
-        else if (is_in_root)
+        else if (isInRoot)
         {
             newroot->AddChild(newitem, true);
         }
-        else if (auto parent = parent_map.find(lookup_path); parent != parent_map.end())
+        else if (auto parent = parentMap.find(lookupPath); parent != parentMap.end())
         {
             parent->second->AddChild(newitem, true);
         }
@@ -205,15 +205,15 @@ CItem* LoadResults(const std::wstring & path)
 
         if (!newitem->TmiIsLeaf() && newitem->GetItemsCount() > 0)
         {
-            parent_map[map_path] = newitem;
+            parentMap[mapPath] = newitem;
 
             // Special case: also add mapping for drive without backslash
-            if (newitem->IsType(IT_DRIVE)) parent_map[map_path.substr(0, 2)] = newitem;
+            if (newitem->IsType(IT_DRIVE)) parentMap[mapPath.substr(0, 2)] = newitem;
         }
     }
 
     // Sort all parent items
-    for (const auto& val : parent_map | std::views::values)
+    for (const auto& val : parentMap | std::views::values)
     {
         val->SortItemsBySizePhysical();
     }
@@ -228,11 +228,12 @@ bool SaveResults(const std::wstring& path, CItem * item)
     outf.open(path, std::ios::binary);
 
     // Determine columns
-    std::vector<CStringW> cols =
+    std::vector<std::wstring> cols =
     {
         Localization::Lookup(IDS_COL_NAME),
         Localization::Lookup(IDS_COL_FILES),
         Localization::Lookup(IDS_COL_FOLDERS),
+        Localization::Lookup(IDS_COL_SIZE_LOGICAL),
         Localization::Lookup(IDS_COL_SIZE_PHYSICAL),
         Localization::Lookup(IDS_COL_ATTRIBUTES),
         Localization::Lookup(IDS_COL_LASTCHANGE),
@@ -259,11 +260,12 @@ bool SaveResults(const std::wstring& path, CItem * item)
         queue.pop();
 
         // Output primary columns
-        const bool non_path_item = qitem->IsType(IT_MYCOMPUTER | IT_UNKNOWN | IT_FREESPACE);
-        outf << std::format("{},{},{},{},0x{:08X},{:%FT%TZ},0x{:04X}",
-            QuoteAndConvert(non_path_item ? qitem->GetName() : qitem->GetPath()),
+        const bool nonPathItem = qitem->IsType(IT_MYCOMPUTER | IT_UNKNOWN | IT_FREESPACE);
+        outf << std::format("{},{},{},{},{},0x{:08X},{:%FT%TZ},0x{:04X}",
+            QuoteAndConvert(nonPathItem ? qitem->GetName() : qitem->GetPath()),
             qitem->GetFilesCount(),
             qitem->GetFoldersCount(),
+            qitem->GetSizeLogical(),
             qitem->GetSizePhysical(),
             qitem->GetAttributes(),
             ToTimePoint(qitem->GetLastChange()),

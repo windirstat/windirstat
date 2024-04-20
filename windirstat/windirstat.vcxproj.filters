@@ -124,9 +124,6 @@
     <ClInclude Include="Options.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="OsSpecific.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="PageCleanups.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -259,9 +256,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Options.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="OsSpecific.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="PageCleanups.cpp">

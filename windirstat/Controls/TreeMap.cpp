@@ -23,7 +23,8 @@
 #include "SelectObject.h"
 #include "TreeMap.h"
 
- 
+#include <vector>
+
 constexpr COLORREF BGR(auto b, auto g, auto r)
 {
     return static_cast<BYTE>(b) | static_cast<BYTE>(g) << 8 | static_cast<BYTE>(r) << 16;
@@ -39,13 +40,13 @@ static constexpr double PALETTE_BRIGHTNESS = 0.6;
 
 /////////////////////////////////////////////////////////////////////////////
 
-double CColorSpace::GetColorBrightness(COLORREF color)
+double CColorSpace::GetColorBrightness(const COLORREF color)
 {
     const COLORREF crIndividualIntensitySum = RGB_GET_RVALUE(color) + RGB_GET_GVALUE(color) + RGB_GET_BVALUE(color);
     return crIndividualIntensitySum / 255.0 / 3.0;
 }
 
-COLORREF CColorSpace::MakeBrightColor(COLORREF color, double brightness)
+COLORREF CColorSpace::MakeBrightColor(const COLORREF color, const double brightness)
 {
     ASSERT(brightness >= 0.0);
     ASSERT(brightness <= 1.0);
@@ -151,14 +152,14 @@ const COLORREF CTreemap::_defaultCushionColors[] = {
     RGB(255, 255, 255)
 };
 
-void CTreemap::GetDefaultPalette(CArray<COLORREF, COLORREF&>& palette)
+void CTreemap::GetDefaultPalette(std::vector<COLORREF>& palette)
 {
     EqualizeColors(_defaultCushionColors, _countof(_defaultCushionColors), palette);
 }
 
-void CTreemap::EqualizeColors(const COLORREF* colors, int count, CArray<COLORREF, COLORREF&>& out)
+void CTreemap::EqualizeColors(const COLORREF* colors, const int count, std::vector<COLORREF>& out)
 {
-    out.SetSize(count);
+    out.resize(count);
 
     for (int i = 0; i < count; i++)
     {
@@ -179,11 +180,11 @@ CTreemap::CTreemap()
 void CTreemap::SetOptions(const Options* options)
 {
     ASSERT(options != nullptr);
-    m_options = *options;
+    m_Options = *options;
 
     // Derive normalized vector here for performance
-    const double lx = m_options.lightSourceX; // negative = left
-    const double ly = m_options.lightSourceY; // negative = top
+    const double lx = m_Options.lightSourceX; // negative = left
+    const double ly = m_Options.lightSourceY; // negative = top
     static constexpr double lz = 10;
 
     const double len = sqrt(lx * lx + ly * ly + lz * lz);
@@ -194,7 +195,7 @@ void CTreemap::SetOptions(const Options* options)
 
 CTreemap::Options CTreemap::GetOptions() const
 {
-    return m_options;
+    return m_Options;
 }
 
 #ifdef _DEBUG
@@ -238,9 +239,9 @@ void CTreemap::DrawTreemap(CDC* pdc, CRect rc, Item* root, const Options* option
         return;
     }
 
-    if (m_options.grid)
+    if (m_Options.grid)
     {
-        pdc->FillSolidRect(rc, m_options.gridColor);
+        pdc->FillSolidRect(rc, m_Options.gridColor);
     }
     else
     {
@@ -263,7 +264,7 @@ void CTreemap::DrawTreemap(CDC* pdc, CRect rc, Item* root, const Options* option
         return;
     }
 
-    m_renderArea = rc;
+    m_RenderArea = rc;
 
     if (root->TmiGetSize() > 0)
     {
@@ -275,16 +276,16 @@ void CTreemap::DrawTreemap(CDC* pdc, CRect rc, Item* root, const Options* option
         CBitmap bmp;
 
         // That bitmap in turn will be created from this array
-        CColorRefArray bitmap_bits;
-        bitmap_bits.SetSize(static_cast<UINT_PTR>(rc.Width() * rc.Height()));
+        std::vector<COLORREF> bitmapBits;
+        bitmapBits.resize(rc.Width() * rc.Height());
 
         // Recursively draw the tree graph
         constexpr double surface[4] = {0, 0, 0, 0};
         const CRect baserc({ 0,0 }, rc.Size());
-        RecurseDrawGraph(bitmap_bits, root, baserc, true, surface, m_options.height, 0);
+        RecurseDrawGraph(bitmapBits, root, baserc, true, surface, m_Options.height, 0);
 
         // Fill the bitmap with the array
-        VERIFY(bmp.CreateBitmap(rc.Width(), rc.Height(), 1, 32, &bitmap_bits[0]));
+        VERIFY(bmp.CreateBitmap(rc.Width(), rc.Height(), 1, 32, bitmapBits.data()));
 
         // Render bitmap to the temporary CDC
         dcTreeView.SelectObject(&bmp);
@@ -298,9 +299,9 @@ void CTreemap::DrawTreemap(CDC* pdc, CRect rc, Item* root, const Options* option
 
 #ifdef STRONGDEBUG  // slow, but finds bugs!
 #ifdef _DEBUG
-        for(int x = rc.left; x < rc.right - m_options.grid; x++)
+        for(int x = rc.left; x < rc.right - m_Options.grid; x++)
         {
-            for(int y = rc.top; y < rc.bottom - m_options.grid; y++)
+            for(int y = rc.top; y < rc.bottom - m_Options.grid; y++)
             {
                 ASSERT(FindItemByPoint(root, CPoint(x, y)) != NULL);
             }
@@ -364,7 +365,7 @@ CTreemap::Item* CTreemap::FindItemByPoint(Item* item, const CPoint point)
 
     Item* ret = nullptr;
 
-    const int gridWidth = m_options.grid ? 1 : 0;
+    const int gridWidth = m_Options.grid ? 1 : 0;
 
     if (rc.Width() <= gridWidth ||
         rc.Height() <= gridWidth ||
@@ -441,7 +442,7 @@ CTreemap::Item* CTreemap::FindItemByPoint(Item* item, const CPoint point)
     return ret;
 }
 
-void CTreemap::DrawColorPreview(CDC* pdc, const CRect& rc, COLORREF color, const Options* options)
+void CTreemap::DrawColorPreview(CDC* pdc, const CRect& rc, const COLORREF color, const Options* options)
 {
     if (options != nullptr)
     {
@@ -449,9 +450,9 @@ void CTreemap::DrawColorPreview(CDC* pdc, const CRect& rc, COLORREF color, const
     }
 
     double surface[4] = {0, 0, 0, 0};
-    AddRidge(rc, surface, m_options.height * m_options.scaleFactor);
+    AddRidge(rc, surface, m_Options.height * m_Options.scaleFactor);
 
-    m_renderArea = rc;
+    m_RenderArea = rc;
 
     // Create a temporary CDC that represents only the tree map
     CDC dcTreeView;
@@ -461,14 +462,14 @@ void CTreemap::DrawColorPreview(CDC* pdc, const CRect& rc, COLORREF color, const
     CBitmap bmp;
 
     // That bitmap in turn will be created from this array
-    CColorRefArray bitmap_bits;
-    bitmap_bits.SetSize(static_cast<UINT_PTR>(rc.Width() * rc.Height()));
+    std::vector<COLORREF> bitmapBits;
+    bitmapBits.resize(rc.Width() * rc.Height());
 
     // Recursively draw the tree graph
-    RenderRectangle(bitmap_bits, CRect(0, 0, rc.Width(), rc.Height()), surface, color);
+    RenderRectangle(bitmapBits, CRect(0, 0, rc.Width(), rc.Height()), surface, color);
 
     // Fill the bitmap with the array
-    VERIFY(bmp.CreateBitmap(rc.Width(), rc.Height(), 1, 32, &bitmap_bits[0]));
+    VERIFY(bmp.CreateBitmap(rc.Width(), rc.Height(), 1, 32, bitmapBits.data()));
 
     // Render bitmap to the temporary CDC
     dcTreeView.SelectObject(&bmp);
@@ -476,9 +477,9 @@ void CTreemap::DrawColorPreview(CDC* pdc, const CRect& rc, COLORREF color, const
     // And lastly, draw the temporary CDC to the real one
     VERIFY(pdc->BitBlt(rc.TopLeft().x, rc.TopLeft().y, rc.Width(), rc.Height(), &dcTreeView, 0, 0, SRCCOPY));
 
-    if (m_options.grid)
+    if (m_Options.grid)
     {
-        CPen pen(PS_SOLID, 1, m_options.gridColor);
+        CPen pen(PS_SOLID, 1, m_Options.gridColor);
         CSelectObject sopen(pdc, &pen);
         CSelectStockObject sobrush(pdc, NULL_BRUSH);
         VERIFY(pdc->Rectangle(rc));
@@ -489,8 +490,8 @@ void CTreemap::DrawColorPreview(CDC* pdc, const CRect& rc, COLORREF color, const
     VERIFY(dcTreeView.DeleteDC());
 }
 
-void CTreemap::RecurseDrawGraph(CColorRefArray& bitmap, Item* item, const CRect& rc,
-    const bool asroot, const double* psurface, double h, DWORD flags)
+void CTreemap::RecurseDrawGraph(std::vector<COLORREF>& bitmap, Item* item, const CRect& rc,
+    const bool asroot, const double* psurface, const double h, const DWORD flags)
 {
     ASSERT(rc.Width() >= 0);
     ASSERT(rc.Height() >= 0);
@@ -499,7 +500,7 @@ void CTreemap::RecurseDrawGraph(CColorRefArray& bitmap, Item* item, const CRect&
 
     item->TmiSetRectangle(rc);
 
-    const int gridWidth = m_options.grid ? 1 : 0;
+    const int gridWidth = m_Options.grid ? 1 : 0;
 
     if (rc.Width() <= gridWidth || rc.Height() <= gridWidth)
     {
@@ -538,10 +539,10 @@ void CTreemap::RecurseDrawGraph(CColorRefArray& bitmap, Item* item, const CRect&
 // simply have a member variable of type CTreemap but have to deal with
 // pointers, factory methods and explicit destruction. It's not worth.
 
-void CTreemap::DrawChildren(CColorRefArray& bitmap, Item* parent,
-    const double* surface, double h, DWORD flags)
+void CTreemap::DrawChildren(std::vector<COLORREF>& bitmap, const Item* parent,
+    const double* surface, const double h, const DWORD flags)
 {
-    switch (m_options.style)
+    switch (m_Options.style)
     {
     case KDirStatStyle:
         {
@@ -560,17 +561,17 @@ void CTreemap::DrawChildren(CColorRefArray& bitmap, Item* parent,
 // I learned this squarification style from the KDirStat executable.
 // It's the most complex one here but also the clearest, imho.
 //
-void CTreemap::KDirStat_DrawChildren(CColorRefArray& bitmap, Item* parent, const double* surface, double h, DWORD /*flags*/)
+void CTreemap::KDirStat_DrawChildren(std::vector<COLORREF>& bitmap, const Item* parent, const double* surface, const double h, DWORD /*flags*/)
 {
     ASSERT(parent->TmiGetChildCount() > 0);
 
     const CRect& rc = parent->TmiGetRectangle();
 
-    CArray<double, double> rows;     // Our rectangle is divided into rows, each of which gets this height (fraction of total height).
-    CArray<int, int> childrenPerRow; // childrenPerRow[i] = # of children in rows[i]
+    std::vector<double> rows;     // Our rectangle is divided into rows, each of which gets this height (fraction of total height).
+    std::vector<int> childrenPerRow; // childrenPerRow[i] = # of children in rows[i]
 
-    CArray<double, double> childWidth; // Widths of the children (fraction of row width).
-    childWidth.SetSize(parent->TmiGetChildCount());
+    std::vector<double> childWidth; // Widths of the children (fraction of row width).
+    childWidth.resize(parent->TmiGetChildCount());
 
     const bool horizontalRows = KDirStat_ArrangeChildren(parent, childWidth, rows, childrenPerRow);
 
@@ -579,13 +580,13 @@ void CTreemap::KDirStat_DrawChildren(CColorRefArray& bitmap, Item* parent, const
     ASSERT(width >= 0);
     ASSERT(height >= 0);
 
-    int c      = 0;
+    int c = 0;
     double top = horizontalRows ? rc.top : rc.left;
-    for (int row = 0; row < rows.GetSize(); row++)
+    for (std::size_t row = 0; row < rows.size(); row++)
     {
         const double fBottom = top + rows[row] * height;
         int bottom           = static_cast<int>(fBottom);
-        if (row == rows.GetSize() - 1)
+        if (row == rows.size() - 1)
         {
             bottom = horizontalRows ? rc.bottom : rc.right;
         }
@@ -629,7 +630,7 @@ void CTreemap::KDirStat_DrawChildren(CColorRefArray& bitmap, Item* parent, const
             }
 #endif
 
-            RecurseDrawGraph(bitmap, child, rcChild, false, surface, h * m_options.scaleFactor, 0);
+            RecurseDrawGraph(bitmap, child, rcChild, false, surface, h * m_Options.scaleFactor, 0);
 
             if (lastChild)
             {
@@ -657,9 +658,9 @@ void CTreemap::KDirStat_DrawChildren(CColorRefArray& bitmap, Item* parent, const
 //
 bool CTreemap::KDirStat_ArrangeChildren(
     const Item* parent,
-    CArray<double, double>& childWidth,
-    CArray<double, double>& rows,
-    CArray<int, int>& childrenPerRow
+    std::vector<double>& childWidth,
+    std::vector<double>& rows,
+    std::vector<int>& childrenPerRow
 )
 {
     ASSERT(!parent->TmiIsLeaf());
@@ -667,8 +668,8 @@ bool CTreemap::KDirStat_ArrangeChildren(
 
     if (parent->TmiGetSize() == 0)
     {
-        rows.Add(1.0);
-        childrenPerRow.Add(parent->TmiGetChildCount());
+        rows.emplace_back(1.0);
+        childrenPerRow.emplace_back(parent->TmiGetChildCount());
         for (int i = 0; i < parent->TmiGetChildCount(); i++)
         {
             childWidth[i] = 1.0 / parent->TmiGetChildCount();
@@ -699,16 +700,16 @@ bool CTreemap::KDirStat_ArrangeChildren(
     int nextChild = 0;
     while (nextChild < parent->TmiGetChildCount())
     {
-        int childrenUsed;
-        rows.Add(KDirStat_CalculateNextRow(parent, nextChild, width, childrenUsed, childWidth));
-        childrenPerRow.Add(childrenUsed);
+        int childrenUsed = 0;
+        rows.emplace_back(KDirStat_CalculateNextRow(parent, nextChild, width, childrenUsed, childWidth));
+        childrenPerRow.emplace_back(childrenUsed);
         nextChild += childrenUsed;
     }
 
     return horizontalRows;
 }
 
-double CTreemap::KDirStat_CalculateNextRow(const Item* parent, const int nextChild, double width, int& childrenUsed, CArray<double, double>& childWidth)
+double CTreemap::KDirStat_CalculateNextRow(const Item* parent, const int nextChild, const double width, int& childrenUsed, std::vector<double>& childWidth)
 {
     static constexpr double _minProportion = 0.4;
     ASSERT(_minProportion < 1.);
@@ -785,7 +786,7 @@ double CTreemap::KDirStat_CalculateNextRow(const Item* parent, const int nextChi
 
 // The classical squarification method.
 //
-void CTreemap::SequoiaView_DrawChildren(CColorRefArray& bitmap, const Item* parent, const double* surface, double h, DWORD /*flags*/)
+void CTreemap::SequoiaView_DrawChildren(std::vector<COLORREF>& bitmap, const Item* parent, const double* surface, const double h, DWORD /*flags*/)
 {
     // Rest rectangle to fill
     CRect remaining(parent->TmiGetRectangle());
@@ -940,7 +941,7 @@ void CTreemap::SequoiaView_DrawChildren(CColorRefArray& bitmap, const Item* pare
             ASSERT(rc.top >= remaining.top);
             ASSERT(rc.bottom <= remaining.bottom);
 
-            RecurseDrawGraph(bitmap, parent->TmiGetChild(i), rc, false, surface, h * m_options.scaleFactor, 0);
+            RecurseDrawGraph(bitmap, parent->TmiGetChild(i), rc, false, surface, h * m_Options.scaleFactor, 0);
 
             if (lastChild)
                 break;
@@ -983,16 +984,16 @@ void CTreemap::SequoiaView_DrawChildren(CColorRefArray& bitmap, const Item* pare
 
 bool CTreemap::IsCushionShading() const
 {
-    return m_options.ambientLight < 1.0
-    && m_options.height > 0.0
-    && m_options.scaleFactor > 0.0;
+    return m_Options.ambientLight < 1.0
+    && m_Options.height > 0.0
+    && m_Options.scaleFactor > 0.0;
 }
 
-void CTreemap::RenderLeaf(CColorRefArray& bitmap, const Item* item, const double* surface)
+void CTreemap::RenderLeaf(std::vector<COLORREF>& bitmap, const Item* item, const double* surface)
 {
     CRect rc = item->TmiGetRectangle();
 
-    if (m_options.grid)
+    if (m_Options.grid)
     {
         rc.top++;
         rc.left++;
@@ -1005,9 +1006,9 @@ void CTreemap::RenderLeaf(CColorRefArray& bitmap, const Item* item, const double
     RenderRectangle(bitmap, rc, surface, item->TmiGetGraphColor());
 }
 
-void CTreemap::RenderRectangle(CColorRefArray& bitmap, const CRect& rc, const double* surface, DWORD color)
+void CTreemap::RenderRectangle(std::vector<COLORREF>& bitmap, const CRect& rc, const double* surface, DWORD color)
 {
-    double brightness = m_options.brightness;
+    double brightness = m_Options.brightness;
 
     if ((color & COLORFLAG_MASK) != 0)
     {
@@ -1038,7 +1039,7 @@ void CTreemap::RenderRectangle(CColorRefArray& bitmap, const CRect& rc, const do
     }
 }
 
-void CTreemap::DrawSolidRect(CColorRefArray& bitmap, const CRect& rc, COLORREF col, double brightness) const
+void CTreemap::DrawSolidRect(std::vector<COLORREF>& bitmap, const CRect& rc, const COLORREF col, const double brightness) const
 {
     int red   = RGB_GET_RVALUE(col);
     int green = RGB_GET_GVALUE(col);
@@ -1056,15 +1057,15 @@ void CTreemap::DrawSolidRect(CColorRefArray& bitmap, const CRect& rc, COLORREF c
     {
         for (int ix = rc.left; ix < rc.right; ix++)
         {
-            bitmap[ix + iy * m_renderArea.Width()] = BGR(blue, green, red);
+            bitmap[ix + iy * m_RenderArea.Width()] = BGR(blue, green, red);
         }
     }
 }
 
-void CTreemap::DrawCushion(CColorRefArray& bitmap, const CRect& rc, const double* surface, COLORREF col, double brightness)
+void CTreemap::DrawCushion(std::vector<COLORREF>& bitmap, const CRect& rc, const double* surface, const COLORREF col, const double brightness)
 {
     // Cushion parameters
-    const double Ia = m_options.ambientLight;
+    const double Ia = m_Options.ambientLight;
 
     // Derived parameters
     const double Is = 1 - Ia; // shading
@@ -1098,8 +1099,8 @@ void CTreemap::DrawCushion(CColorRefArray& bitmap, const CRect& rc, const double
             // Apply contrast.
             // Not implemented.
             // Costs performance and nearly the same effect can be
-            // made width the m_options->ambientLight parameter.
-            // pixel = pow(pixel, m_options->contrast);
+            // made width the m_Options->ambientLight parameter.
+            // pixel = pow(pixel, m_Options->contrast);
 
             // Apply "brightness"
             pixel *= brightness / PALETTE_BRIGHTNESS;
@@ -1112,11 +1113,11 @@ void CTreemap::DrawCushion(CColorRefArray& bitmap, const CRect& rc, const double
             CColorSpace::NormalizeColor(red, green, blue);
 
             // ... and set!
-            bitmap[ix + iy * m_renderArea.Width()] = BGR(blue, green, red);
+            bitmap[ix + iy * m_RenderArea.Width()] = BGR(blue, green, red);
         }
 }
 
-void CTreemap::AddRidge(const CRect& rc, double* surface, double h)
+void CTreemap::AddRidge(const CRect& rc, double* surface, const double h)
 {
     const int width  = rc.Width();
     const int height = rc.Height();
@@ -1142,75 +1143,75 @@ END_MESSAGE_MAP()
 
 CTreemapPreview::CTreemapPreview()
 {
-    m_root = nullptr;
+    m_Root = nullptr;
     BuildDemoData();
 }
 
 CTreemapPreview::~CTreemapPreview()
 {
-    delete m_root;
+    delete m_Root;
 }
 
 void CTreemapPreview::SetOptions(const CTreemap::Options* options)
 {
-    m_treemap.SetOptions(options);
+    m_Treemap.SetOptions(options);
     Invalidate();
 }
 
 void CTreemapPreview::BuildDemoData()
 {
-    CTreemap::GetDefaultPalette(m_colors);
+    CTreemap::GetDefaultPalette(m_Colors);
     int col = -1;
     int i;
     // FIXME: uses too many hardcoded literals without explanation
 
-    CArray<CItem*, CItem*> c4;
+    std::vector<CItem*> c4;
     COLORREF color = GetNextColor(col);
     for (i = 0; i < 30; i++)
     {
-        c4.Add(new CItem(1 + 100 * i, color));
+        c4.emplace_back(new CItem(1 + 100 * i, color));
     }
 
-    CArray<CItem*, CItem*> c0;
+    std::vector<CItem*> c0;
     for (i = 0; i < 8; i++)
     {
-        c0.Add(new CItem(500 + 600 * i, GetNextColor(col)));
+        c0.emplace_back(new CItem(500 + 600 * i, GetNextColor(col)));
     }
 
-    CArray<CItem*, CItem*> c1;
+    std::vector<CItem*> c1;
     color = GetNextColor(col);
     for (i = 0; i < 10; i++)
     {
-        c1.Add(new CItem(1 + 200 * i, color));
+        c1.emplace_back(new CItem(1 + 200 * i, color));
     }
-    c0.Add(new CItem(c1));
+    c0.emplace_back(new CItem(c1));
 
-    CArray<CItem*, CItem*> c2;
+    std::vector<CItem*> c2;
     color = GetNextColor(col);
     for (i = 0; i < 160; i++)
     {
-        c2.Add(new CItem(1 + i, color));
+        c2.emplace_back(new CItem(1 + i, color));
     }
 
-    CArray<CItem*, CItem*> c3;
-    c3.Add(new CItem(10000, GetNextColor(col)));
-    c3.Add(new CItem(c4));
-    c3.Add(new CItem(c2));
-    c3.Add(new CItem(6000, GetNextColor(col)));
-    c3.Add(new CItem(1500, GetNextColor(col)));
+    std::vector<CItem*> c3;
+    c3.emplace_back(new CItem(10000, GetNextColor(col)));
+    c3.emplace_back(new CItem(c4));
+    c3.emplace_back(new CItem(c2));
+    c3.emplace_back(new CItem(6000, GetNextColor(col)));
+    c3.emplace_back(new CItem(1500, GetNextColor(col)));
 
-    CArray<CItem*, CItem*> c10;
-    c10.Add(new CItem(c0));
-    c10.Add(new CItem(c3));
+    std::vector<CItem*> c10;
+    c10.emplace_back(new CItem(c0));
+    c10.emplace_back(new CItem(c3));
 
-    m_root = new CItem(c10);
+    m_Root = new CItem(c10);
 }
 
 COLORREF CTreemapPreview::GetNextColor(int& i)
 {
     i++;
-    i %= m_colors.GetSize();
-    return m_colors[i];
+    i %= m_Colors.size();
+    return m_Colors[i];
 }
 
 void CTreemapPreview::OnPaint()
@@ -1218,5 +1219,5 @@ void CTreemapPreview::OnPaint()
     CPaintDC dc(this);
     CRect rc;
     GetClientRect(rc);
-    m_treemap.DrawTreemapDoubleBuffered(&dc, rc, m_root);
+    m_Treemap.DrawTreemapDoubleBuffered(&dc, rc, m_Root);
 }

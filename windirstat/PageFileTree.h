@@ -42,22 +42,22 @@ protected:
     void OnOK() override;
     void EnableButtons();
 
-    BOOL m_pacmanAnimation = FALSE;
-    BOOL m_showTimeSpent = FALSE;
-    BOOL m_showColumnFolders = FALSE;
-    BOOL m_showColumnItems = FALSE;
-    BOOL m_showColumnFiles = FALSE;
-    BOOL m_showColumnAttributes = FALSE;
-    BOOL m_showColumnLastChange = FALSE;
-    BOOL m_showColumnOwner = FALSE;
-    BOOL m_showColumnSizePhysical = FALSE;
-    BOOL m_showColumnSizeLogical = FALSE;
+    BOOL m_PacmanAnimation = FALSE;
+    BOOL m_ShowTimeSpent = FALSE;
+    BOOL m_ShowColumnFolders = FALSE;
+    BOOL m_ShowColumnItems = FALSE;
+    BOOL m_ShowColumnFiles = FALSE;
+    BOOL m_ShowColumnAttributes = FALSE;
+    BOOL m_ShowColumnLastChange = FALSE;
+    BOOL m_ShowColumnOwner = FALSE;
+    BOOL m_ShowColumnSizePhysical = FALSE;
+    BOOL m_ShowColumnSizeLogical = FALSE;
 
-    int m_treeListColorCount = TREELISTCOLORCOUNT;
-    COLORREF m_treeListColor[TREELISTCOLORCOUNT] = {};
+    int m_FileTreeColorCount = TREELISTCOLORCOUNT;
+    COLORREF m_FileTreeColor[TREELISTCOLORCOUNT] = {};
 
-    CColorButton m_colorButton[TREELISTCOLORCOUNT];
-    CSliderCtrl m_slider;
+    CColorButton m_ColorButton[TREELISTCOLORCOUNT];
+    CSliderCtrl m_Slider;
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnColorChanged(UINT id, NMHDR*, LRESULT*);

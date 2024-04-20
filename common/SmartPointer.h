@@ -38,61 +38,61 @@ public:
     SmartPointer(const SmartPointer<T>&) = delete; // operator not allowed for SmartPointer
     T operator=(const SmartPointer<T>& lp) = delete; // operator not allowed for SmartPointer
 
-    SmartPointer(std::function<void(T)> cleanup) : m_cleanup(cleanup), m_data(nullptr) {}
-    SmartPointer(std::function<void(T)> cleanup, T data) : m_cleanup(cleanup), m_data(data) {}
+    SmartPointer(std::function<void(T)> cleanup) : m_Cleanup(std::move(cleanup)), m_Data(nullptr) {}
+    SmartPointer(std::function<void(T)> cleanup, T data) : m_Cleanup(std::move(cleanup)), m_Data(data) {}
 
     ~SmartPointer()
     {
-        if (m_data != nullptr)
+        if (m_Data != nullptr)
         {
-            m_cleanup(m_data);
+            m_Cleanup(m_Data);
         }
     }
 
     SmartPointer(SmartPointer<T>&& src) noexcept
     {
-        m_cleanup = src.m_cleanup;
-        m_data = src.m_data;
-        src.m_data = nullptr;
+        m_Cleanup = src.m_Cleanup;
+        m_Data = src.m_Data;
+        src.m_Data = nullptr;
     }
 
     operator T()
     {
-        return m_data;
+        return m_Data;
     }
 
     T& operator*()
     {
-        return m_data;
+        return m_Data;
     }
 
     T* operator&()
     {
-        return &m_data;
+        return &m_Data;
     }
 
     T operator->()
     {
-        return m_data;
+        return m_Data;
     }
 
     T operator=(T lp)
     {
-        if (m_data != nullptr)
+        if (m_Data != nullptr)
         {
-            m_cleanup(m_data);
+            m_Cleanup(m_Data);
         }
-        m_data = lp;
-        return m_data;
+        m_Data = lp;
+        return m_Data;
     }
 
     bool operator!()
     {
-        return m_data == nullptr;
+        return m_Data == nullptr;
     }
 
 private:
 
-    std::function<void(T)> m_cleanup;
-    T m_data;
+    std::function<void(T)> m_Cleanup;
+    T m_Data;
 };
