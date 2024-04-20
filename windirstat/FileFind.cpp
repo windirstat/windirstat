@@ -206,5 +206,5 @@ std::wstring FileFindEnhanced::MakeLongPathCompatible(const std::wstring & path)
 bool FileFindEnhanced::DoesFileExist(const std::wstring& folder, const std::wstring& file)
 {
     FileFindEnhanced finder;
-    return finder.FindFile(MakeLongPathCompatible(folder), file);
+    return finder.FindFile(folder, file);
 }

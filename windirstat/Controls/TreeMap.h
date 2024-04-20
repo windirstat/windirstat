@@ -1,4 +1,4 @@
-// TreeMap.h - Declaration of CColorSpace, CTreemap and CTreemapPreview
+// TreeMap.h - Declaration of CColorSpace, CTreeMap and CTreeMapPreview
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
@@ -44,12 +44,12 @@ protected:
 };
 
 //
-// CTreemap. Can create a treemap. Knows 3 squarification methods:
+// CTreeMap. Can create a treemap. Knows 3 squarification methods:
 // KDirStat-like, SequoiaView-like and Simple.
 //
 // This class is fairly reusable.
 //
-class CTreemap final
+class CTreeMap final
 {
 public:
     // One of these flags can be added to the COLORREF returned
@@ -64,7 +64,7 @@ public:
     // Item. Interface which must be supported by the tree items.
     // If you prefer to use the getHead()/getNext() pattern rather
     // than using an array for the children, you will have to
-    // rewrite CTreemap.
+    // rewrite CTreeMap.
     //
     class Item
     {
@@ -186,10 +186,10 @@ public:
     static void EqualizeColors(const COLORREF* colors, int count, std::vector<COLORREF>& out);
 
     // Good values
-    static Options GetDefaultOptions();
+    static Options GetDefaults();
 
     // Construct the treemap generator and register the callback interface.
-    CTreemap();
+    CTreeMap();
 
     // Alter the options
     void SetOptions(const Options* options);
@@ -201,10 +201,10 @@ public:
 #endif // _DEBUG
 
     // Create and draw a treemap
-    void DrawTreemap(CDC* pdc, CRect rc, Item* root, const Options* options = nullptr);
+    void DrawTreeMap(CDC* pdc, CRect rc, Item* root, const Options* options = nullptr);
 
     // Same as above but double buffered
-    void DrawTreemapDoubleBuffered(CDC* pdc, const CRect& rc, Item* root, const Options* options = nullptr);
+    void DrawTreeMapDoubleBuffered(CDC* pdc, const CRect& rc, Item* root, const Options* options = nullptr);
 
     // In the resulting treemap, find the item below a given coordinate.
     // Return value can be NULL, iff point is outside root rect.
@@ -274,15 +274,15 @@ protected:
 };
 
 //
-// CTreemapPreview. A child window, which demonstrates the options
+// CTreeMapPreview. A child window, which demonstrates the options
 // with an own little demo tree.
 //
-class CTreemapPreview final : public CStatic
+class CTreeMapPreview final : public CStatic
 {
     //
     // CItem. Element of the demo tree.
     //
-    class CItem final : public CTreemap::Item
+    class CItem final : public CTreeMap::Item
     {
     public:
         CItem(const int size, const COLORREF color)
@@ -358,9 +358,9 @@ class CTreemapPreview final : public CStatic
     };
 
 public:
-    CTreemapPreview();
-    ~CTreemapPreview() override;
-    void SetOptions(const CTreemap::Options* options);
+    CTreeMapPreview();
+    ~CTreeMapPreview() override;
+    void SetOptions(const CTreeMap::Options* options);
 
 protected:
     void BuildDemoData();
@@ -368,7 +368,7 @@ protected:
 
     std::vector<COLORREF> m_Colors; // Our color palette
     CItem* m_Root;                  // Demo tree
-    CTreemap m_Treemap;             // Our treemap creator
+    CTreeMap m_TreeMap;             // Our treemap creator
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnPaint();

@@ -699,8 +699,8 @@ void CMainFrame::OnClose()
     // It's too late, to do this in OnDestroy(). Because the toolbar, if undocked,
     // is already destroyed in OnDestroy(). So we must save the toolbar state here
     // in OnClose().
-    COptions::ShowToolbar = (m_WndToolBar.GetStyle() & WS_VISIBLE) != 0;
-    COptions::ShowStatusbar = (m_WndStatusBar.GetStyle() & WS_VISIBLE) != 0;
+    COptions::ShowToolBar = (m_WndToolBar.GetStyle() & WS_VISIBLE) != 0;
+    COptions::ShowStatusBar = (m_WndStatusBar.GetStyle() & WS_VISIBLE) != 0;
 
     CFrameWndEx::OnClose();
 }
@@ -713,7 +713,7 @@ void CMainFrame::OnDestroy()
     COptions::MainWindowPlacement = wp;
 
     COptions::ShowFileTypes = GetExtensionView()->IsShowTypes();
-    COptions::ShowTreemap = GetTreeMapView()->IsShowTreemap();
+    COptions::ShowTreeMap = GetTreeMapView()->IsShowTreeMap();
 
     // Close all artifacts and our child windows
     CFrameWndEx::OnDestroy();
@@ -738,14 +738,14 @@ BOOL CMainFrame::OnCreateClient(LPCREATESTRUCT /*lpcs*/, CCreateContext* pContex
     MinimizeExtensionView();
 
     GetExtensionView()->ShowTypes(COptions::ShowFileTypes);
-    GetTreeMapView()->ShowTreemap(COptions::ShowTreemap);
+    GetTreeMapView()->ShowTreeMap(COptions::ShowTreeMap);
 
     return TRUE;
 }
 
 BOOL CMainFrame::PreCreateWindow(CREATESTRUCT& cs)
 {
-    // seed initial title bar text
+    // seed initial Title bar text
     static std::wstring title = Localization::Lookup(IDS_APP_TITLE) + (IsAdmin() ? L" (Administrator)" : L"");
     cs.style &= ~FWS_ADDTOTITLE;
     cs.lpszName = title.c_str();
@@ -779,7 +779,7 @@ void CMainFrame::MinimizeTreeMapView()
 
 void CMainFrame::RestoreTreeMapView()
 {
-    if (GetTreeMapView()->IsShowTreemap())
+    if (GetTreeMapView()->IsShowTreeMap())
     {
         m_Splitter.RestoreSplitterPos(0.5);
         GetTreeMapView()->DrawEmptyView();
@@ -904,12 +904,12 @@ void CMainFrame::UpdateCleanupMenu(CMenu* menu) const
     if (items == 1)
     {
         info.FormatMessage(Localization::Lookup(IDS_ONEITEMss).c_str(), FormatBytes(bytes).c_str(),
-            COptions::HumanFormat && bytes != 0 ? wds::strEmpty : (wds::strBlankSpace + GetSpec_Bytes()).c_str());
+            COptions::UseSizeSuffixes && bytes != 0 ? wds::strEmpty : (wds::strBlankSpace + GetSpec_Bytes()).c_str());
     }
     else
     {
         info.FormatMessage(Localization::Lookup(IDS_sITEMSss).c_str(), FormatCount(items).c_str(),
-            FormatBytes(bytes).c_str(), COptions::HumanFormat && bytes != 0 ? wds::strEmpty : (wds::strBlankSpace + GetSpec_Bytes()).c_str());
+            FormatBytes(bytes).c_str(), COptions::UseSizeSuffixes && bytes != 0 ? wds::strEmpty : (wds::strBlankSpace + GetSpec_Bytes()).c_str());
     }
 
     const std::wstring s = Localization::Lookup(IDS_EMPTYRECYCLEBIN) + info.GetString();
@@ -973,10 +973,10 @@ void CMainFrame::AppendUserDefinedCleanups(CMenu* menu) const
     for (size_t iCurrent = 0; iCurrent < COptions::UserDefinedCleanups.size(); iCurrent++)
     {
         auto& udc = COptions::UserDefinedCleanups[iCurrent];
-        if (!udc.enabled) continue;
+        if (!udc.Enabled) continue;
 
         CStringW string;
-        string.FormatMessage(Localization::Lookup(IDS_UDCsCTRLd).c_str(), udc.title.Obj().c_str(), iCurrent);
+        string.FormatMessage(Localization::Lookup(IDS_UDCsCTRLd).c_str(), udc.Title.Obj().c_str(), iCurrent);
 
         const auto& items = CFileTreeControl::Get()->GetAllSelected<CItem>();
         bool udcValid = GetLogicalFocus() == LF_DIRECTORYLIST && !items.empty();
@@ -1099,13 +1099,13 @@ void CMainFrame::OnSize(const UINT nType, const int cx, const int cy)
 
 void CMainFrame::OnUpdateViewShowtreemap(CCmdUI* pCmdUI)
 {
-    pCmdUI->SetCheck(GetTreeMapView()->IsShowTreemap());
+    pCmdUI->SetCheck(GetTreeMapView()->IsShowTreeMap());
 }
 
 void CMainFrame::OnViewShowtreemap()
 {
-    GetTreeMapView()->ShowTreemap(!GetTreeMapView()->IsShowTreemap());
-    if (GetTreeMapView()->IsShowTreemap())
+    GetTreeMapView()->ShowTreeMap(!GetTreeMapView()->IsShowTreeMap());
+    if (GetTreeMapView()->IsShowTreeMap())
     {
         RestoreTreeMapView();
     }

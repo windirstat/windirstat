@@ -50,14 +50,14 @@ void CTreeMapView::SuspendRecalculationDrawing(const bool suspend)
     }
 }
 
-bool CTreeMapView::IsShowTreemap() const
+bool CTreeMapView::IsShowTreeMap() const
 {
-    return m_ShowTreemap;
+    return m_ShowTreeMap;
 }
 
-void CTreeMapView::ShowTreemap(const bool show)
+void CTreeMapView::ShowTreeMap(const bool show)
 {
-    m_ShowTreemap = show;
+    m_ShowTreeMap = show;
 }
 
 BOOL CTreeMapView::PreCreateWindow(CREATESTRUCT& cs)
@@ -119,7 +119,7 @@ void CTreeMapView::DrawEmptyView(CDC* pDC)
 void CTreeMapView::OnDraw(CDC * pDC)
 {
     const CItem* root = GetDocument()->GetRootItem();
-    if (root == nullptr || !root->IsDone() || m_DrawingSuspended || !m_ShowTreemap)
+    if (root == nullptr || !root->IsDone() || m_DrawingSuspended || !m_ShowTreeMap)
     {
         DrawEmptyView(pDC);
         return;
@@ -146,7 +146,7 @@ void CTreeMapView::OnDraw(CDC * pDC)
             DrawZoomFrame(&dcmem, rc);
         }
 
-        m_Treemap.DrawTreemap(&dcmem, rc, GetDocument()->GetZoomItem(), &COptions::TreemapOptions);
+        m_TreeMap.DrawTreeMap(&dcmem, rc, GetDocument()->GetZoomItem(), &COptions::TreeMapOptions);
     }
 
     CSelectObject sobmp2(&dcmem, &m_Bitmap);
@@ -261,7 +261,7 @@ void CTreeMapView::HighlightSelectedItem(CDC* pdc, const CItem* item, const bool
         CRect rcClient;
         GetClientRect(rcClient);
 
-        if (m_Treemap.GetOptions().grid)
+        if (m_TreeMap.GetOptions().grid)
         {
             rc.right++;
             rc.bottom++;
@@ -326,7 +326,7 @@ void CTreeMapView::OnLButtonDown(const UINT nFlags, const CPoint point)
     const CItem* root = GetDocument()->GetRootItem();
     if (root != nullptr && root->IsDone() && IsDrawn())
     {
-        const auto item = static_cast<CItem*>(m_Treemap.FindItemByPoint(GetDocument()->GetZoomItem(), point));
+        const auto item = static_cast<CItem*>(m_TreeMap.FindItemByPoint(GetDocument()->GetZoomItem(), point));
         if (item == nullptr)
         {
             return;
@@ -443,7 +443,7 @@ void CTreeMapView::OnMouseMove(UINT /*nFlags*/, const CPoint point)
 {
     if (GetDocument()->IsRootDone() && IsDrawn())
     {
-        const auto item = static_cast<const CItem*>(m_Treemap.FindItemByPoint(GetDocument()->GetZoomItem(), point));
+        const auto item = static_cast<const CItem*>(m_TreeMap.FindItemByPoint(GetDocument()->GetZoomItem(), point));
         if (item != nullptr)
         {
             CMainFrame::Get()->SetMessageText(item->GetPath());

@@ -37,15 +37,15 @@ protected:
 
     ~CTreeMapView() override = default;
 
-    // CTreemap::Callback
+    // CTreeMap::Callback
     CDirStatDoc* GetDocument() const
     {
         return reinterpret_cast<CDirStatDoc*>(m_pDocument);
     }
 
     void SuspendRecalculationDrawing(bool suspend);
-    bool IsShowTreemap() const;
-    void ShowTreemap(bool show);
+    bool IsShowTreeMap() const;
+    void ShowTreeMap(bool show);
     void DrawEmptyView();
 
 protected:
@@ -69,9 +69,9 @@ protected:
     void RenderHighlightRectangle(CDC* pdc, CRect& rc);
 
     bool m_DrawingSuspended = false; // True while the user is resizing the window.
-    bool m_ShowTreemap = true;       // False, if the user switched off the treemap (by F9).
+    bool m_ShowTreeMap = true;       // False, if the user switched off the treemap (by F9).
     CSize m_Size{ 0, 0 };            // Current size of view
-    CTreemap m_Treemap;              // Treemap generator
+    CTreeMap m_TreeMap;              // Treemap generator
     CBitmap m_Bitmap;                // Cached view. If m_hObject is NULL, the view must be recalculated.
     CSize m_DimmedSize{ 0,0 };       // Size of bitmap m_Dimmed
     CBitmap m_Dimmed;                // Dimmed view. Used during refresh to avoid the ooops-effect.

@@ -44,7 +44,7 @@ COptionsPropertySheet* CPageGeneral::GetSheet() const
 void CPageGeneral::DoDataExchange(CDataExchange* pDX)
 {
     CPropertyPage::DoDataExchange(pDX);
-    DDX_Check(pDX, IDC_HUMAN_FORMAT, m_HumanFormat);
+    DDX_Check(pDX, IDC_SIZE_SUFFIXES, m_SizeSuffixesFormat);
     DDX_Check(pDX, IDC_USE_WDS_LOCALE, m_UseFallbackLocale);
     DDX_Control(pDX, IDC_COMBO, m_Combo);
     DDX_Check(pDX, IDC_SHOW_GRID, m_ListGrid);
@@ -55,7 +55,7 @@ void CPageGeneral::DoDataExchange(CDataExchange* pDX)
 }
 
 BEGIN_MESSAGE_MAP(CPageGeneral, CPropertyPage)
-    ON_BN_CLICKED(IDC_HUMAN_FORMAT, OnBnClickedSetModified)
+    ON_BN_CLICKED(IDC_SIZE_SUFFIXES, OnBnClickedSetModified)
     ON_BN_CLICKED(IDC_USE_WDS_LOCALE, OnBnClickedSetModified)
     ON_CBN_SELENDOK(IDC_COMBO, OnCbnSelendokCombo)
     ON_BN_CLICKED(IDC_SHOW_GRID, OnBnClickedSetModified)
@@ -71,7 +71,7 @@ BOOL CPageGeneral::OnInitDialog()
 
     Localization::UpdateDialogs(*this);
 
-    m_HumanFormat = COptions::HumanFormat;
+    m_SizeSuffixesFormat = COptions::UseSizeSuffixes;
     m_ListGrid = COptions::ListGrid;
     m_ListStripes = COptions::ListStripes;
     m_ShowDeletionWarning = COptions::ShowDeleteWarning;
@@ -103,7 +103,7 @@ void CPageGeneral::OnOK()
         static_cast<bool>(m_ListStripes) != COptions::ListStripes ||
         static_cast<bool>(m_ListFullRowSelection) != COptions::ListFullRowSelection;
 
-    COptions::HumanFormat = (FALSE != m_HumanFormat);
+    COptions::UseSizeSuffixes = (FALSE != m_SizeSuffixesFormat);
     COptions::UseFallbackLocale = (FALSE != m_UseFallbackLocale);
     COptions::ListGrid = (FALSE != m_ListGrid);
     COptions::ListStripes = (FALSE != m_ListStripes);

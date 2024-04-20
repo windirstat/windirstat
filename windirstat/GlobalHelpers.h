@@ -30,7 +30,7 @@ std::wstring GetLocaleLanguage(LANGID langid);
 std::wstring GetLocaleThousandSeparator();
 std::wstring GetLocaleDecimalSeparator();
 std::wstring FormatBytes(const ULONGLONG& n);
-std::wstring FormatLongLongHuman(ULONGLONG n);
+std::wstring FormatSizeSuffixes(ULONGLONG n);
 std::wstring FormatCount(const ULONGLONG& n);
 std::wstring FormatDouble(double d);
 std::wstring PadWidthBlanks(std::wstring n, int width);

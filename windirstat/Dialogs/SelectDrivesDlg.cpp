@@ -429,7 +429,7 @@ IMPLEMENT_DYNAMIC(CSelectDrivesDlg, CDialogEx)
 UINT CSelectDrivesDlg::_serial;
 
 CSelectDrivesDlg::CSelectDrivesDlg(CWnd* pParent) : CDialogEx(CSelectDrivesDlg::IDD, pParent)
-      , m_Layout(this, COptions::DriveWindowRect.Ptr())
+      , m_Layout(this, COptions::DriveSelectWindowRect.Ptr())
 {
     _serial++;
 }

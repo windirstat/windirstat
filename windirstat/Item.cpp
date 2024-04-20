@@ -1230,12 +1230,12 @@ COLORREF CItem::GetGraphColor() const
 {
     if (IsType(IT_UNKNOWN))
     {
-        return RGB(255, 255, 0) | CTreemap::COLORFLAG_LIGHTER;
+        return RGB(255, 255, 0) | CTreeMap::COLORFLAG_LIGHTER;
     }
 
     if (IsType(IT_FREESPACE))
     {
-        return RGB(100, 100, 100) | CTreemap::COLORFLAG_DARKER;
+        return RGB(100, 100, 100) | CTreeMap::COLORFLAG_DARKER;
     }
 
     if (IsType(IT_FILE))

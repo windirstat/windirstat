@@ -43,7 +43,7 @@ protected:
     void OnOK() override;
 
     BOOL m_UseFallbackLocale = FALSE;
-    BOOL m_HumanFormat = FALSE;
+    BOOL m_SizeSuffixesFormat = FALSE;
     BOOL m_PortableMode = FALSE;
     BOOL m_ListGrid = FALSE;
     BOOL m_ListStripes = FALSE;

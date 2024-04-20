@@ -55,7 +55,7 @@
 #define IDC_TREECOL_ITEMS               1026
 #define IDC_SHOW_GRID                   1028
 #define IDC_TREECOL_FILES               1028
-#define IDC_HUMAN_FORMAT                1029
+#define IDC_SIZE_SUFFIXES                1029
 #define IDC_EXCLUDE_JUNCTIONS           1029
 #define IDC_TREECOL_SIZE_PHYSICAL       1029
 #define IDC_TREEMAPGRIDCOLOR            1030

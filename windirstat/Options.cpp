@@ -28,77 +28,84 @@
 
 #include <format>
 
-Setting<bool> COptions::ExcludeJunctions(L"Options", L"ExcludeJunctions", true);
-Setting<bool> COptions::ExcludeSymbolicLinks(L"Options", L"ExcludeSymbolicLinks", true);
-Setting<bool> COptions::ExcludeVolumeMountPoints(L"Options", L"ExcludeVolumeMountPoints", true);
-Setting<bool> COptions::FollowVolumeMountPoints(L"Options", L"FollowVolumeMountPoints", false);
-Setting<bool> COptions::HumanFormat(L"General", L"HumanFormat", true);
-Setting<bool> COptions::ListFullRowSelection(L"General", L"ListFullRowSelection", true);
-Setting<bool> COptions::ListGrid(L"General", L"ListGrid", false);
-Setting<bool> COptions::ListStripes(L"General", L"ListStripes", false);
-Setting<bool> COptions::PacmanAnimation(L"General", L"PacmanAnimation", true);
-Setting<bool> COptions::ScanForDuplicates(L"DriveSelect", L"ScanForDuplicates", false);
-Setting<bool> COptions::ShowColumnAttributes(L"FileTree", L"ShowColumnAttributes", false);
-Setting<bool> COptions::ShowColumnFiles(L"FileTree", L"ShowColumnFiles", true);
-Setting<bool> COptions::ShowColumnFolders(L"FileTree", L"ShowColumnFolders", false);
-Setting<bool> COptions::ShowColumnItems(L"FileTree", L"ShowColumnItems", false);
-Setting<bool> COptions::ShowColumnLastChange(L"FileTree", L"ShowColumnLastChange", true);
-Setting<bool> COptions::ShowColumnOwner(L"FileTree", L"ShowColumnOwner", false);
-Setting<bool> COptions::ShowColumnSizeLogical(L"FileTree", L"ShowColumnSizeLogical", true);
-Setting<bool> COptions::ShowColumnSizePhysical(L"FileTree", L"ShowColumnSizePhysical", true);
-Setting<bool> COptions::ShowDeleteWarning(L"General", L"ShowDeleteWarning", true);
-Setting<bool> COptions::ShowFileTypes(L"General", L"ShowFileTypes", true);
-Setting<bool> COptions::ShowFreeSpace(L"General", L"ShowFreeSpace", false);
-Setting<bool> COptions::ShowStatusbar(L"General", L"ShowStatusbar", true);
-Setting<bool> COptions::ShowTimeSpent(L"FileTree", L"ShowTimeSpent", true);
-Setting<bool> COptions::ShowToolbar(L"General", L"ShowToolbar", true);
-Setting<bool> COptions::ShowTreemap(L"Appearance", L"ShowTreemap", true);
-Setting<bool> COptions::ShowUnknown(L"General", L"ShowUnknown", false);
-Setting<bool> COptions::SkipDupeDetectionCloudLinks(L"Options", L"SkipDupeDetectionCloudLinks", true);
-Setting<bool> COptions::SkipHidden(L"scans", L"SkipHidden", false);
-Setting<bool> COptions::SkipProtected(L"scans", L"SkipProtected", true);
-Setting<bool> COptions::TreeMapGrid(L"TreeMap", L"TreeMapGrid", (CTreemap::GetDefaultOptions().grid));
-Setting<bool> COptions::UseBackupRestore(L"Options", L"UseBackupRestore", true);
-Setting<bool> COptions::UseFallbackLocale(L"General", L"UseFallbackLocale", false);
-Setting<COLORREF> COptions::FileTreeColor0(L"FileTree", L"FileTreeColor0", RGB(64, 64, 140));
-Setting<COLORREF> COptions::FileTreeColor1(L"FileTree", L"FileTreeColor1", RGB(140, 64, 64));
-Setting<COLORREF> COptions::FileTreeColor2(L"FileTree", L"FileTreeColor2", RGB(64, 140, 64));
-Setting<COLORREF> COptions::FileTreeColor3(L"FileTree", L"FileTreeColor3", RGB(140, 140, 64));
-Setting<COLORREF> COptions::FileTreeColor4(L"FileTree", L"FileTreeColor4", RGB(0, 0, 255));
-Setting<COLORREF> COptions::FileTreeColor5(L"FileTree", L"FileTreeColor5", RGB(255, 0, 0));
-Setting<COLORREF> COptions::FileTreeColor6(L"FileTree", L"FileTreeColor6", RGB(0, 255, 0));
-Setting<COLORREF> COptions::FileTreeColor7(L"FileTree", L"FileTreeColor7", RGB(255, 255, 0));
-Setting<COLORREF> COptions::TreeMapGridColor(L"TreeMap", L"TreeMapGridColor", CTreemap::GetDefaultOptions().gridColor);
-Setting<COLORREF> COptions::TreeMapHighlightColor(L"TreeMap", L"TreeMapHighlightColor", RGB(255, 255, 255));
-Setting<double> COptions::MainSplitterPos(L"General", L"MainSplitterPos", -1.0, 0.0, 1.0);
-Setting<double> COptions::SubSplitterPos(L"General", L"SubSplitterPos", -1.0, 0.0, 1.0);
-Setting<int> COptions::ConfigPage(L"General", L"ConfigPage", true);
-Setting<int> COptions::LanguageId(L"General", L"LanguageId", 0);
-Setting<int> COptions::ScanningThreads(L"Options", L"ScanningThreads", 6, 1, 16);
-Setting<int> COptions::SelectDrivesRadio(L"DriveSelect", L"SelectDrivesRadio", 0, 0, 2);
-Setting<int> COptions::FileTreeColorCount(L"FileTree", L"FileTreeColorCount", 8);
-Setting<int> COptions::TreeMapAmbientLightPercent(L"TreeMap", L"TreeMapAmbientLightPercent", CTreemap::GetDefaultOptions().GetAmbientLightPercent(), 0, 100);
-Setting<int> COptions::TreeMapBrightness(L"TreeMap", L"TreeMapBrightness", CTreemap::GetDefaultOptions().GetBrightnessPercent(), 0, 100);
-Setting<int> COptions::TreeMapHeightFactor(L"TreeMap", L"TreeMapHeightFactor", CTreemap::GetDefaultOptions().GetHeightPercent(), 0, 100);
-Setting<int> COptions::TreeMapLightSourceX(L"TreeMap", L"TreeMapLightSourceX", CTreemap::GetDefaultOptions().GetLightSourceXPercent(), -200, 200);
-Setting<int> COptions::TreeMapLightSourceY(L"TreeMap", L"TreeMapLightSourceY", CTreemap::GetDefaultOptions().GetLightSourceYPercent(), -200, 200);
-Setting<int> COptions::TreeMapScaleFactor(L"TreeMap", L"TreeMapScaleFactor", CTreemap::GetDefaultOptions().GetScaleFactorPercent(), 0, 100);
-Setting<int> COptions::TreeMapStyle(L"TreeMap", L"TreeMapStyle", CTreemap::GetDefaultOptions().style, 0, 1);
-Setting<RECT> COptions::AboutWindowRect(L"Appearance", L"AboutWindowRect");
-Setting<RECT> COptions::DriveWindowRect(L"Appearance", L"DriveWindowRect");
-Setting<std::vector<int>> COptions::DriveListColumnOrder(L"DriveSelect", L"DriveListColumnOrder");
-Setting<std::vector<int>> COptions::DriveListColumnWidths(L"DriveSelect", L"DriveListColumnWidths");
-Setting<std::vector<int>> COptions::DupeTreeColumnOrder(L"Appearance", L"DupeTreeColumnOrder");
-Setting<std::vector<int>> COptions::DupeTreeColumnWidths(L"Appearance", L"DupeTreeColumnWidths");
-Setting<std::vector<int>> COptions::FileTreeColumnOrder(L"FileTree", L"FileTreeColumnOrder");
-Setting<std::vector<int>> COptions::FileTreeColumnWidths(L"FileTree", L"FileTreeColumnWidths");
-Setting<std::vector<int>> COptions::TypesColumnOrder(L"Appearance", L"TypesColumnOrder");
-Setting<std::vector<int>> COptions::TypesColumnWidths(L"Appearance", L"TypesColumnWidths");
-Setting<std::vector<std::wstring>> COptions::SelectDrivesDrives(L"DriveSelect", L"SelectDrivesDrives");
-Setting<std::wstring> COptions::SelectDrivesFolder(L"DriveSelect", L"SelectDrivesFolder");
-Setting<WINDOWPLACEMENT> COptions::MainWindowPlacement(L"General", L"MainWindowPlacement");
+LPCWSTR COptions::OptionsGeneral = L"Options";
+LPCWSTR COptions::OptionsTreeMap = L"TreeMapView";
+LPCWSTR COptions::OptionsFileTree = L"FileTreeView";
+LPCWSTR COptions::OptionsDupeTree = L"DupeView";
+LPCWSTR COptions::OptionsExtView = L"ExtView";
+LPCWSTR COptions::OptionsDriveSelect = L"DriveSelect";
 
-CTreemap::Options COptions::TreemapOptions;
+Setting<bool> COptions::ExcludeJunctions(OptionsGeneral, L"ExcludeJunctions", true);
+Setting<bool> COptions::ExcludeSymbolicLinks(OptionsGeneral, L"ExcludeSymbolicLinks", true);
+Setting<bool> COptions::ExcludeVolumeMountPoints(OptionsGeneral, L"ExcludeVolumeMountPoints", true);
+Setting<bool> COptions::FollowVolumeMountPoints(OptionsGeneral, L"FollowVolumeMountPoints", false);
+Setting<bool> COptions::UseSizeSuffixes(OptionsGeneral, L"UseSizeSuffixes", true);
+Setting<bool> COptions::ListFullRowSelection(OptionsGeneral, L"ListFullRowSelection", true);
+Setting<bool> COptions::ListGrid(OptionsGeneral, L"ListGrid", false);
+Setting<bool> COptions::ListStripes(OptionsGeneral, L"ListStripes", false);
+Setting<bool> COptions::PacmanAnimation(OptionsGeneral, L"PacmanAnimation", true);
+Setting<bool> COptions::ScanForDuplicates(OptionsDupeTree, L"ScanForDuplicates", false);
+Setting<bool> COptions::ShowColumnAttributes(OptionsFileTree, L"ShowColumnAttributes", false);
+Setting<bool> COptions::ShowColumnFiles(OptionsFileTree, L"ShowColumnFiles", true);
+Setting<bool> COptions::ShowColumnFolders(OptionsFileTree, L"ShowColumnFolders", false);
+Setting<bool> COptions::ShowColumnItems(OptionsFileTree, L"ShowColumnItems", false);
+Setting<bool> COptions::ShowColumnLastChange(OptionsFileTree, L"ShowColumnLastChange", true);
+Setting<bool> COptions::ShowColumnOwner(OptionsFileTree, L"ShowColumnOwner", false);
+Setting<bool> COptions::ShowColumnSizeLogical(OptionsFileTree, L"ShowColumnSizeLogical", true);
+Setting<bool> COptions::ShowColumnSizePhysical(OptionsFileTree, L"ShowColumnSizePhysical", true);
+Setting<bool> COptions::ShowDeleteWarning(OptionsGeneral, L"ShowDeleteWarning", true);
+Setting<bool> COptions::ShowFileTypes(OptionsGeneral, L"ShowFileTypes", true);
+Setting<bool> COptions::ShowFreeSpace(OptionsGeneral, L"ShowFreeSpace", false);
+Setting<bool> COptions::ShowStatusBar(OptionsGeneral, L"ShowStatusBar", true);
+Setting<bool> COptions::ShowTimeSpent(OptionsFileTree, L"ShowTimeSpent", true);
+Setting<bool> COptions::ShowToolBar(OptionsGeneral, L"ShowToolBar", true);
+Setting<bool> COptions::ShowTreeMap(OptionsTreeMap, L"ShowTreeMap", true);
+Setting<bool> COptions::ShowUnknown(OptionsGeneral, L"ShowUnknown", false);
+Setting<bool> COptions::SkipDupeDetectionCloudLinks(OptionsGeneral, L"SkipDupeDetectionCloudLinks", true);
+Setting<bool> COptions::SkipHidden(OptionsGeneral, L"SkipHidden", false);
+Setting<bool> COptions::SkipProtected(OptionsGeneral, L"SkipProtected", true);
+Setting<bool> COptions::TreeMapGrid(OptionsTreeMap, L"TreeMapGrid", (CTreeMap::GetDefaults().grid));
+Setting<bool> COptions::UseBackupRestore(OptionsGeneral, L"UseBackupRestore", true);
+Setting<bool> COptions::UseFallbackLocale(OptionsGeneral, L"UseFallbackLocale", false);
+Setting<COLORREF> COptions::FileTreeColor0(OptionsFileTree, L"FileTreeColor0", RGB(64, 64, 140));
+Setting<COLORREF> COptions::FileTreeColor1(OptionsFileTree, L"FileTreeColor1", RGB(140, 64, 64));
+Setting<COLORREF> COptions::FileTreeColor2(OptionsFileTree, L"FileTreeColor2", RGB(64, 140, 64));
+Setting<COLORREF> COptions::FileTreeColor3(OptionsFileTree, L"FileTreeColor3", RGB(140, 140, 64));
+Setting<COLORREF> COptions::FileTreeColor4(OptionsFileTree, L"FileTreeColor4", RGB(0, 0, 255));
+Setting<COLORREF> COptions::FileTreeColor5(OptionsFileTree, L"FileTreeColor5", RGB(255, 0, 0));
+Setting<COLORREF> COptions::FileTreeColor6(OptionsFileTree, L"FileTreeColor6", RGB(0, 255, 0));
+Setting<COLORREF> COptions::FileTreeColor7(OptionsFileTree, L"FileTreeColor7", RGB(255, 255, 0));
+Setting<COLORREF> COptions::TreeMapGridColor(OptionsTreeMap, L"TreeMapGridColor", CTreeMap::GetDefaults().gridColor);
+Setting<COLORREF> COptions::TreeMapHighlightColor(OptionsTreeMap, L"TreeMapHighlightColor", RGB(255, 255, 255));
+Setting<double> COptions::MainSplitterPos(OptionsGeneral, L"MainSplitterPos", -1.0, 0.0, 1.0);
+Setting<double> COptions::SubSplitterPos(OptionsGeneral, L"SubSplitterPos", -1.0, 0.0, 1.0);
+Setting<int> COptions::ConfigPage(OptionsGeneral, L"ConfigPage", true);
+Setting<int> COptions::LanguageId(OptionsGeneral, L"LanguageId", 0);
+Setting<int> COptions::ScanningThreads(OptionsGeneral, L"ScanningThreads", 6, 1, 16);
+Setting<int> COptions::SelectDrivesRadio(OptionsDriveSelect, L"SelectDrivesRadio", 0, 0, 2);
+Setting<int> COptions::FileTreeColorCount(OptionsFileTree, L"FileTreeColorCount", 8);
+Setting<int> COptions::TreeMapAmbientLightPercent(OptionsTreeMap, L"TreeMapAmbientLightPercent", CTreeMap::GetDefaults().GetAmbientLightPercent(), 0, 100);
+Setting<int> COptions::TreeMapBrightness(OptionsTreeMap, L"TreeMapBrightness", CTreeMap::GetDefaults().GetBrightnessPercent(), 0, 100);
+Setting<int> COptions::TreeMapHeightFactor(OptionsTreeMap, L"TreeMapHeightFactor", CTreeMap::GetDefaults().GetHeightPercent(), 0, 100);
+Setting<int> COptions::TreeMapLightSourceX(OptionsTreeMap, L"TreeMapLightSourceX", CTreeMap::GetDefaults().GetLightSourceXPercent(), -200, 200);
+Setting<int> COptions::TreeMapLightSourceY(OptionsTreeMap, L"TreeMapLightSourceY", CTreeMap::GetDefaults().GetLightSourceYPercent(), -200, 200);
+Setting<int> COptions::TreeMapScaleFactor(OptionsTreeMap, L"TreeMapScaleFactor", CTreeMap::GetDefaults().GetScaleFactorPercent(), 0, 100);
+Setting<int> COptions::TreeMapStyle(OptionsTreeMap, L"TreeMapStyle", CTreeMap::GetDefaults().style, 0, 1);
+Setting<RECT> COptions::AboutWindowRect(OptionsGeneral, L"AboutWindowRect");
+Setting<RECT> COptions::DriveSelectWindowRect(OptionsDriveSelect, L"DriveSelectWindowRect");
+Setting<std::vector<int>> COptions::DriveListColumnOrder(OptionsDriveSelect, L"DriveListColumnOrder");
+Setting<std::vector<int>> COptions::DriveListColumnWidths(OptionsDriveSelect, L"DriveListColumnWidths");
+Setting<std::vector<int>> COptions::DupeViewColumnOrder(OptionsDupeTree, L"DupeViewColumnOrder");
+Setting<std::vector<int>> COptions::DupeViewColumnWidths(OptionsDupeTree, L"DupeViewColumnWidths");
+Setting<std::vector<int>> COptions::FileTreeColumnOrder(OptionsFileTree, L"FileTreeColumnOrder");
+Setting<std::vector<int>> COptions::FileTreeColumnWidths(OptionsFileTree, L"FileTreeColumnWidths");
+Setting<std::vector<int>> COptions::ExtViewColumnOrder(OptionsExtView, L"ExtViewColumnOrder");
+Setting<std::vector<int>> COptions::ExtViewColumnWidth(OptionsExtView, L"ExtViewColumnWidth");
+Setting<std::vector<std::wstring>> COptions::SelectDrivesDrives(OptionsDriveSelect, L"SelectDrivesDrives");
+Setting<std::wstring> COptions::SelectDrivesFolder(OptionsDriveSelect, L"SelectDrivesFolder");
+Setting<WINDOWPLACEMENT> COptions::MainWindowPlacement(OptionsGeneral, L"MainWindowPlacement");
+
+CTreeMap::Options COptions::TreeMapOptions;
 std::vector<USERDEFINEDCLEANUP> COptions::UserDefinedCleanups;
 
 void COptions::SanitizeRect(RECT& rect)
@@ -141,19 +148,19 @@ void COptions::SanitizeRect(RECT& rect)
     rect = rc;
 }
 
-void COptions::SetTreemapOptions(const CTreemap::Options& options)
+void COptions::SetTreeMapOptions(const CTreeMap::Options& options)
 {
-    TreemapOptions = options;
+    TreeMapOptions = options;
 
-    TreeMapStyle = static_cast<int>(TreemapOptions.style);
-    TreeMapGrid = TreemapOptions.grid;
-    TreeMapGridColor = TreemapOptions.gridColor;
-    TreeMapBrightness = TreemapOptions.GetBrightnessPercent();
-    TreeMapHeightFactor = TreemapOptions.GetHeightPercent();
-    TreeMapScaleFactor = TreemapOptions.GetScaleFactorPercent();
-    TreeMapAmbientLightPercent = TreemapOptions.GetAmbientLightPercent();
-    TreeMapLightSourceX = TreemapOptions.GetLightSourceXPercent();
-    TreeMapLightSourceY = TreemapOptions.GetLightSourceYPercent();
+    TreeMapStyle = static_cast<int>(TreeMapOptions.style);
+    TreeMapGrid = TreeMapOptions.grid;
+    TreeMapGridColor = TreeMapOptions.gridColor;
+    TreeMapBrightness = TreeMapOptions.GetBrightnessPercent();
+    TreeMapHeightFactor = TreeMapOptions.GetHeightPercent();
+    TreeMapScaleFactor = TreeMapOptions.GetScaleFactorPercent();
+    TreeMapAmbientLightPercent = TreeMapOptions.GetAmbientLightPercent();
+    TreeMapLightSourceX = TreeMapOptions.GetLightSourceXPercent();
+    TreeMapLightSourceY = TreeMapOptions.GetLightSourceYPercent();
 
     GetDocument()->UpdateAllViews(nullptr, HINT_TREEMAPSTYLECHANGED);
 }
@@ -173,7 +180,7 @@ void COptions::PostProcessPersistedSettings()
     // Adjust windows for sanity
     SanitizeRect(MainWindowPlacement.Obj().rcNormalPosition);
     SanitizeRect(AboutWindowRect.Obj());
-    SanitizeRect(DriveWindowRect.Obj());
+    SanitizeRect(DriveSelectWindowRect.Obj());
 
     // Setup the language for the environment
     const LANGID langid = static_cast<LANGID>(LanguageId);
@@ -186,24 +193,24 @@ void COptions::PostProcessPersistedSettings()
     Localization::LoadResource(static_cast<LANGID>(LanguageId));
 
     // Load treemap settings 
-    TreemapOptions.style = static_cast<CTreemap::STYLE>(static_cast<int>(TreeMapStyle));
-    TreemapOptions.grid = TreeMapGrid;
-    TreemapOptions.gridColor = TreeMapGridColor;
-    TreemapOptions.SetBrightnessPercent(TreeMapBrightness);
-    TreemapOptions.SetHeightPercent(TreeMapHeightFactor);
-    TreemapOptions.SetScaleFactorPercent(TreeMapScaleFactor);
-    TreemapOptions.SetAmbientLightPercent(TreeMapAmbientLightPercent);
-    TreemapOptions.SetLightSourceXPercent(TreeMapLightSourceX);
-    TreemapOptions.SetLightSourceYPercent(TreeMapLightSourceY);
+    TreeMapOptions.style = static_cast<CTreeMap::STYLE>(static_cast<int>(TreeMapStyle));
+    TreeMapOptions.grid = TreeMapGrid;
+    TreeMapOptions.gridColor = TreeMapGridColor;
+    TreeMapOptions.SetBrightnessPercent(TreeMapBrightness);
+    TreeMapOptions.SetHeightPercent(TreeMapHeightFactor);
+    TreeMapOptions.SetScaleFactorPercent(TreeMapScaleFactor);
+    TreeMapOptions.SetAmbientLightPercent(TreeMapAmbientLightPercent);
+    TreeMapOptions.SetLightSourceXPercent(TreeMapLightSourceX);
+    TreeMapOptions.SetLightSourceYPercent(TreeMapLightSourceY);
 
-    // Adjust title to language default title
+    // Adjust Title to language default Title
     for (int i = 0; i < USERDEFINEDCLEANUPCOUNT; i++)
     {
-        if (UserDefinedCleanups[i].title.Obj().empty() || UserDefinedCleanups[i].virginTitle)
+        if (UserDefinedCleanups[i].Title.Obj().empty() || UserDefinedCleanups[i].VirginTitle)
         {
             CStringW s;
             s.FormatMessage(Localization::Lookup(IDS_USERDEFINEDCLEANUPd).c_str(), i);
-            UserDefinedCleanups[i].title = std::wstring(s.GetString());
+            UserDefinedCleanups[i].Title = std::wstring(s.GetString());
         }
     }
 }

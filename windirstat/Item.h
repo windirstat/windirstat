@@ -104,7 +104,7 @@ inline bool operator==(const FILETIME& t1, const FILETIME& t2)
 // Methods which recurse down to every child (expensive) are named "RecurseDoSomething".
 // Methods which recurse up to the parent (not so expensive) are named "UpwardDoSomething".
 //
-class CItem final : public CTreeListItem, public CTreemap::Item
+class CItem final : public CTreeListItem, public CTreeMap::Item
 {
 public:
     CItem(const CItem&) = delete;
@@ -126,7 +126,7 @@ public:
     short GetImageToCache() const override;
     void DrawAdditionalState(CDC* pdc, const CRect& rcLabel) const override;
 
-    // CTreemap::Item interface
+    // CTreeMap::Item interface
     bool TmiIsLeaf() const override
     {
         return IsType(IT_FILE | IT_FREESPACE | IT_UNKNOWN);
@@ -146,7 +146,7 @@ public:
         return static_cast<int>(m_FolderInfo->m_Children.size());
     }
 
-    CTreemap::Item* TmiGetChild(const int c) const override
+    CTreeMap::Item* TmiGetChild(const int c) const override
     {
         return m_FolderInfo->m_Children[c];
     }

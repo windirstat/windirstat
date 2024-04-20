@@ -40,52 +40,52 @@ struct USERDEFINEDCLEANUP
 {
     USERDEFINEDCLEANUP() : USERDEFINEDCLEANUP(L"") {}
     USERDEFINEDCLEANUP(const std::wstring & sEntry) :
-        title(Setting<std::wstring>(sEntry, L"title", L"")),
-        commandLine(Setting<std::wstring>(sEntry, L"commandLine", L"")),
-        enabled(Setting<bool>(sEntry, L"enable", false)),
-        virginTitle(Setting<bool>(sEntry, L"virginTitle", true)),
-        worksForDrives(Setting<bool>(sEntry, L"worksForDrives", false)),
-        worksForDirectories(Setting<bool>(sEntry, L"worksForDirectories", false)),
-        worksForFiles(Setting<bool>(sEntry, L"worksForFiles", false)),
-        worksForUncPaths(Setting<bool>(sEntry, L"worksForUncPaths", false)),
-        recurseIntoSubdirectories(Setting<bool>(sEntry, L"recurseIntoSubdirectories", false)),
-        askForConfirmation(Setting<bool>(sEntry, L"askForConfirmation", false)),
-        showConsoleWindow(Setting<bool>(sEntry, L"showConsoleWindow", false)),
-        waitForCompletion(Setting<bool>(sEntry, L"waitForCompletion", false)),
-        refreshPolicy(Setting<int>(sEntry, L"refreshPolicy", 0)) {}
+        Title(Setting<std::wstring>(sEntry, L"Title", L"")),
+        CommandLine(Setting<std::wstring>(sEntry, L"CommandLine", L"")),
+        Enabled(Setting<bool>(sEntry, L"Enable", false)),
+        VirginTitle(Setting<bool>(sEntry, L"VirginTitle", true)),
+        WorksForDrives(Setting<bool>(sEntry, L"WorksForDrives", false)),
+        WorksForDirectories(Setting<bool>(sEntry, L"WorksForDirectories", false)),
+        WorksForFiles(Setting<bool>(sEntry, L"WorksForFiles", false)),
+        WorksForUncPaths(Setting<bool>(sEntry, L"WorksForUncPaths", false)),
+        RecurseIntoSubdirectories(Setting<bool>(sEntry, L"RecurseIntoSubdirectories", false)),
+        AskForConfirmation(Setting<bool>(sEntry, L"AskForConfirmation", false)),
+        ShowConsoleWindow(Setting<bool>(sEntry, L"ShowConsoleWindow", false)),
+        WaitForCompletion(Setting<bool>(sEntry, L"WaitForCompletion", false)),
+        RefreshPolicy(Setting<int>(sEntry, L"RefreshPolicy", 0)) {}
 
-    Setting<std::wstring> title;
-    Setting<std::wstring> commandLine;
-    Setting<bool> enabled;
-    Setting<bool> virginTitle;
-    Setting<bool> worksForDrives;
-    Setting<bool> worksForDirectories;
-    Setting<bool> worksForFiles;
-    Setting<bool> worksForUncPaths;
-    Setting<bool> recurseIntoSubdirectories;
-    Setting<bool> askForConfirmation;
-    Setting<bool> showConsoleWindow;
-    Setting<bool> waitForCompletion;
-    Setting<int> refreshPolicy;
+    Setting<std::wstring> Title;
+    Setting<std::wstring> CommandLine;
+    Setting<bool> Enabled;
+    Setting<bool> VirginTitle;
+    Setting<bool> WorksForDrives;
+    Setting<bool> WorksForDirectories;
+    Setting<bool> WorksForFiles;
+    Setting<bool> WorksForUncPaths;
+    Setting<bool> RecurseIntoSubdirectories;
+    Setting<bool> AskForConfirmation;
+    Setting<bool> ShowConsoleWindow;
+    Setting<bool> WaitForCompletion;
+    Setting<int> RefreshPolicy;
 
     // This will not transfer the property persistent settings but allows
     // this to be used as a generalized structure in the cleanup page
     USERDEFINEDCLEANUP(const USERDEFINEDCLEANUP& other) { *this = other; }
     USERDEFINEDCLEANUP& operator=(const USERDEFINEDCLEANUP& other)
     {
-        title = other.title.Obj();
-        commandLine = other.commandLine.Obj();
-        enabled = other.enabled.Obj();
-        virginTitle = other.virginTitle.Obj();
-        worksForDrives = other.worksForDrives.Obj();
-        worksForDirectories = other.worksForDirectories.Obj();
-        worksForFiles = other.worksForFiles.Obj();
-        worksForUncPaths = other.worksForUncPaths.Obj();
-        recurseIntoSubdirectories = other.recurseIntoSubdirectories.Obj();
-        askForConfirmation = other.askForConfirmation.Obj();
-        showConsoleWindow = other.showConsoleWindow.Obj();
-        waitForCompletion = other.waitForCompletion.Obj();
-        refreshPolicy = other.refreshPolicy.Obj();
+        Title = other.Title.Obj();
+        CommandLine = other.CommandLine.Obj();
+        Enabled = other.Enabled.Obj();
+        VirginTitle = other.VirginTitle.Obj();
+        WorksForDrives = other.WorksForDrives.Obj();
+        WorksForDirectories = other.WorksForDirectories.Obj();
+        WorksForFiles = other.WorksForFiles.Obj();
+        WorksForUncPaths = other.WorksForUncPaths.Obj();
+        RecurseIntoSubdirectories = other.RecurseIntoSubdirectories.Obj();
+        AskForConfirmation = other.AskForConfirmation.Obj();
+        ShowConsoleWindow = other.ShowConsoleWindow.Obj();
+        WaitForCompletion = other.WaitForCompletion.Obj();
+        RefreshPolicy = other.RefreshPolicy.Obj();
         return *this;
     }
 };
@@ -96,13 +96,20 @@ struct USERDEFINEDCLEANUP
 //
 class COptions
 {
+    static LPCWSTR OptionsGeneral;
+    static LPCWSTR OptionsTreeMap;
+    static LPCWSTR OptionsFileTree;
+    static LPCWSTR OptionsDupeTree;
+    static LPCWSTR OptionsExtView;
+    static LPCWSTR OptionsDriveSelect;
+
 public:
 
     static Setting<bool> ExcludeJunctions;
     static Setting<bool> ExcludeSymbolicLinks;
     static Setting<bool> ExcludeVolumeMountPoints;
     static Setting<bool> FollowVolumeMountPoints;
-    static Setting<bool> HumanFormat;
+    static Setting<bool> UseSizeSuffixes;
     static Setting<bool> ListFullRowSelection;
     static Setting<bool> ListGrid;
     static Setting<bool> ListStripes;
@@ -119,10 +126,10 @@ public:
     static Setting<bool> ShowDeleteWarning;
     static Setting<bool> ShowFileTypes;
     static Setting<bool> ShowFreeSpace;
-    static Setting<bool> ShowStatusbar;
+    static Setting<bool> ShowStatusBar;
     static Setting<bool> ShowTimeSpent;
-    static Setting<bool> ShowToolbar;
-    static Setting<bool> ShowTreemap;
+    static Setting<bool> ShowToolBar;
+    static Setting<bool> ShowTreeMap;
     static Setting<bool> ShowUnknown;
     static Setting<bool> SkipDupeDetectionCloudLinks;
     static Setting<bool> SkipHidden;
@@ -156,27 +163,27 @@ public:
     static Setting<int> TreeMapScaleFactor;
     static Setting<int> TreeMapStyle;
     static Setting<RECT> AboutWindowRect;
-    static Setting<RECT> DriveWindowRect;
+    static Setting<RECT> DriveSelectWindowRect;
     static Setting<std::vector<int>> DriveListColumnOrder;
     static Setting<std::vector<int>> DriveListColumnWidths;
-    static Setting<std::vector<int>> DupeTreeColumnOrder;
-    static Setting<std::vector<int>> DupeTreeColumnWidths;
+    static Setting<std::vector<int>> DupeViewColumnOrder;
+    static Setting<std::vector<int>> DupeViewColumnWidths;
     static Setting<std::vector<int>> FileTreeColumnOrder;
     static Setting<std::vector<int>> FileTreeColumnWidths;
-    static Setting<std::vector<int>> TypesColumnOrder;
-    static Setting<std::vector<int>> TypesColumnWidths;
+    static Setting<std::vector<int>> ExtViewColumnOrder;
+    static Setting<std::vector<int>> ExtViewColumnWidth;
     static Setting<std::vector<std::wstring>> SelectDrivesDrives;
     static Setting<std::wstring> SelectDrivesFolder;
     static Setting<WINDOWPLACEMENT> MainWindowPlacement;
 
-    static CTreemap::Options TreemapOptions;
+    static CTreeMap::Options TreeMapOptions;
     static std::vector<USERDEFINEDCLEANUP> UserDefinedCleanups;
 
     static void SanitizeRect(RECT& rect);
     static void LoadAppSettings();
     static void PreProcessPersistedSettings();
     static void PostProcessPersistedSettings();
-    static void SetTreemapOptions(const CTreemap::Options& options);
+    static void SetTreeMapOptions(const CTreeMap::Options& options);
 
     static LANGID GetFallbackLanguage();
     static LANGID GetEffectiveLangId();

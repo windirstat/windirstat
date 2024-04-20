@@ -32,7 +32,7 @@
 #include <execution>
 #include <ranges>
 
-CFileDupeControl::CFileDupeControl() : CTreeListControl(20, COptions::DupeTreeColumnOrder.Ptr(), COptions::DupeTreeColumnWidths.Ptr())
+CFileDupeControl::CFileDupeControl() : CTreeListControl(20, COptions::DupeViewColumnOrder.Ptr(), COptions::DupeViewColumnWidths.Ptr())
 {
     m_Singleton = this;
 }

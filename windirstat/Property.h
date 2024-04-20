@@ -87,7 +87,7 @@ public:
 
     // Copy assignment operators
     T operator=(T other) { return (m_Value = other); }
-    T operator=(Setting<T> other) { return (m_Value = other._value); }
+    T operator=(Setting<T> other) { return (m_Value = other.m_Value); }
 
     // Math operators
     T operator++() { return ++m_Value; }
@@ -120,5 +120,5 @@ public:
     ~Setting<T>() override = default;
 
     // Move constructor to allow for use in dynamic containers
-    Setting(Setting&& other) noexcept : Setting(other._section, other._entry, other._value, other._min, other._max) {}
+    Setting(Setting&& other) noexcept : Setting(other.m_Section, other.m_Entry, other.m_Value, other.m_Min, other.m_Max) {}
 };

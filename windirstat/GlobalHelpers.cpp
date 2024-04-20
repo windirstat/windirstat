@@ -116,16 +116,16 @@ std::wstring GetLocaleDecimalSeparator()
 
 std::wstring FormatBytes(const ULONGLONG& n)
 {
-    if (COptions::HumanFormat)
+    if (COptions::UseSizeSuffixes)
     {
-        return FormatLongLongHuman(n);
+        return FormatSizeSuffixes(n);
     }
 
     return FormatLongLongNormal(n);
 
 }
 
-std::wstring FormatLongLongHuman(ULONGLONG n)
+std::wstring FormatSizeSuffixes(ULONGLONG n)
 {
     // Returns formatted number like "12,4 GB".
     ASSERT(n >= 0);

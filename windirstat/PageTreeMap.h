@@ -47,12 +47,12 @@ protected:
     BOOL OnInitDialog() override;
     void OnOK() override;
 
-    CTreemap::Options m_Options; // Current options
+    CTreeMap::Options m_Options; // Current options
 
     bool m_Altered = false;   // Values have been altered. Button reads "Reset to defaults".
-    CTreemap::Options m_Undo; // Valid, if m_Altered = false
+    CTreeMap::Options m_Undo; // Valid, if m_Altered = false
 
-    CTreemapPreview m_Preview;
+    CTreeMapPreview m_Preview;
 
     int m_Style = 0;
     CColorButton m_HighlightColor;
@@ -81,8 +81,8 @@ protected:
     CButton m_ResetButton;
 
     DECLARE_MESSAGE_MAP()
-    afx_msg void OnColorChangedTreemapGrid(NMHDR*, LRESULT*);
-    afx_msg void OnColorChangedTreemapHighlight(NMHDR*, LRESULT*);
+    afx_msg void OnColorChangedTreeMapGrid(NMHDR*, LRESULT*);
+    afx_msg void OnColorChangedTreeMapHighlight(NMHDR*, LRESULT*);
     afx_msg void OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
     afx_msg void OnLightSourceChanged(NMHDR*, LRESULT*);
     afx_msg void OnSetModified();

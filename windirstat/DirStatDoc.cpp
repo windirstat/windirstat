@@ -293,7 +293,7 @@ void CDirStatDoc::SetPathName(LPCWSTR lpszPathName, BOOL /*bAddToMRU*/)
     ASSERT_VALID(this);
 }
 
-// Prefix the window title (with percentage or "Scanning")
+// Prefix the window Title (with percentage or "Scanning")
 //
 void CDirStatDoc::SetTitlePrefix(const std::wstring& prefix) const
 {
@@ -405,10 +405,10 @@ void CDirStatDoc::UnlinkRoot()
 bool CDirStatDoc::UserDefinedCleanupWorksForItem(USERDEFINEDCLEANUP* udc, const CItem* item)
 {
     return item != nullptr &&
-        (item->IsType(IT_DRIVE) && udc->worksForDrives) ||
-        (item->IsType(IT_DIRECTORY) && udc->worksForDirectories) ||
-        (item->IsType(IT_FILE) && udc->worksForFiles) ||
-        (item->HasUncPath() && udc->worksForUncPaths);
+        (item->IsType(IT_DRIVE) && udc->WorksForDrives) ||
+        (item->IsType(IT_DIRECTORY) && udc->WorksForDirectories) ||
+        (item->IsType(IT_FILE) && udc->WorksForFiles) ||
+        (item->HasUncPath() && udc->WorksForUncPaths);
 }
 
 void CDirStatDoc::OpenItem(const CItem* item, const std::wstring & verb)
@@ -564,7 +564,7 @@ void CDirStatDoc::SetExtensionColors(const std::vector<std::wstring>& sortedExte
 
     if (colors.empty())
     {
-        CTreemap::GetDefaultPalette(colors);
+        CTreeMap::GetDefaultPalette(colors);
     }
 
     for (std::size_t i = 0; i < sortedExtensions.size(); i++)
@@ -632,14 +632,14 @@ void CDirStatDoc::RefreshItem(const std::vector<CItem*>& item)
 //
 void CDirStatDoc::AskForConfirmation(USERDEFINEDCLEANUP* udc, const CItem* item)
 {
-    if (!udc->askForConfirmation)
+    if (!udc->AskForConfirmation)
     {
         return;
     }
 
     CStringW msg;
-    msg.FormatMessage(udc->recurseIntoSubdirectories ? Localization::Lookup(IDS_RUDC_CONFIRMATIONss).c_str() :
-        Localization::Lookup(IDS_UDC_CONFIRMATIONss).c_str(), udc->title.Obj().c_str(), item->GetPath().c_str());
+    msg.FormatMessage(udc->RecurseIntoSubdirectories ? Localization::Lookup(IDS_RUDC_CONFIRMATIONss).c_str() :
+        Localization::Lookup(IDS_UDC_CONFIRMATIONss).c_str(), udc->Title.Obj().c_str(), item->GetPath().c_str());
 
     if (IDYES != AfxMessageBox(msg, MB_YESNO))
     {
@@ -671,7 +671,7 @@ void CDirStatDoc::PerformUserDefinedCleanup(USERDEFINEDCLEANUP* udc, const CItem
         }
     }
 
-    if (udc->recurseIntoSubdirectories)
+    if (udc->RecurseIntoSubdirectories)
     {
         ASSERT(item->IsType(IT_DRIVE | IT_DIRECTORY));
 
@@ -679,13 +679,13 @@ void CDirStatDoc::PerformUserDefinedCleanup(USERDEFINEDCLEANUP* udc, const CItem
     }
     else
     {
-        CallUserDefinedCleanup(item->IsType(IT_DIRECTORY | IT_DRIVE), udc->commandLine.Obj(), path, path, udc->showConsoleWindow, udc->waitForCompletion);
+        CallUserDefinedCleanup(item->IsType(IT_DIRECTORY | IT_DRIVE), udc->CommandLine.Obj(), path, path, udc->ShowConsoleWindow, udc->WaitForCompletion);
     }
 }
 
 void CDirStatDoc::RefreshAfterUserDefinedCleanup(const USERDEFINEDCLEANUP* udc, CItem* item)
 {
-    switch (static_cast<REFRESHPOLICY>(udc->refreshPolicy.Obj()))
+    switch (static_cast<REFRESHPOLICY>(udc->RefreshPolicy.Obj()))
     {
     case RP_NO_REFRESH:
         break;
@@ -730,7 +730,7 @@ void CDirStatDoc::RecursiveUserDefinedCleanup(USERDEFINEDCLEANUP* udc, const std
         RecursiveUserDefinedCleanup(udc, rootPath, finder.GetFilePath());
     }
 
-    CallUserDefinedCleanup(true, udc->commandLine.Obj(), rootPath, currentPath, udc->showConsoleWindow, true);
+    CallUserDefinedCleanup(true, udc->CommandLine.Obj(), rootPath, currentPath, udc->ShowConsoleWindow, true);
 }
 
 void CDirStatDoc::CallUserDefinedCleanup(const bool isDirectory, const std::wstring& format, const std::wstring& rootPath, const std::wstring& currentPath, const bool showConsoleWindow, const bool wait)
@@ -907,16 +907,16 @@ BEGIN_MESSAGE_MAP(CDirStatDoc, CDocument)
     ON_COMMAND(ID_VIEW_SHOWFREESPACE, OnViewShowFreeSpace)
     ON_UPDATE_COMMAND_UI(ID_VIEW_SHOWUNKNOWN, OnUpdateViewShowUnknown)
     ON_COMMAND(ID_VIEW_SHOWUNKNOWN, OnViewShowUnknown)
-    ON_COMMAMD_UPDATE_WRAPPER(ID_TREEMAP_ZOOMIN, OnTreemapZoomIn)
-    ON_COMMAMD_UPDATE_WRAPPER(ID_TREEMAP_ZOOMOUT, OnTreemapZoomOut)
+    ON_COMMAMD_UPDATE_WRAPPER(ID_TREEMAP_ZOOMIN, OnTreeMapZoomIn)
+    ON_COMMAMD_UPDATE_WRAPPER(ID_TREEMAP_ZOOMOUT, OnTreeMapZoomOut)
     ON_COMMAMD_UPDATE_WRAPPER(ID_CLEANUP_EXPLORER_SELECT, OnExplorerSelect)
     ON_COMMAMD_UPDATE_WRAPPER(ID_CLEANUP_OPEN_IN_CONSOLE, OnCommandPromptHere)
     ON_COMMAMD_UPDATE_WRAPPER(ID_CLEANUP_DELETE_BIN, OnCleanupDeleteToBin)
     ON_COMMAMD_UPDATE_WRAPPER(ID_CLEANUP_DELETE, OnCleanupDelete)
     ON_UPDATE_COMMAND_UI_RANGE(ID_USERDEFINEDCLEANUP0, ID_USERDEFINEDCLEANUP9, OnUpdateUserDefinedCleanup)
     ON_COMMAND_RANGE(ID_USERDEFINEDCLEANUP0, ID_USERDEFINEDCLEANUP9, OnUserDefinedCleanup)
-    ON_COMMAMD_UPDATE_WRAPPER(ID_TREEMAP_SELECT_PARENT, OnTreemapSelectParent)
-    ON_COMMAMD_UPDATE_WRAPPER(ID_TREEMAP_RESELECT_CHILD, OnTreemapReselectChild)
+    ON_COMMAMD_UPDATE_WRAPPER(ID_TREEMAP_SELECT_PARENT, OnTreeMapSelectParent)
+    ON_COMMAMD_UPDATE_WRAPPER(ID_TREEMAP_RESELECT_CHILD, OnTreeMapReselectChild)
     ON_COMMAMD_UPDATE_WRAPPER(ID_CLEANUP_OPEN_SELECTED, OnCleanupOpenTarget)
     ON_COMMAMD_UPDATE_WRAPPER(ID_CLEANUP_PROPERTIES, OnCleanupProperties)
     ON_COMMAMD_UPDATE_WRAPPER(ID_SCAN_RESUME, OnScanResume)
@@ -1054,7 +1054,7 @@ void CDirStatDoc::OnViewShowUnknown()
     StartupCoordinator({});
 }
 
-void CDirStatDoc::OnTreemapZoomIn()
+void CDirStatDoc::OnTreeMapZoomIn()
 {
     const auto & item = CFileTreeControl::Get()->GetFirstSelectedItem<CItem>();
     if (item != nullptr)
@@ -1063,7 +1063,7 @@ void CDirStatDoc::OnTreemapZoomIn()
     }
 }
 
-void CDirStatDoc::OnTreemapZoomOut()
+void CDirStatDoc::OnTreeMapZoomOut()
 {
     if (GetZoomItem() != nullptr)
     {
@@ -1159,7 +1159,7 @@ void CDirStatDoc::OnUpdateUserDefinedCleanup(CCmdUI* pCmdUI)
 {
     const int i = pCmdUI->m_nID - ID_USERDEFINEDCLEANUP0;
     const auto & items = GetAllSelected();
-    bool allowControl = DirectoryListHasFocus() && COptions::UserDefinedCleanups.at(i).enabled && !items.empty();
+    bool allowControl = DirectoryListHasFocus() && COptions::UserDefinedCleanups.at(i).Enabled && !items.empty();
     if (allowControl) for (const auto & item : items)
     {
         allowControl &= UserDefinedCleanupWorksForItem(&COptions::UserDefinedCleanups[i], item);
@@ -1198,7 +1198,7 @@ void CDirStatDoc::OnUserDefinedCleanup(const UINT id)
     }
 }
 
-void CDirStatDoc::OnTreemapSelectParent()
+void CDirStatDoc::OnTreeMapSelectParent()
 {
     const auto & item = CFileTreeControl::Get()->GetFirstSelectedItem<CItem>();
     PushReselectChild(item);
@@ -1206,7 +1206,7 @@ void CDirStatDoc::OnTreemapSelectParent()
     UpdateAllViews(nullptr, HINT_SELECTIONREFRESH);
 }
 
-void CDirStatDoc::OnTreemapReselectChild()
+void CDirStatDoc::OnTreeMapReselectChild()
 {
     const CItem* item = PopReselectChild();
     CFileTreeControl::Get()->SelectItem(item, true, true);

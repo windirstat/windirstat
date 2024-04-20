@@ -74,8 +74,8 @@ void CExtensionListControl::CListItem::DrawColor(CDC* pdc, CRect rc, const UINT 
         return;
     }
 
-    CTreemap treemap;
-    treemap.DrawColorPreview(pdc, rc, m_Record.color, &COptions::TreemapOptions);
+    CTreeMap treemap;
+    treemap.DrawColorPreview(pdc, rc, m_Record.color, &COptions::TreeMapOptions);
 }
 
 std::wstring CExtensionListControl::CListItem::GetText(const int subitem) const
@@ -171,7 +171,7 @@ END_MESSAGE_MAP()
 #pragma warning(pop)
 
 CExtensionListControl::CExtensionListControl(CExtensionView* extensionView)
-    : COwnerDrawnListControl(19, COptions::TypesColumnOrder.Ptr(), COptions::TypesColumnWidths.Ptr()) // FIXME: Harcoded value
+    : COwnerDrawnListControl(19, COptions::ExtViewColumnOrder.Ptr(), COptions::ExtViewColumnWidth.Ptr()) // FIXME: Harcoded value
     , m_ExtensionView(extensionView) {}
 
 bool CExtensionListControl::GetAscendingDefault(const int subitem)

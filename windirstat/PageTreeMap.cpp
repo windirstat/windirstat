@@ -86,8 +86,8 @@ void CPageTreeMap::DoDataExchange(CDataExchange* pDX)
 
 BEGIN_MESSAGE_MAP(CPageTreeMap, CPropertyPage)
     ON_WM_VSCROLL()
-    ON_NOTIFY(COLBN_CHANGED, IDC_TREEMAPGRIDCOLOR, OnColorChangedTreemapGrid)
-    ON_NOTIFY(COLBN_CHANGED, IDC_TREEMAPHIGHLIGHTCOLOR, OnColorChangedTreemapHighlight)
+    ON_NOTIFY(COLBN_CHANGED, IDC_TREEMAPGRIDCOLOR, OnColorChangedTreeMapGrid)
+    ON_NOTIFY(COLBN_CHANGED, IDC_TREEMAPHIGHLIGHTCOLOR, OnColorChangedTreeMapHighlight)
     ON_BN_CLICKED(IDC_KDIRSTAT, OnSetModified)
     ON_BN_CLICKED(IDC_SEQUOIAVIEW, OnSetModified)
     ON_BN_CLICKED(IDC_TREEMAPGRID, OnSetModified)
@@ -110,7 +110,7 @@ BOOL CPageTreeMap::OnInitDialog()
     m_ScaleFactor.SetPageSize(10);
     m_LightSource.SetRange(CSize(400, 400));
 
-    m_Options = COptions::TreemapOptions;
+    m_Options = COptions::TreeMapOptions;
     m_HighlightColor.SetColor(COptions::TreeMapHighlightColor);
 
     UpdateData(false);
@@ -122,7 +122,7 @@ void CPageTreeMap::OnOK()
 {
     UpdateData();
 
-    COptions::SetTreemapOptions(m_Options);
+    COptions::SetTreeMapOptions(m_Options);
     COptions::TreeMapHighlightColor = m_HighlightColor.GetColor();
     GetDocument()->UpdateAllViews(nullptr, HINT_SELECTIONSTYLECHANGED);
 
@@ -138,7 +138,7 @@ void CPageTreeMap::UpdateOptions(const bool save)
         m_Options.SetHeightPercent(c_MaxHeight - m_NHeight);
         m_Options.SetScaleFactorPercent(100 - m_NScaleFactor);
         m_Options.SetLightSourcePoint(m_PtLightSource);
-        m_Options.style = m_Style == 0 ? CTreemap::KDirStatStyle : CTreemap::SequoiaViewStyle;
+        m_Options.style = m_Style == 0 ? CTreeMap::KDirStatStyle : CTreeMap::SequoiaViewStyle;
         m_Options.grid = FALSE != m_Grid;
         m_Options.gridColor = m_GridColor.GetColor();
     }
@@ -149,7 +149,7 @@ void CPageTreeMap::UpdateOptions(const bool save)
         m_NHeight = c_MaxHeight - m_Options.GetHeightPercent();
         m_NScaleFactor = 100 - m_Options.GetScaleFactorPercent();
         m_PtLightSource = m_Options.GetLightSourcePoint();
-        m_Style = m_Options.style == CTreemap::KDirStatStyle ? 0 : 1;
+        m_Style = m_Options.style == CTreeMap::KDirStatStyle ? 0 : 1;
         m_Grid = m_Options.grid;
         m_GridColor.SetColor(m_Options.gridColor);
     }
@@ -177,13 +177,13 @@ void CPageTreeMap::ValuesAltered(const bool altered)
     m_ResetButton.SetWindowText(s.c_str());
 }
 
-void CPageTreeMap::OnColorChangedTreemapGrid(NMHDR*, LRESULT* result)
+void CPageTreeMap::OnColorChangedTreeMapGrid(NMHDR*, LRESULT* result)
 {
     *result = 0;
     OnSomethingChanged();
 }
 
-void CPageTreeMap::OnColorChangedTreemapHighlight(NMHDR*, LRESULT* result)
+void CPageTreeMap::OnColorChangedTreeMapHighlight(NMHDR*, LRESULT* result)
 {
     *result = 0;
     OnSomethingChanged();
@@ -208,10 +208,10 @@ void CPageTreeMap::OnSetModified()
 
 void CPageTreeMap::OnBnClickedReset()
 {
-    CTreemap::Options o;
+    CTreeMap::Options o;
     if (m_Altered)
     {
-        o = CTreemap::GetDefaultOptions();
+        o = CTreeMap::GetDefaults();
         m_Undo = m_Options;
     }
     else
