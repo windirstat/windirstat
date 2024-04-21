@@ -20,7 +20,6 @@
 
 #include "stdafx.h"
 #include "WinDirStat.h"
-#include "Options.h"
 #include "SortingListControl.h"
 
 /////////////////////////////////////////////////////////////////////////////

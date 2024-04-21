@@ -22,15 +22,15 @@
 
 #include "stdafx.h"
 #include "WinDirStat.h"
+
 #include <common/MdExceptions.h>
 #include <common/CommonHelpers.h>
 #include "MainFrame.h"
-#include "selectdrivesdlg.h"
+#include "SelectDrivesDlg.h"
 #include "AboutDlg.h"
 #include "DirStatDoc.h"
 #include "TreeMapView.h"
 #include "GlobalHelpers.h"
-#include "Item.h"
 #include "Localization.h"
 #include "SmartPointer.h"
 
@@ -82,9 +82,8 @@ void CDirStatApp::RestartApplication()
 
     if (const BOOL success = CreateProcess(GetAppFileName().c_str(), nullptr, nullptr, nullptr, false, CREATE_SUSPENDED, nullptr, nullptr, &si, &pi); !success)
     {
-        CStringW s;
-        s.FormatMessage(Localization::Lookup(IDS_CREATEPROCESSsFAILEDs).c_str(), GetAppFileName().c_str(), MdGetWinErrorText(::GetLastError()).c_str());
-        AfxMessageBox(s);
+        AfxMessageBox(Localization::Format(IDS_CREATEPROCESSsFAILEDs,
+            GetAppFileName(), MdGetWinErrorText(::GetLastError())).c_str());
         return;
     }
 
@@ -108,7 +107,7 @@ std::tuple<ULONGLONG, ULONGLONG> CDirStatApp::GetFreeDiskSpace(const std::wstrin
 
     if (GetDiskFreeSpaceEx(pszRootPath.c_str(), nullptr, &u64total, &u64free) == 0)
     {
-        VTRACE(L"GetDiskFreeSpaceEx(%s) failed.", pszRootPath.c_str());
+        VTRACE(L"GetDiskFreeSpaceEx({}) failed.", pszRootPath.c_str());
     }
 
     ASSERT(u64free.QuadPart <= u64total.QuadPart);
@@ -174,10 +173,8 @@ std::wstring CDirStatApp::GetCurrentProcessMemoryInfo()
         return wds::strEmpty;
     }
 
-    static std::wstring memformat = L"    " + Localization::Lookup(IDS_RAMUSAGEs);
-    CStringW formatted;
-    formatted.FormatMessage(memformat.c_str(), FormatBytes(pmc.WorkingSetSize).c_str());
-    return formatted.GetString();
+    static std::wstring memformat = L"     " + Localization::Lookup(IDS_RAMUSAGEs);
+    return Localization::Format(memformat, FormatBytes(pmc.WorkingSetSize));
 }
 
 bool CDirStatApp::InPortableMode() const
@@ -364,7 +361,7 @@ void CDirStatApp::OnRunElevated()
 
     if (!::ShellExecuteEx(&shellInfo))
     {
-        VTRACE(L"ShellExecuteEx failed to elevate %d", GetLastError());
+        VTRACE(L"ShellExecuteEx failed to elevate: {:#08X}", GetLastError());
     }
 }
 

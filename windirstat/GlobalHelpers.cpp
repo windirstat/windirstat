@@ -24,15 +24,13 @@
 #include "WinDirStat.h"
 #include <common/MdExceptions.h>
 #include <common/SmartPointer.h>
-#include <common/CommonHelpers.h>
 #include "GlobalHelpers.h"
 #include "Options.h"
 #include "Localization.h"
+#include "FileFind.h"
 
 #include <array>
 #include <algorithm>
-
-#include "FileFind.h"
 
 #pragma comment(lib, "bcrypt.lib")
 #pragma comment(lib, "crypt32.lib")
@@ -49,20 +47,11 @@ namespace
 
         do
         {
-            const int rest = static_cast<int>(n % 1000);
+            const auto rest = n % 1000;
             n /= 1000;
 
-            CStringW s;
-            if (n > 0)
-            {
-                s.Format(L"%s%03d", GetLocaleThousandSeparator().c_str(), rest);
-            }
-            else
-            {
-                s.Format(L"%d", rest);
-            }
-
-            all = s.GetString() + all;
+            all.insert(0, (n <= 0) ? std::to_wstring(rest) :
+                std::format(L"{}{:03}", GetLocaleThousandSeparator(), rest));
         }
         while (n > 0);
 
@@ -131,8 +120,6 @@ std::wstring FormatSizeSuffixes(ULONGLONG n)
     ASSERT(n >= 0);
     constexpr int base = 1024;
     constexpr int half = base / 2;
-
-    CStringW s;
 
     const double B = static_cast<int>(n % base);
     n /= base;
@@ -275,24 +262,16 @@ std::wstring FormatAttributes(const DWORD attr)
 
 std::wstring FormatMilliseconds(const ULONGLONG ms)
 {
-    CStringW ret;
     const ULONGLONG sec = (ms + 500) / 1000;
 
     const ULONGLONG s   = sec % 60;
     const ULONGLONG min = sec / 60;
 
     const ULONGLONG m = min % 60;
+    const ULONGLONG h = min / 60;
 
-
-    if (const ULONGLONG h = min / 60; h > 0)
-    {
-        ret.Format(L"%I64u:%02I64u:%02I64u", h, m, s);
-    }
-    else
-    {
-        ret.Format(L"%I64u:%02I64u", m, s);
-    }
-    return ret.GetString();
+    return (h <= 0) ? std::format(L"{}:{:02}", m, s) :
+        std::format(L"{}:{:02}:{:02}", h, m, s);
 }
 
 bool GetVolumeName(const std::wstring & rootPath, std::wstring& volumeName)
@@ -304,7 +283,7 @@ bool GetVolumeName(const std::wstring & rootPath, std::wstring& volumeName)
 
     if (!success)
     {
-        VTRACE(L"GetVolumeInformation(%s) failed: %u", rootPath.c_str(), ::GetLastError());
+        VTRACE(L"GetVolumeInformation({}) failed: {}", rootPath.c_str(), ::GetLastError());
     }
 
     return success;
@@ -387,9 +366,8 @@ void GetPidlOfMyComputer(LPITEMIDLIST* ppidl)
 
 std::wstring GetFolderNameFromPath(const std::wstring & path)
 {
-    std::wstring s  = path;
-    const auto i = s.find_last_of(wds::chrBackslash);
-    return i == std::wstring::npos ? s : s.substr(0, i);
+    const auto i = path.find_last_of(wds::chrBackslash);
+    return i == std::wstring::npos ? path : path.substr(0, i);
 }
 
 std::wstring GetCOMSPEC()
@@ -499,7 +477,7 @@ std::wstring MyQueryDosDevice(const std::wstring & drive)
     std::array<WCHAR, 512> info;
     if (::QueryDosDevice(d.c_str(), info.data(), static_cast<DWORD>(info.size())) == 0)
     {
-        VTRACE(L"QueryDosDevice(%s) failed: %s", d.c_str(), MdGetWinErrorText(::GetLastError()).c_str());
+        VTRACE(L"QueryDosDevice({}) failed: {}", d.c_str(), MdGetWinErrorText(::GetLastError()).c_str());
         return {};
     }
 

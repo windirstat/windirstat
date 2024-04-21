@@ -20,10 +20,8 @@
 //
 
 #include "stdafx.h"
-#include "WinDirStat.h"
-#include "MainFrame.h" // COptionsPropertySheet
+#include "MainFrame.h"
 #include "PageAdvanced.h"
-
 #include "DirStatDoc.h"
 #include "Options.h"
 #include "Localization.h"

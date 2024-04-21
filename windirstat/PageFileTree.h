@@ -21,8 +21,8 @@
 
 #pragma once
 
+#include "WinDirStat.h"
 #include "ColorButton.h"
-#include "afxcmn.h"
 
 //
 // CPageFileTree. "Settings" property page "Treelist".

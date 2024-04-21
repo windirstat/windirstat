@@ -21,6 +21,9 @@
 
 #pragma once
 
+#include "WinDirStat.h"
+#include "ModalApiShuttle.h"
+
 //
 // CModalApiShuttle. (Base class for CModalShellApi and CModalSendMail.)
 //

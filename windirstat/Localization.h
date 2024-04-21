@@ -21,11 +21,11 @@
 #pragma once
 
 #include "stdafx.h"
+#include "Options.h"
 
 #include <string>
 #include <unordered_map>
-
-#include "Options.h"
+#include <format>
 
 class Localization
 {
@@ -37,6 +37,7 @@ public:
     static constexpr auto MAX_VALUE_SIZE = 1024;
     static constexpr auto LANG_RESOURCE_TYPE = L"RT_LANG";
     static std::unordered_map<std::wstring, std::wstring> m_Map;
+    static std::unordered_map<UINT, std::wstring> m_MapInt;
 
     static bool Contains(const std::wstring& name)
     {
@@ -44,23 +45,39 @@ public:
         return m_Map.contains(name);
     }
 
-    static std::wstring Lookup(const UINT res, const std::wstring& def = std::wstring())
+    static std::wstring & Lookup(const UINT res, const std::wstring& def = std::wstring())
     {
+        // return from cache if already looked up
+        if (m_MapInt.contains(res)) return m_MapInt[res];
+
         CStringW name;
-        name.LoadStringW(nullptr, res, static_cast<LANGID>(COptions::LanguageId.Obj()));
-        return Lookup(name.GetString(), def);
+        (void) name.LoadStringW(nullptr, res, static_cast<LANGID>(COptions::LanguageId.Obj()));
+        m_MapInt.emplace(res, Lookup(name.GetString(), def));
+        return m_MapInt.at(res);
     }
 
     static std::wstring Lookup(const std::wstring& name, const std::wstring & def = std::wstring())
     {
-        return Contains(name) ? std::wstring{ m_Map[name].c_str() } : def;
+        return Contains(name) ? m_Map[name] : def;
     }
 
     static std::wstring LookupNeutral(const UINT res)
     {
         CStringW name;
-        name.LoadStringW(nullptr, res, MAKELANGID(LANG_NEUTRAL,SUBLANG_NEUTRAL));
+        (void) name.LoadStringW(nullptr, res, MAKELANGID(LANG_NEUTRAL,SUBLANG_NEUTRAL));
         return name.GetString();
+    }
+
+    template <typename... Args>
+    static std::wstring Format(std::wstring_view format, const Args&... args)
+    {
+        return std::vformat(format, std::make_wformat_args(args...));
+    }
+
+    template <typename... Args>
+    static std::wstring Format(UINT res, const Args&... args)
+    {
+        return std::vformat(Lookup(res), std::make_wformat_args(args...));
     }
 
     static void UpdateMenu(CMenu& menu);

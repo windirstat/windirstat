@@ -24,7 +24,6 @@
 #include "PacMan.h"
 #include "Item.h"
 #include "FileTabbedView.h"
-#include <common/Constants.h>
 
 #include <functional>
 

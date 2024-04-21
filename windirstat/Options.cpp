@@ -208,9 +208,7 @@ void COptions::PostProcessPersistedSettings()
     {
         if (UserDefinedCleanups[i].Title.Obj().empty() || UserDefinedCleanups[i].VirginTitle)
         {
-            CStringW s;
-            s.FormatMessage(Localization::Lookup(IDS_USERDEFINEDCLEANUPd).c_str(), i);
-            UserDefinedCleanups[i].Title = std::wstring(s.GetString());
+            UserDefinedCleanups[i].Title = Localization::Format(IDS_USERDEFINEDCLEANUPd, i);
         }
     }
 }

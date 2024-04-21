@@ -20,10 +20,12 @@
 //
 
 #include "stdafx.h"
+
 #include <common/MdExceptions.h>
 #include <common/Constants.h>
 #include <common/CommonHelpers.h>
 
+#include <format>
 #include <map>
 #include <sddl.h>
 #include <string>
@@ -46,7 +48,8 @@ BOOL ShellExecuteThrow(HWND hwnd, const std::wstring & lpVerb, const std::wstrin
     const BOOL bResult = ::ShellExecuteEx(&sei);
     if (!bResult)
     {
-        MdThrowStringExceptionF(L"ShellExecute failed: %1!s!", MdGetWinErrorText(::GetLastError()).c_str());
+        MdThrowStringException(std::format(L"ShellExecute failed: {}",
+            MdGetWinErrorText(static_cast<DWORD>(::GetLastError()))));
     }
     return bResult;
 }
@@ -128,8 +131,7 @@ std::wstring GetNameFromSid(const PSID sid)
     else
     {
         // generate full name in domain\name format
-        nameMap[sidCopy] = std::wstring(domainName) +
-            L"\\" + std::wstring(accountName);
+        nameMap[sidCopy] = std::format(L"{}\\{}", domainName, accountName);
     }
 
     // return name

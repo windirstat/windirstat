@@ -24,7 +24,6 @@
 #include "DirStatDoc.h"
 #include "Item.h"
 #include "MainFrame.h"
-#include <common/CommonHelpers.h>
 #include "FileTreeView.h"
 #include "Localization.h"
 

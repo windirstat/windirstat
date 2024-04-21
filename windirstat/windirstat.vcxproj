@@ -169,7 +169,7 @@
       <OutputFile>$(OutDir)WinDirStat64D.exe</OutputFile>
       <TargetMachine>MachineX64</TargetMachine>
       <AdditionalOptions>/pdbaltpath:%_PDB% /nodefaultlib:libcmt %(AdditionalOptions)</AdditionalOptions>
-      <Profile>true</Profile>
+      <Profile>false</Profile>
     </Link>
     <PreBuildEvent>
       <Command>
@@ -336,7 +336,6 @@
   <ItemGroup>
     <ClCompile Include="..\common\CommonHelpers.cpp">
     </ClCompile>
-    <ClCompile Include="..\common\Tracer.cpp" />
     <ClCompile Include="ExtensionListControl.cpp" />
     <ClCompile Include="CsvLoader.cpp" />
     <ClCompile Include="DirStatDoc.cpp">

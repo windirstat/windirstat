@@ -36,9 +36,9 @@
 #include "PageTreeMap.h"
 #include "PageGeneral.h"
 #include "MainFrame.h"
-
 #include <common/MdExceptions.h>
 
+#include <format>
 #include <functional>
 #include <unordered_map>
 
@@ -397,7 +397,7 @@ LRESULT CMainFrame::OnTaskButtonCreated(WPARAM, LPARAM)
         const HRESULT hr = ::CoCreateInstance(CLSID_TaskbarList, nullptr, CLSCTX_ALL, IID_ITaskbarList3, reinterpret_cast<LPVOID*>(&m_TaskbarList));
         if (FAILED(hr))
         {
-            VTRACE(L"CoCreateInstance(CLSID_TaskbarList, nullptr, CLSCTX_ALL) failed %08X", hr);
+            VTRACE(L"CoCreateInstance(CLSID_TaskbarList, nullptr, CLSCTX_ALL) failed {:#08X}", static_cast<DWORD>(hr));
         }
     }
     return 0;
@@ -900,19 +900,20 @@ void CMainFrame::UpdateCleanupMenu(CMenu* menu) const
     ULONGLONG bytes;
     QueryRecycleBin(items, bytes);
 
-    CStringW info;
+    std::wstring info;
     if (items == 1)
     {
-        info.FormatMessage(Localization::Lookup(IDS_ONEITEMss).c_str(), FormatBytes(bytes).c_str(),
-            COptions::UseSizeSuffixes && bytes != 0 ? wds::strEmpty : (wds::strBlankSpace + GetSpec_Bytes()).c_str());
+        info = Localization::Format(IDS_ONEITEMss,  FormatBytes(bytes),
+            COptions::UseSizeSuffixes && bytes != 0 ? wds::strEmpty : (wds::strBlankSpace + GetSpec_Bytes()));
     }
     else
     {
-        info.FormatMessage(Localization::Lookup(IDS_sITEMSss).c_str(), FormatCount(items).c_str(),
-            FormatBytes(bytes).c_str(), COptions::UseSizeSuffixes && bytes != 0 ? wds::strEmpty : (wds::strBlankSpace + GetSpec_Bytes()).c_str());
+        info = Localization::Format(IDS_ONEITEMss, FormatCount(items).c_str(),
+            FormatBytes(bytes).c_str(), COptions::UseSizeSuffixes
+            && bytes != 0 ? wds::strEmpty : (wds::strBlankSpace + GetSpec_Bytes()).c_str());
     }
 
-    const std::wstring s = Localization::Lookup(IDS_EMPTYRECYCLEBIN) + info.GetString();
+    const std::wstring s = Localization::Lookup(IDS_EMPTYRECYCLEBIN) + info;
     const UINT state = menu->GetMenuState(ID_CLEANUP_EMPTY_BIN, MF_BYCOMMAND);
     VERIFY(menu->ModifyMenu(ID_CLEANUP_EMPTY_BIN, MF_BYCOMMAND | MF_STRING, ID_CLEANUP_EMPTY_BIN, s.c_str()));
     menu->EnableMenuItem(ID_CLEANUP_EMPTY_BIN, state);
@@ -975,8 +976,8 @@ void CMainFrame::AppendUserDefinedCleanups(CMenu* menu) const
         auto& udc = COptions::UserDefinedCleanups[iCurrent];
         if (!udc.Enabled) continue;
 
-        CStringW string;
-        string.FormatMessage(Localization::Lookup(IDS_UDCsCTRLd).c_str(), udc.Title.Obj().c_str(), iCurrent);
+        std::wstring string = std::vformat(Localization::Lookup(IDS_UDCsCTRLd),
+            std::make_wformat_args(udc.Title.Obj(), iCurrent));
 
         const auto& items = CFileTreeControl::Get()->GetAllSelected<CItem>();
         bool udcValid = GetLogicalFocus() == LF_DIRECTORYLIST && !items.empty();
@@ -987,7 +988,7 @@ void CMainFrame::AppendUserDefinedCleanups(CMenu* menu) const
 
         bHasItem = true;
         const UINT flags = udcValid ? MF_ENABLED : (MF_DISABLED | MF_GRAYED);
-        menu->AppendMenu(flags | MF_STRING, ID_USERDEFINEDCLEANUP0 + iCurrent, string);
+        menu->AppendMenu(flags | MF_STRING, ID_USERDEFINEDCLEANUP0 + iCurrent, string.c_str());
     }
 
     if (!bHasItem)

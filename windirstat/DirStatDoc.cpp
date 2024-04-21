@@ -35,10 +35,8 @@
 #include <common/MdExceptions.h>
 #include <common/SmartPointer.h>
 
-#include <algorithm>
 #include <functional>
 #include <unordered_map>
-#include <map>
 #include <string>
 #include <unordered_set>
 #include <vector>
@@ -63,7 +61,7 @@ CDirStatDoc::CDirStatDoc() :
     ASSERT(nullptr == _theDocument);
     _theDocument = this;
 
-    VTRACE(L"sizeof(CItem) = %zd", sizeof(CItem));
+    VTRACE(L"sizeof(CItem) = {}", sizeof(CItem));
 }
 
 CDirStatDoc::~CDirStatDoc()
@@ -404,11 +402,11 @@ void CDirStatDoc::UnlinkRoot()
 //
 bool CDirStatDoc::UserDefinedCleanupWorksForItem(USERDEFINEDCLEANUP* udc, const CItem* item)
 {
-    return item != nullptr &&
+    return item != nullptr && (
         (item->IsType(IT_DRIVE) && udc->WorksForDrives) ||
         (item->IsType(IT_DIRECTORY) && udc->WorksForDirectories) ||
         (item->IsType(IT_FILE) && udc->WorksForFiles) ||
-        (item->HasUncPath() && udc->WorksForUncPaths);
+        (item->HasUncPath() && udc->WorksForUncPaths));
 }
 
 void CDirStatDoc::OpenItem(const CItem* item, const std::wstring & verb)
@@ -637,11 +635,10 @@ void CDirStatDoc::AskForConfirmation(USERDEFINEDCLEANUP* udc, const CItem* item)
         return;
     }
 
-    CStringW msg;
-    msg.FormatMessage(udc->RecurseIntoSubdirectories ? Localization::Lookup(IDS_RUDC_CONFIRMATIONss).c_str() :
-        Localization::Lookup(IDS_UDC_CONFIRMATIONss).c_str(), udc->Title.Obj().c_str(), item->GetPath().c_str());
-
-    if (IDYES != AfxMessageBox(msg, MB_YESNO))
+    const std::wstring msg = Localization::Format(udc->RecurseIntoSubdirectories ?
+        Localization::Lookup(IDS_RUDC_CONFIRMATIONss) : Localization::Lookup(IDS_UDC_CONFIRMATIONss),
+        udc->Title.Obj(), item->GetPath());
+    if (IDYES != AfxMessageBox(msg.c_str(), MB_YESNO))
     {
         AfxThrowUserException();
     }
@@ -658,7 +655,7 @@ void CDirStatDoc::PerformUserDefinedCleanup(USERDEFINEDCLEANUP* udc, const CItem
     {
         if (!FolderExists(path) && !DriveExists(path))
         {
-            MdThrowStringExceptionF(Localization::Lookup(IDS_THEDIRECTORYsDOESNOTEXIST).c_str(), path.c_str());
+            MdThrowStringException(Localization::Format(IDS_THEFILEsDOESNOTEXIST, path));
         }
     }
     else
@@ -667,7 +664,7 @@ void CDirStatDoc::PerformUserDefinedCleanup(USERDEFINEDCLEANUP* udc, const CItem
 
         if (!::PathFileExists(path.c_str()))
         {
-            MdThrowStringExceptionF(Localization::Lookup(IDS_THEFILEsDOESNOTEXIST).c_str(), path.c_str());
+            MdThrowStringException(Localization::Format(IDS_THEFILEsDOESNOTEXIST, path));
         }
     }
 
@@ -754,8 +751,8 @@ void CDirStatDoc::CallUserDefinedCleanup(const bool isDirectory, const std::wstr
         nullptr, false, 0, nullptr,
         directory.c_str(), &si, &pi))
     {
-        MdThrowStringExceptionF(Localization::Lookup(IDS_COULDNOTCREATEPROCESSssss).c_str(), app.c_str(),
-            cmdline.c_str(), directory.c_str(), MdGetWinErrorText(::GetLastError()).c_str());
+        MdThrowStringException(Localization::Format(IDS_COULDNOTCREATEPROCESSssss,
+            app, cmdline, directory, MdGetWinErrorText(static_cast<HRESULT>(::GetLastError()))));
         return;
     }
 
@@ -936,10 +933,9 @@ void CDirStatDoc::OnRefreshAll()
 void CDirStatDoc::OnSaveResults()
 {
     // Request the file path from the user
-    CStringW fileSelectString;
-    fileSelectString.Format(L"%s (*.csv)|*.csv|%s (*.*)|*.*||",
-        Localization::Lookup(IDS_CSV_FILES).c_str(), Localization::Lookup(IDS_ALL_FILES).c_str());
-    CFileDialog dlg(FALSE, L"csv", nullptr, OFN_EXPLORER | OFN_DONTADDTORECENT, fileSelectString.GetString());
+    std::wstring fileSelectString = std::format(L"{} (*.csv)|*.csv|{} (*.*)|*.*||",
+        Localization::Lookup(IDS_CSV_FILES), Localization::Lookup(IDS_ALL_FILES));
+    CFileDialog dlg(FALSE, L"csv", nullptr, OFN_EXPLORER | OFN_DONTADDTORECENT, fileSelectString.c_str());
     if (dlg.DoModal() != IDOK) return;
 
     CWaitCursor wc;
@@ -949,10 +945,9 @@ void CDirStatDoc::OnSaveResults()
 void CDirStatDoc::OnLoadResults()
 {
     // Request the file path from the user
-    CStringW fileSelectString;
-    fileSelectString.Format(L"%s (*.csv)|*.csv|%s (*.*)|*.*||",
-        Localization::Lookup(IDS_CSV_FILES).c_str(), Localization::Lookup(IDS_ALL_FILES).c_str());
-    CFileDialog dlg(TRUE, L"csv", nullptr, OFN_EXPLORER | OFN_DONTADDTORECENT | OFN_PATHMUSTEXIST, fileSelectString.GetString());
+    std::wstring fileSelectString = std::format(L"{} (*.csv)|*.csv|{} (*.*)|*.*||",
+        Localization::Lookup(IDS_CSV_FILES), Localization::Lookup(IDS_ALL_FILES));
+    CFileDialog dlg(TRUE, L"csv", nullptr, OFN_EXPLORER | OFN_DONTADDTORECENT | OFN_PATHMUSTEXIST, fileSelectString.c_str());
     if (dlg.DoModal() != IDOK) return;
 
     CWaitCursor wc;

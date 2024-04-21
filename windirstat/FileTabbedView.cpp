@@ -20,6 +20,7 @@
 //
 
 #include "stdafx.h"
+#include "WinDirStat.h"
 #include "FileTabbedView.h"
 #include "FileTreeView.h"
 #include "Localization.h"

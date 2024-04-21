@@ -22,6 +22,7 @@
 #pragma once
 
 #include "FileTreeControl.h"
+#include "DirStatDoc.h"
 
 //
 // CFileTreeView. The upper left view, which consists of the TreeList.

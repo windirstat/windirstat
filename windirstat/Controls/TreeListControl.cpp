@@ -26,7 +26,6 @@
 #include "TreeListControl.h"
 
 #include <algorithm>
-#include <mutex>
 #include <ranges>
 
 namespace

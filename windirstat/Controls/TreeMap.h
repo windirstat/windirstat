@@ -301,8 +301,8 @@ class CTreeMapPreview final : public CStatic
             }
             qsort(m_Children.data(), m_Children.size(), sizeof(CItem*), [](const void* p1, const void* p2)->int
             {
-                const CItem* item1 = *(CItem**)p1;
-                const CItem* item2 = *(CItem**)p2;
+                const CItem* item1 = static_cast<const CItem*>(p1);
+                const CItem* item2 = static_cast<const CItem*>(p2);
                 return signum(item2->m_Size - item1->m_Size);
             });
         }
@@ -317,7 +317,7 @@ class CTreeMapPreview final : public CStatic
 
         bool TmiIsLeaf() const override
         {
-            return m_Children.size() == 0;
+            return m_Children.empty();
         }
 
         CRect TmiGetRectangle() const override

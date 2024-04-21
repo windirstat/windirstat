@@ -23,6 +23,8 @@
 
 #include "ModalApiShuttle.h"
 
+#include <string>
+
 //
 // CModalShellApi. Modal version of the shell functions
 // EmptyRecycleBin and DeleteFile.

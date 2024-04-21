@@ -111,7 +111,7 @@ bool FileFindEnhanced::FindFile(const std::wstring & strFolder, const std::wstri
         &attributes, &statusBlock, FILE_SHARE_READ | FILE_SHARE_WRITE, 
         FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT | FILE_OPEN_FOR_BACKUP_INTENT); status != 0)
     {
-        VTRACE(L"File Access Error (%08X): %s", status, m_Base.data());
+        VTRACE(L"File Access Error {:#08X}: {}", static_cast<DWORD>(status), m_Base.data());
         return FALSE;
     }
 

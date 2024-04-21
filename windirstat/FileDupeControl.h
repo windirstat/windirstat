@@ -24,9 +24,9 @@
 #include "ItemDupe.h"
 #include "TreeListControl.h"
 
-#include <map>
-#include <set>
-#include <mutex>
+#include <unordered_map>
+#include <unordered_set>
+#include <shared_mutex>
 
 class CFileDupeControl final : public CTreeListControl
 {

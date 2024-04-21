@@ -33,7 +33,7 @@
 
 IMPLEMENT_DYNCREATE(CFileTreeView, CView)
 
-CFileTreeView::CFileTreeView() {}
+CFileTreeView::CFileTreeView() = default;
 
 void CFileTreeView::SysColorChanged()
 {

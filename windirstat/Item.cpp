@@ -165,12 +165,16 @@ bool CItem::DrawSubitem(const int subitem, CDC* pdc, CRect rc, const UINT state,
 
 std::wstring CItem::GetText(const int subitem) const
 {
-    std::wstring s;
     switch (subitem)
     {
-    case COL_NAME:
+    case COL_NAME: return m_Name;
+    case COL_SIZE_PHYSICAL: return FormatBytes(GetSizePhysical());
+    case COL_SIZE_LOGICAL: return FormatBytes(GetSizeLogical());
+
+    case COL_OWNER:
+        if (IsType(IT_FILE | IT_DIRECTORY))
         {
-            s = m_Name;
+            return GetOwner();
         }
         break;
 
@@ -178,88 +182,60 @@ std::wstring CItem::GetText(const int subitem) const
         if (!IsDone())
         {
             if (GetReadJobs() == 1)
-                s = Localization::Lookup(IDS_ONEREADJOB);
-            else
             {
-                CStringW format;
-                format.FormatMessage(Localization::Lookup(IDS_sREADJOBS).c_str(), FormatCount(GetReadJobs()).c_str());
-                s = format.GetString();
+                return Localization::Lookup(IDS_ONEREADJOB);
             }
+
+            return Localization::Format(IDS_sREADJOBS, FormatCount(GetReadJobs()));
         }
         break;
 
     case COL_PERCENTAGE:
         if (COptions::ShowTimeSpent && MustShowReadJobs() || IsRootItem())
         {
-            s = L"[" + FormatMilliseconds(GetTicksWorked() * 1000) + L"]";
+            return L"[" + FormatMilliseconds(GetTicksWorked() * 1000) + L"]";
         }
-        else
-        {
-            s = FormatDouble(GetFraction() * 100) + L"%";
-        }
-        break;
-
-    case COL_SIZE_PHYSICAL:
-        {
-            s = FormatBytes(GetSizePhysical());
-        }
-        break;
-
-    case COL_SIZE_LOGICAL:
-        {
-            s = FormatBytes(GetSizeLogical());
-        }
-        break;
+        return FormatDouble(GetFraction() * 100) + L"%";
 
     case COL_ITEMS:
         if (!IsType(IT_FILE | IT_FREESPACE | IT_UNKNOWN))
         {
-            s = FormatCount(GetItemsCount());
+            return FormatCount(GetItemsCount());
         }
         break;
 
     case COL_FILES:
         if (!IsType(IT_FILE | IT_FREESPACE | IT_UNKNOWN))
         {
-            s = FormatCount(GetFilesCount());
+            return FormatCount(GetFilesCount());
         }
         break;
 
     case COL_FOLDERS:
         if (!IsType(IT_FILE | IT_FREESPACE | IT_UNKNOWN))
         {
-            s = FormatCount(GetFoldersCount());
+            return FormatCount(GetFoldersCount());
         }
         break;
 
     case COL_LASTCHANGE:
         if (!IsType(IT_FREESPACE | IT_UNKNOWN))
         {
-            s = FormatFileTime(m_LastChange);
+            return FormatFileTime(m_LastChange);
         }
         break;
 
     case COL_ATTRIBUTES:
         if (!IsType(IT_FREESPACE | IT_UNKNOWN | IT_MYCOMPUTER))
         {
-            s = FormatAttributes(GetAttributes());
+            return FormatAttributes(GetAttributes());
         }
         break;
 
-    case COL_OWNER:
-        if (IsType(IT_FILE | IT_DIRECTORY))
-        {
-            s = GetOwner();
-        }
-        break;
-
-    default:
-        {
-            ASSERT(FALSE);
-        }
-        break;
+    default: ASSERT(FALSE);
     }
-    return s;
+
+    return {};
 }
 
 COLORREF CItem::GetItemTextColor() const
@@ -819,7 +795,7 @@ std::wstring CItem::GetOwner(const bool force) const
 {
     if (!IsVisible() && !force)
     {
-        return L"";
+        return {};
     }
 
     // If visible, use cached variable

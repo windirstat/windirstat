@@ -20,7 +20,6 @@
 //
 
 #include "stdafx.h"
-#include "WinDirStat.h"
 #include "ModalShellApi.h"
 #include "SmartPointer.h"
 #include "FileFind.h"

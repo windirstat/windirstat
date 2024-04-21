@@ -1,4 +1,4 @@
-// aboutdlg.cpp - Implementation of the StartAboutDialog() function
+// AboutDlg.cpp - Implementation of the StartAboutDialog() function
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
@@ -27,6 +27,7 @@
 #include "AboutDlg.h"
 #include "Localization.h"
 #include "Options.h"
+#include "GlobalHelpers.h"
 
 #pragma comment(lib,"version.lib")
 
@@ -131,26 +132,26 @@ void CAboutDlg::CMyTabControl::Initialize()
 
 void CAboutDlg::CMyTabControl::SetPageText(const int tab)
 {
-    CStringW text;
+    std::wstring text;
     DWORD newStyle = ES_CENTER;
 
     switch (tab)
     {
     case TAB_ABOUT:
         {
-            text.FormatMessage(Localization::Lookup(IDS_ABOUT_ABOUTTEXTss).c_str(),
-                Localization::LookupNeutral(IDS_AUTHOR_EMAIL).c_str(),
-                Localization::LookupNeutral(IDS_URL_WEBSITE).c_str());
+            text = Localization::Format(IDS_ABOUT_ABOUTTEXTss,
+                Localization::LookupNeutral(IDS_AUTHOR_EMAIL),
+                Localization::LookupNeutral(IDS_URL_WEBSITE));
         }
         break;
     case TAB_THANKSTO:
         {
-            text = Localization::Lookup(IDS_ABOUT_THANKSTOTEXT).c_str();
+            text = Localization::Lookup(IDS_ABOUT_THANKSTOTEXT);
         }
         break;
     case TAB_LICENSE:
         {
-            text = GetTextResource(IDR_LICENSE, nullptr).c_str();
+            text = GetTextResource(IDR_LICENSE, nullptr);
             newStyle = ES_LEFT;
         }
         break;
@@ -182,7 +183,7 @@ void CAboutDlg::CMyTabControl::SetPageText(const int tab)
     m_Text.SetEventMask(ENM_LINK | ENM_KEYEVENTS);
     m_Text.SetFont(GetFont());
 
-    m_Text.SetWindowText(text);
+    m_Text.SetWindowText(text.c_str());
 
     m_Text.HideCaret();
 }

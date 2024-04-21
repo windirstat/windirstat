@@ -31,6 +31,7 @@
 #include <unordered_map>
 
 std::unordered_map<std::wstring, std::wstring> Localization::m_Map;
+std::unordered_map<UINT, std::wstring> Localization::m_MapInt;
 
 void Localization::SearchReplace(std::wstring& input, const std::wstring_view& search, const std::wstring_view& replace)
 {

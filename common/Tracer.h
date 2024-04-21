@@ -26,41 +26,80 @@
 
 #pragma once
 
-#include <string>
-
 #ifdef _DEBUG
-#define VTRACE_FILE_LINE_FUNC   3
-#define VTRACE_FILE_LINE        2
-#define VTRACE_FUNC             1
+#include <format>
+#include <string>
+#include <iostream>
+#include <source_location>
+
+using VRACE_DETAIL_LEVEL = enum
+{
+    VTRACE_FUNC = 1,
+    VTRACE_FILE_LINE = 2,
+    VTRACE_FILE_LINE_FUNC = 3
+};
+
+constexpr bool VTRACE_OUTPUTDEBUGSTRING = true;
 
 #ifndef VTRACE_DETAIL
-#   define VTRACE_DETAIL 3
+#define VTRACE_DETAIL VRACE_DETAIL_LEVEL::VTRACE_FILE_LINE_FUNC
 #endif
 
-#if VTRACE_TO_CONSOLE
+#define VTRACE(x, ...) CWDSTracerConsole::ProcessOutput(std::source_location::current(), x, ##__VA_ARGS__)
+
 class CWDSTracerConsole final
 {
-public:
-    CWDSTracerConsole();
-    ~CWDSTracerConsole();
-};
-#endif // VTRACE_TO_CONSOLE
+    FILE* handleErr;
+    FILE* handleOut;
+    FILE* handleIn;
 
-class CWDSTracer final
-{
 public:
-    CWDSTracer(const std::wstring& srcfile, const std::wstring& fctname, unsigned int srcline);
-    CWDSTracer& operator=(const CWDSTracer&) = delete; // hide it
-    void operator()(const std::wstring& format, ...) const;
-private:
-    std::wstring m_Srcfile;
-    unsigned int m_Srcline;
-    std::wstring m_Srcfunc;
-    std::wstring m_Srcbasename;
+    CWDSTracerConsole()
+    {
+        ::AllocConsole();
+        ::SetConsoleTitle(L"WinDirStat Debug Trace Output");
+
+        // Redirect console output to new console
+        _wfreopen_s(&handleErr, L"CONOUT$", L"w", stderr);
+        _wfreopen_s(&handleOut, L"CONOUT$", L"w", stdout);
+        _wfreopen_s(&handleIn, L"CONIN$", L"r", stdin);
+
+        // Disable buffering
+        setvbuf(handleOut, nullptr, _IONBF, 0);
+        setvbuf(handleErr, nullptr, _IONBF, 0);
+    }
+
+    ~CWDSTracerConsole()
+    {
+        std::wcout << L"Press any key to close this window.\n";
+        std::wcin.get();
+        ::FreeConsole();
+    }
+
+    static void ProcessOutput(const std::source_location& loc, std::wstring_view format, auto&&... args)
+    {
+        const std::wstring str = std::vformat(format, std::make_wformat_args(args...));
+
+        std::string strPfx;
+        if (VTRACE_DETAIL == VTRACE_FILE_LINE_FUNC)
+            strPfx = std::format("{}:{}|{}", loc.file_name(), loc.line(), loc.function_name());
+        else if (VTRACE_DETAIL == VTRACE_FILE_LINE)
+            strPfx = std::format("{}:{}", loc.file_name(), loc.line());
+        else if (VTRACE_DETAIL == VTRACE_FUNC)
+            strPfx = loc.function_name();
+
+        std::wstring strDbg = strPfx.empty() ?
+            std::format(L"{}\n", str) :
+            std::format(L"[{}] {}\n", std::wstring(strPfx.begin(), strPfx.end()), str);
+
+        if (!VTRACE_TO_CONSOLE || (VTRACE_TO_CONSOLE && VTRACE_OUTPUTDEBUGSTRING))
+            OutputDebugStringW(strDbg.c_str());
+
+        if (VTRACE_TO_CONSOLE)
+            std::wcout << strDbg;
+    }
 };
 
-// Use as VTRACE(format, ...) ... *must* be on one long line ;)
-#   define VTRACE CWDSTracer(__##FILEW##__, __##FUNCTIONW__, __##LINE##__)
 #else
-#   define VTRACE __noop
+#define VTRACE __noop
 #endif // _DEBUG

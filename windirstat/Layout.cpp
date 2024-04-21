@@ -21,7 +21,6 @@
 
 #include "stdafx.h"
 #include "WinDirStat.h"
-#include "Options.h"
 #include "SelectObject.h"
 #include "Layout.h"
 

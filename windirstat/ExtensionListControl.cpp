@@ -21,10 +21,8 @@
 
 #include "stdafx.h"
 #include "WinDirStat.h"
-#include "Item.h"
 #include "MainFrame.h"
 #include "DirStatDoc.h"
-#include <common/CommonHelpers.h>
 #include "ExtensionView.h"
 #include "GlobalHelpers.h"
 #include "Localization.h"
@@ -124,9 +122,7 @@ std::wstring CExtensionListControl::CListItem::GetDescription() const
 
 std::wstring CExtensionListControl::CListItem::GetBytesPercent() const
 {
-    CStringW s;
-    s.Format(L"%s%%", FormatDouble(GetBytesFraction() * 100).c_str());
-    return s.GetString();
+    return FormatDouble(GetBytesFraction() * 100) + L"%";
 }
 
 double CExtensionListControl::CListItem::GetBytesFraction() const

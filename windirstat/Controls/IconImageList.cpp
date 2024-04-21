@@ -35,7 +35,7 @@ void CIconImageList::Initialize()
 
         this->Attach(ImageList_Duplicate(hil));
 
-        VTRACE(L"System image list has %i icons", this->GetImageCount());
+        VTRACE(L"System image list has {} icons", this->GetImageCount());
         for (short i = 0; i < static_cast<short>(this->GetImageCount()); i++)
         {
             m_IndexMap[i] = i;
@@ -110,7 +110,7 @@ short CIconImageList::GetJunctionProtectedImage() const
 
 short CIconImageList::GetFolderImage()
 {
-    const std::wstring s = GetSysDirectory();
+    const std::wstring & s = GetSysDirectory();
     return CacheIcon(s, 0, FILE_ATTRIBUTE_DIRECTORY);
 }
 

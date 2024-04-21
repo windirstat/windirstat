@@ -32,7 +32,7 @@
 
 IMPLEMENT_DYNCREATE(CFileDupeView, CView)
 
-CFileDupeView::CFileDupeView() {}
+CFileDupeView::CFileDupeView() = default;
 
 void CFileDupeView::SysColorChanged()
 {

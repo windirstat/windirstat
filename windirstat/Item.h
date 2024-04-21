@@ -28,7 +28,7 @@
 #include "BlockingQueue.h"
 
 #include <algorithm>
-#include <mutex>
+#include <shared_mutex>
 
 // Columns
 enum ITEMCOLUMNS

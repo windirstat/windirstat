@@ -20,7 +20,6 @@
 //
 
 #include "stdafx.h"
-#include "WinDirStat.h"
 #include "DeleteWarningDlg.h"
 #include "Localization.h"
 

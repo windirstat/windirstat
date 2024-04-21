@@ -30,6 +30,7 @@
 #include "SmartPointer.h"
 
 #include <string>
+#include <format>
 
 class CMdStringException final : public CException
 {
@@ -88,8 +89,7 @@ inline std::wstring MdGetWinErrorText(const HRESULT hr)
     if (0 == dw)
     {
         const CStringW s(MAKEINTRESOURCE(AFX_IDP_NO_ERROR_AVAILABLE));
-        CString s2; s2.Format(L"%s (0x%08lx)", s.GetString(), hr);
-        sRet = s2;
+        sRet = std::format(L"{} {:#08x}", s.GetString(), static_cast<DWORD>(hr));
     }
     else
     {
@@ -106,52 +106,6 @@ inline void MdThrowStringException(const UINT resId)
 inline void MdThrowStringException(const std::wstring & pszText)
 {
     throw new CMdStringException(pszText); //-V1022
-}
-
-inline void MdFormatStringExceptionV(std::wstring& rsText, const std::wstring & pszFormat, va_list vlist)
-{
-    // std::wstring sFormat(); // may be a MAKEINTRESOURCE
-    CStringW format;
-    format.FormatMessageV(pszFormat.c_str(), &vlist);
-    rsText = format;
-}
-
-inline void AFX_CDECL MdThrowStringExceptionF(LPCWSTR pszFormat, ...)
-{
-    std::wstring sText;
-
-    va_list vlist;
-    va_start(vlist, pszFormat);
-    MdFormatStringExceptionV(sText, pszFormat, vlist);
-    va_end(vlist);
-
-    MdThrowStringException(sText);
-}
-
-inline void MdThrowStringExceptionV(const std::wstring & pszFormat, va_list vlist)
-{
-    std::wstring sText;
-    MdFormatStringExceptionV(sText, pszFormat, vlist);
-    MdThrowStringException(sText);
-}
-
-inline void AFX_CDECL MdThrowStringExceptionF(UINT nResIdFormat, ...)
-{
-    std::wstring sText;
-
-    va_list vlist;
-    va_start(vlist, nResIdFormat);
-    MdFormatStringExceptionV(sText, MAKEINTRESOURCE(nResIdFormat), vlist);
-    va_end(vlist);
-
-    MdThrowStringException(sText);
-}
-
-inline void MdThrowStringExceptionF(const UINT nResIdFormat, va_list vlist)
-{
-    std::wstring sText;
-    MdFormatStringExceptionV(sText, MAKEINTRESOURCE(nResIdFormat), vlist);
-    MdThrowStringException(sText);
 }
 
 inline void MdThrowWinError(const DWORD dw, const std::wstring & pszPrefix = {})
