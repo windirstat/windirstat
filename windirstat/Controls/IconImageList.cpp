@@ -36,6 +36,7 @@ void CIconImageList::Initialize()
         this->Attach(ImageList_Duplicate(hil));
 
         VTRACE(L"System image list has {} icons", this->GetImageCount());
+        std::lock_guard lock(m_IndexMutex);
         for (short i = 0; i < static_cast<short>(this->GetImageCount()); i++)
         {
             m_IndexMap[i] = i;
@@ -61,7 +62,7 @@ short CIconImageList::CacheIcon(const std::wstring & path, UINT flags, const DWO
     const auto hil = reinterpret_cast<HIMAGELIST>(::SHGetFileInfo(path.c_str(), attr, &sfi, sizeof(sfi), flags));
     if (hil == nullptr)
     {
-        VTRACE(L"SHGetFileInfo() failed");
+        VTRACE(L"SHGetFileInfo() failed: {}", path);
         return GetEmptyImage();
     }
 
@@ -70,15 +71,15 @@ short CIconImageList::CacheIcon(const std::wstring & path, UINT flags, const DWO
         *psTypeName = sfi.szTypeName;
     }
 
+    // Check if image is already in index and, if so, return
+    std::lock_guard lock(m_IndexMutex);
     const auto i = m_IndexMap.find(sfi.iIcon);
-    if (i == m_IndexMap.end()) // part of the system image list?
-    {
-        CImageList* sil = CImageList::FromHandle(hil); // does not have to be destroyed
-        m_IndexMap[sfi.iIcon] = static_cast<short>(this->Add(sil->ExtractIcon(sfi.iIcon)));
-        return static_cast<short>(sfi.iIcon);
-    }
+    if (i != m_IndexMap.end()) return i->second;
 
-    return i->second;
+    // Extract image and add to cache
+    CImageList* sil = CImageList::FromHandle(hil); // does not have to be destroyed
+    m_IndexMap[sfi.iIcon] = static_cast<short>(this->Add(sil->ExtractIcon(sfi.iIcon)));
+    return m_IndexMap[sfi.iIcon];
 }
 
 short CIconImageList::GetMyComputerImage()

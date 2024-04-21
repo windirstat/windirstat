@@ -23,6 +23,7 @@
 
 #include <string>
 #include <unordered_map>
+#include <shared_mutex>
 
 //
 // CIconImageList. Both CFileTreeView and CExtensionView use this central
@@ -56,6 +57,7 @@ public:
     static std::wstring GetADriveSpec();
     void AddCustomImages();
 
+    std::shared_mutex m_IndexMutex;
     std::unordered_map<int, short> m_IndexMap; // system image list index -> our index
 
     short m_FreeSpaceImage = -1;    // <Free Space>
