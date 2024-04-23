@@ -227,11 +227,11 @@ bool CDirStatApp::SetPortableMode(const bool enable, const bool onlyOpen)
     return false;
 }
 
-std::wstring AFXGetRegPath(const LPCTSTR lpszPostFix, LPCTSTR)
+CString AFXGetRegPath(LPCTSTR lpszPostFix, LPCTSTR)
 {
     // This overrides an internal MFC function that causes CWinAppEx
     // to malfunction when operated in portable mode
-    return std::wstring(L"Software\\WinDirStat\\WinDirStat\\") + lpszPostFix + L"\\";
+    return CString(L"Software\\WinDirStat\\WinDirStat\\") + lpszPostFix + L"\\";
 }
 
 BOOL CDirStatApp::InitInstance()
