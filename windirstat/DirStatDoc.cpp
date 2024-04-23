@@ -594,8 +594,9 @@ bool CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, const bo
     }
 
     // Fetch the parent item of the current focus / selected item so we can reselect
-    const auto reselect = CFileTreeControl::Get()->GetItem(
-        CFileTreeControl::Get()->GetSelectionMark())->GetParent();
+    CTreeListItem* reselect = nullptr;
+    if (const int mark = CFileTreeControl::Get()->GetSelectionMark(); FileTreeHasFocus() && mark != -1)
+        reselect = CFileTreeControl::Get()->GetItem(mark)->GetParent();
 
     CModalShellApi msa;
     for (const auto& item : items)
@@ -606,7 +607,8 @@ bool CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, const bo
     RefreshItem(items);
 
     // Attempt to reselect the item
-    CFileTreeControl::Get()->SelectItem(reselect, true, true);
+    if (reselect != nullptr)
+        CFileTreeControl::Get()->SelectItem(reselect, true, true);
 
     return true;
 }
@@ -809,19 +811,19 @@ bool CDirStatDoc::IsReselectChildAvailable() const
     return !m_ReselectChildStack.IsEmpty();
 }
 
-bool CDirStatDoc::DirectoryListHasFocus()
+bool CDirStatDoc::FileTreeHasFocus()
 {
-    return LF_DIRECTORYLIST == CMainFrame::Get()->GetLogicalFocus();
+    return LF_FILETREE == CMainFrame::Get()->GetLogicalFocus();
 }
 
-bool CDirStatDoc::DuplicateListHasFocus()
+bool CDirStatDoc::DupeListHasFocus()
 {
-    return LF_DUPLICATELIST == CMainFrame::Get()->GetLogicalFocus();
+    return LF_DUPELIST == CMainFrame::Get()->GetLogicalFocus();
 }
 
 std::vector<CItem*> CDirStatDoc::GetAllSelected()
 {
-    return DuplicateListHasFocus() ? CFileDupeControl::Get()->GetAllSelected<CItem>() :
+    return DupeListHasFocus() ? CFileDupeControl::Get()->GetAllSelected<CItem>() :
         CFileTreeControl::Get()->GetAllSelected<CItem>();
 }
 
@@ -878,7 +880,7 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
     const auto& items = GetAllSelected();
 
     bool allow = true;
-    allow &= !filter.treeFocus || DirectoryListHasFocus() || DuplicateListHasFocus();
+    allow &= !filter.treeFocus || FileTreeHasFocus() || DupeListHasFocus();
     allow &= filter.allowNone || !items.empty();
     allow &= filter.allowMany || items.size() <= 1;
     allow &= filter.allowEarly || IsRootDone();
@@ -1154,7 +1156,7 @@ void CDirStatDoc::OnUpdateUserDefinedCleanup(CCmdUI* pCmdUI)
 {
     const int i = pCmdUI->m_nID - ID_USERDEFINEDCLEANUP0;
     const auto & items = GetAllSelected();
-    bool allowControl = DirectoryListHasFocus() && COptions::UserDefinedCleanups.at(i).Enabled && !items.empty();
+    bool allowControl = (FileTreeHasFocus() || DupeListHasFocus()) && COptions::UserDefinedCleanups.at(i).Enabled && !items.empty();
     if (allowControl) for (const auto & item : items)
     {
         allowControl &= UserDefinedCleanupWorksForItem(&COptions::UserDefinedCleanups[i], item);
@@ -1312,6 +1314,9 @@ void CDirStatDoc::StartupCoordinator(std::vector<CItem*> items)
         std::unordered_map<CItem *,VisualInfo> visualInfo;
         for (auto item : std::vector(items))
         {
+            // Clear items from duplicate list;
+            CFileDupeControl::Get()->RemoveItem(item);
+
             // Record current visual arrangement to reapply afterward
             if (item->IsVisible())
             {

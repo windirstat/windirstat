@@ -296,7 +296,7 @@ void CExtensionListControl::OnKeyDown(const UINT nChar, const UINT nRepCnt, cons
 {
     if (nChar == VK_TAB)
     {
-        CMainFrame::Get()->MoveFocus(LF_DIRECTORYLIST);
+        CMainFrame::Get()->MoveFocus(LF_FILETREE);
     }
     else if (nChar == VK_ESCAPE)
     {

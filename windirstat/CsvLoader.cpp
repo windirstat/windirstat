@@ -28,7 +28,7 @@
 #include <string>
 #include <stack>
 #include <sstream>
-#include <map>
+#include <unordered_map>
 #include <format>
 #include <chrono>
 #include <array>
@@ -52,7 +52,7 @@ std::array<CHAR, FIELD_COUNT> orderMap{};
 static void ParseHeaderLine(const std::vector<std::wstring>& header)
 {
     orderMap.fill(-1);
-    std::map<std::wstring, DWORD> resMap =
+    std::unordered_map<std::wstring, DWORD> resMap =
     {
         { Localization::Lookup(IDS_COL_NAME), FIELD_NAME},
         { Localization::Lookup(IDS_COL_FILES), FIELD_FILES },

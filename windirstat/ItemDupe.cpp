@@ -34,15 +34,7 @@ CItemDupe::CItemDupe(const std::wstring& hash, const ULONGLONG size) : m_Hash(ha
 
 CItemDupe::CItemDupe(CItem* item) : m_Item(item) {}
 
-CItemDupe::~CItemDupe()
-{
-    std::lock_guard guard(m_Protect);
-    for (const auto& child : m_Children)
-    {
-        delete child;
-    }
-    m_Children.clear();
-}
+CItemDupe::~CItemDupe() {}
 
 bool CItemDupe::DrawSubitem(const int subitem, CDC* pdc, const CRect rc, const UINT state, int* width, int* focusLeft) const
 {
@@ -133,10 +125,9 @@ void CItemDupe::AddChild(CItemDupe* child)
 
     if (IsVisible() && IsExpanded())
     {
-        (void) GetImage();
         CMainFrame::Get()->InvokeInMessageThread([this, child]
         {
-            m_VisualInfo->control->OnChildAdded(this, child);
+            CFileDupeControl::Get()->OnChildAdded(this, child);
         });
     }
 }
@@ -150,7 +141,7 @@ void CItemDupe::RemoveChild(CItemDupe* child)
     {
         CMainFrame::Get()->InvokeInMessageThread([this, child]
         {
-            CFileTreeControl::Get()->OnChildRemoved(this, child);
+            CFileDupeControl::Get()->OnChildRemoved(this, child);
         });
     }
 

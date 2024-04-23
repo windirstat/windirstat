@@ -44,8 +44,8 @@ class CExtensionView;
 enum LOGICAL_FOCUS
 {
     LF_NONE,
-    LF_DIRECTORYLIST,
-    LF_DUPLICATELIST,
+    LF_FILETREE,
+    LF_DUPELIST,
     LF_EXTENSIONLIST
 };
 

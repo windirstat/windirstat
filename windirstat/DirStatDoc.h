@@ -141,8 +141,8 @@ protected:
     CItem* PopReselectChild();
     void ClearReselectChildStack();
     bool IsReselectChildAvailable() const;
-    static bool DirectoryListHasFocus();
-    static bool DuplicateListHasFocus();
+    static bool FileTreeHasFocus();
+    static bool DupeListHasFocus();
     static std::vector<CItem *> GetAllSelected();
 
     bool m_ShowFreeSpace; // Whether to show the <Free Space> item

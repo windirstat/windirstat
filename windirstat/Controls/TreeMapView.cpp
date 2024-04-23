@@ -183,8 +183,8 @@ void CTreeMapView::DrawHighlights(CDC* pdc)
 {
     switch (CMainFrame::Get()->GetLogicalFocus())
     {
-    case LF_DUPLICATELIST:
-    case LF_DIRECTORYLIST:
+    case LF_DUPELIST:
+    case LF_FILETREE:
         DrawSelection(pdc);
         break;
     case LF_EXTENSIONLIST:

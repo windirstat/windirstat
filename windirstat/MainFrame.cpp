@@ -331,7 +331,7 @@ void CDeadFocusWnd::OnKeyDown(const UINT nChar, UINT /*nRepCnt*/, UINT /*nFlags*
 {
     if (nChar == VK_TAB)
     {
-        CMainFrame::Get()->MoveFocus(LF_DIRECTORYLIST);
+        CMainFrame::Get()->MoveFocus(LF_FILETREE);
     }
 }
 
@@ -980,7 +980,7 @@ void CMainFrame::AppendUserDefinedCleanups(CMenu* menu) const
             std::make_wformat_args(udc.Title.Obj(), iCurrent));
 
         const auto& items = CFileTreeControl::Get()->GetAllSelected<CItem>();
-        bool udcValid = GetLogicalFocus() == LF_DIRECTORYLIST && !items.empty();
+        bool udcValid = GetLogicalFocus() == LF_FILETREE && !items.empty();
         if (udcValid) for (const auto& item : items)
         {
             udcValid &= GetDocument()->UserDefinedCleanupWorksForItem(&udc, item);
@@ -1024,8 +1024,8 @@ void CMainFrame::MoveFocus(const LOGICAL_FOCUS lf)
             m_WndDeadFocus.SetFocus();
         }
         break;
-    case LF_DUPLICATELIST:
-    case LF_DIRECTORYLIST:
+    case LF_DUPELIST:
+    case LF_FILETREE:
         {
             GetFileTreeView()->SetFocus();
         }
@@ -1042,13 +1042,13 @@ void CMainFrame::SetSelectionMessageText()
 {
     switch (GetLogicalFocus())
     {
-    case LF_DUPLICATELIST:
+    case LF_DUPELIST:
     case LF_NONE:
         {
             SetMessageText(Localization::Lookup(IDS_IDLEMESSAGE));
         }
         break;
-    case LF_DIRECTORYLIST:
+    case LF_FILETREE:
         {
             // display file name in bottom left corner if only one item is selected
             const auto item = CFileTreeControl::Get()->GetFirstSelectedItem<CItem>();

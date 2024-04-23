@@ -37,6 +37,7 @@ public:
     void InsertItem(int i, CTreeListItem* item);
     void SetRootItem(CTreeListItem* root) override;
     void ProcessDuplicate(CItem* item);
+    void RemoveItem(CItem* items);
 
     std::shared_mutex m_Mutex;
     std::unordered_map<ULONGLONG, std::unordered_set<CItem*>> m_SizeTracker;

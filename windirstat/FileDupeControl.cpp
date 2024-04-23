@@ -26,11 +26,12 @@
 #include "ItemDupe.h"
 #include "MainFrame.h"
 #include "FileDupeView.h"
-#include "GlobalHelpers.h"
 #include "Localization.h"
 
 #include <execution>
+#include <unordered_map>
 #include <ranges>
+#include <stack>
 
 CFileDupeControl::CFileDupeControl() : CTreeListControl(20, COptions::DupeViewColumnOrder.Ptr(), COptions::DupeViewColumnWidths.Ptr())
 {
@@ -130,11 +131,13 @@ void CFileDupeControl::ProcessDuplicate(CItem * item)
         for (auto& itemToHash : itemsToHash)
         {
             if (itemToHash->IsType(hashType)) continue;
+            constexpr auto partialBufferSize = 128ull * 1024ull;
 
             // Compute the hash for the file
             m_Mutex.unlock();
-            std::wstring hash = itemToHash->GetFileHash(hashType == ITF_PARTHASH);
+            std::wstring hash = itemToHash->GetFileHash(hashType == ITF_PARTHASH ? partialBufferSize : 0);
             m_Mutex.lock();
+
             itemToHash->SetType(itemToHash->GetRawType() | hashType);
             if (itemToHash == item) hashForThisItem = hash;
 
@@ -142,7 +145,7 @@ void CFileDupeControl::ProcessDuplicate(CItem * item)
             if (hash.empty()) continue;
 
             // Mark as the full being completed as well
-            if (itemToHash->GetSizePhysical() <= 1024ull * 1024ull)
+            if (itemToHash->GetSizeLogical() <= partialBufferSize)
                 itemToHash->SetType(itemToHash->GetRawType() | ITF_FULLHASH);
 
             // See if hash is already in tracking
@@ -152,11 +155,11 @@ void CFileDupeControl::ProcessDuplicate(CItem * item)
         }
 
         // Return if no hash conflicts
-        auto hashesResult = m_HashTracker.find(hashForThisItem) ;
+        const auto hashesResult = m_HashTracker.find(hashForThisItem) ;
         if (hashesResult == m_HashTracker.end() || hashesResult->second.size() <= 1) return;
         itemsToHash = hashesResult->second;
     }
-
+    
     for (const auto& itemToAdd : itemsToHash)
     {
         CMainFrame::Get()->InvokeInMessageThread([&]
@@ -168,7 +171,7 @@ void CFileDupeControl::ProcessDuplicate(CItem * item)
             if (dupeParent == nullptr)
             {
                 // Create new root item to hold these duplicates
-                dupeParent = new CItemDupe(hashForThisItem, itemToAdd->GetSizePhysical());
+                dupeParent = new CItemDupe(hashForThisItem, itemToAdd->GetSizeLogical());
                 root->AddChild(dupeParent);
                 m_NodeTracker.emplace(hashForThisItem, dupeParent);
             }
@@ -184,6 +187,63 @@ void CFileDupeControl::ProcessDuplicate(CItem * item)
 
             SortItems();
         });
+    }
+}
+
+void CFileDupeControl::RemoveItem(CItem* item)
+{
+    // exit immediately if not doing duplicate detectr
+    if (m_NodeTracker.empty()) return;
+
+    std::stack<CItem*> queue({ item });
+    std::unordered_set<CItem*> itemsToRemove;
+    while (!queue.empty())
+    {
+        const auto& qitem = queue.top();
+        queue.pop();
+        if (qitem->IsType(IT_FILE)) itemsToRemove.emplace(qitem);
+        else for (const auto& child : qitem->GetChildren())
+        {
+            queue.push(child);
+        }
+    }
+
+    const auto root = reinterpret_cast<CItemDupe*>(GetItem(0));
+    for (const auto& itemToRemove : std::ranges::reverse_view(itemsToRemove))
+    {
+        // remove from size tracker
+        const auto size = itemToRemove->GetSizeLogical();
+        m_SizeTracker.at(size).erase(itemToRemove);
+
+        // remove from hash tracker
+        std::wstring hashString;
+        for (auto& hash : m_HashTracker)
+        {
+            if (hash.second.contains(itemToRemove))
+            {
+                hashString = hash.first;
+                hash.second.erase(itemToRemove);
+            }
+        }
+
+        if (m_NodeTracker.contains(hashString))
+        {
+            auto& hashNode = m_NodeTracker.at(hashString);
+            for (auto & dupchild : std::vector(hashNode->GetChildren()))
+            {
+                if (dupchild->GetItem() == itemToRemove)
+                {
+                   hashNode->RemoveChild(dupchild);
+                }
+            }
+
+            // remove parent node if only one item is list
+            if (hashNode->GetChildren().size() <= 1)
+            {
+                root->RemoveChild(hashNode);
+                m_NodeTracker.erase(hashString);
+            }
+        }
     }
 }
 
@@ -252,7 +312,7 @@ void CFileDupeControl::SetRootItem(CTreeListItem* root)
 void CFileDupeControl::OnSetFocus(CWnd* pOldWnd)
 {
     CTreeListControl::OnSetFocus(pOldWnd);
-    CMainFrame::Get()->SetLogicalFocus(LF_DUPLICATELIST);
+    CMainFrame::Get()->SetLogicalFocus(LF_DUPELIST);
 }
 
 void CFileDupeControl::OnKeyDown(const UINT nChar, const UINT nRepCnt, const UINT nFlags)

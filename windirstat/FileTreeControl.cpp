@@ -136,7 +136,7 @@ void CFileTreeControl::PrepareDefaultMenu(CMenu* menu, const CItem* item)
 void CFileTreeControl::OnSetFocus(CWnd* pOldWnd)
 {
     CTreeListControl::OnSetFocus(pOldWnd);
-    CMainFrame::Get()->SetLogicalFocus(LF_DIRECTORYLIST);
+    CMainFrame::Get()->SetLogicalFocus(LF_FILETREE);
 }
 
 void CFileTreeControl::OnKeyDown(const UINT nChar, const UINT nRepCnt, const UINT nFlags)
