@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include <algorithm>
 #include <vector>
 
 //
@@ -299,11 +300,10 @@ class CTreeMapPreview final : public CStatic
                 m_Children.emplace_back(child);
                 m_Size += static_cast<int>(child->TmiGetSize());
             }
-            qsort(m_Children.data(), m_Children.size(), sizeof(CItem*), [](const void* p1, const void* p2)->int
+
+            std::ranges::sort(m_Children, [](const CItem* item1, const CItem* item2) -> bool
             {
-                const CItem* item1 = static_cast<const CItem*>(p1);
-                const CItem* item2 = static_cast<const CItem*>(p2);
-                return signum(item2->m_Size - item1->m_Size);
+                return item1->m_Size > item2->m_Size;
             });
         }
 
