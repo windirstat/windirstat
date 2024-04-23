@@ -631,7 +631,7 @@ void CSelectDrivesDlg::UpdateButtons()
             }
             else
             {
-                enableOk = FileFindEnhanced::DoesFileExist(m_FolderName.GetString(),L"*");
+                enableOk = FileFindEnhanced::DoesFileExist(m_FolderName.GetString());
             }
         }
         break;

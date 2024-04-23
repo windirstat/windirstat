@@ -71,6 +71,6 @@ public:
     FILETIME GetLastWriteTime() const;
     std::wstring GetFilePath() const;
     std::wstring GetFilePathLong() const;
-    static bool DoesFileExist(const std::wstring& folder, const std::wstring& file);
+    static bool DoesFileExist(const std::wstring& folder, const std::wstring& file = {});
     static std::wstring MakeLongPathCompatible(const std::wstring& path);
 };
