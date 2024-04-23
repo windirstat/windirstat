@@ -227,6 +227,9 @@
       <AdditionalManifestFiles>res\windirstat.manifest</AdditionalManifestFiles>
       <EnableDpiAwareness>false</EnableDpiAwareness>
     </Manifest>
+    <PostBuildEvent>
+      <Command>POWERSHELL -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Unrestricted -File "$(SolutionDir)\common\Prune Executable.ps1" "$(TargetPath)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -276,6 +279,9 @@
       <AdditionalManifestFiles>res\windirstat.manifest</AdditionalManifestFiles>
       <EnableDpiAwareness>false</EnableDpiAwareness>
     </Manifest>
+    <PostBuildEvent>
+      <Command>POWERSHELL -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Unrestricted -File "$(SolutionDir)\common\Prune Executable.ps1" "$(TargetPath)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ImportGroup Label="PropertySheets">
     <Import Project="$(SolutionDir)project.late.props" Condition="exists('$(SolutionDir)project.late.props')" Label="ProjectSpecific (solution/late)" />
