@@ -34,7 +34,7 @@
 #if defined(WDS_RESLANG) && (WDS_RESLANG > 0)
 #define TEXT_FILEDESC               TEXT_RESLANG language file
 #else
-#define TEXT_FILEDESC               Windows Directory Statistics visualizes disk space usage // component description
+#define TEXT_FILEDESC               Windows Directory Statistics (WinDirStat) // component description
 #endif
 
 #define STRING_COMPANY              "WinDirStat Team (windirstat.net)"
