@@ -219,7 +219,7 @@ public:
     void UpdateUnknownItem() const;
     void RemoveUnknownItem();
     void CollectExtensionData(CExtensionData* ed) const;
-    std::wstring GetFileHash(ULONGLONG maxHashSize = 0);
+    std::wstring GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CItem*>* queue);
 
     bool IsDone() const
     {

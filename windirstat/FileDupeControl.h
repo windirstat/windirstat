@@ -36,7 +36,7 @@ public:
     static CFileDupeControl* Get() { return m_Singleton; }
     void InsertItem(int i, CTreeListItem* item);
     void SetRootItem(CTreeListItem* root) override;
-    void ProcessDuplicate(CItem* item);
+    void ProcessDuplicate(CItem* item, BlockingQueue<CItem*>* queue);
     void RemoveItem(CItem* items);
 
     std::shared_mutex m_Mutex;

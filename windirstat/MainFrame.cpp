@@ -691,7 +691,7 @@ void CMainFrame::OnClose()
     CWaitCursor wc;
 
     // Suspend the scan and wait for scan to complete
-    GetDocument()->ShutdownCoordinator();
+    GetDocument()->StopScanningEngine();
 
     // Stop the timer so we are not updating elements during shutdown
     KillTimer(ID_WDS_CONTROL);

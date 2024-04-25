@@ -173,7 +173,7 @@ void CDirStatDoc::DeleteContents()
     CWaitCursor wc;
 
     // Wait for system to fully shutdown
-    ShutdownCoordinator();
+    StopScanningEngine();
 
     // Cleanup structures
     delete m_RootItemDupe;
@@ -256,7 +256,7 @@ BOOL CDirStatDoc::OnOpenDocument(LPCWSTR lpszPathName)
 
     // Update new root for display
     UpdateAllViews(nullptr, HINT_NEWROOT);
-    StartupCoordinator(std::vector({ GetDocument()->GetRootItem() }));
+    StartScanningEngine(std::vector({ GetDocument()->GetRootItem() }));
     return true;
 }
 
@@ -272,7 +272,7 @@ BOOL CDirStatDoc::OnOpenDocument(CItem * newroot)
     m_ZoomItem = m_RootItem;
 
     UpdateAllViews(nullptr, HINT_NEWROOT);
-    StartupCoordinator({});
+    StartScanningEngine({});
     return true;
 }
 
@@ -513,7 +513,7 @@ void CDirStatDoc::RefreshRecyclers() const
         }
     }
 
-    if (!toRefresh.empty()) GetDocument()->StartupCoordinator(toRefresh);
+    if (!toRefresh.empty()) GetDocument()->StartScanningEngine(toRefresh);
 }
 
 void CDirStatDoc::RebuildExtensionData()
@@ -625,7 +625,7 @@ void CDirStatDoc::SetZoomItem(CItem* item)
 //
 void CDirStatDoc::RefreshItem(const std::vector<CItem*>& item)
 {
-    GetDocument()->StartupCoordinator(item);
+    GetDocument()->StartScanningEngine(item);
 }
 
 // UDC confirmation Dialog.
@@ -1013,7 +1013,7 @@ void CDirStatDoc::OnViewShowFreeSpace()
     COptions::ShowFreeSpace = m_ShowFreeSpace;
 
     // Force recalculation and graph refresh
-    StartupCoordinator({});
+    StartScanningEngine({});
 }
 
 void CDirStatDoc::OnUpdateViewShowUnknown(CCmdUI* pCmdUI)
@@ -1048,7 +1048,7 @@ void CDirStatDoc::OnViewShowUnknown()
     COptions::ShowUnknown = m_ShowUnknown;
 
     // Force recalculation and graph refresh
-    StartupCoordinator({});
+    StartScanningEngine({});
 }
 
 void CDirStatDoc::OnTreeMapZoomIn()
@@ -1231,20 +1231,7 @@ void CDirStatDoc::OnCleanupProperties()
 void CDirStatDoc::OnScanSuspend()
 {
     // Wait for system to fully shutdown
-    std::thread([this]() mutable
-    {
-        CWaitCursor wc;
-        queue.suspend(true);
-        PostMessage(CMainFrame::Get()->GetSafeHwnd(), WM_USER, 0, 0);
-    }).detach();
-
-    // Read all messages in this next loop, removing each message as we read it.
-    for (MSG msg; ::GetMessage(&msg, nullptr, 0, 0); )
-    {
-        if (msg.message == WM_USER) break;
-        ::TranslateMessage(&msg);
-        ::DispatchMessage(&msg);
-    }
+    queue.SuspendExecution();
 
     // Mark as suspended
     if (CMainFrame::Get() != nullptr)
@@ -1253,30 +1240,25 @@ void CDirStatDoc::OnScanSuspend()
 
 void CDirStatDoc::OnScanResume()
 {
-    queue.resume();
+    queue.ResumeExecution();
 
     if (CMainFrame::Get() != nullptr)
         CMainFrame::Get()->SuspendState(false);
 }
 
-void CDirStatDoc::ShutdownCoordinator(const bool wait)
+void CDirStatDoc::StopScanningEngine()
 {
-    if (wait) OnScanSuspend();
+    // Signal to shutdown processing
+    queue.CancelExecution();
 
-    if (queue.drain(nullptr) && wait)
-    {
-        for (auto& thread : threads)
-        {
-            thread.join();
-        }
-    }
+    // Clear suspended stay for next run
+    OnScanResume();
 }
 
-void CDirStatDoc::StartupCoordinator(std::vector<CItem*> items)
+void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
 {
     // Stop any previous executions
-    ShutdownCoordinator();
-    OnScanResume();
+    StopScanningEngine();
 
     // Address currently zoomed / selected item conflicts
     const auto zoomItem = GetZoomItem();
@@ -1367,10 +1349,6 @@ void CDirStatDoc::StartupCoordinator(std::vector<CItem*> items)
             }
         }
 
-        // Reset queue from last iteration
-        const int maxThreads = COptions::ScanningThreads;
-        queue.reset(maxThreads);
-
         // Add items to processing queue
         for (const auto item : std::vector(items))
         {
@@ -1382,23 +1360,19 @@ void CDirStatDoc::StartupCoordinator(std::vector<CItem*> items)
 
             item->UpwardAddReadJobs(1);
             item->UpwardSetUndone();
-            queue.push(item);
+            queue.Push(item);
         }
 
         // Create subordinate threads if there is work to do
-        if (queue.hasItems())
+        if (queue.HasItems())
         {
-            threads.clear();
-            for (int i = 0; i < maxThreads; i++)
+            queue.StartThreads(COptions::ScanningThreads, [this]()
             {
-                threads.emplace_back([this]
-                {
                     CItem::ScanItems(&queue);
-                });
-            }
+            });
 
             // Wait for all threads to run out of work
-            if (queue.waitForAll())
+            if (queue.WaitForCompletionOrCancellation())
             {
                 // Exit here and stop progress if drained by an outside actor
                 CMainFrame::Get()->InvokeInMessageThread([]
@@ -1409,14 +1383,6 @@ void CDirStatDoc::StartupCoordinator(std::vector<CItem*> items)
                 });
                 return;
             }
-
-            // Flag workers to exit and wait for threads
-            queue.drain(nullptr);
-            for (auto& thread : threads)
-            {
-                thread.join();
-            }
-            threads.clear();
         }
 
         // Restore unknown and freespace items

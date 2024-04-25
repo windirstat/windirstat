@@ -103,13 +103,13 @@ void CFileDupeControl::OnContextMenu(CWnd* /*pWnd*/, const CPoint pt)
     sub->TrackPopupMenuEx(TPM_LEFTALIGN | TPM_LEFTBUTTON, pt.x, pt.y, AfxGetMainWnd(), &tp);
 }
 
-void CFileDupeControl::ProcessDuplicate(CItem * item)
+void CFileDupeControl::ProcessDuplicate(CItem * item, BlockingQueue<CItem*>* queue)
 {
     if (!COptions::ScanForDuplicates) return;
     if (COptions::SkipDupeDetectionCloudLinks.Obj() &&
         CDirStatApp::Get()->GetReparseInfo()->IsCloudLink(item->GetPathLong(), item->GetAttributes())) return;
 
-    std::lock_guard lock(m_Mutex);
+    std::unique_lock lock(m_Mutex);
     const auto sizeEntry = m_SizeTracker.find(item->GetSizeLogical());
     if (sizeEntry == m_SizeTracker.end())
     {
@@ -134,9 +134,9 @@ void CFileDupeControl::ProcessDuplicate(CItem * item)
             constexpr auto partialBufferSize = 128ull * 1024ull;
 
             // Compute the hash for the file
-            m_Mutex.unlock();
-            std::wstring hash = itemToHash->GetFileHash(hashType == ITF_PARTHASH ? partialBufferSize : 0);
-            m_Mutex.lock();
+            lock.unlock();
+            std::wstring hash = itemToHash->GetFileHash(hashType == ITF_PARTHASH ? partialBufferSize : 0, queue);
+            lock.lock();
 
             itemToHash->SetType(itemToHash->GetRawType() | hashType);
             if (itemToHash == item) hashForThisItem = hash;
