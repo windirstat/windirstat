@@ -1255,7 +1255,7 @@ std::wstring CItem::UpwardGetPathWithoutBackslash() const
     {
         if (p->IsType(IT_DIRECTORY))
         {
-            path = p->m_Name + L"\\" + path;
+            path.insert(0, p->m_Name + L"\\");
         }
         else if (p->IsType(IT_FILE))
         {
@@ -1263,7 +1263,7 @@ std::wstring CItem::UpwardGetPathWithoutBackslash() const
         }
         else if (p->IsType(IT_DRIVE))
         {
-            path = PathFromVolumeName(p->m_Name) + L"\\" + path;
+            path.insert(0, PathFromVolumeName(p->m_Name) + L"\\");
         }
     }
 
