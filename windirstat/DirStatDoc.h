@@ -119,7 +119,7 @@ protected:
     void RefreshItem(const std::vector<CItem*>& item);
     void RefreshItem(CItem* item) { RefreshItem(std::vector{ item }); }
 
-    static void OpenItem(const CItem* item, const std::wstring& verb = L"open");
+    static void OpenItem(const CItem* item, const std::wstring& verb = {});
 
 protected:
     void RecurseRefreshReparsePoints(CItem* items);

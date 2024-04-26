@@ -39,7 +39,7 @@ using VRACE_DETAIL_LEVEL = enum
     VTRACE_FILE_LINE_FUNC = 3
 };
 
-constexpr bool VTRACE_OUTPUTDEBUGSTRING = true;
+constexpr bool VTRACE_OUTPUTDEBUGSTRING = false;
 
 #ifndef VTRACE_DETAIL
 #define VTRACE_DETAIL VRACE_DETAIL_LEVEL::VTRACE_FILE_LINE_FUNC
@@ -65,8 +65,8 @@ public:
         _wfreopen_s(&handleIn, L"CONIN$", L"r", stdin);
 
         // Disable buffering
-        setvbuf(handleOut, nullptr, _IONBF, 0);
-        setvbuf(handleErr, nullptr, _IONBF, 0);
+        (void) setvbuf(handleOut, nullptr, _IONBF, 0);
+        (void) setvbuf(handleErr, nullptr, _IONBF, 0);
     }
 
     ~CWDSTracerConsole()
@@ -92,7 +92,7 @@ public:
             std::format(L"{}\n", str) :
             std::format(L"[{}] {}\n", std::wstring(strPfx.begin(), strPfx.end()), str);
 
-        if (!VTRACE_TO_CONSOLE || (VTRACE_TO_CONSOLE && VTRACE_OUTPUTDEBUGSTRING))
+        if (VTRACE_OUTPUTDEBUGSTRING)
             OutputDebugStringW(strDbg.c_str());
 
         if (VTRACE_TO_CONSOLE)
