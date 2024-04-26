@@ -40,7 +40,9 @@ CFileDupeControl::CFileDupeControl() : CTreeListControl(20, COptions::DupeViewCo
 
 bool CFileDupeControl::GetAscendingDefault(const int column)
 {
-    return column == COL_ITEMDUP_SIZE_PHYSICAL || column == COL_ITEMDUP_LASTCHANGE;
+    return column == COL_ITEMDUP_SIZE_PHYSICAL ||
+        column == COL_ITEMDUP_SIZE_LOGICAL ||
+        COL_ITEMDUP_LASTCHANGE;
 }
 
 #pragma warning(push)
@@ -171,7 +173,7 @@ void CFileDupeControl::ProcessDuplicate(CItem * item, BlockingQueue<CItem*>* que
             if (dupeParent == nullptr)
             {
                 // Create new root item to hold these duplicates
-                dupeParent = new CItemDupe(hashForThisItem, itemToAdd->GetSizeLogical());
+                dupeParent = new CItemDupe(hashForThisItem, itemToAdd->GetSizePhysical(), itemToAdd->GetSizeLogical());
                 root->AddChild(dupeParent);
                 m_NodeTracker.emplace(hashForThisItem, dupeParent);
             }
@@ -182,8 +184,8 @@ void CFileDupeControl::ProcessDuplicate(CItem * item, BlockingQueue<CItem*>* que
                 { return child->GetItem() == itemToAdd; }) != children.end()) return;
 
             // Add new item
-            const auto dupChild = new CItemDupe(itemToAdd);
-            dupeParent->AddChild(dupChild);
+            const auto dupeChild = new CItemDupe(itemToAdd);
+            dupeParent->AddChild(dupeChild);
 
             SortItems();
         });
@@ -192,8 +194,8 @@ void CFileDupeControl::ProcessDuplicate(CItem * item, BlockingQueue<CItem*>* que
 
 void CFileDupeControl::RemoveItem(CItem* item)
 {
-    // exit immediately if not doing duplicate detectr
-    if (m_NodeTracker.empty()) return;
+    // Exit immediately if not doing duplicate detector
+    if (m_HashTracker.empty() && m_SizeTracker.empty()) return;
 
     std::stack<CItem*> queue({ item });
     std::unordered_set<CItem*> itemsToRemove;
@@ -211,40 +213,50 @@ void CFileDupeControl::RemoveItem(CItem* item)
     const auto root = reinterpret_cast<CItemDupe*>(GetItem(0));
     for (const auto& itemToRemove : std::ranges::reverse_view(itemsToRemove))
     {
-        // remove from size tracker
+        // Remove from size tracker
         const auto size = itemToRemove->GetSizeLogical();
         m_SizeTracker.at(size).erase(itemToRemove);
 
-        // remove from hash tracker
-        std::wstring hashString;
-        for (auto& hash : m_HashTracker)
+        // Remove from hash tracker
+        for (auto& [hashKey, hashSet] : m_HashTracker)
         {
-            if (hash.second.contains(itemToRemove))
-            {
-                hashString = hash.first;
-                hash.second.erase(itemToRemove);
-            }
-        }
+            // Skip if no matches of the item associated with this hash
+            if (!hashSet.contains(itemToRemove)) continue;
+        
+            // Remove from this set
+            hashSet.erase(itemToRemove);
 
-        if (m_NodeTracker.contains(hashString))
-        {
-            auto& hashNode = m_NodeTracker.at(hashString);
-            for (auto & dupchild : std::vector(hashNode->GetChildren()))
+            // Continue if this is not present in the node list
+            if (!m_NodeTracker.contains(hashKey)) continue;
+
+            // Remove the entry from the visual node list
+            auto& hashNode = m_NodeTracker.at(hashKey);
+            for (auto& dupeChild : std::vector(hashNode->GetChildren()))
             {
-                if (dupchild->GetItem() == itemToRemove)
+                if (dupeChild->GetItem() == itemToRemove)
                 {
-                   hashNode->RemoveChild(dupchild);
+                    hashNode->RemoveChild(dupeChild);
                 }
             }
 
-            // remove parent node if only one item is list
+            // Remove parent node if only one item is list
             if (hashNode->GetChildren().size() <= 1)
             {
                 root->RemoveChild(hashNode);
-                m_NodeTracker.erase(hashString);
+                m_NodeTracker.erase(hashKey);
             }
         }
     }
+
+    // Cleanup empty structures
+    std::erase_if(m_HashTracker, [&](const auto& pair)
+    {
+        return pair.second.empty();
+    });
+    std::erase_if(m_SizeTracker, [&](const auto& pair)
+    {
+        return pair.second.empty();
+    });
 }
 
 void CFileDupeControl::OnItemDoubleClick(const int i)

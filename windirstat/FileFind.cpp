@@ -94,7 +94,7 @@ bool FileFindEnhanced::FindFile(const std::wstring & strFolder, const std::wstri
     // convert the path to a long path that is compatible with the other call
     m_Base = strFolder;
     if (m_Base.find(L":\\", 1) == 1) m_Base = m_Dos + m_Base;
-    else if (m_Base.starts_with(L"\\\\")) m_Base = m_Dosunc + m_Base.substr(2);
+    else if (m_Base.starts_with(L"\\\\")) m_Base = m_DosUNC + m_Base.substr(2);
     UNICODE_STRING path;
     path.Length = static_cast<USHORT>(m_Base.size() * sizeof(WCHAR));
     path.MaximumLength = static_cast<USHORT>(m_Base.size() + 1) * sizeof(WCHAR);
@@ -186,8 +186,8 @@ std::wstring FileFindEnhanced::GetFilePath() const
     // Strip special dos chars
     if (wcsncmp(path.data(), m_Dos, wcslen(m_Dos) - 1) == 0)
         path = path.substr(static_cast<int>(wcslen(m_Dos)));
-    if (wcsncmp(path.data(), m_Dosunc, wcslen(m_Dosunc) - 1) == 0)
-        path = path.substr(static_cast<int>(wcslen(m_Dosunc)));
+    if (wcsncmp(path.data(), m_DosUNC, wcslen(m_DosUNC) - 1) == 0)
+        path = path.substr(static_cast<int>(wcslen(m_DosUNC)));
     return path;
 }
 
@@ -199,7 +199,7 @@ std::wstring FileFindEnhanced::GetFilePathLong() const
 std::wstring FileFindEnhanced::MakeLongPathCompatible(const std::wstring & path)
 {
     if (path.find(L":\\", 1) == 1) return { m_Long + path };
-    if (path.starts_with(L"\\\\")) return { m_Longunc + path.substr(2) };
+    if (path.starts_with(L"\\\\")) return { m_LongUNC + path.substr(2) };
     return path;
 }
 

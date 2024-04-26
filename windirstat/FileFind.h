@@ -47,9 +47,9 @@ class FileFindEnhanced final
     bool m_Firstrun = true;
     FILE_DIRECTORY_INFORMATION* m_CurrentInfo = nullptr;
     static constexpr auto m_Dos = L"\\??\\";
-    static constexpr auto m_Dosunc = L"\\??\\UNC\\";
+    static constexpr auto m_DosUNC = L"\\??\\UNC\\";
     static constexpr auto m_Long = L"\\\\?\\";
-    static constexpr auto m_Longunc = L"\\\\?\\UNC\\";
+    static constexpr auto m_LongUNC = L"\\\\?\\UNC\\";
 
 public:
 

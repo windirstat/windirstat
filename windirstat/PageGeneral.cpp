@@ -98,8 +98,8 @@ void CPageGeneral::OnOK()
 {
     UpdateData();
 
-    const bool wdsChanged = static_cast<bool>(m_UseFallbackLocale) != COptions::UseFallbackLocale;
-    const bool lgChanged = static_cast<bool>(m_ListGrid) != COptions::ListGrid ||
+    const bool fallbackChanged = static_cast<bool>(m_UseFallbackLocale) != COptions::UseFallbackLocale;
+    const bool gridChanged = static_cast<bool>(m_ListGrid) != COptions::ListGrid ||
         static_cast<bool>(m_ListStripes) != COptions::ListStripes ||
         static_cast<bool>(m_ListFullRowSelection) != COptions::ListFullRowSelection;
 
@@ -114,11 +114,11 @@ void CPageGeneral::OnOK()
         AfxMessageBox(L"Could not toggle WinDirStat portable mode. Check your permissions.", MB_OK | MB_ICONERROR);
     }
 
-    if (lgChanged)
+    if (gridChanged)
     {
         GetDocument()->UpdateAllViews(nullptr, HINT_LISTSTYLECHANGED);
     }
-    if (wdsChanged)
+    if (fallbackChanged)
     {
         GetDocument()->UpdateAllViews(nullptr, HINT_NULL);
     }

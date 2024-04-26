@@ -30,7 +30,8 @@
 #include <functional>
 #include <queue>
 
-CItemDupe::CItemDupe(const std::wstring& hash, const ULONGLONG size) : m_Hash(hash), m_Size(size) {}
+CItemDupe::CItemDupe(const std::wstring& hash, const ULONGLONG sizePhysical, const ULONGLONG sizeLogical) :
+    m_Hash(hash), m_SizePhysical(sizePhysical), m_SizeLogical(sizeLogical) {}
 
 CItemDupe::CItemDupe(CItem* item) : m_Item(item) {}
 
@@ -54,7 +55,8 @@ std::wstring CItemDupe::GetText(const int subitem) const
     {
         // Handle top-level hash collection nodes
         if (subitem == COL_ITEMDUP_NAME) return m_Hash;
-        if (subitem == COL_ITEMDUP_SIZE_PHYSICAL) return FormatBytes(m_Size * GetChildren().size());
+        if (subitem == COL_ITEMDUP_SIZE_PHYSICAL) return FormatBytes(m_SizePhysical * GetChildren().size());
+        if (subitem == COL_ITEMDUP_SIZE_LOGICAL) return FormatBytes(m_SizeLogical * GetChildren().size());
         if (subitem == COL_ITEMDUP_ITEMS) return FormatCount(GetChildren().size());
         return {};
     }
@@ -75,7 +77,8 @@ int CItemDupe::CompareSibling(const CTreeListItem* tlib, const int subitem) cons
     {
         // Handle top-level hash collection nodes
         if (subitem == COL_ITEMDUP_NAME) return signum(_wcsicmp(m_Hash.c_str(),other->m_Hash.c_str()));
-        if (subitem == COL_ITEMDUP_SIZE_PHYSICAL) return usignum(m_Size * m_Children.size(), other->m_Size * other->m_Children.size());
+        if (subitem == COL_ITEMDUP_SIZE_PHYSICAL) return usignum(m_SizePhysical * m_Children.size(), other->m_SizePhysical * other->m_Children.size());
+        if (subitem == COL_ITEMDUP_SIZE_LOGICAL) return usignum(m_SizeLogical * m_Children.size(), other->m_SizeLogical * other->m_Children.size());
         if (subitem == COL_ITEMDUP_ITEMS) return usignum(m_Children.size(), other->m_Children.size());
         return 0;
     }
