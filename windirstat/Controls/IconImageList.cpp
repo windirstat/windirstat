@@ -146,7 +146,7 @@ short CIconImageList::GetEmptyImage() const
 // Returns the boot drive icon
 std::wstring CIconImageList::GetADriveSpec()
 {
-    std::wstring s(_MAX_PATH, L'\0');
+    std::wstring s(_MAX_PATH, wds::chrNull);
     const UINT u = ::GetWindowsDirectory(s.data(), _MAX_PATH);
     s.resize(wcslen(s.data()));
     if (u == 0 || s.size() < 3 || s[1] != wds::chrColon || s[2] != wds::chrBackslash)

@@ -180,7 +180,7 @@ std::wstring PadWidthBlanks(std::wstring n, const int width)
 {
     const auto blankCount = width - n.size();
     if (blankCount <= 0) return n;
-    return n + std::wstring(L" ", blankCount);
+    return n + std::wstring(blankCount, wds::strBlankSpace);
 }
 
 std::wstring FormatFileTime(const FILETIME& t)
@@ -206,21 +206,6 @@ std::wstring FormatFileTime(const FILETIME& t)
 
 std::wstring FormatAttributes(const DWORD attr)
 {
-    // order:
-    // strAttributeReadonly
-    // strAttributeHidden
-    // strAttributeSystem
-    // strAttributeArchive
-    // strAttributeTemporary
-    // strAttributeCompressed
-    // strAttributeEncrypted
-    // strAttributeIntegrityStream
-    // strAttributeVirtual
-    // strAttributeReparsePoint
-    // strAttributeSparse
-    // strAttributeOffline
-    // strAttributeNotContentIndexed
-    // strAttributeEA
     if (attr == INVALID_FILE_ATTRIBUTES)
     {
         return wds::strInvalidAttributes;
@@ -257,6 +242,11 @@ std::wstring FormatAttributes(const DWORD attr)
         attributes.append(wds::strAttributeEncrypted);
     }
 
+    if (attr & FILE_ATTRIBUTE_OFFLINE)
+    {
+        attributes.append(wds::strAttributeOffline);
+    }
+
     return attributes;
 }
 
@@ -276,7 +266,7 @@ std::wstring FormatMilliseconds(const ULONGLONG ms)
 
 bool GetVolumeName(const std::wstring & rootPath, std::wstring& volumeName)
 {
-    volumeName.resize(256);
+    volumeName.resize(MAX_PATH);
     const bool success = GetVolumeInformation(rootPath.c_str(), volumeName.data(),
         static_cast<DWORD>(volumeName.size()), nullptr, nullptr, nullptr, nullptr, 0) != FALSE;
     volumeName.resize(wcslen(volumeName.data()));
@@ -423,14 +413,13 @@ bool DriveExists(const std::wstring& path)
         return false;
     }
 
-    const int d = std::tolower(path.at(0)) - wds::chrSmallA;
+    const int d = std::toupper(path.at(0)) - wds::strAlpha.at(0);
     if (const DWORD mask = 0x1 << d; (mask & ::GetLogicalDrives()) == 0)
     {
         return false;
     }
 
-    std::wstring dummy;
-    if (!::GetVolumeName(path, dummy))
+    if (std::wstring dummy; !::GetVolumeName(path, dummy))
     {
         return false;
     }

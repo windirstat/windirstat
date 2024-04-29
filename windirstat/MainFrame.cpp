@@ -935,14 +935,14 @@ void CMainFrame::QueryRecycleBin(ULONGLONG& items, ULONGLONG& bytes)
 
     const DWORD drives = ::GetLogicalDrives();
     DWORD mask = 0x00000001;
-    for (int i = 0; i < wds::iNumDriveLetters; i++, mask <<= 1)
+    for (std::size_t i = 0; i < wds::strAlpha.size(); i++, mask <<= 1)
     {
         if ((drives & mask) == 0)
         {
             continue;
         }
 
-        std::wstring s = std::wstring(1, wds::albet.at(i)) + L":\\";
+        std::wstring s = std::wstring(1, wds::strAlpha.at(i)) + L":\\";
         const UINT type = ::GetDriveType(s.c_str());
         if (type == DRIVE_UNKNOWN || type == DRIVE_NO_ROOT_DIR)
         {

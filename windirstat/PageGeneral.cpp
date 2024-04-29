@@ -85,7 +85,6 @@ BOOL CPageGeneral::OnInitDialog()
         m_Combo.SetItemData(i, language);
         if (language == COptions::LanguageId)
         {
-            m_OriginalLanguage = i;
             m_Combo.SetCurSel(i);
         }
     }
@@ -136,7 +135,7 @@ void CPageGeneral::OnBnClickedSetModified()
 
 void CPageGeneral::OnCbnSelendokCombo()
 {
-    const int i = m_Combo.GetCurSel();
-    GetSheet()->SetLanguageChanged(i != m_OriginalLanguage);
+    const LANGID langid = static_cast<LANGID>(m_Combo.GetItemData(m_Combo.GetCurSel()));
+    GetSheet()->SetLanguageChanged(langid != COptions::LanguageId);
     SetModified();
 }

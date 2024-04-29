@@ -21,6 +21,7 @@
 
 #include "stdafx.h"
 #include "MountPoints.h"
+#include "Constants.h"
 #include "SmartPointer.h"
 #include "FileFind.h"
 #include "GlobalHelpers.h"
@@ -87,13 +88,13 @@ void CReparsePoints::Initialize()
         }
 
         // Enumerate double null-terminated list of names
-        for (LPWSTR name = buf.data(); *name != L'\0'; name += wcslen(name) + 1 + 1)
+        for (LPWSTR name = buf.data(); *name != wds::chrNull; name += wcslen(name) + 1 + 1)
         {
             // Remove training backslash
             const auto len = wcslen(name);
-            if (name[len - 1] == L'\\')
+            if (name[len - 1] == wds::strBackslash)
             {
-                name[len - 1] = L'\0';
+                name[len - 1] = wds::chrNull;
             }
 
             if (IsReparseType(name, { IO_REPARSE_TAG_MOUNT_POINT }))

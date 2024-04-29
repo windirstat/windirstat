@@ -52,8 +52,6 @@ protected:
 
     CComboBox m_Combo;
 
-    int m_OriginalLanguage = 0;
-
     DECLARE_MESSAGE_MAP()
     afx_msg void OnBnClickedSetModified();
     afx_msg void OnCbnSelendokCombo();

@@ -518,7 +518,7 @@ BOOL CSelectDrivesDlg::OnInitDialog()
 
     const DWORD drives = ::GetLogicalDrives();
     DWORD mask = 0x00000001;
-    for (std::size_t i = 0; i < wds::albet.size(); i++, mask <<= 1)
+    for (std::size_t i = 0; i < wds::strAlpha.size(); i++, mask <<= 1)
     {
         if ((drives & mask) == 0)
         {
@@ -526,7 +526,7 @@ BOOL CSelectDrivesDlg::OnInitDialog()
         }
 
         
-        std::wstring s = std::wstring(1, wds::albet.at(i)) + L":\\";
+        std::wstring s = std::wstring(1, wds::strAlpha.at(i)) + L":\\";
         const UINT type = ::GetDriveType(s.c_str());
         if (type == DRIVE_UNKNOWN || type == DRIVE_NO_ROOT_DIR)
         {

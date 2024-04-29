@@ -67,7 +67,7 @@ std::wstring GetBaseNameFromPath(const std::wstring & path)
 
 std::wstring GetAppFileName(const std::wstring& ext)
 {
-    std::wstring s(_MAX_PATH, L'\0');
+    std::wstring s(_MAX_PATH, wds::chrNull);
     VERIFY(::GetModuleFileName(nullptr, s.data(), _MAX_PATH));
     s.resize(wcslen(s.data()));
 

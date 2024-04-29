@@ -23,6 +23,7 @@
 #include "Item.h"
 #include "Localization.h"
 #include "CsvLoader.h"
+#include "Constants.h"
 
 #include <fstream>
 #include <string>
@@ -173,7 +174,7 @@ CItem* LoadResults(const std::wstring & path)
         LPWSTR displayName = useFullPath ? lookupPath : wcsrchr(lookupPath, L'\\');
         if (!useFullPath && displayName != nullptr)
         {
-            displayName[0] = L'\0';
+            displayName[0] = wds::chrNull;
             displayName = &displayName[1];
         }
 
