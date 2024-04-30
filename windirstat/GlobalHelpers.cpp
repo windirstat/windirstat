@@ -180,7 +180,7 @@ std::wstring PadWidthBlanks(std::wstring n, const int width)
 {
     const auto blankCount = width - n.size();
     if (blankCount <= 0) return n;
-    return n + std::wstring(blankCount, wds::strBlankSpace);
+    return n + std::wstring(blankCount, wds::chrBlankSpace);
 }
 
 std::wstring FormatFileTime(const FILETIME& t)

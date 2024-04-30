@@ -904,13 +904,13 @@ void CMainFrame::UpdateCleanupMenu(CMenu* menu) const
     if (items == 1)
     {
         info = Localization::Format(IDS_ONEITEMss,  FormatBytes(bytes),
-            COptions::UseSizeSuffixes && bytes != 0 ? wds::strEmpty : (wds::strBlankSpace + GetSpec_Bytes()));
+            COptions::UseSizeSuffixes && bytes != 0 ? wds::strEmpty : (wds::chrBlankSpace + GetSpec_Bytes()));
     }
     else
     {
         info = Localization::Format(IDS_ONEITEMss, FormatCount(items).c_str(),
             FormatBytes(bytes).c_str(), COptions::UseSizeSuffixes
-            && bytes != 0 ? wds::strEmpty : (wds::strBlankSpace + GetSpec_Bytes()).c_str());
+            && bytes != 0 ? wds::strEmpty : (wds::chrBlankSpace + GetSpec_Bytes()).c_str());
     }
 
     const std::wstring s = Localization::Lookup(IDS_EMPTYRECYCLEBIN) + info;
@@ -1065,7 +1065,7 @@ void CMainFrame::SetSelectionMessageText()
         break;
     case LF_EXTENSIONLIST:
         {
-            SetMessageText(wds::strStar + GetDocument()->GetHighlightExtension());
+            SetMessageText(wds::chrStar + GetDocument()->GetHighlightExtension());
         }
         break;
     }

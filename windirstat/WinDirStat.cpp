@@ -348,7 +348,7 @@ void CDirStatApp::OnRunElevated()
     // For the configuration to launch, include the parent process so we can
     // terminate it once launched from the child process
     const std::wstring sAppName = GetAppFileName();
-    std::wstring launchConfig = std::to_wstring(GetCurrentProcessId()) + GetDocument()->GetPathName().GetString();
+    const std::wstring launchConfig = std::format(L"{}|{}", GetCurrentProcessId(), GetDocument()->GetPathName().GetString());
 
     SHELLEXECUTEINFO shellInfo;
     ZeroMemory(&shellInfo, sizeof(shellInfo));

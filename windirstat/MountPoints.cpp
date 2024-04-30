@@ -92,7 +92,7 @@ void CReparsePoints::Initialize()
         {
             // Remove training backslash
             const auto len = wcslen(name);
-            if (name[len - 1] == wds::strBackslash)
+            if (name[len - 1] == wds::chrBackslash)
             {
                 name[len - 1] = wds::chrNull;
             }

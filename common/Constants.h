@@ -25,7 +25,7 @@
 
 namespace wds
 {
-    // Single character constants
+    // String and character constants
     inline constexpr auto chrBracketOpen  = L'(';
     inline constexpr auto chrBracketClose = L')';
     inline constexpr auto chrDot          = L'.';
@@ -33,15 +33,10 @@ namespace wds
     inline constexpr auto chrBackslash    = L'\\';
     inline constexpr auto chrPipe         = L'|';
     inline constexpr auto chrNull         = L'\0';
-
-    // Constants strings
-    inline constexpr auto strEmpty      = L"";
-    inline constexpr auto strBlankSpace = L' ';
-    inline constexpr auto strStar       = L'*';
-    inline constexpr auto strDot        = L'.';
-    inline constexpr auto strBackslash  = L'\\';
-    inline constexpr auto strPipe       = L'|';
-    inline constexpr auto strPercent    = L'%';
+    inline constexpr auto strEmpty        = L"";
+    inline constexpr auto chrBlankSpace   = L' ';
+    inline constexpr auto chrStar         = L'*';
+    inline constexpr auto chrPercent      = L'%';
 
     inline constexpr auto strExplorerKey = L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer";
 

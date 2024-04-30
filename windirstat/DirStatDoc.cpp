@@ -153,7 +153,7 @@ void CDirStatDoc::DecodeSelection(const std::wstring& s, std::wstring& folder, s
         else
         {
             // Remove trailing backslash, if any and not drive-root.
-            if (!f.empty() && wds::strBackslash == f.back() && (f.size() != 3 || f[1] != wds::chrColon))
+            if (!f.empty() && wds::chrBackslash == f.back() && (f.size() != 3 || f[1] != wds::chrColon))
             {
                 f = f.substr(0, f.size() - 1);
             }
