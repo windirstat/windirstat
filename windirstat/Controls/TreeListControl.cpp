@@ -165,7 +165,7 @@ void CTreeListItem::SortChildren(const SSorting& sorting)
     // sort by size for proper treemap rendering
     std::ranges::sort(m_VisualInfo->sortedChildren, [sorting](auto item1, auto item2)
         {
-            return item1->CompareS(item2, sorting) < 0;
+            return item1->CompareString(item2, sorting) < 0;
         });
 }
 

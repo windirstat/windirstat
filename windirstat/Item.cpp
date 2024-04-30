@@ -1314,8 +1314,8 @@ void CItem::UpwardDrivePacman()
 std::wstring CItem::GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CItem*>* queue)
 {
     // Initialize hash for this thread
-    constexpr auto maxBufferSize = 2ul * 1024ul * 1024ul;
-    thread_local std::vector<BYTE> FileBuffer(hashSizeLimit > 0 ? hashSizeLimit : maxBufferSize);
+    constexpr auto maxBufferSize = 2ull * 1024ull * 1024ull;
+    thread_local std::vector<BYTE> FileBuffer(static_cast<std::size_t>(hashSizeLimit > 0 ? hashSizeLimit : maxBufferSize));
     thread_local std::vector<BYTE> Hash;
     thread_local SmartPointer<BCRYPT_HASH_HANDLE> HashHandle(BCryptDestroyHash);
     thread_local DWORD HashLength = 0;

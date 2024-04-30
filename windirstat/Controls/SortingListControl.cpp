@@ -37,7 +37,7 @@ int CSortingListItem::Compare(const CSortingListItem* other, const int subitem) 
     return signum(_wcsicmp(GetText(subitem).c_str(),other->GetText(subitem).c_str()));
 }
 
-int CSortingListItem::CompareS(const CSortingListItem* other, const SSorting& sorting) const
+int CSortingListItem::CompareString(const CSortingListItem* other, const SSorting& sorting) const
 {
     int r = Compare(other, sorting.subitem1);
     if (abs(r) < 2 && !sorting.ascending1)
@@ -177,7 +177,7 @@ void CSortingListControl::SortItems()
         const CSortingListItem* item1 = reinterpret_cast<CSortingListItem*>(lParam1);
         const CSortingListItem* item2 = reinterpret_cast<CSortingListItem*>(lParam2);
         const SSorting* sorting = reinterpret_cast<SSorting*>(lParamSort);
-        return item1->CompareS(item2, *sorting); }, reinterpret_cast<DWORD_PTR>(&m_Sorting)));
+        return item1->CompareString(item2, *sorting); }, reinterpret_cast<DWORD_PTR>(&m_Sorting)));
 
     if (m_IndicatedColumn != -1)
     {
@@ -221,32 +221,36 @@ bool CSortingListControl::HasImages()
 #pragma warning(push)
 #pragma warning(disable:26454)
 BEGIN_MESSAGE_MAP(CSortingListControl, CListCtrl)
-    ON_NOTIFY_REFLECT(LVN_GETDISPINFO, OnLvnGetdispinfo)
-    ON_NOTIFY(HDN_ITEMCLICK, 0, OnHdnItemclick)
-    ON_NOTIFY(HDN_ITEMDBLCLICK, 0, OnHdnItemdblclick)
+    ON_NOTIFY_REFLECT(LVN_GETDISPINFO, OnLvnGetDispInfo)
+    ON_NOTIFY(HDN_ITEMCLICK, 0, OnHdnItemClick)
+    ON_NOTIFY(HDN_ITEMDBLCLICK, 0, OnHdnItemDblClick)
     ON_WM_DESTROY()
 END_MESSAGE_MAP()
 #pragma warning(pop)
 
-void CSortingListControl::OnLvnGetdispinfo(NMHDR* pNMHDR, LRESULT* pResult)
+void CSortingListControl::OnLvnGetDispInfo(NMHDR* pNMHDR, LRESULT* pResult)
 {
-    NMLVDISPINFO* di = reinterpret_cast<NMLVDISPINFO*>(pNMHDR);
+    NMLVDISPINFO* displayInfo = reinterpret_cast<NMLVDISPINFO*>(pNMHDR);
     *pResult = FALSE;
 
-    const CSortingListItem* item = reinterpret_cast<CSortingListItem*>(di->item.lParam);
+    const CSortingListItem* item = reinterpret_cast<CSortingListItem*>(displayInfo->item.lParam);
 
-    if ((di->item.mask & LVIF_TEXT) != 0)
+    if ((displayInfo->item.mask & LVIF_TEXT) != 0)
     {
-        wcscpy_s(di->item.pszText, di->item.cchTextMax, item->GetText(di->item.iSubItem).c_str());
+        // The passed item subitem is actually the column id so translate it
+        LVCOLUMN colInfo;
+        colInfo.mask = LVCF_SUBITEM;
+        GetColumn(displayInfo->item.iSubItem, &colInfo);
+        wcscpy_s(displayInfo->item.pszText, displayInfo->item.cchTextMax, item->GetText(colInfo.iSubItem).c_str());
     }
 
-    if ((di->item.mask & LVIF_IMAGE) != 0)
+    if ((displayInfo->item.mask & LVIF_IMAGE) != 0)
     {
-        di->item.iImage = item->GetImage();
+        displayInfo->item.iImage = item->GetImage();
     }
 }
 
-void CSortingListControl::OnHdnItemclick(NMHDR* pNMHDR, LRESULT* pResult)
+void CSortingListControl::OnHdnItemClick(NMHDR* pNMHDR, LRESULT* pResult)
 {
     const LPNMHEADER phdr = reinterpret_cast<LPNMHEADER>(pNMHDR);
     *pResult = FALSE;
@@ -264,9 +268,9 @@ void CSortingListControl::OnHdnItemclick(NMHDR* pNMHDR, LRESULT* pResult)
     SortItems();
 }
 
-void CSortingListControl::OnHdnItemdblclick(NMHDR* pNMHDR, LRESULT* pResult)
+void CSortingListControl::OnHdnItemDblClick(NMHDR* pNMHDR, LRESULT* pResult)
 {
-    OnHdnItemclick(pNMHDR, pResult);
+    OnHdnItemClick(pNMHDR, pResult);
 }
 
 void CSortingListControl::OnDestroy()

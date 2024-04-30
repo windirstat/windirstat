@@ -46,7 +46,7 @@ public:
     virtual std::wstring GetText(int subitem) const = 0;
     virtual int GetImage() const = 0;
     virtual int Compare(const CSortingListItem* other, int subitem) const;
-    int CompareS(const CSortingListItem* other, const SSorting& sorting) const;
+    int CompareString(const CSortingListItem* other, const SSorting& sorting) const;
 };
 
 //
@@ -99,8 +99,8 @@ private:
     int m_IndicatedColumn = -1;
 
     DECLARE_MESSAGE_MAP()
-    afx_msg void OnLvnGetdispinfo(NMHDR* pNMHDR, LRESULT* pResult);
-    afx_msg void OnHdnItemclick(NMHDR* pNMHDR, LRESULT* pResult);
-    afx_msg void OnHdnItemdblclick(NMHDR* pNMHDR, LRESULT* pResult);
+    afx_msg void OnLvnGetDispInfo(NMHDR* pNMHDR, LRESULT* pResult);
+    afx_msg void OnHdnItemClick(NMHDR* pNMHDR, LRESULT* pResult);
+    afx_msg void OnHdnItemDblClick(NMHDR* pNMHDR, LRESULT* pResult);
     afx_msg void OnDestroy();
 };
