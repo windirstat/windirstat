@@ -101,7 +101,6 @@ public:
     int FindListItem(const COwnerDrawnListItem* item) const;
     int GetTextXMargin() const;
     int GetGeneralLeftIndent() const;
-    void AdjustColumnWidth(int col);
     CRect GetWholeSubitemRect(int item, int subitem) const;
 
     bool HasFocus() const;

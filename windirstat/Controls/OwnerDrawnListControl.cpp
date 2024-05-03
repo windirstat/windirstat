@@ -604,23 +604,17 @@ BOOL COwnerDrawnListControl::OnEraseBkgnd(CDC* pDC)
 
 void COwnerDrawnListControl::OnHdnDividerdblclick(NMHDR* pNMHDR, LRESULT* pResult)
 {
-    const int subitem = reinterpret_cast<LPNMHEADER>(pNMHDR)->iItem;
-    AdjustColumnWidth(subitem);
-    *pResult = FALSE;
-}
+    const int columm = reinterpret_cast<LPNMHEADER>(pNMHDR)->iItem;
+    const int subitem = ColumnToSubItem(columm);
 
-void COwnerDrawnListControl::AdjustColumnWidth(const int col)
-{
     int width = 10;
     for (int i = 0; i < GetItemCount(); i++)
     {
-        const int w = GetSubItemWidth(GetItem(i), col);
-        if (w > width)
-        {
-            width = w;
-        }
+        width = max(width, GetSubItemWidth(GetItem(i), subitem));
     }
-    SetColumnWidth(col, width + 5);
+    SetColumnWidth(columm, width + 5);
+
+    *pResult = FALSE;
 }
 
 void COwnerDrawnListControl::OnHdnItemchanging(NMHDR* /*pNMHDR*/, LRESULT* pResult)
