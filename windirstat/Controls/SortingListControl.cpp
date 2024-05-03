@@ -202,7 +202,7 @@ void CSortingListControl::SortItems()
     hditem.cchTextMax = 256;
     GetHeaderCtrl()->GetItem(m_Sorting.column1, &hditem);
     text.resize(wcslen(text.data()));
-    text = (m_Sorting.ascending1 ? L"< " : L"> ") + text;
+    text = (m_Sorting.ascending1 ? L"↑ " : L"↓ ") + text;
     hditem.pszText = text.data();
     GetHeaderCtrl()->SetItem(m_Sorting.column1, &hditem);
     m_IndicatedColumn = m_Sorting.column1;
