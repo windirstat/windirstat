@@ -19,8 +19,8 @@
 
 #pragma once
 
-#define PRD_MAJVER                  1 // major product version
-#define PRD_MINVER                  3 // minor product version
+#define PRD_MAJVER                  2 // major product version
+#define PRD_MINVER                  0 // minor product version
 #define PRD_PATCH                   0 // patch number
 #define PRD_BUILD                   0 // build number for product
 #define PRD_BUILD_NUMERIC           0 // build number for product
@@ -31,11 +31,7 @@
 #define FILE_BUILD_NUMERIC          PRD_BUILD_NUMERIC // build number for product
 #define TEXT_WEBSITE                https:/##/windirstat.net // website
 #define TEXT_PRODUCTNAME            WinDirStat // product's name
-#if defined(WDS_RESLANG) && (WDS_RESLANG > 0)
-#define TEXT_FILEDESC               TEXT_RESLANG language file
-#else
 #define TEXT_FILEDESC               Windows Directory Statistics (WinDirStat) // component description
-#endif
 
 #define STRING_COMPANY              "WinDirStat Team (windirstat.net)"
 #define STRING_COPYRIGHT            "© 2003-2005 Bernhard Seifert, © 2004-2024 WinDirStat Team"
