@@ -24,8 +24,9 @@
 
 namespace
 {
-    constexpr ULONGLONG HIDE_THRESHOLD = 750;  // ms
-    constexpr float MOUTHSPEED = 0.0030f;      // aperture alteration / ms
+    constexpr ULONGLONG HIDE_THRESHOLD = 750; // ms
+    constexpr float MOUTHSPEED = 0.003f;      // aperture alteration / ms
+    constexpr float PACMANSPEED = 0.09f;      // pixels / ms
 }
 
 CPacman::CPacman() :
@@ -55,11 +56,6 @@ void CPacman::SetGlobalSuspendState(const bool suspend)
 void CPacman::SetBackgroundColor(const COLORREF color)
 {
     m_Bgcolor = color;
-}
-
-void CPacman::SetSpeed(const float speed)
-{
-    m_Speed = speed;
 }
 
 void CPacman::Start()
@@ -94,13 +90,15 @@ void CPacman::Draw(const CDC* pdc, const CRect& rect)
     if (now - m_LastUpdate > HIDE_THRESHOLD) m_Moving = false;
 
     // Update position
-    const float delta = static_cast<float>(now - m_LastDraw);
-    m_LastDraw = now;
     if (m_Moving)
     {
-        UpdatePosition(m_Position, m_ToTheRight, m_Speed * delta);
+        const float delta = static_cast<float>(now - m_LastDraw);
+        UpdatePosition(m_Position, m_ToTheRight, PACMANSPEED * delta / static_cast<float>(rect.Width()));
         UpdatePosition(m_Aperture, m_MouthOpening, MOUTHSPEED * delta);
     }
+
+    // Record time for next draw comparison
+    m_LastDraw = now;
 
     // Calculate rectangle to display graphic
     CRect rc(rect);
@@ -110,26 +108,24 @@ void CPacman::Draw(const CDC* pdc, const CRect& rect)
     rc.right = rc.left + rc.Height();
     const Gdiplus::Rect grect(rc.left, rc.top, rc.Width(), rc.Height());
 
-    // Create pens and brushes
-    Gdiplus::Color bgColor;
-    bgColor.SetFromCOLORREF(m_Bgcolor);
-    const Gdiplus::SolidBrush bgPen(bgColor);
-    const Gdiplus::Pen blackPen(Gdiplus::Color(0xFF, 0x00, 0x00, 0x00), 1);
-    const Gdiplus::SolidBrush yellowPen(Gdiplus::Color(0xFF, 0xFC, 0xC9, 0x2F));
-
     // Determine the share of the figure
     const float slice = m_Aperture * 90.0f;
     const Gdiplus::REAL sweepAngle = 360.0f - slice;
     Gdiplus::REAL startAngle = m_Aperture * slice / 2.0f;
     if (!m_ToTheRight) startAngle += 180.0f;
 
-    // Draw the background
-    Gdiplus::Graphics graphics(pdc->GetSafeHdc());
-    graphics.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
-    graphics.FillRectangle(&bgPen, rect.left, rect.top, rect.Width(), rect.Height());
+    // Draw the background (use non gdi+ for performance)
+    const CBrush bgBrush(m_Bgcolor);
+    FillRect(*pdc, &rect, bgBrush);
     if (m_Done) return;
 
+    // Create pens and brushes
+    const Gdiplus::Pen blackPen(Gdiplus::Color(0xFF, 0x00, 0x00, 0x00), 1);
+    const Gdiplus::SolidBrush yellowPen(Gdiplus::Color(0xFF, 0xFC, 0xC9, 0x2F));
+
     // Draw filled shape if we started and recently updated
+    Gdiplus::Graphics graphics(pdc->GetSafeHdc());
+    graphics.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
     graphics.FillPie(&yellowPen, grect, startAngle, sweepAngle);
     graphics.DrawPie(&blackPen, grect, startAngle, sweepAngle);
     if (m_Moving) return;

@@ -263,7 +263,6 @@ void CMySplitterWnd::OnDestroy()
 CPacmanControl::CPacmanControl()
 {
     m_Pacman.SetBackgroundColor(::GetSysColor(COLOR_BTNFACE));
-    m_Pacman.SetSpeed(0.00005f);
 }
 
 void CPacmanControl::Drive()

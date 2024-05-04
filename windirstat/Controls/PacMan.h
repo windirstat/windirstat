@@ -30,7 +30,6 @@ public:
     CPacman();
     static void SetGlobalSuspendState(bool suspend = true);
     void SetBackgroundColor(COLORREF color);
-    void SetSpeed(float speed);
     void Reset();
     void Start();
     void Stop();
@@ -44,7 +43,6 @@ private:
     ULONGLONG m_LastUpdate = 0;  // TickCount
     ULONGLONG m_LastDraw = 0;    // Last time drawn
     COLORREF m_Bgcolor;          // Background color
-    float m_Speed = 0.0006f;     // Speed in full width / ms
     float m_Position = 0.0f;     // 0...1
     float m_Aperture = 0.0f;     // 0...1
     bool m_Done = false;         // Whether pacman should be done
