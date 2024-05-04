@@ -414,9 +414,7 @@ void COwnerDrawnListControl::DrawItem(LPDRAWITEMSTRUCT pdis)
     for (int i = 0; i < headerCount; i++)
     {
         // The subitem tracks the identifer that maps the column enum
-        LVCOLUMN info = { LVCF_SUBITEM };
-        GetColumn(i, &info);
-        const int subitem = info.iSubItem;
+        const int subitem = ColumnToSubItem(i);
         
         CRect rc = GetWholeSubitemRect(pdis->itemID, i);
         const CRect rcDraw = rc - rcItem.TopLeft();

@@ -122,8 +122,7 @@ const SSorting& CSortingListControl::GetSorting() const
 
 int CSortingListControl::ColumnToSubItem(const int col) const
 {
-    LVCOLUMN column_info;
-    column_info.mask = LVCF_SUBITEM;
+    LVCOLUMN column_info{ LVCF_SUBITEM };
     GetColumn(col, &column_info);
     return column_info.iSubItem;
 }
@@ -237,11 +236,9 @@ void CSortingListControl::OnLvnGetDispInfo(NMHDR* pNMHDR, LRESULT* pResult)
 
     if ((displayInfo->item.mask & LVIF_TEXT) != 0)
     {
-        // The passed item subitem is actually the column id so translate it
-        LVCOLUMN colInfo;
-        colInfo.mask = LVCF_SUBITEM;
-        GetColumn(displayInfo->item.iSubItem, &colInfo);
-        wcscpy_s(displayInfo->item.pszText, displayInfo->item.cchTextMax, item->GetText(colInfo.iSubItem).c_str());
+        // The passed subitem value is actually the column id so translate it
+        const int subitem = ColumnToSubItem(displayInfo->item.iSubItem);
+        wcscpy_s(displayInfo->item.pszText, displayInfo->item.cchTextMax, item->GetText(subitem).c_str());
     }
 
     if ((displayInfo->item.mask & LVIF_IMAGE) != 0)
