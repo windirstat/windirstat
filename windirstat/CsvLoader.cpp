@@ -183,8 +183,8 @@ CItem* LoadResults(const std::wstring & path)
             type,
             displayName,
             FromTimeString(fields[orderMap[FIELD_LASTCHANGE]]),
-            _wcstoui64(fields[orderMap[FIELD_SIZE_LOGICAL]].c_str(), nullptr, 10),
             _wcstoui64(fields[orderMap[FIELD_SIZE_PHYSICAL]].c_str(), nullptr, 10),
+            _wcstoui64(fields[orderMap[FIELD_SIZE_LOGICAL]].c_str(), nullptr, 10),
             wcstoul(fields[orderMap[FIELD_ATTRIBUTES]].c_str(), nullptr, 16),
             wcstoul(fields[orderMap[FIELD_FILES]].c_str(), nullptr, 10),
             wcstoul(fields[orderMap[FIELDS_FOLDERS]].c_str(), nullptr, 10));
