@@ -85,7 +85,8 @@ int CFileDupeView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
     m_Control.ShowFullRowSelection(COptions::ListFullRowSelection);
 
     // Columns should be in enumeration order so initial sort will work
-    m_Control.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_HASH).c_str(), LVCFMT_LEFT, 500, COL_ITEMDUP_NAME);
+    const std::wstring hashName = Localization::Lookup(IDS_COL_HASH) + L" / " + Localization::Lookup(IDS_COL_NAME);
+    m_Control.InsertColumn(CHAR_MAX, hashName.c_str(), LVCFMT_LEFT, 500, COL_ITEMDUP_NAME);
     m_Control.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_ITEMS).c_str(), LVCFMT_RIGHT, 70, COL_ITEMDUP_ITEMS);
     m_Control.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_SIZE_PHYSICAL).c_str(), LVCFMT_RIGHT, 90, COL_ITEMDUP_SIZE_PHYSICAL);
     m_Control.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_SIZE_LOGICAL).c_str(), LVCFMT_RIGHT, 90, COL_ITEMDUP_SIZE_LOGICAL);
