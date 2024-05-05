@@ -84,7 +84,7 @@ void CPageAdvanced::OnOK()
 {
     UpdateData();
 
-    const bool refreshReprasepoints =
+    const bool refreshReparsepoints =
         COptions::ExcludeJunctions && COptions::ExcludeJunctions != static_cast<bool>(m_ExcludeJunctions) ||
         COptions::ExcludeSymbolicLinks && COptions::ExcludeSymbolicLinks != static_cast<bool>(m_ExcludeSymbolicLinks) ||
         COptions::ExcludeVolumeMountPoints && COptions::ExcludeVolumeMountPoints != static_cast<bool>(m_ExcludeVolumeMountPoints);
@@ -104,7 +104,7 @@ void CPageAdvanced::OnOK()
     {
         GetDocument()->RefreshItem(GetDocument()->GetRootItem());
     }
-    else if (refreshReprasepoints)
+    else if (refreshReparsepoints)
     {
         GetDocument()->RefreshReparsePointItems();
     }

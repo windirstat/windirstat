@@ -390,8 +390,9 @@ short CItem::GetImageToCache() const
     {
         return GetIconImageList()->GetMountPointImage();
     }
-    if (CDirStatApp::Get()->GetReparseInfo()->IsSymbolicLink(longpath, m_Attributes) ||
-        CDirStatApp::Get()->GetReparseInfo()->IsJunction(longpath, m_Attributes))
+    if ((CDirStatApp::Get()->GetReparseInfo()->IsSymbolicLink(longpath, m_Attributes) ||
+        CDirStatApp::Get()->GetReparseInfo()->IsJunction(longpath, m_Attributes)) &&
+        !CDirStatApp::Get()->GetReparseInfo()->IsCloudLink(longpath, m_Attributes))
     {
         constexpr DWORD mask = FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM;
         const bool osFile = (GetAttributes() & mask) == mask;
