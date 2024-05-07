@@ -124,6 +124,8 @@ IDB_FILE_SELECT         BITMAP                  "res\\toolbar\\IDB_FILE_SELECT.b
 
 IDB_SCAN_SUSPEND        BITMAP                  "res\\toolbar\\IDB_SCAN_SUSPEND.bmp"
 
+IDB_SCAN_STOP           BITMAP                  "res\\toolbar\\IDB_SCAN_STOP.bmp"
+
 IDB_REFRESH_ALL         BITMAP                  "res\\toolbar\\IDB_REFRESH_ALL.bmp"
 
 IDB_TREEMAP_ZOOMIN      BITMAP                  "res\\toolbar\\IDB_TREEMAP_ZOOMIN.bmp"
@@ -159,7 +161,8 @@ BEGIN
     BUTTON      ID_REFRESH_ALL
     BUTTON      ID_SCAN_RESUME
     BUTTON      ID_SCAN_SUSPEND
-    BUTTON      ID_REFRESH_SELECTED
+    BUTTON      ID_SCAN_STOP
+    BUTTON      ID_REFRESH_SELECTED   
     SEPARATOR
     BUTTON      ID_CLEANUP_OPEN_SELECTED
     BUTTON      ID_EDIT_COPY_CLIPBOARD

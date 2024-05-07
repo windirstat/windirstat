@@ -190,6 +190,7 @@ protected:
     afx_msg void OnCleanupProperties();
     afx_msg void OnScanSuspend();
     afx_msg void OnScanResume();
+    afx_msg void OnScanStop();
 };
 
 //

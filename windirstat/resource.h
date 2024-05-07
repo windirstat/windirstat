@@ -20,6 +20,7 @@
 #define IDB_CLEANUP_DELETE_BIN          927
 #define IDB_EDIT_COPY_CLIPBOARD         928
 #define IDB_SCAN_SUSPEND                930
+#define IDB_SCAN_STOP                   933
 #define IDB_REFRESH_ALL                 931
 #define IDB_CLEANUP_DELETE              932
 #define IDB_TREEMAP_ZOOMOUT             934
@@ -55,7 +56,7 @@
 #define IDC_TREECOL_ITEMS               1026
 #define IDC_SHOW_GRID                   1028
 #define IDC_TREECOL_FILES               1028
-#define IDC_SIZE_SUFFIXES                1029
+#define IDC_SIZE_SUFFIXES               1029
 #define IDC_EXCLUDE_JUNCTIONS           1029
 #define IDC_TREECOL_SIZE_PHYSICAL       1029
 #define IDC_TREEMAPGRIDCOLOR            1030
@@ -157,6 +158,7 @@
 #define ID_SCAN_RESUME                  33032
 #define ID_LOAD_RESULTS                 33037
 #define ID_SAVE_RESULTS                 33038
+#define ID_SCAN_STOP                   33039
 #define IDS_AUTHOR_EMAIL                57345
 #define IDS_URL_WEBSITE                 57346
 #define IDS_URL_HELP                    57347
@@ -167,7 +169,7 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        954
-#define _APS_NEXT_COMMAND_VALUE         33039
+#define _APS_NEXT_COMMAND_VALUE         33040
 #define _APS_NEXT_CONTROL_VALUE         1235
 #define _APS_NEXT_SYMED_VALUE           109
 #endif

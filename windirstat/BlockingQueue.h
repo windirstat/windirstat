@@ -18,6 +18,7 @@ class BlockingQueue
     bool m_Started = false;
     bool m_Suspended = false;
     bool m_Draining = false;
+    bool m_ProcessCompletionEvents = false;
 
     bool AllThreadsIdling() const
     {
@@ -120,10 +121,10 @@ public:
         {
             return m_Started && !m_Suspended && AllThreadsIdling() || m_Draining;
         });
-        return m_Draining;
+        return m_ProcessCompletionEvents;
     }
 
-    void CancelExecution()
+    void CancelExecution(bool processCompletionEvents = false)
     {
         // Return early if queue is already draining or never started
         if (!m_Started || m_Draining)
@@ -134,7 +135,8 @@ public:
         // Wait for queue to SuspendExecution first
         SuspendExecution();
 
-        // Start draining process 
+        // Start draining process
+        m_ProcessCompletionEvents = processCompletionEvents;
         m_Draining = true;
         m_Waiting.notify_all();
         m_Pushed.notify_all();

@@ -296,8 +296,9 @@ void CDirStatDoc::SetPathName(LPCWSTR lpszPathName, BOOL /*bAddToMRU*/)
 void CDirStatDoc::SetTitlePrefix(const std::wstring& prefix) const
 {
     static std::wstring suffix = IsAdmin() ? L" (Administrator)" : L"";
-    std::wstring docName = prefix + L" " + GetTitle().GetString() + L" " + suffix;
-    CMainFrame::Get()->UpdateFrameTitleForDocument(TrimString(docName).c_str());
+    std::wstring docName = std::format(L"{} {} {}", prefix, GetTitle().GetString(), suffix);
+    docName = TrimString(docName);
+    CMainFrame::Get()->UpdateFrameTitleForDocument(docName.empty() ? nullptr : docName.c_str());
 }
 
 COLORREF CDirStatDoc::GetCushionColor(const std::wstring & ext)
@@ -845,8 +846,9 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
     static bool (*parentNotNull)(CItem*) = [](CItem* item) { return item != nullptr && item->GetParent() != nullptr; };
     static bool (*reslectAvail)(CItem*) = [](CItem*) { return doc->IsReselectChildAvailable(); };
     static bool (*notRoot)(CItem*) = [](CItem* item) { return item != nullptr && !item->IsRootItem(); };
-    static bool (*isSuspended)(CItem*) = [](CItem*) { return CMainFrame::Get()->IsScanSuspended(); };
-    static bool (*isNotSuspended)(CItem*) = [](CItem*) { return doc->HasRootItem() && !doc->IsRootDone() && !CMainFrame::Get()->IsScanSuspended(); };
+    static bool (*isResumable)(CItem*) = [](CItem*) { return CMainFrame::Get()->IsScanSuspended(); };
+    static bool (*isSuspendable)(CItem*) = [](CItem*) { return doc->HasRootItem() && !doc->IsRootDone() && !CMainFrame::Get()->IsScanSuspended(); };
+    static bool (*isStoppable)(CItem*) = [](CItem*) { return doc->HasRootItem() && !doc->IsRootDone(); };
 
     static std::unordered_map<UINT, const commandFilter> filters
     {
@@ -862,8 +864,9 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
         { ID_TREEMAP_ZOOMOUT,         { false, false, false, false, IT_DIRECTORY, canZoomOut } },
         { ID_CLEANUP_EXPLORER_SELECT, { false, true,  true,  false, IT_DIRECTORY | IT_FILE } },
         { ID_CLEANUP_OPEN_IN_CONSOLE, { false, true,  true,  false, IT_DRIVE | IT_DIRECTORY | IT_FILE } },
-        { ID_SCAN_RESUME,             { true,  true,  true,  false, IT_ANY, isSuspended } },
-        { ID_SCAN_SUSPEND,            { true,  true,  true,  false, IT_ANY, isNotSuspended } },
+        { ID_SCAN_RESUME,             { true,  true,  true,  false, IT_ANY, isResumable } },
+        { ID_SCAN_SUSPEND,            { true,  true,  true,  false, IT_ANY, isSuspendable } },
+        { ID_SCAN_STOP,               { true,  true,  true,  false, IT_ANY, isStoppable } },
         { ID_CLEANUP_DELETE_BIN,      { false, true,  false,  true, IT_DIRECTORY | IT_FILE, notRoot } },
         { ID_CLEANUP_DELETE,          { false, true,  false,  true, IT_DIRECTORY | IT_FILE, notRoot } },
         { ID_CLEANUP_OPEN_SELECTED,   { false, true,  true,  false, IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY | IT_FILE } },
@@ -920,6 +923,7 @@ BEGIN_MESSAGE_MAP(CDirStatDoc, CDocument)
     ON_COMMAMD_UPDATE_WRAPPER(ID_CLEANUP_PROPERTIES, OnCleanupProperties)
     ON_COMMAMD_UPDATE_WRAPPER(ID_SCAN_RESUME, OnScanResume)
     ON_COMMAMD_UPDATE_WRAPPER(ID_SCAN_SUSPEND, OnScanSuspend)
+    ON_COMMAMD_UPDATE_WRAPPER(ID_SCAN_STOP, OnScanStop)
 END_MESSAGE_MAP()
 
 void CDirStatDoc::OnRefreshSelected()
@@ -1246,13 +1250,16 @@ void CDirStatDoc::OnScanResume()
         CMainFrame::Get()->SuspendState(false);
 }
 
+void CDirStatDoc::OnScanStop()
+{
+    queue.CancelExecution();
+    OnScanResume();
+}
+
 void CDirStatDoc::StopScanningEngine()
 {
     // Signal to shutdown processing
-    queue.CancelExecution();
-
-    // Clear suspended stay for next run
-    OnScanResume();
+    queue.CancelExecution(true);
 }
 
 void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
