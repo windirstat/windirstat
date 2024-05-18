@@ -132,8 +132,6 @@ void CDirStatDoc::DecodeSelection(const std::wstring& s, std::wstring& folder, s
         }
     }
 
-    ASSERT(!selections.empty());
-
     if (selections.size() > 1)
     {
         for (const auto & selection : selections)
@@ -143,7 +141,7 @@ void CDirStatDoc::DecodeSelection(const std::wstring& s, std::wstring& folder, s
             drives.emplace_back(selection + L"\\");
         }
     }
-    else
+    else if (!selections.empty())
     {
         std::wstring f = selections[0];
         if (2 == f.size() && wds::chrColon == f[1])
@@ -209,6 +207,9 @@ BOOL CDirStatDoc::OnOpenDocument(LPCWSTR lpszPathName)
     std::wstring folder;
     std::vector<std::wstring> drives;
     DecodeSelection(spec, folder, drives);
+
+    // Return if no drives or folder were passed
+    if (drives.empty() && folder.empty()) return true;
 
     // Determine if we should add multiple drives under a single node
     std::vector<std::wstring> rootFolders;
@@ -284,7 +285,6 @@ void CDirStatDoc::SetPathName(LPCWSTR lpszPathName, BOOL /*bAddToMRU*/)
     // MRU would be fine but is not implemented yet.
 
     m_strPathName = lpszPathName;
-    ASSERT(!m_strPathName.IsEmpty()); // must be set to something
     m_bEmbedded = FALSE;
     SetTitle(m_strPathName);
 
