@@ -432,7 +432,7 @@ void CTreeMapView::OnContextMenu(CWnd* /*pWnd*/, const CPoint point)
     if (root != nullptr && root->IsDone())
     {
         CMenu menu;
-        menu.LoadMenu(IDR_POPUPGRAPH);
+        menu.LoadMenu(IDR_POPUP_MAP);
         Localization::UpdateMenu(menu);
         CMenu* sub = menu.GetSubMenu(0);
         sub->TrackPopupMenu(TPM_LEFTALIGN | TPM_LEFTBUTTON, point.x, point.y, AfxGetMainWnd());

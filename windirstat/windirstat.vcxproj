@@ -453,6 +453,7 @@
     <Image Include="res\toolbar\IDB_REFRESH_ALL.bmp" />
     <Image Include="res\toolbar\IDB_REFRESH_SELECTED.bmp" />
     <Image Include="res\toolbar\IDB_SCAN_RESUME.bmp" />
+    <Image Include="res\toolbar\IDB_SCAN_STOP.bmp" />
     <Image Include="res\toolbar\IDB_SCAN_SUSPEND.bmp" />
     <Image Include="res\toolbar\IDB_TREEMAP_ZOOMIN.bmp" />
     <Image Include="res\toolbar\IDB_TREEMAP_ZOOMOUT.bmp" />

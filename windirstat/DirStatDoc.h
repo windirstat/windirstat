@@ -188,9 +188,11 @@ protected:
     afx_msg void OnTreeMapReselectChild();
     afx_msg void OnCleanupOpenTarget();
     afx_msg void OnCleanupProperties();
+    afx_msg void OnCleanupCompress(UINT id);
     afx_msg void OnScanSuspend();
     afx_msg void OnScanResume();
     afx_msg void OnScanStop();
+    afx_msg void OnContextMenuExplore(UINT nID);
 };
 
 //

@@ -26,7 +26,7 @@
 #include "FileFind.h"
 #include "GlobalHelpers.h"
 
-bool CReparsePoints::IsReparseType(const std::wstring & longpath, const std::unordered_set<DWORD>& tagTypes)
+bool CReparsePoints::IsReparseType(const std::wstring & longpath, const std::unordered_set<DWORD>& tagTypes, const bool mask)
 {
     SmartPointer<HANDLE> handle(CloseHandle, CreateFile(longpath.c_str(), GENERIC_READ, FILE_SHARE_READ,
         nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT, nullptr));
@@ -47,10 +47,11 @@ bool CReparsePoints::IsReparseType(const std::wstring & longpath, const std::uno
     const DWORD tag = reinterpret_cast<PREPARSE_GUID_DATA_BUFFER>(buf.data())->ReparseTag;
     for (const auto & tagType : tagTypes)
     {
-        if ((tag & tagType) == tag) return true;
+        if ((mask && (tag & tagType) == tag) ||
+            (!mask && tag == tagType)) return true;
     }
 
-    return true;
+    return false;
 }
 
 void CReparsePoints::Initialize()
@@ -140,5 +141,5 @@ bool CReparsePoints::IsCloudLink(const std::wstring& longpath, DWORD attr) const
 {
     if (attr == INVALID_FILE_ATTRIBUTES) attr = ::GetFileAttributes(longpath.c_str());
     if (!IsReparsePoint(attr)) return false;
-    return IsReparseType(longpath, { IO_REPARSE_TAG_CLOUD_MASK });
+    return IsReparseType(longpath, { IO_REPARSE_TAG_CLOUD_MASK }, true);
 }

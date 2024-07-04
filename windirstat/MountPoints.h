@@ -36,6 +36,6 @@ public:
     bool IsJunction(const std::wstring& longpath, DWORD attr = INVALID_FILE_ATTRIBUTES) const;
     bool IsSymbolicLink(const std::wstring& longpath, DWORD attr = INVALID_FILE_ATTRIBUTES) const;
     bool IsCloudLink(const std::wstring& longpath, DWORD attr = INVALID_FILE_ATTRIBUTES) const;
-    static bool IsReparseType(const std::wstring& longpath, const std::unordered_set<DWORD>& tagTypes);
+    static bool IsReparseType(const std::wstring& longpath, const std::unordered_set<DWORD>& tagTypes, bool mask = false);
     static bool IsReparsePoint(DWORD attr);
 };

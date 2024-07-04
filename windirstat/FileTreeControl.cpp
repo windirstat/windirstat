@@ -71,12 +71,12 @@ void CFileTreeControl::OnContextMenu(CWnd* /*pWnd*/, const CPoint pt)
     const CRect rcTitle = item->GetTitleRect() + rc.TopLeft();
 
     CMenu menu;
-    menu.LoadMenu(IDR_POPUPLIST);
+    menu.LoadMenu(IDR_POPUP_TREE);
     Localization::UpdateMenu(menu);
     CMenu* sub = menu.GetSubMenu(0);
 
     PrepareDefaultMenu(sub, static_cast<CItem*>(item));
-    CMainFrame::Get()->AppendUserDefinedCleanups(sub);
+    CMainFrame::Get()->UpdateDynamicMenuItems(sub);
 
     // Show popup menu and act accordingly.
     //

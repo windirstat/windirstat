@@ -7,8 +7,8 @@
 #define IDR_MAINFRAME                   128
 #define IDB_NODES                       131
 #define IDD_SELECTDRIVES                133
-#define IDR_POPUPLIST                   134
-#define IDR_POPUPGRAPH                  136
+#define IDR_POPUP_TREE                  134
+#define IDR_POPUP_MAP                   136
 #define IDR_LICENSE                     137
 #define IDD_DELETE_WARNING              138
 #define IDD_MODALAPISHUTTLE             140
@@ -20,9 +20,9 @@
 #define IDB_CLEANUP_DELETE_BIN          927
 #define IDB_EDIT_COPY_CLIPBOARD         928
 #define IDB_SCAN_SUSPEND                930
-#define IDB_SCAN_STOP                   933
 #define IDB_REFRESH_ALL                 931
 #define IDB_CLEANUP_DELETE              932
+#define IDB_SCAN_STOP                   933
 #define IDB_TREEMAP_ZOOMOUT             934
 #define IDB_CLEANUP_PROPERTIES          936
 #define IDB_CLEANUP_OPEN_IN_CONSOLE     937
@@ -158,7 +158,15 @@
 #define ID_SCAN_RESUME                  33032
 #define ID_LOAD_RESULTS                 33037
 #define ID_SAVE_RESULTS                 33038
-#define ID_SCAN_STOP                   33039
+#define ID_SCAN_STOP                    33039
+#define ID_POPUP_IDS                    33040
+#define ID_EXPLORER_MENU                33041
+#define ID_COMPRESS_NONE                33046
+#define ID_COMPRESS_LZNT1               33047
+#define ID_COMPRESS_XPRESS4K            33048
+#define ID_COMPRESS_XPRESS8K            33049
+#define ID_COMPRESS_XPRESS16K           33050
+#define ID_COMPRESS_LZX                 33051
 #define IDS_AUTHOR_EMAIL                57345
 #define IDS_URL_WEBSITE                 57346
 #define IDS_URL_HELP                    57347
@@ -169,7 +177,7 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        954
-#define _APS_NEXT_COMMAND_VALUE         33040
+#define _APS_NEXT_COMMAND_VALUE         33052
 #define _APS_NEXT_CONTROL_VALUE         1235
 #define _APS_NEXT_SYMED_VALUE           109
 #endif

@@ -74,7 +74,6 @@ public:
     virtual short GetImageToCache() const = 0;
 
     void DrawPacman(const CDC* pdc, const CRect& rc, COLORREF bgColor) const;
-    void UnCacheImage();
     void SortChildren(const SSorting& sorting);
     CTreeListItem* GetSortedChild(int i) const;
     int FindSortedChild(const CTreeListItem* child) const;

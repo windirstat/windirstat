@@ -140,14 +140,6 @@ void CTreeListItem::SetScrollPosition(const int top)
     m_VisualInfo->control->SetItemScrollPosition(this, top);
 }
 
-void CTreeListItem::UnCacheImage()
-{
-    if (IsVisible())
-    {
-        m_VisualInfo->image = -1;
-    }
-}
-
 void CTreeListItem::SortChildren(const SSorting& sorting)
 {
     if (!IsVisible())

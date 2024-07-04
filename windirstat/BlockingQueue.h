@@ -18,7 +18,7 @@ class BlockingQueue
     bool m_Started = false;
     bool m_Suspended = false;
     bool m_Draining = false;
-    bool m_ProcessCompletionEvents = false;
+    bool m_ProcessCompletionEvents = true;
 
     bool AllThreadsIdling() const
     {
@@ -222,6 +222,7 @@ public:
         m_TotalWorkerThreads = totalWorkerThreads;
         m_Threads.clear();
         m_Threads.reserve(m_TotalWorkerThreads);
+        m_ProcessCompletionEvents = true;
     }
 };
 

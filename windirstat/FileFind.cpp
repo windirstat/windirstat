@@ -63,12 +63,6 @@ bool FileFindEnhanced::FindNextFile()
         // fetch point to current node 
         success = (Status == 0);
         m_CurrentInfo = reinterpret_cast<FILE_DIRECTORY_INFORMATION*>(m_DirectoryInfo.data());
-
-        // special case for reparse on initial run points - update attributes
-        if (success && m_Firstrun) m_CurrentInfo->FileAttributes = GetFileAttributes(GetFilePathLong().c_str());
-
-        // disable for next run
-        m_Firstrun = false;
     }
     else
     {
@@ -79,10 +73,20 @@ bool FileFindEnhanced::FindNextFile()
 
     if (success)
     {
+        // copy name into local buffer
         m_Name.resize(m_CurrentInfo->FileNameLength / sizeof(WCHAR));
         memcpy(m_Name.data(), m_CurrentInfo->FileName, m_CurrentInfo->FileNameLength);
+
+        // special case for reparse on initial run points - update attributes
+        if (m_Firstrun)
+        {
+            std::wstring initialPath = GetFilePathLong();
+            if (IsDots()) initialPath.pop_back();
+            m_CurrentInfo->FileAttributes = GetFileAttributes(initialPath.c_str());
+        }
     }
 
+    m_Firstrun = false;
     return success;
 }
 
@@ -156,13 +160,15 @@ std::wstring FileFindEnhanced::GetFileName() const
     return m_Name;
 }
 
-ULONGLONG FileFindEnhanced::GetLogicalFileSize() const
-{
-    return m_CurrentInfo->EndOfFile.QuadPart;
-}
-
 ULONGLONG FileFindEnhanced::GetFileSizePhysical() const
 {
+    if (m_CurrentInfo->AllocationSize.QuadPart == 0 &&
+        m_CurrentInfo->EndOfFile.QuadPart != 0)
+    {
+        m_CurrentInfo->AllocationSize.LowPart  = GetCompressedFileSize(GetFilePathLong().c_str(),
+            reinterpret_cast<LPDWORD>(&m_CurrentInfo->AllocationSize.HighPart));
+    }
+
     return m_CurrentInfo->AllocationSize.QuadPart;
 }
 

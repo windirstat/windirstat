@@ -864,6 +864,12 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
         { ID_TREEMAP_ZOOMOUT,         { false, false, false, false, IT_DIRECTORY, canZoomOut } },
         { ID_CLEANUP_EXPLORER_SELECT, { false, true,  true,  false, IT_DIRECTORY | IT_FILE } },
         { ID_CLEANUP_OPEN_IN_CONSOLE, { false, true,  true,  false, IT_DRIVE | IT_DIRECTORY | IT_FILE } },
+        { ID_COMPRESS_NONE,           { false, true,  false, false, IT_FILE } },
+        { ID_COMPRESS_LZNT1,          { false, true,  false, false, IT_FILE } },
+        { ID_COMPRESS_XPRESS4K,       { false, true,  false, false, IT_FILE } },
+        { ID_COMPRESS_XPRESS8K,       { false, true,  false, false, IT_FILE } },
+        { ID_COMPRESS_XPRESS16K,      { false, true,  false, false, IT_FILE } },
+        { ID_COMPRESS_LZX,            { false, true,  false, false, IT_FILE } },
         { ID_SCAN_RESUME,             { true,  true,  true,  false, IT_ANY, isResumable } },
         { ID_SCAN_SUSPEND,            { true,  true,  true,  false, IT_ANY, isSuspendable } },
         { ID_SCAN_STOP,               { true,  true,  true,  false, IT_ANY, isStoppable } },
@@ -921,9 +927,12 @@ BEGIN_MESSAGE_MAP(CDirStatDoc, CDocument)
     ON_COMMAMD_UPDATE_WRAPPER(ID_TREEMAP_RESELECT_CHILD, OnTreeMapReselectChild)
     ON_COMMAMD_UPDATE_WRAPPER(ID_CLEANUP_OPEN_SELECTED, OnCleanupOpenTarget)
     ON_COMMAMD_UPDATE_WRAPPER(ID_CLEANUP_PROPERTIES, OnCleanupProperties)
+    ON_UPDATE_COMMAND_UI_RANGE(ID_COMPRESS_NONE, ID_COMPRESS_LZX, OnUpdateCentralHandler)
+    ON_COMMAND_RANGE(ID_COMPRESS_NONE, ID_COMPRESS_LZX, OnCleanupCompress)
     ON_COMMAMD_UPDATE_WRAPPER(ID_SCAN_RESUME, OnScanResume)
     ON_COMMAMD_UPDATE_WRAPPER(ID_SCAN_SUSPEND, OnScanSuspend)
     ON_COMMAMD_UPDATE_WRAPPER(ID_SCAN_STOP, OnScanStop)
+    ON_COMMAND_RANGE(CONTENT_MENU_MINCMD, CONTENT_MENU_MAXCMD, OnContextMenuExplore)
 END_MESSAGE_MAP()
 
 void CDirStatDoc::OnRefreshSelected()
@@ -1232,6 +1241,27 @@ void CDirStatDoc::OnCleanupProperties()
     }
 }
 
+void CDirStatDoc::OnCleanupCompress(UINT id)
+{
+    const std::unordered_map<UINT, CompressionAlgorithm> compressionMap =
+    {
+        { ID_COMPRESS_NONE, CompressionAlgorithm::NONE },
+        { ID_COMPRESS_LZNT1, CompressionAlgorithm::LZNT1 },
+        { ID_COMPRESS_XPRESS4K, CompressionAlgorithm::XPRESS4K },
+        { ID_COMPRESS_XPRESS8K, CompressionAlgorithm::XPRESS8K },
+        { ID_COMPRESS_XPRESS16K, CompressionAlgorithm::XPRESS16K },
+        { ID_COMPRESS_LZX, CompressionAlgorithm::LZX }
+    };
+
+    CWaitCursor wc;
+    const auto& items = GetAllSelected();
+    for (const auto& item : items)
+    {
+        CompressFile(item->GetPath(), compressionMap.at(id));
+        item->UpdateStatsFromDisk();
+    }
+}
+
 void CDirStatDoc::OnScanSuspend()
 {
     // Wait for system to fully shutdown
@@ -1259,7 +1289,35 @@ void CDirStatDoc::OnScanStop()
 void CDirStatDoc::StopScanningEngine()
 {
     // Signal to shutdown processing
-    queue.CancelExecution(true);
+    queue.CancelExecution();
+}
+
+void CDirStatDoc::OnContextMenuExplore(UINT nID)
+{
+    // get list of paths from items
+    std::vector<std::wstring> paths;
+    for (auto& item : CFileTreeControl::Get()->GetAllSelected<CItem>())
+        paths.push_back(item->GetPath());
+
+    // query current context menu
+    CComPtr<IContextMenu> contextMenu = GetContextMenu(CMainFrame::Get()->GetSafeHwnd(), paths);
+
+    // create placeholder menu
+    CMenu menu;
+    if (menu.CreatePopupMenu() == 0) return;
+    if (FAILED(contextMenu->QueryContextMenu(menu.GetSafeHmenu(), 0,
+        CONTENT_MENU_MINCMD, CONTENT_MENU_MAXCMD, CMF_NORMAL))) return;
+
+    // launch command associated with passed item identifier
+    CMINVOKECOMMANDINFOEX info = { 0 };
+    info.cbSize = sizeof(CMINVOKECOMMANDINFOEX);
+    info.fMask = CMIC_MASK_UNICODE;
+    info.hwnd = CMainFrame::Get()->GetSafeHwnd();
+    info.lpVerb = MAKEINTRESOURCEA(nID - 1);
+    info.lpVerbW = MAKEINTRESOURCEW(nID - 1);
+    info.nShow = SW_SHOWNORMAL;
+    contextMenu->InvokeCommand((LPCMINVOKECOMMANDINFO)&info);
+    return;
 }
 
 void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
@@ -1315,8 +1373,6 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
 
             // Skip pruning if it is a new element
             if (!item->IsDone()) continue;
-
-            item->UnCacheImage();
             item->UpwardRecalcLastChange(true);
             item->UpwardSubtractSizePhysical(item->GetSizePhysical());
             item->UpwardSubtractSizeLogical(item->GetSizeLogical());
@@ -1375,12 +1431,15 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
         {
             queue.StartThreads(COptions::ScanningThreads, [this]()
             {
-                    CItem::ScanItems(&queue);
+                CItem::ScanItems(&queue);
             });
 
             // Wait for all threads to run out of work
-            if (queue.WaitForCompletionOrCancellation())
+            if (!queue.WaitForCompletionOrCancellation())
             {
+                // Sorting and other finalization tasks
+                CItem::ScanItemsFinalize(GetRootItem());
+
                 // Exit here and stop progress if drained by an outside actor
                 CMainFrame::Get()->InvokeInMessageThread([]
                 {

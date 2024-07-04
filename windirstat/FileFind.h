@@ -65,7 +65,6 @@ public:
     bool IsProtectedReparsePoint() const;
     DWORD GetAttributes() const;
     std::wstring GetFileName() const;
-    ULONGLONG GetLogicalFileSize() const;
     ULONGLONG GetFileSizePhysical() const;
     ULONGLONG GetFileSizeLogical() const;
     FILETIME GetLastWriteTime() const;

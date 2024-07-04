@@ -35,28 +35,24 @@
 #pragma comment(lib, "bcrypt.lib")
 #pragma comment(lib, "crypt32.lib")
 
-namespace
+std::wstring FormatLongLongNormal(ULONGLONG n)
 {
-    std::wstring FormatLongLongNormal(ULONGLONG n)
+    // Returns formatted number like "123.456.789".
+
+    ASSERT(n >= 0);
+
+    std::wstring all;
+
+    do
     {
-        // Returns formatted number like "123.456.789".
+        const auto rest = n % 1000;
+        n /= 1000;
 
-        ASSERT(n >= 0);
+        all.insert(0, (n <= 0) ? std::to_wstring(rest) :
+            std::format(L"{}{:03}", GetLocaleThousandSeparator(), rest));
+    } while (n > 0);
 
-        std::wstring all;
-
-        do
-        {
-            const auto rest = n % 1000;
-            n /= 1000;
-
-            all.insert(0, (n <= 0) ? std::to_wstring(rest) :
-                std::format(L"{}{:03}", GetLocaleThousandSeparator(), rest));
-        }
-        while (n > 0);
-
-        return all;
-    }
+    return all;
 }
 
 std::wstring GetLocaleString(const LCTYPE lctype, const LANGID langid)

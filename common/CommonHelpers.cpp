@@ -30,7 +30,7 @@
 #include <sddl.h>
 #include <string>
 
-BOOL ShellExecuteThrow(HWND hwnd, const std::wstring & lpVerb, const std::wstring & lpFile,
+bool ShellExecuteThrow(HWND hwnd, const std::wstring & lpVerb, const std::wstring & lpFile,
     const std::wstring & lpDirectory, const INT nShowCmd)
 {
     CWaitCursor wc;
@@ -136,4 +136,93 @@ std::wstring GetNameFromSid(const PSID sid)
 
     // return name
     return nameMap[sidCopy];
+}
+
+IContextMenu* GetContextMenu(const HWND hwnd, const std::vector<std::wstring>& paths)
+{
+    // structures to hold and track pidls for children
+    std::vector<SmartPointer<LPITEMIDLIST>> pidlsForCleanup;
+    std::vector<LPCITEMIDLIST> pidlsRelatives;
+
+    // create list of children from paths
+    for (auto& path : paths)
+    {
+        LPCITEMIDLIST pidl = ILCreateFromPath(path.c_str());
+        if (pidl == nullptr) return nullptr;
+        pidlsForCleanup.emplace_back(CoTaskMemFree, const_cast<LPITEMIDLIST>(pidl));
+
+        CComPtr<IShellFolder> pParentFolder;
+        LPCITEMIDLIST pidlRelative;
+        if (FAILED(SHBindToParent(pidl, IID_IShellFolder, reinterpret_cast<LPVOID*>(&pParentFolder), &pidlRelative))) return nullptr;
+        pidlsRelatives.push_back(pidlRelative);
+
+        // on last item, return the context menu
+        if (pidlsRelatives.size() == paths.size())
+        {
+            IContextMenu* pContextMenu;
+            if (FAILED(pParentFolder->GetUIObjectOf(hwnd, static_cast<UINT>(pidlsRelatives.size()),
+                pidlsRelatives.data(), IID_IContextMenu, nullptr, reinterpret_cast<LPVOID*>(&pContextMenu)))) return nullptr;
+            return pContextMenu;
+        }
+    }
+
+    return nullptr;
+}
+
+bool CompressFile(const std::wstring& filePath, CompressionAlgorithm algorithm)
+{
+    USHORT numericAlgorithm = static_cast<USHORT>(algorithm) & ~FILE_PROVIDER_COMPRESSION_MODERN;
+    const bool modernAlgorithm = static_cast<USHORT>(algorithm) != numericAlgorithm;
+
+    SmartPointer<HANDLE> handle(CloseHandle, CreateFileW( filePath.c_str(),
+        GENERIC_READ | GENERIC_WRITE, 0, nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, nullptr));
+    if (handle == INVALID_HANDLE_VALUE)
+    {
+        return false;
+    }
+
+    DWORD status = 0;
+    if (modernAlgorithm)
+    {
+        struct
+        {
+            WOF_EXTERNAL_INFO wof_info;
+            FILE_PROVIDER_EXTERNAL_INFO_V1 file_info;
+        }
+        info =
+        {
+            {
+                .Version = WOF_CURRENT_VERSION,
+                .Provider = WOF_PROVIDER_FILE,
+            },
+            {
+                .Version = FILE_PROVIDER_CURRENT_VERSION,
+                .Algorithm = numericAlgorithm,
+            },
+        };
+
+        DWORD bytesReturned;
+        status = DeviceIoControl(handle, FSCTL_SET_EXTERNAL_BACKING,
+            &info, sizeof(info), nullptr, 0, &bytesReturned, nullptr);
+    }
+    else if (numericAlgorithm == COMPRESSION_FORMAT_LZNT1)
+    {
+        DWORD bytesReturned = 0;
+        status = DeviceIoControl(
+            handle, FSCTL_SET_COMPRESSION, &numericAlgorithm,
+            sizeof(numericAlgorithm), nullptr, 0, &bytesReturned, nullptr);
+    }
+    else
+    {
+        DWORD bytesReturned = 0;
+        DeviceIoControl(
+            handle, FSCTL_SET_COMPRESSION, &numericAlgorithm,
+            sizeof(numericAlgorithm), nullptr, 0, &bytesReturned, nullptr);
+
+        DeviceIoControl(
+            handle, FSCTL_DELETE_EXTERNAL_BACKING, nullptr,
+            0, nullptr, 0, nullptr, nullptr);
+    }
+
+    return status == 1 || status == 0xC000046F;
 }

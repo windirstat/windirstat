@@ -21,10 +21,29 @@
 
 #pragma once
 
+#include "stdafx.h"
+
 #include <string>
 
-BOOL ShellExecuteThrow(HWND hwnd, const std::wstring& lpVerb, const std::wstring& lpFile, const std::wstring& lpDirectory, INT nShowCmd);
+bool ShellExecuteThrow(HWND hwnd, const std::wstring& lpVerb, const std::wstring& lpFile, const std::wstring& lpDirectory, INT nShowCmd);
 std::wstring GetBaseNameFromPath(const std::wstring& path);
 std::wstring GetAppFileName(const std::wstring& ext = L"");
 std::wstring GetAppFolder();
 std::wstring GetNameFromSid(PSID sid);
+
+constexpr auto CONTENT_MENU_MINCMD = 0x1ul;
+constexpr auto CONTENT_MENU_MAXCMD = 0x7FFFul;
+IContextMenu* GetContextMenu(HWND hwnd, const std::vector<std::wstring>& paths);
+
+constexpr auto FILE_PROVIDER_COMPRESSION_MODERN = 1u << 8;
+enum class CompressionAlgorithm {
+    NONE = COMPRESSION_FORMAT_NONE,
+    LZNT1 = COMPRESSION_FORMAT_LZNT1,
+    XPRESS4K = FILE_PROVIDER_COMPRESSION_XPRESS4K | FILE_PROVIDER_COMPRESSION_MODERN,
+    XPRESS8K = FILE_PROVIDER_COMPRESSION_XPRESS8K | FILE_PROVIDER_COMPRESSION_MODERN,
+    XPRESS16K = FILE_PROVIDER_COMPRESSION_XPRESS16K | FILE_PROVIDER_COMPRESSION_MODERN,
+    LZX = FILE_PROVIDER_COMPRESSION_LZX | FILE_PROVIDER_COMPRESSION_MODERN,
+
+};
+
+bool CompressFile(const std::wstring& filePath, CompressionAlgorithm algorithm);

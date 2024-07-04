@@ -489,6 +489,8 @@ void CItem::UpdateStatsFromDisk()
             {
                 UpwardSubtractSizePhysical(m_SizePhysical);
                 UpwardAddSizePhysical(finder.GetFileSizePhysical());
+                UpwardSubtractSizeLogical(m_SizeLogical);
+                UpwardAddSizeLogical(finder.GetFileSizeLogical());
             }
         }
     }
@@ -836,7 +838,7 @@ std::wstring CItem::GetFolderPath() const
         {
             const auto i = path.find_last_of(wds::chrBackslash);
             ASSERT(i != std::wstring::npos);
-            path = path.substr(0, i + 1);
+            path = path.substr(0, i);
         }
     }
     return path;
@@ -936,7 +938,11 @@ void CItem::ScanItems(BlockingQueue<CItem*> * queue)
     while (CItem * item = queue->Pop())
     {
         // Mark the time we started evaluating this node
-        if (item->m_FolderInfo) item->m_FolderInfo->m_Tstart = static_cast<ULONG>(GetTickCount64() / 1000ull);
+        if (item->m_FolderInfo)
+        {
+            item->m_FolderInfo->m_Tfinish = 0;
+            item->m_FolderInfo->m_Tstart = static_cast<ULONG>(GetTickCount64() / 1000ull);
+        }
 
         if (item->IsType(IT_DRIVE | IT_DIRECTORY))
         {
