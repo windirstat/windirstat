@@ -1259,6 +1259,7 @@ void CDirStatDoc::OnCleanupCompress(UINT id)
     {
         CompressFile(item->GetPath(), compressionMap.at(id));
         item->UpdateStatsFromDisk();
+        UpdateAllViews(nullptr);
     }
 }
 
@@ -1296,10 +1297,11 @@ void CDirStatDoc::OnContextMenuExplore(UINT nID)
 {
     // get list of paths from items
     std::vector<std::wstring> paths;
-    for (auto& item : CFileTreeControl::Get()->GetAllSelected<CItem>())
+    for (auto& item : CMainFrame::Get()->GetAllSelectedInFocus())
         paths.push_back(item->GetPath());
 
     // query current context menu
+    if (paths.size() == 0) return;
     CComPtr<IContextMenu> contextMenu = GetContextMenu(CMainFrame::Get()->GetSafeHwnd(), paths);
 
     // create placeholder menu
@@ -1316,8 +1318,7 @@ void CDirStatDoc::OnContextMenuExplore(UINT nID)
     info.lpVerb = MAKEINTRESOURCEA(nID - 1);
     info.lpVerbW = MAKEINTRESOURCEW(nID - 1);
     info.nShow = SW_SHOWNORMAL;
-    contextMenu->InvokeCommand((LPCMINVOKECOMMANDINFO)&info);
-    return;
+    contextMenu->InvokeCommand(reinterpret_cast<LPCMINVOKECOMMANDINFO>(&info));
 }
 
 void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)

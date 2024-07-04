@@ -787,23 +787,35 @@ void CTreeListControl::ExpandItem(const int i, const bool scroll)
 
 void CTreeListControl::OnKeyDown(const UINT nChar, const UINT nRepCnt, const UINT nFlags)
 {
-    if (nChar == VK_RIGHT)
+    if (const auto& items = GetAllSelected(); items.size() == 1)
     {
-        const auto& items = GetAllSelected();
-        if (items.size() == 1 && !items[0]->IsExpanded())
+        if (nChar == VK_RIGHT)
         {
-            ExpandItem(FindTreeItem(items[0]));
+            if (!items[0]->IsExpanded())
+            {
+                ExpandItem(FindTreeItem(items[0]));
+            }
+            if (items[0]->IsExpanded() && items[0]->HasChildren())
+            {
+                SelectItem(items[0]->GetSortedChild(0), true, true);
+            }
+            return;
+        }
+        if (nChar == VK_LEFT)
+        {
+            if (items[0]->IsExpanded())
+            {
+                CollapseItem(FindTreeItem(items[0]));
+            }
+            else if (items[0]->GetParent() != nullptr)
+            {
+                SelectItem(items[0]->GetParent(), true, true);
+            }
+            return;
         }
     }
-    else if (nChar == VK_LEFT)
-    {
-        const auto& items = GetAllSelected();
-        if (items.size() == 1 && items[0]->IsExpanded())
-        {
-            CollapseItem(FindTreeItem(items[0]));
-        }
-    }
-    else COwnerDrawnListControl::OnKeyDown(nChar, nRepCnt, nFlags);
+ 
+    COwnerDrawnListControl::OnKeyDown(nChar, nRepCnt, nFlags);
 }
 
 void CTreeListControl::OnLvnItemchangingList(NMHDR* pNMHDR, LRESULT* pResult)
