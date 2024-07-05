@@ -42,7 +42,7 @@ bool CFileDupeControl::GetAscendingDefault(const int column)
 {
     return column == COL_ITEMDUP_SIZE_PHYSICAL ||
         column == COL_ITEMDUP_SIZE_LOGICAL ||
-        COL_ITEMDUP_LASTCHANGE;
+        column == COL_ITEMDUP_LASTCHANGE;
 }
 
 #pragma warning(push)

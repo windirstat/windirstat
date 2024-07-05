@@ -165,14 +165,14 @@ void CXySlider::CheckMinMax(LONG& val, const int min, const int max)
 
 void CXySlider::InternToExtern()
 {
-    m_ExternalPos.x = static_cast<int>(static_cast<double>(abs(m_Pos.x)) * m_ExternalRange.cx / m_Range.cx + 0.5) * signum(m_Pos.x);
-    m_ExternalPos.y = static_cast<int>(static_cast<double>(abs(m_Pos.y)) * m_ExternalRange.cy / m_Range.cy + 0.5) * signum(m_Pos.y);
+    m_ExternalPos.x = static_cast<int>(roundaway(static_cast<double>(m_Pos.x) * m_ExternalRange.cx / m_Range.cx));
+    m_ExternalPos.y = static_cast<int>(roundaway(static_cast<double>(m_Pos.y) * m_ExternalRange.cy / m_Range.cy));
 }
 
 void CXySlider::ExternToIntern()
 {
-    m_Pos.x = static_cast<int>(static_cast<double>(abs(m_ExternalPos.x)) * m_Range.cx / m_ExternalRange.cx + 0.5) * signum(m_ExternalPos.x);
-    m_Pos.y = static_cast<int>(static_cast<double>(abs(m_ExternalPos.y)) * m_Range.cy / m_ExternalRange.cy + 0.5) * signum(m_ExternalPos.y);
+    m_Pos.x = static_cast<int>(roundaway(static_cast<double>(m_ExternalPos.x) * m_Range.cx / m_ExternalRange.cx));
+    m_Pos.y = static_cast<int>(roundaway(static_cast<double>(m_ExternalPos.y) * m_Range.cy / m_ExternalRange.cy));
 }
 
 void CXySlider::NotifyParent()

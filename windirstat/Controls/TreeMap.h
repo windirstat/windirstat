@@ -176,7 +176,7 @@ public:
 
         static int RoundDouble(const double d)
         {
-            return signum(d) * static_cast<int>(fabs(d) + 0.5);
+            return static_cast<int>(d + (d < 0.0 ? -0.5 : 0.5));
         }
     };
 

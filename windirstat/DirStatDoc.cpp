@@ -1289,8 +1289,7 @@ void CDirStatDoc::OnScanStop()
 
 void CDirStatDoc::StopScanningEngine()
 {
-    // Signal to shutdown processing
-    queue.CancelExecution();
+    OnScanStop();
 }
 
 void CDirStatDoc::OnContextMenuExplore(UINT nID)
@@ -1301,7 +1300,7 @@ void CDirStatDoc::OnContextMenuExplore(UINT nID)
         paths.push_back(item->GetPath());
 
     // query current context menu
-    if (paths.size() == 0) return;
+    if (paths.empty()) return;
     CComPtr<IContextMenu> contextMenu = GetContextMenu(CMainFrame::Get()->GetSafeHwnd(), paths);
 
     // create placeholder menu
@@ -1311,7 +1310,7 @@ void CDirStatDoc::OnContextMenuExplore(UINT nID)
         CONTENT_MENU_MINCMD, CONTENT_MENU_MAXCMD, CMF_NORMAL))) return;
 
     // launch command associated with passed item identifier
-    CMINVOKECOMMANDINFOEX info = { 0 };
+    CMINVOKECOMMANDINFOEX info = {};
     info.cbSize = sizeof(CMINVOKECOMMANDINFOEX);
     info.fMask = CMIC_MASK_UNICODE;
     info.hwnd = CMainFrame::Get()->GetSafeHwnd();

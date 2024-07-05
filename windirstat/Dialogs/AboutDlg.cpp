@@ -261,11 +261,12 @@ std::wstring CAboutDlg::GetAppVersion()
     if (GetFileVersionInfo(file.c_str(), 0, iVersionSize, tVersionInfo.data()) != 0 &&
         VerQueryValue(tVersionInfo.data(), L"\\", reinterpret_cast<LPVOID*>(&pVersion), &iQueriedSize) != 0)
     {
-        return L"WinDirStat" +
-            std::to_wstring(HIWORD(pVersion->dwFileVersionMS)) + L"." +
-            std::to_wstring(LOWORD(pVersion->dwFileVersionMS)) + L"." +
-            std::to_wstring(HIWORD(pVersion->dwFileVersionLS)) + L"." +
-            std::to_wstring(LOWORD(pVersion->dwFileVersionLS));
+        return std::format(L"WinDirStat {}.{}.{}.{} ({})\nGit Commit: {}",
+            std::to_wstring(HIWORD(pVersion->dwFileVersionMS)),
+            std::to_wstring(LOWORD(pVersion->dwFileVersionMS)),
+            std::to_wstring(HIWORD(pVersion->dwFileVersionLS)),
+            std::to_wstring(LOWORD(pVersion->dwFileVersionLS)),
+            _CRT_WIDE(GIT_DATE), _CRT_WIDE(GIT_COMMIT));
     }
 
     return L"WinDirStat";

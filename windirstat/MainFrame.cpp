@@ -997,7 +997,7 @@ void CMainFrame::UpdateDynamicMenuItems(CMenu* menu) const
         explorerMenu->DeleteMenu(0, MF_BYPOSITION);
 
     // append menu items
-    if (paths.size() > 0)
+    if (!paths.empty())
     {
         CComPtr<IContextMenu> contextMenu = GetContextMenu(CMainFrame::Get()->GetSafeHwnd(), paths);
         contextMenu->QueryContextMenu(explorerMenu->GetSafeHmenu(), 0,
