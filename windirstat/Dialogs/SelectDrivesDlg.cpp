@@ -437,8 +437,8 @@ CSelectDrivesDlg::CSelectDrivesDlg(CWnd* pParent) : CDialogEx(CSelectDrivesDlg::
 void CSelectDrivesDlg::DoDataExchange(CDataExchange* pDX)
 {
     CDialogEx::DoDataExchange(pDX);
-    DDX_Control(pDX, IDC_DRIVES, m_List);
-    DDX_Radio(pDX, IDC_ALLDRIVES, m_Radio);
+    DDX_Control(pDX, IDC_TARGET_DRIVES_LIST, m_List);
+    DDX_Radio(pDX, IDC_RADIO_TARGET_DRIVES_ALL, m_Radio);
     DDX_Check(pDX, IDC_SCAN_DUPLICATES, m_ScanDuplicates);
     DDX_Control(pDX, IDOK, m_OkButton);
     DDX_Control(pDX, IDC_BROWSE_FOLDER, m_Browse);
@@ -447,20 +447,20 @@ void CSelectDrivesDlg::DoDataExchange(CDataExchange* pDX)
 #pragma warning(push)
 #pragma warning(disable:26454)
 BEGIN_MESSAGE_MAP(CSelectDrivesDlg, CDialogEx)
-    ON_BN_CLICKED(IDC_AFOLDER, OnBnClickedFolder)
-    ON_BN_CLICKED(IDC_SOMEDRIVES, OnBnClickedSomeDrives)
-    ON_BN_CLICKED(IDC_SOMEDRIVES, OnBnClickedSomeDrives)
     ON_EN_CHANGE(IDC_BROWSE_FOLDER, OnEnChangeFolderName)
-    ON_COMMAND(IDC_SCAN_DUPLICATES, OnScanDuplicatesChecked)
+    ON_COMMAND(IDC_SCAN_DUPLICATES, OnBnClickedUpdateButtons)
     ON_WM_MEASUREITEM()
-    ON_NOTIFY(LVN_ITEMCHANGED, IDC_DRIVES, OnLvnItemchangedDrives)
-    ON_BN_CLICKED(IDC_ALLDRIVES, OnBnClickedAllLocalDrives)
+    ON_NOTIFY(LVN_ITEMCHANGED, IDC_TARGET_DRIVES_LIST, OnLvnItemchangedDrives)
+    ON_BN_CLICKED(IDC_RADIO_TARGET_DRIVES_ALL, OnBnClickedUpdateButtons)
     ON_WM_SIZE()
     ON_WM_GETMINMAXINFO()
     ON_WM_DESTROY()
     ON_MESSAGE(WMU_OK, OnWmuOk)
-    ON_REGISTERED_MESSAGE(WMU_THREADFINISHED, OnWmuThreadFinished)
+    ON_REGISTERED_MESSAGE(WMU_THREADFINISHED, OnWmDriveInfoThreadFinished)
     ON_WM_SYSCOLORCHANGE()
+    ON_BN_CLICKED(IDC_RADIO_TARGET_DRIVES_SUBSET, &CSelectDrivesDlg::OnBnClickedRadioTargetDrivesSubset)
+    ON_BN_CLICKED(IDC_RADIO_TARGET_FOLDER, &CSelectDrivesDlg::OnBnClickedRadioTargetFolder)
+    ON_NOTIFY(NM_SETFOCUS, IDC_TARGET_DRIVES_LIST, &CSelectDrivesDlg::OnNMSetfocusTargetDrivesList)
 END_MESSAGE_MAP()
 #pragma warning(pop)
 
@@ -474,7 +474,7 @@ BOOL CSelectDrivesDlg::OnInitDialog()
 
     if (WMU_THREADFINISHED == 0)
     {
-        VTRACE(L"RegisterMessage() failed. Using WM_USER + 123");
+        VTRACE(L"Failed. Using WM_USER + 123");
         WMU_THREADFINISHED = WM_USER + 123;
     }
 
@@ -482,8 +482,8 @@ BOOL CSelectDrivesDlg::OnInitDialog()
 
     m_Layout.AddControl(IDOK, 1, 0, 0, 0);
     m_Layout.AddControl(IDCANCEL, 1, 0, 0, 0);
-    m_Layout.AddControl(IDC_DRIVES, 0, 0, 1, 1);
-    m_Layout.AddControl(IDC_AFOLDER, 0, 1, 0, 0);
+    m_Layout.AddControl(IDC_TARGET_DRIVES_LIST, 0, 0, 1, 1);
+    m_Layout.AddControl(IDC_RADIO_TARGET_FOLDER, 0, 1, 0, 0);
     m_Layout.AddControl(IDC_BROWSE_FOLDER, 0, 1, 1, 0);
     m_Layout.AddControl(IDC_SCAN_DUPLICATES, 0, 1, 1, 0);
 
@@ -524,7 +524,6 @@ BOOL CSelectDrivesDlg::OnInitDialog()
         {
             continue;
         }
-
         
         std::wstring s = std::wstring(1, wds::strAlpha.at(i)) + L":\\";
         const UINT type = ::GetDriveType(s.c_str());
@@ -558,12 +557,12 @@ BOOL CSelectDrivesDlg::OnInitDialog()
     m_Radio = COptions::SelectDrivesRadio;
     UpdateData(FALSE);
 
-    if (m_Radio == RADIO_ALLLOCALDRIVES ||
-        m_Radio == RADIO_AFOLDER)
+    if (m_Radio == RADIO_TARGET_DRIVES_ALL ||
+        m_Radio == RADIO_TARGET_FOLDER)
     {
         m_OkButton.SetFocus();
     }
-    else if (m_Radio == RADIO_SOMEDRIVES)
+    else if (m_Radio == RADIO_TARGET_DRIVES_SUBSET)
     {
         m_List.SetFocus();
     }
@@ -578,7 +577,7 @@ void CSelectDrivesDlg::OnOK()
 
     m_Drives.clear();
     m_SelectedDrives.clear();
-    if (m_Radio == RADIO_AFOLDER)
+    if (m_Radio == RADIO_TARGET_FOLDER)
     {
         m_FolderName = GetFullPathName(m_FolderName.GetString()).c_str();
         UpdateData(false);
@@ -588,8 +587,8 @@ void CSelectDrivesDlg::OnOK()
     {
         const CDriveItem* item = m_List.GetItem(i);
 
-        if (m_Radio == RADIO_ALLLOCALDRIVES && !item->IsRemote() && !item->IsSUBSTed()
-            || m_Radio == RADIO_SOMEDRIVES && m_List.IsItemSelected(i))
+        if (m_Radio == RADIO_TARGET_DRIVES_ALL && !item->IsRemote() && !item->IsSUBSTed()
+            || m_Radio == RADIO_TARGET_DRIVES_SUBSET && m_List.IsItemSelected(i))
         {
             m_Drives.emplace_back(item->GetDrive());
         }
@@ -612,17 +611,17 @@ void CSelectDrivesDlg::UpdateButtons()
     bool enableOk = false;
     switch (m_Radio)
     {
-    case RADIO_ALLLOCALDRIVES:
+    case RADIO_TARGET_DRIVES_ALL:
         {
             enableOk = true;
         }
         break;
-    case RADIO_SOMEDRIVES:
+    case RADIO_TARGET_DRIVES_SUBSET:
         {
             enableOk = m_List.GetSelectedCount() > 0;
         }
         break;
-    case RADIO_AFOLDER:
+    case RADIO_TARGET_FOLDER:
         if (!m_FolderName.IsEmpty())
         {
             if (m_FolderName.GetLength() >= 2 && m_FolderName.Left(2) == L"\\\\")
@@ -643,46 +642,37 @@ void CSelectDrivesDlg::UpdateButtons()
     m_OkButton.EnableWindow(enableOk);
 }
 
-void CSelectDrivesDlg::OnBnClickedFolder()
+void CSelectDrivesDlg::OnBnClickedRadioTargetDrivesSubset()
 {
+    // dynamically adjust next tab order
+    GetDlgItem(IDC_BROWSE_FOLDER)->SetWindowPos(
+        GetDlgItem(IDC_TARGET_DRIVES_LIST), 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+
     UpdateButtons();
 }
 
-void CSelectDrivesDlg::OnBnClickedSomeDrives()
+void CSelectDrivesDlg::OnBnClickedRadioTargetFolder()
 {
-    m_List.SetFocus();
+    // dynamically adjust next tab order
+    GetDlgItem(IDC_TARGET_DRIVES_LIST)->SetWindowPos(
+        GetDlgItem(IDC_BROWSE_FOLDER), 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+
     UpdateButtons();
 }
+
 
 void CSelectDrivesDlg::OnEnChangeFolderName()
 {
-    m_Radio = 2;
+    m_Radio = RADIO_TARGET_FOLDER;
     UpdateData(FALSE);
 
     m_Browse.GetWindowText(m_FolderName);
     UpdateButtons();
 }
 
-void CSelectDrivesDlg::OnScanDuplicatesChecked()
-{
-    UpdateButtons();
-}
-
-void CSelectDrivesDlg::OnMeasureItem(const int nIDCtl, LPMEASUREITEMSTRUCT mis)
-{
-    if (nIDCtl == IDC_DRIVES)
-    {
-        mis->itemHeight = 20;
-    }
-    else
-    {
-        CDialogEx::OnMeasureItem(nIDCtl, mis);
-    }
-}
-
 void CSelectDrivesDlg::OnLvnItemchangedDrives(NMHDR* /*pNMHDR*/, LRESULT* pResult)
 {
-    m_Radio = RADIO_SOMEDRIVES;
+    m_Radio = RADIO_TARGET_DRIVES_SUBSET;
 
     UpdateData(FALSE);
     UpdateButtons();
@@ -690,7 +680,7 @@ void CSelectDrivesDlg::OnLvnItemchangedDrives(NMHDR* /*pNMHDR*/, LRESULT* pResul
     *pResult = FALSE;
 }
 
-void CSelectDrivesDlg::OnBnClickedAllLocalDrives()
+void CSelectDrivesDlg::OnBnClickedUpdateButtons()
 {
     UpdateButtons();
 }
@@ -721,44 +711,35 @@ LRESULT CSelectDrivesDlg::OnWmuOk(WPARAM, LPARAM)
     return 0;
 }
 
-// This message is _sent_ by a CDriveInformationThread.
-//
-LRESULT CSelectDrivesDlg::OnWmuThreadFinished(const WPARAM serial, const LPARAM lparam)
+LRESULT CSelectDrivesDlg::OnWmDriveInfoThreadFinished(const WPARAM serial, const LPARAM lparam)
 {
     if (serial != _serial)
     {
-        VTRACE(L"OnWmuThreadFinished: invalid serial (window handle recycled?)");
+        VTRACE(L"Invalid serial");
         return 0;
     }
-
-    const auto thread = reinterpret_cast<CDriveInformationThread*>(lparam);
 
     bool success;
     std::wstring name;
     ULONGLONG total;
     ULONGLONG free;
 
+    const auto thread = reinterpret_cast<CDriveInformationThread*>(lparam);
     const LPARAM driveItem = thread->GetDriveInformation(success, name, total, free);
 
-    // For paranoia's sake we check, whether driveItem is in our list.
-    // (and we so find its index.)
     LVFINDINFO fi;
     ZeroMemory(&fi, sizeof(fi));
     fi.flags  = LVFI_PARAM;
     fi.lParam = driveItem;
 
-    const int i = m_List.FindItem(&fi);
-    if (i == -1)
+    if (m_List.FindItem(&fi) == -1)
     {
-        VTRACE(L"OnWmuThreadFinished: item not found!");
+        VTRACE(L"Item not found!");
         return 0;
     }
 
     const auto item = reinterpret_cast<CDriveItem*>(driveItem);
-
     item->SetDriveInformation(success, name, total, free);
-
-    m_List.RedrawItems(i, i);
 
     m_List.SortItems();
 
@@ -775,4 +756,15 @@ std::wstring CSelectDrivesDlg::GetFullPathName(const std::wstring & relativePath
 {
     SmartPointer<LPWSTR> path(free, _wfullpath(nullptr, relativePath.c_str(), 0));
     return path != nullptr ? static_cast<LPWSTR>(path) : relativePath;
+}
+
+void CSelectDrivesDlg::OnNMSetfocusTargetDrivesList(NMHDR* pNMHDR, LRESULT* pResult)
+{
+    if (m_List.GetItemCount() > 0 && m_List.GetSelectedCount() == 0)
+    {
+        m_List.SetFocus();
+        m_List.SelectItem(m_List.GetItem(0));
+    }
+
+    *pResult = 0;
 }

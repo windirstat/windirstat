@@ -807,7 +807,7 @@ std::wstring CItem::GetOwner(const bool force) const
     std::wstring & ret = (force) ? tmp : m_VisualInfo->owner;
     if (!ret.empty()) return ret;
 
-    // Fetch owner information from disk
+    // Fetch owner information from drive
     SmartPointer<PSECURITY_DESCRIPTOR> ps(LocalFree);
     PSID sid = nullptr;
     GetNamedSecurityInfo(GetPathLong().c_str(), SE_FILE_OBJECT, OWNER_SECURITY_INFORMATION,

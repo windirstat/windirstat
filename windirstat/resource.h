@@ -36,10 +36,10 @@
 #define IDI_JUNCTION_PROTECTED          946
 #define IDI_FREE_SPACE                  947
 #define IDI_EMPTY                       948
-#define IDC_ALLDRIVES                   1000
-#define IDC_SOMEDRIVES                  1001
-#define IDC_AFOLDER                     1002
-#define IDC_DRIVES                      1005
+#define IDC_RADIO_TARGET_DRIVES_ALL     1000
+#define IDC_RADIO_TARGET_DRIVES_SUBSET  1001
+#define IDC_RADIO_TARGET_FOLDER         1002
+#define IDC_TARGET_DRIVES_LIST          1005
 #define IDC_TAB                         1013
 #define IDC_CAPTION                     1014
 #define IDC_DONTSHOWAGAIN               1017

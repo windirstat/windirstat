@@ -33,9 +33,9 @@
 //
 enum RADIO
 {
-    RADIO_ALLLOCALDRIVES,
-    RADIO_SOMEDRIVES,
-    RADIO_AFOLDER
+    RADIO_TARGET_DRIVES_ALL,
+    RADIO_TARGET_DRIVES_SUBSET,
+    RADIO_TARGET_FOLDER
 };
 
 class CDrivesList;
@@ -155,8 +155,8 @@ public:
     // Dialog Data
     BOOL m_ScanDuplicates = false; // whether duplicate scanning is enable
     int m_Radio = 0;          // out.
-    CStringW m_FolderName;    // out. Valid if m_Radio = RADIO_AFOLDER
-    std::vector<std::wstring> m_Drives;    // out. Valid if m_Radio != RADIO_AFOLDER
+    CStringW m_FolderName;    // out. Valid if m_Radio = RADIO_TARGET_FOLDER
+    std::vector<std::wstring> m_Drives;    // out. Valid if m_Radio != RADIO_TARGET_FOLDER
 
     void DoDataExchange(CDataExchange* pDX) override;
     BOOL OnInitDialog() override;
@@ -172,17 +172,16 @@ public:
     CLayout m_Layout;
 
     DECLARE_MESSAGE_MAP()
-    afx_msg void OnBnClickedAllLocalDrives();
-    afx_msg void OnBnClickedFolder();
-    afx_msg void OnBnClickedSomeDrives();
+    afx_msg void OnBnClickedUpdateButtons();
     afx_msg void OnEnChangeFolderName();
-    afx_msg void OnScanDuplicatesChecked();
-    afx_msg void OnMeasureItem(int nIDCtl, LPMEASUREITEMSTRUCT mis);
     afx_msg void OnLvnItemchangedDrives(NMHDR* pNMHDR, LRESULT* pResult);
     afx_msg void OnSize(UINT nType, int cx, int cy);
     afx_msg void OnGetMinMaxInfo(MINMAXINFO* lpMMI);
     afx_msg void OnDestroy();
     afx_msg LRESULT OnWmuOk(WPARAM, LPARAM);
-    afx_msg LRESULT OnWmuThreadFinished(WPARAM, LPARAM lparam);
+    afx_msg LRESULT OnWmDriveInfoThreadFinished(WPARAM, LPARAM lparam);
     afx_msg void OnSysColorChange();
+    afx_msg void OnBnClickedRadioTargetDrivesSubset();
+    afx_msg void OnBnClickedRadioTargetFolder();
+    afx_msg void OnNMSetfocusTargetDrivesList(NMHDR* pNMHDR, LRESULT* pResult);
 };

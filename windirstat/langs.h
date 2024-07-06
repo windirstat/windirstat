@@ -157,10 +157,10 @@
 #define IDS_POPUP_MAP_CONSOLE           20151
 #define IDS_POPUP_MAP_CANCEL            20152
 #define IDS_ABOUT_TITLE                 20153
-#define IDS_DISKS_TITLE                 20154
-#define IDS_DISKS_ALL_LOCAL             20155
-#define IDS_DISKS_LOCAL                 20156
-#define IDS_DISKS_FOLDER                20157
+#define IDS_DRIVES_TITLE                 20154
+#define IDS_DRIVES_ALL             20155
+#define IDS_DRIVES_SUBSET                 20156
+#define IDS_DRIVES_FOLDER                20157
 #define IDS_DELETE_TITLE                20158
 #define IDS_DELETE_DONT_SHOW            20159
 #define IDS_DELETE_DO_YOU_KNOW          20160

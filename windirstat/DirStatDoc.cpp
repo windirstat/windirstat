@@ -62,6 +62,9 @@ CDirStatDoc::CDirStatDoc() :
     _theDocument = this;
 
     VTRACE(L"sizeof(CItem) = {}", sizeof(CItem));
+    VTRACE(L"sizeof(CTreeListItem) = {}", sizeof(CTreeListItem));
+    VTRACE(L"sizeof(CTreeMap::Item) = {}", sizeof(CTreeMap::Item));
+    VTRACE(L"sizeof(COwnerDrawnListItem) = {}", sizeof(COwnerDrawnListItem));
 }
 
 CDirStatDoc::~CDirStatDoc()
@@ -78,8 +81,8 @@ std::wstring CDirStatDoc::EncodeSelection(const RADIO radio, const std::wstring&
     std::wstring ret;
     switch (radio)
     {
-    case RADIO_ALLLOCALDRIVES:
-    case RADIO_SOMEDRIVES:
+    case RADIO_TARGET_DRIVES_ALL:
+    case RADIO_TARGET_DRIVES_SUBSET:
         {
             for (std::size_t i = 0; i < drives.size(); i++)
             {
@@ -92,7 +95,7 @@ std::wstring CDirStatDoc::EncodeSelection(const RADIO radio, const std::wstring&
         }
         break;
 
-    case RADIO_AFOLDER:
+    case RADIO_TARGET_FOLDER:
         {
             ret = folder;
         }

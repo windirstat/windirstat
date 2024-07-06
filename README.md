@@ -1,4 +1,4 @@
-﻿# WinDirStat - Windows Directory Statistics
+# WinDirStat - Windows Directory Statistics
 
 ## Copyright and licenses
 
@@ -18,14 +18,14 @@ Commons license [CC BY 3.0](http://creativecommons.org/licenses/by/3.0/).
 
 ## Description
 
-WinDirStat is a program that allows you to find disk space hogs at a glance.
+WinDirStat is a program that allows you to find drive space hogs at a glance.
 It achieves that by displaying a drive, drives or directories in a [treemap](https://en.wikipedia.org/wiki/Treemap)
 that assigns bigger areas to bigger files and directories. Making those areas
 visually separate by coloring and other means allows you to see literally at
 a glance what the space hogs are and where to dig deeper.
 
 The directory tree is simultaneously shown as a tree list and as a treemap.
-One can effortlessly gain an impression of the proportions on the hard disk(s).
+One can effortlessly gain an impression of the proportions on the drive(s).
 
 ### Major features
 
