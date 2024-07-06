@@ -63,7 +63,7 @@ Setting<bool> COptions::ShowTreeMap(OptionsTreeMap, L"ShowTreeMap", true);
 Setting<bool> COptions::ShowUnknown(OptionsGeneral, L"ShowUnknown", false);
 Setting<bool> COptions::SkipDupeDetectionCloudLinks(OptionsGeneral, L"SkipDupeDetectionCloudLinks", true);
 Setting<bool> COptions::SkipHidden(OptionsGeneral, L"SkipHidden", false);
-Setting<bool> COptions::SkipProtected(OptionsGeneral, L"SkipProtected", true);
+Setting<bool> COptions::SkipProtected(OptionsGeneral, L"SkipProtected", false);
 Setting<bool> COptions::TreeMapGrid(OptionsTreeMap, L"TreeMapGrid", (CTreeMap::GetDefaults().grid));
 Setting<bool> COptions::UseBackupRestore(OptionsGeneral, L"UseBackupRestore", true);
 Setting<bool> COptions::UseFallbackLocale(OptionsGeneral, L"UseFallbackLocale", false);
