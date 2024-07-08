@@ -579,8 +579,9 @@ void CSelectDrivesDlg::OnOK()
     m_SelectedDrives.clear();
     if (m_Radio == RADIO_TARGET_FOLDER)
     {
+        if (m_FolderName.GetAt(m_FolderName.GetLength() - 1) == L':') m_FolderName.AppendChar(L'\\');
         m_FolderName = GetFullPathName(m_FolderName.GetString()).c_str();
-        UpdateData(false);
+        UpdateData(FALSE);
     }
 
     for (int i = 0; i < m_List.GetItemCount(); i++)
@@ -758,7 +759,7 @@ std::wstring CSelectDrivesDlg::GetFullPathName(const std::wstring & relativePath
     return path != nullptr ? static_cast<LPWSTR>(path) : relativePath;
 }
 
-void CSelectDrivesDlg::OnNMSetfocusTargetDrivesList(NMHDR* pNMHDR, LRESULT* pResult)
+void CSelectDrivesDlg::OnNMSetfocusTargetDrivesList(NMHDR*, LRESULT* pResult)
 {
     if (m_List.GetItemCount() > 0 && m_List.GetSelectedCount() == 0)
     {

@@ -89,7 +89,7 @@ BOOL CPageGeneral::OnInitDialog()
         }
     }
 
-    UpdateData(false);
+    UpdateData(FALSE);
     return TRUE;
 }
 

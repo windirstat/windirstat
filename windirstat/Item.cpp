@@ -916,6 +916,15 @@ ULONGLONG CItem::GetTicksWorked() const
         (m_FolderInfo->m_Tstart > 0) ? ((GetTickCount64() / 1000ull) - m_FolderInfo->m_Tstart) : 0;
 }
 
+void CItem::ResetScanStartTime() const
+{
+    if (m_FolderInfo != nullptr)
+    {
+        m_FolderInfo->m_Tfinish = 0;
+        m_FolderInfo->m_Tstart = static_cast<ULONG>(GetTickCount64() / 1000ull);
+    }
+}
+
 void CItem::ScanItemsFinalize(CItem* item)
 {
     if (item == nullptr) return;
@@ -938,11 +947,7 @@ void CItem::ScanItems(BlockingQueue<CItem*> * queue)
     while (CItem * item = queue->Pop())
     {
         // Mark the time we started evaluating this node
-        if (item->m_FolderInfo)
-        {
-            item->m_FolderInfo->m_Tfinish = 0;
-            item->m_FolderInfo->m_Tstart = static_cast<ULONG>(GetTickCount64() / 1000ull);
-        }
+        item->ResetScanStartTime();
 
         if (item->IsType(IT_DRIVE | IT_DIRECTORY))
         {

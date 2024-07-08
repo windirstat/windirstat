@@ -81,7 +81,7 @@ Setting<double> COptions::MainSplitterPos(OptionsGeneral, L"MainSplitterPos", -1
 Setting<double> COptions::SubSplitterPos(OptionsGeneral, L"SubSplitterPos", -1.0, 0.0, 1.0);
 Setting<int> COptions::ConfigPage(OptionsGeneral, L"ConfigPage", true);
 Setting<int> COptions::LanguageId(OptionsGeneral, L"LanguageId", 0);
-Setting<int> COptions::ScanningThreads(OptionsGeneral, L"ScanningThreads", 6, 1, 16);
+Setting<int> COptions::ScanningThreads(OptionsGeneral, L"ScanningThreads", 4, 1, 16);
 Setting<int> COptions::SelectDrivesRadio(OptionsDriveSelect, L"SelectDrivesRadio", 0, 0, 2);
 Setting<int> COptions::FileTreeColorCount(OptionsFileTree, L"FileTreeColorCount", 8);
 Setting<int> COptions::TreeMapAmbientLightPercent(OptionsTreeMap, L"TreeMapAmbientLightPercent", CTreeMap::GetDefaults().GetAmbientLightPercent(), 0, 100);

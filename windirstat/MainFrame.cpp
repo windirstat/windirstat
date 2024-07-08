@@ -479,16 +479,10 @@ void CMainFrame::SuspendState(const bool suspend)
 void CMainFrame::UpdateProgress()
 {
     // Update working item tracker if changed
-    CItem* workingItem = GetDocument()->GetRootItem();
-    if (workingItem != m_WorkingItem)
+    m_WorkingItem = GetDocument()->GetRootItem();
+    if (m_WorkingItem != nullptr && !m_WorkingItem->IsDone())
     {
-        m_WorkingItem = workingItem;
-
-        // Create progress display elements if now actively working item
-        if (m_WorkingItem != nullptr && !m_WorkingItem->IsDone())
-        {
-            CreateProgress(m_WorkingItem->GetProgressRange());
-        }
+        CreateProgress(m_WorkingItem->GetProgressRange());
     }
 
     // Exit early if we not ready for visual updates

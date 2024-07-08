@@ -105,7 +105,7 @@ BOOL CPageFileTree::OnInitDialog()
     m_Slider.SetPos(m_FileTreeColorCount);
 
     EnableButtons();
-    UpdateData(false);
+    UpdateData(FALSE);
     return TRUE;
 }
 

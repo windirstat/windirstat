@@ -183,5 +183,5 @@ public:
     afx_msg void OnSysColorChange();
     afx_msg void OnBnClickedRadioTargetDrivesSubset();
     afx_msg void OnBnClickedRadioTargetFolder();
-    afx_msg void OnNMSetfocusTargetDrivesList(NMHDR* pNMHDR, LRESULT* pResult);
+    afx_msg void OnNMSetfocusTargetDrivesList(NMHDR*, LRESULT* pResult);
 };

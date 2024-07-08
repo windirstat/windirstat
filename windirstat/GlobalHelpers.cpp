@@ -398,7 +398,7 @@ void WaitForHandleWithRepainting(const HANDLE h, const DWORD TimeOut)
 
 bool FolderExists(const std::wstring & path)
 {
-    DWORD result = GetFileAttributes(FileFindEnhanced::MakeLongPathCompatible(path).c_str());
+    const DWORD result = GetFileAttributes(FileFindEnhanced::MakeLongPathCompatible(path).c_str());
     return result != INVALID_FILE_ATTRIBUTES && (result & FILE_ATTRIBUTE_DIRECTORY) != 0;
 }
 

@@ -205,6 +205,7 @@ public:
     void SetDone();
     void SortItemsBySizePhysical() const;
     ULONGLONG GetTicksWorked() const;
+    void ResetScanStartTime() const;
     static void ScanItems(BlockingQueue<CItem*> *);
     static void ScanItemsFinalize(CItem* item);
     void UpwardSetDone();

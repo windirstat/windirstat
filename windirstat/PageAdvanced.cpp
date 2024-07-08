@@ -76,7 +76,7 @@ BOOL CPageAdvanced::OnInitDialog()
     m_UseBackupRestore = COptions::UseBackupRestore;
     m_ScanningThreads = COptions::ScanningThreads - 1;
 
-    UpdateData(false);
+    UpdateData(FALSE);
     return TRUE;
 }
 

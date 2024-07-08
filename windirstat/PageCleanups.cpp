@@ -156,7 +156,7 @@ void CPageCleanups::CheckEmptyTitle()
     if (m_Title.IsEmpty())
     {
         m_Title = Localization::Format(IDS_USERDEFINEDCLEANUPd, m_Current).c_str();
-        UpdateData(false);
+        UpdateData(FALSE);
 
         m_List.DeleteString(m_Current);
         m_List.InsertString(m_Current, m_Title);
@@ -182,7 +182,7 @@ void CPageCleanups::CurrentUdcToDialog()
     m_WorksForUncPaths          = m_Udc[m_Current].WorksForUncPaths;
 
     UpdateControlStatus();
-    UpdateData(false);
+    UpdateData(FALSE);
 }
 
 void CPageCleanups::DialogToCurrentUdc()
@@ -222,7 +222,7 @@ void CPageCleanups::OnSomethingChanged()
     {
         m_WaitForCompletion = true;
     }
-    UpdateData(false);
+    UpdateData(FALSE);
     DialogToCurrentUdc();
     SetModified();
 }

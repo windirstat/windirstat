@@ -113,7 +113,7 @@ BOOL CPageTreeMap::OnInitDialog()
     m_Options = COptions::TreeMapOptions;
     m_HighlightColor.SetColor(COptions::TreeMapHighlightColor);
 
-    UpdateData(false);
+    UpdateData(FALSE);
 
     return TRUE;
 }
@@ -166,7 +166,7 @@ void CPageTreeMap::UpdateStatics()
 void CPageTreeMap::OnSomethingChanged()
 {
     UpdateData();
-    UpdateData(false);
+    UpdateData(FALSE);
     SetModified();
 }
 
@@ -227,6 +227,6 @@ void CPageTreeMap::OnBnClickedReset()
     m_Options.lightSourceY = o.lightSourceY;
 
     ValuesAltered(!m_Altered);
-    UpdateData(false);
+    UpdateData(FALSE);
     SetModified();
 }
