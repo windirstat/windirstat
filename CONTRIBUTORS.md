@@ -1,21 +1,22 @@
-# Project creator and original author
+# Project Major Contributors
 
 * Bernhard Seifert
+	* Creator and original author
+* Oliver Schneider
+	* Lead maintainer	
+* Bryan Berns
+	* Developer
 
-# Direct contributors
+# Development Contributors
 
 * Falco Peijnenburg
     * Performance improvments to the treemap rendering
 * Morten Asscheman
     * Performance improvments to the treemap rendering
 * Sandeep Mirchandani
-    * fixups to get the `default` branch into shape again
-* Oliver Schneider
-    * maintainer
-* Chris Wimmer
-    * UAC handling ("run elevated")
+    * Fixups to get the `default` branch into shape again
 
-# Contributors of third party code
+# Contributors of Third Party Code
 
 * Lua authors
     * Lua
@@ -29,9 +30,9 @@
     * LuaJIT 2.x
 * Jason Perkins
     * Premake4 and Lua functions from Premake4 as additions for WDS
-* Brodie Thiesfield
-    * SimpleIni.h
 
-# Translators
+# Notable Testers
 
-[TODO]
+* Petr Řehák @PEERSOFTdev
+* Vitali Richert @tron2k
+* Vittorio Sozzi @vittoso
