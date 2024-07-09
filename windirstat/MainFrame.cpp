@@ -1067,35 +1067,25 @@ void CMainFrame::MoveFocus(const LOGICAL_FOCUS lf)
 
 void CMainFrame::SetSelectionMessageText()
 {
-    switch (GetLogicalFocus())
+    const auto focus = GetLogicalFocus();
+    std::wstring text = Localization::Lookup(IDS_IDLEMESSAGE);
+
+    if (focus == LF_EXTENSIONLIST)
     {
-    case LF_DUPELIST:
-    case LF_NONE:
-        {
-            SetMessageText(Localization::Lookup(IDS_IDLEMESSAGE));
-        }
-        break;
-    case LF_FILETREE:
-        {
-            // display file name in bottom left corner if only one item is selected
-            const auto item = CFileTreeControl::Get()->GetFirstSelectedItem<CItem>();
-            if (item != nullptr)
-            {
-                // decide when to do this
-                SetMessageText(item->GetPath());
-            }
-            else
-            {
-                SetMessageText(Localization::Lookup(IDS_IDLEMESSAGE));
-            }
-        }
-        break;
-    case LF_EXTENSIONLIST:
-        {
-            SetMessageText(wds::chrStar + GetDocument()->GetHighlightExtension());
-        }
-        break;
+        text = wds::chrStar + GetDocument()->GetHighlightExtension();
     }
+    else if (focus == LF_FILETREE)
+    {
+        const auto item = CFileTreeControl::Get()->GetFirstSelectedItem<CItem>();
+        if (item != nullptr) text = item->GetPath();
+    }
+    else if (focus == LF_DUPELIST)
+    {
+        const auto item = CFileDupeControl::Get()->GetFirstSelectedItem<CItem>();
+        if (item != nullptr) text = item->GetPath();
+    }
+
+    SetMessageText(text);
 }
 
 void CMainFrame::OnUpdateEnableControl(CCmdUI* pCmdUI)
