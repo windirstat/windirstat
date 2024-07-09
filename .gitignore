@@ -4,5 +4,6 @@
 common/hg.id
 intermediate/
 build/
+publish/
 .git/
 .vs/
