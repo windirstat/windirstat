@@ -155,7 +155,7 @@ void CPageCleanups::CheckEmptyTitle()
     UpdateData();
     if (m_Title.IsEmpty())
     {
-        m_Title = Localization::Format(IDS_USERDEFINEDCLEANUPd, m_Current).c_str();
+        m_Title = Localization::Format(IDS_USER_DEFINED_CLEANUPd, m_Current).c_str();
         UpdateData(FALSE);
 
         m_List.DeleteString(m_Current);

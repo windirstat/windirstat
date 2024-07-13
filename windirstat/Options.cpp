@@ -208,7 +208,7 @@ void COptions::PostProcessPersistedSettings()
     {
         if (UserDefinedCleanups[i].Title.Obj().empty() || UserDefinedCleanups[i].VirginTitle)
         {
-            UserDefinedCleanups[i].Title = Localization::Format(IDS_USERDEFINEDCLEANUPd, i);
+            UserDefinedCleanups[i].Title = Localization::Format(IDS_USER_DEFINED_CLEANUPd, i);
         }
     }
 }

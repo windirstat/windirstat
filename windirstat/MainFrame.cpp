@@ -383,7 +383,6 @@ CMainFrame::CMainFrame() :
       , m_Splitter(COptions::MainSplitterPos.Ptr())
 {
     s_Singleton = this;
-    m_bAutoMenuEnable = FALSE;
 }
 
 CMainFrame::~CMainFrame()
@@ -875,11 +874,9 @@ void CMainFrame::CopyToClipboard(const std::wstring & psz)
 void CMainFrame::OnInitMenuPopup(CMenu* pPopupMenu, const UINT nIndex, const BOOL bSysMenu)
 {
     CFrameWndEx::OnInitMenuPopup(pPopupMenu, nIndex, bSysMenu);
-    if (bSysMenu) return;
-    
-    CStringW menuText;
-    pPopupMenu->GetMenuStringW(nIndex, menuText, MF_BYPOSITION);
-    if (_wcsicmp(menuText.GetString(), Localization::Lookup(IDS_MENU_CLEANUP).c_str()) == 0)
+
+    // update cleanup menu if this is the cleanup submenu
+    if (pPopupMenu->GetMenuState(ID_CLEANUP_EMPTY_BIN, MF_BYCOMMAND) != -1)
     {
         UpdateCleanupMenu(pPopupMenu);
     }
@@ -908,13 +905,6 @@ void CMainFrame::UpdateCleanupMenu(CMenu* menu) const
     const UINT state = menu->GetMenuState(ID_CLEANUP_EMPTY_BIN, MF_BYCOMMAND);
     VERIFY(menu->ModifyMenu(ID_CLEANUP_EMPTY_BIN, MF_BYCOMMAND | MF_STRING, ID_CLEANUP_EMPTY_BIN, s.c_str()));
     menu->EnableMenuItem(ID_CLEANUP_EMPTY_BIN, state);
-
-    // remove everything after the last separator
-    for (int i = menu->GetMenuItemCount() - 1; i >= 0; i--)
-    {
-        if ((menu->GetMenuState(i, MF_BYPOSITION) & MF_SEPARATOR) != 0) break;
-        menu->RemoveMenu(i, MF_BYPOSITION);
-    }
 
     UpdateDynamicMenuItems(menu);
 }
@@ -965,7 +955,29 @@ std::vector<CItem*> CMainFrame::GetAllSelectedInFocus() const
         CFileTreeControl::Get()->GetAllSelected<CItem>();
 }
 
-void CMainFrame::UpdateDynamicMenuItems(CMenu* menu) const
+
+CMenu* CMainFrame::LocateNamedMenu(const CMenu* menu, const std::wstring & subMenuText, bool clear) const
+{
+    // locate submenu
+    CMenu* subMenu = nullptr;
+    for (int i = 0; i < menu->GetMenuItemCount(); i++)
+    {
+        CStringW menuString;
+        if (menu->GetMenuStringW(i, menuString, MF_BYPOSITION) > 0 &&
+            _wcsicmp(menuString, subMenuText.c_str()) == 0)
+        {
+            subMenu = menu->GetSubMenu(i);
+            break;
+        }
+    }
+
+    // cleanup old items
+    if (clear && subMenu != nullptr) while (subMenu->GetMenuItemCount() > 0)
+        subMenu->DeleteMenu(0, MF_BYPOSITION);
+    return subMenu;
+}
+
+void CMainFrame::UpdateDynamicMenuItems(const CMenu* menu) const
 {
     const auto& items = GetAllSelectedInFocus();
 
@@ -973,33 +985,17 @@ void CMainFrame::UpdateDynamicMenuItems(CMenu* menu) const
     std::vector<std::wstring> paths;
     for (auto& item : items) paths.push_back(item->GetPath());
 
-    // locate submenu
-    CMenu* explorerMenu = nullptr;
-    for (int i = 0; i < menu->GetMenuItemCount(); i++)
-    {
-        CStringW menuString;
-        if (menu->GetMenuStringW(i, menuString, MF_BYPOSITION) > 0 &&
-            _wcsicmp(menuString, Localization::Lookup(IDS_POPUP_TREE_EXPLORER_MENU).c_str()) == 0)
-        {
-            explorerMenu = menu->GetSubMenu(i);
-            break;
-        }
-    }   
-
-    // cleanup old items
-    while (explorerMenu->GetMenuItemCount() > 0)
-        explorerMenu->DeleteMenu(0, MF_BYPOSITION);
-
-    // append menu items
-    if (!paths.empty())
+    // locate submenu and merge explorer items
+    CMenu* explorerMenu = LocateNamedMenu(menu, Localization::Lookup(IDS_POPUP_TREE_EXPLORER_MENU), true);
+    if (explorerMenu != nullptr && !paths.empty())
     {
         CComPtr<IContextMenu> contextMenu = GetContextMenu(CMainFrame::Get()->GetSafeHwnd(), paths);
         contextMenu->QueryContextMenu(explorerMenu->GetSafeHmenu(), 0,
             CONTENT_MENU_MINCMD, CONTENT_MENU_MAXCMD, CMF_NORMAL);
     }
 
-    bool bHasItem = false;
-    for (size_t iCurrent = 0; iCurrent < COptions::UserDefinedCleanups.size(); iCurrent++)
+    CMenu * customMenu = LocateNamedMenu(menu, Localization::Lookup(IDS_USER_DEFINED_CLEANUP), true);
+    for (size_t iCurrent = 0; customMenu != nullptr && iCurrent < COptions::UserDefinedCleanups.size(); iCurrent++)
     {
         auto& udc = COptions::UserDefinedCleanups[iCurrent];
         if (!udc.Enabled) continue;
@@ -1013,15 +1009,8 @@ void CMainFrame::UpdateDynamicMenuItems(CMenu* menu) const
             udcValid &= GetDocument()->UserDefinedCleanupWorksForItem(&udc, item);
         }
 
-        bHasItem = true;
         const UINT flags = udcValid ? MF_ENABLED : (MF_DISABLED | MF_GRAYED);
-        menu->AppendMenu(flags | MF_STRING, ID_USERDEFINEDCLEANUP0 + iCurrent, string.c_str());
-    }
-
-    if (!bHasItem)
-    {
-        // This is just to show new users, that they can configure user defined cleanups.
-        menu->AppendMenu(MF_GRAYED, 0, Localization::Lookup(IDS_USERDEFINEDCLEANUP0).c_str());
+        customMenu->AppendMenu(flags | MF_STRING, ID_USERDEFINEDCLEANUP0 + iCurrent, string.c_str());
     }
 }
 
