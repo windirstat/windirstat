@@ -1,29 +1,43 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
   <?include Defines.wxi?>
-  <Product Id="$(var.ProductID)" Name="$(var.ProductName)" Language="1033" Version="$(var.ProductVersion)" Manufacturer="$(var.Manufacturer)" UpgradeCode="$(var.UpgradeCode)">
-    <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine"/>
+	<Product Id="$(var.ProductID)" Name="$(var.ProductName)" Language="1033" Version="$(var.ProductVersion)" Manufacturer="$(var.Manufacturer)" UpgradeCode="$(var.UpgradeCode)">
+	  <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine"/>
     <Icon Id="WinDirStat.ico" SourceFile="$(var.IconFilePath)"/>
     <Property Id="ARPPRODUCTICON" Value="WinDirStat.ico"/>
     <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." Schedule="afterInstallInitialize"/>
-    <MediaTemplate EmbedCab="yes"/>
+    <MediaTemplate EmbedCab="yes" CompressionLevel="high"/>
     <UIRef Id="WixUI_FeatureTree"/>
     <WixVariable Id="WixUILicenseRtf" Value="$(var.LicenseRtf)"/>
-    <Feature Id="FT_Core" Title="Application" Absent="disallow" Description="Includes WinDirStat">
-      <ComponentRef Id="Comp_Main"/>
+    <WixVariable Id="WixUIBannerBmp" Value="$(var.BannerBmp)" />
+    <WixVariable Id="WixUIDialogBmp" Value="$(var.DialogBmp)" />
+    <Feature Id="FT_Core" Title="WinDirStat" Absent="disallow" Description="Includes WinDirStat">
+      <ComponentRef Id="Component_Main"/>
     </Feature>
+    <Property Id="WIN_DIR_STAT_HKCU">
+      <RegistrySearch Id="WinDirStatHKCU" Root="HKCU" Key="Software\Microsoft\Windows\CurrentVersion\Uninstall\WinDirStat" Name="UninstallString" Type="raw"/>
+    </Property>
+    <Property Id="WIN_DIR_STAT_HKLM">
+      <RegistrySearch Id="WinDirStatHKLM" Root="HKLM" Key="Software\Microsoft\Windows\CurrentVersion\Uninstall\WinDirStat" Name="UninstallString" Type="raw" Win64="no"/>
+    </Property>  
+    <CustomAction Id="DoUninstallHKCU" Property="UninstallHKCU" ExeCommand="[WIN_DIR_STAT_HKCU] /s" Execute="immediate" Impersonate="no" Return="ignore"/>
+    <CustomAction Id="DoUninstallHKLM" Property="UninstallHKLM" ExeCommand="[WIN_DIR_STAT_HKLM] /s" Execute="immediate" Impersonate="no" Return="ignore"/>
+    <InstallExecuteSequence>
+      <Custom Action="DoUninstallHKCU" Before="InstallInitialize">WIN_DIR_STAT_HKCU</Custom>
+      <Custom Action="DoUninstallHKLM" Before="InstallInitialize">WIN_DIR_STAT_HKLM</Custom>
+    </InstallExecuteSequence>
   </Product>
   <Fragment>
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="$(var.ProgramFilesNative)">
         <Directory Id="INSTALLFOLDER" Name="WinDirStat"/>
       </Directory>
-      <Directory Id="ProgramMenuFolder" />
+      <Directory Id="ProgramMenuFolder"/>
     </Directory>
   </Fragment>
   <Fragment>
     <DirectoryRef Id="INSTALLFOLDER">
-      <Component Id="Comp_Main" Guid="{48E1104D-2466-4ADC-8BC0-521B6EBA8621}">
+      <Component Id="Component_Main" Guid="{48E1104D-2466-4ADC-8BC0-521B6EBA8621}" Win64="$(var.Win64)">
         <File Id="File_Main" KeyPath="yes" Source="$(var.ProductBinariesDir)\$(var.WinDirStatExe)" Name="WinDirStat.exe">
           <Shortcut Id="File_Main_Shortcut" Directory="ProgramMenuFolder" WorkingDirectory="INSTALLFOLDER" Name="WinDirStat" Advertise="no">
             <ShortcutProperty Key="{9F4C2855-9F79-4B39-A8D0-E1D42DE1D5F3}, 5" Value="WinDirStat"/>

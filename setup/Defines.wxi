@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-  <Include>
-    <!-- Product GUIDs & Version Number -->
+<Include>
+	<!-- Product GUIDs & Version Number -->
     <?define ProductVersion =           "2.0.0"?>
     <?define UpgradeCode =              "E211CCFB-D706-4919-B2FF-0F7F426EA27B"?>
-    <?define ProductID =                "EB9B4D4D-D88C-424A-87AA-B7EF40BCB072"?>
-    <!-- Product and Company information -->
+    <?define ProductID =                "*"?>
+	<!-- Product and Company information -->
     <?define ProductName =              "WinDirStat"?>
     <?define ProductFolder =            "WinDirStat"?>
     <?define Manufacturer =             "WinDirStat Team"?>
@@ -14,18 +14,18 @@
 
     <?define ProductBinariesDir =       "..\build"?>
     <?define LicenseRtf =               "license.rtf"?>
-	
-	<?if $(sys.BUILDARCH) = x64 ?>
-	<?define Win64 = "yes" ?>
-	<?define WinDirStatExe = "WinDirStat64.exe" ?>
-	<?define ProgramFilesNative = "ProgramFiles64Folder" ?>
-	<?else ?>
-	<?define Win64 = "no" ?>
-	<?define WinDirStatExe = "WinDirStat32.exe" ?>
-	<?define ProgramFilesNative = "ProgramFilesFolder" ?>	
-	<?endif ?>	
-	
+    <?define BannerBmp =                "banner.bmp"?>
+    <?define DialogBmp =                "background.bmp"?>
+    
+    <?if $(sys.BUILDARCH) = x64 ?>
+    <?define Win64 = "yes" ?>
+    <?define WinDirStatExe = "WinDirStat64.exe" ?>
+    <?define ProgramFilesNative = "ProgramFiles64Folder" ?>
+    <?else ?>
+    <?define Win64 = "no" ?>
+    <?define WinDirStatExe = "WinDirStat32.exe" ?>
+    <?define ProgramFilesNative = "ProgramFilesFolder" ?>    
+    <?endif ?>
     <!-- Default Registry Key, in which most registry settings are saved. -->
     <?define ProductRegKeyPath = "SOFTWARE\WinDirStat\WinDirStat"?>
-	
 </Include>
