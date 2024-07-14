@@ -36,6 +36,7 @@
 #include "PageTreeMap.h"
 #include "PageGeneral.h"
 #include "MainFrame.h"
+#include "SelectObject.h"
 #include <CommonHelpers.h>
 #include <common/MdExceptions.h>
 
@@ -304,10 +305,24 @@ int CPacmanControl::OnCreate(const LPCREATESTRUCT lpCreateStruct)
 
 void CPacmanControl::OnPaint()
 {
-    const CPaintDC dc(this);
+    // Setup double buffering
+    CPaintDC dc(this);
+    CDC memDC;
+    memDC.CreateCompatibleDC(&dc);
+
+    CBitmap bm;
+    CRect rect;
+    GetClientRect(&rect);
+    bm.CreateCompatibleBitmap(&dc, rect.Width(), rect.Height());
+    CSelectObject sobm(&memDC, &bm);
+
+    // Draw the animation
     CRect rc;
     GetClientRect(rc);
-    m_Pacman.Draw(&dc, rc);
+    m_Pacman.Draw(&memDC, rc);
+
+    // Copy memory DC to screen DC
+    dc.BitBlt(0, 0, rect.Width(), rect.Height(), &memDC, 0, 0, SRCCOPY);
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -552,7 +567,6 @@ void CMainFrame::CreatePacmanProgress()
         CRect rc;
         m_WndStatusBar.GetItemRect(0, rc);
         m_Pacman.Create(wds::strEmpty, WS_CHILD | WS_VISIBLE, rc, &m_WndStatusBar, ID_WDS_CONTROL);
-        m_Pacman.ModifyStyleEx(0, WS_EX_COMPOSITED, 0);
         m_Pacman.Start();
     }
 }
