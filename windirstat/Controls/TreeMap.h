@@ -70,6 +70,7 @@ public:
     class Item
     {
     public:
+        virtual ~Item() = default;
         virtual bool TmiIsLeaf() const = 0;
         virtual CRect TmiGetRectangle() const = 0;
         virtual void TmiSetRectangle(const CRect& rc) = 0;

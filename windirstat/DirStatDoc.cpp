@@ -1270,7 +1270,7 @@ void CDirStatDoc::OnCleanupCompress(UINT id)
 void CDirStatDoc::OnScanSuspend()
 {
     // Wait for system to fully shutdown
-    for (auto& [_, queue] : queues)
+    for (auto& queue : queues | std::views::values)
         queue.SuspendExecution();
 
     // Mark as suspended
@@ -1280,7 +1280,7 @@ void CDirStatDoc::OnScanSuspend()
 
 void CDirStatDoc::OnScanResume()
 {
-    for (auto& [_, queue] : queues)
+    for (auto& queue : queues | std::views::values)
         queue.ResumeExecution();
 
     if (CMainFrame::Get() != nullptr)
@@ -1290,7 +1290,7 @@ void CDirStatDoc::OnScanResume()
 void CDirStatDoc::OnScanStop()
 {
     // Stop queues from executing
-    for (auto& [_, queue] : queues)
+    for (auto& queue : queues | std::views::values)
         queue.CancelExecution();
     queues.clear();
 
@@ -1458,7 +1458,7 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
         }
 
         // Create subordinate threads if there is work to do
-        for (auto& [_, queue] : queues)
+        for (auto& queue : queues | std::views::values)
         {
             queue.StartThreads(COptions::ScanningThreads, [&queue]()
             {
@@ -1468,7 +1468,7 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
 
         // Wait for all threads to run out of work
         bool do_completion = false;
-        for (auto& [_, queue] : queues)
+        for (auto& queue : queues | std::views::values)
             do_completion = queue.WaitForCompletionOrCancellation();
         if (!do_completion)
         {

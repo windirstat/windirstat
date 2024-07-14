@@ -876,7 +876,7 @@ void CMainFrame::OnInitMenuPopup(CMenu* pPopupMenu, const UINT nIndex, const BOO
     CFrameWndEx::OnInitMenuPopup(pPopupMenu, nIndex, bSysMenu);
 
     // update cleanup menu if this is the cleanup submenu
-    if (pPopupMenu->GetMenuState(ID_CLEANUP_EMPTY_BIN, MF_BYCOMMAND) != -1)
+    if (pPopupMenu->GetMenuState(ID_CLEANUP_EMPTY_BIN, MF_BYCOMMAND) != static_cast<UINT>(-1))
     {
         UpdateCleanupMenu(pPopupMenu);
     }
@@ -1163,7 +1163,7 @@ void CMainFrame::OnConfigure()
     
     if (sheet.m_RestartApplication)
     {
-        CDirStatApp::Get()->RestartApplication();
+        CDirStatApp::RestartApplication();
     }
 }
 

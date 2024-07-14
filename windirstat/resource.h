@@ -145,7 +145,6 @@
 #define ID_USERDEFINEDCLEANUP7          32907
 #define ID_USERDEFINEDCLEANUP8          32908
 #define ID_USERDEFINEDCLEANUP9          32909
-#define ID_DUMMY_USERDEFINEDCLEANUP     33005
 #define ID_POPUP_CANCEL                 33008
 #define ID_TREEMAP_RESELECT_CHILD       33011
 #define ID_EDIT_COPY_CLIPBOARD          33013
@@ -159,8 +158,6 @@
 #define ID_LOAD_RESULTS                 33037
 #define ID_SAVE_RESULTS                 33038
 #define ID_SCAN_STOP                    33039
-#define ID_POPUP_IDS                    33040
-#define ID_EXPLORER_MENU                33041
 #define ID_COMPRESS_NONE                33046
 #define ID_COMPRESS_LZNT1               33047
 #define ID_COMPRESS_XPRESS4K            33048

@@ -26,6 +26,8 @@
 #include "FileFind.h"
 #include "GlobalHelpers.h"
 
+#include <algorithm>
+
 bool CReparsePoints::IsReparseType(const std::wstring & longpath, const std::unordered_set<DWORD>& tagTypes, const bool mask)
 {
     SmartPointer<HANDLE> handle(CloseHandle, CreateFile(longpath.c_str(), GENERIC_READ, FILE_SHARE_READ,
@@ -45,13 +47,8 @@ bool CReparsePoints::IsReparseType(const std::wstring & longpath, const std::uno
 
     // Test if the tag matches the types or mask that was passed
     const DWORD tag = reinterpret_cast<PREPARSE_GUID_DATA_BUFFER>(buf.data())->ReparseTag;
-    for (const auto & tagType : tagTypes)
-    {
-        if ((mask && (tag & tagType) == tag) ||
-            (!mask && tag == tagType)) return true;
-    }
-
-    return false;
+    return std::ranges::any_of(tagTypes, [tag, mask](const DWORD& tagType) {
+        return (mask && (tag & tagType) == tag) || (!mask && tag == tagType); });
 }
 
 void CReparsePoints::Initialize()

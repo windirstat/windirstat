@@ -43,6 +43,7 @@ struct SSorting
 class CSortingListItem
 {
 public:
+    virtual ~CSortingListItem() = default;
     virtual std::wstring GetText(int subitem) const = 0;
     virtual int GetImage() const = 0;
     virtual int Compare(const CSortingListItem* other, int subitem) const;

@@ -277,7 +277,7 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, Item* root, const Options* option
 
         // That bitmap in turn will be created from this array
         std::vector<COLORREF> bitmapBits;
-        bitmapBits.resize(rc.Width() * rc.Height());
+        bitmapBits.resize(static_cast<std::size_t>(rc.Width() * rc.Height()));
 
         // Recursively draw the tree graph
         constexpr double surface[4] = {0, 0, 0, 0};
@@ -463,7 +463,7 @@ void CTreeMap::DrawColorPreview(CDC* pdc, const CRect& rc, const COLORREF color,
 
     // That bitmap in turn will be created from this array
     std::vector<COLORREF> bitmapBits;
-    bitmapBits.resize(rc.Width() * rc.Height());
+    bitmapBits.resize(static_cast<std::size_t>(rc.Width() * rc.Height()));
 
     // Recursively draw the tree graph
     RenderRectangle(bitmapBits, CRect(0, 0, rc.Width(), rc.Height()), surface, color);
