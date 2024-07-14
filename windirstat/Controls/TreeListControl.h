@@ -115,7 +115,7 @@ class CTreeListControl : public COwnerDrawnListControl
     CTreeListControl(int rowHeight = -1, std::vector<int>* columnOrder = {}, std::vector<int>* columnWidths = {});
     ~CTreeListControl() override = default;
     void MySetImageList(CImageList* il);
-    virtual BOOL CreateEx(DWORD dwExStyle, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID);
+    virtual BOOL CreateExtended(DWORD dwExStyle, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID);
     void SysColorChanged() override;
     virtual void SetRootItem(CTreeListItem* root);
     void OnChildAdded(const CTreeListItem* parent, CTreeListItem* child);

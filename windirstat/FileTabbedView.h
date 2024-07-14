@@ -28,12 +28,6 @@
 
 class CFileTabbedView : public CTabView
 {
-public:
-    CDirStatDoc* GetDocument() const
-    {
-        return static_cast<CDirStatDoc*>(m_pDocument);
-    }
-
 protected:
     CFileTabbedView() = default;
     ~CFileTabbedView() override = default;

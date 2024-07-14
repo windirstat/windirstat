@@ -78,7 +78,7 @@ void COwnerDrawnListItem::DrawLabel(const COwnerDrawnListControl* list, CImageLi
     rcLabel.bottom = rcRest.bottom - LABEL_Y_MARGIN;
 
     CSetBkMode bk(pdc, TRANSPARENT);
-    COLORREF textColor = ::GetSysColor(COLOR_WINDOWTEXT);
+    COLORREF textColor = GetItemTextColor();
     if (width == nullptr && (state & ODS_SELECTED) != 0 && (list->HasFocus() || list->IsShowSelectionAlways()))
     {
         // Color for the text in a highlighted item (usually white)
@@ -92,12 +92,6 @@ void COwnerDrawnListItem::DrawLabel(const COwnerDrawnListControl* list, CImageLi
         }
         // Fill the selection rectangle background (usually dark blue)
         pdc->FillSolidRect(selection, list->GetHighlightColor());
-    }
-    else
-    {
-        // Use the color designated for this item
-        // This is currently only for encrypted and compressed items
-        textColor = GetItemTextColor();
     }
 
     // Set text color for device context

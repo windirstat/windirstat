@@ -36,8 +36,7 @@ class COwnerDrawnListControl;
 class COwnerDrawnListItem : public CSortingListItem
 {
 public:
-    COwnerDrawnListItem()          = default;
-    virtual ~COwnerDrawnListItem() = default;
+    COwnerDrawnListItem() = default;
 
     // This text is drawn, if DrawSubitem returns false
     std::wstring GetText(int subitem) const override = 0;

@@ -339,7 +339,7 @@ void CTreeListControl::MySetImageList(CImageList* il)
     m_ImageList = il;
 }
 
-BOOL CTreeListControl::CreateEx(const DWORD dwExStyle, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, const UINT nID)
+BOOL CTreeListControl::CreateExtended(const DWORD dwExStyle, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, const UINT nID)
 {
     InitializeNodeBitmaps();
 

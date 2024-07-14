@@ -308,7 +308,7 @@ class CTreeMapPreview final : public CStatic
             });
         }
 
-        ~CItem()
+        ~CItem() override
         {
             for (const auto & child : m_Children)
             {
