@@ -190,10 +190,10 @@ std::wstring FileFindEnhanced::GetFilePath() const
         (m_Base + m_Name) : (m_Base + L"\\" + m_Name);
 
     // Strip special dos chars
-    if (wcsncmp(path.data(), m_Dos, wcslen(m_Dos) - 1) == 0)
-        path = path.substr(static_cast<int>(wcslen(m_Dos)));
     if (wcsncmp(path.data(), m_DosUNC, wcslen(m_DosUNC) - 1) == 0)
-        path = path.substr(static_cast<int>(wcslen(m_DosUNC)));
+        path = L"\\\\" + path.substr(static_cast<int>(wcslen(m_DosUNC)));
+    else if (wcsncmp(path.data(), m_Dos, wcslen(m_Dos) - 1) == 0)
+        path = path.substr(static_cast<int>(wcslen(m_Dos)));
     return path;
 }
 

@@ -1261,7 +1261,7 @@ void CDirStatDoc::OnCleanupCompress(UINT id)
     const auto& items = GetAllSelected();
     for (const auto& item : items)
     {
-        CompressFile(item->GetPath(), compressionMap.at(id));
+        CompressFile(item->GetPathLong(), compressionMap.at(id));
         item->UpdateStatsFromDisk();
         UpdateAllViews(nullptr);
     }

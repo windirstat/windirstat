@@ -1070,6 +1070,7 @@ void CMainFrame::MoveFocus(const LOGICAL_FOCUS lf)
 
 void CMainFrame::SetSelectionMessageText()
 {
+    if (!GetDocument()->IsRootDone()) return;
     const auto focus = GetLogicalFocus();
     std::wstring text = Localization::Lookup(IDS_IDLEMESSAGE);
 
