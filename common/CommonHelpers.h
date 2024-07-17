@@ -47,3 +47,4 @@ enum class CompressionAlgorithm {
 };
 
 bool CompressFile(const std::wstring& filePath, CompressionAlgorithm algorithm);
+bool CompressFileAllowed(const std::wstring& filePath, CompressionAlgorithm algorithm);

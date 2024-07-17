@@ -29,6 +29,8 @@
 #include <map>
 #include <sddl.h>
 #include <string>
+#include <array>
+#include <unordered_set>
 
 bool ShellExecuteThrow(HWND hwnd, const std::wstring & lpVerb, const std::wstring & lpFile,
     const std::wstring & lpDirectory, const INT nShowCmd)
@@ -225,4 +227,58 @@ bool CompressFile(const std::wstring& filePath, CompressionAlgorithm algorithm)
     }
 
     return status == 1 || status == 0xC000046F;
+}
+
+bool CompressFileAllowed(const std::wstring& filePath, CompressionAlgorithm algorithm)
+{
+    static std::unordered_map<std::wstring,bool> compressionStandard;
+    static std::unordered_map<std::wstring,bool> compressionModern;
+    auto& compressionMap = (algorithm == CompressionAlgorithm::LZNT1) ?
+        compressionStandard : compressionModern;
+
+    // Fetch volume root path
+    std::array<WCHAR, MAX_PATH> volumeName;
+    if (GetVolumePathName(filePath.c_str(), volumeName.data(),
+        static_cast<DWORD>(volumeName.size())) == 0)
+    {
+        return false;
+    }
+
+    // Return cached value
+    if (compressionMap.contains(volumeName.data()))
+    {
+        return compressionMap.at(volumeName.data());
+    }
+
+    // Check decompression support
+    if (algorithm == CompressionAlgorithm::NONE)
+    {
+        return CompressFileAllowed(filePath, CompressionAlgorithm::LZNT1) ||
+            CompressFileAllowed(filePath, CompressionAlgorithm::XPRESS4K);
+    }
+
+    // Query volumne for standard encrption support
+    if (algorithm == CompressionAlgorithm::LZNT1)
+    {
+        DWORD fileSystemFlags = 0;
+        compressionMap[volumeName.data()] = GetVolumeInformation(volumeName.data(),
+            nullptr, 0, nullptr, nullptr, &fileSystemFlags, nullptr, 0) != 0 &&
+            (fileSystemFlags & FILE_FILE_COMPRESSION) != 0;
+    }
+    else
+    {
+        compressionMap[volumeName.data()] = false;
+        SmartPointer<HANDLE> handle(CloseHandle, CreateFileW(volumeName.data(), GENERIC_READ,
+            FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+            nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, nullptr));
+        if (handle != INVALID_HANDLE_VALUE)
+        {
+            DWORD bytesReturned = 0;
+            const BOOL status = DeviceIoControl(handle, FSCTL_GET_EXTERNAL_BACKING,
+                nullptr, 0, nullptr, 0, &bytesReturned, nullptr);
+            compressionMap[volumeName.data()] = (status != 0 || GetLastError() == 342);
+        }
+    }
+
+    return compressionMap.at(volumeName.data());;
 }

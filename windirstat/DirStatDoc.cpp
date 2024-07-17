@@ -907,6 +907,23 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
     pCmdUI->Enable(allow); 
 }
 
+void CDirStatDoc::OnUpdateCompressionHandler(CCmdUI* pCmdUI)
+{
+    // Defer to standard update handler for initial value
+    OnUpdateCentralHandler(pCmdUI);
+    if (pCmdUI->m_pMenu == nullptr) return;
+
+    // See if each path supports available compression options
+    const UINT flag = pCmdUI->m_pMenu->GetMenuState(pCmdUI->m_nID, MF_BYCOMMAND);
+    bool allow = (flag & (MF_DISABLED | MF_GRAYED)) == 0;
+    for (const auto& item : GetAllSelected())
+    {
+        allow &= CompressFileAllowed(item->GetPath(),
+            CompressionIdToAlg(pCmdUI->m_nID));
+    }
+    pCmdUI->Enable(allow);
+}
+
 #define ON_COMMAMD_UPDATE_WRAPPER(x,y) ON_COMMAND(x, y) ON_UPDATE_COMMAND_UI(x, OnUpdateCentralHandler)
 BEGIN_MESSAGE_MAP(CDirStatDoc, CDocument) 
     ON_COMMAMD_UPDATE_WRAPPER(ID_REFRESH_SELECTED, OnRefreshSelected)
@@ -931,7 +948,7 @@ BEGIN_MESSAGE_MAP(CDirStatDoc, CDocument)
     ON_COMMAMD_UPDATE_WRAPPER(ID_TREEMAP_RESELECT_CHILD, OnTreeMapReselectChild)
     ON_COMMAMD_UPDATE_WRAPPER(ID_CLEANUP_OPEN_SELECTED, OnCleanupOpenTarget)
     ON_COMMAMD_UPDATE_WRAPPER(ID_CLEANUP_PROPERTIES, OnCleanupProperties)
-    ON_UPDATE_COMMAND_UI_RANGE(ID_COMPRESS_NONE, ID_COMPRESS_LZX, OnUpdateCentralHandler)
+    ON_UPDATE_COMMAND_UI_RANGE(ID_COMPRESS_NONE, ID_COMPRESS_LZX, OnUpdateCompressionHandler)
     ON_COMMAND_RANGE(ID_COMPRESS_NONE, ID_COMPRESS_LZX, OnCleanupCompress)
     ON_COMMAMD_UPDATE_WRAPPER(ID_SCAN_RESUME, OnScanResume)
     ON_COMMAMD_UPDATE_WRAPPER(ID_SCAN_SUSPEND, OnScanSuspend)
@@ -1245,7 +1262,7 @@ void CDirStatDoc::OnCleanupProperties()
     }
 }
 
-void CDirStatDoc::OnCleanupCompress(UINT id)
+CompressionAlgorithm CDirStatDoc::CompressionIdToAlg(UINT id)
 {
     const std::unordered_map<UINT, CompressionAlgorithm> compressionMap =
     {
@@ -1257,11 +1274,17 @@ void CDirStatDoc::OnCleanupCompress(UINT id)
         { ID_COMPRESS_LZX, CompressionAlgorithm::LZX }
     };
 
+    return compressionMap.at(id);
+}
+
+void CDirStatDoc::OnCleanupCompress(UINT id)
+{
     CWaitCursor wc;
     const auto& items = GetAllSelected();
     for (const auto& item : items)
     {
-        CompressFile(item->GetPathLong(), compressionMap.at(id));
+        const auto alg = (CompressionIdToAlg(id));
+        CompressFile(item->GetPathLong(), alg);
         item->UpdateStatsFromDisk();
         UpdateAllViews(nullptr);
     }

@@ -24,6 +24,7 @@
 #include "SelectDrivesDlg.h"
 #include "BlockingQueue.h"
 #include "Options.h"
+#include "CommonHelpers.h"
 
 #include <unordered_map>
 #include <vector>
@@ -141,6 +142,7 @@ protected:
     CItem* PopReselectChild();
     void ClearReselectChildStack();
     bool IsReselectChildAvailable() const;
+    static CompressionAlgorithm CompressionIdToAlg(UINT id);
     static bool FileTreeHasFocus();
     static bool DupeListHasFocus();
     static std::vector<CItem *> GetAllSelected();
@@ -172,6 +174,7 @@ protected:
     afx_msg void OnEditCopy();
     afx_msg void OnCleanupEmptyRecycleBin();
     afx_msg void OnUpdateCentralHandler(CCmdUI* pCmdUI);
+    afx_msg void OnUpdateCompressionHandler(CCmdUI* pCmdUI);
     afx_msg void OnUpdateViewShowFreeSpace(CCmdUI* pCmdUI);
     afx_msg void OnViewShowFreeSpace();
     afx_msg void OnUpdateViewShowUnknown(CCmdUI* pCmdUI);
