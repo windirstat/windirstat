@@ -616,12 +616,14 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
     VERIFY(m_WndToolBar.CreateEx(this, TBSTYLE_FLAT, WS_CHILD | WS_VISIBLE | CBRS_TOP | CBRS_GRIPPER | CBRS_TOOLTIPS | CBRS_FLYBY | CBRS_SIZE_DYNAMIC));
     VERIFY(m_WndToolBar.LoadToolBar(IDR_MAINFRAME));
 
+    // Setup status pane and force initial field population
     VERIFY(m_WndStatusBar.Create(this));
     m_WndStatusBar.SetIndicators(indicators, _countof(indicators));
     m_WndStatusBar.SetPaneStyle(ID_INDICATOR_IDLEMESSAGE_INDEX, SBPS_STRETCH);
     SetStatusPaneText(ID_INDICATOR_CAPS_INDEX, Localization::Lookup(IDS_INDICATOR_CAPS));
     SetStatusPaneText(ID_INDICATOR_NUM_INDEX, Localization::Lookup(IDS_INDICATOR_NUM));
     SetStatusPaneText(ID_INDICATOR_SCRL_INDEX, Localization::Lookup(IDS_INDICATOR_SCRL));
+    SetStatusPaneText(ID_INDICATOR_MEMORYUSAGE_INDEX, CDirStatApp::GetCurrentProcessMemoryInfo());
 
     m_WndDeadFocus.Create(this);
 
