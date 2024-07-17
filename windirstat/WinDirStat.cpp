@@ -50,8 +50,7 @@ BEGIN_MESSAGE_MAP(CDirStatApp, CWinAppEx)
     ON_COMMAND(ID_HELP_REPORTBUG, OnReportBug)
 END_MESSAGE_MAP()
 
-const CDirStatApp _theApp;
-CDirStatApp * CDirStatApp::_singleton;
+CDirStatApp CDirStatApp::_singleton;
 
 CDirStatApp::CDirStatApp()
 {
@@ -61,7 +60,6 @@ CDirStatApp::CDirStatApp()
 
     m_AltColor = GetAlternativeColor(RGB(0x00, 0x00, 0xFF), L"AltColor");
     m_AltEncryptionColor = GetAlternativeColor(RGB(0x00, 0x80, 0x00), L"AltEncryptionColor");
-    _singleton = this;
 }
 
 CIconImageList* CDirStatApp::GetIconImageList()
@@ -73,17 +71,12 @@ CIconImageList* CDirStatApp::GetIconImageList()
 void CDirStatApp::RestartApplication()
 {
     // First, try to create the suspended process
-    STARTUPINFO si;
-    ZeroMemory(&si, sizeof(si));
-    si.cb = sizeof(si);
-
-    PROCESS_INFORMATION pi;
-    ZeroMemory(&pi, sizeof(pi));
-
+    STARTUPINFO si = { .cb = sizeof(si) };
+    PROCESS_INFORMATION pi = {};
     if (const BOOL success = CreateProcess(GetAppFileName().c_str(), nullptr, nullptr, nullptr, false, CREATE_SUSPENDED, nullptr, nullptr, &si, &pi); !success)
     {
         AfxMessageBox(Localization::Format(IDS_CREATEPROCESSsFAILEDs,
-            GetAppFileName(), MdGetWinErrorText(::GetLastError())).c_str());
+            GetAppFileName(), MdGetWinErrorText(static_cast<HRESULT>(GetLastError()))).c_str());
         return;
     }
 
@@ -96,8 +89,8 @@ void CDirStatApp::RestartApplication()
         VTRACE(L"ResumeThread() didn't return 1");
     }
 
-    ::CloseHandle(pi.hProcess);
-    ::CloseHandle(pi.hThread);
+    CloseHandle(pi.hProcess);
+    CloseHandle(pi.hThread);
 }
 
 std::tuple<ULONGLONG, ULONGLONG> CDirStatApp::GetFreeDiskSpace(const std::wstring & pszRootPath)
@@ -133,7 +126,7 @@ bool CDirStatApp::IsFollowingAllowed(const std::wstring& longpath, const DWORD a
 // Get the alternative colors for compressed and encrypted files/folders.
 // This function uses either the value defined in the Explorer configuration
 // or the default color values.
-COLORREF CDirStatApp::GetAlternativeColor(const COLORREF clrDefault, const std::wstring & which)
+COLORREF CDirStatApp::GetAlternativeColor(const COLORREF clrDefault, const std::wstring & which) const
 {
     // Open the explorer key
     CRegKey key;
@@ -240,24 +233,24 @@ BOOL CDirStatApp::InitInstance()
     m_bSaveState = FALSE;
 
     CWinAppEx::InitInstance();
-    CWinAppEx::InitShellManager();
+    InitShellManager();
 
     // Load default language just to get bootstrapped
     Localization::LoadResource(MAKELANGID(LANG_ENGLISH, SUBLANG_NEUTRAL));
 
     // Initialize visual controls
     constexpr INITCOMMONCONTROLSEX ctrls = { sizeof(INITCOMMONCONTROLSEX) , ICC_STANDARD_CLASSES };
-    (void)::InitCommonControlsEx(&ctrls);
-    (void)::OleInitialize(nullptr);
-    (void)::AfxOleInit();
-    ::AfxEnableControlContainer();
-    (void)::AfxInitRichEdit2();
+    (void)InitCommonControlsEx(&ctrls);
+    (void)OleInitialize(nullptr);
+    (void)AfxOleInit();
+    AfxEnableControlContainer();
+    (void)AfxInitRichEdit2();
 
     // If a local config file is available, use that for settings
     SetPortableMode(true, true);
 
     COptions::LoadAppSettings();
-    CWinAppEx::LoadStdProfileSettings(4);
+    LoadStdProfileSettings(4);
 
     m_PDocTemplate = new CSingleDocTemplate(
         IDR_MAINFRAME,
@@ -348,7 +341,7 @@ void CDirStatApp::OnRunElevated()
     // For the configuration to launch, include the parent process so we can
     // terminate it once launched from the child process
     const std::wstring sAppName = GetAppFileName();
-    const std::wstring launchConfig = std::format(L"{}|{}", GetCurrentProcessId(), GetDocument()->GetPathName().GetString());
+    const std::wstring launchConfig = std::format(L"{}|{}", GetCurrentProcessId(), CDirStatDoc::GetDocument()->GetPathName().GetString());
 
     SHELLEXECUTEINFO shellInfo;
     ZeroMemory(&shellInfo, sizeof(shellInfo));

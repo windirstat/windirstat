@@ -56,7 +56,7 @@ class CWDSTracerConsole final
 public:
     CWDSTracerConsole()
     {
-        ::AllocConsole();
+        AllocConsole();
         ::SetConsoleTitle(L"WinDirStat Debug Trace Output");
 
         // Redirect console output to new console
@@ -73,7 +73,7 @@ public:
     {
         std::wcout << L"Press any key to close this window.\n";
         std::wcin.get();
-        ::FreeConsole();
+        FreeConsole();
     }
 
     static void ProcessOutput(const std::source_location& loc, std::wstring_view format, auto&&... args)

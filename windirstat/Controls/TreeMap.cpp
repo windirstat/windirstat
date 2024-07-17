@@ -248,7 +248,7 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, Item* root, const Options* option
         // We shrink the rectangle here, too.
         // If we didn't do this, the layout of the treemap would
         // change, when grid is switched on and off.
-        CPen pen(PS_SOLID, 1, ::GetSysColor(COLOR_3DSHADOW));
+        CPen pen(PS_SOLID, 1, GetSysColor(COLOR_3DSHADOW));
         CSelectObject sopen(pdc, &pen);
         pdc->MoveTo(rc.right - 1, rc.top);
         pdc->LineTo(rc.right - 1, rc.bottom);
@@ -277,7 +277,8 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, Item* root, const Options* option
 
         // That bitmap in turn will be created from this array
         std::vector<COLORREF> bitmapBits;
-        bitmapBits.resize(static_cast<std::size_t>(rc.Width() * rc.Height()));
+        bitmapBits.resize(static_cast<std::vector<COLORREF>::size_type>(rc.Width()) *
+            static_cast<std::vector<COLORREF>::size_type>(rc.Height()));
 
         // Recursively draw the tree graph
         constexpr double surface[4] = {0, 0, 0, 0};
@@ -463,7 +464,8 @@ void CTreeMap::DrawColorPreview(CDC* pdc, const CRect& rc, const COLORREF color,
 
     // That bitmap in turn will be created from this array
     std::vector<COLORREF> bitmapBits;
-    bitmapBits.resize(static_cast<std::size_t>(rc.Width() * rc.Height()));
+    bitmapBits.resize(static_cast<std::vector<COLORREF>::size_type>(rc.Width()) *
+        static_cast<std::vector<COLORREF>::size_type>(rc.Height()));
 
     // Recursively draw the tree graph
     RenderRectangle(bitmapBits, CRect(0, 0, rc.Width(), rc.Height()), surface, color);

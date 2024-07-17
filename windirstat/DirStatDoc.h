@@ -77,6 +77,9 @@ enum
 //
 class CDirStatDoc final : public CDocument
 {
+public:
+    static CDirStatDoc* GetDocument();
+
 protected:
     CDirStatDoc(); // Created by MFC only
     DECLARE_DYNCREATE(CDirStatDoc)
@@ -122,7 +125,6 @@ protected:
 
     static void OpenItem(const CItem* item, const std::wstring& verb = {});
 
-protected:
     void RecurseRefreshReparsePoints(CItem* items);
     std::vector<CItem*> GetDriveItems() const;
     void RefreshRecyclers() const;
@@ -146,6 +148,8 @@ protected:
     static bool FileTreeHasFocus();
     static bool DupeListHasFocus();
     static std::vector<CItem *> GetAllSelected();
+
+    static CDirStatDoc* _theDocument;
 
     bool m_ShowFreeSpace; // Whether to show the <Free Space> item
     bool m_ShowUnknown;   // Whether to show the <Unknown> item
@@ -197,8 +201,3 @@ protected:
     afx_msg void OnScanStop();
     afx_msg void OnContextMenuExplore(UINT nID);
 };
-
-//
-// The document is needed in many places.
-//
-extern CDirStatDoc* GetDocument();

@@ -55,19 +55,19 @@ namespace
                 MdThrowLastWinerror();
             }
 
-            const DWORD dwSize = ::SizeofResource(dll, hrsrc);
+            const DWORD dwSize = SizeofResource(dll, hrsrc);
             if (0 == dwSize)
             {
                 MdThrowLastWinerror();
             }
 
-            hresource = ::LoadResource(dll, hrsrc);
+            hresource = LoadResource(dll, hrsrc);
             if (!hresource)
             {
                 MdThrowLastWinerror();
             }
 
-            const auto pData = static_cast<const BYTE*>(::LockResource(hresource));
+            const auto pData = static_cast<const BYTE*>(LockResource(hresource));
 
             const CComBSTR bstr(dwSize, reinterpret_cast<LPCSTR>(pData));
 
@@ -81,7 +81,7 @@ namespace
 
         if (hresource != nullptr)
         {
-            ::FreeResource(hresource);
+            FreeResource(hresource);
         }
 
         return s;
@@ -229,7 +229,7 @@ void CAboutDlg::CMyTabControl::OnSize(const UINT nType, const int cx, const int 
 {
     CTabCtrl::OnSize(nType, cx, cy);
 
-    if (::IsWindow(m_Text.m_hWnd))
+    if (IsWindow(m_Text.m_hWnd))
     {
         CRect rc;
         GetClientRect(rc);
@@ -246,7 +246,7 @@ void CAboutDlg::CMyTabControl::OnSize(const UINT nType, const int cx, const int 
 ////////////////////////////////////////////////////////////////////////////
 
 CAboutDlg::CAboutDlg()
-    : CDialogEx(CAboutDlg::IDD)
+    : CDialogEx(IDD)
       , m_Layout(this, COptions::AboutWindowRect.Ptr())
 {
 }

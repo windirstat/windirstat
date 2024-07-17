@@ -51,7 +51,7 @@ bool ShellExecuteThrow(HWND hwnd, const std::wstring & lpVerb, const std::wstrin
     if (!bResult)
     {
         MdThrowStringException(std::format(L"ShellExecute failed: {}",
-            MdGetWinErrorText(static_cast<DWORD>(::GetLastError()))));
+            MdGetWinErrorText(static_cast<DWORD>(GetLastError()))));
     }
     return bResult;
 }
@@ -250,14 +250,14 @@ bool CompressFileAllowed(const std::wstring& filePath, CompressionAlgorithm algo
         return compressionMap.at(volumeName.data());
     }
 
-    // Check decompression support
+    // Enable 'none' button if either normal or modern are example
     if (algorithm == CompressionAlgorithm::NONE)
     {
         return CompressFileAllowed(filePath, CompressionAlgorithm::LZNT1) ||
             CompressFileAllowed(filePath, CompressionAlgorithm::XPRESS4K);
     }
 
-    // Query volumne for standard encrption support
+    // Query volume for standard compression support
     if (algorithm == CompressionAlgorithm::LZNT1)
     {
         DWORD fileSystemFlags = 0;
@@ -280,5 +280,5 @@ bool CompressFileAllowed(const std::wstring& filePath, CompressionAlgorithm algo
         }
     }
 
-    return compressionMap.at(volumeName.data());;
+    return compressionMap.at(volumeName.data());
 }

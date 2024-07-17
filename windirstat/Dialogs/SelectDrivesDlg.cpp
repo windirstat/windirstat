@@ -428,7 +428,7 @@ IMPLEMENT_DYNAMIC(CSelectDrivesDlg, CDialogEx)
 
 UINT CSelectDrivesDlg::_serial;
 
-CSelectDrivesDlg::CSelectDrivesDlg(CWnd* pParent) : CDialogEx(CSelectDrivesDlg::IDD, pParent)
+CSelectDrivesDlg::CSelectDrivesDlg(CWnd* pParent) : CDialogEx(IDD, pParent)
       , m_Layout(this, COptions::DriveSelectWindowRect.Ptr())
 {
     _serial++;
@@ -516,7 +516,7 @@ BOOL CSelectDrivesDlg::OnInitDialog()
     BringWindowToTop();
     SetForegroundWindow();
 
-    const DWORD drives = ::GetLogicalDrives();
+    const DWORD drives = GetLogicalDrives();
     DWORD mask = 0x00000001;
     for (std::size_t i = 0; i < wds::strAlpha.size(); i++, mask <<= 1)
     {

@@ -24,7 +24,6 @@
 #include "DirStatDoc.h"
 #include "Item.h"
 #include "MainFrame.h"
-#include <common/CommonHelpers.h>
 #include "FileTreeView.h"
 #include "GlobalHelpers.h"
 #include "Localization.h"
@@ -64,7 +63,7 @@ END_MESSAGE_MAP()
 void CFileTreeView::OnSize(const UINT nType, const int cx, const int cy)
 {
     CView::OnSize(nType, cx, cy);
-    if (::IsWindow(m_Control.m_hWnd))
+    if (IsWindow(m_Control.m_hWnd))
     {
         CRect rc(0, 0, cx, cy);
         m_Control.MoveWindow(rc);

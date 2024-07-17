@@ -183,8 +183,8 @@ std::wstring FormatFileTime(const FILETIME& t)
 {
     SYSTEMTIME st;
     if (FILETIME ft;
-        ::FileTimeToLocalFileTime(&t, &ft) == 0 ||
-        ::FileTimeToSystemTime(&ft, &st) == 0)
+        FileTimeToLocalFileTime(&t, &ft) == 0 ||
+        FileTimeToSystemTime(&ft, &st) == 0)
     {
         return L"";
     }
@@ -325,11 +325,11 @@ std::wstring PathFromVolumeName(const std::wstring& name)
 std::wstring GetParseNameOfMyComputer()
 {
     CComPtr<IShellFolder> sf;
-    HRESULT hr = ::SHGetDesktopFolder(&sf);
+    HRESULT hr = SHGetDesktopFolder(&sf);
     MdThrowFailed(hr, L"::SHGetDesktopFolder");
 
     SmartPointer<LPITEMIDLIST> pidl(CoTaskMemFree);
-    hr = ::SHGetSpecialFolderLocation(nullptr, CSIDL_DRIVES, &pidl);
+    hr = SHGetSpecialFolderLocation(nullptr, CSIDL_DRIVES, &pidl);
     MdThrowFailed(hr, L"SHGetSpecialFolderLocation(CSIDL_DRIVES)");
 
     STRRET name;
@@ -343,10 +343,10 @@ std::wstring GetParseNameOfMyComputer()
 void GetPidlOfMyComputer(LPITEMIDLIST* ppidl)
 {
     CComPtr<IShellFolder> sf;
-    HRESULT hr = ::SHGetDesktopFolder(&sf);
+    HRESULT hr = SHGetDesktopFolder(&sf);
     MdThrowFailed(hr, L"SHGetDesktopFolder");
 
-    hr = ::SHGetSpecialFolderLocation(nullptr, CSIDL_DRIVES, ppidl);
+    hr = SHGetSpecialFolderLocation(nullptr, CSIDL_DRIVES, ppidl);
     MdThrowFailed(hr, L"SHGetSpecialFolderLocation(CSIDL_DRIVES)");
 }
 
@@ -381,7 +381,7 @@ void WaitForHandleWithRepainting(const HANDLE h, const DWORD TimeOut)
 
         // Wait for WM_PAINT message sent or posted to this queue
         // or for one of the passed handles be set to signal.
-        const DWORD r = ::MsgWaitForMultipleObjects(1, &h, FALSE, TimeOut, QS_PAINT);
+        const DWORD r = MsgWaitForMultipleObjects(1, &h, FALSE, TimeOut, QS_PAINT);
 
         // The result tells us the type of event we have.
         if (r == WAIT_OBJECT_0 + 1)
@@ -410,12 +410,12 @@ bool DriveExists(const std::wstring& path)
     }
 
     const int d = std::toupper(path.at(0)) - wds::strAlpha.at(0);
-    if (const DWORD mask = 0x1 << d; (mask & ::GetLogicalDrives()) == 0)
+    if (const DWORD mask = 0x1 << d; (mask & GetLogicalDrives()) == 0)
     {
         return false;
     }
 
-    if (std::wstring dummy; !::GetVolumeName(path, dummy))
+    if (std::wstring dummy; !GetVolumeName(path, dummy))
     {
         return false;
     }
@@ -513,11 +513,11 @@ const std::wstring& GetSpec_TB()
 bool IsAdmin()
 {
     SID_IDENTIFIER_AUTHORITY NtAuthority = SECURITY_NT_AUTHORITY;
-    if (SmartPointer<PSID> pSid(FreeSid); ::AllocateAndInitializeSid(&NtAuthority, 2,
+    if (SmartPointer<PSID> pSid(FreeSid); AllocateAndInitializeSid(&NtAuthority, 2,
         SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_ADMINS, 0, 0, 0, 0, 0, 0, &pSid))
     {
         BOOL bResult = FALSE;
-        if (!::CheckTokenMembership(nullptr, pSid, &bResult))
+        if (!CheckTokenMembership(nullptr, pSid, &bResult))
         {
             return false;
         }

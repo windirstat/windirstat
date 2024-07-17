@@ -36,7 +36,6 @@
 #define IDS_COL_FILES                   20031
 #define IDS_EXTENSION_MISSING           20032
 #define IDS_FREESPACE_ITEM              20033
-#define IDS_STRING20034                 20034
 #define IDS_POPUP_TREE_EXPLORER_MENU    20034
 #define IDS_LANGUAGERESTARTNOW          20035
 #define IDS_MYCOMPUTER                  20036
@@ -75,8 +74,7 @@
 #define IDS_UDC_CONFIRMATIONss          20069
 #define IDS_UDCsCTRLd                   20070
 #define IDS_UNKNOWN_ITEM                20071
-#define IDS_USER_DEFINED_CLEANUP0         20072
-#define IDS_USER_DEFINED_CLEANUPd         20073
+#define IDS_USER_DEFINED_CLEANUPd       20073
 #define IDS_WINDIRSTAT_SETTINGS         20074
 #define IDS_ONEITEMss                   20075
 #define IDS_sITEMSss                    20076
@@ -121,7 +119,7 @@
 #define IDS_MENU_CLEANUP_DELETE         20115
 #define IDS_MENU_CLEANUP_PROPERTIES     20116
 #define IDS_MENU_CLEANUP_EMPTY_BIN      20117
-#define IDS_USER_DEFINED_CLEANUP 20118
+#define IDS_USER_DEFINED_CLEANUP        20118
 #define IDS_MENU_TREEMAP_SHOW           20119
 #define IDS_MENU_TREEMAP_ZOOMIN         20120
 #define IDS_MENU_TREEMAP_ZOOMOUT        20121
@@ -157,10 +155,10 @@
 #define IDS_POPUP_MAP_CONSOLE           20151
 #define IDS_POPUP_MAP_CANCEL            20152
 #define IDS_ABOUT_TITLE                 20153
-#define IDS_DRIVES_TITLE                 20154
-#define IDS_DRIVES_ALL             20155
-#define IDS_DRIVES_SUBSET                 20156
-#define IDS_DRIVES_FOLDER                20157
+#define IDS_DRIVES_TITLE                20154
+#define IDS_DRIVES_ALL                  20155
+#define IDS_DRIVES_SUBSET               20156
+#define IDS_DRIVES_FOLDER               20157
 #define IDS_DELETE_TITLE                20158
 #define IDS_DELETE_DONT_SHOW            20159
 #define IDS_DELETE_DO_YOU_KNOW          20160
@@ -235,7 +233,6 @@
 #define IDS_GENERIC_NO                  20229
 #define IDS_GENERIC_OK                  20230
 #define IDS_GENERIC_CANCEL              20231
-#define IDS_POPUP_TREE_COMPRESS_XPRESS16K2 20232
 #define IDS_POPUP_TREE_COMPRESS_NONE    20232
 
 // Next default values for new objects

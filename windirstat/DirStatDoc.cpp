@@ -46,13 +46,6 @@
 #include <stack>
 #include <array>
 
-CDirStatDoc* _theDocument;
-
-CDirStatDoc* GetDocument()
-{
-    return _theDocument;
-}
-
 IMPLEMENT_DYNCREATE(CDirStatDoc, CDocument)
 
 CDirStatDoc::CDirStatDoc() :
@@ -72,6 +65,12 @@ CDirStatDoc::~CDirStatDoc()
 {
     delete m_RootItem;
     _theDocument = nullptr;
+}
+
+CDirStatDoc* CDirStatDoc::_theDocument = nullptr;
+CDirStatDoc* CDirStatDoc::GetDocument()
+{
+    return _theDocument;
 }
 
 // Encodes a selection from the CSelectDrivesDlg into a string which can be routed as a pseudo
@@ -759,7 +758,7 @@ void CDirStatDoc::CallUserDefinedCleanup(const bool isDirectory, const std::wstr
         directory.c_str(), &si, &pi))
     {
         MdThrowStringException(Localization::Format(IDS_COULDNOTCREATEPROCESSssss,
-            app, cmdline, directory, MdGetWinErrorText(static_cast<HRESULT>(::GetLastError()))));
+            app, cmdline, directory, MdGetWinErrorText(static_cast<HRESULT>(GetLastError()))));
         return;
     }
 

@@ -28,7 +28,7 @@
 
 IMPLEMENT_DYNAMIC(CPageCleanups, CPropertyPage)
 
-CPageCleanups::CPageCleanups() : CPropertyPage(CPageCleanups::IDD) {}
+CPageCleanups::CPageCleanups() : CPropertyPage(IDD) {}
 
 CPageCleanups::~CPageCleanups() = default;
 

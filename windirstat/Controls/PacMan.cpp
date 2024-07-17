@@ -30,7 +30,7 @@ namespace
 }
 
 CPacman::CPacman() :
-    m_Bgcolor(::GetSysColor(COLOR_WINDOW))
+    m_Bgcolor(GetSysColor(COLOR_WINDOW))
 {
     Reset();
 }

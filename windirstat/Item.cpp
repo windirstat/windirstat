@@ -404,14 +404,14 @@ short CItem::GetImageToCache() const
 
 void CItem::DrawAdditionalState(CDC* pdc, const CRect& rcLabel) const
 {
-    if (!IsRootItem() && this == GetDocument()->GetZoomItem())
+    if (!IsRootItem() && this == CDirStatDoc::GetDocument()->GetZoomItem())
     {
         CRect rc = rcLabel;
         rc.InflateRect(1, 0);
         rc.bottom++;
 
         CSelectStockObject sobrush(pdc, NULL_BRUSH);
-        CPen pen(PS_SOLID, 2, GetDocument()->GetZoomColor());
+        CPen pen(PS_SOLID, 2, CDirStatDoc::GetDocument()->GetZoomColor());
         CSelectObject sopen(pdc, &pen);
 
         pdc->Rectangle(rc);
@@ -1226,7 +1226,7 @@ COLORREF CItem::GetGraphColor() const
 
     if (IsType(IT_FILE))
     {
-        return GetDocument()->GetCushionColor(GetExtension());
+        return CDirStatDoc::GetDocument()->GetCushionColor(GetExtension());
     }
 
     return RGB(0, 0, 0);

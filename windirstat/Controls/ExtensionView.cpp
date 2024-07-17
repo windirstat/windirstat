@@ -24,7 +24,6 @@
 #include "Item.h"
 #include "MainFrame.h"
 #include "DirStatDoc.h"
-#include <common/CommonHelpers.h>
 #include "ExtensionView.h"
 #include "Localization.h"
 #include "ExtensionListControl.h"
@@ -162,7 +161,7 @@ void CExtensionView::OnDraw(CDC* pDC)
 void CExtensionView::OnSize(const UINT nType, const int cx, const int cy)
 {
     CView::OnSize(nType, cx, cy);
-    if (::IsWindow(m_ExtensionListControl.m_hWnd))
+    if (IsWindow(m_ExtensionListControl.m_hWnd))
     {
         CRect rc(0, 0, cx, cy);
         m_ExtensionListControl.MoveWindow(rc);

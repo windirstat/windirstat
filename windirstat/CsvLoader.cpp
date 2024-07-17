@@ -83,7 +83,7 @@ static FILETIME FromTimeString(const std::wstring & s)
     // Parse date string
     std::wistringstream in{ s };
     std::chrono::file_clock::time_point tp;
-    in >> std::chrono::parse(L"%Y-%m-%dT%H:%M:%S%Z", tp);
+    in >> parse(L"%Y-%m-%dT%H:%M:%S%Z", tp);
 
     // Adjust time divisor to 100ns 
     const auto tmp = std::chrono::duration_cast<std::chrono::duration<int64_t,

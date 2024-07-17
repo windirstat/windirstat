@@ -30,7 +30,7 @@
 
 IMPLEMENT_DYNAMIC(CPageGeneral, CPropertyPage)
 
-CPageGeneral::CPageGeneral() : CPropertyPage(CPageGeneral::IDD) {}
+CPageGeneral::CPageGeneral() : CPropertyPage(IDD) {}
 
 CPageGeneral::~CPageGeneral() = default;
 
@@ -115,11 +115,11 @@ void CPageGeneral::OnOK()
 
     if (gridChanged)
     {
-        GetDocument()->UpdateAllViews(nullptr, HINT_LISTSTYLECHANGED);
+        CDirStatDoc::GetDocument()->UpdateAllViews(nullptr, HINT_LISTSTYLECHANGED);
     }
     if (fallbackChanged)
     {
-        GetDocument()->UpdateAllViews(nullptr, HINT_NULL);
+        CDirStatDoc::GetDocument()->UpdateAllViews(nullptr, HINT_NULL);
     }
 
     const LANGID id = static_cast<LANGID>(m_Combo.GetItemData(m_Combo.GetCurSel()));

@@ -25,7 +25,7 @@
 
 IMPLEMENT_DYNAMIC(CModalApiShuttle, CDialogEx)
 
-CModalApiShuttle::CModalApiShuttle(CWnd* pParent) : CDialogEx(CModalApiShuttle::IDD, pParent)
+CModalApiShuttle::CModalApiShuttle(CWnd* pParent) : CDialogEx(IDD, pParent)
 {
 }
 

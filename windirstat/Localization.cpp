@@ -115,7 +115,7 @@ bool Localization::LoadResource(const WORD language)
     if (resourceData == nullptr) return false;
 
     // Fetch a pointer to the data
-    const LPVOID binaryData = ::LockResource(resourceData);
+    const LPVOID binaryData = LockResource(resourceData);
     if (binaryData == nullptr) return false;
 
     // Organize the data into a string

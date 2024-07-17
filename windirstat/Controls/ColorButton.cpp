@@ -44,7 +44,7 @@ COLORREF CColorButton::CPreview::GetColor() const
 void CColorButton::CPreview::SetColor(const COLORREF color)
 {
     m_Color = color;
-    if (::IsWindow(m_hWnd))
+    if (IsWindow(m_hWnd))
     {
         InvalidateRect(nullptr);
     }
@@ -62,7 +62,7 @@ void CColorButton::CPreview::OnPaint()
     COLORREF color = m_Color;
     if ((GetParent()->GetStyle() & WS_DISABLED) != 0)
     {
-        color = ::GetSysColor(COLOR_BTNFACE);
+        color = GetSysColor(COLOR_BTNFACE);
     }
     dc.FillSolidRect(rc, color);
 }
@@ -112,7 +112,7 @@ void CColorButton::OnPaint()
 
 void CColorButton::OnDestroy()
 {
-    if (::IsWindow(m_Preview.m_hWnd))
+    if (IsWindow(m_Preview.m_hWnd))
     {
         m_Preview.DestroyWindow();
     }
@@ -136,7 +136,7 @@ void CColorButton::OnBnClicked()
 
 void CColorButton::OnEnable(const BOOL bEnable)
 {
-    if (::IsWindow(m_Preview.m_hWnd))
+    if (IsWindow(m_Preview.m_hWnd))
     {
         m_Preview.InvalidateRect(nullptr);
     }

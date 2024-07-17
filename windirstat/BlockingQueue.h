@@ -187,7 +187,7 @@ public:
             for (MSG msg; ::GetMessage(&msg, nullptr, 0, 0); )
             {
                 if (msg.message == waitMessage) break;
-                ::TranslateMessage(&msg);
+                TranslateMessage(&msg);
                 ::DispatchMessage(&msg);
             }
         }

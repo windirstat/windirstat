@@ -124,7 +124,7 @@ inline void MdThrowHresult(const HRESULT hr, const std::wstring & pszPrefix = {}
 
 inline void MdThrowLastWinerror(const std::wstring & pszPrefix = {})
 {
-    MdThrowWinError(::GetLastError(), pszPrefix);
+    MdThrowWinError(GetLastError(), pszPrefix);
 }
 
 inline void MdThrowFailed(const HRESULT hr, const std::wstring & pszPrefix = {})

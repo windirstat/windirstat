@@ -77,7 +77,7 @@ short CIconImageList::CacheIcon(const std::wstring & path, UINT flags, const DWO
     if (i != m_IndexMap.end()) return i->second;
 
     // Extract image and add to cache
-    CImageList* sil = CImageList::FromHandle(hil); // does not have to be destroyed
+    CImageList* sil = FromHandle(hil); // does not have to be destroyed
     m_IndexMap[sfi.iIcon] = static_cast<short>(this->Add(sil->ExtractIcon(sfi.iIcon)));
     return m_IndexMap[sfi.iIcon];
 }

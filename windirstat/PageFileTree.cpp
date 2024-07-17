@@ -29,7 +29,7 @@
 
 IMPLEMENT_DYNAMIC(CPageFileTree, CPropertyPage)
 
-CPageFileTree::CPageFileTree() : CPropertyPage(CPageFileTree::IDD) {}
+CPageFileTree::CPageFileTree() : CPropertyPage(IDD) {}
 
 void CPageFileTree::DoDataExchange(CDataExchange* pDX)
 {
@@ -142,7 +142,7 @@ void CPageFileTree::OnOK()
     COptions::FileTreeColor6 = m_FileTreeColor[6];
     COptions::FileTreeColor7 = m_FileTreeColor[7];
     if (colsChanged) CMainFrame::Get()->GetFileTreeView()->CreateColumns();
-    GetDocument()->UpdateAllViews(nullptr, HINT_LISTSTYLECHANGED);
+    CDirStatDoc::GetDocument()->UpdateAllViews(nullptr, HINT_LISTSTYLECHANGED);
     CPropertyPage::OnOK();
 }
 

@@ -34,7 +34,7 @@ namespace
 IMPLEMENT_DYNAMIC(CPageTreeMap, CPropertyPage)
 
 CPageTreeMap::CPageTreeMap()
-    : CPropertyPage(CPageTreeMap::IDD)
+    : CPropertyPage(IDD)
       , m_Options()
       , m_Undo()
 {
@@ -124,7 +124,7 @@ void CPageTreeMap::OnOK()
 
     COptions::SetTreeMapOptions(m_Options);
     COptions::TreeMapHighlightColor = m_HighlightColor.GetColor();
-    GetDocument()->UpdateAllViews(nullptr, HINT_SELECTIONSTYLECHANGED);
+    CDirStatDoc::GetDocument()->UpdateAllViews(nullptr, HINT_SELECTIONSTYLECHANGED);
 
     CPropertyPage::OnOK();
 }

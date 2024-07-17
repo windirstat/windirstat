@@ -27,7 +27,6 @@
 #include "FileFind.h" // FileFindEnhanced
 #include "BlockingQueue.h"
 
-#include <algorithm>
 #include <shared_mutex>
 
 // Columns
@@ -146,7 +145,7 @@ public:
         return static_cast<int>(m_FolderInfo->m_Children.size());
     }
 
-    CTreeMap::Item* TmiGetChild(const int c) const override
+    Item* TmiGetChild(const int c) const override
     {
         return m_FolderInfo->m_Children[c];
     }

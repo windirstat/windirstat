@@ -264,12 +264,12 @@ void CMySplitterWnd::OnDestroy()
 
 CPacmanControl::CPacmanControl()
 {
-    m_Pacman.SetBackgroundColor(::GetSysColor(COLOR_BTNFACE));
+    m_Pacman.SetBackgroundColor(GetSysColor(COLOR_BTNFACE));
 }
 
 void CPacmanControl::Drive()
 {
-    if (::IsWindow(m_hWnd))
+    if (IsWindow(m_hWnd))
     {
         m_Pacman.UpdatePosition();
         RedrawWindow();
@@ -409,7 +409,7 @@ LRESULT CMainFrame::OnTaskButtonCreated(WPARAM, LPARAM)
 {
     if (!m_TaskbarList)
     {
-        const HRESULT hr = ::CoCreateInstance(CLSID_TaskbarList, nullptr, CLSCTX_ALL, IID_ITaskbarList3, reinterpret_cast<LPVOID*>(&m_TaskbarList));
+        const HRESULT hr = CoCreateInstance(CLSID_TaskbarList, nullptr, CLSCTX_ALL, IID_ITaskbarList3, reinterpret_cast<LPVOID*>(&m_TaskbarList));
         if (FAILED(hr))
         {
             VTRACE(L"CoCreateInstance(CLSID_TaskbarList, nullptr, CLSCTX_ALL) failed {:#08X}", static_cast<DWORD>(hr));
@@ -461,7 +461,7 @@ void CMainFrame::SetProgressComplete() // called by CDirStatDoc
     }
 
     DestroyProgress();
-    GetDocument()->SetTitlePrefix(wds::strEmpty);
+    CDirStatDoc::GetDocument()->SetTitlePrefix(wds::strEmpty);
     SetMessageText(Localization::Lookup(IDS_IDLEMESSAGE));
     CFileTreeControl::Get()->SortItems();
 }
@@ -493,7 +493,7 @@ void CMainFrame::SuspendState(const bool suspend)
 void CMainFrame::UpdateProgress()
 {
     // Update working item tracker if changed
-    m_WorkingItem = GetDocument()->GetRootItem();
+    m_WorkingItem = CDirStatDoc::GetDocument()->GetRootItem();
     if (m_WorkingItem != nullptr && !m_WorkingItem->IsDone())
     {
         CreateProgress(m_WorkingItem->GetProgressRange());
@@ -542,7 +542,7 @@ void CMainFrame::UpdateProgress()
     }
 
     TrimString(titlePrefix);
-    GetDocument()->SetTitlePrefix(titlePrefix);
+    CDirStatDoc::GetDocument()->SetTitlePrefix(titlePrefix);
 }
 
 void CMainFrame::CreateStatusProgress()
@@ -573,12 +573,12 @@ void CMainFrame::CreatePacmanProgress()
 
 void CMainFrame::DestroyProgress()
 {
-    if (::IsWindow(m_Progress.m_hWnd))
+    if (IsWindow(m_Progress.m_hWnd))
     {
         m_Progress.DestroyWindow();
         m_Progress.m_hWnd = nullptr;
     }
-    else if (::IsWindow(m_Pacman.m_hWnd))
+    else if (IsWindow(m_Pacman.m_hWnd))
     {
         m_Pacman.Stop();
         m_Pacman.DestroyWindow();
@@ -693,7 +693,7 @@ void CMainFrame::InitialShowWindow()
 void CMainFrame::InvokeInMessageThread(std::function<void()> callback)
 {
     if (CDirStatApp::Get()->m_nThreadID == GetCurrentThreadId()) callback();
-    else CMainFrame::Get()->SendMessage(WM_CALLBACKUI, 0, reinterpret_cast<LPARAM>(&callback));
+    else Get()->SendMessage(WM_CALLBACKUI, 0, reinterpret_cast<LPARAM>(&callback));
 }
 
 void CMainFrame::OnClose()
@@ -701,7 +701,7 @@ void CMainFrame::OnClose()
     CWaitCursor wc;
 
     // Suspend the scan and wait for scan to complete
-    GetDocument()->StopScanningEngine();
+    CDirStatDoc::GetDocument()->StopScanningEngine();
 
     // Stop the timer so we are not updating elements during shutdown
     KillTimer(ID_WDS_CONTROL);
@@ -829,7 +829,7 @@ void CMainFrame::OnTimer(const UINT_PTR nIDEvent)
     }
 
     // UI updates that do need to processed frequently
-    if (!GetDocument()->IsRootDone() && !IsScanSuspended())
+    if (!CDirStatDoc::GetDocument()->IsRootDone() && !IsScanSuspended())
     {
         // Update the visual progress on the bottom of the screen
         UpdateProgress();
@@ -856,13 +856,13 @@ void CMainFrame::CopyToClipboard(const std::wstring & psz)
         COpenClipboard clipboard(this);
         const SIZE_T cchBufLen = psz.size() + 1;
 
-        const HGLOBAL h = ::GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE | GMEM_ZEROINIT, cchBufLen * sizeof(WCHAR));
+        const HGLOBAL h = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE | GMEM_ZEROINIT, cchBufLen * sizeof(WCHAR));
         if (h == nullptr)
         {
             MdThrowStringException(L"GlobalAlloc failed.");
         }
 
-        const LPVOID lp = ::GlobalLock(h);
+        const LPVOID lp = GlobalLock(h);
         ASSERT(lp != nullptr);
 
         if (!lp)
@@ -872,9 +872,9 @@ void CMainFrame::CopyToClipboard(const std::wstring & psz)
 
         wcscpy_s(static_cast<LPWSTR>(lp), cchBufLen, psz.c_str());
 
-        ::GlobalUnlock(h);
+        GlobalUnlock(h);
 
-        if (nullptr == ::SetClipboardData(CF_UNICODETEXT, h))
+        if (nullptr == SetClipboardData(CF_UNICODETEXT, h))
         {
             MdThrowStringException(Localization::Lookup(IDS_CANNOTSETCLIPBAORDDATA));
         }
@@ -928,7 +928,7 @@ void CMainFrame::QueryRecycleBin(ULONGLONG& items, ULONGLONG& bytes)
     items = 0;
     bytes = 0;
 
-    const DWORD drives = ::GetLogicalDrives();
+    const DWORD drives = GetLogicalDrives();
     DWORD mask = 0x00000001;
     for (std::size_t i = 0; i < wds::strAlpha.size(); i++, mask <<= 1)
     {
@@ -1003,7 +1003,7 @@ void CMainFrame::UpdateDynamicMenuItems(const CMenu* menu) const
     CMenu* explorerMenu = LocateNamedMenu(menu, Localization::Lookup(IDS_POPUP_TREE_EXPLORER_MENU), true);
     if (explorerMenu != nullptr && !paths.empty())
     {
-        CComPtr<IContextMenu> contextMenu = GetContextMenu(CMainFrame::Get()->GetSafeHwnd(), paths);
+        CComPtr<IContextMenu> contextMenu = GetContextMenu(Get()->GetSafeHwnd(), paths);
         contextMenu->QueryContextMenu(explorerMenu->GetSafeHmenu(), 0,
             CONTENT_MENU_MINCMD, CONTENT_MENU_MAXCMD, CMF_NORMAL);
     }
@@ -1020,7 +1020,7 @@ void CMainFrame::UpdateDynamicMenuItems(const CMenu* menu) const
         bool udcValid = GetLogicalFocus() == LF_FILETREE && !items.empty();
         if (udcValid) for (const auto& item : items)
         {
-            udcValid &= GetDocument()->UserDefinedCleanupWorksForItem(&udc, item);
+            udcValid &= CDirStatDoc::GetDocument()->UserDefinedCleanupWorksForItem(&udc, item);
         }
 
         const UINT flags = udcValid ? MF_ENABLED : (MF_DISABLED | MF_GRAYED);
@@ -1035,7 +1035,7 @@ void CMainFrame::SetLogicalFocus(const LOGICAL_FOCUS lf)
         m_LogicalFocus = lf;
         SetSelectionMessageText();
 
-        GetDocument()->UpdateAllViews(nullptr, HINT_SELECTIONSTYLECHANGED);
+        CDirStatDoc::GetDocument()->UpdateAllViews(nullptr, HINT_SELECTIONSTYLECHANGED);
     }
 }
 
@@ -1070,13 +1070,13 @@ void CMainFrame::MoveFocus(const LOGICAL_FOCUS lf)
 
 void CMainFrame::SetSelectionMessageText()
 {
-    if (!GetDocument()->IsRootDone()) return;
+    if (!CDirStatDoc::GetDocument()->IsRootDone()) return;
     const auto focus = GetLogicalFocus();
     std::wstring text = Localization::Lookup(IDS_IDLEMESSAGE);
 
     if (focus == LF_EXTENSIONLIST)
     {
-        text = wds::chrStar + GetDocument()->GetHighlightExtension();
+        text = wds::chrStar + CDirStatDoc::GetDocument()->GetHighlightExtension();
     }
     else if (focus == LF_FILETREE)
     {
@@ -1101,7 +1101,7 @@ void CMainFrame::OnSize(const UINT nType, const int cx, const int cy)
 {
     CFrameWndEx::OnSize(nType, cx, cy);
 
-    if (!::IsWindow(m_WndStatusBar.m_hWnd))
+    if (!IsWindow(m_WndStatusBar.m_hWnd))
     {
         return;
     }

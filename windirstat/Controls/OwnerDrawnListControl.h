@@ -43,7 +43,7 @@ public:
     // This color is used for the  current item
     virtual COLORREF GetItemTextColor() const
     {
-        return ::GetSysColor(COLOR_WINDOWTEXT);
+        return GetSysColor(COLOR_WINDOWTEXT);
     }
 
     // Return value is true, if the item draws itself.

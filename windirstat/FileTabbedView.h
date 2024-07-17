@@ -24,7 +24,6 @@
 #include "stdafx.h"
 #include "FileTreeView.h"
 #include "FileDupeView.h"
-#include "DirStatDoc.h"
 
 class CFileTabbedView : public CTabView
 {

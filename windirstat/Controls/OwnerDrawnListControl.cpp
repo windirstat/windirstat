@@ -215,7 +215,7 @@ int COwnerDrawnListControl::GetRowHeight() const
 void COwnerDrawnListControl::ShowGrid(const bool show)
 {
     m_ShowGrid = show;
-    if (::IsWindow(m_hWnd))
+    if (IsWindow(m_hWnd))
     {
         InvalidateRect(nullptr);
     }
@@ -224,7 +224,7 @@ void COwnerDrawnListControl::ShowGrid(const bool show)
 void COwnerDrawnListControl::ShowStripes(const bool show)
 {
     m_ShowStripes = show;
-    if (::IsWindow(m_hWnd))
+    if (IsWindow(m_hWnd))
     {
         InvalidateRect(nullptr);
     }
@@ -233,7 +233,7 @@ void COwnerDrawnListControl::ShowStripes(const bool show)
 void COwnerDrawnListControl::ShowFullRowSelection(const bool show)
 {
     m_ShowFullRowSelect = show;
-    if (::IsWindow(m_hWnd))
+    if (IsWindow(m_hWnd))
     {
         InvalidateRect(nullptr);
     }
@@ -272,7 +272,7 @@ COLORREF COwnerDrawnListControl::GetHighlightColor() const
 {
     if (HasFocus())
     {
-        return ::GetSysColor(COLOR_HIGHLIGHT);
+        return GetSysColor(COLOR_HIGHLIGHT);
     }
 
     return GetNonFocusHighlightColor();
@@ -282,7 +282,7 @@ COLORREF COwnerDrawnListControl::GetHighlightTextColor() const
 {
     if (HasFocus())
     {
-        return ::GetSysColor(COLOR_HIGHLIGHTTEXT);
+        return GetSysColor(COLOR_HIGHLIGHTTEXT);
     }
 
     return GetNonFocusHighlightTextColor();
@@ -332,7 +332,7 @@ COLORREF COwnerDrawnListControl::GetItemSelectionTextColor(const int i) const
         return GetHighlightTextColor();
     }
 
-    return ::GetSysColor(COLOR_WINDOWTEXT);
+    return GetSysColor(COLOR_WINDOWTEXT);
 }
 
 int COwnerDrawnListControl::GetTextXMargin() const
@@ -367,7 +367,7 @@ void COwnerDrawnListControl::InitializeColors()
     constexpr double diff      = 0.07; // Try to alter the brightness by diff.
     constexpr double threshold = 1.04; // If result would be brighter, make color darker.
 
-    m_WindowColor = ::GetSysColor(COLOR_WINDOW);
+    m_WindowColor = GetSysColor(COLOR_WINDOW);
 
     double b = CColorSpace::GetColorBrightness(m_WindowColor);
 
@@ -581,7 +581,7 @@ BOOL COwnerDrawnListControl::OnEraseBkgnd(CDC* pDC)
 
     CRect rcClient;
     GetClientRect(rcClient);
-    const COLORREF bgcolor = ::GetSysColor(COLOR_WINDOW);
+    const COLORREF bgcolor = GetSysColor(COLOR_WINDOW);
 
     // draw blank space on right
     CRect fillRight(tableRight, rcClient.top, rcClient.right, rcClient.bottom);

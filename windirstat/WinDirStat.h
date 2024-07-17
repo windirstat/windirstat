@@ -65,12 +65,12 @@ public:
     static void RestartApplication();
 
     static std::tuple<ULONGLONG, ULONGLONG> GetFreeDiskSpace(const std::wstring& pszRootPath);
-    static CDirStatApp* Get() { return _singleton; }
+    static CDirStatApp* Get() { return &_singleton; }
 
 protected:
 
     // Get the alternative color from Explorer configuration
-    COLORREF GetAlternativeColor(COLORREF clrDefault, const std::wstring& which);
+    COLORREF GetAlternativeColor(COLORREF clrDefault, const std::wstring& which) const;
 
     CSingleDocTemplate* m_PDocTemplate{nullptr}; // MFC voodoo.
 
@@ -78,7 +78,7 @@ protected:
     CIconImageList m_MyImageList;     // Our central image list
     COLORREF m_AltColor;              // Coloring of compressed items
     COLORREF m_AltEncryptionColor;    // Coloring of encrypted items
-    static CDirStatApp * _singleton;  // Singleton application instance
+    static CDirStatApp _singleton;    // Singleton application instance
 #ifdef VTRACE_TO_CONSOLE
     CAutoPtr<CWDSTracerConsole> m_VtraceConsole;
 #endif // VTRACE_TO_CONSOLE

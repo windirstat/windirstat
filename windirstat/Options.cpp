@@ -162,7 +162,7 @@ void COptions::SetTreeMapOptions(const CTreeMap::Options& options)
     TreeMapLightSourceX = TreeMapOptions.GetLightSourceXPercent();
     TreeMapLightSourceY = TreeMapOptions.GetLightSourceYPercent();
 
-    GetDocument()->UpdateAllViews(nullptr, HINT_TREEMAPSTYLECHANGED);
+    CDirStatDoc::GetDocument()->UpdateAllViews(nullptr, HINT_TREEMAPSTYLECHANGED);
 }
 
 void COptions::PreProcessPersistedSettings()

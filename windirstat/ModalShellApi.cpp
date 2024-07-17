@@ -70,7 +70,7 @@ bool CModalShellApi::DoDeleteItem()
         CComPtr<IShellItem> shellitem = nullptr;
         if (SHCreateItemFromIDList(pidl, IID_PPV_ARGS(&shellitem)) != S_OK) return false;
         
-        ::CComPtr<IFileOperation> fileOperation;
+        CComPtr<IFileOperation> fileOperation;
         if (FAILED(::CoCreateInstance(CLSID_FileOperation, nullptr, CLSCTX_ALL, IID_PPV_ARGS(&fileOperation))) ||
             FAILED(fileOperation->SetOperationFlags(flags)) ||
             FAILED(fileOperation->DeleteItem(shellitem, nullptr)) ||

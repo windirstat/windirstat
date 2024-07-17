@@ -28,7 +28,7 @@
 
 IMPLEMENT_DYNAMIC(CPageAdvanced, CPropertyPage)
 
-CPageAdvanced::CPageAdvanced() : CPropertyPage(CPageAdvanced::IDD) {}
+CPageAdvanced::CPageAdvanced() : CPropertyPage(IDD) {}
 
 CPageAdvanced::~CPageAdvanced() = default;
 
@@ -102,11 +102,11 @@ void CPageAdvanced::OnOK()
 
     if (refreshAll)
     {
-        GetDocument()->RefreshItem(GetDocument()->GetRootItem());
+        CDirStatDoc::GetDocument()->RefreshItem(CDirStatDoc::GetDocument()->GetRootItem());
     }
     else if (refreshReparsepoints)
     {
-        GetDocument()->RefreshReparsePointItems();
+        CDirStatDoc::GetDocument()->RefreshReparsePointItems();
     }
 
     CPropertyPage::OnOK();
