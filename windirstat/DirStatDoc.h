@@ -168,7 +168,8 @@ protected:
 
     CList<CItem*, CItem*> m_ReselectChildStack; // Stack for the "Re-select Child"-Feature
 
-    std::unordered_map<std::wstring, BlockingQueue<CItem*>> queues; // The scanning and thread queue
+    std::unordered_map<std::wstring, BlockingQueue<CItem*>> m_queues; // The scanning and thread queue
+    std::thread* m_thread = nullptr; // Wrapper thread so we do not occupy the UI thread
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnRefreshSelected();

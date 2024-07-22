@@ -1292,8 +1292,8 @@ void CDirStatDoc::OnCleanupCompress(UINT id)
 void CDirStatDoc::OnScanSuspend()
 {
     // Wait for system to fully shutdown
-    for (auto& queue : queues | std::views::values)
-        queue.SuspendExecution();
+    for (auto& queue : m_queues | std::views::values)
+        ProcessMessagesUntilSignaled([&queue] { queue.SuspendExecution(); });
 
     // Mark as suspended
     if (CMainFrame::Get() != nullptr)
@@ -1302,7 +1302,7 @@ void CDirStatDoc::OnScanSuspend()
 
 void CDirStatDoc::OnScanResume()
 {
-    for (auto& queue : queues | std::views::values)
+    for (auto& queue : m_queues | std::views::values)
         queue.ResumeExecution();
 
     if (CMainFrame::Get() != nullptr)
@@ -1311,10 +1311,19 @@ void CDirStatDoc::OnScanResume()
 
 void CDirStatDoc::OnScanStop()
 {
-    // Stop queues from executing
-    for (auto& queue : queues | std::views::values)
-        queue.CancelExecution();
-    queues.clear();
+    // Stop m_queues from executing
+    for (auto& queue : m_queues | std::views::values)
+        ProcessMessagesUntilSignaled([&queue] { queue.CancelExecution(); });
+
+    // Wait for wrapper thread to complete
+    if (m_thread != nullptr)
+    {
+        CWaitCursor waitCursor;
+        ProcessMessagesUntilSignaled([this] { m_thread->join(); });
+        delete m_thread;
+        m_thread = nullptr;
+        m_queues.clear();
+    }
 
     OnScanResume();
 }
@@ -1382,7 +1391,7 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
 
     // Start a thread so we do not hang the message loop
     // Lambda captures assume document exists for duration of thread
-    std::thread([this,items] () mutable
+    m_thread = new std::thread([this,items] () mutable
     {
         // Wait for other threads to finish if this was scheduled in parallel
         static std::shared_mutex mutex;
@@ -1469,18 +1478,18 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
                 CMainFrame::Get()->UpdateProgress();
             });
 
-            // Separate into separate queues per drive
+            // Separate into separate m_queues per drive
             std::array<WCHAR, MAX_PATH> pathName;
             if (GetVolumePathName(item->GetPathLong().c_str(),
                 pathName.data(), static_cast<DWORD>(pathName.size())) != 0)
             {
-                queues[pathName.data()].Push(item);
+                m_queues[pathName.data()].Push(item);
             }
             else ASSERT(FALSE);
         }
 
         // Create subordinate threads if there is work to do
-        for (auto& queue : queues | std::views::values)
+        for (auto& queue : m_queues | std::views::values)
         {
             queue.StartThreads(COptions::ScanningThreads, [&queue]()
             {
@@ -1489,9 +1498,9 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
         }
 
         // Wait for all threads to run out of work
-        bool do_completion = false;
-        for (auto& queue : queues | std::views::values)
-            do_completion = queue.WaitForCompletionOrCancellation();
+        bool do_completion = true;
+        for (auto& queue : m_queues | std::views::values)
+            do_completion &= queue.WaitForCompletionOrCancellation();
         if (!do_completion)
         {
             // Sorting and other finalization tasks
@@ -1544,5 +1553,5 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
             CMainFrame::Get()->GetTreeMapView()->SuspendRecalculationDrawing(false);
             CMainFrame::Get()-> UnlockWindowUpdate();
         });
-    }).detach();
+    });
 }

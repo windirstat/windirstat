@@ -640,3 +640,31 @@ const std::wstring & GetSysDirectory()
     s.resize(wcslen(s.data()));
     return s;
 }
+
+void ProcessMessagesUntilSignaled(const std::function<void()>& callback)
+{
+    
+    if (CWnd* wnd = AfxGetMainWnd(); GetWindowThreadProcessId(
+        wnd->m_hWnd, nullptr) == GetCurrentThreadId())
+    {
+        // Start thread and wait post message when done
+        static auto waitMessage = RegisterWindowMessage(L"WinDirStatSignalWaiter");
+        std::thread([wnd, &callback]() mutable
+        {
+            callback();
+            wnd->PostMessageW(waitMessage, 0, 0);
+        }).detach();
+
+        // Read all messages in this next loop, removing each message as we read it
+        MSG msg;
+        while (GetMessage(&msg, nullptr, 0, 0)) {
+            if (msg.message == waitMessage) break;
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
+        }
+    }
+    else
+    {
+        callback();
+    }
+}

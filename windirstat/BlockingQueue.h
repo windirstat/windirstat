@@ -17,8 +17,7 @@ class BlockingQueue
     unsigned int m_WorkersWaiting = 0;
     bool m_Started = false;
     bool m_Suspended = false;
-    bool m_Draining = false;
-    bool m_ProcessCompletionEvents = true;
+    bool m_Cancelled = false;
 
     bool AllThreadsIdling() const
     {
@@ -41,7 +40,7 @@ public:
         }
         catch (std::exception&)
         {
-            // caught from long running or draining
+            // caught from long running or cancelled
             std::lock_guard lock(m_Mutex);
             m_WorkersWaiting++;
             m_Waiting.notify_all();
@@ -50,7 +49,7 @@ public:
 
     void StartThreads(const unsigned int workerThreads, const std::function<void()> & callback)
     {
-        ResetQueue(workerThreads);
+        ResetQueue(workerThreads, false);
 
         for (auto worker = 0u; worker < m_TotalWorkerThreads; worker++)
         {
@@ -75,11 +74,11 @@ public:
         m_Waiting.notify_all();
         m_Pushed.wait(lock, [&]
         {
-            return (!m_Suspended && !m_Queue.empty()) || m_Draining;
+            return !m_Suspended && !m_Queue.empty() || m_Cancelled;
         });
         m_WorkersWaiting--;
 
-        if (m_Draining)
+        if (m_Cancelled)
         {
             // Mark we are in waiting mode again and abort
             throw std::exception(__FUNCTION__);
@@ -96,18 +95,18 @@ public:
     {
         if (!m_Suspended) return;
 
-        // wait until its not suspended or its draining
+        // wait until its not suspended or its cancelled
         std::unique_lock lock(m_Mutex);
         m_WorkersWaiting++;
         m_Waiting.notify_all();
         m_Waiting.wait(lock, [&]
         {
-            return !m_Suspended || m_Draining;
+            return !m_Suspended || m_Cancelled;
         });
         m_WorkersWaiting--;
 
-        // if draining then throw to terminate current task
-        if (m_Draining)
+        // if cancelled then throw to terminate current task
+        if (m_Cancelled)
         {
             throw std::exception(__FUNCTION__);
         }
@@ -115,29 +114,20 @@ public:
 
     bool WaitForCompletionOrCancellation()
     {
-        // Wait for all workers threads to be idled or draining
+        // Wait for all workers threads to be idled or cancelled
         std::unique_lock lock(m_Mutex);
         m_Waiting.wait(lock, [&]
         {
-            return m_Started && !m_Suspended && AllThreadsIdling() || m_Draining;
+            return m_Started && !m_Suspended && AllThreadsIdling() && m_Queue.empty() || m_Cancelled;
         });
-        return m_ProcessCompletionEvents;
+
+        return !m_Cancelled;
     }
 
-    void CancelExecution(bool processCompletionEvents = false)
+    void CancelExecution()
     {
-        // Return early if queue is already draining or never started
-        if (!m_Started || m_Draining)
-        {
-            return;
-        }
-
-        // Wait for queue to SuspendExecution first
-        SuspendExecution();
-
-        // Start draining process
-        m_ProcessCompletionEvents = processCompletionEvents;
-        m_Draining = true;
+        // Start cancellation process
+        m_Cancelled = true;
         m_Waiting.notify_all();
         m_Pushed.notify_all();
 
@@ -149,12 +139,6 @@ public:
 
         // Cleanup
         ResetQueue(m_TotalWorkerThreads);
-        m_Queue.clear();
-    }
-
-    bool HasItems() const
-    {
-        return !m_Queue.empty();
     }
 
     bool IsSuspended() const
@@ -164,65 +148,34 @@ public:
 
     void SuspendExecution()
     {
-        // Wait for all threads to idle
-        if (CWnd * wnd = AfxGetMainWnd(); GetWindowThreadProcessId(
-            wnd->m_hWnd, nullptr) == GetCurrentThreadId())
+        std::unique_lock lock(m_Mutex);
+        m_Suspended = true;
+        m_Waiting.notify_all();
+        m_Waiting.wait(lock, [&]
         {
-            static auto waitMessage = RegisterWindowMessage(L"WinDirStatQueue");
-
-            std::thread([wnd, this]() mutable
-            {
-                std::unique_lock lock(m_Mutex);
-                m_Suspended = true;
-                m_Waiting.notify_all();
-                m_Waiting.wait(lock, [&]
-                {
-                    return AllThreadsIdling();
-                });
-                wnd->PostMessageW(waitMessage, 0, 0);
-            }).detach();
-
-            // Read all messages in this next loop, removing each message as we read it.
-            CWaitCursor wc;
-            for (MSG msg; ::GetMessage(&msg, nullptr, 0, 0); )
-            {
-                if (msg.message == waitMessage) break;
-                TranslateMessage(&msg);
-                ::DispatchMessage(&msg);
-            }
-        }
-        else
-        {
-            std::unique_lock lock(m_Mutex);
-            m_Suspended = true;
-            m_Waiting.notify_all();
-            m_Waiting.wait(lock, [&]
-            {
-                return AllThreadsIdling();
-            });
-        }
+            return AllThreadsIdling();
+        });
     }
 
     void ResumeExecution()
     {
         std::lock_guard lock(m_Mutex);
-        m_Started = false;
         m_Suspended = false;
         m_Waiting.notify_all();
         m_Pushed.notify_all();
     }
 
-    void ResetQueue(const int totalWorkerThreads)
+    void ResetQueue(const int totalWorkerThreads, bool clearQueue = true)
     {
         std::lock_guard lock(m_Mutex);
         m_WorkersWaiting = 0;
         m_Suspended = false;
         m_Started = false;
-        m_Draining = false;
+        m_Cancelled = false;
         m_TotalWorkerThreads = totalWorkerThreads;
         m_Threads.clear();
         m_Threads.reserve(m_TotalWorkerThreads);
-        m_ProcessCompletionEvents = true;
+        if (clearQueue) m_Queue.clear();
     }
 };
 

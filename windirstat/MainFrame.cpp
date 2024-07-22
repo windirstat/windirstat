@@ -692,7 +692,7 @@ void CMainFrame::InitialShowWindow()
     SetTimer(ID_WDS_CONTROL, 25, nullptr);
 }
 
-void CMainFrame::InvokeInMessageThread(std::function<void()> callback)
+void CMainFrame::InvokeInMessageThread(std::function<void()> callback) const
 {
     if (CDirStatApp::Get()->m_nThreadID == GetCurrentThreadId()) callback();
     else Get()->SendMessage(WM_CALLBACKUI, 0, reinterpret_cast<LPARAM>(&callback));

@@ -24,6 +24,7 @@
 
 #include <string>
 #include <ranges>
+#include <functional>
 
 std::wstring GetLocaleString(LCTYPE lctype, LANGID langid);
 std::wstring GetLocaleLanguage(LANGID langid);
@@ -62,3 +63,4 @@ void ReplaceString(std::wstring& subject, const std::wstring& search, const std:
 std::wstring& TrimString(std::wstring& s, wchar_t c = L' ');
 std::wstring& MakeLower(std::wstring& s);
 const std::wstring& GetSysDirectory();
+void ProcessMessagesUntilSignaled(const std::function<void()>& callback);
