@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
   <?include Defines.wxi?>
-	<Product Id="$(var.ProductID)" Name="$(var.ProductName)" Language="1033" Version="$(var.ProductVersion)" Manufacturer="$(var.Manufacturer)" UpgradeCode="$(var.UpgradeCode)">
-	  <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine"/>
+  <Product Id="$(var.ProductID)" Name="$(var.ProductName)" Language="1033" Version="$(var.ProductVersion)" Manufacturer="$(var.Manufacturer)" UpgradeCode="$(var.UpgradeCode)">
+    <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine"/>
     <Icon Id="WinDirStat.ico" SourceFile="$(var.IconFilePath)"/>
     <Property Id="ARPPRODUCTICON" Value="WinDirStat.ico"/>
     <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." Schedule="afterInstallInitialize"/>
@@ -13,6 +13,9 @@
     <WixVariable Id="WixUIDialogBmp" Value="$(var.DialogBmp)" />
     <Feature Id="FT_Core" Title="WinDirStat" Absent="disallow" Description="Includes WinDirStat">
       <ComponentRef Id="Component_Main"/>
+      <Feature Id="FT_ContextMenu" Title="Add to Explorer classic context menu" Absent="allow">
+        <ComponentRef Id="Component_ContextMenu"/>
+      </Feature>
     </Feature>
     <Property Id="WIN_DIR_STAT_HKCU">
       <RegistrySearch Id="WinDirStatHKCU" Root="HKCU" Key="Software\Microsoft\Windows\CurrentVersion\Uninstall\WinDirStat" Name="UninstallString" Type="raw"/>
@@ -43,6 +46,26 @@
             <ShortcutProperty Key="{9F4C2855-9F79-4B39-A8D0-E1D42DE1D5F3}, 5" Value="WinDirStat"/>
           </Shortcut>
         </File>
+      </Component>
+    </DirectoryRef>
+  </Fragment>
+  <Fragment>
+    <DirectoryRef Id="TARGETDIR">
+      <Component Id="Component_ContextMenu" Guid="{7B6A2A2E-BF9E-4F37-8EAA-0E7E6B98D87A}" Win64="$(var.Win64)">
+        <RegistryKey Root="HKCR" Key="Directory\shell\WinDirStat">
+          <RegistryValue Name="Icon" Value="[INSTALLFOLDER]WinDirStat.exe" Type="string"/>
+          <RegistryValue Value="WinDirStat" Type="string"/>
+          <RegistryKey Key="command">
+            <RegistryValue Value="&quot;[INSTALLFOLDER]WinDirStat.exe&quot; &quot;0|%1&quot;" Type="string"/>
+          </RegistryKey>
+        </RegistryKey>
+        <RegistryKey Root="HKCR" Key="Drive\shell\WinDirStat">
+          <RegistryValue Name="Icon" Value="[INSTALLFOLDER]WinDirStat.exe" Type="string"/>
+          <RegistryValue Value="WinDirStat" Type="string"/>
+          <RegistryKey Key="command">
+            <RegistryValue Value="&quot;[INSTALLFOLDER]WinDirStat.exe&quot; &quot;0|%1&quot;" Type="string"/>
+          </RegistryKey>
+        </RegistryKey>
       </Component>
     </DirectoryRef>
   </Fragment>
