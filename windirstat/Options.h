@@ -106,8 +106,13 @@ class COptions
 public:
 
     static Setting<bool> ExcludeJunctions;
-    static Setting<bool> ExcludeSymbolicLinks;
+    static Setting<bool> ExcludeSymbolicLinksDirectory;
     static Setting<bool> ExcludeVolumeMountPoints;
+    static Setting<bool> ExcludeHiddenDirectory;
+    static Setting<bool> ExcludeProtectedDirectory;
+    static Setting<bool> ExcludeSymbolicLinksFile;
+    static Setting<bool> ExcludeHiddenFile;
+    static Setting<bool> ExcludeProtectedFile;
     static Setting<bool> FollowVolumeMountPoints;
     static Setting<bool> UseSizeSuffixes;
     static Setting<bool> ListFullRowSelection;
@@ -132,8 +137,6 @@ public:
     static Setting<bool> ShowTreeMap;
     static Setting<bool> ShowUnknown;
     static Setting<bool> SkipDupeDetectionCloudLinks;
-    static Setting<bool> SkipHidden;
-    static Setting<bool> SkipProtected;
     static Setting<bool> TreeMapGrid;
     static Setting<bool> UseBackupRestore;
     static Setting<bool> UseFallbackLocale;

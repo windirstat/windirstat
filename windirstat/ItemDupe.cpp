@@ -1,4 +1,4 @@
-// ItemDup.cpp - Implementation of CItemDupe
+// ItemDupe.cpp - Implementation of CItemDupe
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert

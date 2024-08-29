@@ -867,6 +867,10 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
         { ID_TREEMAP_ZOOMOUT,         { false, false, false, false, IT_DIRECTORY, canZoomOut } },
         { ID_CLEANUP_EXPLORER_SELECT, { false, true,  true,  false, IT_DIRECTORY | IT_FILE } },
         { ID_CLEANUP_OPEN_IN_CONSOLE, { false, true,  true,  false, IT_DRIVE | IT_DIRECTORY | IT_FILE } },
+        { ID_CLEANUP_DISM_NORMAL,     { true,  true,  false, false, IT_ANY } },
+        { ID_CLEANUP_DISM_RESET,      { true,  true,  false, false, IT_ANY } },
+        { ID_CLEANUP_REMOVE_ROAMING,  { true,  true,  false, false, IT_ANY } },
+        { ID_CLEANUP_DISK_CLEANUP,    { true,  true,  false, false, IT_ANY } },
         { ID_COMPRESS_NONE,           { false, true,  false, false, IT_FILE } },
         { ID_COMPRESS_LZNT1,          { false, true,  false, false, IT_FILE } },
         { ID_COMPRESS_XPRESS4K,       { false, true,  false, false, IT_FILE } },
@@ -941,6 +945,10 @@ BEGIN_MESSAGE_MAP(CDirStatDoc, CDocument)
     ON_COMMAMD_UPDATE_WRAPPER(ID_CLEANUP_OPEN_IN_CONSOLE, OnCommandPromptHere)
     ON_COMMAMD_UPDATE_WRAPPER(ID_CLEANUP_DELETE_BIN, OnCleanupDeleteToBin)
     ON_COMMAMD_UPDATE_WRAPPER(ID_CLEANUP_DELETE, OnCleanupDelete)
+    ON_COMMAMD_UPDATE_WRAPPER(ID_CLEANUP_DISM_NORMAL, OnExecuteDism)
+    ON_COMMAMD_UPDATE_WRAPPER(ID_CLEANUP_DISM_RESET, OnExecuteDismReset)
+    ON_COMMAMD_UPDATE_WRAPPER(ID_CLEANUP_REMOVE_ROAMING, OnRemoveRoamingProfiles)
+    ON_COMMAMD_UPDATE_WRAPPER(ID_CLEANUP_DISK_CLEANUP, OnExecuteDiskCleanupUtility)
     ON_UPDATE_COMMAND_UI_RANGE(ID_USERDEFINEDCLEANUP0, ID_USERDEFINEDCLEANUP9, OnUpdateUserDefinedCleanup)
     ON_COMMAND_RANGE(ID_USERDEFINEDCLEANUP0, ID_USERDEFINEDCLEANUP9, OnUserDefinedCleanup)
     ON_COMMAMD_UPDATE_WRAPPER(ID_TREEMAP_SELECT_PARENT, OnTreeMapSelectParent)
@@ -1156,7 +1164,7 @@ void CDirStatDoc::OnCommandPromptHere()
         const std::wstring cmd = GetCOMSPEC();
         for (const auto& path : paths)
         {
-            ShellExecuteThrow(*AfxGetMainWnd(), L"open", cmd, path, SW_SHOWNORMAL);
+            ShellExecuteThrow(path, L"", L"open");
         }
     }
     catch (CException* pe)
@@ -1183,6 +1191,32 @@ void CDirStatDoc::OnCleanupDelete()
     {
         UpdateAllViews(nullptr);
     }
+}
+
+void CDirStatDoc::OnRemoveRoamingProfiles()
+{
+    const std::wstring cmd = std::format(LR"(/C "TITLE {} & WMIC.EXE {} & PAUSE)",
+        L"WinDirStat - Profile Cleanup", L"PATH Win32_UserProfile WHERE RoamingConfigured=TRUE DELETE");
+    ShellExecuteThrow(GetCOMSPEC(), cmd, L"runas");
+}
+
+void CDirStatDoc::OnExecuteDiskCleanupUtility()
+{
+    ShellExecuteThrow(L"CLEANMGR.EXE");
+}
+
+void CDirStatDoc::OnExecuteDismReset()
+{
+    const std::wstring cmd = std::format(LR"(/C "TITLE {} & DISM.EXE {} & PAUSE)",
+        L"WinDirStat - DISM", L"/Online /Cleanup-Image /StartComponentCleanup /ResetBase");
+    ShellExecuteThrow(GetCOMSPEC(), cmd, L"runas");
+}
+
+void CDirStatDoc::OnExecuteDism()
+{
+    const std::wstring cmd = std::format(LR"(/C "TITLE {} & DISM.EXE {} & PAUSE)",
+        L"WinDirStat - DISM", L"/Online /Cleanup-Image /StartComponentCleanup");
+    ShellExecuteThrow(GetCOMSPEC(), cmd, L"runas");
 }
 
 void CDirStatDoc::OnUpdateUserDefinedCleanup(CCmdUI* pCmdUI)

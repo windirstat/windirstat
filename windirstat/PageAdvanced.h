@@ -44,13 +44,18 @@ protected:
 
     BOOL m_ExcludeJunctions = TRUE;
     BOOL m_ExcludeVolumeMountPoints = TRUE;
-    BOOL m_ExcludeSymbolicLinks = TRUE;
+    BOOL m_ExcludeSymbolicLinksDirectory = TRUE;
     BOOL m_SkipDupeDetectionCloudLinks = TRUE;
-    BOOL m_SkipHidden = FALSE;
-    BOOL m_SkipProtected = FALSE;
+    BOOL m_SkipHiddenDirectory = FALSE;
+    BOOL m_SkipProtectedDirectory = FALSE;
+    BOOL m_ExcludeSymbolicLinksFile = TRUE;
+    BOOL m_SkipHiddenFile = FALSE;
+    BOOL m_SkipProtectedFile = FALSE;
     BOOL m_UseBackupRestore = FALSE;
     int m_ScanningThreads = 0;
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnSettingChanged();
+public:
+    afx_msg void OnBnClickedResetPreferences();
 };

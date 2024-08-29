@@ -25,6 +25,7 @@
 #include "DirStatDoc.h"
 #include "Options.h"
 #include "Localization.h"
+#include "WinDirStat.h"
 
 IMPLEMENT_DYNAMIC(CPageAdvanced, CPropertyPage)
 
@@ -42,23 +43,30 @@ void CPageAdvanced::DoDataExchange(CDataExchange* pDX)
     CPropertyPage::DoDataExchange(pDX);
     DDX_Check(pDX, IDC_EXCLUDE_VOLUME_MOUNT_POINTS, m_ExcludeVolumeMountPoints);
     DDX_Check(pDX, IDC_EXCLUDE_JUNCTIONS, m_ExcludeJunctions);
-    DDX_Check(pDX, IDC_EXCLUDE_SYMLINKS, m_ExcludeSymbolicLinks);
+    DDX_Check(pDX, IDC_EXCLUDE_SYMLINKS_DIRECTORY, m_ExcludeSymbolicLinksDirectory);
     DDX_Check(pDX, IDC_PAGE_ADVANCED_SKIP_CLOUD_LINKS, m_SkipDupeDetectionCloudLinks);
-    DDX_Check(pDX, IDC_SKIPHIDDEN, m_SkipHidden);
-    DDX_Check(pDX, IDC_SKIPPROTECTED, m_SkipProtected);
+    DDX_Check(pDX, IDC_EXCLUDE_HIDDEN_DIRECTORY, m_SkipHiddenDirectory);
+    DDX_Check(pDX, IDC_EXCLUDE_PROTECTED_DIRECTORY, m_SkipProtectedDirectory);
     DDX_Check(pDX, IDC_BACKUP_RESTORE, m_UseBackupRestore);
+    DDX_Check(pDX, IDC_EXCLUDE_SYMLINKS_FILE, m_ExcludeSymbolicLinksFile);
+    DDX_Check(pDX, IDC_EXCLUDE_HIDDEN_FILE, m_SkipHiddenFile);
+    DDX_Check(pDX, IDC_EXCLUDE_PROTECTED_FILE, m_SkipProtectedFile);
     DDX_CBIndex(pDX, IDC_COMBO_THREADS, m_ScanningThreads);
 }
 
 BEGIN_MESSAGE_MAP(CPageAdvanced, CPropertyPage)
     ON_BN_CLICKED(IDC_BACKUP_RESTORE, OnSettingChanged)
-    ON_BN_CLICKED(IDC_SKIPHIDDEN, OnSettingChanged)
-    ON_BN_CLICKED(IDC_SKIPPROTECTED, OnSettingChanged)
+    ON_BN_CLICKED(IDC_EXCLUDE_HIDDEN_DIRECTORY, OnSettingChanged)
+    ON_BN_CLICKED(IDC_EXCLUDE_PROTECTED_DIRECTORY, OnSettingChanged)
     ON_CBN_SELENDOK(IDC_COMBO_THREADS, OnSettingChanged)
     ON_BN_CLICKED(IDC_EXCLUDE_VOLUME_MOUNT_POINTS, OnSettingChanged)
     ON_BN_CLICKED(IDC_EXCLUDE_JUNCTIONS, OnSettingChanged)
-    ON_BN_CLICKED(IDC_EXCLUDE_SYMLINKS, OnSettingChanged)
+    ON_BN_CLICKED(IDC_EXCLUDE_SYMLINKS_DIRECTORY, OnSettingChanged)
     ON_BN_CLICKED(IDC_PAGE_ADVANCED_SKIP_CLOUD_LINKS, OnSettingChanged)
+    ON_BN_CLICKED(IDC_EXCLUDE_SYMLINKS_FILE, OnSettingChanged)
+    ON_BN_CLICKED(IDC_EXCLUDE_HIDDEN_FILE, OnSettingChanged)
+    ON_BN_CLICKED(IDC_EXCLUDE_PROTECTED_FILE, OnSettingChanged)
+    ON_BN_CLICKED(IDC_RESET_PREFERENCES, &CPageAdvanced::OnBnClickedResetPreferences)
 END_MESSAGE_MAP()
 
 BOOL CPageAdvanced::OnInitDialog()
@@ -69,10 +77,13 @@ BOOL CPageAdvanced::OnInitDialog()
 
     m_ExcludeVolumeMountPoints = COptions::ExcludeVolumeMountPoints;
     m_ExcludeJunctions = COptions::ExcludeJunctions;
-    m_ExcludeSymbolicLinks = COptions::ExcludeSymbolicLinks;
+    m_ExcludeSymbolicLinksDirectory = COptions::ExcludeSymbolicLinksDirectory;
     m_SkipDupeDetectionCloudLinks = COptions::SkipDupeDetectionCloudLinks;
-    m_SkipHidden = COptions::SkipHidden;
-    m_SkipProtected = COptions::SkipProtected;
+    m_SkipHiddenDirectory = COptions::ExcludeHiddenDirectory;
+    m_SkipProtectedDirectory = COptions::ExcludeProtectedDirectory;
+    m_ExcludeSymbolicLinksFile = COptions::ExcludeSymbolicLinksFile;
+    m_SkipHiddenFile = COptions::ExcludeHiddenFile;
+    m_SkipProtectedFile = COptions::ExcludeProtectedFile;
     m_UseBackupRestore = COptions::UseBackupRestore;
     m_ScanningThreads = COptions::ScanningThreads - 1;
 
@@ -86,17 +97,23 @@ void CPageAdvanced::OnOK()
 
     const bool refreshReparsepoints =
         COptions::ExcludeJunctions && COptions::ExcludeJunctions != static_cast<bool>(m_ExcludeJunctions) ||
-        COptions::ExcludeSymbolicLinks && COptions::ExcludeSymbolicLinks != static_cast<bool>(m_ExcludeSymbolicLinks) ||
-        COptions::ExcludeVolumeMountPoints && COptions::ExcludeVolumeMountPoints != static_cast<bool>(m_ExcludeVolumeMountPoints);
-    const bool refreshAll = COptions::SkipHidden != static_cast<bool>(m_SkipHidden) ||
-        COptions::SkipProtected != static_cast<bool>(m_SkipProtected);
+        COptions::ExcludeSymbolicLinksDirectory && COptions::ExcludeSymbolicLinksDirectory != static_cast<bool>(m_ExcludeSymbolicLinksDirectory) ||
+        COptions::ExcludeVolumeMountPoints && COptions::ExcludeVolumeMountPoints != static_cast<bool>(m_ExcludeVolumeMountPoints) ||
+        COptions::ExcludeSymbolicLinksFile && COptions::ExcludeSymbolicLinksFile != static_cast<bool>(m_ExcludeSymbolicLinksFile);
+    const bool refreshAll = COptions::ExcludeHiddenDirectory != static_cast<bool>(m_SkipHiddenDirectory) ||
+        COptions::ExcludeProtectedDirectory != static_cast<bool>(m_SkipProtectedDirectory) ||
+        COptions::ExcludeHiddenFile != static_cast<bool>(m_SkipHiddenFile) ||
+        COptions::ExcludeProtectedFile != static_cast<bool>(m_SkipProtectedFile);
 
     COptions::ExcludeJunctions = (FALSE != m_ExcludeJunctions);
-    COptions::ExcludeSymbolicLinks = (FALSE != m_ExcludeSymbolicLinks);
+    COptions::ExcludeSymbolicLinksDirectory = (FALSE != m_ExcludeSymbolicLinksDirectory);
     COptions::ExcludeVolumeMountPoints = (FALSE != m_ExcludeVolumeMountPoints);
     COptions::SkipDupeDetectionCloudLinks = (FALSE != m_SkipDupeDetectionCloudLinks);
-    COptions::SkipHidden = (FALSE != m_SkipHidden);
-    COptions::SkipProtected = (FALSE != m_SkipProtected);
+    COptions::ExcludeHiddenDirectory = (FALSE != m_SkipHiddenDirectory);
+    COptions::ExcludeProtectedDirectory = (FALSE != m_SkipProtectedDirectory);
+    COptions::ExcludeSymbolicLinksFile = (FALSE != m_ExcludeSymbolicLinksFile);
+    COptions::ExcludeHiddenFile = (FALSE != m_SkipHiddenFile);
+    COptions::ExcludeProtectedFile = (FALSE != m_SkipProtectedFile);
     COptions::UseBackupRestore = (FALSE != m_UseBackupRestore);
     COptions::ScanningThreads = m_ScanningThreads + 1;
 
@@ -115,4 +132,9 @@ void CPageAdvanced::OnOK()
 void CPageAdvanced::OnSettingChanged()
 {
     SetModified();
+}
+
+void CPageAdvanced::OnBnClickedResetPreferences()
+{
+    CDirStatApp::Get()->RestartApplication(true);
 }

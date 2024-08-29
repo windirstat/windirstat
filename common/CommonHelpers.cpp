@@ -32,8 +32,8 @@
 #include <array>
 #include <unordered_set>
 
-bool ShellExecuteThrow(HWND hwnd, const std::wstring & lpVerb, const std::wstring & lpFile,
-    const std::wstring & lpDirectory, const INT nShowCmd)
+bool ShellExecuteThrow(const std::wstring& lpFile, const std::wstring& lpParameters, const std::wstring & lpVerb,
+    const HWND hwnd, const std::wstring & lpDirectory, const INT nShowCmd)
 {
     CWaitCursor wc;
 
@@ -42,9 +42,10 @@ bool ShellExecuteThrow(HWND hwnd, const std::wstring & lpVerb, const std::wstrin
     sei.cbSize = sizeof(SHELLEXECUTEINFO);
     sei.fMask = 0;
     sei.hwnd = hwnd;
-    sei.lpVerb = lpVerb.c_str();
-    sei.lpFile = lpFile.c_str();
-    sei.lpDirectory = lpDirectory.c_str();
+    sei.lpParameters = lpParameters.empty() ? nullptr : lpParameters.c_str();
+    sei.lpVerb = lpVerb.empty() ? nullptr : lpVerb.c_str();
+    sei.lpFile = lpFile.empty() ? nullptr : lpFile.c_str();
+    sei.lpDirectory = lpDirectory.empty() ? nullptr : lpDirectory.c_str();
     sei.nShow = nShowCmd;
 
     const BOOL bResult = ::ShellExecuteEx(&sei);

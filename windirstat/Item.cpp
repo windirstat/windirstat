@@ -390,9 +390,9 @@ short CItem::GetImageToCache() const
     {
         return GetIconImageList()->GetMountPointImage();
     }
-    if ((CDirStatApp::Get()->GetReparseInfo()->IsSymbolicLink(longpath, m_Attributes) ||
+    if ((CReparsePoints::IsSymbolicLink(longpath, m_Attributes) ||
         CDirStatApp::Get()->GetReparseInfo()->IsJunction(longpath, m_Attributes)) &&
-        !CDirStatApp::Get()->GetReparseInfo()->IsCloudLink(longpath, m_Attributes))
+        !CReparsePoints::IsCloudLink(longpath, m_Attributes))
     {
         constexpr DWORD mask = FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM;
         const bool osFile = (GetAttributes() & mask) == mask;
@@ -958,14 +958,15 @@ void CItem::ScanItems(BlockingQueue<CItem*> * queue)
                 {
                     continue;
                 }
-                if (COptions::SkipHidden && finder.IsHidden() ||
-                    COptions::SkipProtected && finder.IsHiddenSystem())
-                {
-                    continue;
-                }
 
                 if (finder.IsDirectory())
                 {
+                    if (COptions::ExcludeHiddenDirectory && finder.IsHidden() ||
+                        COptions::ExcludeProtectedDirectory && finder.IsHiddenSystem())
+                    {
+                        continue;
+                    }
+
                     item->UpwardAddFolders(1);
                     if (CItem* newitem = item->AddDirectory(finder); newitem->GetReadJobs() > 0)
                     {
@@ -974,6 +975,14 @@ void CItem::ScanItems(BlockingQueue<CItem*> * queue)
                 }
                 else
                 {
+                    if (COptions::ExcludeHiddenFile && finder.IsHidden() ||
+                        COptions::ExcludeProtectedFile && finder.IsHiddenSystem() ||
+                        COptions::ExcludeSymbolicLinksFile && CReparsePoints::IsReparsePoint(finder.GetAttributes()) &&
+                            CReparsePoints::IsSymbolicLink(finder.GetFilePathLong(), finder.GetAttributes()))
+                    {
+                        continue;
+                    }
+
                     item->UpwardAddFiles(1);
                     CItem* newitem = item->AddFile(finder);
                     CFileDupeControl::Get()->ProcessDuplicate(newitem, queue);

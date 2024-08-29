@@ -424,7 +424,7 @@ void CMainFrame::CreateProgress(ULONGLONG range)
     // so set range to indicate these is no range so display pacman
     if (!COptions::ExcludeVolumeMountPoints ||
         !COptions::ExcludeJunctions ||
-        !COptions::ExcludeSymbolicLinks)
+        !COptions::ExcludeSymbolicLinksDirectory)
     {
         range = 0;
     }
@@ -878,7 +878,7 @@ void CMainFrame::CopyToClipboard(const std::wstring & psz)
 
         if (nullptr == SetClipboardData(CF_UNICODETEXT, h))
         {
-            MdThrowStringException(Localization::Lookup(IDS_CANNOTSETCLIPBAORDDATA));
+            MdThrowStringException(Localization::Lookup(IDS_CANNOTSETCLIPBOARDDATA));
         }
     }
     catch (CException& pe)
@@ -1180,7 +1180,7 @@ void CMainFrame::OnConfigure()
     
     if (sheet.m_RestartApplication)
     {
-        CDirStatApp::RestartApplication();
+        CDirStatApp::Get()->RestartApplication();
     }
 }
 

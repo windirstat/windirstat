@@ -57,23 +57,26 @@
 #define IDC_SHOW_GRID                   1028
 #define IDC_TREECOL_FILES               1028
 #define IDC_SIZE_SUFFIXES               1029
-#define IDC_EXCLUDE_JUNCTIONS           1029
 #define IDC_TREECOL_SIZE_PHYSICAL       1029
+#define IDC_EXCLUDE_JUNCTIONS           1029
 #define IDC_TREEMAPGRIDCOLOR            1030
 #define IDC_SHOW_STRIPES                1030
-#define IDC_EXCLUDE_SYMLINKS            1030
 #define IDC_TREECOL_SIZE_LOGICAL        1030
+#define IDC_EXCLUDE_SYMLINKS_DIRECTORY  1030
 #define IDC_FULL_ROW_SELECTION          1031
-#define IDC_SKIPHIDDEN                  1032
 #define IDC_PORTABLE_MODE               1032
+#define IDC_EXCLUDE_HIDDEN_DIRECTORY    1032
 #define IDC_BACKUP_RESTORE              1033
 #define IDC_DELETION_WARNING            1033
 #define IDC_RESET                       1034
 #define IDC_PAGE_ADVANCED_SKIP_CLOUD_LINKS 1034
-#define IDC_SKIPPROTECTED               1035
+#define IDC_EXCLUDE_PROTECTED_DIRECTORY 1035
 #define IDC_LIST                        1036
+#define IDC_EXCLUDE_PROTECTED_FILE      1036
 #define IDC_TITLE                       1037
+#define IDC_EXCLUDE_SYMLINKS_FILE       1037
 #define IDC_COMMANDLINE                 1038
+#define IDC_EXCLUDE_HIDDEN_FILE         1038
 #define IDC_WORKSFORFILES               1039
 #define IDC_WORKSFORDIRECTORIES         1040
 #define IDC_WORKSFORDRIVES              1042
@@ -116,6 +119,7 @@
 #define IDC_BROWSE_FOLDER               1232
 #define IDC_FILENAMES                   1233
 #define IDC_SCAN_DUPLICATES             1234
+#define IDC_RESET_PREFERENCES           1235
 #define ID_WDS_CONTROL                  4711
 #define ID_CLEANUP_EXPLORER_SELECT      32774
 #define ID_TREEMAP_ZOOMIN               32783
@@ -164,6 +168,10 @@
 #define ID_COMPRESS_XPRESS8K            33049
 #define ID_COMPRESS_XPRESS16K           33050
 #define ID_COMPRESS_LZX                 33051
+#define ID_CLEANUP_DISK_CLEANUP         33056
+#define ID_CLEANUP_DISM_NORMAL          33057
+#define ID_CLEANUP_DISM_RESET           33058
+#define ID_CLEANUP_REMOVE_ROAMING       33060
 #define IDS_AUTHOR_EMAIL                57345
 #define IDS_URL_WEBSITE                 57346
 #define IDS_URL_HELP                    57347
@@ -174,8 +182,8 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        954
-#define _APS_NEXT_COMMAND_VALUE         33052
-#define _APS_NEXT_CONTROL_VALUE         1235
+#define _APS_NEXT_COMMAND_VALUE         33061
+#define _APS_NEXT_CONTROL_VALUE         1236
 #define _APS_NEXT_SYMED_VALUE           109
 #endif
 #endif

@@ -68,22 +68,45 @@ CIconImageList* CDirStatApp::GetIconImageList()
     return &m_MyImageList;
 }
 
-void CDirStatApp::RestartApplication()
+void CDirStatApp::RestartApplication(bool resetPreferences)
 {
+    // Clear preferences if requested
+    if (resetPreferences)
+    {
+        // Cleanup registry preferences
+        RegDeleteTree(HKEY_CURRENT_USER, L"Software\\WinDirStat");
+
+        // Enable portable mode by creating the file
+        if (InPortableMode())
+        {
+            const std::wstring ini = GetAppFileName(L"ini");
+            DeleteFile(ini.c_str());
+            SetPortableMode(true);
+        }
+    }
+
     // First, try to create the suspended process
     STARTUPINFO si = { .cb = sizeof(si) };
     PROCESS_INFORMATION pi = {};
-    if (const BOOL success = CreateProcess(GetAppFileName().c_str(), nullptr, nullptr, nullptr, false, CREATE_SUSPENDED, nullptr, nullptr, &si, &pi); !success)
+    if (const BOOL success = CreateProcess(GetAppFileName().c_str(), nullptr, nullptr, nullptr, false,
+        resetPreferences ? 0 : CREATE_SUSPENDED, nullptr, nullptr, &si, &pi); !success)
     {
         AfxMessageBox(Localization::Format(IDS_CREATEPROCESSsFAILEDs,
             GetAppFileName(), MdGetWinErrorText(static_cast<HRESULT>(GetLastError()))).c_str());
         return;
     }
 
+    // If resetting preference, hard exit to prevent saving settings
+    if (resetPreferences)
+    {
+        std::exit(0);
+    }
+
     // We _send_ the WM_CLOSE here to ensure that all COptions-Settings
     // like column widths an so on are saved before the new instance is resumed.
     // This will post a WM_QUIT message.
     (void)CMainFrame::Get()->SendMessage(WM_CLOSE);
+
     if (const DWORD dw = ::ResumeThread(pi.hThread); dw != 1)
     {
         VTRACE(L"ResumeThread() didn't return 1");
@@ -120,7 +143,7 @@ bool CDirStatApp::IsFollowingAllowed(const std::wstring& longpath, const DWORD a
         !CReparsePoints::IsReparseType(longpath, { IO_REPARSE_TAG_SYMLINK, IO_REPARSE_TAG_MOUNT_POINT }) ||
         !COptions::ExcludeVolumeMountPoints && m_ReparsePoints.IsVolumeMountPoint(longpath, attr) ||
         !COptions::ExcludeJunctions && m_ReparsePoints.IsJunction(longpath, attr) ||
-        !COptions::ExcludeSymbolicLinks && m_ReparsePoints.IsSymbolicLink(longpath, attr);
+        !COptions::ExcludeSymbolicLinksDirectory && m_ReparsePoints.IsSymbolicLink(longpath, attr);
 }
 
 // Get the alternative colors for compressed and encrypted files/folders.
@@ -170,7 +193,7 @@ std::wstring CDirStatApp::GetCurrentProcessMemoryInfo()
     return Localization::Format(memformat, FormatBytes(pmc.WorkingSetSize));
 }
 
-bool CDirStatApp::InPortableMode() const
+bool CDirStatApp::InPortableMode()
 {
     return GetFileAttributes(GetAppFileName(L"ini").c_str()) != INVALID_FILE_ATTRIBUTES;
 }

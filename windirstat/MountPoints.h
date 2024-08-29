@@ -34,8 +34,9 @@ public:
     void Initialize();
     bool IsVolumeMountPoint(const std::wstring& longpath, DWORD attr = INVALID_FILE_ATTRIBUTES) const;
     bool IsJunction(const std::wstring& longpath, DWORD attr = INVALID_FILE_ATTRIBUTES) const;
-    bool IsSymbolicLink(const std::wstring& longpath, DWORD attr = INVALID_FILE_ATTRIBUTES) const;
-    bool IsCloudLink(const std::wstring& longpath, DWORD attr = INVALID_FILE_ATTRIBUTES) const;
+    static bool IsSymbolicLink(const std::wstring& longpath, DWORD attr = INVALID_FILE_ATTRIBUTES);
+    static bool IsCloudLink(const std::wstring& longpath, DWORD attr = INVALID_FILE_ATTRIBUTES);
     static bool IsReparseType(const std::wstring& longpath, const std::unordered_set<DWORD>& tagTypes, bool mask = false);
+    static bool IsDirectoryReparsePoint(DWORD attr);
     static bool IsReparsePoint(DWORD attr);
 };

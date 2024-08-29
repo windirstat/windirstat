@@ -48,7 +48,7 @@ public:
     BOOL InitInstance() override;
     BOOL LoadState(LPCTSTR, CFrameImpl*) override { return TRUE; }
 
-    bool InPortableMode() const;
+    static bool InPortableMode();
     bool SetPortableMode(bool enable, bool onlyOpen = false);
 
     void ReReadMountPoints();
@@ -62,7 +62,7 @@ public:
     CIconImageList* GetIconImageList();
 
     static void LaunchHelp();
-    static void RestartApplication();
+    void RestartApplication(bool resetPreferences = false);
 
     static std::tuple<ULONGLONG, ULONGLONG> GetFreeDiskSpace(const std::wstring& pszRootPath);
     static CDirStatApp* Get() { return &_singleton; }

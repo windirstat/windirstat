@@ -186,6 +186,10 @@ protected:
     afx_msg void OnViewShowUnknown();
     afx_msg void OnTreeMapZoomIn();
     afx_msg void OnTreeMapZoomOut();
+    afx_msg void OnRemoveRoamingProfiles();
+    afx_msg void OnExecuteDiskCleanupUtility();
+    afx_msg void OnExecuteDismReset();
+    afx_msg void OnExecuteDism();
     afx_msg void OnExplorerSelect();
     afx_msg void OnCommandPromptHere();
     afx_msg void OnCleanupDeleteToBin();

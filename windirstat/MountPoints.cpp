@@ -105,7 +105,14 @@ void CReparsePoints::Initialize()
     }
 }
 
+
 bool CReparsePoints::IsReparsePoint(const DWORD attr)
+{
+    return attr != INVALID_FILE_ATTRIBUTES &&
+        (attr & FILE_ATTRIBUTE_REPARSE_POINT) != 0;
+}
+
+bool CReparsePoints::IsDirectoryReparsePoint(const DWORD attr)
 {
     return attr != INVALID_FILE_ATTRIBUTES &&
         (attr & FILE_ATTRIBUTE_DIRECTORY) &&
@@ -115,7 +122,7 @@ bool CReparsePoints::IsReparsePoint(const DWORD attr)
 bool CReparsePoints::IsVolumeMountPoint(const std::wstring& longpath, DWORD attr) const
 {
     if (attr == INVALID_FILE_ATTRIBUTES) attr = ::GetFileAttributes(longpath.c_str());
-    if (!IsReparsePoint(attr)) return false;
+    if (!IsDirectoryReparsePoint(attr)) return false;
     std::wstring lowerpath = longpath;
     return std::ranges::find(m_Mountpoints, MakeLower(lowerpath)) != m_Mountpoints.end();
 }
@@ -123,18 +130,18 @@ bool CReparsePoints::IsVolumeMountPoint(const std::wstring& longpath, DWORD attr
 bool CReparsePoints::IsJunction(const std::wstring& longpath, DWORD attr) const
 {
     if (attr == INVALID_FILE_ATTRIBUTES) attr = ::GetFileAttributes(longpath.c_str());
-    if (!IsReparsePoint(attr)) return false;
+    if (!IsDirectoryReparsePoint(attr)) return false;
     return !IsVolumeMountPoint(longpath) && IsReparseType(longpath, { IO_REPARSE_TAG_MOUNT_POINT });
 }
 
-bool CReparsePoints::IsSymbolicLink(const std::wstring& longpath, DWORD attr) const
+bool CReparsePoints::IsSymbolicLink(const std::wstring& longpath, DWORD attr)
 {
     if (attr == INVALID_FILE_ATTRIBUTES) attr = ::GetFileAttributes(longpath.c_str());
     if (!IsReparsePoint(attr)) return false;
     return IsReparseType(longpath, { IO_REPARSE_TAG_SYMLINK });
 }
 
-bool CReparsePoints::IsCloudLink(const std::wstring& longpath, DWORD attr) const
+bool CReparsePoints::IsCloudLink(const std::wstring& longpath, DWORD attr)
 {
     if (attr == INVALID_FILE_ATTRIBUTES) attr = ::GetFileAttributes(longpath.c_str());
     if (!IsReparsePoint(attr)) return false;
