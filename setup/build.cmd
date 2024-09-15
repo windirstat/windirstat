@@ -9,10 +9,10 @@ SET BLDDIR=..\build
 FOR /F "DELIMS=" %%X IN ('DIR "%PX86%\WiX Toolset*" /B /AD') DO SET PATH=%PATH%;%PX86%\%%~nxX\bin
 
 :: create the installers
-candle -arch x86 "WinDirStat.wxs" -o "WinDirStat-x86.wixobj"
-light -ext WixUIExtension -ext WixUtilExtension -sval "WinDirStat-x86.wixobj" -o "%BLDDIR%\WinDirStat-x86.msi"
-candle -arch x64 "WinDirStat.wxs" -o "WinDirStat-x64.wixobj"
-light -ext WixUIExtension -ext WixUtilExtension -sval "WinDirStat-x64.wixobj" -o "%BLDDIR%\WinDirStat-x64.msi"
+FOR %%A IN (arm arm64 x86 x64) DO (
+   candle -arch %%A "WinDirStat.wxs" -o "WinDirStat-%%A.wixobj"
+   light -ext WixUIExtension -ext WixUtilExtension -sval "WinDirStat-%%A.wixobj" -o "%BLDDIR%\WinDirStat-%%A.msi"
+)
 DEL /F "*.wixobj"
 DEL /F "%BLDDIR%\*.wixpdb"
 
