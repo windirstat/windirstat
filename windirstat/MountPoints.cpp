@@ -30,7 +30,7 @@
 
 bool CReparsePoints::IsReparseType(const std::wstring & longpath, const std::unordered_set<DWORD>& tagTypes, const bool mask)
 {
-    SmartPointer<HANDLE> handle(CloseHandle, CreateFile(longpath.c_str(), GENERIC_READ, FILE_SHARE_READ,
+    SmartPointer<HANDLE> handle(CloseHandle, CreateFile(longpath.c_str(), FILE_READ_ATTRIBUTES, FILE_SHARE_READ,
         nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT, nullptr));
     if (handle == INVALID_HANDLE_VALUE)
     {
