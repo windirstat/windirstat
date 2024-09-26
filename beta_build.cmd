@@ -53,8 +53,9 @@ FOR %%A IN (arm arm64 x86 x64) DO (
 :: zip up executatables
 SET POWERSHELL=POWERSHELL.EXE -NoProfile -NonInteractive -NoLogo -ExecutionPolicy Unrestricted
 PUSHD "%PUBDIR%"
-%POWERSHELL% -Command "$Rev = Get-Date -Format 'yyyy-MM-dd'; Compress-Archive '%PUBDIR%\x86' -DestinationPath ('%PUBDIR%\WinDirStat-2.0.0-' + $Rev + '.zip') -Force"
-%POWERSHELL% -Command "$Rev = Get-Date -Format 'yyyy-MM-dd'; Compress-Archive '%PUBDIR%\x64' -DestinationPath ('%PUBDIR%\WinDirStat-2.0.0-' + $Rev + '.zip') -Update"
+FOR %%A IN (arm arm64 x86 x64) DO (
+   %POWERSHELL% -Command "$Rev = Get-Date -Format 'yyyy-MM-dd'; Compress-Archive '%PUBDIR%\%%A' -DestinationPath ('%PUBDIR%\WinDirStat-2.0.0-' + $Rev + '.zip') -Update"
+)
 POPD
 
 PAUSE
