@@ -54,7 +54,7 @@ FOR %%A IN (arm arm64 x86 x64) DO (
 SET POWERSHELL=POWERSHELL.EXE -NoProfile -NonInteractive -NoLogo -ExecutionPolicy Unrestricted
 PUSHD "%PUBDIR%"
 FOR %%A IN (arm arm64 x86 x64) DO (
-   %POWERSHELL% -Command "$Rev = Get-Date -Format 'yyyy-MM-dd'; Compress-Archive '%PUBDIR%\%%A' -DestinationPath ('%PUBDIR%\WinDirStat-2.0.0-' + $Rev + '.zip') -Update"
+   %POWERSHELL% -Command "Compress-Archive '%PUBDIR%\%%A' -DestinationPath ('%PUBDIR%\WinDirStat.zip') -Update"
 )
 POPD
 
