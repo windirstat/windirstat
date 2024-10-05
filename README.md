@@ -1,5 +1,18 @@
 # WinDirStat - Windows Directory Statistics
 
+## Description
+
+WinDirStat is a program that allows you to find drive space hogs at a glance. It achieves that by displaying a drive, drives or directories in a [treemap](https://en.wikipedia.org/wiki/Treemap) that assigns bigger areas to bigger files and directories. Making those areas visually separate by coloring and other means allows you to see literally at a glance what the space hogs are and where to dig deeper.
+
+The directory tree is simultaneously shown as a tree list and as a treemap. One can effortlessly gain an impression of the proportions on the drive(s).
+
+### Major features
+
+* Three views: Directory Tree, Treemap, and Extension
+* Duplicate file detection
+* Built-in cleanup actions including Open, Delete, Show Properties
+* User-defined cleanup actions (command line based)
+
 ## Copyright / Licenses
 
 * Copyright © 2003-2005 Bernhard Seifert (bseifert@users.sourceforge.net)
@@ -11,18 +24,6 @@ The application itself is distributed under the terms of the [GPL v2](windirstat
 
 The logo and all derivatives are available under the terms of the Creative
 Commons license [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/).
-
-## Description
-
-WinDirStat is a program that allows you to find drive space hogs at a glance. It achieves that by displaying a drive, drives or directories in a [treemap](https://en.wikipedia.org/wiki/Treemap) that assigns bigger areas to bigger files and directories. Making those areas visually separate by coloring and other means allows you to see literally at a glance what the space hogs are and where to dig deeper.
-
-The directory tree is simultaneously shown as a tree list and as a treemap. One can effortlessly gain an impression of the proportions on the drive(s).
-
-### Major features
-
-* 3 views, Directory tree, Treemap and Extension list, coupled with each other
-* Built-in cleanup actions including Open, Delete, Show Properties
-* User-defined cleanup actions (command line based)
 
 ### Background
 
@@ -45,8 +46,7 @@ WinDirStat can be built with Visual Studio 2022 or later. A Visual Studio soluti
 
 ## Contributing
 
-The project [Wiki](https://github.com/windirstat/windirstat/wiki) on GitHub features a whole section on the topic of contributing. If you don't
-agree with the requirements, feel free to contact a project member regardless before you put any substantial effort into your potential contribution.
+You can contribute by responding to issues, developing source code, or developing translations.
 
 To see a list of contributors, please check out [the contributors page](CONTRIBUTORS.md).
 
