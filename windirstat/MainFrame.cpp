@@ -912,7 +912,7 @@ void CMainFrame::UpdateCleanupMenu(CMenu* menu) const
     }
     else
     {
-        info = Localization::Format(IDS_ONEITEMss, FormatCount(items).c_str(),
+        info = Localization::Format(IDS_sITEMSss, FormatCount(items).c_str(),
             FormatBytes(bytes).c_str(), COptions::UseSizeSuffixes
             && bytes != 0 ? wds::strEmpty : (wds::chrBlankSpace + GetSpec_Bytes()).c_str());
     }
