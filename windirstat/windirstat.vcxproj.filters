@@ -4,14 +4,8 @@
     <Filter Include="Header Files">
       <UniqueIdentifier>{48D5D65E-28F5-D53D-186F-23FD908A412F}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\Common">
-      <UniqueIdentifier>{A3F39BA6-CC65-7544-398B-3F818D687ACE}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files">
       <UniqueIdentifier>{6DC87E6B-4990-1F63-4AC3-166E48564572}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Common">
-      <UniqueIdentifier>{240FBEEC-022C-367E-4F3C-332BBB836A2F}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\Controls">
       <UniqueIdentifier>{58B807A6-D922-7836-CD41-082C57F30F2D}</UniqueIdentifier>
@@ -62,32 +56,8 @@
     </None>
     <None Include="..\CONTRIBUTORS.md" />
     <None Include="..\README.md" />
-    <None Include="produce_vsprojects.cmd">
-      <Filter>Special Files</Filter>
-    </None>
-    <None Include="setvcvars.cmd">
-      <Filter>Special Files</Filter>
-    </None>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="CommonHelpers.h">
-      <Filter>Header Files\Common</Filter>
-    </ClInclude>
-    <ClInclude Include="SmartPointer.h">
-      <Filter>Header Files\Common</Filter>
-    </ClInclude>
-    <ClInclude Include="MdExceptions.h">
-      <Filter>Header Files\Common</Filter>
-    </ClInclude>
-    <ClInclude Include="Tracer.h">
-      <Filter>Header Files\Common</Filter>
-    </ClInclude>
-    <ClInclude Include="version.h">
-      <Filter>Header Files\Common</Filter>
-    </ClInclude>
-    <ClInclude Include="Constants.h">
-      <Filter>Header Files\Common</Filter>
-    </ClInclude>
     <ClInclude Include="DirStatDoc.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -178,9 +148,6 @@
     <ClInclude Include="PageAdvanced.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Property.h">
-      <Filter>Header Files\Common</Filter>
-    </ClInclude>
     <ClInclude Include="Localization.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -220,11 +187,29 @@
     <ClInclude Include="FileDupeControl.h">
       <Filter>Header Files\Controls</Filter>
     </ClInclude>
+    <ClInclude Include="CommonHelpers.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Constants.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MdExceptions.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Property.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SmartPointer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Tracer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="version.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="CommonHelpers.cpp">
-      <Filter>Source Files\Common</Filter>
-    </ClCompile>
     <ClCompile Include="DirStatDoc.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -309,9 +294,6 @@
     <ClCompile Include="PageAdvanced.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Property.cpp">
-      <Filter>Source Files\Common</Filter>
-    </ClCompile>
     <ClCompile Include="Localization.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -344,6 +326,12 @@
     </ClCompile>
     <ClCompile Include="FileDupeControl.cpp">
       <Filter>Source Files\Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="CommonHelpers.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Property.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
