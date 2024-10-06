@@ -6,12 +6,16 @@ WinDirStat is a program that allows you to find drive space hogs at a glance. It
 
 The directory tree is simultaneously shown as a tree list and as a treemap. One can effortlessly gain an impression of the proportions on the drive(s).
 
+For more information on the background of WinDirStat and alternative versions on other operating systems, please visit the [WinDirStat website](https://windirstat.net/)
+
 ### Major features
 
 * Three views: Directory Tree, Treemap, and Extension
 * Duplicate file detection
 * Built-in cleanup actions including Open, Delete, Show Properties
 * User-defined cleanup actions (command line based)
+
+For changes in recent versions, please check out [the change log](CHANGELOG.md).
 
 ## Copyright / Licenses
 
@@ -24,21 +28,6 @@ The application itself is distributed under the terms of the [GPL v2](windirstat
 
 The logo and all derivatives are available under the terms of the Creative
 Commons license [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/).
-
-### Background
-
-The original author of WinDirStat was Bernhard Seifert and it was inspired by [KDirStat](https://kdirstat.sourceforge.net/) and [SequoiaView](https://www.win.tue.nl/sequoiaview/).
-Design and many details are based on KDirStat.
-
-### WinDirStat Alternatives on other operating systems
-
-Meanwhile, alternatives also exist for OS X and many programs make use of treemaps for a variety of visualization needs.
-
-The [FLOSS](https://en.wikipedia.org/wiki/Alternative_terms_for_free_software) alternatives for other operating systems are thus:
-
-* [QDirStat](https://github.com/shundhammer/qdirstat) (Linux and virtually any \*nix that runs KDE/X11)
-* [Disk Inventory X](https://www.derlien.com/) (OS X)
-* [GrandPerspective](https://grandperspectiv.sourceforge.net/) (OS X)
 
 ## Building
 
@@ -74,8 +63,6 @@ WinDirStat 2.x has been developed for and tested on the following operating syst
 The logo was generously designed and contributed to the project by Robin "tuqueque" Marín. Follow him on Twitter/X [@tuquequeorg](https://twitter.com/tuquequeorg).
 
 ## Resources
-
-We currently have:
 
 * A [website](https://windirstat.net/)
 * A [blog](https://blog.windirstat.net/)
