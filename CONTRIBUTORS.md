@@ -9,6 +9,8 @@
 
 # Development Contributors
 
+* Robin "tuqueque" Marín
+    * Created logo used on website and within WinDirStat
 * Falco Peijnenburg
     * Performance improvments to the treemap rendering
 * Morten Asscheman
