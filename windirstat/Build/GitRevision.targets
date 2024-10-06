@@ -35,6 +35,14 @@
 				<PreprocessorDefinitions>GIT_COMMIT="$(GitRevision)";%(PreprocessorDefinitions)</PreprocessorDefinitions>
 			</ResourceCompile>
 		</ItemGroup>
+		<ItemGroup Condition="'$(GitRevision)' == ''">
+			<ClCompile>
+				<PreprocessorDefinitions>GIT_COMMIT="DEADBEEF";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+			</ClCompile>
+			<ResourceCompile>
+				<PreprocessorDefinitions>GIT_COMMIT="DEADBEEF";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+			</ResourceCompile>
+		</ItemGroup>		
 	</Target>
 	<Target Name="GetGitDate" DependsOnTargets="FindGitExecutablePath" Condition="'$(GitDirSentinelFile)' != ''">
 		<Message Importance="high" Text="Detecting Git commit date, since '$(GitDirSentinelFile)' was found. Using %24(GitExecutableFullPath) = '$(GitExecutableFullPath)'." Condition="'$(GitExecutableFullPath)' != '' and '$(GitWorkTreeRootDir)' != ''" />	
@@ -50,5 +58,13 @@
 				<PreprocessorDefinitions>GIT_DATE="$(GitDate)";%(PreprocessorDefinitions)</PreprocessorDefinitions>
 			</ResourceCompile>
 		</ItemGroup>
+		<ItemGroup Condition="'$(GitDate)' == ''">
+			<ClCompile>
+				<PreprocessorDefinitions>GIT_DATE="0000-00-00";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+			</ClCompile>
+			<ResourceCompile>
+				<PreprocessorDefinitions>GIT_DATE="0000-00-00";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+			</ResourceCompile>
+		</ItemGroup>		
 	</Target>	
 </Project>

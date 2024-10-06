@@ -224,9 +224,6 @@
       <AdditionalManifestFiles>res\windirstat.manifest</AdditionalManifestFiles>
       <EnableDpiAwareness>false</EnableDpiAwareness>
     </Manifest>
-    <PostBuildEvent>
-      <Command>PWSH -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Unrestricted -File "$(SolutionDir)\windirstat\Build\Prune Executable.ps1" "$(TargetPath)"</Command>
-    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
     <ClCompile>
@@ -262,9 +259,6 @@
       <AdditionalManifestFiles>res\windirstat.manifest</AdditionalManifestFiles>
       <EnableDpiAwareness>false</EnableDpiAwareness>
     </Manifest>
-    <PostBuildEvent>
-      <Command>PWSH -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Unrestricted -File "$(SolutionDir)\windirstat\Build\Prune Executable.ps1" "$(TargetPath)"</Command>
-    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -306,9 +300,6 @@
       <AdditionalManifestFiles>res\windirstat.manifest</AdditionalManifestFiles>
       <EnableDpiAwareness>false</EnableDpiAwareness>
     </Manifest>
-    <PostBuildEvent>
-      <Command>PWSH -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Unrestricted -File "$(SolutionDir)\windirstat\Build\Prune Executable.ps1" "$(TargetPath)"</Command>
-    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
     <ClCompile>
@@ -349,9 +340,6 @@
       <AdditionalManifestFiles>res\windirstat.manifest</AdditionalManifestFiles>
       <EnableDpiAwareness>false</EnableDpiAwareness>
     </Manifest>
-    <PostBuildEvent>
-      <Command>PWSH -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Unrestricted -File "$(SolutionDir)\windirstat\Build\Prune Executable.ps1" "$(TargetPath)"</Command>
-    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -400,9 +388,6 @@
       <AdditionalManifestFiles>res\windirstat.manifest</AdditionalManifestFiles>
       <EnableDpiAwareness>false</EnableDpiAwareness>
     </Manifest>
-    <PostBuildEvent>
-      <Command>PWSH -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Unrestricted -File "$(SolutionDir)\windirstat\Build\Prune Executable.ps1" "$(TargetPath)"</Command>
-    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
     <ClCompile>
@@ -449,9 +434,6 @@
       <AdditionalManifestFiles>res\windirstat.manifest</AdditionalManifestFiles>
       <EnableDpiAwareness>false</EnableDpiAwareness>
     </Manifest>
-    <PostBuildEvent>
-      <Command>PWSH -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Unrestricted -File "$(SolutionDir)\windirstat\Build\Prune Executable.ps1" "$(TargetPath)"</Command>
-    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -501,9 +483,6 @@
       <AdditionalManifestFiles>res\windirstat.manifest</AdditionalManifestFiles>
       <EnableDpiAwareness>false</EnableDpiAwareness>
     </Manifest>
-    <PostBuildEvent>
-      <Command>PWSH -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Unrestricted -File "$(SolutionDir)\windirstat\Build\Prune Executable.ps1" "$(TargetPath)"</Command>
-    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
     <ClCompile>
@@ -552,9 +531,6 @@
       <AdditionalManifestFiles>res\windirstat.manifest</AdditionalManifestFiles>
       <EnableDpiAwareness>false</EnableDpiAwareness>
     </Manifest>
-    <PostBuildEvent>
-      <Command>PWSH -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Unrestricted -File "$(SolutionDir)\windirstat\Build\Prune Executable.ps1" "$(TargetPath)"</Command>
-    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ImportGroup Label="PropertySheets">
     <Import Project="$(ProjectDir)/Build/Project.props" Condition="exists('$(ProjectDir)/Build/Project.props') AND '$(SolutionDir)' != '$(ProjectDir)'" Label="Project-specific (local/late)" />

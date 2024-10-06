@@ -8,6 +8,13 @@ SET PX86=%PROGRAMFILES(X86)%
 SET BLDDIR=..\build
 FOR /F "DELIMS=" %%X IN ('DIR "%PX86%\WiX Toolset*" /B /AD') DO SET PATH=%PATH%;%PX86%\%%~nxX\bin
 
+:: test for wix being installed
+candle -help >NUL 2>&1
+IF %ERRORLEVEL% NEQ 0 (
+  ECHO Wix Toolset not found; skipping MSI build
+  EXIT /B 0
+)
+
 :: create the installers
 FOR %%A IN (arm arm64 x86 x64) DO (
    candle -arch %%A "WinDirStat.wxs" -o "WinDirStat-%%A.wixobj"
