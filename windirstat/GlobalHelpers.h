@@ -23,7 +23,6 @@
 #pragma once
 
 #include <string>
-#include <ranges>
 #include <functional>
 
 std::wstring GetLocaleString(LCTYPE lctype, LANGID langid);
