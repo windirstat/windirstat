@@ -22,8 +22,8 @@
 
 #include "stdafx.h"
 #include "WinDirStat.h"
-#include <common/MdExceptions.h>
-#include <common/SmartPointer.h>
+#include <MdExceptions.h>
+#include <SmartPointer.h>
 #include "GlobalHelpers.h"
 #include "Options.h"
 #include "Localization.h"

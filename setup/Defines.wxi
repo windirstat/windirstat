@@ -10,7 +10,7 @@
     <?define Manufacturer =             "WinDirStat Team"?>
     <?define ARPContact =               "WinDirStat Team"?>
     <?define ARPHelpLink =              "https://windirstat.net"?>
-    <?define IconFilePath =             "..\common\WinDirStat.ico" ?>
+    <?define IconFilePath =             "..\windirstat\res\WinDirStat.ico" ?>
 
     <?define ProductBinariesDir =       "..\build"?>
     <?define LicenseRtf =               "license.rtf"?>

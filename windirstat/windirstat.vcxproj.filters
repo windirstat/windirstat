@@ -62,36 +62,30 @@
     </None>
     <None Include="..\CONTRIBUTORS.md" />
     <None Include="..\README.md" />
-    <None Include="..\common\build_luajit.cmd">
+    <None Include="produce_vsprojects.cmd">
       <Filter>Special Files</Filter>
     </None>
-    <None Include="..\common\produce_vsprojects.cmd">
-      <Filter>Special Files</Filter>
-    </None>
-    <None Include="..\common\setvcvars.cmd">
-      <Filter>Special Files</Filter>
-    </None>
-    <None Include="..\premake4.lua">
+    <None Include="setvcvars.cmd">
       <Filter>Special Files</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\common\CommonHelpers.h">
+    <ClInclude Include="CommonHelpers.h">
       <Filter>Header Files\Common</Filter>
     </ClInclude>
-    <ClInclude Include="..\common\SmartPointer.h">
+    <ClInclude Include="SmartPointer.h">
       <Filter>Header Files\Common</Filter>
     </ClInclude>
-    <ClInclude Include="..\common\MdExceptions.h">
+    <ClInclude Include="MdExceptions.h">
       <Filter>Header Files\Common</Filter>
     </ClInclude>
-    <ClInclude Include="..\common\Tracer.h">
+    <ClInclude Include="Tracer.h">
       <Filter>Header Files\Common</Filter>
     </ClInclude>
-    <ClInclude Include="..\common\version.h">
+    <ClInclude Include="version.h">
       <Filter>Header Files\Common</Filter>
     </ClInclude>
-    <ClInclude Include="..\common\Constants.h">
+    <ClInclude Include="Constants.h">
       <Filter>Header Files\Common</Filter>
     </ClInclude>
     <ClInclude Include="DirStatDoc.h">
@@ -228,7 +222,7 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\common\CommonHelpers.cpp">
+    <ClCompile Include="CommonHelpers.cpp">
       <Filter>Source Files\Common</Filter>
     </ClCompile>
     <ClCompile Include="DirStatDoc.cpp">
@@ -356,7 +350,7 @@
     <ResourceCompile Include="windirstat.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
-    <ResourceCompile Include="..\common\version.rc">
+    <ResourceCompile Include="version.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
     <ResourceCompile Include="langs.rc">
@@ -364,7 +358,7 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="..\common\WinDirStat.ico" />
+    <Image Include="WinDirStat.ico" />
     <Image Include="res\toolbar\IDB_CLEANUP_DELETE.bmp">
       <Filter>Resource Files\Resources</Filter>
     </Image>

@@ -27,8 +27,8 @@
 #include "Langs.h"
 #include "IconImageList.h"
 #include "MountPoints.h"
-#include <common/Constants.h>
-#include <common/Tracer.h>
+#include <Constants.h>
+#include <Tracer.h>
 
 class CMainFrame;
 class CDirStatApp;

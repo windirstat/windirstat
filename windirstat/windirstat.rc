@@ -58,7 +58,7 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-IDR_MAINFRAME           ICON                    "..\\common\\WinDirStat.ico"
+IDR_MAINFRAME           ICON                    "res\\WinDirStat.ico"
 
 IDI_JUNCTION            ICON                    "res\\nodes\\IDI_JUNCTION.ico"
 

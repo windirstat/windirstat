@@ -21,9 +21,9 @@
 
 #include "stdafx.h"
 #include "WinDirStat.h"
-#include <common/Constants.h>
-#include <common/MdExceptions.h>
-#include <common/CommonHelpers.h>
+#include <Constants.h>
+#include <MdExceptions.h>
+#include <CommonHelpers.h>
 #include "AboutDlg.h"
 #include "Localization.h"
 #include "Options.h"

@@ -26,7 +26,7 @@
 #include "WinDirStat.h"
 #include "DirStatDoc.h"
 #include "MainFrame.h"
-#include <common/CommonHelpers.h>
+#include <CommonHelpers.h>
 #include "GlobalHelpers.h"
 #include "SelectObject.h"
 #include "Item.h"

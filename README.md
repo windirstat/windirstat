@@ -69,9 +69,9 @@ WinDirStat 2.x has been developed for and tested on the following operating syst
 
 ## Logo
 
-![WinDirStat logo](common/logo_256px.png)
+![WinDirStat logo](windirstat/logos/logo_256px.png)
 
-The [logo](https://windirstat.net/logo.html) was generously designed and contributed to the project by Robin "tuqueque" Marín. Follow him on Twitter [@tuquequeorg](https://twitter.com/tuquequeorg).
+The logo was generously designed and contributed to the project by Robin "tuqueque" Marín. Follow him on Twitter/X [@tuquequeorg](https://twitter.com/tuquequeorg).
 
 ## Resources
 

@@ -38,7 +38,7 @@
 #include "MainFrame.h"
 #include "SelectObject.h"
 #include <CommonHelpers.h>
-#include <common/MdExceptions.h>
+#include <MdExceptions.h>
 
 #include <format>
 #include <functional>

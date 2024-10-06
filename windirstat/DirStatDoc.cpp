@@ -31,9 +31,9 @@
 #include "MainFrame.h"
 #include "ModalShellApi.h"
 #include "WinDirStat.h"
-#include <common/CommonHelpers.h>
-#include <common/MdExceptions.h>
-#include <common/SmartPointer.h>
+#include <CommonHelpers.h>
+#include <MdExceptions.h>
+#include <SmartPointer.h>
 
 #include <functional>
 #include <unordered_map>

@@ -32,12 +32,3 @@
 * Dariusz Małachowski
 * Sergey Polyetayev
 * Sergio Omar Maurelli
-
-# Contributors of Third Party Code
-
-* Doug Currie
-    * `%s/format` patch for Lua
-* Asko Kauppi
-    * LNUM patch
-* Jason Perkins
-    * Premake4 and Lua functions from Premake4 as additions for WDS
