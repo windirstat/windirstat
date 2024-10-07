@@ -78,9 +78,9 @@ IF %ERRORLEVEL% EQU 0 7z.EXE a -mx=9 "%PUBDIR%\WinDirStat.7z" "%PUBDIR%\*\*.exe"
 :: output hash information
 SET HASHFILE=%PUBDIR%\WinDirStat-Hashes.txt
 IF EXIST "%HASHFILE%" DEL /F "%HASHFILE%"
-%POWERSHELL% -Command "Get-ChildItem -Include @('*.msi','*.exe','*.zip') -Path '%PUBDIR%' -Recurse | Get-FileHash -Algorithm SHA256 | Out-File -Append '%HASHFILE%' -Width 256"
-%POWERSHELL% -Command "Get-ChildItem -Include @('*.msi','*.exe','*.zip') -Path '%PUBDIR%' -Recurse | Get-FileHash -Algorithm SHA1 | Out-File -Append '%HASHFILE%' -Width 256"
-%POWERSHELL% -Command "Get-ChildItem -Include @('*.msi','*.exe','*.zip') -Path '%PUBDIR%' -Recurse | Get-FileHash -Algorithm MD5 | Out-File -Append '%HASHFILE%' -Width 256"
+%POWERSHELL% -Command "Get-ChildItem -Include @('*.msi','*.exe','*.zip','*.7z') -Path '%PUBDIR%' -Recurse | Get-FileHash -Algorithm SHA256 | Out-File -Append '%HASHFILE%' -Width 256"
+%POWERSHELL% -Command "Get-ChildItem -Include @('*.msi','*.exe','*.zip','*.7z') -Path '%PUBDIR%' -Recurse | Get-FileHash -Algorithm SHA1 | Out-File -Append '%HASHFILE%' -Width 256"
+%POWERSHELL% -Command "Get-ChildItem -Include @('*.msi','*.exe','*.zip','*.7z') -Path '%PUBDIR%' -Recurse | Get-FileHash -Algorithm MD5 | Out-File -Append '%HASHFILE%' -Width 256"
 %POWERSHELL% -Command "$Data = Get-Content '%HASHFILE%'; $Data.Replace((Get-Item -LiteralPath '%PUBDIR%').FullName + '\','').Trim() | Set-Content '%HASHFILE%'"
 
 PAUSE
