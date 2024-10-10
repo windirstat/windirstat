@@ -76,7 +76,7 @@ BOOL CPageGeneral::OnInitDialog()
     m_ListStripes = COptions::ListStripes;
     m_ShowDeletionWarning = COptions::ShowDeleteWarning;
     m_ListFullRowSelection = COptions::ListFullRowSelection;
-    m_UseFallbackLocale= COptions::UseFallbackLocale;
+    m_UseFallbackLocale = COptions::UseWindowsLocaleSetting;
     m_PortableMode = CDirStatApp::Get()->InPortableMode();
 
     for (const auto & language : Localization::GetLanguageList())
@@ -97,13 +97,13 @@ void CPageGeneral::OnOK()
 {
     UpdateData();
 
-    const bool fallbackChanged = static_cast<bool>(m_UseFallbackLocale) != COptions::UseFallbackLocale;
+    const bool fallbackChanged = static_cast<bool>(m_UseFallbackLocale) != COptions::UseWindowsLocaleSetting;
     const bool gridChanged = static_cast<bool>(m_ListGrid) != COptions::ListGrid ||
         static_cast<bool>(m_ListStripes) != COptions::ListStripes ||
         static_cast<bool>(m_ListFullRowSelection) != COptions::ListFullRowSelection;
 
     COptions::UseSizeSuffixes = (FALSE != m_SizeSuffixesFormat);
-    COptions::UseFallbackLocale = (FALSE != m_UseFallbackLocale);
+    COptions::UseWindowsLocaleSetting = (FALSE != m_UseFallbackLocale);
     COptions::ListGrid = (FALSE != m_ListGrid);
     COptions::ListStripes = (FALSE != m_ListStripes);
     COptions::ShowDeleteWarning = (FALSE != m_ShowDeletionWarning);

@@ -69,7 +69,7 @@ Setting<bool> COptions::ShowUnknown(OptionsGeneral, L"ShowUnknown", false);
 Setting<bool> COptions::SkipDupeDetectionCloudLinks(OptionsGeneral, L"SkipDupeDetectionCloudLinks", true);
 Setting<bool> COptions::TreeMapGrid(OptionsTreeMap, L"TreeMapGrid", (CTreeMap::GetDefaults().grid));
 Setting<bool> COptions::UseBackupRestore(OptionsGeneral, L"UseBackupRestore", true);
-Setting<bool> COptions::UseFallbackLocale(OptionsGeneral, L"UseFallbackLocale", false);
+Setting<bool> COptions::UseWindowsLocaleSetting(OptionsGeneral, L"UseWindowsLocaleSetting", true);
 Setting<COLORREF> COptions::FileTreeColor0(OptionsFileTree, L"FileTreeColor0", RGB(64, 64, 140));
 Setting<COLORREF> COptions::FileTreeColor1(OptionsFileTree, L"FileTreeColor1", RGB(140, 64, 64));
 Setting<COLORREF> COptions::FileTreeColor2(OptionsFileTree, L"FileTreeColor2", RGB(64, 140, 64));
@@ -191,7 +191,7 @@ void COptions::PostProcessPersistedSettings()
     if (std::ranges::find(languages, langid) == languages.end())
     {
         const LANGID best = MAKELANGID(PRIMARYLANGID(GetUserDefaultLangID()), SUBLANG_NEUTRAL);
-        LanguageId.Obj() = (std::ranges::find(languages, best) != languages.end()) ? best : GetFallbackLanguage();
+        LanguageId.Obj() = (std::ranges::find(languages, best) != languages.end()) ? best : MAKELANGID(LANG_ENGLISH, SUBLANG_NEUTRAL);
     }
     Localization::LoadResource(static_cast<LANGID>(LanguageId));
 
@@ -216,19 +216,10 @@ void COptions::PostProcessPersistedSettings()
     }
 }
 
-LANGID COptions::GetFallbackLanguage()
+LCID COptions::GetLocaleForFormatting()
 {
-    return MAKELANGID(LANG_ENGLISH, SUBLANG_NEUTRAL);
-}
-
-LANGID COptions::GetEffectiveLangId()
-{
-    if (UseFallbackLocale)
-    {
-        return GetFallbackLanguage();
-    }
-
-    return static_cast<LANGID>(LanguageId);
+    return UseWindowsLocaleSetting ? LOCALE_USER_DEFAULT :
+        MAKELCID(LanguageId, SORT_DEFAULT);
 }
 
 void COptions::LoadAppSettings()

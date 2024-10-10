@@ -55,9 +55,8 @@ std::wstring FormatLongLongNormal(ULONGLONG n)
     return all;
 }
 
-std::wstring GetLocaleString(const LCTYPE lctype, const LANGID langid)
+std::wstring GetLocaleString(const LCTYPE lctype, const LCID lcid)
 {
-    const LCID lcid = MAKELCID(langid, SORT_DEFAULT);
     const int len = ::GetLocaleInfo(lcid, lctype, nullptr, 0);
 
     std::wstring s;
@@ -77,24 +76,24 @@ std::wstring GetLocaleLanguage(const LANGID langid)
 
 std::wstring GetLocaleThousandSeparator()
 {
-    static LANGID cachedLang = static_cast<LANGID>(-1);
+    static LCID cachedLocale = static_cast<LCID>(-1);
     static std::wstring cachedString;
-    if (cachedLang != COptions::GetEffectiveLangId())
+    if (cachedLocale != COptions::GetLocaleForFormatting())
     {
-        cachedLang = COptions::GetEffectiveLangId();
-        cachedString = GetLocaleString(LOCALE_STHOUSAND, cachedLang);
+        cachedLocale = COptions::GetLocaleForFormatting();
+        cachedString = GetLocaleString(LOCALE_STHOUSAND, cachedLocale);
     }
     return cachedString;
 }
 
 std::wstring GetLocaleDecimalSeparator()
 {
-    static LANGID cachedLang = static_cast<LANGID>(-1);
+    static LCID cachedLocale = static_cast<LCID>(-1);
     static std::wstring cachedString;
-    if (cachedLang != COptions::GetEffectiveLangId())
+    if (cachedLocale != COptions::GetLocaleForFormatting())
     {
-        cachedLang = COptions::GetEffectiveLangId();
-        cachedString = GetLocaleString(LOCALE_SDECIMAL, cachedLang);
+        cachedLocale = COptions::GetLocaleForFormatting();
+        cachedString = GetLocaleString(LOCALE_SDECIMAL, cachedLocale);
     }
     return cachedString;
 }
@@ -188,8 +187,8 @@ std::wstring FormatFileTime(const FILETIME& t)
     {
         return L"";
     }
-
-    const LCID lcid = MAKELCID(COptions::LanguageId.Obj(), SORT_DEFAULT);
+    
+    const LCID lcid = COptions::GetLocaleForFormatting();
 
     std::array<WCHAR, 64> date;
     VERIFY(0 < ::GetDateFormat(lcid, DATE_SHORTDATE, &st, nullptr, date.data(), static_cast<int>(date.size())));

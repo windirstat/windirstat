@@ -25,7 +25,7 @@
 #include <string>
 #include <functional>
 
-std::wstring GetLocaleString(LCTYPE lctype, LANGID langid);
+std::wstring GetLocaleString(LCTYPE lctype, LCID lcid);
 std::wstring GetLocaleLanguage(LANGID langid);
 std::wstring GetLocaleThousandSeparator();
 std::wstring GetLocaleDecimalSeparator();

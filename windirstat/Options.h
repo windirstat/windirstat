@@ -139,7 +139,7 @@ public:
     static Setting<bool> SkipDupeDetectionCloudLinks;
     static Setting<bool> TreeMapGrid;
     static Setting<bool> UseBackupRestore;
-    static Setting<bool> UseFallbackLocale;
+    static Setting<bool> UseWindowsLocaleSetting;
     static Setting<COLORREF> FileTreeColor0;
     static Setting<COLORREF> FileTreeColor1;
     static Setting<COLORREF> FileTreeColor2;
@@ -188,6 +188,5 @@ public:
     static void PostProcessPersistedSettings();
     static void SetTreeMapOptions(const CTreeMap::Options& options);
 
-    static LANGID GetFallbackLanguage();
-    static LANGID GetEffectiveLangId();
+    static LCID GetLocaleForFormatting();
 };
