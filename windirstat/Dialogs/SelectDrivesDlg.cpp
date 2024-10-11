@@ -72,6 +72,7 @@ namespace
 CDriveItem::CDriveItem(CDrivesList* list, const std::wstring & pszPath)
     : m_List(list)
     , m_Path(pszPath)
+    , m_Image(GetIconImageList()->GetFileImage(m_Path))
     , m_IsRemote(DRIVE_REMOTE == ::GetDriveType(m_Path.c_str()))
     , m_Name(m_Path) {}
 
@@ -137,7 +138,7 @@ int CDriveItem::Compare(const CSortingListItem* baseOther, const int subitem) co
 
 int CDriveItem::GetImage() const
 {
-    return GetIconImageList()->GetFileImage(m_Path);
+    return m_Image;
 }
 
 bool CDriveItem::DrawSubitem(const int subitem, CDC* pdc, CRect rc, const UINT state, int* width, int* focusLeft) const
@@ -329,7 +330,6 @@ LPARAM CDriveInformationThread::GetDriveInformation(bool& success, std::wstring&
 
 IMPLEMENT_DYNAMIC(CDrivesList, COwnerDrawnListControl)
 
-// TODO: Persist Settings?
 CDrivesList::CDrivesList()
     : COwnerDrawnListControl(20, COptions::DriveListColumnOrder.Ptr(), COptions::DriveListColumnWidths.Ptr())
 {

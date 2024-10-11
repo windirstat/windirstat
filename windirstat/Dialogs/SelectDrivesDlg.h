@@ -64,13 +64,14 @@ public:
 
 private:
     CDrivesList* m_List; // Backpointer
-    std::wstring m_Path;     // e.g. "C:\"
-    bool m_IsRemote;     // Whether the drive type is DRIVE_REMOTE (network drive)
+    std::wstring m_Path; // e.g. "C:\"
+    short m_Image = -1; // Cached icon image
+    bool m_IsRemote; // Whether the drive type is DRIVE_REMOTE (network drive)
 
-    bool m_Querying = true;  // Information thread is running.
-    bool m_Success = false;  // Drive is accessible. false while m_Querying is true.
+    bool m_Querying = true; // Information thread is running.
+    bool m_Success = false; // Drive is accessible. false while m_Querying is true.
 
-    std::wstring m_Name;            // e.g. "BOOT (C:)"
+    std::wstring m_Name; // e.g. "BOOT (C:)"
     ULONGLONG m_TotalBytes = 0; // Capacity
     ULONGLONG m_FreeBytes = 0;  // Free space
 
