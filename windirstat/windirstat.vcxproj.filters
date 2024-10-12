@@ -346,7 +346,6 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="WinDirStat.ico" />
     <Image Include="res\toolbar\IDB_CLEANUP_DELETE.bmp">
       <Filter>Resource Files\Resources</Filter>
     </Image>
@@ -409,6 +408,9 @@
     </Image>
     <Image Include="res\toolbar\IDB_SCAN_STOP.bmp">
       <Filter>Resource Files\Resources</Filter>
+    </Image>
+    <Image Include="res\WinDirStat.ico">
+      <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>
   <ItemGroup>

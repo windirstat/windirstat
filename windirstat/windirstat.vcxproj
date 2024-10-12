@@ -683,7 +683,7 @@
     <ResourceCompile Include="version.rc" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="WinDirStat.ico" />
+    <Image Include="res\WinDirStat.ico" />
     <Image Include="res\nodes\IDI_EMPTY.ico" />
     <Image Include="res\nodes\IDI_FREE_SPACE.ico" />
     <Image Include="res\nodes\IDI_JUNCTION.ico" />

@@ -192,6 +192,7 @@ protected:
     afx_msg void OnExecuteDism();
     afx_msg void OnExplorerSelect();
     afx_msg void OnCommandPromptHere();
+    afx_msg void OnPowerShellHere();
     afx_msg void OnCleanupDeleteToBin();
     afx_msg void OnCleanupDelete();
     afx_msg void OnUpdateUserDefinedCleanup(CCmdUI* pCmdUI);

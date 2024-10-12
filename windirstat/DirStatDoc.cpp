@@ -235,7 +235,19 @@ BOOL CDirStatDoc::OnOpenDocument(LPCWSTR lpszPathName)
 
     if (m_ShowMyComputer)
     {
-        m_RootItem = new CItem(IT_MYCOMPUTER | ITF_ROOTITEM, Localization::Lookup(IDS_MYCOMPUTER));
+        // Fetch the localized string for the root computer object
+        SmartPointer<LPITEMIDLIST> pidl(CoTaskMemFree);
+        SmartPointer<LPWSTR> ppszName(CoTaskMemFree);
+        CComPtr<IShellItem> psi;
+        if (FAILED(SHGetKnownFolderIDList(FOLDERID_ComputerFolder, 0, nullptr, &pidl)) ||
+            FAILED(SHCreateItemFromIDList(pidl, IID_PPV_ARGS(&psi)) ||
+            FAILED(psi->GetDisplayName(SIGDN_NORMALDISPLAY, &ppszName))))
+        {
+            ASSERT(FALSE);
+        }
+
+        LPCWSTR name = ppszName != nullptr ? ppszName : L"This PC";
+        m_RootItem = new CItem(IT_MYCOMPUTER | ITF_ROOTITEM, name);
         for (const auto & rootFolder : rootFolders)
         {
             const auto drive = new CItem(IT_DRIVE, rootFolder);
@@ -867,6 +879,7 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
         { ID_TREEMAP_ZOOMOUT,         { false, false, false, false, IT_DIRECTORY, canZoomOut } },
         { ID_CLEANUP_EXPLORER_SELECT, { false, true,  true,  false, IT_DIRECTORY | IT_FILE } },
         { ID_CLEANUP_OPEN_IN_CONSOLE, { false, true,  true,  false, IT_DRIVE | IT_DIRECTORY | IT_FILE } },
+        { ID_CLEANUP_OPEN_IN_PWSH,    { false, true,  true,  false, IT_DRIVE | IT_DIRECTORY | IT_FILE } },
         { ID_CLEANUP_DISM_NORMAL,     { true,  true,  false, false, IT_ANY } },
         { ID_CLEANUP_DISM_RESET,      { true,  true,  false, false, IT_ANY } },
         { ID_CLEANUP_REMOVE_ROAMING,  { true,  true,  false, false, IT_ANY } },
@@ -943,6 +956,7 @@ BEGIN_MESSAGE_MAP(CDirStatDoc, CDocument)
     ON_COMMAMD_UPDATE_WRAPPER(ID_TREEMAP_ZOOMOUT, OnTreeMapZoomOut)
     ON_COMMAMD_UPDATE_WRAPPER(ID_CLEANUP_EXPLORER_SELECT, OnExplorerSelect)
     ON_COMMAMD_UPDATE_WRAPPER(ID_CLEANUP_OPEN_IN_CONSOLE, OnCommandPromptHere)
+    ON_COMMAMD_UPDATE_WRAPPER(ID_CLEANUP_OPEN_IN_PWSH, OnPowerShellHere)
     ON_COMMAMD_UPDATE_WRAPPER(ID_CLEANUP_DELETE_BIN, OnCleanupDeleteToBin)
     ON_COMMAMD_UPDATE_WRAPPER(ID_CLEANUP_DELETE, OnCleanupDelete)
     ON_COMMAMD_UPDATE_WRAPPER(ID_CLEANUP_DISM_NORMAL, OnExecuteDism)
@@ -1165,6 +1179,46 @@ void CDirStatDoc::OnCommandPromptHere()
         for (const auto& path : paths)
         {
             ShellExecuteThrow(cmd, L"", L"open", *AfxGetMainWnd(), path);
+        }
+    }
+    catch (CException* pe)
+    {
+        pe->ReportError();
+        pe->Delete();
+    }
+}
+
+void CDirStatDoc::OnPowerShellHere()
+{
+    try
+    {
+        // locate PWSH
+        static std::wstring pwsh;
+        if (pwsh.empty()) for (const auto exe : { L"pwsh.exe", L"powershell.exe" })
+        {
+            SmartPointer<HMODULE> lib(FreeLibrary, LoadLibrary(exe));
+            if (lib == nullptr) continue;
+            pwsh.resize(MAX_PATH);
+            if (GetModuleFileNameW(lib, pwsh.data(),
+                static_cast<DWORD>(pwsh.size())) > 0 && GetLastError() == ERROR_SUCCESS)
+            {
+                pwsh.resize(wcslen(pwsh.data()));
+                break;
+            }
+        }
+
+        // accumulate a unique set of paths
+        const auto& items = GetAllSelected();
+        std::unordered_set<std::wstring>paths;
+        for (const auto& item : items)
+        {
+            paths.insert(item->GetFolderPath());
+        }
+
+        // launch a command prompt for each path
+        for (const auto& path : paths)
+        {
+            ShellExecuteThrow(pwsh, L"", L"open", *AfxGetMainWnd(), path);
         }
     }
     catch (CException* pe)
