@@ -12,9 +12,10 @@
 *	Export scan results to CSV file
 *	Compress files using transparent compression capabilities
 *	Context menu option to display full Explorer context menu
+*	Context menu option to launch PowerShell
 *	Right-click explorer menu
 *	Toolbar icons enhanced
-*	Long file names are now counted
+*	Long file names are now supported
 *	Option to relaunch with elevated credentials
 *	Utilize backup / restore privileges to scan inaccessible files
 *	Pacman drawing enhancements
