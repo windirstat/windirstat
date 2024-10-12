@@ -756,18 +756,15 @@ void CDirStatDoc::CallUserDefinedCleanup(const bool isDirectory, const std::wstr
     std::wstring cmdline = GetBaseNameFromPath(app) + L" /C " + userCommandLine;
     const std::wstring directory = isDirectory ? currentPath : GetFolderNameFromPath(currentPath);
 
-    STARTUPINFO si;
-    ZeroMemory(&si, sizeof(si));
-    si.cb          = sizeof(si);
+    STARTUPINFO si { sizeof(si) };
     si.dwFlags     = STARTF_USESHOWWINDOW;
     si.wShowWindow = showConsoleWindow ? SW_SHOWNORMAL : SW_HIDE;
 
     PROCESS_INFORMATION pi;
     ZeroMemory(&pi, sizeof(pi));
 
-    if (CreateProcess(app.c_str(), cmdline.data(), nullptr,
-        nullptr, false, 0, nullptr,
-        directory.c_str(), &si, &pi))
+    if (CreateProcess(app.c_str(), cmdline.data(), nullptr, nullptr, false,
+        0, nullptr, directory.c_str(), &si, &pi) == 0)
     {
         MdThrowStringException(Localization::Format(IDS_COULDNOTCREATEPROCESSssss,
             app, cmdline, directory, MdGetWinErrorText(static_cast<HRESULT>(GetLastError()))));
