@@ -41,11 +41,10 @@ public:
 
     void Initialize();
 
-    short GetMyComputerImage();
-    short GetMountPointImage();
+    short GetMyComputerImage() const;
+    short GetMountPointImage() const;
     short GetJunctionImage() const;
     short GetJunctionProtectedImage() const;
-    short GetFolderImage();
     short GetFileImage(const std::wstring& path, DWORD attr = 0);
     short GetExtImageAndDescription(const std::wstring& ext, std::wstring& description, DWORD attr = 0);
 
@@ -54,7 +53,6 @@ public:
     short GetEmptyImage() const;
 
     short CacheIcon(const std::wstring& path, UINT flags = 0, DWORD attr = 0, std::wstring* psTypeName = nullptr);
-    static std::wstring GetADriveSpec();
     void AddCustomImages();
 
     std::shared_mutex m_IndexMutex;
@@ -65,4 +63,6 @@ public:
     short m_EmptyImage = -1;        // For items whose image cannot be found
     short m_JunctionImage = -1;     // For normal functions
     short m_JunctionProtected = -1; // For protected junctions
+    short m_MountPointImage = -1;   // Mount point image
+    short m_MyComputerImage = -1;   // My computer icon
 };

@@ -36,7 +36,6 @@ void CIconImageList::Initialize()
         this->Attach(ImageList_Duplicate(hil));
 
         VTRACE(L"System image list has {} icons", this->GetImageCount());
-        std::lock_guard lock(m_IndexMutex);
         for (short i = 0; i < static_cast<short>(this->GetImageCount()); i++)
         {
             m_IndexMap[i] = i;
@@ -98,14 +97,14 @@ short CIconImageList::CacheIcon(const std::wstring & path, UINT flags, const DWO
     return m_IndexMap[sfi.iIcon];
 }
 
-short CIconImageList::GetMyComputerImage()
+short CIconImageList::GetMyComputerImage() const
 {
-    return CacheIcon(std::to_wstring(CSIDL_DRIVES), SHGFI_PIDL);
+    return m_MyComputerImage;
 }
 
-short CIconImageList::GetMountPointImage()
+short CIconImageList::GetMountPointImage() const
 {
-    return CacheIcon(GetADriveSpec(), 0, FILE_ATTRIBUTE_REPARSE_POINT);
+    return m_MountPointImage;
 }
 
 short CIconImageList::GetJunctionImage() const
@@ -116,12 +115,6 @@ short CIconImageList::GetJunctionImage() const
 short CIconImageList::GetJunctionProtectedImage() const
 {
     return m_JunctionProtected;
-}
-
-short CIconImageList::GetFolderImage()
-{
-    const std::wstring & s = GetSysDirectory();
-    return CacheIcon(s, 0, FILE_ATTRIBUTE_DIRECTORY);
 }
 
 short CIconImageList::GetFileImage(const std::wstring & path, const DWORD attr)
@@ -136,13 +129,13 @@ short CIconImageList::GetExtImageAndDescription(const std::wstring & ext, std::w
 
 short CIconImageList::GetFreeSpaceImage() const
 {
-    ASSERT(m_hImageList != nullptr); // should have been initialize()ed.
+    ASSERT(m_hImageList != nullptr);
     return m_FreeSpaceImage;
 }
 
 short CIconImageList::GetUnknownImage() const
 {
-    ASSERT(m_hImageList != nullptr); // should have been initialize()ed.
+    ASSERT(m_hImageList != nullptr);
     return m_UnknownImage;
 }
 
@@ -152,19 +145,6 @@ short CIconImageList::GetEmptyImage() const
     return m_EmptyImage;
 }
 
-// Returns the boot drive icon
-std::wstring CIconImageList::GetADriveSpec()
-{
-    std::wstring s(_MAX_PATH, wds::chrNull);
-    const UINT u = ::GetWindowsDirectory(s.data(), _MAX_PATH);
-    s.resize(wcslen(s.data()));
-    if (u == 0 || s.size() < 3 || s[1] != wds::chrColon || s[2] != wds::chrBackslash)
-    {
-        return L"C:\\";
-    }
-    return s.substr(0, 3);
-}
-
 void CIconImageList::AddCustomImages()
 {
     m_JunctionImage = static_cast<short>(this->Add(CDirStatApp::Get()->LoadIcon(IDI_JUNCTION)));
@@ -172,4 +152,14 @@ void CIconImageList::AddCustomImages()
     m_FreeSpaceImage = static_cast<short>(this->Add(CDirStatApp::Get()->LoadIcon(IDI_FREE_SPACE)));
     m_UnknownImage = static_cast<short>(this->Add(CDirStatApp::Get()->LoadIcon(IDI_UNKNOWN)));
     m_EmptyImage = static_cast<short>(this->Add(CDirStatApp::Get()->LoadIcon(IDI_EMPTY)));
+
+    // cache icon for boot drive
+    const auto driveLen = wcslen(L"C:\\");
+    std::wstring drive(_MAX_PATH, wds::chrNull);
+    const UINT u = ::GetWindowsDirectory(drive.data(), _MAX_PATH);
+    if (u > driveLen) drive.resize(driveLen);
+    m_MountPointImage = CacheIcon(drive, 0, FILE_ATTRIBUTE_REPARSE_POINT);
+
+    // cache icon for my computer
+    m_MyComputerImage = CacheIcon(std::to_wstring(CSIDL_DRIVES), SHGFI_PIDL);
 }
