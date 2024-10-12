@@ -58,8 +58,24 @@ short CIconImageList::CacheIcon(const std::wstring & path, UINT flags, const DWO
         flags |= SHGFI_TYPENAME;
     }
 
+    HIMAGELIST hil = nullptr;
     SHFILEINFO sfi{};
-    const auto hil = reinterpret_cast<HIMAGELIST>(::SHGetFileInfo(path.c_str(), attr, &sfi, sizeof(sfi), flags));
+
+    if (flags & SHGFI_PIDL)
+    {
+        // assume folder id numeric encoded as string
+        SmartPointer<LPITEMIDLIST> pidl(CoTaskMemFree);
+        if (SUCCEEDED(SHGetSpecialFolderLocation(nullptr, std::stoi(path), &pidl)))
+        {
+            hil = reinterpret_cast<HIMAGELIST>(::SHGetFileInfo(static_cast<LPCWSTR>(
+                static_cast<LPVOID>(pidl)), attr, &sfi, sizeof(sfi), flags));
+        }
+    }
+    else
+    {
+        hil = reinterpret_cast<HIMAGELIST>(::SHGetFileInfo(path.c_str(), attr, &sfi, sizeof(sfi), flags));
+    }
+
     if (hil == nullptr)
     {
         VTRACE(L"SHGetFileInfo() failed: {}", path);
@@ -84,14 +100,7 @@ short CIconImageList::CacheIcon(const std::wstring & path, UINT flags, const DWO
 
 short CIconImageList::GetMyComputerImage()
 {
-    SmartPointer<LPITEMIDLIST> pidl(CoTaskMemFree);
-    if (FAILED(::SHGetSpecialFolderLocation(nullptr, CSIDL_DRIVES, &pidl)))
-    {
-        VTRACE(L"SHGetSpecialFolderLocation(CSIDL_DRIVES) failed!");
-        return 0;
-    }
-
-    return CacheIcon(static_cast<LPCWSTR>(static_cast<LPVOID>(pidl)), SHGFI_PIDL);
+    return CacheIcon(std::to_wstring(CSIDL_DRIVES), SHGFI_PIDL);
 }
 
 short CIconImageList::GetMountPointImage()
