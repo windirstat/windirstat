@@ -9,11 +9,22 @@ jobs:
       - name: Get version
         id: get-version
         run: |
-          # Finding the version from release name
-          $VERSION="${{ github.ref_name }}" -ireplace '^release/v?'
-          "version=$VERSION" >> $env:GITHUB_OUTPUT
+          # Finding the version from release tag name
+          if ("${{ github.ref_name }}" -imatch "^release/")
+          {
+              $VERSION="${{ github.ref_name }}" -ireplace '^release/v?'
+              "version=$VERSION" >> $env:GITHUB_OUTPUT
+              "skip=false" >> $env:GITHUB_OUTPUT
+          }
+          else
+          {
+              "skip=true" >> $env:GITHUB_OUTPUT
+          }
         shell: pwsh
-      - uses: vedantmgoyal9/winget-releaser@main
+      - name: Call winget-releaser action
+        id: call-winget-releaser
+        if: ${{ steps.get-version.outputs.skip != 'true' }}
+        uses: vedantmgoyal9/winget-releaser@main
         with:
           identifier: WinDirStat.WinDirStat
           version: ${{ steps.get-version.outputs.version }}
