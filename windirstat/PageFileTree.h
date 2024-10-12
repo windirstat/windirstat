@@ -31,7 +31,7 @@ class CPageFileTree final : public CPropertyPage
 {
     DECLARE_DYNAMIC(CPageFileTree)
 
-    enum { IDD = IDD_PAGE_TREELIST };
+    enum : std::uint8_t { IDD = IDD_PAGE_TREELIST };
 
     CPageFileTree();
     ~CPageFileTree() override = default;

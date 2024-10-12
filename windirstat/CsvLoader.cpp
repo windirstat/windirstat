@@ -35,7 +35,7 @@
 #include <array>
 #include <ranges>
 
-enum
+enum : std::uint8_t
 {
     FIELD_NAME,
     FIELD_FILES,

@@ -77,7 +77,7 @@ BOOL CPageGeneral::OnInitDialog()
     m_ShowDeletionWarning = COptions::ShowDeleteWarning;
     m_ListFullRowSelection = COptions::ListFullRowSelection;
     m_UseFallbackLocale = COptions::UseWindowsLocaleSetting;
-    m_PortableMode = CDirStatApp::Get()->InPortableMode();
+    m_PortableMode = CDirStatApp::InPortableMode();
 
     for (const auto & language : Localization::GetLanguageList())
     {

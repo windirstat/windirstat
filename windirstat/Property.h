@@ -122,3 +122,14 @@ public:
     // Move constructor to allow for use in dynamic containers
     Setting(Setting&& other) noexcept : Setting(other.m_Section, other.m_Entry, other.m_Value, other.m_Min, other.m_Max) {}
 };
+
+// explicit instantiation declaration
+extern template class Setting<int>;
+extern template class Setting<bool>;
+extern template class Setting<double>;
+extern template class Setting<std::wstring>;
+extern template class Setting<std::vector<std::wstring>>;
+extern template class Setting<std::vector<int>>;
+extern template class Setting<WINDOWPLACEMENT>;
+extern template class Setting<RECT>;
+extern template class Setting<COLORREF>;

@@ -29,7 +29,7 @@
 
 namespace
 {
-    enum
+    enum : std::uint8_t
     {
         DELETE_FILE = 1
     };

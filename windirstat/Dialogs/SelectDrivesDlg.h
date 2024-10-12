@@ -31,7 +31,7 @@
 //
 // The dialog has these three radio buttons.
 //
-enum RADIO
+enum RADIO : std::uint8_t
 {
     RADIO_TARGET_DRIVES_ALL,
     RADIO_TARGET_DRIVES_SUBSET,
@@ -145,7 +145,7 @@ class CSelectDrivesDlg final : public CDialogEx
 {
     DECLARE_DYNAMIC(CSelectDrivesDlg)
 
-    enum { IDD = IDD_SELECTDRIVES };
+    enum : std::uint8_t { IDD = IDD_SELECTDRIVES };
 
     static std::wstring GetFullPathName(const std::wstring& relativePath);
 

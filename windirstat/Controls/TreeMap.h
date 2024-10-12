@@ -83,7 +83,7 @@ public:
     //
     // Treemap squarification style.
     //
-    enum STYLE
+    enum STYLE : std::uint8_t
     {
         KDirStatStyle,   // Children are layed out in rows. Similar to the style used by KDirStat.
         SequoiaViewStyle // The 'classical' squarification as described in at https://www.win.tue.nl/~vanwijk/.

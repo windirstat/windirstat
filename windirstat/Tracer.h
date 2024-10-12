@@ -32,7 +32,7 @@
 #include <iostream>
 #include <source_location>
 
-using VRACE_DETAIL_LEVEL = enum
+using VRACE_DETAIL_LEVEL = enum : std::uint8_t
 {
     VTRACE_FUNC = 1,
     VTRACE_FILE_LINE = 2,
@@ -101,5 +101,5 @@ public:
 };
 
 #else
-#define VTRACE __noop
+#define VTRACE(x, ...) __noop
 #endif // _DEBUG

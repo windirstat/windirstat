@@ -30,7 +30,7 @@ class CPageGeneral final : public CPropertyPage
 {
     DECLARE_DYNAMIC(CPageGeneral)
 
-    enum { IDD = IDD_PAGE_GENERAL };
+    enum : std::uint8_t { IDD = IDD_PAGE_GENERAL };
 
     CPageGeneral();
     ~CPageGeneral() override;

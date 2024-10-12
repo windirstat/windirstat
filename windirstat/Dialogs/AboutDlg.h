@@ -35,7 +35,7 @@ protected:
 
 class CAboutDlg final : public CDialogEx
 {
-    enum { IDD = IDD_ABOUTBOX };
+    enum : std::uint8_t { IDD = IDD_ABOUTBOX };
 
     class CMyTabControl final : public CTabCtrl
     {

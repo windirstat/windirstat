@@ -21,9 +21,9 @@
 
 #include "stdafx.h"
 
-#include <MdExceptions.h>
+#include "MdExceptions.h"
 #include <Constants.h>
-#include <CommonHelpers.h>
+#include "CommonHelpers.h"
 
 #include <format>
 #include <map>

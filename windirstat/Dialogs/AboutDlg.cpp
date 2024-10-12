@@ -22,8 +22,8 @@
 #include "stdafx.h"
 #include "WinDirStat.h"
 #include <Constants.h>
-#include <MdExceptions.h>
-#include <CommonHelpers.h>
+#include "MdExceptions.h"
+#include "CommonHelpers.h"
 #include "AboutDlg.h"
 #include "Localization.h"
 #include "Options.h"
@@ -34,7 +34,7 @@
 namespace
 {
     // Tabs
-    enum
+    enum : std::uint8_t
     {
         TAB_ABOUT,
         TAB_THANKSTO,

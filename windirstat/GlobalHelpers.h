@@ -37,8 +37,6 @@ std::wstring PadWidthBlanks(std::wstring n, int width);
 std::wstring FormatFileTime(const FILETIME& t);
 std::wstring FormatAttributes(DWORD attr);
 std::wstring FormatMilliseconds(ULONGLONG ms);
-std::wstring GetParseNameOfMyComputer();
-void GetPidlOfMyComputer(LPITEMIDLIST* ppidl);
 bool GetVolumeName(const std::wstring & rootPath, std::wstring& volumeName);
 std::wstring FormatVolumeNameOfRootPath(const std::wstring& rootPath);
 std::wstring FormatVolumeName(const std::wstring& rootPath, const std::wstring& volumeName);

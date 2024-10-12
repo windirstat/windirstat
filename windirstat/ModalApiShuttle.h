@@ -22,7 +22,6 @@
 #pragma once
 
 #include "WinDirStat.h"
-#include "ModalApiShuttle.h"
 
 //
 // CModalApiShuttle. (Base class for CModalShellApi and CModalSendMail.)
@@ -53,7 +52,7 @@ class CModalApiShuttle : public CDialogEx
     ~CModalApiShuttle() override = default;
 
 protected:
-    enum { IDD = IDD_MODALAPISHUTTLE };
+    enum : std::uint8_t { IDD = IDD_MODALAPISHUTTLE };
 
     BOOL OnInitDialog() override;
     DECLARE_MESSAGE_MAP()

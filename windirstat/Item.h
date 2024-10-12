@@ -30,7 +30,7 @@
 #include <shared_mutex>
 
 // Columns
-enum ITEMCOLUMNS
+enum ITEMCOLUMNS : std::uint8_t
 {
     COL_NAME,
     COL_SUBTREEPERCENTAGE,

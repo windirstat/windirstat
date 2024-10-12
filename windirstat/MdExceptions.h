@@ -35,8 +35,7 @@
 class CMdStringException final : public CException
 {
 public:
-    explicit CMdStringException(const std::wstring & pszText)
-        : m_SText(pszText) // pszText may be an ordinal resource (MAKEINTRESOURCE)
+    explicit CMdStringException(const std::wstring & pszText) : m_SText(pszText)
     {
     }
 
@@ -48,7 +47,6 @@ public:
         }
         if (nMaxError != 0 && lpszError != nullptr)
         {
-            // TODO, fix parameters
             wcscpy_s(lpszError, nMaxError, m_SText.data());
         }
         return true;
@@ -98,11 +96,6 @@ inline std::wstring MdGetWinErrorText(const HRESULT hr)
     return sRet;
 }
 
-inline void MdThrowStringException(const UINT resId)
-{
-    throw new CMdStringException(MAKEINTRESOURCE(resId)); //-V1022
-}
-
 inline void MdThrowStringException(const std::wstring & pszText)
 {
     throw new CMdStringException(pszText); //-V1022
@@ -115,22 +108,7 @@ inline void MdThrowWinError(const DWORD dw, const std::wstring & pszPrefix = {})
     MdThrowStringException(sMsg);
 }
 
-inline void MdThrowHresult(const HRESULT hr, const std::wstring & pszPrefix = {})
-{
-    std::wstring sMsg = pszPrefix;
-    sMsg += L": " + MdGetWinErrorText(hr);
-    MdThrowStringException(sMsg);
-}
-
 inline void MdThrowLastWinerror(const std::wstring & pszPrefix = {})
 {
     MdThrowWinError(GetLastError(), pszPrefix);
-}
-
-inline void MdThrowFailed(const HRESULT hr, const std::wstring & pszPrefix = {})
-{
-    if (FAILED(hr))
-    {
-        MdThrowHresult(hr, pszPrefix);
-    }
 }

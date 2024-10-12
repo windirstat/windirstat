@@ -21,8 +21,8 @@
 
 #include "stdafx.h"
 #include "WinDirStat.h"
-#include <SmartPointer.h>
-#include <CommonHelpers.h>
+#include "SmartPointer.h"
+#include "CommonHelpers.h"
 #include "Options.h"
 #include "GlobalHelpers.h"
 #include "SelectDrivesDlg.h"
@@ -32,7 +32,7 @@
 
 namespace
 {
-    enum
+    enum : std::uint8_t
     {
         COL_NAME,
         COL_TOTAL,

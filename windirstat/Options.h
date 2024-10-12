@@ -29,7 +29,7 @@ class COptions;
 constexpr auto USERDEFINEDCLEANUPCOUNT = 10;
 constexpr auto TREELISTCOLORCOUNT = 8;
 
-enum REFRESHPOLICY
+enum REFRESHPOLICY : std::uint8_t
 {
     RP_NO_REFRESH,
     RP_REFRESH_THIS_ENTRY,

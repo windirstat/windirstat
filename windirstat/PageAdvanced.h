@@ -30,7 +30,7 @@ class CPageAdvanced final : public CPropertyPage
 {
     DECLARE_DYNAMIC(CPageAdvanced)
 
-    enum { IDD = IDD_PAGE_ADVANCED };
+    enum : std::uint8_t { IDD = IDD_PAGE_ADVANCED };
 
     CPageAdvanced();
     ~CPageAdvanced() override;

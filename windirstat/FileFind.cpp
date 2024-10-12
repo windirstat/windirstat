@@ -24,7 +24,7 @@
 
 #include "FileFind.h"
 #include "Options.h"
-#include <Tracer.h>
+#include "Tracer.h"
 
 #pragma comment(lib,"ntdll.lib")
 

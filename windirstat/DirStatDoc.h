@@ -58,7 +58,7 @@ using CExtensionData = std::unordered_map<std::wstring, SExtensionRecord>;
 //
 // Hints for UpdateAllViews()
 //
-enum
+enum : std::uint8_t
 {
     HINT_NULL,                      // General update
     HINT_NEWROOT,                   // Root item has changed - clear everything.

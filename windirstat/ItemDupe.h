@@ -27,7 +27,7 @@
 #include <unordered_map>
 
 // Columns
-using ITEMDUPCOLUMNS = enum
+using ITEMDUPCOLUMNS = enum : std::uint8_t
 {
     COL_ITEMDUP_NAME,
     COL_ITEMDUP_ITEMS,

@@ -30,7 +30,7 @@ class CPageCleanups final : public CPropertyPage
 {
     DECLARE_DYNAMIC(CPageCleanups)
 
-    enum { IDD = IDD_PAGE_CLEANUPS };
+    enum : std::uint8_t { IDD = IDD_PAGE_CLEANUPS };
 
     CPageCleanups();
     ~CPageCleanups() override;

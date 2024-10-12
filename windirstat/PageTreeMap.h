@@ -32,7 +32,7 @@ class CPageTreeMap final : public CPropertyPage
 {
     DECLARE_DYNAMIC(CPageTreeMap)
 
-    enum { IDD = IDD_PAGE_TREEMAP };
+    enum : std::uint8_t { IDD = IDD_PAGE_TREEMAP };
 
     CPageTreeMap();
     ~CPageTreeMap() override = default;

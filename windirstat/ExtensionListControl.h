@@ -32,7 +32,7 @@ class CExtensionListControl final : public COwnerDrawnListControl
 {
 protected:
     // Columns
-    enum ListColumns
+    enum ListColumns : std::uint8_t
     {
         COL_EXT_EXTENSION,
         COL_EXT_COLOR,

@@ -23,8 +23,8 @@
 #include "stdafx.h"
 #include "WinDirStat.h"
 
-#include <MdExceptions.h>
-#include <CommonHelpers.h>
+#include "MdExceptions.h"
+#include "CommonHelpers.h"
 #include "MainFrame.h"
 #include "SelectDrivesDlg.h"
 #include "AboutDlg.h"
@@ -143,7 +143,7 @@ bool CDirStatApp::IsFollowingAllowed(const std::wstring& longpath, const DWORD a
         !CReparsePoints::IsReparseType(longpath, { IO_REPARSE_TAG_SYMLINK, IO_REPARSE_TAG_MOUNT_POINT }) ||
         !COptions::ExcludeVolumeMountPoints && m_ReparsePoints.IsVolumeMountPoint(longpath, attr) ||
         !COptions::ExcludeJunctions && m_ReparsePoints.IsJunction(longpath, attr) ||
-        !COptions::ExcludeSymbolicLinksDirectory && m_ReparsePoints.IsSymbolicLink(longpath, attr);
+        !COptions::ExcludeSymbolicLinksDirectory && CReparsePoints::IsSymbolicLink(longpath, attr);
 }
 
 // Get the alternative colors for compressed and encrypted files/folders.

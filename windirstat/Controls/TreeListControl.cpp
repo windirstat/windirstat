@@ -31,7 +31,7 @@
 namespace
 {
     // Sequence within IDB_NODES
-    enum
+    enum : std::uint8_t
     {
         NODE_PLUS_SIBLING,
         NODE_PLUS_END,

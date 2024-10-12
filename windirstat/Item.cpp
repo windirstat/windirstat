@@ -26,7 +26,7 @@
 #include "WinDirStat.h"
 #include "DirStatDoc.h"
 #include "MainFrame.h"
-#include <CommonHelpers.h>
+#include "CommonHelpers.h"
 #include "GlobalHelpers.h"
 #include "SelectObject.h"
 #include "Item.h"
@@ -42,6 +42,9 @@
 #include <shared_mutex>
 #include <stack>
 #include <array>
+
+#pragma comment(lib, "crypt32.lib")
+#pragma comment(lib, "bcrypt.lib")
 
 CItem::CItem(const ITEMTYPE type, const std::wstring & name) : m_Name(name), m_Type(type)
 {
@@ -825,22 +828,14 @@ bool CItem::HasUncPath() const
 // Returns the path for "Explorer here" or "Command Prompt here"
 std::wstring CItem::GetFolderPath() const
 {
-    std::wstring path;
+    std::wstring path = GetPath();
+    if (IsType(IT_FILE))
+    {
+        const auto i = path.find_last_of(wds::chrBackslash);
+        ASSERT(i != std::wstring::npos);
+        path = path.substr(0, i);
+    }
 
-    if (IsType(IT_MYCOMPUTER))
-    {
-        path = GetParseNameOfMyComputer();
-    }
-    else
-    {
-        path = GetPath();
-        if (IsType(IT_FILE))
-        {
-            const auto i = path.find_last_of(wds::chrBackslash);
-            ASSERT(i != std::wstring::npos);
-            path = path.substr(0, i);
-        }
-    }
     return path;
 }
 
@@ -1288,7 +1283,7 @@ std::wstring CItem::UpwardGetPathWithoutBackslash() const
         }
     }
 
-    while (path.back() == L'\\') path.pop_back();
+    while (!path.empty() && path.back() == L'\\') path.pop_back();
     return path;
 }
 

@@ -34,7 +34,7 @@ class CDeleteWarningDlg final : public CDialogEx
 {
     DECLARE_DYNAMIC(CDeleteWarningDlg)
 
-    enum { IDD = IDD_DELETE_WARNING };
+    enum : std::uint8_t { IDD = IDD_DELETE_WARNING };
 
     CDeleteWarningDlg(const std::vector<CItem*> & items, CWnd* pParent = nullptr);
     ~CDeleteWarningDlg() override = default;

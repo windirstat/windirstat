@@ -22,8 +22,8 @@
 
 #include "stdafx.h"
 #include "WinDirStat.h"
-#include <MdExceptions.h>
-#include <SmartPointer.h>
+#include "MdExceptions.h"
+#include "SmartPointer.h"
 #include "GlobalHelpers.h"
 #include "Options.h"
 #include "Localization.h"
@@ -31,9 +31,6 @@
 
 #include <array>
 #include <algorithm>
-
-#pragma comment(lib, "bcrypt.lib")
-#pragma comment(lib, "crypt32.lib")
 
 std::wstring FormatLongLongNormal(ULONGLONG n)
 {
@@ -318,35 +315,6 @@ std::wstring PathFromVolumeName(const std::wstring& name)
     ASSERT(path[1] == wds::chrColon);
 
     return path;
-}
-
-// Retrieve the "fully qualified parse name" of "My Computer"
-std::wstring GetParseNameOfMyComputer()
-{
-    CComPtr<IShellFolder> sf;
-    HRESULT hr = SHGetDesktopFolder(&sf);
-    MdThrowFailed(hr, L"::SHGetDesktopFolder");
-
-    SmartPointer<LPITEMIDLIST> pidl(CoTaskMemFree);
-    hr = SHGetSpecialFolderLocation(nullptr, CSIDL_DRIVES, &pidl);
-    MdThrowFailed(hr, L"SHGetSpecialFolderLocation(CSIDL_DRIVES)");
-
-    STRRET name;
-    ZeroMemory(&name, sizeof(name));
-    name.uType = STRRET_WSTR;
-    hr = sf->GetDisplayNameOf(pidl, SHGDN_FORPARSING, &name);
-    MdThrowFailed(hr, L"GetDisplayNameOf(My Computer)");
-    return name.pOleStr;
-}
-
-void GetPidlOfMyComputer(LPITEMIDLIST* ppidl)
-{
-    CComPtr<IShellFolder> sf;
-    HRESULT hr = SHGetDesktopFolder(&sf);
-    MdThrowFailed(hr, L"SHGetDesktopFolder");
-
-    hr = SHGetSpecialFolderLocation(nullptr, CSIDL_DRIVES, ppidl);
-    MdThrowFailed(hr, L"SHGetSpecialFolderLocation(CSIDL_DRIVES)");
 }
 
 std::wstring GetFolderNameFromPath(const std::wstring & path)

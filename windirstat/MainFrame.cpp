@@ -37,8 +37,8 @@
 #include "PageGeneral.h"
 #include "MainFrame.h"
 #include "SelectObject.h"
-#include <CommonHelpers.h>
-#include <MdExceptions.h>
+#include "CommonHelpers.h"
+#include "MdExceptions.h"
 
 #include <format>
 #include <functional>
@@ -881,9 +881,10 @@ void CMainFrame::CopyToClipboard(const std::wstring & psz)
             MdThrowStringException(Localization::Lookup(IDS_CANNOTSETCLIPBOARDDATA));
         }
     }
-    catch (CException& pe)
+    catch (CException* pe)
     {
-        pe.ReportError();
+        pe->ReportError();
+        pe->Delete();
     }
 }
 

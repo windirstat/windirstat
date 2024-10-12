@@ -21,7 +21,7 @@
 
 #include "stdafx.h"
 #include "CsvLoader.h"
-#include "deletewarningdlg.h"
+#include "DeleteWarningDlg.h"
 #include "DirStatDoc.h"
 #include "FileTreeView.h"
 #include "GlobalHelpers.h"
@@ -31,9 +31,9 @@
 #include "MainFrame.h"
 #include "ModalShellApi.h"
 #include "WinDirStat.h"
-#include <CommonHelpers.h>
-#include <MdExceptions.h>
-#include <SmartPointer.h>
+#include "CommonHelpers.h"
+#include "MdExceptions.h"
+#include "SmartPointer.h"
 
 #include <functional>
 #include <unordered_map>
@@ -1164,7 +1164,7 @@ void CDirStatDoc::OnCommandPromptHere()
         const std::wstring cmd = GetCOMSPEC();
         for (const auto& path : paths)
         {
-            ShellExecuteThrow(path, L"", L"open");
+            ShellExecuteThrow(cmd, L"", L"open", *AfxGetMainWnd(), path);
         }
     }
     catch (CException* pe)

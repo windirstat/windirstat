@@ -41,7 +41,7 @@ class CExtensionView;
 // Although these windows can lose the real focus, for instance
 // when a dialog box is opened, the logical focus will not be lost.
 //
-enum LOGICAL_FOCUS
+enum LOGICAL_FOCUS : std::uint8_t
 {
     LF_NONE,
     LF_FILETREE,
