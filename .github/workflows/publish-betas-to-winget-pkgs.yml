@@ -1,0 +1,21 @@
+name: Publish betas to WinGet
+on:
+  release:
+    types: [published]
+jobs:
+  publish:
+    runs-on: windows-latest
+    steps:
+      - name: Get version
+        id: get-version
+        run: |
+          # Finding the version from release name
+          $VERSION="${{ github.ref_name }}" -ireplace '^beta/v?' -ireplace '/', '.'
+          "version=$VERSION" >> $env:GITHUB_OUTPUT
+        shell: pwsh
+      - uses: vedantmgoyal9/winget-releaser@main
+        with:
+          identifier: WinDirStat.WinDirStat.Beta
+          version: ${{ steps.get-version.outputs.version }}
+          installers-regex: '\.msi$' # Only .msi files
+          token: ${{ secrets.WINGET_TOKEN }}
