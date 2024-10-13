@@ -635,7 +635,6 @@ void CItem::UpwardSubtractSizePhysical(const ULONGLONG bytes)
     }
 }
 
-
 void CItem::UpwardAddSizeLogical(const ULONGLONG bytes)
 {
     if (bytes == 0) return;
@@ -1034,15 +1033,20 @@ void CItem::UpwardSetUndone()
 
 CItem* CItem::FindRecyclerItem() const
 {
-    // There are no cross-platform way to consistently identify the recycle bin so attempt
-    // to find an item with the most probable to least probable values
-    for (const std::wstring& possible : { L"$RECYCLE.BIN", L"RECYCLER", L"RECYCLED" })
+    for (auto p = this; p != nullptr; p = p->GetParent())
     {
-        for (const auto& child : GetChildren())
+        if (!p->IsType(IT_DRIVE)) continue;
+
+        // There are no cross-platform way to consistently identify the recycle bin so attempt
+        // to find an item with the most probable to least probable values
+        for (const std::wstring& possible : { L"$RECYCLE.BIN", L"RECYCLER", L"RECYCLED" })
         {
-            if (child->IsType(IT_DIRECTORY) && _wcsicmp(child->GetName().c_str(),possible.c_str()) == 0)
+            for (const auto& child : p->GetChildren())
             {
-                return child;
+                if (child->IsType(IT_DIRECTORY) && _wcsicmp(child->GetName().c_str(), possible.c_str()) == 0)
+                {
+                    return child;
+                }
             }
         }
     }

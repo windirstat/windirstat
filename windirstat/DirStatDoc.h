@@ -127,7 +127,6 @@ protected:
 
     void RecurseRefreshReparsePoints(CItem* items);
     std::vector<CItem*> GetDriveItems() const;
-    void RefreshRecyclers() const;
     void RebuildExtensionData();
     void SortExtensionData(std::vector<std::wstring>& sortedExtensions);
     void SetExtensionColors(const std::vector<std::wstring>& sortedExtensions);

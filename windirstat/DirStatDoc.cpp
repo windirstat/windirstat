@@ -501,7 +501,6 @@ std::vector<CItem*> CDirStatDoc::GetDriveItems() const
         return drives;
     }
 
-
     if (root->IsType(IT_MYCOMPUTER))
     {
         for (const auto& child : root->GetChildren())
@@ -516,20 +515,6 @@ std::vector<CItem*> CDirStatDoc::GetDriveItems() const
     }
 
     return drives;
-}
-
-void CDirStatDoc::RefreshRecyclers() const
-{
-    std::vector<CItem*> toRefresh;
-    for (const auto & drive : GetDriveItems())
-    {
-        if (CItem* recycler = drive->FindRecyclerItem(); recycler != nullptr)
-        {
-            toRefresh.push_back(recycler);
-        }
-    }
-
-    if (!toRefresh.empty()) GetDocument()->StartScanningEngine(toRefresh);
 }
 
 void CDirStatDoc::RebuildExtensionData()
@@ -620,7 +605,19 @@ bool CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, const bo
         msa.DeleteFile(item->GetPath(), toTrashBin);
     }
 
-    RefreshItem(items);
+    // Create a list of items and recycler directories to refresh
+    std::vector<CItem*> refresh;
+    for (const auto& item : items)
+    {
+        refresh.push_back(item);
+        if (toTrashBin && std::ranges::find(refresh, item->FindRecyclerItem()) == refresh.end())
+        {
+            refresh.push_back(item->FindRecyclerItem());
+        }
+    }
+
+    // Refresh the items and recycler directories
+    RefreshItem(refresh);
 
     // Attempt to reselect the item
     if (reselect != nullptr)
@@ -1029,8 +1026,18 @@ void CDirStatDoc::OnCleanupEmptyRecycleBin()
 
     SHEmptyRecycleBin(*AfxGetMainWnd(), nullptr, 0);
 
-    RefreshRecyclers();
-    UpdateAllViews(nullptr);
+    // locate all drive items in order to refresh recyclers
+    std::vector<CItem*> toRefresh;
+    for (const auto& drive : GetDriveItems())
+    {
+        if (CItem* recycler = drive->FindRecyclerItem(); recycler != nullptr)
+        {
+            toRefresh.push_back(recycler);
+        }
+    }
+
+    // refresh recyclers
+    if (!toRefresh.empty()) GetDocument()->StartScanningEngine(toRefresh);
 }
 
 void CDirStatDoc::OnUpdateViewShowFreeSpace(CCmdUI* pCmdUI)
@@ -1228,20 +1235,13 @@ void CDirStatDoc::OnPowerShellHere()
 void CDirStatDoc::OnCleanupDeleteToBin()
 {
     const auto & items = GetAllSelected();
-    if (DeletePhysicalItems(items, true))
-    {
-        RefreshRecyclers();
-        UpdateAllViews(nullptr);
-    }
+    DeletePhysicalItems(items, true);
 }
 
 void CDirStatDoc::OnCleanupDelete()
 {
     const auto & items = GetAllSelected();
-    if (DeletePhysicalItems(items, false))
-    {
-        UpdateAllViews(nullptr);
-    }
+    DeletePhysicalItems(items, false);
 }
 
 void CDirStatDoc::OnRemoveRoamingProfiles()
