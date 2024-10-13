@@ -8,7 +8,6 @@ SET THISDIR=%THISDIR:~0,-1%
 SET BASEDIR=%THISDIR%\.
 SET BLDDIR=%THISDIR%\build
 SET PUBDIR=%THISDIR%\publish
-SET DEBUG=0
 
 :: cert info to use for signing
 set TSAURL=http://time.certum.pl/
@@ -58,9 +57,16 @@ IF EXIST "%PUBDIR%" RD /S /Q "%PUBDIR%"
 FOR %%A IN (arm arm64 x86 x64) DO (
    IF NOT EXIST "%PUBDIR%\%%A" MKDIR "%PUBDIR%\%%A"
    COPY /Y "%BLDDIR%\WinDirStat_%%A.exe" "%PUBDIR%\%%A\WinDirStat.exe"
-   IF %DEBUG% EQU 1 COPY /Y "%BLDDIR%\WinDirStat_%%A.pdb" "%PUBDIR%\%%A\WinDirStat.pdb"
+   COPY /Y "%BLDDIR%\WinDirStat_%%A.pdb" "%PUBDIR%\%%A\WinDirStat.pdb"
    COPY /Y "%BLDDIR%\WinDirStat-%%A.msi" "%PUBDIR%"
 )
+
+:: 7-zip executables and debug files
+7z.EXE >NUL 2>&1
+IF %ERRORLEVEL% NEQ 0 ECHO 7-Zip not found; skipping 7-Zip archive
+IF %ERRORLEVEL% EQU 0 7z.EXE a -mx=9 "%PUBDIR%\WinDirStat.7z" "%PUBDIR%\*\*.exe"
+IF %ERRORLEVEL% EQU 0 7z.EXE a -mx=9 "%PUBDIR%\WinDirStat-DebugSymbols.7z" "%PUBDIR%\*\*.pdb"
+DEL /F /S /Q "%PUBDIR%\*.pdb" >NUL 2>&1
 
 :: zip up executatables
 SET POWERSHELL=POWERSHELL.EXE -NoProfile -NonInteractive -NoLogo -ExecutionPolicy Unrestricted
@@ -70,10 +76,6 @@ FOR %%A IN (arm arm64 x86 x64) DO (
 )
 POPD
 
-:: 7-zip executables
-7z.EXE >NUL 2>&1
-IF %ERRORLEVEL% NEQ 0 ECHO 7-Zip not found; skipping 7-Zip archive
-IF %ERRORLEVEL% EQU 0 7z.EXE a -mx=9 "%PUBDIR%\WinDirStat.7z" "%PUBDIR%\*\*.exe"
 
 :: output hash information
 SET HASHFILE=%PUBDIR%\WinDirStat-Hashes.txt
