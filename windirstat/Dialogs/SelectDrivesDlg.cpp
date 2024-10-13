@@ -237,7 +237,6 @@ std::wstring CDriveItem::GetDrive() const
 
 /////////////////////////////////////////////////////////////////////////////
 
-
 std::unordered_set<CDriveInformationThread*> CDriveInformationThread::_runningThreads;
 std::shared_mutex CDriveInformationThread::_mutexRunningThreads;
 
@@ -660,7 +659,6 @@ void CSelectDrivesDlg::OnBnClickedRadioTargetFolder()
 
     UpdateButtons();
 }
-
 
 void CSelectDrivesDlg::OnEnChangeFolderName()
 {

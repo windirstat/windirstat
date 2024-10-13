@@ -251,7 +251,7 @@ bool CompressFileAllowed(const std::wstring& filePath, CompressionAlgorithm algo
         return compressionMap.at(volumeName.data());
     }
 
-    // Enable 'none' button if either normal or modern are example
+    // Enable 'none' button if either normal or modern are available
     if (algorithm == CompressionAlgorithm::NONE)
     {
         return CompressFileAllowed(filePath, CompressionAlgorithm::LZNT1) ||

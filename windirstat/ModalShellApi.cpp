@@ -50,7 +50,6 @@ bool CModalShellApi::DoOperation()
 {
     if (m_Operation == DELETE_FILE)
     {
-
         return DoDeleteItem();
     }
 

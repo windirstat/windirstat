@@ -214,7 +214,6 @@ void CXySlider::PaintBackground(CDC* pdc)
     }
 }
 
-
 void CXySlider::PaintGripper(CDC* pdc)
 {
     CRect rc = GetGripperRect();

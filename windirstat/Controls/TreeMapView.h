@@ -87,4 +87,3 @@ protected:
     afx_msg void OnTimer(UINT_PTR nIDEvent);
 };
 
-

@@ -105,7 +105,6 @@ void CReparsePoints::Initialize()
     }
 }
 
-
 bool CReparsePoints::IsReparsePoint(const DWORD attr)
 {
     return attr != INVALID_FILE_ATTRIBUTES &&

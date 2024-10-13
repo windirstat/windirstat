@@ -189,7 +189,6 @@ CItem* LoadResults(const std::wstring & path)
             wcstoul(fields[orderMap[FIELD_FILES]].c_str(), nullptr, 10),
             wcstoul(fields[orderMap[FIELDS_FOLDERS]].c_str(), nullptr, 10));
 
-
         if (isRoot)
         {
             newroot = newitem;

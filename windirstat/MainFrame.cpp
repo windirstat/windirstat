@@ -972,7 +972,6 @@ std::vector<CItem*> CMainFrame::GetAllSelectedInFocus() const
         CFileTreeControl::Get()->GetAllSelected<CItem>();
 }
 
-
 CMenu* CMainFrame::LocateNamedMenu(const CMenu* menu, const std::wstring & subMenuText, bool clear) const
 {
     // locate submenu

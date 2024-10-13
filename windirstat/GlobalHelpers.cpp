@@ -610,7 +610,6 @@ const std::wstring & GetSysDirectory()
 
 void ProcessMessagesUntilSignaled(const std::function<void()>& callback)
 {
-    
     if (CWnd* wnd = AfxGetMainWnd(); GetWindowThreadProcessId(
         wnd->m_hWnd, nullptr) == GetCurrentThreadId())
     {

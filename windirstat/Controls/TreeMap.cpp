@@ -682,7 +682,6 @@ bool CTreeMap::KDirStat_ArrangeChildren(
     auto const& parentRect = parent->TmiGetRectangle();
     const bool horizontalRows = parentRect.Width() >= parentRect.Height();
 
-
     double width = 1.0;
     if (horizontalRows)
     {
