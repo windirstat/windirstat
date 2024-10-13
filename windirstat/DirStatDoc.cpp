@@ -610,9 +610,10 @@ bool CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, const bo
     for (const auto& item : items)
     {
         refresh.push_back(item);
-        if (toTrashBin && std::ranges::find(refresh, item->FindRecyclerItem()) == refresh.end())
+        if (!toTrashBin) continue;
+        if (auto recycler = std::ranges::find(refresh, item->FindRecyclerItem()); recycler == refresh.end())
         {
-            refresh.push_back(item->FindRecyclerItem());
+            refresh.push_back(*recycler);
         }
     }
 
