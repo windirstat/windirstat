@@ -1428,6 +1428,7 @@ void CDirStatDoc::OnContextMenuExplore(UINT nID)
     // query current context menu
     if (paths.empty()) return;
     CComPtr<IContextMenu> contextMenu = GetContextMenu(CMainFrame::Get()->GetSafeHwnd(), paths);
+    if (contextMenu == nullptr) return;
 
     // create placeholder menu
     CMenu menu;

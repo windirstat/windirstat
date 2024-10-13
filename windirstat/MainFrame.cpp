@@ -1007,7 +1007,7 @@ void CMainFrame::UpdateDynamicMenuItems(const CMenu* menu) const
     if (explorerMenu != nullptr && !paths.empty())
     {
         CComPtr<IContextMenu> contextMenu = GetContextMenu(Get()->GetSafeHwnd(), paths);
-        contextMenu->QueryContextMenu(explorerMenu->GetSafeHmenu(), 0,
+        if (contextMenu != nullptr) contextMenu->QueryContextMenu(explorerMenu->GetSafeHmenu(), 0,
             CONTENT_MENU_MINCMD, CONTENT_MENU_MAXCMD, CMF_NORMAL);
     }
 
