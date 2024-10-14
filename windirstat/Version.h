@@ -21,14 +21,12 @@
 
 #define PRD_MAJVER                  2 // major product version
 #define PRD_MINVER                  0 // minor product version
-#define PRD_PATCH                   0 // patch number
-#define PRD_BUILD                   0 // build number for product
-#define PRD_BUILD_NUMERIC           0 // build number for product
+#define PRD_PATCH                   0 // patch number for product
+#define PRD_BUILD                   GIT_COUNT // build number for product
 #define FILE_MAJVER                 PRD_MAJVER // major file version
 #define FILE_MINVER                 PRD_MINVER // minor file version
-#define FILE_PATCH                  PRD_PATCH // patch number
-#define FILE_BUILD                  PRD_BUILD // build number
-#define FILE_BUILD_NUMERIC          PRD_BUILD_NUMERIC // build number for product
+#define FILE_PATCH                  PRD_PATCH // patch number for version
+#define FILE_BUILD                  PRD_BUILD // build number for version
 #define TEXT_WEBSITE                https:/##/windirstat.net // website
 #define TEXT_PRODUCTNAME            WinDirStat // product's name
 #define TEXT_FILEDESC               Windows Directory Statistics (WinDirStat) // component description

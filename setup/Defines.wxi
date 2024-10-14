@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Include>
 	<!-- Product GUIDs & Version Number -->
-    <?define ProductVersion =           "2.0.0"?>
+    <?define ProductVersion =           "2.0.0.$(var.BUILD)"?>
     <?define UpgradeCode =              "E211CCFB-D706-4919-B2FF-0F7F426EA27B"?>
     <?define ProductID =                "*"?>
 	<!-- Product and Company information -->

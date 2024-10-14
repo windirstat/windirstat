@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="Current" InitialTargets="GetGitRevision;GetGitDate" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="Current" InitialTargets="GetGitRevision;GetGitDate;GetGitCount" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 	<PropertyGroup>
 		<GitWorkTreeRootDir>$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), '.git\refs\heads\main'))</GitWorkTreeRootDir>
 		<GitWorkTreeRootDir Condition="'$(GitWorkTreeRootDir)' == ''">$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), '.git\refs\heads\master'))</GitWorkTreeRootDir>
@@ -64,6 +64,29 @@
 			</ClCompile>
 			<ResourceCompile>
 				<PreprocessorDefinitions>GIT_DATE="0000-00-00";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+			</ResourceCompile>
+		</ItemGroup>		
+	</Target>
+	<Target Name="GetGitCount" DependsOnTargets="FindGitExecutablePath" Condition="'$(GitDirSentinelFile)' != ''">
+		<Message Importance="high" Text="Detecting Git commit count, since '$(GitDirSentinelFile)' was found. Using %24(GitExecutableFullPath) = '$(GitExecutableFullPath)'." Condition="'$(GitExecutableFullPath)' != '' and '$(GitWorkTreeRootDir)' != ''" />
+		<Exec Command="&quot;$(GitExecutableFullPath)&quot; -C &quot;$(GitWorkTreeRootDir)\&quot; rev-list --count --all" EchoOff="true" Condition="'$(GitExecutableFullPath)' != '' and '$(GitWorkTreeRootDir)' != ''" ConsoleToMsBuild="true">
+			<Output TaskParameter="ConsoleOutput" PropertyName="GitCount" />
+		</Exec>
+		<Message Importance="high" Text="Retrieved for %24(GitCount) = '$(GitCount)'." Condition="'$(GitCount)' != ''" />
+		<ItemGroup Condition="'$(GitCount)' != ''">
+			<ClCompile>
+				<PreprocessorDefinitions>GIT_COUNT=$(GitCount);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+			</ClCompile>
+			<ResourceCompile>
+				<PreprocessorDefinitions>GIT_COUNT=$(GitCount);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+			</ResourceCompile>
+		</ItemGroup>
+		<ItemGroup Condition="'$(GitCount)' == ''">
+			<ClCompile>
+				<PreprocessorDefinitions>GIT_COUNT=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+			</ClCompile>
+			<ResourceCompile>
+				<PreprocessorDefinitions>GIT_COUNT=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
 			</ResourceCompile>
 		</ItemGroup>		
 	</Target>	

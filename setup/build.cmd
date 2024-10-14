@@ -15,9 +15,12 @@ IF %ERRORLEVEL% NEQ 0 (
   EXIT /B 0
 )
 
+:: grab current data for installer build version
+FOR /F %%X in ('git -C .. rev-list --count --all') DO SET BUILD=%%X
+
 :: create the installers
 FOR %%A IN (arm arm64 x86 x64) DO (
-   candle -arch %%A "WinDirStat.wxs" -o "WinDirStat-%%A.wixobj"
+   candle -arch %%A "WinDirStat.wxs" -o "WinDirStat-%%A.wixobj" -dBUILD=%BUILD%
    light -ext WixUIExtension -ext WixUtilExtension -sval "WinDirStat-%%A.wixobj" -o "%BLDDIR%\WinDirStat-%%A.msi"
 )
 DEL /F "*.wixobj"
