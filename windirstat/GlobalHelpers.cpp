@@ -589,7 +589,7 @@ void ReplaceString(std::wstring& subject, const std::wstring& search, const std:
 std::wstring& TrimString(std::wstring& s, wchar_t c)
 {
     while (!s.empty() && s.back() == c) s.pop_back();
-    while (!s.empty() && s.front() == c) s.erase();
+    while (!s.empty() && s.front() == c) s.erase(0, 1);
     return s;
 }
 
