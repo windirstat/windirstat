@@ -321,6 +321,7 @@ BOOL CDirStatApp::InitInstance()
     {
         // Terminate parent process that called us
         int token = 0;
+        cmdInfo.m_strFileName = cmdInfo.m_strFileName.Trim(L'"');
         const DWORD parent = wcstoul(cmdInfo.m_strFileName.Tokenize(L"|", token), nullptr, 10);
         cmdInfo.m_strFileName = cmdInfo.m_strFileName.Right(cmdInfo.m_strFileName.GetLength() - token);
         if (SmartPointer<HANDLE> handle(CloseHandle, OpenProcess(PROCESS_TERMINATE, FALSE, parent)); handle != nullptr)
@@ -364,7 +365,7 @@ void CDirStatApp::OnRunElevated()
     // For the configuration to launch, include the parent process so we can
     // terminate it once launched from the child process
     const std::wstring sAppName = GetAppFileName();
-    const std::wstring launchConfig = std::format(L"{}|{}", GetCurrentProcessId(), CDirStatDoc::GetDocument()->GetPathName().GetString());
+    const std::wstring launchConfig = std::format(LR"("{}|{}")", GetCurrentProcessId(), CDirStatDoc::GetDocument()->GetPathName().GetString());
 
     SHELLEXECUTEINFO shellInfo;
     ZeroMemory(&shellInfo, sizeof(shellInfo));
