@@ -518,7 +518,8 @@ void CMainFrame::UpdateProgress()
 
     if (m_ProgressRange > 0 && m_Progress.m_hWnd != nullptr)
     {
-        const int pos = static_cast<int>((m_ProgressPos * 100ull) / m_ProgressRange);
+        // Limit progress at 100% as hard-linked files will count twice
+        const int pos = min(static_cast<int>((m_ProgressPos * 100ull) / m_ProgressRange), 100);
         m_Progress.SetPos(pos);
 
         titlePrefix = std::to_wstring(pos) + L"% " + suspended;
