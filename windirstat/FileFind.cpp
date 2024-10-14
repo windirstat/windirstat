@@ -211,6 +211,8 @@ std::wstring FileFindEnhanced::MakeLongPathCompatible(const std::wstring & path)
 
 bool FileFindEnhanced::DoesFileExist(const std::wstring& folder, const std::wstring& file)
 {
-    return GetFileAttributes(MakeLongPathCompatible(folder + 
-        (file.empty() ? L"" : (L"\\" + file))).c_str()) != INVALID_FILE_ATTRIBUTES;
+    // Use this method over GetFileAttributes() as GetFileAttributes() will
+    // return valid INVALID_FILE_ATTRIBUTES on locked files
+    FileFindEnhanced finder;
+    return finder.FindFile(folder, file);
 }

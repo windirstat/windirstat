@@ -832,7 +832,7 @@ std::wstring CItem::GetFolderPath() const
     {
         const auto i = path.find_last_of(wds::chrBackslash);
         ASSERT(i != std::wstring::npos);
-        path = path.substr(0, i);
+        path = path.substr(0, i + 1);
     }
 
     return path;
