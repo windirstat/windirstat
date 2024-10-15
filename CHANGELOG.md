@@ -1,4 +1,4 @@
-# WinDirStat 2.0.1 (Upcoming)
+# WinDirStat 2.0.1
 
 ## Enhancements
 *	Multiple item selection
