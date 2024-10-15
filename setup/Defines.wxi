@@ -1,9 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Include>
 	<!-- Product GUIDs & Version Number -->
-    <?define ProductVersion =           "2.0.0.$(var.BUILD)"?>
-    <?define UpgradeCode =              "E211CCFB-D706-4919-B2FF-0F7F426EA27B"?>
     <?define ProductID =                "*"?>
+    <?if $(var.RELTYPE) = PRODUCTION ?>
+	<?define ProductVersion =           "$(var.MAJVER).$(var.MINVER).$(var.PATCH)"?>	
+    <?define UpgradeCode =              "46F106C9-090C-43D0-8815-D03BA9FA55A9"?>
+    <?else ?>
+	<?define ProductVersion =           "$(var.MAJVER).$(var.MINVER).$(var.PATCH).$(var.BUILD)"?>	
+    <?define UpgradeCode =              "E211CCFB-D706-4919-B2FF-0F7F426EA27B"?>
+    <?endif ?>
+	
 	<!-- Product and Company information -->
     <?define ProductName =              "WinDirStat"?>
     <?define ProductFolder =            "WinDirStat"?>

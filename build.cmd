@@ -2,6 +2,16 @@
 TITLE Building WinDirStat
 SETLOCAL
 
+:: solicit whether this is production or beta build
+ECHO Please choose a release type:
+ECHO 1. Beta
+ECHO 2. Production
+SET /p CHOICE=Enter Choice (1 or 2): 
+SET RELTYPE=
+IF "%CHOICE%" EQU "1" SET RELTYPE=PRODUCTION
+IF "%CHOICE%" EQU "2" SET RELTYPE=BETA
+IF "%RELTYPE%" EQU "" EXIT /B 1
+
 :: setup environment variables based on location of this script
 SET THISDIR=%~dp0
 SET THISDIR=%THISDIR:~0,-1%
@@ -47,7 +57,7 @@ IF %ERRORLEVEL% EQU 0 FOR %%A IN (arm arm64 x86 x64) DO (
 signtool sign /fd sha256 /tr %TSAURL% /td sha256 /d %LIBNAME% /du %LIBURL% "%BLDDIR%\*.exe"
 
 :: build the msi
-CALL "%THISDIR%\setup\build.cmd"
+CALL "%THISDIR%\setup\build.cmd" "%RELTYPE%"
 
 :: sign the msi
 signtool sign /fd sha256 /tr %TSAURL% /td sha256 /d %LIBNAME% /du %LIBURL% "%BLDDIR%\*.msi"
