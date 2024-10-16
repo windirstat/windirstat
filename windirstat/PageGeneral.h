@@ -42,7 +42,7 @@ protected:
     BOOL OnInitDialog() override;
     void OnOK() override;
 
-    BOOL m_UseFallbackLocale = FALSE;
+    BOOL m_UseWindowsLocale = FALSE;
     BOOL m_SizeSuffixesFormat = FALSE;
     BOOL m_PortableMode = FALSE;
     BOOL m_ListGrid = FALSE;

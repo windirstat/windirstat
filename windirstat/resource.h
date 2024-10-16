@@ -113,7 +113,7 @@
 #define IDC_STATICHEIGHT                1218
 #define IDC_STATICSCALEFACTOR           1219
 #define IDC_LIGHTSOURCE                 1220
-#define IDC_USE_WDS_LOCALE              1225
+#define IDC_USE_WINDOWS_LOCALE          1225
 #define IDC_COMBO_THREADS               1230
 #define IDC_TREECOL_ATTRIBUTES          1231
 #define IDC_BROWSE_FOLDER               1232

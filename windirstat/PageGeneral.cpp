@@ -45,7 +45,7 @@ void CPageGeneral::DoDataExchange(CDataExchange* pDX)
 {
     CPropertyPage::DoDataExchange(pDX);
     DDX_Check(pDX, IDC_SIZE_SUFFIXES, m_SizeSuffixesFormat);
-    DDX_Check(pDX, IDC_USE_WDS_LOCALE, m_UseFallbackLocale);
+    DDX_Check(pDX, IDC_USE_WINDOWS_LOCALE, m_UseWindowsLocale);
     DDX_Control(pDX, IDC_COMBO, m_Combo);
     DDX_Check(pDX, IDC_SHOW_GRID, m_ListGrid);
     DDX_Check(pDX, IDC_SHOW_STRIPES, m_ListStripes);
@@ -56,7 +56,7 @@ void CPageGeneral::DoDataExchange(CDataExchange* pDX)
 
 BEGIN_MESSAGE_MAP(CPageGeneral, CPropertyPage)
     ON_BN_CLICKED(IDC_SIZE_SUFFIXES, OnBnClickedSetModified)
-    ON_BN_CLICKED(IDC_USE_WDS_LOCALE, OnBnClickedSetModified)
+    ON_BN_CLICKED(IDC_USE_WINDOWS_LOCALE, OnBnClickedSetModified)
     ON_CBN_SELENDOK(IDC_COMBO, OnCbnSelendokCombo)
     ON_BN_CLICKED(IDC_SHOW_GRID, OnBnClickedSetModified)
     ON_BN_CLICKED(IDC_SHOW_STRIPES, OnBnClickedSetModified)
@@ -76,7 +76,7 @@ BOOL CPageGeneral::OnInitDialog()
     m_ListStripes = COptions::ListStripes;
     m_ShowDeletionWarning = COptions::ShowDeleteWarning;
     m_ListFullRowSelection = COptions::ListFullRowSelection;
-    m_UseFallbackLocale = COptions::UseWindowsLocaleSetting;
+    m_UseWindowsLocale = COptions::UseWindowsLocaleSetting;
     m_PortableMode = CDirStatApp::InPortableMode();
 
     for (const auto & language : Localization::GetLanguageList())
@@ -97,13 +97,14 @@ void CPageGeneral::OnOK()
 {
     UpdateData();
 
-    const bool fallbackChanged = static_cast<bool>(m_UseFallbackLocale) != COptions::UseWindowsLocaleSetting;
-    const bool gridChanged = static_cast<bool>(m_ListGrid) != COptions::ListGrid ||
+    const bool windowsLocaleChanged = static_cast<bool>(m_UseWindowsLocale) != COptions::UseWindowsLocaleSetting;;
+    const bool listChanged = static_cast<bool>(m_ListGrid) != COptions::ListGrid ||
         static_cast<bool>(m_ListStripes) != COptions::ListStripes ||
-        static_cast<bool>(m_ListFullRowSelection) != COptions::ListFullRowSelection;
+        static_cast<bool>(m_ListFullRowSelection) != COptions::ListFullRowSelection ||
+        static_cast<bool>(m_SizeSuffixesFormat) != COptions::UseSizeSuffixes;
 
     COptions::UseSizeSuffixes = (FALSE != m_SizeSuffixesFormat);
-    COptions::UseWindowsLocaleSetting = (FALSE != m_UseFallbackLocale);
+    COptions::UseWindowsLocaleSetting = (FALSE != m_UseWindowsLocale);
     COptions::ListGrid = (FALSE != m_ListGrid);
     COptions::ListStripes = (FALSE != m_ListStripes);
     COptions::ShowDeleteWarning = (FALSE != m_ShowDeletionWarning);
@@ -113,11 +114,12 @@ void CPageGeneral::OnOK()
         AfxMessageBox(L"Could not toggle WinDirStat portable mode. Check your permissions.", MB_OK | MB_ICONERROR);
     }
 
-    if (gridChanged)
+    // force general user interface update if anything changes
+    if (listChanged)
     {
         CDirStatDoc::GetDocument()->UpdateAllViews(nullptr, HINT_LISTSTYLECHANGED);
     }
-    if (fallbackChanged)
+    if (windowsLocaleChanged)
     {
         CDirStatDoc::GetDocument()->UpdateAllViews(nullptr, HINT_NULL);
     }
