@@ -48,13 +48,13 @@ WinDirStat 2.x has been developed for and tested on the following operating syst
 * Windows 8.1
 * Windows 10
 * Windows 11
-* Windows 2008 R2
-* Windows 2012
-* Windows 2012 R2
-* Windows 2016
-* Windows 2019
-* Windows 2022
-* Windows 2025
+* Windows Server 2008 R2
+* Windows Server 2012
+* Windows Server 2012 R2
+* Windows Server 2016
+* Windows Server 2019
+* Windows Server 2022
+* Windows Server 2025
 
 ## Logo
 
