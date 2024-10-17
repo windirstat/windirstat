@@ -21,6 +21,8 @@
 
 #pragma once
 
+#include "OleFilterOverride.h"
+
 #include <string>
 #include <unordered_map>
 #include <shared_mutex>
@@ -57,6 +59,7 @@ public:
 
     std::shared_mutex m_IndexMutex;
     std::unordered_map<int, short> m_IndexMap; // system image list index -> our index
+    COleFilterOverride m_FilterOverride;
 
     short m_FreeSpaceImage = -1;    // <Free Space>
     short m_UnknownImage = -1;      // <Unknown>

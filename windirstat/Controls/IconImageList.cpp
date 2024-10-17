@@ -29,6 +29,8 @@ void CIconImageList::Initialize()
 {
     if (m_hImageList == nullptr)
     {
+        m_FilterOverride.RegisterFilter();
+
         const std::wstring & s = GetSysDirectory();
         SHFILEINFO sfi = {nullptr};
         const auto hil = reinterpret_cast<HIMAGELIST>(::SHGetFileInfo(s.c_str(), 0, &sfi, sizeof(sfi), WDS_SHGFI_DEFAULTS));
@@ -92,8 +94,9 @@ short CIconImageList::CacheIcon(const std::wstring & path, UINT flags, const DWO
     if (i != m_IndexMap.end()) return i->second;
 
     // Extract image and add to cache
-    CImageList* sil = FromHandle(hil); // does not have to be destroyed
-    m_IndexMap[sfi.iIcon] = static_cast<short>(this->Add(sil->ExtractIcon(sfi.iIcon)));
+    m_FilterOverride.SetDefaultHandler(false);
+    m_IndexMap[sfi.iIcon] = static_cast<short>(this->Add(ImageList_ExtractIcon(NULL, hil, sfi.iIcon)));
+    m_FilterOverride.SetDefaultHandler(true);
     return m_IndexMap[sfi.iIcon];
 }
 

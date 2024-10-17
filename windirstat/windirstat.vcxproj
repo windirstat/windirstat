@@ -537,6 +537,7 @@
   </ImportGroup>
   <ItemGroup>
     <ClInclude Include="CommonHelpers.h" />
+    <ClInclude Include="OleFilterOverride.h" />
     <ClInclude Include="SmartPointer.h" />
     <ClInclude Include="MdExceptions.h" />
     <ClInclude Include="Tracer.h" />
