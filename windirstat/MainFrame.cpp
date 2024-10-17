@@ -377,14 +377,16 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
 END_MESSAGE_MAP()
 
 constexpr auto ID_INDICATOR_IDLEMESSAGE_INDEX = 0;
-constexpr auto ID_INDICATOR_MEMORYUSAGE_INDEX = 1;
-constexpr auto ID_INDICATOR_CAPS_INDEX = 2;
-constexpr auto ID_INDICATOR_NUM_INDEX = 3;
-constexpr auto ID_INDICATOR_SCRL_INDEX = 4;
+constexpr auto ID_INDICATOR_DISKUAGE_INDEX = 1;
+constexpr auto ID_INDICATOR_MEMORYUSAGE_INDEX = 2;
+constexpr auto ID_INDICATOR_CAPS_INDEX = 3;
+constexpr auto ID_INDICATOR_NUM_INDEX = 4;
+constexpr auto ID_INDICATOR_SCRL_INDEX = 5;
 
 constexpr UINT indicators[]
 {
     IDS_IDLEMESSAGE,
+    IDS_IDLEMESSAGE, // DISK USAGE
     IDS_RAMUSAGEs,
     ID_INDICATOR_CAPS,
     ID_INDICATOR_NUM,
@@ -600,7 +602,7 @@ void CMainFrame::SetStatusPaneText(const int pos, const std::wstring & text)
     // attempt to update width if dc is accessible
     if (const CDC* dc = GetDC(); dc != nullptr)
     {
-        const auto cx = dc->GetTextExtent(text.c_str(), static_cast<int>(text.size())).cx;
+        auto cx = dc->GetTextExtent(text.c_str(), static_cast<int>(text.size())).cx;
         m_WndStatusBar.SetPaneWidth(pos, cx);
     }
 
@@ -625,6 +627,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
     SetStatusPaneText(ID_INDICATOR_NUM_INDEX, Localization::Lookup(IDS_INDICATOR_NUM));
     SetStatusPaneText(ID_INDICATOR_SCRL_INDEX, Localization::Lookup(IDS_INDICATOR_SCRL));
     SetStatusPaneText(ID_INDICATOR_MEMORYUSAGE_INDEX, CDirStatApp::GetCurrentProcessMemoryInfo());
+    SetStatusPaneText(ID_INDICATOR_DISKUAGE_INDEX, L"");
 
     m_WndDeadFocus.Create(this);
 
@@ -1076,6 +1079,7 @@ void CMainFrame::SetSelectionMessageText()
     if (!CDirStatDoc::GetDocument()->IsRootDone()) return;
     const auto focus = GetLogicalFocus();
     std::wstring text = Localization::Lookup(IDS_IDLEMESSAGE);
+    ULONGLONG size = 0;
 
     if (focus == LF_EXTENSIONLIST)
     {
@@ -1083,16 +1087,26 @@ void CMainFrame::SetSelectionMessageText()
     }
     else if (focus == LF_FILETREE)
     {
-        const auto item = CFileTreeControl::Get()->GetFirstSelectedItem<CItem>();
-        if (item != nullptr) text = item->GetPath();
+        const auto items = CFileTreeControl::Get()->GetAllSelected<CItem>();
+        if (items.size() == 1) text = items.front()->GetPath();
+        for (const auto & item : items)
+        {
+            size += item->GetSizePhysical();
+        }
     }
     else if (focus == LF_DUPELIST)
     {
-        const auto item = CFileDupeControl::Get()->GetFirstSelectedItem<CItem>();
-        if (item != nullptr) text = item->GetPath();
+        const auto items = CFileDupeControl::Get()->GetAllSelected<CItem>();
+        if (items.size() == 1) text = items.front()->GetPath();
+        for (const auto& item : items)
+        {
+            size += item->GetSizePhysical();
+        }
     }
 
     SetMessageText(text);
+    SetStatusPaneText(ID_INDICATOR_DISKUAGE_INDEX, (size > 0) ? (L" ∑  " + FormatBytes(size) +
+        (COptions::UseSizeSuffixes ? L"" : (L" " + GetSpec_Bytes()))) : L"");
 }
 
 void CMainFrame::OnUpdateEnableControl(CCmdUI* pCmdUI)
