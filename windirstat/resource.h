@@ -173,6 +173,9 @@
 #define ID_CLEANUP_DISM_RESET           33058
 #define ID_CLEANUP_REMOVE_ROAMING       33060
 #define ID_CLEANUP_OPEN_IN_PWSH         33064
+#define ID_INDICATOR_DISK               33065
+#define ID_INDICATOR_MEM                33066
+#define ID_INDICATOR_IDLE               33067
 #define IDS_AUTHOR_EMAIL                57345
 #define IDS_URL_WEBSITE                 57346
 #define IDS_URL_HELP                    57347
@@ -183,7 +186,7 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        954
-#define _APS_NEXT_COMMAND_VALUE         33067
+#define _APS_NEXT_COMMAND_VALUE         33068
 #define _APS_NEXT_CONTROL_VALUE         1236
 #define _APS_NEXT_SYMED_VALUE           109
 #endif
