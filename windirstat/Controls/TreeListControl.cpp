@@ -868,7 +868,7 @@ void CTreeListControl::OnChildAdded(const CTreeListItem* parent, CTreeListItem* 
     InsertItem(p + 1, child);
     Sort();
 
-    // NOTE: Redrawing is deffered to UI thread timer for performance
+    // NOTE: Redrawing is deferred to UI thread timer for performance
 }
 
 void CTreeListControl::OnChildRemoved(CTreeListItem* parent, CTreeListItem* child)

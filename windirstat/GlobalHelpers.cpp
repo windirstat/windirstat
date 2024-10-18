@@ -443,7 +443,7 @@ std::wstring MyQueryDosDevice(const std::wstring & drive)
 
 // drive is a drive spec like C: or C:\ or C:\path (path is ignored).
 // 
-// This function returnes true, if QueryDosDevice() is supported
+// This function returns true, if QueryDosDevice() is supported
 // and drive is a SUBSTed drive.
 //
 bool IsSUBSTedDrive(const std::wstring & drive)

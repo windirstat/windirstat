@@ -85,7 +85,7 @@ public:
     //
     enum STYLE : std::uint8_t
     {
-        KDirStatStyle,   // Children are layed out in rows. Similar to the style used by KDirStat.
+        KDirStatStyle,   // Children are laid out in rows. Similar to the style used by KDirStat.
         SequoiaViewStyle // The 'classical' squarification as described in at https://www.win.tue.nl/~vanwijk/.
     };
 

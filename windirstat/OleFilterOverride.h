@@ -1,4 +1,4 @@
-// MountPoints.h - Declaratio of CMountPoins
+// MountPoints.h - Declaration of COleFilterOverride
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
