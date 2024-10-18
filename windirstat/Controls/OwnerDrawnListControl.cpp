@@ -407,7 +407,7 @@ void COwnerDrawnListControl::DrawItem(LPDRAWITEMSTRUCT pdis)
     const int headerCount = GetHeaderCtrl()->GetItemCount();
     for (int i = 0; i < headerCount; i++)
     {
-        // The subitem tracks the identifer that maps the column enum
+        // The subitem tracks the identifier that maps the column enum
         const int subitem = ColumnToSubItem(i);
         
         CRect rc = GetWholeSubitemRect(pdis->itemID, i);
@@ -596,15 +596,15 @@ BOOL COwnerDrawnListControl::OnEraseBkgnd(CDC* pDC)
 
 void COwnerDrawnListControl::OnHdnDividerdblclick(NMHDR* pNMHDR, LRESULT* pResult)
 {
-    const int columm = reinterpret_cast<LPNMHEADER>(pNMHDR)->iItem;
-    const int subitem = ColumnToSubItem(columm);
+    const int column = reinterpret_cast<LPNMHEADER>(pNMHDR)->iItem;
+    const int subitem = ColumnToSubItem(column);
 
     int width = 10;
     for (int i = 0; i < GetItemCount(); i++)
     {
         width = max(width, GetSubItemWidth(GetItem(i), subitem));
     }
-    SetColumnWidth(columm, width + 5);
+    SetColumnWidth(column, width + 5);
 
     *pResult = FALSE;
 }

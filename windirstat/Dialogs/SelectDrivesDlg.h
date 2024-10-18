@@ -113,7 +113,7 @@ private:
     std::wstring m_Name;            // Result: name like "BOOT (C:)", valid if m_Success
     ULONGLONG m_TotalBytes = 0; // Result: capacity of the drive, valid if m_Success
     ULONGLONG m_FreeBytes = 0;  // Result: free space on the drive, valid if m_Success
-    bool m_Success = false;     // Result: false, iff drive is unaccessible.
+    bool m_Success = false;     // Result: false, iff drive is inaccessible.
 };
 
 //

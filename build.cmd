@@ -78,7 +78,7 @@ IF %ERRORLEVEL% EQU 0 7z.EXE a -mx=9 "%PUBDIR%\WinDirStat.7z" "%PUBDIR%\*\*.exe"
 IF %ERRORLEVEL% EQU 0 7z.EXE a -mx=9 "%PUBDIR%\WinDirStat-DebugSymbols.7z" "%PUBDIR%\*\*.pdb"
 DEL /F /S /Q "%PUBDIR%\*.pdb" >NUL 2>&1
 
-:: zip up executatables
+:: zip up executables
 SET POWERSHELL=POWERSHELL.EXE -NoProfile -NonInteractive -NoLogo -ExecutionPolicy Unrestricted
 PUSHD "%PUBDIR%"
 FOR %%A IN (arm arm64 x86 x64) DO (

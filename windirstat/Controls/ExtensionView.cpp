@@ -97,7 +97,7 @@ void CExtensionView::OnUpdate(CView* /*pSender*/, const LPARAM lHint, CObject*)
             m_ExtensionListControl.SetRootSize(GetDocument()->GetRootSize());
             m_ExtensionListControl.SetExtensionData(GetDocument()->GetExtensionData());
 
-            // If there is no vertical scroll bar, the header control doen't repaint
+            // If there is no vertical scroll bar, the header control doesn't repaint
             // correctly. Don't know why. But this helps:
             m_ExtensionListControl.GetHeaderCtrl()->InvalidateRect(nullptr);
         }

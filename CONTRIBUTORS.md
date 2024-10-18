@@ -12,9 +12,9 @@
 * Robin "tuqueque" Marín
     * Created logo used on website and within WinDirStat
 * Falco Peijnenburg
-    * Performance improvments to the treemap rendering
+    * Performance improvements to the treemap rendering
 * Morten Asscheman
-    * Performance improvments to the treemap rendering
+    * Performance improvements to the treemap rendering
 * Sandeep Mirchandani
     * Fixups to get the `default` branch into shape again
 
