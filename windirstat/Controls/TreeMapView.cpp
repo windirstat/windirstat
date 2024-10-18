@@ -395,7 +395,7 @@ void CTreeMapView::OnUpdate(CView* pSender, const LPARAM lHint, CObject* pHint)
         {
             EmptyView();
             CView::OnUpdate(pSender, lHint, pHint);
-            CMainFrame::Get()->SetSelectionMessageText();
+            CMainFrame::Get()->UpdatePaneText();
         }
         break;
 
@@ -405,7 +405,7 @@ void CTreeMapView::OnUpdate(CView* pSender, const LPARAM lHint, CObject* pHint)
     case HINT_EXTENSIONSELECTIONCHANGED:
         {
             CView::OnUpdate(pSender, lHint, pHint);
-            CMainFrame::Get()->SetSelectionMessageText();
+            CMainFrame::Get()->UpdatePaneText();
         }
         break;
 
@@ -479,7 +479,7 @@ void CTreeMapView::OnTimer(UINT_PTR /*nIDEvent*/)
 
     if (!rc.PtInRect(point))
     {
-        CMainFrame::Get()->SetSelectionMessageText();
+        CMainFrame::Get()->UpdatePaneText();
         KillTimer(m_Timer);
         m_Timer = 0;
     }

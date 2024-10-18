@@ -376,18 +376,18 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
     ON_WM_TIMER()
 END_MESSAGE_MAP()
 
-constexpr auto ID_INDICATOR_IDLEMESSAGE_INDEX = 0;
-constexpr auto ID_INDICATOR_DISKUAGE_INDEX = 1;
-constexpr auto ID_INDICATOR_MEMORYUSAGE_INDEX = 2;
-constexpr auto ID_INDICATOR_CAPS_INDEX = 3;
-constexpr auto ID_INDICATOR_NUM_INDEX = 4;
-constexpr auto ID_INDICATOR_SCRL_INDEX = 5;
+constexpr auto ID_STATUSPANE_IDLE_INDEX = 0;
+constexpr auto ID_STATUSPANE_DISK_INDEX = 1;
+constexpr auto ID_STATUSPANE_MEM_INDEX = 2;
+constexpr auto ID_STATUSPANE_CAPS_INDEX = 3;
+constexpr auto ID_STATUSPANE_NUM_INDEX = 4;
+constexpr auto ID_STATUSPANE_SCRL_INDEX = 5;
 
 constexpr UINT indicators[]
 {
-    IDS_IDLEMESSAGE,
-    IDS_IDLEMESSAGE, // DISK USAGE
-    IDS_RAMUSAGEs,
+    ID_INDICATOR_IDLE,
+    ID_INDICATOR_DISK,
+    ID_INDICATOR_MEM,
     ID_INDICATOR_CAPS,
     ID_INDICATOR_NUM,
     ID_INDICATOR_SCRL,
@@ -464,7 +464,7 @@ void CMainFrame::SetProgressComplete() // called by CDirStatDoc
 
     DestroyProgress();
     CDirStatDoc::GetDocument()->SetTitlePrefix(wds::strEmpty);
-    SetMessageText(Localization::Lookup(IDS_IDLEMESSAGE));
+    //SetMessageText(Localization::Lookup(IDS_IDLEMESSAGE));
     CFileTreeControl::Get()->SortItems();
 }
 
@@ -553,7 +553,7 @@ void CMainFrame::CreateStatusProgress()
     if (m_Progress.m_hWnd == nullptr)
     {
         CRect rc;
-        m_WndStatusBar.GetItemRect(0, rc);
+        m_WndStatusBar.GetItemRect(ID_STATUSPANE_IDLE_INDEX, rc);
         m_Progress.Create(WS_CHILD | WS_VISIBLE, rc, &m_WndStatusBar, ID_WDS_CONTROL);
         m_Progress.ModifyStyle(WS_BORDER, 0);
     }
@@ -592,18 +592,18 @@ void CMainFrame::DestroyProgress()
     m_ProgressVisible = false;
 }
 
-void CMainFrame::SetStatusPaneText(const int pos, const std::wstring & text)
+void CMainFrame::SetStatusPaneText(const int pos, const std::wstring & text, const int minWidth)
 {
     // do not process the update if text is the same
-    static std::wstring last;
-    if (last == text) return;
-    last = text;
+    static std::unordered_map<int, std::wstring> last;
+    if (last.contains(pos) && last[pos] == text) return;
+    last[pos] = text;
 
     // attempt to update width if dc is accessible
     if (const CDC* dc = GetDC(); dc != nullptr)
     {
-        auto cx = dc->GetTextExtent(text.c_str(), static_cast<int>(text.size())).cx;
-        m_WndStatusBar.SetPaneWidth(pos, cx);
+        const auto cx = dc->GetTextExtent(text.c_str(), static_cast<int>(text.size())).cx;
+        m_WndStatusBar.SetPaneWidth(pos, max(cx, minWidth));
     }
 
     m_WndStatusBar.SetPaneText(pos, text.c_str());
@@ -622,12 +622,11 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
     // Setup status pane and force initial field population
     VERIFY(m_WndStatusBar.Create(this));
     m_WndStatusBar.SetIndicators(indicators, _countof(indicators));
-    m_WndStatusBar.SetPaneStyle(ID_INDICATOR_IDLEMESSAGE_INDEX, SBPS_STRETCH);
-    SetStatusPaneText(ID_INDICATOR_CAPS_INDEX, Localization::Lookup(IDS_INDICATOR_CAPS));
-    SetStatusPaneText(ID_INDICATOR_NUM_INDEX, Localization::Lookup(IDS_INDICATOR_NUM));
-    SetStatusPaneText(ID_INDICATOR_SCRL_INDEX, Localization::Lookup(IDS_INDICATOR_SCRL));
-    SetStatusPaneText(ID_INDICATOR_MEMORYUSAGE_INDEX, CDirStatApp::GetCurrentProcessMemoryInfo());
-    SetStatusPaneText(ID_INDICATOR_DISKUAGE_INDEX, L"");
+    m_WndStatusBar.SetPaneStyle(ID_STATUSPANE_IDLE_INDEX, SBPS_STRETCH);
+    SetStatusPaneText(ID_STATUSPANE_CAPS_INDEX, Localization::Lookup(IDS_INDICATOR_CAPS));
+    SetStatusPaneText(ID_STATUSPANE_NUM_INDEX, Localization::Lookup(IDS_INDICATOR_NUM));
+    SetStatusPaneText(ID_STATUSPANE_SCRL_INDEX, Localization::Lookup(IDS_INDICATOR_SCRL));
+    UpdatePaneText();
 
     m_WndDeadFocus.Create(this);
 
@@ -817,18 +816,14 @@ LRESULT CMainFrame::OnExitSizeMove(WPARAM, LPARAM)
 
 void CMainFrame::OnTimer(const UINT_PTR nIDEvent)
 {
-    if (static bool firstRun = true; firstRun)
-    {
-        SetStatusPaneText(ID_INDICATOR_IDLEMESSAGE_INDEX, Localization::Lookup(IDS_IDLEMESSAGE));
-        firstRun = false;
-    }
+   
 
     // UI updates that do not need to processed frequently
     static unsigned int updateCounter = 0;
     if (updateCounter++ % 15 == 0)
     {
         // Update memory usage
-        SetStatusPaneText(ID_INDICATOR_MEMORYUSAGE_INDEX, CDirStatApp::GetCurrentProcessMemoryInfo());
+        UpdatePaneText();
 
         // Force toolbar updates since they do not appear to always receive onidle commands
         m_WndToolBar.OnUpdateCmdUI(this, FALSE);
@@ -1039,7 +1034,7 @@ void CMainFrame::SetLogicalFocus(const LOGICAL_FOCUS lf)
     if (lf != m_LogicalFocus)
     {
         m_LogicalFocus = lf;
-        SetSelectionMessageText();
+        UpdatePaneText();
 
         CDirStatDoc::GetDocument()->UpdateAllViews(nullptr, HINT_SELECTIONSTYLECHANGED);
     }
@@ -1074,39 +1069,48 @@ void CMainFrame::MoveFocus(const LOGICAL_FOCUS lf)
     }
 }
 
-void CMainFrame::SetSelectionMessageText()
+void CMainFrame::UpdatePaneText()
 {
-    if (!CDirStatDoc::GetDocument()->IsRootDone()) return;
     const auto focus = GetLogicalFocus();
-    std::wstring text = Localization::Lookup(IDS_IDLEMESSAGE);
+    std::wstring fileSelectionText = Localization::Lookup(IDS_IDLEMESSAGE);
     ULONGLONG size = 0;
 
-    if (focus == LF_EXTENSIONLIST)
+    // Only get the data the document is not actively updating
+    if (CDirStatDoc::GetDocument()->IsRootDone())
     {
-        text = wds::chrStar + CDirStatDoc::GetDocument()->GetHighlightExtension();
-    }
-    else if (focus == LF_FILETREE)
-    {
-        const auto items = CFileTreeControl::Get()->GetAllSelected<CItem>();
-        if (items.size() == 1) text = items.front()->GetPath();
-        for (const auto & item : items)
+        if (focus == LF_EXTENSIONLIST)
         {
-            size += item->GetSizePhysical();
+            fileSelectionText = wds::chrStar + CDirStatDoc::GetDocument()->GetHighlightExtension();
         }
-    }
-    else if (focus == LF_DUPELIST)
-    {
-        const auto items = CFileDupeControl::Get()->GetAllSelected<CItem>();
-        if (items.size() == 1) text = items.front()->GetPath();
-        for (const auto& item : items)
+        else if (focus == LF_FILETREE)
         {
-            size += item->GetSizePhysical();
+            const auto items = CFileTreeControl::Get()->GetAllSelected<CItem>();
+            if (items.size() == 1) fileSelectionText = items.front()->GetPath();
+            for (const auto& item : items)
+            {
+                size += item->GetSizePhysical();
+            }
+        }
+        else if (focus == LF_DUPELIST)
+        {
+            const auto items = CFileDupeControl::Get()->GetAllSelected<CItem>();
+            if (items.size() == 1) fileSelectionText = items.front()->GetPath();
+            for (const auto& item : items)
+            {
+                size += item->GetSizePhysical();
+            }
         }
     }
 
-    SetMessageText(text);
-    SetStatusPaneText(ID_INDICATOR_DISKUAGE_INDEX, (size > 0) ? (L" ∑  " + FormatBytes(size) +
-        (COptions::UseSizeSuffixes ? L"" : (L" " + GetSpec_Bytes()))) : L"");
+    // Update message selection area
+    SetStatusPaneText(ID_STATUSPANE_IDLE_INDEX, fileSelectionText);
+
+    // Update disk usage area
+    SetStatusPaneText(ID_STATUSPANE_DISK_INDEX, (size > 0) ? (L"      ∑  " + FormatBytes(size) +
+        (COptions::UseSizeSuffixes ? L"" : (L" " + GetSpec_Bytes()))) : L"", 100);
+
+    // Update memory usage area
+    SetStatusPaneText(ID_STATUSPANE_MEM_INDEX, CDirStatApp::GetCurrentProcessMemoryInfo(), 100);
 }
 
 void CMainFrame::OnUpdateEnableControl(CCmdUI* pCmdUI)
@@ -1124,7 +1128,7 @@ void CMainFrame::OnSize(const UINT nType, const int cx, const int cy)
     }
 
     CRect rc;
-    m_WndStatusBar.GetItemRect(0, rc);
+    m_WndStatusBar.GetItemRect(ID_STATUSPANE_IDLE_INDEX, rc);
 
     if (m_Progress.m_hWnd != nullptr)
     {

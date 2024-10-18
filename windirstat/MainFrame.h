@@ -181,7 +181,7 @@ protected:
     void MoveFocus(LOGICAL_FOCUS lf);
 
     void SetMessageText(const std::wstring& text) { SetStatusPaneText(0, text); }
-    void SetSelectionMessageText();
+    void UpdatePaneText();
 
     static void QueryRecycleBin(ULONGLONG& items, ULONGLONG& bytes);
 
@@ -192,7 +192,7 @@ protected:
     void CreatePacmanProgress();
     void DestroyProgress();
 
-    void SetStatusPaneText(int pos, const std::wstring& text);
+    void SetStatusPaneText(int pos, const std::wstring& text, int minWidth = 0);
     void UpdateCleanupMenu(CMenu* menu) const;
 
     UINT_PTR m_Timer = 0;           // Timer for updating the display

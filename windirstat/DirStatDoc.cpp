@@ -395,7 +395,7 @@ bool CDirStatDoc::IsZoomed() const
 void CDirStatDoc::SetHighlightExtension(const std::wstring & ext)
 {
     m_HighlightExtension = ext;
-    CMainFrame::Get()->SetSelectionMessageText();
+    CMainFrame::Get()->UpdatePaneText();
 }
 
 std::wstring CDirStatDoc::GetHighlightExtension()
@@ -891,7 +891,12 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
         { ID_CLEANUP_DELETE_BIN,      { false, true,  false,  true, IT_DIRECTORY | IT_FILE, notRoot } },
         { ID_CLEANUP_DELETE,          { false, true,  false,  true, IT_DIRECTORY | IT_FILE, notRoot } },
         { ID_CLEANUP_OPEN_SELECTED,   { false, true,  true,  false, IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY | IT_FILE } },
-        { ID_CLEANUP_PROPERTIES,      { false, true,  true,  false, IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY | IT_FILE } }
+        { ID_CLEANUP_PROPERTIES,      { false, true,  true,  false, IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY | IT_FILE } },
+        { ID_CLEANUP_OPEN_SELECTED,   { false, true,  true,  false, IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY | IT_FILE } },
+        { ID_CLEANUP_PROPERTIES,      { false, true,  true,  false, IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY | IT_FILE } },
+        { ID_INDICATOR_DISK,          { true,  true,  false, false, IT_ANY } },
+        { ID_INDICATOR_MEM,           { true,  true,  true,  false, IT_ANY } },
+        { ID_INDICATOR_IDLE,          { true,  true,  true,  false, IT_ANY } }
     };
 
     if (!filters.contains(pCmdUI->m_nID))
@@ -969,6 +974,9 @@ BEGIN_MESSAGE_MAP(CDirStatDoc, CDocument)
     ON_COMMAND_UPDATE_WRAPPER(ID_SCAN_RESUME, OnScanResume)
     ON_COMMAND_UPDATE_WRAPPER(ID_SCAN_SUSPEND, OnScanSuspend)
     ON_COMMAND_UPDATE_WRAPPER(ID_SCAN_STOP, OnScanStop)
+    ON_UPDATE_COMMAND_UI(ID_INDICATOR_MEM, OnUpdateCentralHandler)
+    ON_UPDATE_COMMAND_UI(ID_INDICATOR_DISK, OnUpdateCentralHandler)
+    ON_UPDATE_COMMAND_UI(ID_INDICATOR_IDLE, OnUpdateCentralHandler)
     ON_COMMAND_RANGE(CONTENT_MENU_MINCMD, CONTENT_MENU_MAXCMD, OnContextMenuExplore)
 END_MESSAGE_MAP()
 
