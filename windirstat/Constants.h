@@ -49,6 +49,7 @@ namespace wds
     inline constexpr auto strAttributeCompressed   = L"C"; /*FILE_ATTRIBUTE_COMPRESSED*/
     inline constexpr auto strAttributeOffline      = L"O"; /*FILE_ATTRIBUTE_OFFLINE*/
     inline constexpr auto strAttributeEncrypted    = L"E"; /*FILE_ATTRIBUTE_ENCRYPTED*/
+    inline constexpr auto strAttributeSparse       = L"Z"; /*FILE_ATTRIBUTE_SPARSE*/
 
     inline std::wstring strAlpha{ L"ABCDEFGHIJKLMNOPQRSTUVWXYZ" };
 }

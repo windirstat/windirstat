@@ -239,6 +239,11 @@ std::wstring FormatAttributes(const DWORD attr)
         attributes.append(wds::strAttributeOffline);
     }
 
+    if (attr & FILE_ATTRIBUTE_SPARSE_FILE)
+    {
+        attributes.append(wds::strAttributeSparse);
+    }
+
     return attributes;
 }
 
