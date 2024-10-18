@@ -33,4 +33,9 @@
     <?endif ?>
     <!-- Default Registry Key, in which most registry settings are saved. -->
     <?define ProductRegKeyPath = "SOFTWARE\WinDirStat\WinDirStat"?>
+    <?if $(var.RELTYPE) = PRODUCTION ?>
+	<?define AllowSameVersionUpgrades = "no"?>	
+    <?else ?>
+	<?define AllowSameVersionUpgrades = "yes"?>	
+    <?endif ?>
 </Include>

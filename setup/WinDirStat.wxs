@@ -5,7 +5,7 @@
     <Package InstallerVersion="500" Compressed="yes" InstallScope="perMachine"/>
     <Icon Id="WinDirStat.ico" SourceFile="$(var.IconFilePath)"/>
     <Property Id="ARPPRODUCTICON" Value="WinDirStat.ico"/>
-    <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." Schedule="afterInstallInitialize"/>
+    <MajorUpgrade AllowSameVersionUpgrades="$(var.AllowSameVersionUpgrades)" DowngradeErrorMessage="A newer version of [ProductName] is already installed." Schedule="afterInstallInitialize" />
     <MediaTemplate EmbedCab="yes" CompressionLevel="high"/>
     <UIRef Id="WixUI_FeatureTree"/>
     <WixVariable Id="WixUILicenseRtf" Value="$(var.LicenseRtf)"/>
@@ -23,8 +23,8 @@
     <Property Id="WIN_DIR_STAT_HKLM">
       <RegistrySearch Id="WinDirStatHKLM" Root="HKLM" Key="Software\Microsoft\Windows\CurrentVersion\Uninstall\WinDirStat" Name="UninstallString" Type="raw" Win64="no"/>
     </Property>  
-    <CustomAction Id="DoUninstallHKCU" Property="UninstallHKCU" ExeCommand="[WIN_DIR_STAT_HKCU] /s" Execute="immediate" Impersonate="no" Return="ignore"/>
-    <CustomAction Id="DoUninstallHKLM" Property="UninstallHKLM" ExeCommand="[WIN_DIR_STAT_HKLM] /s" Execute="immediate" Impersonate="no" Return="ignore"/>
+    <CustomAction Id="DoUninstallHKCU" Directory="TempFolder" ExeCommand="[WIN_DIR_STAT_HKCU] /S" Execute="immediate" Impersonate="no" />
+    <CustomAction Id="DoUninstallHKLM" Directory="TempFolder" ExeCommand="[WIN_DIR_STAT_HKLM] /S" Execute="immediate" Impersonate="no" />
     <InstallExecuteSequence>
       <Custom Action="DoUninstallHKCU" Before="InstallInitialize">WIN_DIR_STAT_HKCU</Custom>
       <Custom Action="DoUninstallHKLM" Before="InstallInitialize">WIN_DIR_STAT_HKLM</Custom>
@@ -36,6 +36,7 @@
         <Directory Id="INSTALLFOLDER" Name="WinDirStat"/>
       </Directory>
       <Directory Id="ProgramMenuFolder"/>
+      <Directory Id="TempFolder"/>
     </Directory>
   </Fragment>
   <Fragment>
