@@ -19,7 +19,7 @@ For changes in recent versions, please check out [the change log](CHANGELOG.md).
 
 ### Installation
 
-* 📦 Install it by downloading the appropriate version for your system from the [release page](releases)
+* 📦 Install it by downloading the appropriate version for your system from the [release page](https://github.com/windirstat/windirstat/releases/)
   * 📦 Install with `winget install -e --id WinDirStat.WinDirStat` (or use `winget upgrade` subsequently)
   * 📦 Alternatively install with `scoop install extras/windirstat` (requires `scoop bucket add extras`)
 
