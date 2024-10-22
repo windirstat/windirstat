@@ -1,4 +1,4 @@
-// layout.h - Declaration of CLayout
+// Layout.h - Declaration of CLayout
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert

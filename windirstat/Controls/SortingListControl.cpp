@@ -1,3 +1,4 @@
+// SortingListControl.cpp - Implementation of CSortingListItem and CSortingListControl
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert

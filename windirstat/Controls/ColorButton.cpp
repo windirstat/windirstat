@@ -22,7 +22,7 @@
 #include "stdafx.h"
 #include "resource.h"
 #include "ColorButton.h"
-#include <Constants.h>
+#include "Constants.h"
 
 /////////////////////////////////////////////////////////////////////////////
 

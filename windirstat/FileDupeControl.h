@@ -1,4 +1,4 @@
-// FileTreeControl.h - Declaration of CFileDupeControl and CFileTreeView
+// FileDupeControl.h - Declaration of CFileDupeControl and CFileTreeView
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert

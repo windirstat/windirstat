@@ -21,6 +21,7 @@
 /// DEALINGS IN THE SOFTWARE.
 ///
 ///////////////////////////////////////////////////////////////////////////////
+
 #include <winnt.rh>
 #include <verrsrc.h>
 
@@ -29,19 +30,8 @@ LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 #pragma code_page(65001)
 #include "version.h"
 
-#define _ANSISTRING(text) #text
-#define ANSISTRING(text) _ANSISTRING(text)
-
-#define _WIDESTRING(text) L##text
-#define WIDESTRING(text) _WIDESTRING(text)
-
-#define PRESET_UNICODE_STRING(symbol, buffer) \
-        UNICODE_STRING symbol = \
-            { \
-            sizeof(WIDESTRING(buffer)) - sizeof(WCHAR), \
-            sizeof(WIDESTRING(buffer)), \
-            WIDESTRING(buffer) \
-            };
+#define _STRING(text) #text L"\0"
+#define STRING(text) _STRING(text)
 
 #define CREATE_XVER(maj,min,patch,build) maj ## , ## min ## , ## patch ## , ## build
 #define CREATE_FVER(maj,min,patch,build) maj ## . ## min ## . ## patch ## . ## build
@@ -66,47 +56,19 @@ BEGIN
     BEGIN
         BLOCK "000004b0"
         BEGIN
-#ifdef TEXT_AUTHOR
-            VALUE "Author", ANSISTRING(TEXT_AUTHOR)
-#endif
-#ifdef TEXT_COMMENTS
-            VALUE "Comments", ANSISTRING(TEXT_COMMENTS)
-#endif
-            VALUE "CompanyName", STRING_COMPANY
-            VALUE "FileDescription", ANSISTRING(TEXT_FILEDESC)
-            VALUE "FileVersion", ANSISTRING(CREATE_FVER(FILE_MAJVER, FILE_MINVER, FILE_PATCH, FILE_BUILD))
-#ifdef TEXT_INTERNALNAME
-            VALUE "InternalName", ANSISTRING(TEXT_INTERNALNAME)
-#endif
+            VALUE "Comments", STRING(TEXT_WEBSITE)
+            VALUE "CompanyName", STRING(STRING_COMPANY)
+            VALUE "FileDescription", STRING(TEXT_FILEDESC)
+            VALUE "FileVersion", STRING(CREATE_FVER(FILE_MAJVER, FILE_MINVER, FILE_PATCH, FILE_BUILD))
             VALUE "LegalCopyright", STRING_COPYRIGHT
-#ifdef MODNAME
-            VALUE "OriginalFilename", ANSISTRING(MODNAME)
-#endif
-            VALUE "ProductName", ANSISTRING(TEXT_PRODUCTNAME)
-            VALUE "ProductVersion", ANSISTRING(CREATE_PVER(PRD_MAJVER, PRD_MINVER, PRD_PATCH, PRD_BUILD))
-#ifdef TEXT_PORTIONSCOPYRIGHT
-            VALUE "Portions Copyright", TEXT_PORTIONSCOPYRIGHT
-#endif
-#ifdef TEXT_SPECIALBUILD
-            VALUE "SpecialBuild", ANSISTRING(TEXT_SPECIALBUILD)
-#endif
-#ifdef TEXT_WEBSITE
-            VALUE "Website", ANSISTRING(TEXT_WEBSITE)
-#endif
-#if defined(GIT_COMMIT)
-            VALUE "Git revision", ANSISTRING(GIT_COMMIT)
-            VALUE "GitHub revision URL", "https://github.com/windirstat/windirstat/commit/" ANSISTRING(GIT_COMMIT)
-            VALUE "GitLab revision URL", "https://gitlab.com/windirstat/windirstat/-/commit/" ANSISTRING(GIT_COMMIT)
-            VALUE "SourceForge revision URL", "https://sourceforge.net/p/windirstat/code/ci/d6f6dbbbeb26a755927c2f221317e76ee503de46/" ANSISTRING(GIT_COMMIT) "/"
-#endif
-#ifdef SOURCE_REPOSITORY
-            VALUE "Source repository", SOURCE_REPOSITORY
-#endif
+            VALUE "OriginalFilename", STRING(MODNAME)
+            VALUE "ProductName", STRING(TEXT_PRODUCTNAME)
+            VALUE "ProductVersion", STRING(CREATE_PVER(FILE_MAJVER, FILE_MINVER, FILE_PATCH, FILE_BUILD))
         END
     END
     BLOCK "VarFileInfo"
     BEGIN
-        VALUE "Translation", 0x0, 1200
+        VALUE "Translation", 0x0000, 0x04b0
     END
 END
 

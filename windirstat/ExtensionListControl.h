@@ -1,4 +1,4 @@
-// ExtensionView.h - Declaration of CExtensionListControl and CExtensionView
+// ExtensionListControl.h - Declaration of CExtensionListControl and CExtensionView
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert

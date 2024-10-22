@@ -1,4 +1,4 @@
-// ownerdrawnlistcontrol.h - Declaration of COwnerDrawnListControl and COwnerDrawnListItem
+// OwnerDrawnListControl.h - Declaration of COwnerDrawnListControl and COwnerDrawnListItem
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
