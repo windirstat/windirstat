@@ -1092,7 +1092,7 @@ void CMainFrame::UpdatePaneText()
         {
             const auto items = CFileTreeControl::Get()->GetAllSelected<CItem>();
             if (items.size() == 1) fileSelectionText = items.front()->GetPath();
-            for (const auto& item : items)
+            for (size = 0; const auto& item : items)
             {
                 size += item->GetSizePhysical();
             }
@@ -1101,7 +1101,7 @@ void CMainFrame::UpdatePaneText()
         {
             const auto items = CFileDupeControl::Get()->GetAllSelected<CItem>();
             if (items.size() == 1) fileSelectionText = items.front()->GetPath();
-            for (const auto& item : items)
+            for (size = 0; const auto& item : items)
             {
                 size += item->GetSizePhysical();
             }

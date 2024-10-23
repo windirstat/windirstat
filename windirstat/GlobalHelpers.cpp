@@ -143,12 +143,8 @@ std::wstring FormatSizeSuffixes(ULONGLONG n)
     {
         return FormatDouble(KB + B / base) + L" " + GetSpec_KB();
     }
-    if (B != 0.0)
-    {
-        return std::to_wstring(static_cast<ULONG>(B)) + L" " + GetSpec_Bytes();
-    }
 
-    return L"0";
+    return std::to_wstring(static_cast<ULONG>(B)) + L" " + GetSpec_Bytes();
 }
 
 std::wstring FormatCount(const ULONGLONG& n)
