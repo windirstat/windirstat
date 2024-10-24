@@ -1,4 +1,4 @@
-// pacman.h - Declaration of CPacman
+// PacaMan.h - Declaration of CPacman
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert

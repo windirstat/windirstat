@@ -20,8 +20,9 @@
 //
 
 #include "stdafx.h"
+#include "version.h"
 #include "WinDirStat.h"
-#include <Constants.h>
+#include "Constants.h"
 #include "MdExceptions.h"
 #include "CommonHelpers.h"
 #include "AboutDlg.h"

@@ -25,9 +25,6 @@
     <Filter Include="Resource Files\Resources">
       <UniqueIdentifier>{FAE48057-9708-D7A8-F523-7E1B9962C744}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Special Files">
-      <UniqueIdentifier>{38E10655-D178-C918-DFD7-45CB0E3F34CF}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Resource Files\Languages">
       <UniqueIdentifier>{ca41237d-3469-4146-909c-126f62a5c504}</UniqueIdentifier>
     </Filter>
@@ -54,8 +51,6 @@
     <None Include="res\windirstat.rc2">
       <Filter>Resource Files\Resources</Filter>
     </None>
-    <None Include="..\CONTRIBUTORS.md" />
-    <None Include="..\README.md" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DirStatDoc.h">
@@ -206,6 +201,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="version.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="OleFilterOverride.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

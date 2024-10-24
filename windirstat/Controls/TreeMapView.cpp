@@ -428,6 +428,23 @@ void CTreeMapView::OnUpdate(CView* pSender, const LPARAM lHint, CObject* pHint)
     }
 }
 
+std::wstring CTreeMapView::GetTreeMapHoverPath()
+{
+    CPoint point;
+    GetCursorPos(&point);
+    ScreenToClient(&point);
+
+    CRect rc;
+    GetClientRect(rc);
+
+    if (!rc.PtInRect(point))
+    {
+        m_PaneTextOverride = {};
+    }
+
+    return m_PaneTextOverride;
+}
+
 void CTreeMapView::OnContextMenu(CWnd* /*pWnd*/, const CPoint point)
 {
     const CItem* root = GetDocument()->GetRootItem();
@@ -448,39 +465,8 @@ void CTreeMapView::OnMouseMove(UINT /*nFlags*/, const CPoint point)
         const auto item = static_cast<const CItem*>(m_TreeMap.FindItemByPoint(GetDocument()->GetZoomItem(), point));
         if (item != nullptr)
         {
-            CMainFrame::Get()->SetMessageText(item->GetPath());
+            m_PaneTextOverride = item->GetPath();
+            CMainFrame::Get()->UpdatePaneText();
         }
-    }
-    if (m_Timer == 0)
-    {
-        m_Timer = SetTimer(ID_WDS_CONTROL, 100, nullptr);
-    }
-}
-
-void CTreeMapView::OnDestroy()
-{
-    if (m_Timer != NULL)
-    {
-        KillTimer(m_Timer);
-    }
-    m_Timer = 0;
-
-    CView::OnDestroy();
-}
-
-void CTreeMapView::OnTimer(UINT_PTR /*nIDEvent*/)
-{
-    CPoint point;
-    GetCursorPos(&point);
-    ScreenToClient(&point);
-
-    CRect rc;
-    GetClientRect(rc);
-
-    if (!rc.PtInRect(point))
-    {
-        CMainFrame::Get()->UpdatePaneText();
-        KillTimer(m_Timer);
-        m_Timer = 0;
     }
 }

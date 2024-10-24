@@ -22,12 +22,17 @@
     </Property>
     <Property Id="WIN_DIR_STAT_HKLM">
       <RegistrySearch Id="WinDirStatHKLM" Root="HKLM" Key="Software\Microsoft\Windows\CurrentVersion\Uninstall\WinDirStat" Name="UninstallString" Type="raw" Win64="no"/>
-    </Property>  
-    <CustomAction Id="DoUninstallHKCU" Directory="TempFolder" ExeCommand="[WIN_DIR_STAT_HKCU] /S" Execute="immediate" Impersonate="no" />
-    <CustomAction Id="DoUninstallHKLM" Directory="TempFolder" ExeCommand="[WIN_DIR_STAT_HKLM] /S" Execute="immediate" Impersonate="no" />
+    </Property>
+    <Property Id="WAIT_PROCESS" Value="POWERSHELL.EXE -WindowStyle Hidden -Command &quot;While (@(Get-Process 'Au_' -Ea SilentlyContinue)) { Start-Sleep 1 }&quot;"/>	
+    <CustomAction Id="DoUninstallHKCU" Directory="TempFolder" ExeCommand="CMD.EXE /C [WIN_DIR_STAT_HKCU] /S" Execute="immediate" Impersonate="yes" Return="ignore"/>
+    <CustomAction Id="WaitForProcessHKCU" Directory="TempFolder" ExeCommand="[WAIT_PROCESS]" Execute="immediate" Impersonate="yes" Return="ignore"/>	
+    <CustomAction Id="DoUninstallHKLM" Directory="TempFolder" ExeCommand="CMD.EXE /C [WIN_DIR_STAT_HKLM] /S" Execute="immediate" Impersonate="no" Return="ignore"/>
+    <CustomAction Id="WaitForProcessHKLM" Directory="TempFolder" ExeCommand="[WAIT_PROCESS]" Execute="immediate" Impersonate="no" Return="ignore"/>		
     <InstallExecuteSequence>
-      <Custom Action="DoUninstallHKCU" Before="InstallInitialize">WIN_DIR_STAT_HKCU</Custom>
-      <Custom Action="DoUninstallHKLM" Before="InstallInitialize">WIN_DIR_STAT_HKLM</Custom>
+      <Custom Action="DoUninstallHKCU" Before="InstallInitialize">WIN_DIR_STAT_HKCU AND NOT REMOVE</Custom>
+      <Custom Action="WaitForProcessHKCU" After="DoUninstallHKCU">WIN_DIR_STAT_HKCU AND NOT REMOVE</Custom>
+      <Custom Action="DoUninstallHKLM" Before="InstallInitialize">WIN_DIR_STAT_HKLM AND NOT REMOVE</Custom>
+      <Custom Action="WaitForProcessHKLM" After="DoUninstallHKLM">WIN_DIR_STAT_HKLM AND NOT REMOVE</Custom>      
     </InstallExecuteSequence>
   </Product>
   <Fragment>

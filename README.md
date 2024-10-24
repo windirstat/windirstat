@@ -17,6 +17,12 @@ For more information on the background of WinDirStat and alternative versions on
 
 For changes in recent versions, please check out [the change log](CHANGELOG.md).
 
+### Installation
+
+* 📦 Install it by downloading the appropriate version for your system from the [release page](https://github.com/windirstat/windirstat/releases/)
+  * 📦 Install with `winget install -e --id WinDirStat.WinDirStat` (or use `winget upgrade` subsequently)
+  * 📦 Alternatively install with `scoop install extras/windirstat` (requires `scoop bucket add extras`)
+
 ## Copyright / Licenses
 
 * Copyright © 2003-2005 Bernhard Seifert (bseifert@users.sourceforge.net)
@@ -31,7 +37,7 @@ Commons license [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/).
 
 ## Building
 
-WinDirStat can be built with Visual Studio 2022 or later. A Visual Studio solution file can be loaded from windirstat\WinDirStat.sln.
+WinDirStat can be built with Visual Studio 2022 or later. A Visual Studio solution file can be loaded from `windirstat\WinDirStat.sln`.
 
 ## Contributing
 

@@ -179,8 +179,6 @@ protected:
     void SetLogicalFocus(LOGICAL_FOCUS lf);
     LOGICAL_FOCUS GetLogicalFocus() const;
     void MoveFocus(LOGICAL_FOCUS lf);
-
-    void SetMessageText(const std::wstring& text) { SetStatusPaneText(0, text); }
     void UpdatePaneText();
 
     static void QueryRecycleBin(ULONGLONG& items, ULONGLONG& bytes);

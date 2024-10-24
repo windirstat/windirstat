@@ -1073,10 +1073,16 @@ void CMainFrame::UpdatePaneText()
 {
     const auto focus = GetLogicalFocus();
     std::wstring fileSelectionText = Localization::Lookup(IDS_IDLEMESSAGE);
-    ULONGLONG size = 0;
+    ULONGLONG size = MAXULONG64;
+
+    // Allow override test
+    if (const std::wstring & hover = m_TreeMapView->GetTreeMapHoverPath(); !hover.empty())
+    {
+        fileSelectionText = hover;
+    }
 
     // Only get the data the document is not actively updating
-    if (CDirStatDoc::GetDocument()->IsRootDone())
+    else if (CDirStatDoc::GetDocument()->IsRootDone())
     {
         if (focus == LF_EXTENSIONLIST)
         {
@@ -1086,7 +1092,7 @@ void CMainFrame::UpdatePaneText()
         {
             const auto items = CFileTreeControl::Get()->GetAllSelected<CItem>();
             if (items.size() == 1) fileSelectionText = items.front()->GetPath();
-            for (const auto& item : items)
+            for (size = 0; const auto& item : items)
             {
                 size += item->GetSizePhysical();
             }
@@ -1095,7 +1101,7 @@ void CMainFrame::UpdatePaneText()
         {
             const auto items = CFileDupeControl::Get()->GetAllSelected<CItem>();
             if (items.size() == 1) fileSelectionText = items.front()->GetPath();
-            for (const auto& item : items)
+            for (size = 0; const auto& item : items)
             {
                 size += item->GetSizePhysical();
             }
@@ -1106,7 +1112,7 @@ void CMainFrame::UpdatePaneText()
     SetStatusPaneText(ID_STATUSPANE_IDLE_INDEX, fileSelectionText);
 
     // Update disk usage area
-    SetStatusPaneText(ID_STATUSPANE_DISK_INDEX, (size > 0) ? (L"      ∑  " + FormatBytes(size) +
+    SetStatusPaneText(ID_STATUSPANE_DISK_INDEX, (size != MAXULONG64) ? (L"      ∑  " + FormatBytes(size) +
         (COptions::UseSizeSuffixes ? L"" : (L" " + GetSpec_Bytes()))) : L"", 100);
 
     // Update memory usage area

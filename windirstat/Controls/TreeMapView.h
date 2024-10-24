@@ -47,6 +47,7 @@ protected:
     bool IsShowTreeMap() const;
     void ShowTreeMap(bool show);
     void DrawEmptyView();
+    std::wstring GetTreeMapHoverPath();
 
 protected:
     BOOL PreCreateWindow(CREATESTRUCT& cs) override;
@@ -68,6 +69,7 @@ protected:
     void HighlightSelectedItem(CDC* pdc, const CItem* item, bool single);
     void RenderHighlightRectangle(CDC* pdc, CRect& rc);
 
+    std::wstring m_PaneTextOverride; // Populated with the last hovered item for a period of time
     bool m_DrawingSuspended = false; // True while the user is resizing the window.
     bool m_ShowTreeMap = true;       // False, if the user switched off the treemap (by F9).
     CSize m_Size{ 0, 0 };            // Current size of view
@@ -75,7 +77,6 @@ protected:
     CBitmap m_Bitmap;                // Cached view. If m_hObject is NULL, the view must be recalculated.
     CSize m_DimmedSize{ 0,0 };       // Size of bitmap m_Dimmed
     CBitmap m_Dimmed;                // Dimmed view. Used during refresh to avoid the ooops-effect.
-    UINT_PTR m_Timer = 0;            // We need a timer to realize when the mouse left our window.
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnSize(UINT nType, int cx, int cy);
@@ -83,7 +84,5 @@ protected:
     afx_msg void OnSetFocus(CWnd* pOldWnd);
     afx_msg void OnContextMenu(CWnd* pWnd, CPoint point);
     afx_msg void OnMouseMove(UINT nFlags, CPoint point);
-    afx_msg void OnDestroy();
-    afx_msg void OnTimer(UINT_PTR nIDEvent);
 };
 
