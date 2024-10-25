@@ -34,6 +34,12 @@
     <Filter Include="Header Files\Views">
       <UniqueIdentifier>{442ebfd0-7b2c-4c88-82fd-8aaac4efe37f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Pages">
+      <UniqueIdentifier>{6a5393ca-7832-4451-bdb4-0938bdad20a4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Pages">
+      <UniqueIdentifier>{48734b53-64ee-4a01-9ed9-2a08de961821}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="res\IDB_NODES.bmp">
@@ -83,18 +89,6 @@
     <ClInclude Include="Options.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="PageCleanups.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="PageGeneral.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="PageFileTree.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="PageTreeMap.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="SelectObject.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -138,9 +132,6 @@
       <Filter>Header Files\Dialogs</Filter>
     </ClInclude>
     <ClInclude Include="BlockingQueue.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="PageAdvanced.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Localization.h">
@@ -206,6 +197,21 @@
     <ClInclude Include="OleFilterOverride.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Pages\PageAdvanced.h">
+      <Filter>Header Files\Pages</Filter>
+    </ClInclude>
+    <ClInclude Include="Pages\PageCleanups.h">
+      <Filter>Header Files\Pages</Filter>
+    </ClInclude>
+    <ClInclude Include="Pages\PageFileTree.h">
+      <Filter>Header Files\Pages</Filter>
+    </ClInclude>
+    <ClInclude Include="Pages\PageGeneral.h">
+      <Filter>Header Files\Pages</Filter>
+    </ClInclude>
+    <ClInclude Include="Pages\PageTreeMap.h">
+      <Filter>Header Files\Pages</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirStatDoc.cpp">
@@ -233,18 +239,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Options.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="PageCleanups.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="PageGeneral.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="PageFileTree.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="PageTreeMap.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="stdafx.cpp">
@@ -289,9 +283,6 @@
     <ClCompile Include="FileFind.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="PageAdvanced.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Localization.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -330,6 +321,21 @@
     </ClCompile>
     <ClCompile Include="Property.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Pages\PageAdvanced.cpp">
+      <Filter>Source Files\Pages</Filter>
+    </ClCompile>
+    <ClCompile Include="Pages\PageCleanups.cpp">
+      <Filter>Source Files\Pages</Filter>
+    </ClCompile>
+    <ClCompile Include="Pages\PageFileTree.cpp">
+      <Filter>Source Files\Pages</Filter>
+    </ClCompile>
+    <ClCompile Include="Pages\PageGeneral.cpp">
+      <Filter>Source Files\Pages</Filter>
+    </ClCompile>
+    <ClCompile Include="Pages\PageTreeMap.cpp">
+      <Filter>Source Files\Pages</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
