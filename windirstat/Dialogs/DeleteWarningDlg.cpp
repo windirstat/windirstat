@@ -70,5 +70,6 @@ BOOL CDeleteWarningDlg::OnInitDialog()
     ReleaseDC(dc);
     m_Files.SetHorizontalExtent(extent);
 
+    GotoDlgCtrl(GetDlgItem(IDNO));
     return TRUE;
 }
