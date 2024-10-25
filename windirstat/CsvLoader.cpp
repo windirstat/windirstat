@@ -28,10 +28,8 @@
 #include <fstream>
 #include <string>
 #include <stack>
-#include <sstream>
 #include <unordered_map>
 #include <format>
-#include <chrono>
 #include <array>
 #include <ranges>
 
@@ -72,33 +70,33 @@ static void ParseHeaderLine(const std::vector<std::wstring>& header)
     }
 }
 
-static std::chrono::file_clock::time_point ToTimePoint(const FILETIME& ft)
+static std::string ToTimePoint(const FILETIME& fileTime)
 {
-    const std::chrono::file_clock::duration d{ (static_cast<int64_t>(ft.dwHighDateTime) << 32) | ft.dwLowDateTime };
-    return std::chrono::file_clock::time_point { d };
+    SYSTEMTIME sysTime;
+    if (!FileTimeToSystemTime(&fileTime, &sysTime)) return {};
+    return std::format("{}-{:02}-{:02}T{:02}:{:02}:{:02}Z",
+        sysTime.wYear, sysTime.wMonth, sysTime.wDay,
+        sysTime.wHour, sysTime.wMinute, sysTime.wSecond);
+
 }
 
-static FILETIME FromTimeString(const std::wstring & s)
+static FILETIME FromTimeString(const std::wstring& time)
 {
-    // Parse date string
-    std::wistringstream in{ s };
-    std::chrono::file_clock::time_point tp;
-    in >> parse(L"%Y-%m-%dT%H:%M:%S%Z", tp);
+    // Expected format: YYYY-MM-DDTHH:MM:SSZ
+    SYSTEMTIME utc = {};
+    if (time.size() < _countof("YYYY-MM-DDTHH:MM:SS") || time[10] != 'T' ||
+        swscanf_s(time.c_str(), L"%4hu-%2hu-%2huT%2hu:%2hu:%2hu",
+        &utc.wYear, &utc.wMonth, &utc.wDay,
+        &utc.wHour, &utc.wMinute, &utc.wSecond) != 6) return {};
 
-    // Adjust time divisor to 100ns 
-    const auto tmp = std::chrono::duration_cast<std::chrono::duration<int64_t,
-                                                                      std::ratio_multiply<std::hecto, std::nano>>>(tp.time_since_epoch()).count();
-
-    // Load into file time structure
-    return {
-        .dwLowDateTime = static_cast<ULONG>(tmp),
-        .dwHighDateTime = static_cast<DWORD>(tmp >> 32)
-    };
+    FILETIME ft = {};
+    SystemTimeToFileTime(&utc, &ft);
+    return ft;
 }
 
 static std::string QuoteAndConvert(const std::wstring& inc)
 {
-    const int sz = WideCharToMultiByte(CP_UTF8, WC_NO_BEST_FIT_CHARS, inc.c_str(), -1, nullptr, 0, nullptr, nullptr);
+    const int sz = WideCharToMultiByte(CP_UTF8, 0, inc.c_str(), -1, nullptr, 0, nullptr, nullptr);
     std::string out = "\"";
     out.resize(static_cast<size_t>(sz) + 1);
     WideCharToMultiByte(CP_UTF8, 0, inc.data(), -1, &out[1], sz, nullptr, nullptr);
@@ -261,7 +259,7 @@ bool SaveResults(const std::wstring& path, CItem * item)
 
         // Output primary columns
         const bool nonPathItem = qitem->IsType(IT_MYCOMPUTER | IT_UNKNOWN | IT_FREESPACE);
-        outf << std::format("{},{},{},{},{},0x{:08X},{:%FT%TZ},0x{:04X}",
+        outf << std::format("{},{},{},{},{},0x{:08X},{},0x{:04X}",
             QuoteAndConvert(nonPathItem ? qitem->GetName() : qitem->GetPath()),
             qitem->GetFilesCount(),
             qitem->GetFoldersCount(),
