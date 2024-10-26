@@ -21,10 +21,10 @@
 
 #pragma once
 
-#include "afxwin.h"
+#include "WinDirStat.h"
 
 //
-// CPageCleanups. "Settings" property page "User defined cleanups".
+// CPageCleanups. "Settings" property page "Cleanups".
 //
 class CPageCleanups final : public CPropertyPage
 {

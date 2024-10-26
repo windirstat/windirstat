@@ -21,6 +21,8 @@
 
 #pragma once
 
+#include "WinDirStat.h"
+
 class COptionsPropertySheet;
 
 //

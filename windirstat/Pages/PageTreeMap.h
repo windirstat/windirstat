@@ -21,12 +21,13 @@
 
 #pragma once
 
+#include "WinDirStat.h"
 #include "ColorButton.h"
 #include "TreeMap.h"
 #include "XYSlider.h"
 
 //
-// CPageTreeMap. "Settings" property page "Treemap".
+// CPageTreeMap. "Settings" property page "TreeMap".
 //
 class CPageTreeMap final : public CPropertyPage
 {

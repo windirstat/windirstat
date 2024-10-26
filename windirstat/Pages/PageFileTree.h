@@ -25,7 +25,7 @@
 #include "ColorButton.h"
 
 //
-// CPageFileTree. "Settings" property page "Treelist".
+// CPageFileTree. "Settings" property page "Folder List".
 //
 class CPageFileTree final : public CPropertyPage
 {

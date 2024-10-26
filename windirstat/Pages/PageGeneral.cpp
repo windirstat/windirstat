@@ -97,7 +97,7 @@ void CPageGeneral::OnOK()
 {
     UpdateData();
 
-    const bool windowsLocaleChanged = static_cast<bool>(m_UseWindowsLocale) != COptions::UseWindowsLocaleSetting;;
+    const bool windowsLocaleChanged = static_cast<bool>(m_UseWindowsLocale) != COptions::UseWindowsLocaleSetting;
     const bool listChanged = static_cast<bool>(m_ListGrid) != COptions::ListGrid ||
         static_cast<bool>(m_ListStripes) != COptions::ListStripes ||
         static_cast<bool>(m_ListFullRowSelection) != COptions::ListFullRowSelection ||
