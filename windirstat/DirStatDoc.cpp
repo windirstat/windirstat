@@ -1406,6 +1406,10 @@ void CDirStatDoc::OnScanResume()
 
 void CDirStatDoc::OnScanStop()
 {
+    // Request for all threads to stop processing
+    for (auto& queue : m_queues | std::views::values)
+        ProcessMessagesUntilSignaled([&queue] { queue.SuspendExecution(); });
+
     // Stop m_queues from executing
     for (auto& queue : m_queues | std::views::values)
         ProcessMessagesUntilSignaled([&queue] { queue.CancelExecution(); });
