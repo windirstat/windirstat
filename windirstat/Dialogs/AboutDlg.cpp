@@ -45,9 +45,6 @@ namespace
     // Retrieve the GPL text from our resources
     std::wstring GetTextResource(const UINT id, const HMODULE dll = AfxGetResourceHandle())
     {
-        std::wstring s;
-
-        HGLOBAL hresource = nullptr;
         try
         {
             const HRSRC hrsrc = ::FindResource(dll, MAKEINTRESOURCE(id), L"TEXT");
@@ -56,23 +53,11 @@ namespace
                 MdThrowLastWinerror();
             }
 
-            const DWORD dwSize = SizeofResource(dll, hrsrc);
-            if (0 == dwSize)
-            {
-                MdThrowLastWinerror();
-            }
+            // Decompress the resource
+            const auto resourceData = GetCompressedResource(hrsrc);
+            if (resourceData.empty()) MdThrowLastWinerror();
 
-            hresource = LoadResource(dll, hrsrc);
-            if (!hresource)
-            {
-                MdThrowLastWinerror();
-            }
-
-            const auto pData = static_cast<const BYTE*>(LockResource(hresource));
-
-            const CComBSTR bstr(dwSize, reinterpret_cast<LPCSTR>(pData));
-
-            s = bstr;
+            return std::wstring(CComBSTR(static_cast<int>(resourceData.size()), reinterpret_cast<LPCSTR>(resourceData.data())));
         }
         catch (CException* pe)
         {
@@ -80,12 +65,7 @@ namespace
             pe->Delete();
         }
 
-        if (hresource != nullptr)
-        {
-            FreeResource(hresource);
-        }
-
-        return s;
+        return {};
     }
 }
 

@@ -642,7 +642,7 @@ END
 // TEXT
 //
 
-IDR_LICENSE             TEXT                    "res\\license.txt"
+IDR_LICENSE             TEXT                    "res\\license.bin"
 
 
 /////////////////////////////////////////////////////////////////////////////

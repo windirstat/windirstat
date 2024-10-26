@@ -1,4 +1,5 @@
 *.aps
+*.bin
 *.vcxproj.user
 *.lastcodeanalysissucceeded
 intermediate/

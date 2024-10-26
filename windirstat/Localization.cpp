@@ -110,16 +110,12 @@ bool Localization::LoadResource(const WORD language)
     const HRSRC resource = ::FindResourceEx(nullptr, LANG_RESOURCE_TYPE, MAKEINTRESOURCE(IDR_RT_LANG), language);
     if (resource == nullptr) return false;
 
-    // Establish the resource
-    const HGLOBAL resourceData = ::LoadResource(nullptr, resource);
-    if (resourceData == nullptr) return false;
-
-    // Fetch a pointer to the data
-    const LPVOID binaryData = LockResource(resourceData);
-    if (binaryData == nullptr) return false;
+    // Decompress the resource
+    auto resourceData = GetCompressedResource(resource);
+    if (resourceData.empty()) return false;
 
     // Organize the data into a string
-    const std::string file(static_cast<LPCSTR>(binaryData), SizeofResource(nullptr, resource));
+    const std::string file(reinterpret_cast<PCHAR>(resourceData.data()), resourceData.size());
     std::istringstream is(file);
 
     // Process the data

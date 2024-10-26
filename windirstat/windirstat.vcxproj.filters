@@ -57,6 +57,54 @@
     <None Include="res\windirstat.rc2">
       <Filter>Resource Files\Resources</Filter>
     </None>
+    <None Include="res\langs\lang_cs.bin">
+      <Filter>Resource Files\Languages</Filter>
+    </None>
+    <None Include="res\langs\lang_de.bin">
+      <Filter>Resource Files\Languages</Filter>
+    </None>
+    <None Include="res\langs\lang_ee.bin">
+      <Filter>Resource Files\Languages</Filter>
+    </None>
+    <None Include="res\langs\lang_en.bin">
+      <Filter>Resource Files\Languages</Filter>
+    </None>
+    <None Include="res\langs\lang_es.bin">
+      <Filter>Resource Files\Languages</Filter>
+    </None>
+    <None Include="res\langs\lang_fi.bin">
+      <Filter>Resource Files\Languages</Filter>
+    </None>
+    <None Include="res\langs\lang_fr.bin">
+      <Filter>Resource Files\Languages</Filter>
+    </None>
+    <None Include="res\langs\lang_hu.bin">
+      <Filter>Resource Files\Languages</Filter>
+    </None>
+    <None Include="res\langs\lang_it.bin">
+      <Filter>Resource Files\Languages</Filter>
+    </None>
+    <None Include="res\langs\lang_nl.bin">
+      <Filter>Resource Files\Languages</Filter>
+    </None>
+    <None Include="res\langs\lang_no.bin">
+      <Filter>Resource Files\Languages</Filter>
+    </None>
+    <None Include="res\langs\lang_pl.bin">
+      <Filter>Resource Files\Languages</Filter>
+    </None>
+    <None Include="res\langs\lang_pt.bin">
+      <Filter>Resource Files\Languages</Filter>
+    </None>
+    <None Include="res\langs\lang_ru.bin">
+      <Filter>Resource Files\Languages</Filter>
+    </None>
+    <None Include="res\langs\lang_zh.bin">
+      <Filter>Resource Files\Languages</Filter>
+    </None>
+    <None Include="res\license.bin">
+      <Filter>Resource Files\Resources</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DirStatDoc.h">

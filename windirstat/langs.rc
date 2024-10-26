@@ -17,14 +17,14 @@
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_CHS)
 LANGUAGE LANG_CHINESE, SUBLANG_NEUTRAL
-#pragma code_page(65001)
+#pragma code_page(936)
 
 /////////////////////////////////////////////////////////////////////////////
 //
 // RT_LANG
 //
 
-IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_zh.txt"
+IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_zh.bin"
 
 #endif    // Chinese (Simplified) resources
 /////////////////////////////////////////////////////////////////////////////
@@ -35,14 +35,14 @@ IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_zh.txt"
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_CSY)
 LANGUAGE LANG_CZECH, SUBLANG_NEUTRAL
-#pragma code_page(65001)
+#pragma code_page(1250)
 
 /////////////////////////////////////////////////////////////////////////////
 //
 // RT_LANG
 //
 
-IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_cs.txt"
+IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_cs.bin"
 
 #endif    // Czech (Neutral) resources
 /////////////////////////////////////////////////////////////////////////////
@@ -53,14 +53,14 @@ IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_cs.txt"
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_HUN)
 LANGUAGE LANG_HUNGARIAN, SUBLANG_NEUTRAL
-#pragma code_page(65001)
+#pragma code_page(1250)
 
 /////////////////////////////////////////////////////////////////////////////
 //
 // RT_LANG
 //
 
-IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_hu.txt"
+IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_hu.bin"
 
 #endif    // Hungarian (Neutral) resources
 /////////////////////////////////////////////////////////////////////////////
@@ -71,14 +71,14 @@ IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_hu.txt"
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_PLK)
 LANGUAGE LANG_POLISH, SUBLANG_NEUTRAL
-#pragma code_page(65001)
+#pragma code_page(1250)
 
 /////////////////////////////////////////////////////////////////////////////
 //
 // RT_LANG
 //
 
-IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_pl.txt"
+IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_pl.bin"
 
 #endif    // Polish (Neutral) resources
 /////////////////////////////////////////////////////////////////////////////
@@ -89,14 +89,14 @@ IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_pl.txt"
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_RUS)
 LANGUAGE LANG_RUSSIAN, SUBLANG_NEUTRAL
-#pragma code_page(65001)
+#pragma code_page(1251)
 
 /////////////////////////////////////////////////////////////////////////////
 //
 // RT_LANG
 //
 
-IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_ru.txt"
+IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_ru.bin"
 
 #endif    // Russian (Neutral) resources
 /////////////////////////////////////////////////////////////////////////////
@@ -107,7 +107,7 @@ IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_ru.txt"
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_NEU)
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
-#pragma code_page(65001)
+#pragma code_page(1252)
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -427,14 +427,14 @@ END
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_DEU)
 LANGUAGE LANG_GERMAN, SUBLANG_NEUTRAL
-#pragma code_page(65001)
+#pragma code_page(1252)
 
 /////////////////////////////////////////////////////////////////////////////
 //
 // RT_LANG
 //
 
-IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_de.txt"
+IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_de.bin"
 
 #endif    // German (Neutral) resources
 /////////////////////////////////////////////////////////////////////////////
@@ -445,14 +445,14 @@ IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_de.txt"
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
 LANGUAGE LANG_ENGLISH, SUBLANG_NEUTRAL
-#pragma code_page(65001)
+#pragma code_page(1252)
 
 /////////////////////////////////////////////////////////////////////////////
 //
 // RT_LANG
 //
 
-IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_en.txt"
+IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_en.bin"
 
 #endif    // English (Neutral) resources
 /////////////////////////////////////////////////////////////////////////////
@@ -463,14 +463,14 @@ IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_en.txt"
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ESN)
 LANGUAGE LANG_SPANISH, SUBLANG_NEUTRAL
-#pragma code_page(65001)
+#pragma code_page(1252)
 
 /////////////////////////////////////////////////////////////////////////////
 //
 // RT_LANG
 //
 
-IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_es.txt"
+IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_es.bin"
 
 #endif    // Spanish (Neutral) resources
 /////////////////////////////////////////////////////////////////////////////
@@ -481,14 +481,14 @@ IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_es.txt"
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_FIN)
 LANGUAGE LANG_FINNISH, SUBLANG_NEUTRAL
-#pragma code_page(65001)
+#pragma code_page(1252)
 
 /////////////////////////////////////////////////////////////////////////////
 //
 // RT_LANG
 //
 
-IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_fi.txt"
+IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_fi.bin"
 
 #endif    // Finnish (Neutral) resources
 /////////////////////////////////////////////////////////////////////////////
@@ -499,14 +499,14 @@ IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_fi.txt"
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_FRA)
 LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
-#pragma code_page(65001)
+#pragma code_page(1252)
 
 /////////////////////////////////////////////////////////////////////////////
 //
 // RT_LANG
 //
 
-IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_fr.txt"
+IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_fr.bin"
 
 #endif    // French (Neutral) resources
 /////////////////////////////////////////////////////////////////////////////
@@ -517,14 +517,14 @@ IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_fr.txt"
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ITA)
 LANGUAGE LANG_ITALIAN, SUBLANG_NEUTRAL
-#pragma code_page(65001)
+#pragma code_page(1252)
 
 /////////////////////////////////////////////////////////////////////////////
 //
 // RT_LANG
 //
 
-IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_it.txt"
+IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_it.bin"
 
 #endif    // Italian (Neutral) resources
 /////////////////////////////////////////////////////////////////////////////
@@ -535,14 +535,14 @@ IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_it.txt"
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_NLD)
 LANGUAGE LANG_DUTCH, SUBLANG_NEUTRAL
-#pragma code_page(65001)
+#pragma code_page(1252)
 
 /////////////////////////////////////////////////////////////////////////////
 //
 // RT_LANG
 //
 
-IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_nl.txt"
+IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_nl.bin"
 
 #endif    // Dutch (Neutral) resources
 /////////////////////////////////////////////////////////////////////////////
@@ -553,14 +553,14 @@ IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_nl.txt"
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_NOR)
 LANGUAGE LANG_NORWEGIAN, SUBLANG_NEUTRAL
-#pragma code_page(65001)
+#pragma code_page(1252)
 
 /////////////////////////////////////////////////////////////////////////////
 //
 // RT_LANG
 //
 
-IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_no.txt"
+IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_no.bin"
 
 #endif    // Norwegian (Neutral) resources
 /////////////////////////////////////////////////////////////////////////////
@@ -571,14 +571,14 @@ IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_no.txt"
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_PTB)
 LANGUAGE LANG_PORTUGUESE, SUBLANG_NEUTRAL
-#pragma code_page(65001)
+#pragma code_page(1252)
 
 /////////////////////////////////////////////////////////////////////////////
 //
 // RT_LANG
 //
 
-IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_pt.txt"
+IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_pt.bin"
 
 #endif    // Portuguese (Neutral) resources
 /////////////////////////////////////////////////////////////////////////////
@@ -589,7 +589,7 @@ IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_pt.txt"
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
-#pragma code_page(65001)
+#pragma code_page(1252)
 
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
@@ -625,14 +625,14 @@ END
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ETI)
 LANGUAGE LANG_ESTONIAN, SUBLANG_NEUTRAL
-#pragma code_page(65001)
+#pragma code_page(1257)
 
 /////////////////////////////////////////////////////////////////////////////
 //
 // RT_LANG
 //
 
-IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_ee.txt"
+IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_ee.bin"
 
 #endif    // Estonian (Neutral) resources
 /////////////////////////////////////////////////////////////////////////////

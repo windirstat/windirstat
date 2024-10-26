@@ -32,6 +32,10 @@
 #include <array>
 #include <algorithm>
 
+#pragma comment(lib,"ntdll.lib")
+EXTERN_C NTSTATUS NTAPI RtlDecompressBuffer(USHORT CompressionFormat, PUCHAR UncompressedBuffer, ULONG  UncompressedBufferSize,
+    PUCHAR CompressedBuffer, ULONG  CompressedBufferSize, PULONG FinalUncompressedSize);
+
 std::wstring FormatLongLongNormal(ULONGLONG n)
 {
     // Returns formatted number like "123.456.789".
@@ -635,3 +639,26 @@ void ProcessMessagesUntilSignaled(const std::function<void()>& callback)
         callback();
     }
 }
+
+std::vector<BYTE> GetCompressedResource(const HRSRC resource)
+{
+    // Establish the resource
+    const HGLOBAL resourceData = ::LoadResource(nullptr, resource);
+    if (resourceData == nullptr) return {};
+
+    // Fetch a pointer to the data
+    const LPVOID binaryData = LockResource(resourceData);
+    if (binaryData == nullptr) return {};
+
+    // Decompress data
+    size_t resourceSize = SizeofResource(nullptr, resource);
+    std::vector<BYTE> decompressedData(resourceSize * 4u);
+    ULONG finalDecompressedSize = 0;
+    if (RtlDecompressBuffer(COMPRESSION_FORMAT_XPRESS, decompressedData.data(), static_cast<LONG>(decompressedData.size()),
+        static_cast<PUCHAR>(binaryData), static_cast<ULONG>(resourceSize), &finalDecompressedSize) != ERROR_SUCCESS) return {};
+    decompressedData.resize(finalDecompressedSize);
+
+    return decompressedData;
+}
+
+

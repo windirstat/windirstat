@@ -61,3 +61,4 @@ std::wstring& TrimString(std::wstring& s, wchar_t c = L' ');
 std::wstring& MakeLower(std::wstring& s);
 const std::wstring& GetSysDirectory();
 void ProcessMessagesUntilSignaled(const std::function<void()>& callback);
+std::vector<BYTE> GetCompressedResource(HRSRC resource);
