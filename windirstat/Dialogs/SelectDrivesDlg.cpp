@@ -767,3 +767,15 @@ void CSelectDrivesDlg::OnNMSetfocusTargetDrivesList(NMHDR*, LRESULT* pResult)
 
     *pResult = 0;
 }
+
+BOOL CSelectDrivesDlg::PreTranslateMessage(MSG* pMsg)
+{
+    // Change radio button if a user clicks in the dialog box without changing it
+    if ((pMsg->wParam == VK_LBUTTON) && (m_Browse.m_hWnd == pMsg->hwnd))
+    {
+        m_Radio = RADIO_TARGET_FOLDER;
+        UpdateData(FALSE);
+    }
+
+    return CDialog::PreTranslateMessage(pMsg);
+}

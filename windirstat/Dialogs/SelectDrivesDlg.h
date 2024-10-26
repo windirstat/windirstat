@@ -185,4 +185,5 @@ public:
     afx_msg void OnBnClickedRadioTargetDrivesSubset();
     afx_msg void OnBnClickedRadioTargetFolder();
     afx_msg void OnNMSetfocusTargetDrivesList(NMHDR*, LRESULT* pResult);
+    virtual BOOL PreTranslateMessage(MSG* pMsg) override;
 };
