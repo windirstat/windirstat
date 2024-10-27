@@ -73,9 +73,14 @@ bool FileFindEnhanced::FindNextFile()
 
     if (success)
     {
+        // handle unexpected trailing null on some file systems
+        ULONG nameLength = m_CurrentInfo->FileNameLength / sizeof(WCHAR);
+        if (nameLength > 1 && m_CurrentInfo->FileName[nameLength - 1] == L'\0')
+            nameLength -= 1;
+
         // copy name into local buffer
-        m_Name.resize(m_CurrentInfo->FileNameLength / sizeof(WCHAR));
-        memcpy(m_Name.data(), m_CurrentInfo->FileName, m_CurrentInfo->FileNameLength);
+        m_Name.resize(nameLength);
+        memcpy(m_Name.data(), m_CurrentInfo->FileName, nameLength * sizeof(WCHAR));
 
         // special case for reparse on initial run points - update attributes
         if (m_Firstrun)
