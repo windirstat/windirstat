@@ -447,7 +447,6 @@ void CSelectDrivesDlg::DoDataExchange(CDataExchange* pDX)
 #pragma warning(disable:26454)
 BEGIN_MESSAGE_MAP(CSelectDrivesDlg, CDialogEx)
     ON_EN_CHANGE(IDC_BROWSE_FOLDER, OnEnChangeFolderName)
-    ON_COMMAND(IDC_SCAN_DUPLICATES, OnBnClickedUpdateButtons)
     ON_WM_MEASUREITEM()
     ON_NOTIFY(LVN_ITEMCHANGED, IDC_TARGET_DRIVES_LIST, OnLvnItemchangedDrives)
     ON_BN_CLICKED(IDC_RADIO_TARGET_DRIVES_ALL, OnBnClickedUpdateButtons)
@@ -488,6 +487,7 @@ BOOL CSelectDrivesDlg::OnInitDialog()
 
     m_Layout.OnInitDialog(true);
 
+    m_List.ModifyStyle(0, LVS_SHOWSELALWAYS);
     m_List.ShowGrid(COptions::ListGrid);
     m_List.ShowStripes(COptions::ListStripes);
     m_List.ShowFullRowSelection(COptions::ListFullRowSelection);
@@ -497,7 +497,7 @@ BOOL CSelectDrivesDlg::OnInitDialog()
     m_List.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_TOTAL).c_str(), LVCFMT_RIGHT, 55, COL_TOTAL);
     m_List.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_FREE).c_str(), LVCFMT_RIGHT, 55, COL_FREE);
     m_List.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_GRAPH).c_str(), LVCFMT_LEFT, 100, COL_GRAPH);
-    m_List.InsertColumn(CHAR_MAX,Localization::Lookup(IDS_COL_PERCENTUSED).c_str(),LVCFMT_RIGHT, 55, COL_PERCENTUSED);
+    m_List.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_PERCENTUSED).c_str(),LVCFMT_RIGHT, 55, COL_PERCENTUSED);
 
     m_List.OnColumnsInserted();
 
@@ -775,6 +775,7 @@ BOOL CSelectDrivesDlg::PreTranslateMessage(MSG* pMsg)
     {
         m_Radio = RADIO_TARGET_FOLDER;
         UpdateData(FALSE);
+        UpdateButtons();
     }
 
     return CDialog::PreTranslateMessage(pMsg);
