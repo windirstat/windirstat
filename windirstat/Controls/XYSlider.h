@@ -21,7 +21,7 @@
 
 #pragma once
 
-#define XYSLIDER_CHANGED    0x88    // this is a value, I hope, that is nowhere used as notification code.
+constexpr UINT XYSLIDER_CHANGED = 0x88; // Notification code to parent
 
 //
 // CXySlider. A two-dimensional slider.
@@ -41,27 +41,21 @@ class CXySlider final : public CStatic
     CPoint GetPos() const;
     void SetPos(CPoint pt);
 
-    // "Line size" is always 1 Pixel
-    // "Page size" is always 10 Pixel
-
 protected:
     void Initialize();
     void CalcSizes();
     CRect GetGripperRect() const;
-    void CheckMinMax(LONG& val, int min, int max);
+    void CheckMinMax(LONG& val, int minVal, int maxVal) const;
     void InternToExtern();
     void ExternToIntern();
-    void NotifyParent();
+    void NotifyParent() const;
 
     void PaintBackground(CDC* pdc);
-    // void PaintValues(CDC *pdc); This is too noisy
-    void PaintGripper(CDC* pdc);
+    void PaintGripper(CDC* pdc) const;
     void DoMoveBy(int cx, int cy);
     void DoDrag(CPoint point);
     void DoPage(CPoint point);
     void HighlightGripper(bool on);
-    void InstallTimer();
-    void RemoveTimer();
 
     bool m_Inited = false;
 
@@ -84,7 +78,6 @@ protected:
     bool m_GripperHighlight = false;
 
     DECLARE_MESSAGE_MAP()
-    afx_msg void OnDestroy();
     afx_msg UINT OnGetDlgCode();
     afx_msg LRESULT OnNcHitTest(CPoint point);
     afx_msg void OnSetFocus(CWnd* pOldWnd);
@@ -93,8 +86,6 @@ protected:
     afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
     afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
     afx_msg void OnLButtonDblClk(UINT nFlags, CPoint point);
-    afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
-    afx_msg void OnTimer(UINT_PTR nIDEvent);
     afx_msg LRESULT OnSetPos(WPARAM, LPARAM lparam);
     afx_msg LRESULT OnGetPos(WPARAM, LPARAM lparam);
 };

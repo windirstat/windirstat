@@ -87,14 +87,14 @@ CPoint CXySlider::GetPos() const
 
 LRESULT CXySlider::OnSetPos(WPARAM, const LPARAM lparam)
 {
-    const POINT* point = reinterpret_cast<POINT*>(lparam);
+    const auto point = reinterpret_cast<PPOINT>(lparam);
     SetPos(*point);
     return 0;
 }
 
 LRESULT CXySlider::OnGetPos(WPARAM, const LPARAM lparam)
 {
-    const auto point = reinterpret_cast<POINT*>(lparam);
+    const auto point = reinterpret_cast<PPOINT>(lparam);
     *point = GetPos();
     return 0;
 }
@@ -149,18 +149,11 @@ CRect CXySlider::GetGripperRect() const
     return rc;
 }
 
-void CXySlider::CheckMinMax(LONG& val, const int min, const int max)
+void CXySlider::CheckMinMax(LONG& val, const int minVal, const int maxVal) const
 {
-    ASSERT(min <= max);
+    ASSERT(minVal <= maxVal);
 
-    if (val < min)
-    {
-        val = min;
-    }
-    if (val > max)
-    {
-        val = max;
-    }
+    val = max(min(val, maxVal), minVal);
 }
 
 void CXySlider::InternToExtern()
@@ -175,7 +168,7 @@ void CXySlider::ExternToIntern()
     m_Pos.y = static_cast<int>(roundaway(static_cast<double>(m_ExternalPos.y) * m_Range.cy / m_ExternalRange.cy));
 }
 
-void CXySlider::NotifyParent()
+void CXySlider::NotifyParent() const
 {
     NMHDR hdr;
     hdr.hwndFrom = m_hWnd;
@@ -214,16 +207,16 @@ void CXySlider::PaintBackground(CDC* pdc)
     }
 }
 
-void CXySlider::PaintGripper(CDC* pdc)
+void CXySlider::PaintGripper(CDC* pdc) const
 {
     CRect rc = GetGripperRect();
 
     COLORREF color = GetSysColor(COLOR_BTNFACE);
     if (m_GripperHighlight)
     {
-        int r = RGB_GET_RVALUE(color);
-        int g = RGB_GET_GVALUE(color);
-        int b = RGB_GET_BVALUE(color);
+        auto r = RGB_GET_RVALUE(color);
+        auto g = RGB_GET_GVALUE(color);
+        auto b = RGB_GET_BVALUE(color);
         r += (255 - r) / 3;
         g += (255 - g) / 3;
         b += (255 - b) / 3;
@@ -335,23 +328,7 @@ void CXySlider::HighlightGripper(const bool on)
     RedrawWindow();
 }
 
-void CXySlider::InstallTimer()
-{
-    RemoveTimer();
-    m_Timer = SetTimer(ID_WDS_CONTROL, 500, nullptr);
-}
-
-void CXySlider::RemoveTimer()
-{
-    if (m_Timer != 0)
-    {
-        KillTimer(m_Timer);
-    }
-    m_Timer = 0;
-}
-
 BEGIN_MESSAGE_MAP(CXySlider, CStatic)
-    ON_WM_DESTROY()
     ON_WM_GETDLGCODE()
     ON_WM_NCHITTEST()
     ON_WM_SETFOCUS()
@@ -360,17 +337,9 @@ BEGIN_MESSAGE_MAP(CXySlider, CStatic)
     ON_WM_KEYDOWN()
     ON_WM_LBUTTONDOWN()
     ON_WM_LBUTTONDBLCLK()
-    ON_WM_LBUTTONUP()
-    ON_WM_TIMER()
     ON_MESSAGE(CXySlider::XY_SETPOS, OnSetPos)
     ON_MESSAGE(CXySlider::XY_GETPOS, OnGetPos)
 END_MESSAGE_MAP()
-
-void CXySlider::OnDestroy()
-{
-    RemoveTimer();
-    CStatic::OnDestroy();
-}
 
 UINT CXySlider::OnGetDlgCode()
 {
@@ -408,7 +377,6 @@ void CXySlider::OnPaint()
     CSelectObject sobm(&dcmem, &bm);
 
     PaintBackground(&dcmem);
-    // PaintValues(&dcmem); This is too noisy
     PaintGripper(&dcmem);
 
     dc.BitBlt(0, 0, w, h, &dcmem, 0, 0, SRCCOPY);
@@ -428,12 +396,10 @@ void CXySlider::OnKeyDown(const UINT nChar, const UINT nRepCnt, const UINT nFlag
 
 void CXySlider::OnLButtonDown(UINT /*nFlags*/, const CPoint point)
 {
-    SetFocus();
-    DoDrag(point);
-
-    if (const CRect rc = GetGripperRect(); !rc.PtInRect(point))
+    if (GetGripperRect().PtInRect(point))
     {
-        InstallTimer();
+        SetFocus();
+        DoDrag(point);
     }
 }
 
@@ -446,26 +412,6 @@ void CXySlider::OnLButtonDblClk(UINT /*nFlags*/, const CPoint point)
         DoMoveBy(-m_Pos.x, -m_Pos.y);
     }
     else
-    {
-        DoPage(point);
-        InstallTimer();
-    }
-}
-
-void CXySlider::OnLButtonUp(const UINT nFlags, const CPoint point)
-{
-    RemoveTimer();
-    CStatic::OnLButtonUp(nFlags, point);
-}
-
-void CXySlider::OnTimer(UINT_PTR /*nIDEvent*/)
-{
-    CPoint point;
-    GetCursorPos(&point);
-    ScreenToClient(&point);
-
-    const CRect rc = GetGripperRect();
-    if (!rc.PtInRect(point))
     {
         DoPage(point);
     }
