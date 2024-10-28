@@ -30,6 +30,7 @@ IMPLEMENT_DYNCREATE(CFileTabbedView, CTabView)
 BEGIN_MESSAGE_MAP(CFileTabbedView, CTabView)
     ON_WM_CREATE()
     ON_WM_ERASEBKGND()
+    ON_REGISTERED_MESSAGE(AFX_WM_CHANGING_ACTIVE_TAB, OnChangeActiveTab)
 END_MESSAGE_MAP()
 
 int CFileTabbedView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
@@ -37,10 +38,11 @@ int CFileTabbedView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
     if (CTabView::OnCreate(lpCreateStruct) == -1)
         return -1;
 
-    const int v1 = AddView(RUNTIME_CLASS(CFileTreeView), Localization::Lookup(IDS_ALL_FILES).c_str(), 100);
-    m_FileTreeView = DYNAMIC_DOWNCAST(CFileTreeView, GetTabControl().GetTabWnd(v1));
-    const int v2 = AddView(RUNTIME_CLASS(CFileDupeView), Localization::Lookup(IDS_DUPLICATE_FILES).c_str(), 100);
-    m_FileDupeView = DYNAMIC_DOWNCAST(CFileDupeView, GetTabControl().GetTabWnd(v2));
+    m_FileTreeViewIndex = AddView(RUNTIME_CLASS(CFileTreeView), Localization::Lookup(IDS_ALL_FILES).c_str(), 100);
+    m_FileTreeView = DYNAMIC_DOWNCAST(CFileTreeView, GetTabControl().GetTabWnd(m_FileTreeViewIndex));
+    m_FileDupeViewIndex = AddView(RUNTIME_CLASS(CFileDupeView), Localization::Lookup(IDS_DUPLICATE_FILES).c_str(), 100);
+    m_FileDupeView = DYNAMIC_DOWNCAST(CFileDupeView, GetTabControl().GetTabWnd(m_FileDupeViewIndex));
+    GetTabControl().ModifyTabStyle(CMFCTabCtrl::STYLE_3D_ONENOTE);
 
     return 0;
 }
@@ -48,4 +50,14 @@ int CFileTabbedView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
 BOOL CFileTabbedView::OnEraseBkgnd(CDC* /*pDC*/)
 {
     return TRUE;
+}
+
+LRESULT CFileTabbedView::OnChangeActiveTab(WPARAM wp, LPARAM lp)
+{
+    if (wp == m_FileDupeViewIndex && !COptions::ScanForDuplicates)
+    {
+        return TRUE;
+    }
+
+    return CTabView::OnChangeActiveTab(wp, lp);
 }

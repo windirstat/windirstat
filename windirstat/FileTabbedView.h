@@ -33,14 +33,15 @@ protected:
     DECLARE_DYNCREATE(CFileTabbedView)
 
     // Used for storing and retrieving the various tab views
+    int m_FileTreeViewIndex = -1;
     CFileTreeView* m_FileTreeView = nullptr;
     CFileTreeView* GetFileTreeView() const { return m_FileTreeView; }
+    int m_FileDupeViewIndex = -1;
     CFileDupeView* m_FileDupeView = nullptr;
     CFileDupeView* GetFileDupeView() const { return m_FileDupeView; }
 
-protected:
-
     afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
     afx_msg BOOL OnEraseBkgnd(CDC* pDC);
+    afx_msg LRESULT OnChangeActiveTab(WPARAM wp, LPARAM lp);
     DECLARE_MESSAGE_MAP()
 };
