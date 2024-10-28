@@ -2,8 +2,8 @@
 *.bin
 *.vcxproj.user
 *.lastcodeanalysissucceeded
-intermediate/
-build/
-publish/
-.git/
+/intermediate/
+/build/
+/publish/
+/.git/
 .vs/

@@ -654,7 +654,7 @@ std::vector<BYTE> GetCompressedResource(const HRSRC resource)
     size_t resourceSize = SizeofResource(nullptr, resource);
     std::vector<BYTE> decompressedData(resourceSize * 4u);
     ULONG finalDecompressedSize = 0;
-    if (RtlDecompressBuffer(COMPRESSION_FORMAT_XPRESS, decompressedData.data(), static_cast<LONG>(decompressedData.size()),
+    if (RtlDecompressBuffer(COMPRESSION_FORMAT_LZNT1, decompressedData.data(), static_cast<LONG>(decompressedData.size()),
         static_cast<PUCHAR>(binaryData), static_cast<ULONG>(resourceSize), &finalDecompressedSize) != ERROR_SUCCESS) return {};
     decompressedData.resize(finalDecompressedSize);
 
