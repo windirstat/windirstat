@@ -28,9 +28,9 @@
 #include "GlobalHelpers.h"
 #include "Localization.h"
 
-IMPLEMENT_DYNAMIC(CPageGeneral, CPropertyPage)
+IMPLEMENT_DYNAMIC(CPageGeneral, CPropertyPageEx)
 
-CPageGeneral::CPageGeneral() : CPropertyPage(IDD) {}
+CPageGeneral::CPageGeneral() : CPropertyPageEx(IDD) {}
 
 CPageGeneral::~CPageGeneral() = default;
 
@@ -43,7 +43,7 @@ COptionsPropertySheet* CPageGeneral::GetSheet() const
 
 void CPageGeneral::DoDataExchange(CDataExchange* pDX)
 {
-    CPropertyPage::DoDataExchange(pDX);
+    CPropertyPageEx::DoDataExchange(pDX);
     DDX_Check(pDX, IDC_SIZE_SUFFIXES, m_SizeSuffixesFormat);
     DDX_Check(pDX, IDC_USE_WINDOWS_LOCALE, m_UseWindowsLocale);
     DDX_Control(pDX, IDC_COMBO, m_Combo);
@@ -54,7 +54,7 @@ void CPageGeneral::DoDataExchange(CDataExchange* pDX)
     DDX_Check(pDX, IDC_PORTABLE_MODE, m_PortableMode);
 }
 
-BEGIN_MESSAGE_MAP(CPageGeneral, CPropertyPage)
+BEGIN_MESSAGE_MAP(CPageGeneral, CPropertyPageEx)
     ON_BN_CLICKED(IDC_SIZE_SUFFIXES, OnBnClickedSetModified)
     ON_BN_CLICKED(IDC_USE_WINDOWS_LOCALE, OnBnClickedSetModified)
     ON_CBN_SELENDOK(IDC_COMBO, OnCbnSelendokCombo)
@@ -67,7 +67,7 @@ END_MESSAGE_MAP()
 
 BOOL CPageGeneral::OnInitDialog()
 {
-    CPropertyPage::OnInitDialog();
+    CPropertyPageEx::OnInitDialog();
 
     Localization::UpdateDialogs(*this);
 
@@ -127,7 +127,7 @@ void CPageGeneral::OnOK()
     const LANGID id = static_cast<LANGID>(m_Combo.GetItemData(m_Combo.GetCurSel()));
     COptions::LanguageId = static_cast<int>(id);
 
-    CPropertyPage::OnOK();
+    CPropertyPageEx::OnOK();
 }
 
 void CPageGeneral::OnBnClickedSetModified()

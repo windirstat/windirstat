@@ -27,9 +27,9 @@
 #include "Localization.h"
 #include "WinDirStat.h"
 
-IMPLEMENT_DYNAMIC(CPageAdvanced, CPropertyPage)
+IMPLEMENT_DYNAMIC(CPageAdvanced, CPropertyPageEx)
 
-CPageAdvanced::CPageAdvanced() : CPropertyPage(IDD) {}
+CPageAdvanced::CPageAdvanced() : CPropertyPageEx(IDD) {}
 
 CPageAdvanced::~CPageAdvanced() = default;
 
@@ -40,7 +40,7 @@ COptionsPropertySheet* CPageAdvanced::GetSheet() const
 
 void CPageAdvanced::DoDataExchange(CDataExchange* pDX)
 {
-    CPropertyPage::DoDataExchange(pDX);
+    CPropertyPageEx::DoDataExchange(pDX);
     DDX_Check(pDX, IDC_EXCLUDE_VOLUME_MOUNT_POINTS, m_ExcludeVolumeMountPoints);
     DDX_Check(pDX, IDC_EXCLUDE_JUNCTIONS, m_ExcludeJunctions);
     DDX_Check(pDX, IDC_EXCLUDE_SYMLINKS_DIRECTORY, m_ExcludeSymbolicLinksDirectory);
@@ -54,7 +54,7 @@ void CPageAdvanced::DoDataExchange(CDataExchange* pDX)
     DDX_CBIndex(pDX, IDC_COMBO_THREADS, m_ScanningThreads);
 }
 
-BEGIN_MESSAGE_MAP(CPageAdvanced, CPropertyPage)
+BEGIN_MESSAGE_MAP(CPageAdvanced, CPropertyPageEx)
     ON_BN_CLICKED(IDC_BACKUP_RESTORE, OnSettingChanged)
     ON_BN_CLICKED(IDC_EXCLUDE_HIDDEN_DIRECTORY, OnSettingChanged)
     ON_BN_CLICKED(IDC_EXCLUDE_PROTECTED_DIRECTORY, OnSettingChanged)
@@ -71,7 +71,7 @@ END_MESSAGE_MAP()
 
 BOOL CPageAdvanced::OnInitDialog()
 {
-    CPropertyPage::OnInitDialog();
+    CPropertyPageEx::OnInitDialog();
 
     Localization::UpdateDialogs(*this);
 
@@ -126,7 +126,7 @@ void CPageAdvanced::OnOK()
         CDirStatDoc::GetDocument()->RefreshReparsePointItems();
     }
 
-    CPropertyPage::OnOK();
+    CPropertyPageEx::OnOK();
 }
 
 void CPageAdvanced::OnSettingChanged()

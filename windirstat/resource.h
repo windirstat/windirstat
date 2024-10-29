@@ -4,6 +4,7 @@
 //
 #define IDD_ABOUTBOX                    100
 #define IDD_PAGE_ADVANCED               102
+#define IDD_PAGE_FILTERING              103
 #define IDR_MAINFRAME                   128
 #define IDB_NODES                       131
 #define IDD_SELECTDRIVES                133
@@ -16,6 +17,7 @@
 #define IDD_PAGE_TREELIST               142
 #define IDD_PAGE_TREEMAP                143
 #define IDD_PAGE_GENERAL                144
+#define IDB_FILTER                      921
 #define IDB_FILE_SELECT                 922
 #define IDB_CLEANUP_DELETE_BIN          927
 #define IDB_EDIT_COPY_CLIPBOARD         928
@@ -120,6 +122,12 @@
 #define IDC_FILENAMES                   1233
 #define IDC_SCAN_DUPLICATES             1234
 #define IDC_RESET_PREFERENCES           1235
+#define IDC_FILTERING_EXCLUDE_DIRS      1236
+#define IDC_FILTERING_EXCLUDE_FILES     1237
+#define IDC_FILTERING_SIZE_MIN          1239
+#define IDC_CHECK1                      1240
+#define IDC_FILTERING_USE_REGEX         1240
+#define IDC_FILTERING_MIN_UNITS         1241
 #define ID_WDS_CONTROL                  4711
 #define ID_CLEANUP_EXPLORER_SELECT      32774
 #define ID_TREEMAP_ZOOMIN               32783
@@ -131,6 +139,7 @@
 #define ID_CLEANUP_OPEN_IN_CONSOLE      32808
 #define ID_CLEANUP_DELETE_BIN           32809
 #define ID_CLEANUP_DELETE               32810
+#define ID_FILTER                       32811
 #define ID_CONFIGURE                    32813
 #define ID_HELP_MANUAL                  32814
 #define ID_REFRESH_ALL                  32816
@@ -180,14 +189,18 @@
 #define IDS_URL_WEBSITE                 57346
 #define IDS_URL_HELP                    57347
 #define IDS_URL_REPORT_BUG              57348
+#define IDS_FILTER_EXAMPLE_FILES        57349
+#define IDS_FILTER_EXAMPLE_DIRS         57350
+#define IDS_FILTER_EXAMPLE_FILES_REGEX  57351
+#define IDS_FILTER_EXAMPLE_DIRS_REGEX   57352
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        954
+#define _APS_NEXT_RESOURCE_VALUE        57353
 #define _APS_NEXT_COMMAND_VALUE         33068
-#define _APS_NEXT_CONTROL_VALUE         1236
+#define _APS_NEXT_CONTROL_VALUE         1242
 #define _APS_NEXT_SYMED_VALUE           109
 #endif
 #endif

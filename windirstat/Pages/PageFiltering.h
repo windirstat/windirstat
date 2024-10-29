@@ -1,4 +1,4 @@
-// PageGeneral.h - Declaration of CPageGeneral
+// PageFiltering.h - Declaration of CPageFiltering
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
@@ -26,16 +26,16 @@
 class COptionsPropertySheet;
 
 //
-// CPageGeneral. "Settings" property page "General".
+// CPageFiltering. "Settings" property page "Filtering".
 //
-class CPageGeneral final : public CPropertyPageEx
+class CPageFiltering final : public CPropertyPageEx
 {
-    DECLARE_DYNAMIC(CPageGeneral)
+    DECLARE_DYNAMIC(CPageFiltering)
 
-    enum : std::uint8_t { IDD = IDD_PAGE_GENERAL };
+    enum : std::uint8_t { IDD = IDD_PAGE_FILTERING };
 
-    CPageGeneral();
-    ~CPageGeneral() override;
+    CPageFiltering();
+    ~CPageFiltering() override;
 
 protected:
     COptionsPropertySheet* GetSheet() const;
@@ -43,18 +43,19 @@ protected:
     void DoDataExchange(CDataExchange* pDX) override;
     BOOL OnInitDialog() override;
     void OnOK() override;
+    void SetToolTips();
 
-    BOOL m_UseWindowsLocale = FALSE;
-    BOOL m_SizeSuffixesFormat = FALSE;
-    BOOL m_PortableMode = FALSE;
-    BOOL m_ListGrid = FALSE;
-    BOOL m_ListStripes = FALSE;
-    BOOL m_ShowDeletionWarning = FALSE;
-    BOOL m_ListFullRowSelection = FALSE;
-
-    CComboBox m_Combo;
+    int m_FilteringSizeMinimum = 0;
+    int m_FilteringSizeUnits = 0;
+    BOOL m_FilteringUseRegex = FALSE;
+    CString m_FilteringExcludeDirs;
+    CString m_FilteringExcludeFiles;
+    CComboBox m_CtlFilteringSizeUnits;
+    CEdit m_CtrlFilteringExcludeFiles;
+    CEdit m_CtrlFilteringExcludeDirs;
+    CToolTipCtrl m_ToolTip;
 
     DECLARE_MESSAGE_MAP()
-    afx_msg void OnBnClickedSetModified();
-    afx_msg void OnCbnSelendokCombo();
+    afx_msg void OnSettingChanged();
+    BOOL PreTranslateMessage(MSG* pMsg) override;
 };

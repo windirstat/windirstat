@@ -23,10 +23,14 @@
 #include "WinDirStat.h"
 #include "DirStatDoc.h"
 #include "Options.h"
+
+#include <array>
+
+#include "GlobalHelpers.h"
 #include "Property.h"
 #include "Localization.h"
 
-#include <format>
+#include <sstream>
 
 LPCWSTR COptions::OptionsGeneral = L"Options";
 LPCWSTR COptions::OptionsTreeMap = L"TreeMapView";
@@ -43,6 +47,7 @@ Setting<bool> COptions::ExcludeProtectedDirectory(OptionsGeneral, L"ExcludeProte
 Setting<bool> COptions::ExcludeSymbolicLinksFile(OptionsGeneral, L"ExcludeSymbolicLinksFile", true);
 Setting<bool> COptions::ExcludeHiddenFile(OptionsGeneral, L"ExcludeHiddenFile", false);
 Setting<bool> COptions::ExcludeProtectedFile(OptionsGeneral, L"ExcludeProtectedFile", false);
+Setting<bool> COptions::FilteringUseRegex(OptionsGeneral, L"FilteringUseRegex", false);
 Setting<bool> COptions::FollowVolumeMountPoints(OptionsGeneral, L"FollowVolumeMountPoints", false);
 Setting<bool> COptions::UseSizeSuffixes(OptionsGeneral, L"UseSizeSuffixes", true);
 Setting<bool> COptions::ListFullRowSelection(OptionsGeneral, L"ListFullRowSelection", true);
@@ -67,6 +72,7 @@ Setting<bool> COptions::ShowToolBar(OptionsGeneral, L"ShowToolBar", true);
 Setting<bool> COptions::ShowTreeMap(OptionsTreeMap, L"ShowTreeMap", true);
 Setting<bool> COptions::ShowUnknown(OptionsGeneral, L"ShowUnknown", false);
 Setting<bool> COptions::SkipDupeDetectionCloudLinks(OptionsGeneral, L"SkipDupeDetectionCloudLinks", true);
+Setting<bool> COptions::SkipDupeDetectionCloudLinksWarning(OptionsGeneral, L"SkipDupeDetectionCloudLinksWarning", true);
 Setting<bool> COptions::TreeMapGrid(OptionsTreeMap, L"TreeMapGrid", (CTreeMap::GetDefaults().grid));
 Setting<bool> COptions::UseBackupRestore(OptionsGeneral, L"UseBackupRestore", true);
 Setting<bool> COptions::UseWindowsLocaleSetting(OptionsGeneral, L"UseWindowsLocaleSetting", true);
@@ -87,6 +93,8 @@ Setting<int> COptions::LanguageId(OptionsGeneral, L"LanguageId", 0);
 Setting<int> COptions::ScanningThreads(OptionsGeneral, L"ScanningThreads", 4, 1, 16);
 Setting<int> COptions::SelectDrivesRadio(OptionsDriveSelect, L"SelectDrivesRadio", 0, 0, 2);
 Setting<int> COptions::FileTreeColorCount(OptionsFileTree, L"FileTreeColorCount", 8);
+Setting<int> COptions::FilteringSizeMinimum(OptionsGeneral, L"FilteringSizeMinimum", 0);
+Setting<int> COptions::FilteringSizeUnits(OptionsGeneral, L"FilteringSizeUnits", 0);
 Setting<int> COptions::TreeMapAmbientLightPercent(OptionsTreeMap, L"TreeMapAmbientLightPercent", CTreeMap::GetDefaults().GetAmbientLightPercent(), 0, 100);
 Setting<int> COptions::TreeMapBrightness(OptionsTreeMap, L"TreeMapBrightness", CTreeMap::GetDefaults().GetBrightnessPercent(), 0, 100);
 Setting<int> COptions::TreeMapHeightFactor(OptionsTreeMap, L"TreeMapHeightFactor", CTreeMap::GetDefaults().GetHeightPercent(), 0, 100);
@@ -106,10 +114,15 @@ Setting<std::vector<int>> COptions::ExtViewColumnOrder(OptionsExtView, L"ExtView
 Setting<std::vector<int>> COptions::ExtViewColumnWidth(OptionsExtView, L"ExtViewColumnWidth");
 Setting<std::vector<std::wstring>> COptions::SelectDrivesDrives(OptionsDriveSelect, L"SelectDrivesDrives");
 Setting<std::wstring> COptions::SelectDrivesFolder(OptionsDriveSelect, L"SelectDrivesFolder");
+Setting<std::wstring> COptions::FilteringExcludeDirs(OptionsDriveSelect, L"FilteringExcludeDirs");
+Setting<std::wstring> COptions::FilteringExcludeFiles(OptionsDriveSelect, L"FilteringExcludeFiles");
 Setting<WINDOWPLACEMENT> COptions::MainWindowPlacement(OptionsGeneral, L"MainWindowPlacement");
 
 CTreeMap::Options COptions::TreeMapOptions;
 std::vector<USERDEFINEDCLEANUP> COptions::UserDefinedCleanups;
+std::vector<std::wregex> COptions::FilteringExcludeDirsRegex;
+std::vector<std::wregex> COptions::FilteringExcludeFilesRegex;
+ULONGLONG COptions::FilteringSizeMinimumCalculated;
 
 void COptions::SanitizeRect(RECT& rect)
 {
@@ -168,6 +181,33 @@ void COptions::SetTreeMapOptions(const CTreeMap::Options& options)
     CDirStatDoc::GetDocument()->UpdateAllViews(nullptr, HINT_TREEMAPSTYLECHANGED);
 }
 
+void COptions::CompileFilters()
+{
+    for (const auto & [optionString, optionRegex] : {
+        std::pair{FilteringExcludeDirs.Obj(), std::ref(FilteringExcludeDirsRegex)},
+        std::pair{FilteringExcludeFiles.Obj(), std::ref(FilteringExcludeFilesRegex)}})
+    {
+        std::wstringstream stream(optionString);
+        std::wstring token;
+
+        while (std::getline(stream, token))
+        {
+            try
+            {
+                while (!token.empty() && token.back() == L'\r') token.pop_back();
+                optionRegex.get().emplace_back(FilteringUseRegex ? token : GlobToRegex(token));
+            }
+            catch (const std::regex_error&)
+            {
+                AfxMessageBox((Localization::Lookup(IDS_PAGE_FILTERING_INVALID_FILTER) + L" " + token).c_str());
+            }
+        }
+    }
+
+    // Calculate the total number of bytes to test as a scan minimum
+    FilteringSizeMinimumCalculated = static_cast<ULONGLONG>(FilteringSizeMinimum) * (1ull << (10 * FilteringSizeUnits));
+}
+
 void COptions::PreProcessPersistedSettings()
 {
     // Reserve space so the copy/move constructors are not called
@@ -184,6 +224,9 @@ void COptions::PostProcessPersistedSettings()
     SanitizeRect(MainWindowPlacement.Obj().rcNormalPosition);
     SanitizeRect(AboutWindowRect.Obj());
     SanitizeRect(DriveSelectWindowRect.Obj());
+
+    // Compile filters, if any
+    CompileFilters();
 
     // Setup the language for the environment
     const LANGID langid = static_cast<LANGID>(LanguageId);

@@ -86,6 +86,7 @@ protected:
     DECLARE_MESSAGE_MAP()
     afx_msg void OnFileOpen();
     afx_msg void OnRunElevated();
+    afx_msg void OnFilter();
     afx_msg void OnUpdateRunElevated(CCmdUI* pCmdUI);
     afx_msg void OnHelpManual();
     afx_msg void OnReportBug();

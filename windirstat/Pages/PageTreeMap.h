@@ -29,7 +29,7 @@
 //
 // CPageTreeMap. "Settings" property page "TreeMap".
 //
-class CPageTreeMap final : public CPropertyPage
+class CPageTreeMap final : public CPropertyPageEx
 {
     DECLARE_DYNAMIC(CPageTreeMap)
 

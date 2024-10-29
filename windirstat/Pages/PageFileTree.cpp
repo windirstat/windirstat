@@ -27,13 +27,13 @@
 #include "Localization.h"
 #include "MainFrame.h"
 
-IMPLEMENT_DYNAMIC(CPageFileTree, CPropertyPage)
+IMPLEMENT_DYNAMIC(CPageFileTree, CPropertyPageEx)
 
-CPageFileTree::CPageFileTree() : CPropertyPage(IDD) {}
+CPageFileTree::CPageFileTree() : CPropertyPageEx(IDD) {}
 
 void CPageFileTree::DoDataExchange(CDataExchange* pDX)
 {
-    CPropertyPage::DoDataExchange(pDX);
+    CPropertyPageEx::DoDataExchange(pDX);
     DDX_Check(pDX, IDC_PACMANANIMATION, m_PacmanAnimation);
     DDX_Check(pDX, IDC_SHOWTIMESPENT, m_ShowTimeSpent);
     DDX_Check(pDX, IDC_TREECOL_FOLDERS, m_ShowColumnFolders);
@@ -59,7 +59,7 @@ void CPageFileTree::DoDataExchange(CDataExchange* pDX)
     DDX_Control(pDX, IDC_SLIDER, m_Slider);
 }
 
-BEGIN_MESSAGE_MAP(CPageFileTree, CPropertyPage)
+BEGIN_MESSAGE_MAP(CPageFileTree, CPropertyPageEx)
     ON_NOTIFY_RANGE(COLBN_CHANGED, IDC_COLORBUTTON0, IDC_COLORBUTTON7, OnColorChanged)
     ON_WM_VSCROLL()
     ON_BN_CLICKED(IDC_PACMANANIMATION, OnBnClickedSetModified)
@@ -76,7 +76,7 @@ END_MESSAGE_MAP()
 
 BOOL CPageFileTree::OnInitDialog()
 {
-    CPropertyPage::OnInitDialog();
+    CPropertyPageEx::OnInitDialog();
 
     Localization::UpdateDialogs(*this);
 
@@ -143,7 +143,7 @@ void CPageFileTree::OnOK()
     COptions::FileTreeColor7 = m_FileTreeColor[7];
     if (colsChanged) CMainFrame::Get()->GetFileTreeView()->CreateColumns();
     CDirStatDoc::GetDocument()->UpdateAllViews(nullptr, HINT_LISTSTYLECHANGED);
-    CPropertyPage::OnOK();
+    CPropertyPageEx::OnOK();
 }
 
 void CPageFileTree::OnBnClickedSetModified()
@@ -181,5 +181,5 @@ void CPageFileTree::OnVScroll(const UINT nSBCode, const UINT nPos, CScrollBar* p
         EnableButtons();
         SetModified();
     }
-    CPropertyPage::OnVScroll(nSBCode, nPos, pScrollBar);
+    CPropertyPageEx::OnVScroll(nSBCode, nPos, pScrollBar);
 }

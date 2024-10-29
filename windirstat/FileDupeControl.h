@@ -59,6 +59,7 @@ public:
 protected:
 
     static CFileDupeControl* m_Singleton;
+    bool m_ShowCloudWarningOnThisScan = false;
     
     void OnItemDoubleClick(int i) override;
     void PrepareDefaultMenu(CMenu* menu, const CItemDupe* item);

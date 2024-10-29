@@ -24,6 +24,8 @@
 #include "TreeMap.h"
 #include "Property.h"
 
+#include <regex>
+
 class COptions;
 
 constexpr auto USERDEFINEDCLEANUPCOUNT = 10;
@@ -113,6 +115,7 @@ public:
     static Setting<bool> ExcludeSymbolicLinksFile;
     static Setting<bool> ExcludeHiddenFile;
     static Setting<bool> ExcludeProtectedFile;
+    static Setting<bool> FilteringUseRegex;
     static Setting<bool> FollowVolumeMountPoints;
     static Setting<bool> UseSizeSuffixes;
     static Setting<bool> ListFullRowSelection;
@@ -137,6 +140,7 @@ public:
     static Setting<bool> ShowTreeMap;
     static Setting<bool> ShowUnknown;
     static Setting<bool> SkipDupeDetectionCloudLinks;
+    static Setting<bool> SkipDupeDetectionCloudLinksWarning;
     static Setting<bool> TreeMapGrid;
     static Setting<bool> UseBackupRestore;
     static Setting<bool> UseWindowsLocaleSetting;
@@ -158,6 +162,8 @@ public:
     static Setting<int> ScanningThreads;
     static Setting<int> SelectDrivesRadio;
     static Setting<int> FileTreeColorCount;
+    static Setting<int> FilteringSizeMinimum;
+    static Setting<int> FilteringSizeUnits;
     static Setting<int> TreeMapAmbientLightPercent;
     static Setting<int> TreeMapBrightness;
     static Setting<int> TreeMapHeightFactor;
@@ -176,17 +182,23 @@ public:
     static Setting<std::vector<int>> ExtViewColumnOrder;
     static Setting<std::vector<int>> ExtViewColumnWidth;
     static Setting<std::vector<std::wstring>> SelectDrivesDrives;
+    static Setting<std::wstring> FilteringExcludeDirs;
+    static Setting<std::wstring> FilteringExcludeFiles;
     static Setting<std::wstring> SelectDrivesFolder;
     static Setting<WINDOWPLACEMENT> MainWindowPlacement;
 
     static CTreeMap::Options TreeMapOptions;
     static std::vector<USERDEFINEDCLEANUP> UserDefinedCleanups;
+    static std::vector<std::wregex> FilteringExcludeDirsRegex;
+    static std::vector<std::wregex> FilteringExcludeFilesRegex;
+    static ULONGLONG FilteringSizeMinimumCalculated;
 
     static void SanitizeRect(RECT& rect);
     static void LoadAppSettings();
     static void PreProcessPersistedSettings();
     static void PostProcessPersistedSettings();
     static void SetTreeMapOptions(const CTreeMap::Options& options);
+    static void CompileFilters();
 
     static LCID GetLocaleForFormatting();
 };

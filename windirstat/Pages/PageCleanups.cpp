@@ -26,15 +26,15 @@
 
 #include "Localization.h"
 
-IMPLEMENT_DYNAMIC(CPageCleanups, CPropertyPage)
+IMPLEMENT_DYNAMIC(CPageCleanups, CPropertyPageEx)
 
-CPageCleanups::CPageCleanups() : CPropertyPage(IDD) {}
+CPageCleanups::CPageCleanups() : CPropertyPageEx(IDD) {}
 
 CPageCleanups::~CPageCleanups() = default;
 
 void CPageCleanups::DoDataExchange(CDataExchange* pDX)
 {
-    CPropertyPage::DoDataExchange(pDX);
+    CPropertyPageEx::DoDataExchange(pDX);
     DDX_Control(pDX, IDC_LIST, m_List);
     DDX_Check(pDX, IDC_ENABLED, m_Enabled);
     DDX_Text(pDX, IDC_TITLE, m_Title);
@@ -66,7 +66,7 @@ void CPageCleanups::DoDataExchange(CDataExchange* pDX)
     DDX_Control(pDX, IDC_DOWN, m_CtlDown);
 }
 
-BEGIN_MESSAGE_MAP(CPageCleanups, CPropertyPage)
+BEGIN_MESSAGE_MAP(CPageCleanups, CPropertyPageEx)
     ON_LBN_SELCHANGE(IDC_LIST, OnLbnSelchangeList)
     ON_BN_CLICKED(IDC_ENABLED, OnBnClickedEnabled)
     ON_EN_CHANGE(IDC_TITLE, OnEnChangeTitle)
@@ -87,7 +87,7 @@ END_MESSAGE_MAP()
 
 BOOL CPageCleanups::OnInitDialog()
 {
-    CPropertyPage::OnInitDialog();
+    CPropertyPageEx::OnInitDialog();
 
     Localization::UpdateDialogs(*this);
 
@@ -129,7 +129,7 @@ void CPageCleanups::OnOK()
         COptions::UserDefinedCleanups[i].WorksForUncPaths = m_Udc[i].WorksForUncPaths.Obj();
     }
 
-    CPropertyPage::OnOK();
+    CPropertyPageEx::OnOK();
 }
 
 void CPageCleanups::OnLbnSelchangeList()

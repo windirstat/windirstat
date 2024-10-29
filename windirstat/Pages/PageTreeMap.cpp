@@ -31,10 +31,10 @@ namespace
     constexpr UINT c_MaxHeight = 200;
 }
 
-IMPLEMENT_DYNAMIC(CPageTreeMap, CPropertyPage)
+IMPLEMENT_DYNAMIC(CPageTreeMap, CPropertyPageEx)
 
 CPageTreeMap::CPageTreeMap()
-    : CPropertyPage(IDD)
+    : CPropertyPageEx(IDD)
       , m_Options()
       , m_Undo()
 {
@@ -42,7 +42,7 @@ CPageTreeMap::CPageTreeMap()
 
 void CPageTreeMap::DoDataExchange(CDataExchange* pDX)
 {
-    CPropertyPage::DoDataExchange(pDX);
+    CPropertyPageEx::DoDataExchange(pDX);
 
     DDX_Control(pDX, IDC_PREVIEW, m_Preview);
     DDX_Control(pDX, IDC_TREEMAPHIGHLIGHTCOLOR, m_HighlightColor);
@@ -84,7 +84,7 @@ void CPageTreeMap::DoDataExchange(CDataExchange* pDX)
     }
 }
 
-BEGIN_MESSAGE_MAP(CPageTreeMap, CPropertyPage)
+BEGIN_MESSAGE_MAP(CPageTreeMap, CPropertyPageEx)
     ON_WM_VSCROLL()
     ON_NOTIFY(COLBN_CHANGED, IDC_TREEMAPGRIDCOLOR, OnColorChangedTreeMapGrid)
     ON_NOTIFY(COLBN_CHANGED, IDC_TREEMAPHIGHLIGHTCOLOR, OnColorChangedTreeMapHighlight)
@@ -97,7 +97,7 @@ END_MESSAGE_MAP()
 
 BOOL CPageTreeMap::OnInitDialog()
 {
-    CPropertyPage::OnInitDialog();
+    CPropertyPageEx::OnInitDialog();
 
     Localization::UpdateDialogs(*this);
 
@@ -126,7 +126,7 @@ void CPageTreeMap::OnOK()
     COptions::TreeMapHighlightColor = m_HighlightColor.GetColor();
     CDirStatDoc::GetDocument()->UpdateAllViews(nullptr, HINT_SELECTIONSTYLECHANGED);
 
-    CPropertyPage::OnOK();
+    CPropertyPageEx::OnOK();
 }
 
 void CPageTreeMap::UpdateOptions(const bool save)

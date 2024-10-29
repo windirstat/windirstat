@@ -31,6 +31,7 @@
 #include "Localization.h"
 #include "Property.h"
 #include "PageAdvanced.h"
+#include "PageFiltering.h"
 #include "PageCleanups.h"
 #include "PageFileTree.h"
 #include "PageTreeMap.h"
@@ -644,6 +645,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
         { ID_CLEANUP_OPEN_IN_CONSOLE, {IDB_CLEANUP_OPEN_IN_CONSOLE, IDS_CLEANUP_OPEN_IN_CONSOLE}},
         { ID_REFRESH_SELECTED, {IDB_REFRESH_SELECTED, IDS_REFRESH_SELECTED}},
         { ID_REFRESH_ALL, {IDB_REFRESH_ALL, IDS_REFRESH_ALL}},
+        { ID_FILTER, {IDB_FILTER, IDS_PAGE_FILTERING_TITLE}},
         { ID_SCAN_SUSPEND, {IDB_SCAN_SUSPEND, IDS_SUSPEND}},
         { ID_SCAN_RESUME, {IDB_SCAN_RESUME, IDS_GENERIC_BLANK}},
         { ID_SCAN_STOP, {IDB_SCAN_STOP, IDS_GENERIC_BLANK}},
@@ -673,13 +675,13 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
         // copy button into new toolbar control
         CMFCToolBarButton newButton(button->m_nID, image, nullptr, TRUE, TRUE);
         newButton.m_nStyle = button->m_nStyle | TBBS_DISABLED;
-        newButton.m_strText = Localization::Lookup(toolbarMap.at(button->m_nID).second).c_str();
+        newButton.m_strText = Localization::Lookup(static_cast<USHORT>(toolbarMap.at(button->m_nID).second)).c_str();
         m_WndToolBar.ReplaceButton(button->m_nID, newButton);
     }
 
     // setup look at feel
     CMFCVisualManager::SetDefaultManager(RUNTIME_CLASS(CMFCVisualManagerWindows7));
-    CDockingManager::SetDockingMode(DT_SMART);
+    CDockingManager::SetDockingMode(DT_SMART); 
 
     return 0;
 }
@@ -705,11 +707,11 @@ void CMainFrame::OnClose()
 {
     CWaitCursor wc;
 
-    // Suspend the scan and wait for scan to complete
-    CDirStatDoc::GetDocument()->StopScanningEngine();
-
     // Stop the timer so we are not updating elements during shutdown
     KillTimer(ID_WDS_CONTROL);
+
+    // Suspend the scan and wait for scan to complete
+    CDirStatDoc::GetDocument()->StopScanningEngine();
 
     // It's too late, to do this in OnDestroy(). Because the toolbar, if undocked,
     // is already destroyed in OnDestroy(). So we must save the toolbar state here
@@ -941,12 +943,9 @@ void CMainFrame::QueryRecycleBin(ULONGLONG& items, ULONGLONG& bytes)
 
         std::wstring s = std::wstring(1, wds::strAlpha.at(i)) + L":\\";
         const UINT type = ::GetDriveType(s.c_str());
-        if (type == DRIVE_UNKNOWN || type == DRIVE_NO_ROOT_DIR)
-        {
-            continue;
-        }
-
-        if (type == DRIVE_REMOTE)
+        if (type == DRIVE_UNKNOWN ||
+            type == DRIVE_NO_ROOT_DIR ||
+            type == DRIVE_REMOTE)
         {
             continue;
         }
@@ -1187,12 +1186,14 @@ void CMainFrame::OnConfigure()
     COptionsPropertySheet sheet;
 
     CPageGeneral general;
+    CPageFiltering filtering;
     CPageFileTree treelist;
     CPageTreeMap treemap;
     CPageCleanups cleanups;
     CPageAdvanced advanced;
 
     sheet.AddPage(&general);
+    sheet.AddPage(&filtering);
     sheet.AddPage(&treelist);
     sheet.AddPage(&treemap);
     sheet.AddPage(&cleanups);

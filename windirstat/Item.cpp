@@ -757,12 +757,13 @@ unsigned short CItem::GetSortAttributes() const
 
     // We want to enforce the order RHSACE with R being the highest priority
     // attribute and E being the lowest priority attribute.
-    ret |= m_Attributes & FILE_ATTRIBUTE_READONLY   ? 1 << 5 : 0; // R
-    ret |= m_Attributes & FILE_ATTRIBUTE_HIDDEN     ? 1 << 4 : 0; // H
-    ret |= m_Attributes & FILE_ATTRIBUTE_SYSTEM     ? 1 << 3 : 0; // S
-    ret |= m_Attributes & FILE_ATTRIBUTE_ARCHIVE    ? 1 << 2 : 0; // A
-    ret |= m_Attributes & FILE_ATTRIBUTE_COMPRESSED ? 1 << 1 : 0; // C
-    ret |= m_Attributes & FILE_ATTRIBUTE_ENCRYPTED  ? 1 << 0 : 0; // E
+    ret |= m_Attributes & FILE_ATTRIBUTE_READONLY    ? 1 << 6 : 0; // R
+    ret |= m_Attributes & FILE_ATTRIBUTE_HIDDEN      ? 1 << 5 : 0; // H
+    ret |= m_Attributes & FILE_ATTRIBUTE_SYSTEM      ? 1 << 4 : 0; // S
+    ret |= m_Attributes & FILE_ATTRIBUTE_ARCHIVE     ? 1 << 3 : 0; // A
+    ret |= m_Attributes & FILE_ATTRIBUTE_COMPRESSED  ? 1 << 2 : 0; // C
+    ret |= m_Attributes & FILE_ATTRIBUTE_ENCRYPTED   ? 1 << 1 : 0; // E
+    ret |= m_Attributes & FILE_ATTRIBUTE_SPARSE_FILE ? 1 << 0 : 0; // Z
 
     return ret;
 }
@@ -960,6 +961,13 @@ void CItem::ScanItems(BlockingQueue<CItem*> * queue)
                     {
                         continue;
                     }
+  
+                    // Exclude directories matching path filter
+                    if (!COptions::FilteringExcludeDirsRegex.empty() && std::ranges::any_of(COptions::FilteringExcludeDirsRegex,
+                        [&finder](const auto& pattern) { return std::regex_match(finder.GetFilePath(), pattern); }))
+                    {
+                        continue;
+                    }
 
                     item->UpwardAddFolders(1);
                     if (CItem* newitem = item->AddDirectory(finder); newitem->GetReadJobs() > 0)
@@ -973,6 +981,19 @@ void CItem::ScanItems(BlockingQueue<CItem*> * queue)
                         COptions::ExcludeProtectedFile && finder.IsHiddenSystem() ||
                         COptions::ExcludeSymbolicLinksFile && CReparsePoints::IsReparsePoint(finder.GetAttributes()) &&
                             CReparsePoints::IsSymbolicLink(finder.GetFilePathLong(), finder.GetAttributes()))
+                    {
+                        continue;
+                    }
+
+                    // Exclude files matching name filter
+                    if (!COptions::FilteringExcludeFilesRegex.empty() && std::ranges::any_of(COptions::FilteringExcludeFilesRegex,
+                        [&finder](const auto& pattern) { return std::regex_match(finder.GetFileName(), pattern); }))
+                    {
+                        continue;
+                    }
+
+                    // Exclude files matching size filter
+                    if (COptions::FilteringSizeMinimumCalculated > 0 && finder.GetFileSizeLogical() < COptions::FilteringSizeMinimumCalculated)
                     {
                         continue;
                     }

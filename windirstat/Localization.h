@@ -37,7 +37,7 @@ public:
     static constexpr auto MAX_VALUE_SIZE = 1024;
     static constexpr auto LANG_RESOURCE_TYPE = L"RT_LANG";
     static std::unordered_map<std::wstring, std::wstring> m_Map;
-    static std::unordered_map<UINT, std::wstring> m_MapInt;
+    static std::unordered_map<USHORT, std::wstring> m_MapInt;
 
     static bool Contains(const std::wstring& name)
     {
@@ -45,7 +45,7 @@ public:
         return m_Map.contains(name);
     }
 
-    static std::wstring & Lookup(const UINT res, const std::wstring& def = std::wstring())
+    static std::wstring & Lookup(const USHORT res, const std::wstring& def = std::wstring())
     {
         // return from cache if already looked up
         if (m_MapInt.contains(res)) return m_MapInt[res];
@@ -75,7 +75,7 @@ public:
     }
 
     template <typename... Args>
-    static std::wstring Format(UINT res, const Args&... args)
+    static std::wstring Format(USHORT res, const Args&... args)
     {
         return std::vformat(Lookup(res), std::make_wformat_args(args...));
     }

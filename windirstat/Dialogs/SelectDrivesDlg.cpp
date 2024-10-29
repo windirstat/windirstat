@@ -778,5 +778,5 @@ BOOL CSelectDrivesDlg::PreTranslateMessage(MSG* pMsg)
         UpdateButtons();
     }
 
-    return CDialog::PreTranslateMessage(pMsg);
+    return CDialogEx::PreTranslateMessage(pMsg);
 }

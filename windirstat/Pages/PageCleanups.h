@@ -26,7 +26,7 @@
 //
 // CPageCleanups. "Settings" property page "Cleanups".
 //
-class CPageCleanups final : public CPropertyPage
+class CPageCleanups final : public CPropertyPageEx
 {
     DECLARE_DYNAMIC(CPageCleanups)
 

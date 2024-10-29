@@ -31,6 +31,7 @@
 
 #include <array>
 #include <algorithm>
+#include <regex>
 
 #pragma comment(lib,"ntdll.lib")
 EXTERN_C NTSTATUS NTAPI RtlDecompressBuffer(USHORT CompressionFormat, PUCHAR UncompressedBuffer, ULONG  UncompressedBufferSize,
@@ -640,6 +641,29 @@ void ProcessMessagesUntilSignaled(const std::function<void()>& callback)
     }
 }
 
+std::wstring GlobToRegex(const std::wstring& glob)
+{
+    std::wstring regex = glob;
+
+    // Replace escape sequences for '\' in the glob
+    regex = std::regex_replace(regex, std::wregex(LR"(\\)"), LR"(\\)");
+
+    // Replace '.' characters (escape them for regex)
+    regex = std::regex_replace(regex, std::wregex(LR"(\.)"), LR"(\.)");
+
+    // Replace '*' (match any sequence of characters)
+    regex = std::regex_replace(regex, std::wregex(LR"(\*)"), LR"(.*)");
+
+    // Replace '?' (match any single character)
+    regex = std::regex_replace(regex, std::wregex(LR"(\?)"), LR"(.)");
+
+    // Replace '[' with '\[' and ']' with '\]' for character classes
+    regex = std::regex_replace(regex, std::wregex(LR"(\[)"), LR"(\[)");
+    regex = std::regex_replace(regex, std::wregex(LR"(\])"), LR"(\])");
+
+    return L"^" + regex + L"$";
+}
+
 std::vector<BYTE> GetCompressedResource(const HRSRC resource)
 {
     // Establish the resource
@@ -660,5 +684,3 @@ std::vector<BYTE> GetCompressedResource(const HRSRC resource)
 
     return decompressedData;
 }
-
-

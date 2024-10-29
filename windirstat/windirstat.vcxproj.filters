@@ -245,6 +245,9 @@
     <ClInclude Include="OleFilterOverride.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Pages\PageTreeMap.h">
+      <Filter>Header Files\Pages</Filter>
+    </ClInclude>
     <ClInclude Include="Pages\PageAdvanced.h">
       <Filter>Header Files\Pages</Filter>
     </ClInclude>
@@ -254,10 +257,13 @@
     <ClInclude Include="Pages\PageFileTree.h">
       <Filter>Header Files\Pages</Filter>
     </ClInclude>
+    <ClInclude Include="Pages\PageFiltering.h">
+      <Filter>Header Files\Pages</Filter>
+    </ClInclude>
     <ClInclude Include="Pages\PageGeneral.h">
       <Filter>Header Files\Pages</Filter>
     </ClInclude>
-    <ClInclude Include="Pages\PageTreeMap.h">
+    <ClInclude Include="Pages\PageGeneral.h">
       <Filter>Header Files\Pages</Filter>
     </ClInclude>
   </ItemGroup>
@@ -379,6 +385,9 @@
     <ClCompile Include="Pages\PageFileTree.cpp">
       <Filter>Source Files\Pages</Filter>
     </ClCompile>
+    <ClCompile Include="Pages\PageFiltering.cpp">
+      <Filter>Source Files\Pages</Filter>
+    </ClCompile>
     <ClCompile Include="Pages\PageGeneral.cpp">
       <Filter>Source Files\Pages</Filter>
     </ClCompile>
@@ -463,6 +472,9 @@
     </Image>
     <Image Include="res\WinDirStat.ico">
       <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\toolbar\IDB_FILTER.bmp">
+      <Filter>Resource Files\Resources</Filter>
     </Image>
   </ItemGroup>
   <ItemGroup>

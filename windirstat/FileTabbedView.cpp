@@ -56,6 +56,7 @@ LRESULT CFileTabbedView::OnChangeActiveTab(WPARAM wp, LPARAM lp)
 {
     if (wp == m_FileDupeViewIndex && !COptions::ScanForDuplicates)
     {
+        AfxMessageBox(Localization::Lookup(IDS_DUPLICATES_DISABLED).c_str(), MB_OK | MB_ICONHAND);
         return TRUE;
     }
 

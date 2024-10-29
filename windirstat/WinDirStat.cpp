@@ -32,6 +32,7 @@
 #include "TreeMapView.h"
 #include "GlobalHelpers.h"
 #include "Localization.h"
+#include "PageFiltering.h"
 #include "SmartPointer.h"
 
 CIconImageList* GetIconImageList()
@@ -44,6 +45,7 @@ CIconImageList* GetIconImageList()
 BEGIN_MESSAGE_MAP(CDirStatApp, CWinAppEx)
     ON_COMMAND(ID_APP_ABOUT, OnAppAbout)
     ON_COMMAND(ID_FILE_SELECT, OnFileOpen)
+    ON_COMMAND(ID_FILTER, OnFilter)
     ON_COMMAND(ID_RUN_ELEVATED, OnRunElevated)
     ON_UPDATE_COMMAND_UI(ID_RUN_ELEVATED, OnUpdateRunElevated)
     ON_COMMAND(ID_HELP_MANUAL, OnHelpManual)
@@ -273,7 +275,7 @@ BOOL CDirStatApp::InitInstance()
     SetPortableMode(true, true);
 
     COptions::LoadAppSettings();
-    LoadStdProfileSettings(4);
+    LoadStdProfileSettings(0);
 
     m_PDocTemplate = new CSingleDocTemplate(
         IDR_MAINFRAME,
@@ -380,6 +382,14 @@ void CDirStatApp::OnRunElevated()
     {
         VTRACE(L"ShellExecuteEx failed to elevate: {:#08X}", GetLastError());
     }
+}
+
+void CDirStatApp::OnFilter()
+{
+    COptionsPropertySheet sheet;
+    CPageFiltering filtering;
+    sheet.AddPage(&filtering);
+    sheet.DoModal();
 }
 
 void CDirStatApp::LaunchHelp()

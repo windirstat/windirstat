@@ -108,8 +108,18 @@ void CFileDupeControl::OnContextMenu(CWnd* /*pWnd*/, const CPoint pt)
 void CFileDupeControl::ProcessDuplicate(CItem * item, BlockingQueue<CItem*>* queue)
 {
     if (!COptions::ScanForDuplicates) return;
-    if (COptions::SkipDupeDetectionCloudLinks.Obj() &&
-        CReparsePoints::IsCloudLink(item->GetPathLong(), item->GetAttributes())) return;
+    if (COptions::SkipDupeDetectionCloudLinks &&
+        CReparsePoints::IsCloudLink(item->GetPathLong(), item->GetAttributes()))
+    {
+        std::unique_lock lock(m_Mutex);
+        if (m_ShowCloudWarningOnThisScan &&
+            AfxMessageBox(Localization::Lookup(IDS_DUPLICATES_WARNING).c_str(), MB_YESNO) == IDNO)
+        {
+            COptions::SkipDupeDetectionCloudLinksWarning = false;
+        }
+        m_ShowCloudWarningOnThisScan = false;
+        return;
+    }
 
     std::unique_lock lock(m_Mutex);
     const auto sizeEntry = m_SizeTracker.find(item->GetSizeLogical());
@@ -314,6 +324,8 @@ void CFileDupeControl::InsertItem(const int i, CTreeListItem* item)
 
 void CFileDupeControl::SetRootItem(CTreeListItem* root)
 {
+    m_ShowCloudWarningOnThisScan = COptions::SkipDupeDetectionCloudLinksWarning;
+
     m_NodeTracker.clear();
     m_HashTracker.clear();
     m_SizeTracker.clear();
