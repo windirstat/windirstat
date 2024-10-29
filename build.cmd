@@ -8,8 +8,8 @@ ECHO 1. Beta
 ECHO 2. Production
 SET /p CHOICE=Enter Choice (1 or 2): 
 SET RELTYPE=
-IF "%CHOICE%" EQU "1" SET RELTYPE=PRODUCTION
-IF "%CHOICE%" EQU "2" SET RELTYPE=BETA
+IF "%CHOICE%" EQU "1" SET RELTYPE=BETA
+IF "%CHOICE%" EQU "2" SET RELTYPE=PRODUCTION
 IF "%RELTYPE%" EQU "" EXIT /B 1
 
 :: setup environment variables based on location of this script
