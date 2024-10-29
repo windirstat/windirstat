@@ -791,13 +791,13 @@ void CTreeListControl::OnKeyDown(const UINT nChar, const UINT nRepCnt, const UIN
     {
         if (nChar == VK_RIGHT)
         {
-            if (!items[0]->IsExpanded())
-            {
-                ExpandItem(FindTreeItem(items[0]));
-            }
             if (items[0]->IsExpanded() && items[0]->HasChildren())
             {
                 SelectItem(items[0]->GetSortedChild(0), true, true);
+            }
+            if (!items[0]->IsExpanded())
+            {
+                ExpandItem(FindTreeItem(items[0]));
             }
             return;
         }
