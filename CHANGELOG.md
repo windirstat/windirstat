@@ -1,13 +1,15 @@
 # WinDirStat 2.1.0 (Upcoming)
 
 ## Enhancements
-* Ability to exclude file or folders by name
+* Ability to exclude folders by path
+* Ability to exclude files by name
 * Ability to exclude files by minimum file size
 * Scans now stop quicker when requested during duplicate scan
 * Slightly reduced executable size
 * Better Norwegian tranlsations (thanks @TilKenneth)
 * Improved keyboard navigation on the file deletion dialog box
-
+* Cleanup option to empty folder
+  
 ## Bug Fixes
 * Addressed save/load files on Windows Server 2016 not working
 * Addressed hover over treemap not showing filename properly
