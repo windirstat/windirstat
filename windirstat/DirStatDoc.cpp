@@ -672,7 +672,7 @@ void CDirStatDoc::PerformUserDefinedCleanup(USERDEFINEDCLEANUP* udc, const CItem
     {
         if (!FolderExists(path) && !DriveExists(path))
         {
-            MdThrowStringException(Localization::Format(IDS_THEFILEsDOESNOTEXIST, path));
+            MdThrowStringException(Localization::Format(IDS_THEDIRECTORYsDOESNOTEXIST, path));
         }
     }
     else
@@ -892,6 +892,7 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
         { ID_SCAN_STOP,               { true,  true,  true,  false, IT_ANY, isStoppable } },
         { ID_CLEANUP_DELETE_BIN,      { false, true,  false,  true, IT_DIRECTORY | IT_FILE, notRoot } },
         { ID_CLEANUP_DELETE,          { false, true,  false,  true, IT_DIRECTORY | IT_FILE, notRoot } },
+        { ID_CLEANUP_EMPTY_FOLDER,    { true,  false, false,  true, IT_DIRECTORY, notRoot } },
         { ID_CLEANUP_OPEN_SELECTED,   { false, true,  true,  false, IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY | IT_FILE } },
         { ID_CLEANUP_PROPERTIES,      { false, true,  true,  false, IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY | IT_FILE } },
         { ID_CLEANUP_OPEN_SELECTED,   { false, true,  true,  false, IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY | IT_FILE } },
@@ -961,6 +962,7 @@ BEGIN_MESSAGE_MAP(CDirStatDoc, CDocument)
     ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_OPEN_IN_PWSH, OnPowerShellHere)
     ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_DELETE_BIN, OnCleanupDeleteToBin)
     ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_DELETE, OnCleanupDelete)
+    ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_EMPTY_FOLDER, OnCleanupEmptyFolder)
     ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_DISM_NORMAL, OnExecuteDism)
     ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_DISM_RESET, OnExecuteDismReset)
     ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_REMOVE_ROAMING, OnRemoveRoamingProfiles)
@@ -1255,6 +1257,29 @@ void CDirStatDoc::OnCleanupDelete()
     DeletePhysicalItems(items, false);
 }
 
+void CDirStatDoc::OnCleanupEmptyFolder()
+{
+    for (const auto& select : GetAllSelected())
+    {
+        // confirm user wishes to proceed
+        if (AfxMessageBox(Localization::Format(IDS_EMPTY_FOLDER_WARNINGs,
+            select->GetPath()).c_str(), MB_YESNO) == IDYES)
+        {
+            // delete all children
+            CWaitCursor wc;
+            for (const auto& items : select->GetChildren())
+            {
+                std::error_code ec;
+                std::filesystem::remove_all(items->GetPathLong().c_str(), ec);
+            }
+        }
+    }
+
+    // refresh items
+    RefreshItem(GetAllSelected());
+}
+
+
 void CDirStatDoc::OnRemoveRoamingProfiles()
 {
     const std::wstring cmd = std::format(LR"(/C "TITLE {} & WMIC.EXE {} & PAUSE)",
@@ -1518,6 +1543,7 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
             {
                 visualInfo[item].isSelected = std::ranges::find(selectedItems, item) != selectedItems.end();
                 visualInfo[item].wasExpanded = item->IsExpanded();
+                visualInfo[item].oldScrollPosition = item->GetScrollPosition();
             }
 
             // Skip pruning if it is a new element
@@ -1637,7 +1663,7 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
         CItem::ScanItemsFinalize(GetRootItem());
 
         // Invoke a UI thread to do updates
-        CMainFrame::Get()->InvokeInMessageThread([&items,&visualInfo]
+        CMainFrame::Get()->InvokeInMessageThread([&]
         {
             for (const auto& item : items)
             {

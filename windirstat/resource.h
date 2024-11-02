@@ -185,6 +185,8 @@
 #define ID_INDICATOR_DISK               33065
 #define ID_INDICATOR_MEM                33066
 #define ID_INDICATOR_IDLE               33067
+#define ID_POPUP_IDS                    33068
+#define ID_CLEANUP_EMPTY_FOLDER         33069
 #define IDS_AUTHOR_EMAIL                57345
 #define IDS_URL_WEBSITE                 57346
 #define IDS_URL_HELP                    57347
@@ -199,7 +201,7 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        57353
-#define _APS_NEXT_COMMAND_VALUE         33068
+#define _APS_NEXT_COMMAND_VALUE         33071
 #define _APS_NEXT_CONTROL_VALUE         1242
 #define _APS_NEXT_SYMED_VALUE           109
 #endif

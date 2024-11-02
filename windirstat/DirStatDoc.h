@@ -194,6 +194,7 @@ protected:
     afx_msg void OnPowerShellHere();
     afx_msg void OnCleanupDeleteToBin();
     afx_msg void OnCleanupDelete();
+    afx_msg void OnCleanupEmptyFolder();
     afx_msg void OnUpdateUserDefinedCleanup(CCmdUI* pCmdUI);
     afx_msg void OnUserDefinedCleanup(UINT id);
     afx_msg void OnTreeMapSelectParent();
