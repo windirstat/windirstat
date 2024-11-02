@@ -117,7 +117,7 @@ bool FileFindEnhanced::FindFile(const std::wstring & strFolder, const std::wstri
     // get an open file handle
     IO_STATUS_BLOCK statusBlock = {};
     if (const NTSTATUS status = NtOpenFile(&m_Handle, FILE_LIST_DIRECTORY | SYNCHRONIZE,
-        &attributes, &statusBlock, FILE_SHARE_READ | FILE_SHARE_WRITE, 
+        &attributes, &statusBlock, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
         FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT | FILE_OPEN_FOR_BACKUP_INTENT); status != 0)
     {
         VTRACE(L"File Access Error {:#08X}: {}", static_cast<DWORD>(status), m_Base.data());
