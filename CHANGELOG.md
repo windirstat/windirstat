@@ -11,6 +11,7 @@
 * Cleanup option to empty folder
   
 ## Bug Fixes
+* Addressed not being able to scan CSC directory
 * Addressed save/load files on Windows Server 2016 not working
 * Addressed hover over treemap not showing filename properly
 
