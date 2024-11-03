@@ -1355,8 +1355,7 @@ void CItem::UpwardDrivePacman()
 std::wstring CItem::GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CItem*>* queue)
 {
     // Initialize hash for this thread
-    constexpr auto maxBufferSize = 2ull * 1024ull * 1024ull;
-    thread_local std::vector<BYTE> FileBuffer(static_cast<std::size_t>(hashSizeLimit > 0 ? hashSizeLimit : maxBufferSize));
+    thread_local std::vector<BYTE> FileBuffer(1024ull * 1024ull);
     thread_local std::vector<BYTE> Hash;
     thread_local SmartPointer<BCRYPT_HASH_HANDLE> HashHandle(BCryptDestroyHash);
     thread_local DWORD HashLength = 0;
@@ -1374,8 +1373,9 @@ std::wstring CItem::GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CItem*>* 
     }
 
     // Open file for reading
-    SmartPointer<HANDLE> hFile(CloseHandle, CreateFile(GetPathLong().c_str(), GENERIC_READ, FILE_SHARE_READ,
-        nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_SEQUENTIAL_SCAN, nullptr));
+    SmartPointer<HANDLE> hFile(CloseHandle, CreateFile(GetPathLong().c_str(), GENERIC_READ,
+        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING,
+        FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_SEQUENTIAL_SCAN, nullptr));
     if (hFile == INVALID_HANDLE_VALUE)
     {
         return {};
@@ -1386,7 +1386,8 @@ std::wstring CItem::GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CItem*>* 
     DWORD iHashResult = 0;
     DWORD iReadBytes = 0;
     Hash.resize(HashLength);
-    while ((iReadResult = ReadFile(hFile, FileBuffer.data(), static_cast<DWORD>(FileBuffer.size()),
+    while ((iReadResult = ReadFile(hFile, FileBuffer.data(), static_cast<DWORD>(
+        hashSizeLimit > 0 ? min(hashSizeLimit, FileBuffer.size()) : FileBuffer.size()),
         &iReadBytes, nullptr)) != 0 && iReadBytes > 0)
     {
         UpwardDrivePacman();
