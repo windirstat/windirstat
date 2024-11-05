@@ -39,6 +39,11 @@ $workSpaceBuffer = [System.Runtime.InteropServices.Marshal]::AllocHGlobal([int]$
 $Files = Get-ChildItem -Path $Path -Recurse
 ForEach ($File in $Files)
 {
+    If ($File.Name -like 'lang_*.txt')
+    {
+        $File | Get-Content -Encoding UTF8 | Sort-Object -Unique | Where-Object { -not [string]::IsNullOrEmpty($_) } | Set-Content -LiteralPath $File.FullName -Encoding UTF8
+    }
+
     $bytesToCompress = [System.IO.File]::ReadAllBytes($File.FullName)
     $compressedData = New-Object byte[] ($bytesToCompress.Length)
 
