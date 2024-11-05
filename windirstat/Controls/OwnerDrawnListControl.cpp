@@ -422,7 +422,6 @@ void COwnerDrawnListControl::DrawItem(LPDRAWITEMSTRUCT pdis)
             CSetBkMode bk(&dcMem, TRANSPARENT);
             CSelectObject sofont(&dcMem, GetFont());
             const std::wstring s = item->GetText(subitem);
-            const UINT align = IsColumnRightAligned(i) ? DT_RIGHT : DT_LEFT;
 
             // Get the correct color in case of compressed or encrypted items
             COLORREF textColor = item->GetItemTextColor();
@@ -437,7 +436,7 @@ void COwnerDrawnListControl::DrawItem(LPDRAWITEMSTRUCT pdis)
             CSetTextColor tc(&dcMem, textColor);
 
             // Draw the (sub)item text
-            dcMem.DrawText(s.c_str(), rcText, DT_SINGLELINE | DT_VCENTER | DT_WORD_ELLIPSIS | DT_NOPREFIX | align);
+            dcMem.DrawText(s.c_str(), rcText, DT_SINGLELINE | DT_VCENTER | DT_WORD_ELLIPSIS | DT_NOPREFIX);
         }
 
         if (m_ShowGrid)
@@ -462,16 +461,6 @@ void COwnerDrawnListControl::DrawItem(LPDRAWITEMSTRUCT pdis)
 
     pdc->BitBlt(rcItem.left, rcItem.top,
         rcItem.Width(), rcItem.Height(), &dcMem, 0, 0, SRCCOPY);
-}
-
-bool COwnerDrawnListControl::IsColumnRightAligned(const int col) const
-{
-    HDITEM hditem;
-    ZeroMemory(&hditem, sizeof(hditem));
-    hditem.mask = HDI_FORMAT;
-
-    GetHeaderCtrl()->GetItem(col, &hditem);
-    return (hditem.fmt & HDF_RIGHT) != 0;
 }
 
 CRect COwnerDrawnListControl::GetWholeSubitemRect(const int item, const int subitem) const

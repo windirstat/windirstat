@@ -109,7 +109,6 @@ protected:
     void InitializeColors();
     void DrawItem(LPDRAWITEMSTRUCT pdis) override;
     int GetSubItemWidth(const COwnerDrawnListItem* item, int subitem);
-    bool IsColumnRightAligned(int col) const;
 
     COLORREF m_WindowColor = CLR_NONE; // The default background color if !m_ShowStripes
     COLORREF m_StripeColor = CLR_NONE; // The stripe color, used for every other item if m_ShowStripes
