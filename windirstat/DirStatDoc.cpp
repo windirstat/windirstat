@@ -1606,11 +1606,10 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
             });
 
             // Separate into separate m_queues per drive
-            std::array<WCHAR, MAX_PATH> pathName;
-            if (GetVolumePathName(item->GetPathLong().c_str(),
-                pathName.data(), static_cast<DWORD>(pathName.size())) != 0)
+            const auto volume = GetVolumePathNameEx(item->GetPathLong());
+            if (!volume.empty())
             {
-                m_queues[pathName.data()].Push(item);
+                m_queues[volume].Push(item);
             }
             else ASSERT(FALSE);
         }

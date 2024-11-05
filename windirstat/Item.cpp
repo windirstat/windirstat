@@ -499,8 +499,9 @@ void CItem::UpdateStatsFromDisk()
     }
     else if (IsType(IT_DRIVE))
     {
-        SmartPointer<HANDLE> handle(CloseHandle, CreateFile(GetPathLong().c_str(), GENERIC_READ, 
-            FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, nullptr));
+        SmartPointer<HANDLE> handle(CloseHandle, CreateFile(GetPathLong().c_str(), FILE_READ_ATTRIBUTES, 
+            FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr,
+            OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, nullptr));
         if (handle != INVALID_HANDLE_VALUE)
         {
             GetFileTime(handle, nullptr, nullptr, &m_LastChange);

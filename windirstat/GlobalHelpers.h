@@ -63,3 +63,4 @@ const std::wstring& GetSysDirectory();
 void ProcessMessagesUntilSignaled(const std::function<void()>& callback);
 std::wstring GlobToRegex(const std::wstring& glob);
 std::vector<BYTE> GetCompressedResource(HRSRC resource);
+std::wstring GetVolumePathNameEx(const std::wstring& path);

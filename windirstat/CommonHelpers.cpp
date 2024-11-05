@@ -24,12 +24,12 @@
 #include "MdExceptions.h"
 #include "Constants.h"
 #include "CommonHelpers.h"
+#include "GlobalHelpers.h"
 
 #include <format>
 #include <map>
 #include <sddl.h>
 #include <string>
-#include <array>
 #include <unordered_set>
 
 bool ShellExecuteThrow(const std::wstring& lpFile, const std::wstring& lpParameters, const std::wstring & lpVerb,
@@ -238,17 +238,16 @@ bool CompressFileAllowed(const std::wstring& filePath, CompressionAlgorithm algo
         compressionStandard : compressionModern;
 
     // Fetch volume root path
-    std::array<WCHAR, MAX_PATH> volumeName;
-    if (GetVolumePathName(filePath.c_str(), volumeName.data(),
-        static_cast<DWORD>(volumeName.size())) == 0)
+    const auto volumeName = GetVolumePathNameEx(filePath);
+    if (volumeName.empty())
     {
         return false;
     }
 
     // Return cached value
-    if (compressionMap.contains(volumeName.data()))
+    if (compressionMap.contains(volumeName))
     {
-        return compressionMap.at(volumeName.data());
+        return compressionMap.at(volumeName);
     }
 
     // Enable 'none' button if either normal or modern are available
@@ -262,14 +261,14 @@ bool CompressFileAllowed(const std::wstring& filePath, CompressionAlgorithm algo
     if (algorithm == CompressionAlgorithm::LZNT1)
     {
         DWORD fileSystemFlags = 0;
-        compressionMap[volumeName.data()] = GetVolumeInformation(volumeName.data(),
+        compressionMap[volumeName.data()] = GetVolumeInformation(volumeName.c_str(),
             nullptr, 0, nullptr, nullptr, &fileSystemFlags, nullptr, 0) != 0 &&
             (fileSystemFlags & FILE_FILE_COMPRESSION) != 0;
     }
     else
     {
         compressionMap[volumeName.data()] = false;
-        SmartPointer<HANDLE> handle(CloseHandle, CreateFileW(volumeName.data(), GENERIC_READ,
+        SmartPointer<HANDLE> handle(CloseHandle, CreateFileW(volumeName.c_str(), GENERIC_READ,
             FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
             nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, nullptr));
         if (handle != INVALID_HANDLE_VALUE)
@@ -281,5 +280,5 @@ bool CompressFileAllowed(const std::wstring& filePath, CompressionAlgorithm algo
         }
     }
 
-    return compressionMap.at(volumeName.data());
+    return compressionMap.at(volumeName);
 }

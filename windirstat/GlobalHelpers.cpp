@@ -305,22 +305,16 @@ std::wstring FormatVolumeName(const std::wstring& rootPath, const std::wstring& 
 // Or, if name like "C:\", it returns "C:".
 std::wstring PathFromVolumeName(const std::wstring& name)
 {
-    const auto i = name.find_last_of(wds::chrBracketClose);
-    if (i == std::wstring::npos)
+    static std::wregex pattern(LR"(\(([A-Z]:)\)[\\]?$)", std::regex_constants::optimize);
+    std::wsmatch match;
+
+    if (std::regex_search(name, match, pattern) && match.size() > 1)
     {
-        ASSERT(name.size() == 3);
-        return name.substr(0, 2);
+        return match[1].str();
     }
 
-    ASSERT(i != std::wstring::npos);
-    const auto k = name.find_last_of(wds::chrBracketOpen);
-    ASSERT(k != std::wstring::npos);
-    ASSERT(k < i);
-    std::wstring path = name.substr(k + 1, i - k - 1);
-    ASSERT(path.size() == 2);
-    ASSERT(path[1] == wds::chrColon);
-
-    return path;
+    ASSERT(FALSE);
+    return {};
 }
 
 std::wstring GetFolderNameFromPath(const std::wstring & path)
@@ -676,4 +670,34 @@ std::vector<BYTE> GetCompressedResource(const HRSRC resource)
     decompressedData.resize(finalDecompressedSize);
 
     return decompressedData;
+}
+
+std::wstring GetVolumePathNameEx(const std::wstring & path)
+{
+    // First, try the regular path resolution
+    std::array<WCHAR, MAX_PATH> volume;
+    if (GetVolumePathName(path.c_str(),
+        volume.data(), static_cast<DWORD>(volume.size())) != 0)
+    {
+        return volume.data();
+    }
+
+    // Create a file handle to do a reverse lookup (in case of subst'd drive)
+    SmartPointer<HANDLE> handle(CloseHandle, CreateFile(path.c_str(), FILE_READ_ATTRIBUTES,
+        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, nullptr));
+    if (handle == nullptr) return {};
+
+    // Determine the maximum size to hold the resultant final path
+    const DWORD bufferSize = GetFinalPathNameByHandle(handle, nullptr, 0, FILE_NAME_NORMALIZED);
+    if (bufferSize == 0) return {};
+
+    // Lookup the path and then determine the pathname from it
+    std::vector<WCHAR> final(bufferSize + 1, L'\0');
+    if (GetFinalPathNameByHandle(handle, final.data(), static_cast<DWORD>(final.size()), FILE_NAME_NORMALIZED) != 0 &&
+        GetVolumePathName(final.data(), volume.data(), static_cast<DWORD>(volume.size())) != 0)
+    {
+        return volume.data();
+    }
+
+    return {};
 }
