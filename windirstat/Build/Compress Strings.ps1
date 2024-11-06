@@ -1,5 +1,6 @@
 ﻿param($Path)
 
+$env:LIB = ''
 $CompressLibrary = Add-Type -TypeDefinition @"
     using System;
     using System.Runtime.InteropServices;
