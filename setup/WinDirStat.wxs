@@ -5,17 +5,17 @@
     <Package InstallerVersion="500" Compressed="yes" InstallScope="perMachine"/>
     <Icon Id="WinDirStat.ico" SourceFile="$(var.IconFilePath)"/>
     <Property Id="ARPPRODUCTICON" Value="WinDirStat.ico"/>
-    <MajorUpgrade AllowSameVersionUpgrades="$(var.AllowSameVersionUpgrades)" DowngradeErrorMessage="A newer version of [ProductName] is already installed." Schedule="afterInstallInitialize" />
+    <MajorUpgrade AllowSameVersionUpgrades="$(var.AllowSameVersionUpgrades)" DowngradeErrorMessage="A newer version of [ProductName] is already installed." Schedule="afterInstallInitialize"/>
     <MediaTemplate EmbedCab="yes" CompressionLevel="high"/>
-    <UIRef Id="WixUI_FeatureTree"/>
+    <Property Id="WIXUI_INSTALLDIR" Value="INSTALLFOLDER"/>
+    <UIRef Id="WixUI_InstallDir"/>
     <WixVariable Id="WixUILicenseRtf" Value="$(var.LicenseRtf)"/>
-    <WixVariable Id="WixUIBannerBmp" Value="$(var.BannerBmp)" />
-    <WixVariable Id="WixUIDialogBmp" Value="$(var.DialogBmp)" />
+    <WixVariable Id="WixUIBannerBmp" Value="$(var.BannerBmp)"/>
+    <WixVariable Id="WixUIDialogBmp" Value="$(var.DialogBmp)"/>
     <Feature Id="FT_Core" Title="WinDirStat" Absent="disallow" Description="Includes WinDirStat">
       <ComponentRef Id="Component_Main"/>
-      <Feature Id="FT_ContextMenu" Title="Add to Explorer classic context menu" Absent="allow">
-        <ComponentRef Id="Component_ContextMenu"/>
-      </Feature>
+      <ComponentRef Id="Component_ContextMenuEntry"/>
+      <ComponentRef Id="Component_DesktopShortcut"/>
     </Feature>
     <Property Id="WIN_DIR_STAT_HKCU">
       <RegistrySearch Id="WinDirStatHKCU" Root="HKCU" Key="Software\Microsoft\Windows\CurrentVersion\Uninstall\WinDirStat" Name="UninstallString" Type="raw"/>
@@ -23,17 +23,52 @@
     <Property Id="WIN_DIR_STAT_HKLM">
       <RegistrySearch Id="WinDirStatHKLM" Root="HKLM" Key="Software\Microsoft\Windows\CurrentVersion\Uninstall\WinDirStat" Name="UninstallString" Type="raw" Win64="no"/>
     </Property>
-    <Property Id="WAIT_PROCESS" Value="POWERSHELL.EXE -WindowStyle Hidden -Command &quot;While (@(Get-Process 'Au_' -Ea SilentlyContinue)) { Start-Sleep 1 }&quot;"/>	
+    <Property Id="WAIT_PROCESS" Value="POWERSHELL.EXE -WindowStyle Hidden -Command &quot;While (@(Get-Process 'Au_' -Ea SilentlyContinue)) { Start-Sleep 1 }&quot;"/>
     <CustomAction Id="DoUninstallHKCU" Directory="TempFolder" ExeCommand="CMD.EXE /C [WIN_DIR_STAT_HKCU] /S" Execute="immediate" Impersonate="yes" Return="ignore"/>
-    <CustomAction Id="WaitForProcessHKCU" Directory="TempFolder" ExeCommand="[WAIT_PROCESS]" Execute="immediate" Impersonate="yes" Return="ignore"/>	
+    <CustomAction Id="WaitForProcessHKCU" Directory="TempFolder" ExeCommand="[WAIT_PROCESS]" Execute="immediate" Impersonate="yes" Return="ignore"/>
     <CustomAction Id="DoUninstallHKLM" Directory="TempFolder" ExeCommand="CMD.EXE /C [WIN_DIR_STAT_HKLM] /S" Execute="immediate" Impersonate="no" Return="ignore"/>
-    <CustomAction Id="WaitForProcessHKLM" Directory="TempFolder" ExeCommand="[WAIT_PROCESS]" Execute="immediate" Impersonate="no" Return="ignore"/>		
+    <CustomAction Id="WaitForProcessHKLM" Directory="TempFolder" ExeCommand="[WAIT_PROCESS]" Execute="immediate" Impersonate="no" Return="ignore"/>
     <InstallExecuteSequence>
       <Custom Action="DoUninstallHKCU" Before="InstallInitialize">WIN_DIR_STAT_HKCU AND NOT REMOVE</Custom>
       <Custom Action="WaitForProcessHKCU" After="DoUninstallHKCU">WIN_DIR_STAT_HKCU AND NOT REMOVE</Custom>
       <Custom Action="DoUninstallHKLM" Before="InstallInitialize">WIN_DIR_STAT_HKLM AND NOT REMOVE</Custom>
-      <Custom Action="WaitForProcessHKLM" After="DoUninstallHKLM">WIN_DIR_STAT_HKLM AND NOT REMOVE</Custom>      
+      <Custom Action="WaitForProcessHKLM" After="DoUninstallHKLM">WIN_DIR_STAT_HKLM AND NOT REMOVE</Custom>
     </InstallExecuteSequence>
+    <Property Id="DESKTOP_SHORTCUT_LOCATE">
+      <DirectorySearch Id="DesktopFolderSearch" Path="[DesktopFolder]" AssignToProperty="yes">
+        <FileSearch Id="DesktopShortcutFileSearch" Name="WinDirStat.lnk"/>
+      </DirectorySearch>
+    </Property>
+    <SetProperty Id="DESKTOP_SHORTCUT" After="AppSearch" Value="1" Sequence="first">
+    <![CDATA[(WIX_UPGRADE_DETECTED AND DESKTOP_SHORTCUT_LOCATE <> "")]]></SetProperty>
+    <Property Id="CONTEXT_MENU_LOCATE">
+      <RegistrySearch Id='ContextMenuSearch' Type='raw' Root='HKCR' Key='Directory\shell\WinDirStat' Name="Icon" Win64="$(var.Win64)"/>
+    </Property>
+    <SetProperty Id="CONTEXTMENU_ENTRY" After="AppSearch" Value="1" Sequence="first">
+    <![CDATA[(WIX_UPGRADE_DETECTED AND CONTEXT_MENU_LOCATE <> "") OR NOT WIX_UPGRADE_DETECTED]]></SetProperty>
+    <UI Id="InstallerUI">
+      <Dialog Id="OptionsDlg" Width="370" Height="270" Title="WinDirStat Options">
+        <Control Id="BannerLine" Type="Line" X="0" Y="44" Width="370" Height="2"/>
+        <Control Id="BottomLine" Type="Line" X="0" Y="234" Width="370" Height="2"/>
+        <Control Id="Description" Type="Text" X="25" Y="23" Width="280" Height="15" Transparent="yes" NoPrefix="yes">
+          <Text>Select the options below to customize your WinDirStat experience.</Text>
+        </Control>        
+        <Control Id="Title" Type="Text" X="15" Y="6" Width="210" Height="15" Transparent="yes" NoPrefix="yes" Text="{\WixUI_Font_Title}Install Options"/>
+        <Control Id="DesktopShortcutCheckBox" Type="CheckBox" Height="18" Width="295" X="26" Y="58" Text="Create Desktop Shortcut" Property="DESKTOP_SHORTCUT" CheckBoxValue="1"/>
+        <Control Id="ContextMenuEntryCheckBox" Type="CheckBox" Height="18" Width="295" X="26" Y="79" Text="Create Classic Shell Context Menu Entry" Property="CONTEXTMENU_ENTRY" CheckBoxValue="1"/>
+        <Control Id="Next" Type="PushButton" X="248" Y="243" Width="56" Height="17" Default="yes" Text="!(loc.WixUINext)">
+          <Publish Event="NewDialog" Value="VerifyReadyDlg" Order="10"/>
+        </Control>
+        <Control Id="Back" Type="PushButton" X="192" Y="243" Width="56" Height="17" Text="!(loc.WixUIBack)">
+          <Publish Event="NewDialog" Value="InstallDirDlg" Order="10"/>
+        </Control>
+        <Control Id="Cancel" Type="PushButton" X="304" Y="243" Width="56" Height="17" Cancel="yes" Text="!(loc.WixUICancel)">
+          <Publish Event="SpawnDialog" Value="CancelDlg">1</Publish>
+        </Control>
+      </Dialog>
+      <Publish Dialog="InstallDirDlg" Control="Next" Event="NewDialog" Value="OptionsDlg" Order="10">NOT Installed</Publish>
+      <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="OptionsDlg" Order="10">NOT Installed</Publish>
+    </UI>
   </Product>
   <Fragment>
     <Directory Id="TARGETDIR" Name="SourceDir">
@@ -42,6 +77,7 @@
       </Directory>
       <Directory Id="ProgramMenuFolder"/>
       <Directory Id="TempFolder"/>
+      <Directory Id="DesktopFolder" Name="Desktop"/>
     </Directory>
   </Fragment>
   <Fragment>
@@ -57,21 +93,26 @@
   </Fragment>
   <Fragment>
     <DirectoryRef Id="TARGETDIR">
-      <Component Id="Component_ContextMenu" Guid="{7B6A2A2E-BF9E-4F37-8EAA-0E7E6B98D87A}" Win64="$(var.Win64)">
-        <RegistryKey Root="HKCR" Key="Directory\shell\WinDirStat">
+      <Component Id="Component_ContextMenuEntry" Guid="{7B6A2A2E-BF9E-4F37-8EAA-0E7E6B98D87A}" Win64="$(var.Win64)">
+        <Condition>CONTEXTMENU_ENTRY</Condition>
+        <RegistryKey Root="HKCR" Key="Directory\shell\WinDirStat" ForceDeleteOnUninstall="yes">
           <RegistryValue Name="Icon" Value="[INSTALLFOLDER]WinDirStat.exe" Type="string"/>
           <RegistryValue Value="WinDirStat" Type="string"/>
           <RegistryKey Key="command">
             <RegistryValue Value="&quot;[INSTALLFOLDER]WinDirStat.exe&quot; &quot;0|%1&quot;" Type="string"/>
           </RegistryKey>
         </RegistryKey>
-        <RegistryKey Root="HKCR" Key="Drive\shell\WinDirStat">
+        <RegistryKey Root="HKCR" Key="Drive\shell\WinDirStat" ForceDeleteOnUninstall="yes">
           <RegistryValue Name="Icon" Value="[INSTALLFOLDER]WinDirStat.exe" Type="string"/>
           <RegistryValue Value="WinDirStat" Type="string"/>
           <RegistryKey Key="command">
             <RegistryValue Value="&quot;[INSTALLFOLDER]WinDirStat.exe&quot; &quot;0|%1&quot;" Type="string"/>
           </RegistryKey>
         </RegistryKey>
+      </Component>
+      <Component Id="Component_DesktopShortcut" Guid="{82879C46-B937-405B-8931-EB8FE3CF606A}" Win64="$(var.Win64)">
+        <Condition>DESKTOP_SHORTCUT</Condition>
+        <Shortcut Id="ConfigDesktopShortcut" Name="WinDirStat" WorkingDirectory="INSTALLFOLDER" Directory="DesktopFolder" Target="[INSTALLFOLDER]WinDirStat.exe"/>
       </Component>
     </DirectoryRef>
   </Fragment>
