@@ -40,12 +40,12 @@
       </DirectorySearch>
     </Property>
     <SetProperty Id="DESKTOP_SHORTCUT" After="AppSearch" Value="1" Sequence="first">
-    <![CDATA[(WIX_UPGRADE_DETECTED AND DESKTOP_SHORTCUT_LOCATE <> "")]]></SetProperty>
+    <![CDATA[((WIX_UPGRADE_DETECTED AND DESKTOP_SHORTCUT_LOCATE <> "") OR ENABLE_SHORTCUT)]]></SetProperty>
     <Property Id="CONTEXT_MENU_LOCATE">
       <RegistrySearch Id='ContextMenuSearch' Type='raw' Root='HKCR' Key='Directory\shell\WinDirStat' Name="Icon" Win64="$(var.Win64)"/>
     </Property>
     <SetProperty Id="CONTEXTMENU_ENTRY" After="AppSearch" Value="1" Sequence="first">
-    <![CDATA[(WIX_UPGRADE_DETECTED AND CONTEXT_MENU_LOCATE <> "") OR NOT WIX_UPGRADE_DETECTED]]></SetProperty>
+    <![CDATA[(WIX_UPGRADE_DETECTED AND CONTEXT_MENU_LOCATE <> "") OR (NOT WIX_UPGRADE_DETECTED AND NOT DISABLE_CONTEXTMENU)]]></SetProperty>
     <UI Id="InstallerUI">
       <Dialog Id="OptionsDlg" Width="370" Height="270" Title="WinDirStat Options">
         <Control Id="BannerLine" Type="Line" X="0" Y="44" Width="370" Height="2"/>
