@@ -674,6 +674,15 @@ std::vector<BYTE> GetCompressedResource(const HRSRC resource)
 
 std::wstring GetVolumePathNameEx(const std::wstring & path)
 {
+    // Establish a fallback volume as drive letter or server name
+    std::wstring fallback;
+    std::wsmatch match;
+    if (std::regex_search(path, match, std::wregex(LR"(\\\\\?\\([A-Z]:).*)")) && match.size() > 1 ||
+        std::regex_search(path, match, std::wregex(LR"(\\\\\?\\UNC\\([^\\]*).*)")) && match.size() > 1)
+    {
+        fallback = match[1].str();
+    }
+
     // First, try the regular path resolution
     std::array<WCHAR, MAX_PATH> volume;
     if (GetVolumePathName(path.c_str(),
@@ -685,11 +694,11 @@ std::wstring GetVolumePathNameEx(const std::wstring & path)
     // Create a file handle to do a reverse lookup (in case of subst'd drive)
     SmartPointer<HANDLE> handle(CloseHandle, CreateFile(path.c_str(), FILE_READ_ATTRIBUTES,
         FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, nullptr));
-    if (handle == nullptr) return {};
+    if (handle == nullptr) return fallback;
 
     // Determine the maximum size to hold the resultant final path
     const DWORD bufferSize = GetFinalPathNameByHandle(handle, nullptr, 0, FILE_NAME_NORMALIZED);
-    if (bufferSize == 0) return {};
+    if (bufferSize == 0) return fallback;
 
     // Lookup the path and then determine the pathname from it
     std::vector<WCHAR> final(bufferSize + 1, L'\0');
@@ -699,5 +708,6 @@ std::wstring GetVolumePathNameEx(const std::wstring & path)
         return volume.data();
     }
 
-    return {};
+    return fallback;
 }
+
