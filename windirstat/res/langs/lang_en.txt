@@ -153,6 +153,7 @@ IDS_PAGE_FILTERING_SIZE_MIN=Exclude files less than:
 IDS_PAGE_FILTERING_TITLE=Filtering
 IDS_PAGE_FILTERING_TOOLTIP_PREFIX=List one exclusion per line. Examples:
 IDS_PAGE_FILTERING_USE_REGEX=Use regular expression instead of glob patterns
+IDS_PAGE_GENERAL_COLAUTOSIZE=Automatically resize columns
 IDS_PAGE_GENERAL_DELETION_WARNING=Show warning message before deleting files
 IDS_PAGE_GENERAL_FORMATTING=&Use Windows settings for date, time, and number formatting
 IDS_PAGE_GENERAL_FULL_ROW=&Full Row Selection

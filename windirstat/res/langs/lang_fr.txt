@@ -163,6 +163,7 @@ IDS_PAGE_GENERAL_SHOW_GRID=&Montrer la grille
 IDS_PAGE_GENERAL_SHOW_SIZES=&Montrer la taille des fichiers en Go/Mo/Ko/octets
 IDS_PAGE_GENERAL_SHOW_STRIPES=Faire des &rayures
 IDS_PAGE_GENERAL_TITLE=Général
+IDS_PAGE_TREELIST_AUTOSIZE=Redimensionner automatiquement les colonnes
 IDS_PAGE_TREELIST_COLORS=&Couleurs des pourcentages de l'arbre
 IDS_PAGE_TREELIST_OPTIONAL=Colonnes facultatives
 IDS_PAGE_TREELIST_PACMAN=Animation ""&Pacman""

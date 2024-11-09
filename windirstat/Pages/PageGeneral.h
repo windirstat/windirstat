@@ -45,6 +45,7 @@ protected:
     void OnOK() override;
 
     BOOL m_UseWindowsLocale = FALSE;
+    BOOL m_AutomaticallyResizeColumns = FALSE;
     BOOL m_SizeSuffixesFormat = FALSE;
     BOOL m_PortableMode = FALSE;
     BOOL m_ListGrid = FALSE;

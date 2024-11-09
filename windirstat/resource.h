@@ -72,6 +72,7 @@
 #define IDC_DELETION_WARNING            1033
 #define IDC_RESET                       1034
 #define IDC_PAGE_ADVANCED_SKIP_CLOUD_LINKS 1034
+#define IDC_COLUMN_AUTOSIZE             1034
 #define IDC_EXCLUDE_PROTECTED_DIRECTORY 1035
 #define IDC_LIST                        1036
 #define IDC_EXCLUDE_PROTECTED_FILE      1036
@@ -125,7 +126,6 @@
 #define IDC_FILTERING_EXCLUDE_DIRS      1236
 #define IDC_FILTERING_EXCLUDE_FILES     1237
 #define IDC_FILTERING_SIZE_MIN          1239
-#define IDC_CHECK1                      1240
 #define IDC_FILTERING_USE_REGEX         1240
 #define IDC_FILTERING_MIN_UNITS         1241
 #define ID_WDS_CONTROL                  4711

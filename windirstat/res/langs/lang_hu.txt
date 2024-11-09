@@ -163,6 +163,7 @@ IDS_PAGE_GENERAL_SHOW_GRID=&Rácsozást mutat
 IDS_PAGE_GENERAL_SHOW_SIZES=Méretek GB/MB/KB/bájt formát&umban
 IDS_PAGE_GENERAL_SHOW_STRIPES=&Sávok mutatása
 IDS_PAGE_GENERAL_TITLE=Általános
+IDS_PAGE_TREELIST_AUTOSIZE=Oszlopok automatikus átméretezése
 IDS_PAGE_TREELIST_COLORS=Részfák &arányainak színei
 IDS_PAGE_TREELIST_OPTIONAL=Nem kötelező oszlopok
 IDS_PAGE_TREELIST_PACMAN=&Pacman animáció

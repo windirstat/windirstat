@@ -163,6 +163,7 @@ IDS_PAGE_GENERAL_SHOW_GRID=Näita &ruudustikus
 IDS_PAGE_GENERAL_SHOW_SIZES=&Näita suurust in GB/MB/KB/baiti vormingus
 IDS_PAGE_GENERAL_SHOW_STRIPES=Näita v&arjundis
 IDS_PAGE_GENERAL_TITLE=Üldine
+IDS_PAGE_TREELIST_AUTOSIZE=Muuda veerge automaatselt
 IDS_PAGE_TREELIST_COLORS=Alampuu esitus &värvides
 IDS_PAGE_TREELIST_OPTIONAL=Valikulised veerud
 IDS_PAGE_TREELIST_PACMAN=&Kakuke animeeritult

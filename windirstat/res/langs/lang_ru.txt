@@ -163,6 +163,7 @@ IDS_PAGE_GENERAL_SHOW_GRID=Показывать решетку
 IDS_PAGE_GENERAL_SHOW_SIZES=Показывать размеры в формате ГБ/МБ/кБ/Байт
 IDS_PAGE_GENERAL_SHOW_STRIPES=Показывать полосы
 IDS_PAGE_GENERAL_TITLE=Общие
+IDS_PAGE_TREELIST_AUTOSIZE=Автоматически изменять размер столбцов
 IDS_PAGE_TREELIST_COLORS=Пропорциональное окрашивание подкаталогов
 IDS_PAGE_TREELIST_OPTIONAL=Дополнительные столбцы
 IDS_PAGE_TREELIST_PACMAN=Анимация '&Pacman

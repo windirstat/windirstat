@@ -163,6 +163,7 @@ IDS_PAGE_GENERAL_SHOW_GRID=Zobrazovat &mřížku
 IDS_PAGE_GENERAL_SHOW_SIZES=&Zobrazovat velikosti ve formátu GB/MB/kB/bajty
 IDS_PAGE_GENERAL_SHOW_STRIPES=Zobrazovat &pruhy
 IDS_PAGE_GENERAL_TITLE=Obecné
+IDS_PAGE_TREELIST_AUTOSIZE=Automaticky přizpůsobit šířku sloupců
 IDS_PAGE_TREELIST_COLORS=Úrovňové &barvy
 IDS_PAGE_TREELIST_OPTIONAL=Volitelné sloupce
 IDS_PAGE_TREELIST_PACMAN=&Pacman animace

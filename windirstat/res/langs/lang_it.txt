@@ -163,6 +163,7 @@ IDS_PAGE_GENERAL_SHOW_GRID=Mostra &griglia
 IDS_PAGE_GENERAL_SHOW_SIZES=&Mostra dimensioni in formato GB/MB/KB/Byte
 IDS_PAGE_GENERAL_SHOW_STRIPES=Mostra s&trisce
 IDS_PAGE_GENERAL_TITLE=Generale
+IDS_PAGE_TREELIST_AUTOSIZE=Ridimensiona automaticamente le colonne
 IDS_PAGE_TREELIST_COLORS=&Colori percentuale sottoalbero
 IDS_PAGE_TREELIST_OPTIONAL=Colonne facoltative
 IDS_PAGE_TREELIST_PACMAN=Animazione &Pacman

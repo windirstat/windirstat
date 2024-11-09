@@ -44,25 +44,27 @@ COptionsPropertySheet* CPageGeneral::GetSheet() const
 void CPageGeneral::DoDataExchange(CDataExchange* pDX)
 {
     CPropertyPageEx::DoDataExchange(pDX);
-    DDX_Check(pDX, IDC_SIZE_SUFFIXES, m_SizeSuffixesFormat);
-    DDX_Check(pDX, IDC_USE_WINDOWS_LOCALE, m_UseWindowsLocale);
-    DDX_Control(pDX, IDC_COMBO, m_Combo);
-    DDX_Check(pDX, IDC_SHOW_GRID, m_ListGrid);
-    DDX_Check(pDX, IDC_SHOW_STRIPES, m_ListStripes);
+    DDX_Check(pDX, IDC_COLUMN_AUTOSIZE, m_AutomaticallyResizeColumns);
     DDX_Check(pDX, IDC_DELETION_WARNING, m_ShowDeletionWarning);
     DDX_Check(pDX, IDC_FULL_ROW_SELECTION, m_ListFullRowSelection);
     DDX_Check(pDX, IDC_PORTABLE_MODE, m_PortableMode);
+    DDX_Check(pDX, IDC_SHOW_GRID, m_ListGrid);
+    DDX_Check(pDX, IDC_SHOW_STRIPES, m_ListStripes);
+    DDX_Check(pDX, IDC_SIZE_SUFFIXES, m_SizeSuffixesFormat);
+    DDX_Check(pDX, IDC_USE_WINDOWS_LOCALE, m_UseWindowsLocale);
+    DDX_Control(pDX, IDC_COMBO, m_Combo);
 }
 
 BEGIN_MESSAGE_MAP(CPageGeneral, CPropertyPageEx)
-    ON_BN_CLICKED(IDC_SIZE_SUFFIXES, OnBnClickedSetModified)
-    ON_BN_CLICKED(IDC_USE_WINDOWS_LOCALE, OnBnClickedSetModified)
-    ON_CBN_SELENDOK(IDC_COMBO, OnCbnSelendokCombo)
-    ON_BN_CLICKED(IDC_SHOW_GRID, OnBnClickedSetModified)
-    ON_BN_CLICKED(IDC_SHOW_STRIPES, OnBnClickedSetModified)
+    ON_BN_CLICKED(IDC_COLUMN_AUTOSIZE, OnBnClickedSetModified)
     ON_BN_CLICKED(IDC_DELETION_WARNING, OnBnClickedSetModified)
     ON_BN_CLICKED(IDC_FULL_ROW_SELECTION, OnBnClickedSetModified)
     ON_BN_CLICKED(IDC_PORTABLE_MODE, OnBnClickedSetModified)
+    ON_BN_CLICKED(IDC_SHOW_GRID, OnBnClickedSetModified)
+    ON_BN_CLICKED(IDC_SHOW_STRIPES, OnBnClickedSetModified)
+    ON_BN_CLICKED(IDC_SIZE_SUFFIXES, OnBnClickedSetModified)
+    ON_BN_CLICKED(IDC_USE_WINDOWS_LOCALE, OnBnClickedSetModified)
+    ON_CBN_SELENDOK(IDC_COMBO, OnCbnSelendokCombo)
 END_MESSAGE_MAP()
 
 BOOL CPageGeneral::OnInitDialog()
@@ -71,6 +73,7 @@ BOOL CPageGeneral::OnInitDialog()
 
     Localization::UpdateDialogs(*this);
 
+    m_AutomaticallyResizeColumns = COptions::AutomaticallyResizeColumns;
     m_SizeSuffixesFormat = COptions::UseSizeSuffixes;
     m_ListGrid = COptions::ListGrid;
     m_ListStripes = COptions::ListStripes;
@@ -103,6 +106,7 @@ void CPageGeneral::OnOK()
         static_cast<bool>(m_ListFullRowSelection) != COptions::ListFullRowSelection ||
         static_cast<bool>(m_SizeSuffixesFormat) != COptions::UseSizeSuffixes;
 
+    COptions::AutomaticallyResizeColumns = (FALSE != m_AutomaticallyResizeColumns);
     COptions::UseSizeSuffixes = (FALSE != m_SizeSuffixesFormat);
     COptions::UseWindowsLocaleSetting = (FALSE != m_UseWindowsLocale);
     COptions::ListGrid = (FALSE != m_ListGrid);

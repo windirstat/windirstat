@@ -163,6 +163,7 @@ IDS_PAGE_GENERAL_SHOW_GRID=Näytä &ruudukko
 IDS_PAGE_GENERAL_SHOW_SIZES=&Näytä koot Gt/Mt/kt/tavua -muodossa
 IDS_PAGE_GENERAL_SHOW_STRIPES=Näytä r&aidat
 IDS_PAGE_GENERAL_TITLE=Yleiset
+IDS_PAGE_TREELIST_AUTOSIZE=Muuta sarakkeiden kokoa automaattisesti
 IDS_PAGE_TREELIST_COLORS=Osuuskuvaajien &värit
 IDS_PAGE_TREELIST_OPTIONAL=Valinnaiset sarakkeet
 IDS_PAGE_TREELIST_PACMAN=&Pacman-animaatio

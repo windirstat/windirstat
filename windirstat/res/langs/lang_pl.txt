@@ -163,6 +163,7 @@ IDS_PAGE_GENERAL_SHOW_GRID=Pokaż sia&tkę
 IDS_PAGE_GENERAL_SHOW_SIZES=Pokaż rozmiar w &formacie GB/MB/KB/Bajty
 IDS_PAGE_GENERAL_SHOW_STRIPES=Pokaż Pas&ki
 IDS_PAGE_GENERAL_TITLE=Ogólne
+IDS_PAGE_TREELIST_AUTOSIZE=Automatycznie zmieniaj rozmiar kolumn
 IDS_PAGE_TREELIST_COLORS=&Kolory poddrzewa - procentowo
 IDS_PAGE_TREELIST_OPTIONAL=Opcjonalne kolumny
 IDS_PAGE_TREELIST_PACMAN=Animacja &Pacman

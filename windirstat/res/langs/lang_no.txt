@@ -163,6 +163,7 @@ IDS_PAGE_GENERAL_SHOW_GRID=Vis som &rutenett
 IDS_PAGE_GENERAL_SHOW_SIZES=&Vis størrelser i GB/MB/KB/Byte format
 IDS_PAGE_GENERAL_SHOW_STRIPES=Vis med kant&striper
 IDS_PAGE_GENERAL_TITLE=Generelt
+IDS_PAGE_TREELIST_AUTOSIZE=Endre størrelsen på kolonnene automatisk
 IDS_PAGE_TREELIST_COLORS=Farger for undermappeprosent
 IDS_PAGE_TREELIST_OPTIONAL=Valgfrie kolonner
 IDS_PAGE_TREELIST_PACMAN=Vis &Pacman animasjon

@@ -107,6 +107,7 @@ class COptions
 
 public:
 
+    static Setting<bool> AutomaticallyResizeColumns;
     static Setting<bool> ExcludeJunctions;
     static Setting<bool> ExcludeSymbolicLinksDirectory;
     static Setting<bool> ExcludeVolumeMountPoints;

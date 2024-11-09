@@ -163,6 +163,7 @@ IDS_PAGE_GENERAL_SHOW_GRID=&Raster weergeven
 IDS_PAGE_GENERAL_SHOW_SIZES=Bestandsgrootte in GB/MB/KB/Bytes formaat &weergeven
 IDS_PAGE_GENERAL_SHOW_STRIPES=&Strepen weergeven
 IDS_PAGE_GENERAL_TITLE=Algemeen
+IDS_PAGE_TREELIST_AUTOSIZE=Kolommen automatisch aanpassen
 IDS_PAGE_TREELIST_COLORS=&Kleuren onderliggende percentages van tree
 IDS_PAGE_TREELIST_OPTIONAL=Optionele kolommen
 IDS_PAGE_TREELIST_PACMAN=&Pacman animatie
