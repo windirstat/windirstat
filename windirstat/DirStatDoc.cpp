@@ -604,27 +604,29 @@ bool CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, const bo
     {
         for (const auto& item : items)
         {
+            // Determine flags to use for deletion
+            auto flags = FOF_NOCONFIRMATION | FOFX_SHOWELEVATIONPROMPT | FOF_NOERRORUI;
             if (toTrashBin)
             {
-                // Determine flags to use for deletion
-                const auto flags = FOF_NOCONFIRMATION | FOFX_EARLYFAILURE | FOFX_SHOWELEVATIONPROMPT |
-                    (IsWindows8OrGreater() ? (FOFX_ADDUNDORECORD | FOFX_RECYCLEONDELETE) : FOF_ALLOWUNDO);
-
-                // Do deletion operation
-                SmartPointer<LPITEMIDLIST> pidl(CoTaskMemFree, ILCreateFromPath(item->GetPath().c_str()));
-                CComPtr<IShellItem> shellitem = nullptr;
-                if (SHCreateItemFromIDList(pidl, IID_PPV_ARGS(&shellitem)) != S_OK) continue;
-
-                CComPtr<IFileOperation> fileOperation;
-                if (FAILED(::CoCreateInstance(CLSID_FileOperation, nullptr, CLSCTX_ALL, IID_PPV_ARGS(&fileOperation))) ||
-                    FAILED(fileOperation->SetOperationFlags(flags)) ||
-                    FAILED(fileOperation->DeleteItem(shellitem, nullptr)) ||
-                    FAILED(fileOperation->PerformOperations()))
-                {
-                    continue;
-                }
+                flags |= (IsWindows8OrGreater() ? (FOFX_ADDUNDORECORD | FOFX_RECYCLEONDELETE) : FOF_ALLOWUNDO);
             }
-            else
+
+            // Do deletion operation
+            SmartPointer<LPITEMIDLIST> pidl(CoTaskMemFree, ILCreateFromPath(item->GetPath().c_str()));
+            CComPtr<IShellItem> shellitem = nullptr;
+            if (SHCreateItemFromIDList(pidl, IID_PPV_ARGS(&shellitem)) != S_OK) continue;
+
+            CComPtr<IFileOperation> fileOperation;
+            if (FAILED(::CoCreateInstance(CLSID_FileOperation, nullptr, CLSCTX_ALL, IID_PPV_ARGS(&fileOperation))) ||
+                FAILED(fileOperation->SetOperationFlags(flags)) ||
+                FAILED(fileOperation->DeleteItem(shellitem, nullptr)) ||
+                FAILED(fileOperation->PerformOperations()))
+            {
+                continue;
+            }
+
+            // Re-run deletion using native function to handle any long paths that were missed
+            if (!toTrashBin)
             {
                 std::wstring path = FileFindEnhanced::MakeLongPathCompatible(item->GetPath());
                 std::error_code ec;
