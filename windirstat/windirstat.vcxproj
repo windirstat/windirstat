@@ -609,7 +609,6 @@
     <ClInclude Include="Localization.h" />
     <ClInclude Include="MainFrame.h" />
     <ClInclude Include="ModalApiShuttle.h" />
-    <ClInclude Include="ModalShellApi.h" />
     <ClInclude Include="MountPoints.h" />
     <ClInclude Include="Options.h" />
     <ClInclude Include="Pages\PageAdvanced.h" />
@@ -662,8 +661,6 @@
     <ClCompile Include="MainFrame.cpp">
     </ClCompile>
     <ClCompile Include="ModalApiShuttle.cpp">
-    </ClCompile>
-    <ClCompile Include="ModalShellApi.cpp">
     </ClCompile>
     <ClCompile Include="MountPoints.cpp">
     </ClCompile>

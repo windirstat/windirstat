@@ -23,6 +23,8 @@
 
 #include "WinDirStat.h"
 
+#include <functional>
+
 //
 // CModalApiShuttle. (Base class for CModalShellApi and CModalSendMail.)
 //
@@ -48,8 +50,9 @@ class CModalApiShuttle : public CDialogEx
 {
     DECLARE_DYNAMIC(CModalApiShuttle)
 
-    CModalApiShuttle(CWnd* pParent = nullptr);
+    CModalApiShuttle(const std::function<void()>& task, CWnd* pParent = nullptr);
     ~CModalApiShuttle() override = default;
+    INT_PTR DoModal() override;
 
 protected:
     enum : std::uint8_t { IDD = IDD_MODALAPISHUTTLE };
@@ -57,5 +60,5 @@ protected:
     BOOL OnInitDialog() override;
     DECLARE_MESSAGE_MAP()
 
-    virtual bool DoOperation() = 0;
+    const std::function<void()> m_task;
 };

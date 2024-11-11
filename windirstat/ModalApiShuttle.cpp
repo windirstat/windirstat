@@ -23,14 +23,21 @@
 #include "WinDirStat.h"
 #include "ModalApiShuttle.h"
 
+#include <functional>
+
 IMPLEMENT_DYNAMIC(CModalApiShuttle, CDialogEx)
 
-CModalApiShuttle::CModalApiShuttle(CWnd* pParent) : CDialogEx(IDD, pParent)
+CModalApiShuttle::CModalApiShuttle(const std::function<void()>& task, CWnd* pParent) : CDialogEx(IDD, pParent), m_task(task)
 {
 }
 
 BEGIN_MESSAGE_MAP(CModalApiShuttle, CDialogEx)
 END_MESSAGE_MAP()
+
+INT_PTR CModalApiShuttle::DoModal()
+{
+    return CDialogEx::DoModal();
+}
 
 BOOL CModalApiShuttle::OnInitDialog()
 {
@@ -46,7 +53,8 @@ BOOL CModalApiShuttle::OnInitDialog()
     EnableWindow(true);
     ShowWindow(SW_SHOW);
 
-    DoOperation();
+    CWaitCursor wc;
+    m_task();
 
     EndDialog(IDOK);
     return TRUE;

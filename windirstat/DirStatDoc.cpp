@@ -29,7 +29,7 @@
 #include "Item.h"
 #include "Localization.h"
 #include "MainFrame.h"
-#include "ModalShellApi.h"
+#include "ModalApiShuttle.h"
 #include "WinDirStat.h"
 #include "CommonHelpers.h"
 #include "MdExceptions.h"
@@ -45,6 +45,7 @@
 #include <ranges>
 #include <stack>
 #include <array>
+#include <VersionHelpers.h>
 
 IMPLEMENT_DYNCREATE(CDirStatDoc, CDocument)
 
@@ -599,11 +600,39 @@ bool CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, const bo
     if (const int mark = CFileTreeControl::Get()->GetSelectionMark(); FileTreeHasFocus() && mark != -1)
         reselect = CFileTreeControl::Get()->GetItem(mark)->GetParent();
 
-    CModalShellApi msa;
-    for (const auto& item : items)
+    CModalApiShuttle msa([&items, toTrashBin]
     {
-        msa.DeleteFile(item->GetPath(), toTrashBin);
-    }
+        for (const auto& item : items)
+        {
+            if (toTrashBin)
+            {
+                // Determine flags to use for deletion
+                const auto flags = FOF_NOCONFIRMATION | FOFX_EARLYFAILURE | FOFX_SHOWELEVATIONPROMPT |
+                    (IsWindows8OrGreater() ? (FOFX_ADDUNDORECORD | FOFX_RECYCLEONDELETE) : FOF_ALLOWUNDO);
+
+                // Do deletion operation
+                SmartPointer<LPITEMIDLIST> pidl(CoTaskMemFree, ILCreateFromPath(item->GetPath().c_str()));
+                CComPtr<IShellItem> shellitem = nullptr;
+                if (SHCreateItemFromIDList(pidl, IID_PPV_ARGS(&shellitem)) != S_OK) continue;
+
+                CComPtr<IFileOperation> fileOperation;
+                if (FAILED(::CoCreateInstance(CLSID_FileOperation, nullptr, CLSCTX_ALL, IID_PPV_ARGS(&fileOperation))) ||
+                    FAILED(fileOperation->SetOperationFlags(flags)) ||
+                    FAILED(fileOperation->DeleteItem(shellitem, nullptr)) ||
+                    FAILED(fileOperation->PerformOperations()))
+                {
+                    continue;
+                }
+            }
+            else
+            {
+                std::wstring path = FileFindEnhanced::MakeLongPathCompatible(item->GetPath());
+                std::error_code ec;
+                remove_all(std::filesystem::path(path.data()), ec);
+            }
+        }
+    });
+    msa.DoModal();
 
     // Create a list of items and recycler directories to refresh
     std::vector<CItem*> refresh;
@@ -1035,9 +1064,11 @@ void CDirStatDoc::OnEditCopy()
 
 void CDirStatDoc::OnCleanupEmptyRecycleBin()
 {
-    CModalShellApi msa;
-
-    SHEmptyRecycleBin(*AfxGetMainWnd(), nullptr, 0);
+    CModalApiShuttle msa([]
+    {
+        SHEmptyRecycleBin(*AfxGetMainWnd(), nullptr, 0);
+    });
+    msa.DoModal();
 
     // locate all drive items in order to refresh recyclers
     std::vector<CItem*> toRefresh;
