@@ -66,7 +66,7 @@ Setting<bool> COptions::ShowColumnSizeLogical(OptionsFileTree, L"ShowColumnSizeL
 Setting<bool> COptions::ShowColumnSizePhysical(OptionsFileTree, L"ShowColumnSizePhysical", true);
 Setting<bool> COptions::ShowDeleteWarning(OptionsGeneral, L"ShowDeleteWarning", true);
 Setting<bool> COptions::ShowFileTypes(OptionsGeneral, L"ShowFileTypes", true);
-Setting<bool> COptions::ShowFreeSpace(OptionsGeneral, L"ShowFreeSpace", false);
+Setting<bool> COptions::ShowFreeSpace(OptionsGeneral, L"ShowFreeSpace", true);
 Setting<bool> COptions::ShowStatusBar(OptionsGeneral, L"ShowStatusBar", true);
 Setting<bool> COptions::ShowTimeSpent(OptionsFileTree, L"ShowTimeSpent", true);
 Setting<bool> COptions::ShowToolBar(OptionsGeneral, L"ShowToolBar", true);
