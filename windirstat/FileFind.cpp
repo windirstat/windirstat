@@ -54,19 +54,19 @@ bool FileFindEnhanced::FindNextFile()
         uSearch.Buffer = m_Search.data();
 
         // enumerate files in the directory
-        constexpr auto FileDirectoryInformation = 1;
+        constexpr auto FileFullDirectoryInformation = 2;
         IO_STATUS_BLOCK IoStatusBlock;
         const NTSTATUS Status = NtQueryDirectoryFile(m_Handle, nullptr, nullptr, nullptr, &IoStatusBlock,
-            m_DirectoryInfo.data(), BUFFER_SIZE, static_cast<FILE_INFORMATION_CLASS>(FileDirectoryInformation),
+            m_DirectoryInfo.data(), BUFFER_SIZE, static_cast<FILE_INFORMATION_CLASS>(FileFullDirectoryInformation),
             FALSE, (uSearch.Length > 0) ? &uSearch : nullptr, (m_Firstrun) ? TRUE : FALSE);
 
         // fetch point to current node 
         success = (Status == 0);
-        m_CurrentInfo = reinterpret_cast<FILE_DIRECTORY_INFORMATION*>(m_DirectoryInfo.data());
+        m_CurrentInfo = reinterpret_cast<FILE_FULL_DIR_INFORMATION*>(m_DirectoryInfo.data());
     }
     else
     {
-        m_CurrentInfo = reinterpret_cast<FILE_DIRECTORY_INFORMATION*>(
+        m_CurrentInfo = reinterpret_cast<FILE_FULL_DIR_INFORMATION*>(
             &reinterpret_cast<BYTE*>(m_CurrentInfo)[m_CurrentInfo->NextEntryOffset]);
         success = true;
     }

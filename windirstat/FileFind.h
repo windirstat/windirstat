@@ -26,7 +26,7 @@
 
 class FileFindEnhanced final
 {
-    using FILE_DIRECTORY_INFORMATION = struct {
+    using FILE_FULL_DIR_INFORMATION = struct {
         ULONG         NextEntryOffset;
         ULONG         FileIndex;
         LARGE_INTEGER CreationTime;
@@ -37,6 +37,7 @@ class FileFindEnhanced final
         LARGE_INTEGER AllocationSize;
         ULONG         FileAttributes;
         ULONG         FileNameLength;
+        ULONG         EaSize;
         WCHAR         FileName[1];
     };
 
@@ -45,7 +46,7 @@ class FileFindEnhanced final
     std::wstring m_Name;
     HANDLE m_Handle = nullptr;
     bool m_Firstrun = true;
-    FILE_DIRECTORY_INFORMATION* m_CurrentInfo = nullptr;
+    FILE_FULL_DIR_INFORMATION* m_CurrentInfo = nullptr;
     static constexpr auto m_Dos = L"\\??\\";
     static constexpr auto m_DosUNC = L"\\??\\UNC\\";
     static constexpr auto m_Long = L"\\\\?\\";
