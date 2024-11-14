@@ -80,7 +80,7 @@ bool FileFindEnhanced::FindNextFile()
 
         // copy name into local buffer
         m_Name.resize(nameLength);
-        memcpy(m_Name.data(), m_CurrentInfo->FileName, nameLength * sizeof(WCHAR));
+        std::memcpy(m_Name.data(), m_CurrentInfo->FileName, nameLength * sizeof(WCHAR));
 
         // special case for reparse on initial run points - update attributes
         if (m_Firstrun)

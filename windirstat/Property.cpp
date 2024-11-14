@@ -36,7 +36,7 @@ bool PersistedSetting::ReadBinaryProperty(const std::wstring& section, const std
     UINT dataSize = 0;
     CDirStatApp::Get()->GetProfileBinary(section.c_str(), entry.c_str(), &data, &dataSize);
     const bool success = (dataSize == size);
-    if (success) memcpy(dest, data, dataSize);
+    if (success) std::memcpy(dest, data, dataSize);
     delete[] data;
     return success;
 }

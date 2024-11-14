@@ -118,7 +118,7 @@ std::wstring GetNameFromSid(const PSID sid)
 
     // copy the sid for storage in our cache table
     const DWORD sidLength = SidGetLength(sid);
-    const auto sidCopy = memcpy(malloc(sidLength), sid, sidLength);
+    const auto sidCopy = std::memcpy(malloc(sidLength), sid, sidLength);
 
     // lookup the name for this sid
     SID_NAME_USE nameUse;
