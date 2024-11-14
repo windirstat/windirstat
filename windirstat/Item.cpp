@@ -50,7 +50,9 @@ CItem::CItem(const ITEMTYPE type, const std::wstring & name) : m_Name(name), m_T
 {
     if (IsType(IT_DRIVE))
     {
-        m_Name = FormatVolumeNameOfRootPath(m_Name);
+        // The name string on the drive is two parts separated by a pipe.  For example,
+        // C:\|Local Disk (C:) is the true path following by the name description
+        m_Name = std::format(L"{:.2}|{}", m_Name, FormatVolumeNameOfRootPath(m_Name));
     }
 
     if (IsType(IT_FILE))
@@ -170,9 +172,15 @@ std::wstring CItem::GetText(const int subitem) const
 {
     switch (subitem)
     {
-    case COL_NAME: return m_Name;
     case COL_SIZE_PHYSICAL: return FormatBytes(GetSizePhysical());
     case COL_SIZE_LOGICAL: return FormatBytes(GetSizeLogical());
+
+    case COL_NAME:
+        if (IsType(IT_DRIVE))
+        {
+            return m_Name.substr(_countof(L"?:"));
+        }
+        return m_Name;
 
     case COL_OWNER:
         if (IsType(IT_FILE | IT_DIRECTORY))
@@ -277,11 +285,6 @@ int CItem::CompareSibling(const CTreeListItem* tlib, const int subitem) const
         case COL_NAME:
         {
             if (IsType(IT_DRIVE))
-            {
-                ASSERT(other->IsType(IT_DRIVE));
-                return signum(_wcsicmp(GetPath().c_str(), other->GetPath().c_str()));
-            }
-            else
             {
                 return signum(_wcsicmp(m_Name.c_str(),other->m_Name.c_str()));
             }
@@ -1305,7 +1308,7 @@ std::wstring CItem::UpwardGetPathWithoutBackslash() const
         }
         else if (p->IsType(IT_DRIVE))
         {
-            path.insert(0, PathFromVolumeName(p->m_Name) + L"\\");
+            path.insert(0, p->m_Name.substr(0, 2) + L"\\");
         }
     }
 

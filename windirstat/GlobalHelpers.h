@@ -40,7 +40,6 @@ std::wstring FormatMilliseconds(ULONGLONG ms);
 bool GetVolumeName(const std::wstring & rootPath, std::wstring& volumeName);
 std::wstring FormatVolumeNameOfRootPath(const std::wstring& rootPath);
 std::wstring FormatVolumeName(const std::wstring& rootPath, const std::wstring& volumeName);
-std::wstring PathFromVolumeName(const std::wstring& name);
 std::wstring GetFolderNameFromPath(const std::wstring & path);
 std::wstring GetCOMSPEC();
 void WaitForHandleWithRepainting(HANDLE h, DWORD TimeOut = INFINITE);

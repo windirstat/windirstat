@@ -297,24 +297,7 @@ std::wstring FormatVolumeNameOfRootPath(const std::wstring& rootPath)
 
 std::wstring FormatVolumeName(const std::wstring& rootPath, const std::wstring& volumeName)
 {
-    return volumeName + L" (" + rootPath.substr(0, 2) + L")";
-}
-
-// The inverse of FormatVolumeNameOfRootPath().
-// Given a name like "BOOT (C:)", it returns "C:" (without trailing backslash).
-// Or, if name like "C:\", it returns "C:".
-std::wstring PathFromVolumeName(const std::wstring& name)
-{
-    static std::wregex pattern(LR"(\(([A-Z]:)\)[\\]?$)", std::regex_constants::optimize);
-    std::wsmatch match;
-
-    if (std::regex_search(name, match, pattern) && match.size() > 1)
-    {
-        return match[1].str();
-    }
-
-    ASSERT(FALSE);
-    return {};
+    return std::format(L"{} ({:.2})", volumeName, rootPath);
 }
 
 std::wstring GetFolderNameFromPath(const std::wstring & path)
