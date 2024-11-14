@@ -74,6 +74,7 @@ CDriveItem::CDriveItem(CDrivesList* list, const std::wstring & pszPath)
     , m_Path(pszPath)
     , m_Image(GetIconImageList()->GetFileImage(m_Path))
     , m_IsRemote(DRIVE_REMOTE == ::GetDriveType(m_Path.c_str()))
+    , m_Subst(IsSUBSTedDrive(m_Path))
     , m_Name(m_Path) {}
 
 void CDriveItem::StartQuery(HWND dialog, const UINT serial) const
@@ -116,7 +117,7 @@ bool CDriveItem::IsRemote() const
 
 bool CDriveItem::IsSUBSTed() const
 {
-    return IsSUBSTedDrive(m_Path);
+    return m_Subst;
 }
 
 int CDriveItem::Compare(const CSortingListItem* baseOther, const int subitem) const
@@ -151,7 +152,7 @@ bool CDriveItem::DrawSubitem(const int subitem, CDC* pdc, CRect rc, const UINT s
 
     if (subitem == COL_GRAPH)
     {
-        if (!m_Success)
+        if (!m_Success || IsSUBSTed())
         {
             return false;
         }
@@ -187,7 +188,7 @@ std::wstring CDriveItem::GetText(const int subitem) const
         break;
 
     case COL_TOTAL:
-        if (m_Success)
+        if (m_Success && !IsSUBSTed())
         {
             s = FormatBytes(m_TotalBytes);
         }
@@ -201,7 +202,7 @@ std::wstring CDriveItem::GetText(const int subitem) const
         break;
 
     case COL_GRAPH:
-        if (m_Querying)
+        if (m_Querying && !IsSUBSTed())
         {
             s = Localization::Lookup(IDS_QUERYING);
         }
@@ -212,7 +213,7 @@ std::wstring CDriveItem::GetText(const int subitem) const
         break;
 
     case COL_PERCENTUSED:
-        if (m_Success)
+        if (m_Success && !IsSUBSTed())
         {
             s = FormatDouble(m_Used * 100) + L"%";
         }
@@ -403,13 +404,13 @@ void CDrivesList::OnNMDblclk(NMHDR* /*pNMHDR*/, LRESULT* pResult)
 #pragma warning(disable:26454)
 BEGIN_MESSAGE_MAP(CDrivesList, COwnerDrawnListControl)
     ON_WM_LBUTTONDOWN()
-    ON_NOTIFY_REFLECT(LVN_DELETEITEM, OnLvnDeleteitem)
+    ON_NOTIFY_REFLECT(LVN_DELETEITEM, OnLvnDeleteItem)
     ON_WM_MEASUREITEM_REFLECT()
     ON_NOTIFY_REFLECT(NM_DBLCLK, OnNMDblclk)
 END_MESSAGE_MAP()
 #pragma warning(pop)
 
-void CDrivesList::OnLvnDeleteitem(NMHDR* pNMHDR, LRESULT* pResult)
+void CDrivesList::OnLvnDeleteItem(NMHDR* pNMHDR, LRESULT* pResult)
 {
     const auto pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
     delete GetItem(pNMLV->iItem);

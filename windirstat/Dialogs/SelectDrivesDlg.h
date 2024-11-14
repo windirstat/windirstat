@@ -70,6 +70,7 @@ private:
 
     bool m_Querying = true; // Information thread is running.
     bool m_Success = false; // Drive is accessible. false while m_Querying is true.
+    bool m_Subst = false; // Drive is subst'd
 
     std::wstring m_Name; // e.g. "BOOT (C:)"
     ULONGLONG m_TotalBytes = 0; // Capacity
@@ -132,7 +133,7 @@ class CDrivesList final : public COwnerDrawnListControl
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
-    afx_msg void OnLvnDeleteitem(NMHDR* pNMHDR, LRESULT* pResult);
+    afx_msg void OnLvnDeleteItem(NMHDR* pNMHDR, LRESULT* pResult);
     afx_msg void MeasureItem(LPMEASUREITEMSTRUCT mis);
     afx_msg void OnNMDblclk(NMHDR* pNMHDR, LRESULT* pResult);
 };
