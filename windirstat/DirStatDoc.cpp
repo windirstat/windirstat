@@ -441,6 +441,13 @@ void CDirStatDoc::OpenItem(const CItem* item, const std::wstring & verb)
         pidl = ILCreateFromPath(item->GetPath().c_str());
     }
 
+    // ignore unresolvable (e.g., deleted) files
+    if (pidl == nullptr)
+    {
+        ASSERT(FALSE);
+        return;
+    }
+
     // launch properties dialog
     SHELLEXECUTEINFO sei;
     ZeroMemory(&sei, sizeof(sei));
@@ -1190,6 +1197,13 @@ void CDirStatDoc::OnExplorerSelect()
         // create path pidl
         SmartPointer<LPITEMIDLIST> parent(CoTaskMemFree);
         parent = ILCreateFromPath(path.c_str());
+
+        // ignore unresolvable (e.g., deleted) files
+        if (parent == nullptr)
+        {
+            ASSERT(FALSE);
+            return;
+        }
 
         // structures to hold and track pidls for children
         std::vector<SmartPointer<LPITEMIDLIST>> pidlCleanup;
