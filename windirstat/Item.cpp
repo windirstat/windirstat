@@ -1106,21 +1106,23 @@ CItem* CItem::FindFreeSpaceItem() const
     return nullptr;
 }
 
-void CItem::UpdateFreeSpaceItem() const
+void CItem::UpdateFreeSpaceItem()
 {
     ASSERT(IsType(IT_DRIVE));
 
-    CItem* freeSpaceItem = FindFreeSpaceItem();
-    if (freeSpaceItem == nullptr)
-    {
-        return;
-    }
-
-    // Rebaseline as if freespace was not shown
-    freeSpaceItem->UpwardSubtractSizePhysical(freeSpaceItem->GetSizePhysical());
-
     auto [total, free] = CDirStatApp::GetFreeDiskSpace(GetPath());
-    freeSpaceItem->UpwardAddSizePhysical(free);
+
+    // Recreate name based on updated space percentage
+    m_Name = std::format(L"{:.2}|{} - {:.1f}% {}", m_Name, FormatVolumeNameOfRootPath(GetPath()),
+        100.0 * static_cast<double>(free) / static_cast<double>(total), Localization::Lookup(IDS_COL_FREE));
+
+    // Update freespace item if it exists
+    CItem* freeSpaceItem = FindFreeSpaceItem();
+    if (freeSpaceItem != nullptr)
+    {
+        freeSpaceItem->UpwardSubtractSizePhysical(freeSpaceItem->GetSizePhysical());
+        freeSpaceItem->UpwardAddSizePhysical(free);
+    }
 }
 
 void CItem::UpdateUnknownItem() const

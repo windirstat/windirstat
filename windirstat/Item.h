@@ -212,7 +212,7 @@ public:
     CItem* FindRecyclerItem() const;
     void CreateFreeSpaceItem();
     CItem* FindFreeSpaceItem() const;
-    void UpdateFreeSpaceItem() const;
+    void UpdateFreeSpaceItem();
     void RemoveFreeSpaceItem();
     void CreateUnknownItem();
     CItem* FindUnknownItem() const;
