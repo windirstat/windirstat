@@ -538,7 +538,6 @@ void CItem::AddChild(CItem* child, const bool addOnly)
 
     if (IsVisible() && IsExpanded())
     {
-        (void)GetImage();
         CMainFrame::Get()->InvokeInMessageThread([this, child]
         {
             CFileTreeControl::Get()->OnChildAdded(this, child);

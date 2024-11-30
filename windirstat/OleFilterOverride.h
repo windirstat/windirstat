@@ -23,11 +23,15 @@
 
 #include "stdafx.h"
 
+#include <shared_mutex>
+
 class COleFilterOverride final : public COleMessageFilter
 {
 public:
 
-    BOOL m_DefaultHandler = TRUE;
+    bool m_DefaultHandler = true;
+    int m_RefCounter = 0;
+    std::shared_mutex m_Mutex;
 
     COleFilterOverride()
     {
@@ -45,8 +49,11 @@ public:
         return (m_DefaultHandler) ? COleMessageFilter::OnMessagePending(pMsg) : FALSE;
     }
 
-    void SetDefaultHandler(BOOL defaultHandler)
+    void SetDefaultHandler(bool defaultHandler)
     {
-        m_DefaultHandler = defaultHandler;
+        if (AfxGetThread() == nullptr) return;
+        std::lock_guard guard(m_Mutex);
+        m_RefCounter = (defaultHandler) ? (m_RefCounter - 1) : (m_RefCounter + 1);
+        m_DefaultHandler = m_RefCounter == 0;
     }
 };

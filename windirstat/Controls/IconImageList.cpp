@@ -25,31 +25,74 @@
 #include "GlobalHelpers.h"
 #include "SmartPointer.h"
 
+CIconImageList::~CIconImageList()
+{
+    for (auto i = MAX_ICON_THREADS; i > 0; i--)
+    {
+        m_LookupQueue.CancelExecution();
+    }
+}
+
 void CIconImageList::Initialize()
 {
-    if (m_hImageList == nullptr)
+    if (m_hImageList != nullptr) return;
+
+    m_FilterOverride.RegisterFilter();
+
+    const std::wstring & s = GetSysDirectory();
+    SHFILEINFO sfi = {nullptr};
+    const auto hil = reinterpret_cast<HIMAGELIST>(::SHGetFileInfo(s.c_str(), 0, &sfi, sizeof(sfi), WDS_SHGFI_DEFAULTS));
+
+    Attach(ImageList_Duplicate(hil));
+
+    VTRACE(L"System image list has {} icons", this->GetImageCount());
+    for (short i = 0; i < static_cast<short>(this->GetImageCount()); i++)
     {
-        m_FilterOverride.RegisterFilter();
+        m_IndexMap[i] = i;
+    }
 
-        const std::wstring & s = GetSysDirectory();
-        SHFILEINFO sfi = {nullptr};
-        const auto hil = reinterpret_cast<HIMAGELIST>(::SHGetFileInfo(s.c_str(), 0, &sfi, sizeof(sfi), WDS_SHGFI_DEFAULTS));
+    m_JunctionImage = static_cast<short>(this->Add(CDirStatApp::Get()->LoadIcon(IDI_JUNCTION)));
+    m_JunctionProtected = static_cast<short>(this->Add(CDirStatApp::Get()->LoadIcon(IDI_JUNCTION_PROTECTED)));
+    m_FreeSpaceImage = static_cast<short>(this->Add(CDirStatApp::Get()->LoadIcon(IDI_FREE_SPACE)));
+    m_UnknownImage = static_cast<short>(this->Add(CDirStatApp::Get()->LoadIcon(IDI_UNKNOWN)));
+    m_EmptyImage = static_cast<short>(this->Add(CDirStatApp::Get()->LoadIcon(IDI_EMPTY)));
 
-        this->Attach(ImageList_Duplicate(hil));
+    // Cache icon for boot drive
+    const auto driveLen = wcslen(L"C:\\");
+    std::wstring drive(_MAX_PATH, wds::chrNull);
+    const UINT u = ::GetWindowsDirectory(drive.data(), _MAX_PATH);
+    if (u > driveLen) drive.resize(driveLen);
+    m_MountPointImage = CacheIcon(drive, 0, FILE_ATTRIBUTE_REPARSE_POINT);
 
-        VTRACE(L"System image list has {} icons", this->GetImageCount());
-        for (short i = 0; i < static_cast<short>(this->GetImageCount()); i++)
+    // Cache icon for my computer
+    m_MyComputerImage = CacheIcon(std::to_wstring(CSIDL_DRIVES), SHGFI_PIDL);
+
+    // Use two threads for asynchronous icon lookup
+    m_LookupQueue.StartThreads(MAX_ICON_THREADS, [this]()
+    {
+        while (const CTreeListItem* item = m_LookupQueue.Pop())
         {
-            m_IndexMap[i] = i;
+            if (item->IsVisible())
+            {
+                item->ForceImageFetch();
+                item->RedrawItem();
+            }
         }
+    });
+}
 
-        this->AddCustomImages();
+void CIconImageList::SubmitToCachingThread(CTreeListItem* item)
+{
+    if (!m_LookupQueue.IsQueued(item))
+    {
+        m_LookupQueue.Push(item);
     }
 }
 
 // Returns the index of the added icon
 short CIconImageList::CacheIcon(const std::wstring & path, UINT flags, const DWORD attr, std::wstring* psTypeName)
 {
+    ASSERT(AfxGetThread() != GetCurrentThread());
     ASSERT(m_hImageList != nullptr);
     flags |= WDS_SHGFI_DEFAULTS;
 
@@ -90,13 +133,17 @@ short CIconImageList::CacheIcon(const std::wstring & path, UINT flags, const DWO
 
     // Check if image is already in index and, if so, return
     std::lock_guard lock(m_IndexMutex);
-    const auto i = m_IndexMap.find(sfi.iIcon);
-    if (i != m_IndexMap.end()) return i->second;
-
-    // Extract image and add to cache
+    if (const auto i = m_IndexMap.find(sfi.iIcon); i != m_IndexMap.end()) return i->second;
     m_FilterOverride.SetDefaultHandler(false);
-    m_IndexMap[sfi.iIcon] = static_cast<short>(this->Add(ImageList_ExtractIcon(NULL, hil, sfi.iIcon)));
+    
+    // Extract image and add to cache
+    m_IndexMutex.unlock();
+    const auto icon = static_cast<short>(this->Add(ImageList_ExtractIcon(NULL, hil, sfi.iIcon)));
+    m_IndexMutex.lock();
+
+    // Add to map
     m_FilterOverride.SetDefaultHandler(true);
+    m_IndexMap[sfi.iIcon] = icon;
     return m_IndexMap[sfi.iIcon];
 }
 
@@ -146,23 +193,4 @@ short CIconImageList::GetEmptyImage() const
 {
     ASSERT(m_hImageList != nullptr);
     return m_EmptyImage;
-}
-
-void CIconImageList::AddCustomImages()
-{
-    m_JunctionImage = static_cast<short>(this->Add(CDirStatApp::Get()->LoadIcon(IDI_JUNCTION)));
-    m_JunctionProtected = static_cast<short>(this->Add(CDirStatApp::Get()->LoadIcon(IDI_JUNCTION_PROTECTED)));
-    m_FreeSpaceImage = static_cast<short>(this->Add(CDirStatApp::Get()->LoadIcon(IDI_FREE_SPACE)));
-    m_UnknownImage = static_cast<short>(this->Add(CDirStatApp::Get()->LoadIcon(IDI_UNKNOWN)));
-    m_EmptyImage = static_cast<short>(this->Add(CDirStatApp::Get()->LoadIcon(IDI_EMPTY)));
-
-    // cache icon for boot drive
-    const auto driveLen = wcslen(L"C:\\");
-    std::wstring drive(_MAX_PATH, wds::chrNull);
-    const UINT u = ::GetWindowsDirectory(drive.data(), _MAX_PATH);
-    if (u > driveLen) drive.resize(driveLen);
-    m_MountPointImage = CacheIcon(drive, 0, FILE_ATTRIBUTE_REPARSE_POINT);
-
-    // cache icon for my computer
-    m_MyComputerImage = CacheIcon(std::to_wstring(CSIDL_DRIVES), SHGFI_PIDL);
 }

@@ -21,6 +21,8 @@
 
 #pragma once
 
+#include "TreeListControl.h"
+#include "BlockingQueue.h"
 #include "OleFilterOverride.h"
 
 #include <string>
@@ -36,12 +38,14 @@
 class CIconImageList final : public CImageList
 {
     static constexpr UINT WDS_SHGFI_DEFAULTS = SHGFI_USEFILEATTRIBUTES | SHGFI_SMALLICON | SHGFI_SYSICONINDEX;
+    static constexpr auto MAX_ICON_THREADS = 2;
 
 public:
     CIconImageList() = default;
-    ~CIconImageList() override = default;
+    ~CIconImageList() override;
 
     void Initialize();
+    void SubmitToCachingThread(CTreeListItem* item);
 
     short GetMyComputerImage() const;
     short GetMountPointImage() const;
@@ -55,8 +59,8 @@ public:
     short GetEmptyImage() const;
 
     short CacheIcon(const std::wstring& path, UINT flags = 0, DWORD attr = 0, std::wstring* psTypeName = nullptr);
-    void AddCustomImages();
 
+    BlockingQueue<CTreeListItem*> m_LookupQueue;
     std::shared_mutex m_IndexMutex;
     std::unordered_map<int, short> m_IndexMap; // system image list index -> our index
     COleFilterOverride m_FilterOverride;

@@ -97,24 +97,27 @@ std::wstring CExtensionListControl::CListItem::GetExtension() const
 
 int CExtensionListControl::CListItem::GetImage() const
 {
-    if (m_Image == -1)
+    if (m_Extension.empty())
+    {
+        m_Image = GetIconImageList()->GetUnknownImage();
+    }
+    else if (m_Image == -1)
     {
         m_Image = GetIconImageList()->GetExtImageAndDescription(m_Extension, m_Description, 0);
     }
+
     return m_Image;
 }
 
 std::wstring CExtensionListControl::CListItem::GetDescription() const
 {
-    if (m_Description.empty())
-    {
-        m_Image = GetIconImageList()->GetExtImageAndDescription(m_Extension, m_Description, 0);
-    }
-
     if (m_Extension.empty())
     {
-        m_Image = GetIconImageList()->GetUnknownImage();
         m_Description = Localization::Lookup(IDS_EXTENSION_MISSING);
+    }
+    else if (m_Description.empty())
+    {
+        m_Image = GetIconImageList()->GetExtImageAndDescription(m_Extension, m_Description, 0);
     }
 
     return m_Description;

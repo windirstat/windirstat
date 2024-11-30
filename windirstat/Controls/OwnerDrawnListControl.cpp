@@ -49,18 +49,25 @@ void COwnerDrawnListItem::DrawLabel(const COwnerDrawnListControl* list, CImageLi
     }
 
     // Prepare to draw the file/folder icon
+    const auto imageIndex = GetImage();
     ASSERT(GetImage() < il->GetImageCount());
 
-    IMAGEINFO ii;
-    il->GetImageInfo(GetImage(), &ii);
-    const CRect rcImage(ii.rcImage);
+    static CRect rcImageDefault(0, 0, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CXSMICON));
+    CRect rcImage = rcImageDefault;
+
+    if (imageIndex != -1)
+    {
+        IMAGEINFO ii;
+        il->GetImageInfo(GetImage(), &ii);
+        rcImage = ii.rcImage;
+    }
 
     if (width == nullptr)
     {
         // Draw the color with transparent background
         const CPoint pt(rcRest.left, rcRest.top + rcRest.Height() / 2 - rcImage.Height() / 2);
         il->SetBkColor(CLR_NONE);
-        il->Draw(pdc, GetImage(), pt, ILD_NORMAL);
+        if (imageIndex != -1) il->Draw(pdc, GetImage(), pt, ILD_NORMAL);
     }
 
     // Decrease size of the remainder rectangle from left

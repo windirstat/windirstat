@@ -89,12 +89,18 @@ std::wstring CTreeListItem::GetText(int /*subitem*/) const
     return {};
 }
 
+void CTreeListItem::ForceImageFetch() const
+{
+    ASSERT(IsVisible());
+    m_VisualInfo->image = GetImageToCache();
+}
+
 int CTreeListItem::GetImage() const
 {
     ASSERT(IsVisible());
     if (m_VisualInfo->image == -1)
     {
-        m_VisualInfo->image = GetImageToCache();
+        GetIconImageList()->SubmitToCachingThread(const_cast<CTreeListItem*>(this));
     }
     return m_VisualInfo->image;
 }
@@ -281,13 +287,21 @@ void CTreeListItem::SetVisible(CTreeListControl* control, const bool visible)
     }
 }
 
+void CTreeListItem::RedrawItem() const
+{
+    ASSERT(IsVisible());
+    const auto control = m_VisualInfo->control;
+    const auto i = control->FindListItem(this);
+    ::PostMessage(control->m_hWnd, LVM_REDRAWITEMS, i, i);
+}
+
 unsigned char CTreeListItem::GetIndent() const
 {
     ASSERT(IsVisible());
     return m_VisualInfo->indent;
 }
 
-void CTreeListItem::SetIndent(const unsigned char indent)
+void CTreeListItem::SetIndent(const unsigned char indent) const
 {
     ASSERT(IsVisible());
     m_VisualInfo->indent = indent;
@@ -799,7 +813,7 @@ void CTreeListControl::OnKeyDown(const UINT nChar, const UINT nRepCnt, const UIN
             {
                 SelectItem(items[0]->GetSortedChild(0), true, true);
             }
-            if (!items[0]->IsExpanded())
+            if (!items[0]->IsExpanded() && items[0]->HasChildren())
             {
                 ExpandItem(FindTreeItem(items[0]));
             }
@@ -814,6 +828,7 @@ void CTreeListControl::OnKeyDown(const UINT nChar, const UINT nRepCnt, const UIN
             else if (items[0]->GetParent() != nullptr)
             {
                 SelectItem(items[0]->GetParent(), true, true);
+                EnsureItemVisible(items[0]->GetParent());
             }
             return;
         }
@@ -871,8 +886,6 @@ void CTreeListControl::OnChildAdded(const CTreeListItem* parent, CTreeListItem* 
     ASSERT(p != -1);
     InsertItem(p + 1, child);
     Sort();
-
-    // NOTE: Redrawing is deferred to UI thread timer for performance
 }
 
 void CTreeListControl::OnChildRemoved(CTreeListItem* parent, CTreeListItem* child)
