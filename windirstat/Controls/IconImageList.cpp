@@ -27,10 +27,7 @@
 
 CIconImageList::~CIconImageList()
 {
-    for (auto i = MAX_ICON_THREADS; i > 0; i--)
-    {
-        m_LookupQueue.CancelExecution();
-    }
+    m_LookupQueue.CancelExecution();
 }
 
 void CIconImageList::Initialize()
