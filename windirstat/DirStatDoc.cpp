@@ -45,7 +45,6 @@
 #include <ranges>
 #include <stack>
 #include <array>
-#include <VersionHelpers.h>
 
 IMPLEMENT_DYNCREATE(CDirStatDoc, CDocument)
 

@@ -286,7 +286,11 @@ int CItem::CompareSibling(const CTreeListItem* tlib, const int subitem) const
         {
             if (IsType(IT_DRIVE))
             {
-                return signum(_wcsicmp(m_Name.c_str(),other->m_Name.c_str()));
+                return signum(_wcsicmp(GetPath().c_str(), other->GetPath().c_str()));
+            }
+            else
+            {
+                return signum(_wcsicmp(m_Name.c_str(), other->m_Name.c_str()));
             }
         }
 

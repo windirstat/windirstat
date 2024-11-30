@@ -39,7 +39,7 @@ public:
     {
     }
 
-    BOOL GetErrorMessage(LPWSTR lpszError, const UINT nMaxError, UINT* pnHelpContext = nullptr) override
+    BOOL GetErrorMessage(LPWSTR lpszError, const UINT nMaxError, UINT* pnHelpContext = NULL) override
     {
         if (pnHelpContext != nullptr)
         {
@@ -104,11 +104,11 @@ inline void MdThrowStringException(const std::wstring & pszText)
 inline void MdThrowWinError(const DWORD dw, const std::wstring & pszPrefix = {})
 {
     std::wstring sMsg = pszPrefix;
-    sMsg += L": " + MdGetWinErrorText(dw);
+    sMsg += L": " + MdGetWinErrorText(static_cast<HRESULT>(dw));
     MdThrowStringException(sMsg);
 }
 
-inline void MdThrowLastWinerror(const std::wstring & pszPrefix = {})
+inline void MdThrowLastWinError(const std::wstring & pszPrefix = {})
 {
     MdThrowWinError(GetLastError(), pszPrefix);
 }

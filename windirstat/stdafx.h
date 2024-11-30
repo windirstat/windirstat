@@ -41,14 +41,16 @@
 #include <afxmt.h>          // MFC Multi-threading
 #include <afxcontrolbars.h> // MFC support for ribbons and control bars
 
-#include <cmath>            // floor(), fmod(), sqrt() etc.
-#include <cfloat>           // DBL_MAX
+#include <VersionHelpers.h>
+#include <cmath>
 #include <psapi.h>
 #include <winioctl.h>
 #include <bcrypt.h>
 #include <sal.h>
 #include <wincrypt.h>
 #include <winioctl.h>
+#include <sddl.h>
+#include <winternl.h>
 
 constexpr auto RGB_GET_RVALUE(auto rgb) { return (rgb >>  0) & 0xFF; }
 constexpr auto RGB_GET_GVALUE(auto rgb) { return (rgb >>  8) & 0xFF; }

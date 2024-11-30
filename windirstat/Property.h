@@ -68,9 +68,9 @@ public:
 template <typename T = void>
 class Setting final : PersistedSetting
 {
-    T m_Value;
-    T m_Min;
-    T m_Max;
+    T m_Value{};
+    T m_Min{};
+    T m_Max{};
 
 public:
 

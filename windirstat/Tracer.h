@@ -65,8 +65,8 @@ public:
         _wfreopen_s(&handleIn, L"CONIN$", L"r", stdin);
 
         // Disable buffering
-        (void) setvbuf(handleOut, nullptr, _IONBF, 0);
-        (void) setvbuf(handleErr, nullptr, _IONBF, 0);
+        if (handleOut != nullptr) (void) setvbuf(handleOut, nullptr, _IONBF, 0);
+        if (handleErr != nullptr) (void) setvbuf(handleErr, nullptr, _IONBF, 0);
     }
 
     ~CWDSTracerConsole()

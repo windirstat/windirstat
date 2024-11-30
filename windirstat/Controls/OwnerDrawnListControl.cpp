@@ -92,7 +92,6 @@ void COwnerDrawnListItem::DrawLabel(const COwnerDrawnListControl* list, CImageLi
         textColor = list->GetHighlightTextColor();
 
         CRect selection = rcLabel;
-        // Depending on "FullRowSelection" style
         if (list->IsFullRowSelection())
         {
             selection.right = rc.right;

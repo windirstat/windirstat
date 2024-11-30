@@ -28,7 +28,6 @@
 
 #include <format>
 #include <map>
-#include <sddl.h>
 #include <string>
 #include <unordered_set>
 

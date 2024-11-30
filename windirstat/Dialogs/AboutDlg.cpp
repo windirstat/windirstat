@@ -50,12 +50,12 @@ namespace
             const HRSRC hrsrc = ::FindResource(dll, MAKEINTRESOURCE(id), L"TEXT");
             if (nullptr == hrsrc)
             {
-                MdThrowLastWinerror();
+                MdThrowLastWinError();
             }
 
             // Decompress the resource
             const auto resourceData = GetCompressedResource(hrsrc);
-            if (resourceData.empty()) MdThrowLastWinerror();
+            if (resourceData.empty()) MdThrowLastWinError();
 
             return std::wstring(CComBSTR(static_cast<int>(resourceData.size()), reinterpret_cast<LPCSTR>(resourceData.data())));
         }
