@@ -89,10 +89,13 @@ std::wstring CTreeListItem::GetText(int /*subitem*/) const
     return {};
 }
 
-void CTreeListItem::ForceImageFetch() const
+void CTreeListItem::FetchShellInfo()
 {
     ASSERT(IsVisible());
     m_VisualInfo->image = GetImageToCache();
+
+    const auto i = m_VisualInfo->control->FindListItem(this);
+    m_VisualInfo->control->RedrawItems(i, i);
 }
 
 int CTreeListItem::GetImage() const
@@ -100,8 +103,9 @@ int CTreeListItem::GetImage() const
     ASSERT(IsVisible());
     if (m_VisualInfo->image == -1)
     {
-        GetIconImageList()->SubmitToCachingThread(const_cast<CTreeListItem*>(this));
+        GetIconImageList()->DoAsyncShellInfoLookup(const_cast<CTreeListItem*>(this));
     }
+
     return m_VisualInfo->image;
 }
 
@@ -285,14 +289,6 @@ void CTreeListItem::SetVisible(CTreeListControl* control, const bool visible)
         delete m_VisualInfo;
         m_VisualInfo = nullptr;
     }
-}
-
-void CTreeListItem::RedrawItem() const
-{
-    ASSERT(IsVisible());
-    const auto control = m_VisualInfo->control;
-    const auto i = control->FindListItem(this);
-    ::PostMessage(control->m_hWnd, LVM_REDRAWITEMS, i, i);
 }
 
 unsigned char CTreeListItem::GetIndent() const

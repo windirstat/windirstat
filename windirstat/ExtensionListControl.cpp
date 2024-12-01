@@ -61,6 +61,7 @@ void CExtensionListControl::CListItem::DrawColor(CDC* pdc, CRect rc, const UINT 
     {
         *width = 40;
         return;
+
     }
 
     DrawSelection(m_List, pdc, rc, state);
@@ -95,15 +96,27 @@ std::wstring CExtensionListControl::CListItem::GetExtension() const
     return m_Extension;
 }
 
-int CExtensionListControl::CListItem::GetImage() const
+void CExtensionListControl::CListItem::FetchShellInfo()
 {
     if (m_Extension.empty())
     {
+        m_Description = Localization::Lookup(IDS_EXTENSION_MISSING);
         m_Image = GetIconImageList()->GetUnknownImage();
     }
-    else if (m_Image == -1)
+    else
     {
         m_Image = GetIconImageList()->GetExtImageAndDescription(m_Extension, m_Description, 0);
+    }
+
+    const auto i = m_List->FindListItem(this);
+    m_List->RedrawItems(i, i);
+}
+
+int CExtensionListControl::CListItem::GetImage() const
+{
+    if (m_Image == -1)
+    {
+        GetIconImageList()->DoAsyncShellInfoLookup(const_cast<CListItem*>(this));
     }
 
     return m_Image;
@@ -111,15 +124,6 @@ int CExtensionListControl::CListItem::GetImage() const
 
 std::wstring CExtensionListControl::CListItem::GetDescription() const
 {
-    if (m_Extension.empty())
-    {
-        m_Description = Localization::Lookup(IDS_EXTENSION_MISSING);
-    }
-    else if (m_Description.empty())
-    {
-        m_Image = GetIconImageList()->GetExtImageAndDescription(m_Extension, m_Description, 0);
-    }
-
     return m_Description;
 }
 

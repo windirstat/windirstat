@@ -38,29 +38,29 @@
 class CIconImageList final : public CImageList
 {
     static constexpr UINT WDS_SHGFI_DEFAULTS = SHGFI_USEFILEATTRIBUTES | SHGFI_SMALLICON | SHGFI_SYSICONINDEX;
-    static constexpr auto MAX_ICON_THREADS = 2;
+    static constexpr auto MAX_ICON_THREADS = 4;
 
 public:
     CIconImageList() = default;
     ~CIconImageList() override;
 
     void Initialize();
-    void SubmitToCachingThread(CTreeListItem* item);
+    void DoAsyncShellInfoLookup(COwnerDrawnListItem* item);
 
     short GetMyComputerImage() const;
     short GetMountPointImage() const;
     short GetJunctionImage() const;
     short GetJunctionProtectedImage() const;
     short GetFileImage(const std::wstring& path, DWORD attr = 0);
-    short GetExtImageAndDescription(const std::wstring& ext, std::wstring& description, DWORD attr = 0);
+    short GetExtImageAndDescription(const std::wstring& ext, std::wstring& description, DWORD attr = FILE_ATTRIBUTE_NORMAL);
 
     short GetFreeSpaceImage() const;
     short GetUnknownImage() const;
     short GetEmptyImage() const;
 
-    short CacheIcon(const std::wstring& path, UINT flags = 0, DWORD attr = 0, std::wstring* psTypeName = nullptr);
+    short CacheIcon(const std::wstring& path, UINT flags = 0, DWORD attr = FILE_ATTRIBUTE_NORMAL, std::wstring* psTypeName = nullptr);
 
-    BlockingQueue<CTreeListItem*> m_LookupQueue;
+    BlockingQueue<COwnerDrawnListItem*> m_LookupQueue;
     std::shared_mutex m_IndexMutex;
     std::unordered_map<int, short> m_IndexMap; // system image list index -> our index
     COleFilterOverride m_FilterOverride;

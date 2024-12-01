@@ -67,18 +67,14 @@ void CIconImageList::Initialize()
     // Use two threads for asynchronous icon lookup
     m_LookupQueue.StartThreads(MAX_ICON_THREADS, [this]()
     {
-        while (const CTreeListItem* item = m_LookupQueue.Pop())
+        while (const auto item = m_LookupQueue.Pop())
         {
-            if (item->IsVisible())
-            {
-                item->ForceImageFetch();
-                item->RedrawItem();
-            }
+            item->FetchShellInfo();
         }
     });
 }
 
-void CIconImageList::SubmitToCachingThread(CTreeListItem* item)
+void CIconImageList::DoAsyncShellInfoLookup(COwnerDrawnListItem* item)
 {
     if (!m_LookupQueue.IsQueued(item))
     {
@@ -108,13 +104,17 @@ short CIconImageList::CacheIcon(const std::wstring & path, UINT flags, const DWO
         SmartPointer<LPITEMIDLIST> pidl(CoTaskMemFree);
         if (SUCCEEDED(SHGetSpecialFolderLocation(nullptr, std::stoi(path), &pidl)))
         {
+            m_FilterOverride.SetDefaultHandler(false);
             hil = reinterpret_cast<HIMAGELIST>(::SHGetFileInfo(static_cast<LPCWSTR>(
                 static_cast<LPVOID>(pidl)), attr, &sfi, sizeof(sfi), flags));
+            m_FilterOverride.SetDefaultHandler(true);
         }
     }
     else
     {
+        m_FilterOverride.SetDefaultHandler(false);
         hil = reinterpret_cast<HIMAGELIST>(::SHGetFileInfo(path.c_str(), attr, &sfi, sizeof(sfi), flags));
+        m_FilterOverride.SetDefaultHandler(true);
     }
 
     if (hil == nullptr)

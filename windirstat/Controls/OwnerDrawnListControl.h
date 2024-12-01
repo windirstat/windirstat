@@ -51,10 +51,9 @@ public:
     // If focus rectangle shall not begin leftmost, set *focusLeft
     // to the left edge of the desired focus rectangle.
     virtual bool DrawSubitem(int subitem, CDC* pdc, CRect rc, UINT state, int* width, int* focusLeft) const = 0;
-
     virtual void DrawAdditionalState(CDC* /*pdc*/, const CRect & /*rcLabel*/) const {}
-
     void DrawSelection(const COwnerDrawnListControl* list, CDC* pdc, CRect rc, UINT state) const;
+    virtual void FetchShellInfo() {}
 
 protected:
     void DrawLabel(const COwnerDrawnListControl* list, CImageList* il, CDC* pdc, CRect& rc, UINT state, int* width, int* focusLeft, bool indent = true) const;
@@ -108,6 +107,7 @@ public:
 protected:
     void InitializeColors();
     void DrawItem(LPDRAWITEMSTRUCT pdis) override;
+    void RedrawItem(const COwnerDrawnListItem* item) const;
     int GetSubItemWidth(const COwnerDrawnListItem* item, int subitem);
 
     COLORREF m_WindowColor = CLR_NONE; // The default background color if !m_ShowStripes

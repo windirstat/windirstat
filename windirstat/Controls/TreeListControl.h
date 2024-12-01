@@ -67,7 +67,7 @@ public:
 
     bool DrawSubitem(int subitem, CDC* pdc, CRect rc, UINT state, int* width, int* focusLeft) const override;
     std::wstring GetText(int subitem) const override;
-    void ForceImageFetch() const;
+    void FetchShellInfo() override;
     int GetImage() const override;
     int Compare(const CSortingListItem* baseOther, int subitem) const override;
     virtual CTreeListItem* GetTreeListChild(int i) const = 0;
@@ -87,7 +87,6 @@ public:
     void SetExpanded(bool expanded = true);
     bool IsVisible() const { return m_VisualInfo != nullptr; }
     void SetVisible(CTreeListControl * control, bool visible = true);
-    void RedrawItem() const;
     unsigned char GetIndent() const;
     void SetIndent(unsigned char indent) const;
     CRect GetPlusMinusRect() const;

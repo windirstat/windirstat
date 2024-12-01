@@ -469,6 +469,12 @@ void COwnerDrawnListControl::DrawItem(LPDRAWITEMSTRUCT pdis)
         rcItem.Width(), rcItem.Height(), &dcMem, 0, 0, SRCCOPY);
 }
 
+void COwnerDrawnListControl::RedrawItem(const COwnerDrawnListItem * item) const
+{
+    const auto i = FindListItem(item);
+    ::PostMessage(m_hWnd, LVM_REDRAWITEMS, i, i);
+}
+
 CRect COwnerDrawnListControl::GetWholeSubitemRect(const int item, const int subitem) const
 {
     CRect rc;

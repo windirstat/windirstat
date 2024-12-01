@@ -52,6 +52,7 @@ protected:
         std::wstring GetText(int subitem) const override;
 
         std::wstring GetExtension() const;
+        void FetchShellInfo() override;
         int GetImage() const override;
         int Compare(const CSortingListItem* baseOther, int subitem) const override;
 

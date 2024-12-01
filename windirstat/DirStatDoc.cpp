@@ -1706,6 +1706,7 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
 
         // Sorting and other finalization tasks
         CItem::ScanItemsFinalize(GetRootItem());
+        GetDocument()->RebuildExtensionData();
 
         // Invoke a UI thread to do updates
         CMainFrame::Get()->InvokeInMessageThread([&]
@@ -1718,7 +1719,6 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
             }
 
             CMainFrame::Get()->LockWindowUpdate();
-            GetDocument()->RebuildExtensionData();
             GetDocument()->UpdateAllViews(nullptr);
             CMainFrame::Get()->SetProgressComplete();
             CMainFrame::Get()->RestoreExtensionView();
