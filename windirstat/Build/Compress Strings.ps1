@@ -42,7 +42,9 @@ ForEach ($File in $Files)
 {
     If ($File.Name -like 'lang_*.txt')
     {
-        $File | Get-Content -Encoding UTF8 | Sort-Object -Unique | Where-Object { -not [string]::IsNullOrEmpty($_) } | Set-Content -LiteralPath $File.FullName -Encoding UTF8
+        $Content = $File | Get-Content -Encoding UTF8 | Sort-Object -Unique | Where-Object { -not [string]::IsNullOrEmpty($_) }
+        $Encoding = New-Object System.Text.UTF8Encoding $False
+        [System.IO.File]::WriteAllLines($File.FullName, $Content, $Encoding)
     }
 
     $bytesToCompress = [System.IO.File]::ReadAllBytes($File.FullName)

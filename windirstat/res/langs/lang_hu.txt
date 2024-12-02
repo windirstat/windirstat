@@ -1,4 +1,4 @@
-﻿IDS_ABOUT_ABOUT=Névjegy
+IDS_ABOUT_ABOUT=Névjegy
 IDS_ABOUT_ABOUTTEXTss=\nWinDirStat - Könyvtár statisztika\n\n"Itt megtekintheti az összes lemezterületét\nés segítséget kap a kitakarításhoz."\n\nA Microsoft Windows-hoz újraprogramozta\nBernhard Seifert, Oliver Schneider, Bryan Berns\n(mailto:{}),\n\naz alapot Stefan Hundhammer KDE (Linux) KDirStat programja alkotja\n(https://kdirstat.sourceforge.net/).\n\nA WinDirStat honlapja {}/\n\nCopyright (c) 2003-2024 The authors of WinDirStat
 IDS_ABOUT_LICENSEAGREEMENT=Licenc
 IDS_ABOUT_THANKSTO=Köszönet

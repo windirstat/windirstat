@@ -1,4 +1,4 @@
-﻿IDS_ABOUT_ABOUT=Over
+IDS_ABOUT_ABOUT=Over
 IDS_ABOUT_ABOUTTEXTss=\nWinDirStat - Directory Statistics\n\n"Weten waar je schijfruimte gebleven is\nen helpt je met opruimen."\n\nGeprogrammeerd voor Microsoft Windows door\nBernhard Seifert, Oliver Schneider, Bryan Berns\n(mailto:{}),\n\nGebaseerd op Stefan Hundhammer's KDE (Linux) programma KDirStat\n(https://kdirstat.sourceforge.net/).\n\nWinDirStat's website is {}/\n\nCopyright (c) 2003-2024 de auteurs van WinDirStat
 IDS_ABOUT_LICENSEAGREEMENT=Licentie
 IDS_ABOUT_THANKSTO=Bedankt

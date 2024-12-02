@@ -1,4 +1,4 @@
-﻿IDS_ABOUT_ABOUT=Teave
+IDS_ABOUT_ABOUT=Teave
 IDS_ABOUT_ABOUTTEXTss=\nWinDirStat - Directory Statistics\n\n"Shows where all your disk space has gone\nand helps you clean it up."\n\nProgrammed for Microsoft Windows by\nBernhard Seifert, Oliver Schneider, Bryan Berns\n(mailto:{}),\n\nbased on Stefan Hundhammer's KDE (Linux) program KDirStat\n(https://kdirstat.sourceforge.net/).\n\nWinDirStat's home is {}/\n\nCopyright (c) 2003-2024 The authors of WinDirStat
 IDS_ABOUT_LICENSEAGREEMENT=Litsents
 IDS_ABOUT_THANKSTO=Tänud

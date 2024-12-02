@@ -1,4 +1,4 @@
-﻿IDS_ABOUT_ABOUT=Acerca de
+IDS_ABOUT_ABOUT=Acerca de
 IDS_ABOUT_ABOUTTEXTss=\nWinDirStat - Estadística de Directorios\n\n"Muestra dónde fue a parar todo su espacio en disco\ny le ayuda a limpiarlo."\n\nProgramado para Microsoft Windows por\nBernhard Seifert, Oliver Schneider, Bryan Berns\n(mailto:{}),\n\nbasado en el programa KDirStat (Linux KDE) de Stefan Hundhammer\n(https://kdirstat.sourceforge.net/).\n\nLa página de WinDirStat es {}/\n\nCopyright (c) 2003-2024 Los autores de WinDirStat
 IDS_ABOUT_LICENSEAGREEMENT=Licencia
 IDS_ABOUT_THANKSTO=Gracias a
