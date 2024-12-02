@@ -31,6 +31,10 @@
 #define GIT_COUNT 0
 #endif
 
+#ifndef PRODUCTION
+#define PRODUCTION 0
+#endif
+
 #define PRD_MAJVER                  2 // major product version
 #define PRD_MINVER                  1 // minor product version
 #define PRD_PATCH                   0 // patch number for product

@@ -36,14 +36,18 @@ FOR /F "DELIMS=" %%X IN ('DIR "%PROGRAMFILES%\PowerShell\pwsh.exe" /B /S /A') DO
 :: prepend preferred system paths
 SET PATH=%WINDIR%\system32;%WINDIR%\system32\WindowsPowerShell\v1.0;%PATH%
 
+:: create define for build about box
+SET PRODUCTION=0
+IF /I "%RELTYPE%" EQU "PRODUCTION" SET PRODUCTION=1
+
 :: import vs build tools
 IF EXIST "%BLDDIR%" RD /S /Q "%BLDDIR%"
 FOR /F "DELIMS=" %%X IN ('DIR "%ProgramFiles%\Microsoft Visual Studio\VsDevCmd.bat" /A /S /B') DO SET VS=%%X
 CALL "%VS%"
-IF EXIST "%WindowsSdkVerBinPath%\x86" msbuild "%BASEDIR%\windirstat.sln" /p:Configuration=Release /t:Clean;Build /p:Platform=Win32
-IF EXIST "%WindowsSdkVerBinPath%\x64" msbuild "%BASEDIR%\windirstat.sln" /p:Configuration=Release /t:Clean;Build /p:Platform=x64
-IF EXIST "%WindowsSdkVerBinPath%\arm" msbuild "%BASEDIR%\windirstat.sln" /p:Configuration=Release /t:Clean;Build /p:Platform=ARM
-IF EXIST "%WindowsSdkVerBinPath%\arm64" msbuild "%BASEDIR%\windirstat.sln" /p:Configuration=Release /t:Clean;Build /p:Platform=ARM64
+IF EXIST "%WindowsSdkVerBinPath%\x86" msbuild "%BASEDIR%\windirstat.sln" /p:Configuration=Release /t:Clean;Build /p:Platform=Win32,ExternalCompilerOptions=/DPRODUCTION=%PRODUCTION%
+IF EXIST "%WindowsSdkVerBinPath%\x64" msbuild "%BASEDIR%\windirstat.sln" /p:Configuration=Release /t:Clean;Build /p:Platform=x64,ExternalCompilerOptions=/DPRODUCTION=%PRODUCTION%
+IF EXIST "%WindowsSdkVerBinPath%\arm" msbuild "%BASEDIR%\windirstat.sln" /p:Configuration=Release /t:Clean;Build /p:Platform=ARM,ExternalCompilerOptions=/DPRODUCTION=%PRODUCTION%
+IF EXIST "%WindowsSdkVerBinPath%\arm64" msbuild "%BASEDIR%\windirstat.sln" /p:Configuration=Release /t:Clean;Build /p:Platform=ARM64,ExternalCompilerOptions=/DPRODUCTION=%PRODUCTION%
 TIMEOUT /t 3 /nobreak >NUL
 
 :: optimize executable size if pwsh is present
