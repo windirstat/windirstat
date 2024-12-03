@@ -9,11 +9,16 @@
 * Better Norwegian tranlsations (thanks @TilKenneth)
 * Improved keyboard navigation on the file deletion dialog box
 * Cleanup option to empty folder
+* Improved file deletion progress indicator
+* Display free space percentage next to volume label
+* Other translations improvements (thanks @EricPossato, @tferrerm)
   
 ## Bug Fixes
 * Addressed not being able to scan CSC directory
+* Addressed not being to scan SUBST'd drives
 * Addressed save/load files on Windows Server 2016 not working
 * Addressed hover over treemap not showing filename properly
+* Addressed not being able to scan in some Acronis folders
 
 # WinDirStat 2.0.3
 
