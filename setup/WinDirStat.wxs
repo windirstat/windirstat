@@ -23,16 +23,31 @@
     <Property Id="WIN_DIR_STAT_HKLM">
       <RegistrySearch Id="WinDirStatHKLM" Root="HKLM" Key="Software\Microsoft\Windows\CurrentVersion\Uninstall\WinDirStat" Name="UninstallString" Type="raw" Win64="no"/>
     </Property>
-    <Property Id="WAIT_PROCESS" Value="POWERSHELL.EXE -WindowStyle Hidden -Command &quot;While (@(Get-Process 'Au_' -Ea SilentlyContinue)) { Start-Sleep 1 }&quot;"/>
-    <CustomAction Id="DoUninstallHKCU" Directory="TempFolder" ExeCommand="CMD.EXE /C [WIN_DIR_STAT_HKCU] /S" Execute="immediate" Impersonate="yes" Return="ignore"/>
-    <CustomAction Id="WaitForProcessHKCU" Directory="TempFolder" ExeCommand="[WAIT_PROCESS]" Execute="immediate" Impersonate="yes" Return="ignore"/>
-    <CustomAction Id="DoUninstallHKLM" Directory="TempFolder" ExeCommand="CMD.EXE /C [WIN_DIR_STAT_HKLM] /S" Execute="immediate" Impersonate="no" Return="ignore"/>
-    <CustomAction Id="WaitForProcessHKLM" Directory="TempFolder" ExeCommand="[WAIT_PROCESS]" Execute="immediate" Impersonate="no" Return="ignore"/>
+    <Property Id="LEGACY_UNINSTALL_SCRIPT">
+      <![CDATA[
+        POWERSHELL -NoLogo -NonInteractive -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -Command "& {
+        $ErrorActionPreference = 'SilentlyContinue'
+        Get-Process 'WinDirStat*' | Stop-Process -Force
+        $Keys = @()
+        $Keys += Get-ChildItem 'Registry::HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Uninstall\WinDirStat'
+        $Keys += Get-ChildItem 'Registry::HKEY_USERS\*\Software\Microsoft\Windows\CurrentVersion\Uninstall\WinDirStat'
+        ForEach ($Key in $Keys)
+        {
+            $Path = $Key.GetValue('InstallLocation')
+            Remove-Item -Path ($Path + '\wdsh*.chm') -Force
+            Remove-Item -Path ($Path + '\wdsr*.dll') -Force
+            Remove-Item -Path ($Path + '\WinDirStat*.*') -Force     
+            Remove-Item -Path ($Path + '\Uninstall.exe') -Force
+            If (-not (Test-Path ($Path + '\*'))) { Remove-Item -Path $Path -Force }
+            Remove-Item -Path $Key.PSPath -Force
+        }
+        Remove-Item -Path ($env:SYSTEMDIR + '\Users\*\Desktop\WinDirStat.lnk') -Force
+    }"     
+      ]]>
+    </Property>    
+    <CustomAction Id="DoLegacyUninstall" Directory="TempFolder" ExeCommand="[LEGACY_UNINSTALL_SCRIPT]" Execute="deferred" Impersonate="no" Return="ignore"/>
     <InstallExecuteSequence>
-      <Custom Action="DoUninstallHKCU" Before="InstallInitialize">WIN_DIR_STAT_HKCU AND NOT REMOVE</Custom>
-      <Custom Action="WaitForProcessHKCU" After="DoUninstallHKCU">WIN_DIR_STAT_HKCU AND NOT REMOVE</Custom>
-      <Custom Action="DoUninstallHKLM" Before="InstallInitialize">WIN_DIR_STAT_HKLM AND NOT REMOVE</Custom>
-      <Custom Action="WaitForProcessHKLM" After="DoUninstallHKLM">WIN_DIR_STAT_HKLM AND NOT REMOVE</Custom>
+      <Custom Action="DoLegacyUninstall" Before="InstallFiles">(WIN_DIR_STAT_HKCU OR WIN_DIR_STAT_HKLM) AND NOT REMOVE</Custom>
     </InstallExecuteSequence>
     <Property Id="DESKTOP_SHORTCUT_LOCATE">
       <DirectorySearch Id="DesktopFolderSearch" Path="[DesktopFolder]" AssignToProperty="yes">
