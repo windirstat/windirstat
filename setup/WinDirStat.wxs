@@ -34,14 +34,15 @@
         ForEach ($Key in $Keys)
         {
             $Path = $Key.GetValue('InstallLocation')
+            If (-not (Test-Path ($Path + '\*'))) { Continue }
             Remove-Item -Path ($Path + '\wdsh*.chm') -Force
             Remove-Item -Path ($Path + '\wdsr*.dll') -Force
             Remove-Item -Path ($Path + '\WinDirStat*.*') -Force     
             Remove-Item -Path ($Path + '\Uninstall.exe') -Force
             If (-not (Test-Path ($Path + '\*'))) { Remove-Item -Path $Path -Force }
             Remove-Item -Path $Key.PSPath -Force
+            Remove-Item -Path ($env:SystemDrive + '\Users\*\Desktop\WinDirStat.lnk') -Force
         }
-        Remove-Item -Path ($env:SYSTEMDIR + '\Users\*\Desktop\WinDirStat.lnk') -Force
     }"     
       ]]>
     </Property>    
