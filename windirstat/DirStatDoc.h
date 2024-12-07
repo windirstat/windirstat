@@ -108,6 +108,7 @@ protected:
 
     bool HasRootItem() const;
     bool IsRootDone() const;
+    bool IsScanRunning() const;
     CItem* GetRootItem() const;
     CItem* GetZoomItem() const;
     CItemDupe* GetRootItemDupe() const;

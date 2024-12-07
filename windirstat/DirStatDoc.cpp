@@ -372,6 +372,15 @@ bool CDirStatDoc::IsRootDone() const
     return HasRootItem() && m_RootItem->IsDone();
 }
 
+bool CDirStatDoc::IsScanRunning() const
+{
+    if (m_thread == nullptr) return false;
+
+    DWORD exitCode;
+    GetExitCodeThread(m_thread->native_handle(), &exitCode);
+    return (exitCode == STILL_ACTIVE);
+}
+
 CItem* CDirStatDoc::GetRootItem() const
 {
     return m_RootItem;
@@ -901,12 +910,14 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
     static std::unordered_map<UINT, const commandFilter> filters
     {
         // ID                           none   many   early  focus  types
-        { ID_REFRESH_ALL,             { true,  true,  false, false, IT_ANY} },
+        { ID_REFRESH_ALL,             { true,  true,  false, false, IT_ANY } },
         { ID_REFRESH_SELECTED,        { false, true,  false, false, IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY | IT_FILE } },
         { ID_FILTER,                  { true,  true,  true,  false, IT_ANY } },
-        { ID_SAVE_RESULTS,            { true,  true,  false, false, IT_ANY} },
+        { ID_SAVE_RESULTS,            { true,  true,  false, false, IT_ANY } },
+        { ID_VIEW_SHOWUNKNOWN,        { true,  true,  false, false, IT_ANY } },
+        { ID_VIEW_SHOWFREESPACE,      { true,  true,  false, false, IT_ANY } },
         { ID_EDIT_COPY_CLIPBOARD,     { false, true,  true,  false, IT_DRIVE | IT_DIRECTORY | IT_FILE } },
-        { ID_CLEANUP_EMPTY_BIN,       { true,  true,  false, false, IT_ANY} },
+        { ID_CLEANUP_EMPTY_BIN,       { true,  true,  false, false, IT_ANY } },
         { ID_TREEMAP_RESELECT_CHILD,  { true,  true,  true,  false, IT_ANY, reslectAvail } },
         { ID_TREEMAP_SELECT_PARENT,   { false, false, true,  false, IT_ANY, parentNotNull } },
         { ID_TREEMAP_ZOOMIN,          { false, false, false, false, IT_DRIVE | IT_DIRECTORY} },
@@ -952,7 +963,7 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
     allow &= !filter.treeFocus || FileTreeHasFocus() || DupeListHasFocus();
     allow &= filter.allowNone || !items.empty();
     allow &= filter.allowMany || items.size() <= 1;
-    allow &= filter.allowEarly || IsRootDone();
+    allow &= filter.allowEarly || (IsRootDone() && !IsScanRunning());
     if (items.empty()) allow &= filter.extra(nullptr);
     for (const auto& item : items)
     {
@@ -1094,6 +1105,7 @@ void CDirStatDoc::OnCleanupEmptyRecycleBin()
 
 void CDirStatDoc::OnUpdateViewShowFreeSpace(CCmdUI* pCmdUI)
 {
+    OnUpdateCentralHandler(pCmdUI);
     pCmdUI->SetCheck(m_ShowFreeSpace);
 }
 
@@ -1129,6 +1141,7 @@ void CDirStatDoc::OnViewShowFreeSpace()
 
 void CDirStatDoc::OnUpdateViewShowUnknown(CCmdUI* pCmdUI)
 {
+    OnUpdateCentralHandler(pCmdUI);
     pCmdUI->SetCheck(m_ShowUnknown);
 }
 
