@@ -598,9 +598,9 @@ CExtensionData* CDirStatDoc::_pqsortExtensionData;
 // Deletes a file or directory via SHFileOperation.
 // Return: false, if canceled
 //
-bool CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, const bool toTrashBin)
+bool CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, const bool toTrashBin, const bool bypassWarning)
 {
-    if (COptions::ShowDeleteWarning)
+    if (!bypassWarning && COptions::ShowDeleteWarning)
     {
         CDeleteWarningDlg warning(items);
         if (IDYES != warning.DoModal())
@@ -1325,12 +1325,7 @@ void CDirStatDoc::OnCleanupEmptyFolder()
             select->GetPath()).c_str(), MB_YESNO) == IDYES)
         {
             // delete all children
-            CWaitCursor wc;
-            for (const auto& items : select->GetChildren())
-            {
-                std::error_code ec;
-                std::filesystem::remove_all(items->GetPathLong().c_str(), ec);
-            }
+            DeletePhysicalItems(select->GetChildren(), false, true);
         }
     }
 

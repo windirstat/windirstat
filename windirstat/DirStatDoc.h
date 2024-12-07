@@ -132,7 +132,7 @@ protected:
     void SortExtensionData(std::vector<std::wstring>& sortedExtensions);
     void SetExtensionColors(const std::vector<std::wstring>& sortedExtensions);
     static CExtensionData* _pqsortExtensionData;
-    bool DeletePhysicalItems(const std::vector<CItem*>& items, bool toTrashBin);
+    bool DeletePhysicalItems(const std::vector<CItem*>& items, bool toTrashBin, bool bypassWarning = false);
     void SetZoomItem(CItem* item);
     static void AskForConfirmation(USERDEFINEDCLEANUP* udc, const CItem* item);
     void PerformUserDefinedCleanup(USERDEFINEDCLEANUP* udc, const CItem* item);
