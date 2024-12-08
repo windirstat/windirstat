@@ -1,4 +1,4 @@
-# WinDirStat 2.1.0 (Upcoming)
+# WinDirStat 2.1.1
 
 ## Enhancements
 * Ability to exclude folders by path
