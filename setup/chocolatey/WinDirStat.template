@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
+  <metadata>
+    <id>WinDirStat</id>
+    <version></version>
+    <packageSourceUrl>https://github.com/windirstat/windirstat</packageSourceUrl>
+    <owners>NoMoreFood</owners>
+    <title>WinDirStat</title>
+    <authors>Bernhard Seifert, Oliver Schneider, Bryan Berns</authors>
+    <projectUrl>https://github.com/windirstat/windirstat</projectUrl>
+    <copyright>2003-2024 WinDirStat Team</copyright>
+    <iconUrl>https://github.com/windirstat/windirstat/raw/master/windirstat/logos/logo_256px.png</iconUrl>
+    <licenseUrl>https://raw.githubusercontent.com/windirstat/windirstat/refs/heads/master/LICENSE.md</licenseUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <projectSourceUrl>https://github.com/windirstat/windirstat</projectSourceUrl>
+    <docsUrl>https://github.com/windirstat/windirstat</docsUrl>
+    <bugTrackerUrl>https://github.com/windirstat/windirstat/issues</bugTrackerUrl>
+    <tags>windows treemap cleanup disk-space-analyzer duplicate-detection treemaps disk-usage-analyzer</tags>
+    <summary>WinDirStat is a disk usage statistics viewer and cleanup tool for Microsoft Windows</summary>
+    <description>WinDirStat is a disk usage statistics viewer and cleanup tool for Microsoft Windows</description>
+    <releaseNotes>https://raw.githubusercontent.com/windirstat/windirstat/refs/heads/master/CHANGELOG.md</releaseNotes>
+  </metadata>
+  <files>
+    <file src="tools\**" target="tools" />
+  </files>
+</package>
