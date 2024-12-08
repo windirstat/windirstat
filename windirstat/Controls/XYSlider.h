@@ -21,8 +21,6 @@
 
 #pragma once
 
-constexpr UINT XYSLIDER_CHANGED = 0x88; // Notification code to parent
-
 //
 // CXySlider. A two-dimensional slider.
 //
@@ -30,8 +28,9 @@ class CXySlider final : public CStatic
 {
     DECLARE_DYNAMIC(CXySlider)
 
-    static const UINT XY_SETPOS; // lparam = POINT *
-    static const UINT XY_GETPOS; // lparam = POINT *
+    static constexpr UINT XYSLIDER_CHANGED = 0x88; // Notification code to parent
+    static constexpr UINT XY_SETPOS = WM_USER + 100; // lparam = POINT *
+    static constexpr UINT XY_GETPOS = WM_USER + 101; // lparam = POINT *
 
     CXySlider() = default;
 

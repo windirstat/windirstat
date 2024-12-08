@@ -282,7 +282,7 @@ void CFileDupeControl::OnItemDoubleClick(const int i)
     }
 }
 
-void CFileDupeControl::PrepareDefaultMenu(CMenu* menu, const CItemDupe* item)
+void CFileDupeControl::PrepareDefaultMenu(CMenu* menu, const CItemDupe* item) const
 {
     if (const CItem * ditem = item->GetItem(); ditem != nullptr && ditem->TmiIsLeaf())
     {

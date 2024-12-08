@@ -27,22 +27,13 @@
 
 IMPLEMENT_DYNAMIC(CXySlider, CStatic)
 
-const UINT CXySlider::XY_SETPOS = WM_USER + 100;
-const UINT CXySlider::XY_GETPOS = WM_USER + 101;
-
 void AFXAPI DDX_XySlider(CDataExchange* pDX, int nIDC, CPoint& value)
 {
     pDX->PrepareCtrl(nIDC);
     HWND hWndCtrl;
     pDX->m_pDlgWnd->GetDlgItem(nIDC, &hWndCtrl);
-    if (pDX->m_bSaveAndValidate)
-    {
-        ::SendMessage(hWndCtrl, CXySlider::XY_GETPOS, 0, reinterpret_cast<LPARAM>(&value));
-    }
-    else
-    {
-        ::SendMessage(hWndCtrl, CXySlider::XY_SETPOS, 0, reinterpret_cast<LPARAM>(&value));
-    }
+    SendMessage(hWndCtrl, pDX->m_bSaveAndValidate ? CXySlider::XY_GETPOS : CXySlider::XY_SETPOS,
+        0, reinterpret_cast<LPARAM>(&value));
 }
 
 void CXySlider::Initialize()
@@ -158,14 +149,14 @@ void CXySlider::CheckMinMax(LONG& val, const int minVal, const int maxVal) const
 
 void CXySlider::InternToExtern()
 {
-    m_ExternalPos.x = static_cast<int>(roundaway(static_cast<double>(m_Pos.x) * m_ExternalRange.cx / m_Range.cx));
-    m_ExternalPos.y = static_cast<int>(roundaway(static_cast<double>(m_Pos.y) * m_ExternalRange.cy / m_Range.cy));
+    m_ExternalPos.x = roundaway(static_cast<double>(m_Pos.x) * m_ExternalRange.cx / m_Range.cx);
+    m_ExternalPos.y = roundaway(static_cast<double>(m_Pos.y) * m_ExternalRange.cy / m_Range.cy);
 }
 
 void CXySlider::ExternToIntern()
 {
-    m_Pos.x = static_cast<int>(roundaway(static_cast<double>(m_ExternalPos.x) * m_Range.cx / m_ExternalRange.cx));
-    m_Pos.y = static_cast<int>(roundaway(static_cast<double>(m_ExternalPos.y) * m_Range.cy / m_ExternalRange.cy));
+    m_Pos.x = roundaway(static_cast<double>(m_ExternalPos.x) * m_Range.cx / m_ExternalRange.cx);
+    m_Pos.y = roundaway(static_cast<double>(m_ExternalPos.y) * m_Range.cy / m_ExternalRange.cy);
 }
 
 void CXySlider::NotifyParent() const

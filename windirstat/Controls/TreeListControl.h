@@ -75,7 +75,7 @@ public:
     virtual short GetImageToCache() const = 0;
 
     void DrawPacman(const CDC* pdc, const CRect& rc, COLORREF bgColor) const;
-    void SortChildren(const SSorting& sorting);
+    void SortChildren(const SSorting& sorting) const;
     CTreeListItem* GetSortedChild(int i) const;
     int FindSortedChild(const CTreeListItem* child) const;
     CTreeListItem* GetParent() const;
@@ -84,9 +84,9 @@ public:
     bool HasSiblings() const;
     bool HasChildren() const;
     bool IsExpanded() const;
-    void SetExpanded(bool expanded = true);
+    void SetExpanded(bool expanded = true) const;
     bool IsVisible() const { return m_VisualInfo != nullptr; }
-    void SetVisible(CTreeListControl * control, bool visible = true);
+    void SetVisible(CTreeListControl * control, bool visible = true) const;
     unsigned char GetIndent() const;
     void SetIndent(unsigned char indent) const;
     CRect GetPlusMinusRect() const;
@@ -94,7 +94,7 @@ public:
     CRect GetTitleRect() const;
     void SetTitleRect(const CRect& rc) const;
     int GetScrollPosition() const;
-    void SetScrollPosition(int top);
+    void SetScrollPosition(int top) const;
     void StartPacman() const;
     void StopPacman() const;
     void DrivePacman() const;
@@ -120,7 +120,7 @@ class CTreeListControl : public COwnerDrawnListControl
     void SysColorChanged() override;
     virtual void SetRootItem(CTreeListItem* root);
     void OnChildAdded(const CTreeListItem* parent, CTreeListItem* child);
-    void OnChildRemoved(CTreeListItem* parent, CTreeListItem* child);
+    void OnChildRemoved(const CTreeListItem* parent, CTreeListItem* child);
     void OnRemovingAllChildren(const CTreeListItem* parent);
     CTreeListItem* GetItem(int i) const;
     bool IsItemSelected(const CTreeListItem* item) const;

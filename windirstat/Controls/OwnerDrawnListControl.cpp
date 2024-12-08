@@ -573,7 +573,7 @@ BOOL COwnerDrawnListControl::OnEraseBkgnd(CDC* pDC)
 
     // Calculate where the columns end on the right
     int tableRight = -GetScrollPos(SB_HORZ);
-    for (int i = 0; i < GetHeaderCtrl()->GetItemCount(); i++)
+    for (int i = 0, itemMax = GetHeaderCtrl()->GetItemCount(); i < itemMax; i++)
     {
         HDITEM hdi{ HDI_WIDTH };
         GetHeaderCtrl()->GetItem(i, &hdi);
@@ -601,7 +601,7 @@ void COwnerDrawnListControl::OnHdnDividerdblclick(NMHDR* pNMHDR, LRESULT* pResul
     const int subitem = ColumnToSubItem(column);
 
     int width = 10;
-    for (int i = 0; i < GetItemCount(); i++)
+    for (int i = 0, itemMax = GetItemCount(); i < itemMax; i++)
     {
         width = max(width, GetSubItemWidth(GetItem(i), subitem));
     }

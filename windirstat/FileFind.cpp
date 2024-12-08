@@ -81,12 +81,21 @@ bool FileFindEnhanced::FindNextFile()
         m_Name.resize(nameLength);
         std::memcpy(m_Name.data(), m_CurrentInfo->FileName, nameLength * sizeof(WCHAR));
 
-        // special case for reparse on initial run points - update attributes
+        // special case for reparse on initial run points since it will
+        // return the attributes on the destination folder and not the reparse
+        // point attributes itself that we want
         if (m_Firstrun)
         {
-            std::wstring initialPath = GetFilePathLong();
-            if (IsDots()) initialPath.pop_back();
-            m_CurrentInfo->FileAttributes = GetFileAttributes(initialPath.c_str());
+            // Use cached value passed in from previous capture
+            m_CurrentInfo->FileAttributes = m_InitialAttributes;
+
+            // Fallback if cached value was not passed
+            if (m_CurrentInfo->FileAttributes == INVALID_FILE_ATTRIBUTES)
+            {
+                std::wstring initialPath = GetFilePathLong();
+                if (IsDots()) initialPath.pop_back();
+                m_CurrentInfo->FileAttributes = GetFileAttributes(initialPath.c_str());
+            }
         }
     }
 
@@ -94,10 +103,11 @@ bool FileFindEnhanced::FindNextFile()
     return success;
 }
 
-bool FileFindEnhanced::FindFile(const std::wstring & strFolder, const std::wstring& strName)
+bool FileFindEnhanced::FindFile(const std::wstring & strFolder, const std::wstring& strName, const DWORD attr)
 {
     // stash the search pattern for later use
     m_Search = strName;
+    m_InitialAttributes = attr;
 
     // convert the path to a long path that is compatible with the other call
     m_Base = strFolder;

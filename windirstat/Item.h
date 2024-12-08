@@ -179,6 +179,9 @@ public:
     void UpwardSubtractReadJobs(ULONG count);
     void UpwardUpdateLastChange(const FILETIME& t);
     void UpwardRecalcLastChange(bool withoutItem = false);
+    void ExtensionDataAdd() const;
+    void ExtensionDataRemove() const;
+    void ExtensionDataRemoveChildren() const;
     ULONGLONG GetSizePhysical() const;
     ULONGLONG GetSizeLogical() const;
     void SetSizePhysical(ULONGLONG size);
@@ -218,7 +221,6 @@ public:
     CItem* FindUnknownItem() const;
     void UpdateUnknownItem() const;
     void RemoveUnknownItem();
-    void CollectExtensionData(CExtensionData* ed) const;
     std::wstring GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CItem*>* queue);
 
     bool IsDone() const
@@ -272,13 +274,13 @@ private:
         std::atomic<ULONG> m_Jobs = 0;    // # "read jobs" in subtree.
     };
 
-    RECT m_Rect;                                // To support TreeMapView
-    std::wstring m_Name;                        // Display name
-    LPCWSTR m_Extension = nullptr;              // Cache of extension (it's used often)
-    FILETIME m_LastChange = {0, 0};             // Last modification time of self or subtree
-    CHILDINFO* m_FolderInfo = nullptr;          // Child information for non-files
-    std::atomic<ULONGLONG> m_SizePhysical = 0;  // Total physical size of self or subtree
-    std::atomic<ULONGLONG> m_SizeLogical = 0;   // Total local size of self or subtree
-    DWORD m_Attributes = 0;                     // Packed file attributes of the item
-    ITEMTYPE m_Type;                            // Indicates our type.
+    RECT m_Rect;                                  // To support TreeMapView
+    std::wstring m_Name;                          // Display name
+    LPCWSTR m_Extension = nullptr;                // Cache of extension (it's used often)
+    FILETIME m_LastChange = {0, 0};               // Last modification time of self or subtree
+    CHILDINFO* m_FolderInfo = nullptr;            // Child information for non-files
+    std::atomic<ULONGLONG> m_SizePhysical = 0;    // Total physical size of self or subtree
+    std::atomic<ULONGLONG> m_SizeLogical = 0;     // Total local size of self or subtree
+    DWORD m_Attributes = INVALID_FILE_ATTRIBUTES; // File or directory attributes of the item
+    ITEMTYPE m_Type;                              // Indicates our type.
 };

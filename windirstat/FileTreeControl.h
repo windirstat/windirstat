@@ -36,7 +36,7 @@ protected:
     static CFileTreeControl * m_Singleton;
 
     void OnItemDoubleClick(int i) override;
-    void PrepareDefaultMenu(CMenu* menu, const CItem* item);
+    void PrepareDefaultMenu(CMenu* menu, const CItem* item) const;
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnContextMenu(CWnd* /*pWnd*/, CPoint /*point*/);

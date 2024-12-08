@@ -145,12 +145,12 @@ int CTreeListItem::GetScrollPosition() const
     return m_VisualInfo->control->GetItemScrollPosition(this);
 }
 
-void CTreeListItem::SetScrollPosition(const int top)
+void CTreeListItem::SetScrollPosition(const int top) const
 {
     m_VisualInfo->control->SetItemScrollPosition(this, top);
 }
 
-void CTreeListItem::SortChildren(const SSorting& sorting)
+void CTreeListItem::SortChildren(const SSorting& sorting) const
 {
     if (!IsVisible())
     {
@@ -166,9 +166,9 @@ void CTreeListItem::SortChildren(const SSorting& sorting)
 
     // sort by size for proper treemap rendering
     std::ranges::sort(m_VisualInfo->sortedChildren, [sorting](auto item1, auto item2)
-        {
-            return item1->CompareString(item2, sorting) < 0;
-        });
+    {
+        return item1->CompareString(item2, sorting) < 0;
+    });
 }
 
 CTreeListItem* CTreeListItem::GetSortedChild(const int i) const
@@ -215,7 +215,7 @@ int CTreeListItem::Compare(const CSortingListItem* baseOther, const int subitem)
 
 int CTreeListItem::FindSortedChild(const CTreeListItem* child) const
 {
-    for (int i = 0; i < GetTreeListChildCount(); i++)
+    for (int i = 0, maxChild = GetTreeListChildCount(); i < maxChild; i++)
     {
         if (child == GetSortedChild(i))
         {
@@ -269,13 +269,13 @@ bool CTreeListItem::IsExpanded() const
     return m_VisualInfo->isExpanded;
 }
 
-void CTreeListItem::SetExpanded(const bool expanded)
+void CTreeListItem::SetExpanded(const bool expanded) const
 {
     ASSERT(IsVisible());
     m_VisualInfo->isExpanded = expanded;
 }
 
-void CTreeListItem::SetVisible(CTreeListControl* control, const bool visible)
+void CTreeListItem::SetVisible(CTreeListControl* control, const bool visible) const
 {
     if (visible)
     {
@@ -689,7 +689,7 @@ void CTreeListControl::CollapseItem(const int i)
     LockWindowUpdate();
 
     int todelete = 0;
-    for (int k = i + 1; k < GetItemCount(); k++)
+    for (int k = i + 1, kMax = GetItemCount(); k < kMax; k++)
     {
         const CTreeListItem* child = GetItem(k);
         if (child->GetIndent() <= item->GetIndent())
@@ -884,7 +884,7 @@ void CTreeListControl::OnChildAdded(const CTreeListItem* parent, CTreeListItem* 
     Sort();
 }
 
-void CTreeListControl::OnChildRemoved(CTreeListItem* parent, CTreeListItem* child)
+void CTreeListControl::OnChildRemoved(const CTreeListItem* parent, CTreeListItem* child)
 {
     if (!parent->IsVisible())
     {

@@ -23,6 +23,8 @@
 #include "SelectObject.h"
 #include "TreeMap.h"
 
+#pragma strict_gs_check(off)
+
 #include <vector>
 
 constexpr COLORREF BGR(auto b, auto g, auto r)
@@ -112,49 +114,9 @@ void CColorSpace::DistributeFirst(int& first, int& second, int& third)
 
 /////////////////////////////////////////////////////////////////////////////
 
-const CTreeMap::Options CTreeMap::_defaultOptions = {
-    KDirStatStyle,
-    false,
-    RGB(0, 0, 0),
-    0.88,
-    0.38,
-    0.91,
-    0.13,
-    -1.0,
-    -1.0
-};
-
-const CTreeMap::Options CTreeMap::_defaultOptionsOld = {
-    KDirStatStyle,
-    false,
-    RGB(0, 0, 0),
-    0.85,
-    0.4,
-    0.9,
-    0.15,
-    -1.0,
-    -1.0
-};
-
-const COLORREF CTreeMap::_defaultCushionColors[] = {
-    RGB(0, 0, 255),
-    RGB(255, 0, 0),
-    RGB(0, 255, 0),
-    RGB(0, 255, 255),
-    RGB(255, 0, 255),
-    RGB(255, 255, 0),
-    RGB(150, 150, 255),
-    RGB(255, 150, 150),
-    RGB(150, 255, 150),
-    RGB(150, 255, 255),
-    RGB(255, 150, 255),
-    RGB(255, 255, 150),
-    RGB(255, 255, 255)
-};
-
 void CTreeMap::GetDefaultPalette(std::vector<COLORREF>& palette)
 {
-    EqualizeColors(_defaultCushionColors, _countof(_defaultCushionColors), palette);
+    EqualizeColors(DefaultCushionColors, _countof(DefaultCushionColors), palette);
 }
 
 void CTreeMap::EqualizeColors(const COLORREF* colors, const int count, std::vector<COLORREF>& out)
@@ -169,12 +131,12 @@ void CTreeMap::EqualizeColors(const COLORREF* colors, const int count, std::vect
 
 CTreeMap::Options CTreeMap::GetDefaults()
 {
-    return _defaultOptions;
+    return DefaultOptions;
 }
 
 CTreeMap::CTreeMap()
 {
-    SetOptions(&_defaultOptions);
+    SetOptions(&DefaultOptions);
 }
 
 void CTreeMap::SetOptions(const Options* options)
@@ -379,7 +341,8 @@ CTreeMap::Item* CTreeMap::FindItemByPoint(Item* item, const CPoint point)
         ASSERT(item->TmiGetSize() > 0);
         ASSERT(item->TmiGetChildCount() > 0);
 
-        for (int i = 0; i < item->TmiGetChildCount(); i++)
+        const auto childCount = item->TmiGetChildCount();
+        for (int i = 0; i < childCount; i++)
         {
             Item* child = item->TmiGetChild(i);
 
@@ -512,10 +475,7 @@ void CTreeMap::RecurseDrawGraph(std::vector<COLORREF>& bitmap, Item* item, const
     double surface[4] = {0, 0, 0, 0};
     if (IsCushionShading())
     {
-        for (unsigned int i = 0; i < _countof(surface); i++)
-        {
-            surface[i] = psurface[i];
-        }
+        std::copy_n(psurface, _countof(surface), surface);
 
         if (!asroot)
         {
@@ -532,31 +492,14 @@ void CTreeMap::RecurseDrawGraph(std::vector<COLORREF>& bitmap, Item* item, const
         ASSERT(item->TmiGetChildCount() > 0);
         ASSERT(item->TmiGetSize() > 0);
 
-        DrawChildren(bitmap, item, surface, h, flags);
-    }
-}
-
-// My first approach was to make this member pure virtual and have three
-// classes derived from CTreeMap. The disadvantage is then, that we cannot
-// simply have a member variable of type CTreeMap but have to deal with
-// pointers, factory methods and explicit destruction. It's not worth.
-
-void CTreeMap::DrawChildren(std::vector<COLORREF>& bitmap, const Item* parent,
-    const double* surface, const double h, const DWORD flags)
-{
-    switch (m_Options.style)
-    {
-    case KDirStatStyle:
+        if (m_Options.style == KDirStatStyle)
         {
-            KDirStat_DrawChildren(bitmap, parent, surface, h, flags);
+            KDirStat_DrawChildren(bitmap, item, surface, h, flags);
         }
-        break;
-
-    case SequoiaViewStyle:
+        else
         {
-            SequoiaView_DrawChildren(bitmap, parent, surface, h, flags);
+            SequoiaView_DrawChildren(bitmap, item, surface, h, flags);
         }
-        break;
     }
 }
 
@@ -587,7 +530,7 @@ void CTreeMap::KDirStat_DrawChildren(std::vector<COLORREF>& bitmap, const Item* 
     for (std::size_t row = 0; row < rows.size(); row++)
     {
         const double fBottom = top + rows[row] * height;
-        int bottom           = static_cast<int>(fBottom);
+        int bottom = static_cast<int>(fBottom);
         if (row == rows.size() - 1)
         {
             bottom = horizontalRows ? rc.bottom : rc.right;
@@ -663,19 +606,17 @@ bool CTreeMap::KDirStat_ArrangeChildren(
     std::vector<double>& childWidth,
     std::vector<double>& rows,
     std::vector<int>& childrenPerRow
-)
+) const
 {
     ASSERT(!parent->TmiIsLeaf());
     ASSERT(parent->TmiGetChildCount() > 0);
 
+    const auto childCount = parent->TmiGetChildCount();
     if (parent->TmiGetSize() == 0)
     {
         rows.emplace_back(1.0);
-        childrenPerRow.emplace_back(parent->TmiGetChildCount());
-        for (int i = 0; i < parent->TmiGetChildCount(); i++)
-        {
-            childWidth[i] = 1.0 / parent->TmiGetChildCount();
-        }
+        childrenPerRow.emplace_back(childCount);
+        std::ranges::fill(childWidth, 1.0 / childCount);
         return true;
     }
 
@@ -698,8 +639,7 @@ bool CTreeMap::KDirStat_ArrangeChildren(
         }
     }
 
-    int nextChild = 0;
-    while (nextChild < parent->TmiGetChildCount())
+    for (int nextChild = 0; nextChild < childCount;)
     {
         int childrenUsed = 0;
         rows.emplace_back(KDirStat_CalculateNextRow(parent, nextChild, width, childrenUsed, childWidth));
@@ -710,7 +650,7 @@ bool CTreeMap::KDirStat_ArrangeChildren(
     return horizontalRows;
 }
 
-double CTreeMap::KDirStat_CalculateNextRow(const Item* parent, const int nextChild, const double width, int& childrenUsed, std::vector<double>& childWidth)
+double CTreeMap::KDirStat_CalculateNextRow(const Item* parent, const int nextChild, const double width, int& childrenUsed, std::vector<double>& childWidth) const
 {
     static constexpr double _minProportion = 0.4;
     ASSERT(_minProportion < 1.);
@@ -723,8 +663,9 @@ double CTreeMap::KDirStat_CalculateNextRow(const Item* parent, const int nextChi
     ULONGLONG sizeUsed = 0;
     double rowHeight   = 0;
 
-    int i = 0;
-    for (i = nextChild; i < parent->TmiGetChildCount(); i++)
+    int i = nextChild;
+    const auto childCount = parent->TmiGetChildCount();
+    for (; i < childCount; i++)
     {
         const ULONGLONG childSize = parent->TmiGetChild(i)->TmiGetSize();
         if (childSize == 0)
@@ -764,7 +705,7 @@ double CTreeMap::KDirStat_CalculateNextRow(const Item* parent, const int nextChi
     // and rowHeight is the height of the row.
 
     // We add the rest of the children, if their size is 0.
-    while (i < parent->TmiGetChildCount() && parent->TmiGetChild(i)->TmiGetSize() == 0)
+    while (i < childCount && parent->TmiGetChild(i)->TmiGetSize() == 0)
     {
         i++;
     }
@@ -802,11 +743,8 @@ void CTreeMap::SequoiaView_DrawChildren(std::vector<COLORREF>& bitmap, const Ite
     // Scale factor
     const double sizePerSquarePixel = static_cast<double>(parent->TmiGetSize()) / remaining.Width() / remaining.Height();
 
-    // First child for next row
-    int head = 0;
-
     // At least one child left
-    while (head < parent->TmiGetChildCount())
+    for (int head = 0, maxChild = parent->TmiGetChildCount(); head < maxChild;)
     {
         ASSERT(remaining.Width() > 0);
         ASSERT(remaining.Height() > 0);
@@ -835,7 +773,7 @@ void CTreeMap::SequoiaView_DrawChildren(std::vector<COLORREF>& bitmap, const Ite
         ULONGLONG sum = 0;
 
         // This condition will hold at least once.
-        while (rowEnd < parent->TmiGetChildCount())
+        while (rowEnd < maxChild)
         {
             // We check a virtual row made up of child(rowBegin)...child(rowEnd) here.
 
@@ -845,7 +783,7 @@ void CTreeMap::SequoiaView_DrawChildren(std::vector<COLORREF>& bitmap, const Ite
             // If sizes of the rest of the children is zero, we add all of them
             if (rmin == 0)
             {
-                rowEnd = parent->TmiGetChildCount();
+                rowEnd = maxChild;
                 break;
             }
 
@@ -971,7 +909,7 @@ void CTreeMap::SequoiaView_DrawChildren(std::vector<COLORREF>& bitmap, const Ite
 
         if (remaining.Width() <= 0 || remaining.Height() <= 0)
         {
-            if (head < parent->TmiGetChildCount())
+            if (head < maxChild)
             {
                 parent->TmiGetChild(head)->TmiSetRectangle(CRect(-1, -1, -1, -1));
             }
@@ -990,7 +928,7 @@ bool CTreeMap::IsCushionShading() const
     && m_Options.scaleFactor > 0.0;
 }
 
-void CTreeMap::RenderLeaf(std::vector<COLORREF>& bitmap, const Item* item, const double* surface)
+void CTreeMap::RenderLeaf(std::vector<COLORREF>& bitmap, const Item* item, const double* surface) const
 {
     CRect rc = item->TmiGetRectangle();
 
@@ -1007,7 +945,7 @@ void CTreeMap::RenderLeaf(std::vector<COLORREF>& bitmap, const Item* item, const
     RenderRectangle(bitmap, rc, surface, item->TmiGetGraphColor());
 }
 
-void CTreeMap::RenderRectangle(std::vector<COLORREF>& bitmap, const CRect& rc, const double* surface, DWORD color)
+void CTreeMap::RenderRectangle(std::vector<COLORREF>& bitmap, const CRect& rc, const double* surface, DWORD color) const
 {
     double brightness = m_Options.brightness;
 
@@ -1063,7 +1001,7 @@ void CTreeMap::DrawSolidRect(std::vector<COLORREF>& bitmap, const CRect& rc, con
     }
 }
 
-void CTreeMap::DrawCushion(std::vector<COLORREF>& bitmap, const CRect& rc, const double* surface, const COLORREF col, const double brightness)
+void CTreeMap::DrawCushion(std::vector<COLORREF>& bitmap, const CRect& rc, const double* surface, const COLORREF col, const double brightness) const
 {
     // Cushion parameters
     const double Ia = m_Options.ambientLight;
@@ -1163,25 +1101,23 @@ void CTreeMapPreview::BuildDemoData()
 {
     CTreeMap::GetDefaultPalette(m_Colors);
     int col = -1;
-    int i;
-    // FIXME: uses too many hardcoded literals without explanation
 
     std::vector<CItem*> c4;
     COLORREF color = GetNextColor(col);
-    for (i = 0; i < 30; i++)
+    for (int i = 0; i < 30; i++)
     {
         c4.emplace_back(new CItem(1 + 100 * i, color));
     }
 
     std::vector<CItem*> c0;
-    for (i = 0; i < 8; i++)
+    for (int i = 0; i < 8; i++)
     {
         c0.emplace_back(new CItem(500 + 600 * i, GetNextColor(col)));
     }
 
     std::vector<CItem*> c1;
     color = GetNextColor(col);
-    for (i = 0; i < 10; i++)
+    for (int i = 0; i < 10; i++)
     {
         c1.emplace_back(new CItem(1 + 200 * i, color));
     }
@@ -1189,7 +1125,7 @@ void CTreeMapPreview::BuildDemoData()
 
     std::vector<CItem*> c2;
     color = GetNextColor(col);
-    for (i = 0; i < 160; i++)
+    for (int i = 0; i < 160; i++)
     {
         c2.emplace_back(new CItem(1 + i, color));
     }
@@ -1208,7 +1144,7 @@ void CTreeMapPreview::BuildDemoData()
     m_Root = new CItem(c10);
 }
 
-COLORREF CTreeMapPreview::GetNextColor(int& i)
+COLORREF CTreeMapPreview::GetNextColor(int& i) const
 {
     i++;
     i %= m_Colors.size();

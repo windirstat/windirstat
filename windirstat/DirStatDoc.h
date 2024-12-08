@@ -45,9 +45,9 @@ class CItemDupe;
 //
 struct SExtensionRecord
 {
-    ULONGLONG files;
-    ULONGLONG bytes;
-    COLORREF color;
+    std::atomic<ULONGLONG> files = 0;
+    std::atomic<ULONGLONG> bytes = 0;
+    COLORREF color = 0;
 };
 
 //
@@ -98,9 +98,10 @@ protected:
     void SetTitlePrefix(const std::wstring& prefix) const;
 
     COLORREF GetCushionColor(const std::wstring& ext);
-    COLORREF GetZoomColor();
+    COLORREF GetZoomColor() const;
 
-    const CExtensionData* GetExtensionData();
+    CExtensionData* GetExtensionData();
+    SExtensionRecord* GetExtensionDataRecord(const std::wstring& ext);
     ULONGLONG GetRootSize() const;
 
     static bool IsDrive(const std::wstring& spec);
@@ -118,25 +119,24 @@ protected:
     std::wstring GetHighlightExtension();
 
     void UnlinkRoot();
-    bool UserDefinedCleanupWorksForItem(USERDEFINEDCLEANUP* udc, const CItem* item);
+    bool UserDefinedCleanupWorksForItem(USERDEFINEDCLEANUP* udc, const CItem* item) const;
     void StartScanningEngine(std::vector<CItem*> items);
     void StopScanningEngine();
-    void RefreshItem(const std::vector<CItem*>& item);
-    void RefreshItem(CItem* item) { RefreshItem(std::vector{ item }); }
+    void RefreshItem(const std::vector<CItem*>& item) const;
+    void RefreshItem(CItem* item) const { RefreshItem(std::vector{ item }); }
 
     static void OpenItem(const CItem* item, const std::wstring& verb = {});
 
-    void RecurseRefreshReparsePoints(CItem* items);
+    void RecurseRefreshReparsePoints(CItem* items) const;
     std::vector<CItem*> GetDriveItems() const;
     void RebuildExtensionData();
     void SortExtensionData(std::vector<std::wstring>& sortedExtensions);
     void SetExtensionColors(const std::vector<std::wstring>& sortedExtensions);
-    static CExtensionData* _pqsortExtensionData;
     bool DeletePhysicalItems(const std::vector<CItem*>& items, bool toTrashBin, bool bypassWarning = false);
     void SetZoomItem(CItem* item);
     static void AskForConfirmation(USERDEFINEDCLEANUP* udc, const CItem* item);
     void PerformUserDefinedCleanup(USERDEFINEDCLEANUP* udc, const CItem* item);
-    void RefreshAfterUserDefinedCleanup(const USERDEFINEDCLEANUP* udc, CItem* item);
+    void RefreshAfterUserDefinedCleanup(const USERDEFINEDCLEANUP* udc, CItem* item) const;
     void RecursiveUserDefinedCleanup(USERDEFINEDCLEANUP* udc, const std::wstring& rootPath, const std::wstring& currentPath);
     static void CallUserDefinedCleanup(bool isDirectory, const std::wstring& format, const std::wstring& rootPath, const std::wstring& currentPath, bool showConsoleWindow, bool wait);
     static std::wstring BuildUserDefinedCleanupCommandLine(const std::wstring& format, const std::wstring& rootPath, const std::wstring& currentPath);
@@ -163,7 +163,7 @@ protected:
     std::wstring m_HighlightExtension; // Currently highlighted extension
     CItem* m_ZoomItem = nullptr;   // Current "zoom root"
 
-    bool m_ExtensionDataValid = false; // If this is false, m_ExtensionData must be rebuilt
+    std::mutex m_ExtensionMutex;
     CExtensionData m_ExtensionData;    // Base for the extension view and cushion colors
 
     CList<CItem*, CItem*> m_ReselectChildStack; // Stack for the "Re-select Child"-Feature

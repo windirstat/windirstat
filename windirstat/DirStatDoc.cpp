@@ -246,11 +246,11 @@ BOOL CDirStatDoc::OnOpenDocument(LPCWSTR lpszPathName)
             ASSERT(FALSE);
         }
 
-        LPCWSTR name = ppszName != nullptr ? ppszName : L"This PC";
+        LPCWSTR name = ppszName != nullptr ? const_cast<LPCWSTR>(*ppszName) : L"This PC";
         m_RootItem = new CItem(IT_MYCOMPUTER | ITF_ROOTITEM, name);
         for (const auto & rootFolder : rootFolders)
         {
-            const auto drive = new CItem(IT_DRIVE, rootFolder);
+            auto drive = new CItem(IT_DRIVE, rootFolder);
             driveItems.emplace_back(drive);
             m_RootItem->AddChild(drive);
         }
@@ -319,22 +319,24 @@ void CDirStatDoc::SetTitlePrefix(const std::wstring& prefix) const
 COLORREF CDirStatDoc::GetCushionColor(const std::wstring & ext)
 {
     const auto& record = GetExtensionData()->find(ext);
-    VERIFY(record != GetExtensionData()->end());
+    ASSERT(record != GetExtensionData()->end());
     return record->second.color;
 }
 
-COLORREF CDirStatDoc::GetZoomColor()
+COLORREF CDirStatDoc::GetZoomColor() const
 {
     return RGB(0, 0, 255);
 }
 
-const CExtensionData* CDirStatDoc::GetExtensionData()
+CExtensionData* CDirStatDoc::GetExtensionData()
 {
-    if (!m_ExtensionDataValid)
-    {
-        RebuildExtensionData();
-    }
     return &m_ExtensionData;
+}
+
+SExtensionRecord* CDirStatDoc::GetExtensionDataRecord(const std::wstring& ext)
+{
+    std::lock_guard guard(m_ExtensionMutex);
+    return &m_ExtensionData[ext];
 }
 
 ULONGLONG CDirStatDoc::GetRootSize() const
@@ -425,7 +427,7 @@ void CDirStatDoc::UnlinkRoot()
 
 // Determines, whether an UDC works for a given item.
 //
-bool CDirStatDoc::UserDefinedCleanupWorksForItem(USERDEFINEDCLEANUP* udc, const CItem* item)
+bool CDirStatDoc::UserDefinedCleanupWorksForItem(USERDEFINEDCLEANUP* udc, const CItem* item) const
 {
     return item != nullptr && (
         (item->IsType(IT_DRIVE) && udc->WorksForDrives) ||
@@ -468,7 +470,7 @@ void CDirStatDoc::OpenItem(const CItem* item, const std::wstring & verb)
     ShellExecuteEx(&sei);
 }
 
-void CDirStatDoc::RecurseRefreshReparsePoints(CItem* item)
+void CDirStatDoc::RecurseRefreshReparsePoints(CItem* item) const
 {
     std::vector<CItem*> toRefresh;
 
@@ -536,41 +538,24 @@ std::vector<CItem*> CDirStatDoc::GetDriveItems() const
 void CDirStatDoc::RebuildExtensionData()
 {
     CWaitCursor wc;
-
-    m_ExtensionData.clear();
-    if (IsRootDone())
-    {
-        m_RootItem->CollectExtensionData(&m_ExtensionData);
-    }
     
     std::vector<std::wstring> sortedExtensions;
     SortExtensionData(sortedExtensions);
     SetExtensionColors(sortedExtensions);
-
-    m_ExtensionDataValid = true;
 }
 
 void CDirStatDoc::SortExtensionData(std::vector<std::wstring>& sortedExtensions)
 {
     sortedExtensions.resize(m_ExtensionData.size());
-
     for (int i = 0; const auto& ext : m_ExtensionData | std::views::keys)
     {
         sortedExtensions[i++] = ext;
     }
 
-    _pqsortExtensionData = &m_ExtensionData;
-    qsort(sortedExtensions.data(), sortedExtensions.size(), sizeof(std::wstring), [](const LPCVOID item1, const LPCVOID item2)
+    std::ranges::sort(sortedExtensions, [this](const auto& a, const auto& b)
     {
-        const std::wstring &ext1 = *static_cast<const std::wstring*>(item1);
-        const std::wstring &ext2 = *static_cast<const std::wstring*>(item2);
-        const auto& r1 = _pqsortExtensionData->find(ext1);
-        const auto& r2 = _pqsortExtensionData->find(ext2);
-        ASSERT(r1 != _pqsortExtensionData->end());
-        ASSERT(r2 != _pqsortExtensionData->end());
-        return usignum(r2->second.bytes, r1->second.bytes);
+        return m_ExtensionData[a].bytes.load() > m_ExtensionData[b].bytes.load();
     });
-    _pqsortExtensionData = nullptr;
 }
 
 void CDirStatDoc::SetExtensionColors(const std::vector<std::wstring>& sortedExtensions)
@@ -593,8 +578,6 @@ void CDirStatDoc::SetExtensionColors(const std::vector<std::wstring>& sortedExte
     }
 }
 
-CExtensionData* CDirStatDoc::_pqsortExtensionData;
-
 // Deletes a file or directory via SHFileOperation.
 // Return: false, if canceled
 //
@@ -611,7 +594,7 @@ bool CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, const bo
     }
 
     // Fetch the parent item of the current focus / selected item so we can reselect
-    CTreeListItem* reselect = nullptr;
+    const CTreeListItem* reselect = nullptr;
     if (const int mark = CFileTreeControl::Get()->GetSelectionMark(); FileTreeHasFocus() && mark != -1)
         reselect = CFileTreeControl::Get()->GetItem(mark)->GetParent();
 
@@ -684,7 +667,7 @@ void CDirStatDoc::SetZoomItem(CItem* item)
 // If the physical item has been deleted,
 // updates selection, zoom and working item accordingly.
 //
-void CDirStatDoc::RefreshItem(const std::vector<CItem*>& item)
+void CDirStatDoc::RefreshItem(const std::vector<CItem*>& item) const
 {
     GetDocument()->StartScanningEngine(item);
 }
@@ -743,7 +726,7 @@ void CDirStatDoc::PerformUserDefinedCleanup(USERDEFINEDCLEANUP* udc, const CItem
     }
 }
 
-void CDirStatDoc::RefreshAfterUserDefinedCleanup(const USERDEFINEDCLEANUP* udc, CItem* item)
+void CDirStatDoc::RefreshAfterUserDefinedCleanup(const USERDEFINEDCLEANUP* udc, CItem* item) const
 {
     switch (static_cast<REFRESHPOLICY>(udc->RefreshPolicy.Obj()))
     {
@@ -1602,6 +1585,7 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
 
             // Skip pruning if it is a new element
             if (!item->IsDone()) continue;
+            item->ExtensionDataRemoveChildren();
             item->UpwardRecalcLastChange(true);
             item->UpwardSubtractSizePhysical(item->GetSizePhysical());
             item->UpwardSubtractSizeLogical(item->GetSizeLogical());

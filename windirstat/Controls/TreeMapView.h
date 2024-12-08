@@ -58,7 +58,7 @@ protected:
     void EmptyView();
     void DrawEmptyView(CDC* pDC);
 
-    void DrawZoomFrame(CDC* pdc, CRect& rc);
+    void DrawZoomFrame(CDC* pdc, CRect& rc) const;
     void DrawHighlights(CDC* pdc);
 
     void DrawHighlightExtension(CDC* pdc);
@@ -67,7 +67,7 @@ protected:
     void DrawSelection(CDC* pdc);
 
     void HighlightSelectedItem(CDC* pdc, const CItem* item, bool single);
-    void RenderHighlightRectangle(CDC* pdc, CRect& rc);
+    void RenderHighlightRectangle(CDC* pdc, CRect& rc) const;
 
     std::wstring m_PaneTextOverride; // Populated with the last hovered item for a period of time
     bool m_DrawingSuspended = false; // True while the user is resizing the window.

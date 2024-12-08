@@ -156,7 +156,7 @@ void CTreeMapView::OnDraw(CDC * pDC)
     DrawHighlights(pDC);
 }
 
-void CTreeMapView::DrawZoomFrame(CDC* pdc, CRect& rc)
+void CTreeMapView::DrawZoomFrame(CDC* pdc, CRect& rc) const
 {
     constexpr int w = 4;
 
@@ -287,7 +287,7 @@ void CTreeMapView::HighlightSelectedItem(CDC* pdc, const CItem* item, const bool
 
 // A pen and the null brush must be selected.
 //
-void CTreeMapView::RenderHighlightRectangle(CDC* pdc, CRect& rc)
+void CTreeMapView::RenderHighlightRectangle(CDC* pdc, CRect& rc) const
 {
     ASSERT(rc.Width() >= 0);
     ASSERT(rc.Height() >= 0);

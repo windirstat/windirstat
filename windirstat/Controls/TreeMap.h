@@ -217,29 +217,13 @@ public:
 
 protected:
     // The recursive drawing function
-    void RecurseDrawGraph(
-        std::vector<COLORREF>& bitmap,
-        Item* item,
-        const CRect& rc,
-        bool asroot,
-        const double* psurface,
-        double h,
-        DWORD flags
-    );
-
-    // This function switches to KDirStat-, SequoiaView- or Simple_DrawChildren
-    void DrawChildren(
-        std::vector<COLORREF>& bitmap,
-        const Item* parent,
-        const double* surface,
-        double h,
-        DWORD flags
-    );
+    void RecurseDrawGraph(std::vector<COLORREF>& bitmap, Item* item, const CRect& rc,
+        bool asroot, const double* psurface, double h, DWORD flags);
 
     // KDirStat-like squarification
     void KDirStat_DrawChildren(std::vector<COLORREF>& bitmap, const Item* parent, const double* surface, double h, DWORD flags);
-    bool KDirStat_ArrangeChildren(const Item* parent, std::vector<double>& childWidth, std::vector<double>& rows, std::vector<int>& childrenPerRow);
-    double KDirStat_CalculateNextRow(const Item* parent, int nextChild, double width, int& childrenUsed, std::vector<double>& childWidth);
+    bool KDirStat_ArrangeChildren(const Item* parent, std::vector<double>& childWidth, std::vector<double>& rows, std::vector<int>& childrenPerRow) const;
+    double KDirStat_CalculateNextRow(const Item* parent, int nextChild, double width, int& childrenUsed, std::vector<double>& childWidth) const;
 
     // Classical SequoiaView-like squarification
     void SequoiaView_DrawChildren(std::vector<COLORREF>& bitmap, const Item* parent, const double* surface, double h, DWORD flags);
@@ -248,14 +232,13 @@ protected:
     bool IsCushionShading() const;
 
     // Leaves space for grid and then calls RenderRectangle()
-    void RenderLeaf(std::vector<COLORREF>& bitmap, const Item* item, const double* surface);
+    void RenderLeaf(std::vector<COLORREF>& bitmap, const Item* item, const double* surface) const;
 
     // Either calls DrawCushion() or DrawSolidRect()
-    void RenderRectangle(std::vector<COLORREF>& bitmap, const CRect& rc, const double* surface, DWORD color);
-    // void RenderRectangle(CDC *pdc, const CRect& rc, const double *surface, DWORD color);
+    void RenderRectangle(std::vector<COLORREF>& bitmap, const CRect& rc, const double* surface, DWORD color) const;
 
     // Draws the surface using SetPixel()
-    void DrawCushion(std::vector<COLORREF>& bitmap, const CRect& rc, const double* surface, COLORREF col, double brightness);
+    void DrawCushion(std::vector<COLORREF>& bitmap, const CRect& rc, const double* surface, COLORREF col, double brightness) const;
 
     // Draws the surface using FillSolidRect()
     void DrawSolidRect(std::vector<COLORREF>& bitmap, const CRect& rc, COLORREF col, double brightness) const;
@@ -263,9 +246,35 @@ protected:
     // Adds a new ridge to surface
     static void AddRidge(const CRect& rc, double* surface, double h);
 
-    static const Options _defaultOptions;             // Good values. Default for WinDirStat 1.0.2
-    static const Options _defaultOptionsOld;          // WinDirStat 1.0.1 default options
-    static const COLORREF _defaultCushionColors[];    // Standard palette for WinDirStat
+    // Default tree map options
+    static constexpr Options DefaultOptions = {
+        KDirStatStyle,
+        false,
+        RGB(0, 0, 0),
+        0.88,
+        0.38,
+        0.91,
+        0.13,
+        -1.0,
+        -1.0
+    };
+
+    // Standard palette for WinDirStat
+    static constexpr COLORREF DefaultCushionColors[] = {
+        RGB(0, 0, 255),
+        RGB(255, 0, 0),
+        RGB(0, 255, 0),
+        RGB(0, 255, 255),
+        RGB(255, 0, 255),
+        RGB(255, 255, 0),
+        RGB(150, 150, 255),
+        RGB(255, 150, 150),
+        RGB(150, 255, 150),
+        RGB(150, 255, 255),
+        RGB(255, 150, 255),
+        RGB(255, 255, 150),
+        RGB(255, 255, 255)
+    };
 
     CRect m_RenderArea;
 
@@ -365,7 +374,7 @@ public:
 
 protected:
     void BuildDemoData();
-    COLORREF GetNextColor(int& i);
+    COLORREF GetNextColor(int& i) const;
 
     std::vector<COLORREF> m_Colors; // Our color palette
     CItem* m_Root;                  // Demo tree

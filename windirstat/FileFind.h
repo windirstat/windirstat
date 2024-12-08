@@ -45,6 +45,7 @@ class FileFindEnhanced final
     std::wstring m_Base;
     std::wstring m_Name;
     HANDLE m_Handle = nullptr;
+    DWORD m_InitialAttributes = INVALID_FILE_ATTRIBUTES;
     bool m_Firstrun = true;
     FILE_FULL_DIR_INFORMATION* m_CurrentInfo = nullptr;
     static constexpr auto m_Dos = L"\\??\\";
@@ -58,7 +59,7 @@ public:
     ~FileFindEnhanced();
 
     bool FindNextFile();
-    bool FindFile(const std::wstring& strFolder,const std::wstring& strName = L"");
+    bool FindFile(const std::wstring& strFolder,const std::wstring& strName = L"", DWORD attr = INVALID_FILE_ATTRIBUTES);
     bool IsDirectory() const;
     bool IsDots() const;
     bool IsHidden() const;

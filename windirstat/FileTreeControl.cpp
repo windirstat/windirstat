@@ -117,7 +117,7 @@ void CFileTreeControl::OnItemDoubleClick(const int i)
     }
 }
 
-void CFileTreeControl::PrepareDefaultMenu(CMenu* menu, const CItem* item)
+void CFileTreeControl::PrepareDefaultMenu(CMenu* menu, const CItem* item) const
 {
     if (item->TmiIsLeaf())
     {

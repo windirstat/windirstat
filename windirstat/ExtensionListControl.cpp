@@ -30,11 +30,13 @@
 
 /////////////////////////////////////////////////////////////////////////////
 
-CExtensionListControl::CListItem::CListItem(CExtensionListControl* list, const std::wstring & extension, const SExtensionRecord& r)
+CExtensionListControl::CListItem::CListItem(CExtensionListControl* list, const std::wstring& extension, const SExtensionRecord& r)
 {
     m_List = list;
     m_Extension = extension;
-    m_Record = r;
+    m_Bytes = r.bytes;
+    m_Files = r.files;
+    m_Color = r.color;
 }
 
 bool CExtensionListControl::CListItem::DrawSubitem(const int subitem, CDC* pdc, CRect rc, const UINT state, int* width, int* focusLeft) const
@@ -74,7 +76,7 @@ void CExtensionListControl::CListItem::DrawColor(CDC* pdc, CRect rc, const UINT 
     }
 
     CTreeMap treemap;
-    treemap.DrawColorPreview(pdc, rc, m_Record.color, &COptions::TreeMapOptions);
+    treemap.DrawColorPreview(pdc, rc, m_Color, &COptions::TreeMapOptions);
 }
 
 std::wstring CExtensionListControl::CListItem::GetText(const int subitem) const
@@ -83,8 +85,8 @@ std::wstring CExtensionListControl::CListItem::GetText(const int subitem) const
     {
         case COL_EXT_EXTENSION: return GetExtension();
         case COL_EXT_COLOR: return {};
-        case COL_EXT_BYTES: return FormatBytes(m_Record.bytes);
-        case COL_EXT_FILES: return FormatCount(m_Record.files);
+        case COL_EXT_BYTES: return FormatBytes(m_Bytes);
+        case COL_EXT_FILES: return FormatCount(m_Files);
         case COL_EXT_DESCRIPTION: return GetDescription();
         case COL_EXT_BYTESPERCENT: return GetBytesPercent();
         default: ASSERT(FALSE); return {};
@@ -139,7 +141,7 @@ double CExtensionListControl::CListItem::GetBytesFraction() const
         return 0;
     }
 
-    return static_cast<double>(m_Record.bytes) /
+    return static_cast<double>(m_Bytes) /
         static_cast<double>(m_List->GetRootSize());
 }
 
@@ -150,9 +152,9 @@ int CExtensionListControl::CListItem::Compare(const CSortingListItem* baseOther,
     switch (subitem)
     {
         case COL_EXT_COLOR:
-        case COL_EXT_BYTES: return usignum(m_Record.bytes, other->m_Record.bytes);
+        case COL_EXT_BYTES: return usignum(m_Bytes, other->m_Bytes);
         case COL_EXT_EXTENSION: return signum(_wcsicmp(GetExtension().c_str(),other->GetExtension().c_str()));
-        case COL_EXT_FILES: return usignum(m_Record.files, other->m_Record.files);
+        case COL_EXT_FILES: return usignum(m_Files, other->m_Files);
         case COL_EXT_DESCRIPTION: return signum(_wcsicmp(GetDescription().c_str(), other->GetDescription().c_str()));
         case COL_EXT_BYTESPERCENT: return signum(GetBytesFraction() - other->GetBytesFraction());
         default: ASSERT(FALSE); return 0;
@@ -242,7 +244,7 @@ ULONGLONG CExtensionListControl::GetRootSize() const
 
 void CExtensionListControl::SelectExtension(const std::wstring & ext)
 {
-    for (int i = 0; i < GetItemCount(); i++)
+    for (int i = 0, iMax = GetItemCount(); i < iMax; i++)
     {
         if (_wcsicmp(GetListItem(i)->GetExtension().c_str(), ext.c_str()) == 0)
         {

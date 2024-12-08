@@ -53,6 +53,7 @@ CItem::CItem(const ITEMTYPE type, const std::wstring & name) : m_Name(name), m_T
         // The name string on the drive is two parts separated by a pipe.  For example,
         // C:\|Local Disk (C:) is the true path following by the name description
         m_Name = std::format(L"{:.2}|{}", m_Name, FormatVolumeNameOfRootPath(m_Name));
+        m_Attributes = GetFileAttributesW(GetPathLong().c_str());
     }
 
     if (IsType(IT_FILE))
@@ -490,17 +491,19 @@ void CItem::UpdateStatsFromDisk()
     if (IsType(IT_DIRECTORY | IT_FILE))
     {
         FileFindEnhanced finder;
-        if (finder.FindFile(GetFolderPath(),IsType(ITF_ROOTITEM) ? std::wstring() : GetName()))
+        if (finder.FindFile(GetFolderPath(),IsType(ITF_ROOTITEM) ? std::wstring() : GetName(), GetAttributes()))
         {
             SetLastChange(finder.GetLastWriteTime());
             SetAttributes(finder.GetAttributes());
 
             if (IsType(IT_FILE))
             {
+                ExtensionDataRemove();
                 UpwardSubtractSizePhysical(m_SizePhysical);
-                UpwardAddSizePhysical(finder.GetFileSizePhysical());
                 UpwardSubtractSizeLogical(m_SizeLogical);
+                UpwardAddSizePhysical(finder.GetFileSizePhysical());
                 UpwardAddSizeLogical(finder.GetFileSizeLogical());
+                ExtensionDataAdd();
             }
         }
     }
@@ -533,6 +536,7 @@ void CItem::AddChild(CItem* child, const bool addOnly)
         UpwardAddSizePhysical(child->m_SizePhysical);
         UpwardAddSizeLogical(child->m_SizeLogical);
         UpwardUpdateLastChange(child->m_LastChange);
+        ExtensionDataAdd();
     }
 
     child->SetParent(this);
@@ -567,6 +571,11 @@ void CItem::RemoveChild(CItem* child)
 
 void CItem::RemoveAllChildren()
 {
+    if (IsRootItem())
+    {
+        CDirStatDoc::GetDocument()->GetExtensionData()->clear();
+    }
+
     if (m_FolderInfo == nullptr) return;
     CMainFrame::Get()->InvokeInMessageThread([this]
     {
@@ -579,6 +588,7 @@ void CItem::RemoveAllChildren()
         delete child;
     }
     m_FolderInfo->m_Children.clear();
+    
 }
 
 void CItem::UpwardAddFolders(const ULONG dirCount)
@@ -658,6 +668,45 @@ void CItem::UpwardSubtractSizeLogical(const ULONGLONG bytes)
     {
         ASSERT(p->m_SizeLogical - bytes >= 0);
         p->m_SizeLogical -= bytes;
+    }
+}
+
+void CItem::ExtensionDataAdd() const
+{
+    if (!IsType(IT_FILE)) return;
+    const auto record = CDirStatDoc::GetDocument()->GetExtensionDataRecord(GetExtension());
+    record->bytes += GetSizePhysical();
+    record->files += 1;
+}
+
+void CItem::ExtensionDataRemove() const
+{
+    if (!IsType(IT_FILE)) return;
+    const auto record = CDirStatDoc::GetDocument()->GetExtensionDataRecord(GetExtension());
+    record->bytes -= GetSizePhysical();
+    record->files -= 1;
+    if (record->files == 0) CDirStatDoc::GetDocument()->GetExtensionData()->erase(GetExtension());
+}
+
+void CItem::ExtensionDataRemoveChildren() const
+{
+    std::stack<const CItem*> childStack({ this });
+    while (!childStack.empty())
+    {
+        const auto& item = childStack.top();
+        childStack.pop();
+
+        if (item->IsType(IT_MYCOMPUTER | IT_DIRECTORY | IT_DRIVE))
+        {
+            for (const auto& child : item->GetChildren())
+            {
+                childStack.push(child);
+            }
+        }
+        else if (IsType(IT_FILE))
+        {
+            item->ExtensionDataRemove();
+        }
     }
 }
 
@@ -954,7 +1003,7 @@ void CItem::ScanItems(BlockingQueue<CItem*> * queue)
         if (item->IsType(IT_DRIVE | IT_DIRECTORY))
         {
             FileFindEnhanced finder;
-            for (BOOL b = finder.FindFile(item->GetPath()); b; b = finder.FindNextFile())
+            for (BOOL b = finder.FindFile(item->GetPath(), L"", item->GetAttributes()); b; b = finder.FindNextFile())
             {
                 if (finder.IsDots())
                 {
@@ -1197,37 +1246,6 @@ void CItem::RemoveUnknownItem()
     }
 } 
 
-void CItem::CollectExtensionData(CExtensionData* ed) const
-{
-    std::stack<const CItem*> queue({this});
-    while (!queue.empty())
-    {
-        const auto& qitem = queue.top();
-        queue.pop();
-        if (qitem->IsType(IT_FILE))
-        {
-            const std::wstring& ext = qitem->GetExtension();
-            const auto & record = ed->find(ext);
-            if (record != ed->end())
-            {
-                record->second.bytes += qitem->GetSizePhysical();
-                record->second.files++;
-            }
-            else
-            {
-                SExtensionRecord new_record;
-                new_record.bytes = qitem->GetSizePhysical();
-                new_record.files = 1;
-                ed->emplace(ext, new_record);
-            }
-        }
-        else for (const auto& child : qitem->m_FolderInfo->m_Children)
-        {
-            queue.push(child);
-        }
-    }
-}
-
 ULONGLONG CItem::GetProgressRangeMyComputer() const
 {
     ASSERT(IsType(IT_MYCOMPUTER));
@@ -1341,6 +1359,7 @@ CItem* CItem::AddFile(const FileFindEnhanced& finder)
     child->SetSizeLogical(finder.GetFileSizeLogical());
     child->SetLastChange(finder.GetLastWriteTime());
     child->SetAttributes(finder.GetAttributes());
+    child->ExtensionDataAdd();
     AddChild(child);
     child->SetDone();
     return child;

@@ -66,7 +66,9 @@ protected:
 
         CExtensionListControl* m_List;
         std::wstring m_Extension;
-        SExtensionRecord m_Record;
+        ULONGLONG m_Bytes = 0;
+        ULONGLONG m_Files = 0;
+        COLORREF m_Color = 0;
         mutable std::wstring m_Description;
         mutable int m_Image = -1;
     };
