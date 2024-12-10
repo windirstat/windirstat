@@ -400,6 +400,7 @@ void CTreeListControl::SelectItem(const CTreeListItem* item, const bool deselect
     SetItemState(itempos, LVIS_SELECTED, LVIS_SELECTED);
     if (focus) SetItemState(itempos, LVIS_FOCUSED, LVIS_FOCUSED);
     if (focus) SetSelectionMark(itempos);
+    EnsureItemVisible(item);
 }
 
 void CTreeListControl::SetRootItem(CTreeListItem* root)
@@ -833,7 +834,6 @@ void CTreeListControl::OnKeyDown(const UINT nChar, const UINT nRepCnt, const UIN
             else if (items[0]->GetParent() != nullptr)
             {
                 SelectItem(items[0]->GetParent(), true, true);
-                EnsureItemVisible(items[0]->GetParent());
             }
             return;
         }
