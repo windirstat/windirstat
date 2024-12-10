@@ -713,6 +713,9 @@ void CMainFrame::OnClose()
     // Suspend the scan and wait for scan to complete
     CDirStatDoc::GetDocument()->StopScanningEngine();
 
+    // Clean out image queue
+    GetIconImageList()->StopAsyncShellInfoQueue();
+
     // It's too late, to do this in OnDestroy(). Because the toolbar, if undocked,
     // is already destroyed in OnDestroy(). So we must save the toolbar state here
     // in OnClose().

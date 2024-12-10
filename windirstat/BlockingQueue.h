@@ -153,6 +153,7 @@ public:
     void CancelExecution()
     {
         // Start cancellation process
+        if (!m_Started) return;
         m_Cancelled = true;
         m_Waiting.notify_all();
         m_Pushed.notify_all();
@@ -172,8 +173,9 @@ public:
         return m_Started && m_Suspended;
     }
 
-    void SuspendExecution()
+    void SuspendExecution(bool clearQueue = false)
     {
+        if (!m_Started) return;
         std::unique_lock lock(m_Mutex);
         m_Suspended = true;
         m_Waiting.notify_all();
@@ -181,6 +183,7 @@ public:
         {
             return AllThreadsIdling();
         });
+        if (clearQueue) m_Queue.clear();
     }
 
     void ResumeExecution()

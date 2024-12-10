@@ -176,6 +176,12 @@ void CDirStatDoc::DeleteContents()
     // Wait for system to fully shutdown
     StopScanningEngine();
 
+    // Clean out image queue
+    GetIconImageList()->ClearAsyncShellInfoQueue();
+
+    // Reset extension data
+    GetExtensionData()->clear();
+
     // Cleanup structures
     delete m_RootItemDupe;
     delete m_RootItem;

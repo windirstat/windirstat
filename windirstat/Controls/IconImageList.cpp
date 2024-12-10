@@ -82,6 +82,18 @@ void CIconImageList::DoAsyncShellInfoLookup(COwnerDrawnListItem* item)
     }
 }
 
+void CIconImageList::ClearAsyncShellInfoQueue()
+{
+    m_LookupQueue.SuspendExecution(true);
+    m_LookupQueue.ResumeExecution();
+}
+
+void CIconImageList::StopAsyncShellInfoQueue()
+{
+    m_LookupQueue.SuspendExecution();
+    m_LookupQueue.CancelExecution();
+}
+
 // Returns the index of the added icon
 short CIconImageList::CacheIcon(const std::wstring & path, UINT flags, const DWORD attr, std::wstring* psTypeName)
 {

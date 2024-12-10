@@ -46,7 +46,8 @@ public:
 
     void Initialize();
     void DoAsyncShellInfoLookup(COwnerDrawnListItem* item);
-
+    void ClearAsyncShellInfoQueue();
+    void StopAsyncShellInfoQueue();
     short GetMyComputerImage() const;
     short GetMountPointImage() const;
     short GetJunctionImage() const;
