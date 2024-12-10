@@ -14,8 +14,11 @@
     <?define ProductName =              "WinDirStat"?>
     <?define ProductFolder =            "WinDirStat"?>
     <?define Manufacturer =             "WinDirStat Team"?>
-    <?define ARPContact =               "WinDirStat Team"?>
-    <?define ARPHelpLink =              "https://windirstat.net"?>
+    <?define Contact =                  "team@windirstat.net"?>
+    <?define AboutLink =                "https://windirstat.net"?>
+    <?define HelpLink =                 "https://windirstat.net"?>
+    <?define UpdateLink =               "https://windirstat.net"?>
+    <?define ReadMeLink =               "https://windirstat.net"?>
     <?define IconFilePath =             "..\windirstat\res\WinDirStat.ico" ?>
 
     <?define ProductBinariesDir =       "..\build"?>

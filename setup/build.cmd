@@ -1,6 +1,6 @@
 @ECHO OFF
 TITLE Building WinDirStat Installer
-SETLOCAL
+SETLOCAL ENABLEDELAYEDEXPANSION
 
 :: setup release type
 SET RELTYPE=BETA
@@ -30,7 +30,8 @@ SET VERSTRING=-dMAJVER=%PRD_MAJVER% -dMINVER=%PRD_MINVER% -dPATCH=%PRD_PATCH% -d
 
 :: create the installers
 FOR %%A IN (arm arm64 x86 x64) DO (
-   candle -arch %%A "WinDirStat.wxs" -o "WinDirStat-%%A.wixobj" -dRELTYPE=%RELTYPE% %VERSTRING%
+   FOR /F %%S in ('POWERSHELL -NoLogo -NoProfile "[int] ((Get-Item ..\build\windirstat_%%A.exe).Length / 1024)"') DO SET SIZE=%%S
+   candle -arch %%A "WinDirStat.wxs" -o "WinDirStat-%%A.wixobj" -dRELTYPE=%RELTYPE% %VERSTRING% -dEstimatedSize=!SIZE!
    light -ext WixUIExtension -ext WixUtilExtension -sval "WinDirStat-%%A.wixobj" -o "%BLDDIR%\WinDirStat-%%A.msi"
 )
 DEL /F "*.wixobj"
