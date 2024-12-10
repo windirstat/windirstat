@@ -24,6 +24,7 @@
 #include "DirStatDoc.h"
 #include "SelectObject.h"
 #include "TreeListControl.h"
+#include "MainFrame.h"
 
 #include <algorithm>
 #include <ranges>
@@ -92,10 +93,18 @@ std::wstring CTreeListItem::GetText(int /*subitem*/) const
 void CTreeListItem::FetchShellInfo()
 {
     ASSERT(IsVisible());
-    m_VisualInfo->image = GetImageToCache();
+    const auto image = GetImageToCache();
 
-    const auto i = m_VisualInfo->control->FindListItem(this);
-    m_VisualInfo->control->RedrawItems(i, i);
+    CMainFrame::Get()->InvokeInMessageThread([this,&image]
+    {
+        if (IsVisible())
+        {
+            m_VisualInfo->image = image;
+            const auto i = m_VisualInfo->control->FindListItem(this);
+            m_VisualInfo->control->RedrawItems(i, i);
+        }
+    });
+
 }
 
 int CTreeListItem::GetImage() const
