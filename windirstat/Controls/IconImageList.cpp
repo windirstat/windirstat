@@ -84,14 +84,20 @@ void CIconImageList::DoAsyncShellInfoLookup(COwnerDrawnListItem* item)
 
 void CIconImageList::ClearAsyncShellInfoQueue()
 {
-    m_LookupQueue.SuspendExecution(true);
-    m_LookupQueue.ResumeExecution();
+    ProcessMessagesUntilSignaled([this]
+    {
+        m_LookupQueue.SuspendExecution(true);
+        m_LookupQueue.ResumeExecution();
+    });
 }
 
 void CIconImageList::StopAsyncShellInfoQueue()
 {
-    m_LookupQueue.SuspendExecution();
-    m_LookupQueue.CancelExecution();
+    ProcessMessagesUntilSignaled([this]
+    {
+        m_LookupQueue.SuspendExecution();
+        m_LookupQueue.CancelExecution();
+    });
 }
 
 // Returns the index of the added icon

@@ -593,7 +593,7 @@ const std::wstring & GetSysDirectory()
 
 void ProcessMessagesUntilSignaled(const std::function<void()>& callback)
 {
-    if (CWnd* wnd = AfxGetMainWnd(); GetWindowThreadProcessId(
+    if (CWnd* wnd = AfxGetMainWnd(); wnd != nullptr && GetWindowThreadProcessId(
         wnd->m_hWnd, nullptr) == GetCurrentThreadId())
     {
         // Start thread and wait post message when done
