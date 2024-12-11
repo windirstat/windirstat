@@ -92,7 +92,7 @@ std::wstring CTreeListItem::GetText(int /*subitem*/) const
 
 void CTreeListItem::FetchShellInfo()
 {
-    ASSERT(IsVisible());
+    if (!IsVisible()) return;
     const auto image = GetImageToCache();
 
     CMainFrame::Get()->InvokeInMessageThread([this,&image]
@@ -109,7 +109,6 @@ void CTreeListItem::FetchShellInfo()
 
 int CTreeListItem::GetImage() const
 {
-    ASSERT(IsVisible());
     if (m_VisualInfo->image == -1)
     {
         GetIconImageList()->DoAsyncShellInfoLookup(const_cast<CTreeListItem*>(this));
