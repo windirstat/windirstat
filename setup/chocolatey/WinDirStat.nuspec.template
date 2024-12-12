@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
   <metadata>
     <id>WinDirStat</id>
-    <version></version>
+    <version>${VERSION}</version>
     <packageSourceUrl>https://github.com/windirstat/windirstat</packageSourceUrl>
     <owners>NoMoreFood</owners>
     <title>WinDirStat</title>
@@ -21,6 +21,6 @@
     <releaseNotes>https://raw.githubusercontent.com/windirstat/windirstat/refs/heads/master/CHANGELOG.md</releaseNotes>
   </metadata>
   <files>
-    <file src="tools\**" target="tools" />
+    <file src="tools\*.ps1" target="tools" />
   </files>
 </package>

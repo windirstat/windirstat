@@ -17,16 +17,20 @@ $VersionMatches = $Content | Select-String -Pattern $Pattern -AllMatches
 $VersionParts = $VersionMatches | ForEach-Object { $_.Matches.Groups[1].Value }
 $Version = $VersionParts -join '.'
 
-$SpecContent = Get-Content 'WinDirStat.template'
-$SpecContent = $SpecContent -replace "<version>.*?</version>","<version>${Version}</version>"
-$SpecContent | Set-Content 'WinDirStat.nuspec' -Force
-
-$JsonDataHash = @{
-   'version' = $Version;
-   'hashX86' = (Get-FileHash -Algorithm SHA256 -LiteralPath '..\..\publish\WinDirStat-x86.msi').Hash;
-   'hashX64' = (Get-FileHash -Algorithm SHA256 -LiteralPath '..\..\publish\WinDirStat-x64.msi').Hash;
+$ReplaceStrings = @{
+    '${VERSION}' = $Version
+    '${HASHX86}' = (Get-FileHash -Algorithm SHA256 -LiteralPath '..\..\publish\WinDirStat-x86.msi').Hash;
+    '${HASHX64}' = (Get-FileHash -Algorithm SHA256 -LiteralPath '..\..\publish\WinDirStat-x64.msi').Hash;
 }
 
-$JsonDataHash | ConvertTo-Json | Set-Content 'tools\chocolateymetadata.json' -Force
+ForEach ($File in (Get-ChildItem ".\*.template" -Recurse -Force))
+{
+    $Content = [System.IO.File]::ReadAllText($File.FullName)
+    ForEach ($Key in $ReplaceStrings.Keys)
+    {
+        $Content = $Content.Replace($Key, $ReplaceStrings[$Key])   
+    }
+    [System.IO.File]::WriteAllText(($File.FullName -replace '.template$',''), $Content)
+}
 
 Exit 0

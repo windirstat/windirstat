@@ -2,24 +2,22 @@
 
 $packageName= $env:ChocolateyPackageName
 $toolsDir = "$(Split-Path -parent $MyInvocation.MyCommand.Definition)"
-$metadata = Get-Content "${PSScriptRoot}\chocolateymetadata.json" | ConvertFrom-Json
 
-$url = 'https://github.com/windirstat/windirstat/releases/download/release/v'
-$urlx86 = $url + $Metadata.version + '/WinDirStat-x86.msi'
-$urlx64 = $url + $Metadata.version + '/WinDirStat-x64.msi'
+$url = 'https://github.com/windirstat/windirstat/releases/download/release/v${VERSION}/WinDirStat-x86.msi'
+$url64 = 'https://github.com/windirstat/windirstat/releases/download/release/v${VERSION}/WinDirStat-x64.msi'
 
 $packageArgs = @{
   packageName   = $packageName
   unzipLocation = $toolsDir
   fileType      = 'msi'
-  url           = $urlx86
-  url64bit      = $urlx64
+  url           = $url
+  url64bit      = $url64
 
   softwareName  = 'WinDirStat'
 
-  checksum      = $metadata.hashX86
+  checksum      = '${HASHX86}'
   checksumType  = 'sha256'
-  checksum64    = $metadata.hashX64
+  checksum64    = '${HASHX64}'
   checksumType64= 'sha256'
 
   silentArgs    = "/qn /norestart /l*v `"$($env:TEMP)\$($packageName).$($env:chocolateyPackageVersion).MsiInstall.log`""
