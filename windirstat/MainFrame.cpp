@@ -821,17 +821,12 @@ LRESULT CMainFrame::OnExitSizeMove(WPARAM, LPARAM)
 
 void CMainFrame::OnTimer(const UINT_PTR nIDEvent)
 {
-   
-
     // UI updates that do not need to processed frequently
     static unsigned int updateCounter = 0;
-    if (updateCounter++ % 15 == 0)
+    if (updateCounter++ % 50 == 0)
     {
         // Update memory usage
         UpdatePaneText();
-
-        // Force toolbar updates since they do not appear to always receive onidle commands
-        m_WndToolBar.OnUpdateCmdUI(this, FALSE);
     }
 
     // UI updates that do need to processed frequently
