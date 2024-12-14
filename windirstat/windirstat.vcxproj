@@ -737,6 +737,7 @@
     <None Include="res\langs\lang_fr.bin" />
     <None Include="res\langs\lang_hu.bin" />
     <None Include="res\langs\lang_it.bin" />
+    <None Include="res\langs\lang_ko.bin" />
     <None Include="res\langs\lang_nl.bin" />
     <None Include="res\langs\lang_no.bin" />
     <None Include="res\langs\lang_pl.bin" />
@@ -789,6 +790,7 @@
     <Text Include="res\langs\lang_fr.txt" />
     <Text Include="res\langs\lang_hu.txt" />
     <Text Include="res\langs\lang_it.txt" />
+    <Text Include="res\langs\lang_ko.txt" />
     <Text Include="res\langs\lang_nl.txt" />
     <Text Include="res\langs\lang_no.txt" />
     <Text Include="res\langs\lang_pl.txt" />
