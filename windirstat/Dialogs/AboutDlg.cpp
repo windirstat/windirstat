@@ -23,7 +23,6 @@
 #include "version.h"
 #include "WinDirStat.h"
 #include "Constants.h"
-#include "MdExceptions.h"
 #include "CommonHelpers.h"
 #include "AboutDlg.h"
 #include "Localization.h"
@@ -45,27 +44,16 @@ namespace
     // Retrieve the GPL text from our resources
     std::wstring GetTextResource(const UINT id, const HMODULE dll = AfxGetResourceHandle())
     {
-        try
-        {
-            const HRSRC hrsrc = ::FindResource(dll, MAKEINTRESOURCE(id), L"TEXT");
-            if (nullptr == hrsrc)
-            {
-                MdThrowLastWinError();
-            }
+        // Fetch the resource
+        const HRSRC hrsrc = ::FindResource(dll, MAKEINTRESOURCE(id), L"TEXT");
+        if (nullptr == hrsrc) return {};
 
-            // Decompress the resource
-            const auto resourceData = GetCompressedResource(hrsrc);
-            if (resourceData.empty()) MdThrowLastWinError();
+        // Decompress the resource
+        const auto resourceData = GetCompressedResource(hrsrc);
+        if (resourceData.empty()) return {};
 
-            return std::wstring(CComBSTR(static_cast<int>(resourceData.size()), reinterpret_cast<LPCSTR>(resourceData.data())));
-        }
-        catch (CException* pe)
-        {
-            pe->ReportError();
-            pe->Delete();
-        }
-
-        return {};
+        return std::wstring(CComBSTR(static_cast<int>(resourceData.size()),
+            reinterpret_cast<LPCSTR>(resourceData.data())));
     }
 }
 

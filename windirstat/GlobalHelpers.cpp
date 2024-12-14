@@ -22,7 +22,6 @@
 
 #include "stdafx.h"
 #include "WinDirStat.h"
-#include "MdExceptions.h"
 #include "SmartPointer.h"
 #include "GlobalHelpers.h"
 #include "Options.h"
@@ -34,6 +33,7 @@
 #include <regex>
 
 #pragma comment(lib,"ntdll.lib")
+
 EXTERN_C NTSTATUS NTAPI RtlDecompressBuffer(USHORT CompressionFormat, PUCHAR UncompressedBuffer, ULONG  UncompressedBufferSize,
     PUCHAR CompressedBuffer, ULONG  CompressedBufferSize, PULONG FinalUncompressedSize);
 
@@ -694,3 +694,19 @@ std::wstring GetVolumePathNameEx(const std::wstring & path)
     return fallback;
 }
 
+void DisplayError(const std::wstring& error)
+{
+    AfxMessageBox(error.c_str(), MB_OK | MB_ICONERROR);
+}
+
+std::wstring TranslateError(const HRESULT hr)
+{
+    SmartPointer<LPVOID> lpMsgBuf(LocalFree);
+    if (FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, nullptr, hr,
+        MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), reinterpret_cast<LPWSTR>(&lpMsgBuf), 0, nullptr) == 0)
+    {
+        const CStringW s(MAKEINTRESOURCE(AFX_IDP_NO_ERROR_AVAILABLE));
+        return std::format(L"{} {:#08x}", s.GetString(), static_cast<DWORD>(hr));
+    }
+    return static_cast<LPWSTR>(*lpMsgBuf);
+}

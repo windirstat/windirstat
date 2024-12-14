@@ -22,8 +22,6 @@
 
 #include "stdafx.h"
 #include "WinDirStat.h"
-
-#include "MdExceptions.h"
 #include "CommonHelpers.h"
 #include "MainFrame.h"
 #include "SelectDrivesDlg.h"
@@ -93,15 +91,14 @@ void CDirStatApp::RestartApplication(bool resetPreferences)
     if (const BOOL success = CreateProcess(GetAppFileName().c_str(), nullptr, nullptr, nullptr, false,
         resetPreferences ? 0 : CREATE_SUSPENDED, nullptr, nullptr, &si, &pi); !success)
     {
-        AfxMessageBox(Localization::Format(IDS_CREATEPROCESSsFAILEDs,
-            GetAppFileName(), MdGetWinErrorText(static_cast<HRESULT>(GetLastError()))).c_str());
+        DisplayError(Localization::Format(IDS_CREATEPROCESSsFAILEDs, GetAppFileName(), TranslateError()));
         return;
     }
 
     // If resetting preference, hard exit to prevent saving settings
     if (resetPreferences)
     {
-        std::exit(0);
+        ExitProcess(0);
     }
 
     // We _send_ the WM_CLOSE here to ensure that all COptions-Settings

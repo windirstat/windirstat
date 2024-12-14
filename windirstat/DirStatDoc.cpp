@@ -32,7 +32,6 @@
 #include "ModalApiShuttle.h"
 #include "WinDirStat.h"
 #include "CommonHelpers.h"
-#include "MdExceptions.h"
 #include "SmartPointer.h"
 
 #include <functional>
@@ -707,7 +706,8 @@ void CDirStatDoc::PerformUserDefinedCleanup(USERDEFINEDCLEANUP* udc, const CItem
     {
         if (!FolderExists(path) && !DriveExists(path))
         {
-            MdThrowStringException(Localization::Format(IDS_THEDIRECTORYsDOESNOTEXIST, path));
+            DisplayError(Localization::Format(IDS_THEDIRECTORYsDOESNOTEXIST, path));
+            throw;
         }
     }
     else
@@ -716,7 +716,8 @@ void CDirStatDoc::PerformUserDefinedCleanup(USERDEFINEDCLEANUP* udc, const CItem
 
         if (!::PathFileExists(path.c_str()))
         {
-            MdThrowStringException(Localization::Format(IDS_THEFILEsDOESNOTEXIST, path));
+            DisplayError(Localization::Format(IDS_THEFILEsDOESNOTEXIST, path));
+            throw;
         }
     }
 
@@ -800,9 +801,9 @@ void CDirStatDoc::CallUserDefinedCleanup(const bool isDirectory, const std::wstr
     if (CreateProcess(app.c_str(), cmdline.data(), nullptr, nullptr, false,
         0, nullptr, directory.c_str(), &si, &pi) == 0)
     {
-        MdThrowStringException(Localization::Format(IDS_COULDNOTCREATEPROCESSssss,
-            app, cmdline, directory, MdGetWinErrorText(static_cast<HRESULT>(GetLastError()))));
-        return;
+        DisplayError(Localization::Format(IDS_COULDNOTCREATEPROCESSssss,
+            app, cmdline, directory, TranslateError()));
+        throw;
     }
 
     CloseHandle(pi.hThread);
@@ -1229,67 +1230,51 @@ void CDirStatDoc::OnExplorerSelect()
 
 void CDirStatDoc::OnCommandPromptHere()
 {
-    try
+    // accumulate a unique set of paths
+    const auto& items = GetAllSelected();
+    std::unordered_set<std::wstring>paths;
+    for (const auto& item : items)
     {
-        // accumulate a unique set of paths
-        const auto& items = GetAllSelected();
-        std::unordered_set<std::wstring>paths;
-        for (const auto& item : items)
-        {
-            paths.insert(item->GetFolderPath());
-        }
-
-        // launch a command prompt for each path
-        const std::wstring cmd = GetCOMSPEC();
-        for (const auto& path : paths)
-        {
-            ShellExecuteThrow(cmd, L"", L"open", *AfxGetMainWnd(), path);
-        }
+        paths.insert(item->GetFolderPath());
     }
-    catch (CException* pe)
+
+    // launch a command prompt for each path
+    const std::wstring cmd = GetCOMSPEC();
+    for (const auto& path : paths)
     {
-        pe->ReportError();
-        pe->Delete();
+        ShellExecuteWrapper(cmd, L"", L"open", *AfxGetMainWnd(), path);
     }
 }
 
 void CDirStatDoc::OnPowerShellHere()
 {
-    try
+    // locate PWSH
+    static std::wstring pwsh;
+    if (pwsh.empty()) for (const auto exe : { L"pwsh.exe", L"powershell.exe" })
     {
-        // locate PWSH
-        static std::wstring pwsh;
-        if (pwsh.empty()) for (const auto exe : { L"pwsh.exe", L"powershell.exe" })
+        SmartPointer<HMODULE> lib(FreeLibrary, LoadLibrary(exe));
+        if (lib == nullptr) continue;
+        pwsh.resize(MAX_PATH);
+        if (GetModuleFileNameW(lib, pwsh.data(),
+            static_cast<DWORD>(pwsh.size())) > 0 && GetLastError() == ERROR_SUCCESS)
         {
-            SmartPointer<HMODULE> lib(FreeLibrary, LoadLibrary(exe));
-            if (lib == nullptr) continue;
-            pwsh.resize(MAX_PATH);
-            if (GetModuleFileNameW(lib, pwsh.data(),
-                static_cast<DWORD>(pwsh.size())) > 0 && GetLastError() == ERROR_SUCCESS)
-            {
-                pwsh.resize(wcslen(pwsh.data()));
-                break;
-            }
-        }
-
-        // accumulate a unique set of paths
-        const auto& items = GetAllSelected();
-        std::unordered_set<std::wstring>paths;
-        for (const auto& item : items)
-        {
-            paths.insert(item->GetFolderPath());
-        }
-
-        // launch a command prompt for each path
-        for (const auto& path : paths)
-        {
-            ShellExecuteThrow(pwsh, L"", L"open", *AfxGetMainWnd(), path);
+            pwsh.resize(wcslen(pwsh.data()));
+            break;
         }
     }
-    catch (CException* pe)
+
+    // accumulate a unique set of paths
+    const auto& items = GetAllSelected();
+    std::unordered_set<std::wstring>paths;
+    for (const auto& item : items)
     {
-        pe->ReportError();
-        pe->Delete();
+        paths.insert(item->GetFolderPath());
+    }
+
+    // launch a command prompt for each path
+    for (const auto& path : paths)
+    {
+        ShellExecuteWrapper(pwsh, L"", L"open", *AfxGetMainWnd(), path);
     }
 }
 
@@ -1327,26 +1312,26 @@ void CDirStatDoc::OnRemoveRoamingProfiles()
 {
     const std::wstring cmd = std::format(LR"(/C "TITLE {} & WMIC.EXE {} & PAUSE)",
         L"WinDirStat - Profile Cleanup", L"PATH Win32_UserProfile WHERE RoamingConfigured=TRUE DELETE");
-    ShellExecuteThrow(GetCOMSPEC(), cmd, L"runas");
+    ShellExecuteWrapper(GetCOMSPEC(), cmd, L"runas");
 }
 
 void CDirStatDoc::OnExecuteDiskCleanupUtility()
 {
-    ShellExecuteThrow(L"CLEANMGR.EXE");
+    ShellExecuteWrapper(L"CLEANMGR.EXE");
 }
 
 void CDirStatDoc::OnExecuteDismReset()
 {
     const std::wstring cmd = std::format(LR"(/C "TITLE {} & DISM.EXE {} & PAUSE)",
         L"WinDirStat - DISM", L"/Online /Cleanup-Image /StartComponentCleanup /ResetBase");
-    ShellExecuteThrow(GetCOMSPEC(), cmd, L"runas");
+    ShellExecuteWrapper(GetCOMSPEC(), cmd, L"runas");
 }
 
 void CDirStatDoc::OnExecuteDism()
 {
     const std::wstring cmd = std::format(LR"(/C "TITLE {} & DISM.EXE {} & PAUSE)",
         L"WinDirStat - DISM", L"/Online /Cleanup-Image /StartComponentCleanup");
-    ShellExecuteThrow(GetCOMSPEC(), cmd, L"runas");
+    ShellExecuteWrapper(GetCOMSPEC(), cmd, L"runas");
 }
 
 void CDirStatDoc::OnUpdateUserDefinedCleanup(CCmdUI* pCmdUI)
@@ -1380,14 +1365,9 @@ void CDirStatDoc::OnUserDefinedCleanup(const UINT id)
             PerformUserDefinedCleanup(udc, item);
             RefreshAfterUserDefinedCleanup(udc, item);
         }
-        catch (CUserException* pe)
+        catch (...)
         {
-            pe->Delete();
-        }
-        catch (CException* pe)
-        {
-            pe->ReportError();
-            pe->Delete();
+            // error would have been displayed already
         }
     }
 }

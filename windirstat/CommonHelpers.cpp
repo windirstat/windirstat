@@ -21,18 +21,18 @@
 
 #include "stdafx.h"
 
-#include "MdExceptions.h"
 #include "Constants.h"
 #include "CommonHelpers.h"
 #include "GlobalHelpers.h"
+#include "SmartPointer.h"
 
 #include <format>
 #include <map>
 #include <string>
 #include <unordered_set>
 
-bool ShellExecuteThrow(const std::wstring& lpFile, const std::wstring& lpParameters, const std::wstring & lpVerb,
-    const HWND hwnd, const std::wstring & lpDirectory, const INT nShowCmd)
+bool ShellExecuteWrapper(const std::wstring& lpFile, const std::wstring& lpParameters, const std::wstring & lpVerb,
+                       const HWND hwnd, const std::wstring & lpDirectory, const INT nShowCmd)
 {
     CWaitCursor wc;
 
@@ -50,8 +50,8 @@ bool ShellExecuteThrow(const std::wstring& lpFile, const std::wstring& lpParamet
     const BOOL bResult = ::ShellExecuteEx(&sei);
     if (!bResult)
     {
-        MdThrowStringException(std::format(L"ShellExecute failed: {}",
-            MdGetWinErrorText(static_cast<DWORD>(GetLastError()))));
+        DisplayError(std::format(L"ShellExecute failed: {}",
+            TranslateError(GetLastError())));
     }
     return bResult;
 }

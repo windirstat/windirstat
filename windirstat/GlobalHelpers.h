@@ -63,3 +63,5 @@ void ProcessMessagesUntilSignaled(const std::function<void()>& callback);
 std::wstring GlobToRegex(const std::wstring& glob);
 std::vector<BYTE> GetCompressedResource(HRSRC resource);
 std::wstring GetVolumePathNameEx(const std::wstring& path);
+void DisplayError(const std::wstring& error);
+std::wstring TranslateError(const HRESULT hr = static_cast<HRESULT>(GetLastError()));

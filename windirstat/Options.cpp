@@ -200,7 +200,7 @@ void COptions::CompileFilters()
             }
             catch (const std::regex_error&)
             {
-                AfxMessageBox((Localization::Lookup(IDS_PAGE_FILTERING_INVALID_FILTER) + L" " + token).c_str());
+                DisplayError(Localization::Lookup(IDS_PAGE_FILTERING_INVALID_FILTER) + L" " + token);
             }
         }
     }

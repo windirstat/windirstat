@@ -39,11 +39,12 @@
 #include "MainFrame.h"
 #include "SelectObject.h"
 #include "CommonHelpers.h"
-#include "MdExceptions.h"
 
 #include <format>
 #include <functional>
 #include <unordered_map>
+
+#include "SmartPointer.h"
 
 namespace
 {
@@ -56,13 +57,15 @@ namespace
             m_Open = owner->OpenClipboard();
             if (!m_Open)
             {
-                MdThrowStringException(Localization::Lookup(IDS_CANNOTOPENCLIPBOARD));
+                DisplayError(Localization::Lookup(IDS_CANNOTOPENCLIPBOARD));
+                return;
             }
             if (empty)
             {
                 if (!EmptyClipboard())
                 {
-                    MdThrowStringException(Localization::Lookup(IDS_CANNOTEMTPYCLIPBOARD));
+                    DisplayError(Localization::Lookup(IDS_CANNOTEMTPYCLIPBOARD));
+                    return;
                 }
             }
         }
@@ -852,38 +855,27 @@ LRESULT CMainFrame::OnCallbackRequest(WPARAM, const LPARAM lParam)
 
 void CMainFrame::CopyToClipboard(const std::wstring & psz)
 {
-    try
+    COpenClipboard clipboard(this);
+    const SIZE_T cchBufLen = psz.size() + 1;
+
+    SmartPointer<HGLOBAL> h(GlobalFree, GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE | GMEM_ZEROINIT, cchBufLen * sizeof(WCHAR)));
+    if (h == nullptr)
     {
-        COpenClipboard clipboard(this);
-        const SIZE_T cchBufLen = psz.size() + 1;
-
-        const HGLOBAL h = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE | GMEM_ZEROINIT, cchBufLen * sizeof(WCHAR));
-        if (h == nullptr)
-        {
-            MdThrowStringException(L"GlobalAlloc failed.");
-        }
-
-        const LPVOID lp = GlobalLock(h);
-        ASSERT(lp != nullptr);
-
-        if (!lp)
-        {
-            MdThrowStringException(L"GlobalLock failed.");
-        }
-
-        wcscpy_s(static_cast<LPWSTR>(lp), cchBufLen, psz.c_str());
-
-        GlobalUnlock(h);
-
-        if (nullptr == SetClipboardData(CF_UNICODETEXT, h))
-        {
-            MdThrowStringException(Localization::Lookup(IDS_CANNOTSETCLIPBOARDDATA));
-        }
+        DisplayError(TranslateError());
+        return;
     }
-    catch (CException* pe)
+
+    SmartPointer<LPVOID> lp(GlobalUnlock, GlobalLock(h));
+    if (lp == nullptr)
     {
-        pe->ReportError();
-        pe->Delete();
+        DisplayError(TranslateError());
+        return;
+    }
+
+    wcscpy_s(static_cast<LPWSTR>(*lp), cchBufLen, psz.c_str());
+    if (SetClipboardData(CF_UNICODETEXT, h) == nullptr)
+    {
+        DisplayError(Localization::Lookup(IDS_CANNOTSETCLIPBOARDDATA));
     }
 }
 

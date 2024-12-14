@@ -115,7 +115,7 @@ void CPageGeneral::OnOK()
     COptions::ListFullRowSelection = (FALSE != m_ListFullRowSelection);
     if (!CDirStatApp::Get()->SetPortableMode(m_PortableMode))
     {
-        AfxMessageBox(L"Could not toggle WinDirStat portable mode. Check your permissions.", MB_OK | MB_ICONERROR);
+        DisplayError(L"Could not toggle WinDirStat portable mode. Check your permissions.");
     }
 
     // force general user interface update if anything changes

@@ -598,7 +598,6 @@
     <ClInclude Include="OleFilterOverride.h" />
     <ClInclude Include="Pages\PageFiltering.h" />
     <ClInclude Include="SmartPointer.h" />
-    <ClInclude Include="MdExceptions.h" />
     <ClInclude Include="Tracer.h" />
     <ClInclude Include="version.h" />
     <ClInclude Include="Constants.h" />
