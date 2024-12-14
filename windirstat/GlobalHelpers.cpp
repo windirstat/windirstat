@@ -412,7 +412,7 @@ std::wstring MyQueryDosDevice(const std::wstring & drive)
     std::array<WCHAR, 512> info;
     if (::QueryDosDevice(d.c_str(), info.data(), static_cast<DWORD>(info.size())) == 0)
     {
-        VTRACE(L"QueryDosDevice({}) failed: {}", d.c_str(), MdGetWinErrorText(::GetLastError()).c_str());
+        VTRACE(L"QueryDosDevice({}) Failed: {}", d.c_str(), TranslateError());
         return {};
     }
 
