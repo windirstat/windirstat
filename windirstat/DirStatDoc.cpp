@@ -896,6 +896,7 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
     static bool (*isResumable)(CItem*) = [](CItem*) { return CMainFrame::Get()->IsScanSuspended(); };
     static bool (*isSuspendable)(CItem*) = [](CItem*) { return doc->HasRootItem() && !doc->IsRootDone() && !CMainFrame::Get()->IsScanSuspended(); };
     static bool (*isStoppable)(CItem*) = [](CItem*) { return doc->HasRootItem() && !doc->IsRootDone(); };
+    static bool (*isHibernate)(CItem*) = [](CItem*) { return IsAdmin() && IsHibernateEnabled(); };
 
     static std::unordered_map<UINT, const commandFilter> filters
     {
@@ -915,10 +916,11 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
         { ID_CLEANUP_EXPLORER_SELECT, { false, true,  true,  false, IT_DIRECTORY | IT_FILE } },
         { ID_CLEANUP_OPEN_IN_CONSOLE, { false, true,  true,  false, IT_DRIVE | IT_DIRECTORY | IT_FILE } },
         { ID_CLEANUP_OPEN_IN_PWSH,    { false, true,  true,  false, IT_DRIVE | IT_DIRECTORY | IT_FILE } },
+        { ID_CLEANUP_DISK_CLEANUP  ,  { true,  true,  false, false, IT_ANY } },
         { ID_CLEANUP_DISM_NORMAL,     { true,  true,  false, false, IT_ANY } },
         { ID_CLEANUP_DISM_RESET,      { true,  true,  false, false, IT_ANY } },
         { ID_CLEANUP_REMOVE_ROAMING,  { true,  true,  false, false, IT_ANY } },
-        { ID_CLEANUP_DISK_CLEANUP,    { true,  true,  false, false, IT_ANY } },
+        { ID_CLEANUP_HIBERNATE,       { true,  true,  false, false, IT_ANY, isHibernate } },
         { ID_COMPRESS_NONE,           { false, true,  false, false, IT_FILE } },
         { ID_COMPRESS_LZNT1,          { false, true,  false, false, IT_FILE } },
         { ID_COMPRESS_XPRESS4K,       { false, true,  false, false, IT_FILE } },
@@ -1003,6 +1005,7 @@ BEGIN_MESSAGE_MAP(CDirStatDoc, CDocument)
     ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_EMPTY_FOLDER, OnCleanupEmptyFolder)
     ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_DISM_NORMAL, OnExecuteDism)
     ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_DISM_RESET, OnExecuteDismReset)
+    ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_HIBERNATE, OnDisableHibernateFile)
     ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_REMOVE_ROAMING, OnRemoveRoamingProfiles)
     ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_DISK_CLEANUP, OnExecuteDiskCleanupUtility)
     ON_UPDATE_COMMAND_UI_RANGE(ID_USERDEFINEDCLEANUP0, ID_USERDEFINEDCLEANUP9, OnUpdateUserDefinedCleanup)
@@ -1019,6 +1022,7 @@ BEGIN_MESSAGE_MAP(CDirStatDoc, CDocument)
     ON_UPDATE_COMMAND_UI(ID_INDICATOR_MEM, OnUpdateCentralHandler)
     ON_UPDATE_COMMAND_UI(ID_INDICATOR_DISK, OnUpdateCentralHandler)
     ON_UPDATE_COMMAND_UI(ID_INDICATOR_IDLE, OnUpdateCentralHandler)
+    ON_UPDATE_COMMAND_UI(ID_CLEANUP_DISK_CLEANUP, OnUpdateCentralHandler)
     ON_COMMAND_RANGE(CONTENT_MENU_MINCMD, CONTENT_MENU_MAXCMD, OnContextMenuExplore)
 END_MESSAGE_MAP()
 
@@ -1280,13 +1284,13 @@ void CDirStatDoc::OnPowerShellHere()
 
 void CDirStatDoc::OnCleanupDeleteToBin()
 {
-    const auto & items = GetAllSelected();
+    const auto& items = GetAllSelected();
     DeletePhysicalItems(items, true);
 }
 
 void CDirStatDoc::OnCleanupDelete()
 {
-    const auto & items = GetAllSelected();
+    const auto& items = GetAllSelected();
     DeletePhysicalItems(items, false);
 }
 
@@ -1307,6 +1311,22 @@ void CDirStatDoc::OnCleanupEmptyFolder()
     RefreshItem(GetAllSelected());
 }
 
+void CDirStatDoc::OnDisableHibernateFile()
+{
+    DisableHibernate();
+
+    // See if there is a hibernate file on any drive to refresh
+    for (const auto& drive : GetDriveItems())
+    {
+        for (const auto& child : drive->GetChildren())
+        {
+            if (_wcsicmp(child->GetName().c_str(), L"hiberfil.sys") == 0)
+            {
+                StartScanningEngine({ child });
+            }
+        }
+    }
+}
 
 void CDirStatDoc::OnRemoveRoamingProfiles()
 {

@@ -78,6 +78,7 @@ IDS_LANGUAGERESTARTNOW=Le changement de la langue ne prendra effet qu'après red
 IDS_MENU_CLEANUP_CONSOLE=Ligne de &commande à cet endroit\tCtrl+P
 IDS_MENU_CLEANUP_DELETE_BIN=&Effacer (vers la corbeille)\tDel
 IDS_MENU_CLEANUP_DELETE=&Détruire (impossible de récupérer!)\tShift+Del
+IDS_MENU_CLEANUP_DISABLE_HIBERNATE=Désactiver le fichier d'hibernation
 IDS_MENU_CLEANUP_DISK_CLEANUP=Exécuter l'utilitaire de nettoyage de disque Windows
 IDS_MENU_CLEANUP_DISM_NORMAL=/StartComponentCleanup
 IDS_MENU_CLEANUP_DISM_RESET=/StartComponentCleanup /ResetBase

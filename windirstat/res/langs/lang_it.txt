@@ -78,6 +78,7 @@ IDS_LANGUAGERESTARTNOW=Le modifiche della lingua non sono effettive se non dopo 
 IDS_MENU_CLEANUP_CONSOLE=Prompt &comandi qui\tCtrl+P
 IDS_MENU_CLEANUP_DELETE_BIN=&Cancella (al Cestino)\tCanc
 IDS_MENU_CLEANUP_DELETE=Cancella (impossibile annullare la cancellazione!)\tShift+Canc
+IDS_MENU_CLEANUP_DISABLE_HIBERNATE=Disabilita il file di ibernazione
 IDS_MENU_CLEANUP_DISK_CLEANUP=Esegui l'utilità di pulizia disco di Windows
 IDS_MENU_CLEANUP_DISM_NORMAL=/StartComponentCleanup
 IDS_MENU_CLEANUP_DISM_RESET=/StartComponentCleanup /ResetBase

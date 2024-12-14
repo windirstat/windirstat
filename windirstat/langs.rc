@@ -31,6 +31,24 @@ IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_zh.bin"
 
 
 /////////////////////////////////////////////////////////////////////////////
+// Korean (Neutral) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_KOR)
+LANGUAGE LANG_KOREAN, SUBLANG_NEUTRAL
+#pragma code_page(949)
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// RT_LANG
+//
+
+IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_ko.bin"
+
+#endif    // Korean (Neutral) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
 // Czech (Neutral) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_CSY)
@@ -427,6 +445,7 @@ BEGIN
     IDS_PAGE_FILTERING_INVALID_FILTER "IDS_PAGE_FILTERING_INVALID_FILTER"
     IDS_PAGE_FILTERING_TOOLTIP_PREFIX "IDS_PAGE_FILTERING_TOOLTIP_PREFIX"
     IDS_DUPLICATES_WARNING  "IDS_DUPLICATES_WARNING"
+    IDS_MENU_CLEANUP_DISABLE_HIBERNATE "IDS_MENU_CLEANUP_DISABLE_HIBERNATE"
 END
 
 #endif    // Neutral resources
@@ -538,24 +557,6 @@ LANGUAGE LANG_ITALIAN, SUBLANG_NEUTRAL
 IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_it.bin"
 
 #endif    // Italian (Neutral) resources
-/////////////////////////////////////////////////////////////////////////////
-
-
-/////////////////////////////////////////////////////////////////////////////
-// Korean (Neutral) resources
-
-#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_NLD)
-LANGUAGE LANG_KOREAN, SUBLANG_NEUTRAL
-#pragma code_page(1252)
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// RT_LANG
-//
-
-IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_ko.bin"
-
-#endif    // Korean (Neutral) resources
 /////////////////////////////////////////////////////////////////////////////
 
 

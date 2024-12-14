@@ -78,6 +78,7 @@ IDS_LANGUAGERESTARTNOW=A nyelv módosítása addíg nem kerül érvényesítésr
 IDS_MENU_CLEANUP_CONSOLE=Paran&cssor megnyitása\tCtrl+P
 IDS_MENU_CLEANUP_DELETE_BIN=&Törlés (a Lomtárba)\tDel
 IDS_MENU_CLEANUP_DELETE=Törlés (&véglegesen!)\tShift+Del
+IDS_MENU_CLEANUP_DISABLE_HIBERNATE=Hibernációs fájl letiltása
 IDS_MENU_CLEANUP_DISK_CLEANUP=Windows Lemezkarbantartó futtatása
 IDS_MENU_CLEANUP_DISM_NORMAL=/StartComponentCleanup
 IDS_MENU_CLEANUP_DISM_RESET=/StartComponentCleanup /ResetBase

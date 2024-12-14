@@ -32,6 +32,7 @@
 #include <algorithm>
 #include <regex>
 
+#pragma comment(lib,"powrprof.lib") 
 #pragma comment(lib,"ntdll.lib")
 
 EXTERN_C NTSTATUS NTAPI RtlDecompressBuffer(USHORT CompressionFormat, PUCHAR UncompressedBuffer, ULONG  UncompressedBufferSize,
@@ -709,4 +710,18 @@ std::wstring TranslateError(const HRESULT hr)
         return std::format(L"{} {:#08x}", s.GetString(), static_cast<DWORD>(hr));
     }
     return static_cast<LPWSTR>(*lpMsgBuf);
+}
+
+void DisableHibernate()
+{
+    BOOLEAN hibernateEnabled = FALSE;
+    (void) CallNtPowerInformation(SystemReserveHiberFile, &hibernateEnabled,
+        sizeof(hibernateEnabled), nullptr, 0);
+}
+
+bool IsHibernateEnabled()
+{
+    WCHAR drive[3];
+    return GetEnvironmentVariable(L"SystemDrive", drive, _countof(drive)) == _countof(drive) - 1 &&
+        FileFindEnhanced::DoesFileExist(drive + std::wstring(L"\\"), L"hiberfil.sys");
 }

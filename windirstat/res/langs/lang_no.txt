@@ -78,6 +78,7 @@ IDS_LANGUAGERESTARTNOW=Språkendringene trer i kraft etter at programmet er star
 IDS_MENU_CLEANUP_CONSOLE=Åpne bane i &Kommandolinje...\tCtrl+P
 IDS_MENU_CLEANUP_DELETE_BIN=&Slett (til Papirkurv)\tDel
 IDS_MENU_CLEANUP_DELETE=Slett permanent\tShift+Del
+IDS_MENU_CLEANUP_DISABLE_HIBERNATE=Deaktiver dvalefil
 IDS_MENU_CLEANUP_DISK_CLEANUP=Start Windows Diskopprydding...
 IDS_MENU_CLEANUP_DISM_NORMAL=/StartComponentCleanup
 IDS_MENU_CLEANUP_DISM_RESET=/StartComponentCleanup /ResetBase

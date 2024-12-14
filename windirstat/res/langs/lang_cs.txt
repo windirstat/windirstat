@@ -78,6 +78,7 @@ IDS_LANGUAGERESTARTNOW=Změna jazyka se projeví až při příštím spuštěn�
 IDS_MENU_CLEANUP_CONSOLE=Otevřít v příkazovém &řádku...\tCtrl+P
 IDS_MENU_CLEANUP_DELETE_BIN=Smazat (do &koše)\tDel
 IDS_MENU_CLEANUP_DELETE=&Smazat (bez možnosti obnovení!)\tShift+Del
+IDS_MENU_CLEANUP_DISABLE_HIBERNATE=Zakázat soubor hibernace
 IDS_MENU_CLEANUP_DISK_CLEANUP=Spustit nástroj Čištění disku
 IDS_MENU_CLEANUP_DISM_NORMAL=/StartComponentCleanup
 IDS_MENU_CLEANUP_DISM_RESET=/StartComponentCleanup /ResetBase

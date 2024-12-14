@@ -78,6 +78,7 @@ IDS_LANGUAGERESTARTNOW=Taalwijzigingen worden zichtbaar na opnieuw laden van de 
 IDS_MENU_CLEANUP_CONSOLE=Openen in &oprachtprompt...\tCtrl+P
 IDS_MENU_CLEANUP_DELETE_BIN=&Verwijderen (naar Prullenbak)\tDel
 IDS_MENU_CLEANUP_DELETE=Permanent verwijderen (&ongedaan maken onmogelijk!)\tShift+Del
+IDS_MENU_CLEANUP_DISABLE_HIBERNATE=Hibernate-bestand uitschakelen
 IDS_MENU_CLEANUP_DISK_CLEANUP=Voer de Windows Schijfopruiming-tool uit
 IDS_MENU_CLEANUP_DISM_NORMAL=/StartComponentCleanup
 IDS_MENU_CLEANUP_DISM_RESET=/StartComponentCleanup /ResetBase

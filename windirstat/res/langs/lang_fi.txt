@@ -78,6 +78,7 @@ IDS_LANGUAGERESTARTNOW=Kielen vaihto ei tule voimaan ennen ohjelman uudelleenkä
 IDS_MENU_CLEANUP_CONSOLE=Avaa &komentoriviin\tCtrl+P
 IDS_MENU_CLEANUP_DELETE_BIN=&Poista (roskakoriin)\tDel
 IDS_MENU_CLEANUP_DELETE=Poista pys&yvästi\tShift+Del
+IDS_MENU_CLEANUP_DISABLE_HIBERNATE=Poista lepotilan tiedosto käytöstä
 IDS_MENU_CLEANUP_DISK_CLEANUP=Suorita Windowsin Levynpuhdistus-ohjelma
 IDS_MENU_CLEANUP_DISM_NORMAL=/StartComponentCleanup
 IDS_MENU_CLEANUP_DISM_RESET=/StartComponentCleanup /ResetBase

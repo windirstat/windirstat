@@ -78,6 +78,7 @@ IDS_LANGUAGERESTARTNOW=Изменение языка вступит в силу 
 IDS_MENU_CLEANUP_CONSOLE=Вызвать командную строку\tCtrl+P
 IDS_MENU_CLEANUP_DELETE_BIN=Удалить (в корзину)\tDel
 IDS_MENU_CLEANUP_DELETE=Удалить (без возможности восстановления!)\tShift+Del
+IDS_MENU_CLEANUP_DISABLE_HIBERNATE=Отключить файл гибернации
 IDS_MENU_CLEANUP_DISK_CLEANUP=Запустить утилиту очистки диска Windows
 IDS_MENU_CLEANUP_DISM_NORMAL=/StartComponentCleanup
 IDS_MENU_CLEANUP_DISM_RESET=/StartComponentCleanup /ResetBase

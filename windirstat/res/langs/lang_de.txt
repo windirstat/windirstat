@@ -78,6 +78,7 @@ IDS_LANGUAGERESTARTNOW=Änderungen der Sprache werden erst wirksam, wenn das Pro
 IDS_MENU_CLEANUP_CONSOLE=&DOS-Prompt hier starten\tStrg+P
 IDS_MENU_CLEANUP_DELETE_BIN=&Löschen (in den Papierkorb)\tEntf
 IDS_MENU_CLEANUP_DELETE=Löschen (&irreversibel!)\tUmschalt+Entf
+IDS_MENU_CLEANUP_DISABLE_HIBERNATE=Ruhezustandsdatei deaktivieren
 IDS_MENU_CLEANUP_DISK_CLEANUP=Windows-Datenträgerbereinigung ausführen
 IDS_MENU_CLEANUP_DISM_NORMAL=/StartComponentCleanup
 IDS_MENU_CLEANUP_DISM_RESET=/StartComponentCleanup /ResetBase

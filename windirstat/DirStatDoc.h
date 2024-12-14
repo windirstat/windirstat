@@ -187,6 +187,7 @@ protected:
     afx_msg void OnTreeMapZoomIn();
     afx_msg void OnTreeMapZoomOut();
     afx_msg void OnRemoveRoamingProfiles();
+    afx_msg void OnDisableHibernateFile();
     afx_msg void OnExecuteDiskCleanupUtility();
     afx_msg void OnExecuteDismReset();
     afx_msg void OnExecuteDism();

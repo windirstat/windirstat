@@ -78,6 +78,7 @@ IDS_LANGUAGERESTARTNOW=Język zostanie zmieniony po ponownym uruchomieniu progra
 IDS_MENU_CLEANUP_CONSOLE=Wiersz &Polecenia\tCtrl+P
 IDS_MENU_CLEANUP_DELETE_BIN=&Usuń (do Kosza)\tDel
 IDS_MENU_CLEANUP_DELETE=Usuń (tr&wale!)\tShift+Del
+IDS_MENU_CLEANUP_DISABLE_HIBERNATE=Wyłącz plik hibernacji
 IDS_MENU_CLEANUP_DISK_CLEANUP=Uruchom narzędzie Windows do oczyszczania dysku
 IDS_MENU_CLEANUP_DISM_NORMAL=/StartComponentCleanup
 IDS_MENU_CLEANUP_DISM_RESET=/StartComponentCleanup /ResetBase

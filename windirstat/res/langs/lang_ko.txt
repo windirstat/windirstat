@@ -78,6 +78,7 @@ IDS_LANGUAGERESTARTNOW=언어 변경은 응용 프로그램을 다시 로드할 
 IDS_MENU_CLEANUP_CONSOLE=명령 프롬프트에서 열기(&C)...\tCtrl+P
 IDS_MENU_CLEANUP_DELETE_BIN=삭제(&D) (휴지통으로)(&D)\tDel
 IDS_MENU_CLEANUP_DELETE=영구 삭제\tShift+Del
+IDS_MENU_CLEANUP_DISABLE_HIBERNATE=최대 절전 모드 파일 비활성화
 IDS_MENU_CLEANUP_DISK_CLEANUP=Windows 디스크 정리 유틸리티 실행
 IDS_MENU_CLEANUP_DISM_NORMAL=/StartComponentCleanup
 IDS_MENU_CLEANUP_DISM_RESET=/StartComponentCleanup /ResetBase

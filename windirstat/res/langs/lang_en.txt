@@ -78,6 +78,7 @@ IDS_LANGUAGERESTARTNOW=Language changes take effect on reloading the application
 IDS_MENU_CLEANUP_CONSOLE=Open in &Command Prompt...\tCtrl+P
 IDS_MENU_CLEANUP_DELETE_BIN=&Delete (to Recycle Bin)\tDel
 IDS_MENU_CLEANUP_DELETE=Delete Permanently\tShift+Del
+IDS_MENU_CLEANUP_DISABLE_HIBERNATE=Disable Hibernate File
 IDS_MENU_CLEANUP_DISK_CLEANUP=Run Windows Disk Cleanup Utility
 IDS_MENU_CLEANUP_DISM_NORMAL=/StartComponentCleanup
 IDS_MENU_CLEANUP_DISM_RESET=/StartComponentCleanup /ResetBase

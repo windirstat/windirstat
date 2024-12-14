@@ -78,6 +78,7 @@ IDS_LANGUAGERESTARTNOW=Keele vahetus ei toimi WinDirStat taaskäivitakse.\n\nRes
 IDS_MENU_CLEANUP_CONSOLE=&Käsuviip\tCtrl+P
 IDS_MENU_CLEANUP_DELETE_BIN=&Kustuta (Prügikasti)\tDel
 IDS_MENU_CLEANUP_DELETE=Kustuta (puudub &ennistamine!)\tShift+Del
+IDS_MENU_CLEANUP_DISABLE_HIBERNATE=Keela hibernatsioonifail
 IDS_MENU_CLEANUP_DISK_CLEANUP=Käivita Windowsi kettapuhastuse tööriist
 IDS_MENU_CLEANUP_DISM_NORMAL=/StartComponentCleanup
 IDS_MENU_CLEANUP_DISM_RESET=/StartComponentCleanup /ResetBase
