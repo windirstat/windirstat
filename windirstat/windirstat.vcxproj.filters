@@ -105,6 +105,9 @@
     <None Include="res\license.bin">
       <Filter>Resource Files\Resources</Filter>
     </None>
+    <None Include="res\langs\lang_ko.bin">
+      <Filter>Resource Files\Languages</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DirStatDoc.h">
@@ -222,9 +225,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Constants.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MdExceptions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Property.h">
@@ -515,6 +515,9 @@
       <Filter>Resource Files\Languages</Filter>
     </Text>
     <Text Include="res\langs\lang_no.txt">
+      <Filter>Resource Files\Languages</Filter>
+    </Text>
+    <Text Include="res\langs\lang_ko.txt">
       <Filter>Resource Files\Languages</Filter>
     </Text>
   </ItemGroup>
