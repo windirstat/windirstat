@@ -24,12 +24,6 @@
       <ComponentRef Id="Component_ContextMenuEntry"/>
       <ComponentRef Id="Component_DesktopShortcut"/>
     </Feature>
-    <Property Id="WIN_DIR_STAT_HKCU">
-      <RegistrySearch Id="WinDirStatHKCU" Root="HKCU" Key="Software\Microsoft\Windows\CurrentVersion\Uninstall\WinDirStat" Name="UninstallString" Type="raw"/>
-    </Property>
-    <Property Id="WIN_DIR_STAT_HKLM">
-      <RegistrySearch Id="WinDirStatHKLM" Root="HKLM" Key="Software\Microsoft\Windows\CurrentVersion\Uninstall\WinDirStat" Name="UninstallString" Type="raw" Win64="no"/>
-    </Property>
     <Property Id="LEGACY_UNINSTALL_SCRIPT">
       <![CDATA[
         POWERSHELL -NoLogo -NonInteractive -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -Command "& {
@@ -57,7 +51,7 @@
     </Property>    
     <CustomAction Id="DoLegacyUninstall" Directory="TempFolder" ExeCommand="[LEGACY_UNINSTALL_SCRIPT]" Execute="deferred" Impersonate="no" Return="ignore"/>
     <InstallExecuteSequence>
-      <Custom Action="DoLegacyUninstall" Before="InstallFiles">(WIN_DIR_STAT_HKCU OR WIN_DIR_STAT_HKLM) AND NOT REMOVE</Custom>
+      <Custom Action="DoLegacyUninstall" Before="InstallFiles">NOT REMOVE</Custom>
     </InstallExecuteSequence>
     <Property Id="DESKTOP_SHORTCUT_LOCATE">
       <DirectorySearch Id="DesktopFolderSearch" Path="[DesktopFolder]" AssignToProperty="yes">
