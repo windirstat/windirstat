@@ -132,10 +132,7 @@ void CItemDupe::AddChild(CItemDupe* child)
 
     if (IsVisible() && IsExpanded())
     {
-        CMainFrame::Get()->InvokeInMessageThread([this, child]
-        {
-            CFileDupeControl::Get()->OnChildAdded(this, child);
-        });
+        CFileDupeControl::Get()->OnChildAdded(this, child);
     }
 }
 

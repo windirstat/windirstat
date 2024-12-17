@@ -824,7 +824,10 @@ LRESULT CMainFrame::OnExitSizeMove(WPARAM, LPARAM)
 
 void CMainFrame::OnTimer(const UINT_PTR nIDEvent)
 {
-    // UI updates that do not need to processed frequently
+    // Do not process UI updates if minimize
+    if (IsIconic()) return;
+
+    // Calculate UI updates that do not need to processed frequently
     static unsigned int updateCounter = 0;
     const bool doInfrequentUpdate = updateCounter++ % 15 == 0;
     if (doInfrequentUpdate)
@@ -844,7 +847,8 @@ void CMainFrame::OnTimer(const UINT_PTR nIDEvent)
         CFileTreeControl::Get()->SortItems();
 
         // Conditionally sort duplicates
-        if (COptions::ScanForDuplicates && doInfrequentUpdate && GetFileTabbedView()->GetTabControl().GetActiveTab() == 1)
+        if (COptions::ScanForDuplicates && doInfrequentUpdate &&
+            GetFileTabbedView()->GetTabControl().GetActiveTab() == 1)
         {
             CFileDupeControl::Get()->SortItems();
         }

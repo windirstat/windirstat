@@ -203,15 +203,26 @@ void CFileDupeControl::SortItems()
 {
     ASSERT(AfxGetThread() != nullptr);
 
-    SetRedraw(FALSE);
-    for (std::lock_guard guard(m_NodeTrackerMutex); !m_PendingListAdds.empty();)
+    // Transfer elements to vector so we do not have to hold the lock 
+    m_NodeTrackerMutex.lock();
+    std::vector<std::pair<CItemDupe*, CItemDupe*>> pendingAdds;
+    while (!m_PendingListAdds.empty())
     {
-        auto& [parent, child] = m_PendingListAdds.front();
-        if (parent == nullptr) parent = reinterpret_cast<CItemDupe*>(GetItem(0));
+        pendingAdds.emplace_back(m_PendingListAdds.front());
         m_PendingListAdds.pop();
-        parent->AddChild(child);
     }
-    SetRedraw(TRUE);
+    m_NodeTrackerMutex.unlock();
+
+    // Add items to the list
+    if (!pendingAdds.empty())
+    {
+        CWaitCursor wc;
+        SetRedraw(FALSE);
+        const auto root = reinterpret_cast<CItemDupe*>(GetItem(0));
+        for (const auto& [parent, child] : pendingAdds)
+            (parent == nullptr ? root : parent)->AddChild(child);
+        SetRedraw(TRUE);
+    }
 
     CSortingListControl::SortItems();
 }
