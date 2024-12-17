@@ -171,33 +171,45 @@ void CFileDupeControl::ProcessDuplicate(CItem * item, BlockingQueue<CItem*>* que
         if (hashesResult == m_HashTracker.end() || hashesResult->second.size() <= 1) return;
         itemsToHash = hashesResult->second;
     }
-    
-    for (const auto& itemToAdd : itemsToHash)
+
+    // Add the hashes to the UI thread 
+    m_Mutex.unlock();
+    for (std::lock_guard guard(m_NodeTrackerMutex); const auto& itemToAdd : itemsToHash)
     {
-        CMainFrame::Get()->InvokeInMessageThread([&]
+        const auto nodeEntry = m_NodeTracker.find(hashForThisItem);
+        auto dupeParent = nodeEntry != m_NodeTracker.end() ? nodeEntry->second : nullptr;
+
+        if (dupeParent == nullptr)
         {
-            const auto root = reinterpret_cast<CItemDupe*>(GetItem(0));
-            const auto nodeEntry = m_NodeTracker.find(hashForThisItem);
-            auto dupeParent = nodeEntry != m_NodeTracker.end() ? nodeEntry->second : nullptr;
+            // Create new root item to hold these duplicates
+            dupeParent = new CItemDupe(hashForThisItem, itemToAdd->GetSizePhysical(), itemToAdd->GetSizeLogical());
+            m_PendingListAdds.emplace(nullptr, dupeParent);
+            m_NodeTracker.emplace(hashForThisItem, dupeParent);
+        }
 
-            if (dupeParent == nullptr)
-            {
-                // Create new root item to hold these duplicates
-                dupeParent = new CItemDupe(hashForThisItem, itemToAdd->GetSizePhysical(), itemToAdd->GetSizeLogical());
-                root->AddChild(dupeParent);
-                m_NodeTracker.emplace(hashForThisItem, dupeParent);
-            }
+        // See if child is already in list parent
+        const auto& children = dupeParent->GetChildren();
+        if (std::ranges::find_if(children, [itemToAdd](const auto& child)
+            { return child->GetItem() == itemToAdd; }) != children.end()) break;
 
-            // See if child is already in list parent
-            const auto& children = dupeParent->GetChildren();
-            if (std::ranges::find_if(children, [itemToAdd](const auto& child)
-                { return child->GetItem() == itemToAdd; }) != children.end()) return;
-
-            // Add new item
-            const auto dupeChild = new CItemDupe(itemToAdd);
-            dupeParent->AddChild(dupeChild);
-        });
+        // Add new item
+        const auto dupeChild = new CItemDupe(itemToAdd);
+        m_PendingListAdds.emplace(dupeParent, dupeChild);
     }
+    m_Mutex.lock();
+}
+
+void CFileDupeControl::SortItems()
+{
+    for (std::lock_guard guard(m_NodeTrackerMutex); !m_PendingListAdds.empty();)
+    {
+        auto& [parent, child] = m_PendingListAdds.front();
+        if (parent == nullptr) parent = reinterpret_cast<CItemDupe*>(GetItem(0));
+        m_PendingListAdds.pop();
+        parent->AddChild(child);
+    }
+
+    CSortingListControl::SortItems();
 }
 
 void CFileDupeControl::RemoveItem(CItem* item)

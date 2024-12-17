@@ -844,7 +844,7 @@ void CMainFrame::OnTimer(const UINT_PTR nIDEvent)
         CFileTreeControl::Get()->SortItems();
 
         // Conditionally sort duplicates
-        if (COptions::ScanForDuplicates && doInfrequentUpdate)
+        if (COptions::ScanForDuplicates && doInfrequentUpdate && GetFileTabbedView()->GetTabControl().GetActiveTab() == 1)
         {
             CFileDupeControl::Get()->SortItems();
         }

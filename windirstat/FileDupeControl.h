@@ -27,6 +27,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <shared_mutex>
+#include <queue>
 
 class CFileDupeControl final : public CTreeListControl
 {
@@ -38,11 +39,14 @@ public:
     void SetRootItem(CTreeListItem* root) override;
     void ProcessDuplicate(CItem* item, BlockingQueue<CItem*>* queue);
     void RemoveItem(CItem* items);
+    void SortItems() override;
 
     std::shared_mutex m_Mutex;
+    std::shared_mutex m_NodeTrackerMutex;
     std::unordered_map<ULONGLONG, std::unordered_set<CItem*>> m_SizeTracker;
     std::unordered_map<std::wstring, CItemDupe*> m_NodeTracker;
     std::unordered_map<std::wstring, std::unordered_set<CItem*>> m_HashTracker;
+    std::queue<std::pair<CItemDupe*, CItemDupe*>> m_PendingListAdds;
 
     template <class T = CTreeListItem> std::vector<T*> GetAllSelected()
     {
