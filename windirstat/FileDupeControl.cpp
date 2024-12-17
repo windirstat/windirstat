@@ -201,6 +201,9 @@ void CFileDupeControl::ProcessDuplicate(CItem * item, BlockingQueue<CItem*>* que
 
 void CFileDupeControl::SortItems()
 {
+    ASSERT(AfxGetThread() != nullptr);
+
+    SetRedraw(FALSE);
     for (std::lock_guard guard(m_NodeTrackerMutex); !m_PendingListAdds.empty();)
     {
         auto& [parent, child] = m_PendingListAdds.front();
@@ -208,6 +211,7 @@ void CFileDupeControl::SortItems()
         m_PendingListAdds.pop();
         parent->AddChild(child);
     }
+    SetRedraw(TRUE);
 
     CSortingListControl::SortItems();
 }
