@@ -2,7 +2,7 @@
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
   <?include Defines.wxi?>
   <Product Id="$(var.ProductID)" Name="$(var.ProductName)" Language="1033" Version="$(var.ProductVersion)" Manufacturer="$(var.Manufacturer)" UpgradeCode="$(var.UpgradeCode)">
-    <Package InstallerVersion="500" Compressed="yes" InstallScope="perMachine"/>
+    <Package InstallerVersion="500" Compressed="yes" InstallScope="perMachine" Comments="$(var.ProductName) $(var.ProductVersion) ($(sys.BUILDARCH))"/>
     <Icon Id="WinDirStat.ico" SourceFile="$(var.IconFilePath)"/>
     <Property Id="ARPCONTACT" Value="$(var.Contact)"/>
     <Property Id="ARPHELPLINK" Value="$(var.HelpLink)"/>
