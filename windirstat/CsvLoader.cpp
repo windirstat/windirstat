@@ -84,7 +84,7 @@ static FILETIME FromTimeString(const std::wstring& time)
 {
     // Expected format: YYYY-MM-DDTHH:MM:SSZ
     SYSTEMTIME utc = {};
-    if (time.size() < _countof("YYYY-MM-DDTHH:MM:SS") || time[10] != 'T' ||
+    if (time.size() < std::size("YYYY-MM-DDTHH:MM:SS") || time[10] != 'T' ||
         swscanf_s(time.c_str(), L"%4hu-%2hu-%2huT%2hu:%2hu:%2hu",
         &utc.wYear, &utc.wMonth, &utc.wDay,
         &utc.wHour, &utc.wMinute, &utc.wSecond) != 6) return {};

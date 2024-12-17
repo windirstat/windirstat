@@ -196,8 +196,6 @@ void CFileDupeControl::ProcessDuplicate(CItem * item, BlockingQueue<CItem*>* que
             // Add new item
             const auto dupeChild = new CItemDupe(itemToAdd);
             dupeParent->AddChild(dupeChild);
-
-            SortItems();
         });
     }
 }

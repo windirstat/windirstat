@@ -179,7 +179,7 @@ std::wstring CItem::GetText(const int subitem) const
     case COL_NAME:
         if (IsType(IT_DRIVE))
         {
-            return m_Name.substr(_countof(L"?:"));
+            return m_Name.substr(std::size(L"?:"));
         }
         return m_Name;
 
@@ -285,14 +285,7 @@ int CItem::CompareSibling(const CTreeListItem* tlib, const int subitem) const
     {
         case COL_NAME:
         {
-            if (IsType(IT_DRIVE))
-            {
-                return signum(_wcsicmp(GetPath().c_str(), other->GetPath().c_str()));
-            }
-            else
-            {
-                return signum(_wcsicmp(m_Name.c_str(), other->m_Name.c_str()));
-            }
+            return signum(_wcsicmp(m_Name.c_str(), other->m_Name.c_str()));
         }
 
         case COL_SUBTREEPERCENTAGE:

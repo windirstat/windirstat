@@ -122,7 +122,7 @@ std::wstring GetNameFromSid(const PSID sid)
     // lookup the name for this sid
     SID_NAME_USE nameUse;
     WCHAR accountName[UNLEN + 1], domainName[UNLEN + 1];
-    DWORD iAccountNameSize = _countof(accountName), iDomainName = _countof(domainName);
+    DWORD iAccountNameSize = std::size(accountName), iDomainName = std::size(domainName);
     if (LookupAccountSid(nullptr, sid, accountName,
         &iAccountNameSize, domainName, &iDomainName, &nameUse) == 0)
     {

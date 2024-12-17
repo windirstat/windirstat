@@ -158,32 +158,6 @@ void CTreeListItem::SetScrollPosition(const int top) const
     m_VisualInfo->control->SetItemScrollPosition(this, top);
 }
 
-void CTreeListItem::SortChildren(const SSorting& sorting) const
-{
-    if (!IsVisible())
-    {
-        return;
-    }
-
-    const int children = GetTreeListChildCount();
-    m_VisualInfo->sortedChildren.resize(children, nullptr);
-    for (int i = 0; i < children; i++)
-    {
-        m_VisualInfo->sortedChildren[i] = GetTreeListChild(i);
-    }
-
-    // sort by size for proper treemap rendering
-    std::ranges::sort(m_VisualInfo->sortedChildren, [sorting](auto item1, auto item2)
-    {
-        return item1->CompareString(item2, sorting) < 0;
-    });
-}
-
-CTreeListItem* CTreeListItem::GetSortedChild(const int i) const
-{
-    return m_VisualInfo->sortedChildren[i];
-}
-
 int CTreeListItem::Compare(const CSortingListItem* baseOther, const int subitem) const
 {
     const auto other = reinterpret_cast<const CTreeListItem*>(baseOther);
@@ -221,19 +195,6 @@ int CTreeListItem::Compare(const CSortingListItem* baseOther, const int subitem)
     return m_Parent->Compare(other->m_Parent, subitem);
 }
 
-int CTreeListItem::FindSortedChild(const CTreeListItem* child) const
-{
-    for (int i = 0, maxChild = GetTreeListChildCount(); i < maxChild; i++)
-    {
-        if (child == GetSortedChild(i))
-        {
-            return i;
-        }
-    }
-    ASSERT(FALSE);
-    return 0;
-}
-
 CTreeListItem* CTreeListItem::GetParent() const
 {
     return m_Parent;
@@ -262,8 +223,7 @@ bool CTreeListItem::HasSiblings() const
     {
         return false;
     }
-    const int i = m_Parent->FindSortedChild(this);
-    return i < m_Parent->GetTreeListChildCount() - 1;
+    return m_Parent->GetTreeListChildCount() > 1;
 }
 
 bool CTreeListItem::HasChildren() const
@@ -345,11 +305,6 @@ CTreeListControl::CTreeListControl(int rowHeight, std::vector<int>* columnOrder,
 {
     ASSERT(rowHeight <= NODE_HEIGHT); // can't be higher
     ASSERT(rowHeight % 2 == 0);       // must be an even number
-}
-
-bool CTreeListControl::HasImages()
-{
-    return true;
 }
 
 void CTreeListControl::MySetImageList(CImageList* il)
@@ -767,14 +722,12 @@ void CTreeListControl::ExpandItem(const int i, const bool scroll)
 
     CWaitCursor wc;
 
-    item->SortChildren(GetSorting());
-
     SetRedraw(FALSE);
     LockWindowUpdate();
     int maxwidth = GetSubItemWidth(item, 0);
     for (int c = 0; c < item->GetTreeListChildCount(); c++)
     {
-        CTreeListItem* child = item->GetSortedChild(c);
+        CTreeListItem* child = item->GetTreeListChild(c);
         InsertItem(i + 1 + c, child);
 
         // The calculation of item width is very expensive for
@@ -786,6 +739,7 @@ void CTreeListControl::ExpandItem(const int i, const bool scroll)
         }
     }
     UnlockWindowUpdate();
+    SortItems();
     SetRedraw(TRUE);
 
     if (scroll && GetColumnWidth(0) < maxwidth)
@@ -816,7 +770,7 @@ void CTreeListControl::OnKeyDown(const UINT nChar, const UINT nRepCnt, const UIN
         {
             if (items[0]->IsExpanded() && items[0]->HasChildren())
             {
-                SelectItem(items[0]->GetSortedChild(0), true, true);
+                SelectItem(GetItem(FindTreeItem(items[0]) + 1), true, true);
             }
             if (!items[0]->IsExpanded() && items[0]->HasChildren())
             {
@@ -888,8 +842,7 @@ void CTreeListControl::OnChildAdded(const CTreeListItem* parent, CTreeListItem* 
 
     const int p = FindTreeItem(parent);
     ASSERT(p != -1);
-    InsertItem(p + 1, child);
-    Sort();
+    InsertItem(p + parent->GetTreeListChildCount(), child);
 }
 
 void CTreeListControl::OnChildRemoved(const CTreeListItem* parent, CTreeListItem* child)
@@ -904,17 +857,14 @@ void CTreeListControl::OnChildRemoved(const CTreeListItem* parent, CTreeListItem
 
     if (parent->IsExpanded())
     {
-        LockWindowUpdate();
         for (int i = 0; i < child->GetTreeListChildCount(); i++)
         {
             OnChildRemoved(child, child->GetTreeListChild(i));
         }
-        UnlockWindowUpdate();
 
         const int c = FindTreeItem(child);
         ASSERT(c != -1);
         DeleteItem(c);
-        parent->SortChildren(GetSorting());
     }
 
     RedrawItems(p, p);
@@ -931,19 +881,6 @@ void CTreeListControl::OnRemovingAllChildren(const CTreeListItem* parent)
     ASSERT(p != -1);
 
     CollapseItem(p);
-}
-
-void CTreeListControl::Sort()
-{
-    const int count = GetItemCount();
-    for (int i = 0; i < count; i++)
-    {
-        if (GetItem(i)->IsExpanded())
-        {
-            GetItem(i)->SortChildren(GetSorting());
-        }
-    }
-    COwnerDrawnListControl::SortItems();
 }
 
 void CTreeListControl::EnsureItemVisible(const CTreeListItem* item)

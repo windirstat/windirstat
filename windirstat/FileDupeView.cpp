@@ -149,7 +149,6 @@ void CFileDupeView::OnUpdate(CView* pSender, const LPARAM lHint, CObject* pHint)
         case HINT_NEWROOT:
         {
             m_Control.SetRootItem(GetDocument()->GetRootItemDupe());
-            m_Control.Sort();
             m_Control.Invalidate();
         }
         break;
@@ -164,7 +163,6 @@ void CFileDupeView::OnUpdate(CView* pSender, const LPARAM lHint, CObject* pHint)
 
         case HINT_NULL:
         {
-            m_Control.Sort();
             CView::OnUpdate(pSender, lHint, pHint);
         }
         break;

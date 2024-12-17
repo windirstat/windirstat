@@ -722,6 +722,6 @@ void DisableHibernate()
 bool IsHibernateEnabled()
 {
     WCHAR drive[3];
-    return GetEnvironmentVariable(L"SystemDrive", drive, _countof(drive)) == _countof(drive) - 1 &&
+    return GetEnvironmentVariable(L"SystemDrive", drive, std::size(drive)) == std::size(drive) - 1 &&
         FileFindEnhanced::DoesFileExist(drive + std::wstring(L"\\"), L"hiberfil.sys");
 }

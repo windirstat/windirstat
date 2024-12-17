@@ -46,8 +46,8 @@ public:
     virtual ~CSortingListItem() = default;
     virtual std::wstring GetText(int subitem) const = 0;
     virtual int GetImage() const = 0;
-    virtual int Compare(const CSortingListItem* other, int subitem) const;
-    int CompareString(const CSortingListItem* other, const SSorting& sorting) const;
+    virtual int Compare(const CSortingListItem* other, int subitem) const = 0;
+    int CompareSort(const CSortingListItem* other, const SSorting& sorting) const;
 };
 
 //
@@ -82,14 +82,11 @@ class CSortingListControl : public CListCtrl
     void SetSorting(const SSorting& sorting);
     void SetSorting(int sortColumn1, bool ascending1, int sortColumn2, bool ascending2);
     void SetSorting(int sortColumn, bool ascending);
-
     void InsertListItem(int i, CSortingListItem* item);
-    CSortingListItem* GetSortingListItem(int i) const;
 
     // Overridables
     virtual void SortItems();
     virtual bool GetAscendingDefault(int column);
-    virtual bool HasImages();
 
 private:
     void SavePersistentAttributes() const;

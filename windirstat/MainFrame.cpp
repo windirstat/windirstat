@@ -468,8 +468,8 @@ void CMainFrame::SetProgressComplete() // called by CDirStatDoc
 
     DestroyProgress();
     CDirStatDoc::GetDocument()->SetTitlePrefix(wds::strEmpty);
-    //SetMessageText(Localization::Lookup(IDS_IDLEMESSAGE));
     CFileTreeControl::Get()->SortItems();
+    CFileDupeControl::Get()->SortItems();
 }
 
 bool CMainFrame::IsScanSuspended() const
@@ -625,7 +625,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
     // Setup status pane and force initial field population
     VERIFY(m_WndStatusBar.Create(this));
-    m_WndStatusBar.SetIndicators(indicators, _countof(indicators));
+    m_WndStatusBar.SetIndicators(indicators, std::size(indicators));
     m_WndStatusBar.SetPaneStyle(ID_STATUSPANE_IDLE_INDEX, SBPS_STRETCH);
     SetStatusPaneText(ID_STATUSPANE_CAPS_INDEX, Localization::Lookup(IDS_INDICATOR_CAPS));
     SetStatusPaneText(ID_STATUSPANE_NUM_INDEX, Localization::Lookup(IDS_INDICATOR_NUM));
@@ -826,7 +826,8 @@ void CMainFrame::OnTimer(const UINT_PTR nIDEvent)
 {
     // UI updates that do not need to processed frequently
     static unsigned int updateCounter = 0;
-    if (updateCounter++ % 50 == 0)
+    const bool doInfrequentUpdate = updateCounter++ % 15 == 0;
+    if (doInfrequentUpdate)
     {
         // Update memory usage
         UpdatePaneText();
@@ -841,6 +842,12 @@ void CMainFrame::OnTimer(const UINT_PTR nIDEvent)
         // By sorting items, items will be redrawn which will
         // also force pacman to update with recent position
         CFileTreeControl::Get()->SortItems();
+
+        // Conditionally sort duplicates
+        if (COptions::ScanForDuplicates && doInfrequentUpdate)
+        {
+            CFileDupeControl::Get()->SortItems();
+        }
     }
 
     CFrameWndEx::OnTimer(nIDEvent);

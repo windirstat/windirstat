@@ -70,8 +70,8 @@ void CReparsePoints::Initialize()
 
     m_Mountpoints.clear();
     WCHAR volume[_MAX_PATH];
-    SmartPointer<HANDLE> hvol(FindVolumeClose, ::FindFirstVolume(volume, _countof(volume)));
-    for (BOOL bContinue = hvol != INVALID_HANDLE_VALUE; bContinue; bContinue = ::FindNextVolume(hvol, volume, _countof(volume)))
+    SmartPointer<HANDLE> hvol(FindVolumeClose, ::FindFirstVolume(volume, std::size(volume)));
+    for (BOOL bContinue = hvol != INVALID_HANDLE_VALUE; bContinue; bContinue = ::FindNextVolume(hvol, volume, std::size(volume)))
     {
         // Fetch required buffer size
         DWORD bufSize = 0;

@@ -39,6 +39,7 @@ using ITEMDUPCOLUMNS = enum : std::uint8_t
 class CItemDupe final : public CTreeListItem
 {
     std::wstring m_Hash;
+    ULONGLONG m_HashComp = 0;
     ULONGLONG m_SizePhysical = 0;
     ULONGLONG m_SizeLogical = 0;
     CItem* m_Item = nullptr;
@@ -72,6 +73,7 @@ public:
     int GetTreeListChildCount() const override;
     CTreeListItem* GetTreeListChild(int i) const override;
     short GetImageToCache() const override;
+    int GetImage() const override;
 
     CItem* GetItem() const { return m_Item; }
     const std::vector<CItemDupe*>& GetChildren() const;

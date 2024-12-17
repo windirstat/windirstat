@@ -129,8 +129,6 @@ class CDrivesList final : public COwnerDrawnListControl
     void SelectItem(const CDriveItem* item);
     bool IsItemSelected(int i) const;
 
-    bool HasImages() override;
-
     DECLARE_MESSAGE_MAP()
     afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
     afx_msg void OnLvnDeleteItem(NMHDR* pNMHDR, LRESULT* pResult);

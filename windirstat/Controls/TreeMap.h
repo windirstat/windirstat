@@ -205,9 +205,6 @@ public:
     // Create and draw a treemap
     void DrawTreeMap(CDC* pdc, CRect rc, Item* root, const Options* options = nullptr);
 
-    // Same as above but double buffered
-    void DrawTreeMapDoubleBuffered(CDC* pdc, const CRect& rc, Item* root, const Options* options = nullptr);
-
     // In the resulting treemap, find the item below a given coordinate.
     // Return value can be NULL, iff point is outside root rect.
     Item* FindItemByPoint(Item* item, CPoint point);
@@ -216,17 +213,10 @@ public:
     void DrawColorPreview(CDC* pdc, const CRect& rc, COLORREF color, const Options* options = nullptr);
 
 protected:
-    // The recursive drawing function
-    void RecurseDrawGraph(std::vector<COLORREF>& bitmap, Item* item, const CRect& rc,
-        bool asroot, const double* psurface, double h, DWORD flags);
 
     // KDirStat-like squarification
-    void KDirStat_DrawChildren(std::vector<COLORREF>& bitmap, const Item* parent, const double* surface, double h, DWORD flags);
     bool KDirStat_ArrangeChildren(const Item* parent, std::vector<double>& childWidth, std::vector<double>& rows, std::vector<int>& childrenPerRow) const;
     double KDirStat_CalculateNextRow(const Item* parent, int nextChild, double width, int& childrenUsed, std::vector<double>& childWidth) const;
-
-    // Classical SequoiaView-like squarification
-    void SequoiaView_DrawChildren(std::vector<COLORREF>& bitmap, const Item* parent, const double* surface, double h, DWORD flags);
 
     // Returns true, if height and scaleFactor are > 0 and ambientLight is < 1.0
     bool IsCushionShading() const;

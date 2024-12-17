@@ -31,7 +31,13 @@
 #include <queue>
 
 CItemDupe::CItemDupe(const std::wstring& hash, const ULONGLONG sizePhysical, const ULONGLONG sizeLogical) :
-    m_Hash(hash), m_SizePhysical(sizePhysical), m_SizeLogical(sizeLogical) {}
+    m_Hash(hash), m_SizePhysical(sizePhysical), m_SizeLogical(sizeLogical)
+{
+    DWORD maxSize = sizeof(m_HashComp);
+    CryptStringToBinary(hash.c_str(), sizeof(m_HashComp) * 2, CRYPT_STRING_HEXRAW,
+        reinterpret_cast<PBYTE>(&m_HashComp), &maxSize, nullptr, nullptr);
+    m_HashComp = _byteswap_uint64(m_HashComp);
+}
 
 CItemDupe::CItemDupe(CItem* item) : m_Item(item) {}
 
@@ -68,13 +74,13 @@ int CItemDupe::CompareSibling(const CTreeListItem* tlib, const int subitem) cons
 {
     // Root node
     if (GetParent() == nullptr) return 0;
-
+    
     // Parent hash nodes
     const auto* other = reinterpret_cast<const CItemDupe*>(tlib);
     if (m_Item == nullptr)
     {
         // Handle top-level hash collection nodes
-        if (subitem == COL_ITEMDUP_NAME) return signum(_wcsicmp(m_Hash.c_str(),other->m_Hash.c_str()));
+        if (subitem == COL_ITEMDUP_NAME) return usignum(m_HashComp, other->m_HashComp);
         if (subitem == COL_ITEMDUP_SIZE_PHYSICAL) return usignum(m_SizePhysical * m_Children.size(), other->m_SizePhysical * other->m_Children.size());
         if (subitem == COL_ITEMDUP_SIZE_LOGICAL) return usignum(m_SizeLogical * m_Children.size(), other->m_SizeLogical * other->m_Children.size());
         if (subitem == COL_ITEMDUP_ITEMS) return usignum(m_Children.size(), other->m_Children.size());
@@ -97,14 +103,14 @@ CTreeListItem* CItemDupe::GetTreeListChild(const int i) const
 
 short CItemDupe::GetImageToCache() const
 {
-    // Root node
-    if (GetParent() == nullptr) return GetIconImageList()->GetFreeSpaceImage();
+    return (m_Item != nullptr) ? m_Item->GetImageToCache() :
+        GetIconImageList()->GetFreeSpaceImage();
+}
 
-    // Parent hash nodes
-    if (m_Item == nullptr) return GetIconImageList()->GetFreeSpaceImage();
-
-    // Individual file names
-    return m_Item->GetImageToCache();
+int CItemDupe::GetImage() const
+{
+    return (m_Item != nullptr) ? CTreeListItem::GetImage() :
+        GetIconImageList()->GetFreeSpaceImage();
 }
 
 const std::vector<CItemDupe*>& CItemDupe::GetChildren() const

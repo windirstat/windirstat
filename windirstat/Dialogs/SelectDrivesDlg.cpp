@@ -340,11 +340,6 @@ CDriveItem* CDrivesList::GetItem(const int i) const
     return reinterpret_cast<CDriveItem*>(GetItemData(i));
 }
 
-bool CDrivesList::HasImages()
-{
-    return true;
-}
-
 void CDrivesList::SelectItem(const CDriveItem* item)
 {
     const int i = FindListItem(item);

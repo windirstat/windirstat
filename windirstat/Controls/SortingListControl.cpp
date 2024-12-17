@@ -25,20 +25,7 @@
 
 /////////////////////////////////////////////////////////////////////////////
 
-// Return value:
-// <= -2:   this is less than other regardless of ascending flag
-// -1:      this is less than other
-// 0:       this equals other
-// +1:      this is greater than other
-// >= +1:   this is greater than other regardless of ascending flag.
-//
-int CSortingListItem::Compare(const CSortingListItem* other, const int subitem) const
-{
-    // Default implementation compares strings
-    return signum(_wcsicmp(GetText(subitem).c_str(),other->GetText(subitem).c_str()));
-}
-
-int CSortingListItem::CompareString(const CSortingListItem* other, const SSorting& sorting) const
+int CSortingListItem::CompareSort(const CSortingListItem* other, const SSorting& sorting) const
 {
     int r = Compare(other, sorting.subitem1);
     if (abs(r) < 2 && !sorting.ascending1)
@@ -156,7 +143,7 @@ void CSortingListControl::SetSorting(const int sortColumn, const bool ascending)
 void CSortingListControl::InsertListItem(const int i, CSortingListItem* item)
 {
     LVITEM lvitem;
-    lvitem.mask = LVIF_TEXT | LVIF_PARAM | (HasImages() ? LVIF_IMAGE : 0);
+    lvitem.mask = LVIF_TEXT | LVIF_PARAM | LVIF_IMAGE;
     lvitem.iItem = i;
     lvitem.pszText = LPSTR_TEXTCALLBACK;
     lvitem.iImage = I_IMAGECALLBACK;
@@ -166,18 +153,13 @@ void CSortingListControl::InsertListItem(const int i, CSortingListItem* item)
     VERIFY(i == CListCtrl::InsertItem(&lvitem));
 }
 
-CSortingListItem* CSortingListControl::GetSortingListItem(const int i) const
-{
-    return reinterpret_cast<CSortingListItem*>(GetItemData(i));
-}
-
 void CSortingListControl::SortItems()
 {
     VERIFY(CListCtrl::SortItems([](LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort) {
         const CSortingListItem* item1 = reinterpret_cast<CSortingListItem*>(lParam1);
         const CSortingListItem* item2 = reinterpret_cast<CSortingListItem*>(lParam2);
         const SSorting* sorting = reinterpret_cast<SSorting*>(lParamSort);
-        return item1->CompareString(item2, *sorting); }, reinterpret_cast<DWORD_PTR>(&m_Sorting)));
+        return item1->CompareSort(item2, *sorting); }, reinterpret_cast<DWORD_PTR>(&m_Sorting)));
 
     if (m_IndicatedColumn != -1)
     {
@@ -186,7 +168,7 @@ void CSortingListControl::SortItems()
         text.resize(256);
         hditem.mask = HDI_TEXT;
         hditem.pszText = text.data();
-        hditem.cchTextMax = 256;
+        hditem.cchTextMax = static_cast<int>(text.size());
         GetHeaderCtrl()->GetItem(m_IndicatedColumn, &hditem);
         text.resize(wcslen(text.data()));
         text = text.substr(2);
@@ -199,7 +181,7 @@ void CSortingListControl::SortItems()
     text.resize(256);
     hditem.mask = HDI_TEXT;
     hditem.pszText = text.data();
-    hditem.cchTextMax = 256;
+    hditem.cchTextMax = static_cast<int>(text.size());
     GetHeaderCtrl()->GetItem(m_Sorting.column1, &hditem);
     text.resize(wcslen(text.data()));
     text = (m_Sorting.ascending1 ? L"↑ " : L"↓ ") + text;
@@ -211,11 +193,6 @@ void CSortingListControl::SortItems()
 bool CSortingListControl::GetAscendingDefault(int /*column*/)
 {
     return true;
-}
-
-bool CSortingListControl::HasImages()
-{
-    return false;
 }
 
 #pragma warning(push)
@@ -242,10 +219,7 @@ void CSortingListControl::OnLvnGetDispInfo(NMHDR* pNMHDR, LRESULT* pResult)
         wcscpy_s(displayInfo->item.pszText, displayInfo->item.cchTextMax, item->GetText(subitem).c_str());
     }
 
-    if ((displayInfo->item.mask & LVIF_IMAGE) != 0)
-    {
-        displayInfo->item.iImage = item->GetImage();
-    }
+    displayInfo->item.iImage = item->GetImage();
 }
 
 void CSortingListControl::OnHdnItemClick(NMHDR* pNMHDR, LRESULT* pResult)

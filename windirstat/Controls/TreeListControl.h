@@ -41,12 +41,6 @@ class CTreeListItem : public COwnerDrawnListItem
     // Data needed to display the item.
     struct VISIBLEINFO
     {
-        // sortedChildren: This member contains our children (the same set of
-        // children as in CItem::m_Children) and is initialized as soon as
-        // we are expanded. In contrast to CItem::m_Children, this array is always
-        // sorted depending on the current user-defined sort column and -order.
-        std::vector<CTreeListItem*> sortedChildren;
-
         CPacman pacman;
         CRect rcPlusMinus;    // Coordinates of the little +/- rectangle, relative to the upper left corner of the item.
         CRect rcTitle;        // Coordinates of the label, relative to the upper left corner of the item.
@@ -75,9 +69,6 @@ public:
     virtual short GetImageToCache() const = 0;
 
     void DrawPacman(const CDC* pdc, const CRect& rc, COLORREF bgColor) const;
-    void SortChildren(const SSorting& sorting) const;
-    CTreeListItem* GetSortedChild(int i) const;
-    int FindSortedChild(const CTreeListItem* child) const;
     CTreeListItem* GetParent() const;
     void SetParent(CTreeListItem* parent);
     bool IsAncestorOf(const CTreeListItem* item) const;
@@ -128,7 +119,6 @@ class CTreeListControl : public COwnerDrawnListControl
     void DeselectAll();
     void ExpandPathToItem(const CTreeListItem* item);
     void DrawNode(CDC* pdc, CRect& rc, CRect& rcPlusMinus, const CTreeListItem* item, int* width);
-    void Sort();
     void EnsureItemVisible(const CTreeListItem* item);
     void ExpandItem(const CTreeListItem* item);
     int FindTreeItem(const CTreeListItem* item) const;
@@ -137,8 +127,6 @@ class CTreeListControl : public COwnerDrawnListControl
     bool SelectedItemCanToggle();
     void ToggleSelectedItem();
     void EmulateInteractiveSelection(const CTreeListItem* item);
-
-    bool HasImages() override;
 
     template <class T = CTreeListItem> std::vector<T*> GetAllSelected()
     {
