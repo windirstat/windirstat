@@ -79,7 +79,7 @@ bool FileFindEnhanced::FindNextFile()
 
         // copy name into local buffer
         m_Name.resize(nameLength);
-        std::memcpy(m_Name.data(), m_CurrentInfo->FileName, nameLength * sizeof(WCHAR));
+        std::wmemcpy(m_Name.data(), m_CurrentInfo->FileName, nameLength);
 
         // special case for reparse on initial run points since it will
         // return the attributes on the destination folder and not the reparse
