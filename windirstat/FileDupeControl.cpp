@@ -275,9 +275,9 @@ void CFileDupeControl::RemoveItem(CItem* item)
             // Remove parent node if only one item is list
             if (hashNode->GetChildren().size() <= 1)
             {
-                m_NodeTracker.erase(hashKey);
                 m_ChildTracker.erase(hashNode);
                 root->RemoveDupeItemChild(hashNode);
+                m_NodeTracker.erase(hashKey);
             }
         }
     }
