@@ -475,14 +475,16 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, Item* root, const Options* option
                         }
 
                         // Prepare child state and push onto the stack
-                        DrawState childState;
-                        childState.item = item->TmiGetChild(i);
-                        childState.rc = rcChild;
-                        childState.asroot = false;
-                        childState.surface = state.surface;
-                        childState.h = state.h * m_Options.scaleFactor;
-
-                        stack.push(childState);
+                        if (childSize > 0)
+                        {
+                            DrawState childState;
+                            childState.item = item->TmiGetChild(i);
+                            childState.rc = rcChild;
+                            childState.asroot = false;
+                            childState.surface = state.surface;
+                            childState.h = state.h * m_Options.scaleFactor;
+                            stack.push(childState);
+                        }
 
                         fBegin = fEnd;
                     }
