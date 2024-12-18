@@ -344,24 +344,29 @@ bool CTreeMapView::IsDrawn() const
 
 void CTreeMapView::Inactivate()
 {
-    if (m_Bitmap.m_hObject != nullptr)
-    {
-        // Move the old bitmap to m_Dimmed
-        m_Dimmed.DeleteObject();
-        m_Dimmed.Attach(m_Bitmap.Detach());
-        m_DimmedSize = m_Size;
+    if (m_Bitmap.m_hObject == nullptr) return;
 
-        // Dim m_Inactive
-        CClientDC dc(this);
-        CDC dcmem;
-        dcmem.CreateCompatibleDC(&dc);
-        CSelectObject sobmp(&dcmem, &m_Dimmed);
-        for (int x = 0; x < m_DimmedSize.cx; x += 2)
-            for (int y = 0; y < m_DimmedSize.cy; y += 2)
-            {
-                dcmem.SetPixel(x, y, RGB(100, 100, 100));
-            }
-    }
+    // Move the old bitmap to m_Dimmed
+    m_Dimmed.DeleteObject();
+    m_Dimmed.Attach(m_Bitmap.Detach());
+    m_DimmedSize = m_Size;
+    
+    // Dim m_Inactive
+    CClientDC dc(this);
+    CDC dcmem;
+    dcmem.CreateCompatibleDC(&dc);
+    CSelectObject sobmp(&dcmem, &m_Dimmed);
+
+    // Apply the dimming overlay
+    BLENDFUNCTION blendFunc = {};
+    blendFunc.BlendOp = AC_SRC_OVER;
+    blendFunc.BlendFlags = 0;
+    blendFunc.SourceConstantAlpha = 175;
+    blendFunc.AlphaFormat = 0;
+    CBrush brush(RGB(0, 0, 0));
+    dcmem.FillRect(CRect(0, 0, m_DimmedSize.cx, m_DimmedSize.cy), &brush);
+    dcmem.AlphaBlend(0, 0, m_DimmedSize.cx, m_DimmedSize.cy, &dc,
+        0, 0, m_DimmedSize.cx, m_DimmedSize.cy, blendFunc);
 }
 
 void CTreeMapView::EmptyView()
