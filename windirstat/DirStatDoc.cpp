@@ -425,8 +425,11 @@ void CDirStatDoc::UnlinkRoot()
 {
     CMainFrame::Get()->InvokeInMessageThread([this]
     {
+        CMainFrame::Get()->MinimizeTreeMapView();
+        CMainFrame::Get()->MinimizeExtensionView();
         DeleteContents();
         UpdateAllViews(nullptr, HINT_NEWROOT);
+        CMainFrame::Get()->SetProgressComplete();
     });
 }
 
@@ -1614,13 +1617,13 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
 
                 if (item->IsRootItem())
                 {
-                    // Handle deleted root item
-                    CMainFrame::Get()->InvokeInMessageThread([]
+                    // Handle deleted root item; this much be launched
+                    // asynchrously since it will end up calling this
+                    // function and could potentially deadlock
+                    std::thread ([] ()
                     {
                         GetDocument()->UnlinkRoot();
-                        CMainFrame::Get()->MinimizeTreeMapView();
-                        CMainFrame::Get()->MinimizeExtensionView();
-                    });
+                    }).detach();
                     return;
                 }
 
