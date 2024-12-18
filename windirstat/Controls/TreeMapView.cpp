@@ -62,14 +62,13 @@ void CTreeMapView::ShowTreeMap(const bool show)
 
 BOOL CTreeMapView::PreCreateWindow(CREATESTRUCT& cs)
 {
-    // We don't want a background brush
     VERIFY(CView::PreCreateWindow(cs)); // this registers a wndclass
 
     WNDCLASS wc;
     VERIFY(GetClassInfo(AfxGetInstanceHandle(), cs.lpszClass, &wc));
     wc.hbrBackground = nullptr;
-    wc.lpszClassName = L"windirstatGraphviewClass-{E0BE4F6F-3904-4c99-A3D4-2F11DE629740}";
-    cs.lpszClass     = reinterpret_cast<LPCWSTR>(::RegisterClass(&wc)); //-V542
+    wc.lpszClassName = L"windirstatTreeMapClass";
+    cs.lpszClass = reinterpret_cast<LPCWSTR>(::RegisterClass(&wc));
 
     return true;
 }
@@ -252,7 +251,7 @@ void CTreeMapView::DrawSelection(CDC* pdc)
 // Draws the highlight rectangle of item. If single, the rectangle is slightly
 // bigger than the item rect, else it fits inside.
 //
-void CTreeMapView::HighlightSelectedItem(CDC* pdc, const CItem* item, const bool single)
+void CTreeMapView::HighlightSelectedItem(CDC* pdc, const CItem* item, const bool single) const
 {
     CRect rc(item->TmiGetRectangle());
 
@@ -267,14 +266,10 @@ void CTreeMapView::HighlightSelectedItem(CDC* pdc, const CItem* item, const bool
             rc.bottom++;
         }
 
-        if (rcClient.left < rc.left)
-            rc.left--;
-        if (rcClient.top < rc.top)
-            rc.top--;
-        if (rc.right < rcClient.right)
-            rc.right++;
-        if (rc.bottom < rcClient.bottom)
-            rc.bottom++;
+        if (rcClient.left < rc.left) rc.left--;
+        if (rcClient.top < rc.top) rc.top--;
+        if (rc.right < rcClient.right) rc.right++;
+        if (rc.bottom < rcClient.bottom) rc.bottom++;
     }
 
     if (rc.Width() <= 0 || rc.Height() <= 0)

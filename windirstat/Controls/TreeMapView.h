@@ -66,7 +66,7 @@ protected:
 
     void DrawSelection(CDC* pdc);
 
-    void HighlightSelectedItem(CDC* pdc, const CItem* item, bool single);
+    void HighlightSelectedItem(CDC* pdc, const CItem* item, bool single) const;
     void RenderHighlightRectangle(CDC* pdc, CRect& rc) const;
 
     std::wstring m_PaneTextOverride; // Populated with the last hovered item for a period of time

@@ -222,19 +222,19 @@ protected:
     bool IsCushionShading() const;
 
     // Leaves space for grid and then calls RenderRectangle()
-    void RenderLeaf(std::vector<COLORREF>& bitmap, const Item* item, const double* surface) const;
+    void RenderLeaf(std::vector<COLORREF>& bitmap, const Item* item, const std::array<double, 4>& surface) const;
 
     // Either calls DrawCushion() or DrawSolidRect()
-    void RenderRectangle(std::vector<COLORREF>& bitmap, const CRect& rc, const double* surface, DWORD color) const;
+    void RenderRectangle(std::vector<COLORREF>& bitmap, const CRect& rc, const std::array<double, 4>& surface, DWORD color) const;
 
     // Draws the surface using SetPixel()
-    void DrawCushion(std::vector<COLORREF>& bitmap, const CRect& rc, const double* surface, COLORREF col, double brightness) const;
+    void DrawCushion(std::vector<COLORREF>& bitmap, const CRect& rc, const std::array<double, 4>& surface, COLORREF col, double brightness) const;
 
     // Draws the surface using FillSolidRect()
     void DrawSolidRect(std::vector<COLORREF>& bitmap, const CRect& rc, COLORREF col, double brightness) const;
 
     // Adds a new ridge to surface
-    static void AddRidge(const CRect& rc, double* surface, double h);
+    static void AddRidge(const CRect& rc, std::array<double, 4>& surface, const double h);
 
     // Default tree map options
     static constexpr Options DefaultOptions = {

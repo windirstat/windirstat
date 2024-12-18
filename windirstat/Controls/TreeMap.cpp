@@ -248,25 +248,11 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, Item* root, const Options* option
 
         struct DrawState
         {
-            Item* item;
-            CRect rc;
-            bool asroot;
             std::array<double, 4> surface;
+            CRect rc;
+            Item* item;
             double h;
-
-            // For KDirStat style
-            std::vector<double> childWidth;
-            std::vector<double> rows;
-            std::vector<int> childrenPerRow;
-            bool horizontalRows;
-            double horizontalTop;
-
-            // For SequoiaView style
-            CRect remaining;
-            ULONGLONG remainingSize;
-            double sizePerSquarePixel;
-            int head;
-            int maxChild;
+            bool asroot;
         };
 
         // Initialize the stack with the root item
@@ -277,7 +263,13 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, Item* root, const Options* option
         initialState.surface = { 0, 0, 0, 0 };
         initialState.h = m_Options.height;
 
+        // Defined at top level to prevent reallocation
+        std::vector<double> childWidth;
+        std::vector<double> rows;
+        std::vector<int> childrenPerRow;
+
         // Main loop
+        const int gridWidth = m_Options.grid ? 1 : 0;
         std::stack<DrawState> stack({ initialState });
         while (!stack.empty())
         {
@@ -288,7 +280,6 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, Item* root, const Options* option
             // Process the current state
             item->TmiSetRectangle(state.rc);
 
-            const int gridWidth = m_Options.grid ? 1 : 0;
             if (state.rc.Width() <= gridWidth || state.rc.Height() <= gridWidth)
             {
                 continue;
@@ -296,60 +287,58 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, Item* root, const Options* option
 
             if (IsCushionShading() && (!state.asroot))
             {
-                AddRidge(state.rc, state.surface.data(), state.h);
+                AddRidge(state.rc, state.surface, state.h);
             }
 
             if (item->TmiIsLeaf())
             {
                 // Leaf node, render it
-                RenderLeaf(bitmapBits, item, state.surface.data());
+                RenderLeaf(bitmapBits, item, state.surface);
                 continue;
             }
 
             if (m_Options.style == KDirStatStyle)
             {
+                // Reset vectors for next run
+                childWidth.resize(0);
+                rows.resize(0);
+                childrenPerRow.resize(0);
+
                 // KDirStat style preparation
-                state.childWidth.clear();
-                state.rows.clear();
-                state.childrenPerRow.clear();
-
-                state.horizontalRows = KDirStat_ArrangeChildren(
-                    item, state.childWidth, state.rows, state.childrenPerRow);
-
-                state.horizontalTop = state.horizontalRows ? state.rc.top : state.rc.left;
+                const bool horizontalRows = KDirStat_ArrangeChildren(item, childWidth, rows, childrenPerRow);
+                const double horizontalTop = horizontalRows ? state.rc.top : state.rc.left;
 
                 // Now process the children
-                const int width = state.horizontalRows ? state.rc.Width() : state.rc.Height();
-                const int height = state.horizontalRows ? state.rc.Height() : state.rc.Width();
+                const int width = horizontalRows ? state.rc.Width() : state.rc.Height();
+                const int height = horizontalRows ? state.rc.Height() : state.rc.Width();
 
-                size_t c = 0;
-                double top = state.horizontalTop;
-                for (size_t row = 0; row < state.rows.size(); row++)
+                double top = horizontalTop;
+                for (size_t row = 0, c = 0; row < rows.size(); row++)
                 {
-                    const double fBottom = top + state.rows[row] * height;
+                    const double fBottom = top + rows[row] * height;
                     int bottom = static_cast<int>(fBottom);
-                    if (row == state.rows.size() - 1)
+                    if (row == rows.size() - 1)
                     {
-                        bottom = state.horizontalRows ? state.rc.bottom : state.rc.right;
+                        bottom = horizontalRows ? state.rc.bottom : state.rc.right;
                     }
-                    double left = state.horizontalRows ? state.rc.left : state.rc.top;
-                    for (int i = 0; i < state.childrenPerRow[row]; i++, c++)
+                    double left = horizontalRows ? state.rc.left : state.rc.top;
+                    for (int i = 0; i < childrenPerRow[row]; i++, c++)
                     {
                         Item* child = item->TmiGetChild(static_cast<int>(c));
-                        const double childWidth_ = state.childWidth[c];
+                        const double childWidth_ = childWidth[c];
                         const double fRight = left + childWidth_ * width;
                         int right = static_cast<int>(fRight);
 
-                        const bool lastChild = i == state.childrenPerRow[row] - 1 ||
-                            (c + 1 < state.childWidth.size() && state.childWidth[c + 1] == 0);
+                        const bool lastChild = i == childrenPerRow[row] - 1 ||
+                            (c + 1 < childWidth.size() && childWidth[c + 1] == 0);
 
                         if (lastChild)
                         {
-                            right = state.horizontalRows ? state.rc.right : state.rc.bottom;
+                            right = horizontalRows ? state.rc.right : state.rc.bottom;
                         }
 
                         CRect rcChild;
-                        if (state.horizontalRows)
+                        if (horizontalRows)
                         {
                             rcChild.left = static_cast<int>(left);
                             rcChild.right = right;
@@ -382,40 +371,39 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, Item* root, const Options* option
             else
             {
                 // SequoiaView style processing
-                state.remaining = state.rc;
-                state.remainingSize = item->TmiGetSize();
-                ASSERT(state.remainingSize > 0);
-                state.sizePerSquarePixel = static_cast<double>(state.remainingSize) /
-                    state.remaining.Width() / state.remaining.Height();
-                state.head = 0;
-                state.maxChild = item->TmiGetChildCount();
+                CRect remaining = state.rc;
+                ULONGLONG remainingSize = item->TmiGetSize();
+                ASSERT(remainingSize > 0);
+                const double sizePerSquarePixel = static_cast<double>(remainingSize) /
+                    remaining.Width() / remaining.Height();
+                int head = 0;
+                const int maxChild = item->TmiGetChildCount();
 
-                while (state.head < state.maxChild)
+                while (head < maxChild)
                 {
-                    ASSERT(state.remaining.Width() > 0);
-                    ASSERT(state.remaining.Height() > 0);
+                    ASSERT(remaining.Width() > 0);
+                    ASSERT(remaining.Height() > 0);
 
-                    const bool horizontal = state.remaining.Width() >= state.remaining.Height();
-                    const int height = horizontal ? state.remaining.Height() : state.remaining.Width();
+                    const bool horizontal = remaining.Width() >= remaining.Height();
+                    const int height = horizontal ? remaining.Height() : remaining.Width();
 
-                    const double hh = height * height * state.sizePerSquarePixel;
+                    const double hh = height * height * sizePerSquarePixel;
                     ASSERT(hh > 0);
 
-                    int rowBegin = state.head;
-                    int rowEnd = state.head;
+                    int rowBegin = head;
+                    int rowEnd = head;
 
                     double worst = DBL_MAX;
                     ULONGLONG rmax = item->TmiGetChild(rowBegin)->TmiGetSize();
-
                     ULONGLONG sum = 0;
 
-                    while (rowEnd < state.maxChild)
+                    while (rowEnd < maxChild)
                     {
                         ULONGLONG childSize = item->TmiGetChild(rowEnd)->TmiGetSize();
 
                         if (childSize == 0)
                         {
-                            rowEnd = state.maxChild;
+                            rowEnd = maxChild;
                             break;
                         }
 
@@ -436,12 +424,12 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, Item* root, const Options* option
                     }
 
                     // Now process the row from rowBegin to rowEnd - 1
-                    int width = horizontal ? state.remaining.Width() : state.remaining.Height();
+                    int width = horizontal ? remaining.Width() : remaining.Height();
 
-                    if (sum < state.remainingSize)
-                        width = static_cast<int>(static_cast<double>(sum) / state.remainingSize * width);
+                    if (sum < remainingSize)
+                        width = static_cast<int>(static_cast<double>(sum) / remainingSize * width);
 
-                    CRect rcRow = state.remaining;
+                    CRect rcRow = remaining;
 
                     if (horizontal)
                     {
@@ -502,21 +490,21 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, Item* root, const Options* option
                     // Adjust remaining rectangle
                     if (horizontal)
                     {
-                        state.remaining.left += width;
+                        remaining.left += width;
                     }
                     else
                     {
-                        state.remaining.top += width;
+                        remaining.top += width;
                     }
 
-                    state.remainingSize -= sum;
-                    state.head += rowEnd - rowBegin;
+                    remainingSize -= sum;
+                    head += rowEnd - rowBegin;
 
-                    if (state.remaining.Width() <= 0 || state.remaining.Height() <= 0)
+                    if (remaining.Width() <= 0 || remaining.Height() <= 0)
                     {
-                        if (state.head < state.maxChild)
+                        if (head < maxChild)
                         {
-                            item->TmiGetChild(state.head)->TmiSetRectangle(CRect(-1, -1, -1, -1));
+                            item->TmiGetChild(head)->TmiSetRectangle(CRect(-1, -1, -1, -1));
                         }
                         break;
                     }
@@ -648,7 +636,7 @@ void CTreeMap::DrawColorPreview(CDC* pdc, const CRect& rc, const COLORREF color,
         SetOptions(options);
     }
 
-    double surface[4] = { 0, 0, 0, 0 };
+    std::array<double, 4> surface = { 0, 0, 0, 0 };
     AddRidge(rc, surface, m_Options.height * m_Options.scaleFactor);
 
     m_RenderArea = rc;
@@ -690,7 +678,7 @@ void CTreeMap::DrawColorPreview(CDC* pdc, const CRect& rc, const COLORREF color,
     VERIFY(dcTreeView.DeleteDC());
 }
 
-void CTreeMap::RenderLeaf(std::vector<COLORREF>& bitmap, const Item* item, const double* surface) const
+void CTreeMap::RenderLeaf(std::vector<COLORREF>& bitmap, const Item* item, const std::array<double, 4>& surface) const
 {
     CRect rc = item->TmiGetRectangle();
 
@@ -707,7 +695,7 @@ void CTreeMap::RenderLeaf(std::vector<COLORREF>& bitmap, const Item* item, const
     RenderRectangle(bitmap, rc, surface, item->TmiGetGraphColor());
 }
 
-void CTreeMap::RenderRectangle(std::vector<COLORREF>& bitmap, const CRect& rc, const double* surface, DWORD color) const
+void CTreeMap::RenderRectangle(std::vector<COLORREF>& bitmap, const CRect& rc, const std::array<double, 4>& surface, DWORD color) const
 {
     double brightness = m_Options.brightness;
 
@@ -889,7 +877,7 @@ void CTreeMap::DrawSolidRect(std::vector<COLORREF>& bitmap, const CRect& rc, con
     }
 }
 
-void CTreeMap::DrawCushion(std::vector<COLORREF>& bitmap, const CRect& rc, const double* surface, const COLORREF col, const double brightness) const
+void CTreeMap::DrawCushion(std::vector<COLORREF>& bitmap, const CRect& rc, const std::array<double, 4>& surface, const COLORREF col, const double brightness) const
 {
     // Cushion parameters
     const double Ia = m_Options.ambientLight;
@@ -943,7 +931,7 @@ void CTreeMap::DrawCushion(std::vector<COLORREF>& bitmap, const CRect& rc, const
     }
 }
 
-void CTreeMap::AddRidge(const CRect& rc, double* surface, const double h)
+void CTreeMap::AddRidge(const CRect& rc, std::array<double,4> & surface, const double h)
 {
     const int width = rc.Width();
     const int height = rc.Height();
