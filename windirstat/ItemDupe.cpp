@@ -123,7 +123,7 @@ CItemDupe* CItemDupe::GetParent() const
     return reinterpret_cast<CItemDupe*>(CTreeListItem::GetParent());
 }
 
-void CItemDupe::AddChild(CItemDupe* child)
+void CItemDupe::AddDupeItemChild(CItemDupe* child)
 {
     child->SetParent(this);
 
@@ -136,33 +136,15 @@ void CItemDupe::AddChild(CItemDupe* child)
     }
 }
 
-void CItemDupe::RemoveChild(CItemDupe* child)
+void CItemDupe::RemoveDupeItemChild(CItemDupe* child)
 {
     std::lock_guard guard(m_Protect);
     std::erase(m_Children, child);
 
     if (IsVisible())
     {
-        CMainFrame::Get()->InvokeInMessageThread([this, child]
-        {
-            CFileDupeControl::Get()->OnChildRemoved(this, child);
-        });
+        CFileDupeControl::Get()->OnChildRemoved(this, child);
     }
 
     delete child;
-}
-
-void CItemDupe::RemoveAllChildren()
-{
-    CMainFrame::Get()->InvokeInMessageThread([this]
-    {
-        CFileTreeControl::Get()->OnRemovingAllChildren(this);
-    });
-
-    std::lock_guard guard(m_Protect);
-    for (const auto& child : m_Children)
-    {
-        delete child;
-    }
-    m_Children.clear();
 }

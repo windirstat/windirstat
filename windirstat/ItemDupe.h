@@ -78,7 +78,6 @@ public:
     CItem* GetItem() const { return m_Item; }
     const std::vector<CItemDupe*>& GetChildren() const;
     CItemDupe* GetParent() const;
-    void AddChild(CItemDupe* child);
-    void RemoveChild(CItemDupe* child);
-    void RemoveAllChildren();
+    void AddDupeItemChild(CItemDupe* child);
+    void RemoveDupeItemChild(CItemDupe* child);
 };

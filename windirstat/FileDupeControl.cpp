@@ -111,7 +111,7 @@ void CFileDupeControl::ProcessDuplicate(CItem * item, BlockingQueue<CItem*>* que
     if (COptions::SkipDupeDetectionCloudLinks &&
         CReparsePoints::IsCloudLink(item->GetPathLong(), item->GetAttributes()))
     {
-        std::unique_lock lock(m_Mutex);
+        std::unique_lock lock(m_HashTrackerMutex);
         if (m_ShowCloudWarningOnThisScan &&
             AfxMessageBox(Localization::Lookup(IDS_DUPLICATES_WARNING).c_str(), MB_YESNO) == IDNO)
         {
@@ -121,7 +121,7 @@ void CFileDupeControl::ProcessDuplicate(CItem * item, BlockingQueue<CItem*>* que
         return;
     }
 
-    std::unique_lock lock(m_Mutex);
+    std::unique_lock lock(m_HashTrackerMutex);
     const auto sizeEntry = m_SizeTracker.find(item->GetSizeLogical());
     if (sizeEntry == m_SizeTracker.end())
     {
@@ -173,7 +173,7 @@ void CFileDupeControl::ProcessDuplicate(CItem * item, BlockingQueue<CItem*>* que
     }
 
     // Add the hashes to the UI thread 
-    m_Mutex.unlock();
+    m_HashTrackerMutex.unlock();
     for (std::lock_guard guard(m_NodeTrackerMutex); const auto& itemToAdd : itemsToHash)
     {
         const auto nodeEntry = m_NodeTracker.find(hashForThisItem);
@@ -187,16 +187,14 @@ void CFileDupeControl::ProcessDuplicate(CItem * item, BlockingQueue<CItem*>* que
             m_NodeTracker.emplace(hashForThisItem, dupeParent);
         }
 
-        // See if child is already in list parent
-        const auto& children = dupeParent->GetChildren();
-        if (std::ranges::find_if(children, [itemToAdd](const auto& child)
-            { return child->GetItem() == itemToAdd; }) != children.end()) break;
-
         // Add new item
+        auto& m_HashParentNode = m_ChildTracker[dupeParent];
+        if (m_HashParentNode.contains(itemToAdd)) continue;
         const auto dupeChild = new CItemDupe(itemToAdd);
         m_PendingListAdds.emplace(dupeParent, dupeChild);
+        m_HashParentNode.emplace(itemToAdd);
     }
-    m_Mutex.lock();
+    m_HashTrackerMutex.lock();
 }
 
 void CFileDupeControl::SortItems()
@@ -216,11 +214,10 @@ void CFileDupeControl::SortItems()
     // Add items to the list
     if (!pendingAdds.empty())
     {
-        CWaitCursor wc;
         SetRedraw(FALSE);
         const auto root = reinterpret_cast<CItemDupe*>(GetItem(0));
         for (const auto& [parent, child] : pendingAdds)
-            (parent == nullptr ? root : parent)->AddChild(child);
+            (parent == nullptr ? root : parent)->AddDupeItemChild(child);
         SetRedraw(TRUE);
     }
 
@@ -233,12 +230,12 @@ void CFileDupeControl::RemoveItem(CItem* item)
     if (m_HashTracker.empty() && m_SizeTracker.empty()) return;
 
     std::stack<CItem*> queue({ item });
-    std::unordered_set<CItem*> itemsToRemove;
+    std::vector<CItem*> itemsToRemove;
     while (!queue.empty())
     {
         const auto& qitem = queue.top();
         queue.pop();
-        if (qitem->IsType(IT_FILE)) itemsToRemove.emplace(qitem);
+        if (qitem->IsType(IT_FILE)) itemsToRemove.emplace_back(qitem);
         else for (const auto& child : qitem->GetChildren())
         {
             queue.push(child);
@@ -266,19 +263,21 @@ void CFileDupeControl::RemoveItem(CItem* item)
 
             // Remove the entry from the visual node list
             auto& hashNode = m_NodeTracker.at(hashKey);
-            for (auto& dupeChild : std::vector(hashNode->GetChildren()))
+            for (const auto& dupeChild : std::vector(hashNode->GetChildren()))
             {
                 if (dupeChild->GetItem() == itemToRemove)
                 {
-                    hashNode->RemoveChild(dupeChild);
+                    m_ChildTracker[hashNode].erase(itemToRemove);
+                    hashNode->RemoveDupeItemChild(dupeChild);
                 }
             }
 
             // Remove parent node if only one item is list
             if (hashNode->GetChildren().size() <= 1)
             {
-                root->RemoveChild(hashNode);
                 m_NodeTracker.erase(hashKey);
+                m_ChildTracker.erase(hashNode);
+                root->RemoveDupeItemChild(hashNode);
             }
         }
     }
@@ -289,6 +288,10 @@ void CFileDupeControl::RemoveItem(CItem* item)
         return pair.second.empty();
     });
     std::erase_if(m_SizeTracker, [&](const auto& pair)
+    {
+        return pair.second.empty();
+    });
+    std::erase_if(m_ChildTracker, [&](const auto& pair)
     {
         return pair.second.empty();
     });
@@ -303,6 +306,7 @@ void CFileDupeControl::OnItemDoubleClick(const int i)
     }
     else
     {
+        std::unique_lock lock(m_HashTrackerMutex);
         CTreeListControl::OnItemDoubleClick(i);
     }
 }
