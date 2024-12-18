@@ -111,10 +111,12 @@ public:
         return i;
     }
 
-    bool IsQueued(T const& value)
+    void PushIfNotQueued(T const& value)
     {
         std::lock_guard lock(m_Mutex);
-        return std::ranges::find(m_Queue, value) != m_Queue.end();
+        if (std::ranges::find(m_Queue, value) != m_Queue.end()) return;
+        m_Queue.push_back(value);
+        m_Pushed.notify_one();
     }
 
     void WaitIfSuspended()

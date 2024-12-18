@@ -76,10 +76,7 @@ void CIconImageList::Initialize()
 
 void CIconImageList::DoAsyncShellInfoLookup(COwnerDrawnListItem* item)
 {
-    if (!m_LookupQueue.IsQueued(item))
-    {
-        m_LookupQueue.Push(item);
-    }
+    m_LookupQueue.PushIfNotQueued(item);
 }
 
 void CIconImageList::ClearAsyncShellInfoQueue()
