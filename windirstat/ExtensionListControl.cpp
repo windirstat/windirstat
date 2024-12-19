@@ -107,7 +107,7 @@ void CExtensionListControl::CListItem::FetchShellInfo()
     }
     else
     {
-        m_Image = GetIconImageList()->GetExtImageAndDescription(m_Extension, m_Description, 0);
+        m_Image = GetIconImageList()->GetExtImageAndDescription(m_Extension, m_Description, FILE_ATTRIBUTE_NORMAL);
     }
 
     const auto i = m_List->FindListItem(this);
