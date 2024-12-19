@@ -46,6 +46,7 @@ enum LOGICAL_FOCUS : std::uint8_t
     LF_NONE,
     LF_FILETREE,
     LF_DUPELIST,
+    LF_TOPLIST,
     LF_EXTENSIONLIST
 };
 
@@ -225,7 +226,7 @@ protected:
     afx_msg void OnInitMenuPopup(CMenu* pPopupMenu, UINT nIndex, BOOL bSysMenu);
     afx_msg void OnUpdateEnableControl(CCmdUI* pCmdUI);
     afx_msg void OnSize(UINT nType, int cx, int cy);
-    afx_msg void OnUpdateViewShowtreemap(CCmdUI* pCmdUI);
+    afx_msg void OnUpdateViewShowTreeMap(CCmdUI* pCmdUI);
     afx_msg void OnViewShowtreemap();
     afx_msg void OnUpdateViewShowFileTypes(CCmdUI* pCmdUI);
     afx_msg void OnViewShowFileTypes();

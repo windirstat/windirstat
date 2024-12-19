@@ -25,6 +25,7 @@
 #include "SelectObject.h"
 #include "TreeListControl.h"
 #include "MainFrame.h"
+#include "Localization.h"
 
 #include <algorithm>
 #include <ranges>
@@ -460,6 +461,7 @@ int CTreeListControl::FindTreeItem(const CTreeListItem* item) const
 BEGIN_MESSAGE_MAP(CTreeListControl, COwnerDrawnListControl)
     ON_WM_MEASUREITEM_REFLECT()
     ON_NOTIFY_REFLECT(LVN_ITEMCHANGING, OnLvnItemchangingList)
+    ON_WM_CONTEXTMENU()
     ON_WM_LBUTTONDOWN()
     ON_WM_KEYDOWN()
     ON_WM_LBUTTONDBLCLK()
@@ -900,4 +902,64 @@ void CTreeListControl::EnsureItemVisible(const CTreeListItem* item)
 void CTreeListControl::MeasureItem(LPMEASUREITEMSTRUCT mis)
 {
     mis->itemHeight = GetRowHeight();
+}
+
+void CTreeListControl::OnContextMenu(CWnd* /*pWnd*/, const CPoint pt)
+{
+    const int i = GetSelectionMark();
+    if (i == -1)
+    {
+        return;
+    }
+
+    CTreeListItem* item = GetItem(i);
+    CRect rc = GetWholeSubitemRect(i, 0);
+    const CRect rcTitle = item->GetTitleRect() + rc.TopLeft();
+
+    CMenu menu;
+    menu.LoadMenu(IDR_POPUP_TREE);
+    Localization::UpdateMenu(menu);
+    CMenu* sub = menu.GetSubMenu(0);
+
+    // Populate default menu items
+    if (item != nullptr && item->GetTreeListChildCount() == 0)
+    {
+        sub->DeleteMenu(0, MF_BYPOSITION); // Remove "Expand/Collapse" item
+        sub->DeleteMenu(0, MF_BYPOSITION); // Remove separator
+        sub->SetDefaultItem(ID_CLEANUP_OPEN_SELECTED, false);
+    }
+    else
+    {
+        const std::wstring command = item->IsExpanded() && item->HasChildren() ? Localization::Lookup(IDS_COLLAPSE) : Localization::Lookup(IDS_EXPAND);
+        VERIFY(sub->ModifyMenu(ID_POPUP_TOGGLE, MF_BYCOMMAND | MF_STRING, ID_POPUP_TOGGLE, command.c_str()));
+        sub->SetDefaultItem(ID_POPUP_TOGGLE, false);
+    }
+
+    // Update dynamic menu items
+    CMainFrame::Get()->UpdateDynamicMenuItems(sub);
+
+    // Show popup menu and act accordingly.
+    //
+    // The menu shall not overlap the label but appear
+    // horizontally at the cursor position,
+    // vertically under (or above) the label.
+    // TrackPopupMenuEx() behaves in the desired way, if
+    // we exclude the label rectangle extended to full screen width.
+
+    TPMPARAMS tp;
+    tp.cbSize = sizeof(tp);
+    tp.rcExclude = rcTitle;
+    ClientToScreen(&tp.rcExclude);
+
+    CRect desktop;
+    GetDesktopWindow()->GetWindowRect(desktop);
+
+    tp.rcExclude.left = desktop.left;
+    tp.rcExclude.right = desktop.right;
+
+    constexpr int overlap = 2; // a little vertical overlapping
+    tp.rcExclude.top += overlap;
+    tp.rcExclude.bottom -= overlap;
+
+    sub->TrackPopupMenuEx(TPM_LEFTALIGN | TPM_LEFTBUTTON, pt.x, pt.y, AfxGetMainWnd(), &tp);
 }

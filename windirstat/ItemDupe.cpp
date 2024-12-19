@@ -118,11 +118,6 @@ const std::vector<CItemDupe*>& CItemDupe::GetChildren() const
     return m_Children;
 }
 
-CItemDupe* CItemDupe::GetParent() const
-{
-    return reinterpret_cast<CItemDupe*>(CTreeListItem::GetParent());
-}
-
 void CItemDupe::AddDupeItemChild(CItemDupe* child)
 {
     child->SetParent(this);

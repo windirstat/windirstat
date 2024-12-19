@@ -63,7 +63,7 @@
     <None Include="res\langs\lang_de.bin">
       <Filter>Resource Files\Languages</Filter>
     </None>
-    <None Include="res\langs\lang_ee.bin">
+    <None Include="res\langs\lang_et.bin">
       <Filter>Resource Files\Languages</Filter>
     </None>
     <None Include="res\langs\lang_en.bin">
@@ -146,30 +146,6 @@
     <ClInclude Include="WinDirStat.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Controls\ColorButton.h">
-      <Filter>Header Files\Controls</Filter>
-    </ClInclude>
-    <ClInclude Include="Controls\IconImageList.h">
-      <Filter>Header Files\Controls</Filter>
-    </ClInclude>
-    <ClInclude Include="Controls\OwnerDrawnListControl.h">
-      <Filter>Header Files\Controls</Filter>
-    </ClInclude>
-    <ClInclude Include="Controls\PacMan.h">
-      <Filter>Header Files\Controls</Filter>
-    </ClInclude>
-    <ClInclude Include="Controls\SortingListControl.h">
-      <Filter>Header Files\Controls</Filter>
-    </ClInclude>
-    <ClInclude Include="Controls\TreeListControl.h">
-      <Filter>Header Files\Controls</Filter>
-    </ClInclude>
-    <ClInclude Include="Controls\TreeMap.h">
-      <Filter>Header Files\Controls</Filter>
-    </ClInclude>
-    <ClInclude Include="Controls\XYSlider.h">
-      <Filter>Header Files\Controls</Filter>
-    </ClInclude>
     <ClInclude Include="Dialogs\AboutDlg.h">
       <Filter>Header Files\Dialogs</Filter>
     </ClInclude>
@@ -194,32 +170,8 @@
     <ClInclude Include="resource.h">
       <Filter>Resource Files</Filter>
     </ClInclude>
-    <ClInclude Include="ExtensionListControl.h">
-      <Filter>Header Files\Controls</Filter>
-    </ClInclude>
-    <ClInclude Include="FileTreeView.h">
-      <Filter>Header Files\Views</Filter>
-    </ClInclude>
-    <ClInclude Include="Controls\ExtensionView.h">
-      <Filter>Header Files\Views</Filter>
-    </ClInclude>
-    <ClInclude Include="Controls\TreeMapView.h">
-      <Filter>Header Files\Views</Filter>
-    </ClInclude>
-    <ClInclude Include="FileTreeControl.h">
-      <Filter>Header Files\Controls</Filter>
-    </ClInclude>
-    <ClInclude Include="FileTabbedView.h">
-      <Filter>Header Files\Views</Filter>
-    </ClInclude>
     <ClInclude Include="ItemDupe.h">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="FileDupeView.h">
-      <Filter>Header Files\Views</Filter>
-    </ClInclude>
-    <ClInclude Include="FileDupeControl.h">
-      <Filter>Header Files\Controls</Filter>
     </ClInclude>
     <ClInclude Include="CommonHelpers.h">
       <Filter>Header Files</Filter>
@@ -263,6 +215,63 @@
     <ClInclude Include="Pages\PageGeneral.h">
       <Filter>Header Files\Pages</Filter>
     </ClInclude>
+    <ClInclude Include="Views\ExtensionView.h">
+      <Filter>Header Files\Views</Filter>
+    </ClInclude>
+    <ClInclude Include="Views\FileDupeView.h">
+      <Filter>Header Files\Views</Filter>
+    </ClInclude>
+    <ClInclude Include="Views\FileTabbedView.h">
+      <Filter>Header Files\Views</Filter>
+    </ClInclude>
+    <ClInclude Include="Views\FileTopView.h">
+      <Filter>Header Files\Views</Filter>
+    </ClInclude>
+    <ClInclude Include="Views\FileTreeView.h">
+      <Filter>Header Files\Views</Filter>
+    </ClInclude>
+    <ClInclude Include="Controls\XYSlider.h">
+      <Filter>Header Files\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="Controls\TreeMap.h">
+      <Filter>Header Files\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="Controls\TreeListControl.h">
+      <Filter>Header Files\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="Controls\SortingListControl.h">
+      <Filter>Header Files\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="Controls\PacMan.h">
+      <Filter>Header Files\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="Controls\OwnerDrawnListControl.h">
+      <Filter>Header Files\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="Controls\IconImageList.h">
+      <Filter>Header Files\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="Controls\FileTreeControl.h">
+      <Filter>Header Files\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="Controls\FileTopControl.h">
+      <Filter>Header Files\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="Controls\FileDupeControl.h">
+      <Filter>Header Files\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="Controls\ExtensionListControl.h">
+      <Filter>Header Files\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="Controls\ColorButton.h">
+      <Filter>Header Files\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="ItemTop.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Views\TreeMapView.h">
+      <Filter>Header Files\Views</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirStatDoc.cpp">
@@ -295,30 +304,6 @@
     <ClCompile Include="WinDirStat.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Controls\ColorButton.cpp">
-      <Filter>Source Files\Controls</Filter>
-    </ClCompile>
-    <ClCompile Include="Controls\IconImageList.cpp">
-      <Filter>Source Files\Controls</Filter>
-    </ClCompile>
-    <ClCompile Include="Controls\OwnerDrawnListControl.cpp">
-      <Filter>Source Files\Controls</Filter>
-    </ClCompile>
-    <ClCompile Include="Controls\PacMan.cpp">
-      <Filter>Source Files\Controls</Filter>
-    </ClCompile>
-    <ClCompile Include="Controls\SortingListControl.cpp">
-      <Filter>Source Files\Controls</Filter>
-    </ClCompile>
-    <ClCompile Include="Controls\TreeListControl.cpp">
-      <Filter>Source Files\Controls</Filter>
-    </ClCompile>
-    <ClCompile Include="Controls\TreeMap.cpp">
-      <Filter>Source Files\Controls</Filter>
-    </ClCompile>
-    <ClCompile Include="Controls\XYSlider.cpp">
-      <Filter>Source Files\Controls</Filter>
-    </ClCompile>
     <ClCompile Include="Dialogs\AboutDlg.cpp">
       <Filter>Source Files\Dialogs</Filter>
     </ClCompile>
@@ -337,32 +322,8 @@
     <ClCompile Include="CsvLoader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ExtensionListControl.cpp">
-      <Filter>Source Files\Controls</Filter>
-    </ClCompile>
-    <ClCompile Include="Controls\TreeMapView.cpp">
-      <Filter>Source Files\Views</Filter>
-    </ClCompile>
-    <ClCompile Include="Controls\ExtensionView.cpp">
-      <Filter>Source Files\Views</Filter>
-    </ClCompile>
-    <ClCompile Include="FileTreeView.cpp">
-      <Filter>Source Files\Views</Filter>
-    </ClCompile>
-    <ClCompile Include="FileTreeControl.cpp">
-      <Filter>Source Files\Controls</Filter>
-    </ClCompile>
-    <ClCompile Include="FileTabbedView.cpp">
-      <Filter>Source Files\Views</Filter>
-    </ClCompile>
     <ClCompile Include="ItemDupe.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="FileDupeView.cpp">
-      <Filter>Source Files\Views</Filter>
-    </ClCompile>
-    <ClCompile Include="FileDupeControl.cpp">
-      <Filter>Source Files\Controls</Filter>
     </ClCompile>
     <ClCompile Include="CommonHelpers.cpp">
       <Filter>Source Files</Filter>
@@ -387,6 +348,63 @@
     </ClCompile>
     <ClCompile Include="Pages\PageTreeMap.cpp">
       <Filter>Source Files\Pages</Filter>
+    </ClCompile>
+    <ClCompile Include="Views\FileTopView.cpp">
+      <Filter>Source Files\Views</Filter>
+    </ClCompile>
+    <ClCompile Include="Views\FileTreeView.cpp">
+      <Filter>Source Files\Views</Filter>
+    </ClCompile>
+    <ClCompile Include="Views\ExtensionView.cpp">
+      <Filter>Source Files\Views</Filter>
+    </ClCompile>
+    <ClCompile Include="Views\TreeMapView.cpp">
+      <Filter>Source Files\Views</Filter>
+    </ClCompile>
+    <ClCompile Include="Views\FileTabbedView.cpp">
+      <Filter>Source Files\Views</Filter>
+    </ClCompile>
+    <ClCompile Include="Views\FileDupeView.cpp">
+      <Filter>Source Files\Views</Filter>
+    </ClCompile>
+    <ClCompile Include="ItemTop.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Controls\XYSlider.cpp">
+      <Filter>Source Files\Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="Controls\TreeMap.cpp">
+      <Filter>Source Files\Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="Controls\TreeListControl.cpp">
+      <Filter>Source Files\Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="Controls\SortingListControl.cpp">
+      <Filter>Source Files\Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="Controls\PacMan.cpp">
+      <Filter>Source Files\Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="Controls\OwnerDrawnListControl.cpp">
+      <Filter>Source Files\Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="Controls\FileTreeControl.cpp">
+      <Filter>Source Files\Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="Controls\FileTopControl.cpp">
+      <Filter>Source Files\Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="Controls\FileDupeControl.cpp">
+      <Filter>Source Files\Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="Controls\ExtensionListControl.cpp">
+      <Filter>Source Files\Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="Controls\IconImageList.cpp">
+      <Filter>Source Files\Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="Controls\ColorButton.cpp">
+      <Filter>Source Files\Controls</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -472,7 +490,7 @@
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="res\langs\lang_ee.txt">
+    <Text Include="res\langs\lang_et.txt">
       <Filter>Resource Files\Languages</Filter>
     </Text>
     <Text Include="res\langs\lang_es.txt">

@@ -35,7 +35,6 @@ public:
     CFileDupeControl();
     bool GetAscendingDefault(int column) override;
     static CFileDupeControl* Get() { return m_Singleton; }
-    void InsertItem(int i, CTreeListItem* item);
     void SetRootItem(CTreeListItem* root) override;
     void ProcessDuplicate(CItem* item, BlockingQueue<CItem*>* queue);
     void RemoveItem(CItem* items);
@@ -56,8 +55,8 @@ public:
         for (POSITION pos = GetFirstSelectedItemPosition(); pos != nullptr;)
         {
             const int i = GetNextSelectedItem(pos);
-            array.push_back(reinterpret_cast<T*>(
-                reinterpret_cast<CItemDupe*>(GetItem(i))->GetItem()));
+            auto item = reinterpret_cast<T*>(reinterpret_cast<CItemDupe*>(GetItem(i))->GetItem());
+            if (item != nullptr) array.emplace_back(item);
         }
         return array;
     }
@@ -68,11 +67,9 @@ protected:
     bool m_ShowCloudWarningOnThisScan = false;
     
     void OnItemDoubleClick(int i) override;
-    void PrepareDefaultMenu(CMenu* menu, const CItemDupe* item) const;
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnLvnItemchangingList(NMHDR* pNMHDR, LRESULT* pResult);
-    afx_msg void OnContextMenu(CWnd* /*pWnd*/, CPoint /*point*/);
     afx_msg void OnSetFocus(CWnd* pOldWnd);
     afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
 };

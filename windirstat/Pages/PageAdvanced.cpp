@@ -51,6 +51,7 @@ void CPageAdvanced::DoDataExchange(CDataExchange* pDX)
     DDX_Check(pDX, IDC_EXCLUDE_SYMLINKS_FILE, m_ExcludeSymbolicLinksFile);
     DDX_Check(pDX, IDC_EXCLUDE_HIDDEN_FILE, m_SkipHiddenFile);
     DDX_Check(pDX, IDC_EXCLUDE_PROTECTED_FILE, m_SkipProtectedFile);
+    DDX_Text(pDX, IDC_LARGEST_FILE_COUNT, m_LargestFileCount);
     DDX_CBIndex(pDX, IDC_COMBO_THREADS, m_ScanningThreads);
 }
 
@@ -86,6 +87,7 @@ BOOL CPageAdvanced::OnInitDialog()
     m_SkipProtectedFile = COptions::ExcludeProtectedFile;
     m_UseBackupRestore = COptions::UseBackupRestore;
     m_ScanningThreads = COptions::ScanningThreads - 1;
+    m_LargestFileCount = std::to_wstring(COptions::LargeFileCount.Obj()).c_str();
 
     UpdateData(FALSE);
     return TRUE;
@@ -116,6 +118,7 @@ void CPageAdvanced::OnOK()
     COptions::ExcludeProtectedFile = (FALSE != m_SkipProtectedFile);
     COptions::UseBackupRestore = (FALSE != m_UseBackupRestore);
     COptions::ScanningThreads = m_ScanningThreads + 1;
+    COptions::LargeFileCount = std::stoi(m_LargestFileCount.GetString());
 
     if (refreshAll)
     {

@@ -183,6 +183,7 @@ void CTreeMapView::DrawHighlights(CDC* pdc)
     switch (CMainFrame::Get()->GetLogicalFocus())
     {
     case LF_DUPELIST:
+    case LF_TOPLIST:
     case LF_FILETREE:
         DrawSelection(pdc);
         break;
@@ -353,7 +354,7 @@ void CTreeMapView::Inactivate()
     CSelectObject sobmp(&dcmem, &m_Dimmed);
 
     // Apply the dimming overlay
-    BLENDFUNCTION blendFunc = {};
+    BLENDFUNCTION blendFunc;
     blendFunc.BlendOp = AC_SRC_OVER;
     blendFunc.BlendFlags = 0;
     blendFunc.SourceConstantAlpha = 175;

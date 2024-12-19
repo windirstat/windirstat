@@ -128,7 +128,7 @@ template <> void Setting<std::vector<int>>::ReadPersistedProperty()
     m_Value.clear();
     for (std::wstring part; std::getline(iss, part, L',');)
     {
-        m_Value.push_back(_wtoi(part.c_str()));
+        m_Value.push_back(std::stoi(part));
     }
 }
 

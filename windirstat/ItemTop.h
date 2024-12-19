@@ -1,4 +1,4 @@
-// ItemDupe.h - Declaration of CItemDupe
+// ItemTop.h - Declaration of CItemTop
 //
 // WinDirStat - Directory Statistics
 // Copyright (C) 2003-2005 Bernhard Seifert
@@ -27,43 +27,36 @@
 #include <unordered_map>
 
 // Columns
-using ITEMDUPCOLUMNS = enum : std::uint8_t
+using ITEMTOPCOLUMNS = enum : std::uint8_t
 {
-    COL_ITEMDUP_NAME,
-    COL_ITEMDUP_ITEMS,
-    COL_ITEMDUP_SIZE_PHYSICAL,
-    COL_ITEMDUP_SIZE_LOGICAL,
-    COL_ITEMDUP_LASTCHANGE
+    COL_ITEMTOP_NAME,
+    COL_ITEMTOP_SIZE_PHYSICAL,
+    COL_ITEMTOP_SIZE_LOGICAL,
+    COL_ITEMTOP_LASTCHANGE
 };
 
-class CItemDupe final : public CTreeListItem
+class CItemTop final : public CTreeListItem
 {
-    std::wstring m_Hash;
-    ULONGLONG m_HashComp = 0;
-    ULONGLONG m_SizePhysical = 0;
-    ULONGLONG m_SizeLogical = 0;
     CItem* m_Item = nullptr;
     std::shared_mutex m_Protect;
-    std::vector<CItemDupe*> m_Children;
+    std::vector<CItemTop*> m_Children;
 
 public:
-    CItemDupe(const CItemDupe&) = delete;
-    CItemDupe(CItemDupe&&) = delete;
-    CItemDupe& operator=(const CItemDupe&) = delete;
-    CItemDupe& operator=(CItemDupe&&) = delete;
-    CItemDupe() = default;
-    CItemDupe(const std::wstring & hash, ULONGLONG sizePhysical, ULONGLONG sizeLogical);
-    CItemDupe(CItem* item);
-    ~CItemDupe() override = default;
+    CItemTop(const CItemTop&) = delete;
+    CItemTop(CItemTop&&) = delete;
+    CItemTop& operator=(const CItemTop&) = delete;
+    CItemTop& operator=(CItemTop&&) = delete;
+    CItemTop() = default;
+    CItemTop(CItem* item);
+    ~CItemTop() override = default;
 
     // Translation map for leveraging Item routines
     const std::unordered_map<int, int> columnMap =
     {
-        { COL_ITEMDUP_NAME, COL_NAME },
-        { COL_ITEMDUP_ITEMS, COL_ITEMS },
-        { COL_ITEMDUP_SIZE_LOGICAL, COL_SIZE_LOGICAL },
-        { COL_ITEMDUP_SIZE_PHYSICAL, COL_SIZE_PHYSICAL },
-        { COL_ITEMDUP_LASTCHANGE, COL_LASTCHANGE }
+        { COL_ITEMTOP_NAME, COL_NAME },
+        { COL_ITEMTOP_SIZE_LOGICAL, COL_SIZE_LOGICAL },
+        { COL_ITEMTOP_SIZE_PHYSICAL, COL_SIZE_PHYSICAL },
+        { COL_ITEMTOP_LASTCHANGE, COL_LASTCHANGE }
     };
 
     // CTreeListItem Interface
@@ -76,7 +69,6 @@ public:
     int GetImage() const override;
 
     CItem* GetItem() const { return m_Item; }
-    const std::vector<CItemDupe*>& GetChildren() const;
-    void AddDupeItemChild(CItemDupe* child);
-    void RemoveDupeItemChild(CItemDupe* child);
+    void AddTopItemChild(CItemTop* child);
+    void RemoveTopItemChild(CItemTop* child);
 };

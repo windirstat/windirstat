@@ -40,7 +40,6 @@ bool CFileTreeControl::GetAscendingDefault(const int column)
 #pragma warning(push)
 #pragma warning(disable:26454)
 BEGIN_MESSAGE_MAP(CFileTreeControl, CTreeListControl)
-    ON_WM_CONTEXTMENU()
     ON_WM_SETFOCUS()
     ON_WM_KEYDOWN()
     ON_NOTIFY_EX(HDN_ENDDRAG, 0, OnHeaderEndDrag)
@@ -58,52 +57,6 @@ BOOL CFileTreeControl::OnHeaderEndDrag(UINT, NMHDR* pNMHDR, LRESULT* pResult)
     return block;
 }
 
-void CFileTreeControl::OnContextMenu(CWnd* /*pWnd*/, const CPoint pt)
-{
-    const int i = GetSelectionMark();
-    if (i == -1)
-    {
-        return;
-    }
-
-    CTreeListItem* item = GetItem(i);
-    CRect rc = GetWholeSubitemRect(i, 0);
-    const CRect rcTitle = item->GetTitleRect() + rc.TopLeft();
-
-    CMenu menu;
-    menu.LoadMenu(IDR_POPUP_TREE);
-    Localization::UpdateMenu(menu);
-    CMenu* sub = menu.GetSubMenu(0);
-
-    PrepareDefaultMenu(sub, static_cast<CItem*>(item));
-    CMainFrame::Get()->UpdateDynamicMenuItems(sub);
-
-    // Show popup menu and act accordingly.
-    //
-    // The menu shall not overlap the label but appear
-    // horizontally at the cursor position,
-    // vertically under (or above) the label.
-    // TrackPopupMenuEx() behaves in the desired way, if
-    // we exclude the label rectangle extended to full screen width.
-
-    TPMPARAMS tp;
-    tp.cbSize = sizeof(tp);
-    tp.rcExclude = rcTitle;
-    ClientToScreen(&tp.rcExclude);
-
-    CRect desktop;
-    GetDesktopWindow()->GetWindowRect(desktop);
-
-    tp.rcExclude.left = desktop.left;
-    tp.rcExclude.right = desktop.right;
-
-    constexpr int overlap = 2; // a little vertical overlapping
-    tp.rcExclude.top += overlap;
-    tp.rcExclude.bottom -= overlap;
-
-    sub->TrackPopupMenuEx(TPM_LEFTALIGN | TPM_LEFTBUTTON, pt.x, pt.y, AfxGetMainWnd(), &tp);
-}
-
 void CFileTreeControl::OnItemDoubleClick(const int i)
 {
     const auto item = reinterpret_cast<const CItem*>(GetItem(i));
@@ -114,22 +67,6 @@ void CFileTreeControl::OnItemDoubleClick(const int i)
     else
     {
         CTreeListControl::OnItemDoubleClick(i);
-    }
-}
-
-void CFileTreeControl::PrepareDefaultMenu(CMenu* menu, const CItem* item) const
-{
-    if (item->TmiIsLeaf())
-    {
-        menu->DeleteMenu(0, MF_BYPOSITION); // Remove "Expand/Collapse" item
-        menu->DeleteMenu(0, MF_BYPOSITION); // Remove separator
-        menu->SetDefaultItem(ID_CLEANUP_OPEN_SELECTED, false);
-    }
-    else
-    {
-        const std::wstring command = item->IsExpanded() && item->HasChildren() ? Localization::Lookup(IDS_COLLAPSE) : Localization::Lookup(IDS_EXPAND);
-        VERIFY(menu->ModifyMenu(ID_POPUP_TOGGLE, MF_BYCOMMAND | MF_STRING, ID_POPUP_TOGGLE, command.c_str()));
-        menu->SetDefaultItem(ID_POPUP_TOGGLE, false);
     }
 }
 

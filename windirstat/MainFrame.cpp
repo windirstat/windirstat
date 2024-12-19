@@ -39,12 +39,12 @@
 #include "MainFrame.h"
 #include "SelectObject.h"
 #include "CommonHelpers.h"
+#include "FileTopControl.h"
+#include "SmartPointer.h"
 
 #include <format>
 #include <functional>
 #include <unordered_map>
-
-#include "SmartPointer.h"
 
 namespace
 {
@@ -368,7 +368,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
     ON_MESSAGE(WM_CALLBACKUI, OnCallbackRequest)
     ON_REGISTERED_MESSAGE(s_TaskBarMessage, OnTaskButtonCreated)
     ON_UPDATE_COMMAND_UI(ID_VIEW_SHOWFILETYPES, OnUpdateViewShowFileTypes)
-    ON_UPDATE_COMMAND_UI(ID_VIEW_SHOWTREEMAP, OnUpdateViewShowtreemap)
+    ON_UPDATE_COMMAND_UI(ID_VIEW_SHOWTREEMAP, OnUpdateViewShowTreeMap)
     ON_UPDATE_COMMAND_UI(IDS_RAMUSAGEs, OnUpdateEnableControl)
     ON_UPDATE_COMMAND_UI(IDS_IDLEMESSAGE, OnUpdateEnableControl)
     ON_WM_CLOSE()
@@ -470,6 +470,7 @@ void CMainFrame::SetProgressComplete() // called by CDirStatDoc
     CDirStatDoc::GetDocument()->SetTitlePrefix(wds::strEmpty);
     CFileTreeControl::Get()->SortItems();
     CFileDupeControl::Get()->SortItems();
+    CFileTopControl::Get()->SortItems();
 }
 
 bool CMainFrame::IsScanSuspended() const
@@ -847,10 +848,15 @@ void CMainFrame::OnTimer(const UINT_PTR nIDEvent)
         CFileTreeControl::Get()->SortItems();
 
         // Conditionally sort duplicates
-        if (COptions::ScanForDuplicates && doInfrequentUpdate &&
-            GetFileTabbedView()->GetTabControl().GetActiveTab() == 1)
+        if (COptions::ScanForDuplicates && doInfrequentUpdate && GetFileTabbedView()->IsFileDupeViewTabActive())
         {
             CFileDupeControl::Get()->SortItems();
+        }
+
+        // Conditionally sort duplicates
+        if (doInfrequentUpdate && GetFileTabbedView()->IsFileTopViewTabActive())
+        {
+            CFileTopControl::Get()->SortItems();
         }
     }
 
@@ -967,8 +973,9 @@ void CMainFrame::QueryRecycleBin(ULONGLONG& items, ULONGLONG& bytes)
 
 std::vector<CItem*> CMainFrame::GetAllSelectedInFocus() const
 {
-    return GetLogicalFocus() == LF_DUPELIST ? CFileDupeControl::Get()->GetAllSelected<CItem>() :
-        CFileTreeControl::Get()->GetAllSelected<CItem>();
+    if (GetLogicalFocus() == LF_DUPELIST) return CFileDupeControl::Get()->GetAllSelected<CItem>();
+    if (GetLogicalFocus() == LF_TOPLIST) return CFileTopControl::Get()->GetAllSelected<CItem>();
+    return CFileTreeControl::Get()->GetAllSelected<CItem>();
 }
 
 CMenu* CMainFrame::LocateNamedMenu(const CMenu* menu, const std::wstring & subMenuText, bool clear) const
@@ -1088,18 +1095,9 @@ void CMainFrame::UpdatePaneText()
         {
             fileSelectionText = wds::chrStar + CDirStatDoc::GetDocument()->GetHighlightExtension();
         }
-        else if (focus == LF_FILETREE)
+        else if (focus == LF_FILETREE || focus == LF_DUPELIST || focus == LF_TOPLIST)
         {
-            const auto items = CFileTreeControl::Get()->GetAllSelected<CItem>();
-            if (items.size() == 1) fileSelectionText = items.front()->GetPath();
-            for (size = 0; const auto& item : items)
-            {
-                size += item->GetSizePhysical();
-            }
-        }
-        else if (focus == LF_DUPELIST)
-        {
-            const auto items = CFileDupeControl::Get()->GetAllSelected<CItem>();
+            const auto& items = GetAllSelectedInFocus();
             if (items.size() == 1) fileSelectionText = items.front()->GetPath();
             for (size = 0; const auto& item : items)
             {
@@ -1146,7 +1144,7 @@ void CMainFrame::OnSize(const UINT nType, const int cx, const int cy)
     }
 }
 
-void CMainFrame::OnUpdateViewShowtreemap(CCmdUI* pCmdUI)
+void CMainFrame::OnUpdateViewShowTreeMap(CCmdUI* pCmdUI)
 {
     pCmdUI->SetCheck(GetTreeMapView()->IsShowTreeMap());
 }

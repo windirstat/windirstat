@@ -192,7 +192,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(SolutionDir);$(ProjectDir);$(ProjectDir)Controls\;$(ProjectDir)Dialogs\;$(ProjectDir)Pages\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir);$(ProjectDir);$(ProjectDir)Controls\;$(ProjectDir)Dialogs\;$(ProjectDir)Pages\;$(ProjectDir)Views\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_DEBUG;VTRACE_TO_CONSOLE=1;VTRACE_DETAIL=2;WINVER=_WIN32_WINNT_WIN7;_WIN32_WINNT=_WIN32_WINNT_WIN7;_ALLOW_RTCc_IN_STL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -238,7 +238,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(SolutionDir);$(ProjectDir);$(ProjectDir)Controls\;$(ProjectDir)Dialogs\;$(ProjectDir)Pages\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir);$(ProjectDir);$(ProjectDir)Controls\;$(ProjectDir)Dialogs\;$(ProjectDir)Pages\;$(ProjectDir)Views\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_DEBUG;VTRACE_TO_CONSOLE=1;VTRACE_DETAIL=2;WINVER=_WIN32_WINNT_WIN7;_WIN32_WINNT=_WIN32_WINNT_WIN7;_ALLOW_RTCc_IN_STL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -283,7 +283,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(SolutionDir);$(ProjectDir);$(ProjectDir)Controls\;$(ProjectDir)Dialogs\;$(ProjectDir)Pages\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir);$(ProjectDir);$(ProjectDir)Controls\;$(ProjectDir)Dialogs\;$(ProjectDir)Pages\;$(ProjectDir)Views\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_DEBUG;VTRACE_TO_CONSOLE=1;VTRACE_DETAIL=2;WINVER=_WIN32_WINNT_WIN7;_WIN32_WINNT=_WIN32_WINNT_WIN7;_ALLOW_RTCc_IN_STL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -329,7 +329,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(SolutionDir);$(ProjectDir);$(ProjectDir)Controls\;$(ProjectDir)Dialogs\;$(ProjectDir)Pages\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir);$(ProjectDir);$(ProjectDir)Controls\;$(ProjectDir)Dialogs\;$(ProjectDir)Pages\;$(ProjectDir)Views\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_DEBUG;VTRACE_TO_CONSOLE=1;VTRACE_DETAIL=2;WINVER=_WIN32_WINNT_WIN7;_WIN32_WINNT=_WIN32_WINNT_WIN7;_ALLOW_RTCc_IN_STL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -375,7 +375,7 @@
     <ClCompile>
       <AdditionalOptions>/utf-8 $(ExternalCompilerOptions)</AdditionalOptions>
       <Optimization>Full</Optimization>
-      <AdditionalIncludeDirectories>$(SolutionDir);$(ProjectDir);$(ProjectDir)Controls\;$(ProjectDir)Dialogs\;$(ProjectDir)Pages\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir);$(ProjectDir);$(ProjectDir)Controls\;$(ProjectDir)Dialogs\;$(ProjectDir)Pages\;$(ProjectDir)Views\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>NDEBUG;WINVER=_WIN32_WINNT_WIN7;_WIN32_WINNT=_WIN32_WINNT_WIN7;_ALLOW_RTCc_IN_STL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <StringPooling>true</StringPooling>
@@ -430,7 +430,7 @@
     <ClCompile>
       <AdditionalOptions>/utf-8 $(ExternalCompilerOptions)</AdditionalOptions>
       <Optimization>Full</Optimization>
-      <AdditionalIncludeDirectories>$(SolutionDir);$(ProjectDir);$(ProjectDir)Controls\;$(ProjectDir)Dialogs\;$(ProjectDir)Pages\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir);$(ProjectDir);$(ProjectDir)Controls\;$(ProjectDir)Dialogs\;$(ProjectDir)Pages\;$(ProjectDir)Views\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>NDEBUG;WINVER=_WIN32_WINNT_WIN7;_WIN32_WINNT=_WIN32_WINNT_WIN7;_ALLOW_RTCc_IN_STL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <StringPooling>true</StringPooling>
@@ -483,7 +483,7 @@
     <ClCompile>
       <AdditionalOptions>/utf-8 $(ExternalCompilerOptions)</AdditionalOptions>
       <Optimization>Full</Optimization>
-      <AdditionalIncludeDirectories>$(SolutionDir);$(ProjectDir);$(ProjectDir)Controls\;$(ProjectDir)Dialogs\;$(ProjectDir)Pages\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir);$(ProjectDir);$(ProjectDir)Controls\;$(ProjectDir)Dialogs\;$(ProjectDir)Pages\;$(ProjectDir)Views\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>NDEBUG;WINVER=_WIN32_WINNT_WIN7;_WIN32_WINNT=_WIN32_WINNT_WIN7;_ALLOW_RTCc_IN_STL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <StringPooling>true</StringPooling>
@@ -539,7 +539,7 @@
     <ClCompile>
       <AdditionalOptions>/utf-8 $(ExternalCompilerOptions)</AdditionalOptions>
       <Optimization>Full</Optimization>
-      <AdditionalIncludeDirectories>$(SolutionDir);$(ProjectDir);$(ProjectDir)Controls\;$(ProjectDir)Dialogs\;$(ProjectDir)Pages\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir);$(ProjectDir);$(ProjectDir)Controls\;$(ProjectDir)Dialogs\;$(ProjectDir)Pages\;$(ProjectDir)Views\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>NDEBUG;WINVER=_WIN32_WINNT_WIN7;_WIN32_WINNT=_WIN32_WINNT_WIN7;_ALLOW_RTCc_IN_STL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <StringPooling>true</StringPooling>
@@ -595,6 +595,19 @@
   </ImportGroup>
   <ItemGroup>
     <ClInclude Include="CommonHelpers.h" />
+    <ClInclude Include="Controls\ColorButton.h" />
+    <ClInclude Include="Controls\ExtensionListControl.h" />
+    <ClInclude Include="Controls\FileDupeControl.h" />
+    <ClInclude Include="Controls\FileTopControl.h" />
+    <ClInclude Include="Controls\FileTreeControl.h" />
+    <ClInclude Include="Controls\IconImageList.h" />
+    <ClInclude Include="Controls\OwnerDrawnListControl.h" />
+    <ClInclude Include="Controls\PacMan.h" />
+    <ClInclude Include="Controls\SortingListControl.h" />
+    <ClInclude Include="Controls\TreeListControl.h" />
+    <ClInclude Include="Controls\TreeMap.h" />
+    <ClInclude Include="Controls\XYSlider.h" />
+    <ClInclude Include="ItemTop.h" />
     <ClInclude Include="OleFilterOverride.h" />
     <ClInclude Include="Pages\PageFiltering.h" />
     <ClInclude Include="SmartPointer.h" />
@@ -602,14 +615,8 @@
     <ClInclude Include="version.h" />
     <ClInclude Include="Constants.h" />
     <ClInclude Include="BlockingQueue.h" />
-    <ClInclude Include="ExtensionListControl.h" />
     <ClInclude Include="CsvLoader.h" />
     <ClInclude Include="DirStatDoc.h" />
-    <ClInclude Include="FileDupeControl.h" />
-    <ClInclude Include="FileDupeView.h" />
-    <ClInclude Include="FileTabbedView.h" />
-    <ClInclude Include="FileTreeControl.h" />
-    <ClInclude Include="FileTreeView.h" />
     <ClInclude Include="FileFind.h" />
     <ClInclude Include="GlobalHelpers.h" />
     <ClInclude Include="Item.h" />
@@ -630,17 +637,13 @@
     <ClInclude Include="langs.h" />
     <ClInclude Include="SelectObject.h" />
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="Views\ExtensionView.h" />
+    <ClInclude Include="Views\FileDupeView.h" />
+    <ClInclude Include="Views\FileTabbedView.h" />
+    <ClInclude Include="Views\FileTopView.h" />
+    <ClInclude Include="Views\FileTreeView.h" />
+    <ClInclude Include="Views\TreeMapView.h" />
     <ClInclude Include="WinDirStat.h" />
-    <ClInclude Include="Controls\ColorButton.h" />
-    <ClInclude Include="Controls\TreeMapView.h" />
-    <ClInclude Include="Controls\IconImageList.h" />
-    <ClInclude Include="Controls\OwnerDrawnListControl.h" />
-    <ClInclude Include="Controls\PacMan.h" />
-    <ClInclude Include="Controls\SortingListControl.h" />
-    <ClInclude Include="Controls\TreeListControl.h" />
-    <ClInclude Include="Controls\TreeMap.h" />
-    <ClInclude Include="Controls\ExtensionView.h" />
-    <ClInclude Include="Controls\XYSlider.h" />
     <ClInclude Include="Dialogs\AboutDlg.h" />
     <ClInclude Include="Dialogs\DeleteWarningDlg.h" />
     <ClInclude Include="Dialogs\SelectDrivesDlg.h" />
@@ -648,15 +651,18 @@
   <ItemGroup>
     <ClCompile Include="CommonHelpers.cpp">
     </ClCompile>
-    <ClCompile Include="ExtensionListControl.cpp" />
+    <ClCompile Include="Controls\ExtensionListControl.cpp" />
+    <ClCompile Include="Controls\FileDupeControl.cpp" />
+    <ClCompile Include="Controls\FileTopControl.cpp" />
+    <ClCompile Include="Controls\FileTreeControl.cpp" />
+    <ClCompile Include="Controls\OwnerDrawnListControl.cpp" />
+    <ClCompile Include="Controls\PacMan.cpp" />
+    <ClCompile Include="Controls\SortingListControl.cpp" />
+    <ClCompile Include="Controls\TreeListControl.cpp" />
+    <ClCompile Include="Controls\TreeMap.cpp" />
+    <ClCompile Include="Controls\XYSlider.cpp" />
     <ClCompile Include="CsvLoader.cpp" />
     <ClCompile Include="DirStatDoc.cpp">
-    </ClCompile>
-    <ClCompile Include="FileDupeControl.cpp" />
-    <ClCompile Include="FileDupeView.cpp" />
-    <ClCompile Include="FileTabbedView.cpp" />
-    <ClCompile Include="FileTreeControl.cpp" />
-    <ClCompile Include="FileTreeView.cpp">
     </ClCompile>
     <ClCompile Include="FileFind.cpp" />
     <ClCompile Include="GlobalHelpers.cpp">
@@ -664,6 +670,7 @@
     <ClCompile Include="Item.cpp">
     </ClCompile>
     <ClCompile Include="ItemDupe.cpp" />
+    <ClCompile Include="ItemTop.cpp" />
     <ClCompile Include="Layout.cpp">
     </ClCompile>
     <ClCompile Include="Localization.cpp" />
@@ -696,27 +703,17 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="Views\ExtensionView.cpp" />
+    <ClCompile Include="Views\FileDupeView.cpp" />
+    <ClCompile Include="Views\FileTabbedView.cpp" />
+    <ClCompile Include="Views\FileTopView.cpp" />
+    <ClCompile Include="Views\FileTreeView.cpp" />
+    <ClCompile Include="Views\TreeMapView.cpp" />
     <ClCompile Include="WinDirStat.cpp">
     </ClCompile>
     <ClCompile Include="Controls\ColorButton.cpp">
     </ClCompile>
-    <ClCompile Include="Controls\TreeMapView.cpp">
-    </ClCompile>
     <ClCompile Include="Controls\IconImageList.cpp">
-    </ClCompile>
-    <ClCompile Include="Controls\OwnerDrawnListControl.cpp">
-    </ClCompile>
-    <ClCompile Include="Controls\PacMan.cpp">
-    </ClCompile>
-    <ClCompile Include="Controls\SortingListControl.cpp">
-    </ClCompile>
-    <ClCompile Include="Controls\TreeListControl.cpp">
-    </ClCompile>
-    <ClCompile Include="Controls\TreeMap.cpp">
-    </ClCompile>
-    <ClCompile Include="Controls\ExtensionView.cpp">
-    </ClCompile>
-    <ClCompile Include="Controls\XYSlider.cpp">
     </ClCompile>
     <ClCompile Include="Dialogs\AboutDlg.cpp">
     </ClCompile>
@@ -729,7 +726,7 @@
     <None Include="res\IDB_NODES.bmp" />
     <None Include="res\langs\lang_cs.bin" />
     <None Include="res\langs\lang_de.bin" />
-    <None Include="res\langs\lang_ee.bin" />
+    <None Include="res\langs\lang_et.bin" />
     <None Include="res\langs\lang_en.bin" />
     <None Include="res\langs\lang_es.bin" />
     <None Include="res\langs\lang_fi.bin" />
@@ -782,7 +779,7 @@
   <ItemGroup>
     <Text Include="res\langs\lang_cs.txt" />
     <Text Include="res\langs\lang_de.txt" />
-    <Text Include="res\langs\lang_ee.txt" />
+    <Text Include="res\langs\lang_et.txt" />
     <Text Include="res\langs\lang_en.txt" />
     <Text Include="res\langs\lang_es.txt" />
     <Text Include="res\langs\lang_fi.txt" />

@@ -55,6 +55,7 @@ protected:
     BOOL m_SkipProtectedFile = FALSE;
     BOOL m_UseBackupRestore = FALSE;
     int m_ScanningThreads = 0;
+    CStringW m_LargestFileCount;
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnSettingChanged();

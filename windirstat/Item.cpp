@@ -38,7 +38,6 @@
 #include <algorithm>
 #include <unordered_set>
 #include <functional>
-#include <queue>
 #include <shared_mutex>
 #include <stack>
 #include <array>
@@ -1050,6 +1049,7 @@ void CItem::ScanItems(BlockingQueue<CItem*> * queue)
                     item->UpwardAddFiles(1);
                     CItem* newitem = item->AddFile(finder);
                     CFileDupeControl::Get()->ProcessDuplicate(newitem, queue);
+                    CFileTopControl::Get()->ProcessTop(newitem);
                     queue->WaitIfSuspended();
                 }
 

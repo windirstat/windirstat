@@ -33,6 +33,7 @@
 #include "WinDirStat.h"
 #include "CommonHelpers.h"
 #include "SmartPointer.h"
+#include "FileTopControl.h"
 
 #include <functional>
 #include <unordered_map>
@@ -183,8 +184,10 @@ void CDirStatDoc::DeleteContents()
 
     // Cleanup structures
     delete m_RootItemDupe;
+    delete m_RootItemTop;
     delete m_RootItem;
     m_RootItemDupe = nullptr;
+    m_RootItemTop = nullptr;
     m_RootItem = nullptr;
     m_ZoomItem = nullptr;
     CDirStatApp::Get()->ReReadMountPoints();
@@ -272,8 +275,9 @@ BOOL CDirStatDoc::OnOpenDocument(LPCWSTR lpszPathName)
     }
     m_ZoomItem = m_RootItem;
 
-    // Set new node for duplicate view
+    // Set new node for extra views
     m_RootItemDupe = new CItemDupe();
+    m_RootItemTop = new CItemTop();
 
     // Update new root for display
     UpdateAllViews(nullptr, HINT_NEWROOT);
@@ -289,6 +293,7 @@ BOOL CDirStatDoc::OnOpenDocument(CItem * newroot)
     CDocument::OnNewDocument(); // --> DeleteContents()
 
     m_RootItemDupe = new CItemDupe();
+    m_RootItemTop = new CItemTop();
     m_RootItem = newroot;
     m_ZoomItem = m_RootItem;
 
@@ -401,6 +406,11 @@ CItem* CDirStatDoc::GetZoomItem() const
 CItemDupe* CDirStatDoc::GetRootItemDupe() const
 {
     return m_RootItemDupe;
+}
+
+CItemTop* CDirStatDoc::GetRootItemTop() const
+{
+    return m_RootItemTop;
 }
 
 bool CDirStatDoc::IsZoomed() const
@@ -872,10 +882,17 @@ bool CDirStatDoc::DupeListHasFocus()
     return LF_DUPELIST == CMainFrame::Get()->GetLogicalFocus();
 }
 
+bool CDirStatDoc::TopListHasFocus()
+{
+    return LF_TOPLIST == CMainFrame::Get()->GetLogicalFocus();
+}
+
 std::vector<CItem*> CDirStatDoc::GetAllSelected()
 {
-    return DupeListHasFocus() ? CFileDupeControl::Get()->GetAllSelected<CItem>() :
-        CFileTreeControl::Get()->GetAllSelected<CItem>();
+    if (DupeListHasFocus()) return CFileDupeControl::Get()->GetAllSelected<CItem>();
+    if (TopListHasFocus()) return CFileTopControl::Get()->GetAllSelected<CItem>();
+    return CFileTreeControl::Get()->GetAllSelected<CItem>();
+        ;
 }
 
 void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
@@ -1583,6 +1600,7 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
         {
             // Clear items from duplicate list;
             CFileDupeControl::Get()->RemoveItem(item);
+            CFileTopControl::Get()->RemoveItem(item);
 
             // Record current visual arrangement to reapply afterward
             if (item->IsVisible())

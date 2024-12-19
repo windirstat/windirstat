@@ -24,9 +24,18 @@
 #include "stdafx.h"
 #include "FileTreeView.h"
 #include "FileDupeView.h"
+#include "FileTopView.h"
 
-class CFileTabbedView : public CTabView
+class CFileTabbedView final : public CTabView
 {
+public:
+    bool IsFileTreeViewTabActive() { return GetTabControl().GetActiveTab() == m_FileTreeViewIndex; }
+    bool IsFileDupeViewTabActive() { return GetTabControl().GetActiveTab() == m_FileDupeViewIndex; }
+    bool IsFileTopViewTabActive() { return GetTabControl().GetActiveTab() == m_FileTopViewIndex; }
+    CFileTopView* GetFileTopView() const { return m_FileTopView; }
+    CFileTreeView* GetFileTreeView() const { return m_FileTreeView; }
+    CFileDupeView* GetFileDupeView() const { return m_FileDupeView; }
+
 protected:
     CFileTabbedView() = default;
     ~CFileTabbedView() override = default;
@@ -35,10 +44,10 @@ protected:
     // Used for storing and retrieving the various tab views
     int m_FileTreeViewIndex = -1;
     CFileTreeView* m_FileTreeView = nullptr;
-    CFileTreeView* GetFileTreeView() const { return m_FileTreeView; }
     int m_FileDupeViewIndex = -1;
     CFileDupeView* m_FileDupeView = nullptr;
-    CFileDupeView* GetFileDupeView() const { return m_FileDupeView; }
+    int m_FileTopViewIndex = -1;
+    CFileTopView* m_FileTopView = nullptr;
 
     afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
     afx_msg BOOL OnEraseBkgnd(CDC* pDC);

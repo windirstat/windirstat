@@ -22,6 +22,7 @@
 #include "stdafx.h"
 #include "WinDirStat.h"
 #include "FileTabbedView.h"
+#include "FileTopView.h"
 #include "FileTreeView.h"
 #include "Localization.h"
 
@@ -38,9 +39,11 @@ int CFileTabbedView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
     if (CTabView::OnCreate(lpCreateStruct) == -1)
         return -1;
 
-    m_FileTreeViewIndex = AddView(RUNTIME_CLASS(CFileTreeView), Localization::Lookup(IDS_ALL_FILES).c_str(), 100);
+    m_FileTreeViewIndex = AddView(RUNTIME_CLASS(CFileTreeView), Localization::Lookup(IDS_ALL_FILES).c_str(), CHAR_MAX);
     m_FileTreeView = DYNAMIC_DOWNCAST(CFileTreeView, GetTabControl().GetTabWnd(m_FileTreeViewIndex));
-    m_FileDupeViewIndex = AddView(RUNTIME_CLASS(CFileDupeView), Localization::Lookup(IDS_DUPLICATE_FILES).c_str(), 100);
+    m_FileTopViewIndex = AddView(RUNTIME_CLASS(CFileTopView), Localization::Lookup(IDS_LARGEST_FILES).c_str(), CHAR_MAX);
+    m_FileTopView = DYNAMIC_DOWNCAST(CFileTopView, GetTabControl().GetTabWnd(m_FileTopViewIndex));
+    m_FileDupeViewIndex = AddView(RUNTIME_CLASS(CFileDupeView), Localization::Lookup(IDS_DUPLICATE_FILES).c_str(), CHAR_MAX);
     m_FileDupeView = DYNAMIC_DOWNCAST(CFileDupeView, GetTabControl().GetTabWnd(m_FileDupeViewIndex));
     GetTabControl().ModifyTabStyle(CMFCTabCtrl::STYLE_3D_ONENOTE);
 

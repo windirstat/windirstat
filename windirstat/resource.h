@@ -128,6 +128,8 @@
 #define IDC_FILTERING_SIZE_MIN          1239
 #define IDC_FILTERING_USE_REGEX         1240
 #define IDC_FILTERING_MIN_UNITS         1241
+#define IDC_EDIT1                       1242
+#define IDC_LARGEST_FILE_COUNT          1242
 #define ID_WDS_CONTROL                  4711
 #define ID_CLEANUP_EXPLORER_SELECT      32774
 #define ID_TREEMAP_ZOOMIN               32783
@@ -204,7 +206,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        57353
 #define _APS_NEXT_COMMAND_VALUE         33074
-#define _APS_NEXT_CONTROL_VALUE         1242
+#define _APS_NEXT_CONTROL_VALUE         1243
 #define _APS_NEXT_SYMED_VALUE           109
 #endif
 #endif

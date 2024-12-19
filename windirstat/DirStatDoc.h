@@ -31,6 +31,7 @@
 
 class CItem;
 class CItemDupe;
+class CItemTop;
 
 //
 // The treemap colors as calculated in CDirStatDoc::SetExtensionColors()
@@ -113,6 +114,7 @@ protected:
     CItem* GetRootItem() const;
     CItem* GetZoomItem() const;
     CItemDupe* GetRootItemDupe() const;
+    CItemTop* GetRootItemTop() const;
     bool IsZoomed() const;
 
     void SetHighlightExtension(const std::wstring& ext);
@@ -147,6 +149,7 @@ protected:
     static CompressionAlgorithm CompressionIdToAlg(UINT id);
     static bool FileTreeHasFocus();
     static bool DupeListHasFocus();
+    static bool TopListHasFocus();
     static std::vector<CItem *> GetAllSelected();
 
     static CDirStatDoc* _theDocument;
@@ -157,9 +160,9 @@ protected:
     bool m_ShowMyComputer = false; // True, if the user selected more than one drive for scanning.
     // In this case, we need a root pseudo item ("My Computer").
 
-    CItem* m_RootItem = nullptr;       // The very root item
-    CItemDupe* m_RootItemDupe = nullptr; // The very root dup item
-
+    CItem* m_RootItem = nullptr; // The very root item
+    CItemDupe* m_RootItemDupe = nullptr; // The very root dupe item
+    CItemTop* m_RootItemTop = nullptr; // The very root top item
     std::wstring m_HighlightExtension; // Currently highlighted extension
     CItem* m_ZoomItem = nullptr;   // Current "zoom root"
 

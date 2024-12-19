@@ -27,6 +27,7 @@
 
 CIconImageList::~CIconImageList()
 {
+    m_LookupQueue.SuspendExecution();
     m_LookupQueue.CancelExecution();
 }
 

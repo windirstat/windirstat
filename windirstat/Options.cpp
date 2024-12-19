@@ -37,6 +37,7 @@ LPCWSTR COptions::OptionsTreeMap = L"TreeMapView";
 LPCWSTR COptions::OptionsFileTree = L"FileTreeView";
 LPCWSTR COptions::OptionsDupeTree = L"DupeView";
 LPCWSTR COptions::OptionsExtView = L"ExtView";
+LPCWSTR COptions::OptionsTopView = L"TopView";
 LPCWSTR COptions::OptionsDriveSelect = L"DriveSelect";
 
 Setting<bool> COptions::AutomaticallyResizeColumns(OptionsGeneral, L"AutomaticallyResizeColumns", true);
@@ -91,6 +92,7 @@ Setting<double> COptions::MainSplitterPos(OptionsGeneral, L"MainSplitterPos", -1
 Setting<double> COptions::SubSplitterPos(OptionsGeneral, L"SubSplitterPos", -1.0, 0.0, 1.0);
 Setting<int> COptions::ConfigPage(OptionsGeneral, L"ConfigPage", 0);
 Setting<int> COptions::LanguageId(OptionsGeneral, L"LanguageId", 0);
+Setting<int> COptions::LargeFileCount(OptionsGeneral, L"LargeFileCount", 50, 0, 10000);
 Setting<int> COptions::ScanningThreads(OptionsGeneral, L"ScanningThreads", 4, 1, 16);
 Setting<int> COptions::SelectDrivesRadio(OptionsDriveSelect, L"SelectDrivesRadio", 0, 0, 2);
 Setting<int> COptions::FileTreeColorCount(OptionsFileTree, L"FileTreeColorCount", 8);
@@ -112,7 +114,9 @@ Setting<std::vector<int>> COptions::DupeViewColumnWidths(OptionsDupeTree, L"Dupe
 Setting<std::vector<int>> COptions::FileTreeColumnOrder(OptionsFileTree, L"FileTreeColumnOrder");
 Setting<std::vector<int>> COptions::FileTreeColumnWidths(OptionsFileTree, L"FileTreeColumnWidths");
 Setting<std::vector<int>> COptions::ExtViewColumnOrder(OptionsExtView, L"ExtViewColumnOrder");
-Setting<std::vector<int>> COptions::ExtViewColumnWidth(OptionsExtView, L"ExtViewColumnWidth");
+Setting<std::vector<int>> COptions::ExtViewColumnWidths(OptionsExtView, L"ExtViewColumnWidths");
+Setting<std::vector<int>> COptions::TopViewColumnOrder(OptionsTopView, L"TopViewColumnOrder");
+Setting<std::vector<int>> COptions::TopViewColumnWidths(OptionsTopView, L"TopViewColumnWidths");
 Setting<std::vector<std::wstring>> COptions::SelectDrivesDrives(OptionsDriveSelect, L"SelectDrivesDrives");
 Setting<std::wstring> COptions::SelectDrivesFolder(OptionsDriveSelect, L"SelectDrivesFolder");
 Setting<std::wstring> COptions::FilteringExcludeDirs(OptionsDriveSelect, L"FilteringExcludeDirs");

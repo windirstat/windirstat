@@ -26,7 +26,7 @@
 #include <functional>
 
 template <typename T>
-class BlockingQueue
+class BlockingQueue final
 {
     std::vector<std::thread> m_Threads;
     std::deque<T> m_Queue;

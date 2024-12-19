@@ -49,61 +49,12 @@ bool CFileDupeControl::GetAscendingDefault(const int column)
 #pragma warning(disable:26454)
 BEGIN_MESSAGE_MAP(CFileDupeControl, CTreeListControl)
     ON_NOTIFY_REFLECT(LVN_ITEMCHANGING, OnLvnItemchangingList)
-    ON_WM_CONTEXTMENU()
     ON_WM_SETFOCUS()
     ON_WM_KEYDOWN()
 END_MESSAGE_MAP()
 #pragma warning(pop)
 
 CFileDupeControl* CFileDupeControl::m_Singleton = nullptr;
-
-void CFileDupeControl::OnContextMenu(CWnd* /*pWnd*/, const CPoint pt)
-{
-    const int i = GetSelectionMark();
-    if (i == -1)
-    {
-        return;
-    }
-
-    CTreeListItem* item = GetItem(i);
-    if (item->GetParent() == nullptr) return;
-
-    CRect rc = GetWholeSubitemRect(i, 0);
-    const CRect rcTitle = item->GetTitleRect() + rc.TopLeft();
-
-    CMenu menu;
-    menu.LoadMenu(IDR_POPUP_TREE);
-    Localization::UpdateMenu(menu);
-    CMenu* sub = menu.GetSubMenu(0);
-
-    PrepareDefaultMenu(sub, static_cast<CItemDupe*>(item));
-    CMainFrame::Get()->UpdateDynamicMenuItems(sub);
-
-    // Show popup menu and act accordingly.
-    //
-    // The menu shall not overlap the label but appear
-    // horizontally at the cursor position,
-    // vertically under (or above) the label.
-    // TrackPopupMenuEx() behaves in the desired way, if
-    // we exclude the label rectangle extended to full screen width.
-
-    TPMPARAMS tp;
-    tp.cbSize = sizeof(tp);
-    tp.rcExclude = rcTitle;
-    ClientToScreen(&tp.rcExclude);
-
-    CRect desktop;
-    GetDesktopWindow()->GetWindowRect(desktop);
-
-    tp.rcExclude.left = desktop.left;
-    tp.rcExclude.right = desktop.right;
-
-    constexpr int overlap = 2; // a little vertical overlapping
-    tp.rcExclude.top += overlap;
-    tp.rcExclude.bottom -= overlap;
-
-    sub->TrackPopupMenuEx(TPM_LEFTALIGN | TPM_LEFTBUTTON, pt.x, pt.y, AfxGetMainWnd(), &tp);
-}
 
 void CFileDupeControl::ProcessDuplicate(CItem * item, BlockingQueue<CItem*>* queue)
 {
@@ -306,24 +257,7 @@ void CFileDupeControl::OnItemDoubleClick(const int i)
     }
     else
     {
-        std::unique_lock lock(m_HashTrackerMutex);
         CTreeListControl::OnItemDoubleClick(i);
-    }
-}
-
-void CFileDupeControl::PrepareDefaultMenu(CMenu* menu, const CItemDupe* item) const
-{
-    if (const CItem * ditem = item->GetItem(); ditem != nullptr && ditem->TmiIsLeaf())
-    {
-        menu->DeleteMenu(0, MF_BYPOSITION); // Remove "Expand/Collapse" item
-        menu->DeleteMenu(0, MF_BYPOSITION); // Remove separator
-        menu->SetDefaultItem(ID_CLEANUP_OPEN_SELECTED, false);
-    }
-    else
-    {
-        const std::wstring command = item->IsExpanded() && item->HasChildren() ? Localization::Lookup(IDS_COLLAPSE) : Localization::Lookup(IDS_EXPAND);
-        VERIFY(menu->ModifyMenu(ID_POPUP_TOGGLE, MF_BYCOMMAND | MF_STRING, ID_POPUP_TOGGLE, command.c_str()));
-        menu->SetDefaultItem(ID_POPUP_TOGGLE, false);
     }
 }
 
@@ -345,15 +279,19 @@ void CFileDupeControl::OnLvnItemchangingList(NMHDR* pNMHDR, LRESULT* pResult)
     return CTreeListControl::OnLvnItemchangingList(pNMHDR, pResult);
 }
 
-void CFileDupeControl::InsertItem(const int i, CTreeListItem* item)
-{
-    InsertListItem(i, item);
-    item->SetVisible(this, true);
-}
-
 void CFileDupeControl::SetRootItem(CTreeListItem* root)
 {
     m_ShowCloudWarningOnThisScan = COptions::SkipDupeDetectionCloudLinksWarning;
+
+    // Cleanup node allocations
+    for (const auto& item : m_NodeTracker | std::views::values)
+    {
+        delete item;
+    }
+
+    // Clear out any pending visual updates
+    while (!m_PendingListAdds.empty())
+        m_PendingListAdds.pop();
 
     m_NodeTracker.clear();
     m_HashTracker.clear();
