@@ -1378,7 +1378,8 @@ void CDirStatDoc::OnUpdateUserDefinedCleanup(CCmdUI* pCmdUI)
 {
     const int i = pCmdUI->m_nID - ID_USERDEFINEDCLEANUP0;
     const auto & items = GetAllSelected();
-    bool allowControl = (FileTreeHasFocus() || DupeListHasFocus()) && COptions::UserDefinedCleanups.at(i).Enabled && !items.empty();
+    bool allowControl = (FileTreeHasFocus() || DupeListHasFocus() || TopListHasFocus()) &&
+        COptions::UserDefinedCleanups.at(i).Enabled && !items.empty();
     if (allowControl) for (const auto & item : items)
     {
         allowControl &= UserDefinedCleanupWorksForItem(&COptions::UserDefinedCleanups[i], item);
@@ -1596,6 +1597,7 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
         const auto selectedItems = GetAllSelected();
         using VisualInfo = struct { bool wasExpanded; bool isSelected; int oldScrollPosition; };
         std::unordered_map<CItem *,VisualInfo> visualInfo;
+        CMainFrame::Get()->SetRedraw(FALSE);
         for (auto item : std::vector(items))
         {
             // Clear items from duplicate list;
@@ -1642,6 +1644,7 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
                     {
                         GetDocument()->UnlinkRoot();
                     }).detach();
+                    CMainFrame::Get()->SetRedraw(TRUE);
                     return;
                 }
 
@@ -1651,6 +1654,7 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
                 item->GetParent()->RemoveChild(item);
             }
         }
+        CMainFrame::Get()->SetRedraw(TRUE);
 
         // Add items to processing queue
         for (const auto & item : items)

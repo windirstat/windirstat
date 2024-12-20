@@ -64,7 +64,7 @@ protected:
     void DrawHighlightExtension(CDC* pdc);
     void RecurseHighlightExtension(CDC* pdc, const CItem* item);
 
-    void DrawSelection(CDC* pdc);
+    void DrawSelection(CDC* pdc) const;
 
     void HighlightSelectedItem(CDC* pdc, const CItem* item, bool single) const;
     void RenderHighlightRectangle(CDC* pdc, CRect& rc) const;

@@ -234,14 +234,14 @@ void CTreeMapView::RecurseHighlightExtension(CDC* pdc, const CItem* item)
     }
 }
 
-void CTreeMapView::DrawSelection(CDC* pdc)
+void CTreeMapView::DrawSelection(CDC* pdc) const
 {
     CSelectStockObject sobrush(pdc, NULL_BRUSH);
 
     CPen pen(PS_SOLID, 1, COptions::TreeMapHighlightColor);
     CSelectObject sopen(pdc, &pen);
 
-    const auto& items = CFileTreeControl::Get()->GetAllSelected<CItem>();
+    const auto& items = CMainFrame::Get()->GetAllSelectedInFocus();
     for (const auto& item : items)
     {
         HighlightSelectedItem(pdc, item, items.size() == 1);

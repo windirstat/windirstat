@@ -162,6 +162,8 @@ protected:
     CExtensionView* m_ExtensionView = nullptr;
     CTreeMapView* m_TreeMapView = nullptr;
     CFileTreeView* GetFileTreeView() const { return m_FileTabbedView->GetFileTreeView(); }
+    CFileTopView* GetFileTopView() const { return m_FileTabbedView->GetFileTopView(); }
+    CFileDupeView* GetFileDupeView() const { return m_FileTabbedView->GetFileDupeView(); }
     CFileTabbedView* GetFileTabbedView() const { return m_FileTabbedView; }
     CTreeMapView* GetTreeMapView() const { return m_TreeMapView; }
     CExtensionView* GetExtensionView() const { return m_ExtensionView; }
@@ -179,7 +181,7 @@ protected:
 
     void SetLogicalFocus(LOGICAL_FOCUS lf);
     LOGICAL_FOCUS GetLogicalFocus() const;
-    void MoveFocus(LOGICAL_FOCUS lf);
+    void MoveFocus(LOGICAL_FOCUS logicalFocus);
     void UpdatePaneText();
 
     static void QueryRecycleBin(ULONGLONG& items, ULONGLONG& bytes);

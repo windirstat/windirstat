@@ -37,9 +37,9 @@ using ITEMTOPCOLUMNS = enum : std::uint8_t
 
 class CItemTop final : public CTreeListItem
 {
-    CItem* m_Item = nullptr;
     std::shared_mutex m_Protect;
     std::vector<CItemTop*> m_Children;
+    CItem* m_Item = nullptr;
 
 public:
     CItemTop(const CItemTop&) = delete;

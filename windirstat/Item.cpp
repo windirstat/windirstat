@@ -1061,6 +1061,8 @@ void CItem::ScanItems(BlockingQueue<CItem*> * queue)
         {
             // Only used for refreshes
             item->UpdateStatsFromDisk();
+            CFileDupeControl::Get()->ProcessDuplicate(item, queue);
+            CFileTopControl::Get()->ProcessTop(item);
             item->SetDone();
         }
         else if (item->IsType(IT_MYCOMPUTER))

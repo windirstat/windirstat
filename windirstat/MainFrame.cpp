@@ -1052,27 +1052,19 @@ LOGICAL_FOCUS CMainFrame::GetLogicalFocus() const
     return m_LogicalFocus;
 }
 
-void CMainFrame::MoveFocus(const LOGICAL_FOCUS lf)
+void CMainFrame::MoveFocus(const LOGICAL_FOCUS logicalFocus)
 {
-    switch (lf)
+    switch (logicalFocus)
     {
-    case LF_NONE:
+        case LF_EXTENSIONLIST: GetExtensionView()->SetFocus(); break;
+        case LF_DUPELIST: GetFileDupeView()->SetFocus(); break;
+        case LF_TOPLIST: GetFileTopView()->SetFocus(); break;
+        case LF_FILETREE: GetFileTreeView()->SetFocus(); break;
+        case LF_NONE:
         {
             SetLogicalFocus(LF_NONE);
             m_WndDeadFocus.SetFocus();
         }
-        break;
-    case LF_DUPELIST:
-    case LF_FILETREE:
-        {
-            GetFileTreeView()->SetFocus();
-        }
-        break;
-    case LF_EXTENSIONLIST:
-        {
-            GetExtensionView()->SetFocus();
-        }
-        break;
     }
 }
 

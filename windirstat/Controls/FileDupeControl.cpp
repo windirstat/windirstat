@@ -196,6 +196,9 @@ void CFileDupeControl::RemoveItem(CItem* item)
     const auto root = reinterpret_cast<CItemDupe*>(GetItem(0));
     for (const auto& itemToRemove : std::ranges::reverse_view(itemsToRemove))
     {
+        // Clear our hash bits
+        item->SetType(ITF_PARTHASH | ITF_FULLHASH, false);
+
         // Remove from size tracker
         const auto size = itemToRemove->GetSizeLogical();
         m_SizeTracker.at(size).erase(itemToRemove);

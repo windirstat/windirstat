@@ -55,7 +55,7 @@ public:
 protected:
 
     static CFileTopControl* m_Singleton;
-    std::mutex m_SizeMutex;
+    std::shared_mutex m_SizeMutex;
     std::map<ULONGLONG, std::unordered_set<CItem*>> m_SizeMap;
     std::unordered_map<CItem*, CItemTop*> m_ItemTracker;
 
