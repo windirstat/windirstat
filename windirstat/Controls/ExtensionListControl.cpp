@@ -221,6 +221,7 @@ void CExtensionListControl::OnDestroy()
 
 void CExtensionListControl::SetExtensionData(const CExtensionData* ed)
 {
+    SetRedraw(FALSE);
     DeleteAllItems();
 
     for (int i = 0; const auto & ext : *ed)
@@ -229,6 +230,7 @@ void CExtensionListControl::SetExtensionData(const CExtensionData* ed)
         InsertListItem(i++, item);
     }
 
+    SetRedraw(TRUE);
     SortItems();
 }
 
