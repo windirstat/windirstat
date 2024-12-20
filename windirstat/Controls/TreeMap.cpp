@@ -23,8 +23,6 @@
 #include "SelectObject.h"
 #include "TreeMap.h"
 
-#pragma strict_gs_check(off)
-
 #include <array>
 #include <memory>
 #include <vector>

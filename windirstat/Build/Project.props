@@ -6,7 +6,7 @@
 	<ItemDefinitionGroup>
 		<ClCompile>
 			<AdditionalOptions Condition="'$(PlatformToolset)' != 'ClangCL'">%(AdditionalOptions) /d1trimfile:"$(MSBuildThisFileDirectory)\"</AdditionalOptions>
-			<AdditionalOptions>%(AdditionalOptions) /Zc:__cplusplus /utf-8 /GS</AdditionalOptions>
+			<AdditionalOptions>%(AdditionalOptions) /Zc:__cplusplus /utf-8</AdditionalOptions>
 		</ClCompile>
 		<ClCompile Condition="'$(TargetName)' != ''">
 			<PreprocessorDefinitions>MODNAME="$(TargetName)$(TargetExt)";%(PreprocessorDefinitions)</PreprocessorDefinitions>
