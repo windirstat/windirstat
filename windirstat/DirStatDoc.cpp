@@ -972,7 +972,7 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
     const auto& items = GetAllSelected();
 
     bool allow = true;
-    allow &= !filter.treeFocus || FileTreeHasFocus() || DupeListHasFocus();
+    allow &= !filter.treeFocus || FileTreeHasFocus() || DupeListHasFocus() || TopListHasFocus();
     allow &= filter.allowNone || !items.empty();
     allow &= filter.allowMany || items.size() <= 1;
     allow &= filter.allowEarly || (IsRootDone() && !IsScanRunning());
