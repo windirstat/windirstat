@@ -55,7 +55,7 @@ CFileTopControl* CFileTopControl::m_Singleton = nullptr;
 void CFileTopControl::ProcessTop(CItem * item)
 {
     std::lock_guard guard(m_SizeMutex);
-    m_SizeMap[item->GetSizeLogical()].emplace(item);
+    m_SizeMap.emplace(item);
 }
 
 void CFileTopControl::SortItems()
@@ -70,7 +70,7 @@ void CFileTopControl::SortItems()
     std::unordered_set<CItem*> largestItems;
     for (auto & pair : m_SizeMap | std::views::reverse)
     {
-        largestItems.insert(pair.second.begin(), pair.second.end());
+        largestItems.insert(pair);
         if (static_cast<int>(largestItems.size()) >= COptions::LargeFileCount) break;
     }
     m_SizeMutex.unlock();
@@ -110,7 +110,7 @@ void CFileTopControl::RemoveItem(CItem* item)
         queue.pop();
         if (qitem->IsType(IT_FILE))
         {
-            m_SizeMap[qitem->GetSizeLogical()].erase(qitem);
+            m_SizeMap.erase(qitem);
         }
         else for (const auto& child : qitem->GetChildren())
         {

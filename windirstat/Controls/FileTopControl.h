@@ -24,7 +24,7 @@
 #include "ItemTop.h"
 #include "TreeListControl.h"
 
-#include <unordered_set>
+#include <set>
 #include <map>
 #include <vector>
 #include <mutex>
@@ -54,9 +54,15 @@ public:
 
 protected:
 
+    // Custom comparator to keep the list organized by size
+    static constexpr auto CompareBySize = [](const CItem* lhs, const CItem* rhs)
+    {
+        return lhs->GetSizeLogical() < rhs->GetSizeLogical();
+    };
+
     static CFileTopControl* m_Singleton;
     std::shared_mutex m_SizeMutex;
-    std::map<ULONGLONG, std::unordered_set<CItem*>> m_SizeMap;
+    std::set<CItem*, decltype(CompareBySize)> m_SizeMap;
     std::unordered_map<CItem*, CItemTop*> m_ItemTracker;
 
     void OnItemDoubleClick(int i) override;
