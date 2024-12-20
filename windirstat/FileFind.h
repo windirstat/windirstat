@@ -48,10 +48,10 @@ class FileFindEnhanced final
     DWORD m_InitialAttributes = INVALID_FILE_ATTRIBUTES;
     bool m_Firstrun = true;
     FILE_FULL_DIR_INFORMATION* m_CurrentInfo = nullptr;
-    static constexpr auto m_Dos = L"\\??\\";
-    static constexpr auto m_DosUNC = L"\\??\\UNC\\";
-    static constexpr auto m_Long = L"\\\\?\\";
-    static constexpr auto m_LongUNC = L"\\\\?\\UNC\\";
+    static constexpr std::wstring_view m_Dos = L"\\??\\";
+    static constexpr std::wstring_view m_DosUNC = L"\\??\\UNC\\";
+    static constexpr std::wstring_view m_Long = L"\\\\?\\";
+    static constexpr std::wstring_view m_LongUNC = L"\\\\?\\UNC\\";
 
 public:
 

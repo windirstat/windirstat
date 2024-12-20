@@ -111,8 +111,8 @@ bool FileFindEnhanced::FindFile(const std::wstring & strFolder, const std::wstri
 
     // convert the path to a long path that is compatible with the other call
     m_Base = strFolder;
-    if (m_Base.find(L":\\", 1) == 1) m_Base = m_Dos + m_Base;
-    else if (m_Base.starts_with(L"\\\\")) m_Base = m_DosUNC + m_Base.substr(2);
+    if (m_Base.find(L":\\", 1) == 1) m_Base = m_Dos.data() + m_Base;
+    else if (m_Base.starts_with(L"\\\\")) m_Base = m_DosUNC.data() + m_Base.substr(2);
     UNICODE_STRING path;
     path.Length = static_cast<USHORT>(m_Base.size() * sizeof(WCHAR));
     path.MaximumLength = static_cast<USHORT>(m_Base.size() + 1) * sizeof(WCHAR);
@@ -205,14 +205,13 @@ FILETIME FileFindEnhanced::GetLastWriteTime() const
 std::wstring FileFindEnhanced::GetFilePath() const
 {
     // Get full path to folder or file
-    std::wstring path = (m_Base.at(m_Base.size() - 1) == L'\\') ?
-        (m_Base + m_Name) : (m_Base + L"\\" + m_Name);
+    std::wstring path = m_Base.back() == L'\\'
+        ? (m_Base + m_Name)
+        : (m_Base + L"\\" + m_Name);
 
-    // Strip special dos chars
-    if (wcsncmp(path.data(), m_DosUNC, wcslen(m_DosUNC) - 1) == 0)
-        path = L"\\\\" + path.substr(static_cast<int>(wcslen(m_DosUNC)));
-    else if (wcsncmp(path.data(), m_Dos, wcslen(m_Dos) - 1) == 0)
-        path = path.substr(static_cast<int>(wcslen(m_Dos)));
+    // Strip special DOS chars
+    if (path.starts_with(m_DosUNC)) return L"\\\\" + path.substr(m_DosUNC.size());
+    if (path.starts_with(m_Dos)) return path.substr(m_Dos.size());
     return path;
 }
 
@@ -223,8 +222,8 @@ std::wstring FileFindEnhanced::GetFilePathLong() const
 
 std::wstring FileFindEnhanced::MakeLongPathCompatible(const std::wstring & path)
 {
-    if (path.find(L":\\", 1) == 1) return { m_Long + path };
-    if (path.starts_with(L"\\\\")) return { m_LongUNC + path.substr(2) };
+    if (path.find(L":\\", 1) == 1) return m_Long.data() + path;
+    if (path.starts_with(L"\\\\")) return m_LongUNC.data() + path.substr(2);
     return path;
 }
 
