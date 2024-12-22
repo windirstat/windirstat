@@ -39,7 +39,7 @@ namespace
 
 // Draws an item label (icon, text) in all parts of the WinDirStat view
 // the rest is drawn by DrawItem()
-void COwnerDrawnListItem::DrawLabel(const COwnerDrawnListControl* list, CImageList* il, CDC* pdc, CRect& rc, const UINT state, int* width, int* focusLeft, const bool indent) const
+void COwnerDrawnListItem::DrawLabel(const COwnerDrawnListControl* list, CIconImageList* il, CDC* pdc, CRect& rc, const UINT state, int* width, int* focusLeft, const bool indent) const
 {
     CRect rcRest = rc;
     // Increase indentation according to tree-level
@@ -52,22 +52,15 @@ void COwnerDrawnListItem::DrawLabel(const COwnerDrawnListControl* list, CImageLi
     const auto imageIndex = GetImage();
     ASSERT(GetImage() < il->GetImageCount());
 
-    static CRect rcImageDefault(0, 0, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CXSMICON));
-    CRect rcImage = rcImageDefault;
-
-    if (imageIndex != -1)
-    {
-        IMAGEINFO ii;
-        il->GetImageInfo(GetImage(), &ii);
-        rcImage = ii.rcImage;
-    }
+    // Get default small icon parameters
+    static const CRect rcImage(0, 0, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CXSMICON));
 
     if (width == nullptr)
     {
         // Draw the color with transparent background
         const CPoint pt(rcRest.left, rcRest.top + rcRest.Height() / 2 - rcImage.Height() / 2);
         il->SetBkColor(CLR_NONE);
-        if (imageIndex != -1) il->Draw(pdc, GetImage(), pt, ILD_NORMAL);
+        if (imageIndex != -1) il->DrawIcon(pdc, imageIndex, pt);
     }
 
     // Decrease size of the remainder rectangle from left

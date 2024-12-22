@@ -26,6 +26,7 @@
 #include "SortingListControl.h"
 
 class COwnerDrawnListControl;
+class CIconImageList;
 
 //
 // COwnerDrawnListItem. An item in a COwnerDrawnListControl.
@@ -56,7 +57,7 @@ public:
     virtual void FetchShellInfo() {}
 
 protected:
-    void DrawLabel(const COwnerDrawnListControl* list, CImageList* il, CDC* pdc, CRect& rc, UINT state, int* width, int* focusLeft, bool indent = true) const;
+    void DrawLabel(const COwnerDrawnListControl* list, CIconImageList* il, CDC* pdc, CRect& rc, UINT state, int* width, int* focusLeft, bool indent = true) const;
     void DrawPercentage(CDC* pdc, CRect rc, double fraction, COLORREF color) const;
 };
 

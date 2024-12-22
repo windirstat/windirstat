@@ -98,6 +98,13 @@ void CIconImageList::StopAsyncShellInfoQueue()
     });
 }
 
+void CIconImageList::DrawIcon(CDC* hdc, const int image, const CPoint & pt)
+{
+    m_FilterOverride.SetDefaultHandler(false);
+    Draw(hdc, image, pt, ILD_NORMAL);
+    m_FilterOverride.SetDefaultHandler(true);
+}
+
 // Returns the index of the added icon
 short CIconImageList::CacheIcon(const std::wstring & path, UINT flags, const DWORD attr, std::wstring* psTypeName)
 {
@@ -151,13 +158,14 @@ short CIconImageList::CacheIcon(const std::wstring & path, UINT flags, const DWO
     
     // Extract image and add to cache
     m_IndexMutex.unlock();
-    const auto icon = static_cast<short>(this->Add(ImageList_ExtractIcon(NULL, hil, sfi.iIcon)));
+    const auto icon = ImageList_ExtractIcon(NULL, hil, sfi.iIcon);
+    const auto iconIndex = static_cast<short>(this->Add(icon));
     m_IndexMutex.lock();
 
     // Add to map
     m_FilterOverride.SetDefaultHandler(true);
-    m_IndexMap[sfi.iIcon] = icon;
-    return m_IndexMap[sfi.iIcon];
+    m_IndexMap[sfi.iIcon] = iconIndex;
+    return iconIndex;
 }
 
 short CIconImageList::GetMyComputerImage() const

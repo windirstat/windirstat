@@ -46,6 +46,7 @@ public:
 
     void Initialize();
     void DoAsyncShellInfoLookup(COwnerDrawnListItem* item);
+    void DrawIcon(CDC* hdc, int image, const CPoint& pt);
     void ClearAsyncShellInfoQueue();
     void StopAsyncShellInfoQueue();
     short GetMyComputerImage() const;
