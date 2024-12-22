@@ -25,6 +25,7 @@
 #include "PacMan.h"
 
 #include <vector>
+#include <memory>
 
 class CFileTreeView;
 class CTreeListItem;
@@ -55,7 +56,6 @@ class CTreeListItem : public COwnerDrawnListItem
 
 public:
     CTreeListItem() = default;
-    ~CTreeListItem() override;
 
     virtual int CompareSibling(const CTreeListItem* tlib, int subitem) const = 0;
 
@@ -91,7 +91,7 @@ public:
     void DrivePacman() const;
 
 protected:
-    mutable VISIBLEINFO* m_VisualInfo = nullptr;
+    mutable std::unique_ptr<VISIBLEINFO> m_VisualInfo;
 
 private:
     CTreeListItem* m_Parent = nullptr;

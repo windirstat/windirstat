@@ -210,7 +210,7 @@ protected:
     CMFCToolBar m_WndToolBar;     // Tool bar
     CProgressCtrl m_Progress;     // Progress control. Is Create()ed and Destroy()ed again every time.
     CPacmanControl m_Pacman;      // Static control for Pacman.
-
+    CMFCToolBarImages m_Images;   // Tool bar images
     LOGICAL_FOCUS m_LogicalFocus = LF_NONE; // Which view has the logical focus
     CDeadFocusWnd m_WndDeadFocus; // Zero-size window which holds the focus if logical focus is "NONE"
 

@@ -53,11 +53,6 @@ namespace
     constexpr auto HOTNODE_X = 0;
 }
 
-CTreeListItem::~CTreeListItem()
-{
-    delete m_VisualInfo;
-}
-
 bool CTreeListItem::DrawSubitem(const int subitem, CDC* pdc, CRect rc, const UINT state, int* width, int* focusLeft) const
 {
     if (subitem != 0)
@@ -249,14 +244,14 @@ void CTreeListItem::SetVisible(CTreeListControl* control, const bool visible) co
     if (visible)
     {
         ASSERT(!IsVisible());
-        m_VisualInfo = new VISIBLEINFO(GetParent() == nullptr ? 0 : GetParent()->GetIndent() + 1);
+        const unsigned char indent = GetParent() == nullptr ? 0 : GetParent()->GetIndent() + 1;
+        m_VisualInfo = std::make_unique<VISIBLEINFO>(indent);
         m_VisualInfo->control = control;
     }
     else
     {
         ASSERT(IsVisible());
-        delete m_VisualInfo;
-        m_VisualInfo = nullptr;
+        m_VisualInfo.reset();
     }
 }
 

@@ -661,8 +661,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
         { ID_HELP_MANUAL, {IDB_HELP_MANUAL, IDS_HELP_MANUAL}}};
 
     // update toolbar images with high resolution versions
-    CMFCToolBarImages* images = new CMFCToolBarImages();
-    images->SetImageSize({ 16,16 }, TRUE);
+    m_Images.SetImageSize({ 16,16 }, TRUE);
     for (int i = 0; i < m_WndToolBar.GetCount();i++)
     {
         // lookup the button in the editor toolbox
@@ -673,8 +672,8 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
         // load high quality bitmap from resource
         CBitmap bitmap;
         bitmap.LoadBitmapW(toolbarMap.at(button->m_nID).first);
-        const int image = images->AddImage(bitmap, TRUE);
-        CMFCToolBar::SetUserImages(images);
+        const int image = m_Images.AddImage(bitmap, TRUE);
+        CMFCToolBar::SetUserImages(&m_Images);
 
         // copy button into new toolbar control
         CMFCToolBarButton newButton(button->m_nID, image, nullptr, TRUE, TRUE);
@@ -683,7 +682,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
         m_WndToolBar.ReplaceButton(button->m_nID, newButton);
     }
 
-    // setup look at feel
+    // setup look and feel
     CMFCVisualManager::SetDefaultManager(RUNTIME_CLASS(CMFCVisualManagerWindows7));
     CDockingManager::SetDockingMode(DT_SMART); 
 

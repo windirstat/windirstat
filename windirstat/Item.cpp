@@ -76,7 +76,7 @@ CItem::CItem(const ITEMTYPE type, const std::wstring & name) : m_Name(name), m_T
     }
     else
     {
-        m_FolderInfo = new CHILDINFO;
+        m_FolderInfo = std::make_unique<CHILDINFO>();
         m_Extension = m_Name.c_str();
     }
 }
@@ -104,7 +104,6 @@ CItem::~CItem()
         {
             delete m_Child;
         }
-        delete m_FolderInfo;
     }
 }
 
