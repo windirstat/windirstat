@@ -64,13 +64,13 @@ protected:
 
         double GetBytesFraction() const;
 
-        CExtensionListControl* m_List;
         std::wstring m_Extension;
+        std::wstring m_Description;
+        CExtensionListControl* m_List;
         ULONGLONG m_Bytes = 0;
         ULONGLONG m_Files = 0;
         COLORREF m_Color = 0;
-        mutable std::wstring m_Description;
-        mutable int m_Image = -1;
+        short m_Image = -1;
     };
 
 public:
