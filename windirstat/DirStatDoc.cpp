@@ -1692,6 +1692,12 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
             });
         }
 
+        // Ensure toolbar buttons reflect scanning status
+        CMainFrame::Get()->InvokeInMessageThread([&]
+        {
+            CDirStatApp::Get()->OnIdle(0);
+        });
+
         // Wait for all threads to run out of work
         for (auto& queue : m_queues | std::views::values)
             queue.WaitForCompletion();
