@@ -126,7 +126,7 @@ int CExtensionListControl::CListItem::GetImage() const
 
 std::wstring CExtensionListControl::CListItem::GetDescription() const
 {
-    return m_Description;
+    return m_Image == -1 ? L"" : m_Description;
 }
 
 std::wstring CExtensionListControl::CListItem::GetBytesPercent() const
