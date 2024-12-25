@@ -1693,25 +1693,9 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
         }
 
         // Wait for all threads to run out of work
-        bool do_completion = true;
         for (auto& queue : m_queues | std::views::values)
-            do_completion &= queue.WaitForCompletionOrCancellation();
-        if (!do_completion)
-        {
-            // Exit here and stop progress if drained by an outside actor
-            CMainFrame::Get()->InvokeInMessageThread([]
-            {
-                // Sorting and other finalization tasks
-                CWaitCursor wc;
-                CItem::ScanItemsFinalize(GetDocument()->GetRootItem());
-
-                CMainFrame::Get()->SetProgressComplete();
-                CMainFrame::Get()->MinimizeTreeMapView();
-                CMainFrame::Get()->MinimizeExtensionView();
-            });
-            return;
-        }
-
+            queue.WaitForCompletion();
+   
         // Restore unknown and freespace items
         for (const auto& item : items)
         {

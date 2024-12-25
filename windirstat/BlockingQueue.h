@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include <deque>
+#include <stack>
 #include <mutex>
 #include <condition_variable>
 #include <functional>
@@ -140,7 +140,7 @@ public:
         }
     }
 
-    bool WaitForCompletionOrCancellation()
+    void WaitForCompletion()
     {
         // Wait for all workers threads to be idled or cancelled
         std::unique_lock lock(m_Mutex);
@@ -148,8 +148,6 @@ public:
         {
             return m_Started && !m_Suspended && AllThreadsIdling() && m_Queue.empty() || m_Cancelled;
         });
-
-        return !m_Cancelled;
     }
 
     void CancelExecution()
@@ -175,7 +173,7 @@ public:
         return m_Started && m_Suspended;
     }
 
-    void SuspendExecution(bool clearQueue = false)
+    void SuspendExecution(const bool clearQueue = false)
     {
         if (!m_Started) return;
         std::unique_lock lock(m_Mutex);
@@ -196,7 +194,7 @@ public:
         m_Pushed.notify_all();
     }
 
-    void ResetQueue(const int totalWorkerThreads, bool clearQueue = true)
+    void ResetQueue(const int totalWorkerThreads, const bool clearQueue = true)
     {
         std::lock_guard lock(m_Mutex);
         m_WorkersWaiting = 0;
