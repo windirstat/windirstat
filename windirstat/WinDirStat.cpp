@@ -64,8 +64,8 @@ CDirStatApp::CDirStatApp()
 
 CIconImageList* CDirStatApp::GetIconImageList()
 {
-    m_MyImageList.Initialize();
-    return &m_MyImageList;
+    m_ImageList.Initialize();
+    return &m_ImageList;
 }
 
 void CDirStatApp::RestartApplication(bool resetPreferences)

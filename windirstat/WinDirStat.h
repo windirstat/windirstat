@@ -75,7 +75,7 @@ protected:
     CSingleDocTemplate* m_PDocTemplate{nullptr}; // MFC voodoo.
 
     CReparsePoints m_ReparsePoints;   // Mount point information
-    CIconImageList m_MyImageList;     // Our central image list
+    CIconImageList m_ImageList;       // Our central image list
     COLORREF m_AltColor;              // Coloring of compressed items
     COLORREF m_AltEncryptionColor;    // Coloring of encrypted items
     static CDirStatApp _singleton;    // Singleton application instance

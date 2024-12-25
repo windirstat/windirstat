@@ -51,7 +51,6 @@ BEGIN_MESSAGE_MAP(CFileTreeView, CView)
     ON_WM_SIZE()
     ON_WM_CREATE()
     ON_WM_ERASEBKGND()
-    ON_WM_DESTROY()
     ON_WM_SETFOCUS()
     ON_WM_SETTINGCHANGE()
     ON_NOTIFY(LVN_ITEMCHANGED, ID_WDS_CONTROL, OnLvnItemchanged)
@@ -123,20 +122,12 @@ int CFileTreeView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
 
     CreateColumns(true);
 
-    m_Control.MySetImageList(GetIconImageList());
-
     return 0;
 }
 
 BOOL CFileTreeView::OnEraseBkgnd(CDC* /*pDC*/)
 {
     return true;
-}
-
-void CFileTreeView::OnDestroy()
-{
-    m_Control.MySetImageList(nullptr);
-    CView::OnDestroy();
 }
 
 void CFileTreeView::OnSetFocus(CWnd* /*pOldWnd*/)

@@ -106,7 +106,6 @@ class CTreeListControl : public COwnerDrawnListControl
 
     CTreeListControl(int rowHeight = -1, std::vector<int>* columnOrder = {}, std::vector<int>* columnWidths = {});
     ~CTreeListControl() override = default;
-    void MySetImageList(CImageList* il);
     virtual BOOL CreateExtended(DWORD dwExStyle, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID);
     void SysColorChanged() override;
     virtual void SetRootItem(CTreeListItem* root);
@@ -162,7 +161,6 @@ protected:
 
     CBitmap m_BmNodes0;                // The bitmaps needed to draw the treecontrol-like branches
     CBitmap m_BmNodes1;                // The same bitmaps with stripe-background color
-    CImageList* m_ImageList = nullptr; // We don't use the system-supplied SetImageList(), but MySetImageList().
     int m_LButtonDownItem = -1;        // Set in OnLButtonDown(). -1 if not item hit.
     bool m_LButtonDownOnPlusMinusRect = false; // Set in OnLButtonDown(). True, if plus-minus-rect hit.
 

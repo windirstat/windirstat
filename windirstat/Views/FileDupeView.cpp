@@ -50,7 +50,6 @@ BEGIN_MESSAGE_MAP(CFileDupeView, CView)
     ON_WM_SIZE()
     ON_WM_CREATE()
     ON_WM_ERASEBKGND()
-    ON_WM_DESTROY()
     ON_WM_SETFOCUS()
     ON_WM_SETTINGCHANGE()
     ON_NOTIFY(LVN_ITEMCHANGED, ID_WDS_CONTROL, OnLvnItemchanged)
@@ -94,20 +93,12 @@ int CFileDupeView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
 
     m_Control.OnColumnsInserted();
 
-    m_Control.MySetImageList(GetIconImageList());
-
     return 0;
 }
 
 BOOL CFileDupeView::OnEraseBkgnd(CDC* /*pDC*/)
 {
     return TRUE;
-}
-
-void CFileDupeView::OnDestroy()
-{
-    m_Control.MySetImageList(nullptr);
-    CView::OnDestroy();
 }
 
 void CFileDupeView::OnSetFocus(CWnd* /*pOldWnd*/)

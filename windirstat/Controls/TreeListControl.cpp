@@ -303,11 +303,6 @@ CTreeListControl::CTreeListControl(int rowHeight, std::vector<int>* columnOrder,
     ASSERT(rowHeight % 2 == 0);       // must be an even number
 }
 
-void CTreeListControl::MySetImageList(CImageList* il)
-{
-    m_ImageList = il;
-}
-
 BOOL CTreeListControl::CreateExtended(const DWORD dwExStyle, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, const UINT nID)
 {
     InitializeNodeBitmaps();
