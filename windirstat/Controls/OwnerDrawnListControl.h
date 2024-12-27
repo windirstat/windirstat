@@ -26,20 +26,20 @@
 #include "SortingListControl.h"
 
 class COwnerDrawnListControl;
-class CIconImageList;
+class CIconHandler;
 
 //
 // COwnerDrawnListItem. An item in a COwnerDrawnListControl.
-// Some columns (subitems) may be owner drawn (DrawSubitem() returns true),
+// Some columns (subitems) may be owner drawn (DrawSubItem() returns true),
 // COwnerDrawnListControl draws the texts (GetText()) of all others.
-// DrawLabel() draws a standard label (width image, text, selection and focus rect)
+// DrawLabel() draws a standard label (width icon, text, selection and focus rect)
 //
 class COwnerDrawnListItem : public CSortingListItem
 {
 public:
     COwnerDrawnListItem() = default;
 
-    // This text is drawn, if DrawSubitem returns false
+    // This text is drawn, if DrawSubItem returns false
     std::wstring GetText(int subitem) const override = 0;
     // This color is used for the  current item
     virtual COLORREF GetItemTextColor() const
@@ -51,13 +51,13 @@ public:
     // width != NULL -> only determine width, do not draw.
     // If focus rectangle shall not begin leftmost, set *focusLeft
     // to the left edge of the desired focus rectangle.
-    virtual bool DrawSubitem(int subitem, CDC* pdc, CRect rc, UINT state, int* width, int* focusLeft) const = 0;
+    virtual bool DrawSubItem(int subitem, CDC* pdc, CRect rc, UINT state, int* width, int* focusLeft) = 0;
     virtual void DrawAdditionalState(CDC* /*pdc*/, const CRect & /*rcLabel*/) const {}
     void DrawSelection(const COwnerDrawnListControl* list, CDC* pdc, CRect rc, UINT state) const;
-    virtual void FetchShellInfo() {}
+    virtual HICON GetIcon() = 0;
 
 protected:
-    void DrawLabel(const COwnerDrawnListControl* list, CIconImageList* il, CDC* pdc, CRect& rc, UINT state, int* width, int* focusLeft, bool indent = true) const;
+    void DrawLabel(const COwnerDrawnListControl* list, CDC* pdc, CRect& rc, UINT state, int* width, int* focusLeft, bool indent = true);
     void DrawPercentage(CDC* pdc, CRect rc, double fraction, COLORREF color) const;
 };
 
@@ -109,7 +109,7 @@ protected:
     void InitializeColors();
     void DrawItem(LPDRAWITEMSTRUCT pdis) override;
     void RedrawItem(const COwnerDrawnListItem* item) const;
-    int GetSubItemWidth(const COwnerDrawnListItem* item, int subitem);
+    int GetSubItemWidth(COwnerDrawnListItem* item, int subitem);
 
     COLORREF m_WindowColor = CLR_NONE; // The default background color if !m_ShowStripes
     COLORREF m_StripeColor = CLR_NONE; // The stripe color, used for every other item if m_ShowStripes

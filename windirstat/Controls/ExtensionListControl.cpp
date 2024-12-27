@@ -39,11 +39,16 @@ CExtensionListControl::CListItem::CListItem(CExtensionListControl* list, const s
     m_Color = r.color;
 }
 
-bool CExtensionListControl::CListItem::DrawSubitem(const int subitem, CDC* pdc, CRect rc, const UINT state, int* width, int* focusLeft) const
+CExtensionListControl::CListItem::~CListItem()
+{
+    if (m_Icon != nullptr) DestroyIcon(m_Icon);
+}
+
+bool CExtensionListControl::CListItem::DrawSubItem(const int subitem, CDC* pdc, CRect rc, const UINT state, int* width, int* focusLeft)
 {
     if (subitem == COL_EXT_EXTENSION)
     {
-        DrawLabel(m_List, GetIconImageList(), pdc, rc, state, width, focusLeft);
+        DrawLabel(m_List, pdc, rc, state, width, focusLeft);
     }
     else if (subitem == COL_EXT_COLOR)
     {
@@ -98,35 +103,19 @@ std::wstring CExtensionListControl::CListItem::GetExtension() const
     return m_Extension;
 }
 
-void CExtensionListControl::CListItem::FetchShellInfo()
+HICON CExtensionListControl::CListItem::GetIcon()
 {
-    if (m_Extension.empty())
-    {
-        m_Description = Localization::Lookup(IDS_EXTENSION_MISSING);
-        m_Image = GetIconImageList()->GetUnknownImage();
-    }
-    else
-    {
-        m_Image = GetIconImageList()->GetExtImageAndDescription(m_Extension, m_Description, FILE_ATTRIBUTE_NORMAL);
-    }
+    if (m_Icon != nullptr) return m_Icon;
 
-    const auto i = m_List->FindListItem(this);
-    m_List->RedrawItems(i, i);
-}
+    GetIconHandler()->DoAsyncShellInfoLookup(std::make_tuple(const_cast<CListItem*>(this),
+        m_List, m_Extension, FILE_ATTRIBUTE_NORMAL, &m_Icon, &m_Description));
 
-int CExtensionListControl::CListItem::GetImage() const
-{
-    if (m_Image == -1)
-    {
-        GetIconImageList()->DoAsyncShellInfoLookup(const_cast<CListItem*>(this));
-    }
-
-    return m_Image;
+    return m_Icon;
 }
 
 std::wstring CExtensionListControl::CListItem::GetDescription() const
 {
-    return m_Image == -1 ? L"" : m_Description;
+    return m_Icon == nullptr ? L"" : m_Description;
 }
 
 std::wstring CExtensionListControl::CListItem::GetBytesPercent() const
@@ -208,10 +197,6 @@ void CExtensionListControl::Initialize()
     SetSorting(COL_EXT_BYTES, GetAscendingDefault(COL_EXT_BYTES));
 
     OnColumnsInserted();
-
-    // We don't use the list control's image list, but attaching an image list
-    // to the control ensures a proper line height.
-    SetImageList(GetIconImageList(), LVSIL_SMALL);
 }
 
 void CExtensionListControl::OnDestroy()

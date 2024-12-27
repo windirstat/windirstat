@@ -48,10 +48,10 @@
 #include <bcrypt.h>
 #include <sal.h>
 #include <wincrypt.h>
-#include <winioctl.h>
 #include <sddl.h>
 #include <winternl.h>
 #include <powrprof.h>
+#include <aclapi.h>
 
 constexpr auto RGB_GET_RVALUE(auto rgb) { return (rgb >>  0) & 0xFF; }
 constexpr auto RGB_GET_GVALUE(auto rgb) { return (rgb >>  8) & 0xFF; }

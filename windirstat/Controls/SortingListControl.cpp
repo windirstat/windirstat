@@ -218,8 +218,6 @@ void CSortingListControl::OnLvnGetDispInfo(NMHDR* pNMHDR, LRESULT* pResult)
         const int subitem = ColumnToSubItem(displayInfo->item.iSubItem);
         wcscpy_s(displayInfo->item.pszText, displayInfo->item.cchTextMax, item->GetText(subitem).c_str());
     }
-
-    displayInfo->item.iImage = item->GetImage();
 }
 
 void CSortingListControl::OnHdnItemClick(NMHDR* pNMHDR, LRESULT* pResult)

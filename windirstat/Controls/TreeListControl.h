@@ -40,18 +40,19 @@ class CTreeListControl;
 class CTreeListItem : public COwnerDrawnListItem
 {
     // Data needed to display the item.
-    struct VISIBLEINFO
+    struct VISIBLEINFO final
     {
         CPacman pacman;
-        CRect rcPlusMinus;    // Coordinates of the little +/- rectangle, relative to the upper left corner of the item.
-        CRect rcTitle;        // Coordinates of the label, relative to the upper left corner of the item.
-        std::wstring owner;       // Owner of file or folder
-        short image = -1;     // -1 as long as not needed, >= 0: valid index in IconImageList.
+        CRect rcPlusMinus{}; // Coordinates of the little +/- rectangle, relative to the upper left corner of the item.
+        CRect rcTitle{}; // Coordinates of the label, relative to the upper left corner of the item.
+        std::wstring owner; // Owner of file or folder
+        CTreeListControl* control = nullptr;
+        HICON icon = nullptr;  // -1 as long as not needed, >= 0: valid index in IconHandler.
         unsigned char indent; // 0 for the root item, 1 for its children, and so on.
         bool isExpanded = false; // Whether item is expanded.
-        CTreeListControl* control = nullptr;
 
         VISIBLEINFO(const unsigned char iIndent) : indent(iIndent) {}
+        ~VISIBLEINFO() { if (icon != nullptr) DestroyIcon(icon); }
     };
 
 public:
@@ -59,14 +60,12 @@ public:
 
     virtual int CompareSibling(const CTreeListItem* tlib, int subitem) const = 0;
 
-    bool DrawSubitem(int subitem, CDC* pdc, CRect rc, UINT state, int* width, int* focusLeft) const override;
+    bool DrawSubItem(int subitem, CDC* pdc, CRect rc, UINT state, int* width, int* focusLeft) override;
     std::wstring GetText(int subitem) const override;
-    void FetchShellInfo() override;
-    int GetImage() const override;
+    HICON GetIcon() override { return m_VisualInfo->icon; }
     int Compare(const CSortingListItem* baseOther, int subitem) const override;
     virtual CTreeListItem* GetTreeListChild(int i) const = 0;
     virtual int GetTreeListChildCount() const = 0;
-    virtual short GetImageToCache() const = 0;
 
     void DrawPacman(const CDC* pdc, const CRect& rc, COLORREF bgColor) const;
     CTreeListItem* GetParent() const;
@@ -77,7 +76,7 @@ public:
     bool IsExpanded() const;
     void SetExpanded(bool expanded = true) const;
     bool IsVisible() const { return m_VisualInfo != nullptr; }
-    void SetVisible(CTreeListControl * control, bool visible = true) const;
+    void SetVisible(CTreeListControl * control, bool visible = true);
     unsigned char GetIndent() const;
     void SetIndent(unsigned char indent) const;
     CRect GetPlusMinusRect() const;
@@ -91,7 +90,7 @@ public:
     void DrivePacman() const;
 
 protected:
-    mutable std::unique_ptr<VISIBLEINFO> m_VisualInfo;
+    std::unique_ptr<VISIBLEINFO> m_VisualInfo;
 
 private:
     CTreeListItem* m_Parent = nullptr;

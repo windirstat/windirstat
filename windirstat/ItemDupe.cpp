@@ -41,11 +41,11 @@ CItemDupe::CItemDupe(const std::wstring& hash, const ULONGLONG sizePhysical, con
 
 CItemDupe::CItemDupe(CItem* item) : m_Item(item) {}
 
-bool CItemDupe::DrawSubitem(const int subitem, CDC* pdc, const CRect rc, const UINT state, int* width, int* focusLeft) const
+bool CItemDupe::DrawSubItem(const int subitem, CDC* pdc, const CRect rc, const UINT state, int* width, int* focusLeft)
 {
     // Handle individual file items
     if (subitem != COL_ITEMDUP_NAME) return false;
-    return CTreeListItem::DrawSubitem(columnMap.at(subitem), pdc, rc, state, width, focusLeft);
+    return CTreeListItem::DrawSubItem(columnMap.at(subitem), pdc, rc, state, width, focusLeft);
 }
 
 std::wstring CItemDupe::GetText(const int subitem) const
@@ -101,16 +101,31 @@ CTreeListItem* CItemDupe::GetTreeListChild(const int i) const
     return m_Children[i];
 }
 
-short CItemDupe::GetImageToCache() const
+HICON CItemDupe::GetIcon()
 {
-    return (m_Item != nullptr) ? m_Item->GetImageToCache() :
-        GetIconImageList()->GetFreeSpaceImage();
-}
+    // No icon to return if not visible yet
+    if (m_VisualInfo == nullptr)
+    {
+        return nullptr;
+    }
 
-int CItemDupe::GetImage() const
-{
-    return (m_Item != nullptr) ? CTreeListItem::GetImage() :
-        GetIconImageList()->GetFreeSpaceImage();
+    // Return previously cached value
+    if (m_VisualInfo->icon != nullptr)
+    {
+        return m_VisualInfo->icon;
+    }
+
+    // Cache icon for parent nodes
+    if (m_Item == nullptr)
+    {
+        m_VisualInfo->icon = GetIconHandler()->GetFreeSpaceImage();
+        return m_VisualInfo->icon;
+    }
+
+    // Fetch all other icons
+    CDirStatApp::Get()->GetIconHandler()->DoAsyncShellInfoLookup(std::make_tuple(this,
+        m_VisualInfo->control, m_Item->GetPath(), m_Item->GetAttributes(), &m_VisualInfo->icon, nullptr));
+    return nullptr;
 }
 
 const std::vector<CItemDupe*>& CItemDupe::GetChildren() const

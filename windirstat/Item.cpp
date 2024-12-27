@@ -20,8 +20,6 @@
 //
 
 #include "stdafx.h"
-#include "aclapi.h"
-#include "sddl.h"
 
 #include "WinDirStat.h"
 #include "DirStatDoc.h"
@@ -117,11 +115,11 @@ void CItem::TmiSetRectangle(const CRect& rc)
     m_Rect = rc;
 }
 
-bool CItem::DrawSubitem(const int subitem, CDC* pdc, CRect rc, const UINT state, int* width, int* focusLeft) const
+bool CItem::DrawSubItem(const int subitem, CDC* pdc, CRect rc, const UINT state, int* width, int* focusLeft)
 {
     if (subitem == COL_NAME)
     {
-        return CTreeListItem::DrawSubitem(subitem, pdc, rc, state, width, focusLeft);
+        return CTreeListItem::DrawSubItem(subitem, pdc, rc, state, width, focusLeft);
     }
     if (subitem != COL_SUBTREEPERCENTAGE)
     {
@@ -370,27 +368,37 @@ CTreeListItem* CItem::GetTreeListChild(const int i) const
     return GetChildren()[i];
 }
 
-short CItem::GetImageToCache() const
+HICON CItem::GetIcon()
 {
-    // (Caching is done in CTreeListItem)
+    ASSERT(IsVisible());
+
+    // Return cached icon if available
+    if (m_VisualInfo->icon != nullptr)
+    {
+        return m_VisualInfo->icon;
+    }
 
     if (IsType(IT_MYCOMPUTER))
     {
-        return GetIconImageList()->GetMyComputerImage();
+        m_VisualInfo->icon = GetIconHandler()->GetMyComputerImage();
+        return m_VisualInfo->icon;
     }
     if (IsType(IT_FREESPACE))
     {
-        return GetIconImageList()->GetFreeSpaceImage();
+        m_VisualInfo->icon = GetIconHandler()->GetFreeSpaceImage();
+        return m_VisualInfo->icon;
     }
     if (IsType(IT_UNKNOWN))
     {
-        return GetIconImageList()->GetUnknownImage();
+        m_VisualInfo->icon = GetIconHandler()->GetUnknownImage();
+        return m_VisualInfo->icon;
     }
 
     const std::wstring longpath = GetPathLong();
     if (CDirStatApp::Get()->GetReparseInfo()->IsVolumeMountPoint(longpath, m_Attributes))
     {
-        return GetIconImageList()->GetMountPointImage();
+        m_VisualInfo->icon = GetIconHandler()->GetMountPointImage();
+        return m_VisualInfo->icon;
     }
     if ((CReparsePoints::IsSymbolicLink(longpath, m_Attributes) ||
         CDirStatApp::Get()->GetReparseInfo()->IsJunction(longpath, m_Attributes)) &&
@@ -398,10 +406,14 @@ short CItem::GetImageToCache() const
     {
         constexpr DWORD mask = FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM;
         const bool osFile = (GetAttributes() & mask) == mask;
-        return osFile ? GetIconImageList()->GetJunctionProtectedImage() : GetIconImageList()->GetJunctionImage();
+        m_VisualInfo->icon = osFile ? GetIconHandler()->GetJunctionProtectedImage() : GetIconHandler()->GetJunctionImage();
+        return m_VisualInfo->icon;
     }
 
-    return GetIconImageList()->GetFileImage(GetPath(), GetAttributes());
+    CDirStatApp::Get()->GetIconHandler()->DoAsyncShellInfoLookup(std::make_tuple(const_cast<CItem*>(this),
+        m_VisualInfo->control, GetPath(), GetAttributes(), &m_VisualInfo->icon, nullptr));
+
+    return nullptr;
 }
 
 void CItem::DrawAdditionalState(CDC* pdc, const CRect& rcLabel) const

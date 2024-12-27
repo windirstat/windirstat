@@ -106,7 +106,7 @@ public:
 
         // Worker now has something to work on so pop it off the queue
         m_Started = true;
-        T& i = m_Queue.front();
+        T i = m_Queue.front();
         m_Queue.pop_front();
         return i;
     }

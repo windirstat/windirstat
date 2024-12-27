@@ -604,7 +604,7 @@
     <ClInclude Include="Controls\FileDupeControl.h" />
     <ClInclude Include="Controls\FileTopControl.h" />
     <ClInclude Include="Controls\FileTreeControl.h" />
-    <ClInclude Include="Controls\IconImageList.h" />
+    <ClInclude Include="Controls\IconHandler.h" />
     <ClInclude Include="Controls\OwnerDrawnListControl.h" />
     <ClInclude Include="Controls\PacMan.h" />
     <ClInclude Include="Controls\SortingListControl.h" />
@@ -717,7 +717,7 @@
     </ClCompile>
     <ClCompile Include="Controls\ColorButton.cpp">
     </ClCompile>
-    <ClCompile Include="Controls\IconImageList.cpp">
+    <ClCompile Include="Controls\IconHandler.cpp">
     </ClCompile>
     <ClCompile Include="Dialogs\AboutDlg.cpp">
     </ClCompile>

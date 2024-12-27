@@ -39,7 +39,7 @@ namespace
 
 // Draws an item label (icon, text) in all parts of the WinDirStat view
 // the rest is drawn by DrawItem()
-void COwnerDrawnListItem::DrawLabel(const COwnerDrawnListControl* list, CIconImageList* il, CDC* pdc, CRect& rc, const UINT state, int* width, int* focusLeft, const bool indent) const
+void COwnerDrawnListItem::DrawLabel(const COwnerDrawnListControl* list, CDC* pdc, CRect& rc, const UINT state, int* width, int* focusLeft, const bool indent)
 {
     CRect rcRest = rc;
     // Increase indentation according to tree-level
@@ -48,23 +48,19 @@ void COwnerDrawnListItem::DrawLabel(const COwnerDrawnListControl* list, CIconIma
         rcRest.left += GENERAL_INDENT;
     }
 
-    // Prepare to draw the file/folder icon
-    const auto imageIndex = GetImage();
-    ASSERT(GetImage() < il->GetImageCount());
-
     // Get default small icon parameters
-    static const CRect rcImage(0, 0, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CXSMICON));
+    static const CSize sizeImage(GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CXSMICON));
 
     if (width == nullptr)
     {
         // Draw the color with transparent background
-        const CPoint pt(rcRest.left, rcRest.top + rcRest.Height() / 2 - rcImage.Height() / 2);
-        il->SetBkColor(CLR_NONE);
-        if (imageIndex != -1) il->DrawIcon(pdc, imageIndex, pt);
+        const CPoint pt(rcRest.left, rcRest.top + rcRest.Height() / 2 - sizeImage.cy / 2);
+        const auto icon = const_cast<const HICON>(GetIcon());
+        if (icon != nullptr) GetIconHandler()->DrawIcon(pdc, icon, pt, sizeImage);
     }
 
     // Decrease size of the remainder rectangle from left
-    rcRest.left += rcImage.Width();
+    rcRest.left += sizeImage.cy;
 
     CSelectObject sofont(pdc, list->GetFont());
 
@@ -388,7 +384,7 @@ void COwnerDrawnListControl::InitializeColors()
 
 void COwnerDrawnListControl::DrawItem(LPDRAWITEMSTRUCT pdis)
 {
-    const COwnerDrawnListItem* item = reinterpret_cast<COwnerDrawnListItem*>(pdis->itemData);
+    COwnerDrawnListItem* item = reinterpret_cast<COwnerDrawnListItem*>(pdis->itemData);
     CDC* pdc = CDC::FromHandle(pdis->hDC);
     CRect rcItem(pdis->rcItem);
 
@@ -412,7 +408,7 @@ void COwnerDrawnListControl::DrawItem(LPDRAWITEMSTRUCT pdis)
         CRect rc = GetWholeSubitemRect(pdis->itemID, i);
         const CRect rcDraw = rc - rcItem.TopLeft();
 
-        if (!item->DrawSubitem(subitem, &dcMem, rcDraw, pdis->itemState, nullptr, &focusLeft))
+        if (!item->DrawSubItem(subitem, &dcMem, rcDraw, pdis->itemState, nullptr, &focusLeft))
         {
             item->DrawSelection(this, &dcMem, rcDraw, pdis->itemState);
 
@@ -475,8 +471,8 @@ CRect COwnerDrawnListControl::GetWholeSubitemRect(const int item, const int subi
     {
         // Special case column 0:
         // If we did GetSubItemRect(item 0, LVIR_LABEL, rc)
-        // and we have an image list, then we would get the rectangle
-        // excluding the image.
+        // and we have an icon list, then we would get the rectangle
+        // excluding the icon.
         HDITEM hditem = { HDI_WIDTH };
         GetHeaderCtrl()->GetItem(0, &hditem);
 
@@ -506,14 +502,14 @@ bool COwnerDrawnListControl::IsShowSelectionAlways() const
     return (GetStyle() & LVS_SHOWSELALWAYS) != 0;
 }
 
-int COwnerDrawnListControl::GetSubItemWidth(const COwnerDrawnListItem* item, const int subitem)
+int COwnerDrawnListControl::GetSubItemWidth(COwnerDrawnListItem* item, const int subitem)
 {
     CClientDC dc(this);
     CRect rc(0, 0, 1000, 1000);
 
     int width;
     int dummy = rc.left;
-    if (item->DrawSubitem(subitem, &dc, rc, 0, &width, &dummy))
+    if (item->DrawSubItem(subitem, &dc, rc, 0, &width, &dummy))
     {
         return width;
     }

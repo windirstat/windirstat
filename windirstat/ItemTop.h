@@ -60,13 +60,12 @@ public:
     };
 
     // CTreeListItem Interface
-    bool DrawSubitem(int subitem, CDC* pdc, CRect rc, UINT state, int* width, int* focusLeft) const override;
+    bool DrawSubItem(int subitem, CDC* pdc, CRect rc, UINT state, int* width, int* focusLeft) override;
     std::wstring GetText(int subitem) const override;
     int CompareSibling(const CTreeListItem* tlib, int subitem) const override;
     int GetTreeListChildCount() const override;
     CTreeListItem* GetTreeListChild(int i) const override;
-    short GetImageToCache() const override;
-    int GetImage() const override;
+    HICON GetIcon() override;
 
     CItem* GetItem() const { return m_Item; }
     void AddTopItemChild(CItemTop* child);

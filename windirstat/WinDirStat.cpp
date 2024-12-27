@@ -33,9 +33,9 @@
 #include "PageFiltering.h"
 #include "SmartPointer.h"
 
-CIconImageList* GetIconImageList()
+CIconHandler* GetIconHandler()
 {
-    return CDirStatApp::Get()->GetIconImageList();
+    return CDirStatApp::Get()->GetIconHandler();
 }
 
 // CDirStatApp
@@ -62,10 +62,10 @@ CDirStatApp::CDirStatApp()
     m_AltEncryptionColor = GetAlternativeColor(RGB(0x00, 0x80, 0x00), L"AltEncryptionColor");
 }
 
-CIconImageList* CDirStatApp::GetIconImageList()
+CIconHandler* CDirStatApp::GetIconHandler()
 {
-    m_ImageList.Initialize();
-    return &m_ImageList;
+    m_IconList.Initialize();
+    return &m_IconList;
 }
 
 void CDirStatApp::RestartApplication(bool resetPreferences)
@@ -299,8 +299,6 @@ BOOL CDirStatApp::InitInstance()
         if (!ProcessShellCommand(cmdInfo))
             return FALSE;
     }
-
-    FileIconInit();
 
     CMainFrame::Get()->InitialShowWindow();
     m_pMainWnd->UpdateWindow();

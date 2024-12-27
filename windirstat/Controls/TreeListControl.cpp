@@ -53,7 +53,7 @@ namespace
     constexpr auto HOTNODE_X = 0;
 }
 
-bool CTreeListItem::DrawSubitem(const int subitem, CDC* pdc, CRect rc, const UINT state, int* width, int* focusLeft) const
+bool CTreeListItem::DrawSubItem(const int subitem, CDC* pdc, CRect rc, const UINT state, int* width, int* focusLeft)
 {
     if (subitem != 0)
     {
@@ -66,7 +66,7 @@ bool CTreeListItem::DrawSubitem(const int subitem, CDC* pdc, CRect rc, const UIN
 
     CRect rcLabel = rc;
     rcLabel.left = rcNode.right;
-    DrawLabel(m_VisualInfo->control, GetIconImageList(), pdc, rcLabel, state, width, focusLeft, false);
+    DrawLabel(m_VisualInfo->control, pdc, rcLabel, state, width, focusLeft, false);
 
     if (width)
     {
@@ -84,33 +84,6 @@ bool CTreeListItem::DrawSubitem(const int subitem, CDC* pdc, CRect rc, const UIN
 std::wstring CTreeListItem::GetText(int /*subitem*/) const
 {
     return {};
-}
-
-void CTreeListItem::FetchShellInfo()
-{
-    if (!IsVisible()) return;
-    const auto image = GetImageToCache();
-
-    CMainFrame::Get()->InvokeInMessageThread([this,&image]
-    {
-        if (IsVisible())
-        {
-            m_VisualInfo->image = image;
-            const auto i = m_VisualInfo->control->FindListItem(this);
-            m_VisualInfo->control->RedrawItems(i, i);
-        }
-    });
-
-}
-
-int CTreeListItem::GetImage() const
-{
-    if (m_VisualInfo->image == -1)
-    {
-        GetIconImageList()->DoAsyncShellInfoLookup(const_cast<CTreeListItem*>(this));
-    }
-
-    return m_VisualInfo->image;
 }
 
 void CTreeListItem::DrawPacman(const CDC* pdc, const CRect& rc, const COLORREF bgColor) const
@@ -239,7 +212,7 @@ void CTreeListItem::SetExpanded(const bool expanded) const
     m_VisualInfo->isExpanded = expanded;
 }
 
-void CTreeListItem::SetVisible(CTreeListControl* control, const bool visible) const
+void CTreeListItem::SetVisible(CTreeListControl* control, const bool visible)
 {
     if (visible)
     {

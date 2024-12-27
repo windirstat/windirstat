@@ -248,7 +248,7 @@
     <ClInclude Include="Controls\OwnerDrawnListControl.h">
       <Filter>Header Files\Controls</Filter>
     </ClInclude>
-    <ClInclude Include="Controls\IconImageList.h">
+    <ClInclude Include="Controls\IconHandler.h">
       <Filter>Header Files\Controls</Filter>
     </ClInclude>
     <ClInclude Include="Controls\FileTreeControl.h">
@@ -400,7 +400,7 @@
     <ClCompile Include="Controls\ExtensionListControl.cpp">
       <Filter>Source Files\Controls</Filter>
     </ClCompile>
-    <ClCompile Include="Controls\IconImageList.cpp">
+    <ClCompile Include="Controls\IconHandler.cpp">
       <Filter>Source Files\Controls</Filter>
     </ClCompile>
     <ClCompile Include="Controls\ColorButton.cpp">

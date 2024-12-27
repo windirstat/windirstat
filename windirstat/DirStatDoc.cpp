@@ -176,8 +176,8 @@ void CDirStatDoc::DeleteContents()
     // Wait for system to fully shutdown
     StopScanningEngine();
 
-    // Clean out image queue
-    GetIconImageList()->ClearAsyncShellInfoQueue();
+    // Clean out icon queue
+    GetIconHandler()->ClearAsyncShellInfoQueue();
 
     // Reset extension data
     GetExtensionData()->clear();

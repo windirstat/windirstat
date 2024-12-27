@@ -53,7 +53,6 @@ const std::wstring& GetSpec_MB();
 const std::wstring& GetSpec_GB();
 const std::wstring& GetSpec_TB();
 bool IsAdmin();
-bool FileIconInit();
 bool EnableReadPrivileges();
 void ReplaceString(std::wstring& subject, const std::wstring& search, const std::wstring& replace);
 std::wstring& TrimString(std::wstring& s, wchar_t c = L' ');

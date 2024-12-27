@@ -51,7 +51,6 @@ BEGIN_MESSAGE_MAP(CFileDupeView, CView)
     ON_WM_CREATE()
     ON_WM_ERASEBKGND()
     ON_WM_SETFOCUS()
-    ON_WM_SETTINGCHANGE()
     ON_NOTIFY(LVN_ITEMCHANGED, ID_WDS_CONTROL, OnLvnItemchanged)
     ON_UPDATE_COMMAND_UI(ID_POPUP_TOGGLE, OnUpdatePopupToggle)
     ON_COMMAND(ID_POPUP_TOGGLE, OnPopupToggle)
@@ -104,15 +103,6 @@ BOOL CFileDupeView::OnEraseBkgnd(CDC* /*pDC*/)
 void CFileDupeView::OnSetFocus(CWnd* /*pOldWnd*/)
 {
     m_Control.SetFocus();
-}
-
-void CFileDupeView::OnSettingChange(const UINT uFlags, LPCWSTR lpszSection)
-{
-    if (uFlags & SPI_SETNONCLIENTMETRICS)
-    {
-        FileIconInit();
-    }
-    CView::OnSettingChange(uFlags, lpszSection);
 }
 
 void CFileDupeView::OnLvnItemchanged(NMHDR* pNMHDR, LRESULT* pResult)

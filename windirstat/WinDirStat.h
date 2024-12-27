@@ -25,7 +25,7 @@
 #include "stdafx.h"
 #include "resource.h"
 #include "Langs.h"
-#include "IconImageList.h"
+#include "IconHandler.h"
 #include "MountPoints.h"
 #include "Constants.h"
 #include "Tracer.h"
@@ -34,11 +34,11 @@ class CMainFrame;
 class CDirStatApp;
 
 // Frequently used "globals"
-CIconImageList* GetIconImageList();
+CIconHandler* GetIconHandler();
 
 //
 // CDirStatApp. The MFC application object.
-// Knows about RAM Usage, Mount points, Help files and the CIconImageList.
+// Knows about RAM Usage, Mount points, Help files and the CIconHandler.
 //
 class CDirStatApp final : public CWinAppEx
 {
@@ -59,7 +59,7 @@ public:
     COLORREF AltEncryptionColor() const; // Coloring of encrypted items
 
     static std::wstring GetCurrentProcessMemoryInfo();
-    CIconImageList* GetIconImageList();
+    CIconHandler* GetIconHandler();
 
     static void LaunchHelp();
     void RestartApplication(bool resetPreferences = false);
@@ -75,7 +75,7 @@ protected:
     CSingleDocTemplate* m_PDocTemplate{nullptr}; // MFC voodoo.
 
     CReparsePoints m_ReparsePoints;   // Mount point information
-    CIconImageList m_ImageList;       // Our central image list
+    CIconHandler m_IconList;          // Our central icon list
     COLORREF m_AltColor;              // Coloring of compressed items
     COLORREF m_AltEncryptionColor;    // Coloring of encrypted items
     static CDirStatApp _singleton;    // Singleton application instance

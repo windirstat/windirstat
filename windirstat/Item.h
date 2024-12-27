@@ -116,13 +116,13 @@ public:
     ~CItem() override;
 
     // CTreeListItem Interface
-    bool DrawSubitem(int subitem, CDC* pdc, CRect rc, UINT state, int* width, int* focusLeft) const override;
+    bool DrawSubItem(int subitem, CDC* pdc, CRect rc, UINT state, int* width, int* focusLeft) override;
     std::wstring GetText(int subitem) const override;
     COLORREF GetItemTextColor() const override;
     int CompareSibling(const CTreeListItem* tlib, int subitem) const override;
     int GetTreeListChildCount() const override;
     CTreeListItem* GetTreeListChild(int i) const override;
-    short GetImageToCache() const override;
+    HICON GetIcon() override;
     void DrawAdditionalState(CDC* pdc, const CRect& rcLabel) const override;
 
     // CTreeMap::Item interface

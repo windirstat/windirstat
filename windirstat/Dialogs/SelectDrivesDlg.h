@@ -48,6 +48,8 @@ class CDriveItem final : public COwnerDrawnListItem
 {
 public:
     CDriveItem(CDrivesList* list, const std::wstring& pszPath);
+    ~CDriveItem();
+
     void StartQuery(HWND dialog, UINT serial) const;
 
     void SetDriveInformation(bool success, const std::wstring& name, ULONGLONG total, ULONGLONG free);
@@ -58,14 +60,14 @@ public:
     std::wstring GetDrive() const;
     bool IsRemote() const;
     bool IsSUBSTed() const;
-    bool DrawSubitem(int subitem, CDC* pdc, CRect rc, UINT state, int* width, int* focusLeft) const override;
+    bool DrawSubItem(int subitem, CDC* pdc, CRect rc, UINT state, int* width, int* focusLeft) override;
     std::wstring GetText(int subitem) const override;
-    int GetImage() const override;
+    HICON GetIcon() override;
 
 private:
     CDrivesList* m_List; // Backpointer
     std::wstring m_Path; // e.g. "C:\"
-    short m_Image = -1; // Cached icon image
+    HICON m_Icon = nullptr; // Cached icon icon
     bool m_IsRemote; // Whether the drive type is DRIVE_REMOTE (network drive)
 
     bool m_Querying = true; // Information thread is running.

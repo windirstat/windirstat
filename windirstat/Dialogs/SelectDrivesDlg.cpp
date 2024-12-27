@@ -72,10 +72,15 @@ namespace
 CDriveItem::CDriveItem(CDrivesList* list, const std::wstring & pszPath)
     : m_List(list)
     , m_Path(pszPath)
-    , m_Image(GetIconImageList()->GetFileImage(m_Path))
+    , m_Icon(GetIconHandler()->FetchShellIcon(m_Path))
     , m_IsRemote(DRIVE_REMOTE == ::GetDriveType(m_Path.c_str()))
     , m_Subst(IsSUBSTedDrive(m_Path))
     , m_Name(m_Path) {}
+
+CDriveItem::~CDriveItem()
+{
+    if (m_Icon != nullptr) DestroyIcon(m_Icon);
+}
 
 void CDriveItem::StartQuery(HWND dialog, const UINT serial) const
 {
@@ -137,16 +142,16 @@ int CDriveItem::Compare(const CSortingListItem* baseOther, const int subitem) co
     return 0;
 }
 
-int CDriveItem::GetImage() const
+HICON CDriveItem::GetIcon()
 {
-    return m_Image;
+    return m_Icon;
 }
 
-bool CDriveItem::DrawSubitem(const int subitem, CDC* pdc, CRect rc, const UINT state, int* width, int* focusLeft) const
+bool CDriveItem::DrawSubItem(const int subitem, CDC* pdc, CRect rc, const UINT state, int* width, int* focusLeft)
 {
     if (subitem == COL_NAME)
     {
-        DrawLabel(m_List, GetIconImageList(), pdc, rc, state, width, focusLeft);
+        DrawLabel(m_List, pdc, rc, state, width, focusLeft);
         return true;
     }
 

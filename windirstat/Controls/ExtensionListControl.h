@@ -47,13 +47,13 @@ protected:
     {
     public:
         CListItem(CExtensionListControl* list, const std::wstring & extension, const SExtensionRecord& r);
+        ~CListItem();
 
-        bool DrawSubitem(int subitem, CDC* pdc, CRect rc, UINT state, int* width, int* focusLeft) const override;
+        bool DrawSubItem(int subitem, CDC* pdc, CRect rc, UINT state, int* width, int* focusLeft) override;
         std::wstring GetText(int subitem) const override;
 
         std::wstring GetExtension() const;
-        void FetchShellInfo() override;
-        int GetImage() const override;
+        HICON GetIcon() override;
         int Compare(const CSortingListItem* baseOther, int subitem) const override;
 
     private:
@@ -67,10 +67,10 @@ protected:
         std::wstring m_Extension;
         std::wstring m_Description;
         CExtensionListControl* m_List;
+        HICON m_Icon = nullptr;
         ULONGLONG m_Bytes = 0;
         ULONGLONG m_Files = 0;
         COLORREF m_Color = 0;
-        short m_Image = -1;
     };
 
 public:

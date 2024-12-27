@@ -478,24 +478,6 @@ bool IsAdmin()
     return false;
 }
 
-bool FileIconInit()
-{
-    // Required to use the system image lists
-    SmartPointer<HMODULE> hmod(FreeLibrary, LoadLibrary(L"shell32.dll"));
-    if (hmod != nullptr)
-    {
-        BOOL(WINAPI * FileIconInitFunc)(BOOL) =
-            reinterpret_cast<decltype(FileIconInitFunc)>(
-                static_cast<LPVOID>(GetProcAddress(hmod, reinterpret_cast<LPCSTR>(660))));
-        if (FileIconInitFunc != nullptr)
-        {
-            return FileIconInitFunc(TRUE);
-        }
-    }
-
-    return true;
-}
-
 bool EnableReadPrivileges()
 {
     // Open a connection to the currently running process token and request
