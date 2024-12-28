@@ -37,8 +37,6 @@ BEGIN_MESSAGE_MAP(CTreeMapView, CView)
     ON_WM_SETFOCUS()
     ON_WM_CONTEXTMENU()
     ON_WM_MOUSEMOVE()
-    ON_WM_DESTROY()
-    ON_WM_TIMER()
 END_MESSAGE_MAP()
 
 void CTreeMapView::SuspendRecalculationDrawing(const bool suspend)
