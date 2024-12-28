@@ -40,18 +40,6 @@ public:
     void RemoveItem(CItem* items);
     void SortItems() override;
 
-    template <class T = CTreeListItem> std::vector<T*> GetAllSelected()
-    {
-        std::vector<T*> array;
-        for (POSITION pos = GetFirstSelectedItemPosition(); pos != nullptr;)
-        {
-            const int i = GetNextSelectedItem(pos);
-            auto item = reinterpret_cast<T*>(reinterpret_cast<CItemTop*>(GetItem(i))->GetItem());
-            if (item != nullptr) array.emplace_back(item);
-        }
-        return array;
-    }
-
 protected:
 
     // Custom comparator to keep the list organized by size

@@ -66,6 +66,7 @@ public:
     int Compare(const CSortingListItem* baseOther, int subitem) const override;
     virtual CTreeListItem* GetTreeListChild(int i) const = 0;
     virtual int GetTreeListChildCount() const = 0;
+    virtual CTreeListItem* GetLinkedItem() { return this; }
 
     void DrawPacman(const CDC* pdc, const CRect& rc, COLORREF bgColor) const;
     CTreeListItem* GetParent() const;
@@ -132,10 +133,11 @@ class CTreeListControl : public COwnerDrawnListControl
         for (POSITION pos = GetFirstSelectedItemPosition(); pos != nullptr;)
         {
             const int i = GetNextSelectedItem(pos);
-            array.push_back(reinterpret_cast<T*>(GetItem(i)));
+            array.push_back(reinterpret_cast<T*>(GetItem(i)->GetLinkedItem()));
         }
         return array;
     }
+
     template <class T = CTreeListItem> T* GetFirstSelectedItem()
     {
         POSITION pos = GetFirstSelectedItemPosition();

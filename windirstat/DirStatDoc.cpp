@@ -611,11 +611,6 @@ bool CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, const bo
         COptions::ShowDeleteWarning = !warning.m_DontShowAgain;
     }
 
-    // Fetch the parent item of the current focus / selected item so we can reselect
-    const CTreeListItem* reselect = nullptr;
-    if (const int mark = CFileTreeControl::Get()->GetSelectionMark(); FileTreeHasFocus() && mark != -1)
-        reselect = CFileTreeControl::Get()->GetItem(mark)->GetParent();
-
     CModalApiShuttle msa([&items, toTrashBin]
     {
         for (const auto& item : items)
@@ -667,10 +662,6 @@ bool CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, const bo
 
     // Refresh the items and recycler directories
     RefreshItem(refresh);
-
-    // Attempt to reselect the item
-    if (reselect != nullptr)
-        CFileTreeControl::Get()->SelectItem(reselect, true, true);
 
     return true;
 }
@@ -887,12 +878,16 @@ bool CDirStatDoc::TopListHasFocus()
     return LF_TOPLIST == CMainFrame::Get()->GetLogicalFocus();
 }
 
+CTreeListControl* CDirStatDoc::GetFocusControl()
+{
+    if (DupeListHasFocus()) return CFileDupeControl::Get();
+    if (TopListHasFocus()) return CFileTopControl::Get();
+    return CFileTreeControl::Get();
+}
+
 std::vector<CItem*> CDirStatDoc::GetAllSelected()
 {
-    if (DupeListHasFocus()) return CFileDupeControl::Get()->GetAllSelected<CItem>();
-    if (TopListHasFocus()) return CFileTopControl::Get()->GetAllSelected<CItem>();
-    return CFileTreeControl::Get()->GetAllSelected<CItem>();
-        ;
+    return GetFocusControl()->GetAllSelected<CItem>();
 }
 
 void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
@@ -969,7 +964,8 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
     }
 
     const auto& filter = filters[pCmdUI->m_nID];
-    const auto& items = GetAllSelected();
+    const auto& items = (filter.allowNone && filter.extra == nullptr) ?
+        std::vector<CItem*>{} : GetAllSelected();
 
     bool allow = true;
     allow &= !filter.treeFocus || FileTreeHasFocus() || DupeListHasFocus() || TopListHasFocus();
@@ -1595,12 +1591,12 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
         }
 
         const auto selectedItems = GetAllSelected();
-        using VisualInfo = struct { bool wasExpanded; bool isSelected; int oldScrollPosition; };
+        using VisualInfo = struct { bool wasExpanded; bool isSelected; int scrollPosition; };
         std::unordered_map<CItem *,VisualInfo> visualInfo;
         CMainFrame::Get()->SetRedraw(FALSE);
         for (auto item : std::vector(items))
         {
-            // Clear items from duplicate list;
+            // Clear items from duplicates and top list;
             CFileDupeControl::Get()->RemoveItem(item);
             CFileTopControl::Get()->RemoveItem(item);
 
@@ -1609,7 +1605,7 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
             {
                 visualInfo[item].isSelected = std::ranges::find(selectedItems, item) != selectedItems.end();
                 visualInfo[item].wasExpanded = item->IsExpanded();
-                visualInfo[item].oldScrollPosition = item->GetScrollPosition();
+                visualInfo[item].scrollPosition = item->GetScrollPosition();
             }
 
             // Skip pruning if it is a new element
@@ -1724,13 +1720,6 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
         // Invoke a UI thread to do updates
         CMainFrame::Get()->InvokeInMessageThread([&]
         {
-            for (const auto& item : items)
-            {
-                // restore scroll position if previously set
-                if (visualInfo.contains(item) && item->IsVisible())
-                    item->SetScrollPosition(visualInfo[item].oldScrollPosition);
-            }
-
             CMainFrame::Get()->LockWindowUpdate();
             GetDocument()->UpdateAllViews(nullptr);
             CMainFrame::Get()->SetProgressComplete();
@@ -1738,6 +1727,16 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
             CMainFrame::Get()->RestoreTreeMapView();
             CMainFrame::Get()->GetTreeMapView()->SuspendRecalculationDrawing(false);
             CMainFrame::Get()-> UnlockWindowUpdate();
+
+            // Restore pre-scan visual orientation
+            for (const auto& item : visualInfo | std::views::keys)
+            {
+                if (GetFocusControl()->FindTreeItem(item) == -1 || !item->IsVisible()) continue;
+
+                // Restore scroll position and selection if previously set
+                item->SetScrollPosition(visualInfo[item].scrollPosition);
+                if (visualInfo[item].isSelected) GetFocusControl()->SelectItem(item, false, true);
+            }
         });
     });
 }

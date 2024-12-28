@@ -49,18 +49,6 @@ public:
     std::unordered_map<CItemDupe*, std::unordered_set<CItem*>> m_ChildTracker;
     std::queue<std::pair<CItemDupe*, CItemDupe*>> m_PendingListAdds;
 
-    template <class T = CTreeListItem> std::vector<T*> GetAllSelected()
-    {
-        std::vector<T*> array;
-        for (POSITION pos = GetFirstSelectedItemPosition(); pos != nullptr;)
-        {
-            const int i = GetNextSelectedItem(pos);
-            auto item = reinterpret_cast<T*>(reinterpret_cast<CItemDupe*>(GetItem(i))->GetItem());
-            if (item != nullptr) array.emplace_back(item);
-        }
-        return array;
-    }
-
 protected:
 
     static CFileDupeControl* m_Singleton;

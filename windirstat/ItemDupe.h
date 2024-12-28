@@ -73,8 +73,8 @@ public:
     int GetTreeListChildCount() const override;
     CTreeListItem* GetTreeListChild(int i) const override;
     HICON GetIcon() override;
+    CTreeListItem* GetLinkedItem() override { return m_Item; }
 
-    CItem* GetItem() const { return m_Item; }
     const std::vector<CItemDupe*>& GetChildren() const;
     void AddDupeItemChild(CItemDupe* child);
     void RemoveDupeItemChild(CItemDupe* child);

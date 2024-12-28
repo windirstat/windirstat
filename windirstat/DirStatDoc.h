@@ -150,7 +150,8 @@ protected:
     static bool FileTreeHasFocus();
     static bool DupeListHasFocus();
     static bool TopListHasFocus();
-    static std::vector<CItem *> GetAllSelected();
+    static std::vector<CItem*> GetAllSelected();
+    static CTreeListControl* GetFocusControl();
 
     static CDirStatDoc* _theDocument;
 

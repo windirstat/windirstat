@@ -219,7 +219,7 @@ void CFileDupeControl::RemoveItem(CItem* item)
             auto& hashNode = m_NodeTracker.at(hashKey);
             for (const auto& dupeChild : std::vector(hashNode->GetChildren()))
             {
-                if (dupeChild->GetItem() == itemToRemove)
+                if (dupeChild->GetLinkedItem() == itemToRemove)
                 {
                     m_ChildTracker[hashNode].erase(itemToRemove);
                     hashNode->RemoveDupeItemChild(dupeChild);
@@ -253,7 +253,7 @@ void CFileDupeControl::RemoveItem(CItem* item)
 
 void CFileDupeControl::OnItemDoubleClick(const int i)
 {
-    if (const auto item = reinterpret_cast<const CItemDupe*>(GetItem(i))->GetItem();
+    if (const auto item = reinterpret_cast<const CItem*>(GetItem(i)->GetLinkedItem());
         item != nullptr && item->IsType(IT_FILE))
     {
         CDirStatDoc::OpenItem(item);
@@ -273,7 +273,7 @@ void CFileDupeControl::OnLvnItemchangingList(NMHDR* pNMHDR, LRESULT* pResult)
         (pNMLV->uOldState & LVIS_SELECTED) == 0 &&
         (pNMLV->uNewState & LVIS_SELECTED) != 0;
 
-    if (requestingSelection && reinterpret_cast<CItemDupe*>(GetItem(pNMLV->iItem))->GetItem() == nullptr)
+    if (requestingSelection && GetItem(pNMLV->iItem)->GetLinkedItem() == nullptr)
     {
         *pResult = TRUE;
         return;
