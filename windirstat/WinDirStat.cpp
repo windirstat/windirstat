@@ -316,14 +316,18 @@ BOOL CDirStatApp::InitInstance()
 
     if (cmdInfo.m_nShellCommand == CCommandLineInfo::FileOpen)
     {
-        // Terminate parent process that called us
+        // See if the filename has the format of <PID>|<PATH>|<PATH>
         int token = 0;
         cmdInfo.m_strFileName = cmdInfo.m_strFileName.Trim(L'"');
         const DWORD parent = wcstoul(cmdInfo.m_strFileName.Tokenize(L"|", token), nullptr, 10);
-        cmdInfo.m_strFileName = cmdInfo.m_strFileName.Right(cmdInfo.m_strFileName.GetLength() - token);
-        if (SmartPointer<HANDLE> handle(CloseHandle, OpenProcess(PROCESS_TERMINATE, FALSE, parent)); handle != nullptr)
+        if (token > 0 && token < cmdInfo.m_strFileName.GetLength())
         {
-            TerminateProcess(handle, 0);
+            // Terminate the process that called us
+            cmdInfo.m_strFileName = cmdInfo.m_strFileName.Right(cmdInfo.m_strFileName.GetLength() - token);
+            if (SmartPointer<HANDLE> handle(CloseHandle, OpenProcess(PROCESS_TERMINATE, FALSE, parent)); handle != nullptr)
+            {
+                TerminateProcess(handle, 0);
+            }
         }
 
         m_PDocTemplate->OpenDocumentFile(cmdInfo.m_strFileName, true);
