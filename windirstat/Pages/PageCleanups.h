@@ -46,7 +46,7 @@ protected:
     void UpdateControlStatus();
     void CheckEmptyTitle();
 
-    USERDEFINEDCLEANUP m_Udc[USERDEFINEDCLEANUPCOUNT]{}; // FIXME: should probably go to the heap
+    std::unique_ptr<USERDEFINEDCLEANUP[]> m_Udc = std::make_unique<USERDEFINEDCLEANUP[]>(USERDEFINEDCLEANUPCOUNT);
     int m_Current = -1; // currently selected user defined cleanup
 
     // Dialog data
