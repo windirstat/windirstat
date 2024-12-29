@@ -11,6 +11,7 @@
     <Property Id="ARPSIZE" Value="$(var.EstimatedSize)"/>
     <Property Id="ARPURLINFOABOUT" Value="$(var.AboutLink)"/>
     <Property Id="ARPURLUPDATEINFO" Value="$(var.UpdateLink)"/>
+    <Property Id="ARPCOMMENTS" Value="$(var.ProductName) $(var.ProductVersion) ($(sys.BUILDARCH))"/>
     <Property Id="WIXUI_INSTALLDIR" Value="INSTALLFOLDER"/>
     <SetProperty Id="ARPINSTALLLOCATION" Value="[INSTALLFOLDER]" After="CostFinalize" />
     <MajorUpgrade AllowSameVersionUpgrades="$(var.AllowSameVersionUpgrades)" DowngradeErrorMessage="A newer version of [ProductName] is already installed." Schedule="afterInstallInitialize"/>
