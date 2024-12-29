@@ -80,17 +80,19 @@ public:
     {
         const std::wstring str = std::vformat(format, std::make_wformat_args(args...));
 
-        std::string strPfx;
+        std::string errorPrefix;
+        std::string fileName = loc.file_name();
+        if (fileName.find_last_of('\\')) fileName = fileName.substr(fileName.find_last_of('\\') + 1);
         if (VTRACE_DETAIL == VTRACE_FILE_LINE_FUNC)
-            strPfx = std::format("{}:{}|{}", loc.file_name(), loc.line(), loc.function_name());
+            errorPrefix = std::format("{}:{}|{}", fileName, loc.line(), loc.function_name());
         else if (VTRACE_DETAIL == VTRACE_FILE_LINE)
-            strPfx = std::format("{}:{}", loc.file_name(), loc.line());
+            errorPrefix = std::format("{}:{}", fileName, loc.line());
         else if (VTRACE_DETAIL == VTRACE_FUNC)
-            strPfx = loc.function_name();
+            errorPrefix = loc.function_name();
 
-        std::wstring strDbg = strPfx.empty() ?
+        std::wstring strDbg = errorPrefix.empty() ?
             std::format(L"{}\n", str) :
-            std::format(L"[{}] {}\n", std::wstring(strPfx.begin(), strPfx.end()), str);
+            std::format(L"[{}] {}\n", std::wstring(errorPrefix.begin(), errorPrefix.end()), str);
 
         if (VTRACE_OUTPUTDEBUGSTRING)
             OutputDebugStringW(strDbg.c_str());
