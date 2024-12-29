@@ -423,7 +423,7 @@ int CTreeListControl::FindTreeItem(const CTreeListItem* item) const
 #pragma warning(disable:26454)
 BEGIN_MESSAGE_MAP(CTreeListControl, COwnerDrawnListControl)
     ON_WM_MEASUREITEM_REFLECT()
-    ON_NOTIFY_REFLECT(LVN_ITEMCHANGING, OnLvnItemchangingList)
+    ON_NOTIFY_REFLECT(LVN_ITEMCHANGING, OnLvnItemChangingList)
     ON_WM_CONTEXTMENU()
     ON_WM_LBUTTONDOWN()
     ON_WM_KEYDOWN()
@@ -654,7 +654,7 @@ void CTreeListControl::SetItemScrollPosition(const CTreeListItem* item, const in
 
 bool CTreeListControl::SelectedItemCanToggle()
 {
-    const auto& items = GetAllSelected();
+    const auto& items = GetAllSelected(true);
     bool allow = !items.empty();
     for (const auto& item : items)
     {
@@ -665,7 +665,7 @@ bool CTreeListControl::SelectedItemCanToggle()
 
 void CTreeListControl::ToggleSelectedItem()
 {
-    const auto& items = GetAllSelected();
+    const auto& items = GetAllSelected(true);
     for (const auto& item : items)
     {
         ToggleExpansion(FindTreeItem(item));
@@ -729,7 +729,7 @@ void CTreeListControl::ExpandItem(const int i, const bool scroll)
 
 void CTreeListControl::OnKeyDown(const UINT nChar, const UINT nRepCnt, const UINT nFlags)
 {
-    if (const auto& items = GetAllSelected(); items.size() == 1)
+    if (const auto& items = GetAllSelected(true); items.size() == 1)
     {
         if (nChar == VK_RIGHT)
         {
@@ -760,7 +760,7 @@ void CTreeListControl::OnKeyDown(const UINT nChar, const UINT nRepCnt, const UIN
     COwnerDrawnListControl::OnKeyDown(nChar, nRepCnt, nFlags);
 }
 
-void CTreeListControl::OnLvnItemchangingList(NMHDR* pNMHDR, LRESULT* pResult)
+void CTreeListControl::OnLvnItemChangingList(NMHDR* pNMHDR, LRESULT* pResult)
 {
     const auto pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
 
@@ -783,7 +783,7 @@ void CTreeListControl::OnLvnItemchangingList(NMHDR* pNMHDR, LRESULT* pResult)
     const auto ctrlPressed = (HSHELL_HIGHBIT & GetKeyState(VK_CONTROL)) != 0;
     if (ctrlPressed && requestingSelection)
     {
-        const auto& items = GetAllSelected();
+        const auto& items = GetAllSelected(true);
         const auto& potentialSelection = GetItem(pNMLV->iItem);
         for (const auto item : items)
         {

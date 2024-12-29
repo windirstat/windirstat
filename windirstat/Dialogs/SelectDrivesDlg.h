@@ -176,7 +176,7 @@ public:
     DECLARE_MESSAGE_MAP()
     afx_msg void OnBnClickedUpdateButtons();
     afx_msg void OnEnChangeFolderName();
-    afx_msg void OnLvnItemchangedDrives(NMHDR* pNMHDR, LRESULT* pResult);
+    afx_msg void OnLvnItemChangedDrives(NMHDR* pNMHDR, LRESULT* pResult);
     afx_msg void OnSize(UINT nType, int cx, int cy);
     afx_msg void OnGetMinMaxInfo(MINMAXINFO* lpMMI);
     afx_msg void OnDestroy();

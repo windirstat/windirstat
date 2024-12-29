@@ -452,7 +452,7 @@ BEGIN_MESSAGE_MAP(CSelectDrivesDlg, CDialogEx)
     ON_BN_CLICKED(IDC_SCAN_DUPLICATES, OnBnClickedUpdateButtons)
     ON_EN_CHANGE(IDC_BROWSE_FOLDER, OnEnChangeFolderName)
     ON_MESSAGE(WMU_OK, OnWmuOk)
-    ON_NOTIFY(LVN_ITEMCHANGED, IDC_TARGET_DRIVES_LIST, OnLvnItemchangedDrives)
+    ON_NOTIFY(LVN_ITEMCHANGED, IDC_TARGET_DRIVES_LIST, OnLvnItemChangedDrives)
     ON_NOTIFY(NM_SETFOCUS, IDC_TARGET_DRIVES_LIST, &CSelectDrivesDlg::OnNMSetfocusTargetDrivesList)
     ON_REGISTERED_MESSAGE(WMU_THREADFINISHED, OnWmDriveInfoThreadFinished)
     ON_WM_DESTROY()
@@ -670,7 +670,7 @@ void CSelectDrivesDlg::OnEnChangeFolderName()
     UpdateButtons();
 }
 
-void CSelectDrivesDlg::OnLvnItemchangedDrives(NMHDR* /*pNMHDR*/, LRESULT* pResult)
+void CSelectDrivesDlg::OnLvnItemChangedDrives(NMHDR* /*pNMHDR*/, LRESULT* pResult)
 {
     m_Radio = RADIO_TARGET_DRIVES_SUBSET;
 

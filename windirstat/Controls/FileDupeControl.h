@@ -57,7 +57,6 @@ protected:
     void OnItemDoubleClick(int i) override;
 
     DECLARE_MESSAGE_MAP()
-    afx_msg void OnLvnItemchangingList(NMHDR* pNMHDR, LRESULT* pResult);
     afx_msg void OnSetFocus(CWnd* pOldWnd);
     afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
 };

@@ -52,7 +52,7 @@ BEGIN_MESSAGE_MAP(CFileTreeView, CView)
     ON_WM_CREATE()
     ON_WM_ERASEBKGND()
     ON_WM_SETFOCUS()
-    ON_NOTIFY(LVN_ITEMCHANGED, ID_WDS_CONTROL, OnLvnItemchanged)
+    ON_NOTIFY(LVN_ITEMCHANGED, ID_WDS_CONTROL, OnLvnItemChanged)
     ON_UPDATE_COMMAND_UI(ID_POPUP_TOGGLE, OnUpdatePopupToggle)
     ON_COMMAND(ID_POPUP_TOGGLE, OnPopupToggle)
 END_MESSAGE_MAP()
@@ -134,7 +134,7 @@ void CFileTreeView::OnSetFocus(CWnd* /*pOldWnd*/)
     m_Control.SetFocus();
 }
 
-void CFileTreeView::OnLvnItemchanged(NMHDR* pNMHDR, LRESULT* pResult)
+void CFileTreeView::OnLvnItemChanged(NMHDR* pNMHDR, LRESULT* pResult)
 {
     const auto pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
 

@@ -159,7 +159,7 @@ BEGIN_MESSAGE_MAP(CExtensionListControl, COwnerDrawnListControl)
     ON_WM_DESTROY()
     ON_NOTIFY_REFLECT(LVN_DELETEITEM, OnLvnDeleteitem)
     ON_WM_SETFOCUS()
-    ON_NOTIFY_REFLECT(LVN_ITEMCHANGED, OnLvnItemchanged)
+    ON_NOTIFY_REFLECT(LVN_ITEMCHANGED, OnLvnItemChanged)
     ON_WM_KEYDOWN()
 END_MESSAGE_MAP()
 #pragma warning(pop)
@@ -278,7 +278,7 @@ void CExtensionListControl::OnSetFocus(CWnd* pOldWnd)
     CMainFrame::Get()->SetLogicalFocus(LF_EXTENSIONLIST);
 }
 
-void CExtensionListControl::OnLvnItemchanged(NMHDR* pNMHDR, LRESULT* pResult)
+void CExtensionListControl::OnLvnItemChanged(NMHDR* pNMHDR, LRESULT* pResult)
 {
     const auto pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
     if ((pNMLV->uNewState & LVIS_SELECTED) != 0)

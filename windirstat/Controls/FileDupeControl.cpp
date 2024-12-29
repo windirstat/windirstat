@@ -48,7 +48,6 @@ bool CFileDupeControl::GetAscendingDefault(const int column)
 #pragma warning(push)
 #pragma warning(disable:26454)
 BEGIN_MESSAGE_MAP(CFileDupeControl, CTreeListControl)
-    ON_NOTIFY_REFLECT(LVN_ITEMCHANGING, OnLvnItemchangingList)
     ON_WM_SETFOCUS()
     ON_WM_KEYDOWN()
 END_MESSAGE_MAP()
@@ -262,24 +261,6 @@ void CFileDupeControl::OnItemDoubleClick(const int i)
     {
         CTreeListControl::OnItemDoubleClick(i);
     }
-}
-
-void CFileDupeControl::OnLvnItemchangingList(NMHDR* pNMHDR, LRESULT* pResult)
-{
-    const auto pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
-
-    // determine if a new selection is being made
-    const bool requestingSelection =
-        (pNMLV->uOldState & LVIS_SELECTED) == 0 &&
-        (pNMLV->uNewState & LVIS_SELECTED) != 0;
-
-    if (requestingSelection && GetItem(pNMLV->iItem)->GetLinkedItem() == nullptr)
-    {
-        *pResult = TRUE;
-        return;
-    }
-
-    return CTreeListControl::OnLvnItemchangingList(pNMHDR, pResult);
 }
 
 void CFileDupeControl::SetRootItem(CTreeListItem* root)

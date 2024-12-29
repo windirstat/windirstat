@@ -127,13 +127,14 @@ class CTreeListControl : public COwnerDrawnListControl
     void ToggleSelectedItem();
     void EmulateInteractiveSelection(const CTreeListItem* item);
 
-    template <class T = CTreeListItem> std::vector<T*> GetAllSelected()
+    template <class T = CTreeListItem> std::vector<T*> GetAllSelected(bool visual = false)
     {
         std::vector<T*> array;
         for (POSITION pos = GetFirstSelectedItemPosition(); pos != nullptr;)
         {
             const int i = GetNextSelectedItem(pos);
-            array.push_back(reinterpret_cast<T*>(GetItem(i)->GetLinkedItem()));
+            const auto item = reinterpret_cast<T*>(visual ? GetItem(i) : GetItem(i)->GetLinkedItem());
+            if (item != nullptr) array.push_back(item);
         }
         return array;
     }
@@ -170,6 +171,6 @@ protected:
     afx_msg void MeasureItem(LPMEASUREITEMSTRUCT mis);
     afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
     afx_msg void OnLButtonDblClk(UINT nFlags, CPoint point);
-    afx_msg void OnLvnItemchangingList(NMHDR* pNMHDR, LRESULT* pResult);
+    afx_msg void OnLvnItemChangingList(NMHDR* pNMHDR, LRESULT* pResult);
     afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
 };
