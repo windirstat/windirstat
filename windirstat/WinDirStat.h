@@ -47,6 +47,7 @@ public:
     CDirStatApp();
     BOOL InitInstance() override;
     BOOL LoadState(LPCTSTR, CFrameImpl*) override { return TRUE; }
+    BOOL IsIdleMessage(MSG* pMsg) override;
 
     static bool InPortableMode();
     bool SetPortableMode(bool enable, bool onlyOpen = false);

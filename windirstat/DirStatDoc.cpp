@@ -1692,6 +1692,7 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
         CMainFrame::Get()->InvokeInMessageThread([&]
         {
             CDirStatApp::Get()->OnIdle(0);
+            CMainFrame::Get()->Invalidate();
         });
 
         // Wait for all threads to run out of work

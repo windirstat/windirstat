@@ -340,6 +340,12 @@ BOOL CDirStatApp::InitInstance()
     return TRUE;
 }
 
+BOOL CDirStatApp::IsIdleMessage(MSG* pMsg)
+{
+    if (pMsg->message == WM_TIMER) return FALSE;
+    return CWinApp::IsIdleMessage(pMsg);
+}
+
 void CDirStatApp::OnAppAbout()
 {
     StartAboutDialog();
