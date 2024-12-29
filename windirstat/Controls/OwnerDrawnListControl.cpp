@@ -403,7 +403,10 @@ void COwnerDrawnListControl::DrawItem(LPDRAWITEMSTRUCT pdis)
     for (int i = 0; i < headerCount; i++)
     {
         // The subitem tracks the identifier that maps the column enum
-        const int subitem = ColumnToSubItem(i);
+        LVCOLUMN colInfo{ LVCF_SUBITEM | LVCF_FMT };
+        GetColumn(i, &colInfo);
+        const int subitem = colInfo.iSubItem;
+        const int alignment = (colInfo.fmt & LVCFMT_RIGHT) != 0 ? DT_RIGHT : DT_LEFT;
         
         CRect rc = GetWholeSubitemRect(pdis->itemID, i);
         const CRect rcDraw = rc - rcItem.TopLeft();
@@ -431,7 +434,7 @@ void COwnerDrawnListControl::DrawItem(LPDRAWITEMSTRUCT pdis)
             CSetTextColor tc(&dcMem, textColor);
 
             // Draw the (sub)item text
-            dcMem.DrawText(s.c_str(), rcText, DT_SINGLELINE | DT_VCENTER | DT_WORD_ELLIPSIS | DT_NOPREFIX);
+            dcMem.DrawText(s.c_str(), rcText, alignment | DT_SINGLELINE | DT_VCENTER | DT_WORD_ELLIPSIS | DT_NOPREFIX);
         }
 
         if (m_ShowGrid)
