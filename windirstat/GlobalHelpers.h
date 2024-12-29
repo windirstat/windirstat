@@ -22,8 +22,25 @@
 
 #pragma once
 
+#include "stdafx.h"
+
 #include <string>
 #include <functional>
+
+constexpr auto CONTENT_MENU_MINCMD = 0x1ul;
+constexpr auto CONTENT_MENU_MAXCMD = 0x7FFFul;
+IContextMenu* GetContextMenu(HWND hwnd, const std::vector<std::wstring>& paths);
+
+constexpr auto FILE_PROVIDER_COMPRESSION_MODERN = 1u << 8;
+enum class CompressionAlgorithm {
+    NONE = COMPRESSION_FORMAT_NONE,
+    LZNT1 = COMPRESSION_FORMAT_LZNT1,
+    XPRESS4K = FILE_PROVIDER_COMPRESSION_XPRESS4K | FILE_PROVIDER_COMPRESSION_MODERN,
+    XPRESS8K = FILE_PROVIDER_COMPRESSION_XPRESS8K | FILE_PROVIDER_COMPRESSION_MODERN,
+    XPRESS16K = FILE_PROVIDER_COMPRESSION_XPRESS16K | FILE_PROVIDER_COMPRESSION_MODERN,
+    LZX = FILE_PROVIDER_COMPRESSION_LZX | FILE_PROVIDER_COMPRESSION_MODERN,
+
+};
 
 std::wstring GetLocaleString(LCTYPE lctype, LCID lcid);
 std::wstring GetLocaleLanguage(LANGID langid);
@@ -66,3 +83,13 @@ void DisplayError(const std::wstring& error);
 std::wstring TranslateError(const HRESULT hr = static_cast<HRESULT>(GetLastError()));
 void DisableHibernate();
 bool IsHibernateEnabled();
+bool ShellExecuteWrapper(const std::wstring& lpFile, const std::wstring& lpParameters = L"", const std::wstring& lpVerb = L"",
+    HWND hwnd = *AfxGetMainWnd(), const std::wstring& lpDirector = L"", INT nShowCmd = SW_NORMAL);
+std::wstring GetBaseNameFromPath(const std::wstring& path);
+std::wstring GetAppFileName(const std::wstring& ext = L"");
+std::wstring GetAppFolder();
+std::wstring GetNameFromSid(PSID sid);
+
+
+bool CompressFile(const std::wstring& filePath, CompressionAlgorithm algorithm);
+bool CompressFileAllowed(const std::wstring& filePath, CompressionAlgorithm algorithm);

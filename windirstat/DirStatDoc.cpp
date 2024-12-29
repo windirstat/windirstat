@@ -31,7 +31,6 @@
 #include "MainFrame.h"
 #include "ModalApiShuttle.h"
 #include "WinDirStat.h"
-#include "CommonHelpers.h"
 #include "SmartPointer.h"
 #include "FileTopControl.h"
 

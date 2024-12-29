@@ -23,7 +23,6 @@
 #include "version.h"
 #include "WinDirStat.h"
 #include "Constants.h"
-#include "CommonHelpers.h"
 #include "AboutDlg.h"
 #include "Localization.h"
 #include "Options.h"

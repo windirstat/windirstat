@@ -20,7 +20,6 @@
 
 #include "stdafx.h"
 #include "Localization.h"
-#include "CommonHelpers.h"
 #include "GlobalHelpers.h"
 #include "FileFind.h"
 #include "langs.h"

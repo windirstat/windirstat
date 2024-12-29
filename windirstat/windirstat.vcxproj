@@ -598,7 +598,6 @@
     <Import Project="$(ProjectDir)/Build/Project.props" Condition="exists('$(ProjectDir)/Build/Project.props') AND '$(SolutionDir)' != '$(ProjectDir)'" Label="Project-specific (local/late)" />
   </ImportGroup>
   <ItemGroup>
-    <ClInclude Include="CommonHelpers.h" />
     <ClInclude Include="Controls\ColorButton.h" />
     <ClInclude Include="Controls\ExtensionListControl.h" />
     <ClInclude Include="Controls\FileDupeControl.h" />
@@ -653,8 +652,6 @@
     <ClInclude Include="Dialogs\SelectDrivesDlg.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="CommonHelpers.cpp">
-    </ClCompile>
     <ClCompile Include="Controls\ExtensionListControl.cpp" />
     <ClCompile Include="Controls\FileDupeControl.cpp" />
     <ClCompile Include="Controls\FileTopControl.cpp" />

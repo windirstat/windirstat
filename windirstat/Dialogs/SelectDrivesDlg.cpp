@@ -22,7 +22,6 @@
 #include "stdafx.h"
 #include "WinDirStat.h"
 #include "SmartPointer.h"
-#include "CommonHelpers.h"
 #include "Options.h"
 #include "GlobalHelpers.h"
 #include "SelectDrivesDlg.h"

@@ -24,7 +24,7 @@
 #include "SelectDrivesDlg.h"
 #include "BlockingQueue.h"
 #include "Options.h"
-#include "CommonHelpers.h"
+#include "GlobalHelpers.h"
 
 #include <unordered_map>
 #include <vector>

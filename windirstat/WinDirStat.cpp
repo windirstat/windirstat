@@ -22,7 +22,6 @@
 
 #include "stdafx.h"
 #include "WinDirStat.h"
-#include "CommonHelpers.h"
 #include "MainFrame.h"
 #include "SelectDrivesDlg.h"
 #include "AboutDlg.h"

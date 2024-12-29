@@ -38,7 +38,6 @@
 #include "PageGeneral.h"
 #include "MainFrame.h"
 #include "SelectObject.h"
-#include "CommonHelpers.h"
 #include "FileTopControl.h"
 #include "SmartPointer.h"
 
