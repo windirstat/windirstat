@@ -807,7 +807,7 @@ void CTreeListControl::OnChildAdded(const CTreeListItem* parent, CTreeListItem* 
 
     const int p = FindTreeItem(parent);
     ASSERT(p != -1);
-    InsertItem(p + 1, child);
+    InsertItem(p + GetItem(p)->GetTreeListChildCount(), child);
 }
 
 void CTreeListControl::OnChildRemoved(const CTreeListItem* parent, CTreeListItem* child)
