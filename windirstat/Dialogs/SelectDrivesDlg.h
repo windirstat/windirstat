@@ -132,10 +132,9 @@ class CDrivesList final : public COwnerDrawnListControl
     bool IsItemSelected(int i) const;
 
     DECLARE_MESSAGE_MAP()
-    afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
     afx_msg void OnLvnDeleteItem(NMHDR* pNMHDR, LRESULT* pResult);
     afx_msg void MeasureItem(LPMEASUREITEMSTRUCT mis);
-    afx_msg void OnNMDblclk(NMHDR* pNMHDR, LRESULT* pResult);
+    afx_msg void OnDoubleClick(NMHDR* pNMHDR, LRESULT* pResult);
 };
 
 //

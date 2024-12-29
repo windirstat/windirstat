@@ -355,46 +355,16 @@ bool CDrivesList::IsItemSelected(const int i) const
     return LVIS_SELECTED == GetItemState(i, LVIS_SELECTED);
 }
 
-void CDrivesList::OnLButtonDown(UINT /*nFlags*/ , CPoint/*point*/)
-{
-    if (GetFocus() == this || GetSelectedCount() == 0)
-    {
-        // We simulate Ctrl-Key-Down here, so that the dialog
-        // can be driven with one hand (mouse) only.
-        const MSG* msg = GetCurrentMessage();
-        DefWindowProc(msg->message, msg->wParam | MK_CONTROL, msg->lParam);
-    }
-    else
-    {
-        SetFocus();
-
-        // Send a LVN_ITEMCHANGED to the parent, so that it can
-        // update the radio button.
-        NMLISTVIEW lv;
-        ZeroMemory(&lv, sizeof(lv));
-        lv.hdr.hwndFrom = m_hWnd;
-        lv.hdr.idFrom   = GetDlgCtrlID();
-        lv.hdr.code = static_cast<UINT>(LVN_ITEMCHANGED);
-        GetParent()->SendMessage(WM_NOTIFY, GetDlgCtrlID(), reinterpret_cast<LPARAM>(&lv));
-    }
-}
-
-void CDrivesList::OnNMDblclk(NMHDR* /*pNMHDR*/, LRESULT* pResult)
+void CDrivesList::OnDoubleClick(NMHDR* /*pNMHDR*/, LRESULT* pResult)
 {
     *pResult = FALSE;
 
     CPoint point = GetCurrentMessage()->pt;
     ScreenToClient(&point);
     const int i = HitTest(point);
-    if (i == -1)
-    {
-        return;
-    }
-
-    for (int k = 0; k < GetItemCount(); k++)
-    {
-        SetItemState(k, k == i ? LVIS_SELECTED : 0, LVIS_SELECTED);
-    }
+    
+    SetItemState(-1, 0, LVIS_SELECTED | LVIS_FOCUSED);
+    SetItemState(i, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
 
     (void) GetParent()->SendMessage(WMU_OK);
 }
@@ -402,10 +372,9 @@ void CDrivesList::OnNMDblclk(NMHDR* /*pNMHDR*/, LRESULT* pResult)
 #pragma warning(push)
 #pragma warning(disable:26454)
 BEGIN_MESSAGE_MAP(CDrivesList, COwnerDrawnListControl)
-    ON_WM_LBUTTONDOWN()
     ON_NOTIFY_REFLECT(LVN_DELETEITEM, OnLvnDeleteItem)
     ON_WM_MEASUREITEM_REFLECT()
-    ON_NOTIFY_REFLECT(NM_DBLCLK, OnNMDblclk)
+    ON_NOTIFY_REFLECT(NM_DBLCLK, OnDoubleClick)
 END_MESSAGE_MAP()
 #pragma warning(pop)
 
