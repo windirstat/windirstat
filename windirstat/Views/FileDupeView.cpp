@@ -85,9 +85,9 @@ int CFileDupeView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
     const std::wstring hashName = Localization::Lookup(IDS_COL_HASH) + L" / " + Localization::Lookup(IDS_COL_NAME);
     m_Control.InsertColumn(CHAR_MAX, hashName.c_str(), LVCFMT_LEFT, 500, COL_ITEMDUP_NAME);
     m_Control.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_ITEMS).c_str(), LVCFMT_RIGHT, 70, COL_ITEMDUP_ITEMS);
-    m_Control.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_SIZE_PHYSICAL).c_str(), LVCFMT_RIGHT, 90, COL_ITEMDUP_SIZE_PHYSICAL);
-    m_Control.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_SIZE_LOGICAL).c_str(), LVCFMT_RIGHT, 90, COL_ITEMDUP_SIZE_LOGICAL);
-    m_Control.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_LASTCHANGE).c_str(), LVCFMT_RIGHT, 100, COL_ITEMDUP_LASTCHANGE);
+    m_Control.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_SIZE_PHYSICAL).c_str(), LVCFMT_RIGHT, 80, COL_ITEMDUP_SIZE_PHYSICAL);
+    m_Control.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_SIZE_LOGICAL).c_str(), LVCFMT_RIGHT, 80, COL_ITEMDUP_SIZE_LOGICAL);
+    m_Control.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_LASTCHANGE).c_str(), LVCFMT_LEFT, 120, COL_ITEMDUP_LASTCHANGE);
     m_Control.SetSorting(COL_ITEMDUP_SIZE_PHYSICAL, false);
 
     m_Control.OnColumnsInserted();
