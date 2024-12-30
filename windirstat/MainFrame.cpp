@@ -603,13 +603,10 @@ void CMainFrame::SetStatusPaneText(const int pos, const std::wstring & text, con
     if (last.contains(pos) && last[pos] == text) return;
     last[pos] = text;
 
-    // attempt to update width if dc is accessible
-    if (const CDC* dc = GetDC(); dc != nullptr)
-    {
-        const auto cx = dc->GetTextExtent(text.c_str(), static_cast<int>(text.size())).cx;
-        m_WndStatusBar.SetPaneWidth(pos, max(cx, minWidth));
-    }
-
+    // set status path width and then set text
+    const CClientDC dc(this);
+    const auto cx = dc.GetTextExtent(text.c_str(), static_cast<int>(text.size())).cx;
+    m_WndStatusBar.SetPaneWidth(pos, max(cx, minWidth));
     m_WndStatusBar.SetPaneText(pos, text.c_str());
 }
 

@@ -61,13 +61,12 @@ BOOL CDeleteWarningDlg::OnInitDialog()
     Localization::UpdateDialogs(*this);
 
     int extent = 0;
-    CDC* dc = m_Files.GetDC();
+    const CClientDC dc(this);
     for (const auto& item : m_Items)
     {
-        extent = max(extent, dc->GetTextExtent(item->GetPath().c_str()).cx);
+        extent = max(extent, dc.GetTextExtent(item->GetPath().c_str()).cx);
         m_Files.AddString(item->GetPath().c_str());
     }
-    ReleaseDC(dc);
     m_Files.SetHorizontalExtent(extent);
 
     GotoDlgCtrl(GetDlgItem(IDNO));
