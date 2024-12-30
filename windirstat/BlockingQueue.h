@@ -153,7 +153,6 @@ public:
     void CancelExecution()
     {
         // Start cancellation process
-        if (!m_Started) return;
         m_Cancelled = true;
         m_Waiting.notify_all();
         m_Pushed.notify_all();
