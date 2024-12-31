@@ -251,19 +251,24 @@ protected:
 
     // Standard palette for WinDirStat
     static constexpr COLORREF DefaultCushionColors[] = {
-        RGB(0, 0, 255),
-        RGB(255, 0, 0),
-        RGB(0, 255, 0),
-        RGB(0, 255, 255),
-        RGB(255, 0, 255),
-        RGB(255, 255, 0),
-        RGB(150, 150, 255),
-        RGB(255, 150, 150),
-        RGB(150, 255, 150),
-        RGB(150, 255, 255),
-        RGB(255, 150, 255),
-        RGB(255, 255, 150),
-        RGB(255, 255, 255)
+        RGB(  0,   0, 255),  // Blue
+        RGB(255,   0,   0),  // Red
+        RGB(  0, 255,   0),  // Green
+        RGB(255, 255,   0),  // Yellow
+        RGB(  0, 255, 255),  // Cyan
+        RGB(255,   0, 255),  // Magenta
+        RGB(255, 170,   0),  // Orange  
+        RGB(  0,  85, 255),  // Dodger Blue  
+        RGB(255,   0,  85),  // Hot Pink  
+        RGB( 85, 255,   0),  // Lime Green  
+        RGB(170,   0, 255),  // Violet  
+        RGB(  0, 255,  85),  // Spring Green  
+        RGB(255,   0, 170),  // Deep Pink  
+        RGB(  0, 170, 255),  // Sky Blue  
+        RGB(255,  85,   0),  // Orange Red  
+        RGB(  0, 255, 170),  // Aquamarine  
+        RGB( 85,   0, 255),  // Indigo
+        RGB(255, 255, 255),  // White  
     };
 
     CRect m_RenderArea;
