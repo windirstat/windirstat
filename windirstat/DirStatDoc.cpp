@@ -554,44 +554,40 @@ std::vector<CItem*> CDirStatDoc::GetDriveItems() const
 
 void CDirStatDoc::RebuildExtensionData()
 {
-    CWaitCursor wc;
-    
-    std::vector<std::wstring> sortedExtensions;
-    SortExtensionData(sortedExtensions);
-    SetExtensionColors(sortedExtensions);
-}
-
-void CDirStatDoc::SortExtensionData(std::vector<std::wstring>& sortedExtensions)
-{
-    sortedExtensions.resize(m_ExtensionData.size());
-    for (int i = 0; const auto& ext : m_ExtensionData | std::views::keys)
+    // Collect iterators to the map entries to avoid copying keys  
+    std::vector<CExtensionData::iterator> sortedExtensions;
+    sortedExtensions.reserve(m_ExtensionData.size());
+    for (auto it = m_ExtensionData.begin(); it != m_ExtensionData.end(); ++it)
     {
-        sortedExtensions[i++] = ext;
+        sortedExtensions.emplace_back(it);
     }
 
-    std::ranges::sort(sortedExtensions, [this](const auto& a, const auto& b)
+    // Sort the iterators based on total bytes in descending order  
+    std::ranges::sort(sortedExtensions, [](const auto& a_it, const auto& b_it)
     {
-        return m_ExtensionData[a].bytes.load() > m_ExtensionData[b].bytes.load();
+        return a_it->second.bytes.load() > b_it->second.bytes.load();
     });
-}
 
-void CDirStatDoc::SetExtensionColors(const std::vector<std::wstring>& sortedExtensions)
-{
+    // Initialize colors if not already done  
     static std::vector<COLORREF> colors;
-
     if (colors.empty())
     {
         CTreeMap::GetDefaultPalette(colors);
     }
 
-    for (std::size_t i = 0; i < sortedExtensions.size(); i++)
+    // Assign primary colors to extensions  
+    const auto extensionsSize = sortedExtensions.size();
+    const auto primaryColorsMax = min(colors.size(), extensionsSize);
+    for (std::size_t i = 0; i < primaryColorsMax; ++i)
     {
-        COLORREF c = colors[colors.size() - 1];
-        if (i < colors.size())
-        {
-            c = colors[i];
-        }
-        m_ExtensionData[sortedExtensions[i]].color = c;
+        sortedExtensions[i]->second.color = colors[i];
+    }
+
+    // Assign fallback colors to extensions  
+    const auto fallbackColor = colors.back();
+    for (std::size_t i = primaryColorsMax; i < extensionsSize; ++i)
+    {
+        sortedExtensions[i]->second.color = fallbackColor;
     }
 }
 
