@@ -23,6 +23,7 @@
 #include "WinDirStat.h"
 #include "IconHandler.h"
 #include "GlobalHelpers.h"
+#include "Localization.h"
 #include "SmartPointer.h"
 #include "MainFrame.h"
 
@@ -127,7 +128,7 @@ HICON CIconHandler::FetchShellIcon(const std::wstring & path, UINT flags, const 
     ASSERT(AfxGetThread() != GetCurrentThread());
     flags |= WDS_SHGFI_DEFAULTS;
 
-    if (psTypeName != nullptr)
+    if (psTypeName != nullptr && !path.empty())
     {
         // Also retrieve the file type description
         flags |= SHGFI_TYPENAME;
@@ -164,7 +165,8 @@ HICON CIconHandler::FetchShellIcon(const std::wstring & path, UINT flags, const 
 
     if (psTypeName != nullptr)
     {
-        *psTypeName = sfi.szTypeName;
+        if (path.empty()) *psTypeName = Localization::Lookup(IDS_EXTENSION_MISSING);
+        else *psTypeName = sfi.szTypeName;
     }
 
     // Check if icon is already in index and, if so, return
