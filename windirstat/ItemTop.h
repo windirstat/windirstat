@@ -48,7 +48,7 @@ public:
     CItemTop& operator=(CItemTop&&) = delete;
     CItemTop() = default;
     CItemTop(CItem* item);
-    ~CItemTop() override = default;
+    ~CItemTop();
 
     // Translation map for leveraging Item routines
     const std::unordered_map<int, int> columnMap =

@@ -180,73 +180,88 @@ void CFileDupeControl::RemoveItem(CItem* item)
     if (m_HashTracker.empty() && m_SizeTracker.empty()) return;
 
     std::stack<CItem*> queue({ item });
-    std::vector<CItem*> itemsToRemove;
     while (!queue.empty())
     {
         const auto& qitem = queue.top();
         queue.pop();
-        if (qitem->IsType(IT_FILE)) itemsToRemove.emplace_back(qitem);
+        if (qitem->IsType(IT_FILE))
+        {
+            // Mark as all files as not being hashed anymore
+            m_SizeTracker.at(qitem->GetSizeLogical()).erase(qitem);
+            qitem->SetType(ITF_PARTHASH | ITF_FULLHASH, false);
+        }
         else for (const auto& child : qitem->GetChildren())
         {
             queue.push(child);
         }
     }
 
-    const auto root = reinterpret_cast<CItemDupe*>(GetItem(0));
-    for (const auto& itemToRemove : std::ranges::reverse_view(itemsToRemove))
+    // Remove all unhashed files from hash tracker
+    for (auto& hashSet : m_HashTracker | std::views::values)
     {
-        // Clear our hash bits
-        item->SetType(ITF_PARTHASH | ITF_FULLHASH, false);
-
-        // Remove from size tracker
-        const auto size = itemToRemove->GetSizeLogical();
-        m_SizeTracker.at(size).erase(itemToRemove);
-
-        // Remove from hash tracker
-        for (auto& [hashKey, hashSet] : m_HashTracker)
+        // Skip if no matches of the item associated with this hash
+        std::erase_if(hashSet, [](const auto& hashItem)
         {
-            // Skip if no matches of the item associated with this hash
-            if (!hashSet.contains(itemToRemove)) continue;
-        
-            // Remove from this set
-            hashSet.erase(itemToRemove);
+            return !hashItem->IsType(ITF_PARTHASH | ITF_FULLHASH);
+        });
+    }
 
-            // Continue if this is not present in the node list
-            if (!m_NodeTracker.contains(hashKey)) continue;
+    // Pause redrawing for mass node removal
+    SetRedraw(FALSE);
 
-            // Remove the entry from the visual node list
-            auto& hashNode = m_NodeTracker.at(hashKey);
-            for (const auto& dupeChild : std::vector(hashNode->GetChildren()))
+    // Cleanup any empty visual nodes in the list
+    const auto root = reinterpret_cast<CItemDupe*>(GetItem(0));
+    for (auto nodeIter = m_NodeTracker.begin(); nodeIter != m_NodeTracker.end(); ++nodeIter)
+    {
+        auto& [dupeParentKey, dupeParent] = *nodeIter;
+
+        // Remove from child tracker
+        auto& childItems = m_ChildTracker[dupeParent];
+        for (auto childItem = childItems.begin(); childItem != childItems.end(); ++childItem)
+        {
+            // Nothing to do if still marked as hashed
+            if ((*childItem)->IsType(ITF_PARTHASH | ITF_FULLHASH)) continue;
+
+            // Remove from child tracker and visual tree
+            for (auto& visualChild : dupeParent->GetChildren())
             {
-                if (dupeChild->GetLinkedItem() == itemToRemove)
-                {
-                    m_ChildTracker[hashNode].erase(itemToRemove);
-                    hashNode->RemoveDupeItemChild(dupeChild);
-                }
+                if (visualChild->GetLinkedItem() != (*childItem)) continue;
+
+                dupeParent->RemoveDupeItemChild(visualChild);
+                childItem = childItems.erase(childItem);
+                break;
             }
 
-            // Remove parent node if only one item is list
-            if (hashNode->GetChildren().size() <= 1)
-            {
-                m_ChildTracker.erase(hashNode);
-                root->RemoveDupeItemChild(hashNode);
-                m_NodeTracker.erase(hashKey);
-            }
+            // Break if already at end of list
+            if (childItem == childItems.end()) break;
+        }
+
+        // When only one node, left remove last node and parent
+        if (dupeParent->GetChildren().size() == 1)
+        {
+            dupeParent->RemoveDupeItemChild(dupeParent->GetChildren().at(0));
+            root->RemoveDupeItemChild(dupeParent);
+            nodeIter = m_NodeTracker.erase(nodeIter);
+            if (nodeIter == m_NodeTracker.end()) break;
         }
     }
 
+    // Resume redrawing and invalidate to force refresh
+    SetRedraw(TRUE);
+    Invalidate();
+
     // Cleanup empty structures
-    std::erase_if(m_HashTracker, [&](const auto& pair)
+    std::erase_if(m_HashTracker, [](const auto& pair)
     {
         return pair.second.empty();
     });
-    std::erase_if(m_SizeTracker, [&](const auto& pair)
+    std::erase_if(m_SizeTracker, [](const auto& pair)
     {
         return pair.second.empty();
     });
-    std::erase_if(m_ChildTracker, [&](const auto& pair)
+    std::erase_if(m_ChildTracker, [](const auto& pair)
     {
-        return pair.second.empty();
+        return pair.second.size() <= 1;
     });
 }
 
@@ -267,11 +282,8 @@ void CFileDupeControl::SetRootItem(CTreeListItem* root)
 {
     m_ShowCloudWarningOnThisScan = COptions::SkipDupeDetectionCloudLinksWarning;
 
-    // Cleanup node allocations
-    for (const auto& item : m_NodeTracker | std::views::values)
-    {
-        delete item;
-    }
+    // Cleanup visual list
+    CTreeListControl::SetRootItem(root);
 
     // Clear out any pending visual updates
     while (!m_PendingListAdds.empty())
@@ -280,8 +292,7 @@ void CFileDupeControl::SetRootItem(CTreeListItem* root)
     m_NodeTracker.clear();
     m_HashTracker.clear();
     m_SizeTracker.clear();
-
-    CTreeListControl::SetRootItem(root);
+    m_ChildTracker.clear();
 }
 
 void CFileDupeControl::OnSetFocus(CWnd* pOldWnd)

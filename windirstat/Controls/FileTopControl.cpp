@@ -140,16 +140,12 @@ void CFileTopControl::OnItemDoubleClick(const int i)
 
 void CFileTopControl::SetRootItem(CTreeListItem* root)
 {
-    // Cleanup node allocations
-    for (const auto& item : m_ItemTracker| std::views::values)
-    {
-        delete item;
-    }
+    // Cleanup visual list
+    CTreeListControl::SetRootItem(root);
 
+    // Reset trackers
     m_SizeMap.clear();
     m_ItemTracker.clear();
-
-    CTreeListControl::SetRootItem(root);
 }
 
 void CFileTopControl::OnSetFocus(CWnd* pOldWnd)

@@ -28,6 +28,14 @@
 
 CItemTop::CItemTop(CItem* item) : m_Item(item) {}
 
+CItemTop::~CItemTop()
+{
+    for (const auto& m_Child : m_Children)
+    {
+        delete m_Child;
+    }
+}
+
 bool CItemTop::DrawSubItem(const int subitem, CDC* pdc, const CRect rc, const UINT state, int* width, int* focusLeft)
 {
     // Handle individual file items

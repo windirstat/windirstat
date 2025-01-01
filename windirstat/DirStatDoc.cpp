@@ -1044,7 +1044,7 @@ void CDirStatDoc::OnRefreshSelected()
 
 void CDirStatDoc::OnRefreshAll()
 {
-    RefreshItem(GetRootItem());
+    OnOpenDocument(GetRootItem()->GetPath().c_str());
 }
 
 void CDirStatDoc::OnSaveResults()

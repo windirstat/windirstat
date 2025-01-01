@@ -41,6 +41,14 @@ CItemDupe::CItemDupe(const std::wstring& hash, const ULONGLONG sizePhysical, con
 
 CItemDupe::CItemDupe(CItem* item) : m_Item(item) {}
 
+CItemDupe::~CItemDupe()
+{
+    for (const auto& m_Child : m_Children)
+    {
+        delete m_Child;
+    }
+}
+
 bool CItemDupe::DrawSubItem(const int subitem, CDC* pdc, const CRect rc, const UINT state, int* width, int* focusLeft)
 {
     // Handle individual file items

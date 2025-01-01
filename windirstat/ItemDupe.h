@@ -54,7 +54,7 @@ public:
     CItemDupe() = default;
     CItemDupe(const std::wstring & hash, ULONGLONG sizePhysical, ULONGLONG sizeLogical);
     CItemDupe(CItem* item);
-    ~CItemDupe() override = default;
+    ~CItemDupe() override;
 
     // Translation map for leveraging Item routines
     const std::unordered_map<int, int> columnMap =
