@@ -45,6 +45,7 @@ protected:
     // Custom comparator to keep the list organized by size
     static constexpr auto CompareBySize = [](const CItem* lhs, const CItem* rhs)
     {
+        if (lhs->GetSizePhysical() == rhs->GetSizePhysical()) return lhs < rhs;
         return lhs->GetSizePhysical() < rhs->GetSizePhysical();
     };
 
