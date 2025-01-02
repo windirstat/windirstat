@@ -51,29 +51,9 @@ CItem::CItem(const ITEMTYPE type, const std::wstring & name) : m_Name(name), m_T
         m_Attributes = GetFileAttributesW(GetPathLong().c_str());
     }
 
-    if (IsType(IT_FILE))
-    {
-        if (const LPCWSTR ext = wcsrchr(name.c_str(), L'.'); ext != nullptr)
-        {
-            std::wstring extToAdd(&ext[0]);
-            _wcslwr_s(extToAdd.data(), extToAdd.size() + 1);
-
-            static std::shared_mutex extLock;
-            static std::unordered_set<std::wstring> extcache;
-            std::lock_guard lock(extLock);
-            const auto cached = extcache.insert(std::move(extToAdd));
-            m_Extension = cached.first->c_str();
-        }
-        else
-        {
-            static LPCWSTR noext = L"";
-            m_Extension = noext;
-        }
-    }
-    else
+    if (!IsType(IT_FILE))
     {
         m_FolderInfo = std::make_unique<CHILDINFO>();
-        m_Extension = m_Name.c_str();
     }
 }
 
@@ -903,7 +883,12 @@ std::wstring CItem::GetName() const
 
 std::wstring CItem::GetExtension() const
 {
-    return m_Extension;
+    if (!IsType(IT_FILE)) return m_Name;
+    const LPCWSTR ext = wcsrchr(m_Name.c_str(), L'.');
+    if (ext == nullptr) return L"";
+    std::wstring extLower = ext;
+    _wcslwr_s(extLower.data(), extLower.size() + 1);
+    return extLower;
 }
 
 ULONG CItem::GetFilesCount() const

@@ -276,7 +276,6 @@ private:
 
     RECT m_Rect;                                  // To support TreeMapView
     std::wstring m_Name;                          // Display name
-    LPCWSTR m_Extension = nullptr;                // Cache of extension (it's used often)
     FILETIME m_LastChange = {0, 0};               // Last modification time of self or subtree
     std::unique_ptr<CHILDINFO> m_FolderInfo;      // Child information for non-files
     std::atomic<ULONGLONG> m_SizePhysical = 0;    // Total physical size of self or subtree
