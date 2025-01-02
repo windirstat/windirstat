@@ -1,5 +1,5 @@
 IDS_ABOUT_ABOUT=关于
-IDS_ABOUT_ABOUTTEXTss=\nWinDirStat - 目录统计\n\n"显示您的磁盘空间都去哪里了\n并帮助您清理它。"。\n\n由Microsoft Windows编写\nBernhard Seifert、Oliver Schneider、Bryan Berns\n(mailto:{})，\n\n基于Stefan Hundhammer的KDE（Linux）应用程序KDirStat\n(https://kdirstat.sourceforge.net/)。\n\nWinDirStat的主页是 {}/\n\n版权所有（c）2003-2024年WinDirStat的作者
+IDS_ABOUT_ABOUTTEXTss=\nWinDirStat - 目录统计\n\n"显示您的磁盘空间都去哪里了\n并帮助您清理它。"。\n\n由Microsoft Windows编写\nBernhard Seifert、Oliver Schneider、Bryan Berns\n(mailto:{})，\n\n基于Stefan Hundhammer的KDE（Linux）应用程序KDirStat\n(https://kdirstat.sourceforge.net/)。\n\nWinDirStat的主页是 {}/\n\n版权所有 © WinDirStat Team
 IDS_ABOUT_LICENSEAGREEMENT=许可证
 IDS_ABOUT_THANKSTO=致谢
 IDS_ABOUT_THANKSTOTEXT=\nStefan Hundhammer 对他出色的Linux工具KDirStat表示感谢。\n使用KDirStat（2.3.7）作为规范节省了我大量时间。\nhttps://kdirstat.sourceforge.net/\n\nSequoiaView的作者展示了树状图真正有多有用。\nhttps://www.win.tue.nl/sequoiaview/\n\nJarke J. van Wijk、Huub van de Wetering、Mark Bruls和Kees Huizing\n对他们关于垫子树状图和方形树状图的论文表示感谢。\nhttps://www.win.tue.nl/~vanwijk/\n\nBen Shneiderman 提出了树状图的巧妙思想-\n一种真正直观的方式来可视化树内容。\nhttps://www.cs.umd.edu/hcil/TreeMap.history/

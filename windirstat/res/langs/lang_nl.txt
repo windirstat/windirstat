@@ -1,5 +1,5 @@
 IDS_ABOUT_ABOUT=Over
-IDS_ABOUT_ABOUTTEXTss=\nWinDirStat - Directory Statistics\n\n"Weten waar je schijfruimte gebleven is\nen helpt je met opruimen."\n\nGeprogrammeerd voor Microsoft Windows door\nBernhard Seifert, Oliver Schneider, Bryan Berns\n(mailto:{}),\n\nGebaseerd op Stefan Hundhammer's KDE (Linux) programma KDirStat\n(https://kdirstat.sourceforge.net/).\n\nWinDirStat's website is {}/\n\nCopyright (c) 2003-2024 de auteurs van WinDirStat
+IDS_ABOUT_ABOUTTEXTss=\nWinDirStat - Directory Statistics\n\n"Weten waar je schijfruimte gebleven is\nen helpt je met opruimen."\n\nGeprogrammeerd voor Microsoft Windows door\nBernhard Seifert, Oliver Schneider, Bryan Berns\n(mailto:{}),\n\nGebaseerd op Stefan Hundhammer's KDE (Linux) programma KDirStat\n(https://kdirstat.sourceforge.net/).\n\nWinDirStat's website is {}/\n\nCopyright © WinDirStat Team
 IDS_ABOUT_LICENSEAGREEMENT=Licentie
 IDS_ABOUT_THANKSTO=Bedankt
 IDS_ABOUT_THANKSTOTEXT=\nStefan Hundhammer voor zijn geweldige Linux tool KDirStat.\nHet gebruiken van KDirStat (2.3.7) als basis bespaarde mij heel veel tijd.\nhttps://kdirstat.sourceforge.net/\n\nDe auteurs van SequoiaView voor het aantonen van hoe nuttig treemaps kunnen zijn.\nhttps://www.win.tue.nl/sequoiaview/\n\nJarke J. van Wijk, Huub van de Wetering, Mark Bruls en Kees Huizing\nvoor hun artikelen over 'cushion treemaps and squarified treemaps'.\nhttps://www.win.tue.nl/~vanwijk/\n\nBen Shneiderman voor zijn ingenieuze idee over treemaps -\neen intuïtieve manier om de inhoud van een tree te visualiseren.\nhttps://www.cs.umd.edu/hcil/TreeMap.history/\n
@@ -53,7 +53,7 @@ IDS_DRIVES_SUBSET=A&fzonderlijke stations
 IDS_DRIVES_TITLE=WinDirStat - Stations selecteren
 IDS_DUPLICATE_FILES=Duplicaatbestanden
 IDS_DUPLICATES_DISABLED=Duplicaat scannen is momenteel niet ingeschakeld voor deze scan.
-IDS_DUPLICATES_SCAN=Scannen op duplicaatbestanden (be�nvloedt de prestaties)
+IDS_DUPLICATES_SCAN=Scannen op duplicaatbestanden (be©nvloedt de prestaties)
 IDS_DUPLICATES_WARNING=De duplicatiescanner heeft een bestand gedetecteerd dat is gesynchroniseerd met de cloud. Cloudbestanden worden niet gescand omdat scannen ervoor kan zorgen dat ze worden gedownload. Wijzig uw instellingen als u cloudbestanden wilt scannen. Wilt u deze waarschuwing bij toekomstige scans zien?
 IDS_EDIT_COPY_CLIPBOARD=Geselecteerde pad kopiëren naar het klembord.\nPad kopiëren
 IDS_EMPTY_FOLDER_WARNING=Weet u zeker dat u alle bestanden in {} wilt verwijderen?

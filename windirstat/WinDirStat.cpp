@@ -1,9 +1,7 @@
-// WinDirStat.cpp - Implementation of CDirStatApp and some globals
+﻿// WinDirStat.cpp - Implementation of CDirStatApp and some globals
 //
 // WinDirStat - Directory Statistics
-// Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
-// Copyright (C) 2010 Chris Wimmer
+// Copyright © WinDirStat Team
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

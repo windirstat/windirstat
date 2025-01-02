@@ -8,7 +8,7 @@
     <title>WinDirStat</title>
     <authors>Bernhard Seifert, Oliver Schneider, Bryan Berns</authors>
     <projectUrl>https://github.com/windirstat/windirstat</projectUrl>
-    <copyright>2003-2024 WinDirStat Team</copyright>
+    <copyright>© WinDirStat Team</copyright>
     <iconUrl>https://github.com/windirstat/windirstat/raw/master/windirstat/logos/logo_256px.png</iconUrl>
     <licenseUrl>https://raw.githubusercontent.com/windirstat/windirstat/refs/heads/master/LICENSE.md</licenseUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>

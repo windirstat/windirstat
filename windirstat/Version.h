@@ -1,6 +1,5 @@
-// WinDirStat - Directory Statistics
-// Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
+﻿// WinDirStat - Directory Statistics
+// Copyright © WinDirStat Team
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -47,6 +46,6 @@
 #define TEXT_PRODUCTNAME            WinDirStat // product's name
 #define TEXT_FILEDESC               Windows Directory Statistics (WinDirStat) // component description
 
-#define STRING_COMPANY              WinDirStat Team (windirstat.net)
-#define STRING_COPYRIGHT            "© 2004-2024 WinDirStat Team, © 2003-2005 Bernhard Seifert"
+#define STRING_COMPANY              WinDirStat Team
+#define STRING_COPYRIGHT            "© WinDirStat Team"
 #define SOURCE_REPOSITORY           https://github.com/windirstat/windirstat

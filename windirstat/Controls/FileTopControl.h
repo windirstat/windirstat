@@ -1,8 +1,7 @@
 // FileTopControl.h - Declaration of CFileTopControl and CFileTreeView
 //
 // WinDirStat - Directory Statistics
-// Copyright (C) 2003-2005 Bernhard Seifert
-// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
+// Copyright © WinDirStat Team
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by

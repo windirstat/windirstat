@@ -1,9 +1,9 @@
-// Tracer.h - Implementation of tracer class for debugging purposes
+﻿// Tracer.h - Implementation of tracer class for debugging purposes
 //
 // NOTE: this file is under MIT license as opposed to the project as a whole.
 //
 // WinDirStat - Directory Statistics
-// Copyright (C) 2004-2024 WinDirStat Team (windirstat.net)
+// Copyright © WinDirStat Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal

@@ -1,5 +1,5 @@
 IDS_ABOUT_ABOUT=제품 정보
-IDS_ABOUT_ABOUTTEXTss=\nWinDirStat - 디렉터리 통계\n\n"모든 드라이브 공간이 어디로 갔는지 보여줍니다\n정리하는 데 도움이 됩니다."\n\nPMicrosoft Windows용으로 프로그래밍\nBernhard Seifert, Oliver Schneider, Bryan Berns\n(mailto:{}),\n\n KDE (Linux) 응용 프로그램 KDIrStat 기반\n(https://kdirstat.sourceforge.net/).\n\nWinDirStat 의 홈 {}/\n\nCopyright (c) 2003-2024 WinDirStat의 저자들
+IDS_ABOUT_ABOUTTEXTss=\nWinDirStat - 디렉터리 통계\n\n"모든 드라이브 공간이 어디로 갔는지 보여줍니다\n정리하는 데 도움이 됩니다."\n\nPMicrosoft Windows용으로 프로그래밍\nBernhard Seifert, Oliver Schneider, Bryan Berns\n(mailto:{}),\n\n KDE (Linux) 응용 프로그램 KDIrStat 기반\n(https://kdirstat.sourceforge.net/).\n\nWinDirStat 의 홈 {}/\n\nCopyright © WinDirStat Team의 저자들
 IDS_ABOUT_LICENSEAGREEMENT=라이선스
 IDS_ABOUT_THANKSTO=감사 인사
 IDS_ABOUT_THANKSTOTEXT=\nStefan Hundhammer는 뛰어난 Linux 도구인 KDirStat을 개발했습니다.\nKDirStat (2.3.7)을 사양으로 사용하여 많은 시간을 절약할 수 있었습니다.\nhttps://kdirstat.sourceforge.net/\n\nSequoiaView의 저자들은 트리맵이 실제로 얼마나 유용한지 보여주었습니다.\nhttps://www.win.tue.nl/sequoiaview/\n\nJarke J. van Wijk, Huub van de Wetering, Mark Bruls and Kees Huizing\n쿠션 트리맵과 정사각형 트리맵에 관한 논문을 발표했습니다..\nhttps://www.win.tue.nl/~vanwijk/\n\n트리맵에 대한 기발한 아이디어 제공의 Ben Shneiderman -\n트리 콘텐츠를 시각화하는 진정한 직관적인 방법입니다.\nhttps://www.cs.umd.edu/hcil/TreeMap.history/\n

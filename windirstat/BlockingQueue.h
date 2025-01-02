@@ -1,7 +1,7 @@
-// BlockingQueue.h - Functions used by WinDirStat.exe and setup.exe
+﻿// BlockingQueue.h - Functions used by WinDirStat.exe and setup.exe
 //
 // WinDirStat - Directory Statistics
-// Copyright (C) 2024 WinDirStat Team (windirstat.net)
+// Copyright © WinDirStat Team
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
