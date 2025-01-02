@@ -819,13 +819,10 @@ LRESULT CMainFrame::OnExitSizeMove(WPARAM, LPARAM)
 
 void CMainFrame::OnTimer(const UINT_PTR nIDEvent)
 {
-    // Do not process UI updates if minimize
-    if (IsIconic()) return;
-
     // Calculate UI updates that do not need to processed frequently
     static unsigned int updateCounter = 0;
     const bool doInfrequentUpdate = updateCounter++ % 15 == 0;
-    if (doInfrequentUpdate)
+    if (doInfrequentUpdate && !IsIconic())
     {
         // Update memory usage
         UpdatePaneText();
