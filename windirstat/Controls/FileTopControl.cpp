@@ -1,4 +1,4 @@
-﻿// FileTopControl.cpp - Implementation of FileTopControl
+// FileTopControl.cpp - Implementation of FileTopControl
 //
 // WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
@@ -53,6 +53,9 @@ CFileTopControl* CFileTopControl::m_Singleton = nullptr;
 
 void CFileTopControl::ProcessTop(CItem * item)
 {
+    // Do not process if we are not tracking large files
+    if (COptions::LargeFileCount == 0) return;
+
     std::lock_guard guard(m_SizeMutex);
     m_SizeMap.emplace(item);
 }
