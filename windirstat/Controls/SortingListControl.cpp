@@ -215,7 +215,10 @@ void CSortingListControl::OnLvnGetDispInfo(NMHDR* pNMHDR, LRESULT* pResult)
     {
         // The passed subitem value is actually the column id so translate it
         const int subitem = ColumnToSubItem(displayInfo->item.iSubItem);
-        wcscpy_s(displayInfo->item.pszText, displayInfo->item.cchTextMax, item->GetText(subitem).c_str());
+
+        // Copy maximum allowed to the provided puffer 
+        wcsncpy_s(displayInfo->item.pszText, displayInfo->item.cchTextMax,
+            item->GetText(subitem).c_str(), displayInfo->item.cchTextMax - 1);
     }
 }
 
