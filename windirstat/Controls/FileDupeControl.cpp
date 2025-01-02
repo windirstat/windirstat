@@ -81,9 +81,9 @@ void CFileDupeControl::ProcessDuplicate(CItem * item, BlockingQueue<CItem*>* que
     }
 
     // Add to the list of items to track
-    sizeEntry->second.insert(item);
+    sizeEntry->second.emplace_back(item);
 
-    std::wstring hashForThisItem;
+    std::vector<BYTE> hashForThisItem;
     auto itemsToHash = sizeEntry->second;
     for (const ITEMTYPE & hashType : {ITF_PARTHASH, ITF_FULLHASH })
     {
@@ -96,7 +96,7 @@ void CFileDupeControl::ProcessDuplicate(CItem * item, BlockingQueue<CItem*>* que
 
             // Compute the hash for the file
             lock.unlock();
-            std::wstring hash = itemToHash->GetFileHash(hashType == ITF_PARTHASH ? partialBufferSize : 0, queue);
+            auto hash = itemToHash->GetFileHash(hashType == ITF_PARTHASH ? partialBufferSize : 0, queue);
             lock.lock();
 
             itemToHash->SetType(itemToHash->GetRawType() | hashType);
@@ -111,7 +111,7 @@ void CFileDupeControl::ProcessDuplicate(CItem * item, BlockingQueue<CItem*>* que
 
             // See if hash is already in tracking
             const auto hashEntry = m_HashTracker.find(hash);
-            if (hashEntry != m_HashTracker.end()) hashEntry->second.insert(itemToHash);
+            if (hashEntry != m_HashTracker.end()) hashEntry->second.emplace_back(itemToHash);
             else m_HashTracker.emplace(hash, std::initializer_list<CItem*> { itemToHash });
         }
 
@@ -186,7 +186,7 @@ void CFileDupeControl::RemoveItem(CItem* item)
         if (qitem->IsType(IT_FILE))
         {
             // Mark as all files as not being hashed anymore
-            m_SizeTracker.at(qitem->GetSizeLogical()).erase(qitem);
+            std::erase(m_SizeTracker.at(qitem->GetSizeLogical()), qitem);
             qitem->SetType(ITF_PARTHASH | ITF_FULLHASH, false);
         }
         else for (const auto& child : qitem->GetChildren())

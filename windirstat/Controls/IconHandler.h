@@ -48,13 +48,13 @@ public:
     void DrawIcon(CDC* hdc, HICON image, const CPoint& pt, const CSize& sz);
     void ClearAsyncShellInfoQueue();
     void StopAsyncShellInfoQueue();
-    HICON GetMyComputerImage() const;
-    HICON GetMountPointImage() const;
-    HICON GetJunctionImage() const;
-    HICON GetJunctionProtectedImage() const;
-    HICON GetFreeSpaceImage() const;
-    HICON GetUnknownImage() const;
-    HICON GetEmptyImage() const;
+    HICON GetMyComputerImage(bool getCopy = true) const;
+    HICON GetMountPointImage(bool getCopy = true) const;
+    HICON GetJunctionImage(bool getCopy = true) const;
+    HICON GetJunctionProtectedImage(bool getCopy = true) const;
+    HICON GetFreeSpaceImage(bool getCopy = true) const;
+    HICON GetUnknownImage(bool getCopy = true) const;
+    HICON GetEmptyImage(bool getCopy = true) const;
 
     HICON FetchShellIcon(const std::wstring& path, UINT flags = 0, DWORD attr = FILE_ATTRIBUTE_NORMAL, std::wstring* psTypeName = nullptr);
 

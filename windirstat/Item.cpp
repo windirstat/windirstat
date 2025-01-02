@@ -1384,7 +1384,7 @@ void CItem::UpwardDrivePacman()
     }
 }
 
-std::wstring CItem::GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CItem*>* queue)
+std::vector<BYTE> CItem::GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CItem*>* queue)
 {
     // Initialize hash for this thread
     thread_local std::vector<BYTE> FileBuffer(1024ull * 1024ull);
@@ -1435,11 +1435,10 @@ std::wstring CItem::GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CItem*>* 
         return {};
     }
 
-    // Convert to hex string
-    std::wstring sHash;
-    sHash.resize(2ull * HashLength);
-    DWORD iHashStringLength = static_cast<DWORD>(sHash.size() + 1ull);
-    CryptBinaryToStringW(Hash.data(), HashLength, CRYPT_STRING_HEXRAW | CRYPT_STRING_NOCRLF,
-        sHash.data(), &iHashStringLength);
-    return sHash;
+    // We halve the hash since the level of uniqueness of SHA512 to save
+    // time and memory when comparing hash values.  This is better than
+    // just using SHA256 because SHA512 is faster on Windows. 
+    Hash.resize(HashLength / 2);
+    Hash.shrink_to_fit();
+    return Hash;
 }

@@ -1,4 +1,4 @@
-// FileTopControl.cpp - Implementation of FileTopControl
+﻿// FileTopControl.cpp - Implementation of FileTopControl
 //
 // WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team

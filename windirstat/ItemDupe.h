@@ -37,13 +37,13 @@ using ITEMDUPCOLUMNS = enum : std::uint8_t
 
 class CItemDupe final : public CTreeListItem
 {
-    std::wstring m_Hash;
-    ULONGLONG m_HashComp = 0;
+    std::wstring m_HashString;
+    std::vector<BYTE> m_Hash;
+    std::vector<CItemDupe*> m_Children;
     ULONGLONG m_SizePhysical = 0;
     ULONGLONG m_SizeLogical = 0;
     CItem* m_Item = nullptr;
     std::shared_mutex m_Protect;
-    std::vector<CItemDupe*> m_Children;
 
 public:
     CItemDupe(const CItemDupe&) = delete;
@@ -51,7 +51,7 @@ public:
     CItemDupe& operator=(const CItemDupe&) = delete;
     CItemDupe& operator=(CItemDupe&&) = delete;
     CItemDupe() = default;
-    CItemDupe(const std::wstring & hash, ULONGLONG sizePhysical, ULONGLONG sizeLogical);
+    CItemDupe(const std::vector<BYTE> & hash, ULONGLONG sizePhysical, ULONGLONG sizeLogical);
     CItemDupe(CItem* item);
     ~CItemDupe() override;
 
@@ -65,7 +65,7 @@ public:
         { COL_ITEMDUP_LASTCHANGE, COL_LASTCHANGE }
     };
 
-    // CTreeListItem Interface
+    // Inherited Overrides
     bool DrawSubItem(int subitem, CDC* pdc, CRect rc, UINT state, int* width, int* focusLeft) override;
     std::wstring GetText(int subitem) const override;
     int CompareSibling(const CTreeListItem* tlib, int subitem) const override;
@@ -74,6 +74,7 @@ public:
     HICON GetIcon() override;
     CTreeListItem* GetLinkedItem() override { return m_Item; }
 
+    std::wstring GetHashAndExtensions() const;
     const std::vector<CItemDupe*>& GetChildren() const;
     void AddDupeItemChild(CItemDupe* child);
     void RemoveDupeItemChild(CItemDupe* child);

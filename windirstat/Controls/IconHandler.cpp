@@ -172,37 +172,37 @@ HICON CIconHandler::FetchShellIcon(const std::wstring & path, UINT flags, const 
     return sfi.hIcon;
 }
 
-HICON CIconHandler::GetMyComputerImage() const
+HICON CIconHandler::GetMyComputerImage(const bool getCopy) const
 {
-    return CopyIcon(m_MyComputerImage);
+    return getCopy ? CopyIcon(m_MyComputerImage) : m_MyComputerImage;
 }
 
-HICON CIconHandler::GetMountPointImage() const
+HICON CIconHandler::GetMountPointImage(const bool getCopy) const
 {
-    return CopyIcon(m_MountPointImage);
+    return getCopy ? CopyIcon(m_MountPointImage) : m_MountPointImage;
 }
 
-HICON CIconHandler::GetJunctionImage() const
+HICON CIconHandler::GetJunctionImage(const bool getCopy) const
 {
-    return CopyIcon(m_JunctionImage);
+    return getCopy ? CopyIcon(m_JunctionImage) : m_JunctionImage;
 }
 
-HICON CIconHandler::GetJunctionProtectedImage() const
+HICON CIconHandler::GetJunctionProtectedImage(const bool getCopy) const
 {
-    return CopyIcon(m_JunctionProtected);
+    return getCopy ? CopyIcon(m_JunctionProtected) : m_JunctionProtected;
 }
 
-HICON CIconHandler::GetFreeSpaceImage() const
+HICON CIconHandler::GetFreeSpaceImage(const bool getCopy) const
 {
-    return CopyIcon(m_FreeSpaceImage);
+    return getCopy ? CopyIcon(m_FreeSpaceImage): m_FreeSpaceImage;
 }
 
-HICON CIconHandler::GetUnknownImage() const
+HICON CIconHandler::GetUnknownImage(const bool getCopy) const
 {
-    return CopyIcon(m_UnknownImage);
+    return getCopy ? CopyIcon(m_UnknownImage): m_UnknownImage;
 }
 
-HICON CIconHandler::GetEmptyImage() const
+HICON CIconHandler::GetEmptyImage(const bool getCopy) const
 {
-    return CopyIcon(m_EmptyImage);
+    return getCopy ? CopyIcon(m_EmptyImage) : m_EmptyImage;
 }

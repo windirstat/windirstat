@@ -23,10 +23,10 @@
 #include "ItemDupe.h"
 #include "TreeListControl.h"
 
-#include <unordered_map>
-#include <unordered_set>
 #include <shared_mutex>
 #include <queue>
+#include <set>
+#include <map>
 
 class CFileDupeControl final : public CTreeListControl
 {
@@ -40,12 +40,12 @@ public:
     void SortItems() override;
 
     std::shared_mutex m_HashTrackerMutex;
-    std::unordered_map<ULONGLONG, std::unordered_set<CItem*>> m_SizeTracker;
-    std::unordered_map<std::wstring, std::unordered_set<CItem*>> m_HashTracker;
+    std::map<ULONGLONG, std::vector<CItem*>> m_SizeTracker;
+    std::map<std::vector<BYTE>, std::vector<CItem*>> m_HashTracker;
 
     std::shared_mutex m_NodeTrackerMutex;
-    std::unordered_map<std::wstring, CItemDupe*> m_NodeTracker;
-    std::unordered_map<CItemDupe*, std::unordered_set<CItem*>> m_ChildTracker;
+    std::map<std::vector<BYTE>, CItemDupe*> m_NodeTracker;
+    std::map<CItemDupe*, std::set<CItem*>> m_ChildTracker;
     std::queue<std::pair<CItemDupe*, CItemDupe*>> m_PendingListAdds;
 
 protected:

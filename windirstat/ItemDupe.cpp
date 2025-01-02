@@ -28,14 +28,15 @@
 
 #include <functional>
 #include <queue>
+#include <format>
 
-CItemDupe::CItemDupe(const std::wstring& hash, const ULONGLONG sizePhysical, const ULONGLONG sizeLogical) :
+CItemDupe::CItemDupe(const std::vector<BYTE>& hash, const ULONGLONG sizePhysical, const ULONGLONG sizeLogical) :
     m_Hash(hash), m_SizePhysical(sizePhysical), m_SizeLogical(sizeLogical)
 {
-    DWORD maxSize = sizeof(m_HashComp);
-    CryptStringToBinary(hash.c_str(), sizeof(m_HashComp) * 2, CRYPT_STRING_HEXRAW,
-        reinterpret_cast<PBYTE>(&m_HashComp), &maxSize, nullptr, nullptr);
-    m_HashComp = _byteswap_uint64(m_HashComp);
+    m_HashString.resize(2ull * m_Hash.size());
+    DWORD iHashStringLength = static_cast<DWORD>(m_HashString.size() + 1ull);
+    CryptBinaryToStringW(m_Hash.data(), static_cast<DWORD>(m_Hash.size()),
+        CRYPT_STRING_HEXRAW | CRYPT_STRING_NOCRLF, m_HashString.data(), &iHashStringLength);
 }
 
 CItemDupe::CItemDupe(CItem* item) : m_Item(item) {}
@@ -65,7 +66,7 @@ std::wstring CItemDupe::GetText(const int subitem) const
     if (m_Item == nullptr)
     {
         // Handle top-level hash collection nodes
-        if (subitem == COL_ITEMDUP_NAME) return m_Hash;
+        if (subitem == COL_ITEMDUP_NAME) return GetHashAndExtensions();
         if (subitem == COL_ITEMDUP_SIZE_PHYSICAL) return FormatBytes(m_SizePhysical * GetChildren().size());
         if (subitem == COL_ITEMDUP_SIZE_LOGICAL) return FormatBytes(m_SizeLogical * GetChildren().size());
         if (subitem == COL_ITEMDUP_ITEMS) return FormatCount(GetChildren().size());
@@ -87,7 +88,7 @@ int CItemDupe::CompareSibling(const CTreeListItem* tlib, const int subitem) cons
     if (m_Item == nullptr)
     {
         // Handle top-level hash collection nodes
-        if (subitem == COL_ITEMDUP_NAME) return usignum(m_HashComp, other->m_HashComp);
+        if (subitem == COL_ITEMDUP_NAME) return memcmp(m_Hash.data(), other->m_Hash.data(), m_Hash.size());
         if (subitem == COL_ITEMDUP_SIZE_PHYSICAL) return usignum(m_SizePhysical * m_Children.size(), other->m_SizePhysical * other->m_Children.size());
         if (subitem == COL_ITEMDUP_SIZE_LOGICAL) return usignum(m_SizeLogical * m_Children.size(), other->m_SizeLogical * other->m_Children.size());
         if (subitem == COL_ITEMDUP_ITEMS) return usignum(m_Children.size(), other->m_Children.size());
@@ -110,22 +111,15 @@ CTreeListItem* CItemDupe::GetTreeListChild(const int i) const
 
 HICON CItemDupe::GetIcon()
 {
-    // No icon to return if not visible yet
-    if (m_VisualInfo == nullptr)
+    // Return generic node for parent nodes
+    if (m_Item == nullptr || m_VisualInfo == nullptr)
     {
-        return nullptr;
+        return GetIconHandler()->GetFreeSpaceImage(false);
     }
 
     // Return previously cached value
     if (m_VisualInfo->icon != nullptr)
     {
-        return m_VisualInfo->icon;
-    }
-
-    // Cache icon for parent nodes
-    if (m_Item == nullptr)
-    {
-        m_VisualInfo->icon = GetIconHandler()->GetFreeSpaceImage();
         return m_VisualInfo->icon;
     }
 
@@ -138,6 +132,31 @@ HICON CItemDupe::GetIcon()
 const std::vector<CItemDupe*>& CItemDupe::GetChildren() const
 {
     return m_Children;
+}
+
+std::wstring CItemDupe::GetHashAndExtensions() const
+{
+    // Create set of unique extensions
+    std::unordered_set<std::wstring> extensionsSet;
+    for (const auto& child : m_Children)
+    {
+        extensionsSet.emplace(child->m_Item->GetExtension());
+    }
+
+    // Create list of comma and space delimitered extensions
+    std::wstring extensions;
+    for (const auto& extension : extensionsSet)
+    {
+        extensions.append(extension);
+        extensions.append(L", ");
+    }
+
+    // Remove the last two delimeters
+    extensions.pop_back();
+    extensions.pop_back();
+
+    // Format string as Hash (.exta, .extb)
+    return std::format(L"{} ({})", m_HashString, TrimString(extensions, L','));
 }
 
 void CItemDupe::AddDupeItemChild(CItemDupe* child)

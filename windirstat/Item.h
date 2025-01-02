@@ -220,7 +220,8 @@ public:
     CItem* FindUnknownItem() const;
     void UpdateUnknownItem() const;
     void RemoveUnknownItem();
-    std::wstring GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CItem*>* queue);
+
+    std::vector<BYTE> GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CItem*>* queue);
 
     bool IsDone() const
     {
