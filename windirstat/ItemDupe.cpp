@@ -147,13 +147,20 @@ std::wstring CItemDupe::GetHashAndExtensions() const
     std::wstring extensions;
     for (const auto& extension : extensionsSet)
     {
+        // Limit number of characters to reasonable amount
+        if (extension.size() +
+            extensions.size() > 128) break;
+
         extensions.append(extension);
         extensions.append(L", ");
     }
 
     // Remove the last two delimeters
-    extensions.pop_back();
-    extensions.pop_back();
+    if (!extensions.empty())
+    {
+        extensions.pop_back();
+        extensions.pop_back();
+    }
 
     // Format string as Hash (.exta, .extb)
     return std::format(L"{} ({})", m_HashString, TrimString(extensions, L','));
