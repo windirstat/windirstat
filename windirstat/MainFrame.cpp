@@ -619,6 +619,10 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
     SetStatusPaneText(ID_STATUSPANE_SCRL_INDEX, Localization::Lookup(IDS_INDICATOR_SCRL));
     UpdatePaneText();
 
+    // Show or hide status bar if requested
+    if (!COptions::ShowStatusBar) m_WndStatusBar.ShowWindow(SW_HIDE);
+    if (!COptions::ShowToolBar) m_WndToolBar.ShowWindow(SW_HIDE);
+
     m_WndDeadFocus.Create(this);
 
     m_WndToolBar.EnableDocking(CBRS_ALIGN_ANY);
