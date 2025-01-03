@@ -79,10 +79,10 @@
         <Control Id="Title" Type="Text" X="15" Y="6" Width="210" Height="15" Transparent="yes" NoPrefix="yes" Text="{\WixUI_Font_Title}Install Options"/>
         <Control Id="DesktopShortcutCheckBox" Type="CheckBox" Height="18" Width="295" X="26" Y="58" Text="Create Desktop Shortcut" Property="DESKTOP_SHORTCUT" CheckBoxValue="1"/>
         <Control Id="ContextMenuEntryCheckBox" Type="CheckBox" Height="18" Width="295" X="26" Y="79" Text="Create Classic Shell Context Menu Entry" Property="CONTEXTMENU_ENTRY" CheckBoxValue="1"/>
-        <Control Id="Next" Type="PushButton" X="248" Y="243" Width="56" Height="17" Default="yes" Text="!(loc.WixUINext)">
+        <Control Id="Next" Type="PushButton" X="236" Y="243" Width="56" Height="17" Default="yes" Text="!(loc.WixUINext)">
           <Publish Event="NewDialog" Value="VerifyReadyDlg" Order="10"/>
         </Control>
-        <Control Id="Back" Type="PushButton" X="192" Y="243" Width="56" Height="17" Text="!(loc.WixUIBack)">
+        <Control Id="Back" Type="PushButton" X="180" Y="243" Width="56" Height="17" Text="!(loc.WixUIBack)">
           <Publish Event="NewDialog" Value="InstallDirDlg" Order="10"/>
         </Control>
         <Control Id="Cancel" Type="PushButton" X="304" Y="243" Width="56" Height="17" Cancel="yes" Text="!(loc.WixUICancel)">
