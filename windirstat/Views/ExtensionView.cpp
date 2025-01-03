@@ -102,7 +102,7 @@ void CExtensionView::OnUpdate(CView* /*pSender*/, const LPARAM lHint, CObject*)
         }
         else
         {
-            m_ExtensionListControl.DeleteAllItems();
+            m_ExtensionListControl.SetExtensionData(nullptr);
         }
 
         [[fallthrough]];

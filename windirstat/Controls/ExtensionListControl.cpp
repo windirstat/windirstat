@@ -155,7 +155,6 @@ int CExtensionListControl::CListItem::Compare(const CSortingListItem* baseOther,
 #pragma warning(disable:26454)
 BEGIN_MESSAGE_MAP(CExtensionListControl, COwnerDrawnListControl)
     ON_WM_MEASUREITEM_REFLECT()
-    ON_WM_DESTROY()
     ON_NOTIFY_REFLECT(LVN_DELETEITEM, OnLvnDeleteitem)
     ON_WM_SETFOCUS()
     ON_NOTIFY_REFLECT(LVN_ITEMCHANGED, OnLvnItemChanged)
@@ -198,23 +197,14 @@ void CExtensionListControl::Initialize()
     OnColumnsInserted();
 }
 
-void CExtensionListControl::OnDestroy()
-{
-    COwnerDrawnListControl::OnDestroy();
-}
-
 void CExtensionListControl::SetExtensionData(const CExtensionData* ed)
 {
+    // Cleanup visual nodes
     SetRedraw(FALSE);
     DeleteAllItems();
 
-    // Cleanup previous allocations
-    for (int i = GetItemCount() - 1; i >= 0; i++)
-    {
-        delete reinterpret_cast<CListItem*>(GetItemData(i));
-    }
-
-    for (int i = 0; const auto & ext : *ed)
+    // Insert new items
+    if (ed != nullptr) for (int i = 0; const auto & ext : *ed)
     {
         const auto item = new CListItem(this, ext.first, ext.second);
         InsertListItem(i++, item);

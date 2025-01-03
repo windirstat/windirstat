@@ -89,7 +89,6 @@ protected:
     ULONGLONG m_RootSize = 0;
 
     DECLARE_MESSAGE_MAP()
-    afx_msg void OnDestroy();
     afx_msg void OnLvnDeleteitem(NMHDR* pNMHDR, LRESULT* pResult);
     afx_msg void MeasureItem(LPMEASUREITEMSTRUCT mis);
     afx_msg void OnSetFocus(CWnd* pOldWnd);
