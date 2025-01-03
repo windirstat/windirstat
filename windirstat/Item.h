@@ -260,6 +260,11 @@ private:
     CItem* AddFile(const FileFindEnhanced& finder);
     void UpwardDrivePacman();
 
+    // Used for initialization of hashing process
+    static std::shared_mutex m_HashMutex;
+    static BCRYPT_ALG_HANDLE m_HashAlgHandle;
+    static DWORD m_HashLength;
+
     // Special structure for container items that is separately allocated to
     // reduce memory usage.  This operates under the assumption that most
     // containers have files in them.
