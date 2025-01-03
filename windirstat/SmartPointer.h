@@ -55,6 +55,11 @@ public:
         src.m_Data = nullptr;
     }
 
+    void Release() noexcept
+    {
+        m_Data = nullptr;
+    }
+
     operator T()
     {
         return m_Data;

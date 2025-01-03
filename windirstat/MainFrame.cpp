@@ -50,21 +50,12 @@ namespace
     class COpenClipboard final
     {
     public:
-        COpenClipboard(CWnd* owner, const bool empty = true)
+        COpenClipboard(CWnd* owner)
         {
             m_Open = owner->OpenClipboard();
-            if (!m_Open)
+            if (!m_Open || !EmptyClipboard())
             {
                 DisplayError(Localization::Lookup(IDS_CANNOTOPENCLIPBOARD));
-                return;
-            }
-            if (empty)
-            {
-                if (!EmptyClipboard())
-                {
-                    DisplayError(Localization::Lookup(IDS_CANNOTEMTPYCLIPBOARD));
-                    return;
-                }
             }
         }
 
@@ -72,12 +63,12 @@ namespace
         {
             if (m_Open)
             {
-                CloseClipboard();
+                ::CloseClipboard();
             }
         }
 
     private:
-        BOOL m_Open;
+        BOOL m_Open = FALSE;
     };
 }
 
@@ -866,25 +857,31 @@ void CMainFrame::CopyToClipboard(const std::wstring & psz)
     COpenClipboard clipboard(this);
     const SIZE_T cchBufLen = psz.size() + 1;
 
-    SmartPointer<HGLOBAL> h(GlobalFree, GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE | GMEM_ZEROINIT, cchBufLen * sizeof(WCHAR)));
+    SmartPointer<HGLOBAL> h(GlobalFree, GlobalAlloc(GMEM_MOVEABLE, cchBufLen * sizeof(WCHAR)));
     if (h == nullptr)
     {
         DisplayError(TranslateError());
         return;
     }
 
-    SmartPointer<LPVOID> lp(GlobalUnlock, GlobalLock(h));
-    if (lp == nullptr)
+    // Allocate memory - scoped to forced release after copy
     {
-        DisplayError(TranslateError());
-        return;
+        SmartPointer<LPVOID> lp(GlobalUnlock, GlobalLock(h));
+        if (lp == nullptr)
+        {
+            DisplayError(TranslateError());
+            return;
+        }
+        wcscpy_s(static_cast<LPWSTR>(*lp), cchBufLen, psz.c_str());
     }
-
-    wcscpy_s(static_cast<LPWSTR>(*lp), cchBufLen, psz.c_str());
+    
     if (SetClipboardData(CF_UNICODETEXT, h) == nullptr)
     {
-        DisplayError(Localization::Lookup(IDS_CANNOTSETCLIPBOARDDATA));
+        DisplayError(TranslateError());
     }
+
+    // System now owns pointer so do not allow cleanup
+    h.Release();
 }
 
 void CMainFrame::OnInitMenuPopup(CMenu* pPopupMenu, const UINT nIndex, const BOOL bSysMenu)
