@@ -56,14 +56,7 @@ public:
     ~CItemDupe() override;
 
     // Translation map for leveraging Item routines
-    const std::unordered_map<int, int> columnMap =
-    {
-        { COL_ITEMDUP_NAME, COL_NAME },
-        { COL_ITEMDUP_ITEMS, COL_ITEMS },
-        { COL_ITEMDUP_SIZE_LOGICAL, COL_SIZE_LOGICAL },
-        { COL_ITEMDUP_SIZE_PHYSICAL, COL_SIZE_PHYSICAL },
-        { COL_ITEMDUP_LASTCHANGE, COL_LASTCHANGE }
-    };
+    static const std::unordered_map<uint8_t, uint8_t> columnMap;
 
     // Inherited Overrides
     bool DrawSubItem(int subitem, CDC* pdc, CRect rc, UINT state, int* width, int* focusLeft) override;

@@ -132,7 +132,7 @@ void CFileDupeControl::ProcessDuplicate(CItem * item, BlockingQueue<CItem*>* que
         {
             // Create new root item to hold these duplicates
             dupeParent = new CItemDupe(hashForThisItem, itemToAdd->GetSizePhysical(), itemToAdd->GetSizeLogical());
-            m_PendingListAdds.emplace(nullptr, dupeParent);
+            m_PendingListAdds.emplace_back(nullptr, dupeParent);
             m_NodeTracker.emplace(hashForThisItem, dupeParent);
         }
 
@@ -140,7 +140,7 @@ void CFileDupeControl::ProcessDuplicate(CItem * item, BlockingQueue<CItem*>* que
         auto& m_HashParentNode = m_ChildTracker[dupeParent];
         if (m_HashParentNode.contains(itemToAdd)) continue;
         const auto dupeChild = new CItemDupe(itemToAdd);
-        m_PendingListAdds.emplace(dupeParent, dupeChild);
+        m_PendingListAdds.emplace_back(dupeParent, dupeChild);
         m_HashParentNode.emplace(itemToAdd);
     }
     m_HashTrackerMutex.lock();
@@ -152,12 +152,9 @@ void CFileDupeControl::SortItems()
 
     // Transfer elements to vector so we do not have to hold the lock 
     m_NodeTrackerMutex.lock();
-    std::vector<std::pair<CItemDupe*, CItemDupe*>> pendingAdds;
-    while (!m_PendingListAdds.empty())
-    {
-        pendingAdds.emplace_back(m_PendingListAdds.front());
-        m_PendingListAdds.pop();
-    }
+    std::vector<std::pair<CItemDupe*, CItemDupe*>> pendingAdds = m_PendingListAdds;
+    m_PendingListAdds.clear();
+    m_PendingListAdds.shrink_to_fit();
     m_NodeTrackerMutex.unlock();
 
     // Add items to the list
@@ -284,10 +281,8 @@ void CFileDupeControl::SetRootItem(CTreeListItem* root)
     // Cleanup visual list
     CTreeListControl::SetRootItem(root);
 
-    // Clear out any pending visual updates
-    while (!m_PendingListAdds.empty())
-        m_PendingListAdds.pop();
-
+    // Cleanup support lists
+    m_PendingListAdds.clear();
     m_NodeTracker.clear();
     m_HashTracker.clear();
     m_SizeTracker.clear();

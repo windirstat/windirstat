@@ -47,16 +47,10 @@ public:
     CItemTop& operator=(CItemTop&&) = delete;
     CItemTop() = default;
     CItemTop(CItem* item);
-    ~CItemTop();
+    ~CItemTop() override;
 
     // Translation map for leveraging Item routines
-    const std::unordered_map<int, int> columnMap =
-    {
-        { COL_ITEMTOP_NAME, COL_NAME },
-        { COL_ITEMTOP_SIZE_LOGICAL, COL_SIZE_LOGICAL },
-        { COL_ITEMTOP_SIZE_PHYSICAL, COL_SIZE_PHYSICAL },
-        { COL_ITEMTOP_LASTCHANGE, COL_LASTCHANGE }
-    };
+    static const std::unordered_map<uint8_t, uint8_t> columnMap;
 
     // CTreeListItem Interface
     bool DrawSubItem(int subitem, CDC* pdc, CRect rc, UINT state, int* width, int* focusLeft) override;

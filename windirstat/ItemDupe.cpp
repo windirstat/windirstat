@@ -49,6 +49,15 @@ CItemDupe::~CItemDupe()
     }
 }
 
+const std::unordered_map<uint8_t, uint8_t> CItemDupe::columnMap =
+{
+    { COL_ITEMDUP_NAME, COL_NAME },
+    { COL_ITEMDUP_ITEMS, COL_ITEMS },
+    { COL_ITEMDUP_SIZE_LOGICAL, COL_SIZE_LOGICAL },
+    { COL_ITEMDUP_SIZE_PHYSICAL, COL_SIZE_PHYSICAL },
+    { COL_ITEMDUP_LASTCHANGE, COL_LASTCHANGE }
+};
+
 bool CItemDupe::DrawSubItem(const int subitem, CDC* pdc, const CRect rc, const UINT state, int* width, int* focusLeft)
 {
     // Handle individual file items

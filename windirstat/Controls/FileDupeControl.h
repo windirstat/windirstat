@@ -42,11 +42,11 @@ public:
     std::shared_mutex m_HashTrackerMutex;
     std::map<ULONGLONG, std::vector<CItem*>> m_SizeTracker;
     std::map<std::vector<BYTE>, std::vector<CItem*>> m_HashTracker;
-
+    
     std::shared_mutex m_NodeTrackerMutex;
     std::map<std::vector<BYTE>, CItemDupe*> m_NodeTracker;
     std::map<CItemDupe*, std::set<CItem*>> m_ChildTracker;
-    std::queue<std::pair<CItemDupe*, CItemDupe*>> m_PendingListAdds;
+    std::vector<std::pair<CItemDupe*, CItemDupe*>> m_PendingListAdds;
 
 protected:
 

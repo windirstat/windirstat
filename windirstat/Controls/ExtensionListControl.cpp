@@ -208,6 +208,12 @@ void CExtensionListControl::SetExtensionData(const CExtensionData* ed)
     SetRedraw(FALSE);
     DeleteAllItems();
 
+    // Cleanup previous allocations
+    for (int i = GetItemCount() - 1; i >= 0; i++)
+    {
+        delete reinterpret_cast<CListItem*>(GetItemData(i));
+    }
+
     for (int i = 0; const auto & ext : *ed)
     {
         const auto item = new CListItem(this, ext.first, ext.second);
