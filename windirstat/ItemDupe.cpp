@@ -62,7 +62,7 @@ bool CItemDupe::DrawSubItem(const int subitem, CDC* pdc, const CRect rc, const U
 {
     // Handle individual file items
     if (subitem != COL_ITEMDUP_NAME) return false;
-    return CTreeListItem::DrawSubItem(columnMap.at(subitem), pdc, rc, state, width, focusLeft);
+    return CTreeListItem::DrawSubItem(columnMap.at(static_cast<uint8_t>(subitem)), pdc, rc, state, width, focusLeft);
 }
 
 std::wstring CItemDupe::GetText(const int subitem) const
@@ -84,7 +84,7 @@ std::wstring CItemDupe::GetText(const int subitem) const
 
     // Individual file names
     if (subitem == COL_ITEMDUP_NAME) return m_Item->GetPath();
-    return m_Item->GetText(columnMap.at(subitem));
+    return m_Item->GetText(columnMap.at(static_cast<uint8_t>(subitem)));
 }
 
 int CItemDupe::CompareSibling(const CTreeListItem* tlib, const int subitem) const
@@ -105,7 +105,7 @@ int CItemDupe::CompareSibling(const CTreeListItem* tlib, const int subitem) cons
     }
 
     // Individual file names
-    return m_Item->CompareSibling(other->m_Item, columnMap.at(subitem));
+    return m_Item->CompareSibling(other->m_Item, columnMap.at(static_cast<uint8_t>(subitem)));
 }
 
 int CItemDupe::GetTreeListChildCount()const
