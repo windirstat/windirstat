@@ -3,6 +3,9 @@
   <?include Defines.wxi?>
   <Product Id="$(var.ProductID)" Name="$(var.ProductName)" Language="1033" Version="$(var.ProductVersion)" Manufacturer="$(var.Manufacturer)" UpgradeCode="$(var.UpgradeCode)">
     <Package InstallerVersion="500" Compressed="yes" InstallScope="perMachine" Comments="$(var.ProductName) $(var.ProductVersion) ($(sys.BUILDARCH))"/>
+    <Upgrade Id="$(var.UpgradeCodeAlt)">  
+      <UpgradeVersion OnlyDetect="no" Minimum="1.0.0.0" Maximum="99.0.0.0" Property="OLDPRODUCTS" IncludeMinimum="yes" IncludeMaximum="no" />
+    </Upgrade>      
     <Icon Id="WinDirStat.ico" SourceFile="$(var.IconFilePath)"/>
     <Property Id="ARPCONTACT" Value="$(var.Contact)"/>
     <Property Id="ARPHELPLINK" Value="$(var.HelpLink)"/>
