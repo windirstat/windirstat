@@ -48,4 +48,5 @@
 
 #define STRING_COMPANY              WinDirStat Team
 #define STRING_COPYRIGHT            "© WinDirStat Team"
+#define STRING_EXENAME              WinDirStat.exe
 #define SOURCE_REPOSITORY           https://github.com/windirstat/windirstat

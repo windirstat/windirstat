@@ -61,7 +61,7 @@ BEGIN
             VALUE "FileDescription", STRING(TEXT_FILEDESC)
             VALUE "FileVersion", STRING(CREATE_FVER(FILE_MAJVER, FILE_MINVER, FILE_PATCH, FILE_BUILD))
             VALUE "LegalCopyright", STRING_COPYRIGHT
-            VALUE "OriginalFilename", STRING(MODNAME)
+            VALUE "OriginalFilename", STRING(STRING_EXENAME)
             VALUE "ProductName", STRING(TEXT_PRODUCTNAME)
             VALUE "ProductVersion", STRING(CREATE_PVER(FILE_MAJVER, FILE_MINVER, FILE_PATCH, FILE_BUILD))
         END

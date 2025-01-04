@@ -3,33 +3,10 @@
 	<PropertyGroup>
 		<_PropertySheetDisplayName>Project-specific overrides (late)</_PropertySheetDisplayName>
 	</PropertyGroup>
-	<ItemDefinitionGroup>
-		<ClCompile>
-			<AdditionalOptions Condition="'$(PlatformToolset)' != 'ClangCL'">%(AdditionalOptions) /d1trimfile:"$(MSBuildThisFileDirectory)\"</AdditionalOptions>
-			<AdditionalOptions>%(AdditionalOptions) /Zc:__cplusplus /utf-8</AdditionalOptions>
-		</ClCompile>
-		<ClCompile Condition="'$(TargetName)' != ''">
-			<PreprocessorDefinitions>MODNAME="$(TargetName)$(TargetExt)";%(PreprocessorDefinitions)</PreprocessorDefinitions>
-		</ClCompile>
-		<ResourceCompile Condition="'$(TargetName)' != ''">
-			<PreprocessorDefinitions>MODNAME="$(TargetName)$(TargetExt)";%(PreprocessorDefinitions)</PreprocessorDefinitions>
-		</ResourceCompile>
-	</ItemDefinitionGroup>
 	<ItemDefinitionGroup Condition="'$(Configuration)'=='Release' AND '$(PlatformToolset)'!='ClangCL'">
 		<Link>
 			<AdditionalOptions>/release %(AdditionalOptions)</AdditionalOptions>
 		</Link>
-	</ItemDefinitionGroup>
-	<ItemDefinitionGroup Condition="false">
-		<ClCompile>
-			<AdditionalOptions>%(AdditionalOptions) /Bt+</AdditionalOptions>
-		</ClCompile>
-		<Link Condition="'$(ConfigurationType)' != 'StaticLibrary'">
-			<AdditionalOptions>%(AdditionalOptions) /time+</AdditionalOptions>
-		</Link>
-		<Lib Condition="'$(ConfigurationType)' == 'StaticLibrary'">
-			<AdditionalOptions>%(AdditionalOptions) /time+</AdditionalOptions>
-		</Lib>
 	</ItemDefinitionGroup>
 	<ImportGroup Condition="'$(GitDirSentinelFile)' == ''">
 		<Import Condition="Exists('$(MSBuildThisFileDirectory)GitRevision.targets')" Project="$(MSBuildThisFileDirectory)GitRevision.targets" />
