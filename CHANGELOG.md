@@ -1,3 +1,25 @@
+# WinDirStat 2.2.0 (Upcoming)
+
+## Enhancements
+* Added "Largest Files" tab to the interface
+* Increased the number of colorized extensions in TreeMap
+* Added file extension information to duplicate list
+* Numerous duplicate detection performance improvements
+* Performance improvements when refreshing selected items
+* Added Korean language support (thanks @VenusGirl)
+* Added cleanup option to disable hibernate (hiberfil.sys)
+* Added additional metadata to MSI installer
+* Modified chocolatey installer to allow internalization
+* Allow production / beta to update each other
+* Improved legacy installer cleanup logic
+
+## Bug Fixes
+* Right-aligned numerical data in columns
+* Allow WinDirStat.exe to accept folder as command line argument
+* Addressed numerous potential hanging / crashing scenarios
+* Addressed copy / paste not always working
+* Addressed hiding toolbar and status bar setting persistence
+  
 # WinDirStat 2.1.1
 
 ## Enhancements
