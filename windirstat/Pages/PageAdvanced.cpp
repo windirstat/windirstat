@@ -122,7 +122,7 @@ void CPageAdvanced::OnOK()
     if (refreshAll)
     {
         CDirStatDoc::GetDocument()->OnOpenDocument(
-            CDirStatDoc::GetDocument()->GetRootItem()->GetPath().c_str());
+            CDirStatDoc::GetDocument()->GetPathName().GetString());
     }
     else if (refreshReparsepoints)
     {

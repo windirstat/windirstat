@@ -208,14 +208,17 @@ BOOL CDirStatDoc::OnOpenDocument(LPCWSTR lpszPathName)
     CMainFrame::Get()->MinimizeTreeMapView();
     CMainFrame::Get()->MinimizeExtensionView();
 
-    // Prepare for new root and delete any existing data
-    CDocument::OnNewDocument();
-
     // Decode list of folders to scan
     const std::wstring spec = lpszPathName;
     std::wstring folder;
     std::vector<std::wstring> drives;
     DecodeSelection(spec, folder, drives);
+
+    // Prepare for new root and delete any existing data
+    CDocument::OnNewDocument();
+
+    // Call base class to commit path to internal doc name string
+    GetDocument()->SetPathName(spec.c_str(), FALSE);
 
     // Return if no drives or folder were passed
     if (drives.empty() && folder.empty()) return true;
@@ -1043,7 +1046,7 @@ void CDirStatDoc::OnRefreshSelected()
 
 void CDirStatDoc::OnRefreshAll()
 {
-    OnOpenDocument(GetRootItem()->GetPath().c_str());
+    OnOpenDocument(GetDocument()->GetPathName().GetString());
 }
 
 void CDirStatDoc::OnSaveResults()
