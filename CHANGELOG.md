@@ -1,4 +1,4 @@
-# WinDirStat 2.2.0 (Upcoming)
+# WinDirStat 2.2.0
 
 ## Enhancements
 * Added "Largest Files" tab to the interface
@@ -14,6 +14,7 @@
 * Improved legacy installer cleanup logic
 
 ## Bug Fixes
+* Fixed missing overlays on some icons (e.g. .lnk files)
 * Right-aligned numerical data in columns
 * Allow WinDirStat.exe to accept folder as command line argument
 * Addressed numerous potential hanging / crashing scenarios
