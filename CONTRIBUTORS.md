@@ -23,6 +23,14 @@
 * Petr Řehák @PEERSOFTdev
 * Vitali Richert @tron2k
 * Vittorio Sozzi @vittoso
+* Miles Raymond @tron2k
+* Peter Geis @pgwipeout
+* Andrew Hill @AartBluestoke
+* @Neustradamus
+* @BiatuAutMiahn
+* @reukiodo
+* @an4120
+* @Max-RM
 
 # Translators
 
@@ -33,4 +41,4 @@
 * Gerben Wieringa
 * Dariusz Małachowski
 * Sergey Polyetayev
-* Sergio Omar Maurelli
+* @VenusGirl
