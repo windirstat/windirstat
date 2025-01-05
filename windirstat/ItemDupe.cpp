@@ -1,4 +1,4 @@
-﻿// ItemDupe.cpp - Implementation of CItemDupe
+// ItemDupe.cpp - Implementation of CItemDupe
 //
 // WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
@@ -149,7 +149,9 @@ std::wstring CItemDupe::GetHashAndExtensions() const
     std::unordered_set<std::wstring> extensionsSet;
     for (const auto& child : m_Children)
     {
-        extensionsSet.emplace(child->m_Item->GetExtension());
+        const auto & ext = child->m_Item->GetExtension();
+        if (ext.empty()) extensionsSet.emplace(L".???");
+        else extensionsSet.emplace(ext);
     }
 
     // Create list of comma and space delimitered extensions
@@ -172,7 +174,7 @@ std::wstring CItemDupe::GetHashAndExtensions() const
     }
 
     // Format string as Hash (.exta, .extb)
-    return std::format(L"{} ({})", m_HashString, TrimString(extensions, L','));
+    return std::format(L"{} ({})", m_HashString, extensions);
 }
 
 void CItemDupe::AddDupeItemChild(CItemDupe* child)
