@@ -1,4 +1,4 @@
-﻿// GlobalHelpers.cpp - Implementation of global helper functions
+// GlobalHelpers.cpp - Implementation of global helper functions
 //
 // WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
@@ -698,6 +698,14 @@ void DisableHibernate()
     BOOLEAN hibernateEnabled = FALSE;
     (void) CallNtPowerInformation(SystemReserveHiberFile, &hibernateEnabled,
         sizeof(hibernateEnabled), nullptr, 0);
+
+    // Delete file in the event that the above call does not actually delete the file as
+    // designed or hibernate was previously disabled in a way that did not delete the file
+    WCHAR drive[3];
+    if (GetEnvironmentVariable(L"SystemDrive", drive, std::size(drive)) == std::size(drive) - 1)
+    {
+        DeleteFile((drive + std::wstring(L"\\hiberfil.sys")).c_str());
+    }
 }
 
 bool IsHibernateEnabled()
