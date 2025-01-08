@@ -1,4 +1,4 @@
-﻿// PacMan.cpp - Implementation of CPacman
+// PacMan.cpp - Implementation of CPacman
 //
 // WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
@@ -130,7 +130,7 @@ void CPacman::Draw(const CDC* pdc, const CRect& rect)
     if (m_Moving) return;
 
     // Draw sleepy graphic
-    const Gdiplus::Font font(L"Arial", 6.0f, Gdiplus::FontStyleBold);
+    static const Gdiplus::Font font(L"Arial", 6.0f, Gdiplus::FontStyleBold);
     const Gdiplus::SolidBrush blackBrush(Gdiplus::Color(0xFF, 0, 0, 0));
     graphics.DrawString(L"z",1, &font, {rc.left + 5.0f, rc.top - 3.0f}, &blackBrush);
     graphics.DrawString(L"z", 1, &font, { rc.left + 10.0f, rc.top - 4.5f }, &blackBrush);
