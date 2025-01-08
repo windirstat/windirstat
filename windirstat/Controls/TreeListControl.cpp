@@ -1,4 +1,4 @@
-﻿// TreeListControl.cpp - Implementation of CTreeListItem and CTreeListControl
+// TreeListControl.cpp - Implementation of CTreeListItem and CTreeListControl
 //
 // WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
@@ -807,7 +807,7 @@ void CTreeListControl::OnChildAdded(const CTreeListItem* parent, CTreeListItem* 
 
     const int p = FindTreeItem(parent);
     ASSERT(p != -1);
-    InsertItem(p + GetItem(p)->GetTreeListChildCount(), child);
+    InsertItem(p + parent->GetTreeListChildCount(), child);
 }
 
 void CTreeListControl::OnChildRemoved(const CTreeListItem* parent, CTreeListItem* child)
