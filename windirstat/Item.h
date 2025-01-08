@@ -1,4 +1,4 @@
-﻿// Item.h - Declaration of CItem
+// Item.h - Declaration of CItem
 //
 // WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
@@ -57,8 +57,9 @@ enum ITEMTYPE : unsigned short
     IT_ANY        = 0x00FF,  // Indicates any item type
     ITF_DONE      = 1 << 8,  // Indicates done processing
     ITF_ROOTITEM  = 1 << 9,  // Indicates root item
-    ITF_PARTHASH  = 1 << 10, // Indicates a partial hash
-    ITF_FULLHASH  = 1 << 11, // Indicates a full hash
+    ITF_SKIPHASH  = 1 << 10, // Indicates cannot be hased (unreadable)
+    ITF_PARTHASH  = 1 << 11, // Indicates a partial hash
+    ITF_FULLHASH  = 1 << 12, // Indicates a full hash
     ITF_FLAGS     = 0xFF00,  // All potential flag items
 };
 

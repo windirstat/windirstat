@@ -1,4 +1,4 @@
-﻿// FileDupeControl.cpp - Implementation of FileDupeControl
+// FileDupeControl.cpp - Implementation of FileDupeControl
 //
 // WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
@@ -70,28 +70,19 @@ void CFileDupeControl::ProcessDuplicate(CItem * item, BlockingQueue<CItem*>* que
         return;
     }
 
+    // Add to size tracker
     std::unique_lock lock(m_HashTrackerMutex);
-    const auto sizeEntry = m_SizeTracker.find(item->GetSizeLogical());
-    if (sizeEntry == m_SizeTracker.end())
-    {
-        // Add first entry to list
-        const auto set = { item };
-        m_SizeTracker.emplace(item->GetSizeLogical(), set);
-        return;
-    }
-
-    // Add to the list of items to track
-    sizeEntry->second.emplace_back(item);
-
+    auto & sizeSet = m_SizeTracker[item->GetSizeLogical()];
+    sizeSet.emplace_back(item);
+    
     std::vector<BYTE> hashForThisItem;
-    auto itemsToHash = sizeEntry->second;
+    auto itemsToHash = std::vector(sizeSet);
     for (const ITEMTYPE & hashType : {ITF_PARTHASH, ITF_FULLHASH })
     {
         // Attempt to hash the file partially
-        std::unordered_map<std::wstring, std::unordered_set<CItem*>> hashesToDisplay;
         for (auto& itemToHash : itemsToHash)
         {
-            if (itemToHash->IsType(hashType)) continue;
+            if (itemToHash->IsType(hashType) || itemToHash->IsType(ITF_SKIPHASH)) continue;
             constexpr auto partialBufferSize = 128ull * 1024ull;
 
             // Compute the hash for the file
@@ -99,29 +90,34 @@ void CFileDupeControl::ProcessDuplicate(CItem * item, BlockingQueue<CItem*>* que
             auto hash = itemToHash->GetFileHash(hashType == ITF_PARTHASH ? partialBufferSize : 0, queue);
             lock.lock();
 
+            // Skip if not hashable
+            if (hash.empty())
+            {
+                itemToHash->SetType(itemToHash->GetRawType() | ITF_SKIPHASH);
+                return;
+            }
+
             itemToHash->SetType(itemToHash->GetRawType() | hashType);
             if (itemToHash == item) hashForThisItem = hash;
-
-            // Skip if not hashable
-            if (hash.empty()) continue;
 
             // Mark as the full being completed as well
             if (itemToHash->GetSizeLogical() <= partialBufferSize)
                 itemToHash->SetType(itemToHash->GetRawType() | ITF_FULLHASH);
 
-            // See if hash is already in tracking
-            const auto hashEntry = m_HashTracker.find(hash);
-            if (hashEntry != m_HashTracker.end()) hashEntry->second.emplace_back(itemToHash);
-            else m_HashTracker.emplace(hash, std::initializer_list<CItem*> { itemToHash });
+            // Add hash to tracking queue
+            auto & hashVector = m_HashTracker[hash];
+            if (std::ranges::find(hashVector, itemToHash) == hashVector.end())
+                hashVector.emplace_back(itemToHash);
         }
 
         // Return if no hash conflicts
         const auto hashesResult = m_HashTracker.find(hashForThisItem) ;
-        if (hashesResult == m_HashTracker.end() || hashesResult->second.size() <= 1) return;
+        if (hashesResult == m_HashTracker.end() || hashesResult->second.size() < 2) return;
         itemsToHash = hashesResult->second;
     }
 
-    // Add the hashes to the UI thread 
+    // Add the hashes to the UI thread
+    if (hashForThisItem.empty() || itemsToHash.empty()) return;
     m_HashTrackerMutex.unlock();
     for (std::lock_guard guard(m_NodeTrackerMutex); const auto& itemToAdd : itemsToHash)
     {
