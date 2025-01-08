@@ -94,7 +94,7 @@ void CFileDupeControl::ProcessDuplicate(CItem * item, BlockingQueue<CItem*>* que
             if (hash.empty())
             {
                 itemToHash->SetType(itemToHash->GetRawType() | ITF_SKIPHASH);
-                return;
+                continue;
             }
 
             itemToHash->SetType(itemToHash->GetRawType() | hashType);
