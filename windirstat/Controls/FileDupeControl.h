@@ -1,4 +1,4 @@
-﻿// FileDupeControl.h - Declaration of CFileDupeControl and CFileTreeView
+// FileDupeControl.h - Declaration of CFileDupeControl and CFileTreeView
 //
 // WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
@@ -41,7 +41,8 @@ public:
 
     std::shared_mutex m_HashTrackerMutex;
     std::map<ULONGLONG, std::vector<CItem*>> m_SizeTracker;
-    std::map<std::vector<BYTE>, std::vector<CItem*>> m_HashTracker;
+    std::map<std::vector<BYTE>, std::vector<CItem*>> m_HashTrackerSmall;
+    std::map<std::vector<BYTE>, std::vector<CItem*>> m_HashTrackerLarge;
     
     std::shared_mutex m_NodeTrackerMutex;
     std::map<std::vector<BYTE>, CItemDupe*> m_NodeTracker;
@@ -50,6 +51,7 @@ public:
 
 protected:
 
+    static constexpr auto m_PartialBufferSize = 128ull * 1024ull;
     static CFileDupeControl* m_Singleton;
     bool m_ShowCloudWarningOnThisScan = false;
     

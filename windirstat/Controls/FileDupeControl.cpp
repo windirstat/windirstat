@@ -70,10 +70,15 @@ void CFileDupeControl::ProcessDuplicate(CItem * item, BlockingQueue<CItem*>* que
         return;
     }
 
-    // Add to size tracker
+    // Determine which hash applies to this object
+    auto& m_HashTracker = item->GetSizeLogical() <= m_PartialBufferSize
+        ? m_HashTrackerSmall : m_HashTrackerLarge;
+
+    // Add to size tracker and exit early if first item
     std::unique_lock lock(m_HashTrackerMutex);
     auto & sizeSet = m_SizeTracker[item->GetSizeLogical()];
     sizeSet.emplace_back(item);
+    if (sizeSet.size() < 2) return;
     
     std::vector<BYTE> hashForThisItem;
     auto itemsToHash = std::vector(sizeSet);
@@ -83,11 +88,10 @@ void CFileDupeControl::ProcessDuplicate(CItem * item, BlockingQueue<CItem*>* que
         for (auto& itemToHash : itemsToHash)
         {
             if (itemToHash->IsType(hashType) || itemToHash->IsType(ITF_SKIPHASH)) continue;
-            constexpr auto partialBufferSize = 128ull * 1024ull;
 
             // Compute the hash for the file
             lock.unlock();
-            auto hash = itemToHash->GetFileHash(hashType == ITF_PARTHASH ? partialBufferSize : 0, queue);
+            auto hash = itemToHash->GetFileHash(hashType == ITF_PARTHASH ? m_PartialBufferSize : 0, queue);
             lock.lock();
 
             // Skip if not hashable
@@ -101,7 +105,7 @@ void CFileDupeControl::ProcessDuplicate(CItem * item, BlockingQueue<CItem*>* que
             if (itemToHash == item) hashForThisItem = hash;
 
             // Mark as the full being completed as well
-            if (itemToHash->GetSizeLogical() <= partialBufferSize)
+            if (itemToHash->GetSizeLogical() <= m_PartialBufferSize)
                 itemToHash->SetType(itemToHash->GetRawType() | ITF_FULLHASH);
 
             // Add hash to tracking queue
@@ -168,6 +172,10 @@ void CFileDupeControl::SortItems()
 
 void CFileDupeControl::RemoveItem(CItem* item)
 {
+    // Determine which hash applies to this object
+    auto& m_HashTracker = item->GetSizeLogical() <= m_PartialBufferSize
+        ? m_HashTrackerSmall : m_HashTrackerLarge;
+
     // Exit immediately if not doing duplicate detector
     if (m_HashTracker.empty() && m_SizeTracker.empty()) return;
 
@@ -280,7 +288,8 @@ void CFileDupeControl::SetRootItem(CTreeListItem* root)
     // Cleanup support lists
     m_PendingListAdds.clear();
     m_NodeTracker.clear();
-    m_HashTracker.clear();
+    m_HashTrackerSmall.clear();
+    m_HashTrackerLarge.clear();
     m_SizeTracker.clear();
     m_ChildTracker.clear();
 }
