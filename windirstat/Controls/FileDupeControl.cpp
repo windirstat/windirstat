@@ -167,6 +167,28 @@ void CFileDupeControl::SortItems()
         SetRedraw(TRUE);
     }
 
+#ifdef _DEBUG
+    const auto root = reinterpret_cast<CItemDupe*>(GetItem(0));
+    for (const auto& hashParent : root->GetChildren())
+    {
+        const auto& hashString = hashParent->GetHashAndExtensions().substr(0, 8);
+        if (hashParent->GetChildren().size() < 2)
+        {
+            VTRACE(L"Debug Dupe Tree Entry < 2 Nodes: {}", hashString);
+        }
+
+        const auto sizeCheck = reinterpret_cast<CItem*>(hashParent->GetChildren()[0]->GetLinkedItem())->GetSizeLogical();
+        for (const auto& hashItem : hashParent->GetChildren())
+        {
+            const auto sizeCompare = reinterpret_cast<CItem*>(hashItem->GetLinkedItem())->GetSizeLogical();
+            if (sizeCheck != sizeCompare)
+            {
+                VTRACE(L"Debug Dupe Tree: Hash {} Sizes: {} != {}", hashString, sizeCheck, sizeCompare);
+            }
+        }
+    }
+#endif
+
     CSortingListControl::SortItems();
 }
 
