@@ -1430,10 +1430,11 @@ std::vector<BYTE> CItem::GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CIte
         return {};
     }
 
-    // We halve the hash since the level of uniqueness of SHA512 to save
-    // time and memory when comparing hash values.  This is better than
-    // just using SHA256 because SHA512 is faster on Windows. 
-    Hash.resize(m_HashLength / 2);
+    // We reduce the size of the stored hash since the level of uniqueness required
+    // is unnecessary for simple dupe checking. This is preferred to just using a simpler
+    // hash alg since SHA512 is FIPS complaint on Windows and more performant than SHA256.
+    constexpr auto ReducedHashInBytes = 16;
+    Hash.resize(ReducedHashInBytes);
     Hash.shrink_to_fit();
     return Hash;
 }
