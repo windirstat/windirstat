@@ -1,4 +1,4 @@
-﻿// PacaMan.h - Declaration of CPacman
+// PacaMan.h - Declaration of CPacman
 //
 // WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
@@ -20,6 +20,8 @@
 
 #pragma once
 
+#include "stdafx.h"
+
 //
 // CPacman. Pacman animation.
 //
@@ -39,6 +41,7 @@ private:
     static void UpdatePosition(float& position, bool& up, float diff);
     static bool m_Suspended;
 
+    Gdiplus::Font m_Font;
     ULONGLONG m_LastUpdate = 0;  // TickCount
     ULONGLONG m_LastDraw = 0;    // Last time drawn
     COLORREF m_Bgcolor;          // Background color
