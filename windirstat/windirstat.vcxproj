@@ -747,6 +747,7 @@
     <None Include="res\IDR_MAINFRAME.bmp" />
     <None Include="res\windirstat.manifest" />
     <None Include="res\windirstat.rc2" />
+    <None Include="rt_lang1.bin" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="langs.rc" />
