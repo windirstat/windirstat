@@ -1,4 +1,4 @@
-﻿// WinDirStat.cpp - Implementation of CDirStatApp and some globals
+// WinDirStat.cpp - Implementation of CDirStatApp and some globals
 //
 // WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
@@ -264,6 +264,11 @@ BOOL CDirStatApp::InitInstance()
     (void)AfxOleInit();
     AfxEnableControlContainer();
     (void)AfxInitRichEdit2();
+
+    // Initialize GPI Plus
+    Gdiplus::GdiplusStartupInput gdiplusStartupInput;
+    ULONG_PTR gdiplusToken;
+    Gdiplus::GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, nullptr);
 
     // If a local config file is available, use that for settings
     SetPortableMode(true, true);

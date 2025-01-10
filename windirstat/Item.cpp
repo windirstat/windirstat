@@ -1,4 +1,4 @@
-﻿// Item.cpp - Implementation of CItem
+// Item.cpp - Implementation of CItem
 //
 // WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
@@ -1399,9 +1399,9 @@ std::vector<BYTE> CItem::GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CIte
         }
     }
 
-    // Open file for reading
-    SmartPointer<HANDLE> hFile(CloseHandle, CreateFile(GetPathLong().c_str(), GENERIC_READ,
-        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING,
+    // Open file for reading - avoid files that are actively being written to
+    SmartPointer<HANDLE> hFile(CloseHandle, CreateFile(GetPathLong().c_str(), 
+        GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING,
         FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_SEQUENTIAL_SCAN, nullptr));
     if (hFile == INVALID_HANDLE_VALUE)
     {
@@ -1430,10 +1430,11 @@ std::vector<BYTE> CItem::GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CIte
         return {};
     }
 
-    // We halve the hash since the level of uniqueness of SHA512 to save
-    // time and memory when comparing hash values.  This is better than
-    // just using SHA256 because SHA512 is faster on Windows. 
-    Hash.resize(m_HashLength / 2);
+    // We reduce the size of the stored hash since the level of uniqueness required
+    // is unnecessary for simple dupe checking. This is preferred to just using a simpler
+    // hash alg since SHA512 is FIPS complaint on Windows and more performant than SHA256.
+    constexpr auto ReducedHashInBytes = 16;
+    Hash.resize(ReducedHashInBytes);
     Hash.shrink_to_fit();
     return Hash;
 }
