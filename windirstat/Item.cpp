@@ -1,4 +1,4 @@
-﻿// Item.cpp - Implementation of CItem
+// Item.cpp - Implementation of CItem
 //
 // WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
@@ -1399,9 +1399,9 @@ std::vector<BYTE> CItem::GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CIte
         }
     }
 
-    // Open file for reading
-    SmartPointer<HANDLE> hFile(CloseHandle, CreateFile(GetPathLong().c_str(), GENERIC_READ,
-        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING,
+    // Open file for reading - avoid files that are actively being written to
+    SmartPointer<HANDLE> hFile(CloseHandle, CreateFile(GetPathLong().c_str(), 
+        GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING,
         FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_SEQUENTIAL_SCAN, nullptr));
     if (hFile == INVALID_HANDLE_VALUE)
     {
