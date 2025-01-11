@@ -1041,7 +1041,10 @@ END_MESSAGE_MAP()
 
 void CDirStatDoc::OnRefreshSelected()
 {
-    RefreshItem(GetAllSelected());
+    // Optimize refresh selected when done on root item
+    const auto& selected = GetAllSelected();
+    if (selected.size() == 1 && selected.at(0) == GetRootItem()) OnRefreshAll();
+    else RefreshItem(selected);
 }
 
 void CDirStatDoc::OnRefreshAll()
