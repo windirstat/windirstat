@@ -51,7 +51,7 @@ public:
     CItemDupe& operator=(const CItemDupe&) = delete;
     CItemDupe& operator=(CItemDupe&&) = delete;
     CItemDupe() = default;
-    CItemDupe(const std::vector<BYTE> & hash, ULONGLONG sizePhysical, ULONGLONG sizeLogical);
+    CItemDupe(const std::vector<BYTE> & hash);
     CItemDupe(CItem* item);
     ~CItemDupe() override;
 

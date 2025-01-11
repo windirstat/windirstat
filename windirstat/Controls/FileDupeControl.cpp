@@ -1,4 +1,4 @@
-// FileDupeControl.cpp - Implementation of FileDupeControl
+﻿// FileDupeControl.cpp - Implementation of FileDupeControl
 //
 // WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
@@ -131,7 +131,7 @@ void CFileDupeControl::ProcessDuplicate(CItem * item, BlockingQueue<CItem*>* que
         if (dupeParent == nullptr)
         {
             // Create new root item to hold these duplicates
-            dupeParent = new CItemDupe(hashForThisItem, itemToAdd->GetSizePhysical(), itemToAdd->GetSizeLogical());
+            dupeParent = new CItemDupe(hashForThisItem);
             m_PendingListAdds.emplace_back(nullptr, dupeParent);
             m_NodeTracker.emplace(hashForThisItem, dupeParent);
         }
