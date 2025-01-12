@@ -27,6 +27,7 @@ class CFileTreeControl final : public CTreeListControl
 {
 public:
     CFileTreeControl();
+    ~CFileTreeControl() override { m_Singleton = nullptr; }
     bool GetAscendingDefault(int column) override;
     static CFileTreeControl* Get() { return m_Singleton; }
 

@@ -704,7 +704,7 @@ void CMainFrame::OnClose()
     KillTimer(ID_WDS_CONTROL);
 
     // Suspend the scan and wait for scan to complete
-    CDirStatDoc::GetDocument()->StopScanningEngine();
+    CDirStatDoc::GetDocument()->StopScanningEngine(CDirStatDoc::Abort);
 
     // Stop icon queue
     GetIconHandler()->StopAsyncShellInfoQueue();

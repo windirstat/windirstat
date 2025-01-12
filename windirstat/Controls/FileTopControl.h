@@ -31,9 +31,9 @@ class CFileTopControl final : public CTreeListControl
 {
 public:
     CFileTopControl();
+    ~CFileTopControl() override { m_Singleton = nullptr; }
     bool GetAscendingDefault(int column) override;
     static CFileTopControl* Get() { return m_Singleton; }
-    void SetRootItem(CTreeListItem* root) override;
     void ProcessTop(CItem* item);
     void RemoveItem(CItem* items);
     void SortItems() override;
@@ -56,4 +56,5 @@ protected:
     DECLARE_MESSAGE_MAP()
     afx_msg void OnSetFocus(CWnd* pOldWnd);
     afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
+    afx_msg BOOL OnDeleteAllItems(NMHDR* pNMHDR, LRESULT* pResult);
 };

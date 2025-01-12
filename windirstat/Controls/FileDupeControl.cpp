@@ -49,6 +49,7 @@ bool CFileDupeControl::GetAscendingDefault(const int column)
 BEGIN_MESSAGE_MAP(CFileDupeControl, CTreeListControl)
     ON_WM_SETFOCUS()
     ON_WM_KEYDOWN()
+    ON_NOTIFY_REFLECT_EX(LVN_DELETEALLITEMS, OnDeleteAllItems)
 END_MESSAGE_MAP()
 #pragma warning(pop)
 
@@ -308,12 +309,10 @@ void CFileDupeControl::OnItemDoubleClick(const int i)
     }
 }
 
-void CFileDupeControl::SetRootItem(CTreeListItem* root)
+BOOL CFileDupeControl::OnDeleteAllItems(NMHDR*, LRESULT* pResult)
 {
+    // Reset duplicate warning
     m_ShowCloudWarningOnThisScan = COptions::SkipDupeDetectionCloudLinksWarning;
-
-    // Cleanup visual list
-    CTreeListControl::SetRootItem(root);
 
     // Cleanup support lists
     m_PendingListAdds.clear();
@@ -322,6 +321,10 @@ void CFileDupeControl::SetRootItem(CTreeListItem* root)
     m_HashTrackerLarge.clear();
     m_SizeTracker.clear();
     m_ChildTracker.clear();
+
+    // Allow delete to proceed
+    *pResult = FALSE;
+    return FALSE;
 }
 
 void CFileDupeControl::OnSetFocus(CWnd* pOldWnd)
