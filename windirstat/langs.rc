@@ -49,6 +49,24 @@ IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_ko.bin"
 
 
 /////////////////////////////////////////////////////////////////////////////
+// Chinese (Traditional, Hong Kong SAR) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ZHH)
+LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_HONGKONG
+#pragma code_page(950)
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// RT_LANG
+//
+
+IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_hk.bin"
+
+#endif    // Chinese (Traditional, Hong Kong SAR) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
 // Czech (Neutral) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_CSY)
