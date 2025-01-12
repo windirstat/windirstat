@@ -1519,8 +1519,6 @@ void CDirStatDoc::StopScanningEngine(StopReason stopReason)
         m_thread = nullptr;
         m_queues.clear();
     }
-
-    OnScanResume();
 }
 
 void CDirStatDoc::OnContextMenuExplore(UINT nID)
@@ -1720,8 +1718,17 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
             }
         }
 
+        // If new scan or closing, indicate done and exit early
+        if (stopReason == Abort)
+        {
+            CMainFrame::Get()->InvokeInMessageThread([&]
+            {
+                CMainFrame::Get()->SetProgressComplete();
+            });
+            return;
+        }
+
         // Sorting and other finalization tasks
-        if (stopReason == Abort) return;
         CItem::ScanItemsFinalize(GetRootItem());
         GetDocument()->RebuildExtensionData();
 

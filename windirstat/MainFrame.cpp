@@ -448,8 +448,11 @@ void CMainFrame::SetProgressPos(ULONGLONG pos)
     UpdateProgress();
 }
 
-void CMainFrame::SetProgressComplete() // called by CDirStatDoc
+void CMainFrame::SetProgressComplete()
 {
+    // Disable any potential suspend state
+    SuspendState(false);
+
     if (m_TaskbarList)
     {
         m_TaskbarList->SetProgressState(*this, m_TaskbarButtonState = TBPF_NOPROGRESS);
