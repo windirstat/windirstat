@@ -37,6 +37,7 @@
 #include <shared_mutex>
 #include <stack>
 #include <array>
+#include <ranges>
 
 #pragma comment(lib, "crypt32.lib")
 #pragma comment(lib, "bcrypt.lib")
@@ -1305,22 +1306,31 @@ COLORREF CItem::GetPercentageColor() const
 
 std::wstring CItem::UpwardGetPathWithoutBackslash() const
 {
-    // allow persistent storage to prevent constant reallocation
-    std::wstring path = L"\\";
-
+    // create vector of the path structure so we can reverse it
+    std::vector<const CItem*> pathParts;
+    std::size_t estSize = 0;
     for (auto p = this; p != nullptr; p = p->GetParent())
+    {
+        pathParts.emplace_back(p);
+        estSize += p->m_Name.length() + 1;
+    }
+
+    // append the strings in reverse order
+    std::wstring path;
+    path.reserve(estSize);
+    for (const auto & p : pathParts | std::views::reverse)
     {
         if (p->IsType(IT_DIRECTORY))
         {
-            path.insert(0, p->m_Name + L"\\");
+            path.append(p->m_Name).append(L"\\");
         }
         else if (p->IsType(IT_FILE))
         {
-            path = p->m_Name;
+            path.append(p->m_Name);
         }
         else if (p->IsType(IT_DRIVE))
         {
-            path.insert(0, p->m_Name.substr(0, 2) + L"\\");
+            path.append(p->m_Name.substr(0, 2)).append(L"\\");
         }
     }
 
