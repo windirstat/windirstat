@@ -108,6 +108,7 @@
     <None Include="res\langs\lang_ko.bin">
       <Filter>Resource Files\Languages</Filter>
     </None>
+    <None Include="res\langs\lang_hk.bin" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DirStatDoc.h">
@@ -532,5 +533,6 @@
     <Text Include="res\langs\lang_ko.txt">
       <Filter>Resource Files\Languages</Filter>
     </Text>
+    <Text Include="res\langs\lang_hk.txt" />
   </ItemGroup>
 </Project>

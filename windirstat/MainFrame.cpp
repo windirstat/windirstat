@@ -404,7 +404,7 @@ LRESULT CMainFrame::OnTaskButtonCreated(WPARAM, LPARAM)
 {
     if (!m_TaskbarList)
     {
-        const HRESULT hr = CoCreateInstance(CLSID_TaskbarList, nullptr, CLSCTX_ALL, IID_ITaskbarList3, reinterpret_cast<LPVOID*>(&m_TaskbarList));
+        const HRESULT hr = CoCreateInstance(CLSID_TaskbarList, nullptr, CLSCTX_ALL, IID_PPV_ARGS(&m_TaskbarList));
         if (FAILED(hr))
         {
             VTRACE(L"CoCreateInstance(CLSID_TaskbarList, nullptr, CLSCTX_ALL) failed {:#08X}", static_cast<DWORD>(hr));
@@ -492,14 +492,16 @@ void CMainFrame::SuspendState(const bool suspend)
 void CMainFrame::UpdateProgress()
 {
     // Update working item tracker if changed
-    m_WorkingItem = CDirStatDoc::GetDocument()->GetRootItem();
-    if (m_WorkingItem != nullptr && !m_WorkingItem->IsDone())
+    const auto currentRoot = CDirStatDoc::GetDocument()->GetRootItem();
+    if (currentRoot != m_WorkingItem &&
+        currentRoot != nullptr && !currentRoot->IsDone())
     {
+        m_WorkingItem = currentRoot;
         CreateProgress(m_WorkingItem->GetProgressRange());
     }
 
     // Exit early if we not ready for visual updates
-    if (!m_ProgressVisible || m_WorkingItem == nullptr) return;
+    if (!m_ProgressVisible || m_WorkingItem == nullptr || currentRoot == nullptr) return;
 
     // Update pacman graphic (does nothing if hidden)
     m_ProgressPos = m_WorkingItem->GetProgressPos();
