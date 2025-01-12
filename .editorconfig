@@ -13,7 +13,8 @@ charset = utf-8
 end_of_line = crlf
 
 [*.{c,cpp,h}]
-charset = utf-8
+end_of_line = crlf
+charset = utf-8-bom
 trim_trailing_whitespace = true
 
 [*.{md}]

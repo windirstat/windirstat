@@ -122,7 +122,8 @@ protected:
     void UnlinkRoot();
     bool UserDefinedCleanupWorksForItem(USERDEFINEDCLEANUP* udc, const CItem* item) const;
     void StartScanningEngine(std::vector<CItem*> items);
-    void StopScanningEngine();
+    enum StopReason : uint8_t { Default, Stop, Abort };
+    void StopScanningEngine(StopReason stopReason = Stop);
     void RefreshItem(const std::vector<CItem*>& item) const;
     void RefreshItem(CItem* item) const { RefreshItem(std::vector{ item }); }
 

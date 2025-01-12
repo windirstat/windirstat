@@ -155,7 +155,7 @@ int CExtensionListControl::CListItem::Compare(const CSortingListItem* baseOther,
 #pragma warning(disable:26454)
 BEGIN_MESSAGE_MAP(CExtensionListControl, COwnerDrawnListControl)
     ON_WM_MEASUREITEM_REFLECT()
-    ON_NOTIFY_REFLECT(LVN_DELETEITEM, OnLvnDeleteitem)
+    ON_NOTIFY_REFLECT(LVN_DELETEITEM, OnLvnDeleteItem)
     ON_WM_SETFOCUS()
     ON_NOTIFY_REFLECT(LVN_ITEMCHANGED, OnLvnItemChanged)
     ON_WM_KEYDOWN()
@@ -255,7 +255,7 @@ CExtensionListControl::CListItem* CExtensionListControl::GetListItem(const int i
     return reinterpret_cast<CListItem*>(GetItemData(i));
 }
 
-void CExtensionListControl::OnLvnDeleteitem(NMHDR* pNMHDR, LRESULT* pResult)
+void CExtensionListControl::OnLvnDeleteItem(NMHDR* pNMHDR, LRESULT* pResult)
 {
     const auto lv = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
     delete reinterpret_cast<CListItem*>(lv->lParam);

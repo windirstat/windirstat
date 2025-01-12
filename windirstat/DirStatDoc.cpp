@@ -172,13 +172,18 @@ void CDirStatDoc::DeleteContents()
     CWaitCursor wc;
 
     // Wait for system to fully shutdown
-    StopScanningEngine();
+    StopScanningEngine(Abort);
 
     // Clean out icon queue
     GetIconHandler()->ClearAsyncShellInfoQueue();
 
     // Reset extension data
     GetExtensionData()->clear();
+
+    // Cleanup visual artifacts
+    if (CFileTopControl::Get() != nullptr) CFileTopControl::Get()->DeleteAllItems();
+    if (CFileTreeControl::Get() != nullptr) CFileTreeControl::Get()->DeleteAllItems();
+    if (CFileDupeControl::Get() != nullptr) CFileDupeControl::Get()->DeleteAllItems();
 
     // Cleanup structures
     delete m_RootItemDupe;
@@ -1041,7 +1046,10 @@ END_MESSAGE_MAP()
 
 void CDirStatDoc::OnRefreshSelected()
 {
-    RefreshItem(GetAllSelected());
+    // Optimize refresh selected when done on root item
+    const auto& selected = GetAllSelected();
+    if (selected.size() == 1 && selected.at(0) == GetRootItem()) OnRefreshAll();
+    else RefreshItem(selected);
 }
 
 void CDirStatDoc::OnRefreshAll()
@@ -1489,13 +1497,18 @@ void CDirStatDoc::OnScanResume()
 
 void CDirStatDoc::OnScanStop()
 {
+    StopScanningEngine(Stop);
+}
+
+void CDirStatDoc::StopScanningEngine(StopReason stopReason)
+{
     // Request for all threads to stop processing
     for (auto& queue : m_queues | std::views::values)
         ProcessMessagesUntilSignaled([&queue] { queue.SuspendExecution(); });
 
     // Stop m_queues from executing
     for (auto& queue : m_queues | std::views::values)
-        ProcessMessagesUntilSignaled([&queue] { queue.CancelExecution(); });
+        ProcessMessagesUntilSignaled([&queue, &stopReason] { queue.CancelExecution(stopReason); });
 
     // Wait for wrapper thread to complete
     if (m_thread != nullptr)
@@ -1506,13 +1519,6 @@ void CDirStatDoc::OnScanStop()
         m_thread = nullptr;
         m_queues.clear();
     }
-
-    OnScanResume();
-}
-
-void CDirStatDoc::StopScanningEngine()
-{
-    OnScanStop();
 }
 
 void CDirStatDoc::OnContextMenuExplore(UINT nID)
@@ -1693,8 +1699,9 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
         });
 
         // Wait for all threads to run out of work
+        StopReason stopReason = Default;
         for (auto& queue : m_queues | std::views::values)
-            queue.WaitForCompletion();
+            stopReason = static_cast<StopReason>(queue.WaitForCompletion());
    
         // Restore unknown and freespace items
         for (const auto& item : items)
@@ -1709,6 +1716,16 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
             {
                 item->CreateUnknownItem();
             }
+        }
+
+        // If new scan or closing, indicate done and exit early
+        if (stopReason == Abort)
+        {
+            CMainFrame::Get()->InvokeInMessageThread([&]
+            {
+                CMainFrame::Get()->SetProgressComplete();
+            });
+            return;
         }
 
         // Sorting and other finalization tasks

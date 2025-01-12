@@ -1,4 +1,4 @@
-// ItemDupe.cpp - Implementation of CItemDupe
+﻿// ItemDupe.cpp - Implementation of CItemDupe
 //
 // WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
@@ -30,8 +30,7 @@
 #include <queue>
 #include <format>
 
-CItemDupe::CItemDupe(const std::vector<BYTE>& hash, const ULONGLONG sizePhysical, const ULONGLONG sizeLogical) :
-    m_Hash(hash), m_SizePhysical(sizePhysical), m_SizeLogical(sizeLogical)
+CItemDupe::CItemDupe(const std::vector<BYTE>& hash) : m_Hash(hash)
 {
     m_HashString.resize(2ull * m_Hash.size());
     DWORD iHashStringLength = static_cast<DWORD>(m_HashString.size() + 1ull);
@@ -76,8 +75,8 @@ std::wstring CItemDupe::GetText(const int subitem) const
     {
         // Handle top-level hash collection nodes
         if (subitem == COL_ITEMDUP_NAME) return GetHashAndExtensions();
-        if (subitem == COL_ITEMDUP_SIZE_PHYSICAL) return FormatBytes(m_SizePhysical * GetChildren().size());
-        if (subitem == COL_ITEMDUP_SIZE_LOGICAL) return FormatBytes(m_SizeLogical * GetChildren().size());
+        if (subitem == COL_ITEMDUP_SIZE_PHYSICAL) return FormatBytes(m_SizePhysical);
+        if (subitem == COL_ITEMDUP_SIZE_LOGICAL) return FormatBytes(m_SizeLogical);
         if (subitem == COL_ITEMDUP_ITEMS) return FormatCount(GetChildren().size());
         return {};
     }
@@ -98,8 +97,8 @@ int CItemDupe::CompareSibling(const CTreeListItem* tlib, const int subitem) cons
     {
         // Handle top-level hash collection nodes
         if (subitem == COL_ITEMDUP_NAME) return memcmp(m_Hash.data(), other->m_Hash.data(), m_Hash.size());
-        if (subitem == COL_ITEMDUP_SIZE_PHYSICAL) return usignum(m_SizePhysical * m_Children.size(), other->m_SizePhysical * other->m_Children.size());
-        if (subitem == COL_ITEMDUP_SIZE_LOGICAL) return usignum(m_SizeLogical * m_Children.size(), other->m_SizeLogical * other->m_Children.size());
+        if (subitem == COL_ITEMDUP_SIZE_PHYSICAL) return usignum(m_SizePhysical, other->m_SizePhysical);
+        if (subitem == COL_ITEMDUP_SIZE_LOGICAL) return usignum(m_SizeLogical, other->m_SizeLogical);
         if (subitem == COL_ITEMDUP_ITEMS) return usignum(m_Children.size(), other->m_Children.size());
         return 0;
     }
@@ -179,6 +178,13 @@ std::wstring CItemDupe::GetHashAndExtensions() const
 
 void CItemDupe::AddDupeItemChild(CItemDupe* child)
 {
+    // Adjust parent item sizes
+    if (const auto childItem = reinterpret_cast<CItem*>(child->GetLinkedItem()); childItem != nullptr)
+    {
+        m_SizeLogical += childItem->GetSizeLogical();
+        m_SizePhysical += childItem->GetSizePhysical();
+    }
+
     child->SetParent(this);
 
     std::lock_guard guard(m_Protect);
@@ -192,6 +198,13 @@ void CItemDupe::AddDupeItemChild(CItemDupe* child)
 
 void CItemDupe::RemoveDupeItemChild(CItemDupe* child)
 {
+    // Adjust parent item sizes
+    if (const auto childItem = reinterpret_cast<CItem*>(child->GetLinkedItem()); childItem != nullptr)
+    {
+        m_SizeLogical -= childItem->GetSizeLogical();
+        m_SizePhysical -= childItem->GetSizePhysical();
+    }
+
     std::lock_guard guard(m_Protect);
     std::erase(m_Children, child);
 

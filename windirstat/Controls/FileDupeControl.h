@@ -1,4 +1,4 @@
-// FileDupeControl.h - Declaration of CFileDupeControl and CFileTreeView
+﻿// FileDupeControl.h - Declaration of CFileDupeControl and CFileTreeView
 //
 // WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
@@ -32,9 +32,9 @@ class CFileDupeControl final : public CTreeListControl
 {
 public:
     CFileDupeControl();
+    ~CFileDupeControl() override { m_Singleton = nullptr; }
     bool GetAscendingDefault(int column) override;
     static CFileDupeControl* Get() { return m_Singleton; }
-    void SetRootItem(CTreeListItem* root) override;
     void ProcessDuplicate(CItem* item, BlockingQueue<CItem*>* queue);
     void RemoveItem(CItem* items);
     void SortItems() override;
@@ -60,4 +60,5 @@ protected:
     DECLARE_MESSAGE_MAP()
     afx_msg void OnSetFocus(CWnd* pOldWnd);
     afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
+    afx_msg BOOL OnDeleteAllItems(NMHDR* pNMHDR, LRESULT* pResult);
 };

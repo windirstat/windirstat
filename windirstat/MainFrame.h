@@ -174,9 +174,9 @@ protected:
     bool IsScanSuspended() const;
 
     void UpdateProgress();
-    void UpdateDynamicMenuItems(const CMenu* menu) const;
+    void UpdateDynamicMenuItems(CMenu* menu) const;
     std::vector<CItem*> GetAllSelectedInFocus() const;
-    CMenu* LocateNamedMenu(const CMenu* menu, const std::wstring & subMenuText, bool clear = false) const;
+    std::pair<CMenu*, int> LocateNamedMenu(const CMenu* menu, const std::wstring& subMenuText) const;
 
     void SetLogicalFocus(LOGICAL_FOCUS lf);
     LOGICAL_FOCUS GetLogicalFocus() const;

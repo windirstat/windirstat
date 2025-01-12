@@ -1,4 +1,4 @@
-// FileDupeControl.cpp - Implementation of FileDupeControl
+﻿// FileDupeControl.cpp - Implementation of FileDupeControl
 //
 // WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
@@ -49,6 +49,7 @@ bool CFileDupeControl::GetAscendingDefault(const int column)
 BEGIN_MESSAGE_MAP(CFileDupeControl, CTreeListControl)
     ON_WM_SETFOCUS()
     ON_WM_KEYDOWN()
+    ON_NOTIFY_REFLECT_EX(LVN_DELETEALLITEMS, OnDeleteAllItems)
 END_MESSAGE_MAP()
 #pragma warning(pop)
 
@@ -131,7 +132,7 @@ void CFileDupeControl::ProcessDuplicate(CItem * item, BlockingQueue<CItem*>* que
         if (dupeParent == nullptr)
         {
             // Create new root item to hold these duplicates
-            dupeParent = new CItemDupe(hashForThisItem, itemToAdd->GetSizePhysical(), itemToAdd->GetSizeLogical());
+            dupeParent = new CItemDupe(hashForThisItem);
             m_PendingListAdds.emplace_back(nullptr, dupeParent);
             m_NodeTracker.emplace(hashForThisItem, dupeParent);
         }
@@ -175,6 +176,7 @@ void CFileDupeControl::SortItems()
         if (hashParent->GetChildren().size() < 2)
         {
             VTRACE(L"Debug Dupe Tree Entry < 2 Nodes: {}", hashString);
+            continue;
         }
 
         const auto sizeCheck = reinterpret_cast<CItem*>(hashParent->GetChildren()[0]->GetLinkedItem())->GetSizeLogical();
@@ -194,13 +196,10 @@ void CFileDupeControl::SortItems()
 
 void CFileDupeControl::RemoveItem(CItem* item)
 {
-    // Determine which hash applies to this object
-    auto& m_HashTracker = item->GetSizeLogical() <= m_PartialBufferSize
-        ? m_HashTrackerSmall : m_HashTrackerLarge;
-
     // Exit immediately if not doing duplicate detector
-    if (m_HashTracker.empty() && m_SizeTracker.empty()) return;
+    if (!COptions::ScanForDuplicates) return;
 
+    // Enumerate child items and mark all as unhashed
     std::stack<CItem*> queue({ item });
     while (!queue.empty())
     {
@@ -217,14 +216,27 @@ void CFileDupeControl::RemoveItem(CItem* item)
             queue.push(child);
         }
     }
-
-    // Remove all unhashed files from hash tracker
-    for (auto& hashSet : m_HashTracker | std::views::values)
+    std::erase_if(m_SizeTracker, [](const auto& pair)
     {
-        // Skip if no matches of the item associated with this hash
-        std::erase_if(hashSet, [](const auto& hashItem)
+        return pair.second.empty();
+    });
+
+    // Remove all unhashed files from hash trackers
+    for (auto& hashTracker : { std::ref(m_HashTrackerSmall), std::ref(m_HashTrackerLarge) })
+    {
+        for (auto& hashSet : hashTracker.get() | std::views::values)
         {
-            return !hashItem->IsType(ITF_PARTHASH | ITF_FULLHASH);
+            // Skip if no matches of the item associated with this hash
+            std::erase_if(hashSet, [](const auto& hashItem)
+            {
+                return !hashItem->IsType(ITF_PARTHASH | ITF_FULLHASH);
+            });
+        }
+
+        // Cleanup empty structures
+        std::erase_if(hashTracker.get(), [](const auto& pair)
+        {
+            return pair.second.empty();
         });
     }
 
@@ -233,13 +245,17 @@ void CFileDupeControl::RemoveItem(CItem* item)
 
     // Cleanup any empty visual nodes in the list
     const auto root = reinterpret_cast<CItemDupe*>(GetItem(0));
-    for (auto nodeIter = m_NodeTracker.begin(); nodeIter != m_NodeTracker.end(); ++nodeIter)
+    bool erasedNode = false;
+    for (auto nodeIter = m_NodeTracker.begin(); nodeIter != m_NodeTracker.end();
+        erasedNode ? nodeIter : ++nodeIter, erasedNode = false)
     {
         auto& [dupeParentKey, dupeParent] = *nodeIter;
 
         // Remove from child tracker
+        bool erasedChild = false;
         auto& childItems = m_ChildTracker[dupeParent];
-        for (auto childItem = childItems.begin(); childItem != childItems.end(); ++childItem)
+        for (auto childItem = childItems.begin(); childItem != childItems.end();
+            erasedChild ? childItem : ++childItem, erasedChild = false)
         {
             // Nothing to do if still marked as hashed
             if ((*childItem)->IsType(ITF_PARTHASH | ITF_FULLHASH)) continue;
@@ -251,40 +267,33 @@ void CFileDupeControl::RemoveItem(CItem* item)
 
                 dupeParent->RemoveDupeItemChild(visualChild);
                 childItem = childItems.erase(childItem);
+                erasedChild = true;
                 break;
             }
-
-            // Break if already at end of list
-            if (childItem == childItems.end()) break;
         }
 
-        // When only one node, left remove last node and parent
+        // When only one child left, remove child item
         if (dupeParent->GetChildren().size() == 1)
         {
             dupeParent->RemoveDupeItemChild(dupeParent->GetChildren().at(0));
+        }
+
+        // When no childen left, remove parent item
+        if (dupeParent->GetChildren().empty())
+        {
             root->RemoveDupeItemChild(dupeParent);
             nodeIter = m_NodeTracker.erase(nodeIter);
-            if (nodeIter == m_NodeTracker.end()) break;
+            erasedNode = true;
         }
     }
-
-    // Resume redrawing and invalidate to force refresh
-    SetRedraw(TRUE);
-    Invalidate();
-
-    // Cleanup empty structures
-    std::erase_if(m_HashTracker, [](const auto& pair)
-    {
-        return pair.second.empty();
-    });
-    std::erase_if(m_SizeTracker, [](const auto& pair)
-    {
-        return pair.second.empty();
-    });
     std::erase_if(m_ChildTracker, [](const auto& pair)
     {
         return pair.second.size() <= 1;
     });
+
+    // Resume redrawing and invalidate to force refresh
+    SetRedraw(TRUE);
+    Invalidate();
 }
 
 void CFileDupeControl::OnItemDoubleClick(const int i)
@@ -300,12 +309,10 @@ void CFileDupeControl::OnItemDoubleClick(const int i)
     }
 }
 
-void CFileDupeControl::SetRootItem(CTreeListItem* root)
+BOOL CFileDupeControl::OnDeleteAllItems(NMHDR*, LRESULT* pResult)
 {
+    // Reset duplicate warning
     m_ShowCloudWarningOnThisScan = COptions::SkipDupeDetectionCloudLinksWarning;
-
-    // Cleanup visual list
-    CTreeListControl::SetRootItem(root);
 
     // Cleanup support lists
     m_PendingListAdds.clear();
@@ -314,6 +321,10 @@ void CFileDupeControl::SetRootItem(CTreeListItem* root)
     m_HashTrackerLarge.clear();
     m_SizeTracker.clear();
     m_ChildTracker.clear();
+
+    // Allow delete to proceed
+    *pResult = FALSE;
+    return FALSE;
 }
 
 void CFileDupeControl::OnSetFocus(CWnd* pOldWnd)

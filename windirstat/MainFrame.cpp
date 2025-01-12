@@ -448,8 +448,11 @@ void CMainFrame::SetProgressPos(ULONGLONG pos)
     UpdateProgress();
 }
 
-void CMainFrame::SetProgressComplete() // called by CDirStatDoc
+void CMainFrame::SetProgressComplete()
 {
+    // Disable any potential suspend state
+    SuspendState(false);
+
     if (m_TaskbarList)
     {
         m_TaskbarList->SetProgressState(*this, m_TaskbarButtonState = TBPF_NOPROGRESS);
@@ -704,7 +707,7 @@ void CMainFrame::OnClose()
     KillTimer(ID_WDS_CONTROL);
 
     // Suspend the scan and wait for scan to complete
-    CDirStatDoc::GetDocument()->StopScanningEngine();
+    CDirStatDoc::GetDocument()->StopScanningEngine(CDirStatDoc::Abort);
 
     // Stop icon queue
     GetIconHandler()->StopAsyncShellInfoQueue();
@@ -970,10 +973,11 @@ std::vector<CItem*> CMainFrame::GetAllSelectedInFocus() const
     return CFileTreeControl::Get()->GetAllSelected<CItem>();
 }
 
-CMenu* CMainFrame::LocateNamedMenu(const CMenu* menu, const std::wstring & subMenuText, bool clear) const
+std::pair<CMenu*,int> CMainFrame::LocateNamedMenu(const CMenu* menu, const std::wstring & subMenuText) const
 {
     // locate submenu
     CMenu* subMenu = nullptr;
+    int subMenuPos = -1;
     for (int i = 0; i < menu->GetMenuItemCount(); i++)
     {
         CStringW menuString;
@@ -981,17 +985,18 @@ CMenu* CMainFrame::LocateNamedMenu(const CMenu* menu, const std::wstring & subMe
             _wcsicmp(menuString, subMenuText.c_str()) == 0)
         {
             subMenu = menu->GetSubMenu(i);
+            subMenuPos = i;
             break;
         }
     }
 
     // cleanup old items
-    if (clear && subMenu != nullptr) while (subMenu->GetMenuItemCount() > 0)
+    if (subMenu != nullptr) while (subMenu->GetMenuItemCount() > 0)
         subMenu->DeleteMenu(0, MF_BYPOSITION);
-    return subMenu;
+    return { subMenu, subMenuPos };
 }
 
-void CMainFrame::UpdateDynamicMenuItems(const CMenu* menu) const
+void CMainFrame::UpdateDynamicMenuItems(CMenu* menu) const
 {
     const auto& items = GetAllSelectedInFocus();
 
@@ -1000,15 +1005,19 @@ void CMainFrame::UpdateDynamicMenuItems(const CMenu* menu) const
     for (auto& item : items) paths.push_back(item->GetPath());
 
     // locate submenu and merge explorer items
-    CMenu* explorerMenu = LocateNamedMenu(menu, Localization::Lookup(IDS_POPUP_TREE_EXPLORER_MENU), true);
+    auto [explorerMenu, explorerMenuPos] = LocateNamedMenu(menu, Localization::Lookup(IDS_POPUP_TREE_EXPLORER_MENU));
     if (explorerMenu != nullptr && !paths.empty())
     {
         CComPtr<IContextMenu> contextMenu = GetContextMenu(Get()->GetSafeHwnd(), paths);
         if (contextMenu != nullptr) contextMenu->QueryContextMenu(explorerMenu->GetSafeHmenu(), 0,
             CONTENT_MENU_MINCMD, CONTENT_MENU_MAXCMD, CMF_NORMAL);
+
+        // conditionally disable menu if empty
+        if (explorerMenuPos >= 0) menu->EnableMenuItem(explorerMenuPos, MF_BYPOSITION |
+            (explorerMenu->GetMenuItemCount() > 0 ? MF_ENABLED : (MF_DISABLED | MF_GRAYED)));
     }
 
-    CMenu * customMenu = LocateNamedMenu(menu, Localization::Lookup(IDS_USER_DEFINED_CLEANUP), true);
+    auto[customMenu, customMenuPos] = LocateNamedMenu(menu, Localization::Lookup(IDS_USER_DEFINED_CLEANUP));
     for (size_t iCurrent = 0; customMenu != nullptr && iCurrent < COptions::UserDefinedCleanups.size(); iCurrent++)
     {
         auto& udc = COptions::UserDefinedCleanups[iCurrent];
@@ -1026,6 +1035,10 @@ void CMainFrame::UpdateDynamicMenuItems(const CMenu* menu) const
         const UINT flags = udcValid ? MF_ENABLED : (MF_DISABLED | MF_GRAYED);
         customMenu->AppendMenu(flags | MF_STRING, ID_USERDEFINEDCLEANUP0 + iCurrent, string.c_str());
     }
+
+    // conditionally disable menu if empty
+    if (customMenuPos >= 0) menu->EnableMenuItem(customMenuPos, MF_BYPOSITION | 
+        (customMenu->GetMenuItemCount() > 0 ? MF_ENABLED : (MF_DISABLED | MF_GRAYED)));
 }
 
 void CMainFrame::SetLogicalFocus(const LOGICAL_FOCUS lf)

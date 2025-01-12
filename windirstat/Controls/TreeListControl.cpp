@@ -1,4 +1,4 @@
-// TreeListControl.cpp - Implementation of CTreeListItem and CTreeListControl
+﻿// TreeListControl.cpp - Implementation of CTreeListItem and CTreeListControl
 //
 // WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
@@ -690,7 +690,8 @@ void CTreeListControl::ExpandItem(const int i, const bool scroll)
     SetRedraw(FALSE);
     LockWindowUpdate();
     int maxwidth = GetSubItemWidth(item, 0);
-    for (int c = 0; c < item->GetTreeListChildCount(); c++)
+    const auto childItems = item->GetTreeListChildCount();
+    for (int c = 0; c < childItems; c++)
     {
         CTreeListItem* child = item->GetTreeListChild(c);
         InsertItem(i + 1 + c, child);
@@ -703,8 +704,8 @@ void CTreeListControl::ExpandItem(const int i, const bool scroll)
             maxwidth = max(maxwidth, GetSubItemWidth(child, 0));
         }
     }
+    if (childItems > 0) SortItems();
     UnlockWindowUpdate();
-    SortItems();
     SetRedraw(TRUE);
 
     if (scroll && GetColumnWidth(0) < maxwidth)

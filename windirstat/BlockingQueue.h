@@ -35,6 +35,7 @@ class BlockingQueue final
     std::condition_variable m_Waiting;
     unsigned int m_TotalWorkerThreads = 1;
     unsigned int m_WorkersWaiting = 0;
+    unsigned int m_StopReason = 0;
     bool m_Started = false;
     bool m_Suspended = false;
     bool m_Cancelled = false;
@@ -140,7 +141,7 @@ public:
         }
     }
 
-    void WaitForCompletion()
+    int WaitForCompletion()
     {
         // Wait for all workers threads to be idled or cancelled
         std::unique_lock lock(m_Mutex);
@@ -148,11 +149,14 @@ public:
         {
             return m_Started && !m_Suspended && AllThreadsIdling() && m_Queue.empty() || m_Cancelled;
         });
+
+        return m_StopReason;
     }
 
-    void CancelExecution()
+    void CancelExecution(const int stopReason = -1)
     {
         // Start cancellation process
+        if (stopReason != -1) m_StopReason = stopReason;
         m_Cancelled = true;
         m_Waiting.notify_all();
         m_Pushed.notify_all();

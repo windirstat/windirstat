@@ -1,4 +1,4 @@
-// Item.cpp - Implementation of CItem
+﻿// Item.cpp - Implementation of CItem
 //
 // WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
@@ -51,7 +51,7 @@ CItem::CItem(const ITEMTYPE type, const std::wstring & name) : m_Name(name), m_T
         m_Attributes = GetFileAttributesW(GetPathLong().c_str());
     }
 
-    if (!IsType(IT_FILE))
+    if (IsType(IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY))
     {
         m_FolderInfo = std::make_unique<CHILDINFO>();
     }
