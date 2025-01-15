@@ -241,6 +241,9 @@ void CTreeMapView::DrawSelection(CDC* pdc) const
     const auto& items = CMainFrame::Get()->GetAllSelectedInFocus();
     for (const auto& item : items)
     {
+        // Ignore if not a child of the current zoomed item
+        if (!GetDocument()->GetZoomItem()->IsAncestorOf(item)) continue;
+        
         HighlightSelectedItem(pdc, item, items.size() == 1);
     }
 }
