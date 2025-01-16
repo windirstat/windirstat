@@ -310,9 +310,7 @@ void CPacmanControl::OnPaint()
     CSelectObject sobm(&memDC, &bm);
 
     // Draw the animation
-    CRect rc;
-    GetClientRect(rc);
-    m_Pacman.Draw(&memDC, rc);
+    m_Pacman.Draw(&memDC, rect);
 
     // Copy memory DC to screen DC
     dc.BitBlt(0, 0, rect.Width(), rect.Height(), &memDC, 0, 0, SRCCOPY);
