@@ -24,6 +24,7 @@
 #include "FileTopView.h"
 #include "FileTreeView.h"
 #include "Localization.h"
+#include "MainFrame.h"
 
 IMPLEMENT_DYNCREATE(CFileTabbedView, CTabView)
 
@@ -56,10 +57,18 @@ BOOL CFileTabbedView::OnEraseBkgnd(CDC* /*pDC*/)
 
 LRESULT CFileTabbedView::OnChangeActiveTab(WPARAM wp, LPARAM lp)
 {
-    if (wp == static_cast<WPARAM>(m_FileDupeViewIndex) && !COptions::ScanForDuplicates)
+    if (wp == static_cast<WPARAM>(m_FileDupeViewIndex))
     {
-        AfxMessageBox(Localization::Lookup(IDS_DUPLICATES_DISABLED).c_str(), MB_OK | MB_ICONHAND);
-        return TRUE;
+        // Alert the message they are not actually scanning for duplicates
+        if (!COptions::ScanForDuplicates)
+        {
+            AfxMessageBox(Localization::Lookup(IDS_DUPLICATES_DISABLED).c_str(), MB_OK | MB_ICONHAND);
+            return TRUE;
+        }
+
+        // Duplicate view can take awhile to populate so show wait cursor
+        CWaitCursor wc;
+        CFileDupeControl::Get()->SortItems();
     }
 
     return CTabView::OnChangeActiveTab(wp, lp);
