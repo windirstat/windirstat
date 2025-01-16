@@ -929,7 +929,7 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
         { ID_TREEMAP_RESELECT_CHILD,  { true,  true,  true,  false, IT_ANY, reslectAvail } },
         { ID_TREEMAP_SELECT_PARENT,   { false, false, true,  false, IT_ANY, parentNotNull } },
         { ID_TREEMAP_ZOOMIN,          { false, false, false, false, IT_DRIVE | IT_DIRECTORY} },
-        { ID_TREEMAP_ZOOMOUT,         { false, false, false, false, IT_DIRECTORY, canZoomOut } },
+        { ID_TREEMAP_ZOOMOUT,         { true,  true,  false, false, IT_ANY, canZoomOut } },
         { ID_CLEANUP_EXPLORER_SELECT, { false, true,  true,  false, IT_DIRECTORY | IT_FILE } },
         { ID_CLEANUP_OPEN_IN_CONSOLE, { false, true,  true,  false, IT_DRIVE | IT_DIRECTORY | IT_FILE } },
         { ID_CLEANUP_OPEN_IN_PWSH,    { false, true,  true,  false, IT_DRIVE | IT_DIRECTORY | IT_FILE } },
