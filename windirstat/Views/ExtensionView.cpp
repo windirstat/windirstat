@@ -138,17 +138,24 @@ void CExtensionView::OnUpdate(CView* /*pSender*/, const LPARAM lHint, CObject*)
 
 void CExtensionView::SetSelection()
 {
+    // Get first extension from selected items
     const auto & items = CFileTreeControl::Get()->GetAllSelected<CItem>();
-    for (const auto & item : items)
+    CItem* validItem = nullptr;
+    for (const auto& item : items)
     {
-        if (item->GetType() != IT_FILE)
+        if (item->IsType(IT_FILE))
         {
-            m_ExtensionListControl.EnsureVisible(0, false);
+            validItem = item;
+            break;
         }
-        else
-        {
-            m_ExtensionListControl.SelectExtension(item->GetExtension());
-        }
+    }
+
+    // Set selection if not already selected
+    if (validItem == nullptr) return;
+    if (const std::wstring& ext = validItem->GetExtension();
+        m_ExtensionListControl.GetSelectedExtension() != ext)
+    {
+        m_ExtensionListControl.SelectExtension(ext);
     }
 }
 
