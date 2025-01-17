@@ -719,7 +719,7 @@ void CItem::UpwardUpdateLastChange(const FILETIME& t)
 {
     for (auto p = this; p != nullptr; p = p->GetParent())
     {
-        if (CompareFileTime(&t, &p->m_LastChange) == 1) p->m_LastChange = t;
+        if (FileTimeIsGreater(t, p->m_LastChange)) p->m_LastChange = t;
     }
 }
 
@@ -733,7 +733,7 @@ void CItem::UpwardRecalcLastChange(const bool withoutItem)
         for (const auto& child : p->GetChildren())
         {
             if (withoutItem && child == this) continue;
-            if (CompareFileTime(&child->m_LastChange, &p->m_LastChange) == 1)
+            if (FileTimeIsGreater(child->m_LastChange, p->m_LastChange))
                 p->m_LastChange = child->m_LastChange;
         }
     }

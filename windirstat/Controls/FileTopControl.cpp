@@ -71,10 +71,10 @@ void CFileTopControl::SortItems()
     // Reverse iterate over the multimap
     m_SizeMutex.lock();
     std::unordered_set<CItem*> largestItems;
-    for (auto & pair : m_SizeMap | std::views::reverse)
+    largestItems.reserve(COptions::LargeFileCount);
+    for (auto& pItem : m_SizeMap | std::views::reverse | std::views::take(COptions::LargeFileCount.Obj()))
     {
-        largestItems.insert(pair);
-        if (static_cast<int>(largestItems.size()) >= COptions::LargeFileCount) break;
+        largestItems.emplace(pItem);
     }
     m_SizeMutex.unlock();
 

@@ -397,6 +397,10 @@ void COwnerDrawnListControl::DrawItem(LPDRAWITEMSTRUCT pdis)
     dcMem.FillSolidRect(rcItem - rcItem.TopLeft(),
         GetItemBackgroundColor(static_cast<int>(pdis->itemID)));
 
+    // Set defaults for all text drawing
+    CSetBkMode bk(&dcMem, TRANSPARENT);
+    CSelectObject sofont(&dcMem, GetFont());
+
     int focusLeft = 0;
     const int headerCount = GetHeaderCtrl()->GetItemCount();
     for (int i = 0; i < headerCount; i++)
@@ -416,8 +420,6 @@ void COwnerDrawnListControl::DrawItem(LPDRAWITEMSTRUCT pdis)
 
             CRect rcText = rcDraw;
             rcText.DeflateRect(TEXT_X_MARGIN, 0);
-            CSetBkMode bk(&dcMem, TRANSPARENT);
-            CSelectObject sofont(&dcMem, GetFont());
             const std::wstring s = item->GetText(subitem);
 
             // Get the correct color in case of compressed or encrypted items

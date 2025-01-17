@@ -1,4 +1,4 @@
-// Item.h - Declaration of CItem
+﻿// Item.h - Declaration of CItem
 //
 // WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
@@ -248,6 +248,12 @@ public:
     {
         if (set) m_Type = m_Type | type;
         else m_Type = m_Type - type;
+    }
+
+    static constexpr bool FileTimeIsGreater(const FILETIME& ft1, const FILETIME& ft2)
+    {
+        return (static_cast<QWORD>(ft1.dwHighDateTime) << 32 | (ft1.dwLowDateTime)) >
+            (static_cast<QWORD>(ft2.dwHighDateTime) << 32 | (ft2.dwLowDateTime));
     }
 
 private:
