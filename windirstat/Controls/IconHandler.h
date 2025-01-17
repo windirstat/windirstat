@@ -45,7 +45,7 @@ public:
 
     void Initialize();
     void DoAsyncShellInfoLookup(const IconLookup& lookupInfo);
-    void DrawIcon(CDC* hdc, HICON image, const CPoint& pt, const CSize& sz);
+    void DrawIcon(const CDC* hdc, HICON image, const CPoint& pt, const CSize& sz);
     void ClearAsyncShellInfoQueue();
     void StopAsyncShellInfoQueue();
     HICON GetMyComputerImage(bool getCopy = true) const;

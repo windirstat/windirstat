@@ -78,7 +78,7 @@ std::wstring GlobToRegex(const std::wstring& glob);
 std::vector<BYTE> GetCompressedResource(HRSRC resource);
 std::wstring GetVolumePathNameEx(const std::wstring& path);
 void DisplayError(const std::wstring& error);
-std::wstring TranslateError(const HRESULT hr = static_cast<HRESULT>(GetLastError()));
+std::wstring TranslateError(HRESULT hr = static_cast<HRESULT>(GetLastError()));
 void DisableHibernate();
 bool IsHibernateEnabled();
 bool ShellExecuteWrapper(const std::wstring& lpFile, const std::wstring& lpParameters = L"", const std::wstring& lpVerb = L"",

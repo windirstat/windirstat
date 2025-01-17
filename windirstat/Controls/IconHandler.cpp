@@ -114,7 +114,7 @@ void CIconHandler::StopAsyncShellInfoQueue()
     });
 }
 
-void CIconHandler::DrawIcon(CDC* hdc, const HICON image, const CPoint & pt, const CSize& sz)
+void CIconHandler::DrawIcon(const CDC* hdc, const HICON image, const CPoint & pt, const CSize& sz)
 {
     m_FilterOverride.SetDefaultHandler(false);
     DrawIconEx(*hdc, pt.x, pt.y, image, sz.cx, sz.cy, 0, nullptr, DI_NORMAL);

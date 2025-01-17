@@ -50,8 +50,8 @@ namespace
         const auto resourceData = GetCompressedResource(hrsrc);
         if (resourceData.empty()) return {};
 
-        return std::wstring(CComBSTR(static_cast<int>(resourceData.size()),
-            reinterpret_cast<LPCSTR>(resourceData.data())));
+        return CComBSTR(static_cast<int>(resourceData.size()),
+            reinterpret_cast<LPCSTR>(resourceData.data())).m_str;
     }
 }
 

@@ -233,7 +233,7 @@ protected:
     void DrawSolidRect(std::vector<COLORREF>& bitmap, const CRect& rc, COLORREF col, double brightness) const;
 
     // Adds a new ridge to surface
-    static void AddRidge(const CRect& rc, std::array<double, 4>& surface, const double h);
+    static void AddRidge(const CRect& rc, std::array<double, 4>& surface, double h);
 
     // Default tree map options
     static constexpr Options DefaultOptions = {

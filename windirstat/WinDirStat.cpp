@@ -1,4 +1,4 @@
-// WinDirStat.cpp - Implementation of CDirStatApp and some globals
+﻿// WinDirStat.cpp - Implementation of CDirStatApp and some globals
 //
 // WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
@@ -179,7 +179,7 @@ COLORREF CDirStatApp::AltEncryptionColor() const
 std::wstring CDirStatApp::GetCurrentProcessMemoryInfo()
 {
     // Fetch current working set
-    PROCESS_MEMORY_COUNTERS pmc = { sizeof(pmc) };
+    PROCESS_MEMORY_COUNTERS pmc = { .cb = sizeof(pmc) };
     if (!::GetProcessMemoryInfo(GetCurrentProcess(), &pmc, sizeof(pmc)))
     {
         return wds::strEmpty;

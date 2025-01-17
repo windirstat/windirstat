@@ -202,11 +202,7 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, Item* root, const Options* option
         return;
     }
 
-    if (m_Options.grid)
-    {
-        pdc->FillSolidRect(rc, m_Options.gridColor);
-    }
-    else
+    if (!m_Options.grid)
     {
         // We shrink the rectangle here, too.
         // If we didn't do this, the layout of the treemap would
@@ -242,8 +238,9 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, Item* root, const Options* option
         std::vector<COLORREF> bitmapBits;
         bitmapBits.resize(static_cast<std::vector<COLORREF>::size_type>(rc.Width()) *
             static_cast<std::vector<COLORREF>::size_type>(rc.Height()));
+        DrawSolidRect(bitmapBits, CRect(CPoint(), rc.Size()), m_Options.gridColor, PALETTE_BRIGHTNESS);
 
-        struct DrawState
+        using DrawState = struct
         {
             std::array<double, 4> surface;
             CRect rc;
@@ -976,44 +973,56 @@ void CTreeMapPreview::BuildDemoData()
     CTreeMap::GetDefaultPalette(m_Colors);
     int col = -1;
 
+    constexpr auto c4Items = 30;
     std::vector<CItem*> c4;
+    c4.reserve(c4Items);
     COLORREF color = GetNextColor(col);
-    for (int i = 0; i < 30; i++)
+    for (int i = 0; i < c4Items; i++)
     {
         c4.emplace_back(new CItem(1 + 100 * i, color));
     }
 
+    constexpr auto c0Items = 8;
     std::vector<CItem*> c0;
-    for (int i = 0; i < 8; i++)
+    c0.reserve(c0Items);
+    for (int i = 0; i < c0Items; i++)
     {
         c0.emplace_back(new CItem(500 + 600 * i, GetNextColor(col)));
     }
 
+    constexpr auto c1Items = 10;
     std::vector<CItem*> c1;
+    c1.reserve(c1Items);
     color = GetNextColor(col);
-    for (int i = 0; i < 10; i++)
+    for (int i = 0; i < c1Items; i++)
     {
         c1.emplace_back(new CItem(1 + 200 * i, color));
     }
     c0.emplace_back(new CItem(c1));
 
+    constexpr auto c2Items = 160;
     std::vector<CItem*> c2;
+    c2.reserve(c2Items);
     color = GetNextColor(col);
-    for (int i = 0; i < 160; i++)
+    for (int i = 0; i < c2Items; i++)
     {
         c2.emplace_back(new CItem(1 + i, color));
     }
 
-    std::vector<CItem*> c3;
-    c3.emplace_back(new CItem(10000, GetNextColor(col)));
-    c3.emplace_back(new CItem(c4));
-    c3.emplace_back(new CItem(c2));
-    c3.emplace_back(new CItem(6000, GetNextColor(col)));
-    c3.emplace_back(new CItem(1500, GetNextColor(col)));
+    const std::vector c3 =
+    {
+        new CItem(10000, GetNextColor(col)),
+        new CItem(c4),
+        new CItem(c2),
+        new CItem(6000, GetNextColor(col)),
+        new CItem(1500, GetNextColor(col))
+    };
 
-    std::vector<CItem*> c10;
-    c10.emplace_back(new CItem(c0));
-    c10.emplace_back(new CItem(c3));
+    const std::vector c10
+    {
+        new CItem(c0),
+        new CItem(c3)
+    };
 
     m_Root = new CItem(c10);
 }
