@@ -154,25 +154,23 @@ void CTreeMapView::OnDraw(CDC * pDC)
 
 void CTreeMapView::DrawZoomFrame(CDC* pdc, CRect& rc) const
 {
-    constexpr int w = 4;
-
     CRect r  = rc;
-    r.bottom = r.top + w;
+    r.bottom = r.top + ZoomFrameWidth;
     pdc->FillSolidRect(r, GetDocument()->GetZoomColor());
 
     r = rc;
-    r.top = r.bottom - w;
+    r.top = r.bottom - ZoomFrameWidth;
     pdc->FillSolidRect(r, GetDocument()->GetZoomColor());
 
     r = rc;
-    r.right = r.left + w;
+    r.right = r.left + ZoomFrameWidth;
     pdc->FillSolidRect(r, GetDocument()->GetZoomColor());
 
     r = rc;
-    r.left = r.right - w;
+    r.left = r.right - ZoomFrameWidth;
     pdc->FillSolidRect(r, GetDocument()->GetZoomColor());
 
-    rc.DeflateRect(w, w);
+    rc.DeflateRect(ZoomFrameWidth, ZoomFrameWidth);
 }
 
 void CTreeMapView::DrawHighlights(CDC* pdc)
@@ -205,6 +203,7 @@ void CTreeMapView::DrawHighlightExtension(CDC* pdc)
 void CTreeMapView::RecurseHighlightExtension(CDC* pdc, const CItem* item)
 {
     CRect rc(item->TmiGetRectangle());
+    rc.OffsetRect(4, 4);
     if (rc.Width() <= 0 || rc.Height() <= 0)
     {
         return;
@@ -255,6 +254,12 @@ void CTreeMapView::DrawSelection(CDC* pdc) const
 void CTreeMapView::HighlightSelectedItem(CDC* pdc, const CItem* item, const bool single) const
 {
     CRect rc(item->TmiGetRectangle());
+
+    // Offset the display rectangle if zoomed
+    if (GetDocument()->IsZoomed())
+    {
+        rc.OffsetRect(ZoomFrameWidth, ZoomFrameWidth);
+    }
 
     if (single)
     {
@@ -319,10 +324,17 @@ void CTreeMapView::OnSize(const UINT nType, const int cx, const int cy)
 
 void CTreeMapView::OnLButtonDown(const UINT nFlags, const CPoint point)
 {
+    // Offset the click point if zoomed
+    CPoint pointClicked = point;
+    if (GetDocument()->IsZoomed())
+    {
+        pointClicked.Offset(-1 * ZoomFrameWidth, -1 * ZoomFrameWidth);
+    }
+
     const CItem* root = GetDocument()->GetRootItem();
     if (root != nullptr && root->IsDone() && IsDrawn())
     {
-        const auto item = static_cast<CItem*>(m_TreeMap.FindItemByPoint(GetDocument()->GetZoomItem(), point));
+        const auto item = static_cast<CItem*>(m_TreeMap.FindItemByPoint(GetDocument()->GetZoomItem(), pointClicked));
         if (item == nullptr)
         {
             return;

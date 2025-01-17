@@ -68,6 +68,8 @@ protected:
     void HighlightSelectedItem(CDC* pdc, const CItem* item, bool single) const;
     void RenderHighlightRectangle(CDC* pdc, CRect& rc) const;
 
+    static constexpr int ZoomFrameWidth = 4;
+
     std::wstring m_PaneTextOverride; // Populated with the last hovered item for a period of time
     bool m_DrawingSuspended = false; // True while the user is resizing the window.
     bool m_ShowTreeMap = true;       // False, if the user switched off the treemap (by F9).
