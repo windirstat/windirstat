@@ -34,6 +34,7 @@
 
 # Translators
 
+* Tim Ming Yeung @harryytm
 * Sergio Omar Maurelli	
 * Markus Hietaranta
 * Pascal Delrot
