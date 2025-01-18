@@ -1,4 +1,20 @@
-# WinDirStat 2.2.0
+# WinDirStat 2.2.2
+
+## Enhancements
+- Traditional Chinese language support (thanks @harryytm)
+- Korean languages updates (thanks @VenusGirl)
+- Gray-out user defined submenu if none are present
+- Basic support for scanning \\\\?\\Volume{GUID} formatted paths
+- Fallback deletion for hiberfil.sys 
+- Various performance enhancements
+
+## Bug Fixes
+- Corrected hash entry inconsistencies in duplicate viewer
+- Corrected tallying of physical sizes in duplicate viewer
+- Corrected treemap zoomed view hit detection and highlighting
+- Corrected treemap custom grid color not being applied
+
+# WinDirStat 2.2.1
 
 ## Enhancements
 * Added "Largest Files" tab to the interface
