@@ -86,9 +86,8 @@ protected:
 
     ~CDirStatDoc() override;
 
-    static std::wstring EncodeSelection(RADIO radio, const std::wstring& folder, const std::vector<std::wstring>& drives);
-    static void DecodeSelection(const std::wstring& s, std::wstring& folder, std::vector<std::wstring>& drives);
-    static WCHAR GetEncodingSeparator();
+    static std::wstring EncodeSelection(const std::vector<std::wstring>& folders);
+    static std::vector<std::wstring> DecodeSelection(const std::wstring& encodedPath);
 
     void DeleteContents() override;
     BOOL OnNewDocument() override;
@@ -104,7 +103,6 @@ protected:
     SExtensionRecord* GetExtensionDataRecord(const std::wstring& ext);
     ULONGLONG GetRootSize() const;
 
-    static bool IsDrive(const std::wstring& spec);
     void RefreshReparsePointItems();
 
     bool HasRootItem() const;
@@ -155,8 +153,6 @@ protected:
 
     bool m_ShowFreeSpace; // Whether to show the <Free Space> item
     bool m_ShowUnknown;   // Whether to show the <Unknown> item
-
-    bool m_ShowMyComputer = false; // True, if the user selected more than one drive for scanning.
     // In this case, we need a root pseudo item ("My Computer").
 
     CItem* m_RootItem = nullptr; // The very root item

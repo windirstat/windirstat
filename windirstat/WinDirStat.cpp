@@ -246,6 +246,37 @@ CString AFXGetRegPath(LPCTSTR lpszPostFix, LPCTSTR)
     return CString(L"Software\\WinDirStat\\WinDirStat\\") + lpszPostFix + L"\\";
 }
 
+ class CWinDirStatCommandLineInfo final : public CCommandLineInfo
+{
+public:
+
+    DWORD m_ParentPid = 0;
+    std::vector<std::wstring> m_PathsToOpen;
+
+    void ParseParam(const WCHAR* pszParam, BOOL bFlag, BOOL bLast) override
+    {
+        UNREFERENCED_PARAMETER(bLast);
+
+        // Normalize case for parsing
+        std::wstring param{ pszParam };
+        MakeLower(param);
+
+        // Handle any non-flags as paths
+        if (!bFlag)
+        {
+            if (!m_strFileName.IsEmpty()) m_strFileName += wds::chrPipe;
+            m_strFileName += TrimString(param, wds::chrBackslash).c_str();
+            return;
+        }
+
+        const std::wstring ParentPidFlag = L"parentpid:";
+        if (param.starts_with(ParentPidFlag))
+        {
+            m_ParentPid = std::stoul(param.substr(ParentPidFlag.size()));
+        }
+    }
+};
+
 BOOL CDirStatApp::InitInstance()
 {
     // Prevent state saving
@@ -287,20 +318,10 @@ BOOL CDirStatApp::InitInstance()
     }
     AddDocTemplate(m_PDocTemplate);
 
-    CCommandLineInfo cmdInfo;
+    // Parse command line arguments
+    CWinDirStatCommandLineInfo cmdInfo;
     ParseCommandLine(cmdInfo);
-    if (cmdInfo.m_nShellCommand == CCommandLineInfo::FileOpen)
-    {
-        // Use the default a new document since the shell processor will fault
-        // interpreting the complex configuration string we pass as a document name
-        CCommandLineInfo cmdAlt;
-        ProcessShellCommand(cmdAlt);
-    }
-    else
-    {
-        if (!ProcessShellCommand(cmdInfo))
-            return FALSE;
-    }
+    ProcessShellCommand(cmdInfo);
 
     CMainFrame::Get()->InitialShowWindow();
     m_pMainWnd->UpdateWindow();
@@ -316,28 +337,18 @@ BOOL CDirStatApp::InitInstance()
         VTRACE(L"Failed to enable additional privileges.");
     }
 
-    if (cmdInfo.m_nShellCommand == CCommandLineInfo::FileOpen)
+    // If launches with a parent pid flag, close that process
+    if (cmdInfo.m_ParentPid != 0)
     {
-        // See if the filename has the format of <PID>|<PATH>|<PATH>
-        int token = 0;
-        cmdInfo.m_strFileName = cmdInfo.m_strFileName.Trim(L'"');
-        const DWORD parent = wcstoul(cmdInfo.m_strFileName.Tokenize(L"|", token), nullptr, 10);
-        if (token > 0 && token < cmdInfo.m_strFileName.GetLength())
+        if (SmartPointer<HANDLE> handle(CloseHandle, OpenProcess(PROCESS_TERMINATE, FALSE, cmdInfo.m_ParentPid)); handle != nullptr)
         {
-            // Terminate the process that called us
-            cmdInfo.m_strFileName = cmdInfo.m_strFileName.Right(cmdInfo.m_strFileName.GetLength() - token);
-            if (SmartPointer<HANDLE> handle(CloseHandle, OpenProcess(PROCESS_TERMINATE, FALSE, parent)); handle != nullptr)
-            {
-                TerminateProcess(handle, 0);
-            }
+            TerminateProcess(handle, 0);
         }
+    }
 
-        m_PDocTemplate->OpenDocumentFile(cmdInfo.m_strFileName, true);
-    }
-    else
-    {
-        OnFileOpen();
-    }
+    // Either open the file names or open file selection dialog
+    cmdInfo.m_strFileName.IsEmpty() ? OnFileOpen() :
+        (void) m_PDocTemplate->OpenDocumentFile(cmdInfo.m_strFileName, true);
 
     return TRUE;
 }
@@ -358,8 +369,7 @@ void CDirStatApp::OnFileOpen()
     CSelectDrivesDlg dlg;
     if (IDOK == dlg.DoModal())
     {
-        const std::wstring path = CDirStatDoc::EncodeSelection(static_cast<RADIO>(dlg.m_Radio),
-            dlg.m_FolderName.GetString(), dlg.m_Drives);
+        const std::wstring path = CDirStatDoc::EncodeSelection(dlg.GetSelectedItems());
         m_PDocTemplate->OpenDocumentFile(path.c_str(), true);
     }
 }
@@ -374,7 +384,7 @@ void CDirStatApp::OnRunElevated()
     // For the configuration to launch, include the parent process so we can
     // terminate it once launched from the child process
     const std::wstring sAppName = GetAppFileName();
-    const std::wstring launchConfig = std::format(LR"("{}|{}")", GetCurrentProcessId(), CDirStatDoc::GetDocument()->GetPathName().GetString());
+    const std::wstring launchConfig = std::format(LR"(/ParentPid {} "{}")", GetCurrentProcessId(), CDirStatDoc::GetDocument()->GetPathName().GetString());
 
     SHELLEXECUTEINFO shellInfo;
     ZeroMemory(&shellInfo, sizeof(shellInfo));

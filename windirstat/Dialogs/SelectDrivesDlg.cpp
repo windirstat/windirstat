@@ -556,8 +556,8 @@ void CSelectDrivesDlg::OnOK()
     {
         const CDriveItem* item = m_List.GetItem(i);
 
-        if (m_Radio == RADIO_TARGET_DRIVES_ALL && !item->IsRemote() && !item->IsSUBSTed()
-            || m_Radio == RADIO_TARGET_DRIVES_SUBSET && m_List.IsItemSelected(i))
+        if (m_Radio == RADIO_TARGET_DRIVES_ALL && !item->IsRemote() && !item->IsSUBSTed() ||
+            m_Radio == RADIO_TARGET_DRIVES_SUBSET && m_List.IsItemSelected(i))
         {
             m_Drives.emplace_back(item->GetDrive());
         }
@@ -568,6 +568,7 @@ void CSelectDrivesDlg::OnOK()
     }
 
     COptions::SelectDrivesRadio = m_Radio;
+    COptions::SelectDrivesDrives = m_SelectedDrives;
     COptions::SelectDrivesFolder = std::wstring(m_FolderName);
     COptions::ScanForDuplicates = (FALSE != m_ScanDuplicates);
 
@@ -748,4 +749,10 @@ BOOL CSelectDrivesDlg::PreTranslateMessage(MSG* pMsg)
     }
 
     return CDialogEx::PreTranslateMessage(pMsg);
+}
+
+std::vector<std::wstring> CSelectDrivesDlg::GetSelectedItems() const
+{
+    return (m_Radio == RADIO_TARGET_FOLDER) ?
+        std::vector<std::wstring>{m_FolderName.GetString()} : m_SelectedDrives;
 }

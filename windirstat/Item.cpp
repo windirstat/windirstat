@@ -46,6 +46,9 @@ CItem::CItem(const ITEMTYPE type, const std::wstring & name) : m_Name(name), m_T
 {
     if (IsType(IT_DRIVE))
     {
+        // Store drive paths with a backslash
+        if (m_Name.ends_with(L":")) m_Name.append(L"\\");
+
         // The name string on the drive is two parts separated by a pipe.  For example,
         // C:\|Local Disk (C:) is the true path following by the name description
         m_Name = std::format(L"{:.2}|{}", m_Name, FormatVolumeNameOfRootPath(m_Name));

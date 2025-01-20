@@ -43,6 +43,7 @@
 #include <ranges>
 #include <stack>
 #include <array>
+#include <numeric>
 
 IMPLEMENT_DYNCREATE(CDirStatDoc, CDocument)
 
@@ -74,97 +75,25 @@ CDirStatDoc* CDirStatDoc::GetDocument()
 // Encodes a selection from the CSelectDrivesDlg into a string which can be routed as a pseudo
 // document "path" through MFC and finally arrives in OnOpenDocument().
 //
-std::wstring CDirStatDoc::EncodeSelection(const RADIO radio, const std::wstring& folder, const std::vector<std::wstring>& drives)
+std::wstring CDirStatDoc::EncodeSelection(const std::vector<std::wstring>& folders)
 {
-    std::wstring ret;
-    switch (radio)
-    {
-    case RADIO_TARGET_DRIVES_ALL:
-    case RADIO_TARGET_DRIVES_SUBSET:
-        {
-            for (std::size_t i = 0; i < drives.size(); i++)
-            {
-                if (i > 0)
-                {
-                    ret += GetEncodingSeparator();
-                }
-                ret += drives[i];
-            }
-        }
-        break;
-
-    case RADIO_TARGET_FOLDER:
-        {
-            ret = folder;
-        }
-        break;
-    }
-    return ret;
+    return std::accumulate(folders.begin(), folders.end(), std::wstring(),
+        [&](const std::wstring& a, const std::wstring& b) {
+            return a.empty() ? b : a + wds::chrPipe + b;
+        });
 }
 
 // The inverse of EncodeSelection
 //
-void CDirStatDoc::DecodeSelection(const std::wstring& s, std::wstring& folder, std::vector<std::wstring>& drives)
+std::vector<std::wstring> CDirStatDoc::DecodeSelection(const std::wstring& encodedPath)
 {
-    folder.clear();
-    drives.clear();
-
-    // s is either something like "C:\programme"
-    // or something like "C:|D:|E:".
-
     std::vector<std::wstring> selections;
-    std::size_t i = 0;
-
-    while (i < s.size())
-    {
-        std::wstring token;
-        while (i < s.size() && s[i] != GetEncodingSeparator())
-        {
-            token += s[i++];
-        }
-
-        TrimString(token);
-        ASSERT(!token.empty());
-        selections.emplace_back(token);
-
-        if (i < s.size())
-        {
-            i++;
-        }
+    for (const auto& part : std::views::split(encodedPath, wds::chrPipe)) {
+        std::wstring partString(part.begin(), part.end());
+        selections.emplace_back(TrimString(partString));
     }
 
-    if (selections.size() > 1)
-    {
-        for (const auto & selection : selections)
-        {
-            ASSERT(2 == selection.size());
-            ASSERT(wds::chrColon == selection[1]);
-            drives.emplace_back(selection + L"\\");
-        }
-    }
-    else if (!selections.empty())
-    {
-        std::wstring f = selections[0];
-        if (2 == f.size() && wds::chrColon == f[1])
-        {
-            drives.emplace_back(f + L'\\');
-        }
-        else
-        {
-            // Remove trailing backslash, if any and not drive-root.
-            if (!f.empty() && wds::chrBackslash == f.back() && (f.size() != 3 || f[1] != wds::chrColon))
-            {
-                f = f.substr(0, f.size() - 1);
-            }
-
-            folder = f;
-        }
-    }
-}
-
-WCHAR CDirStatDoc::GetEncodingSeparator()
-{
-    return wds::chrPipe; // This character must be one, which is not allowed in file names.
+    return selections;
 }
 
 void CDirStatDoc::DeleteContents()
@@ -215,9 +144,7 @@ BOOL CDirStatDoc::OnOpenDocument(LPCWSTR lpszPathName)
 
     // Decode list of folders to scan
     const std::wstring spec = lpszPathName;
-    std::wstring folder;
-    std::vector<std::wstring> drives;
-    DecodeSelection(spec, folder, drives);
+    std::vector<std::wstring> selections = DecodeSelection(spec);
 
     // Prepare for new root and delete any existing data
     CDocument::OnNewDocument();
@@ -225,29 +152,19 @@ BOOL CDirStatDoc::OnOpenDocument(LPCWSTR lpszPathName)
     // Call base class to commit path to internal doc name string
     GetDocument()->SetPathName(spec.c_str(), FALSE);
 
-    // Return if no drives or folder were passed
-    if (drives.empty() && folder.empty()) return true;
+    // Count number of drives for validation
+    const auto driveCount = static_cast<size_t>(std::ranges::count_if(selections, [](const std::wstring& str) {
+        return std::regex_match(str, std::wregex(LR"(^[A-Za-z]:[\\]?$)"));
+    }));
+
+    // Return if no paths were passed
+    if (selections.empty()) return true;
+
+    // Return if multiple selections but they are not all drives
+    if (selections.size() >= 2 && selections.size() != driveCount) return true;
 
     // Determine if we should add multiple drives under a single node
-    std::vector<std::wstring> rootFolders;
-    if (drives.empty())
-    {
-        ASSERT(!folder.empty());
-        m_ShowMyComputer = false;
-        rootFolders.emplace_back(folder);
-    }
-    else
-    {
-        m_ShowMyComputer = drives.size() > 1;
-        for (const auto & drive : drives)
-        {
-            rootFolders.emplace_back(drive);
-        }
-    }
-
-    std::vector<CItem*> driveItems;
-
-    if (m_ShowMyComputer)
+    if (selections.size() >= 2)
     {
         // Fetch the localized string for the root computer object
         SmartPointer<LPITEMIDLIST> pidl(CoTaskMemFree);
@@ -260,25 +177,22 @@ BOOL CDirStatDoc::OnOpenDocument(LPCWSTR lpszPathName)
             ASSERT(FALSE);
         }
 
-        LPCWSTR name = ppszName != nullptr ? const_cast<LPCWSTR>(*ppszName) : L"This PC";
+        const LPCWSTR name = ppszName != nullptr ? const_cast<LPCWSTR>(*ppszName) : L"This PC";
         m_RootItem = new CItem(IT_MYCOMPUTER | ITF_ROOTITEM, name);
-        for (const auto & rootFolder : rootFolders)
+        for (const auto & rootFolder : selections)
         {
-            auto drive = new CItem(IT_DRIVE, rootFolder);
-            driveItems.emplace_back(drive);
+            const auto drive = new CItem(IT_DRIVE, rootFolder);
             m_RootItem->AddChild(drive);
         }
     }
     else
     {
-        const ITEMTYPE type = IsDrive(rootFolders[0]) ? IT_DRIVE : IT_DIRECTORY;
-        m_RootItem = new CItem(type | ITF_ROOTITEM, rootFolders[0]);
-        if (m_RootItem->IsType(IT_DRIVE))
-        {
-            driveItems.emplace_back(m_RootItem);
-        }
+        const ITEMTYPE type = driveCount == 1 ? IT_DRIVE : IT_DIRECTORY;
+        m_RootItem = new CItem(type | ITF_ROOTITEM, selections.front());
         m_RootItem->UpdateStatsFromDisk();
     }
+
+    // Restore zoom scope to be the root
     m_ZoomItem = m_RootItem;
 
     // Set new node for extra views
@@ -314,7 +228,6 @@ BOOL CDirStatDoc::OnOpenDocument(CItem * newroot)
 void CDirStatDoc::SetPathName(LPCWSTR lpszPathName, BOOL /*bAddToMRU*/)
 {
     // MRU would be fine but is not implemented yet.
-
     m_strPathName = lpszPathName;
     m_bEmbedded = FALSE;
     SetTitle(m_strPathName);
@@ -360,11 +273,6 @@ ULONGLONG CDirStatDoc::GetRootSize() const
     ASSERT(m_RootItem != nullptr);
     ASSERT(IsRootDone());
     return m_RootItem->GetSizePhysical();
-}
-
-bool CDirStatDoc::IsDrive(const std::wstring& spec)
-{
-    return 3 == spec.size() && wds::chrColon == spec[1] && wds::chrBackslash == spec[2];
 }
 
 // Starts a refresh of all mount points in our tree.

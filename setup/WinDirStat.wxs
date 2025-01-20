@@ -122,14 +122,14 @@
           <RegistryValue Name="Icon" Value="[INSTALLFOLDER]WinDirStat.exe" Type="string"/>
           <RegistryValue Value="WinDirStat" Type="string"/>
           <RegistryKey Key="command">
-            <RegistryValue Value="&quot;[INSTALLFOLDER]WinDirStat.exe&quot; &quot;0|%1&quot;" Type="string"/>
+            <RegistryValue Value="&quot;[INSTALLFOLDER]WinDirStat.exe&quot; %*" Type="string"/>
           </RegistryKey>
         </RegistryKey>
         <RegistryKey Root="HKCR" Key="Drive\shell\WinDirStat" ForceDeleteOnUninstall="yes">
           <RegistryValue Name="Icon" Value="[INSTALLFOLDER]WinDirStat.exe" Type="string"/>
           <RegistryValue Value="WinDirStat" Type="string"/>
           <RegistryKey Key="command">
-            <RegistryValue Value="&quot;[INSTALLFOLDER]WinDirStat.exe&quot; &quot;0|%1&quot;" Type="string"/>
+            <RegistryValue Value="&quot;[INSTALLFOLDER]WinDirStat.exe&quot; %*" Type="string"/>
           </RegistryKey>
         </RegistryKey>
       </Component>

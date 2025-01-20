@@ -148,22 +148,23 @@ class CSelectDrivesDlg final : public CDialogEx
 
     static std::wstring GetFullPathName(const std::wstring& relativePath);
 
-public:
+
     CSelectDrivesDlg(CWnd* pParent = nullptr);
     ~CSelectDrivesDlg() override = default;
+
+    std::vector<std::wstring> GetSelectedItems() const;
+    void DoDataExchange(CDataExchange* pDX) override;
+    BOOL OnInitDialog() override;
+    void OnOK() override;
+    void UpdateButtons();
+
+protected:
 
     // Dialog Data
     BOOL m_ScanDuplicates = false; // whether duplicate scanning is enable
     int m_Radio = 0;          // out.
     CStringW m_FolderName;    // out. Valid if m_Radio = RADIO_TARGET_FOLDER
     std::vector<std::wstring> m_Drives;    // out. Valid if m_Radio != RADIO_TARGET_FOLDER
-
-    void DoDataExchange(CDataExchange* pDX) override;
-    BOOL OnInitDialog() override;
-    void OnOK() override;
-
-    void UpdateButtons();
-
     static UINT _serial; // Each Instance of this dialog gets a serial number
     CDrivesList m_List;
     CMFCEditBrowseCtrl m_Browse;
