@@ -24,7 +24,7 @@
 #include "GlobalHelpers.h"
 #include "Options.h"
 #include "Localization.h"
-#include "FileFind.h"
+#include "FinderBasic.h"
 
 #include <array>
 #include <algorithm>
@@ -348,7 +348,7 @@ void WaitForHandleWithRepainting(const HANDLE h, const DWORD TimeOut)
 
 bool FolderExists(const std::wstring & path)
 {
-    const DWORD result = GetFileAttributes(FileFindEnhanced::MakeLongPathCompatible(path).c_str());
+    const DWORD result = GetFileAttributes(FinderBasic::MakeLongPathCompatible(path).c_str());
     return result != INVALID_FILE_ATTRIBUTES && (result & FILE_ATTRIBUTE_DIRECTORY) != 0;
 }
 
@@ -712,7 +712,7 @@ bool IsHibernateEnabled()
 {
     WCHAR drive[3];
     return GetEnvironmentVariable(L"SystemDrive", drive, std::size(drive)) == std::size(drive) - 1 &&
-        FileFindEnhanced::DoesFileExist(drive + std::wstring(L"\\"), L"hiberfil.sys");
+        FinderBasic::DoesFileExist(drive + std::wstring(L"\\"), L"hiberfil.sys");
 }
 
 bool ShellExecuteWrapper(const std::wstring& lpFile, const std::wstring& lpParameters, const std::wstring& lpVerb,

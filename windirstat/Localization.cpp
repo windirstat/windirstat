@@ -21,7 +21,7 @@
 #include "stdafx.h"
 #include "Localization.h"
 #include "GlobalHelpers.h"
-#include "FileFind.h"
+#include "FinderBasic.h"
 #include "langs.h"
 
 #include <filesystem>
@@ -80,7 +80,7 @@ std::vector<LANGID> Localization::GetLanguageList()
 
     }, reinterpret_cast<LONG_PTR>(&results), 0, 0);
 
-    FileFindEnhanced finder;
+    FinderBasic finder;
     for (BOOL b = finder.FindFile(GetAppFolder(), L"lang_??.txt"); b; b = finder.FindNextFile())
     {
         const std::wstring lang = finder.GetFileName().substr(5, 2);
@@ -97,10 +97,10 @@ std::vector<LANGID> Localization::GetLanguageList()
 
 bool Localization::LoadResource(const WORD language)
 {
-    FileFindEnhanced finder;
+    FinderBasic finder;
     const std::wstring lang = GetLocaleString(LOCALE_SISO639LANGNAME, language);
     const std::wstring name = L"lang_" + lang + L".txt";
-    if (FileFindEnhanced::DoesFileExist(GetAppFolder(), name))
+    if (FinderBasic::DoesFileExist(GetAppFolder(), name))
     {
         return LoadFile((GetAppFolder() + L"\\" + name));
     }

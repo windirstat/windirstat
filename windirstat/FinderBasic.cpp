@@ -1,4 +1,4 @@
-﻿// FileFind.cpp - Declaration of CFileFindEnhanced
+﻿// FinderBasic.cpp - Declaration of CFinderBasic
 //
 // WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
@@ -20,7 +20,7 @@
 
 #include "stdafx.h"
 
-#include "FileFind.h"
+#include "FinderBasic.h"
 #include "Options.h"
 #include "Tracer.h"
 
@@ -32,12 +32,12 @@ NTSTATUS(WINAPI* NtQueryDirectoryFile)(HANDLE FileHandle, HANDLE Event, PVOID Ap
     PUNICODE_STRING FileName, BOOLEAN RestartScan) = reinterpret_cast<decltype(NtQueryDirectoryFile)>(
         static_cast<LPVOID>(GetProcAddress(LoadLibrary(L"ntdll.dll"), "NtQueryDirectoryFile")));
 
-FileFindEnhanced::~FileFindEnhanced()
+FinderBasic::~FinderBasic()
 {
     if (m_Handle != nullptr) NtClose(m_Handle);
 }
 
-bool FileFindEnhanced::FindNextFile()
+bool FinderBasic::FindNextFile()
 {
     bool success = false;
     if (m_Firstrun || m_CurrentInfo->NextEntryOffset == 0)
@@ -102,7 +102,7 @@ bool FileFindEnhanced::FindNextFile()
     return success;
 }
 
-bool FileFindEnhanced::FindFile(const std::wstring & strFolder, const std::wstring& strName, const DWORD attr)
+bool FinderBasic::FindFile(const std::wstring & strFolder, const std::wstring& strName, const DWORD attr)
 {
     // stash the search pattern for later use
     m_Search = strName;
@@ -137,44 +137,44 @@ bool FileFindEnhanced::FindFile(const std::wstring & strFolder, const std::wstri
     return FindNextFile();
 }
 
-bool FileFindEnhanced::IsDirectory() const
+bool FinderBasic::IsDirectory() const
 {
     return (m_CurrentInfo->FileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
 }
 
-bool FileFindEnhanced::IsDots() const
+bool FinderBasic::IsDots() const
 {
     return m_Name == L"." || m_Name == L"..";
 }
 
-bool FileFindEnhanced::IsHidden() const
+bool FinderBasic::IsHidden() const
 {
     return (m_CurrentInfo->FileAttributes & FILE_ATTRIBUTE_HIDDEN) != 0;
 }
 
-bool FileFindEnhanced::IsHiddenSystem() const
+bool FinderBasic::IsHiddenSystem() const
 {
     constexpr DWORD hiddenSystem = FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM;
     return (m_CurrentInfo->FileAttributes & hiddenSystem) == hiddenSystem;
 }
 
-bool FileFindEnhanced::IsProtectedReparsePoint() const
+bool FinderBasic::IsProtectedReparsePoint() const
 {
     constexpr DWORD protect = FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM | FILE_ATTRIBUTE_REPARSE_POINT;
     return (m_CurrentInfo->FileAttributes & protect) == protect;
 }
 
-DWORD FileFindEnhanced::GetAttributes() const
+DWORD FinderBasic::GetAttributes() const
 {
     return m_CurrentInfo->FileAttributes;
 }
 
-std::wstring FileFindEnhanced::GetFileName() const
+std::wstring FinderBasic::GetFileName() const
 {
     return m_Name;
 }
 
-ULONGLONG FileFindEnhanced::GetFileSizePhysical() const
+ULONGLONG FinderBasic::GetFileSizePhysical() const
 {
     if (m_CurrentInfo->AllocationSize.QuadPart == 0 &&
         m_CurrentInfo->EndOfFile.QuadPart != 0)
@@ -191,18 +191,18 @@ ULONGLONG FileFindEnhanced::GetFileSizePhysical() const
     return m_CurrentInfo->AllocationSize.QuadPart;
 }
 
-ULONGLONG FileFindEnhanced::GetFileSizeLogical() const
+ULONGLONG FinderBasic::GetFileSizeLogical() const
 {
     return m_CurrentInfo->EndOfFile.QuadPart;
 }
 
-FILETIME FileFindEnhanced::GetLastWriteTime() const
+FILETIME FinderBasic::GetLastWriteTime() const
 {
     return { m_CurrentInfo->LastWriteTime.LowPart,
         static_cast<DWORD>(m_CurrentInfo->LastWriteTime.HighPart) };
 }
 
-std::wstring FileFindEnhanced::GetFilePath() const
+std::wstring FinderBasic::GetFilePath() const
 {
     // Get full path to folder or file
     std::wstring path = m_Base.back() == L'\\'
@@ -215,12 +215,12 @@ std::wstring FileFindEnhanced::GetFilePath() const
     return path;
 }
 
-std::wstring FileFindEnhanced::GetFilePathLong() const
+std::wstring FinderBasic::GetFilePathLong() const
 {
     return MakeLongPathCompatible(GetFilePath());
 }
 
-std::wstring FileFindEnhanced::MakeLongPathCompatible(const std::wstring & path)
+std::wstring FinderBasic::MakeLongPathCompatible(const std::wstring & path)
 {
     if (path.find(L":\\", 1) == 1) return m_Long.data() + path;
     if (path.starts_with(L"\\\\?")) return path;
@@ -228,10 +228,10 @@ std::wstring FileFindEnhanced::MakeLongPathCompatible(const std::wstring & path)
     return path;
 }
 
-bool FileFindEnhanced::DoesFileExist(const std::wstring& folder, const std::wstring& file)
+bool FinderBasic::DoesFileExist(const std::wstring& folder, const std::wstring& file)
 {
     // Use this method over GetFileAttributes() as GetFileAttributes() will
     // return valid INVALID_FILE_ATTRIBUTES on locked files
-    FileFindEnhanced finder;
+    FinderBasic finder;
     return finder.FindFile(folder, file);
 }

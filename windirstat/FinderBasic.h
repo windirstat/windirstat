@@ -1,4 +1,4 @@
-﻿// FileFind.h - Declaration of CFileFindEnhanced
+﻿// FinderBasic.h - Declaration of CFinderBasic
 //
 // WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
@@ -23,7 +23,7 @@
 #include "stdafx.h"
 #include <string>
 
-class FileFindEnhanced final
+class FinderBasic final
 {
     using FILE_FULL_DIR_INFORMATION = struct {
         ULONG         NextEntryOffset;
@@ -54,8 +54,8 @@ class FileFindEnhanced final
 
 public:
 
-    FileFindEnhanced() = default;
-    ~FileFindEnhanced();
+    FinderBasic() = default;
+    ~FinderBasic();
 
     bool FindNextFile();
     bool FindFile(const std::wstring& strFolder,const std::wstring& strName = L"", DWORD attr = INVALID_FILE_ATTRIBUTES);

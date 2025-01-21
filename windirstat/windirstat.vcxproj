@@ -620,7 +620,7 @@
     <ClInclude Include="BlockingQueue.h" />
     <ClInclude Include="CsvLoader.h" />
     <ClInclude Include="DirStatDoc.h" />
-    <ClInclude Include="FileFind.h" />
+    <ClInclude Include="FinderBasic.h" />
     <ClInclude Include="GlobalHelpers.h" />
     <ClInclude Include="Item.h" />
     <ClInclude Include="ItemDupe.h" />
@@ -665,7 +665,7 @@
     <ClCompile Include="CsvLoader.cpp" />
     <ClCompile Include="DirStatDoc.cpp">
     </ClCompile>
-    <ClCompile Include="FileFind.cpp" />
+    <ClCompile Include="FinderBasic.cpp" />
     <ClCompile Include="GlobalHelpers.cpp">
     </ClCompile>
     <ClCompile Include="Item.cpp">

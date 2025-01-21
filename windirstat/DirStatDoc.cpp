@@ -549,7 +549,7 @@ bool CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, const bo
             // Re-run deletion using native function to handle any long paths that were missed
             if (!toTrashBin)
             {
-                std::wstring path = FileFindEnhanced::MakeLongPathCompatible(item->GetPath());
+                std::wstring path = FinderBasic::MakeLongPathCompatible(item->GetPath());
                 std::error_code ec;
                 remove_all(std::filesystem::path(path.data()), ec);
             }
@@ -679,7 +679,7 @@ void CDirStatDoc::RecursiveUserDefinedCleanup(USERDEFINEDCLEANUP* udc, const std
 {
     // (Depth first.)
 
-    FileFindEnhanced finder;
+    FinderBasic finder;
     for (BOOL b = finder.FindFile(currentPath); b; b = finder.FindNextFile())
     {
         if (finder.IsDots() || !finder.IsDirectory())
@@ -1536,7 +1536,7 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
   
             // Handle if item to be refreshed has been removed
             if (item->IsType(IT_FILE | IT_DIRECTORY | IT_DRIVE) &&
-                !FileFindEnhanced::DoesFileExist(item->GetFolderPath(),
+                !FinderBasic::DoesFileExist(item->GetFolderPath(),
                     item->IsType(IT_FILE) ? item->GetName() : std::wstring()))
             {
                 // Remove item from list so we do not rescan it

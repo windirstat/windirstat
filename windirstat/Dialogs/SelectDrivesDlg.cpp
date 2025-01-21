@@ -25,7 +25,7 @@
 #include "GlobalHelpers.h"
 #include "SelectDrivesDlg.h"
 
-#include "FileFind.h"
+#include "FinderBasic.h"
 #include "Localization.h"
 
 namespace
@@ -600,7 +600,7 @@ void CSelectDrivesDlg::UpdateButtons()
             }
             else
             {
-                enableOk = FileFindEnhanced::DoesFileExist(m_FolderName.GetString());
+                enableOk = FinderBasic::DoesFileExist(m_FolderName.GetString());
             }
         }
         break;

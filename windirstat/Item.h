@@ -23,7 +23,7 @@
 #include "TreeListControl.h"
 #include "TreeMap.h"
 #include "DirStatDoc.h" // CExtensionData
-#include "FileFind.h" // FileFindEnhanced
+#include "FinderBasic.h" // FinderBasic
 #include "BlockingQueue.h"
 
 #include <shared_mutex>
@@ -263,8 +263,8 @@ private:
     bool MustShowReadJobs() const;
     COLORREF GetPercentageColor() const;
     std::wstring UpwardGetPathWithoutBackslash() const;
-    CItem* AddDirectory(const FileFindEnhanced& finder);
-    CItem* AddFile(const FileFindEnhanced& finder);
+    CItem* AddDirectory(const FinderBasic& finder);
+    CItem* AddFile(const FinderBasic& finder);
     void UpwardDrivePacman();
 
     // Used for initialization of hashing process

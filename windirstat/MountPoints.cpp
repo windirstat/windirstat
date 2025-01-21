@@ -22,7 +22,7 @@
 #include "MountPoints.h"
 #include "Constants.h"
 #include "SmartPointer.h"
-#include "FileFind.h"
+#include "FinderBasic.h"
 #include "GlobalHelpers.h"
 
 #include <algorithm>
@@ -99,7 +99,7 @@ void CReparsePoints::Initialize()
             {
                 _wcslwr_s(name, len + 1);
                 m_Mountpoints.emplace_back(name);
-                m_Mountpoints.emplace_back(FileFindEnhanced::MakeLongPathCompatible(name));
+                m_Mountpoints.emplace_back(FinderBasic::MakeLongPathCompatible(name));
             }
         }
     }

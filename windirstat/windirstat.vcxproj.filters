@@ -116,7 +116,7 @@
     <ClInclude Include="DirStatDoc.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="FileFind.h">
+    <ClInclude Include="FinderBasic.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="GlobalHelpers.h">
@@ -313,7 +313,7 @@
     <ClCompile Include="Dialogs\SelectDrivesDlg.cpp">
       <Filter>Source Files\Dialogs</Filter>
     </ClCompile>
-    <ClCompile Include="FileFind.cpp">
+    <ClCompile Include="FinderBasic.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Localization.cpp">
