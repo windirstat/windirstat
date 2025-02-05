@@ -73,10 +73,10 @@ BOOL CPageFiltering::OnInitDialog()
     m_FilteringExcludeFiles = COptions::FilteringExcludeFiles.Obj().c_str();
 
     m_CtlFilteringSizeUnits.AddString(GetSpec_Bytes().c_str());
-    m_CtlFilteringSizeUnits.AddString(GetSpec_KB().c_str());
-    m_CtlFilteringSizeUnits.AddString(GetSpec_MB().c_str());
-    m_CtlFilteringSizeUnits.AddString(GetSpec_GB().c_str());
-    m_CtlFilteringSizeUnits.AddString(GetSpec_TB().c_str());
+    m_CtlFilteringSizeUnits.AddString(GetSpec_KiB().c_str());
+    m_CtlFilteringSizeUnits.AddString(GetSpec_MiB().c_str());
+    m_CtlFilteringSizeUnits.AddString(GetSpec_GiB().c_str());
+    m_CtlFilteringSizeUnits.AddString(GetSpec_TiB().c_str());
 
     // Initialize the tooltip control
     m_ToolTip.Create(this);

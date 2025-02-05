@@ -432,10 +432,10 @@ END
 STRINGTABLE
 BEGIN
     IDS_SPEC_BYTES          "IDS_SPEC_BYTES"
-    IDS_SPEC_GB             "IDS_SPEC_GB"
-    IDS_SPEC_KB             "IDS_SPEC_KB"
-    IDS_SPEC_MB             "IDS_SPEC_MB"
-    IDS_SPEC_TB             "IDS_SPEC_TB"
+    IDS_SPEC_GiB            "IDS_SPEC_GiB"
+    IDS_SPEC_KiB            "IDS_SPEC_KiB"
+    IDS_SPEC_MiB            "IDS_SPEC_MiB"
+    IDS_SPEC_TiB            "IDS_SPEC_TiB"
     IDS_sREADJOBS           "IDS_sREADJOBS"
     IDS_SUSPEND             "IDS_SUSPEND"
     IDS_SUSPENDED           "IDS_SUSPENDED"
