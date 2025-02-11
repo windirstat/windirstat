@@ -224,10 +224,10 @@
 #define IDS_SCANNING                    20222
 #define IDS_sITEMSss                    20223
 #define IDS_SPEC_BYTES                  20224
-#define IDS_SPEC_GB                     20225
-#define IDS_SPEC_KB                     20226
-#define IDS_SPEC_MB                     20227
-#define IDS_SPEC_TB                     20228
+#define IDS_SPEC_GiB                    20225
+#define IDS_SPEC_KiB                    20226
+#define IDS_SPEC_MiB                    20227
+#define IDS_SPEC_TiB                    20228
 #define IDS_sREADJOBS                   20229
 #define IDS_SUSPEND                     20230
 #define IDS_SUSPENDED                   20231
