@@ -1,4 +1,4 @@
-// GlobalHelpers.cpp - Implementation of global helper functions
+﻿// GlobalHelpers.cpp - Implementation of global helper functions
 //
 // WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
@@ -121,32 +121,32 @@ std::wstring FormatSizeSuffixes(ULONGLONG n)
     const double B = static_cast<int>(n % base);
     n /= base;
 
-    const double KB = static_cast<int>(n % base);
+    const double KiB = static_cast<int>(n % base);
     n /= base;
 
-    const double MB = static_cast<int>(n % base);
+    const double MiB = static_cast<int>(n % base);
     n /= base;
 
-    const double GB = static_cast<int>(n % base);
+    const double GiB = static_cast<int>(n % base);
     n /= base;
 
-    const double TB = static_cast<int>(n);
+    const double TiB = static_cast<int>(n);
 
-    if (TB != 0.0 || GB == base - 1 && MB >= half)
+    if (TiB != 0.0 || GiB == base - 1 && MiB >= half)
     {
-        return FormatDouble(TB + GB / base) + L" " + GetSpec_TB();
+        return FormatDouble(TiB + GiB / base) + L" " + GetSpec_TiB();
     }
-    if (GB != 0.0 || MB == base - 1 && KB >= half)
+    if (GiB != 0.0 || MiB == base - 1 && KiB >= half)
     {
-        return FormatDouble(GB + MB / base) + L" " + GetSpec_GB();
+        return FormatDouble(GiB + MiB / base) + L" " + GetSpec_GiB();
     }
-    if (MB != 0.0 || KB == base - 1 && B >= half)
+    if (MiB != 0.0 || KiB == base - 1 && B >= half)
     {
-        return FormatDouble(MB + KB / base) + L" " + GetSpec_MB();
+        return FormatDouble(MiB + KiB / base) + L" " + GetSpec_MiB();
     }
-    if (KB != 0.0)
+    if (KiB != 0.0)
     {
-        return FormatDouble(KB + B / base) + L" " + GetSpec_KB();
+        return FormatDouble(KiB + B / base) + L" " + GetSpec_KiB();
     }
 
     return std::to_wstring(static_cast<ULONG>(B)) + L" " + GetSpec_Bytes();
@@ -436,27 +436,27 @@ const std::wstring & GetSpec_Bytes()
     return s;
 }
 
-const std::wstring& GetSpec_KB()
+const std::wstring& GetSpec_KiB()
 {
-    static std::wstring s = Localization::Lookup(IDS_SPEC_KB, L"KiB");
+    static std::wstring s = Localization::Lookup(IDS_SPEC_KiB, L"KiB");
     return s;
 }
 
-const std::wstring& GetSpec_MB()
+const std::wstring& GetSpec_MiB()
 {
-    static std::wstring s = Localization::Lookup(IDS_SPEC_MB, L"MiB");
+    static std::wstring s = Localization::Lookup(IDS_SPEC_MiB, L"MiB");
     return s;
 }
 
-const std::wstring& GetSpec_GB()
+const std::wstring& GetSpec_GiB()
 {
-    static std::wstring s = Localization::Lookup(IDS_SPEC_GB, L"GiB");
+    static std::wstring s = Localization::Lookup(IDS_SPEC_GiB, L"GiB");
     return s;
 }
 
-const std::wstring& GetSpec_TB()
+const std::wstring& GetSpec_TiB()
 {
-    static std::wstring s = Localization::Lookup(IDS_SPEC_TB, L"TiB");
+    static std::wstring s = Localization::Lookup(IDS_SPEC_TiB, L"TiB");
     return s;
 }
 

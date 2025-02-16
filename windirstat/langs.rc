@@ -432,10 +432,10 @@ END
 STRINGTABLE
 BEGIN
     IDS_SPEC_BYTES          "IDS_SPEC_BYTES"
-    IDS_SPEC_GB             "IDS_SPEC_GB"
-    IDS_SPEC_KB             "IDS_SPEC_KB"
-    IDS_SPEC_MB             "IDS_SPEC_MB"
-    IDS_SPEC_TB             "IDS_SPEC_TB"
+    IDS_SPEC_GiB            "IDS_SPEC_GiB"
+    IDS_SPEC_KiB            "IDS_SPEC_KiB"
+    IDS_SPEC_MiB            "IDS_SPEC_MiB"
+    IDS_SPEC_TiB            "IDS_SPEC_TiB"
     IDS_sREADJOBS           "IDS_sREADJOBS"
     IDS_SUSPEND             "IDS_SUSPEND"
     IDS_SUSPENDED           "IDS_SUSPENDED"
@@ -668,6 +668,24 @@ END
 #endif    // APSTUDIO_INVOKED
 
 #endif    // English (United States) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
+// Swedish (Sweden) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_SVE)
+LANGUAGE LANG_SWEDISH, SUBLANG_SWEDISH
+#pragma code_page(1252)
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// RT_LANG
+//
+
+IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_sv.bin"
+
+#endif    // Swedish (Sweden) resources
 /////////////////////////////////////////////////////////////////////////////
 
 
