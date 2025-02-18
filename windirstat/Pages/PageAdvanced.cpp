@@ -117,7 +117,7 @@ void CPageAdvanced::OnOK()
     COptions::ExcludeProtectedFile = (FALSE != m_SkipProtectedFile);
     COptions::UseBackupRestore = (FALSE != m_UseBackupRestore);
     COptions::ScanningThreads = m_ScanningThreads + 1;
-    COptions::LargeFileCount = std::stoi(m_LargestFileCount.GetString());
+    COptions::LargeFileCount = min(std::stoi(m_LargestFileCount.GetString()),10000);
 
     if (refreshAll)
     {
