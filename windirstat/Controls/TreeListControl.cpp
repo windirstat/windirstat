@@ -698,10 +698,12 @@ void CTreeListControl::ExpandItem(const int i, const bool scroll)
 
         // The calculation of item width is very expensive for
         // very large lists so limit calculation based on the
-        // first few bunch of visible items
-        if (COptions::AutomaticallyResizeColumns && scroll && c < 50)
+        // LargeFileCount, to ensure all items displayed on
+        // the large file list have the correct column width
+        // to show the entire file path
+        if (COptions::AutomaticallyResizeColumns && scroll && c < max(COptions::LargeFileCount,50))
         {
-            maxwidth = max(maxwidth, GetSubItemWidth(child, 0));
+            maxwidth = max(maxwidth, GetSubItemWidth(child, 0) + 5);
         }
     }
     if (childItems > 0) SortItems();
