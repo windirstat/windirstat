@@ -673,7 +673,7 @@ void CItem::ExtensionDataRemove() const
     if (record->files == 0) CDirStatDoc::GetDocument()->GetExtensionData()->erase(GetExtension());
 }
 
-void CItem::ExtensionDataRemoveChildren() const
+void CItem::ExtensionDataProcessChildren(const bool remove) const
 {
     std::stack<const CItem*> childStack({ this });
     while (!childStack.empty())
@@ -688,9 +688,9 @@ void CItem::ExtensionDataRemoveChildren() const
                 childStack.push(child);
             }
         }
-        else if (IsType(IT_FILE))
+        else if (item->IsType(IT_FILE))
         {
-            item->ExtensionDataRemove();
+            remove ? item->ExtensionDataRemove() : item->ExtensionDataAdd();
         }
     }
 }

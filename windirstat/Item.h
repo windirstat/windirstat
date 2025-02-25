@@ -181,7 +181,7 @@ public:
     void UpwardRecalcLastChange(bool withoutItem = false);
     void ExtensionDataAdd() const;
     void ExtensionDataRemove() const;
-    void ExtensionDataRemoveChildren() const;
+    void ExtensionDataProcessChildren(bool remove = false) const;
     ULONGLONG GetSizePhysical() const;
     ULONGLONG GetSizeLogical() const;
     void SetSizePhysical(ULONGLONG size);

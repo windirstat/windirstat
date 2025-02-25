@@ -212,6 +212,18 @@ BOOL CDirStatDoc::OnOpenDocument(CItem * newroot)
 
     CDocument::OnNewDocument(); // --> DeleteContents()
 
+    // Determine root spec string
+    std::wstring spec = newroot->GetName();
+    if (newroot->IsType(IT_MYCOMPUTER))
+    {
+        std::vector<std::wstring> folders;
+        std::ranges::transform(newroot->GetChildren(), std::back_inserter(folders),
+            [](const CItem* obj) -> std::wstring { return obj->GetName().substr(0, 2); });
+        spec = EncodeSelection(folders);
+    }
+
+    GetDocument()->SetPathName(spec.c_str(), FALSE);
+
     m_RootItemDupe = new CItemDupe();
     m_RootItemTop = new CItemTop();
     m_RootItem = newroot;
@@ -469,6 +481,12 @@ std::vector<CItem*> CDirStatDoc::GetDriveItems() const
 
 void CDirStatDoc::RebuildExtensionData()
 {
+    // Do initial extension information population if necessary
+    if (m_ExtensionData.empty())
+    {
+        GetRootItem()->ExtensionDataProcessChildren();
+    }
+
     // Collect iterators to the map entries to avoid copying keys  
     std::vector<CExtensionData::iterator> sortedExtensions;
     sortedExtensions.reserve(m_ExtensionData.size());
@@ -1521,7 +1539,7 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
 
             // Skip pruning if it is a new element
             if (!item->IsDone()) continue;
-            item->ExtensionDataRemoveChildren();
+            item->ExtensionDataProcessChildren(true);
             item->UpwardRecalcLastChange(true);
             item->UpwardSubtractSizePhysical(item->GetSizePhysical());
             item->UpwardSubtractSizeLogical(item->GetSizeLogical());
