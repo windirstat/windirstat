@@ -753,6 +753,7 @@ BOOL CSelectDrivesDlg::PreTranslateMessage(MSG* pMsg)
 
 std::vector<std::wstring> CSelectDrivesDlg::GetSelectedItems() const
 {
-    return (m_Radio == RADIO_TARGET_FOLDER) ?
-        std::vector<std::wstring>{m_FolderName.GetString()} : m_SelectedDrives;
+    return (m_Radio == RADIO_TARGET_DRIVES_ALL) ? m_Drives :
+        (m_Radio == RADIO_TARGET_DRIVES_SUBSET) ? m_SelectedDrives :
+        std::vector<std::wstring>{ m_FolderName.GetString() };
 }
