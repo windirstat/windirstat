@@ -86,7 +86,10 @@ bool FinderBasic::FindNextFile()
         if (m_Firstrun)
         {
             // Use cached value passed in from previous capture
-            m_CurrentInfo->FileAttributes = m_InitialAttributes;
+            if (m_Name == L".")
+            {
+                m_CurrentInfo->FileAttributes = m_InitialAttributes;
+            }
 
             // Fallback if cached value was not passed
             if (m_CurrentInfo->FileAttributes == INVALID_FILE_ATTRIBUTES)
