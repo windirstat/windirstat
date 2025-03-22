@@ -368,7 +368,7 @@ void CTreeListControl::ExpandPathToItem(const CTreeListItem* item)
         {
             for (int k = parent + 1; k < index; k++)
             {
-                // Do not collapse if in multiple selection mode (holding control) 
+                // Do not collapse if in multiple selection mode (holding control)
                 if ((HSHELL_HIGHBIT & GetKeyState(VK_CONTROL)) == 0) CollapseItem(k);
                 index = FindTreeItem(path);
             }
@@ -756,8 +756,16 @@ void CTreeListControl::OnKeyDown(const UINT nChar, const UINT nRepCnt, const UIN
             }
             return;
         }
+        if (nChar == VK_SPACE)
+        {
+            if (items[0]->HasChildren())
+            {
+                ToggleExpansion(FindTreeItem(items[0]));
+                return;
+            }
+        }
     }
- 
+
     COwnerDrawnListControl::OnKeyDown(nChar, nRepCnt, nFlags);
 }
 
