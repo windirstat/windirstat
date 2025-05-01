@@ -665,8 +665,14 @@ void CDirStatDoc::PerformUserDefinedCleanup(USERDEFINEDCLEANUP* udc, const CItem
     }
 }
 
-void CDirStatDoc::RefreshAfterUserDefinedCleanup(const USERDEFINEDCLEANUP* udc, CItem* item) const
+void CDirStatDoc::RefreshAfterUserDefinedCleanup(const USERDEFINEDCLEANUP* udc, CItem* item, std::vector<CItem*> & refreshQueue) const
 {
+    // Do not refresh if we are not set to wait
+    if (!udc->WaitForCompletion.Obj())
+    {
+        return;
+    }
+
     switch (static_cast<REFRESHPOLICY>(udc->RefreshPolicy.Obj()))
     {
     case RP_NO_REFRESH:
@@ -674,13 +680,13 @@ void CDirStatDoc::RefreshAfterUserDefinedCleanup(const USERDEFINEDCLEANUP* udc, 
 
     case RP_REFRESH_THIS_ENTRY:
         {
-            RefreshItem(item);
+            refreshQueue.push_back(item);
         }
         break;
 
     case RP_REFRESH_THIS_ENTRYS_PARENT:
         {
-            RefreshItem(nullptr == item->GetParent() ? item : item->GetParent());
+            refreshQueue.push_back(nullptr == item->GetParent() ? item : item->GetParent());
         }
         break;
 
@@ -1319,6 +1325,7 @@ void CDirStatDoc::OnUserDefinedCleanup(const UINT id)
 {
     USERDEFINEDCLEANUP* udc = &COptions::UserDefinedCleanups[id - ID_USERDEFINEDCLEANUP0];
     const auto & items = GetAllSelected();
+    std::vector<CItem*> refreshQueue;
     for (const auto & item : items)
     {
         ASSERT(UserDefinedCleanupWorksForItem(udc, item));
@@ -1331,12 +1338,18 @@ void CDirStatDoc::OnUserDefinedCleanup(const UINT id)
         {
             AskForConfirmation(udc, item);
             PerformUserDefinedCleanup(udc, item);
-            RefreshAfterUserDefinedCleanup(udc, item);
+            RefreshAfterUserDefinedCleanup(udc, item, refreshQueue);
         }
         catch (...)
         {
             // error would have been displayed already
         }
+    }
+
+    // process refresh queue
+    if (!refreshQueue.empty())
+    {
+        RefreshItem(refreshQueue);
     }
 }
 

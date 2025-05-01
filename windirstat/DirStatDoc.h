@@ -134,7 +134,7 @@ protected:
     void SetZoomItem(CItem* item);
     static void AskForConfirmation(USERDEFINEDCLEANUP* udc, const CItem* item);
     void PerformUserDefinedCleanup(USERDEFINEDCLEANUP* udc, const CItem* item);
-    void RefreshAfterUserDefinedCleanup(const USERDEFINEDCLEANUP* udc, CItem* item) const;
+    void RefreshAfterUserDefinedCleanup(const USERDEFINEDCLEANUP* udc, CItem* item, std::vector<CItem*> & refreshQueue) const;
     void RecursiveUserDefinedCleanup(USERDEFINEDCLEANUP* udc, const std::wstring& rootPath, const std::wstring& currentPath);
     static void CallUserDefinedCleanup(bool isDirectory, const std::wstring& format, const std::wstring& rootPath, const std::wstring& currentPath, bool showConsoleWindow, bool wait);
     static std::wstring BuildUserDefinedCleanupCommandLine(const std::wstring& format, const std::wstring& rootPath, const std::wstring& currentPath);
