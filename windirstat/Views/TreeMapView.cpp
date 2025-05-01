@@ -203,7 +203,11 @@ void CTreeMapView::DrawHighlightExtension(CDC* pdc)
 void CTreeMapView::RecurseHighlightExtension(CDC* pdc, const CItem* item)
 {
     CRect rc(item->TmiGetRectangle());
-    rc.OffsetRect(4, 4);
+    if (GetDocument()->IsZoomed())
+    {
+        rc.OffsetRect(ZoomFrameWidth, ZoomFrameWidth);
+    }
+
     if (rc.Width() <= 0 || rc.Height() <= 0)
     {
         return;
