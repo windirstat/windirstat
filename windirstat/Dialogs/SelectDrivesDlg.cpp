@@ -75,11 +75,6 @@ CDriveItem::CDriveItem(CDrivesList* list, const std::wstring & pszPath)
     , m_Subst(IsSUBSTedDrive(m_Path))
     , m_Name(m_Path) {}
 
-CDriveItem::~CDriveItem()
-{
-    if (m_Icon != nullptr) DestroyIcon(m_Icon);
-}
-
 void CDriveItem::StartQuery(HWND dialog, const UINT serial) const
 {
     ASSERT(dialog != nullptr);

@@ -122,7 +122,7 @@ HICON CItemDupe::GetIcon()
     // Return generic node for parent nodes
     if (m_Item == nullptr || m_VisualInfo == nullptr)
     {
-        return GetIconHandler()->GetFreeSpaceImage(false);
+        return GetIconHandler()->GetFreeSpaceImage();
     }
 
     // Return previously cached value

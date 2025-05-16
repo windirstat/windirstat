@@ -47,7 +47,6 @@ class CDriveItem final : public COwnerDrawnListItem
 {
 public:
     CDriveItem(CDrivesList* list, const std::wstring& pszPath);
-    ~CDriveItem();
 
     void StartQuery(HWND dialog, UINT serial) const;
 

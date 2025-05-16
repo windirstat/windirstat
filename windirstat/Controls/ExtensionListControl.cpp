@@ -38,11 +38,6 @@ CExtensionListControl::CListItem::CListItem(CExtensionListControl* list, const s
     m_Color = r.color;
 }
 
-CExtensionListControl::CListItem::~CListItem()
-{
-    if (m_Icon != nullptr) DestroyIcon(m_Icon);
-}
-
 bool CExtensionListControl::CListItem::DrawSubItem(const int subitem, CDC* pdc, CRect rc, const UINT state, int* width, int* focusLeft)
 {
     if (subitem == COL_EXT_EXTENSION)

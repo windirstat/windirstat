@@ -33,8 +33,11 @@
 //
 class CIconHandler final
 {
-    static constexpr UINT WDS_SHGFI_DEFAULTS = SHGFI_USEFILEATTRIBUTES | SHGFI_SMALLICON | SHGFI_ICON | SHGFI_ADDOVERLAYS;
+    static constexpr UINT WDS_SHGFI_DEFAULTS = SHGFI_USEFILEATTRIBUTES | SHGFI_SMALLICON | SHGFI_ICON | SHGFI_ADDOVERLAYS | SHGFI_SYSICONINDEX | SHGFI_OVERLAYINDEX;
     static constexpr auto MAX_ICON_THREADS = 4;
+
+    std::shared_mutex m_CachedIconMutex;
+    std::unordered_map<int, HICON> m_CachedIcons;
 
 public:
     CIconHandler() = default;
@@ -48,13 +51,13 @@ public:
     void DrawIcon(const CDC* hdc, HICON image, const CPoint& pt, const CSize& sz);
     void ClearAsyncShellInfoQueue();
     void StopAsyncShellInfoQueue();
-    HICON GetMyComputerImage(bool getCopy = true) const;
-    HICON GetMountPointImage(bool getCopy = true) const;
-    HICON GetJunctionImage(bool getCopy = true) const;
-    HICON GetJunctionProtectedImage(bool getCopy = true) const;
-    HICON GetFreeSpaceImage(bool getCopy = true) const;
-    HICON GetUnknownImage(bool getCopy = true) const;
-    HICON GetEmptyImage(bool getCopy = true) const;
+    HICON GetMyComputerImage() const;
+    HICON GetMountPointImage() const;
+    HICON GetJunctionImage() const;
+    HICON GetJunctionProtectedImage() const;
+    HICON GetFreeSpaceImage() const;
+    HICON GetUnknownImage() const;
+    HICON GetEmptyImage() const;
 
     HICON FetchShellIcon(const std::wstring& path, UINT flags = 0, DWORD attr = FILE_ATTRIBUTE_NORMAL, std::wstring* psTypeName = nullptr);
 

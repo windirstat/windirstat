@@ -51,7 +51,6 @@ class CTreeListItem : public COwnerDrawnListItem
         bool isExpanded = false; // Whether item is expanded.
 
         VISIBLEINFO(const unsigned char iIndent) : indent(iIndent) {}
-        ~VISIBLEINFO() { if (icon != nullptr) DestroyIcon(icon); }
     };
 
 public:
