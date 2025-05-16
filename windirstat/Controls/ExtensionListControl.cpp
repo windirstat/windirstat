@@ -270,7 +270,7 @@ void CExtensionListControl::MeasureItem(LPMEASUREITEMSTRUCT mis)
 void CExtensionListControl::OnSetFocus(CWnd* pOldWnd)
 {
     COwnerDrawnListControl::OnSetFocus(pOldWnd);
-    CMainFrame::Get()->SetLogicalFocus(LF_EXTENSIONLIST);
+    CMainFrame::Get()->SetLogicalFocus(LF_EXTLIST);
 }
 
 void CExtensionListControl::OnLvnItemChanged(NMHDR* pNMHDR, LRESULT* pResult)

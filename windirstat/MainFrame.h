@@ -42,11 +42,11 @@ class CExtensionView;
 //
 enum LOGICAL_FOCUS : std::uint8_t
 {
-    LF_NONE,
-    LF_FILETREE,
-    LF_DUPELIST,
-    LF_TOPLIST,
-    LF_EXTENSIONLIST
+    LF_NONE = 0,
+    LF_FILETREE = 1 << 0,
+    LF_DUPELIST = 1 << 1,
+    LF_TOPLIST = 1 << 2,
+    LF_EXTLIST = 1 << 3,
 };
 
 //

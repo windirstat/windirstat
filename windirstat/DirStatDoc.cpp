@@ -828,11 +828,11 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
 {
     struct commandFilter
     {
-        bool allowNone = false;       // allow display when nothing is selected
-        bool allowMany = false;       // allow display when multiple items are selected
-        bool allowEarly = false;      // allow display before processing is finished
-        bool treeFocus = false;       // only display in tree view
-        ITEMTYPE typesAllow = IT_ANY; // only display if these types are allowed
+        bool allowNone = false;        // allow display when nothing is selected
+        bool allowMany = false;        // allow display when multiple items are selected
+        bool allowEarly = false;       // allow display before processing is finished
+        LOGICAL_FOCUS focus = LF_NONE; // restrict which views support this selection
+        ITEMTYPE typesAllow = IT_ANY;  // only display if these types are allowed
         bool (*extra)(CItem*) = [](CItem*) { return true; }; // extra checks
     };
 
@@ -849,46 +849,46 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
 
     static std::unordered_map<UINT, const commandFilter> filters
     {
-        // ID                           none   many   early  focus  types
-        { ID_REFRESH_ALL,             { true,  true,  false, false, IT_ANY } },
-        { ID_REFRESH_SELECTED,        { false, true,  false, false, IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY | IT_FILE } },
-        { ID_FILTER,                  { true,  true,  true,  false, IT_ANY } },
-        { ID_SAVE_RESULTS,            { true,  true,  false, false, IT_ANY } },
-        { ID_VIEW_SHOWUNKNOWN,        { true,  true,  false, false, IT_ANY } },
-        { ID_VIEW_SHOWFREESPACE,      { true,  true,  false, false, IT_ANY } },
-        { ID_EDIT_COPY_CLIPBOARD,     { false, true,  true,  false, IT_DRIVE | IT_DIRECTORY | IT_FILE } },
-        { ID_CLEANUP_EMPTY_BIN,       { true,  true,  false, false, IT_ANY } },
-        { ID_TREEMAP_RESELECT_CHILD,  { true,  true,  true,  false, IT_ANY, reslectAvail } },
-        { ID_TREEMAP_SELECT_PARENT,   { false, false, true,  false, IT_ANY, parentNotNull } },
-        { ID_TREEMAP_ZOOMIN,          { false, false, false, false, IT_DRIVE | IT_DIRECTORY} },
-        { ID_TREEMAP_ZOOMOUT,         { true,  true,  false, false, IT_ANY, canZoomOut } },
-        { ID_CLEANUP_EXPLORER_SELECT, { false, true,  true,  false, IT_DIRECTORY | IT_FILE } },
-        { ID_CLEANUP_OPEN_IN_CONSOLE, { false, true,  true,  false, IT_DRIVE | IT_DIRECTORY | IT_FILE } },
-        { ID_CLEANUP_OPEN_IN_PWSH,    { false, true,  true,  false, IT_DRIVE | IT_DIRECTORY | IT_FILE } },
-        { ID_CLEANUP_DISK_CLEANUP  ,  { true,  true,  false, false, IT_ANY } },
-        { ID_CLEANUP_DISM_NORMAL,     { true,  true,  false, false, IT_ANY } },
-        { ID_CLEANUP_DISM_RESET,      { true,  true,  false, false, IT_ANY } },
-        { ID_CLEANUP_REMOVE_ROAMING,  { true,  true,  false, false, IT_ANY } },
-        { ID_CLEANUP_HIBERNATE,       { true,  true,  false, false, IT_ANY, isHibernate } },
-        { ID_COMPRESS_NONE,           { false, true,  false, false, IT_FILE } },
-        { ID_COMPRESS_LZNT1,          { false, true,  false, false, IT_FILE } },
-        { ID_COMPRESS_XPRESS4K,       { false, true,  false, false, IT_FILE } },
-        { ID_COMPRESS_XPRESS8K,       { false, true,  false, false, IT_FILE } },
-        { ID_COMPRESS_XPRESS16K,      { false, true,  false, false, IT_FILE } },
-        { ID_COMPRESS_LZX,            { false, true,  false, false, IT_FILE } },
-        { ID_SCAN_RESUME,             { true,  true,  true,  false, IT_ANY, isResumable } },
-        { ID_SCAN_SUSPEND,            { true,  true,  true,  false, IT_ANY, isSuspendable } },
-        { ID_SCAN_STOP,               { true,  true,  true,  false, IT_ANY, isStoppable } },
-        { ID_CLEANUP_DELETE_BIN,      { false, true,  false,  true, IT_DIRECTORY | IT_FILE, notRoot } },
-        { ID_CLEANUP_DELETE,          { false, true,  false,  true, IT_DIRECTORY | IT_FILE, notRoot } },
-        { ID_CLEANUP_EMPTY_FOLDER,    { true,  false, false,  true, IT_DIRECTORY, notRoot } },
-        { ID_CLEANUP_OPEN_SELECTED,   { false, true,  true,  false, IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY | IT_FILE } },
-        { ID_CLEANUP_PROPERTIES,      { false, true,  true,  false, IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY | IT_FILE } },
-        { ID_CLEANUP_OPEN_SELECTED,   { false, true,  true,  false, IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY | IT_FILE } },
-        { ID_CLEANUP_PROPERTIES,      { false, true,  true,  false, IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY | IT_FILE } },
-        { ID_INDICATOR_DISK,          { true,  true,  false, false, IT_ANY } },
-        { ID_INDICATOR_MEM,           { true,  true,  true,  false, IT_ANY } },
-        { ID_INDICATOR_IDLE,          { true,  true,  true,  false, IT_ANY } }
+        // ID                           none   many   early  focus        types
+        { ID_REFRESH_ALL,             { true,  true,  false, LF_NONE,     IT_ANY } },
+        { ID_REFRESH_SELECTED,        { false, true,  false, LF_NONE,     IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY | IT_FILE } },
+        { ID_FILTER,                  { true,  true,  true,  LF_NONE,     IT_ANY } },
+        { ID_SAVE_RESULTS,            { true,  true,  false, LF_NONE,     IT_ANY } },
+        { ID_VIEW_SHOWUNKNOWN,        { true,  true,  false, LF_NONE,     IT_ANY } },
+        { ID_VIEW_SHOWFREESPACE,      { true,  true,  false, LF_NONE,     IT_ANY } },
+        { ID_EDIT_COPY_CLIPBOARD,     { false, true,  true,  LF_NONE,     IT_DRIVE | IT_DIRECTORY | IT_FILE } },
+        { ID_CLEANUP_EMPTY_BIN,       { true,  true,  false, LF_NONE,     IT_ANY } },
+        { ID_TREEMAP_RESELECT_CHILD,  { true,  true,  true,  LF_FILETREE, IT_ANY, reslectAvail } },
+        { ID_TREEMAP_SELECT_PARENT,   { false, false, true,  LF_FILETREE, IT_ANY, parentNotNull } },
+        { ID_TREEMAP_ZOOMIN,          { false, false, false, LF_FILETREE, IT_DRIVE | IT_DIRECTORY} },
+        { ID_TREEMAP_ZOOMOUT,         { true,  true,  false, LF_FILETREE, IT_ANY, canZoomOut } },
+        { ID_CLEANUP_EXPLORER_SELECT, { false, true,  true,  LF_NONE,     IT_DIRECTORY | IT_FILE } },
+        { ID_CLEANUP_OPEN_IN_CONSOLE, { false, true,  true,  LF_NONE,     IT_DRIVE | IT_DIRECTORY | IT_FILE } },
+        { ID_CLEANUP_OPEN_IN_PWSH,    { false, true,  true,  LF_NONE,     IT_DRIVE | IT_DIRECTORY | IT_FILE } },
+        { ID_CLEANUP_DISK_CLEANUP  ,  { true,  true,  false, LF_NONE,     IT_ANY } },
+        { ID_CLEANUP_DISM_NORMAL,     { true,  true,  false, LF_NONE,     IT_ANY } },
+        { ID_CLEANUP_DISM_RESET,      { true,  true,  false, LF_NONE,     IT_ANY } },
+        { ID_CLEANUP_REMOVE_ROAMING,  { true,  true,  false, LF_NONE,     IT_ANY } },
+        { ID_CLEANUP_HIBERNATE,       { true,  true,  false, LF_NONE,     IT_ANY, isHibernate } },
+        { ID_COMPRESS_NONE,           { false, true,  false, LF_NONE,     IT_FILE } },
+        { ID_COMPRESS_LZNT1,          { false, true,  false, LF_NONE,     IT_FILE } },
+        { ID_COMPRESS_XPRESS4K,       { false, true,  false, LF_NONE,     IT_FILE } },
+        { ID_COMPRESS_XPRESS8K,       { false, true,  false, LF_NONE,     IT_FILE } },
+        { ID_COMPRESS_XPRESS16K,      { false, true,  false, LF_NONE,     IT_FILE } },
+        { ID_COMPRESS_LZX,            { false, true,  false, LF_NONE,     IT_FILE } },
+        { ID_SCAN_RESUME,             { true,  true,  true,  LF_NONE,     IT_ANY, isResumable } },
+        { ID_SCAN_SUSPEND,            { true,  true,  true,  LF_NONE,     IT_ANY, isSuspendable } },
+        { ID_SCAN_STOP,               { true,  true,  true,  LF_NONE,     IT_ANY, isStoppable } },
+        { ID_CLEANUP_DELETE_BIN,      { false, true,  false, LF_NONE,     IT_DIRECTORY | IT_FILE, notRoot } },
+        { ID_CLEANUP_DELETE,          { false, true,  false, LF_NONE,     IT_DIRECTORY | IT_FILE, notRoot } },
+        { ID_CLEANUP_EMPTY_FOLDER,    { true,  false, false, LF_NONE,     IT_DIRECTORY, notRoot } },
+        { ID_CLEANUP_OPEN_SELECTED,   { false, true,  true,  LF_NONE,     IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY | IT_FILE } },
+        { ID_CLEANUP_PROPERTIES,      { false, true,  true,  LF_NONE,     IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY | IT_FILE } },
+        { ID_CLEANUP_OPEN_SELECTED,   { false, true,  true,  LF_NONE,     IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY | IT_FILE } },
+        { ID_CLEANUP_PROPERTIES,      { false, true,  true,  LF_NONE,     IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY | IT_FILE } },
+        { ID_INDICATOR_DISK,          { true,  true,  false, LF_NONE,     IT_ANY } },
+        { ID_INDICATOR_MEM,           { true,  true,  true,  LF_NONE,     IT_ANY } },
+        { ID_INDICATOR_IDLE,          { true,  true,  true,  LF_NONE,     IT_ANY } }
     };
 
     if (!filters.contains(pCmdUI->m_nID))
@@ -902,7 +902,7 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
         std::vector<CItem*>{} : GetAllSelected();
 
     bool allow = true;
-    allow &= !filter.treeFocus || FileTreeHasFocus() || DupeListHasFocus() || TopListHasFocus();
+    allow &= filter.focus == LF_NONE || (CMainFrame::Get()->GetLogicalFocus() & filter.focus) > 0;
     allow &= filter.allowNone || !items.empty();
     allow &= filter.allowMany || items.size() <= 1;
     allow &= filter.allowEarly || (IsRootDone() && !IsScanRunning());

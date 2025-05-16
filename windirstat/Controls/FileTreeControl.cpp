@@ -79,7 +79,7 @@ void CFileTreeControl::OnKeyDown(const UINT nChar, const UINT nRepCnt, const UIN
 {
     if (nChar == VK_TAB)
     {
-        CMainFrame::Get()->MoveFocus(LF_EXTENSIONLIST);
+        CMainFrame::Get()->MoveFocus(LF_EXTLIST);
     }
     else if (nChar == VK_ESCAPE)
     {

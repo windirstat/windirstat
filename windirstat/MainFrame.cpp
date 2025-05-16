@@ -1061,7 +1061,7 @@ void CMainFrame::MoveFocus(const LOGICAL_FOCUS logicalFocus)
 {
     switch (logicalFocus)
     {
-        case LF_EXTENSIONLIST: GetExtensionView()->SetFocus(); break;
+        case LF_EXTLIST: GetExtensionView()->SetFocus(); break;
         case LF_DUPELIST: GetFileDupeView()->SetFocus(); break;
         case LF_TOPLIST: GetFileTopView()->SetFocus(); break;
         case LF_FILETREE: GetFileTreeView()->SetFocus(); break;
@@ -1088,7 +1088,7 @@ void CMainFrame::UpdatePaneText()
     // Only get the data the document is not actively updating
     else if (CDirStatDoc::GetDocument()->IsRootDone())
     {
-        if (focus == LF_EXTENSIONLIST)
+        if (focus == LF_EXTLIST)
         {
             fileSelectionText = wds::chrStar + CDirStatDoc::GetDocument()->GetHighlightExtension();
         }
