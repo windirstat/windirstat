@@ -43,6 +43,7 @@ class CAboutDlg final : public CDialogEx
         void SetPageText(int tab);
 
     protected:
+        CFont m_MonoFont;
         CRichEditCtrl m_Text;
 
         DECLARE_MESSAGE_MAP()
