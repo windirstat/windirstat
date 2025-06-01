@@ -95,6 +95,10 @@ void CAboutDlg::CMyTabControl::Initialize()
 
     VERIFY(m_Text.Create(WS_CHILD | WS_VISIBLE | WS_BORDER | ES_CENTER | ES_MULTILINE | ES_READONLY, rc, this, ID_WDS_CONTROL));
     SetPageText(TAB_ABOUT);
+
+    // Set the font for the text control
+    m_MonoFont.CreateFontW(12, 0, 0, 0, 0, 0, 0, 0, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
+        CLIP_DEFAULT_PRECIS, CLEARTYPE_NATURAL_QUALITY, FF_MODERN, L"Consolas");
 }
 
 void CAboutDlg::CMyTabControl::SetPageText(const int tab)
@@ -148,7 +152,7 @@ void CAboutDlg::CMyTabControl::SetPageText(const int tab)
 
     m_Text.SetAutoURLDetect();
     m_Text.SetEventMask(ENM_LINK | ENM_KEYEVENTS);
-    m_Text.SetFont(GetFont());
+    m_Text.SetFont(tab == TAB_LICENSE ? &m_MonoFont : GetFont());
 
     m_Text.SetWindowText(text.c_str());
 
