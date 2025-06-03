@@ -29,7 +29,7 @@ FOR /F %%X in ('git -C .. rev-list --count --all') DO SET PRD_BUILD=%%X
 SET VERSTRING=-dMAJVER=%PRD_MAJVER% -dMINVER=%PRD_MINVER% -dPATCH=%PRD_PATCH% -dBUILD=%PRD_BUILD%
 
 :: create the installers
-FOR %%A IN (arm arm64 x86 x64) DO (
+FOR %%A IN (arm64 x86 x64) DO (
    FOR /F %%S in ('POWERSHELL -NoLogo -NoProfile "[int] ((Get-Item ..\build\windirstat_%%A.exe).Length / 1024)"') DO SET SIZE=%%S
    candle -arch %%A "WinDirStat.wxs" -o "WinDirStat-%%A.wixobj" -dRELTYPE=%RELTYPE% %VERSTRING% -dEstimatedSize=!SIZE!
    light -ext WixUIExtension -ext WixUtilExtension -sval "WinDirStat-%%A.wixobj" -o "%BLDDIR%\WinDirStat-%%A.msi"

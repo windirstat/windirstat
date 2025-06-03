@@ -46,14 +46,13 @@ FOR /F "DELIMS=" %%X IN ('DIR "%ProgramFiles%\Microsoft Visual Studio\VsDevCmd.b
 CALL "%VS%"
 IF EXIST "%WindowsSdkVerBinPath%\x86" msbuild "%BASEDIR%\windirstat.sln" /p:Configuration=Release /t:Clean;Build /p:Platform=Win32,ExternalCompilerOptions=/DPRODUCTION=%PRODUCTION%
 IF EXIST "%WindowsSdkVerBinPath%\x64" msbuild "%BASEDIR%\windirstat.sln" /p:Configuration=Release /t:Clean;Build /p:Platform=x64,ExternalCompilerOptions=/DPRODUCTION=%PRODUCTION%
-IF EXIST "%WindowsSdkVerBinPath%\arm" msbuild "%BASEDIR%\windirstat.sln" /p:Configuration=Release /t:Clean;Build /p:Platform=ARM,ExternalCompilerOptions=/DPRODUCTION=%PRODUCTION%
 IF EXIST "%WindowsSdkVerBinPath%\arm64" msbuild "%BASEDIR%\windirstat.sln" /p:Configuration=Release /t:Clean;Build /p:Platform=ARM64,ExternalCompilerOptions=/DPRODUCTION=%PRODUCTION%
 TIMEOUT /t 3 /nobreak >NUL
 
 :: optimize executable size if pwsh is present
 PWSH.EXE -Help >NUL 2>&1
 IF %ERRORLEVEL% NEQ 0 ECHO PowerShell not found; skipping executable pruning
-IF %ERRORLEVEL% EQU 0 FOR %%A IN (arm arm64 x86 x64) DO (
+IF %ERRORLEVEL% EQU 0 FOR %%A IN (arm64 x86 x64) DO (
   PWSH -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Unrestricted -File "%THISDIR%\windirstat\Build\Prune Executable.ps1" "%BLDDIR%\WinDirStat_%%A.exe"
 )
 
@@ -68,7 +67,7 @@ signtool sign /fd sha256 /tr %TSAURL% /td sha256 /d %LIBNAME% /du %LIBURL% "%BLD
 
 :: copy the output files
 IF EXIST "%PUBDIR%" RD /S /Q "%PUBDIR%"
-FOR %%A IN (arm arm64 x86 x64) DO (
+FOR %%A IN (arm64 x86 x64) DO (
    IF NOT EXIST "%PUBDIR%\%%A" MKDIR "%PUBDIR%\%%A"
    COPY /Y "%BLDDIR%\WinDirStat_%%A.exe" "%PUBDIR%\%%A\WinDirStat.exe"
    COPY /Y "%BLDDIR%\WinDirStat_%%A.pdb" "%PUBDIR%\%%A\WinDirStat.pdb"
@@ -85,7 +84,7 @@ DEL /F /S /Q "%PUBDIR%\*.pdb" >NUL 2>&1
 :: zip up executables
 SET POWERSHELL=POWERSHELL.EXE -NoProfile -NonInteractive -NoLogo -ExecutionPolicy Unrestricted
 PUSHD "%PUBDIR%"
-FOR %%A IN (arm arm64 x86 x64) DO (
+FOR %%A IN (arm64 x86 x64) DO (
    %POWERSHELL% -Command "Compress-Archive '%PUBDIR%\%%A' -DestinationPath ('%PUBDIR%\WinDirStat.zip') -Update"
 )
 POPD
