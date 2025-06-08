@@ -57,7 +57,7 @@ void CReparsePoints::Initialize()
     SmartPointer<HMODULE> hmod(FreeLibrary, LoadLibrary(L"ntdll.dll"));
     if (hmod != nullptr)
     {
-        CHAR(*RtlSetProcessPlaceholderCompatibilityMode)(CHAR Mode) =
+        CHAR(WINAPI *RtlSetProcessPlaceholderCompatibilityMode) (CHAR Mode) =
             reinterpret_cast<decltype(RtlSetProcessPlaceholderCompatibilityMode)>(
                 static_cast<LPVOID>(GetProcAddress(hmod, "RtlSetProcessPlaceholderCompatibilityMode")));
         if (RtlSetProcessPlaceholderCompatibilityMode != nullptr)
