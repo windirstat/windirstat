@@ -47,7 +47,7 @@ enum : std::uint8_t
     FIELD_COUNT
 };
 
-std::array<CHAR, FIELD_COUNT> orderMap{};
+static std::array<CHAR, FIELD_COUNT> orderMap{};
 static void ParseHeaderLine(const std::vector<std::wstring>& header)
 {
     orderMap.fill(-1);

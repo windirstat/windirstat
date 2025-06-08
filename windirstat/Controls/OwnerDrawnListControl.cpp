@@ -24,6 +24,8 @@
 #include "SelectObject.h"
 #include "OwnerDrawnListControl.h"
 
+#include <algorithm>
+
 namespace
 {
     constexpr UINT TEXT_X_MARGIN = 6; // Horizontal distance of the text from the edge of the item rectangle
@@ -372,10 +374,7 @@ void COwnerDrawnListControl::InitializeColors()
     else
     {
         b += diff;
-        if (b > 1.0)
-        {
-            b = 1.0;
-        }
+        b = std::min<double>(b, 1.0);
     }
 
     m_StripeColor = CColorSpace::MakeBrightColor(m_WindowColor, b);

@@ -22,12 +22,13 @@
 #include "SelectObject.h"
 #include "TreeMap.h"
 
+#include <algorithm>
 #include <array>
 #include <memory>
 #include <vector>
 #include <stack>
 
-constexpr COLORREF BGR(auto b, auto g, auto r)
+static constexpr COLORREF BGR(auto b, auto g, auto r)
 {
     return static_cast<BYTE>(b) | static_cast<BYTE>(g) << 8 | static_cast<BYTE>(r) << 16;
 }
@@ -707,10 +708,7 @@ void CTreeMap::RenderRectangle(std::vector<COLORREF>& bitmap, const CRect& rc, c
         else
         {
             brightness *= 1.2;
-            if (brightness > 1.0)
-            {
-                brightness = 1.0;
-            }
+            brightness = std::min<double>(brightness, 1.0);
         }
     }
 
@@ -890,16 +888,10 @@ void CTreeMap::DrawCushion(std::vector<COLORREF>& bitmap, const CRect& rc, const
         const double nx = -(2 * surface[0] * (ix + 0.5) + surface[2]);
         const double ny = -(2 * surface[1] * (iy + 0.5) + surface[3]);
         double cosa = (nx * m_Lx + ny * m_Ly + m_Lz) / sqrt(nx * nx + ny * ny + 1.0);
-        if (cosa > 1.0)
-        {
-            cosa = 1.0;
-        }
+        cosa = std::min<double>(cosa, 1.0);
 
         double pixel = Is * cosa;
-        if (pixel < 0)
-        {
-            pixel = 0;
-        }
+        pixel = std::max<double>(pixel, 0.0);
 
         pixel += Ia;
         ASSERT(pixel <= 1.0);
