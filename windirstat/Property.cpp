@@ -22,6 +22,7 @@
 #include "WinDirStat.h"
 #include "Property.h"
 
+#include <regex>
 #include <sstream>
 
 std::vector<PersistedSetting*>& PersistedSetting::GetPropertySet()
@@ -72,11 +73,13 @@ template <> void Setting<bool>::WritePersistedProperty()
 template <> void Setting<std::wstring>::ReadPersistedProperty()
 {
     m_Value = CDirStatApp::Get()->GetProfileString(m_Section.c_str(), m_Entry.c_str(), m_Value.c_str());
+    m_Value = std::regex_replace(m_Value, std::wregex(LR"(\x1e)"), L"\r\n");
 }
 
 template <> void Setting<std::wstring>::WritePersistedProperty()
 {
-    CDirStatApp::Get()->WriteProfileString(m_Section.c_str(), m_Entry.c_str(), m_Value.c_str());
+    const std::wstring valueCleaned = std::regex_replace(m_Value, std::wregex(LR"((\r|\n)+)"), L"\x1e");
+    CDirStatApp::Get()->WriteProfileString(m_Section.c_str(), m_Entry.c_str(), valueCleaned.c_str());
 }
 
 // Setting<WINDOWPLACEMENT> Processing
@@ -181,4 +184,3 @@ template <> void Setting<RECT>::WritePersistedProperty()
 {
     CDirStatApp::Get()->WriteProfileBinary(m_Section.c_str(), m_Entry.c_str(), reinterpret_cast<LPBYTE>(&m_Value), sizeof(RECT));
 }
-
