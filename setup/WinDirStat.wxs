@@ -129,7 +129,7 @@
           <RegistryValue Name="Icon" Value="[INSTALLFOLDER]WinDirStat.exe" Type="string"/>
           <RegistryValue Value="WinDirStat" Type="string"/>
           <RegistryKey Key="command">
-            <RegistryValue Value="&quot;[INSTALLFOLDER]WinDirStat.exe&quot; &quot;%1&quot;" Type="string"/>
+            <RegistryValue Value="&quot;[INSTALLFOLDER]WinDirStat.exe&quot; %1" Type="string"/>
           </RegistryKey>
         </RegistryKey>
       </Component>
