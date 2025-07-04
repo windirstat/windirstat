@@ -28,6 +28,7 @@ namespace wds
     inline constexpr auto chrBracketOpen  = L'(';
     inline constexpr auto chrBracketClose = L')';
     inline constexpr auto chrDot          = L'.';
+    inline constexpr auto chrDoubleQuote  = L'"';
     inline constexpr auto chrColon        = L':';
     inline constexpr auto chrBackslash    = L'\\';
     inline constexpr auto chrPipe         = L'|';

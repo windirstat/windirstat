@@ -257,18 +257,21 @@ public:
     {
         UNREFERENCED_PARAMETER(bLast);
 
-        // Normalize case for parsing
+        // Normalize string for parsing
         std::wstring param{ pszParam };
-        MakeLower(param);
+        TrimString(param, wds::chrDoubleQuote);
+        TrimString(param, wds::chrBackslash);
 
         // Handle any non-flags as paths
         if (!bFlag)
         {
             if (!m_strFileName.IsEmpty()) m_strFileName += wds::chrPipe;
-            m_strFileName += TrimString(param, wds::chrBackslash).c_str();
+            m_strFileName += param.c_str();
             return;
         }
 
+        // Handle special parameter of parent process to close
+        MakeLower(param);
         const std::wstring ParentPidFlag = L"parentpid:";
         if (param.starts_with(ParentPidFlag))
         {
