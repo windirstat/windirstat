@@ -143,6 +143,7 @@ public:
     static Setting<bool> SkipDupeDetectionCloudLinks;
     static Setting<bool> SkipDupeDetectionCloudLinksWarning;
     static Setting<bool> TreeMapGrid;
+    static Setting<bool> TreeMapUseLogical;
     static Setting<bool> UseBackupRestore;
     static Setting<bool> UseWindowsLocaleSetting;
     static Setting<COLORREF> FileTreeColor0;

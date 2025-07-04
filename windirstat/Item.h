@@ -152,7 +152,7 @@ public:
 
     ULONGLONG TmiGetSize() const override
     {
-        return GetSizePhysical();
+        return COptions::TreeMapUseLogical ? GetSizeLogical() : GetSizePhysical();
     }
 
     // CItem
@@ -206,6 +206,7 @@ public:
     ULONGLONG GetItemsCount() const;
     void SetDone();
     void SortItemsBySizePhysical() const;
+    void SortItemsBySizeLogical() const;
     ULONGLONG GetTicksWorked() const;
     void ResetScanStartTime() const;
     static void ScanItems(BlockingQueue<CItem*> *);

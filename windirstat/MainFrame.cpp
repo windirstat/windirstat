@@ -55,7 +55,7 @@ namespace
             m_Open = owner->OpenClipboard();
             if (!m_Open || !EmptyClipboard())
             {
-                DisplayError(Localization::Lookup(IDS_CANNOTOPENCLIPBOARD));
+                DisplayError(TranslateError());
             }
         }
 
@@ -349,13 +349,15 @@ IMPLEMENT_DYNCREATE(CMainFrame, CFrameWndEx)
 BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
     ON_COMMAND(ID_CONFIGURE, OnConfigure)
     ON_COMMAND(ID_VIEW_SHOWFILETYPES, OnViewShowFileTypes)
-    ON_COMMAND(ID_VIEW_SHOWTREEMAP, OnViewShowtreemap)
+    ON_COMMAND(ID_VIEW_SHOWTREEMAP, OnViewShowTreeMap)
+    ON_COMMAND(ID_TREEMAP_LOGICAL_SIZE, OnViewTreeMapUseLogical)
     ON_MESSAGE(WM_ENTERSIZEMOVE, OnEnterSizeMove)
     ON_MESSAGE(WM_EXITSIZEMOVE, OnExitSizeMove)
     ON_MESSAGE(WM_CALLBACKUI, OnCallbackRequest)
     ON_REGISTERED_MESSAGE(s_TaskBarMessage, OnTaskButtonCreated)
     ON_UPDATE_COMMAND_UI(ID_VIEW_SHOWFILETYPES, OnUpdateViewShowFileTypes)
     ON_UPDATE_COMMAND_UI(ID_VIEW_SHOWTREEMAP, OnUpdateViewShowTreeMap)
+    ON_UPDATE_COMMAND_UI(ID_TREEMAP_LOGICAL_SIZE, OnUpdateTreeMapUseLogical)
     ON_UPDATE_COMMAND_UI(IDS_RAMUSAGEs, OnUpdateEnableControl)
     ON_UPDATE_COMMAND_UI(IDS_IDLEMESSAGE, OnUpdateEnableControl)
     ON_WM_CLOSE()
@@ -1146,7 +1148,12 @@ void CMainFrame::OnUpdateViewShowTreeMap(CCmdUI* pCmdUI)
     pCmdUI->SetCheck(GetTreeMapView()->IsShowTreeMap());
 }
 
-void CMainFrame::OnViewShowtreemap()
+void CMainFrame::OnUpdateTreeMapUseLogical(CCmdUI* pCmdUI)
+{
+    pCmdUI->SetCheck(COptions::TreeMapUseLogical);
+}
+
+void CMainFrame::OnViewShowTreeMap()
 {
     GetTreeMapView()->ShowTreeMap(!GetTreeMapView()->IsShowTreeMap());
     if (GetTreeMapView()->IsShowTreeMap())
@@ -1156,6 +1163,15 @@ void CMainFrame::OnViewShowtreemap()
     else
     {
         MinimizeTreeMapView();
+    }
+}
+
+void CMainFrame::OnViewTreeMapUseLogical()
+{
+    COptions::TreeMapUseLogical = !COptions::TreeMapUseLogical;
+    if (GetTreeMapView()->IsShowTreeMap())
+    {
+        CDirStatDoc::GetDocument()->RefreshItem(CDirStatDoc::GetDocument()->GetRootItem());
     }
 }
 

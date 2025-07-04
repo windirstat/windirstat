@@ -111,6 +111,7 @@ IDS_MENU_OPTIONS_TOOL_BAR=Näytä työkalu&rivi\tF10
 IDS_MENU_OPTIONS_TREEMAP=Näytä &kuvaaja\tF9
 IDS_MENU_OPTIONS_UNKNOWN=Näytä &tuntematon\tF7
 IDS_MENU_OPTIONS=&Valinnat
+IDS_MENU_TREEMAP_LOGICAL_SIZE=Käytä loogista kokoa\tCtrl+L
 IDS_MENU_TREEMAP_RESELECT_CHILD=Valitse uudelleen &alikohde\tCtrl++ tai *
 IDS_MENU_TREEMAP_SELECT_PARENT=Valitse &yläkohde\tCtrl+- tai /
 IDS_MENU_TREEMAP_SHOW=&Näytä kuvaaja\tF9

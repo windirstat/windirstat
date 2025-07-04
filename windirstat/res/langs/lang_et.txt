@@ -111,6 +111,7 @@ IDS_MENU_OPTIONS_TOOL_BAR=Näita töör&iistariba\tF10
 IDS_MENU_OPTIONS_TREEMAP=Näita kausta&plaan\tF9
 IDS_MENU_OPTIONS_UNKNOWN=Näita &tundmatu\tF7
 IDS_MENU_OPTIONS=&Seaded
+IDS_MENU_TREEMAP_LOGICAL_SIZE=Kasuta loogilist suurust\tCtrl+L
 IDS_MENU_TREEMAP_RESELECT_CHILD=&Vali alamtasand\tCtrl++ või *
 IDS_MENU_TREEMAP_SELECT_PARENT=&Vali kõrgem tasand\tCtrl+- või /
 IDS_MENU_TREEMAP_SHOW=&Näita Kaustaplaani\tF9

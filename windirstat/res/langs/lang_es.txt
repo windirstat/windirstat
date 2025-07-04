@@ -111,6 +111,7 @@ IDS_MENU_OPTIONS_TOOL_BAR=Mostrar &Barra de Herramientas\tF10
 IDS_MENU_OPTIONS_TREEMAP=Mostrar Tree&map\tF9
 IDS_MENU_OPTIONS_UNKNOWN=Mostrar &Desconocido\tF7
 IDS_MENU_OPTIONS=&Opciones
+IDS_MENU_TREEMAP_LOGICAL_SIZE=Usar tamaño lógico\tCtrl+L
 IDS_MENU_TREEMAP_RESELECT_CHILD=&Reseleccionar Hijo\tCtrl++ o *
 IDS_MENU_TREEMAP_SELECT_PARENT=&Seleccionar Padre\tCtrl+- o /
 IDS_MENU_TREEMAP_SHOW=&Mostrar Treemap\tF9

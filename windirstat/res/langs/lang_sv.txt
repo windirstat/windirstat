@@ -111,6 +111,7 @@ IDS_MENU_OPTIONS_TOOL_BAR=Visa verkt&ygsfältet\tF10
 IDS_MENU_OPTIONS_TREEMAP=Visa tr&ädkarta\tF9
 IDS_MENU_OPTIONS_UNKNOWN=Visa &okända\tF7
 IDS_MENU_OPTIONS=Alternati&v
+IDS_MENU_TREEMAP_LOGICAL_SIZE=Använd logisk storlek\tCtrl+L
 IDS_MENU_TREEMAP_RESELECT_CHILD=Välj &underordnad mapp igen\tCtrl++ eller *
 IDS_MENU_TREEMAP_SELECT_PARENT=Välj överordnad ma&pp\tCtrl+- eller /
 IDS_MENU_TREEMAP_SHOW=Visa tr&ädkarta\tF9

@@ -111,6 +111,7 @@ IDS_MENU_OPTIONS_TOOL_BAR=Показывать панель инструмент
 IDS_MENU_OPTIONS_TREEMAP=Показывать карту каталогов\tF9
 IDS_MENU_OPTIONS_UNKNOWN=Показывать &неизвестные\tF7
 IDS_MENU_OPTIONS=Настройки
+IDS_MENU_TREEMAP_LOGICAL_SIZE=Использовать логический размер\tCtrl+L
 IDS_MENU_TREEMAP_RESELECT_CHILD=Перейти на уровень вниз\tCtrl++ или *
 IDS_MENU_TREEMAP_SELECT_PARENT=Перейти на уровень вверх\tCtrl+- или /
 IDS_MENU_TREEMAP_SHOW=Показывать карту каталогов\tF9

@@ -929,7 +929,7 @@ void CItem::SetDone()
     // Sort and set finish time
     if (m_FolderInfo != nullptr)
     {
-        SortItemsBySizePhysical();
+        COptions::TreeMapUseLogical ? SortItemsBySizeLogical() : SortItemsBySizePhysical();
         m_FolderInfo->m_Tfinish = static_cast<ULONG>(GetTickCount64() / 1000ull);
     }
 
@@ -940,13 +940,26 @@ void CItem::SetDone()
 void CItem::SortItemsBySizePhysical() const
 {
     if (m_FolderInfo == nullptr) return;
+
+    // sort by size for proper treemap rendering
+    std::lock_guard guard(m_FolderInfo->m_Protect);
+    m_FolderInfo->m_Children.shrink_to_fit();
+    std::ranges::sort(m_FolderInfo->m_Children, [](auto item1, auto item2)
+        {
+            return item1->GetSizePhysical() > item2->GetSizePhysical(); // biggest first
+        });
+}
+
+void CItem::SortItemsBySizeLogical() const
+{
+    if (m_FolderInfo == nullptr) return;
     
     // sort by size for proper treemap rendering
     std::lock_guard guard(m_FolderInfo->m_Protect);
     m_FolderInfo->m_Children.shrink_to_fit();
     std::ranges::sort(m_FolderInfo->m_Children, [](auto item1, auto item2)
     {
-        return item1->GetSizePhysical() > item2->GetSizePhysical(); // biggest first
+        return item1->GetSizeLogical() > item2->GetSizeLogical(); // biggest first
     });
 }
 

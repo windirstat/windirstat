@@ -228,7 +228,9 @@ protected:
     afx_msg void OnUpdateEnableControl(CCmdUI* pCmdUI);
     afx_msg void OnSize(UINT nType, int cx, int cy);
     afx_msg void OnUpdateViewShowTreeMap(CCmdUI* pCmdUI);
-    afx_msg void OnViewShowtreemap();
+    afx_msg void OnUpdateTreeMapUseLogical(CCmdUI* pCmdUI);
+    afx_msg void OnViewShowTreeMap();
+    afx_msg void OnViewTreeMapUseLogical();
     afx_msg void OnUpdateViewShowFileTypes(CCmdUI* pCmdUI);
     afx_msg void OnViewShowFileTypes();
     afx_msg void OnConfigure();

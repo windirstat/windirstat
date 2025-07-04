@@ -111,6 +111,7 @@ IDS_MENU_OPTIONS_TOOL_BAR=Montrer la barre d'&outils\tF10
 IDS_MENU_OPTIONS_TREEMAP=Montrer l'&arbre\tF9
 IDS_MENU_OPTIONS_UNKNOWN=Montrer l'espace inconnu\tF7
 IDS_MENU_OPTIONS=&Options
+IDS_MENU_TREEMAP_LOGICAL_SIZE=Utiliser la taille logique\tCtrl+L
 IDS_MENU_TREEMAP_RESELECT_CHILD=&Resélectionner le précedent sous-dossier\tCtrl++ ou *
 IDS_MENU_TREEMAP_SELECT_PARENT=&Sélectionner le dossier parent\tCtrl+- ou /
 IDS_MENU_TREEMAP_SHOW=&Montrer l'arbre\tF9

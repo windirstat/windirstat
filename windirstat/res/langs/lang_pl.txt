@@ -111,6 +111,7 @@ IDS_MENU_OPTIONS_TOOL_BAR=Pokaż &Pasek Narzędzi\tF10
 IDS_MENU_OPTIONS_TREEMAP=Pokaż &Mapę Drzewa\tF9
 IDS_MENU_OPTIONS_UNKNOWN=Pokaż elementy &nieznany\tF7
 IDS_MENU_OPTIONS=&Opcje
+IDS_MENU_TREEMAP_LOGICAL_SIZE=Użyj rozmiaru logicznego\tCtrl+L
 IDS_MENU_TREEMAP_RESELECT_CHILD=Skocz poziom &niżej\tCtrl++ lub *
 IDS_MENU_TREEMAP_SELECT_PARENT=Skocz poziom &wyżej\tCtrl+- lub /
 IDS_MENU_TREEMAP_SHOW=&Pokaż Mapę Drzewa\tF9

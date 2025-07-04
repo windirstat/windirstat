@@ -111,6 +111,7 @@ IDS_MENU_OPTIONS_TOOL_BAR=Zobrazit &panel nástrojů\tF10
 IDS_MENU_OPTIONS_TREEMAP=Zobrazit &stromovou mapu\tF9
 IDS_MENU_OPTIONS_UNKNOWN=Zobrazit ne&známé\tF7
 IDS_MENU_OPTIONS=&Možnosti
+IDS_MENU_TREEMAP_LOGICAL_SIZE=Použít logickou velikost\tCtrl+L
 IDS_MENU_TREEMAP_RESELECT_CHILD=Znovu vybrat &potomka\tCtrl++ nebo *
 IDS_MENU_TREEMAP_SELECT_PARENT=Vybrat &rodiče\tCtrl+- nebo /
 IDS_MENU_TREEMAP_SHOW=&Zobrazit mapu\tF9
