@@ -211,7 +211,7 @@ void CFileDupeControl::RemoveItem(CItem* item)
             std::erase(m_SizeTracker.at(qitem->GetSizeLogical()), qitem);
             qitem->SetType(ITF_PARTHASH | ITF_FULLHASH, false);
         }
-        else for (const auto& child : qitem->GetChildren())
+        else if (!qitem->IsLeaf()) for (const auto& child : qitem->GetChildren())
         {
             queue.push(child);
         }

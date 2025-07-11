@@ -115,7 +115,7 @@ void CFileTopControl::RemoveItem(CItem* item)
         {
             m_SizeMap.erase(qitem);
         }
-        else for (const auto& child : qitem->GetChildren())
+        else if (!qitem->IsLeaf()) for (const auto& child : qitem->GetChildren())
         {
             queue.push(child);
         }

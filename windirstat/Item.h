@@ -128,7 +128,7 @@ public:
     // CTreeMap::Item interface
     bool TmiIsLeaf() const override
     {
-        return IsType(IT_FILE | IT_FREESPACE | IT_UNKNOWN);
+        return IsLeaf();
     }
 
     CRect TmiGetRectangle() const override;
@@ -163,6 +163,7 @@ public:
     ULONGLONG GetProgressPos() const;
     void UpdateStatsFromDisk();
     const std::vector<CItem*>& GetChildren() const;
+    bool IsLeaf() const { return m_FolderInfo == nullptr; }
     CItem* GetParent() const;
     void AddChild(CItem* child, bool addOnly = false);
     void RemoveChild(CItem* child);

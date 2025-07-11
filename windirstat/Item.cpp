@@ -80,9 +80,9 @@ CItem::~CItem()
 {
     if (m_FolderInfo != nullptr)
     {
-        for (const auto& m_Child : m_FolderInfo->m_Children)
+        for (const auto& child : m_FolderInfo->m_Children)
         {
-            delete m_Child;
+            delete child;
         }
     }
 }
@@ -341,7 +341,7 @@ int CItem::CompareSibling(const CTreeListItem* tlib, const int subitem) const
 
 int CItem::GetTreeListChildCount() const
 {
-    if (m_FolderInfo == nullptr) return 0;
+    if (IsLeaf()) return 0;
     return static_cast<int>(GetChildren().size());
 }
 
@@ -506,6 +506,7 @@ void CItem::UpdateStatsFromDisk()
 
 const std::vector<CItem*>& CItem::GetChildren() const
 {
+    ASSERT(m_FolderInfo != nullptr);
     return m_FolderInfo->m_Children;
 }
 
@@ -561,7 +562,7 @@ void CItem::RemoveAllChildren()
         CDirStatDoc::GetDocument()->GetExtensionData()->clear();
     }
 
-    if (m_FolderInfo == nullptr) return;
+    if (IsLeaf()) return;
     CMainFrame::Get()->InvokeInMessageThread([this]
     {
         CFileTreeControl::Get()->OnRemovingAllChildren(this);
@@ -697,7 +698,7 @@ void CItem::ExtensionDataProcessChildren(const bool remove) const
 
 void CItem::UpwardAddReadJobs(const ULONG count)
 {
-    if (m_FolderInfo == nullptr || count == 0) return;
+    if (IsLeaf() || count == 0) return;
     if (m_FolderInfo->m_Jobs == 0) m_FolderInfo->m_Tstart = static_cast<ULONG>(GetTickCount64() / 1000ull);
     for (auto p = this; p != nullptr; p = p->GetParent())
     {
@@ -732,7 +733,7 @@ void CItem::UpwardRecalcLastChange(const bool withoutItem)
     {
         p->UpdateStatsFromDisk();
 
-        if (p->m_FolderInfo == nullptr) continue;
+        if (IsLeaf()) continue;
         for (const auto& child : p->GetChildren())
         {
             if (withoutItem && child == this) continue;
@@ -766,7 +767,7 @@ void CItem::SetSizeLogical(const ULONGLONG size)
 
 ULONG CItem::GetReadJobs() const
 {
-    if (m_FolderInfo == nullptr) return 0;
+    if (IsLeaf()) return 0;
     return m_FolderInfo->m_Jobs;
 }
 
@@ -897,19 +898,19 @@ std::wstring CItem::GetExtension() const
 
 ULONG CItem::GetFilesCount() const
 {
-    if (m_FolderInfo == nullptr) return 0;
+    if (IsLeaf()) return 0;
     return m_FolderInfo->m_Files;
 }
 
 ULONG CItem::GetFoldersCount() const
 {
-    if (m_FolderInfo == nullptr) return 0;
+    if (IsLeaf()) return 0;
     return m_FolderInfo->m_Subdirs;
 }
 
 ULONGLONG CItem::GetItemsCount() const
 {
-    if (m_FolderInfo == nullptr) return 0;
+    if (IsLeaf()) return 0;
     return static_cast<ULONGLONG>(m_FolderInfo->m_Files) + static_cast<ULONGLONG>(m_FolderInfo->m_Subdirs);
 }
 
@@ -927,7 +928,7 @@ void CItem::SetDone()
     }
 
     // Sort and set finish time
-    if (m_FolderInfo != nullptr)
+    if (!IsLeaf())
     {
         COptions::TreeMapUseLogical ? SortItemsBySizeLogical() : SortItemsBySizePhysical();
         m_FolderInfo->m_Tfinish = static_cast<ULONG>(GetTickCount64() / 1000ull);
@@ -939,7 +940,7 @@ void CItem::SetDone()
 
 void CItem::SortItemsBySizePhysical() const
 {
-    if (m_FolderInfo == nullptr) return;
+    if (IsLeaf()) return;
 
     // sort by size for proper treemap rendering
     std::lock_guard guard(m_FolderInfo->m_Protect);
@@ -952,7 +953,7 @@ void CItem::SortItemsBySizePhysical() const
 
 void CItem::SortItemsBySizeLogical() const
 {
-    if (m_FolderInfo == nullptr) return;
+    if (IsLeaf()) return;
     
     // sort by size for proper treemap rendering
     std::lock_guard guard(m_FolderInfo->m_Protect);
@@ -965,18 +966,16 @@ void CItem::SortItemsBySizeLogical() const
 
 ULONGLONG CItem::GetTicksWorked() const
 {
-    if (m_FolderInfo == nullptr) return 0;
+    if (IsLeaf()) return 0;
     return m_FolderInfo->m_Tfinish > 0 ? (m_FolderInfo->m_Tfinish - m_FolderInfo->m_Tstart) :
         (m_FolderInfo->m_Tstart > 0) ? ((GetTickCount64() / 1000ull) - m_FolderInfo->m_Tstart) : 0;
 }
 
 void CItem::ResetScanStartTime() const
 {
-    if (m_FolderInfo != nullptr)
-    {
-        m_FolderInfo->m_Tfinish = 0;
-        m_FolderInfo->m_Tstart = static_cast<ULONG>(GetTickCount64() / 1000ull);
-    }
+    if (IsLeaf()) return;
+    m_FolderInfo->m_Tfinish = 0;
+    m_FolderInfo->m_Tstart = static_cast<ULONG>(GetTickCount64() / 1000ull);
 }
 
 void CItem::ScanItemsFinalize(CItem* item)
