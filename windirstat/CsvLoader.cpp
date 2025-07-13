@@ -279,7 +279,7 @@ bool SaveResults(const std::wstring& path, CItem * item)
         outf << "\r\n";
 
         // Descend into childitems
-        if (qitem->IsType(IT_FILE)) continue;
+        if (qitem->IsLeaf()) continue;
         for (const auto& child : qitem->GetChildren())
         {
             queue.push(child);
