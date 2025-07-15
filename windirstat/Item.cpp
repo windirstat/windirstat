@@ -263,6 +263,10 @@ int CItem::CompareSibling(const CTreeListItem* tlib, const int subitem) const
     {
         case COL_NAME:
         {
+            if (GetType() != other->GetType())
+            {
+                return usignum(GetType(), other->GetType());
+            }
             return signum(_wcsicmp(m_Name.c_str(), other->m_Name.c_str()));
         }
 
