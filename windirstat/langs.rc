@@ -691,6 +691,24 @@ IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_sv.bin"
 
 
 /////////////////////////////////////////////////////////////////////////////
+// Japanese (Neutral) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_JPN)
+LANGUAGE LANG_JAPANESE, SUBLANG_NEUTRAL
+#pragma code_page(932)
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// RT_LANG
+//
+
+IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_ja.bin"
+
+#endif    // Japanese (Neutral) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
 // Estonian (Neutral) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ETI)
