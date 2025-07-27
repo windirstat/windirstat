@@ -164,7 +164,7 @@ struct STANDARD_INFORMATION
 constexpr auto NtfsNodeRoot = 5;
 constexpr auto NtfsBadClusNode = 8;
 
-static constexpr auto& getMapBinRef(auto* mapArray, std::mutex* mutexArray, auto key, size_t binSize)
+static constexpr auto& getMapBinRef(auto* mapArray, std::mutex* mutexArray, auto key, auto binSize)
 {
     const auto binIndex = key / binSize;
     std::lock_guard<std::mutex> lock(mutexArray[binIndex]);
