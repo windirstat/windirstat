@@ -37,6 +37,7 @@ enum ATTRIBUTE_TYPE_CODE : ULONG
     AttributeStandardInformation = 0x10,
     AttributeFileName = 0x30,
     AttributeData = 0x80,
+    AttributeReparsePoint = 0xC0,
     AttributeEnd = 0xFFFFFFFF,
 };
 
@@ -152,7 +153,7 @@ using FILE_NAME = struct FILE_NAME
     }
 };
 
-struct STANDARD_INFORMATION
+using STANDARD_INFORMATION = struct STANDARD_INFORMATION
 {
     FILETIME CreationTime;
     FILETIME LastModificationTime;
@@ -283,10 +284,10 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
                     {
                         if (curAttribute->IsNonResident()) continue;
                         const auto si = byteOffset<STANDARD_INFORMATION>(curAttribute, curAttribute->Form.Resident.ValueOffset);
-                        auto& baseFileRecord = getMapBinRef(baseFileRecordMapTemp, baseFileRecordMapMutex, baseRecordIndex, binSize);
-                        baseFileRecord.LastModifiedTime = si->LastModificationTime;
-                        baseFileRecord.Attributes = si->FileAttributes;
-                        if (fileRecord->IsDirectory()) baseFileRecord.Attributes |= FILE_ATTRIBUTE_DIRECTORY;
+                        auto& baseRecord = getMapBinRef(baseFileRecordMapTemp, baseFileRecordMapMutex, baseRecordIndex, binSize);
+                        baseRecord.LastModifiedTime = si->LastModificationTime;
+                        baseRecord.Attributes = si->FileAttributes;
+                        if (fileRecord->IsDirectory()) baseRecord.Attributes |= FILE_ATTRIBUTE_DIRECTORY;
                     }
                     else if (curAttribute->TypeCode == AttributeFileName)
                     {
@@ -298,17 +299,24 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
                     }
                     else if (curAttribute->TypeCode == AttributeData)
                     {
-                        auto& baseFileRecord = getMapBinRef(baseFileRecordMapTemp, baseFileRecordMapMutex, baseRecordIndex, binSize);
+                        auto& baseRecord = getMapBinRef(baseFileRecordMapTemp, baseFileRecordMapMutex, baseRecordIndex, binSize);
                         if (curAttribute->IsNonResident())
                         {
-                            baseFileRecord.LogicalSize = curAttribute->Form.Nonresident.FileSize;
-                            baseFileRecord.PhysicalSize = curAttribute->Form.Nonresident.AllocatedLength;
+                            baseRecord.LogicalSize = curAttribute->Form.Nonresident.FileSize;
+                            baseRecord.PhysicalSize = curAttribute->Form.Nonresident.AllocatedLength;
                         }
                         else
                         {
-                            baseFileRecord.LogicalSize = curAttribute->Form.Resident.ValueLength;
-                            baseFileRecord.PhysicalSize = curAttribute->Form.Resident.ValueLength;
+                            baseRecord.LogicalSize = curAttribute->Form.Resident.ValueLength;
+                            baseRecord.PhysicalSize = curAttribute->Form.Resident.ValueLength;
                         }
+                    }
+                    else if (curAttribute->TypeCode == AttributeReparsePoint)
+                    {
+                        if (curAttribute->IsNonResident()) continue;
+                        const auto fn = byteOffset<REPARSE_GUID_DATA_BUFFER>(curAttribute, curAttribute->Form.Resident.ValueOffset);
+                        auto& baseRecord = getMapBinRef(baseFileRecordMapTemp, baseFileRecordMapMutex, baseRecordIndex, binSize);
+                        baseRecord.ReparsePointTag = fn->ReparseTag;
                     }
                 }
             }
@@ -400,4 +408,9 @@ std::wstring FinderNtfs::GetFilePath() const
     else if (wcsncmp(path.data(), m_Dos.data(), wcslen(m_Dos.data()) - 1) == 0)
         path = path.substr(static_cast<int>(wcslen(m_Dos.data())));
     return path;
+}
+
+bool FinderNtfs::IsDots() const
+{
+    return m_CurrentRecordName->FileName == L"." || m_CurrentRecordName->FileName == L"..";
 }

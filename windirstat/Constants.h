@@ -51,5 +51,5 @@ namespace wds
     inline constexpr auto strAttributeEncrypted    = L"E"; /*FILE_ATTRIBUTE_ENCRYPTED*/
     inline constexpr auto strAttributeSparse       = L"Z"; /*FILE_ATTRIBUTE_SPARSE*/
 
-    inline std::wstring strAlpha{ L"ABCDEFGHIJKLMNOPQRSTUVWXYZ" };
+    inline constexpr std::wstring_view strAlpha{ L"ABCDEFGHIJKLMNOPQRSTUVWXYZ" };
 }

@@ -38,6 +38,7 @@ public:
 
     virtual bool FindNext() = 0;
     virtual bool FindFile(const CItem* item) = 0;
+    virtual bool IsDots() const = 0;
     virtual inline DWORD GetAttributes() const = 0;
     virtual inline ULONGLONG GetFileSizePhysical() const = 0;
     virtual inline ULONGLONG GetFileSizeLogical() const = 0;
@@ -54,11 +55,6 @@ public:
     bool IsDirectory() const
     {
         return (GetAttributes() & FILE_ATTRIBUTE_DIRECTORY) != 0;
-    }
-
-    bool IsDots() const
-    {
-        return GetFileName() == L"." || GetFileName() == L"..";
     }
 
     bool IsHidden() const

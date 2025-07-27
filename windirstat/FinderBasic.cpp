@@ -206,3 +206,8 @@ bool FinderBasic::DoesFileExist(const std::wstring& folder, const std::wstring& 
     FinderBasic finder;
     return finder.FindFile(folder, file);
 }
+
+bool FinderBasic::IsDots() const
+{
+    return m_Name == L"." || m_Name == L"..";
+}

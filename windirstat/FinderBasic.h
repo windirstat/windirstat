@@ -60,6 +60,7 @@ public:
     bool FindNext() override;
     bool FindFile(const CItem* item) override;
     bool FindFile(const std::wstring& strFolder, const std::wstring& strName = L"", DWORD attr = INVALID_FILE_ATTRIBUTES);
+    bool FinderBasic::IsDots() const override;
     inline DWORD GetAttributes() const override;
     std::wstring GetFileName() const override;
     ULONGLONG GetFileSizePhysical() const override;

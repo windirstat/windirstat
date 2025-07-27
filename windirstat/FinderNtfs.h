@@ -38,6 +38,7 @@ public:
         ULONGLONG PhysicalSize = 0;
         FILETIME LastModifiedTime = {};
         ULONG Attributes = 0;
+        DWORD ReparsePointTag = 0;
     };
 
     using FileRecordName = struct FileRecordName
@@ -76,6 +77,7 @@ public:
 
     bool FindNext() override;
     bool FindFile(const CItem* item) override;
+    bool IsDots() const override;
     DWORD GetAttributes() const override;
     ULONG GetIndex() const override;
     std::wstring GetFileName() const override;
