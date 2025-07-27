@@ -36,7 +36,7 @@ class CAboutDlg final : public CDialogEx
 {
     enum : std::uint8_t { IDD = IDD_ABOUTBOX };
 
-    class CMyTabControl final : public CTabCtrl
+    class WdsTabControl final : public CTabCtrl
     {
     public:
         void Initialize();
@@ -55,15 +55,13 @@ class CAboutDlg final : public CDialogEx
 public:
     CAboutDlg();
     static std::wstring GetAppVersion();
-    static std::wstring GetDevelList();
-    static std::wstring GetTranslatorList();
 
 protected:
     BOOL OnInitDialog() override;
     void DoDataExchange(CDataExchange* pDX) override;
 
     CStatic m_Caption;
-    CMyTabControl m_Tab;
+    WdsTabControl m_Tab;
     CLayout m_Layout;
 
     DECLARE_MESSAGE_MAP()

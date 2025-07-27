@@ -77,7 +77,7 @@ BOOL CAboutThread::InitInstance()
 
 /////////////////////////////////////////////////////////////////////////////
 
-void CAboutDlg::CMyTabControl::Initialize()
+void CAboutDlg::WdsTabControl::Initialize()
 {
     ModifyStyle(0, WS_CLIPCHILDREN);
 
@@ -101,7 +101,7 @@ void CAboutDlg::CMyTabControl::Initialize()
         CLIP_DEFAULT_PRECIS, CLEARTYPE_NATURAL_QUALITY, FF_MODERN, L"Consolas");
 }
 
-void CAboutDlg::CMyTabControl::SetPageText(const int tab)
+void CAboutDlg::WdsTabControl::SetPageText(const int tab)
 {
     std::wstring text;
     DWORD newStyle = ES_CENTER;
@@ -159,13 +159,13 @@ void CAboutDlg::CMyTabControl::SetPageText(const int tab)
     m_Text.HideCaret();
 }
 
-BEGIN_MESSAGE_MAP(CAboutDlg::CMyTabControl, CTabCtrl)
+BEGIN_MESSAGE_MAP(CAboutDlg::WdsTabControl, CTabCtrl)
     ON_NOTIFY(EN_LINK, ID_WDS_CONTROL, OnEnLinkText)
     ON_NOTIFY(EN_MSGFILTER, ID_WDS_CONTROL, OnEnMsgFilter)
     ON_WM_SIZE()
 END_MESSAGE_MAP()
 
-void CAboutDlg::CMyTabControl::OnEnLinkText(NMHDR* pNMHDR, LRESULT* pResult)
+void CAboutDlg::WdsTabControl::OnEnLinkText(NMHDR* pNMHDR, LRESULT* pResult)
 {
     const ENLINK* el = reinterpret_cast<ENLINK*>(pNMHDR);
     *pResult         = 0;
@@ -180,7 +180,7 @@ void CAboutDlg::CMyTabControl::OnEnLinkText(NMHDR* pNMHDR, LRESULT* pResult)
     }
 }
 
-void CAboutDlg::CMyTabControl::OnEnMsgFilter(NMHDR* pNMHDR, LRESULT* pResult)
+void CAboutDlg::WdsTabControl::OnEnMsgFilter(NMHDR* pNMHDR, LRESULT* pResult)
 {
     const MSGFILTER* mf = reinterpret_cast<MSGFILTER*>(pNMHDR);
     *pResult            = 0;
@@ -196,7 +196,7 @@ void CAboutDlg::CMyTabControl::OnEnMsgFilter(NMHDR* pNMHDR, LRESULT* pResult)
     }
 }
 
-void CAboutDlg::CMyTabControl::OnSize(const UINT nType, const int cx, const int cy)
+void CAboutDlg::WdsTabControl::OnSize(const UINT nType, const int cx, const int cy)
 {
     CTabCtrl::OnSize(nType, cx, cy);
 
@@ -227,7 +227,7 @@ std::wstring CAboutDlg::GetAppVersion()
     const std::wstring file = GetAppFileName();
     const DWORD iVersionSize = GetFileVersionInfoSize(file.c_str(), nullptr);
     UINT iQueriedSize = 0;
-    std::vector<BYTE> tVersionInfo = std::vector<BYTE>(iVersionSize);
+    auto tVersionInfo = std::vector<BYTE>(iVersionSize);
     VS_FIXEDFILEINFO* pVersion = nullptr;
     if (GetFileVersionInfo(file.c_str(), 0, iVersionSize, tVersionInfo.data()) != 0 &&
         VerQueryValue(tVersionInfo.data(), L"\\", reinterpret_cast<LPVOID*>(&pVersion), &iQueriedSize) != 0)
@@ -241,18 +241,6 @@ std::wstring CAboutDlg::GetAppVersion()
     }
 
     return L"WinDirStat";
-}
-
-std::wstring CAboutDlg::GetDevelList()
-{
-    std::wstring retval;
-    return retval;
-}
-
-std::wstring CAboutDlg::GetTranslatorList()
-{
-    std::wstring retval;
-    return retval;
 }
 
 void CAboutDlg::DoDataExchange(CDataExchange* pDX)
