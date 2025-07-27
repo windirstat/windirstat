@@ -114,6 +114,9 @@
     <None Include="res\langs\lang_sv.bin">
       <Filter>Resource Files\Languages</Filter>
     </None>
+    <None Include="res\langs\lang_ja.bin">
+      <Filter>Resource Files\Languages</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DirStatDoc.h">
@@ -551,6 +554,9 @@
       <Filter>Resource Files\Languages</Filter>
     </Text>
     <Text Include="res\langs\lang_sv.txt">
+      <Filter>Resource Files\Languages</Filter>
+    </Text>
+    <Text Include="res\langs\lang_ja.txt">
       <Filter>Resource Files\Languages</Filter>
     </Text>
   </ItemGroup>
