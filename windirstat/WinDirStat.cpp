@@ -315,10 +315,6 @@ BOOL CDirStatApp::InitInstance()
         RUNTIME_CLASS(CDirStatDoc),
         RUNTIME_CLASS(CMainFrame),
         RUNTIME_CLASS(CTreeMapView));
-    if (!m_PDocTemplate)
-    {
-        return FALSE;
-    }
     AddDocTemplate(m_PDocTemplate);
 
     // Parse command line arguments

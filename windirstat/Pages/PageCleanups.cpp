@@ -209,10 +209,6 @@ void CPageCleanups::OnSomethingChanged()
     {
         m_RecurseIntoSubdirectories = false;
     }
-    if (!m_WorksForDrives && !m_WorksForDirectories)
-    {
-        m_RecurseIntoSubdirectories = false;
-    }
     if (!m_WaitForCompletion)
     {
         m_RefreshPolicy = RP_NO_REFRESH;

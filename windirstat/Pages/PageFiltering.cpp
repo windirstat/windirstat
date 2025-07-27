@@ -68,7 +68,6 @@ BOOL CPageFiltering::OnInitDialog()
     m_FilteringSizeMinimum = COptions::FilteringSizeMinimum;
     m_FilteringSizeUnits = COptions::FilteringSizeUnits;
     m_FilteringUseRegex = COptions::FilteringUseRegex;
-    m_FilteringSizeUnits = COptions::FilteringSizeUnits;
     m_FilteringExcludeDirs = COptions::FilteringExcludeDirs.Obj().c_str();
     m_FilteringExcludeFiles = COptions::FilteringExcludeFiles.Obj().c_str();
 

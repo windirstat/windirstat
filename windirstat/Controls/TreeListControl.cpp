@@ -884,7 +884,7 @@ void CTreeListControl::OnContextMenu(CWnd* /*pWnd*/, const CPoint pt)
         return;
     }
 
-    CTreeListItem* item = GetItem(i);
+    const CTreeListItem* item = GetItem(i);
     CRect rc = GetWholeSubitemRect(i, 0);
     const CRect rcTitle = item->GetTitleRect() + rc.TopLeft();
 
