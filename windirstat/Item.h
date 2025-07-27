@@ -22,11 +22,15 @@
 
 #include "TreeListControl.h"
 #include "TreeMap.h"
-#include "DirStatDoc.h" // CExtensionData
-#include "FinderBasic.h" // FinderBasic
+#include "DirStatDoc.h"
+#include "Finder.h"
 #include "BlockingQueue.h"
+#include "FinderNtfs.h"
 
 #include <shared_mutex>
+
+class Finder;
+class FinderNtfsContext;
 
 // Columns
 enum ITEMCOLUMNS : std::uint8_t
@@ -165,6 +169,7 @@ public:
     const std::vector<CItem*>& GetChildren() const;
     bool IsLeaf() const { return m_FolderInfo == nullptr; }
     CItem* GetParent() const;
+    CItem* GetParentDrive() const;
     void AddChild(CItem* child, bool addOnly = false);
     void RemoveChild(CItem* child);
     void RemoveAllChildren();
@@ -192,6 +197,8 @@ public:
     void SetLastChange(const FILETIME& t);
     void SetAttributes(DWORD attr);
     DWORD GetAttributes() const;
+    void SetIndex(DWORD index);
+    DWORD GetIndex() const;
     unsigned short GetSortAttributes() const;
     double GetFraction() const;
     bool IsRootItem() const;
@@ -210,7 +217,7 @@ public:
     void SortItemsBySizeLogical() const;
     ULONGLONG GetTicksWorked() const;
     void ResetScanStartTime() const;
-    static void ScanItems(BlockingQueue<CItem*> *);
+    static void ScanItems(BlockingQueue<CItem*> *, FinderNtfsContext& contextNtfs);
     static void ScanItemsFinalize(CItem* item);
     void UpwardSetDone();
     void UpwardSetUndone();
@@ -223,6 +230,7 @@ public:
     CItem* FindUnknownItem() const;
     void UpdateUnknownItem() const;
     void RemoveUnknownItem();
+    void UpwardDrivePacman();
 
     std::vector<BYTE> GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CItem*>* queue);
 
@@ -265,9 +273,8 @@ private:
     bool MustShowReadJobs() const;
     COLORREF GetPercentageColor() const;
     std::wstring UpwardGetPathWithoutBackslash() const;
-    CItem* AddDirectory(const FinderBasic& finder);
-    CItem* AddFile(const FinderBasic& finder);
-    void UpwardDrivePacman();
+    CItem* AddDirectory(const Finder& finder);
+    CItem* AddFile(const Finder& finder);
 
     // Used for initialization of hashing process
     static std::shared_mutex m_HashMutex;
@@ -294,6 +301,7 @@ private:
     std::unique_ptr<CHILDINFO> m_FolderInfo;      // Child information for non-files
     std::atomic<ULONGLONG> m_SizePhysical = 0;    // Total physical size of self or subtree
     std::atomic<ULONGLONG> m_SizeLogical = 0;     // Total local size of self or subtree
+    ULONG m_Index = 0;                            // Index of item for special scan types
     DWORD m_Attributes = INVALID_FILE_ATTRIBUTES; // File or directory attributes of the item
     ITEMTYPE m_Type;                              // Indicates our type.
 };

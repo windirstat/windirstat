@@ -533,6 +533,8 @@
     <ClInclude Include="Controls\TreeListControl.h" />
     <ClInclude Include="Controls\TreeMap.h" />
     <ClInclude Include="Controls\XYSlider.h" />
+    <ClInclude Include="Finder.h" />
+    <ClInclude Include="FinderNtfs.h" />
     <ClInclude Include="ItemTop.h" />
     <ClInclude Include="OleFilterOverride.h" />
     <ClInclude Include="Pages\PageFiltering.h" />
@@ -589,6 +591,7 @@
     <ClCompile Include="DirStatDoc.cpp">
     </ClCompile>
     <ClCompile Include="FinderBasic.cpp" />
+    <ClCompile Include="FinderNtfs.cpp" />
     <ClCompile Include="GlobalHelpers.cpp">
     </ClCompile>
     <ClCompile Include="Item.cpp">

@@ -81,7 +81,7 @@ std::vector<LANGID> Localization::GetLanguageList()
     }, reinterpret_cast<LONG_PTR>(&results), 0, 0);
 
     FinderBasic finder;
-    for (BOOL b = finder.FindFile(GetAppFolder(), L"lang_??.txt"); b; b = finder.FindNextFile())
+    for (BOOL b = finder.FindFile(GetAppFolder(), L"lang_??.txt"); b; b = finder.FindNext())
     {
         const std::wstring lang = finder.GetFileName().substr(5, 2);
         const LCID lcid = LocaleNameToLCID(lang.c_str(), LOCALE_ALLOW_NEUTRAL_NAMES);

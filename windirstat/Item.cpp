@@ -29,6 +29,7 @@
 #include "BlockingQueue.h"
 #include "Localization.h"
 #include "SmartPointer.h"
+#include "FinderBasic.h"
 
 #include <string>
 #include <algorithm>
@@ -38,6 +39,8 @@
 #include <stack>
 #include <array>
 #include <ranges>
+
+#include "FinderNtfs.h"
 
 #pragma comment(lib, "crypt32.lib")
 #pragma comment(lib, "bcrypt.lib")
@@ -519,6 +522,15 @@ CItem* CItem::GetParent() const
     return reinterpret_cast<CItem*>(CTreeListItem::GetParent());
 }
 
+CItem* CItem::GetParentDrive() const
+{
+    for (auto p = this; p != nullptr; p = p->GetParent())
+    {
+        if (p->IsType(IT_DRIVE)) return const_cast<CItem*>(p);
+    }
+    return nullptr;
+}
+
 void CItem::AddChild(CItem* child, const bool addOnly)
 {
     if (!addOnly)
@@ -790,10 +802,19 @@ void CItem::SetAttributes(const DWORD attr)
     m_Attributes = attr;
 }
 
-// Decode the attributes encoded by SetAttributes()
 DWORD CItem::GetAttributes() const
 {
     return m_Attributes;
+}
+
+void CItem::SetIndex(const DWORD index)
+{
+    m_Index = index;
+}
+
+DWORD CItem::GetIndex() const
+{
+    return m_Index;
 }
 
 // Returns a value which resembles sorting of RHSACE considering gaps
@@ -999,69 +1020,80 @@ void CItem::ScanItemsFinalize(CItem* item)
     }
 }
 
-void CItem::ScanItems(BlockingQueue<CItem*> * queue)
+void CItem::ScanItems(BlockingQueue<CItem*> * queue, FinderNtfsContext& contextNtfs)
 {
-    while (CItem * item = queue->Pop())
+    FinderNtfs finderNtfs(&contextNtfs);
+    FinderBasic finderBasic;
+
+    while (CItem * const item = queue->Pop())
     {
         // Mark the time we started evaluating this node
         item->ResetScanStartTime();
 
+        // Try to load NTFS MFT
+        if (item->IsType(IT_DRIVE))
+        {
+            contextNtfs.LoadRoot(item);
+        }
+
         if (item->IsType(IT_DRIVE | IT_DIRECTORY))
         {
-            FinderBasic finder;
-            for (BOOL b = finder.FindFile(item->GetPath(), L"", item->GetAttributes()); b; b = finder.FindNextFile())
+            Finder* finder = item->GetIndex() > 0 ?
+                reinterpret_cast<Finder*>(&finderNtfs) : reinterpret_cast<Finder*>(&finderBasic);
+
+            for (BOOL b = finder->FindFile(item); b; b = finder->FindNext())
             {
-                if (finder.IsDots())
+                if (finder->IsDots())
                 {
                     continue;
                 }
 
-                if (finder.IsDirectory())
+                if (finder->IsDirectory())
                 {
-                    if (COptions::ExcludeHiddenDirectory && finder.IsHidden() ||
-                        COptions::ExcludeProtectedDirectory && finder.IsHiddenSystem())
+                    if (COptions::ExcludeHiddenDirectory && finder->IsHidden() ||
+                        COptions::ExcludeProtectedDirectory && finder->IsHiddenSystem())
                     {
                         continue;
                     }
   
                     // Exclude directories matching path filter
                     if (!COptions::FilteringExcludeDirsRegex.empty() && std::ranges::any_of(COptions::FilteringExcludeDirsRegex,
-                        [&finder](const auto& pattern) { return std::regex_match(finder.GetFilePath(), pattern); }))
+                        [&finder](const auto& pattern) { return std::regex_match(finder->GetFilePath(), pattern); }))
                     {
                         continue;
                     }
 
                     item->UpwardAddFolders(1);
-                    if (CItem* newitem = item->AddDirectory(finder); newitem->GetReadJobs() > 0)
+                    if (CItem* newitem = item->AddDirectory(*finder); newitem->GetReadJobs() > 0)
                     {
                         queue->Push(newitem);
                     }
                 }
                 else
                 {
-                    if (COptions::ExcludeHiddenFile && finder.IsHidden() ||
-                        COptions::ExcludeProtectedFile && finder.IsHiddenSystem() ||
-                        COptions::ExcludeSymbolicLinksFile && CReparsePoints::IsReparsePoint(finder.GetAttributes()) &&
-                            CReparsePoints::IsSymbolicLink(finder.GetFilePathLong(), finder.GetAttributes()))
+                    if (COptions::ExcludeHiddenFile && finder->IsHidden() ||
+                        COptions::ExcludeProtectedFile && finder->IsHiddenSystem() ||
+                        COptions::ExcludeSymbolicLinksFile && CReparsePoints::IsReparsePoint(finder->GetAttributes()) &&
+                            CReparsePoints::IsSymbolicLink(finder->GetFilePathLong(), finder->GetAttributes()))
                     {
                         continue;
                     }
 
                     // Exclude files matching name filter
                     if (!COptions::FilteringExcludeFilesRegex.empty() && std::ranges::any_of(COptions::FilteringExcludeFilesRegex,
-                        [&finder](const auto& pattern) { return std::regex_match(finder.GetFileName(), pattern); }))
+                        [&finder](const auto& pattern) { return std::regex_match(finder->GetFileName(), pattern); }))
                     {
                         continue;
                     }
 
                     // Exclude files matching size filter
-                    if (COptions::FilteringSizeMinimumCalculated > 0 && finder.GetFileSizeLogical() < COptions::FilteringSizeMinimumCalculated)
+                    if (COptions::FilteringSizeMinimumCalculated > 0 && finder->GetFileSizeLogical() < COptions::FilteringSizeMinimumCalculated)
                     {
                         continue;
                     }
 
                     item->UpwardAddFiles(1);
-                    CItem* newitem = item->AddFile(finder);
+                    CItem* newitem = item->AddFile(*finder);
                     CFileDupeControl::Get()->ProcessDuplicate(newitem, queue);
                     CFileTopControl::Get()->ProcessTop(newitem);
                     queue->WaitIfSuspended();
@@ -1357,20 +1389,22 @@ std::wstring CItem::UpwardGetPathWithoutBackslash() const
     return path;
 }
 
-CItem* CItem::AddDirectory(const FinderBasic& finder)
+CItem* CItem::AddDirectory(const Finder& finder)
 {
     const bool follow = !finder.IsProtectedReparsePoint() &&
         CDirStatApp::Get()->IsFollowingAllowed(finder.GetFilePathLong(), finder.GetAttributes());
 
     const auto & child = new CItem(IT_DIRECTORY, finder.GetFileName());
+    child->SetIndex(finder.GetIndex());
     child->SetLastChange(finder.GetLastWriteTime());
     child->SetAttributes(finder.GetAttributes());
     AddChild(child);
     child->UpwardAddReadJobs(follow ? 1 : 0);
+
     return child;
 }
 
-CItem* CItem::AddFile(const FinderBasic& finder)
+CItem* CItem::AddFile(const Finder& finder)
 {
     const auto & child = new CItem(IT_FILE, finder.GetFileName());
     child->SetSizePhysical(finder.GetFileSizePhysical());

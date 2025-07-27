@@ -1,4 +1,4 @@
-﻿// FinderBasic.cpp - Declaration of CFinderBasic
+﻿// FinderBasic.cpp - Declaration of FinderBasic
 //
 // WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
@@ -18,8 +18,7 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 
-#include "stdafx.h"
-
+#include <stdafx.h>
 #include "FinderBasic.h"
 #include "Options.h"
 #include "Tracer.h"
@@ -37,23 +36,24 @@ FinderBasic::~FinderBasic()
     if (m_Handle != nullptr) NtClose(m_Handle);
 }
 
-bool FinderBasic::FindNextFile()
+bool FinderBasic::FindNext()
 {
     bool success = false;
     if (m_Firstrun || m_CurrentInfo->NextEntryOffset == 0)
     {
-        constexpr auto BUFFER_SIZE = 64 * 1024;
-        thread_local std::vector<BYTE> m_DirectoryInfo(BUFFER_SIZE);
-
         // handle optional pattern mask
-        UNICODE_STRING uSearch;
-        uSearch.Length = static_cast<USHORT>(m_Search.size() * sizeof(WCHAR));
-        uSearch.MaximumLength = static_cast<USHORT>(m_Search.size() + 1) * sizeof(WCHAR);
-        uSearch.Buffer = m_Search.data();
+        UNICODE_STRING uSearch
+        {
+            .Length = static_cast<USHORT>(m_Search.size() * sizeof(WCHAR)),
+            .MaximumLength = static_cast<USHORT>((m_Search.size() + 1) * sizeof(WCHAR)),
+            .Buffer = m_Search.data()
+        };
 
         // enumerate files in the directory
+        constexpr auto BUFFER_SIZE = 64 * 1024;
         constexpr auto FileFullDirectoryInformation = 2;
         IO_STATUS_BLOCK IoStatusBlock;
+        m_DirectoryInfo.reserve(BUFFER_SIZE);
         const NTSTATUS Status = NtQueryDirectoryFile(m_Handle, nullptr, nullptr, nullptr, &IoStatusBlock,
             m_DirectoryInfo.data(), BUFFER_SIZE, static_cast<FILE_INFORMATION_CLASS>(FileFullDirectoryInformation),
             FALSE, (uSearch.Length > 0) ? &uSearch : nullptr, (m_Firstrun) ? TRUE : FALSE);
@@ -105,9 +105,15 @@ bool FinderBasic::FindNextFile()
     return success;
 }
 
+bool FinderBasic::FindFile(const CItem* item)
+{
+    return FindFile(item->GetPath(), L"", item->GetAttributes());
+}
+
 bool FinderBasic::FindFile(const std::wstring & strFolder, const std::wstring& strName, const DWORD attr)
 {
     // stash the search pattern for later use
+    m_Firstrun = true;
     m_Search = strName;
     m_InitialAttributes = attr;
 
@@ -116,10 +122,12 @@ bool FinderBasic::FindFile(const std::wstring & strFolder, const std::wstring& s
     if (m_Base.find(L":\\", 1) == 1) m_Base = m_Dos.data() + m_Base;
     else if (m_Base.starts_with(L"\\\\?\\")) m_Base = m_Dos.data() + m_Base.substr(4) + L"\\";
     else if (m_Base.starts_with(L"\\\\")) m_Base = m_DosUNC.data() + m_Base.substr(2);
-    UNICODE_STRING path;
-    path.Length = static_cast<USHORT>(m_Base.size() * sizeof(WCHAR));
-    path.MaximumLength = static_cast<USHORT>(m_Base.size() + 1) * sizeof(WCHAR);
-    path.Buffer = m_Base.data();
+    UNICODE_STRING path
+    {
+        .Length = static_cast<USHORT>(m_Base.size() * sizeof(WCHAR)),
+        .MaximumLength = static_cast<USHORT>((m_Base.size() + 1) * sizeof(WCHAR)),
+        .Buffer = m_Base.data()
+    };
 
     // update object attributes object
     OBJECT_ATTRIBUTES attributes;
@@ -137,34 +145,7 @@ bool FinderBasic::FindFile(const std::wstring & strFolder, const std::wstring& s
     }
 
     // do initial search
-    return FindNextFile();
-}
-
-bool FinderBasic::IsDirectory() const
-{
-    return (m_CurrentInfo->FileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
-}
-
-bool FinderBasic::IsDots() const
-{
-    return m_Name == L"." || m_Name == L"..";
-}
-
-bool FinderBasic::IsHidden() const
-{
-    return (m_CurrentInfo->FileAttributes & FILE_ATTRIBUTE_HIDDEN) != 0;
-}
-
-bool FinderBasic::IsHiddenSystem() const
-{
-    constexpr DWORD hiddenSystem = FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM;
-    return (m_CurrentInfo->FileAttributes & hiddenSystem) == hiddenSystem;
-}
-
-bool FinderBasic::IsProtectedReparsePoint() const
-{
-    constexpr DWORD protect = FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM | FILE_ATTRIBUTE_REPARSE_POINT;
-    return (m_CurrentInfo->FileAttributes & protect) == protect;
+    return FindNext();
 }
 
 DWORD FinderBasic::GetAttributes() const
@@ -215,19 +196,6 @@ std::wstring FinderBasic::GetFilePath() const
     // Strip special DOS chars
     if (path.starts_with(m_DosUNC)) return L"\\\\" + path.substr(m_DosUNC.size());
     if (path.starts_with(m_Dos)) return path.substr(m_Dos.size());
-    return path;
-}
-
-std::wstring FinderBasic::GetFilePathLong() const
-{
-    return MakeLongPathCompatible(GetFilePath());
-}
-
-std::wstring FinderBasic::MakeLongPathCompatible(const std::wstring & path)
-{
-    if (path.find(L":\\", 1) == 1) return m_Long.data() + path;
-    if (path.starts_with(L"\\\\?")) return path;
-    if (path.starts_with(L"\\\\")) return m_LongUNC.data() + path.substr(2);
     return path;
 }
 

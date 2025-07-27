@@ -32,11 +32,11 @@ namespace
 {
     enum : std::uint8_t
     {
-        COL_NAME,
-        COL_TOTAL,
-        COL_FREE,
-        COL_GRAPH,
-        COL_PERCENTUSED
+        COL_DRIVES_NAME,
+        COL_DRIVES_TOTAL,
+        COL_DRIVES_FREE,
+        COL_DRIVES_GRAPH,
+        COL_DRIVES_PERCENTUSED
     };
 
     constexpr UINT WMU_OK = WM_USER + 100;
@@ -124,11 +124,11 @@ int CDriveItem::Compare(const CSortingListItem* baseOther, const int subitem) co
 
     switch (subitem)
     {
-        case COL_NAME: return signum(_wcsicmp(GetPath().c_str(),other->GetPath().c_str()));
-        case COL_TOTAL: return usignum(m_TotalBytes, other->m_TotalBytes);
-        case COL_FREE: return usignum(m_FreeBytes, other->m_FreeBytes);
-        case COL_GRAPH:
-        case COL_PERCENTUSED: return signum(m_Used - other->m_Used);
+        case COL_DRIVES_NAME: return signum(_wcsicmp(GetPath().c_str(),other->GetPath().c_str()));
+        case COL_DRIVES_TOTAL: return usignum(m_TotalBytes, other->m_TotalBytes);
+        case COL_DRIVES_FREE: return usignum(m_FreeBytes, other->m_FreeBytes);
+        case COL_DRIVES_GRAPH:
+        case COL_DRIVES_PERCENTUSED: return signum(m_Used - other->m_Used);
         default: ASSERT(FALSE);
     }
 
@@ -142,13 +142,13 @@ HICON CDriveItem::GetIcon()
 
 bool CDriveItem::DrawSubItem(const int subitem, CDC* pdc, CRect rc, const UINT state, int* width, int* focusLeft)
 {
-    if (subitem == COL_NAME)
+    if (subitem == COL_DRIVES_NAME)
     {
         DrawLabel(m_List, pdc, rc, state, width, focusLeft);
         return true;
     }
 
-    if (subitem == COL_GRAPH)
+    if (subitem == COL_DRIVES_GRAPH)
     {
         if (!m_Success || IsSUBSTed())
         {
@@ -179,27 +179,27 @@ std::wstring CDriveItem::GetText(const int subitem) const
 
     switch (subitem)
     {
-    case COL_NAME:
+    case COL_DRIVES_NAME:
         {
             s = m_Name;
         }
         break;
 
-    case COL_TOTAL:
+    case COL_DRIVES_TOTAL:
         if (m_Success && !IsSUBSTed())
         {
             s = FormatBytes(m_TotalBytes);
         }
         break;
 
-    case COL_FREE:
+    case COL_DRIVES_FREE:
         if (m_Success)
         {
             s = FormatBytes(m_FreeBytes);
         }
         break;
 
-    case COL_GRAPH:
+    case COL_DRIVES_GRAPH:
         if (m_Querying && !IsSUBSTed())
         {
             s = Localization::Lookup(IDS_QUERYING);
@@ -210,7 +210,7 @@ std::wstring CDriveItem::GetText(const int subitem) const
         }
         break;
 
-    case COL_PERCENTUSED:
+    case COL_DRIVES_PERCENTUSED:
         if (m_Success && !IsSUBSTed())
         {
             s = FormatDouble(m_Used * 100) + L"%";
@@ -457,11 +457,11 @@ BOOL CSelectDrivesDlg::OnInitDialog()
     m_List.ShowFullRowSelection(COptions::ListFullRowSelection);
     m_List.SetExtendedStyle(m_List.GetExtendedStyle() | LVS_EX_HEADERDRAGDROP);
 
-    m_List.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_NAME).c_str(), LVCFMT_LEFT, 150, COL_NAME);
-    m_List.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_TOTAL).c_str(), LVCFMT_RIGHT, 65, COL_TOTAL);
-    m_List.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_FREE).c_str(), LVCFMT_RIGHT, 65, COL_FREE);
-    m_List.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_GRAPH).c_str(), LVCFMT_LEFT, 100, COL_GRAPH);
-    m_List.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_PERCENTUSED).c_str(),LVCFMT_RIGHT, 65, COL_PERCENTUSED);
+    m_List.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_NAME).c_str(), LVCFMT_LEFT, 150, COL_DRIVES_NAME);
+    m_List.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_TOTAL).c_str(), LVCFMT_RIGHT, 65, COL_DRIVES_TOTAL);
+    m_List.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_FREE).c_str(), LVCFMT_RIGHT, 65, COL_DRIVES_FREE);
+    m_List.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_GRAPH).c_str(), LVCFMT_LEFT, 100, COL_DRIVES_GRAPH);
+    m_List.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_PERCENTUSED).c_str(),LVCFMT_RIGHT, 65, COL_DRIVES_PERCENTUSED);
 
     m_List.OnColumnsInserted();
 

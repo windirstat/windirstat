@@ -32,6 +32,8 @@
 #include "WinDirStat.h"
 #include "SmartPointer.h"
 #include "FileTopControl.h"
+#include "FinderBasic.h"
+#include "FinderNtfs.h"
 
 #include <functional>
 #include <unordered_map>
@@ -704,7 +706,7 @@ void CDirStatDoc::RecursiveUserDefinedCleanup(USERDEFINEDCLEANUP* udc, const std
     // (Depth first.)
 
     FinderBasic finder;
-    for (BOOL b = finder.FindFile(currentPath); b; b = finder.FindNextFile())
+    for (BOOL b = finder.FindFile(currentPath); b; b = finder.FindNext())
     {
         if (finder.IsDots() || !finder.IsDirectory())
         {
@@ -1622,16 +1624,18 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
         }
 
         // Create subordinate threads if there is work to do
-        for (auto& queue : m_queues | std::views::values)
+        std::unordered_map<std::wstring, FinderNtfsContext> queueContextNtfs;
+        for (auto& queue : m_queues)
         {
-            queue.StartThreads(COptions::ScanningThreads, [&queue]()
+            queueContextNtfs.emplace(queue.first, FinderNtfsContext{});
+            queue.second.StartThreads(COptions::ScanningThreads, [&]()
             {
-                CItem::ScanItems(&queue);
+                CItem::ScanItems(&queue.second, queueContextNtfs[queue.first]);
             });
         }
 
         // Ensure toolbar buttons reflect scanning status
-        CMainFrame::Get()->InvokeInMessageThread([&]
+        CMainFrame::Get()->InvokeInMessageThread([]
         {
             CDirStatApp::Get()->OnIdle(0);
             CMainFrame::Get()->Invalidate();

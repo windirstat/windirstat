@@ -275,6 +275,12 @@
     <ClInclude Include="Views\TreeMapView.h">
       <Filter>Header Files\Views</Filter>
     </ClInclude>
+    <ClInclude Include="Finder.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FinderNtfs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirStatDoc.cpp">
@@ -405,6 +411,9 @@
     </ClCompile>
     <ClCompile Include="Controls\ColorButton.cpp">
       <Filter>Source Files\Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="FinderNtfs.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

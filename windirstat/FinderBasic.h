@@ -1,4 +1,4 @@
-﻿// FinderBasic.h - Declaration of CFinderBasic
+﻿// FinderBasic.h - Declaration of FinderBasic
 //
 // WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
@@ -20,10 +20,13 @@
 
 #pragma once
 
-#include "stdafx.h"
+#include <stdafx.h>
+#include "Item.h"
+#include "Finder.h"
+
 #include <string>
 
-class FinderBasic final
+class FinderBasic final : public Finder
 {
     using FILE_FULL_DIR_INFORMATION = struct {
         ULONG         NextEntryOffset;
@@ -47,30 +50,21 @@ class FinderBasic final
     DWORD m_InitialAttributes = INVALID_FILE_ATTRIBUTES;
     bool m_Firstrun = true;
     FILE_FULL_DIR_INFORMATION* m_CurrentInfo = nullptr;
-    static constexpr std::wstring_view m_Dos = L"\\??\\";
-    static constexpr std::wstring_view m_DosUNC = L"\\??\\UNC\\";
-    static constexpr std::wstring_view m_Long = L"\\\\?\\";
-    static constexpr std::wstring_view m_LongUNC = L"\\\\?\\UNC\\";
+    std::vector<BYTE> m_DirectoryInfo;
 
 public:
 
     FinderBasic() = default;
     ~FinderBasic();
 
-    bool FindNextFile();
-    bool FindFile(const std::wstring& strFolder,const std::wstring& strName = L"", DWORD attr = INVALID_FILE_ATTRIBUTES);
-    bool IsDirectory() const;
-    bool IsDots() const;
-    bool IsHidden() const;
-    bool IsHiddenSystem() const;
-    bool IsProtectedReparsePoint() const;
-    DWORD GetAttributes() const;
-    std::wstring GetFileName() const;
-    ULONGLONG GetFileSizePhysical() const;
-    ULONGLONG GetFileSizeLogical() const;
-    FILETIME GetLastWriteTime() const;
-    std::wstring GetFilePath() const;
-    std::wstring GetFilePathLong() const;
+    bool FindNext() override;
+    bool FindFile(const CItem* item) override;
+    bool FindFile(const std::wstring& strFolder, const std::wstring& strName = L"", DWORD attr = INVALID_FILE_ATTRIBUTES);
+    inline DWORD GetAttributes() const override;
+    std::wstring GetFileName() const override;
+    ULONGLONG GetFileSizePhysical() const override;
+    ULONGLONG GetFileSizeLogical() const override;
+    FILETIME GetLastWriteTime() const override;
+    std::wstring GetFilePath() const override;
     static bool DoesFileExist(const std::wstring& folder, const std::wstring& file = {});
-    static std::wstring MakeLongPathCompatible(const std::wstring& path);
 };
