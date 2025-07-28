@@ -58,7 +58,7 @@ void CFileTopControl::ProcessTop(CItem * item)
     if (COptions::LargeFileCount == 0) return;
 
     std::lock_guard guard(m_SizeMutex);
-    m_SizeMap.emplace(item);
+    m_QueuedSet.emplace_back(item);
 }
 
 void CFileTopControl::SortItems()
@@ -68,20 +68,19 @@ void CFileTopControl::SortItems()
     // Verify at least root exists
     if (GetItemCount() == 0) return;
 
-    // Reverse iterate over the multimap
+    // Quickly copy the items to a vector to free mutex
     m_SizeMutex.lock();
-    std::unordered_set<CItem*> largestItems;
-    largestItems.reserve(COptions::LargeFileCount);
-    for (auto& pItem : m_SizeMap | std::views::reverse | std::views::take(COptions::LargeFileCount.Obj()))
-    {
-        largestItems.emplace(pItem);
-    }
+    std::vector<CItem*> queuedItems = m_QueuedSet;
+    m_QueuedSet.clear();
     m_SizeMutex.unlock();
+
+    // Insert into map
+    m_SizeMap.insert(queuedItems.begin(), queuedItems.end());
 
     SetRedraw(FALSE);
     const auto root = reinterpret_cast<CItemTop*>(GetItem(0));
     auto itemTrackerCopy = std::unordered_map(m_ItemTracker);
-    for (auto& largeItem : largestItems)
+    for (const auto& largeItem : m_SizeMap | std::views::take(COptions::LargeFileCount.Obj()))
     {
         if (m_ItemTracker.contains(largeItem))
         {
