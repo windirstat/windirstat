@@ -126,20 +126,12 @@ std::tuple<ULONGLONG, ULONGLONG> CDirStatApp::GetFreeDiskSpace(const std::wstrin
     return { u64total.QuadPart, u64free.QuadPart };
 }
 
-void CDirStatApp::ReReadMountPoints()
+bool CDirStatApp::IsFollowingAllowed(const DWORD reparseTag) const
 {
-    m_ReparsePoints.Initialize();
-}
-
-bool CDirStatApp::IsFollowingAllowed(const std::wstring& longpath, const DWORD attr) const
-{
-    // Allow following if not a reparse point, is a reparse point without exclusion controls,
-    // or is a reparse point with exclusion controls but are not excluded
-    return !CReparsePoints::IsReparsePoint(attr) ||
-        !CReparsePoints::IsReparseType(longpath, { IO_REPARSE_TAG_SYMLINK, IO_REPARSE_TAG_MOUNT_POINT }) ||
-        !COptions::ExcludeVolumeMountPoints && m_ReparsePoints.IsVolumeMountPoint(longpath, attr) ||
-        !COptions::ExcludeJunctions && m_ReparsePoints.IsJunction(longpath, attr) ||
-        !COptions::ExcludeSymbolicLinksDirectory && CReparsePoints::IsSymbolicLink(longpath, attr);
+    if (reparseTag == 0) return true;
+    return reparseTag == IO_REPARSE_TAG_MOUNT_POINT && !COptions::ExcludeVolumeMountPoints ||
+        reparseTag == IO_REPARSE_TAG_SYMLINK && !COptions::ExcludeSymbolicLinksDirectory ||
+        reparseTag == ~IO_REPARSE_TAG_MOUNT_POINT && !COptions::ExcludeJunctions;
 }
 
 // Get the alternative colors for compressed and encrypted files/folders.
@@ -334,6 +326,17 @@ BOOL CDirStatApp::InitInstance()
     if (COptions::UseBackupRestore && !EnableReadPrivileges())
     {
         VTRACE(L"Failed to enable additional privileges.");
+    }
+
+    // Enable reading of reparse data for cloud links
+    SmartPointer<HMODULE> hmod(FreeLibrary, LoadLibrary(L"ntdll.dll"));
+    CHAR(WINAPI * RtlSetProcessPlaceholderCompatibilityMode) (CHAR Mode) =
+        reinterpret_cast<decltype(RtlSetProcessPlaceholderCompatibilityMode)>(
+            static_cast<LPVOID>(GetProcAddress(hmod, "RtlSetProcessPlaceholderCompatibilityMode")));
+    if (RtlSetProcessPlaceholderCompatibilityMode != nullptr)
+    {
+        constexpr CHAR PHCM_EXPOSE_PLACEHOLDERS = 2;
+        RtlSetProcessPlaceholderCompatibilityMode(PHCM_EXPOSE_PLACEHOLDERS);
     }
 
     // If launches with a parent pid flag, close that process

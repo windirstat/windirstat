@@ -140,9 +140,6 @@
     <ClInclude Include="ModalApiShuttle.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="MountPoints.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Options.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -302,9 +299,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ModalApiShuttle.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="MountPoints.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Options.cpp">

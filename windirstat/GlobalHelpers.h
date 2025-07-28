@@ -30,15 +30,20 @@ constexpr auto CONTENT_MENU_MAXCMD = 0x7FFFul;
 IContextMenu* GetContextMenu(HWND hwnd, const std::vector<std::wstring>& paths);
 
 constexpr auto FILE_PROVIDER_COMPRESSION_MODERN = 1u << 8;
-enum class CompressionAlgorithm {
+using CompressionAlgorithm = enum CompressionAlgorithm {
     NONE = COMPRESSION_FORMAT_NONE,
     LZNT1 = COMPRESSION_FORMAT_LZNT1,
     XPRESS4K = FILE_PROVIDER_COMPRESSION_XPRESS4K | FILE_PROVIDER_COMPRESSION_MODERN,
     XPRESS8K = FILE_PROVIDER_COMPRESSION_XPRESS8K | FILE_PROVIDER_COMPRESSION_MODERN,
     XPRESS16K = FILE_PROVIDER_COMPRESSION_XPRESS16K | FILE_PROVIDER_COMPRESSION_MODERN,
-    LZX = FILE_PROVIDER_COMPRESSION_LZX | FILE_PROVIDER_COMPRESSION_MODERN,
-
+    LZX = FILE_PROVIDER_COMPRESSION_LZX | FILE_PROVIDER_COMPRESSION_MODERN
 };
+
+template<typename T>
+static constexpr T* ByteOffset(void* ptr, std::ptrdiff_t offset)
+{
+    return reinterpret_cast<T*>(static_cast<std::byte*>(ptr) + offset);
+}
 
 std::wstring GetLocaleString(LCTYPE lctype, LCID lcid);
 std::wstring GetLocaleLanguage(LANGID langid);
@@ -87,7 +92,6 @@ std::wstring GetBaseNameFromPath(const std::wstring& path);
 std::wstring GetAppFileName(const std::wstring& ext = L"");
 std::wstring GetAppFolder();
 std::wstring GetNameFromSid(PSID sid);
-
 
 bool CompressFile(const std::wstring& filePath, CompressionAlgorithm algorithm);
 bool CompressFileAllowed(const std::wstring& filePath, CompressionAlgorithm algorithm);

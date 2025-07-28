@@ -124,7 +124,6 @@ void CDirStatDoc::DeleteContents()
     m_RootItemTop = nullptr;
     m_RootItem = nullptr;
     m_ZoomItem = nullptr;
-    CDirStatApp::Get()->ReReadMountPoints();
 }
 
 BOOL CDirStatDoc::OnNewDocument()
@@ -435,8 +434,7 @@ void CDirStatDoc::RecurseRefreshReparsePoints(CItem* item) const
                 continue;
             }
 
-            if (CReparsePoints::IsReparsePoint(child->GetAttributes()) &&
-                CDirStatApp::Get()->IsFollowingAllowed(child->GetPathLong(), child->GetAttributes()))
+            if (CDirStatApp::Get()->IsFollowingAllowed(child->GetReparseTag()))
             {
                 toRefresh.push_back(child);
             }
@@ -712,7 +710,7 @@ void CDirStatDoc::RecursiveUserDefinedCleanup(USERDEFINEDCLEANUP* udc, const std
         {
             continue;
         }
-        if (!CDirStatApp::Get()->IsFollowingAllowed(finder.GetFilePathLong(), finder.GetAttributes()))
+        if (!CDirStatApp::Get()->IsFollowingAllowed(finder.GetReparseTag()))
         {
             continue;
         }
@@ -1598,7 +1596,7 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
         for (const auto & item : items)
         {
             // Skip any items we should not follow
-            if (!item->IsType(ITF_ROOTITEM) && !CDirStatApp::Get()->IsFollowingAllowed(item->GetPath(), item->GetAttributes()))
+            if (!item->IsType(ITF_ROOTITEM) && !CDirStatApp::Get()->IsFollowingAllowed(item->GetReparseTag()))
             {
                 continue;
             }

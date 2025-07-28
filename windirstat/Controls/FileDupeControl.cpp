@@ -58,8 +58,7 @@ CFileDupeControl* CFileDupeControl::m_Singleton = nullptr;
 void CFileDupeControl::ProcessDuplicate(CItem * item, BlockingQueue<CItem*>* queue)
 {
     if (!COptions::ScanForDuplicates) return;
-    if (COptions::SkipDupeDetectionCloudLinks &&
-        CReparsePoints::IsCloudLink(item->GetPathLong(), item->GetAttributes()))
+    if (COptions::SkipDupeDetectionCloudLinks && item->IsReparseType(ITF_CLOUDLINK))
     {
         std::unique_lock lock(m_HashTrackerMutex);
         if (m_ShowCloudWarningOnThisScan &&

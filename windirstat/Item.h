@@ -64,7 +64,12 @@ enum ITEMTYPE : unsigned short
     ITF_SKIPHASH  = 1 << 10, // Indicates cannot be hased (unreadable)
     ITF_PARTHASH  = 1 << 11, // Indicates a partial hash
     ITF_FULLHASH  = 1 << 12, // Indicates a full hash
-    ITF_FLAGS     = 0xFF00,  // All potential flag items
+    ITF_SYMLINK   = 0b001 << 13, // Indicates a reparse point that is a symlink
+    ITF_MOUNTPNT  = 0b010 << 13, // Indicates a reparse point that is a mount point
+    ITF_JUNCTION  = 0b011 << 13, // Indicates a reparse point that is a junction
+    ITF_CLOUDLINK = 0b100 << 13, // Indicates a reparse point that is a cloud link
+    ITF_RPMASK    = 0b111 << 13, // Indicates a reparse point
+    ITF_FLAGS     = 0xFF00, // All potential flag items
 };
 
 inline ITEMTYPE operator|(const ITEMTYPE & a, const ITEMTYPE & b)
@@ -199,6 +204,8 @@ public:
     DWORD GetAttributes() const;
     void SetIndex(DWORD index);
     DWORD GetIndex() const;
+    DWORD GetReparseTag() const;
+    void SetReparseTag(DWORD reparseType);
     unsigned short GetSortAttributes() const;
     double GetFraction() const;
     bool IsRootItem() const;
@@ -260,6 +267,11 @@ public:
         else m_Type = m_Type - type;
     }
 
+    constexpr bool IsReparseType(const ITEMTYPE type) const
+    {
+        return (m_Type & ITF_RPMASK) == type;
+    }
+
     static constexpr bool FileTimeIsGreater(const FILETIME& ft1, const FILETIME& ft2)
     {
         return (static_cast<QWORD>(ft1.dwHighDateTime) << 32 | (ft1.dwLowDateTime)) >
@@ -295,13 +307,13 @@ private:
         std::atomic<ULONG> m_Jobs = 0;    // # "read jobs" in subtree.
     };
 
-    RECT m_Rect;                                  // To support TreeMapView
-    std::wstring m_Name;                          // Display name
-    FILETIME m_LastChange = {0, 0};               // Last modification time of self or subtree
-    std::unique_ptr<CHILDINFO> m_FolderInfo;      // Child information for non-files
-    std::atomic<ULONGLONG> m_SizePhysical = 0;    // Total physical size of self or subtree
-    std::atomic<ULONGLONG> m_SizeLogical = 0;     // Total local size of self or subtree
-    ULONG m_Index = 0;                            // Index of item for special scan types
-    DWORD m_Attributes = INVALID_FILE_ATTRIBUTES; // File or directory attributes of the item
-    ITEMTYPE m_Type;                              // Indicates our type.
+    RECT m_Rect;                               // To support TreeMapView
+    std::wstring m_Name;                       // Display name
+    FILETIME m_LastChange = {0, 0};            // Last modification time of self or subtree
+    std::unique_ptr<CHILDINFO> m_FolderInfo;   // Child information for non-files
+    std::atomic<ULONGLONG> m_SizePhysical = 0; // Total physical size of self or subtree
+    std::atomic<ULONGLONG> m_SizeLogical = 0;  // Total local size of self or subtree
+    ULONG m_Index = 0;                         // Index of item for special scan types
+    USHORT m_Attributes = 0xFFFF;              // File or directory attributes of the item
+    ITEMTYPE m_Type;                           // Indicates our type.
 };

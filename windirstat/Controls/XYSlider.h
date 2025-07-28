@@ -34,7 +34,7 @@ class CXySlider final : public CStatic
     CXySlider() = default;
 
     void GetRange(CSize& range) const;
-    void SetRange(CSize range);
+    void SetRange(const CSize & range);
 
     CPoint GetPos() const;
     void SetPos(CPoint pt);
@@ -51,8 +51,8 @@ protected:
     void PaintBackground(CDC* pdc);
     void PaintGripper(CDC* pdc) const;
     void DoMoveBy(int cx, int cy);
-    void DoDrag(CPoint point);
-    void DoPage(CPoint point);
+    void DoDrag(const CPoint & point);
+    void DoPage(const CPoint & point);
     void HighlightGripper(bool on);
 
     bool m_Inited = false;

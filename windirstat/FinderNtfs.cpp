@@ -26,12 +26,6 @@
 #include <execution>
 #include <set>
 
-template<typename T>
-static constexpr T* byteOffset(void* ptr, std::ptrdiff_t offset)
-{
-    return reinterpret_cast<T*>(static_cast<std::byte*>(ptr) + offset);
-}
-
 enum ATTRIBUTE_TYPE_CODE : ULONG
 {
     AttributeStandardInformation = 0x10,
@@ -118,14 +112,14 @@ using ATTRIBUTE_RECORD = struct ATTRIBUTE_RECORD
 
     ATTRIBUTE_RECORD* next() const
     {
-        return byteOffset<ATTRIBUTE_RECORD>(const_cast<ATTRIBUTE_RECORD*>(this), RecordLength);
+        return ByteOffset<ATTRIBUTE_RECORD>(const_cast<ATTRIBUTE_RECORD*>(this), RecordLength);
     }
 
     static constexpr std::pair<ATTRIBUTE_RECORD*, ATTRIBUTE_RECORD*> bounds(FILE_RECORD* FileRecord, auto TotalLength)
     {
         return {
-            byteOffset<ATTRIBUTE_RECORD>(FileRecord, FileRecord->FirstAttributeOffset),
-            byteOffset<ATTRIBUTE_RECORD>(FileRecord, FileRecord->FirstAttributeOffset + TotalLength)
+            ByteOffset<ATTRIBUTE_RECORD>(FileRecord, FileRecord->FirstAttributeOffset),
+            ByteOffset<ATTRIBUTE_RECORD>(FileRecord, FileRecord->FirstAttributeOffset + TotalLength)
         };
     }
 };
@@ -210,7 +204,7 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
     }
 
     // Extract data run origins and cluster counts
-    RETRIEVAL_POINTERS_BUFFER* retrievalBuffer = byteOffset<RETRIEVAL_POINTERS_BUFFER>(dataRunsBuffer.data(), 0);
+    RETRIEVAL_POINTERS_BUFFER* retrievalBuffer = ByteOffset<RETRIEVAL_POINTERS_BUFFER>(dataRunsBuffer.data(), 0);
     std::vector<std::pair<ULONGLONG, ULONGLONG>> dataRuns(retrievalBuffer->ExtentCount, {});
     for (DWORD i = 0; i < retrievalBuffer->ExtentCount; i++)
     {
@@ -258,13 +252,13 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
             for (ULONG offset = 0; offset + volumeInfo.BytesPerFileRecordSegment <= bytesRead; offset += volumeInfo.BytesPerFileRecordSegment)
             {
                 // Process MFT record inline
-                const auto fileRecord = byteOffset<FILE_RECORD>(buffer.data(), offset);
+                const auto fileRecord = ByteOffset<FILE_RECORD>(buffer.data(), offset);
 
                 // Apply fixup
                 const auto wordsPerSector = volumeInfo.BytesPerSector / sizeof(USHORT);
-                const auto fixupArray = byteOffset<USHORT>(fileRecord, fileRecord->UsaOffset);
+                const auto fixupArray = ByteOffset<USHORT>(fileRecord, fileRecord->UsaOffset);
                 const auto usn = fixupArray[0];
-                const auto recordWords = reinterpret_cast<PUSHORT>(byteOffset<UCHAR>(buffer.data(), offset));
+                const auto recordWords = reinterpret_cast<PUSHORT>(ByteOffset<UCHAR>(buffer.data(), offset));
                 for (ULONG i = 1; i < fileRecord->UsaCount; ++i)
                 {
                     const auto sectorEnd = recordWords + i * wordsPerSector - 1;
@@ -283,7 +277,7 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
                     if (curAttribute->TypeCode == AttributeStandardInformation)
                     {
                         if (curAttribute->IsNonResident()) continue;
-                        const auto si = byteOffset<STANDARD_INFORMATION>(curAttribute, curAttribute->Form.Resident.ValueOffset);
+                        const auto si = ByteOffset<STANDARD_INFORMATION>(curAttribute, curAttribute->Form.Resident.ValueOffset);
                         auto& baseRecord = getMapBinRef(baseFileRecordMapTemp, baseFileRecordMapMutex, baseRecordIndex, binSize);
                         baseRecord.LastModifiedTime = si->LastModificationTime;
                         baseRecord.Attributes = si->FileAttributes;
@@ -292,7 +286,7 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
                     else if (curAttribute->TypeCode == AttributeFileName)
                     {
                         if (curAttribute->IsNonResident()) continue;
-                        const auto fn = byteOffset<FILE_NAME>(curAttribute, curAttribute->Form.Resident.ValueOffset);
+                        const auto fn = ByteOffset<FILE_NAME>(curAttribute, curAttribute->Form.Resident.ValueOffset);
                         if (fn->IsShortNameRecord()) continue;
                         auto& parentToChildEntry = getMapBinRef(parentToChildMapTemp, parentToChildMapMutex, fn->ParentDirectory, binSize);
                         parentToChildEntry.emplace(std::wstring{ fn->FileName, fn->FileNameLength }, baseRecordIndex);
@@ -314,9 +308,13 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
                     else if (curAttribute->TypeCode == AttributeReparsePoint)
                     {
                         if (curAttribute->IsNonResident()) continue;
-                        const auto fn = byteOffset<REPARSE_GUID_DATA_BUFFER>(curAttribute, curAttribute->Form.Resident.ValueOffset);
+                        const auto fn = ByteOffset<Finder::REPARSE_DATA_BUFFER>(curAttribute, curAttribute->Form.Resident.ValueOffset);
                         auto& baseRecord = getMapBinRef(baseFileRecordMapTemp, baseFileRecordMapMutex, baseRecordIndex, binSize);
                         baseRecord.ReparsePointTag = fn->ReparseTag;
+                        if (!Finder::IsMountPoint(*fn))
+                        {
+                            baseRecord.ReparsePointTag = ~IO_REPARSE_TAG_MOUNT_POINT;
+                        }
                     }
                 }
             }
@@ -376,6 +374,11 @@ ULONG FinderNtfs::GetIndex() const
     return static_cast<ULONG>(m_CurrentRecordName->BaseRecord);
 }
 
+DWORD FinderNtfs::GetReparseTag() const
+{
+    return m_CurrentRecord->ReparsePointTag;
+}
+
 std::wstring FinderNtfs::GetFileName() const
 {
     return m_CurrentRecordName->FileName;
@@ -403,10 +406,10 @@ std::wstring FinderNtfs::GetFilePath() const
         (m_Base + GetFileName()) : (m_Base + L"\\" + GetFileName());
 
     // Strip special dos chars
-    if (wcsncmp(path.data(), m_DosUNC.data(), wcslen(m_DosUNC.data()) - 1) == 0)
-        path = L"\\\\" + path.substr(static_cast<int>(wcslen(m_DosUNC.data())));
-    else if (wcsncmp(path.data(), m_Dos.data(), wcslen(m_Dos.data()) - 1) == 0)
-        path = path.substr(static_cast<int>(wcslen(m_Dos.data())));
+    if (wcsncmp(path.data(), m_DosUNC.data(), m_DosUNC.length() - 1) == 0)
+        path = L"\\\\" + path.substr(m_DosUNC.length());
+    else if (wcsncmp(path.data(), m_Dos.data(), m_Dos.length() - 1) == 0)
+        path = path.substr(m_Dos.length());
     return path;
 }
 

@@ -24,7 +24,6 @@
 #include "resource.h"
 #include "Langs.h"
 #include "IconHandler.h"
-#include "MountPoints.h"
 #include "Constants.h"
 #include "Tracer.h"
 
@@ -50,9 +49,7 @@ public:
     static bool InPortableMode();
     bool SetPortableMode(bool enable, bool onlyOpen = false);
 
-    void ReReadMountPoints();
-    bool IsFollowingAllowed(const std::wstring& longpath, DWORD attr = 1) const;
-    CReparsePoints* GetReparseInfo() { return &m_ReparsePoints; }
+    bool IsFollowingAllowed(DWORD reparseTag = 0) const;
 
     COLORREF AltColor() const;           // Coloring of compressed items
     COLORREF AltEncryptionColor() const; // Coloring of encrypted items
@@ -73,7 +70,6 @@ protected:
 
     CSingleDocTemplate* m_PDocTemplate{nullptr}; // MFC voodoo.
 
-    CReparsePoints m_ReparsePoints;   // Mount point information
     CIconHandler m_IconList;          // Our central icon list
     COLORREF m_AltColor;              // Coloring of compressed items
     COLORREF m_AltEncryptionColor;    // Coloring of encrypted items

@@ -55,7 +55,7 @@ CItem::CItem(const ITEMTYPE type, const std::wstring & name) : m_Name(name), m_T
         // The name string on the drive is two parts separated by a pipe.  For example,
         // C:\|Local Disk (C:) is the true path following by the name description
         m_Name = std::format(L"{:.2}|{}", m_Name, FormatVolumeNameOfRootPath(m_Name));
-        m_Attributes = GetFileAttributesW(GetPathLong().c_str());
+        m_Attributes = LOWORD(GetFileAttributesW(GetPathLong().c_str()));
     }
 
     if (IsType(IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY))
@@ -71,7 +71,7 @@ CItem::CItem(const ITEMTYPE type, const std::wstring& name, const FILETIME lastC
     m_LastChange = lastChange;
     m_SizePhysical = sizePhysical;
     m_SizeLogical = sizeLogical;
-    m_Attributes = attributes;
+    m_Attributes = LOWORD(attributes);
     if (m_FolderInfo != nullptr)
     {
         m_FolderInfo->m_Subdirs = subdirs;
@@ -384,14 +384,12 @@ HICON CItem::GetIcon()
     }
 
     const std::wstring longpath = GetPathLong();
-    if (CDirStatApp::Get()->GetReparseInfo()->IsVolumeMountPoint(longpath, m_Attributes))
+    if (IsReparseType(ITF_MOUNTPNT))
     {
         m_VisualInfo->icon = GetIconHandler()->GetMountPointImage();
         return m_VisualInfo->icon;
     }
-    if ((CReparsePoints::IsSymbolicLink(longpath, m_Attributes) ||
-        CDirStatApp::Get()->GetReparseInfo()->IsJunction(longpath, m_Attributes)) &&
-        !CReparsePoints::IsCloudLink(longpath, m_Attributes))
+    if (IsReparseType(ITF_SYMLINK) || IsReparseType(ITF_JUNCTION))
     {
         constexpr DWORD mask = FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM;
         const bool osFile = (GetAttributes() & mask) == mask;
@@ -799,7 +797,7 @@ void CItem::SetLastChange(const FILETIME& t)
 
 void CItem::SetAttributes(const DWORD attr)
 {
-    m_Attributes = attr;
+    m_Attributes = LOWORD(attr);
 }
 
 DWORD CItem::GetAttributes() const
@@ -815,6 +813,24 @@ void CItem::SetIndex(const DWORD index)
 DWORD CItem::GetIndex() const
 {
     return m_Index;
+}
+
+DWORD CItem::GetReparseTag() const
+{
+    if (m_Type == ITF_SYMLINK) return IO_REPARSE_TAG_SYMLINK;
+    if (m_Type == ITF_MOUNTPNT) return IO_REPARSE_TAG_MOUNT_POINT;
+    if (m_Type == ITF_JUNCTION) return ~IO_REPARSE_TAG_MOUNT_POINT;
+    if (m_Type == ITF_CLOUDLINK) return IO_REPARSE_TAG_CLOUD_MASK;
+    return 0;
+}
+
+void CItem::SetReparseTag(const DWORD reparseType)
+{
+    if (reparseType == 0) (void) false;
+    else if (reparseType == IO_REPARSE_TAG_SYMLINK) SetType(ITF_SYMLINK);
+    else if (reparseType == IO_REPARSE_TAG_MOUNT_POINT) SetType(ITF_MOUNTPNT);
+    else if (reparseType == ~IO_REPARSE_TAG_MOUNT_POINT) SetType(ITF_JUNCTION);
+    else if (reparseType & IO_REPARSE_TAG_CLOUD_MASK) SetType(ITF_CLOUDLINK);
 }
 
 // Returns a value which resembles sorting of RHSACE considering gaps
@@ -1073,8 +1089,7 @@ void CItem::ScanItems(BlockingQueue<CItem*> * queue, FinderNtfsContext& contextN
                 {
                     if (COptions::ExcludeHiddenFile && finder->IsHidden() ||
                         COptions::ExcludeProtectedFile && finder->IsHiddenSystem() ||
-                        COptions::ExcludeSymbolicLinksFile && CReparsePoints::IsReparsePoint(finder->GetAttributes()) &&
-                            CReparsePoints::IsSymbolicLink(finder->GetFilePathLong(), finder->GetAttributes()))
+                        COptions::ExcludeSymbolicLinksFile && finder->GetReparseTag() == IO_REPARSE_TAG_SYMLINK)
                     {
                         continue;
                     }
@@ -1392,12 +1407,13 @@ std::wstring CItem::UpwardGetPathWithoutBackslash() const
 CItem* CItem::AddDirectory(const Finder& finder)
 {
     const bool follow = !finder.IsProtectedReparsePoint() &&
-        CDirStatApp::Get()->IsFollowingAllowed(finder.GetFilePathLong(), finder.GetAttributes());
+        CDirStatApp::Get()->IsFollowingAllowed(finder.GetReparseTag());
 
     const auto & child = new CItem(IT_DIRECTORY, finder.GetFileName());
     child->SetIndex(finder.GetIndex());
     child->SetLastChange(finder.GetLastWriteTime());
     child->SetAttributes(finder.GetAttributes());
+    child->SetReparseTag(finder.GetReparseTag());
     AddChild(child);
     child->UpwardAddReadJobs(follow ? 1 : 0);
 
@@ -1411,6 +1427,7 @@ CItem* CItem::AddFile(const Finder& finder)
     child->SetSizeLogical(finder.GetFileSizeLogical());
     child->SetLastChange(finder.GetLastWriteTime());
     child->SetAttributes(finder.GetAttributes());
+    child->SetReparseTag(finder.GetReparseTag());
     child->ExtensionDataAdd();
     AddChild(child);
     child->SetDone();

@@ -446,7 +446,7 @@
       <OutputFile>$(OutDir)$(TargetName).exe</OutputFile>
       <TargetMachine>MachineX64</TargetMachine>
       <AdditionalOptions>/pdbaltpath:%_PDB% /release %(AdditionalOptions)</AdditionalOptions>
-      <Profile>false</Profile>
+      <Profile>true</Profile>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
     <Manifest>
@@ -553,7 +553,6 @@
     <ClInclude Include="Localization.h" />
     <ClInclude Include="MainFrame.h" />
     <ClInclude Include="ModalApiShuttle.h" />
-    <ClInclude Include="MountPoints.h" />
     <ClInclude Include="Options.h" />
     <ClInclude Include="Pages\PageAdvanced.h" />
     <ClInclude Include="Pages\PageCleanups.h" />
@@ -604,8 +603,6 @@
     <ClCompile Include="MainFrame.cpp">
     </ClCompile>
     <ClCompile Include="ModalApiShuttle.cpp">
-    </ClCompile>
-    <ClCompile Include="MountPoints.cpp">
     </ClCompile>
     <ClCompile Include="Options.cpp">
     </ClCompile>

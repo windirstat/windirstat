@@ -46,6 +46,7 @@ public:
     virtual std::wstring GetFilePath() const = 0;
     virtual std::wstring GetFileName() const = 0;
     virtual ULONG GetIndex() const { return 0; }
+    virtual DWORD GetReparseTag() const = 0;
 
     bool IsReparsePoint() const
     {
@@ -85,5 +86,31 @@ public:
         if (path.starts_with(L"\\\\?")) return path;
         if (path.starts_with(L"\\\\")) return m_LongUNC.data() + path.substr(2);
         return path;
+    }
+
+    using REPARSE_DATA_BUFFER = struct REPARSE_DATA_BUFFER {
+        ULONG  ReparseTag;
+        USHORT ReparseDataLength;
+        USHORT Reserved;
+        USHORT SubstituteNameOffset;
+        USHORT SubstituteNameLength;
+        USHORT PrintNameOffset;
+        USHORT PrintNameLength;
+        WCHAR PathBuffer[1];
+    };
+
+    static bool IsMountPoint(REPARSE_DATA_BUFFER & reparseBuffer)
+    {
+        if (reparseBuffer.ReparseTag == IO_REPARSE_TAG_MOUNT_POINT)
+        {
+            const auto volumeIdentifier = LR"(\??\Volume)";
+            const auto path = ByteOffset<WCHAR>(reparseBuffer.PathBuffer, reparseBuffer.SubstituteNameOffset);
+            if (_wcsnicmp(path, volumeIdentifier, min(reparseBuffer.SubstituteNameLength, wcslen(volumeIdentifier))) == 0)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 };

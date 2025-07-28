@@ -80,6 +80,7 @@ public:
     bool IsDots() const override;
     DWORD GetAttributes() const override;
     ULONG GetIndex() const override;
+    DWORD GetReparseTag() const override;
     std::wstring GetFileName() const override;
     ULONGLONG GetFileSizePhysical() const override;
     ULONGLONG GetFileSizeLogical() const override;

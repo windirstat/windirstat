@@ -22,6 +22,7 @@
 #include "FinderBasic.h"
 #include "Options.h"
 #include "Tracer.h"
+#include <SmartPointer.h>
 
 #pragma comment(lib,"ntdll.lib")
 
@@ -99,7 +100,34 @@ bool FinderBasic::FindNext()
                 m_CurrentInfo->FileAttributes = GetFileAttributes(initialPath.c_str());
             }
         }
+
+        // Handle reparse points
+        m_ReparseTag = 0;
+        if (IsReparsePoint())
+        {
+            // Extract the reparse tag from the buffer
+            const auto longpath = MakeLongPathCompatible(GetFilePath());
+            SmartPointer<HANDLE> handle(CloseHandle, CreateFile(longpath.c_str(), FILE_READ_ATTRIBUTES,
+                FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING,
+                FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT, nullptr));
+            if (handle != INVALID_HANDLE_VALUE)
+            {
+                std::vector<BYTE> buf(MAXIMUM_REPARSE_DATA_BUFFER_SIZE);
+                DWORD dwRet = MAXIMUM_REPARSE_DATA_BUFFER_SIZE;
+                if (DeviceIoControl(handle, FSCTL_GET_REPARSE_POINT,
+                    nullptr, 0, buf.data(), MAXIMUM_REPARSE_DATA_BUFFER_SIZE, &dwRet, nullptr) != FALSE)
+                {
+                    auto& reparseBuffer = *ByteOffset<REPARSE_DATA_BUFFER>(buf.data(), 0);
+                    m_ReparseTag = reparseBuffer.ReparseTag;
+                    if (!IsMountPoint(reparseBuffer))
+                    {
+                        m_ReparseTag = ~IO_REPARSE_TAG_MOUNT_POINT;
+                    }
+                }
+            }
+        }
     }
+
 
     m_Firstrun = false;
     return success;
@@ -199,6 +227,16 @@ std::wstring FinderBasic::GetFilePath() const
     return path;
 }
 
+bool FinderBasic::IsDots() const
+{
+    return m_Name == L"." || m_Name == L"..";
+}
+
+DWORD FinderBasic::GetReparseTag() const
+{
+    return m_ReparseTag;
+}
+
 bool FinderBasic::DoesFileExist(const std::wstring& folder, const std::wstring& file)
 {
     // Use this method over GetFileAttributes() as GetFileAttributes() will
@@ -207,7 +245,3 @@ bool FinderBasic::DoesFileExist(const std::wstring& folder, const std::wstring& 
     return finder.FindFile(folder, file);
 }
 
-bool FinderBasic::IsDots() const
-{
-    return m_Name == L"." || m_Name == L"..";
-}

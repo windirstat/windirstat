@@ -46,11 +46,12 @@ class FinderBasic final : public Finder
     std::wstring m_Search;
     std::wstring m_Base;
     std::wstring m_Name;
+    std::vector<BYTE> m_DirectoryInfo;
+    FILE_FULL_DIR_INFORMATION* m_CurrentInfo = nullptr;
     HANDLE m_Handle = nullptr;
     DWORD m_InitialAttributes = INVALID_FILE_ATTRIBUTES;
+    DWORD m_ReparseTag = 0;
     bool m_Firstrun = true;
-    FILE_FULL_DIR_INFORMATION* m_CurrentInfo = nullptr;
-    std::vector<BYTE> m_DirectoryInfo;
 
 public:
 
@@ -60,12 +61,14 @@ public:
     bool FindNext() override;
     bool FindFile(const CItem* item) override;
     bool FindFile(const std::wstring& strFolder, const std::wstring& strName = L"", DWORD attr = INVALID_FILE_ATTRIBUTES);
-    bool FinderBasic::IsDots() const override;
+    bool IsDots() const override;
     inline DWORD GetAttributes() const override;
     std::wstring GetFileName() const override;
     ULONGLONG GetFileSizePhysical() const override;
     ULONGLONG GetFileSizeLogical() const override;
     FILETIME GetLastWriteTime() const override;
     std::wstring GetFilePath() const override;
+    DWORD GetReparseTag() const override;
+
     static bool DoesFileExist(const std::wstring& folder, const std::wstring& file = {});
 };

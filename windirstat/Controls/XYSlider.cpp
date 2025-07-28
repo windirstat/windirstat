@@ -65,7 +65,7 @@ void CXySlider::GetRange(CSize& range) const
     range = m_ExternalRange;
 }
 
-void CXySlider::SetRange(const CSize range)
+void CXySlider::SetRange(const CSize & range)
 {
     m_ExternalRange = range;
 }
@@ -242,7 +242,7 @@ void CXySlider::DoMoveBy(const int cx, const int cy)
     }
 }
 
-void CXySlider::DoDrag(const CPoint point)
+void CXySlider::DoDrag(const CPoint & point)
 {
     CPoint pt0 = point;
 
@@ -296,7 +296,7 @@ void CXySlider::DoDrag(const CPoint point)
     HighlightGripper(false);
 }
 
-void CXySlider::DoPage(const CPoint point)
+void CXySlider::DoPage(const CPoint & point)
 {
     const CSize sz = point - (m_Zero + m_Pos);
 
