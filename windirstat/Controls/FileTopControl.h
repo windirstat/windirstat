@@ -43,7 +43,7 @@ protected:
     // Custom comparator to keep the list organized by size
     static constexpr auto CompareBySize = [](const CItem* lhs, const CItem* rhs)
     {
-        return lhs->GetSizePhysical() >= rhs->GetSizePhysical();
+        return lhs->GetSizeLogical() > rhs->GetSizeLogical();
     };
 
     static CFileTopControl* m_Singleton;
