@@ -817,10 +817,10 @@ DWORD CItem::GetIndex() const
 
 DWORD CItem::GetReparseTag() const
 {
-    if (m_Type == ITF_SYMLINK) return IO_REPARSE_TAG_SYMLINK;
-    if (m_Type == ITF_MOUNTPNT) return IO_REPARSE_TAG_MOUNT_POINT;
-    if (m_Type == ITF_JUNCTION) return ~IO_REPARSE_TAG_MOUNT_POINT;
-    if (m_Type == ITF_CLOUDLINK) return IO_REPARSE_TAG_CLOUD_MASK;
+    if (IsReparseType(ITF_SYMLINK)) return IO_REPARSE_TAG_SYMLINK;
+    if (IsReparseType(ITF_MOUNTPNT)) return IO_REPARSE_TAG_MOUNT_POINT;
+    if (IsReparseType(ITF_JUNCTION)) return ~IO_REPARSE_TAG_MOUNT_POINT;
+    if (IsReparseType(ITF_CLOUDLINK)) return IO_REPARSE_TAG_CLOUD_MASK;
     return 0;
 }
 
@@ -976,6 +976,7 @@ void CItem::SetDone()
     }
 
     m_Rect = { 0,0,0,0 };
+    SetIndex(0);
     SetType(ITF_DONE, true);
 }
 
@@ -1410,7 +1411,7 @@ CItem* CItem::AddDirectory(const Finder& finder)
         CDirStatApp::Get()->IsFollowingAllowed(finder.GetReparseTag());
 
     const auto & child = new CItem(IT_DIRECTORY, finder.GetFileName());
-    child->SetIndex(finder.GetIndex());
+    child->SetIndex(finder.IsReparsePoint() && follow ? 0 : finder.GetIndex());
     child->SetLastChange(finder.GetLastWriteTime());
     child->SetAttributes(finder.GetAttributes());
     child->SetReparseTag(finder.GetReparseTag());
