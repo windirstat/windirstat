@@ -200,7 +200,8 @@ void COptions::CompileFilters()
             try
             {
                 while (!token.empty() && token.back() == L'\r') token.pop_back();
-                optionRegex.get().emplace_back(FilteringUseRegex ? token : GlobToRegex(token));
+                optionRegex.get().emplace_back(FilteringUseRegex ? token : GlobToRegex(token),
+                    std::regex_constants::icase | std::regex_constants::optimize);
             }
             catch (const std::regex_error&)
             {
