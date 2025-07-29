@@ -102,12 +102,18 @@ using ATTRIBUTE_RECORD = struct ATTRIBUTE_RECORD
             LONGLONG AllocatedLength;
             LONGLONG FileSize;
             LONGLONG ValidDataLength;
+            LONGLONG Compressed;
         } Nonresident;
     } Form;
 
     constexpr bool IsNonResident() const
     {
         return FormCode & 0x0001;
+    }
+
+    constexpr bool IsCompressed() const
+    {
+        return Flags & 0x0001;
     }
 
     ATTRIBUTE_RECORD* next() const
@@ -297,8 +303,10 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
                         auto& baseRecord = getMapBinRef(baseFileRecordMapTemp, baseFileRecordMapMutex, baseRecordIndex, binSize);
                         if (curAttribute->IsNonResident())
                         {
+                            if (curAttribute->Form.Nonresident.LowestVcn != 0) continue;
                             baseRecord.LogicalSize = curAttribute->Form.Nonresident.FileSize;
-                            baseRecord.PhysicalSize = curAttribute->Form.Nonresident.AllocatedLength;
+                            baseRecord.PhysicalSize = curAttribute->IsCompressed() ?
+                                curAttribute->Form.Nonresident.Compressed : curAttribute->Form.Nonresident.AllocatedLength;
                         }
                         else
                         {
