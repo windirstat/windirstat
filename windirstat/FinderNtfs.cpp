@@ -165,9 +165,9 @@ using STANDARD_INFORMATION = struct STANDARD_INFORMATION
 constexpr auto NtfsNodeRoot = 5;
 constexpr auto NtfsReservedMax = 16;
 
-static constexpr auto& getMapBinRef(auto* mapArray, std::mutex* mutexArray, auto key, auto binSize)
+static constexpr auto& getMapBinRef(auto* mapArray, std::mutex* mutexArray, auto key, auto binSize, auto binMax)
 {
-    const auto binIndex = key / binSize;
+    const auto binIndex = (key / binSize) % binMax;
     std::lock_guard<std::mutex> lock(mutexArray[binIndex]);
     return mapArray[binIndex][key];
 }
@@ -275,7 +275,7 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
                 if (!fileRecord->IsValid() || !fileRecord->IsInUse()) continue;
                 const auto currentRecord = fileRecord->SegmentNumber();
                 auto baseRecordIndex = fileRecord->BaseFileRecordNumber > 0 ? fileRecord->BaseFileRecordNumber : currentRecord;
-                getMapBinRef(nonBaseToBaseMapTemp, nonBaseToBaseMapMutex, currentRecord, binSize) = baseRecordIndex;
+                getMapBinRef(nonBaseToBaseMapTemp, nonBaseToBaseMapMutex, currentRecord, binSize, numBins) = baseRecordIndex;
 
                 for (auto [curAttribute, endAttribute] = ATTRIBUTE_RECORD::bounds(fileRecord, volumeInfo.BytesPerFileRecordSegment); curAttribute <
                     endAttribute && curAttribute->TypeCode != AttributeEnd; curAttribute = curAttribute->next())
@@ -284,7 +284,7 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
                     {
                         if (curAttribute->IsNonResident()) continue;
                         const auto si = ByteOffset<STANDARD_INFORMATION>(curAttribute, curAttribute->Form.Resident.ValueOffset);
-                        auto& baseRecord = getMapBinRef(baseFileRecordMapTemp, baseFileRecordMapMutex, baseRecordIndex, binSize);
+                        auto& baseRecord = getMapBinRef(baseFileRecordMapTemp, baseFileRecordMapMutex, baseRecordIndex, binSize, numBins);
                         baseRecord.LastModifiedTime = si->LastModificationTime;
                         baseRecord.Attributes = si->FileAttributes;
                         if (fileRecord->IsDirectory()) baseRecord.Attributes |= FILE_ATTRIBUTE_DIRECTORY;
@@ -294,13 +294,13 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
                         if (curAttribute->IsNonResident()) continue;
                         const auto fn = ByteOffset<FILE_NAME>(curAttribute, curAttribute->Form.Resident.ValueOffset);
                         if (fn->IsShortNameRecord()) continue;
-                        auto& parentToChildEntry = getMapBinRef(parentToChildMapTemp, parentToChildMapMutex, fn->ParentDirectory, binSize);
+                        auto& parentToChildEntry = getMapBinRef(parentToChildMapTemp, parentToChildMapMutex, fn->ParentDirectory, binSize, numBins);
                         parentToChildEntry.emplace(std::wstring{ fn->FileName, fn->FileNameLength }, baseRecordIndex);
                     }
                     else if (curAttribute->TypeCode == AttributeData)
                     {
                         if (curAttribute->NameLength != 0) continue; // only process default data stream
-                        auto& baseRecord = getMapBinRef(baseFileRecordMapTemp, baseFileRecordMapMutex, baseRecordIndex, binSize);
+                        auto& baseRecord = getMapBinRef(baseFileRecordMapTemp, baseFileRecordMapMutex, baseRecordIndex, binSize, numBins);
                         if (curAttribute->IsNonResident())
                         {
                             if (curAttribute->Form.Nonresident.LowestVcn != 0) continue;
@@ -318,7 +318,7 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
                     {
                         if (curAttribute->IsNonResident()) continue;
                         const auto fn = ByteOffset<Finder::REPARSE_DATA_BUFFER>(curAttribute, curAttribute->Form.Resident.ValueOffset);
-                        auto& baseRecord = getMapBinRef(baseFileRecordMapTemp, baseFileRecordMapMutex, baseRecordIndex, binSize);
+                        auto& baseRecord = getMapBinRef(baseFileRecordMapTemp, baseFileRecordMapMutex, baseRecordIndex, binSize, numBins);
                         baseRecord.ReparsePointTag = fn->ReparseTag;
                         if (!Finder::IsMountPoint(*fn))
                         {
