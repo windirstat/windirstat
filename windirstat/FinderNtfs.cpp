@@ -214,8 +214,8 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
     }
 
     // This is a binning approach to reduce contention on the maps
-    constexpr auto numBins = 1024;
-    const auto numRecords = dataRuns.back().first + dataRuns.back().second * volumeInfo.BytesPerCluster / volumeInfo.BytesPerCluster;
+    constexpr auto numBins = 256;
+    const auto numRecords = volumeInfo.MftValidDataLength.QuadPart / volumeInfo.BytesPerFileRecordSegment;
     const auto binSize = numRecords / numBins;
     std::unordered_map<ULONGLONG, FileRecordBase> baseFileRecordMapTemp[numBins];
     std::unordered_map<ULONGLONG, ULONGLONG> nonBaseToBaseMapTemp[numBins];
