@@ -157,7 +157,7 @@ using STANDARD_INFORMATION = struct STANDARD_INFORMATION
 };
 
 constexpr auto NtfsNodeRoot = 5;
-constexpr auto NtfsBadClusNode = 8;
+constexpr auto NtfsReservedMax = 16;
 
 static constexpr auto& getMapBinRef(auto* mapArray, std::mutex* mutexArray, auto key, auto binSize)
 {
@@ -293,6 +293,7 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
                     }
                     else if (curAttribute->TypeCode == AttributeData)
                     {
+                        if (curAttribute->NameLength != 0) continue; // only process default data stream
                         auto& baseRecord = getMapBinRef(baseFileRecordMapTemp, baseFileRecordMapMutex, baseRecordIndex, binSize);
                         if (curAttribute->IsNonResident())
                         {
@@ -335,7 +336,7 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
 
     // Remove bad cluster node
     std::erase_if(m_ParentToChildMap[NtfsNodeRoot], [](const auto& child) {
-        return child.BaseRecord < 12 && child.BaseRecord != NtfsNodeRoot;
+        return child.BaseRecord < NtfsReservedMax && child.BaseRecord != NtfsNodeRoot;
     });
 
     driveitem->SetIndex(NtfsNodeRoot);
