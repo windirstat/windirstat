@@ -130,7 +130,7 @@ protected:
     void RecurseRefreshReparsePoints(CItem* items) const;
     std::vector<CItem*> GetDriveItems() const;
     void RebuildExtensionData();
-    bool DeletePhysicalItems(const std::vector<CItem*>& items, bool toTrashBin, bool bypassWarning = false);
+    bool DeletePhysicalItems(const std::vector<CItem*>& items, bool toTrashBin, bool bypassWarning = false, bool doRefresh = true);
     void SetZoomItem(CItem* item);
     static void AskForConfirmation(USERDEFINEDCLEANUP* udc, const CItem* item);
     void PerformUserDefinedCleanup(USERDEFINEDCLEANUP* udc, const CItem* item);

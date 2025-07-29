@@ -527,7 +527,7 @@ void CDirStatDoc::RebuildExtensionData()
 // Deletes a file or directory via SHFileOperation.
 // Return: false, if canceled
 //
-bool CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, const bool toTrashBin, const bool bypassWarning)
+bool CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, const bool toTrashBin, const bool bypassWarning, const bool doRefresh)
 {
     if (!bypassWarning && COptions::ShowDeleteWarning)
     {
@@ -589,7 +589,7 @@ bool CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, const bo
     }
 
     // Refresh the items and recycler directories
-    RefreshItem(refresh);
+    if (doRefresh) RefreshItem(refresh);
 
     return true;
 }
@@ -1247,19 +1247,20 @@ void CDirStatDoc::OnCleanupDelete()
 
 void CDirStatDoc::OnCleanupEmptyFolder()
 {
-    for (const auto& select : GetAllSelected())
+    const auto selectedItems = GetAllSelected();
+    for (const auto& select : selectedItems)
     {
         // confirm user wishes to proceed
         if (AfxMessageBox(Localization::Format(IDS_EMPTY_FOLDER_WARNINGs,
             select->GetPath()).c_str(), MB_YESNO) == IDYES)
         {
             // delete all children
-            DeletePhysicalItems(select->GetChildren(), false, true);
+            DeletePhysicalItems(select->GetChildren(), false, true, false);
         }
     }
 
     // refresh items
-    RefreshItem(GetAllSelected());
+    RefreshItem(selectedItems);
 }
 
 void CDirStatDoc::OnDisableHibernateFile()
