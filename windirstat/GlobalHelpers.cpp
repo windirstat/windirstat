@@ -551,7 +551,7 @@ void ReplaceString(std::wstring& subject, const std::wstring& search, const std:
     }
 }
 
-std::wstring& TrimString(std::wstring& s, wchar_t c)
+std::wstring& TrimString(std::wstring& s, const wchar_t c)
 {
     while (!s.empty() && s.back() == c) s.pop_back();
     while (!s.empty() && s.front() == c) s.erase(0, 1);
@@ -855,7 +855,7 @@ IContextMenu* GetContextMenu(const HWND hwnd, const std::vector<std::wstring>& p
     return nullptr;
 }
 
-bool CompressFile(const std::wstring& filePath, CompressionAlgorithm algorithm)
+bool CompressFile(const std::wstring& filePath, const CompressionAlgorithm algorithm)
 {
     USHORT numericAlgorithm = static_cast<USHORT>(algorithm) & ~FILE_PROVIDER_COMPRESSION_MODERN;
     const bool modernAlgorithm = static_cast<USHORT>(algorithm) != numericAlgorithm;
@@ -914,7 +914,7 @@ bool CompressFile(const std::wstring& filePath, CompressionAlgorithm algorithm)
     return status == 1 || status == 0xC000046F;
 }
 
-bool CompressFileAllowed(const std::wstring& filePath, CompressionAlgorithm algorithm)
+bool CompressFileAllowed(const std::wstring& filePath, const CompressionAlgorithm algorithm)
 {
     static std::unordered_map<std::wstring, bool> compressionStandard;
     static std::unordered_map<std::wstring, bool> compressionModern;
@@ -934,36 +934,23 @@ bool CompressFileAllowed(const std::wstring& filePath, CompressionAlgorithm algo
         return compressionMap.at(volumeName);
     }
 
-    // Enable 'none' button if either normal or modern are available
+    // Enable 'none' button if at least standard is available
     if (algorithm == CompressionAlgorithm::NONE)
     {
         return CompressFileAllowed(filePath, CompressionAlgorithm::LZNT1) ||
             CompressFileAllowed(filePath, CompressionAlgorithm::XPRESS4K);
     }
 
-    // Query volume for standard compression support
-    if (algorithm == CompressionAlgorithm::LZNT1)
-    {
-        DWORD fileSystemFlags = 0;
-        compressionMap[volumeName.data()] = GetVolumeInformation(volumeName.c_str(),
-            nullptr, 0, nullptr, nullptr, &fileSystemFlags, nullptr, 0) != 0 &&
-            (fileSystemFlags & FILE_FILE_COMPRESSION) != 0;
-    }
-    else
-    {
-        compressionMap[volumeName.data()] = false;
-        SmartPointer<HANDLE> handle(CloseHandle, CreateFileW(volumeName.c_str(), GENERIC_READ,
-            FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-            nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, nullptr));
-        if (handle != INVALID_HANDLE_VALUE)
-        {
-            DWORD bytesReturned = 0;
-            const BOOL status = DeviceIoControl(handle, FSCTL_GET_EXTERNAL_BACKING,
-                nullptr, 0, nullptr, 0, &bytesReturned, nullptr);
-            compressionMap[volumeName.data()] = (status != 0 || GetLastError() == 342);
-        }
-        else VTRACE(L"CreateFile() Error: {:#08X}", GetLastError());
-    }
+    // Query volume for standard compression support based on whether NTFS
+    std::array<WCHAR, MAX_PATH + 1> fileSystemName;
+    DWORD fileSystemFlags = 0;
+    const bool isNTFS = GetVolumeInformation(volumeName.c_str(), nullptr, 0, nullptr, nullptr,
+        &fileSystemFlags, fileSystemName.data(), fileSystemName.size()) != 0 &&
+        std::wstring(fileSystemName.data()) == L"NTFS";
+
+    // Query volume for modern compression support based on NTFS and OS version
+    compressionStandard[volumeName.data()] = isNTFS && (fileSystemFlags & FILE_FILE_COMPRESSION) != 0;
+    compressionModern[volumeName.data()] = isNTFS && IsWindows10OrGreater();
 
     return compressionMap.at(volumeName);
 }
