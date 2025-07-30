@@ -59,7 +59,7 @@ bool FinderBasic::FindNext()
             m_DirectoryInfo.data(), BUFFER_SIZE, static_cast<FILE_INFORMATION_CLASS>(FileFullDirectoryInformation),
             FALSE, (uSearch.Length > 0) ? &uSearch : nullptr, (m_Firstrun) ? TRUE : FALSE);
 
-        // fetch point to current node 
+        // fetch pointer to current node
         success = (Status == 0);
         m_CurrentInfo = reinterpret_cast<FILE_FULL_DIR_INFORMATION*>(m_DirectoryInfo.data());
     }

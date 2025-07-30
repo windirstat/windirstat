@@ -13,6 +13,7 @@
 #define IDS_APP_TITLE                   20011
 #define IDS_BACKTO_USERSETTINGS         20012
 #define IDS_MENU_TREEMAP_LOGICAL_SIZE   20013
+#define IDS_MFTSCAN_CHECKBOX            20014
 #define IDS_CLEANUP_DELETE_BIN          20016
 #define IDS_CLEANUP_DELETE              20017
 #define IDS_CLEANUP_EXPLORER_SELECT     20018
@@ -255,6 +256,7 @@
 #define IDS_MENU_CLEANUP_DISABLE_HIBERNATE 20255
 #define IDS_LARGEST_FILES               20256
 #define IDS_PAGE_ADVANCED_LARGEST_COUNT 20257
+#define IDS_EVELATION_QUESTION          20258
 
 // Next default values for new objects
 // 

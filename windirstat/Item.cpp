@@ -499,7 +499,7 @@ void CItem::UpdateStatsFromDisk()
     }
     else if (IsType(IT_DRIVE))
     {
-        SmartPointer<HANDLE> handle(CloseHandle, CreateFile(GetPathLong().c_str(), FILE_READ_ATTRIBUTES, 
+        SmartPointer<HANDLE> handle(CloseHandle, CreateFile(GetPathLong().c_str(), FILE_READ_ATTRIBUTES,
             FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr,
             OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, nullptr));
         if (handle != INVALID_HANDLE_VALUE)
@@ -1055,7 +1055,7 @@ void CItem::ScanItems(BlockingQueue<CItem*> * queue, FinderNtfsContext& contextN
 
         if (item->IsType(IT_DRIVE | IT_DIRECTORY))
         {
-            Finder* finder = item->GetIndex() > 0 ?
+            Finder* finder = item->GetIndex() > 0 && COptions::UseFastScanEngine ?
                 reinterpret_cast<Finder*>(&finderNtfs) : reinterpret_cast<Finder*>(&finderBasic);
 
             for (BOOL b = finder->FindFile(item); b; b = finder->FindNext())
@@ -1301,7 +1301,7 @@ void CItem::RemoveUnknownItem()
         UpwardSubtractSizePhysical(unknown->GetSizePhysical());
         RemoveChild(unknown);
     }
-} 
+}
 
 ULONGLONG CItem::GetProgressRangeMyComputer() const
 {
@@ -1481,7 +1481,7 @@ std::vector<BYTE> CItem::GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CIte
     }
 
     // Open file for reading - avoid files that are actively being written to
-    SmartPointer<HANDLE> hFile(CloseHandle, CreateFile(GetPathLong().c_str(), 
+    SmartPointer<HANDLE> hFile(CloseHandle, CreateFile(GetPathLong().c_str(),
         GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING,
         FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_SEQUENTIAL_SCAN, nullptr));
     if (hFile == INVALID_HANDLE_VALUE)

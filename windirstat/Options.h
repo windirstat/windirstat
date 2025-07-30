@@ -1,4 +1,4 @@
-﻿// Options.h - Declaration of CRegistryUser, COptions and COptions
+﻿// Options.h
 //
 // WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
@@ -145,6 +145,7 @@ public:
     static Setting<bool> TreeMapGrid;
     static Setting<bool> TreeMapUseLogical;
     static Setting<bool> UseBackupRestore;
+    static Setting<bool> UseFastScanEngine;
     static Setting<bool> UseWindowsLocaleSetting;
     static Setting<COLORREF> FileTreeColor0;
     static Setting<COLORREF> FileTreeColor1;

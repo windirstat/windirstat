@@ -31,7 +31,7 @@
 #include <regex>
 #include <map>
 
-#pragma comment(lib,"powrprof.lib") 
+#pragma comment(lib,"powrprof.lib")
 #pragma comment(lib,"ntdll.lib")
 
 EXTERN_C NTSTATUS NTAPI RtlDecompressBuffer(USHORT CompressionFormat, PUCHAR UncompressedBuffer, ULONG  UncompressedBufferSize,
@@ -420,7 +420,7 @@ std::wstring MyQueryDosDevice(const std::wstring & drive)
 }
 
 // drive is a drive spec like C: or C:\ or C:\path (path is ignored).
-// 
+//
 // This function returns true, if QueryDosDevice() is supported
 // and drive is a SUBSTed drive.
 //
@@ -460,21 +460,34 @@ const std::wstring& GetSpec_TiB()
     return s;
 }
 
-bool IsAdmin()
+bool IsElevationActive()
 {
-    SID_IDENTIFIER_AUTHORITY NtAuthority = SECURITY_NT_AUTHORITY;
-    if (SmartPointer<PSID> pSid(FreeSid); AllocateAndInitializeSid(&NtAuthority, 2,
-        SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_ADMINS, 0, 0, 0, 0, 0, 0, &pSid))
+    SmartPointer<HANDLE> token(CloseHandle);
+    TOKEN_ELEVATION elevation;
+    DWORD size = sizeof(TOKEN_ELEVATION);
+    if (OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token) == 0 ||
+        GetTokenInformation(token, TokenElevation, &elevation, sizeof(elevation), &size) == 0)
     {
-        BOOL bResult = FALSE;
-        if (!CheckTokenMembership(nullptr, pSid, &bResult))
-        {
-            return false;
-        }
-        return bResult != FALSE;
+        return false;
     }
 
-    return false;
+    return elevation.TokenIsElevated != 0;
+}
+
+bool IsElevationAvailable()
+{
+    if (IsElevationActive()) return false;
+
+    SmartPointer<HANDLE> token(CloseHandle);
+    TOKEN_ELEVATION_TYPE elevationType;
+    DWORD size = sizeof(TOKEN_ELEVATION_TYPE);
+    if (OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token) == 0 ||
+        GetTokenInformation(token, TokenElevationType, &elevationType, sizeof(elevationType), &size) == 0)
+    {
+        return false;
+    }
+
+    return elevationType == TokenElevationTypeLimited;
 }
 
 bool EnableReadPrivileges()
@@ -793,8 +806,7 @@ std::wstring GetNameFromSid(const PSID sid)
 
     // attempt to lookup sid in cache
     static std::map<PSID, std::wstring, decltype(comp)> nameMap(comp);
-    const auto iter = nameMap.find(sid);
-    if (iter != nameMap.end())
+    if (const auto iter = nameMap.find(sid); iter != nameMap.end())
     {
         return iter->second;
     }
@@ -945,7 +957,7 @@ bool CompressFileAllowed(const std::wstring& filePath, const CompressionAlgorith
     std::array<WCHAR, MAX_PATH + 1> fileSystemName;
     DWORD fileSystemFlags = 0;
     const bool isNTFS = GetVolumeInformation(volumeName.c_str(), nullptr, 0, nullptr, nullptr,
-        &fileSystemFlags, fileSystemName.data(), fileSystemName.size()) != 0 &&
+        &fileSystemFlags, fileSystemName.data(), static_cast<DWORD>(fileSystemName.size())) != 0 &&
         std::wstring(fileSystemName.data()) == L"NTFS";
 
     // Query volume for modern compression support based on NTFS and OS version

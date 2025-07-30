@@ -402,6 +402,7 @@ void CSelectDrivesDlg::DoDataExchange(CDataExchange* pDX)
     DDX_Control(pDX, IDC_TARGET_DRIVES_LIST, m_List);
     DDX_Radio(pDX, IDC_RADIO_TARGET_DRIVES_ALL, m_Radio);
     DDX_Check(pDX, IDC_SCAN_DUPLICATES, m_ScanDuplicates);
+    DDX_Check(pDX, IDC_FASTSCAN_CHECKBOX, m_UseFastScan);
     DDX_Control(pDX, IDOK, m_OkButton);
     DDX_Control(pDX, IDC_BROWSE_FOLDER, m_Browse);
 }
@@ -468,6 +469,7 @@ BOOL CSelectDrivesDlg::OnInitDialog()
     m_FolderName = COptions::SelectDrivesFolder.Obj().c_str();
     m_SelectedDrives = COptions::SelectDrivesDrives;
     m_ScanDuplicates = COptions::ScanForDuplicates;
+    m_UseFastScan = COptions::UseFastScanEngine;
 
     CBitmap bitmap;
     bitmap.LoadBitmapW(IDB_FILE_SELECT);
@@ -566,6 +568,7 @@ void CSelectDrivesDlg::OnOK()
     COptions::SelectDrivesDrives = m_SelectedDrives;
     COptions::SelectDrivesFolder = std::wstring(m_FolderName);
     COptions::ScanForDuplicates = (FALSE != m_ScanDuplicates);
+    COptions::UseFastScanEngine = (FALSE != m_UseFastScan);
 
     CDialogEx::OnOK();
 }

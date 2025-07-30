@@ -61,7 +61,7 @@ using FILE_RECORD = struct FILE_RECORD
     constexpr bool IsValid() const
     {
         return Signature == 0x454C4946; // 'FILE'
-    } 
+    }
     constexpr bool IsInUse() const
     {
         return Flags & 0x0001;

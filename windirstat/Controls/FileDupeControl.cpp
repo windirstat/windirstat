@@ -150,7 +150,7 @@ void CFileDupeControl::SortItems()
 {
     ASSERT(AfxGetThread() != nullptr);
 
-    // Transfer elements to vector so we do not have to hold the lock 
+    // Transfer elements to vector so we do not have to hold the lock
     m_NodeTrackerMutex.lock();
     std::vector<std::pair<CItemDupe*, CItemDupe*>> pendingAdds = m_PendingListAdds;
     m_PendingListAdds.clear();

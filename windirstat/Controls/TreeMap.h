@@ -256,18 +256,18 @@ protected:
         RGB(255, 255,   0),  // Yellow
         RGB(  0, 255, 255),  // Cyan
         RGB(255,   0, 255),  // Magenta
-        RGB(255, 170,   0),  // Orange  
-        RGB(  0,  85, 255),  // Dodger Blue  
-        RGB(255,   0,  85),  // Hot Pink  
-        RGB( 85, 255,   0),  // Lime Green  
-        RGB(170,   0, 255),  // Violet  
-        RGB(  0, 255,  85),  // Spring Green  
-        RGB(255,   0, 170),  // Deep Pink  
-        RGB(  0, 170, 255),  // Sky Blue  
-        RGB(255,  85,   0),  // Orange Red  
-        RGB(  0, 255, 170),  // Aquamarine  
+        RGB(255, 170,   0),  // Orange
+        RGB(  0,  85, 255),  // Dodger Blue
+        RGB(255,   0,  85),  // Hot Pink
+        RGB( 85, 255,   0),  // Lime Green
+        RGB(170,   0, 255),  // Violet
+        RGB(  0, 255,  85),  // Spring Green
+        RGB(255,   0, 170),  // Deep Pink
+        RGB(  0, 170, 255),  // Sky Blue
+        RGB(255,  85,   0),  // Orange Red
+        RGB(  0, 255, 170),  // Aquamarine
         RGB( 85,   0, 255),  // Indigo
-        RGB(255, 255, 255),  // White  
+        RGB(255, 255, 255),  // White
     };
 
     CRect m_RenderArea;

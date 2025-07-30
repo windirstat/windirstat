@@ -252,7 +252,7 @@ void CDirStatDoc::SetPathName(LPCWSTR lpszPathName, BOOL /*bAddToMRU*/)
 //
 void CDirStatDoc::SetTitlePrefix(const std::wstring& prefix) const
 {
-    static std::wstring suffix = IsAdmin() ? L" (Administrator)" : L"";
+    static std::wstring suffix = IsElevationActive() ? L" (Administrator)" : L"";
     std::wstring docName = std::format(L"{} {} {}", prefix, GetTitle().GetString(), suffix);
     docName = TrimString(docName);
     CMainFrame::Get()->UpdateFrameTitleForDocument(docName.empty() ? nullptr : docName.c_str());
@@ -487,7 +487,7 @@ void CDirStatDoc::RebuildExtensionData()
         GetRootItem()->ExtensionDataProcessChildren();
     }
 
-    // Collect iterators to the map entries to avoid copying keys  
+    // Collect iterators to the map entries to avoid copying keys
     std::vector<CExtensionData::iterator> sortedExtensions;
     sortedExtensions.reserve(m_ExtensionData.size());
     for (auto it = m_ExtensionData.begin(); it != m_ExtensionData.end(); ++it)
@@ -495,20 +495,20 @@ void CDirStatDoc::RebuildExtensionData()
         sortedExtensions.emplace_back(it);
     }
 
-    // Sort the iterators based on total bytes in descending order  
+    // Sort the iterators based on total bytes in descending order
     std::ranges::sort(sortedExtensions, [](const auto& a_it, const auto& b_it)
     {
         return a_it->second.bytes.load() > b_it->second.bytes.load();
     });
 
-    // Initialize colors if not already done  
+    // Initialize colors if not already done
     static std::vector<COLORREF> colors;
     if (colors.empty())
     {
         CTreeMap::GetDefaultPalette(colors);
     }
 
-    // Assign primary colors to extensions  
+    // Assign primary colors to extensions
     const auto extensionsSize = sortedExtensions.size();
     const auto primaryColorsMax = min(colors.size(), extensionsSize);
     for (std::size_t i = 0; i < primaryColorsMax; ++i)
@@ -516,7 +516,7 @@ void CDirStatDoc::RebuildExtensionData()
         sortedExtensions[i]->second.color = colors[i];
     }
 
-    // Assign fallback colors to extensions  
+    // Assign fallback colors to extensions
     const auto fallbackColor = colors.back();
     for (std::size_t i = primaryColorsMax; i < extensionsSize; ++i)
     {
@@ -845,7 +845,7 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
     static bool (*isResumable)(CItem*) = [](CItem*) { return CMainFrame::Get()->IsScanSuspended(); };
     static bool (*isSuspendable)(CItem*) = [](CItem*) { return doc->HasRootItem() && !doc->IsRootDone() && !CMainFrame::Get()->IsScanSuspended(); };
     static bool (*isStoppable)(CItem*) = [](CItem*) { return doc->HasRootItem() && !doc->IsRootDone(); };
-    static bool (*isHibernate)(CItem*) = [](CItem*) { return IsAdmin() && IsHibernateEnabled(); };
+    static bool (*isHibernate)(CItem*) = [](CItem*) { return IsElevationActive() && IsHibernateEnabled(); };
 
     static std::unordered_map<UINT, const commandFilter> filters
     {
@@ -911,7 +911,7 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
         allow &= item->IsType(filter.typesAllow);
     }
 
-    pCmdUI->Enable(allow); 
+    pCmdUI->Enable(allow);
 }
 
 void CDirStatDoc::OnUpdateCompressionHandler(CCmdUI* pCmdUI)
@@ -932,7 +932,7 @@ void CDirStatDoc::OnUpdateCompressionHandler(CCmdUI* pCmdUI)
 }
 
 #define ON_COMMAND_UPDATE_WRAPPER(x,y) ON_COMMAND(x, y) ON_UPDATE_COMMAND_UI(x, OnUpdateCentralHandler)
-BEGIN_MESSAGE_MAP(CDirStatDoc, CDocument) 
+BEGIN_MESSAGE_MAP(CDirStatDoc, CDocument)
     ON_COMMAND_UPDATE_WRAPPER(ID_REFRESH_SELECTED, OnRefreshSelected)
     ON_COMMAND_UPDATE_WRAPPER(ID_REFRESH_ALL, OnRefreshAll)
     ON_COMMAND(ID_LOAD_RESULTS, OnLoadResults)

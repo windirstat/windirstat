@@ -161,6 +161,7 @@ protected:
 
     // Dialog Data
     BOOL m_ScanDuplicates = false; // whether duplicate scanning is enable
+    BOOL m_UseFastScan = false; // whether fast scan is enable
     int m_Radio = 0;          // out.
     CStringW m_FolderName;    // out. Valid if m_Radio = RADIO_TARGET_FOLDER
     std::vector<std::wstring> m_Drives;    // out. Valid if m_Radio != RADIO_TARGET_FOLDER

@@ -77,6 +77,7 @@ Setting<bool> COptions::SkipDupeDetectionCloudLinksWarning(OptionsGeneral, L"Ski
 Setting<bool> COptions::TreeMapGrid(OptionsTreeMap, L"TreeMapGrid", (CTreeMap::GetDefaults().grid));
 Setting<bool> COptions::TreeMapUseLogical(OptionsTreeMap, L"TreeMapUseLogicalSize", false);
 Setting<bool> COptions::UseBackupRestore(OptionsGeneral, L"UseBackupRestore", true);
+Setting<bool> COptions::UseFastScanEngine(OptionsGeneral, L"UseFastScanEngine", true);
 Setting<bool> COptions::UseWindowsLocaleSetting(OptionsGeneral, L"UseWindowsLocaleSetting", true);
 Setting<COLORREF> COptions::FileTreeColor0(OptionsFileTree, L"FileTreeColor0", RGB(64, 64, 140));
 Setting<COLORREF> COptions::FileTreeColor1(OptionsFileTree, L"FileTreeColor1", RGB(140, 64, 64));
