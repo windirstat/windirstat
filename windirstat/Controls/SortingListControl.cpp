@@ -22,6 +22,8 @@
 #include "WinDirStat.h"
 #include "SortingListControl.h"
 
+#include <array>
+
 /////////////////////////////////////////////////////////////////////////////
 
 int CSortingListItem::CompareSort(const CSortingListItem* other, const SSorting& sorting) const
@@ -160,30 +162,29 @@ void CSortingListControl::SortItems()
         const SSorting* sorting = reinterpret_cast<SSorting*>(lParamSort);
         return item1->CompareSort(item2, *sorting); }, reinterpret_cast<DWORD_PTR>(&m_Sorting)));
 
+    constexpr std::wstring_view sortUp = L"↑ ";
+    constexpr std::wstring_view sortDown = L"↓ ";
+
+    std::array<WCHAR, 260> text;
+    HDITEM hditem;
+    hditem.mask = HDI_TEXT;
+    hditem.cchTextMax = static_cast<int>(text.size());
+    
     if (m_IndicatedColumn != -1)
     {
-        HDITEM hditem;
-        std::wstring text;
-        text.resize(256);
-        hditem.mask = HDI_TEXT;
+        // Remove the sort indicator from the previously indicated column
         hditem.pszText = text.data();
-        hditem.cchTextMax = static_cast<int>(text.size());
         GetHeaderCtrl()->GetItem(m_IndicatedColumn, &hditem);
-        text.resize(wcslen(text.data()));
-        text = text.substr(2);
-        hditem.pszText = text.data();
+        hditem.pszText = text.data() + sortUp.size();
         GetHeaderCtrl()->SetItem(m_IndicatedColumn, &hditem);
     }
 
-    HDITEM hditem;
-    std::wstring text;
-    text.resize(256);
-    hditem.mask = HDI_TEXT;
-    hditem.pszText = text.data();
-    hditem.cchTextMax = static_cast<int>(text.size());
+    // Copy the sort indicator to the beginning of the text buffer
+    std::wmemcpy(text.data(), m_Sorting.ascending1 ? sortUp.data() : sortDown.data(), sortUp.size());
+
+    // Append the column text after the sort indicator
+    hditem.pszText = text.data() + sortUp.size();
     GetHeaderCtrl()->GetItem(m_Sorting.column1, &hditem);
-    text.resize(wcslen(text.data()));
-    text = (m_Sorting.ascending1 ? L"↑ " : L"↓ ") + text;
     hditem.pszText = text.data();
     GetHeaderCtrl()->SetItem(m_Sorting.column1, &hditem);
     m_IndicatedColumn = m_Sorting.column1;
