@@ -75,7 +75,7 @@ std::vector<LANGID> Localization::GetLanguageList()
     std::vector<LANGID> results;
     EnumResourceLanguagesExW(nullptr, LANG_RESOURCE_TYPE, MAKEINTRESOURCE(IDR_RT_LANG), [](HMODULE, LPCWSTR, LPCWSTR, const WORD wIDLanguage, const LONG_PTR lParam)->BOOL
     {
-        reinterpret_cast<std::vector<LANGID>*>(lParam)->push_back(wIDLanguage);
+        std::bit_cast<std::vector<LANGID>*>(lParam)->push_back(wIDLanguage);
         return TRUE;
 
     }, reinterpret_cast<LONG_PTR>(&results), 0, 0);
@@ -161,7 +161,7 @@ void Localization::UpdateTabControl(CTabCtrl& tab)
     }
 }
 
-void Localization::UpdateWindowText(HWND hwnd)
+void Localization::UpdateWindowText(const HWND hwnd)
 {
     std::array<WCHAR, MAX_VALUE_SIZE> buffer;
     if (GetWindowText(hwnd, buffer.data(), static_cast<int>(buffer.size())) > 0 &&

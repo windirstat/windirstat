@@ -402,7 +402,7 @@ void CSelectDrivesDlg::DoDataExchange(CDataExchange* pDX)
     DDX_Control(pDX, IDC_TARGET_DRIVES_LIST, m_List);
     DDX_Radio(pDX, IDC_RADIO_TARGET_DRIVES_ALL, m_Radio);
     DDX_Check(pDX, IDC_SCAN_DUPLICATES, m_ScanDuplicates);
-    DDX_Check(pDX, IDC_FASTSCAN_CHECKBOX, m_UseFastScan);
+    DDX_Check(pDX, IDC_SCAN_DUPLICATES, m_UseFastScan);
     DDX_Control(pDX, IDOK, m_OkButton);
     DDX_Control(pDX, IDC_BROWSE_FOLDER, m_Browse);
 }
@@ -448,6 +448,7 @@ BOOL CSelectDrivesDlg::OnInitDialog()
     m_Layout.AddControl(IDC_TARGET_DRIVES_LIST, 0, 0, 1, 1);
     m_Layout.AddControl(IDC_RADIO_TARGET_FOLDER, 0, 1, 0, 0);
     m_Layout.AddControl(IDC_BROWSE_FOLDER, 0, 1, 1, 0);
+    m_Layout.AddControl(IDC_FAST_SCAN_CHECKBOX, 0, 1, 1, 0);
     m_Layout.AddControl(IDC_SCAN_DUPLICATES, 0, 1, 1, 0);
 
     m_Layout.OnInitDialog(true);

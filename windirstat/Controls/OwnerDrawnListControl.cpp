@@ -55,9 +55,11 @@ void COwnerDrawnListItem::DrawLabel(const COwnerDrawnListControl* list, CDC* pdc
     if (width == nullptr)
     {
         // Draw the color with transparent background
-        const CPoint pt(rcRest.left, rcRest.top + rcRest.Height() / 2 - sizeImage.cy / 2);
-        const auto icon = const_cast<const HICON>(GetIcon());
-        if (icon != nullptr) GetIconHandler()->DrawIcon(pdc, icon, pt, sizeImage);
+        if (const auto icon = const_cast<const HICON>(GetIcon()); icon != nullptr)
+        {
+            const CPoint pt(rcRest.left, rcRest.top + rcRest.Height() / 2 - sizeImage.cy / 2);
+            GetIconHandler()->DrawIcon(pdc, icon, pt, sizeImage);
+        }
     }
 
     // Decrease size of the remainder rectangle from left

@@ -383,7 +383,6 @@ HICON CItem::GetIcon()
         return m_VisualInfo->icon;
     }
 
-    const std::wstring longpath = GetPathLong();
     if (IsReparseType(ITF_MOUNTPNT))
     {
         m_VisualInfo->icon = GetIconHandler()->GetMountPointImage();

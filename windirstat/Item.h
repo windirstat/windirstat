@@ -72,25 +72,25 @@ enum ITEMTYPE : unsigned short
     ITF_FLAGS     = 0xFF00, // All potential flag items
 };
 
-inline ITEMTYPE operator|(const ITEMTYPE & a, const ITEMTYPE & b)
+constexpr ITEMTYPE operator|(const ITEMTYPE & a, const ITEMTYPE & b)
 {
     return static_cast<ITEMTYPE>(static_cast<unsigned short>(a) | static_cast<unsigned short>(b));
 }
 
-inline ITEMTYPE operator-(const ITEMTYPE& a, const ITEMTYPE& b)
+constexpr ITEMTYPE operator-(const ITEMTYPE& a, const ITEMTYPE& b)
 {
     return static_cast<ITEMTYPE>(static_cast<unsigned short>(a) & ~static_cast<unsigned short>(b));
 }
 
 // Compare FILETIMEs
-inline bool operator<(const FILETIME& t1, const FILETIME& t2)
+constexpr bool operator<(const FILETIME& t1, const FILETIME& t2)
 {
     return t1.dwHighDateTime < t2.dwHighDateTime
     || t1.dwHighDateTime == t2.dwHighDateTime && t1.dwLowDateTime < t2.dwLowDateTime;
 }
 
 // Compare FILETIMEs
-inline bool operator==(const FILETIME& t1, const FILETIME& t2)
+constexpr bool operator==(const FILETIME& t1, const FILETIME& t2)
 {
     return t1.dwLowDateTime == t2.dwLowDateTime && t1.dwHighDateTime == t2.dwHighDateTime;
 }

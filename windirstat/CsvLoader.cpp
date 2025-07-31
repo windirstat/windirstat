@@ -167,7 +167,6 @@ CItem* LoadResults(const std::wstring & path)
         const bool isRoot = (type & ITF_ROOTITEM);
         const bool isInRoot = (type & IT_DRIVE) || (type & IT_UNKNOWN) || (type & IT_FREESPACE);
         const bool useFullPath = isRoot || isInRoot;
-        const std::wstring mapPath = fields[orderMap[FIELD_NAME]];
         LPWSTR lookupPath = fields[orderMap[FIELD_NAME]].data();
         LPWSTR displayName = useFullPath ? lookupPath : wcsrchr(lookupPath, L'\\');
         if (!useFullPath && displayName != nullptr)
@@ -203,6 +202,7 @@ CItem* LoadResults(const std::wstring & path)
 
         if (!newitem->TmiIsLeaf() && newitem->GetItemsCount() > 0)
         {
+            const std::wstring mapPath = fields[orderMap[FIELD_NAME]];
             parentMap[mapPath] = newitem;
 
             // Special case: also add mapping for drive without backslash

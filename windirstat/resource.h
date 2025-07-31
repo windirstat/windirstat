@@ -197,7 +197,7 @@
 #define IDS_FILTER_EXAMPLE_DIRS         57350
 #define IDS_FILTER_EXAMPLE_FILES_REGEX  57351
 #define IDS_FILTER_EXAMPLE_DIRS_REGEX   57352
-#define IDC_FASTSCAN_CHECKBOX           57353
+#define IDC_FAST_SCAN_CHECKBOX          57353
 
 // Next default values for new objects
 // 

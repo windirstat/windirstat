@@ -1575,7 +1575,7 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
                 if (item->IsRootItem())
                 {
                     // Handle deleted root item; this much be launched
-                    // asynchrously since it will end up calling this
+                    // asynchronously since it will end up calling this
                     // function and could potentially deadlock
                     std::thread ([] ()
                     {
