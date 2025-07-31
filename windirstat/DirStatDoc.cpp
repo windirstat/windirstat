@@ -1408,9 +1408,9 @@ void CDirStatDoc::OnCleanupCompress(UINT id)
     {
         const auto alg = (CompressionIdToAlg(id));
         CompressFile(item->GetPathLong(), alg);
-        item->UpdateStatsFromDisk();
-        UpdateAllViews(nullptr);
     }
+
+    RefreshItem(items);
 }
 
 void CDirStatDoc::OnScanSuspend()

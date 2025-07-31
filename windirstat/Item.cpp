@@ -61,6 +61,13 @@ CItem::CItem(const ITEMTYPE type, const std::wstring & name) : m_Name(name), m_T
     if (IsType(IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY))
     {
         m_FolderInfo = std::make_unique<CHILDINFO>();
+
+        // My computer node will never have these attributes set externally
+        if (IsType(IT_MYCOMPUTER))
+        {
+            m_Attributes = 0;
+            m_LastChange = { .dwLowDateTime = 0, .dwHighDateTime = 0 };
+        }
     }
 }
 
@@ -801,7 +808,8 @@ void CItem::SetAttributes(const DWORD attr)
 
 DWORD CItem::GetAttributes() const
 {
-    return m_Attributes;
+    return m_Attributes == LOWORD(INVALID_FILE_ATTRIBUTES)
+        ? INVALID_FILE_ATTRIBUTES : m_Attributes;
 }
 
 void CItem::SetIndex(const DWORD index)
