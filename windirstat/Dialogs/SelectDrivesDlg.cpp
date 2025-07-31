@@ -402,7 +402,7 @@ void CSelectDrivesDlg::DoDataExchange(CDataExchange* pDX)
     DDX_Control(pDX, IDC_TARGET_DRIVES_LIST, m_List);
     DDX_Radio(pDX, IDC_RADIO_TARGET_DRIVES_ALL, m_Radio);
     DDX_Check(pDX, IDC_SCAN_DUPLICATES, m_ScanDuplicates);
-    DDX_Check(pDX, IDC_SCAN_DUPLICATES, m_UseFastScan);
+    DDX_Check(pDX, IDC_FAST_SCAN_CHECKBOX, m_UseFastScan);
     DDX_Control(pDX, IDOK, m_OkButton);
     DDX_Control(pDX, IDC_BROWSE_FOLDER, m_Browse);
 }
