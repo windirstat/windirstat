@@ -114,6 +114,12 @@ public:
         return false;
     }
 
+    bool IsOffVolumeReparsePoint() const
+    {
+        return GetReparseTag() == IO_REPARSE_TAG_MOUNT_POINT ||
+            GetReparseTag() == IO_REPARSE_TAG_SYMLINK;
+    }
+
     static bool IsJunction(REPARSE_DATA_BUFFER& reparseBuffer)
     {
         return reparseBuffer.ReparseTag == IO_REPARSE_TAG_MOUNT_POINT &&

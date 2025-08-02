@@ -1417,7 +1417,7 @@ CItem* CItem::AddDirectory(const Finder& finder)
         CDirStatApp::Get()->IsFollowingAllowed(finder.GetReparseTag());
 
     const auto & child = new CItem(IT_DIRECTORY, finder.GetFileName());
-    child->SetIndex(finder.IsReparsePoint() && follow ? 0 : finder.GetIndex());
+    child->SetIndex(finder.IsOffVolumeReparsePoint() && follow ? 0 : finder.GetIndex());
     child->SetLastChange(finder.GetLastWriteTime());
     child->SetAttributes(finder.GetAttributes());
     child->SetReparseTag(finder.GetReparseTag());
