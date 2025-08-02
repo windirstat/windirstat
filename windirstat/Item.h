@@ -25,7 +25,6 @@
 #include "DirStatDoc.h"
 #include "Finder.h"
 #include "BlockingQueue.h"
-#include "FinderNtfs.h"
 
 #include <shared_mutex>
 

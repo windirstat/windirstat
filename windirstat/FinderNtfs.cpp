@@ -288,6 +288,7 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
                         baseRecord.LastModifiedTime = si->LastModificationTime;
                         baseRecord.Attributes = si->FileAttributes;
                         if (fileRecord->IsDirectory()) baseRecord.Attributes |= FILE_ATTRIBUTE_DIRECTORY;
+                        if (baseRecord.Attributes == 0) baseRecord.Attributes = FILE_ATTRIBUTE_NORMAL;
                     }
                     else if (curAttribute->TypeCode == AttributeFileName)
                     {
@@ -311,7 +312,7 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
                         else
                         {
                             baseRecord.LogicalSize = curAttribute->Form.Resident.ValueLength;
-                            baseRecord.PhysicalSize = curAttribute->Form.Resident.ValueLength;
+                            baseRecord.PhysicalSize = (curAttribute->Form.Resident.ValueLength + 7) & ~7;
                         }
                     }
                     else if (curAttribute->TypeCode == AttributeReparsePoint)
@@ -320,9 +321,9 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
                         const auto fn = ByteOffset<Finder::REPARSE_DATA_BUFFER>(curAttribute, curAttribute->Form.Resident.ValueOffset);
                         auto& baseRecord = getMapBinRef(baseFileRecordMapTemp, baseFileRecordMapMutex, baseRecordIndex, binSize, numBins);
                         baseRecord.ReparsePointTag = fn->ReparseTag;
-                        if (!Finder::IsMountPoint(*fn))
+                        if (Finder::IsJunction(*fn))
                         {
-                            baseRecord.ReparsePointTag = ~IO_REPARSE_TAG_MOUNT_POINT;
+                            baseRecord.ReparsePointTag = IO_REPARSE_TAG_JUNCTION_POINT;
                         }
                     }
                 }
@@ -395,6 +396,7 @@ std::wstring FinderNtfs::GetFileName() const
 
 ULONGLONG FinderNtfs::GetFileSizePhysical() const
 {
+    if (m_CurrentRecord->ReparsePointTag != 0) return 0;
     return m_CurrentRecord->PhysicalSize;
 }
 

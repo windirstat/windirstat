@@ -113,4 +113,10 @@ public:
 
         return false;
     }
+
+    static bool IsJunction(REPARSE_DATA_BUFFER& reparseBuffer)
+    {
+        return reparseBuffer.ReparseTag == IO_REPARSE_TAG_MOUNT_POINT &&
+            IsMountPoint(reparseBuffer);
+    }
 };

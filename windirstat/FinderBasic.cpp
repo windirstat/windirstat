@@ -22,7 +22,7 @@
 #include "FinderBasic.h"
 #include "Options.h"
 #include "Tracer.h"
-#include <SmartPointer.h>
+#include "SmartPointer.h"
 
 #pragma comment(lib,"ntdll.lib")
 
@@ -119,9 +119,9 @@ bool FinderBasic::FindNext()
                 {
                     auto& reparseBuffer = *ByteOffset<REPARSE_DATA_BUFFER>(buf.data(), 0);
                     m_ReparseTag = reparseBuffer.ReparseTag;
-                    if (!IsMountPoint(reparseBuffer))
+                    if (IsJunction(reparseBuffer))
                     {
-                        m_ReparseTag = ~IO_REPARSE_TAG_MOUNT_POINT;
+                        m_ReparseTag = IO_REPARSE_TAG_JUNCTION_POINT;
                     }
                 }
             }

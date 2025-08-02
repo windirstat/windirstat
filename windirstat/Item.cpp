@@ -30,6 +30,7 @@
 #include "Localization.h"
 #include "SmartPointer.h"
 #include "FinderBasic.h"
+#include "FinderNtfs.h"
 
 #include <string>
 #include <algorithm>
@@ -39,8 +40,6 @@
 #include <stack>
 #include <array>
 #include <ranges>
-
-#include "FinderNtfs.h"
 
 #pragma comment(lib, "crypt32.lib")
 #pragma comment(lib, "bcrypt.lib")
@@ -826,7 +825,7 @@ DWORD CItem::GetReparseTag() const
 {
     if (IsReparseType(ITF_SYMLINK)) return IO_REPARSE_TAG_SYMLINK;
     if (IsReparseType(ITF_MOUNTPNT)) return IO_REPARSE_TAG_MOUNT_POINT;
-    if (IsReparseType(ITF_JUNCTION)) return ~IO_REPARSE_TAG_MOUNT_POINT;
+    if (IsReparseType(ITF_JUNCTION)) return IO_REPARSE_TAG_JUNCTION_POINT;
     if (IsReparseType(ITF_CLOUDLINK)) return IO_REPARSE_TAG_CLOUD_MASK;
     return 0;
 }
@@ -836,7 +835,7 @@ void CItem::SetReparseTag(const DWORD reparseType)
     if (reparseType == 0) (void) false;
     else if (reparseType == IO_REPARSE_TAG_SYMLINK) SetType(ITF_SYMLINK);
     else if (reparseType == IO_REPARSE_TAG_MOUNT_POINT) SetType(ITF_MOUNTPNT);
-    else if (reparseType == ~IO_REPARSE_TAG_MOUNT_POINT) SetType(ITF_JUNCTION);
+    else if (reparseType == IO_REPARSE_TAG_JUNCTION_POINT) SetType(ITF_JUNCTION);
     else if (reparseType & IO_REPARSE_TAG_CLOUD_MASK) SetType(ITF_CLOUDLINK);
 }
 

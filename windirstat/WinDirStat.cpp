@@ -131,7 +131,8 @@ bool CDirStatApp::IsFollowingAllowed(const DWORD reparseTag) const
     if (reparseTag == 0) return true;
     return reparseTag == IO_REPARSE_TAG_MOUNT_POINT && !COptions::ExcludeVolumeMountPoints ||
         reparseTag == IO_REPARSE_TAG_SYMLINK && !COptions::ExcludeSymbolicLinksDirectory ||
-        reparseTag == ~IO_REPARSE_TAG_MOUNT_POINT && !COptions::ExcludeJunctions;
+        reparseTag == IO_REPARSE_TAG_JUNCTION_POINT && !COptions::ExcludeJunctions ||
+        (reparseTag != IO_REPARSE_TAG_MOUNT_POINT && reparseTag != IO_REPARSE_TAG_SYMLINK && reparseTag != IO_REPARSE_TAG_JUNCTION_POINT);
 }
 
 // Get the alternative colors for compressed and encrypted files/folders.

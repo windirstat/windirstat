@@ -39,8 +39,12 @@ using CompressionAlgorithm = enum CompressionAlgorithm {
     LZX = FILE_PROVIDER_COMPRESSION_LZX | FILE_PROVIDER_COMPRESSION_MODERN
 };
 
+// Used at runtime to distinguish between mount points and junction points since they
+// share the same reparse tag on the file system.
+constexpr DWORD IO_REPARSE_TAG_JUNCTION_POINT = ~IO_REPARSE_TAG_MOUNT_POINT;
+
 template<typename T>
-static constexpr T* ByteOffset(void* ptr, std::ptrdiff_t offset)
+constexpr T* ByteOffset(void* ptr, const std::ptrdiff_t offset)
 {
     return reinterpret_cast<T*>(static_cast<std::byte*>(ptr) + offset);
 }
