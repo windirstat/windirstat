@@ -214,9 +214,9 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
     std::vector<std::pair<ULONGLONG, ULONGLONG>> dataRuns(retrievalBuffer->ExtentCount, {});
     for (DWORD i = 0; i < retrievalBuffer->ExtentCount; i++)
     {
-        dataRuns.emplace_back(retrievalBuffer->Extents[i].Lcn.QuadPart,
+        dataRuns[i] = { retrievalBuffer->Extents[i].Lcn.QuadPart,
             retrievalBuffer->Extents[i].NextVcn.QuadPart - (i == 0
-                ? retrievalBuffer->StartingVcn.QuadPart : retrievalBuffer->Extents[i - 1].NextVcn.QuadPart));
+                ? retrievalBuffer->StartingVcn.QuadPart : retrievalBuffer->Extents[i - 1].NextVcn.QuadPart) };
     }
 
     // This is a binning approach to reduce contention on the maps
