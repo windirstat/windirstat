@@ -182,7 +182,8 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
 
     // Open volume handle without FILE_FLAG_OVERLAPPED for synchronous I/O
     SmartPointer<HANDLE> volumeHandle(CloseHandle,CreateFile(volumePath.c_str(), FILE_READ_DATA | FILE_READ_ATTRIBUTES | SYNCHRONIZE,
-        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING, 0, nullptr));
+        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING,
+        FILE_FLAG_NO_BUFFERING | FILE_FLAG_OVERLAPPED, nullptr));
     if (volumeHandle == INVALID_HANDLE_VALUE) return false;
 
     // Get volume information
@@ -194,7 +195,7 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
     // Get MFT retrieval pointers
     SmartPointer<HANDLE> fileHandle(CloseHandle, CreateFile((volumePath + L"\\$MFT::$DATA").c_str(), FILE_READ_ATTRIBUTES | SYNCHRONIZE,
         FILE_SHARE_WRITE | FILE_SHARE_READ | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING,
-        FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_NO_BUFFERING | FILE_FLAG_SEQUENTIAL_SCAN | FILE_FLAG_OVERLAPPED, nullptr));
+        FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_NO_BUFFERING, nullptr));
     if (fileHandle == INVALID_HANDLE_VALUE) return {};
 
     std::vector<BYTE> dataRunsBuffer(sizeof(RETRIEVAL_POINTERS_BUFFER) + 32 * sizeof(LARGE_INTEGER));
@@ -248,9 +249,11 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
 
             // Set file pointer for synchronous read
             const ULONG bytesThisRead = static_cast<ULONG>(min(bytesToRead, bufferSize));
-            OVERLAPPED overlapped = { .Offset = fileOffset.LowPart, .OffsetHigh = static_cast<DWORD>(fileOffset.HighPart) };
-            if (ReadFile(volumeHandle, buffer.data(), bytesThisRead, &bytesRead, &overlapped) == 0 ||
-                GetOverlappedResult(volumeHandle, &overlapped, &bytesRead, INFINITE) == 0)
+            SmartPointer<HANDLE> event(CloseHandle, CreateEvent(nullptr, TRUE, FALSE, nullptr));
+            OVERLAPPED overlapped = { .Offset = fileOffset.LowPart, .OffsetHigh = static_cast<DWORD>(fileOffset.HighPart), . hEvent = event };
+            if (ReadFile(volumeHandle, buffer.data(), bytesThisRead, &bytesRead, &overlapped) == 0 && GetLastError() != ERROR_IO_PENDING ||
+                WaitForSingleObject(event, INFINITE) != WAIT_OBJECT_0 ||
+                GetOverlappedResult(volumeHandle, &overlapped, &bytesRead, TRUE) == 0)
             {
                 break;
             }
