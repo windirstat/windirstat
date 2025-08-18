@@ -26,7 +26,7 @@
 
 #include <string>
 #include <unordered_map>
-#include <shared_mutex>
+#include <mutex>
 
 //
 // CIconHandler. Handles all shell information lookup.
@@ -36,7 +36,7 @@ class CIconHandler final
     static constexpr UINT WDS_SHGFI_DEFAULTS = SHGFI_USEFILEATTRIBUTES | SHGFI_SMALLICON | SHGFI_ICON | SHGFI_ADDOVERLAYS | SHGFI_SYSICONINDEX | SHGFI_OVERLAYINDEX;
     static constexpr auto MAX_ICON_THREADS = 4;
 
-    std::shared_mutex m_CachedIconMutex;
+    std::mutex m_CachedIconMutex;
     std::unordered_map<int, HICON> m_CachedIcons;
 
 public:

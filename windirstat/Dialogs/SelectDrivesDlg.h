@@ -24,7 +24,7 @@
 #include "Layout.h"
 #include "resource.h"
 
-#include <shared_mutex>
+#include <mutex>
 #include <unordered_set>
 
 //
@@ -88,7 +88,7 @@ class CDriveInformationThread final : public CWinThread
     // Set of all running CDriveInformationThreads.
     // Used by InvalidateDialogHandle().
     static std::unordered_set<CDriveInformationThread*> _runningThreads;
-    static std::shared_mutex _mutexRunningThreads;
+    static std::mutex _mutexRunningThreads;
 
     // The objects register and unregister themselves in _runningThreads
     void AddRunningThread();
@@ -106,7 +106,7 @@ private:
     const std::wstring m_Path; // Path like "C:\"
     const LPARAM m_DriveItem;  // The list item, we belong to
 
-    std::shared_mutex m_Mutex; // for m_Dialog
+    std::mutex m_Mutex;        // for m_Dialog
     HWND m_Dialog;             // synchronized by m_Cs
     const UINT m_Serial;       // serial number of m_Dialog
 

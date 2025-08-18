@@ -30,7 +30,7 @@ public:
 
     bool m_DefaultHandler = true;
     int m_RefCounter = 0;
-    std::shared_mutex m_Mutex;
+    std::mutex m_Mutex;
 
     COleFilterOverride()
     {

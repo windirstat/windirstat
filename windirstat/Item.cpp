@@ -1456,7 +1456,7 @@ void CItem::UpwardDrivePacman()
     }
 }
 
-std::shared_mutex CItem::m_HashMutex;
+std::mutex CItem::m_HashMutex;
 BCRYPT_ALG_HANDLE CItem::m_HashAlgHandle = nullptr;
 DWORD CItem::m_HashLength = 0;
 

@@ -288,7 +288,7 @@ private:
     CItem* AddFile(const Finder& finder);
 
     // Used for initialization of hashing process
-    static std::shared_mutex m_HashMutex;
+    static std::mutex m_HashMutex;
     static BCRYPT_ALG_HANDLE m_HashAlgHandle;
     static DWORD m_HashLength;
 
