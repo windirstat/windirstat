@@ -126,8 +126,20 @@ bool FinderBasic::FindNext()
                 }
             }
         }
-    }
 
+        // Correct physical size
+        if (m_CurrentInfo->AllocationSize.QuadPart == 0 &&
+            m_CurrentInfo->EndOfFile.QuadPart != 0)
+        {
+            DWORD highPart;
+            DWORD lowPart = GetCompressedFileSize(GetFilePathLong().c_str(), &highPart);
+            if (lowPart != INVALID_FILE_SIZE || GetLastError() == NO_ERROR)
+            {
+                m_CurrentInfo->AllocationSize.LowPart = lowPart;
+                m_CurrentInfo->AllocationSize.HighPart = static_cast<LONG>(highPart);
+            }
+        }
+    }
 
     m_Firstrun = false;
     return success;
@@ -188,18 +200,6 @@ std::wstring FinderBasic::GetFileName() const
 
 ULONGLONG FinderBasic::GetFileSizePhysical() const
 {
-    if (m_CurrentInfo->AllocationSize.QuadPart == 0 &&
-        m_CurrentInfo->EndOfFile.QuadPart != 0)
-    {
-        DWORD highPart;
-        DWORD lowPart = GetCompressedFileSize(GetFilePathLong().c_str(), &highPart);
-        if (lowPart != INVALID_FILE_SIZE || GetLastError() == NO_ERROR)
-        {
-            m_CurrentInfo->AllocationSize.LowPart = lowPart;
-            m_CurrentInfo->AllocationSize.HighPart = static_cast<LONG>(highPart);
-        }
-    }
-
     return m_CurrentInfo->AllocationSize.QuadPart;
 }
 

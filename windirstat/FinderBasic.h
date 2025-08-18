@@ -63,12 +63,12 @@ public:
     bool FindFile(const std::wstring& strFolder, const std::wstring& strName = L"", DWORD attr = INVALID_FILE_ATTRIBUTES);
     bool IsDots() const override;
     inline DWORD GetAttributes() const override;
-    std::wstring GetFileName() const override;
-    ULONGLONG GetFileSizePhysical() const override;
-    ULONGLONG GetFileSizeLogical() const override;
-    FILETIME GetLastWriteTime() const override;
+    inline std::wstring GetFileName() const override;
+    inline ULONGLONG GetFileSizePhysical() const override;
+    inline ULONGLONG GetFileSizeLogical() const override;
+    inline FILETIME GetLastWriteTime() const override;
     std::wstring GetFilePath() const override;
-    DWORD GetReparseTag() const override;
+    inline DWORD GetReparseTag() const override;
 
     static bool DoesFileExist(const std::wstring& folder, const std::wstring& file = {});
 };
