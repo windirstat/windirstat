@@ -603,6 +603,9 @@ void ProcessMessagesUntilSignaled(const std::function<void()>& callback)
         MSG msg;
         while (GetMessage(&msg, nullptr, 0, 0)) {
             if (msg.message == waitMessage) break;
+            if (msg.message >= WM_MOUSEFIRST && msg.message <= WM_MOUSELAST) continue;
+            if (msg.message >= WM_KEYFIRST && msg.message <= WM_KEYLAST) continue;
+            if (msg.message == WM_NCLBUTTONDOWN || msg.message == WM_NCLBUTTONUP) continue;
             TranslateMessage(&msg);
             DispatchMessage(&msg);
         }
