@@ -1,6 +1,4 @@
-﻿// ItemTop.cpp - Implementation of CItemTop
-//
-// WinDirStat - Directory Statistics
+﻿// WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
 //
 // This program is free software; you can redistribute it and/or modify

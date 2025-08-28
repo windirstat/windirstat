@@ -1,6 +1,4 @@
-﻿// MountPoints.h - Declaration of COleFilterOverride
-//
-// WinDirStat - Directory Statistics
+﻿// WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
 //
 // This program is free software; you can redistribute it and/or modify

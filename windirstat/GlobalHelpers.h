@@ -1,6 +1,4 @@
-﻿// GlobalHelpers.h - Declaration of global helper functions
-//
-// WinDirStat - Directory Statistics
+﻿// WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
 //
 // This program is free software; you can redistribute it and/or modify
