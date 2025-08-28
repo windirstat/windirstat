@@ -162,6 +162,7 @@ protected:
     CFileTreeView* GetFileTreeView() const { return m_FileTabbedView->GetFileTreeView(); }
     CFileTopView* GetFileTopView() const { return m_FileTabbedView->GetFileTopView(); }
     CFileDupeView* GetFileDupeView() const { return m_FileTabbedView->GetFileDupeView(); }
+    CFileSearchView* GetFileSearchView() const { return m_FileTabbedView->GetFileSearchView(); }
     CFileTabbedView* GetFileTabbedView() const { return m_FileTabbedView; }
     CTreeMapView* GetTreeMapView() const { return m_TreeMapView; }
     CExtensionView* GetExtensionView() const { return m_ExtensionView; }
