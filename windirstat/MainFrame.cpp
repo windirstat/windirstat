@@ -1093,7 +1093,7 @@ void CMainFrame::UpdatePaneText()
         {
             fileSelectionText = wds::chrStar + CDirStatDoc::GetDocument()->GetHighlightExtension();
         }
-        else if (focus == LF_FILETREE || focus == LF_DUPELIST || focus == LF_TOPLIST)
+        else if (focus == LF_FILETREE || focus == LF_DUPELIST || focus == LF_TOPLIST || focus == LF_SEARCHLIST)
         {
             const auto& items = GetAllSelectedInFocus();
             if (items.size() == 1) fileSelectionText = items.front()->GetPath();
