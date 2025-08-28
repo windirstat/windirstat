@@ -58,7 +58,8 @@ public:
     template <typename... Args>
     static std::wstring Format(std::wstring_view format, const Args&... args)
     {
-        return std::vformat(format, std::make_wformat_args(args...));
+        const auto & formatString = Lookup(format);
+        return std::vformat(formatString, std::make_wformat_args(args...));
     }
 
     static void UpdateMenu(CMenu& menu);

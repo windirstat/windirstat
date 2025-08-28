@@ -176,8 +176,7 @@ std::wstring CDirStatApp::GetCurrentProcessMemoryInfo()
         return wds::strEmpty;
     }
 
-    static std::wstring memformat = L"     " + Localization::Lookup(IDS_RAMUSAGEs);
-    return Localization::Format(memformat, FormatBytes(pmc.WorkingSetSize));
+    return L"     " + Localization::Lookup(IDS_RAMUSAGEs, FormatBytes(pmc.WorkingSetSize));
 }
 
 bool CDirStatApp::InPortableMode()
