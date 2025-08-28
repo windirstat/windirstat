@@ -22,5 +22,5 @@
 
 #include <string>
 
-bool SaveResults(const std::wstring& path, CItem* item);
+bool SaveResults(const std::wstring& path, CItem* rootItem);
 CItem* LoadResults(const std::wstring& path);

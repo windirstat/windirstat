@@ -29,6 +29,7 @@
 #include <unordered_map>
 #include <format>
 #include <array>
+#include <execution>
 #include <ranges>
 
 enum : std::uint8_t
@@ -200,7 +201,10 @@ CItem* LoadResults(const std::wstring & path)
 
         if (!newitem->TmiIsLeaf() && newitem->GetItemsCount() > 0)
         {
-            const std::wstring mapPath = fields[orderMap[FIELD_NAME]];
+            // Restore full path for parent assignment
+            if (lookupPath != displayName) lookupPath[wcslen(lookupPath)] = wds::chrBackslash;
+
+            const std::wstring & mapPath = fields[orderMap[FIELD_NAME]];
             parentMap[mapPath] = newitem;
 
             // Special case: also add mapping for drive without backslash
@@ -217,8 +221,37 @@ CItem* LoadResults(const std::wstring & path)
     return newroot;
 }
 
-bool SaveResults(const std::wstring& path, CItem * item)
+bool SaveResults(const std::wstring& path, CItem * rootItem)
 {
+
+    // Vector to store all entries
+    std::vector<const CItem*> items;
+    items.reserve(rootItem->GetItemsCount());
+
+    // Output all items to file
+    std::stack<CItem*> queue({ rootItem });
+    while (!queue.empty())
+    {
+        // Grab item from queue
+        const CItem* qitem = queue.top();
+        queue.pop();
+        items.push_back(qitem);
+
+        // Descend into childitems
+        if (qitem->IsLeaf()) continue;
+        for (const auto& child : qitem->GetChildren())
+        {
+            queue.push(child);
+        }
+    }
+
+    // Sort results
+    std::sort(std::execution::par_unseq, items.begin(), items.end(),
+        [](const CItem* a, const CItem* b) {
+            if (a->IsRootItem() != b->IsRootItem()) return a->IsRootItem();
+            return a->GetPath() < b->GetPath();
+        });
+
     // Output header line to file
     std::ofstream outf;
     outf.open(path, std::ios::binary);
@@ -248,40 +281,28 @@ bool SaveResults(const std::wstring& path, CItem * item)
 
     // Output all items to file
     outf << "\r\n";
-    std::stack<CItem*> queue({ item });
-    while (!queue.empty())
+    for (const auto item : items)
     {
-        // Grab item from queue
-        const CItem* qitem = queue.top();
-        queue.pop();
-
         // Output primary columns
-        const bool nonPathItem = qitem->IsType(IT_MYCOMPUTER | IT_UNKNOWN | IT_FREESPACE);
+        const bool nonPathItem = item->IsType(IT_MYCOMPUTER | IT_UNKNOWN | IT_FREESPACE);
         outf << std::format("{},{},{},{},{},0x{:08X},{},0x{:04X}",
-            QuoteAndConvert(nonPathItem ? qitem->GetName() : qitem->GetPath()),
-            qitem->GetFilesCount(),
-            qitem->GetFoldersCount(),
-            qitem->GetSizeLogical(),
-            qitem->GetSizePhysical(),
-            qitem->GetAttributes(),
-            ToTimePoint(qitem->GetLastChange()),
-            static_cast<unsigned short>(qitem->GetRawType()));
+            QuoteAndConvert(nonPathItem ? item->GetName() : item->GetPath()),
+            item->GetFilesCount(),
+            item->GetFoldersCount(),
+            item->GetSizeLogical(),
+            item->GetSizePhysical(),
+            item->GetAttributes(),
+            ToTimePoint(item->GetLastChange()),
+            static_cast<unsigned short>(item->GetRawType()));
 
         // Output additional columns
         if (COptions::ShowColumnOwner)
         {
-            outf << "," << QuoteAndConvert(qitem->GetOwner(true));
+            outf << "," << QuoteAndConvert(item->GetOwner(true));
         }
 
         // Finalize lines
         outf << "\r\n";
-
-        // Descend into childitems
-        if (qitem->IsLeaf()) continue;
-        for (const auto& child : qitem->GetChildren())
-        {
-            queue.push(child);
-        }
     }
 
     outf.close();
