@@ -281,6 +281,21 @@
     <ClInclude Include="FinderNtfs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Dialogs\SearchDlg.h">
+      <Filter>Header Files\Dialogs</Filter>
+    </ClInclude>
+    <ClInclude Include="Controls\FileSearchControl.h">
+      <Filter>Header Files\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="ItemSearch.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Views\FileSearchView.h">
+      <Filter>Header Files\Views</Filter>
+    </ClInclude>
+    <ClInclude Include="res\LangStrings.h">
+      <Filter>Resource Files\Languages</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirStatDoc.cpp">
@@ -412,6 +427,18 @@
     <ClCompile Include="FinderNtfs.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Dialogs\SearchDlg.cpp">
+      <Filter>Source Files\Dialogs</Filter>
+    </ClCompile>
+    <ClCompile Include="Controls\FileSearchControl.cpp">
+      <Filter>Source Files\Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="ItemSearch.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Views\FileSearchView.cpp">
+      <Filter>Source Files\Views</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="windirstat.rc">
@@ -492,6 +519,9 @@
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="res\toolbar\IDB_FILTER.bmp">
+      <Filter>Resource Files\Resources</Filter>
+    </Image>
+    <Image Include="res\toolbar\IDB_SEARCH.bmp">
       <Filter>Resource Files\Resources</Filter>
     </Image>
   </ItemGroup>

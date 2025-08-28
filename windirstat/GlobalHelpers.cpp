@@ -616,7 +616,7 @@ void ProcessMessagesUntilSignaled(const std::function<void()>& callback)
     }
 }
 
-std::wstring GlobToRegex(const std::wstring& glob)
+std::wstring GlobToRegex(const std::wstring& glob, const bool useAnchors)
 {
     std::wstring regex = glob;
 
@@ -629,7 +629,7 @@ std::wstring GlobToRegex(const std::wstring& glob)
     // Replace '?' (match any single character)
     regex = std::regex_replace(regex, std::wregex(LR"(\?)"), LR"([^\\/:])");
 
-    return L"^" + regex + L"$";
+    return useAnchors ? (L"^" + regex + L"$") : regex;
 }
 
 std::vector<BYTE> GetCompressedResource(const HRSRC resource)
@@ -658,8 +658,8 @@ std::wstring GetVolumePathNameEx(const std::wstring & path)
     // Establish a fallback volume as drive letter or server name
     std::wstring fallback;
     std::wsmatch match;
-    if (std::regex_search(path, match, std::wregex(LR"(\\\\\?\\([A-Z]:).*)")) && match.size() > 1 ||
-        std::regex_search(path, match, std::wregex(LR"(\\\\\?\\UNC\\([^\\]*).*)")) && match.size() > 1)
+    if (std::regex_match(path, match, std::wregex(LR"(\\\\\?\\([A-Z]:).*)")) && match.size() > 1 ||
+        std::regex_match(path, match, std::wregex(LR"(\\\\\?\\UNC\\([^\\]*).*)")) && match.size() > 1)
     {
         fallback = match[1].str();
     }

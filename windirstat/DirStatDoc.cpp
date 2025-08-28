@@ -32,8 +32,10 @@
 #include "WinDirStat.h"
 #include "SmartPointer.h"
 #include "FileTopControl.h"
+#include "FileSearchControl.h"
 #include "FinderBasic.h"
 #include "FinderNtfs.h"
+#include "SearchDlg.h"
 
 #include <functional>
 #include <unordered_map>
@@ -115,13 +117,16 @@ void CDirStatDoc::DeleteContents()
     if (CFileTopControl::Get() != nullptr) CFileTopControl::Get()->DeleteAllItems();
     if (CFileTreeControl::Get() != nullptr) CFileTreeControl::Get()->DeleteAllItems();
     if (CFileDupeControl::Get() != nullptr) CFileDupeControl::Get()->DeleteAllItems();
+    if (CFileSearchControl::Get() != nullptr) CFileSearchControl::Get()->DeleteAllItems();
 
     // Cleanup structures
     delete m_RootItemDupe;
     delete m_RootItemTop;
+    delete m_RootItemSearch;
     delete m_RootItem;
     m_RootItemDupe = nullptr;
     m_RootItemTop = nullptr;
+    m_RootItemSearch = nullptr;
     m_RootItem = nullptr;
     m_ZoomItem = nullptr;
 }
@@ -199,6 +204,7 @@ BOOL CDirStatDoc::OnOpenDocument(LPCWSTR lpszPathName)
     // Set new node for extra views
     m_RootItemDupe = new CItemDupe();
     m_RootItemTop = new CItemTop();
+    m_RootItemSearch = new CItemSearch();
 
     // Update new root for display
     UpdateAllViews(nullptr, HINT_NEWROOT);
@@ -227,6 +233,7 @@ BOOL CDirStatDoc::OnOpenDocument(CItem * newroot)
 
     m_RootItemDupe = new CItemDupe();
     m_RootItemTop = new CItemTop();
+    m_RootItemSearch = new CItemSearch();
     m_RootItem = newroot;
     m_ZoomItem = m_RootItem;
 
@@ -338,6 +345,11 @@ CItemDupe* CDirStatDoc::GetRootItemDupe() const
 CItemTop* CDirStatDoc::GetRootItemTop() const
 {
     return m_RootItemTop;
+}
+
+CItemSearch* CDirStatDoc::GetRootItemSearch() const
+{
+    return m_RootItemSearch;
 }
 
 bool CDirStatDoc::IsZoomed() const
@@ -812,10 +824,16 @@ bool CDirStatDoc::TopListHasFocus()
     return LF_TOPLIST == CMainFrame::Get()->GetLogicalFocus();
 }
 
+bool CDirStatDoc::SearchListHasFocus()
+{
+    return LF_SEARCHLIST == CMainFrame::Get()->GetLogicalFocus();
+}
+
 CTreeListControl* CDirStatDoc::GetFocusControl()
 {
     if (DupeListHasFocus()) return CFileDupeControl::Get();
     if (TopListHasFocus()) return CFileTopControl::Get();
+    if (SearchListHasFocus()) return CFileSearchControl::Get();
     return CFileTreeControl::Get();
 }
 
@@ -872,6 +890,7 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
         { ID_COMPRESS_XPRESS8K,       { false, true,  false, LF_NONE,     IT_FILE } },
         { ID_EDIT_COPY_CLIPBOARD,     { false, true,  true,  LF_NONE,     IT_DRIVE | IT_DIRECTORY | IT_FILE } },
         { ID_FILTER,                  { true,  true,  true,  LF_NONE,     IT_ANY } },
+        { ID_SEARCH,                  { true,  true,  false, LF_NONE,     IT_ANY } },
         { ID_INDICATOR_DISK,          { true,  true,  false, LF_NONE,     IT_ANY } },
         { ID_INDICATOR_IDLE,          { true,  true,  true,  LF_NONE,     IT_ANY } },
         { ID_INDICATOR_MEM,           { true,  true,  true,  LF_NONE,     IT_ANY } },
@@ -951,6 +970,7 @@ BEGIN_MESSAGE_MAP(CDirStatDoc, CDocument)
     ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_DELETE_BIN, OnCleanupDeleteToBin)
     ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_DELETE, OnCleanupDelete)
     ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_EMPTY_FOLDER, OnCleanupEmptyFolder)
+    ON_COMMAND_UPDATE_WRAPPER(ID_SEARCH, OnSearch)
     ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_DISM_NORMAL, OnExecuteDism)
     ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_DISM_RESET, OnExecuteDismReset)
     ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_HIBERNATE, OnDisableHibernateFile)
@@ -1263,6 +1283,12 @@ void CDirStatDoc::OnCleanupEmptyFolder()
     RefreshItem(selectedItems);
 }
 
+void CDirStatDoc::OnSearch()
+{
+    SearchDlg search;
+    search.DoModal();
+}
+
 void CDirStatDoc::OnDisableHibernateFile()
 {
     DisableHibernate();
@@ -1540,6 +1566,7 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
             // Clear items from duplicates and top list;
             CFileDupeControl::Get()->RemoveItem(item);
             CFileTopControl::Get()->RemoveItem(item);
+            CFileSearchControl::Get()->RemoveItem(item);
 
             // Record current visual arrangement to reapply afterward
             if (item->IsVisible())

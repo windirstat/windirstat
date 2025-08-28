@@ -19,6 +19,7 @@
 #define IDD_PAGE_GENERAL                144
 #define IDB_FILTER                      921
 #define IDB_FILE_SELECT                 922
+#define IDB_SEARCH                      923
 #define IDB_CLEANUP_DELETE_BIN          927
 #define IDB_EDIT_COPY_CLIPBOARD         928
 #define IDB_SCAN_SUSPEND                930
@@ -129,6 +130,10 @@
 #define IDC_FILTERING_USE_REGEX         1240
 #define IDC_FILTERING_MIN_UNITS         1241
 #define IDC_LARGEST_FILE_COUNT          1242
+#define IDC_SEARCH_REGEX                1243
+#define IDC_SEARCH_CASE                 1244
+#define IDC_SEARCH_TERM                 1245
+#define IDC_SEARCH_WHOLE_PHRASE         1246
 #define ID_WDS_CONTROL                  4711
 #define ID_CLEANUP_EXPLORER_SELECT      32774
 #define ID_TREEMAP_ZOOMIN               32783
@@ -141,6 +146,7 @@
 #define ID_CLEANUP_DELETE_BIN           32809
 #define ID_CLEANUP_DELETE               32810
 #define ID_FILTER                       32811
+#define ID_SEARCH                       32812
 #define ID_CONFIGURE                    32813
 #define ID_HELP_MANUAL                  32814
 #define ID_REFRESH_ALL                  32816
@@ -198,14 +204,15 @@
 #define IDS_FILTER_EXAMPLE_FILES_REGEX  57351
 #define IDS_FILTER_EXAMPLE_DIRS_REGEX   57352
 #define IDC_FAST_SCAN_CHECKBOX          57353
+#define IDD_SEARCH                      57354
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        57354
+#define _APS_NEXT_RESOURCE_VALUE        57356
 #define _APS_NEXT_COMMAND_VALUE         33092
-#define _APS_NEXT_CONTROL_VALUE         1243
+#define _APS_NEXT_CONTROL_VALUE         1246
 #define _APS_NEXT_SYMED_VALUE           109
 #endif
 #endif

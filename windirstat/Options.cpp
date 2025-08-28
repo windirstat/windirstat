@@ -37,6 +37,7 @@ LPCWSTR COptions::OptionsFileTree = L"FileTreeView";
 LPCWSTR COptions::OptionsDupeTree = L"DupeView";
 LPCWSTR COptions::OptionsExtView = L"ExtView";
 LPCWSTR COptions::OptionsTopView = L"TopView";
+LPCWSTR COptions::OptionsSearch = L"SearchView";
 LPCWSTR COptions::OptionsDriveSelect = L"DriveSelect";
 
 Setting<bool> COptions::AutomaticallyResizeColumns(OptionsGeneral, L"AutomaticallyResizeColumns", true);
@@ -56,6 +57,9 @@ Setting<bool> COptions::ListGrid(OptionsGeneral, L"ListGrid", false);
 Setting<bool> COptions::ListStripes(OptionsGeneral, L"ListStripes", false);
 Setting<bool> COptions::PacmanAnimation(OptionsGeneral, L"PacmanAnimation", true);
 Setting<bool> COptions::ScanForDuplicates(OptionsDupeTree, L"ScanForDuplicates", false);
+Setting<bool> COptions::SearchWholePhrase(OptionsSearch, L"SearchWholePhrase", false);
+Setting<bool> COptions::SearchRegex(OptionsSearch, L"SearchRegex", false);
+Setting<bool> COptions::SearchCase(OptionsSearch, L"SearchCase", false);
 Setting<bool> COptions::ShowColumnAttributes(OptionsFileTree, L"ShowColumnAttributes", false);
 Setting<bool> COptions::ShowColumnFiles(OptionsFileTree, L"ShowColumnFiles", true);
 Setting<bool> COptions::ShowColumnFolders(OptionsFileTree, L"ShowColumnFolders", false);
@@ -108,6 +112,7 @@ Setting<int> COptions::TreeMapScaleFactor(OptionsTreeMap, L"TreeMapScaleFactor",
 Setting<int> COptions::TreeMapStyle(OptionsTreeMap, L"TreeMapStyle", CTreeMap::GetDefaults().style, 0, 1);
 Setting<RECT> COptions::AboutWindowRect(OptionsGeneral, L"AboutWindowRect");
 Setting<RECT> COptions::DriveSelectWindowRect(OptionsDriveSelect, L"DriveSelectWindowRect");
+Setting<RECT> COptions::SearchWindowRect(OptionsSearch, L"SearchWindowRect");
 Setting<std::vector<int>> COptions::DriveListColumnOrder(OptionsDriveSelect, L"DriveListColumnOrder");
 Setting<std::vector<int>> COptions::DriveListColumnWidths(OptionsDriveSelect, L"DriveListColumnWidths");
 Setting<std::vector<int>> COptions::DupeViewColumnOrder(OptionsDupeTree, L"DupeViewColumnOrder");
@@ -118,7 +123,10 @@ Setting<std::vector<int>> COptions::ExtViewColumnOrder(OptionsExtView, L"ExtView
 Setting<std::vector<int>> COptions::ExtViewColumnWidths(OptionsExtView, L"ExtViewColumnWidths");
 Setting<std::vector<int>> COptions::TopViewColumnOrder(OptionsTopView, L"TopViewColumnOrder");
 Setting<std::vector<int>> COptions::TopViewColumnWidths(OptionsTopView, L"TopViewColumnWidths");
+Setting<std::vector<int>> COptions::SearchViewColumnOrder(OptionsSearch, L"TopViewColumnOrder");
+Setting<std::vector<int>> COptions::SearchViewColumnWidths(OptionsSearch, L"TopViewColumnWidths");
 Setting<std::vector<std::wstring>> COptions::SelectDrivesDrives(OptionsDriveSelect, L"SelectDrivesDrives");
+Setting<std::wstring> COptions::SearchTerm(OptionsSearch, L"SearchTerm");
 Setting<std::wstring> COptions::SelectDrivesFolder(OptionsDriveSelect, L"SelectDrivesFolder");
 Setting<std::wstring> COptions::FilteringExcludeDirs(OptionsDriveSelect, L"FilteringExcludeDirs");
 Setting<std::wstring> COptions::FilteringExcludeFiles(OptionsDriveSelect, L"FilteringExcludeFiles");
@@ -231,6 +239,7 @@ void COptions::PostProcessPersistedSettings()
     SanitizeRect(MainWindowPlacement.Obj().rcNormalPosition);
     SanitizeRect(AboutWindowRect.Obj());
     SanitizeRect(DriveSelectWindowRect.Obj());
+    SanitizeRect(SearchWindowRect.Obj());
 
     // Compile filters, if any
     CompileFilters();

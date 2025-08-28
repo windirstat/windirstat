@@ -21,6 +21,7 @@
 #pragma once
 
 #include "stdafx.h"
+#include "res\LangStrings.h"
 #include "Options.h"
 
 #include <string>
@@ -37,28 +38,16 @@ public:
     static constexpr auto MAX_VALUE_SIZE = 1024;
     static constexpr auto LANG_RESOURCE_TYPE = L"RT_LANG";
     static std::unordered_map<std::wstring, std::wstring> m_Map;
-    static std::unordered_map<USHORT, std::wstring> m_MapInt;
 
-    static bool Contains(const std::wstring& name)
+    static bool Contains(const std::wstring_view& name)
     {
-        ASSERT(m_Map.contains(name));
-        return m_Map.contains(name);
+        ASSERT(m_Map.contains(std::wstring(name)));
+        return m_Map.contains(std::wstring(name));
     }
 
-    static std::wstring & Lookup(const USHORT res, const std::wstring& def = std::wstring())
+    static std::wstring Lookup(const std::wstring_view& name, const std::wstring & def = std::wstring())
     {
-        // return from cache if already looked up
-        if (m_MapInt.contains(res)) return m_MapInt[res];
-
-        CStringW name;
-        (void) name.LoadStringW(nullptr, res, static_cast<LANGID>(COptions::LanguageId.Obj()));
-        m_MapInt.emplace(res, Lookup(name.GetString(), def));
-        return m_MapInt.at(res);
-    }
-
-    static std::wstring Lookup(const std::wstring& name, const std::wstring & def = std::wstring())
-    {
-        return Contains(name) ? m_Map[name] : def;
+        return Contains(name) ? m_Map[std::wstring(name)] : def;
     }
 
     static std::wstring LookupNeutral(const UINT res)
@@ -72,12 +61,6 @@ public:
     static std::wstring Format(std::wstring_view format, const Args&... args)
     {
         return std::vformat(format, std::make_wformat_args(args...));
-    }
-
-    template <typename... Args>
-    static std::wstring Format(USHORT res, const Args&... args)
-    {
-        return std::vformat(Lookup(res), std::make_wformat_args(args...));
     }
 
     static void UpdateMenu(CMenu& menu);

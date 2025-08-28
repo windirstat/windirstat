@@ -84,7 +84,7 @@ std::wstring& TrimString(std::wstring& s, wchar_t c = L' ');
 std::wstring& MakeLower(std::wstring& s);
 const std::wstring& GetSysDirectory();
 void ProcessMessagesUntilSignaled(const std::function<void()>& callback);
-std::wstring GlobToRegex(const std::wstring& glob);
+std::wstring GlobToRegex(const std::wstring& glob, bool useAnchors = true);
 std::vector<BYTE> GetCompressedResource(HRSRC resource);
 std::wstring GetVolumePathNameEx(const std::wstring& path);
 void DisplayError(const std::wstring& error);

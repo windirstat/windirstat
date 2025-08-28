@@ -103,6 +103,7 @@ class COptions final
     static LPCWSTR OptionsDupeTree;
     static LPCWSTR OptionsExtView;
     static LPCWSTR OptionsTopView;
+    static LPCWSTR OptionsSearch;
     static LPCWSTR OptionsDriveSelect;
 
 public:
@@ -124,6 +125,9 @@ public:
     static Setting<bool> ListStripes;
     static Setting<bool> PacmanAnimation;
     static Setting<bool> ScanForDuplicates;
+    static Setting<bool> SearchWholePhrase;
+    static Setting<bool> SearchCase;
+    static Setting<bool> SearchRegex;
     static Setting<bool> ShowColumnAttributes;
     static Setting<bool> ShowColumnFiles;
     static Setting<bool> ShowColumnFolders;
@@ -177,6 +181,7 @@ public:
     static Setting<int> TreeMapStyle;
     static Setting<RECT> AboutWindowRect;
     static Setting<RECT> DriveSelectWindowRect;
+    static Setting<RECT> SearchWindowRect;
     static Setting<std::vector<int>> DriveListColumnOrder;
     static Setting<std::vector<int>> DriveListColumnWidths;
     static Setting<std::vector<int>> DupeViewColumnOrder;
@@ -185,11 +190,14 @@ public:
     static Setting<std::vector<int>> FileTreeColumnWidths;
     static Setting<std::vector<int>> ExtViewColumnOrder;
     static Setting<std::vector<int>> ExtViewColumnWidths;
+    static Setting<std::vector<int>> SearchViewColumnOrder;
+    static Setting<std::vector<int>> SearchViewColumnWidths;
     static Setting<std::vector<int>> TopViewColumnOrder;
     static Setting<std::vector<int>> TopViewColumnWidths;
     static Setting<std::vector<std::wstring>> SelectDrivesDrives;
     static Setting<std::wstring> FilteringExcludeDirs;
     static Setting<std::wstring> FilteringExcludeFiles;
+    static Setting<std::wstring> SearchTerm;
     static Setting<std::wstring> SelectDrivesFolder;
     static Setting<WINDOWPLACEMENT> MainWindowPlacement;
 

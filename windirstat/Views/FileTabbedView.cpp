@@ -21,6 +21,7 @@
 #include "stdafx.h"
 #include "WinDirStat.h"
 #include "FileTabbedView.h"
+#include "FileSearchView.h"
 #include "FileTopView.h"
 #include "FileTreeView.h"
 #include "Localization.h"
@@ -45,6 +46,8 @@ int CFileTabbedView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
     m_FileTopView = DYNAMIC_DOWNCAST(CFileTopView, GetTabControl().GetTabWnd(m_FileTopViewIndex));
     m_FileDupeViewIndex = AddView(RUNTIME_CLASS(CFileDupeView), Localization::Lookup(IDS_DUPLICATE_FILES).c_str(), CHAR_MAX);
     m_FileDupeView = DYNAMIC_DOWNCAST(CFileDupeView, GetTabControl().GetTabWnd(m_FileDupeViewIndex));
+    m_FileSearchViewIndex = AddView(RUNTIME_CLASS(CFileSearchView), Localization::Lookup(IDS_SEARCH_RESULTS).c_str(), CHAR_MAX);
+    m_FileSearchView = DYNAMIC_DOWNCAST(CFileSearchView, GetTabControl().GetTabWnd(m_FileSearchViewIndex));
     GetTabControl().ModifyTabStyle(CMFCTabCtrl::STYLE_3D_ONENOTE);
 
     return 0;

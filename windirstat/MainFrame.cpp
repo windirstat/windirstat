@@ -38,6 +38,7 @@
 #include "MainFrame.h"
 #include "SelectObject.h"
 #include "FileTopControl.h"
+#include "FileSearchControl.h"
 #include "SmartPointer.h"
 
 #include <format>
@@ -358,8 +359,6 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
     ON_UPDATE_COMMAND_UI(ID_VIEW_SHOWFILETYPES, OnUpdateViewShowFileTypes)
     ON_UPDATE_COMMAND_UI(ID_VIEW_SHOWTREEMAP, OnUpdateViewShowTreeMap)
     ON_UPDATE_COMMAND_UI(ID_TREEMAP_LOGICAL_SIZE, OnUpdateTreeMapUseLogical)
-    ON_UPDATE_COMMAND_UI(IDS_RAMUSAGEs, OnUpdateEnableControl)
-    ON_UPDATE_COMMAND_UI(IDS_IDLEMESSAGE, OnUpdateEnableControl)
     ON_WM_CLOSE()
     ON_WM_CREATE()
     ON_WM_DESTROY()
@@ -635,7 +634,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
     DockPane(&m_WndToolBar);
 
     // map from toolbar resources to specific icons
-    const std::unordered_map<UINT, std::pair<UINT, UINT>> toolbarMap =
+    const std::unordered_map<UINT, std::pair<UINT, std::wstring_view>> toolbarMap =
     {
         { ID_FILE_SELECT, {IDB_FILE_SELECT, IDS_FILE_SELECT}},
         { ID_CLEANUP_OPEN_SELECTED, {IDB_CLEANUP_OPEN_SELECTED, IDS_CLEANUP_OPEN_SELECTED}},
@@ -645,6 +644,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
         { ID_REFRESH_SELECTED, {IDB_REFRESH_SELECTED, IDS_REFRESH_SELECTED}},
         { ID_REFRESH_ALL, {IDB_REFRESH_ALL, IDS_REFRESH_ALL}},
         { ID_FILTER, {IDB_FILTER, IDS_PAGE_FILTERING_TITLE}},
+        { ID_SEARCH, {IDB_SEARCH, IDS_SEARCH_TITLE}},
         { ID_SCAN_SUSPEND, {IDB_SCAN_SUSPEND, IDS_SUSPEND}},
         { ID_SCAN_RESUME, {IDB_SCAN_RESUME, IDS_GENERIC_BLANK}},
         { ID_SCAN_STOP, {IDB_SCAN_STOP, IDS_GENERIC_BLANK}},
@@ -673,7 +673,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
         // copy button into new toolbar control
         CMFCToolBarButton newButton(button->m_nID, image, nullptr, TRUE, TRUE);
         newButton.m_nStyle = button->m_nStyle | TBBS_DISABLED;
-        newButton.m_strText = Localization::Lookup(static_cast<USHORT>(toolbarMap.at(button->m_nID).second)).c_str();
+        newButton.m_strText = Localization::Lookup(toolbarMap.at(button->m_nID).second).c_str();
         m_WndToolBar.ReplaceButton(button->m_nID, newButton);
     }
 
@@ -972,6 +972,7 @@ std::vector<CItem*> CMainFrame::GetAllSelectedInFocus() const
 {
     if (GetLogicalFocus() == LF_DUPELIST) return CFileDupeControl::Get()->GetAllSelected<CItem>();
     if (GetLogicalFocus() == LF_TOPLIST) return CFileTopControl::Get()->GetAllSelected<CItem>();
+    if (GetLogicalFocus() == LF_SEARCHLIST) return CFileSearchControl::Get()->GetAllSelected<CItem>();
     return CFileTreeControl::Get()->GetAllSelected<CItem>();
 }
 

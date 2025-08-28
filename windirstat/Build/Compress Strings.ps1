@@ -37,7 +37,7 @@ $Alg = $COMPRESSION_FORMAT_LZNT1 -bor $COMPRESSION_ENGINE_MAXIMUM
 if ($CompressLibrary::RtlGetCompressionWorkSpaceSize($Alg, [ref]$workSpaceSize, [ref]$fragmentWorkSpaceSize) -ne 0) { Exit 1 }
 $workSpaceBuffer = [System.Runtime.InteropServices.Marshal]::AllocHGlobal([int]$workSpaceSize)
 
-$Files = Get-ChildItem -Path $Path -Recurse
+$Files = Get-ChildItem -Path "$Path\*.txt" -Recurse
 ForEach ($File in $Files)
 {
     If ($File.Name -like 'lang_*.txt')
@@ -59,3 +59,17 @@ ForEach ($File in $Files)
         [System.IO.File]::WriteAllBytes($NewFile, $compressedData)
     }
 }
+
+$TempHeader = (New-TemporaryFile).FullName
+'#pragma once' | Out-File $TempHeader -Force -Encoding utf8
+'#include <string_view>' | Out-File $TempHeader -Encoding utf8 -Append
+$Files | Where-Object Name -like 'lang_*.txt' | Get-Content | 
+    ForEach-Object { $_ -replace '=.*','' } |
+    Sort-Object -Unique | 
+    ForEach { "constexpr std::wstring_view $_ = L""$_"";" } |
+    Out-File $TempHeader -Encoding utf8 -Append
+If ((Get-FileHash "$Path\LangStrings.h").Hash -ne (Get-FileHash $TempHeader).Hash)
+{
+    Copy-Item -LiteralPath $TempHeader "$Path\LangStrings.h" -Force
+}
+Remove-Item -LiteralPath $TempHeader -Force

@@ -24,6 +24,7 @@
 #include "BlockingQueue.h"
 #include "Options.h"
 #include "GlobalHelpers.h"
+#include "TreeListControl.h"
 
 #include <unordered_map>
 #include <vector>
@@ -31,6 +32,7 @@
 class CItem;
 class CItemDupe;
 class CItemTop;
+class CItemSearch;
 
 //
 // The treemap colors as calculated in CDirStatDoc::SetExtensionColors()
@@ -112,6 +114,7 @@ protected:
     CItem* GetZoomItem() const;
     CItemDupe* GetRootItemDupe() const;
     CItemTop* GetRootItemTop() const;
+    CItemSearch* GetRootItemSearch() const;
     bool IsZoomed() const;
 
     void SetHighlightExtension(const std::wstring& ext);
@@ -146,6 +149,7 @@ protected:
     static bool FileTreeHasFocus();
     static bool DupeListHasFocus();
     static bool TopListHasFocus();
+    static bool SearchListHasFocus();
     static std::vector<CItem*> GetAllSelected();
     static CTreeListControl* GetFocusControl();
 
@@ -158,6 +162,7 @@ protected:
     CItem* m_RootItem = nullptr; // The very root item
     CItemDupe* m_RootItemDupe = nullptr; // The very root dupe item
     CItemTop* m_RootItemTop = nullptr; // The very root top item
+    CItemSearch* m_RootItemSearch = nullptr; // The very root search item
     std::wstring m_HighlightExtension; // Currently highlighted extension
     CItem* m_ZoomItem = nullptr;   // Current "zoom root"
 
@@ -195,6 +200,7 @@ protected:
     afx_msg void OnCleanupDeleteToBin();
     afx_msg void OnCleanupDelete();
     afx_msg void OnCleanupEmptyFolder();
+    afx_msg void OnSearch();
     afx_msg void OnUpdateUserDefinedCleanup(CCmdUI* pCmdUI);
     afx_msg void OnUserDefinedCleanup(UINT id);
     afx_msg void OnTreeMapSelectParent();

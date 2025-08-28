@@ -200,7 +200,7 @@
       </Command>
     </CustomBuildStep>
     <PreBuildEvent>
-      <Command>POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(ProjectDir)Build\Compress Strings.ps1" -Path "$(ProjectDir)res\*.txt"</Command>
+      <Command>POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(ProjectDir)Build\Compress Strings.ps1" -Path "$(ProjectDir)res"</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -238,7 +238,7 @@
       <Profile>false</Profile>
     </Link>
     <PreBuildEvent>
-      <Command>POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(ProjectDir)Build\Compress Strings.ps1" -Path "$(ProjectDir)res\*.txt"</Command>
+      <Command>POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(ProjectDir)Build\Compress Strings.ps1" -Path "$(ProjectDir)res"</Command>
     </PreBuildEvent>
     <Manifest>
       <AdditionalManifestFiles>res\windirstat.manifest</AdditionalManifestFiles>
@@ -283,7 +283,7 @@
       <Profile>false</Profile>
     </Link>
     <PreBuildEvent>
-      <Command>POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(ProjectDir)Build\Compress Strings.ps1" -Path "$(ProjectDir)res\*.txt"</Command>
+      <Command>POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(ProjectDir)Build\Compress Strings.ps1" -Path "$(ProjectDir)res"</Command>
     </PreBuildEvent>
     <Manifest>
       <AdditionalManifestFiles>res\windirstat.manifest</AdditionalManifestFiles>
@@ -347,7 +347,7 @@
       </Command>
     </CustomBuildStep>
     <PreBuildEvent>
-      <Command>POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(ProjectDir)Build\Compress Strings.ps1" -Path "$(ProjectDir)res\*.txt"</Command>
+      <Command>POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(ProjectDir)Build\Compress Strings.ps1" -Path "$(ProjectDir)res"</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
@@ -458,7 +458,7 @@
       </Command>
     </CustomBuildStep>
     <PreBuildEvent>
-      <Command>POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(ProjectDir)Build\Compress Strings.ps1" -Path "$(ProjectDir)res\*.txt"</Command>
+      <Command>POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(ProjectDir)Build\Compress Strings.ps1" -Path "$(ProjectDir)res"</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
@@ -514,7 +514,7 @@
       </Command>
     </CustomBuildStep>
     <PreBuildEvent>
-      <Command>POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(ProjectDir)Build\Compress Strings.ps1" -Path "$(ProjectDir)res\*.txt"</Command>
+      <Command>POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(ProjectDir)Build\Compress Strings.ps1" -Path "$(ProjectDir)res"</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ImportGroup Label="PropertySheets">
@@ -533,11 +533,16 @@
     <ClInclude Include="Controls\TreeListControl.h" />
     <ClInclude Include="Controls\TreeMap.h" />
     <ClInclude Include="Controls\XYSlider.h" />
+    <ClInclude Include="Controls\FileSearchControl.h" />
+    <ClInclude Include="Views\FileSearchView.h" />
     <ClInclude Include="Finder.h" />
     <ClInclude Include="FinderNtfs.h" />
+    <ClInclude Include="ItemSearch.h" />
     <ClInclude Include="ItemTop.h" />
     <ClInclude Include="OleFilterOverride.h" />
     <ClInclude Include="Pages\PageFiltering.h" />
+    <ClInclude Include="res\LangStrings.h" />
+    <ClInclude Include="Dialogs\SearchDlg.h" />
     <ClInclude Include="SmartPointer.h" />
     <ClInclude Include="Tracer.h" />
     <ClInclude Include="version.h" />
@@ -589,6 +594,8 @@
     <ClCompile Include="CsvLoader.cpp" />
     <ClCompile Include="DirStatDoc.cpp">
     </ClCompile>
+    <ClCompile Include="Views\FileSearchView.cpp" />
+    <ClCompile Include="Controls\FileSearchControl.cpp" />
     <ClCompile Include="FinderBasic.cpp" />
     <ClCompile Include="FinderNtfs.cpp" />
     <ClCompile Include="GlobalHelpers.cpp">
@@ -596,6 +603,7 @@
     <ClCompile Include="Item.cpp">
     </ClCompile>
     <ClCompile Include="ItemDupe.cpp" />
+    <ClCompile Include="ItemSearch.cpp" />
     <ClCompile Include="ItemTop.cpp" />
     <ClCompile Include="Layout.cpp">
     </ClCompile>
@@ -617,6 +625,7 @@
     <ClCompile Include="Pages\PageTreeMap.cpp">
     </ClCompile>
     <ClCompile Include="Property.cpp" />
+    <ClCompile Include="Dialogs\SearchDlg.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">Create</PrecompiledHeader>
@@ -678,6 +687,7 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\toolbar\IDB_FILTER.bmp" />
+    <Image Include="res\toolbar\IDB_SEARCH.bmp" />
     <Image Include="res\WinDirStat.ico" />
     <Image Include="res\nodes\IDI_EMPTY.ico" />
     <Image Include="res\nodes\IDI_FREE_SPACE.ico" />
