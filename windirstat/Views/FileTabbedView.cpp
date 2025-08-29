@@ -47,6 +47,7 @@ int CFileTabbedView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
     m_FileSearchViewIndex = AddView(RUNTIME_CLASS(CFileSearchView), Localization::Lookup(IDS_SEARCH_RESULTS).c_str(), CHAR_MAX);
     m_FileSearchView = DYNAMIC_DOWNCAST(CFileSearchView, GetTabControl().GetTabWnd(m_FileSearchViewIndex));
     GetTabControl().ModifyTabStyle(CMFCTabCtrl::STYLE_3D_ONENOTE);
+    GetTabControl().EnableTabSwap(FALSE);
 
     return 0;
 }
