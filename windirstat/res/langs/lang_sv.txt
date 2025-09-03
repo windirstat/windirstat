@@ -55,6 +55,7 @@ IDS_DUPLICATES_WARNING=Dubblettsökaren har upptäckt en fil som är synkroniser
 IDS_EDIT_COPY_CLIPBOARD=Kopiera den valda sökvägen till urklipp.\nKopiera sökväg
 IDS_EMPTY_FOLDER_WARNINGs=Är du säker på att du vill ta bort alla filer i {}?
 IDS_EMPTYRECYCLEBIN=Töm papp&erskorgen
+IDS_ENABLEFASTSCAN_QUESTION=Körs för närvarande med förhöjda privilegier.\n\nVill du aktivera den förbättrade skanningsmotorn för att öka skanningshastigheten och noggrannheten?
 IDS_EVELATION_QUESTION=Vill du köra WinDirStat med förhöjda behörigheter för att förbättra skanningshastighet och noggrannhet?
 IDS_EXPAND=E&xpandera
 IDS_EXTENSION_MISSING=Inget filnamnstillägg

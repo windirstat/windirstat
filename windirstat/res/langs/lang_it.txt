@@ -55,6 +55,7 @@ IDS_DUPLICATES_WARNING=Il rilevatore di duplicati ha rilevato un file sincronizz
 IDS_EDIT_COPY_CLIPBOARD=Copia il percorso selezionato nella clipboard.\nCopia percorso
 IDS_EMPTY_FOLDER_WARNINGs=Sei sicuro di voler eliminare tutti i file in {}?
 IDS_EMPTYRECYCLEBIN=&Svuota Cestino
+IDS_ENABLEFASTSCAN_QUESTION=Attualmente in esecuzione con privilegi elevati.\n\nSi desidera abilitare il motore di scansione avanzato per migliorare la velocità e la precisione della scansione?
 IDS_EVELATION_QUESTION=Vuoi eseguire WinDirStat con privilegi elevati per migliorare la velocità e l’accuratezza della scansione?
 IDS_EXPAND=E&spandi
 IDS_EXTENSION_MISSING=Senza Estensione

@@ -55,6 +55,7 @@ IDS_DUPLICATES_WARNING=Der Doppelscanner hat eine Datei erkannt, die mit der Clo
 IDS_EDIT_COPY_CLIPBOARD=Kopiert den Pfad des markierten Elements in die Zwischenablage.\nPfad kopieren
 IDS_EMPTY_FOLDER_WARNINGs=Sind Sie sicher, dass Sie alle Dateien in {} löschen möchten?
 IDS_EMPTYRECYCLEBIN=&Papierkorb leeren
+IDS_ENABLEFASTSCAN_QUESTION=Wird gerade mit erhöhten Rechten ausgeführt.\n\nMöchten Sie die verbesserte Scan-Engine aktivieren, um die Scangeschwindigkeit und -genauigkeit zu erhöhen?
 IDS_EVELATION_QUESTION=Möchten Sie WinDirStat mit erhöhten Rechten ausführen, um die Scan-Geschwindigkeit und Genauigkeit zu steigern?
 IDS_EXPAND=E&rweitern
 IDS_EXTENSION_MISSING=Ohne Dateityp
