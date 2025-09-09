@@ -55,6 +55,7 @@ IDS_DUPLICATES_WARNING=Skener duplikátů detekoval soubor, který je synchroniz
 IDS_EDIT_COPY=Zkopíruje vybranou cestu do schránky.\nKopírovat cestu
 IDS_EMPTY_FOLDER_WARNINGs=Opravdu chcete smazat všechny soubory ve složce {}?
 IDS_EMPTYRECYCLEBIN=&Vysypat koš
+IDS_ENABLEFASTSCAN_QUESTION=V současné době běží s oprávněními správce.\n\nChcete povolit vylepšený skenovací engine pro zvýšení rychlosti a přesnosti skenování?
 IDS_EVELATION_QUESTION=Chcete spustit WinDirStat s oprávněními správce pro zvýšení rychlosti skenování a přesnosti?
 IDS_EXPAND=&Rozbalit
 IDS_EXTENSION_MISSING=Bez přípony

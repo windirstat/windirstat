@@ -58,6 +58,7 @@ constexpr std::wstring_view IDS_EDIT_COPY = L"IDS_EDIT_COPY";
 constexpr std::wstring_view IDS_EDIT_COPY_CLIPBOARD = L"IDS_EDIT_COPY_CLIPBOARD";
 constexpr std::wstring_view IDS_EMPTY_FOLDER_WARNINGs = L"IDS_EMPTY_FOLDER_WARNINGs";
 constexpr std::wstring_view IDS_EMPTYRECYCLEBIN = L"IDS_EMPTYRECYCLEBIN";
+constexpr std::wstring_view IDS_ENABLEFASTSCAN_QUESTION = L"IDS_ENABLEFASTSCAN_QUESTION";
 constexpr std::wstring_view IDS_EVELATION_QUESTION = L"IDS_EVELATION_QUESTION";
 constexpr std::wstring_view IDS_EXPAND = L"IDS_EXPAND";
 constexpr std::wstring_view IDS_EXTENSION_MISSING = L"IDS_EXTENSION_MISSING";

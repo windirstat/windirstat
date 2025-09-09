@@ -346,6 +346,14 @@ BOOL CDirStatApp::InitInstance()
         }
     }
 
+    // Prompt user to enable enhanced scanning engine if it is disabled and running in elevated privileges
+    if(IsElevationActive()) {
+        if (COptions::UseFastScanEngine == false) {
+            COptions::UseFastScanEngine = (MessageBox(m_pMainWnd->GetSafeHwnd(), Localization::Lookup(IDS_ENABLEFASTSCAN_QUESTION).c_str(),
+                Localization::Lookup(IDS_APP_TITLE).c_str(), MB_YESNO | MB_ICONQUESTION) == IDYES);
+            COptions::UseFastScanEngine.WritePersistedProperty();
+        }
+    }
 
     // Allow user to elevate if desired
     if (IsElevationAvailable())
@@ -355,6 +363,10 @@ BOOL CDirStatApp::InitInstance()
         {
             RunElevated(m_lpCmdLine);
             return FALSE;
+        }
+        else
+        {
+            COptions::UseFastScanEngine = false;
         }
     }
 

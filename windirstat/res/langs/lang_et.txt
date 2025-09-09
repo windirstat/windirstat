@@ -55,6 +55,7 @@ IDS_DUPLICATES_WARNING=Duplikaatide skanner tuvastas faili, mis on pilve sünkro
 IDS_EDIT_COPY_CLIPBOARD=Kopeeri see märgitud tee Lõikelauale.\nCopy Path
 IDS_EMPTY_FOLDER_WARNINGs=Kas olete kindel, et soovite kõik failid kaustas {} kustutada?
 IDS_EMPTYRECYCLEBIN=&Tühi Prügikast
+IDS_ENABLEFASTSCAN_QUESTION=Praegu käivitub kõrgendatud privileegidega.\n\nKas soovite lubada täiustatud skannimismootorit skannimiskiiruse ja täpsuse suurendamiseks?
 IDS_EVELATION_QUESTION=Kas soovite WinDirStat‑i käivitada tõstetud õigustega, et parandada skannimise kiirust ja täpsust?
 IDS_EXPAND=L&aiendama
 IDS_EXTENSION_MISSING=Ei Laiend
