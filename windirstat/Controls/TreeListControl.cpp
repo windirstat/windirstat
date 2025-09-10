@@ -688,6 +688,7 @@ void CTreeListControl::ExpandItem(const int i, const bool scroll)
     SetRedraw(FALSE);
     LockWindowUpdate();
     int maxwidth = GetSubItemWidth(item, 0);
+    const int padding = 3;
     const auto childItems = item->GetTreeListChildCount();
     for (int c = 0; c < childItems; c++)
     {
@@ -695,21 +696,22 @@ void CTreeListControl::ExpandItem(const int i, const bool scroll)
         InsertItem(i + 1 + c, child);
 
         // The calculation of item width is very expensive for
-        // very large lists so limit calculation based on the
-        // first few bunch of visible items
-        if (COptions::AutomaticallyResizeColumns && scroll && c < 50)
+        // very large lists so limit calculation based on 50%
+        // of the LargeFileCount, to ensure all items displayed
+        // on the large file list have the correct column width
+        // to show the entire file path
+        if (COptions::AutomaticallyResizeColumns && scroll && c < 110)
         {
-            maxwidth = max(maxwidth, GetSubItemWidth(child, 0));
+            maxwidth = max(maxwidth, GetSubItemWidth(child, 0) + padding);
         }
     }
     if (childItems > 0) SortItems();
     UnlockWindowUpdate();
     SetRedraw(TRUE);
 
-    const int padding = 3;
     if (scroll && GetColumnWidth(0) < maxwidth)
     {
-        SetColumnWidth(0, maxwidth + padding);
+        SetColumnWidth(0, maxwidth);
     }
 
     item->SetExpanded(true);
