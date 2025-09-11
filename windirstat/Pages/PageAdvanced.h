@@ -55,7 +55,7 @@ protected:
     CStringW m_LargestFileCount;
 
     DECLARE_MESSAGE_MAP()
-    void OnEnChangeLargestFileCount();
+    afx_msg void OnEnChangeLargestFileCount();
     afx_msg void OnSettingChanged();
 public:
     afx_msg void OnBnClickedResetPreferences();
