@@ -121,8 +121,8 @@ Setting<std::vector<int>> COptions::ExtViewColumnOrder(OptionsExtView, L"ExtView
 Setting<std::vector<int>> COptions::ExtViewColumnWidths(OptionsExtView, L"ExtViewColumnWidths");
 Setting<std::vector<int>> COptions::TopViewColumnOrder(OptionsTopView, L"TopViewColumnOrder");
 Setting<std::vector<int>> COptions::TopViewColumnWidths(OptionsTopView, L"TopViewColumnWidths");
-Setting<std::vector<int>> COptions::SearchViewColumnOrder(OptionsSearch, L"TopViewColumnOrder");
-Setting<std::vector<int>> COptions::SearchViewColumnWidths(OptionsSearch, L"TopViewColumnWidths");
+Setting<std::vector<int>> COptions::SearchViewColumnOrder(OptionsSearch, L"SearchViewColumnOrder");
+Setting<std::vector<int>> COptions::SearchViewColumnWidths(OptionsSearch, L"SearchViewColumnWidths");
 Setting<std::vector<std::wstring>> COptions::SelectDrivesDrives(OptionsDriveSelect, L"SelectDrivesDrives");
 Setting<std::wstring> COptions::SearchTerm(OptionsSearch, L"SearchTerm");
 Setting<std::wstring> COptions::SelectDrivesFolder(OptionsDriveSelect, L"SelectDrivesFolder");
