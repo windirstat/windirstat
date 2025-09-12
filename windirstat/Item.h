@@ -55,6 +55,7 @@ enum ITEMTYPE : unsigned short
     IT_FILE       = 1 << 3,  // Regular file
     IT_FREESPACE  = 1 << 4,  // Pseudo File "<Free Space>"
     IT_UNKNOWN    = 1 << 5,  // Pseudo File "<Unknown>"
+    IT_HARDLINKS  = 1 << 6,  // Pseudo File "<Hard Links>"
     IT_ANY        = 0x00FF,  // Indicates any item type
     ITF_DONE      = 1 << 8,  // Indicates done processing
     ITF_ROOTITEM  = 1 << 9,  // Indicates root item
@@ -226,6 +227,8 @@ public:
     void UpwardSetDone();
     void UpwardSetUndone();
     CItem* FindRecyclerItem() const;
+    void CreateHardLinksItem();
+    CItem* FindHardLinksItem() const;
     void CreateFreeSpaceItem();
     CItem* FindFreeSpaceItem() const;
     void UpdateFreeSpaceItem();

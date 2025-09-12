@@ -1681,6 +1681,7 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
             {
                 item->CreateUnknownItem();
             }
+            item->CreateHardLinksItem();
         }
 
         // If new scan or closing, indicate done and exit early

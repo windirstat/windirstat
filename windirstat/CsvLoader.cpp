@@ -164,7 +164,7 @@ CItem* LoadResults(const std::wstring & path)
 
         // Determine how to store the path if it was the root or not
         const bool isRoot = (type & ITF_ROOTITEM);
-        const bool isInRoot = (type & IT_DRIVE) || (type & IT_UNKNOWN) || (type & IT_FREESPACE);
+        const bool isInRoot = (type & IT_DRIVE) || (type & IT_UNKNOWN) || (type & IT_FREESPACE) || (type & IT_HARDLINKS);
         const bool useFullPath = isRoot || isInRoot;
         LPWSTR lookupPath = fields[orderMap[FIELD_NAME]].data();
         LPWSTR displayName = useFullPath ? lookupPath : wcsrchr(lookupPath, L'\\');
@@ -226,7 +226,7 @@ bool SaveResults(const std::wstring& path, CItem * rootItem)
 
     // Vector to store all entries
     std::vector<const CItem*> items;
-    items.reserve(rootItem->GetItemsCount());
+    items.reserve(static_cast<size_t>(rootItem->GetItemsCount()));
 
     // Output all items to file
     std::stack<CItem*> queue({ rootItem });
@@ -284,7 +284,7 @@ bool SaveResults(const std::wstring& path, CItem * rootItem)
     for (const auto item : items)
     {
         // Output primary columns
-        const bool nonPathItem = item->IsType(IT_MYCOMPUTER | IT_UNKNOWN | IT_FREESPACE);
+        const bool nonPathItem = item->IsType(IT_MYCOMPUTER | IT_UNKNOWN | IT_FREESPACE | IT_HARDLINKS);
         outf << std::format("{},{},{},{},{},0x{:08X},{},0x{:04X}",
             QuoteAndConvert(nonPathItem ? item->GetName() : item->GetPath()),
             item->GetFilesCount(),

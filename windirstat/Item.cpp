@@ -195,35 +195,35 @@ std::wstring CItem::GetText(const int subitem) const
         return FormatDouble(GetFraction() * 100) + L"%";
 
     case COL_ITEMS:
-        if (!IsType(IT_FILE | IT_FREESPACE | IT_UNKNOWN))
+        if (!IsType(IT_FILE | IT_FREESPACE | IT_UNKNOWN | IT_HARDLINKS))
         {
             return FormatCount(GetItemsCount());
         }
         break;
 
     case COL_FILES:
-        if (!IsType(IT_FILE | IT_FREESPACE | IT_UNKNOWN))
+        if (!IsType(IT_FILE | IT_FREESPACE | IT_UNKNOWN | IT_HARDLINKS))
         {
             return FormatCount(GetFilesCount());
         }
         break;
 
     case COL_FOLDERS:
-        if (!IsType(IT_FILE | IT_FREESPACE | IT_UNKNOWN))
+        if (!IsType(IT_FILE | IT_FREESPACE | IT_UNKNOWN | IT_HARDLINKS))
         {
             return FormatCount(GetFoldersCount());
         }
         break;
 
     case COL_LASTCHANGE:
-        if (!IsType(IT_FREESPACE | IT_UNKNOWN))
+        if (!IsType(IT_FREESPACE | IT_UNKNOWN | IT_HARDLINKS))
         {
             return FormatFileTime(m_LastChange);
         }
         break;
 
     case COL_ATTRIBUTES:
-        if (!IsType(IT_FREESPACE | IT_UNKNOWN | IT_MYCOMPUTER))
+        if (!IsType(IT_FREESPACE | IT_UNKNOWN | IT_MYCOMPUTER | IT_HARDLINKS))
         {
             return FormatAttributes(GetAttributes());
         }
@@ -1189,6 +1189,30 @@ CItem* CItem::FindRecyclerItem() const
         }
     }
 
+    return nullptr;
+}
+
+void CItem::CreateHardLinksItem()
+{
+    ASSERT(IsType(IT_DRIVE));
+
+    UpwardSetUndone();
+
+    const auto hardlinks = new CItem(IT_HARDLINKS, Localization::Lookup(IDS_HARDLINKS_ITEM));
+    hardlinks->SetDone();
+
+    AddChild(hardlinks);
+}
+
+CItem* CItem::FindHardLinksItem() const
+{
+    for (const auto& child : GetChildren())
+    {
+        if (child->IsType(IT_HARDLINKS))
+        {
+            return child;
+        }
+    }
     return nullptr;
 }
 
