@@ -55,6 +55,7 @@ IDS_DUPLICATES_WARNING=A duplikációs szkenner egy fájlt észlelt, amely a fel
 IDS_EDIT_COPY_CLIPBOARD=Kijelölt útvonal másolása a vágólapra.\nÚtvonal másolása
 IDS_EMPTY_FOLDER_WARNINGs=Biztosan törölni szeretné az összes fájlt a(z) {} mappában?
 IDS_EMPTYRECYCLEBIN=Lomtár ürítés&e
+IDS_ENABLEFASTSCAN_QUESTION=Jelenleg emelt szintű jogosultságokkal fut.\n\nSzeretné engedélyezni a továbbfejlesztett szkennelőmotort a szkennelési sebesség és pontosság növelése érdekében?
 IDS_EVELATION_QUESTION=Szeretné a WinDirStat‑ot emelt jogosultságokkal futtatni a beolvasási sebesség és pontosság javítása érdekében?
 IDS_EXPAND=K&ibont
 IDS_EXTENSION_MISSING=Nem Kiterjesztés

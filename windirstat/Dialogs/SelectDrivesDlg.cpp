@@ -450,6 +450,9 @@ BOOL CSelectDrivesDlg::OnInitDialog()
     m_Layout.AddControl(IDC_FAST_SCAN_CHECKBOX, 0, 1, 1, 0);
     m_Layout.AddControl(IDC_SCAN_DUPLICATES, 0, 1, 1, 0);
 
+    // Disable the Fast Scan checkbox if elevation is not available
+    GetDlgItem(IDC_FAST_SCAN_CHECKBOX)->EnableWindow(IsElevationActive() || IsElevationAvailable());
+
     m_Layout.OnInitDialog(true);
 
     m_List.ModifyStyle(0, LVS_SHOWSELALWAYS);
@@ -577,6 +580,24 @@ void CSelectDrivesDlg::UpdateButtons()
 {
     UpdateData();
     bool enableOk = false;
+
+    // Prompt user to elevate if the Fast Scan option is checked in non-elevated session
+    if (m_UseFastScan && !IsElevationActive())
+    {
+        m_UseFastScan = false;
+        if (MessageBox(Localization::Lookup(IDS_EVELATION_QUESTION).c_str(),
+            Localization::Lookup(IDS_APP_TITLE).c_str(), MB_YESNO | MB_ICONQUESTION) == IDYES)
+        {
+            COptions::UseFastScanEngine = true;
+            RunElevated(CDirStatDoc::GetDocument()->GetPathName().GetString());
+        }
+        else
+        {
+            // If the user declines, uncheck the fast scan box to revert the state.
+            CheckDlgButton(IDC_FAST_SCAN_CHECKBOX, BST_UNCHECKED);
+        }
+    }
+
     switch (m_Radio)
     {
     case RADIO_TARGET_DRIVES_ALL:

@@ -55,6 +55,7 @@ IDS_DUPLICATES_WARNING=重複スキャナーがクラウドに同期されたフ
 IDS_EDIT_COPY_CLIPBOARD=選択したパスをクリップボードにコピーします。\nパスをコピー
 IDS_EMPTY_FOLDER_WARNINGs={} 内のすべてのファイルを削除してもよろしいですか？
 IDS_EMPTYRECYCLEBIN=ごみ箱を空にする(&E)
+IDS_ENABLEFASTSCAN_QUESTION=現在、管理者権限で実行中です。\n\nスキャン速度と精度を向上させるため、拡張スキャンエンジンを有効にしますか？
 IDS_EVELATION_QUESTION=WinDirStat を特権昇格で実行して、スキャンの速度と精度を向上させますか？
 IDS_EXPAND=展開(&X)
 IDS_EXTENSION_MISSING=拡張子なし

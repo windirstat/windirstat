@@ -55,6 +55,7 @@ IDS_DUPLICATES_WARNING=The duplicate scanner has detected a file that is synced 
 IDS_EDIT_COPY_CLIPBOARD=Copy the selected path into the clipboard.\nCopy Path
 IDS_EMPTY_FOLDER_WARNINGs=Are you sure you want to delete all files in {}?
 IDS_EMPTYRECYCLEBIN=&Empty Recycle Bin
+IDS_ENABLEFASTSCAN_QUESTION=Currently running with elevated privileges.\n\nWould you like to enable the enhanced scanning engine to enhance scanning speed and accuracy?
 IDS_EVELATION_QUESTION=Do you want to run WinDirStat with elevated privileges to enhance scanning speed and accuracy?
 IDS_EXPAND=E&xpand
 IDS_EXTENSION_MISSING=No Extension

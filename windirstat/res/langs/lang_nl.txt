@@ -55,6 +55,7 @@ IDS_DUPLICATES_WARNING=De duplicatiescanner heeft een bestand gedetecteerd dat i
 IDS_EDIT_COPY_CLIPBOARD=Geselecteerde pad kopiëren naar het klembord.\nPad kopiëren
 IDS_EMPTY_FOLDER_WARNINGs=Weet u zeker dat u alle bestanden in {} wilt verwijderen?
 IDS_EMPTYRECYCLEBIN=&Prullenbak leegmaken
+IDS_ENABLEFASTSCAN_QUESTION=Wordt momenteel met verhoogde rechten uitgevoerd.\n\nWilt u de verbeterde scan-engine inschakelen om de scansnelheid en -nauwkeurigheid te verhogen?
 IDS_EVELATION_QUESTION=Wilt u WinDirStat uitvoeren met verhoogde bevoegdheden om de scansnelheid en nauwkeurigheid te verbeteren?
 IDS_EXPAND=&Uitvouwen
 IDS_EXTENSION_MISSING=Zonder Extensie

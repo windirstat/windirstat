@@ -488,6 +488,16 @@ bool IsElevationAvailable()
     return elevationType == TokenElevationTypeLimited;
 }
 
+void RunElevated(const std::wstring& cmdLine)
+{
+    // For the configuration to launch, include the parent process so we can
+    // terminate it once launched from the child process
+    PersistedSetting::WritePersistedProperties(); // write settings to disk before before elevation
+    const std::wstring launchConfig = std::format(LR"(/ParentPid:{} "{}")",
+        GetCurrentProcessId(), cmdLine);
+    ShellExecuteWrapper(GetAppFileName(), launchConfig, L"runas");
+}
+
 bool EnableReadPrivileges()
 {
     // Open a connection to the currently running process token and request

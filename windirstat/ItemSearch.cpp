@@ -52,7 +52,8 @@ std::wstring CItemSearch::GetText(const int subitem) const
 {
     // Root node
     static std::wstring tops = Localization::Lookup(IDS_SEARCH_RESULTS);
-    if (GetParent() == nullptr) return subitem == COL_ITEMSEARCH_NAME ? tops : std::wstring{};
+    if (GetParent() == nullptr) return subitem == COL_ITEMSEARCH_NAME ?
+        std::format(L"{} ({})", tops, m_Children.size()) : std::wstring{};
 
     // Parent hash nodes
     if (m_Item == nullptr) return {};

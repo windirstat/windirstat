@@ -55,6 +55,7 @@ IDS_DUPLICATES_WARNING=Kaksoiskanneri on havainnut tiedoston, joka on synkronoit
 IDS_EDIT_COPY_CLIPBOARD=Kopioi valitun polun leikepöydälle.\nKopioi polku
 IDS_EMPTY_FOLDER_WARNINGs=Oletko varma, että haluat poistaa kaikki tiedostot kohteessa {}?
 IDS_EMPTYRECYCLEBIN=&Tyhjennä roskakori
+IDS_ENABLEFASTSCAN_QUESTION=Käynnissä korotetuilla oikeuksilla.\n\nHaluatko ottaa käyttöön parannetun skannausmoottorin skannausnopeuden ja tarkkuuden parantamiseksi?
 IDS_EVELATION_QUESTION=Haluatko suorittaa WinDirStat‑ohjelman korotetuilla oikeuksilla skannauksen nopeuden ja tarkkuuden parantamiseksi?
 IDS_EXPAND=&Laajenna
 IDS_EXTENSION_MISSING=Ei Pääte

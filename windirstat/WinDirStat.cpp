@@ -346,6 +346,14 @@ BOOL CDirStatApp::InitInstance()
         }
     }
 
+    // Prompt user to enable enhanced scanning engine if it is disabled and running in elevated privileges
+    if(IsElevationActive()) {
+        if (COptions::UseFastScanEngine == false) {
+            COptions::UseFastScanEngine = (MessageBox(m_pMainWnd->GetSafeHwnd(), Localization::Lookup(IDS_ENABLEFASTSCAN_QUESTION).c_str(),
+                Localization::Lookup(IDS_APP_TITLE).c_str(), MB_YESNO | MB_ICONQUESTION) == IDYES);
+            COptions::UseFastScanEngine.WritePersistedProperty();
+        }
+    }
 
     // Allow user to elevate if desired
     if (IsElevationAvailable())
@@ -353,10 +361,12 @@ BOOL CDirStatApp::InitInstance()
         if (MessageBox(m_pMainWnd->GetSafeHwnd(), Localization::Lookup(IDS_EVELATION_QUESTION).c_str(),
             Localization::Lookup(IDS_APP_TITLE).c_str(), MB_YESNO | MB_ICONQUESTION) == IDYES)
         {
-            const std::wstring launchConfig = std::format(LR"(/ParentPid:{} "{}")",
-                GetCurrentProcessId(), m_lpCmdLine);
-            ShellExecuteWrapper(GetAppFileName(), launchConfig, L"runas");
+            RunElevated(m_lpCmdLine);
             return FALSE;
+        }
+        else
+        {
+            COptions::UseFastScanEngine = false;
         }
     }
 
@@ -395,11 +405,7 @@ void CDirStatApp::OnUpdateRunElevated(CCmdUI* pCmdUI)
 
 void CDirStatApp::OnRunElevated()
 {
-    // For the configuration to launch, include the parent process so we can
-    // terminate it once launched from the child process
-    const std::wstring launchConfig = std::format(LR"(/ParentPid:{} "{}")",
-        GetCurrentProcessId(), CDirStatDoc::GetDocument()->GetPathName().GetString());
-    ShellExecuteWrapper(GetAppFileName(), launchConfig, L"runas");
+    RunElevated(CDirStatDoc::GetDocument()->GetPathName().GetString());
 }
 
 void CDirStatApp::OnFilter()

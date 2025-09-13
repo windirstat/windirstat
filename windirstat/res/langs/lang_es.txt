@@ -55,6 +55,7 @@ IDS_DUPLICATES_WARNING=El escáner de duplicados ha detectado un archivo que est
 IDS_EDIT_COPY_CLIPBOARD=Copia la ruta de acceso Seleccionado al Portapapeles (Clipboard).\nCopiar ruta de acceso
 IDS_EMPTY_FOLDER_WARNINGs=¿Estás seguro de que deseas eliminar todos los archivos en {}?
 IDS_EMPTYRECYCLEBIN=&Vaciar la Papelera de Reciclaje
+IDS_ENABLEFASTSCAN_QUESTION=Actualmente ejecutándose con privilegios elevados.\n\n¿Le gustaría habilitar el motor de escaneo mejorado para aumentar la velocidad y la precisión del escaneo?
 IDS_EVELATION_QUESTION=¿Desea ejecutar WinDirStat con privilegios elevados para mejorar la velocidad y precisión del escaneo?
 IDS_EXPAND=E&xpandir
 IDS_EXTENSION_MISSING=Sin Extensión

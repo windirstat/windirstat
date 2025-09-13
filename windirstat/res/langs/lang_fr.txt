@@ -55,6 +55,7 @@ IDS_DUPLICATES_WARNING=L'analyseur de doublons a détecté un fichier synchronis
 IDS_EDIT_COPY_CLIPBOARD=Copie le chemin sélectionné dans le presse-papier.\nCopier le chemin
 IDS_EMPTY_FOLDER_WARNINGs=Êtes-vous sûr de vouloir supprimer tous les fichiers dans {} ?
 IDS_EMPTYRECYCLEBIN=&Vider la corbeille
+IDS_ENABLEFASTSCAN_QUESTION=Exécution en cours avec des privilèges élevés.\n\nVoulez-vous activer le moteur d'analyse amélioré pour améliorer la vitesse et la précision de l'analyse ?
 IDS_EVELATION_QUESTION=Souhaitez‑vous exécuter WinDirStat avec des privilèges élevés pour améliorer la vitesse et l’exactitude de l’analyse ?
 IDS_EXPAND=&Développer
 IDS_EXTENSION_MISSING=Sans Extension

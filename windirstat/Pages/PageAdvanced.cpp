@@ -65,6 +65,7 @@ BEGIN_MESSAGE_MAP(CPageAdvanced, CPropertyPageEx)
     ON_BN_CLICKED(IDC_EXCLUDE_HIDDEN_FILE, OnSettingChanged)
     ON_BN_CLICKED(IDC_EXCLUDE_PROTECTED_FILE, OnSettingChanged)
     ON_BN_CLICKED(IDC_RESET_PREFERENCES, &CPageAdvanced::OnBnClickedResetPreferences)
+    ON_EN_CHANGE(IDC_LARGEST_FILE_COUNT, &CPageAdvanced::OnEnChangeLargestFileCount)
 END_MESSAGE_MAP()
 
 BOOL CPageAdvanced::OnInitDialog()
@@ -138,4 +139,23 @@ void CPageAdvanced::OnSettingChanged()
 void CPageAdvanced::OnBnClickedResetPreferences()
 {
     CDirStatApp::Get()->RestartApplication(true);
+}
+
+void CPageAdvanced::OnEnChangeLargestFileCount()
+{
+    // This function limits the value in the edit box to 10000 by
+    // checking the input and reverting it if it's too high
+    // or 0 if it is empty.
+    UpdateData(TRUE);
+
+    if (m_LargestFileCount.IsEmpty())
+    {
+        m_LargestFileCount = _T("0");
+    }
+    else if (_ttoi(m_LargestFileCount) > 10000)
+    {
+        m_LargestFileCount = _T("10000");
+    }
+
+    UpdateData(FALSE);
 }
