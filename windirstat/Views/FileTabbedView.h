@@ -35,6 +35,10 @@ public:
     CFileTreeView* GetFileTreeView() const { return m_FileTreeView; }
     CFileDupeView* GetFileDupeView() const { return m_FileDupeView; }
     CFileSearchView* GetFileSearchView() const { return m_FileSearchView; }
+    void SetActiveFileTreeView() { SetActiveView(m_FileTreeViewIndex); }
+    void SetActiveTopView() { SetActiveView(m_FileTopViewIndex); }
+    void SetActiveDupeView() { SetActiveView(m_FileDupeViewIndex); }
+    void SetActiveSearchView() { SetActiveView(m_FileSearchViewIndex); }
 
 protected:
     CFileTabbedView() = default;
