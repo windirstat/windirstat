@@ -152,39 +152,53 @@ void CSortingListControl::InsertListItem(const int i, CSortingListItem* item)
     VERIFY(i == CListCtrl::InsertItem(&lvitem));
 }
 
+/*
+ * Sorts the list control's items and updates the header to display the correct sorting indicator.
+ * This method reorders the list control's items based on the current sorting column and direction.
+ * It then updates the header control by using native Windows header flags (HDF_SORTUP and HDF_SORTDOWN)
+ * to display a platform-consistent sorting arrow. This approach is superior to manually
+ * changing the header text with Unicode characters, which caused visual misalignment.
+ */
 void CSortingListControl::SortItems()
 {
+    // Reorder the list items based on the current sorting criteria using a lambda comparison function.
     VERIFY(CListCtrl::SortItems([](LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort) {
         const CSortingListItem* item1 = reinterpret_cast<CSortingListItem*>(lParam1);
         const CSortingListItem* item2 = reinterpret_cast<CSortingListItem*>(lParam2);
         const SSorting* sorting = reinterpret_cast<SSorting*>(lParamSort);
         return item1->CompareSort(item2, *sorting); }, reinterpret_cast<DWORD_PTR>(&m_Sorting)));
 
-    constexpr std::wstring_view sortUp = L"↑ ";
-    constexpr std::wstring_view sortDown = L"↓ ";
-
-    std::array<WCHAR, 260> text;
-    HDITEM hditem;
-    hditem.mask = HDI_TEXT;
-    hditem.cchTextMax = static_cast<int>(text.size());
+    CHeaderCtrl* pHeaderCtrl = GetHeaderCtrl();
     
-    if (m_IndicatedColumn != -1)
+    // Exit if the header control is unavailable, to prevent a null pointer crash.
+    if (pHeaderCtrl == nullptr)
     {
-        // Remove the sort indicator from the previously indicated column
-        hditem.pszText = text.data();
-        GetHeaderCtrl()->GetItem(m_IndicatedColumn, &hditem);
-        hditem.pszText = text.data() + sortUp.size();
-        GetHeaderCtrl()->SetItem(m_IndicatedColumn, &hditem);
+        return;
     }
 
-    // Copy the sort indicator to the beginning of the text buffer
-    std::wmemcpy(text.data(), m_Sorting.ascending1 ? sortUp.data() : sortDown.data(), sortUp.size());
+    HDITEM hditem;
+    hditem.mask = HDI_FORMAT;
 
-    // Append the column text after the sort indicator
-    hditem.pszText = text.data() + sortUp.size();
-    GetHeaderCtrl()->GetItem(m_Sorting.column1, &hditem);
-    hditem.pszText = text.data();
-    GetHeaderCtrl()->SetItem(m_Sorting.column1, &hditem);
+    // Remove the sort indicator from the previously sorted column if one exists.
+    if (m_IndicatedColumn != -1)
+    {
+        pHeaderCtrl->GetItem(m_IndicatedColumn, &hditem);
+        // Use a bitwise operation to clear both the UP and DOWN sort flags.
+        hditem.fmt &= ~(HDF_SORTUP | HDF_SORTDOWN);
+        pHeaderCtrl->SetItem(m_IndicatedColumn, &hditem);
+    }
+
+    // Retrieve the newly sorted column's current format flags.
+    pHeaderCtrl->GetItem(m_Sorting.column1, &hditem);
+    // Clear any existing sort flags to ensure a clean state before applying the new one.
+    hditem.fmt &= ~(HDF_SORTUP | HDF_SORTDOWN); 
+
+    // Apply the correct native sorting indicator based on the sort direction using a ternary operator.
+    hditem.fmt |= m_Sorting.ascending1 ? HDF_SORTUP : HDF_SORTDOWN;
+
+    pHeaderCtrl->SetItem(m_Sorting.column1, &hditem);
+
+    // Store the current sorted column's index to be cleared next time.
     m_IndicatedColumn = m_Sorting.column1;
 }
 
