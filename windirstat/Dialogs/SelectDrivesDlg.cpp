@@ -25,6 +25,7 @@
 
 #include "FinderBasic.h"
 #include "Localization.h"
+#include "MainFrame.h"
 
 namespace
 {
@@ -572,6 +573,10 @@ void CSelectDrivesDlg::OnOK()
     COptions::SelectDrivesFolder = std::wstring(m_FolderName);
     COptions::ScanForDuplicates = (FALSE != m_ScanDuplicates);
     COptions::UseFastScanEngine = (FALSE != m_UseFastScan);
+
+    // Switch focus to file tree view
+    const auto tabbedView = CMainFrame::Get()->GetFileTabbedView();
+    tabbedView->SetActiveFileTreeView();
 
     CDialogEx::OnOK();
 }

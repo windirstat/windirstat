@@ -364,6 +364,10 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
     ON_WM_SIZE()
     ON_WM_SYSCOLORCHANGE()
     ON_WM_TIMER()
+    ON_COMMAND(ID_VIEW_ALL_FILES, &CMainFrame::OnViewAllFiles)
+    ON_COMMAND(ID_VIEW_LARGEST_FILES, &CMainFrame::OnViewLargestFiles)
+    ON_COMMAND(ID_VIEW_DUPLICATE_FILES, &CMainFrame::OnViewDuplicateFiles)
+    ON_COMMAND(ID_VIEW_SEARCH_RESULTS, &CMainFrame::OnViewSearchResults)
 END_MESSAGE_MAP()
 
 constexpr auto ID_STATUSPANE_IDLE_INDEX = 0;

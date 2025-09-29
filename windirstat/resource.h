@@ -195,6 +195,10 @@
 #define ID_CLEANUP_EMPTY_FOLDER         33069
 #define ID_CLEANUP_HIBERNATE            33073
 #define ID_TREEMAP_LOGICAL_SIZE         33089
+#define ID_VIEW_ALL_FILES               33090
+#define ID_VIEW_LARGEST_FILES           33091
+#define ID_VIEW_DUPLICATE_FILES         33092
+#define ID_VIEW_SEARCH_RESULTS          33093
 #define IDS_AUTHOR_EMAIL                57345
 #define IDS_URL_WEBSITE                 57346
 #define IDS_URL_HELP                    57347
@@ -211,7 +215,7 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        57356
-#define _APS_NEXT_COMMAND_VALUE         33092
+#define _APS_NEXT_COMMAND_VALUE         33094
 #define _APS_NEXT_CONTROL_VALUE         1246
 #define _APS_NEXT_SYMED_VALUE           109
 #endif

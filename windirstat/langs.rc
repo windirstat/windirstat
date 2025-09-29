@@ -373,6 +373,24 @@ IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_sv.bin"
 
 
 /////////////////////////////////////////////////////////////////////////////
+// Turkish (Neutral) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_TRK)
+LANGUAGE LANG_TURKISH, SUBLANG_NEUTRAL
+#pragma code_page(1254)
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// RT_LANG
+//
+
+IDR_RT_LANG             RT_LANG                 "res\\langs\\lang_tr.bin"
+
+#endif    // Turkish (Neutral) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
 // Estonian (Neutral) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ETI)

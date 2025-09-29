@@ -233,6 +233,10 @@ protected:
     afx_msg void OnViewTreeMapUseLogical();
     afx_msg void OnUpdateViewShowFileTypes(CCmdUI* pCmdUI);
     afx_msg void OnViewShowFileTypes();
+    afx_msg void OnViewAllFiles() { GetFileTabbedView()->SetActiveFileTreeView(); }
+    afx_msg void OnViewLargestFiles() { GetFileTabbedView()->SetActiveTopView(); }
+    afx_msg void OnViewDuplicateFiles() { GetFileTabbedView()->SetActiveDupeView(); }
+    afx_msg void OnViewSearchResults() { GetFileTabbedView()->SetActiveSearchView(); }
     afx_msg void OnConfigure();
     afx_msg void OnDestroy();
     afx_msg LRESULT OnTaskButtonCreated(WPARAM, LPARAM);

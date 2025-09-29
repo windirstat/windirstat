@@ -109,7 +109,7 @@ void SearchDlg::OnBnClickedOk()
 
     // Switch focus to search results
     const auto tabbedView = CMainFrame::Get()->GetFileTabbedView();
-    tabbedView->SetActiveView(tabbedView->m_FileSearchViewIndex);
+    tabbedView->SetActiveSearchView();
 
     CDialogEx::OnOK();
 }
