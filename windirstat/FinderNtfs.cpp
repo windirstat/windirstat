@@ -361,7 +361,7 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
 
 bool FinderNtfs::FindNext()
 {
-    if (m_RecordIterator == m_ChildrenSet->end()) return false;;
+    if (m_RecordIterator == m_ChildrenSet->end()) return false;
     m_Index = m_RecordIterator->BaseRecord;
     m_CurrentRecord = &m_Master->m_BaseFileRecordMap[m_Index];
     m_CurrentRecordName = &(*m_RecordIterator);
