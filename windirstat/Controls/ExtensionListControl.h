@@ -44,7 +44,7 @@ protected:
     {
     public:
         CListItem(CExtensionListControl* list, const std::wstring & extension, const SExtensionRecord& r);
-        ~CListItem() = default;
+        ~CListItem() override = default;
 
         bool DrawSubItem(int subitem, CDC* pdc, CRect rc, UINT state, int* width, int* focusLeft) override;
         std::wstring GetText(int subitem) const override;

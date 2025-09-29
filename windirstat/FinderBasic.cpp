@@ -137,6 +137,20 @@ bool FinderBasic::FindNext()
                 m_CurrentInfo->AllocationSize.HighPart = static_cast<LONG>(highPart);
             }
         }
+
+        // Correct logical size
+        if (m_CurrentInfo->EndOfFile.QuadPart == 0 &&
+            m_CurrentInfo->AllocationSize.QuadPart != 0)
+        {
+            SmartPointer<HANDLE> handle(CloseHandle, CreateFile(GetFilePathLong().c_str(), FILE_READ_ATTRIBUTES,
+                FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr,
+                OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, nullptr));
+
+            if (handle != INVALID_HANDLE_VALUE)
+            {
+                GetFileSizeEx(handle, &m_CurrentInfo->EndOfFile);
+            }
+        }
     }
 
     m_Firstrun = false;

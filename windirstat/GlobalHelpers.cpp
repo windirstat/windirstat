@@ -425,7 +425,7 @@ std::wstring MyQueryDosDevice(const std::wstring & drive)
 bool IsSUBSTedDrive(const std::wstring & drive)
 {
     const std::wstring info = MyQueryDosDevice(drive);
-    return info.size() >= 4 && info.substr(0, 4) == L"\\??\\";
+    return info.starts_with(L"\\??\\");
 }
 
 const std::wstring & GetSpec_Bytes()

@@ -834,7 +834,7 @@ void CItem::SetReparseTag(const DWORD reparseType)
     else if (reparseType == IO_REPARSE_TAG_SYMLINK) SetType(ITF_SYMLINK);
     else if (reparseType == IO_REPARSE_TAG_MOUNT_POINT) SetType(ITF_MOUNTPNT);
     else if (reparseType == IO_REPARSE_TAG_JUNCTION_POINT) SetType(ITF_JUNCTION);
-    else if (reparseType & IO_REPARSE_TAG_CLOUD_MASK) SetType(ITF_CLOUDLINK);
+    else if ((reparseType & 0xF00000FF) == IO_REPARSE_TAG_CLOUD) SetType(ITF_CLOUDLINK);
 }
 
 // Returns a value which resembles sorting of RHSACE considering gaps
@@ -908,8 +908,7 @@ std::wstring CItem::GetOwner(const bool force) const
 
 bool CItem::HasUncPath() const
 {
-    const std::wstring path = GetPath();
-    return path.size() >= 2 && path.substr(0, 2) == L"\\\\";
+    return GetPath().starts_with(L"\\\\");
 }
 
 // Returns the path for "Explorer here" or "Command Prompt here"

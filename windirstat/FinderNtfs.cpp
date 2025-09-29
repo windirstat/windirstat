@@ -94,13 +94,13 @@ using ATTRIBUTE_RECORD = struct ATTRIBUTE_RECORD
         {
             LONGLONG LowestVcn;
             LONGLONG HighestVcn;
-            USHORT MappingPairsOffset;
+            USHORT DataRunOffset;
             USHORT CompressionSize;
             UCHAR Padding[4];
-            LONGLONG AllocatedLength;
-            LONGLONG FileSize;
-            LONGLONG ValidDataLength;
-            LONGLONG Compressed;
+            ULONGLONG AllocatedLength;
+            ULONGLONG FileSize;
+            ULONGLONG ValidDataLength;
+            ULONGLONG Compressed;
         } Nonresident;
     } Form;
 
@@ -112,6 +112,11 @@ using ATTRIBUTE_RECORD = struct ATTRIBUTE_RECORD
     constexpr bool IsCompressed() const
     {
         return Flags & 0x0001;
+    }
+
+    constexpr bool IsSparse() const
+    {
+        return Flags & 0x8000;
     }
 
     ATTRIBUTE_RECORD* next() const
@@ -307,7 +312,7 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
                         {
                             if (curAttribute->Form.Nonresident.LowestVcn != 0) continue;
                             baseRecord.LogicalSize = curAttribute->Form.Nonresident.FileSize;
-                            baseRecord.PhysicalSize = curAttribute->IsCompressed() ?
+                            baseRecord.PhysicalSize = (curAttribute->IsCompressed() || curAttribute->IsSparse()) ?
                                 curAttribute->Form.Nonresident.Compressed : curAttribute->Form.Nonresident.AllocatedLength;
                         }
                         else
@@ -356,7 +361,7 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
 
 bool FinderNtfs::FindNext()
 {
-    if (m_RecordIterator == m_ChildrenSet->end()) return false;;
+    if (m_RecordIterator == m_ChildrenSet->end()) return false;
     m_Index = m_RecordIterator->BaseRecord;
     m_CurrentRecord = &m_Master->m_BaseFileRecordMap[m_Index];
     m_CurrentRecordName = &(*m_RecordIterator);
