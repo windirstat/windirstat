@@ -90,7 +90,7 @@ std::wstring CDirStatDoc::EncodeSelection(const std::vector<std::wstring>& folde
 std::vector<std::wstring> CDirStatDoc::DecodeSelection(const std::wstring& encodedPath)
 {
     std::vector<std::wstring> selections;
-    for (const auto& part : std::views::split(encodedPath, wds::chrPipe)) {
+    for (const auto part : std::views::split(encodedPath, wds::chrPipe)) {
         std::wstring partString(part.begin(), part.end());
         selections.emplace_back(TrimString(partString));
     }
