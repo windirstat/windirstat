@@ -706,9 +706,10 @@ void CTreeListControl::ExpandItem(const int i, const bool scroll)
     UnlockWindowUpdate();
     SetRedraw(TRUE);
 
+    const int padding = 3;
     if (scroll && GetColumnWidth(0) < maxwidth)
     {
-        SetColumnWidth(0, maxwidth);
+        SetColumnWidth(0, maxwidth + padding);
     }
 
     item->SetExpanded(true);
