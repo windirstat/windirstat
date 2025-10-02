@@ -21,6 +21,7 @@
 #include "TreeMap.h"    // CColorSpace
 #include "SelectObject.h"
 #include "OwnerDrawnListControl.h"
+#include <Vsstyle.h>
 
 #include <algorithm>
 
@@ -530,6 +531,65 @@ int COwnerDrawnListControl::GetSubItemWidth(COwnerDrawnListItem* item, const int
     return rc.Width();
 }
 
+// Calculates the total display width of a specific column header.
+int COwnerDrawnListControl::GetHeaderWidth(const int column)
+{
+    CHeaderCtrl* pHeaderCtrl = GetHeaderCtrl();
+
+    if (!pHeaderCtrl)
+    {
+        return 0;
+    }
+
+    CClientDC dc(pHeaderCtrl);
+    CFont* pOldFont = dc.SelectObject(pHeaderCtrl->GetFont());
+
+    TCHAR szHeaderText[256];
+
+    // Zero-initialize the buffer.
+    ZeroMemory(&szHeaderText, sizeof(szHeaderText));
+
+    HDITEM hdItem = { 0 };
+    hdItem.mask = HDI_TEXT;
+    hdItem.pszText = szHeaderText;
+    hdItem.cchTextMax = _countof(szHeaderText);
+
+    if (!pHeaderCtrl->GetItem(column, &hdItem))
+    {
+        dc.SelectObject(pOldFont);
+        return 0;
+    }
+
+    // Explicitly null-terminate the string.
+    szHeaderText[_countof(szHeaderText) - 1] = _T('\0');
+
+    const int padding = 9; // Padding adjustment.
+    int totalWidth;
+
+    HTHEME hTheme = ::OpenThemeData(pHeaderCtrl->GetSafeHwnd(), _T("HEADER"));
+
+    if (hTheme)
+    {
+        CRect rectThemeText;
+        // GetThemeTextExtent accounts for theme-specific padding and margins.
+        ::GetThemeTextExtent(hTheme, dc.GetSafeHdc(), HP_HEADERITEM, HIS_NORMAL, szHeaderText,
+            static_cast<int>(_tcslen(szHeaderText)), DT_SINGLELINE, NULL, &rectThemeText);
+
+        totalWidth = rectThemeText.Width() + padding;
+        ::CloseThemeData(hTheme);
+    }
+    else
+    {
+        // Fallback for systems without themes.
+        const CSize headerSize = dc.GetTextExtent(szHeaderText);
+        totalWidth = headerSize.cx + padding;
+    }
+
+    // Restore the original font to the DC.
+    dc.SelectObject(pOldFont);
+    return totalWidth;
+}
+
 #pragma warning(push)
 #pragma warning(disable:26454)
 BEGIN_MESSAGE_MAP(COwnerDrawnListControl, CSortingListControl)
@@ -591,6 +651,7 @@ void COwnerDrawnListControl::OnHdnDividerdblclick(NMHDR* pNMHDR, LRESULT* pResul
 {
     const int column = reinterpret_cast<LPNMHEADER>(pNMHDR)->iItem;
     const int subitem = ColumnToSubItem(column);
+    const int hdrWidth = GetHeaderWidth(column);
     const int padding = 3;
 
     int width = 10;
@@ -598,7 +659,9 @@ void COwnerDrawnListControl::OnHdnDividerdblclick(NMHDR* pNMHDR, LRESULT* pResul
     {
         width = max(width, GetSubItemWidth(GetItem(i), subitem));
     }
-    SetColumnWidth(column, width + padding);
+    width = max(width, hdrWidth);
+    width += padding; // add padding
+    SetColumnWidth(column, width);
 
     *pResult = FALSE;
 }
