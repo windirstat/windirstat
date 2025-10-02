@@ -1378,6 +1378,11 @@ std::wstring CItem::UpwardGetPathWithoutBackslash() const
 {
     // create vector of the path structure so we can reverse it
     std::vector<const CItem*> pathParts;
+
+    // preallocate some space to avoid multiple re-allocations
+    pathParts.resize(8);
+
+    // walk backwards to get a list of pointers to each part of the path
     std::size_t estSize = 0;
     for (auto p = this; p != nullptr; p = p->GetParent())
     {
