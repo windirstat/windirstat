@@ -114,6 +114,7 @@ protected:
     bool m_ShowGrid = false;           // Whether to draw a grid
     bool m_ShowStripes = false;        // Whether to show stripes
     bool m_ShowFullRowSelect = false;  // Whether to draw full row selection
+    int GetHeaderWidth(const int column);
 
     DECLARE_MESSAGE_MAP()
     afx_msg BOOL OnEraseBkgnd(CDC* pDC);
