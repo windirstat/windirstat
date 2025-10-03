@@ -1380,7 +1380,7 @@ std::wstring CItem::UpwardGetPathWithoutBackslash() const
     std::vector<const CItem*> pathParts;
 
     // preallocate some space to avoid multiple re-allocations
-    pathParts.resize(8);
+    pathParts.reserve(CDirStatApp::Get()->GetMaxPathPartsSize());
 
     // walk backwards to get a list of pointers to each part of the path
     std::size_t estSize = 0;
@@ -1389,6 +1389,7 @@ std::wstring CItem::UpwardGetPathWithoutBackslash() const
         pathParts.emplace_back(p);
         estSize += p->m_Name.length() + 1;
     }
+    CDirStatApp::Get()->SetMaxPathPartsSize(pathParts.size());
 
     // append the strings in reverse order
     std::wstring path;

@@ -1517,6 +1517,9 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
     // Stop any previous executions
     StopScanningEngine();
 
+    //Reset Path Construction Cache Size to Default
+    CDirStatApp::Get()->ResetMaxPathPartsSizeCache();
+
     // Address currently zoomed / selected item conflicts
     const auto zoomItem = GetZoomItem();
     for (const auto& item : std::vector(items))

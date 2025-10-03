@@ -124,6 +124,22 @@ std::tuple<ULONGLONG, ULONGLONG> CDirStatApp::GetFreeDiskSpace(const std::wstrin
     return { u64total.QuadPart, u64free.QuadPart };
 }
 
+void CDirStatApp::SetMaxPathPartsSize(size_t size)
+{
+    size_t current_max = s_maxPathPartsSize.load();
+
+    // Use a Compare-and-Swap (CAS) loop to safely update the maximum across threads.
+    while (size > current_max)
+    {
+        // Atomically tries to replace current_max with size.
+        // If it fails (due to another thread), current_max is updated and the loop retries.
+        if (s_maxPathPartsSize.compare_exchange_weak(current_max, size))
+        {
+            break;
+        }
+    }
+}
+
 bool CDirStatApp::IsFollowingAllowed(const DWORD reparseTag) const
 {
     if (reparseTag == 0) return true;
