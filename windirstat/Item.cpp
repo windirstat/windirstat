@@ -1380,7 +1380,7 @@ std::wstring CItem::UpwardGetPathWithoutBackslash() const
     std::vector<const CItem*> pathParts;
 
     // preallocate some space to avoid multiple re-allocations
-    pathParts.resize(8);
+    pathParts.reserve(8);
 
     // walk backwards to get a list of pointers to each part of the path
     std::size_t estSize = 0;
