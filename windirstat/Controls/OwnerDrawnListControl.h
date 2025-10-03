@@ -107,6 +107,7 @@ protected:
     void DrawItem(LPDRAWITEMSTRUCT pdis) override;
     void RedrawItem(const COwnerDrawnListItem* item) const;
     int GetSubItemWidth(COwnerDrawnListItem* item, int subitem);
+    int GetHeaderWidth(const int column);
 
     COLORREF m_WindowColor = CLR_NONE; // The default background color if !m_ShowStripes
     COLORREF m_StripeColor = CLR_NONE; // The stripe color, used for every other item if m_ShowStripes
