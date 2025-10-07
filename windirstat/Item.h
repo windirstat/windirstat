@@ -112,6 +112,9 @@ constexpr bool operator==(const FILETIME& t1, const FILETIME& t2)
 class CItem final : public CTreeListItem, public CTreeMap::Item
 {
 public:
+    // Initial reserve size (16) for path construction based on filesystem limit
+    static constexpr int DEFAULT_PATH_RESERVE = 16;
+
     CItem(const CItem&) = delete;
     CItem(CItem&&) = delete;
     CItem& operator=(const CItem&) = delete;
