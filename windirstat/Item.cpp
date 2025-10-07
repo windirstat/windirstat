@@ -1229,8 +1229,7 @@ void CItem::UpdateFreeSpaceItem()
         100.0 * static_cast<double>(free) / static_cast<double>(total), Localization::Lookup(IDS_COL_FREE));
 
     // Update freespace item if it exists
-    CItem* freeSpaceItem = FindFreeSpaceItem();
-    if (freeSpaceItem != nullptr)
+    if (CItem* freeSpaceItem = FindFreeSpaceItem(); freeSpaceItem != nullptr)
     {
         freeSpaceItem->UpwardSubtractSizePhysical(freeSpaceItem->GetSizePhysical());
         freeSpaceItem->UpwardAddSizePhysical(free);
@@ -1361,7 +1360,7 @@ bool CItem::MustShowReadJobs() const
 COLORREF CItem::GetPercentageColor() const
 {
     const int i = GetIndent() % COptions::FileTreeColorCount;
-    return std::vector<COLORREF>
+    return std::array<COLORREF, 8>
     {
         COptions::FileTreeColor0,
         COptions::FileTreeColor1,
@@ -1393,23 +1392,27 @@ std::wstring CItem::UpwardGetPathWithoutBackslash() const
     // append the strings in reverse order
     std::wstring path;
     path.reserve(estSize);
-    for (const auto & p : pathParts | std::views::reverse)
+    for (auto it = pathParts.rbegin(); it != pathParts.rend(); ++it)
     {
-        if (p->IsType(IT_DIRECTORY))
+        if (const auto & pathPart = *it; pathPart->IsType(IT_DIRECTORY))
         {
-            path.append(p->m_Name).append(L"\\");
+            path.append(pathPart->m_Name).append(L"\\");
         }
-        else if (p->IsType(IT_FILE))
+        else if (pathPart->IsType(IT_FILE))
         {
-            path.append(p->m_Name);
+            path.append(pathPart->m_Name);
         }
-        else if (p->IsType(IT_DRIVE))
+        else if (pathPart->IsType(IT_DRIVE))
         {
-            path.append(p->m_Name.substr(0, 2)).append(L"\\");
+            path.append(pathPart->m_Name.substr(0, 2)).append(L"\\");
         }
     }
 
-    while (!path.empty() && path.back() == L'\\') path.pop_back();
+    // Remove trailing backslashes
+    if (const auto pos = path.find_last_not_of(L'\\'); pos != std::wstring::npos)
+    {
+        path.erase(pos + 1);
+    }
     return path;
 }
 
