@@ -1375,11 +1375,14 @@ COLORREF CItem::GetPercentageColor() const
 
 std::wstring CItem::UpwardGetPathWithoutBackslash() const
 {
-    // create vector of the path structure so we can reverse it
-    std::vector<const CItem*> pathParts;
+    // create vector of the path structure in thread scope so we can reverse it
+    thread_local static std::vector<const CItem*> pathParts;
 
     // preallocate some space to avoid multiple re-allocations
-    pathParts.reserve(8);
+    pathParts.reserve(DEFAULT_PATH_RESERVE);
+
+    // make sure the vector is cleared before use
+    pathParts.clear();
 
     // walk backwards to get a list of pointers to each part of the path
     std::size_t estSize = 0;
