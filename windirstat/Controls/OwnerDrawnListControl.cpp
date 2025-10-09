@@ -591,15 +591,23 @@ void COwnerDrawnListControl::OnHdnDividerdblclick(NMHDR* pNMHDR, LRESULT* pResul
 {
     const int column = reinterpret_cast<LPNMHEADER>(pNMHDR)->iItem;
     const int subitem = ColumnToSubItem(column);
-    const int padding = 3;
 
-    int width = 10;
+    // fetch size of rendered column header
+    SetRedraw(FALSE);
+    SetColumnWidth(column, LVSCW_AUTOSIZE_USEHEADER);
+    int width = GetColumnWidth(column);
+
+    // fetch size of sub-elements
     for (int i = 0, itemMax = GetItemCount(); i < itemMax; i++)
     {
         width = max(width, GetSubItemWidth(GetItem(i), subitem));
     }
+
+    // update final column width
+    constexpr int padding = 3;
     SetColumnWidth(column, width + padding);
 
+    SetRedraw(TRUE);
     *pResult = FALSE;
 }
 
