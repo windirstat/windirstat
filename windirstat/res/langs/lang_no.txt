@@ -44,6 +44,7 @@ IDS_DELETE_DONT_SHOW=&Ikke vis denne advarselen igjen.
 IDS_DELETE_FROM_YOUR_COMPUTER=fra din datamaskin.
 IDS_DELETE_SYSTEM_WARNING=Sletting av filer Windows anser som systemfiler kan føre til at Windows ikke starter etter omstart.
 IDS_DELETE_TITLE=Advarsel
+IDS_DRIVE_ITEM_FREEsTOTALs={} ledig av {}
 IDS_DRIVES_ALL=Søk kun inni lok&ale stasjoner.
 IDS_DRIVES_FOLDER=Søk kun inni denne &mappen:
 IDS_DRIVES_SUBSET=Søk kun valgte plasser&inger:

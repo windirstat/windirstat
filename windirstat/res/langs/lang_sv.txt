@@ -44,6 +44,7 @@ IDS_DELETE_DONT_SHOW=Visa inte &denna varning igen.
 IDS_DELETE_FROM_YOUR_COMPUTER=från din dator.
 IDS_DELETE_SYSTEM_WARNING=Borttagning av systemfiler och/eller mappar kan allvarligt skada systemets funktion.
 IDS_DELETE_TITLE=Varning
+IDS_DRIVE_ITEM_FREEsTOTALs={} ledigt av {}
 IDS_DRIVES_ALL=&Alla lokala enheter
 IDS_DRIVES_FOLDER=Enskild &mapp
 IDS_DRIVES_SUBSET=Ensk&ilda enheter

@@ -46,6 +46,7 @@ constexpr std::wstring_view IDS_DELETE_DONT_SHOW = L"IDS_DELETE_DONT_SHOW";
 constexpr std::wstring_view IDS_DELETE_FROM_YOUR_COMPUTER = L"IDS_DELETE_FROM_YOUR_COMPUTER";
 constexpr std::wstring_view IDS_DELETE_SYSTEM_WARNING = L"IDS_DELETE_SYSTEM_WARNING";
 constexpr std::wstring_view IDS_DELETE_TITLE = L"IDS_DELETE_TITLE";
+constexpr std::wstring_view IDS_DRIVE_ITEM_FREEsTOTALs = L"IDS_DRIVE_ITEM_FREEsTOTALs";
 constexpr std::wstring_view IDS_DRIVES_ALL = L"IDS_DRIVES_ALL";
 constexpr std::wstring_view IDS_DRIVES_FOLDER = L"IDS_DRIVES_FOLDER";
 constexpr std::wstring_view IDS_DRIVES_SUBSET = L"IDS_DRIVES_SUBSET";
