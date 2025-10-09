@@ -44,6 +44,7 @@ IDS_DELETE_DONT_SHOW=&Toto varování příšte nezobrazovat.
 IDS_DELETE_FROM_YOUR_COMPUTER=.
 IDS_DELETE_SYSTEM_WARNING=Odstranění systémových souborů nebo složek může vážně poškodit váš systém.
 IDS_DELETE_TITLE=Varování
+IDS_DRIVE_ITEM_FREEsTOTALs={} volných z {}
 IDS_DRIVES_ALL=&Všechny místní jednotky
 IDS_DRIVES_FOLDER=Jednotlivá &složka
 IDS_DRIVES_SUBSET=Jednotlivé &jednotky

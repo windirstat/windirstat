@@ -44,6 +44,7 @@ IDS_DELETE_DONT_SHOW=&Bu uyarıyı tekrar gösterme.
 IDS_DELETE_FROM_YOUR_COMPUTER=bilgisayarınızdan.
 IDS_DELETE_SYSTEM_WARNING=Sistem dizin ve/veya dosyalarının silinmesi sistemin çalışmasına ciddi zararlar verebilir.
 IDS_DELETE_TITLE=Uyarı
+IDS_DRIVE_ITEM_FREEsTOTALs={} boş, toplam {}
 IDS_DRIVES_ALL=&Tüm Yerel Sürücüler
 IDS_DRIVES_FOLDER=Tek &Dizin
 IDS_DRIVES_SUBSET=&Tek Sürücüler
