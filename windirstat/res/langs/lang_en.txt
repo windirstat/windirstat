@@ -44,6 +44,7 @@ IDS_DELETE_DONT_SHOW=&Don't show this warning again.
 IDS_DELETE_FROM_YOUR_COMPUTER=from your computer.
 IDS_DELETE_SYSTEM_WARNING=Deletion of system files and/or folders can seriously damage the working of your system.
 IDS_DELETE_TITLE=Warning
+IDS_DRIVE_ITEM_FREEsTOTALs={} free of {}
 IDS_DRIVES_ALL=&All Local Drives
 IDS_DRIVES_FOLDER=Individual &Folder
 IDS_DRIVES_SUBSET=&Individual Drives
