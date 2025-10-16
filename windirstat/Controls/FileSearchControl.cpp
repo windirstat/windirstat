@@ -57,7 +57,7 @@ std::wregex CFileSearchControl::ComputeSearchRegex(const std::wstring & searchTe
 
         // Decode regex flags based on settings
         auto searchFlags = std::regex_constants::optimize;
-        if (searchCase) searchFlags |= std::regex_constants::icase;
+        if (!searchCase) searchFlags |= std::regex_constants::icase;
 
         // Precompile regex string
         return std::wregex(useRegex ?
