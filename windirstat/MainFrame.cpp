@@ -1113,8 +1113,11 @@ void CMainFrame::UpdatePaneText()
     SetStatusPaneText(ID_STATUSPANE_IDLE_INDEX, fileSelectionText);
 
     // Update disk usage area
-    SetStatusPaneText(ID_STATUSPANE_DISK_INDEX, (size != MAXULONG64) ? (L"      ∑  " + FormatBytes(size) +
-        (COptions::UseSizeSuffixes ? L"" : (L" " + GetSpec_Bytes()))) : L"", 100);
+    SetStatusPaneText(
+        ID_STATUSPANE_DISK_INDEX,
+        (size != MAXULONG64) ? (L"      ∑  " + FormatBytes(size)) : L"",
+        100
+    );
 
     // Update memory usage area
     SetStatusPaneText(ID_STATUSPANE_MEM_INDEX, CDirStatApp::GetCurrentProcessMemoryInfo(), 100);
