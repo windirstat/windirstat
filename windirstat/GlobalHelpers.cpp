@@ -105,8 +105,7 @@ std::wstring FormatBytes(const ULONGLONG& n)
         return FormatSizeSuffixes(n);
     }
 
-    return FormatLongLongNormal(n);
-
+    return FormatLongLongNormal(n) + L" " + GetSpec_Bytes();
 }
 
 std::wstring FormatSizeSuffixes(ULONGLONG n)
@@ -430,7 +429,7 @@ bool IsSUBSTedDrive(const std::wstring & drive)
 
 const std::wstring & GetSpec_Bytes()
 {
-    static std::wstring s = Localization::Lookup(IDS_SPEC_BYTES, L"Bytes");
+    static std::wstring s = Localization::Lookup(IDS_SPEC_BYTES, L"bytes");
     return s;
 }
 
