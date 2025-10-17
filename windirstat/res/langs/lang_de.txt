@@ -44,6 +44,7 @@ IDS_DELETE_DONT_SHOW=&Diese Warnung nicht mehr anzeigen
 IDS_DELETE_FROM_YOUR_COMPUTER=zu löschen.
 IDS_DELETE_SYSTEM_WARNING=Das Löschen von Systemdateien oder -verzeichnissen kann das System ernsthaft beschädigen.
 IDS_DELETE_TITLE=Warnung
+IDS_DRIVE_ITEM_FREEsTOTALs={} frei von {}
 IDS_DRIVES_ALL=&Alle lokalen Laufwerke
 IDS_DRIVES_FOLDER=Ein &Verzeichnis
 IDS_DRIVES_SUBSET=&Einzelne Laufwerke

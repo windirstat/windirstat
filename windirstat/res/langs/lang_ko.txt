@@ -44,6 +44,7 @@ IDS_DELETE_DONT_SHOW=이 경고를 다시 표시하지않습니다(&D).
 IDS_DELETE_FROM_YOUR_COMPUTER= 삭제하려고 합니다
 IDS_DELETE_SYSTEM_WARNING=시스템 파일 및/또는 폴더를 삭제하면 시스템 작동이 심각하게 손상될 수 있습니다.
 IDS_DELETE_TITLE=경고
+IDS_DRIVE_ITEM_FREEsTOTALs={1} 중 {0} 사용 가능
 IDS_DRIVES_ALL=모든 물리적 드라이브(&A)
 IDS_DRIVES_FOLDER=개별 폴더(&F)
 IDS_DRIVES_SUBSET=개별 드라이브(&I)
