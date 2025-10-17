@@ -94,13 +94,8 @@ std::vector<LANGID> Localization::GetLanguageList()
 
 bool Localization::LoadResource(const WORD language)
 {
-    FinderBasic finder;
-    const std::wstring lang = GetLocaleString(LOCALE_SISO639LANGNAME, language);
-    const std::wstring name = L"lang_" + lang + L".txt";
-    if (FinderBasic::DoesFileExist(GetAppFolder(), name))
-    {
-        return LoadFile((GetAppFolder() + L"\\" + name));
-    }
+    if (LoadExternalLanguage(LOCALE_SISO639LANGNAME, language)) return true; // ISO 639-1 language code
+    if (LoadExternalLanguage(LOCALE_SNAME, language)) return true; // BCP 47 language code
 
     // Find the resource in the loaded module
     const HRSRC resource = ::FindResourceEx(nullptr, LANG_RESOURCE_TYPE, MAKEINTRESOURCE(IDR_RT_LANG), language);
@@ -179,6 +174,15 @@ void Localization::UpdateDialogs(const CWnd& wnd)
         return TRUE;
     },
     reinterpret_cast<LPARAM>(nullptr));
+}
+
+// Try to find and load external language file, return false if failed.
+bool Localization::LoadExternalLanguage(const LCTYPE lcttype, const LCID lcid)
+{
+    const std::wstring name = L"lang_" + GetLocaleString(lcttype, lcid) + L".txt";
+    const std::wstring langFolder = GetAppFolder() + L"\\";
+
+    return FinderBasic::DoesFileExist(langFolder, name) && LoadFile(langFolder + name);
 }
 
 bool Localization::LoadFile(const std::wstring& file)
