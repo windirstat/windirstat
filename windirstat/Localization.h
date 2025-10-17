@@ -65,6 +65,7 @@ public:
     static void UpdateMenu(CMenu& menu);
     static void UpdateTabControl(CTabCtrl& tab);
     static void UpdateDialogs(const CWnd& wnd);
+    static bool LoadExternalLanguage(const LCTYPE lcttype, const LCID lcid);
     static bool LoadFile(const std::wstring& file);
     static bool LoadResource(WORD language);
     static std::vector<LANGID> GetLanguageList();
