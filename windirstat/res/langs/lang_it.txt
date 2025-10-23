@@ -44,6 +44,7 @@ IDS_DELETE_DONT_SHOW=&Non mostrare questo avviso in futuro.
 IDS_DELETE_FROM_YOUR_COMPUTER=dal computer.
 IDS_DELETE_SYSTEM_WARNING=La cancellazione di file o directory di sistema può danneggiare gravemente il sistema.
 IDS_DELETE_TITLE=Avvertenza
+IDS_DRIVE_ITEM_FREEsTOTALs={} libero su {}
 IDS_DRIVES_ALL=&Tutte le unità locali
 IDS_DRIVES_FOLDER=Una &cartella
 IDS_DRIVES_SUBSET=&Singole unità
