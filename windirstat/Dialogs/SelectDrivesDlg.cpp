@@ -259,7 +259,6 @@ void CDriveInformationThread::InvalidateDialogHandle()
     std::lock_guard lock(_mutexRunningThreads);
     for (const auto & thread : _runningThreads)
     {
-        std::lock_guard lockd(thread->m_Mutex);
         thread->m_Dialog = nullptr;
     }
 }
@@ -283,14 +282,7 @@ BOOL CDriveInformationThread::InitInstance()
 {
     m_Success = RetrieveDriveInformation(m_Path, m_Name, m_TotalBytes, m_FreeBytes);
 
-    HWND dialog = nullptr;
-
-    {
-        std::lock_guard lock(m_Mutex);
-        dialog = m_Dialog;
-    }
-
-    if (dialog != nullptr)
+    if (HWND dialog = m_Dialog; dialog != nullptr)
     {
         // Theoretically the dialog may have been closed at this point.
         // SendMessage() to a non-existing window simply fails immediately.

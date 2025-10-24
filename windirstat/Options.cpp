@@ -17,17 +17,15 @@
 //
 
 #include "stdafx.h"
-#include "WinDirStat.h"
 #include "DirStatDoc.h"
 #include "Options.h"
 
 #include <array>
+#include <ranges>
 
 #include "GlobalHelpers.h"
 #include "Property.h"
 #include "Localization.h"
-
-#include <sstream>
 
 LPCWSTR COptions::OptionsGeneral = L"Options";
 LPCWSTR COptions::OptionsTreeMap = L"TreeMapView";
@@ -199,11 +197,10 @@ void COptions::CompileFilters()
         std::pair{FilteringExcludeDirs.Obj(), std::ref(FilteringExcludeDirsRegex)},
         std::pair{FilteringExcludeFiles.Obj(), std::ref(FilteringExcludeFilesRegex)}})
     {
-        std::wstringstream stream(optionString);
-        std::wstring token;
-
-        while (std::getline(stream, token))
+        for (const auto& token_view : std::views::split(optionString, L'\n'))
         {
+            std::wstring token(token_view.begin(), token_view.end());
+
             try
             {
                 while (!token.empty() && token.back() == L'\r') token.pop_back();

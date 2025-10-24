@@ -1042,7 +1042,7 @@ void CMainFrame::UpdateDynamicMenuItems(CMenu* menu) const
     }
 
     // conditionally disable menu if empty
-    if (customMenuPos >= 0) menu->EnableMenuItem(customMenuPos, MF_BYPOSITION |
+    if (customMenu && customMenuPos >= 0) menu->EnableMenuItem(customMenuPos, MF_BYPOSITION |
         (customMenu->GetMenuItemCount() > 0 ? MF_ENABLED : (MF_DISABLED | MF_GRAYED)));
 }
 

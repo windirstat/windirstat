@@ -20,8 +20,8 @@
 #include "WinDirStat.h"
 #include "Property.h"
 
+#include <ranges>
 #include <regex>
-#include <sstream>
 
 std::vector<PersistedSetting*>& PersistedSetting::GetPropertySet()
 {
@@ -97,13 +97,11 @@ template <> void Setting<WINDOWPLACEMENT>::WritePersistedProperty()
 
 template <> void Setting<std::vector<std::wstring>>::ReadPersistedProperty()
 {
-    const std::wstring s = CDirStatApp::Get()->GetProfileString(m_Section.c_str(), m_Entry.c_str()).GetString();
-    std::wstringstream iss(s);
-
     m_Value.clear();
-    for (std::wstring part; std::getline(iss, part, L'|');)
+    for (const std::wstring s = CDirStatApp::Get()->GetProfileString(m_Section.c_str(), m_Entry.c_str()).GetString();
+        const auto& token_view : std::views::split(s, L'|'))
     {
-        m_Value.push_back(part);
+        m_Value.emplace_back(token_view.begin(), token_view.end());
     }
 }
 
@@ -123,13 +121,11 @@ template <> void Setting<std::vector<std::wstring>>::WritePersistedProperty()
 
 template <> void Setting<std::vector<int>>::ReadPersistedProperty()
 {
-    const std::wstring s = CDirStatApp::Get()->GetProfileString(m_Section.c_str(), m_Entry.c_str()).GetString();
-    std::wstringstream iss(s);
-
     m_Value.clear();
-    for (std::wstring part; std::getline(iss, part, L',');)
+    for (const std::wstring s = CDirStatApp::Get()->GetProfileString(m_Section.c_str(), m_Entry.c_str()).GetString();
+        const auto& token_view : std::views::split(s, L','))
     {
-        m_Value.push_back(std::stoi(part));
+        m_Value.push_back(std::stoi(std::wstring(token_view.begin(), token_view.end())));
     }
 }
 
