@@ -103,13 +103,11 @@ public:
 private:
     const std::wstring m_Path; // Path like "C:\"
     const LPARAM m_DriveItem;  // The list item, we belong to
-
-    std::mutex m_Mutex;        // for m_Dialog
-    HWND m_Dialog;             // synchronized by m_Cs
     const UINT m_Serial;       // serial number of m_Dialog
+    std::atomic<HWND> m_Dialog;
 
     // "[out]"-parameters
-    std::wstring m_Name;            // Result: name like "BOOT (C:)", valid if m_Success
+    std::wstring m_Name;        // Result: name like "BOOT (C:)", valid if m_Success
     ULONGLONG m_TotalBytes = 0; // Result: capacity of the drive, valid if m_Success
     ULONGLONG m_FreeBytes = 0;  // Result: free space on the drive, valid if m_Success
     bool m_Success = false;     // Result: false, iff drive is inaccessible.

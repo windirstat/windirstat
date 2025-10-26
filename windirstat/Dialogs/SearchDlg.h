@@ -25,24 +25,23 @@
 
 class SearchDlg final : public CDialogEx
 {
-	DECLARE_DYNAMIC(SearchDlg)
+    DECLARE_DYNAMIC(SearchDlg)
 
-public:
-	SearchDlg(CWnd* pParent = nullptr);   // standard constructor
-    ~SearchDlg() override;
+    SearchDlg(CWnd* pParent = nullptr); // standard constructor
+    ~SearchDlg() override = default;
 
-// Dialog Data
+    // Dialog Data
 #ifdef AFX_DESIGN_TIME
-	enum { IDD = IDD_SEARCH };
+    enum { IDD = IDD_SEARCH };
 #endif
 
 protected:
-    void DoDataExchange(CDataExchange* pDX) override;    // DDX/DDV support
+    void DoDataExchange(CDataExchange* pDX) override; // DDX/DDV support
 
 private:
     DECLARE_MESSAGE_MAP()
     BOOL OnInitDialog() override;
-	afx_msg void OnBnClickedOk();
+    afx_msg void OnBnClickedOk();
     afx_msg void OnChangeSearchTerm();
     afx_msg void OnSize(UINT nType, int cx, int cy);
     afx_msg void OnGetMinMaxInfo(MINMAXINFO* lpMMI);

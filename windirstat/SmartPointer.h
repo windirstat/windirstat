@@ -32,8 +32,8 @@ class SmartPointer final
 {
 public:
 
-    SmartPointer(const SmartPointer<T>&) = delete; // operator not allowed for SmartPointer
-    T operator=(const SmartPointer<T>& lp) = delete; // operator not allowed for SmartPointer
+    SmartPointer(const SmartPointer&) = delete; // operator not allowed for SmartPointer
+    T operator=(const SmartPointer& lp) = delete; // operator not allowed for SmartPointer
 
     SmartPointer(std::function<void(T)> cleanup) : m_Cleanup(std::move(cleanup)), m_Data(nullptr) {}
     SmartPointer(std::function<void(T)> cleanup, T data) : m_Cleanup(std::move(cleanup)), m_Data(data) {}
@@ -46,7 +46,7 @@ public:
         }
     }
 
-    SmartPointer(SmartPointer<T>&& src) noexcept
+    SmartPointer(SmartPointer&& src) noexcept
     {
         m_Cleanup = src.m_Cleanup;
         m_Data = src.m_Data;

@@ -112,8 +112,8 @@ void CDirStatApp::RestartApplication(bool resetPreferences)
 
 std::tuple<ULONGLONG, ULONGLONG> CDirStatApp::GetFreeDiskSpace(const std::wstring & pszRootPath)
 {
-    ULARGE_INTEGER u64total = {{0, 0}};
-    ULARGE_INTEGER u64free = {{0, 0}};
+    ULARGE_INTEGER u64total = {.QuadPart = 0};
+    ULARGE_INTEGER u64free = {.QuadPart = 0};
 
     if (GetDiskFreeSpaceEx(pszRootPath.c_str(), nullptr, &u64total, &u64free) == 0)
     {

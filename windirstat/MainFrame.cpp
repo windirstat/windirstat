@@ -1013,7 +1013,7 @@ void CMainFrame::UpdateDynamicMenuItems(CMenu* menu) const
     auto [explorerMenu, explorerMenuPos] = LocateNamedMenu(menu, Localization::Lookup(IDS_POPUP_TREE_EXPLORER_MENU));
     if (explorerMenu != nullptr && !paths.empty())
     {
-        CComPtr<IContextMenu> contextMenu = GetContextMenu(Get()->GetSafeHwnd(), paths);
+        CComPtr contextMenu = GetContextMenu(Get()->GetSafeHwnd(), paths);
         if (contextMenu != nullptr) contextMenu->QueryContextMenu(explorerMenu->GetSafeHmenu(), 0,
             CONTENT_MENU_MINCMD, CONTENT_MENU_MAXCMD, CMF_NORMAL);
 
@@ -1042,7 +1042,7 @@ void CMainFrame::UpdateDynamicMenuItems(CMenu* menu) const
     }
 
     // conditionally disable menu if empty
-    if (customMenuPos >= 0) menu->EnableMenuItem(customMenuPos, MF_BYPOSITION |
+    if (customMenu && customMenuPos >= 0) menu->EnableMenuItem(customMenuPos, MF_BYPOSITION |
         (customMenu->GetMenuItemCount() > 0 ? MF_ENABLED : (MF_DISABLED | MF_GRAYED)));
 }
 

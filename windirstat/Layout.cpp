@@ -115,19 +115,9 @@ void CLayout::OnGetMinMaxInfo(MINMAXINFO* mmi)
 
 void CLayout::CSizeGripper::Create(CWnd* parent, const CRect rc)
 {
-    VERIFY(CWnd::Create(
-        AfxRegisterWndClass(
-            0,
-            CDirStatApp::Get()->LoadStandardCursor(IDC_ARROW),
-            reinterpret_cast<HBRUSH>(COLOR_BTNFACE + 1),
-            nullptr
-        ),
-        wds::strEmpty,
-        WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS,
-        rc,
-        parent,
-        IDC_SIZEGRIPPER
-    ));
+    VERIFY(CWnd::Create(AfxRegisterWndClass(0,
+        CDirStatApp::Get()->LoadStandardCursor(IDC_ARROW), reinterpret_cast<HBRUSH>(COLOR_BTNFACE + 1), nullptr),
+        wds::strEmpty, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS, rc, parent, IDC_SIZEGRIPPER));
 }
 
 BEGIN_MESSAGE_MAP(CLayout::CSizeGripper, CWnd)

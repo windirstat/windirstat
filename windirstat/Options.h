@@ -41,17 +41,17 @@ struct USERDEFINEDCLEANUP
     USERDEFINEDCLEANUP(const std::wstring & sEntry) :
         Title(Setting<std::wstring>(sEntry, L"Title", L"")),
         CommandLine(Setting<std::wstring>(sEntry, L"CommandLine", L"")),
-        Enabled(Setting<bool>(sEntry, L"Enable", false)),
-        VirginTitle(Setting<bool>(sEntry, L"VirginTitle", true)),
-        WorksForDrives(Setting<bool>(sEntry, L"WorksForDrives", false)),
-        WorksForDirectories(Setting<bool>(sEntry, L"WorksForDirectories", false)),
-        WorksForFiles(Setting<bool>(sEntry, L"WorksForFiles", false)),
-        WorksForUncPaths(Setting<bool>(sEntry, L"WorksForUncPaths", false)),
-        RecurseIntoSubdirectories(Setting<bool>(sEntry, L"RecurseIntoSubdirectories", false)),
-        AskForConfirmation(Setting<bool>(sEntry, L"AskForConfirmation", false)),
-        ShowConsoleWindow(Setting<bool>(sEntry, L"ShowConsoleWindow", false)),
-        WaitForCompletion(Setting<bool>(sEntry, L"WaitForCompletion", false)),
-        RefreshPolicy(Setting<int>(sEntry, L"RefreshPolicy", 0)) {}
+        Enabled(Setting(sEntry, L"Enable", false)),
+        VirginTitle(Setting(sEntry, L"VirginTitle", true)),
+        WorksForDrives(Setting(sEntry, L"WorksForDrives", false)),
+        WorksForDirectories(Setting(sEntry, L"WorksForDirectories", false)),
+        WorksForFiles(Setting(sEntry, L"WorksForFiles", false)),
+        WorksForUncPaths(Setting(sEntry, L"WorksForUncPaths", false)),
+        RecurseIntoSubdirectories(Setting(sEntry, L"RecurseIntoSubdirectories", false)),
+        AskForConfirmation(Setting(sEntry, L"AskForConfirmation", false)),
+        ShowConsoleWindow(Setting(sEntry, L"ShowConsoleWindow", false)),
+        WaitForCompletion(Setting(sEntry, L"WaitForCompletion", false)),
+        RefreshPolicy(Setting(sEntry, L"RefreshPolicy", 0)) {}
 
     Setting<std::wstring> Title;
     Setting<std::wstring> CommandLine;

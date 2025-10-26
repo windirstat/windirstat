@@ -257,7 +257,7 @@ bool SaveResults(const std::wstring& path, CItem * rootItem)
     outf.open(path, std::ios::binary);
 
     // Determine columns
-    std::vector<std::wstring> cols =
+    std::vector cols =
     {
         Localization::Lookup(IDS_COL_NAME),
         Localization::Lookup(IDS_COL_FILES),

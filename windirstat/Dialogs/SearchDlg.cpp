@@ -32,7 +32,7 @@
 IMPLEMENT_DYNAMIC(SearchDlg, CDialogEx)
 
 SearchDlg::SearchDlg(CWnd* pParent /*=nullptr*/)
-	: CDialogEx(IDD_SEARCH, pParent)
+    : CDialogEx(IDD_SEARCH, pParent)
     , m_SearchWholePhrase(FALSE)
     , m_SearchCase(FALSE)
     , m_SearchRegex(FALSE)
@@ -40,10 +40,6 @@ SearchDlg::SearchDlg(CWnd* pParent /*=nullptr*/)
     , m_Layout(this, COptions::SearchWindowRect.Ptr())
 {
 
-}
-
-SearchDlg::~SearchDlg()
-{
 }
 
 void SearchDlg::DoDataExchange(CDataExchange* pDX)

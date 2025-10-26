@@ -41,8 +41,8 @@ public:
     CIconHandler() = default;
     ~CIconHandler();
 
-    typedef std::tuple<COwnerDrawnListItem*, COwnerDrawnListControl*,
-        std::wstring, DWORD, HICON*, std::wstring*> IconLookup;
+    using IconLookup = std::tuple<COwnerDrawnListItem*, COwnerDrawnListControl*,
+        std::wstring, DWORD, HICON*, std::wstring*>;
 
     void Initialize();
     void DoAsyncShellInfoLookup(const IconLookup& lookupInfo);

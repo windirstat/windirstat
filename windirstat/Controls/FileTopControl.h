@@ -23,7 +23,6 @@
 
 #include <set>
 #include <unordered_map>
-#include <shared_mutex>
 
 class CFileTopControl final : public CTreeListControl
 {

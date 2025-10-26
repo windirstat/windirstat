@@ -689,7 +689,7 @@ std::wstring GetVolumePathNameEx(const std::wstring & path)
     if (bufferSize == 0) return fallback;
 
     // Lookup the path and then determine the pathname from it
-    std::vector<WCHAR> final(bufferSize + 1, L'\0');
+    std::vector final(bufferSize + 1, L'\0');
     if (GetFinalPathNameByHandle(handle, final.data(), static_cast<DWORD>(final.size()), FILE_NAME_NORMALIZED) != 0 &&
         GetVolumePathName(final.data(), volume.data(), static_cast<DWORD>(volume.size())) != 0)
     {
