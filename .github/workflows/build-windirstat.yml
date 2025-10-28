@@ -8,7 +8,7 @@ on:
       reltype:
         description: 'Release type'
         required: false
-        default: 'production'
+        default: 'beta'
         type: choice
         options:
           - production
