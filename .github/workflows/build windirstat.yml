@@ -46,11 +46,23 @@ jobs:
         # If you already have Wix in your environment, you can remove this step.
 
       - name: Verify environment (for debugging)
-        shell: cmd
+        shell: powershell
         run: |
-          where msbuild || echo msbuild not found
-          where candle || echo candle (WiX) not found
-          where signtool || echo signtool not found (stub may be used)
+          if (Get-Command msbuild -ErrorAction SilentlyContinue) {
+            Write-Host "msbuild: $((Get-Command msbuild).Source)"
+          } else {
+            Write-Host "msbuild not found"
+          }
+          if (Get-Command candle -ErrorAction SilentlyContinue) {
+            Write-Host "candle (WiX) found: $((Get-Command candle).Source)"
+          } else {
+            Write-Host "candle (WiX) not found"
+          }
+          if (Get-Command signtool -ErrorAction SilentlyContinue) {
+            Write-Host "signtool found: $((Get-Command signtool).Source)"
+          } else {
+            Write-Host "signtool not found (stub may be used)"
+          }
 
       - name: Run build.cmd (non-interactive)
         shell: cmd
