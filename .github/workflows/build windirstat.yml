@@ -1,0 +1,68 @@
+name: Build WinDirStat
+
+on:
+  push:
+    branches: [ "master", "main" ]
+  workflow_dispatch:
+    inputs:
+      reltype:
+        description: 'Release type'
+        required: false
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - beta
+
+jobs:
+  build:
+    runs-on: windows-latest
+    env:
+      # Automatically set CHOICE for the interactive build.cmd:
+      # production -> 2, beta -> 1
+      CHOICE: ${{ github.event.inputs.reltype == 'production' && '2' || '1' }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Create tools folder and stub signtool
+        shell: cmd
+        run: |
+          IF NOT EXIST "%~dp0tools" MKDIR "%~dp0tools"
+          ECHO @ECHO OFF> "%~dp0tools\signtool.cmd"
+          ECHO REM Stub signtool for CI: do nothing and succeed>> "%~dp0tools\signtool.cmd"
+          ECHO exit /b 0>> "%~dp0tools\signtool.cmd"
+
+      - name: Add tools folder to PATH
+        shell: powershell
+        run: |
+          Add-Content -Path $Env:GITHUB_PATH -Value "${{ github.workspace }}\tools"
+
+      - name: Install WiX toolset (for MSI build)
+        shell: powershell
+        run: |
+          choco install wixtoolset -y
+        # choco is available on GitHub-hosted Windows runners.
+        # If you already have Wix in your environment, you can remove this step.
+
+      - name: Verify environment (for debugging)
+        shell: cmd
+        run: |
+          where msbuild || echo msbuild not found
+          where candle || echo candle (WiX) not found
+          where signtool || echo signtool not found (stub may be used)
+
+      - name: Run build.cmd (non-interactive)
+        shell: cmd
+        working-directory: ${{ github.workspace }}
+        run: |
+          REM CHOICE is set via env at the job level.
+          REM Call build.cmd which expects the interactive CHOICE; we pre-set it.
+          call build.cmd
+
+      - name: Upload publish folder
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: windirstat-publish
+          path: publish/**
