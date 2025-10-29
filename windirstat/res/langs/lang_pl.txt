@@ -44,6 +44,7 @@ IDS_DELETE_DONT_SHOW=&Nie pokazuj tego ostrzeżenia ponownie.
 IDS_DELETE_FROM_YOUR_COMPUTER=z dysku.
 IDS_DELETE_SYSTEM_WARNING=Usunięcie plików lub katalogów systemowych może poważnie uszkodzić Twój system!
 IDS_DELETE_TITLE=Ostrzeżenie
+IDS_DRIVE_ITEM_FREEsTOTALs={} wolne z {}
 IDS_DRIVES_ALL=&Wszystkie dyski lokalne
 IDS_DRIVES_FOLDER=&Katalog
 IDS_DRIVES_SUBSET=&Określone dyski

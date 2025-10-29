@@ -44,6 +44,7 @@ IDS_DELETE_DONT_SHOW=この警告を再度表示しない(&D)
 IDS_DELETE_FROM_YOUR_COMPUTER=コンピューターから。
 IDS_DELETE_SYSTEM_WARNING=システムファイルやフォルダーの削除は、システムの動作に深刻な損傷を与える可能性があります。
 IDS_DELETE_TITLE=警告
+IDS_DRIVE_ITEM_FREEsTOTALs=空き領域 {}/{}
 IDS_DRIVES_ALL=すべてのローカルドライブ(&A)
 IDS_DRIVES_FOLDER=個別フォルダー(&F)
 IDS_DRIVES_SUBSET=個別ドライブ(&I)
