@@ -914,14 +914,11 @@ void CMainFrame::UpdateCleanupMenu(CMenu* menu) const
     std::wstring info;
     if (items == 1)
     {
-        info = Localization::Format(IDS_ONEITEMss,  FormatBytes(bytes),
-            COptions::UseSizeSuffixes && bytes != 0 ? wds::strEmpty : (wds::chrBlankSpace + GetSpec_Bytes()));
+        info = Localization::Format(IDS_ONEITEMs, FormatBytes(bytes));
     }
     else
     {
-        info = Localization::Format(IDS_sITEMSss, FormatCount(items).c_str(),
-            FormatBytes(bytes).c_str(), COptions::UseSizeSuffixes
-            && bytes != 0 ? wds::strEmpty : (wds::chrBlankSpace + GetSpec_Bytes()).c_str());
+        info = Localization::Format(IDS_sITEMSs, FormatCount(items), FormatBytes(bytes));
     }
 
     const std::wstring s = Localization::Lookup(IDS_EMPTYRECYCLEBIN) + info;
