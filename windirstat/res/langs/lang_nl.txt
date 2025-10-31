@@ -44,6 +44,7 @@ IDS_DELETE_DONT_SHOW=&Deze waarschuwing niet meer weergeven.
 IDS_DELETE_FROM_YOUR_COMPUTER=verwijderen van jouw computer.
 IDS_DELETE_SYSTEM_WARNING=Verwijderen van systeembestanden en/of -mappen kan de werking van het systeem beschadigen.
 IDS_DELETE_TITLE=Waarschuwing
+IDS_DRIVE_ITEM_FREEsTOTALs={} vrij van {}
 IDS_DRIVES_ALL=&Alle lokale stations
 IDS_DRIVES_FOLDER=Afzonderlijke &map
 IDS_DRIVES_SUBSET=A&fzonderlijke stations

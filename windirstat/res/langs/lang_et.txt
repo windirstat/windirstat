@@ -44,6 +44,7 @@ IDS_DELETE_DONT_SHOW=&Ära näita seda hoaitust jälle.
 IDS_DELETE_FROM_YOUR_COMPUTER=sinu kompuuterist.
 IDS_DELETE_SYSTEM_WARNING=Kustutades süsteemi faile või kauste võid tugevasti vigastada oma süsteemi.
 IDS_DELETE_TITLE=Hoiatus
+IDS_DRIVE_ITEM_FREEsTOTALs={} vaba {} kokku
 IDS_DRIVES_ALL=&Kõik kettad
 IDS_DRIVES_FOLDER=Sirvi
 IDS_DRIVES_SUBSET=&Määratud Kettad

@@ -109,6 +109,7 @@ void CPageGeneral::OnOK()
     COptions::ListStripes = (FALSE != m_ListStripes);
     COptions::ShowDeleteWarning = (FALSE != m_ShowDeletionWarning);
     COptions::ListFullRowSelection = (FALSE != m_ListFullRowSelection);
+
     if (!CDirStatApp::Get()->SetPortableMode(m_PortableMode))
     {
         DisplayError(L"Could not toggle WinDirStat portable mode. Check your permissions.");
@@ -117,6 +118,15 @@ void CPageGeneral::OnOK()
     // force general user interface update if anything changes
     if (listChanged)
     {
+        const CDirStatDoc* pDoc = CDirStatDoc::GetDocument();
+        if (pDoc != nullptr)
+        {
+            // Iterate over all drive items and update their display names/free space item sizes
+            for (CItem* pItem : pDoc->GetDriveItems())
+            {
+                pItem->UpdateFreeSpaceItem();
+            }
+        }
         CDirStatDoc::GetDocument()->UpdateAllViews(nullptr, HINT_LISTSTYLECHANGED);
     }
     if (windowsLocaleChanged)

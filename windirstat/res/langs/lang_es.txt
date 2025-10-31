@@ -44,6 +44,7 @@ IDS_DELETE_DONT_SHOW=&No mostrar esta advertencia nuevamente.
 IDS_DELETE_FROM_YOUR_COMPUTER=de su computadora.
 IDS_DELETE_SYSTEM_WARNING=Borrar archivos de sistema o directorios puede dañar seriamente su sistema.
 IDS_DELETE_TITLE=Advertencia
+IDS_DRIVE_ITEM_FREEsTOTALs={} libre de {}
 IDS_DRIVES_ALL=&Todos los Discos Locales
 IDS_DRIVES_FOLDER=Una &Carpeta
 IDS_DRIVES_SUBSET=Discos &Individuales

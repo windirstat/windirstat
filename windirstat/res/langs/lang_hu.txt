@@ -44,6 +44,7 @@ IDS_DELETE_DONT_SHOW=&Ne mutassa a figyelmeztetést újra.
 IDS_DELETE_FROM_YOUR_COMPUTER=a számítógépérol.
 IDS_DELETE_SYSTEM_WARNING=A rendszerfájlok, vagy könyvtárak törlése komoly károkat okozhat a rendszerében.
 IDS_DELETE_TITLE=IDS_DELETE_DONT_SHOW=
+IDS_DRIVE_ITEM_FREEsTOTALs={} szabad a(z) {} -ból
 IDS_DRIVES_ALL=Minden helyi megh&ajtó
 IDS_DRIVES_FOLDER=A &Mappa
 IDS_DRIVES_SUBSET=&Egyéni meghajtók
