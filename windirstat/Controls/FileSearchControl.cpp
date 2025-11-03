@@ -36,14 +36,11 @@ bool CFileSearchControl::GetAscendingDefault(const int column)
         column == COL_ITEMSEARCH_LASTCHANGE;
 }
 
-#pragma warning(push)
-#pragma warning(disable:26454)
 BEGIN_MESSAGE_MAP(CFileSearchControl, CTreeListControl)
     ON_WM_SETFOCUS()
     ON_WM_KEYDOWN()
     ON_NOTIFY_REFLECT_EX(LVN_DELETEALLITEMS, OnDeleteAllItems)
 END_MESSAGE_MAP()
-#pragma warning(pop)
 
 CFileSearchControl* CFileSearchControl::m_Singleton = nullptr;
 

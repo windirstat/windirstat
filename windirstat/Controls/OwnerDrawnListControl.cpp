@@ -529,15 +529,12 @@ int COwnerDrawnListControl::GetSubItemWidth(COwnerDrawnListItem* item, const int
     return rc.Width();
 }
 
-#pragma warning(push)
-#pragma warning(disable:26454)
 BEGIN_MESSAGE_MAP(COwnerDrawnListControl, CSortingListControl)
     ON_WM_ERASEBKGND()
     ON_NOTIFY(HDN_DIVIDERDBLCLICK, 0, OnHdnDividerdblclick)
     ON_NOTIFY(HDN_ITEMCHANGING, 0, OnHdnItemchanging)
     ON_WM_SHOWWINDOW()
 END_MESSAGE_MAP()
-#pragma warning(pop)
 
 BOOL COwnerDrawnListControl::OnEraseBkgnd(CDC* pDC)
 {

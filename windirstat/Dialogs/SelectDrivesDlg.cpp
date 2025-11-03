@@ -353,14 +353,11 @@ void CDrivesList::OnDoubleClick(NMHDR* /*pNMHDR*/, LRESULT* pResult)
     (void) GetParent()->SendMessage(WMU_OK);
 }
 
-#pragma warning(push)
-#pragma warning(disable:26454)
 BEGIN_MESSAGE_MAP(CDrivesList, COwnerDrawnListControl)
     ON_NOTIFY_REFLECT(LVN_DELETEITEM, OnLvnDeleteItem)
     ON_WM_MEASUREITEM_REFLECT()
     ON_NOTIFY_REFLECT(NM_DBLCLK, OnDoubleClick)
 END_MESSAGE_MAP()
-#pragma warning(pop)
 
 void CDrivesList::OnLvnDeleteItem(NMHDR* pNMHDR, LRESULT* pResult)
 {
@@ -397,8 +394,6 @@ void CSelectDrivesDlg::DoDataExchange(CDataExchange* pDX)
     DDX_Control(pDX, IDC_BROWSE_FOLDER, m_Browse);
 }
 
-#pragma warning(push)
-#pragma warning(disable:26454)
 BEGIN_MESSAGE_MAP(CSelectDrivesDlg, CDialogEx)
     ON_BN_CLICKED(IDC_RADIO_TARGET_DRIVES_ALL, OnBnClickedUpdateButtons)
     ON_BN_CLICKED(IDC_RADIO_TARGET_DRIVES_SUBSET, &CSelectDrivesDlg::OnBnClickedRadioTargetDrivesSubset)
@@ -416,7 +411,6 @@ BEGIN_MESSAGE_MAP(CSelectDrivesDlg, CDialogEx)
     ON_WM_SIZE()
     ON_WM_SYSCOLORCHANGE()
 END_MESSAGE_MAP()
-#pragma warning(pop)
 
 BOOL CSelectDrivesDlg::OnInitDialog()
 {

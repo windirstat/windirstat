@@ -33,14 +33,11 @@ bool CFileTreeControl::GetAscendingDefault(const int column)
     return column == COL_NAME || column == COL_LASTCHANGE;
 }
 
-#pragma warning(push)
-#pragma warning(disable:26454)
 BEGIN_MESSAGE_MAP(CFileTreeControl, CTreeListControl)
     ON_WM_SETFOCUS()
     ON_WM_KEYDOWN()
     ON_NOTIFY_EX(HDN_ENDDRAG, 0, OnHeaderEndDrag)
 END_MESSAGE_MAP()
-#pragma warning(pop)
 
 CFileTreeControl* CFileTreeControl::m_Singleton = nullptr;
 

@@ -39,8 +39,6 @@ void CFileSearchView::OnDraw(CDC* pDC)
     UNREFERENCED_PARAMETER(pDC);
 }
 
-#pragma warning(push)
-#pragma warning(disable:26454)
 BEGIN_MESSAGE_MAP(CFileSearchView, CView)
     ON_WM_INITMENUPOPUP()
     ON_WM_SIZE()
@@ -51,7 +49,6 @@ BEGIN_MESSAGE_MAP(CFileSearchView, CView)
     ON_UPDATE_COMMAND_UI(ID_POPUP_TOGGLE, OnUpdatePopupToggle)
     ON_COMMAND(ID_POPUP_TOGGLE, OnPopupToggle)
 END_MESSAGE_MAP()
-#pragma warning(pop)
 
 void CFileSearchView::OnSize(const UINT nType, const int cx, const int cy)
 {

@@ -247,15 +247,12 @@ void CAboutDlg::DoDataExchange(CDataExchange* pDX)
     DDX_Control(pDX, IDC_TAB, m_Tab);
 }
 
-#pragma warning(push)
-#pragma warning(disable:26454)
 BEGIN_MESSAGE_MAP(CAboutDlg, CDialogEx)
     ON_NOTIFY(TCN_SELCHANGE, IDC_TAB, OnTcnSelchangeTab)
     ON_WM_SIZE()
     ON_WM_GETMINMAXINFO()
     ON_WM_DESTROY()
 END_MESSAGE_MAP()
-#pragma warning(pop)
 
 BOOL CAboutDlg::OnInitDialog()
 {

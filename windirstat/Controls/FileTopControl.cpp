@@ -38,14 +38,11 @@ bool CFileTopControl::GetAscendingDefault(const int column)
         column == COL_ITEMTOP_LASTCHANGE;
 }
 
-#pragma warning(push)
-#pragma warning(disable:26454)
 BEGIN_MESSAGE_MAP(CFileTopControl, CTreeListControl)
     ON_WM_SETFOCUS()
     ON_WM_KEYDOWN()
     ON_NOTIFY_REFLECT_EX(LVN_DELETEALLITEMS, OnDeleteAllItems)
 END_MESSAGE_MAP()
-#pragma warning(pop)
 
 CFileTopControl* CFileTopControl::m_Singleton = nullptr;
 

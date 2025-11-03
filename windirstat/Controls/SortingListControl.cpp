@@ -206,15 +206,12 @@ bool CSortingListControl::GetAscendingDefault(int /*column*/)
     return true;
 }
 
-#pragma warning(push)
-#pragma warning(disable:26454)
 BEGIN_MESSAGE_MAP(CSortingListControl, CListCtrl)
     ON_NOTIFY_REFLECT(LVN_GETDISPINFO, OnLvnGetDispInfo)
     ON_NOTIFY(HDN_ITEMCLICK, 0, OnHdnItemClick)
     ON_NOTIFY(HDN_ITEMDBLCLICK, 0, OnHdnItemDblClick)
     ON_WM_DESTROY()
 END_MESSAGE_MAP()
-#pragma warning(pop)
 
 void CSortingListControl::OnLvnGetDispInfo(NMHDR* pNMHDR, LRESULT* pResult)
 {

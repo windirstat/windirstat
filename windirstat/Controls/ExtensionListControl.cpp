@@ -143,8 +143,6 @@ int CExtensionListControl::CListItem::Compare(const CSortingListItem* baseOther,
 
 /////////////////////////////////////////////////////////////////////////////
 
-#pragma warning(push)
-#pragma warning(disable:26454)
 BEGIN_MESSAGE_MAP(CExtensionListControl, COwnerDrawnListControl)
     ON_WM_MEASUREITEM_REFLECT()
     ON_NOTIFY_REFLECT(LVN_DELETEITEM, OnLvnDeleteItem)
@@ -152,7 +150,6 @@ BEGIN_MESSAGE_MAP(CExtensionListControl, COwnerDrawnListControl)
     ON_NOTIFY_REFLECT(LVN_ITEMCHANGED, OnLvnItemChanged)
     ON_WM_KEYDOWN()
 END_MESSAGE_MAP()
-#pragma warning(pop)
 
 CExtensionListControl::CExtensionListControl(CExtensionView* extensionView)
     : COwnerDrawnListControl(19, COptions::ExtViewColumnOrder.Ptr(), COptions::ExtViewColumnWidths.Ptr()) // FIXME: Hardcoded value
