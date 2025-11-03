@@ -17,6 +17,7 @@
 
 #include "stdafx.h"
 #include "PacMan.h"
+#include "DarkMode.h"
 
 namespace
 {
@@ -27,7 +28,7 @@ namespace
 
 CPacman::CPacman() :
     m_Font(L"Arial", 6.0f, Gdiplus::FontStyleBold),
-    m_Bgcolor(GetSysColor(COLOR_WINDOW))
+    m_Bgcolor(DarkMode::WdsSysColor(COLOR_WINDOW))
 {
     Reset();
 }
@@ -110,10 +111,6 @@ void CPacman::Draw(const CDC* pdc, const CRect& rect)
     const Gdiplus::REAL sweepAngle = 360.0f - slice;
     Gdiplus::REAL startAngle = m_Aperture * slice / 2.0f;
     if (!m_ToTheRight) startAngle += 180.0f;
-
-    // Draw the background (use non gdi+ for performance)
-    const CBrush bgBrush(m_Bgcolor);
-    FillRect(*pdc, &rect, bgBrush);
     if (m_Done) return;
 
     // Create pens and brushes
@@ -128,10 +125,11 @@ void CPacman::Draw(const CDC* pdc, const CRect& rect)
     if (m_Moving) return;
 
     // Draw sleepy graphic
-    const Gdiplus::SolidBrush blackBrush(Gdiplus::Color(0xFF, 0, 0, 0));
-    graphics.DrawString(L"z",1, &m_Font, {rc.left + 5.0f, rc.top - 3.0f}, &blackBrush);
-    graphics.DrawString(L"z", 1, &m_Font, { rc.left + 10.0f, rc.top - 4.5f }, &blackBrush);
-    graphics.DrawString(L"z", 1, &m_Font, { rc.left + 15.0f, rc.top - 6.0f }, &blackBrush);
+    const COLORREF zColor = DarkMode::WdsSysColor(COLOR_WINDOWTEXT);
+    const Gdiplus::SolidBrush zBrush(Gdiplus::Color(0xFF, GetRValue(zColor), GetGValue(zColor), GetBValue(zColor)));
+    graphics.DrawString(L"z",1, &m_Font, {rc.left + 5.0f, rc.top - 3.0f}, &zBrush);
+    graphics.DrawString(L"z", 1, &m_Font, { rc.left + 10.0f, rc.top - 4.5f }, &zBrush);
+    graphics.DrawString(L"z", 1, &m_Font, { rc.left + 15.0f, rc.top - 6.0f }, &zBrush);
 }
 
 void CPacman::UpdatePosition(float& position, bool& up, const float diff)

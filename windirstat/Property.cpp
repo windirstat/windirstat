@@ -45,7 +45,7 @@ template <> void Setting<int>::ReadPersistedProperty()
 {
     const int def = m_Value;
     m_Value = CDirStatApp::Get()->GetProfileInt(m_Section.c_str(), m_Entry.c_str(), m_Value);
-    if (m_Value != def && m_Min != m_Max) m_Value = max(min(m_Value, m_Max), m_Min);
+    if (m_Value != def && m_Min != m_Max) m_Value = std::clamp(m_Value, m_Min, m_Max);
 }
 
 template <> void Setting<int>::WritePersistedProperty()

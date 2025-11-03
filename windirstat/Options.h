@@ -34,6 +34,13 @@ enum REFRESHPOLICY : std::uint8_t
     RP_REFRESH_THIS_ENTRYS_PARENT
 };
 
+enum DARKMODE : std::uint8_t
+{
+    DM_DISABLED,
+    DM_ENABLED,
+    DM_USE_WINDOWS
+};
+
 struct USERDEFINEDCLEANUP
 {
     USERDEFINEDCLEANUP() : USERDEFINEDCLEANUP(L"") {}
@@ -176,6 +183,7 @@ public:
     static Setting<int> TreeMapLightSourceY;
     static Setting<int> TreeMapScaleFactor;
     static Setting<int> TreeMapStyle;
+    static Setting<int> DarkMode;
     static Setting<RECT> AboutWindowRect;
     static Setting<RECT> DriveSelectWindowRect;
     static Setting<RECT> SearchWindowRect;

@@ -299,6 +299,12 @@
     <ClInclude Include="res\LangStrings.h">
       <Filter>Resource Files\Languages</Filter>
     </ClInclude>
+    <ClInclude Include="Dialogs\MessageBoxDlg.h">
+      <Filter>Header Files\Dialogs</Filter>
+    </ClInclude>
+    <ClInclude Include="DarkMode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirStatDoc.cpp">
@@ -442,6 +448,12 @@
     <ClCompile Include="Views\FileSearchView.cpp">
       <Filter>Source Files\Views</Filter>
     </ClCompile>
+    <ClCompile Include="DarkMode.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Dialogs\MessageBoxDlg.cpp">
+      <Filter>Source Files\Dialogs</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="windirstat.rc">
@@ -525,6 +537,9 @@
       <Filter>Resource Files\Resources</Filter>
     </Image>
     <Image Include="res\toolbar\IDB_SEARCH.bmp">
+      <Filter>Resource Files\Resources</Filter>
+    </Image>
+    <Image Include="res\IDB_NODES_INVERT.bmp">
       <Filter>Resource Files\Resources</Filter>
     </Image>
   </ItemGroup>

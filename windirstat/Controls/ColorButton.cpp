@@ -19,6 +19,7 @@
 #include "resource.h"
 #include "ColorButton.h"
 #include "Constants.h"
+#include "DarkMode.h"
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -58,7 +59,7 @@ void CColorButton::CPreview::OnPaint()
     COLORREF color = m_Color;
     if ((GetParent()->GetStyle() & WS_DISABLED) != 0)
     {
-        color = GetSysColor(COLOR_BTNFACE);
+        color = DarkMode::WdsSysColor(COLOR_BTNFACE);
     }
     dc.FillSolidRect(rc, color);
 }

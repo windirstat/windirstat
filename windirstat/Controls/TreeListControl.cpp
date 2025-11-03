@@ -392,10 +392,11 @@ void CTreeListControl::InitializeNodeBitmaps()
 
     COLORMAP cm[1] = { {RGB(255, 0, 255), 0} };
 
+    auto bitmapToUse = DarkMode::IsDarkModeActive() ? IDB_NODES_INVERT : IDB_NODES;
     cm[0].to = GetWindowColor();
-    VERIFY(m_BmNodes0.LoadMappedBitmap(IDB_NODES, 0, cm, 1));
+    VERIFY(m_BmNodes0.LoadMappedBitmap(bitmapToUse, 0, cm, 1));
     cm[0].to = GetStripeColor();
-    VERIFY(m_BmNodes1.LoadMappedBitmap(IDB_NODES, 0, cm, 1));
+    VERIFY(m_BmNodes1.LoadMappedBitmap(bitmapToUse, 0, cm, 1));
 }
 
 void CTreeListControl::InsertItem(const int i, CTreeListItem* item)
@@ -423,7 +424,6 @@ BEGIN_MESSAGE_MAP(CTreeListControl, COwnerDrawnListControl)
     ON_WM_LBUTTONDOWN()
     ON_WM_KEYDOWN()
     ON_WM_LBUTTONDBLCLK()
-    ON_WM_DESTROY()
 END_MESSAGE_MAP()
 
 void CTreeListControl::DrawNode(CDC* pdc, CRect& rc, CRect& rcPlusMinus, const CTreeListItem* item, int* width)

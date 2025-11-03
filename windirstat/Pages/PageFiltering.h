@@ -24,7 +24,7 @@ class COptionsPropertySheet;
 //
 // CPageFiltering. "Settings" property page "Filtering".
 //
-class CPageFiltering final : public CPropertyPageEx
+class CPageFiltering final : public CMFCPropertyPage
 {
     DECLARE_DYNAMIC(CPageFiltering)
 
@@ -54,4 +54,5 @@ protected:
     DECLARE_MESSAGE_MAP()
     afx_msg void OnSettingChanged();
     BOOL PreTranslateMessage(MSG* pMsg) override;
+    afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 };

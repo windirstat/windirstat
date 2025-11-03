@@ -62,7 +62,7 @@ public:
     }
 
     static void UpdateMenu(CMenu& menu);
-    static void UpdateTabControl(CTabCtrl& tab);
+    static void UpdateTabControl(CMFCTabCtrl& tab);
     static void UpdateDialogs(const CWnd& wnd);
     static bool LoadExternalLanguage(LCTYPE lcttype, LCID lcid);
     static bool LoadFile(const std::wstring& file);

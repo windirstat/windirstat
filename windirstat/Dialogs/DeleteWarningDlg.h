@@ -46,4 +46,5 @@ protected:
     DECLARE_MESSAGE_MAP()
     afx_msg void OnBnClickedNo();
     afx_msg void OnBnClickedYes();
+    afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 };

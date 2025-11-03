@@ -36,6 +36,7 @@ void CDeleteWarningDlg::DoDataExchange(CDataExchange* pDX)
 BEGIN_MESSAGE_MAP(CDeleteWarningDlg, CDialogEx)
     ON_BN_CLICKED(IDNO, OnBnClickedNo)
     ON_BN_CLICKED(IDYES, OnBnClickedYes)
+    ON_WM_CTLCOLOR()
 END_MESSAGE_MAP()
 
 void CDeleteWarningDlg::OnBnClickedNo()
@@ -55,6 +56,7 @@ BOOL CDeleteWarningDlg::OnInitDialog()
     CDialogEx::OnInitDialog();
 
     Localization::UpdateDialogs(*this);
+    DarkMode::AdjustControls(GetSafeHwnd());
 
     int extent = 0;
     const CClientDC dc(this);
@@ -67,4 +69,10 @@ BOOL CDeleteWarningDlg::OnInitDialog()
 
     GotoDlgCtrl(GetDlgItem(IDNO));
     return TRUE;
+}
+
+HBRUSH CDeleteWarningDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, const UINT nCtlColor)
+{
+    const HBRUSH brush = DarkMode::OnCtlColor(pDC, nCtlColor);
+    return brush ? brush : CDialogEx::OnCtlColor(pDC, pWnd, nCtlColor);
 }

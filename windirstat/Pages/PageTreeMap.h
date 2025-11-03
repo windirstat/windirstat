@@ -25,7 +25,7 @@
 //
 // CPageTreeMap. "Settings" property page "TreeMap".
 //
-class CPageTreeMap final : public CPropertyPageEx
+class CPageTreeMap final : public CMFCPropertyPage
 {
     DECLARE_DYNAMIC(CPageTreeMap)
 
@@ -84,4 +84,5 @@ protected:
     afx_msg void OnLightSourceChanged(NMHDR*, LRESULT*);
     afx_msg void OnSetModified();
     afx_msg void OnBnClickedReset();
+    afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 };

@@ -22,10 +22,11 @@
 #include "Options.h"
 #include "Localization.h"
 #include "WinDirStat.h"
+#include "DarkMode.h"
 
-IMPLEMENT_DYNAMIC(CPageAdvanced, CPropertyPageEx)
+IMPLEMENT_DYNAMIC(CPageAdvanced, CMFCPropertyPage)
 
-CPageAdvanced::CPageAdvanced() : CPropertyPageEx(IDD) {}
+CPageAdvanced::CPageAdvanced() : CMFCPropertyPage(IDD) {}
 
 CPageAdvanced::~CPageAdvanced() = default;
 
@@ -36,7 +37,7 @@ COptionsPropertySheet* CPageAdvanced::GetSheet() const
 
 void CPageAdvanced::DoDataExchange(CDataExchange* pDX)
 {
-    CPropertyPageEx::DoDataExchange(pDX);
+    CMFCPropertyPage::DoDataExchange(pDX);
     DDX_Check(pDX, IDC_EXCLUDE_VOLUME_MOUNT_POINTS, m_ExcludeVolumeMountPoints);
     DDX_Check(pDX, IDC_EXCLUDE_JUNCTIONS, m_ExcludeJunctions);
     DDX_Check(pDX, IDC_EXCLUDE_SYMLINKS_DIRECTORY, m_ExcludeSymbolicLinksDirectory);
@@ -51,7 +52,7 @@ void CPageAdvanced::DoDataExchange(CDataExchange* pDX)
     DDX_CBIndex(pDX, IDC_COMBO_THREADS, m_ScanningThreads);
 }
 
-BEGIN_MESSAGE_MAP(CPageAdvanced, CPropertyPageEx)
+BEGIN_MESSAGE_MAP(CPageAdvanced, CMFCPropertyPage)
     ON_BN_CLICKED(IDC_BACKUP_RESTORE, OnSettingChanged)
     ON_BN_CLICKED(IDC_EXCLUDE_HIDDEN_DIRECTORY, OnSettingChanged)
     ON_BN_CLICKED(IDC_EXCLUDE_PROTECTED_DIRECTORY, OnSettingChanged)
@@ -65,13 +66,23 @@ BEGIN_MESSAGE_MAP(CPageAdvanced, CPropertyPageEx)
     ON_BN_CLICKED(IDC_EXCLUDE_PROTECTED_FILE, OnSettingChanged)
     ON_BN_CLICKED(IDC_RESET_PREFERENCES, &CPageAdvanced::OnBnClickedResetPreferences)
     ON_EN_CHANGE(IDC_LARGEST_FILE_COUNT, &CPageAdvanced::OnEnChangeLargestFileCount)
+    ON_WM_CTLCOLOR()
 END_MESSAGE_MAP()
+
+HBRUSH CPageAdvanced::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
+{
+    const HBRUSH brush = DarkMode::OnCtlColor(pDC, nCtlColor);
+    return brush ? brush : CMFCPropertyPage::OnCtlColor(pDC, pWnd, nCtlColor);
+}
 
 BOOL CPageAdvanced::OnInitDialog()
 {
-    CPropertyPageEx::OnInitDialog();
+    CMFCPropertyPage::OnInitDialog();
 
     Localization::UpdateDialogs(*this);
+
+    // Apply dark mode to this property page
+    DarkMode::AdjustControls(GetSafeHwnd());
 
     m_ExcludeVolumeMountPoints = COptions::ExcludeVolumeMountPoints;
     m_ExcludeJunctions = COptions::ExcludeJunctions;
@@ -127,7 +138,7 @@ void CPageAdvanced::OnOK()
         CDirStatDoc::GetDocument()->RefreshReparsePointItems();
     }
 
-    CPropertyPageEx::OnOK();
+    CMFCPropertyPage::OnOK();
 }
 
 void CPageAdvanced::OnSettingChanged()
@@ -149,11 +160,11 @@ void CPageAdvanced::OnEnChangeLargestFileCount()
 
     if (m_LargestFileCount.IsEmpty())
     {
-        m_LargestFileCount = _T("0");
+        m_LargestFileCount = L"0";
     }
     else if (_ttoi(m_LargestFileCount) > 10000)
     {
-        m_LargestFileCount = _T("10000");
+        m_LargestFileCount = L"10000";
     }
 
     UpdateData(FALSE);

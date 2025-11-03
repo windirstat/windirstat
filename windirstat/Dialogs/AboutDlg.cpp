@@ -23,6 +23,7 @@
 #include "Localization.h"
 #include "Options.h"
 #include "GlobalHelpers.h"
+#include "DarkMode.h"
 
 #pragma comment(lib,"version.lib")
 
@@ -76,103 +77,76 @@ BOOL CAboutThread::InitInstance()
 
 void CAboutDlg::WdsTabControl::Initialize()
 {
-    ModifyStyle(0, WS_CLIPCHILDREN);
+    SetLocation(LOCATION_TOP);
+    DarkModeTabCtrlHelper::SetupDarkMode(*this);
 
-    InsertItem(TAB_ABOUT, Localization::Lookup(IDS_ABOUT_ABOUT).c_str());
-    InsertItem(TAB_THANKSTO, Localization::Lookup(IDS_ABOUT_THANKSTO).c_str());
-    InsertItem(TAB_LICENSE, Localization::Lookup(IDS_ABOUT_LICENSEAGREEMENT).c_str());
+    // Calculate initial client area
+    auto createText = [&](CRichEditCtrl& ctrl, const DWORD align = ES_CENTER)
+    {
+        VERIFY(ctrl.Create(WS_CHILD | WS_VISIBLE | WS_BORDER | ES_MULTILINE | ES_READONLY | WS_VSCROLL | align,
+            CRect(), this, ID_WDS_CONTROL));
+        ctrl.SetEventMask(ENM_LINK | ENM_KEYEVENTS);
+        return &ctrl;
+    };
 
-    CRect rc;
-    GetClientRect(rc);
+    // Create all three pages and add them as tabs
+    AddTab(createText(m_TextAbout), Localization::Lookup(IDS_ABOUT_ABOUT).c_str(), TAB_ABOUT);
+    AddTab(createText(m_TextThanks), Localization::Lookup(IDS_ABOUT_THANKSTO).c_str(), TAB_THANKSTO);
+    AddTab(createText(m_TextLicense, ES_LEFT), Localization::Lookup(IDS_ABOUT_LICENSEAGREEMENT).c_str(), TAB_LICENSE);
 
-    CRect rcItem;
-    GetItemRect(0, rcItem);
-
-    rc.top = rcItem.bottom;
-
-    VERIFY(m_Text.Create(WS_CHILD | WS_VISIBLE | WS_BORDER | ES_CENTER | ES_MULTILINE | ES_READONLY, rc, this, ID_WDS_CONTROL));
-    SetPageText(TAB_ABOUT);
-
-    // Set the font for the text control
+    // Use monospace font for license page
     m_MonoFont.CreateFontW(12, 0, 0, 0, 0, 0, 0, 0, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
         CLIP_DEFAULT_PRECIS, CLEARTYPE_NATURAL_QUALITY, FF_MODERN, L"Consolas");
+
+    // Populate text
+    const auto about = Localization::Format(IDS_ABOUT_ABOUTTEXTss,
+        Localization::LookupNeutral(IDS_AUTHOR_EMAIL),
+        Localization::LookupNeutral(IDS_URL_WEBSITE));
+    m_TextAbout.SetWindowText(about.c_str());
+
+    const auto thanks = Localization::Lookup(IDS_ABOUT_THANKSTOTEXT);
+    m_TextThanks.SetWindowText(thanks.c_str());
+
+    const auto license = GetTextResource(IDR_LICENSE, nullptr);
+    m_TextLicense.SetWindowText(license.c_str());
+    m_TextLicense.SetFont(&m_MonoFont);
+
+    // Set default rich edit settings
+    for (auto ctrl : { &m_TextAbout, &m_TextThanks, &m_TextLicense })
+    {
+        CHARFORMAT2 charFormat = { 0 };
+        charFormat.cbSize = sizeof(CHARFORMAT2);
+        charFormat.dwMask = CFM_COLOR;
+        charFormat.crTextColor = DarkMode::WdsSysColor(COLOR_WINDOWTEXT);
+        ctrl->SetDefaultCharFormat(charFormat);
+        ctrl->SetAutoURLDetect();
+        ctrl->SetBackgroundColor(FALSE, DarkMode::WdsSysColor(COLOR_WINDOW));
+    }
 }
 
-void CAboutDlg::WdsTabControl::SetPageText(const int tab)
+void CAboutDlg::WdsTabControl::ClearSelectionCursor()
 {
-    std::wstring text;
-    DWORD newStyle = ES_CENTER;
-
-    switch (tab)
-    {
-    case TAB_ABOUT:
-        {
-            text = Localization::Format(IDS_ABOUT_ABOUTTEXTss,
-                Localization::LookupNeutral(IDS_AUTHOR_EMAIL),
-                Localization::LookupNeutral(IDS_URL_WEBSITE));
-        }
-        break;
-    case TAB_THANKSTO:
-        {
-            text = Localization::Lookup(IDS_ABOUT_THANKSTOTEXT);
-        }
-        break;
-    case TAB_LICENSE:
-        {
-            text = GetTextResource(IDR_LICENSE, nullptr);
-            newStyle = ES_LEFT;
-        }
-        break;
-    default:
-        {
-            ASSERT(FALSE);
-        }
-        break;
-    }
-    CRect rc;
-    m_Text.GetWindowRect(rc);
-    ScreenToClient(rc);
-
-    DWORD style = m_Text.GetStyle();
-    style &= ~ES_CENTER;
-    style |= newStyle | WS_VSCROLL;
-
-    const DWORD exstyle = m_Text.GetExStyle();
-
-    m_Text.DestroyWindow();
-
-    m_Text.Create(style, rc, this, ID_WDS_CONTROL);
-    if (exstyle)
-    {
-        m_Text.ModifyStyleEx(0, exstyle);
-    }
-
-    m_Text.SetAutoURLDetect();
-    m_Text.SetEventMask(ENM_LINK | ENM_KEYEVENTS);
-    m_Text.SetFont(tab == TAB_LICENSE ? &m_MonoFont : GetFont());
-
-    m_Text.SetWindowText(text.c_str());
-
-    m_Text.HideCaret();
+    const auto tabIndex = GetActiveTab();
+    auto& active = tabIndex == TAB_ABOUT ? m_TextAbout : tabIndex == TAB_THANKSTO ? m_TextThanks : m_TextLicense;
+    active.SetSel(0, 0);
+    active.HideCaret();
 }
 
-BEGIN_MESSAGE_MAP(CAboutDlg::WdsTabControl, CTabCtrl)
+BEGIN_MESSAGE_MAP(CAboutDlg::WdsTabControl, CMFCTabCtrl)
     ON_NOTIFY(EN_LINK, ID_WDS_CONTROL, OnEnLinkText)
     ON_NOTIFY(EN_MSGFILTER, ID_WDS_CONTROL, OnEnMsgFilter)
-    ON_WM_SIZE()
 END_MESSAGE_MAP()
 
 void CAboutDlg::WdsTabControl::OnEnLinkText(NMHDR* pNMHDR, LRESULT* pResult)
 {
     const ENLINK* el = reinterpret_cast<ENLINK*>(pNMHDR);
-    *pResult         = 0;
+    *pResult = 0;
 
     if (WM_LBUTTONDOWN == el->msg)
     {
         CStringW link;
-        m_Text.GetTextRange(el->chrg.cpMin, el->chrg.cpMax, link);
-
-        // FIXME: should probably one of the helper variants of this function
+        const auto& active = GetActiveTab() == TAB_ABOUT ? m_TextAbout : GetActiveTab() == TAB_THANKSTO ? m_TextThanks : m_TextLicense;
+        active.GetTextRange(el->chrg.cpMin, el->chrg.cpMax, link);
         ::ShellExecute(*this, nullptr, link, nullptr, wds::strEmpty, SW_SHOWNORMAL);
     }
 }
@@ -180,42 +154,19 @@ void CAboutDlg::WdsTabControl::OnEnLinkText(NMHDR* pNMHDR, LRESULT* pResult)
 void CAboutDlg::WdsTabControl::OnEnMsgFilter(NMHDR* pNMHDR, LRESULT* pResult)
 {
     const MSGFILTER* mf = reinterpret_cast<MSGFILTER*>(pNMHDR);
-    *pResult            = 0;
+    *pResult = 0;
 
     if (WM_KEYDOWN == mf->msg && (VK_ESCAPE == mf->wParam || VK_TAB == mf->wParam))
     {
-        // Move the focus back to the Tab control
         SetFocus();
-
-        // If we didn't ignore VK_ESCAPE here, strange things happen:
-        // both m_Text and the Tab control would disappear.
         *pResult = 1;
-    }
-}
-
-void CAboutDlg::WdsTabControl::OnSize(const UINT nType, const int cx, const int cy)
-{
-    CTabCtrl::OnSize(nType, cx, cy);
-
-    if (IsWindow(m_Text.m_hWnd))
-    {
-        CRect rc;
-        GetClientRect(rc);
-
-        CRect rcItem;
-        GetItemRect(0, rcItem);
-
-        rc.top = rcItem.bottom;
-
-        m_Text.MoveWindow(rc);
     }
 }
 
 ////////////////////////////////////////////////////////////////////////////
 
 CAboutDlg::CAboutDlg()
-    : CDialogEx(IDD)
-      , m_Layout(this, COptions::AboutWindowRect.Ptr())
+    : CLayoutDialogEx(IDD_ABOUTBOX, COptions::AboutWindowRect.Ptr())
 {
 }
 
@@ -247,17 +198,22 @@ void CAboutDlg::DoDataExchange(CDataExchange* pDX)
     DDX_Control(pDX, IDC_TAB, m_Tab);
 }
 
-BEGIN_MESSAGE_MAP(CAboutDlg, CDialogEx)
-    ON_NOTIFY(TCN_SELCHANGE, IDC_TAB, OnTcnSelchangeTab)
-    ON_WM_SIZE()
-    ON_WM_GETMINMAXINFO()
-    ON_WM_DESTROY()
+BEGIN_MESSAGE_MAP(CAboutDlg, CLayoutDialogEx)
+    ON_WM_CTLCOLOR()
+    ON_REGISTERED_MESSAGE(AFX_WM_CHANGE_ACTIVE_TAB, OnTabChanged)
 END_MESSAGE_MAP()
 
 BOOL CAboutDlg::OnInitDialog()
 {
-    CDialogEx::OnInitDialog();
+    CLayoutDialogEx::OnInitDialog();
 
+    // Re-create the tab control
+    CWnd* placeholderTabCtrl = GetDlgItem(IDC_TAB);
+    CRect placeholderRect;
+    placeholderTabCtrl->GetWindowRect(&placeholderRect);
+    ScreenToClient(&placeholderRect);
+    placeholderTabCtrl->DestroyWindow();
+    m_Tab.Create(CMFCTabCtrl::STYLE_FLAT, placeholderRect, this, IDC_TAB);
     Localization::UpdateDialogs(*this);
 
     m_Layout.AddControl(IDC_CAPTION, 0.5, 0, 0, 0);
@@ -269,29 +225,23 @@ BOOL CAboutDlg::OnInitDialog()
     m_Tab.Initialize();
     m_Caption.SetWindowText(GetAppVersion().c_str());
 
+    DarkMode::AdjustControls(GetSafeHwnd());
+
     return TRUE;
 }
 
-void CAboutDlg::OnTcnSelchangeTab(NMHDR* /*pNMHDR*/, LRESULT* pResult)
+
+LRESULT CAboutDlg::OnTabChanged(WPARAM wParam, LPARAM lParam)
 {
-    *pResult = FALSE;
-    m_Tab.SetPageText(m_Tab.GetCurSel());
+    UNREFERENCED_PARAMETER(wParam);
+    UNREFERENCED_PARAMETER(lParam);
+
+    m_Tab.ClearSelectionCursor();
+    return 0;
 }
 
-void CAboutDlg::OnSize(const UINT nType, const int cx, const int cy)
+HBRUSH CAboutDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 {
-    CDialogEx::OnSize(nType, cx, cy);
-    m_Layout.OnSize();
-}
-
-void CAboutDlg::OnGetMinMaxInfo(MINMAXINFO* lpMMI)
-{
-    m_Layout.OnGetMinMaxInfo(lpMMI);
-    CDialogEx::OnGetMinMaxInfo(lpMMI);
-}
-
-void CAboutDlg::OnDestroy()
-{
-    m_Layout.OnDestroy();
-    CDialogEx::OnDestroy();
+    const HBRUSH brush = DarkMode::OnCtlColor(pDC, nCtlColor);
+    return brush ? brush : CLayoutDialogEx::OnCtlColor(pDC, pWnd, nCtlColor);
 }

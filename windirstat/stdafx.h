@@ -50,6 +50,9 @@
 #include <winternl.h>
 #include <powrprof.h>
 #include <aclapi.h>
+#include <uxtheme.h>
+#include <vssym32.h>
+#include <dwmapi.h>
 
 constexpr auto RGB_GET_RVALUE(auto rgb) { return (rgb >>  0) & 0xFF; }
 constexpr auto RGB_GET_GVALUE(auto rgb) { return (rgb >>  8) & 0xFF; }

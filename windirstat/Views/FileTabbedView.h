@@ -43,6 +43,7 @@ protected:
     CFileTabbedView() = default;
     ~CFileTabbedView() override = default;
     DECLARE_DYNCREATE(CFileTabbedView)
+    void OnInitialUpdate() override;
 
     // Used for storing and retrieving the various tab views
     int m_FileTreeViewIndex = -1;
@@ -54,8 +55,8 @@ protected:
     int m_FileSearchViewIndex = -1;
     CFileSearchView* m_FileSearchView = nullptr;
 
+    DECLARE_MESSAGE_MAP()
     afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
     afx_msg BOOL OnEraseBkgnd(CDC* pDC);
     afx_msg LRESULT OnChangeActiveTab(WPARAM wp, LPARAM lp);
-    DECLARE_MESSAGE_MAP()
 };

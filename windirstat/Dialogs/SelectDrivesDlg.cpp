@@ -21,10 +21,13 @@
 #include "Options.h"
 #include "GlobalHelpers.h"
 #include "SelectDrivesDlg.h"
-
+#include "DarkMode.h"
 #include "FinderBasic.h"
 #include "Localization.h"
 #include "MainFrame.h"
+#include "MessageBoxDlg.h"
+
+#include <array>
 
 namespace
 {
@@ -283,14 +286,6 @@ BOOL CDriveInformationThread::InitInstance()
 
     if (HWND dialog = m_Dialog; dialog != nullptr)
     {
-        // Theoretically the dialog may have been closed at this point.
-        // SendMessage() to a non-existing window simply fails immediately.
-        // If in the meantime the system recycled the window handle,
-        // (it may even belong to another process now?!),
-        // we are safe, because WMU_THREADFINISHED is a unique registered message.
-        // (Well if the other process crashes because of our message, there is nothing we can do about it.)
-        // If the window handle is recycled by a new Select drives dialog,
-        // its new serial will prevent it from reacting.
         ::SendMessage(dialog, WMU_THREADFINISHED, m_Serial, reinterpret_cast<LPARAM>(this));
     }
 
@@ -373,12 +368,12 @@ void CDrivesList::MeasureItem(LPMEASUREITEMSTRUCT mis)
 
 /////////////////////////////////////////////////////////////////////////////
 
-IMPLEMENT_DYNAMIC(CSelectDrivesDlg, CDialogEx)
+IMPLEMENT_DYNAMIC(CSelectDrivesDlg, CLayoutDialogEx)
 
 UINT CSelectDrivesDlg::_serial;
 
-CSelectDrivesDlg::CSelectDrivesDlg(CWnd* pParent) : CDialogEx(IDD, pParent)
-      , m_Layout(this, COptions::DriveSelectWindowRect.Ptr())
+CSelectDrivesDlg::CSelectDrivesDlg(CWnd* pParent) :
+    CLayoutDialogEx(IDD, COptions::DriveSelectWindowRect.Ptr(), pParent)
 {
     _serial++;
 }
@@ -394,7 +389,7 @@ void CSelectDrivesDlg::DoDataExchange(CDataExchange* pDX)
     DDX_Control(pDX, IDC_BROWSE_FOLDER, m_Browse);
 }
 
-BEGIN_MESSAGE_MAP(CSelectDrivesDlg, CDialogEx)
+BEGIN_MESSAGE_MAP(CSelectDrivesDlg, CLayoutDialogEx)
     ON_BN_CLICKED(IDC_RADIO_TARGET_DRIVES_ALL, OnBnClickedUpdateButtons)
     ON_BN_CLICKED(IDC_RADIO_TARGET_DRIVES_SUBSET, &CSelectDrivesDlg::OnBnClickedRadioTargetDrivesSubset)
     ON_BN_CLICKED(IDC_RADIO_TARGET_FOLDER, &CSelectDrivesDlg::OnBnClickedRadioTargetFolder)
@@ -406,10 +401,9 @@ BEGIN_MESSAGE_MAP(CSelectDrivesDlg, CDialogEx)
     ON_NOTIFY(NM_SETFOCUS, IDC_TARGET_DRIVES_LIST, &CSelectDrivesDlg::OnNMSetfocusTargetDrivesList)
     ON_REGISTERED_MESSAGE(WMU_THREADFINISHED, OnWmDriveInfoThreadFinished)
     ON_WM_DESTROY()
-    ON_WM_GETMINMAXINFO()
     ON_WM_MEASUREITEM()
-    ON_WM_SIZE()
     ON_WM_SYSCOLORCHANGE()
+    ON_WM_CTLCOLOR()
 END_MESSAGE_MAP()
 
 BOOL CSelectDrivesDlg::OnInitDialog()
@@ -419,12 +413,7 @@ BOOL CSelectDrivesDlg::OnInitDialog()
     CDialogEx::OnInitDialog();
 
     Localization::UpdateDialogs(*this);
-
-    if (WMU_THREADFINISHED == 0)
-    {
-        VTRACE(L"Failed. Using WM_USER + 123");
-        WMU_THREADFINISHED = WM_USER + 123;
-    }
+    DarkMode::AdjustControls(GetSafeHwnd());
 
     ModifyStyle(0, WS_CLIPCHILDREN);
 
@@ -469,6 +458,7 @@ BOOL CSelectDrivesDlg::OnInitDialog()
     UpdateWindow();
     BringWindowToTop();
     SetForegroundWindow();
+    DarkMode::AdjustControls(m_Browse.GetSafeHwnd());
 
     const DWORD drives = GetLogicalDrives();
     DWORD mask = 0x00000001;
@@ -574,17 +564,17 @@ void CSelectDrivesDlg::UpdateButtons()
     // Prompt user to elevate if the Fast Scan option is checked in non-elevated session
     if (m_UseFastScan && !IsElevationActive())
     {
-        m_UseFastScan = false;
-        if (MessageBox(Localization::Lookup(IDS_EVELATION_QUESTION).c_str(),
-            Localization::Lookup(IDS_APP_TITLE).c_str(), MB_YESNO | MB_ICONQUESTION) == IDYES)
+    m_UseFastScan = false;
+        if (WdsMessageBox(*this, Localization::Lookup(IDS_EVELATION_QUESTION),
+    Localization::Lookup(IDS_APP_TITLE), MB_YESNO | MB_ICONQUESTION) == IDYES)
         {
             COptions::UseFastScanEngine = true;
-            RunElevated(CDirStatDoc::GetDocument()->GetPathName().GetString());
-        }
+        RunElevated(CDirStatDoc::GetDocument()->GetPathName().GetString());
+ }
         else
-        {
-            // If the user declines, uncheck the fast scan box to revert the state.
-            CheckDlgButton(IDC_FAST_SCAN_CHECKBOX, BST_UNCHECKED);
+ {
+  // If the user declines, uncheck the fast scan box to revert the state.
+          CheckDlgButton(IDC_FAST_SCAN_CHECKBOX, BST_UNCHECKED);
         }
     }
 
@@ -663,24 +653,10 @@ void CSelectDrivesDlg::OnBnClickedUpdateButtons()
     UpdateButtons();
 }
 
-void CSelectDrivesDlg::OnSize(const UINT nType, const int cx, const int cy)
-{
-    CDialogEx::OnSize(nType, cx, cy);
-    m_Layout.OnSize();
-}
-
-void CSelectDrivesDlg::OnGetMinMaxInfo(MINMAXINFO* lpMMI)
-{
-    m_Layout.OnGetMinMaxInfo(lpMMI);
-    CDialogEx::OnGetMinMaxInfo(lpMMI);
-}
-
 void CSelectDrivesDlg::OnDestroy()
 {
     CDriveInformationThread::InvalidateDialogHandle();
-
-    m_Layout.OnDestroy();
-    CDialogEx::OnDestroy();
+    CLayoutDialogEx::OnDestroy();
 }
 
 LRESULT CSelectDrivesDlg::OnWmuOk(WPARAM, LPARAM)
@@ -765,4 +741,10 @@ std::vector<std::wstring> CSelectDrivesDlg::GetSelectedItems() const
     return (m_Radio == RADIO_TARGET_DRIVES_ALL) ? m_Drives :
         (m_Radio == RADIO_TARGET_DRIVES_SUBSET) ? m_SelectedDrives :
         std::vector<std::wstring>{ m_FolderName.GetString() };
+}
+
+HBRUSH CSelectDrivesDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, const UINT nCtlColor)
+{
+    const HBRUSH brush = DarkMode::OnCtlColor(pDC, nCtlColor);
+    return brush ? brush : CDialogEx::OnCtlColor(pDC, pWnd, nCtlColor);
 }

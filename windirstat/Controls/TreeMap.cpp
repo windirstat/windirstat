@@ -18,6 +18,7 @@
 #include "stdafx.h"
 #include "SelectObject.h"
 #include "TreeMap.h"
+#include "DarkMode.h"
 
 #include <algorithm>
 #include <array>
@@ -205,7 +206,7 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, Item* root, const Options* option
         // We shrink the rectangle here, too.
         // If we didn't do this, the layout of the treemap would
         // change, when grid is switched on and off.
-        CPen pen(PS_SOLID, 1, GetSysColor(COLOR_3DSHADOW));
+        CPen pen(PS_SOLID, 1, DarkMode::WdsSysColor(COLOR_3DSHADOW));
         CSelectObject sopen(pdc, &pen);
         pdc->MoveTo(rc.right - 1, rc.top);
         pdc->LineTo(rc.right - 1, rc.bottom);

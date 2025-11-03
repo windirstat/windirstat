@@ -134,7 +134,7 @@ class CDrivesList final : public COwnerDrawnListControl
 // CSelectDrivesDlg. The initial dialog, where the user can select
 // one or more drives or a folder for scanning.
 //
-class CSelectDrivesDlg final : public CDialogEx
+class CSelectDrivesDlg final : public CLayoutDialogEx
 {
     DECLARE_DYNAMIC(CSelectDrivesDlg)
 
@@ -165,14 +165,11 @@ protected:
     CMFCEditBrowseCtrl m_Browse;
     CButton m_OkButton;
     std::vector<std::wstring> m_SelectedDrives;
-    CLayout m_Layout;
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnBnClickedUpdateButtons();
     afx_msg void OnEnChangeFolderName();
     afx_msg void OnLvnItemChangedDrives(NMHDR* pNMHDR, LRESULT* pResult);
-    afx_msg void OnSize(UINT nType, int cx, int cy);
-    afx_msg void OnGetMinMaxInfo(MINMAXINFO* lpMMI);
     afx_msg void OnDestroy();
     afx_msg LRESULT OnWmuOk(WPARAM, LPARAM);
     afx_msg LRESULT OnWmDriveInfoThreadFinished(WPARAM, LPARAM lparam);
@@ -180,5 +177,6 @@ protected:
     afx_msg void OnBnClickedRadioTargetDrivesSubset();
     afx_msg void OnBnClickedRadioTargetFolder();
     afx_msg void OnNMSetfocusTargetDrivesList(NMHDR*, LRESULT* pResult);
+    afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
     BOOL PreTranslateMessage(MSG* pMsg) override;
 };

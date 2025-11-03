@@ -45,7 +45,7 @@ protected:
     void SetSelection();
 
     bool m_ShowTypes = true;                      // Whether this view shall be shown (F8 option)
-    CTabCtrl m_Tabs;                              // The tab control
+    CMFCTabCtrl m_Tabs;                              // The tab control
     CExtensionListControl m_ExtensionListControl; // The list control
 
     DECLARE_MESSAGE_MAP()

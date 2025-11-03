@@ -24,7 +24,7 @@ class COptionsPropertySheet;
 //
 // CPageGeneral. "Settings" property page "General".
 //
-class CPageGeneral final : public CPropertyPageEx
+class CPageGeneral final : public CMFCPropertyPage
 {
     DECLARE_DYNAMIC(CPageGeneral)
 
@@ -50,8 +50,9 @@ protected:
     BOOL m_ListFullRowSelection = FALSE;
 
     CComboBox m_Combo;
+    int m_DarkModeRadio = 0;
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnBnClickedSetModified();
-    afx_msg void OnCbnSelendokCombo();
+    afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 };

@@ -23,6 +23,7 @@
 #include "FileTreeView.h"
 #include "Localization.h"
 #include "MainFrame.h"
+#include "MessageBoxDlg.h"
 
 IMPLEMENT_DYNCREATE(CFileTabbedView, CTabView)
 
@@ -45,10 +46,15 @@ int CFileTabbedView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
     m_FileDupeView = DYNAMIC_DOWNCAST(CFileDupeView, GetTabControl().GetTabWnd(m_FileDupeViewIndex));
     m_FileSearchViewIndex = AddView(RUNTIME_CLASS(CFileSearchView), Localization::Lookup(IDS_SEARCH_RESULTS).c_str(), CHAR_MAX);
     m_FileSearchView = DYNAMIC_DOWNCAST(CFileSearchView, GetTabControl().GetTabWnd(m_FileSearchViewIndex));
-    GetTabControl().ModifyTabStyle(CMFCTabCtrl::STYLE_3D_ONENOTE);
-    GetTabControl().EnableTabSwap(FALSE);
 
     return 0;
+}
+
+void CFileTabbedView::OnInitialUpdate()
+{
+    CTabView::OnInitialUpdate();
+
+    DarkModeTabCtrlHelper::SetupDarkMode(GetTabControl());
 }
 
 BOOL CFileTabbedView::OnEraseBkgnd(CDC* /*pDC*/)
@@ -63,7 +69,7 @@ LRESULT CFileTabbedView::OnChangeActiveTab(WPARAM wp, LPARAM lp)
         // Alert the message they are not actually scanning for duplicates
         if (!COptions::ScanForDuplicates)
         {
-            AfxMessageBox(Localization::Lookup(IDS_DUPLICATES_DISABLED).c_str(), MB_OK | MB_ICONHAND);
+            WdsMessageBox(Localization::Lookup(IDS_DUPLICATES_DISABLED), MB_OK | MB_ICONHAND);
             return TRUE;
         }
 

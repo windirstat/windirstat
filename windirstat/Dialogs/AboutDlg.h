@@ -29,24 +29,23 @@ protected:
     BOOL InitInstance() override;
 };
 
-class CAboutDlg final : public CDialogEx
+class CAboutDlg final : public CLayoutDialogEx
 {
-    enum : std::uint8_t { IDD = IDD_ABOUTBOX };
-
-    class WdsTabControl final : public CTabCtrl
+    class WdsTabControl final : public CMFCTabCtrl
     {
     public:
         void Initialize();
-        void SetPageText(int tab);
+        void ClearSelectionCursor();
 
     protected:
         CFont m_MonoFont;
-        CRichEditCtrl m_Text;
+        CRichEditCtrl m_TextAbout;
+        CRichEditCtrl m_TextThanks;
+        CRichEditCtrl m_TextLicense;
 
         DECLARE_MESSAGE_MAP()
         afx_msg void OnEnLinkText(NMHDR* pNMHDR, LRESULT* pResult);
         afx_msg void OnEnMsgFilter(NMHDR* pNMHDR, LRESULT* pResult);
-        afx_msg void OnSize(UINT nType, int cx, int cy);
     };
 
 public:
@@ -59,11 +58,8 @@ protected:
 
     CStatic m_Caption;
     WdsTabControl m_Tab;
-    CLayout m_Layout;
 
     DECLARE_MESSAGE_MAP()
-    afx_msg void OnTcnSelchangeTab(NMHDR* pNMHDR, LRESULT* pResult);
-    afx_msg void OnSize(UINT nType, int cx, int cy);
-    afx_msg void OnGetMinMaxInfo(MINMAXINFO* lpMMI);
-    afx_msg void OnDestroy();
+    afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
+    afx_msg LRESULT OnTabChanged(WPARAM wParam, LPARAM lParam);
 };

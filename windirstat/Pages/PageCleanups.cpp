@@ -19,18 +19,18 @@
 #include "WinDirStat.h"
 #include "Options.h"
 #include "PageCleanups.h"
-
 #include "Localization.h"
+#include "DarkMode.h"
 
-IMPLEMENT_DYNAMIC(CPageCleanups, CPropertyPageEx)
+IMPLEMENT_DYNAMIC(CPageCleanups, CMFCPropertyPage)
 
-CPageCleanups::CPageCleanups() : CPropertyPageEx(IDD) {}
+CPageCleanups::CPageCleanups() : CMFCPropertyPage(IDD) {}
 
 CPageCleanups::~CPageCleanups() = default;
 
 void CPageCleanups::DoDataExchange(CDataExchange* pDX)
 {
-    CPropertyPageEx::DoDataExchange(pDX);
+    CMFCPropertyPage::DoDataExchange(pDX);
     DDX_Control(pDX, IDC_LIST, m_List);
     DDX_Check(pDX, IDC_ENABLED, m_Enabled);
     DDX_Text(pDX, IDC_TITLE, m_Title);
@@ -62,7 +62,7 @@ void CPageCleanups::DoDataExchange(CDataExchange* pDX)
     DDX_Control(pDX, IDC_DOWN, m_CtlDown);
 }
 
-BEGIN_MESSAGE_MAP(CPageCleanups, CPropertyPageEx)
+BEGIN_MESSAGE_MAP(CPageCleanups, CMFCPropertyPage)
     ON_LBN_SELCHANGE(IDC_LIST, OnLbnSelchangeList)
     ON_BN_CLICKED(IDC_ENABLED, OnBnClickedEnabled)
     ON_EN_CHANGE(IDC_TITLE, OnEnChangeTitle)
@@ -79,13 +79,23 @@ BEGIN_MESSAGE_MAP(CPageCleanups, CPropertyPageEx)
     ON_BN_CLICKED(IDC_UP, OnBnClickedUp)
     ON_BN_CLICKED(IDC_DOWN, OnBnClickedDown)
     ON_BN_CLICKED(IDC_HELPBUTTON, OnBnClickedHelpbutton)
+    ON_WM_CTLCOLOR()
 END_MESSAGE_MAP()
+
+HBRUSH CPageCleanups::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
+{
+    const HBRUSH brush = DarkMode::OnCtlColor(pDC, nCtlColor);
+    return brush ? brush : CMFCPropertyPage::OnCtlColor(pDC, pWnd, nCtlColor);
+}
 
 BOOL CPageCleanups::OnInitDialog()
 {
-    CPropertyPageEx::OnInitDialog();
+    CMFCPropertyPage::OnInitDialog();
 
     Localization::UpdateDialogs(*this);
+
+    // Apply dark mode to this property page
+    DarkMode::AdjustControls(GetSafeHwnd());
 
     // Combobox data correspond to enum REFRESHPOLICY:
     m_CtlRefreshPolicy.AddString(Localization::Lookup(IDS_POLICY_NOREFRESH).c_str());
@@ -125,7 +135,7 @@ void CPageCleanups::OnOK()
         COptions::UserDefinedCleanups[i].WorksForUncPaths = m_Udc[i].WorksForUncPaths.Obj();
     }
 
-    CPropertyPageEx::OnOK();
+    CMFCPropertyPage::OnOK();
 }
 
 void CPageCleanups::OnLbnSelchangeList()

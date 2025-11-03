@@ -21,24 +21,22 @@
 #include "Localization.h"
 #include "FileSearchControl.h"
 #include "FileTabbedView.h"
+#include "MainFrame.h"
+#include "DarkMode.h"
 
 #include <regex>
 
-#include "MainFrame.h"
-
 // SearchDlg dialog
 
-IMPLEMENT_DYNAMIC(SearchDlg, CDialogEx)
+IMPLEMENT_DYNAMIC(SearchDlg, CLayoutDialogEx)
 
 SearchDlg::SearchDlg(CWnd* pParent /*=nullptr*/)
-    : CDialogEx(IDD_SEARCH, pParent)
+    : CLayoutDialogEx(IDD_SEARCH, COptions::SearchWindowRect.Ptr(), pParent)
     , m_SearchWholePhrase(FALSE)
     , m_SearchCase(FALSE)
     , m_SearchRegex(FALSE)
     , m_SearchTerm(L"")
-    , m_Layout(this, COptions::SearchWindowRect.Ptr())
 {
-
 }
 
 void SearchDlg::DoDataExchange(CDataExchange* pDX)
@@ -50,16 +48,12 @@ void SearchDlg::DoDataExchange(CDataExchange* pDX)
     DDX_Text(pDX, IDC_SEARCH_TERM, m_SearchTerm);
 }
 
-
-BEGIN_MESSAGE_MAP(SearchDlg, CDialogEx)
+BEGIN_MESSAGE_MAP(SearchDlg, CLayoutDialogEx)
     ON_BN_CLICKED(IDOK, &SearchDlg::OnBnClickedOk)
     ON_EN_CHANGE(IDC_SEARCH_TERM, &SearchDlg::OnChangeSearchTerm)
     ON_BN_CLICKED(IDC_SEARCH_REGEX, &SearchDlg::OnChangeSearchTerm)
-    ON_WM_DESTROY()
-    ON_WM_GETMINMAXINFO()
-    ON_WM_SIZE()
+    ON_WM_CTLCOLOR()
 END_MESSAGE_MAP()
-
 
 // SearchDlg message handlers
 
@@ -68,6 +62,7 @@ BOOL SearchDlg::OnInitDialog()
     CDialogEx::OnInitDialog();
 
     Localization::UpdateDialogs(*this);
+    DarkMode::AdjustControls(GetSafeHwnd());
 
     ModifyStyle(0, WS_CLIPCHILDREN);
 
@@ -106,7 +101,7 @@ void SearchDlg::OnBnClickedOk()
     const auto tabbedView = CMainFrame::Get()->GetFileTabbedView();
     tabbedView->SetActiveSearchView();
 
-    CDialogEx::OnOK();
+    CLayoutDialogEx::OnOK();
 }
 
 void SearchDlg::OnChangeSearchTerm()
@@ -118,20 +113,8 @@ void SearchDlg::OnChangeSearchTerm()
     GetDlgItem(IDOK)->EnableWindow(regexTest.flags() & std::regex_constants::optimize);
 }
 
-void SearchDlg::OnSize(const UINT nType, const int cx, const int cy)
+HBRUSH SearchDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, const UINT nCtlColor)
 {
-    CDialogEx::OnSize(nType, cx, cy);
-    m_Layout.OnSize();
-}
-
-void SearchDlg::OnGetMinMaxInfo(MINMAXINFO* lpMMI)
-{
-    m_Layout.OnGetMinMaxInfo(lpMMI);
-    CDialogEx::OnGetMinMaxInfo(lpMMI);
-}
-
-void SearchDlg::OnDestroy()
-{
-    m_Layout.OnDestroy();
-    CDialogEx::OnDestroy();
+    const HBRUSH brush = DarkMode::OnCtlColor(pDC, nCtlColor);
+    return brush ? brush : CDialogEx::OnCtlColor(pDC, pWnd, nCtlColor);
 }

@@ -20,6 +20,7 @@
 #include "PacMan.h"
 #include "Item.h"
 #include "FileTabbedView.h"
+#include "DarkMode.h"
 
 #include <functional>
 
@@ -50,28 +51,32 @@ enum LOGICAL_FOCUS : std::uint8_t
 //
 // COptionsPropertySheet. The options dialog.
 //
-class COptionsPropertySheet final : public CPropertySheet
+class COptionsPropertySheet final : public CMFCPropertySheet
 {
     DECLARE_DYNAMIC(COptionsPropertySheet)
 
     COptionsPropertySheet();
-    void SetLanguageChanged(bool changed);
+    void SetRestartRequired(bool changed);
     BOOL OnInitDialog() override;
 
     bool m_RestartApplication = false; // [out]
 
 protected:
     BOOL OnCommand(WPARAM wParam, LPARAM lParam) override;
+    afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
+    afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 
-    bool m_LanguageChanged = false;
+    bool m_RestartRequest = false;
     bool m_AlreadyAsked = false;
+
+    DECLARE_MESSAGE_MAP()
 };
 
 //
 // CMySplitterWnd. A CSplitterWnd with 2 columns or rows, which
 // knows about the current split ratio and retains it even when resized.
 //
-class CMySplitterWnd final : public CSplitterWnd
+class CMySplitterWnd final : public CSplitterWndEx
 {
 public:
     CMySplitterWnd(double * splitterPos);
@@ -86,9 +91,6 @@ protected:
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnSize(UINT nType, int cx, int cy);
-
-public:
-    afx_msg void OnDestroy();
 };
 
 //
@@ -204,8 +206,8 @@ protected:
     CMySplitterWnd m_SubSplitter; // Contains the two upper views
     CMySplitterWnd m_Splitter;    // Contains (a) m_WndSubSplitter and (b) the graph view.
 
-    CMFCStatusBar m_WndStatusBar; // Status bar
-    CMFCToolBar m_WndToolBar;     // Tool bar
+    CDarkModeStatusBar m_WndStatusBar; // Status bar
+    CDarkModeToolBar m_WndToolBar;     // Tool bar
     CProgressCtrl m_Progress;     // Progress control. Is Create()ed and Destroy()ed again every time.
     CPacmanControl m_Pacman;      // Static control for Pacman.
     CMFCToolBarImages m_Images;   // Tool bar images
@@ -240,7 +242,10 @@ protected:
     afx_msg void OnDestroy();
     afx_msg LRESULT OnTaskButtonCreated(WPARAM, LPARAM);
     afx_msg void OnSysColorChange();
-
+    afx_msg LRESULT OnUahDrawMenu(WPARAM wParam, LPARAM lParam);
+    afx_msg LRESULT OnUahDrawMenuItem(WPARAM wParam, LPARAM lParam);
+    afx_msg void OnNcPaint();
+    afx_msg BOOL OnNcActivate(BOOL bActive);
 public:
     static CMainFrame* Get() { return s_Singleton; }
     BOOL LoadFrame(UINT nIDResource, DWORD dwDefaultStyle = WS_OVERLAPPEDWINDOW | FWS_ADDTOTITLE, CWnd* pParentWnd = NULL, CCreateContext* pContext = NULL) override;

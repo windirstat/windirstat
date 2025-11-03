@@ -20,6 +20,38 @@
 #include "SelectObject.h"
 #include "Layout.h"
 
+/////////////////////////////////////////////////////////////////////////////
+// CLayoutDialogEx
+
+IMPLEMENT_DYNCREATE(CLayoutDialogEx, CDialogEx)
+
+BEGIN_MESSAGE_MAP(CLayoutDialogEx, CDialogEx)
+    ON_WM_SIZE()
+    ON_WM_GETMINMAXINFO()
+    ON_WM_DESTROY()
+END_MESSAGE_MAP()
+
+void CLayoutDialogEx::OnSize(UINT nType, int cx, int cy)
+{
+    CDialogEx::OnSize(nType, cx, cy);
+    m_Layout.OnSize();
+}
+
+void CLayoutDialogEx::OnGetMinMaxInfo(MINMAXINFO* lpMMI)
+{
+    m_Layout.OnGetMinMaxInfo(lpMMI);
+    CDialogEx::OnGetMinMaxInfo(lpMMI);
+}
+
+void CLayoutDialogEx::OnDestroy()
+{
+    m_Layout.OnDestroy();
+    CDialogEx::OnDestroy();
+}
+
+/////////////////////////////////////////////////////////////////////////////
+// CLayout
+
 CLayout::CLayout(CWnd* dialog, RECT* placement)
 {
     ASSERT(dialog != nullptr);
@@ -65,7 +97,7 @@ void CLayout::OnInitDialog(const bool centerWindow)
     sg.top  = sg.bottom - m_SizeGripper.m_Width;
     m_SizeGripper.Create(m_Dialog, sg);
 
-    const int i                    = AddControl(&m_SizeGripper, 1, 1, 0, 0);
+    const int i  = AddControl(&m_SizeGripper, 1, 1, 0, 0);
     m_Control[i].originalRectangle = sg;
 
     m_Dialog->MoveWindow(m_Wp);
@@ -160,7 +192,7 @@ void CLayout::CSizeGripper::OnPaint()
 void CLayout::CSizeGripper::DrawShadowLine(CDC* pdc, CPoint start, CPoint end)
 {
     {
-        CPen lightPen(PS_SOLID, 1, GetSysColor(COLOR_3DHIGHLIGHT));
+        CPen lightPen(PS_SOLID, 1, DarkMode::WdsSysColor(COLOR_3DHIGHLIGHT));
         CSelectObject sopen(pdc, &lightPen);
 
         pdc->MoveTo(start);
@@ -171,7 +203,7 @@ void CLayout::CSizeGripper::DrawShadowLine(CDC* pdc, CPoint start, CPoint end)
     end.y++;
 
     {
-        CPen darkPen(PS_SOLID, 1, GetSysColor(COLOR_3DSHADOW));
+        CPen darkPen(PS_SOLID, 1, DarkMode::WdsSysColor(COLOR_3DSHADOW));
         CSelectObject sopen(pdc, &darkPen);
 
         pdc->MoveTo(start);

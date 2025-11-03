@@ -24,6 +24,7 @@
 #include "TreeMapView.h"
 #include "GlobalHelpers.h"
 #include "Localization.h"
+#include "MessageBoxDlg.h"
 #include "PageFiltering.h"
 #include "SmartPointer.h"
 
@@ -274,11 +275,20 @@ BOOL CDirStatApp::InitInstance()
     // Prevent state saving
     m_bSaveState = FALSE;
 
-    CWinAppEx::InitInstance();
-    InitShellManager();
-
     // Load default language just to get bootstrapped
     Localization::LoadResource(MAKELANGID(LANG_ENGLISH, SUBLANG_NEUTRAL));
+
+    // If a local config file is available, use that for settings
+    SetPortableMode(true, true);
+
+    COptions::LoadAppSettings();
+    LoadStdProfileSettings(0);
+
+    // Set app to prefer dark mode
+    DarkMode::SetAppDarkMode();
+
+    CWinAppEx::InitInstance();
+    InitShellManager();
 
     // Initialize visual controls
     constexpr INITCOMMONCONTROLSEX ctrls = { sizeof(INITCOMMONCONTROLSEX) , ICC_STANDARD_CLASSES };
@@ -293,23 +303,20 @@ BOOL CDirStatApp::InitInstance()
     ULONG_PTR gdiplusToken;
     Gdiplus::GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, nullptr);
 
-    // If a local config file is available, use that for settings
-    SetPortableMode(true, true);
-
-    COptions::LoadAppSettings();
-    LoadStdProfileSettings(0);
-
     m_PDocTemplate = new CSingleDocTemplate(
         IDR_MAINFRAME,
         RUNTIME_CLASS(CDirStatDoc),
         RUNTIME_CLASS(CMainFrame),
         RUNTIME_CLASS(CTreeMapView));
     AddDocTemplate(m_PDocTemplate);
-
+;
     // Parse command line arguments
     CWinDirStatCommandLineInfo cmdInfo;
     ParseCommandLine(cmdInfo);
     ProcessShellCommand(cmdInfo);
+
+    // Allow dark mode
+    DarkMode::SetupGlobalColors();
 
     CMainFrame::Get()->InitialShowWindow();
     m_pMainWnd->UpdateWindow();
@@ -346,10 +353,11 @@ BOOL CDirStatApp::InitInstance()
     }
 
     // Prompt user to enable enhanced scanning engine if it is disabled and running in elevated privileges
-    if(IsElevationActive()) {
+    if(IsElevationActive())
+    {
         if (COptions::UseFastScanEngine == false) {
-            COptions::UseFastScanEngine = (MessageBox(m_pMainWnd->GetSafeHwnd(), Localization::Lookup(IDS_ENABLEFASTSCAN_QUESTION).c_str(),
-                Localization::Lookup(IDS_APP_TITLE).c_str(), MB_YESNO | MB_ICONQUESTION) == IDYES);
+            COptions::UseFastScanEngine = (WdsMessageBox(*m_pMainWnd, Localization::Lookup(IDS_ENABLEFASTSCAN_QUESTION),
+                Localization::Lookup(IDS_APP_TITLE), MB_YESNO | MB_ICONQUESTION) == IDYES);
             COptions::UseFastScanEngine.WritePersistedProperty();
         }
     }
@@ -357,8 +365,8 @@ BOOL CDirStatApp::InitInstance()
     // Allow user to elevate if desired
     if (IsElevationAvailable())
     {
-        if (MessageBox(m_pMainWnd->GetSafeHwnd(), Localization::Lookup(IDS_EVELATION_QUESTION).c_str(),
-            Localization::Lookup(IDS_APP_TITLE).c_str(), MB_YESNO | MB_ICONQUESTION) == IDYES)
+        if (WdsMessageBox(*m_pMainWnd, Localization::Lookup(IDS_EVELATION_QUESTION),
+            Localization::Lookup(IDS_APP_TITLE), MB_YESNO | MB_ICONQUESTION) == IDYES)
         {
             RunElevated(m_lpCmdLine);
             return FALSE;

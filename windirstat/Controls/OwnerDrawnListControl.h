@@ -20,6 +20,7 @@
 #include <vector>
 
 #include "SortingListControl.h"
+#include "DarkMode.h"
 
 class COwnerDrawnListControl;
 class CIconHandler;
@@ -30,6 +31,7 @@ class CIconHandler;
 // COwnerDrawnListControl draws the texts (GetText()) of all others.
 // DrawLabel() draws a standard label (width icon, text, selection and focus rect)
 //
+
 class COwnerDrawnListItem : public CSortingListItem
 {
 public:
@@ -40,7 +42,7 @@ public:
     // This color is used for the  current item
     virtual COLORREF GetItemTextColor() const
     {
-        return GetSysColor(COLOR_WINDOWTEXT);
+        return DarkMode::WdsSysColor(COLOR_WINDOWTEXT);
     }
 
     // Return value is true, if the item draws itself.
@@ -70,7 +72,7 @@ public:
     ~COwnerDrawnListControl() override = default;
     void OnColumnsInserted();
     virtual void SysColorChanged();
-
+    
     int GetRowHeight() const;
     void ShowGrid(bool show);
     void ShowStripes(bool show);
@@ -79,9 +81,9 @@ public:
 
     COLORREF GetWindowColor() const;
     COLORREF GetStripeColor() const;
+    COLORREF GetHighlightColor() const;
     COLORREF GetNonFocusHighlightColor() const;
     COLORREF GetNonFocusHighlightTextColor() const;
-    COLORREF GetHighlightColor() const;
     COLORREF GetHighlightTextColor() const;
 
     bool IsItem_stripeColor(int i) const;
@@ -118,4 +120,5 @@ protected:
     afx_msg BOOL OnEraseBkgnd(CDC* pDC);
     afx_msg void OnHdnDividerdblclick(NMHDR* pNMHDR, LRESULT* pResult);
     afx_msg void OnHdnItemchanging(NMHDR* pNMHDR, LRESULT* pResult);
+    afx_msg void OnCustomDraw(NMHDR* pNMHDR, LRESULT* pResult);
 };

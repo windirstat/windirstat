@@ -34,8 +34,8 @@
 #endif
 
 #define PRD_MAJVER                  2 // major product version
-#define PRD_MINVER                  3 // minor product version
-#define PRD_PATCH                   1 // patch number for product
+#define PRD_MINVER                  4 // minor product version
+#define PRD_PATCH                   0 // patch number for product
 #define PRD_BUILD                   GIT_COUNT // build number for product
 #define FILE_MAJVER                 PRD_MAJVER // major file version
 #define FILE_MINVER                 PRD_MINVER // minor file version

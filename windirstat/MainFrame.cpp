@@ -37,10 +37,8 @@
 #include "FileTopControl.h"
 #include "FileSearchControl.h"
 #include "SmartPointer.h"
-
-#include <format>
-#include <functional>
-#include <unordered_map>
+#include "DarkMode.h"
+#include "MessageBoxDlg.h"
 
 namespace
 {
@@ -61,7 +59,7 @@ namespace
         {
             if (m_Open)
             {
-                ::CloseClipboard();
+                CloseClipboard();
             }
         }
 
@@ -72,23 +70,55 @@ namespace
 
 /////////////////////////////////////////////////////////////////////////////
 
-IMPLEMENT_DYNAMIC(COptionsPropertySheet, CPropertySheet)
+IMPLEMENT_DYNAMIC(COptionsPropertySheet, CMFCPropertySheet)
 
 COptionsPropertySheet::COptionsPropertySheet()
-    : CPropertySheet(Localization::Lookup(IDS_WINDIRSTAT_SETTINGS).c_str())
+    : CMFCPropertySheet(Localization::Lookup(IDS_WINDIRSTAT_SETTINGS).c_str())
 {
+    m_look = PropSheetLook_OneNoteTabs;
 }
 
-void COptionsPropertySheet::SetLanguageChanged(const bool changed)
+void COptionsPropertySheet::SetRestartRequired(const bool changed)
 {
-    m_LanguageChanged = changed;
+    m_RestartRequest = changed;
+}
+
+BEGIN_MESSAGE_MAP(COptionsPropertySheet, CMFCPropertySheet)
+    ON_WM_CTLCOLOR()
+    ON_WM_ERASEBKGND()
+END_MESSAGE_MAP()
+
+BOOL COptionsPropertySheet::OnEraseBkgnd(CDC* pDC)
+{
+    if (!DarkMode::IsDarkModeActive() || !DarkMode::IsDarkModeActive())
+    {
+        return CMFCPropertySheet::OnEraseBkgnd(pDC);
+    }
+
+    // Paint the background with dark mode color
+    CRect rect;
+    GetClientRect(&rect);
+    
+    CBrush brush(DarkMode::WdsSysColor(CTLCOLOR_DLG));
+    pDC->FillRect(&rect, &brush);
+    
+    return TRUE;
+}
+
+HBRUSH COptionsPropertySheet::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
+{
+    const HBRUSH brush = DarkMode::OnCtlColor(pDC, nCtlColor);
+    return brush ? brush : CMFCPropertySheet::OnCtlColor(pDC, pWnd, nCtlColor);
 }
 
 BOOL COptionsPropertySheet::OnInitDialog()
 {
-    const BOOL bResult = CPropertySheet::OnInitDialog();
+    const BOOL bResult = CMFCPropertySheet::OnInitDialog();
+    DarkModeTabCtrlHelper::SetupDarkMode(GetTab());
+
     Localization::UpdateDialogs(*this);
-    Localization::UpdateTabControl(*GetTabControl());
+    Localization::UpdateTabControl(GetTab());
+    DarkMode::AdjustControls(GetSafeHwnd());
 
     SetActivePage(min(COptions::ConfigPage, GetPageCount() - 1));
     return bResult;
@@ -101,9 +131,10 @@ BOOL COptionsPropertySheet::OnCommand(const WPARAM wParam, const LPARAM lParam)
     const int cmd = LOWORD(wParam);
     if (IDOK == cmd || ID_APPLY_NOW == cmd)
     {
-        if (m_LanguageChanged && (IDOK == cmd || !m_AlreadyAsked))
+        if (m_RestartRequest && (IDOK == cmd || !m_AlreadyAsked))
         {
-            const int r = AfxMessageBox(Localization::Lookup(IDS_LANGUAGERESTARTNOW).c_str(), MB_YESNOCANCEL);
+            const int r = WdsMessageBox(*this, Localization::Lookup(IDS_RESTART_REQUEST),
+                Localization::Lookup(IDS_APP_TITLE), MB_YESNOCANCEL);
             if (IDCANCEL == r)
             {
                 return true; // "Message handled". Don't proceed.
@@ -128,25 +159,24 @@ BOOL COptionsPropertySheet::OnCommand(const WPARAM wParam, const LPARAM lParam)
         }
     }
 
-    return CPropertySheet::OnCommand(wParam, lParam);
+    return CMFCPropertySheet::OnCommand(wParam, lParam);
 }
 
 /////////////////////////////////////////////////////////////////////////////
 
-CMySplitterWnd::CMySplitterWnd(double * splitterPos) : 
+CMySplitterWnd::CMySplitterWnd(double* splitterPos) :
     m_UserSplitterPos(splitterPos)
 {
     m_WasTrackedByUser = (*splitterPos > 0 && *splitterPos < 1);
 }
 
-BEGIN_MESSAGE_MAP(CMySplitterWnd, CSplitterWnd)
+BEGIN_MESSAGE_MAP(CMySplitterWnd, CSplitterWndEx)
     ON_WM_SIZE()
-    ON_WM_DESTROY()
 END_MESSAGE_MAP()
 
 void CMySplitterWnd::StopTracking(const BOOL bAccept)
 {
-    CSplitterWnd::StopTracking(bAccept);
+    CSplitterWndEx::StopTracking(bAccept);
 
     if (bAccept)
     {
@@ -243,19 +273,14 @@ void CMySplitterWnd::OnSize(const UINT nType, const int cx, const int cy)
             SetRowInfo(0, cyUpper, 0);
         }
     }
-    CSplitterWnd::OnSize(nType, cx, cy);
-}
-
-void CMySplitterWnd::OnDestroy()
-{
-    CSplitterWnd::OnDestroy();
+    CSplitterWndEx::OnSize(nType, cx, cy);
 }
 
 /////////////////////////////////////////////////////////////////////////////
 
 CPacmanControl::CPacmanControl()
 {
-    m_Pacman.SetBackgroundColor(GetSysColor(COLOR_BTNFACE));
+    m_Pacman.SetBackgroundColor(DarkMode::WdsSysColor(COLOR_WINDOWFRAME));
 }
 
 void CPacmanControl::Drive()
@@ -352,6 +377,8 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
     ON_MESSAGE(WM_ENTERSIZEMOVE, OnEnterSizeMove)
     ON_MESSAGE(WM_EXITSIZEMOVE, OnExitSizeMove)
     ON_MESSAGE(WM_CALLBACKUI, OnCallbackRequest)
+    ON_MESSAGE(DarkMode::WM_UAHDRAWMENU, OnUahDrawMenu)
+    ON_MESSAGE(DarkMode::WM_UAHDRAWMENUITEM, OnUahDrawMenuItem)
     ON_REGISTERED_MESSAGE(s_TaskBarMessage, OnTaskButtonCreated)
     ON_UPDATE_COMMAND_UI(ID_VIEW_SHOWFILETYPES, OnUpdateViewShowFileTypes)
     ON_UPDATE_COMMAND_UI(ID_VIEW_SHOWTREEMAP, OnUpdateViewShowTreeMap)
@@ -363,6 +390,8 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
     ON_WM_SIZE()
     ON_WM_SYSCOLORCHANGE()
     ON_WM_TIMER()
+    ON_WM_NCPAINT()
+    ON_WM_NCACTIVATE()
     ON_COMMAND(ID_VIEW_ALL_FILES, &CMainFrame::OnViewAllFiles)
     ON_COMMAND(ID_VIEW_LARGEST_FILES, &CMainFrame::OnViewLargestFiles)
     ON_COMMAND(ID_VIEW_DUPLICATE_FILES, &CMainFrame::OnViewDuplicateFiles)
@@ -611,9 +640,11 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
     {
         return -1;
     }
-
-    VERIFY(m_WndToolBar.CreateEx(this, TBSTYLE_FLAT, WS_CHILD | WS_VISIBLE | CBRS_TOP | CBRS_GRIPPER | CBRS_TOOLTIPS | CBRS_FLYBY | CBRS_SIZE_DYNAMIC));
-    VERIFY(m_WndToolBar.LoadToolBar(IDR_MAINFRAME));
+    
+    m_WndToolBar.CreateEx(this, TBSTYLE_FLAT, WS_CHILD | WS_VISIBLE | CBRS_TOP | CBRS_TOOLTIPS | CBRS_SIZE_DYNAMIC);
+    m_WndToolBar.LoadToolBar(IDR_MAINFRAME);
+    m_WndToolBar.SetBorders(CRect());
+    m_WndToolBar.SetPaneStyle(m_WndToolBar.GetPaneStyle() & ~CBRS_GRIPPER);
 
     // Setup status pane and force initial field population
     VERIFY(m_WndStatusBar.Create(this));
@@ -629,9 +660,6 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
     if (!COptions::ShowToolBar) m_WndToolBar.ShowWindow(SW_HIDE);
 
     m_WndDeadFocus.Create(this);
-
-    m_WndToolBar.EnableDocking(CBRS_ALIGN_ANY);
-    EnableDocking(CBRS_ALIGN_ANY);
     DockPane(&m_WndToolBar);
 
     // map from toolbar resources to specific icons
@@ -654,11 +682,11 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
         { ID_CLEANUP_PROPERTIES, {IDB_CLEANUP_PROPERTIES, IDS_CLEANUP_PROPERTIES}},
         { ID_TREEMAP_ZOOMIN, {IDB_TREEMAP_ZOOMIN, IDS_TREEMAP_ZOOMIN}},
         { ID_TREEMAP_ZOOMOUT, {IDB_TREEMAP_ZOOMOUT, IDS_TREEMAP_ZOOMOUT}},
-        { ID_HELP_MANUAL, {IDB_HELP_MANUAL, IDS_HELP_MANUAL}}};
+        { ID_HELP_MANUAL, {IDB_HELP_MANUAL, IDS_HELP_MANUAL}} };
 
     // update toolbar images with high resolution versions
     m_Images.SetImageSize({ 16,16 }, TRUE);
-    for (int i = 0; i < m_WndToolBar.GetCount();i++)
+    for (int i = 0; i < m_WndToolBar.GetCount(); i++)
     {
         // lookup the button in the editor toolbox
         const auto button = m_WndToolBar.GetButton(i);
@@ -668,6 +696,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
         // load high quality bitmap from resource
         CBitmap bitmap;
         bitmap.LoadBitmapW(toolbarMap.at(button->m_nID).first);
+        DarkMode::LightenBitmap(&bitmap);
         const int image = m_Images.AddImage(bitmap, TRUE);
         CMFCToolBar::SetUserImages(&m_Images);
 
@@ -678,9 +707,12 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
         m_WndToolBar.ReplaceButton(button->m_nID, newButton);
     }
 
-    // setup look and feel
-    CMFCVisualManager::SetDefaultManager(RUNTIME_CLASS(CMFCVisualManagerWindows7));
-    CDockingManager::SetDockingMode(DT_SMART); 
+    // setup look and feel with dark mode support
+    CMFCVisualManager::SetDefaultManager(DarkMode::IsDarkModeActive() ?
+        RUNTIME_CLASS(CDarkModeVisualManager) : RUNTIME_CLASS(CMFCVisualManagerWindows7));
+
+    // apply dark mode to main frame window
+    DarkMode::AdjustControls(GetSafeHwnd());
 
     return 0;
 }
@@ -946,7 +978,8 @@ void CMainFrame::QueryRecycleBin(ULONGLONG& items, ULONGLONG& bytes)
             continue;
         }
 
-        std::wstring s = std::wstring(1, wds::strAlpha.at(i)) + L":\\";
+        std::wstring s = std::wstring(1, wds::strAlpha.at(i)) + L":\
+";
         const UINT type = ::GetDriveType(s.c_str());
         if (type == DRIVE_UNKNOWN ||
             type == DRIVE_NO_ROOT_DIR ||
@@ -1118,7 +1151,7 @@ void CMainFrame::UpdatePaneText()
         100
     );
 
-    // Update memory usage area
+    // Update memory usage
     SetStatusPaneText(ID_STATUSPANE_MEM_INDEX, CDirStatApp::GetCurrentProcessMemoryInfo(), 100);
 }
 
@@ -1233,6 +1266,52 @@ void CMainFrame::OnSysColorChange()
     CFrameWndEx::OnSysColorChange();
     GetFileTreeView()->SysColorChanged();
     GetExtensionView()->SysColorChanged();
+
+    // Redraw splitter windows
+    m_Splitter.Invalidate();
+    m_SubSplitter.Invalidate();
+
+    // Redraw menus for dark mode
+    DrawMenuBar();
+}
+
+LRESULT CMainFrame::OnUahDrawMenu(WPARAM wParam, LPARAM lParam)
+{
+    if (DarkMode::UAHMENU* pUDM = reinterpret_cast<DarkMode::UAHMENU*>(lParam);
+        pUDM && DarkMode::IsDarkModeActive())
+    {
+        DarkMode::DrawMenuBar(this->GetSafeHwnd(), pUDM);
+        return 1;
+    }
+
+    return DefWindowProc(DarkMode::WM_UAHDRAWMENU, wParam, lParam);
+}
+
+LRESULT CMainFrame::OnUahDrawMenuItem(WPARAM wParam, LPARAM lParam)
+{
+    if (DarkMode::UAHDRAWMENUITEM* pUDMI = reinterpret_cast<DarkMode::UAHDRAWMENUITEM*>(lParam);
+      pUDMI && DarkMode::IsDarkModeActive())
+    {
+         DarkMode::DrawMenuItem(m_hWnd, pUDMI);
+         return 1;
+    }
+
+    return DefWindowProcW(DarkMode::WM_UAHDRAWMENUITEM, wParam, lParam);
+}
+
+void CMainFrame::OnNcPaint()
+{
+    // Update the bottom of the menu bar that is not properly painted
+    CFrameWndEx::OnNcPaint();
+    DarkMode::DrawMenuClientArea(*this);
+}
+
+BOOL CMainFrame::OnNcActivate(BOOL bActive)
+{
+    // Update the bottom of the menu bar that is not properly painted
+    const auto ret = CFrameWndEx::OnNcActivate(bActive);
+    DarkMode::DrawMenuClientArea(*this);
+    return ret;
 }
 
 BOOL CMainFrame::LoadFrame(const UINT nIDResource, const DWORD dwDefaultStyle, CWnd* pParentWnd, CCreateContext* pContext)

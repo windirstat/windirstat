@@ -534,6 +534,8 @@
     <ClInclude Include="Controls\TreeMap.h" />
     <ClInclude Include="Controls\XYSlider.h" />
     <ClInclude Include="Controls\FileSearchControl.h" />
+    <ClInclude Include="DarkMode.h" />
+    <ClInclude Include="Dialogs\MessageBoxDlg.h" />
     <ClInclude Include="Views\FileSearchView.h" />
     <ClInclude Include="Finder.h" />
     <ClInclude Include="FinderNtfs.h" />
@@ -592,6 +594,8 @@
     <ClCompile Include="Controls\TreeMap.cpp" />
     <ClCompile Include="Controls\XYSlider.cpp" />
     <ClCompile Include="CsvLoader.cpp" />
+    <ClCompile Include="DarkMode.cpp" />
+    <ClCompile Include="Dialogs\MessageBoxDlg.cpp" />
     <ClCompile Include="DirStatDoc.cpp">
     </ClCompile>
     <ClCompile Include="Views\FileSearchView.cpp" />
@@ -687,6 +691,7 @@
     <ResourceCompile Include="version.rc" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="res\IDB_NODES_INVERT.bmp" />
     <Image Include="res\toolbar\IDB_FILTER.bmp" />
     <Image Include="res\toolbar\IDB_SEARCH.bmp" />
     <Image Include="res\WinDirStat.ico" />

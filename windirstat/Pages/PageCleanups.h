@@ -22,7 +22,7 @@
 //
 // CPageCleanups. "Settings" property page "Cleanups".
 //
-class CPageCleanups final : public CPropertyPageEx
+class CPageCleanups final : public CMFCPropertyPage
 {
     DECLARE_DYNAMIC(CPageCleanups)
 
@@ -87,4 +87,5 @@ protected:
     afx_msg void OnBnClickedUp();
     afx_msg void OnBnClickedDown();
     afx_msg void OnBnClickedHelpbutton();
+    afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 };

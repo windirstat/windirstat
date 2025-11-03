@@ -7,11 +7,13 @@
 #define IDD_PAGE_FILTERING              103
 #define IDR_MAINFRAME                   128
 #define IDB_NODES                       131
+#define IDB_NODES_INVERT                132
 #define IDD_SELECTDRIVES                133
 #define IDR_POPUP_TREE                  134
 #define IDR_POPUP_MAP                   136
 #define IDR_LICENSE                     137
 #define IDD_DELETE_WARNING              138
+#define IDD_MESSAGEBOX                  139
 #define IDD_MODALAPISHUTTLE             140
 #define IDD_PAGE_CLEANUPS               141
 #define IDD_PAGE_TREELIST               142
@@ -134,6 +136,10 @@
 #define IDC_SEARCH_CASE                 1244
 #define IDC_SEARCH_TERM                 1245
 #define IDC_SEARCH_WHOLE_PHRASE         1246
+#define IDC_DARK_MODE_DISABLED          1247
+#define IDC_DARK_MODE_USE_WINDOWS    1248
+#define IDC_DARK_MODE_ENABLED           1249
+#define IDC_PAGE_GENERAL_DARK_MODE_USE_WINDOWS 1250
 #define ID_WDS_CONTROL                  4711
 #define ID_CLEANUP_EXPLORER_SELECT      32774
 #define ID_TREEMAP_ZOOMIN               32783
@@ -209,14 +215,19 @@
 #define IDS_FILTER_EXAMPLE_DIRS_REGEX   57352
 #define IDC_FAST_SCAN_CHECKBOX          57353
 #define IDD_SEARCH                      57354
+#define IDC_MESSAGE_ICON                57355
+#define IDC_MESSAGE_TEXT                57356
+#define IDC_MESSAGE_BUTTON1             57357
+#define IDC_MESSAGE_BUTTON2             57358
+#define IDC_MESSAGE_BUTTON3             57359
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        57356
+#define _APS_NEXT_RESOURCE_VALUE        57360
 #define _APS_NEXT_COMMAND_VALUE         33094
-#define _APS_NEXT_CONTROL_VALUE         1246
+#define _APS_NEXT_CONTROL_VALUE         1251
 #define _APS_NEXT_SYMED_VALUE           109
 #endif
 #endif

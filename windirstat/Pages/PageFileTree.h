@@ -23,7 +23,7 @@
 //
 // CPageFileTree. "Settings" property page "Folder List".
 //
-class CPageFileTree final : public CPropertyPageEx
+class CPageFileTree final : public CMFCPropertyPage
 {
     DECLARE_DYNAMIC(CPageFileTree)
 
@@ -59,4 +59,5 @@ protected:
     afx_msg void OnColorChanged(UINT id, NMHDR*, LRESULT*);
     afx_msg void OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
     afx_msg void OnBnClickedSetModified();
+    afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 };

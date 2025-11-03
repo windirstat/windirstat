@@ -22,7 +22,7 @@
 
 // SearchDlg dialog
 
-class SearchDlg final : public CDialogEx
+class SearchDlg final : public CLayoutDialogEx
 {
     DECLARE_DYNAMIC(SearchDlg)
 
@@ -42,13 +42,10 @@ private:
     BOOL OnInitDialog() override;
     afx_msg void OnBnClickedOk();
     afx_msg void OnChangeSearchTerm();
-    afx_msg void OnSize(UINT nType, int cx, int cy);
-    afx_msg void OnGetMinMaxInfo(MINMAXINFO* lpMMI);
-    afx_msg void OnDestroy();
+    afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 
     BOOL m_SearchWholePhrase;
     BOOL m_SearchCase;
     BOOL m_SearchRegex;
     CString m_SearchTerm;
-    CLayout m_Layout;
 };

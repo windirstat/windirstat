@@ -92,3 +92,35 @@ protected:
     std::vector<SControlInfo> m_Control;
     CSizeGripper m_SizeGripper;
 };
+
+//
+// CLayoutDialogEx. A class that provides automatic layout management
+// for dialogs. Inherit from this class instead of CDialogEx to get automatic
+// m_Layout support with OnSize, OnGetMinMaxInfo, and OnDestroy handling.
+//
+class CLayoutDialogEx : public CDialogEx
+{
+    DECLARE_DYNCREATE(CLayoutDialogEx)
+
+protected:
+    CLayout m_Layout;
+
+    // Constructor that takes dialog ID and window placement
+    CLayoutDialogEx(UINT nIDTemplate, RECT* placement, CWnd* pParent = nullptr)
+        : CDialogEx(nIDTemplate, pParent)
+        , m_Layout(this, placement)
+    {
+    }
+
+    // Default constructor for DYNCREATE
+    CLayoutDialogEx()
+        : m_Layout(this, nullptr)
+    {
+    }
+
+    // Message handlers
+    DECLARE_MESSAGE_MAP()
+    afx_msg void OnSize(UINT nType, int cx, int cy);
+    afx_msg void OnGetMinMaxInfo(MINMAXINFO* lpMMI);
+    afx_msg void OnDestroy();
+};

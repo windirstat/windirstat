@@ -18,7 +18,7 @@
 #include "stdafx.h"
 #include "SelectObject.h"
 #include "XYSlider.h"
-
+#include "DarkMode.h"
 #include "resource.h"
 
 IMPLEMENT_DYNAMIC(CXySlider, CStatic)
@@ -167,14 +167,14 @@ void CXySlider::NotifyParent() const
 
 void CXySlider::PaintBackground(CDC* pdc)
 {
-    pdc->FillSolidRect(m_RcAll, GetSysColor(COLOR_BTNFACE));
+    pdc->FillSolidRect(m_RcAll, DarkMode::WdsSysColor(COLOR_BTNFACE));
 
     CRect rc = m_RcInner;
     pdc->DrawEdge(rc, EDGE_SUNKEN, BF_RECT | BF_ADJUST);
 
     pdc->FillSolidRect(rc, RGB(255, 255, 255));
 
-    CPen pen(PS_SOLID, 1, GetSysColor(COLOR_3DLIGHT));
+    CPen pen(PS_SOLID, 1, DarkMode::WdsSysColor(COLOR_3DLIGHT));
     CSelectObject sopen(pdc, &pen);
 
     pdc->MoveTo(rc.left, m_Zero.y);
@@ -198,7 +198,7 @@ void CXySlider::PaintGripper(CDC* pdc) const
 {
     CRect rc = GetGripperRect();
 
-    COLORREF color = GetSysColor(COLOR_BTNFACE);
+    COLORREF color = DarkMode::WdsSysColor(COLOR_BTNFACE);
     if (m_GripperHighlight)
     {
         auto r = RGB_GET_RVALUE(color);
@@ -212,7 +212,7 @@ void CXySlider::PaintGripper(CDC* pdc) const
     pdc->FillSolidRect(rc, color);
     pdc->DrawEdge(rc, EDGE_RAISED, BF_RECT);
 
-    CPen pen(PS_SOLID, 1, GetSysColor(COLOR_3DSHADOW));
+    CPen pen(PS_SOLID, 1, DarkMode::WdsSysColor(COLOR_3DSHADOW));
     CSelectObject sopen(pdc, &pen);
 
     pdc->MoveTo(rc.left, rc.top + rc.Height() / 2);

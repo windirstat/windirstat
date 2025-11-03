@@ -133,21 +133,16 @@ void Localization::UpdateMenu(CMenu& menu)
     }
 }
 
-void Localization::UpdateTabControl(CTabCtrl& tab)
+void Localization::UpdateTabControl(CMFCTabCtrl& tab)
 {
-    for (int i = 0; i < tab.GetItemCount(); i++)
+    for (int i = 0; i < tab.GetTabsNum(); i++)
     {
-        std::array<WCHAR, MAX_VALUE_SIZE> buffer;
-        TCITEMW ti{ sizeof(TCITEMW) };
-        ti.cchTextMax = static_cast<int>(buffer.size());
-        ti.mask = TCIF_TEXT;
-        ti.pszText = buffer.data();
-        if (tab.GetItem(i, &ti) && wcsstr(ti.pszText, L"ID") == ti.pszText &&
-            Contains(ti.pszText))
+        CString tabLabel;
+        tab.GetTabLabel(i, tabLabel);
+        std::wstring tabLabelStr = tabLabel.GetString();
+        if (tabLabelStr.starts_with(L"ID") && Contains(tabLabelStr))
         {
-            ti.mask = TCIF_TEXT;
-            ti.pszText = const_cast<LPWSTR>(m_Map[ti.pszText].c_str());
-            tab.SetItem(i, &ti);
+            tab.SetTabLabel(i, m_Map[tabLabelStr].c_str());
         }
     }
 }

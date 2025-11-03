@@ -33,6 +33,7 @@
 #include "FinderBasic.h"
 #include "FinderNtfs.h"
 #include "SearchDlg.h"
+#include "MessageBoxDlg.h"
 
 #include <functional>
 #include <unordered_map>
@@ -630,7 +631,7 @@ void CDirStatDoc::AskForConfirmation(USERDEFINEDCLEANUP* udc, const CItem* item)
     const std::wstring msg = Localization::Format(udc->RecurseIntoSubdirectories ?
         Localization::Lookup(IDS_RUDC_CONFIRMATIONss) : Localization::Lookup(IDS_UDC_CONFIRMATIONss),
         udc->Title.Obj(), item->GetPath());
-    if (IDYES != AfxMessageBox(msg.c_str(), MB_YESNO))
+    if (IDYES != WdsMessageBox(msg, MB_YESNO))
     {
         AfxThrowUserException();
     }

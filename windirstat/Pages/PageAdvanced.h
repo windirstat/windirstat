@@ -24,7 +24,7 @@ class COptionsPropertySheet;
 //
 // CPageAdvanced. "Settings" property page "General".
 //
-class CPageAdvanced final : public CPropertyPageEx
+class CPageAdvanced final : public CMFCPropertyPage
 {
     DECLARE_DYNAMIC(CPageAdvanced)
 
@@ -56,6 +56,6 @@ protected:
     DECLARE_MESSAGE_MAP()
     afx_msg void OnEnChangeLargestFileCount();
     afx_msg void OnSettingChanged();
-public:
     afx_msg void OnBnClickedResetPreferences();
+    afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 };

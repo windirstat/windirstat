@@ -36,6 +36,7 @@ namespace wds
     inline constexpr auto chrPercent      = L'%';
 
     inline constexpr auto strExplorerKey = L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer";
+    inline constexpr auto strThemesKey   = L"Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize";
 
     inline constexpr auto strInvalidAttributes     = L"??????";
     inline constexpr auto strAttributeReadonly     = L"R"; /*FILE_ATTRIBUTE_READONLY*/
