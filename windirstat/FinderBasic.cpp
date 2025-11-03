@@ -15,7 +15,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
-#include <stdafx.h>
+#include "stdafx.h"
 #include "FinderBasic.h"
 #include "Options.h"
 #include "Tracer.h"

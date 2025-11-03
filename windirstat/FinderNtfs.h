@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include <stdafx.h>
+#include "stdafx.h"
 #include "Finder.h"
 #include "Item.h"
 
