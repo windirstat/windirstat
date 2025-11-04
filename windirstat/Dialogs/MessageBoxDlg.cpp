@@ -39,15 +39,15 @@ void CMessageBoxDlg::DoDataExchange(CDataExchange* pDX)
     CDialogEx::DoDataExchange(pDX);
     DDX_Control(pDX, IDC_MESSAGE_ICON, m_IconCtrl);
     DDX_Control(pDX, IDC_MESSAGE_TEXT, m_MessageCtrl);
-    DDX_Control(pDX, IDC_MESSAGE_BUTTON1, m_Button1);
-    DDX_Control(pDX, IDC_MESSAGE_BUTTON2, m_Button2);
-    DDX_Control(pDX, IDC_MESSAGE_BUTTON3, m_Button3);
+    DDX_Control(pDX, IDC_MESSAGE_BUTTONLEFT, m_ButtonLeft);
+    DDX_Control(pDX, IDC_MESSAGE_BUTTONMIDDLE, m_ButtonMiddle);
+    DDX_Control(pDX, IDC_MESSAGE_BUTTONRIGHT, m_ButtonRight);
 }
 
 BEGIN_MESSAGE_MAP(CMessageBoxDlg, CDialogEx)
-    ON_BN_CLICKED(IDC_MESSAGE_BUTTON1, OnButton1)
-    ON_BN_CLICKED(IDC_MESSAGE_BUTTON2, OnButton2)
-    ON_BN_CLICKED(IDC_MESSAGE_BUTTON3, OnButton3)
+    ON_BN_CLICKED(IDC_MESSAGE_BUTTONLEFT, OnButtonLeft)
+    ON_BN_CLICKED(IDC_MESSAGE_BUTTONMIDDLE, OnButtonMiddle)
+    ON_BN_CLICKED(IDC_MESSAGE_BUTTONRIGHT, OnButtonRight)
     ON_WM_CTLCOLOR()
 END_MESSAGE_MAP()
 
@@ -60,42 +60,42 @@ BOOL CMessageBoxDlg::OnInitDialog()
     m_MessageCtrl.SetWindowText(m_Message.c_str());
 
     // Configure buttons based on message box type
-    m_Button1.ShowWindow(SW_HIDE);
-    m_Button2.ShowWindow(SW_HIDE);
-    m_Button3.ShowWindow(SW_HIDE);
+    m_ButtonLeft.ShowWindow(SW_HIDE);
+    m_ButtonMiddle.ShowWindow(SW_HIDE);
+    m_ButtonRight.ShowWindow(SW_HIDE);
 
     switch (m_ButtonType)
     {
     case MB_OKCANCEL:
-        m_Button1.SetWindowText(Localization::Lookup(IDS_GENERIC_OK).c_str());
-        m_Button1.ShowWindow(SW_SHOW);
-        m_Button2.SetWindowText(Localization::Lookup(IDS_GENERIC_CANCEL).c_str());
-        m_Button2.ShowWindow(SW_SHOW);
-        m_Button1.SetFocus();
+        m_ButtonMiddle.SetWindowText(Localization::Lookup(IDS_GENERIC_OK).c_str());
+        m_ButtonMiddle.ShowWindow(SW_SHOW);
+        m_ButtonRight.SetWindowText(Localization::Lookup(IDS_GENERIC_CANCEL).c_str());
+        m_ButtonRight.ShowWindow(SW_SHOW);
+        m_ButtonMiddle.SetFocus();
         break;
 
     case MB_YESNO:
-        m_Button1.SetWindowText(Localization::Lookup(IDS_GENERIC_YES).c_str());
-        m_Button1.ShowWindow(SW_SHOW);
-        m_Button2.SetWindowText(Localization::Lookup(IDS_GENERIC_NO).c_str());
-        m_Button2.ShowWindow(SW_SHOW);
-        m_Button1.SetFocus();
+        m_ButtonMiddle.SetWindowText(Localization::Lookup(IDS_GENERIC_YES).c_str());
+        m_ButtonMiddle.ShowWindow(SW_SHOW);
+        m_ButtonRight.SetWindowText(Localization::Lookup(IDS_GENERIC_NO).c_str());
+        m_ButtonRight.ShowWindow(SW_SHOW);
+        m_ButtonMiddle.SetFocus();
         break;
 
     case MB_YESNOCANCEL:
-        m_Button1.SetWindowText(Localization::Lookup(IDS_GENERIC_YES).c_str());
-        m_Button1.ShowWindow(SW_SHOW);
-        m_Button2.SetWindowText(Localization::Lookup(IDS_GENERIC_NO).c_str());
-        m_Button2.ShowWindow(SW_SHOW);
-        m_Button3.SetWindowText(Localization::Lookup(IDS_GENERIC_CANCEL).c_str());
-        m_Button3.ShowWindow(SW_SHOW);
-        m_Button1.SetFocus();
+        m_ButtonLeft.SetWindowText(Localization::Lookup(IDS_GENERIC_YES).c_str());
+        m_ButtonLeft.ShowWindow(SW_SHOW);
+        m_ButtonMiddle.SetWindowText(Localization::Lookup(IDS_GENERIC_NO).c_str());
+        m_ButtonMiddle.ShowWindow(SW_SHOW);
+        m_ButtonRight.SetWindowText(Localization::Lookup(IDS_GENERIC_CANCEL).c_str());
+        m_ButtonRight.ShowWindow(SW_SHOW);
+        m_ButtonLeft.SetFocus();
         break;
 
     default: // MB_OK
-        m_Button2.SetWindowText(Localization::Lookup(IDS_GENERIC_OK).c_str());
-        m_Button2.ShowWindow(SW_SHOW);
-        m_Button2.SetFocus();
+        m_ButtonRight.SetWindowText(Localization::Lookup(IDS_GENERIC_OK).c_str());
+        m_ButtonRight.ShowWindow(SW_SHOW);
+        m_ButtonRight.SetFocus();
         break;
     }
 
@@ -154,37 +154,45 @@ BOOL CMessageBoxDlg::OnInitDialog()
     return TRUE;
 }
 
-void CMessageBoxDlg::OnButton1()
+void CMessageBoxDlg::OnButtonLeft()
 {
-        if (m_ButtonType == MB_YESNOCANCEL)
-    {
-        EndDialog(IDYES);
-    }
-    else
+    EndDialog(IDYES);
+}
+
+void CMessageBoxDlg::OnButtonMiddle()
+{
+    if (m_ButtonType == MB_OKCANCEL)
     {
         EndDialog(IDOK);
     }
+    else if (m_ButtonType == MB_YESNO)
+    {
+        EndDialog(IDYES);
+    }
+    else if (m_ButtonType == MB_YESNOCANCEL)
+    {
+        EndDialog(IDNO);
+    }
 }
 
-void CMessageBoxDlg::OnButton2()
+void CMessageBoxDlg::OnButtonRight()
 {
     if (m_ButtonType == MB_OKCANCEL)
     {
         EndDialog(IDCANCEL);
     }
-    else if (m_ButtonType == MB_YESNOCANCEL || m_ButtonType == MB_YESNO)
+    else if (m_ButtonType == MB_YESNO)
     {
         EndDialog(IDNO);
     }
-    else
+    else if (m_ButtonType == MB_YESNOCANCEL)
+    {
+        EndDialog(IDCANCEL);
+    }
+    else if (m_ButtonType == MB_OK)
     {
         EndDialog(IDOK);
     }
-}
-
-void CMessageBoxDlg::OnButton3()
-{
-    EndDialog(IDCANCEL);
 }
 
 INT_PTR CMessageBoxDlg::DoModal()

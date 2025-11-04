@@ -217,9 +217,9 @@
 #define IDD_SEARCH                      57354
 #define IDC_MESSAGE_ICON                57355
 #define IDC_MESSAGE_TEXT                57356
-#define IDC_MESSAGE_BUTTON1             57357
-#define IDC_MESSAGE_BUTTON2             57358
-#define IDC_MESSAGE_BUTTON3             57359
+#define IDC_MESSAGE_BUTTONLEFT          57357
+#define IDC_MESSAGE_BUTTONMIDDLE        57358
+#define IDC_MESSAGE_BUTTONRIGHT         57359
 
 // Next default values for new objects
 // 
