@@ -137,7 +137,7 @@ bool CItem::DrawSubItem(const int subitem, CDC* pdc, CRect rc, const UINT state,
     {
         constexpr SIZE sizeDeflatePacman = { 1, 2 };
         rc.DeflateRect(sizeDeflatePacman);
-        DrawPacman(pdc, rc, CFileTreeControl::Get()->GetItemSelectionBackgroundColor(this));
+        DrawPacman(pdc, rc);
     }
     else
     {

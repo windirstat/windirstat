@@ -27,8 +27,7 @@ namespace
 }
 
 CPacman::CPacman() :
-    m_Font(L"Arial", 6.0f, Gdiplus::FontStyleBold),
-    m_Bgcolor(DarkMode::WdsSysColor(COLOR_WINDOW))
+    m_Font(L"Arial", 6.0f, Gdiplus::FontStyleBold)
 {
     Reset();
 }
@@ -49,11 +48,6 @@ bool CPacman::m_Suspended = false;
 void CPacman::SetGlobalSuspendState(const bool suspend)
 {
     m_Suspended = suspend;
-}
-
-void CPacman::SetBackgroundColor(const COLORREF color)
-{
-    m_Bgcolor = color;
 }
 
 void CPacman::Start()

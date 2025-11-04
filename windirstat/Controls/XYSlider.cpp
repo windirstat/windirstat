@@ -145,14 +145,14 @@ void CXySlider::CheckMinMax(LONG& val, const int minVal, const int maxVal) const
 
 void CXySlider::InternToExtern()
 {
-    m_ExternalPos.x = roundaway(static_cast<double>(m_Pos.x) * m_ExternalRange.cx / m_Range.cx);
-    m_ExternalPos.y = roundaway(static_cast<double>(m_Pos.y) * m_ExternalRange.cy / m_Range.cy);
+    m_ExternalPos.x = std::round(static_cast<double>(m_Pos.x) * m_ExternalRange.cx / m_Range.cx);
+    m_ExternalPos.y = std::round(static_cast<double>(m_Pos.y) * m_ExternalRange.cy / m_Range.cy);
 }
 
 void CXySlider::ExternToIntern()
 {
-    m_Pos.x = roundaway(static_cast<double>(m_ExternalPos.x) * m_Range.cx / m_ExternalRange.cx);
-    m_Pos.y = roundaway(static_cast<double>(m_ExternalPos.y) * m_Range.cy / m_ExternalRange.cy);
+    m_Pos.x = std::round(static_cast<double>(m_ExternalPos.x) * m_Range.cx / m_ExternalRange.cx);
+    m_Pos.y = std::round(static_cast<double>(m_ExternalPos.y) * m_Range.cy / m_ExternalRange.cy);
 }
 
 void CXySlider::NotifyParent() const
@@ -201,9 +201,9 @@ void CXySlider::PaintGripper(CDC* pdc) const
     COLORREF color = DarkMode::WdsSysColor(COLOR_BTNFACE);
     if (m_GripperHighlight)
     {
-        auto r = RGB_GET_RVALUE(color);
-        auto g = RGB_GET_GVALUE(color);
-        auto b = RGB_GET_BVALUE(color);
+        auto r = GetRValue(color);
+        auto g = GetGValue(color);
+        auto b = GetBValue(color);
         r += (255 - r) / 3;
         g += (255 - g) / 3;
         b += (255 - b) / 3;

@@ -114,7 +114,7 @@ void CAboutDlg::WdsTabControl::Initialize()
     // Set default rich edit settings
     for (auto ctrl : { &m_TextAbout, &m_TextThanks, &m_TextLicense })
     {
-        CHARFORMAT2 charFormat = { 0 };
+        CHARFORMAT2 charFormat = { {} };
         charFormat.cbSize = sizeof(CHARFORMAT2);
         charFormat.dwMask = CFM_COLOR;
         charFormat.crTextColor = DarkMode::WdsSysColor(COLOR_WINDOWTEXT);

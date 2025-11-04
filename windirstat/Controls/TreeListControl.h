@@ -63,7 +63,7 @@ public:
     virtual int GetTreeListChildCount() const = 0;
     virtual CTreeListItem* GetLinkedItem() { return this; }
 
-    void DrawPacman(const CDC* pdc, const CRect& rc, COLORREF bgColor) const;
+    void DrawPacman(const CDC* pdc, const CRect& rc) const;
     CTreeListItem* GetParent() const;
     void SetParent(CTreeListItem* parent);
     bool IsAncestorOf(const CTreeListItem* item) const;

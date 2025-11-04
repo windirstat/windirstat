@@ -82,10 +82,9 @@ std::wstring CTreeListItem::GetText(int /*subitem*/) const
     return {};
 }
 
-void CTreeListItem::DrawPacman(const CDC* pdc, const CRect& rc, const COLORREF bgColor) const
+void CTreeListItem::DrawPacman(const CDC* pdc, const CRect& rc) const
 {
     ASSERT(IsVisible());
-    m_VisualInfo->pacman.SetBackgroundColor(bgColor);
     m_VisualInfo->pacman.Draw(pdc, rc);
 }
 

@@ -148,8 +148,8 @@ inline BOOL CreateRectRgn(CRgn& rgn, const CRect rc)
 inline COLORREF MakeShadowColor(const COLORREF c, const int percent)
 {
     return RGB(
-        RGB_GET_RVALUE(c) * percent / 100,
-        RGB_GET_GVALUE(c) * percent / 100,
-        RGB_GET_BVALUE(c) * percent / 100
+        GetRValue(c) * percent / 100,
+        GetGValue(c) * percent / 100,
+        GetBValue(c) * percent / 100
     );
 }

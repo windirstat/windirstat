@@ -309,7 +309,7 @@ BOOL CDirStatApp::InitInstance()
         RUNTIME_CLASS(CMainFrame),
         RUNTIME_CLASS(CTreeMapView));
     AddDocTemplate(m_PDocTemplate);
-;
+
     // Parse command line arguments
     CWinDirStatCommandLineInfo cmdInfo;
     ParseCommandLine(cmdInfo);

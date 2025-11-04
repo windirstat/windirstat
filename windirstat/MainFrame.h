@@ -99,7 +99,7 @@ protected:
 class CPacmanControl final : public CStatic
 {
 public:
-    CPacmanControl();
+    CPacmanControl() = default;
     void Drive();
     void Start();
     void Stop();

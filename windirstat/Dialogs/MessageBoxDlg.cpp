@@ -25,12 +25,12 @@ IMPLEMENT_DYNAMIC(CMessageBoxDlg, CDialogEx)
 
 CMessageBoxDlg::CMessageBoxDlg(HWND wnd, const std::wstring& message, const std::wstring& title, const UINT type, CWnd* pParent)
     : CDialogEx(IDD, pParent)
-    , m_Hwnd(wnd)
     , m_Message(message)
     , m_Title(title)
     , m_ButtonType(type & MB_TYPEMASK)
     , m_IconType(type& MB_ICONMASK)
     , m_hIcon(nullptr)
+    , m_Hwnd(wnd)
 {
 }
 

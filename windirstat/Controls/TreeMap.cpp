@@ -43,7 +43,7 @@ static constexpr double PALETTE_BRIGHTNESS = 0.6;
 
 double CColorSpace::GetColorBrightness(const COLORREF color)
 {
-    const unsigned int crIndividualIntensitySum = RGB_GET_RVALUE(color) + RGB_GET_GVALUE(color) + RGB_GET_BVALUE(color);
+    const unsigned int crIndividualIntensitySum = GetRValue(color) + GetGValue(color) + GetBValue(color);
     return crIndividualIntensitySum / 255.0 / 3.0;
 }
 
@@ -52,9 +52,9 @@ COLORREF CColorSpace::MakeBrightColor(const COLORREF color, const double brightn
     ASSERT(brightness >= 0.0);
     ASSERT(brightness <= 1.0);
 
-    double dred = (RGB_GET_RVALUE(color) & 0xFF) / 255.0;
-    double dgreen = (RGB_GET_GVALUE(color) & 0xFF) / 255.0;
-    double dblue = (RGB_GET_BVALUE(color) & 0xFF) / 255.0;
+    double dred = (GetRValue(color) & 0xFF) / 255.0;
+    double dgreen = (GetGValue(color) & 0xFF) / 255.0;
+    double dblue = (GetBValue(color) & 0xFF) / 255.0;
 
     const double f = 3.0 * brightness / (dred + dgreen + dblue);
     dred *= f;
@@ -855,10 +855,10 @@ bool CTreeMap::IsCushionShading() const
 void CTreeMap::DrawSolidRect(std::vector<COLORREF>& bitmap, const CRect& rc, const COLORREF col, const double brightness) const
 {
     const double factor = brightness / PALETTE_BRIGHTNESS;
-
-    auto red = static_cast<int>(RGB_GET_RVALUE(col) * factor);
-    auto green = static_cast<int>(RGB_GET_GVALUE(col) * factor);
-    auto blue = static_cast<int>(RGB_GET_BVALUE(col) * factor);
+    
+    auto red = static_cast<int>(GetRValue(col) * factor);
+    auto green = static_cast<int>(GetGValue(col) * factor);
+    auto blue = static_cast<int>(GetBValue(col) * factor);
 
     CColorSpace::NormalizeColor(red, green, blue);
 
@@ -877,9 +877,9 @@ void CTreeMap::DrawCushion(std::vector<COLORREF>& bitmap, const CRect& rc, const
     // Derived parameters
     const double Is = 1 - Ia; // shading
 
-    const double colR = RGB_GET_RVALUE(col);
-    const double colG = RGB_GET_GVALUE(col);
-    const double colB = RGB_GET_BVALUE(col);
+    const double colR = GetRValue(col);
+    const double colG = GetGValue(col);
+    const double colB = GetBValue(col);
 
     for (int iy = rc.top; iy < rc.bottom; iy++) for (int ix = rc.left; ix < rc.right; ix++)
     {

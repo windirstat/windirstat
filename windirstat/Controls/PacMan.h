@@ -27,7 +27,6 @@ class CPacman final
 public:
     CPacman();
     static void SetGlobalSuspendState(bool suspend = true);
-    void SetBackgroundColor(COLORREF color);
     void Reset();
     void Start();
     void Stop();
@@ -41,7 +40,6 @@ private:
     Gdiplus::Font m_Font;
     ULONGLONG m_LastUpdate = 0;  // TickCount
     ULONGLONG m_LastDraw = 0;    // Last time drawn
-    COLORREF m_Bgcolor;          // Background color
     float m_Position = 0.0f;     // 0...1
     float m_Aperture = 0.0f;     // 0...1
     bool m_Done = false;         // Whether pacman should be done

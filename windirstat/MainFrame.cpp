@@ -278,11 +278,6 @@ void CMySplitterWnd::OnSize(const UINT nType, const int cx, const int cy)
 
 /////////////////////////////////////////////////////////////////////////////
 
-CPacmanControl::CPacmanControl()
-{
-    m_Pacman.SetBackgroundColor(DarkMode::WdsSysColor(COLOR_WINDOWFRAME));
-}
-
 void CPacmanControl::Drive()
 {
     if (IsWindow(m_hWnd))
@@ -1260,6 +1255,7 @@ void CMainFrame::OnConfigure()
 
 void CMainFrame::OnSysColorChange()
 {
+    DarkMode::SetAppDarkMode();
     CFrameWndEx::OnSysColorChange();
     GetFileTreeView()->SysColorChanged();
     GetExtensionView()->SysColorChanged();

@@ -24,7 +24,11 @@
 
 constexpr auto CONTENT_MENU_MINCMD = 0x1ul;
 constexpr auto CONTENT_MENU_MAXCMD = 0x7FFFul;
+
 IContextMenu* GetContextMenu(HWND hwnd, const std::vector<std::wstring>& paths);
+
+constexpr auto signum(auto x) { return x < 0 ? -1 : x == 0 ? 0 : 1; };
+constexpr auto usignum(auto x, auto y) { return x < y ? -1 : x == y ? 0 : 1; };
 
 constexpr auto FILE_PROVIDER_COMPRESSION_MODERN = 1u << 8;
 using CompressionAlgorithm = enum CompressionAlgorithm {
@@ -35,6 +39,9 @@ using CompressionAlgorithm = enum CompressionAlgorithm {
     XPRESS16K = FILE_PROVIDER_COMPRESSION_XPRESS16K | FILE_PROVIDER_COMPRESSION_MODERN,
     LZX = FILE_PROVIDER_COMPRESSION_LZX | FILE_PROVIDER_COMPRESSION_MODERN
 };
+
+bool CompressFile(const std::wstring& filePath, CompressionAlgorithm algorithm);
+bool CompressFileAllowed(const std::wstring& filePath, CompressionAlgorithm algorithm);
 
 // Used at runtime to distinguish between mount points and junction points since they
 // share the same reparse tag on the file system.
@@ -95,6 +102,3 @@ std::wstring GetBaseNameFromPath(const std::wstring& path);
 std::wstring GetAppFileName(const std::wstring& ext = L"");
 std::wstring GetAppFolder();
 std::wstring GetNameFromSid(PSID sid);
-
-bool CompressFile(const std::wstring& filePath, CompressionAlgorithm algorithm);
-bool CompressFileAllowed(const std::wstring& filePath, CompressionAlgorithm algorithm);

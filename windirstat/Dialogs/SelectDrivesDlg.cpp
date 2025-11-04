@@ -270,8 +270,8 @@ void CDriveInformationThread::InvalidateDialogHandle()
 CDriveInformationThread::CDriveInformationThread(const std::wstring & path, const LPARAM driveItem, HWND dialog, const UINT serial)
     : m_Path(path)
       , m_DriveItem(driveItem)
-      , m_Dialog(dialog)
       , m_Serial(serial)
+      , m_Dialog(dialog)
 {
     ASSERT(m_bAutoDelete);
 

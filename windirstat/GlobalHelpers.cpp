@@ -34,7 +34,7 @@
 EXTERN_C NTSTATUS NTAPI RtlDecompressBuffer(USHORT CompressionFormat, PUCHAR UncompressedBuffer, ULONG  UncompressedBufferSize,
     PUCHAR CompressedBuffer, ULONG  CompressedBufferSize, PULONG FinalUncompressedSize);
 
-std::wstring FormatLongLongNormal(ULONGLONG n)
+static std::wstring FormatLongLongNormal(ULONGLONG n)
 {
     // Returns formatted number like "123.456.789".
 
@@ -794,7 +794,7 @@ std::wstring GetAppFolder()
     return folder.substr(0, folder.find_last_of(wds::chrBackslash));
 }
 
-constexpr DWORD SidGetLength(const PSID x)
+static constexpr DWORD SidGetLength(const PSID x)
 {
     return sizeof(SID) + (static_cast<SID*>(x)->SubAuthorityCount - 1) * sizeof(static_cast<SID*>(x)->SubAuthority);
 }
@@ -899,11 +899,11 @@ bool CompressFile(const std::wstring& filePath, const CompressionAlgorithm algor
         }
         info =
         {
-            {
+            .wof_info = {
                 .Version = WOF_CURRENT_VERSION,
                 .Provider = WOF_PROVIDER_FILE,
             },
-            {
+            .file_info = {
                 .Version = FILE_PROVIDER_CURRENT_VERSION,
                 .Algorithm = numericAlgorithm,
             },
