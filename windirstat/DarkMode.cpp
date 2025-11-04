@@ -160,7 +160,7 @@ void DarkMode::AdjustControls(const HWND hWnd)
         {
             SetWindowTheme(hWnd, L"DarkMode_ItemsView", nullptr);
         }
-        else if (className == WC_COMBOBOX || className == WC_EDIT)
+        else if (className == WC_COMBOBOX)
         {
             SetWindowTheme(hWnd, L"DarkMode_CFD", nullptr);
         }

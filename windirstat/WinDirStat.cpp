@@ -53,7 +53,7 @@ CDirStatApp::CDirStatApp()
     m_VtraceConsole.Attach(new CWDSTracerConsole);
 #endif
 
-    m_AltColor = GetAlternativeColor(RGB(0x00, 0x00, 0xFF), L"AltColor");
+    m_AltColor = GetAlternativeColor(RGB(0x3A, 0x99, 0xE8), L"AltColor");
     m_AltEncryptionColor = GetAlternativeColor(RGB(0x00, 0x80, 0x00), L"AltEncryptionColor");
 }
 
