@@ -146,26 +146,27 @@ void DarkMode::AdjustControls(const HWND hWnd)
         if (className == WC_BUTTON)
         {
             const auto style = GetWindowLong(hWnd, GWL_STYLE) & BS_TYPEMASK;
-            if (style == BS_GROUPBOX || style == BS_RADIOBUTTON || style == BS_AUTORADIOBUTTON)
+            if (style == BS_PUSHBUTTON || style == BS_DEFPUSHBUTTON)
             {
-                SetWindowTheme(hWnd, _darkModeEnabled ? L"DarkMode_Explorer" : L"Explorer", L"");
+                SetWindowTheme(hWnd, L"DarkMode_Explorer", nullptr);
             }
             else
             {
-                SetWindowTheme(hWnd, _darkModeEnabled ? L"DarkMode_Explorer" : L"Explorer", nullptr);
+                // Disable theme for other buttons to force classic rendering
+                SetWindowTheme(hWnd, L"", L"");
             }
         }
         else if (className == WC_HEADER)
         {
-            SetWindowTheme(hWnd, _darkModeEnabled ? L"DarkMode_ItemsView" : L"DItemsView", nullptr);
+            SetWindowTheme(hWnd, L"DarkMode_ItemsView", nullptr);
         }
         else if (className == WC_COMBOBOX || className == WC_EDIT)
         {
-            SetWindowTheme(hWnd, _darkModeEnabled ? L"DarkMode_CFD" : L"CFD", nullptr);
+            SetWindowTheme(hWnd, L"DarkMode_CFD", nullptr);
         }
         else
         {
-            SetWindowTheme(hWnd, _darkModeEnabled ? L"DarkMode_Explorer" : L"Explorer", nullptr);
+            SetWindowTheme(hWnd, L"DarkMode_Explorer", nullptr);
         }
         
         return TRUE;
