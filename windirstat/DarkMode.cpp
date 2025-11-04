@@ -146,7 +146,8 @@ void DarkMode::AdjustControls(const HWND hWnd)
         if (className == WC_BUTTON)
         {
             const auto style = GetWindowLong(hWnd, GWL_STYLE) & BS_TYPEMASK;
-            if (style == BS_GROUPBOX || style == BS_RADIOBUTTON || style == BS_AUTORADIOBUTTON)
+            if (style == BS_GROUPBOX || style == BS_RADIOBUTTON || style == BS_AUTORADIOBUTTON ||
+                style == BS_CHECKBOX || style == BS_AUTOCHECKBOX)
             {
                 SetWindowTheme(hWnd, _darkModeEnabled ? L"DarkMode_Explorer" : L"Explorer", L"");
             }
