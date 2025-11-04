@@ -44,6 +44,10 @@ static DWORD(WINAPI* SetPreferredAppMode)(PreferredAppMode word) = reinterpret_c
 static DWORD(WINAPI* AllowDarkModeForWindow)(HWND hwnd, bool allow) = reinterpret_cast<decltype(AllowDarkModeForWindow)>(
     reinterpret_cast<LPVOID>(GetProcAddress(LoadLibraryW(L"uxtheme.dll"), MAKEINTRESOURCEA(133))));
 
+static LONG(WINAPI* RtlGetVersion)(LPOSVERSIONINFOEXW) = reinterpret_cast<decltype(RtlGetVersion)>(
+    reinterpret_cast<LPVOID>(GetProcAddress(LoadLibraryW(L"ntdll.dll"), "RtlGetVersion")));
+
+
 bool DarkMode::_darkModeEnabled = false;
 static std::array<COLORREF, 50> OriginalColors;
 static std::array<COLORREF, 50> DarkModeColors;
@@ -63,7 +67,12 @@ void DarkMode::SetAppDarkMode() noexcept
         _darkModeEnabled = (darkSetting == 0);
     }
 
-    // Disable if not supported
+    // Validate this version of Windows supports dark mode
+    OSVERSIONINFOEXW verInfo { .dwOSVersionInfoSize  = sizeof(verInfo) };
+    RtlGetVersion(&verInfo);
+    _darkModeEnabled &= verInfo.dwMajorVersion >= 10 && verInfo.dwBuildNumber >= 17763;
+
+    // Disable if functions are not accessible
     _darkModeEnabled &= SetPreferredAppMode != nullptr;
     _darkModeEnabled &= AllowDarkModeForWindow != nullptr;
 

@@ -62,6 +62,7 @@ class CLayout
         DECLARE_MESSAGE_MAP()
         afx_msg void OnPaint();
         afx_msg LRESULT OnNcHitTest(CPoint point);
+        afx_msg BOOL OnEraseBkgnd(CDC* pDC);
     };
 
     class CPositioner final
