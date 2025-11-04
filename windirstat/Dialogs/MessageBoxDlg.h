@@ -40,9 +40,9 @@ protected:
     BOOL OnInitDialog() override;
 
     DECLARE_MESSAGE_MAP()
-    afx_msg void OnButton1();
-    afx_msg void OnButton2();
-    afx_msg void OnButton3();
+    afx_msg void OnButtonLeft();
+    afx_msg void OnButtonMiddle();
+    afx_msg void OnButtonRight();
     afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 
 private:
@@ -55,9 +55,9 @@ private:
 
     CStatic m_IconCtrl;
     CStatic m_MessageCtrl;
-    CButton m_Button1;
-    CButton m_Button2;
-    CButton m_Button3;
+    CButton m_ButtonLeft;
+    CButton m_ButtonMiddle;
+    CButton m_ButtonRight;
 };
 
 // Global wrapper functions that emulate MessageBox/AfxMessageBox
