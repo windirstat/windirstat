@@ -25,7 +25,7 @@
 #include <unordered_map>
 #include <format>
 
-class Localization
+class Localization final
 {
     static bool CrackStrings(std::basic_istream<char>& stream, unsigned int streamSize);
     static void SearchReplace(std::wstring& input, const std::wstring_view& search, const std::wstring_view& replace);

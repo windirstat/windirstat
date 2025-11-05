@@ -42,7 +42,7 @@
 // then do the operation in its OnInitDialog function
 // and end the dialog.
 //
-class CModalApiShuttle : public CDialogEx
+class CModalApiShuttle final : public CDialogEx
 {
     DECLARE_DYNAMIC(CModalApiShuttle)
 

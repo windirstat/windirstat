@@ -23,7 +23,7 @@
 // CLayout. A poor men's dialog layout mechanism.
 // Simple, flat, and sufficient for our purposes.
 //
-class CLayout
+class CLayout final
 {
     template <typename T>
     struct SControlInfoT
