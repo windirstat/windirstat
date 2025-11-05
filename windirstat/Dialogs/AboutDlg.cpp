@@ -78,7 +78,7 @@ BOOL CAboutThread::InitInstance()
 void CAboutDlg::WdsTabControl::Initialize()
 {
     SetLocation(LOCATION_TOP);
-    DarkModeTabCtrlHelper::SetupDarkMode(*this);
+    CTabCtrlHelper::SetupTabControl(*this);
 
     // Calculate initial client area
     auto createText = [&](CRichEditCtrl& ctrl, const DWORD align = ES_CENTER)

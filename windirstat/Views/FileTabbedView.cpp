@@ -54,7 +54,7 @@ void CFileTabbedView::OnInitialUpdate()
 {
     CTabView::OnInitialUpdate();
 
-    DarkModeTabCtrlHelper::SetupDarkMode(GetTabControl());
+    CTabCtrlHelper::SetupTabControl(GetTabControl());
 }
 
 BOOL CFileTabbedView::OnEraseBkgnd(CDC* /*pDC*/)

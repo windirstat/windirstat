@@ -29,25 +29,6 @@ public:
     static constexpr auto WM_UAHDRAWMENU = 0x0091;
     static constexpr auto WM_UAHDRAWMENUITEM = 0x0092;
 
-    // describes the sizes of the menu bar or menu itemWM_NCACTIVATE
-    using UAHMENUITEMMETRICS = union UAHMENUITEMMETRICS
-    {
-        struct {
-            DWORD cx;
-            DWORD cy;
-        } rgsizeBar[2];
-        struct {
-            DWORD cx;
-            DWORD cy;
-        } rgsizePopup[4];
-    };
-
-    using UAHMENUPOPUPMETRICS = struct
-    {
-        DWORD rgcx[4];
-        DWORD fUpdateMaxWidths : 2;
-    };
-
     using UAHMENU = struct
     {
         HMENU hmenu;
@@ -55,18 +36,11 @@ public:
         DWORD dwFlags;
     };
 
-    using UAHMENUITEM = struct
-    {
-        int iPosition;
-        UAHMENUITEMMETRICS umim;
-        UAHMENUPOPUPMETRICS umpm;
-    };
-
     using UAHDRAWMENUITEM = struct
     {
         DRAWITEMSTRUCT dis;
         UAHMENU um;
-        UAHMENUITEM umi;
+        int iPosition; // Abbreviated structure
     };
 
     // Check if dark mode is supported on this system
@@ -91,28 +65,34 @@ private:
     static bool _darkModeEnabled;
 };
 
-class DarkModeTabCtrlHelper final : public CMFCTabCtrl
+
+//
+// CTabCtrlHelper. Used to setup tab control properties.
+//
+class CTabCtrlHelper final : public CMFCTabCtrl
 {
 public:
-    static void SetupDarkMode(CMFCTabCtrl& tab)
+    static void SetupTabControl(CMFCTabCtrl& tab)
     {
-        auto& helper = reinterpret_cast<DarkModeTabCtrlHelper&>(tab);
+        auto& helper = reinterpret_cast<CTabCtrlHelper&>(tab);
 
+        helper.ModifyTabStyle(DarkMode::IsDarkModeActive() ? STYLE_FLAT : STYLE_3D_VS2005);
+        helper.EnableTabSwap(FALSE);
+        helper.SetDrawFrame(FALSE);
+        helper.SetScrollButtons();
+
+        // Forcibly hide tabs
+        if (IsWindow(helper.m_btnScrollFirst)) helper.m_btnScrollFirst.ShowWindow(SW_HIDE);
+        if (IsWindow(helper.m_btnScrollLast)) helper.m_btnScrollLast.ShowWindow(SW_HIDE);
+        if (IsWindow(helper.m_btnScrollLeft)) helper.m_btnScrollLeft.ShowWindow(SW_HIDE);
+        if (IsWindow(helper.m_btnScrollRight)) helper.m_btnScrollRight.ShowWindow(SW_HIDE);
+        helper.m_bScroll = FALSE;
+
+        // Dark mode tab have a black background so set text to be white
         if (DarkMode::IsDarkModeActive())
         {
-            helper.ModifyTabStyle(STYLE_FLAT);
-            helper.EnableTabSwap(FALSE);
-            helper.SetDrawFrame(FALSE);
-            helper.SetTabBorderSize(1);
             helper.SetActiveTabColor(DarkMode::WdsSysColor(COLOR_WINDOWTEXT));
-            helper.m_bScroll = FALSE;
-        }
-        else
-        {
-            helper.ModifyTabStyle(STYLE_3D_ONENOTE);
-            helper.EnableTabSwap(FALSE);
-            helper.SetDrawFrame(FALSE);
-            helper.m_bScroll = FALSE;
+            helper.SetTabBorderSize(1);
         }
     }
 };

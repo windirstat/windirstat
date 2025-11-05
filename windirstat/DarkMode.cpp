@@ -234,7 +234,7 @@ void DarkMode::DrawMenuItem(const HWND hWnd, UAHDRAWMENUITEM* pUDMI)
     std::array<WCHAR, 256> menuString = { L'\0' };
     MENUITEMINFO mii{ .cbSize = sizeof(MENUITEMINFO), .fMask = MIIM_STRING,
         .dwTypeData = menuString.data(), .cch = static_cast<UINT>(menuString.size() - 1)};
-    GetMenuItemInfo(pUDMI->um.hmenu, pUDMI->umi.iPosition, TRUE, &mii);
+    GetMenuItemInfo(pUDMI->um.hmenu, pUDMI->iPosition, TRUE, &mii);
 
     // Use structured bindings and lambda for state determination
     auto [txtId, bgId] = [&]() -> std::pair<int, int>
