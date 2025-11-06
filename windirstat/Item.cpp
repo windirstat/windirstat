@@ -1049,14 +1049,14 @@ void CItem::ScanItems(BlockingQueue<CItem*> * queue, FinderNtfsContext& contextN
         item->ResetScanStartTime();
 
         // Try to load NTFS MFT
-        if (item->IsType(IT_DRIVE))
+        if (item->IsType(IT_DRIVE) && COptions::UseFastScanEngine)
         {
             contextNtfs.LoadRoot(item);
         }
 
         if (item->IsType(IT_DRIVE | IT_DIRECTORY))
         {
-            Finder* finder = item->GetIndex() > 0 && COptions::UseFastScanEngine ?
+            Finder* finder = item->GetIndex() > 0 ?
                 reinterpret_cast<Finder*>(&finderNtfs) : reinterpret_cast<Finder*>(&finderBasic);
 
             for (BOOL b = finder->FindFile(item); b; b = finder->FindNext())
