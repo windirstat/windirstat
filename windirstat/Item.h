@@ -213,6 +213,7 @@ public:
     std::wstring GetOwner(bool force = false) const;
     bool HasUncPath() const;
     std::wstring GetFolderPath() const;
+    void SetName(std::wstring_view name);
     std::wstring GetName() const;
     std::wstring GetExtension() const;
     ULONG GetFilesCount() const;
@@ -306,13 +307,17 @@ private:
         std::atomic<ULONG> m_Jobs = 0;    // # "read jobs" in subtree.
     };
 
-    RECT m_Rect;                               // To support TreeMapView
-    std::wstring m_Name;                       // Display name
+    std::unique_ptr<wchar_t[]> m_Name;         // Display name
     FILETIME m_LastChange = {0, 0};            // Last modification time of self or subtree
     std::unique_ptr<CHILDINFO> m_FolderInfo;   // Child information for non-files
     std::atomic<ULONGLONG> m_SizePhysical = 0; // Total physical size of self or subtree
     std::atomic<ULONGLONG> m_SizeLogical = 0;  // Total local size of self or subtree
     ULONG m_Index = 0;                         // Index of item for special scan types
     USHORT m_Attributes = 0xFFFF;              // File or directory attributes of the item
+    USHORT m_NameLen = 0;
+    USHORT tmiTop = 0;
+    USHORT tmiLeft = 0;
+    USHORT tmiRight = 0;
+    USHORT tmiBottom = 0;
     ITEMTYPE m_Type;                           // Indicates our type.
 };

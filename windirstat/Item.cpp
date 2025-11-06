@@ -40,17 +40,22 @@
 #pragma comment(lib, "crypt32.lib")
 #pragma comment(lib, "bcrypt.lib")
 
-CItem::CItem(const ITEMTYPE type, const std::wstring & name) : m_Name(name), m_Type(type)
+CItem::CItem(const ITEMTYPE type, const std::wstring & name) : m_Type(type)
 {
     if (IsType(IT_DRIVE))
     {
         // Store drive paths with a backslash
-        if (m_Name.ends_with(L":")) m_Name.append(L"\\");
+        std::wstring nameTmp = name;
+        if (nameTmp.ends_with(L":")) nameTmp.append(L"\\");
 
         // The name string on the drive is two parts separated by a pipe.  For example,
         // C:\|Local Disk (C:) is the true path following by the name description
-        m_Name = std::format(L"{:.2}|{}", m_Name, FormatVolumeNameOfRootPath(m_Name));
+        SetName(std::format(L"{:.2}|{}", nameTmp, FormatVolumeNameOfRootPath(nameTmp)));
         m_Attributes = LOWORD(GetFileAttributesW(GetPathLong().c_str()));
+    }
+    else
+    {
+        SetName(name);
     }
 
     if (IsType(IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY))
@@ -94,12 +99,15 @@ CItem::~CItem()
 
 CRect CItem::TmiGetRectangle() const
 {
-    return m_Rect;
+    return { tmiLeft, tmiTop, tmiRight, tmiBottom };
 }
 
 void CItem::TmiSetRectangle(const CRect& rc)
 {
-    m_Rect = rc;
+    tmiLeft = static_cast<USHORT>(rc.left);
+    tmiTop = static_cast<USHORT>(rc.top);
+    tmiRight = static_cast<USHORT>(rc.right);
+    tmiBottom = static_cast<USHORT>(rc.bottom);
 }
 
 bool CItem::DrawSubItem(const int subitem, CDC* pdc, CRect rc, const UINT state, int* width, int* focusLeft)
@@ -162,9 +170,9 @@ std::wstring CItem::GetText(const int subitem) const
     case COL_NAME:
         if (IsType(IT_DRIVE))
         {
-            return m_Name.substr(std::size(L"?:"));
+            return GetName().substr(std::size(L"?:"));;
         }
-        return m_Name;
+        return GetName();
 
     case COL_OWNER:
         if (IsType(IT_FILE | IT_DIRECTORY))
@@ -272,7 +280,7 @@ int CItem::CompareSibling(const CTreeListItem* tlib, const int subitem) const
             {
                 return usignum(GetType(), other->GetType());
             }
-            return signum(_wcsicmp(m_Name.c_str(), other->m_Name.c_str()));
+            return signum(_wcsicmp(m_Name.get(), other->m_Name.get()));
         }
 
         case COL_SUBTREEPERCENTAGE:
@@ -923,17 +931,26 @@ std::wstring CItem::GetFolderPath() const
     return path;
 }
 
+void CItem::SetName(std::wstring_view name)
+{
+    m_NameLen = static_cast<std::uint8_t>(name.size());
+    m_Name = std::make_unique<wchar_t[]>(m_NameLen + 1);
+    if (m_NameLen) std::wmemcpy(m_Name.get(), name.data(), m_NameLen);
+    m_Name[m_NameLen] = L'\0';
+}
+
 std::wstring CItem::GetName() const
 {
-    return m_Name;
+    return { m_Name.get(), m_NameLen };
 }
 
 std::wstring CItem::GetExtension() const
 {
-    if (!IsType(IT_FILE)) return m_Name;
-    const LPCWSTR ext = wcsrchr(m_Name.c_str(), L'.');
-    if (ext == nullptr) return L"";
-    std::wstring extLower = ext;
+    if (!IsType(IT_FILE)) return GetName();
+    const auto & extName = GetName();
+    const auto pos = extName.rfind('.');
+    if (pos == std::string::npos) return {};
+    std::wstring extLower = extName.substr(pos);
     _wcslwr_s(extLower.data(), extLower.size() + 1);
     return extLower;
 }
@@ -976,7 +993,6 @@ void CItem::SetDone()
         m_FolderInfo->m_Tfinish = static_cast<ULONG>(GetTickCount64() / 1000ull);
     }
 
-    m_Rect = { 0,0,0,0 };
     SetIndex(0);
     SetType(ITF_DONE, true);
 }
@@ -1223,17 +1239,10 @@ void CItem::UpdateFreeSpaceItem()
     auto [total, free] = CDirStatApp::GetFreeDiskSpace(GetPath());
 
     // Recreate name based on updated free space and percentage
-    m_Name = std::format(
-        L"{:.2}|{} - {} ({:.1f}%)",
-        m_Name,
-        FormatVolumeNameOfRootPath(GetPath()),
-        Localization::Format(
-            IDS_DRIVE_ITEM_FREEsTOTALs,
-            FormatBytes(free),
-            FormatBytes(total)
-        ),
-        100.0 * free / total
-    );
+    SetName(std::format(L"{:.2}|{} - {} ({:.1f}%)", GetName(),
+        FormatVolumeNameOfRootPath(GetPath()), Localization::Format(
+        IDS_DRIVE_ITEM_FREEsTOTALs, FormatBytes(free), FormatBytes(total)),
+        100.0 * free / total));
 
     // Update freespace item if it exists
     if (CItem* freeSpaceItem = FindFreeSpaceItem(); freeSpaceItem != nullptr)
@@ -1396,7 +1405,7 @@ std::wstring CItem::UpwardGetPathWithoutBackslash() const
     for (auto p = this; p != nullptr; p = p->GetParent())
     {
         pathParts.emplace_back(p);
-        estSize += p->m_Name.length() + 1;
+        estSize += p->m_NameLen + 1;
     }
 
     // append the strings in reverse order
@@ -1406,15 +1415,15 @@ std::wstring CItem::UpwardGetPathWithoutBackslash() const
     {
         if (const auto & pathPart = *it; pathPart->IsType(IT_DIRECTORY))
         {
-            path.append(pathPart->m_Name).append(L"\\");
+            path.append(pathPart->m_Name.get(), pathPart->m_NameLen).append(L"\\");
         }
         else if (pathPart->IsType(IT_FILE))
         {
-            path.append(pathPart->m_Name);
+            path.append(pathPart->m_Name.get(), pathPart->m_NameLen);
         }
         else if (pathPart->IsType(IT_DRIVE))
         {
-            path.append(pathPart->m_Name.substr(0, 2)).append(L"\\");
+            path.append(pathPart->m_Name.get(), 2).append(L"\\");
         }
     }
 
