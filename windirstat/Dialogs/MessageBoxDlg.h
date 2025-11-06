@@ -20,6 +20,19 @@
 #include "stdafx.h"
 #include <string>
 
+struct ButtonContexts
+{
+    int btnLeftSW;
+    int btnMidSW;
+    int btnRightSW;
+    int btnLeftID = 0;
+    int btnMidID = 0;
+    int btnRightID = 0;
+    std::wstring_view btnLeftIDS = wds::strEmpty;
+    std::wstring_view btnMidIDS = wds::strEmpty;
+    std::wstring_view btnRightIDS = wds::strEmpty;
+};
+
 //
 // CMessageBoxDlg. Custom message box dialog with dark mode support.
 // Emulates the functionality of MessageBox/AfxMessageBox.
@@ -52,6 +65,7 @@ private:
     UINT m_IconType;
     HICON m_hIcon;
     HWND m_Hwnd;
+    ButtonContexts m_buttonTypeContext;
 
     CStatic m_IconCtrl;
     CStatic m_MessageCtrl;
