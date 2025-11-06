@@ -20,19 +20,6 @@
 #include "stdafx.h"
 #include <string>
 
-struct ButtonContexts
-{
-    int btnLeftSW;
-    int btnMidSW;
-    int btnRightSW;
-    int btnLeftID = 0;
-    int btnMidID = 0;
-    int btnRightID = 0;
-    std::wstring_view btnLeftIDS = wds::strEmpty;
-    std::wstring_view btnMidIDS = wds::strEmpty;
-    std::wstring_view btnRightIDS = wds::strEmpty;
-};
-
 //
 // CMessageBoxDlg. Custom message box dialog with dark mode support.
 // Emulates the functionality of MessageBox/AfxMessageBox.
@@ -41,7 +28,7 @@ class CMessageBoxDlg final : public CDialogEx
 {
     DECLARE_DYNAMIC(CMessageBoxDlg)
 
-    CMessageBoxDlg(HWND wnd, const std::wstring& message, const std::wstring& title, UINT type, CWnd* pParent = nullptr);
+    CMessageBoxDlg(const std::wstring& message, const std::wstring& title, UINT type, CWnd* pParent = nullptr);
     ~CMessageBoxDlg() override = default;
 
     INT_PTR DoModal() override;
@@ -59,13 +46,24 @@ protected:
     afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 
 private:
+
+    using ButtonContext = struct
+    {
+        BYTE btnLeftID;
+        BYTE btnMidID;
+        BYTE btnRightID;
+        std::wstring_view btnLeftIDS;
+        std::wstring_view btnMidIDS;
+        std::wstring_view btnRightIDS;
+        CButton * btnFocus;
+    };
+
     std::wstring m_Message;
     std::wstring m_Title;
     UINT m_ButtonType;
     UINT m_IconType;
     HICON m_hIcon;
-    HWND m_Hwnd;
-    ButtonContexts m_buttonTypeContext;
+    ButtonContext m_buttonContext;
 
     CStatic m_IconCtrl;
     CStatic m_MessageCtrl;

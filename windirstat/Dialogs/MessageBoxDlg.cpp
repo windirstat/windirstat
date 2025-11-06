@@ -21,32 +21,31 @@
 #include "DarkMode.h"
 #include "Localization.h"
 
-static const std::unordered_map<UINT, ButtonContexts> buttonTypeContexts
-{
-    // m_ButtonType          btnLeftSW btMidSW   btnRightSW  btnLeftID  btnMidID   btnRightID  btnLeftIDS         btnMidIDS          btnRightIDS
-    { MB_OK,               { SW_HIDE,  SW_HIDE,  SW_SHOW,    0,         0,         IDOK,       IDS_GENERIC_BLANK, IDS_GENERIC_BLANK, IDS_GENERIC_OK     } },
-    { MB_OKCANCEL,         { SW_HIDE,  SW_SHOW,  SW_SHOW,    0,         IDOK,      IDCANCEL,   IDS_GENERIC_BLANK, IDS_GENERIC_OK,    IDS_GENERIC_CANCEL } },
-    { MB_YESNO,            { SW_HIDE,  SW_SHOW,  SW_SHOW,    0,         IDYES,     IDNO,       IDS_GENERIC_BLANK, IDS_GENERIC_YES,   IDS_GENERIC_NO     } },
-    { MB_YESNOCANCEL,      { SW_SHOW,  SW_SHOW,  SW_SHOW,    IDYES,     IDNO,      IDCANCEL,   IDS_GENERIC_YES,   IDS_GENERIC_NO,    IDS_GENERIC_CANCEL } },
-    // these MB types are not used by WinDirStat, but included for completeness and using IDS_GENERIC_BLANK as placeholder for button labels,
-    // please add required IDS to localization engine upon use
-    { MB_RETRYCANCEL,      { SW_HIDE,  SW_SHOW,  SW_SHOW,    0,         IDRETRY,   IDCANCEL,   IDS_GENERIC_BLANK, IDS_GENERIC_BLANK, IDS_GENERIC_CANCEL } },
-    { MB_ABORTRETRYIGNORE, { SW_SHOW,  SW_SHOW,  SW_SHOW,    IDABORT,   IDRETRY,   IDIGNORE,   IDS_GENERIC_BLANK, IDS_GENERIC_BLANK, IDS_GENERIC_BLANK  } },
-};
-
 IMPLEMENT_DYNAMIC(CMessageBoxDlg, CDialogEx)
 
-CMessageBoxDlg::CMessageBoxDlg(HWND wnd, const std::wstring& message, const std::wstring& title, const UINT type, CWnd* pParent)
+CMessageBoxDlg::CMessageBoxDlg(const std::wstring& message, const std::wstring& title, const UINT type, CWnd* pParent)
     : CDialogEx(IDD, pParent)
     , m_Message(message)
     , m_Title(title)
     , m_ButtonType(type & MB_TYPEMASK)
     , m_IconType(type& MB_ICONMASK)
     , m_hIcon(nullptr)
-    , m_Hwnd(wnd)
 {
+    const std::unordered_map<UINT, ButtonContext> buttonTypeContexts
+    {
+        // m_ButtonType          btnLeftID  btnMidID   btnRightID  btnLeftIDS         btnMidIDS          btnRightIDS         btnFocus
+        { MB_OK,               { 0,         0,         IDOK,       IDS_GENERIC_BLANK, IDS_GENERIC_BLANK, IDS_GENERIC_OK,     &m_ButtonRight  } },
+        { MB_OKCANCEL,         { 0,         IDOK,      IDCANCEL,   IDS_GENERIC_BLANK, IDS_GENERIC_OK,    IDS_GENERIC_CANCEL, &m_ButtonMiddle } },
+        { MB_YESNO,            { 0,         IDYES,     IDNO,       IDS_GENERIC_BLANK, IDS_GENERIC_YES,   IDS_GENERIC_NO    , &m_ButtonMiddle } },
+        { MB_YESNOCANCEL,      { IDYES,     IDNO,      IDCANCEL,   IDS_GENERIC_YES,   IDS_GENERIC_NO,    IDS_GENERIC_CANCEL, &m_ButtonLeft   } },
+        // these MB types are not used by WinDirStat, but included for completeness and using IDS_GENERIC_BLANK as placeholder for button labels,
+        // please add required IDS to localization engine upon use
+        { MB_RETRYCANCEL,      { 0,         IDRETRY,   IDCANCEL,   IDS_GENERIC_BLANK, IDS_GENERIC_BLANK, IDS_GENERIC_CANCEL, &m_ButtonMiddle } },
+        { MB_ABORTRETRYIGNORE, { IDABORT,   IDRETRY,   IDIGNORE,   IDS_GENERIC_BLANK, IDS_GENERIC_BLANK, IDS_GENERIC_BLANK,  &m_ButtonLeft   } },
+    };
+
     ASSERT(buttonTypeContexts.contains(m_ButtonType));
-    m_buttonTypeContext = buttonTypeContexts.at(m_ButtonType);
+    m_buttonContext = buttonTypeContexts.at(m_ButtonType);
 }
 
 void CMessageBoxDlg::DoDataExchange(CDataExchange* pDX)
@@ -75,38 +74,17 @@ BOOL CMessageBoxDlg::OnInitDialog()
     m_MessageCtrl.SetWindowText(m_Message.c_str());
 
     // Configure buttons
-    m_ButtonLeft.ShowWindow(m_buttonTypeContext.btnLeftSW);
-    m_ButtonMiddle.ShowWindow(m_buttonTypeContext.btnMidSW);
-    m_ButtonRight.ShowWindow(m_buttonTypeContext.btnRightSW);
+    m_ButtonLeft.ShowWindow(m_buttonContext.btnLeftID != 0 ? SW_SHOW : SW_HIDE);
+    m_ButtonMiddle.ShowWindow(m_buttonContext.btnMidID != 0 ? SW_SHOW : SW_HIDE);
+    m_ButtonRight.ShowWindow(m_buttonContext.btnRightID != 0 ? SW_SHOW : SW_HIDE);
 
     // Set button texts
-    m_ButtonLeft.SetWindowText(Localization::Lookup(m_buttonTypeContext.btnLeftIDS).c_str());
-    m_ButtonMiddle.SetWindowText(Localization::Lookup(m_buttonTypeContext.btnMidIDS).c_str());
-    m_ButtonRight.SetWindowText(Localization::Lookup(m_buttonTypeContext.btnRightIDS).c_str());
+    m_ButtonLeft.SetWindowText(Localization::Lookup(m_buttonContext.btnLeftIDS).c_str());
+    m_ButtonMiddle.SetWindowText(Localization::Lookup(m_buttonContext.btnMidIDS).c_str());
+    m_ButtonRight.SetWindowText(Localization::Lookup(m_buttonContext.btnRightIDS).c_str());
 
     // Set focus to default button
-    CWnd* pFocusButton = nullptr;
-
-    switch (m_ButtonType)
-    {
-    case MB_YESNOCANCEL:
-    case MB_ABORTRETRYIGNORE:
-        pFocusButton = &m_ButtonLeft;
-        break;
-
-    case MB_YESNO:
-    case MB_OKCANCEL:
-    case MB_RETRYCANCEL:
-        pFocusButton = &m_ButtonMiddle;
-        break;
-
-    case MB_OK:
-    default:
-        pFocusButton = &m_ButtonRight;
-        break;
-    }
-
-    pFocusButton->SetFocus();
+    m_buttonContext.btnFocus->SetFocus();
 
     // Set icon based on message box type
     LPCWSTR iconResource = IDI_INFORMATION;
@@ -165,17 +143,17 @@ BOOL CMessageBoxDlg::OnInitDialog()
 
 void CMessageBoxDlg::OnButtonLeft()
 {
-    EndDialog(m_buttonTypeContext.btnLeftID);
+    EndDialog(m_buttonContext.btnLeftID);
 }
 
 void CMessageBoxDlg::OnButtonMiddle()
 {
-    EndDialog(m_buttonTypeContext.btnMidID);
+    EndDialog(m_buttonContext.btnMidID);
 }
 
 void CMessageBoxDlg::OnButtonRight()
 {
-    EndDialog(m_buttonTypeContext.btnRightID);
+    EndDialog(m_buttonContext.btnRightID);
 }
 
 INT_PTR CMessageBoxDlg::DoModal()
@@ -207,6 +185,6 @@ int WdsMessageBox(HWND wnd, const std::wstring& message, const std::wstring& tit
         return MessageBox(wnd, message.c_str(), title.c_str(), type);
     }
 
-    CMessageBoxDlg dlg(wnd, message, title, type);
+    CMessageBoxDlg dlg(message, title, type, CWnd::FromHandle(wnd));
     return static_cast<int>(dlg.DoModal());
 }
