@@ -181,13 +181,16 @@ bool CTreeListItem::IsAncestorOf(const CTreeListItem* item) const
     return false;
 }
 
-bool CTreeListItem::HasSiblings() const
+bool CTreeListItem::HasMoreSiblings() const
 {
     if (m_Parent == nullptr)
     {
         return false;
     }
-    return m_Parent->GetTreeListChildCount() > 1;
+
+    const auto thisIndex = m_VisualInfo->control->FindTreeItem(this);
+    const auto nextVisualItem = m_VisualInfo->control->GetItem(thisIndex + 1);
+    return nextVisualItem != nullptr && m_Parent == nextVisualItem->GetParent();
 }
 
 bool CTreeListItem::HasChildren() const
@@ -294,6 +297,7 @@ void CTreeListControl::SysColorChanged()
 
 CTreeListItem* CTreeListControl::GetItem(const int i) const
 {
+    if (i >= GetItemCount()) return nullptr;
     return reinterpret_cast<CTreeListItem*>(GetItemData(i));
 }
 
@@ -445,7 +449,7 @@ void CTreeListControl::DrawNode(CDC* pdc, CRect& rc, CRect& rcPlusMinus, const C
             for (int indent = item->GetIndent() - 2; indent >= 0; indent--)
             {
                 ancestor = ancestor->GetParent();
-                if (ancestor->HasSiblings())
+                if (ancestor->HasMoreSiblings())
                 {
                     pdc->BitBlt(rcRest.left + indent * INDENT_WIDTH, rcRest.top, NODE_WIDTH, NODE_HEIGHT, &dcmem, NODE_WIDTH * NODE_LINE, ysrc, SRCCOPY);
                 }
@@ -459,7 +463,7 @@ void CTreeListControl::DrawNode(CDC* pdc, CRect& rc, CRect& rcPlusMinus, const C
             int node;
             if (item->HasChildren())
             {
-                if (item->HasSiblings())
+                if (item->HasMoreSiblings())
                 {
                     if (item->IsExpanded())
                     {
@@ -484,7 +488,7 @@ void CTreeListControl::DrawNode(CDC* pdc, CRect& rc, CRect& rcPlusMinus, const C
             }
             else
             {
-                if (item->HasSiblings())
+                if (item->HasMoreSiblings())
                 {
                     node = NODE_SIBLING;
                 }

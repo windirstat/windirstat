@@ -165,7 +165,6 @@ public:
 
     // CItem
     static int GetSubtreePercentageWidth();
-    static CItem* FindCommonAncestor(const CItem* item1, const CItem* item2);
 
     ULONGLONG GetProgressRange() const;
     ULONGLONG GetProgressPos() const;
@@ -308,16 +307,13 @@ private:
     };
 
     std::unique_ptr<wchar_t[]> m_Name;         // Display name
-    FILETIME m_LastChange = {0, 0};            // Last modification time of self or subtree
     std::unique_ptr<CHILDINFO> m_FolderInfo;   // Child information for non-files
     std::atomic<ULONGLONG> m_SizePhysical = 0; // Total physical size of self or subtree
     std::atomic<ULONGLONG> m_SizeLogical = 0;  // Total local size of self or subtree
+    FILETIME m_LastChange = { 0, 0 };          // Last modification time of self or subtree
     ULONG m_Index = 0;                         // Index of item for special scan types
     USHORT m_Attributes = 0xFFFF;              // File or directory attributes of the item
     USHORT m_NameLen = 0;
-    USHORT tmiTop = 0;
-    USHORT tmiLeft = 0;
-    USHORT tmiRight = 0;
-    USHORT tmiBottom = 0;
     ITEMTYPE m_Type;                           // Indicates our type.
+    CSmallRect tmiRect = {};                   // Treemap rectangle
 };

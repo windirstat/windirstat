@@ -99,15 +99,12 @@ CItem::~CItem()
 
 CRect CItem::TmiGetRectangle() const
 {
-    return { tmiLeft, tmiTop, tmiRight, tmiBottom };
+    return tmiRect;
 }
 
 void CItem::TmiSetRectangle(const CRect& rc)
 {
-    tmiLeft = static_cast<USHORT>(rc.left);
-    tmiTop = static_cast<USHORT>(rc.top);
-    tmiRight = static_cast<USHORT>(rc.right);
-    tmiBottom = static_cast<USHORT>(rc.bottom);
+    tmiRect = rc;
 }
 
 bool CItem::DrawSubItem(const int subitem, CDC* pdc, CRect rc, const UINT state, int* width, int* focusLeft)
@@ -431,17 +428,6 @@ void CItem::DrawAdditionalState(CDC* pdc, const CRect& rcLabel) const
 int CItem::GetSubtreePercentageWidth()
 {
     return 105;
-}
-
-CItem* CItem::FindCommonAncestor(const CItem* item1, const CItem* item2)
-{
-    for (auto parent = item1; parent != nullptr; parent = parent->GetParent())
-    {
-        if (parent->IsAncestorOf(item2)) return const_cast<CItem*>(parent);
-    }
-
-    ASSERT(FALSE);
-    return nullptr;
 }
 
 ULONGLONG CItem::GetProgressRange() const

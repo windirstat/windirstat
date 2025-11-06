@@ -18,6 +18,7 @@
 #pragma once
 
 #include "OwnerDrawnListControl.h"
+#include "GlobalHelpers.h"
 #include "PacMan.h"
 
 #include <vector>
@@ -39,9 +40,9 @@ class CTreeListItem : public COwnerDrawnListItem
     struct VISIBLEINFO final
     {
         CPacman pacman;
-        CRect rcPlusMinus{}; // Coordinates of the little +/- rectangle, relative to the upper left corner of the item.
-        CRect rcTitle{}; // Coordinates of the label, relative to the upper left corner of the item.
         std::wstring owner; // Owner of file or folder
+        CSmallRect rcPlusMinus{}; // Coordinates of the little +/- rectangle, relative to the upper left corner of the item.
+        CSmallRect rcTitle{}; // Coordinates of the label, relative to the upper left corner of the item.
         CTreeListControl* control = nullptr;
         HICON icon = nullptr;  // -1 as long as not needed, >= 0: valid index in IconHandler.
         unsigned char indent; // 0 for the root item, 1 for its children, and so on.
@@ -67,7 +68,7 @@ public:
     CTreeListItem* GetParent() const;
     void SetParent(CTreeListItem* parent);
     bool IsAncestorOf(const CTreeListItem* item) const;
-    bool HasSiblings() const;
+    bool HasMoreSiblings() const;
     bool HasChildren() const;
     bool IsExpanded() const;
     void SetExpanded(bool expanded = true) const;

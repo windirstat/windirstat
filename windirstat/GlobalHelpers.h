@@ -102,3 +102,37 @@ std::wstring GetBaseNameFromPath(const std::wstring& path);
 std::wstring GetAppFileName(const std::wstring& ext = L"");
 std::wstring GetAppFolder();
 std::wstring GetNameFromSid(PSID sid);
+
+using CSmallRect = struct CSmallRect
+{
+    WORD left;
+    WORD top;
+    WORD right;
+    WORD bottom;
+
+    // Default constructor
+    CSmallRect() : left(0), top(0), right(0), bottom(0) {}
+
+    // Constructor from CRect
+    explicit CSmallRect(const CRect& rect) :
+          left(static_cast<WORD>(rect.left)), top(static_cast<WORD>(rect.top))
+        , right(static_cast<WORD>(rect.right)) , bottom(static_cast<WORD>(rect.bottom)) 
+    {
+    }
+
+    // Assignment from CRect
+    CSmallRect& operator=(const CRect& rect)
+    {
+        left = static_cast<WORD>(rect.left);
+        top = static_cast<WORD>(rect.top);
+        right = static_cast<WORD>(rect.right);
+        bottom = static_cast<WORD>(rect.bottom);
+        return *this;
+    }
+
+    // Conversion to CRect
+    operator CRect() const
+    {
+        return { left, top, right, bottom };
+    }
+};
