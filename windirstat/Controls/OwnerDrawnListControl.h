@@ -121,4 +121,5 @@ protected:
     afx_msg void OnHdnDividerdblclick(NMHDR* pNMHDR, LRESULT* pResult);
     afx_msg void OnHdnItemchanging(NMHDR* pNMHDR, LRESULT* pResult);
     afx_msg void OnCustomDraw(NMHDR* pNMHDR, LRESULT* pResult);
+    afx_msg void OnPaint();
 };

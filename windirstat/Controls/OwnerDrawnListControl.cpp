@@ -540,6 +540,7 @@ BEGIN_MESSAGE_MAP(COwnerDrawnListControl, CSortingListControl)
     ON_NOTIFY(HDN_ITEMCHANGING, 0, OnHdnItemchanging)
     ON_WM_SHOWWINDOW()
     ON_NOTIFY(NM_CUSTOMDRAW, 0, OnCustomDraw)
+    ON_WM_PAINT()
 END_MESSAGE_MAP()
 
 void COwnerDrawnListControl::OnCustomDraw(NMHDR* pNMHDR, LRESULT* pResult)
@@ -644,4 +645,15 @@ void COwnerDrawnListControl::OnHdnItemchanging(NMHDR* /*pNMHDR*/, LRESULT* pResu
     InvalidateRect(nullptr);
 
     *pResult = FALSE;
+}
+
+void COwnerDrawnListControl::OnPaint()
+{
+    CHeaderCtrl* pHeader = GetHeaderCtrl();
+    if (pHeader && pHeader->GetSafeHwnd())
+    {
+        pHeader->Invalidate(FALSE);
+        pHeader->UpdateWindow();
+    }
+    CSortingListControl::OnPaint();
 }
