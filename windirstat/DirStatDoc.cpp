@@ -880,12 +880,12 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
         { ID_CLEANUP_OPEN_SELECTED,   { false, true,  true,  LF_NONE,     IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY | IT_FILE } },
         { ID_CLEANUP_PROPERTIES,      { false, true,  true,  LF_NONE,     IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY | IT_FILE } },
         { ID_CLEANUP_REMOVE_ROAMING,  { true,  true,  false, LF_NONE,     IT_ANY } },
-        { ID_COMPRESS_LZNT1,          { false, true,  false, LF_NONE,     IT_FILE } },
-        { ID_COMPRESS_LZX,            { false, true,  false, LF_NONE,     IT_FILE } },
-        { ID_COMPRESS_NONE,           { false, true,  false, LF_NONE,     IT_FILE } },
-        { ID_COMPRESS_XPRESS16K,      { false, true,  false, LF_NONE,     IT_FILE } },
-        { ID_COMPRESS_XPRESS4K,       { false, true,  false, LF_NONE,     IT_FILE } },
-        { ID_COMPRESS_XPRESS8K,       { false, true,  false, LF_NONE,     IT_FILE } },
+        { ID_COMPRESS_LZNT1,          { false, true,  false, LF_NONE,     IT_DIRECTORY | IT_FILE } },
+        { ID_COMPRESS_LZX,            { false, true,  false, LF_NONE,     IT_DIRECTORY | IT_FILE } },
+        { ID_COMPRESS_NONE,           { false, true,  false, LF_NONE,     IT_DIRECTORY | IT_FILE } },
+        { ID_COMPRESS_XPRESS16K,      { false, true,  false, LF_NONE,     IT_DIRECTORY | IT_FILE } },
+        { ID_COMPRESS_XPRESS4K,       { false, true,  false, LF_NONE,     IT_DIRECTORY | IT_FILE } },
+        { ID_COMPRESS_XPRESS8K,       { false, true,  false, LF_NONE,     IT_DIRECTORY | IT_FILE } },
         { ID_EDIT_COPY_CLIPBOARD,     { false, true,  true,  LF_NONE,     IT_DRIVE | IT_DIRECTORY | IT_FILE } },
         { ID_FILTER,                  { true,  true,  true,  LF_NONE,     IT_ANY } },
         { ID_SEARCH,                  { true,  true,  false, LF_NONE,     IT_ANY } },
@@ -1427,14 +1427,36 @@ CompressionAlgorithm CDirStatDoc::CompressionIdToAlg(UINT id)
 void CDirStatDoc::OnCleanupCompress(UINT id)
 {
     CWaitCursor wc;
-    const auto& items = GetAllSelected();
-    for (const auto& item : items)
+
+    const auto& itemsSelected = GetAllSelected();
+    std::vector<const CItem*> itemsToCompress;
+    std::stack<const CItem*> childStack;
+    for (const auto & item : itemsSelected) { childStack.push(item); }
+    while (!childStack.empty())
+    {
+        const auto& item = childStack.top();
+        childStack.pop();
+
+        if (item->IsType(IT_DIRECTORY))
+        {
+            for (const auto& child : item->GetChildren())
+            {
+                childStack.push(child);
+            }
+        }
+        else if (item->IsType(IT_FILE))
+        {
+            itemsToCompress.emplace_back(item);
+        }
+    }
+
+    for (const auto& item : itemsToCompress)
     {
         const auto alg = (CompressionIdToAlg(id));
         CompressFile(item->GetPathLong(), alg);
     }
 
-    RefreshItem(items);
+    RefreshItem(itemsSelected);
 }
 
 void CDirStatDoc::OnScanSuspend()
