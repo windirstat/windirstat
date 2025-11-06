@@ -319,7 +319,7 @@ BOOL CDirStatApp::InitInstance()
     DarkMode::SetupGlobalColors();
 
     CMainFrame::Get()->InitialShowWindow();
-    m_pMainWnd->UpdateWindow();
+    m_pMainWnd->Invalidate();
 
     // When called by setup.exe, WinDirStat remained in the
     // background, so force it to the foreground

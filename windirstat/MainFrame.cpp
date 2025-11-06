@@ -578,7 +578,14 @@ void CMainFrame::CreateStatusProgress()
         CRect rc;
         m_WndStatusBar.GetItemRect(ID_STATUSPANE_IDLE_INDEX, rc);
         m_Progress.Create(WS_CHILD | WS_VISIBLE, rc, &m_WndStatusBar, ID_WDS_CONTROL);
-        m_Progress.ModifyStyle(WS_BORDER, 0);
+        m_Progress.ModifyStyle(WS_BORDER,0);
+
+        if (DarkMode::IsDarkModeActive())
+        {
+            // Disable theming for progress bar to avoid light background in dark mode
+            SetWindowTheme(m_Progress.GetSafeHwnd(), L"", L"");
+            m_Progress.SetBkColor(DarkMode::WdsSysColor(COLOR_WINDOWFRAME));
+        }
     }
     if (m_TaskbarList)
     {
