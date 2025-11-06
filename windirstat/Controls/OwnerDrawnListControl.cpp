@@ -258,7 +258,7 @@ COLORREF COwnerDrawnListControl::GetStripeColor() const
 // Highlight color if we have no focus
 COLORREF COwnerDrawnListControl::GetNonFocusHighlightColor() const
 {
-    return RGB(190, 190, 190);
+    return DarkMode::IsDarkModeActive() ? RGB(90, 90, 90) : RGB(190, 190, 190);
 }
 
 // Highlight text color if we have no focus
