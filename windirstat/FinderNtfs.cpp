@@ -183,7 +183,7 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
     if (!volumePath.empty() && volumePath[0] != L'\\' && volumePath[0] != L'/') volumePath.insert(0, L"\\\\.\\");
 
     // Open volume handle without FILE_FLAG_OVERLAPPED for synchronous I/O
-    SmartPointer<HANDLE> volumeHandle(CloseHandle,CreateFile(volumePath.c_str(), FILE_READ_DATA | FILE_READ_ATTRIBUTES | SYNCHRONIZE,
+    SmartPointer<HANDLE> volumeHandle(CloseHandle, CreateFile(volumePath.c_str(), FILE_READ_DATA | FILE_READ_ATTRIBUTES | SYNCHRONIZE,
         FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING,
         FILE_FLAG_NO_BUFFERING | FILE_FLAG_OVERLAPPED, nullptr));
     if (volumeHandle == INVALID_HANDLE_VALUE) return false;
@@ -336,12 +336,27 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
         }
     });
 
+    // Pre-reserve memory in main maps before merging
+    size_t totalBaseRecords = 0;
+    size_t totalNonBaseRecords = 0;
+    size_t totalParentRecords = 0;
+    for (const auto& map : baseFileRecordMapTemp) totalBaseRecords += map.size();
+    for (const auto& map : nonBaseToBaseMapTemp) totalNonBaseRecords += map.size();
+    for (const auto& map : parentToChildMapTemp) totalParentRecords += map.size();
+    m_BaseFileRecordMap.reserve(totalBaseRecords);
+    m_NonBaseToBaseMap.reserve(totalNonBaseRecords);
+    m_ParentToChildMap.reserve(totalParentRecords);
+
     {
         // Merge temporary maps into the main maps using jthread for parallel execution
         std::jthread t1([&]() { for (auto& map : baseFileRecordMapTemp) { m_BaseFileRecordMap.merge(map); }});
         std::jthread t2([&]() { for (auto& map : nonBaseToBaseMapTemp) { m_NonBaseToBaseMap.merge(map); }});
         std::jthread t3([&]() { for (auto& map : parentToChildMapTemp) { m_ParentToChildMap.merge(map); }});
     }
+
+    // Cleanup map (not currently needed)
+    m_NonBaseToBaseMap.clear();
+    m_NonBaseToBaseMap.rehash(0);
 
     if (!m_ParentToChildMap.contains(NtfsNodeRoot))
     {
