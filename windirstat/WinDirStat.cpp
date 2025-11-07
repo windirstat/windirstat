@@ -320,6 +320,7 @@ BOOL CDirStatApp::InitInstance()
 
     CMainFrame::Get()->InitialShowWindow();
     m_pMainWnd->Invalidate();
+    m_pMainWnd->UpdateWindow();
 
     // When called by setup.exe, WinDirStat remained in the
     // background, so force it to the foreground
