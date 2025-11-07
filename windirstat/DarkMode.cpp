@@ -345,7 +345,7 @@ void DarkMode::LightenBitmap(CBitmap* pBitmap, const bool invert)
         // Invert all color channels (BGR)
         for (int i = 0; i < bm.bmWidth * bm.bmHeight * 4; i += 4)
             std::ranges::transform(pixels.get() + i, pixels.get() + i + 3,
-                pixels.get() + i, [](BYTE b) { return 255 - b; });
+                pixels.get() + i, [](const BYTE b) { return static_cast<BYTE>(255 - b); });
     }
     else
     {
@@ -353,10 +353,11 @@ void DarkMode::LightenBitmap(CBitmap* pBitmap, const bool invert)
         std::array<BYTE, 256> lut;
         std::ranges::transform(std::views::iota(0, 256), lut.begin(),
             [](const int i) { return static_cast<BYTE>(std::pow(i / 255.0f, 0.5f) * 255.0f); });
+
         // Apply to all color channels (BGR)
         for (int i = 0; i < bm.bmWidth * bm.bmHeight * 4; i += 4)
             std::ranges::transform(pixels.get() + i, pixels.get() + i + 3,
-                pixels.get() + i, [&lut](BYTE b) { return lut[b]; });
+                pixels.get() + i, [&lut](const BYTE b) { return lut[b]; });
     }
 
     SetDIBits(memDC, *pBitmap, 0, bm.bmHeight, pixels.get(), &bmi, DIB_RGB_COLORS);
