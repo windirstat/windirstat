@@ -373,8 +373,7 @@ void CTreeMapView::Inactivate()
     blendFunc.BlendFlags = 0;
     blendFunc.SourceConstantAlpha = 175;
     blendFunc.AlphaFormat = 0;
-    CBrush brush(RGB(0, 0, 0));
-    dcmem.FillRect(CRect(0, 0, m_DimmedSize.cx, m_DimmedSize.cy), &brush);
+    dcmem.FillSolidRect(CRect(0, 0, m_DimmedSize.cx, m_DimmedSize.cy), RGB(0, 0, 0));
     dcmem.AlphaBlend(0, 0, m_DimmedSize.cx, m_DimmedSize.cy, &dc,
         0, 0, m_DimmedSize.cx, m_DimmedSize.cy, blendFunc);
 }

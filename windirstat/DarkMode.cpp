@@ -223,8 +223,7 @@ void DarkMode::DrawMenuBar(const HWND hWnd, const UAHMENU* pUDM)
     OffsetRect(&mbi.rcBar, -rcWindow.left, -rcWindow.top);
     mbi.rcBar.top -= 1;
 
-    const CBrush brush(WdsSysColor(COLOR_MENUBAR));
-    FillRect(pUDM->hdc, &mbi.rcBar, brush);
+    CDC::FromHandle(pUDM->hdc)->FillSolidRect(&mbi.rcBar, WdsSysColor(COLOR_MENUBAR));
 }
 
 void DarkMode::DrawMenuItem(const HWND hWnd, UAHDRAWMENUITEM* pUDMI)
@@ -261,8 +260,7 @@ void DarkMode::DrawMenuItem(const HWND hWnd, UAHDRAWMENUITEM* pUDMI)
         (bgId == MBI_PUSHED || bgId == MBI_DISABLEDPUSHED) ? WdsSysColor(COLOR_MENU) :
         (bgId == MBI_HOT || bgId == MBI_DISABLEDHOT) ? WdsSysColor(COLOR_MENU) : WdsSysColor(COLOR_MENUBAR);
 
-    const CBrush brush(bgColor);
-    FillRect(pUDMI->um.hdc, &pUDMI->dis.rcItem, brush);
+    CDC::FromHandle(pUDMI->um.hdc)->FillSolidRect(&pUDMI->dis.rcItem, bgColor);
 
     const COLORREF textColor =
         (txtId == MBI_DISABLED || txtId == MBI_DISABLEDHOT || txtId == MBI_DISABLEDPUSHED) ?
@@ -302,8 +300,7 @@ void DarkMode::DrawMenuClientArea(CWnd& wnd)
     lineToPaint.top--;
 
     CWindowDC dc(&wnd);
-    CBrush brush(WdsSysColor(COLOR_MENUBAR));
-    dc.FillRect(&lineToPaint, &brush);
+    dc.FillSolidRect(&lineToPaint, WdsSysColor(COLOR_MENUBAR));
 }
 
 HICON DarkMode::LightenIcon(const HICON hIcon, const bool invert)

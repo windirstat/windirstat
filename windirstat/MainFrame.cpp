@@ -98,9 +98,7 @@ BOOL COptionsPropertySheet::OnEraseBkgnd(CDC* pDC)
     // Paint the background with dark mode color
     CRect rect;
     GetClientRect(&rect);
-    
-    CBrush brush(DarkMode::WdsSysColor(CTLCOLOR_DLG));
-    pDC->FillRect(&rect, &brush);
+    pDC->FillSolidRect(&rect, DarkMode::WdsSysColor(CTLCOLOR_DLG));
     
     return TRUE;
 }
