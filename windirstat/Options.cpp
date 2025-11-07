@@ -91,7 +91,7 @@ Setting<COLORREF> COptions::TreeMapHighlightColor(OptionsTreeMap, L"TreeMapHighl
 Setting<double> COptions::MainSplitterPos(OptionsGeneral, L"MainSplitterPos", -1.0, 0.0, 1.0);
 Setting<double> COptions::SubSplitterPos(OptionsGeneral, L"SubSplitterPos", -1.0, 0.0, 1.0);
 Setting<int> COptions::ConfigPage(OptionsGeneral, L"ConfigPage", 0);
-Setting<int> COptions::DarkMode(OptionsGeneral, L"DarkMode", DM_DISABLED, DM_DISABLED, DM_USE_WINDOWS);
+Setting<int> COptions::DarkMode(OptionsGeneral, L"DarkMode", DM_USE_WINDOWS, DM_DISABLED, DM_USE_WINDOWS);
 Setting<int> COptions::LanguageId(OptionsGeneral, L"LanguageId", 0);
 Setting<int> COptions::LargeFileCount(OptionsGeneral, L"LargeFileCount", 50, 0, 10000);
 Setting<int> COptions::ScanningThreads(OptionsGeneral, L"ScanningThreads", 4, 1, 16);

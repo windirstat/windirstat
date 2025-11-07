@@ -41,7 +41,7 @@ void CPageAdvanced::DoDataExchange(CDataExchange* pDX)
     DDX_Check(pDX, IDC_EXCLUDE_VOLUME_MOUNT_POINTS, m_ExcludeVolumeMountPoints);
     DDX_Check(pDX, IDC_EXCLUDE_JUNCTIONS, m_ExcludeJunctions);
     DDX_Check(pDX, IDC_EXCLUDE_SYMLINKS_DIRECTORY, m_ExcludeSymbolicLinksDirectory);
-    DDX_Check(pDX, IDC_PAGE_ADVANCED_SKIP_CLOUD_LINKS, m_SkipDupeDetectionCloudLinks);
+    DDX_Check(pDX, IDC_SKIP_CLOUD_LINKS, m_SkipDupeDetectionCloudLinks);
     DDX_Check(pDX, IDC_EXCLUDE_HIDDEN_DIRECTORY, m_SkipHiddenDirectory);
     DDX_Check(pDX, IDC_EXCLUDE_PROTECTED_DIRECTORY, m_SkipProtectedDirectory);
     DDX_Check(pDX, IDC_BACKUP_RESTORE, m_UseBackupRestore);
@@ -60,7 +60,7 @@ BEGIN_MESSAGE_MAP(CPageAdvanced, CMFCPropertyPage)
     ON_BN_CLICKED(IDC_EXCLUDE_VOLUME_MOUNT_POINTS, OnSettingChanged)
     ON_BN_CLICKED(IDC_EXCLUDE_JUNCTIONS, OnSettingChanged)
     ON_BN_CLICKED(IDC_EXCLUDE_SYMLINKS_DIRECTORY, OnSettingChanged)
-    ON_BN_CLICKED(IDC_PAGE_ADVANCED_SKIP_CLOUD_LINKS, OnSettingChanged)
+    ON_BN_CLICKED(IDC_SKIP_CLOUD_LINKS, OnSettingChanged)
     ON_BN_CLICKED(IDC_EXCLUDE_SYMLINKS_FILE, OnSettingChanged)
     ON_BN_CLICKED(IDC_EXCLUDE_HIDDEN_FILE, OnSettingChanged)
     ON_BN_CLICKED(IDC_EXCLUDE_PROTECTED_FILE, OnSettingChanged)
