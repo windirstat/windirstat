@@ -206,8 +206,8 @@ protected:
     CMySplitterWnd m_SubSplitter; // Contains the two upper views
     CMySplitterWnd m_Splitter;    // Contains (a) m_WndSubSplitter and (b) the graph view.
 
-    CDarkModeStatusBar m_WndStatusBar; // Status bar
-    CDarkModeToolBar m_WndToolBar;     // Tool bar
+    CMFCStatusBar m_WndStatusBar; // Status bar
+    CMFCToolBar m_WndToolBar;     // Tool bar
     CProgressCtrl m_Progress;     // Progress control. Is Create()ed and Destroy()ed again every time.
     CPacmanControl m_Pacman;      // Static control for Pacman.
     CMFCToolBarImages m_Images;   // Tool bar images

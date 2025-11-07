@@ -98,33 +98,6 @@ public:
     }
 };
 
-class CDarkModeToolBar final : public CMFCToolBar
-{
-protected:
-
-    void OnFillBackground(CDC* pDC) override
-    {
-        // Fill toolbar background with dark mode color
-        CRect rect;
-        GetClientRect(&rect);
-        pDC->FillSolidRect(&rect, DarkMode::WdsSysColor(COLOR_MENUBAR));
-    }
-};
-
-//
-// CDarkModeStatusBar. A status bar control that supports dark mode.
-//
-class CDarkModeStatusBar final : public CMFCStatusBar
-{
-public:
-    CDarkModeStatusBar() = default;
-
-protected:
-    DECLARE_MESSAGE_MAP()
-    afx_msg BOOL OnEraseBkgnd(CDC* pDC);
-    afx_msg void OnPaint();
-};
-
 //
 // CDarkModeVisualManager. A visual manager tweak for dark mode support
 //
@@ -138,5 +111,9 @@ protected:
         COLORREF& clrDark, COLORREF& clrBlack, COLORREF& clrHighlight, COLORREF& clrFace,
         COLORREF& clrDarkShadow, COLORREF& clrLight, CBrush*& pbrFace, CBrush*& pbrBlack) override;
 
+    void OnFillBarBackground(CDC* pDC, CBasePane* pBar, CRect rectClient, CRect rectClip, BOOL bNCArea) override;
+
     void OnDrawSeparator(CDC* pDC, CBasePane* pBar, CRect rect, BOOL bIsHoriz) override;
+
+    void OnDrawStatusBarPaneBorder(CDC* pDC, CMFCStatusBar* pBar, CRect rectPane, UINT uiID, UINT nStyle) override;
 };

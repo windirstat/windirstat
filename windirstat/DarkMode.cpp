@@ -360,92 +360,6 @@ void DarkMode::LightenBitmap(CBitmap* pBitmap, const bool invert)
     SetDIBits(memDC, *pBitmap, 0, bm.bmHeight, pixels.get(), &bmi, DIB_RGB_COLORS);
 }
 
-BEGIN_MESSAGE_MAP(CDarkModeStatusBar, CMFCStatusBar)
-    ON_WM_ERASEBKGND()
-    ON_WM_PAINT()
-END_MESSAGE_MAP()
-
-BOOL CDarkModeStatusBar::OnEraseBkgnd(CDC* pDC)
-{
-    if (!DarkMode::IsDarkModeActive())
-    {
-        return CMFCStatusBar::OnEraseBkgnd(pDC);
-    }
-
-    CRect rect;
-    GetClientRect(&rect);
-    pDC->FillSolidRect(rect, DarkMode::WdsSysColor(COLOR_BACKGROUND));
-    return TRUE;
-}
-
-void CDarkModeStatusBar::OnPaint()
-{
-    if (!DarkMode::IsDarkModeActive())
-    {
-        CMFCStatusBar::OnPaint();
-        return;
-    }
-
-    CPaintDC dcPaint(this);
-    CRect rectClient;
-    GetClientRect(&rectClient);
-
-    // Create memory DC with bitmap for double buffering
-    CDC dcMem;
-    dcMem.CreateCompatibleDC(&dcPaint);
-    CBitmap bmp;
-    bmp.CreateCompatibleBitmap(&dcPaint, rectClient.Width(), rectClient.Height());
-    CBitmap* pOldBitmap = dcMem.SelectObject(&bmp);
-
-    // Setup drawing context
-    dcMem.FillSolidRect(rectClient, DarkMode::WdsSysColor(COLOR_BACKGROUND));
-    dcMem.SetTextColor(DarkMode::WdsSysColor(COLOR_WINDOWTEXT));
-    dcMem.SetBkMode(TRANSPARENT);
-
-    CFont* pOldFont = dcMem.SelectObject(GetFont());
-    CPen penBorder(PS_SOLID, 1, DarkMode::WdsSysColor(COLOR_BACKGROUND));
-    CPen* pOldPen = dcMem.SelectObject(&penBorder);
-
-    // Draw top border
-    dcMem.MoveTo(0, 0);
-    dcMem.LineTo(rectClient.right, 0);
-
-    // Draw each pane
-    for (int i = 0; i < GetCount(); i++)
-    {
-        CRect rectPane;
-        UINT nID, nStyle;
-        int cxWidth;
-        GetItemRect(i, &rectPane);
-        GetPaneInfo(i, nID, nStyle, cxWidth);
-
-        // Draw separator (skip first pane and stretch panes)
-        if (i > 0 && !(nStyle & SBPS_STRETCH))
-        {
-            dcMem.MoveTo(rectPane.left - 1, rectPane.top + 2);
-            dcMem.LineTo(rectPane.left - 1, rectPane.bottom - 2);
-        }
-
-        // Draw pane text
-        CString strText;
-        GetPaneText(i, strText);
-        if (!strText.IsEmpty())
-        {
-            CRect rectText = rectPane;
-            rectText.DeflateRect(4, 0);
-            const UINT nFormat = DT_SINGLELINE | DT_VCENTER | DT_NOPREFIX |
-                ((nStyle & SBPS_STRETCH) ? DT_LEFT : DT_CENTER);
-            dcMem.DrawText(strText, rectText, nFormat);
-        }
-    }
-
-    // Restore and blit to screen
-    dcMem.SelectObject(pOldPen);
-    dcMem.SelectObject(pOldFont);
-    dcPaint.BitBlt(0, 0, rectClient.Width(), rectClient.Height(), &dcMem, 0, 0, SRCCOPY);
-    dcMem.SelectObject(pOldBitmap);
-}
-
 // Implement runtime class information for CDarkModeVisualManager
 IMPLEMENT_DYNCREATE(CDarkModeVisualManager, CMFCVisualManagerWindows7)
 
@@ -467,10 +381,29 @@ void CDarkModeVisualManager::GetTabFrameColors(const CMFCBaseTabCtrl* pTabWnd,
     pbrBlack = &brBlackDark;
 }
 
+void CDarkModeVisualManager::OnFillBarBackground(CDC* pDC, CBasePane* pBar, CRect rectClient, CRect rectClip, BOOL bNCArea)
+{
+    UNREFERENCED_PARAMETER(pBar);
+    UNREFERENCED_PARAMETER(bNCArea);
+    UNREFERENCED_PARAMETER(rectClip);
+
+    pDC->FillSolidRect(rectClient, DarkMode::WdsSysColor(COLOR_MENUBAR));
+}
+
 void CDarkModeVisualManager::OnDrawSeparator(CDC* pDC, CBasePane* pBar, CRect rect, BOOL bIsHoriz)
 {
     UNREFERENCED_PARAMETER(pDC);
     UNREFERENCED_PARAMETER(pBar);
     UNREFERENCED_PARAMETER(rect);
     UNREFERENCED_PARAMETER(bIsHoriz);
+}
+
+void CDarkModeVisualManager::OnDrawStatusBarPaneBorder(CDC* pDC, CMFCStatusBar* pBar, CRect rectPane, UINT uiID, UINT nStyle)
+{
+    UNREFERENCED_PARAMETER(pBar);
+    UNREFERENCED_PARAMETER(uiID);
+    UNREFERENCED_PARAMETER(nStyle);
+
+    pDC->FillSolidRect(rectPane.left, rectPane.top, rectPane.Width(), 1, DarkMode::WdsSysColor(COLOR_WINDOWFRAME));
+    pDC->FillSolidRect(rectPane.right - 1, rectPane.top, 1, rectPane.Height(), DarkMode::WdsSysColor(COLOR_WINDOWFRAME));
 }

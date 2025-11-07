@@ -655,6 +655,15 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
     SetStatusPaneText(ID_STATUSPANE_SCRL_INDEX, Localization::Lookup(IDS_INDICATOR_SCRL));
     UpdatePaneText();
 
+    // Setup status pane for dark mode
+    if (DarkMode::IsDarkModeActive())
+    {
+        for (int i = 0; i < m_WndStatusBar.GetCount(); i++)
+        {
+            m_WndStatusBar.SetPaneBackgroundColor(i, DarkMode::WdsSysColor(COLOR_WINDOW));
+        }
+    }
+
     // Show or hide status bar if requested
     if (!COptions::ShowStatusBar) m_WndStatusBar.ShowWindow(SW_HIDE);
     if (!COptions::ShowToolBar) m_WndToolBar.ShowWindow(SW_HIDE);
