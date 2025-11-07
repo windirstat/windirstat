@@ -37,11 +37,11 @@ void CIconHandler::Initialize()
 
     m_FilterOverride.RegisterFilter();
 
-    m_JunctionImage = CDirStatApp::Get()->LoadIcon(IDI_JUNCTION);
-    m_JunctionProtected = CDirStatApp::Get()->LoadIcon(IDI_JUNCTION_PROTECTED);
-    m_FreeSpaceImage = CDirStatApp::Get()->LoadIcon(IDI_FREE_SPACE);
-    m_UnknownImage = CDirStatApp::Get()->LoadIcon(IDI_UNKNOWN);
-    m_EmptyImage = CDirStatApp::Get()->LoadIcon(IDI_EMPTY);
+    m_JunctionImage = DarkMode::LightenIcon(CDirStatApp::Get()->LoadIcon(IDI_JUNCTION));
+    m_JunctionProtected = DarkMode::LightenIcon(CDirStatApp::Get()->LoadIcon(IDI_JUNCTION_PROTECTED), true);
+    m_FreeSpaceImage = DarkMode::LightenIcon(CDirStatApp::Get()->LoadIcon(IDI_FREE_SPACE), true);
+    m_UnknownImage = DarkMode::LightenIcon(CDirStatApp::Get()->LoadIcon(IDI_UNKNOWN), true);
+    m_EmptyImage = DarkMode::LightenIcon(CDirStatApp::Get()->LoadIcon(IDI_EMPTY), true);
 
     // Cache icon for boot drive
     const auto driveLen = wcslen(L"C:\\");

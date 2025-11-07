@@ -306,31 +306,58 @@ void DarkMode::DrawMenuClientArea(CWnd& wnd)
     dc.FillRect(&lineToPaint, &brush);
 }
 
-void DarkMode::LightenBitmap(CBitmap* pBitmap)
+HICON DarkMode::LightenIcon(const HICON hIcon, const bool invert)
+{
+    if (!_darkModeEnabled) return hIcon;
+
+    ICONINFO iconInfo;
+    if (!GetIconInfo(hIcon, &iconInfo)) return hIcon;
+
+    // Lighten the color bitmap
+    if (CBitmap* pColorBitmap = CBitmap::FromHandle(iconInfo.hbmColor))
+    {
+        LightenBitmap(pColorBitmap, invert);
+    }
+
+    // Create new icon with lightened bitmap
+    const HICON hNewIcon = CreateIconIndirect(&iconInfo);
+
+    // Clean up
+    if (iconInfo.hbmColor) DeleteObject(iconInfo.hbmColor);
+    if (iconInfo.hbmMask) DeleteObject(iconInfo.hbmMask);
+
+    return hNewIcon ? hNewIcon : hIcon;
+}
+void DarkMode::LightenBitmap(CBitmap* pBitmap, const bool invert)
 {
     if (!_darkModeEnabled) return;
-
     BITMAP bm;
     pBitmap->GetBitmap(&bm);
-
     CDC memDC;
     memDC.CreateCompatibleDC(nullptr);
     memDC.SelectObject(pBitmap);
-
-    BITMAPINFO bmi = {{sizeof(BITMAPINFOHEADER), bm.bmWidth, -bm.bmHeight, 1, 32, BI_RGB}};
-
+    BITMAPINFO bmi = { {sizeof(BITMAPINFOHEADER), bm.bmWidth, -bm.bmHeight, 1, 32, BI_RGB} };
     const auto pixels = std::make_unique<BYTE[]>(bm.bmWidth * bm.bmHeight * 4);
     if (!GetDIBits(memDC, *pBitmap, 0, bm.bmHeight, pixels.get(), &bmi, DIB_RGB_COLORS)) return;
 
-    // Gamma lookup table
-    std::array<BYTE, 256> lut;
-    std::ranges::transform(std::views::iota(0, 256), lut.begin(),
-        [](const int i) { return static_cast<BYTE>(std::pow(i / 255.0f, 0.5f) * 255.0f); });
-
-    // Apply to all color channels (BGR)
-    for (int i = 0; i < bm.bmWidth * bm.bmHeight * 4; i += 4)
-        std::ranges::transform(pixels.get() + i, pixels.get() + i + 3,
-            pixels.get() + i, [&lut](BYTE b) { return lut[b]; });
+    if (invert)
+    {
+        // Invert all color channels (BGR)
+        for (int i = 0; i < bm.bmWidth * bm.bmHeight * 4; i += 4)
+            std::ranges::transform(pixels.get() + i, pixels.get() + i + 3,
+                pixels.get() + i, [](BYTE b) { return 255 - b; });
+    }
+    else
+    {
+        // Gamma lookup table
+        std::array<BYTE, 256> lut;
+        std::ranges::transform(std::views::iota(0, 256), lut.begin(),
+            [](const int i) { return static_cast<BYTE>(std::pow(i / 255.0f, 0.5f) * 255.0f); });
+        // Apply to all color channels (BGR)
+        for (int i = 0; i < bm.bmWidth * bm.bmHeight * 4; i += 4)
+            std::ranges::transform(pixels.get() + i, pixels.get() + i + 3,
+                pixels.get() + i, [&lut](BYTE b) { return lut[b]; });
+    }
 
     SetDIBits(memDC, *pBitmap, 0, bm.bmHeight, pixels.get(), &bmi, DIB_RGB_COLORS);
 }
