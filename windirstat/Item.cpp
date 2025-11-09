@@ -920,7 +920,7 @@ std::wstring CItem::GetFolderPath() const
 void CItem::SetName(std::wstring_view name)
 {
     m_NameLen = static_cast<std::uint8_t>(name.size());
-    m_Name = std::make_unique<wchar_t[]>(m_NameLen + 1);
+    m_Name = std::make_unique_for_overwrite<wchar_t[]>(m_NameLen + 1);
     if (m_NameLen) std::wmemcpy(m_Name.get(), name.data(), m_NameLen);
     m_Name[m_NameLen] = L'\0';
 }
