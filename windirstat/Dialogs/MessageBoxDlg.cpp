@@ -70,7 +70,7 @@ bool CMessageBoxDlg::IsCheckboxChecked() const
 
 void CMessageBoxDlg::DoDataExchange(CDataExchange* pDX)
 {
-    CDialogEx::DoDataExchange(pDX);
+    CLayoutDialogEx::DoDataExchange(pDX);
     DDX_Control(pDX, IDC_MESSAGE_ICON, m_IconCtrl);
     DDX_Control(pDX, IDC_MESSAGE_TEXT, m_MessageCtrl);
     DDX_Control(pDX, IDC_MESSAGE_BUTTONLEFT, m_ButtonLeft);
@@ -241,13 +241,13 @@ void CMessageBoxDlg::OnButtonRight()
 
 INT_PTR CMessageBoxDlg::DoModal()
 {
-    return CDialogEx::DoModal();
+    return CLayoutDialogEx::DoModal();
 }
 
 HBRUSH CMessageBoxDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, const UINT nCtlColor)
 {
     const HBRUSH brush = DarkMode::OnCtlColor(pDC, nCtlColor);
-    return brush ? brush : CDialogEx::OnCtlColor(pDC, pWnd, nCtlColor);
+    return brush ? brush : CLayoutDialogEx::OnCtlColor(pDC, pWnd, nCtlColor);
 }
 
 // Global wrapper functions
