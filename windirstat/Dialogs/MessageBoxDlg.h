@@ -18,20 +18,29 @@
 #pragma once
 
 #include "stdafx.h"
+#include "Layout.h"
+
 #include <string>
+#include <vector>
+#include <optional>
 
 //
 // CMessageBoxDlg. Custom message box dialog with dark mode support.
 // Emulates the functionality of MessageBox/AfxMessageBox.
 //
-class CMessageBoxDlg final : public CDialogEx
+class CMessageBoxDlg final : public CLayoutDialogEx
 {
     DECLARE_DYNAMIC(CMessageBoxDlg)
 
-    CMessageBoxDlg(const std::wstring& message, const std::wstring& title, UINT type, CWnd* pParent = nullptr);
+    CMessageBoxDlg(const std::wstring& message, const std::wstring& title, UINT type, CWnd* pParent = nullptr,
+        const std::vector<std::wstring>& listViewItems = {}, const std::wstring& checkBoxText = {}, bool checkBoxValue = false);
     ~CMessageBoxDlg() override = default;
 
     INT_PTR DoModal() override;
+    void SetInitialWindowSize(const CSize size) { m_InitialSize = size; }
+
+    // Optional checkbox support
+    bool IsCheckboxChecked() const;
 
 protected:
     enum : std::uint8_t { IDD = IDD_MESSAGEBOX };
@@ -44,6 +53,10 @@ protected:
     afx_msg void OnButtonMiddle();
     afx_msg void OnButtonRight();
     afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
+
+    // Helper methods for control layout
+    void ShiftControls(const std::vector<CWnd*>& controls, int shiftAmount);
+    void ShiftControlsIfHidden(const CWnd* pTargetControl, const std::vector<CWnd*>& controlsToShift);
 
 private:
 
@@ -60,16 +73,23 @@ private:
 
     std::wstring m_Message;
     std::wstring m_Title;
-    UINT m_ButtonType;
-    UINT m_IconType;
-    HICON m_hIcon;
     ButtonContext m_buttonContext;
+    RECT m_WindowRect {};
 
+    HICON m_Icon;
     CStatic m_IconCtrl;
     CStatic m_MessageCtrl;
     CButton m_ButtonLeft;
     CButton m_ButtonMiddle;
     CButton m_ButtonRight;
+    CSize m_InitialSize{};
+
+    // Optional controls
+    CButton m_Checkbox;
+    CListBox m_ListView;
+    std::wstring m_CheckboxText;
+    std::vector<std::wstring> m_ListViewItems;
+    BOOL m_CheckboxChecked = FALSE;
 };
 
 // Global wrapper functions that emulate MessageBox/AfxMessageBox

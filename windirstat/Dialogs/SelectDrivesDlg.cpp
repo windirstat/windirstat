@@ -565,7 +565,7 @@ void CSelectDrivesDlg::UpdateButtons()
     if (m_UseFastScan && !IsElevationActive())
     {
     m_UseFastScan = false;
-        if (WdsMessageBox(*this, Localization::Lookup(IDS_EVELATION_QUESTION),
+        if (WdsMessageBox(*this, Localization::Lookup(IDS_ELEVATION_QUESTION),
     Localization::Lookup(IDS_APP_TITLE), MB_YESNO | MB_ICONQUESTION) == IDYES)
         {
             COptions::UseFastScanEngine = true;

@@ -158,9 +158,6 @@
     <ClInclude Include="Dialogs\AboutDlg.h">
       <Filter>Header Files\Dialogs</Filter>
     </ClInclude>
-    <ClInclude Include="Dialogs\DeleteWarningDlg.h">
-      <Filter>Header Files\Dialogs</Filter>
-    </ClInclude>
     <ClInclude Include="Dialogs\SelectDrivesDlg.h">
       <Filter>Header Files\Dialogs</Filter>
     </ClInclude>
@@ -335,9 +332,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Dialogs\AboutDlg.cpp">
-      <Filter>Source Files\Dialogs</Filter>
-    </ClCompile>
-    <ClCompile Include="Dialogs\DeleteWarningDlg.cpp">
       <Filter>Source Files\Dialogs</Filter>
     </ClCompile>
     <ClCompile Include="Dialogs\SelectDrivesDlg.cpp">

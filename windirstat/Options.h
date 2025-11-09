@@ -141,6 +141,8 @@ public:
     static Setting<bool> ShowColumnSizeLogical;
     static Setting<bool> ShowColumnSizePhysical;
     static Setting<bool> ShowDeleteWarning;
+    static Setting<bool> ShowElevationPrompt;
+    static Setting<bool> ShowFastScanPrompt;
     static Setting<bool> ShowFileTypes;
     static Setting<bool> ShowFreeSpace;
     static Setting<bool> ShowStatusBar;

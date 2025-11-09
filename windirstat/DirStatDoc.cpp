@@ -17,7 +17,6 @@
 
 #include "stdafx.h"
 #include "CsvLoader.h"
-#include "DeleteWarningDlg.h"
 #include "DirStatDoc.h"
 #include "FileTreeView.h"
 #include "GlobalHelpers.h"
@@ -541,12 +540,29 @@ bool CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, const bo
 {
     if (!bypassWarning && COptions::ShowDeleteWarning)
     {
-        CDeleteWarningDlg warning(items);
+        // Build list of file paths for the message box
+        std::vector<std::wstring> filePaths;
+        for (const auto& item : items)
+        {
+            filePaths.push_back(item->GetPath());
+        }
+
+        // Display the file deletion warning dialog
+        CMessageBoxDlg warning(
+            Localization::Lookup(IDS_DELETE_WARNING),
+            Localization::Lookup(IDS_DELETE_TITLE),
+            MB_YESNO | MB_ICONWARNING, AfxGetMainWnd(), filePaths,
+            Localization::Lookup(IDS_DONT_SHOW_AGAIN), false);
+
+        // Change default width and display
+        warning.SetInitialWindowSize({ 600, 600 });
         if (IDYES != warning.DoModal())
         {
             return false;
         }
-        COptions::ShowDeleteWarning = !warning.m_DontShowAgain;
+
+        // Save off the deletion warning preference
+        COptions::ShowDeleteWarning = !warning.IsCheckboxChecked();
     }
 
     CModalApiShuttle msa([&items, toTrashBin]

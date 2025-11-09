@@ -579,7 +579,6 @@
     <ClInclude Include="Views\TreeMapView.h" />
     <ClInclude Include="WinDirStat.h" />
     <ClInclude Include="Dialogs\AboutDlg.h" />
-    <ClInclude Include="Dialogs\DeleteWarningDlg.h" />
     <ClInclude Include="Dialogs\SelectDrivesDlg.h" />
   </ItemGroup>
   <ItemGroup>
@@ -651,8 +650,6 @@
     <ClCompile Include="Controls\IconHandler.cpp">
     </ClCompile>
     <ClCompile Include="Dialogs\AboutDlg.cpp">
-    </ClCompile>
-    <ClCompile Include="Dialogs\DeleteWarningDlg.cpp">
     </ClCompile>
     <ClCompile Include="Dialogs\SelectDrivesDlg.cpp">
     </ClCompile>

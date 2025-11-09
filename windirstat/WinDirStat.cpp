@@ -354,33 +354,38 @@ BOOL CDirStatApp::InitInstance()
     }
 
     // Prompt user to enable enhanced scanning engine if it is disabled and running in elevated privileges
-    if(IsElevationActive())
-    {
-        if (COptions::UseFastScanEngine == false) {
-            COptions::UseFastScanEngine = (WdsMessageBox(*m_pMainWnd, Localization::Lookup(IDS_ENABLEFASTSCAN_QUESTION),
-                Localization::Lookup(IDS_APP_TITLE), MB_YESNO | MB_ICONQUESTION) == IDYES);
-            COptions::UseFastScanEngine.WritePersistedProperty();
-        }
+    if (IsElevationActive() && COptions::UseFastScanEngine == false && COptions::ShowFastScanPrompt) {
+        CMessageBoxDlg fastScanPrompt( Localization::Lookup(IDS_ENABLEFASTSCAN_QUESTION),
+            Localization::Lookup(IDS_APP_TITLE), MB_YESNO | MB_ICONQUESTION, m_pMainWnd,
+            {}, Localization::Lookup(IDS_DONT_SHOW_AGAIN), false);
+
+        const INT_PTR result = fastScanPrompt.DoModal();
+        COptions::UseFastScanEngine = (result == IDYES);
+        COptions::UseFastScanEngine.WritePersistedProperty();
+        COptions::ShowFastScanPrompt = !fastScanPrompt.IsCheckboxChecked();
     }
 
     // Allow user to elevate if desired
-    if (IsElevationAvailable())
+    if (IsElevationAvailable() && COptions::ShowElevationPrompt)
     {
-        if (WdsMessageBox(*m_pMainWnd, Localization::Lookup(IDS_EVELATION_QUESTION),
-            Localization::Lookup(IDS_APP_TITLE), MB_YESNO | MB_ICONQUESTION) == IDYES)
+        CMessageBoxDlg elevationPrompt(Localization::Lookup(IDS_ELEVATION_QUESTION),
+            Localization::Lookup(IDS_APP_TITLE), MB_YESNO | MB_ICONQUESTION, m_pMainWnd, {},
+            Localization::Lookup(IDS_DONT_SHOW_AGAIN), false);
+
+        const INT_PTR result = elevationPrompt.DoModal();
+        COptions::ShowElevationPrompt = !elevationPrompt.IsCheckboxChecked();
+        if (result == IDYES)
         {
             RunElevated(m_lpCmdLine);
             return FALSE;
         }
-        else
-        {
-            COptions::UseFastScanEngine = false;
-        }
+
+        COptions::UseFastScanEngine = false;
     }
 
     // Either open the file names or open file selection dialog
     cmdInfo.m_strFileName.IsEmpty() ? OnFileOpen() :
-        (void) m_PDocTemplate->OpenDocumentFile(cmdInfo.m_strFileName, true);
+        (void)m_PDocTemplate->OpenDocumentFile(cmdInfo.m_strFileName, true);
 
     return TRUE;
 }

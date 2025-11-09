@@ -64,6 +64,8 @@ Setting<bool> COptions::ShowColumnOwner(OptionsFileTree, L"ShowColumnOwner", fal
 Setting<bool> COptions::ShowColumnSizeLogical(OptionsFileTree, L"ShowColumnSizeLogical", true);
 Setting<bool> COptions::ShowColumnSizePhysical(OptionsFileTree, L"ShowColumnSizePhysical", true);
 Setting<bool> COptions::ShowDeleteWarning(OptionsGeneral, L"ShowDeleteWarning", true);
+Setting<bool> COptions::ShowElevationPrompt(OptionsGeneral, L"ShowElevationPrompt", true);
+Setting<bool> COptions::ShowFastScanPrompt(OptionsGeneral, L"ShowFastScanPrompt", true);
 Setting<bool> COptions::ShowFileTypes(OptionsGeneral, L"ShowFileTypes", true);
 Setting<bool> COptions::ShowFreeSpace(OptionsGeneral, L"ShowFreeSpace", false);
 Setting<bool> COptions::ShowStatusBar(OptionsGeneral, L"ShowStatusBar", true);

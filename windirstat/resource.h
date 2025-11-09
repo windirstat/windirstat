@@ -6,7 +6,6 @@
 #define IDD_PAGE_ADVANCED               101
 #define IDD_PAGE_FILTERING              102
 #define IDD_SELECTDRIVES                103
-#define IDD_DELETE_WARNING              104
 #define IDD_MESSAGEBOX                  105
 #define IDD_MODALAPISHUTTLE             106
 #define IDD_PAGE_CLEANUPS               107
@@ -49,7 +48,6 @@
 #define IDC_TARGET_DRIVES_LIST          1003
 #define IDC_TAB                         1004
 #define IDC_CAPTION                     1005
-#define IDC_DONTSHOWAGAIN               1006
 #define IDC_PACMANANIMATION             1007
 #define IDC_ASKFORCONFIRMATION          1008
 #define IDC_SHOWTIMESPENT               1009
@@ -125,7 +123,6 @@
 #define IDC_COMBO_THREADS               1079
 #define IDC_TREECOL_ATTRIBUTES          1080
 #define IDC_BROWSE_FOLDER               1081
-#define IDC_FILENAMES                   1082
 #define IDC_SCAN_DUPLICATES             1083
 #define IDC_RESET_PREFERENCES           1084
 #define IDC_FILTERING_EXCLUDE_DIRS      1085
@@ -147,6 +144,8 @@
 #define IDC_MESSAGE_BUTTONLEFT          1101
 #define IDC_MESSAGE_BUTTONMIDDLE        1102
 #define IDC_MESSAGE_BUTTONRIGHT         1103
+#define IDC_MESSAGE_CHECKBOX            1104
+#define IDC_MESSAGE_LISTVIEW            1105
 #define ID_WDS_CONTROL                  4711
 #define ID_CLEANUP_EXPLORER_SELECT      32768
 #define ID_TREEMAP_ZOOMIN               32769
@@ -226,7 +225,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        305
 #define _APS_NEXT_COMMAND_VALUE         32831
-#define _APS_NEXT_CONTROL_VALUE         1104
+#define _APS_NEXT_CONTROL_VALUE         1108
 #define _APS_NEXT_SYMED_VALUE           109
 #endif
 #endif
