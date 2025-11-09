@@ -131,7 +131,9 @@
 #define IDC_FILTERING_USE_REGEX         1088
 #define IDC_FILTERING_MIN_UNITS         1089
 #define IDC_LARGEST_FILE_COUNT          1090
+#define IDC_FOLDER_HISTORY_COUNT        1091
 #define IDC_SEARCH_REGEX                1091
+#define IDC_LARGEST_FILE_COUNT2         1091
 #define IDC_SEARCH_CASE                 1092
 #define IDC_SEARCH_TERM                 1093
 #define IDC_SEARCH_WHOLE_PHRASE         1094
@@ -146,6 +148,7 @@
 #define IDC_MESSAGE_BUTTONRIGHT         1103
 #define IDC_MESSAGE_CHECKBOX            1104
 #define IDC_MESSAGE_LISTVIEW            1105
+#define IDC_BROWSE_BUTTON               1109
 #define ID_WDS_CONTROL                  4711
 #define ID_CLEANUP_EXPLORER_SELECT      32768
 #define ID_TREEMAP_ZOOMIN               32769
@@ -225,7 +228,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        305
 #define _APS_NEXT_COMMAND_VALUE         32831
-#define _APS_NEXT_CONTROL_VALUE         1108
+#define _APS_NEXT_CONTROL_VALUE         1111
 #define _APS_NEXT_SYMED_VALUE           109
 #endif
 #endif

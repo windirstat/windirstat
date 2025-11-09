@@ -102,6 +102,7 @@ std::wstring GetBaseNameFromPath(const std::wstring& path);
 std::wstring GetAppFileName(const std::wstring& ext = L"");
 std::wstring GetAppFolder();
 std::wstring GetNameFromSid(PSID sid);
+std::wstring PromptForFolder(HWND hwnd = nullptr, const std::wstring& initialFolder = {});
 
 using CSmallRect = struct CSmallRect
 {

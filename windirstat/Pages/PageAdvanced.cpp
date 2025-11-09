@@ -49,6 +49,7 @@ void CPageAdvanced::DoDataExchange(CDataExchange* pDX)
     DDX_Check(pDX, IDC_EXCLUDE_HIDDEN_FILE, m_SkipHiddenFile);
     DDX_Check(pDX, IDC_EXCLUDE_PROTECTED_FILE, m_SkipProtectedFile);
     DDX_Text(pDX, IDC_LARGEST_FILE_COUNT, m_LargestFileCount);
+    DDX_Text(pDX, IDC_FOLDER_HISTORY_COUNT, m_FolderHistoryCount);
     DDX_CBIndex(pDX, IDC_COMBO_THREADS, m_ScanningThreads);
 }
 
@@ -66,6 +67,7 @@ BEGIN_MESSAGE_MAP(CPageAdvanced, CMFCPropertyPage)
     ON_BN_CLICKED(IDC_EXCLUDE_PROTECTED_FILE, OnSettingChanged)
     ON_BN_CLICKED(IDC_RESET_PREFERENCES, &CPageAdvanced::OnBnClickedResetPreferences)
     ON_EN_CHANGE(IDC_LARGEST_FILE_COUNT, &CPageAdvanced::OnEnChangeLargestFileCount)
+    ON_EN_CHANGE(IDC_FOLDER_HISTORY_COUNT, &CPageAdvanced::OnEnChangeFolderHistoryCount)
     ON_WM_CTLCOLOR()
 END_MESSAGE_MAP()
 
@@ -96,6 +98,7 @@ BOOL CPageAdvanced::OnInitDialog()
     m_UseBackupRestore = COptions::UseBackupRestore;
     m_ScanningThreads = COptions::ScanningThreads - 1;
     m_LargestFileCount = std::to_wstring(COptions::LargeFileCount.Obj()).c_str();
+    m_FolderHistoryCount = std::to_wstring(COptions::FolderHistoryCount.Obj()).c_str();
 
     UpdateData(FALSE);
     return TRUE;
@@ -127,6 +130,7 @@ void CPageAdvanced::OnOK()
     COptions::UseBackupRestore = (FALSE != m_UseBackupRestore);
     COptions::ScanningThreads = m_ScanningThreads + 1;
     COptions::LargeFileCount = std::stoi(m_LargestFileCount.GetString());
+    COptions::FolderHistoryCount = std::stoi(m_FolderHistoryCount.GetString());
 
     if (refreshAll)
     {
@@ -153,19 +157,22 @@ void CPageAdvanced::OnBnClickedResetPreferences()
 
 void CPageAdvanced::OnEnChangeLargestFileCount()
 {
-    // This function limits the value in the edit box to 10000 by
-    // checking the input and reverting it if it's too high
-    // or 0 if it is empty.
+    // This function limits the number of files in the largest files list
     UpdateData(TRUE);
 
-    if (m_LargestFileCount.IsEmpty())
-    {
-        m_LargestFileCount = L"0";
-    }
-    else if (_ttoi(m_LargestFileCount) > 10000)
-    {
-        m_LargestFileCount = L"10000";
-    }
+    m_LargestFileCount = std::to_wstring(std::clamp(_wtoi(m_LargestFileCount),
+        COptions::LargeFileCount.Min(), COptions::LargeFileCount.Max())).c_str();
+
+    UpdateData(FALSE);
+}
+
+void CPageAdvanced::OnEnChangeFolderHistoryCount()
+{
+    // This function limits the value in the folder history count
+    UpdateData(TRUE);
+
+    m_FolderHistoryCount = std::to_wstring(std::clamp(_wtoi(m_FolderHistoryCount),
+        COptions::FolderHistoryCount.Min(), COptions::FolderHistoryCount.Max())).c_str();
 
     UpdateData(FALSE);
 }

@@ -73,6 +73,8 @@ public:
 
     T* Ptr() { return &m_Value; }
     T& Obj() { return m_Value; }
+    T Min() { return m_Min; }
+    T Max() { return m_Max; }
     const T& Obj() const { return m_Value; }
 
     // Member persistence read/write settings

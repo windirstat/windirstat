@@ -121,6 +121,7 @@ IDS_MENU_TREEMAP=&Arbre
 IDS_NOTACCESSIBLE=(indisponible)
 IDS_ONEITEMs= (1 élément; {})
 IDS_ONEREADJOB=[1 traitement de lecture]
+IDS_PAGE_ADVANCED_FOLDER_HISTORY=Historique des dossiers
 IDS_PAGE_ADVANCED_LARGEST_COUNT=Nombre de grands fichiers affichés
 IDS_PAGE_ADVANCED_SKIP_CLOUD_LINKS=Ignorer la lecture des liens cloud lors de la détection des doublons
 IDS_PAGE_ADVANCED_THREADS=Threads par lecteur

@@ -28,6 +28,7 @@
 #include "MessageBoxDlg.h"
 
 #include <array>
+#include <ranges>
 
 namespace
 {
@@ -380,13 +381,15 @@ CSelectDrivesDlg::CSelectDrivesDlg(CWnd* pParent) :
 
 void CSelectDrivesDlg::DoDataExchange(CDataExchange* pDX)
 {
-    CDialogEx::DoDataExchange(pDX);
+    CLayoutDialogEx::DoDataExchange(pDX);
     DDX_Control(pDX, IDC_TARGET_DRIVES_LIST, m_List);
     DDX_Radio(pDX, IDC_RADIO_TARGET_DRIVES_ALL, m_Radio);
     DDX_Check(pDX, IDC_SCAN_DUPLICATES, m_ScanDuplicates);
     DDX_Check(pDX, IDC_FAST_SCAN_CHECKBOX, m_UseFastScan);
     DDX_Control(pDX, IDOK, m_OkButton);
-    DDX_Control(pDX, IDC_BROWSE_FOLDER, m_Browse);
+    DDX_Control(pDX, IDC_BROWSE_FOLDER, m_BrowseList);
+    DDX_Control(pDX, IDC_BROWSE_BUTTON, m_BrowseButton);
+    DDX_CBString(pDX, IDC_BROWSE_FOLDER, m_FolderName);
 }
 
 BEGIN_MESSAGE_MAP(CSelectDrivesDlg, CLayoutDialogEx)
@@ -395,7 +398,6 @@ BEGIN_MESSAGE_MAP(CSelectDrivesDlg, CLayoutDialogEx)
     ON_BN_CLICKED(IDC_RADIO_TARGET_FOLDER, &CSelectDrivesDlg::OnBnClickedRadioTargetFolder)
     ON_BN_CLICKED(IDC_SCAN_DUPLICATES, OnBnClickedUpdateButtons)
     ON_BN_CLICKED(IDC_FAST_SCAN_CHECKBOX, OnBnClickedUpdateButtons)
-    ON_EN_CHANGE(IDC_BROWSE_FOLDER, OnEnChangeFolderName)
     ON_MESSAGE(WMU_OK, OnWmuOk)
     ON_NOTIFY(LVN_ITEMCHANGED, IDC_TARGET_DRIVES_LIST, OnLvnItemChangedDrives)
     ON_NOTIFY(NM_SETFOCUS, IDC_TARGET_DRIVES_LIST, &CSelectDrivesDlg::OnNMSetfocusTargetDrivesList)
@@ -404,13 +406,15 @@ BEGIN_MESSAGE_MAP(CSelectDrivesDlg, CLayoutDialogEx)
     ON_WM_MEASUREITEM()
     ON_WM_SYSCOLORCHANGE()
     ON_WM_CTLCOLOR()
+    ON_BN_CLICKED(IDC_BROWSE_BUTTON, &CSelectDrivesDlg::OnBnClickedBrowseButton)
+    ON_CBN_EDITCHANGE(IDC_BROWSE_FOLDER, &CSelectDrivesDlg::OnEditchangeBrowseFolder)
 END_MESSAGE_MAP()
 
 BOOL CSelectDrivesDlg::OnInitDialog()
 {
     CWaitCursor wc;
 
-    CDialogEx::OnInitDialog();
+    CLayoutDialogEx::OnInitDialog();
 
     Localization::UpdateDialogs(*this);
     DarkMode::AdjustControls(GetSafeHwnd());
@@ -421,6 +425,7 @@ BOOL CSelectDrivesDlg::OnInitDialog()
     m_Layout.AddControl(IDCANCEL, 1, 0, 0, 0);
     m_Layout.AddControl(IDC_TARGET_DRIVES_LIST, 0, 0, 1, 1);
     m_Layout.AddControl(IDC_RADIO_TARGET_FOLDER, 0, 1, 0, 0);
+    m_Layout.AddControl(IDC_BROWSE_BUTTON, 1, 1, 0, 0);
     m_Layout.AddControl(IDC_BROWSE_FOLDER, 0, 1, 1, 0);
     m_Layout.AddControl(IDC_FAST_SCAN_CHECKBOX, 0, 1, 1, 0);
     m_Layout.AddControl(IDC_SCAN_DUPLICATES, 0, 1, 1, 0);
@@ -444,21 +449,29 @@ BOOL CSelectDrivesDlg::OnInitDialog()
 
     m_List.OnColumnsInserted();
 
-    m_FolderName = COptions::SelectDrivesFolder.Obj().c_str();
     m_SelectedDrives = COptions::SelectDrivesDrives;
     m_ScanDuplicates = COptions::ScanForDuplicates;
     m_UseFastScan = COptions::UseFastScanEngine;
 
+    // Add previously used folders to the combo box
+    for (const auto & folder : COptions::SelectDrivesFolder.Obj())
+    {
+        m_BrowseList.AddString(folder.c_str());
+    }
+
+    // Select the first folder value from the list
+    if (m_BrowseList.GetCount() > 0)
+        m_FolderName = COptions::SelectDrivesFolder.Obj().front().c_str();
+
     CBitmap bitmap;
     bitmap.LoadBitmapW(IDB_FILE_SELECT);
-    m_Browse.SetBrowseButtonImage(bitmap, TRUE);
-    m_Browse.SetWindowTextW(m_FolderName);
+    DarkMode::LightenBitmap(&bitmap);
+    m_BrowseButton.SetBitmap(bitmap);
 
     ShowWindow(SW_SHOWNORMAL);
     UpdateWindow();
     BringWindowToTop();
     SetForegroundWindow();
-    DarkMode::AdjustControls(m_Browse.GetSafeHwnd());
 
     const DWORD drives = GetLogicalDrives();
     DWORD mask = 0x00000001;
@@ -526,6 +539,23 @@ void CSelectDrivesDlg::OnOK()
         if (m_FolderName.GetAt(m_FolderName.GetLength() - 1) == L':') m_FolderName.AppendChar(L'\\');
         m_FolderName = GetFullPathName(m_FolderName.GetString()).c_str();
         UpdateData(FALSE);
+
+        // Remove the folder from the most recently used list to avoid duplicates
+        std::wstring folderName = m_FolderName.GetString();
+        std::erase_if(COptions::SelectDrivesFolder.Obj(), [&folderName](const std::wstring& s) {
+            return _wcsicmp(s.c_str(), folderName.c_str()) == 0;
+        });
+
+        // Insert it at the beginning of the used list
+        COptions::SelectDrivesFolder.Obj().insert(
+          COptions::SelectDrivesFolder.Obj().begin(), folderName);
+
+        // Limit the folder history to the configured count
+        if (const int maxHistory = COptions::FolderHistoryCount;
+            maxHistory > 0 && COptions::SelectDrivesFolder.Obj().size() > static_cast<size_t>(maxHistory))
+        {
+            COptions::SelectDrivesFolder.Obj().resize(maxHistory);
+        }
     }
 
     for (int i = 0; i < m_List.GetItemCount(); i++)
@@ -545,7 +575,6 @@ void CSelectDrivesDlg::OnOK()
 
     COptions::SelectDrivesRadio = m_Radio;
     COptions::SelectDrivesDrives = m_SelectedDrives;
-    COptions::SelectDrivesFolder = std::wstring(m_FolderName);
     COptions::ScanForDuplicates = (FALSE != m_ScanDuplicates);
     COptions::UseFastScanEngine = (FALSE != m_UseFastScan);
 
@@ -553,7 +582,7 @@ void CSelectDrivesDlg::OnOK()
     const auto tabbedView = CMainFrame::Get()->GetFileTabbedView();
     tabbedView->SetActiveFileTreeView();
 
-    CDialogEx::OnOK();
+    CLayoutDialogEx::OnOK();
 }
 
 void CSelectDrivesDlg::UpdateButtons()
@@ -564,17 +593,17 @@ void CSelectDrivesDlg::UpdateButtons()
     // Prompt user to elevate if the Fast Scan option is checked in non-elevated session
     if (m_UseFastScan && !IsElevationActive())
     {
-    m_UseFastScan = false;
+        m_UseFastScan = false;
         if (WdsMessageBox(*this, Localization::Lookup(IDS_ELEVATION_QUESTION),
-    Localization::Lookup(IDS_APP_TITLE), MB_YESNO | MB_ICONQUESTION) == IDYES)
+            Localization::Lookup(IDS_APP_TITLE), MB_YESNO | MB_ICONQUESTION) == IDYES)
         {
             COptions::UseFastScanEngine = true;
-        RunElevated(CDirStatDoc::GetDocument()->GetPathName().GetString());
- }
+            RunElevated(CDirStatDoc::GetDocument()->GetPathName().GetString());
+        }
         else
- {
-  // If the user declines, uncheck the fast scan box to revert the state.
-          CheckDlgButton(IDC_FAST_SCAN_CHECKBOX, BST_UNCHECKED);
+        {
+            // If the user declines, uncheck the fast scan box to revert the state.
+            CheckDlgButton(IDC_FAST_SCAN_CHECKBOX, BST_UNCHECKED);
         }
     }
 
@@ -629,20 +658,9 @@ void CSelectDrivesDlg::OnBnClickedRadioTargetFolder()
     UpdateButtons();
 }
 
-void CSelectDrivesDlg::OnEnChangeFolderName()
-{
-    m_Radio = RADIO_TARGET_FOLDER;
-    UpdateData(FALSE);
-
-    m_Browse.GetWindowText(m_FolderName);
-    UpdateButtons();
-}
-
 void CSelectDrivesDlg::OnLvnItemChangedDrives(NMHDR* /*pNMHDR*/, LRESULT* pResult)
 {
-    m_Radio = RADIO_TARGET_DRIVES_SUBSET;
-
-    UpdateData(FALSE);
+    SetActiveRadio(IDC_RADIO_TARGET_DRIVES_SUBSET);
     UpdateButtons();
 
     *pResult = FALSE;
@@ -702,7 +720,7 @@ LRESULT CSelectDrivesDlg::OnWmDriveInfoThreadFinished(const WPARAM serial, const
 
 void CSelectDrivesDlg::OnSysColorChange()
 {
-    CDialogEx::OnSysColorChange();
+    CLayoutDialogEx::OnSysColorChange();
     m_List.SysColorChanged();
 }
 
@@ -725,15 +743,14 @@ void CSelectDrivesDlg::OnNMSetfocusTargetDrivesList(NMHDR*, LRESULT* pResult)
 
 BOOL CSelectDrivesDlg::PreTranslateMessage(MSG* pMsg)
 {
-    // Change radio button if a user clicks in the dialog box without changing it
-    if ((pMsg->wParam == VK_LBUTTON) && (m_Browse.m_hWnd == pMsg->hwnd))
+    if (pMsg->message == WM_LBUTTONDOWN &&
+        (m_BrowseList.m_hWnd == pMsg->hwnd || m_BrowseList.m_hWnd == ::GetParent(pMsg->hwnd)))
     {
-        m_Radio = RADIO_TARGET_FOLDER;
-        UpdateData(FALSE);
+        SetActiveRadio(IDC_RADIO_TARGET_FOLDER);
         UpdateButtons();
     }
 
-    return CDialogEx::PreTranslateMessage(pMsg);
+    return CLayoutDialogEx::PreTranslateMessage(pMsg);
 }
 
 std::vector<std::wstring> CSelectDrivesDlg::GetSelectedItems() const
@@ -746,5 +763,28 @@ std::vector<std::wstring> CSelectDrivesDlg::GetSelectedItems() const
 HBRUSH CSelectDrivesDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, const UINT nCtlColor)
 {
     const HBRUSH brush = DarkMode::OnCtlColor(pDC, nCtlColor);
-    return brush ? brush : CDialogEx::OnCtlColor(pDC, pWnd, nCtlColor);
+    return brush ? brush : CLayoutDialogEx::OnCtlColor(pDC, pWnd, nCtlColor);
+}
+
+void CSelectDrivesDlg::OnBnClickedBrowseButton()
+{
+    // Prompt user and then update folder in combo box
+    const auto folder = PromptForFolder();
+    if (folder.empty()) return;
+    m_FolderName = folder.c_str();
+    UpdateData(FALSE);
+
+    SetActiveRadio(IDC_RADIO_TARGET_FOLDER);
+    UpdateButtons();
+}
+
+void CSelectDrivesDlg::OnEditchangeBrowseFolder()
+{
+    SetActiveRadio(IDC_RADIO_TARGET_FOLDER);
+    UpdateButtons();
+}
+
+void CSelectDrivesDlg::SetActiveRadio(const int radio)
+{
+    CheckRadioButton(IDC_RADIO_TARGET_DRIVES_ALL, IDC_RADIO_TARGET_FOLDER, radio);
 }

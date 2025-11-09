@@ -151,6 +151,7 @@ class CSelectDrivesDlg final : public CLayoutDialogEx
     BOOL OnInitDialog() override;
     void OnOK() override;
     void UpdateButtons();
+    void SetActiveRadio(int radio);
 
 protected:
 
@@ -162,13 +163,13 @@ protected:
     std::vector<std::wstring> m_Drives;    // out. Valid if m_Radio != RADIO_TARGET_FOLDER
     static UINT _serial; // Each Instance of this dialog gets a serial number
     CDrivesList m_List;
-    CMFCEditBrowseCtrl m_Browse;
+    CComboBox m_BrowseList;
     CButton m_OkButton;
+    CButton m_BrowseButton;
     std::vector<std::wstring> m_SelectedDrives;
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnBnClickedUpdateButtons();
-    afx_msg void OnEnChangeFolderName();
     afx_msg void OnLvnItemChangedDrives(NMHDR* pNMHDR, LRESULT* pResult);
     afx_msg void OnDestroy();
     afx_msg LRESULT OnWmuOk(WPARAM, LPARAM);
@@ -178,5 +179,8 @@ protected:
     afx_msg void OnBnClickedRadioTargetFolder();
     afx_msg void OnNMSetfocusTargetDrivesList(NMHDR*, LRESULT* pResult);
     afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
+    afx_msg void OnBnClickedBrowseButton();
     BOOL PreTranslateMessage(MSG* pMsg) override;
+public:
+    afx_msg void OnEditchangeBrowseFolder();
 };

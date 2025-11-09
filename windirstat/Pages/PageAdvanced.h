@@ -52,9 +52,11 @@ protected:
     BOOL m_UseBackupRestore = FALSE;
     int m_ScanningThreads = 0;
     CStringW m_LargestFileCount;
+    CStringW m_FolderHistoryCount;
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnEnChangeLargestFileCount();
+    afx_msg void OnEnChangeFolderHistoryCount();
     afx_msg void OnSettingChanged();
     afx_msg void OnBnClickedResetPreferences();
     afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);

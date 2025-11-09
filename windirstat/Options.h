@@ -186,6 +186,7 @@ public:
     static Setting<int> TreeMapScaleFactor;
     static Setting<int> TreeMapStyle;
     static Setting<int> DarkMode;
+    static Setting<int> FolderHistoryCount;
     static Setting<RECT> AboutWindowRect;
     static Setting<RECT> DriveSelectWindowRect;
     static Setting<RECT> SearchWindowRect;
@@ -202,10 +203,10 @@ public:
     static Setting<std::vector<int>> TopViewColumnOrder;
     static Setting<std::vector<int>> TopViewColumnWidths;
     static Setting<std::vector<std::wstring>> SelectDrivesDrives;
+    static Setting<std::vector<std::wstring>> SelectDrivesFolder;
     static Setting<std::wstring> FilteringExcludeDirs;
     static Setting<std::wstring> FilteringExcludeFiles;
     static Setting<std::wstring> SearchTerm;
-    static Setting<std::wstring> SelectDrivesFolder;
     static Setting<WINDOWPLACEMENT> MainWindowPlacement;
 
     static CTreeMap::Options TreeMapOptions;
