@@ -158,7 +158,7 @@ template <> void Setting<double>::ReadPersistedProperty()
 {
     const double def = m_Value;
     ReadBinaryProperty(m_Section, m_Entry, &m_Value, sizeof(double));
-    if (m_Value != def && m_Min != m_Max) m_Value = max(min(m_Value, m_Max), m_Min);
+    if (m_Value != def && m_Min != m_Max) m_Value = std::clamp(m_Value, m_Min, m_Max);
 }
 
 template <> void Setting<double>::WritePersistedProperty()

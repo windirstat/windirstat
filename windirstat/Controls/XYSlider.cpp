@@ -140,7 +140,7 @@ void CXySlider::CheckMinMax(LONG& val, const int minVal, const int maxVal) const
 {
     ASSERT(minVal <= maxVal);
 
-    val = max(min(val, maxVal), minVal);
+    val = std::clamp(val, static_cast<LONG>(minVal), static_cast<LONG>(maxVal));
 }
 
 void CXySlider::InternToExtern()
