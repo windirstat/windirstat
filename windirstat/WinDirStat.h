@@ -71,7 +71,7 @@ protected:
     COLORREF m_AltColor;              // Coloring of compressed items
     COLORREF m_AltEncryptionColor;    // Coloring of encrypted items
     static CDirStatApp _singleton;    // Singleton application instance
-#ifdef VTRACE_TO_CONSOLE
+#ifdef _DEBUG
     CAutoPtr<CWDSTracerConsole> m_VtraceConsole;
 #endif // VTRACE_TO_CONSOLE
 

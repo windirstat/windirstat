@@ -49,7 +49,7 @@ CDirStatApp CDirStatApp::_singleton;
 
 CDirStatApp::CDirStatApp()
 {
-#ifdef VTRACE_TO_CONSOLE
+#ifdef _DEBUG
     m_VtraceConsole.Attach(new CWDSTracerConsole);
 #endif
 
