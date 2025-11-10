@@ -463,6 +463,8 @@ BOOL CSelectDrivesDlg::OnInitDialog()
     if (m_BrowseList.GetCount() > 0)
         m_FolderName = COptions::SelectDrivesFolder.Obj().front().c_str();
 
+    UpdateData(FALSE);
+
     CBitmap bitmap;
     bitmap.LoadBitmapW(IDB_FILE_SELECT);
     DarkMode::LightenBitmap(&bitmap);
