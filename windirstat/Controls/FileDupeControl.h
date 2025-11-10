@@ -48,7 +48,7 @@ public:
 
 protected:
 
-    static constexpr auto m_PartialBufferSize = 128ull * 1024ull;
+    static constexpr auto m_PartialBufferSize = 4ull * 1024ull;
     static CFileDupeControl* m_Singleton;
     bool m_ShowCloudWarningOnThisScan = false;
     
