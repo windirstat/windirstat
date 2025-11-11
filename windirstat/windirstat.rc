@@ -728,7 +728,6 @@ BEGIN
 
     IDD_MESSAGEBOX, DIALOG
     BEGIN
-        MOCKUP, 0, 100, -83, -40, "..\..\..\Users\User\Desktop\2025-11-04_192842.bmp"
         LEFTMARGIN, 7
         RIGHTMARGIN, 279
         TOPMARGIN, 7
