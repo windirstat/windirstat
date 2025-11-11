@@ -597,7 +597,7 @@ void CSelectDrivesDlg::UpdateButtons()
     bool enableOk = false;
 
     // Prompt user to elevate if the Fast Scan option is checked in non-elevated session
-    if (m_UseFastScan && !IsElevationActive())
+    if (m_UseFastScan && !IsElevationActive() && IsElevationAvailable())
     {
         m_UseFastScan = false;
         if (WdsMessageBox(*this, Localization::Lookup(IDS_ELEVATION_QUESTION),
