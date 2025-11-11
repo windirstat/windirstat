@@ -971,7 +971,7 @@ bool CompressFileAllowed(const std::wstring& filePath, const CompressionAlgorith
 
     // Query volume for modern compression support based on NTFS and OS version
     compressionStandard[volumeName.data()] = isNTFS && (fileSystemFlags & FILE_FILE_COMPRESSION) != 0;
-    compressionModern[volumeName.data()] = isNTFS && IsWindows10OrGreater();
+    compressionModern[volumeName.data()] = isNTFS && IsWindows10OrGreater() && !filePath.starts_with(L"\\\\");
 
     return compressionMap.at(volumeName);
 }
