@@ -25,19 +25,20 @@
 class CPacman final
 {
 public:
-    CPacman();
+    CPacman(COLORREF backColor = -1);
     static void SetGlobalSuspendState(bool suspend = true);
     void Reset();
     void Start();
     void Stop();
     void UpdatePosition();
-    void Draw(const CDC* pdc, const CRect& rect);
+    void Draw(CDC* pdc, const CRect& rect);
 
 private:
     static void UpdatePosition(float& position, bool& up, float diff);
     static bool m_Suspended;
 
     Gdiplus::Font m_Font;
+    COLORREF m_BackColor;
     ULONGLONG m_LastUpdate = 0;  // TickCount
     ULONGLONG m_LastDraw = 0;    // Last time drawn
     float m_Position = 0.0f;     // 0...1
@@ -45,5 +46,5 @@ private:
     bool m_Done = false;         // Whether pacman should be done
     bool m_Moving = false;       // Whether pacman is moving
     bool m_ToTheRight = true;    // Moving right
-    bool m_MouthOpening = false; // Mouth is opening
+    bool m_MouthOpening = true;  // Mouth is opening
 };

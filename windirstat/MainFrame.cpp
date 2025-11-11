@@ -295,14 +295,15 @@ void CPacmanControl::Stop()
     m_Pacman.Stop();
 }
 
-BEGIN_MESSAGE_MAP(CPacmanControl, CStatic)
+BEGIN_MESSAGE_MAP(CPacmanControl, CWnd)
     ON_WM_PAINT()
     ON_WM_CREATE()
+    ON_WM_ERASEBKGND()
 END_MESSAGE_MAP()
 
 int CPacmanControl::OnCreate(const LPCREATESTRUCT lpCreateStruct)
 {
-    if (CStatic::OnCreate(lpCreateStruct) == -1)
+    if (CWnd::OnCreate(lpCreateStruct) == -1)
     {
         return -1;
     }
@@ -312,6 +313,12 @@ int CPacmanControl::OnCreate(const LPCREATESTRUCT lpCreateStruct)
     return 0;
 }
 
+BOOL CPacmanControl::OnEraseBkgnd(CDC* pDC)
+{
+    UNREFERENCED_PARAMETER(pDC);
+    return TRUE;
+}
+
 void CPacmanControl::OnPaint()
 {
     // Setup double buffering
@@ -319,14 +326,19 @@ void CPacmanControl::OnPaint()
     CDC memDC;
     memDC.CreateCompatibleDC(&dc);
 
-    CBitmap bm;
     CRect rect;
     GetClientRect(&rect);
+
+    CBitmap bm;
     bm.CreateCompatibleBitmap(&dc, rect.Width(), rect.Height());
     CSelectObject sobm(&memDC, &bm);
 
     // Draw the animation
     m_Pacman.Draw(&memDC, rect);
+
+    // Draw the borders
+    CMFCVisualManager::GetInstance()->OnDrawStatusBarPaneBorder(
+        &memDC, &CMainFrame::Get()->m_WndStatusBar, rect, 0, CMainFrame::Get()->GetStyle());
 
     // Copy memory DC to screen DC
     dc.BitBlt(0, 0, rect.Width(), rect.Height(), &memDC, 0, 0, SRCCOPY);
@@ -595,9 +607,10 @@ void CMainFrame::CreatePacmanProgress()
 {
     if (m_Pacman.m_hWnd == nullptr)
     {
+        // Get rectangle and remove top/bottom border dimension
         CRect rc;
         m_WndStatusBar.GetItemRect(0, rc);
-        m_Pacman.Create(wds::strEmpty, WS_CHILD | WS_VISIBLE, rc, &m_WndStatusBar, ID_WDS_CONTROL);
+        m_Pacman.Create(nullptr, nullptr, WS_CHILD | WS_VISIBLE, rc, &m_WndStatusBar, ID_WDS_CONTROL);
         m_Pacman.Start();
     }
 }

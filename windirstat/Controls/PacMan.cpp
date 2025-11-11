@@ -17,6 +17,8 @@
 
 #include "stdafx.h"
 #include "PacMan.h"
+
+#include <utility>
 #include "DarkMode.h"
 
 namespace
@@ -26,8 +28,9 @@ namespace
     constexpr float PACMANSPEED = 0.09f;      // pixels / ms
 }
 
-CPacman::CPacman() :
-    m_Font(L"Arial", 6.0f, Gdiplus::FontStyleBold)
+CPacman::CPacman(const COLORREF backColor) :
+    m_Font(L"Arial", 6.0f, Gdiplus::FontStyleBold),
+    m_BackColor(backColor)
 {
     Reset();
 }
@@ -68,7 +71,7 @@ void CPacman::UpdatePosition()
     m_Done = false;
 }
 
-void CPacman::Draw(const CDC* pdc, const CRect& rect)
+void CPacman::Draw(CDC* pdc, const CRect& rect)
 {
     const ULONGLONG now = GetTickCount64();
     if (m_Suspended)
@@ -105,6 +108,12 @@ void CPacman::Draw(const CDC* pdc, const CRect& rect)
     const Gdiplus::REAL sweepAngle = 360.0f - slice;
     Gdiplus::REAL startAngle = m_Aperture * slice / 2.0f;
     if (!m_ToTheRight) startAngle += 180.0f;
+
+    // Fill background if requested
+    if (m_BackColor != -1)
+    {
+        pdc->FillSolidRect(rect, m_BackColor);
+    }
     if (m_Done) return;
 
     // Create pens and brushes

@@ -82,7 +82,7 @@ std::wstring CTreeListItem::GetText(int /*subitem*/) const
     return {};
 }
 
-void CTreeListItem::DrawPacman(const CDC* pdc, const CRect& rc) const
+void CTreeListItem::DrawPacman(CDC* pdc, const CRect& rc) const
 {
     ASSERT(IsVisible());
     m_VisualInfo->pacman.Draw(pdc, rc);
@@ -439,7 +439,7 @@ void CTreeListControl::DrawNode(CDC* pdc, CRect& rc, CRect& rcPlusMinus, const C
 
         CDC dcmem;
         dcmem.CreateCompatibleDC(pdc);
-        CSelectObject sonodes(&dcmem, IsItem_stripeColor(item) ? &m_BmNodes1 : &m_BmNodes0);
+        CSelectObject sonodes(&dcmem, IsItemStripColor(FindTreeItem(item)) ? &m_BmNodes1 : &m_BmNodes0);
 
         const int ysrc = NODE_HEIGHT / 2 - GetRowHeight() / 2;
 

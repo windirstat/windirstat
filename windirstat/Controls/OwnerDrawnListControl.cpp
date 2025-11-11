@@ -75,7 +75,6 @@ void COwnerDrawnListItem::DrawLabel(const COwnerDrawnListControl* list, CDC* pdc
     rcLabel.top = rcRest.top + LABEL_Y_MARGIN;
     rcLabel.bottom = rcRest.bottom - LABEL_Y_MARGIN;
 
-    CSetBkMode bk(pdc, TRANSPARENT);
     COLORREF textColor = GetItemTextColor();
     if (width == nullptr && (state & ODS_SELECTED) != 0 && (list->HasFocus() || list->IsShowSelectionAlways()))
     {
@@ -287,24 +286,14 @@ COLORREF COwnerDrawnListControl::GetHighlightTextColor() const
     return GetNonFocusHighlightTextColor();
 }
 
-bool COwnerDrawnListControl::IsItem_stripeColor(const int i) const
+bool COwnerDrawnListControl::IsItemStripColor(const int i) const
 {
     return m_ShowStripes && i % 2 != 0;
 }
 
-bool COwnerDrawnListControl::IsItem_stripeColor(const COwnerDrawnListItem* item) const
-{
-    return IsItem_stripeColor(FindListItem(item));
-}
-
 COLORREF COwnerDrawnListControl::GetItemBackgroundColor(const int i) const
 {
-    return IsItem_stripeColor(i) ? GetStripeColor() : GetWindowColor();
-}
-
-COLORREF COwnerDrawnListControl::GetItemBackgroundColor(const COwnerDrawnListItem* item) const
-{
-    return GetItemBackgroundColor(FindListItem(item));
+    return IsItemStripColor(i) ? GetStripeColor() : GetWindowColor();
 }
 
 COLORREF COwnerDrawnListControl::GetItemSelectionBackgroundColor(const int i) const
@@ -316,11 +305,6 @@ COLORREF COwnerDrawnListControl::GetItemSelectionBackgroundColor(const int i) co
     }
 
     return GetItemBackgroundColor(i);
-}
-
-COLORREF COwnerDrawnListControl::GetItemSelectionBackgroundColor(const COwnerDrawnListItem* item) const
-{
-    return GetItemSelectionBackgroundColor(FindListItem(item));
 }
 
 COLORREF COwnerDrawnListControl::GetItemSelectionTextColor(const int i) const
@@ -397,11 +381,11 @@ void COwnerDrawnListControl::DrawItem(LPDRAWITEMSTRUCT pdis)
     bm.CreateCompatibleBitmap(pdc, rcItem.Width(), rcItem.Height());
     CSelectObject sobm(&dcMem, &bm);
 
-    dcMem.FillSolidRect(rcItem - rcItem.TopLeft(),
-        GetItemBackgroundColor(static_cast<int>(pdis->itemID)));
+    COLORREF backColor = GetItemBackgroundColor(static_cast<int>(pdis->itemID));
+    dcMem.FillSolidRect(rcItem - rcItem.TopLeft(), backColor);
 
     // Set defaults for all text drawing
-    CSetBkMode bk(&dcMem, TRANSPARENT);
+    CSetBkColor bkColor(&dcMem, backColor);
     CSelectObject sofont(&dcMem, GetFont());
 
     int focusLeft = 0;
@@ -416,7 +400,7 @@ void COwnerDrawnListControl::DrawItem(LPDRAWITEMSTRUCT pdis)
 
         CRect rc = GetWholeSubitemRect(pdis->itemID, i);
         const CRect rcDraw = rc - rcItem.TopLeft();
-
+        
         if (!item->DrawSubItem(subitem, &dcMem, rcDraw, pdis->itemState, nullptr, &focusLeft))
         {
             item->DrawSelection(this, &dcMem, rcDraw, pdis->itemState);
@@ -431,11 +415,13 @@ void COwnerDrawnListControl::DrawItem(LPDRAWITEMSTRUCT pdis)
             // Except if the item is selected - in this case just use standard colors
             if (pdis->itemState & ODS_SELECTED && (HasFocus() || IsShowSelectionAlways()) && IsFullRowSelection())
             {
+                backColor = GetItemSelectionBackgroundColor(pdis->itemID);
                 textColor = GetItemSelectionTextColor(pdis->itemID);
             }
 
             // Set the text color
             CSetTextColor tc(&dcMem, textColor);
+            CSetBkColor backColorSub(&dcMem, backColor);
 
             // Draw the (sub)item text
             dcMem.DrawText(s.c_str(), rcText, alignment | DT_SINGLELINE | DT_VCENTER | DT_WORD_ELLIPSIS | DT_NOPREFIX);
@@ -463,12 +449,6 @@ void COwnerDrawnListControl::DrawItem(LPDRAWITEMSTRUCT pdis)
 
     pdc->BitBlt(rcItem.left, rcItem.top,
         rcItem.Width(), rcItem.Height(), &dcMem, 0, 0, SRCCOPY);
-}
-
-void COwnerDrawnListControl::RedrawItem(const COwnerDrawnListItem* item) const
-{
-    const auto i = FindListItem(item);
-    ::PostMessage(m_hWnd, LVM_REDRAWITEMS, i, i);
 }
 
 CRect COwnerDrawnListControl::GetWholeSubitemRect(const int item, const int subitem) const
@@ -551,7 +531,7 @@ void COwnerDrawnListControl::OnCustomDraw(NMHDR* pNMHDR, LRESULT* pResult)
         return;
     }
 
-    // Process drawing for color mode swiched
+    // Handle custom text color for headers in dark mode
     NMCUSTOMDRAW* pCustomDraw = reinterpret_cast<NMCUSTOMDRAW*>(pNMHDR);
     if (pCustomDraw->dwDrawStage == CDDS_PREPAINT)
     {

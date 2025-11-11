@@ -96,7 +96,7 @@ protected:
 //
 // CPacmanControl. Pacman on the status bar.
 //
-class CPacmanControl final : public CStatic
+class CPacmanControl final : public CWnd
 {
 public:
     CPacmanControl() = default;
@@ -105,11 +105,13 @@ public:
     void Stop();
 
 protected:
-    CPacman m_Pacman;
+    CPacman m_Pacman{ DarkMode::WdsSysColor(
+        DarkMode::IsDarkModeActive() ? COLOR_WINDOW : COLOR_BTNFACE) };
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnPaint();
     afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
+    afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 };
 
 //

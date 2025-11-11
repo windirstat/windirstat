@@ -86,12 +86,9 @@ public:
     COLORREF GetNonFocusHighlightTextColor() const;
     COLORREF GetHighlightTextColor() const;
 
-    bool IsItem_stripeColor(int i) const;
-    bool IsItem_stripeColor(const COwnerDrawnListItem* item) const;
+    bool IsItemStripColor(int i) const;
     COLORREF GetItemBackgroundColor(int i) const;
-    COLORREF GetItemBackgroundColor(const COwnerDrawnListItem* item) const;
     COLORREF GetItemSelectionBackgroundColor(int i) const;
-    COLORREF GetItemSelectionBackgroundColor(const COwnerDrawnListItem* item) const;
     COLORREF GetItemSelectionTextColor(int i) const;
 
     COwnerDrawnListItem* GetItem(int i) const;
@@ -106,7 +103,6 @@ public:
 protected:
     void InitializeColors();
     void DrawItem(LPDRAWITEMSTRUCT pdis) override;
-    void RedrawItem(const COwnerDrawnListItem* item) const;
     int GetSubItemWidth(COwnerDrawnListItem* item, int subitem);
 
     COLORREF m_WindowColor = CLR_NONE; // The default background color if !m_ShowStripes

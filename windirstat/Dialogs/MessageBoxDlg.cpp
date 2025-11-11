@@ -182,7 +182,7 @@ BOOL CMessageBoxDlg::OnInitDialog()
     ScreenToClient(&rectMessage);
     CDC* pDC = m_MessageCtrl.GetDC();
     CRect rectText(0, 0, rectMessage.Width(), 0);
-    pDC->DrawText(m_Message.c_str(), &rectText, DT_CALCRECT | DT_WORDBREAK);
+    pDC->DrawText(m_Message.c_str(), &rectText, DT_CALCRECT | DT_WORDBREAK | DT_NOPREFIX);
     m_MessageCtrl.ReleaseDC(pDC);
 
     // Shift down if message height exceeds icon height
