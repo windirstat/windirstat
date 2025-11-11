@@ -78,7 +78,7 @@ private:
 
 //
 // CDriveInformationThread. Does the GetVolumeInformation() call, which
-// may hang for ca. 30 sec, it a network drive is not accessible.
+// may hang for ca. 30 sec, if a network drive is not accessible.
 //
 class CDriveInformationThread final : public CWinThread
 {

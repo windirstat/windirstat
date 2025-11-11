@@ -148,7 +148,7 @@ void DarkMode::AdjustControls(const HWND hWnd)
         const int length = GetClassName(hWnd, classNameBuffer.data(), static_cast<int>(classNameBuffer.size()));
         const std::wstring className(classNameBuffer.data(), length);
 
-        // Control whether is window is allowed for dark mode
+        // Control whether the window is allowed for dark mode
         AllowDarkModeForWindow(hWnd, _darkModeEnabled);
 
         // Set toplevel theme

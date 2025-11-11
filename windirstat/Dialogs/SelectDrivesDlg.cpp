@@ -102,7 +102,7 @@ void CDriveItem::SetDriveInformation(const bool success, const std::wstring & na
         m_FreeBytes  = free;
         m_Used       = 0.0;
 
-        // guard against cases where free bytes might be limited (.e.g, quotas)
+        // guard against cases where free bytes might be limited (e.g., quotas)
         if (m_TotalBytes > 0 && m_TotalBytes >= m_FreeBytes)
         {
             m_Used = static_cast<double>(m_TotalBytes - m_FreeBytes) / m_TotalBytes;
@@ -798,7 +798,7 @@ void CSelectDrivesDlg::SetActiveRadio(const int radio)
 
 void CSelectDrivesDlg::OnCbnSelchangeBrowseFolder()
 {
-    // Fet the current selection text and assess if valid for okay button
+    // Get the current selection text and assess if valid for okay button
     m_BrowseList.GetWindowText(m_FolderName);
     UpdateData(FALSE);
     UpdateButtons();

@@ -90,7 +90,7 @@ END_MESSAGE_MAP()
 
 BOOL COptionsPropertySheet::OnEraseBkgnd(CDC* pDC)
 {
-    if (!DarkMode::IsDarkModeActive() || !DarkMode::IsDarkModeActive())
+    if (!DarkMode::IsDarkModeActive())
     {
         return CMFCPropertySheet::OnEraseBkgnd(pDC);
     }
