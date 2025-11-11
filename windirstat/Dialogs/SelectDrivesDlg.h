@@ -183,4 +183,5 @@ protected:
     BOOL PreTranslateMessage(MSG* pMsg) override;
 public:
     afx_msg void OnEditchangeBrowseFolder();
+    afx_msg void OnCbnSelchangeBrowseFolder();
 };

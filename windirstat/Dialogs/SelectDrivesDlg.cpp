@@ -408,6 +408,7 @@ BEGIN_MESSAGE_MAP(CSelectDrivesDlg, CLayoutDialogEx)
     ON_WM_CTLCOLOR()
     ON_BN_CLICKED(IDC_BROWSE_BUTTON, &CSelectDrivesDlg::OnBnClickedBrowseButton)
     ON_CBN_EDITCHANGE(IDC_BROWSE_FOLDER, &CSelectDrivesDlg::OnEditchangeBrowseFolder)
+    ON_CBN_SELCHANGE(IDC_BROWSE_FOLDER, &CSelectDrivesDlg::OnCbnSelchangeBrowseFolder)
 END_MESSAGE_MAP()
 
 BOOL CSelectDrivesDlg::OnInitDialog()
@@ -461,7 +462,10 @@ BOOL CSelectDrivesDlg::OnInitDialog()
 
     // Select the first folder value from the list
     if (m_BrowseList.GetCount() > 0)
+    {
+        m_BrowseList.SetCurSel(0);
         m_FolderName = COptions::SelectDrivesFolder.Obj().front().c_str();
+    }
 
     CBitmap bitmap;
     bitmap.LoadBitmapW(IDB_FILE_SELECT);
@@ -780,6 +784,7 @@ void CSelectDrivesDlg::OnBnClickedBrowseButton()
 
 void CSelectDrivesDlg::OnEditchangeBrowseFolder()
 {
+    // Force assessing folder to make the okay button light up
     SetActiveRadio(IDC_RADIO_TARGET_FOLDER);
     UpdateButtons();
 }
@@ -787,4 +792,12 @@ void CSelectDrivesDlg::OnEditchangeBrowseFolder()
 void CSelectDrivesDlg::SetActiveRadio(const int radio)
 {
     CheckRadioButton(IDC_RADIO_TARGET_DRIVES_ALL, IDC_RADIO_TARGET_FOLDER, radio);
+}
+
+void CSelectDrivesDlg::OnCbnSelchangeBrowseFolder()
+{
+    // Fet the current selection text and assess if valid for okay button
+    m_BrowseList.GetWindowText(m_FolderName);
+    UpdateData(FALSE);
+    UpdateButtons();
 }
