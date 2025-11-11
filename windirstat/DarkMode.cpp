@@ -105,6 +105,9 @@ void DarkMode::SetAppDarkMode() noexcept
     DarkModeColors[COLOR_WINDOW] = RGB(32, 32, 32);
     DarkModeColors[COLOR_WINDOWFRAME] = RGB(50, 50, 50);
     DarkModeColors[COLOR_WINDOWTEXT] = RGB(220, 220, 220);
+
+    // Update colors
+    SetupGlobalColors();
 }
 
 void DarkMode::SetupGlobalColors() noexcept

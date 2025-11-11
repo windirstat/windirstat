@@ -1282,7 +1282,6 @@ void CMainFrame::OnConfigure()
 
 void CMainFrame::OnSysColorChange()
 {
-    DarkMode::SetAppDarkMode();
     CFrameWndEx::OnSysColorChange();
     GetFileTreeView()->SysColorChanged();
     GetExtensionView()->SysColorChanged();
@@ -1292,6 +1291,7 @@ void CMainFrame::OnSysColorChange()
     m_SubSplitter.Invalidate();
 
     // Redraw menus for dark mode
+    DarkMode::SetAppDarkMode();
     DrawMenuBar();
 }
 
