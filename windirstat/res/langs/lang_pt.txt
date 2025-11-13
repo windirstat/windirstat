@@ -127,7 +127,6 @@ IDS_MENU_TOOL_BAR=Exibir Barra de Ferramen&tas\tF10
 IDS_MENU_TREEMAP=&Mapa de Árvore
 IDS_MENU_ZOOMIN=Aumentar &Zoom\t+
 IDS_MENU_ZOOMOUT=Reduzir Zoo&m\t-
-
 IDS_NOTACCESSIBLE=(unavailable)
 IDS_ONEITEMs= (1 Item, {})
 IDS_ONEREADJOB=[1 Trabalho de Leitura]
