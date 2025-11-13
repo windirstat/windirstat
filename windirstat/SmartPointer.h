@@ -21,6 +21,7 @@
 #pragma once
 
 #include <functional>
+#include <memory>
 
 //
 // SmartPointer<>. Custom template for WinApi cleanup.
@@ -52,6 +53,19 @@ public:
         src.m_Data = nullptr;
     }
 
+    SmartPointer& operator=(SmartPointer&& src) noexcept
+    {
+        if (std::addressof(*this) != std::addressof(src))
+        {
+            this->~SmartPointer();
+            m_Cleanup = src.m_Cleanup;
+            m_Data = src.m_Data;
+            src.m_Data = nullptr;
+        }
+
+        return *this;
+    }
+
     void Release() noexcept
     {
         m_Data = nullptr;
@@ -79,10 +93,7 @@ public:
 
     T operator=(T lp)
     {
-        if (m_Data != nullptr)
-        {
-            m_Cleanup(m_Data);
-        }
+        this->~SmartPointer();
         m_Data = lp;
         return m_Data;
     }

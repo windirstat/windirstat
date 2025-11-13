@@ -119,6 +119,9 @@ protected:
     {
     }
 
+    // PreTranslateMessage to handle Ctrl+C for CStatic controls
+    BOOL PreTranslateMessage(MSG* pMsg) override;
+
     // Message handlers
     DECLARE_MESSAGE_MAP()
     afx_msg void OnSize(UINT nType, int cx, int cy);

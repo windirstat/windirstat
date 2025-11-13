@@ -33,6 +33,7 @@
 #include "FinderNtfs.h"
 #include "SearchDlg.h"
 #include "MessageBoxDlg.h"
+#include "ProgressDlg.h"
 
 #include <functional>
 #include <unordered_map>
@@ -884,6 +885,7 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
         // ID                           none   many   early  focus        types
         { ID_CLEANUP_DELETE,          { false, true,  false, LF_NONE,     IT_DIRECTORY | IT_FILE, notRoot } },
         { ID_CLEANUP_DELETE_BIN,      { false, true,  false, LF_NONE,     IT_DIRECTORY | IT_FILE, notRoot } },
+        { ID_COMPUTE_HASH,            { false, false, false, LF_NONE,     IT_FILE } },
         { ID_CLEANUP_DISK_CLEANUP  ,  { true,  true,  false, LF_NONE,     IT_ANY } },
         { ID_CLEANUP_DISM_NORMAL,     { true,  true,  false, LF_NONE,     IT_ANY } },
         { ID_CLEANUP_DISM_RESET,      { true,  true,  false, LF_NONE,     IT_ANY } },
@@ -996,6 +998,7 @@ BEGIN_MESSAGE_MAP(CDirStatDoc, CDocument)
     ON_COMMAND_UPDATE_WRAPPER(ID_TREEMAP_RESELECT_CHILD, OnTreeMapReselectChild)
     ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_OPEN_SELECTED, OnCleanupOpenTarget)
     ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_PROPERTIES, OnCleanupProperties)
+    ON_COMMAND_UPDATE_WRAPPER(ID_COMPUTE_HASH, OnComputeHash)
     ON_UPDATE_COMMAND_UI_RANGE(ID_COMPRESS_NONE, ID_COMPRESS_LZX, OnUpdateCompressionHandler)
     ON_COMMAND_RANGE(ID_COMPRESS_NONE, ID_COMPRESS_LZX, OnCleanupCompress)
     ON_COMMAND_UPDATE_WRAPPER(ID_SCAN_RESUME, OnScanResume)
@@ -1425,7 +1428,19 @@ void CDirStatDoc::OnCleanupProperties()
     }
 }
 
-CompressionAlgorithm CDirStatDoc::CompressionIdToAlg(UINT id)
+void CDirStatDoc::OnComputeHash()
+{
+    // Compute the hash in the message thread
+    const auto& items = GetAllSelected();
+    const std::wstring hashResult = ComputeFileHashes(items.front()->GetPath());
+
+    // Display result in message box
+    CMessageBoxDlg dlg(hashResult, Localization::Lookup(IDS_APP_TITLE), MB_OK | MB_ICONINFORMATION);
+    dlg.SetInitialWindowSize(CSize(950, 200));
+    dlg.DoModal();
+}
+
+CompressionAlgorithm CDirStatDoc::CompressionIdToAlg(const UINT id)
 {
     const std::unordered_map<UINT, CompressionAlgorithm> compressionMap =
     {
@@ -1443,7 +1458,6 @@ CompressionAlgorithm CDirStatDoc::CompressionIdToAlg(UINT id)
 void CDirStatDoc::OnCleanupCompress(UINT id)
 {
     CWaitCursor wc;
-
     const auto& itemsSelected = GetAllSelected();
     std::vector<const CItem*> itemsToCompress;
     std::stack<const CItem*> childStack;
@@ -1466,12 +1480,22 @@ void CDirStatDoc::OnCleanupCompress(UINT id)
         }
     }
 
-    for (const auto& item : itemsToCompress)
+    // Show progress dialog and compress files
+    const auto alg = CompressionIdToAlg(id);
+    CProgressDlg progressDlg([&](const std::atomic<bool>& cancel,
+        std::atomic<size_t>& current, std::atomic<size_t>& total)
     {
-        const auto alg = (CompressionIdToAlg(id));
-        CompressFile(item->GetPathLong(), alg);
-    }
+        total = itemsToCompress.size();
+        for (size_t i = 0; i < itemsToCompress.size() && !cancel; ++i)
+        {
+            current = i + 1;
+            CompressFile(itemsToCompress[i]->GetPathLong(), alg);
+        }
+    }, AfxGetMainWnd());
 
+    progressDlg.DoModal();
+
+    // Refresh items after compression
     RefreshItem(itemsSelected);
 }
 
@@ -1744,7 +1768,7 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
             CMainFrame::Get()->RestoreExtensionView();
             CMainFrame::Get()->RestoreTreeMapView();
             CMainFrame::Get()->GetTreeMapView()->SuspendRecalculationDrawing(false);
-            CMainFrame::Get()-> UnlockWindowUpdate();
+            CMainFrame::Get()->UnlockWindowUpdate();
 
             // Restore pre-scan visual orientation
             for (const auto& item : visualInfo | std::views::keys)

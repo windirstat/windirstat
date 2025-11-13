@@ -25,6 +25,7 @@
 
 #include <array>
 #include <algorithm>
+#include <execution>
 #include <regex>
 #include <map>
 
@@ -649,7 +650,7 @@ std::vector<BYTE> GetCompressedResource(const HRSRC resource)
     if (binaryData == nullptr) return {};
 
     // Decompress data
-    size_t resourceSize = SizeofResource(nullptr, resource);
+    const size_t resourceSize = SizeofResource(nullptr, resource);
     std::vector<BYTE> decompressedData(resourceSize * 4u);
     ULONG finalDecompressedSize = 0;
     if (RtlDecompressBuffer(COMPRESSION_FORMAT_LZNT1, decompressedData.data(), static_cast<LONG>(decompressedData.size()),
@@ -854,7 +855,7 @@ IContextMenu* GetContextMenu(const HWND hwnd, const std::vector<std::wstring>& p
     // create list of children from paths
     for (auto& path : paths)
     {
-        LPCITEMIDLIST pidl = ILCreateFromPath(path.c_str());
+        const LPCITEMIDLIST pidl = ILCreateFromPath(path.c_str());
         if (pidl == nullptr) return nullptr;
         pidlsForCleanup.emplace_back(CoTaskMemFree, const_cast<LPITEMIDLIST>(pidl));
 
@@ -939,7 +940,7 @@ bool CompressFileAllowed(const std::wstring& filePath, const CompressionAlgorith
 {
     static std::unordered_map<std::wstring, bool> compressionStandard;
     static std::unordered_map<std::wstring, bool> compressionModern;
-    auto& compressionMap = (algorithm == CompressionAlgorithm::LZNT1) ?
+    const auto& compressionMap = (algorithm == CompressionAlgorithm::LZNT1) ?
         compressionStandard : compressionModern;
 
     // Fetch volume root path
@@ -1010,4 +1011,94 @@ std::wstring PromptForFolder(const HWND hwnd, const std::wstring& initialFolder)
     }
 
     return *pszPath;
+}
+
+std::wstring ComputeFileHashes(const std::wstring& filePath)
+{
+    // Open file with smart pointer
+    CWaitCursor wc;
+    SmartPointer<HANDLE> hFile(CloseHandle, CreateFileW(filePath.c_str(), GENERIC_READ, FILE_SHARE_READ,
+        nullptr, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, nullptr));
+    if (hFile == INVALID_HANDLE_VALUE) return {};
+
+    // Initialize all hash contexts
+    struct HashContext {
+        LPCWSTR name;
+        SmartPointer<BCRYPT_ALG_HANDLE> hAlg = { nullptr, nullptr };
+        SmartPointer<BCRYPT_HASH_HANDLE> hHash = { nullptr, nullptr };
+        std::vector<BYTE> hashObject;
+        std::vector<BYTE> hash;
+        DWORD objectLen = 0;
+    };
+
+    // Define algorithms to compute
+    using AlgSet = struct { LPCWSTR id; DWORD hashLen; LPCWSTR name; };
+    constexpr std::array algos = {
+        AlgSet{BCRYPT_MD5_ALGORITHM, 16, L"MD5"},
+        AlgSet{BCRYPT_SHA1_ALGORITHM, 20, L"SHA1"},
+        AlgSet{BCRYPT_SHA256_ALGORITHM, 32, L"SHA256"},
+        AlgSet{BCRYPT_SHA384_ALGORITHM, 48, L"SHA384"},
+        AlgSet{BCRYPT_SHA512_ALGORITHM, 64, L"SHA512"}
+    };
+
+    // Setup all algorithms
+    std::vector<HashContext> contexts;
+    for (const auto& algo : algos)
+    {
+        HashContext ctx;
+        BCRYPT_ALG_HANDLE hAlg = nullptr;
+        if (BCryptOpenAlgorithmProvider(&hAlg, algo.id, nullptr, 0) != 0) continue;
+        ctx.hAlg = SmartPointer<BCRYPT_ALG_HANDLE>(
+            [](const BCRYPT_ALG_HANDLE h) { BCryptCloseAlgorithmProvider(h, 0); }, hAlg);
+
+        BCryptGetProperty(ctx.hAlg, BCRYPT_OBJECT_LENGTH,
+            reinterpret_cast<PBYTE>(&ctx.objectLen), sizeof(DWORD), nullptr, 0);
+
+        ctx.name = algo.name;
+        ctx.hashObject.resize(ctx.objectLen);
+        ctx.hash.resize(algo.hashLen);
+
+        BCRYPT_HASH_HANDLE hHash = nullptr;
+        if (BCryptCreateHash(ctx.hAlg, &hHash, ctx.hashObject.data(),
+            ctx.objectLen, nullptr, 0, 0) != 0) continue;
+
+        ctx.hHash = SmartPointer<BCRYPT_HASH_HANDLE>(
+            [](const BCRYPT_HASH_HANDLE h) { BCryptDestroyHash(h); }, hHash);
+
+        contexts.emplace_back(std::move(ctx));
+    }
+
+    // Read file and update all hashes
+    constexpr size_t BUFFER_SIZE = 1024 * 1024; // 1MB chunks
+    std::vector<BYTE> buffer(BUFFER_SIZE);
+    DWORD bytesRead;
+
+    // Update all valid hashes with the same buffer in parallel
+    while (ReadFile(hFile, buffer.data(), BUFFER_SIZE, &bytesRead, nullptr) && bytesRead > 0)
+    {
+        std::for_each(std::execution::par, contexts.begin(), contexts.end(),
+            [&buffer, bytesRead](auto & ctx) {
+                BCryptHashData(ctx.hHash, buffer.data(), bytesRead, 0);
+            });
+    }
+
+    // Finalize all hashes and convert to hex strings
+    std::wstring result;
+    for (auto & ctx : contexts)
+    {
+        if (BCryptFinishHash(ctx.hHash, ctx.hash.data(),
+            static_cast<ULONG>(ctx.hash.size()), 0) != 0) continue;
+
+        // Convert to hex
+        std::wstring hashHex;
+        for (uint8_t byte : ctx.hash)
+        {
+            std::format_to(std::back_inserter(hashHex), "{:02X}", byte);
+        }
+
+        // Add to result
+        result += std::format(L"{}: {}\n", ctx.name, hashHex);
+    }
+
+    return result;
 }

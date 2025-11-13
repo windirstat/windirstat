@@ -103,6 +103,7 @@ std::wstring GetAppFileName(const std::wstring& ext = L"");
 std::wstring GetAppFolder();
 std::wstring GetNameFromSid(PSID sid);
 std::wstring PromptForFolder(HWND hwnd = nullptr, const std::wstring& initialFolder = {});
+std::wstring ComputeFileHashes(const std::wstring& filePath);
 
 using CSmallRect = struct CSmallRect
 {

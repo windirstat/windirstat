@@ -302,6 +302,9 @@
     <ClInclude Include="DarkMode.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Dialogs\ProgressDlg.h">
+      <Filter>Header Files\Dialogs</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirStatDoc.cpp">
@@ -446,6 +449,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Dialogs\MessageBoxDlg.cpp">
+      <Filter>Source Files\Dialogs</Filter>
+    </ClCompile>
+    <ClCompile Include="Dialogs\ProgressDlg.cpp">
       <Filter>Source Files\Dialogs</Filter>
     </ClCompile>
   </ItemGroup>
