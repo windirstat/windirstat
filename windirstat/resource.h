@@ -151,6 +151,9 @@
 #define IDC_BROWSE_BUTTON               1109
 #define IDC_PROGRESS_MESSAGE            1110
 #define IDC_PROGRESS_BAR                1111
+#define IDC_SHOW_FASTSCAN_PROMPT        1112
+#define IDC_SHOW_ELEVATION_PROMPT       1113
+#define IDC_START_ELEVATED              1114
 #define ID_WDS_CONTROL                  4711
 #define ID_CLEANUP_EXPLORER_SELECT      32768
 #define ID_TREEMAP_ZOOMIN               32769
@@ -232,7 +235,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        305
 #define _APS_NEXT_COMMAND_VALUE         32835
-#define _APS_NEXT_CONTROL_VALUE         1111
+#define _APS_NEXT_CONTROL_VALUE         1115
 #define _APS_NEXT_SYMED_VALUE           109
 #endif
 #endif

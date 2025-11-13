@@ -48,6 +48,9 @@ protected:
     BOOL m_ListStripes = FALSE;
     BOOL m_ShowDeletionWarning = FALSE;
     BOOL m_ListFullRowSelection = FALSE;
+    BOOL m_ShowFastScanPrompt = FALSE;
+    BOOL m_ShowElevationPrompt = FALSE;
+    BOOL m_StartElevated = FALSE;
 
     CComboBox m_Combo;
     int m_DarkModeRadio = 0;

@@ -51,6 +51,9 @@ void CPageGeneral::DoDataExchange(CDataExchange* pDX)
     DDX_Check(pDX, IDC_USE_WINDOWS_LOCALE, m_UseWindowsLocale);
     DDX_Control(pDX, IDC_COMBO, m_Combo);
     DDX_Radio(pDX, IDC_DARK_MODE_DISABLED, m_DarkModeRadio);
+    DDX_Check(pDX, IDC_SHOW_FASTSCAN_PROMPT, m_ShowFastScanPrompt);
+    DDX_Check(pDX, IDC_SHOW_ELEVATION_PROMPT, m_ShowElevationPrompt);
+    DDX_Check(pDX, IDC_START_ELEVATED, m_StartElevated);
 }
 
 BEGIN_MESSAGE_MAP(CPageGeneral, CMFCPropertyPage)
@@ -67,6 +70,9 @@ BEGIN_MESSAGE_MAP(CPageGeneral, CMFCPropertyPage)
     ON_BN_CLICKED(IDC_DARK_MODE_USE_WINDOWS, OnBnClickedSetModified)
     ON_CBN_SELENDOK(IDC_COMBO, OnBnClickedSetModified)
     ON_WM_CTLCOLOR()
+    ON_BN_CLICKED(IDC_SHOW_FASTSCAN_PROMPT, OnBnClickedSetModified)
+    ON_BN_CLICKED(IDC_SHOW_ELEVATION_PROMPT, OnBnClickedSetModified)
+    ON_BN_CLICKED(IDC_START_ELEVATED, OnBnClickedSetModified)
 END_MESSAGE_MAP()
 
 HBRUSH CPageGeneral::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
@@ -91,6 +97,9 @@ BOOL CPageGeneral::OnInitDialog()
     m_UseWindowsLocale = COptions::UseWindowsLocaleSetting;
     m_PortableMode = CDirStatApp::InPortableMode();
     m_DarkModeRadio = COptions::DarkMode;
+    m_ShowFastScanPrompt = COptions::ShowFastScanPrompt;
+    m_ShowElevationPrompt = COptions::ShowElevationPrompt;
+    m_StartElevated = COptions::ElevateOnDemand;
 
     for (const auto& language : Localization::GetLanguageList())
     {
@@ -124,6 +133,9 @@ void CPageGeneral::OnOK()
     COptions::ShowDeleteWarning = (FALSE != m_ShowDeletionWarning);
     COptions::ListFullRowSelection = (FALSE != m_ListFullRowSelection);
     COptions::DarkMode = m_DarkModeRadio;
+    COptions::ShowFastScanPrompt = (FALSE != m_ShowFastScanPrompt);
+    COptions::ShowElevationPrompt = (FALSE != m_ShowElevationPrompt);
+    COptions::ElevateOnDemand = (FALSE != m_StartElevated);
 
     if (!CDirStatApp::Get()->SetPortableMode(m_PortableMode))
     {
@@ -156,6 +168,7 @@ void CPageGeneral::OnBnClickedSetModified()
 {
     UpdateData(TRUE);
 
+    GetDlgItem(IDC_START_ELEVATED)->EnableWindow(!m_ShowElevationPrompt);
     // Assess for restart required
     const LANGID id = static_cast<LANGID>(m_Combo.GetItemData(m_Combo.GetCurSel()));
     const bool languagedChanged = id != static_cast<LANGID>(COptions::LanguageId);
