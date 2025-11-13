@@ -1061,7 +1061,7 @@ void CMainFrame::UpdateDynamicMenuItems(CMenu* menu) const
     for (auto& item : items) paths.push_back(item->GetPath());
 
     // locate submenu and merge explorer items
-    auto [explorerMenu, explorerMenuPos] = LocateNamedMenu(menu, Localization::Lookup(IDS_POPUP_TREE_EXPLORER_MENU));
+    auto [explorerMenu, explorerMenuPos] = LocateNamedMenu(menu, Localization::Lookup(IDS_MENU_EXPLORER_MENU));
     if (explorerMenu != nullptr && !paths.empty())
     {
         CComPtr contextMenu = GetContextMenu(Get()->GetSafeHwnd(), paths);
