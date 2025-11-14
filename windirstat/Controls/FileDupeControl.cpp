@@ -23,6 +23,7 @@
 #include "MainFrame.h"
 #include "FileDupeView.h"
 #include "Localization.h"
+#include "MessageBoxDlg.h"
 
 #include <execution>
 #include <unordered_map>
@@ -55,8 +56,9 @@ void CFileDupeControl::ProcessDuplicate(CItem * item, BlockingQueue<CItem*>* que
     if (COptions::SkipDupeDetectionCloudLinks && item->IsReparseType(ITF_CLOUDLINK))
     {
         std::unique_lock lock(m_HashTrackerMutex);
-        if (m_ShowCloudWarningOnThisScan &&
-            AfxMessageBox(Localization::Lookup(IDS_DUPLICATES_WARNING).c_str(), MB_YESNO) == IDNO)
+        CMessageBoxDlg dlg(Localization::Lookup(IDS_DUPLICATES_WARNING), Localization::Lookup(IDS_APP_TITLE),
+            MB_OK | MB_ICONINFORMATION, this, {}, Localization::Lookup(IDS_DONT_SHOW_AGAIN), false);
+        if (m_ShowCloudWarningOnThisScan && dlg.DoModal() == IDOK && dlg.IsCheckboxChecked())
         {
             COptions::SkipDupeDetectionCloudLinksWarning = false;
         }
