@@ -89,7 +89,7 @@ void CFileSearchControl::ProcessSearch(CItem* item)
     {
         // Do search
         std::stack<CItem*> queue({ item });
-        total = item->GetItemsCount();
+        total = static_cast<size_t>(item->GetItemsCount());
         while (!queue.empty() && !cancel)
         {
             // Grab item from queue
