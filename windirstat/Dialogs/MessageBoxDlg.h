@@ -60,15 +60,15 @@ protected:
 
 private:
 
-    using ButtonContext = struct
+    using ButtonContext = struct ButtonContext
     {
-        BYTE btnLeftID;
-        BYTE btnMidID;
-        BYTE btnRightID;
+        BYTE btnLeftID = 0;
+        BYTE btnMidID = 0;
+        BYTE btnRightID = 0;
         std::wstring_view btnLeftIDS;
         std::wstring_view btnMidIDS;
         std::wstring_view btnRightIDS;
-        CButton * btnFocus;
+        CButton * btnFocus = nullptr;
     };
 
     std::wstring m_Message;

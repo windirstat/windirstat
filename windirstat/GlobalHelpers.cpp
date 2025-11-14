@@ -867,7 +867,7 @@ IContextMenu* GetContextMenu(const HWND hwnd, const std::vector<std::wstring>& p
         // on last item, return the context menu
         if (pidlsRelatives.size() == paths.size())
         {
-            IContextMenu* pContextMenu;
+            IContextMenu* pContextMenu = nullptr;
             if (FAILED(pParentFolder->GetUIObjectOf(hwnd, static_cast<UINT>(pidlsRelatives.size()),
                 pidlsRelatives.data(), IID_IContextMenu, nullptr, reinterpret_cast<LPVOID*>(&pContextMenu)))) return nullptr;
             return pContextMenu;
@@ -1023,7 +1023,7 @@ std::wstring ComputeFileHashes(const std::wstring& filePath)
 
     // Initialize all hash contexts
     struct HashContext {
-        LPCWSTR name;
+        LPCWSTR name = nullptr;
         SmartPointer<BCRYPT_ALG_HANDLE> hAlg = { nullptr, nullptr };
         SmartPointer<BCRYPT_HASH_HANDLE> hHash = { nullptr, nullptr };
         std::vector<BYTE> hashObject;
@@ -1051,8 +1051,11 @@ std::wstring ComputeFileHashes(const std::wstring& filePath)
         ctx.hAlg = SmartPointer<BCRYPT_ALG_HANDLE>(
             [](const BCRYPT_ALG_HANDLE h) { BCryptCloseAlgorithmProvider(h, 0); }, hAlg);
 
-        BCryptGetProperty(ctx.hAlg, BCRYPT_OBJECT_LENGTH,
-            reinterpret_cast<PBYTE>(&ctx.objectLen), sizeof(DWORD), nullptr, 0);
+        if (BCryptGetProperty(ctx.hAlg, BCRYPT_OBJECT_LENGTH, reinterpret_cast<PBYTE>(&ctx.objectLen),
+            sizeof(DWORD), nullptr, 0) == ERROR_SUCCESS)
+        {
+            continue;
+        }
 
         ctx.name = algo.name;
         ctx.hashObject.resize(ctx.objectLen);
@@ -1078,7 +1081,7 @@ std::wstring ComputeFileHashes(const std::wstring& filePath)
     {
         std::for_each(std::execution::par, contexts.begin(), contexts.end(),
             [&buffer, bytesRead](auto & ctx) {
-                BCryptHashData(ctx.hHash, buffer.data(), bytesRead, 0);
+                (void) BCryptHashData(ctx.hHash, buffer.data(), bytesRead, 0);
             });
     }
 

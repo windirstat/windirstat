@@ -337,7 +337,7 @@ void DarkMode::LightenBitmap(CBitmap* pBitmap, const bool invert)
     memDC.CreateCompatibleDC(nullptr);
     memDC.SelectObject(pBitmap);
     BITMAPINFO bmi = { {sizeof(BITMAPINFOHEADER), bm.bmWidth, -bm.bmHeight, 1, 32, BI_RGB} };
-    const auto pixels = std::make_unique<BYTE[]>(bm.bmWidth * bm.bmHeight * 4);
+    const auto pixels = std::make_unique_for_overwrite<BYTE[]>(bm.bmWidth * bm.bmHeight * 4);
     if (!GetDIBits(memDC, *pBitmap, 0, bm.bmHeight, pixels.get(), &bmi, DIB_RGB_COLORS)) return;
 
     if (invert)

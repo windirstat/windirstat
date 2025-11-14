@@ -175,8 +175,8 @@ BOOL CDirStatDoc::OnOpenDocument(LPCWSTR lpszPathName)
         SmartPointer<LPWSTR> ppszName(CoTaskMemFree);
         CComPtr<IShellItem> psi;
         if (FAILED(SHGetKnownFolderIDList(FOLDERID_ComputerFolder, 0, nullptr, &pidl)) ||
-            FAILED(SHCreateItemFromIDList(pidl, IID_PPV_ARGS(&psi)) ||
-            FAILED(psi->GetDisplayName(SIGDN_NORMALDISPLAY, &ppszName))))
+            SHCreateItemFromIDList(pidl, IID_PPV_ARGS(&psi)) != S_OK ||
+            FAILED(psi->GetDisplayName(SIGDN_NORMALDISPLAY, &ppszName)))
         {
             ASSERT(FALSE);
         }
@@ -361,7 +361,7 @@ void CDirStatDoc::SetHighlightExtension(const std::wstring & ext)
     CMainFrame::Get()->UpdatePaneText();
 }
 
-std::wstring CDirStatDoc::GetHighlightExtension()
+std::wstring CDirStatDoc::GetHighlightExtension() const
 {
     return m_HighlightExtension;
 }
@@ -537,7 +537,7 @@ void CDirStatDoc::RebuildExtensionData()
 // Deletes a file or directory via SHFileOperation.
 // Return: false, if canceled
 //
-bool CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, const bool toTrashBin, const bool bypassWarning, const bool doRefresh)
+bool CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, const bool toTrashBin, const bool bypassWarning, const bool doRefresh) const
 {
     if (!bypassWarning && COptions::ShowDeleteWarning)
     {

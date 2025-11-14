@@ -129,7 +129,8 @@ void Localization::UpdateMenu(CMenu& menu)
             mi.dwTypeData = const_cast<LPWSTR>(m_Map[mi.dwTypeData].c_str());
             menu.SetMenuItemInfoW(i, &mi, TRUE);
         }
-        if (IsMenu(mi.hSubMenu)) UpdateMenu(*menu.GetSubMenu(i));
+        if (mi.hSubMenu != nullptr && IsMenu(mi.hSubMenu))
+            UpdateMenu(*menu.GetSubMenu(i));
     }
 }
 

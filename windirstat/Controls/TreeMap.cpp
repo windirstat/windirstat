@@ -239,13 +239,13 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, Item* root, const Options* option
             static_cast<std::vector<COLORREF>::size_type>(rc.Height()));
         DrawSolidRect(bitmapBits, CRect(CPoint(), rc.Size()), m_Options.gridColor, PALETTE_BRIGHTNESS);
 
-        using DrawState = struct
+        using DrawState = struct DrawState
         {
-            std::array<double, 4> surface;
-            CRect rc;
-            Item* item;
-            double h;
-            bool asroot;
+            std::array<double, 4> surface{};
+            CRect rc{};
+            Item* item = nullptr;
+            double h = 0.0;
+            bool asroot = false;
         };
 
         // Initialize the stack with the root item

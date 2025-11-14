@@ -165,7 +165,7 @@ HICON CIconHandler::FetchShellIcon(const std::wstring & path, UINT flags, const 
     std::lock_guard lock(m_CachedIconMutex);
     if (m_CachedIcons.contains(sfi.iIcon))
     {
-        DestroyIcon(sfi.hIcon);
+        if (sfi.hIcon != nullptr) DestroyIcon(sfi.hIcon);
         return m_CachedIcons[sfi.iIcon];
     }
 
