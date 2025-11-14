@@ -21,6 +21,7 @@
 #include "MainFrame.h"
 #include "FileSearchControl.h"
 #include "Localization.h"
+#include "ProgressDlg.h"
 
 #include <ranges>
 
@@ -82,33 +83,41 @@ void CFileSearchControl::ProcessSearch(CItem* item)
         [](const std::wstring& str, const std::wregex& regex) { return std::regex_match(str, regex); } :
         [](const std::wstring& str, const std::wregex& regex) { return std::regex_search(str, regex); };
 
-    // Do search
-    CWaitCursor waitCursor;
-    SetRedraw(FALSE);
-    std::stack<CItem*> queue({ item });
-    while (!queue.empty())
+    // Process search request using progress dialog
+    CProgressDlg progressDlg([&](const std::atomic<bool>& cancel,
+        std::atomic<size_t>& current, std::atomic<size_t>& total)
     {
-        // Grab item from queue
-        CItem* qitem = queue.top();
-        queue.pop();
-
-        if (searchFunc(qitem->GetName(), searchRegex))
+        // Do search
+        std::stack<CItem*> queue({ item });
+        total = item->GetItemsCount();
+        while (!queue.empty() && !cancel)
         {
-            CItemSearch* searchItem = new CItemSearch(qitem);
-            CDirStatDoc::GetDocument()->GetRootItemSearch()->AddSearchItemChild(searchItem);
-            m_ItemTracker.emplace(qitem, searchItem);
-        }
+            // Grab item from queue
+            ++current;
+            CItem* qitem = queue.top();
+            queue.pop();
 
-        // Descend into childitems
-        if (qitem->IsLeaf()) continue;
-        for (const auto& child : qitem->GetChildren())
-        {
-            queue.push(child);
+            if (searchFunc(qitem->GetName(), searchRegex))
+            {
+                CItemSearch* searchItem = new CItemSearch(qitem);
+                CMainFrame::Get()->InvokeInMessageThread([this, searchItem]
+                {
+                    CDirStatDoc::GetDocument()->GetRootItemSearch()->AddSearchItemChild(searchItem);
+                });
+                m_ItemTracker.emplace(qitem, searchItem);
+            }
+
+            // Descend into childitems
+            if (qitem->IsLeaf()) continue;
+            for (const auto& child : qitem->GetChildren())
+            {
+                queue.push(child);
+            }
         }
-    }
+    });
 
     // Reenable drawing
-    SetRedraw(TRUE);
+    progressDlg.DoModal();
     SortItems();
 }
 

@@ -19,6 +19,7 @@
 #include "ProgressDlg.h"
 #include "DarkMode.h"
 #include "Localization.h"
+#include "GlobalHelpers.h"
 
 #include <format>
 
@@ -132,10 +133,14 @@ void CProgressDlg::OnCancel()
     // Wait for worker thread to complete
     if (m_WorkerThread != nullptr)
     {
-        if (m_WorkerThread->joinable())
+        ProcessMessagesUntilSignaled([this]
         {
-            m_WorkerThread->join();
-        }
+            if (m_WorkerThread->joinable())
+            {
+                m_WorkerThread->join();
+            }
+        });
+
         delete m_WorkerThread;
         m_WorkerThread = nullptr;
     }
