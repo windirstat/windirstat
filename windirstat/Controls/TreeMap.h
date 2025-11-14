@@ -27,17 +27,79 @@ class CColorSpace final
 {
 public:
     // Returns the brightness of color. Brightness is a value between 0 and 1.0.
-    static double GetColorBrightness(COLORREF color);
+    static constexpr double GetColorBrightness(COLORREF color)
+    {
+        const unsigned int crIndividualIntensitySum = GetRValue(color) + GetGValue(color) + GetBValue(color);
+        return crIndividualIntensitySum / 255.0 / 3.0;
+    }
 
     // Gives a color a defined brightness.
-    static COLORREF MakeBrightColor(COLORREF color, double brightness);
+    static constexpr COLORREF MakeBrightColor(COLORREF color, double brightness)
+    {
+        ASSERT(brightness >= 0.0);
+        ASSERT(brightness <= 1.0);
+
+        double dred = (GetRValue(color) & 0xFF) / 255.0;
+        double dgreen = (GetGValue(color) & 0xFF) / 255.0;
+        double dblue = (GetBValue(color) & 0xFF) / 255.0;
+
+        const double f = 3.0 * brightness / (dred + dgreen + dblue);
+        dred *= f;
+        dgreen *= f;
+        dblue *= f;
+
+        int red = static_cast<int>(dred * 255);
+        int green = static_cast<int>(dgreen * 255);
+        int blue = static_cast<int>(dblue * 255);
+
+        NormalizeColor(red, green, blue);
+
+        return RGB(red, green, blue);
+    }
 
     // Swaps values above 255 to the other two values
-    static void NormalizeColor(int& red, int& green, int& blue);
+    static constexpr void NormalizeColor(int& red, int& green, int& blue)
+    {
+        ASSERT(red + green + blue <= 3 * 255);
+
+        if (red > 255)
+        {
+            DistributeFirst(red, green, blue);
+        }
+        else if (green > 255)
+        {
+            DistributeFirst(green, red, blue);
+        }
+        else if (blue > 255)
+        {
+            DistributeFirst(blue, red, green);
+        }
+    }
 
 protected:
     // Helper function for NormalizeColor()
-    static void DistributeFirst(int& first, int& second, int& third);
+    static constexpr void DistributeFirst(int& first, int& second, int& third)
+    {
+        const int h = (first - 255) / 2;
+        first = 255;
+        second += h;
+        third += h;
+
+        if (second > 255)
+        {
+            const int j = second - 255;
+            second = 255;
+            third += j;
+            ASSERT(third <= 255);
+        }
+        else if (third > 255)
+        {
+            const int j = third - 255;
+            third = 255;
+            second += j;
+            ASSERT(second <= 255);
+        }
+    }
 };
 
 //

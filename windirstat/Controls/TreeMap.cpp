@@ -31,85 +31,13 @@ static constexpr COLORREF BGR(auto b, auto g, auto r)
     return static_cast<BYTE>(b) | static_cast<BYTE>(g) << 8 | static_cast<BYTE>(r) << 16;
 }
 
-// I define the "brightness" of an rgb value as (r+b+g)/3/255.
+// Define the "brightness" of an rgb value as (r+b+g)/3/255.
 // The EqualizeColors() method creates a palette with colors
 // all having the same brightness of 0.6
 // Later in RenderCushion() this number is used again to
 // scale the colors.
 
 static constexpr double PALETTE_BRIGHTNESS = 0.6;
-
-/////////////////////////////////////////////////////////////////////////////
-
-double CColorSpace::GetColorBrightness(const COLORREF color)
-{
-    const unsigned int crIndividualIntensitySum = GetRValue(color) + GetGValue(color) + GetBValue(color);
-    return crIndividualIntensitySum / 255.0 / 3.0;
-}
-
-COLORREF CColorSpace::MakeBrightColor(const COLORREF color, const double brightness)
-{
-    ASSERT(brightness >= 0.0);
-    ASSERT(brightness <= 1.0);
-
-    double dred = (GetRValue(color) & 0xFF) / 255.0;
-    double dgreen = (GetGValue(color) & 0xFF) / 255.0;
-    double dblue = (GetBValue(color) & 0xFF) / 255.0;
-
-    const double f = 3.0 * brightness / (dred + dgreen + dblue);
-    dred *= f;
-    dgreen *= f;
-    dblue *= f;
-
-    int red = static_cast<int>(dred * 255);
-    int green = static_cast<int>(dgreen * 255);
-    int blue = static_cast<int>(dblue * 255);
-
-    NormalizeColor(red, green, blue);
-
-    return RGB(red, green, blue);
-}
-
-void CColorSpace::NormalizeColor(int& red, int& green, int& blue)
-{
-    ASSERT(red + green + blue <= 3 * 255);
-
-    if (red > 255)
-    {
-        DistributeFirst(red, green, blue);
-    }
-    else if (green > 255)
-    {
-        DistributeFirst(green, red, blue);
-    }
-    else if (blue > 255)
-    {
-        DistributeFirst(blue, red, green);
-    }
-}
-
-void CColorSpace::DistributeFirst(int& first, int& second, int& third)
-{
-    const int h = (first - 255) / 2;
-    first = 255;
-    second += h;
-    third += h;
-
-    if (second > 255)
-    {
-        const int j = second - 255;
-        second = 255;
-        third += j;
-        ASSERT(third <= 255);
-    }
-    else if (third > 255)
-    {
-        const int j = third - 255;
-        third = 255;
-        second += j;
-        ASSERT(second <= 255);
-    }
-}
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -183,7 +111,6 @@ void CTreeMap::RecurseCheckTree(const Item* item)
     }
 }
 #endif
-
 
 void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, Item* root, const Options* options)
 {
