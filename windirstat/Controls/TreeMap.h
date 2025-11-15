@@ -162,81 +162,23 @@ public:
         double lightSourceX; // -4.0..+4.0 (default = -1.0), negative = left
         double lightSourceY; // -4.0..+4.0 (default = -1.0), negative = top
 
-        int GetBrightnessPercent() const
-        {
-            return RoundDouble(brightness * 100);
-        }
+        int GetBrightnessPercent() const { return RoundDouble(brightness * 100); }
+        int GetHeightPercent() const { return RoundDouble(height * 100); }
+        int GetScaleFactorPercent() const { return RoundDouble(scaleFactor * 100); }
+        int GetAmbientLightPercent() const { return RoundDouble(ambientLight * 100); }
+        int GetLightSourceXPercent() const { return RoundDouble(lightSourceX * 100); }
+        int GetLightSourceYPercent() const { return RoundDouble(lightSourceY * 100); }
+        CPoint GetLightSourcePoint() const { return { GetLightSourceXPercent(), GetLightSourceYPercent() }; }
 
-        int GetHeightPercent() const
-        {
-            return RoundDouble(height * 100);
-        }
+        void SetBrightnessPercent(int n) { brightness = n / 100.0; }
+        void SetHeightPercent(int n) { height = n / 100.0; }
+        void SetScaleFactorPercent(int n) { scaleFactor = n / 100.0; }
+        void SetAmbientLightPercent(int n) { ambientLight = n / 100.0; }
+        void SetLightSourceXPercent(int n) { lightSourceX = n / 100.0; }
+        void SetLightSourceYPercent(int n) { lightSourceY = n / 100.0; }
+        void SetLightSourcePoint(CPoint pt) { SetLightSourceXPercent(pt.x); SetLightSourceYPercent(pt.y); }
 
-        int GetScaleFactorPercent() const
-        {
-            return RoundDouble(scaleFactor * 100);
-        }
-
-        int GetAmbientLightPercent() const
-        {
-            return RoundDouble(ambientLight * 100);
-        }
-
-        int GetLightSourceXPercent() const
-        {
-            return RoundDouble(lightSourceX * 100);
-        }
-
-        int GetLightSourceYPercent() const
-        {
-            return RoundDouble(lightSourceY * 100);
-        }
-
-        CPoint GetLightSourcePoint() const
-        {
-            return { GetLightSourceXPercent(), GetLightSourceYPercent() };
-        }
-
-        void SetBrightnessPercent(const int n)
-        {
-            brightness = n / 100.0;
-        }
-
-        void SetHeightPercent(const int n)
-        {
-            height = n / 100.0;
-        }
-
-        void SetScaleFactorPercent(const int n)
-        {
-            scaleFactor = n / 100.0;
-        }
-
-        void SetAmbientLightPercent(const int n)
-        {
-            ambientLight = n / 100.0;
-        }
-
-        void SetLightSourceXPercent(const int n)
-        {
-            lightSourceX = n / 100.0;
-        }
-
-        void SetLightSourceYPercent(const int n)
-        {
-            lightSourceY = n / 100.0;
-        }
-
-        void SetLightSourcePoint(const CPoint pt)
-        {
-            SetLightSourceXPercent(pt.x);
-            SetLightSourceYPercent(pt.y);
-        }
-
-        static int RoundDouble(const double d)
-        {
-            return static_cast<int>(d + (d < 0.0 ? -0.5 : 0.5));
-        }
+        static int RoundDouble(double d) { return static_cast<int>(d + (d < 0.0 ? -0.5 : 0.5)); }
     };
 
     // Get a good palette of 13 colors (7 if system has 256 colors)
