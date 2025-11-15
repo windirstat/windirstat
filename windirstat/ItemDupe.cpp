@@ -162,7 +162,7 @@ std::wstring CItemDupe::GetHashAndExtensions() const
         extensions.append(L", ");
     }
 
-    // Remove the last two delimeters
+    // Remove the last two delimiters
     if (!extensions.empty())
     {
         extensions.pop_back();

@@ -41,7 +41,6 @@
 #include <unordered_set>
 #include <vector>
 #include <filesystem>
-#include <fstream>
 #include <ranges>
 #include <stack>
 #include <array>
@@ -716,13 +715,6 @@ void CDirStatDoc::RefreshAfterUserDefinedCleanup(const USERDEFINEDCLEANUP* udc, 
             refreshQueue.push_back(nullptr == item->GetParent() ? item : item->GetParent());
         }
         break;
-
-    // case RP_ASSUME_ENTRY_HAS_BEEN_DELETED:
-    // Feature not implemented.
-    // break;
-
-    default:
-        ASSERT(FALSE);
     }
 }
 
@@ -1618,7 +1610,7 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
         }
 
         const auto selectedItems = GetAllSelected();
-        using VisualInfo = struct { bool wasExpanded; bool isSelected; int scrollPosition; };
+        using VisualInfo = struct { int scrollPosition; bool wasExpanded; bool isSelected; };
         std::unordered_map<CItem *,VisualInfo> visualInfo;
         CMainFrame::Get()->SetRedraw(FALSE);
         for (auto item : std::vector(items))

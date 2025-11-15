@@ -20,10 +20,6 @@
 #include "ItemSearch.h"
 #include "TreeListControl.h"
 
-#include <set>
-#include <unordered_map>
-#include <shared_mutex>
-
 class CFileSearchControl final : public CTreeListControl
 {
 public:

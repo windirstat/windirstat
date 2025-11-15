@@ -37,7 +37,7 @@ EXTERN_C NTSTATUS NTAPI RtlDecompressBuffer(USHORT CompressionFormat, PUCHAR Unc
 
 static std::wstring FormatLongLongNormal(ULONGLONG n)
 {
-    // Returns a locale-formatted integer with thousand separators (example with '.' as separator: "123.456.789").
+    // Returns a locale-formatted integer with thousands separators (example with '.' as separator: "123.456.789").
     // Actual separator depends on current formatting locale.
 
     ASSERT(n >= 0);
@@ -387,7 +387,6 @@ bool DriveExists(const std::wstring& path)
 //
 // I hope that a drive is SUBSTed iff this string starts with \??\.
 //
-// assarbad:
 //   It cannot be safely determined whether a path is or is not SUBSTed on NT
 //   via this API. You would have to look up the volume mount points because
 //   SUBST only works per session by definition whereas volume mount points
@@ -1020,7 +1019,7 @@ std::wstring ComputeFileHashes(const std::wstring& filePath)
     if (hFile == INVALID_HANDLE_VALUE) return {};
 
     // Initialize all hash contexts
-    struct HashContext {
+    using HashContext = struct HashContext {
         LPCWSTR name = nullptr;
         SmartPointer<BCRYPT_ALG_HANDLE> hAlg = { nullptr, nullptr };
         SmartPointer<BCRYPT_HASH_HANDLE> hHash = { nullptr, nullptr };
@@ -1030,13 +1029,13 @@ std::wstring ComputeFileHashes(const std::wstring& filePath)
     };
 
     // Define algorithms to compute
-    using AlgSet = struct { LPCWSTR id; DWORD hashLen; LPCWSTR name; };
+    using AlgSet = struct { LPCWSTR id; LPCWSTR name; DWORD hashLen; };
     constexpr std::array algos = {
-        AlgSet{BCRYPT_MD5_ALGORITHM, 16, L"MD5"},
-        AlgSet{BCRYPT_SHA1_ALGORITHM, 20, L"SHA1"},
-        AlgSet{BCRYPT_SHA256_ALGORITHM, 32, L"SHA256"},
-        AlgSet{BCRYPT_SHA384_ALGORITHM, 48, L"SHA384"},
-        AlgSet{BCRYPT_SHA512_ALGORITHM, 64, L"SHA512"}
+        AlgSet{BCRYPT_MD5_ALGORITHM, L"MD5", 16},
+        AlgSet{BCRYPT_SHA1_ALGORITHM, L"SHA1", 20},
+        AlgSet{BCRYPT_SHA256_ALGORITHM, L"SHA256", 32},
+        AlgSet{BCRYPT_SHA384_ALGORITHM, L"SHA384", 48},
+        AlgSet{BCRYPT_SHA512_ALGORITHM, L"SHA512", 64}
     };
 
     // Setup all algorithms

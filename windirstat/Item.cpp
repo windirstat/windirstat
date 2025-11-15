@@ -157,7 +157,7 @@ std::wstring CItem::GetText(const int subitem) const
     case COL_NAME:
         if (IsType(IT_DRIVE))
         {
-            return GetName().substr(std::size(L"?:"));;
+            return GetName().substr(std::size(L"?:"));
         }
         return GetName();
 
@@ -1153,8 +1153,8 @@ CItem* CItem::FindRecyclerItem() const
     {
         if (!p->IsType(IT_DRIVE)) continue;
 
-        // There are no cross-platform way to consistently identify the recycle bin so attempt
-        // to find an item with the most probable to least probable values
+        // There are no cross-platform way to consistently identify the recycle bin 
+        // so attempt to find an item with the most probable values
         for (const std::wstring& possible : { L"$RECYCLE.BIN", L"RECYCLER", L"RECYCLED" })
         {
             for (const auto& child : p->GetChildren())

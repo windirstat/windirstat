@@ -121,7 +121,7 @@ public:
     {
         if (!m_Suspended) return;
 
-        // wait until its not suspended or its cancelled
+        // wait until not suspended or its cancelled
         std::unique_lock lock(m_Mutex);
         m_WorkersWaiting++;
         m_Waiting.notify_all();

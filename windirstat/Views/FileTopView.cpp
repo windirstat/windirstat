@@ -16,11 +16,8 @@
 //
 
 #include "stdafx.h"
-#include "WinDirStat.h"
 #include "DirStatDoc.h"
-#include "MainFrame.h"
 #include "FileTopView.h"
-#include "GlobalHelpers.h"
 #include "Localization.h"
 
 /////////////////////////////////////////////////////////////////////////////

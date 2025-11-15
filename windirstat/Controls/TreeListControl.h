@@ -94,7 +94,7 @@ private:
 };
 
 //
-// CTreeListControl. A CListCtrl, which additionally behaves an looks like a tree control.
+// CTreeListControl. A CListCtrl, which additionally behaves and looks like a tree control.
 //
 class CTreeListControl : public COwnerDrawnListControl
 {

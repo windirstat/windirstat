@@ -54,7 +54,7 @@ static std::array<COLORREF, 50> DarkModeColors;
 
 void DarkMode::SetAppDarkMode() noexcept
 {
-    // Determine if dark mode should based on settings
+    // Determine if dark mode should be set based on settings
     _darkModeEnabled = COptions::DarkMode == 1;
 
     if (COptions::DarkMode == 2)

@@ -14,9 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
-// This general purpose header is published under GPL with
-// the friendly permission of D'accord (www.daccord.net).
-//
 
 #pragma once
 

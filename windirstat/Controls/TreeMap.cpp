@@ -31,7 +31,7 @@ static constexpr COLORREF BGR(auto b, auto g, auto r)
     return static_cast<BYTE>(b) | static_cast<BYTE>(g) << 8 | static_cast<BYTE>(r) << 16;
 }
 
-// Define the "brightness" of an rgb value as (r+b+g)/3/255.
+// Define the "brightness" of an RBG value as (r+b+g)/3/255.
 // The EqualizeColors() method creates a palette with colors
 // all having the same brightness of 0.6
 // Later in RenderCushion() this number is used again to

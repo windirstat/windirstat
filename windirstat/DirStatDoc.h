@@ -51,7 +51,7 @@ struct SExtensionRecord
 };
 
 //
-// Maps an extension (".bmp") to an SExtensionRecord.
+// Maps an extension to an SExtensionRecord.
 //
 using CExtensionData = std::unordered_map<std::wstring, SExtensionRecord>;
 

@@ -140,7 +140,7 @@ BOOL CFileTopControl::OnDeleteAllItems(NMHDR*, LRESULT* pResult)
     m_SizeMap.clear();
     m_ItemTracker.clear();
 
-    // Allow delete to proceed
+    // Allow deletion to proceed
     *pResult = FALSE;
     return FALSE;
 }

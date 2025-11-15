@@ -21,7 +21,6 @@
 #include "GlobalHelpers.h"
 #include "Options.h"
 #include "Localization.h"
-#include "WinDirStat.h"
 #include "DarkMode.h"
 
 IMPLEMENT_DYNAMIC(CPageFiltering, CMFCPropertyPage)

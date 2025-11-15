@@ -16,14 +16,12 @@
 //
 
 #include "stdafx.h"
-#include "WinDirStat.h"
 #include "DirStatDoc.h"
 #include "SelectObject.h"
 #include "TreeListControl.h"
 #include "MainFrame.h"
 #include "Localization.h"
 
-#include <algorithm>
 #include <ranges>
 
 namespace
@@ -705,9 +703,9 @@ void CTreeListControl::ExpandItem(const int i, const bool scroll)
     UnlockWindowUpdate();
     SetRedraw(TRUE);
 
-    const int padding = 3;
     if (scroll && GetColumnWidth(0) < maxwidth)
     {
+        constexpr int padding = 3;
         SetColumnWidth(0, maxwidth + padding);
     }
 

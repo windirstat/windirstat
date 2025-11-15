@@ -146,7 +146,7 @@ void CFileSearchControl::OnItemDoubleClick(const int i)
 
 BOOL CFileSearchControl::OnDeleteAllItems(NMHDR*, LRESULT* pResult)
 {
-    // Allow delete to proceed
+    // Allow deletion to proceed
     *pResult = FALSE;
     return FALSE;
 }

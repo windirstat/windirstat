@@ -18,7 +18,7 @@
 #pragma once
 
 #include "stdafx.h"
-#include "res\LangStrings.h"
+#include "LangStrings.h"
 #include "Options.h"
 
 #include <string>

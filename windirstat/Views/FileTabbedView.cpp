@@ -73,7 +73,7 @@ LRESULT CFileTabbedView::OnChangeActiveTab(WPARAM wp, LPARAM lp)
             return TRUE;
         }
 
-        // Duplicate view can take awhile to populate so show wait cursor
+        // Duplicate view can take a while to populate so show wait cursor
         CWaitCursor wc;
         CFileDupeControl::Get()->SortItems();
     }

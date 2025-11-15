@@ -16,7 +16,6 @@
 //
 
 #include "stdafx.h"
-#include "langs.h"
 #include "Item.h"
 #include "Localization.h"
 #include "CsvLoader.h"

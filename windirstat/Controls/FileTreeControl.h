@@ -17,7 +17,6 @@
 
 #pragma once
 
-#include "Item.h"
 #include "TreeListControl.h"
 
 class CFileTreeControl final : public CTreeListControl

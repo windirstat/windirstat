@@ -49,7 +49,7 @@ enum LOGICAL_FOCUS : std::uint8_t
 };
 
 //
-// COptionsPropertySheet. The options dialog.
+// COptionsPropertySheet.
 //
 class COptionsPropertySheet final : public CMFCPropertySheet
 {

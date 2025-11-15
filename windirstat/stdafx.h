@@ -28,7 +28,7 @@
 
 #define _ATL_CSTRING_EXPLICIT_CONSTRUCTORS  // some CStringW constructors will be explicit
 
-// enables new gdiplus version
+// enables new GDI+ version
 #define GDIPVER 0x0110
 
 #include <afxwin.h>         // MFC Core

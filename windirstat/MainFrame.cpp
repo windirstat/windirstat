@@ -450,7 +450,7 @@ LRESULT CMainFrame::OnTaskButtonCreated(WPARAM, LPARAM)
 void CMainFrame::CreateProgress(ULONGLONG range)
 {
     // Directory structure may contain other volume or internal loops
-    // so set range to indicate these is no range so display pacman
+    // so set range to indicate there is no range so display pacman
     if (!COptions::ExcludeVolumeMountPoints ||
         !COptions::ExcludeJunctions ||
         !COptions::ExcludeSymbolicLinksDirectory)
