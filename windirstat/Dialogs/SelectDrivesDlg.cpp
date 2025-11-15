@@ -38,7 +38,7 @@ namespace
         COL_DRIVES_TOTAL,
         COL_DRIVES_FREE,
         COL_DRIVES_GRAPH,
-        COL_DRIVES_PERCENTUSED
+        COL_DRIVES_PERCENT_USED
     };
 
     constexpr UINT WMU_OK = WM_USER + 100;
@@ -130,7 +130,7 @@ int CDriveItem::Compare(const CSortingListItem* baseOther, const int subitem) co
         case COL_DRIVES_TOTAL: return usignum(m_TotalBytes, other->m_TotalBytes);
         case COL_DRIVES_FREE: return usignum(m_FreeBytes, other->m_FreeBytes);
         case COL_DRIVES_GRAPH:
-        case COL_DRIVES_PERCENTUSED: return signum(m_Used - other->m_Used);
+        case COL_DRIVES_PERCENT_USED: return signum(m_Used - other->m_Used);
         default: ASSERT(FALSE);
     }
 
@@ -212,7 +212,7 @@ std::wstring CDriveItem::GetText(const int subitem) const
         }
         break;
 
-    case COL_DRIVES_PERCENTUSED:
+    case COL_DRIVES_PERCENT_USED:
         if (m_Success && !IsSUBSTed())
         {
             s = FormatDouble(m_Used * 100) + L"%";
@@ -243,13 +243,13 @@ std::mutex CDriveInformationThread::_mutexRunningThreads;
 
 void CDriveInformationThread::AddRunningThread()
 {
-    std::lock_guard lock(_mutexRunningThreads);
+    std::scoped_lock lock(_mutexRunningThreads);
     _runningThreads.insert(this);
 }
 
 void CDriveInformationThread::RemoveRunningThread()
 {
-    std::lock_guard lock(_mutexRunningThreads);
+    std::scoped_lock lock(_mutexRunningThreads);
     _runningThreads.erase(this);
 }
 
@@ -259,7 +259,7 @@ void CDriveInformationThread::RemoveRunningThread()
 //
 void CDriveInformationThread::InvalidateDialogHandle()
 {
-    std::lock_guard lock(_mutexRunningThreads);
+    std::scoped_lock lock(_mutexRunningThreads);
     for (const auto & thread : _runningThreads)
     {
         thread->m_Dialog = nullptr;
@@ -446,7 +446,7 @@ BOOL CSelectDrivesDlg::OnInitDialog()
     m_List.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_TOTAL).c_str(), LVCFMT_RIGHT, 65, COL_DRIVES_TOTAL);
     m_List.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_FREE).c_str(), LVCFMT_RIGHT, 65, COL_DRIVES_FREE);
     m_List.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_GRAPH).c_str(), LVCFMT_LEFT, 100, COL_DRIVES_GRAPH);
-    m_List.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_PERCENTUSED).c_str(),LVCFMT_RIGHT, 65, COL_DRIVES_PERCENTUSED);
+    m_List.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_PERCENT_USED).c_str(),LVCFMT_RIGHT, 65, COL_DRIVES_PERCENT_USED);
 
     m_List.OnColumnsInserted();
 

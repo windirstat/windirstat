@@ -30,7 +30,7 @@ CFileTreeControl::CFileTreeControl() : CTreeListControl(20, COptions::FileTreeCo
 
 bool CFileTreeControl::GetAscendingDefault(const int column)
 {
-    return column == COL_NAME || column == COL_LASTCHANGE;
+    return column == COL_NAME || column == COL_LAST_CHANGE;
 }
 
 BEGIN_MESSAGE_MAP(CFileTreeControl, CTreeListControl)

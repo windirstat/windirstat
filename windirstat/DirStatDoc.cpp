@@ -142,7 +142,7 @@ BOOL CDirStatDoc::OnNewDocument()
 
 BOOL CDirStatDoc::OnOpenDocument(LPCWSTR lpszPathName)
 {
-    // Temporary minimize extra reviews
+    // Temporarily minimize extra views
     CMainFrame::Get()->MinimizeTreeMapView();
     CMainFrame::Get()->MinimizeExtensionView();
 
@@ -240,7 +240,7 @@ BOOL CDirStatDoc::OnOpenDocument(CItem * newroot)
     return true;
 }
 
-// We don't want MFCs AfxFullPath()-Logic, because lpszPathName
+// We don't want MFC's AfxFullPath() logic, because lpszPathName
 // is not a path. So we have overridden this.
 //
 void CDirStatDoc::SetPathName(LPCWSTR lpszPathName, BOOL /*bAddToMRU*/)
@@ -253,7 +253,7 @@ void CDirStatDoc::SetPathName(LPCWSTR lpszPathName, BOOL /*bAddToMRU*/)
     ASSERT_VALID(this);
 }
 
-// Prefix the window Title (with percentage or "Scanning")
+// Prefix the window title (with percentage or "Scanning")
 //
 void CDirStatDoc::SetTitlePrefix(const std::wstring& prefix) const
 {
@@ -282,7 +282,7 @@ CExtensionData* CDirStatDoc::GetExtensionData()
 
 SExtensionRecord* CDirStatDoc::GetExtensionDataRecord(const std::wstring& ext)
 {
-    std::lock_guard guard(m_ExtensionMutex);
+    std::scoped_lock guard(m_ExtensionMutex);
     return &m_ExtensionData[ext];
 }
 
@@ -366,7 +366,7 @@ std::wstring CDirStatDoc::GetHighlightExtension() const
     return m_HighlightExtension;
 }
 
-// The very root has been deleted.
+// The root item has been deleted.
 //
 void CDirStatDoc::UnlinkRoot()
 {
@@ -380,7 +380,7 @@ void CDirStatDoc::UnlinkRoot()
     });
 }
 
-// Determines, whether an UDC works for a given item.
+// Determines whether a UDC works for a given item.
 //
 bool CDirStatDoc::UserDefinedCleanupWorksForItem(USERDEFINEDCLEANUP* udc, const CItem* item) const
 {
@@ -395,7 +395,7 @@ void CDirStatDoc::OpenItem(const CItem* item, const std::wstring & verb)
 {
     ASSERT(item != nullptr);
 
-    // determine path to feed into shell function
+    // Determine path to feed into shell function
     SmartPointer<LPITEMIDLIST> pidl(CoTaskMemFree, nullptr);
     if (item->IsType(IT_MYCOMPUTER))
     {
@@ -406,14 +406,14 @@ void CDirStatDoc::OpenItem(const CItem* item, const std::wstring & verb)
         pidl = ILCreateFromPath(item->GetPath().c_str());
     }
 
-    // ignore unresolvable (e.g., deleted) files
+    // Ignore unresolvable (e.g., deleted) files
     if (pidl == nullptr)
     {
         ASSERT(FALSE);
         return;
     }
 
-    // launch properties dialog
+    // Launch properties dialog
     SHELLEXECUTEINFO sei;
     ZeroMemory(&sei, sizeof(sei));
     sei.cbSize = sizeof(sei);
@@ -636,7 +636,7 @@ void CDirStatDoc::RefreshItem(const std::vector<CItem*>& item) const
     GetDocument()->StartScanningEngine(item);
 }
 
-// UDC confirmation Dialog.
+// UDC confirmation dialog.
 //
 void CDirStatDoc::AskForConfirmation(USERDEFINEDCLEANUP* udc, const CItem* item)
 {
@@ -665,7 +665,7 @@ void CDirStatDoc::PerformUserDefinedCleanup(USERDEFINEDCLEANUP* udc, const CItem
     {
         if (!FolderExists(path) && !DriveExists(path))
         {
-            DisplayError(Localization::Format(IDS_THEDIRECTORYsDOESNOTEXIST, path));
+            DisplayError(Localization::Format(IDS_DIRECTORYs_NOT_EXIST, path));
             throw;
         }
     }
@@ -766,7 +766,7 @@ void CDirStatDoc::CallUserDefinedCleanup(const bool isDirectory, const std::wstr
     if (CreateProcess(app.c_str(), cmdline.data(), nullptr, nullptr, false,
         0, nullptr, directory.c_str(), &si, &pi) == 0)
     {
-        DisplayError(Localization::Format(IDS_COULDNOTCREATEPROCESSssss,
+        DisplayError(Localization::Format(IDS_PROCESS_ERRORssss,
             app, cmdline, directory, TranslateError()));
         throw;
     }
@@ -1579,7 +1579,7 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
     // Stop any previous executions
     StopScanningEngine();
 
-    // Address currently zoomed / selected item conflicts
+    // Address conflicts with currently zoomed/selected items
     const auto zoomItem = GetZoomItem();
     for (const auto& item : std::vector(items))
     {
@@ -1608,7 +1608,7 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
     {
         // Wait for other threads to finish if this was scheduled in parallel
         static std::shared_mutex mutex;
-        std::lock_guard lock(mutex);
+        std::scoped_lock lock(mutex);
 
         // If scanning drive(s) just rescan the child nodes
         if (items.size() == 1 && items.at(0)->IsType(IT_MYCOMPUTER))
@@ -1647,7 +1647,7 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
             item->RemoveAllChildren();
             item->UpwardSetUndone();
 
-            // children removal will collapse item so re-expand it
+            // Child removal will collapse the item, so re-expand it
             if (visualInfo.contains(item) && item->IsVisible())
                 item->SetExpanded(visualInfo[item].wasExpanded);
   
@@ -1661,7 +1661,7 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
 
                 if (item->IsRootItem())
                 {
-                    // Handle deleted root item; this much be launched
+                    // Handle deleted root item; this must be launched
                     // asynchronously since it will end up calling this
                     // function and could potentially deadlock
                     std::thread ([] ()

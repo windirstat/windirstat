@@ -51,7 +51,7 @@ const std::unordered_map<uint8_t, uint8_t> CItemDupe::columnMap =
     { COL_ITEMDUP_ITEMS, COL_ITEMS },
     { COL_ITEMDUP_SIZE_LOGICAL, COL_SIZE_LOGICAL },
     { COL_ITEMDUP_SIZE_PHYSICAL, COL_SIZE_PHYSICAL },
-    { COL_ITEMDUP_LASTCHANGE, COL_LASTCHANGE }
+    { COL_ITEMDUP_LAST_CHANGE, COL_LAST_CHANGE }
 };
 
 bool CItemDupe::DrawSubItem(const int subitem, CDC* pdc, const CRect rc, const UINT state, int* width, int* focusLeft)
@@ -184,7 +184,7 @@ void CItemDupe::AddDupeItemChild(CItemDupe* child)
 
     child->SetParent(this);
 
-    std::lock_guard guard(m_Protect);
+    std::scoped_lock guard(m_Protect);
     m_Children.push_back(child);
 
     if (IsVisible() && IsExpanded())
@@ -202,7 +202,7 @@ void CItemDupe::RemoveDupeItemChild(CItemDupe* child)
         m_SizePhysical -= childItem->GetSizePhysical();
     }
 
-    std::lock_guard guard(m_Protect);
+    std::scoped_lock guard(m_Protect);
     std::erase(m_Children, child);
 
     if (IsVisible())

@@ -34,8 +34,9 @@ class CItemSearch;
 //
 // The treemap colors as calculated in CDirStatDoc::SetExtensionColors()
 // all have the "brightness" BASE_BRIGHTNESS.
-// I define brightness as a number from 0 to 3.0: (r+g+b)/255.
-// RGB(127, 255, 0), for example, has a brightness of 2.5.
+// Brightness here is defined as (r+g+b)/255, i.e. an unnormalized sum of the
+// individual color intensities divided by 255 (range 0..3.0). This is not the
+// average intensity (which would be / (255*3)).
 //
 #define BASE_BRIGHTNESS 1.8
 
@@ -63,7 +64,7 @@ enum : std::uint8_t
     HINT_NEWROOT,                   // Root item has changed - clear everything.
     HINT_SELECTIONACTION,           // Inform central selection handler to update selection (uses pHint)
     HINT_SELECTIONREFRESH,          // Inform all views to redraw based on current selections
-    HINT_SELECTIONSTYLECHANGED,     // Only update selection in Graphview
+    HINT_SELECTIONSTYLECHANGED,     // Only update selection in TreeMapView
     HINT_EXTENSIONSELECTIONCHANGED, // Type list selected a new extension
     HINT_ZOOMCHANGED,               // Only zoom item has changed.
     HINT_LISTSTYLECHANGED,          // Options: List style (grid/stripes) or treelist colors changed

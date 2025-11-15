@@ -86,7 +86,7 @@ void CDirStatApp::RestartApplication(bool resetPreferences)
     if (const BOOL success = CreateProcess(GetAppFileName().c_str(), nullptr, nullptr, nullptr, false,
         resetPreferences ? 0 : CREATE_SUSPENDED, nullptr, nullptr, &si, &pi); !success)
     {
-        DisplayError(Localization::Format(IDS_CREATEPROCESSsFAILEDs, GetAppFileName(), TranslateError()));
+        DisplayError(Localization::Format(IDS_PROCESS_FAILEDss, GetAppFileName(), TranslateError()));
         return;
     }
 
@@ -96,8 +96,8 @@ void CDirStatApp::RestartApplication(bool resetPreferences)
         ExitProcess(0);
     }
 
-    // We _send_ the WM_CLOSE here to ensure that all COptions-Settings
-    // like column widths an so on are saved before the new instance is resumed.
+    // We _send_ the WM_CLOSE here to ensure that all COptions settings
+    // like column widths and so on are saved before the new instance is resumed.
     // This will post a WM_QUIT message.
     (void)CMainFrame::Get()->SendMessage(WM_CLOSE);
 
@@ -298,7 +298,7 @@ BOOL CDirStatApp::InitInstance()
     AfxEnableControlContainer();
     (void)AfxInitRichEdit2();
 
-    // Initialize GPI Plus
+    // Initialize GDI Plus
     Gdiplus::GdiplusStartupInput gdiplusStartupInput;
     ULONG_PTR gdiplusToken;
     Gdiplus::GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, nullptr);
@@ -344,7 +344,7 @@ BOOL CDirStatApp::InitInstance()
         RtlSetProcessPlaceholderCompatibilityMode(PHCM_EXPOSE_PLACEHOLDERS);
     }
 
-    // If launches with a parent pid flag, close that process
+    // If launched with a parent PID flag, close that process
     if (cmdInfo.m_ParentPid != 0)
     {
         if (SmartPointer<HANDLE> handle(CloseHandle, OpenProcess(PROCESS_TERMINATE, FALSE, cmdInfo.m_ParentPid)); handle != nullptr)

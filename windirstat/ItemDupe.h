@@ -29,7 +29,7 @@ using ITEMDUPCOLUMNS = enum : std::uint8_t
     COL_ITEMDUP_ITEMS,
     COL_ITEMDUP_SIZE_PHYSICAL,
     COL_ITEMDUP_SIZE_LOGICAL,
-    COL_ITEMDUP_LASTCHANGE
+    COL_ITEMDUP_LAST_CHANGE
 };
 
 class CItemDupe final : public CTreeListItem

@@ -37,7 +37,7 @@ const std::unordered_map<uint8_t, uint8_t> CItemSearch::columnMap =
     { COL_ITEMSEARCH_NAME, COL_NAME },
     { COL_ITEMSEARCH_SIZE_LOGICAL, COL_SIZE_LOGICAL },
     { COL_ITEMSEARCH_SIZE_PHYSICAL, COL_SIZE_PHYSICAL },
-    { COL_ITEMSEARCH_LASTCHANGE, COL_LASTCHANGE }
+    { COL_ITEMSEARCH_LAST_CHANGE, COL_LAST_CHANGE }
 };
 
 bool CItemSearch::DrawSubItem(const int subitem, CDC* pdc, const CRect rc, const UINT state, int* width, int* focusLeft)
@@ -116,7 +116,7 @@ void CItemSearch::AddSearchItemChild(CItemSearch* child)
 {
     child->SetParent(this);
 
-    std::lock_guard guard(m_Protect);
+    std::scoped_lock guard(m_Protect);
     m_Children.push_back(child);
 
     if (IsVisible() && IsExpanded())
@@ -127,7 +127,7 @@ void CItemSearch::AddSearchItemChild(CItemSearch* child)
 
 void CItemSearch::RemoveSearchItemChild(CItemSearch* child)
 {
-    std::lock_guard guard(m_Protect);
+    std::scoped_lock guard(m_Protect);
     std::erase(m_Children, child);
 
     if (IsVisible())

@@ -178,7 +178,7 @@ void CPageTreeMap::OnSomethingChanged()
 void CPageTreeMap::ValuesAltered(const bool altered)
 {
     m_Altered = altered;
-    const std::wstring s = m_Altered ? Localization::Lookup(IDS_RESETTO_DEFAULTS) : Localization::Lookup(IDS_BACKTO_USERSETTINGS);
+    const std::wstring s = m_Altered ? Localization::Lookup(IDS_RESET_DEFAULTS) : Localization::Lookup(IDS_BACKTO_USERSETTINGS);
     m_ResetButton.SetWindowText(s.c_str());
 }
 

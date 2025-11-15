@@ -34,7 +34,7 @@ bool CFileSearchControl::GetAscendingDefault(const int column)
 {
     return column == COL_ITEMSEARCH_SIZE_PHYSICAL ||
         column == COL_ITEMSEARCH_SIZE_LOGICAL ||
-        column == COL_ITEMSEARCH_LASTCHANGE;
+        column == COL_ITEMSEARCH_LAST_CHANGE;
 }
 
 BEGIN_MESSAGE_MAP(CFileSearchControl, CTreeListControl)

@@ -28,7 +28,7 @@ using ITEMTOPCOLUMNS = enum : std::uint8_t
     COL_ITEMTOP_NAME,
     COL_ITEMTOP_SIZE_PHYSICAL,
     COL_ITEMTOP_SIZE_LOGICAL,
-    COL_ITEMTOP_LASTCHANGE
+    COL_ITEMTOP_LAST_CHANGE
 };
 
 class CItemTop final : public CTreeListItem

@@ -32,7 +32,7 @@ class FinderNtfsContext;
 enum ITEMCOLUMNS : std::uint8_t
 {
     COL_NAME,
-    COL_SUBTREEPERCENTAGE,
+    COL_SUBTREE_PERCENTAGE,
     COL_PERCENTAGE,
     COL_OPTIONAL_START,
     COL_SIZE_PHYSICAL,
@@ -40,7 +40,7 @@ enum ITEMCOLUMNS : std::uint8_t
     COL_ITEMS,
     COL_FILES,
     COL_FOLDERS,
-    COL_LASTCHANGE,
+    COL_LAST_CHANGE,
     COL_ATTRIBUTES,
     COL_OWNER
 };
@@ -78,14 +78,12 @@ constexpr ITEMTYPE operator-(const ITEMTYPE& a, const ITEMTYPE& b)
     return static_cast<ITEMTYPE>(static_cast<unsigned short>(a) & ~static_cast<unsigned short>(b));
 }
 
-// Compare FILETIMEs
 constexpr bool operator<(const FILETIME& t1, const FILETIME& t2)
 {
-    return t1.dwHighDateTime < t2.dwHighDateTime
-    || t1.dwHighDateTime == t2.dwHighDateTime && t1.dwLowDateTime < t2.dwLowDateTime;
+    return t1.dwHighDateTime < t2.dwHighDateTime ||
+        t1.dwHighDateTime == t2.dwHighDateTime && t1.dwLowDateTime < t2.dwLowDateTime;
 }
 
-// Compare FILETIMEs
 constexpr bool operator==(const FILETIME& t1, const FILETIME& t2)
 {
     return t1.dwLowDateTime == t2.dwLowDateTime && t1.dwHighDateTime == t2.dwHighDateTime;
@@ -93,7 +91,7 @@ constexpr bool operator==(const FILETIME& t1, const FILETIME& t2)
 
 //
 // CItem. This is the object, from which the whole tree is built.
-// For every directory, file etc., we find on the Harddisks, there is one CItem.
+// For every directory, file etc., we find on the hard disks, there is one CItem.
 // It is derived from CTreeListItem because it _may_ become "visible" and therefore
 // may be inserted in the TreeList view (we don't clone any data).
 //
@@ -103,10 +101,6 @@ constexpr bool operator==(const FILETIME& t1, const FILETIME& t2)
 // It may have been better to design a class hierarchy for this, but I can't help it,
 // rather than browsing to virtual functions I like to flatly see what's going on.
 // But, of course, now we have quite many switch statements in the member functions.
-//
-// Naming convention:
-// Methods which recurse down to every child (expensive) are named "RecurseDoSomething".
-// Methods which recurse up to the parent (not so expensive) are named "UpwardDoSomething".
 //
 class CItem final : public CTreeListItem, public CTreeMap::Item
 {
@@ -128,44 +122,21 @@ public:
     std::wstring GetText(int subitem) const override;
     COLORREF GetItemTextColor() const override;
     int CompareSibling(const CTreeListItem* tlib, int subitem) const override;
-    int GetTreeListChildCount() const override;
-    CTreeListItem* GetTreeListChild(int i) const override;
+    int GetTreeListChildCount() const override { return IsLeaf() ? 0 : static_cast<int>(GetChildren().size()); }
+    CTreeListItem* GetTreeListChild(int i) const override { return GetChildren()[i]; }
     HICON GetIcon() override;
     void DrawAdditionalState(CDC* pdc, const CRect& rcLabel) const override;
 
     // CTreeMap::Item interface
-    bool TmiIsLeaf() const override
-    {
-        return IsLeaf();
-    }
+    bool TmiIsLeaf() const override { return IsLeaf(); }
+    CRect TmiGetRectangle() const override { return tmiRect; };
+    void TmiSetRectangle(const CRect& rc) override { tmiRect = rc; }
+    COLORREF TmiGetGraphColor() const override { return GetGraphColor(); }
+    int TmiGetChildCount() const override { return m_FolderInfo == nullptr ? 0 : static_cast<int>(m_FolderInfo->m_Children.size()); }
+    Item* TmiGetChild(const int c) const override { return m_FolderInfo->m_Children[c]; }
+    ULONGLONG TmiGetSize() const override { return COptions::TreeMapUseLogical ? GetSizeLogical() : GetSizePhysical(); }
 
-    CRect TmiGetRectangle() const override;
-    void TmiSetRectangle(const CRect& rc) override;
-
-    COLORREF TmiGetGraphColor() const override
-    {
-        return GetGraphColor();
-    }
-
-    int TmiGetChildCount() const override
-    {
-        if (!m_FolderInfo) return 0;
-        return static_cast<int>(m_FolderInfo->m_Children.size());
-    }
-
-    Item* TmiGetChild(const int c) const override
-    {
-        return m_FolderInfo->m_Children[c];
-    }
-
-    ULONGLONG TmiGetSize() const override
-    {
-        return COptions::TreeMapUseLogical ? GetSizeLogical() : GetSizePhysical();
-    }
-
-    // CItem
     static int GetSubtreePercentageWidth();
-
     ULONGLONG GetProgressRange() const;
     ULONGLONG GetProgressPos() const;
     void UpdateStatsFromDisk();
@@ -299,10 +270,10 @@ private:
     {
         std::vector<CItem*> m_Children;
         std::shared_mutex m_Protect;
-        std::atomic<ULONG> m_Tstart = 0;  // initial time this node started enumerating
-        std::atomic<ULONG> m_Tfinish = 0; // initial time this node started enumerating
+        std::atomic<ULONG> m_Tstart = 0;  // time this node started enumerating
+        std::atomic<ULONG> m_Tfinish = 0; // time this node finished enumerating
         std::atomic<ULONG> m_Files = 0;   // # Files in subtree
-        std::atomic<ULONG> m_Subdirs = 0; // # Folder in subtree
+        std::atomic<ULONG> m_Subdirs = 0; // # Folders in subtree
         std::atomic<ULONG> m_Jobs = 0;    // # "read jobs" in subtree.
     };
 

@@ -37,7 +37,8 @@ EXTERN_C NTSTATUS NTAPI RtlDecompressBuffer(USHORT CompressionFormat, PUCHAR Unc
 
 static std::wstring FormatLongLongNormal(ULONGLONG n)
 {
-    // Returns formatted number like "123.456.789".
+    // Returns a locale-formatted integer with thousand separators (example with '.' as separator: "123.456.789").
+    // Actual separator depends on current formatting locale.
 
     ASSERT(n >= 0);
 
@@ -110,7 +111,7 @@ std::wstring FormatBytes(const ULONGLONG& n)
 
 std::wstring FormatSizeSuffixes(ULONGLONG n)
 {
-    // Returns formatted number like "12,4 GB".
+    // Returns formatted number like "12,4 GiB" (uses IEC binary prefixes KiB/MiB/GiB/TiB).
     ASSERT(n >= 0);
     constexpr int base = 1024;
     constexpr int half = base / 2;
@@ -180,7 +181,7 @@ std::wstring FormatFileTime(const FILETIME& t)
         FileTimeToLocalFileTime(&t, &ft) == 0 ||
         FileTimeToSystemTime(&ft, &st) == 0)
     {
-        return L"";
+        return {};
     }
     
     const LCID lcid = COptions::GetLocaleForFormatting();
@@ -276,7 +277,7 @@ bool GetVolumeName(const std::wstring & rootPath, std::wstring& volumeName)
 
 // Given a root path like "C:\", this function
 // obtains the volume name and returns a complete display string
-// like "BOOT (C:)".
+// like "BOOT (C:)" (drive label followed by the two‑character drive spec).
 std::wstring FormatVolumeNameOfRootPath(const std::wstring& rootPath)
 {
     std::wstring ret;
@@ -319,26 +320,23 @@ void WaitForHandleWithRepainting(const HANDLE h, const DWORD TimeOut)
 {
     while (true)
     {
-        // Read all messages in this next loop, removing each message as we read it.
+        // Pump all pending WM_PAINT messages so the UI keeps updating.
         MSG msg;
         while (::PeekMessage(&msg, nullptr, WM_PAINT, WM_PAINT, PM_REMOVE))
         {
             ::DispatchMessage(&msg);
         }
 
-        // Wait for WM_PAINT message sent or posted to this queue
-        // or for one of the passed handles be set to signal.
+        // Wait for either WM_PAINT messages or the supplied handle to become signaled.
         const DWORD r = MsgWaitForMultipleObjects(1, &h, FALSE, TimeOut, QS_PAINT);
 
-        // The result tells us the type of event we have.
         if (r == WAIT_OBJECT_0 + 1)
         {
-            // New messages have arrived.
-            // Continue to the top of the always while loop to dispatch them and resume waiting.
+            // New paint messages arrived; loop again to dispatch them before waiting.
             continue;
         }
 
-        // The handle became signaled.
+        // The handle was signaled (or a timeout occurred); exit loop.
         break;
     }
 }
@@ -491,7 +489,7 @@ void RunElevated(const std::wstring& cmdLine)
 {
     // For the configuration to launch, include the parent process so we can
     // terminate it once launched from the child process
-    PersistedSetting::WritePersistedProperties(); // write settings to disk before before elevation
+    PersistedSetting::WritePersistedProperties(); // write settings to disk before elevation
     const std::wstring launchConfig = std::format(LR"(/ParentPid:{} "{}")",
         GetCurrentProcessId(), cmdLine);
     ShellExecuteWrapper(GetAppFileName(), launchConfig, L"runas");
@@ -803,7 +801,7 @@ static constexpr DWORD SidGetLength(const PSID x)
 std::wstring GetNameFromSid(const PSID sid)
 {
     // return immediately if sid is null
-    if (sid == nullptr) return L"";
+    if (sid == nullptr) return {};
 
     // define custom lookup function
     auto comp = [](const PSID p1, const PSID p2)

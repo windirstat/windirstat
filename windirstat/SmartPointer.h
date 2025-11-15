@@ -24,16 +24,16 @@
 #include <memory>
 
 //
-// SmartPointer<>. Custom template for WinApi cleanup.
-// This template does that in its destructor.
+// SmartPointer<>. Custom template for WinAPI resource cleanup.
+// Automatically invokes the provided cleanup callable in its destructor.
 //
 template <typename T>
 class SmartPointer final
 {
 public:
 
-    SmartPointer(const SmartPointer&) = delete; // operator not allowed for SmartPointer
-    T operator=(const SmartPointer& lp) = delete; // operator not allowed for SmartPointer
+    SmartPointer(const SmartPointer&) = delete; // non-copyable
+    T operator=(const SmartPointer& lp) = delete; // copy assignment forbidden
 
     SmartPointer(std::function<void(T)> cleanup) : m_Cleanup(std::move(cleanup)), m_Data(nullptr) {}
     SmartPointer(std::function<void(T)> cleanup, T data) : m_Cleanup(std::move(cleanup)), m_Data(data) {}

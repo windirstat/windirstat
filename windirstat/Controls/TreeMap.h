@@ -144,7 +144,7 @@ public:
     enum STYLE : std::uint8_t
     {
         KDirStatStyle,   // Children are laid out in rows. Similar to the style used by KDirStat.
-        SequoiaViewStyle // The 'classical' squarification as described in at https://www.win.tue.nl/~vanwijk/.
+        SequoiaViewStyle // The classical squarification as described at https://www.win.tue.nl/~vanwijk/
     };
 
     //
@@ -156,7 +156,7 @@ public:
         bool grid;           // Whether or not to draw grid lines
         COLORREF gridColor;  // Color of grid lines
         double brightness;   // 0..1.0   (default = 0.84)
-        double height;       // 0..oo    (default = 0.40)    Factor "H"
+        double height;       // >= 0.0    (default = 0.40)    Factor "H"
         double scaleFactor;  // 0..1.0   (default = 0.90)    Factor "F"
         double ambientLight; // 0..1.0   (default = 0.15)    Factor "Ia"
         double lightSourceX; // -4.0..+4.0 (default = -1.0), negative = left
@@ -181,10 +181,10 @@ public:
         static int RoundDouble(double d) { return static_cast<int>(d + (d < 0.0 ? -0.5 : 0.5)); }
     };
 
-    // Get a good palette of 13 colors (7 if system has 256 colors)
+    // Get a good palette of 18 colors
     static void GetDefaultPalette(std::vector<COLORREF>& palette);
 
-    // Create a equally-bright palette from a set of arbitrary colors
+    // Create an equally bright palette from a set of arbitrary colors
     static void EqualizeColors(const COLORREF* colors, int count, std::vector<COLORREF>& out);
 
     // Good values
@@ -238,15 +238,15 @@ protected:
 
     // Default tree map options
     static constexpr Options DefaultOptions = {
-        KDirStatStyle,
-        false,
-        RGB(0, 0, 0),
-        0.88,
-        0.38,
-        0.91,
-        0.13,
-        -1.0,
-        -1.0
+        .style = KDirStatStyle,
+        .grid = false,
+        .gridColor = RGB(0, 0, 0),
+        .brightness = 0.88,
+        .height = 0.38,
+        .scaleFactor = 0.91,
+        .ambientLight = 0.13,
+        .lightSourceX = -1.0,
+        .lightSourceY = -1.0
     };
 
     // Standard palette for WinDirStat

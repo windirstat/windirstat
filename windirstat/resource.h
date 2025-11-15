@@ -58,7 +58,7 @@
 #define IDC_TREECOL_OWNER               1013
 #define IDC_WAITFORCOMPLETION           1014
 #define IDC_TREECOL_FOLDERS             1015
-#define IDC_TREECOL_LASTCHANGE          1016
+#define IDC_TREECOL_LAST_CHANGE          1016
 #define IDC_TREECOL_ITEMS               1017
 #define IDC_SHOW_GRID                   1018
 #define IDC_TREECOL_FILES               1019

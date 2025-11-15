@@ -58,8 +58,8 @@ public:
         }
         catch (std::exception&)
         {
-            // caught from long running or cancelled
-            std::lock_guard lock(m_Mutex);
+            // Exception caught from a long-running task or cancellation
+            std::scoped_lock lock(m_Mutex);
             m_WorkersWaiting++;
             m_Waiting.notify_all();
         }
@@ -78,14 +78,14 @@ public:
     void Push(T const& value)
     {
         // Push another entry onto the queue
-        std::lock_guard lock(m_Mutex);
+        std::scoped_lock lock(m_Mutex);
         m_Queue.push_front(value);
         m_Pushed.notify_one();
     }
 
     T Pop()
     {
-        // Record the worker is m_Waiting for an item until
+        // Record that the worker is waiting for an item until
         // the queue has something in it and we are not suspended
         std::unique_lock lock(m_Mutex);
         m_WorkersWaiting++;
@@ -111,7 +111,7 @@ public:
 
     void PushIfNotQueued(T const& value)
     {
-        std::lock_guard lock(m_Mutex);
+        std::scoped_lock lock(m_Mutex);
         if (std::ranges::find(m_Queue, value) != m_Queue.end()) return;
         m_Queue.push_back(value);
         m_Pushed.notify_one();
@@ -188,7 +188,7 @@ public:
 
     void ResumeExecution()
     {
-        std::lock_guard lock(m_Mutex);
+        std::scoped_lock lock(m_Mutex);
         m_Suspended = false;
         m_Waiting.notify_all();
         m_Pushed.notify_all();
@@ -196,7 +196,7 @@ public:
 
     void ResetQueue(const int totalWorkerThreads, const bool clearQueue = true)
     {
-        std::lock_guard lock(m_Mutex);
+        std::scoped_lock lock(m_Mutex);
         m_WorkersWaiting = 0;
         m_Suspended = false;
         m_Started = false;

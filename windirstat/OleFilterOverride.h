@@ -48,7 +48,7 @@ public:
     void SetDefaultHandler(bool defaultHandler)
     {
         if (AfxGetThread() == nullptr) return;
-        std::lock_guard guard(m_Mutex);
+        std::scoped_lock guard(m_Mutex);
         m_RefCounter = (defaultHandler) ? (m_RefCounter - 1) : (m_RefCounter + 1);
         m_DefaultHandler = m_RefCounter == 0;
     }

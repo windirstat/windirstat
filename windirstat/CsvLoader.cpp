@@ -39,7 +39,7 @@ enum : std::uint8_t
     FIELD_SIZE_LOGICAL,
     FIELD_SIZE_PHYSICAL,
     FIELD_ATTRIBUTES,
-    FIELD_LASTCHANGE,
+    FIELD_LAST_CHANGE,
     FIELD_ATTRIBUTES_WDS,
     FIELD_OWNER,
     FIELD_COUNT
@@ -57,7 +57,7 @@ static void ParseHeaderLine(const std::vector<std::wstring>& header)
         { Localization::Lookup(IDS_COL_SIZE_LOGICAL), FIELD_SIZE_LOGICAL },
         { Localization::Lookup(IDS_COL_SIZE_PHYSICAL), FIELD_SIZE_PHYSICAL },
         { Localization::Lookup(IDS_COL_ATTRIBUTES), FIELD_ATTRIBUTES },
-        { Localization::Lookup(IDS_COL_LASTCHANGE), FIELD_LASTCHANGE },
+        { Localization::Lookup(IDS_COL_LAST_CHANGE), FIELD_LAST_CHANGE },
         { (Localization::Lookup(IDS_APP_TITLE) + L" " + Localization::Lookup(IDS_COL_ATTRIBUTES)), FIELD_ATTRIBUTES_WDS },
         { Localization::Lookup(IDS_COL_OWNER), FIELD_OWNER }
     };
@@ -177,7 +177,7 @@ CItem* LoadResults(const std::wstring & path)
         CItem* newitem = new CItem(
             type,
             displayName,
-            FromTimeString(fields[orderMap[FIELD_LASTCHANGE]]),
+            FromTimeString(fields[orderMap[FIELD_LAST_CHANGE]]),
             _wcstoui64(fields[orderMap[FIELD_SIZE_PHYSICAL]].c_str(), nullptr, 10),
             _wcstoui64(fields[orderMap[FIELD_SIZE_LOGICAL]].c_str(), nullptr, 10),
             wcstoul(fields[orderMap[FIELD_ATTRIBUTES]].c_str(), nullptr, 16),
@@ -264,7 +264,7 @@ bool SaveResults(const std::wstring& path, CItem * rootItem)
         Localization::Lookup(IDS_COL_SIZE_LOGICAL),
         Localization::Lookup(IDS_COL_SIZE_PHYSICAL),
         Localization::Lookup(IDS_COL_ATTRIBUTES),
-        Localization::Lookup(IDS_COL_LASTCHANGE),
+        Localization::Lookup(IDS_COL_LAST_CHANGE),
         Localization::Lookup(IDS_APP_TITLE) + L" " + Localization::Lookup(IDS_COL_ATTRIBUTES)
     };
     if (COptions::ShowColumnOwner)

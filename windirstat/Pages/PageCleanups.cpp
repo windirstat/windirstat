@@ -99,8 +99,8 @@ BOOL CPageCleanups::OnInitDialog()
 
     // Combobox data correspond to enum REFRESHPOLICY:
     m_CtlRefreshPolicy.AddString(Localization::Lookup(IDS_POLICY_NOREFRESH).c_str());
-    m_CtlRefreshPolicy.AddString(Localization::Lookup(IDS_POLICY_REFRESHTHISENTRY).c_str());
-    m_CtlRefreshPolicy.AddString(Localization::Lookup(IDS_POLICY_REFRESHPARENT).c_str());
+    m_CtlRefreshPolicy.AddString(Localization::Lookup(IDS_POLICY_REFRESH_ENTRY).c_str());
+    m_CtlRefreshPolicy.AddString(Localization::Lookup(IDS_POLICY_REFRESH_PARENT).c_str());
 
     for (size_t i = 0; i < COptions::UserDefinedCleanups.size(); i++)
     {

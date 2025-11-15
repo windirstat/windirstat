@@ -356,12 +356,12 @@ void CTreeMapView::Inactivate()
 {
     if (m_Bitmap.m_hObject == nullptr) return;
 
-    // Move the old bitmap to m_Dimmed
+    // Move the old bitmap to m_Dimmed for later dimmed display
     m_Dimmed.DeleteObject();
     m_Dimmed.Attach(m_Bitmap.Detach());
     m_DimmedSize = m_Size;
     
-    // Dim m_Inactive
+    // Dim m_Dimmed contents to indicate inactive/refresh state
     CClientDC dc(this);
     CDC dcmem;
     dcmem.CreateCompatibleDC(&dc);

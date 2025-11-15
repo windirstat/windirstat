@@ -37,7 +37,7 @@ const std::unordered_map<uint8_t, uint8_t> CItemTop::columnMap =
     { COL_ITEMTOP_NAME, COL_NAME },
     { COL_ITEMTOP_SIZE_LOGICAL, COL_SIZE_LOGICAL },
     { COL_ITEMTOP_SIZE_PHYSICAL, COL_SIZE_PHYSICAL },
-    { COL_ITEMTOP_LASTCHANGE, COL_LASTCHANGE }
+    { COL_ITEMTOP_LAST_CHANGE, COL_LAST_CHANGE }
 };
 
 bool CItemTop::DrawSubItem(const int subitem, CDC* pdc, const CRect rc, const UINT state, int* width, int* focusLeft)
@@ -115,7 +115,7 @@ void CItemTop::AddTopItemChild(CItemTop* child)
 {
     child->SetParent(this);
 
-    std::lock_guard guard(m_Protect);
+    std::scoped_lock guard(m_Protect);
     m_Children.push_back(child);
 
     if (IsVisible() && IsExpanded())
@@ -126,7 +126,7 @@ void CItemTop::AddTopItemChild(CItemTop* child)
 
 void CItemTop::RemoveTopItemChild(CItemTop* child)
 {
-    std::lock_guard guard(m_Protect);
+    std::scoped_lock guard(m_Protect);
     std::erase(m_Children, child);
 
     if (IsVisible())

@@ -76,12 +76,12 @@ void CPacman::Draw(CDC* pdc, const CRect& rect)
     const ULONGLONG now = GetTickCount64();
     if (m_Suspended)
     {
-        // Rebase time based if suspended
+        // Rebase time if suspended
         m_LastUpdate = now;
         m_LastDraw = now;
     }
 
-    // See if we should still consider ourselves movies
+    // See if we should still consider ourselves moving
     if (now - m_LastUpdate > HIDE_THRESHOLD) m_Moving = false;
 
     // Update position

@@ -170,7 +170,7 @@ constexpr auto NtfsReservedMax = 16;
 static constexpr auto& getMapBinRef(auto* mapArray, std::mutex* mutexArray, auto key, auto binSize, auto binMax)
 {
     const auto binIndex = (key / binSize) % binMax;
-    std::lock_guard<std::mutex> lock(mutexArray[binIndex]);
+    std::scoped_lock<std::mutex> lock(mutexArray[binIndex]);
     return mapArray[binIndex][key];
 }
 

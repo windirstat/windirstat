@@ -35,7 +35,7 @@ bool CFileTopControl::GetAscendingDefault(const int column)
 {
     return column == COL_ITEMTOP_SIZE_PHYSICAL ||
         column == COL_ITEMTOP_SIZE_LOGICAL ||
-        column == COL_ITEMTOP_LASTCHANGE;
+        column == COL_ITEMTOP_LAST_CHANGE;
 }
 
 BEGIN_MESSAGE_MAP(CFileTopControl, CTreeListControl)
@@ -51,7 +51,7 @@ void CFileTopControl::ProcessTop(CItem * item)
     // Do not process if we are not tracking large files
     if (COptions::LargeFileCount == 0) return;
 
-    std::lock_guard guard(m_SizeMutex);
+    std::scoped_lock guard(m_SizeMutex);
     m_QueuedSet.emplace_back(item);
 }
 

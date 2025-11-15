@@ -115,14 +115,13 @@ protected:
 };
 
 //
-// CDeadFocusWnd. The focus in Windirstat can be on
+// CDeadFocusWnd. The focus in WinDirStat can be on
 // - the directory list
 // - the extension list,
-// - or none of them. In this case the focus lies on
+// - or none of them. In that case the focus resides on
 //   an invisible (zero-size) child of CMainFrame.
-// On VK_TAB CDeadFocusWnd moves the focus to the
-// directory list then.
-//
+// Pressing VK_TAB while this window has focus moves focus to the
+// directory list.
 class CDeadFocusWnd final : public CWnd
 {
 public:
@@ -245,7 +244,6 @@ protected:
     afx_msg LRESULT OnTaskButtonCreated(WPARAM, LPARAM);
     afx_msg void OnSysColorChange();
     afx_msg LRESULT OnUahDrawMenu(WPARAM wParam, LPARAM lParam);
-    afx_msg LRESULT OnUahDrawMenuItem(WPARAM wParam, LPARAM lParam);
     afx_msg void OnNcPaint();
     afx_msg BOOL OnNcActivate(BOOL bActive);
 public:

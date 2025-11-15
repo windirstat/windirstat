@@ -211,73 +211,6 @@ HBRUSH DarkMode::GetDialogBackgroundBrush()
     return _darkModeEnabled ? darkBrush : GetSysColorBrush(COLOR_WINDOW);
 }
 
-void DarkMode::DrawMenuBar(const HWND hWnd, const UAHMENU* pUDM)
-{
-    if (!_darkModeEnabled) return;
-
-    MENUBARINFO mbi{};
-    mbi.cbSize = sizeof(MENUBARINFO);
-    GetMenuBarInfo(hWnd, OBJID_MENU, 0, &mbi);
-
-    RECT rcWindow{};
-    GetWindowRect(hWnd, &rcWindow);
-
-    // the rcBar is offset by the window rect
-    OffsetRect(&mbi.rcBar, -rcWindow.left, -rcWindow.top);
-    mbi.rcBar.top -= 1;
-
-    CDC::FromHandle(pUDM->hdc)->FillSolidRect(&mbi.rcBar, WdsSysColor(COLOR_MENUBAR));
-}
-
-void DarkMode::DrawMenuItem(const HWND hWnd, UAHDRAWMENUITEM* pUDMI)
-{
-    if (!_darkModeEnabled) return;
-
-    std::array<WCHAR, 256> menuString = { L'\0' };
-    MENUITEMINFO mii{ .cbSize = sizeof(MENUITEMINFO), .fMask = MIIM_STRING,
-        .dwTypeData = menuString.data(), .cch = static_cast<UINT>(menuString.size() - 1)};
-    GetMenuItemInfo(pUDMI->um.hmenu, pUDMI->iPosition, TRUE, &mii);
-
-    // Use structured bindings and lambda for state determination
-    auto [txtId, bgId] = [&]() -> std::pair<int, int>
-    {
-        const auto itemState = pUDMI->dis.itemState;
-
-        if (itemState & ODS_SELECTED)
-            return { MBI_PUSHED, MBI_PUSHED };
-        if (itemState & ODS_HOTLIGHT)
-            return { (itemState & ODS_INACTIVE) ? MBI_DISABLEDHOT : MBI_HOT, MBI_HOT };
-        if (itemState & (ODS_GRAYED | ODS_DISABLED | ODS_INACTIVE))
-            return { MBI_DISABLED, MBI_DISABLED };
-
-        return { MBI_NORMAL, MBI_NORMAL };
-    }();
-
-    DWORD dwFlags = DT_CENTER | DT_SINGLELINE | DT_VCENTER;
-    if (pUDMI->dis.itemState & ODS_NOACCEL)
-    {
-        dwFlags |= DT_HIDEPREFIX;
-    }
-
-    const COLORREF bgColor =
-        (bgId == MBI_PUSHED || bgId == MBI_DISABLEDPUSHED) ? WdsSysColor(COLOR_MENU) :
-        (bgId == MBI_HOT || bgId == MBI_DISABLEDHOT) ? WdsSysColor(COLOR_MENU) : WdsSysColor(COLOR_MENUBAR);
-
-    CDC::FromHandle(pUDMI->um.hdc)->FillSolidRect(&pUDMI->dis.rcItem, bgColor);
-
-    const COLORREF textColor =
-        (txtId == MBI_DISABLED || txtId == MBI_DISABLEDHOT || txtId == MBI_DISABLEDPUSHED) ?
-        WdsSysColor(COLOR_GRAYTEXT) : WdsSysColor(COLOR_BTNTEXT);
-
-    DTTOPTS dttopts{ .dwSize = sizeof(DTTOPTS) };
-    dttopts.dwFlags = DTT_TEXTCOLOR;
-    dttopts.crText = textColor;
-
-    const HTHEME menuTheme = OpenThemeData(hWnd, VSCLASS_MENU);
-    DrawThemeTextEx(menuTheme, pUDMI->um.hdc, MENU_BARITEM, txtId,
-        menuString.data(), mii.cch, dwFlags, &pUDMI->dis.rcItem, &dttopts);
-}
-
 void DarkMode::DrawMenuClientArea(CWnd& wnd)
 {
     if (!_darkModeEnabled) return;
@@ -304,6 +237,92 @@ void DarkMode::DrawMenuClientArea(CWnd& wnd)
 
     CWindowDC dc(&wnd);
     dc.FillSolidRect(&lineToPaint, WdsSysColor(COLOR_MENUBAR));
+}
+
+LRESULT DarkMode::HandleMenuMessage(const UINT message, const WPARAM wParam, const LPARAM lParam, const HWND hWnd)
+{
+    if (!_darkModeEnabled || lParam == NULL) return DefWindowProc(hWnd, message, wParam, lParam);
+
+    using UAHMENU = struct UAHMENU
+    {
+        HMENU hmenu;
+        HDC hdc;
+        DWORD dwFlags;
+    };
+
+    using UAHDRAWMENUITEM = struct UAHDRAWMENUITEM
+    {
+        DRAWITEMSTRUCT dis;
+        UAHMENU um;
+        int iPosition; // Abbreviated structure
+    };
+
+    if (message == WM_UAHDRAWMENU)
+    {
+        UAHMENU* pUDM = reinterpret_cast<UAHMENU*>(lParam);
+        MENUBARINFO mbi{};
+        mbi.cbSize = sizeof(MENUBARINFO);
+        GetMenuBarInfo(hWnd, OBJID_MENU, 0, &mbi);
+
+        RECT rcWindow{};
+        GetWindowRect(hWnd, &rcWindow);
+
+        // the rcBar is offset by the window rect
+        OffsetRect(&mbi.rcBar, -rcWindow.left, -rcWindow.top);
+        mbi.rcBar.top -= 1;
+
+        CDC::FromHandle(pUDM->hdc)->FillSolidRect(&mbi.rcBar, WdsSysColor(COLOR_MENUBAR));
+    }
+    else if (message == WM_UAHDRAWMENUITEM)
+    {
+        UAHDRAWMENUITEM* pUDMI = reinterpret_cast<UAHDRAWMENUITEM*>(lParam);
+
+        std::array<WCHAR, 256> menuString = { L'\0' };
+        MENUITEMINFO mii{ .cbSize = sizeof(MENUITEMINFO), .fMask = MIIM_STRING,
+            .dwTypeData = menuString.data(), .cch = static_cast<UINT>(menuString.size() - 1) };
+        GetMenuItemInfo(pUDMI->um.hmenu, pUDMI->iPosition, TRUE, &mii);
+
+        // Use structured bindings and lambda for state determination
+        auto [txtId, bgId] = [&]() -> std::pair<int, int>
+        {
+            const auto itemState = pUDMI->dis.itemState;
+
+            if (itemState & ODS_SELECTED)
+                return { MBI_PUSHED, MBI_PUSHED };
+            if (itemState & ODS_HOTLIGHT)
+                return { (itemState & ODS_INACTIVE) ? MBI_DISABLEDHOT : MBI_HOT, MBI_HOT };
+            if (itemState & (ODS_GRAYED | ODS_DISABLED | ODS_INACTIVE))
+                return { MBI_DISABLED, MBI_DISABLED };
+
+            return { MBI_NORMAL, MBI_NORMAL };
+        }();
+
+        DWORD dwFlags = DT_CENTER | DT_SINGLELINE | DT_VCENTER;
+        if (pUDMI->dis.itemState & ODS_NOACCEL)
+        {
+            dwFlags |= DT_HIDEPREFIX;
+        }
+
+        const COLORREF bgColor =
+            (bgId == MBI_PUSHED || bgId == MBI_DISABLEDPUSHED) ? WdsSysColor(COLOR_MENU) :
+            (bgId == MBI_HOT || bgId == MBI_DISABLEDHOT) ? WdsSysColor(COLOR_MENU) : WdsSysColor(COLOR_MENUBAR);
+
+        CDC::FromHandle(pUDMI->um.hdc)->FillSolidRect(&pUDMI->dis.rcItem, bgColor);
+
+        const COLORREF textColor =
+            (txtId == MBI_DISABLED || txtId == MBI_DISABLEDHOT || txtId == MBI_DISABLEDPUSHED) ?
+            WdsSysColor(COLOR_GRAYTEXT) : WdsSysColor(COLOR_BTNTEXT);
+
+        DTTOPTS dttopts{ .dwSize = sizeof(DTTOPTS) };
+        dttopts.dwFlags = DTT_TEXTCOLOR;
+        dttopts.crText = textColor;
+
+        const HTHEME menuTheme = OpenThemeData(hWnd, VSCLASS_MENU);
+        DrawThemeTextEx(menuTheme, pUDMI->um.hdc, MENU_BARITEM, txtId,
+            menuString.data(), mii.cch, dwFlags, &pUDMI->dis.rcItem, &dttopts);
+    }
+
+    return 1;
 }
 
 HICON DarkMode::LightenIcon(const HICON hIcon, const bool invert)

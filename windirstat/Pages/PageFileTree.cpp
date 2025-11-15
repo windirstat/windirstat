@@ -39,7 +39,7 @@ void CPageFileTree::DoDataExchange(CDataExchange* pDX)
     DDX_Check(pDX, IDC_TREECOL_ITEMS, m_ShowColumnItems);
     DDX_Check(pDX, IDC_TREECOL_FILES, m_ShowColumnFiles);
     DDX_Check(pDX, IDC_TREECOL_ATTRIBUTES, m_ShowColumnAttributes);
-    DDX_Check(pDX, IDC_TREECOL_LASTCHANGE, m_ShowColumnLastChange);
+    DDX_Check(pDX, IDC_TREECOL_LAST_CHANGE, m_ShowColumnLastChange);
     DDX_Check(pDX, IDC_TREECOL_OWNER, m_ShowColumnOwner);
     for (int i = 0; i < TREELISTCOLORCOUNT; i++)
     {
@@ -65,7 +65,7 @@ BEGIN_MESSAGE_MAP(CPageFileTree, CMFCPropertyPage)
     ON_BN_CLICKED(IDC_TREECOL_ITEMS, OnBnClickedSetModified)
     ON_BN_CLICKED(IDC_TREECOL_FILES, OnBnClickedSetModified)
     ON_BN_CLICKED(IDC_TREECOL_ATTRIBUTES, OnBnClickedSetModified)
-    ON_BN_CLICKED(IDC_TREECOL_LASTCHANGE, OnBnClickedSetModified)
+    ON_BN_CLICKED(IDC_TREECOL_LAST_CHANGE, OnBnClickedSetModified)
     ON_BN_CLICKED(IDC_TREECOL_OWNER, OnBnClickedSetModified)
     ON_BN_CLICKED(IDC_TREECOL_SIZE_LOGICAL, OnBnClickedSetModified)
     ON_BN_CLICKED(IDC_TREECOL_SIZE_PHYSICAL, OnBnClickedSetModified)

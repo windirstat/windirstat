@@ -29,28 +29,15 @@ public:
     static constexpr auto WM_UAHDRAWMENU = 0x0091;
     static constexpr auto WM_UAHDRAWMENUITEM = 0x0092;
 
-    using UAHMENU = struct
-    {
-        HMENU hmenu;
-        HDC hdc;
-        DWORD dwFlags;
-    };
-
-    using UAHDRAWMENUITEM = struct
-    {
-        DRAWITEMSTRUCT dis;
-        UAHMENU um;
-        int iPosition; // Abbreviated structure
-    };
-
     // Check if dark mode is supported on this system
     static bool IsDarkModeActive() noexcept;
     static COLORREF WdsSysColor(DWORD index);
 
     // Menu rendering functions
-    static void DrawMenuBar(HWND hWnd, const UAHMENU* pUDM);
-    static void DrawMenuItem(HWND hWnd, UAHDRAWMENUITEM* pUDMI);
     static void DrawMenuClientArea(CWnd& wnd);
+    
+    // Unified message handler for menu drawing messages
+    static LRESULT HandleMenuMessage(UINT message, WPARAM wParam, LPARAM lParam, HWND hWnd);
 
     // Enhanced dialog support functions
     static HBRUSH GetDialogBackgroundBrush();
@@ -68,7 +55,7 @@ private:
 
 
 //
-// CTabCtrlHelper. Used to setup tab control properties.
+// CTabCtrlHelper. Used to set up tab control properties.
 //
 class CTabCtrlHelper final : public CMFCTabCtrl
 {

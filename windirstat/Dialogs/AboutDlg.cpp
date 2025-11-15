@@ -91,20 +91,20 @@ void CAboutDlg::WdsTabControl::Initialize()
 
     // Create all three pages and add them as tabs
     AddTab(createText(m_TextAbout), Localization::Lookup(IDS_ABOUT_ABOUT).c_str(), TAB_ABOUT);
-    AddTab(createText(m_TextThanks), Localization::Lookup(IDS_ABOUT_THANKSTO).c_str(), TAB_THANKSTO);
-    AddTab(createText(m_TextLicense, ES_LEFT), Localization::Lookup(IDS_ABOUT_LICENSEAGREEMENT).c_str(), TAB_LICENSE);
+    AddTab(createText(m_TextThanks), Localization::Lookup(IDS_ABOUT_THANKS).c_str(), TAB_THANKSTO);
+    AddTab(createText(m_TextLicense, ES_LEFT), Localization::Lookup(IDS_ABOUT_LICENSE).c_str(), TAB_LICENSE);
 
     // Use monospace font for license page
     m_MonoFont.CreateFontW(12, 0, 0, 0, 0, 0, 0, 0, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
         CLIP_DEFAULT_PRECIS, CLEARTYPE_NATURAL_QUALITY, FF_MODERN, L"Consolas");
 
     // Populate text
-    const auto about = Localization::Format(IDS_ABOUT_ABOUTTEXTss,
+    const auto about = Localization::Format(IDS_ABOUT_ABOUT_TEXTss,
         Localization::LookupNeutral(IDS_AUTHOR_EMAIL),
         Localization::LookupNeutral(IDS_URL_WEBSITE));
     m_TextAbout.SetWindowText(about.c_str());
 
-    const auto thanks = Localization::Lookup(IDS_ABOUT_THANKSTOTEXT);
+    const auto thanks = Localization::Lookup(IDS_ABOUT_THANKS_TEXT);
     m_TextThanks.SetWindowText(thanks.c_str());
 
     const auto license = GetTextResource(IDR_LICENSE, nullptr);

@@ -383,7 +383,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
     ON_MESSAGE(WM_EXITSIZEMOVE, OnExitSizeMove)
     ON_MESSAGE(WM_CALLBACKUI, OnCallbackRequest)
     ON_MESSAGE(DarkMode::WM_UAHDRAWMENU, OnUahDrawMenu)
-    ON_MESSAGE(DarkMode::WM_UAHDRAWMENUITEM, OnUahDrawMenuItem)
+    ON_MESSAGE(DarkMode::WM_UAHDRAWMENUITEM, OnUahDrawMenu)
     ON_REGISTERED_MESSAGE(s_TaskBarMessage, OnTaskButtonCreated)
     ON_UPDATE_COMMAND_UI(ID_VIEW_SHOWFILETYPES, OnUpdateViewShowFileTypes)
     ON_UPDATE_COMMAND_UI(ID_VIEW_SHOWTREEMAP, OnUpdateViewShowTreeMap)
@@ -975,7 +975,7 @@ void CMainFrame::UpdateCleanupMenu(CMenu* menu) const
         info = Localization::Format(IDS_sITEMSs, FormatCount(items), FormatBytes(bytes));
     }
 
-    const std::wstring s = Localization::Lookup(IDS_EMPTYRECYCLEBIN) + info;
+    const std::wstring s = Localization::Lookup(IDS_EMPTY_RECYCLEBIN) + info;
     const UINT state = menu->GetMenuState(ID_CLEANUP_EMPTY_BIN, MF_BYCOMMAND);
     VERIFY(menu->ModifyMenu(ID_CLEANUP_EMPTY_BIN, MF_BYCOMMAND | MF_STRING, ID_CLEANUP_EMPTY_BIN, s.c_str()));
     menu->EnableMenuItem(ID_CLEANUP_EMPTY_BIN, state);
@@ -1297,26 +1297,7 @@ void CMainFrame::OnSysColorChange()
 
 LRESULT CMainFrame::OnUahDrawMenu(WPARAM wParam, LPARAM lParam)
 {
-    if (DarkMode::UAHMENU* pUDM = reinterpret_cast<DarkMode::UAHMENU*>(lParam);
-        pUDM && DarkMode::IsDarkModeActive())
-    {
-        DarkMode::DrawMenuBar(this->GetSafeHwnd(), pUDM);
-        return 1;
-    }
-
-    return DefWindowProc(DarkMode::WM_UAHDRAWMENU, wParam, lParam);
-}
-
-LRESULT CMainFrame::OnUahDrawMenuItem(WPARAM wParam, LPARAM lParam)
-{
-    if (DarkMode::UAHDRAWMENUITEM* pUDMI = reinterpret_cast<DarkMode::UAHDRAWMENUITEM*>(lParam);
-      pUDMI && DarkMode::IsDarkModeActive())
-    {
-         DarkMode::DrawMenuItem(m_hWnd, pUDMI);
-         return 1;
-    }
-
-    return DefWindowProcW(DarkMode::WM_UAHDRAWMENUITEM, wParam, lParam);
+    return DarkMode::HandleMenuMessage(GetCurrentMessage()->message, wParam, lParam, *this);
 }
 
 void CMainFrame::OnNcPaint()

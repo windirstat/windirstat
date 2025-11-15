@@ -97,23 +97,13 @@ CItem::~CItem()
     }
 }
 
-CRect CItem::TmiGetRectangle() const
-{
-    return tmiRect;
-}
-
-void CItem::TmiSetRectangle(const CRect& rc)
-{
-    tmiRect = rc;
-}
-
 bool CItem::DrawSubItem(const int subitem, CDC* pdc, CRect rc, const UINT state, int* width, int* focusLeft)
 {
     if (subitem == COL_NAME)
     {
         return CTreeListItem::DrawSubItem(subitem, pdc, rc, state, width, focusLeft);
     }
-    if (subitem != COL_SUBTREEPERCENTAGE)
+    if (subitem != COL_SUBTREE_PERCENTAGE)
     {
         return false;
     }
@@ -178,7 +168,7 @@ std::wstring CItem::GetText(const int subitem) const
         }
         break;
 
-    case COL_SUBTREEPERCENTAGE:
+    case COL_SUBTREE_PERCENTAGE:
         if (!IsDone())
         {
             if (GetReadJobs() == 1)
@@ -218,7 +208,7 @@ std::wstring CItem::GetText(const int subitem) const
         }
         break;
 
-    case COL_LASTCHANGE:
+    case COL_LAST_CHANGE:
         if (!IsType(IT_FREESPACE | IT_UNKNOWN))
         {
             return FormatFileTime(m_LastChange);
@@ -280,7 +270,7 @@ int CItem::CompareSibling(const CTreeListItem* tlib, const int subitem) const
             return signum(_wcsicmp(m_Name.get(), other->m_Name.get()));
         }
 
-        case COL_SUBTREEPERCENTAGE:
+        case COL_SUBTREE_PERCENTAGE:
         {
             if (MustShowReadJobs())
             {
@@ -322,7 +312,7 @@ int CItem::CompareSibling(const CTreeListItem* tlib, const int subitem) const
             return usignum(GetFoldersCount(), other->GetFoldersCount());
         }
 
-        case COL_LASTCHANGE:
+        case COL_LAST_CHANGE:
         {
             if (m_LastChange < other->m_LastChange)
             {
@@ -351,17 +341,6 @@ int CItem::CompareSibling(const CTreeListItem* tlib, const int subitem) const
             return 0;
         }
     }
-}
-
-int CItem::GetTreeListChildCount() const
-{
-    if (IsLeaf()) return 0;
-    return static_cast<int>(GetChildren().size());
-}
-
-CTreeListItem* CItem::GetTreeListChild(const int i) const
-{
-    return GetChildren()[i];
 }
 
 HICON CItem::GetIcon()
@@ -536,7 +515,7 @@ void CItem::AddChild(CItem* child, const bool addOnly)
 
     child->SetParent(this);
 
-    std::lock_guard guard(m_FolderInfo->m_Protect);
+    std::scoped_lock guard(m_FolderInfo->m_Protect);
     m_FolderInfo->m_Children.push_back(child);
 
     if (IsVisible() && IsExpanded())
@@ -550,7 +529,7 @@ void CItem::AddChild(CItem* child, const bool addOnly)
 
 void CItem::RemoveChild(CItem* child)
 {
-    std::lock_guard guard(m_FolderInfo->m_Protect);
+    std::scoped_lock guard(m_FolderInfo->m_Protect);
     std::erase(m_FolderInfo->m_Children, child);
 
     if (IsVisible())
@@ -577,7 +556,7 @@ void CItem::RemoveAllChildren()
         CFileTreeControl::Get()->OnRemovingAllChildren(this);
     });
 
-    std::lock_guard guard(m_FolderInfo->m_Protect);
+    std::scoped_lock guard(m_FolderInfo->m_Protect);
     for (const auto& child : m_FolderInfo->m_Children)
     {
         delete child;
@@ -988,7 +967,7 @@ void CItem::SortItemsBySizePhysical() const
     if (IsLeaf()) return;
 
     // sort by size for proper treemap rendering
-    std::lock_guard guard(m_FolderInfo->m_Protect);
+    std::scoped_lock guard(m_FolderInfo->m_Protect);
     m_FolderInfo->m_Children.shrink_to_fit();
     std::ranges::sort(m_FolderInfo->m_Children, [](auto item1, auto item2)
         {
@@ -1001,7 +980,7 @@ void CItem::SortItemsBySizeLogical() const
     if (IsLeaf()) return;
     
     // sort by size for proper treemap rendering
-    std::lock_guard guard(m_FolderInfo->m_Protect);
+    std::scoped_lock guard(m_FolderInfo->m_Protect);
     m_FolderInfo->m_Children.shrink_to_fit();
     std::ranges::sort(m_FolderInfo->m_Children, [](auto item1, auto item2)
     {
@@ -1477,7 +1456,7 @@ std::vector<BYTE> CItem::GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CIte
     thread_local SmartPointer<BCRYPT_HASH_HANDLE> HashHandle(BCryptDestroyHash);
 
     // Initialize shared structures
-    if (m_HashLength == 0) if (std::lock_guard guard(m_HashMutex); m_HashLength == 0)
+    if (m_HashLength == 0) if (std::scoped_lock guard(m_HashMutex); m_HashLength == 0)
     {
         DWORD ResultLength = 0;
         if (BCryptOpenAlgorithmProvider(&m_HashAlgHandle, BCRYPT_SHA512_ALGORITHM, MS_PRIMITIVE_PROVIDER, BCRYPT_HASH_REUSABLE_FLAG) != 0 ||

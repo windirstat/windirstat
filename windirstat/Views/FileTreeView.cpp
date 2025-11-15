@@ -67,7 +67,7 @@ void CFileTreeView::CreateColumns(const bool all)
     {
         // Columns should be in enumeration order so initial sort will work
         m_Control.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_NAME).c_str(), LVCFMT_LEFT, 250, COL_NAME);
-        m_Control.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_SUBTREEPERCENTAGE).c_str(), LVCFMT_RIGHT, CItem::GetSubtreePercentageWidth() + 30, COL_SUBTREEPERCENTAGE);
+        m_Control.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_SUBTREE_PERCENTAGE).c_str(), LVCFMT_RIGHT, CItem::GetSubtreePercentageWidth() + 30, COL_SUBTREE_PERCENTAGE);
         m_Control.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_PERCENTAGE).c_str(), LVCFMT_RIGHT, 90, COL_PERCENTAGE);
     }
 
@@ -88,7 +88,7 @@ void CFileTreeView::CreateColumns(const bool all)
     if (COptions::ShowColumnFolders)
         m_Control.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_FOLDERS).c_str(), LVCFMT_RIGHT, 90, COL_FOLDERS);
     if (COptions::ShowColumnLastChange)
-        m_Control.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_LASTCHANGE).c_str(), LVCFMT_LEFT, 120, COL_LASTCHANGE);
+        m_Control.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_LAST_CHANGE).c_str(), LVCFMT_LEFT, 120, COL_LAST_CHANGE);
     if (COptions::ShowColumnAttributes)
         m_Control.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_ATTRIBUTES).c_str(), LVCFMT_LEFT, 90, COL_ATTRIBUTES);
     if (COptions::ShowColumnOwner)
