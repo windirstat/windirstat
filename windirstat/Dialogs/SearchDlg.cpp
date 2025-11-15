@@ -94,14 +94,14 @@ void SearchDlg::OnBnClickedOk()
     COptions::SearchCase = (FALSE != m_SearchCase);
     COptions::SearchRegex = (FALSE != m_SearchRegex);
 
+    CLayoutDialogEx::OnOK();
+
     // Process search request
     CFileSearchControl::Get()->ProcessSearch(CDirStatDoc::GetDocument()->GetRootItem());
 
     // Switch focus to search results
     const auto tabbedView = CMainFrame::Get()->GetFileTabbedView();
     tabbedView->SetActiveSearchView();
-
-    CLayoutDialogEx::OnOK();
 }
 
 void SearchDlg::OnChangeSearchTerm()
