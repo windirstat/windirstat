@@ -567,36 +567,38 @@ bool CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, const bo
 
     CModalApiShuttle msa([&items, toTrashBin]
     {
+        // Determine flags to use for deletion
+        auto flags = FOF_NOCONFIRMATION | FOFX_SHOWELEVATIONPROMPT | FOF_NOERRORUI;
+        if (toTrashBin)
+        {
+            flags |= (IsWindows8OrGreater() ? (FOFX_ADDUNDORECORD | FOFX_RECYCLEONDELETE) : FOF_ALLOWUNDO);
+        }
+
+        CComPtr<IFileOperation> fileOperation;
+        if (FAILED(::CoCreateInstance(CLSID_FileOperation, nullptr, CLSCTX_ALL, IID_PPV_ARGS(&fileOperation))) ||
+            FAILED(fileOperation->SetOperationFlags(flags)))
+        {
+            return;
+        }
+
+        // Add all items into a single deletion operation
         for (const auto& item : items)
         {
-            // Determine flags to use for deletion
-            auto flags = FOF_NOCONFIRMATION | FOFX_SHOWELEVATIONPROMPT | FOF_NOERRORUI;
-            if (toTrashBin)
-            {
-                flags |= (IsWindows8OrGreater() ? (FOFX_ADDUNDORECORD | FOFX_RECYCLEONDELETE) : FOF_ALLOWUNDO);
-            }
-
-            // Do deletion operation
+            CComPtr<IShellItem> shellitem;
             SmartPointer<LPITEMIDLIST> pidl(CoTaskMemFree, ILCreateFromPath(item->GetPath().c_str()));
-            CComPtr<IShellItem> shellitem = nullptr;
-            if (SHCreateItemFromIDList(pidl, IID_PPV_ARGS(&shellitem)) != S_OK) continue;
+            if (pidl == nullptr || FAILED(SHCreateItemFromIDList(pidl, IID_PPV_ARGS(&shellitem)))) continue;
+            fileOperation->DeleteItem(shellitem, nullptr);
+        }
 
-            CComPtr<IFileOperation> fileOperation;
-            if (FAILED(::CoCreateInstance(CLSID_FileOperation, nullptr, CLSCTX_ALL, IID_PPV_ARGS(&fileOperation))) ||
-                FAILED(fileOperation->SetOperationFlags(flags)) ||
-                FAILED(fileOperation->DeleteItem(shellitem, nullptr)) ||
-                FAILED(fileOperation->PerformOperations()))
-            {
-                continue;
-            }
+        // Do all deletions
+        fileOperation->PerformOperations();
 
-            // Re-run deletion using native function to handle any long paths that were missed
-            if (!toTrashBin)
-            {
-                std::wstring path = FinderBasic::MakeLongPathCompatible(item->GetPath());
-                std::error_code ec;
-                remove_all(std::filesystem::path(path.data()), ec);
-            }
+        // Re-run deletion using native function to handle any long paths that were missed
+        if (!toTrashBin) for (const auto& item : items)
+        {
+            std::wstring path = FinderBasic::MakeLongPathCompatible(item->GetPath());
+            std::error_code ec;
+            remove_all(std::filesystem::path(path.data()), ec);
         }
     });
     msa.DoModal();
