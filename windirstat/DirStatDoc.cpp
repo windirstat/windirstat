@@ -885,7 +885,7 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
         { ID_CLEANUP_DISM_NORMAL,     { true,  true,  false, LF_NONE,     IT_ANY, isElevationAvailable } },
         { ID_CLEANUP_DISM_RESET,      { true,  true,  false, LF_NONE,     IT_ANY, isElevationAvailable } },
         { ID_CLEANUP_EMPTY_BIN,       { true,  true,  false, LF_NONE,     IT_ANY } },
-        { ID_CLEANUP_EMPTY_FOLDER,    { true,  false, false, LF_NONE,     IT_DIRECTORY, notRoot } },
+        { ID_CLEANUP_EMPTY_FOLDER,    { true,  true,  false, LF_NONE,     IT_DIRECTORY, notRoot } },
         { ID_CLEANUP_REMOVE_SHADOW,   { true,  true,  false, LF_NONE,     IT_ANY, isElevated } },
         { ID_CLEANUP_EXPLORER_SELECT, { false, true,  true,  LF_NONE,     IT_DIRECTORY | IT_FILE } },
         { ID_CLEANUP_HIBERNATE,       { true,  true,  false, LF_NONE,     IT_ANY, isHibernate } },
