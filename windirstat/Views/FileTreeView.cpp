@@ -119,7 +119,7 @@ int CFileTreeView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
 
 BOOL CFileTreeView::OnEraseBkgnd(CDC* /*pDC*/)
 {
-    return true;
+    return TRUE;
 }
 
 void CFileTreeView::OnSetFocus(CWnd* /*pOldWnd*/)

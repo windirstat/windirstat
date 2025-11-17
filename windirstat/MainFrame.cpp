@@ -1286,13 +1286,9 @@ void CMainFrame::OnSysColorChange()
     GetFileTreeView()->SysColorChanged();
     GetExtensionView()->SysColorChanged();
 
-    // Redraw splitter windows
-    m_Splitter.Invalidate();
-    m_SubSplitter.Invalidate();
-
     // Redraw menus for dark mode
     DarkMode::SetAppDarkMode();
-    DrawMenuBar();
+    RedrawWindow();
 }
 
 LRESULT CMainFrame::OnUahDrawMenu(WPARAM wParam, LPARAM lParam)

@@ -49,8 +49,6 @@ private:
 
         DECLARE_MESSAGE_MAP()
         afx_msg void OnPaint();
-
-    public:
         afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
     };
 

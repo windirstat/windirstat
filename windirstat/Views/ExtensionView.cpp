@@ -175,3 +175,8 @@ void CExtensionView::OnSetFocus(CWnd* /*pOldWnd*/)
 {
     m_ExtensionListControl.SetFocus();
 }
+
+BOOL CExtensionView::OnEraseBkgnd(CDC* /*pDC*/)
+{
+    return TRUE;
+}
