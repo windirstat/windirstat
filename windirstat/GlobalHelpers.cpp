@@ -22,6 +22,7 @@
 #include "Options.h"
 #include "Localization.h"
 #include "FinderBasic.h"
+#include "MessageBoxDlg.h"
 
 #include <array>
 #include <algorithm>
@@ -779,7 +780,7 @@ std::wstring GetVolumePathNameEx(const std::wstring & path)
 
 void DisplayError(const std::wstring& error)
 {
-    AfxMessageBox(error.c_str(), MB_OK | MB_ICONERROR);
+    WdsMessageBox(error.c_str(), MB_OK | MB_ICONERROR);
 }
 
 std::wstring TranslateError(const HRESULT hr)

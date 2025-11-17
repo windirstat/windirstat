@@ -1301,11 +1301,13 @@ void CDirStatDoc::OnCleanupEmptyFolder()
     for (const auto& select : selectedItems)
     {
         // confirm user wishes to proceed
-        if (AfxMessageBox(Localization::Format(IDS_EMPTY_FOLDER_WARNINGs,
+        if (WdsMessageBox(Localization::Format(IDS_EMPTY_FOLDER_WARNINGs,
             select->GetPath()).c_str(), MB_YESNO) == IDYES)
         {
-            // delete all children
-            DeletePhysicalItems(select->GetChildren(), false, true, false);
+            CProgressDlg([&](const std::atomic<bool>&, std::atomic<size_t>&)
+            {
+                DeletePhysicalItems(select->GetChildren(), false, true, false);
+            }).DoModal();
         }
     }
 

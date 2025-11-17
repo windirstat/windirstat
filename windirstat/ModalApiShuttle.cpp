@@ -18,6 +18,7 @@
 #include "stdafx.h"
 #include "WinDirStat.h"
 #include "ModalApiShuttle.h"
+#include "MainFrame.h"
 
 #include <functional>
 
@@ -40,7 +41,7 @@ BOOL CModalApiShuttle::OnInitDialog()
     CDialogEx::OnInitDialog();
 
     CRect rc;
-    AfxGetMainWnd()->GetWindowRect(rc);
+    CMainFrame::Get()->GetWindowRect(rc);
     rc.right  = rc.left;
     rc.bottom = rc.top;
 
