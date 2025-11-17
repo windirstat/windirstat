@@ -846,11 +846,7 @@ std::wstring GetBaseNameFromPath(const std::wstring& path)
 {
     std::wstring s = path;
     const auto i = s.find_last_of(wds::chrBackslash);
-    if (i == std::wstring::npos)
-    {
-        return s;
-    }
-    return s.substr(i + 1);
+    return i == std::wstring::npos ? s : s.substr(i + 1);
 }
 
 std::wstring GetAppFileName(const std::wstring& ext)

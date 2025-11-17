@@ -565,7 +565,7 @@ bool CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, const bo
         COptions::ShowDeleteWarning = !warning.IsCheckboxChecked();
     }
 
-    CModalApiShuttle msa([&items, toTrashBin]
+    CModalApiShuttle([&items, toTrashBin]
     {
         // Determine flags to use for deletion
         auto flags = FOF_NOCONFIRMATION | FOFX_SHOWELEVATIONPROMPT | FOF_NOERRORUI;
@@ -600,8 +600,7 @@ bool CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, const bo
             std::error_code ec;
             remove_all(std::filesystem::path(path.data()), ec);
         }
-    });
-    msa.DoModal();
+    }).DoModal();
 
     // Create a list of items and recycler directories to refresh
     std::vector<CItem*> refresh;
