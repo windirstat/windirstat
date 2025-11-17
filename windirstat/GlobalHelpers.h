@@ -20,6 +20,7 @@
 #include "stdafx.h"
 
 #include <string>
+#include <atomic>
 #include <functional>
 
 constexpr auto CONTENT_MENU_MINCMD = 0x1ul;
@@ -104,6 +105,9 @@ std::wstring GetAppFolder();
 std::wstring GetNameFromSid(PSID sid);
 std::wstring PromptForFolder(HWND hwnd = nullptr, const std::wstring& initialFolder = {});
 std::wstring ComputeFileHashes(const std::wstring& filePath);
+void QueryShadowCopies(ULONGLONG& count, ULONGLONG& bytesUsed);
+void RemoveWmiInstances(const std::wstring& wmiClass, std::atomic<size_t> & progress,
+    const std::atomic<bool>& cancelRequested, const std::wstring& whereClause = L"__PATH IS NOT NULL");
 
 using CSmallRect = struct CSmallRect
 {

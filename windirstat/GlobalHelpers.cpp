@@ -31,9 +31,90 @@
 
 #pragma comment(lib,"powrprof.lib")
 #pragma comment(lib,"ntdll.lib")
+#pragma comment(lib,"wbemuuid.lib")
 
 EXTERN_C NTSTATUS NTAPI RtlDecompressBuffer(USHORT CompressionFormat, PUCHAR UncompressedBuffer, ULONG  UncompressedBufferSize,
     PUCHAR CompressedBuffer, ULONG  CompressedBufferSize, PULONG FinalUncompressedSize);
+
+static HRESULT WmiConnect(CComPtr<IWbemServices>& pSvc)
+{
+    if (thread_local bool comInit = false; !comInit)
+    {
+        const HRESULT result = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
+        if (FAILED(result) && result != RPC_E_CHANGED_MODE) return result;
+        comInit = true;
+    }
+
+    CComPtr<IWbemLocator> locObj;
+    return SUCCEEDED(CoCreateInstance(CLSID_WbemLocator, 0, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&locObj))) &&
+        SUCCEEDED(locObj->ConnectServer(CComBSTR(L"ROOT\\CIMV2"), nullptr, nullptr, nullptr, 0, nullptr, nullptr, &pSvc)) &&
+        SUCCEEDED(CoSetProxyBlanket(pSvc, RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE, nullptr,
+            RPC_C_AUTHN_LEVEL_CALL, RPC_C_IMP_LEVEL_IMPERSONATE, nullptr, EOAC_NONE)) ? S_OK : E_FAIL;
+}
+
+void QueryShadowCopies(ULONGLONG& count, ULONGLONG& bytesUsed)
+{
+    count = 0;
+    bytesUsed = 0;
+    CComPtr<IWbemServices> svcObj;
+    CComPtr<IEnumWbemClassObject> enumObj;
+    if (FAILED(WmiConnect(svcObj)) ||
+        FAILED(svcObj->ExecQuery(CComBSTR(L"WQL"), CComBSTR(L"SELECT UsedSpace FROM Win32_ShadowStorage"),
+            WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY, nullptr, &enumObj))) return;
+
+    // Sum up all used space
+    while (true)
+    {
+        ULONG uRet;
+        CComPtr<IWbemClassObject> pObj;
+        if (enumObj->Next(WBEM_INFINITE, 1, &pObj, &uRet) != WBEM_S_NO_ERROR && uRet == 0) break;
+
+        CComVariant usedStr, usedString;
+        if (SUCCEEDED(pObj->Get(L"UsedSpace", 0, &usedStr, nullptr, nullptr)) &&
+            SUCCEEDED(VariantChangeType(&usedString, &usedStr, 0, VT_UI8)))
+            bytesUsed += usedString.ullVal;
+    }
+
+    // Count existing shadow copies
+    enumObj.Release();
+    if (SUCCEEDED(svcObj->ExecQuery(CComBSTR(L"WQL"), CComBSTR(L"SELECT ID FROM Win32_ShadowCopy"),
+        WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY, nullptr, &enumObj)))
+    {
+        for (;; ++count)
+        {
+            ULONG ret;
+            CComPtr<IWbemClassObject> pObj;
+            if (enumObj->Next(WBEM_INFINITE, 1, &pObj, &ret) != WBEM_S_NO_ERROR && ret == 0) break;
+        }
+    }
+}
+
+void RemoveWmiInstances(const std::wstring& wmiClass, std::atomic<size_t>& progress, const std::atomic<bool>& cancelRequested, const std::wstring& whereClause)
+{
+    CComPtr<IWbemServices> svcObj;
+    CComPtr<IWbemClassObject> classObj;
+    CComPtr<IEnumWbemClassObject> enumObj;
+    if (FAILED(WmiConnect(svcObj)) || !svcObj ||
+        FAILED(svcObj->GetObject(CComBSTR(wmiClass.c_str()), 0, nullptr, &classObj, nullptr)) || !classObj ||
+        FAILED(svcObj->ExecQuery(CComBSTR(L"WQL"), CComBSTR(std::format(L"SELECT __PATH FROM {} WHERE {}", wmiClass, whereClause).c_str()),
+            WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY, nullptr, &enumObj)))
+    {
+        return;
+    }
+
+    for (; cancelRequested == false; ++progress)
+    {
+        ULONG uRet;
+        CComPtr<IWbemClassObject> pObj;
+        if (enumObj->Next(WBEM_INFINITE, 1, &pObj, &uRet) != WBEM_S_NO_ERROR || uRet == 0) break;
+
+        CComVariant vtPath;
+        if (SUCCEEDED(pObj->Get(L"__PATH", 0, &vtPath, nullptr, nullptr)) && vtPath.vt == VT_BSTR)
+        {
+            svcObj->DeleteInstance(vtPath.bstrVal, 0, nullptr, nullptr);
+        }
+    }
+}
 
 static std::wstring FormatLongLongNormal(ULONGLONG n)
 {

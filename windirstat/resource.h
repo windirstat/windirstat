@@ -204,6 +204,7 @@
 #define ID_CLEANUP_DISM_NORMAL          32817
 #define ID_CLEANUP_DISM_RESET           32818
 #define ID_CLEANUP_REMOVE_ROAMING       32819
+#define ID_CLEANUP_REMOVE_LOCAL         32833
 #define ID_CLEANUP_OPEN_IN_PWSH         32820
 #define ID_INDICATOR_DISK               32821
 #define ID_INDICATOR_MEM                32822
@@ -216,7 +217,7 @@
 #define ID_VIEW_DUPLICATE_FILES         32829
 #define ID_VIEW_SEARCH_RESULTS          32830
 #define ID_COMPUTE_HASH                 32832
-#define ID_Menu                         32833
+#define ID_CLEANUP_REMOVE_SHADOW        32834
 #define IDS_AUTHOR_EMAIL                57345
 #define IDS_URL_WEBSITE                 57346
 #define IDS_URL_HELP                    57347

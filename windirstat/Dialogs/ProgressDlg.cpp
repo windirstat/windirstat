@@ -25,9 +25,9 @@
 
 IMPLEMENT_DYNAMIC(CProgressDlg, CDialogEx)
 
-CProgressDlg::CProgressDlg(std::function<void(std::atomic<bool>&, std::atomic<size_t>&, std::atomic<size_t>&)> task,
-    CWnd* pParent)
+CProgressDlg::CProgressDlg(std::function<void(std::atomic<bool>&, std::atomic<size_t>&)> task, const size_t total, CWnd* pParent)
     : CDialogEx(IDD, pParent)
+    , m_Total(total)
     , m_Message(Localization::Lookup(IDS_PROGRESS))
     , m_Task(std::move(task))
 {
@@ -59,14 +59,23 @@ BOOL CProgressDlg::OnInitDialog()
     m_MessageCtrl.SetWindowText(m_Message.c_str());
 
     // Configure progress bar
-    m_ProgressCtrl.SetRange(0, 100);
-    m_ProgressCtrl.SetPos(0);
+    if (m_Total > 0)
+    {
+        m_ProgressCtrl.SetRange(0, 100);
+        m_ProgressCtrl.SetPos(0);
+
+        // Start timer for progress updates
+        SetTimer(TIMER_ID, TIMER_INTERVAL, nullptr);
+    }
+    else
+    {
+        m_ProgressCtrl.ModifyStyle(0, PBS_MARQUEE);
+        m_ProgressCtrl.SetMarquee(TRUE, 30);
+    }
 
     // Center dialog
     CenterWindow();
 
-    // Start timer for progress updates
-    SetTimer(TIMER_ID, TIMER_INTERVAL, nullptr);
 
     // Start worker thread
     StartWorkerThread();
@@ -79,7 +88,7 @@ void CProgressDlg::StartWorkerThread()
     m_WorkerThread = new std::thread([this]()
     {
         // Execute the task
-        m_Task(m_CancelRequested, m_Current, m_Total);
+        m_Task(m_CancelRequested, m_Current);
         
         // Post message to close dialog when complete
         if (!m_CancelRequested)
@@ -91,24 +100,13 @@ void CProgressDlg::StartWorkerThread()
 
 void CProgressDlg::UpdateProgress()
 {
-    const size_t total = m_Total;
-    const size_t current = m_Current;
+    const int percent = static_cast<int>((m_Current.load() * 100) / m_Total);
+    m_ProgressCtrl.SetPos(percent);
 
-    if (total > 0)
-    {
-        const int percent = static_cast<int>((current * 100) / total);
-        m_ProgressCtrl.SetPos(percent);
-
-        // Update message with progress
-        const std::wstring progressText = std::format(L"{}: {} / {}",
-            m_Message, current, total);
-        m_MessageCtrl.SetWindowText(progressText.c_str());
-    }
-    else
-    {
-        // Indeterminate progress - marquee style
-        m_ProgressCtrl.SetPos(0);
-    }
+    // Update message with progress
+    const std::wstring progressText = std::format(L"{}: {} / {}",
+        m_Message, m_Current.load(), m_Total);
+    m_MessageCtrl.SetWindowText(progressText.c_str());
 }
 
 void CProgressDlg::OnTimer(UINT_PTR nIDEvent)

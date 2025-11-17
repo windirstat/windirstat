@@ -961,24 +961,24 @@ void CMainFrame::OnInitMenuPopup(CMenu* pPopupMenu, const UINT nIndex, const BOO
 
 void CMainFrame::UpdateCleanupMenu(CMenu* menu) const
 {
-    ULONGLONG items;
-    ULONGLONG bytes;
-    QueryRecycleBin(items, bytes);
+    struct { void (*queryFunc)(ULONGLONG&, ULONGLONG&); UINT menuId; LPCWSTR prefix; } menuItems[] = {
+        { QueryRecycleBin, ID_CLEANUP_EMPTY_BIN, IDS_EMPTY_RECYCLEBIN.data() },
+        { QueryShadowCopies, ID_CLEANUP_REMOVE_SHADOW, IDS_MENU_REMOVE_SHADOW.data() }
+    };
 
-    std::wstring info;
-    if (items == 1)
+    for (const auto& [queryFunc, menuId, prefix] : menuItems)
     {
-        info = Localization::Format(IDS_ONEITEMs, FormatBytes(bytes));
-    }
-    else
-    {
-        info = Localization::Format(IDS_sITEMSs, FormatCount(items), FormatBytes(bytes));
-    }
+        ULONGLONG count, bytes;
+        queryFunc(count, bytes);
 
-    const std::wstring s = Localization::Lookup(IDS_EMPTY_RECYCLEBIN) + info;
-    const UINT state = menu->GetMenuState(ID_CLEANUP_EMPTY_BIN, MF_BYCOMMAND);
-    VERIFY(menu->ModifyMenu(ID_CLEANUP_EMPTY_BIN, MF_BYCOMMAND | MF_STRING, ID_CLEANUP_EMPTY_BIN, s.c_str()));
-    menu->EnableMenuItem(ID_CLEANUP_EMPTY_BIN, state);
+        const std::wstring label = Localization::Lookup(prefix) + ((count == 1) ?
+            Localization::Format(IDS_ONEITEMs, FormatBytes(bytes)) :
+            Localization::Format(IDS_sITEMSs, FormatCount(count), FormatBytes(bytes)));
+
+        const UINT state = menu->GetMenuState(menuId, MF_BYCOMMAND);
+        VERIFY(menu->ModifyMenu(menuId, MF_BYCOMMAND | MF_STRING, menuId, label.c_str()));
+        menu->EnableMenuItem(menuId, state);
+    }
 
     UpdateDynamicMenuItems(menu);
 }

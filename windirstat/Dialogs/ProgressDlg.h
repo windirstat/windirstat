@@ -34,8 +34,8 @@ class CProgressDlg final : public CDialogEx
     DECLARE_DYNAMIC(CProgressDlg)
 
 public:
-    CProgressDlg(std::function<void(std::atomic<bool>&, std::atomic<size_t>&, std::atomic<size_t>&)> task,
-                 CWnd* pParent = nullptr);
+    CProgressDlg(std::function<void(std::atomic<bool>&, std::atomic<size_t>&)> task,
+                 size_t total = 0, CWnd* pParent = AfxGetMainWnd());
     ~CProgressDlg() override = default;
 
     INT_PTR DoModal() override;
@@ -57,16 +57,16 @@ private:
     void StartWorkerThread();
 
     std::wstring m_Message;
-    std::function<void(std::atomic<bool>&, std::atomic<size_t>&, std::atomic<size_t>&)> m_Task;
+    std::function<void(std::atomic<bool>&, std::atomic<size_t>&)> m_Task;
     
     CStatic m_MessageCtrl;
     CProgressCtrl m_ProgressCtrl;
     CButton m_CancelButton;
 
-    std::atomic<bool> m_CancelRequested{ false };
-    std::atomic<size_t> m_Current{ 0 };
-    std::atomic<size_t> m_Total{ 0 };
-    bool m_Cancelled{ false };
+    std::atomic<bool> m_CancelRequested = false;
+    std::atomic<size_t> m_Current = 0;
+    size_t m_Total = 0;
+    bool m_Cancelled = false;
 
     std::thread* m_WorkerThread{ nullptr };
     static constexpr UINT_PTR TIMER_ID = 1;

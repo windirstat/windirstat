@@ -865,12 +865,14 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
     static auto doc = this;
     static bool (*canZoomOut)(CItem*) = [](CItem*) { return doc->GetZoomItem() != doc->GetRootItem(); };
     static bool (*parentNotNull)(CItem*) = [](CItem* item) { return item != nullptr && item->GetParent() != nullptr; };
-    static bool (*reslectAvail)(CItem*) = [](CItem*) { return doc->IsReselectChildAvailable(); };
+    static bool (*reselectAvail)(CItem*) = [](CItem*) { return doc->IsReselectChildAvailable(); };
     static bool (*notRoot)(CItem*) = [](CItem* item) { return item != nullptr && !item->IsRootItem(); };
     static bool (*isResumable)(CItem*) = [](CItem*) { return CMainFrame::Get()->IsScanSuspended(); };
     static bool (*isSuspendable)(CItem*) = [](CItem*) { return doc->HasRootItem() && !doc->IsRootDone() && !CMainFrame::Get()->IsScanSuspended(); };
     static bool (*isStoppable)(CItem*) = [](CItem*) { return doc->HasRootItem() && !doc->IsRootDone(); };
     static bool (*isHibernate)(CItem*) = [](CItem*) { return IsElevationActive() && IsHibernateEnabled(); };
+    static bool (*isElevated)(CItem*) = [](CItem*) { return IsElevationActive(); };
+    static bool (*isElevationAvailable)(CItem*) = [](CItem*) { return IsElevationActive(); };
 
     static std::unordered_map<UINT, const commandFilter> filters
     {
@@ -878,18 +880,20 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
         { ID_CLEANUP_DELETE,          { false, true,  false, LF_NONE,     IT_DIRECTORY | IT_FILE, notRoot } },
         { ID_CLEANUP_DELETE_BIN,      { false, true,  false, LF_NONE,     IT_DIRECTORY | IT_FILE, notRoot } },
         { ID_COMPUTE_HASH,            { false, false, false, LF_NONE,     IT_FILE } },
-        { ID_CLEANUP_DISK_CLEANUP  ,  { true,  true,  false, LF_NONE,     IT_ANY } },
-        { ID_CLEANUP_DISM_NORMAL,     { true,  true,  false, LF_NONE,     IT_ANY } },
-        { ID_CLEANUP_DISM_RESET,      { true,  true,  false, LF_NONE,     IT_ANY } },
+        { ID_CLEANUP_DISK_CLEANUP  ,  { true,  true,  false, LF_NONE,     IT_ANY, isElevationAvailable } },
+        { ID_CLEANUP_DISM_NORMAL,     { true,  true,  false, LF_NONE,     IT_ANY, isElevationAvailable } },
+        { ID_CLEANUP_DISM_RESET,      { true,  true,  false, LF_NONE,     IT_ANY, isElevationAvailable } },
         { ID_CLEANUP_EMPTY_BIN,       { true,  true,  false, LF_NONE,     IT_ANY } },
         { ID_CLEANUP_EMPTY_FOLDER,    { true,  false, false, LF_NONE,     IT_DIRECTORY, notRoot } },
+        { ID_CLEANUP_REMOVE_SHADOW,   { true,  true,  false, LF_NONE,     IT_ANY, isElevated } },
         { ID_CLEANUP_EXPLORER_SELECT, { false, true,  true,  LF_NONE,     IT_DIRECTORY | IT_FILE } },
         { ID_CLEANUP_HIBERNATE,       { true,  true,  false, LF_NONE,     IT_ANY, isHibernate } },
         { ID_CLEANUP_OPEN_IN_CONSOLE, { false, true,  true,  LF_NONE,     IT_DRIVE | IT_DIRECTORY | IT_FILE } },
         { ID_CLEANUP_OPEN_IN_PWSH,    { false, true,  true,  LF_NONE,     IT_DRIVE | IT_DIRECTORY | IT_FILE } },
         { ID_CLEANUP_OPEN_SELECTED,   { false, true,  true,  LF_NONE,     IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY | IT_FILE } },
         { ID_CLEANUP_PROPERTIES,      { false, true,  true,  LF_NONE,     IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY | IT_FILE } },
-        { ID_CLEANUP_REMOVE_ROAMING,  { true,  true,  false, LF_NONE,     IT_ANY } },
+        { ID_CLEANUP_REMOVE_ROAMING,  { true,  true,  false, LF_NONE,     IT_ANY, isElevated } },
+        { ID_CLEANUP_REMOVE_LOCAL,    { true,  true,  false, LF_NONE,     IT_ANY, isElevated } },
         { ID_COMPRESS_LZNT1,          { false, true,  false, LF_NONE,     IT_DIRECTORY | IT_FILE } },
         { ID_COMPRESS_LZX,            { false, true,  false, LF_NONE,     IT_DIRECTORY | IT_FILE } },
         { ID_COMPRESS_NONE,           { false, true,  false, LF_NONE,     IT_DIRECTORY | IT_FILE } },
@@ -908,7 +912,7 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
         { ID_SCAN_RESUME,             { true,  true,  true,  LF_NONE,     IT_ANY, isResumable } },
         { ID_SCAN_STOP,               { true,  true,  true,  LF_NONE,     IT_ANY, isStoppable } },
         { ID_SCAN_SUSPEND,            { true,  true,  true,  LF_NONE,     IT_ANY, isSuspendable } },
-        { ID_TREEMAP_RESELECT_CHILD,  { true,  true,  true,  LF_FILETREE, IT_ANY, reslectAvail } },
+        { ID_TREEMAP_RESELECT_CHILD,  { true,  true,  true,  LF_FILETREE, IT_ANY, reselectAvail } },
         { ID_TREEMAP_SELECT_PARENT,   { false, false, true,  LF_FILETREE, IT_ANY, parentNotNull } },
         { ID_TREEMAP_ZOOMIN,          { false, false, false, LF_FILETREE, IT_DRIVE | IT_DIRECTORY} },
         { ID_TREEMAP_ZOOMOUT,         { true,  true,  false, LF_FILETREE, IT_ANY, canZoomOut } },
@@ -978,11 +982,13 @@ BEGIN_MESSAGE_MAP(CDirStatDoc, CDocument)
     ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_DELETE_BIN, OnCleanupDeleteToBin)
     ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_DELETE, OnCleanupDelete)
     ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_EMPTY_FOLDER, OnCleanupEmptyFolder)
+    ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_REMOVE_SHADOW, OnRemoveShadowCopies)
     ON_COMMAND_UPDATE_WRAPPER(ID_SEARCH, OnSearch)
     ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_DISM_NORMAL, OnExecuteDism)
     ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_DISM_RESET, OnExecuteDismReset)
     ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_HIBERNATE, OnDisableHibernateFile)
     ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_REMOVE_ROAMING, OnRemoveRoamingProfiles)
+    ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_REMOVE_LOCAL, OnRemoveLocalProfiles)
     ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_DISK_CLEANUP, OnExecuteDiskCleanupUtility)
     ON_UPDATE_COMMAND_UI_RANGE(ID_USERDEFINEDCLEANUP0, ID_USERDEFINEDCLEANUP9, OnUpdateUserDefinedCleanup)
     ON_COMMAND_RANGE(ID_USERDEFINEDCLEANUP0, ID_USERDEFINEDCLEANUP9, OnUserDefinedCleanup)
@@ -1075,6 +1081,21 @@ void CDirStatDoc::OnCleanupEmptyRecycleBin()
 
     // refresh recyclers
     if (!toRefresh.empty()) GetDocument()->StartScanningEngine(toRefresh);
+}
+
+void CDirStatDoc::OnRemoveShadowCopies()
+{
+    // Show progress dialog and compress files
+    ULONGLONG count = 0, bytesUsed = 0;
+    QueryShadowCopies(count, bytesUsed);
+
+    CProgressDlg([](const std::atomic<bool>& cancelRequested,
+        std::atomic<size_t>& progress)
+    {
+        RemoveWmiInstances(L"Win32_ShadowCopy", progress, cancelRequested);
+    }, count).DoModal();
+
+    GetRootItem()->UpdateFreeSpaceItem();
 }
 
 void CDirStatDoc::OnUpdateViewShowFreeSpace(CCmdUI* pCmdUI)
@@ -1317,9 +1338,25 @@ void CDirStatDoc::OnDisableHibernateFile()
 
 void CDirStatDoc::OnRemoveRoamingProfiles()
 {
-    const std::wstring cmd = std::format(LR"(/C "TITLE {} & WMIC.EXE {} & PAUSE)",
-        L"WinDirStat - Profile Cleanup", L"PATH Win32_UserProfile WHERE RoamingConfigured=TRUE DELETE");
-    ShellExecuteWrapper(GetCOMSPEC(), cmd, L"runas");
+    CProgressDlg([&](const std::atomic<bool>& cancelRequested, std::atomic<size_t>& progress)
+    {
+        RemoveWmiInstances(L"Win32_UserProfile", progress, cancelRequested,
+            L"RoamingConfigured = TRUE");
+    }).DoModal();
+
+    GetRootItem()->UpdateFreeSpaceItem();
+}
+
+
+void CDirStatDoc::OnRemoveLocalProfiles()
+{
+    CProgressDlg([&](const std::atomic<bool>& cancelRequested, std::atomic<size_t>& progress)
+    {
+        RemoveWmiInstances(L"Win32_UserProfile", progress, cancelRequested,
+            L"RoamingConfigured = FALSE AND Loaded = FALSE AND Special = FALSE");
+    }).DoModal();
+
+    GetRootItem()->UpdateFreeSpaceItem();
 }
 
 void CDirStatDoc::OnExecuteDiskCleanupUtility()
@@ -1474,18 +1511,16 @@ void CDirStatDoc::OnCleanupCompress(UINT id)
 
     // Show progress dialog and compress files
     const auto alg = CompressionIdToAlg(id);
-    CProgressDlg progressDlg([&](const std::atomic<bool>& cancel,
-        std::atomic<size_t>& current, std::atomic<size_t>& total)
+    CProgressDlg([&](const std::atomic<bool>& cancel,
+        std::atomic<size_t>& current)
     {
-        total = itemsToCompress.size();
         for (size_t i = 0; i < itemsToCompress.size() && !cancel; ++i)
         {
             current = i + 1;
             CompressFile(itemsToCompress[i]->GetPathLong(), alg);
         }
-    }, AfxGetMainWnd());
+    }, itemsToCompress.size()).DoModal();
 
-    progressDlg.DoModal();
 
     // Refresh items after compression
     RefreshItem(itemsSelected);

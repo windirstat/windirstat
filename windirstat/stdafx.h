@@ -53,3 +53,5 @@
 #include <uxtheme.h>
 #include <vssym32.h>
 #include <dwmapi.h>
+#include <comdef.h>
+#include <wbemidl.h>

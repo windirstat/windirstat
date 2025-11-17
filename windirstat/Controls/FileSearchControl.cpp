@@ -84,12 +84,11 @@ void CFileSearchControl::ProcessSearch(CItem* item)
         [](const std::wstring& str, const std::wregex& regex) { return std::regex_search(str, regex); };
 
     // Process search request using progress dialog
-    CProgressDlg progressDlg([&](const std::atomic<bool>& cancel,
-        std::atomic<size_t>& current, std::atomic<size_t>& total)
+    CProgressDlg([&](const std::atomic<bool>& cancel,
+        std::atomic<size_t>& current)
     {
         // Do search
         std::stack<CItem*> queue({ item });
-        total = static_cast<size_t>(item->GetItemsCount());
         while (!queue.empty() && !cancel)
         {
             // Grab item from queue
@@ -107,17 +106,16 @@ void CFileSearchControl::ProcessSearch(CItem* item)
                 m_ItemTracker.emplace(qitem, searchItem);
             }
 
-            // Descend into childitems
+            // Descend into child items
             if (qitem->IsLeaf()) continue;
             for (const auto& child : qitem->GetChildren())
             {
                 queue.push(child);
             }
         }
-    });
+    }, item->GetItemsCount()).DoModal();
 
     // Reenable drawing
-    progressDlg.DoModal();
     SortItems();
 }
 

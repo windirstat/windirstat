@@ -1199,22 +1199,32 @@ CItem* CItem::FindFreeSpaceItem() const
 
 void CItem::UpdateFreeSpaceItem()
 {
-    ASSERT(IsType(IT_DRIVE));
-
-    auto [total, free] = CDirStatApp::GetFreeDiskSpace(GetPath());
-
-    // Recreate name based on updated free space and percentage
-    SetName(std::format(L"{:.2}|{} - {} ({:.1f}%)", GetName(),
-        FormatVolumeNameOfRootPath(GetPath()), Localization::Format(
-        IDS_DRIVE_ITEM_FREEsTOTALs, FormatBytes(free), FormatBytes(total)),
-        100.0 * free / total));
-
-    // Update freespace item if it exists
-    if (CItem* freeSpaceItem = FindFreeSpaceItem(); freeSpaceItem != nullptr)
+    if (IsType(IT_MYCOMPUTER))
     {
-        freeSpaceItem->UpwardSubtractSizePhysical(freeSpaceItem->GetSizePhysical());
-        freeSpaceItem->UpwardAddSizePhysical(free);
+        for (const auto& child : GetChildren())
+        {
+            if (child->IsType(IT_DRIVE))
+                child->UpdateFreeSpaceItem();
+        }
     }
+    else if (IsType(IT_DRIVE))
+    {
+        auto [total, free] = CDirStatApp::GetFreeDiskSpace(GetPath());
+
+        // Recreate name based on updated free space and percentage
+            SetName(std::format(L"{:.2}|{} - {} ({:.1f}%)", GetName(),
+                FormatVolumeNameOfRootPath(GetPath()), Localization::Format(
+                    IDS_DRIVE_ITEM_FREEsTOTALs, FormatBytes(free), FormatBytes(total)),
+                100.0 * free / total));
+
+        // Update freespace item if it exists
+        if (CItem* freeSpaceItem = FindFreeSpaceItem(); freeSpaceItem != nullptr)
+        {
+            freeSpaceItem->UpwardSubtractSizePhysical(freeSpaceItem->GetSizePhysical());
+            freeSpaceItem->UpwardAddSizePhysical(free);
+        }
+    }
+    else ASSERT(FALSE);
 }
 
 void CItem::UpdateUnknownItem() const

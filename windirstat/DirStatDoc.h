@@ -188,6 +188,7 @@ protected:
     afx_msg void OnTreeMapZoomIn();
     afx_msg void OnTreeMapZoomOut();
     afx_msg void OnRemoveRoamingProfiles();
+    afx_msg void OnRemoveLocalProfiles();
     afx_msg void OnDisableHibernateFile();
     afx_msg void OnExecuteDiskCleanupUtility();
     afx_msg void OnExecuteDismReset();
@@ -211,4 +212,5 @@ protected:
     afx_msg void OnScanResume();
     afx_msg void OnScanStop();
     afx_msg void OnContextMenuExplore(UINT nID);
+    afx_msg void OnRemoveShadowCopies();
 };
