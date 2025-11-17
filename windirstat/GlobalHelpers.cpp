@@ -507,31 +507,31 @@ bool IsSUBSTedDrive(const std::wstring & drive)
 
 const std::wstring & GetSpec_Bytes()
 {
-    static std::wstring s = Localization::Lookup(IDS_SPEC_BYTES, L"bytes");
+    static std::wstring s = Localization::Lookup(IDS_SPEC_BYTES);
     return s;
 }
 
 const std::wstring& GetSpec_KiB()
 {
-    static std::wstring s = Localization::Lookup(IDS_SPEC_KiB, L"KiB");
+    static std::wstring s = Localization::Lookup(IDS_SPEC_KiB);
     return s;
 }
 
 const std::wstring& GetSpec_MiB()
 {
-    static std::wstring s = Localization::Lookup(IDS_SPEC_MiB, L"MiB");
+    static std::wstring s = Localization::Lookup(IDS_SPEC_MiB);
     return s;
 }
 
 const std::wstring& GetSpec_GiB()
 {
-    static std::wstring s = Localization::Lookup(IDS_SPEC_GiB, L"GiB");
+    static std::wstring s = Localization::Lookup(IDS_SPEC_GiB);
     return s;
 }
 
 const std::wstring& GetSpec_TiB()
 {
-    static std::wstring s = Localization::Lookup(IDS_SPEC_TiB, L"TiB");
+    static std::wstring s = Localization::Lookup(IDS_SPEC_TiB);
     return s;
 }
 
