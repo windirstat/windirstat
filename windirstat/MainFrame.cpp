@@ -132,7 +132,7 @@ BOOL COptionsPropertySheet::OnCommand(const WPARAM wParam, const LPARAM lParam)
         if (m_RestartRequest && (IDOK == cmd || !m_AlreadyAsked))
         {
             const int r = WdsMessageBox(*this, Localization::Lookup(IDS_RESTART_REQUEST),
-                Localization::Lookup(IDS_APP_TITLE), MB_YESNOCANCEL);
+                Localization::LookupNeutral(AFX_IDS_APP_TITLE), MB_YESNOCANCEL);
             if (IDCANCEL == r)
             {
                 return true; // "Message handled". Don't proceed.
@@ -819,7 +819,7 @@ BOOL CMainFrame::OnCreateClient(LPCREATESTRUCT /*lpcs*/, CCreateContext* pContex
 BOOL CMainFrame::PreCreateWindow(CREATESTRUCT& cs)
 {
     // seed initial Title bar text
-    static std::wstring title = Localization::Lookup(IDS_APP_TITLE) + (IsElevationActive() ? L" (Administrator)" : L"");
+    static std::wstring title = Localization::LookupNeutral(AFX_IDS_APP_TITLE) + (IsElevationActive() ? L" (Administrator)" : L"");
     cs.style &= ~FWS_ADDTOTITLE;
     cs.lpszName = title.c_str();
 
@@ -1320,7 +1320,7 @@ BOOL CMainFrame::LoadFrame(const UINT nIDResource, const DWORD dwDefaultStyle, C
 
     Localization::UpdateMenu(*GetMenu());
     Localization::UpdateDialogs(*this);
-    SetTitle(Localization::Lookup(IDS_APP_TITLE).c_str());
+    SetTitle(Localization::LookupNeutral(AFX_IDS_APP_TITLE).c_str());
 
     return TRUE;
 }

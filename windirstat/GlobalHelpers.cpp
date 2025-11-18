@@ -1040,42 +1040,6 @@ bool CompressFileAllowed(const std::wstring& filePath, const CompressionAlgorith
     return compressionMap.at(volumeName);
 }
 
-std::wstring PromptForFolder(const HWND hwnd, const std::wstring& initialFolder)
-{
-    // Create the file dialog object and set basic options
-    CComPtr<IFileDialog> pfd;
-    FILEOPENDIALOGOPTIONS options;
-    if (FAILED(CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pfd))) ||
-        FAILED(pfd->GetOptions(&options)) ||
-        FAILED(pfd->SetOptions(options | FOS_PICKFOLDERS | FOS_FORCEFILESYSTEM | FOS_PATHMUSTEXIST | FOS_DONTADDTORECENT)) ||
-        FAILED(pfd->SetTitle(Localization::LookupNeutral(AFX_IDS_APP_TITLE).c_str())))
-    {
-        return {};
-    }
-
-    // Set the initial folder if provided
-    if (!initialFolder.empty())
-    {
-        CComPtr<IShellItem> psiFolder;
-        if (SUCCEEDED(SHCreateItemFromParsingName(initialFolder.c_str(), nullptr, IID_PPV_ARGS(&psiFolder))))
-        {
-            (void) pfd->SetFolder(psiFolder);
-        }
-    }
-
-    // Show the dialog and get result
-    CComPtr<IShellItem> psiResult;
-    SmartPointer<LPWSTR> pszPath(CoTaskMemFree);
-    if (FAILED(pfd->Show(hwnd)) ||
-        FAILED(pfd->GetResult(&psiResult)) ||
-        FAILED(psiResult->GetDisplayName(SIGDN_FILESYSPATH, &pszPath)))
-    {
-        return {};
-    }
-
-    return *pszPath;
-}
-
 std::wstring ComputeFileHashes(const std::wstring& filePath)
 {
     // Open file with smart pointer

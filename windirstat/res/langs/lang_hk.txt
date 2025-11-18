@@ -5,7 +5,6 @@ IDS_ABOUT_THANKS_TEXT=\n感謝由 Stefan Hundhammer 編寫出色的 Linux 工具
 IDS_ABOUT_THANKS=感謝
 IDS_ABOUT_TITLE=關於 WinDirStat
 IDS_ALL_FILES=所有檔案
-IDS_APP_TITLE=WinDirStat
 IDS_BACK_TO_SETTINGS=返回到\n使用者設定(&U)
 IDS_CLEANUP_DELETE_BIN=將選取的項目移動到資源回收筒。\n刪除（至資源回收筒）
 IDS_CLEANUP_DELETE=永久刪除選取的項目。\n永久刪除

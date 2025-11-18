@@ -601,7 +601,7 @@ void CSelectDrivesDlg::UpdateButtons()
     {
         m_UseFastScan = false;
         if (WdsMessageBox(*this, Localization::Lookup(IDS_ELEVATION_QUESTION),
-            Localization::Lookup(IDS_APP_TITLE), MB_YESNO | MB_ICONQUESTION) == IDYES)
+            Localization::LookupNeutral(AFX_IDS_APP_TITLE), MB_YESNO | MB_ICONQUESTION) == IDYES)
         {
             COptions::UseFastScanEngine = true;
             RunElevated(CDirStatDoc::GetDocument()->GetPathName().GetString());
@@ -775,9 +775,20 @@ HBRUSH CSelectDrivesDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, const UINT nCtlColor)
 void CSelectDrivesDlg::OnBnClickedBrowseButton()
 {
     // Prompt user and then update folder in combo box
-    const auto folder = PromptForFolder();
-    if (folder.empty()) return;
-    m_FolderName = folder.c_str();
+    UpdateData();
+
+    // Setup folder picker dialog
+    CFolderPickerDialog dlg(nullptr,
+        OFN_EXPLORER | OFN_PATHMUSTEXIST | OFN_DONTADDTORECENT, this);
+    const auto title = Localization::LookupNeutral(AFX_IDS_APP_TITLE);
+    dlg.m_ofn.lpstrTitle = title.c_str();
+
+    // Show dialog and validate results
+    if (dlg.DoModal() != IDOK) return;
+    const std::wstring path = dlg.GetFolderPath().GetString();
+
+    if (!FinderBasic::DoesFileExist(path)) return;
+    m_FolderName = path.c_str();
     UpdateData(FALSE);
 
     SetActiveRadio(IDC_RADIO_TARGET_FOLDER);

@@ -5,7 +5,6 @@ IDS_ABOUT_THANKS_TEXT=\nStefana Hundhammera za jego linuksowe super narzędzie K
 IDS_ABOUT_THANKS=Podziękowania dla
 IDS_ABOUT_TITLE=O WinDirStat
 IDS_ALL_FILES=Wszystkie pliki
-IDS_APP_TITLE=WinDirStat
 IDS_BACK_TO_SETTINGS=Wróć do\n&ustawień użytkownika
 IDS_CLEANUP_DELETE_BIN=Przenosi wybraną pozycję do Kosza.\nUsuń (do Kosza)
 IDS_CLEANUP_DELETE=Trwale usuwa wybraną pozycję.\nUsuń (bez możliwości przywrócenia!)

@@ -25,11 +25,12 @@
 
 IMPLEMENT_DYNAMIC(CProgressDlg, CDialogEx)
 
-CProgressDlg::CProgressDlg(std::function<void(std::atomic<bool>&, std::atomic<size_t>&)> task, const size_t total, CWnd* pParent)
+CProgressDlg::CProgressDlg(std::function<void(std::atomic<bool>&, std::atomic<size_t>&)> task, const size_t total, const bool noCancel, CWnd* pParent)
     : CDialogEx(IDD, pParent)
     , m_Total(total)
     , m_Message(Localization::Lookup(IDS_PROGRESS))
     , m_Task(std::move(task))
+    , m_NoCancel(noCancel)
 {
 }
 
@@ -55,8 +56,11 @@ BOOL CProgressDlg::OnInitDialog()
     DarkMode::AdjustControls(GetSafeHwnd());
 
     // Set window title and message
-    SetWindowText(Localization::Lookup(IDS_APP_TITLE).c_str());
+    SetWindowText(Localization::LookupNeutral(AFX_IDS_APP_TITLE).c_str());
     m_MessageCtrl.SetWindowText(m_Message.c_str());
+
+    // Configure cancel button
+    if (m_NoCancel) m_CancelButton.ShowWindow(SW_HIDE);
 
     // Configure progress bar
     if (m_Total > 0)
@@ -75,7 +79,6 @@ BOOL CProgressDlg::OnInitDialog()
 
     // Center dialog
     CenterWindow();
-
 
     // Start worker thread
     StartWorkerThread();

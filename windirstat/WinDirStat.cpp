@@ -213,14 +213,14 @@ bool CDirStatApp::SetPortableMode(const bool enable, const bool onlyOpen)
         }
 
         // Fallback to registry mode for any failures
-        SetRegistryKey(Localization::Lookup(IDS_APP_TITLE).c_str());
+        SetRegistryKey(Localization::LookupNeutral(AFX_IDS_APP_TITLE).c_str());
         return false;
     }
 
     // Attempt to remove file succeeded
     if (DeleteFile(ini.c_str()) != 0 || GetLastError() == ERROR_FILE_NOT_FOUND)
     {
-        SetRegistryKey(Localization::Lookup(IDS_APP_TITLE).c_str());
+        SetRegistryKey(Localization::LookupNeutral(AFX_IDS_APP_TITLE).c_str());
         return true;
     }
 
@@ -356,7 +356,7 @@ BOOL CDirStatApp::InitInstance()
     // Prompt user to enable enhanced scanning engine if it is disabled and running in elevated privileges
     if (IsElevationActive() && COptions::UseFastScanEngine == false && COptions::ShowFastScanPrompt) {
         CMessageBoxDlg fastScanPrompt( Localization::Lookup(IDS_ENABLEFASTSCAN_QUESTION),
-            Localization::Lookup(IDS_APP_TITLE), MB_YESNO | MB_ICONQUESTION, m_pMainWnd,
+            Localization::LookupNeutral(AFX_IDS_APP_TITLE), MB_YESNO | MB_ICONQUESTION, m_pMainWnd,
             {}, Localization::Lookup(IDS_DONT_SHOW_AGAIN), false);
 
         const INT_PTR result = fastScanPrompt.DoModal();
@@ -369,7 +369,7 @@ BOOL CDirStatApp::InitInstance()
     if (IsElevationAvailable() && COptions::ShowElevationPrompt)
     {
         CMessageBoxDlg elevationPrompt(Localization::Lookup(IDS_ELEVATION_QUESTION),
-            Localization::Lookup(IDS_APP_TITLE), MB_YESNO | MB_ICONQUESTION, m_pMainWnd, {},
+            Localization::LookupNeutral(AFX_IDS_APP_TITLE), MB_YESNO | MB_ICONQUESTION, m_pMainWnd, {},
             Localization::Lookup(IDS_DONT_SHOW_AGAIN), false);
 
         const INT_PTR result = elevationPrompt.DoModal();

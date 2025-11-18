@@ -57,7 +57,7 @@ static void ParseHeaderLine(const std::vector<std::wstring>& header)
         { Localization::Lookup(IDS_COL_SIZE_PHYSICAL), FIELD_SIZE_PHYSICAL },
         { Localization::Lookup(IDS_COL_ATTRIBUTES), FIELD_ATTRIBUTES },
         { Localization::Lookup(IDS_COL_LAST_CHANGE), FIELD_LAST_CHANGE },
-        { (Localization::Lookup(IDS_APP_TITLE) + L" " + Localization::Lookup(IDS_COL_ATTRIBUTES)), FIELD_ATTRIBUTES_WDS },
+        { (Localization::LookupNeutral(AFX_IDS_APP_TITLE) + L" " + Localization::Lookup(IDS_COL_ATTRIBUTES)), FIELD_ATTRIBUTES_WDS },
         { Localization::Lookup(IDS_COL_OWNER), FIELD_OWNER }
     };
 
@@ -264,7 +264,7 @@ bool SaveResults(const std::wstring& path, CItem * rootItem)
         Localization::Lookup(IDS_COL_SIZE_PHYSICAL),
         Localization::Lookup(IDS_COL_ATTRIBUTES),
         Localization::Lookup(IDS_COL_LAST_CHANGE),
-        Localization::Lookup(IDS_APP_TITLE) + L" " + Localization::Lookup(IDS_COL_ATTRIBUTES)
+        Localization::LookupNeutral(AFX_IDS_APP_TITLE) + L" " + Localization::Lookup(IDS_COL_ATTRIBUTES)
     };
     if (COptions::ShowColumnOwner)
     {

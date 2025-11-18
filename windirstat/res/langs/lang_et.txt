@@ -5,7 +5,6 @@ IDS_ABOUT_THANKS_TEXT=\nStefan Hundhammer for his superb Linux tool KDirStat.\nU
 IDS_ABOUT_THANKS=Tänud
 IDS_ABOUT_TITLE=About WinDirStat
 IDS_ALL_FILES=Kõik failid
-IDS_APP_TITLE=WinDirStat
 IDS_BACK_TO_SETTINGS=Tagasi\n&kasutaja sätted
 IDS_CLEANUP_DELETE_BIN=Liiguta märgitud üksus prügikasti.\nDelete (to Recycle Bin)
 IDS_CLEANUP_DELETE=Kustuta märgitud üksus (ilma taastamis võimaluseta!).\nDelete (no way to undelete!)

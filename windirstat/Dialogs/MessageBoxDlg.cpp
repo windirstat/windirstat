@@ -258,7 +258,7 @@ int WdsMessageBox(const std::wstring& message, const UINT type)
         return AfxMessageBox(message.c_str(), type);
     }
 
-    return WdsMessageBox(nullptr, message, Localization::Lookup(IDS_APP_TITLE), type);
+    return WdsMessageBox(nullptr, message, Localization::LookupNeutral(AFX_IDS_APP_TITLE), type);
 }
 
 int WdsMessageBox(const HWND wnd, const std::wstring& message, const std::wstring& title, const UINT type)

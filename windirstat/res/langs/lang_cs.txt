@@ -5,7 +5,6 @@ IDS_ABOUT_THANKS_TEXT=\nStefanu Hundhammerovi za skvělou linuxovou utilitku KDi
 IDS_ABOUT_THANKS=Poděkování
 IDS_ABOUT_TITLE=O programu WinDirStat
 IDS_ALL_FILES=Všechny soubory
-IDS_APP_TITLE=WinDirStat
 IDS_BACK_TO_SETTINGS=Zpět na &uživ.\nnastavení
 IDS_CLEANUP_DELETE_BIN=Přesune vybranou položku do koše.\nOdstranit (do koše)
 IDS_CLEANUP_DELETE=Odstraní zvolenou položku bez možnosti obnovení!\nOdstranit (bez možnosti obnovení!)

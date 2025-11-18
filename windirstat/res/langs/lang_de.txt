@@ -5,7 +5,6 @@ IDS_ABOUT_THANKS_TEXT=\nStefan Hundhammer für sein vorzügliches Linux-Tool KDi
 IDS_ABOUT_THANKS=Dank
 IDS_ABOUT_TITLE=Über WinDirStat
 IDS_ALL_FILES=Alle Dateien
-IDS_APP_TITLE=WinDirStat
 IDS_BACK_TO_SETTINGS=&Zurück zur eige-\nnen Einstellung
 IDS_CLEANUP_DELETE_BIN=Verschiebt das markierte Element in den Papierkorb.\nLöschen (in den Papierkorb)
 IDS_CLEANUP_DELETE=Löscht das markierte Element (irreversibel!).\nLöschen (irreversibel!)

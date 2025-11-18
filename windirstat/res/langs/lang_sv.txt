@@ -5,7 +5,6 @@ IDS_ABOUT_THANKS_TEXT=\nStefan Hundhammer för hans fantastiska Linux-verktyg KD
 IDS_ABOUT_THANKS=Tack till
 IDS_ABOUT_TITLE=Om WinDirStat
 IDS_ALL_FILES=Alla filer
-IDS_APP_TITLE=WinDirStat
 IDS_BACK_TO_SETTINGS=Tillbaka till\n&användarinställningar
 IDS_CLEANUP_DELETE_BIN=Flytta det valda objektet till papperskorgen.\nFlytta (till papperskorgen)
 IDS_CLEANUP_DELETE=Ta bort det valda objektet permanent.\nTa bort permanent

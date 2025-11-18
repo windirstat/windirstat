@@ -5,7 +5,6 @@ IDS_ABOUT_THANKS_TEXT=\nStefan Hundhammer nagyszeru Linuxos eszköze a KDirStat.
 IDS_ABOUT_THANKS=Köszönet
 IDS_ABOUT_TITLE=WinDirStat névjegye
 IDS_ALL_FILES=Minden fájl
-IDS_APP_TITLE=WinDirStat
 IDS_BACK_TO_SETTINGS=&Vissza a felhasználói\nbeállításokhoz
 IDS_CLEANUP_DELETE_BIN=Kijelölt elem áthelyezése a Lomtárba.\nTörlés (a Lomtárba)
 IDS_CLEANUP_DELETE=Kijelölt elem végleges törlése (nincs visszaállítás!).\nTörlés (nem állítható vissza!)

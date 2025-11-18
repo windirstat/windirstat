@@ -1031,8 +1031,10 @@ void CDirStatDoc::OnSaveResults()
     CFileDialog dlg(FALSE, L"csv", nullptr, OFN_EXPLORER | OFN_DONTADDTORECENT, fileSelectString.c_str());
     if (dlg.DoModal() != IDOK) return;
 
-    CWaitCursor wc;
-    SaveResults(dlg.GetPathName().GetString(), GetRootItem());
+    CProgressDlg([&](const std::atomic<bool>&, std::atomic<size_t>&)
+    {
+        SaveResults(dlg.GetPathName().GetString(), GetRootItem());
+    }, 0, true).DoModal();
 }
 
 void CDirStatDoc::OnLoadResults()
@@ -1043,9 +1045,11 @@ void CDirStatDoc::OnLoadResults()
     CFileDialog dlg(TRUE, L"csv", nullptr, OFN_EXPLORER | OFN_DONTADDTORECENT | OFN_PATHMUSTEXIST, fileSelectString.c_str());
     if (dlg.DoModal() != IDOK) return;
 
-    CWaitCursor wc;
-    CItem* newroot = LoadResults(dlg.GetPathName().GetString());
-    GetDocument()->OnOpenDocument(newroot);
+    CProgressDlg([&](const std::atomic<bool>&, std::atomic<size_t>&)
+    {
+        CItem* newroot = LoadResults(dlg.GetPathName().GetString());
+        GetDocument()->OnOpenDocument(newroot);
+    }, 0, true).DoModal();
 }
 
 void CDirStatDoc::OnEditCopy()
@@ -1467,7 +1471,7 @@ void CDirStatDoc::OnComputeHash()
     const std::wstring hashResult = ComputeFileHashes(items.front()->GetPath());
 
     // Display result in message box
-    CMessageBoxDlg dlg(hashResult, Localization::Lookup(IDS_APP_TITLE), MB_OK | MB_ICONINFORMATION);
+    CMessageBoxDlg dlg(hashResult, Localization::LookupNeutral(AFX_IDS_APP_TITLE), MB_OK | MB_ICONINFORMATION);
     dlg.SetInitialWindowSize(CSize(950, 200));
     dlg.DoModal();
 }

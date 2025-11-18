@@ -5,7 +5,6 @@ IDS_ABOUT_THANKS_TEXT=\nStefan Hundhammer por su genial herramienta Linux KDirSt
 IDS_ABOUT_THANKS=Gracias a
 IDS_ABOUT_TITLE=Acerca de WinDirStat
 IDS_ALL_FILES=Todos los archivos
-IDS_APP_TITLE=WinDirStat
 IDS_BACK_TO_SETTINGS=Volver a\nConfiguración de &Usuario
 IDS_CLEANUP_DELETE_BIN=Mover el Item Seleccionado a la Papelera de Reciclaje.\nBorrar (a la Papelera de Reciclaje)
 IDS_CLEANUP_DELETE=Borrar el Item Seleccionado (¡sin posibilidad de recuperación!).\\Borrar (¡sin posibilidad de recuperación!)

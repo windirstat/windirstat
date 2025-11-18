@@ -5,7 +5,6 @@ IDS_ABOUT_THANKS_TEXT=\nÀ Stefan Hundhammer pelo super KDirStat.\nUsar o KDirSt
 IDS_ABOUT_THANKS=Agradecimentos
 IDS_ABOUT_TITLE=Sobre o WinDirStat
 IDS_ALL_FILES=Todos os arquivos
-IDS_APP_TITLE=WinDirStat
 IDS_BACK_TO_SETTINGS=Voltar as \n&Configurações do Usuário
 IDS_CLEANUP_DELETE_BIN=Enviar para a lixeira.\nDelete (para a Lixeira)
 IDS_CLEANUP_DELETE=Excluir definitivamente (impossível recuperar!).\nDelete (impossível recuperar!)

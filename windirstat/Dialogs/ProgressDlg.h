@@ -35,7 +35,7 @@ class CProgressDlg final : public CDialogEx
 
 public:
     CProgressDlg(std::function<void(std::atomic<bool>&, std::atomic<size_t>&)> task,
-                 size_t total = 0, CWnd* pParent = AfxGetMainWnd());
+                 size_t total = 0, bool noCancel = false, CWnd* pParent = AfxGetMainWnd());
     ~CProgressDlg() override = default;
 
     INT_PTR DoModal() override;
@@ -67,6 +67,7 @@ private:
     std::atomic<size_t> m_Current = 0;
     size_t m_Total = 0;
     bool m_Cancelled = false;
+    bool m_NoCancel = false;
 
     std::thread* m_WorkerThread{ nullptr };
     static constexpr UINT_PTR TIMER_ID = 1;
