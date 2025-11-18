@@ -1312,7 +1312,7 @@ void CDirStatDoc::OnCleanupEmptyFolder()
             CProgressDlg([&](const std::atomic<bool>&, std::atomic<size_t>&)
             {
                 DeletePhysicalItems(select->GetChildren(), false, true, false);
-            }).DoModal();
+            }, 0, true).DoModal();
         }
     }
 
