@@ -822,7 +822,7 @@ bool ShellExecuteWrapper(const std::wstring& lpFile, const std::wstring& lpParam
     sei.nShow = nShowCmd;
 
     const BOOL bResult = ::ShellExecuteEx(&sei);
-    if (!bResult)
+    if (!bResult && GetLastError() != ERROR_CANCELLED)
     {
         DisplayError(std::format(L"ShellExecute failed: {}",
             TranslateError(GetLastError())));
