@@ -56,8 +56,8 @@ constexpr T* ByteOffset(void* ptr, const std::ptrdiff_t offset)
 
 std::wstring GetLocaleString(LCTYPE lctype, LCID lcid);
 std::wstring GetLocaleLanguage(LANGID langid);
-std::wstring GetLocaleThousandSeparator();
-std::wstring GetLocaleDecimalSeparator();
+wchar_t GetLocaleThousandSeparator();
+wchar_t GetLocaleDecimalSeparator();
 std::wstring FormatBytes(const ULONGLONG& n);
 std::wstring FormatSizeSuffixes(ULONGLONG n);
 std::wstring FormatCount(const ULONGLONG& n);

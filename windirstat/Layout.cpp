@@ -49,7 +49,7 @@ BOOL CLayoutDialogEx::PreTranslateMessage(MSG* pMsg)
         {
             // Check if it's a static control
             WCHAR className[MAX_CLASS_NAME]{};
-            ::GetClassName(pWndUnderCursor->GetSafeHwnd(), className, _countof(className));
+            ::GetClassName(pWndUnderCursor->GetSafeHwnd(), className, std::size(className));
             if (_wcsicmp(className, WC_STATIC) == 0)
             {
                 // Get the text from the static control

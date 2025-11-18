@@ -119,23 +119,20 @@ void RemoveWmiInstances(const std::wstring& wmiClass, std::atomic<size_t>& progr
 
 static std::wstring FormatLongLongNormal(ULONGLONG n)
 {
-    // Returns a locale-formatted integer with thousands separators (example with '.' as separator: "123.456.789").
-    // Actual separator depends on current formatting locale.
+    if (n == 0) return L"0";
 
-    ASSERT(n >= 0);
+    const wchar_t sep = GetLocaleThousandSeparator();
+    wchar_t buffer[32];
+    int pos = std::size(buffer) - 1;
+    buffer[pos] = L'\0';
 
-    std::wstring all;
-
-    do
+    for (int count = 0; n > 0; ++count, n /= 10)
     {
-        const auto rest = n % 1000;
-        n /= 1000;
+        if (count && count % 3 == 0) buffer[--pos] = sep;
+        buffer[--pos] = L'0' + (n % 10);
+    }
 
-        all.insert(0, (n <= 0) ? std::to_wstring(rest) :
-            std::format(L"{}{:03}", GetLocaleThousandSeparator(), rest));
-    } while (n > 0);
-
-    return all;
+    return { &buffer[pos] };
 }
 
 std::wstring GetLocaleString(const LCTYPE lctype, const LCID lcid)
@@ -157,28 +154,28 @@ std::wstring GetLocaleLanguage(const LANGID langid)
     return s + L" (" + n + L")";
 }
 
-std::wstring GetLocaleThousandSeparator()
+wchar_t GetLocaleThousandSeparator()
 {
     static LCID cachedLocale = static_cast<LCID>(-1);
-    static std::wstring cachedString;
+    static wchar_t cachedChar;
     if (cachedLocale != COptions::GetLocaleForFormatting())
     {
         cachedLocale = COptions::GetLocaleForFormatting();
-        cachedString = GetLocaleString(LOCALE_STHOUSAND, cachedLocale);
+        cachedChar = GetLocaleString(LOCALE_STHOUSAND, cachedLocale)[0];
     }
-    return cachedString;
+    return cachedChar;
 }
 
-std::wstring GetLocaleDecimalSeparator()
+wchar_t GetLocaleDecimalSeparator()
 {
     static LCID cachedLocale = static_cast<LCID>(-1);
-    static std::wstring cachedString;
+    static wchar_t cachedChar;
     if (cachedLocale != COptions::GetLocaleForFormatting())
     {
         cachedLocale = COptions::GetLocaleForFormatting();
-        cachedString = GetLocaleString(LOCALE_SDECIMAL, cachedLocale);
+        cachedChar = GetLocaleString(LOCALE_SDECIMAL, cachedLocale)[0];
     }
-    return cachedString;
+    return cachedChar;
 }
 
 std::wstring FormatBytes(const ULONGLONG& n)
@@ -195,41 +192,32 @@ std::wstring FormatSizeSuffixes(ULONGLONG n)
 {
     // Returns formatted number like "12,4 GiB" (uses IEC binary prefixes KiB/MiB/GiB/TiB).
     ASSERT(n >= 0);
-    constexpr int base = 1024;
-    constexpr int half = base / 2;
+    constexpr ULONGLONG base = 1024;
+    constexpr ULONGLONG half = base / 2;
 
-    const double B = static_cast<int>(n % base);
-    n /= base;
+    const ULONGLONG B = n % base; n /= base;
+    const ULONGLONG KiB = n % base; n /= base;
+    const ULONGLONG MiB = n % base; n /= base;
+    const ULONGLONG GiB = n % base; n /= base;
+    const ULONGLONG TiB = n;
 
-    const double KiB = static_cast<int>(n % base);
-    n /= base;
-
-    const double MiB = static_cast<int>(n % base);
-    n /= base;
-
-    const double GiB = static_cast<int>(n % base);
-    n /= base;
-
-    const double TiB = static_cast<int>(n);
-
-    if (TiB != 0.0 || GiB == base - 1 && MiB >= half)
+    if (TiB != 0 || (GiB == base - 1 && MiB >= half))
     {
-        return FormatDouble(TiB + GiB / base) + L" " + GetSpec_TiB();
+        return FormatDouble(static_cast<double>(TiB) + static_cast<double>(GiB) / base) + L" " + GetSpec_TiB();
     }
-    if (GiB != 0.0 || MiB == base - 1 && KiB >= half)
+    if (GiB != 0 || (MiB == base - 1 && KiB >= half))
     {
-        return FormatDouble(GiB + MiB / base) + L" " + GetSpec_GiB();
+        return FormatDouble(static_cast<double>(GiB) + static_cast<double>(MiB) / base) + L" " + GetSpec_GiB();
     }
-    if (MiB != 0.0 || KiB == base - 1 && B >= half)
+    if (MiB != 0 || (KiB == base - 1 && B >= half))
     {
-        return FormatDouble(MiB + KiB / base) + L" " + GetSpec_MiB();
+        return FormatDouble(static_cast<double>(MiB) + static_cast<double>(KiB) / base) + L" " + GetSpec_MiB();
     }
-    if (KiB != 0.0)
+    if (KiB != 0)
     {
-        return FormatDouble(KiB + B / base) + L" " + GetSpec_KiB();
+        return FormatDouble(static_cast<double>(KiB) + static_cast<double>(B) / base) + L" " + GetSpec_KiB();
     }
-
-    return std::to_wstring(static_cast<ULONG>(B)) + L" " + GetSpec_Bytes();
+    return std::to_wstring(B) + L" " + GetSpec_Bytes();
 }
 
 std::wstring FormatCount(const ULONGLONG& n)
@@ -244,7 +232,7 @@ std::wstring FormatDouble(double d)
     d += 0.05;
 
     const int i = static_cast<int>(floor(d));
-    const int r = static_cast<int>(10 * fmod(d, 1));
+    const int r = static_cast<int>(10 * (d - i));
 
     return std::to_wstring(i) + GetLocaleDecimalSeparator() + std::to_wstring(r);
 }
