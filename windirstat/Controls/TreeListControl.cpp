@@ -447,7 +447,7 @@ void CTreeListControl::DrawNode(CDC* pdc, CRect& rc, CRect& rcPlusMinus, const C
             for (int indent = item->GetIndent() - 2; indent >= 0; indent--)
             {
                 ancestor = ancestor->GetParent();
-                if (ancestor->HasMoreSiblings())
+                if (ancestor->GetTreeListChildCount() > 1)
                 {
                     pdc->BitBlt(rcRest.left + indent * INDENT_WIDTH, rcRest.top, NODE_WIDTH, NODE_HEIGHT, &dcmem, NODE_WIDTH * NODE_LINE, ysrc, SRCCOPY);
                 }
@@ -458,42 +458,12 @@ void CTreeListControl::DrawNode(CDC* pdc, CRect& rc, CRect& rcPlusMinus, const C
 
         if (width == nullptr)
         {
-            int node;
+            int node = item->HasMoreSiblings() ? NODE_SIBLING : NODE_END;
             if (item->HasChildren())
             {
-                if (item->HasMoreSiblings())
-                {
-                    if (item->IsExpanded())
-                    {
-                        node = NODE_MINUS_SIBLING;
-                    }
-                    else
-                    {
-                        node = NODE_PLUS_SIBLING;
-                    }
-                }
-                else
-                {
-                    if (item->IsExpanded())
-                    {
-                        node = NODE_MINUS_END;
-                    }
-                    else
-                    {
-                        node = NODE_PLUS_END;
-                    }
-                }
-            }
-            else
-            {
-                if (item->HasMoreSiblings())
-                {
-                    node = NODE_SIBLING;
-                }
-                else
-                {
-                    node = NODE_END;
-                }
+                node = item->HasMoreSiblings() ?
+                    (item->IsExpanded() ? NODE_MINUS_SIBLING : NODE_PLUS_SIBLING) :
+                    (item->IsExpanded() ? NODE_MINUS_END : NODE_PLUS_END);
             }
 
             pdc->BitBlt(rcRest.left, rcRest.top, NODE_WIDTH, NODE_HEIGHT, &dcmem, NODE_WIDTH * node, ysrc, SRCCOPY);
@@ -503,6 +473,7 @@ void CTreeListControl::DrawNode(CDC* pdc, CRect& rc, CRect& rcPlusMinus, const C
             rcPlusMinus.top = rcRest.top + rcRest.Height() / 2 - HOTNODE_CY / 2 - 1;
             rcPlusMinus.bottom = rcPlusMinus.top + HOTNODE_CY;
         }
+
         rcRest.left += NODE_WIDTH;
     }
 
