@@ -116,17 +116,17 @@ using CSmallRect = struct CSmallRect
     WORD bottom;
 
     // Default constructor
-    CSmallRect() : left(0), top(0), right(0), bottom(0) {}
+    constexpr CSmallRect() : left(0), top(0), right(0), bottom(0) {}
 
     // Constructor from CRect
-    explicit CSmallRect(const CRect& rect) :
+    explicit constexpr CSmallRect(const CRect& rect) :
           left(static_cast<WORD>(rect.left)), top(static_cast<WORD>(rect.top))
         , right(static_cast<WORD>(rect.right)) , bottom(static_cast<WORD>(rect.bottom)) 
     {
     }
 
     // Assignment from CRect
-    CSmallRect& operator=(const CRect& rect)
+    constexpr CSmallRect& operator=(const CRect& rect)
     {
         left = static_cast<WORD>(rect.left);
         top = static_cast<WORD>(rect.top);
