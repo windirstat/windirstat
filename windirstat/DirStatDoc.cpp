@@ -1307,10 +1307,7 @@ void CDirStatDoc::OnCleanupEmptyFolder()
         if (WdsMessageBox(Localization::Format(IDS_EMPTY_FOLDER_WARNINGs,
             select->GetPath()).c_str(), MB_YESNO) == IDYES)
         {
-            CProgressDlg(0, true, AfxGetMainWnd(), [&](const std::atomic<bool>&, std::atomic<size_t>&)
-            {
-                DeletePhysicalItems(select->GetChildren(), false, true, false);
-            }).DoModal();
+            DeletePhysicalItems(select->GetChildren(), false, true, false);
         }
     }
 
