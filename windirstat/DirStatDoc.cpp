@@ -24,7 +24,6 @@
 #include "Item.h"
 #include "Localization.h"
 #include "MainFrame.h"
-#include "ModalApiShuttle.h"
 #include "WinDirStat.h"
 #include "SmartPointer.h"
 #include "FileTopControl.h"
@@ -565,7 +564,7 @@ bool CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, const bo
         COptions::ShowDeleteWarning = !warning.IsCheckboxChecked();
     }
 
-    CModalApiShuttle([&items, toTrashBin]
+    CProgressDlg(0, true, AfxGetMainWnd(), [&items, toTrashBin](const std::atomic<bool>&, std::atomic<size_t>&)
     {
         // Determine flags to use for deletion
         auto flags = FOF_NOCONFIRMATION | FOFX_SHOWELEVATIONPROMPT | FOF_NOERRORUI;
@@ -1031,10 +1030,10 @@ void CDirStatDoc::OnSaveResults()
     CFileDialog dlg(FALSE, L"csv", nullptr, OFN_EXPLORER | OFN_DONTADDTORECENT, fileSelectString.c_str());
     if (dlg.DoModal() != IDOK) return;
 
-    CProgressDlg([&](const std::atomic<bool>&, std::atomic<size_t>&)
+    CProgressDlg(0, true, AfxGetMainWnd(), [&](const std::atomic<bool>&, std::atomic<size_t>&)
     {
         SaveResults(dlg.GetPathName().GetString(), GetRootItem());
-    }, 0, true).DoModal();
+    }).DoModal();
 }
 
 void CDirStatDoc::OnLoadResults()
@@ -1045,11 +1044,11 @@ void CDirStatDoc::OnLoadResults()
     CFileDialog dlg(TRUE, L"csv", nullptr, OFN_EXPLORER | OFN_DONTADDTORECENT | OFN_PATHMUSTEXIST, fileSelectString.c_str());
     if (dlg.DoModal() != IDOK) return;
 
-    CProgressDlg([&](const std::atomic<bool>&, std::atomic<size_t>&)
+    CProgressDlg(0, true, AfxGetMainWnd(), [&](const std::atomic<bool>&, std::atomic<size_t>&)
     {
         CItem* newroot = LoadResults(dlg.GetPathName().GetString());
         GetDocument()->OnOpenDocument(newroot);
-    }, 0, true).DoModal();
+    }).DoModal();
 }
 
 void CDirStatDoc::OnEditCopy()
@@ -1068,11 +1067,10 @@ void CDirStatDoc::OnEditCopy()
 
 void CDirStatDoc::OnCleanupEmptyRecycleBin()
 {
-    CModalApiShuttle msa([]
+    CProgressDlg(0, true, AfxGetMainWnd(), [](const std::atomic<bool>&, std::atomic<size_t>&)
     {
         SHEmptyRecycleBin(*AfxGetMainWnd(), nullptr, 0);
-    });
-    msa.DoModal();
+    }).DoModal();
 
     // locate all drive items in order to refresh recyclers
     std::vector<CItem*> toRefresh;
@@ -1094,11 +1092,11 @@ void CDirStatDoc::OnRemoveShadowCopies()
     ULONGLONG count = 0, bytesUsed = 0;
     QueryShadowCopies(count, bytesUsed);
 
-    CProgressDlg([](const std::atomic<bool>& cancelRequested,
+    CProgressDlg(static_cast<size_t>(count), false, AfxGetMainWnd(), [](const std::atomic<bool>& cancelRequested,
         std::atomic<size_t>& progress)
     {
         RemoveWmiInstances(L"Win32_ShadowCopy", progress, cancelRequested);
-    }, count).DoModal();
+    }).DoModal();
 
     GetRootItem()->UpdateFreeSpaceItem();
 }
@@ -1309,10 +1307,10 @@ void CDirStatDoc::OnCleanupEmptyFolder()
         if (WdsMessageBox(Localization::Format(IDS_EMPTY_FOLDER_WARNINGs,
             select->GetPath()).c_str(), MB_YESNO) == IDYES)
         {
-            CProgressDlg([&](const std::atomic<bool>&, std::atomic<size_t>&)
+            CProgressDlg(0, true, AfxGetMainWnd(), [&](const std::atomic<bool>&, std::atomic<size_t>&)
             {
                 DeletePhysicalItems(select->GetChildren(), false, true, false);
-            }, 0, true).DoModal();
+            }).DoModal();
         }
     }
 
@@ -1345,7 +1343,7 @@ void CDirStatDoc::OnDisableHibernateFile()
 
 void CDirStatDoc::OnRemoveRoamingProfiles()
 {
-    CProgressDlg([&](const std::atomic<bool>& cancelRequested, std::atomic<size_t>& progress)
+    CProgressDlg(0, false, AfxGetMainWnd(), [&](const std::atomic<bool>& cancelRequested, std::atomic<size_t>& progress)
     {
         RemoveWmiInstances(L"Win32_UserProfile", progress, cancelRequested,
             L"RoamingConfigured = TRUE");
@@ -1357,7 +1355,7 @@ void CDirStatDoc::OnRemoveRoamingProfiles()
 
 void CDirStatDoc::OnRemoveLocalProfiles()
 {
-    CProgressDlg([&](const std::atomic<bool>& cancelRequested, std::atomic<size_t>& progress)
+    CProgressDlg(0, false, AfxGetMainWnd(), [&](const std::atomic<bool>&cancelRequested, std::atomic<size_t>& progress)
     {
         RemoveWmiInstances(L"Win32_UserProfile", progress, cancelRequested,
             L"RoamingConfigured = FALSE AND Loaded = FALSE AND Special = FALSE");
@@ -1518,7 +1516,7 @@ void CDirStatDoc::OnCleanupCompress(UINT id)
 
     // Show progress dialog and compress files
     const auto alg = CompressionIdToAlg(id);
-    CProgressDlg([&](const std::atomic<bool>& cancel,
+    CProgressDlg(itemsToCompress.size(), false, AfxGetMainWnd(), [&](const std::atomic<bool>& cancel,
         std::atomic<size_t>& current)
     {
         for (size_t i = 0; i < itemsToCompress.size() && !cancel; ++i)
@@ -1526,7 +1524,7 @@ void CDirStatDoc::OnCleanupCompress(UINT id)
             current = i + 1;
             CompressFile(itemsToCompress[i]->GetPathLong(), alg);
         }
-    }, itemsToCompress.size()).DoModal();
+    }).DoModal();
 
 
     // Refresh items after compression

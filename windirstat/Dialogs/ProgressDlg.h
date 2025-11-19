@@ -34,8 +34,7 @@ class CProgressDlg final : public CDialogEx
     DECLARE_DYNAMIC(CProgressDlg)
 
 public:
-    CProgressDlg(std::function<void(std::atomic<bool>&, std::atomic<size_t>&)> task,
-                 size_t total = 0, bool noCancel = false, CWnd* pParent = AfxGetMainWnd());
+    CProgressDlg(size_t total, bool noCancel, CWnd* pParent, std::function<void(std::atomic<bool>&, std::atomic<size_t>&)> task);
     ~CProgressDlg() override = default;
 
     INT_PTR DoModal() override;
