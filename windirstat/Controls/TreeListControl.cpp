@@ -444,7 +444,7 @@ void CTreeListControl::DrawNode(CDC* pdc, CRect& rc, CRect& rcPlusMinus, const C
         if (width == nullptr)
         {
             const CTreeListItem* ancestor = item;
-            for (int indent = item->GetIndent() - 2; indent >= 0; indent--)
+            for (int indent = item->GetIndent() - 1; indent >= 0; indent--)
             {
                 ancestor = ancestor->GetParent();
                 if (ancestor->GetTreeListChildCount() > 1)
