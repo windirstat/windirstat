@@ -117,6 +117,9 @@ void CFileSearchControl::ProcessSearch(CItem* item)
 
     // Reenable drawing
     SortItems();
+
+    // Update tab visibility to show search tab if results exist
+    CMainFrame::Get()->GetFileTabbedView()->SetSearchTabVisibility(true);
 }
 
 void CFileSearchControl::RemoveItem(CItem* item)

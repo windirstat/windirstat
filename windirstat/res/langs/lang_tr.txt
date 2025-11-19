@@ -45,7 +45,6 @@ IDS_DRIVES_FOLDER=Tek &Dizin
 IDS_DRIVES_SUBSET=&Tek Sürücüler
 IDS_DRIVES_TITLE=WinDirStat - Sürücüleri Seç
 IDS_DUPLICATE_FILES=Yinelenen Dosyalar
-IDS_DUPLICATES_DISABLED=Mevcut tarama için yinelenen dosya bulma şimdilik aktifleştirilmedi.
 IDS_DUPLICATES_SCAN=Yinelenen doyalar için tara (performansı etkiler)
 IDS_DUPLICATES_WARNING=Yinelenen dosya tarayıcısı bulut ile senkronize bir dosya buldu. Bulut dosyaları, taranması dosyanın indirilmesine yol açabileceği için tarama dışı bırakılır. Bulut dosyalarını taramaya dahil etmek istiyorsanız ayarlarınızı değiştirin.
 IDS_EDIT_COPY_CLIPBOARD=Seçili yolu panoya kopyala.\nPanoya Kopyala

@@ -38,6 +38,8 @@ public:
     void SetActiveTopView() { SetActiveView(m_FileTopViewIndex); }
     void SetActiveDupeView() { SetActiveView(m_FileDupeViewIndex); }
     void SetActiveSearchView() { SetActiveView(m_FileSearchViewIndex); }
+    void SetDupeTabVisibility(bool show = true);
+    void SetSearchTabVisibility(bool show = true);
 
 protected:
     CFileTabbedView() = default;

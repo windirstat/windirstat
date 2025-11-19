@@ -45,7 +45,6 @@ IDS_DRIVES_FOLDER=個別フォルダー(&F)
 IDS_DRIVES_SUBSET=個別ドライブ(&I)
 IDS_DRIVES_TITLE=WinDirStat - ドライブを選択
 IDS_DUPLICATE_FILES=重複ファイル
-IDS_DUPLICATES_DISABLED=このスキャンでは重複スキャンが現在無効になっています。
 IDS_DUPLICATES_SCAN=重複ファイルをスキャン（パフォーマンスに影響）
 IDS_DUPLICATES_WARNING=重複スキャナーがクラウドに同期されたファイルを検出しました。スキャンによりダウンロードが発生する可能性があるため、クラウドファイルはスキャンされません。クラウドファイルをスキャンしたい場合は設定を変更してください。
 IDS_EDIT_COPY_CLIPBOARD=選択したパスをクリップボードにコピーします。\nパスをコピー

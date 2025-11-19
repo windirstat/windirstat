@@ -45,7 +45,6 @@ IDS_DRIVES_FOLDER=Una &cartella
 IDS_DRIVES_SUBSET=&Singole unità
 IDS_DRIVES_TITLE=WinDirStat - Seleziona unità
 IDS_DUPLICATE_FILES=File duplicati
-IDS_DUPLICATES_DISABLED=La scansione dei duplicati non è attualmente abilitata per questa scansione.
 IDS_DUPLICATES_SCAN=Scansione file duplicati (influenza le prestazioni)
 IDS_DUPLICATES_WARNING=Il rilevatore di duplicati ha rilevato un file sincronizzato con il cloud. I file nel cloud non verranno scansionati perché la scansione potrebbe farli scaricare. Cambia le impostazioni se desideri eseguire la scansione dei file nel cloud.
 IDS_EDIT_COPY_CLIPBOARD=Copia il percorso selezionato nella clipboard.\nCopia percorso

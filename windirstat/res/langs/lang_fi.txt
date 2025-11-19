@@ -45,7 +45,6 @@ IDS_DRIVES_FOLDER=&Kansio
 IDS_DRIVES_SUBSET=&Valitut asemat
 IDS_DRIVES_TITLE=WinDirStat - Valitse Asemat
 IDS_DUPLICATE_FILES=Duplikaattitiedostot
-IDS_DUPLICATES_DISABLED=Kaksoisskannaus ei ole tällä hetkellä käytössä tässä skannauksessa.
 IDS_DUPLICATES_SCAN=Skannaa duplikaattitiedostoja (vaikuttaa suorituskykyyn)
 IDS_DUPLICATES_WARNING=Kaksoiskanneri on havainnut tiedoston, joka on synkronoitu pilveen. Pilvitiedostoja ei skannata, koska skannaus voi aiheuttaa niiden lataamisen. Vaihda asetuksiasi, jos haluat skannata pilvitiedostoja.
 IDS_EDIT_COPY_CLIPBOARD=Kopioi valitun polun leikepöydälle.\nKopioi polku

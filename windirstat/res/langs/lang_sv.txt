@@ -45,7 +45,6 @@ IDS_DRIVES_FOLDER=Enskild &mapp
 IDS_DRIVES_SUBSET=Ensk&ilda enheter
 IDS_DRIVES_TITLE=WinDirStat - Välj enheter
 IDS_DUPLICATE_FILES=Dubbletter av filer
-IDS_DUPLICATES_DISABLED=Sök efter dubbletter är inte aktiverad för denna sökning.
 IDS_DUPLICATES_SCAN=Sök efter dubbletter av filer (påverkar prestandan)
 IDS_DUPLICATES_WARNING=Dubblettsökaren har upptäckt en fil som är synkroniserad med molnet. Molnfiler kommer inte att genomsökas eftersom det kan göra att de laddas ner. Ändra dina inställningar om du vill söka igenom molnfiler.
 IDS_EDIT_COPY_CLIPBOARD=Kopiera den valda sökvägen till urklipp.\nKopiera sökväg

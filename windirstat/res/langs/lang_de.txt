@@ -45,7 +45,6 @@ IDS_DRIVES_FOLDER=Ein &Verzeichnis
 IDS_DRIVES_SUBSET=&Einzelne Laufwerke
 IDS_DRIVES_TITLE=WinDirStat - Laufwerke auswählen
 IDS_DUPLICATE_FILES=Duplizierte Dateien
-IDS_DUPLICATES_DISABLED=Doppelte Scans sind für diesen Scan derzeit nicht aktiviert.
 IDS_DUPLICATES_SCAN=Nach duplizierten Dateien scannen (beeinträchtigt die Leistung)
 IDS_DUPLICATES_WARNING=Der Doppelscanner hat eine Datei erkannt, die mit der Cloud synchronisiert wird. Cloud-Dateien werden nicht gescannt, da das Scannen sie herunterladen könnte. Ändern Sie Ihre Einstellungen, wenn Sie Cloud-Dateien scannen möchten.
 IDS_EDIT_COPY_CLIPBOARD=Kopiert den Pfad des markierten Elements in die Zwischenablage.\nPfad kopieren

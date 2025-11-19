@@ -24,6 +24,8 @@
 #include "Localization.h"
 #include "MainFrame.h"
 #include "MessageBoxDlg.h"
+#include "DirStatDoc.h"
+#include "ItemSearch.h"
 
 IMPLEMENT_DYNCREATE(CFileTabbedView, CTabView)
 
@@ -55,6 +57,19 @@ void CFileTabbedView::OnInitialUpdate()
     CTabView::OnInitialUpdate();
 
     CTabCtrlHelper::SetupTabControl(GetTabControl());
+
+    SetSearchTabVisibility(false);
+    SetDupeTabVisibility(COptions::ScanForDuplicates);
+}
+
+void CFileTabbedView::SetDupeTabVisibility(const bool show)
+{
+    GetTabControl().ShowTab(m_FileDupeViewIndex, show);
+}
+
+void CFileTabbedView::SetSearchTabVisibility(const bool show)
+{
+    GetTabControl().ShowTab(m_FileSearchViewIndex, show);
 }
 
 BOOL CFileTabbedView::OnEraseBkgnd(CDC* /*pDC*/)
@@ -66,13 +81,6 @@ LRESULT CFileTabbedView::OnChangeActiveTab(WPARAM wp, LPARAM lp)
 {
     if (wp == static_cast<WPARAM>(m_FileDupeViewIndex))
     {
-        // Alert the message they are not actually scanning for duplicates
-        if (!COptions::ScanForDuplicates)
-        {
-            WdsMessageBox(Localization::Lookup(IDS_DUPLICATES_DISABLED), MB_OK | MB_ICONHAND);
-            return TRUE;
-        }
-
         // Duplicate view can take a while to populate so show wait cursor
         CWaitCursor wc;
         CFileDupeControl::Get()->SortItems();

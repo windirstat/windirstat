@@ -45,7 +45,6 @@ IDS_DRIVES_FOLDER=A &Mappa
 IDS_DRIVES_SUBSET=&Egyéni meghajtók
 IDS_DRIVES_TITLE=WinDirStat - Meghajtó kijelölése
 IDS_DUPLICATE_FILES=Duplikált fájlok
-IDS_DUPLICATES_DISABLED=A duplikált szkennelés jelenleg nincs engedélyezve ehhez a vizsgálathoz.
 IDS_DUPLICATES_SCAN=Duplikált fájlok keresése (teljesítményt befolyásolja)
 IDS_DUPLICATES_WARNING=A duplikációs szkenner egy fájlt észlelt, amely a felhőbe van szinkronizálva. A felhőfájlokat nem vizsgáljuk, mert a vizsgálat letöltheti azokat. Módosítsa a beállításokat, ha felhőfájlokat szeretne vizsgálni.
 IDS_EDIT_COPY_CLIPBOARD=Kijelölt útvonal másolása a vágólapra.\nÚtvonal másolása

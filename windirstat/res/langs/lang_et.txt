@@ -45,7 +45,6 @@ IDS_DRIVES_FOLDER=Sirvi
 IDS_DRIVES_SUBSET=&Määratud Kettad
 IDS_DRIVES_TITLE=WinDirStat - Ketaste märkimine
 IDS_DUPLICATE_FILES=Dubleeritud failid
-IDS_DUPLICATES_DISABLED=Duplikaatide skaneerimine pole selle skannimise jaoks hetkel lubatud.
 IDS_DUPLICATES_SCAN=Otsi dubleeritud faile (mõjutab jõudlust)
 IDS_DUPLICATES_WARNING=Duplikaatide skanner tuvastas faili, mis on pilve sünkroonitud. Pilvefaile ei skaneerita, kuna skaneerimine võib põhjustada nende allalaadimise. Kui soovite pilvefaile skannida, muutke oma seadeid.
 IDS_EDIT_COPY_CLIPBOARD=Kopeeri see märgitud tee Lõikelauale.\nCopy Path

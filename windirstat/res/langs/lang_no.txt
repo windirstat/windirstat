@@ -45,7 +45,6 @@ IDS_DRIVES_FOLDER=Søk kun inni denne &mappen:
 IDS_DRIVES_SUBSET=Søk kun valgte plasser&inger:
 IDS_DRIVES_TITLE=WinDirStat - Velg søkeplasseringer
 IDS_DUPLICATE_FILES=Duplikate filer
-IDS_DUPLICATES_DISABLED=Duplikatskanning er for øyeblikket ikke aktivert for denne skanningen.
 IDS_DUPLICATES_SCAN=Sammenlign filer for duplikater (påvirker ytelsen)
 IDS_DUPLICATES_WARNING=Duplikatskanneren har oppdaget en fil som er synkronisert med skyen. Skyfiler vil ikke bli skannet fordi skanning kan føre til nedlasting. Endre innstillingene dine hvis du vil skanne skyfiler.
 IDS_EDIT_COPY_CLIPBOARD=Kopier banen til utklippstavlen.\nKopier bane

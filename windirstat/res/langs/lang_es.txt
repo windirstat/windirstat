@@ -45,7 +45,6 @@ IDS_DRIVES_FOLDER=Una &Carpeta
 IDS_DRIVES_SUBSET=Discos &Individuales
 IDS_DRIVES_TITLE=WinDirStat - Seleccionar Discos
 IDS_DUPLICATE_FILES=Archivos duplicados
-IDS_DUPLICATES_DISABLED=El escaneo de duplicados no está habilitado actualmente para este escaneo.
 IDS_DUPLICATES_SCAN=Escanear archivos duplicados (afecta el rendimiento)
 IDS_DUPLICATES_WARNING=El escáner de duplicados ha detectado un archivo que está sincronizado con la nube. Los archivos en la nube no se escanearán, ya que el escaneo puede hacer que se descarguen. Cambie su configuración si desea escanear archivos en la nube.
 IDS_EDIT_COPY_CLIPBOARD=Copia la ruta de acceso Seleccionado al Portapapeles (Clipboard).\nCopiar ruta de acceso

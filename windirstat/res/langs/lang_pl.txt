@@ -45,7 +45,6 @@ IDS_DRIVES_FOLDER=&Katalog
 IDS_DRIVES_SUBSET=&Określone dyski
 IDS_DRIVES_TITLE=WinDirStat - Wybierz dyski
 IDS_DUPLICATE_FILES=Powielone pliki
-IDS_DUPLICATES_DISABLED=Skanowanie duplikatów nie jest aktualnie włączone dla tego skanu.
 IDS_DUPLICATES_SCAN=Skanuj powielone pliki (wpływa na wydajność)
 IDS_DUPLICATES_WARNING=Skaner duplikatów wykrył plik, który jest synchronizowany z chmurą. Pliki w chmurze nie będą skanowane, ponieważ skanowanie może spowodować ich pobranie. Zmień swoje ustawienia, jeśli chcesz skanować pliki w chmurze.
 IDS_EDIT_COPY_CLIPBOARD=Kopiuje wybraną ścieżkę do Schowka.\nKopiuj ścieżkę

@@ -45,7 +45,6 @@ IDS_DRIVES_FOLDER=Jednotlivá &složka
 IDS_DRIVES_SUBSET=Jednotlivé &jednotky
 IDS_DRIVES_TITLE=WinDirStat - výběr jednotky
 IDS_DUPLICATE_FILES=Duplicitní soubory
-IDS_DUPLICATES_DISABLED=Skenování duplikátů není pro tento sken aktuálně povoleno.
 IDS_DUPLICATES_SCAN=Hledat duplicitní soubory (ovlivní výkon)
 IDS_DUPLICATES_WARNING=Skener duplikátů detekoval soubor, který je synchronizován s cloudem. Soubory v cloudu nebudou skenovány, protože skenování může způsobit jejich stažení. Změňte nastavení, pokud chcete skenovat cloudové soubory.
 IDS_EDIT_COPY=Zkopíruje vybranou cestu do schránky.\nKopírovat cestu

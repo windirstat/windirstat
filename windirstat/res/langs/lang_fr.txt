@@ -45,7 +45,6 @@ IDS_DRIVES_FOLDER=Un &dossier
 IDS_DRIVES_SUBSET=Certains &lecteurs
 IDS_DRIVES_TITLE=WinDirStat - Sélectionner des lecteurs
 IDS_DUPLICATE_FILES=Fichiers en double
-IDS_DUPLICATES_DISABLED=La détection des doublons n'est pas actuellement activée pour cette analyse.
 IDS_DUPLICATES_SCAN=Détecter les fichiers en double (impacte les performances)
 IDS_DUPLICATES_WARNING=L'analyseur de doublons a détecté un fichier synchronisé avec le cloud. Les fichiers cloud ne seront pas analysés car cela pourrait entraîner leur téléchargement. Modifiez vos paramètres si vous souhaitez analyser les fichiers cloud.
 IDS_EDIT_COPY_CLIPBOARD=Copie le chemin sélectionné dans le presse-papier.\nCopier le chemin

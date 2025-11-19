@@ -45,7 +45,6 @@ IDS_DRIVES_FOLDER=Individual &Folder
 IDS_DRIVES_SUBSET=&Individual Drives
 IDS_DRIVES_TITLE=WinDirStat - Select Drives
 IDS_DUPLICATE_FILES=Duplicate Files
-IDS_DUPLICATES_DISABLED=Duplicate scanning is not currently enabled for this scan.
 IDS_DUPLICATES_SCAN=Scan for duplicate files (impacts performance)
 IDS_DUPLICATES_WARNING=The duplicate scanner has detected a file that is synced to the cloud. Cloud files will not be scanned because scanning may cause them to be downloaded. Change your settings if you want to scan cloud files.
 IDS_EDIT_COPY_CLIPBOARD=Copy the selected path into the clipboard.\nCopy Path
