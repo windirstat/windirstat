@@ -191,6 +191,7 @@ protected:
     afx_msg void OnRemoveLocalProfiles();
     afx_msg void OnDisableHibernateFile();
     afx_msg void OnExecuteDiskCleanupUtility();
+    afx_msg void OnExecuteDismAnalyze();
     afx_msg void OnExecuteDismReset();
     afx_msg void OnExecuteDism();
     afx_msg void OnExplorerSelect();

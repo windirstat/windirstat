@@ -85,6 +85,7 @@ IDS_MENU_DELETE_BIN=&Sil (Geri Dönüşüm Kutusu)\tDel
 IDS_MENU_DELETE=Kalıcı Olarak Sil\tShift+Del
 IDS_MENU_DISABLE_HIBERNATE=Hazırda Bekleme Dosyasını Devre Dışı Bırak
 IDS_MENU_DISK_CLEANUP=Windows Disk Temizleme Aracını Başlat
+IDS_MENU_DISM_ANALYZE=/AnalyzeComponentStore
 IDS_MENU_DISM_NORMAL=/StartComponentCleanup
 IDS_MENU_DISM_RESET=/StartComponentCleanup /ResetBase
 IDS_MENU_DISM=Bileşen Deposunu Temizle
