@@ -17,6 +17,7 @@
 
 #include "stdafx.h"
 #include "Item.h"
+#include "ItemDupe.h"
 #include "Localization.h"
 #include "CsvLoader.h"
 #include "Constants.h"
@@ -301,6 +302,54 @@ bool SaveResults(const std::wstring& path, CItem * rootItem)
 
         // Finalize lines
         outf << "\r\n";
+    }
+
+    outf.close();
+    return true;
+}
+
+bool SaveDuplicates(const std::wstring& path, CItemDupe* rootDupe)
+{
+    // Open output file
+    std::ofstream outf;
+    outf.open(path, std::ios::binary);
+    if (!outf.is_open()) return false;
+
+    // Define and output column headers
+    std::vector cols =
+    {
+        Localization::Lookup(IDS_COL_HASH),
+        Localization::Lookup(IDS_COL_NAME),
+        Localization::Lookup(IDS_COL_SIZE_LOGICAL),
+        Localization::Lookup(IDS_COL_SIZE_PHYSICAL),
+        Localization::Lookup(IDS_COL_LAST_CHANGE),
+        Localization::Lookup(IDS_COL_ATTRIBUTES)
+    };
+
+    for (unsigned int i = 0; i < cols.size(); i++)
+    {
+        outf << QuoteAndConvert(cols[i]) << ((i < cols.size() - 1) ? "," : "");
+    }
+    outf << "\r\n";
+
+    // Iterate through all duplicate groups
+    for (const auto& dupeGroup : rootDupe->GetChildren())
+    {
+        // Output each file in the duplicate group
+        for (const auto& dupeFile : dupeGroup->GetChildren())
+        {
+            const auto* linkedItem = reinterpret_cast<const CItem*>(dupeFile->GetLinkedItem());
+            if (linkedItem == nullptr) continue;
+
+            // Output file information
+            outf << std::format("{},{},{},{},{},0x{:08X}\r\n",
+                QuoteAndConvert(dupeFile->GetHash()),
+                QuoteAndConvert(linkedItem->GetPath()),
+                linkedItem->GetSizeLogical(),
+                linkedItem->GetSizePhysical(),
+                ToTimePoint(linkedItem->GetLastChange()),
+                linkedItem->GetAttributes());
+        }
     }
 
     outf.close();

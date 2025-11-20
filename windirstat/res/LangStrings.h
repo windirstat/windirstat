@@ -117,6 +117,7 @@ constexpr std::wstring_view IDS_MENU_REMOVE_LOCAL = L"IDS_MENU_REMOVE_LOCAL";
 constexpr std::wstring_view IDS_MENU_REMOVE_ROAMING = L"IDS_MENU_REMOVE_ROAMING";
 constexpr std::wstring_view IDS_MENU_REMOVE_SHADOW = L"IDS_MENU_REMOVE_SHADOW";
 constexpr std::wstring_view IDS_MENU_RESELECT_CHILD = L"IDS_MENU_RESELECT_CHILD";
+constexpr std::wstring_view IDS_MENU_SAVE_DUPLICATES = L"IDS_MENU_SAVE_DUPLICATES";
 constexpr std::wstring_view IDS_MENU_SAVE_RESULTS = L"IDS_MENU_SAVE_RESULTS";
 constexpr std::wstring_view IDS_MENU_SEARCH = L"IDS_MENU_SEARCH";
 constexpr std::wstring_view IDS_MENU_SELECT = L"IDS_MENU_SELECT";

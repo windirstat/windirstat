@@ -64,6 +64,7 @@ public:
     HICON GetIcon() override;
     CTreeListItem* GetLinkedItem() override { return m_Item; }
 
+    std::wstring GetHash() const { return m_HashString; }
     std::wstring GetHashAndExtensions() const;
     const std::vector<CItemDupe*>& GetChildren() const;
     void AddDupeItemChild(CItemDupe* child);

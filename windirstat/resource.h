@@ -218,6 +218,7 @@
 #define ID_COMPUTE_HASH                 32832
 #define ID_CLEANUP_REMOVE_LOCAL         32833
 #define ID_CLEANUP_REMOVE_SHADOW        32834
+#define ID_SAVE_DUPLICATES              32835
 #define IDS_AUTHOR_EMAIL                57345
 #define IDS_URL_WEBSITE                 57346
 #define IDS_URL_HELP                    57347
@@ -232,7 +233,7 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        305
-#define _APS_NEXT_COMMAND_VALUE         32835
+#define _APS_NEXT_COMMAND_VALUE         32836
 #define _APS_NEXT_CONTROL_VALUE         1111
 #define _APS_NEXT_SYMED_VALUE           109
 #endif

@@ -114,6 +114,7 @@ IDS_MENU_REMOVE_LOCAL="Supprimer les profils locaux"
 IDS_MENU_REMOVE_ROAMING=Supprimer les profils itinérants en cache
 IDS_MENU_REMOVE_SHADOW="Supprimer les clichés instantanés du volume"
 IDS_MENU_RESELECT_CHILD=&Resélectionner le précedent sous-dossier\tCtrl++ ou *
+IDS_MENU_SAVE_DUPLICATES=Enregistrer les &doublons en CSV...
 IDS_MENU_SAVE_RESULTS=Enregistrer les résultats dans un fichier CSV...\tCtrl+Alt+S
 IDS_MENU_SEARCH=&Rechercher...\tCtrl+F
 IDS_MENU_SELECT_PARENT=&Sélectionner le dossier parent\tCtrl+- ou /

@@ -114,6 +114,7 @@ IDS_MENU_REMOVE_LOCAL="ローカルプロファイルを削除"
 IDS_MENU_REMOVE_ROAMING=キャッシュされたローミングプロファイルを削除
 IDS_MENU_REMOVE_SHADOW="ボリュームシャドウコピーを削除"
 IDS_MENU_RESELECT_CHILD=子を再選択(&C)\tCtrl++ または *
+IDS_MENU_SAVE_DUPLICATES=重複ファイルをCSVに保存(&D)...
 IDS_MENU_SAVE_RESULTS=結果を CSV に保存...\tCtrl+Alt+S
 IDS_MENU_SEARCH=検索(&S)...\tCtrl+F
 IDS_MENU_SELECT_PARENT=親を選択(&P)\tCtrl+- または /

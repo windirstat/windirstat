@@ -114,6 +114,7 @@ IDS_MENU_REMOVE_LOCAL=Remove Local Profiles
 IDS_MENU_REMOVE_ROAMING=Remove Cached Roaming Profiles
 IDS_MENU_REMOVE_SHADOW=Remove Volume Shadow Copies
 IDS_MENU_RESELECT_CHILD=Reselect &Child\tCtrl++ or *
+IDS_MENU_SAVE_DUPLICATES=Save &Duplicates To CSV...
 IDS_MENU_SAVE_RESULTS=Save Results To CSV...\tCtrl+Alt+S
 IDS_MENU_SEARCH=&Search...\tCtrl+F
 IDS_MENU_SELECT_PARENT=Select &Parent\tCtrl+- or /

@@ -114,6 +114,7 @@ IDS_MENU_REMOVE_LOCAL="Usuń profile lokalne"
 IDS_MENU_REMOVE_ROAMING=Usuń profilowanie roamingu z pamięci podręcznej
 IDS_MENU_REMOVE_SHADOW="Usuń kopie woluminów w tle"
 IDS_MENU_RESELECT_CHILD=Skocz poziom &niżej\tCtrl++ lub *
+IDS_MENU_SAVE_DUPLICATES=Zapisz &duplikaty do pliku CSV...
 IDS_MENU_SAVE_RESULTS=Zapisz wyniki do pliku CSV...\tCtrl+Alt+S
 IDS_MENU_SEARCH=&Szukaj...\tCtrl+F
 IDS_MENU_SELECT_PARENT=Skocz poziom &wyżej\tCtrl+- lub /

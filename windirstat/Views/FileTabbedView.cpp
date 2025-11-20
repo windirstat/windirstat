@@ -59,7 +59,8 @@ void CFileTabbedView::OnInitialUpdate()
     CTabCtrlHelper::SetupTabControl(GetTabControl());
 
     SetSearchTabVisibility(false);
-    SetDupeTabVisibility(COptions::ScanForDuplicates);
+    SetDupeTabVisibility(COptions::ScanForDuplicates &&
+        CDirStatDoc::GetDocument()->GetRootItem() != nullptr);
 }
 
 void CFileTabbedView::SetDupeTabVisibility(const bool show)

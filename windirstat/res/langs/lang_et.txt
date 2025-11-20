@@ -114,6 +114,7 @@ IDS_MENU_REMOVE_LOCAL="Eemalda kohalikud profiilid"
 IDS_MENU_REMOVE_ROAMING=Eemalda vahemälust rändprofiilid
 IDS_MENU_REMOVE_SHADOW="Eemalda kettatõmmiste varikoopiad"
 IDS_MENU_RESELECT_CHILD=&Vali alamtasand\tCtrl++ või *
+IDS_MENU_SAVE_DUPLICATES=Salvesta &duplikaadid CSV-faili...
 IDS_MENU_SAVE_RESULTS=Salvesta tulemused CSV-sse...\tCtrl+Alt+S
 IDS_MENU_SEARCH=&Otsi...\tCtrl+F
 IDS_MENU_SELECT_PARENT=&Vali kõrgem tasand\tCtrl+- või /

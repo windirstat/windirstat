@@ -913,45 +913,47 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
     static bool (*isHibernate)(CItem*) = [](CItem*) { return IsElevationActive() && IsHibernateEnabled(); };
     static bool (*isElevated)(CItem*) = [](CItem*) { return IsElevationActive(); };
     static bool (*isElevationAvailable)(CItem*) = [](CItem*) { return IsElevationActive(); };
-
+    static bool (*isDupeTabVisible)(CItem*) = [](CItem*) { return CMainFrame::Get()->GetFileTabbedView()->IsDupeTabVisible(); };
+    
     static std::unordered_map<UINT, const commandFilter> filters
     {
         // ID                           none   many   early  focus        types
         { ID_CLEANUP_DELETE,          { false, true,  false, LF_NONE,     IT_DIRECTORY | IT_FILE, notRoot } },
         { ID_CLEANUP_DELETE_BIN,      { false, true,  false, LF_NONE,     IT_DIRECTORY | IT_FILE, notRoot } },
-        { ID_COMPUTE_HASH,            { false, false, false, LF_NONE,     IT_FILE } },
         { ID_CLEANUP_DISK_CLEANUP  ,  { true,  true,  false, LF_NONE,     IT_ANY, isElevationAvailable } },
         { ID_CLEANUP_DISM_NORMAL,     { true,  true,  false, LF_NONE,     IT_ANY, isElevationAvailable } },
         { ID_CLEANUP_DISM_RESET,      { true,  true,  false, LF_NONE,     IT_ANY, isElevationAvailable } },
         { ID_CLEANUP_EMPTY_BIN,       { true,  true,  false, LF_NONE,     IT_ANY } },
         { ID_CLEANUP_EMPTY_FOLDER,    { true,  true,  false, LF_NONE,     IT_DIRECTORY, notRoot } },
-        { ID_CLEANUP_REMOVE_SHADOW,   { true,  true,  false, LF_NONE,     IT_ANY, isElevated } },
         { ID_CLEANUP_EXPLORER_SELECT, { false, true,  true,  LF_NONE,     IT_DIRECTORY | IT_FILE } },
         { ID_CLEANUP_HIBERNATE,       { true,  true,  false, LF_NONE,     IT_ANY, isHibernate } },
         { ID_CLEANUP_OPEN_IN_CONSOLE, { false, true,  true,  LF_NONE,     IT_DRIVE | IT_DIRECTORY | IT_FILE } },
         { ID_CLEANUP_OPEN_IN_PWSH,    { false, true,  true,  LF_NONE,     IT_DRIVE | IT_DIRECTORY | IT_FILE } },
         { ID_CLEANUP_OPEN_SELECTED,   { false, true,  true,  LF_NONE,     IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY | IT_FILE } },
         { ID_CLEANUP_PROPERTIES,      { false, true,  true,  LF_NONE,     IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY | IT_FILE } },
-        { ID_CLEANUP_REMOVE_ROAMING,  { true,  true,  false, LF_NONE,     IT_ANY, isElevated } },
         { ID_CLEANUP_REMOVE_LOCAL,    { true,  true,  false, LF_NONE,     IT_ANY, isElevated } },
+        { ID_CLEANUP_REMOVE_ROAMING,  { true,  true,  false, LF_NONE,     IT_ANY, isElevated } },
+        { ID_CLEANUP_REMOVE_SHADOW,   { true,  true,  false, LF_NONE,     IT_ANY, isElevated } },
         { ID_COMPRESS_LZNT1,          { false, true,  false, LF_NONE,     IT_DIRECTORY | IT_FILE } },
         { ID_COMPRESS_LZX,            { false, true,  false, LF_NONE,     IT_DIRECTORY | IT_FILE } },
         { ID_COMPRESS_NONE,           { false, true,  false, LF_NONE,     IT_DIRECTORY | IT_FILE } },
         { ID_COMPRESS_XPRESS16K,      { false, true,  false, LF_NONE,     IT_DIRECTORY | IT_FILE } },
         { ID_COMPRESS_XPRESS4K,       { false, true,  false, LF_NONE,     IT_DIRECTORY | IT_FILE } },
         { ID_COMPRESS_XPRESS8K,       { false, true,  false, LF_NONE,     IT_DIRECTORY | IT_FILE } },
+        { ID_COMPUTE_HASH,            { false, false, false, LF_NONE,     IT_FILE } },
         { ID_EDIT_COPY_CLIPBOARD,     { false, true,  true,  LF_NONE,     IT_DRIVE | IT_DIRECTORY | IT_FILE } },
         { ID_FILTER,                  { true,  true,  true,  LF_NONE,     IT_ANY } },
-        { ID_SEARCH,                  { true,  true,  false, LF_NONE,     IT_ANY } },
         { ID_INDICATOR_DISK,          { true,  true,  false, LF_NONE,     IT_ANY } },
         { ID_INDICATOR_IDLE,          { true,  true,  true,  LF_NONE,     IT_ANY } },
         { ID_INDICATOR_MEM,           { true,  true,  true,  LF_NONE,     IT_ANY } },
         { ID_REFRESH_ALL,             { true,  true,  false, LF_NONE,     IT_ANY } },
         { ID_REFRESH_SELECTED,        { false, true,  false, LF_NONE,     IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY | IT_FILE } },
+        { ID_SAVE_DUPLICATES,         { true,  true,  false, LF_NONE,     IT_ANY, isDupeTabVisible } },
         { ID_SAVE_RESULTS,            { true,  true,  false, LF_NONE,     IT_ANY } },
         { ID_SCAN_RESUME,             { true,  true,  true,  LF_NONE,     IT_ANY, isResumable } },
         { ID_SCAN_STOP,               { true,  true,  true,  LF_NONE,     IT_ANY, isStoppable } },
         { ID_SCAN_SUSPEND,            { true,  true,  true,  LF_NONE,     IT_ANY, isSuspendable } },
+        { ID_SEARCH,                  { true,  true,  false, LF_NONE,     IT_ANY } },
         { ID_TREEMAP_RESELECT_CHILD,  { true,  true,  true,  LF_FILETREE, IT_ANY, reselectAvail } },
         { ID_TREEMAP_SELECT_PARENT,   { false, false, true,  LF_FILETREE, IT_ANY, parentNotNull } },
         { ID_TREEMAP_ZOOMIN,          { false, false, false, LF_FILETREE, IT_DRIVE | IT_DIRECTORY} },
@@ -1008,6 +1010,7 @@ BEGIN_MESSAGE_MAP(CDirStatDoc, CDocument)
     ON_COMMAND_UPDATE_WRAPPER(ID_REFRESH_ALL, OnRefreshAll)
     ON_COMMAND(ID_LOAD_RESULTS, OnLoadResults)
     ON_COMMAND_UPDATE_WRAPPER(ID_SAVE_RESULTS, OnSaveResults)
+    ON_COMMAND_UPDATE_WRAPPER(ID_SAVE_DUPLICATES, OnSaveDuplicates)
     ON_COMMAND_UPDATE_WRAPPER(ID_EDIT_COPY_CLIPBOARD, OnEditCopy)
     ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_EMPTY_BIN, OnCleanupEmptyRecycleBin)
     ON_UPDATE_COMMAND_UI(ID_VIEW_SHOWFREESPACE, OnUpdateViewShowFreeSpace)
@@ -1073,6 +1076,20 @@ void CDirStatDoc::OnSaveResults()
     CProgressDlg(0, true, AfxGetMainWnd(), [&](const std::atomic<bool>&, std::atomic<size_t>&)
     {
         SaveResults(dlg.GetPathName().GetString(), GetRootItem());
+    }).DoModal();
+}
+
+void CDirStatDoc::OnSaveDuplicates()
+{
+    // Request the file path from the user
+    std::wstring fileSelectString = std::format(L"{} (*.csv)|*.csv|{} (*.*)|*.*||",
+        Localization::Lookup(IDS_CSV_FILES), Localization::Lookup(IDS_ALL_FILES));
+    CFileDialog dlg(FALSE, L"csv", nullptr, OFN_EXPLORER | OFN_DONTADDTORECENT, fileSelectString.c_str());
+    if (dlg.DoModal() != IDOK) return;
+
+    CProgressDlg(0, true, AfxGetMainWnd(), [&](const std::atomic<bool>&, std::atomic<size_t>&)
+    {
+        SaveDuplicates(dlg.GetPathName().GetString(), GetRootItemDupe());
     }).DoModal();
 }
 

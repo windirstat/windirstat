@@ -114,6 +114,7 @@ IDS_MENU_REMOVE_LOCAL="删除本地用户配置文件"
 IDS_MENU_REMOVE_ROAMING=删除缓存的漫游配置文件
 IDS_MENU_REMOVE_SHADOW="删除卷影副本"
 IDS_MENU_RESELECT_CHILD=重新选择子项(&C)\tCtrl++ 或 *
+IDS_MENU_SAVE_DUPLICATES=将重复项保存到 CSV(&D)...
 IDS_MENU_SAVE_RESULTS=将结果保存到 CSV...\tCtrl+Alt+S
 IDS_MENU_SEARCH=搜索(&S)...\tCtrl+F
 IDS_MENU_SELECT_PARENT=选择父项(&P)\tCtrl+- 或 /
