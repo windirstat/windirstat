@@ -535,9 +535,9 @@ void CDirStatDoc::RebuildExtensionData()
 // Deletes a file or directory via SHFileOperation.
 // Return: false, if canceled
 //
-bool CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, const bool toTrashBin, const bool bypassWarning, const bool doRefresh) const
+bool CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, const bool toTrashBin, const bool emptyOnly) const
 {
-    if (!bypassWarning && COptions::ShowDeleteWarning)
+    if (COptions::ShowDeleteWarning)
     {
         // Build list of file paths for the message box
         std::vector<std::wstring> filePaths;
@@ -548,10 +548,11 @@ bool CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, const bo
 
         // Display the file deletion warning dialog
         CMessageBoxDlg warning(
-            Localization::Lookup(IDS_DELETE_WARNING),
+            Localization::Lookup(emptyOnly ? IDS_EMPTY_FOLDER_WARNING : IDS_DELETE_WARNING),
             Localization::Lookup(IDS_DELETE_TITLE),
             MB_YESNO | MB_ICONWARNING, AfxGetMainWnd(), filePaths,
             Localization::Lookup(IDS_DONT_SHOW_AGAIN), false);
+
 
         // Change default width and display
         warning.SetInitialWindowSize({ 600, 600 });
@@ -564,8 +565,20 @@ bool CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, const bo
         COptions::ShowDeleteWarning = !warning.IsCheckboxChecked();
     }
 
-    CProgressDlg(0, true, AfxGetMainWnd(), [&items, toTrashBin](const std::atomic<bool>&, std::atomic<size_t>&)
+    CProgressDlg(0, true, AfxGetMainWnd(), [&](const std::atomic<bool>&, std::atomic<size_t>&)
     {
+        // Build list of items to delete
+        std::vector<CItem*> itemsToDelete{ items };
+        if (emptyOnly)
+        {
+            itemsToDelete.clear();
+            for (const auto& item : items)
+            {
+                const auto& children = item->GetChildren();
+                itemsToDelete.insert(itemsToDelete.end(), children.begin(), children.end());
+            }
+        }
+
         // Determine flags to use for deletion
         auto flags = FOF_NOCONFIRMATION | FOFX_SHOWELEVATIONPROMPT | FOF_NOERRORUI;
         if (toTrashBin)
@@ -590,23 +603,51 @@ bool CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, const bo
         }
 
         // Do all deletions
-        fileOperation->PerformOperations();
+        HRESULT res = fileOperation->PerformOperations();
+        if (res != S_OK) VTRACE(L"File Operation Failed: {}", TranslateError(res));
 
         // Re-run deletion using native function to handle any long paths that were missed
-        if (!toTrashBin) for (const auto& item : items)
+        if (!toTrashBin)
         {
-            std::wstring path = FinderBasic::MakeLongPathCompatible(item->GetPath());
-            std::error_code ec;
-            remove_all(std::filesystem::path(path.data()), ec);
+            // Create a list of files and directories that still exist to remove
+            std::vector<const CItem*> filesToDelete;
+            std::vector<const CItem*> dirsToDelete;
+            std::stack<const CItem*> childStack;
+            for (const auto& item : items) childStack.push(item);
+            while (!childStack.empty())
+            {
+                const auto& item = childStack.top();
+                childStack.pop();
+                if (!FinderBasic::DoesFileExist(item->GetPath())) continue;
+
+                if (item->IsType(IT_DIRECTORY))
+                {
+                    dirsToDelete.emplace_back(item);
+                    for (const auto& child : item->GetChildren())
+                    {
+                        childStack.push(child);
+                    }
+                }
+                else if (item->IsType(IT_FILE))
+                {
+                    filesToDelete.emplace_back(item);
+                }
+            }
+
+            // First remove files and then attempt directories in order from deep to shallow
+            for (const auto& file : filesToDelete) DeleteFile(file->GetPathLong().c_str());
+            for (const auto& dir : dirsToDelete | std::views::reverse)
+            {
+                std::error_code ec;
+                std::filesystem::remove_all(std::filesystem::path(dir->GetPathLong().c_str()), ec);
+            }
         }
     }).DoModal();
 
     // Create a list of items and recycler directories to refresh
-    std::vector<CItem*> refresh;
-    for (const auto& item : items)
+    std::vector<CItem*> refresh{ items };
+    if (toTrashBin) for (const auto& item : items)
     {
-        refresh.push_back(item);
-        if (!toTrashBin) continue;
         if (const auto & recycler = item->FindRecyclerItem(); recycler != nullptr &&
             std::ranges::find(refresh, recycler) == refresh.end())
         {
@@ -615,8 +656,7 @@ bool CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, const bo
     }
 
     // Refresh the items and recycler directories
-    if (doRefresh) RefreshItem(refresh);
-
+    RefreshItem(items);
     return true;
 }
 
@@ -1288,31 +1328,17 @@ void CDirStatDoc::OnPowerShellHere()
 
 void CDirStatDoc::OnCleanupDeleteToBin()
 {
-    const auto& items = GetAllSelected();
-    DeletePhysicalItems(items, true);
+    DeletePhysicalItems(GetAllSelected(), true);
 }
 
 void CDirStatDoc::OnCleanupDelete()
 {
-    const auto& items = GetAllSelected();
-    DeletePhysicalItems(items, false);
+    DeletePhysicalItems(GetAllSelected(), false);
 }
 
 void CDirStatDoc::OnCleanupEmptyFolder()
 {
-    const auto selectedItems = GetAllSelected();
-    for (const auto& select : selectedItems)
-    {
-        // confirm user wishes to proceed
-        if (WdsMessageBox(Localization::Format(IDS_EMPTY_FOLDER_WARNINGs,
-            select->GetPath()).c_str(), MB_YESNO) == IDYES)
-        {
-            DeletePhysicalItems(select->GetChildren(), false, true, false);
-        }
-    }
-
-    // refresh items
-    RefreshItem(selectedItems);
+    DeletePhysicalItems(GetAllSelected(), false, true);
 }
 
 void CDirStatDoc::OnSearch()
