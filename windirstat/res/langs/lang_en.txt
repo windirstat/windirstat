@@ -85,6 +85,7 @@ IDS_MENU_DELETE_BIN=&Delete (to Recycle Bin)\tDel
 IDS_MENU_DELETE=Delete Permanently\tShift+Del
 IDS_MENU_DISABLE_HIBERNATE=Disable Hibernate File
 IDS_MENU_DISK_CLEANUP=Run Windows Disk Cleanup Utility
+IDS_MENU_DISM_ANALYZE=/AnalyzeComponentStore
 IDS_MENU_DISM_NORMAL=/StartComponentCleanup
 IDS_MENU_DISM_RESET=/StartComponentCleanup /ResetBase
 IDS_MENU_DISM=Component Store Cleanup

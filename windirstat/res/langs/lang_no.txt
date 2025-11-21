@@ -85,6 +85,7 @@ IDS_MENU_DELETE_BIN=&Slett til Papirkurven\tDel
 IDS_MENU_DELETE=Slett permanent\tShift+Del
 IDS_MENU_DISABLE_HIBERNATE=Deaktiver dvalefil
 IDS_MENU_DISK_CLEANUP=Start Windows Diskopprydding...
+IDS_MENU_DISM_ANALYZE=/AnalyzeComponentStore
 IDS_MENU_DISM_NORMAL=/StartComponentCleanup
 IDS_MENU_DISM_RESET=/StartComponentCleanup /ResetBase
 IDS_MENU_DISM=Windows systemkomponentopprydding (DISM)

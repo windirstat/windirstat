@@ -85,6 +85,7 @@ IDS_MENU_DELETE_BIN=&Effacer (vers la corbeille)\tDel
 IDS_MENU_DELETE=&Détruire (impossible de récupérer!)\tShift+Del
 IDS_MENU_DISABLE_HIBERNATE=Désactiver le fichier d'hibernation
 IDS_MENU_DISK_CLEANUP=Exécuter l'utilitaire de nettoyage de disque Windows
+IDS_MENU_DISM_ANALYZE=/AnalyzeComponentStore
 IDS_MENU_DISM_NORMAL=/StartComponentCleanup
 IDS_MENU_DISM_RESET=/StartComponentCleanup /ResetBase
 IDS_MENU_DISM=Nettoyage du magasin de composants

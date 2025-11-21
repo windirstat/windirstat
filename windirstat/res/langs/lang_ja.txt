@@ -85,6 +85,7 @@ IDS_MENU_DELETE_BIN=削除（ごみ箱へ）(&D)\tDel
 IDS_MENU_DELETE=完全削除\tShift+Del
 IDS_MENU_DISABLE_HIBERNATE=休止状態ファイルを無効化
 IDS_MENU_DISK_CLEANUP=Windows ディスククリーンアップユーティリティを実行
+IDS_MENU_DISM_ANALYZE=/AnalyzeComponentStore
 IDS_MENU_DISM_NORMAL=/StartComponentCleanup
 IDS_MENU_DISM_RESET=/StartComponentCleanup /ResetBase
 IDS_MENU_DISM=コンポーネントストアクリーンアップ

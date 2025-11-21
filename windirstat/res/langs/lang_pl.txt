@@ -85,6 +85,7 @@ IDS_MENU_DELETE_BIN=&Usuń (do Kosza)\tDel
 IDS_MENU_DELETE=Usuń (tr&wale!)\tShift+Del
 IDS_MENU_DISABLE_HIBERNATE=Wyłącz plik hibernacji
 IDS_MENU_DISK_CLEANUP=Uruchom narzędzie Windows do oczyszczania dysku
+IDS_MENU_DISM_ANALYZE=/AnalyzeComponentStore
 IDS_MENU_DISM_NORMAL=/StartComponentCleanup
 IDS_MENU_DISM_RESET=/StartComponentCleanup /ResetBase
 IDS_MENU_DISM=Czyszczenie magazynu komponentów

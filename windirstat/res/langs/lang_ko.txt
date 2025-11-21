@@ -85,6 +85,7 @@ IDS_MENU_DELETE_BIN=삭제 (휴지통으로)(&D)\tDel
 IDS_MENU_DELETE=영구 삭제\tShift+Del
 IDS_MENU_DISABLE_HIBERNATE=최대 절전 모드 파일 비활성화
 IDS_MENU_DISK_CLEANUP=Windows 디스크 정리 유틸리티 실행
+IDS_MENU_DISM_ANALYZE=/AnalyzeComponentStore
 IDS_MENU_DISM_NORMAL=/StartComponentCleanup
 IDS_MENU_DISM_RESET=/StartComponentCleanup /ResetBase
 IDS_MENU_DISM=구성 요소 저장소 정리

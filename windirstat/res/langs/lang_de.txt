@@ -85,6 +85,7 @@ IDS_MENU_DELETE_BIN=&Löschen (in den Papierkorb)\tEntf
 IDS_MENU_DELETE=Löschen (&irreversibel!)\tUmschalt+Entf
 IDS_MENU_DISABLE_HIBERNATE=Ruhezustandsdatei deaktivieren
 IDS_MENU_DISK_CLEANUP=Windows-Datenträgerbereinigung ausführen
+IDS_MENU_DISM_ANALYZE=/AnalyzeComponentStore
 IDS_MENU_DISM_NORMAL=/StartComponentCleanup
 IDS_MENU_DISM_RESET=/StartComponentCleanup /ResetBase
 IDS_MENU_DISM=Bereinigung des Komponentenspeichers
