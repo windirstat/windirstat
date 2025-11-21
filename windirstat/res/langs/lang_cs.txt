@@ -115,6 +115,7 @@ IDS_MENU_REMOVE_LOCAL="Odstranit místní profily"
 IDS_MENU_REMOVE_ROAMING=Odebrat soubory roamingového profilu uloženého v mezipaměti
 IDS_MENU_REMOVE_SHADOW="Odstranit stínové kopie svazku"
 IDS_MENU_RESELECT_CHILD=Znovu vybrat po&tomka\tCtrl++ nebo *
+IDS_MENU_SAVE_DUPLICATES=Uložit &duplikáty do CSV...
 IDS_MENU_SAVE_RESULTS=Uložit výsledky do CSV...\tCtrl+Alt+S
 IDS_MENU_SEARCH=&Hledat...\tCtrl+F
 IDS_MENU_SELECT_PARENT=Vybrat &rodiče\tCtrl+- nebo /

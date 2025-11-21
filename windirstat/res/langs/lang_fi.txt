@@ -115,6 +115,7 @@ IDS_MENU_REMOVE_LOCAL="Poista paikalliset profiilit"
 IDS_MENU_REMOVE_ROAMING=Poista välimuistissa olevat Roaming-profiilit
 IDS_MENU_REMOVE_SHADOW="Poista levyn varjokopiot"
 IDS_MENU_RESELECT_CHILD=Valitse uudelleen &alikohde\tCtrl++ tai *
+IDS_MENU_SAVE_DUPLICATES=Tallenna &duplikaatit CSV-tiedostoon...
 IDS_MENU_SAVE_RESULTS=Tallenna tulokset CSV-muodossa...\tCtrl+Alt+S
 IDS_MENU_SEARCH=&Etsi...\tCtrl+F
 IDS_MENU_SELECT_PARENT=Valitse &yläkohde\tCtrl+- tai /

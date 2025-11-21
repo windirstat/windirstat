@@ -115,6 +115,7 @@ IDS_MENU_REMOVE_LOCAL="로컬 프로필 제거"
 IDS_MENU_REMOVE_ROAMING=캐시된 로밍 프로필 제거
 IDS_MENU_REMOVE_SHADOW="볼륨 섀도 복사본 제거"
 IDS_MENU_RESELECT_CHILD=하위 다시 선택(&C)\tCtrl++ 또는 *
+IDS_MENU_SAVE_DUPLICATES=중복 파일을 CSV로 저장(&D)...
 IDS_MENU_SAVE_RESULTS=결과를 CSV로 저장...\tCtrl+Alt+S
 IDS_MENU_SEARCH=검색(&S)...\tCtrl+F
 IDS_MENU_SELECT_PARENT=상위 선택(&P)\tCtrl+- 또는 /

@@ -176,6 +176,7 @@ protected:
     afx_msg void OnRefreshSelected();
     afx_msg void OnRefreshAll();
     afx_msg void OnSaveResults();
+    afx_msg void OnSaveDuplicates();
     afx_msg void OnLoadResults();
     afx_msg void OnEditCopy();
     afx_msg void OnCleanupEmptyRecycleBin();

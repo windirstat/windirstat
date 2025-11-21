@@ -115,6 +115,7 @@ IDS_MENU_REMOVE_LOCAL="Fjern lokale profiler"
 IDS_MENU_REMOVE_ROAMING=Fjern hurtigbufrede Roaming-profiler
 IDS_MENU_REMOVE_SHADOW="Fjern volumspeilkopier"
 IDS_MENU_RESELECT_CHILD=Velg &underelement på nytt\tCtrl++ eller *
+IDS_MENU_SAVE_DUPLICATES=Lagre &duplikater til CSV...
 IDS_MENU_SAVE_RESULTS=Lagre resultater til CSV...\tCtrl+Alt+S
 IDS_MENU_SEARCH=&Søk...\tCtrl+F
 IDS_MENU_SELECT_PARENT=Velg &element\tCtrl+- eller /

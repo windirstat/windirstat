@@ -115,6 +115,7 @@ IDS_MENU_REMOVE_LOCAL="Lokale profielen verwijderen"
 IDS_MENU_REMOVE_ROAMING=Gecachte roaming-profielen verwijderen
 IDS_MENU_REMOVE_SHADOW="Volume-schaduwkopieën verwijderen"
 IDS_MENU_RESELECT_CHILD=&Onderliggende opnieuw selecteren\tCtrl++ of *
+IDS_MENU_SAVE_DUPLICATES=Duplicaten naar CSV &opslaan...
 IDS_MENU_SAVE_RESULTS=Resultaten opslaan in CSV...\tCtrl+Alt+S
 IDS_MENU_SEARCH=&Zoeken...\tCtrl+F
 IDS_MENU_SELECT_PARENT=&Bovenliggende selecteren\tCtrl+- of /

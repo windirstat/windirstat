@@ -115,6 +115,7 @@ IDS_MENU_REMOVE_LOCAL="Rimuovi profili locali"
 IDS_MENU_REMOVE_ROAMING=Rimuovi i profili di roaming memorizzati nella cache
 IDS_MENU_REMOVE_SHADOW="Rimuovi copie shadow del volume"
 IDS_MENU_RESELECT_CHILD=&Riseleziona secondario\tCtrl++ o *
+IDS_MENU_SAVE_DUPLICATES=Salva i &duplicati in CSV...
 IDS_MENU_SAVE_RESULTS=Salva risultati su CSV...\tCtrl+Alt+S
 IDS_MENU_SEARCH=&Cerca...\tCtrl+F
 IDS_MENU_SELECT_PARENT=&Seleziona primario\tCtrl+- o /

@@ -115,6 +115,7 @@ IDS_MENU_REMOVE_LOCAL="Helyi profilok eltávolítása"
 IDS_MENU_REMOVE_ROAMING=Gyorsítótárazott barangoló profilok eltávolítása
 IDS_MENU_REMOVE_SHADOW="Kötet árnyékmásolatainak eltávolítása"
 IDS_MENU_RESELECT_CHILD=&Gyermek újrajelölése\tCtrl++ vagy *
+IDS_MENU_SAVE_DUPLICATES=Duplikátumok &mentése CSV-be...
 IDS_MENU_SAVE_RESULTS=Eredmények mentése CSV fájlba...\tCtrl+Alt+S
 IDS_MENU_SEARCH=&Keresés...\tCtrl+F
 IDS_MENU_SELECT_PARENT=&Szülo kijelölése\tCtrl+- vagy /

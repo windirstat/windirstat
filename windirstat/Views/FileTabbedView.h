@@ -40,6 +40,8 @@ public:
     void SetActiveSearchView() { SetActiveView(m_FileSearchViewIndex); }
     void SetDupeTabVisibility(bool show = true);
     void SetSearchTabVisibility(bool show = true);
+    bool IsDupeTabVisible() { return GetTabControl().IsTabVisible(m_FileDupeViewIndex); }
+    bool IsSearchTabVisible() { return GetTabControl().IsTabVisible(m_FileSearchViewIndex); }
 
 protected:
     CFileTabbedView() = default;
