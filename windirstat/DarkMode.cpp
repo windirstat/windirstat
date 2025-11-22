@@ -429,3 +429,9 @@ void CDarkModeVisualManager::OnDrawStatusBarPaneBorder(CDC* pDC, CMFCStatusBar* 
     pDC->FillSolidRect(rectPane.left, rectPane.top, rectPane.Width(), 1, DarkMode::WdsSysColor(COLOR_WINDOWFRAME));
     pDC->FillSolidRect(rectPane.right - 1, rectPane.top, 1, rectPane.Height(), DarkMode::WdsSysColor(COLOR_WINDOWFRAME));
 }
+
+void CDarkModeVisualManager::OnUpdateSystemColors()
+{
+    CMFCVisualManagerWindows7::OnUpdateSystemColors();
+    DarkMode::SetupGlobalColors();
+}
