@@ -1,19 +1,18 @@
 ﻿// WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
 //
-// This program is free software; you can redistribute it and/or modify
+// This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
-// the Free Software Foundation; either version 2 of the License, or
-// (at your option) any later version.
+// the Free Software Foundation, either version 2 of the License, or
+// at your option any later version.
 //
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
 #pragma once
@@ -63,7 +62,7 @@ public:
 private:
     CDrivesList* m_List; // Backpointer
     std::wstring m_Path; // e.g. "C:\"
-    HICON m_Icon = nullptr; // Cached icon icon
+    HICON m_Icon = nullptr; // Cached icon
     bool m_IsRemote; // Whether the drive type is DRIVE_REMOTE (network drive)
 
     bool m_Querying = true; // Information thread is running.
@@ -79,7 +78,7 @@ private:
 
 //
 // CDriveInformationThread. Does the GetVolumeInformation() call, which
-// may hang for ca. 30 sec, it a network drive is not accessible.
+// may hang for ca. 30 sec, if a network drive is not accessible.
 //
 class CDriveInformationThread final : public CWinThread
 {
@@ -103,13 +102,11 @@ public:
 private:
     const std::wstring m_Path; // Path like "C:\"
     const LPARAM m_DriveItem;  // The list item, we belong to
-
-    std::mutex m_Mutex;        // for m_Dialog
-    HWND m_Dialog;             // synchronized by m_Cs
     const UINT m_Serial;       // serial number of m_Dialog
+    std::atomic<HWND> m_Dialog;
 
     // "[out]"-parameters
-    std::wstring m_Name;            // Result: name like "BOOT (C:)", valid if m_Success
+    std::wstring m_Name;        // Result: name like "BOOT (C:)", valid if m_Success
     ULONGLONG m_TotalBytes = 0; // Result: capacity of the drive, valid if m_Success
     ULONGLONG m_FreeBytes = 0;  // Result: free space on the drive, valid if m_Success
     bool m_Success = false;     // Result: false, iff drive is inaccessible.
@@ -137,7 +134,7 @@ class CDrivesList final : public COwnerDrawnListControl
 // CSelectDrivesDlg. The initial dialog, where the user can select
 // one or more drives or a folder for scanning.
 //
-class CSelectDrivesDlg final : public CDialogEx
+class CSelectDrivesDlg final : public CLayoutDialogEx
 {
     DECLARE_DYNAMIC(CSelectDrivesDlg)
 
@@ -154,6 +151,7 @@ class CSelectDrivesDlg final : public CDialogEx
     BOOL OnInitDialog() override;
     void OnOK() override;
     void UpdateButtons();
+    void SetActiveRadio(int radio);
 
 protected:
 
@@ -165,17 +163,14 @@ protected:
     std::vector<std::wstring> m_Drives;    // out. Valid if m_Radio != RADIO_TARGET_FOLDER
     static UINT _serial; // Each Instance of this dialog gets a serial number
     CDrivesList m_List;
-    CMFCEditBrowseCtrl m_Browse;
+    CComboBox m_BrowseList;
     CButton m_OkButton;
+    CButton m_BrowseButton;
     std::vector<std::wstring> m_SelectedDrives;
-    CLayout m_Layout;
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnBnClickedUpdateButtons();
-    afx_msg void OnEnChangeFolderName();
     afx_msg void OnLvnItemChangedDrives(NMHDR* pNMHDR, LRESULT* pResult);
-    afx_msg void OnSize(UINT nType, int cx, int cy);
-    afx_msg void OnGetMinMaxInfo(MINMAXINFO* lpMMI);
     afx_msg void OnDestroy();
     afx_msg LRESULT OnWmuOk(WPARAM, LPARAM);
     afx_msg LRESULT OnWmDriveInfoThreadFinished(WPARAM, LPARAM lparam);
@@ -183,5 +178,10 @@ protected:
     afx_msg void OnBnClickedRadioTargetDrivesSubset();
     afx_msg void OnBnClickedRadioTargetFolder();
     afx_msg void OnNMSetfocusTargetDrivesList(NMHDR*, LRESULT* pResult);
+    afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
+    afx_msg void OnBnClickedBrowseButton();
     BOOL PreTranslateMessage(MSG* pMsg) override;
+public:
+    afx_msg void OnEditchangeBrowseFolder();
+    afx_msg void OnCbnSelchangeBrowseFolder();
 };

@@ -1,19 +1,18 @@
 ﻿// WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
 //
-// This program is free software; you can redistribute it and/or modify
+// This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
-// the Free Software Foundation; either version 2 of the License, or
-// (at your option) any later version.
+// the Free Software Foundation, either version 2 of the License, or
+// at your option any later version.
 //
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
 #include "stdafx.h"
@@ -38,11 +37,11 @@ void CIconHandler::Initialize()
 
     m_FilterOverride.RegisterFilter();
 
-    m_JunctionImage = CDirStatApp::Get()->LoadIcon(IDI_JUNCTION);
-    m_JunctionProtected = CDirStatApp::Get()->LoadIcon(IDI_JUNCTION_PROTECTED);
-    m_FreeSpaceImage = CDirStatApp::Get()->LoadIcon(IDI_FREE_SPACE);
-    m_UnknownImage = CDirStatApp::Get()->LoadIcon(IDI_UNKNOWN);
-    m_EmptyImage = CDirStatApp::Get()->LoadIcon(IDI_EMPTY);
+    m_JunctionImage = DarkMode::LightenIcon(CDirStatApp::Get()->LoadIcon(IDI_JUNCTION));
+    m_JunctionProtected = DarkMode::LightenIcon(CDirStatApp::Get()->LoadIcon(IDI_JUNCTION_PROTECTED), true);
+    m_FreeSpaceImage = DarkMode::LightenIcon(CDirStatApp::Get()->LoadIcon(IDI_FREE_SPACE), true);
+    m_UnknownImage = DarkMode::LightenIcon(CDirStatApp::Get()->LoadIcon(IDI_UNKNOWN), true);
+    m_EmptyImage = DarkMode::LightenIcon(CDirStatApp::Get()->LoadIcon(IDI_EMPTY), true);
 
     // Cache icon for boot drive
     const auto driveLen = wcslen(L"C:\\");
@@ -163,10 +162,10 @@ HICON CIconHandler::FetchShellIcon(const std::wstring & path, UINT flags, const 
         else *psTypeName = sfi.szTypeName;
     }
 
-    std::lock_guard lock(m_CachedIconMutex);
+    std::scoped_lock lock(m_CachedIconMutex);
     if (m_CachedIcons.contains(sfi.iIcon))
     {
-        DestroyIcon(sfi.hIcon);
+        if (sfi.hIcon != nullptr) DestroyIcon(sfi.hIcon);
         return m_CachedIcons[sfi.iIcon];
     }
 

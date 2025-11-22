@@ -1,19 +1,18 @@
 ﻿// WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
 //
-// This program is free software; you can redistribute it and/or modify
+// This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
-// the Free Software Foundation; either version 2 of the License, or
-// (at your option) any later version.
+// the Free Software Foundation, either version 2 of the License, or
+// at your option any later version.
 //
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
 #include "stdafx.h"
@@ -23,14 +22,15 @@
 #include "FileTreeView.h"
 #include "Localization.h"
 #include "MainFrame.h"
+#include "DarkMode.h"
 
-IMPLEMENT_DYNAMIC(CPageFileTree, CPropertyPageEx)
+IMPLEMENT_DYNAMIC(CPageFileTree, CMFCPropertyPage)
 
-CPageFileTree::CPageFileTree() : CPropertyPageEx(IDD) {}
+CPageFileTree::CPageFileTree() : CMFCPropertyPage(IDD) {}
 
 void CPageFileTree::DoDataExchange(CDataExchange* pDX)
 {
-    CPropertyPageEx::DoDataExchange(pDX);
+    CMFCPropertyPage::DoDataExchange(pDX);
     DDX_Check(pDX, IDC_PACMANANIMATION, m_PacmanAnimation);
     DDX_Check(pDX, IDC_SHOWTIMESPENT, m_ShowTimeSpent);
     DDX_Check(pDX, IDC_TREECOL_FOLDERS, m_ShowColumnFolders);
@@ -39,7 +39,7 @@ void CPageFileTree::DoDataExchange(CDataExchange* pDX)
     DDX_Check(pDX, IDC_TREECOL_ITEMS, m_ShowColumnItems);
     DDX_Check(pDX, IDC_TREECOL_FILES, m_ShowColumnFiles);
     DDX_Check(pDX, IDC_TREECOL_ATTRIBUTES, m_ShowColumnAttributes);
-    DDX_Check(pDX, IDC_TREECOL_LASTCHANGE, m_ShowColumnLastChange);
+    DDX_Check(pDX, IDC_TREECOL_LAST_CHANGE, m_ShowColumnLastChange);
     DDX_Check(pDX, IDC_TREECOL_OWNER, m_ShowColumnOwner);
     for (int i = 0; i < TREELISTCOLORCOUNT; i++)
     {
@@ -56,8 +56,8 @@ void CPageFileTree::DoDataExchange(CDataExchange* pDX)
     DDX_Control(pDX, IDC_SLIDER, m_Slider);
 }
 
-BEGIN_MESSAGE_MAP(CPageFileTree, CPropertyPageEx)
-    ON_NOTIFY_RANGE(COLBN_CHANGED, IDC_COLORBUTTON0, IDC_COLORBUTTON7, OnColorChanged)
+BEGIN_MESSAGE_MAP(CPageFileTree, CMFCPropertyPage)
+ ON_NOTIFY_RANGE(COLBN_CHANGED, IDC_COLORBUTTON0, IDC_COLORBUTTON7, OnColorChanged)
     ON_WM_VSCROLL()
     ON_BN_CLICKED(IDC_PACMANANIMATION, OnBnClickedSetModified)
     ON_BN_CLICKED(IDC_SHOWTIMESPENT, OnBnClickedSetModified)
@@ -65,17 +65,25 @@ BEGIN_MESSAGE_MAP(CPageFileTree, CPropertyPageEx)
     ON_BN_CLICKED(IDC_TREECOL_ITEMS, OnBnClickedSetModified)
     ON_BN_CLICKED(IDC_TREECOL_FILES, OnBnClickedSetModified)
     ON_BN_CLICKED(IDC_TREECOL_ATTRIBUTES, OnBnClickedSetModified)
-    ON_BN_CLICKED(IDC_TREECOL_LASTCHANGE, OnBnClickedSetModified)
+    ON_BN_CLICKED(IDC_TREECOL_LAST_CHANGE, OnBnClickedSetModified)
     ON_BN_CLICKED(IDC_TREECOL_OWNER, OnBnClickedSetModified)
     ON_BN_CLICKED(IDC_TREECOL_SIZE_LOGICAL, OnBnClickedSetModified)
     ON_BN_CLICKED(IDC_TREECOL_SIZE_PHYSICAL, OnBnClickedSetModified)
+    ON_WM_CTLCOLOR()
 END_MESSAGE_MAP()
+
+HBRUSH CPageFileTree::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
+{
+    const HBRUSH brush = DarkMode::OnCtlColor(pDC, nCtlColor);
+    return brush ? brush : CMFCPropertyPage::OnCtlColor(pDC, pWnd, nCtlColor);
+}
 
 BOOL CPageFileTree::OnInitDialog()
 {
-    CPropertyPageEx::OnInitDialog();
+    CMFCPropertyPage::OnInitDialog();
 
     Localization::UpdateDialogs(*this);
+    DarkMode::AdjustControls(GetSafeHwnd());
 
     m_PacmanAnimation= COptions::PacmanAnimation;
     m_ShowTimeSpent = COptions::ShowTimeSpent;
@@ -140,7 +148,7 @@ void CPageFileTree::OnOK()
     COptions::FileTreeColor7 = m_FileTreeColor[7];
     if (colsChanged) CMainFrame::Get()->GetFileTreeView()->CreateColumns();
     CDirStatDoc::GetDocument()->UpdateAllViews(nullptr, HINT_LISTSTYLECHANGED);
-    CPropertyPageEx::OnOK();
+    CMFCPropertyPage::OnOK();
 }
 
 void CPageFileTree::OnBnClickedSetModified()
@@ -178,5 +186,5 @@ void CPageFileTree::OnVScroll(const UINT nSBCode, const UINT nPos, CScrollBar* p
         EnableButtons();
         SetModified();
     }
-    CPropertyPageEx::OnVScroll(nSBCode, nPos, pScrollBar);
+    CMFCPropertyPage::OnVScroll(nSBCode, nPos, pScrollBar);
 }

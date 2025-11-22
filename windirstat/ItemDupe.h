@@ -1,19 +1,18 @@
 ﻿// WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
 //
-// This program is free software; you can redistribute it and/or modify
+// This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
-// the Free Software Foundation; either version 2 of the License, or
-// (at your option) any later version.
+// the Free Software Foundation, either version 2 of the License, or
+// at your option any later version.
 //
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
 #pragma once
@@ -30,7 +29,7 @@ using ITEMDUPCOLUMNS = enum : std::uint8_t
     COL_ITEMDUP_ITEMS,
     COL_ITEMDUP_SIZE_PHYSICAL,
     COL_ITEMDUP_SIZE_LOGICAL,
-    COL_ITEMDUP_LASTCHANGE
+    COL_ITEMDUP_LAST_CHANGE
 };
 
 class CItemDupe final : public CTreeListItem
@@ -65,6 +64,7 @@ public:
     HICON GetIcon() override;
     CTreeListItem* GetLinkedItem() override { return m_Item; }
 
+    std::wstring GetHash() const { return m_HashString; }
     std::wstring GetHashAndExtensions() const;
     const std::vector<CItemDupe*>& GetChildren() const;
     void AddDupeItemChild(CItemDupe* child);

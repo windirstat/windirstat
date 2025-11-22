@@ -1,19 +1,18 @@
 ﻿// WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
 //
-// This program is free software; you can redistribute it and/or modify
+// This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
-// the Free Software Foundation; either version 2 of the License, or
-// (at your option) any later version.
+// the Free Software Foundation, either version 2 of the License, or
+// at your option any later version.
 //
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
 #pragma once
@@ -59,8 +58,8 @@ public:
         }
         catch (std::exception&)
         {
-            // caught from long running or cancelled
-            std::lock_guard lock(m_Mutex);
+            // Exception caught from a long-running task or cancellation
+            std::scoped_lock lock(m_Mutex);
             m_WorkersWaiting++;
             m_Waiting.notify_all();
         }
@@ -79,14 +78,14 @@ public:
     void Push(T const& value)
     {
         // Push another entry onto the queue
-        std::lock_guard lock(m_Mutex);
+        std::scoped_lock lock(m_Mutex);
         m_Queue.push_front(value);
         m_Pushed.notify_one();
     }
 
     T Pop()
     {
-        // Record the worker is m_Waiting for an item until
+        // Record that the worker is waiting for an item until
         // the queue has something in it and we are not suspended
         std::unique_lock lock(m_Mutex);
         m_WorkersWaiting++;
@@ -112,7 +111,7 @@ public:
 
     void PushIfNotQueued(T const& value)
     {
-        std::lock_guard lock(m_Mutex);
+        std::scoped_lock lock(m_Mutex);
         if (std::ranges::find(m_Queue, value) != m_Queue.end()) return;
         m_Queue.push_back(value);
         m_Pushed.notify_one();
@@ -122,7 +121,7 @@ public:
     {
         if (!m_Suspended) return;
 
-        // wait until its not suspended or its cancelled
+        // wait until not suspended or its cancelled
         std::unique_lock lock(m_Mutex);
         m_WorkersWaiting++;
         m_Waiting.notify_all();
@@ -189,7 +188,7 @@ public:
 
     void ResumeExecution()
     {
-        std::lock_guard lock(m_Mutex);
+        std::scoped_lock lock(m_Mutex);
         m_Suspended = false;
         m_Waiting.notify_all();
         m_Pushed.notify_all();
@@ -197,7 +196,7 @@ public:
 
     void ResetQueue(const int totalWorkerThreads, const bool clearQueue = true)
     {
-        std::lock_guard lock(m_Mutex);
+        std::scoped_lock lock(m_Mutex);
         m_WorkersWaiting = 0;
         m_Suspended = false;
         m_Started = false;

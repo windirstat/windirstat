@@ -1,19 +1,18 @@
 ﻿// WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
 //
-// This program is free software; you can redistribute it and/or modify
+// This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
-// the Free Software Foundation; either version 2 of the License, or
-// (at your option) any later version.
+// the Free Software Foundation, either version 2 of the License, or
+// at your option any later version.
 //
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
 #include "stdafx.h"
@@ -41,8 +40,6 @@ void CFileTreeView::OnDraw(CDC* pDC)
     UNREFERENCED_PARAMETER(pDC);
 }
 
-#pragma warning(push)
-#pragma warning(disable:26454)
 BEGIN_MESSAGE_MAP(CFileTreeView, CView)
     ON_WM_INITMENUPOPUP()
     ON_WM_SIZE()
@@ -53,7 +50,6 @@ BEGIN_MESSAGE_MAP(CFileTreeView, CView)
     ON_UPDATE_COMMAND_UI(ID_POPUP_TOGGLE, OnUpdatePopupToggle)
     ON_COMMAND(ID_POPUP_TOGGLE, OnPopupToggle)
 END_MESSAGE_MAP()
-#pragma warning(pop)
 
 void CFileTreeView::OnSize(const UINT nType, const int cx, const int cy)
 {
@@ -71,7 +67,7 @@ void CFileTreeView::CreateColumns(const bool all)
     {
         // Columns should be in enumeration order so initial sort will work
         m_Control.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_NAME).c_str(), LVCFMT_LEFT, 250, COL_NAME);
-        m_Control.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_SUBTREEPERCENTAGE).c_str(), LVCFMT_RIGHT, CItem::GetSubtreePercentageWidth() + 30, COL_SUBTREEPERCENTAGE);
+        m_Control.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_SUBTREE_PERCENTAGE).c_str(), LVCFMT_RIGHT, CItem::GetSubtreePercentageWidth() + 30, COL_SUBTREE_PERCENTAGE);
         m_Control.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_PERCENTAGE).c_str(), LVCFMT_RIGHT, 90, COL_PERCENTAGE);
     }
 
@@ -92,7 +88,7 @@ void CFileTreeView::CreateColumns(const bool all)
     if (COptions::ShowColumnFolders)
         m_Control.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_FOLDERS).c_str(), LVCFMT_RIGHT, 90, COL_FOLDERS);
     if (COptions::ShowColumnLastChange)
-        m_Control.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_LASTCHANGE).c_str(), LVCFMT_LEFT, 120, COL_LASTCHANGE);
+        m_Control.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_LAST_CHANGE).c_str(), LVCFMT_LEFT, 120, COL_LAST_CHANGE);
     if (COptions::ShowColumnAttributes)
         m_Control.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_ATTRIBUTES).c_str(), LVCFMT_LEFT, 90, COL_ATTRIBUTES);
     if (COptions::ShowColumnOwner)
@@ -123,7 +119,7 @@ int CFileTreeView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
 
 BOOL CFileTreeView::OnEraseBkgnd(CDC* /*pDC*/)
 {
-    return true;
+    return TRUE;
 }
 
 void CFileTreeView::OnSetFocus(CWnd* /*pOldWnd*/)

@@ -1,25 +1,24 @@
 ﻿// WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
 //
-// This program is free software; you can redistribute it and/or modify
+// This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
-// the Free Software Foundation; either version 2 of the License, or
-// (at your option) any later version.
+// the Free Software Foundation, either version 2 of the License, or
+// at your option any later version.
 //
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
 #include "stdafx.h"
 #include "SelectObject.h"
 #include "XYSlider.h"
-
+#include "DarkMode.h"
 #include "resource.h"
 
 IMPLEMENT_DYNAMIC(CXySlider, CStatic)
@@ -141,19 +140,19 @@ void CXySlider::CheckMinMax(LONG& val, const int minVal, const int maxVal) const
 {
     ASSERT(minVal <= maxVal);
 
-    val = max(min(val, maxVal), minVal);
+    val = std::clamp(val, static_cast<LONG>(minVal), static_cast<LONG>(maxVal));
 }
 
 void CXySlider::InternToExtern()
 {
-    m_ExternalPos.x = roundaway(static_cast<double>(m_Pos.x) * m_ExternalRange.cx / m_Range.cx);
-    m_ExternalPos.y = roundaway(static_cast<double>(m_Pos.y) * m_ExternalRange.cy / m_Range.cy);
+    m_ExternalPos.x = static_cast<LONG>(std::round(static_cast<double>(m_Pos.x) * m_ExternalRange.cx / m_Range.cx));
+    m_ExternalPos.y = static_cast<LONG>(std::round(static_cast<double>(m_Pos.y) * m_ExternalRange.cy / m_Range.cy));
 }
 
 void CXySlider::ExternToIntern()
 {
-    m_Pos.x = roundaway(static_cast<double>(m_ExternalPos.x) * m_Range.cx / m_ExternalRange.cx);
-    m_Pos.y = roundaway(static_cast<double>(m_ExternalPos.y) * m_Range.cy / m_ExternalRange.cy);
+    m_Pos.x = static_cast<LONG>(std::round(static_cast<double>(m_ExternalPos.x) * m_Range.cx / m_ExternalRange.cx));
+    m_Pos.y = static_cast<LONG>(std::round(static_cast<double>(m_ExternalPos.y) * m_Range.cy / m_ExternalRange.cy));
 }
 
 void CXySlider::NotifyParent() const
@@ -168,14 +167,14 @@ void CXySlider::NotifyParent() const
 
 void CXySlider::PaintBackground(CDC* pdc)
 {
-    pdc->FillSolidRect(m_RcAll, GetSysColor(COLOR_BTNFACE));
+    pdc->FillSolidRect(m_RcAll, DarkMode::WdsSysColor(COLOR_BTNFACE));
 
     CRect rc = m_RcInner;
     pdc->DrawEdge(rc, EDGE_SUNKEN, BF_RECT | BF_ADJUST);
 
     pdc->FillSolidRect(rc, RGB(255, 255, 255));
 
-    CPen pen(PS_SOLID, 1, GetSysColor(COLOR_3DLIGHT));
+    CPen pen(PS_SOLID, 1, DarkMode::WdsSysColor(COLOR_3DLIGHT));
     CSelectObject sopen(pdc, &pen);
 
     pdc->MoveTo(rc.left, m_Zero.y);
@@ -199,12 +198,12 @@ void CXySlider::PaintGripper(CDC* pdc) const
 {
     CRect rc = GetGripperRect();
 
-    COLORREF color = GetSysColor(COLOR_BTNFACE);
+    COLORREF color = DarkMode::WdsSysColor(COLOR_BTNFACE);
     if (m_GripperHighlight)
     {
-        auto r = RGB_GET_RVALUE(color);
-        auto g = RGB_GET_GVALUE(color);
-        auto b = RGB_GET_BVALUE(color);
+        auto r = GetRValue(color);
+        auto g = GetGValue(color);
+        auto b = GetBValue(color);
         r += (255 - r) / 3;
         g += (255 - g) / 3;
         b += (255 - b) / 3;
@@ -213,7 +212,7 @@ void CXySlider::PaintGripper(CDC* pdc) const
     pdc->FillSolidRect(rc, color);
     pdc->DrawEdge(rc, EDGE_RAISED, BF_RECT);
 
-    CPen pen(PS_SOLID, 1, GetSysColor(COLOR_3DSHADOW));
+    CPen pen(PS_SOLID, 1, DarkMode::WdsSysColor(COLOR_3DSHADOW));
     CSelectObject sopen(pdc, &pen);
 
     pdc->MoveTo(rc.left, rc.top + rc.Height() / 2);

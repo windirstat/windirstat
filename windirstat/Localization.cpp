@@ -1,19 +1,18 @@
 ﻿// WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
 //
-// This program is free software; you can redistribute it and/or modify
+// This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
-// the Free Software Foundation; either version 2 of the License, or
-// (at your option) any later version.
+// the Free Software Foundation, either version 2 of the License, or
+// at your option any later version.
 //
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
 #include "stdafx.h"
@@ -94,13 +93,8 @@ std::vector<LANGID> Localization::GetLanguageList()
 
 bool Localization::LoadResource(const WORD language)
 {
-    FinderBasic finder;
-    const std::wstring lang = GetLocaleString(LOCALE_SISO639LANGNAME, language);
-    const std::wstring name = L"lang_" + lang + L".txt";
-    if (FinderBasic::DoesFileExist(GetAppFolder(), name))
-    {
-        return LoadFile((GetAppFolder() + L"\\" + name));
-    }
+    if (LoadExternalLanguage(LOCALE_SISO639LANGNAME, language)) return true; // ISO 639-1 language code
+    if (LoadExternalLanguage(LOCALE_SNAME, language)) return true; // BCP 47 language code
 
     // Find the resource in the loaded module
     const HRSRC resource = ::FindResourceEx(nullptr, LANG_RESOURCE_TYPE, MAKEINTRESOURCE(IDR_RT_LANG), language);
@@ -135,25 +129,21 @@ void Localization::UpdateMenu(CMenu& menu)
             mi.dwTypeData = const_cast<LPWSTR>(m_Map[mi.dwTypeData].c_str());
             menu.SetMenuItemInfoW(i, &mi, TRUE);
         }
-        if (IsMenu(mi.hSubMenu)) UpdateMenu(*menu.GetSubMenu(i));
+        if (mi.hSubMenu != nullptr && IsMenu(mi.hSubMenu))
+            UpdateMenu(*menu.GetSubMenu(i));
     }
 }
 
-void Localization::UpdateTabControl(CTabCtrl& tab)
+void Localization::UpdateTabControl(CMFCTabCtrl& tab)
 {
-    for (int i = 0; i < tab.GetItemCount(); i++)
+    for (int i = 0; i < tab.GetTabsNum(); i++)
     {
-        std::array<WCHAR, MAX_VALUE_SIZE> buffer;
-        TCITEMW ti{ sizeof(TCITEMW) };
-        ti.cchTextMax = static_cast<int>(buffer.size());
-        ti.mask = TCIF_TEXT;
-        ti.pszText = buffer.data();
-        if (tab.GetItem(i, &ti) && wcsstr(ti.pszText, L"ID") == ti.pszText &&
-            Contains(ti.pszText))
+        CString tabLabel;
+        tab.GetTabLabel(i, tabLabel);
+        std::wstring tabLabelStr = tabLabel.GetString();
+        if (tabLabelStr.starts_with(L"ID") && Contains(tabLabelStr))
         {
-            ti.mask = TCIF_TEXT;
-            ti.pszText = const_cast<LPWSTR>(m_Map[ti.pszText].c_str());
-            tab.SetItem(i, &ti);
+            tab.SetTabLabel(i, m_Map[tabLabelStr].c_str());
         }
     }
 }
@@ -179,6 +169,15 @@ void Localization::UpdateDialogs(const CWnd& wnd)
         return TRUE;
     },
     reinterpret_cast<LPARAM>(nullptr));
+}
+
+// Try to find and load external language file, return false if failed.
+bool Localization::LoadExternalLanguage(const LCTYPE lcttype, const LCID lcid)
+{
+    const std::wstring name = L"lang_" + GetLocaleString(lcttype, lcid) + L".txt";
+    const std::wstring langFolder = GetAppFolder() + L"\\";
+
+    return FinderBasic::DoesFileExist(langFolder, name) && LoadFile(langFolder + name);
 }
 
 bool Localization::LoadFile(const std::wstring& file)

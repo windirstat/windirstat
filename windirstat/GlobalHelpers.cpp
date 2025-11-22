@@ -1,19 +1,18 @@
 ﻿// WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
 //
-// This program is free software; you can redistribute it and/or modify
+// This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
-// the Free Software Foundation; either version 2 of the License, or
-// (at your option) any later version.
+// the Free Software Foundation, either version 2 of the License, or
+// at your option any later version.
 //
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
 #include "stdafx.h"
@@ -23,36 +22,117 @@
 #include "Options.h"
 #include "Localization.h"
 #include "FinderBasic.h"
+#include "MessageBoxDlg.h"
 
 #include <array>
 #include <algorithm>
+#include <execution>
 #include <regex>
 #include <map>
 
 #pragma comment(lib,"powrprof.lib")
 #pragma comment(lib,"ntdll.lib")
+#pragma comment(lib,"wbemuuid.lib")
 
 EXTERN_C NTSTATUS NTAPI RtlDecompressBuffer(USHORT CompressionFormat, PUCHAR UncompressedBuffer, ULONG  UncompressedBufferSize,
     PUCHAR CompressedBuffer, ULONG  CompressedBufferSize, PULONG FinalUncompressedSize);
 
-std::wstring FormatLongLongNormal(ULONGLONG n)
+static HRESULT WmiConnect(CComPtr<IWbemServices>& pSvc)
 {
-    // Returns formatted number like "123.456.789".
-
-    ASSERT(n >= 0);
-
-    std::wstring all;
-
-    do
+    if (thread_local bool comInit = false; !comInit)
     {
-        const auto rest = n % 1000;
-        n /= 1000;
+        const HRESULT result = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
+        if (FAILED(result) && result != RPC_E_CHANGED_MODE) return result;
+        comInit = true;
+    }
 
-        all.insert(0, (n <= 0) ? std::to_wstring(rest) :
-            std::format(L"{}{:03}", GetLocaleThousandSeparator(), rest));
-    } while (n > 0);
+    CComPtr<IWbemLocator> locObj;
+    return SUCCEEDED(CoCreateInstance(CLSID_WbemLocator, 0, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&locObj))) &&
+        SUCCEEDED(locObj->ConnectServer(CComBSTR(L"ROOT\\CIMV2"), nullptr, nullptr, nullptr, 0, nullptr, nullptr, &pSvc)) &&
+        SUCCEEDED(CoSetProxyBlanket(pSvc, RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE, nullptr,
+            RPC_C_AUTHN_LEVEL_CALL, RPC_C_IMP_LEVEL_IMPERSONATE, nullptr, EOAC_NONE)) ? S_OK : E_FAIL;
+}
 
-    return all;
+void QueryShadowCopies(ULONGLONG& count, ULONGLONG& bytesUsed)
+{
+    count = 0;
+    bytesUsed = 0;
+    CComPtr<IWbemServices> svcObj;
+    CComPtr<IEnumWbemClassObject> enumObj;
+    if (FAILED(WmiConnect(svcObj)) ||
+        FAILED(svcObj->ExecQuery(CComBSTR(L"WQL"), CComBSTR(L"SELECT UsedSpace FROM Win32_ShadowStorage"),
+            WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY, nullptr, &enumObj))) return;
+
+    // Sum up all used space
+    while (true)
+    {
+        ULONG uRet;
+        CComPtr<IWbemClassObject> pObj;
+        if (enumObj->Next(WBEM_INFINITE, 1, &pObj, &uRet) != WBEM_S_NO_ERROR && uRet == 0) break;
+
+        CComVariant usedStr, usedString;
+        if (SUCCEEDED(pObj->Get(L"UsedSpace", 0, &usedStr, nullptr, nullptr)) &&
+            SUCCEEDED(VariantChangeType(&usedString, &usedStr, 0, VT_UI8)))
+            bytesUsed += usedString.ullVal;
+    }
+
+    // Count existing shadow copies
+    enumObj.Release();
+    if (SUCCEEDED(svcObj->ExecQuery(CComBSTR(L"WQL"), CComBSTR(L"SELECT ID FROM Win32_ShadowCopy"),
+        WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY, nullptr, &enumObj)))
+    {
+        for (;; ++count)
+        {
+            ULONG ret;
+            CComPtr<IWbemClassObject> pObj;
+            if (enumObj->Next(WBEM_INFINITE, 1, &pObj, &ret) != WBEM_S_NO_ERROR && ret == 0) break;
+        }
+    }
+}
+
+void RemoveWmiInstances(const std::wstring& wmiClass, std::atomic<size_t>& progress, const std::atomic<bool>& cancelRequested, const std::wstring& whereClause)
+{
+    CComPtr<IWbemServices> svcObj;
+    CComPtr<IWbemClassObject> classObj;
+    CComPtr<IEnumWbemClassObject> enumObj;
+    if (FAILED(WmiConnect(svcObj)) || !svcObj ||
+        FAILED(svcObj->GetObject(CComBSTR(wmiClass.c_str()), 0, nullptr, &classObj, nullptr)) || !classObj ||
+        FAILED(svcObj->ExecQuery(CComBSTR(L"WQL"), CComBSTR(std::format(L"SELECT __PATH FROM {} WHERE {}", wmiClass, whereClause).c_str()),
+            WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY, nullptr, &enumObj)))
+    {
+        return;
+    }
+
+    for (; cancelRequested == false; ++progress)
+    {
+        ULONG uRet;
+        CComPtr<IWbemClassObject> pObj;
+        if (enumObj->Next(WBEM_INFINITE, 1, &pObj, &uRet) != WBEM_S_NO_ERROR || uRet == 0) break;
+
+        CComVariant vtPath;
+        if (SUCCEEDED(pObj->Get(L"__PATH", 0, &vtPath, nullptr, nullptr)) && vtPath.vt == VT_BSTR)
+        {
+            svcObj->DeleteInstance(vtPath.bstrVal, 0, nullptr, nullptr);
+        }
+    }
+}
+
+static std::wstring FormatLongLongNormal(ULONGLONG n)
+{
+    if (n == 0) return L"0";
+
+    const wchar_t sep = GetLocaleThousandSeparator();
+    wchar_t buffer[32];
+    int pos = std::size(buffer) - 1;
+    buffer[pos] = L'\0';
+
+    for (int count = 0; n > 0; ++count, n /= 10)
+    {
+        if (count && count % 3 == 0) buffer[--pos] = sep;
+        buffer[--pos] = L'0' + (n % 10);
+    }
+
+    return { &buffer[pos] };
 }
 
 std::wstring GetLocaleString(const LCTYPE lctype, const LCID lcid)
@@ -74,28 +154,28 @@ std::wstring GetLocaleLanguage(const LANGID langid)
     return s + L" (" + n + L")";
 }
 
-std::wstring GetLocaleThousandSeparator()
+wchar_t GetLocaleThousandSeparator()
 {
     static LCID cachedLocale = static_cast<LCID>(-1);
-    static std::wstring cachedString;
+    static wchar_t cachedChar;
     if (cachedLocale != COptions::GetLocaleForFormatting())
     {
         cachedLocale = COptions::GetLocaleForFormatting();
-        cachedString = GetLocaleString(LOCALE_STHOUSAND, cachedLocale);
+        cachedChar = GetLocaleString(LOCALE_STHOUSAND, cachedLocale)[0];
     }
-    return cachedString;
+    return cachedChar;
 }
 
-std::wstring GetLocaleDecimalSeparator()
+wchar_t GetLocaleDecimalSeparator()
 {
     static LCID cachedLocale = static_cast<LCID>(-1);
-    static std::wstring cachedString;
+    static wchar_t cachedChar;
     if (cachedLocale != COptions::GetLocaleForFormatting())
     {
         cachedLocale = COptions::GetLocaleForFormatting();
-        cachedString = GetLocaleString(LOCALE_SDECIMAL, cachedLocale);
+        cachedChar = GetLocaleString(LOCALE_SDECIMAL, cachedLocale)[0];
     }
-    return cachedString;
+    return cachedChar;
 }
 
 std::wstring FormatBytes(const ULONGLONG& n)
@@ -105,49 +185,39 @@ std::wstring FormatBytes(const ULONGLONG& n)
         return FormatSizeSuffixes(n);
     }
 
-    return FormatLongLongNormal(n);
-
+    return FormatLongLongNormal(n) + L" " + GetSpec_Bytes();
 }
 
 std::wstring FormatSizeSuffixes(ULONGLONG n)
 {
-    // Returns formatted number like "12,4 GB".
+    // Returns formatted number like "12,4 GiB" (uses IEC binary prefixes KiB/MiB/GiB/TiB).
     ASSERT(n >= 0);
-    constexpr int base = 1024;
-    constexpr int half = base / 2;
+    constexpr ULONGLONG base = 1024;
+    constexpr ULONGLONG half = base / 2;
 
-    const double B = static_cast<int>(n % base);
-    n /= base;
+    const ULONGLONG B = n % base; n /= base;
+    const ULONGLONG KiB = n % base; n /= base;
+    const ULONGLONG MiB = n % base; n /= base;
+    const ULONGLONG GiB = n % base; n /= base;
+    const ULONGLONG TiB = n;
 
-    const double KiB = static_cast<int>(n % base);
-    n /= base;
-
-    const double MiB = static_cast<int>(n % base);
-    n /= base;
-
-    const double GiB = static_cast<int>(n % base);
-    n /= base;
-
-    const double TiB = static_cast<int>(n);
-
-    if (TiB != 0.0 || GiB == base - 1 && MiB >= half)
+    if (TiB != 0 || (GiB == base - 1 && MiB >= half))
     {
-        return FormatDouble(TiB + GiB / base) + L" " + GetSpec_TiB();
+        return FormatDouble(static_cast<double>(TiB) + static_cast<double>(GiB) / base) + L" " + GetSpec_TiB();
     }
-    if (GiB != 0.0 || MiB == base - 1 && KiB >= half)
+    if (GiB != 0 || (MiB == base - 1 && KiB >= half))
     {
-        return FormatDouble(GiB + MiB / base) + L" " + GetSpec_GiB();
+        return FormatDouble(static_cast<double>(GiB) + static_cast<double>(MiB) / base) + L" " + GetSpec_GiB();
     }
-    if (MiB != 0.0 || KiB == base - 1 && B >= half)
+    if (MiB != 0 || (KiB == base - 1 && B >= half))
     {
-        return FormatDouble(MiB + KiB / base) + L" " + GetSpec_MiB();
+        return FormatDouble(static_cast<double>(MiB) + static_cast<double>(KiB) / base) + L" " + GetSpec_MiB();
     }
-    if (KiB != 0.0)
+    if (KiB != 0)
     {
-        return FormatDouble(KiB + B / base) + L" " + GetSpec_KiB();
+        return FormatDouble(static_cast<double>(KiB) + static_cast<double>(B) / base) + L" " + GetSpec_KiB();
     }
-
-    return std::to_wstring(static_cast<ULONG>(B)) + L" " + GetSpec_Bytes();
+    return std::to_wstring(B) + L" " + GetSpec_Bytes();
 }
 
 std::wstring FormatCount(const ULONGLONG& n)
@@ -162,7 +232,7 @@ std::wstring FormatDouble(double d)
     d += 0.05;
 
     const int i = static_cast<int>(floor(d));
-    const int r = static_cast<int>(10 * fmod(d, 1));
+    const int r = static_cast<int>(10 * (d - i));
 
     return std::to_wstring(i) + GetLocaleDecimalSeparator() + std::to_wstring(r);
 }
@@ -181,7 +251,7 @@ std::wstring FormatFileTime(const FILETIME& t)
         FileTimeToLocalFileTime(&t, &ft) == 0 ||
         FileTimeToSystemTime(&ft, &st) == 0)
     {
-        return L"";
+        return {};
     }
     
     const LCID lcid = COptions::GetLocaleForFormatting();
@@ -277,7 +347,7 @@ bool GetVolumeName(const std::wstring & rootPath, std::wstring& volumeName)
 
 // Given a root path like "C:\", this function
 // obtains the volume name and returns a complete display string
-// like "BOOT (C:)".
+// like "BOOT (C:)" (drive label followed by the two‑character drive spec).
 std::wstring FormatVolumeNameOfRootPath(const std::wstring& rootPath)
 {
     std::wstring ret;
@@ -320,26 +390,23 @@ void WaitForHandleWithRepainting(const HANDLE h, const DWORD TimeOut)
 {
     while (true)
     {
-        // Read all messages in this next loop, removing each message as we read it.
+        // Pump all pending WM_PAINT messages so the UI keeps updating.
         MSG msg;
         while (::PeekMessage(&msg, nullptr, WM_PAINT, WM_PAINT, PM_REMOVE))
         {
             ::DispatchMessage(&msg);
         }
 
-        // Wait for WM_PAINT message sent or posted to this queue
-        // or for one of the passed handles be set to signal.
+        // Wait for either WM_PAINT messages or the supplied handle to become signaled.
         const DWORD r = MsgWaitForMultipleObjects(1, &h, FALSE, TimeOut, QS_PAINT);
 
-        // The result tells us the type of event we have.
         if (r == WAIT_OBJECT_0 + 1)
         {
-            // New messages have arrived.
-            // Continue to the top of the always while loop to dispatch them and resume waiting.
+            // New paint messages arrived; loop again to dispatch them before waiting.
             continue;
         }
 
-        // The handle became signaled.
+        // The handle was signaled (or a timeout occurred); exit loop.
         break;
     }
 }
@@ -390,7 +457,6 @@ bool DriveExists(const std::wstring& path)
 //
 // I hope that a drive is SUBSTed iff this string starts with \??\.
 //
-// assarbad:
 //   It cannot be safely determined whether a path is or is not SUBSTed on NT
 //   via this API. You would have to look up the volume mount points because
 //   SUBST only works per session by definition whereas volume mount points
@@ -430,31 +496,31 @@ bool IsSUBSTedDrive(const std::wstring & drive)
 
 const std::wstring & GetSpec_Bytes()
 {
-    static std::wstring s = Localization::Lookup(IDS_SPEC_BYTES, L"Bytes");
+    static std::wstring s = Localization::Lookup(IDS_SPEC_BYTES);
     return s;
 }
 
 const std::wstring& GetSpec_KiB()
 {
-    static std::wstring s = Localization::Lookup(IDS_SPEC_KiB, L"KiB");
+    static std::wstring s = Localization::Lookup(IDS_SPEC_KiB);
     return s;
 }
 
 const std::wstring& GetSpec_MiB()
 {
-    static std::wstring s = Localization::Lookup(IDS_SPEC_MiB, L"MiB");
+    static std::wstring s = Localization::Lookup(IDS_SPEC_MiB);
     return s;
 }
 
 const std::wstring& GetSpec_GiB()
 {
-    static std::wstring s = Localization::Lookup(IDS_SPEC_GiB, L"GiB");
+    static std::wstring s = Localization::Lookup(IDS_SPEC_GiB);
     return s;
 }
 
 const std::wstring& GetSpec_TiB()
 {
-    static std::wstring s = Localization::Lookup(IDS_SPEC_TiB, L"TiB");
+    static std::wstring s = Localization::Lookup(IDS_SPEC_TiB);
     return s;
 }
 
@@ -492,7 +558,7 @@ void RunElevated(const std::wstring& cmdLine)
 {
     // For the configuration to launch, include the parent process so we can
     // terminate it once launched from the child process
-    PersistedSetting::WritePersistedProperties(); // write settings to disk before before elevation
+    PersistedSetting::WritePersistedProperties(); // write settings to disk before elevation
     const std::wstring launchConfig = std::format(LR"(/ParentPid:{} "{}")",
         GetCurrentProcessId(), cmdLine);
     ShellExecuteWrapper(GetAppFileName(), launchConfig, L"runas");
@@ -651,7 +717,7 @@ std::vector<BYTE> GetCompressedResource(const HRSRC resource)
     if (binaryData == nullptr) return {};
 
     // Decompress data
-    size_t resourceSize = SizeofResource(nullptr, resource);
+    const size_t resourceSize = SizeofResource(nullptr, resource);
     std::vector<BYTE> decompressedData(resourceSize * 4u);
     ULONG finalDecompressedSize = 0;
     if (RtlDecompressBuffer(COMPRESSION_FORMAT_LZNT1, decompressedData.data(), static_cast<LONG>(decompressedData.size()),
@@ -690,7 +756,7 @@ std::wstring GetVolumePathNameEx(const std::wstring & path)
     if (bufferSize == 0) return fallback;
 
     // Lookup the path and then determine the pathname from it
-    std::vector<WCHAR> final(bufferSize + 1, L'\0');
+    std::vector final(bufferSize + 1, L'\0');
     if (GetFinalPathNameByHandle(handle, final.data(), static_cast<DWORD>(final.size()), FILE_NAME_NORMALIZED) != 0 &&
         GetVolumePathName(final.data(), volume.data(), static_cast<DWORD>(volume.size())) != 0)
     {
@@ -702,7 +768,7 @@ std::wstring GetVolumePathNameEx(const std::wstring & path)
 
 void DisplayError(const std::wstring& error)
 {
-    AfxMessageBox(error.c_str(), MB_OK | MB_ICONERROR);
+    WdsMessageBox(error.c_str(), MB_OK | MB_ICONERROR);
 }
 
 std::wstring TranslateError(const HRESULT hr)
@@ -756,7 +822,7 @@ bool ShellExecuteWrapper(const std::wstring& lpFile, const std::wstring& lpParam
     sei.nShow = nShowCmd;
 
     const BOOL bResult = ::ShellExecuteEx(&sei);
-    if (!bResult)
+    if (!bResult && GetLastError() != ERROR_CANCELLED)
     {
         DisplayError(std::format(L"ShellExecute failed: {}",
             TranslateError(GetLastError())));
@@ -768,11 +834,7 @@ std::wstring GetBaseNameFromPath(const std::wstring& path)
 {
     std::wstring s = path;
     const auto i = s.find_last_of(wds::chrBackslash);
-    if (i == std::wstring::npos)
-    {
-        return s;
-    }
-    return s.substr(i + 1);
+    return i == std::wstring::npos ? s : s.substr(i + 1);
 }
 
 std::wstring GetAppFileName(const std::wstring& ext)
@@ -796,7 +858,7 @@ std::wstring GetAppFolder()
     return folder.substr(0, folder.find_last_of(wds::chrBackslash));
 }
 
-constexpr DWORD SidGetLength(const PSID x)
+static constexpr DWORD SidGetLength(const PSID x)
 {
     return sizeof(SID) + (static_cast<SID*>(x)->SubAuthorityCount - 1) * sizeof(static_cast<SID*>(x)->SubAuthority);
 }
@@ -804,7 +866,7 @@ constexpr DWORD SidGetLength(const PSID x)
 std::wstring GetNameFromSid(const PSID sid)
 {
     // return immediately if sid is null
-    if (sid == nullptr) return L"";
+    if (sid == nullptr) return {};
 
     // define custom lookup function
     auto comp = [](const PSID p1, const PSID p2)
@@ -856,7 +918,7 @@ IContextMenu* GetContextMenu(const HWND hwnd, const std::vector<std::wstring>& p
     // create list of children from paths
     for (auto& path : paths)
     {
-        LPCITEMIDLIST pidl = ILCreateFromPath(path.c_str());
+        const LPCITEMIDLIST pidl = ILCreateFromPath(path.c_str());
         if (pidl == nullptr) return nullptr;
         pidlsForCleanup.emplace_back(CoTaskMemFree, const_cast<LPITEMIDLIST>(pidl));
 
@@ -868,7 +930,7 @@ IContextMenu* GetContextMenu(const HWND hwnd, const std::vector<std::wstring>& p
         // on last item, return the context menu
         if (pidlsRelatives.size() == paths.size())
         {
-            IContextMenu* pContextMenu;
+            IContextMenu* pContextMenu = nullptr;
             if (FAILED(pParentFolder->GetUIObjectOf(hwnd, static_cast<UINT>(pidlsRelatives.size()),
                 pidlsRelatives.data(), IID_IContextMenu, nullptr, reinterpret_cast<LPVOID*>(&pContextMenu)))) return nullptr;
             return pContextMenu;
@@ -901,11 +963,11 @@ bool CompressFile(const std::wstring& filePath, const CompressionAlgorithm algor
         }
         info =
         {
-            {
+            .wof_info = {
                 .Version = WOF_CURRENT_VERSION,
                 .Provider = WOF_PROVIDER_FILE,
             },
-            {
+            .file_info = {
                 .Version = FILE_PROVIDER_CURRENT_VERSION,
                 .Algorithm = numericAlgorithm,
             },
@@ -941,7 +1003,7 @@ bool CompressFileAllowed(const std::wstring& filePath, const CompressionAlgorith
 {
     static std::unordered_map<std::wstring, bool> compressionStandard;
     static std::unordered_map<std::wstring, bool> compressionModern;
-    auto& compressionMap = (algorithm == CompressionAlgorithm::LZNT1) ?
+    const auto& compressionMap = (algorithm == CompressionAlgorithm::LZNT1) ?
         compressionStandard : compressionModern;
 
     // Fetch volume root path
@@ -973,7 +1035,100 @@ bool CompressFileAllowed(const std::wstring& filePath, const CompressionAlgorith
 
     // Query volume for modern compression support based on NTFS and OS version
     compressionStandard[volumeName.data()] = isNTFS && (fileSystemFlags & FILE_FILE_COMPRESSION) != 0;
-    compressionModern[volumeName.data()] = isNTFS && IsWindows10OrGreater();
+    compressionModern[volumeName.data()] = isNTFS && IsWindows10OrGreater() && !filePath.starts_with(L"\\\\");
 
     return compressionMap.at(volumeName);
+}
+
+std::wstring ComputeFileHashes(const std::wstring& filePath)
+{
+    // Open file with smart pointer
+    CWaitCursor wc;
+    SmartPointer<HANDLE> hFile(CloseHandle, CreateFileW(filePath.c_str(), GENERIC_READ, FILE_SHARE_READ,
+        nullptr, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, nullptr));
+    if (hFile == INVALID_HANDLE_VALUE) return {};
+
+    // Initialize all hash contexts
+    using HashContext = struct HashContext {
+        LPCWSTR name = nullptr;
+        SmartPointer<BCRYPT_ALG_HANDLE> hAlg = { nullptr, nullptr };
+        SmartPointer<BCRYPT_HASH_HANDLE> hHash = { nullptr, nullptr };
+        std::vector<BYTE> hashObject;
+        std::vector<BYTE> hash;
+        DWORD objectLen = 0;
+    };
+
+    // Define algorithms to compute
+    using AlgSet = struct { LPCWSTR id; LPCWSTR name; DWORD hashLen; };
+    constexpr std::array algos = {
+        AlgSet{BCRYPT_MD5_ALGORITHM, L"MD5", 16},
+        AlgSet{BCRYPT_SHA1_ALGORITHM, L"SHA1", 20},
+        AlgSet{BCRYPT_SHA256_ALGORITHM, L"SHA256", 32},
+        AlgSet{BCRYPT_SHA384_ALGORITHM, L"SHA384", 48},
+        AlgSet{BCRYPT_SHA512_ALGORITHM, L"SHA512", 64}
+    };
+
+    // Setup all algorithms
+    std::vector<HashContext> contexts;
+    for (const auto& algo : algos)
+    {
+        HashContext ctx;
+        BCRYPT_ALG_HANDLE hAlg = nullptr;
+        if (BCryptOpenAlgorithmProvider(&hAlg, algo.id, nullptr, 0) != 0) continue;
+        ctx.hAlg = SmartPointer<BCRYPT_ALG_HANDLE>(
+            [](const BCRYPT_ALG_HANDLE h) { BCryptCloseAlgorithmProvider(h, 0); }, hAlg);
+
+        if (BCryptGetProperty(ctx.hAlg, BCRYPT_OBJECT_LENGTH, reinterpret_cast<PBYTE>(&ctx.objectLen),
+            sizeof(DWORD), nullptr, 0) == ERROR_SUCCESS)
+        {
+            continue;
+        }
+
+        ctx.name = algo.name;
+        ctx.hashObject.resize(ctx.objectLen);
+        ctx.hash.resize(algo.hashLen);
+
+        BCRYPT_HASH_HANDLE hHash = nullptr;
+        if (BCryptCreateHash(ctx.hAlg, &hHash, ctx.hashObject.data(),
+            ctx.objectLen, nullptr, 0, 0) != 0) continue;
+
+        ctx.hHash = SmartPointer<BCRYPT_HASH_HANDLE>(
+            [](const BCRYPT_HASH_HANDLE h) { BCryptDestroyHash(h); }, hHash);
+
+        contexts.emplace_back(std::move(ctx));
+    }
+
+    // Read file and update all hashes
+    constexpr size_t BUFFER_SIZE = 1024 * 1024; // 1MB chunks
+    std::vector<BYTE> buffer(BUFFER_SIZE);
+    DWORD bytesRead;
+
+    // Update all valid hashes with the same buffer in parallel
+    while (ReadFile(hFile, buffer.data(), BUFFER_SIZE, &bytesRead, nullptr) && bytesRead > 0)
+    {
+        std::for_each(std::execution::par, contexts.begin(), contexts.end(),
+            [&buffer, bytesRead](auto & ctx) {
+                (void) BCryptHashData(ctx.hHash, buffer.data(), bytesRead, 0);
+            });
+    }
+
+    // Finalize all hashes and convert to hex strings
+    std::wstring result;
+    for (auto & ctx : contexts)
+    {
+        if (BCryptFinishHash(ctx.hHash, ctx.hash.data(),
+            static_cast<ULONG>(ctx.hash.size()), 0) != 0) continue;
+
+        // Convert to hex
+        std::wstring hashHex;
+        for (uint8_t byte : ctx.hash)
+        {
+            std::format_to(std::back_inserter(hashHex), "{:02X}", byte);
+        }
+
+        // Add to result
+        result += std::format(L"{}: {}\n", ctx.name, hashHex);
+    }
+
+    return result;
 }

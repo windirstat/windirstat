@@ -1,19 +1,18 @@
 ﻿// WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
 //
-// This program is free software; you can redistribute it and/or modify
+// This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
-// the Free Software Foundation; either version 2 of the License, or
-// (at your option) any later version.
+// the Free Software Foundation, either version 2 of the License, or
+// at your option any later version.
 //
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
 #include "stdafx.h"
@@ -22,24 +21,25 @@
 #include "Options.h"
 #include "PageTreeMap.h"
 #include "Localization.h"
+#include "DarkMode.h"
 
 namespace
 {
     constexpr UINT c_MaxHeight = 200;
 }
 
-IMPLEMENT_DYNAMIC(CPageTreeMap, CPropertyPageEx)
+IMPLEMENT_DYNAMIC(CPageTreeMap, CMFCPropertyPage)
 
 CPageTreeMap::CPageTreeMap()
-    : CPropertyPageEx(IDD)
-      , m_Options()
-      , m_Undo()
+    : CMFCPropertyPage(IDD)
+    , m_Options()
+    , m_Undo()
 {
 }
 
 void CPageTreeMap::DoDataExchange(CDataExchange* pDX)
 {
-    CPropertyPageEx::DoDataExchange(pDX);
+    CMFCPropertyPage::DoDataExchange(pDX);
 
     DDX_Control(pDX, IDC_PREVIEW, m_Preview);
     DDX_Control(pDX, IDC_TREEMAPHIGHLIGHTCOLOR, m_HighlightColor);
@@ -81,7 +81,7 @@ void CPageTreeMap::DoDataExchange(CDataExchange* pDX)
     }
 }
 
-BEGIN_MESSAGE_MAP(CPageTreeMap, CPropertyPageEx)
+BEGIN_MESSAGE_MAP(CPageTreeMap, CMFCPropertyPage)
     ON_WM_VSCROLL()
     ON_NOTIFY(COLBN_CHANGED, IDC_TREEMAPGRIDCOLOR, OnColorChangedTreeMapGrid)
     ON_NOTIFY(COLBN_CHANGED, IDC_TREEMAPHIGHLIGHTCOLOR, OnColorChangedTreeMapHighlight)
@@ -90,13 +90,21 @@ BEGIN_MESSAGE_MAP(CPageTreeMap, CPropertyPageEx)
     ON_BN_CLICKED(IDC_TREEMAPGRID, OnSetModified)
     ON_BN_CLICKED(IDC_RESET, OnBnClickedReset)
     ON_NOTIFY(CXySlider::XYSLIDER_CHANGED, IDC_LIGHTSOURCE, OnLightSourceChanged)
-    END_MESSAGE_MAP()
+    ON_WM_CTLCOLOR()
+END_MESSAGE_MAP()
+
+HBRUSH CPageTreeMap::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
+{
+    const HBRUSH brush = DarkMode::OnCtlColor(pDC, nCtlColor);
+    return brush ? brush : CMFCPropertyPage::OnCtlColor(pDC, pWnd, nCtlColor);
+}
 
 BOOL CPageTreeMap::OnInitDialog()
 {
-    CPropertyPageEx::OnInitDialog();
+    CMFCPropertyPage::OnInitDialog();
 
     Localization::UpdateDialogs(*this);
+    DarkMode::AdjustControls(GetSafeHwnd());
 
     ValuesAltered(); // m_Undo is invalid
 
@@ -123,7 +131,7 @@ void CPageTreeMap::OnOK()
     COptions::TreeMapHighlightColor = m_HighlightColor.GetColor();
     CDirStatDoc::GetDocument()->UpdateAllViews(nullptr, HINT_SELECTIONSTYLECHANGED);
 
-    CPropertyPageEx::OnOK();
+    CMFCPropertyPage::OnOK();
 }
 
 void CPageTreeMap::UpdateOptions(const bool save)
@@ -169,8 +177,8 @@ void CPageTreeMap::OnSomethingChanged()
 
 void CPageTreeMap::ValuesAltered(const bool altered)
 {
-    m_Altered= altered;
-    const std::wstring s = m_Altered ? Localization::Lookup(IDS_RESETTO_DEFAULTS) : Localization::Lookup(IDS_BACKTO_USERSETTINGS);
+    m_Altered = altered;
+    const std::wstring s = m_Altered ? Localization::Lookup(IDS_RESET_DEFAULTS) : Localization::Lookup(IDS_BACK_TO_SETTINGS);
     m_ResetButton.SetWindowText(s.c_str());
 }
 
@@ -216,10 +224,10 @@ void CPageTreeMap::OnBnClickedReset()
         o = m_Undo;
     }
 
-    m_Options.brightness   = o.brightness;
+    m_Options.brightness = o.brightness;
     m_Options.ambientLight = o.ambientLight;
-    m_Options.height       = o.height;
-    m_Options.scaleFactor  = o.scaleFactor;
+    m_Options.height = o.height;
+    m_Options.scaleFactor = o.scaleFactor;
     m_Options.lightSourceX = o.lightSourceX;
     m_Options.lightSourceY = o.lightSourceY;
 

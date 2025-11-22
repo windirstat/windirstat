@@ -1,19 +1,18 @@
 ﻿// WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
 //
-// This program is free software; you can redistribute it and/or modify
+// This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
-// the Free Software Foundation; either version 2 of the License, or
-// (at your option) any later version.
+// the Free Software Foundation, either version 2 of the License, or
+// at your option any later version.
 //
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
 #include "stdafx.h"
@@ -23,10 +22,11 @@
 #include "Options.h"
 #include "Localization.h"
 #include "WinDirStat.h"
+#include "DarkMode.h"
 
-IMPLEMENT_DYNAMIC(CPageAdvanced, CPropertyPageEx)
+IMPLEMENT_DYNAMIC(CPageAdvanced, CMFCPropertyPage)
 
-CPageAdvanced::CPageAdvanced() : CPropertyPageEx(IDD) {}
+CPageAdvanced::CPageAdvanced() : CMFCPropertyPage(IDD) {}
 
 CPageAdvanced::~CPageAdvanced() = default;
 
@@ -37,11 +37,11 @@ COptionsPropertySheet* CPageAdvanced::GetSheet() const
 
 void CPageAdvanced::DoDataExchange(CDataExchange* pDX)
 {
-    CPropertyPageEx::DoDataExchange(pDX);
+    CMFCPropertyPage::DoDataExchange(pDX);
     DDX_Check(pDX, IDC_EXCLUDE_VOLUME_MOUNT_POINTS, m_ExcludeVolumeMountPoints);
     DDX_Check(pDX, IDC_EXCLUDE_JUNCTIONS, m_ExcludeJunctions);
     DDX_Check(pDX, IDC_EXCLUDE_SYMLINKS_DIRECTORY, m_ExcludeSymbolicLinksDirectory);
-    DDX_Check(pDX, IDC_PAGE_ADVANCED_SKIP_CLOUD_LINKS, m_SkipDupeDetectionCloudLinks);
+    DDX_Check(pDX, IDC_SKIP_CLOUD_LINKS, m_SkipDupeDetectionCloudLinks);
     DDX_Check(pDX, IDC_EXCLUDE_HIDDEN_DIRECTORY, m_SkipHiddenDirectory);
     DDX_Check(pDX, IDC_EXCLUDE_PROTECTED_DIRECTORY, m_SkipProtectedDirectory);
     DDX_Check(pDX, IDC_BACKUP_RESTORE, m_UseBackupRestore);
@@ -49,10 +49,11 @@ void CPageAdvanced::DoDataExchange(CDataExchange* pDX)
     DDX_Check(pDX, IDC_EXCLUDE_HIDDEN_FILE, m_SkipHiddenFile);
     DDX_Check(pDX, IDC_EXCLUDE_PROTECTED_FILE, m_SkipProtectedFile);
     DDX_Text(pDX, IDC_LARGEST_FILE_COUNT, m_LargestFileCount);
+    DDX_Text(pDX, IDC_FOLDER_HISTORY_COUNT, m_FolderHistoryCount);
     DDX_CBIndex(pDX, IDC_COMBO_THREADS, m_ScanningThreads);
 }
 
-BEGIN_MESSAGE_MAP(CPageAdvanced, CPropertyPageEx)
+BEGIN_MESSAGE_MAP(CPageAdvanced, CMFCPropertyPage)
     ON_BN_CLICKED(IDC_BACKUP_RESTORE, OnSettingChanged)
     ON_BN_CLICKED(IDC_EXCLUDE_HIDDEN_DIRECTORY, OnSettingChanged)
     ON_BN_CLICKED(IDC_EXCLUDE_PROTECTED_DIRECTORY, OnSettingChanged)
@@ -60,19 +61,30 @@ BEGIN_MESSAGE_MAP(CPageAdvanced, CPropertyPageEx)
     ON_BN_CLICKED(IDC_EXCLUDE_VOLUME_MOUNT_POINTS, OnSettingChanged)
     ON_BN_CLICKED(IDC_EXCLUDE_JUNCTIONS, OnSettingChanged)
     ON_BN_CLICKED(IDC_EXCLUDE_SYMLINKS_DIRECTORY, OnSettingChanged)
-    ON_BN_CLICKED(IDC_PAGE_ADVANCED_SKIP_CLOUD_LINKS, OnSettingChanged)
+    ON_BN_CLICKED(IDC_SKIP_CLOUD_LINKS, OnSettingChanged)
     ON_BN_CLICKED(IDC_EXCLUDE_SYMLINKS_FILE, OnSettingChanged)
     ON_BN_CLICKED(IDC_EXCLUDE_HIDDEN_FILE, OnSettingChanged)
     ON_BN_CLICKED(IDC_EXCLUDE_PROTECTED_FILE, OnSettingChanged)
     ON_BN_CLICKED(IDC_RESET_PREFERENCES, &CPageAdvanced::OnBnClickedResetPreferences)
     ON_EN_CHANGE(IDC_LARGEST_FILE_COUNT, &CPageAdvanced::OnEnChangeLargestFileCount)
+    ON_EN_CHANGE(IDC_FOLDER_HISTORY_COUNT, &CPageAdvanced::OnEnChangeFolderHistoryCount)
+    ON_WM_CTLCOLOR()
 END_MESSAGE_MAP()
+
+HBRUSH CPageAdvanced::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
+{
+    const HBRUSH brush = DarkMode::OnCtlColor(pDC, nCtlColor);
+    return brush ? brush : CMFCPropertyPage::OnCtlColor(pDC, pWnd, nCtlColor);
+}
 
 BOOL CPageAdvanced::OnInitDialog()
 {
-    CPropertyPageEx::OnInitDialog();
+    CMFCPropertyPage::OnInitDialog();
 
     Localization::UpdateDialogs(*this);
+
+    // Apply dark mode to this property page
+    DarkMode::AdjustControls(GetSafeHwnd());
 
     m_ExcludeVolumeMountPoints = COptions::ExcludeVolumeMountPoints;
     m_ExcludeJunctions = COptions::ExcludeJunctions;
@@ -86,6 +98,7 @@ BOOL CPageAdvanced::OnInitDialog()
     m_UseBackupRestore = COptions::UseBackupRestore;
     m_ScanningThreads = COptions::ScanningThreads - 1;
     m_LargestFileCount = std::to_wstring(COptions::LargeFileCount.Obj()).c_str();
+    m_FolderHistoryCount = std::to_wstring(COptions::FolderHistoryCount.Obj()).c_str();
 
     UpdateData(FALSE);
     return TRUE;
@@ -117,6 +130,7 @@ void CPageAdvanced::OnOK()
     COptions::UseBackupRestore = (FALSE != m_UseBackupRestore);
     COptions::ScanningThreads = m_ScanningThreads + 1;
     COptions::LargeFileCount = std::stoi(m_LargestFileCount.GetString());
+    COptions::FolderHistoryCount = std::stoi(m_FolderHistoryCount.GetString());
 
     if (refreshAll)
     {
@@ -128,7 +142,7 @@ void CPageAdvanced::OnOK()
         CDirStatDoc::GetDocument()->RefreshReparsePointItems();
     }
 
-    CPropertyPageEx::OnOK();
+    CMFCPropertyPage::OnOK();
 }
 
 void CPageAdvanced::OnSettingChanged()
@@ -143,19 +157,22 @@ void CPageAdvanced::OnBnClickedResetPreferences()
 
 void CPageAdvanced::OnEnChangeLargestFileCount()
 {
-    // This function limits the value in the edit box to 10000 by
-    // checking the input and reverting it if it's too high
-    // or 0 if it is empty.
+    // This function limits the number of files in the largest files list
     UpdateData(TRUE);
 
-    if (m_LargestFileCount.IsEmpty())
-    {
-        m_LargestFileCount = _T("0");
-    }
-    else if (_ttoi(m_LargestFileCount) > 10000)
-    {
-        m_LargestFileCount = _T("10000");
-    }
+    m_LargestFileCount = std::to_wstring(std::clamp(_wtoi(m_LargestFileCount),
+        COptions::LargeFileCount.Min(), COptions::LargeFileCount.Max())).c_str();
+
+    UpdateData(FALSE);
+}
+
+void CPageAdvanced::OnEnChangeFolderHistoryCount()
+{
+    // This function limits the value in the folder history count
+    UpdateData(TRUE);
+
+    m_FolderHistoryCount = std::to_wstring(std::clamp(_wtoi(m_FolderHistoryCount),
+        COptions::FolderHistoryCount.Min(), COptions::FolderHistoryCount.Max())).c_str();
 
     UpdateData(FALSE);
 }

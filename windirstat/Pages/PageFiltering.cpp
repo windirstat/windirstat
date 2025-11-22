@@ -1,19 +1,18 @@
 ﻿// WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
 //
-// This program is free software; you can redistribute it and/or modify
+// This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
-// the Free Software Foundation; either version 2 of the License, or
-// (at your option) any later version.
+// the Free Software Foundation, either version 2 of the License, or
+// at your option any later version.
 //
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
 #include "stdafx.h"
@@ -22,11 +21,11 @@
 #include "GlobalHelpers.h"
 #include "Options.h"
 #include "Localization.h"
-#include "WinDirStat.h"
+#include "DarkMode.h"
 
-IMPLEMENT_DYNAMIC(CPageFiltering, CPropertyPageEx)
+IMPLEMENT_DYNAMIC(CPageFiltering, CMFCPropertyPage)
 
-CPageFiltering::CPageFiltering() : CPropertyPageEx(IDD) {}
+CPageFiltering::CPageFiltering() : CMFCPropertyPage(IDD) {}
 
 CPageFiltering::~CPageFiltering() = default;
 
@@ -37,7 +36,7 @@ COptionsPropertySheet* CPageFiltering::GetSheet() const
 
 void CPageFiltering::DoDataExchange(CDataExchange* pDX)
 {
-    CPropertyPageEx::DoDataExchange(pDX);
+    CMFCPropertyPage::DoDataExchange(pDX);
     DDX_Text(pDX, IDC_FILTERING_EXCLUDE_DIRS, m_FilteringExcludeDirs);
     DDX_Text(pDX, IDC_FILTERING_EXCLUDE_FILES, m_FilteringExcludeFiles);
     DDX_Text(pDX, IDC_FILTERING_SIZE_MIN, m_FilteringSizeMinimum);
@@ -48,18 +47,25 @@ void CPageFiltering::DoDataExchange(CDataExchange* pDX)
     DDX_CBIndex(pDX, IDC_FILTERING_MIN_UNITS, m_FilteringSizeUnits);
 }
 
-BEGIN_MESSAGE_MAP(CPageFiltering, CPropertyPageEx)
+BEGIN_MESSAGE_MAP(CPageFiltering, CMFCPropertyPage)
     ON_EN_CHANGE(IDC_FILTERING_EXCLUDE_DIRS, OnSettingChanged)
     ON_EN_CHANGE(IDC_FILTERING_EXCLUDE_FILES, OnSettingChanged)
     ON_BN_CLICKED(IDC_FILTERING_USE_REGEX, OnSettingChanged)
     ON_EN_CHANGE(IDC_FILTERING_SIZE_MIN, OnSettingChanged)
     ON_EN_CHANGE(IDC_FILTERING_MIN_UNITS, OnSettingChanged)
     ON_CBN_SELENDOK(IDC_FILTERING_MIN_UNITS, OnSettingChanged)
+    ON_WM_CTLCOLOR()
 END_MESSAGE_MAP()
+
+HBRUSH CPageFiltering::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
+{
+    const HBRUSH brush = DarkMode::OnCtlColor(pDC, nCtlColor);
+    return brush ? brush : CMFCPropertyPage::OnCtlColor(pDC, pWnd, nCtlColor);
+}
 
 BOOL CPageFiltering::OnInitDialog()
 {
-    CPropertyPageEx::OnInitDialog();
+    CMFCPropertyPage::OnInitDialog();
 
     Localization::UpdateDialogs(*this);
 
@@ -82,6 +88,25 @@ BOOL CPageFiltering::OnInitDialog()
     m_ToolTip.Activate(TRUE);
 
     UpdateData(FALSE);
+
+  // Apply dark mode to this property page AFTER controls are initialized
+    if (DarkMode::IsDarkModeActive())
+    {
+        DarkMode::AdjustControls(GetSafeHwnd());
+        
+        // Explicitly apply dark mode to edit controls with scrollbars
+        if (DarkMode::IsDarkModeActive())
+        {
+          // Force the edit controls to refresh their scrollbars
+            DarkMode::AdjustControls(m_CtrlFilteringExcludeDirs.GetSafeHwnd());
+            DarkMode::AdjustControls(m_CtrlFilteringExcludeFiles.GetSafeHwnd());
+   
+            // Force a complete redraw
+       m_CtrlFilteringExcludeDirs.Invalidate();
+   m_CtrlFilteringExcludeFiles.Invalidate();
+        }
+    }
+
     return TRUE;
 }
 
@@ -111,7 +136,7 @@ void CPageFiltering::OnOK()
     COptions::FilteringExcludeDirs.Obj() = m_FilteringExcludeDirs;
     COptions::CompileFilters();
 
-    CPropertyPageEx::OnOK();
+    CMFCPropertyPage::OnOK();
 }
 
 void CPageFiltering::OnSettingChanged()
@@ -125,6 +150,6 @@ BOOL CPageFiltering::PreTranslateMessage(MSG* pMsg)
 {
     m_ToolTip.RelayEvent(pMsg);
 
-    return CPropertyPageEx::PreTranslateMessage(pMsg);
+    return CMFCPropertyPage::PreTranslateMessage(pMsg);
 }
 

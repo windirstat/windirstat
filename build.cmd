@@ -42,8 +42,11 @@ IF /I "%RELTYPE%" EQU "PRODUCTION" SET PRODUCTION=1
 
 :: import vs build tools
 IF EXIST "%BLDDIR%" RD /S /Q "%BLDDIR%"
-FOR /F "DELIMS=" %%X IN ('DIR "%ProgramFiles%\Microsoft Visual Studio\VsDevCmd.bat" /A /S /B') DO SET VS=%%X
-CALL "%VS%"
+FOR /F "USEBACKQ TOKENS=*" %%X in (`
+    "%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe" ^
+        -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 ^
+        -property installationPath
+`) DO CALL "%%X\Common7\Tools\VsDevCmd.bat"
 IF EXIST "%WindowsSdkVerBinPath%\x86" msbuild "%BASEDIR%\windirstat.sln" /p:Configuration=Release /t:Clean;Build /p:Platform=Win32,ExternalCompilerOptions=/DPRODUCTION=%PRODUCTION%
 IF EXIST "%WindowsSdkVerBinPath%\x64" msbuild "%BASEDIR%\windirstat.sln" /p:Configuration=Release /t:Clean;Build /p:Platform=x64,ExternalCompilerOptions=/DPRODUCTION=%PRODUCTION%
 IF EXIST "%WindowsSdkVerBinPath%\arm64" msbuild "%BASEDIR%\windirstat.sln" /p:Configuration=Release /t:Clean;Build /p:Platform=ARM64,ExternalCompilerOptions=/DPRODUCTION=%PRODUCTION%

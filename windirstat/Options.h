@@ -1,19 +1,18 @@
 ﻿// WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
 //
-// This program is free software; you can redistribute it and/or modify
+// This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
-// the Free Software Foundation; either version 2 of the License, or
-// (at your option) any later version.
+// the Free Software Foundation, either version 2 of the License, or
+// at your option any later version.
 //
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
 #pragma once
@@ -35,23 +34,30 @@ enum REFRESHPOLICY : std::uint8_t
     RP_REFRESH_THIS_ENTRYS_PARENT
 };
 
+enum DARKMODE : std::uint8_t
+{
+    DM_DISABLED,
+    DM_ENABLED,
+    DM_USE_WINDOWS
+};
+
 struct USERDEFINEDCLEANUP
 {
     USERDEFINEDCLEANUP() : USERDEFINEDCLEANUP(L"") {}
     USERDEFINEDCLEANUP(const std::wstring & sEntry) :
         Title(Setting<std::wstring>(sEntry, L"Title", L"")),
         CommandLine(Setting<std::wstring>(sEntry, L"CommandLine", L"")),
-        Enabled(Setting<bool>(sEntry, L"Enable", false)),
-        VirginTitle(Setting<bool>(sEntry, L"VirginTitle", true)),
-        WorksForDrives(Setting<bool>(sEntry, L"WorksForDrives", false)),
-        WorksForDirectories(Setting<bool>(sEntry, L"WorksForDirectories", false)),
-        WorksForFiles(Setting<bool>(sEntry, L"WorksForFiles", false)),
-        WorksForUncPaths(Setting<bool>(sEntry, L"WorksForUncPaths", false)),
-        RecurseIntoSubdirectories(Setting<bool>(sEntry, L"RecurseIntoSubdirectories", false)),
-        AskForConfirmation(Setting<bool>(sEntry, L"AskForConfirmation", false)),
-        ShowConsoleWindow(Setting<bool>(sEntry, L"ShowConsoleWindow", false)),
-        WaitForCompletion(Setting<bool>(sEntry, L"WaitForCompletion", false)),
-        RefreshPolicy(Setting<int>(sEntry, L"RefreshPolicy", 0)) {}
+        Enabled(Setting(sEntry, L"Enable", false)),
+        VirginTitle(Setting(sEntry, L"VirginTitle", true)),
+        WorksForDrives(Setting(sEntry, L"WorksForDrives", false)),
+        WorksForDirectories(Setting(sEntry, L"WorksForDirectories", false)),
+        WorksForFiles(Setting(sEntry, L"WorksForFiles", false)),
+        WorksForUncPaths(Setting(sEntry, L"WorksForUncPaths", false)),
+        RecurseIntoSubdirectories(Setting(sEntry, L"RecurseIntoSubdirectories", false)),
+        AskForConfirmation(Setting(sEntry, L"AskForConfirmation", false)),
+        ShowConsoleWindow(Setting(sEntry, L"ShowConsoleWindow", false)),
+        WaitForCompletion(Setting(sEntry, L"WaitForCompletion", false)),
+        RefreshPolicy(Setting(sEntry, L"RefreshPolicy", 0)) {}
 
     Setting<std::wstring> Title;
     Setting<std::wstring> CommandLine;
@@ -90,7 +96,7 @@ struct USERDEFINEDCLEANUP
 };
 
 //
-// COptions. Reads from and writes all the persistent settings
+// COptions. Reads and writes all persistent settings
 // like window position, column order etc.
 //
 class COptions final
@@ -135,6 +141,8 @@ public:
     static Setting<bool> ShowColumnSizeLogical;
     static Setting<bool> ShowColumnSizePhysical;
     static Setting<bool> ShowDeleteWarning;
+    static Setting<bool> ShowElevationPrompt;
+    static Setting<bool> ShowFastScanPrompt;
     static Setting<bool> ShowFileTypes;
     static Setting<bool> ShowFreeSpace;
     static Setting<bool> ShowStatusBar;
@@ -177,6 +185,8 @@ public:
     static Setting<int> TreeMapLightSourceY;
     static Setting<int> TreeMapScaleFactor;
     static Setting<int> TreeMapStyle;
+    static Setting<int> DarkMode;
+    static Setting<int> FolderHistoryCount;
     static Setting<RECT> AboutWindowRect;
     static Setting<RECT> DriveSelectWindowRect;
     static Setting<RECT> SearchWindowRect;
@@ -193,10 +203,10 @@ public:
     static Setting<std::vector<int>> TopViewColumnOrder;
     static Setting<std::vector<int>> TopViewColumnWidths;
     static Setting<std::vector<std::wstring>> SelectDrivesDrives;
+    static Setting<std::vector<std::wstring>> SelectDrivesFolder;
     static Setting<std::wstring> FilteringExcludeDirs;
     static Setting<std::wstring> FilteringExcludeFiles;
     static Setting<std::wstring> SearchTerm;
-    static Setting<std::wstring> SelectDrivesFolder;
     static Setting<WINDOWPLACEMENT> MainWindowPlacement;
 
     static CTreeMap::Options TreeMapOptions;

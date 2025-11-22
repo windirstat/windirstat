@@ -1,19 +1,18 @@
 ﻿// WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
 //
-// This program is free software; you can redistribute it and/or modify
+// This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
-// the Free Software Foundation; either version 2 of the License, or
-// (at your option) any later version.
+// the Free Software Foundation, either version 2 of the License, or
+// at your option any later version.
 //
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
 #pragma once
@@ -24,7 +23,7 @@
 // CLayout. A poor men's dialog layout mechanism.
 // Simple, flat, and sufficient for our purposes.
 //
-class CLayout
+class CLayout final
 {
     template <typename T>
     struct SControlInfoT
@@ -63,6 +62,7 @@ class CLayout
         DECLARE_MESSAGE_MAP()
         afx_msg void OnPaint();
         afx_msg LRESULT OnNcHitTest(CPoint point);
+        afx_msg BOOL OnEraseBkgnd(CDC* pDC);
     };
 
     class CPositioner final
@@ -92,4 +92,39 @@ protected:
     CSize m_OriginalDialogSize;
     std::vector<SControlInfo> m_Control;
     CSizeGripper m_SizeGripper;
+};
+
+//
+// CLayoutDialogEx. A class that provides automatic layout management
+// for dialogs. Inherit from this class instead of CDialogEx to get automatic
+// m_Layout support with OnSize, OnGetMinMaxInfo, and OnDestroy handling.
+//
+class CLayoutDialogEx : public CDialogEx
+{
+    DECLARE_DYNCREATE(CLayoutDialogEx)
+
+protected:
+    CLayout m_Layout;
+
+    // Constructor that takes dialog ID and window placement
+    CLayoutDialogEx(UINT nIDTemplate, RECT* placement, CWnd* pParent = nullptr)
+        : CDialogEx(nIDTemplate, pParent)
+        , m_Layout(this, placement)
+    {
+    }
+
+    // Default constructor for DYNCREATE
+    CLayoutDialogEx()
+        : m_Layout(this, nullptr)
+    {
+    }
+
+    // PreTranslateMessage to handle Ctrl+C for CStatic controls
+    BOOL PreTranslateMessage(MSG* pMsg) override;
+
+    // Message handlers
+    DECLARE_MESSAGE_MAP()
+    afx_msg void OnSize(UINT nType, int cx, int cy);
+    afx_msg void OnGetMinMaxInfo(MINMAXINFO* lpMMI);
+    afx_msg void OnDestroy();
 };

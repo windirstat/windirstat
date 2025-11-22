@@ -1,19 +1,18 @@
 ﻿// WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
 //
-// This program is free software; you can redistribute it and/or modify
+// This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
-// the Free Software Foundation; either version 2 of the License, or
-// (at your option) any later version.
+// the Free Software Foundation, either version 2 of the License, or
+// at your option any later version.
 //
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
 #pragma once
@@ -21,6 +20,7 @@
 #include <vector>
 
 #include "SortingListControl.h"
+#include "DarkMode.h"
 
 class COwnerDrawnListControl;
 class CIconHandler;
@@ -31,6 +31,7 @@ class CIconHandler;
 // COwnerDrawnListControl draws the texts (GetText()) of all others.
 // DrawLabel() draws a standard label (width icon, text, selection and focus rect)
 //
+
 class COwnerDrawnListItem : public CSortingListItem
 {
 public:
@@ -41,7 +42,7 @@ public:
     // This color is used for the  current item
     virtual COLORREF GetItemTextColor() const
     {
-        return GetSysColor(COLOR_WINDOWTEXT);
+        return DarkMode::WdsSysColor(COLOR_WINDOWTEXT);
     }
 
     // Return value is true, if the item draws itself.
@@ -71,7 +72,7 @@ public:
     ~COwnerDrawnListControl() override = default;
     void OnColumnsInserted();
     virtual void SysColorChanged();
-
+    
     int GetRowHeight() const;
     void ShowGrid(bool show);
     void ShowStripes(bool show);
@@ -80,17 +81,14 @@ public:
 
     COLORREF GetWindowColor() const;
     COLORREF GetStripeColor() const;
+    COLORREF GetHighlightColor() const;
     COLORREF GetNonFocusHighlightColor() const;
     COLORREF GetNonFocusHighlightTextColor() const;
-    COLORREF GetHighlightColor() const;
     COLORREF GetHighlightTextColor() const;
 
-    bool IsItem_stripeColor(int i) const;
-    bool IsItem_stripeColor(const COwnerDrawnListItem* item) const;
+    bool IsItemStripColor(int i) const;
     COLORREF GetItemBackgroundColor(int i) const;
-    COLORREF GetItemBackgroundColor(const COwnerDrawnListItem* item) const;
     COLORREF GetItemSelectionBackgroundColor(int i) const;
-    COLORREF GetItemSelectionBackgroundColor(const COwnerDrawnListItem* item) const;
     COLORREF GetItemSelectionTextColor(int i) const;
 
     COwnerDrawnListItem* GetItem(int i) const;
@@ -105,7 +103,6 @@ public:
 protected:
     void InitializeColors();
     void DrawItem(LPDRAWITEMSTRUCT pdis) override;
-    void RedrawItem(const COwnerDrawnListItem* item) const;
     int GetSubItemWidth(COwnerDrawnListItem* item, int subitem);
 
     COLORREF m_WindowColor = CLR_NONE; // The default background color if !m_ShowStripes
@@ -119,4 +116,5 @@ protected:
     afx_msg BOOL OnEraseBkgnd(CDC* pDC);
     afx_msg void OnHdnDividerdblclick(NMHDR* pNMHDR, LRESULT* pResult);
     afx_msg void OnHdnItemchanging(NMHDR* pNMHDR, LRESULT* pResult);
+    afx_msg void OnCustomDraw(NMHDR* pNMHDR, LRESULT* pResult);
 };

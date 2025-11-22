@@ -1,19 +1,18 @@
 ﻿// WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
 //
-// This program is free software; you can redistribute it and/or modify
+// This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
-// the Free Software Foundation; either version 2 of the License, or
-// (at your option) any later version.
+// the Free Software Foundation, either version 2 of the License, or
+// at your option any later version.
 //
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
 #include "stdafx.h"
@@ -24,9 +23,9 @@
 #include "MainFrame.h"
 #include "FileDupeView.h"
 #include "Localization.h"
+#include "MessageBoxDlg.h"
 
 #include <execution>
-#include <unordered_map>
 #include <ranges>
 #include <stack>
 
@@ -39,17 +38,14 @@ bool CFileDupeControl::GetAscendingDefault(const int column)
 {
     return column == COL_ITEMDUP_SIZE_PHYSICAL ||
         column == COL_ITEMDUP_SIZE_LOGICAL ||
-        column == COL_ITEMDUP_LASTCHANGE;
+        column == COL_ITEMDUP_LAST_CHANGE;
 }
 
-#pragma warning(push)
-#pragma warning(disable:26454)
 BEGIN_MESSAGE_MAP(CFileDupeControl, CTreeListControl)
     ON_WM_SETFOCUS()
     ON_WM_KEYDOWN()
     ON_NOTIFY_REFLECT_EX(LVN_DELETEALLITEMS, OnDeleteAllItems)
 END_MESSAGE_MAP()
-#pragma warning(pop)
 
 CFileDupeControl* CFileDupeControl::m_Singleton = nullptr;
 
@@ -59,8 +55,9 @@ void CFileDupeControl::ProcessDuplicate(CItem * item, BlockingQueue<CItem*>* que
     if (COptions::SkipDupeDetectionCloudLinks && item->IsReparseType(ITF_CLOUDLINK))
     {
         std::unique_lock lock(m_HashTrackerMutex);
-        if (m_ShowCloudWarningOnThisScan &&
-            AfxMessageBox(Localization::Lookup(IDS_DUPLICATES_WARNING).c_str(), MB_YESNO) == IDNO)
+        CMessageBoxDlg dlg(Localization::Lookup(IDS_DUPLICATES_WARNING), Localization::LookupNeutral(AFX_IDS_APP_TITLE),
+            MB_OK | MB_ICONINFORMATION, this, {}, Localization::Lookup(IDS_DONT_SHOW_AGAIN), false);
+        if (m_ShowCloudWarningOnThisScan && dlg.DoModal() == IDOK && dlg.IsCheckboxChecked())
         {
             COptions::SkipDupeDetectionCloudLinksWarning = false;
         }
@@ -121,7 +118,7 @@ void CFileDupeControl::ProcessDuplicate(CItem * item, BlockingQueue<CItem*>* que
     // Add the hashes to the UI thread
     if (hashForThisItem.empty() || itemsToHash.empty()) return;
     m_HashTrackerMutex.unlock();
-    for (std::lock_guard guard(m_NodeTrackerMutex); const auto& itemToAdd : itemsToHash)
+    for (std::scoped_lock guard(m_NodeTrackerMutex); const auto& itemToAdd : itemsToHash)
     {
         const auto nodeEntry = m_NodeTracker.find(hashForThisItem);
         auto dupeParent = nodeEntry != m_NodeTracker.end() ? nodeEntry->second : nullptr;
@@ -275,7 +272,7 @@ void CFileDupeControl::RemoveItem(CItem* item)
             dupeParent->RemoveDupeItemChild(dupeParent->GetChildren().at(0));
         }
 
-        // When no childen left, remove parent item
+        // When no children left, remove parent item
         if (dupeParent->GetChildren().empty())
         {
             root->RemoveDupeItemChild(dupeParent);
@@ -319,7 +316,7 @@ BOOL CFileDupeControl::OnDeleteAllItems(NMHDR*, LRESULT* pResult)
     m_SizeTracker.clear();
     m_ChildTracker.clear();
 
-    // Allow delete to proceed
+    // Allow deletion to proceed
     *pResult = FALSE;
     return FALSE;
 }

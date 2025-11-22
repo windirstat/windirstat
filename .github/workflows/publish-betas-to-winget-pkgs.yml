@@ -9,6 +9,8 @@ jobs:
       - name: Get version
         id: get-version
         run: |
+          Write-Host "github.ref_name: ${{ github.ref_name }}"
+          Write-Host "github.ref: ${{ github.ref }}"        
           # Finding the version from beta tag name
           if ("${{ github.ref_name }}" -imatch "^beta/")
           {

@@ -1,19 +1,18 @@
 ﻿// WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
 //
-// This program is free software; you can redistribute it and/or modify
+// This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
-// the Free Software Foundation; either version 2 of the License, or
-// (at your option) any later version.
+// the Free Software Foundation, either version 2 of the License, or
+// at your option any later version.
 //
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
 #pragma once
@@ -35,8 +34,9 @@ class CItemSearch;
 //
 // The treemap colors as calculated in CDirStatDoc::SetExtensionColors()
 // all have the "brightness" BASE_BRIGHTNESS.
-// I define brightness as a number from 0 to 3.0: (r+g+b)/255.
-// RGB(127, 255, 0), for example, has a brightness of 2.5.
+// Brightness here is defined as (r+g+b)/255, i.e. an unnormalized sum of the
+// individual color intensities divided by 255 (range 0..3.0). This is not the
+// average intensity (which would be / (255*3)).
 //
 #define BASE_BRIGHTNESS 1.8
 
@@ -51,7 +51,7 @@ struct SExtensionRecord
 };
 
 //
-// Maps an extension (".bmp") to an SExtensionRecord.
+// Maps an extension to an SExtensionRecord.
 //
 using CExtensionData = std::unordered_map<std::wstring, SExtensionRecord>;
 
@@ -64,7 +64,7 @@ enum : std::uint8_t
     HINT_NEWROOT,                   // Root item has changed - clear everything.
     HINT_SELECTIONACTION,           // Inform central selection handler to update selection (uses pHint)
     HINT_SELECTIONREFRESH,          // Inform all views to redraw based on current selections
-    HINT_SELECTIONSTYLECHANGED,     // Only update selection in Graphview
+    HINT_SELECTIONSTYLECHANGED,     // Only update selection in TreeMapView
     HINT_EXTENSIONSELECTIONCHANGED, // Type list selected a new extension
     HINT_ZOOMCHANGED,               // Only zoom item has changed.
     HINT_LISTSTYLECHANGED,          // Options: List style (grid/stripes) or treelist colors changed
@@ -116,7 +116,7 @@ protected:
     bool IsZoomed() const;
 
     void SetHighlightExtension(const std::wstring& ext);
-    std::wstring GetHighlightExtension();
+    std::wstring GetHighlightExtension() const;
 
     void UnlinkRoot();
     bool UserDefinedCleanupWorksForItem(USERDEFINEDCLEANUP* udc, const CItem* item) const;
@@ -131,7 +131,7 @@ protected:
     void RecurseRefreshReparsePoints(CItem* items) const;
     std::vector<CItem*> GetDriveItems() const;
     void RebuildExtensionData();
-    bool DeletePhysicalItems(const std::vector<CItem*>& items, bool toTrashBin, bool bypassWarning = false, bool doRefresh = true);
+    bool DeletePhysicalItems(const std::vector<CItem*>& items, bool toTrashBin, bool emptyOnly = false) const;
     void SetZoomItem(CItem* item);
     static void AskForConfirmation(USERDEFINEDCLEANUP* udc, const CItem* item);
     void PerformUserDefinedCleanup(USERDEFINEDCLEANUP* udc, const CItem* item);
@@ -176,6 +176,7 @@ protected:
     afx_msg void OnRefreshSelected();
     afx_msg void OnRefreshAll();
     afx_msg void OnSaveResults();
+    afx_msg void OnSaveDuplicates();
     afx_msg void OnLoadResults();
     afx_msg void OnEditCopy();
     afx_msg void OnCleanupEmptyRecycleBin();
@@ -188,8 +189,10 @@ protected:
     afx_msg void OnTreeMapZoomIn();
     afx_msg void OnTreeMapZoomOut();
     afx_msg void OnRemoveRoamingProfiles();
+    afx_msg void OnRemoveLocalProfiles();
     afx_msg void OnDisableHibernateFile();
     afx_msg void OnExecuteDiskCleanupUtility();
+    afx_msg void OnExecuteDismAnalyze();
     afx_msg void OnExecuteDismReset();
     afx_msg void OnExecuteDism();
     afx_msg void OnExplorerSelect();
@@ -205,9 +208,11 @@ protected:
     afx_msg void OnTreeMapReselectChild();
     afx_msg void OnCleanupOpenTarget();
     afx_msg void OnCleanupProperties();
+    afx_msg void OnComputeHash();
     afx_msg void OnCleanupCompress(UINT id);
     afx_msg void OnScanSuspend();
     afx_msg void OnScanResume();
     afx_msg void OnScanStop();
     afx_msg void OnContextMenuExplore(UINT nID);
+    afx_msg void OnRemoveShadowCopies();
 };

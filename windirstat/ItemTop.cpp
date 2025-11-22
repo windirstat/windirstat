@@ -1,19 +1,18 @@
 ﻿// WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
 //
-// This program is free software; you can redistribute it and/or modify
+// This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
-// the Free Software Foundation; either version 2 of the License, or
-// (at your option) any later version.
+// the Free Software Foundation, either version 2 of the License, or
+// at your option any later version.
 //
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
 #include "stdafx.h"
@@ -38,7 +37,7 @@ const std::unordered_map<uint8_t, uint8_t> CItemTop::columnMap =
     { COL_ITEMTOP_NAME, COL_NAME },
     { COL_ITEMTOP_SIZE_LOGICAL, COL_SIZE_LOGICAL },
     { COL_ITEMTOP_SIZE_PHYSICAL, COL_SIZE_PHYSICAL },
-    { COL_ITEMTOP_LASTCHANGE, COL_LASTCHANGE }
+    { COL_ITEMTOP_LAST_CHANGE, COL_LAST_CHANGE }
 };
 
 bool CItemTop::DrawSubItem(const int subitem, CDC* pdc, const CRect rc, const UINT state, int* width, int* focusLeft)
@@ -116,7 +115,7 @@ void CItemTop::AddTopItemChild(CItemTop* child)
 {
     child->SetParent(this);
 
-    std::lock_guard guard(m_Protect);
+    std::scoped_lock guard(m_Protect);
     m_Children.push_back(child);
 
     if (IsVisible() && IsExpanded())
@@ -127,7 +126,7 @@ void CItemTop::AddTopItemChild(CItemTop* child)
 
 void CItemTop::RemoveTopItemChild(CItemTop* child)
 {
-    std::lock_guard guard(m_Protect);
+    std::scoped_lock guard(m_Protect);
     std::erase(m_Children, child);
 
     if (IsVisible())

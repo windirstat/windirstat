@@ -1,27 +1,23 @@
 ﻿// WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
 //
-// This program is free software; you can redistribute it and/or modify
+// This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
-// the Free Software Foundation; either version 2 of the License, or
-// (at your option) any later version.
+// the Free Software Foundation, either version 2 of the License, or
+// at your option any later version.
 //
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
 #include "stdafx.h"
-#include "WinDirStat.h"
 #include "DirStatDoc.h"
-#include "MainFrame.h"
 #include "FileTopView.h"
-#include "GlobalHelpers.h"
 #include "Localization.h"
 
 /////////////////////////////////////////////////////////////////////////////
@@ -40,8 +36,6 @@ void CFileTopView::OnDraw(CDC* pDC)
     UNREFERENCED_PARAMETER(pDC);
 }
 
-#pragma warning(push)
-#pragma warning(disable:26454)
 BEGIN_MESSAGE_MAP(CFileTopView, CView)
     ON_WM_INITMENUPOPUP()
     ON_WM_SIZE()
@@ -52,7 +46,6 @@ BEGIN_MESSAGE_MAP(CFileTopView, CView)
     ON_UPDATE_COMMAND_UI(ID_POPUP_TOGGLE, OnUpdatePopupToggle)
     ON_COMMAND(ID_POPUP_TOGGLE, OnPopupToggle)
 END_MESSAGE_MAP()
-#pragma warning(pop)
 
 void CFileTopView::OnSize(const UINT nType, const int cx, const int cy)
 {
@@ -82,7 +75,7 @@ int CFileTopView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
     m_Control.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_NAME).c_str(), LVCFMT_LEFT, 500, COL_ITEMTOP_NAME);
     m_Control.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_SIZE_PHYSICAL).c_str(), LVCFMT_RIGHT, 90, COL_ITEMTOP_SIZE_PHYSICAL);
     m_Control.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_SIZE_LOGICAL).c_str(), LVCFMT_RIGHT, 90, COL_ITEMTOP_SIZE_LOGICAL);
-    m_Control.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_LASTCHANGE).c_str(), LVCFMT_LEFT, 120, COL_ITEMTOP_LASTCHANGE);
+    m_Control.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_LAST_CHANGE).c_str(), LVCFMT_LEFT, 120, COL_ITEMTOP_LAST_CHANGE);
     m_Control.SetSorting(COL_ITEMTOP_SIZE_PHYSICAL, false);
 
     m_Control.OnColumnsInserted();

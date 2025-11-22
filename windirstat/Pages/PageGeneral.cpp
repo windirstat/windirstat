@@ -1,19 +1,18 @@
 ﻿// WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
 //
-// This program is free software; you can redistribute it and/or modify
+// This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
-// the Free Software Foundation; either version 2 of the License, or
-// (at your option) any later version.
+// the Free Software Foundation, either version 2 of the License, or
+// at your option any later version.
 //
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
 #include "stdafx.h"
@@ -24,10 +23,11 @@
 #include "Options.h"
 #include "GlobalHelpers.h"
 #include "Localization.h"
+#include "DarkMode.h"
 
-IMPLEMENT_DYNAMIC(CPageGeneral, CPropertyPageEx)
+IMPLEMENT_DYNAMIC(CPageGeneral, CMFCPropertyPage)
 
-CPageGeneral::CPageGeneral() : CPropertyPageEx(IDD) {}
+CPageGeneral::CPageGeneral() : CMFCPropertyPage(IDD) {}
 
 CPageGeneral::~CPageGeneral() = default;
 
@@ -40,7 +40,7 @@ COptionsPropertySheet* CPageGeneral::GetSheet() const
 
 void CPageGeneral::DoDataExchange(CDataExchange* pDX)
 {
-    CPropertyPageEx::DoDataExchange(pDX);
+    CMFCPropertyPage::DoDataExchange(pDX);
     DDX_Check(pDX, IDC_COLUMN_AUTOSIZE, m_AutomaticallyResizeColumns);
     DDX_Check(pDX, IDC_DELETION_WARNING, m_ShowDeletionWarning);
     DDX_Check(pDX, IDC_FULL_ROW_SELECTION, m_ListFullRowSelection);
@@ -50,9 +50,10 @@ void CPageGeneral::DoDataExchange(CDataExchange* pDX)
     DDX_Check(pDX, IDC_SIZE_SUFFIXES, m_SizeSuffixesFormat);
     DDX_Check(pDX, IDC_USE_WINDOWS_LOCALE, m_UseWindowsLocale);
     DDX_Control(pDX, IDC_COMBO, m_Combo);
+    DDX_Radio(pDX, IDC_DARK_MODE_DISABLED, m_DarkModeRadio);
 }
 
-BEGIN_MESSAGE_MAP(CPageGeneral, CPropertyPageEx)
+BEGIN_MESSAGE_MAP(CPageGeneral, CMFCPropertyPage)
     ON_BN_CLICKED(IDC_COLUMN_AUTOSIZE, OnBnClickedSetModified)
     ON_BN_CLICKED(IDC_DELETION_WARNING, OnBnClickedSetModified)
     ON_BN_CLICKED(IDC_FULL_ROW_SELECTION, OnBnClickedSetModified)
@@ -61,14 +62,25 @@ BEGIN_MESSAGE_MAP(CPageGeneral, CPropertyPageEx)
     ON_BN_CLICKED(IDC_SHOW_STRIPES, OnBnClickedSetModified)
     ON_BN_CLICKED(IDC_SIZE_SUFFIXES, OnBnClickedSetModified)
     ON_BN_CLICKED(IDC_USE_WINDOWS_LOCALE, OnBnClickedSetModified)
-    ON_CBN_SELENDOK(IDC_COMBO, OnCbnSelendokCombo)
+    ON_BN_CLICKED(IDC_DARK_MODE_DISABLED, OnBnClickedSetModified)
+    ON_BN_CLICKED(IDC_DARK_MODE_ENABLED, OnBnClickedSetModified)
+    ON_BN_CLICKED(IDC_DARK_MODE_USE_WINDOWS, OnBnClickedSetModified)
+    ON_CBN_SELENDOK(IDC_COMBO, OnBnClickedSetModified)
+    ON_WM_CTLCOLOR()
 END_MESSAGE_MAP()
+
+HBRUSH CPageGeneral::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
+{
+    const HBRUSH brush = DarkMode::OnCtlColor(pDC, nCtlColor);
+    return brush ? brush : CMFCPropertyPage::OnCtlColor(pDC, pWnd, nCtlColor);
+}
 
 BOOL CPageGeneral::OnInitDialog()
 {
-    CPropertyPageEx::OnInitDialog();
+    CMFCPropertyPage::OnInitDialog();
 
     Localization::UpdateDialogs(*this);
+    DarkMode::AdjustControls(GetSafeHwnd());
 
     m_AutomaticallyResizeColumns = COptions::AutomaticallyResizeColumns;
     m_SizeSuffixesFormat = COptions::UseSizeSuffixes;
@@ -78,8 +90,9 @@ BOOL CPageGeneral::OnInitDialog()
     m_ListFullRowSelection = COptions::ListFullRowSelection;
     m_UseWindowsLocale = COptions::UseWindowsLocaleSetting;
     m_PortableMode = CDirStatApp::InPortableMode();
+    m_DarkModeRadio = COptions::DarkMode;
 
-    for (const auto & language : Localization::GetLanguageList())
+    for (const auto& language : Localization::GetLanguageList())
     {
         const int i = m_Combo.AddString(GetLocaleLanguage(language).c_str());
         m_Combo.SetItemData(i, language);
@@ -110,14 +123,22 @@ void CPageGeneral::OnOK()
     COptions::ListStripes = (FALSE != m_ListStripes);
     COptions::ShowDeleteWarning = (FALSE != m_ShowDeletionWarning);
     COptions::ListFullRowSelection = (FALSE != m_ListFullRowSelection);
+    COptions::DarkMode = m_DarkModeRadio;
+
     if (!CDirStatApp::Get()->SetPortableMode(m_PortableMode))
     {
         DisplayError(L"Could not toggle WinDirStat portable mode. Check your permissions.");
     }
 
     // force general user interface update if anything changes
-    if (listChanged)
+    if (const CDirStatDoc* pDoc = CDirStatDoc::GetDocument(); listChanged && pDoc != nullptr)
     {
+        // Iterate over all drive items and update their display names/free space item sizes
+        for (CItem* pItem : pDoc->GetDriveItems())
+        {
+            pItem->UpdateFreeSpaceItem();
+        }
+
         CDirStatDoc::GetDocument()->UpdateAllViews(nullptr, HINT_LISTSTYLECHANGED);
     }
     if (windowsLocaleChanged)
@@ -128,17 +149,18 @@ void CPageGeneral::OnOK()
     const LANGID id = static_cast<LANGID>(m_Combo.GetItemData(m_Combo.GetCurSel()));
     COptions::LanguageId = static_cast<int>(id);
 
-    CPropertyPageEx::OnOK();
+    CMFCPropertyPage::OnOK();
 }
 
 void CPageGeneral::OnBnClickedSetModified()
 {
-    SetModified();
-}
+    UpdateData(TRUE);
 
-void CPageGeneral::OnCbnSelendokCombo()
-{
-    const LANGID langid = static_cast<LANGID>(m_Combo.GetItemData(m_Combo.GetCurSel()));
-    GetSheet()->SetLanguageChanged(langid != COptions::LanguageId);
+    // Assess for restart required
+    const LANGID id = static_cast<LANGID>(m_Combo.GetItemData(m_Combo.GetCurSel()));
+    const bool languagedChanged = id != static_cast<LANGID>(COptions::LanguageId);
+    const bool darkModeChanged = m_DarkModeRadio != COptions::DarkMode;
+    GetSheet()->SetRestartRequired(darkModeChanged || languagedChanged);
+
     SetModified();
 }

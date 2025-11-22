@@ -1,19 +1,18 @@
 ﻿// WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
 //
-// This program is free software; you can redistribute it and/or modify
+// This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
-// the Free Software Foundation; either version 2 of the License, or
-// (at your option) any later version.
+// the Free Software Foundation, either version 2 of the License, or
+// at your option any later version.
 //
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
 #pragma once
@@ -21,6 +20,7 @@
 #include "PacMan.h"
 #include "Item.h"
 #include "FileTabbedView.h"
+#include "DarkMode.h"
 
 #include <functional>
 
@@ -41,38 +41,42 @@ class CExtensionView;
 enum LOGICAL_FOCUS : std::uint8_t
 {
     LF_NONE = 0,
-    LF_FILETREE = 1 << 0,
-    LF_DUPELIST = 1 << 1,
-    LF_TOPLIST = 1 << 2,
-    LF_SEARCHLIST = 1 << 3,
-    LF_EXTLIST = 1 << 4,
+    LF_FILETREE,
+    LF_DUPELIST,
+    LF_TOPLIST,
+    LF_SEARCHLIST,
+    LF_EXTLIST,
 };
 
 //
-// COptionsPropertySheet. The options dialog.
+// COptionsPropertySheet.
 //
-class COptionsPropertySheet final : public CPropertySheet
+class COptionsPropertySheet final : public CMFCPropertySheet
 {
     DECLARE_DYNAMIC(COptionsPropertySheet)
 
     COptionsPropertySheet();
-    void SetLanguageChanged(bool changed);
+    void SetRestartRequired(bool changed);
     BOOL OnInitDialog() override;
 
     bool m_RestartApplication = false; // [out]
 
 protected:
     BOOL OnCommand(WPARAM wParam, LPARAM lParam) override;
+    afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
+    afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 
-    bool m_LanguageChanged = false;
+    bool m_RestartRequest = false;
     bool m_AlreadyAsked = false;
+
+    DECLARE_MESSAGE_MAP()
 };
 
 //
 // CMySplitterWnd. A CSplitterWnd with 2 columns or rows, which
 // knows about the current split ratio and retains it even when resized.
 //
-class CMySplitterWnd final : public CSplitterWnd
+class CMySplitterWnd final : public CSplitterWndEx
 {
 public:
     CMySplitterWnd(double * splitterPos);
@@ -87,39 +91,37 @@ protected:
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnSize(UINT nType, int cx, int cy);
-
-public:
-    afx_msg void OnDestroy();
 };
 
 //
 // CPacmanControl. Pacman on the status bar.
 //
-class CPacmanControl final : public CStatic
+class CPacmanControl final : public CWnd
 {
 public:
-    CPacmanControl();
+    CPacmanControl() = default;
     void Drive();
     void Start();
     void Stop();
 
 protected:
-    CPacman m_Pacman;
+    CPacman m_Pacman{ DarkMode::WdsSysColor(
+        DarkMode::IsDarkModeActive() ? COLOR_WINDOW : COLOR_BTNFACE) };
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnPaint();
     afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
+    afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 };
 
 //
-// CDeadFocusWnd. The focus in Windirstat can be on
+// CDeadFocusWnd. The focus in WinDirStat can be on
 // - the directory list
 // - the extension list,
-// - or none of them. In this case the focus lies on
+// - or none of them. In that case the focus resides on
 //   an invisible (zero-size) child of CMainFrame.
-// On VK_TAB CDeadFocusWnd moves the focus to the
-// directory list then.
-//
+// Pressing VK_TAB while this window has focus moves focus to the
+// directory list.
 class CDeadFocusWnd final : public CWnd
 {
 public:
@@ -241,7 +243,9 @@ protected:
     afx_msg void OnDestroy();
     afx_msg LRESULT OnTaskButtonCreated(WPARAM, LPARAM);
     afx_msg void OnSysColorChange();
-
+    afx_msg LRESULT OnUahDrawMenu(WPARAM wParam, LPARAM lParam);
+    afx_msg void OnNcPaint();
+    afx_msg BOOL OnNcActivate(BOOL bActive);
 public:
     static CMainFrame* Get() { return s_Singleton; }
     BOOL LoadFrame(UINT nIDResource, DWORD dwDefaultStyle = WS_OVERLAPPEDWINDOW | FWS_ADDTOTITLE, CWnd* pParentWnd = NULL, CCreateContext* pContext = NULL) override;

@@ -1,19 +1,18 @@
 ﻿// WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
 //
-// This program is free software; you can redistribute it and/or modify
+// This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
-// the Free Software Foundation; either version 2 of the License, or
-// (at your option) any later version.
+// the Free Software Foundation, either version 2 of the License, or
+// at your option any later version.
 //
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
 #pragma once
@@ -21,11 +20,16 @@
 #include "stdafx.h"
 
 #include <string>
+#include <atomic>
 #include <functional>
 
 constexpr auto CONTENT_MENU_MINCMD = 0x1ul;
 constexpr auto CONTENT_MENU_MAXCMD = 0x7FFFul;
+
 IContextMenu* GetContextMenu(HWND hwnd, const std::vector<std::wstring>& paths);
+
+constexpr auto signum(auto x) { return x < 0 ? -1 : x == 0 ? 0 : 1; };
+constexpr auto usignum(auto x, auto y) { return x < y ? -1 : x == y ? 0 : 1; };
 
 constexpr auto FILE_PROVIDER_COMPRESSION_MODERN = 1u << 8;
 using CompressionAlgorithm = enum CompressionAlgorithm {
@@ -36,6 +40,9 @@ using CompressionAlgorithm = enum CompressionAlgorithm {
     XPRESS16K = FILE_PROVIDER_COMPRESSION_XPRESS16K | FILE_PROVIDER_COMPRESSION_MODERN,
     LZX = FILE_PROVIDER_COMPRESSION_LZX | FILE_PROVIDER_COMPRESSION_MODERN
 };
+
+bool CompressFile(const std::wstring& filePath, CompressionAlgorithm algorithm);
+bool CompressFileAllowed(const std::wstring& filePath, CompressionAlgorithm algorithm);
 
 // Used at runtime to distinguish between mount points and junction points since they
 // share the same reparse tag on the file system.
@@ -49,8 +56,8 @@ constexpr T* ByteOffset(void* ptr, const std::ptrdiff_t offset)
 
 std::wstring GetLocaleString(LCTYPE lctype, LCID lcid);
 std::wstring GetLocaleLanguage(LANGID langid);
-std::wstring GetLocaleThousandSeparator();
-std::wstring GetLocaleDecimalSeparator();
+wchar_t GetLocaleThousandSeparator();
+wchar_t GetLocaleDecimalSeparator();
 std::wstring FormatBytes(const ULONGLONG& n);
 std::wstring FormatSizeSuffixes(ULONGLONG n);
 std::wstring FormatCount(const ULONGLONG& n);
@@ -96,6 +103,41 @@ std::wstring GetBaseNameFromPath(const std::wstring& path);
 std::wstring GetAppFileName(const std::wstring& ext = L"");
 std::wstring GetAppFolder();
 std::wstring GetNameFromSid(PSID sid);
+std::wstring ComputeFileHashes(const std::wstring& filePath);
+void QueryShadowCopies(ULONGLONG& count, ULONGLONG& bytesUsed);
+void RemoveWmiInstances(const std::wstring& wmiClass, std::atomic<size_t> & progress,
+    const std::atomic<bool>& cancelRequested, const std::wstring& whereClause = L"__PATH IS NOT NULL");
 
-bool CompressFile(const std::wstring& filePath, CompressionAlgorithm algorithm);
-bool CompressFileAllowed(const std::wstring& filePath, CompressionAlgorithm algorithm);
+using CSmallRect = struct CSmallRect
+{
+    WORD left;
+    WORD top;
+    WORD right;
+    WORD bottom;
+
+    // Default constructor
+    constexpr CSmallRect() : left(0), top(0), right(0), bottom(0) {}
+
+    // Constructor from CRect
+    explicit constexpr CSmallRect(const CRect& rect) :
+          left(static_cast<WORD>(rect.left)), top(static_cast<WORD>(rect.top))
+        , right(static_cast<WORD>(rect.right)) , bottom(static_cast<WORD>(rect.bottom)) 
+    {
+    }
+
+    // Assignment from CRect
+    constexpr CSmallRect& operator=(const CRect& rect)
+    {
+        left = static_cast<WORD>(rect.left);
+        top = static_cast<WORD>(rect.top);
+        right = static_cast<WORD>(rect.right);
+        bottom = static_cast<WORD>(rect.bottom);
+        return *this;
+    }
+
+    // Conversion to CRect
+    operator CRect() const
+    {
+        return { left, top, right, bottom };
+    }
+};

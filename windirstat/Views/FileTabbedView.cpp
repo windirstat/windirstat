@@ -1,19 +1,18 @@
 ﻿// WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
 //
-// This program is free software; you can redistribute it and/or modify
+// This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
-// the Free Software Foundation; either version 2 of the License, or
-// (at your option) any later version.
+// the Free Software Foundation, either version 2 of the License, or
+// at your option any later version.
 //
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
 #include "stdafx.h"
@@ -24,6 +23,9 @@
 #include "FileTreeView.h"
 #include "Localization.h"
 #include "MainFrame.h"
+#include "MessageBoxDlg.h"
+#include "DirStatDoc.h"
+#include "ItemSearch.h"
 
 IMPLEMENT_DYNCREATE(CFileTabbedView, CTabView)
 
@@ -46,10 +48,29 @@ int CFileTabbedView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
     m_FileDupeView = DYNAMIC_DOWNCAST(CFileDupeView, GetTabControl().GetTabWnd(m_FileDupeViewIndex));
     m_FileSearchViewIndex = AddView(RUNTIME_CLASS(CFileSearchView), Localization::Lookup(IDS_SEARCH_RESULTS).c_str(), CHAR_MAX);
     m_FileSearchView = DYNAMIC_DOWNCAST(CFileSearchView, GetTabControl().GetTabWnd(m_FileSearchViewIndex));
-    GetTabControl().ModifyTabStyle(CMFCTabCtrl::STYLE_3D_ONENOTE);
-    GetTabControl().EnableTabSwap(FALSE);
 
     return 0;
+}
+
+void CFileTabbedView::OnInitialUpdate()
+{
+    CTabView::OnInitialUpdate();
+
+    CTabCtrlHelper::SetupTabControl(GetTabControl());
+
+    SetSearchTabVisibility(false);
+    SetDupeTabVisibility(COptions::ScanForDuplicates &&
+        CDirStatDoc::GetDocument()->GetRootItem() != nullptr);
+}
+
+void CFileTabbedView::SetDupeTabVisibility(const bool show)
+{
+    GetTabControl().ShowTab(m_FileDupeViewIndex, show);
+}
+
+void CFileTabbedView::SetSearchTabVisibility(const bool show)
+{
+    GetTabControl().ShowTab(m_FileSearchViewIndex, show);
 }
 
 BOOL CFileTabbedView::OnEraseBkgnd(CDC* /*pDC*/)
@@ -61,14 +82,7 @@ LRESULT CFileTabbedView::OnChangeActiveTab(WPARAM wp, LPARAM lp)
 {
     if (wp == static_cast<WPARAM>(m_FileDupeViewIndex))
     {
-        // Alert the message they are not actually scanning for duplicates
-        if (!COptions::ScanForDuplicates)
-        {
-            AfxMessageBox(Localization::Lookup(IDS_DUPLICATES_DISABLED).c_str(), MB_OK | MB_ICONHAND);
-            return TRUE;
-        }
-
-        // Duplicate view can take awhile to populate so show wait cursor
+        // Duplicate view can take a while to populate so show wait cursor
         CWaitCursor wc;
         CFileDupeControl::Get()->SortItems();
     }

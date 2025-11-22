@@ -1,44 +1,53 @@
 ﻿// WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
 //
-// This program is free software; you can redistribute it and/or modify
+// This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
-// the Free Software Foundation; either version 2 of the License, or
-// (at your option) any later version.
+// the Free Software Foundation, either version 2 of the License, or
+// at your option any later version.
 //
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-//
-// This general purpose header is published under GPL with
-// the friendly permission of D'accord (www.daccord.net).
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
 #pragma once
 
 #include <functional>
+#include <memory>
 
 //
-// SmartPointer<>. Custom template for WinApi cleanup.
-// This template does that in its destructor.
+// SmartPointer<>. Custom template for WinAPI resource cleanup.
+// Automatically invokes the provided cleanup callable in its destructor.
 //
 template <typename T>
 class SmartPointer final
 {
 public:
 
-    SmartPointer(const SmartPointer<T>&) = delete; // operator not allowed for SmartPointer
-    T operator=(const SmartPointer<T>& lp) = delete; // operator not allowed for SmartPointer
+    SmartPointer(const SmartPointer&) = delete; // non-copyable
+    T operator=(const SmartPointer& lp) = delete; // copy assignment forbidden
 
     SmartPointer(std::function<void(T)> cleanup) : m_Cleanup(std::move(cleanup)), m_Data(nullptr) {}
     SmartPointer(std::function<void(T)> cleanup, T data) : m_Cleanup(std::move(cleanup)), m_Data(data) {}
 
     ~SmartPointer()
+    {
+        Cleanup();
+    }
+
+    SmartPointer(SmartPointer&& src) noexcept
+    {
+        m_Cleanup = src.m_Cleanup;
+        m_Data = src.m_Data;
+        src.m_Data = nullptr;
+    }
+
+    void Cleanup()
     {
         if (m_Data != nullptr)
         {
@@ -46,11 +55,17 @@ public:
         }
     }
 
-    SmartPointer(SmartPointer<T>&& src) noexcept
+    SmartPointer& operator=(SmartPointer&& src) noexcept
     {
-        m_Cleanup = src.m_Cleanup;
-        m_Data = src.m_Data;
-        src.m_Data = nullptr;
+        if (std::addressof(*this) != std::addressof(src))
+        {
+            Cleanup();
+            m_Cleanup = src.m_Cleanup;
+            m_Data = src.m_Data;
+            src.m_Data = nullptr;
+        }
+
+        return *this;
     }
 
     void Release() noexcept
@@ -80,10 +95,7 @@ public:
 
     T operator=(T lp)
     {
-        if (m_Data != nullptr)
-        {
-            m_Cleanup(m_Data);
-        }
+        Cleanup();
         m_Data = lp;
         return m_Data;
     }

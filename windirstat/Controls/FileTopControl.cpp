@@ -1,19 +1,18 @@
 ﻿// WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
 //
-// This program is free software; you can redistribute it and/or modify
+// This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
-// the Free Software Foundation; either version 2 of the License, or
-// (at your option) any later version.
+// the Free Software Foundation, either version 2 of the License, or
+// at your option any later version.
 //
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
 #include "stdafx.h"
@@ -36,17 +35,14 @@ bool CFileTopControl::GetAscendingDefault(const int column)
 {
     return column == COL_ITEMTOP_SIZE_PHYSICAL ||
         column == COL_ITEMTOP_SIZE_LOGICAL ||
-        column == COL_ITEMTOP_LASTCHANGE;
+        column == COL_ITEMTOP_LAST_CHANGE;
 }
 
-#pragma warning(push)
-#pragma warning(disable:26454)
 BEGIN_MESSAGE_MAP(CFileTopControl, CTreeListControl)
     ON_WM_SETFOCUS()
     ON_WM_KEYDOWN()
     ON_NOTIFY_REFLECT_EX(LVN_DELETEALLITEMS, OnDeleteAllItems)
 END_MESSAGE_MAP()
-#pragma warning(pop)
 
 CFileTopControl* CFileTopControl::m_Singleton = nullptr;
 
@@ -55,7 +51,7 @@ void CFileTopControl::ProcessTop(CItem * item)
     // Do not process if we are not tracking large files
     if (COptions::LargeFileCount == 0) return;
 
-    std::lock_guard guard(m_SizeMutex);
+    std::scoped_lock guard(m_SizeMutex);
     m_QueuedSet.emplace_back(item);
 }
 
@@ -144,7 +140,7 @@ BOOL CFileTopControl::OnDeleteAllItems(NMHDR*, LRESULT* pResult)
     m_SizeMap.clear();
     m_ItemTracker.clear();
 
-    // Allow delete to proceed
+    // Allow deletion to proceed
     *pResult = FALSE;
     return FALSE;
 }

@@ -1,27 +1,26 @@
 ﻿// WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
 //
-// This program is free software; you can redistribute it and/or modify
+// This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
-// the Free Software Foundation; either version 2 of the License, or
-// (at your option) any later version.
+// the Free Software Foundation, either version 2 of the License, or
+// at your option any later version.
 //
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
 #include "stdafx.h"
 #include "WinDirStat.h"
 #include "Property.h"
 
+#include <ranges>
 #include <regex>
-#include <sstream>
 
 std::vector<PersistedSetting*>& PersistedSetting::GetPropertySet()
 {
@@ -46,7 +45,7 @@ template <> void Setting<int>::ReadPersistedProperty()
 {
     const int def = m_Value;
     m_Value = CDirStatApp::Get()->GetProfileInt(m_Section.c_str(), m_Entry.c_str(), m_Value);
-    if (m_Value != def && m_Min != m_Max) m_Value = max(min(m_Value, m_Max), m_Min);
+    if (m_Value != def && m_Min != m_Max) m_Value = std::clamp(m_Value, m_Min, m_Max);
 }
 
 template <> void Setting<int>::WritePersistedProperty()
@@ -97,13 +96,11 @@ template <> void Setting<WINDOWPLACEMENT>::WritePersistedProperty()
 
 template <> void Setting<std::vector<std::wstring>>::ReadPersistedProperty()
 {
-    const std::wstring s = CDirStatApp::Get()->GetProfileString(m_Section.c_str(), m_Entry.c_str()).GetString();
-    std::wstringstream iss(s);
-
     m_Value.clear();
-    for (std::wstring part; std::getline(iss, part, L'|');)
+    for (const std::wstring s = CDirStatApp::Get()->GetProfileString(m_Section.c_str(), m_Entry.c_str()).GetString();
+        const auto token_view : std::views::split(s, L'|'))
     {
-        m_Value.push_back(part);
+        m_Value.emplace_back(token_view.begin(), token_view.end());
     }
 }
 
@@ -123,13 +120,11 @@ template <> void Setting<std::vector<std::wstring>>::WritePersistedProperty()
 
 template <> void Setting<std::vector<int>>::ReadPersistedProperty()
 {
-    const std::wstring s = CDirStatApp::Get()->GetProfileString(m_Section.c_str(), m_Entry.c_str()).GetString();
-    std::wstringstream iss(s);
-
     m_Value.clear();
-    for (std::wstring part; std::getline(iss, part, L',');)
+    for (const std::wstring s = CDirStatApp::Get()->GetProfileString(m_Section.c_str(), m_Entry.c_str()).GetString();
+        const auto token_view : std::views::split(s, L','))
     {
-        m_Value.push_back(std::stoi(part));
+        m_Value.push_back(std::stoi(std::wstring(token_view.begin(), token_view.end())));
     }
 }
 
@@ -163,7 +158,7 @@ template <> void Setting<double>::ReadPersistedProperty()
 {
     const double def = m_Value;
     ReadBinaryProperty(m_Section, m_Entry, &m_Value, sizeof(double));
-    if (m_Value != def && m_Min != m_Max) m_Value = max(min(m_Value, m_Max), m_Min);
+    if (m_Value != def && m_Min != m_Max) m_Value = std::clamp(m_Value, m_Min, m_Max);
 }
 
 template <> void Setting<double>::WritePersistedProperty()

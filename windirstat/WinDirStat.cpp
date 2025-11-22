@@ -1,19 +1,18 @@
 ﻿// WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
 //
-// This program is free software; you can redistribute it and/or modify
+// This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
-// the Free Software Foundation; either version 2 of the License, or
-// (at your option) any later version.
+// the Free Software Foundation, either version 2 of the License, or
+// at your option any later version.
 //
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
 #include "stdafx.h"
@@ -25,6 +24,7 @@
 #include "TreeMapView.h"
 #include "GlobalHelpers.h"
 #include "Localization.h"
+#include "MessageBoxDlg.h"
 #include "PageFiltering.h"
 #include "SmartPointer.h"
 
@@ -49,11 +49,11 @@ CDirStatApp CDirStatApp::_singleton;
 
 CDirStatApp::CDirStatApp()
 {
-#ifdef VTRACE_TO_CONSOLE
+#ifdef _DEBUG
     m_VtraceConsole.Attach(new CWDSTracerConsole);
 #endif
 
-    m_AltColor = GetAlternativeColor(RGB(0x00, 0x00, 0xFF), L"AltColor");
+    m_AltColor = GetAlternativeColor(RGB(0x3A, 0x99, 0xE8), L"AltColor");
     m_AltEncryptionColor = GetAlternativeColor(RGB(0x00, 0x80, 0x00), L"AltEncryptionColor");
 }
 
@@ -86,7 +86,7 @@ void CDirStatApp::RestartApplication(bool resetPreferences)
     if (const BOOL success = CreateProcess(GetAppFileName().c_str(), nullptr, nullptr, nullptr, false,
         resetPreferences ? 0 : CREATE_SUSPENDED, nullptr, nullptr, &si, &pi); !success)
     {
-        DisplayError(Localization::Format(IDS_CREATEPROCESSsFAILEDs, GetAppFileName(), TranslateError()));
+        DisplayError(Localization::Format(IDS_PROCESS_FAILEDss, GetAppFileName(), TranslateError()));
         return;
     }
 
@@ -96,8 +96,8 @@ void CDirStatApp::RestartApplication(bool resetPreferences)
         ExitProcess(0);
     }
 
-    // We _send_ the WM_CLOSE here to ensure that all COptions-Settings
-    // like column widths an so on are saved before the new instance is resumed.
+    // We _send_ the WM_CLOSE here to ensure that all COptions settings
+    // like column widths and so on are saved before the new instance is resumed.
     // This will post a WM_QUIT message.
     (void)CMainFrame::Get()->SendMessage(WM_CLOSE);
 
@@ -112,8 +112,8 @@ void CDirStatApp::RestartApplication(bool resetPreferences)
 
 std::tuple<ULONGLONG, ULONGLONG> CDirStatApp::GetFreeDiskSpace(const std::wstring & pszRootPath)
 {
-    ULARGE_INTEGER u64total = {{0, 0}};
-    ULARGE_INTEGER u64free = {{0, 0}};
+    ULARGE_INTEGER u64total = {.QuadPart = 0};
+    ULARGE_INTEGER u64free = {.QuadPart = 0};
 
     if (GetDiskFreeSpaceEx(pszRootPath.c_str(), nullptr, &u64total, &u64free) == 0)
     {
@@ -213,14 +213,14 @@ bool CDirStatApp::SetPortableMode(const bool enable, const bool onlyOpen)
         }
 
         // Fallback to registry mode for any failures
-        SetRegistryKey(Localization::Lookup(IDS_APP_TITLE).c_str());
+        SetRegistryKey(Localization::LookupNeutral(AFX_IDS_APP_TITLE).c_str());
         return false;
     }
 
     // Attempt to remove file succeeded
     if (DeleteFile(ini.c_str()) != 0 || GetLastError() == ERROR_FILE_NOT_FOUND)
     {
-        SetRegistryKey(Localization::Lookup(IDS_APP_TITLE).c_str());
+        SetRegistryKey(Localization::LookupNeutral(AFX_IDS_APP_TITLE).c_str());
         return true;
     }
 
@@ -275,11 +275,20 @@ BOOL CDirStatApp::InitInstance()
     // Prevent state saving
     m_bSaveState = FALSE;
 
-    CWinAppEx::InitInstance();
-    InitShellManager();
-
     // Load default language just to get bootstrapped
     Localization::LoadResource(MAKELANGID(LANG_ENGLISH, SUBLANG_NEUTRAL));
+
+    // If a local config file is available, use that for settings
+    SetPortableMode(true, true);
+
+    COptions::LoadAppSettings();
+    LoadStdProfileSettings(0);
+
+    // Set app to prefer dark mode
+    DarkMode::SetAppDarkMode();
+
+    CWinAppEx::InitInstance();
+    InitShellManager();
 
     // Initialize visual controls
     constexpr INITCOMMONCONTROLSEX ctrls = { sizeof(INITCOMMONCONTROLSEX) , ICC_STANDARD_CLASSES };
@@ -289,16 +298,10 @@ BOOL CDirStatApp::InitInstance()
     AfxEnableControlContainer();
     (void)AfxInitRichEdit2();
 
-    // Initialize GPI Plus
+    // Initialize GDI Plus
     Gdiplus::GdiplusStartupInput gdiplusStartupInput;
     ULONG_PTR gdiplusToken;
     Gdiplus::GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, nullptr);
-
-    // If a local config file is available, use that for settings
-    SetPortableMode(true, true);
-
-    COptions::LoadAppSettings();
-    LoadStdProfileSettings(0);
 
     m_PDocTemplate = new CSingleDocTemplate(
         IDR_MAINFRAME,
@@ -312,7 +315,11 @@ BOOL CDirStatApp::InitInstance()
     ParseCommandLine(cmdInfo);
     ProcessShellCommand(cmdInfo);
 
+    // Allow dark mode
+    DarkMode::SetupGlobalColors();
+
     CMainFrame::Get()->InitialShowWindow();
+    m_pMainWnd->Invalidate();
     m_pMainWnd->UpdateWindow();
 
     // When called by setup.exe, WinDirStat remained in the
@@ -337,7 +344,7 @@ BOOL CDirStatApp::InitInstance()
         RtlSetProcessPlaceholderCompatibilityMode(PHCM_EXPOSE_PLACEHOLDERS);
     }
 
-    // If launches with a parent pid flag, close that process
+    // If launched with a parent PID flag, close that process
     if (cmdInfo.m_ParentPid != 0)
     {
         if (SmartPointer<HANDLE> handle(CloseHandle, OpenProcess(PROCESS_TERMINATE, FALSE, cmdInfo.m_ParentPid)); handle != nullptr)
@@ -347,32 +354,38 @@ BOOL CDirStatApp::InitInstance()
     }
 
     // Prompt user to enable enhanced scanning engine if it is disabled and running in elevated privileges
-    if(IsElevationActive()) {
-        if (COptions::UseFastScanEngine == false) {
-            COptions::UseFastScanEngine = (MessageBox(m_pMainWnd->GetSafeHwnd(), Localization::Lookup(IDS_ENABLEFASTSCAN_QUESTION).c_str(),
-                Localization::Lookup(IDS_APP_TITLE).c_str(), MB_YESNO | MB_ICONQUESTION) == IDYES);
-            COptions::UseFastScanEngine.WritePersistedProperty();
-        }
+    if (IsElevationActive() && COptions::UseFastScanEngine == false && COptions::ShowFastScanPrompt) {
+        CMessageBoxDlg fastScanPrompt( Localization::Lookup(IDS_ENABLEFASTSCAN_QUESTION),
+            Localization::LookupNeutral(AFX_IDS_APP_TITLE), MB_YESNO | MB_ICONQUESTION, m_pMainWnd,
+            {}, Localization::Lookup(IDS_DONT_SHOW_AGAIN), false);
+
+        const INT_PTR result = fastScanPrompt.DoModal();
+        COptions::UseFastScanEngine = (result == IDYES);
+        COptions::UseFastScanEngine.WritePersistedProperty();
+        COptions::ShowFastScanPrompt = !fastScanPrompt.IsCheckboxChecked();
     }
 
     // Allow user to elevate if desired
-    if (IsElevationAvailable())
+    if (IsElevationAvailable() && COptions::ShowElevationPrompt)
     {
-        if (MessageBox(m_pMainWnd->GetSafeHwnd(), Localization::Lookup(IDS_EVELATION_QUESTION).c_str(),
-            Localization::Lookup(IDS_APP_TITLE).c_str(), MB_YESNO | MB_ICONQUESTION) == IDYES)
+        CMessageBoxDlg elevationPrompt(Localization::Lookup(IDS_ELEVATION_QUESTION),
+            Localization::LookupNeutral(AFX_IDS_APP_TITLE), MB_YESNO | MB_ICONQUESTION, m_pMainWnd, {},
+            Localization::Lookup(IDS_DONT_SHOW_AGAIN), false);
+
+        const INT_PTR result = elevationPrompt.DoModal();
+        COptions::ShowElevationPrompt = !elevationPrompt.IsCheckboxChecked();
+        if (result == IDYES)
         {
             RunElevated(m_lpCmdLine);
             return FALSE;
         }
-        else
-        {
-            COptions::UseFastScanEngine = false;
-        }
+
+        COptions::UseFastScanEngine = false;
     }
 
     // Either open the file names or open file selection dialog
     cmdInfo.m_strFileName.IsEmpty() ? OnFileOpen() :
-        (void) m_PDocTemplate->OpenDocumentFile(cmdInfo.m_strFileName, true);
+        (void)m_PDocTemplate->OpenDocumentFile(cmdInfo.m_strFileName, true);
 
     return TRUE;
 }

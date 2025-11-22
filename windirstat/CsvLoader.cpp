@@ -1,24 +1,23 @@
 ﻿// WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
 //
-// This program is free software; you can redistribute it and/or modify
+// This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
-// the Free Software Foundation; either version 2 of the License, or
-// (at your option) any later version.
+// the Free Software Foundation, either version 2 of the License, or
+// at your option any later version.
 //
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
 #include "stdafx.h"
-#include "langs.h"
 #include "Item.h"
+#include "ItemDupe.h"
 #include "Localization.h"
 #include "CsvLoader.h"
 #include "Constants.h"
@@ -40,7 +39,7 @@ enum : std::uint8_t
     FIELD_SIZE_LOGICAL,
     FIELD_SIZE_PHYSICAL,
     FIELD_ATTRIBUTES,
-    FIELD_LASTCHANGE,
+    FIELD_LAST_CHANGE,
     FIELD_ATTRIBUTES_WDS,
     FIELD_OWNER,
     FIELD_COUNT
@@ -58,8 +57,8 @@ static void ParseHeaderLine(const std::vector<std::wstring>& header)
         { Localization::Lookup(IDS_COL_SIZE_LOGICAL), FIELD_SIZE_LOGICAL },
         { Localization::Lookup(IDS_COL_SIZE_PHYSICAL), FIELD_SIZE_PHYSICAL },
         { Localization::Lookup(IDS_COL_ATTRIBUTES), FIELD_ATTRIBUTES },
-        { Localization::Lookup(IDS_COL_LASTCHANGE), FIELD_LASTCHANGE },
-        { (Localization::Lookup(IDS_APP_TITLE) + L" " + Localization::Lookup(IDS_COL_ATTRIBUTES)), FIELD_ATTRIBUTES_WDS },
+        { Localization::Lookup(IDS_COL_LAST_CHANGE), FIELD_LAST_CHANGE },
+        { (Localization::LookupNeutral(AFX_IDS_APP_TITLE) + L" " + Localization::Lookup(IDS_COL_ATTRIBUTES)), FIELD_ATTRIBUTES_WDS },
         { Localization::Lookup(IDS_COL_OWNER), FIELD_OWNER }
     };
 
@@ -178,7 +177,7 @@ CItem* LoadResults(const std::wstring & path)
         CItem* newitem = new CItem(
             type,
             displayName,
-            FromTimeString(fields[orderMap[FIELD_LASTCHANGE]]),
+            FromTimeString(fields[orderMap[FIELD_LAST_CHANGE]]),
             _wcstoui64(fields[orderMap[FIELD_SIZE_PHYSICAL]].c_str(), nullptr, 10),
             _wcstoui64(fields[orderMap[FIELD_SIZE_LOGICAL]].c_str(), nullptr, 10),
             wcstoul(fields[orderMap[FIELD_ATTRIBUTES]].c_str(), nullptr, 16),
@@ -257,7 +256,7 @@ bool SaveResults(const std::wstring& path, CItem * rootItem)
     outf.open(path, std::ios::binary);
 
     // Determine columns
-    std::vector<std::wstring> cols =
+    std::vector cols =
     {
         Localization::Lookup(IDS_COL_NAME),
         Localization::Lookup(IDS_COL_FILES),
@@ -265,8 +264,8 @@ bool SaveResults(const std::wstring& path, CItem * rootItem)
         Localization::Lookup(IDS_COL_SIZE_LOGICAL),
         Localization::Lookup(IDS_COL_SIZE_PHYSICAL),
         Localization::Lookup(IDS_COL_ATTRIBUTES),
-        Localization::Lookup(IDS_COL_LASTCHANGE),
-        Localization::Lookup(IDS_APP_TITLE) + L" " + Localization::Lookup(IDS_COL_ATTRIBUTES)
+        Localization::Lookup(IDS_COL_LAST_CHANGE),
+        Localization::LookupNeutral(AFX_IDS_APP_TITLE) + L" " + Localization::Lookup(IDS_COL_ATTRIBUTES)
     };
     if (COptions::ShowColumnOwner)
     {
@@ -303,6 +302,54 @@ bool SaveResults(const std::wstring& path, CItem * rootItem)
 
         // Finalize lines
         outf << "\r\n";
+    }
+
+    outf.close();
+    return true;
+}
+
+bool SaveDuplicates(const std::wstring& path, CItemDupe* rootDupe)
+{
+    // Open output file
+    std::ofstream outf;
+    outf.open(path, std::ios::binary);
+    if (!outf.is_open()) return false;
+
+    // Define and output column headers
+    std::vector cols =
+    {
+        Localization::Lookup(IDS_COL_HASH),
+        Localization::Lookup(IDS_COL_NAME),
+        Localization::Lookup(IDS_COL_SIZE_LOGICAL),
+        Localization::Lookup(IDS_COL_SIZE_PHYSICAL),
+        Localization::Lookup(IDS_COL_LAST_CHANGE),
+        Localization::Lookup(IDS_COL_ATTRIBUTES)
+    };
+
+    for (unsigned int i = 0; i < cols.size(); i++)
+    {
+        outf << QuoteAndConvert(cols[i]) << ((i < cols.size() - 1) ? "," : "");
+    }
+    outf << "\r\n";
+
+    // Iterate through all duplicate groups
+    for (const auto& dupeGroup : rootDupe->GetChildren())
+    {
+        // Output each file in the duplicate group
+        for (const auto& dupeFile : dupeGroup->GetChildren())
+        {
+            const auto* linkedItem = reinterpret_cast<const CItem*>(dupeFile->GetLinkedItem());
+            if (linkedItem == nullptr) continue;
+
+            // Output file information
+            outf << std::format("{},{},{},{},{},0x{:08X}\r\n",
+                QuoteAndConvert(dupeFile->GetHash()),
+                QuoteAndConvert(linkedItem->GetPath()),
+                linkedItem->GetSizeLogical(),
+                linkedItem->GetSizePhysical(),
+                ToTimePoint(linkedItem->GetLastChange()),
+                linkedItem->GetAttributes());
+        }
     }
 
     outf.close();

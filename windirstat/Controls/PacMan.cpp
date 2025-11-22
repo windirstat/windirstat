@@ -1,23 +1,25 @@
 ﻿// WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
 //
-// This program is free software; you can redistribute it and/or modify
+// This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
-// the Free Software Foundation; either version 2 of the License, or
-// (at your option) any later version.
+// the Free Software Foundation, either version 2 of the License, or
+// at your option any later version.
 //
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
 #include "stdafx.h"
 #include "PacMan.h"
+
+#include <utility>
+#include "DarkMode.h"
 
 namespace
 {
@@ -26,9 +28,9 @@ namespace
     constexpr float PACMANSPEED = 0.09f;      // pixels / ms
 }
 
-CPacman::CPacman() :
+CPacman::CPacman(const COLORREF backColor) :
     m_Font(L"Arial", 6.0f, Gdiplus::FontStyleBold),
-    m_Bgcolor(GetSysColor(COLOR_WINDOW))
+    m_BackColor(backColor)
 {
     Reset();
 }
@@ -51,11 +53,6 @@ void CPacman::SetGlobalSuspendState(const bool suspend)
     m_Suspended = suspend;
 }
 
-void CPacman::SetBackgroundColor(const COLORREF color)
-{
-    m_Bgcolor = color;
-}
-
 void CPacman::Start()
 {
     m_Moving = true;
@@ -74,17 +71,17 @@ void CPacman::UpdatePosition()
     m_Done = false;
 }
 
-void CPacman::Draw(const CDC* pdc, const CRect& rect)
+void CPacman::Draw(CDC* pdc, const CRect& rect)
 {
     const ULONGLONG now = GetTickCount64();
     if (m_Suspended)
     {
-        // Rebase time based if suspended
+        // Rebase time if suspended
         m_LastUpdate = now;
         m_LastDraw = now;
     }
 
-    // See if we should still consider ourselves movies
+    // See if we should still consider ourselves moving
     if (now - m_LastUpdate > HIDE_THRESHOLD) m_Moving = false;
 
     // Update position
@@ -112,9 +109,11 @@ void CPacman::Draw(const CDC* pdc, const CRect& rect)
     Gdiplus::REAL startAngle = m_Aperture * slice / 2.0f;
     if (!m_ToTheRight) startAngle += 180.0f;
 
-    // Draw the background (use non gdi+ for performance)
-    const CBrush bgBrush(m_Bgcolor);
-    FillRect(*pdc, &rect, bgBrush);
+    // Fill background if requested
+    if (m_BackColor != -1)
+    {
+        pdc->FillSolidRect(rect, m_BackColor);
+    }
     if (m_Done) return;
 
     // Create pens and brushes
@@ -129,10 +128,11 @@ void CPacman::Draw(const CDC* pdc, const CRect& rect)
     if (m_Moving) return;
 
     // Draw sleepy graphic
-    const Gdiplus::SolidBrush blackBrush(Gdiplus::Color(0xFF, 0, 0, 0));
-    graphics.DrawString(L"z",1, &m_Font, {rc.left + 5.0f, rc.top - 3.0f}, &blackBrush);
-    graphics.DrawString(L"z", 1, &m_Font, { rc.left + 10.0f, rc.top - 4.5f }, &blackBrush);
-    graphics.DrawString(L"z", 1, &m_Font, { rc.left + 15.0f, rc.top - 6.0f }, &blackBrush);
+    const COLORREF zColor = DarkMode::WdsSysColor(COLOR_WINDOWTEXT);
+    const Gdiplus::SolidBrush zBrush(Gdiplus::Color(0xFF, GetRValue(zColor), GetGValue(zColor), GetBValue(zColor)));
+    graphics.DrawString(L"z",1, &m_Font, {rc.left + 5.0f, rc.top - 3.0f}, &zBrush);
+    graphics.DrawString(L"z", 1, &m_Font, { rc.left + 10.0f, rc.top - 4.5f }, &zBrush);
+    graphics.DrawString(L"z", 1, &m_Font, { rc.left + 15.0f, rc.top - 6.0f }, &zBrush);
 }
 
 void CPacman::UpdatePosition(float& position, bool& up, const float diff)

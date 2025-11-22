@@ -1,19 +1,18 @@
 ﻿// WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
 //
-// This program is free software; you can redistribute it and/or modify
+// This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
-// the Free Software Foundation; either version 2 of the License, or
-// (at your option) any later version.
+// the Free Software Foundation, either version 2 of the License, or
+// at your option any later version.
 //
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
 #pragma once
@@ -33,7 +32,7 @@ class FinderNtfsContext;
 enum ITEMCOLUMNS : std::uint8_t
 {
     COL_NAME,
-    COL_SUBTREEPERCENTAGE,
+    COL_SUBTREE_PERCENTAGE,
     COL_PERCENTAGE,
     COL_OPTIONAL_START,
     COL_SIZE_PHYSICAL,
@@ -41,7 +40,7 @@ enum ITEMCOLUMNS : std::uint8_t
     COL_ITEMS,
     COL_FILES,
     COL_FOLDERS,
-    COL_LASTCHANGE,
+    COL_LAST_CHANGE,
     COL_ATTRIBUTES,
     COL_OWNER
 };
@@ -80,14 +79,12 @@ constexpr ITEMTYPE operator-(const ITEMTYPE& a, const ITEMTYPE& b)
     return static_cast<ITEMTYPE>(static_cast<unsigned short>(a) & ~static_cast<unsigned short>(b));
 }
 
-// Compare FILETIMEs
 constexpr bool operator<(const FILETIME& t1, const FILETIME& t2)
 {
-    return t1.dwHighDateTime < t2.dwHighDateTime
-    || t1.dwHighDateTime == t2.dwHighDateTime && t1.dwLowDateTime < t2.dwLowDateTime;
+    return t1.dwHighDateTime < t2.dwHighDateTime ||
+        t1.dwHighDateTime == t2.dwHighDateTime && t1.dwLowDateTime < t2.dwLowDateTime;
 }
 
-// Compare FILETIMEs
 constexpr bool operator==(const FILETIME& t1, const FILETIME& t2)
 {
     return t1.dwLowDateTime == t2.dwLowDateTime && t1.dwHighDateTime == t2.dwHighDateTime;
@@ -95,7 +92,7 @@ constexpr bool operator==(const FILETIME& t1, const FILETIME& t2)
 
 //
 // CItem. This is the object, from which the whole tree is built.
-// For every directory, file etc., we find on the Harddisks, there is one CItem.
+// For every directory, file etc., we find on the hard disks, there is one CItem.
 // It is derived from CTreeListItem because it _may_ become "visible" and therefore
 // may be inserted in the TreeList view (we don't clone any data).
 //
@@ -105,10 +102,6 @@ constexpr bool operator==(const FILETIME& t1, const FILETIME& t2)
 // It may have been better to design a class hierarchy for this, but I can't help it,
 // rather than browsing to virtual functions I like to flatly see what's going on.
 // But, of course, now we have quite many switch statements in the member functions.
-//
-// Naming convention:
-// Methods which recurse down to every child (expensive) are named "RecurseDoSomething".
-// Methods which recurse up to the parent (not so expensive) are named "UpwardDoSomething".
 //
 class CItem final : public CTreeListItem, public CTreeMap::Item
 {
@@ -127,45 +120,21 @@ public:
     std::wstring GetText(int subitem) const override;
     COLORREF GetItemTextColor() const override;
     int CompareSibling(const CTreeListItem* tlib, int subitem) const override;
-    int GetTreeListChildCount() const override;
-    CTreeListItem* GetTreeListChild(int i) const override;
+    int GetTreeListChildCount() const override { return IsLeaf() ? 0 : static_cast<int>(GetChildren().size()); }
+    CTreeListItem* GetTreeListChild(int i) const override { return GetChildren()[i]; }
     HICON GetIcon() override;
     void DrawAdditionalState(CDC* pdc, const CRect& rcLabel) const override;
 
     // CTreeMap::Item interface
-    bool TmiIsLeaf() const override
-    {
-        return IsLeaf();
-    }
+    bool TmiIsLeaf() const override { return IsLeaf(); }
+    CRect TmiGetRectangle() const override { return tmiRect; };
+    void TmiSetRectangle(const CRect& rc) override { tmiRect = rc; }
+    COLORREF TmiGetGraphColor() const override { return GetGraphColor(); }
+    int TmiGetChildCount() const override { return m_FolderInfo == nullptr ? 0 : static_cast<int>(m_FolderInfo->m_Children.size()); }
+    Item* TmiGetChild(const int c) const override { return m_FolderInfo->m_Children[c]; }
+    ULONGLONG TmiGetSize() const override { return COptions::TreeMapUseLogical ? GetSizeLogical() : GetSizePhysical(); }
 
-    CRect TmiGetRectangle() const override;
-    void TmiSetRectangle(const CRect& rc) override;
-
-    COLORREF TmiGetGraphColor() const override
-    {
-        return GetGraphColor();
-    }
-
-    int TmiGetChildCount() const override
-    {
-        if (!m_FolderInfo) return 0;
-        return static_cast<int>(m_FolderInfo->m_Children.size());
-    }
-
-    Item* TmiGetChild(const int c) const override
-    {
-        return m_FolderInfo->m_Children[c];
-    }
-
-    ULONGLONG TmiGetSize() const override
-    {
-        return COptions::TreeMapUseLogical ? GetSizeLogical() : GetSizePhysical();
-    }
-
-    // CItem
     static int GetSubtreePercentageWidth();
-    static CItem* FindCommonAncestor(const CItem* item1, const CItem* item2);
-
     ULONGLONG GetProgressRange() const;
     ULONGLONG GetProgressPos() const;
     void UpdateStatsFromDisk();
@@ -212,6 +181,7 @@ public:
     std::wstring GetOwner(bool force = false) const;
     bool HasUncPath() const;
     std::wstring GetFolderPath() const;
+    void SetName(std::wstring_view name);
     std::wstring GetName() const;
     std::wstring GetExtension() const;
     ULONG GetFilesCount() const;
@@ -300,20 +270,21 @@ private:
     {
         std::vector<CItem*> m_Children;
         std::shared_mutex m_Protect;
-        std::atomic<ULONG> m_Tstart = 0;  // initial time this node started enumerating
-        std::atomic<ULONG> m_Tfinish = 0; // initial time this node started enumerating
+        std::atomic<ULONG> m_Tstart = 0;  // time this node started enumerating
+        std::atomic<ULONG> m_Tfinish = 0; // time this node finished enumerating
         std::atomic<ULONG> m_Files = 0;   // # Files in subtree
-        std::atomic<ULONG> m_Subdirs = 0; // # Folder in subtree
+        std::atomic<ULONG> m_Subdirs = 0; // # Folders in subtree
         std::atomic<ULONG> m_Jobs = 0;    // # "read jobs" in subtree.
     };
 
-    RECT m_Rect;                               // To support TreeMapView
-    std::wstring m_Name;                       // Display name
-    FILETIME m_LastChange = {0, 0};            // Last modification time of self or subtree
+    std::unique_ptr<wchar_t[]> m_Name;         // Display name
     std::unique_ptr<CHILDINFO> m_FolderInfo;   // Child information for non-files
     std::atomic<ULONGLONG> m_SizePhysical = 0; // Total physical size of self or subtree
     std::atomic<ULONGLONG> m_SizeLogical = 0;  // Total local size of self or subtree
+    FILETIME m_LastChange = { 0, 0 };          // Last modification time of self or subtree
     ULONG m_Index = 0;                         // Index of item for special scan types
     USHORT m_Attributes = 0xFFFF;              // File or directory attributes of the item
+    USHORT m_NameLen = 0;
     ITEMTYPE m_Type;                           // Indicates our type.
+    CSmallRect tmiRect = {};                   // Treemap rectangle
 };
