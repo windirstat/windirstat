@@ -284,6 +284,13 @@ BOOL CDirStatApp::InitInstance()
     COptions::LoadAppSettings();
     LoadStdProfileSettings(0);
 
+    // Silently restart elevated conditionally before any expensive initialization
+    if (IsElevationAvailable() && COptions::AutoElevate && !COptions::ShowElevationPrompt) // only if user doesn't want to be prompted
+    {
+        RunElevated(m_lpCmdLine);
+        return FALSE;
+    }
+
     // Set app to prefer dark mode
     DarkMode::SetAppDarkMode();
 
@@ -373,12 +380,19 @@ BOOL CDirStatApp::InitInstance()
         COptions::ShowElevationPrompt = !elevationPrompt.IsCheckboxChecked();
         if (result == IDYES)
         {
+            if (!COptions::ShowElevationPrompt) COptions::AutoElevate = true;
             RunElevated(m_lpCmdLine);
             return FALSE;
         }
-
-        COptions::UseFastScanEngine = false;
+        else
+        {
+            COptions::AutoElevate = false;
+        }
     }
+
+    // If elevation is available but not active, disable Fast Scan as it requires elevated privileges
+    if (COptions::UseFastScanEngine && IsElevationAvailable())
+        COptions::UseFastScanEngine = false;
 
     // Either open the file names or open file selection dialog
     cmdInfo.m_strFileName.IsEmpty() ? OnFileOpen() :

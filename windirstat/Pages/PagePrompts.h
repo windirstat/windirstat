@@ -22,16 +22,16 @@
 class COptionsPropertySheet;
 
 //
-// CPageGeneral. "Settings" property page "General".
+// CPagePrompts. "Settings" property page "Prompts".
 //
-class CPageGeneral final : public CMFCPropertyPage
+class CPagePrompts final : public CMFCPropertyPage
 {
-    DECLARE_DYNAMIC(CPageGeneral)
+    DECLARE_DYNAMIC(CPagePrompts)
 
-    enum : std::uint8_t { IDD = IDD_PAGE_GENERAL };
+    enum : std::uint8_t { IDD = IDD_PAGE_PROMPTS };
 
-    CPageGeneral();
-    ~CPageGeneral() override;
+    CPagePrompts();
+    ~CPagePrompts() override;
 
 protected:
     COptionsPropertySheet* GetSheet() const;
@@ -40,16 +40,10 @@ protected:
     BOOL OnInitDialog() override;
     void OnOK() override;
 
-    BOOL m_UseWindowsLocale = FALSE;
-    BOOL m_AutomaticallyResizeColumns = FALSE;
-    BOOL m_SizeSuffixesFormat = FALSE;
-    BOOL m_PortableMode = FALSE;
-    BOOL m_ListGrid = FALSE;
-    BOOL m_ListStripes = FALSE;
-    BOOL m_ListFullRowSelection = FALSE;
-
-    CComboBox m_Combo;
-    int m_DarkModeRadio = 0;
+    BOOL m_ShowDeleteWarning = FALSE;
+    BOOL m_ShowElevationPrompt = FALSE;
+    BOOL m_ShowFastScanPrompt = FALSE;
+    BOOL m_SkipDupeDetectionCloudLinksWarning = FALSE;
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnBnClickedSetModified();
