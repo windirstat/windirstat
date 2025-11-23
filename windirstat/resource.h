@@ -225,8 +225,6 @@
 #define ID_CLEANUP_DISM_ANALYZE         32835
 #define ID_SAVE_DUPLICATES              32836
 #define ID_AUTO_ELEVATE                 32837
-#define ID_SHOWELEVATEPROMPT            32838
-#define ID_SHOWUSEFASTSCANPROMPT        32839
 #define IDS_AUTHOR_EMAIL                57345
 #define IDS_URL_WEBSITE                 57346
 #define IDS_URL_HELP                    57347
