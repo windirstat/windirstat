@@ -302,7 +302,9 @@
     <ClInclude Include="Dialogs\ProgressDlg.h">
       <Filter>Header Files\Dialogs</Filter>
     </ClInclude>
-    <ClInclude Include="Pages\PagePrompts.h" />
+    <ClInclude Include="Pages\PagePrompts.h">
+      <Filter>Header Files\Pages</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirStatDoc.cpp">
@@ -449,7 +451,9 @@
     <ClCompile Include="Dialogs\ProgressDlg.cpp">
       <Filter>Source Files\Dialogs</Filter>
     </ClCompile>
-    <ClCompile Include="Pages\PagePrompts.cpp" />
+    <ClCompile Include="Pages\PagePrompts.cpp">
+      <Filter>Source Files\Pages</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="windirstat.rc">
