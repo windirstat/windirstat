@@ -32,6 +32,7 @@
 #include "PageFileTree.h"
 #include "PageTreeMap.h"
 #include "PageGeneral.h"
+#include "PagePrompts.h"
 #include "MainFrame.h"
 #include "SelectObject.h"
 #include "FileTopControl.h"
@@ -1260,6 +1261,7 @@ void CMainFrame::OnConfigure()
     CPageFileTree treelist;
     CPageTreeMap treemap;
     CPageCleanups cleanups;
+    CPagePrompts prompts;
     CPageAdvanced advanced;
 
     sheet.AddPage(&general);
@@ -1267,6 +1269,7 @@ void CMainFrame::OnConfigure()
     sheet.AddPage(&treelist);
     sheet.AddPage(&treemap);
     sheet.AddPage(&cleanups);
+    sheet.AddPage(&prompts);
     sheet.AddPage(&advanced);
 
     sheet.DoModal();

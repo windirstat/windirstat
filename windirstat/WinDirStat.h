@@ -83,10 +83,4 @@ protected:
     afx_msg void OnHelpManual();
     afx_msg void OnReportBug();
     afx_msg void OnAppAbout();
-    afx_msg void OnAutoElevate();
-    afx_msg void OnUpdateAutoElevate(CCmdUI* pCmdUI);
-    afx_msg void OnShowElevationPrompt();
-    afx_msg void OnUpdateShowElevationPrompt(CCmdUI* pCmdUI);
-    afx_msg void OnShowFastScanPrompt();
-    afx_msg void OnUpdateShowFastScanPrompt(CCmdUI* pCmdUI);
 };

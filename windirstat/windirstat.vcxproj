@@ -537,6 +537,7 @@
     <ClInclude Include="DarkMode.h" />
     <ClInclude Include="Dialogs\MessageBoxDlg.h" />
     <ClInclude Include="Dialogs\ProgressDlg.h" />
+    <ClInclude Include="Pages\PagePrompts.h" />
     <ClInclude Include="Views\FileSearchView.h" />
     <ClInclude Include="Finder.h" />
     <ClInclude Include="FinderNtfs.h" />
@@ -598,6 +599,7 @@
     <ClCompile Include="Dialogs\ProgressDlg.cpp" />
     <ClCompile Include="DirStatDoc.cpp">
     </ClCompile>
+    <ClCompile Include="Pages\PagePrompts.cpp" />
     <ClCompile Include="Views\FileSearchView.cpp" />
     <ClCompile Include="Controls\FileSearchControl.cpp" />
     <ClCompile Include="FinderBasic.cpp" />

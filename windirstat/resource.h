@@ -14,6 +14,7 @@
 #define IDD_PAGE_GENERAL                110
 #define IDD_SEARCH                      111
 #define IDD_PROGRESS                    112
+#define IDD_PAGE_PROMPTS                113
 #define IDR_MAINFRAME                   128
 #define IDR_POPUP_TREE                  129
 #define IDR_POPUP_MAP                   130
@@ -151,6 +152,9 @@
 #define IDC_BROWSE_BUTTON               1109
 #define IDC_PROGRESS_MESSAGE            1110
 #define IDC_PROGRESS_BAR                1111
+#define IDC_ELEVATION_PROMPT            1112
+#define IDC_FAST_SCAN_PROMPT            1113
+#define IDC_CLOUD_LINKS_WARNING         1114
 #define ID_WDS_CONTROL                  4711
 #define ID_CLEANUP_EXPLORER_SELECT      32768
 #define ID_TREEMAP_ZOOMIN               32769

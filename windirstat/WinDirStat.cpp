@@ -40,13 +40,7 @@ BEGIN_MESSAGE_MAP(CDirStatApp, CWinAppEx)
     ON_COMMAND(ID_FILE_SELECT, OnFileOpen)
     ON_COMMAND(ID_FILTER, OnFilter)
     ON_COMMAND(ID_RUN_ELEVATED, OnRunElevated)
-    ON_COMMAND(ID_AUTO_ELEVATE, OnAutoElevate)
-    ON_COMMAND(ID_SHOWELEVATEPROMPT, OnShowElevationPrompt)
-    ON_COMMAND(ID_SHOWUSEFASTSCANPROMPT, OnShowFastScanPrompt)
     ON_UPDATE_COMMAND_UI(ID_RUN_ELEVATED, OnUpdateRunElevated)
-    ON_UPDATE_COMMAND_UI(ID_AUTO_ELEVATE, OnUpdateAutoElevate)
-    ON_UPDATE_COMMAND_UI(ID_SHOWELEVATEPROMPT, OnUpdateShowElevationPrompt)
-    ON_UPDATE_COMMAND_UI(ID_SHOWUSEFASTSCANPROMPT, OnUpdateShowFastScanPrompt)
     ON_COMMAND(ID_HELP_MANUAL, OnHelpManual)
     ON_COMMAND(ID_HELP_REPORTBUG, OnReportBug)
 END_MESSAGE_MAP()
@@ -294,7 +288,7 @@ BOOL CDirStatApp::InitInstance()
     if (IsElevationAvailable() && COptions::AutoElevate && !COptions::ShowElevationPrompt) // only if user doesn't want to be prompted
     {
         RunElevated(m_lpCmdLine);
-        return FALSE; // exit current instance before being killed by new elevated instance
+        return FALSE;
     }
 
     // Set app to prefer dark mode
@@ -464,39 +458,4 @@ void CDirStatApp::OnReportBug()
 {
     ShellExecute(*AfxGetMainWnd(), L"open", Localization::LookupNeutral(IDS_URL_REPORT_BUG).c_str(),
         nullptr, nullptr, SW_SHOWNORMAL);
-}
-
-void CDirStatApp::OnAutoElevate()
-{
-    COptions::AutoElevate = !COptions::AutoElevate;
-    if (COptions::AutoElevate) COptions::ShowElevationPrompt = false;
-}
-
-void CDirStatApp::OnUpdateAutoElevate(CCmdUI* pCmdUI)
-{
-    pCmdUI->Enable(IsElevationActive() || IsElevationAvailable());
-    pCmdUI->SetCheck(COptions::AutoElevate);
-}
-
-void CDirStatApp::OnShowElevationPrompt()
-{
-    COptions::ShowElevationPrompt = !COptions::ShowElevationPrompt;
-    if (COptions::ShowElevationPrompt) COptions::AutoElevate = false;
-}
-
-void CDirStatApp::OnUpdateShowElevationPrompt(CCmdUI* pCmdUI)
-{
-    pCmdUI->Enable(IsElevationActive() || IsElevationAvailable());
-    pCmdUI->SetCheck(COptions::ShowElevationPrompt);
-}
-
-void CDirStatApp::OnShowFastScanPrompt()
-{
-    COptions::ShowFastScanPrompt = !COptions::ShowFastScanPrompt;
-}
-
-void CDirStatApp::OnUpdateShowFastScanPrompt(CCmdUI* pCmdUI)
-{
-    pCmdUI->Enable(IsElevationActive() || IsElevationAvailable());
-    pCmdUI->SetCheck(COptions::ShowFastScanPrompt);
 }
