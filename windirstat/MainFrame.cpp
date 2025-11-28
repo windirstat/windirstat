@@ -41,6 +41,8 @@
 #include "DarkMode.h"
 #include "MessageBoxDlg.h"
 
+#include <ranges>
+
 namespace
 {
     // Clipboard-Opener
@@ -1030,7 +1032,7 @@ std::vector<CItem*> CMainFrame::GetAllSelectedInFocus() const
     return CFileTreeControl::Get()->GetAllSelected<CItem>();
 }
 
-std::pair<CMenu*,int> CMainFrame::LocateNamedMenu(const CMenu* menu, const std::wstring & subMenuText) const
+std::pair<CMenu*,int> CMainFrame::LocateNamedMenu(const CMenu* menu, const std::wstring & subMenuText, const bool removeItems) const
 {
     // locate submenu
     CMenu* subMenu = nullptr;
@@ -1048,7 +1050,7 @@ std::pair<CMenu*,int> CMainFrame::LocateNamedMenu(const CMenu* menu, const std::
     }
 
     // cleanup old items
-    if (subMenu != nullptr) while (subMenu->GetMenuItemCount() > 0)
+    if (removeItems && subMenu != nullptr) while (subMenu->GetMenuItemCount() > 0)
         subMenu->DeleteMenu(0, MF_BYPOSITION);
     return { subMenu, subMenuPos };
 }
@@ -1072,6 +1074,26 @@ void CMainFrame::UpdateDynamicMenuItems(CMenu* menu) const
         // conditionally disable menu if empty
         if (explorerMenuPos >= 0) menu->EnableMenuItem(explorerMenuPos, MF_BYPOSITION |
             (explorerMenu->GetMenuItemCount() > 0 ? MF_ENABLED : (MF_DISABLED | MF_GRAYED)));
+    }
+
+    // locate compress menu
+    auto [compressMenu, compressMenuPos] = CMainFrame::LocateNamedMenu(menu, Localization::Lookup(IDS_MENU_COMPRESS_MENU), false);
+    if (compressMenu && compressMenuPos >= 0)
+    {
+        // Check if any submenu items are enabled
+        const auto itemCount = compressMenu->GetMenuItemCount();
+        const bool anyEnabled = std::ranges::any_of(std::views::iota(0, itemCount), [&](int i)
+        {
+            CCmdUI state;
+            state.m_nIndex = i;
+            state.m_nIndexMax = itemCount;
+            state.m_nID = compressMenu->GetMenuItemID(i);
+            state.m_pMenu = compressMenu;
+            state.DoUpdate(const_cast<CMainFrame*>(this), FALSE);
+            return (compressMenu->GetMenuState(i, MF_BYPOSITION) & (MF_DISABLED | MF_GRAYED)) == 0;
+        });
+
+        menu->EnableMenuItem(compressMenuPos, MF_BYPOSITION | (anyEnabled ? MF_ENABLED : (MF_DISABLED | MF_GRAYED)));
     }
 
     auto[customMenu, customMenuPos] = LocateNamedMenu(menu, Localization::Lookup(IDS_USER_DEFINED_CLEANUP));
