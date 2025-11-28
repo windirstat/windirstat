@@ -23,9 +23,6 @@
 #include "FileTopControl.h"
 #include "Localization.h"
 
-#include <ranges>
-#include <stack>
-
 CFileTopControl::CFileTopControl() : CTreeListControl(20, COptions::TopViewColumnOrder.Ptr(), COptions::TopViewColumnWidths.Ptr())
 {
     m_Singleton = this;

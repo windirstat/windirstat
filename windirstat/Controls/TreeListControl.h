@@ -21,9 +21,6 @@
 #include "GlobalHelpers.h"
 #include "PacMan.h"
 
-#include <vector>
-#include <memory>
-
 class CFileTreeView;
 class CTreeListItem;
 class CTreeListControl;

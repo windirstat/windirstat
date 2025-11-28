@@ -21,10 +21,6 @@
 #include "LangStrings.h"
 #include "Options.h"
 
-#include <string>
-#include <unordered_map>
-#include <format>
-
 class Localization final
 {
     static bool CrackStrings(std::basic_istream<char>& stream, unsigned int streamSize);

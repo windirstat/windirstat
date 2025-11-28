@@ -34,17 +34,6 @@
 #include "MessageBoxDlg.h"
 #include "ProgressDlg.h"
 
-#include <functional>
-#include <unordered_map>
-#include <string>
-#include <unordered_set>
-#include <vector>
-#include <filesystem>
-#include <ranges>
-#include <stack>
-#include <array>
-#include <numeric>
-
 IMPLEMENT_DYNCREATE(CDirStatDoc, CDocument)
 
 CDirStatDoc::CDirStatDoc() :
@@ -552,7 +541,6 @@ bool CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, const bo
             Localization::Lookup(IDS_DELETE_TITLE),
             MB_YESNO | MB_ICONWARNING, AfxGetMainWnd(), filePaths,
             Localization::Lookup(IDS_DONT_SHOW_AGAIN), false);
-
 
         // Change default width and display
         warning.SetInitialWindowSize({ 600, 600 });
@@ -1394,7 +1382,6 @@ void CDirStatDoc::OnRemoveRoamingProfiles()
     GetRootItem()->UpdateFreeSpaceItem();
 }
 
-
 void CDirStatDoc::OnRemoveLocalProfiles()
 {
     CProgressDlg(0, false, AfxGetMainWnd(), [&](const std::atomic<bool>&cancelRequested, std::atomic<size_t>& progress)
@@ -1574,7 +1561,6 @@ void CDirStatDoc::OnCleanupCompress(UINT id)
             CompressFile(itemsToCompress[i]->GetPathLong(), alg);
         }
     }).DoModal();
-
 
     // Refresh items after compression
     RefreshItem(itemsSelected);

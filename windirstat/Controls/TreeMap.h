@@ -17,9 +17,6 @@
 
 #pragma once
 
-#include <algorithm>
-#include <vector>
-
 //
 // CColorSpace. Helper class for manipulating colors. Static members only.
 //

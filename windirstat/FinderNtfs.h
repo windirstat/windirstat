@@ -21,10 +21,6 @@
 #include "Finder.h"
 #include "Item.h"
 
-#include <unordered_map>
-#include <string>
-#include <set>
-
 class FinderNtfsContext final
 {
 public:

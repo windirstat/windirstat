@@ -24,12 +24,6 @@
 #include "FinderBasic.h"
 #include "MessageBoxDlg.h"
 
-#include <array>
-#include <algorithm>
-#include <execution>
-#include <regex>
-#include <map>
-
 #pragma comment(lib,"powrprof.lib")
 #pragma comment(lib,"ntdll.lib")
 #pragma comment(lib,"wbemuuid.lib")

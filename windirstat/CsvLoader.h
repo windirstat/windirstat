@@ -19,8 +19,6 @@
 
 #include "Item.h"
 
-#include <string>
-
 bool SaveResults(const std::wstring& path, CItem* rootItem);
 CItem* LoadResults(const std::wstring& path);
 bool SaveDuplicates(const std::wstring& path, CItemDupe* rootDupe);

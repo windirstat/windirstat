@@ -41,8 +41,6 @@
 #include "DarkMode.h"
 #include "MessageBoxDlg.h"
 
-#include <ranges>
-
 namespace
 {
     // Clipboard-Opener

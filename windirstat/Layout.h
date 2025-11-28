@@ -17,8 +17,6 @@
 
 #pragma once
 
-#include <vector>
-
 //
 // CLayout. A poor men's dialog layout mechanism.
 // Simple, flat, and sufficient for our purposes.

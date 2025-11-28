@@ -25,10 +25,6 @@
 #include "Localization.h"
 #include "MessageBoxDlg.h"
 
-#include <execution>
-#include <ranges>
-#include <stack>
-
 CFileDupeControl::CFileDupeControl() : CTreeListControl(20, COptions::DupeViewColumnOrder.Ptr(), COptions::DupeViewColumnWidths.Ptr())
 {
     m_Singleton = this;

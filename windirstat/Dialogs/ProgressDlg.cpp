@@ -21,8 +21,6 @@
 #include "Localization.h"
 #include "GlobalHelpers.h"
 
-#include <format>
-
 IMPLEMENT_DYNAMIC(CProgressDlg, CDialogEx)
 
 CProgressDlg::CProgressDlg(const size_t total, const bool noCancel, CWnd* pParent, std::function<void(std::atomic<bool>&, std::atomic<size_t>&)> task)

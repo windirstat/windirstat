@@ -20,8 +20,6 @@
 #include "stdafx.h"
 #include "Item.h"
 
-#include <unordered_map>
-
 // Columns
 using ITEMSEARCHCOLUMNS = enum : std::uint8_t
 {

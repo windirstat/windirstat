@@ -19,8 +19,6 @@
 
 #include "stdafx.h"
 
-#include <algorithm>
-
 class DarkMode final
 {
 public:
@@ -52,7 +50,6 @@ private:
 
     static bool _darkModeEnabled;
 };
-
 
 //
 // CTabCtrlHelper. Used to set up tab control properties.

@@ -18,10 +18,6 @@
 #include "stdafx.h"
 #include "DirStatDoc.h"
 #include "Options.h"
-
-#include <array>
-#include <ranges>
-
 #include "GlobalHelpers.h"
 #include "Property.h"
 #include "Localization.h"

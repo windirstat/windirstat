@@ -17,8 +17,6 @@
 
 #pragma once
 
-#include <string>
-
 //
 // SSorting. A sorting specification. We sort by column1, and if two items
 // equal in column1, we sort them by column2.

@@ -18,7 +18,6 @@
 #include "stdafx.h"
 #include "PacMan.h"
 
-#include <utility>
 #include "DarkMode.h"
 
 namespace

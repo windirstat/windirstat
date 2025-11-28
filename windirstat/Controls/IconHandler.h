@@ -21,10 +21,6 @@
 #include "BlockingQueue.h"
 #include "OleFilterOverride.h"
 
-#include <string>
-#include <unordered_map>
-#include <mutex>
-
 //
 // CIconHandler. Handles all shell information lookup.
 //

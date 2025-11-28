@@ -23,10 +23,6 @@
 #include "GlobalHelpers.h"
 #include "Localization.h"
 
-#include <functional>
-#include <queue>
-#include <format>
-
 CItemDupe::CItemDupe(const std::vector<BYTE>& hash) : m_Hash(hash)
 {
     m_HashString.resize(2ull * m_Hash.size());

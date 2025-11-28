@@ -230,7 +230,6 @@ BOOL CAboutDlg::OnInitDialog()
     return TRUE;
 }
 
-
 LRESULT CAboutDlg::OnTabChanged(WPARAM wParam, LPARAM lParam)
 {
     UNREFERENCED_PARAMETER(wParam);

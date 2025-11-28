@@ -22,8 +22,6 @@
 #include "FileTabbedView.h"
 #include "DarkMode.h"
 
-#include <functional>
-
 class CMySplitterWnd;
 class CMainFrame;
 

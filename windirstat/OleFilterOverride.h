@@ -19,8 +19,6 @@
 
 #include "stdafx.h"
 
-#include <shared_mutex>
-
 class COleFilterOverride final : public COleMessageFilter
 {
 public:

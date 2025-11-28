@@ -19,10 +19,6 @@
 #include "FinderNtfs.h"
 #include "SmartPointer.h"
 
-#include <vector>
-#include <execution>
-#include <set>
-
 enum ATTRIBUTE_TYPE_CODE : ULONG
 {
     AttributeStandardInformation = 0x10,
@@ -371,7 +367,6 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
     driveitem->SetIndex(NtfsNodeRoot);
     return true;
 }
-
 
 bool FinderNtfs::FindNext()
 {

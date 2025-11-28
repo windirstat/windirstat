@@ -20,9 +20,6 @@
 #include "ItemTop.h"
 #include "TreeListControl.h"
 
-#include <set>
-#include <unordered_map>
-
 class CFileTopControl final : public CTreeListControl
 {
 public:
