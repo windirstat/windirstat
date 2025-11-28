@@ -227,10 +227,8 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
     const auto numRecords = volumeInfo.MftValidDataLength.QuadPart / volumeInfo.BytesPerFileRecordSegment;
     const auto binSize = max(1, numRecords / numBins);
     std::unordered_map<ULONGLONG, FileRecordBase> baseFileRecordMapTemp[numBins];
-    std::unordered_map<ULONGLONG, ULONGLONG> nonBaseToBaseMapTemp[numBins];
     std::unordered_map<ULONGLONG, std::set<FileRecordName>> parentToChildMapTemp[numBins];
     std::mutex baseFileRecordMapMutex[numBins];
-    std::mutex nonBaseToBaseMapMutex[numBins];
     std::mutex parentToChildMapMutex[numBins];
 
     // Process MFT records
@@ -280,7 +278,10 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
                 if (!fileRecord->IsValid() || !fileRecord->IsInUse()) continue;
                 const auto currentRecord = fileRecord->SegmentNumber();
                 auto baseRecordIndex = fileRecord->BaseFileRecordNumber > 0 ? fileRecord->BaseFileRecordNumber : currentRecord;
-                getMapBinRef(nonBaseToBaseMapTemp, nonBaseToBaseMapMutex, currentRecord, binSize, numBins) = baseRecordIndex;
+
+                // Capture link count from the file record
+                auto& baseRecord = getMapBinRef(baseFileRecordMapTemp, baseFileRecordMapMutex, baseRecordIndex, binSize, numBins);
+                if (baseRecord.LinkCount == 0) baseRecord.LinkCount = fileRecord->LinkCount;
 
                 for (auto [curAttribute, endAttribute] = ATTRIBUTE_RECORD::bounds(fileRecord, volumeInfo.BytesPerFileRecordSegment); curAttribute <
                     endAttribute && curAttribute->TypeCode != AttributeEnd; curAttribute = curAttribute->next())
@@ -289,7 +290,6 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
                     {
                         if (curAttribute->IsNonResident()) continue;
                         const auto si = ByteOffset<STANDARD_INFORMATION>(curAttribute, curAttribute->Form.Resident.ValueOffset);
-                        auto& baseRecord = getMapBinRef(baseFileRecordMapTemp, baseFileRecordMapMutex, baseRecordIndex, binSize, numBins);
                         baseRecord.LastModifiedTime = si->LastModificationTime;
                         baseRecord.Attributes = si->FileAttributes;
                         if (fileRecord->IsDirectory()) baseRecord.Attributes |= FILE_ATTRIBUTE_DIRECTORY;
@@ -299,14 +299,13 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
                     {
                         if (curAttribute->IsNonResident()) continue;
                         const auto fn = ByteOffset<FILE_NAME>(curAttribute, curAttribute->Form.Resident.ValueOffset);
-                        if (fn->IsShortNameRecord()) continue;
+                        if (fn->IsShortNameRecord()) { baseRecord.LinkCount--; continue; }
                         auto& parentToChildEntry = getMapBinRef(parentToChildMapTemp, parentToChildMapMutex, fn->ParentDirectory, binSize, numBins);
                         parentToChildEntry.emplace(std::wstring{ fn->FileName, fn->FileNameLength }, baseRecordIndex);
                     }
                     else if (curAttribute->TypeCode == AttributeData)
                     {
                         if (curAttribute->NameLength != 0) continue; // only process default data stream
-                        auto& baseRecord = getMapBinRef(baseFileRecordMapTemp, baseFileRecordMapMutex, baseRecordIndex, binSize, numBins);
                         if (curAttribute->IsNonResident())
                         {
                             if (curAttribute->Form.Nonresident.LowestVcn != 0) continue;
@@ -324,7 +323,6 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
                     {
                         if (curAttribute->IsNonResident()) continue;
                         const auto fn = ByteOffset<Finder::REPARSE_DATA_BUFFER>(curAttribute, curAttribute->Form.Resident.ValueOffset);
-                        auto& baseRecord = getMapBinRef(baseFileRecordMapTemp, baseFileRecordMapMutex, baseRecordIndex, binSize, numBins);
                         baseRecord.ReparsePointTag = fn->ReparseTag;
                         if (Finder::IsJunction(*fn))
                         {
@@ -338,25 +336,17 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
 
     // Pre-reserve memory in main maps before merging
     size_t totalBaseRecords = 0;
-    size_t totalNonBaseRecords = 0;
     size_t totalParentRecords = 0;
     for (const auto& map : baseFileRecordMapTemp) totalBaseRecords += map.size();
-    for (const auto& map : nonBaseToBaseMapTemp) totalNonBaseRecords += map.size();
     for (const auto& map : parentToChildMapTemp) totalParentRecords += map.size();
     m_BaseFileRecordMap.reserve(totalBaseRecords);
-    m_NonBaseToBaseMap.reserve(totalNonBaseRecords);
     m_ParentToChildMap.reserve(totalParentRecords);
 
     {
         // Merge temporary maps into the main maps using jthread for parallel execution
         std::jthread t1([&]() { for (auto& map : baseFileRecordMapTemp) { m_BaseFileRecordMap.merge(map); }});
-        std::jthread t2([&]() { for (auto& map : nonBaseToBaseMapTemp) { m_NonBaseToBaseMap.merge(map); }});
         std::jthread t3([&]() { for (auto& map : parentToChildMapTemp) { m_ParentToChildMap.merge(map); }});
     }
-
-    // Cleanup map (not currently needed)
-    m_NonBaseToBaseMap.clear();
-    m_NonBaseToBaseMap.rehash(0);
 
     if (!m_ParentToChildMap.contains(NtfsNodeRoot))
     {
@@ -447,4 +437,9 @@ std::wstring FinderNtfs::GetFilePath() const
 bool FinderNtfs::IsDots() const
 {
     return m_CurrentRecordName->FileName == L"." || m_CurrentRecordName->FileName == L"..";
+}
+
+USHORT FinderNtfs::GetLinkCount() const
+{
+    return m_CurrentRecord->LinkCount;
 }

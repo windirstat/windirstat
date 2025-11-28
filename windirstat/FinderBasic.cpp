@@ -256,3 +256,31 @@ bool FinderBasic::DoesFileExist(const std::wstring& folder, const std::wstring& 
     return finder.FindFile(folder, file);
 }
 
+std::vector<std::wstring> FinderBasic::GetHardlinks(const std::wstring& path)
+{
+    // Get volume path
+    const std::wstring longPath = MakeLongPathCompatible(path);
+    std::wstring volumePath = GetVolumePathNameEx(longPath);
+
+    // Make sure volume path has backslash at the end
+    volumePath.resize(wcslen(volumePath.data()));
+    if (volumePath.back() == L'\\') volumePath.pop_back();
+
+    SmartPointer<HANDLE> hFile(CloseHandle, CreateFileW(longPath.c_str(), FILE_READ_ATTRIBUTES,
+        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, nullptr));
+    if (hFile == INVALID_HANDLE_VALUE) return {};
+
+    std::vector<std::wstring> paths;
+    std::vector<wchar_t> buf(USHRT_MAX);
+    DWORD count = static_cast<DWORD>(buf.size());
+    BOOL result = TRUE;
+    for (SmartPointer<HANDLE> finder(FindClose, FindFirstFileNameW(longPath.c_str(), 0, &count, buf.data()));
+        finder != INVALID_HANDLE_VALUE && result;
+        count = static_cast<DWORD>(buf.size()), result = FindNextFileNameW(finder, &count, buf.data()))
+    {
+        paths.emplace_back(volumePath + buf.data());
+    }
+
+    return paths;
+}
+

@@ -104,7 +104,7 @@ void CFileTopControl::RemoveItem(CItem* item)
     {
         const auto& qitem = queue.top();
         queue.pop();
-        if (qitem->IsType(IT_FILE))
+        if (qitem->IsItemType(IT_FILE))
         {
             m_SizeMap.erase(qitem);
         }
@@ -124,7 +124,7 @@ void CFileTopControl::RemoveItem(CItem* item)
 void CFileTopControl::OnItemDoubleClick(const int i)
 {
     if (const auto item = reinterpret_cast<const CItem*>(GetItem(i)->GetLinkedItem());
-        item != nullptr && item->IsType(IT_FILE))
+        item != nullptr && item->IsItemType(IT_FILE))
     {
         CDirStatDoc::OpenItem(item);
     }
