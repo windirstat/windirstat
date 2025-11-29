@@ -17,8 +17,6 @@
 
 #pragma once
 
-#include <vector>
-
 #include "SortingListControl.h"
 #include "DarkMode.h"
 

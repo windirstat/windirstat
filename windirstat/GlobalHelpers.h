@@ -19,10 +19,6 @@
 
 #include "stdafx.h"
 
-#include <string>
-#include <atomic>
-#include <functional>
-
 constexpr auto CONTENT_MENU_MINCMD = 0x1ul;
 constexpr auto CONTENT_MENU_MAXCMD = 0x7FFFul;
 

@@ -21,8 +21,6 @@
 #include "Item.h"
 #include "Finder.h"
 
-#include <string>
-
 class FinderBasic final : public Finder
 {
     using FILE_FULL_DIR_INFORMATION = struct {

@@ -20,8 +20,6 @@
 #include "TreeMap.h"
 #include "Property.h"
 
-#include <regex>
-
 class COptions;
 
 constexpr auto USERDEFINEDCLEANUPCOUNT = 10;

@@ -23,8 +23,6 @@
 #include "Localization.h"
 #include "ProgressDlg.h"
 
-#include <ranges>
-
 CFileSearchControl::CFileSearchControl() : CTreeListControl(20, COptions::SearchViewColumnOrder.Ptr(), COptions::SearchViewColumnWidths.Ptr())
 {
     m_Singleton = this;

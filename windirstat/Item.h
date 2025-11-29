@@ -23,8 +23,6 @@
 #include "Finder.h"
 #include "BlockingQueue.h"
 
-#include <shared_mutex>
-
 class Finder;
 class FinderNtfsContext;
 

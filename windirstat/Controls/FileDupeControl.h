@@ -20,11 +20,6 @@
 #include "ItemDupe.h"
 #include "TreeListControl.h"
 
-#include <mutex>
-#include <queue>
-#include <set>
-#include <map>
-
 class CFileDupeControl final : public CTreeListControl
 {
 public:

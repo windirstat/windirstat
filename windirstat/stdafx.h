@@ -39,8 +39,8 @@
 #include <afxmt.h>          // MFC Multi-threading
 #include <afxcontrolbars.h> // MFC support for ribbons and control bars
 
+// Windows API headers
 #include <VersionHelpers.h>
-#include <cmath>
 #include <psapi.h>
 #include <winioctl.h>
 #include <bcrypt.h>
@@ -55,3 +55,35 @@
 #include <dwmapi.h>
 #include <comdef.h>
 #include <wbemidl.h>
+
+// STL headers
+#include <algorithm>
+#include <array>
+#include <atomic>
+#include <cmath>
+#include <condition_variable>
+#include <execution>
+#include <filesystem>
+#include <format>
+#include <fstream>
+#include <functional>
+#include <iostream>
+#include <map>
+#include <memory>
+#include <mutex>
+#include <numeric>
+#include <optional>
+#include <queue>
+#include <ranges>
+#include <regex>
+#include <set>
+#include <shared_mutex>
+#include <source_location>
+#include <stack>
+#include <string>
+#include <string_view>
+#include <thread>
+#include <unordered_map>
+#include <unordered_set>
+#include <utility>
+#include <vector>

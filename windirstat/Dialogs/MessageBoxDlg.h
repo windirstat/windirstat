@@ -20,10 +20,6 @@
 #include "stdafx.h"
 #include "Layout.h"
 
-#include <string>
-#include <vector>
-#include <optional>
-
 //
 // CMessageBoxDlg. Custom message box dialog with dark mode support.
 // Emulates the functionality of MessageBox/AfxMessageBox.

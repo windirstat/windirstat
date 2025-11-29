@@ -19,9 +19,6 @@
 #include "WinDirStat.h"
 #include "Property.h"
 
-#include <ranges>
-#include <regex>
-
 std::vector<PersistedSetting*>& PersistedSetting::GetPropertySet()
 {
     static std::vector<PersistedSetting*> _properties;

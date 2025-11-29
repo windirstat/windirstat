@@ -20,12 +20,6 @@
 #include "TreeMap.h"
 #include "DarkMode.h"
 
-#include <algorithm>
-#include <array>
-#include <memory>
-#include <vector>
-#include <stack>
-
 static constexpr COLORREF BGR(auto b, auto g, auto r)
 {
     return static_cast<BYTE>(b) | static_cast<BYTE>(g) << 8 | static_cast<BYTE>(r) << 16;
@@ -448,7 +442,6 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, Item* root, const Options* option
         pdc->FillSolidRect(rc, RGB(0, 0, 0));
     }
 }
-
 
 CTreeMap::Item* CTreeMap::FindItemByPoint(Item* item, const CPoint point)
 {

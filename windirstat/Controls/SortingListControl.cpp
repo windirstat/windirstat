@@ -19,8 +19,6 @@
 #include "WinDirStat.h"
 #include "SortingListControl.h"
 
-#include <array>
-
 /////////////////////////////////////////////////////////////////////////////
 
 int CSortingListItem::CompareSort(const CSortingListItem* other, const SSorting& sorting) const

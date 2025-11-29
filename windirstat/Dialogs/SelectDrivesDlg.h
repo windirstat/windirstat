@@ -21,9 +21,6 @@
 #include "Layout.h"
 #include "resource.h"
 
-#include <mutex>
-#include <unordered_set>
-
 //
 // The dialog has these three radio buttons.
 //
@@ -141,7 +138,6 @@ class CSelectDrivesDlg final : public CLayoutDialogEx
     enum : std::uint8_t { IDD = IDD_SELECTDRIVES };
 
     static std::wstring GetFullPathName(const std::wstring& relativePath);
-
 
     CSelectDrivesDlg(CWnd* pParent = nullptr);
     ~CSelectDrivesDlg() override = default;

@@ -20,11 +20,6 @@
 #include "stdafx.h"
 #include "resource.h"
 
-#include <string>
-#include <functional>
-#include <atomic>
-#include <thread>
-
 //
 // CProgressDlg - Modal progress dialog for long-running operations
 // Shows progress bar and allows cancellation

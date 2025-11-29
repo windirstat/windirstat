@@ -21,11 +21,6 @@
 #include "FinderBasic.h"
 #include "langs.h"
 
-#include <filesystem>
-#include <fstream>
-#include <array>
-#include <unordered_map>
-
 std::unordered_map<std::wstring, std::wstring> Localization::m_Map;
 
 void Localization::SearchReplace(std::wstring& input, const std::wstring_view& search, const std::wstring_view& replace)

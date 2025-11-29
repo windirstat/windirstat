@@ -27,9 +27,6 @@
 #include "MainFrame.h"
 #include "MessageBoxDlg.h"
 
-#include <array>
-#include <ranges>
-
 namespace
 {
     enum : std::uint8_t

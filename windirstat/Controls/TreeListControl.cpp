@@ -22,8 +22,6 @@
 #include "MainFrame.h"
 #include "Localization.h"
 
-#include <ranges>
-
 namespace
 {
     // Sequence within IDB_NODES

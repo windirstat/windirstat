@@ -17,11 +17,6 @@
 
 #pragma once
 
-#include <stack>
-#include <mutex>
-#include <condition_variable>
-#include <functional>
-
 template <typename T>
 class BlockingQueue final
 {

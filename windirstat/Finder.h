@@ -20,8 +20,6 @@
 #include "stdafx.h"
 #include "Item.h"
 
-#include <string>
-
 class Finder
 {
 protected:

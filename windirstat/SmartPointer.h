@@ -17,9 +17,6 @@
 
 #pragma once
 
-#include <functional>
-#include <memory>
-
 //
 // SmartPointer<>. Custom template for WinAPI resource cleanup.
 // Automatically invokes the provided cleanup callable in its destructor.

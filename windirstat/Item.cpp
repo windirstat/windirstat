@@ -29,14 +29,6 @@
 #include "FinderBasic.h"
 #include "FinderNtfs.h"
 
-#include <string>
-#include <algorithm>
-#include <unordered_set>
-#include <functional>
-#include <stack>
-#include <array>
-#include <ranges>
-
 #pragma comment(lib, "crypt32.lib")
 #pragma comment(lib, "bcrypt.lib")
 

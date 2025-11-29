@@ -22,8 +22,6 @@
 #include "OwnerDrawnListControl.h"
 #include "DarkMode.h"
 
-#include <algorithm>
-
 namespace
 {
     constexpr UINT TEXT_X_MARGIN = 6; // Horizontal distance of the text from the edge of the item rectangle

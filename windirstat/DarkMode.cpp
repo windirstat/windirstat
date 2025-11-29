@@ -20,13 +20,6 @@
 #include "Options.h"
 #include "Constants.h"
 
-#include <algorithm>
-#include <array>
-#include <map>
-#include <memory>
-#include <mutex>
-#include <ranges>
-
 #pragma comment(lib, "uxtheme.lib")
 #pragma comment(lib, "dwmapi.lib")
 
@@ -46,7 +39,6 @@ static DWORD(WINAPI* AllowDarkModeForWindow)(HWND hwnd, bool allow) = reinterpre
 
 static LONG(WINAPI* RtlGetVersion)(LPOSVERSIONINFOEXW) = reinterpret_cast<decltype(RtlGetVersion)>(
     reinterpret_cast<LPVOID>(GetProcAddress(LoadLibraryW(L"ntdll.dll"), "RtlGetVersion")));
-
 
 bool DarkMode::_darkModeEnabled = false;
 static std::array<COLORREF, 50> OriginalColors;

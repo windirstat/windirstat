@@ -24,8 +24,6 @@
 #include "MainFrame.h"
 #include "DarkMode.h"
 
-#include <regex>
-
 // SearchDlg dialog
 
 IMPLEMENT_DYNAMIC(SearchDlg, CLayoutDialogEx)

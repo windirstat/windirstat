@@ -23,9 +23,6 @@
 #include "GlobalHelpers.h"
 #include "TreeListControl.h"
 
-#include <unordered_map>
-#include <vector>
-
 class CItem;
 class CItemDupe;
 class CItemTop;

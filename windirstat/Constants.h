@@ -17,8 +17,6 @@
 
 #pragma once
 
-#include <string>
-
 namespace wds
 {
     // String and character constants
