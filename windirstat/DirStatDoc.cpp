@@ -217,7 +217,7 @@ BOOL CDirStatDoc::OnOpenDocument(CItem * newroot)
 
     // Determine root spec string
     std::wstring spec = newroot->GetName();
-    if (newroot->IsType(IT_MYCOMPUTER))
+    if (newroot->IsItemType(IT_MYCOMPUTER))
     {
         std::vector<std::wstring> folders;
         std::ranges::transform(newroot->GetChildren(), std::back_inserter(folders),
@@ -383,9 +383,9 @@ void CDirStatDoc::UnlinkRoot()
 bool CDirStatDoc::UserDefinedCleanupWorksForItem(USERDEFINEDCLEANUP* udc, const CItem* item) const
 {
     return item != nullptr && (
-        (item->IsType(IT_DRIVE) && udc->WorksForDrives) ||
-        (item->IsType(IT_DIRECTORY) && udc->WorksForDirectories) ||
-        (item->IsType(IT_FILE) && udc->WorksForFiles) ||
+        (item->IsItemType(IT_DRIVE) && udc->WorksForDrives) ||
+        (item->IsItemType(IT_DIRECTORY) && udc->WorksForDirectories) ||
+        (item->IsItemType(IT_FILE) && udc->WorksForFiles) ||
         (item->HasUncPath() && udc->WorksForUncPaths));
 }
 
@@ -395,7 +395,7 @@ void CDirStatDoc::OpenItem(const CItem* item, const std::wstring & verb)
 
     // Determine path to feed into shell function
     SmartPointer<LPITEMIDLIST> pidl(CoTaskMemFree, nullptr);
-    if (item->IsType(IT_MYCOMPUTER))
+    if (item->IsItemType(IT_MYCOMPUTER))
     {
         (void) SHGetSpecialFolderLocation(nullptr, CSIDL_DRIVES, &pidl);
     }
@@ -434,10 +434,10 @@ void CDirStatDoc::RecurseRefreshReparsePoints(CItem* item) const
         const auto& qitem = reparseStack.top();
         reparseStack.pop();
 
-        if (!item->IsType(IT_DIRECTORY | IT_DRIVE)) continue;
+        if (!item->IsItemType(IT_DIRECTORY, IT_DRIVE)) continue;
         for (const auto& child : qitem->GetChildren())
         {
-            if (!child->IsType(IT_DIRECTORY | IT_DRIVE | ITF_ROOTITEM))
+            if (!(child->IsItemType(IT_DIRECTORY, IT_DRIVE) || child->HasFlag(ITF_ROOTITEM)))
             {
                 continue;
             }
@@ -471,15 +471,15 @@ std::vector<CItem*> CDirStatDoc::GetDriveItems() const
         return drives;
     }
 
-    if (root->IsType(IT_MYCOMPUTER))
+    if (root->IsItemType(IT_MYCOMPUTER))
     {
         for (const auto& child : root->GetChildren())
         {
-            ASSERT(child->IsType(IT_DRIVE));
+            ASSERT(child->IsItemType(IT_DRIVE));
             drives.push_back(child);
         }
     }
-    else if (root->IsType(IT_DRIVE))
+    else if (root->IsItemType(IT_DRIVE))
     {
         drives.push_back(root);
     }
@@ -620,7 +620,7 @@ bool CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, const bo
                 childStack.pop();
                 if (!FinderBasic::DoesFileExist(item->GetPath())) continue;
 
-                if (item->IsType(IT_DIRECTORY))
+                if (item->IsItemType(IT_DIRECTORY))
                 {
                     dirsToDelete.emplace_back(item);
                     for (const auto& child : item->GetChildren())
@@ -628,7 +628,7 @@ bool CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, const bo
                         childStack.push(child);
                     }
                 }
-                else if (item->IsType(IT_FILE))
+                else if (item->IsItemType(IT_FILE))
                 {
                     filesToDelete.emplace_back(item);
                 }
@@ -700,7 +700,7 @@ void CDirStatDoc::PerformUserDefinedCleanup(USERDEFINEDCLEANUP* udc, const CItem
     const std::wstring path = item->GetPath();
 
     // Verify that path still exists
-    if (item->IsType(IT_DIRECTORY | IT_DRIVE))
+    if (item->IsItemType(IT_DIRECTORY, IT_DRIVE))
     {
         if (!FolderExists(path) && !DriveExists(path))
         {
@@ -710,7 +710,7 @@ void CDirStatDoc::PerformUserDefinedCleanup(USERDEFINEDCLEANUP* udc, const CItem
     }
     else
     {
-        ASSERT(item->IsType(IT_FILE));
+        ASSERT(item->IsItemType(IT_FILE));
 
         if (!::PathFileExists(path.c_str()))
         {
@@ -721,13 +721,13 @@ void CDirStatDoc::PerformUserDefinedCleanup(USERDEFINEDCLEANUP* udc, const CItem
 
     if (udc->RecurseIntoSubdirectories)
     {
-        ASSERT(item->IsType(IT_DRIVE | IT_DIRECTORY));
+        ASSERT(item->IsItemType(IT_DRIVE, IT_DIRECTORY));
 
         RecursiveUserDefinedCleanup(udc, path, path);
     }
     else
     {
-        CallUserDefinedCleanup(item->IsType(IT_DIRECTORY | IT_DRIVE), udc->CommandLine.Obj(), path, path, udc->ShowConsoleWindow, udc->WaitForCompletion);
+        CallUserDefinedCleanup(item->IsItemType(IT_DIRECTORY, IT_DRIVE), udc->CommandLine.Obj(), path, path, udc->ShowConsoleWindow, udc->WaitForCompletion);
     }
 }
 
@@ -893,11 +893,11 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
 {
     struct commandFilter
     {
-        bool allowNone = false;        // allow display when nothing is selected
-        bool allowMany = false;        // allow display when multiple items are selected
-        bool allowEarly = false;       // allow display before processing is finished
+        bool allowNone = false; // allow display when nothing is selected
+        bool allowMany = false; // allow display when multiple items are selected
+        bool allowEarly = false; // allow display before processing is finished
         LOGICAL_FOCUS focus = LF_NONE; // restrict which views support this selection
-        ITEMTYPE typesAllow = IT_ANY;  // only display if these types are allowed
+        std::vector<ITEMTYPE> typesAllow = { ITF_ANY }; // only display if these types are allowed
         bool (*extra)(CItem*) = [](CItem*) { return true; }; // extra checks
     };
 
@@ -918,49 +918,49 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
     static std::unordered_map<UINT, const commandFilter> filters
     {
         // ID                           none   many   early  focus        types
-        { ID_CLEANUP_DELETE,          { false, true,  false, LF_NONE,     IT_DIRECTORY | IT_FILE, notRoot } },
-        { ID_CLEANUP_DELETE_BIN,      { false, true,  false, LF_NONE,     IT_DIRECTORY | IT_FILE, notRoot } },
-        { ID_CLEANUP_DISK_CLEANUP  ,  { true,  true,  false, LF_NONE,     IT_ANY, isElevationAvailable } },
-        { ID_CLEANUP_DISM_ANALYZE,    { true,  true,  false, LF_NONE,     IT_ANY, isElevationAvailable } },
-        { ID_CLEANUP_DISM_NORMAL,     { true,  true,  false, LF_NONE,     IT_ANY, isElevationAvailable } },
-        { ID_CLEANUP_DISM_RESET,      { true,  true,  false, LF_NONE,     IT_ANY, isElevationAvailable } },
-        { ID_CLEANUP_EMPTY_BIN,       { true,  true,  false, LF_NONE,     IT_ANY } },
-        { ID_CLEANUP_EMPTY_FOLDER,    { true,  true,  false, LF_NONE,     IT_DIRECTORY, notRoot } },
-        { ID_CLEANUP_EXPLORER_SELECT, { false, true,  true,  LF_NONE,     IT_DIRECTORY | IT_FILE } },
-        { ID_CLEANUP_HIBERNATE,       { true,  true,  false, LF_NONE,     IT_ANY, isHibernate } },
-        { ID_CLEANUP_OPEN_IN_CONSOLE, { false, true,  true,  LF_NONE,     IT_DRIVE | IT_DIRECTORY | IT_FILE } },
-        { ID_CLEANUP_OPEN_IN_PWSH,    { false, true,  true,  LF_NONE,     IT_DRIVE | IT_DIRECTORY | IT_FILE } },
-        { ID_CLEANUP_OPEN_SELECTED,   { false, true,  true,  LF_NONE,     IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY | IT_FILE } },
-        { ID_CLEANUP_PROPERTIES,      { false, true,  true,  LF_NONE,     IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY | IT_FILE } },
-        { ID_CLEANUP_REMOVE_LOCAL,    { true,  true,  false, LF_NONE,     IT_ANY, isElevated } },
-        { ID_CLEANUP_REMOVE_ROAMING,  { true,  true,  false, LF_NONE,     IT_ANY, isElevated } },
-        { ID_CLEANUP_REMOVE_SHADOW,   { true,  true,  false, LF_NONE,     IT_ANY, isElevated } },
-        { ID_COMPRESS_LZNT1,          { false, true,  false, LF_NONE,     IT_DIRECTORY | IT_FILE } },
-        { ID_COMPRESS_LZX,            { false, true,  false, LF_NONE,     IT_DIRECTORY | IT_FILE } },
-        { ID_COMPRESS_NONE,           { false, true,  false, LF_NONE,     IT_DIRECTORY | IT_FILE } },
-        { ID_COMPRESS_XPRESS16K,      { false, true,  false, LF_NONE,     IT_DIRECTORY | IT_FILE } },
-        { ID_COMPRESS_XPRESS4K,       { false, true,  false, LF_NONE,     IT_DIRECTORY | IT_FILE } },
-        { ID_COMPRESS_XPRESS8K,       { false, true,  false, LF_NONE,     IT_DIRECTORY | IT_FILE } },
-        { ID_COMPUTE_HASH,            { false, false, false, LF_NONE,     IT_FILE } },
-        { ID_EDIT_COPY_CLIPBOARD,     { false, true,  true,  LF_NONE,     IT_DRIVE | IT_DIRECTORY | IT_FILE } },
-        { ID_FILTER,                  { true,  true,  true,  LF_NONE,     IT_ANY } },
-        { ID_INDICATOR_DISK,          { true,  true,  false, LF_NONE,     IT_ANY } },
-        { ID_INDICATOR_IDLE,          { true,  true,  true,  LF_NONE,     IT_ANY } },
-        { ID_INDICATOR_MEM,           { true,  true,  true,  LF_NONE,     IT_ANY } },
-        { ID_REFRESH_ALL,             { true,  true,  false, LF_NONE,     IT_ANY } },
-        { ID_REFRESH_SELECTED,        { false, true,  false, LF_NONE,     IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY | IT_FILE } },
-        { ID_SAVE_DUPLICATES,         { true,  true,  false, LF_NONE,     IT_ANY, isDupeTabVisible } },
-        { ID_SAVE_RESULTS,            { true,  true,  false, LF_NONE,     IT_ANY } },
-        { ID_SCAN_RESUME,             { true,  true,  true,  LF_NONE,     IT_ANY, isResumable } },
-        { ID_SCAN_STOP,               { true,  true,  true,  LF_NONE,     IT_ANY, isStoppable } },
-        { ID_SCAN_SUSPEND,            { true,  true,  true,  LF_NONE,     IT_ANY, isSuspendable } },
-        { ID_SEARCH,                  { true,  true,  false, LF_NONE,     IT_ANY } },
-        { ID_TREEMAP_RESELECT_CHILD,  { true,  true,  true,  LF_FILETREE, IT_ANY, reselectAvail } },
-        { ID_TREEMAP_SELECT_PARENT,   { false, false, true,  LF_FILETREE, IT_ANY, parentNotNull } },
-        { ID_TREEMAP_ZOOMIN,          { false, false, false, LF_FILETREE, IT_DRIVE | IT_DIRECTORY} },
-        { ID_TREEMAP_ZOOMOUT,         { true,  true,  false, LF_FILETREE, IT_ANY, canZoomOut } },
-        { ID_VIEW_SHOWFREESPACE,      { true,  true,  false, LF_NONE,     IT_ANY } },
-        { ID_VIEW_SHOWUNKNOWN,        { true,  true,  false, LF_NONE,     IT_ANY } }
+        { ID_CLEANUP_DELETE,          { false, true,  false, LF_NONE,     { IT_DIRECTORY, IT_FILE }, notRoot } },
+        { ID_CLEANUP_DELETE_BIN,      { false, true,  false, LF_NONE,     { IT_DIRECTORY, IT_FILE }, notRoot } },
+        { ID_CLEANUP_DISK_CLEANUP  ,  { true,  true,  false, LF_NONE,     { ITF_ANY }, isElevationAvailable } },
+        { ID_CLEANUP_DISM_ANALYZE,    { true,  true,  false, LF_NONE,     { ITF_ANY }, isElevationAvailable } },
+        { ID_CLEANUP_DISM_NORMAL,     { true,  true,  false, LF_NONE,     { ITF_ANY }, isElevationAvailable } },
+        { ID_CLEANUP_DISM_RESET,      { true,  true,  false, LF_NONE,     { ITF_ANY }, isElevationAvailable } },
+        { ID_CLEANUP_EMPTY_BIN,       { true,  true,  false, LF_NONE,     { ITF_ANY } } },
+        { ID_CLEANUP_EMPTY_FOLDER,    { true,  true,  false, LF_NONE,     { IT_DIRECTORY }, notRoot } },
+        { ID_CLEANUP_EXPLORER_SELECT, { false, true,  true,  LF_NONE,     { IT_DIRECTORY, IT_FILE } } },
+        { ID_CLEANUP_HIBERNATE,       { true,  true,  false, LF_NONE,     { ITF_ANY }, isHibernate } },
+        { ID_CLEANUP_OPEN_IN_CONSOLE, { false, true,  true,  LF_NONE,     { IT_DRIVE, IT_DIRECTORY, IT_FILE } } },
+        { ID_CLEANUP_OPEN_IN_PWSH,    { false, true,  true,  LF_NONE,     { IT_DRIVE, IT_DIRECTORY, IT_FILE } } },
+        { ID_CLEANUP_OPEN_SELECTED,   { false, true,  true,  LF_NONE,     { IT_MYCOMPUTER, IT_DRIVE, IT_DIRECTORY, IT_FILE } } },
+        { ID_CLEANUP_PROPERTIES,      { false, true,  true,  LF_NONE,     { IT_MYCOMPUTER, IT_DRIVE, IT_DIRECTORY, IT_FILE } } },
+        { ID_CLEANUP_REMOVE_LOCAL,    { true,  true,  false, LF_NONE,     { ITF_ANY }, isElevated } },
+        { ID_CLEANUP_REMOVE_ROAMING,  { true,  true,  false, LF_NONE,     { ITF_ANY }, isElevated } },
+        { ID_CLEANUP_REMOVE_SHADOW,   { true,  true,  false, LF_NONE,     { ITF_ANY }, isElevated } },
+        { ID_COMPRESS_LZNT1,          { false, true,  false, LF_NONE,     { IT_DIRECTORY, IT_FILE } } },
+        { ID_COMPRESS_LZX,            { false, true,  false, LF_NONE,     { IT_DIRECTORY, IT_FILE } } },
+        { ID_COMPRESS_NONE,           { false, true,  false, LF_NONE,     { IT_DIRECTORY, IT_FILE } } },
+        { ID_COMPRESS_XPRESS16K,      { false, true,  false, LF_NONE,     { IT_DIRECTORY, IT_FILE } } },
+        { ID_COMPRESS_XPRESS4K,       { false, true,  false, LF_NONE,     { IT_DIRECTORY, IT_FILE } } },
+        { ID_COMPRESS_XPRESS8K,       { false, true,  false, LF_NONE,     { IT_DIRECTORY, IT_FILE } } },
+        { ID_COMPUTE_HASH,            { false, false, false, LF_NONE,     { IT_FILE } } },
+        { ID_EDIT_COPY_CLIPBOARD,     { false, true,  true,  LF_NONE,     { IT_DRIVE, IT_DIRECTORY, IT_FILE } } },
+        { ID_FILTER,                  { true,  true,  true,  LF_NONE,     { ITF_ANY } } },
+        { ID_INDICATOR_DISK,          { true,  true,  false, LF_NONE,     { ITF_ANY } } },
+        { ID_INDICATOR_IDLE,          { true,  true,  true,  LF_NONE,     { ITF_ANY } } },
+        { ID_INDICATOR_MEM,           { true,  true,  true,  LF_NONE,     { ITF_ANY } } },
+        { ID_REFRESH_ALL,             { true,  true,  false, LF_NONE,     { ITF_ANY } } },
+        { ID_REFRESH_SELECTED,        { false, true,  false, LF_NONE,     { IT_MYCOMPUTER, IT_DRIVE, IT_DIRECTORY, IT_FILE } } },
+        { ID_SAVE_DUPLICATES,         { true,  true,  false, LF_NONE,     { ITF_ANY }, isDupeTabVisible } },
+        { ID_SAVE_RESULTS,            { true,  true,  false, LF_NONE,     { ITF_ANY } } },
+        { ID_SCAN_RESUME,             { true,  true,  true,  LF_NONE,     { ITF_ANY }, isResumable } },
+        { ID_SCAN_STOP,               { true,  true,  true,  LF_NONE,     { ITF_ANY }, isStoppable } },
+        { ID_SCAN_SUSPEND,            { true,  true,  true,  LF_NONE,     { ITF_ANY }, isSuspendable } },
+        { ID_SEARCH,                  { true,  true,  false, LF_NONE,     { ITF_ANY } } },
+        { ID_TREEMAP_RESELECT_CHILD,  { true,  true,  true,  LF_FILETREE, { ITF_ANY }, reselectAvail } },
+        { ID_TREEMAP_SELECT_PARENT,   { false, false, true,  LF_FILETREE, { ITF_ANY }, parentNotNull } },
+        { ID_TREEMAP_ZOOMIN,          { false, false, false, LF_FILETREE, { IT_DRIVE , IT_DIRECTORY } } },
+        { ID_TREEMAP_ZOOMOUT,         { true,  true,  false, LF_FILETREE, { ITF_ANY }, canZoomOut } },
+        { ID_VIEW_SHOWFREESPACE,      { true,  true,  false, LF_NONE,     { ITF_ANY } } },
+        { ID_VIEW_SHOWUNKNOWN,        { true,  true,  false, LF_NONE,     { ITF_ANY } } }
     };
 
     if (!filters.contains(pCmdUI->m_nID))
@@ -982,7 +982,8 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
     for (const auto& item : items)
     {
         allow &= filter.extra(item);
-        allow &= item->IsType(filter.typesAllow);
+        allow &= std::any_of(filter.typesAllow.begin(), filter.typesAllow.end(),
+            [item](ITEMTYPE type) { return item->IsItemType(type); });
     }
 
     pCmdUI->Enable(allow);
@@ -1550,14 +1551,14 @@ void CDirStatDoc::OnCleanupCompress(UINT id)
         const auto& item = childStack.top();
         childStack.pop();
 
-        if (item->IsType(IT_DIRECTORY))
+        if (item->IsItemType(IT_DIRECTORY))
         {
             for (const auto& child : item->GetChildren())
             {
                 childStack.push(child);
             }
         }
-        else if (item->IsType(IT_FILE))
+        else if (item->IsItemType(IT_FILE))
         {
             itemsToCompress.emplace_back(item);
         }
@@ -1692,7 +1693,7 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
         std::scoped_lock lock(mutex);
 
         // If scanning drive(s) just rescan the child nodes
-        if (items.size() == 1 && items.at(0)->IsType(IT_MYCOMPUTER))
+        if (items.size() == 1 && items.at(0)->IsItemType(IT_MYCOMPUTER))
         {
             items.at(0)->ResetScanStartTime();
             items = items.at(0)->GetChildren();
@@ -1733,9 +1734,9 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
                 item->SetExpanded(visualInfo[item].wasExpanded);
   
             // Handle if item to be refreshed has been removed
-            if (item->IsType(IT_FILE | IT_DIRECTORY | IT_DRIVE) &&
+            if (item->IsItemType(IT_FILE, IT_DIRECTORY, IT_DRIVE) &&
                 !FinderBasic::DoesFileExist(item->GetFolderPath(),
-                    item->IsType(IT_FILE) ? item->GetName() : std::wstring()))
+                    item->IsItemType(IT_FILE) ? item->GetName() : std::wstring()))
             {
                 // Remove item from list so we do not rescan it
                 std::erase(items, item);
@@ -1754,8 +1755,8 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
                 }
 
                 // Handle non-root item by removing from parent
-                item->UpwardSubtractFiles(item->IsType(IT_FILE) ? 1 : 0);
-                item->UpwardSubtractFolders(item->IsType(IT_FILE) ? 0 : 1);
+                item->UpwardSubtractFiles(item->IsItemType(IT_FILE) ? 1 : 0);
+                item->UpwardSubtractFolders(item->IsItemType(IT_FILE) ? 0 : 1);
                 item->GetParent()->RemoveChild(item);
             }
         }
@@ -1765,7 +1766,7 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
         for (const auto & item : items)
         {
             // Skip any items we should not follow
-            if (!item->IsType(ITF_ROOTITEM) && !CDirStatApp::Get()->IsFollowingAllowed(item->GetReparseTag()))
+            if (!item->HasFlag(ITF_ROOTITEM) && !CDirStatApp::Get()->IsFollowingAllowed(item->GetReparseTag()))
             {
                 continue;
             }
@@ -1814,7 +1815,7 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
         // Restore unknown and freespace items
         for (const auto& item : items)
         {
-            if (!item->IsType(IT_DRIVE)) continue;
+            if (!item->IsItemType(IT_DRIVE)) continue;
             
             if (COptions::ShowFreeSpace)
             {

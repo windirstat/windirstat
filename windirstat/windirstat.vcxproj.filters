@@ -527,6 +527,9 @@
     <Image Include="res\nodes\IDI_UNKNOWN.ico">
       <Filter>Resource Files\Resources</Filter>
     </Image>
+    <Image Include="res\nodes\IDI_HARDLINKS.ico">
+      <Filter>Resource Files\Resources</Filter>
+    </Image>    
     <Image Include="res\toolbar\IDB_SCAN_STOP.bmp">
       <Filter>Resource Files\Resources</Filter>
     </Image>

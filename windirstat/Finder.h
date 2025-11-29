@@ -44,6 +44,7 @@ public:
     virtual std::wstring GetFileName() const = 0;
     virtual ULONG GetIndex() const { return 0; }
     virtual DWORD GetReparseTag() const = 0;
+    virtual USHORT GetLinkCount() const { return 1; }
 
     bool IsReparsePoint() const
     {

@@ -162,8 +162,9 @@ CItem* LoadResults(const std::wstring & path)
         const ITEMTYPE type = static_cast<ITEMTYPE>(wcstoul(fields[orderMap[FIELD_ATTRIBUTES_WDS]].c_str(), nullptr, 16));
 
         // Determine how to store the path if it was the root or not
+        const auto itType = ITF_ANY & type;
         const bool isRoot = (type & ITF_ROOTITEM);
-        const bool isInRoot = (type & IT_DRIVE) || (type & IT_UNKNOWN) || (type & IT_FREESPACE);
+        const bool isInRoot = itType == IT_DRIVE || type == IT_UNKNOWN || type == IT_FREESPACE;
         const bool useFullPath = isRoot || isInRoot;
         LPWSTR lookupPath = fields[orderMap[FIELD_NAME]].data();
         LPWSTR displayName = useFullPath ? lookupPath : wcsrchr(lookupPath, L'\\');
@@ -207,7 +208,7 @@ CItem* LoadResults(const std::wstring & path)
             parentMap[mapPath] = newitem;
 
             // Special case: also add mapping for drive without backslash
-            if (newitem->IsType(IT_DRIVE)) parentMap[mapPath.substr(0, 2)] = newitem;
+            if (newitem->IsItemType(IT_DRIVE)) parentMap[mapPath.substr(0, 2)] = newitem;
         }
     }
 
@@ -283,7 +284,7 @@ bool SaveResults(const std::wstring& path, CItem * rootItem)
     for (const auto item : items)
     {
         // Output primary columns
-        const bool nonPathItem = item->IsType(IT_MYCOMPUTER | IT_UNKNOWN | IT_FREESPACE);
+        const bool nonPathItem = item->IsItemType(IT_MYCOMPUTER, IT_UNKNOWN, IT_FREESPACE);
         outf << std::format("{},{},{},{},{},0x{:08X},{},0x{:04X}",
             QuoteAndConvert(nonPathItem ? item->GetName() : item->GetPath()),
             item->GetFilesCount(),
