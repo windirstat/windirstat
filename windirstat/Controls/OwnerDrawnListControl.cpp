@@ -141,8 +141,8 @@ void COwnerDrawnListItem::DrawSelection(const COwnerDrawnListControl* list, CDC*
 
 void COwnerDrawnListItem::DrawPercentage(CDC* pdc, const CRect rc, const double fraction, const COLORREF color) const
 {
-    COLORREF dark = RGB(198, 198, 198); // Light edge
-    COLORREF light = RGB(118, 118, 118); // Dark edge
+    COLORREF dark = RGB(118, 118, 118); // Light edge
+    COLORREF light = RGB(198, 198, 198); // Dark edge
     COLORREF bg = RGB(225, 225, 225); // Background
     if (DarkMode::IsDarkModeActive())
     {
