@@ -22,7 +22,7 @@
 class COptionsPropertySheet;
 
 //
-// CPageAdvanced. "Settings" property page "General".
+// CPageAdvanced. "Settings" property page "Advanced".
 //
 class CPageAdvanced final : public CMFCPropertyPage
 {

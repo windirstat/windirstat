@@ -40,8 +40,8 @@ CItem::CItem(const ITEMTYPE type, const std::wstring & name) : m_Type(type)
         std::wstring nameTmp = name;
         if (nameTmp.ends_with(L":")) nameTmp.append(L"\\");
 
-        // The name string on the drive is two parts separated by a pipe.  For example,
-        // C:\|Local Disk (C:) is the true path following by the name description
+        // The name string on the drive is two parts separated by a pipe. For example,
+        // C:\|Local Disk (C:) is the true path followed by the name description
         SetName(std::format(L"{:.2}|{}", nameTmp, FormatVolumeNameOfRootPath(nameTmp)));
         m_Attributes = LOWORD(GetFileAttributesW(GetPathLong().c_str()));
     }
@@ -1145,7 +1145,7 @@ CItem* CItem::FindRecyclerItem() const
     {
         if (!p->IsType(IT_DRIVE)) continue;
 
-        // There are no cross-platform way to consistently identify the recycle bin 
+        // There is no cross-platform way to consistently identify the recycle bin 
         // so attempt to find an item with the most probable values
         for (const std::wstring& possible : { L"$RECYCLE.BIN", L"RECYCLER", L"RECYCLED" })
         {
@@ -1505,7 +1505,7 @@ std::vector<BYTE> CItem::GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CIte
 
     // We reduce the size of the stored hash since the level of uniqueness required
     // is unnecessary for simple dupe checking. This is preferred to just using a simpler
-    // hash alg since SHA512 is FIPS complaint on Windows and more performant than SHA256.
+    // hash alg since SHA512 is FIPS compliant on Windows and more performant than SHA256.
     constexpr auto ReducedHashInBytes = 16;
     Hash.resize(ReducedHashInBytes);
     Hash.shrink_to_fit();
