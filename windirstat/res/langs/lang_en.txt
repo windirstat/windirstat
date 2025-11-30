@@ -112,6 +112,7 @@ IDS_MENU_PWSH=Open in Power&Shell...\tCtrl+S
 IDS_MENU_REFRESH_ALL=Refresh &All\tShift+F5
 IDS_MENU_REFRESH_SELECTED=Refresh &Selected\tF5
 IDS_MENU_REMOVE_LOCAL=Remove Local Profiles
+IDS_MENU_REMOVE_PROGRAMS=Launch Program && Features
 IDS_MENU_REMOVE_ROAMING=Remove Cached Roaming Profiles
 IDS_MENU_REMOVE_SHADOW=Remove Volume Shadow Copies
 IDS_MENU_RESELECT_CHILD=Reselect &Child\tCtrl++ or *

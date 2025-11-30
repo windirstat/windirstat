@@ -112,6 +112,7 @@ IDS_MENU_PWSH=Otevřít v Power&Shell...\tCtrl+S
 IDS_MENU_REFRESH_ALL=Obnovit &vše\tShift+F5
 IDS_MENU_REFRESH_SELECTED=Obnovit &označené\tF5
 IDS_MENU_REMOVE_LOCAL="Odstranit místní profily"
+IDS_MENU_REMOVE_PROGRAMS=Spustit Programy && Funkce
 IDS_MENU_REMOVE_ROAMING=Odebrat soubory roamingového profilu uloženého v mezipaměti
 IDS_MENU_REMOVE_SHADOW="Odstranit stínové kopie svazku"
 IDS_MENU_RESELECT_CHILD=Znovu vybrat po&tomka\tCtrl++ nebo *

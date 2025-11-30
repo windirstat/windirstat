@@ -112,6 +112,7 @@ IDS_MENU_PWSH=Ava Power&Shellis...\tCtrl+S
 IDS_MENU_REFRESH_ALL=Värskenda &kõik\tShift+F5
 IDS_MENU_REFRESH_SELECTED=&Värskenda valikut\tF5
 IDS_MENU_REMOVE_LOCAL="Eemalda kohalikud profiilid"
+IDS_MENU_REMOVE_PROGRAMS=Käivita Programmid && Funktsioonid
 IDS_MENU_REMOVE_ROAMING=Eemalda vahemälust rändprofiilid
 IDS_MENU_REMOVE_SHADOW="Eemalda kettatõmmiste varikoopiad"
 IDS_MENU_RESELECT_CHILD=&Vali alamtasand\tCtrl++ või *

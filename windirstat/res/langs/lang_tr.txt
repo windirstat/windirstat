@@ -112,6 +112,7 @@ IDS_MENU_PWSH=PowerShell'de Aç...\tCtrl+S
 IDS_MENU_REFRESH_ALL=Tümünü Yenile\tShift+F5
 IDS_MENU_REFRESH_SELECTED=Seçlenleri Yenile\tF5
 IDS_MENU_REMOVE_LOCAL="Yerel profilleri kaldır"
+IDS_MENU_REMOVE_PROGRAMS=Programlar ve Özellikleri Başlat
 IDS_MENU_REMOVE_ROAMING=Önbelleğe Alınmış Dolaşım Profillerini Kaldır
 IDS_MENU_REMOVE_SHADOW="Birim gölge kopyalarını kaldır"
 IDS_MENU_RESELECT_CHILD=Alt seçimi yeniden yap\tCtrl++ ya da *

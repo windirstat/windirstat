@@ -112,6 +112,7 @@ IDS_MENU_PWSH=Megnyitás Power&Shellben...\tCtrl+S
 IDS_MENU_REFRESH_ALL=M&indet frissít\tShift+F5
 IDS_MENU_REFRESH_SELECTED=K&ijelölt frissítése\tF5
 IDS_MENU_REMOVE_LOCAL="Helyi profilok eltávolítása"
+IDS_MENU_REMOVE_PROGRAMS=Programok és szolgáltatások indítása
 IDS_MENU_REMOVE_ROAMING=Gyorsítótárazott barangoló profilok eltávolítása
 IDS_MENU_REMOVE_SHADOW="Kötet árnyékmásolatainak eltávolítása"
 IDS_MENU_RESELECT_CHILD=&Gyermek újrajelölése\tCtrl++ vagy *

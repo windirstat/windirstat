@@ -112,6 +112,7 @@ IDS_MENU_PWSH=Otwórz w Power&Shell...\tCtrl+S
 IDS_MENU_REFRESH_ALL=Odśwież &wszystko\tShift+F5
 IDS_MENU_REFRESH_SELECTED=Odśwież zaznaczone(&S)\tF5
 IDS_MENU_REMOVE_LOCAL="Usuń profile lokalne"
+IDS_MENU_REMOVE_PROGRAMS=Uruchom Programy i funkcje
 IDS_MENU_REMOVE_ROAMING=Usuń profilowanie roamingu z pamięci podręcznej
 IDS_MENU_REMOVE_SHADOW="Usuń kopie woluminów w tle"
 IDS_MENU_RESELECT_CHILD=Skocz poziom &niżej\tCtrl++ lub *

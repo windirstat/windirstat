@@ -112,6 +112,7 @@ IDS_MENU_PWSH=PowerShellで開く(&S)...\tCtrl+S
 IDS_MENU_REFRESH_ALL=すべて更新(&A)\tShift+F5
 IDS_MENU_REFRESH_SELECTED=選択項目を更新(&S)\tF5
 IDS_MENU_REMOVE_LOCAL="ローカルプロファイルを削除"
+IDS_MENU_REMOVE_PROGRAMS=プログラムと機能を起動
 IDS_MENU_REMOVE_ROAMING=キャッシュされたローミングプロファイルを削除
 IDS_MENU_REMOVE_SHADOW="ボリュームシャドウコピーを削除"
 IDS_MENU_RESELECT_CHILD=子を再選択(&C)\tCtrl++ または *

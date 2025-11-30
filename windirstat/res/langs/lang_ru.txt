@@ -112,6 +112,7 @@ IDS_MENU_PWSH=Открыть в Power&Shell...\tCtrl+S
 IDS_MENU_REFRESH_ALL=Обновить все\tShift+F5
 IDS_MENU_REFRESH_SELECTED=Обновить &выделенное\tF5
 IDS_MENU_REMOVE_LOCAL="Удалить локальные профили"
+IDS_MENU_REMOVE_PROGRAMS=Запустить Программы и компоненты
 IDS_MENU_REMOVE_ROAMING=Удалить кэшированные перемещаемые профили
 IDS_MENU_REMOVE_SHADOW="Удалить теневые копии тома"
 IDS_MENU_RESELECT_CHILD=Перейти на уровень вниз\tCtrl++ или *
