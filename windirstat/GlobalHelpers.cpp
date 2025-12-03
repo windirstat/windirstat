@@ -1123,6 +1123,7 @@ std::wstring ComputeFileHashes(const std::wstring& filePath)
         // Add to result
         result += std::format(L"{}: {}\n", ctx.name, hashHex);
     }
+    if (!result.empty() && result.back() == L'\n') result.pop_back();
 
     return result;
 }

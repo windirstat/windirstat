@@ -215,6 +215,9 @@ BOOL CMessageBoxDlg::OnInitDialog()
         MoveWindow(&rectWindow);
     }
 
+    // Remove resizable border
+    ModifyStyle(WS_THICKFRAME, 0, SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER);
+
     // Center dialog
     CenterWindow();
 
