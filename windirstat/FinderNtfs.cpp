@@ -46,21 +46,21 @@ using FILE_RECORD = struct FILE_RECORD
     USHORT SegmentNumberHighPart;
     ULONG SegmentNumberLowPart;
 
-    constexpr ULONGLONG SegmentNumber() const
+    constexpr ULONGLONG SegmentNumber() const noexcept
     {
         return static_cast<ULONGLONG>(SegmentNumberHighPart) << 32ul | SegmentNumberLowPart;
     }
 
-    constexpr bool IsValid() const
+    constexpr bool IsValid() const noexcept
     {
         return Signature == 0x454C4946; // 'FILE'
     }
-    constexpr bool IsInUse() const
+    constexpr bool IsInUse() const noexcept
     {
         return Flags & 0x0001;
     }
 
-    constexpr bool IsDirectory() const
+    constexpr bool IsDirectory() const noexcept
     {
         return Flags & 0x0002;
     }
@@ -99,27 +99,27 @@ using ATTRIBUTE_RECORD = struct ATTRIBUTE_RECORD
         } Nonresident;
     } Form;
 
-    constexpr bool IsNonResident() const
+    constexpr bool IsNonResident() const noexcept
     {
         return FormCode & 0x0001;
     }
 
-    constexpr bool IsCompressed() const
+    constexpr bool IsCompressed() const noexcept
     {
         return Flags & 0x0001;
     }
 
-    constexpr bool IsSparse() const
+    constexpr bool IsSparse() const noexcept
     {
         return Flags & 0x8000;
     }
 
-    ATTRIBUTE_RECORD* next() const
+    ATTRIBUTE_RECORD* next() const noexcept
     {
         return ByteOffset<ATTRIBUTE_RECORD>(const_cast<ATTRIBUTE_RECORD*>(this), RecordLength);
     }
 
-    static constexpr std::pair<ATTRIBUTE_RECORD*, ATTRIBUTE_RECORD*> bounds(FILE_RECORD* FileRecord, auto TotalLength)
+    static constexpr std::pair<ATTRIBUTE_RECORD*, ATTRIBUTE_RECORD*> bounds(FILE_RECORD* FileRecord, auto TotalLength) noexcept
     {
         return {
             ByteOffset<ATTRIBUTE_RECORD>(FileRecord, FileRecord->FirstAttributeOffset),
@@ -145,7 +145,7 @@ using FILE_NAME = struct FILE_NAME
     UCHAR Flags;
     WCHAR FileName[1];
 
-    constexpr bool IsShortNameRecord() const
+    constexpr bool IsShortNameRecord() const noexcept
     {
         return Flags == 0x02;
     }
@@ -163,18 +163,10 @@ using STANDARD_INFORMATION = struct STANDARD_INFORMATION
 constexpr auto NtfsNodeRoot = 5;
 constexpr auto NtfsReservedMax = 16;
 
-static constexpr auto& getMapBinRef(auto* mapArray, std::mutex* mutexArray, auto key, auto binSize, auto binMax)
-{
-    const auto binIndex = (key / binSize) % binMax;
-    std::scoped_lock<std::mutex> lock(mutexArray[binIndex]);
-    return mapArray[binIndex][key];
-}
-
 bool FinderNtfsContext::LoadRoot(CItem* driveitem)
 {
     // Trim off excess characters
     std::wstring volumePath = driveitem->GetPathLong();
-    if (volumePath.back() == L'\\') volumePath.pop_back();
     while (!volumePath.empty() && volumePath.back() == L'\\') volumePath.pop_back();
     if (!volumePath.empty() && volumePath[0] != L'\\' && volumePath[0] != L'/') volumePath.insert(0, L"\\\\.\\");
 
@@ -218,23 +210,11 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
                 ? retrievalBuffer->StartingVcn.QuadPart : retrievalBuffer->Extents[i - 1].NextVcn.QuadPart) };
     }
 
-    // This is a binning approach to reduce contention on the maps
-    constexpr auto numBins = 256;
-    const auto numRecords = volumeInfo.MftValidDataLength.QuadPart / volumeInfo.BytesPerFileRecordSegment;
-    const auto binSize = max(1, numRecords / numBins);
-    std::unordered_map<ULONGLONG, FileRecordBase> baseFileRecordMapTemp[numBins];
-    std::unordered_map<ULONGLONG, ULONGLONG> nonBaseToBaseMapTemp[numBins];
-    std::unordered_map<ULONGLONG, std::set<FileRecordName>> parentToChildMapTemp[numBins];
-    std::mutex baseFileRecordMapMutex[numBins];
-    std::mutex nonBaseToBaseMapMutex[numBins];
-    std::mutex parentToChildMapMutex[numBins];
-
     // Process MFT records
     std::for_each(std::execution::par_unseq, dataRuns.begin(), dataRuns.end(), [&](const auto& dataRun)
     {
         constexpr size_t bufferSize = 4ull * 1024 * 1024;
-        std::vector<UCHAR> buffer;
-        buffer.reserve(bufferSize);
+        thread_local std::vector<UCHAR> buffer(bufferSize);
         const auto& [clusterStart, clusterCount] = dataRun;
 
         // Enumerate over the data run in buffer-sized chunks
@@ -247,8 +227,8 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
 
             // Set file pointer for synchronous read
             const ULONG bytesThisRead = static_cast<ULONG>(min(bytesToRead, bufferSize));
-            SmartPointer<HANDLE> event(CloseHandle, CreateEvent(nullptr, TRUE, FALSE, nullptr));
-            OVERLAPPED overlapped = { .Offset = fileOffset.LowPart, .OffsetHigh = static_cast<DWORD>(fileOffset.HighPart), . hEvent = event };
+            thread_local SmartPointer<HANDLE> event(CloseHandle, CreateEvent(nullptr, TRUE, FALSE, nullptr));
+            OVERLAPPED overlapped = { .Offset = fileOffset.LowPart, . OffsetHigh = static_cast<DWORD>(fileOffset.HighPart), .hEvent = event };
             if (ReadFile(volumeHandle, buffer.data(), bytesThisRead, &bytesRead, &overlapped) == 0 && GetLastError() != ERROR_IO_PENDING ||
                 WaitForSingleObject(event, INFINITE) != WAIT_OBJECT_0 ||
                 GetOverlappedResult(volumeHandle, &overlapped, &bytesRead, TRUE) == 0)
@@ -275,8 +255,8 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
                 // Only process records with valid headers and are in use
                 if (!fileRecord->IsValid() || !fileRecord->IsInUse()) continue;
                 const auto currentRecord = fileRecord->SegmentNumber();
-                auto baseRecordIndex = fileRecord->BaseFileRecordNumber > 0 ? fileRecord->BaseFileRecordNumber : currentRecord;
-                getMapBinRef(nonBaseToBaseMapTemp, nonBaseToBaseMapMutex, currentRecord, binSize, numBins) = baseRecordIndex;
+                const auto baseRecordIndex = fileRecord->BaseFileRecordNumber > 0 ? fileRecord->BaseFileRecordNumber : currentRecord;
+                auto& baseRecord = m_BaseFileRecordMap[baseRecordIndex];
 
                 for (auto [curAttribute, endAttribute] = ATTRIBUTE_RECORD::bounds(fileRecord, volumeInfo.BytesPerFileRecordSegment); curAttribute <
                     endAttribute && curAttribute->TypeCode != AttributeEnd; curAttribute = curAttribute->next())
@@ -285,7 +265,6 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
                     {
                         if (curAttribute->IsNonResident()) continue;
                         const auto si = ByteOffset<STANDARD_INFORMATION>(curAttribute, curAttribute->Form.Resident.ValueOffset);
-                        auto& baseRecord = getMapBinRef(baseFileRecordMapTemp, baseFileRecordMapMutex, baseRecordIndex, binSize, numBins);
                         baseRecord.LastModifiedTime = si->LastModificationTime;
                         baseRecord.Attributes = si->FileAttributes;
                         if (fileRecord->IsDirectory()) baseRecord.Attributes |= FILE_ATTRIBUTE_DIRECTORY;
@@ -296,13 +275,12 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
                         if (curAttribute->IsNonResident()) continue;
                         const auto fn = ByteOffset<FILE_NAME>(curAttribute, curAttribute->Form.Resident.ValueOffset);
                         if (fn->IsShortNameRecord()) continue;
-                        auto& parentToChildEntry = getMapBinRef(parentToChildMapTemp, parentToChildMapMutex, fn->ParentDirectory, binSize, numBins);
-                        parentToChildEntry.emplace(std::wstring{ fn->FileName, fn->FileNameLength }, baseRecordIndex);
+                        m_ParentToChildMap[fn->ParentDirectory].push_back(
+                            FileRecordName{ std::wstring{ fn->FileName, fn->FileNameLength }, baseRecordIndex });
                     }
                     else if (curAttribute->TypeCode == AttributeData)
                     {
                         if (curAttribute->NameLength != 0) continue; // only process default data stream
-                        auto& baseRecord = getMapBinRef(baseFileRecordMapTemp, baseFileRecordMapMutex, baseRecordIndex, binSize, numBins);
                         if (curAttribute->IsNonResident())
                         {
                             if (curAttribute->Form.Nonresident.LowestVcn != 0) continue;
@@ -320,7 +298,6 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
                     {
                         if (curAttribute->IsNonResident()) continue;
                         const auto fn = ByteOffset<Finder::REPARSE_DATA_BUFFER>(curAttribute, curAttribute->Form.Resident.ValueOffset);
-                        auto& baseRecord = getMapBinRef(baseFileRecordMapTemp, baseFileRecordMapMutex, baseRecordIndex, binSize, numBins);
                         baseRecord.ReparsePointTag = fn->ReparseTag;
                         if (Finder::IsJunction(*fn))
                         {
@@ -332,37 +309,20 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
         }
     });
 
-    // Pre-reserve memory in main maps before merging
-    size_t totalBaseRecords = 0;
-    size_t totalNonBaseRecords = 0;
-    size_t totalParentRecords = 0;
-    for (const auto& map : baseFileRecordMapTemp) totalBaseRecords += map.size();
-    for (const auto& map : nonBaseToBaseMapTemp) totalNonBaseRecords += map.size();
-    for (const auto& map : parentToChildMapTemp) totalParentRecords += map.size();
-    m_BaseFileRecordMap.reserve(totalBaseRecords);
-    m_NonBaseToBaseMap.reserve(totalNonBaseRecords);
-    m_ParentToChildMap.reserve(totalParentRecords);
-
-    {
-        // Merge temporary maps into the main maps using jthread for parallel execution
-        std::jthread t1([&]() { for (auto& map : baseFileRecordMapTemp) { m_BaseFileRecordMap.merge(map); }});
-        std::jthread t2([&]() { for (auto& map : nonBaseToBaseMapTemp) { m_NonBaseToBaseMap.merge(map); }});
-        std::jthread t3([&]() { for (auto& map : parentToChildMapTemp) { m_ParentToChildMap.merge(map); }});
-    }
-
-    // Cleanup map (not currently needed)
-    m_NonBaseToBaseMap.clear();
-    m_NonBaseToBaseMap.rehash(0);
-
-    if (!m_ParentToChildMap.contains(NtfsNodeRoot))
+    // Verify root node exists
+    if (m_ParentToChildMap.find(NtfsNodeRoot) == m_ParentToChildMap.end())
     {
         return false;
     }
 
-    // Remove bad cluster node
-    std::erase_if(m_ParentToChildMap[NtfsNodeRoot], [](const auto& child) {
-        return child.BaseRecord < NtfsReservedMax && child.BaseRecord != NtfsNodeRoot;
+    // Remove bad cluster node and reserved entries
+    auto& rootChildren = m_ParentToChildMap[NtfsNodeRoot];
+    concurrency::concurrent_vector<FileRecordName> newChildren;
+    std::copy_if(rootChildren.begin(), rootChildren.end(), std::back_inserter(newChildren), [](const auto& child)
+    {
+        return child.BaseRecord < NtfsReservedMax || child.BaseRecord != NtfsNodeRoot;
     });
+    rootChildren = std::move(newChildren);
 
     driveitem->SetIndex(NtfsNodeRoot);
     return true;

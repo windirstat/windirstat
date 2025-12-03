@@ -19,7 +19,6 @@
 
 #include "stdafx.h"
 #include "Finder.h"
-#include "Item.h"
 
 class FinderNtfsContext final
 {
@@ -45,9 +44,10 @@ public:
         }
     };
 
-    std::unordered_map<ULONGLONG, FileRecordBase> m_BaseFileRecordMap;
-    std::unordered_map<ULONGLONG, ULONGLONG> m_NonBaseToBaseMap;
-    std::unordered_map<ULONGLONG, std::set<FileRecordName>> m_ParentToChildMap;
+    FinderNtfsContext() = default;
+
+    concurrency::concurrent_unordered_map<ULONGLONG, FileRecordBase> m_BaseFileRecordMap;
+    concurrency::concurrent_unordered_map<ULONGLONG, concurrency::concurrent_vector<FileRecordName>> m_ParentToChildMap;
 
     bool LoadRoot(CItem* driveitem);
 };
@@ -58,8 +58,8 @@ class FinderNtfs final : public Finder
     const FinderNtfsContext::FileRecordBase* m_CurrentRecord = nullptr;
     const FinderNtfsContext::FileRecordName* m_CurrentRecordName = nullptr;
 
-    const std::set<FinderNtfsContext::FileRecordName>* m_ChildrenSet = nullptr;
-    std::set<FinderNtfsContext::FileRecordName>::iterator m_RecordIterator;
+    const concurrency::concurrent_vector<FinderNtfsContext::FileRecordName>* m_ChildrenSet = nullptr;
+    concurrency::concurrent_vector<FinderNtfsContext::FileRecordName>::const_iterator m_RecordIterator;
     
     std::wstring m_Base;
     ULONGLONG m_Index = 0;

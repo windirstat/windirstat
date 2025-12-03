@@ -56,6 +56,10 @@
 #include <comdef.h>
 #include <wbemidl.h>
 
+// Microsoft Concurrency headers
+#include <concurrent_unordered_map.h>
+#include <concurrent_vector.h>
+
 // STL headers
 #include <algorithm>
 #include <array>
