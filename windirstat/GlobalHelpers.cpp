@@ -1121,7 +1121,7 @@ std::wstring ComputeFileHashes(const std::wstring& filePath)
         }
 
         // Add to result
-        result += std::format(L"{:6}\t: {}\n", ctx.name, hashHex);
+        result += std::format(L"{:\u2007<7}\t{}\n", std::wstring(ctx.name) + L':', hashHex);
     }
     if (!result.empty() && result.back() == L'\n') result.pop_back();
 
