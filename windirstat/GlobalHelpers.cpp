@@ -1107,7 +1107,7 @@ std::wstring ComputeFileHashes(const std::wstring& filePath)
     }
 
     // Finalize all hashes and convert to hex strings
-    std::wstring result;
+    std::wstring result = filePath + L"\n\n";
     for (auto & ctx : contexts)
     {
         if (BCryptFinishHash(ctx.hHash, ctx.hash.data(),
@@ -1121,7 +1121,7 @@ std::wstring ComputeFileHashes(const std::wstring& filePath)
         }
 
         // Add to result
-        result += std::format(L"{}: {}\n", ctx.name, hashHex);
+        result += std::format(L"{:\u2007<7}\t{}\n", std::wstring(ctx.name) + L':', hashHex);
     }
     if (!result.empty() && result.back() == L'\n') result.pop_back();
 

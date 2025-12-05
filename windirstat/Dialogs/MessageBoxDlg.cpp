@@ -176,14 +176,29 @@ BOOL CMessageBoxDlg::OnInitDialog()
     // Apply dark mode
     DarkMode::AdjustControls(*this);
 
-    // Determine if the dialog needs to be shifted down for the message
+    // Determine if the dialog needs to be shifted down for the message //
+
+    // Calcualte width expansion if custom initial size set
+    CRect rectWindow;
+    GetWindowRect(&rectWindow); // get initial window size
+    const int widthExpansion = max(0, m_InitialSize.cx - rectWindow.Width());
+
+    // Calculate required message text rectangle
     CRect rectMessage;
     m_MessageCtrl.GetWindowRect(&rectMessage);
     ScreenToClient(&rectMessage);
     CDC* pDC = m_MessageCtrl.GetDC();
-    CRect rectText(0, 0, rectMessage.Width(), 0);
+    CRect rectText(0, 0, rectMessage.Width() + widthExpansion, 0); // taking width expansion into account
     pDC->DrawText(m_Message.c_str(), &rectText, DT_CALCRECT | DT_WORDBREAK | DT_NOPREFIX);
     m_MessageCtrl.ReleaseDC(pDC);
+
+    // Calculate message text height overflow and expend message control height if needed
+    const int messageHeightOverflow = max(0, rectText.Height() - rectMessage.Height());
+    if (messageHeightOverflow > 0)
+    {
+        rectMessage.bottom += messageHeightOverflow;
+        m_MessageCtrl.MoveWindow(rectMessage);
+    }
 
     // Shift down if message height exceeds icon height
     CRect iconRect;
@@ -205,13 +220,15 @@ BOOL CMessageBoxDlg::OnInitDialog()
     m_Layout.AddControl(IDC_MESSAGE_BUTTONRIGHT, 1, 1, 0, 0);
     m_Layout.OnInitDialog(true);
 
+    // Calculate minimum window height after dynamic layout adjustments
+    GetWindowRect(&rectWindow); // get updated window size
+    const int minWindowHeight = rectWindow.Height() + messageHeightOverflow;
+
     // Adjust dialog size if requested
-    CRect rectWindow;
-    GetWindowRect(&rectWindow);
     if (m_InitialSize.cx > 0)
     {
         rectWindow.right = rectWindow.left + m_InitialSize.cx;
-        rectWindow.bottom = rectWindow.top + m_InitialSize.cy;
+        rectWindow.bottom = rectWindow.top + max(m_InitialSize.cy, minWindowHeight); // respect minimum height
         MoveWindow(&rectWindow);
     }
 
