@@ -507,8 +507,11 @@ void CItem::AddChild(CItem* child, const bool addOnly)
 
     child->SetParent(this);
 
-    std::scoped_lock guard(m_FolderInfo->m_Protect);
-    m_FolderInfo->m_Children.push_back(child);
+    {
+        // Release lock early to avoid stalling multithreaded scanning
+        std::scoped_lock guard(m_FolderInfo->m_Protect);
+        m_FolderInfo->m_Children.push_back(child);
+    }
 
     if (IsVisible() && IsExpanded())
     {
