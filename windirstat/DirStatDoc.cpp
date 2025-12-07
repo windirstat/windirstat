@@ -1093,11 +1093,13 @@ void CDirStatDoc::OnLoadResults()
     CFileDialog dlg(TRUE, L"csv", nullptr, OFN_EXPLORER | OFN_DONTADDTORECENT | OFN_PATHMUSTEXIST, fileSelectString.c_str());
     if (dlg.DoModal() != IDOK) return;
 
+    CItem* newroot = nullptr;
     CProgressDlg(0, true, AfxGetMainWnd(), [&](const std::atomic<bool>&, std::atomic<size_t>&)
     {
-        CItem* newroot = LoadResults(dlg.GetPathName().GetString());
-        GetDocument()->OnOpenDocument(newroot);
+        newroot = LoadResults(dlg.GetPathName().GetString());
     }).DoModal();
+
+    GetDocument()->OnOpenDocument(newroot);
 }
 
 void CDirStatDoc::OnEditCopy()
