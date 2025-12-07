@@ -62,6 +62,7 @@ IDS_GENERIC_CANCEL=Cancelar
 IDS_GENERIC_NO=Não
 IDS_GENERIC_OK=OK
 IDS_GENERIC_YES=Sim
+IDS_HARDLINKS_ITEM=<Ligações físicas>
 IDS_HELP_MANUAL=Abrir a ajuda on-line do WinDirStat\nManual
 IDS_HIDDEN=Oculto
 IDS_IDLEMESSAGE=Pronto

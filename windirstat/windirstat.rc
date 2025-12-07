@@ -81,6 +81,7 @@ IDI_FREE_SPACE          ICON                    "res\\nodes\\IDI_FREE_SPACE.ico"
 
 IDI_EMPTY               ICON                    "res\\nodes\\IDI_EMPTY.ico"
 
+IDI_HARDLINKS           ICON                    "res\\nodes\\IDI_HARDLINKS.ico"
 
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////

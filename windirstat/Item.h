@@ -44,36 +44,55 @@ enum ITEMCOLUMNS : std::uint8_t
 };
 
 // Item types
-enum ITEMTYPE : unsigned short
+using ITEMTYPE = enum ITEMTYPE : unsigned short
 {
-    IT_MYCOMPUTER = 1 << 0,  // Pseudo Container "My Computer"
-    IT_DRIVE      = 1 << 1,  // C:\, D:\ etc.
-    IT_DIRECTORY  = 1 << 2,  // Folder
-    IT_FILE       = 1 << 3,  // Regular file
-    IT_FREESPACE  = 1 << 4,  // Pseudo File "<Free Space>"
-    IT_UNKNOWN    = 1 << 5,  // Pseudo File "<Unknown>"
-    IT_ANY        = 0x00FF,  // Indicates any item type
-    ITF_DONE      = 1 << 8,  // Indicates done processing
-    ITF_ROOTITEM  = 1 << 9,  // Indicates root item
-    ITF_SKIPHASH  = 1 << 10, // Indicates cannot be hased (unreadable)
-    ITF_PARTHASH  = 1 << 11, // Indicates a partial hash
-    ITF_FULLHASH  = 1 << 12, // Indicates a full hash
-    ITF_SYMLINK   = 0b001 << 13, // Indicates a reparse point that is a symlink
-    ITF_MOUNTPNT  = 0b010 << 13, // Indicates a reparse point that is a mount point
-    ITF_JUNCTION  = 0b011 << 13, // Indicates a reparse point that is a junction
-    ITF_CLOUDLINK = 0b100 << 13, // Indicates a reparse point that is a cloud link
-    ITF_RPMASK    = 0b111 << 13, // Indicates a reparse point
-    ITF_FLAGS     = 0xFF00, // All potential flag items
+    IT_NONE       = 0 << 0, // No type
+    IT_MYCOMPUTER = 1 << 0, // Pseudo Container "My Computer"
+    IT_DRIVE      = 2 << 0, // C:\, D:\ etc.
+    IT_DIRECTORY  = 3 << 0, // Folder
+    IT_FILE       = 4 << 0, // Regular file
+    IT_HARDLINKS  = 5 << 0, // Pseudo File "<Hardlinks>"
+    IT_FREESPACE  = 6 << 0, // Pseudo File "<Free Space>"
+    IT_UNKNOWN    = 7 << 0, // Pseudo File "<Unknown>"
+    IT_MASK       = 0x000F, // Mask for item type
+
+    ITHASH_NONE   = 0 << 4, // Indicates no hash
+    ITHASH_SKIP   = 1 << 4, // Indicates cannot be hashed (unreadable)
+    ITHASH_PART   = 2 << 4, // Indicates a partial hash
+    ITHASH_FULL   = 3 << 4, // Indicates a full hash
+    ITHASH_MASK   = 3 << 4, // Any hash state
+
+    ITRP_NONE     = 0 << 6, // Indicates no reparse data
+    ITRP_SYMLINK  = 1 << 6, // Indicates a reparse point that is a symlink
+    ITRP_MOUNT    = 2 << 6, // Indicates a reparse point that is a mount point
+    ITRP_JUNCTION = 3 << 6, // Indicates a reparse point that is a junction
+    ITRP_CLOUD    = 4 << 6, // Indicates a reparse point that is a cloud link
+    ITRP_MASK     = 7 << 6, // Indicates a reparse point that is a cloud link
+
+    ITF_NONE      = 0 << 9,  // No flags
+    ITF_UNUSED    = 1 << 10, // Unused
+    ITF_BASIC     = 1 << 11, // Forces basic finder
+    ITF_SIZECOUNT = 1 << 12, // Indicates size should be added to physical size
+    ITF_HARDLINK  = 1 << 13, // Indicates file is a hardlink (LinkCount > 1)
+    ITF_ROOTITEM  = 1 << 14, // Indicates root item
+    ITF_DONE      = 1 << 15, // Indicates done processing
+    ITF_FLAGS     = 0xFE00,  // All potential flag items
+    ITF_ANY       = 0xFFFF   // Indicates any item type or flag
 };
+
+constexpr ITEMTYPE operator~(const ITEMTYPE& a)
+{
+    return static_cast<ITEMTYPE>(~static_cast<USHORT>(a));
+}
 
 constexpr ITEMTYPE operator|(const ITEMTYPE & a, const ITEMTYPE & b)
 {
-    return static_cast<ITEMTYPE>(static_cast<unsigned short>(a) | static_cast<unsigned short>(b));
+    return static_cast<ITEMTYPE>(static_cast<USHORT>(a) | static_cast<USHORT>(b));
 }
 
-constexpr ITEMTYPE operator-(const ITEMTYPE& a, const ITEMTYPE& b)
+constexpr ITEMTYPE operator&(const ITEMTYPE& a, const ITEMTYPE& b)
 {
-    return static_cast<ITEMTYPE>(static_cast<unsigned short>(a) & ~static_cast<unsigned short>(b));
+    return static_cast<ITEMTYPE>(static_cast<USHORT>(a) & static_cast<USHORT>(b));
 }
 
 constexpr bool operator<(const FILETIME& t1, const FILETIME& t2)
@@ -109,7 +128,7 @@ public:
     CItem& operator=(CItem&&) = delete;
     CItem(ITEMTYPE type, const std::wstring& name);
     CItem(ITEMTYPE type, const std::wstring& name, FILETIME lastChange, ULONGLONG sizePhysical,
-        ULONGLONG sizeLogical, DWORD attributes, ULONG files, ULONG subdirs);
+        ULONGLONG sizeLogical, const ULONG index, DWORD attributes, ULONG files, ULONG subdirs);
     ~CItem() override;
 
     // CTreeListItem Interface
@@ -159,6 +178,7 @@ public:
     void ExtensionDataProcessChildren(bool remove = false) const;
     ULONGLONG GetSizePhysical() const;
     ULONGLONG GetSizeLogical() const;
+    ULONGLONG GetSizePhysicalRaw() const;
     void SetSizePhysical(ULONGLONG size);
     void SetSizeLogical(ULONGLONG size);
     ULONG GetReadJobs() const;
@@ -170,11 +190,13 @@ public:
     DWORD GetIndex() const;
     DWORD GetReparseTag() const;
     void SetReparseTag(DWORD reparseType);
-    unsigned short GetSortAttributes() const;
+    USHORT GetSortAttributes() const;
     double GetFraction() const;
     bool IsRootItem() const;
     std::wstring GetPath() const;
     std::wstring GetPathLong() const;
+    CItem* FindItemByPath(const std::wstring& path) const;
+    std::vector<CItem*> FindItemsBySameIndex() const;
     std::wstring GetOwner(bool force = false) const;
     bool HasUncPath() const;
     std::wstring GetFolderPath() const;
@@ -202,18 +224,20 @@ public:
     CItem* FindUnknownItem() const;
     void UpdateUnknownItem() const;
     void RemoveUnknownItem();
+    void CreateHardlinksItem();
+    CItem* FindHardlinksItem() const;
     void UpwardDrivePacman();
 
     std::vector<BYTE> GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CItem*>* queue);
 
     bool IsDone() const
     {
-        return IsType(ITF_DONE);
+        return HasFlag(ITF_DONE);
     }
 
-    ITEMTYPE GetType() const
+    ITEMTYPE GetItemType() const
     {
-        return static_cast<ITEMTYPE>(m_Type & ~ITF_FLAGS);
+        return m_Type & IT_MASK;
     }
 
     ITEMTYPE GetRawType() const
@@ -221,21 +245,35 @@ public:
         return m_Type;
     }
 
-    constexpr bool IsType(const ITEMTYPE type) const
+    template<ITEMTYPE Mask, typename... Args>
+    inline bool HasType(bool bitOp = false, Args... args) const
     {
-        return (m_Type & type) != 0;
+        if (bitOp) return ((args == ITF_ANY || ((m_Type & args) != 0)) || ...);
+        return ((args == ITF_ANY || ((m_Type & Mask) == args)) || ...);
     }
 
-    constexpr void SetType(const ITEMTYPE type, const bool set = true)
+    template<ITEMTYPE Mask>
+    inline void SetType(ITEMTYPE type, bool bitOp = false, bool unsetVal = false)
     {
-        if (set) m_Type = m_Type | type;
-        else m_Type = m_Type - type;
+        if (unsetVal) m_Type = (m_Type & ~type);
+        else m_Type = bitOp ? (m_Type | type) : ((m_Type & ~Mask) | type);
     }
 
-    constexpr bool IsReparseType(const ITEMTYPE type) const
-    {
-        return (m_Type & ITF_RPMASK) == type;
-    }
+    template<typename... Args>
+    inline bool IsType(Args... args) const { return HasType<IT_MASK>(false, args...); }
+    inline void SetItemType(ITEMTYPE type) { SetType<IT_MASK>(type); }
+
+    template<typename... Args>
+    inline bool IsReparseType(Args... args) const { return HasType<ITRP_MASK>(false, args...); }
+    inline void SetReparseType(ITEMTYPE type) { SetType<ITRP_MASK>(type); }
+
+    template<typename... Args>
+    inline bool IsHashType(Args... args) const { return HasType<ITHASH_MASK>(false, args...); }
+    inline void SetHashType(ITEMTYPE type) { SetType<ITHASH_MASK>(type); }
+
+    template<typename... Args>
+    inline bool HasFlag(Args... args) const { return HasType<ITF_FLAGS>(true, args...); }
+    inline void SetFlag(ITEMTYPE type, bool unsetVal = false) { SetType<ITF_FLAGS>(type, true, unsetVal); }
 
     static constexpr bool FileTimeIsGreater(const FILETIME& ft1, const FILETIME& ft2)
     {
@@ -251,7 +289,7 @@ private:
     COLORREF GetPercentageColor() const;
     std::wstring UpwardGetPathWithoutBackslash() const;
     CItem* AddDirectory(const Finder& finder);
-    CItem* AddFile(const Finder& finder);
+    CItem* AddFile(Finder& finder);
 
     // Used for initialization of hashing process
     static std::mutex m_HashMutex;

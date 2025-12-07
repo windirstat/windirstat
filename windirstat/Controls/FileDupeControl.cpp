@@ -48,7 +48,7 @@ CFileDupeControl* CFileDupeControl::m_Singleton = nullptr;
 void CFileDupeControl::ProcessDuplicate(CItem * item, BlockingQueue<CItem*>* queue)
 {
     if (!COptions::ScanForDuplicates) return;
-    if (COptions::SkipDupeDetectionCloudLinks && item->IsReparseType(ITF_CLOUDLINK))
+    if (COptions::SkipDupeDetectionCloudLinks && item->IsReparseType(ITRP_CLOUD))
     {
         std::unique_lock lock(m_HashTrackerMutex);
         CMessageBoxDlg dlg(Localization::Lookup(IDS_DUPLICATES_WARNING), Localization::LookupNeutral(AFX_IDS_APP_TITLE),
@@ -73,31 +73,31 @@ void CFileDupeControl::ProcessDuplicate(CItem * item, BlockingQueue<CItem*>* que
     
     std::vector<BYTE> hashForThisItem;
     auto itemsToHash = std::vector(sizeSet);
-    for (const ITEMTYPE & hashType : {ITF_PARTHASH, ITF_FULLHASH })
+    for (const ITEMTYPE & hashType : {ITHASH_PART, ITHASH_FULL })
     {
         // Attempt to hash the file partially
         for (auto& itemToHash : itemsToHash)
         {
-            if (itemToHash->IsType(hashType) || itemToHash->IsType(ITF_SKIPHASH)) continue;
+            if (itemToHash->IsHashType(ITHASH_SKIP)) continue;
 
             // Compute the hash for the file
             lock.unlock();
-            auto hash = itemToHash->GetFileHash(hashType == ITF_PARTHASH ? m_PartialBufferSize : 0, queue);
+            auto hash = itemToHash->GetFileHash(hashType == ITHASH_PART ? m_PartialBufferSize : 0, queue);
             lock.lock();
 
             // Skip if not hashable
             if (hash.empty())
             {
-                itemToHash->SetType(itemToHash->GetRawType() | ITF_SKIPHASH);
+                itemToHash->SetHashType(ITHASH_SKIP);
                 continue;
             }
 
-            itemToHash->SetType(itemToHash->GetRawType() | hashType);
+            itemToHash->SetFlag(hashType);
             if (itemToHash == item) hashForThisItem = hash;
 
             // Mark as the full being completed as well
             if (itemToHash->GetSizeLogical() <= m_PartialBufferSize)
-                itemToHash->SetType(itemToHash->GetRawType() | ITF_FULLHASH);
+                itemToHash->SetHashType(ITHASH_FULL);
 
             // Add hash to tracking queue
             auto & hashVector = m_HashTracker[hash];
@@ -199,7 +199,7 @@ void CFileDupeControl::RemoveItem(CItem* item)
         {
             // Mark as all files as not being hashed anymore
             std::erase(m_SizeTracker.at(qitem->GetSizeLogical()), qitem);
-            qitem->SetType(ITF_PARTHASH | ITF_FULLHASH, false);
+            qitem->SetHashType(ITHASH_NONE);
         }
         else if (!qitem->IsLeaf()) for (const auto& child : qitem->GetChildren())
         {
@@ -219,7 +219,7 @@ void CFileDupeControl::RemoveItem(CItem* item)
             // Skip if no matches of the item associated with this hash
             std::erase_if(hashSet, [](const auto& hashItem)
             {
-                return !hashItem->IsType(ITF_PARTHASH | ITF_FULLHASH);
+                return !hashItem->IsHashType(ITHASH_PART, ITHASH_FULL);
             });
         }
 
@@ -248,7 +248,7 @@ void CFileDupeControl::RemoveItem(CItem* item)
             erasedChild ? childItem : ++childItem, erasedChild = false)
         {
             // Nothing to do if still marked as hashed
-            if ((*childItem)->IsType(ITF_PARTHASH | ITF_FULLHASH)) continue;
+            if ((*childItem)->IsHashType(ITHASH_PART, ITHASH_FULL)) continue;
 
             // Remove from child tracker and visual tree
             for (auto& visualChild : dupeParent->GetChildren())

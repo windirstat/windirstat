@@ -42,6 +42,7 @@ void CIconHandler::Initialize()
     m_FreeSpaceImage = DarkMode::LightenIcon(CDirStatApp::Get()->LoadIcon(IDI_FREE_SPACE), true);
     m_UnknownImage = DarkMode::LightenIcon(CDirStatApp::Get()->LoadIcon(IDI_UNKNOWN), true);
     m_EmptyImage = DarkMode::LightenIcon(CDirStatApp::Get()->LoadIcon(IDI_EMPTY), true);
+    m_HardlinksImage = DarkMode::LightenIcon(CDirStatApp::Get()->LoadIcon(IDI_HARDLINKS), true);
 
     // Cache icon for boot drive
     const auto driveLen = wcslen(L"C:\\");
@@ -206,4 +207,9 @@ HICON CIconHandler::GetUnknownImage() const
 HICON CIconHandler::GetEmptyImage() const
 {
     return m_EmptyImage;
+}
+
+HICON CIconHandler::GetHardlinksImage() const
+{
+    return m_HardlinksImage;
 }

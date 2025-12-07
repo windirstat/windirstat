@@ -65,6 +65,7 @@ constexpr std::wstring_view IDS_GENERIC_CANCEL = L"IDS_GENERIC_CANCEL";
 constexpr std::wstring_view IDS_GENERIC_NO = L"IDS_GENERIC_NO";
 constexpr std::wstring_view IDS_GENERIC_OK = L"IDS_GENERIC_OK";
 constexpr std::wstring_view IDS_GENERIC_YES = L"IDS_GENERIC_YES";
+constexpr std::wstring_view IDS_HARDLINKS_ITEM = L"IDS_HARDLINKS_ITEM";
 constexpr std::wstring_view IDS_HELP_MANUAL = L"IDS_HELP_MANUAL";
 constexpr std::wstring_view IDS_HIDDEN = L"IDS_HIDDEN";
 constexpr std::wstring_view IDS_IDLEMESSAGE = L"IDS_IDLEMESSAGE";

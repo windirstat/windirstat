@@ -26,7 +26,7 @@ enum : std::uint8_t
 {
     FIELD_NAME,
     FIELD_FILES,
-    FIELDS_FOLDERS,
+    FIELD_FOLDERS,
     FIELD_SIZE_LOGICAL,
     FIELD_SIZE_PHYSICAL,
     FIELD_ATTRIBUTES,
@@ -44,7 +44,7 @@ static void ParseHeaderLine(const std::vector<std::wstring>& header)
     {
         { Localization::Lookup(IDS_COL_NAME), FIELD_NAME},
         { Localization::Lookup(IDS_COL_FILES), FIELD_FILES },
-        { Localization::Lookup(IDS_COL_FOLDERS), FIELDS_FOLDERS },
+        { Localization::Lookup(IDS_COL_FOLDERS), FIELD_FOLDERS },
         { Localization::Lookup(IDS_COL_SIZE_LOGICAL), FIELD_SIZE_LOGICAL },
         { Localization::Lookup(IDS_COL_SIZE_PHYSICAL), FIELD_SIZE_PHYSICAL },
         { Localization::Lookup(IDS_COL_ATTRIBUTES), FIELD_ATTRIBUTES },
@@ -150,11 +150,14 @@ CItem* LoadResults(const std::wstring & path)
         }
 
         // Decode item type
-        const ITEMTYPE type = static_cast<ITEMTYPE>(wcstoul(fields[orderMap[FIELD_ATTRIBUTES_WDS]].c_str(), nullptr, 16));
+        const ULONGLONG indexAndAttributes = wcstoull(fields[orderMap[FIELD_ATTRIBUTES_WDS]].c_str(), nullptr, 16);
+        const ITEMTYPE type = static_cast<ITEMTYPE>(indexAndAttributes);
+        const ULONG index = static_cast<ULONG>(indexAndAttributes >> (sizeof(ITEMTYPE) * CHAR_BIT));
 
         // Determine how to store the path if it was the root or not
+        const auto itType = IT_MASK & type;
         const bool isRoot = (type & ITF_ROOTITEM);
-        const bool isInRoot = (type & IT_DRIVE) || (type & IT_UNKNOWN) || (type & IT_FREESPACE);
+        const bool isInRoot = itType == IT_DRIVE || itType == IT_UNKNOWN || itType == IT_FREESPACE || itType == IT_HARDLINKS;
         const bool useFullPath = isRoot || isInRoot;
         LPWSTR lookupPath = fields[orderMap[FIELD_NAME]].data();
         LPWSTR displayName = useFullPath ? lookupPath : wcsrchr(lookupPath, L'\\');
@@ -171,9 +174,10 @@ CItem* LoadResults(const std::wstring & path)
             FromTimeString(fields[orderMap[FIELD_LAST_CHANGE]]),
             _wcstoui64(fields[orderMap[FIELD_SIZE_PHYSICAL]].c_str(), nullptr, 10),
             _wcstoui64(fields[orderMap[FIELD_SIZE_LOGICAL]].c_str(), nullptr, 10),
+            index,
             wcstoul(fields[orderMap[FIELD_ATTRIBUTES]].c_str(), nullptr, 16),
             wcstoul(fields[orderMap[FIELD_FILES]].c_str(), nullptr, 10),
-            wcstoul(fields[orderMap[FIELDS_FOLDERS]].c_str(), nullptr, 10));
+            wcstoul(fields[orderMap[FIELD_FOLDERS]].c_str(), nullptr, 10));
 
         if (isRoot)
         {
@@ -274,8 +278,8 @@ bool SaveResults(const std::wstring& path, CItem * rootItem)
     for (const auto item : items)
     {
         // Output primary columns
-        const bool nonPathItem = item->IsType(IT_MYCOMPUTER | IT_UNKNOWN | IT_FREESPACE);
-        outf << std::format("{},{},{},{},{},0x{:08X},{},0x{:04X}",
+        const bool nonPathItem = item->IsType(IT_MYCOMPUTER, IT_UNKNOWN, IT_FREESPACE, IT_HARDLINKS);
+        outf << std::format("{},{},{},{},{},0x{:08X},{},0x{:012X}",
             QuoteAndConvert(nonPathItem ? item->GetName() : item->GetPath()),
             item->GetFilesCount(),
             item->GetFoldersCount(),
@@ -283,7 +287,7 @@ bool SaveResults(const std::wstring& path, CItem * rootItem)
             item->GetSizePhysical(),
             item->GetAttributes(),
             ToTimePoint(item->GetLastChange()),
-            static_cast<unsigned short>(item->GetRawType()));
+            (item->GetIndex() << (sizeof(ITEMTYPE) * CHAR_BIT)) | item->GetRawType());
 
         // Output additional columns
         if (COptions::ShowColumnOwner)

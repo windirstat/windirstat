@@ -62,6 +62,7 @@ IDS_GENERIC_CANCEL=Отмена
 IDS_GENERIC_NO=Нет
 IDS_GENERIC_OK=ОК
 IDS_GENERIC_YES=Да
+IDS_HARDLINKS_ITEM=<Жёсткие ссылки>
 IDS_HELP_MANUAL=Открывает онлайн помощь по WinDirStat.\nСправочник
 IDS_HIDDEN=Скрыто
 IDS_IDLEMESSAGE=Готово

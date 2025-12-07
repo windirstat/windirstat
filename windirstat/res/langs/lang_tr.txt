@@ -62,6 +62,7 @@ IDS_GENERIC_CANCEL=İptal
 IDS_GENERIC_NO=Hayır
 IDS_GENERIC_OK=Tamam
 IDS_GENERIC_YES=Evet
+IDS_HARDLINKS_ITEM=<Sabit bağlantılar>
 IDS_HELP_MANUAL=WinDirStat Çevrimiçi Yardım'ı açın.\nKılavuz
 IDS_HIDDEN=Gizli
 IDS_IDLEMESSAGE=Hazır

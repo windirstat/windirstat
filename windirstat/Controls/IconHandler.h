@@ -50,6 +50,7 @@ public:
     HICON GetJunctionProtectedImage() const;
     HICON GetFreeSpaceImage() const;
     HICON GetUnknownImage() const;
+    HICON GetHardlinksImage() const;
     HICON GetEmptyImage() const;
 
     HICON FetchShellIcon(const std::wstring& path, UINT flags = 0, DWORD attr = FILE_ATTRIBUTE_NORMAL, std::wstring* psTypeName = nullptr);
@@ -59,6 +60,7 @@ public:
 
     HICON m_FreeSpaceImage = nullptr;    // <Free Space>
     HICON m_UnknownImage = nullptr;      // <Unknown>
+    HICON m_HardlinksImage = nullptr;    // <Hardlinks>
     HICON m_EmptyImage = nullptr;        // For items whose icon cannot be found
     HICON m_JunctionImage = nullptr;     // For normal functions
     HICON m_JunctionProtected = nullptr; // For protected junctions

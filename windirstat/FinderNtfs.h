@@ -31,6 +31,8 @@ public:
         FILETIME LastModifiedTime = {};
         ULONG Attributes = 0;
         DWORD ReparsePointTag = 0;
+        USHORT LinkCount = 0;
+        BOOL SizeCounted = FALSE;
     };
 
     using FileRecordName = struct FileRecordName
@@ -55,7 +57,7 @@ public:
 class FinderNtfs final : public Finder
 {
     FinderNtfsContext* m_Master = nullptr;
-    const FinderNtfsContext::FileRecordBase* m_CurrentRecord = nullptr;
+    FinderNtfsContext::FileRecordBase* m_CurrentRecord = nullptr;
     const FinderNtfsContext::FileRecordName* m_CurrentRecordName = nullptr;
 
     const concurrency::concurrent_vector<FinderNtfsContext::FileRecordName>* m_ChildrenSet = nullptr;
@@ -79,4 +81,6 @@ public:
     ULONGLONG GetFileSizeLogical() const override;
     FILETIME GetLastWriteTime() const override;
     std::wstring GetFilePath() const override;
+    USHORT GetLinkCount() const;
+    bool ShouldCountSize() override;
 };

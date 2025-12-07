@@ -66,4 +66,5 @@ public:
     inline DWORD GetReparseTag() const override;
 
     static bool DoesFileExist(const std::wstring& folder, const std::wstring& file = {});
+    static std::vector<std::wstring> GetHardlinks(const std::wstring& path);
 };
