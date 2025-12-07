@@ -152,7 +152,7 @@ BEGIN_MESSAGE_MAP(CExtensionListControl, COwnerDrawnListControl)
 END_MESSAGE_MAP()
 
 CExtensionListControl::CExtensionListControl(CExtensionView* extensionView)
-    : COwnerDrawnListControl(19, COptions::ExtViewColumnOrder.Ptr(), COptions::ExtViewColumnWidths.Ptr()) // FIXME: Hardcoded value
+    : COwnerDrawnListControl(20, COptions::ExtViewColumnOrder.Ptr(), COptions::ExtViewColumnWidths.Ptr()) // FIXME: Hardcoded value
     , m_ExtensionView(extensionView) {}
 
 bool CExtensionListControl::GetAscendingDefault(const int subitem)
