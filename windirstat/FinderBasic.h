@@ -21,9 +21,16 @@
 #include "Item.h"
 #include "Finder.h"
 
+class FinderBasicContext final
+{
+public:
+    bool Initialized = false;
+    bool VolumeSupportsFileId = false;
+};
+
 class FinderBasic final : public Finder
 {
-    using FILE_FULL_DIR_INFORMATION = struct {
+    using FILE_DIR_INFORMATION = struct {
         ULONG         NextEntryOffset;
         ULONG         FileIndex;
         LARGE_INTEGER CreationTime;
@@ -34,23 +41,40 @@ class FinderBasic final : public Finder
         LARGE_INTEGER AllocationSize;
         ULONG         FileAttributes;
         ULONG         FileNameLength;
-        ULONG         EaSize;
-        WCHAR         FileName[1];
+        ULONG         ReparsePointTag;
+        union
+        {
+            struct
+            {
+                WCHAR         FileName[1];
+            }
+            StandardInfo;
+            
+            struct
+            {        
+                LARGE_INTEGER FileId;
+                WCHAR         FileName[1];
+            }
+            IdInfo;
+        };
     };
 
     std::wstring m_Search;
     std::wstring m_Base;
     std::wstring m_Name;
     std::vector<BYTE> m_DirectoryInfo;
-    FILE_FULL_DIR_INFORMATION* m_CurrentInfo = nullptr;
+    FILE_DIR_INFORMATION* m_CurrentInfo = nullptr;
+    FinderBasicContext* m_Context = nullptr;
     HANDLE m_Handle = nullptr;
     DWORD m_InitialAttributes = INVALID_FILE_ATTRIBUTES;
     DWORD m_ReparseTag = 0;
     bool m_Firstrun = true;
+    bool m_UseFileId = false;
 
 public:
 
     FinderBasic() = default;
+    FinderBasic(FinderBasicContext* context) : m_Context(context) {}
     ~FinderBasic();
 
     bool FindNext() override;
@@ -66,5 +90,4 @@ public:
     inline DWORD GetReparseTag() const override;
 
     static bool DoesFileExist(const std::wstring& folder, const std::wstring& file = {});
-    static std::vector<std::wstring> GetHardlinks(const std::wstring& path);
 };

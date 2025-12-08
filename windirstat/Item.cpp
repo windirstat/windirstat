@@ -16,7 +16,6 @@
 //
 
 #include "stdafx.h"
-
 #include "WinDirStat.h"
 #include "DirStatDoc.h"
 #include "MainFrame.h"
@@ -65,8 +64,8 @@ CItem::CItem(const ITEMTYPE type, const std::wstring & name) : m_Type(type)
 }
 
 CItem::CItem(const ITEMTYPE type, const std::wstring& name, const FILETIME lastChange,
-             const ULONGLONG sizePhysical, const ULONGLONG sizeLogical, const DWORD attributes,
-             const ULONG index, const ULONG files, const ULONG subdirs)
+    const ULONGLONG sizePhysical, const ULONGLONG sizeLogical, const ULONG index,
+    const DWORD attributes, const ULONG files, const ULONG subdirs)
 {
     SetName(name);
     m_Type = type;
@@ -1063,10 +1062,10 @@ void CItem::ScanItemsFinalize(CItem* item)
     }
 }
 
-void CItem::ScanItems(BlockingQueue<CItem*> * queue, FinderNtfsContext& contextNtfs)
+void CItem::ScanItems(BlockingQueue<CItem*> * queue, FinderNtfsContext& contextNtfs, FinderBasicContext& contextBasic)
 {
     FinderNtfs finderNtfs(&contextNtfs);
-    FinderBasic finderBasic;
+    FinderBasic finderBasic(&contextBasic);
 
     while (CItem * const item = queue->Pop())
     {
@@ -1081,7 +1080,7 @@ void CItem::ScanItems(BlockingQueue<CItem*> * queue, FinderNtfsContext& contextN
 
         if (item->IsType(IT_DRIVE, IT_DIRECTORY))
         {
-            Finder* finder = item->GetIndex() > 0 ?
+            Finder* finder = contextNtfs.IsLoaded && !item->HasFlag(ITF_BASIC) ?
                 reinterpret_cast<Finder*>(&finderNtfs) : reinterpret_cast<Finder*>(&finderBasic);
 
             for (BOOL b = finder->FindFile(item); b; b = finder->FindNext())
@@ -1471,10 +1470,11 @@ CItem* CItem::AddDirectory(const Finder& finder)
         CDirStatApp::Get()->IsFollowingAllowed(finder.GetReparseTag());
 
     const auto & child = new CItem(IT_DIRECTORY, finder.GetFileName());
-    child->SetIndex(finder.IsOffVolumeReparsePoint() && follow ? 0 : finder.GetIndex());
+    child->SetIndex(finder.GetIndex());
     child->SetLastChange(finder.GetLastWriteTime());
     child->SetAttributes(finder.GetAttributes());
     child->SetReparseTag(finder.GetReparseTag());
+    if (finder.IsOffVolumeReparsePoint() && follow) child->SetFlag(ITF_BASIC);
     AddChild(child);
     child->UpwardAddReadJobs(follow ? 1 : 0);
 

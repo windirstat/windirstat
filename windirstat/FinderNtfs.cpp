@@ -326,6 +326,7 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
     rootChildren = std::move(newChildren);
 
     driveitem->SetIndex(NtfsNodeRoot);
+    IsLoaded = true;
     return true;
 }
 

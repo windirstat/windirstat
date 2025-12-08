@@ -52,6 +52,7 @@ public:
     concurrency::concurrent_unordered_map<ULONGLONG, concurrency::concurrent_vector<FileRecordName>> m_ParentToChildMap;
 
     bool LoadRoot(CItem* driveitem);
+    bool IsLoaded = false;
 };
 
 class FinderNtfs final : public Finder

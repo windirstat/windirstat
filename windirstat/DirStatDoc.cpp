@@ -1786,12 +1786,14 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
 
         // Create subordinate threads if there is work to do
         std::unordered_map<std::wstring, FinderNtfsContext> queueContextNtfs;
+        std::unordered_map<std::wstring, FinderBasicContext> queueContextBasic;
         for (auto& queue : m_queues)
         {
             queueContextNtfs.emplace(queue.first, FinderNtfsContext{});
+            queueContextBasic.emplace(queue.first, FinderBasicContext{});
             queue.second.StartThreads(COptions::ScanningThreads, [&]()
             {
-                CItem::ScanItems(&queue.second, queueContextNtfs[queue.first]);
+                CItem::ScanItems(&queue.second, queueContextNtfs[queue.first], queueContextBasic[queue.first]);
             });
         }
 

@@ -39,7 +39,6 @@ bool FinderBasic::FindNext()
     bool success = false;
     if (m_Firstrun || m_CurrentInfo->NextEntryOffset == 0)
     {
-        // handle optional pattern mask
         UNICODE_STRING uSearch
         {
             .Length = static_cast<USHORT>(m_Search.size() * sizeof(WCHAR)),
@@ -47,22 +46,36 @@ bool FinderBasic::FindNext()
             .Buffer = m_Search.data()
         };
 
-        // enumerate files in the directory
         constexpr auto BUFFER_SIZE = 64 * 1024;
         constexpr auto FileFullDirectoryInformation = 2;
+        constexpr auto FileIdFullDirectoryInformation = 38;
         IO_STATUS_BLOCK IoStatusBlock;
         m_DirectoryInfo.reserve(BUFFER_SIZE);
+
+        // Determine if volume supports FileId
+        m_UseFileId = m_Context != nullptr && m_Context->VolumeSupportsFileId;
+        if (m_Context != nullptr && !m_Context->Initialized)
+        {
+            NTSTATUS Status = NtQueryDirectoryFile(m_Handle, nullptr, nullptr, nullptr, &IoStatusBlock,
+                m_DirectoryInfo.data(), BUFFER_SIZE, static_cast<FILE_INFORMATION_CLASS>(FileIdFullDirectoryInformation),
+                FALSE, (uSearch.Length > 0) ? &uSearch : nullptr, TRUE);
+            m_Context->VolumeSupportsFileId = (Status == 0);
+            m_UseFileId = m_Context->VolumeSupportsFileId;
+            m_Context->Initialized = true;
+        }
+
+        // Query directory with appropriate information class
         const NTSTATUS Status = NtQueryDirectoryFile(m_Handle, nullptr, nullptr, nullptr, &IoStatusBlock,
-            m_DirectoryInfo.data(), BUFFER_SIZE, static_cast<FILE_INFORMATION_CLASS>(FileFullDirectoryInformation),
+            m_DirectoryInfo.data(), BUFFER_SIZE, static_cast<FILE_INFORMATION_CLASS>(
+                m_UseFileId ? FileIdFullDirectoryInformation : FileFullDirectoryInformation),
             FALSE, (uSearch.Length > 0) ? &uSearch : nullptr, (m_Firstrun) ? TRUE : FALSE);
 
-        // fetch pointer to current node
         success = (Status == 0);
-        m_CurrentInfo = reinterpret_cast<FILE_FULL_DIR_INFORMATION*>(m_DirectoryInfo.data());
+        m_CurrentInfo = reinterpret_cast<FILE_DIR_INFORMATION*>(m_DirectoryInfo.data());
     }
     else
     {
-        m_CurrentInfo = reinterpret_cast<FILE_FULL_DIR_INFORMATION*>(
+        m_CurrentInfo = reinterpret_cast<FILE_DIR_INFORMATION*>(
             &reinterpret_cast<BYTE*>(m_CurrentInfo)[m_CurrentInfo->NextEntryOffset]);
         success = true;
     }
@@ -70,13 +83,15 @@ bool FinderBasic::FindNext()
     if (success)
     {
         // handle unexpected trailing null on some file systems
+        LPCWSTR fileNamePtr = m_UseFileId ? m_CurrentInfo->IdInfo.FileName :
+            m_CurrentInfo->StandardInfo.FileName;
         ULONG nameLength = m_CurrentInfo->FileNameLength / sizeof(WCHAR);
-        if (nameLength > 1 && m_CurrentInfo->FileName[nameLength - 1] == L'\0')
+        if (nameLength > 1 && fileNamePtr[nameLength - 1] == L'\0')
             nameLength -= 1;
 
         // copy name into local buffer
         m_Name.resize(nameLength);
-        std::wmemcpy(m_Name.data(), m_CurrentInfo->FileName, nameLength);
+        std::wmemcpy(m_Name.data(), fileNamePtr, nameLength);
 
         // special case for reparse on initial run points since it will
         // return the attributes on the destination folder and not the reparse
@@ -99,30 +114,8 @@ bool FinderBasic::FindNext()
         }
 
         // Handle reparse points
-        m_ReparseTag = 0;
-        if (IsReparsePoint())
-        {
-            // Extract the reparse tag from the buffer
-            const auto longpath = MakeLongPathCompatible(GetFilePath());
-            SmartPointer<HANDLE> handle(CloseHandle, CreateFile(longpath.c_str(), FILE_READ_ATTRIBUTES,
-                FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING,
-                FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT, nullptr));
-            if (handle != INVALID_HANDLE_VALUE)
-            {
-                std::vector<BYTE> buf(MAXIMUM_REPARSE_DATA_BUFFER_SIZE);
-                DWORD dwRet = MAXIMUM_REPARSE_DATA_BUFFER_SIZE;
-                if (DeviceIoControl(handle, FSCTL_GET_REPARSE_POINT,
-                    nullptr, 0, buf.data(), MAXIMUM_REPARSE_DATA_BUFFER_SIZE, &dwRet, nullptr) != FALSE)
-                {
-                    auto& reparseBuffer = *ByteOffset<REPARSE_DATA_BUFFER>(buf.data(), 0);
-                    m_ReparseTag = reparseBuffer.ReparseTag;
-                    if (IsJunction(reparseBuffer))
-                    {
-                        m_ReparseTag = IO_REPARSE_TAG_JUNCTION_POINT;
-                    }
-                }
-            }
-        }
+        m_ReparseTag = m_CurrentInfo->FileAttributes & FILE_ATTRIBUTE_REPARSE_POINT ?
+            m_CurrentInfo->ReparsePointTag : 0;
 
         // Correct physical size
         if (m_CurrentInfo->AllocationSize.QuadPart == 0 &&
@@ -255,32 +248,3 @@ bool FinderBasic::DoesFileExist(const std::wstring& folder, const std::wstring& 
     FinderBasic finder;
     return finder.FindFile(folder, file);
 }
-
-std::vector<std::wstring> FinderBasic::GetHardlinks(const std::wstring& path)
-{
-    // Get volume path
-    const std::wstring longPath = MakeLongPathCompatible(path);
-    std::wstring volumePath = GetVolumePathNameEx(longPath);
-
-    // Make sure volume path has backslash at the end
-    volumePath.resize(wcslen(volumePath.data()));
-    if (volumePath.back() == L'\\') volumePath.pop_back();
-
-    SmartPointer<HANDLE> hFile(CloseHandle, CreateFileW(longPath.c_str(), FILE_READ_ATTRIBUTES,
-        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, nullptr));
-    if (hFile == INVALID_HANDLE_VALUE) return {};
-
-    std::vector<std::wstring> paths;
-    std::vector<wchar_t> buf(USHRT_MAX);
-    DWORD count = static_cast<DWORD>(buf.size());
-    BOOL result = TRUE;
-    for (SmartPointer<HANDLE> finder(FindClose, FindFirstFileNameW(longPath.c_str(), 0, &count, buf.data()));
-        finder != INVALID_HANDLE_VALUE && result;
-        count = static_cast<DWORD>(buf.size()), result = FindNextFileNameW(finder, &count, buf.data()))
-    {
-        paths.emplace_back(volumePath + buf.data());
-    }
-
-    return paths;
-}
-

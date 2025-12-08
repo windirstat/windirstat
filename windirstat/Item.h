@@ -25,6 +25,7 @@
 
 class Finder;
 class FinderNtfsContext;
+class FinderBasicContext;
 
 // Columns
 enum ITEMCOLUMNS : std::uint8_t
@@ -128,7 +129,7 @@ public:
     CItem& operator=(CItem&&) = delete;
     CItem(ITEMTYPE type, const std::wstring& name);
     CItem(ITEMTYPE type, const std::wstring& name, FILETIME lastChange, ULONGLONG sizePhysical,
-        ULONGLONG sizeLogical, const ULONG index, DWORD attributes, ULONG files, ULONG subdirs);
+        ULONGLONG sizeLogical, ULONG index, DWORD attributes, ULONG files, ULONG subdirs);
     ~CItem() override;
 
     // CTreeListItem Interface
@@ -211,7 +212,7 @@ public:
     void SortItemsBySizeLogical() const;
     ULONGLONG GetTicksWorked() const;
     void ResetScanStartTime() const;
-    static void ScanItems(BlockingQueue<CItem*> *, FinderNtfsContext& contextNtfs);
+    static void ScanItems(BlockingQueue<CItem*> *, FinderNtfsContext& contextNtfs, FinderBasicContext& contextBasic);
     static void ScanItemsFinalize(CItem* item);
     void UpwardSetDone();
     void UpwardSetUndone();
