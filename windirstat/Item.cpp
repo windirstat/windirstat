@@ -1443,16 +1443,14 @@ std::wstring CItem::UpwardGetPathWithoutBackslash() const
         if (const auto & pathPart = *it; pathPart->IsType(IT_DIRECTORY))
         {
             path.append(pathPart->m_Name.get(), pathPart->m_NameLen).append(L"\\");
-
         }
-        else if (pathPart->IsType(IT_FILE))
+        else if (pathPart->IsType(IT_FILE, IT_HARDLINKS, IT_UNKNOWN, IT_FREESPACE))
         {
             path.append(pathPart->m_Name.get(), pathPart->m_NameLen);
         }
         else if (pathPart->IsType(IT_DRIVE))
         {
             path.append(pathPart->m_Name.get(), 2).append(L"\\");
-
         }
     }
 

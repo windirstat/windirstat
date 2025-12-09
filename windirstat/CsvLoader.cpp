@@ -157,7 +157,7 @@ CItem* LoadResults(const std::wstring & path)
         // Determine how to store the path if it was the root or not
         const auto itType = IT_MASK & type;
         const bool isRoot = (type & ITF_ROOTITEM);
-        const bool isInRoot = itType == IT_DRIVE || itType == IT_UNKNOWN || itType == IT_FREESPACE || itType == IT_HARDLINKS;
+        const bool isInRoot = itType == IT_DRIVE;
         const bool useFullPath = isRoot || isInRoot;
         LPWSTR lookupPath = fields[orderMap[FIELD_NAME]].data();
         LPWSTR displayName = useFullPath ? lookupPath : wcsrchr(lookupPath, L'\\');
@@ -278,13 +278,13 @@ bool SaveResults(const std::wstring& path, CItem * rootItem)
     for (const auto item : items)
     {
         // Output primary columns
-        const bool nonPathItem = item->IsType(IT_MYCOMPUTER, IT_UNKNOWN, IT_FREESPACE, IT_HARDLINKS);
+        const bool nonPathItem = item->IsType(IT_MYCOMPUTER);
         outf << std::format("{},{},{},{},{},0x{:08X},{},0x{:012X}",
             QuoteAndConvert(nonPathItem ? item->GetName() : item->GetPath()),
             item->GetFilesCount(),
             item->GetFoldersCount(),
             item->GetSizeLogical(),
-            item->GetSizePhysical(),
+            item->GetSizePhysicalRaw(),
             item->GetAttributes(),
             ToTimePoint(item->GetLastChange()),
             (item->GetIndex() << (sizeof(ITEMTYPE) * CHAR_BIT)) | item->GetRawType());
