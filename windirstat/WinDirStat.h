@@ -59,6 +59,7 @@ public:
 
     static std::tuple<ULONGLONG, ULONGLONG> GetFreeDiskSpace(const std::wstring& pszRootPath);
     static CDirStatApp* Get() { return &_singleton; }
+    std::wstring GetSaveToCsvPath() const { return m_SaveToCsvPath; }
 
 protected:
 
@@ -70,10 +71,11 @@ protected:
     CIconHandler m_IconList;          // Our central icon list
     COLORREF m_AltColor;              // Coloring of compressed items
     COLORREF m_AltEncryptionColor;    // Coloring of encrypted items
+    std::wstring m_SaveToCsvPath;     // Path to save csv file to
     static CDirStatApp _singleton;    // Singleton application instance
 #ifdef _DEBUG
     CAutoPtr<CWDSTracerConsole> m_VtraceConsole;
-#endif // VTRACE_TO_CONSOLE
+#endif 
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnFileOpen();

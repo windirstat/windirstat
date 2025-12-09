@@ -1838,6 +1838,17 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
         CItem::ScanItemsFinalize(GetRootItem());
         GetDocument()->RebuildExtensionData();
 
+        // Handle quiet save mode if path is set
+        if (const auto csvPath = CDirStatApp::Get()->GetSaveToCsvPath(); !csvPath.empty())
+        {
+            // Get the document and root item
+            auto* doc = CDirStatDoc::GetDocument();
+            if (doc == nullptr || !doc->HasRootItem()) ExitProcess(1);
+
+            // Exit the application with appropriate code
+            ExitProcess(SaveResults(csvPath, doc->GetRootItem()) ? 0 : 1);
+        }
+
         // Invoke a UI thread to do updates
         CMainFrame::Get()->InvokeInMessageThread([&]
         {

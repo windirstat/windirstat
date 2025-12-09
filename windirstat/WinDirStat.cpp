@@ -27,6 +27,7 @@
 #include "MessageBoxDlg.h"
 #include "PageFiltering.h"
 #include "SmartPointer.h"
+#include "CsvLoader.h"
 
 CIconHandler* GetIconHandler()
 {
@@ -242,6 +243,7 @@ public:
 
     DWORD m_ParentPid = 0;
     std::vector<std::wstring> m_PathsToOpen;
+    std::wstring m_SaveToCsvPath;
 
     void ParseParam(const WCHAR* pszParam, BOOL bFlag, BOOL bLast) override
     {
@@ -261,11 +263,19 @@ public:
         }
 
         // Handle special parameter of parent process to close
-        MakeLower(param);
+        std::wstring paramLower = param;
+        MakeLower(paramLower);
         const std::wstring ParentPidFlag = L"parentpid:";
-        if (param.starts_with(ParentPidFlag))
+        const std::wstring SaveToCsvFlag = L"savetocsv:";
+        if (paramLower.starts_with(ParentPidFlag))
         {
             m_ParentPid = std::stoul(param.substr(ParentPidFlag.size()));
+        }
+        else if (paramLower.starts_with(SaveToCsvFlag))
+        {
+            // Path after colon should be the csv path
+            m_SaveToCsvPath = param.substr(SaveToCsvFlag.size());
+            m_SaveToCsvPath = TrimString(m_SaveToCsvPath, wds::chrDoubleQuote);
         }
     }
 };
@@ -331,6 +341,13 @@ BOOL CDirStatApp::InitInstance()
     m_pMainWnd->BringWindowToTop();
     m_pMainWnd->SetForegroundWindow();
 
+    // Store csv path and hide window if specified
+    if (!cmdInfo.m_SaveToCsvPath.empty())
+    {
+        m_SaveToCsvPath = cmdInfo.m_SaveToCsvPath;
+        m_pMainWnd->ShowWindow(SW_HIDE);
+    }
+
     // Attempt to enable backup / restore privileges if running as admin
     if (COptions::UseBackupRestore && !EnableReadPrivileges())
     {
@@ -370,7 +387,7 @@ BOOL CDirStatApp::InitInstance()
     }
 
     // Allow user to elevate if desired
-    if (IsElevationAvailable() && COptions::ShowElevationPrompt)
+    if (IsElevationAvailable() && COptions::ShowElevationPrompt && m_SaveToCsvPath.empty())
     {
         CMessageBoxDlg elevationPrompt(Localization::Lookup(IDS_ELEVATION_QUESTION),
             Localization::LookupNeutral(AFX_IDS_APP_TITLE), MB_YESNO | MB_ICONQUESTION, m_pMainWnd, {},
