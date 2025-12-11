@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include "stdafx.h"
+#include "pch.h"
 
 class COleFilterOverride final : public COleMessageFilter
 {

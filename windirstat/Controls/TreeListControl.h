@@ -17,8 +17,8 @@
 
 #pragma once
 
+#include "pch.h"
 #include "OwnerDrawnListControl.h"
-#include "GlobalHelpers.h"
 #include "PacMan.h"
 
 class CFileTreeView;

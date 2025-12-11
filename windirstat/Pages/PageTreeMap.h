@@ -17,9 +17,8 @@
 
 #pragma once
 
-#include "WinDirStat.h"
+#include "pch.h"
 #include "ColorButton.h"
-#include "TreeMap.h"
 #include "XYSlider.h"
 
 //

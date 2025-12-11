@@ -17,6 +17,8 @@
 
 #pragma once
 
+#include "pch.h"
+
 //
 // CLayout. A poor men's dialog layout mechanism.
 // Simple, flat, and sufficient for our purposes.

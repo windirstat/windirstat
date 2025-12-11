@@ -15,9 +15,8 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
-#include "stdafx.h"
+#include "pch.h"
 #include "FinderNtfs.h"
-#include "SmartPointer.h"
 
 enum ATTRIBUTE_TYPE_CODE : ULONG
 {

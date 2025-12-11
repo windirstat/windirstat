@@ -15,12 +15,9 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
-#include "stdafx.h"
+#include "pch.h"
 #include "ItemTop.h"
 #include "FileTopControl.h"
-#include "WinDirStat.h"
-#include "MainFrame.h"
-#include "Localization.h"
 
 CItemTop::CItemTop(CItem* item) : m_Item(item) {}
 

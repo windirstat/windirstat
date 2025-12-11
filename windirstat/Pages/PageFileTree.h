@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include "WinDirStat.h"
+#include "pch.h"
 #include "ColorButton.h"
 
 //

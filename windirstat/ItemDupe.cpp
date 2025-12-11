@@ -15,13 +15,9 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
-#include "stdafx.h"
+#include "pch.h"
 #include "ItemDupe.h"
 #include "FileDupeControl.h"
-#include "WinDirStat.h"
-#include "MainFrame.h"
-#include "GlobalHelpers.h"
-#include "Localization.h"
 
 CItemDupe::CItemDupe(const std::vector<BYTE>& hash) : m_Hash(hash)
 {

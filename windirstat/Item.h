@@ -17,11 +17,10 @@
 
 #pragma once
 
+#include "pch.h"
 #include "TreeListControl.h"
 #include "TreeMap.h"
-#include "DirStatDoc.h"
 #include "Finder.h"
-#include "BlockingQueue.h"
 
 class Finder;
 class FinderNtfsContext;

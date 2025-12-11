@@ -15,12 +15,10 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
-#include "stdafx.h"
-#include "WinDirStat.h"
+#include "pch.h"
 #include "TreeMap.h"
 #include "SelectObject.h"
 #include "OwnerDrawnListControl.h"
-#include "DarkMode.h"
 
 namespace
 {

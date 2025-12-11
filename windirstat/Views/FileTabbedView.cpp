@@ -15,16 +15,12 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
-#include "stdafx.h"
-#include "WinDirStat.h"
+#include "pch.h"
 #include "FileTabbedView.h"
 #include "FileSearchView.h"
 #include "FileTopView.h"
 #include "FileTreeView.h"
-#include "Localization.h"
-#include "MainFrame.h"
 #include "MessageBoxDlg.h"
-#include "DirStatDoc.h"
 #include "ItemSearch.h"
 
 IMPLEMENT_DYNCREATE(CFileTabbedView, CTabView)

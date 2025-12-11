@@ -17,8 +17,7 @@
 
 #pragma once
 
-#include "stdafx.h"
-#include "Item.h"
+#include "pch.h"
 
 // Columns
 using ITEMDUPCOLUMNS = enum : std::uint8_t

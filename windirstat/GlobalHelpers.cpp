@@ -15,12 +15,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
-#include "stdafx.h"
-#include "WinDirStat.h"
-#include "SmartPointer.h"
-#include "GlobalHelpers.h"
-#include "Options.h"
-#include "Localization.h"
+#include "pch.h"
 #include "FinderBasic.h"
 #include "MessageBoxDlg.h"
 

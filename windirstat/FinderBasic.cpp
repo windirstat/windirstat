@@ -15,11 +15,8 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
-#include "stdafx.h"
+#include "pch.h"
 #include "FinderBasic.h"
-#include "Options.h"
-#include "Tracer.h"
-#include "SmartPointer.h"
 
 #pragma comment(lib,"ntdll.lib")
 

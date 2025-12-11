@@ -15,16 +15,9 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
-#include "stdafx.h"
-#include "WinDirStat.h"
-#include "SmartPointer.h"
-#include "Options.h"
-#include "GlobalHelpers.h"
+#include "pch.h"
 #include "SelectDrivesDlg.h"
-#include "DarkMode.h"
 #include "FinderBasic.h"
-#include "Localization.h"
-#include "MainFrame.h"
 #include "MessageBoxDlg.h"
 
 namespace

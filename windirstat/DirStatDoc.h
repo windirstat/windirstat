@@ -17,10 +17,7 @@
 
 #pragma once
 
-#include "SelectDrivesDlg.h"
-#include "BlockingQueue.h"
-#include "Options.h"
-#include "GlobalHelpers.h"
+#include "pch.h"
 #include "TreeListControl.h"
 
 class CItem;

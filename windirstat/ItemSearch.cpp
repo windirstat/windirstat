@@ -15,12 +15,9 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
-#include "stdafx.h"
+#include "pch.h"
 #include "ItemSearch.h"
 #include "FileTopControl.h"
-#include "WinDirStat.h"
-#include "MainFrame.h"
-#include "Localization.h"
 
 CItemSearch::CItemSearch(CItem* item) : m_Item(item) {}
 

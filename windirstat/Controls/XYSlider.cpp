@@ -15,10 +15,9 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
-#include "stdafx.h"
+#include "pch.h"
 #include "SelectObject.h"
 #include "XYSlider.h"
-#include "DarkMode.h"
 #include "resource.h"
 
 IMPLEMENT_DYNAMIC(CXySlider, CStatic)

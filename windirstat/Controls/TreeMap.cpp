@@ -15,10 +15,9 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
-#include "stdafx.h"
+#include "pch.h"
 #include "SelectObject.h"
 #include "TreeMap.h"
-#include "DarkMode.h"
 
 static constexpr COLORREF BGR(auto b, auto g, auto r)
 {

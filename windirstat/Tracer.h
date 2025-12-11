@@ -23,6 +23,7 @@
 #pragma once
 
 #ifdef _DEBUG
+#include "pch.h"
 
 #define VTRACE(x, ...) CWDSTracerConsole::ProcessOutput(std::source_location::current(), x, ##__VA_ARGS__)
 

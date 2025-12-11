@@ -15,18 +15,12 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
-#include "stdafx.h"
-#include "WinDirStat.h"
-#include "MainFrame.h"
+#include "pch.h"
 #include "SelectDrivesDlg.h"
 #include "AboutDlg.h"
-#include "DirStatDoc.h"
 #include "TreeMapView.h"
-#include "GlobalHelpers.h"
-#include "Localization.h"
 #include "MessageBoxDlg.h"
 #include "PageFiltering.h"
-#include "SmartPointer.h"
 #include "CsvLoader.h"
 
 CIconHandler* GetIconHandler()
@@ -50,10 +44,6 @@ CDirStatApp CDirStatApp::_singleton;
 
 CDirStatApp::CDirStatApp()
 {
-#ifdef _DEBUG
-    m_VtraceConsole.Attach(new CWDSTracerConsole);
-#endif
-
     m_AltColor = GetAlternativeColor(RGB(0x3A, 0x99, 0xE8), L"AltColor");
     m_AltEncryptionColor = GetAlternativeColor(RGB(0x00, 0x80, 0x00), L"AltEncryptionColor");
 }

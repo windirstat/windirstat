@@ -15,16 +15,8 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
-#include "stdafx.h"
-#include "WinDirStat.h"
-#include "DirStatDoc.h"
-#include "MainFrame.h"
-#include "GlobalHelpers.h"
+#include "pch.h"
 #include "SelectObject.h"
-#include "Item.h"
-#include "BlockingQueue.h"
-#include "Localization.h"
-#include "SmartPointer.h"
 #include "FinderBasic.h"
 #include "FinderNtfs.h"
 

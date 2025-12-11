@@ -15,12 +15,8 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
-#include "stdafx.h"
-#include "DirStatDoc.h"
-#include "Options.h"
-#include "GlobalHelpers.h"
+#include "pch.h"
 #include "Property.h"
-#include "Localization.h"
 
 LPCWSTR COptions::OptionsGeneral = L"Options";
 LPCWSTR COptions::OptionsTreeMap = L"TreeMapView";

@@ -15,14 +15,9 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
-#include "stdafx.h"
-#include "Options.h"
+#include "pch.h"
 #include "PageFileTree.h"
-#include "DirStatDoc.h"
 #include "FileTreeView.h"
-#include "Localization.h"
-#include "MainFrame.h"
-#include "DarkMode.h"
 
 IMPLEMENT_DYNAMIC(CPageFileTree, CMFCPropertyPage)
 

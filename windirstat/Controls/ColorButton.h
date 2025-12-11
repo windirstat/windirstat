@@ -17,6 +17,8 @@
 
 #pragma once
 
+#include "pch.h"
+
 #define COLBN_CHANGED   0x87    // this is a value, I hope, that is nowhere used as notification code.
 
 //

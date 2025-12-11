@@ -15,8 +15,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
-#include "stdafx.h"
-#include "WinDirStat.h"
+#include "pch.h"
 #include "Property.h"
 
 std::vector<PersistedSetting*>& PersistedSetting::GetPropertySet()

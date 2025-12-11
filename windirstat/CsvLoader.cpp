@@ -15,12 +15,9 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
-#include "stdafx.h"
-#include "Item.h"
+#include "pch.h"
 #include "ItemDupe.h"
-#include "Localization.h"
 #include "CsvLoader.h"
-#include "Constants.h"
 
 enum : std::uint8_t
 {

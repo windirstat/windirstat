@@ -15,14 +15,10 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
-#include "stdafx.h"
+#include "pch.h"
 #include "SearchDlg.h"
-#include "DirStatDoc.h"
-#include "Localization.h"
 #include "FileSearchControl.h"
 #include "FileTabbedView.h"
-#include "MainFrame.h"
-#include "DarkMode.h"
 
 // SearchDlg dialog
 

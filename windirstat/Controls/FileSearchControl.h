@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include "pch.h"
 #include "ItemSearch.h"
 #include "TreeListControl.h"
 

@@ -15,15 +15,10 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
-#include "stdafx.h"
-#include "WinDirStat.h"
-#include "MainFrame.h"
-#include "DirStatDoc.h"
+#include "pch.h"
 #include "FileTreeView.h"
-#include "Item.h"
 #include "SelectObject.h"
 #include "TreeMapView.h"
-#include "Localization.h"
 
 IMPLEMENT_DYNCREATE(CTreeMapView, CView)
 

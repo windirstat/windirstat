@@ -17,8 +17,6 @@
 
 #pragma once
 
-#include "DirStatDoc.h"
-
 class CExtensionView;
 
 //

@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include "pch.h"
 #include "Layout.h"
 
 void StartAboutDialog();

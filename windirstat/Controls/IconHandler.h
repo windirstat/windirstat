@@ -18,7 +18,6 @@
 #pragma once
 
 #include "TreeListControl.h"
-#include "BlockingQueue.h"
 #include "OleFilterOverride.h"
 
 //

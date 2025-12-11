@@ -15,9 +15,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
-#include "stdafx.h"
-#include "Localization.h"
-#include "GlobalHelpers.h"
+#include "pch.h"
 #include "FinderBasic.h"
 #include "langs.h"
 

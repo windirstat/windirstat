@@ -17,8 +17,8 @@
 
 #pragma once
 
-#include "stdafx.h"
-#include "Item.h"
+#include "pch.h"
+#include "TreeListControl.h"
 
 // Columns
 using ITEMTOPCOLUMNS = enum : std::uint8_t

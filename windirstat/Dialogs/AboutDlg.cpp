@@ -15,15 +15,9 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
-#include "stdafx.h"
+#include "pch.h"
 #include "version.h"
-#include "WinDirStat.h"
-#include "Constants.h"
 #include "AboutDlg.h"
-#include "Localization.h"
-#include "Options.h"
-#include "GlobalHelpers.h"
-#include "DarkMode.h"
 
 #pragma comment(lib,"version.lib")
 

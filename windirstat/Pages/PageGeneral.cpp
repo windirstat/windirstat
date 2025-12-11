@@ -15,15 +15,8 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
-#include "stdafx.h"
-#include "WinDirStat.h"
-#include "MainFrame.h"
+#include "pch.h"
 #include "PageGeneral.h"
-#include "DirStatDoc.h"
-#include "Options.h"
-#include "GlobalHelpers.h"
-#include "Localization.h"
-#include "DarkMode.h"
 
 IMPLEMENT_DYNAMIC(CPageGeneral, CMFCPropertyPage)
 

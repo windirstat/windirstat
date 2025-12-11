@@ -17,9 +17,9 @@
 
 #pragma once
 
+#include "pch.h"
 #include "OwnerDrawnListControl.h"
 #include "Layout.h"
-#include "resource.h"
 
 //
 // The dialog has these three radio buttons.

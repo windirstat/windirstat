@@ -17,8 +17,7 @@
 
 #pragma once
 
-#include "stdafx.h"
-#include "Item.h"
+#include "pch.h"
 #include "Finder.h"
 
 class FinderBasicContext final

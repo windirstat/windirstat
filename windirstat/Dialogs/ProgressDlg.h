@@ -17,8 +17,7 @@
 
 #pragma once
 
-#include "stdafx.h"
-#include "resource.h"
+#include "pch.h"
 
 //
 // CProgressDlg - Modal progress dialog for long-running operations

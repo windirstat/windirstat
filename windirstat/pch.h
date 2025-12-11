@@ -1,4 +1,4 @@
-﻿// stdafx.h - include file for standard system include files,
+﻿// pch.h - include file for standard system include files,
 // or project specific include files that are used frequently,
 // but are changed infrequently
 //
@@ -91,3 +91,18 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
+
+// Common WinDirStat headers
+#include "resource.h"
+#include "Tracer.h"
+#include "DarkMode.h"
+#include "GlobalHelpers.h"
+#include "BlockingQueue.h"
+#include "Options.h"
+#include "WinDirStat.h"
+#include "DirStatDoc.h"
+#include "Item.h"
+#include "SmartPointer.h"
+#include "Localization.h"
+#include "Constants.h"
+#include "MainFrame.h"

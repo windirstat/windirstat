@@ -15,12 +15,9 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
-#include "stdafx.h"
-#include "DirStatDoc.h"
+#include "pch.h"
 #include "ItemSearch.h"
-#include "MainFrame.h"
 #include "FileSearchControl.h"
-#include "Localization.h"
 #include "ProgressDlg.h"
 
 CFileSearchControl::CFileSearchControl() : CTreeListControl(20, COptions::SearchViewColumnOrder.Ptr(), COptions::SearchViewColumnWidths.Ptr())

@@ -15,12 +15,9 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
-#include "stdafx.h"
-#include "DirStatDoc.h"
+#include "pch.h"
 #include "SelectObject.h"
 #include "TreeListControl.h"
-#include "MainFrame.h"
-#include "Localization.h"
 
 namespace
 {

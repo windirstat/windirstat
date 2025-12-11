@@ -15,14 +15,10 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
-#include "stdafx.h"
+#include "pch.h"
 
-#include "WinDirStat.h"
-#include "DirStatDoc.h"
 #include "ItemDupe.h"
-#include "MainFrame.h"
 #include "FileDupeView.h"
-#include "Localization.h"
 #include "MessageBoxDlg.h"
 
 CFileDupeControl::CFileDupeControl() : CTreeListControl(20, COptions::DupeViewColumnOrder.Ptr(), COptions::DupeViewColumnWidths.Ptr())

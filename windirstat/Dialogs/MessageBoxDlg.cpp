@@ -15,11 +15,8 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
-#include "stdafx.h"
-#include "WinDirStat.h"
+#include "pch.h"
 #include "MessageBoxDlg.h"
-#include "DarkMode.h"
-#include "Localization.h"
 
 IMPLEMENT_DYNAMIC(CMessageBoxDlg, CLayoutDialogEx)
 

@@ -17,12 +17,8 @@
 
 #pragma once
 
-#include "stdafx.h"
-#include "resource.h"
-#include "Langs.h"
+#include "pch.h"
 #include "IconHandler.h"
-#include "Constants.h"
-#include "Tracer.h"
 
 class CMainFrame;
 class CDirStatApp;
@@ -74,7 +70,7 @@ protected:
     std::wstring m_SaveToCsvPath;     // Path to save csv file to
     static CDirStatApp _singleton;    // Singleton application instance
 #ifdef _DEBUG
-    CAutoPtr<CWDSTracerConsole> m_VtraceConsole;
+    CWDSTracerConsole m_VtraceConsole;
 #endif 
 
     DECLARE_MESSAGE_MAP()

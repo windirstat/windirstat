@@ -15,14 +15,8 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
-#include "stdafx.h"
-#include "WinDirStat.h"
-#include "DirStatDoc.h"
-#include "Item.h"
-#include "MainFrame.h"
+#include "pch.h"
 #include "FileTreeView.h"
-#include "GlobalHelpers.h"
-#include "Localization.h"
 
 /////////////////////////////////////////////////////////////////////////////
 

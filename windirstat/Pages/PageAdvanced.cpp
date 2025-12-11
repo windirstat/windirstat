@@ -15,14 +15,8 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
-#include "stdafx.h"
-#include "MainFrame.h"
+#include "pch.h"
 #include "PageAdvanced.h"
-#include "DirStatDoc.h"
-#include "Options.h"
-#include "Localization.h"
-#include "WinDirStat.h"
-#include "DarkMode.h"
 
 IMPLEMENT_DYNAMIC(CPageAdvanced, CMFCPropertyPage)
 

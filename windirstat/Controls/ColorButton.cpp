@@ -15,11 +15,9 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
-#include "stdafx.h"
+#include "pch.h"
 #include "resource.h"
 #include "ColorButton.h"
-#include "Constants.h"
-#include "DarkMode.h"
 
 /////////////////////////////////////////////////////////////////////////////
 

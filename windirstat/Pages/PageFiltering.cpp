@@ -15,13 +15,8 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
-#include "stdafx.h"
-#include "MainFrame.h"
+#include "pch.h"
 #include "PageFiltering.h"
-#include "GlobalHelpers.h"
-#include "Options.h"
-#include "Localization.h"
-#include "DarkMode.h"
 
 IMPLEMENT_DYNAMIC(CPageFiltering, CMFCPropertyPage)
 

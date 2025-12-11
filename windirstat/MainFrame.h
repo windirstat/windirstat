@@ -17,10 +17,9 @@
 
 #pragma once
 
+#include "pch.h"
 #include "PacMan.h"
-#include "Item.h"
 #include "FileTabbedView.h"
-#include "DarkMode.h"
 
 class CMySplitterWnd;
 class CMainFrame;

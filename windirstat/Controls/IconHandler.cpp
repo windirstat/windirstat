@@ -15,13 +15,8 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
-#include "stdafx.h"
-#include "WinDirStat.h"
+#include "pch.h"
 #include "IconHandler.h"
-#include "GlobalHelpers.h"
-#include "Localization.h"
-#include "SmartPointer.h"
-#include "MainFrame.h"
 
 CIconHandler::~CIconHandler()
 {

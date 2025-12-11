@@ -15,17 +15,10 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
-#include "stdafx.h"
+#include "pch.h"
 #include "CsvLoader.h"
-#include "DirStatDoc.h"
 #include "FileTreeView.h"
-#include "GlobalHelpers.h"
 #include "TreeMapView.h"
-#include "Item.h"
-#include "Localization.h"
-#include "MainFrame.h"
-#include "WinDirStat.h"
-#include "SmartPointer.h"
 #include "FileTopControl.h"
 #include "FileSearchControl.h"
 #include "FinderBasic.h"

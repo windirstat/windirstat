@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include "pch.h"
 #include "TreeMap.h"
 
 class CDirStatDoc;

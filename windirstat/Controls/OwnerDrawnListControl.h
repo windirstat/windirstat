@@ -17,8 +17,8 @@
 
 #pragma once
 
+#include "pch.h"
 #include "SortingListControl.h"
-#include "DarkMode.h"
 
 class COwnerDrawnListControl;
 class CIconHandler;

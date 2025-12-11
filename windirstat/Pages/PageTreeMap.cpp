@@ -15,13 +15,8 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
-#include "stdafx.h"
-#include "WinDirStat.h"
-#include "DirStatDoc.h"
-#include "Options.h"
+#include "pch.h"
 #include "PageTreeMap.h"
-#include "Localization.h"
-#include "DarkMode.h"
 
 namespace
 {

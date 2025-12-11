@@ -15,16 +15,11 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
-#include "stdafx.h"
-#include "WinDirStat.h"
+#include "pch.h"
 #include "TreeMapView.h"
 #include "FileTabbedView.h"
 #include "FileTreeView.h"
 #include "ExtensionView.h"
-#include "DirStatDoc.h"
-#include "GlobalHelpers.h"
-#include "Item.h"
-#include "Localization.h"
 #include "Property.h"
 #include "PageAdvanced.h"
 #include "PageFiltering.h"
@@ -33,12 +28,9 @@
 #include "PageTreeMap.h"
 #include "PageGeneral.h"
 #include "PagePrompts.h"
-#include "MainFrame.h"
 #include "SelectObject.h"
 #include "FileTopControl.h"
 #include "FileSearchControl.h"
-#include "SmartPointer.h"
-#include "DarkMode.h"
 #include "MessageBoxDlg.h"
 
 namespace
