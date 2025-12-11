@@ -1808,6 +1808,13 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
         StopReason stopReason = Default;
         for (auto& queue : m_queues | std::views::values)
             stopReason = static_cast<StopReason>(queue.WaitForCompletion());
+
+        // Handle hardlink counting for the drive
+        auto drives = GetDriveItems();
+        std::for_each(std::execution::par, drives.begin(), drives.end(), [](auto* drive)
+        {
+            drive->DoHardlinkAdjustment();
+        });
    
         // Restore unknown and freespace items
         for (const auto& item : items)

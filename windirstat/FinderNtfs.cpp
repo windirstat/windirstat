@@ -257,7 +257,6 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
                 const auto currentRecord = fileRecord->SegmentNumber();
                 const auto baseRecordIndex = fileRecord->BaseFileRecordNumber > 0 ? fileRecord->BaseFileRecordNumber : currentRecord;
                 auto& baseRecord = m_BaseFileRecordMap[baseRecordIndex];
-                if (baseRecord.LinkCount == 0) baseRecord.LinkCount = fileRecord->LinkCount;
 
                 for (auto [curAttribute, endAttribute] = ATTRIBUTE_RECORD::bounds(fileRecord, volumeInfo.BytesPerFileRecordSegment); curAttribute <
                     endAttribute && curAttribute->TypeCode != AttributeEnd; curAttribute = curAttribute->next())
@@ -275,7 +274,7 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
                     {
                         if (curAttribute->IsNonResident()) continue;
                         const auto fn = ByteOffset<FILE_NAME>(curAttribute, curAttribute->Form.Resident.ValueOffset);
-                        if (fn->IsShortNameRecord()) { baseRecord.LinkCount--; continue; }
+                        if (fn->IsShortNameRecord()) { continue; }
                         m_ParentToChildMap[fn->ParentDirectory].push_back(
                             FileRecordName{ std::wstring{ fn->FileName, fn->FileNameLength }, baseRecordIndex });
                     }
@@ -404,17 +403,4 @@ std::wstring FinderNtfs::GetFilePath() const
 bool FinderNtfs::IsDots() const
 {
     return m_CurrentRecordName->FileName == L"." || m_CurrentRecordName->FileName == L"..";
-}
-
-USHORT FinderNtfs::GetLinkCount() const
-{
-    return m_CurrentRecord->LinkCount;
-}
-
-bool FinderNtfs::ShouldCountSize()
-{
-    if (m_CurrentRecord->LinkCount <= 1) return true;
-    bool shouldCount = !m_CurrentRecord->SizeCounted;
-    m_CurrentRecord->SizeCounted = TRUE;
-    return shouldCount;
 }

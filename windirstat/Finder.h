@@ -40,10 +40,8 @@ public:
     virtual inline FILETIME GetLastWriteTime() const = 0;
     virtual std::wstring GetFilePath() const = 0;
     virtual std::wstring GetFileName() const = 0;
-    virtual ULONG GetIndex() const { return 0; }
+    virtual inline ULONG GetIndex() const = 0;
     virtual DWORD GetReparseTag() const = 0;
-    virtual USHORT GetLinkCount() const { return 1; }
-    virtual bool ShouldCountSize() { return true; }
 
     bool IsReparsePoint() const
     {

@@ -87,6 +87,7 @@ public:
     inline ULONGLONG GetFileSizeLogical() const override;
     inline FILETIME GetLastWriteTime() const override;
     std::wstring GetFilePath() const override;
+    inline ULONG GetIndex() const override;
     inline DWORD GetReparseTag() const override;
 
     static bool DoesFileExist(const std::wstring& folder, const std::wstring& file = {});

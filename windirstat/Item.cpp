@@ -514,16 +514,6 @@ void CItem::AddChild(CItem* child, const bool addOnly)
 {
     if (!addOnly)
     {
-        if (child->HasFlag(ITF_HARDLINK) && child->HasFlag(ITF_SIZECOUNT))
-        {
-            // Add the physical size from the hardlinks node
-            if (CItem* hardlinksItem = FindHardlinksItem(); hardlinksItem != nullptr)
-            {
-                hardlinksItem->UpwardAddSizePhysical(child->GetSizePhysicalRaw());
-                hardlinksItem->UpwardSetUndone();
-            }
-        }
-
         UpwardAddSizePhysical(child->GetSizePhysical());
         UpwardAddSizeLogical(child->GetSizeLogical());
         UpwardUpdateLastChange(child->GetLastChange());
@@ -659,7 +649,7 @@ void CItem::UpwardSubtractSizePhysical(const ULONGLONG bytes)
 
     for (auto p = this; p != nullptr; p = p->GetParent())
     {
-        ASSERT(p->m_SizePhysical - bytes >= 0);
+        ASSERT(bytes <= p->m_SizePhysical);
         p->m_SizePhysical -= bytes;
     }
 }
@@ -1230,7 +1220,7 @@ void CItem::CreateFreeSpaceItem()
 
 CItem* CItem::FindFreeSpaceItem() const
 {
-    auto it = std::ranges::find_if(GetChildren(),
+    const auto it = std::ranges::find_if(GetChildren(),
         [](const auto& child) { return child->IsType(IT_FREESPACE); });
 
     return it != GetChildren().end() ? *it : nullptr;
@@ -1313,7 +1303,7 @@ void CItem::CreateUnknownItem()
 
 CItem* CItem::FindUnknownItem() const
 {
-    auto it = std::ranges::find_if(GetChildren(),
+    const auto it = std::ranges::find_if(GetChildren(),
         [](const auto& child) { return child->IsType(IT_UNKNOWN); });
 
     return it != GetChildren().end() ? *it : nullptr;
@@ -1346,6 +1336,70 @@ CItem* CItem::FindHardlinksItem() const
         [](const auto& child) { return child->IsType(IT_HARDLINKS); });
 
     return it != children.end() ? *it : nullptr;
+}
+
+void CItem::DoHardlinkAdjustment()
+{
+    if (!IsType(IT_DRIVE)) return;
+
+    // Create map for duplicate index detection
+    std::unordered_map<ULONG, CItem*> indexMapInitial;
+    std::unordered_map<ULONG, std::vector<CItem*>> indexDupes;
+    indexMapInitial.reserve(GetFilesCount());
+
+    // Look for all indexed items in the tree
+    for (std::stack<CItem*> queue({  this }); !queue.empty();)
+    {
+        // Grab item from queue
+        const CItem* qitem = queue.top();
+        queue.pop();
+
+        // Descend into child items
+        if (qitem->IsLeaf()) continue;
+        for (const auto& child : qitem->GetChildren())
+        {
+            // Add for duplicate index detection
+            if (child->IsType(IT_FILE) && child->GetIndex() > 0)
+            {
+                if (indexMapInitial.contains(child->GetIndex()))
+                {
+                    auto & existing = indexDupes[child->GetIndex()];
+                    if (existing.empty()) existing.emplace_back(indexMapInitial[child->GetIndex()]);
+                    existing.emplace_back(child);
+                }
+                else indexMapInitial.emplace(child->GetIndex(), child);
+            }
+
+            // Do not descend into reparse points since indexes may be from other volumes
+            else if (!child->IsLeaf() &&
+                (child->GetAttributes() & FILE_ATTRIBUTE_REPARSE_POINT) == 0)
+            {
+                queue.push(child);
+            }
+        }
+    }
+
+    // Process hardlinks
+    const auto hardlinksItem = FindHardlinksItem();
+    auto itemSizeTotal = 0ull;
+    for (const auto& list : indexDupes | std::views::values)
+    {
+        bool skipAdd = false;
+        auto itemSize = 0ull;
+        for (auto* item : list)
+        {
+            if (item->HasFlag(ITF_HARDLINK)) { skipAdd = true; continue; }
+            itemSize = max(itemSize, item->GetSizePhysicalRaw());
+            item->GetParent()->UpwardSubtractSizePhysical(item->GetSizePhysicalRaw());
+            item->GetParent()->UpwardSetUndone();
+            item->SetFlag(ITF_HARDLINK);
+        }
+
+        if (!skipAdd) itemSizeTotal += itemSize;
+    }
+
+    hardlinksItem->UpwardAddSizePhysical(itemSizeTotal);
+    hardlinksItem->UpwardSetUndone();
 }
 
 ULONGLONG CItem::GetProgressRangeMyComputer() const
@@ -1485,8 +1539,6 @@ CItem* CItem::AddFile(Finder& finder)
     child->SetIndex(finder.GetIndex());
     child->SetSizePhysical(finder.GetFileSizePhysical());
     child->SetSizeLogical(finder.GetFileSizeLogical());
-    child->SetFlag(finder.GetLinkCount() > 1 ? ITF_HARDLINK : ITF_NONE);
-    child->SetFlag(finder.ShouldCountSize() ? ITF_SIZECOUNT : ITF_NONE);
     child->SetLastChange(finder.GetLastWriteTime());
     child->SetAttributes(finder.GetAttributes());
     child->SetReparseTag(finder.GetReparseTag());

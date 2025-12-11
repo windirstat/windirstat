@@ -176,7 +176,7 @@ protected:
     void UpdateProgress();
     void UpdateDynamicMenuItems(CMenu* menu) const;
     std::vector<CItem*> GetAllSelectedInFocus() const;
-    std::pair<CMenu*, int> LocateNamedMenu(const CMenu* menu, const std::wstring& subMenuText, const bool removeItems = true) const;
+    std::pair<CMenu*, int> LocateNamedMenu(const CMenu* menu, const std::wstring& subMenuText, bool removeItems = true) const;
 
     void SetLogicalFocus(LOGICAL_FOCUS lf);
     LOGICAL_FOCUS GetLogicalFocus() const;

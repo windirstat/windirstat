@@ -212,6 +212,11 @@ ULONGLONG FinderBasic::GetFileSizeLogical() const
     return m_CurrentInfo->EndOfFile.QuadPart;
 }
 
+ULONG FinderBasic::GetIndex() const
+{
+    return m_UseFileId ? m_CurrentInfo->IdInfo.FileId.LowPart : 0;
+}
+
 FILETIME FinderBasic::GetLastWriteTime() const
 {
     return { m_CurrentInfo->LastWriteTime.LowPart,

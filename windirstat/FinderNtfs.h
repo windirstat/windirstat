@@ -31,8 +31,6 @@ public:
         FILETIME LastModifiedTime = {};
         ULONG Attributes = 0;
         DWORD ReparsePointTag = 0;
-        USHORT LinkCount = 0;
-        BOOL SizeCounted = FALSE;
     };
 
     using FileRecordName = struct FileRecordName
@@ -82,6 +80,4 @@ public:
     ULONGLONG GetFileSizeLogical() const override;
     FILETIME GetLastWriteTime() const override;
     std::wstring GetFilePath() const override;
-    USHORT GetLinkCount() const;
-    bool ShouldCountSize() override;
 };

@@ -71,9 +71,9 @@ using ITEMTYPE = enum ITEMTYPE : unsigned short
     ITRP_MASK     = 7 << 6, // Indicates a reparse point that is a cloud link
 
     ITF_NONE      = 0 << 9,  // No flags
-    ITF_UNUSED    = 1 << 10, // Unused
-    ITF_BASIC     = 1 << 11, // Forces basic finder
-    ITF_SIZECOUNT = 1 << 12, // Indicates size should be added to physical size
+    ITF_UNUSED1   = 1 << 10, // Unused
+    ITF_UNUSED2   = 1 << 11, // Unused
+    ITF_BASIC     = 1 << 12, // Forces basic finder
     ITF_HARDLINK  = 1 << 13, // Indicates file is a hardlink (LinkCount > 1)
     ITF_ROOTITEM  = 1 << 14, // Indicates root item
     ITF_DONE      = 1 << 15, // Indicates done processing
@@ -138,7 +138,7 @@ public:
     COLORREF GetItemTextColor() const override;
     int CompareSibling(const CTreeListItem* tlib, int subitem) const override;
     int GetTreeListChildCount() const override { return IsLeaf() ? 0 : static_cast<int>(GetChildren().size()); }
-    CTreeListItem* GetTreeListChild(int i) const override { return GetChildren()[i]; }
+    CTreeListItem* GetTreeListChild(const int i) const override { return GetChildren()[i]; }
     HICON GetIcon() override;
     void DrawAdditionalState(CDC* pdc, const CRect& rcLabel) const override;
 
@@ -228,9 +228,10 @@ public:
     void CreateHardlinksItem();
     CItem* FindHardlinksItem() const;
     void UpwardDrivePacman();
+    void DoHardlinkAdjustment();
 
     std::vector<BYTE> GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CItem*>* queue);
-
+    
     bool IsDone() const
     {
         return HasFlag(ITF_DONE);
@@ -247,34 +248,38 @@ public:
     }
 
     template<ITEMTYPE Mask, typename... Args>
-    inline bool HasType(bool bitOp = false, Args... args) const
+    bool HasType(const bool bitOp = false, Args... args) const
     {
         if (bitOp) return ((args == ITF_ANY || ((m_Type & args) != 0)) || ...);
         return ((args == ITF_ANY || ((m_Type & Mask) == args)) || ...);
     }
 
     template<ITEMTYPE Mask>
-    inline void SetType(ITEMTYPE type, bool bitOp = false, bool unsetVal = false)
+    void SetType(const ITEMTYPE type, const bool bitOp = false, const bool unsetVal = false)
     {
         if (unsetVal) m_Type = (m_Type & ~type);
         else m_Type = bitOp ? (m_Type | type) : ((m_Type & ~Mask) | type);
     }
 
     template<typename... Args>
-    inline bool IsType(Args... args) const { return HasType<IT_MASK>(false, args...); }
-    inline void SetItemType(ITEMTYPE type) { SetType<IT_MASK>(type); }
+    bool IsType(Args... args) const { return HasType<IT_MASK>(false, args...); }
+
+    void SetItemType(const ITEMTYPE type) { SetType<IT_MASK>(type); }
 
     template<typename... Args>
-    inline bool IsReparseType(Args... args) const { return HasType<ITRP_MASK>(false, args...); }
-    inline void SetReparseType(ITEMTYPE type) { SetType<ITRP_MASK>(type); }
+    bool IsReparseType(Args... args) const { return HasType<ITRP_MASK>(false, args...); }
+
+    void SetReparseType(const ITEMTYPE type) { SetType<ITRP_MASK>(type); }
 
     template<typename... Args>
-    inline bool IsHashType(Args... args) const { return HasType<ITHASH_MASK>(false, args...); }
-    inline void SetHashType(ITEMTYPE type) { SetType<ITHASH_MASK>(type); }
+    bool IsHashType(Args... args) const { return HasType<ITHASH_MASK>(false, args...); }
+
+    void SetHashType(const ITEMTYPE type) { SetType<ITHASH_MASK>(type); }
 
     template<typename... Args>
-    inline bool HasFlag(Args... args) const { return HasType<ITF_FLAGS>(true, args...); }
-    inline void SetFlag(ITEMTYPE type, bool unsetVal = false) { SetType<ITF_FLAGS>(type, true, unsetVal); }
+    bool HasFlag(Args... args) const { return HasType<ITF_FLAGS>(true, args...); }
+
+    void SetFlag(const ITEMTYPE type, const bool unsetVal = false) { SetType<ITF_FLAGS>(type, true, unsetVal); }
 
     static constexpr bool FileTimeIsGreater(const FILETIME& ft1, const FILETIME& ft2)
     {
