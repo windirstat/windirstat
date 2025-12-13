@@ -275,6 +275,9 @@ BOOL CDirStatApp::InitInstance()
     // Prevent state saving
     m_bSaveState = FALSE;
 
+    // Set process I/O priority to high for better disk scanning performance
+    SetProcessIoPriorityHigh();
+
     // Load default language just to get bootstrapped
     Localization::LoadResource(MAKELANGID(LANG_ENGLISH, SUBLANG_NEUTRAL));
 

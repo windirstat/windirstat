@@ -81,6 +81,7 @@ bool IsElevationActive();
 bool IsElevationAvailable();
 void RunElevated(const std::wstring& cmdLine);
 bool EnableReadPrivileges();
+void SetProcessIoPriorityHigh();
 void ReplaceString(std::wstring& subject, const std::wstring& search, const std::wstring& replace);
 std::wstring& TrimString(std::wstring& s, wchar_t c = L' ');
 std::wstring& MakeLower(std::wstring& s);

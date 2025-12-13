@@ -26,6 +26,9 @@
 EXTERN_C NTSTATUS NTAPI RtlDecompressBuffer(USHORT CompressionFormat, PUCHAR UncompressedBuffer, ULONG  UncompressedBufferSize,
     PUCHAR CompressedBuffer, ULONG  CompressedBufferSize, PULONG FinalUncompressedSize);
 
+EXTERN_C NTSTATUS NTAPI NtSetInformationProcess(HANDLE ProcessHandle, ULONG ProcessInformationClass,
+    PVOID ProcessInformation, ULONG ProcessInformationLength);
+
 static HRESULT WmiConnect(CComPtr<IWbemServices>& pSvc)
 {
     if (thread_local bool comInit = false; !comInit)
@@ -1121,4 +1124,19 @@ std::wstring ComputeFileHashes(const std::wstring& filePath)
     if (!result.empty() && result.back() == L'\n') result.pop_back();
 
     return result;
+}
+
+void SetProcessIoPriorityHigh()
+{
+    // Define I/O priority constants
+    constexpr ULONG ProcessIoPriority = 33;
+    constexpr ULONG IoPriorityHigh = 3;
+
+    // Set the I/O priority to high for the current process
+    ULONG ioPriority = IoPriorityHigh;
+    if (NtSetInformationProcess(GetCurrentProcess(),
+        ProcessIoPriority, &ioPriority, sizeof(ioPriority)) != 0)
+    {
+        VTRACE(L"NtSetInformationProcess() Failed");
+    }
 }
