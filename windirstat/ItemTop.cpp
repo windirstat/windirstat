@@ -123,12 +123,16 @@ void CItemTop::AddTopItemChild(CItemTop* child)
 
 void CItemTop::RemoveTopItemChild(CItemTop* child)
 {
-    std::scoped_lock guard(m_Protect);
-    std::erase(m_Children, child);
-
     if (IsVisible())
     {
         CFileTopControl::Get()->OnChildRemoved(this, child);
+    }
+
+    std::scoped_lock guard(m_Protect);
+    auto& children = m_Children;
+    if (auto it = std::ranges::find(children, child); it != children.end())
+    {
+        children.erase(it);
     }
 
     delete child;

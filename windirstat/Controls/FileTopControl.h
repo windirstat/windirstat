@@ -41,8 +41,7 @@ protected:
     };
 
     static CFileTopControl* m_Singleton;
-    std::mutex m_SizeMutex;
-    std::vector<CItem*> m_QueuedSet;
+    SingleConsumerQueue<CItem*> m_QueuedSet;
     std::multiset<CItem*, decltype(CompareBySize)> m_SizeMap;
     std::unordered_map<CItem*, CItemTop*> m_ItemTracker;
 

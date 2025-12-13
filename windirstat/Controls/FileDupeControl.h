@@ -39,7 +39,7 @@ public:
     std::mutex m_NodeTrackerMutex;
     std::map<std::vector<BYTE>, CItemDupe*> m_NodeTracker;
     std::map<CItemDupe*, std::set<CItem*>> m_ChildTracker;
-    std::vector<std::pair<CItemDupe*, CItemDupe*>> m_PendingListAdds;
+    SingleConsumerQueue<std::pair<CItemDupe*, CItemDupe*>> m_PendingListAdds;
 
 protected:
 

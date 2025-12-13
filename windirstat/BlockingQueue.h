@@ -17,6 +17,8 @@
 
 #pragma once
 
+#include "pch.h"
+
 template <typename T>
 class BlockingQueue final
 {
@@ -45,7 +47,7 @@ public:
     ~BlockingQueue() = default;
     BlockingQueue() = default;
 
-    void ThreadWrapper(const std::function<void()> & callback)
+    void ThreadWrapper(const std::function<void()>& callback)
     {
         try
         {
@@ -60,7 +62,7 @@ public:
         }
     }
 
-    void StartThreads(const unsigned int workerThreads, const std::function<void()> & callback)
+    void StartThreads(const unsigned int workerThreads, const std::function<void()>& callback)
     {
         ResetQueue(workerThreads, false);
 
@@ -200,6 +202,82 @@ public:
         m_Threads.clear();
         m_Threads.reserve(m_TotalWorkerThreads);
         if (clearQueue) m_Queue.clear();
+    }
+};
+
+template<typename T>
+class SingleConsumerQueue
+{
+    struct Node {
+        std::atomic<Node*> next{ nullptr };
+        T data;
+
+        Node() = default;
+
+        template<typename U>
+        explicit Node(U&& value) : data(std::forward<U>(value)) {}
+    };
+
+    #pragma warning(disable: 4324)
+    alignas(std::hardware_destructive_interference_size) std::atomic<Node*> head;
+    alignas(std::hardware_destructive_interference_size) Node* tail;
+
+public:
+    SingleConsumerQueue()
+    {
+        Node* dummy = new Node();
+        tail = dummy;
+        head.store(dummy, std::memory_order_relaxed);
+    }
+
+    ~SingleConsumerQueue()
+    {
+        T dummy;
+        while (pop(dummy));
+        delete tail;
+    }
+
+    template<typename U>
+    void push(U&& item)
+    {
+        Node* node = new Node(std::forward<U>(item));
+        Node* prev = head.exchange(node, std::memory_order_acq_rel);
+        prev->next.store(node, std::memory_order_release);
+    }
+
+    [[nodiscard]] bool pop(T& item) noexcept(std::is_nothrow_move_assignable_v<T>)
+    {
+        Node* t = tail;
+        Node* next = t->next.load(std::memory_order_acquire);
+
+        if (next == nullptr)
+            return false;
+
+        item = std::move(next->data);
+        tail = next;
+
+        delete t;
+        return true;
+    }
+
+    // Only valid for consumer
+    [[nodiscard]] bool empty() const noexcept
+    {
+        return tail->next.load(std::memory_order_acquire) == nullptr;
+    }
+
+    // Clear out queue
+    void clear() noexcept
+    {
+        for (T tmp; pop(tmp););
+
+        Node* old = tail; // One dummy remains
+        Node* dummy = new Node();
+
+        tail = dummy;
+        head.store(dummy, std::memory_order_release);
+
+        delete old;
     }
 };
 

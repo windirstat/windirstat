@@ -187,6 +187,13 @@ void CItemDupe::AddDupeItemChild(CItemDupe* child)
 
 void CItemDupe::RemoveDupeItemChild(CItemDupe* child)
 {
+    if (IsVisible())
+    {
+        CFileDupeControl::Get()->OnChildRemoved(this, child);
+    }
+
+    std::scoped_lock guard(m_Protect);
+
     // Adjust parent item sizes
     if (const auto childItem = reinterpret_cast<CItem*>(child->GetLinkedItem()); childItem != nullptr)
     {
@@ -194,13 +201,10 @@ void CItemDupe::RemoveDupeItemChild(CItemDupe* child)
         m_SizePhysical -= childItem->GetSizePhysical();
     }
 
-    std::scoped_lock guard(m_Protect);
-    std::erase(m_Children, child);
-
-    if (IsVisible())
+    auto& children = m_Children;
+    if (auto it = std::ranges::find(children, child); it != children.end())
     {
-        CFileDupeControl::Get()->OnChildRemoved(this, child);
+        children.erase(it);
     }
-
     delete child;
 }

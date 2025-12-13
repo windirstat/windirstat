@@ -513,12 +513,8 @@ void CItem::AddChild(CItem* child, const bool addOnly)
     }
 
     child->SetParent(this);
-    {
-        // Release lock early to avoid stalling multithreaded scanning
-        std::scoped_lock guard(m_FolderInfo->m_Protect);
-        m_FolderInfo->m_Children.push_back(child);
-    }
-
+    m_FolderInfo->m_Children.push_back(child);
+  
     if (IsVisible() && IsExpanded())
     {
         CMainFrame::Get()->InvokeInMessageThread([this, child]
@@ -530,8 +526,19 @@ void CItem::AddChild(CItem* child, const bool addOnly)
 
 void CItem::RemoveChild(CItem* child)
 {
-    std::scoped_lock guard(m_FolderInfo->m_Protect);
-    std::erase(m_FolderInfo->m_Children, child);
+    if (IsVisible())
+    {
+        CMainFrame::Get()->InvokeInMessageThread([this, child]
+        {
+            CFileTreeControl::Get()->OnChildRemoved(this, child);
+        });
+    }
+
+    auto& children = m_FolderInfo->m_Children;
+    if (auto it = std::ranges::find(children, child); it != children.end())
+    {
+        children.erase(it);
+    }
 
     // Check if this child is a hardlink
     if (child->HasFlag(ITF_HARDLINK) && child->GetIndex() > 0)
@@ -550,14 +557,6 @@ void CItem::RemoveChild(CItem* child)
         }
     }
 
-    if (IsVisible())
-    {
-        CMainFrame::Get()->InvokeInMessageThread([this, child]
-        {
-            CFileTreeControl::Get()->OnChildRemoved(this, child);
-        });
-    }
-
     delete child;
 }
 
@@ -574,13 +573,11 @@ void CItem::RemoveAllChildren()
         CFileTreeControl::Get()->OnRemovingAllChildren(this);
     });
 
-    std::scoped_lock guard(m_FolderInfo->m_Protect);
     for (const auto& child : m_FolderInfo->m_Children)
     {
         delete child;
     }
     m_FolderInfo->m_Children.clear();
-    
 }
 
 void CItem::UpwardAddFolders(const ULONG dirCount)
@@ -720,9 +717,11 @@ void CItem::UpwardSubtractReadJobs(const ULONG count)
     if (count == 0 || IsType(IT_FILE)) return;
     for (auto p = this; p != nullptr; p = p->GetParent())
     {
-        ASSERT(p->m_FolderInfo->m_Jobs - count >= 0);
-        p->m_FolderInfo->m_Jobs -= count;
-        if (p->m_FolderInfo->m_Jobs == 0) p->SetDone();
+        ULONG previous = p->m_FolderInfo->m_Jobs.fetch_sub(count);
+        if (previous >= count && previous - count == 0)
+        {
+            p->SetDone();
+        }
     }
 }
 
@@ -984,6 +983,7 @@ void CItem::SetDone()
         m_FolderInfo->m_Tfinish = static_cast<ULONG>(GetTickCount64() / 1000ull);
     }
 
+    // Mark as done just so other functions do not sort at the same time
     SetFlag(ITF_DONE);
 }
 
@@ -992,12 +992,11 @@ void CItem::SortItemsBySizePhysical() const
     if (IsLeaf()) return;
 
     // sort by size for proper treemap rendering
-    std::scoped_lock guard(m_FolderInfo->m_Protect);
     m_FolderInfo->m_Children.shrink_to_fit();
     std::ranges::sort(m_FolderInfo->m_Children, [](auto item1, auto item2)
-        {
-            return item1->GetSizePhysical() > item2->GetSizePhysical(); // biggest first
-        });
+    {
+        return item1->GetSizePhysical() > item2->GetSizePhysical(); // biggest first
+    });
 }
 
 void CItem::SortItemsBySizeLogical() const
@@ -1005,7 +1004,6 @@ void CItem::SortItemsBySizeLogical() const
     if (IsLeaf()) return;
     
     // sort by size for proper treemap rendering
-    std::scoped_lock guard(m_FolderInfo->m_Protect);
     m_FolderInfo->m_Children.shrink_to_fit();
     std::ranges::sort(m_FolderInfo->m_Children, [](auto item1, auto item2)
     {

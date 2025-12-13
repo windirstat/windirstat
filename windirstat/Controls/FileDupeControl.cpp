@@ -119,7 +119,7 @@ void CFileDupeControl::ProcessDuplicate(CItem * item, BlockingQueue<CItem*>* que
         {
             // Create new root item to hold these duplicates
             dupeParent = new CItemDupe(hashForThisItem);
-            m_PendingListAdds.emplace_back(nullptr, dupeParent);
+            m_PendingListAdds.push(std::make_pair(nullptr, dupeParent));
             m_NodeTracker.emplace(hashForThisItem, dupeParent);
         }
 
@@ -127,7 +127,7 @@ void CFileDupeControl::ProcessDuplicate(CItem * item, BlockingQueue<CItem*>* que
         auto& m_HashParentNode = m_ChildTracker[dupeParent];
         if (m_HashParentNode.contains(itemToAdd)) continue;
         const auto dupeChild = new CItemDupe(itemToAdd);
-        m_PendingListAdds.emplace_back(dupeParent, dupeChild);
+        m_PendingListAdds.push(std::make_pair(dupeParent, dupeChild));
         m_HashParentNode.emplace(itemToAdd);
     }
     m_HashTrackerMutex.lock();
@@ -137,25 +137,19 @@ void CFileDupeControl::SortItems()
 {
     ASSERT(AfxGetThread() != nullptr);
 
-    // Transfer elements to vector so we do not have to hold the lock
-    m_NodeTrackerMutex.lock();
-    std::vector<std::pair<CItemDupe*, CItemDupe*>> pendingAdds = m_PendingListAdds;
-    m_PendingListAdds.clear();
-    m_PendingListAdds.shrink_to_fit();
-    m_NodeTrackerMutex.unlock();
-
     // Add items to the list
-    if (!pendingAdds.empty())
+    if (m_PendingListAdds.empty()) return;
+    const auto root = reinterpret_cast<CItemDupe*>(GetItem(0));
+    SetRedraw(FALSE);
+    std::pair<CItemDupe*, CItemDupe*> pair;
+    while (m_PendingListAdds.pop(pair))
     {
-        SetRedraw(FALSE);
-        const auto root = reinterpret_cast<CItemDupe*>(GetItem(0));
-        for (const auto& [parent, child] : pendingAdds)
-            (parent == nullptr ? root : parent)->AddDupeItemChild(child);
-        SetRedraw(TRUE);
+        const auto& [parent, child] = pair;
+        (parent == nullptr ? root : parent)->AddDupeItemChild(child);
     }
+    SetRedraw(TRUE);
 
 #ifdef _DEBUG
-    const auto root = reinterpret_cast<CItemDupe*>(GetItem(0));
     for (const auto& hashParent : root->GetChildren())
     {
         const auto& hashString = hashParent->GetHashAndExtensions().substr(0, 8);

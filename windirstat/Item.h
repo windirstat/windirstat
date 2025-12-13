@@ -307,7 +307,6 @@ private:
     using CHILDINFO = struct CHILDINFO
     {
         std::vector<CItem*> m_Children;
-        std::shared_mutex m_Protect;
         std::atomic<ULONG> m_Tstart = 0;  // time this node started enumerating
         std::atomic<ULONG> m_Tfinish = 0; // time this node finished enumerating
         std::atomic<ULONG> m_Files = 0;   // # Files in subtree

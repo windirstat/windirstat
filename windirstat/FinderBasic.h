@@ -24,51 +24,56 @@ class FinderBasicContext final
 {
 public:
     bool Initialized = false;
-    bool VolumeSupportsFileId = false;
+    bool SupportsFileId = false;
+    ULONG ClusterSize = 0;
 };
 
 class FinderBasic final : public Finder
 {
-    using FILE_DIR_INFORMATION = struct {
-        ULONG         NextEntryOffset;
-        ULONG         FileIndex;
+    #pragma pack(push, 1)
+    using FILE_DIR_INFORMATION = __declspec(align(8)) struct
+    {
+        ULONG NextEntryOffset;
+        ULONG FileIndex;
         LARGE_INTEGER CreationTime;
         LARGE_INTEGER LastAccessTime;
         LARGE_INTEGER LastWriteTime;
         LARGE_INTEGER ChangeTime;
         LARGE_INTEGER EndOfFile;
         LARGE_INTEGER AllocationSize;
-        ULONG         FileAttributes;
-        ULONG         FileNameLength;
-        ULONG         ReparsePointTag;
+        ULONG FileAttributes;
+        ULONG FileNameLength;
+        ULONG ReparsePointTag;
         union
         {
             struct
             {
-                WCHAR         FileName[1];
+                WCHAR FileName[1]; 
             }
             StandardInfo;
             
             struct
-            {        
+            {
+                BYTE Padding[4];
                 LARGE_INTEGER FileId;
-                WCHAR         FileName[1];
+                WCHAR FileName[1];
             }
             IdInfo;
         };
     };
+    #pragma pack(pop)
 
     std::wstring m_Search;
     std::wstring m_Base;
     std::wstring m_Name;
-    std::vector<BYTE> m_DirectoryInfo;
-    FILE_DIR_INFORMATION* m_CurrentInfo = nullptr;
-    FinderBasicContext* m_Context = nullptr;
+    std::vector<LARGE_INTEGER> m_DirectoryInfo;
+    FILE_DIR_INFORMATION* m_CurrentInfo;
+    FinderBasicContext m_Default{};
+    FinderBasicContext* m_Context = &m_Default;
     HANDLE m_Handle = nullptr;
     DWORD m_InitialAttributes = INVALID_FILE_ATTRIBUTES;
     DWORD m_ReparseTag = 0;
-    bool m_Firstrun = true;
-    bool m_UseFileId = false;
+    bool m_FirstRun = true;
 
 public:
 

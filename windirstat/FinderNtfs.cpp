@@ -159,6 +159,7 @@ using STANDARD_INFORMATION = struct STANDARD_INFORMATION
     ULONG FileAttributes;
 };
 
+constexpr auto NtfsMftRecord = 0;
 constexpr auto NtfsNodeRoot = 5;
 constexpr auto NtfsReservedMax = 16;
 
@@ -319,7 +320,7 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
     concurrency::concurrent_vector<FileRecordName> newChildren;
     std::copy_if(rootChildren.begin(), rootChildren.end(), std::back_inserter(newChildren), [](const auto& child)
     {
-        return child.BaseRecord > NtfsReservedMax || child.BaseRecord == NtfsNodeRoot;
+        return child.BaseRecord > NtfsReservedMax || child.BaseRecord == NtfsMftRecord || child.BaseRecord == NtfsNodeRoot;
     });
     rootChildren = std::move(newChildren);
 

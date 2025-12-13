@@ -34,7 +34,7 @@ FinderBasic::~FinderBasic()
 bool FinderBasic::FindNext()
 {
     bool success = false;
-    if (m_Firstrun || m_CurrentInfo->NextEntryOffset == 0)
+    if (m_FirstRun || m_CurrentInfo->NextEntryOffset == 0)
     {
         UNICODE_STRING uSearch
         {
@@ -47,40 +47,45 @@ bool FinderBasic::FindNext()
         constexpr auto FileFullDirectoryInformation = 2;
         constexpr auto FileIdFullDirectoryInformation = 38;
         IO_STATUS_BLOCK IoStatusBlock;
-        m_DirectoryInfo.reserve(BUFFER_SIZE);
+        m_DirectoryInfo.reserve(BUFFER_SIZE / sizeof(decltype(m_DirectoryInfo)::value_type));
 
         // Determine if volume supports FileId
-        m_UseFileId = m_Context != nullptr && m_Context->VolumeSupportsFileId;
-        if (m_Context != nullptr && !m_Context->Initialized)
+        if (!m_Context->Initialized)
         {
             NTSTATUS Status = NtQueryDirectoryFile(m_Handle, nullptr, nullptr, nullptr, &IoStatusBlock,
                 m_DirectoryInfo.data(), BUFFER_SIZE, static_cast<FILE_INFORMATION_CLASS>(FileIdFullDirectoryInformation),
                 FALSE, (uSearch.Length > 0) ? &uSearch : nullptr, TRUE);
-            m_Context->VolumeSupportsFileId = (Status == 0);
-            m_UseFileId = m_Context->VolumeSupportsFileId;
+            m_Context->SupportsFileId = (Status == 0);
             m_Context->Initialized = true;
+
+            // Query cluster size if not already known
+            DWORD sectorsPerCluster, bytesPerSector, numberOfFreeClusters, totalNumberOfClusters;
+            if (GetDiskFreeSpace(m_Base.c_str(), &sectorsPerCluster, &bytesPerSector,
+                &numberOfFreeClusters, &totalNumberOfClusters))
+            {
+                m_Context->ClusterSize = sectorsPerCluster * bytesPerSector;
+            }
         }
 
         // Query directory with appropriate information class
         const NTSTATUS Status = NtQueryDirectoryFile(m_Handle, nullptr, nullptr, nullptr, &IoStatusBlock,
             m_DirectoryInfo.data(), BUFFER_SIZE, static_cast<FILE_INFORMATION_CLASS>(
-                m_UseFileId ? FileIdFullDirectoryInformation : FileFullDirectoryInformation),
-            FALSE, (uSearch.Length > 0) ? &uSearch : nullptr, (m_Firstrun) ? TRUE : FALSE);
+                m_Context->SupportsFileId ? FileIdFullDirectoryInformation : FileFullDirectoryInformation),
+            FALSE, (uSearch.Length > 0) ? &uSearch : nullptr, (m_FirstRun) ? TRUE : FALSE);
 
         success = (Status == 0);
-        m_CurrentInfo = reinterpret_cast<FILE_DIR_INFORMATION*>(m_DirectoryInfo.data());
+        m_CurrentInfo = std::assume_aligned<8>(reinterpret_cast<FILE_DIR_INFORMATION*>(m_DirectoryInfo.data()));
     }
     else
     {
-        m_CurrentInfo = reinterpret_cast<FILE_DIR_INFORMATION*>(
-            &reinterpret_cast<BYTE*>(m_CurrentInfo)[m_CurrentInfo->NextEntryOffset]);
+        m_CurrentInfo = std::assume_aligned<8>(ByteOffset<FILE_DIR_INFORMATION>(m_CurrentInfo, m_CurrentInfo->NextEntryOffset));
         success = true;
     }
 
     if (success)
     {
         // handle unexpected trailing null on some file systems
-        LPCWSTR fileNamePtr = m_UseFileId ? m_CurrentInfo->IdInfo.FileName :
+        LPCWSTR fileNamePtr = m_Context->SupportsFileId ? m_CurrentInfo->IdInfo.FileName :
             m_CurrentInfo->StandardInfo.FileName;
         ULONG nameLength = m_CurrentInfo->FileNameLength / sizeof(WCHAR);
         if (nameLength > 1 && fileNamePtr[nameLength - 1] == L'\0')
@@ -93,7 +98,7 @@ bool FinderBasic::FindNext()
         // special case for reparse on initial run points since it will
         // return the attributes on the destination folder and not the reparse
         // point attributes itself that we want
-        if (m_Firstrun)
+        if (m_FirstRun)
         {
             // Use cached value passed in from previous capture
             if (m_Name == L".")
@@ -116,7 +121,9 @@ bool FinderBasic::FindNext()
 
         // Correct physical size
         if (m_CurrentInfo->AllocationSize.QuadPart == 0 &&
-            m_CurrentInfo->EndOfFile.QuadPart != 0)
+            ((m_CurrentInfo->EndOfFile.QuadPart > m_Context->ClusterSize ||
+             (m_CurrentInfo->FileAttributes & FILE_ATTRIBUTE_SPARSE_FILE) != 0) ||
+             (m_CurrentInfo->FileAttributes & FILE_ATTRIBUTE_COMPRESSED) != 0))
         {
             DWORD highPart;
             DWORD lowPart = GetCompressedFileSize(GetFilePathLong().c_str(), &highPart);
@@ -142,7 +149,7 @@ bool FinderBasic::FindNext()
         }
     }
 
-    m_Firstrun = false;
+    m_FirstRun = false;
     return success;
 }
 
@@ -154,7 +161,7 @@ bool FinderBasic::FindFile(const CItem* item)
 bool FinderBasic::FindFile(const std::wstring & strFolder, const std::wstring& strName, const DWORD attr)
 {
     // stash the search pattern for later use
-    m_Firstrun = true;
+    m_FirstRun = true;
     m_Search = strName;
     m_InitialAttributes = attr;
 
@@ -211,7 +218,7 @@ ULONGLONG FinderBasic::GetFileSizeLogical() const
 
 ULONG FinderBasic::GetIndex() const
 {
-    return m_UseFileId ? m_CurrentInfo->IdInfo.FileId.LowPart : 0;
+    return m_Context->SupportsFileId ? m_CurrentInfo->IdInfo.FileId.LowPart : 0;
 }
 
 FILETIME FinderBasic::GetLastWriteTime() const

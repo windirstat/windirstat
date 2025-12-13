@@ -44,8 +44,7 @@ void CFileTopControl::ProcessTop(CItem * item)
     // Do not process if we are not tracking large files
     if (COptions::LargeFileCount == 0) return;
 
-    std::scoped_lock guard(m_SizeMutex);
-    m_QueuedSet.emplace_back(item);
+    m_QueuedSet.push(item);
 }
 
 void CFileTopControl::SortItems()
@@ -56,13 +55,8 @@ void CFileTopControl::SortItems()
     if (GetItemCount() == 0) return;
 
     // Quickly copy the items to a vector to free mutex
-    m_SizeMutex.lock();
-    std::vector<CItem*> queuedItems = m_QueuedSet;
-    m_QueuedSet.clear();
-    m_SizeMutex.unlock();
-
-    // Insert into map
-    m_SizeMap.insert(queuedItems.begin(), queuedItems.end());
+    CItem* newItem = nullptr;
+    while (m_QueuedSet.pop(newItem)) m_SizeMap.emplace(newItem);
 
     SetRedraw(FALSE);
     const auto root = reinterpret_cast<CItemTop*>(GetItem(0));
