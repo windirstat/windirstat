@@ -27,6 +27,7 @@
 #endif
 
 #define _ATL_CSTRING_EXPLICIT_CONSTRUCTORS  // some CStringW constructors will be explicit
+#define _ITERATOR_DEBUG_LEVEL 0 // disable debugging due to debug performance impact
 
 // enables new GDI+ version
 #define GDIPVER 0x0110
