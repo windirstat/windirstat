@@ -31,7 +31,7 @@ public:
 class FinderBasic final : public Finder
 {
     #pragma pack(push, 1)
-    using FILE_DIR_INFORMATION = __declspec(align(8)) struct
+    using FILE_DIR_INFORMATION = struct
     {
         ULONG NextEntryOffset;
         ULONG FileIndex;
