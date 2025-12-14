@@ -208,7 +208,8 @@ public:
 template<typename T>
 class SingleConsumerQueue
 {
-    struct Node {
+    struct Node
+    {
         std::atomic<Node*> next{ nullptr };
         T data;
 
@@ -218,43 +219,44 @@ class SingleConsumerQueue
         explicit Node(U&& value) : data(std::forward<U>(value)) {}
     };
 
-    #pragma warning(disable: 4324)
-    alignas(std::hardware_destructive_interference_size) std::atomic<Node*> head;
-    alignas(std::hardware_destructive_interference_size) Node* tail;
+    #pragma warning(push)
+    #pragma warning(disable: 4324) // structure was padded due to alignment specifier
+    alignas(std::hardware_destructive_interference_size) std::atomic<Node*> m_Head;
+    alignas(std::hardware_destructive_interference_size) Node* m_Tail;
+    #pragma warning(pop)
 
 public:
     SingleConsumerQueue()
     {
         Node* dummy = new Node();
-        tail = dummy;
-        head.store(dummy, std::memory_order_relaxed);
+        m_Tail = dummy;
+        m_Head.store(dummy, std::memory_order_relaxed);
     }
 
     ~SingleConsumerQueue()
     {
-        T dummy;
-        while (pop(dummy));
-        delete tail;
+        for (T tmp; pop(tmp););
+        delete m_Tail;
     }
 
     template<typename U>
     void push(U&& item)
     {
         Node* node = new Node(std::forward<U>(item));
-        Node* prev = head.exchange(node, std::memory_order_acq_rel);
+        Node* prev = m_Head.exchange(node, std::memory_order_release);
         prev->next.store(node, std::memory_order_release);
     }
 
     [[nodiscard]] bool pop(T& item) noexcept(std::is_nothrow_move_assignable_v<T>)
     {
-        Node* t = tail;
+        Node* t = m_Tail;
         Node* next = t->next.load(std::memory_order_acquire);
 
         if (next == nullptr)
             return false;
 
         item = std::move(next->data);
-        tail = next;
+        m_Tail = next;
 
         delete t;
         return true;
@@ -263,21 +265,20 @@ public:
     // Only valid for consumer
     [[nodiscard]] bool empty() const noexcept
     {
-        return tail->next.load(std::memory_order_acquire) == nullptr;
+        return m_Tail->next.load(std::memory_order_acquire) == nullptr;
     }
 
-    // Clear out queue
+    // Clear out queue (unsafe with concurrent producers)
     void clear() noexcept
     {
         for (T tmp; pop(tmp););
 
-        Node* old = tail; // One dummy remains
+        Node* old = m_Tail; // One dummy remains
         Node* dummy = new Node();
 
-        tail = dummy;
-        head.store(dummy, std::memory_order_release);
+        m_Tail = dummy;
+        m_Head.store(dummy, std::memory_order_release);
 
         delete old;
     }
 };
-
