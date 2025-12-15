@@ -19,6 +19,7 @@
 #include "TreeMap.h"
 #include "SelectObject.h"
 #include "OwnerDrawnListControl.h"
+#include "DrawTextCache.h"
 
 namespace
 {
@@ -65,7 +66,7 @@ void COwnerDrawnListItem::DrawLabel(const COwnerDrawnListControl* list, CDC* pdc
     rcRest.DeflateRect(list->GetTextXMargin(), 0);
 
     CRect rcLabel = rcRest;
-    pdc->DrawText(GetText(0).c_str(), rcLabel, DT_SINGLELINE | DT_VCENTER | DT_WORD_ELLIPSIS | DT_CALCRECT | DT_NOPREFIX);
+    DrawTextCache::GetInstance().DrawTextCached(pdc, GetText(0), rcLabel, DT_SINGLELINE | DT_VCENTER | DT_WORD_ELLIPSIS | DT_CALCRECT | DT_NOPREFIX);
 
     rcLabel.InflateRect(LABEL_INFLATE_CX, 0);
     rcLabel.top = rcRest.top + LABEL_Y_MARGIN;
@@ -92,7 +93,7 @@ void COwnerDrawnListItem::DrawLabel(const COwnerDrawnListControl* list, CDC* pdc
     if (width == nullptr)
     {
         // Draw the actual text
-        pdc->DrawText(GetText(0).c_str(), rcRest, DT_SINGLELINE | DT_VCENTER | DT_WORD_ELLIPSIS | DT_NOPREFIX);
+        DrawTextCache::GetInstance().DrawTextCached(pdc, GetText(0), rcRest, DT_SINGLELINE | DT_VCENTER | DT_WORD_ELLIPSIS | DT_NOPREFIX);
     }
 
     rcLabel.InflateRect(1, 1);
@@ -415,7 +416,7 @@ void COwnerDrawnListControl::DrawItem(LPDRAWITEMSTRUCT pdis)
             CSetBkColor backColorSub(&dcMem, backColor);
 
             // Draw the (sub)item text
-            dcMem.DrawText(s.c_str(), rcText, alignment | DT_SINGLELINE | DT_VCENTER | DT_WORD_ELLIPSIS | DT_NOPREFIX);
+            DrawTextCache::GetInstance().DrawTextCached(&dcMem, s, rcText, alignment | DT_SINGLELINE | DT_VCENTER | DT_WORD_ELLIPSIS | DT_NOPREFIX);
         }
 
         if (m_ShowGrid)
@@ -494,7 +495,7 @@ int COwnerDrawnListControl::GetSubItemWidth(COwnerDrawnListItem* item, const int
     }
 
     CSelectObject sofont(&dc, GetFont());
-    dc.DrawText(s.c_str(), rc, DT_SINGLELINE | DT_CALCRECT | DT_NOPREFIX | DT_NOCLIP);
+    DrawTextCache::GetInstance().DrawTextCached(&dc, s, rc, DT_SINGLELINE | DT_CALCRECT | DT_NOPREFIX | DT_NOCLIP);
 
     rc.InflateRect(TEXT_X_MARGIN, 0);
     return rc.Width();
