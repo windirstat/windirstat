@@ -1659,29 +1659,23 @@ CItem* CItem::FindItemByPath(const std::wstring& path) const
 
 std::vector<CItem*> CItem::FindItemsBySameIndex() const
 {
-    std::vector<CItem*> results;
-
-    // Get the index of the current item
-    const DWORD targetIndex = GetIndex();
-    
     // Only search if we have a valid non-zero index
+    const DWORD targetIndex = GetIndex();
     if (targetIndex == 0)
     {
-        return results;
+        return {};
     }
 
     // Get the parent drive - we only search within the same drive
     auto* driveItem = GetParentDrive();
     if (driveItem == nullptr)
     {
-        return results;
+        return {};
     }
 
     // Use a stack-based traversal to search through all items under the drive
-    std::stack<CItem*> itemStack;
-    itemStack.push(driveItem);
-
-    while (!itemStack.empty())
+    std::vector<CItem*> results;
+    for (std::stack<CItem*> itemStack({ driveItem }); !itemStack.empty();)
     {
         CItem* current = itemStack.top();
         itemStack.pop();
@@ -1693,7 +1687,8 @@ std::vector<CItem*> CItem::FindItemsBySameIndex() const
         }
 
         // Add all children to the stack for traversal
-        if (!current->IsLeaf())
+        else if (!current->IsLeaf() &&
+            (current->GetAttributes() & FILE_ATTRIBUTE_REPARSE_POINT) == 0)
         {
             for (auto* child : current->GetChildren())
             {
