@@ -96,7 +96,6 @@ public:
     CRect GetWholeSubitemRect(int item, int subitem) const;
 
     bool HasFocus() const;
-    bool IsShowSelectionAlways() const;
 
 protected:
     void InitializeColors();

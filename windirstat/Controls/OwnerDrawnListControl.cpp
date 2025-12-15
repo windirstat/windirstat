@@ -72,7 +72,7 @@ void COwnerDrawnListItem::DrawLabel(const COwnerDrawnListControl* list, CDC* pdc
     rcLabel.bottom = rcRest.bottom - LABEL_Y_MARGIN;
 
     COLORREF textColor = GetItemTextColor();
-    if (width == nullptr && (state & ODS_SELECTED) != 0 && (list->HasFocus() || list->IsShowSelectionAlways()))
+    if (width == nullptr && (state & ODS_SELECTED) != 0)
     {
         // Color for the text in a highlighted item (usually white)
         textColor = list->GetHighlightTextColor();
@@ -121,10 +121,6 @@ void COwnerDrawnListItem::DrawLabel(const COwnerDrawnListControl* list, CDC* pdc
 void COwnerDrawnListItem::DrawSelection(const COwnerDrawnListControl* list, CDC* pdc, CRect rc, const UINT state) const
 {
     if (!list->IsFullRowSelection())
-    {
-        return;
-    }
-    if (!list->HasFocus() && !list->IsShowSelectionAlways())
     {
         return;
     }
@@ -294,7 +290,7 @@ COLORREF COwnerDrawnListControl::GetItemBackgroundColor(const int i) const
 COLORREF COwnerDrawnListControl::GetItemSelectionBackgroundColor(const int i) const
 {
     const bool selected = (GetItemState(i, LVIS_SELECTED) & LVIS_SELECTED) != 0;
-    if (selected && IsFullRowSelection() && (HasFocus() || IsShowSelectionAlways()))
+    if (selected && IsFullRowSelection())
     {
         return GetHighlightColor();
     }
@@ -305,7 +301,7 @@ COLORREF COwnerDrawnListControl::GetItemSelectionBackgroundColor(const int i) co
 COLORREF COwnerDrawnListControl::GetItemSelectionTextColor(const int i) const
 {
     const bool selected = (GetItemState(i, LVIS_SELECTED) & LVIS_SELECTED) != 0;
-    if (selected && IsFullRowSelection() && (HasFocus() || IsShowSelectionAlways()))
+    if (selected && IsFullRowSelection())
     {
         return GetHighlightTextColor();
     }
@@ -408,7 +404,7 @@ void COwnerDrawnListControl::DrawItem(LPDRAWITEMSTRUCT pdis)
             COLORREF textColor = item->GetItemTextColor();
 
             // Except if the item is selected - in this case just use standard colors
-            if (pdis->itemState & ODS_SELECTED && (HasFocus() || IsShowSelectionAlways()) && IsFullRowSelection())
+            if (pdis->itemState & ODS_SELECTED && IsFullRowSelection())
             {
                 backColor = GetItemSelectionBackgroundColor(pdis->itemID);
                 textColor = GetItemSelectionTextColor(pdis->itemID);
@@ -477,11 +473,6 @@ CRect COwnerDrawnListControl::GetWholeSubitemRect(const int item, const int subi
 bool COwnerDrawnListControl::HasFocus() const
 {
     return ::GetFocus() == m_hWnd;
-}
-
-bool COwnerDrawnListControl::IsShowSelectionAlways() const
-{
-    return (GetStyle() & LVS_SHOWSELALWAYS) != 0;
 }
 
 int COwnerDrawnListControl::GetSubItemWidth(COwnerDrawnListItem* item, const int subitem)
