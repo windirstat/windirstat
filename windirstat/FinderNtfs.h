@@ -37,11 +37,6 @@ public:
     {
         std::wstring FileName;
         ULONGLONG BaseRecord;
-
-        bool operator<(const FileRecordName& other) const
-        {
-            return BaseRecord != other.BaseRecord ? BaseRecord < other.BaseRecord : FileName < other.FileName;
-        }
     };
 
     FinderNtfsContext() = default;
