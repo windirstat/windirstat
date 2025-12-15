@@ -19,7 +19,7 @@
 #include "ItemTop.h"
 #include "FileTopControl.h"
 
-CFileTopControl::CFileTopControl() : CTreeListControl(20, COptions::TopViewColumnOrder.Ptr(), COptions::TopViewColumnWidths.Ptr())
+CFileTopControl::CFileTopControl() : CTreeListControl(COptions::TopViewColumnOrder.Ptr(), COptions::TopViewColumnWidths.Ptr())
 {
     m_Singleton = this;
 }

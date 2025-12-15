@@ -97,7 +97,7 @@ class CTreeListControl : public COwnerDrawnListControl
 {
     DECLARE_DYNAMIC(CTreeListControl)
 
-    CTreeListControl(int rowHeight = -1, std::vector<int>* columnOrder = {}, std::vector<int>* columnWidths = {});
+    CTreeListControl(std::vector<int>* columnOrder = {}, std::vector<int>* columnWidths = {});
     ~CTreeListControl() override = default;
     virtual BOOL CreateExtended(DWORD dwExStyle, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID);
     void SysColorChanged() override;

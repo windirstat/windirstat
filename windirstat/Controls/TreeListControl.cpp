@@ -260,11 +260,11 @@ void CTreeListItem::SetTitleRect(const CRect& rc) const
 
 IMPLEMENT_DYNAMIC(CTreeListControl, COwnerDrawnListControl)
 
-CTreeListControl::CTreeListControl(int rowHeight, std::vector<int>* columnOrder, std::vector<int>* columnWidths)
-    : COwnerDrawnListControl(rowHeight, columnOrder, columnWidths)
+CTreeListControl::CTreeListControl(std::vector<int>* columnOrder, std::vector<int>* columnWidths)
+    : COwnerDrawnListControl(columnOrder, columnWidths)
 {
-    ASSERT(rowHeight <= NODE_HEIGHT); // can't be higher
-    ASSERT(rowHeight % 2 == 0);       // must be an even number
+    ASSERT(GetRowHeight() <= NODE_HEIGHT); // can't be higher
+    ASSERT(GetRowHeight() % 2 == 0);       // must be an even number
 }
 
 BOOL CTreeListControl::CreateExtended(const DWORD dwExStyle, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, const UINT nID)

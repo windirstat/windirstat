@@ -20,7 +20,7 @@
 #include "FileSearchControl.h"
 #include "ProgressDlg.h"
 
-CFileSearchControl::CFileSearchControl() : CTreeListControl(20, COptions::SearchViewColumnOrder.Ptr(), COptions::SearchViewColumnWidths.Ptr())
+CFileSearchControl::CFileSearchControl() : CTreeListControl(COptions::SearchViewColumnOrder.Ptr(), COptions::SearchViewColumnWidths.Ptr())
 {
     m_Singleton = this;
 }

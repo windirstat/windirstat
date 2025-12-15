@@ -180,11 +180,10 @@ void COwnerDrawnListItem::DrawPercentage(CDC* pdc, const CRect rc, const double 
 
 IMPLEMENT_DYNAMIC(COwnerDrawnListControl, CSortingListControl)
 
-COwnerDrawnListControl::COwnerDrawnListControl(int rowHeight, std::vector<int>* columnOrder, std::vector<int>* columnWidths)
+// Previously took rowHeight parameter; use default from constants instead
+COwnerDrawnListControl::COwnerDrawnListControl(std::vector<int>* columnOrder, std::vector<int>* columnWidths)
     : CSortingListControl(columnOrder, columnWidths)
-    , m_RowHeight(rowHeight)
 {
-    ASSERT(rowHeight > 0);
     InitializeColors();
 }
 

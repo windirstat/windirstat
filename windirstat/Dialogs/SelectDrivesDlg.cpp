@@ -305,7 +305,7 @@ LPARAM CDriveInformationThread::GetDriveInformation(bool& success, std::wstring&
 IMPLEMENT_DYNAMIC(CDrivesList, COwnerDrawnListControl)
 
 CDrivesList::CDrivesList()
-    : COwnerDrawnListControl(20, COptions::DriveListColumnOrder.Ptr(), COptions::DriveListColumnWidths.Ptr())
+    : COwnerDrawnListControl(COptions::DriveListColumnOrder.Ptr(), COptions::DriveListColumnWidths.Ptr())
 {
 }
 

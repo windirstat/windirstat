@@ -21,7 +21,7 @@
 #include "FileDupeView.h"
 #include "MessageBoxDlg.h"
 
-CFileDupeControl::CFileDupeControl() : CTreeListControl(20, COptions::DupeViewColumnOrder.Ptr(), COptions::DupeViewColumnWidths.Ptr())
+CFileDupeControl::CFileDupeControl() : CTreeListControl(COptions::DupeViewColumnOrder.Ptr(), COptions::DupeViewColumnWidths.Ptr())
 {
     m_Singleton = this;
 }

@@ -66,7 +66,7 @@ class COwnerDrawnListControl : public CSortingListControl
     DECLARE_DYNAMIC(COwnerDrawnListControl)
 
 public:
-    COwnerDrawnListControl(int rowHeight, std::vector<int>* columnOrder, std::vector<int>* columnWidths);
+    COwnerDrawnListControl(std::vector<int>* columnOrder, std::vector<int>* columnWidths);
     ~COwnerDrawnListControl() override = default;
     void OnColumnsInserted();
     virtual void SysColorChanged();
@@ -105,7 +105,7 @@ protected:
 
     COLORREF m_WindowColor = CLR_NONE; // The default background color if !m_ShowStripes
     COLORREF m_StripeColor = CLR_NONE; // The stripe color, used for every other item if m_ShowStripes
-    int m_RowHeight;                   // Height of an item
+    int m_RowHeight = 20;              // Height of an item
     bool m_ShowGrid = false;           // Whether to draw a grid
     bool m_ShowStripes = false;        // Whether to show stripes
     bool m_ShowFullRowSelect = false;  // Whether to draw full row selection
