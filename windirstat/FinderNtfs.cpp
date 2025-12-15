@@ -274,7 +274,9 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
                     {
                         if (curAttribute->IsNonResident()) continue;
                         const auto fn = ByteOffset<FILE_NAME>(curAttribute, curAttribute->Form.Resident.ValueOffset);
-                        if (fn->IsShortNameRecord()) { continue; }
+                        if (fn->IsShortNameRecord() ||
+                            (fn->FileNameLength == 1 && wcscmp(fn->FileName, L".") == 0) ||
+                            (fn->FileNameLength == 2 && wcscmp(fn->FileName, L"..") == 0)) continue;
                         m_ParentToChildMap[fn->ParentDirectory].push_back(
                             FileRecordName{ std::wstring{ fn->FileName, fn->FileNameLength }, baseRecordIndex });
                     }
@@ -398,9 +400,4 @@ std::wstring FinderNtfs::GetFilePath() const
     else if (wcsncmp(path.data(), m_Dos.data(), m_Dos.length() - 1) == 0)
         path = path.substr(m_Dos.length());
     return path;
-}
-
-bool FinderNtfs::IsDots() const
-{
-    return m_CurrentRecordName->FileName == L"." || m_CurrentRecordName->FileName == L"..";
 }

@@ -746,7 +746,7 @@ void CDirStatDoc::RecursiveUserDefinedCleanup(USERDEFINEDCLEANUP* udc, const std
     FinderBasic finder;
     for (BOOL b = finder.FindFile(currentPath); b; b = finder.FindNext())
     {
-        if (finder.IsDots() || !finder.IsDirectory())
+        if (!finder.IsDirectory())
         {
             continue;
         }

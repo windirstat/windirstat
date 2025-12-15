@@ -1065,11 +1065,6 @@ void CItem::ScanItems(BlockingQueue<CItem*> * queue, FinderNtfsContext& contextN
 
             for (BOOL b = finder->FindFile(item); b; b = finder->FindNext())
             {
-                if (finder->IsDots())
-                {
-                    continue;
-                }
-
                 if (finder->IsDirectory())
                 {
                     if (COptions::ExcludeHiddenDirectory && finder->IsHidden() ||

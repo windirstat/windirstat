@@ -32,7 +32,6 @@ public:
 
     virtual bool FindNext() = 0;
     virtual bool FindFile(const CItem* item) = 0;
-    virtual bool IsDots() const = 0;
     virtual inline DWORD GetAttributes() const = 0;
     virtual inline ULONGLONG GetFileSizePhysical() const = 0;
     virtual inline ULONGLONG GetFileSizeLogical() const = 0;

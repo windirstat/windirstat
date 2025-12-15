@@ -110,7 +110,7 @@ bool FinderBasic::FindNext()
             if (m_CurrentInfo->FileAttributes == INVALID_FILE_ATTRIBUTES)
             {
                 std::wstring initialPath = GetFilePathLong();
-                if (IsDots()) initialPath.pop_back();
+                if (m_Name == L"." || m_Name == L"..") initialPath.pop_back();
                 m_CurrentInfo->FileAttributes = GetFileAttributes(initialPath.c_str());
             }
         }
@@ -150,7 +150,9 @@ bool FinderBasic::FindNext()
     }
 
     m_FirstRun = false;
-    return success;
+
+    if (success && (m_Name == L"." || m_Name == L"..")) return FindNext();
+    else return success;
 }
 
 bool FinderBasic::FindFile(const CItem* item)
@@ -238,11 +240,6 @@ std::wstring FinderBasic::GetFilePath() const
     if (path.starts_with(m_DosUNC)) return L"\\\\" + path.substr(m_DosUNC.size());
     if (path.starts_with(m_Dos)) return path.substr(m_Dos.size());
     return path;
-}
-
-bool FinderBasic::IsDots() const
-{
-    return m_Name == L"." || m_Name == L"..";
 }
 
 DWORD FinderBasic::GetReparseTag() const

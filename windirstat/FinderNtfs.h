@@ -66,7 +66,6 @@ public:
 
     bool FindNext() override;
     bool FindFile(const CItem* item) override;
-    bool IsDots() const override;
     DWORD GetAttributes() const override;
     ULONG GetIndex() const override;
     DWORD GetReparseTag() const override;
