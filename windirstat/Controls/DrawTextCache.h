@@ -17,11 +17,7 @@
 
 #pragma once
 
-#include <afxwin.h>
-#include <string>
-#include <unordered_map>
-#include <list>
-#include <memory>
+#include "pch.h"
 
 class DrawTextCache
 {
@@ -39,14 +35,13 @@ public:
     int DrawTextCached(CDC* pDC, const std::wstring& text, CRect& rect, UINT format);
 
 private:
-    DrawTextCache() = default;
-    ~DrawTextCache() = default;
 
     // Cache key structure
     struct CacheKey
     {
         std::wstring text;
         COLORREF textColor;
+        COLORREF backgroundColor;
         UINT format;
         int width;
         int height;
@@ -61,9 +56,10 @@ private:
         {
             size_t hash = std::hash<std::wstring>{}(key.text);
             hash ^= std::hash<COLORREF>{}(key.textColor) << 1;
-            hash ^= std::hash<UINT>{}(key.format) << 2;
-            hash ^= std::hash<int>{}(key.width) << 3;
-            hash ^= std::hash<int>{}(key.height) << 4;
+            hash ^= std::hash<COLORREF>{}(key.backgroundColor) << 2;
+            hash ^= std::hash<UINT>{}(key.format) << 3;
+            hash ^= std::hash<int>{}(key.width) << 4;
+            hash ^= std::hash<int>{}(key.height) << 5;
             return hash;
         }
     };
@@ -72,20 +68,10 @@ private:
     struct CacheEntry
     {
         CBitmap bitmap;
-        CBitmap mask;
-        int textHeight = 0;
         CSize bitmapSize;
-
-        CacheEntry() = default;
-        ~CacheEntry() = default;
-
-        // Non-copyable
-        CacheEntry(const CacheEntry&) = delete;
-        CacheEntry& operator=(const CacheEntry&) = delete;
-
-        // Movable
-        CacheEntry(CacheEntry&&) = default;
-        CacheEntry& operator=(CacheEntry&&) = default;
+        CSmallRect drawnRect;  // Actual rectangle where text was drawn (relative to input rect)
+        CSmallRect calculatedRect;  // Calculated rectangle for DT_CALCRECT requests
+        int textHeight = 0;
     };
 
     // LRU list type - stores keys in order of use (most recent at front)
@@ -113,6 +99,6 @@ private:
     // Paint cached entry to DC
     void PaintCachedEntry(CDC* pDC, const CRect& rect, CacheEntry& entry);
 
-    CacheMap m_cache;
-    LRUList m_lruList;
+    CacheMap m_Cache;
+    LRUList m_LeastRecentList;
 };
