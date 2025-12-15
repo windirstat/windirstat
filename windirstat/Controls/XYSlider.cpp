@@ -352,20 +352,13 @@ void CXySlider::OnKillFocus(CWnd* pNewWnd)
 void CXySlider::OnPaint()
 {
     Initialize();
-    const int w = m_RcAll.Width();
-    const int h = m_RcAll.Height();
 
     CPaintDC dc(this);
-    CDC dcmem;
-    dcmem.CreateCompatibleDC(&dc);
-    CBitmap bm;
-    bm.CreateCompatibleBitmap(&dc, w, h);
-    CSelectObject sobm(&dcmem, &bm);
+    CMemDC memDC(dc, this);
+    CDC* pDC = &memDC.GetDC();
 
-    PaintBackground(&dcmem);
-    PaintGripper(&dcmem);
-
-    dc.BitBlt(0, 0, w, h, &dcmem, 0, 0, SRCCOPY);
+    PaintBackground(pDC);
+    PaintGripper(pDC);
 }
 
 void CXySlider::OnKeyDown(const UINT nChar, const UINT nRepCnt, const UINT nFlags)

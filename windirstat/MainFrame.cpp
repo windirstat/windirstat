@@ -314,27 +314,19 @@ BOOL CPacmanControl::OnEraseBkgnd(CDC* pDC)
 
 void CPacmanControl::OnPaint()
 {
-    // Setup double buffering
     CPaintDC dc(this);
-    CDC memDC;
-    memDC.CreateCompatibleDC(&dc);
+    CMemDC memDC(dc, this);
+    CDC* pDC = &memDC.GetDC();
 
     CRect rect;
     GetClientRect(&rect);
 
-    CBitmap bm;
-    bm.CreateCompatibleBitmap(&dc, rect.Width(), rect.Height());
-    CSelectObject sobm(&memDC, &bm);
-
     // Draw the animation
-    m_Pacman.Draw(&memDC, rect);
+    m_Pacman.Draw(pDC, rect);
 
     // Draw the borders
     CMFCVisualManager::GetInstance()->OnDrawStatusBarPaneBorder(
-        &memDC, &CMainFrame::Get()->m_WndStatusBar, rect, 0, CMainFrame::Get()->GetStyle());
-
-    // Copy memory DC to screen DC
-    dc.BitBlt(0, 0, rect.Width(), rect.Height(), &memDC, 0, 0, SRCCOPY);
+        pDC, &CMainFrame::Get()->m_WndStatusBar, rect, 0, CMainFrame::Get()->GetStyle());
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -1214,6 +1206,8 @@ void CMainFrame::OnSize(const UINT nType, const int cx, const int cy)
         m_Pacman.MoveWindow(rc);
     }
 }
+
+/////////////////////////////////////////////////////////////////////////////
 
 void CMainFrame::OnUpdateViewShowTreeMap(CCmdUI* pCmdUI)
 {
