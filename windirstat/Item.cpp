@@ -1205,10 +1205,11 @@ void CItem::CreateFreeSpaceItem()
 
 CItem* CItem::FindFreeSpaceItem() const
 {
-    const auto it = std::ranges::find_if(GetChildren(),
+    const auto& children = GetChildren();
+    const auto it = std::ranges::find_if(children,
         [](const auto& child) { return child->IsType(IT_FREESPACE); });
 
-    return it != GetChildren().end() ? *it : nullptr;
+    return it != children.end() ? *it : nullptr;
 }
 
 void CItem::UpdateFreeSpaceItem()
@@ -1288,10 +1289,10 @@ void CItem::CreateUnknownItem()
 
 CItem* CItem::FindUnknownItem() const
 {
-    const auto it = std::ranges::find_if(GetChildren(),
+    const auto& children = GetChildren();
+    const auto it = std::ranges::find_if(children,
         [](const auto& child) { return child->IsType(IT_UNKNOWN); });
-
-    return it != GetChildren().end() ? *it : nullptr;
+    return it != children.end() ? *it : nullptr;
 }
 
 void CItem::RemoveUnknownItem()
