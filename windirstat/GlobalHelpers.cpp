@@ -630,10 +630,10 @@ void ReplaceString(std::wstring& subject, const std::wstring& search, const std:
     }
 }
 
-std::wstring& TrimString(std::wstring& s, const wchar_t c)
+std::wstring& TrimString(std::wstring& s, const wchar_t c, const bool endOnly)
 {
     while (!s.empty() && s.back() == c) s.pop_back();
-    while (!s.empty() && s.front() == c) s.erase(0, 1);
+    if (!endOnly) while (!s.empty() && s.front() == c) s.erase(0, 1);
     return s;
 }
 

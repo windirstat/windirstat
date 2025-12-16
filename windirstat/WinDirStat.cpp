@@ -242,7 +242,7 @@ public:
         // Normalize string for parsing
         std::wstring param{ pszParam };
         TrimString(param, wds::chrDoubleQuote);
-        TrimString(param, wds::chrBackslash);
+        TrimString(param, wds::chrBackslash, true);
 
         // Handle any non-flags as paths
         if (!bFlag)

@@ -83,7 +83,7 @@ void RunElevated(const std::wstring& cmdLine);
 bool EnableReadPrivileges();
 void SetProcessIoPriorityHigh();
 void ReplaceString(std::wstring& subject, const std::wstring& search, const std::wstring& replace);
-std::wstring& TrimString(std::wstring& s, wchar_t c = L' ');
+std::wstring& TrimString(std::wstring& s, wchar_t c = L' ', bool endOnly = false);
 std::wstring& MakeLower(std::wstring& s);
 const std::wstring& GetSysDirectory();
 void ProcessMessagesUntilSignaled(const std::function<void()>& callback);
