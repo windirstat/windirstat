@@ -131,24 +131,31 @@ void CFileTopControl::SortItems()
 
 void CFileTopControl::RemoveItem(CItem* item)
 {
+    // Create list of all items to remove
+    std::unordered_set<CItem*> toRemove;
     std::stack<CItem*> queue({ item });
     while (!queue.empty())
     {
         const auto& qitem = queue.top();
         queue.pop();
+
         if (qitem->IsType(IT_FILE))
         {
-            // Use erase-remove idiom for vector
-            std::erase(m_SizeMap, qitem);
-
-            // Mark that we need to resort since items were removed
-            m_NeedsResort = item->GetSizeLogical() > m_TopNMinSize;
+            toRemove.emplace(qitem);
         }
         else if (!qitem->IsLeaf()) for (const auto& child : qitem->GetChildren())
         {
-            queue.push(child);
+            if (child->IsType(IT_FILE)) toRemove.emplace(child);
+            else queue.push(child);
         }
     }
+
+    // Remove items in bulk
+    m_NeedsResort = true;
+    std::erase_if(m_SizeMap, [&](const auto& item)
+    {
+        return toRemove.contains(item);
+    });
 
     // Use the sort function to remove visual items
     CMainFrame::Get()->InvokeInMessageThread([&]
