@@ -46,8 +46,6 @@ CItem::CItem(const ITEMTYPE type, const std::wstring & name) : m_Type(type)
         // C:\|Local Disk (C:) is the true path followed by the name description
         SetName(std::format(L"{:.2}|{}", nameTmp, FormatVolumeNameOfRootPath(nameTmp)));
         m_Attributes = LOWORD(GetFileAttributesW(GetPathLong().c_str()));
-
-        CreateHardlinksItem();
     }
     else
     {
