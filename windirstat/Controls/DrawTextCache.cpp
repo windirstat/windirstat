@@ -91,7 +91,7 @@ std::unique_ptr<DrawTextCache::CacheEntry> DrawTextCache::CreateCachedBitmap(
     int textHeight = calcRect.Height();
     if (TEXTMETRIC tm; memDC.GetTextMetrics(&tm))
     {
-        textHeight = tm.tmHeight;
+        textHeight = tm.tmHeight - 1;
     }
 
     // Store the actual drawn rectangle (relative to input rect)
@@ -122,9 +122,12 @@ std::unique_ptr<DrawTextCache::CacheEntry> DrawTextCache::CreateCachedBitmap(
     memDC.SetBkColor(pDC->GetBkColor());
     memDC.SetTextColor(pDC->GetTextColor());
 
+    // Fill the entire bitmap with background color first
+    CRect drawRect(0, 0, calcRect.Width(), textHeight);
+    memDC.FillSolidRect(&drawRect, pDC->GetBkColor());
+
     // Draw the text - remove vertical alignment flags since we're drawing into
     // a bitmap sized exactly for the text
-    CRect drawRect(0, 0, calcRect.Width(), textHeight);
     memDC.DrawTextW(text.c_str(), static_cast<int>(text.length()),
         &drawRect, format & ~DT_VCENTER);
 
