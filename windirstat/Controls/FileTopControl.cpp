@@ -54,14 +54,59 @@ void CFileTopControl::SortItems()
     // Verify at least root exists
     if (GetItemCount() == 0) return;
 
-    // Quickly copy the items to a vector to free mutex
-    CItem* newItem = nullptr;
-    while (m_QueuedSet.pop(newItem)) m_SizeMap.emplace(newItem);
+    // Record size and complete resort if top N changed
+    const auto topN = static_cast<size_t>(COptions::LargeFileCount.Obj());
+    if (topN != m_PreviousTopN)
+    {
+        std::ranges::sort(m_SizeMap, CompareBySize);
+        m_PreviousTopN = topN;
+        m_NeedsResort = true;
+    }
 
-    SetRedraw(FALSE);
+    // Process queued items - only mark for resort if item could affect top N
+    CItem* newItem = nullptr;
+    while (m_QueuedSet.pop(newItem))
+    {
+        // Check if this item could affect the top N
+        if (m_SizeMap.size() < topN || newItem->GetSizeLogical() > m_TopNMinSize)
+        {
+            m_NeedsResort = true;
+        }
+        m_SizeMap.push_back(newItem);
+    }
+
+    // Only sort the vector if we need to update the top N
+    if (!m_NeedsResort)
+    {
+        CTreeListControl::SortItems();
+        return;
+    }
+    
+    m_NeedsResort = false;
+    const auto sortEnd = m_SizeMap.size() <= topN ? m_SizeMap.end()
+        : m_SizeMap.begin() + topN;
+
+    // Partial sort to get top N items at the front
+    std::partial_sort(m_SizeMap.begin(), sortEnd, m_SizeMap.end(), CompareBySize);
+
+    // Update minimum size in top N for future comparisons
+    if (m_SizeMap.size() >= topN)
+    {
+        m_TopNMinSize = m_SizeMap[topN - 1]->GetSizeLogical();
+    }
+    else if (!m_SizeMap.empty())
+    {
+        m_TopNMinSize = m_SizeMap.back()->GetSizeLogical();
+    }
+    else
+    {
+        m_TopNMinSize = 0;
+    }
+
+    // Update visual item removals
     const auto root = reinterpret_cast<CItemTop*>(GetItem(0));
     auto itemTrackerCopy = std::unordered_map(m_ItemTracker);
-    for (const auto& largeItem : m_SizeMap | std::views::take(COptions::LargeFileCount.Obj()))
+    for (const auto& largeItem : m_SizeMap | std::views::take(topN))
     {
         if (m_ItemTracker.contains(largeItem))
         {
@@ -74,14 +119,14 @@ void CFileTopControl::SortItems()
         m_ItemTracker[largeItem] = itemTop;
     }
 
+    // Handle visual item additions
     for (const auto& itemTop : itemTrackerCopy | std::views::values)
     {
         m_ItemTracker.erase(reinterpret_cast<CItem*>(itemTop->GetLinkedItem()));
         root->RemoveTopItemChild(itemTop);
     }
-    SetRedraw(TRUE);
 
-    CSortingListControl::SortItems();
+    CTreeListControl::SortItems();
 }
 
 void CFileTopControl::RemoveItem(CItem* item)
@@ -93,7 +138,11 @@ void CFileTopControl::RemoveItem(CItem* item)
         queue.pop();
         if (qitem->IsType(IT_FILE))
         {
-            m_SizeMap.erase(qitem);
+            // Use erase-remove idiom for vector
+            std::erase(m_SizeMap, qitem);
+
+            // Mark that we need to resort since items were removed
+            m_NeedsResort = item->GetSizeLogical() > m_TopNMinSize;
         }
         else if (!qitem->IsLeaf()) for (const auto& child : qitem->GetChildren())
         {
@@ -126,6 +175,8 @@ BOOL CFileTopControl::OnDeleteAllItems(NMHDR*, LRESULT* pResult)
     // Reset trackers
     m_SizeMap.clear();
     m_ItemTracker.clear();
+    m_TopNMinSize = 0;
+    m_NeedsResort = true;
 
     // Allow deletion to proceed
     *pResult = FALSE;

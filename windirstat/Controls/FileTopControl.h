@@ -34,7 +34,7 @@ public:
 
 protected:
 
-    // Custom comparator to keep the list organized by size
+    // Custom comparator to keep the list organized by size (largest first)
     static constexpr auto CompareBySize = [](const CItem* lhs, const CItem* rhs)
     {
         return lhs->GetSizeLogical() > rhs->GetSizeLogical();
@@ -42,8 +42,11 @@ protected:
 
     static CFileTopControl* m_Singleton;
     SingleConsumerQueue<CItem*> m_QueuedSet;
-    std::multiset<CItem*, decltype(CompareBySize)> m_SizeMap;
+    std::vector<CItem*> m_SizeMap;
+    ULONGLONG m_TopNMinSize = 0;
+    bool m_NeedsResort = true;
     std::unordered_map<CItem*, CItemTop*> m_ItemTracker;
+    size_t m_PreviousTopN = 0;
 
     void OnItemDoubleClick(int i) override;
 

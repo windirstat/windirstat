@@ -136,6 +136,7 @@ void CPageAdvanced::OnOK()
         CDirStatDoc::GetDocument()->RefreshReparsePointItems();
     }
 
+    CDirStatDoc::GetDocument()->UpdateAllViews(nullptr, HINT_LISTSTYLECHANGED);
     CMFCPropertyPage::OnOK();
 }
 

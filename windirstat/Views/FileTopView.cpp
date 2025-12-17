@@ -125,6 +125,7 @@ void CFileTopView::OnUpdate(CView* pSender, const LPARAM lHint, CObject* pHint)
             m_Control.ShowGrid(COptions::ListGrid);
             m_Control.ShowStripes(COptions::ListStripes);
             m_Control.ShowFullRowSelection(COptions::ListFullRowSelection);
+            m_Control.SortItems();
         }
         break;
 
