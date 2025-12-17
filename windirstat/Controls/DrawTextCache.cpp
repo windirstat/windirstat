@@ -29,7 +29,7 @@ int DrawTextCache::DrawTextCached(CDC* pDC, const std::wstring& text, CRect& rec
     }
 
     // Look up in cache
-    const CacheKey key = CreateCacheKey(pDC, text, rect, format);
+    CacheKey key = CreateCacheKey(pDC, text, rect, format);
     if (auto it = m_Cache.find(key); it != m_Cache.end())
     {
         // Cache hit - use cached entry

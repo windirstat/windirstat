@@ -139,7 +139,8 @@ void CAboutDlg::WdsTabControl::OnEnLinkText(NMHDR* pNMHDR, LRESULT* pResult)
     if (WM_LBUTTONDOWN == el->msg)
     {
         CStringW link;
-        const auto& active = GetActiveTab() == TAB_ABOUT ? m_TextAbout : GetActiveTab() == TAB_THANKSTO ? m_TextThanks : m_TextLicense;
+        const auto tabIndex = GetActiveTab();
+        const auto& active = tabIndex == TAB_ABOUT ? m_TextAbout : tabIndex == TAB_THANKSTO ? m_TextThanks : m_TextLicense;
         active.GetTextRange(el->chrg.cpMin, el->chrg.cpMax, link);
         ::ShellExecute(*this, nullptr, link, nullptr, wds::strEmpty, SW_SHOWNORMAL);
     }
@@ -224,11 +225,8 @@ BOOL CAboutDlg::OnInitDialog()
     return TRUE;
 }
 
-LRESULT CAboutDlg::OnTabChanged(WPARAM wParam, LPARAM lParam)
+LRESULT CAboutDlg::OnTabChanged(WPARAM, LPARAM)
 {
-    UNREFERENCED_PARAMETER(wParam);
-    UNREFERENCED_PARAMETER(lParam);
-
     m_Tab.ClearSelectionCursor();
     return 0;
 }

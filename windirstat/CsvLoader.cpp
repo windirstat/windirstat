@@ -63,7 +63,6 @@ static std::string ToTimePoint(const FILETIME& fileTime)
     return std::format("{}-{:02}-{:02}T{:02}:{:02}:{:02}Z",
         sysTime.wYear, sysTime.wMonth, sysTime.wDay,
         sysTime.wHour, sysTime.wMinute, sysTime.wSecond);
-
 }
 
 static FILETIME FromTimeString(const std::wstring& time)
@@ -82,12 +81,18 @@ static FILETIME FromTimeString(const std::wstring& time)
 
 static std::string QuoteAndConvert(const std::wstring& inc)
 {
-    const int sz = WideCharToMultiByte(CP_UTF8, 0, inc.c_str(), -1, nullptr, 0, nullptr, nullptr);
-    std::string out = "\"";
-    out.resize(static_cast<size_t>(sz) + 1);
-    WideCharToMultiByte(CP_UTF8, 0, inc.data(), -1, &out[1], sz, nullptr, nullptr);
-    out[sz] = '"';
-    return out;
+    thread_local std::vector<CHAR> result(512, '"');
+    int charsWritten = static_cast<int>(result.size());
+    while ((charsWritten = WideCharToMultiByte(CP_UTF8, 0, inc.data(), static_cast<int>(inc.size()),
+        result.data() + 1, static_cast<int>(result.size() - 2), nullptr, nullptr)) == 0
+        && GetLastError() == ERROR_INSUFFICIENT_BUFFER)
+    {
+        result.resize(result.size() * 2);
+    }
+
+    if (charsWritten == 0) return {};
+    result[1 + charsWritten] = '"';
+    return { result.begin(), result.begin() + 1 + charsWritten + 1 };
 }
 
 CItem* LoadResults(const std::wstring & path)
@@ -212,9 +217,8 @@ CItem* LoadResults(const std::wstring & path)
     return newroot;
 }
 
-bool SaveResults(const std::wstring& path, CItem * rootItem)
+bool SaveResults(const std::wstring& path, CItem* rootItem)
 {
-
     // Vector to store all entries
     std::vector<const CItem*> items;
     items.reserve(static_cast<size_t>(rootItem->GetItemsCount()));
@@ -230,10 +234,7 @@ bool SaveResults(const std::wstring& path, CItem * rootItem)
 
         // Descend into childitems
         if (qitem->IsLeaf()) continue;
-        for (const auto& child : qitem->GetChildren())
-        {
-            queue.push(child);
-        }
+        for (const auto& child : qitem->GetChildren()) queue.push(child);
     }
 
     // Sort results
@@ -244,8 +245,7 @@ bool SaveResults(const std::wstring& path, CItem * rootItem)
         });
 
     // Output header line to file
-    std::ofstream outf;
-    outf.open(path, std::ios::binary);
+    std::ofstream outf(path, std::ios::binary);
 
     // Determine columns
     std::vector cols =
@@ -259,20 +259,17 @@ bool SaveResults(const std::wstring& path, CItem * rootItem)
         Localization::Lookup(IDS_COL_LAST_CHANGE),
         Localization::LookupNeutral(AFX_IDS_APP_TITLE) + L" " + Localization::Lookup(IDS_COL_ATTRIBUTES)
     };
-    if (COptions::ShowColumnOwner)
-    {
-        cols.push_back(Localization::Lookup(IDS_COL_OWNER));
-    }
+    if (COptions::ShowColumnOwner) cols.push_back(Localization::Lookup(IDS_COL_OWNER));
 
     // Output columns to file
-    for (unsigned int i = 0; i < cols.size(); i++)
+    for (size_t i = 0; i < cols.size(); i++)
     {
-        outf << QuoteAndConvert(cols[i]) << ((i < cols.size() - 1) ? "," : "");
+        outf << QuoteAndConvert(cols[i]) << (i + 1 < cols.size() ? "," : "");
     }
 
     // Output all items to file
     outf << "\r\n";
-    for (const auto item : items)
+    for (const auto* item : items)
     {
         // Output primary columns
         const bool nonPathItem = item->IsType(IT_MYCOMPUTER);
@@ -287,24 +284,19 @@ bool SaveResults(const std::wstring& path, CItem * rootItem)
             (item->GetIndex() << (sizeof(ITEMTYPE) * CHAR_BIT)) | item->GetRawType());
 
         // Output additional columns
-        if (COptions::ShowColumnOwner)
-        {
-            outf << "," << QuoteAndConvert(item->GetOwner(true));
-        }
+        if (COptions::ShowColumnOwner) outf << "," << QuoteAndConvert(item->GetOwner(true));
 
         // Finalize lines
         outf << "\r\n";
     }
 
-    outf.close();
     return true;
 }
 
 bool SaveDuplicates(const std::wstring& path, CItemDupe* rootDupe)
 {
     // Open output file
-    std::ofstream outf;
-    outf.open(path, std::ios::binary);
+    std::ofstream outf(path, std::ios::binary);
     if (!outf.is_open()) return false;
 
     // Define and output column headers
@@ -318,9 +310,9 @@ bool SaveDuplicates(const std::wstring& path, CItemDupe* rootDupe)
         Localization::Lookup(IDS_COL_ATTRIBUTES)
     };
 
-    for (unsigned int i = 0; i < cols.size(); i++)
+    for (size_t i = 0; i < cols.size(); i++)
     {
-        outf << QuoteAndConvert(cols[i]) << ((i < cols.size() - 1) ? "," : "");
+        outf << QuoteAndConvert(cols[i]) << (i + 1 < cols.size() ? "," : "");
     }
     outf << "\r\n";
 
@@ -344,6 +336,5 @@ bool SaveDuplicates(const std::wstring& path, CItemDupe* rootDupe)
         }
     }
 
-    outf.close();
     return true;
 }

@@ -95,15 +95,15 @@ constexpr ITEMTYPE operator&(const ITEMTYPE& a, const ITEMTYPE& b)
     return static_cast<ITEMTYPE>(static_cast<USHORT>(a) & static_cast<USHORT>(b));
 }
 
-constexpr bool operator<(const FILETIME& t1, const FILETIME& t2)
+constexpr auto operator<=>(const FILETIME& t1, const FILETIME& t2)
 {
-    return t1.dwHighDateTime < t2.dwHighDateTime ||
-        t1.dwHighDateTime == t2.dwHighDateTime && t1.dwLowDateTime < t2.dwLowDateTime;
+    if (const auto cmp = t1.dwHighDateTime <=> t2.dwHighDateTime; cmp != 0) return cmp;
+    return t1.dwLowDateTime <=> t2.dwLowDateTime;
 }
 
 constexpr bool operator==(const FILETIME& t1, const FILETIME& t2)
 {
-    return t1.dwLowDateTime == t2.dwLowDateTime && t1.dwHighDateTime == t2.dwHighDateTime;
+    return (t1 <=> t2) == 0;
 }
 
 //

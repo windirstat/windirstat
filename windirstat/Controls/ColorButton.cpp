@@ -26,9 +26,8 @@ BEGIN_MESSAGE_MAP(CColorButton::CPreview, CWnd)
     ON_WM_LBUTTONDOWN()
 END_MESSAGE_MAP()
 
-CColorButton::CPreview::CPreview()
+CColorButton::CPreview::CPreview() : m_Color(0)
 {
-    m_Color = 0;
 }
 
 COLORREF CColorButton::CPreview::GetColor() const
@@ -54,12 +53,8 @@ void CColorButton::CPreview::OnPaint()
 
     dc.DrawEdge(rc, EDGE_BUMP, BF_RECT | BF_ADJUST);
 
-    COLORREF color = m_Color;
-    if ((GetParent()->GetStyle() & WS_DISABLED) != 0)
-    {
-        color = DarkMode::WdsSysColor(COLOR_BTNFACE);
-    }
-    dc.FillSolidRect(rc, color);
+    const bool disabled = (GetParent()->GetStyle() & WS_DISABLED) != 0;
+    dc.FillSolidRect(rc, disabled ? DarkMode::WdsSysColor(COLOR_BTNFACE) : m_Color);
 }
 
 void CColorButton::CPreview::OnLButtonDown(const UINT nFlags, CPoint point)

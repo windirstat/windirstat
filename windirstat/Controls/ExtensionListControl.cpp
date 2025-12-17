@@ -22,12 +22,12 @@
 /////////////////////////////////////////////////////////////////////////////
 
 CExtensionListControl::CListItem::CListItem(CExtensionListControl* list, const std::wstring& extension, const SExtensionRecord& r)
+    : m_List(list)
+    , m_Extension(extension)
+    , m_Bytes(r.bytes)
+    , m_Files(r.files)
+    , m_Color(r.color)
 {
-    m_List = list;
-    m_Extension = extension;
-    m_Bytes = r.bytes;
-    m_Files = r.files;
-    m_Color = r.color;
 }
 
 bool CExtensionListControl::CListItem::DrawSubItem(const int subitem, CDC* pdc, CRect rc, const UINT state, int* width, int* focusLeft)
@@ -188,10 +188,13 @@ void CExtensionListControl::SetExtensionData(const CExtensionData* ed)
     DeleteAllItems();
 
     // Insert new items
-    if (ed != nullptr) for (int i = 0; const auto & ext : *ed)
+    if (ed != nullptr)
     {
-        const auto item = new CListItem(this, ext.first, ext.second);
-        InsertListItem(i++, item);
+        int i = 0;
+        for (const auto& [ext, rec] : *ed)
+        {
+            InsertListItem(i++, new CListItem(this, ext, rec));
+        }
     }
 
     SetRedraw(TRUE);
