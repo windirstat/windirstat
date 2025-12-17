@@ -305,6 +305,9 @@
     <ClInclude Include="Pages\PagePrompts.h">
       <Filter>Header Files\Pages</Filter>
     </ClInclude>
+    <ClInclude Include="Controls\DrawTextCache.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirStatDoc.cpp">
@@ -454,6 +457,9 @@
     <ClCompile Include="Pages\PagePrompts.cpp">
       <Filter>Source Files\Pages</Filter>
     </ClCompile>
+    <ClCompile Include="Controls\DrawTextCache.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="windirstat.rc">
@@ -529,7 +535,7 @@
     </Image>
     <Image Include="res\nodes\IDI_HARDLINKS.ico">
       <Filter>Resource Files\Resources</Filter>
-    </Image>    
+    </Image>
     <Image Include="res\toolbar\IDB_SCAN_STOP.bmp">
       <Filter>Resource Files\Resources</Filter>
     </Image>
