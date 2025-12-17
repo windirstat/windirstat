@@ -282,7 +282,20 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
                     }
                     else if (curAttribute->TypeCode == AttributeData)
                     {
-                        if (curAttribute->NameLength != 0) continue; // only process default data stream
+                        // Special case for WofCompressedData files
+                        if (const WCHAR* streamName = ByteOffset<WCHAR>(curAttribute, curAttribute->NameOffset); curAttribute->NameLength > 0)
+                        {
+                            if (std::wstring_view(streamName, curAttribute->NameLength) == L"WofCompressedData")
+                            {
+                                baseRecord.PhysicalSize = curAttribute->IsNonResident() ?
+                                    curAttribute->Form.Nonresident.AllocatedLength :
+                                    (curAttribute->Form.Resident.ValueLength + 7) & ~7;
+                            }
+
+                            continue;
+                        }
+
+                        // Default stream processing
                         if (curAttribute->IsNonResident())
                         {
                             if (curAttribute->Form.Nonresident.LowestVcn != 0) continue;
@@ -300,7 +313,17 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
                     {
                         if (curAttribute->IsNonResident()) continue;
                         const auto fn = ByteOffset<Finder::REPARSE_DATA_BUFFER>(curAttribute, curAttribute->Form.Resident.ValueOffset);
-                        baseRecord.ReparsePointTag = fn->ReparseTag;
+                        if (fn->ReparseTag == IO_REPARSE_TAG_MOUNT_POINT ||
+                            fn->ReparseTag == IO_REPARSE_TAG_SYMLINK ||
+                            fn->ReparseTag == IO_REPARSE_TAG_MOUNT_POINT)
+                        {
+                            baseRecord.ReparsePointTag = fn->ReparseTag;
+                        }
+                        else if (fn->ReparseTag == IO_REPARSE_TAG_WOF)
+                        {
+                            baseRecord.Attributes |= FILE_ATTRIBUTE_COMPRESSED;
+                        }
+
                         if (Finder::IsJunction(*fn))
                         {
                             baseRecord.ReparsePointTag = IO_REPARSE_TAG_JUNCTION_POINT;
@@ -374,7 +397,6 @@ std::wstring FinderNtfs::GetFileName() const
 
 ULONGLONG FinderNtfs::GetFileSizePhysical() const
 {
-    if (m_CurrentRecord->ReparsePointTag != 0) return 0;
     return m_CurrentRecord->PhysicalSize;
 }
 
