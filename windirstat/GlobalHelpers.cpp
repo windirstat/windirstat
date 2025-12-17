@@ -15,6 +15,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
+
 #include "pch.h"
 #include "FinderBasic.h"
 #include "MessageBoxDlg.h"
@@ -114,7 +115,7 @@ static std::wstring FormatLongLongNormal(ULONGLONG n)
     if (n == 0) return L"0";
 
     const wchar_t sep = GetLocaleThousandSeparator();
-    wchar_t buffer[32];
+    std::array<WCHAR, 32> buffer;
     int pos = std::size(buffer) - 1;
     buffer[pos] = L'\0';
 
@@ -124,17 +125,16 @@ static std::wstring FormatLongLongNormal(ULONGLONG n)
         buffer[--pos] = L'0' + (n % 10);
     }
 
-    return { &buffer[pos] };
+    return { &buffer[pos], static_cast<size_t>(std::size(buffer) - 1 - pos) };
 }
 
 std::wstring GetLocaleString(const LCTYPE lctype, const LCID lcid)
 {
     const int len = ::GetLocaleInfo(lcid, lctype, nullptr, 0);
+    if (len <= 0) return {};
 
-    std::wstring s;
-    s.resize(len);
+    std::wstring s(len - 1, L'\0');
     ::GetLocaleInfo(lcid, lctype, s.data(), len);
-    s.resize(wcslen(s.data()));
 
     return s;
 }
@@ -143,7 +143,7 @@ std::wstring GetLocaleLanguage(const LANGID langid)
 {
     const std::wstring s = GetLocaleString(LOCALE_SLOCALIZEDLANGUAGENAME, langid);
     const std::wstring n = GetLocaleString(LOCALE_SNATIVELANGNAME, langid);
-    return s + L" (" + n + L")";
+    return std::format(L"{} ({})", s, n);
 }
 
 wchar_t GetLocaleThousandSeparator()
@@ -170,14 +170,14 @@ wchar_t GetLocaleDecimalSeparator()
     return cachedChar;
 }
 
-std::wstring FormatBytes(const ULONGLONG& n)
+std::wstring FormatBytes(const ULONGLONG n)
 {
     if (COptions::UseSizeSuffixes)
     {
         return FormatSizeSuffixes(n);
     }
 
-    return FormatLongLongNormal(n) + L" " + GetSpec_Bytes();
+    return std::format(L"{} {}", FormatLongLongNormal(n), GetSpec_Bytes());
 }
 
 std::wstring FormatSizeSuffixes(ULONGLONG n)
@@ -195,24 +195,24 @@ std::wstring FormatSizeSuffixes(ULONGLONG n)
 
     if (TiB != 0 || (GiB == base - 1 && MiB >= half))
     {
-        return FormatDouble(static_cast<double>(TiB) + static_cast<double>(GiB) / base) + L" " + GetSpec_TiB();
+        return std::format(L"{} {}", FormatDouble(static_cast<double>(TiB) + static_cast<double>(GiB) / base), GetSpec_TiB());
     }
     if (GiB != 0 || (MiB == base - 1 && KiB >= half))
     {
-        return FormatDouble(static_cast<double>(GiB) + static_cast<double>(MiB) / base) + L" " + GetSpec_GiB();
+        return std::format(L"{} {}", FormatDouble(static_cast<double>(GiB) + static_cast<double>(MiB) / base), GetSpec_GiB());
     }
     if (MiB != 0 || (KiB == base - 1 && B >= half))
     {
-        return FormatDouble(static_cast<double>(MiB) + static_cast<double>(KiB) / base) + L" " + GetSpec_MiB();
+        return std::format(L"{} {}", FormatDouble(static_cast<double>(MiB) + static_cast<double>(KiB) / base), GetSpec_MiB());
     }
     if (KiB != 0)
     {
-        return FormatDouble(static_cast<double>(KiB) + static_cast<double>(B) / base) + L" " + GetSpec_KiB();
+        return std::format(L"{} {}", FormatDouble(static_cast<double>(KiB) + static_cast<double>(B) / base), GetSpec_KiB());
     }
-    return std::to_wstring(B) + L" " + GetSpec_Bytes();
+    return std::format(L"{} {}", B, GetSpec_Bytes());
 }
 
-std::wstring FormatCount(const ULONGLONG& n)
+std::wstring FormatCount(const ULONGLONG n)
 {
     return FormatLongLongNormal(n);
 }
@@ -226,14 +226,13 @@ std::wstring FormatDouble(double d)
     const int i = static_cast<int>(floor(d));
     const int r = static_cast<int>(10 * (d - i));
 
-    return std::to_wstring(i) + GetLocaleDecimalSeparator() + std::to_wstring(r);
+    return std::format(L"{}{}{}", i, GetLocaleDecimalSeparator(), r);
 }
 
-std::wstring PadWidthBlanks(std::wstring n, const int width)
+std::wstring PadWidthBlanks(const std::wstring& n, const int width)
 {
-    const auto blankCount = width - n.size();
-    if (blankCount <= 0) return n;
-    return n + std::wstring(blankCount, wds::chrBlankSpace);
+    const auto blankCount = width - static_cast<int>(n.size());
+    return (blankCount <= 0) ? n : n + std::wstring(blankCount, wds::chrBlankSpace);
 }
 
 std::wstring FormatFileTime(const FILETIME& t)
@@ -252,58 +251,26 @@ std::wstring FormatFileTime(const FILETIME& t)
     VERIFY(0 < ::GetDateFormat(lcid, DATE_SHORTDATE, &st, nullptr, date.data(), static_cast<int>(date.size())));
 
     std::array<WCHAR, 64> time;
-    VERIFY(0 < GetTimeFormat(lcid, TIME_NOSECONDS, &st, nullptr, time.data(), static_cast<int>(time.size())));
+    VERIFY(0 < ::GetTimeFormat(lcid, TIME_NOSECONDS, &st, nullptr, time.data(), static_cast<int>(time.size())));
  
-    return date.data() + std::wstring(L"  ") + time.data();
+    return std::format(L"{}  {}", date.data(), time.data());
 }
 
 std::wstring FormatAttributes(const DWORD attr)
 {
-    if (attr == INVALID_FILE_ATTRIBUTES)
-    {
-        return wds::strInvalidAttributes;
-    }
+    if (attr == INVALID_FILE_ATTRIBUTES) return wds::strInvalidAttributes;
 
     std::wstring attributes;
-    if (attr & FILE_ATTRIBUTE_READONLY)
-    {
-        attributes.append(wds::strAttributeReadonly);
-    }
+    attributes.reserve(8); // Typical max length for attribute string
 
-    if (attr & FILE_ATTRIBUTE_HIDDEN)
-    {
-        attributes.append(wds::strAttributeHidden);
-    }
-
-    if (attr & FILE_ATTRIBUTE_SYSTEM)
-    {
-        attributes.append(wds::strAttributeSystem);
-    }
-
-    if (attr & FILE_ATTRIBUTE_ARCHIVE)
-    {
-        attributes.append(wds::strAttributeArchive);
-    }
-
-    if (attr & FILE_ATTRIBUTE_COMPRESSED)
-    {
-        attributes.append(wds::strAttributeCompressed);
-    }
-
-    if (attr & FILE_ATTRIBUTE_ENCRYPTED)
-    {
-        attributes.append(wds::strAttributeEncrypted);
-    }
-
-    if (attr & FILE_ATTRIBUTE_OFFLINE)
-    {
-        attributes.append(wds::strAttributeOffline);
-    }
-
-    if (attr & FILE_ATTRIBUTE_SPARSE_FILE)
-    {
-        attributes.append(wds::strAttributeSparse);
-    }
+    if (attr & FILE_ATTRIBUTE_READONLY) attributes += wds::strAttributeReadonly;
+    if (attr & FILE_ATTRIBUTE_HIDDEN) attributes += wds::strAttributeHidden;
+    if (attr & FILE_ATTRIBUTE_SYSTEM) attributes += wds::strAttributeSystem;
+    if (attr & FILE_ATTRIBUTE_ARCHIVE) attributes += wds::strAttributeArchive;
+    if (attr & FILE_ATTRIBUTE_COMPRESSED) attributes += wds::strAttributeCompressed;
+    if (attr & FILE_ATTRIBUTE_ENCRYPTED) attributes += wds::strAttributeEncrypted;
+    if (attr & FILE_ATTRIBUTE_OFFLINE) attributes += wds::strAttributeOffline;
+    if (attr & FILE_ATTRIBUTE_SPARSE_FILE) attributes += wds::strAttributeSparse;
 
     return attributes;
 }
@@ -311,15 +278,12 @@ std::wstring FormatAttributes(const DWORD attr)
 std::wstring FormatMilliseconds(const ULONGLONG ms)
 {
     const ULONGLONG sec = (ms + 500) / 1000;
-
     const ULONGLONG s   = sec % 60;
     const ULONGLONG min = sec / 60;
-
     const ULONGLONG m = min % 60;
     const ULONGLONG h = min / 60;
 
-    return (h <= 0) ? std::format(L"{}:{:02}", m, s) :
-        std::format(L"{}:{:02}:{:02}", h, m, s);
+    return (h <= 0) ? std::format(L"{}:{:02}", m, s) : std::format(L"{}:{:02}:{:02}", h, m, s);
 }
 
 bool GetVolumeName(const std::wstring & rootPath, std::wstring& volumeName)
@@ -327,13 +291,8 @@ bool GetVolumeName(const std::wstring & rootPath, std::wstring& volumeName)
     volumeName.resize(MAX_PATH);
     const bool success = GetVolumeInformation(rootPath.c_str(), volumeName.data(),
         static_cast<DWORD>(volumeName.size()), nullptr, nullptr, nullptr, nullptr, 0) != FALSE;
-    volumeName.resize(wcslen(volumeName.data()));
-
-    if (!success)
-    {
-        VTRACE(L"GetVolumeInformation({}) failed: {}", rootPath.c_str(), ::GetLastError());
-    }
-
+    volumeName.resize(success ? wcslen(volumeName.data()) : 0);
+    if (!success) VTRACE(L"GetVolumeInformation({}) failed: {}", rootPath.c_str(), ::GetLastError());
     return success;
 }
 
@@ -342,17 +301,8 @@ bool GetVolumeName(const std::wstring & rootPath, std::wstring& volumeName)
 // like "BOOT (C:)" (drive label followed by the two‑character drive spec).
 std::wstring FormatVolumeNameOfRootPath(const std::wstring& rootPath)
 {
-    std::wstring ret;
     std::wstring volumeName;
-    if (GetVolumeName(rootPath, volumeName))
-    {
-        ret = FormatVolumeName(rootPath, volumeName);
-    }
-    else
-    {
-        ret = rootPath;
-    }
-    return ret;
+    return GetVolumeName(rootPath, volumeName) ? FormatVolumeName(rootPath, volumeName) : rootPath;
 }
 
 std::wstring FormatVolumeName(const std::wstring& rootPath, const std::wstring& volumeName)
@@ -456,19 +406,12 @@ bool DriveExists(const std::wstring& path)
 //
 std::wstring MyQueryDosDevice(const std::wstring & drive)
 {
-    std::wstring d = drive;
-
-    if (d.size() < 2 || d[1] != wds::chrColon)
-    {
-        return wds::strEmpty;
-    }
-
-    d = d.substr(0, 2);
+    if (drive.size() < 2 || drive[1] != wds::chrColon) return {};
 
     std::array<WCHAR, 512> info;
-    if (::QueryDosDevice(d.c_str(), info.data(), static_cast<DWORD>(info.size())) == 0)
+    if (::QueryDosDevice(drive.substr(0, 2).c_str(), info.data(), static_cast<DWORD>(info.size())) == 0)
     {
-        VTRACE(L"QueryDosDevice({}) Failed: {}", d.c_str(), TranslateError());
+        VTRACE(L"QueryDosDevice({}) Failed: {}", drive.substr(0, 2), TranslateError());
         return {};
     }
 
@@ -623,10 +566,10 @@ bool EnableReadPrivileges()
 
 void ReplaceString(std::wstring& subject, const std::wstring& search, const std::wstring& replace)
 {
-    size_t pos = 0;
-    while ((pos = subject.find(search, pos)) != std::string::npos) {
-        subject.replace(pos, search.length(), replace);
-        pos += replace.length();
+    for (size_t i = 0; (i = subject.find(search, i)) != std::wstring::npos; i += replace.length())
+    {
+        subject.replace(i, search.length(), replace);
+        
     }
 }
 
@@ -684,16 +627,21 @@ void ProcessMessagesUntilSignaled(const std::function<void()>& callback)
 
 std::wstring GlobToRegex(const std::wstring& glob, const bool useAnchors)
 {
+    // Static regex patterns - compiled once instead of every call
+    static const std::wregex escapePattern(LR"([.\\+^$|()[\]{}])", std::regex_constants::optimize);
+    static const std::wregex starPattern(LR"(\*)", std::regex_constants::optimize);
+    static const std::wregex questionPattern(LR"(\?)", std::regex_constants::optimize);
+
     std::wstring regex = glob;
 
     // Replace escape sequences for '\' in the glob
-    regex = std::regex_replace(regex, std::wregex(LR"([.\\+^$|()[\]{}])"), LR"(\$&)");
+    regex = std::regex_replace(regex, escapePattern, LR"(\$&)");
 
     // Replace '*' (match any sequence of characters)
-    regex = std::regex_replace(regex, std::wregex(LR"(\*)"), LR"([^\\/:]*)");
+    regex = std::regex_replace(regex, starPattern, LR"([^\\/:]*)");
 
     // Replace '?' (match any single character)
-    regex = std::regex_replace(regex, std::wregex(LR"(\?)"), LR"([^\\/:])");
+    regex = std::regex_replace(regex, questionPattern, LR"([^\\/:])");
 
     return useAnchors ? (L"^" + regex + L"$") : regex;
 }
@@ -721,22 +669,20 @@ std::vector<BYTE> GetCompressedResource(const HRSRC resource)
 
 std::wstring GetVolumePathNameEx(const std::wstring & path)
 {
-    // Establish a fallback volume as drive letter or server name
-    std::wstring fallback;
-    std::wsmatch match;
-    if (std::regex_match(path, match, std::wregex(LR"(\\\\\?\\([A-Z]:).*)")) && match.size() > 1 ||
-        std::regex_match(path, match, std::wregex(LR"(\\\\\?\\UNC\\([^\\]*).*)")) && match.size() > 1)
-    {
-        fallback = match[1].str();
-    }
+    // Static regex patterns - compiled once instead of every call
+    static const std::wregex drivePattern(LR"(\\\\\?\\([A-Z]:).*)", std::regex_constants::optimize);
+    static const std::wregex uncPattern(LR"(\\\\\?\\UNC\\([^\\]*).*)", std::regex_constants::optimize);
 
     // First, try the regular path resolution
     std::array<WCHAR, MAX_PATH> volume;
-    if (GetVolumePathName(path.c_str(),
-        volume.data(), static_cast<DWORD>(volume.size())) != 0)
-    {
+    if (GetVolumePathName(path.c_str(), volume.data(), static_cast<DWORD>(volume.size())) != 0)
         return volume.data();
-    }
+
+    // Establish a fallback volume as drive letter or server name
+    std::wstring fallback;
+    if (std::wsmatch match; std::regex_match(path, match, drivePattern) && match.size() > 1 ||
+        std::regex_match(path, match, uncPattern) && match.size() > 1)
+        fallback = match[1].str();
 
     // Create a file handle to do a reverse lookup (in case of subst'd drive)
     SmartPointer<HANDLE> handle(CloseHandle, CreateFile(path.c_str(), FILE_READ_ATTRIBUTES,
@@ -751,9 +697,7 @@ std::wstring GetVolumePathNameEx(const std::wstring & path)
     std::vector final(bufferSize + 1, L'\0');
     if (GetFinalPathNameByHandle(handle, final.data(), static_cast<DWORD>(final.size()), FILE_NAME_NORMALIZED) != 0 &&
         GetVolumePathName(final.data(), volume.data(), static_cast<DWORD>(volume.size())) != 0)
-    {
         return volume.data();
-    }
 
     return fallback;
 }
@@ -824,9 +768,8 @@ bool ShellExecuteWrapper(const std::wstring& lpFile, const std::wstring& lpParam
 
 std::wstring GetBaseNameFromPath(const std::wstring& path)
 {
-    std::wstring s = path;
-    const auto i = s.find_last_of(wds::chrBackslash);
-    return i == std::wstring::npos ? s : s.substr(i + 1);
+    const auto i = path.find_last_of(wds::chrBackslash);
+    return i == std::wstring::npos ? path : path.substr(i + 1);
 }
 
 std::wstring GetAppFileName(const std::wstring& ext)
@@ -1070,12 +1013,13 @@ std::wstring ComputeFileHashes(const std::wstring& filePath)
         ctx.hAlg = SmartPointer<BCRYPT_ALG_HANDLE>(
             [](const BCRYPT_ALG_HANDLE h) { BCryptCloseAlgorithmProvider(h, 0); }, hAlg);
 
-        if (BCryptGetProperty(ctx.hAlg, BCRYPT_OBJECT_LENGTH, reinterpret_cast<PBYTE>(&ctx.objectLen),
-            sizeof(DWORD), nullptr, 0) == ERROR_SUCCESS)
+
+        if (DWORD bytesWritten = 0; BCryptGetProperty(ctx.hAlg, BCRYPT_OBJECT_LENGTH,
+            reinterpret_cast<PBYTE>(&ctx.objectLen), sizeof(DWORD), &bytesWritten, 0) != ERROR_SUCCESS)
         {
             continue;
         }
-
+        
         ctx.name = algo.name;
         ctx.hashObject.resize(ctx.objectLen);
         ctx.hash.resize(algo.hashLen);
