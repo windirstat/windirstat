@@ -801,7 +801,7 @@ void CSelectDrivesDlg::SetActiveRadio(const int radio)
 void CSelectDrivesDlg::OnCbnSelchangeBrowseFolder()
 {
     // Get the current selection text and assess if valid for okay button
-    m_BrowseList.GetWindowText(m_FolderName);
+    m_BrowseList.GetLBText(m_BrowseList.GetCurSel(), m_FolderName);
     UpdateData(FALSE);
     UpdateButtons();
 }
