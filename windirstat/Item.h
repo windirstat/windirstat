@@ -226,6 +226,7 @@ public:
     void RemoveUnknownItem();
     void CreateHardlinksItem();
     CItem* FindHardlinksItem() const;
+    void RemoveHardlinksItem();
     void UpwardDrivePacman();
     void DoHardlinkAdjustment();
 

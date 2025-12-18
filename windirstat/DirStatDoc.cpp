@@ -661,7 +661,7 @@ void CDirStatDoc::AskForConfirmation(USERDEFINEDCLEANUP* udc, const CItem* item)
         return;
     }
 
-    const std::wstring msg = Localization::Format(udc->RecurseIntoSubdirectories ?
+    const std::wstring msg = Localization::Format(udc->RecurseIntoSubdirectories ? 
         Localization::Lookup(IDS_RUDC_CONFIRMATIONss) : Localization::Lookup(IDS_UDC_CONFIRMATIONss),
         udc->Title.Obj(), item->GetPath());
     if (IDYES != WdsMessageBox(msg, MB_YESNO))
@@ -1843,14 +1843,23 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
 
         // Handle hardlink counting for the drive
         auto drives = GetDriveItems();
-        std::for_each(std::execution::par, drives.begin(), drives.end(), [](auto* drive)
+        if (COptions::ProcessHardlinks) std::for_each(std::execution::par, drives.begin(), drives.end(), [](auto* drive)
         {
+            // Create hardlink item if it doesn't exist
             if (drive->FindHardlinksItem() == nullptr)
             {
                 drive->CreateHardlinksItem();
             }
 
             drive->DoHardlinkAdjustment();
+        });
+        else std::for_each(std::execution::par, drives.begin(), drives.end(), [](auto* drive)
+        {
+            // Remove hardlink item if processing is disabled
+            if (drive->FindHardlinksItem() != nullptr)
+            {
+                drive->RemoveHardlinksItem();
+            }
         });
 
         // If new scan or closing, indicate done and exit early

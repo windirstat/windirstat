@@ -42,6 +42,7 @@ void CPageAdvanced::DoDataExchange(CDataExchange* pDX)
     DDX_Check(pDX, IDC_EXCLUDE_SYMLINKS_FILE, m_ExcludeSymbolicLinksFile);
     DDX_Check(pDX, IDC_EXCLUDE_HIDDEN_FILE, m_SkipHiddenFile);
     DDX_Check(pDX, IDC_EXCLUDE_PROTECTED_FILE, m_SkipProtectedFile);
+    DDX_Check(pDX, IDC_PROCESS_HARDLINKS, m_ProcessHardlinks);
     DDX_Text(pDX, IDC_LARGEST_FILE_COUNT, m_LargestFileCount);
     DDX_Text(pDX, IDC_FOLDER_HISTORY_COUNT, m_FolderHistoryCount);
     DDX_CBIndex(pDX, IDC_COMBO_THREADS, m_ScanningThreads);
@@ -59,6 +60,7 @@ BEGIN_MESSAGE_MAP(CPageAdvanced, CMFCPropertyPage)
     ON_BN_CLICKED(IDC_EXCLUDE_SYMLINKS_FILE, OnSettingChanged)
     ON_BN_CLICKED(IDC_EXCLUDE_HIDDEN_FILE, OnSettingChanged)
     ON_BN_CLICKED(IDC_EXCLUDE_PROTECTED_FILE, OnSettingChanged)
+    ON_BN_CLICKED(IDC_PROCESS_HARDLINKS, OnSettingChanged)
     ON_BN_CLICKED(IDC_RESET_PREFERENCES, &CPageAdvanced::OnBnClickedResetPreferences)
     ON_EN_CHANGE(IDC_LARGEST_FILE_COUNT, &CPageAdvanced::OnEnChangeLargestFileCount)
     ON_EN_CHANGE(IDC_FOLDER_HISTORY_COUNT, &CPageAdvanced::OnEnChangeFolderHistoryCount)
@@ -90,6 +92,7 @@ BOOL CPageAdvanced::OnInitDialog()
     m_SkipHiddenFile = COptions::ExcludeHiddenFile;
     m_SkipProtectedFile = COptions::ExcludeProtectedFile;
     m_UseBackupRestore = COptions::UseBackupRestore;
+    m_ProcessHardlinks = COptions::ProcessHardlinks;
     m_ScanningThreads = COptions::ScanningThreads - 1;
     m_LargestFileCount = std::to_wstring(COptions::LargeFileCount.Obj()).c_str();
     m_FolderHistoryCount = std::to_wstring(COptions::FolderHistoryCount.Obj()).c_str();
@@ -110,7 +113,8 @@ void CPageAdvanced::OnOK()
     const bool refreshAll = COptions::ExcludeHiddenDirectory != static_cast<bool>(m_SkipHiddenDirectory) ||
         COptions::ExcludeProtectedDirectory != static_cast<bool>(m_SkipProtectedDirectory) ||
         COptions::ExcludeHiddenFile != static_cast<bool>(m_SkipHiddenFile) ||
-        COptions::ExcludeProtectedFile != static_cast<bool>(m_SkipProtectedFile);
+        COptions::ExcludeProtectedFile != static_cast<bool>(m_SkipProtectedFile) ||
+        COptions::ProcessHardlinks != static_cast<bool>(m_ProcessHardlinks);
 
     COptions::ExcludeJunctions = (FALSE != m_ExcludeJunctions);
     COptions::ExcludeSymbolicLinksDirectory = (FALSE != m_ExcludeSymbolicLinksDirectory);
@@ -122,6 +126,7 @@ void CPageAdvanced::OnOK()
     COptions::ExcludeHiddenFile = (FALSE != m_SkipHiddenFile);
     COptions::ExcludeProtectedFile = (FALSE != m_SkipProtectedFile);
     COptions::UseBackupRestore = (FALSE != m_UseBackupRestore);
+    COptions::ProcessHardlinks = (FALSE != m_ProcessHardlinks);
     COptions::ScanningThreads = m_ScanningThreads + 1;
     COptions::LargeFileCount = std::stoi(m_LargestFileCount.GetString());
     COptions::FolderHistoryCount = std::stoi(m_FolderHistoryCount.GetString());

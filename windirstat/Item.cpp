@@ -539,7 +539,7 @@ void CItem::RemoveChild(CItem* child)
     }
 
     // Check if this child is a hardlink
-    if (child->HasFlag(ITF_HARDLINK) && child->GetIndex() > 0)
+    if (COptions::ProcessHardlinks && child->HasFlag(ITF_HARDLINK) && child->GetIndex() > 0)
     {
         if (const auto sameIndexItems = child->FindItemsBySameIndex(); sameIndexItems.size() == 1)
         {
@@ -750,7 +750,7 @@ void CItem::UpwardRecalcLastChange(const bool withoutItem)
 
 ULONGLONG CItem::GetSizePhysical() const
 {
-    return HasFlag(ITF_HARDLINK) ? 0 : m_SizePhysical.load();
+    return (HasFlag(ITF_HARDLINK) && COptions::ProcessHardlinks) ? 0 : m_SizePhysical.load();
 }
 
 ULONGLONG CItem::GetSizeLogical() const
@@ -1302,6 +1302,18 @@ void CItem::RemoveUnknownItem()
         UpwardSetUndone();
         UpwardSubtractSizePhysical(unknown->GetSizePhysical());
         RemoveChild(unknown);
+    }
+}
+
+void CItem::RemoveHardlinksItem()
+{
+    ASSERT(IsType(IT_DRIVE));
+
+    if (const auto hardlinks = FindHardlinksItem(); hardlinks != nullptr)
+    {
+        UpwardSetUndone();
+        UpwardSubtractSizePhysical(hardlinks->GetSizePhysical());
+        RemoveChild(hardlinks);
     }
 }
 

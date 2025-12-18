@@ -50,6 +50,7 @@ protected:
     BOOL m_SkipHiddenFile = FALSE;
     BOOL m_SkipProtectedFile = FALSE;
     BOOL m_UseBackupRestore = FALSE;
+    BOOL m_ProcessHardlinks = TRUE;
     int m_ScanningThreads = 0;
     CStringW m_LargestFileCount;
     CStringW m_FolderHistoryCount;

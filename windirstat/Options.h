@@ -157,6 +157,7 @@ public:
     static Setting<bool> UseBackupRestore;
     static Setting<bool> UseFastScanEngine;
     static Setting<bool> UseWindowsLocaleSetting;
+    static Setting<bool> ProcessHardlinks;
     static Setting<COLORREF> FileTreeColor0;
     static Setting<COLORREF> FileTreeColor1;
     static Setting<COLORREF> FileTreeColor2;
