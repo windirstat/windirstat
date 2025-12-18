@@ -142,7 +142,7 @@ void CPageFileTree::OnOK()
     COptions::FileTreeColor6 = m_FileTreeColor[6];
     COptions::FileTreeColor7 = m_FileTreeColor[7];
     if (colsChanged) CMainFrame::Get()->GetFileTreeView()->CreateColumns();
-    CDirStatDoc::GetDocument()->UpdateAllViews(nullptr, HINT_LISTSTYLECHANGED);
+    CDirStatDoc::Get()->UpdateAllViews(nullptr, HINT_LISTSTYLECHANGED);
     CMFCPropertyPage::OnOK();
 }
 

@@ -65,6 +65,7 @@
 #include <algorithm>
 #include <array>
 #include <atomic>
+#include <cstdint>
 #include <cmath>
 #include <condition_variable>
 #include <execution>

@@ -124,7 +124,7 @@ void CPageTreeMap::OnOK()
 
     COptions::SetTreeMapOptions(m_Options);
     COptions::TreeMapHighlightColor = m_HighlightColor.GetColor();
-    CDirStatDoc::GetDocument()->UpdateAllViews(nullptr, HINT_SELECTIONSTYLECHANGED);
+    CDirStatDoc::Get()->UpdateAllViews(nullptr, HINT_SELECTIONSTYLECHANGED);
 
     CMFCPropertyPage::OnOK();
 }

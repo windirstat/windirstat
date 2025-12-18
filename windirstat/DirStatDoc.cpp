@@ -49,10 +49,6 @@ CDirStatDoc::~CDirStatDoc()
 }
 
 CDirStatDoc* CDirStatDoc::_theDocument = nullptr;
-CDirStatDoc* CDirStatDoc::GetDocument()
-{
-    return _theDocument;
-}
 
 // Encodes a selection from the CSelectDrivesDlg into a string which can be routed as a pseudo
 // document "path" through MFC and finally arrives in OnOpenDocument().
@@ -134,7 +130,7 @@ BOOL CDirStatDoc::OnOpenDocument(LPCWSTR lpszPathName)
     CDocument::OnNewDocument();
 
     // Call base class to commit path to internal doc name string
-    GetDocument()->SetPathName(spec.c_str(), FALSE);
+    Get()->SetPathName(spec.c_str(), FALSE);
 
     // Count number of drives for validation
     const auto driveCount = static_cast<size_t>(std::ranges::count_if(selections, [](const std::wstring& str) {
@@ -186,7 +182,7 @@ BOOL CDirStatDoc::OnOpenDocument(LPCWSTR lpszPathName)
 
     // Update new root for display
     UpdateAllViews(nullptr, HINT_NEWROOT);
-    StartScanningEngine(std::vector({ GetDocument()->GetRootItem() }));
+    StartScanningEngine(std::vector({ Get()->GetRootItem() }));
     return true;
 }
 
@@ -207,7 +203,7 @@ BOOL CDirStatDoc::OnOpenDocument(CItem * newroot)
         spec = EncodeSelection(folders);
     }
 
-    GetDocument()->SetPathName(spec.c_str(), FALSE);
+    Get()->SetPathName(spec.c_str(), FALSE);
 
     m_RootItemDupe = new CItemDupe();
     m_RootItemTop = new CItemTop();
@@ -237,7 +233,7 @@ void CDirStatDoc::SetPathName(LPCWSTR lpszPathName, BOOL /*bAddToMRU*/)
 //
 void CDirStatDoc::SetTitlePrefix(const std::wstring& prefix) const
 {
-    static std::wstring suffix = IsElevationActive() ? L" (Administrator)" : L"";
+    static std::wstring suffix = IsElevationActive() ? L" (Administrator)" : L"";;
     std::wstring docName = std::format(L"{} {} {}", prefix, GetTitle().GetString(), suffix);
     docName = TrimString(docName);
     CMainFrame::Get()->UpdateFrameTitleForDocument(docName.empty() ? nullptr : docName.c_str());
@@ -653,7 +649,7 @@ void CDirStatDoc::SetZoomItem(CItem* item)
 //
 void CDirStatDoc::RefreshItem(const std::vector<CItem*>& item) const
 {
-    GetDocument()->StartScanningEngine(item);
+    Get()->StartScanningEngine(item);
 }
 
 // UDC confirmation dialog.
@@ -865,9 +861,36 @@ CTreeListControl* CDirStatDoc::GetFocusControl()
     return CFileTreeControl::Get();
 }
 
+void CDirStatDoc::UpdateAllViews(CView* pSender, VIEW_HINT hint, CObject* pHint)
+{
+    InvalidateSelectionCache();
+
+    CDocument::UpdateAllViews(pSender, static_cast<LONG>(hint), pHint);
+}
+
 std::vector<CItem*> CDirStatDoc::GetAllSelected()
 {
-    return GetFocusControl()->GetAllSelected<CItem>();
+    // Check if we can use cached results
+    const auto currentFocus = CMainFrame::Get()->GetLogicalFocus();
+    if (m_SelectionCacheValid && m_CachedFocus == currentFocus)
+    {
+        return m_CachedSelection;
+    }
+
+    // Query fresh selection data
+    auto selection = GetFocusControl()->GetAllSelected<CItem>();
+
+    // Update cache
+    m_CachedFocus = currentFocus;
+    m_CachedSelection = selection;
+    m_SelectionCacheValid = true;
+
+    return selection;
+}
+
+void CDirStatDoc::InvalidateSelectionCache()
+{
+    m_SelectionCacheValid = false;
 }
 
 void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
@@ -1048,7 +1071,7 @@ void CDirStatDoc::OnRefreshSelected()
 
 void CDirStatDoc::OnRefreshAll()
 {
-    OnOpenDocument(GetDocument()->GetPathName().GetString());
+    OnOpenDocument(Get()->GetPathName().GetString());
 }
 
 void CDirStatDoc::OnSaveResults()
@@ -1093,7 +1116,7 @@ void CDirStatDoc::OnLoadResults()
         newroot = LoadResults(dlg.GetPathName().GetString());
     }).DoModal();
 
-    GetDocument()->OnOpenDocument(newroot);
+    Get()->OnOpenDocument(newroot);
 }
 
 void CDirStatDoc::OnEditCopy()
@@ -1128,7 +1151,7 @@ void CDirStatDoc::OnCleanupEmptyRecycleBin()
     }
 
     // refresh recyclers
-    if (!toRefresh.empty()) GetDocument()->StartScanningEngine(toRefresh);
+    if (!toRefresh.empty()) Get()->StartScanningEngine(toRefresh);
 }
 
 void CDirStatDoc::OnRemoveShadowCopies()
@@ -1619,7 +1642,7 @@ void CDirStatDoc::OnContextMenuExplore(UINT nID)
 {
     // get list of paths from items
     std::vector<std::wstring> paths;
-    for (auto& item : CMainFrame::Get()->GetAllSelectedInFocus())
+    for (auto& item : GetAllSelected())
         paths.push_back(item->GetPath());
 
     // query current context menu
@@ -1697,6 +1720,7 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
             CFileDupeControl::Get()->RemoveItem(item);
             CFileTopControl::Get()->RemoveItem(item);
             CFileSearchControl::Get()->RemoveItem(item);
+            CDirStatDoc::InvalidateSelectionCache();
 
             // Record current visual arrangement to reapply afterward
             if (item->IsVisible())
@@ -1736,7 +1760,7 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
                     // function and could potentially deadlock
                     std::thread ([] ()
                     {
-                        GetDocument()->UnlinkRoot();
+                        Get()->UnlinkRoot();
                     }).detach();
                     CMainFrame::Get()->SetRedraw(TRUE);
                     return;
@@ -1841,13 +1865,13 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
 
         // Sorting and other finalization tasks
         CItem::ScanItemsFinalize(GetRootItem());
-        GetDocument()->RebuildExtensionData();
+        Get()->RebuildExtensionData();
 
         // Handle quiet save mode if path is set
         if (const auto csvPath = CDirStatApp::Get()->GetSaveToCsvPath(); !csvPath.empty())
         {
             // Get the document and root item
-            auto* doc = CDirStatDoc::GetDocument();
+            auto* doc = CDirStatDoc::Get();
             if (doc == nullptr || !doc->HasRootItem()) ExitProcess(1);
 
             // Exit the application with appropriate code
@@ -1858,7 +1882,7 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
         CMainFrame::Get()->InvokeInMessageThread([&]
         {
             CMainFrame::Get()->LockWindowUpdate();
-            GetDocument()->UpdateAllViews(nullptr);
+            Get()->UpdateAllViews(nullptr);
             CMainFrame::Get()->SetProgressComplete();
             CMainFrame::Get()->RestoreExtensionView();
             CMainFrame::Get()->RestoreTreeMapView();

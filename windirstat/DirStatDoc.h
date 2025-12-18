@@ -24,6 +24,7 @@ class CItem;
 class CItemDupe;
 class CItemTop;
 class CItemSearch;
+enum LOGICAL_FOCUS : uint8_t;
 
 //
 // The treemap colors as calculated in CDirStatDoc::SetExtensionColors()
@@ -52,7 +53,7 @@ using CExtensionData = std::unordered_map<std::wstring, SExtensionRecord>;
 //
 // Hints for UpdateAllViews()
 //
-enum : std::uint8_t
+using VIEW_HINT = enum VIEW_HINT : std::uint8_t
 {
     HINT_NULL,                      // General update
     HINT_NEWROOT,                   // Root item has changed - clear everything.
@@ -72,7 +73,7 @@ enum : std::uint8_t
 class CDirStatDoc final : public CDocument
 {
 public:
-    static CDirStatDoc* GetDocument();
+    static CDirStatDoc* Get() { return _theDocument; }
 
 protected:
     CDirStatDoc(); // Created by MFC only
@@ -142,8 +143,10 @@ protected:
     static bool DupeListHasFocus();
     static bool TopListHasFocus();
     static bool SearchListHasFocus();
-    static std::vector<CItem*> GetAllSelected();
+    std::vector<CItem*> GetAllSelected();
+    void InvalidateSelectionCache();
     static CTreeListControl* GetFocusControl();
+    void UpdateAllViews(CView* pSender, VIEW_HINT hint = HINT_NULL, CObject* pHint = nullptr);
 
     static CDirStatDoc* _theDocument;
 
@@ -165,6 +168,10 @@ protected:
 
     std::unordered_map<std::wstring, BlockingQueue<CItem*>> m_queues; // The scanning and thread queue
     std::thread* m_thread = nullptr; // Wrapper thread so we do not occupy the UI thread
+
+    LOGICAL_FOCUS m_CachedFocus; // Cache for GetAllSelected to avoid expensive queries
+    std::vector<CItem*> m_CachedSelection;
+    bool m_SelectionCacheValid = false;
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnRefreshSelected();

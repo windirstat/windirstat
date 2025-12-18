@@ -478,7 +478,7 @@ void CMainFrame::SetProgressComplete()
     }
 
     DestroyProgress();
-    CDirStatDoc::GetDocument()->SetTitlePrefix(wds::strEmpty);
+    CDirStatDoc::Get()->SetTitlePrefix(wds::strEmpty);
     CFileTreeControl::Get()->SortItems();
     CFileDupeControl::Get()->SortItems();
     CFileTopControl::Get()->SortItems();
@@ -511,7 +511,7 @@ void CMainFrame::SuspendState(const bool suspend)
 void CMainFrame::UpdateProgress()
 {
     // Update working item tracker if changed
-    const auto currentRoot = CDirStatDoc::GetDocument()->GetRootItem();
+    const auto currentRoot = CDirStatDoc::Get()->GetRootItem();
     if (currentRoot != m_WorkingItem &&
         currentRoot != nullptr && !currentRoot->IsDone())
     {
@@ -563,7 +563,7 @@ void CMainFrame::UpdateProgress()
     }
 
     TrimString(titlePrefix);
-    CDirStatDoc::GetDocument()->SetTitlePrefix(titlePrefix);
+    CDirStatDoc::Get()->SetTitlePrefix(titlePrefix);
 }
 
 void CMainFrame::CreateStatusProgress()
@@ -750,7 +750,7 @@ void CMainFrame::OnClose()
     KillTimer(ID_WDS_CONTROL);
 
     // Suspend the scan and wait for scan to complete
-    CDirStatDoc::GetDocument()->StopScanningEngine(CDirStatDoc::Abort);
+    CDirStatDoc::Get()->StopScanningEngine(CDirStatDoc::Abort);
 
     // Stop icon queue
     GetIconHandler()->StopAsyncShellInfoQueue();
@@ -870,7 +870,7 @@ void CMainFrame::OnTimer(const UINT_PTR nIDEvent)
     }
 
     // UI updates that do need to processed frequently
-    if (!CDirStatDoc::GetDocument()->IsRootDone() && !IsScanSuspended())
+    if (!CDirStatDoc::Get()->IsRootDone() && !IsScanSuspended())
     {
         // Update the visual progress on the bottom of the screen
         UpdateProgress();
@@ -1007,14 +1007,6 @@ void CMainFrame::QueryRecycleBin(ULONGLONG& items, ULONGLONG& bytes)
     }
 }
 
-std::vector<CItem*> CMainFrame::GetAllSelectedInFocus() const
-{
-    if (GetLogicalFocus() == LF_DUPELIST) return CFileDupeControl::Get()->GetAllSelected<CItem>();
-    if (GetLogicalFocus() == LF_TOPLIST) return CFileTopControl::Get()->GetAllSelected<CItem>();
-    if (GetLogicalFocus() == LF_SEARCHLIST) return CFileSearchControl::Get()->GetAllSelected<CItem>();
-    return CFileTreeControl::Get()->GetAllSelected<CItem>();
-}
-
 std::pair<CMenu*,int> CMainFrame::LocateNamedMenu(const CMenu* menu, const std::wstring & subMenuText, const bool removeItems) const
 {
     // locate submenu
@@ -1040,7 +1032,7 @@ std::pair<CMenu*,int> CMainFrame::LocateNamedMenu(const CMenu* menu, const std::
 
 void CMainFrame::UpdateDynamicMenuItems(CMenu* menu) const
 {
-    const auto& items = GetAllSelectedInFocus();
+    const auto& items = CDirStatDoc::Get()->GetAllSelected();
 
     // get list of paths from items
     std::vector<std::wstring> paths;
@@ -1091,7 +1083,7 @@ void CMainFrame::UpdateDynamicMenuItems(CMenu* menu) const
         bool udcValid = GetLogicalFocus() == LF_FILETREE && !items.empty();
         if (udcValid) for (const auto& item : items)
         {
-            udcValid &= CDirStatDoc::GetDocument()->UserDefinedCleanupWorksForItem(&udc, item);
+            udcValid &= CDirStatDoc::Get()->UserDefinedCleanupWorksForItem(&udc, item);
         }
 
         const UINT flags = udcValid ? MF_ENABLED : (MF_DISABLED | MF_GRAYED);
@@ -1110,7 +1102,7 @@ void CMainFrame::SetLogicalFocus(const LOGICAL_FOCUS lf)
         m_LogicalFocus = lf;
         UpdatePaneText();
 
-        CDirStatDoc::GetDocument()->UpdateAllViews(nullptr, HINT_SELECTIONSTYLECHANGED);
+        CDirStatDoc::Get()->UpdateAllViews(nullptr, HINT_SELECTIONSTYLECHANGED);
     }
 }
 
@@ -1149,15 +1141,15 @@ void CMainFrame::UpdatePaneText()
     }
 
     // Only get the data the document is not actively updating
-    else if (CDirStatDoc::GetDocument()->IsRootDone())
+    else if (CDirStatDoc::Get()->IsRootDone())
     {
         if (focus == LF_EXTLIST)
         {
-            fileSelectionText = wds::chrStar + CDirStatDoc::GetDocument()->GetHighlightExtension();
+            fileSelectionText = wds::chrStar + CDirStatDoc::Get()->GetHighlightExtension();
         }
         else if (focus == LF_FILETREE || focus == LF_DUPELIST || focus == LF_TOPLIST || focus == LF_SEARCHLIST)
         {
-            const auto& items = GetAllSelectedInFocus();
+            const auto& items = CDirStatDoc::Get()->GetAllSelected();
             if (items.size() == 1) fileSelectionText = items.front()->GetPath();
             for (size = 0; const auto& item : items)
             {
@@ -1237,7 +1229,7 @@ void CMainFrame::OnViewTreeMapUseLogical()
     COptions::TreeMapUseLogical = !COptions::TreeMapUseLogical;
     if (GetTreeMapView()->IsShowTreeMap())
     {
-        CDirStatDoc::GetDocument()->RefreshItem(CDirStatDoc::GetDocument()->GetRootItem());
+        CDirStatDoc::Get()->RefreshItem(CDirStatDoc::Get()->GetRootItem());
     }
 }
 

@@ -124,7 +124,7 @@ void CPageGeneral::OnOK()
     }
 
     // force general user interface update if anything changes
-    if (const CDirStatDoc* pDoc = CDirStatDoc::GetDocument(); listChanged && pDoc != nullptr)
+    if (const CDirStatDoc* pDoc = CDirStatDoc::Get(); listChanged && pDoc != nullptr)
     {
         // Iterate over all drive items and update their display names/free space item sizes
         for (CItem* pItem : pDoc->GetDriveItems())
@@ -132,11 +132,11 @@ void CPageGeneral::OnOK()
             pItem->UpdateFreeSpaceItem();
         }
 
-        CDirStatDoc::GetDocument()->UpdateAllViews(nullptr, HINT_LISTSTYLECHANGED);
+        CDirStatDoc::Get()->UpdateAllViews(nullptr, HINT_LISTSTYLECHANGED);
     }
     if (windowsLocaleChanged)
     {
-        CDirStatDoc::GetDocument()->UpdateAllViews(nullptr, HINT_NULL);
+        CDirStatDoc::Get()->UpdateAllViews(nullptr, HINT_NULL);
     }
 
     const LANGID id = static_cast<LANGID>(m_Combo.GetItemData(m_Combo.GetCurSel()));

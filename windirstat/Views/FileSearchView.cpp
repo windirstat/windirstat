@@ -115,7 +115,7 @@ void CFileSearchView::OnUpdate(CView* pSender, const LPARAM lHint, CObject* pHin
     {
     case HINT_NEWROOT:
     {
-        m_Control.SetRootItem(GetDocument()->GetRootItemSearch());
+        m_Control.SetRootItem(CDirStatDoc::Get()->GetRootItemSearch());
         m_Control.Invalidate();
     }
     break;

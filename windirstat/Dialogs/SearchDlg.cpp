@@ -91,7 +91,7 @@ void SearchDlg::OnBnClickedOk()
     CLayoutDialogEx::OnOK();
 
     // Process search request
-    CFileSearchControl::Get()->ProcessSearch(CDirStatDoc::GetDocument()->GetRootItem());
+    CFileSearchControl::Get()->ProcessSearch(CDirStatDoc::Get()->GetRootItem());
 
     // Switch focus to search results
     const auto tabbedView = CMainFrame::Get()->GetFileTabbedView();

@@ -145,7 +145,7 @@ void CFileTreeView::OnUpdate(CView* pSender, const LPARAM lHint, CObject* pHint)
     {
     case HINT_NEWROOT:
         {
-            m_Control.SetRootItem(GetDocument()->GetRootItem());
+            m_Control.SetRootItem(CDirStatDoc::Get()->GetRootItem());
             m_Control.Invalidate();
         }
         break;

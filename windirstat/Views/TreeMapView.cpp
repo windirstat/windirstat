@@ -234,7 +234,7 @@ void CTreeMapView::DrawSelection(CDC* pdc) const
     CPen pen(PS_SOLID, 1, COptions::TreeMapHighlightColor);
     CSelectObject sopen(pdc, &pen);
 
-    const auto& items = CMainFrame::Get()->GetAllSelectedInFocus();
+    const auto& items = CDirStatDoc::Get()->GetAllSelected();
     for (const auto& item : items)
     {
         // Ignore if not a child of the current zoomed item

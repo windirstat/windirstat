@@ -439,7 +439,7 @@ void CDirStatApp::OnUpdateRunElevated(CCmdUI* pCmdUI)
 
 void CDirStatApp::OnRunElevated()
 {
-    RunElevated(CDirStatDoc::GetDocument()->GetPathName().GetString());
+    RunElevated(CDirStatDoc::Get()->GetPathName().GetString());
 }
 
 void CDirStatApp::OnFilter()

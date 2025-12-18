@@ -128,15 +128,15 @@ void CPageAdvanced::OnOK()
 
     if (refreshAll)
     {
-        CDirStatDoc::GetDocument()->OnOpenDocument(
-            CDirStatDoc::GetDocument()->GetPathName().GetString());
+        CDirStatDoc::Get()->OnOpenDocument(
+            CDirStatDoc::Get()->GetPathName().GetString());
     }
     else if (refreshReparsepoints)
     {
-        CDirStatDoc::GetDocument()->RefreshReparsePointItems();
+        CDirStatDoc::Get()->RefreshReparsePointItems();
     }
 
-    CDirStatDoc::GetDocument()->UpdateAllViews(nullptr, HINT_LISTSTYLECHANGED);
+    CDirStatDoc::Get()->UpdateAllViews(nullptr, HINT_LISTSTYLECHANGED);
     CMFCPropertyPage::OnOK();
 }
 

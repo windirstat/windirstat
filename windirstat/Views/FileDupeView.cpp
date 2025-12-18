@@ -117,7 +117,7 @@ void CFileDupeView::OnUpdate(CView* pSender, const LPARAM lHint, CObject* pHint)
     {
         case HINT_NEWROOT:
         {
-            m_Control.SetRootItem(GetDocument()->GetRootItemDupe());
+            m_Control.SetRootItem(CDirStatDoc::Get()->GetRootItemDupe());
             m_Control.Invalidate();
         }
         break;

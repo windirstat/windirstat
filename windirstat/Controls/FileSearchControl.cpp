@@ -65,7 +65,7 @@ void CFileSearchControl::ProcessSearch(CItem* item)
 {
     // Remove previous results
     SetRedraw(FALSE);
-    CDirStatDoc::GetDocument()->GetRootItemSearch()->RemoveSearchItemResults();
+    CDirStatDoc::Get()->GetRootItemSearch()->RemoveSearchItemResults();
     m_ItemTracker.clear();
     SetRedraw(TRUE);
 
@@ -96,7 +96,7 @@ void CFileSearchControl::ProcessSearch(CItem* item)
                 CItemSearch* searchItem = new CItemSearch(qitem);
                 CMainFrame::Get()->InvokeInMessageThread([this, searchItem]
                 {
-                    CDirStatDoc::GetDocument()->GetRootItemSearch()->AddSearchItemChild(searchItem);
+                    CDirStatDoc::Get()->GetRootItemSearch()->AddSearchItemChild(searchItem);
                 });
                 m_ItemTracker.emplace(qitem, searchItem);
             }
@@ -123,7 +123,7 @@ void CFileSearchControl::RemoveItem(CItem* item)
     if (findItem == m_ItemTracker.end()) return;
 
     // Remove the item from the interface
-    CDirStatDoc::GetDocument()->GetRootItemSearch()->RemoveSearchItemChild(findItem->second);
+    CDirStatDoc::Get()->GetRootItemSearch()->RemoveSearchItemChild(findItem->second);
     m_ItemTracker.erase(findItem);
 }
 

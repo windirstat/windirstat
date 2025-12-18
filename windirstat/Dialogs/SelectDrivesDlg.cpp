@@ -593,7 +593,7 @@ void CSelectDrivesDlg::UpdateButtons()
             Localization::LookupNeutral(AFX_IDS_APP_TITLE), MB_YESNO | MB_ICONQUESTION) == IDYES)
         {
             COptions::UseFastScanEngine = true;
-            RunElevated(CDirStatDoc::GetDocument()->GetPathName().GetString());
+            RunElevated(CDirStatDoc::Get()->GetPathName().GetString());
             return;
         }
         else

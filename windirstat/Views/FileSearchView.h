@@ -34,10 +34,6 @@ protected:
 
 protected:
     void OnDraw(CDC* pDC) override;
-    CDirStatDoc* GetDocument() const
-    {
-        return reinterpret_cast<CDirStatDoc*>(m_pDocument);
-    }
     void OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint) override;
 
     CFileSearchControl m_Control;

@@ -35,7 +35,7 @@ class CExtensionView;
 // Although these windows can lose the real focus, for instance
 // when a dialog box is opened, the logical focus will not be lost.
 //
-enum LOGICAL_FOCUS : std::uint8_t
+enum LOGICAL_FOCUS : uint8_t
 {
     LF_NONE = 0,
     LF_FILETREE,
@@ -174,7 +174,6 @@ protected:
 
     void UpdateProgress();
     void UpdateDynamicMenuItems(CMenu* menu) const;
-    std::vector<CItem*> GetAllSelectedInFocus() const;
     std::pair<CMenu*, int> LocateNamedMenu(const CMenu* menu, const std::wstring& subMenuText, bool removeItems = true) const;
 
     void SetLogicalFocus(LOGICAL_FOCUS lf);

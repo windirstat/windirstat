@@ -387,14 +387,14 @@ HICON CItem::GetIcon()
 
 void CItem::DrawAdditionalState(CDC* pdc, const CRect& rcLabel) const
 {
-    if (!IsRootItem() && this == CDirStatDoc::GetDocument()->GetZoomItem())
+    if (!IsRootItem() && this == CDirStatDoc::Get()->GetZoomItem())
     {
         CRect rc = rcLabel;
         rc.InflateRect(1, 0);
         rc.bottom++;
 
         CSelectStockObject sobrush(pdc, NULL_BRUSH);
-        CPen pen(PS_SOLID, 2, CDirStatDoc::GetDocument()->GetZoomColor());
+        CPen pen(PS_SOLID, 2, CDirStatDoc::Get()->GetZoomColor());
         CSelectObject sopen(pdc, &pen);
 
         pdc->Rectangle(rc);
@@ -562,7 +562,7 @@ void CItem::RemoveAllChildren()
 {
     if (IsRootItem())
     {
-        CDirStatDoc::GetDocument()->GetExtensionData()->clear();
+        CDirStatDoc::Get()->GetExtensionData()->clear();
     }
 
     if (IsLeaf()) return;
@@ -663,7 +663,7 @@ void CItem::UpwardSubtractSizeLogical(const ULONGLONG bytes)
 void CItem::ExtensionDataAdd() const
 {
     if (!IsType(IT_FILE)) return;
-    const auto record = CDirStatDoc::GetDocument()->GetExtensionDataRecord(GetExtension());
+    const auto record = CDirStatDoc::Get()->GetExtensionDataRecord(GetExtension());
     record->bytes += GetSizePhysical();
     record->files += 1;
 }
@@ -671,10 +671,10 @@ void CItem::ExtensionDataAdd() const
 void CItem::ExtensionDataRemove() const
 {
     if (!IsType(IT_FILE)) return;
-    const auto record = CDirStatDoc::GetDocument()->GetExtensionDataRecord(GetExtension());
+    const auto record = CDirStatDoc::Get()->GetExtensionDataRecord(GetExtension());
     record->bytes -= GetSizePhysical();
     record->files -= 1;
-    if (record->files == 0) CDirStatDoc::GetDocument()->GetExtensionData()->erase(GetExtension());
+    if (record->files == 0) CDirStatDoc::Get()->GetExtensionData()->erase(GetExtension());
 }
 
 void CItem::ExtensionDataProcessChildren(const bool remove) const
@@ -1427,7 +1427,7 @@ COLORREF CItem::GetGraphColor() const
 
     if (IsType(IT_FILE))
     {
-        return CDirStatDoc::GetDocument()->GetCushionColor(GetExtension());
+        return CDirStatDoc::Get()->GetCushionColor(GetExtension());
     }
 
     return RGB(0, 0, 0);
