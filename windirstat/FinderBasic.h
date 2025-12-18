@@ -67,7 +67,7 @@ class FinderBasic final : public Finder
     std::wstring m_Base;
     std::wstring m_Name;
     std::vector<LARGE_INTEGER> m_DirectoryInfo;
-    FILE_DIR_INFORMATION* m_CurrentInfo;
+    FILE_DIR_INFORMATION* m_CurrentInfo = nullptr;
     FinderBasicContext m_Default{};
     FinderBasicContext* m_Context = &m_Default;
     HANDLE m_Handle = nullptr;
