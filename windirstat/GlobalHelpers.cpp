@@ -181,35 +181,34 @@ std::wstring FormatBytes(const ULONGLONG n)
 }
 
 std::wstring FormatSizeSuffixes(ULONGLONG n)
-{
-    // Returns formatted number like "12,4 GiB" (uses IEC binary prefixes KiB/MiB/GiB/TiB).
-    ASSERT(n >= 0);
-    constexpr ULONGLONG base = 1024;
-    constexpr ULONGLONG half = base / 2;
-
-    const ULONGLONG B = n % base; n /= base;
-    const ULONGLONG KiB = n % base; n /= base;
-    const ULONGLONG MiB = n % base; n /= base;
-    const ULONGLONG GiB = n % base; n /= base;
-    const ULONGLONG TiB = n;
-
-    if (TiB != 0 || (GiB == base - 1 && MiB >= half))
+{   
+    constexpr ULONGLONG BASE_BYTES = 1024;
+    constexpr ULONGLONG KIB_BYTES = BASE_BYTES;
+    constexpr ULONGLONG MIB_BYTES = KIB_BYTES * BASE_BYTES;
+    constexpr ULONGLONG GIB_BYTES = MIB_BYTES * BASE_BYTES;
+    constexpr ULONGLONG TIB_BYTES = GIB_BYTES * BASE_BYTES;
+    constexpr ULONGLONG TIB_THRESHOLD_BYTES = TIB_BYTES - (GIB_BYTES / 2);
+    constexpr ULONGLONG GIB_THRESHOLD_BYTES = GIB_BYTES - (MIB_BYTES / 2);
+    constexpr ULONGLONG MIB_THRESHOLD_BYTES = MIB_BYTES - (KIB_BYTES / 2);
+    
+    // Returns formatted number like "12,4 GiB" (uses IEC binary prefixes KiB/MiB/GiB/TiB)
+    if (n >= TIB_THRESHOLD_BYTES)
     {
-        return std::format(L"{} {}", FormatDouble(static_cast<double>(TiB) + static_cast<double>(GiB) / base), GetSpec_TiB());
+        return std::format(L"{} {}", FormatDouble(static_cast<double>(n) / TIB_BYTES), GetSpec_TiB());
     }
-    if (GiB != 0 || (MiB == base - 1 && KiB >= half))
+    if (n >= GIB_THRESHOLD_BYTES)
     {
-        return std::format(L"{} {}", FormatDouble(static_cast<double>(GiB) + static_cast<double>(MiB) / base), GetSpec_GiB());
+        return std::format(L"{} {}", FormatDouble(static_cast<double>(n) / GIB_BYTES), GetSpec_GiB());
     }
-    if (MiB != 0 || (KiB == base - 1 && B >= half))
+    if (n >= MIB_THRESHOLD_BYTES)
     {
-        return std::format(L"{} {}", FormatDouble(static_cast<double>(MiB) + static_cast<double>(KiB) / base), GetSpec_MiB());
+        return std::format(L"{} {}", FormatDouble(static_cast<double>(n) / MIB_BYTES), GetSpec_MiB());
     }
-    if (KiB != 0)
+    if (n >= KIB_BYTES)
     {
-        return std::format(L"{} {}", FormatDouble(static_cast<double>(KiB) + static_cast<double>(B) / base), GetSpec_KiB());
+        return std::format(L"{} {}", FormatDouble(static_cast<double>(n) / KIB_BYTES), GetSpec_KiB());
     }
-    return std::format(L"{} {}", B, GetSpec_Bytes());
+    return std::format(L"{} {}", n, GetSpec_Bytes());
 }
 
 std::wstring FormatCount(const ULONGLONG n)
