@@ -181,9 +181,17 @@ std::wstring FormatBytes(const ULONGLONG n)
 }
 
 std::wstring FormatSizeSuffixes(ULONGLONG n)
-{
-    // Returns formatted number like "12,4 GiB" (uses IEC binary prefixes KiB/MiB/GiB/TiB).
-    ASSERT(n >= 0);
+{   
+    constexpr ULONGLONG BASE_BYTES = 1024;
+    constexpr ULONGLONG KIB_BYTES = BASE_BYTES;
+    constexpr ULONGLONG MIB_BYTES = KIB_BYTES * BASE_BYTES;
+    constexpr ULONGLONG GIB_BYTES = MIB_BYTES * BASE_BYTES;
+    constexpr ULONGLONG TIB_BYTES = GIB_BYTES * BASE_BYTES;
+    constexpr ULONGLONG TIB_THRESHOLD_BYTES = TIB_BYTES - (GIB_BYTES / 2);
+    constexpr ULONGLONG GIB_THRESHOLD_BYTES = GIB_BYTES - (MIB_BYTES / 2);
+    constexpr ULONGLONG MIB_THRESHOLD_BYTES = MIB_BYTES - (KIB_BYTES / 2);
+    
+    // Returns formatted number like "12,4 GiB" (uses IEC binary prefixes KiB/MiB/GiB/TiB)
     if (n >= TIB_THRESHOLD_BYTES)
     {
         return std::format(L"{} {}", FormatDouble(static_cast<double>(n) / TIB_BYTES), GetSpec_TiB());
