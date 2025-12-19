@@ -208,7 +208,7 @@ void CTreeMapView::RecurseHighlightExtension(CDC* pdc, const CItem* item)
 
     if (item->TmiIsLeaf())
     {
-        if (item->IsType(IT_FILE) && _wcsicmp(item->GetExtension().c_str(), GetDocument()->GetHighlightExtension().c_str()) == 0)
+        if (item->IsTypeOrFlag(IT_FILE) && _wcsicmp(item->GetExtension().c_str(), GetDocument()->GetHighlightExtension().c_str()) == 0)
         {
             RenderHighlightRectangle(pdc, rc);
         }

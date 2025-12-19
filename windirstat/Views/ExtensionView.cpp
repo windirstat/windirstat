@@ -135,7 +135,7 @@ void CExtensionView::SetSelection()
     CItem* validItem = nullptr;
     for (const auto& item : items)
     {
-        if (item->IsType(IT_FILE))
+        if (item->IsTypeOrFlag(IT_FILE))
         {
             validItem = item;
             break;

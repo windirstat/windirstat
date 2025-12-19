@@ -67,7 +67,7 @@ public:
     bool FindNext() override;
     bool FindFile(const CItem* item) override;
     DWORD GetAttributes() const override;
-    ULONG GetIndex() const override;
+    ULONGLONG GetIndex() const override;
     DWORD GetReparseTag() const override;
     std::wstring GetFileName() const override;
     ULONGLONG GetFileSizePhysical() const override;

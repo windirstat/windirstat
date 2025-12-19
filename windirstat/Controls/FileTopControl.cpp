@@ -139,13 +139,13 @@ void CFileTopControl::RemoveItem(CItem* item)
         const auto& qitem = queue.top();
         queue.pop();
 
-        if (qitem->IsType(IT_FILE))
+        if (qitem->IsTypeOrFlag(IT_FILE))
         {
             toRemove.emplace(qitem);
         }
         else if (!qitem->IsLeaf()) for (const auto& child : qitem->GetChildren())
         {
-            if (child->IsType(IT_FILE)) toRemove.emplace(child);
+            if (child->IsTypeOrFlag(IT_FILE)) toRemove.emplace(child);
             else queue.push(child);
         }
     }
@@ -167,7 +167,7 @@ void CFileTopControl::RemoveItem(CItem* item)
 void CFileTopControl::OnItemDoubleClick(const int i)
 {
     if (const auto item = reinterpret_cast<const CItem*>(GetItem(i)->GetLinkedItem());
-        item != nullptr && item->IsType(IT_FILE))
+        item != nullptr && item->IsTypeOrFlag(IT_FILE))
     {
         CDirStatDoc::OpenItem(item);
     }

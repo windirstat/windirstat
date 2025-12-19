@@ -195,7 +195,7 @@ BOOL CDirStatDoc::OnOpenDocument(CItem * newroot)
 
     // Determine root spec string
     std::wstring spec = newroot->GetName();
-    if (newroot->IsType(IT_MYCOMPUTER))
+    if (newroot->IsTypeOrFlag(IT_MYCOMPUTER))
     {
         std::vector<std::wstring> folders;
         std::ranges::transform(newroot->GetChildren(), std::back_inserter(folders),
@@ -361,9 +361,9 @@ void CDirStatDoc::UnlinkRoot()
 bool CDirStatDoc::UserDefinedCleanupWorksForItem(USERDEFINEDCLEANUP* udc, const CItem* item) const
 {
     return item != nullptr && (
-        (item->IsType(IT_DRIVE) && udc->WorksForDrives) ||
-        (item->IsType(IT_DIRECTORY) && udc->WorksForDirectories) ||
-        (item->IsType(IT_FILE) && udc->WorksForFiles) ||
+        (item->IsTypeOrFlag(IT_DRIVE) && udc->WorksForDrives) ||
+        (item->IsTypeOrFlag(IT_DIRECTORY) && udc->WorksForDirectories) ||
+        (item->IsTypeOrFlag(IT_FILE) && udc->WorksForFiles) ||
         (item->HasUncPath() && udc->WorksForUncPaths));
 }
 
@@ -373,7 +373,7 @@ void CDirStatDoc::OpenItem(const CItem* item, const std::wstring & verb)
 
     // Determine path to feed into shell function
     SmartPointer<LPITEMIDLIST> pidl(CoTaskMemFree, nullptr);
-    if (item->IsType(IT_MYCOMPUTER))
+    if (item->IsTypeOrFlag(IT_MYCOMPUTER))
     {
         (void) SHGetSpecialFolderLocation(nullptr, CSIDL_DRIVES, &pidl);
     }
@@ -412,10 +412,10 @@ void CDirStatDoc::RecurseRefreshReparsePoints(CItem* item) const
         const auto& qitem = reparseStack.top();
         reparseStack.pop();
 
-        if (!item->IsType(IT_DIRECTORY, IT_DRIVE)) continue;
+        if (!item->IsTypeOrFlag(IT_DIRECTORY, IT_DRIVE)) continue;
         for (const auto& child : qitem->GetChildren())
         {
-            if (!(child->IsType(IT_DIRECTORY, IT_DRIVE) || child->HasFlag(ITF_ROOTITEM)))
+            if (!(child->IsTypeOrFlag(IT_DIRECTORY, IT_DRIVE) || child->IsTypeOrFlag(ITF_ROOTITEM)))
             {
                 continue;
             }
@@ -449,15 +449,15 @@ std::vector<CItem*> CDirStatDoc::GetDriveItems() const
         return drives;
     }
 
-    if (root->IsType(IT_MYCOMPUTER))
+    if (root->IsTypeOrFlag(IT_MYCOMPUTER))
     {
         for (const auto& child : root->GetChildren())
         {
-            ASSERT(child->IsType(IT_DRIVE));
+            ASSERT(child->IsTypeOrFlag(IT_DRIVE));
             drives.push_back(child);
         }
     }
-    else if (root->IsType(IT_DRIVE))
+    else if (root->IsTypeOrFlag(IT_DRIVE))
     {
         drives.push_back(root);
     }
@@ -597,7 +597,7 @@ bool CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, const bo
                 childStack.pop();
                 if (!FinderBasic::DoesFileExist(item->GetPath())) continue;
 
-                if (item->IsType(IT_DIRECTORY))
+                if (item->IsTypeOrFlag(IT_DIRECTORY))
                 {
                     dirsToDelete.emplace_back(item);
                     for (const auto& child : item->GetChildren())
@@ -605,7 +605,7 @@ bool CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, const bo
                         childStack.push(child);
                     }
                 }
-                else if (item->IsType(IT_FILE))
+                else if (item->IsTypeOrFlag(IT_FILE))
                 {
                     filesToDelete.emplace_back(item);
                 }
@@ -677,7 +677,7 @@ void CDirStatDoc::PerformUserDefinedCleanup(USERDEFINEDCLEANUP* udc, const CItem
     const std::wstring path = item->GetPath();
 
     // Verify that path still exists
-    if (item->IsType(IT_DIRECTORY, IT_DRIVE))
+    if (item->IsTypeOrFlag(IT_DIRECTORY, IT_DRIVE))
     {
         if (!FolderExists(path) && !DriveExists(path))
         {
@@ -687,7 +687,7 @@ void CDirStatDoc::PerformUserDefinedCleanup(USERDEFINEDCLEANUP* udc, const CItem
     }
     else
     {
-        ASSERT(item->IsType(IT_FILE));
+        ASSERT(item->IsTypeOrFlag(IT_FILE));
 
         if (!::PathFileExists(path.c_str()))
         {
@@ -698,13 +698,13 @@ void CDirStatDoc::PerformUserDefinedCleanup(USERDEFINEDCLEANUP* udc, const CItem
 
     if (udc->RecurseIntoSubdirectories)
     {
-        ASSERT(item->IsType(IT_DRIVE, IT_DIRECTORY));
+        ASSERT(item->IsTypeOrFlag(IT_DRIVE, IT_DIRECTORY));
 
         RecursiveUserDefinedCleanup(udc, path, path);
     }
     else
     {
-        CallUserDefinedCleanup(item->IsType(IT_DIRECTORY, IT_DRIVE), udc->CommandLine.Obj(), path, path, udc->ShowConsoleWindow, udc->WaitForCompletion);
+        CallUserDefinedCleanup(item->IsTypeOrFlag(IT_DIRECTORY, IT_DRIVE), udc->CommandLine.Obj(), path, path, udc->ShowConsoleWindow, udc->WaitForCompletion);
     }
 }
 
@@ -988,7 +988,7 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
     {
         allow &= filter.extra(item);
         allow &= std::any_of(filter.typesAllow.begin(), filter.typesAllow.end(),
-            [item](ITEMTYPE type) { return item->IsType(type); });
+            [item](ITEMTYPE type) { return item->IsTypeOrFlag(type); });
     }
 
     pCmdUI->Enable(allow);
@@ -1563,14 +1563,14 @@ void CDirStatDoc::OnCleanupCompress(UINT id)
         const auto& item = childStack.top();
         childStack.pop();
 
-        if (item->IsType(IT_DIRECTORY))
+        if (item->IsTypeOrFlag(IT_DIRECTORY))
         {
             for (const auto& child : item->GetChildren())
             {
                 childStack.push(child);
             }
         }
-        else if (item->IsType(IT_FILE))
+        else if (item->IsTypeOrFlag(IT_FILE))
         {
             itemsToCompress.emplace_back(item);
         }
@@ -1703,7 +1703,7 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
         std::scoped_lock lock(mutex);
 
         // If scanning drive(s) just rescan the child nodes
-        if (items.size() == 1 && items.at(0)->IsType(IT_MYCOMPUTER))
+        if (items.size() == 1 && items.at(0)->IsTypeOrFlag(IT_MYCOMPUTER))
         {
             items.at(0)->ResetScanStartTime();
             items = items.at(0)->GetChildren();
@@ -1745,9 +1745,9 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
                 item->SetExpanded(visualInfo[item].wasExpanded);
   
             // Handle if item to be refreshed has been removed
-            if (item->IsType(IT_FILE, IT_DIRECTORY, IT_DRIVE) &&
+            if (item->IsTypeOrFlag(IT_FILE, IT_DIRECTORY, IT_DRIVE) &&
                 !FinderBasic::DoesFileExist(item->GetFolderPath(),
-                    item->IsType(IT_FILE) ? item->GetName() : std::wstring()))
+                    item->IsTypeOrFlag(IT_FILE) ? item->GetName() : std::wstring()))
             {
                 // Remove item from list so we do not rescan it
                 std::erase(items, item);
@@ -1766,8 +1766,8 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
                 }
 
                 // Handle non-root item by removing from parent
-                item->UpwardSubtractFiles(item->IsType(IT_FILE) ? 1 : 0);
-                item->UpwardSubtractFolders(item->IsType(IT_FILE) ? 0 : 1);
+                item->UpwardSubtractFiles(item->IsTypeOrFlag(IT_FILE) ? 1 : 0);
+                item->UpwardSubtractFolders(item->IsTypeOrFlag(IT_FILE) ? 0 : 1);
                 item->GetParent()->RemoveChild(item);
             }
         }
@@ -1777,7 +1777,7 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
         for (const auto & item : items)
         {
             // Skip any items we should not follow
-            if (!item->HasFlag(ITF_ROOTITEM) && !CDirStatApp::Get()->IsFollowingAllowed(item->GetReparseTag()))
+            if (!item->IsTypeOrFlag(ITF_ROOTITEM) && !CDirStatApp::Get()->IsFollowingAllowed(item->GetReparseTag()))
             {
                 continue;
             }
@@ -1828,7 +1828,7 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
         // Restore unknown and freespace items
         for (const auto& item : items)
         {
-            if (!item->IsType(IT_DRIVE)) continue;
+            if (!item->IsTypeOrFlag(IT_DRIVE)) continue;
             
             if (COptions::ShowFreeSpace)
             {

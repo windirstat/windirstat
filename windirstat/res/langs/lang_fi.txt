@@ -22,6 +22,7 @@ IDS_COL_FOLDERS=Alikansioita
 IDS_COL_FREE=Vapaana
 IDS_COL_GRAPH=Käytetty/Yhteensä
 IDS_COL_HASH=Hashin etuliite
+IDS_COL_INDEX=Indeksi
 IDS_COL_ITEMS=Kohteita
 IDS_COL_LAST_CHANGE=Edellinen muutos
 IDS_COL_NAME=Nimi

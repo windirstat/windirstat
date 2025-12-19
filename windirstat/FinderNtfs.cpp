@@ -385,9 +385,9 @@ DWORD FinderNtfs::GetAttributes() const
     return m_CurrentRecord->Attributes;
 }
 
-ULONG FinderNtfs::GetIndex() const
+ULONGLONG FinderNtfs::GetIndex() const
 {
-    return static_cast<ULONG>(m_CurrentRecordName->BaseRecord);
+    return m_CurrentRecordName->BaseRecord;
 }
 
 DWORD FinderNtfs::GetReparseTag() const

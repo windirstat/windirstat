@@ -48,7 +48,7 @@ BOOL CFileTreeControl::OnHeaderEndDrag(UINT, NMHDR* pNMHDR, LRESULT* pResult)
 void CFileTreeControl::OnItemDoubleClick(const int i)
 {
     const auto item = reinterpret_cast<const CItem*>(GetItem(i));
-    if (item->IsType(IT_FILE))
+    if (item->IsTypeOrFlag(IT_FILE))
     {
         CDirStatDoc::OpenItem(item);
     }

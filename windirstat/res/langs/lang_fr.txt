@@ -22,6 +22,7 @@ IDS_COL_FOLDERS=Sous-dossiers
 IDS_COL_FREE=Libre
 IDS_COL_GRAPH=Utilisé/Total
 IDS_COL_HASH=Préfixe de hachage
+IDS_COL_INDEX=Index
 IDS_COL_ITEMS=Eléments
 IDS_COL_LAST_CHANGE=Dernier changement
 IDS_COL_NAME=Nom

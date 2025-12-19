@@ -44,7 +44,7 @@ CFileDupeControl* CFileDupeControl::m_Singleton = nullptr;
 void CFileDupeControl::ProcessDuplicate(CItem * item, BlockingQueue<CItem*>* queue)
 {
     if (!COptions::ScanForDuplicates) return;
-    if (COptions::SkipDupeDetectionCloudLinks && item->IsReparseType(ITRP_CLOUD))
+    if (COptions::SkipDupeDetectionCloudLinks && item->IsTypeOrFlag(ITRP_CLOUD))
     {
         std::unique_lock lock(m_HashTrackerMutex);
         CMessageBoxDlg dlg(Localization::Lookup(IDS_DUPLICATES_WARNING), Localization::LookupNeutral(AFX_IDS_APP_TITLE),
@@ -74,7 +74,7 @@ void CFileDupeControl::ProcessDuplicate(CItem * item, BlockingQueue<CItem*>* que
         // Attempt to hash the file partially
         for (auto& itemToHash : itemsToHash)
         {
-            if (itemToHash->IsHashType(ITHASH_SKIP)) continue;
+            if (itemToHash->IsTypeOrFlag(ITHASH_SKIP)) continue;
 
             // Compute the hash for the file
             lock.unlock();
@@ -185,7 +185,7 @@ void CFileDupeControl::RemoveItem(CItem* item)
     {
         const auto& qitem = queue.top();
         queue.pop();
-        if (qitem->IsType(IT_FILE))
+        if (qitem->IsTypeOrFlag(IT_FILE))
         {
             // Mark as all files as not being hashed anymore
             std::erase(m_SizeTracker.at(qitem->GetSizeLogical()), qitem);
@@ -209,7 +209,7 @@ void CFileDupeControl::RemoveItem(CItem* item)
             // Skip if no matches of the item associated with this hash
             std::erase_if(hashSet, [](const auto& hashItem)
             {
-                return !hashItem->IsHashType(ITHASH_PART, ITHASH_FULL);
+                return !hashItem->IsTypeOrFlag(ITHASH_PART, ITHASH_FULL);
             });
         }
 
@@ -238,7 +238,7 @@ void CFileDupeControl::RemoveItem(CItem* item)
             erasedChild ? childItem : ++childItem, erasedChild = false)
         {
             // Nothing to do if still marked as hashed
-            if ((*childItem)->IsHashType(ITHASH_PART, ITHASH_FULL)) continue;
+            if ((*childItem)->IsTypeOrFlag(ITHASH_PART, ITHASH_FULL)) continue;
 
             // Remove from child tracker and visual tree
             for (auto& visualChild : dupeParent->GetChildren())
@@ -279,7 +279,7 @@ void CFileDupeControl::RemoveItem(CItem* item)
 void CFileDupeControl::OnItemDoubleClick(const int i)
 {
     if (const auto item = reinterpret_cast<const CItem*>(GetItem(i)->GetLinkedItem());
-        item != nullptr && item->IsType(IT_FILE))
+        item != nullptr && item->IsTypeOrFlag(IT_FILE))
     {
         CDirStatDoc::OpenItem(item);
     }

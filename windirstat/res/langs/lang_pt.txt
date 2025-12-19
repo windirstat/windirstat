@@ -22,6 +22,7 @@ IDS_COL_FOLDERS=Subdiretórios
 IDS_COL_FREE=Livre
 IDS_COL_GRAPH=Usado/Total
 IDS_COL_HASH=Prefixo de hash
+IDS_COL_INDEX=Índice
 IDS_COL_ITEMS=Itens
 IDS_COL_LAST_CHANGE=Última Alteração
 IDS_COL_NAME=Nome

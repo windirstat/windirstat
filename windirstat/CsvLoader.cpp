@@ -29,6 +29,7 @@ enum : std::uint8_t
     FIELD_ATTRIBUTES,
     FIELD_LAST_CHANGE,
     FIELD_ATTRIBUTES_WDS,
+    FIELD_INDEX,
     FIELD_OWNER,
     FIELD_COUNT
 };
@@ -47,6 +48,7 @@ static void ParseHeaderLine(const std::vector<std::wstring>& header)
         { Localization::Lookup(IDS_COL_ATTRIBUTES), FIELD_ATTRIBUTES },
         { Localization::Lookup(IDS_COL_LAST_CHANGE), FIELD_LAST_CHANGE },
         { (Localization::LookupNeutral(AFX_IDS_APP_TITLE) + L" " + Localization::Lookup(IDS_COL_ATTRIBUTES)), FIELD_ATTRIBUTES_WDS },
+        { Localization::Lookup(IDS_COL_INDEX), FIELD_INDEX },
         { Localization::Lookup(IDS_COL_OWNER), FIELD_OWNER }
     };
 
@@ -152,9 +154,7 @@ CItem* LoadResults(const std::wstring & path)
         }
 
         // Decode item type
-        const ULONGLONG indexAndAttributes = wcstoull(fields[orderMap[FIELD_ATTRIBUTES_WDS]].c_str(), nullptr, 16);
-        const ITEMTYPE type = static_cast<ITEMTYPE>(indexAndAttributes);
-        const ULONG index = static_cast<ULONG>(indexAndAttributes >> (sizeof(ITEMTYPE) * CHAR_BIT));
+        const ITEMTYPE type = static_cast<ITEMTYPE>(wcstoull(fields[orderMap[FIELD_ATTRIBUTES_WDS]].c_str(), nullptr, 16));
 
         // Determine how to store the path if it was the root or not
         const auto itType = IT_MASK & type;
@@ -174,9 +174,9 @@ CItem* LoadResults(const std::wstring & path)
             type,
             displayName,
             FromTimeString(fields[orderMap[FIELD_LAST_CHANGE]]),
-            _wcstoui64(fields[orderMap[FIELD_SIZE_PHYSICAL]].c_str(), nullptr, 10),
-            _wcstoui64(fields[orderMap[FIELD_SIZE_LOGICAL]].c_str(), nullptr, 10),
-            index,
+            wcstoull(fields[orderMap[FIELD_SIZE_PHYSICAL]].c_str(), nullptr, 10),
+            wcstoull(fields[orderMap[FIELD_SIZE_LOGICAL]].c_str(), nullptr, 10),
+            wcstoull(fields[orderMap[FIELD_INDEX]].c_str(), nullptr, 16),
             wcstoul(fields[orderMap[FIELD_ATTRIBUTES]].c_str(), nullptr, 16),
             wcstoul(fields[orderMap[FIELD_FILES]].c_str(), nullptr, 10),
             wcstoul(fields[orderMap[FIELD_FOLDERS]].c_str(), nullptr, 10));
@@ -204,7 +204,7 @@ CItem* LoadResults(const std::wstring & path)
             parentMap[mapPath] = newitem;
 
             // Special case: also add mapping for drive without backslash
-            if (newitem->IsType(IT_DRIVE)) parentMap[mapPath.substr(0, 2)] = newitem;
+            if (newitem->IsTypeOrFlag(IT_DRIVE)) parentMap[mapPath.substr(0, 2)] = newitem;
         }
     }
 
@@ -232,8 +232,8 @@ bool SaveResults(const std::wstring& path, CItem* rootItem)
         queue.pop();
         items.push_back(qitem);
 
-        // Descend into childitems
-        if (qitem->IsLeaf()) continue;
+        // Descend into childitems but do not output hard links
+        if (qitem->IsLeaf() || qitem->IsTypeOrFlag(IT_HARDLINKS)) continue;
         for (const auto& child : qitem->GetChildren()) queue.push(child);
     }
 
@@ -257,7 +257,8 @@ bool SaveResults(const std::wstring& path, CItem* rootItem)
         Localization::Lookup(IDS_COL_SIZE_PHYSICAL),
         Localization::Lookup(IDS_COL_ATTRIBUTES),
         Localization::Lookup(IDS_COL_LAST_CHANGE),
-        Localization::LookupNeutral(AFX_IDS_APP_TITLE) + L" " + Localization::Lookup(IDS_COL_ATTRIBUTES)
+        Localization::LookupNeutral(AFX_IDS_APP_TITLE) + L" " + Localization::Lookup(IDS_COL_ATTRIBUTES),
+        Localization::Lookup(IDS_COL_INDEX)
     };
     if (COptions::ShowColumnOwner) cols.push_back(Localization::Lookup(IDS_COL_OWNER));
 
@@ -272,8 +273,8 @@ bool SaveResults(const std::wstring& path, CItem* rootItem)
     for (const auto* item : items)
     {
         // Output primary columns
-        const bool nonPathItem = item->IsType(IT_MYCOMPUTER);
-        outf << std::format("{},{},{},{},{},0x{:08X},{},0x{:012X}",
+        const bool nonPathItem = item->IsTypeOrFlag(IT_MYCOMPUTER);
+        outf << std::format("{},{},{},{},{},0x{:08X},{},{:08X},0x{:016X}",
             QuoteAndConvert(nonPathItem ? item->GetName() : item->GetPath()),
             item->GetFilesCount(),
             item->GetFoldersCount(),
@@ -281,7 +282,8 @@ bool SaveResults(const std::wstring& path, CItem* rootItem)
             item->GetSizePhysicalRaw(),
             item->GetAttributes(),
             ToTimePoint(item->GetLastChange()),
-            (item->GetIndex() << (sizeof(ITEMTYPE) * CHAR_BIT)) | item->GetRawType());
+            static_cast<std::uint32_t>(item->GetRawType()),
+            item->GetIndex());
 
         // Output additional columns
         if (COptions::ShowColumnOwner) outf << "," << QuoteAndConvert(item->GetOwner(true));

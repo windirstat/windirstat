@@ -43,56 +43,58 @@ enum ITEMCOLUMNS : std::uint8_t
     COL_OWNER
 };
 
-// Item types
-using ITEMTYPE = enum ITEMTYPE : unsigned short
+// Item types - all values are bitmasks for efficient type checking
+using ITEMTYPE = enum ITEMTYPE : std::uint32_t
 {
-    IT_NONE       = 0 << 0, // No type
-    IT_MYCOMPUTER = 1 << 0, // Pseudo Container "My Computer"
-    IT_DRIVE      = 2 << 0, // C:\, D:\ etc.
-    IT_DIRECTORY  = 3 << 0, // Folder
-    IT_FILE       = 4 << 0, // Regular file
-    IT_HARDLINKS  = 5 << 0, // Pseudo File "<Hardlinks>"
-    IT_FREESPACE  = 6 << 0, // Pseudo File "<Free Space>"
-    IT_UNKNOWN    = 7 << 0, // Pseudo File "<Unknown>"
-    IT_MASK       = 0x000F, // Mask for item type
+    IT_NONE        = 0,       // No type
+    IT_MYCOMPUTER  = 1 << 0,  // Pseudo Container "My Computer"
+    IT_DRIVE       = 1 << 1,  // C:\, D:\ etc.
+    IT_DIRECTORY   = 1 << 2,  // Folder
+    IT_FILE        = 1 << 3,  // Regular file
+    IT_HARDLINKS   = 1 << 4,  // Pseudo Container "<Hardlinks>"
+    IT_FREESPACE   = 1 << 5,  // Pseudo File "<Free Space>"
+    IT_UNKNOWN     = 1 << 6,  // Pseudo File "<Unknown>"
+    IT_HLINKS_SET  = 1 << 7,  // Pseudo Folder "Index Set N" under <Hardlinks>
+    IT_HLINKS_IDX  = 1 << 8,  // Pseudo Folder "Index N" under Index Set
+    IT_HLINKS_FILE = 1 << 9,  // Pseudo File reference under Index N
+    IT_MASK        = 0x0000FFFF,
 
-    ITHASH_NONE   = 0 << 4, // Indicates no hash
-    ITHASH_SKIP   = 1 << 4, // Indicates cannot be hashed (unreadable)
-    ITHASH_PART   = 2 << 4, // Indicates a partial hash
-    ITHASH_FULL   = 3 << 4, // Indicates a full hash
-    ITHASH_MASK   = 3 << 4, // Any hash state
+    ITHASH_NONE    = 0,       // Indicates no hash
+    ITHASH_SKIP    = 1 << 16, // Indicates cannot be hashed (unreadable)
+    ITHASH_PART    = 1 << 17, // Indicates a partial hash
+    ITHASH_FULL    = 1 << 18, // Indicates a full hash
+    ITHASH_MASK    = 0x000F0000,
 
-    ITRP_NONE     = 0 << 6, // Indicates no reparse data
-    ITRP_SYMLINK  = 1 << 6, // Indicates a reparse point that is a symlink
-    ITRP_MOUNT    = 2 << 6, // Indicates a reparse point that is a mount point
-    ITRP_JUNCTION = 3 << 6, // Indicates a reparse point that is a junction
-    ITRP_CLOUD    = 4 << 6, // Indicates a reparse point that is a cloud link
-    ITRP_MASK     = 7 << 6, // Indicates a reparse point that is a cloud link
+    ITRP_NONE      = 0,       // Indicates no reparse data
+    ITRP_SYMLINK   = 1 << 20, // Indicates a reparse point that is a symlink
+    ITRP_MOUNT     = 1 << 21, // Indicates a reparse point that is a mount point
+    ITRP_JUNCTION  = 1 << 22, // Indicates a reparse point that is a junction
+    ITRP_CLOUD     = 1 << 23, // Indicates a reparse point that is a cloud link
+    ITRP_MASK      = 0x00F00000,
 
-    ITF_NONE      = 0 << 9,  // No flags
-    ITF_UNUSED1   = 1 << 10, // Unused
-    ITF_UNUSED2   = 1 << 11, // Unused
-    ITF_BASIC     = 1 << 12, // Forces basic finder
-    ITF_HARDLINK  = 1 << 13, // Indicates file is a hardlink (LinkCount > 1)
-    ITF_ROOTITEM  = 1 << 14, // Indicates root item
-    ITF_DONE      = 1 << 15, // Indicates done processing
-    ITF_FLAGS     = 0xFE00,  // All potential flag items
-    ITF_ANY       = 0xFFFF   // Indicates any item type or flag
+    ITF_NONE       = 0,       // No flags
+    ITF_BASIC      = 1 << 24, // Forces basic finder
+    ITF_HARDLINK   = 1 << 25, // Indicates file is a hardlink
+    ITF_ROOTITEM   = 1 << 26, // Indicates root item
+    ITF_DONE       = 1 << 27, // Indicates done processing
+    ITF_MASK       = 0xFF000000,
+
+    ITF_ANY        = 0xFFFFFFFF, // Indicates any item type or flag
 };
 
 constexpr ITEMTYPE operator~(const ITEMTYPE& a)
 {
-    return static_cast<ITEMTYPE>(~static_cast<USHORT>(a));
+    return static_cast<ITEMTYPE>(~static_cast<std::uint32_t>(a));
 }
 
 constexpr ITEMTYPE operator|(const ITEMTYPE & a, const ITEMTYPE & b)
 {
-    return static_cast<ITEMTYPE>(static_cast<USHORT>(a) | static_cast<USHORT>(b));
+    return static_cast<ITEMTYPE>(static_cast<std::uint32_t>(a) | static_cast<std::uint32_t>(b));
 }
 
 constexpr ITEMTYPE operator&(const ITEMTYPE& a, const ITEMTYPE& b)
 {
-    return static_cast<ITEMTYPE>(static_cast<USHORT>(a) & static_cast<USHORT>(b));
+    return static_cast<ITEMTYPE>(static_cast<std::uint32_t>(a) & static_cast<std::uint32_t>(b));
 }
 
 constexpr auto operator<=>(const FILETIME& t1, const FILETIME& t2)
@@ -128,7 +130,7 @@ public:
     CItem& operator=(CItem&&) = delete;
     CItem(ITEMTYPE type, const std::wstring& name);
     CItem(ITEMTYPE type, const std::wstring& name, FILETIME lastChange, ULONGLONG sizePhysical,
-        ULONGLONG sizeLogical, ULONG index, DWORD attributes, ULONG files, ULONG subdirs);
+        ULONGLONG sizeLogical, ULONGLONG index, DWORD attributes, ULONG files, ULONG subdirs);
     ~CItem() override;
 
     // CTreeListItem Interface
@@ -140,13 +142,17 @@ public:
     CTreeListItem* GetTreeListChild(const int i) const override { return GetChildren()[i]; }
     HICON GetIcon() override;
     void DrawAdditionalState(CDC* pdc, const CRect& rcLabel) const override;
+    CTreeListItem* GetLinkedItem() override;
 
     // CTreeMap::Item interface
-    bool TmiIsLeaf() const override { return IsLeaf(); }
+    bool TmiIsLeaf() const override { return IsLeaf() || IsTypeOrFlag(IT_HLINKS_IDX); }
     CRect TmiGetRectangle() const override { return tmiRect; };
     void TmiSetRectangle(const CRect& rc) override { tmiRect = rc; }
     COLORREF TmiGetGraphColor() const override { return GetGraphColor(); }
-    int TmiGetChildCount() const override { return m_FolderInfo == nullptr ? 0 : static_cast<int>(m_FolderInfo->m_Children.size()); }
+    int TmiGetChildCount() const override { 
+        if (m_FolderInfo == nullptr || IsTypeOrFlag(IT_HLINKS_IDX)) return 0;
+        return static_cast<int>(m_FolderInfo->m_Children.size()); 
+    }
     Item* TmiGetChild(const int c) const override { return m_FolderInfo->m_Children[c]; }
     ULONGLONG TmiGetSize() const override { return COptions::TreeMapUseLogical ? GetSizeLogical() : GetSizePhysical(); }
 
@@ -186,8 +192,8 @@ public:
     void SetLastChange(const FILETIME& t);
     void SetAttributes(DWORD attr);
     DWORD GetAttributes() const;
-    void SetIndex(DWORD index);
-    DWORD GetIndex() const;
+    void SetIndex(ULONGLONG index);
+    ULONGLONG GetIndex() const;
     DWORD GetReparseTag() const;
     void SetReparseTag(DWORD reparseType);
     USHORT GetSortAttributes() const;
@@ -234,7 +240,7 @@ public:
     
     bool IsDone() const
     {
-        return HasFlag(ITF_DONE);
+        return IsTypeOrFlag(ITF_DONE);
     }
 
     ITEMTYPE GetItemType() const
@@ -247,11 +253,11 @@ public:
         return m_Type;
     }
 
-    template<ITEMTYPE Mask, typename... Args>
-    bool HasType(const bool bitOp = false, Args... args) const
+    template<typename... Args>
+    constexpr bool IsTypeOrFlag(Args... args) const
     {
-        if (bitOp) return ((args == ITF_ANY || ((m_Type & args) != 0)) || ...);
-        return ((args == ITF_ANY || ((m_Type & Mask) == args)) || ...);
+        const ITEMTYPE combinedMask = (args | ...);
+        return (m_Type & combinedMask) != IT_NONE;
     }
 
     template<ITEMTYPE Mask>
@@ -261,25 +267,10 @@ public:
         else m_Type = bitOp ? (m_Type | type) : ((m_Type & ~Mask) | type);
     }
 
-    template<typename... Args>
-    bool IsType(Args... args) const { return HasType<IT_MASK>(false, args...); }
-
     void SetItemType(const ITEMTYPE type) { SetType<IT_MASK>(type); }
-
-    template<typename... Args>
-    bool IsReparseType(Args... args) const { return HasType<ITRP_MASK>(false, args...); }
-
     void SetReparseType(const ITEMTYPE type) { SetType<ITRP_MASK>(type); }
-
-    template<typename... Args>
-    bool IsHashType(Args... args) const { return HasType<ITHASH_MASK>(false, args...); }
-
     void SetHashType(const ITEMTYPE type) { SetType<ITHASH_MASK>(type); }
-
-    template<typename... Args>
-    bool HasFlag(Args... args) const { return HasType<ITF_FLAGS>(true, args...); }
-
-    void SetFlag(const ITEMTYPE type, const bool unsetVal = false) { SetType<ITF_FLAGS>(type, true, unsetVal); }
+    void SetFlag(const ITEMTYPE type, const bool unsetVal = false) { SetType<ITF_MASK>(type, true, unsetVal); }
 
     static constexpr bool FileTimeIsGreater(const FILETIME& ft1, const FILETIME& ft2)
     {
@@ -320,9 +311,9 @@ private:
     std::atomic<ULONGLONG> m_SizePhysical = 0; // Total physical size of self or subtree
     std::atomic<ULONGLONG> m_SizeLogical = 0;  // Total local size of self or subtree
     FILETIME m_LastChange = { 0, 0 };          // Last modification time of self or subtree
-    ULONG m_Index = 0;                         // Index of item for special scan types
+    ULONGLONG m_Index = 0;                     // Index of item for special scan types
+    CSmallRect tmiRect = {};                   // Treemap rectangle
+    ITEMTYPE m_Type;                           // Indicates our type.
     USHORT m_Attributes = 0xFFFF;              // File or directory attributes of the item
     USHORT m_NameLen = 0;
-    ITEMTYPE m_Type;                           // Indicates our type.
-    CSmallRect tmiRect = {};                   // Treemap rectangle
 };

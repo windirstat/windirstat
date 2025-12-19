@@ -22,6 +22,7 @@ IDS_COL_FOLDERS=Složky
 IDS_COL_FREE=Volné
 IDS_COL_GRAPH=Využito/Celkem
 IDS_COL_HASH=Hashový prefix
+IDS_COL_INDEX=Index
 IDS_COL_ITEMS=Položky
 IDS_COL_LAST_CHANGE=Poslední změna
 IDS_COL_NAME=Název

@@ -22,6 +22,7 @@ IDS_COL_FOLDERS=Onderliggende mappen
 IDS_COL_FREE=Beschikbaar
 IDS_COL_GRAPH=Gebruikt/Totaal
 IDS_COL_HASH=Hashvoorvoegsel
+IDS_COL_INDEX=Index
 IDS_COL_ITEMS=Items
 IDS_COL_LAST_CHANGE=Laatste wijziging
 IDS_COL_NAME=Naam

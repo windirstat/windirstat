@@ -22,6 +22,7 @@ IDS_COL_FOLDERS=Dizinler
 IDS_COL_FREE=Boş
 IDS_COL_GRAPH=Kullanılan/Toplam
 IDS_COL_HASH=Hash Öneki
+IDS_COL_INDEX=Dizin
 IDS_COL_ITEMS=Girdiler
 IDS_COL_LAST_CHANGE=Son Değişiklik
 IDS_COL_NAME=Ad

@@ -24,6 +24,7 @@ constexpr std::wstring_view IDS_COL_FOLDERS = L"IDS_COL_FOLDERS";
 constexpr std::wstring_view IDS_COL_FREE = L"IDS_COL_FREE";
 constexpr std::wstring_view IDS_COL_GRAPH = L"IDS_COL_GRAPH";
 constexpr std::wstring_view IDS_COL_HASH = L"IDS_COL_HASH";
+constexpr std::wstring_view IDS_COL_INDEX = L"IDS_COL_INDEX";
 constexpr std::wstring_view IDS_COL_ITEMS = L"IDS_COL_ITEMS";
 constexpr std::wstring_view IDS_COL_LAST_CHANGE = L"IDS_COL_LAST_CHANGE";
 constexpr std::wstring_view IDS_COL_NAME = L"IDS_COL_NAME";
