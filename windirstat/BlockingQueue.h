@@ -22,7 +22,7 @@
 template <typename T>
 class BlockingQueue final
 {
-    std::vector<std::thread> m_Threads;
+    std::vector<std::jthread> m_Threads;
     std::deque<T> m_Queue;
     std::mutex m_Mutex;
     std::condition_variable m_Pushed;

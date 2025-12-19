@@ -83,7 +83,7 @@ BOOL CProgressDlg::OnInitDialog()
 
 void CProgressDlg::StartWorkerThread()
 {
-    m_WorkerThread = new std::thread([this]()
+    m_WorkerThread = new std::jthread([this]()
     {
         // Execute the task
         m_Task(m_CancelRequested, m_Current);

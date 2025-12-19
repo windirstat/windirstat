@@ -62,7 +62,7 @@ private:
     bool m_Cancelled = false;
     bool m_NoCancel = false;
 
-    std::thread* m_WorkerThread{ nullptr };
+    std::jthread* m_WorkerThread{ nullptr };
     static constexpr UINT_PTR TIMER_ID = 1;
     static constexpr UINT TIMER_INTERVAL = 100; // Update every 100ms
 };

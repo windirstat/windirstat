@@ -601,7 +601,7 @@ void ProcessMessagesUntilSignaled(const std::function<void()>& callback)
     {
         // Start thread and wait post message when done
         static auto waitMessage = RegisterWindowMessage(L"WinDirStatSignalWaiter");
-        std::thread([wnd, &callback]() mutable
+        std::jthread([wnd, &callback]() mutable
         {
             callback();
             wnd->PostMessageW(waitMessage, 0, 0);

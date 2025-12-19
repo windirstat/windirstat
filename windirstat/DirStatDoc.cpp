@@ -294,10 +294,10 @@ bool CDirStatDoc::IsRootDone() const
 
 bool CDirStatDoc::IsScanRunning() const
 {
-    if (m_thread == nullptr) return false;
+    if (!m_thread.has_value()) return false;
 
     DWORD exitCode;
-    GetExitCodeThread(m_thread->native_handle(), &exitCode);
+    GetExitCodeThread(const_cast<std::jthread&>(*m_thread).native_handle(), &exitCode);
     return (exitCode == STILL_ACTIVE);
 }
 
@@ -1628,12 +1628,11 @@ void CDirStatDoc::StopScanningEngine(StopReason stopReason)
         ProcessMessagesUntilSignaled([&queue, &stopReason] { queue.CancelExecution(stopReason); });
 
     // Wait for wrapper thread to complete
-    if (m_thread != nullptr)
+    if (m_thread.has_value())
     {
         CWaitCursor waitCursor;
         ProcessMessagesUntilSignaled([this] { m_thread->join(); });
-        delete m_thread;
-        m_thread = nullptr;
+        m_thread.reset();
         m_queues.clear();
     }
 }
@@ -1697,7 +1696,7 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
 
     // Start a thread so we do not hang the message loop
     // Lambda captures assume document exists for duration of thread
-    m_thread = new std::thread([this,items] () mutable
+    m_thread.emplace([this,items] () mutable
     {
         // Wait for other threads to finish if this was scheduled in parallel
         static std::shared_mutex mutex;
@@ -1758,7 +1757,7 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
                     // Handle deleted root item; this must be launched
                     // asynchronously since it will end up calling this
                     // function and could potentially deadlock
-                    std::thread ([] ()
+                    std::jthread ([] ()
                     {
                         Get()->UnlinkRoot();
                     }).detach();
