@@ -124,7 +124,6 @@ protected:
     static void OpenItem(const CItem* item, const std::wstring& verb = {});
 
     void RecurseRefreshReparsePoints(CItem* items) const;
-    std::vector<CItem*> GetDriveItems() const;
     void RebuildExtensionData();
     bool DeletePhysicalItems(const std::vector<CItem*>& items, bool toTrashBin, bool emptyOnly = false) const;
     void SetZoomItem(CItem* item);

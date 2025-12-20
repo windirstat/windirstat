@@ -51,9 +51,9 @@ using ITEMTYPE = enum ITEMTYPE : std::uint32_t
     IT_DRIVE       = 1 << 1,  // C:\, D:\ etc.
     IT_DIRECTORY   = 1 << 2,  // Folder
     IT_FILE        = 1 << 3,  // Regular file
-    IT_HARDLINKS   = 1 << 4,  // Pseudo Container "<Hardlinks>"
-    IT_FREESPACE   = 1 << 5,  // Pseudo File "<Free Space>"
-    IT_UNKNOWN     = 1 << 6,  // Pseudo File "<Unknown>"
+    IT_FREESPACE   = 1 << 4,  // Pseudo File "<Free Space>"
+    IT_UNKNOWN     = 1 << 5,  // Pseudo File "<Unknown>"
+    IT_HLINKS      = 1 << 6,  // Pseudo Container "<Hardlinks>"
     IT_HLINKS_SET  = 1 << 7,  // Pseudo Folder "Index Set N" under <Hardlinks>
     IT_HLINKS_IDX  = 1 << 8,  // Pseudo Folder "Index N" under Index Set
     IT_HLINKS_FILE = 1 << 9,  // Pseudo File reference under Index N
@@ -235,6 +235,7 @@ public:
     void RemoveHardlinksItem();
     void UpwardDrivePacman();
     void DoHardlinkAdjustment();
+    std::vector<CItem*> GetDriveItems() const;
 
     std::vector<BYTE> GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CItem*>* queue);
     

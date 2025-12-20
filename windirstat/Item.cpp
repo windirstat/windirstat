@@ -25,7 +25,7 @@
 
 CItem::CItem(const ITEMTYPE type, const std::wstring & name) : m_Type(type)
 {
-    if (IsTypeOrFlag(IT_MYCOMPUTER, IT_DRIVE, IT_DIRECTORY, IT_HARDLINKS, IT_HLINKS_SET, IT_HLINKS_IDX))
+    if (IsTypeOrFlag(IT_MYCOMPUTER, IT_DRIVE, IT_DIRECTORY, IT_HLINKS, IT_HLINKS_SET, IT_HLINKS_IDX))
     {
         m_FolderInfo = std::make_unique<CHILDINFO>();
 
@@ -70,7 +70,7 @@ CItem::CItem(const ITEMTYPE type, const std::wstring& name, const FILETIME lastC
         SetName(std::format(L"{:.2}|{}", name, FormatVolumeNameOfRootPath(name)));
     }
 
-    if (IsTypeOrFlag(IT_MYCOMPUTER, IT_DRIVE, IT_DIRECTORY, IT_HARDLINKS, IT_HLINKS_SET, IT_HLINKS_IDX))
+    if (IsTypeOrFlag(IT_MYCOMPUTER, IT_DRIVE, IT_DIRECTORY, IT_HLINKS, IT_HLINKS_SET, IT_HLINKS_IDX))
     {
         m_FolderInfo = std::make_unique<CHILDINFO>();
         m_FolderInfo->m_Subdirs = subdirs;
@@ -180,35 +180,35 @@ std::wstring CItem::GetText(const int subitem) const
         return FormatDouble(GetFraction() * 100) + L"%";
 
     case COL_ITEMS:
-        if (!IsTypeOrFlag(IT_FILE, IT_FREESPACE, IT_UNKNOWN, IT_HARDLINKS, IT_HLINKS_SET, IT_HLINKS_IDX, IT_HLINKS_FILE))
+        if (!IsTypeOrFlag(IT_FILE, IT_FREESPACE, IT_UNKNOWN, IT_HLINKS, IT_HLINKS_SET, IT_HLINKS_IDX, IT_HLINKS_FILE))
         {
             return FormatCount(GetItemsCount());
         }
         break;
 
     case COL_FILES:
-        if (!IsTypeOrFlag(IT_FILE, IT_FREESPACE, IT_UNKNOWN, IT_HARDLINKS, IT_HLINKS_SET, IT_HLINKS_IDX, IT_HLINKS_FILE))
+        if (!IsTypeOrFlag(IT_FILE, IT_FREESPACE, IT_UNKNOWN, IT_HLINKS, IT_HLINKS_SET, IT_HLINKS_IDX, IT_HLINKS_FILE))
         {
             return FormatCount(GetFilesCount());
         }
         break;
 
     case COL_FOLDERS:
-        if (!IsTypeOrFlag(IT_FILE, IT_FREESPACE, IT_UNKNOWN, IT_HARDLINKS, IT_HLINKS_SET, IT_HLINKS_IDX, IT_HLINKS_FILE))
+        if (!IsTypeOrFlag(IT_FILE, IT_FREESPACE, IT_UNKNOWN, IT_HLINKS, IT_HLINKS_SET, IT_HLINKS_IDX, IT_HLINKS_FILE))
         {
             return FormatCount(GetFoldersCount());
         }
         break;
 
     case COL_LAST_CHANGE:
-        if (!IsTypeOrFlag(IT_FREESPACE, IT_UNKNOWN, IT_HARDLINKS, IT_HLINKS_SET, IT_HLINKS_IDX))
+        if (!IsTypeOrFlag(IT_FREESPACE, IT_UNKNOWN, IT_HLINKS, IT_HLINKS_SET, IT_HLINKS_IDX))
         {
             return FormatFileTime(m_LastChange);
         }
         break;
 
     case COL_ATTRIBUTES:
-        if (!IsTypeOrFlag(IT_FREESPACE, IT_UNKNOWN, IT_MYCOMPUTER, IT_HARDLINKS, IT_HLINKS_SET, IT_HLINKS_IDX, IT_HLINKS_FILE))
+        if (!IsTypeOrFlag(IT_FREESPACE, IT_UNKNOWN, IT_MYCOMPUTER, IT_HLINKS, IT_HLINKS_SET, IT_HLINKS_IDX, IT_HLINKS_FILE))
         {
             return FormatAttributes(GetAttributes());
         }
@@ -360,7 +360,7 @@ HICON CItem::GetIcon()
         m_VisualInfo->icon = GetIconHandler()->GetUnknownImage();
         return m_VisualInfo->icon;
     }
-    if (IsTypeOrFlag(IT_HARDLINKS, IT_HLINKS_SET, IT_HLINKS_IDX, IT_HLINKS_FILE))
+    if (IsTypeOrFlag(IT_HLINKS, IT_HLINKS_SET, IT_HLINKS_IDX, IT_HLINKS_FILE))
     {
         m_VisualInfo->icon = GetIconHandler()->GetHardlinksImage();
         return m_VisualInfo->icon;
@@ -976,19 +976,14 @@ void CItem::SetName(std::wstring_view name)
 
 std::wstring CItem::GetName() const
 {
-    std::wstring fullName{ m_Name.get(), m_NameLen };
-    
-    // For IT_HARDLINKS_FILE, the name is stored as "name|path" - return just the name part
+    // For IT_HLINKS_FILE, the name is stored as the full path - extract just the filename
     if (IsTypeOrFlag(IT_HLINKS_FILE))
     {
-        const auto pos = fullName.find(wds::chrPipe);
-        if (pos != std::wstring::npos)
-        {
-            return fullName.substr(0, pos);
-        }
+        std::wstring fullName{ m_Name.get(), m_NameLen };
+        return fullName.substr(fullName.find_last_of(wds::chrBackslash) + 1);
     }
     
-    return fullName;
+    return { m_Name.get(), m_NameLen };
 }
 
 std::wstring CItem::GetExtension() const
@@ -1380,7 +1375,7 @@ void CItem::CreateHardlinksItem()
 {
     ASSERT(IsTypeOrFlag(IT_DRIVE));
 
-    const auto hardlinks = new CItem(IT_HARDLINKS, Localization::Lookup(IDS_HARDLINKS_ITEM));
+    const auto hardlinks = new CItem(IT_HLINKS, Localization::Lookup(IDS_HARDLINKS_ITEM));
     
     // Create 20 Index Set subfolders (Index Set 1 through Index 20)
     constexpr char INDEX_SET_COUNT = 20;
@@ -1398,7 +1393,7 @@ CItem* CItem::FindHardlinksItem() const
 {
     const auto & children = GetParentDrive()->GetChildren();
     const auto it = std::ranges::find_if(children,
-        [](const auto& child) { return child->IsTypeOrFlag(IT_HARDLINKS); });
+        [](const auto& child) { return child->IsTypeOrFlag(IT_HLINKS); });
 
     return it != children.end() ? *it : nullptr;
 }
@@ -1489,10 +1484,9 @@ void CItem::DoHardlinkAdjustment()
             item->GetParent()->UpwardSetUndone();
             item->SetFlag(ITF_HARDLINK);
             
-            // Create a file reference entry with the name and full path separated by |
-            // Format: "filename|fullpath" so GetLinkedItem() can find the real item
-            const auto fileRef = new CItem(IT_HLINKS_FILE, 
-                std::format(L"{}|{}", item->GetName(), item->GetPath()));
+            // Create a file reference entry with just the full path
+            // GetName() will extract the filename, GetLinkedItem() will use the path
+            const auto fileRef = new CItem(IT_HLINKS_FILE, item->GetPath());
             fileRef->SetIndex(item->GetIndex());
             fileRef->SetSizePhysical(item->GetSizePhysicalRaw());
             fileRef->SetSizeLogical(item->GetSizeLogical());
@@ -1537,6 +1531,40 @@ void CItem::DoHardlinkAdjustment()
     hardlinksItem->UpwardSetUndone();
 }
 
+// Gets all items of type IT_DRIVE.
+//
+std::vector<CItem*> CItem::GetDriveItems() const
+{
+    std::vector<CItem*> drives;
+
+    // Walk up to find the root item
+    const CItem* root = this;
+    while (root->GetParent() != nullptr)
+    {
+        root = root->GetParent();
+    }
+
+    if (root == nullptr)
+    {
+        return drives;
+    }
+
+    if (root->IsTypeOrFlag(IT_MYCOMPUTER))
+    {
+        for (const auto& child : root->GetChildren())
+        {
+            ASSERT(child->IsTypeOrFlag(IT_DRIVE));
+            drives.push_back(child);
+        }
+    }
+    else if (root->IsTypeOrFlag(IT_DRIVE))
+    {
+        drives.push_back(const_cast<CItem*>(root));
+    }
+
+    return drives;
+}
+
 ULONGLONG CItem::GetProgressRangeMyComputer() const
 {
     ASSERT(IsTypeOrFlag(IT_MYCOMPUTER));
@@ -1571,7 +1599,7 @@ COLORREF CItem::GetGraphColor() const
         return RGB(100, 100, 100) | CTreeMap::COLORFLAG_DARKER;
     }
 
-    if (IsTypeOrFlag(IT_HARDLINKS, IT_HLINKS_SET, IT_HLINKS_IDX, IT_HLINKS_FILE))
+    if (IsTypeOrFlag(IT_HLINKS, IT_HLINKS_SET, IT_HLINKS_IDX, IT_HLINKS_FILE))
     {
         return RGB(200, 150, 100) | CTreeMap::COLORFLAG_LIGHTER;
     }
@@ -1634,7 +1662,7 @@ std::wstring CItem::UpwardGetPathWithoutBackslash() const
             path.append(pathPart->m_Name.get(), pathPart->m_NameLen).append(L"\\");
 
         }
-        else if (pathPart->IsTypeOrFlag(IT_FILE, IT_HARDLINKS, IT_UNKNOWN, IT_FREESPACE, IT_HLINKS_SET, IT_HLINKS_IDX, IT_HLINKS_FILE))
+        else if (pathPart->IsTypeOrFlag(IT_FILE, IT_HLINKS, IT_UNKNOWN, IT_FREESPACE, IT_HLINKS_SET, IT_HLINKS_IDX, IT_HLINKS_FILE))
         {
             path.append(pathPart->m_Name.get(), pathPart->m_NameLen);
         }
@@ -1852,19 +1880,13 @@ std::vector<CItem*> CItem::FindItemsBySameIndex() const
 
 CTreeListItem* CItem::GetLinkedItem()
 {
-    // For IT_HARDLINKS_FILE, the name is stored as "name|path"
-    // Extract the path and find the actual item
+    // For IT_HLINKS_FILE, the name stores the full path
     if (IsTypeOrFlag(IT_HLINKS_FILE))
     {
-        const std::wstring fullName{ m_Name.get(), m_NameLen };
-        const auto pos = fullName.find(wds::chrPipe);
-        if (pos != std::wstring::npos)
+        const std::wstring storedPath{ m_Name.get(), m_NameLen };
+        if (CItem* linkedItem = FindItemByPath(storedPath); linkedItem != nullptr)
         {
-            const std::wstring storedPath = fullName.substr(pos + 1);
-            if (CItem* linkedItem = FindItemByPath(storedPath); linkedItem != nullptr)
-            {
-                return linkedItem;
-            }
+            return linkedItem;
         }
     }
     

@@ -437,34 +437,6 @@ void CDirStatDoc::RecurseRefreshReparsePoints(CItem* item) const
     }
 }
 
-// Gets all items of type IT_DRIVE.
-//
-std::vector<CItem*> CDirStatDoc::GetDriveItems() const
-{
-    std::vector<CItem*> drives;
-    CItem* root = GetRootItem();
-
-    if (nullptr == root)
-    {
-        return drives;
-    }
-
-    if (root->IsTypeOrFlag(IT_MYCOMPUTER))
-    {
-        for (const auto& child : root->GetChildren())
-        {
-            ASSERT(child->IsTypeOrFlag(IT_DRIVE));
-            drives.push_back(child);
-        }
-    }
-    else if (root->IsTypeOrFlag(IT_DRIVE))
-    {
-        drives.push_back(root);
-    }
-
-    return drives;
-}
-
 void CDirStatDoc::RebuildExtensionData()
 {
     // Do initial extension information population if necessary
@@ -1142,7 +1114,7 @@ void CDirStatDoc::OnCleanupEmptyRecycleBin()
 
     // locate all drive items in order to refresh recyclers
     std::vector<CItem*> toRefresh;
-    for (const auto& drive : GetDriveItems())
+    for (const auto& drive : GetRootItem()->GetDriveItems())
     {
         if (CItem* recycler = drive->FindRecyclerItem(); recycler != nullptr)
         {
@@ -1177,7 +1149,7 @@ void CDirStatDoc::OnUpdateViewShowFreeSpace(CCmdUI* pCmdUI)
 
 void CDirStatDoc::OnViewShowFreeSpace()
 {
-    for (const auto& drive : GetDriveItems())
+    for (const auto& drive : GetRootItem()->GetDriveItems())
     {
         if (m_ShowFreeSpace)
         {
@@ -1213,7 +1185,7 @@ void CDirStatDoc::OnUpdateViewShowUnknown(CCmdUI* pCmdUI)
 
 void CDirStatDoc::OnViewShowUnknown()
 {
-    for (const auto& drive : GetDriveItems())
+    for (const auto& drive : GetRootItem()->GetDriveItems())
     {
         if (m_ShowUnknown)
         {
@@ -1380,7 +1352,7 @@ void CDirStatDoc::OnDisableHibernateFile()
     DisableHibernate();
 
     // See if there is a hibernate file on any drive to refresh
-    for (const auto& drive : GetDriveItems())
+    for (const auto& drive : GetRootItem()->GetDriveItems())
     {
         for (const auto& child : drive->GetChildren())
         {
@@ -1841,7 +1813,7 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
         }
 
         // Handle hardlink counting for the drive
-        auto drives = GetDriveItems();
+        auto drives = GetRootItem()->GetDriveItems();
         if (COptions::ProcessHardlinks) std::for_each(std::execution::par, drives.begin(), drives.end(), [](auto* drive)
         {
             // Create hardlink item if it doesn't exist

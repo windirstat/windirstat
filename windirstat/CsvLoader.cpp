@@ -230,19 +230,23 @@ bool SaveResults(const std::wstring& path, CItem* rootItem)
         // Grab item from queue
         const CItem* qitem = queue.top();
         queue.pop();
+
+        // Skip hardlink container items - we output files as if hardlink processing wasn't done
+        if (qitem->IsTypeOrFlag(IT_HLINKS)) continue;
+
         items.push_back(qitem);
+        if (qitem->IsLeaf()) continue;
 
-        // Descend into childitems but do not output hard links
-        if (qitem->IsLeaf() || qitem->IsTypeOrFlag(IT_HARDLINKS)) continue;
-        for (const auto& child : qitem->GetChildren()) queue.push(child);
-    }
-
-    // Sort results
-    std::sort(std::execution::par_unseq, items.begin(), items.end(),
-        [](const CItem* a, const CItem* b) {
-            if (a->IsRootItem() != b->IsRootItem()) return a->IsRootItem();
-            return a->GetPath() < b->GetPath();
+        // Sort child items alphabetically
+        std::vector<CItem*> children = qitem->GetChildren();
+        std::sort(children.begin(), children.end(), [](auto a, auto b)
+        {
+            return _wcsicmp(a->GetName().c_str(), b->GetName().c_str()) > 0;
         });
+
+        // Descend into childitems
+        for (const auto& child : children) queue.push(child);
+    }
 
     // Output header line to file
     std::ofstream outf(path, std::ios::binary);
@@ -268,21 +272,51 @@ bool SaveResults(const std::wstring& path, CItem* rootItem)
         outf << QuoteAndConvert(cols[i]) << (i + 1 < cols.size() ? "," : "");
     }
 
+    // Calculate accumulated physical sizes for parent items (to undo hardlink adjustments)
+    std::unordered_map<const CItem*, LONGLONG> adjustedSizes;
+    std::set<std::pair<const CItem*,ULONGLONG>> seenIndex;
+    std::unordered_map<CItem*, LONGLONG> unknownSize;
+    for (const auto* item : items)
+    {
+        if (!item->IsTypeOrFlag(ITF_HARDLINK)) continue;
+
+        // Add size to all ancestors
+        for (const CItem* p = item->GetParent(); p != nullptr; p = p->GetParent())
+        {
+            if (p->IsTypeOrFlag(IT_DRIVE))
+            {
+                // Unknown size should be updated to account for all but one
+                if (const auto unknown = p->FindUnknownItem();
+                    seenIndex.contains({p, item->GetIndex() }) && unknown != nullptr)
+                { 
+                    unknownSize[unknown] -= item->GetSizePhysicalRaw();
+                }
+
+                seenIndex.emplace(p, item->GetIndex());
+                break;
+            }
+
+            adjustedSizes[p] += item->GetSizePhysicalRaw();
+        }
+    }
+
     // Output all items to file
     outf << "\r\n";
     for (const auto* item : items)
     {
         // Output primary columns
         const bool nonPathItem = item->IsTypeOrFlag(IT_MYCOMPUTER);
-        outf << std::format("{},{},{},{},{},0x{:08X},{},{:08X},0x{:016X}",
+        const ITEMTYPE itemType = item->GetRawType() & ~ITF_HARDLINK;
+        const auto adjustedSize = adjustedSizes.contains(item) ? adjustedSizes[item] : 0;
+        outf << std::format("{},{},{},{},{},0x{:08X},{},0x{:08X},0x{:016X}",
             QuoteAndConvert(nonPathItem ? item->GetName() : item->GetPath()),
             item->GetFilesCount(),
             item->GetFoldersCount(),
             item->GetSizeLogical(),
-            item->GetSizePhysicalRaw(),
+            item->GetSizePhysicalRaw() + adjustedSize,
             item->GetAttributes(),
             ToTimePoint(item->GetLastChange()),
-            static_cast<std::uint32_t>(item->GetRawType()),
+            static_cast<std::uint32_t>(itemType),
             item->GetIndex());
 
         // Output additional columns

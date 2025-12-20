@@ -124,12 +124,15 @@ void CPageGeneral::OnOK()
     }
 
     // force general user interface update if anything changes
-    if (const CDirStatDoc* pDoc = CDirStatDoc::Get(); listChanged && pDoc != nullptr)
+    if (const CDirStatDoc* doc = CDirStatDoc::Get(); listChanged && doc != nullptr)
     {
         // Iterate over all drive items and update their display names/free space item sizes
-        for (CItem* pItem : pDoc->GetDriveItems())
+        if (CItem* root = doc->GetRootItem(); root != nullptr)
         {
-            pItem->UpdateFreeSpaceItem();
+            for (CItem* item : root->GetDriveItems())
+            {
+                item->UpdateFreeSpaceItem();
+            }
         }
 
         CDirStatDoc::Get()->UpdateAllViews(nullptr, HINT_LISTSTYLECHANGED);
