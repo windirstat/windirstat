@@ -495,10 +495,10 @@ int COwnerDrawnListControl::GetSubItemWidth(COwnerDrawnListItem* item, const int
     }
 
     CSelectObject sofont(&dc, GetFont());
-    DrawTextCache::GetInstance().DrawTextCached(&dc, s, rc, DT_SINGLELINE | DT_CALCRECT | DT_NOPREFIX | DT_NOCLIP);
 
-    rc.InflateRect(TEXT_X_MARGIN, 0);
-    return rc.Width();
+    SIZE size;
+    GetTextExtentPoint32(dc, s.c_str(), static_cast<int>(s.size()), &size);
+    return TEXT_X_MARGIN + size.cx;
 }
 
 BEGIN_MESSAGE_MAP(COwnerDrawnListControl, CSortingListControl)
