@@ -37,7 +37,7 @@ enum : std::uint8_t
 static std::array<CHAR, FIELD_COUNT> orderMap{};
 static void ParseHeaderLine(const std::vector<std::wstring>& header)
 {
-    orderMap.fill(-1);
+    orderMap.fill(static_cast<size_t>(UCHAR_MAX));
     std::unordered_map<std::wstring, DWORD> resMap =
     {
         { Localization::Lookup(IDS_COL_NAME), FIELD_NAME},
@@ -117,7 +117,7 @@ CItem* LoadResults(const std::wstring & path)
         line.resize(linebuf.size() + 1);
         const int size = MultiByteToWideChar(CP_UTF8, 0, linebuf.c_str(), -1,
             line.data(), static_cast<int>(line.size()));
-        line.resize(size);
+        line.resize(size - 1);
 
         // Parse all fields
         for (size_t pos = 0; pos < line.length(); pos++)
@@ -148,7 +148,7 @@ CItem* LoadResults(const std::wstring & path)
             // Validate all necessary fields are present
             for (auto i = 0; i < static_cast<char>(orderMap.size()); i++)
             {
-                if (i != FIELD_OWNER && orderMap[i] == -1) return nullptr;
+                if (i != FIELD_OWNER && orderMap[i] == UCHAR_MAX) return nullptr;
             }
             continue;
         }

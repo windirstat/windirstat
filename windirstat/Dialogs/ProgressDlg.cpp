@@ -64,7 +64,7 @@ BOOL CProgressDlg::OnInitDialog()
         m_ProgressCtrl.SetPos(0);
 
         // Start timer for progress updates
-        SetTimer(TIMER_ID, TIMER_INTERVAL, nullptr);
+        m_nTimerID = SetTimer(TIMER_ID, TIMER_INTERVAL, nullptr);
     }
     else
     {
@@ -83,11 +83,11 @@ BOOL CProgressDlg::OnInitDialog()
 
 void CProgressDlg::StartWorkerThread()
 {
-    m_WorkerThread = new std::jthread([this]()
+    m_WorkerThread.emplace([this]()
     {
         // Execute the task
         m_Task(m_CancelRequested, m_Current);
-        
+
         // Post message to close dialog when complete
         if (!m_CancelRequested)
         {
@@ -125,20 +125,15 @@ void CProgressDlg::OnCancel()
 
     // Disable cancel button to prevent multiple clicks
     m_CancelButton.EnableWindow(FALSE);
-
+    
     // Wait for worker thread to complete
-    if (m_WorkerThread != nullptr)
+    if (m_WorkerThread.has_value())
     {
         ProcessMessagesUntilSignaled([this]
         {
-            if (m_WorkerThread->joinable())
-            {
-                m_WorkerThread->join();
-            }
+            if (m_WorkerThread->joinable()) m_WorkerThread->join();
         });
-
-        delete m_WorkerThread;
-        m_WorkerThread = nullptr;
+        m_WorkerThread.reset();
     }
 
     CDialogEx::OnCancel();
@@ -149,14 +144,17 @@ INT_PTR CProgressDlg::DoModal()
     const INT_PTR result = CDialogEx::DoModal();
 
     // Clean up worker thread if still running
-    if (m_WorkerThread != nullptr)
+    if (m_WorkerThread.has_value())
     {
-        if (m_WorkerThread->joinable())
-        {
-            m_WorkerThread->join();
-        }
-        delete m_WorkerThread;
-        m_WorkerThread = nullptr;
+        if (m_WorkerThread->joinable()) m_WorkerThread->join();
+        m_WorkerThread.reset();
+    }
+
+    // Stop timer updates
+    if (m_nTimerID != 0)
+    {
+        KillTimer(TIMER_ID);
+        m_nTimerID = 0;
     }
 
     return result;

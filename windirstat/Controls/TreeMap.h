@@ -181,9 +181,6 @@ public:
     // Get a good palette of 18 colors
     static void GetDefaultPalette(std::vector<COLORREF>& palette);
 
-    // Create an equally bright palette from a set of arbitrary colors
-    static void EqualizeColors(const COLORREF* colors, int count, std::vector<COLORREF>& out);
-
     // Good values
     static Options GetDefaults();
 

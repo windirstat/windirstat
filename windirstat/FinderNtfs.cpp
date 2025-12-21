@@ -225,6 +225,7 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
         // Enumerate over the data run in buffer-sized chunks
         ULONGLONG bytesToRead = clusterCount * volumeInfo.BytesPerCluster;
         LARGE_INTEGER fileOffset{ .QuadPart = static_cast<LONGLONG>(clusterStart * volumeInfo.BytesPerCluster) };
+        thread_local SmartPointer<HANDLE> event(CloseHandle, CreateEvent(nullptr, TRUE, FALSE, nullptr));
         for (ULONG bytesRead = 0; bytesToRead > 0; bytesToRead -= bytesRead, fileOffset.QuadPart += bytesRead)
         {
             // Animate pacman
@@ -232,7 +233,6 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
 
             // Set file pointer for synchronous read
             const ULONG bytesThisRead = static_cast<ULONG>(min(bytesToRead, bufferSize));
-            thread_local SmartPointer<HANDLE> event(CloseHandle, CreateEvent(nullptr, TRUE, FALSE, nullptr));
             OVERLAPPED overlapped = { .Offset = fileOffset.LowPart, . OffsetHigh = static_cast<DWORD>(fileOffset.HighPart), .hEvent = event };
             if (ReadFile(volumeHandle, buffer.data(), bytesThisRead, &bytesRead, &overlapped) == 0 && GetLastError() != ERROR_IO_PENDING ||
                 WaitForSingleObject(event, INFINITE) != WAIT_OBJECT_0 ||

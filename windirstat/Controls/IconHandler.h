@@ -43,14 +43,6 @@ public:
     void DrawIcon(const CDC* hdc, HICON image, const CPoint& pt, const CSize& sz);
     void ClearAsyncShellInfoQueue();
     void StopAsyncShellInfoQueue();
-    HICON GetMyComputerImage() const;
-    HICON GetMountPointImage() const;
-    HICON GetJunctionImage() const;
-    HICON GetJunctionProtectedImage() const;
-    HICON GetFreeSpaceImage() const;
-    HICON GetUnknownImage() const;
-    HICON GetHardlinksImage() const;
-    HICON GetEmptyImage() const;
 
     HICON FetchShellIcon(const std::wstring& path, UINT flags = 0, DWORD attr = FILE_ATTRIBUTE_NORMAL, std::wstring* psTypeName = nullptr);
 
@@ -65,4 +57,14 @@ public:
     HICON m_JunctionProtected = nullptr; // For protected junctions
     HICON m_MountPointImage = nullptr;   // Mount point icon
     HICON m_MyComputerImage = nullptr;   // My computer icon
+
+    // Trivial getters
+    HICON GetMyComputerImage() const { return m_MyComputerImage; }
+    HICON GetMountPointImage() const { return m_MountPointImage; }
+    HICON GetJunctionImage() const { return m_JunctionImage; }
+    HICON GetJunctionProtectedImage() const { return m_JunctionProtected; }
+    HICON GetFreeSpaceImage() const { return m_FreeSpaceImage; }
+    HICON GetUnknownImage() const { return m_UnknownImage; }
+    HICON GetEmptyImage() const { return m_EmptyImage; }
+    HICON GetHardlinksImage() const { return m_HardlinksImage; }
 };

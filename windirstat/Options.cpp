@@ -219,7 +219,7 @@ void COptions::PreProcessPersistedSettings()
 {
     // Reserve space so the copy/move constructors are not called
     UserDefinedCleanups.reserve(USERDEFINEDCLEANUPCOUNT);
-    for (int i = 0; i < USERDEFINEDCLEANUPCOUNT; i++)
+    for (int i : std::views::iota(0, USERDEFINEDCLEANUPCOUNT))
     {
         UserDefinedCleanups.emplace_back(L"Cleanups\\UserDefinedCleanup" + std::format(L"{:02}", i));
     }
@@ -258,7 +258,7 @@ void COptions::PostProcessPersistedSettings()
     TreeMapOptions.SetLightSourceYPercent(TreeMapLightSourceY);
 
     // Adjust Title to language default Title
-    for (int i = 0; i < USERDEFINEDCLEANUPCOUNT; i++)
+    for (int i : std::views::iota(0, USERDEFINEDCLEANUPCOUNT))
     {
         if (UserDefinedCleanups[i].Title.Obj().empty() || UserDefinedCleanups[i].VirginTitle)
         {

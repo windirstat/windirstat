@@ -32,7 +32,7 @@ public:
     }
 
     // Main drawing function - replacement for DrawText
-    int DrawTextCached(CDC* pDC, const std::wstring& text, CRect& rect, UINT format);
+    void DrawTextCached(CDC* pDC, const std::wstring& text, CRect& rect, UINT format);
 
 private:
 

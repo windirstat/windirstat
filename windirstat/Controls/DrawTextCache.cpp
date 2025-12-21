@@ -18,15 +18,11 @@
 #include "pch.h"
 #include "DrawTextCache.h"
 
-int DrawTextCache::DrawTextCached(CDC* pDC, const std::wstring& text, CRect& rect, UINT format)
+void DrawTextCache::DrawTextCached(CDC* pDC, const std::wstring& text, CRect& rect, UINT format)
 {
     ASSERT((format & DT_SINGLELINE) != 0);
     ASSERT((format & DT_VCENTER) != 0);
-
-    if (!pDC || text.empty())
-    {
-        return 0;
-    }
+    if (!pDC || text.empty()) return;
 
     // Look up in cache
     CacheKey key = CreateCacheKey(pDC, text, rect, format);
@@ -36,10 +32,9 @@ int DrawTextCache::DrawTextCached(CDC* pDC, const std::wstring& text, CRect& rec
         TouchEntry(it);
 
         // Handle rectangle calculation or normal drawing
-        if (format & DT_CALCRECT) rect = it->second.first->calculatedRect;
-        else PaintCachedEntry(pDC, rect, *it->second.first);
-
-        return it->second.first->textHeight;
+        auto& entry = *it->second.first;
+        if (format & DT_CALCRECT) rect = entry.calculatedRect;
+        else PaintCachedEntry(pDC, rect, entry);
     }
 
     // Cache miss - create new cached entry
@@ -47,7 +42,6 @@ int DrawTextCache::DrawTextCached(CDC* pDC, const std::wstring& text, CRect& rec
 
     // Handle rectangle calculation or normal drawing
     auto entry = CreateCachedBitmap(pDC, text, rect, format);
-    const int textHeight = entry->textHeight;
     if (format & DT_CALCRECT) rect = entry->calculatedRect;
     else PaintCachedEntry(pDC, rect, *entry);
 
@@ -55,8 +49,6 @@ int DrawTextCache::DrawTextCached(CDC* pDC, const std::wstring& text, CRect& rec
     m_LeastRecentList.push_front(key);
     m_Cache.emplace(std::move(key),
         std::make_pair(std::move(entry), m_LeastRecentList.begin()));
-
-    return textHeight;
 }
 
 DrawTextCache::CacheKey DrawTextCache::CreateCacheKey(
@@ -96,7 +88,7 @@ std::unique_ptr<DrawTextCache::CacheEntry> DrawTextCache::CreateCachedBitmap(
 
     // Store the actual drawn rectangle (relative to input rect)
     // The vertical offset positions the text correctly within the target rect
-    const int vertOffset = (rect.Height() - textHeight) / 2;
+    const int vertOffset = max(0, (rect.Height() - textHeight) / 2);
     auto entry = std::make_unique<CacheEntry>();
     entry->drawnRect = CRect(calcRect.left, vertOffset, calcRect.right, vertOffset + textHeight);
     entry->textHeight = textHeight;
@@ -149,11 +141,8 @@ void DrawTextCache::EvictIfNeeded()
 void DrawTextCache::TouchEntry(CacheMap::iterator it)
 {
     // Move to front of LRU list
-    auto& lruIt = it->second.second;
-    if (lruIt != m_LeastRecentList.begin())
-    {
-        m_LeastRecentList.splice(m_LeastRecentList.begin(), m_LeastRecentList, lruIt);
-    }
+    m_LeastRecentList.splice(m_LeastRecentList.begin(),
+        m_LeastRecentList, it->second.second);
 }
 
 void DrawTextCache::PaintCachedEntry(CDC* pDC, const CRect& rect, CacheEntry& entry)

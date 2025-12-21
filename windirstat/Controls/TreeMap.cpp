@@ -36,17 +36,9 @@ static constexpr double PALETTE_BRIGHTNESS = 0.6;
 
 void CTreeMap::GetDefaultPalette(std::vector<COLORREF>& palette)
 {
-    EqualizeColors(DefaultCushionColors, std::size(DefaultCushionColors), palette);
-}
-
-void CTreeMap::EqualizeColors(const COLORREF* colors, const int count, std::vector<COLORREF>& out)
-{
-    out.resize(count);
-
-    for (int i = 0; i < count; i++)
-    {
-        out[i] = CColorSpace::MakeBrightColor(colors[i], PALETTE_BRIGHTNESS);
-    }
+    palette.resize(std::size(DefaultCushionColors));
+    std::ranges::transform(DefaultCushionColors, palette.begin(),
+        [](COLORREF color) { return CColorSpace::MakeBrightColor(color, PALETTE_BRIGHTNESS); });
 }
 
 CTreeMap::Options CTreeMap::GetDefaults()
@@ -213,9 +205,9 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, Item* root, const Options* option
             if (m_Options.style == KDirStatStyle)
             {
                 // Reset vectors for next run
-                childWidth.resize(0);
-                rows.resize(0);
-                childrenPerRow.resize(0);
+                childWidth.clear();
+                rows.clear();
+                childrenPerRow.clear();
 
                 // KDirStat style preparation
                 const bool horizontalRows = KDirStat_ArrangeChildren(item, childWidth, rows, childrenPerRow);
@@ -950,4 +942,3 @@ void CTreeMapPreview::OnPaint()
     GetClientRect(rc);
     m_TreeMap.DrawTreeMap(&dc, rc, m_Root);
 }
-

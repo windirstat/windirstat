@@ -290,7 +290,7 @@ private:
     CItem* AddFile(Finder& finder);
 
     // Used for initialization of hashing process
-    static std::mutex m_HashMutex;
+    static std::once_flag m_HashInitFlag;
     static BCRYPT_ALG_HANDLE m_HashAlgHandle;
     static DWORD m_HashLength;
 
@@ -316,5 +316,5 @@ private:
     CSmallRect tmiRect = {};                   // Treemap rectangle
     ITEMTYPE m_Type;                           // Indicates our type.
     USHORT m_Attributes = 0xFFFF;              // File or directory attributes of the item
-    USHORT m_NameLen = 0;
+    USHORT m_NameLen = 0;                      // Length of name string
 };

@@ -1728,7 +1728,7 @@ void CItem::UpwardDrivePacman()
     }
 }
 
-std::mutex CItem::m_HashMutex;
+std::once_flag CItem::m_HashInitFlag;
 BCRYPT_ALG_HANDLE CItem::m_HashAlgHandle = nullptr;
 DWORD CItem::m_HashLength = 0;
 
@@ -1738,15 +1738,21 @@ std::vector<BYTE> CItem::GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CIte
     thread_local std::vector<BYTE> Hash;
     thread_local SmartPointer<BCRYPT_HASH_HANDLE> HashHandle(BCryptDestroyHash);
 
-    // Initialize shared structures
-    if (m_HashLength == 0) if (std::scoped_lock guard(m_HashMutex); m_HashLength == 0)
+    // Initialize shared structures using std::call_once for better performance
+    std::call_once(m_HashInitFlag, []()
     {
         DWORD ResultLength = 0;
         if (BCryptOpenAlgorithmProvider(&m_HashAlgHandle, BCRYPT_SHA512_ALGORITHM, MS_PRIMITIVE_PROVIDER, BCRYPT_HASH_REUSABLE_FLAG) != 0 ||
             BCryptGetProperty(m_HashAlgHandle, BCRYPT_HASH_LENGTH, reinterpret_cast<PBYTE>(&m_HashLength), sizeof(m_HashLength), &ResultLength, 0) != 0)
         {
-            return {};
+            m_HashLength = 0; // Indicate failure
         }
+    });
+
+    // Check if initialization succeeded
+    if (m_HashLength == 0)
+    {
+        return {};
     }
 
     // Initialize per-thread hashing handle

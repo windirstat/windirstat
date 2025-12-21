@@ -56,7 +56,7 @@ CDirStatDoc* CDirStatDoc::_theDocument = nullptr;
 std::wstring CDirStatDoc::EncodeSelection(const std::vector<std::wstring>& folders)
 {
     return std::accumulate(folders.begin(), folders.end(), std::wstring(),
-        [&](const std::wstring& a, const std::wstring& b) {
+        [](const std::wstring& a, const std::wstring& b) {
             return a.empty() ? b : a + wds::chrPipe + b;
         });
 }
@@ -233,7 +233,7 @@ void CDirStatDoc::SetPathName(LPCWSTR lpszPathName, BOOL /*bAddToMRU*/)
 //
 void CDirStatDoc::SetTitlePrefix(const std::wstring& prefix) const
 {
-    static std::wstring suffix = IsElevationActive() ? L" (Administrator)" : L"";;
+    static std::wstring suffix = IsElevationActive() ? L" (Administrator)" : L"";
     std::wstring docName = std::format(L"{} {} {}", prefix, GetTitle().GetString(), suffix);
     docName = TrimString(docName);
     CMainFrame::Get()->UpdateFrameTitleForDocument(docName.empty() ? nullptr : docName.c_str());
@@ -412,7 +412,7 @@ void CDirStatDoc::RecurseRefreshReparsePoints(CItem* item) const
         const auto& qitem = reparseStack.top();
         reparseStack.pop();
 
-        if (!item->IsTypeOrFlag(IT_DIRECTORY, IT_DRIVE)) continue;
+        if (!qitem->IsTypeOrFlag(IT_DIRECTORY, IT_DRIVE)) continue;
         for (const auto& child : qitem->GetChildren())
         {
             if (!(child->IsTypeOrFlag(IT_DIRECTORY, IT_DRIVE) || child->IsTypeOrFlag(ITF_ROOTITEM)))
@@ -605,7 +605,7 @@ bool CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, const bo
     }
 
     // Refresh the items and recycler directories
-    RefreshItem(items);
+    RefreshItem(refresh);
     return true;
 }
 

@@ -58,11 +58,12 @@ private:
 
     std::atomic<bool> m_CancelRequested = false;
     std::atomic<size_t> m_Current = 0;
-    size_t m_Total = 0;
+    const size_t m_Total = 0;
     bool m_Cancelled = false;
-    bool m_NoCancel = false;
+    const bool m_NoCancel = false;
+    UINT_PTR m_nTimerID = 0;
 
-    std::jthread* m_WorkerThread{ nullptr };
+    std::optional<std::jthread> m_WorkerThread;
     static constexpr UINT_PTR TIMER_ID = 1;
     static constexpr UINT TIMER_INTERVAL = 100; // Update every 100ms
 };
