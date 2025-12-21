@@ -107,6 +107,7 @@ IDS_MENU_HELP_REPORT=報告錯誤/表達意見... (&R)
 IDS_MENU_HELP=說明(&H)
 IDS_MENU_LOAD_RESULTS=從 CSV 檔案載入掃描結果...\tCtrl+Alt+L
 IDS_MENU_LOGICAL_SIZE=使用邏輯大小(&L)\tCtrl+L
+IDS_MENU_MOVE_TO=&移動至...\tCtrl+M
 IDS_MENU_OPEN=開啟...(&O)\tEnter
 IDS_MENU_OPTIONS=選項(&O)
 IDS_MENU_PROPERTIES=內容(&P)\tAlt+Enter

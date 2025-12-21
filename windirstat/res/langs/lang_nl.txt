@@ -107,6 +107,7 @@ IDS_MENU_HELP_REPORT=Bug/feedback &melden...
 IDS_MENU_HELP=&Help
 IDS_MENU_LOAD_RESULTS=Resultaten laden vanuit CSV...\tCtrl+Alt+L
 IDS_MENU_LOGICAL_SIZE=Logische grootte gebruiken\tCtrl+L
+IDS_MENU_MOVE_TO=&Verplaatsen naar...\tCtrl+M
 IDS_MENU_OPEN=&Openen...\tEnter
 IDS_MENU_OPTIONS=&Opties
 IDS_MENU_PROPERTIES=&Eigenschappen\tAlt+Enter

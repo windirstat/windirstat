@@ -107,6 +107,7 @@ IDS_MENU_HELP_REPORT=バグ報告/フィードバック(&R)...
 IDS_MENU_HELP=ヘルプ(&H)
 IDS_MENU_LOAD_RESULTS=CSVから結果を読み込み...\tCtrl+Alt+L
 IDS_MENU_LOGICAL_SIZE=論理サイズを使用(&L)\tCtrl+L
+IDS_MENU_MOVE_TO=&移動...\tCtrl+M
 IDS_MENU_OPEN=開く(&O)...\tEnter
 IDS_MENU_OPTIONS=オプション(&O)
 IDS_MENU_PROPERTIES=プロパティ(&P)\tAlt+Enter

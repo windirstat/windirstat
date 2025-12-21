@@ -897,6 +897,7 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
         { ID_CLEANUP_DELETE,          { false, true,  false, LF_NONE,     { IT_DIRECTORY, IT_FILE }, notRoot } },
         { ID_CLEANUP_DELETE_BIN,      { false, true,  false, LF_NONE,     { IT_DIRECTORY, IT_FILE }, notRoot } },
         { ID_CLEANUP_DISK_CLEANUP  ,  { true,  true,  false, LF_NONE,     { ITF_ANY }, isElevationAvailable } },
+        { ID_CLEANUP_MOVE_TO,         { false, true,  false, LF_NONE,     { IT_DIRECTORY, IT_FILE }, notRoot } },
         { ID_CLEANUP_REMOVE_PROGRAMS, { true,  true,  false, LF_NONE,     { ITF_ANY } } },        
         { ID_CLEANUP_DISM_ANALYZE,    { true,  true,  false, LF_NONE,     { ITF_ANY }, isElevationAvailable } },
         { ID_CLEANUP_DISM_NORMAL,     { true,  true,  false, LF_NONE,     { ITF_ANY }, isElevationAvailable } },
@@ -992,6 +993,7 @@ BEGIN_MESSAGE_MAP(CDirStatDoc, CDocument)
     ON_COMMAND_UPDATE_WRAPPER(ID_SAVE_DUPLICATES, OnSaveDuplicates)
     ON_COMMAND_UPDATE_WRAPPER(ID_EDIT_COPY_CLIPBOARD, OnEditCopy)
     ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_EMPTY_BIN, OnCleanupEmptyRecycleBin)
+    ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_MOVE_TO, OnCleanupMoveTo)
     ON_UPDATE_COMMAND_UI(ID_VIEW_SHOWFREESPACE, OnUpdateViewShowFreeSpace)
     ON_COMMAND(ID_VIEW_SHOWFREESPACE, OnViewShowFreeSpace)
     ON_UPDATE_COMMAND_UI(ID_VIEW_SHOWUNKNOWN, OnUpdateViewShowUnknown)
@@ -1339,6 +1341,76 @@ void CDirStatDoc::OnCleanupDelete()
 void CDirStatDoc::OnCleanupEmptyFolder()
 {
     DeletePhysicalItems(GetAllSelected(), false, true);
+}
+
+void CDirStatDoc::OnCleanupMoveTo()
+{
+    const auto& items = GetAllSelected();
+    if (items.empty()) return;
+
+    // Show folder browser dialog to get destination directory
+    CFolderPickerDialog dlg(nullptr, OFN_EXPLORER | OFN_PATHMUSTEXIST | OFN_DONTADDTORECENT);
+    dlg.m_ofn.lpstrTitle = Localization::LookupNeutral(AFX_IDS_APP_TITLE).c_str();
+
+    if (dlg.DoModal() != IDOK) return;
+    const std::wstring destFolder = dlg.GetPathName().GetString();
+
+    // Verify destination exists
+    if (!FolderExists(destFolder)) return;
+
+    // Show progress dialog and move files
+    CProgressDlg(items.size(), false, AfxGetMainWnd(), [&](const std::atomic<bool>&, std::atomic<size_t>&)
+    {
+        // Create file operation object
+        CComPtr<IFileOperation> fileOperation;
+        CComPtr<IShellItem> destShellItem;
+        const auto flags = FOF_NOCONFIRMMKDIR | FOFX_SHOWELEVATIONPROMPT;
+        if (FAILED(::CoCreateInstance(CLSID_FileOperation, nullptr, CLSCTX_ALL, IID_PPV_ARGS(&fileOperation))) ||
+            FAILED(fileOperation->SetOperationFlags(flags)) ||
+            FAILED(SHCreateItemFromParsingName(destFolder.c_str(), nullptr, IID_PPV_ARGS(&destShellItem))))
+        {
+            return;
+        }
+
+        // Add all items to the move operation
+        for (const auto& item : items)
+        {
+            CComPtr<IShellItem> sourceShellItem;
+            SmartPointer<LPITEMIDLIST> pidl(CoTaskMemFree, ILCreateFromPath(item->GetPath().c_str()));
+            if (pidl == nullptr || FAILED(SHCreateItemFromIDList(pidl, IID_PPV_ARGS(&sourceShellItem))))
+            {
+                continue;
+            }
+
+            fileOperation->MoveItem(sourceShellItem, destShellItem, nullptr, nullptr);
+        }
+
+        // Do all moves
+        HRESULT res = fileOperation->PerformOperations();
+        if (res != S_OK) VTRACE(L"File Operation Failed: {}", TranslateError(res));
+    }).DoModal();
+
+    // Refresh the parent items of the moved files
+    std::vector<CItem*> refresh;
+    for (const auto& item : items)
+    {
+        if (item->GetParent() != nullptr &&
+            std::ranges::find(refresh, item->GetParent()) == refresh.end())
+        {
+            refresh.push_back(item->GetParent());
+        }
+    }
+
+    // Add in destination directory as a refresh location if present
+    if (const auto destItem = GetRootItem()->FindItemByPath(destFolder); destItem != nullptr)
+    {
+        refresh.push_back(destItem);
+    }
+
+    if (!refresh.empty())
+    {
+        RefreshItem(refresh);
+    }
 }
 
 void CDirStatDoc::OnSearch()

@@ -107,6 +107,7 @@ IDS_MENU_HELP_REPORT=&Rapporter forbedring på GitHub...
 IDS_MENU_HELP=&Hjelp
 IDS_MENU_LOAD_RESULTS=Importer visning fra CSV...\tCtrl+Alt+L
 IDS_MENU_LOGICAL_SIZE=Bruk logisk størrelse\tCtrl+L
+IDS_MENU_MOVE_TO=&Flytt til...\tCtrl+M
 IDS_MENU_OPEN=&Åpne...\tEnter
 IDS_MENU_OPTIONS=In&nstillinger
 IDS_MENU_PROPERTIES=&Egenskaper\tAlt+Enter

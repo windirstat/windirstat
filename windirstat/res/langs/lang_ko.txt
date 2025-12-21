@@ -107,6 +107,7 @@ IDS_MENU_HELP_REPORT=버그 보고/피드백(&R)...
 IDS_MENU_HELP=도움말(&H)
 IDS_MENU_LOAD_RESULTS=CSV에서 결과 불러오기...\tCtrl+Alt+L
 IDS_MENU_LOGICAL_SIZE=논리 크기 사용\tCtrl+L
+IDS_MENU_MOVE_TO=&이동...\tCtrl+M
 IDS_MENU_OPEN=열기(&O)...\tEnter
 IDS_MENU_OPTIONS=옵션(&O)
 IDS_MENU_PROPERTIES=속성(&P)\tAlt+Enter

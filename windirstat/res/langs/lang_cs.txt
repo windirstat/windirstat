@@ -107,6 +107,7 @@ IDS_MENU_HELP_REPORT=Na&hlásit chybu / zpětnou vazbu...
 IDS_MENU_HELP=&Nápověda
 IDS_MENU_LOAD_RESULTS=Načíst výsledky z CSV...\tCtrl+Alt+L
 IDS_MENU_LOGICAL_SIZE=Použít logickou velikost\tCtrl+L
+IDS_MENU_MOVE_TO=&Přesunout do...\tCtrl+M
 IDS_MENU_OPEN=&Otevřít\tEnter
 IDS_MENU_OPTIONS=&Možnosti
 IDS_MENU_PROPERTIES=&Vlastnosti\tAlt+Enter

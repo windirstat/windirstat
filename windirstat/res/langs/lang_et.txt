@@ -107,6 +107,7 @@ IDS_MENU_HELP_REPORT=Teata veast/tagasisidest
 IDS_MENU_HELP=&Abi
 IDS_MENU_LOAD_RESULTS=Laadi tulemused CSV-failist...\tCtrl+Alt+L
 IDS_MENU_LOGICAL_SIZE=Kasuta loogilist suurust\tCtrl+L
+IDS_MENU_MOVE_TO=&Teisalda...\tCtrl+M
 IDS_MENU_OPEN=&Ava\tEnter
 IDS_MENU_OPTIONS=&Seaded
 IDS_MENU_PROPERTIES=&Seaded\tAlt+Enter

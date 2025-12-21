@@ -107,6 +107,7 @@ IDS_MENU_HELP_REPORT=&Hibajelentés/Visszajelzés...
 IDS_MENU_HELP=&Súgó
 IDS_MENU_LOAD_RESULTS=Eredmények betöltése CSV-ből...\tCtrl+Alt+L
 IDS_MENU_LOGICAL_SIZE=Logikai méret használata\tCtrl+L
+IDS_MENU_MOVE_TO=&Áthelyezés ide...\tCtrl+M
 IDS_MENU_OPEN=&Megnyitás\tEnter
 IDS_MENU_OPTIONS=&Beállítások
 IDS_MENU_PROPERTIES=T&ulajdonságok\tAlt+Enter

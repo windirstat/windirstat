@@ -216,4 +216,5 @@ protected:
     afx_msg void OnScanStop();
     afx_msg void OnContextMenuExplore(UINT nID);
     afx_msg void OnRemoveShadowCopies();
+    afx_msg void OnCleanupMoveTo();
 };

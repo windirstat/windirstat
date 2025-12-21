@@ -107,6 +107,7 @@ IDS_MENU_HELP_REPORT=&Bug Bildir/Geri Bildirim Yap...
 IDS_MENU_HELP=&Yardım
 IDS_MENU_LOAD_RESULTS=CSV Dosyasından Sonuç Yükle...\tCtrl+Alt+L
 IDS_MENU_LOGICAL_SIZE=Mantıksal Boyut Kullan\tCtrl+L
+IDS_MENU_MOVE_TO=&Taşı...\tCtrl+M
 IDS_MENU_OPEN=&Aç...\tEnter
 IDS_MENU_OPTIONS=&Seçenekler
 IDS_MENU_PROPERTIES=&Özellikler\tAlt+Enter
