@@ -131,6 +131,10 @@ void CPageAdvanced::OnOK()
     COptions::LargeFileCount = std::stoi(m_LargestFileCount.GetString());
     COptions::FolderHistoryCount = std::stoi(m_FolderHistoryCount.GetString());
 
+    // Trim the folder history if needed
+    COptions::SelectDrivesFolder.Obj().resize(min(COptions::FolderHistoryCount,
+        COptions::SelectDrivesFolder.Obj().size()));
+
     if (refreshAll)
     {
         CDirStatDoc::Get()->OnOpenDocument(
@@ -160,7 +164,7 @@ void CPageAdvanced::OnEnChangeLargestFileCount()
     // This function limits the number of files in the largest files list
     UpdateData(TRUE);
 
-    m_LargestFileCount = std::to_wstring(std::clamp(_wtoi(m_LargestFileCount),
+    m_LargestFileCount = std::to_wstring(std::clamp(std::stoi(m_LargestFileCount.GetString()),
         COptions::LargeFileCount.Min(), COptions::LargeFileCount.Max())).c_str();
 
     UpdateData(FALSE);
@@ -171,7 +175,7 @@ void CPageAdvanced::OnEnChangeFolderHistoryCount()
     // This function limits the value in the folder history count
     UpdateData(TRUE);
 
-    m_FolderHistoryCount = std::to_wstring(std::clamp(_wtoi(m_FolderHistoryCount),
+    m_FolderHistoryCount = std::to_wstring(std::clamp(std::stoi(m_FolderHistoryCount.GetString()),
         COptions::FolderHistoryCount.Min(), COptions::FolderHistoryCount.Max())).c_str();
 
     UpdateData(FALSE);
