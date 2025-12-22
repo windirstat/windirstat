@@ -34,12 +34,6 @@ protected:
 
     ~CTreeMapView() override = default;
 
-    // CTreeMap::Callback
-    CDirStatDoc* GetDocument() const
-    {
-        return reinterpret_cast<CDirStatDoc*>(m_pDocument);
-    }
-
     void SuspendRecalculationDrawing(bool suspend);
     bool IsShowTreeMap() const;
     void ShowTreeMap(bool show);

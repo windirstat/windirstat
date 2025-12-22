@@ -31,10 +31,7 @@ protected:
     DECLARE_DYNCREATE(CExtensionView)
 
     ~CExtensionView() override = default;
-    CDirStatDoc* GetDocument() const
-    {
-        return static_cast<CDirStatDoc*>(m_pDocument);
-    }
+
     void SysColorChanged();
     bool IsShowTypes() const;
     void ShowTypes(bool show);

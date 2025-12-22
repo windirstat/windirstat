@@ -102,7 +102,7 @@ void CFileTopView::OnLvnItemChanged(NMHDR* pNMHDR, LRESULT* pResult)
     }
   
     // Signal to listeners that selection has changed
-    GetDocument()->UpdateAllViews(this, HINT_SELECTIONREFRESH);
+    CDirStatDoc::Get()->UpdateAllViews(this, HINT_SELECTIONREFRESH);
      
     *pResult = FALSE;
 }
@@ -115,7 +115,7 @@ void CFileTopView::OnUpdate(CView* pSender, const LPARAM lHint, CObject* pHint)
     {
         case HINT_NEWROOT:
         {
-            m_Control.SetRootItem(GetDocument()->GetRootItemTop());
+            m_Control.SetRootItem(CDirStatDoc::Get()->GetRootItemTop());
             m_Control.Invalidate();
         }
         break;

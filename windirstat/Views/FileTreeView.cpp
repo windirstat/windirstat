@@ -132,7 +132,7 @@ void CFileTreeView::OnLvnItemChanged(NMHDR* pNMHDR, LRESULT* pResult)
     }
   
     // Signal to listeners that selection has changed
-    GetDocument()->UpdateAllViews(this, HINT_SELECTIONREFRESH);
+    CDirStatDoc::Get()->UpdateAllViews(this, HINT_SELECTIONREFRESH);
      
     *pResult = FALSE;
 }

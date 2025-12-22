@@ -51,10 +51,10 @@ void CExtensionView::ShowTypes(const bool show)
 
 void CExtensionView::SetHighlightExtension(const std::wstring & ext)
 {
-    GetDocument()->SetHighlightExtension(ext);
+    CDirStatDoc::Get()->SetHighlightExtension(ext);
     if (GetFocus() == &m_ExtensionListControl)
     {
-        GetDocument()->UpdateAllViews(this, HINT_EXTENSIONSELECTIONCHANGED);
+        CDirStatDoc::Get()->UpdateAllViews(this, HINT_EXTENSIONSELECTIONCHANGED);
     }
 }
 
@@ -83,10 +83,10 @@ void CExtensionView::OnUpdate(CView* /*pSender*/, const LPARAM lHint, CObject*)
     {
     case HINT_NEWROOT:
     case HINT_NULL:
-        if (IsShowTypes() && GetDocument()->IsRootDone())
+        if (IsShowTypes() && CDirStatDoc::Get()->IsRootDone())
         {
-            m_ExtensionListControl.SetRootSize(GetDocument()->GetRootSize());
-            m_ExtensionListControl.SetExtensionData(GetDocument()->GetExtensionData());
+            m_ExtensionListControl.SetRootSize(CDirStatDoc::Get()->GetRootSize());
+            m_ExtensionListControl.SetExtensionData(CDirStatDoc::Get()->GetExtensionData());
 
             // If there is no vertical scroll bar, the header control doesn't repaint
             // correctly. Don't know why. But this helps:

@@ -106,7 +106,7 @@ void CTreeMapView::DrawEmptyView(CDC* pDC)
 
 void CTreeMapView::OnDraw(CDC * pDC)
 {
-    const CItem* root = GetDocument()->GetRootItem();
+    const CItem* root = CDirStatDoc::Get()->GetRootItem();
     if (root == nullptr || !root->IsDone() || m_DrawingSuspended || !m_ShowTreeMap)
     {
         DrawEmptyView(pDC);
@@ -129,12 +129,12 @@ void CTreeMapView::OnDraw(CDC * pDC)
 
         CSelectObject sobmp(&dcmem, &m_Bitmap);
 
-        if (GetDocument()->IsZoomed())
+        if (CDirStatDoc::Get()->IsZoomed())
         {
             DrawZoomFrame(&dcmem, rc);
         }
 
-        m_TreeMap.DrawTreeMap(&dcmem, rc, GetDocument()->GetZoomItem(), &COptions::TreeMapOptions);
+        m_TreeMap.DrawTreeMap(&dcmem, rc, CDirStatDoc::Get()->GetZoomItem(), &COptions::TreeMapOptions);
     }
 
     CSelectObject sobmp2(&dcmem, &m_Bitmap);
@@ -148,19 +148,19 @@ void CTreeMapView::DrawZoomFrame(CDC* pdc, CRect& rc) const
 {
     CRect r  = rc;
     r.bottom = r.top + ZoomFrameWidth;
-    pdc->FillSolidRect(r, GetDocument()->GetZoomColor());
+    pdc->FillSolidRect(r, CDirStatDoc::Get()->GetZoomColor());
 
     r = rc;
     r.top = r.bottom - ZoomFrameWidth;
-    pdc->FillSolidRect(r, GetDocument()->GetZoomColor());
+    pdc->FillSolidRect(r, CDirStatDoc::Get()->GetZoomColor());
 
     r = rc;
     r.right = r.left + ZoomFrameWidth;
-    pdc->FillSolidRect(r, GetDocument()->GetZoomColor());
+    pdc->FillSolidRect(r, CDirStatDoc::Get()->GetZoomColor());
 
     r = rc;
     r.left = r.right - ZoomFrameWidth;
-    pdc->FillSolidRect(r, GetDocument()->GetZoomColor());
+    pdc->FillSolidRect(r, CDirStatDoc::Get()->GetZoomColor());
 
     rc.DeflateRect(ZoomFrameWidth, ZoomFrameWidth);
 }
@@ -190,13 +190,13 @@ void CTreeMapView::DrawHighlightExtension(CDC* pdc)
     CPen pen(PS_SOLID, 1, COptions::TreeMapHighlightColor);
     CSelectObject sopen(pdc, &pen);
     CSelectStockObject sobrush(pdc, NULL_BRUSH);
-    RecurseHighlightExtension(pdc, GetDocument()->GetZoomItem());
+    RecurseHighlightExtension(pdc, CDirStatDoc::Get()->GetZoomItem());
 }
 
 void CTreeMapView::RecurseHighlightExtension(CDC* pdc, const CItem* item)
 {
     CRect rc(item->TmiGetRectangle());
-    if (GetDocument()->IsZoomed())
+    if (CDirStatDoc::Get()->IsZoomed())
     {
         rc.OffsetRect(ZoomFrameWidth, ZoomFrameWidth);
     }
@@ -208,7 +208,7 @@ void CTreeMapView::RecurseHighlightExtension(CDC* pdc, const CItem* item)
 
     if (item->TmiIsLeaf())
     {
-        if (item->IsTypeOrFlag(IT_FILE) && _wcsicmp(item->GetExtension().c_str(), GetDocument()->GetHighlightExtension().c_str()) == 0)
+        if (item->IsTypeOrFlag(IT_FILE) && _wcsicmp(item->GetExtension().c_str(), CDirStatDoc::Get()->GetHighlightExtension().c_str()) == 0)
         {
             RenderHighlightRectangle(pdc, rc);
         }
@@ -238,7 +238,7 @@ void CTreeMapView::DrawSelection(CDC* pdc) const
     for (const auto& item : items)
     {
         // Ignore if not a child of the current zoomed item
-        if (!GetDocument()->GetZoomItem()->IsAncestorOf(item)) continue;
+        if (!CDirStatDoc::Get()->GetZoomItem()->IsAncestorOf(item)) continue;
         
         HighlightSelectedItem(pdc, item, items.size() == 1);
     }
@@ -253,7 +253,7 @@ void CTreeMapView::HighlightSelectedItem(CDC* pdc, const CItem* item, const bool
     CRect rc(item->TmiGetRectangle());
 
     // Offset the display rectangle if zoomed
-    if (GetDocument()->IsZoomed())
+    if (CDirStatDoc::Get()->IsZoomed())
     {
         rc.OffsetRect(ZoomFrameWidth, ZoomFrameWidth);
     }
@@ -323,21 +323,21 @@ void CTreeMapView::OnLButtonDown(const UINT nFlags, const CPoint point)
 {
     // Offset the click point if zoomed
     CPoint pointClicked = point;
-    if (GetDocument()->IsZoomed())
+    if (CDirStatDoc::Get()->IsZoomed())
     {
         pointClicked.Offset(-1 * ZoomFrameWidth, -1 * ZoomFrameWidth);
     }
 
-    const CItem* root = GetDocument()->GetRootItem();
+    const CItem* root = CDirStatDoc::Get()->GetRootItem();
     if (root != nullptr && root->IsDone() && IsDrawn())
     {
-        const auto item = static_cast<CItem*>(m_TreeMap.FindItemByPoint(GetDocument()->GetZoomItem(), pointClicked));
+        const auto item = static_cast<CItem*>(m_TreeMap.FindItemByPoint(CDirStatDoc::Get()->GetZoomItem(), pointClicked));
         if (item == nullptr)
         {
             return;
         }
 
-        GetDocument()->UpdateAllViews(this, HINT_SELECTIONACTION, reinterpret_cast<CObject*>(item));
+        CDirStatDoc::Get()->UpdateAllViews(this, HINT_SELECTIONACTION, reinterpret_cast<CObject*>(item));
     }
     CView::OnLButtonDown(nFlags, point);
 }
@@ -393,7 +393,7 @@ void CTreeMapView::OnSetFocus(CWnd* /*pOldWnd*/)
 
 void CTreeMapView::OnUpdate(CView* pSender, const LPARAM lHint, CObject* pHint)
 {
-    if (!GetDocument()->IsRootDone())
+    if (!CDirStatDoc::Get()->IsRootDone())
     {
         Inactivate();
     }
@@ -456,7 +456,7 @@ std::wstring CTreeMapView::GetTreeMapHoverPath()
 
 void CTreeMapView::OnContextMenu(CWnd* /*pWnd*/, const CPoint point)
 {
-    const CItem* root = GetDocument()->GetRootItem();
+    const CItem* root = CDirStatDoc::Get()->GetRootItem();
     if (root != nullptr && root->IsDone())
     {
         CMenu menu;
@@ -469,9 +469,9 @@ void CTreeMapView::OnContextMenu(CWnd* /*pWnd*/, const CPoint point)
 
 void CTreeMapView::OnMouseMove(UINT /*nFlags*/, const CPoint point)
 {
-    if (GetDocument()->IsRootDone() && IsDrawn())
+    if (CDirStatDoc::Get()->IsRootDone() && IsDrawn())
     {
-        const auto item = static_cast<const CItem*>(m_TreeMap.FindItemByPoint(GetDocument()->GetZoomItem(), point));
+        const auto item = static_cast<const CItem*>(m_TreeMap.FindItemByPoint(CDirStatDoc::Get()->GetZoomItem(), point));
         if (item != nullptr)
         {
             m_PaneTextOverride = item->GetPath();
