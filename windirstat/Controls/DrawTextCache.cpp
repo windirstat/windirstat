@@ -101,6 +101,7 @@ std::unique_ptr<DrawTextCache::CacheEntry> DrawTextCache::CreateCachedBitmap(
     entry->drawnRect = CRect(calcRect.left, vertOffset, calcRect.right, vertOffset + textHeight);
     entry->textHeight = textHeight;
     entry->bitmapSize = CSize(calcRect.Width(), textHeight);
+    entry->format = format;  // Store format for alignment during painting
 
     // Store the calculated rectangle for DT_CALCRECT requests
     // Preserve the original position (left, top) from input rect, only update size
@@ -163,8 +164,18 @@ void DrawTextCache::PaintCachedEntry(CDC* pDC, const CRect& rect, CacheEntry& en
     SmartPointer<CBitmap*> pOldBitmap([&](CBitmap* p) { memDC.SelectObject(p); },
         memDC.SelectObject(&entry.bitmap));
 
-    // BitBlt at the offset where the text was actually drawn
-    // entry.drawnRect contains the position relative to the input rect's origin
-    pDC->BitBlt(rect.left + entry.drawnRect.left, rect.top + entry.drawnRect.top,
+    // Calculate horizontal position based on alignment
+    int xPos = rect.left + entry.drawnRect.left;
+    if (entry.format & DT_RIGHT)
+    {
+        xPos = rect.right - entry.bitmapSize.cx;
+    }
+    else if (entry.format & DT_CENTER)
+    {
+        xPos = rect.left + (rect.Width() - entry.bitmapSize.cx) / 2;
+    }
+
+    // BitBlt at the calculated position
+    pDC->BitBlt(xPos, rect.top + entry.drawnRect.top,
         entry.bitmapSize.cx, entry.bitmapSize.cy, &memDC, 0, 0, SRCCOPY);
 }

@@ -69,9 +69,10 @@ private:
     {
         CBitmap bitmap;
         CSize bitmapSize;
-        CSmallRect drawnRect;  // Actual rectangle where text was drawn (relative to input rect)
-        CSmallRect calculatedRect;  // Calculated rectangle for DT_CALCRECT requests
+        CSmallRect drawnRect;
+        CSmallRect calculatedRect;
         int textHeight = 0;
+        UINT format = 0;
     };
 
     // LRU list type - stores keys in order of use (most recent at front)
