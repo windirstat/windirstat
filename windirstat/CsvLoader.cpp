@@ -34,7 +34,7 @@ enum : std::uint8_t
     FIELD_COUNT
 };
 
-static std::array<CHAR, FIELD_COUNT> orderMap{};
+static std::array<UCHAR, FIELD_COUNT> orderMap{};
 static void ParseHeaderLine(const std::vector<std::wstring>& header)
 {
     orderMap.fill(static_cast<size_t>(UCHAR_MAX));
@@ -117,6 +117,7 @@ CItem* LoadResults(const std::wstring & path)
         line.resize(linebuf.size() + 1);
         const int size = MultiByteToWideChar(CP_UTF8, 0, linebuf.c_str(), -1,
             line.data(), static_cast<int>(line.size()));
+        if (size == 0) continue;
         line.resize(size - 1);
 
         // Parse all fields

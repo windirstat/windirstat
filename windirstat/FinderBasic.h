@@ -63,10 +63,10 @@ class FinderBasic final : public Finder
     };
     #pragma pack(pop)
 
+    std::vector<LARGE_INTEGER> m_DirectoryInfo = std::vector<LARGE_INTEGER>((4 * 1024 * 1024) / sizeof(LARGE_INTEGER));
     std::wstring m_Search;
     std::wstring m_Base;
     std::wstring m_Name;
-    std::vector<LARGE_INTEGER> m_DirectoryInfo;
     FILE_DIR_INFORMATION* m_CurrentInfo = nullptr;
     FinderBasicContext m_Default{};
     FinderBasicContext* m_Context = &m_Default;

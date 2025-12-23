@@ -219,13 +219,15 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
     std::for_each(std::execution::par_unseq, dataRuns.begin(), dataRuns.end(), [&](const auto& dataRun)
     {
         constexpr size_t bufferSize = 4ull * 1024 * 1024;
-        thread_local std::vector<UCHAR> buffer(bufferSize);
+        thread_local std::unique_ptr<UCHAR, decltype(&_aligned_free)> buffer(
+            static_cast<UCHAR*>(_aligned_malloc(bufferSize, volumeInfo.BytesPerSector)), &_aligned_free);
+
         const auto& [clusterStart, clusterCount] = dataRun;
 
         // Enumerate over the data run in buffer-sized chunks
         ULONGLONG bytesToRead = clusterCount * volumeInfo.BytesPerCluster;
         LARGE_INTEGER fileOffset{ .QuadPart = static_cast<LONGLONG>(clusterStart * volumeInfo.BytesPerCluster) };
-        thread_local SmartPointer<HANDLE> event(CloseHandle, CreateEvent(nullptr, TRUE, FALSE, nullptr));
+        thread_local SmartPointer<HANDLE> event(CloseHandle, CreateEvent(nullptr, FALSE, FALSE, nullptr));
         for (ULONG bytesRead = 0; bytesToRead > 0; bytesToRead -= bytesRead, fileOffset.QuadPart += bytesRead)
         {
             // Animate pacman
@@ -234,7 +236,7 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
             // Set file pointer for synchronous read
             const ULONG bytesThisRead = static_cast<ULONG>(min(bytesToRead, bufferSize));
             OVERLAPPED overlapped = { .Offset = fileOffset.LowPart, . OffsetHigh = static_cast<DWORD>(fileOffset.HighPart), .hEvent = event };
-            if (ReadFile(volumeHandle, buffer.data(), bytesThisRead, &bytesRead, &overlapped) == 0 && GetLastError() != ERROR_IO_PENDING ||
+            if (ReadFile(volumeHandle, buffer.get(), bytesThisRead, &bytesRead, &overlapped) == 0 && GetLastError() != ERROR_IO_PENDING ||
                 WaitForSingleObject(event, INFINITE) != WAIT_OBJECT_0 ||
                 GetOverlappedResult(volumeHandle, &overlapped, &bytesRead, TRUE) == 0)
             {
@@ -244,13 +246,13 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
             for (ULONG offset = 0; offset + volumeInfo.BytesPerFileRecordSegment <= bytesRead; offset += volumeInfo.BytesPerFileRecordSegment)
             {
                 // Process MFT record inline
-                const auto fileRecord = ByteOffset<FILE_RECORD>(buffer.data(), offset);
+                const auto fileRecord = ByteOffset<FILE_RECORD>(buffer.get(), offset);
 
                 // Apply fixup
                 const auto wordsPerSector = volumeInfo.BytesPerSector / sizeof(USHORT);
                 const auto fixupArray = ByteOffset<USHORT>(fileRecord, fileRecord->UsaOffset);
                 const auto usn = fixupArray[0];
-                const auto recordWords = reinterpret_cast<PUSHORT>(ByteOffset<UCHAR>(buffer.data(), offset));
+                const auto recordWords = reinterpret_cast<PUSHORT>(ByteOffset<UCHAR>(buffer.get(), offset));
                 for (ULONG i = 1; i < fileRecord->UsaCount; ++i)
                 {
                     const auto sectorEnd = recordWords + i * wordsPerSector - 1;
@@ -318,13 +320,10 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
                     {
                         if (curAttribute->IsNonResident()) continue;
                         const auto fn = ByteOffset<Finder::REPARSE_DATA_BUFFER>(curAttribute, curAttribute->Form.Resident.ValueOffset);
-                        if (fn->ReparseTag == IO_REPARSE_TAG_MOUNT_POINT ||
-                            fn->ReparseTag == IO_REPARSE_TAG_SYMLINK ||
-                            fn->ReparseTag == IO_REPARSE_TAG_MOUNT_POINT)
-                        {
-                            baseRecord.ReparsePointTag = fn->ReparseTag;
-                        }
-                        else if (fn->ReparseTag == IO_REPARSE_TAG_WOF)
+                        baseRecord.ReparsePointTag = fn->ReparseTag;
+
+                        // Treat WOF files as compressed
+                        if (fn->ReparseTag == IO_REPARSE_TAG_WOF)
                         {
                             baseRecord.Attributes |= FILE_ATTRIBUTE_COMPRESSED;
                         }

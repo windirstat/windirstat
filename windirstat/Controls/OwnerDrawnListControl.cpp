@@ -583,7 +583,7 @@ void COwnerDrawnListControl::OnHdnDividerdblclick(NMHDR* pNMHDR, LRESULT* pResul
     const int subitem = ColumnToSubItem(column);
 
     // fetch size of rendered column header text
-    // temporarily insert a false column to the finalize column does 
+    // temporarily insert a false column to the finalize column does
     // not autosize to fit the whole control width
     SetRedraw(FALSE);
     const int falseColumn = InsertColumn(column + 1, L"");

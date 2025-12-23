@@ -409,7 +409,7 @@ void CDirStatDoc::RecurseRefreshReparsePoints(CItem* item) const
     std::stack<CItem*> reparseStack({item});
     while (!reparseStack.empty())
     {
-        const auto& qitem = reparseStack.top();
+        const auto qitem = reparseStack.top();
         reparseStack.pop();
 
         if (!qitem->IsTypeOrFlag(IT_DIRECTORY, IT_DRIVE)) continue;

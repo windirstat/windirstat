@@ -192,9 +192,8 @@ void CItemDupe::RemoveDupeItemChild(CItemDupe* child)
         CFileDupeControl::Get()->OnChildRemoved(this, child);
     }
 
-    std::scoped_lock guard(m_Protect);
-
     // Adjust parent item sizes
+    std::scoped_lock guard(m_Protect);
     if (const auto childItem = reinterpret_cast<CItem*>(child->GetLinkedItem()); childItem != nullptr)
     {
         m_SizeLogical -= childItem->GetSizeLogical();

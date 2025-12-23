@@ -136,7 +136,7 @@ void CFileTopControl::RemoveItem(CItem* item)
     std::stack<CItem*> queue({ item });
     while (!queue.empty())
     {
-        const auto& qitem = queue.top();
+        const auto qitem = queue.top();
         queue.pop();
 
         if (qitem->IsTypeOrFlag(IT_FILE))

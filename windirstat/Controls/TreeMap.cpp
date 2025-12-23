@@ -175,10 +175,10 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, Item* root, const Options* option
 
         // Main loop
         const int gridWidth = m_Options.grid ? 1 : 0;
-        std::stack<DrawState> stack({ initialState });
+        std::stack<DrawState> stack({ std::move(initialState) });
         while (!stack.empty())
         {
-            DrawState state = stack.top();
+            DrawState state = std::move(stack.top());
             stack.pop();
             Item* item = state.item;
 
@@ -266,7 +266,7 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, Item* root, const Options* option
                         childState.surface = state.surface;
                         childState.h = state.h * m_Options.scaleFactor;
 
-                        stack.push(childState);
+                        stack.push(std::move(childState));
 
                         left = fRight;
                     }
@@ -388,7 +388,7 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, Item* root, const Options* option
                             childState.asroot = false;
                             childState.surface = state.surface;
                             childState.h = state.h * m_Options.scaleFactor;
-                            stack.push(childState);
+                            stack.push(std::move(childState));
                         }
 
                         fBegin = fEnd;

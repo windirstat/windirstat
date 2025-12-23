@@ -23,17 +23,16 @@ std::unordered_map<std::wstring, std::wstring> Localization::m_Map;
 
 void Localization::SearchReplace(std::wstring& input, const std::wstring_view& search, const std::wstring_view& replace)
 {
-    for (size_t i = input.find(search); i != std::wstring::npos; i = input.find(search))
+    for (size_t pos = 0; (pos = input.find(search, pos)) != std::wstring::npos; pos += replace.size())
     {
-        input.replace(i, search.size(), replace);
+        input.replace(pos, search.size(), replace);
     }
 }
 
 bool Localization::CrackStrings(std::basic_istream<char>& stream, const unsigned int streamSize)
 {
     // Size a buffer to the largest string it will contain
-    std::wstring bufferWide;
-    bufferWide.resize((streamSize + 1) * sizeof(WCHAR));
+    std::wstring bufferWide(streamSize + 1, L'\0');
 
     // Read the file line by line
     std::string line;
@@ -50,7 +49,7 @@ bool Localization::CrackStrings(std::basic_istream<char>& stream, const unsigned
         SearchReplace(lineWide, L"\r", L"");
         SearchReplace(lineWide, L"\\n", L"\n");
         SearchReplace(lineWide, L"\\t", L"\t");
-        if (const auto e = lineWide.find_first_of('='); e != std::string::npos)
+        if (const auto e = lineWide.find_first_of(L'='); e != std::string::npos)
         {
             m_Map[lineWide.substr(0, e)] = lineWide.substr(e + 1);
         }

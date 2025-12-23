@@ -15,7 +15,6 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
-
 #include "pch.h"
 #include "FinderBasic.h"
 #include "MessageBoxDlg.h"

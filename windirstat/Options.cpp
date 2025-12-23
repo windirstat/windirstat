@@ -246,7 +246,7 @@ void COptions::PostProcessPersistedSettings()
     }
     Localization::LoadResource(static_cast<LANGID>(LanguageId));
 
-    // Load treemap settings 
+    // Load treemap settings
     TreeMapOptions.style = static_cast<CTreeMap::STYLE>(static_cast<int>(TreeMapStyle));
     TreeMapOptions.grid = TreeMapGrid;
     TreeMapOptions.gridColor = TreeMapGridColor;

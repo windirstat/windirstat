@@ -1223,7 +1223,7 @@ CItem* CItem::FindRecyclerItem() const
     {
         if (!p->IsTypeOrFlag(IT_DRIVE)) continue;
 
-        // There is no cross-platform way to consistently identify the recycle bin 
+        // There is no cross-platform way to consistently identify the recycle bin
         // so attempt to find an item with the most probable values
         for (const std::wstring& possible : { L"$RECYCLE.BIN", L"RECYCLER", L"RECYCLED" })
         {
@@ -1531,10 +1531,10 @@ void CItem::DoHardlinkAdjustment()
     hardlinksItem->UpwardSetUndone();
 }
 
-// Gets all items of type IT_DRIVE.
-//
+
 std::vector<CItem*> CItem::GetDriveItems() const
 {
+    // Gets all items of type IT_DRIVE
     std::vector<CItem*> drives;
 
     // Walk up to find the root item
@@ -1660,7 +1660,6 @@ std::wstring CItem::UpwardGetPathWithoutBackslash() const
         if (const auto & pathPart = *it; pathPart->IsTypeOrFlag(IT_DIRECTORY))
         {
             path.append(pathPart->m_Name.get(), pathPart->m_NameLen).append(L"\\");
-
         }
         else if (pathPart->IsTypeOrFlag(IT_FILE, IT_HLINKS, IT_UNKNOWN, IT_FREESPACE, IT_HLINKS_SET, IT_HLINKS_IDX, IT_HLINKS_FILE))
         {
@@ -1669,7 +1668,6 @@ std::wstring CItem::UpwardGetPathWithoutBackslash() const
         else if (pathPart->IsTypeOrFlag(IT_DRIVE))
         {
             path.append(pathPart->m_Name.get(), 2).append(L"\\");
-
         }
     }
 

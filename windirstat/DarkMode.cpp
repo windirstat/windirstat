@@ -35,7 +35,7 @@ static DWORD(WINAPI* AllowDarkModeForWindow)(HWND hwnd, bool allow) = reinterpre
     reinterpret_cast<LPVOID>(GetProcAddress(LoadLibraryW(L"uxtheme.dll"), MAKEINTRESOURCEA(133))));
 
 static LONG(WINAPI* RtlGetVersion)(LPOSVERSIONINFOEXW) = reinterpret_cast<decltype(RtlGetVersion)>(
-    reinterpret_cast<LPVOID>(GetProcAddress(LoadLibraryW(L"ntdll.dll"), "RtlGetVersion")));
+    reinterpret_cast<LPVOID>(GetProcAddress(GetModuleHandle(L"ntdll.dll"), "RtlGetVersion")));
 
 bool DarkMode::_darkModeEnabled = false;
 static std::array<COLORREF, 50> OriginalColors;

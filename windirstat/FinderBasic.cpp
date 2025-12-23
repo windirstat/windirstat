@@ -24,7 +24,7 @@ static NTSTATUS(WINAPI* NtQueryDirectoryFile)(HANDLE FileHandle, HANDLE Event, P
     PVOID ApcContext, PIO_STATUS_BLOCK IoStatusBlock, PVOID FileInformation,
     ULONG Length, FILE_INFORMATION_CLASS FileInformationClass, BOOLEAN ReturnSingleEntry,
     PUNICODE_STRING FileName, BOOLEAN RestartScan) = reinterpret_cast<decltype(NtQueryDirectoryFile)>(
-        static_cast<LPVOID>(GetProcAddress(LoadLibrary(L"ntdll.dll"), "NtQueryDirectoryFile")));
+        static_cast<LPVOID>(GetProcAddress(GetModuleHandle(L"ntdll.dll"), "NtQueryDirectoryFile")));
 
 FinderBasic::~FinderBasic()
 {
@@ -43,11 +43,10 @@ bool FinderBasic::FindNext()
             .Buffer = m_Search.data()
         };
 
-        constexpr auto BUFFER_SIZE = 64 * 1024;
+        const auto BUFFER_SIZE = static_cast<ULONG>(m_DirectoryInfo.size());
         constexpr auto FileFullDirectoryInformation = 2;
         constexpr auto FileIdFullDirectoryInformation = 38;
         IO_STATUS_BLOCK IoStatusBlock;
-        m_DirectoryInfo.reserve(BUFFER_SIZE / sizeof(decltype(m_DirectoryInfo)::value_type));
 
         // Determine if volume supports FileId
         if (!m_Context->Initialized)

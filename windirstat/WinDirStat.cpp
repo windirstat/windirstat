@@ -348,10 +348,9 @@ BOOL CDirStatApp::InitInstance()
     }
 
     // Enable reading of reparse data for cloud links
-    SmartPointer<HMODULE> hmod(FreeLibrary, LoadLibrary(L"ntdll.dll"));
     CHAR(WINAPI * RtlSetProcessPlaceholderCompatibilityMode) (CHAR Mode) =
         reinterpret_cast<decltype(RtlSetProcessPlaceholderCompatibilityMode)>(
-            static_cast<LPVOID>(GetProcAddress(hmod, "RtlSetProcessPlaceholderCompatibilityMode")));
+            static_cast<LPVOID>(GetProcAddress(GetModuleHandle(L"ntdll.dll"), "RtlSetProcessPlaceholderCompatibilityMode")));
     if (RtlSetProcessPlaceholderCompatibilityMode != nullptr)
     {
         constexpr CHAR PHCM_EXPOSE_PLACEHOLDERS = 2;

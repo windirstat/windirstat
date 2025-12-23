@@ -71,7 +71,7 @@ protected:
     static CDirStatApp _singleton;    // Singleton application instance
 #ifdef _DEBUG
     CWDSTracerConsole m_VtraceConsole;
-#endif 
+#endif
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnFileOpen();
