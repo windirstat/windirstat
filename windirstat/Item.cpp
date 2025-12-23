@@ -95,6 +95,7 @@ bool CItem::DrawSubItem(const int subitem, CDC* pdc, CRect rc, const UINT state,
     {
         return CTreeListItem::DrawSubItem(subitem, pdc, rc, state, width, focusLeft);
     }
+    
     if (subitem != COL_SUBTREE_PERCENTAGE)
     {
         return false;
@@ -143,8 +144,17 @@ std::wstring CItem::GetText(const int subitem) const
 {
     switch (subitem)
     {
-    case COL_SIZE_PHYSICAL: return FormatBytes(GetSizePhysical());
-    case COL_SIZE_LOGICAL: return FormatBytes(GetSizeLogical());
+    case COL_SIZE_PHYSICAL:
+        if (IsTypeOrFlag(ITF_HARDLINK))
+        {
+            return std::wstring(L"⧉ ") + FormatBytes(GetSizePhysicalRaw());
+        }
+        return FormatBytes(GetSizePhysical());
+
+    case COL_SIZE_LOGICAL:
+        {
+            return FormatBytes(GetSizeLogical());
+        }
 
     case COL_NAME:
         if (IsTypeOrFlag(IT_DRIVE))
@@ -1381,9 +1391,9 @@ void CItem::CreateHardlinksItem()
     constexpr char INDEX_SET_COUNT = 20;
     for (int i = 1; i <= INDEX_SET_COUNT; i++)
     {
-        const auto indexSet = new CItem(IT_HLINKS_SET, std::format(L"Index ⟐ {:02}", i));
+        const auto indexSet = new CItem(IT_HLINKS_SET, std::format(L"{} ⧉ {:02}", Localization::Lookup(IDS_COL_INDEX), i));
         indexSet->SetDone();
-        hardlinks->AddChild(indexSet, true);  // addOnly=true to avoid size propagation
+        hardlinks->AddChild(indexSet);
     }
     
     AddChild(hardlinks);
@@ -1396,6 +1406,37 @@ CItem* CItem::FindHardlinksItem() const
         [](const auto& child) { return child->IsTypeOrFlag(IT_HLINKS); });
 
     return it != children.end() ? *it : nullptr;
+}
+
+CItem* CItem::FindHardlinksIndexItem() const
+{
+    // Only applicable for files with ITF_HARDLINK flag
+    if (!IsTypeOrFlag(ITF_HARDLINK) || GetIndex() == 0)
+    {
+        return nullptr;
+    }
+
+    // Find the <Hardlinks> container
+    CItem* hardlinksItem = FindHardlinksItem();
+    if (hardlinksItem == nullptr)
+    {
+        return nullptr;
+    }
+
+    // Search through Index Sets to find the IT_HLINKS_IDX with matching index
+    for (auto* indexSet : hardlinksItem->GetChildren())
+    {
+        if (!indexSet->IsTypeOrFlag(IT_HLINKS_SET)) continue;
+        for (auto* indexFolder : indexSet->GetChildren())
+        {
+            if (indexFolder->IsTypeOrFlag(IT_HLINKS_IDX) && indexFolder->GetIndex() == GetIndex())
+            {
+                return indexFolder;
+            }
+        }
+    }
+
+    return nullptr;
 }
 
 void CItem::DoHardlinkAdjustment()

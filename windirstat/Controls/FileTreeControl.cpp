@@ -31,6 +31,8 @@ bool CFileTreeControl::GetAscendingDefault(const int column)
 BEGIN_MESSAGE_MAP(CFileTreeControl, CTreeListControl)
     ON_WM_SETFOCUS()
     ON_WM_KEYDOWN()
+    ON_WM_LBUTTONDOWN()
+    ON_WM_SETCURSOR()
     ON_NOTIFY_EX(HDN_ENDDRAG, 0, OnHeaderEndDrag)
 END_MESSAGE_MAP()
 
@@ -75,4 +77,65 @@ void CFileTreeControl::OnKeyDown(const UINT nChar, const UINT nRepCnt, const UIN
         CMainFrame::Get()->MoveFocus(LF_NONE);
     }
     CTreeListControl::OnKeyDown(nChar, nRepCnt, nFlags);
+}
+
+void CFileTreeControl::OnLButtonDown(const UINT nFlags, const CPoint point)
+{
+    CTreeListControl::OnLButtonDown(nFlags, point);
+
+    // Hit test
+    LVHITTESTINFO hti{ .pt = point };
+    const int i = HitTest(&hti);
+    if (i == -1) return;
+
+    // Check if item is a hardlink
+    const auto* item = reinterpret_cast<CItem*>(GetItem(i));
+    if (item == nullptr || !item->IsTypeOrFlag(ITF_HARDLINK) || !COptions::ProcessHardlinks) return;
+
+    // Validate if in physical size column
+    const int headerCount = GetHeaderCtrl()->GetItemCount();
+    if (!std::ranges::any_of(std::views::iota(0, headerCount), [&](const int col)
+        {
+            LVCOLUMN colInfo{ LVCF_SUBITEM };
+            GetColumn(col, &colInfo);
+            return colInfo.iSubItem == COL_SIZE_PHYSICAL && GetWholeSubitemRect(i, col).PtInRect(point);
+        })) return;
+
+    CItem* indexItem = item->FindHardlinksIndexItem();
+    if (indexItem == nullptr) return;
+
+    CDirStatDoc::Get()->UpdateAllViews(nullptr, HINT_SELECTIONACTION, reinterpret_cast<CObject*>(indexItem));
+    ExpandItem(indexItem);
+}
+
+BOOL CFileTreeControl::OnSetCursor(CWnd* pWnd, const UINT nHitTest, const UINT message)
+{
+    const auto defaultReturn = CTreeListControl::OnSetCursor(pWnd, nHitTest, message);
+    if (nHitTest != HTCLIENT) return defaultReturn;
+
+    CPoint point;
+    GetCursorPos(&point);
+    ScreenToClient(&point);
+
+    // Hit test
+    LVHITTESTINFO hti{ .pt = point };
+    const int i = HitTest(&hti);
+    if (i == -1) return defaultReturn;
+
+    // Check if item is a hardlink
+    if (const auto* item = reinterpret_cast<CItem*>(GetItem(i));
+        item == nullptr || !item->IsTypeOrFlag(ITF_HARDLINK)) return defaultReturn;
+
+    // Validate if in physical size column
+    const int headerCount = GetHeaderCtrl()->GetItemCount();
+    if (!std::ranges::any_of(std::views::iota(0, headerCount), [&](const int col)
+    {
+        LVCOLUMN colInfo{ LVCF_SUBITEM };
+        GetColumn(col, &colInfo);
+        return colInfo.iSubItem == COL_SIZE_PHYSICAL && GetWholeSubitemRect(i, col).PtInRect(point);
+    })) return defaultReturn;
+
+
+    SetCursor(AfxGetApp()->LoadStandardCursor(IDC_HAND));
+    return TRUE;
 }
