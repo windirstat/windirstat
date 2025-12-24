@@ -45,7 +45,7 @@ public:
     static std::wstring LookupNeutral(const UINT res)
     {
         CStringW name;
-        (void) name.LoadStringW(nullptr, res, MAKELANGID(LANG_NEUTRAL,SUBLANG_NEUTRAL));
+        (void) name.LoadStringW(AfxGetResourceHandle(), res, MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL));
         return name.GetString();
     }
 

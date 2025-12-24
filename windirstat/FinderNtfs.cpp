@@ -211,9 +211,9 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
     }
 
     // Initialize with some sane defaults based on MFT record count
-    ULONGLONG inUseMftRecords = (volumeInfo.MftValidDataLength.QuadPart / volumeInfo.BytesPerFileRecordSegment) / 2;
-    m_BaseFileRecordMap.rehash(inUseMftRecords);
-    m_ParentToChildMap.rehash(inUseMftRecords / 5);
+    auto inUseMftRecords = (volumeInfo.MftValidDataLength.QuadPart / volumeInfo.BytesPerFileRecordSegment) / 2;
+    m_BaseFileRecordMap.rehash(static_cast<size_t>(inUseMftRecords));
+    m_ParentToChildMap.rehash(static_cast<size_t>(inUseMftRecords) / 5);
 
     // Process MFT records
     std::for_each(std::execution::par_unseq, dataRuns.begin(), dataRuns.end(), [&](const auto& dataRun)

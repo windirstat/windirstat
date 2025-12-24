@@ -132,7 +132,7 @@ void CPageAdvanced::OnOK()
     COptions::FolderHistoryCount = std::stoi(m_FolderHistoryCount.GetString());
 
     // Trim the folder history if needed
-    COptions::SelectDrivesFolder.Obj().resize(min(COptions::FolderHistoryCount,
+    COptions::SelectDrivesFolder.Obj().resize(min(static_cast<size_t>(COptions::FolderHistoryCount),
         COptions::SelectDrivesFolder.Obj().size()));
 
     if (refreshAll)

@@ -39,7 +39,11 @@ public:
     std::mutex m_NodeTrackerMutex;
     std::map<std::vector<BYTE>, CItemDupe*> m_NodeTracker;
     std::map<CItemDupe*, std::set<CItem*>> m_ChildTracker;
+    
+    #pragma warning(push)
+    #pragma warning(disable: 4324) // structure was padded due to alignment specifier
     SingleConsumerQueue<std::pair<CItemDupe*, CItemDupe*>> m_PendingListAdds;
+    #pragma warning(pop)
 
 protected:
 

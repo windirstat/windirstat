@@ -126,7 +126,7 @@ static std::wstring FormatLongLongNormal(ULONGLONG n)
         buffer[--pos] = L'0' + (n % 10);
     }
 
-    return { &buffer[pos], buffer.size() - 1 - pos };
+    return std::wstring(buffer.begin() + pos, buffer.end() - 1);
 }
 
 std::wstring GetLocaleString(const LCTYPE lctype, const LCID lcid)

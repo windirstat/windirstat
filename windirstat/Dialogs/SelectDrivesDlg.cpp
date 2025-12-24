@@ -545,7 +545,7 @@ void CSelectDrivesDlg::OnOK()
           COptions::SelectDrivesFolder.Obj().begin(), folderName);
 
         // Limit the folder history to the configured count
-        COptions::SelectDrivesFolder.Obj().resize(min(COptions::FolderHistoryCount,
+        COptions::SelectDrivesFolder.Obj().resize(min(static_cast<size_t>(COptions::FolderHistoryCount),
             COptions::SelectDrivesFolder.Obj().size()));
     }
 
