@@ -118,8 +118,9 @@ bool FinderBasic::FindNext()
         m_ReparseTag = m_CurrentInfo->FileAttributes & FILE_ATTRIBUTE_REPARSE_POINT ?
             m_CurrentInfo->ReparsePointTag : 0;
 
-        // Mark file as compressed Wof compressed
-        if (m_CurrentInfo->ReparsePointTag == IO_REPARSE_TAG_WOF)
+        // Mark file as compressed WOF compressed - this does not always
+        // seem to be set with WOF compressed files 
+        if (m_ReparseTag == IO_REPARSE_TAG_WOF)
         {
             m_CurrentInfo->FileAttributes |= FILE_ATTRIBUTE_COMPRESSED;
         }
