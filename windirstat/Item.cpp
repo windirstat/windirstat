@@ -146,6 +146,10 @@ std::wstring CItem::GetText(const int subitem) const
         {
             return std::wstring(L"⧉ ") + FormatBytes(GetSizePhysicalRaw());
         }
+        if (IsTypeOrFlag(IT_HLINKS_FILE))
+        {
+            return std::wstring(L"▣ ") + FormatBytes(GetSizePhysical());
+        }
         return FormatBytes(GetSizePhysical());
 
     case COL_SIZE_LOGICAL:
@@ -1924,7 +1928,7 @@ std::vector<CItem*> CItem::FindItemsBySameIndex() const
     return results;
 }
 
-CTreeListItem* CItem::GetLinkedItem()
+CItem* CItem::GetLinkedItem()
 {
     // For IT_HLINKS_FILE, the name stores the full path
     if (IsTypeOrFlag(IT_HLINKS_FILE))

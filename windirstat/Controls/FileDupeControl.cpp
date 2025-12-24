@@ -159,10 +159,10 @@ void CFileDupeControl::SortItems()
             continue;
         }
 
-        const auto sizeCheck = reinterpret_cast<CItem*>(hashParent->GetChildren()[0]->GetLinkedItem())->GetSizeLogical();
+        const auto sizeCheck = hashParent->GetChildren()[0]->GetLinkedItem()->GetSizeLogical();
         for (const auto& hashItem : hashParent->GetChildren())
         {
-            const auto sizeCompare = reinterpret_cast<CItem*>(hashItem->GetLinkedItem())->GetSizeLogical();
+            const auto sizeCompare = hashItem->GetLinkedItem()->GetSizeLogical();
             if (sizeCheck != sizeCompare)
             {
                 VTRACE(L"Debug Dupe Tree: Hash {} Sizes: {} != {}", hashString, sizeCheck, sizeCompare);
@@ -278,7 +278,7 @@ void CFileDupeControl::RemoveItem(CItem* item)
 
 void CFileDupeControl::OnItemDoubleClick(const int i)
 {
-    if (const auto item = reinterpret_cast<const CItem*>(GetItem(i)->GetLinkedItem());
+    if (const auto item = GetItem(i)->GetLinkedItem();
         item != nullptr && item->IsTypeOrFlag(IT_FILE))
     {
         CDirStatDoc::OpenItem(item);

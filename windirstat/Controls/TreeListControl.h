@@ -24,6 +24,7 @@
 class CFileTreeView;
 class CTreeListItem;
 class CTreeListControl;
+class CItem;
 
 //
 // CTreeListItem. An item in the CTreeListControl. (CItem is derived from CTreeListItem.)
@@ -59,7 +60,7 @@ public:
     int Compare(const CSortingListItem* baseOther, int subitem) const override;
     virtual CTreeListItem* GetTreeListChild(int i) const = 0;
     virtual int GetTreeListChildCount() const = 0;
-    virtual CTreeListItem* GetLinkedItem() { return this; }
+    virtual CItem* GetLinkedItem() { return reinterpret_cast<CItem*>(this); }
 
     void DrawPacman(CDC* pdc, const CRect& rc) const;
     CTreeListItem* GetParent() const;

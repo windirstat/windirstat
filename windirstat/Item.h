@@ -142,7 +142,7 @@ public:
     CTreeListItem* GetTreeListChild(const int i) const override { return GetChildren()[i]; }
     HICON GetIcon() override;
     void DrawAdditionalState(CDC* pdc, const CRect& rcLabel) const override;
-    CTreeListItem* GetLinkedItem() override;
+    CItem* GetLinkedItem() override;
 
     // CTreeMap::Item interface
     bool TmiIsLeaf() const override { return IsLeaf() || IsTypeOrFlag(IT_HLINKS_IDX); }

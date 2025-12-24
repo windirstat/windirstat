@@ -880,7 +880,7 @@ void CTreeListControl::OnContextMenu(CWnd* /*pWnd*/, const CPoint pt)
     // TrackPopupMenuEx() behaves in the desired way, if
     // we exclude the label rectangle extended to full screen width.
 
-    TPMPARAMS tp;
+    TPMPARAMS tp{};
     tp.cbSize = sizeof(tp);
     tp.rcExclude = rcTitle;
     ClientToScreen(&tp.rcExclude);

@@ -33,7 +33,7 @@ enum LOGICAL_FOCUS : uint8_t;
 // individual color intensities divided by 255 (range 0..3.0). This is not the
 // average intensity (which would be / (255*3)).
 //
-#define BASE_BRIGHTNESS 1.8
+constexpr auto BASE_BRIGHTNESS = 1.8;
 
 //
 // Data stored for each extension.
@@ -145,7 +145,7 @@ protected:
     std::vector<CItem*> GetAllSelected();
     void InvalidateSelectionCache();
     static CTreeListControl* GetFocusControl();
-    void UpdateAllViews(CView* pSender, VIEW_HINT hint = HINT_NULL, CObject* pHint = nullptr);
+    void UpdateAllViews(CView* pSender, VIEW_HINT hint = HINT_NULL, CItem* pHint = nullptr);
 
     static CDirStatDoc* _theDocument;
 

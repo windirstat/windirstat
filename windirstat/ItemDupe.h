@@ -59,7 +59,7 @@ public:
     int GetTreeListChildCount() const override;
     CTreeListItem* GetTreeListChild(int i) const override;
     HICON GetIcon() override;
-    CTreeListItem* GetLinkedItem() override { return m_Item; }
+    CItem* GetLinkedItem() override { return m_Item; }
 
     std::wstring GetHash() const { return m_HashString; }
     std::wstring GetHashAndExtensions() const;

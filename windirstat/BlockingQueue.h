@@ -222,7 +222,7 @@ class SingleConsumerQueue
     struct Node
     {
         std::atomic<Node*> next{ nullptr };
-        T data;
+        T data{};
 
         Node() = default;
 

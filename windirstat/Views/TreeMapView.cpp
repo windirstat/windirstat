@@ -337,7 +337,7 @@ void CTreeMapView::OnLButtonDown(const UINT nFlags, const CPoint point)
             return;
         }
 
-        CDirStatDoc::Get()->UpdateAllViews(this, HINT_SELECTIONACTION, reinterpret_cast<CObject*>(item));
+        CDirStatDoc::Get()->UpdateAllViews(this, HINT_SELECTIONACTION, item);
     }
     CView::OnLButtonDown(nFlags, point);
 }
@@ -363,7 +363,7 @@ void CTreeMapView::Inactivate()
     CSelectObject sobmp(&dcmem, &m_Dimmed);
 
     // Apply the dimming overlay
-    BLENDFUNCTION blendFunc;
+    BLENDFUNCTION blendFunc{};
     blendFunc.BlendOp = AC_SRC_OVER;
     blendFunc.BlendFlags = 0;
     blendFunc.SourceConstantAlpha = 175;

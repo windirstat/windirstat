@@ -168,7 +168,7 @@ std::wstring CItemDupe::GetHashAndExtensions() const
 void CItemDupe::AddDupeItemChild(CItemDupe* child)
 {
     // Adjust parent item sizes
-    if (const auto childItem = reinterpret_cast<CItem*>(child->GetLinkedItem()); childItem != nullptr)
+    if (const auto childItem = child->GetLinkedItem(); childItem != nullptr)
     {
         m_SizeLogical += childItem->GetSizeLogical();
         m_SizePhysical += childItem->GetSizePhysical();
@@ -194,7 +194,7 @@ void CItemDupe::RemoveDupeItemChild(CItemDupe* child)
 
     // Adjust parent item sizes
     std::scoped_lock guard(m_Protect);
-    if (const auto childItem = reinterpret_cast<CItem*>(child->GetLinkedItem()); childItem != nullptr)
+    if (const auto childItem = child->GetLinkedItem(); childItem != nullptr)
     {
         m_SizeLogical -= childItem->GetSizeLogical();
         m_SizePhysical -= childItem->GetSizePhysical();

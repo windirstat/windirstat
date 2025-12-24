@@ -833,11 +833,11 @@ CTreeListControl* CDirStatDoc::GetFocusControl()
     return CFileTreeControl::Get();
 }
 
-void CDirStatDoc::UpdateAllViews(CView* pSender, VIEW_HINT hint, CObject* pHint)
+void CDirStatDoc::UpdateAllViews(CView* pSender, VIEW_HINT hint, CItem* pHint)
 {
     InvalidateSelectionCache();
 
-    CDocument::UpdateAllViews(pSender, static_cast<LONG>(hint), pHint);
+    CDocument::UpdateAllViews(pSender, static_cast<LONG>(hint), reinterpret_cast<CObject*>(pHint));
 }
 
 std::vector<CItem*> CDirStatDoc::GetAllSelected()

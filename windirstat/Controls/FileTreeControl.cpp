@@ -88,9 +88,9 @@ void CFileTreeControl::OnLButtonDown(const UINT nFlags, const CPoint point)
     const int i = HitTest(&hti);
     if (i == -1) return;
 
-    // Check if item is a hardlink
+    // Check if item is a hardlink or hardlinks file reference
     const auto* item = reinterpret_cast<CItem*>(GetItem(i));
-    if (item == nullptr || !item->IsTypeOrFlag(ITF_HARDLINK) || !COptions::ProcessHardlinks) return;
+    if (item == nullptr || !item->IsTypeOrFlag(ITF_HARDLINK, IT_HLINKS_FILE)) return;
 
     // Validate if in physical size column
     if (!std::ranges::any_of(std::views::iota(0, GetHeaderCtrl()->GetItemCount()), [&](const int col)
@@ -100,11 +100,23 @@ void CFileTreeControl::OnLButtonDown(const UINT nFlags, const CPoint point)
             return colInfo.iSubItem == COL_SIZE_PHYSICAL && GetWholeSubitemRect(i, col).PtInRect(point);
         })) return;
 
-    CItem* indexItem = item->FindHardlinksIndexItem();
-    if (indexItem == nullptr) return;
+    if (item->IsTypeOrFlag(ITF_HARDLINK))
+    {
+        // Navigate to the hardlink index item
+        CItem* indexItem = item->FindHardlinksIndexItem();
+        if (indexItem == nullptr) return;
 
-    CDirStatDoc::Get()->UpdateAllViews(nullptr, HINT_SELECTIONACTION, reinterpret_cast<CObject*>(indexItem));
-    ExpandItem(indexItem);
+        CDirStatDoc::Get()->UpdateAllViews(nullptr, HINT_SELECTIONACTION, indexItem);
+        ExpandItem(indexItem);
+    }
+    else if (item->IsTypeOrFlag(IT_HLINKS_FILE))
+    {
+        // Navigate to the actual file in the tree
+        CItem* linkedItem = const_cast<CItem*>(item)->GetLinkedItem();
+        if (linkedItem == nullptr || linkedItem == item) return;
+
+        CDirStatDoc::Get()->UpdateAllViews(nullptr, HINT_SELECTIONACTION, linkedItem);
+    }
 }
 
 BOOL CFileTreeControl::OnSetCursor(CWnd* pWnd, const UINT nHitTest, const UINT message)
@@ -121,9 +133,15 @@ BOOL CFileTreeControl::OnSetCursor(CWnd* pWnd, const UINT nHitTest, const UINT m
     const int i = HitTest(&hti);
     if (i == -1) return defaultReturn;
 
-    // Check if item is a hardlink
-    if (const auto* item = reinterpret_cast<CItem*>(GetItem(i));
-        item == nullptr || !item->IsTypeOrFlag(ITF_HARDLINK)) return defaultReturn;
+    // Check if item is a hardlink or hardlinks file reference
+    const auto* item = reinterpret_cast<CItem*>(GetItem(i));
+    if (item == nullptr) return defaultReturn;
+    
+    // Check for ITF_HARDLINK or IT_HLINKS_FILE
+    const bool isHardlink = item->IsTypeOrFlag(ITF_HARDLINK);
+    const bool isHlinksFile = item->IsTypeOrFlag(IT_HLINKS_FILE);
+    
+    if (!isHardlink && !isHlinksFile) return defaultReturn;
 
     // Validate if in physical size column
     if (!std::ranges::any_of(std::views::iota(0, GetHeaderCtrl()->GetItemCount()), [&](const int col)

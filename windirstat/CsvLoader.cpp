@@ -359,7 +359,7 @@ bool SaveDuplicates(const std::wstring& path, CItemDupe* rootDupe)
         // Output each file in the duplicate group
         for (const auto& dupeFile : dupeGroup->GetChildren())
         {
-            const auto* linkedItem = reinterpret_cast<const CItem*>(dupeFile->GetLinkedItem());
+            const auto* linkedItem = dupeFile->GetLinkedItem();
             if (linkedItem == nullptr) continue;
 
             // Output file information

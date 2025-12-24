@@ -122,7 +122,7 @@ void CFileTopControl::SortItems()
     // Handle visual item additions
     for (const auto& itemTop : itemTrackerCopy | std::views::values)
     {
-        m_ItemTracker.erase(reinterpret_cast<CItem*>(itemTop->GetLinkedItem()));
+        m_ItemTracker.erase(itemTop->GetLinkedItem());
         root->RemoveTopItemChild(itemTop);
     }
 
@@ -166,7 +166,7 @@ void CFileTopControl::RemoveItem(CItem* item)
 
 void CFileTopControl::OnItemDoubleClick(const int i)
 {
-    if (const auto item = reinterpret_cast<const CItem*>(GetItem(i)->GetLinkedItem());
+    if (const auto item = GetItem(i)->GetLinkedItem();
         item != nullptr && item->IsTypeOrFlag(IT_FILE))
     {
         CDirStatDoc::OpenItem(item);

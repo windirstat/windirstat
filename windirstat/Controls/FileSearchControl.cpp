@@ -129,7 +129,7 @@ void CFileSearchControl::RemoveItem(CItem* item)
 
 void CFileSearchControl::OnItemDoubleClick(const int i)
 {
-    if (const auto item = reinterpret_cast<const CItem*>(GetItem(i)->GetLinkedItem());
+    if (const auto item = GetItem(i)->GetLinkedItem();
         item != nullptr && item->IsTypeOrFlag(IT_FILE))
     {
         CDirStatDoc::OpenItem(item);
