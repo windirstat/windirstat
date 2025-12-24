@@ -36,7 +36,7 @@ void CPageFileTree::DoDataExchange(CDataExchange* pDX)
     DDX_Check(pDX, IDC_TREECOL_ATTRIBUTES, m_ShowColumnAttributes);
     DDX_Check(pDX, IDC_TREECOL_LAST_CHANGE, m_ShowColumnLastChange);
     DDX_Check(pDX, IDC_TREECOL_OWNER, m_ShowColumnOwner);
-    for (int i = 0; i < TREELISTCOLORCOUNT; i++)
+    for (const int i : std::views::iota(0, TREELISTCOLORCOUNT))
     {
         DDX_Control(pDX, IDC_COLORBUTTON0 + i, m_ColorButton[i]);
         if (pDX->m_bSaveAndValidate)
@@ -158,12 +158,11 @@ void CPageFileTree::OnColorChanged(UINT, NMHDR*, LRESULT*)
 
 void CPageFileTree::EnableButtons()
 {
-    int i = 0;
-    for (; i < m_FileTreeColorCount; i++)
+    for (const int i : std::views::iota(0, m_FileTreeColorCount))
     {
         m_ColorButton[i].EnableWindow(true);
     }
-    for (; i < TREELISTCOLORCOUNT; i++)
+    for (const int i : std::views::iota(m_FileTreeColorCount, TREELISTCOLORCOUNT))
     {
         m_ColorButton[i].EnableWindow(false);
     }

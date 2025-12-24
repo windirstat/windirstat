@@ -579,7 +579,7 @@ void CTreeListControl::CollapseItem(const int i)
     LockWindowUpdate();
 
     int todelete = 0;
-    for (int k = i + 1, kMax = GetItemCount(); k < kMax; k++)
+    for (const int k : std::views::iota(i + 1, GetItemCount()))
     {
         const CTreeListItem* child = GetItem(k);
         if (child->GetIndent() <= item->GetIndent())
@@ -652,7 +652,7 @@ void CTreeListControl::ExpandItem(const int i, const bool scroll)
     LockWindowUpdate();
     int maxwidth = GetSubItemWidth(item, 0);
     const auto childItems = item->GetTreeListChildCount();
-    for (int c = 0; c < childItems; c++)
+    for (const int c : std::views::iota(0, childItems))
     {
         CTreeListItem* child = item->GetTreeListChild(c);
         InsertItem(i + 1 + c, child);

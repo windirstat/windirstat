@@ -246,7 +246,6 @@ void CDriveInformationThread::RemoveRunningThread()
 // This static method is called by the dialog when the dialog gets closed.
 // We set the m_Dialog members of all running threads to null, so that
 // they don't send messages around to a no-more-existing window.
-//
 void CDriveInformationThread::InvalidateDialogHandle()
 {
     std::scoped_lock lock(_mutexRunningThreads);
@@ -256,8 +255,6 @@ void CDriveInformationThread::InvalidateDialogHandle()
     }
 }
 
-// The constructor starts the thread.
-//
 CDriveInformationThread::CDriveInformationThread(const std::wstring & path, const LPARAM driveItem, HWND dialog, const UINT serial)
     : m_Path(path)
       , m_DriveItem(driveItem)
@@ -266,6 +263,7 @@ CDriveInformationThread::CDriveInformationThread(const std::wstring & path, cons
 {
     ASSERT(m_bAutoDelete);
 
+    // The constructor starts the thread
     AddRunningThread();
 
     VERIFY(CreateThread());
@@ -470,9 +468,9 @@ BOOL CSelectDrivesDlg::OnInitDialog()
     SetForegroundWindow();
 
     const DWORD drives = GetLogicalDrives();
-    DWORD mask = 0x00000001;
-    for (std::size_t i = 0; i < wds::strAlpha.size(); i++, mask <<= 1)
+    for (const std::size_t i : std::views::iota(std::size_t{0}, wds::strAlpha.size()))
     {
+        const DWORD mask = 0x00000001 << i;
         if ((drives & mask) == 0)
         {
             continue;
@@ -551,7 +549,7 @@ void CSelectDrivesDlg::OnOK()
             COptions::SelectDrivesFolder.Obj().size()));
     }
 
-    for (int i = 0; i < m_List.GetItemCount(); i++)
+    for (const int i : std::views::iota(0, m_List.GetItemCount()))
     {
         const CDriveItem* item = m_List.GetItem(i);
 

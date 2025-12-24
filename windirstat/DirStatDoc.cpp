@@ -469,14 +469,14 @@ void CDirStatDoc::RebuildExtensionData()
     // Assign primary colors to extensions
     const auto extensionsSize = sortedExtensions.size();
     const auto primaryColorsMax = min(colors.size(), extensionsSize);
-    for (std::size_t i = 0; i < primaryColorsMax; ++i)
+    for (const std::size_t i : std::views::iota(std::size_t{0}, primaryColorsMax))
     {
         sortedExtensions[i]->second.color = colors[i];
     }
 
     // Assign fallback colors to extensions
     const auto fallbackColor = colors.back();
-    for (std::size_t i = primaryColorsMax; i < extensionsSize; ++i)
+    for (const std::size_t i : std::views::iota(primaryColorsMax, extensionsSize))
     {
         sortedExtensions[i]->second.color = fallbackColor;
     }

@@ -83,7 +83,7 @@ void CTreeMap::RecurseCheckTree(const Item* item)
     {
         ULONGLONG sum = 0;
         ULONGLONG last = static_cast<ULONGLONG>(-1);
-        for (int i = 0; i < item->TmiGetChildCount(); i++)
+        for (const int i : std::views::iota(0, item->TmiGetChildCount()))
         {
             Item* child = item->TmiGetChild(i);
             const ULONGLONG size = child->TmiGetSize();
@@ -718,7 +718,7 @@ double CTreeMap::KDirStat_CalculateNextRow(
 
         // Rectangle(mySize)    = width * 1.0
         // Rectangle(childSize) = childWidth * virtualRowHeight
-        // Rectangle(childSize) = childSize / mySize * width
+        // Rectangle(childSize) = childSize / mySize * width / virtualRowHeight;
 
         const double childWidth_ = childSize / mySize * width / virtualRowHeight;
 
@@ -878,7 +878,7 @@ void CTreeMapPreview::BuildDemoData()
     std::vector<CItem*> c4;
     c4.reserve(c4Items);
     COLORREF color = GetNextColor(col);
-    for (int i = 0; i < c4Items; i++)
+    for (const int i : std::views::iota(0, c4Items))
     {
         c4.emplace_back(new CItem(1 + 100 * i, color));
     }
@@ -886,7 +886,7 @@ void CTreeMapPreview::BuildDemoData()
     constexpr auto c0Items = 8;
     std::vector<CItem*> c0;
     c0.reserve(c0Items);
-    for (int i = 0; i < c0Items; i++)
+    for (const int i : std::views::iota(0, c0Items))
     {
         c0.emplace_back(new CItem(500 + 600 * i, GetNextColor(col)));
     }
@@ -895,7 +895,7 @@ void CTreeMapPreview::BuildDemoData()
     std::vector<CItem*> c1;
     c1.reserve(c1Items);
     color = GetNextColor(col);
-    for (int i = 0; i < c1Items; i++)
+    for (const int i : std::views::iota(0, c1Items))
     {
         c1.emplace_back(new CItem(1 + 200 * i, color));
     }
@@ -905,7 +905,7 @@ void CTreeMapPreview::BuildDemoData()
     std::vector<CItem*> c2;
     c2.reserve(c2Items);
     color = GetNextColor(col);
-    for (int i = 0; i < c2Items; i++)
+    for (const int i : std::views::iota(0, c2Items))
     {
         c2.emplace_back(new CItem(1 + i, color));
     }

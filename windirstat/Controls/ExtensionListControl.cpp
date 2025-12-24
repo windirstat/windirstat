@@ -54,7 +54,6 @@ void CExtensionListControl::CListItem::DrawColor(CDC* pdc, CRect rc, const UINT 
     {
         *width = 40;
         return;
-
     }
 
     DrawSelection(m_List, pdc, rc, state);
@@ -213,7 +212,7 @@ ULONGLONG CExtensionListControl::GetRootSize() const
 
 void CExtensionListControl::SelectExtension(const std::wstring & ext)
 {
-    for (int i = 0, iMax = GetItemCount(); i < iMax; i++)
+    for (const int i : std::views::iota(0, GetItemCount()))
     {
         if (_wcsicmp(GetListItem(i)->GetExtension().c_str(), ext.c_str()) == 0)
         {

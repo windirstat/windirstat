@@ -381,8 +381,7 @@ void COwnerDrawnListControl::DrawItem(LPDRAWITEMSTRUCT pdis)
     CSelectObject sofont(&dcMem, GetFont());
 
     int focusLeft = 0;
-    const int headerCount = GetHeaderCtrl()->GetItemCount();
-    for (int i = 0; i < headerCount; i++)
+    for (const int i : std::views::iota(0, GetHeaderCtrl()->GetItemCount()))
     {
         // The subitem tracks the identifier that maps the column enum
         LVCOLUMN colInfo{ LVCF_SUBITEM | LVCF_FMT };
@@ -555,7 +554,7 @@ BOOL COwnerDrawnListControl::OnEraseBkgnd(CDC* pDC)
 
     // Calculate where the columns end on the right
     int tableRight = -GetScrollPos(SB_HORZ);
-    for (int i = 0, itemMax = GetHeaderCtrl()->GetItemCount(); i < itemMax; i++)
+    for (const int i : std::views::iota(0, GetHeaderCtrl()->GetItemCount()))
     {
         HDITEM hdi{ HDI_WIDTH };
         GetHeaderCtrl()->GetItem(i, &hdi);
@@ -592,7 +591,7 @@ void COwnerDrawnListControl::OnHdnDividerdblclick(NMHDR* pNMHDR, LRESULT* pResul
     DeleteColumn(falseColumn);
 
     // fetch size of sub-elements
-    for (int i = 0, itemMax = GetItemCount(); i < itemMax; i++)
+    for (const int i : std::views::iota(0, GetItemCount()))
     {
         width = max(width, GetSubItemWidth(GetItem(i), subitem));
     }

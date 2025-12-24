@@ -569,7 +569,6 @@ void ReplaceString(std::wstring& subject, const std::wstring& search, const std:
     for (size_t i = 0; (i = subject.find(search, i)) != std::wstring::npos; i += replace.length())
     {
         subject.replace(i, search.length(), replace);
-        
     }
 }
 

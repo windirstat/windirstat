@@ -98,7 +98,7 @@ BOOL CPageCleanups::OnInitDialog()
     m_CtlRefreshPolicy.AddString(Localization::Lookup(IDS_POLICY_REFRESH_ENTRY).c_str());
     m_CtlRefreshPolicy.AddString(Localization::Lookup(IDS_POLICY_REFRESH_PARENT).c_str());
 
-    for (size_t i = 0; i < COptions::UserDefinedCleanups.size(); i++)
+    for (const auto i : std::views::iota(size_t{0}, COptions::UserDefinedCleanups.size()))
     {
         m_Udc[i] = COptions::UserDefinedCleanups[i];
         m_List.AddString(m_Udc[i].Title.Obj().c_str());
@@ -114,7 +114,7 @@ void CPageCleanups::OnOK()
 {
     CheckEmptyTitle();
 
-    for (size_t i = 0; i < COptions::UserDefinedCleanups.size(); i++)
+    for (const auto i : std::views::iota(size_t{0}, COptions::UserDefinedCleanups.size()))
     {
         COptions::UserDefinedCleanups[i].AskForConfirmation = m_Udc[i].AskForConfirmation.Obj();
         COptions::UserDefinedCleanups[i].CommandLine = m_Udc[i].CommandLine.Obj();

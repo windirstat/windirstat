@@ -65,7 +65,6 @@ std::vector<LANGID> Localization::GetLanguageList()
     {
         std::bit_cast<std::vector<LANGID>*>(lParam)->push_back(wIDLanguage);
         return TRUE;
-
     }, reinterpret_cast<LONG_PTR>(&results), 0, 0);
 
     FinderBasic finder;
@@ -106,7 +105,7 @@ bool Localization::LoadResource(const WORD language)
 
 void Localization::UpdateMenu(CMenu& menu)
 {
-    for (int i = 0; i < menu.GetMenuItemCount(); i++)
+    for (const int i : std::views::iota(0, menu.GetMenuItemCount()))
     {
         std::array<WCHAR, MAX_VALUE_SIZE> buffer;
         MENUITEMINFOW mi{ sizeof(MENUITEMINFO) };
@@ -128,7 +127,7 @@ void Localization::UpdateMenu(CMenu& menu)
 
 void Localization::UpdateTabControl(CMFCTabCtrl& tab)
 {
-    for (int i = 0; i < tab.GetTabsNum(); i++)
+    for (const int i : std::views::iota(0, tab.GetTabsNum()))
     {
         CString tabLabel;
         tab.GetTabLabel(i, tabLabel);

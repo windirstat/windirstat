@@ -93,8 +93,7 @@ void CFileTreeControl::OnLButtonDown(const UINT nFlags, const CPoint point)
     if (item == nullptr || !item->IsTypeOrFlag(ITF_HARDLINK) || !COptions::ProcessHardlinks) return;
 
     // Validate if in physical size column
-    const int headerCount = GetHeaderCtrl()->GetItemCount();
-    if (!std::ranges::any_of(std::views::iota(0, headerCount), [&](const int col)
+    if (!std::ranges::any_of(std::views::iota(0, GetHeaderCtrl()->GetItemCount()), [&](const int col)
         {
             LVCOLUMN colInfo{ LVCF_SUBITEM };
             GetColumn(col, &colInfo);
@@ -127,8 +126,7 @@ BOOL CFileTreeControl::OnSetCursor(CWnd* pWnd, const UINT nHitTest, const UINT m
         item == nullptr || !item->IsTypeOrFlag(ITF_HARDLINK)) return defaultReturn;
 
     // Validate if in physical size column
-    const int headerCount = GetHeaderCtrl()->GetItemCount();
-    if (!std::ranges::any_of(std::views::iota(0, headerCount), [&](const int col)
+    if (!std::ranges::any_of(std::views::iota(0, GetHeaderCtrl()->GetItemCount()), [&](const int col)
     {
         LVCOLUMN colInfo{ LVCF_SUBITEM };
         GetColumn(col, &colInfo);

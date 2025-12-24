@@ -254,7 +254,7 @@ LRESULT DarkMode::HandleMenuMessage(const UINT message, const WPARAM wParam, con
         GetMenuBarInfo(hWnd, OBJID_MENU, 0, &mbi);
 
         RECT rcWindow{};
-        GetWindowRect(hWnd, &rcWindow);
+        ::GetWindowRect(hWnd, &rcWindow);
 
         // the rcBar is offset by the window rect
         OffsetRect(&mbi.rcBar, -rcWindow.left, -rcWindow.top);
@@ -359,7 +359,7 @@ void DarkMode::LightenBitmap(CBitmap* pBitmap, const bool invert)
     {
         // Gamma lookup table
         std::array<BYTE, 256> lut;
-        std::ranges::transform(std::views::iota(0, 256), lut.begin(),
+        std::ranges::transform(std::views::iota(0, static_cast<int>(lut.size())), lut.begin(),
             [](const int i) { return static_cast<BYTE>(std::pow(i / 255.0f, 0.5f) * 255.0f); });
 
         // Apply to all color channels (BGR)

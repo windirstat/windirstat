@@ -130,10 +130,7 @@ bool CItem::DrawSubItem(const int subitem, CDC* pdc, CRect rc, const UINT state,
     else
     {
         rc.DeflateRect(2, 5);
-        for (int i = 0; i < GetIndent(); i++)
-        {
-            rc.left += rc.Width() / 10;
-        }
+        rc.left += GetIndent() * rc.Width() / 10;
 
         DrawPercentage(pdc, rc, GetFraction(), GetPercentageColor());
     }
@@ -575,6 +572,7 @@ void CItem::RemoveChild(CItem* child)
                             indexSet->UpwardSubtractSizePhysical(indexFolder->GetSizePhysical());
                             indexSet->RemoveChild(indexFolder);
                             
+
                             // Restore size to the remaining item's hierarchy
                             remainingItem->GetParent()->UpwardAddSizePhysical(remainingItem->GetSizePhysicalRaw());
                             break;
@@ -1392,7 +1390,7 @@ void CItem::CreateHardlinksItem()
     
     // Create 20 Index Set subfolders (Index Set 1 through Index 20)
     constexpr char INDEX_SET_COUNT = 20;
-    for (int i = 1; i <= INDEX_SET_COUNT; i++)
+    for (const int i : std::views::iota(1, INDEX_SET_COUNT + 1))
     {
         const auto indexSet = new CItem(IT_HLINKS_SET, std::format(L"{} ⧉ {:02}", Localization::Lookup(IDS_COL_INDEX), i));
         indexSet->SetDone();

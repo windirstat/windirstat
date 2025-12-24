@@ -657,7 +657,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
     // Setup status pane for dark mode
     if (DarkMode::IsDarkModeActive())
     {
-        for (int i = 0; i < m_WndStatusBar.GetCount(); i++)
+        for (const int i : std::views::iota(0, m_WndStatusBar.GetCount()))
         {
             m_WndStatusBar.SetPaneBackgroundColor(i, DarkMode::WdsSysColor(COLOR_WINDOW));
         }
@@ -694,7 +694,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
     // update toolbar images with high resolution versions
     m_Images.SetImageSize({ 16,16 }, TRUE);
-    for (int i = 0; i < m_WndToolBar.GetCount(); i++)
+    for (const int i : std::views::iota(0, m_WndToolBar.GetCount()))
     {
         // lookup the button in the editor toolbox
         const auto button = m_WndToolBar.GetButton(i);
@@ -976,15 +976,15 @@ void CMainFrame::QueryRecycleBin(ULONGLONG& items, ULONGLONG& bytes)
 
     const DWORD drives = GetLogicalDrives();
     DWORD mask = 0x00000001;
-    for (std::size_t i = 0; i < wds::strAlpha.size(); i++, mask <<= 1)
+    for (auto i : std::views::iota(0, static_cast<int>(wds::strAlpha.size())))
     {
+        mask = 0x00000001 << i;
         if ((drives & mask) == 0)
         {
             continue;
         }
 
-        std::wstring s = std::wstring(1, wds::strAlpha.at(i)) + L":\
-";
+        std::wstring s = std::wstring(1, wds::strAlpha.at(i)) + L":\\";
         const UINT type = ::GetDriveType(s.c_str());
         if (type == DRIVE_UNKNOWN ||
             type == DRIVE_NO_ROOT_DIR ||
@@ -1012,7 +1012,7 @@ std::pair<CMenu*,int> CMainFrame::LocateNamedMenu(const CMenu* menu, const std::
     // locate submenu
     CMenu* subMenu = nullptr;
     int subMenuPos = -1;
-    for (int i = 0; i < menu->GetMenuItemCount(); i++)
+    for (const int i : std::views::iota(0, menu->GetMenuItemCount()))
     {
         CStringW menuString;
         if (menu->GetMenuStringW(i, menuString, MF_BYPOSITION) > 0 &&
@@ -1056,12 +1056,12 @@ void CMainFrame::UpdateDynamicMenuItems(CMenu* menu) const
     if (compressMenu && compressMenuPos >= 0)
     {
         // Check if any submenu items are enabled
-        const auto itemCount = compressMenu->GetMenuItemCount();
-        const bool anyEnabled = std::ranges::any_of(std::views::iota(0, itemCount), [&](int i)
+        const int menuItemCount = compressMenu->GetMenuItemCount();
+        const bool anyEnabled = std::ranges::any_of(std::views::iota(0, menuItemCount), [&](int i)
         {
             CCmdUI state;
             state.m_nIndex = i;
-            state.m_nIndexMax = itemCount;
+            state.m_nIndexMax = menuItemCount;
             state.m_nID = compressMenu->GetMenuItemID(i);
             state.m_pMenu = compressMenu;
             state.DoUpdate(const_cast<CMainFrame*>(this), FALSE);
