@@ -239,8 +239,9 @@ void CTreeMapView::DrawSelection(CDC* pdc) const
     {
         // Ignore if not a child of the current zoomed item
         if (!CDirStatDoc::Get()->GetZoomItem()->IsAncestorOf(item)) continue;
-        
-        HighlightSelectedItem(pdc, item, items.size() == 1);
+
+        auto itemToSelect = item->IsTypeOrFlag(ITF_HARDLINK) ? item->FindHardlinksIndexItem() : item;
+        HighlightSelectedItem(pdc, itemToSelect, items.size() == 1);
     }
 }
 
