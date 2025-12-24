@@ -367,7 +367,7 @@ BOOL CDirStatApp::InitInstance()
     }
 
     // Prompt user to enable enhanced scanning engine if it is disabled and running in elevated privileges
-    if (IsElevationActive() && COptions::UseFastScanEngine == false && COptions::ShowFastScanPrompt) {
+    if (IsElevationActive() && !COptions::UseFastScanEngine && COptions::ShowFastScanPrompt) {
         CMessageBoxDlg fastScanPrompt( Localization::Lookup(IDS_ENABLEFASTSCAN_QUESTION),
             Localization::LookupNeutral(AFX_IDS_APP_TITLE), MB_YESNO | MB_ICONQUESTION, m_pMainWnd,
             {}, Localization::Lookup(IDS_DONT_SHOW_AGAIN), false);

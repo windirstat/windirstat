@@ -97,7 +97,7 @@ void RemoveWmiInstances(const std::wstring& wmiClass, std::atomic<size_t>& progr
         return;
     }
 
-    for (; cancelRequested == false; ++progress)
+    for (; !cancelRequested; ++progress)
     {
         ULONG uRet;
         CComPtr<IWbemClassObject> pObj;
@@ -521,7 +521,7 @@ bool EnableReadPrivileges()
     }
     
     bool ret = true;
-    for (const std::wstring & priv : { SE_RESTORE_NAME, SE_BACKUP_NAME })
+    for (const auto priv : { SE_RESTORE_NAME, SE_BACKUP_NAME })
     {
         // Populate the privilege adjustment structure
         TOKEN_PRIVILEGES privEntry = {};
@@ -529,7 +529,7 @@ bool EnableReadPrivileges()
         privEntry.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
 
         // Translate the privilege name into the binary representation
-        if (LookupPrivilegeValue(nullptr, priv.c_str(), &privEntry.Privileges[0].Luid) == 0)
+        if (LookupPrivilegeValue(nullptr, priv, &privEntry.Privileges[0].Luid) == 0)
         {
             ret = false;
             continue;
@@ -1056,7 +1056,7 @@ std::wstring ComputeFileHashes(const std::wstring& filePath)
 
         // Convert to hex
         std::wstring hashHex;
-        for (uint8_t byte : ctx.hash)
+        for (const auto byte : ctx.hash)
         {
             std::format_to(std::back_inserter(hashHex), "{:02X}", byte);
         }

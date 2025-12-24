@@ -300,10 +300,7 @@ class CTreeMapPreview final : public CStatic
                 m_Size += static_cast<int>(child->TmiGetSize());
             }
 
-            std::ranges::sort(m_Children, [](const CItem* item1, const CItem* item2) -> bool
-            {
-                return item1->m_Size > item2->m_Size;
-            });
+            std::ranges::sort(m_Children, [](auto a, auto b) {return a->m_Size > b->m_Size; });
         }
 
         ~CItem() override

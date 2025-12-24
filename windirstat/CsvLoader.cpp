@@ -52,9 +52,10 @@ static void ParseHeaderLine(const std::vector<std::wstring>& header)
         { Localization::Lookup(IDS_COL_OWNER), FIELD_OWNER }
     };
 
-    for (std::vector<std::wstring>::size_type c = 0; c < header.size(); c++)
+    for (const auto c : std::views::iota(0u, header.size()))
     {
-        if (resMap.contains(header.at(c))) orderMap[resMap[header.at(c)]] = static_cast<BYTE>(c);
+        if (const auto it = resMap.find(header[c]); it != resMap.end())
+            orderMap[it->second] = static_cast<BYTE>(c);
     }
 }
 
@@ -147,7 +148,7 @@ CItem* LoadResults(const std::wstring & path)
             headerProcessed = true;
 
             // Validate all necessary fields are present
-            for (auto i = 0; i < static_cast<char>(orderMap.size()); i++)
+            for (const auto i : std::views::iota(0u, orderMap.size()))
             {
                 if (i != FIELD_OWNER && orderMap[i] == UCHAR_MAX) return nullptr;
             }
@@ -268,7 +269,7 @@ bool SaveResults(const std::wstring& path, CItem* rootItem)
     if (COptions::ShowColumnOwner) cols.push_back(Localization::Lookup(IDS_COL_OWNER));
 
     // Output columns to file
-    for (size_t i = 0; i < cols.size(); i++)
+    for (const auto i : std::views::iota(0u, cols.size()))
     {
         outf << QuoteAndConvert(cols[i]) << (i + 1 < cols.size() ? "," : "");
     }
@@ -347,7 +348,7 @@ bool SaveDuplicates(const std::wstring& path, CItemDupe* rootDupe)
         Localization::Lookup(IDS_COL_ATTRIBUTES)
     };
 
-    for (size_t i = 0; i < cols.size(); i++)
+    for (const auto i : std::views::iota(0u, cols.size()))
     {
         outf << QuoteAndConvert(cols[i]) << (i + 1 < cols.size() ? "," : "");
     }

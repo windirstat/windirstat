@@ -147,8 +147,7 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, Item* root, const Options* option
 
         // That bitmap in turn will be created from this array
         std::vector<COLORREF> bitmapBits;
-        bitmapBits.resize(static_cast<std::vector<COLORREF>::size_type>(rc.Width()) *
-            static_cast<std::vector<COLORREF>::size_type>(rc.Height()));
+        bitmapBits.resize(static_cast<size_t>(rc.Width()) * static_cast<size_t>(rc.Height()));
         DrawSolidRect(bitmapBits, CRect(CPoint(), rc.Size()), m_Options.gridColor, PALETTE_BRIGHTNESS);
 
         using DrawState = struct DrawState
@@ -165,7 +164,7 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, Item* root, const Options* option
         initialState.item = root;
         initialState.rc = CRect(0, 0, rc.Width(), rc.Height());
         initialState.asroot = true;
-        initialState.surface = { 0, 0, 0, 0 };
+        initialState.surface = {};
         initialState.h = m_Options.height;
 
         // Defined at top level to prevent reallocation
@@ -218,7 +217,8 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, Item* root, const Options* option
                 const int height = horizontalRows ? state.rc.Height() : state.rc.Width();
 
                 double top = horizontalTop;
-                for (size_t row = 0, c = 0; row < rows.size(); row++)
+                size_t c = 0;
+                for (const size_t row : std::views::iota(0u, rows.size()))
                 {
                     const double fBottom = top + rows[row] * height;
                     int bottom = static_cast<int>(fBottom);
@@ -348,7 +348,7 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, Item* root, const Options* option
                     // Distribute the children in the row
                     double fBegin = horizontal ? rcRow.top : rcRow.left;
 
-                    for (int i = rowBegin; i < rowEnd; i++)
+                    for (const int i : std::views::iota(rowBegin, rowEnd))
                     {
                         ULONGLONG childSize = item->TmiGetChild(i)->TmiGetSize();
                         double fraction = static_cast<double>(childSize) / sum;
@@ -542,7 +542,7 @@ void CTreeMap::DrawColorPreview(CDC* pdc, const CRect& rc, const COLORREF color,
         SetOptions(options);
     }
 
-    std::array<double, 4> surface = { 0, 0, 0, 0 };
+    std::array<double, 4> surface{};
     AddRidge(rc, surface, m_Options.height * m_Options.scaleFactor);
 
     m_RenderArea = rc;
@@ -556,8 +556,7 @@ void CTreeMap::DrawColorPreview(CDC* pdc, const CRect& rc, const COLORREF color,
 
     // That bitmap in turn will be created from this array
     std::vector<COLORREF> bitmapBits;
-    bitmapBits.resize(static_cast<std::vector<COLORREF>::size_type>(rc.Width()) *
-        static_cast<std::vector<COLORREF>::size_type>(rc.Height()));
+    bitmapBits.resize(static_cast<size_t>(rc.Width()) * static_cast<size_t>(rc.Height()));
 
     // Recursively draw the tree graph
     RenderRectangle(bitmapBits, CRect(0, 0, rc.Width(), rc.Height()), surface, color);

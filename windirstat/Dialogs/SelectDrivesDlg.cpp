@@ -468,7 +468,7 @@ BOOL CSelectDrivesDlg::OnInitDialog()
     SetForegroundWindow();
 
     const DWORD drives = GetLogicalDrives();
-    for (const std::size_t i : std::views::iota(std::size_t{0}, wds::strAlpha.size()))
+    for (const size_t i : std::views::iota(0u, wds::strAlpha.size()))
     {
         const DWORD mask = 0x00000001 << i;
         if ((drives & mask) == 0)

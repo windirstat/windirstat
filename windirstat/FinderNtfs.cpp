@@ -203,7 +203,7 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
     // Extract data run origins and cluster counts
     RETRIEVAL_POINTERS_BUFFER* retrievalBuffer = ByteOffset<RETRIEVAL_POINTERS_BUFFER>(dataRunsBuffer.data(), 0);
     std::vector<std::pair<ULONGLONG, ULONGLONG>> dataRuns(retrievalBuffer->ExtentCount, {});
-    for (DWORD i = 0; i < retrievalBuffer->ExtentCount; i++)
+    for (const auto i : std::views::iota(0u, retrievalBuffer->ExtentCount))
     {
         dataRuns[i] = { retrievalBuffer->Extents[i].Lcn.QuadPart,
             retrievalBuffer->Extents[i].NextVcn.QuadPart - (i == 0
@@ -253,7 +253,7 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
                 const auto fixupArray = ByteOffset<USHORT>(fileRecord, fileRecord->UsaOffset);
                 const auto usn = fixupArray[0];
                 const auto recordWords = reinterpret_cast<PUSHORT>(ByteOffset<UCHAR>(buffer.get(), offset));
-                for (ULONG i = 1; i < fileRecord->UsaCount; ++i)
+                if (fileRecord->UsaCount > 0) for (const auto i : std::views::iota(1u, fileRecord->UsaCount))
                 {
                     const auto sectorEnd = recordWords + i * wordsPerSector - 1;
                     if (*sectorEnd == usn) *sectorEnd = fixupArray[i];

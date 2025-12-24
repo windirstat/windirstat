@@ -225,7 +225,7 @@ void CLayout::CSizeGripper::DrawShadowLine(CDC* pdc, CPoint start, CPoint end)
     CPen darkPen(PS_SOLID, 1, DarkMode::WdsSysColor(COLOR_3DSHADOW));
     const CSelectObject sopen(pdc, &darkPen);
 
-    for (int i : std::views::iota(1, 3))
+    for (const int i : std::views::iota(1, 3))
     {
         pdc->MoveTo(start.x + i, start.y + i);
         pdc->LineTo(end.x + i, end.y + i);

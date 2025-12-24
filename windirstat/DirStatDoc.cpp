@@ -469,14 +469,14 @@ void CDirStatDoc::RebuildExtensionData()
     // Assign primary colors to extensions
     const auto extensionsSize = sortedExtensions.size();
     const auto primaryColorsMax = min(colors.size(), extensionsSize);
-    for (const std::size_t i : std::views::iota(std::size_t{0}, primaryColorsMax))
+    for (const size_t i : std::views::iota(0u, primaryColorsMax))
     {
         sortedExtensions[i]->second.color = colors[i];
     }
 
     // Assign fallback colors to extensions
     const auto fallbackColor = colors.back();
-    for (const std::size_t i : std::views::iota(primaryColorsMax, extensionsSize))
+    for (const size_t i : std::views::iota(primaryColorsMax, extensionsSize))
     {
         sortedExtensions[i]->second.color = fallbackColor;
     }
@@ -873,7 +873,7 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
         bool allowMany = false; // allow display when multiple items are selected
         bool allowEarly = false; // allow display before processing is finished
         LOGICAL_FOCUS focus = LF_NONE; // restrict which views support this selection
-        std::vector<ITEMTYPE> typesAllow = { ITF_ANY }; // only display if these types are allowed
+        std::vector<ITEMTYPE> typesAllow{ ITF_ANY }; // only display if these types are allowed
         bool (*extra)(CItem*) = [](CItem*) { return true; }; // extra checks
     };
 

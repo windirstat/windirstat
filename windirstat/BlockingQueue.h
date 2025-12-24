@@ -67,7 +67,7 @@ public:
     {
         ResetQueue(workerThreads, false);
 
-        for (auto worker = 0u; worker < m_TotalWorkerThreads; worker++)
+        for ([[maybe_unused]] const auto _ : std::views::iota(0u, m_TotalWorkerThreads))
         {
             m_Threads.emplace_back(&BlockingQueue::ThreadWrapper, this, callback);
         }

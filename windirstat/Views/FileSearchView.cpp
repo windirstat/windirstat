@@ -62,7 +62,7 @@ int CFileSearchView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
         return -1;
     }
 
-    constexpr RECT rect = { 0, 0, 0, 0 };
+    constexpr RECT rect{};
     VERIFY(m_Control.CreateExtended(0, WS_CHILD | WS_VISIBLE | LVS_REPORT | LVS_SHOWSELALWAYS, rect, this, ID_WDS_CONTROL));
 
     m_Control.ShowGrid(COptions::ListGrid);

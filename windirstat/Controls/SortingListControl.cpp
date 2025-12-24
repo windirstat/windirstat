@@ -65,7 +65,7 @@ void CSortingListControl::LoadPersistentAttributes()
     if (m_ColumnWidths->size() != columnCount)
     {
         m_ColumnWidths->resize(columnCount,0);
-        for (int i : std::views::iota(0, static_cast<int>(m_ColumnWidths->size())))
+        for (const int i : std::views::iota(0, static_cast<int>(m_ColumnWidths->size())))
         {
             (*m_ColumnWidths)[i] = GetColumnWidth(i);
         }
@@ -73,7 +73,7 @@ void CSortingListControl::LoadPersistentAttributes()
     
     // Set based on persisted values
     SetColumnOrderArray(static_cast<int>(m_ColumnOrder->size()), m_ColumnOrder->data());
-    for (int i : std::views::iota(0, static_cast<int>(m_ColumnWidths->size())))
+    for (const int i : std::views::iota(0, static_cast<int>(m_ColumnWidths->size())))
     {
         SetColumnWidth(i, min((*m_ColumnWidths)[i], (*m_ColumnWidths)[i] * 2));
     }
@@ -82,7 +82,7 @@ void CSortingListControl::LoadPersistentAttributes()
 void CSortingListControl::SavePersistentAttributes() const
 {
     GetColumnOrderArray(m_ColumnOrder->data(), static_cast<int>(m_ColumnOrder->size()));
-    for (int i : std::views::iota(0, static_cast<int>(m_ColumnWidths->size())))
+    for (const int i : std::views::iota(0, static_cast<int>(m_ColumnWidths->size())))
     {
         (*m_ColumnWidths)[i] = GetColumnWidth(i);
     }

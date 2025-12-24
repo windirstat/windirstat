@@ -1057,10 +1057,7 @@ void CItem::SortItemsBySizePhysical() const
 
     // sort by size for proper treemap rendering
     m_FolderInfo->m_Children.shrink_to_fit();
-    std::ranges::sort(m_FolderInfo->m_Children, [](auto item1, auto item2)
-    {
-        return item1->GetSizePhysical() > item2->GetSizePhysical(); // biggest first
-    });
+    std::ranges::sort(m_FolderInfo->m_Children, std::ranges::greater{}, &CItem::GetSizePhysical);
 }
 
 void CItem::SortItemsBySizeLogical() const
@@ -1069,10 +1066,7 @@ void CItem::SortItemsBySizeLogical() const
     
     // sort by size for proper treemap rendering
     m_FolderInfo->m_Children.shrink_to_fit();
-    std::ranges::sort(m_FolderInfo->m_Children, [](auto item1, auto item2)
-    {
-        return item1->GetSizeLogical() > item2->GetSizeLogical(); // biggest first
-    });
+    std::ranges::sort(m_FolderInfo->m_Children, std::ranges::greater{}, &CItem::GetSizeLogical);
 }
 
 ULONGLONG CItem::GetTicksWorked() const
@@ -1240,11 +1234,11 @@ CItem* CItem::FindRecyclerItem() const
 
         // There is no cross-platform way to consistently identify the recycle bin
         // so attempt to find an item with the most probable values
-        for (const std::wstring& possible : { L"$RECYCLE.BIN", L"RECYCLER", L"RECYCLED" })
+        for (const auto possible : { L"$RECYCLE.BIN", L"RECYCLER", L"RECYCLED" })
         {
             for (const auto& child : p->GetChildren())
             {
-                if (child->IsTypeOrFlag(IT_DIRECTORY) && _wcsicmp(child->GetName().c_str(), possible.c_str()) == 0)
+                if (child->IsTypeOrFlag(IT_DIRECTORY) && _wcsicmp(child->GetName().c_str(), possible) == 0)
                 {
                     return child;
                 }
@@ -1868,16 +1862,12 @@ CItem* CItem::FindItemByPath(const std::wstring& path) const
 
     // Start from the drive and process remaining components
     CItem* current = pathDrive;
-    for (size_t i = 1; i < components.size(); ++i)
+    for (const auto i : std::views::iota(1u, components.size()))
     {
         if (current->IsLeaf()) return nullptr;
 
         // Find the matching child
-        auto it = std::ranges::find_if(current->GetChildren(), [&](const CItem* child)
-        {
-            return components[i] == child->GetName();
-        });
-
+        auto it = std::ranges::find(current->GetChildren(), components[i], &CItem::GetName);
         if (it == current->GetChildren().end()) return nullptr;
         current = *it;
     }

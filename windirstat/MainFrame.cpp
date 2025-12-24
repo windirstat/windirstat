@@ -623,8 +623,8 @@ void CMainFrame::SetStatusPaneText(const int pos, const std::wstring & text, con
 {
     // do not process the update if text is the same
     static std::unordered_map<int, std::wstring> last;
-    if (last.contains(pos) && last[pos] == text) return;
-    last[pos] = text;
+    if (auto it = last.find(pos); it != last.end() && it->second == text) return;
+    last.insert_or_assign(pos, text);
 
     // set status path width and then set text
     const CClientDC dc(this);
@@ -976,7 +976,7 @@ void CMainFrame::QueryRecycleBin(ULONGLONG& items, ULONGLONG& bytes)
 
     const DWORD drives = GetLogicalDrives();
     DWORD mask = 0x00000001;
-    for (auto i : std::views::iota(0, static_cast<int>(wds::strAlpha.size())))
+    for (const auto i : std::views::iota(0, static_cast<int>(wds::strAlpha.size())))
     {
         mask = 0x00000001 << i;
         if ((drives & mask) == 0)
