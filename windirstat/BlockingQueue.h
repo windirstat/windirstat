@@ -33,6 +33,7 @@ class BlockingQueue final
     bool m_Started = false;
     bool m_Suspended = false;
     bool m_Cancelled = false;
+    bool m_ExitOnAllIdle = true;
 
     bool AllThreadsIdling() const
     {
@@ -45,7 +46,7 @@ public:
     BlockingQueue& operator=(const BlockingQueue&) = delete;
     BlockingQueue& operator=(BlockingQueue&&) = delete;
     ~BlockingQueue() = default;
-    BlockingQueue() = default;
+    BlockingQueue(bool exitOnAllIdle = true) : m_ExitOnAllIdle(exitOnAllIdle) {};
 
     void ThreadWrapper(const std::function<void()>& callback)
     {
@@ -80,26 +81,36 @@ public:
         m_Pushed.notify_one();
     }
 
-    T Pop()
+    std::optional<T> Pop()
     {
         // Record that the worker is waiting for an item until
         // the queue has something in it and we are not suspended
         std::unique_lock lock(m_Mutex);
         m_WorkersWaiting++;
         m_Waiting.notify_all();
+
+        // Check if all workers are waiting and queue is empty - time to exit
+        if (m_Started && AllThreadsIdling() && m_Queue.empty() && m_ExitOnAllIdle)
+        {
+            m_Cancelled = true;
+            m_Pushed.notify_all();
+            return std::nullopt;
+        }
+
         m_Pushed.wait(lock, [&]
         {
             return !m_Suspended && !m_Queue.empty() || m_Cancelled;
         });
-        m_WorkersWaiting--;
 
         if (m_Cancelled)
         {
-            // Mark we are in waiting mode again and abort
-            throw std::exception(__FUNCTION__);
+            // Abort and signal other threads
+            m_Pushed.notify_all();
+            return std::nullopt;
         }
 
         // Worker now has something to work on so pop it off the queue
+        m_WorkersWaiting--;
         m_Started = true;
         T i = m_Queue.front();
         m_Queue.pop_front();

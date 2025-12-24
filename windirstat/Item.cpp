@@ -1109,8 +1109,11 @@ void CItem::ScanItems(BlockingQueue<CItem*> * queue, FinderNtfsContext& contextN
     FinderNtfs finderNtfs(&contextNtfs);
     FinderBasic finderBasic(&contextBasic);
 
-    while (CItem * const item = queue->Pop())
+    for (auto itemOpt = queue->Pop(); itemOpt.has_value(); itemOpt = queue->Pop())
     {
+        // Fetch item from queue
+        CItem* const item = itemOpt.value();
+
         // Mark the time we started evaluating this node
         item->ResetScanStartTime();
 

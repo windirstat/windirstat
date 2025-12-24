@@ -46,7 +46,7 @@ public:
 
     HICON FetchShellIcon(const std::wstring& path, UINT flags = 0, DWORD attr = FILE_ATTRIBUTE_NORMAL, std::wstring* psTypeName = nullptr);
 
-    BlockingQueue<IconLookup> m_LookupQueue;
+    BlockingQueue<IconLookup> m_LookupQueue = BlockingQueue<IconLookup>(false);
     COleFilterOverride m_FilterOverride;
 
     HICON m_FreeSpaceImage = nullptr;    // <Free Space>

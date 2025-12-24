@@ -56,10 +56,10 @@ void CIconHandler::Initialize()
         // Use two threads for asynchronous icon lookup
         m_LookupQueue.StartThreads(MAX_ICON_THREADS, [this]
         {
-            while (true)
+            for (auto itemOpt = m_LookupQueue.Pop(); itemOpt.has_value(); itemOpt = m_LookupQueue.Pop())
             {
-                auto [item, control, path, attr, icon, desc] = m_LookupQueue.Pop();
-                if (item == nullptr) return;
+                // Fetch item from queue
+                auto& [item, control, path, attr, icon, desc] = itemOpt.value();
 
                 // Query the icon from the system
                 std::wstring descTmp;
