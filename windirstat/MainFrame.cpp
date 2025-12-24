@@ -1150,7 +1150,12 @@ void CMainFrame::UpdatePaneText()
         else if (focus == LF_FILETREE || focus == LF_DUPELIST || focus == LF_TOPLIST || focus == LF_SEARCHLIST)
         {
             const auto& items = CDirStatDoc::Get()->GetAllSelected();
-            if (items.size() == 1) fileSelectionText = items.front()->GetPath();
+            if (items.size() == 1)
+            {
+                // If single item selected, show full path
+                const auto path = items.front()->GetPath();
+                if (!path.empty()) fileSelectionText = path;
+            }
             for (size = 0; const auto& item : items)
             {
                 size += item->GetSizePhysical();
@@ -1162,11 +1167,7 @@ void CMainFrame::UpdatePaneText()
     SetStatusPaneText(ID_STATUSPANE_IDLE_INDEX, fileSelectionText);
 
     // Update disk usage area
-    SetStatusPaneText(
-        ID_STATUSPANE_DISK_INDEX,
-        (size != MAXULONG64) ? (L"      ∑  " + FormatBytes(size)) : L"",
-        100
-    );
+    SetStatusPaneText(ID_STATUSPANE_DISK_INDEX, (size != MAXULONG64) ? (L"      ∑  " + FormatBytes(size)) : L"", 100);
 
     // Update memory usage
     SetStatusPaneText(ID_STATUSPANE_MEM_INDEX, CDirStatApp::GetCurrentProcessMemoryInfo(), 100);

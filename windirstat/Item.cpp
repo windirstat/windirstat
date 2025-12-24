@@ -924,6 +924,11 @@ bool CItem::IsRootItem() const
 
 std::wstring CItem::GetPath() const
 {
+    if (IsTypeOrFlag(IT_HLINKS_SET, IT_HLINKS_IDX))
+    {
+        return {};
+    }
+
     std::wstring path = UpwardGetPathWithoutBackslash();
     if (IsTypeOrFlag(IT_DRIVE))
     {
