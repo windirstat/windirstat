@@ -20,14 +20,16 @@
 #include "MessageBoxDlg.h"
 
 #pragma comment(lib,"powrprof.lib")
-#pragma comment(lib,"ntdll.lib")
 #pragma comment(lib,"wbemuuid.lib")
 
-EXTERN_C NTSTATUS NTAPI RtlDecompressBuffer(USHORT CompressionFormat, PUCHAR UncompressedBuffer, ULONG  UncompressedBufferSize,
-    PUCHAR CompressedBuffer, ULONG  CompressedBufferSize, PULONG FinalUncompressedSize);
+static NTSTATUS(NTAPI* RtlDecompressBuffer)(USHORT CompressionFormat, PUCHAR UncompressedBuffer,
+    ULONG  UncompressedBufferSize, PUCHAR CompressedBuffer, ULONG  CompressedBufferSize,
+    PULONG FinalUncompressedSize) = reinterpret_cast<decltype(RtlDecompressBuffer)>(
+        reinterpret_cast<LPVOID>(GetProcAddress(GetModuleHandle(L"ntdll.dll"), "RtlDecompressBuffer")));
 
-EXTERN_C NTSTATUS NTAPI NtSetInformationProcess(HANDLE ProcessHandle, ULONG ProcessInformationClass,
-    PVOID ProcessInformation, ULONG ProcessInformationLength);
+static NTSTATUS(NTAPI* NtSetInformationProcess)(HANDLE ProcessHandle, ULONG ProcessInformationClass,
+    PVOID ProcessInformation, ULONG ProcessInformationLength) = reinterpret_cast<decltype(NtSetInformationProcess)>(
+    reinterpret_cast<LPVOID>(GetProcAddress(GetModuleHandle(L"ntdll.dll"), "NtSetInformationProcess")));
 
 static HRESULT WmiConnect(CComPtr<IWbemServices>& pSvc)
 {
@@ -115,7 +117,7 @@ static std::wstring FormatLongLongNormal(ULONGLONG n)
 
     const wchar_t sep = GetLocaleThousandSeparator();
     std::array<WCHAR, 32> buffer;
-    int pos = std::size(buffer) - 1;
+    size_t pos = buffer.size() - 1;
     buffer[pos] = L'\0';
 
     for (int count = 0; n > 0; ++count, n /= 10)
@@ -124,7 +126,7 @@ static std::wstring FormatLongLongNormal(ULONGLONG n)
         buffer[--pos] = L'0' + (n % 10);
     }
 
-    return { &buffer[pos], static_cast<size_t>(std::size(buffer) - 1 - pos) };
+    return { &buffer[pos], buffer.size() - 1 - pos };
 }
 
 std::wstring GetLocaleString(const LCTYPE lctype, const LCID lcid)
