@@ -66,15 +66,15 @@ void CFileDupeControl::ProcessDuplicate(CItem * item, BlockingQueue<CItem*>* que
     auto & sizeSet = m_SizeTracker[item->GetSizeLogical()];
     sizeSet.emplace_back(item);
     if (sizeSet.size() < 2) return;
-    
+
     std::vector<BYTE> hashForThisItem;
     auto itemsToHash = std::vector(sizeSet);
-    for (const ITEMTYPE & hashType : {ITHASH_PART, ITHASH_FULL })
+    for (const ITEMTYPE& hashType : { ITHASH_PART, ITHASH_FULL })
     {
         // Attempt to hash the file partially
         for (auto& itemToHash : itemsToHash)
         {
-            if (itemToHash->IsTypeOrFlag(ITHASH_SKIP)) continue;
+            if (itemToHash->IsTypeOrFlag(hashType, ITHASH_SKIP)) continue;
 
             // Compute the hash for the file
             lock.unlock();
@@ -88,7 +88,7 @@ void CFileDupeControl::ProcessDuplicate(CItem * item, BlockingQueue<CItem*>* que
                 continue;
             }
 
-            itemToHash->SetFlag(hashType);
+            itemToHash->SetHashType(hashType);
             if (itemToHash == item) hashForThisItem = hash;
 
             // Mark as the full being completed as well
@@ -96,13 +96,13 @@ void CFileDupeControl::ProcessDuplicate(CItem * item, BlockingQueue<CItem*>* que
                 itemToHash->SetHashType(ITHASH_FULL);
 
             // Add hash to tracking queue
-            auto & hashVector = m_HashTracker[hash];
+            auto& hashVector = m_HashTracker[hash];
             if (std::ranges::find(hashVector, itemToHash) == hashVector.end())
                 hashVector.emplace_back(itemToHash);
         }
 
         // Return if no hash conflicts
-        const auto hashesResult = m_HashTracker.find(hashForThisItem) ;
+        const auto hashesResult = m_HashTracker.find(hashForThisItem);
         if (hashesResult == m_HashTracker.end() || hashesResult->second.size() < 2) return;
         itemsToHash = hashesResult->second;
     }
@@ -189,7 +189,7 @@ void CFileDupeControl::RemoveItem(CItem* item)
         {
             // Mark as all files as not being hashed anymore
             std::erase(m_SizeTracker.at(qitem->GetSizeLogical()), qitem);
-            qitem->SetHashType(ITHASH_NONE);
+            qitem->SetHashType(ITHASH_NONE, false);
         }
         else if (!qitem->IsLeaf()) for (const auto& child : qitem->GetChildren())
         {

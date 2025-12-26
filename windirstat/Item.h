@@ -271,7 +271,7 @@ public:
 
     void SetItemType(const ITEMTYPE type) { SetType<IT_MASK>(type); }
     void SetReparseType(const ITEMTYPE type) { SetType<ITRP_MASK>(type); }
-    void SetHashType(const ITEMTYPE type) { SetType<ITHASH_MASK>(type); }
+    void SetHashType(const ITEMTYPE type, const bool addType = true) { SetType<ITHASH_MASK>(type, addType); }
     void SetFlag(const ITEMTYPE type, const bool unsetVal = false) { SetType<ITF_MASK>(type, true, unsetVal); }
 
     static constexpr bool FileTimeIsGreater(const FILETIME& ft1, const FILETIME& ft2)
