@@ -92,12 +92,12 @@ void CFileTreeControl::OnLButtonDown(const UINT nFlags, const CPoint point)
     const auto* item = reinterpret_cast<CItem*>(GetItem(i));
     if (item == nullptr || !item->IsTypeOrFlag(ITF_HARDLINK, IT_HLINKS_FILE)) return;
 
-    // Validate if in physical size column
+    // Validate if in physical size or name column depend on item type
     if (!std::ranges::any_of(std::views::iota(0, GetHeaderCtrl()->GetItemCount()), [&](const int col)
         {
             LVCOLUMN colInfo{ LVCF_SUBITEM };
             GetColumn(col, &colInfo);
-            return colInfo.iSubItem == COL_SIZE_PHYSICAL && GetWholeSubitemRect(i, col).PtInRect(point);
+            return colInfo.iSubItem == ((item->IsTypeOrFlag(ITF_HARDLINK)) ? COL_SIZE_PHYSICAL : COL_NAME) && GetWholeSubitemRect(i, col).PtInRect(point);
         })) return;
 
     if (item->IsTypeOrFlag(ITF_HARDLINK))
@@ -143,12 +143,12 @@ BOOL CFileTreeControl::OnSetCursor(CWnd* pWnd, const UINT nHitTest, const UINT m
     
     if (!isHardlink && !isHlinksFile) return defaultReturn;
 
-    // Validate if in physical size column
+    // Validate if in physical size or name column depend on item type
     if (!std::ranges::any_of(std::views::iota(0, GetHeaderCtrl()->GetItemCount()), [&](const int col)
     {
         LVCOLUMN colInfo{ LVCF_SUBITEM };
         GetColumn(col, &colInfo);
-        return colInfo.iSubItem == COL_SIZE_PHYSICAL && GetWholeSubitemRect(i, col).PtInRect(point);
+        return colInfo.iSubItem == ((isHardlink) ? COL_SIZE_PHYSICAL : COL_NAME) && GetWholeSubitemRect(i, col).PtInRect(point);
     })) return defaultReturn;
 
 
