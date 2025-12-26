@@ -544,8 +544,10 @@ void CTreeListControl::EmulateInteractiveSelection(const CTreeListItem* item)
     EnsureItemVisible(item);
 
     // get the item relative offset
-    RECT rect = {};
+    RECT rect = {}, clientRect = {};
     GetItemRect(FindTreeItem(item), &rect, LVIR_BOUNDS);
+    GetClientRect(&clientRect);
+    IntersectRect(&rect, &rect, &clientRect);
     const LPARAM lparam = MAKELPARAM(rect.left, rect.top);
 
     // send the selection message
