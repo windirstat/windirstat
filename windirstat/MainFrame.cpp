@@ -1141,13 +1141,9 @@ void CMainFrame::UpdatePaneText()
     }
 
     // Only get the data the document is not actively updating
-    else if (CDirStatDoc::Get()->IsRootDone())
+    if (CDirStatDoc::Get()->IsRootDone())
     {
-        if (focus == LF_EXTLIST)
-        {
-            fileSelectionText = wds::chrStar + CDirStatDoc::Get()->GetHighlightExtension();
-        }
-        else if (focus == LF_FILETREE || focus == LF_DUPELIST || focus == LF_TOPLIST || focus == LF_SEARCHLIST)
+        if (focus != LF_EXTLIST)
         {
             const auto& items = CDirStatDoc::Get()->GetAllSelected();
             if (items.size() == 1)
@@ -1160,6 +1156,11 @@ void CMainFrame::UpdatePaneText()
             {
                 size += item->GetSizePhysical();
             }
+
+        }
+        else if (fileSelectionText.empty())
+        {
+            fileSelectionText = wds::chrStar + CDirStatDoc::Get()->GetHighlightExtension();
         }
     }
 
