@@ -148,7 +148,7 @@ std::wstring CItem::GetText(const int subitem) const
         }
         if (IsTypeOrFlag(IT_HLINKS_FILE))
         {
-            return std::wstring(L"▣ ") + FormatBytes(GetSizePhysical());
+            return std::wstring(L"⧉ ") + FormatBytes(GetSizePhysical());
         }
         return FormatBytes(GetSizePhysical());
 
@@ -997,7 +997,7 @@ std::wstring CItem::GetName() const
     if (IsTypeOrFlag(IT_HLINKS_FILE))
     {
         std::wstring fullName{ m_Name.get(), m_NameLen };
-        return fullName.substr(fullName.find_last_of(wds::chrBackslash) + 1);
+        return L"⫘ " + fullName;
     }
     
     return { m_Name.get(), m_NameLen };
