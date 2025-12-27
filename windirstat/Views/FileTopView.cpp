@@ -26,7 +26,7 @@ CFileTopView::CFileTopView() = default;
 
 void CFileTopView::SysColorChanged()
 {
-    m_Control.SysColorChanged();
+    m_control.SysColorChanged();
 }
 
 void CFileTopView::OnDraw(CDC* pDC)
@@ -48,10 +48,10 @@ END_MESSAGE_MAP()
 void CFileTopView::OnSize(const UINT nType, const int cx, const int cy)
 {
     CView::OnSize(nType, cx, cy);
-    if (IsWindow(m_Control.m_hWnd))
+    if (IsWindow(m_control.m_hWnd))
     {
         CRect rc(0, 0, cx, cy);
-        m_Control.MoveWindow(rc);
+        m_control.MoveWindow(rc);
     }
 }
 
@@ -63,20 +63,20 @@ int CFileTopView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
     }
 
     constexpr RECT rect = {0, 0, 0, 0};
-    VERIFY(m_Control.CreateExtended(0, WS_CHILD | WS_VISIBLE | LVS_REPORT | LVS_SHOWSELALWAYS, rect, this, ID_WDS_CONTROL));
+    VERIFY(m_control.CreateExtended(0, WS_CHILD | WS_VISIBLE | LVS_REPORT | LVS_SHOWSELALWAYS, rect, this, ID_WDS_CONTROL));
 
-    m_Control.ShowGrid(COptions::ListGrid);
-    m_Control.ShowStripes(COptions::ListStripes);
-    m_Control.ShowFullRowSelection(COptions::ListFullRowSelection);
+    m_control.ShowGrid(COptions::ListGrid);
+    m_control.ShowStripes(COptions::ListStripes);
+    m_control.ShowFullRowSelection(COptions::ListFullRowSelection);
 
     // Columns should be in enumeration order so initial sort will work
-    m_Control.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_NAME).c_str(), LVCFMT_LEFT, 500, COL_ITEMTOP_NAME);
-    m_Control.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_SIZE_PHYSICAL).c_str(), LVCFMT_RIGHT, 90, COL_ITEMTOP_SIZE_PHYSICAL);
-    m_Control.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_SIZE_LOGICAL).c_str(), LVCFMT_RIGHT, 90, COL_ITEMTOP_SIZE_LOGICAL);
-    m_Control.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_LAST_CHANGE).c_str(), LVCFMT_LEFT, 120, COL_ITEMTOP_LAST_CHANGE);
-    m_Control.SetSorting(COL_ITEMTOP_SIZE_PHYSICAL, false);
+    m_control.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_NAME).c_str(), LVCFMT_LEFT, 500, COL_ITEMTOP_NAME);
+    m_control.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_SIZE_PHYSICAL).c_str(), LVCFMT_RIGHT, 90, COL_ITEMTOP_SIZE_PHYSICAL);
+    m_control.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_SIZE_LOGICAL).c_str(), LVCFMT_RIGHT, 90, COL_ITEMTOP_SIZE_LOGICAL);
+    m_control.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_LAST_CHANGE).c_str(), LVCFMT_LEFT, 120, COL_ITEMTOP_LAST_CHANGE);
+    m_control.SetSorting(COL_ITEMTOP_SIZE_PHYSICAL, false);
 
-    m_Control.OnColumnsInserted();
+    m_control.OnColumnsInserted();
 
     return 0;
 }
@@ -88,7 +88,7 @@ BOOL CFileTopView::OnEraseBkgnd(CDC* /*pDC*/)
 
 void CFileTopView::OnSetFocus(CWnd* /*pOldWnd*/)
 {
-    m_Control.SetFocus();
+    m_control.SetFocus();
 }
 
 void CFileTopView::OnLvnItemChanged(NMHDR* pNMHDR, LRESULT* pResult)
@@ -115,17 +115,17 @@ void CFileTopView::OnUpdate(CView* pSender, const LPARAM lHint, CObject* pHint)
     {
         case HINT_NEWROOT:
         {
-            m_Control.SetRootItem(CDirStatDoc::Get()->GetRootItemTop());
-            m_Control.Invalidate();
+            m_control.SetRootItem(CDirStatDoc::Get()->GetRootItemTop());
+            m_control.Invalidate();
         }
         break;
 
         case HINT_LISTSTYLECHANGED:
         {
-            m_Control.ShowGrid(COptions::ListGrid);
-            m_Control.ShowStripes(COptions::ListStripes);
-            m_Control.ShowFullRowSelection(COptions::ListFullRowSelection);
-            m_Control.SortItems();
+            m_control.ShowGrid(COptions::ListGrid);
+            m_control.ShowStripes(COptions::ListStripes);
+            m_control.ShowFullRowSelection(COptions::ListFullRowSelection);
+            m_control.SortItems();
         }
         break;
 
@@ -142,10 +142,10 @@ void CFileTopView::OnUpdate(CView* pSender, const LPARAM lHint, CObject* pHint)
 
 void CFileTopView::OnUpdatePopupToggle(CCmdUI* pCmdUI)
 {
-    pCmdUI->Enable(m_Control.SelectedItemCanToggle());
+    pCmdUI->Enable(m_control.SelectedItemCanToggle());
 }
 
 void CFileTopView::OnPopupToggle()
 {
-    m_Control.ToggleSelectedItem();
+    m_control.ToggleSelectedItem();
 }

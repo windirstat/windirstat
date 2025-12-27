@@ -100,6 +100,6 @@ private:
     // Paint cached entry to DC
     void PaintCachedEntry(CDC* pDC, const CRect& rect, CacheEntry& entry);
 
-    CacheMap m_Cache;
-    LRUList m_LeastRecentList;
+    CacheMap m_cache;
+    LRUList m_leastRecentList;
 };

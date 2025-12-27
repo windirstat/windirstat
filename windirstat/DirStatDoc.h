@@ -73,7 +73,7 @@ using VIEW_HINT = enum VIEW_HINT : std::uint8_t
 class CDirStatDoc final : public CDocument
 {
 public:
-    static CDirStatDoc* Get() { return _theDocument; }
+    static CDirStatDoc* Get() { return s_singleton; }
 
 protected:
     CDirStatDoc(); // Created by MFC only
@@ -147,30 +147,30 @@ protected:
     static CTreeListControl* GetFocusControl();
     void UpdateAllViews(CView* pSender, VIEW_HINT hint = HINT_NULL, CItem* pHint = nullptr);
 
-    static CDirStatDoc* _theDocument;
+    static CDirStatDoc* s_singleton;
 
-    bool m_ShowFreeSpace; // Whether to show the <Free Space> item
-    bool m_ShowUnknown;   // Whether to show the <Unknown> item
-    // In this case, we need a root pseudo item ("My Computer").
+    bool m_showFreeSpace; // Whether to show the <Free Space> item
+    bool m_showUnknown;   // Whether to show the <Unknown> item
 
-    CItem* m_RootItem = nullptr; // The very root item
-    CItemDupe* m_RootItemDupe = nullptr; // The very root dupe item
-    CItemTop* m_RootItemTop = nullptr; // The very root top item
-    CItemSearch* m_RootItemSearch = nullptr; // The very root search item
-    std::wstring m_HighlightExtension; // Currently highlighted extension
-    CItem* m_ZoomItem = nullptr;   // Current "zoom root"
+    CItem* m_rootItem = nullptr; // The very root item
+    CItemDupe* m_rootItemDupe = nullptr; // The very root dupe item
+    CItemTop* m_rootItemTop = nullptr; // The very root top item
+    CItemSearch* m_rootItemSearch = nullptr; // The very root search item
+    std::wstring m_highlightExtension; // Currently highlighted extension
+    CItem* m_zoomItem = nullptr;   // Current "zoom root"
 
-    std::mutex m_ExtensionMutex;
-    CExtensionData m_ExtensionData;    // Base for the extension view and cushion colors
+    std::mutex m_extensionMutex;
+    CExtensionData m_extensionData;    // Base for the extension view and cushion colors
 
-    CList<CItem*, CItem*> m_ReselectChildStack; // Stack for the "Re-select Child"-Feature
+    CList<CItem*, CItem*> m_reselectChildStack; // Stack for the "Re-select Child"-Feature
 
     std::unordered_map<std::wstring, BlockingQueue<CItem*>> m_queues; // The scanning and thread queue
     std::optional<std::jthread> m_thread; // Wrapper thread so we do not occupy the UI thread
 
-    LOGICAL_FOCUS m_CachedFocus; // Cache for GetAllSelected to avoid expensive queries
-    std::vector<CItem*> m_CachedSelection;
-    bool m_SelectionCacheValid = false;
+    // Cache for GetAllSelected to avoid expensive queries
+    LOGICAL_FOCUS m_cachedFocus{}; 
+    std::vector<CItem*> m_cachedSelection;
+    bool m_selectionCacheValid = false;
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnRefreshSelected();

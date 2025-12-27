@@ -22,7 +22,7 @@
 
 CFileSearchControl::CFileSearchControl() : CTreeListControl(COptions::SearchViewColumnOrder.Ptr(), COptions::SearchViewColumnWidths.Ptr())
 {
-    m_Singleton = this;
+    m_singleton = this;
 }
 
 bool CFileSearchControl::GetAscendingDefault(const int column)
@@ -38,7 +38,7 @@ BEGIN_MESSAGE_MAP(CFileSearchControl, CTreeListControl)
     ON_NOTIFY_REFLECT_EX(LVN_DELETEALLITEMS, OnDeleteAllItems)
 END_MESSAGE_MAP()
 
-CFileSearchControl* CFileSearchControl::m_Singleton = nullptr;
+CFileSearchControl* CFileSearchControl::m_singleton = nullptr;
 
 std::wregex CFileSearchControl::ComputeSearchRegex(const std::wstring & searchTerm, const bool searchCase, const bool useRegex)
 {
@@ -66,7 +66,7 @@ void CFileSearchControl::ProcessSearch(CItem* item)
     // Remove previous results
     SetRedraw(FALSE);
     CDirStatDoc::Get()->GetRootItemSearch()->RemoveSearchItemResults();
-    m_ItemTracker.clear();
+    m_itemTracker.clear();
     SetRedraw(TRUE);
 
     // Precompile regex string
@@ -98,7 +98,7 @@ void CFileSearchControl::ProcessSearch(CItem* item)
                 {
                     CDirStatDoc::Get()->GetRootItemSearch()->AddSearchItemChild(searchItem);
                 });
-                m_ItemTracker.emplace(qitem, searchItem);
+                m_itemTracker.emplace(qitem, searchItem);
             }
 
             // Descend into child items
@@ -119,12 +119,12 @@ void CFileSearchControl::ProcessSearch(CItem* item)
 
 void CFileSearchControl::RemoveItem(CItem* item)
 {
-    const auto& findItem = m_ItemTracker.find(item);
-    if (findItem == m_ItemTracker.end()) return;
+    const auto& findItem = m_itemTracker.find(item);
+    if (findItem == m_itemTracker.end()) return;
 
     // Remove the item from the interface
     CDirStatDoc::Get()->GetRootItemSearch()->RemoveSearchItemChild(findItem->second);
-    m_ItemTracker.erase(findItem);
+    m_itemTracker.erase(findItem);
 }
 
 void CFileSearchControl::OnItemDoubleClick(const int i)

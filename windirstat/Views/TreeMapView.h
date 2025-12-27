@@ -62,14 +62,14 @@ protected:
 
     static constexpr int ZoomFrameWidth = 4;
 
-    std::wstring m_PaneTextOverride; // Populated with the last hovered item for a period of time
-    bool m_DrawingSuspended = false; // True while the user is resizing the window.
-    bool m_ShowTreeMap = true;       // False, if the user switched off the treemap (by F9).
-    CSize m_Size{ 0, 0 };            // Current size of view
-    CTreeMap m_TreeMap;              // Treemap generator
-    CBitmap m_Bitmap;                // Cached view. If m_hObject is NULL, the view must be recalculated.
-    CSize m_DimmedSize{ 0,0 };       // Size of bitmap m_Dimmed
-    CBitmap m_Dimmed;                // Dimmed view. Used during refresh to avoid the ooops-effect.
+    std::wstring m_paneTextOverride; // Populated with the last hovered item for a period of time
+    bool m_drawingSuspended = false; // True while the user is resizing the window.
+    bool m_showTreeMap = true;       // False, if the user switched off the treemap (by F9).
+    CSize m_size{ 0, 0 };            // Current size of view
+    CTreeMap m_treeMap;              // Treemap generator
+    CBitmap m_bitmap;                // Cached view. If m_hObject is NULL, the view must be recalculated.
+    CSize m_dimmedSize{ 0,0 };       // Size of bitmap m_dimmed
+    CBitmap m_dimmed;                // Dimmed view. Used during refresh to avoid the ooops-effect.
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnSize(UINT nType, int cx, int cy);

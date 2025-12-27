@@ -22,10 +22,10 @@ IMPLEMENT_DYNAMIC(CProgressDlg, CDialogEx)
 
 CProgressDlg::CProgressDlg(const size_t total, const bool noCancel, CWnd* pParent, std::function<void(std::atomic<bool>&, std::atomic<size_t>&)> task)
     : CDialogEx(IDD, pParent)
-    , m_Total(total)
-    , m_Message(Localization::Lookup(IDS_PROGRESS))
-    , m_Task(std::move(task))
-    , m_NoCancel(noCancel)
+    , m_total(total)
+    , m_message(Localization::Lookup(IDS_PROGRESS))
+    , m_task(std::move(task))
+    , m_noCancel(noCancel)
 {
 }
 
@@ -38,9 +38,9 @@ END_MESSAGE_MAP()
 void CProgressDlg::DoDataExchange(CDataExchange* pDX)
 {
     CDialogEx::DoDataExchange(pDX);
-    DDX_Control(pDX, IDC_PROGRESS_MESSAGE, m_MessageCtrl);
-    DDX_Control(pDX, IDC_PROGRESS_BAR, m_ProgressCtrl);
-    DDX_Control(pDX, IDCANCEL, m_CancelButton);
+    DDX_Control(pDX, IDC_PROGRESS_MESSAGE, m_messageCtrl);
+    DDX_Control(pDX, IDC_PROGRESS_BAR, m_progressCtrl);
+    DDX_Control(pDX, IDCANCEL, m_cancelButton);
 }
 
 BOOL CProgressDlg::OnInitDialog()
@@ -52,24 +52,24 @@ BOOL CProgressDlg::OnInitDialog()
 
     // Set window title and message
     SetWindowText(Localization::LookupNeutral(AFX_IDS_APP_TITLE).c_str());
-    m_MessageCtrl.SetWindowText(m_Message.c_str());
+    m_messageCtrl.SetWindowText(m_message.c_str());
 
     // Configure cancel button
-    if (m_NoCancel) m_CancelButton.ShowWindow(SW_HIDE);
+    if (m_noCancel) m_cancelButton.ShowWindow(SW_HIDE);
 
     // Configure progress bar
-    if (m_Total > 0)
+    if (m_total > 0)
     {
-        m_ProgressCtrl.SetRange(0, 100);
-        m_ProgressCtrl.SetPos(0);
+        m_progressCtrl.SetRange(0, 100);
+        m_progressCtrl.SetPos(0);
 
         // Start timer for progress updates
         m_nTimerID = SetTimer(TIMER_ID, TIMER_INTERVAL, nullptr);
     }
     else
     {
-        m_ProgressCtrl.ModifyStyle(0, PBS_MARQUEE);
-        m_ProgressCtrl.SetMarquee(TRUE, 30);
+        m_progressCtrl.ModifyStyle(0, PBS_MARQUEE);
+        m_progressCtrl.SetMarquee(TRUE, 30);
     }
 
     // Center dialog
@@ -83,13 +83,13 @@ BOOL CProgressDlg::OnInitDialog()
 
 void CProgressDlg::StartWorkerThread()
 {
-    m_WorkerThread.emplace([this]()
+    m_workerThread.emplace([this]()
     {
         // Execute the task
-        m_Task(m_CancelRequested, m_Current);
+        m_task(m_cancelRequested, m_current);
 
         // Post message to close dialog when complete
-        if (!m_CancelRequested)
+        if (!m_cancelRequested)
         {
             PostMessage(WM_COMMAND, IDOK);
         }
@@ -98,13 +98,13 @@ void CProgressDlg::StartWorkerThread()
 
 void CProgressDlg::UpdateProgress()
 {
-    const int percent = static_cast<int>((m_Current.load() * 100) / m_Total);
-    m_ProgressCtrl.SetPos(percent);
+    const int percent = static_cast<int>((m_current.load() * 100) / m_total);
+    m_progressCtrl.SetPos(percent);
 
     // Update message with progress
     const std::wstring progressText = std::format(L"{}: {} / {}",
-        m_Message, m_Current.load(), m_Total);
-    m_MessageCtrl.SetWindowText(progressText.c_str());
+        m_message, m_current.load(), m_total);
+    m_messageCtrl.SetWindowText(progressText.c_str());
 }
 
 void CProgressDlg::OnTimer(UINT_PTR nIDEvent)
@@ -120,20 +120,20 @@ void CProgressDlg::OnCancel()
 {
     // Request cancellation
     CWaitCursor wc;
-    m_CancelRequested = true;
-    m_Cancelled = true;
+    m_cancelRequested = true;
+    m_cancelled = true;
 
     // Disable cancel button to prevent multiple clicks
-    m_CancelButton.EnableWindow(FALSE);
+    m_cancelButton.EnableWindow(FALSE);
     
     // Wait for worker thread to complete
-    if (m_WorkerThread.has_value())
+    if (m_workerThread.has_value())
     {
         ProcessMessagesUntilSignaled([this]
         {
-            if (m_WorkerThread->joinable()) m_WorkerThread->join();
+            if (m_workerThread->joinable()) m_workerThread->join();
         });
-        m_WorkerThread.reset();
+        m_workerThread.reset();
     }
 
     CDialogEx::OnCancel();
@@ -144,10 +144,10 @@ INT_PTR CProgressDlg::DoModal()
     const INT_PTR result = CDialogEx::DoModal();
 
     // Clean up worker thread if still running
-    if (m_WorkerThread.has_value())
+    if (m_workerThread.has_value())
     {
-        if (m_WorkerThread->joinable()) m_WorkerThread->join();
-        m_WorkerThread.reset();
+        if (m_workerThread->joinable()) m_workerThread->join();
+        m_workerThread.reset();
     }
 
     // Stop timer updates

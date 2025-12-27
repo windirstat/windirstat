@@ -51,7 +51,7 @@ class CLayout final
     class CSizeGripper final : public CWnd
     {
     public:
-        const int m_Width = 14;
+        const int m_width = 14;
 
         CSizeGripper() = default;
         void Create(CWnd* parent, CRect rc);
@@ -73,7 +73,7 @@ class CLayout final
         void SetWindowPos(HWND hWnd, int x, int y, int cx, int cy, UINT uFlags);
 
     private:
-        HDWP m_Wdp;
+        HDWP m_wdp;
     };
 
 public:
@@ -87,35 +87,35 @@ public:
     void OnDestroy() const;
 
 protected:
-    RECT* m_Wp;
-    CWnd* m_Dialog;
-    CSize m_OriginalDialogSize;
-    std::vector<SControlInfo> m_Control;
-    CSizeGripper m_SizeGripper;
+    RECT* m_wp;
+    CWnd* m_dialog;
+    CSize m_originalDialogSize;
+    std::vector<SControlInfo> m_control;
+    CSizeGripper m_sizeGripper;
 };
 
 //
 // CLayoutDialogEx. A class that provides automatic layout management
 // for dialogs. Inherit from this class instead of CDialogEx to get automatic
-// m_Layout support with OnSize, OnGetMinMaxInfo, and OnDestroy handling.
+// m_layout support with OnSize, OnGetMinMaxInfo, and OnDestroy handling.
 //
 class CLayoutDialogEx : public CDialogEx
 {
     DECLARE_DYNCREATE(CLayoutDialogEx)
 
 protected:
-    CLayout m_Layout;
+    CLayout m_layout;
 
     // Constructor that takes dialog ID and window placement
     CLayoutDialogEx(UINT nIDTemplate, RECT* placement, CWnd* pParent = nullptr)
         : CDialogEx(nIDTemplate, pParent)
-        , m_Layout(this, placement)
+        , m_layout(this, placement)
     {
     }
 
     // Default constructor for DYNCREATE
     CLayoutDialogEx()
-        : m_Layout(this, nullptr)
+        : m_layout(this, nullptr)
     {
     }
 

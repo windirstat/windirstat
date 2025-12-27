@@ -52,25 +52,25 @@ protected:
     void DoPage(const CPoint & point);
     void HighlightGripper(bool on);
 
-    bool m_Inited = false;
+    bool m_inited = false;
 
     // These are in external scale
-    CSize m_ExternalRange{ 100, 100 };
-    CPoint m_ExternalPos{ 0, 0 };
+    CSize m_externalRange{ 100, 100 };
+    CPoint m_externalPos{ 0, 0 };
 
     // These are in pixels
-    CSize m_Range;
-    CPoint m_Pos{ 0, 0 }; // relative to m_Zero
+    CSize m_range;
+    CPoint m_pos{ 0, 0 }; // relative to m_zero
 
     // Constants (in pixels)
-    CRect m_RcAll;
-    CRect m_RcInner;
-    CPoint m_Zero{ 0, 0 };
-    CSize m_Radius;
-    CSize m_GripperRadius;
+    CRect m_rcAll;
+    CRect m_rcInner;
+    CPoint m_zero{ 0, 0 };
+    CSize m_radius;
+    CSize m_gripperRadius;
 
-    UINT_PTR m_Timer = 0;
-    bool m_GripperHighlight = false;
+    UINT_PTR m_timer = 0;
+    bool m_gripperHighlight = false;
 
     DECLARE_MESSAGE_MAP()
     afx_msg UINT OnGetDlgCode();

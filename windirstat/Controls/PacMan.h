@@ -35,16 +35,16 @@ public:
 
 private:
     static void UpdatePosition(float& position, bool& up, float diff);
-    static bool m_Suspended;
+    static bool m_suspended;
 
-    Gdiplus::Font m_Font;
-    COLORREF m_BackColor;
-    ULONGLONG m_LastUpdate = 0;  // TickCount
-    ULONGLONG m_LastDraw = 0;    // Last time drawn
-    float m_Position = 0.0f;     // 0...1
-    float m_Aperture = 0.0f;     // 0...1
-    bool m_Done = false;         // Whether pacman should be done
-    bool m_Moving = false;       // Whether pacman is moving
-    bool m_ToTheRight = true;    // Moving right
-    bool m_MouthOpening = true;  // Mouth is opening
+    Gdiplus::Font m_font;
+    COLORREF m_backColor;
+    ULONGLONG m_lastUpdate = 0;  // TickCount
+    ULONGLONG m_lastDraw = 0;    // Last time drawn
+    float m_position = 0.0f;     // 0...1
+    float m_aperture = 0.0f;     // 0...1
+    bool m_done = false;         // Whether pacman should be done
+    bool m_moving = false;       // Whether pacman is moving
+    bool m_toTheRight = true;    // Moving right
+    bool m_mouthOpening = true;  // Mouth is opening
 };

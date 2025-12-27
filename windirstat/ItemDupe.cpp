@@ -19,25 +19,25 @@
 #include "ItemDupe.h"
 #include "FileDupeControl.h"
 
-CItemDupe::CItemDupe(const std::vector<BYTE>& hash) : m_Hash(hash)
+CItemDupe::CItemDupe(const std::vector<BYTE>& hash) : m_hash(hash)
 {
-    m_HashString.resize(2ull * m_Hash.size());
-    DWORD iHashStringLength = static_cast<DWORD>(m_HashString.size() + 1ull);
-    CryptBinaryToStringW(m_Hash.data(), static_cast<DWORD>(m_Hash.size()),
-        CRYPT_STRING_HEXRAW | CRYPT_STRING_NOCRLF, m_HashString.data(), &iHashStringLength);
+    m_hashString.resize(2ull * m_hash.size());
+    DWORD iHashStringLength = static_cast<DWORD>(m_hashString.size() + 1ull);
+    CryptBinaryToStringW(m_hash.data(), static_cast<DWORD>(m_hash.size()),
+        CRYPT_STRING_HEXRAW | CRYPT_STRING_NOCRLF, m_hashString.data(), &iHashStringLength);
 }
 
-CItemDupe::CItemDupe(CItem* item) : m_Item(item) {}
+CItemDupe::CItemDupe(CItem* item) : m_item(item) {}
 
 CItemDupe::~CItemDupe()
 {
-    for (const auto& m_Child : m_Children)
+    for (const auto& m_child : m_children)
     {
-        delete m_Child;
+        delete m_child;
     }
 }
 
-const std::unordered_map<uint8_t, uint8_t> CItemDupe::columnMap =
+const std::unordered_map<uint8_t, uint8_t> CItemDupe::s_columnMap =
 {
     { COL_ITEMDUP_NAME, COL_NAME },
     { COL_ITEMDUP_ITEMS, COL_ITEMS },
@@ -50,7 +50,7 @@ bool CItemDupe::DrawSubItem(const int subitem, CDC* pdc, const CRect rc, const U
 {
     // Handle individual file items
     if (subitem != COL_ITEMDUP_NAME) return false;
-    return CTreeListItem::DrawSubItem(columnMap.at(static_cast<uint8_t>(subitem)), pdc, rc, state, width, focusLeft);
+    return CTreeListItem::DrawSubItem(s_columnMap.at(static_cast<uint8_t>(subitem)), pdc, rc, state, width, focusLeft);
 }
 
 std::wstring CItemDupe::GetText(const int subitem) const
@@ -60,19 +60,19 @@ std::wstring CItemDupe::GetText(const int subitem) const
     if (GetParent() == nullptr) return subitem == COL_ITEMDUP_NAME ? duplicates : std::wstring{};
 
     // Parent hash nodes
-    if (m_Item == nullptr)
+    if (m_item == nullptr)
     {
         // Handle top-level hash collection nodes
         if (subitem == COL_ITEMDUP_NAME) return GetHashAndExtensions();
-        if (subitem == COL_ITEMDUP_SIZE_PHYSICAL) return FormatBytes(m_SizePhysical);
-        if (subitem == COL_ITEMDUP_SIZE_LOGICAL) return FormatBytes(m_SizeLogical);
+        if (subitem == COL_ITEMDUP_SIZE_PHYSICAL) return FormatBytes(m_sizePhysical);
+        if (subitem == COL_ITEMDUP_SIZE_LOGICAL) return FormatBytes(m_sizeLogical);
         if (subitem == COL_ITEMDUP_ITEMS) return FormatCount(GetChildren().size());
         return {};
     }
 
     // Individual file names
-    if (subitem == COL_ITEMDUP_NAME) return m_Item->GetPath();
-    return m_Item->GetText(columnMap.at(static_cast<uint8_t>(subitem)));
+    if (subitem == COL_ITEMDUP_NAME) return m_item->GetPath();
+    return m_item->GetText(s_columnMap.at(static_cast<uint8_t>(subitem)));
 }
 
 int CItemDupe::CompareSibling(const CTreeListItem* tlib, const int subitem) const
@@ -82,62 +82,62 @@ int CItemDupe::CompareSibling(const CTreeListItem* tlib, const int subitem) cons
     
     // Parent hash nodes
     const auto* other = reinterpret_cast<const CItemDupe*>(tlib);
-    if (m_Item == nullptr)
+    if (m_item == nullptr)
     {
         // Handle top-level hash collection nodes
-        if (subitem == COL_ITEMDUP_NAME) return memcmp(m_Hash.data(), other->m_Hash.data(), m_Hash.size());
-        if (subitem == COL_ITEMDUP_SIZE_PHYSICAL) return usignum(m_SizePhysical, other->m_SizePhysical);
-        if (subitem == COL_ITEMDUP_SIZE_LOGICAL) return usignum(m_SizeLogical, other->m_SizeLogical);
-        if (subitem == COL_ITEMDUP_ITEMS) return usignum(m_Children.size(), other->m_Children.size());
+        if (subitem == COL_ITEMDUP_NAME) return memcmp(m_hash.data(), other->m_hash.data(), m_hash.size());
+        if (subitem == COL_ITEMDUP_SIZE_PHYSICAL) return usignum(m_sizePhysical, other->m_sizePhysical);
+        if (subitem == COL_ITEMDUP_SIZE_LOGICAL) return usignum(m_sizeLogical, other->m_sizeLogical);
+        if (subitem == COL_ITEMDUP_ITEMS) return usignum(m_children.size(), other->m_children.size());
         return 0;
     }
 
     // Individual file names
-    return m_Item->CompareSibling(other->m_Item, columnMap.at(static_cast<uint8_t>(subitem)));
+    return m_item->CompareSibling(other->m_item, s_columnMap.at(static_cast<uint8_t>(subitem)));
 }
 
 int CItemDupe::GetTreeListChildCount()const
 {
-    return static_cast<int>(m_Children.size());
+    return static_cast<int>(m_children.size());
 }
 
 CTreeListItem* CItemDupe::GetTreeListChild(const int i) const
 {
-    return m_Children[i];
+    return m_children[i];
 }
 
 HICON CItemDupe::GetIcon()
 {
     // Return generic node for parent nodes
-    if (m_Item == nullptr || m_VisualInfo == nullptr)
+    if (m_item == nullptr || m_visualInfo == nullptr)
     {
         return GetIconHandler()->GetFreeSpaceImage();
     }
 
     // Return previously cached value
-    if (m_VisualInfo->icon != nullptr)
+    if (m_visualInfo->icon != nullptr)
     {
-        return m_VisualInfo->icon;
+        return m_visualInfo->icon;
     }
 
     // Fetch all other icons
     CDirStatApp::Get()->GetIconHandler()->DoAsyncShellInfoLookup(std::make_tuple(this,
-        m_VisualInfo->control, m_Item->GetPath(), m_Item->GetAttributes(), &m_VisualInfo->icon, nullptr));
+        m_visualInfo->control, m_item->GetPath(), m_item->GetAttributes(), &m_visualInfo->icon, nullptr));
     return nullptr;
 }
 
 const std::vector<CItemDupe*>& CItemDupe::GetChildren() const
 {
-    return m_Children;
+    return m_children;
 }
 
 std::wstring CItemDupe::GetHashAndExtensions() const
 {
     // Create set of unique extensions
     std::unordered_set<std::wstring> extensionsSet;
-    for (const auto& child : m_Children)
+    for (const auto& child : m_children)
     {
-        const auto & ext = child->m_Item->GetExtension();
+        const auto & ext = child->m_item->GetExtension();
         if (ext.empty()) extensionsSet.emplace(L".???");
         else extensionsSet.emplace(ext);
     }
@@ -162,7 +162,7 @@ std::wstring CItemDupe::GetHashAndExtensions() const
     }
 
     // Format string as Hash (.exta, .extb)
-    return std::format(L"{} ({})", m_HashString, extensions);
+    return std::format(L"{} ({})", m_hashString, extensions);
 }
 
 void CItemDupe::AddDupeItemChild(CItemDupe* child)
@@ -170,14 +170,14 @@ void CItemDupe::AddDupeItemChild(CItemDupe* child)
     // Adjust parent item sizes
     if (const auto childItem = child->GetLinkedItem(); childItem != nullptr)
     {
-        m_SizeLogical += childItem->GetSizeLogical();
-        m_SizePhysical += childItem->GetSizePhysical();
+        m_sizeLogical += childItem->GetSizeLogical();
+        m_sizePhysical += childItem->GetSizePhysical();
     }
 
     child->SetParent(this);
 
-    std::scoped_lock guard(m_Protect);
-    m_Children.push_back(child);
+    std::scoped_lock guard(m_protect);
+    m_children.push_back(child);
 
     if (IsVisible() && IsExpanded())
     {
@@ -193,14 +193,14 @@ void CItemDupe::RemoveDupeItemChild(CItemDupe* child)
     }
 
     // Adjust parent item sizes
-    std::scoped_lock guard(m_Protect);
+    std::scoped_lock guard(m_protect);
     if (const auto childItem = child->GetLinkedItem(); childItem != nullptr)
     {
-        m_SizeLogical -= childItem->GetSizeLogical();
-        m_SizePhysical -= childItem->GetSizePhysical();
+        m_sizeLogical -= childItem->GetSizeLogical();
+        m_sizePhysical -= childItem->GetSizePhysical();
     }
 
-    auto& children = m_Children;
+    auto& children = m_children;
     if (auto it = std::ranges::find(children, child); it != children.end())
     {
         children.erase(it);

@@ -23,16 +23,16 @@
 #pragma comment(lib, "crypt32.lib")
 #pragma comment(lib, "bcrypt.lib")
 
-CItem::CItem(const ITEMTYPE type, const std::wstring & name) : m_Type(type)
+CItem::CItem(const ITEMTYPE type, const std::wstring & name) : m_type(type)
 {
     if (IsTypeOrFlag(IT_MYCOMPUTER, IT_DRIVE, IT_DIRECTORY, IT_HLINKS, IT_HLINKS_SET, IT_HLINKS_IDX))
     {
-        m_FolderInfo = std::make_unique<CHILDINFO>();
+        m_folderInfo = std::make_unique<CHILDINFO>();
 
         // My computer node will never have these attributes set externally
         if (IsTypeOrFlag(IT_MYCOMPUTER))
         {
-            m_Attributes = 0;
+            m_attributes = 0;
         }
     }
 
@@ -45,7 +45,7 @@ CItem::CItem(const ITEMTYPE type, const std::wstring & name) : m_Type(type)
         // The name string on the drive is two parts separated by a pipe. For example,
         // C:\|Local Disk (C:) is the true path followed by the name description
         SetName(std::format(L"{:.2}|{}", nameTmp, FormatVolumeNameOfRootPath(nameTmp)));
-        m_Attributes = LOWORD(GetFileAttributesW(GetPathLong().c_str()));
+        m_attributes = LOWORD(GetFileAttributesW(GetPathLong().c_str()));
     }
     else
     {
@@ -58,12 +58,12 @@ CItem::CItem(const ITEMTYPE type, const std::wstring& name, const FILETIME lastC
     const DWORD attributes, const ULONG files, const ULONG subdirs)
 {
     SetName(name);
-    m_Type = type;
-    m_LastChange = lastChange;
-    m_SizePhysical = sizePhysical;
-    m_SizeLogical = sizeLogical;
-    m_Index = index;
-    m_Attributes = LOWORD(attributes);
+    m_type = type;
+    m_lastChange = lastChange;
+    m_sizePhysical = sizePhysical;
+    m_sizeLogical = sizeLogical;
+    m_index = index;
+    m_attributes = LOWORD(attributes);
 
     if (IsTypeOrFlag(IT_DRIVE))
     {
@@ -72,17 +72,17 @@ CItem::CItem(const ITEMTYPE type, const std::wstring& name, const FILETIME lastC
 
     if (IsTypeOrFlag(IT_MYCOMPUTER, IT_DRIVE, IT_DIRECTORY, IT_HLINKS, IT_HLINKS_SET, IT_HLINKS_IDX))
     {
-        m_FolderInfo = std::make_unique<CHILDINFO>();
-        m_FolderInfo->m_Subdirs = subdirs;
-        m_FolderInfo->m_Files = files;
+        m_folderInfo = std::make_unique<CHILDINFO>();
+        m_folderInfo->m_subdirs = subdirs;
+        m_folderInfo->m_files = files;
     }
 }
 
 CItem::~CItem()
 {
-    if (m_FolderInfo != nullptr)
+    if (m_folderInfo != nullptr)
     {
-        for (const auto& child : m_FolderInfo->m_Children)
+        for (const auto& child : m_folderInfo->m_children)
         {
             delete child;
         }
@@ -214,7 +214,7 @@ std::wstring CItem::GetText(const int subitem) const
     case COL_LAST_CHANGE:
         if (!IsTypeOrFlag(IT_FREESPACE, IT_UNKNOWN, IT_HLINKS, IT_HLINKS_SET, IT_HLINKS_IDX))
         {
-            return FormatFileTime(m_LastChange);
+            return FormatFileTime(m_lastChange);
         }
         break;
 
@@ -270,7 +270,7 @@ int CItem::CompareSibling(const CTreeListItem* tlib, const int subitem) const
             {
                 return usignum(GetItemType(), other->GetItemType());
             }
-            return signum(_wcsicmp(m_Name.get(), other->m_Name.get()));
+            return signum(_wcsicmp(m_name.get(), other->m_name.get()));
         }
 
         case COL_SUBTREE_PERCENTAGE:
@@ -317,11 +317,11 @@ int CItem::CompareSibling(const CTreeListItem* tlib, const int subitem) const
 
         case COL_LAST_CHANGE:
         {
-            if (m_LastChange < other->m_LastChange)
+            if (m_lastChange < other->m_lastChange)
             {
                 return -1;
             }
-            if (m_LastChange == other->m_LastChange)
+            if (m_lastChange == other->m_lastChange)
             {
                 return 0;
             }
@@ -351,47 +351,47 @@ HICON CItem::GetIcon()
     ASSERT(IsVisible());
 
     // Return cached icon if available
-    if (m_VisualInfo->icon != nullptr)
+    if (m_visualInfo->icon != nullptr)
     {
-        return m_VisualInfo->icon;
+        return m_visualInfo->icon;
     }
 
     if (IsTypeOrFlag(IT_MYCOMPUTER))
     {
-        m_VisualInfo->icon = GetIconHandler()->GetMyComputerImage();
-        return m_VisualInfo->icon;
+        m_visualInfo->icon = GetIconHandler()->GetMyComputerImage();
+        return m_visualInfo->icon;
     }
     if (IsTypeOrFlag(IT_FREESPACE))
     {
-        m_VisualInfo->icon = GetIconHandler()->GetFreeSpaceImage();
-        return m_VisualInfo->icon;
+        m_visualInfo->icon = GetIconHandler()->GetFreeSpaceImage();
+        return m_visualInfo->icon;
     }
     if (IsTypeOrFlag(IT_UNKNOWN))
     {
-        m_VisualInfo->icon = GetIconHandler()->GetUnknownImage();
-        return m_VisualInfo->icon;
+        m_visualInfo->icon = GetIconHandler()->GetUnknownImage();
+        return m_visualInfo->icon;
     }
     if (IsTypeOrFlag(IT_HLINKS, IT_HLINKS_SET, IT_HLINKS_IDX, IT_HLINKS_FILE))
     {
-        m_VisualInfo->icon = GetIconHandler()->GetHardlinksImage();
-        return m_VisualInfo->icon;
+        m_visualInfo->icon = GetIconHandler()->GetHardlinksImage();
+        return m_visualInfo->icon;
     }
 
     if (IsTypeOrFlag(ITRP_MOUNT))
     {
-        m_VisualInfo->icon = GetIconHandler()->GetMountPointImage();
-        return m_VisualInfo->icon;
+        m_visualInfo->icon = GetIconHandler()->GetMountPointImage();
+        return m_visualInfo->icon;
     }
     if (IsTypeOrFlag(ITRP_SYMLINK, ITRP_JUNCTION))
     {
         constexpr DWORD mask = FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM;
         const bool osFile = (GetAttributes() & mask) == mask;
-        m_VisualInfo->icon = osFile ? GetIconHandler()->GetJunctionProtectedImage() : GetIconHandler()->GetJunctionImage();
-        return m_VisualInfo->icon;
+        m_visualInfo->icon = osFile ? GetIconHandler()->GetJunctionProtectedImage() : GetIconHandler()->GetJunctionImage();
+        return m_visualInfo->icon;
     }
 
     CDirStatApp::Get()->GetIconHandler()->DoAsyncShellInfoLookup(std::make_tuple(const_cast<CItem*>(this),
-        m_VisualInfo->control, GetPath(), GetAttributes(), &m_VisualInfo->icon, nullptr));
+        m_visualInfo->control, GetPath(), GetAttributes(), &m_visualInfo->icon, nullptr));
 
     return nullptr;
 }
@@ -486,15 +486,15 @@ void CItem::UpdateStatsFromDisk()
             OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, nullptr));
         if (handle != INVALID_HANDLE_VALUE)
         {
-            GetFileTime(handle, nullptr, nullptr, &m_LastChange);
+            GetFileTime(handle, nullptr, nullptr, &m_lastChange);
         }
     }
 }
 
 const std::vector<CItem*>& CItem::GetChildren() const
 {
-    ASSERT(m_FolderInfo != nullptr);
-    return m_FolderInfo->m_Children;
+    ASSERT(m_folderInfo != nullptr);
+    return m_folderInfo->m_children;
 }
 
 CItem* CItem::GetParent() const
@@ -522,7 +522,7 @@ void CItem::AddChild(CItem* child, const bool addOnly)
     }
 
     child->SetParent(this);
-    m_FolderInfo->m_Children.push_back(child);
+    m_folderInfo->m_children.push_back(child);
   
     if (IsVisible() && IsExpanded())
     {
@@ -543,7 +543,7 @@ void CItem::RemoveChild(CItem* child)
         });
     }
 
-    auto& children = m_FolderInfo->m_Children;
+    auto& children = m_folderInfo->m_children;
     if (auto it = std::ranges::find(children, child); it != children.end())
     {
         children.erase(it);
@@ -630,11 +630,11 @@ void CItem::RemoveAllChildren()
         CFileTreeControl::Get()->OnRemovingAllChildren(this);
     });
 
-    for (const auto& child : m_FolderInfo->m_Children)
+    for (const auto& child : m_folderInfo->m_children)
     {
         delete child;
     }
-    m_FolderInfo->m_Children.clear();
+    m_folderInfo->m_children.clear();
 }
 
 void CItem::UpwardAddFolders(const ULONG dirCount)
@@ -643,7 +643,7 @@ void CItem::UpwardAddFolders(const ULONG dirCount)
     for (auto p = this; p != nullptr; p = p->GetParent())
     {
         if (p->IsTypeOrFlag(IT_FILE)) continue;
-        p->m_FolderInfo->m_Subdirs += dirCount;
+        p->m_folderInfo->m_subdirs += dirCount;
     }
 }
 
@@ -652,9 +652,9 @@ void CItem::UpwardSubtractFolders(const ULONG dirCount)
     if (dirCount == 0) return;
     for (auto p = this; p != nullptr; p = p->GetParent())
     {
-        ASSERT(p->m_FolderInfo->m_Subdirs - dirCount >= 0);
+        ASSERT(p->m_folderInfo->m_subdirs - dirCount >= 0);
         if (p->IsTypeOrFlag(IT_FILE)) continue;
-        p->m_FolderInfo->m_Subdirs -= dirCount;
+        p->m_folderInfo->m_subdirs -= dirCount;
     }
 }
 
@@ -664,7 +664,7 @@ void CItem::UpwardAddFiles(const ULONG fileCount)
     for (auto p = this; p != nullptr; p = p->GetParent())
     {
         if (p->IsTypeOrFlag(IT_FILE)) continue;
-        p->m_FolderInfo->m_Files += fileCount;
+        p->m_folderInfo->m_files += fileCount;
     }
 }
 
@@ -674,8 +674,8 @@ void CItem::UpwardSubtractFiles(const ULONG fileCount)
     for (auto p = this; p != nullptr; p = p->GetParent())
     {
         if (p->IsTypeOrFlag(IT_FILE)) continue;
-        ASSERT(p->m_FolderInfo->m_Files - fileCount >= 0);
-        p->m_FolderInfo->m_Files -= fileCount;
+        ASSERT(p->m_folderInfo->m_files - fileCount >= 0);
+        p->m_folderInfo->m_files -= fileCount;
     }
 }
 
@@ -685,7 +685,7 @@ void CItem::UpwardAddSizePhysical(const ULONGLONG bytes)
 
     for (auto p = this; p != nullptr; p = p->GetParent())
     {
-        p->m_SizePhysical += bytes;
+        p->m_sizePhysical += bytes;
     }
 }
 
@@ -695,8 +695,8 @@ void CItem::UpwardSubtractSizePhysical(const ULONGLONG bytes)
 
     for (auto p = this; p != nullptr; p = p->GetParent())
     {
-        ASSERT(bytes <= p->m_SizePhysical);
-        p->m_SizePhysical -= bytes;
+        ASSERT(bytes <= p->m_sizePhysical);
+        p->m_sizePhysical -= bytes;
     }
 }
 
@@ -705,7 +705,7 @@ void CItem::UpwardAddSizeLogical(const ULONGLONG bytes)
     if (bytes == 0) return;
     for (auto p = this; p != nullptr; p = p->GetParent())
     {
-        p->m_SizeLogical += bytes;
+        p->m_sizeLogical += bytes;
     }
 }
 
@@ -714,8 +714,8 @@ void CItem::UpwardSubtractSizeLogical(const ULONGLONG bytes)
     if (bytes == 0) return;
     for (auto p = this; p != nullptr; p = p->GetParent())
     {
-        ASSERT(p->m_SizeLogical - bytes >= 0);
-        p->m_SizeLogical -= bytes;
+        ASSERT(p->m_sizeLogical - bytes >= 0);
+        p->m_sizeLogical -= bytes;
     }
 }
 
@@ -761,11 +761,11 @@ void CItem::ExtensionDataProcessChildren(const bool remove) const
 void CItem::UpwardAddReadJobs(const ULONG count)
 {
     if (IsLeaf() || count == 0) return;
-    if (m_FolderInfo->m_Jobs == 0) m_FolderInfo->m_Tstart = static_cast<ULONG>(GetTickCount64() / 1000ull);
+    if (m_folderInfo->m_jobs == 0) m_folderInfo->m_tstart = static_cast<ULONG>(GetTickCount64() / 1000ull);
     for (auto p = this; p != nullptr; p = p->GetParent())
     {
         if (p->IsTypeOrFlag(IT_FILE)) continue;
-        p->m_FolderInfo->m_Jobs += count;
+        p->m_folderInfo->m_jobs += count;
     }
 }
 
@@ -774,7 +774,7 @@ void CItem::UpwardSubtractReadJobs(const ULONG count)
     if (count == 0 || IsTypeOrFlag(IT_FILE)) return;
     for (auto p = this; p != nullptr; p = p->GetParent())
     {
-        ULONG previous = p->m_FolderInfo->m_Jobs.fetch_sub(count);
+        ULONG previous = p->m_folderInfo->m_jobs.fetch_sub(count);
         if (previous >= count && previous - count == 0)
         {
             p->SetDone();
@@ -787,7 +787,7 @@ void CItem::UpwardUpdateLastChange(const FILETIME& t)
 {
     for (auto p = this; p != nullptr; p = p->GetParent())
     {
-        if (FileTimeIsGreater(t, p->m_LastChange)) p->m_LastChange = t;
+        if (FileTimeIsGreater(t, p->m_lastChange)) p->m_lastChange = t;
     }
 }
 
@@ -801,74 +801,74 @@ void CItem::UpwardRecalcLastChange(const bool withoutItem)
         for (const auto& child : p->GetChildren())
         {
             if (withoutItem && child == this) continue;
-            if (FileTimeIsGreater(child->m_LastChange, p->m_LastChange))
-                p->m_LastChange = child->m_LastChange;
+            if (FileTimeIsGreater(child->m_lastChange, p->m_lastChange))
+                p->m_lastChange = child->m_lastChange;
         }
     }
 }
 
 ULONGLONG CItem::GetSizePhysical() const
 {
-    return (IsTypeOrFlag(ITF_HARDLINK) && COptions::ProcessHardlinks) ? 0 : m_SizePhysical.load();
+    return (IsTypeOrFlag(ITF_HARDLINK) && COptions::ProcessHardlinks) ? 0 : m_sizePhysical.load();
 }
 
 ULONGLONG CItem::GetSizeLogical() const
 {
-    return m_SizeLogical;
+    return m_sizeLogical;
 }
 
 ULONGLONG CItem::GetSizePhysicalRaw() const
 {
-    return m_SizePhysical;
+    return m_sizePhysical;
 }
 
 void CItem::SetSizePhysical(const ULONGLONG size)
 {
     ASSERT(size >= 0);
-    m_SizePhysical = size;
+    m_sizePhysical = size;
 }
 
 void CItem::SetSizeLogical(const ULONGLONG size)
 {
     ASSERT(size >= 0);
-    m_SizeLogical = size;
+    m_sizeLogical = size;
 }
 
 ULONG CItem::GetReadJobs() const
 {
     if (IsLeaf()) return 0;
-    return m_FolderInfo->m_Jobs;
+    return m_folderInfo->m_jobs;
 }
 
 FILETIME CItem::GetLastChange() const
 {
-    return m_LastChange;
+    return m_lastChange;
 }
 
 void CItem::SetLastChange(const FILETIME& t)
 {
-    m_LastChange = t;
+    m_lastChange = t;
 }
 
 void CItem::SetAttributes(const DWORD attr)
 {
-    m_Attributes = LOWORD(attr);
+    m_attributes = LOWORD(attr);
 }
 
 DWORD CItem::GetAttributes() const
 {
-    return m_Attributes == LOWORD(INVALID_FILE_ATTRIBUTES)
-        ? INVALID_FILE_ATTRIBUTES : m_Attributes;
+    return m_attributes == LOWORD(INVALID_FILE_ATTRIBUTES)
+        ? INVALID_FILE_ATTRIBUTES : m_attributes;
 }
 
 void CItem::SetIndex(const ULONGLONG index)
 {
-    m_Index = index;
+    m_index = index;
 }
 
 ULONGLONG CItem::GetIndex() const
 {
-    return m_Index;
+    return m_index;
 }
 
 DWORD CItem::GetReparseTag() const
@@ -896,13 +896,13 @@ USHORT CItem::GetSortAttributes() const
 
     // We want to enforce the order RHSACE with R being the highest priority
     // attribute and E being the lowest priority attribute.
-    ret |= m_Attributes & FILE_ATTRIBUTE_READONLY    ? 1 << 6 : 0; // R
-    ret |= m_Attributes & FILE_ATTRIBUTE_HIDDEN      ? 1 << 5 : 0; // H
-    ret |= m_Attributes & FILE_ATTRIBUTE_SYSTEM      ? 1 << 4 : 0; // S
-    ret |= m_Attributes & FILE_ATTRIBUTE_ARCHIVE     ? 1 << 3 : 0; // A
-    ret |= m_Attributes & FILE_ATTRIBUTE_COMPRESSED  ? 1 << 2 : 0; // C
-    ret |= m_Attributes & FILE_ATTRIBUTE_ENCRYPTED   ? 1 << 1 : 0; // E
-    ret |= m_Attributes & FILE_ATTRIBUTE_SPARSE_FILE ? 1 << 0 : 0; // Z
+    ret |= m_attributes & FILE_ATTRIBUTE_READONLY    ? 1 << 6 : 0; // R
+    ret |= m_attributes & FILE_ATTRIBUTE_HIDDEN      ? 1 << 5 : 0; // H
+    ret |= m_attributes & FILE_ATTRIBUTE_SYSTEM      ? 1 << 4 : 0; // S
+    ret |= m_attributes & FILE_ATTRIBUTE_ARCHIVE     ? 1 << 3 : 0; // A
+    ret |= m_attributes & FILE_ATTRIBUTE_COMPRESSED  ? 1 << 2 : 0; // C
+    ret |= m_attributes & FILE_ATTRIBUTE_ENCRYPTED   ? 1 << 1 : 0; // E
+    ret |= m_attributes & FILE_ATTRIBUTE_SPARSE_FILE ? 1 << 0 : 0; // Z
 
     return ret;
 }
@@ -951,7 +951,7 @@ std::wstring CItem::GetOwner(const bool force) const
 
     // If visible, use cached variable
     std::wstring tmp;
-    std::wstring & ret = (force) ? tmp : m_VisualInfo->owner;
+    std::wstring & ret = (force) ? tmp : m_visualInfo->owner;
     if (!ret.empty()) return ret;
 
     // Fetch owner information from drive
@@ -985,10 +985,10 @@ std::wstring CItem::GetFolderPath() const
 
 void CItem::SetName(std::wstring_view name)
 {
-    m_NameLen = static_cast<std::uint8_t>(name.size());
-    m_Name = std::make_unique_for_overwrite<wchar_t[]>(m_NameLen + 1);
-    if (m_NameLen) std::wmemcpy(m_Name.get(), name.data(), m_NameLen);
-    m_Name[m_NameLen] = L'\0';
+    m_nameLen = static_cast<std::uint8_t>(name.size());
+    m_name = std::make_unique_for_overwrite<wchar_t[]>(m_nameLen + 1);
+    if (m_nameLen) std::wmemcpy(m_name.get(), name.data(), m_nameLen);
+    m_name[m_nameLen] = L'\0';
 }
 
 std::wstring CItem::GetName() const
@@ -996,11 +996,11 @@ std::wstring CItem::GetName() const
     // For IT_HLINKS_FILE, the name is stored as the full path - extract just the filename
     if (IsTypeOrFlag(IT_HLINKS_FILE))
     {
-        std::wstring fullName{ m_Name.get(), m_NameLen };
+        std::wstring fullName{ m_name.get(), m_nameLen };
         return fullName.substr(fullName.find_last_of(wds::chrBackslash) + 1);
     }
     
-    return { m_Name.get(), m_NameLen };
+    return { m_name.get(), m_nameLen };
 }
 
 std::wstring CItem::GetExtension() const
@@ -1017,19 +1017,19 @@ std::wstring CItem::GetExtension() const
 ULONG CItem::GetFilesCount() const
 {
     if (IsLeaf()) return 0;
-    return m_FolderInfo->m_Files;
+    return m_folderInfo->m_files;
 }
 
 ULONG CItem::GetFoldersCount() const
 {
     if (IsLeaf()) return 0;
-    return m_FolderInfo->m_Subdirs;
+    return m_folderInfo->m_subdirs;
 }
 
 ULONGLONG CItem::GetItemsCount() const
 {
     if (IsLeaf()) return 0;
-    return static_cast<ULONGLONG>(m_FolderInfo->m_Files) + static_cast<ULONGLONG>(m_FolderInfo->m_Subdirs);
+    return static_cast<ULONGLONG>(m_folderInfo->m_files) + static_cast<ULONGLONG>(m_folderInfo->m_subdirs);
 }
 
 void CItem::SetDone()
@@ -1049,7 +1049,7 @@ void CItem::SetDone()
     if (!IsLeaf())
     {
         COptions::TreeMapUseLogical ? SortItemsBySizeLogical() : SortItemsBySizePhysical();
-        m_FolderInfo->m_Tfinish = static_cast<ULONG>(GetTickCount64() / 1000ull);
+        m_folderInfo->m_tfinish = static_cast<ULONG>(GetTickCount64() / 1000ull);
     }
 
     // Mark as done just so other functions do not sort at the same time
@@ -1061,8 +1061,8 @@ void CItem::SortItemsBySizePhysical() const
     if (IsLeaf()) return;
 
     // sort by size for proper treemap rendering
-    m_FolderInfo->m_Children.shrink_to_fit();
-    std::ranges::sort(m_FolderInfo->m_Children, std::ranges::greater{}, &CItem::GetSizePhysical);
+    m_folderInfo->m_children.shrink_to_fit();
+    std::ranges::sort(m_folderInfo->m_children, std::ranges::greater{}, &CItem::GetSizePhysical);
 }
 
 void CItem::SortItemsBySizeLogical() const
@@ -1070,22 +1070,22 @@ void CItem::SortItemsBySizeLogical() const
     if (IsLeaf()) return;
     
     // sort by size for proper treemap rendering
-    m_FolderInfo->m_Children.shrink_to_fit();
-    std::ranges::sort(m_FolderInfo->m_Children, std::ranges::greater{}, &CItem::GetSizeLogical);
+    m_folderInfo->m_children.shrink_to_fit();
+    std::ranges::sort(m_folderInfo->m_children, std::ranges::greater{}, &CItem::GetSizeLogical);
 }
 
 ULONGLONG CItem::GetTicksWorked() const
 {
     if (IsLeaf()) return 0;
-    return m_FolderInfo->m_Tfinish > 0 ? (m_FolderInfo->m_Tfinish - m_FolderInfo->m_Tstart) :
-        (m_FolderInfo->m_Tstart > 0) ? ((GetTickCount64() / 1000ull) - m_FolderInfo->m_Tstart) : 0;
+    return m_folderInfo->m_tfinish > 0 ? (m_folderInfo->m_tfinish - m_folderInfo->m_tstart) :
+        (m_folderInfo->m_tstart > 0) ? ((GetTickCount64() / 1000ull) - m_folderInfo->m_tstart) : 0;
 }
 
 void CItem::ResetScanStartTime() const
 {
     if (IsLeaf()) return;
-    m_FolderInfo->m_Tfinish = 0;
-    m_FolderInfo->m_Tstart = static_cast<ULONG>(GetTickCount64() / 1000ull);
+    m_folderInfo->m_tfinish = 0;
+    m_folderInfo->m_tstart = static_cast<ULONG>(GetTickCount64() / 1000ull);
 }
 
 void CItem::ScanItemsFinalize(CItem* item)
@@ -1097,7 +1097,7 @@ void CItem::ScanItemsFinalize(CItem* item)
         const auto & qitem = queue.top();
         queue.pop();
         qitem->SetDone();
-        if (qitem->m_FolderInfo == nullptr) continue;
+        if (qitem->m_folderInfo == nullptr) continue;
         for (const auto& child : qitem->GetChildren())
         {
             if (!child->IsDone()) queue.push(child);
@@ -1704,15 +1704,15 @@ std::wstring CItem::UpwardGetPathWithoutBackslash() const
     {
         if (const auto & pathPart = *it; pathPart->IsTypeOrFlag(IT_DIRECTORY))
         {
-            path.append(pathPart->m_Name.get(), pathPart->m_NameLen).append(L"\\");
+            path.append(pathPart->m_name.get(), pathPart->m_nameLen).append(L"\\");
         }
         else if (pathPart->IsTypeOrFlag(IT_FILE, IT_HLINKS, IT_UNKNOWN, IT_FREESPACE, IT_HLINKS_SET, IT_HLINKS_IDX, IT_HLINKS_FILE))
         {
-            path.append(pathPart->m_Name.get(), pathPart->m_NameLen);
+            path.append(pathPart->m_name.get(), pathPart->m_nameLen);
         }
         else if (pathPart->IsTypeOrFlag(IT_DRIVE))
         {
-            path.append(pathPart->m_Name.get(), 2).append(L"\\");
+            path.append(pathPart->m_name.get(), 2).append(L"\\");
         }
     }
 
@@ -1771,9 +1771,9 @@ void CItem::UpwardDrivePacman()
     }
 }
 
-std::once_flag CItem::m_HashInitFlag;
-BCRYPT_ALG_HANDLE CItem::m_HashAlgHandle = nullptr;
-DWORD CItem::m_HashLength = 0;
+std::once_flag CItem::s_HashInitFlag;
+BCRYPT_ALG_HANDLE CItem::s_HashAlgHandle = nullptr;
+DWORD CItem::s_HashLength = 0;
 
 std::vector<BYTE> CItem::GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CItem*>* queue)
 {
@@ -1782,18 +1782,18 @@ std::vector<BYTE> CItem::GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CIte
     thread_local SmartPointer<BCRYPT_HASH_HANDLE> HashHandle(BCryptDestroyHash);
 
     // Initialize shared structures using std::call_once for better performance
-    std::call_once(m_HashInitFlag, []()
+    std::call_once(s_HashInitFlag, []()
     {
         DWORD ResultLength = 0;
-        if (BCryptOpenAlgorithmProvider(&m_HashAlgHandle, BCRYPT_SHA512_ALGORITHM, MS_PRIMITIVE_PROVIDER, BCRYPT_HASH_REUSABLE_FLAG) != 0 ||
-            BCryptGetProperty(m_HashAlgHandle, BCRYPT_HASH_LENGTH, reinterpret_cast<PBYTE>(&m_HashLength), sizeof(m_HashLength), &ResultLength, 0) != 0)
+        if (BCryptOpenAlgorithmProvider(&s_HashAlgHandle, BCRYPT_SHA512_ALGORITHM, MS_PRIMITIVE_PROVIDER, BCRYPT_HASH_REUSABLE_FLAG) != 0 ||
+            BCryptGetProperty(s_HashAlgHandle, BCRYPT_HASH_LENGTH, reinterpret_cast<PBYTE>(&s_HashLength), sizeof(s_HashLength), &ResultLength, 0) != 0)
         {
-            m_HashLength = 0; // Indicate failure
+            s_HashLength = 0; // Indicate failure
         }
     });
 
     // Check if initialization succeeded
-    if (m_HashLength == 0)
+    if (s_HashLength == 0)
     {
         return {};
     }
@@ -1801,7 +1801,7 @@ std::vector<BYTE> CItem::GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CIte
     // Initialize per-thread hashing handle
     if (HashHandle == nullptr)
     {
-        if (BCryptCreateHash(m_HashAlgHandle, &HashHandle, nullptr, 0, nullptr, 0, BCRYPT_HASH_REUSABLE_FLAG) != 0)
+        if (BCryptCreateHash(s_HashAlgHandle, &HashHandle, nullptr, 0, nullptr, 0, BCRYPT_HASH_REUSABLE_FLAG) != 0)
         {
             return {};
         }
@@ -1831,9 +1831,9 @@ std::vector<BYTE> CItem::GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CIte
     }
 
     // Complete hash data
-    Hash.resize(m_HashLength);
+    Hash.resize(s_HashLength);
     if (iHashResult != 0 || iReadResult == 0 ||
-        BCryptFinishHash(HashHandle, Hash.data(), m_HashLength, 0) != 0)
+        BCryptFinishHash(HashHandle, Hash.data(), s_HashLength, 0) != 0)
     {
         return {};
     }
@@ -1928,7 +1928,7 @@ CItem* CItem::GetLinkedItem()
     // For IT_HLINKS_FILE, the name stores the full path
     if (IsTypeOrFlag(IT_HLINKS_FILE))
     {
-        const std::wstring storedPath{ m_Name.get(), m_NameLen };
+        const std::wstring storedPath{ m_name.get(), m_nameLen };
         if (CItem* linkedItem = FindItemByPath(storedPath); linkedItem != nullptr)
         {
             return linkedItem;

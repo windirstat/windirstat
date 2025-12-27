@@ -34,16 +34,16 @@ COptionsPropertySheet* CPageGeneral::GetSheet() const
 void CPageGeneral::DoDataExchange(CDataExchange* pDX)
 {
     CMFCPropertyPage::DoDataExchange(pDX);
-    DDX_Check(pDX, IDC_AUTO_ELEVATE, m_AutomaticallyElevateOnStartup);
-    DDX_Check(pDX, IDC_COLUMN_AUTOSIZE, m_AutomaticallyResizeColumns);
-    DDX_Check(pDX, IDC_FULL_ROW_SELECTION, m_ListFullRowSelection);
-    DDX_Check(pDX, IDC_PORTABLE_MODE, m_PortableMode);
-    DDX_Check(pDX, IDC_SHOW_GRID, m_ListGrid);
-    DDX_Check(pDX, IDC_SHOW_STRIPES, m_ListStripes);
-    DDX_Check(pDX, IDC_SIZE_SUFFIXES, m_SizeSuffixesFormat);
-    DDX_Check(pDX, IDC_USE_WINDOWS_LOCALE, m_UseWindowsLocale);
-    DDX_Control(pDX, IDC_COMBO, m_Combo);
-    DDX_Radio(pDX, IDC_DARK_MODE_DISABLED, m_DarkModeRadio);
+    DDX_Check(pDX, IDC_AUTO_ELEVATE, m_automaticallyElevateOnStartup);
+    DDX_Check(pDX, IDC_COLUMN_AUTOSIZE, m_automaticallyResizeColumns);
+    DDX_Check(pDX, IDC_FULL_ROW_SELECTION, m_listFullRowSelection);
+    DDX_Check(pDX, IDC_PORTABLE_MODE, m_portableMode);
+    DDX_Check(pDX, IDC_SHOW_GRID, m_listGrid);
+    DDX_Check(pDX, IDC_SHOW_STRIPES, m_listStripes);
+    DDX_Check(pDX, IDC_SIZE_SUFFIXES, m_sizeSuffixesFormat);
+    DDX_Check(pDX, IDC_USE_WINDOWS_LOCALE, m_useWindowsLocale);
+    DDX_Control(pDX, IDC_COMBO, m_combo);
+    DDX_Radio(pDX, IDC_DARK_MODE_DISABLED, m_darkModeRadio);
 }
 
 BEGIN_MESSAGE_MAP(CPageGeneral, CMFCPropertyPage)
@@ -75,23 +75,23 @@ BOOL CPageGeneral::OnInitDialog()
     Localization::UpdateDialogs(*this);
     DarkMode::AdjustControls(GetSafeHwnd());
 
-    m_AutomaticallyElevateOnStartup = COptions::AutoElevate;
-    m_AutomaticallyResizeColumns = COptions::AutomaticallyResizeColumns;
-    m_SizeSuffixesFormat = COptions::UseSizeSuffixes;
-    m_ListGrid = COptions::ListGrid;
-    m_ListStripes = COptions::ListStripes;
-    m_ListFullRowSelection = COptions::ListFullRowSelection;
-    m_UseWindowsLocale = COptions::UseWindowsLocaleSetting;
-    m_PortableMode = CDirStatApp::InPortableMode();
-    m_DarkModeRadio = COptions::DarkMode;
+    m_automaticallyElevateOnStartup = COptions::AutoElevate;
+    m_automaticallyResizeColumns = COptions::AutomaticallyResizeColumns;
+    m_sizeSuffixesFormat = COptions::UseSizeSuffixes;
+    m_listGrid = COptions::ListGrid;
+    m_listStripes = COptions::ListStripes;
+    m_listFullRowSelection = COptions::ListFullRowSelection;
+    m_useWindowsLocale = COptions::UseWindowsLocaleSetting;
+    m_portableMode = CDirStatApp::InPortableMode();
+    m_darkModeRadio = COptions::DarkMode;
 
     for (const auto& language : Localization::GetLanguageList())
     {
-        const int i = m_Combo.AddString(GetLocaleLanguage(language).c_str());
-        m_Combo.SetItemData(i, language);
+        const int i = m_combo.AddString(GetLocaleLanguage(language).c_str());
+        m_combo.SetItemData(i, language);
         if (language == COptions::LanguageId)
         {
-            m_Combo.SetCurSel(i);
+            m_combo.SetCurSel(i);
         }
     }
 
@@ -103,22 +103,22 @@ void CPageGeneral::OnOK()
 {
     UpdateData();
 
-    const bool windowsLocaleChanged = static_cast<bool>(m_UseWindowsLocale) != COptions::UseWindowsLocaleSetting;
-    const bool listChanged = static_cast<bool>(m_ListGrid) != COptions::ListGrid ||
-        static_cast<bool>(m_ListStripes) != COptions::ListStripes ||
-        static_cast<bool>(m_ListFullRowSelection) != COptions::ListFullRowSelection ||
-        static_cast<bool>(m_SizeSuffixesFormat) != COptions::UseSizeSuffixes;
+    const bool windowsLocaleChanged = static_cast<bool>(m_useWindowsLocale) != COptions::UseWindowsLocaleSetting;
+    const bool listChanged = static_cast<bool>(m_listGrid) != COptions::ListGrid ||
+        static_cast<bool>(m_listStripes) != COptions::ListStripes ||
+        static_cast<bool>(m_listFullRowSelection) != COptions::ListFullRowSelection ||
+        static_cast<bool>(m_sizeSuffixesFormat) != COptions::UseSizeSuffixes;
 
-    COptions::AutoElevate = (FALSE != m_AutomaticallyElevateOnStartup);
-    COptions::AutomaticallyResizeColumns = (FALSE != m_AutomaticallyResizeColumns);
-    COptions::UseSizeSuffixes = (FALSE != m_SizeSuffixesFormat);
-    COptions::UseWindowsLocaleSetting = (FALSE != m_UseWindowsLocale);
-    COptions::ListGrid = (FALSE != m_ListGrid);
-    COptions::ListStripes = (FALSE != m_ListStripes);
-    COptions::ListFullRowSelection = (FALSE != m_ListFullRowSelection);
-    COptions::DarkMode = m_DarkModeRadio;
+    COptions::AutoElevate = (FALSE != m_automaticallyElevateOnStartup);
+    COptions::AutomaticallyResizeColumns = (FALSE != m_automaticallyResizeColumns);
+    COptions::UseSizeSuffixes = (FALSE != m_sizeSuffixesFormat);
+    COptions::UseWindowsLocaleSetting = (FALSE != m_useWindowsLocale);
+    COptions::ListGrid = (FALSE != m_listGrid);
+    COptions::ListStripes = (FALSE != m_listStripes);
+    COptions::ListFullRowSelection = (FALSE != m_listFullRowSelection);
+    COptions::DarkMode = m_darkModeRadio;
 
-    if (!CDirStatApp::Get()->SetPortableMode(m_PortableMode))
+    if (!CDirStatApp::Get()->SetPortableMode(m_portableMode))
     {
         DisplayError(L"Could not toggle WinDirStat portable mode. Check your permissions.");
     }
@@ -142,7 +142,7 @@ void CPageGeneral::OnOK()
         CDirStatDoc::Get()->UpdateAllViews(nullptr, HINT_NULL);
     }
 
-    const LANGID id = static_cast<LANGID>(m_Combo.GetItemData(m_Combo.GetCurSel()));
+    const LANGID id = static_cast<LANGID>(m_combo.GetItemData(m_combo.GetCurSel()));
     COptions::LanguageId = static_cast<int>(id);
 
     CMFCPropertyPage::OnOK();
@@ -153,9 +153,9 @@ void CPageGeneral::OnBnClickedSetModified()
     UpdateData(TRUE);
 
     // Assess for restart required
-    const LANGID id = static_cast<LANGID>(m_Combo.GetItemData(m_Combo.GetCurSel()));
+    const LANGID id = static_cast<LANGID>(m_combo.GetItemData(m_combo.GetCurSel()));
     const bool languagedChanged = id != static_cast<LANGID>(COptions::LanguageId);
-    const bool darkModeChanged = m_DarkModeRadio != COptions::DarkMode;
+    const bool darkModeChanged = m_darkModeRadio != COptions::DarkMode;
     GetSheet()->SetRestartRequired(darkModeChanged || languagedChanged);
 
     SetModified();

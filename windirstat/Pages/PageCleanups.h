@@ -42,39 +42,39 @@ protected:
     void UpdateControlStatus();
     void CheckEmptyTitle();
 
-    std::unique_ptr<USERDEFINEDCLEANUP[]> m_Udc = std::make_unique<USERDEFINEDCLEANUP[]>(USERDEFINEDCLEANUPCOUNT);
-    int m_Current = -1; // currently selected user defined cleanup
+    std::unique_ptr<USERDEFINEDCLEANUP[]> m_udc = std::make_unique<USERDEFINEDCLEANUP[]>(USERDEFINEDCLEANUPCOUNT);
+    int m_current = -1; // currently selected user defined cleanup
 
     // Dialog data
-    CListBox m_List;
-    BOOL m_Enabled = FALSE;
-    CStringW m_Title;
-    BOOL m_WorksForDrives = FALSE;
-    BOOL m_WorksForDirectories = FALSE;
-    BOOL m_WorksForFiles = FALSE;
-    BOOL m_WorksForUncPaths = FALSE;
-    CStringW m_CommandLine;
-    BOOL m_RecurseIntoSubdirectories = FALSE;
-    BOOL m_AskForConfirmation = FALSE;
-    BOOL m_ShowConsoleWindow = FALSE;
-    BOOL m_WaitForCompletion = FALSE;
-    int m_RefreshPolicy = 0;
-    CComboBox m_CtlRefreshPolicy;
+    CListBox m_list;
+    BOOL m_enabled = FALSE;
+    CStringW m_title;
+    BOOL m_worksForDrives = FALSE;
+    BOOL m_worksForDirectories = FALSE;
+    BOOL m_worksForFiles = FALSE;
+    BOOL m_worksForUncPaths = FALSE;
+    CStringW m_commandLine;
+    BOOL m_recurseIntoSubdirectories = FALSE;
+    BOOL m_askForConfirmation = FALSE;
+    BOOL m_showConsoleWindow = FALSE;
+    BOOL m_waitForCompletion = FALSE;
+    int m_refreshPolicy = 0;
+    CComboBox m_ctlRefreshPolicy;
 
-    CEdit m_CtlTitle;
-    CButton m_CtlWorksForDrives;
-    CButton m_CtlWorksForDirectories;
-    CButton m_CtlWorksForFiles;
-    CButton m_CtlWorksForUncPaths;
-    CEdit m_CtlCommandLine;
-    CButton m_CtlRecurseIntoSubdirectories;
-    CButton m_CtlAskForConfirmation;
-    CButton m_CtlShowConsoleWindow;
-    CButton m_CtlWaitForCompletion;
-    CStatic m_CtlHintSp;
-    CStatic m_CtlHintSn;
-    CButton m_CtlUp;
-    CButton m_CtlDown;
+    CEdit m_ctlTitle;
+    CButton m_ctlWorksForDrives;
+    CButton m_ctlWorksForDirectories;
+    CButton m_ctlWorksForFiles;
+    CButton m_ctlWorksForUncPaths;
+    CEdit m_ctlCommandLine;
+    CButton m_ctlRecurseIntoSubdirectories;
+    CButton m_ctlAskForConfirmation;
+    CButton m_ctlShowConsoleWindow;
+    CButton m_ctlWaitForCompletion;
+    CStatic m_ctlHintSp;
+    CStatic m_ctlHintSn;
+    CButton m_ctlUp;
+    CButton m_ctlDown;
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnLbnSelchangeList();

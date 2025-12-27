@@ -25,9 +25,9 @@ class CFileTopControl final : public CTreeListControl
 {
 public:
     CFileTopControl();
-    ~CFileTopControl() override { m_Singleton = nullptr; }
+    ~CFileTopControl() override { m_singleton = nullptr; }
     bool GetAscendingDefault(int column) override;
-    static CFileTopControl* Get() { return m_Singleton; }
+    static CFileTopControl* Get() { return m_singleton; }
     void ProcessTop(CItem* item);
     void RemoveItem(CItem* items);
     void SortItems() override;
@@ -40,13 +40,13 @@ protected:
         return lhs->GetSizeLogical() > rhs->GetSizeLogical();
     };
 
-    static CFileTopControl* m_Singleton;
-    SingleConsumerQueue<CItem*> m_QueuedSet;
-    std::vector<CItem*> m_SizeMap;
-    ULONGLONG m_TopNMinSize = 0;
-    bool m_NeedsResort = true;
-    std::unordered_map<CItem*, CItemTop*> m_ItemTracker;
-    size_t m_PreviousTopN = 0;
+    static CFileTopControl* m_singleton;
+    SingleConsumerQueue<CItem*> m_queuedSet;
+    std::vector<CItem*> m_sizeMap;
+    ULONGLONG m_topNMinSize = 0;
+    bool m_needsResort = true;
+    std::unordered_map<CItem*, CItemTop*> m_itemTracker;
+    size_t m_previousTopN = 0;
 
     void OnItemDoubleClick(int i) override;
 

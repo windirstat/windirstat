@@ -42,9 +42,9 @@ protected:
     void OnDraw(CDC* pDC) override;
     void SetSelection();
 
-    bool m_ShowTypes = true;                      // Whether this view shall be shown (F8 option)
-    CMFCTabCtrl m_Tabs;                              // The tab control
-    CExtensionListControl m_ExtensionListControl; // The list control
+    bool m_showTypes = true;                      // Whether this view shall be shown (F8 option)
+    CMFCTabCtrl m_tabs;                              // The tab control
+    CExtensionListControl m_extensionListControl; // The list control
 
     DECLARE_MESSAGE_MAP()
     afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);

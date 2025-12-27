@@ -23,10 +23,10 @@ class Finder
 {
 protected:
 
-    static constexpr std::wstring_view m_Dos = L"\\??\\";
-    static constexpr std::wstring_view m_DosUNC = L"\\??\\UNC\\";
-    static constexpr std::wstring_view m_Long = L"\\\\?\\";
-    static constexpr std::wstring_view m_LongUNC = L"\\\\?\\UNC\\";
+    static constexpr std::wstring_view s_dosPath = L"\\??\\";
+    static constexpr std::wstring_view s_dosUNCPath = L"\\??\\UNC\\";
+    static constexpr std::wstring_view s_longPath = L"\\\\?\\";
+    static constexpr std::wstring_view s_longUNCPath = L"\\\\?\\UNC\\";
 
 public:
 
@@ -75,9 +75,9 @@ public:
 
     static std::wstring MakeLongPathCompatible(const std::wstring& path)
     {
-        if (path.find(L":\\", 1) == 1) return m_Long.data() + path;
+        if (path.find(L":\\", 1) == 1) return s_longPath.data() + path;
         if (path.starts_with(L"\\\\?")) return path;
-        if (path.starts_with(L"\\\\")) return m_LongUNC.data() + path.substr(2);
+        if (path.starts_with(L"\\\\")) return s_longUNCPath.data() + path.substr(2);
         return path;
     }
 

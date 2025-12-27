@@ -47,8 +47,7 @@ public:
     static void LightenBitmap(CBitmap* pBitmap, bool invert = false);
 
 private:
-
-    static bool _darkModeEnabled;
+    static bool s_darkModeEnabled;
 };
 
 //

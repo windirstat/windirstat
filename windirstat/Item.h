@@ -116,7 +116,7 @@ constexpr bool operator==(const FILETIME& t1, const FILETIME& t2)
 //
 // Of course, this class and the base classes are optimized rather for size than for speed.
 //
-// The m_Type indicates whether we are a file or a folder or a drive etc.
+// The m_type indicates whether we are a file or a folder or a drive etc.
 // It may have been better to design a class hierarchy for this, but I can't help it,
 // rather than browsing to virtual functions I like to flatly see what's going on.
 // But, of course, now we have quite many switch statements in the member functions.
@@ -150,10 +150,10 @@ public:
     void TmiSetRectangle(const CRect& rc) override { tmiRect = rc; }
     COLORREF TmiGetGraphColor() const override { return GetGraphColor(); }
     int TmiGetChildCount() const override { 
-        if (m_FolderInfo == nullptr || IsTypeOrFlag(IT_HLINKS_IDX)) return 0;
-        return static_cast<int>(m_FolderInfo->m_Children.size()); 
+        if (m_folderInfo == nullptr || IsTypeOrFlag(IT_HLINKS_IDX)) return 0;
+        return static_cast<int>(m_folderInfo->m_children.size()); 
     }
-    Item* TmiGetChild(const int c) const override { return m_FolderInfo->m_Children[c]; }
+    Item* TmiGetChild(const int c) const override { return m_folderInfo->m_children[c]; }
     ULONGLONG TmiGetSize() const override { return COptions::TreeMapUseLogical ? GetSizeLogical() : GetSizePhysical(); }
 
     static int GetSubtreePercentageWidth();
@@ -161,7 +161,7 @@ public:
     ULONGLONG GetProgressPos() const;
     void UpdateStatsFromDisk();
     const std::vector<CItem*>& GetChildren() const;
-    bool IsLeaf() const { return m_FolderInfo == nullptr; }
+    bool IsLeaf() const { return m_folderInfo == nullptr; }
     CItem* GetParent() const;
     CItem* GetParentDrive() const;
     void AddChild(CItem* child, bool addOnly = false);
@@ -247,26 +247,26 @@ public:
 
     ITEMTYPE GetItemType() const
     {
-        return m_Type & IT_MASK;
+        return m_type & IT_MASK;
     }
 
     ITEMTYPE GetRawType() const
     {
-        return m_Type;
+        return m_type;
     }
 
     template<typename... Args>
     constexpr bool IsTypeOrFlag(Args... args) const
     {
         const ITEMTYPE combinedMask = (args | ...);
-        return (m_Type & combinedMask) != IT_NONE;
+        return (m_type & combinedMask) != IT_NONE;
     }
 
     template<ITEMTYPE Mask>
     void SetType(const ITEMTYPE type, const bool bitOp = false, const bool unsetVal = false)
     {
-        if (unsetVal) m_Type = (m_Type & ~type);
-        else m_Type = bitOp ? (m_Type | type) : ((m_Type & ~Mask) | type);
+        if (unsetVal) m_type = (m_type & ~type);
+        else m_type = bitOp ? (m_type | type) : ((m_type & ~Mask) | type);
     }
 
     void SetItemType(const ITEMTYPE type) { SetType<IT_MASK>(type); }
@@ -291,31 +291,31 @@ private:
     CItem* AddFile(Finder& finder);
 
     // Used for initialization of hashing process
-    static std::once_flag m_HashInitFlag;
-    static BCRYPT_ALG_HANDLE m_HashAlgHandle;
-    static DWORD m_HashLength;
+    static std::once_flag s_HashInitFlag;
+    static BCRYPT_ALG_HANDLE s_HashAlgHandle;
+    static DWORD s_HashLength;
 
     // Special structure for container items that is separately allocated to
     // reduce memory usage.  This operates under the assumption that most
     // containers have files in them.
     using CHILDINFO = struct CHILDINFO
     {
-        std::vector<CItem*> m_Children;
-        std::atomic<ULONG> m_Tstart = 0;  // time this node started enumerating
-        std::atomic<ULONG> m_Tfinish = 0; // time this node finished enumerating
-        std::atomic<ULONG> m_Files = 0;   // # Files in subtree
-        std::atomic<ULONG> m_Subdirs = 0; // # Folders in subtree
-        std::atomic<ULONG> m_Jobs = 0;    // # "read jobs" in subtree.
+        std::vector<CItem*> m_children;
+        std::atomic<ULONG> m_tstart = 0;  // time this node started enumerating
+        std::atomic<ULONG> m_tfinish = 0; // time this node finished enumerating
+        std::atomic<ULONG> m_files = 0;   // # Files in subtree
+        std::atomic<ULONG> m_subdirs = 0; // # Folders in subtree
+        std::atomic<ULONG> m_jobs = 0;    // # "read jobs" in subtree.
     };
 
-    std::unique_ptr<wchar_t[]> m_Name;         // Display name
-    std::unique_ptr<CHILDINFO> m_FolderInfo;   // Child information for non-files
-    std::atomic<ULONGLONG> m_SizePhysical = 0; // Total physical size of self or subtree
-    std::atomic<ULONGLONG> m_SizeLogical = 0;  // Total local size of self or subtree
-    FILETIME m_LastChange = { 0, 0 };          // Last modification time of self or subtree
-    ULONGLONG m_Index = 0;                     // Index of item for special scan types
+    std::unique_ptr<wchar_t[]> m_name;         // Display name
+    std::unique_ptr<CHILDINFO> m_folderInfo;   // Child information for non-files
+    std::atomic<ULONGLONG> m_sizePhysical = 0; // Total physical size of self or subtree
+    std::atomic<ULONGLONG> m_sizeLogical = 0;  // Total local size of self or subtree
+    FILETIME m_lastChange = { 0, 0 };          // Last modification time of self or subtree
+    ULONGLONG m_index = 0;                     // Index of item for special scan types
     CSmallRect tmiRect = {};                   // Treemap rectangle
-    ITEMTYPE m_Type;                           // Indicates our type.
-    USHORT m_Attributes = 0xFFFF;              // File or directory attributes of the item
-    USHORT m_NameLen = 0;                      // Length of name string
+    ITEMTYPE m_type;                           // Indicates our type.
+    USHORT m_attributes = 0xFFFF;              // File or directory attributes of the item
+    USHORT m_nameLen = 0;                      // Length of name string
 };

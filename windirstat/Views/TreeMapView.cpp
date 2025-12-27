@@ -32,7 +32,7 @@ END_MESSAGE_MAP()
 
 void CTreeMapView::SuspendRecalculationDrawing(const bool suspend)
 {
-    m_DrawingSuspended = suspend;
+    m_drawingSuspended = suspend;
     if (!suspend)
     {
         Invalidate();
@@ -41,12 +41,12 @@ void CTreeMapView::SuspendRecalculationDrawing(const bool suspend)
 
 bool CTreeMapView::IsShowTreeMap() const
 {
-    return m_ShowTreeMap;
+    return m_showTreeMap;
 }
 
 void CTreeMapView::ShowTreeMap(const bool show)
 {
-    m_ShowTreeMap = show;
+    m_showTreeMap = show;
 }
 
 BOOL CTreeMapView::PreCreateWindow(CREATESTRUCT& cs)
@@ -77,7 +77,7 @@ void CTreeMapView::DrawEmptyView(CDC* pDC)
     CRect rc;
     GetClientRect(rc);
 
-    if (m_Dimmed.m_hObject == nullptr)
+    if (m_dimmed.m_hObject == nullptr)
     {
         pDC->FillSolidRect(rc, gray);
     }
@@ -85,20 +85,20 @@ void CTreeMapView::DrawEmptyView(CDC* pDC)
     {
         CDC dcmem;
         dcmem.CreateCompatibleDC(pDC);
-        CSelectObject sobmp(&dcmem, &m_Dimmed);
-        pDC->BitBlt(rc.left, rc.top, m_DimmedSize.cx, m_DimmedSize.cy, &dcmem, 0, 0, SRCCOPY);
+        CSelectObject sobmp(&dcmem, &m_dimmed);
+        pDC->BitBlt(rc.left, rc.top, m_dimmedSize.cx, m_dimmedSize.cy, &dcmem, 0, 0, SRCCOPY);
 
-        if (rc.Width() > m_DimmedSize.cx)
+        if (rc.Width() > m_dimmedSize.cx)
         {
             CRect r = rc;
-            r.left  = r.left + m_DimmedSize.cx;
+            r.left  = r.left + m_dimmedSize.cx;
             pDC->FillSolidRect(r, gray);
         }
 
-        if (rc.Height() > m_DimmedSize.cy)
+        if (rc.Height() > m_dimmedSize.cy)
         {
             CRect r = rc;
-            r.top   = r.top + m_DimmedSize.cy;
+            r.top   = r.top + m_dimmedSize.cy;
             pDC->FillSolidRect(r, gray);
         }
     }
@@ -107,7 +107,7 @@ void CTreeMapView::DrawEmptyView(CDC* pDC)
 void CTreeMapView::OnDraw(CDC * pDC)
 {
     const CItem* root = CDirStatDoc::Get()->GetRootItem();
-    if (root == nullptr || !root->IsDone() || m_DrawingSuspended || !m_ShowTreeMap)
+    if (root == nullptr || !root->IsDone() || m_drawingSuspended || !m_showTreeMap)
     {
         DrawEmptyView(pDC);
         return;
@@ -115,7 +115,7 @@ void CTreeMapView::OnDraw(CDC * pDC)
 
     CRect rc;
     GetClientRect(rc);
-    ASSERT(m_Size == rc.Size());
+    ASSERT(m_size == rc.Size());
     ASSERT(rc.TopLeft() == CPoint(0, 0));
 
     CDC dcmem;
@@ -125,21 +125,21 @@ void CTreeMapView::OnDraw(CDC * pDC)
     {
         CWaitCursor wc;
 
-        m_Bitmap.CreateCompatibleBitmap(pDC, m_Size.cx, m_Size.cy);
+        m_bitmap.CreateCompatibleBitmap(pDC, m_size.cx, m_size.cy);
 
-        CSelectObject sobmp(&dcmem, &m_Bitmap);
+        CSelectObject sobmp(&dcmem, &m_bitmap);
 
         if (CDirStatDoc::Get()->IsZoomed())
         {
             DrawZoomFrame(&dcmem, rc);
         }
 
-        m_TreeMap.DrawTreeMap(&dcmem, rc, CDirStatDoc::Get()->GetZoomItem(), &COptions::TreeMapOptions);
+        m_treeMap.DrawTreeMap(&dcmem, rc, CDirStatDoc::Get()->GetZoomItem(), &COptions::TreeMapOptions);
     }
 
-    CSelectObject sobmp2(&dcmem, &m_Bitmap);
+    CSelectObject sobmp2(&dcmem, &m_bitmap);
 
-    pDC->BitBlt(0, 0, m_Size.cx, m_Size.cy, &dcmem, 0, 0, SRCCOPY);
+    pDC->BitBlt(0, 0, m_size.cx, m_size.cy, &dcmem, 0, 0, SRCCOPY);
 
     DrawHighlights(pDC);
 }
@@ -264,7 +264,7 @@ void CTreeMapView::HighlightSelectedItem(CDC* pdc, const CItem* item, const bool
         CRect rcClient;
         GetClientRect(rcClient);
 
-        if (m_TreeMap.GetOptions().grid)
+        if (m_treeMap.GetOptions().grid)
         {
             rc.right++;
             rc.bottom++;
@@ -313,10 +313,10 @@ void CTreeMapView::OnSize(const UINT nType, const int cx, const int cy)
 {
     CView::OnSize(nType, cx, cy);
     const CSize sz(cx, cy);
-    if (sz != m_Size)
+    if (sz != m_size)
     {
         Inactivate();
-        m_Size = sz;
+        m_size = sz;
     }
 }
 
@@ -332,7 +332,7 @@ void CTreeMapView::OnLButtonDown(const UINT nFlags, const CPoint point)
     const CItem* root = CDirStatDoc::Get()->GetRootItem();
     if (root != nullptr && root->IsDone() && IsDrawn())
     {
-        const auto item = static_cast<CItem*>(m_TreeMap.FindItemByPoint(CDirStatDoc::Get()->GetZoomItem(), pointClicked));
+        const auto item = static_cast<CItem*>(m_treeMap.FindItemByPoint(CDirStatDoc::Get()->GetZoomItem(), pointClicked));
         if (item == nullptr)
         {
             return;
@@ -345,23 +345,23 @@ void CTreeMapView::OnLButtonDown(const UINT nFlags, const CPoint point)
 
 bool CTreeMapView::IsDrawn() const
 {
-    return m_Bitmap.m_hObject != nullptr;
+    return m_bitmap.m_hObject != nullptr;
 }
 
 void CTreeMapView::Inactivate()
 {
-    if (m_Bitmap.m_hObject == nullptr) return;
+    if (m_bitmap.m_hObject == nullptr) return;
 
-    // Move the old bitmap to m_Dimmed for later dimmed display
-    m_Dimmed.DeleteObject();
-    m_Dimmed.Attach(m_Bitmap.Detach());
-    m_DimmedSize = m_Size;
+    // Move the old bitmap to m_dimmed for later dimmed display
+    m_dimmed.DeleteObject();
+    m_dimmed.Attach(m_bitmap.Detach());
+    m_dimmedSize = m_size;
     
-    // Dim m_Dimmed contents to indicate inactive/refresh state
+    // Dim m_dimmed contents to indicate inactive/refresh state
     CClientDC dc(this);
     CDC dcmem;
     dcmem.CreateCompatibleDC(&dc);
-    CSelectObject sobmp(&dcmem, &m_Dimmed);
+    CSelectObject sobmp(&dcmem, &m_dimmed);
 
     // Apply the dimming overlay
     BLENDFUNCTION blendFunc{};
@@ -369,21 +369,21 @@ void CTreeMapView::Inactivate()
     blendFunc.BlendFlags = 0;
     blendFunc.SourceConstantAlpha = 175;
     blendFunc.AlphaFormat = 0;
-    dcmem.FillSolidRect(CRect(0, 0, m_DimmedSize.cx, m_DimmedSize.cy), RGB(0, 0, 0));
-    dcmem.AlphaBlend(0, 0, m_DimmedSize.cx, m_DimmedSize.cy, &dc,
-        0, 0, m_DimmedSize.cx, m_DimmedSize.cy, blendFunc);
+    dcmem.FillSolidRect(CRect(0, 0, m_dimmedSize.cx, m_dimmedSize.cy), RGB(0, 0, 0));
+    dcmem.AlphaBlend(0, 0, m_dimmedSize.cx, m_dimmedSize.cy, &dc,
+        0, 0, m_dimmedSize.cx, m_dimmedSize.cy, blendFunc);
 }
 
 void CTreeMapView::EmptyView()
 {
-    if (m_Bitmap.m_hObject != nullptr)
+    if (m_bitmap.m_hObject != nullptr)
     {
-        m_Bitmap.DeleteObject();
+        m_bitmap.DeleteObject();
     }
 
-    if (m_Dimmed.m_hObject != nullptr)
+    if (m_dimmed.m_hObject != nullptr)
     {
-        m_Dimmed.DeleteObject();
+        m_dimmed.DeleteObject();
     }
 }
 
@@ -449,10 +449,10 @@ std::wstring CTreeMapView::GetTreeMapHoverPath()
 
     if (!rc.PtInRect(point))
     {
-        m_PaneTextOverride = {};
+        m_paneTextOverride = {};
     }
 
-    return m_PaneTextOverride;
+    return m_paneTextOverride;
 }
 
 void CTreeMapView::OnContextMenu(CWnd* /*pWnd*/, const CPoint point)
@@ -472,10 +472,10 @@ void CTreeMapView::OnMouseMove(UINT /*nFlags*/, const CPoint point)
 {
     if (CDirStatDoc::Get()->IsRootDone() && IsDrawn())
     {
-        const auto item = static_cast<const CItem*>(m_TreeMap.FindItemByPoint(CDirStatDoc::Get()->GetZoomItem(), point));
+        const auto item = static_cast<const CItem*>(m_treeMap.FindItemByPoint(CDirStatDoc::Get()->GetZoomItem(), point));
         if (item != nullptr)
         {
-            m_PaneTextOverride = item->GetPath();
+            m_paneTextOverride = item->GetPath();
             CMainFrame::Get()->UpdatePaneText();
         }
     }

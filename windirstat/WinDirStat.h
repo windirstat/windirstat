@@ -54,23 +54,23 @@ public:
     void RestartApplication(bool resetPreferences = false);
 
     static std::tuple<ULONGLONG, ULONGLONG> GetFreeDiskSpace(const std::wstring& pszRootPath);
-    static CDirStatApp* Get() { return &_singleton; }
-    std::wstring GetSaveToCsvPath() const { return m_SaveToCsvPath; }
+    static CDirStatApp* Get() { return &s_singleton; }
+    std::wstring GetSaveToCsvPath() const { return m_saveToCsvPath; }
 
 protected:
 
     // Get the alternative color from Explorer configuration
     COLORREF GetAlternativeColor(COLORREF clrDefault, const std::wstring& which) const;
 
-    CSingleDocTemplate* m_PDocTemplate{nullptr}; // MFC voodoo.
+    CSingleDocTemplate* m_pDocTemplate{nullptr}; // MFC voodoo.
 
-    CIconHandler m_IconList;          // Our central icon list
-    COLORREF m_AltColor;              // Coloring of compressed items
-    COLORREF m_AltEncryptionColor;    // Coloring of encrypted items
-    std::wstring m_SaveToCsvPath;     // Path to save csv file to
-    static CDirStatApp _singleton;    // Singleton application instance
+    CIconHandler m_iconList;          // Our central icon list
+    COLORREF m_altColor;              // Coloring of compressed items
+    COLORREF m_altEncryptionColor;    // Coloring of encrypted items
+    std::wstring m_saveToCsvPath;     // Path to save csv file to
+    static CDirStatApp s_singleton;    // Singleton application instance
 #ifdef _DEBUG
-    CWDSTracerConsole m_VtraceConsole;
+    CWDSTracerConsole m_vtraceConsole;
 #endif
 
     DECLARE_MESSAGE_MAP()

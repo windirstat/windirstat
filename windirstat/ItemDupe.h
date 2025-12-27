@@ -31,13 +31,13 @@ using ITEMDUPCOLUMNS = enum : std::uint8_t
 
 class CItemDupe final : public CTreeListItem
 {
-    std::wstring m_HashString;
-    std::vector<BYTE> m_Hash;
-    std::vector<CItemDupe*> m_Children;
-    ULONGLONG m_SizePhysical = 0;
-    ULONGLONG m_SizeLogical = 0;
-    CItem* m_Item = nullptr;
-    std::shared_mutex m_Protect;
+    std::wstring m_hashString;
+    std::vector<BYTE> m_hash;
+    std::vector<CItemDupe*> m_children;
+    ULONGLONG m_sizePhysical = 0;
+    ULONGLONG m_sizeLogical = 0;
+    CItem* m_item = nullptr;
+    std::shared_mutex m_protect;
 
 public:
     CItemDupe(const CItemDupe&) = delete;
@@ -50,7 +50,7 @@ public:
     ~CItemDupe() override;
 
     // Translation map for leveraging Item routines
-    static const std::unordered_map<uint8_t, uint8_t> columnMap;
+    static const std::unordered_map<uint8_t, uint8_t> s_columnMap;
 
     // Inherited Overrides
     bool DrawSubItem(int subitem, CDC* pdc, CRect rc, UINT state, int* width, int* focusLeft) override;
@@ -59,9 +59,9 @@ public:
     int GetTreeListChildCount() const override;
     CTreeListItem* GetTreeListChild(int i) const override;
     HICON GetIcon() override;
-    CItem* GetLinkedItem() override { return m_Item; }
+    CItem* GetLinkedItem() override { return m_item; }
 
-    std::wstring GetHash() const { return m_HashString; }
+    std::wstring GetHash() const { return m_hashString; }
     std::wstring GetHashAndExtensions() const;
     const std::vector<CItemDupe*>& GetChildren() const;
     void AddDupeItemChild(CItemDupe* child);

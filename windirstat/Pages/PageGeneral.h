@@ -40,17 +40,17 @@ protected:
     BOOL OnInitDialog() override;
     void OnOK() override;
 
-    BOOL m_UseWindowsLocale = FALSE;
-    BOOL m_AutomaticallyElevateOnStartup = FALSE;
-    BOOL m_AutomaticallyResizeColumns = FALSE;
-    BOOL m_SizeSuffixesFormat = FALSE;
-    BOOL m_PortableMode = FALSE;
-    BOOL m_ListGrid = FALSE;
-    BOOL m_ListStripes = FALSE;
-    BOOL m_ListFullRowSelection = FALSE;
+    BOOL m_useWindowsLocale = FALSE;
+    BOOL m_automaticallyElevateOnStartup = FALSE;
+    BOOL m_automaticallyResizeColumns = FALSE;
+    BOOL m_sizeSuffixesFormat = FALSE;
+    BOOL m_portableMode = FALSE;
+    BOOL m_listGrid = FALSE;
+    BOOL m_listStripes = FALSE;
+    BOOL m_listFullRowSelection = FALSE;
 
-    CComboBox m_Combo;
-    int m_DarkModeRadio = 0;
+    CComboBox m_combo;
+    int m_darkModeRadio = 0;
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnBnClickedSetModified();

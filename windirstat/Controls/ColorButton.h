@@ -47,14 +47,14 @@ private:
         void SetColor(COLORREF color);
 
     private:
-        COLORREF m_Color;
+        COLORREF m_color;
 
         DECLARE_MESSAGE_MAP()
         afx_msg void OnPaint();
         afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
     };
 
-    CPreview m_Preview;
+    CPreview m_preview;
 
 protected:
     DECLARE_MESSAGE_MAP()

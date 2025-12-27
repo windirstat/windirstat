@@ -24,32 +24,32 @@ class CFileDupeControl final : public CTreeListControl
 {
 public:
     CFileDupeControl();
-    ~CFileDupeControl() override { m_Singleton = nullptr; }
+    ~CFileDupeControl() override { m_singleton = nullptr; }
     bool GetAscendingDefault(int column) override;
-    static CFileDupeControl* Get() { return m_Singleton; }
+    static CFileDupeControl* Get() { return m_singleton; }
     void ProcessDuplicate(CItem* item, BlockingQueue<CItem*>* queue);
     void RemoveItem(CItem* items);
     void SortItems() override;
 
-    std::mutex m_HashTrackerMutex;
-    std::map<ULONGLONG, std::vector<CItem*>> m_SizeTracker;
-    std::map<std::vector<BYTE>, std::vector<CItem*>> m_HashTrackerSmall;
-    std::map<std::vector<BYTE>, std::vector<CItem*>> m_HashTrackerLarge;
+    std::mutex m_hashTrackerMutex;
+    std::map<ULONGLONG, std::vector<CItem*>> m_sizeTracker;
+    std::map<std::vector<BYTE>, std::vector<CItem*>> m_hashTrackerSmall;
+    std::map<std::vector<BYTE>, std::vector<CItem*>> m_hashTrackerLarge;
     
-    std::mutex m_NodeTrackerMutex;
-    std::map<std::vector<BYTE>, CItemDupe*> m_NodeTracker;
-    std::map<CItemDupe*, std::set<CItem*>> m_ChildTracker;
+    std::mutex m_nodeTrackerMutex;
+    std::map<std::vector<BYTE>, CItemDupe*> m_nodeTracker;
+    std::map<CItemDupe*, std::set<CItem*>> m_childTracker;
     
     #pragma warning(push)
     #pragma warning(disable: 4324) // structure was padded due to alignment specifier
-    SingleConsumerQueue<std::pair<CItemDupe*, CItemDupe*>> m_PendingListAdds;
+    SingleConsumerQueue<std::pair<CItemDupe*, CItemDupe*>> m_pendingListAdds;
     #pragma warning(pop)
 
 protected:
 
-    static constexpr auto m_PartialBufferSize = 4ull * 1024ull;
-    static CFileDupeControl* m_Singleton;
-    bool m_ShowCloudWarningOnThisScan = false;
+    static constexpr auto m_partialBufferSize = 4ull * 1024ull;
+    static CFileDupeControl* m_singleton;
+    bool m_showCloudWarningOnThisScan = false;
     
     void OnItemDoubleClick(int i) override;
 

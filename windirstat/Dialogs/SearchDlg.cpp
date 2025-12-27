@@ -26,20 +26,20 @@ IMPLEMENT_DYNAMIC(SearchDlg, CLayoutDialogEx)
 
 SearchDlg::SearchDlg(CWnd* pParent /*=nullptr*/)
     : CLayoutDialogEx(IDD_SEARCH, COptions::SearchWindowRect.Ptr(), pParent)
-    , m_SearchWholePhrase(FALSE)
-    , m_SearchCase(FALSE)
-    , m_SearchRegex(FALSE)
-    , m_SearchTerm(L"")
+    , m_searchWholePhrase(FALSE)
+    , m_searchCase(FALSE)
+    , m_searchRegex(FALSE)
+    , m_searchTerm(L"")
 {
 }
 
 void SearchDlg::DoDataExchange(CDataExchange* pDX)
 {
     CDialogEx::DoDataExchange(pDX);
-    DDX_Check(pDX, IDC_SEARCH_WHOLE_PHRASE, m_SearchWholePhrase);
-    DDX_Check(pDX, IDC_SEARCH_CASE, m_SearchCase);
-    DDX_Check(pDX, IDC_SEARCH_REGEX, m_SearchRegex);
-    DDX_Text(pDX, IDC_SEARCH_TERM, m_SearchTerm);
+    DDX_Check(pDX, IDC_SEARCH_WHOLE_PHRASE, m_searchWholePhrase);
+    DDX_Check(pDX, IDC_SEARCH_CASE, m_searchCase);
+    DDX_Check(pDX, IDC_SEARCH_REGEX, m_searchRegex);
+    DDX_Text(pDX, IDC_SEARCH_TERM, m_searchTerm);
 }
 
 BEGIN_MESSAGE_MAP(SearchDlg, CLayoutDialogEx)
@@ -60,19 +60,19 @@ BOOL SearchDlg::OnInitDialog()
 
     ModifyStyle(0, WS_CLIPCHILDREN);
 
-    m_Layout.AddControl(IDOK, 1, 0, 0, 0);
-    m_Layout.AddControl(IDCANCEL, 1, 0, 0, 0);
-    m_Layout.AddControl(IDC_SEARCH_TERM, 0, 0, 1, 0);
-    m_Layout.AddControl(IDC_SEARCH_WHOLE_PHRASE, 0, 0, 0, 0);
-    m_Layout.AddControl(IDC_SEARCH_REGEX, 0, 0, 0, 0);
-    m_Layout.AddControl(IDC_SEARCH_CASE, 0, 0, 0, 0);
+    m_layout.AddControl(IDOK, 1, 0, 0, 0);
+    m_layout.AddControl(IDCANCEL, 1, 0, 0, 0);
+    m_layout.AddControl(IDC_SEARCH_TERM, 0, 0, 1, 0);
+    m_layout.AddControl(IDC_SEARCH_WHOLE_PHRASE, 0, 0, 0, 0);
+    m_layout.AddControl(IDC_SEARCH_REGEX, 0, 0, 0, 0);
+    m_layout.AddControl(IDC_SEARCH_CASE, 0, 0, 0, 0);
 
-    m_Layout.OnInitDialog(true);
+    m_layout.OnInitDialog(true);
 
-    m_SearchTerm = COptions::SearchTerm.Obj().c_str();
-    m_SearchWholePhrase = COptions::SearchWholePhrase;
-    m_SearchCase = COptions::SearchCase;
-    m_SearchRegex = COptions::SearchRegex;
+    m_searchTerm = COptions::SearchTerm.Obj().c_str();
+    m_searchWholePhrase = COptions::SearchWholePhrase;
+    m_searchCase = COptions::SearchCase;
+    m_searchRegex = COptions::SearchRegex;
     UpdateData(FALSE);
 
     OnChangeSearchTerm();
@@ -83,10 +83,10 @@ void SearchDlg::OnBnClickedOk()
 {
     UpdateData();
 
-    COptions::SearchTerm.Obj() = m_SearchTerm;
-    COptions::SearchWholePhrase = (FALSE != m_SearchWholePhrase);
-    COptions::SearchCase = (FALSE != m_SearchCase);
-    COptions::SearchRegex = (FALSE != m_SearchRegex);
+    COptions::SearchTerm.Obj() = m_searchTerm;
+    COptions::SearchWholePhrase = (FALSE != m_searchWholePhrase);
+    COptions::SearchCase = (FALSE != m_searchCase);
+    COptions::SearchRegex = (FALSE != m_searchRegex);
 
     CLayoutDialogEx::OnOK();
 
@@ -103,7 +103,7 @@ void SearchDlg::OnChangeSearchTerm()
     UpdateData();
 
     const auto regexTest = CFileSearchControl::ComputeSearchRegex(
-        m_SearchTerm.GetString(), m_SearchCase, m_SearchRegex);
+        m_searchTerm.GetString(), m_searchCase, m_searchRegex);
     GetDlgItem(IDOK)->EnableWindow(regexTest.flags() & std::regex_constants::optimize);
 }
 

@@ -37,7 +37,7 @@ protected:
     void OnDraw(CDC* pDC) override;
     void OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint) override;
 
-    CFileTreeControl m_Control;
+    CFileTreeControl m_control;
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnSize(UINT nType, int cx, int cy);

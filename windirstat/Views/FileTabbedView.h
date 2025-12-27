@@ -26,22 +26,22 @@
 class CFileTabbedView final : public CTabView
 {
 public:
-    bool IsFileTreeViewTabActive() { return GetTabControl().GetActiveTab() == m_FileTreeViewIndex; }
-    bool IsFileDupeViewTabActive() { return GetTabControl().GetActiveTab() == m_FileDupeViewIndex; }
-    bool IsFileTopViewTabActive() { return GetTabControl().GetActiveTab() == m_FileTopViewIndex; }
-    bool IsFileSearchViewTabActive() { return GetTabControl().GetActiveTab() == m_FileTopViewIndex; }
-    CFileTopView* GetFileTopView() const { return m_FileTopView; }
-    CFileTreeView* GetFileTreeView() const { return m_FileTreeView; }
-    CFileDupeView* GetFileDupeView() const { return m_FileDupeView; }
-    CFileSearchView* GetFileSearchView() const { return m_FileSearchView; }
-    void SetActiveFileTreeView() { SetActiveView(m_FileTreeViewIndex); }
-    void SetActiveTopView() { SetActiveView(m_FileTopViewIndex); }
-    void SetActiveDupeView() { SetActiveView(m_FileDupeViewIndex); }
-    void SetActiveSearchView() { SetActiveView(m_FileSearchViewIndex); }
+    bool IsFileTreeViewTabActive() { return GetTabControl().GetActiveTab() == m_fileTreeViewIndex; }
+    bool IsFileDupeViewTabActive() { return GetTabControl().GetActiveTab() == m_fileDupeViewIndex; }
+    bool IsFileTopViewTabActive() { return GetTabControl().GetActiveTab() == m_fileTopViewIndex; }
+    bool IsFileSearchViewTabActive() { return GetTabControl().GetActiveTab() == m_fileTopViewIndex; }
+    CFileTopView* GetFileTopView() const { return m_fileTopView; }
+    CFileTreeView* GetFileTreeView() const { return m_fileTreeView; }
+    CFileDupeView* GetFileDupeView() const { return m_fileDupeView; }
+    CFileSearchView* GetFileSearchView() const { return m_fileSearchView; }
+    void SetActiveFileTreeView() { SetActiveView(m_fileTreeViewIndex); }
+    void SetActiveTopView() { SetActiveView(m_fileTopViewIndex); }
+    void SetActiveDupeView() { SetActiveView(m_fileDupeViewIndex); }
+    void SetActiveSearchView() { SetActiveView(m_fileSearchViewIndex); }
     void SetDupeTabVisibility(bool show = true);
     void SetSearchTabVisibility(bool show = true);
-    bool IsDupeTabVisible() { return GetTabControl().IsTabVisible(m_FileDupeViewIndex); }
-    bool IsSearchTabVisible() { return GetTabControl().IsTabVisible(m_FileSearchViewIndex); }
+    bool IsDupeTabVisible() { return GetTabControl().IsTabVisible(m_fileDupeViewIndex); }
+    bool IsSearchTabVisible() { return GetTabControl().IsTabVisible(m_fileSearchViewIndex); }
 
 protected:
     CFileTabbedView() = default;
@@ -50,14 +50,14 @@ protected:
     void OnInitialUpdate() override;
 
     // Used for storing and retrieving the various tab views
-    int m_FileTreeViewIndex = -1;
-    CFileTreeView* m_FileTreeView = nullptr;
-    int m_FileDupeViewIndex = -1;
-    CFileDupeView* m_FileDupeView = nullptr;
-    int m_FileTopViewIndex = -1;
-    CFileTopView* m_FileTopView = nullptr;
-    int m_FileSearchViewIndex = -1;
-    CFileSearchView* m_FileSearchView = nullptr;
+    int m_fileTreeViewIndex = -1;
+    CFileTreeView* m_fileTreeView = nullptr;
+    int m_fileDupeViewIndex = -1;
+    CFileDupeView* m_fileDupeView = nullptr;
+    int m_fileTopViewIndex = -1;
+    CFileTopView* m_fileTopView = nullptr;
+    int m_fileSearchViewIndex = -1;
+    CFileSearchView* m_fileSearchView = nullptr;
 
     DECLARE_MESSAGE_MAP()
     afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);

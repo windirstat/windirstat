@@ -41,8 +41,8 @@ public:
 
     FinderNtfsContext() = default;
 
-    concurrency::concurrent_unordered_map<ULONGLONG, FileRecordBase> m_BaseFileRecordMap;
-    concurrency::concurrent_unordered_map<ULONGLONG, concurrency::concurrent_vector<FileRecordName>> m_ParentToChildMap;
+    concurrency::concurrent_unordered_map<ULONGLONG, FileRecordBase> m_baseFileRecordMap;
+    concurrency::concurrent_unordered_map<ULONGLONG, concurrency::concurrent_vector<FileRecordName>> m_parentToChildMap;
 
     bool LoadRoot(CItem* driveitem);
     bool IsLoaded = false;
@@ -50,19 +50,19 @@ public:
 
 class FinderNtfs final : public Finder
 {
-    FinderNtfsContext* m_Master = nullptr;
-    FinderNtfsContext::FileRecordBase* m_CurrentRecord = nullptr;
-    const FinderNtfsContext::FileRecordName* m_CurrentRecordName = nullptr;
+    FinderNtfsContext* m_master = nullptr;
+    FinderNtfsContext::FileRecordBase* m_currentRecord = nullptr;
+    const FinderNtfsContext::FileRecordName* m_currentRecordName = nullptr;
 
-    const concurrency::concurrent_vector<FinderNtfsContext::FileRecordName>* m_ChildrenSet = nullptr;
-    concurrency::concurrent_vector<FinderNtfsContext::FileRecordName>::const_iterator m_RecordIterator;
+    const concurrency::concurrent_vector<FinderNtfsContext::FileRecordName>* m_childrenSet = nullptr;
+    concurrency::concurrent_vector<FinderNtfsContext::FileRecordName>::const_iterator m_recordIterator;
     
-    std::wstring m_Base;
-    ULONGLONG m_Index = 0;
+    std::wstring m_base;
+    ULONGLONG m_index = 0;
 
 public:
 
-    explicit FinderNtfs(FinderNtfsContext* master) : m_Master(master) {}
+    explicit FinderNtfs(FinderNtfsContext* master) : m_master(master) {}
 
     bool FindNext() override;
     bool FindFile(const CItem* item) override;

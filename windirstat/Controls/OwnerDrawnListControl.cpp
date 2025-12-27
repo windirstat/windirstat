@@ -199,12 +199,12 @@ void COwnerDrawnListControl::SysColorChanged()
 
 int COwnerDrawnListControl::GetRowHeight() const
 {
-    return m_RowHeight;
+    return m_rowHeight;
 }
 
 void COwnerDrawnListControl::ShowGrid(const bool show)
 {
-    m_ShowGrid = show;
+    m_showGrid = show;
     if (IsWindow(m_hWnd))
     {
         InvalidateRect(nullptr);
@@ -213,7 +213,7 @@ void COwnerDrawnListControl::ShowGrid(const bool show)
 
 void COwnerDrawnListControl::ShowStripes(const bool show)
 {
-    m_ShowStripes = show;
+    m_showStripes = show;
     if (IsWindow(m_hWnd))
     {
         InvalidateRect(nullptr);
@@ -222,7 +222,7 @@ void COwnerDrawnListControl::ShowStripes(const bool show)
 
 void COwnerDrawnListControl::ShowFullRowSelection(const bool show)
 {
-    m_ShowFullRowSelect = show;
+    m_showFullRowSelect = show;
     if (IsWindow(m_hWnd))
     {
         InvalidateRect(nullptr);
@@ -231,19 +231,19 @@ void COwnerDrawnListControl::ShowFullRowSelection(const bool show)
 
 bool COwnerDrawnListControl::IsFullRowSelection() const
 {
-    return m_ShowFullRowSelect;
+    return m_showFullRowSelect;
 }
 
 // Normal window background color
 COLORREF COwnerDrawnListControl::GetWindowColor() const
 {
-    return m_WindowColor;
+    return m_windowColor;
 }
 
 // Shaded window background color (for stripes)
 COLORREF COwnerDrawnListControl::GetStripeColor() const
 {
-    return m_StripeColor;
+    return m_stripeColor;
 }
 
 // Highlight color if we have no focus
@@ -280,7 +280,7 @@ COLORREF COwnerDrawnListControl::GetHighlightTextColor() const
 
 bool COwnerDrawnListControl::IsItemStripColor(const int i) const
 {
-    return m_ShowStripes && i % 2 != 0;
+    return m_showStripes && i % 2 != 0;
 }
 
 COLORREF COwnerDrawnListControl::GetItemBackgroundColor(const int i) const
@@ -342,9 +342,9 @@ void COwnerDrawnListControl::InitializeColors()
     constexpr double diff = 0.07; // Try to alter the brightness by diff.
     constexpr double threshold = 1.04; // If result would be brighter, make color darker.
 
-    m_WindowColor = DarkMode::WdsSysColor(COLOR_WINDOW);
+    m_windowColor = DarkMode::WdsSysColor(COLOR_WINDOW);
 
-    double b = CColorSpace::GetColorBrightness(m_WindowColor);
+    double b = CColorSpace::GetColorBrightness(m_windowColor);
 
     if (b + diff > threshold)
     {
@@ -356,8 +356,8 @@ void COwnerDrawnListControl::InitializeColors()
         b = std::min<double>(b, 1.0);
     }
 
-    m_StripeColor = DarkMode::IsDarkModeActive() ? DarkMode::WdsSysColor(COLOR_WINDOWFRAME) :
-        CColorSpace::MakeBrightColor(m_WindowColor, b);
+    m_stripeColor = DarkMode::IsDarkModeActive() ? DarkMode::WdsSysColor(COLOR_WINDOWFRAME) :
+        CColorSpace::MakeBrightColor(m_windowColor, b);
 }
 
 void COwnerDrawnListControl::DrawItem(LPDRAWITEMSTRUCT pdis)
@@ -418,7 +418,7 @@ void COwnerDrawnListControl::DrawItem(LPDRAWITEMSTRUCT pdis)
             DrawTextCache::GetInstance().DrawTextCached(&dcMem, s, rcText, alignment | DT_SINGLELINE | DT_VCENTER | DT_WORD_ELLIPSIS | DT_NOPREFIX);
         }
 
-        if (m_ShowGrid)
+        if (m_showGrid)
         {
             constexpr COLORREF gridColor = RGB(212, 208, 200);
             CPen pen(PS_SOLID, 1, gridColor);
@@ -462,7 +462,7 @@ CRect COwnerDrawnListControl::GetWholeSubitemRect(const int item, const int subi
         VERIFY(GetSubItemRect(item, subitem, LVIR_LABEL, rc));
     }
 
-    if (m_ShowGrid)
+    if (m_showGrid)
     {
         rc.right--;
         rc.bottom--;

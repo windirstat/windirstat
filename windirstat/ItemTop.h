@@ -31,9 +31,9 @@ using ITEMTOPCOLUMNS = enum : std::uint8_t
 
 class CItemTop final : public CTreeListItem
 {
-    std::shared_mutex m_Protect;
-    std::vector<CItemTop*> m_Children;
-    CItem* m_Item = nullptr;
+    std::shared_mutex m_protect;
+    std::vector<CItemTop*> m_children;
+    CItem* m_item = nullptr;
 
 public:
     CItemTop(const CItemTop&) = delete;
@@ -45,7 +45,7 @@ public:
     ~CItemTop() override;
 
     // Translation map for leveraging Item routines
-    static const std::unordered_map<uint8_t, uint8_t> columnMap;
+    static const std::unordered_map<uint8_t, uint8_t> s_columnMap;
 
     // CTreeListItem Interface
     bool DrawSubItem(int subitem, CDC* pdc, CRect rc, UINT state, int* width, int* focusLeft) override;
@@ -54,7 +54,7 @@ public:
     int GetTreeListChildCount() const override;
     CTreeListItem* GetTreeListChild(int i) const override;
     HICON GetIcon() override;
-    CItem* GetLinkedItem() override { return m_Item; }
+    CItem* GetLinkedItem() override { return m_item; }
 
     void AddTopItemChild(CItemTop* child);
     void RemoveTopItemChild(CItemTop* child);

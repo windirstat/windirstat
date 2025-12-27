@@ -57,20 +57,20 @@ public:
     HICON GetIcon() override;
 
 private:
-    CDrivesList* m_List; // Backpointer
-    std::wstring m_Path; // e.g. "C:\"
-    HICON m_Icon = nullptr; // Cached icon
-    bool m_IsRemote; // Whether the drive type is DRIVE_REMOTE (network drive)
+    CDrivesList* m_list; // Backpointer
+    std::wstring m_path; // e.g. "C:\"
+    HICON m_icon = nullptr; // Cached icon
+    bool m_isRemote; // Whether the drive type is DRIVE_REMOTE (network drive)
 
-    bool m_Querying = true; // Information thread is running.
-    bool m_Success = false; // Drive is accessible. false while m_Querying is true.
-    bool m_Subst = false; // Drive is subst'd
+    bool m_querying = true; // Information thread is running.
+    bool m_success = false; // Drive is accessible. false while m_querying is true.
+    bool m_subst = false; // Drive is subst'd
 
-    std::wstring m_Name; // e.g. "BOOT (C:)"
-    ULONGLONG m_TotalBytes = 0; // Capacity
-    ULONGLONG m_FreeBytes = 0;  // Free space
+    std::wstring m_name; // e.g. "BOOT (C:)"
+    ULONGLONG m_totalBytes = 0; // Capacity
+    ULONGLONG m_freeBytes = 0;  // Free space
 
-    double m_Used = 0.0; // used space / total space
+    double m_used = 0.0; // used space / total space
 };
 
 //
@@ -81,8 +81,8 @@ class CDriveInformationThread final : public CWinThread
 {
     // Set of all running CDriveInformationThreads.
     // Used by InvalidateDialogHandle().
-    static std::unordered_set<CDriveInformationThread*> _runningThreads;
-    static std::mutex _mutexRunningThreads;
+    static std::unordered_set<CDriveInformationThread*> s_runningThreads;
+    static std::mutex s_mutexRunningThreads;
 
     // The objects register and unregister themselves in _runningThreads
     void AddRunningThread();
@@ -97,16 +97,16 @@ public:
     LPARAM GetDriveInformation(bool& success, std::wstring& name, ULONGLONG& total, ULONGLONG& free) const;
 
 private:
-    const std::wstring m_Path; // Path like "C:\"
-    const LPARAM m_DriveItem;  // The list item, we belong to
-    const UINT m_Serial;       // serial number of m_Dialog
-    std::atomic<HWND> m_Dialog;
+    const std::wstring m_path; // Path like "C:\"
+    const LPARAM m_driveItem;  // The list item, we belong to
+    const UINT m_serial;       // serial number of m_dialog
+    std::atomic<HWND> m_dialog;
 
     // "[out]"-parameters
-    std::wstring m_Name;        // Result: name like "BOOT (C:)", valid if m_Success
-    ULONGLONG m_TotalBytes = 0; // Result: capacity of the drive, valid if m_Success
-    ULONGLONG m_FreeBytes = 0;  // Result: free space on the drive, valid if m_Success
-    bool m_Success = false;     // Result: false, iff drive is inaccessible.
+    std::wstring m_name;        // Result: name like "BOOT (C:)", valid if m_success
+    ULONGLONG m_totalBytes = 0; // Result: capacity of the drive, valid if m_success
+    ULONGLONG m_freeBytes = 0;  // Result: free space on the drive, valid if m_success
+    bool m_success = false;     // Result: false, iff drive is inaccessible.
 };
 
 //
@@ -152,17 +152,17 @@ class CSelectDrivesDlg final : public CLayoutDialogEx
 protected:
 
     // Dialog Data
-    BOOL m_ScanDuplicates = false; // whether duplicate scanning is enable
-    BOOL m_UseFastScan = false; // whether fast scan is enable
-    int m_Radio = 0;          // out.
-    CStringW m_FolderName;    // out. Valid if m_Radio = RADIO_TARGET_FOLDER
-    std::vector<std::wstring> m_Drives;    // out. Valid if m_Radio != RADIO_TARGET_FOLDER
-    static UINT _serial; // Each Instance of this dialog gets a serial number
-    CDrivesList m_List;
-    CComboBox m_BrowseList;
-    CButton m_OkButton;
-    CButton m_BrowseButton;
-    std::vector<std::wstring> m_SelectedDrives;
+    BOOL m_scanDuplicates = false; // whether duplicate scanning is enable
+    BOOL m_useFastScan = false; // whether fast scan is enable
+    int m_radio = 0;          // out.
+    CStringW m_folderName;    // out. Valid if m_radio = RADIO_TARGET_FOLDER
+    std::vector<std::wstring> m_drives;    // out. Valid if m_radio != RADIO_TARGET_FOLDER
+    static UINT s_serial; // Each Instance of this dialog gets a serial number
+    CDrivesList m_list;
+    CComboBox m_browseList;
+    CButton m_okButton;
+    CButton m_browseButton;
+    std::vector<std::wstring> m_selectedDrives;
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnBnClickedUpdateButtons();

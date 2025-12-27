@@ -37,14 +37,14 @@ static DWORD(WINAPI* AllowDarkModeForWindow)(HWND hwnd, bool allow) = reinterpre
 static LONG(WINAPI* RtlGetVersion)(LPOSVERSIONINFOEXW) = reinterpret_cast<decltype(RtlGetVersion)>(
     reinterpret_cast<LPVOID>(GetProcAddress(GetModuleHandle(L"ntdll.dll"), "RtlGetVersion")));
 
-bool DarkMode::_darkModeEnabled = false;
+bool DarkMode::s_darkModeEnabled = false;
 static std::array<COLORREF, 50> OriginalColors;
 static std::array<COLORREF, 50> DarkModeColors;
 
 void DarkMode::SetAppDarkMode() noexcept
 {
     // Determine if dark mode should be set based on settings
-    _darkModeEnabled = COptions::DarkMode == 1;
+    s_darkModeEnabled = COptions::DarkMode == 1;
 
     if (COptions::DarkMode == 2)
     {
@@ -53,20 +53,20 @@ void DarkMode::SetAppDarkMode() noexcept
         CRegKey key;
         key.Open(HKEY_CURRENT_USER, wds::strThemesKey, KEY_READ);
         key.QueryDWORDValue(L"AppsUseLightTheme", darkSetting);
-        _darkModeEnabled = (darkSetting == 0);
+        s_darkModeEnabled = (darkSetting == 0);
     }
 
     // Validate this version of Windows supports dark mode
     OSVERSIONINFOEXW verInfo { .dwOSVersionInfoSize  = sizeof(verInfo) };
     RtlGetVersion(&verInfo);
-    _darkModeEnabled &= verInfo.dwMajorVersion >= 10 && verInfo.dwBuildNumber >= 17763;
+    s_darkModeEnabled &= verInfo.dwMajorVersion >= 10 && verInfo.dwBuildNumber >= 17763;
 
     // Disable if functions are not accessible
-    _darkModeEnabled &= SetPreferredAppMode != nullptr;
-    _darkModeEnabled &= AllowDarkModeForWindow != nullptr;
+    s_darkModeEnabled &= SetPreferredAppMode != nullptr;
+    s_darkModeEnabled &= AllowDarkModeForWindow != nullptr;
 
     // Signal this app can support dark mode
-    if (_darkModeEnabled) SetPreferredAppMode(ForceDark);
+    if (s_darkModeEnabled) SetPreferredAppMode(ForceDark);
 
     // Record initial system colors
     for (const auto i : std::views::iota(0u, OriginalColors.size()))
@@ -102,7 +102,7 @@ void DarkMode::SetAppDarkMode() noexcept
 void DarkMode::SetupGlobalColors() noexcept
 {
     // No need to continue if dark mode is not enabled
-    if (!_darkModeEnabled) return;
+    if (!s_darkModeEnabled) return;
 
     // Update global colors
     GetGlobalData()->clrBarFace = WdsSysColor(COLOR_MENUBAR);
@@ -119,17 +119,17 @@ void DarkMode::SetupGlobalColors() noexcept
 
 COLORREF DarkMode::WdsSysColor(const DWORD index)
 {
-    return _darkModeEnabled ? DarkModeColors[index] : OriginalColors[index];
+    return s_darkModeEnabled ? DarkModeColors[index] : OriginalColors[index];
 }
 
 bool DarkMode::IsDarkModeActive() noexcept
 {
-    return _darkModeEnabled;
+    return s_darkModeEnabled;
 }
 
 void DarkMode::AdjustControls(const HWND hWnd)
 {
-    if (!_darkModeEnabled) return;
+    if (!s_darkModeEnabled) return;
 
     auto ProcessWindow = [](const HWND hWnd, const LPARAM) -> BOOL
     {
@@ -138,10 +138,10 @@ void DarkMode::AdjustControls(const HWND hWnd)
         const std::wstring className(classNameBuffer.data(), length);
 
         // Control whether the window is allowed for dark mode
-        AllowDarkModeForWindow(hWnd, _darkModeEnabled);
+        AllowDarkModeForWindow(hWnd, s_darkModeEnabled);
 
         // Set toplevel theme
-        const BOOL dark = _darkModeEnabled;
+        const BOOL dark = s_darkModeEnabled;
         DwmSetWindowAttribute(hWnd, DWMWA_USE_IMMERSIVE_DARK_MODE, &dark, sizeof(dark));
 
         if (className == WC_BUTTON)
@@ -182,7 +182,7 @@ void DarkMode::AdjustControls(const HWND hWnd)
 
 HBRUSH DarkMode::OnCtlColor(CDC* pDC, UINT nCtlColor)
 {
-    if (_darkModeEnabled &&
+    if (s_darkModeEnabled &&
         (nCtlColor == CTLCOLOR_DLG || nCtlColor == CTLCOLOR_STATIC ||
          nCtlColor == CTLCOLOR_EDIT || nCtlColor == CTLCOLOR_LISTBOX))
     {
@@ -197,12 +197,12 @@ HBRUSH DarkMode::OnCtlColor(CDC* pDC, UINT nCtlColor)
 HBRUSH DarkMode::GetDialogBackgroundBrush()
 {
     static HBRUSH darkBrush = CreateSolidBrush(DarkModeColors[COLOR_WINDOW]);
-    return _darkModeEnabled ? darkBrush : GetSysColorBrush(COLOR_WINDOW);
+    return s_darkModeEnabled ? darkBrush : GetSysColorBrush(COLOR_WINDOW);
 }
 
 void DarkMode::DrawMenuClientArea(CWnd& wnd)
 {
-    if (!_darkModeEnabled) return;
+    if (!s_darkModeEnabled) return;
 
     MENUBARINFO mbi{};
     mbi.cbSize = sizeof(MENUBARINFO);
@@ -230,7 +230,7 @@ void DarkMode::DrawMenuClientArea(CWnd& wnd)
 
 LRESULT DarkMode::HandleMenuMessage(const UINT message, const WPARAM wParam, const LPARAM lParam, const HWND hWnd)
 {
-    if (!_darkModeEnabled || lParam == NULL) return DefWindowProc(hWnd, message, wParam, lParam);
+    if (!s_darkModeEnabled || lParam == NULL) return DefWindowProc(hWnd, message, wParam, lParam);
 
     using UAHMENU = struct UAHMENU
     {
@@ -316,7 +316,7 @@ LRESULT DarkMode::HandleMenuMessage(const UINT message, const WPARAM wParam, con
 
 HICON DarkMode::LightenIcon(const HICON hIcon, const bool invert)
 {
-    if (!_darkModeEnabled) return hIcon;
+    if (!s_darkModeEnabled) return hIcon;
 
     ICONINFO iconInfo;
     if (!GetIconInfo(hIcon, &iconInfo)) return hIcon;
@@ -338,7 +338,7 @@ HICON DarkMode::LightenIcon(const HICON hIcon, const bool invert)
 }
 void DarkMode::LightenBitmap(CBitmap* pBitmap, const bool invert)
 {
-    if (!_darkModeEnabled) return;
+    if (!s_darkModeEnabled) return;
     BITMAP bm;
     pBitmap->GetBitmap(&bm);
     CDC memDC;

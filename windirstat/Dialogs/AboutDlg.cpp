@@ -84,29 +84,29 @@ void CAboutDlg::WdsTabControl::Initialize()
     };
 
     // Create all three pages and add them as tabs
-    AddTab(createText(m_TextAbout), Localization::Lookup(IDS_ABOUT_ABOUT).c_str(), TAB_ABOUT);
-    AddTab(createText(m_TextThanks), Localization::Lookup(IDS_ABOUT_THANKS).c_str(), TAB_THANKSTO);
-    AddTab(createText(m_TextLicense, ES_LEFT), Localization::Lookup(IDS_ABOUT_LICENSE).c_str(), TAB_LICENSE);
+    AddTab(createText(m_textAbout), Localization::Lookup(IDS_ABOUT_ABOUT).c_str(), TAB_ABOUT);
+    AddTab(createText(m_textThanks), Localization::Lookup(IDS_ABOUT_THANKS).c_str(), TAB_THANKSTO);
+    AddTab(createText(m_textLicense, ES_LEFT), Localization::Lookup(IDS_ABOUT_LICENSE).c_str(), TAB_LICENSE);
 
     // Use monospace font for license page
-    m_MonoFont.CreateFontW(12, 0, 0, 0, 0, 0, 0, 0, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
+    m_monoFont.CreateFontW(12, 0, 0, 0, 0, 0, 0, 0, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
         CLIP_DEFAULT_PRECIS, CLEARTYPE_NATURAL_QUALITY, FF_MODERN, L"Consolas");
 
     // Populate text
     const auto about = Localization::Format(IDS_ABOUT_ABOUT_TEXTss,
         Localization::LookupNeutral(IDS_AUTHOR_EMAIL),
         Localization::LookupNeutral(IDS_URL_WEBSITE));
-    m_TextAbout.SetWindowText(about.c_str());
+    m_textAbout.SetWindowText(about.c_str());
 
     const auto thanks = Localization::Lookup(IDS_ABOUT_THANKS_TEXT);
-    m_TextThanks.SetWindowText(thanks.c_str());
+    m_textThanks.SetWindowText(thanks.c_str());
 
     const auto license = GetTextResource(IDR_LICENSE, nullptr);
-    m_TextLicense.SetWindowText(license.c_str());
-    m_TextLicense.SetFont(&m_MonoFont);
+    m_textLicense.SetWindowText(license.c_str());
+    m_textLicense.SetFont(&m_monoFont);
 
     // Set default rich edit settings
-    for (auto ctrl : { &m_TextAbout, &m_TextThanks, &m_TextLicense })
+    for (auto ctrl : { &m_textAbout, &m_textThanks, &m_textLicense })
     {
         CHARFORMAT2 charFormat = { {} };
         charFormat.cbSize = sizeof(CHARFORMAT2);
@@ -121,7 +121,7 @@ void CAboutDlg::WdsTabControl::Initialize()
 void CAboutDlg::WdsTabControl::ClearSelectionCursor()
 {
     const auto tabIndex = GetActiveTab();
-    auto& active = tabIndex == TAB_ABOUT ? m_TextAbout : tabIndex == TAB_THANKSTO ? m_TextThanks : m_TextLicense;
+    auto& active = tabIndex == TAB_ABOUT ? m_textAbout : tabIndex == TAB_THANKSTO ? m_textThanks : m_textLicense;
     active.SetSel(0, 0);
     active.HideCaret();
 }
@@ -140,7 +140,7 @@ void CAboutDlg::WdsTabControl::OnEnLinkText(NMHDR* pNMHDR, LRESULT* pResult)
     {
         CStringW link;
         const auto tabIndex = GetActiveTab();
-        const auto& active = tabIndex == TAB_ABOUT ? m_TextAbout : tabIndex == TAB_THANKSTO ? m_TextThanks : m_TextLicense;
+        const auto& active = tabIndex == TAB_ABOUT ? m_textAbout : tabIndex == TAB_THANKSTO ? m_textThanks : m_textLicense;
         active.GetTextRange(el->chrg.cpMin, el->chrg.cpMax, link);
         ::ShellExecute(*this, nullptr, link, nullptr, wds::strEmpty, SW_SHOWNORMAL);
     }
@@ -189,8 +189,8 @@ std::wstring CAboutDlg::GetAppVersion()
 void CAboutDlg::DoDataExchange(CDataExchange* pDX)
 {
     CDialogEx::DoDataExchange(pDX);
-    DDX_Control(pDX, IDC_CAPTION, m_Caption);
-    DDX_Control(pDX, IDC_TAB, m_Tab);
+    DDX_Control(pDX, IDC_CAPTION, m_caption);
+    DDX_Control(pDX, IDC_TAB, m_tab);
 }
 
 BEGIN_MESSAGE_MAP(CAboutDlg, CLayoutDialogEx)
@@ -208,17 +208,17 @@ BOOL CAboutDlg::OnInitDialog()
     placeholderTabCtrl->GetWindowRect(&placeholderRect);
     ScreenToClient(&placeholderRect);
     placeholderTabCtrl->DestroyWindow();
-    m_Tab.Create(CMFCTabCtrl::STYLE_FLAT, placeholderRect, this, IDC_TAB);
+    m_tab.Create(CMFCTabCtrl::STYLE_FLAT, placeholderRect, this, IDC_TAB);
     Localization::UpdateDialogs(*this);
 
-    m_Layout.AddControl(IDC_CAPTION, 0.5, 0, 0, 0);
-    m_Layout.AddControl(IDC_TAB, 0, 0, 1, 1);
-    m_Layout.AddControl(IDOK, 0.5, 1, 0, 0);
+    m_layout.AddControl(IDC_CAPTION, 0.5, 0, 0, 0);
+    m_layout.AddControl(IDC_TAB, 0, 0, 1, 1);
+    m_layout.AddControl(IDOK, 0.5, 1, 0, 0);
 
-    m_Layout.OnInitDialog(true);
+    m_layout.OnInitDialog(true);
 
-    m_Tab.Initialize();
-    m_Caption.SetWindowText(GetAppVersion().c_str());
+    m_tab.Initialize();
+    m_caption.SetWindowText(GetAppVersion().c_str());
 
     DarkMode::AdjustControls(GetSafeHwnd());
 
@@ -227,7 +227,7 @@ BOOL CAboutDlg::OnInitDialog()
 
 LRESULT CAboutDlg::OnTabChanged(WPARAM, LPARAM)
 {
-    m_Tab.ClearSelectionCursor();
+    m_tab.ClearSelectionCursor();
     return 0;
 }
 

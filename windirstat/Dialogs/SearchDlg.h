@@ -44,8 +44,8 @@ private:
     afx_msg void OnChangeSearchTerm();
     afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 
-    BOOL m_SearchWholePhrase;
-    BOOL m_SearchCase;
-    BOOL m_SearchRegex;
-    CString m_SearchTerm;
+    BOOL m_searchWholePhrase;
+    BOOL m_searchCase;
+    BOOL m_searchRegex;
+    CString m_searchTerm;
 };

@@ -27,8 +27,8 @@ struct CFilterGuard
 
 CIconHandler::~CIconHandler()
 {
-    m_LookupQueue.SuspendExecution();
-    m_LookupQueue.CancelExecution();
+    m_lookupQueue.SuspendExecution();
+    m_lookupQueue.CancelExecution();
 }
 
 void CIconHandler::Initialize()
@@ -36,27 +36,27 @@ void CIconHandler::Initialize()
     static std::once_flag s_once;
     std::call_once(s_once, [this]
     {
-        m_FilterOverride.RegisterFilter();
+        m_filterOverride.RegisterFilter();
 
-        m_JunctionImage = DarkMode::LightenIcon(CDirStatApp::Get()->LoadIcon(IDI_JUNCTION));
-        m_JunctionProtected = DarkMode::LightenIcon(CDirStatApp::Get()->LoadIcon(IDI_JUNCTION_PROTECTED), true);
-        m_FreeSpaceImage = DarkMode::LightenIcon(CDirStatApp::Get()->LoadIcon(IDI_FREE_SPACE), true);
-        m_UnknownImage = DarkMode::LightenIcon(CDirStatApp::Get()->LoadIcon(IDI_UNKNOWN), true);
-        m_EmptyImage = DarkMode::LightenIcon(CDirStatApp::Get()->LoadIcon(IDI_EMPTY), true);
-        m_HardlinksImage = DarkMode::LightenIcon(CDirStatApp::Get()->LoadIcon(IDI_HARDLINKS), true);
+        m_junctionImage = DarkMode::LightenIcon(CDirStatApp::Get()->LoadIcon(IDI_JUNCTION));
+        m_junctionProtected = DarkMode::LightenIcon(CDirStatApp::Get()->LoadIcon(IDI_JUNCTION_PROTECTED), true);
+        m_freeSpaceImage = DarkMode::LightenIcon(CDirStatApp::Get()->LoadIcon(IDI_FREE_SPACE), true);
+        m_unknownImage = DarkMode::LightenIcon(CDirStatApp::Get()->LoadIcon(IDI_UNKNOWN), true);
+        m_emptyImage = DarkMode::LightenIcon(CDirStatApp::Get()->LoadIcon(IDI_EMPTY), true);
+        m_hardlinksImage = DarkMode::LightenIcon(CDirStatApp::Get()->LoadIcon(IDI_HARDLINKS), true);
 
         // Cache icon for boot drive
         std::wstring drive(_MAX_PATH, wds::chrNull);
         drive.resize(min(wcslen(L"C:\\"), GetWindowsDirectory(drive.data(), _MAX_PATH)));
-        m_MountPointImage = FetchShellIcon(drive, 0, FILE_ATTRIBUTE_REPARSE_POINT);
+        m_mountPointImage = FetchShellIcon(drive, 0, FILE_ATTRIBUTE_REPARSE_POINT);
 
         // Cache icon for my computer
-        m_MyComputerImage = FetchShellIcon(std::to_wstring(CSIDL_DRIVES), SHGFI_PIDL);
+        m_myComputerImage = FetchShellIcon(std::to_wstring(CSIDL_DRIVES), SHGFI_PIDL);
 
         // Use two threads for asynchronous icon lookup
-        m_LookupQueue.StartThreads(MAX_ICON_THREADS, [this]
+        m_lookupQueue.StartThreads(MAX_ICON_THREADS, [this]
         {
-            for (auto itemOpt = m_LookupQueue.Pop(); itemOpt.has_value(); itemOpt = m_LookupQueue.Pop())
+            for (auto itemOpt = m_lookupQueue.Pop(); itemOpt.has_value(); itemOpt = m_lookupQueue.Pop())
             {
                 // Fetch item from queue
                 auto& [item, control, path, attr, icon, desc] = itemOpt.value();
@@ -85,15 +85,15 @@ void CIconHandler::Initialize()
 
 void CIconHandler::DoAsyncShellInfoLookup(const IconLookup& lookupInfo)
 {
-    m_LookupQueue.PushIfNotQueued(lookupInfo);
+    m_lookupQueue.PushIfNotQueued(lookupInfo);
 }
 
 void CIconHandler::ClearAsyncShellInfoQueue()
 {
     ProcessMessagesUntilSignaled([this]
     {
-        m_LookupQueue.SuspendExecution(true);
-        m_LookupQueue.ResumeExecution();
+        m_lookupQueue.SuspendExecution(true);
+        m_lookupQueue.ResumeExecution();
     });
 }
 
@@ -101,14 +101,14 @@ void CIconHandler::StopAsyncShellInfoQueue()
 {
     ProcessMessagesUntilSignaled([this]
     {
-        m_LookupQueue.SuspendExecution();
-        m_LookupQueue.CancelExecution();
+        m_lookupQueue.SuspendExecution();
+        m_lookupQueue.CancelExecution();
     });
 }
 
 void CIconHandler::DrawIcon(const CDC* hdc, const HICON image, const CPoint & pt, const CSize& sz)
 {
-    CFilterGuard guard(m_FilterOverride);
+    CFilterGuard guard(m_filterOverride);
     DrawIconEx(*hdc, pt.x, pt.y, image, sz.cx, sz.cy, 0, nullptr, DI_NORMAL);
 }
 
@@ -130,7 +130,7 @@ HICON CIconHandler::FetchShellIcon(const std::wstring & path, UINT flags, const 
         SmartPointer<LPITEMIDLIST> pidl(CoTaskMemFree);
         if (SUCCEEDED(SHGetSpecialFolderLocation(nullptr, std::stoi(path), &pidl)))
         {
-            CFilterGuard guard(m_FilterOverride);
+            CFilterGuard guard(m_filterOverride);
             success = reinterpret_cast<HIMAGELIST>(::SHGetFileInfo(
                 static_cast<LPCWSTR>(static_cast<LPVOID>(pidl)), attr, &sfi,
                 sizeof(sfi), flags)) != nullptr;
@@ -138,7 +138,7 @@ HICON CIconHandler::FetchShellIcon(const std::wstring & path, UINT flags, const 
     }
     else
     {
-        CFilterGuard guard(m_FilterOverride);
+        CFilterGuard guard(m_filterOverride);
         success = reinterpret_cast<HIMAGELIST>(::SHGetFileInfo(path.c_str(),
             attr, &sfi, sizeof(sfi), flags)) != nullptr;
     }
@@ -155,13 +155,13 @@ HICON CIconHandler::FetchShellIcon(const std::wstring & path, UINT flags, const 
             Localization::Lookup(IDS_EXTENSION_MISSING) : sfi.szTypeName;
     }
 
-    std::scoped_lock lock(m_CachedIconMutex);
-    if (const auto it = m_CachedIcons.find(sfi.iIcon); it != m_CachedIcons.end())
+    std::scoped_lock lock(m_cachedIconMutex);
+    if (const auto it = m_cachedIcons.find(sfi.iIcon); it != m_cachedIcons.end())
     {
         if (sfi.hIcon != nullptr) DestroyIcon(sfi.hIcon);
         return it->second;
     }
 
-    m_CachedIcons[sfi.iIcon] = sfi.hIcon;
+    m_cachedIcons[sfi.iIcon] = sfi.hIcon;
     return sfi.hIcon;
 }

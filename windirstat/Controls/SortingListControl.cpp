@@ -45,8 +45,8 @@ IMPLEMENT_DYNAMIC(CSortingListControl, CListCtrl)
 
 CSortingListControl::CSortingListControl(std::vector<int>* columnOrder, std::vector<int>* columnWidths)
 {
-    m_ColumnOrder = columnOrder;
-    m_ColumnWidths = columnWidths;
+    m_columnOrder = columnOrder;
+    m_columnWidths = columnWidths;
 }
 
 void CSortingListControl::LoadPersistentAttributes()
@@ -55,36 +55,36 @@ void CSortingListControl::LoadPersistentAttributes()
     const auto columnCount = static_cast<size_t>(GetHeaderCtrl()->GetItemCount());
 
     // Load default column order values from resource
-    if (m_ColumnOrder->size() != columnCount)
+    if (m_columnOrder->size() != columnCount)
     {
-        m_ColumnOrder->resize(columnCount);
-        GetColumnOrderArray(m_ColumnOrder->data(), static_cast<int>(m_ColumnOrder->size()));
+        m_columnOrder->resize(columnCount);
+        GetColumnOrderArray(m_columnOrder->data(), static_cast<int>(m_columnOrder->size()));
     }
 
     // Load default column width values from resource
-    if (m_ColumnWidths->size() != columnCount)
+    if (m_columnWidths->size() != columnCount)
     {
-        m_ColumnWidths->resize(columnCount,0);
-        for (const int i : std::views::iota(0, static_cast<int>(m_ColumnWidths->size())))
+        m_columnWidths->resize(columnCount,0);
+        for (const int i : std::views::iota(0, static_cast<int>(m_columnWidths->size())))
         {
-            (*m_ColumnWidths)[i] = GetColumnWidth(i);
+            (*m_columnWidths)[i] = GetColumnWidth(i);
         }
     }
     
     // Set based on persisted values
-    SetColumnOrderArray(static_cast<int>(m_ColumnOrder->size()), m_ColumnOrder->data());
-    for (const int i : std::views::iota(0, static_cast<int>(m_ColumnWidths->size())))
+    SetColumnOrderArray(static_cast<int>(m_columnOrder->size()), m_columnOrder->data());
+    for (const int i : std::views::iota(0, static_cast<int>(m_columnWidths->size())))
     {
-        SetColumnWidth(i, min((*m_ColumnWidths)[i], (*m_ColumnWidths)[i] * 2));
+        SetColumnWidth(i, min((*m_columnWidths)[i], (*m_columnWidths)[i] * 2));
     }
 }
 
 void CSortingListControl::SavePersistentAttributes() const
 {
-    GetColumnOrderArray(m_ColumnOrder->data(), static_cast<int>(m_ColumnOrder->size()));
-    for (const int i : std::views::iota(0, static_cast<int>(m_ColumnWidths->size())))
+    GetColumnOrderArray(m_columnOrder->data(), static_cast<int>(m_columnOrder->size()));
+    for (const int i : std::views::iota(0, static_cast<int>(m_columnWidths->size())))
     {
-        (*m_ColumnWidths)[i] = GetColumnWidth(i);
+        (*m_columnWidths)[i] = GetColumnWidth(i);
     }
 }
 
@@ -100,7 +100,7 @@ void CSortingListControl::RemoveExtendedStyle(const DWORD exStyle)
 
 const SSorting& CSortingListControl::GetSorting() const
 {
-    return m_Sorting;
+    return m_sorting;
 }
 
 int CSortingListControl::ColumnToSubItem(const int col) const
@@ -112,27 +112,27 @@ int CSortingListControl::ColumnToSubItem(const int col) const
 
 void CSortingListControl::SetSorting(const SSorting& sorting)
 {
-    m_Sorting = sorting;
+    m_sorting = sorting;
 }
 
 void CSortingListControl::SetSorting(const int sortColumn1, const bool ascending1, const int sortColumn2, const bool ascending2)
 {
-    m_Sorting.column1    = sortColumn1;
-    m_Sorting.subitem1   = ColumnToSubItem(sortColumn1);
-    m_Sorting.ascending1 = ascending1;
-    m_Sorting.column2    = sortColumn2;
-    m_Sorting.subitem2   = ColumnToSubItem(sortColumn2);
-    m_Sorting.ascending2 = ascending2;
+    m_sorting.column1    = sortColumn1;
+    m_sorting.subitem1   = ColumnToSubItem(sortColumn1);
+    m_sorting.ascending1 = ascending1;
+    m_sorting.column2    = sortColumn2;
+    m_sorting.subitem2   = ColumnToSubItem(sortColumn2);
+    m_sorting.ascending2 = ascending2;
 }
 
 void CSortingListControl::SetSorting(const int sortColumn, const bool ascending)
 {
-    m_Sorting.column2    = m_Sorting.column1;
-    m_Sorting.subitem2   = m_Sorting.subitem1;
-    m_Sorting.ascending2 = m_Sorting.ascending1;
-    m_Sorting.column1    = sortColumn;
-    m_Sorting.ascending1 = ascending;
-    m_Sorting.subitem1   = ColumnToSubItem(sortColumn);
+    m_sorting.column2    = m_sorting.column1;
+    m_sorting.subitem2   = m_sorting.subitem1;
+    m_sorting.ascending2 = m_sorting.ascending1;
+    m_sorting.column1    = sortColumn;
+    m_sorting.ascending1 = ascending;
+    m_sorting.subitem1   = ColumnToSubItem(sortColumn);
 }
 
 void CSortingListControl::InsertListItem(const int i, CSortingListItem* item)
@@ -162,7 +162,7 @@ void CSortingListControl::SortItems()
         const CSortingListItem* item1 = reinterpret_cast<CSortingListItem*>(lParam1);
         const CSortingListItem* item2 = reinterpret_cast<CSortingListItem*>(lParam2);
         const SSorting* sorting = reinterpret_cast<SSorting*>(lParamSort);
-        return item1->CompareSort(item2, *sorting); }, reinterpret_cast<DWORD_PTR>(&m_Sorting)));
+        return item1->CompareSort(item2, *sorting); }, reinterpret_cast<DWORD_PTR>(&m_sorting)));
 
     CHeaderCtrl* pHeaderCtrl = GetHeaderCtrl();
     
@@ -176,26 +176,26 @@ void CSortingListControl::SortItems()
     hditem.mask = HDI_FORMAT;
 
     // Remove the sort indicator from the previously sorted column if one exists.
-    if (m_IndicatedColumn != -1)
+    if (m_indicatedColumn != -1)
     {
-        pHeaderCtrl->GetItem(m_IndicatedColumn, &hditem);
+        pHeaderCtrl->GetItem(m_indicatedColumn, &hditem);
         // Use a bitwise operation to clear both the UP and DOWN sort flags.
         hditem.fmt &= ~(HDF_SORTUP | HDF_SORTDOWN);
-        pHeaderCtrl->SetItem(m_IndicatedColumn, &hditem);
+        pHeaderCtrl->SetItem(m_indicatedColumn, &hditem);
     }
 
     // Retrieve the newly sorted column's current format flags.
-    pHeaderCtrl->GetItem(m_Sorting.column1, &hditem);
+    pHeaderCtrl->GetItem(m_sorting.column1, &hditem);
     // Clear any existing sort flags to ensure a clean state before applying the new one.
     hditem.fmt &= ~(HDF_SORTUP | HDF_SORTDOWN); 
 
     // Apply the correct native sorting indicator based on the sort direction using a ternary operator.
-    hditem.fmt |= m_Sorting.ascending1 ? HDF_SORTUP : HDF_SORTDOWN;
+    hditem.fmt |= m_sorting.ascending1 ? HDF_SORTUP : HDF_SORTDOWN;
 
-    pHeaderCtrl->SetItem(m_Sorting.column1, &hditem);
+    pHeaderCtrl->SetItem(m_sorting.column1, &hditem);
 
     // Store the current sorted column's index to be cleared next time.
-    m_IndicatedColumn = m_Sorting.column1;
+    m_indicatedColumn = m_sorting.column1;
 }
 
 bool CSortingListControl::GetAscendingDefault(int /*column*/)
@@ -234,9 +234,9 @@ void CSortingListControl::OnHdnItemClick(NMHDR* pNMHDR, LRESULT* pResult)
     *pResult = FALSE;
     const int col = phdr->iItem;
 
-    if (col == m_Sorting.column1)
+    if (col == m_sorting.column1)
     {
-        m_Sorting.ascending1 = !m_Sorting.ascending1;
+        m_sorting.ascending1 = !m_sorting.ascending1;
     }
     else
     {

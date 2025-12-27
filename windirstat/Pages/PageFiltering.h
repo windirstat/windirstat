@@ -41,15 +41,15 @@ protected:
     void OnOK() override;
     void SetToolTips();
 
-    int m_FilteringSizeMinimum = 0;
-    int m_FilteringSizeUnits = 0;
-    BOOL m_FilteringUseRegex = FALSE;
-    CString m_FilteringExcludeDirs;
-    CString m_FilteringExcludeFiles;
-    CComboBox m_CtlFilteringSizeUnits;
-    CEdit m_CtrlFilteringExcludeFiles;
-    CEdit m_CtrlFilteringExcludeDirs;
-    CToolTipCtrl m_ToolTip;
+    int m_filteringSizeMinimum = 0;
+    int m_filteringSizeUnits = 0;
+    BOOL m_filteringUseRegex = FALSE;
+    CString m_filteringExcludeDirs;
+    CString m_filteringExcludeFiles;
+    CComboBox m_ctlFilteringSizeUnits;
+    CEdit m_ctrlFilteringExcludeFiles;
+    CEdit m_ctrlFilteringExcludeDirs;
+    CToolTipCtrl m_toolTip;
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnSettingChanged();

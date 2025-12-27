@@ -33,7 +33,7 @@ void AFXAPI DDX_XySlider(CDataExchange* pDX, int nIDC, CPoint& value)
 
 void CXySlider::Initialize()
 {
-    if (!m_Inited && IsWindow(m_hWnd))
+    if (!m_inited && IsWindow(m_hWnd))
     {
         // Make size odd, so that zero lines are central
         CRect rc;
@@ -52,23 +52,23 @@ void CXySlider::Initialize()
         // Initialize constants
         CalcSizes();
 
-        m_Inited = true;
+        m_inited = true;
     }
 }
 
 void CXySlider::GetRange(CSize& range) const
 {
-    range = m_ExternalRange;
+    range = m_externalRange;
 }
 
 void CXySlider::SetRange(const CSize & range)
 {
-    m_ExternalRange = range;
+    m_externalRange = range;
 }
 
 CPoint CXySlider::GetPos() const
 {
-    return m_ExternalPos;
+    return m_externalPos;
 }
 
 LRESULT CXySlider::OnSetPos(WPARAM, const LPARAM lparam)
@@ -89,49 +89,49 @@ void CXySlider::SetPos(const CPoint pt)
 {
     Initialize();
 
-    m_ExternalPos = pt;
+    m_externalPos = pt;
     ExternToIntern();
     Invalidate();
 }
 
 void CXySlider::CalcSizes()
 {
-    static constexpr int _gripperRadius = 8;
+    static constexpr int s_gripperRadius = 8;
 
-    GetClientRect(m_RcAll);
+    GetClientRect(m_rcAll);
 
-    ASSERT(m_RcAll.left == 0);
-    ASSERT(m_RcAll.top == 0);
-    ASSERT(m_RcAll.Width() % 2 == 1);
-    ASSERT(m_RcAll.Height() % 2 == 1);
-    ASSERT(m_RcAll.Width() >= _gripperRadius * 2); // Control must be large enough
-    ASSERT(m_RcAll.Height() >= _gripperRadius * 2);
+    ASSERT(m_rcAll.left == 0);
+    ASSERT(m_rcAll.top == 0);
+    ASSERT(m_rcAll.Width() % 2 == 1);
+    ASSERT(m_rcAll.Height() % 2 == 1);
+    ASSERT(m_rcAll.Width() >= s_gripperRadius * 2); // Control must be large enough
+    ASSERT(m_rcAll.Height() >= s_gripperRadius * 2);
 
-    m_Zero.x = m_RcAll.Width() / 2;
-    m_Zero.y = m_RcAll.Height() / 2;
+    m_zero.x = m_rcAll.Width() / 2;
+    m_zero.y = m_rcAll.Height() / 2;
 
-    m_Radius.cx = m_RcAll.Width() / 2 - 1;
-    m_Radius.cy = m_RcAll.Height() / 2 - 1;
+    m_radius.cx = m_rcAll.Width() / 2 - 1;
+    m_radius.cy = m_rcAll.Height() / 2 - 1;
 
-    m_RcInner = m_RcAll;
-    m_RcInner.DeflateRect(_gripperRadius - 3, _gripperRadius - 3);
+    m_rcInner = m_rcAll;
+    m_rcInner.DeflateRect(s_gripperRadius - 3, s_gripperRadius - 3);
 
-    m_GripperRadius.cx = _gripperRadius;
-    m_GripperRadius.cy = _gripperRadius;
+    m_gripperRadius.cx = s_gripperRadius;
+    m_gripperRadius.cy = s_gripperRadius;
 
-    m_Range = m_Radius - m_GripperRadius;
+    m_range = m_radius - m_gripperRadius;
 }
 
 CRect CXySlider::GetGripperRect() const
 {
     CRect rc(
-        -m_GripperRadius.cx,
-        -m_GripperRadius.cy,
-        m_GripperRadius.cx + 1,
-        m_GripperRadius.cy + 1
+        -m_gripperRadius.cx,
+        -m_gripperRadius.cy,
+        m_gripperRadius.cx + 1,
+        m_gripperRadius.cy + 1
     );
-    rc.OffsetRect(m_Zero);
-    rc.OffsetRect(m_Pos);
+    rc.OffsetRect(m_zero);
+    rc.OffsetRect(m_pos);
     return rc;
 }
 
@@ -144,14 +144,14 @@ void CXySlider::CheckMinMax(LONG& val, const int minVal, const int maxVal) const
 
 void CXySlider::InternToExtern()
 {
-    m_ExternalPos.x = static_cast<LONG>(std::round(static_cast<double>(m_Pos.x) * m_ExternalRange.cx / m_Range.cx));
-    m_ExternalPos.y = static_cast<LONG>(std::round(static_cast<double>(m_Pos.y) * m_ExternalRange.cy / m_Range.cy));
+    m_externalPos.x = static_cast<LONG>(std::round(static_cast<double>(m_pos.x) * m_externalRange.cx / m_range.cx));
+    m_externalPos.y = static_cast<LONG>(std::round(static_cast<double>(m_pos.y) * m_externalRange.cy / m_range.cy));
 }
 
 void CXySlider::ExternToIntern()
 {
-    m_Pos.x = static_cast<LONG>(std::round(static_cast<double>(m_ExternalPos.x) * m_Range.cx / m_ExternalRange.cx));
-    m_Pos.y = static_cast<LONG>(std::round(static_cast<double>(m_ExternalPos.y) * m_Range.cy / m_ExternalRange.cy));
+    m_pos.x = static_cast<LONG>(std::round(static_cast<double>(m_externalPos.x) * m_range.cx / m_externalRange.cx));
+    m_pos.y = static_cast<LONG>(std::round(static_cast<double>(m_externalPos.y) * m_range.cy / m_externalRange.cy));
 }
 
 void CXySlider::NotifyParent() const
@@ -166,9 +166,9 @@ void CXySlider::NotifyParent() const
 
 void CXySlider::PaintBackground(CDC* pdc)
 {
-    pdc->FillSolidRect(m_RcAll, DarkMode::WdsSysColor(COLOR_BTNFACE));
+    pdc->FillSolidRect(m_rcAll, DarkMode::WdsSysColor(COLOR_BTNFACE));
 
-    CRect rc = m_RcInner;
+    CRect rc = m_rcInner;
     pdc->DrawEdge(rc, EDGE_SUNKEN, BF_RECT | BF_ADJUST);
 
     pdc->FillSolidRect(rc, RGB(255, 255, 255));
@@ -176,20 +176,20 @@ void CXySlider::PaintBackground(CDC* pdc)
     CPen pen(PS_SOLID, 1, DarkMode::WdsSysColor(COLOR_3DLIGHT));
     CSelectObject sopen(pdc, &pen);
 
-    pdc->MoveTo(rc.left, m_Zero.y);
-    pdc->LineTo(rc.right, m_Zero.y);
-    pdc->MoveTo(m_Zero.x, rc.top);
-    pdc->LineTo(m_Zero.x, rc.bottom);
+    pdc->MoveTo(rc.left, m_zero.y);
+    pdc->LineTo(rc.right, m_zero.y);
+    pdc->MoveTo(m_zero.x, rc.top);
+    pdc->LineTo(m_zero.x, rc.bottom);
 
-    CRect circle = m_RcAll;
-    circle.DeflateRect(m_GripperRadius);
+    CRect circle = m_rcAll;
+    circle.DeflateRect(m_gripperRadius);
 
     CSelectStockObject sobrush(pdc, NULL_BRUSH);
     pdc->Ellipse(circle);
 
     if (GetFocus() == this)
     {
-        pdc->DrawFocusRect(m_RcAll);
+        pdc->DrawFocusRect(m_rcAll);
     }
 }
 
@@ -198,7 +198,7 @@ void CXySlider::PaintGripper(CDC* pdc) const
     CRect rc = GetGripperRect();
 
     COLORREF color = DarkMode::WdsSysColor(COLOR_BTNFACE);
-    if (m_GripperHighlight)
+    if (m_gripperHighlight)
     {
         auto r = GetRValue(color);
         auto g = GetGValue(color);
@@ -222,17 +222,17 @@ void CXySlider::PaintGripper(CDC* pdc) const
 
 void CXySlider::DoMoveBy(const int cx, const int cy)
 {
-    m_Pos.x += cx;
-    CheckMinMax(m_Pos.x, -m_Range.cx, m_Range.cx);
+    m_pos.x += cx;
+    CheckMinMax(m_pos.x, -m_range.cx, m_range.cx);
 
-    m_Pos.y += cy;
-    CheckMinMax(m_Pos.y, -m_Range.cy, m_Range.cy);
+    m_pos.y += cy;
+    CheckMinMax(m_pos.y, -m_range.cy, m_range.cy);
 
     RedrawWindow();
 
-    const CPoint oldpos = m_ExternalPos;
+    const CPoint oldpos = m_externalPos;
     InternToExtern();
-    if (m_ExternalPos != oldpos)
+    if (m_externalPos != oldpos)
     {
         NotifyParent();
     }
@@ -245,8 +245,8 @@ void CXySlider::DoDrag(const CPoint & point)
     HighlightGripper(true);
 
     const CSize inGripper = pt0 - GetGripperRect().CenterPoint();
-    const CPoint ptMin(m_Zero - m_Range + inGripper);
-    const CPoint ptMax(m_Zero + m_Range + inGripper);
+    const CPoint ptMin(m_zero - m_range + inGripper);
+    const CPoint ptMax(m_zero + m_range + inGripper);
 
     SetCapture();
     while (true)
@@ -294,7 +294,7 @@ void CXySlider::DoDrag(const CPoint & point)
 
 void CXySlider::DoPage(const CPoint & point)
 {
-    const CSize sz = point - (m_Zero + m_Pos);
+    const CSize sz = point - (m_zero + m_pos);
 
     ASSERT(sz.cx != 0 || sz.cy != 0);
 
@@ -310,7 +310,7 @@ void CXySlider::DoPage(const CPoint & point)
 
 void CXySlider::HighlightGripper(const bool on)
 {
-    m_GripperHighlight = on;
+    m_gripperHighlight = on;
     RedrawWindow();
 }
 
@@ -388,7 +388,7 @@ void CXySlider::OnLButtonDblClk(UINT /*nFlags*/, const CPoint point)
 
     if (GetGripperRect().PtInRect(point))
     {
-        DoMoveBy(-m_Pos.x, -m_Pos.y);
+        DoMoveBy(-m_pos.x, -m_pos.y);
     }
     else
     {

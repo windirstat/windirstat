@@ -26,92 +26,92 @@ namespace
 }
 
 CPacman::CPacman(const COLORREF backColor) :
-    m_Font(L"Arial", 6.0f, Gdiplus::FontStyleBold),
-    m_BackColor(backColor)
+    m_font(L"Arial", 6.0f, Gdiplus::FontStyleBold),
+    m_backColor(backColor)
 {
     Reset();
 }
 
 void CPacman::Reset()
 {
-    m_LastUpdate   = 0;
-    m_LastDraw     = 0;
-    m_ToTheRight   = true;
-    m_Position     = 0;
-    m_MouthOpening = true;
-    m_Aperture     = 0;
-    m_Done         = false;
+    m_lastUpdate   = 0;
+    m_lastDraw     = 0;
+    m_toTheRight   = true;
+    m_position     = 0;
+    m_mouthOpening = true;
+    m_aperture     = 0;
+    m_done         = false;
 }
 
-bool CPacman::m_Suspended = false;
+bool CPacman::m_suspended = false;
 
 void CPacman::SetGlobalSuspendState(const bool suspend)
 {
-    m_Suspended = suspend;
+    m_suspended = suspend;
 }
 
 void CPacman::Start()
 {
-    m_Moving = true;
+    m_moving = true;
 }
 
 void CPacman::Stop()
 {
-    m_Done = true;
+    m_done = true;
 }
 
 void CPacman::UpdatePosition()
 {
-    m_LastUpdate = GetTickCount64();
-    if (m_LastDraw == 0) m_LastDraw = m_LastUpdate;
-    m_Moving = true;
-    m_Done = false;
+    m_lastUpdate = GetTickCount64();
+    if (m_lastDraw == 0) m_lastDraw = m_lastUpdate;
+    m_moving = true;
+    m_done = false;
 }
 
 void CPacman::Draw(CDC* pdc, const CRect& rect)
 {
     const ULONGLONG now = GetTickCount64();
-    if (m_Suspended)
+    if (m_suspended)
     {
         // Rebase time if suspended
-        m_LastUpdate = now;
-        m_LastDraw = now;
+        m_lastUpdate = now;
+        m_lastDraw = now;
     }
 
     // See if we should still consider ourselves moving
-    if (now - m_LastUpdate > HIDE_THRESHOLD) m_Moving = false;
+    if (now - m_lastUpdate > HIDE_THRESHOLD) m_moving = false;
 
     // Update position
-    if (m_Moving)
+    if (m_moving)
     {
-        const float delta = static_cast<float>(now - m_LastDraw);
-        UpdatePosition(m_Position, m_ToTheRight, PACMANSPEED * delta / static_cast<float>(rect.Width()));
-        UpdatePosition(m_Aperture, m_MouthOpening, MOUTHSPEED * delta);
+        const float delta = static_cast<float>(now - m_lastDraw);
+        UpdatePosition(m_position, m_toTheRight, PACMANSPEED * delta / static_cast<float>(rect.Width()));
+        UpdatePosition(m_aperture, m_mouthOpening, MOUTHSPEED * delta);
     }
 
     // Record time for next draw comparison
-    m_LastDraw = now;
+    m_lastDraw = now;
 
     // Calculate rectangle to display graphic
     CRect rc(rect);
     rc.DeflateRect(5, 1);
     rc.bottom -= rc.Height() % 2;
-    rc.left += static_cast<int>(m_Position * (rc.Width() - rc.Height() / 2.0f));
+    rc.left += static_cast<int>(m_position * (rc.Width() - rc.Height() / 2.0f));
     rc.right = rc.left + rc.Height();
     const Gdiplus::Rect grect(rc.left, rc.top, rc.Width(), rc.Height());
 
     // Determine the share of the figure
-    const float slice = m_Aperture * 90.0f;
+    const float slice = m_aperture * 90.0f;
     const Gdiplus::REAL sweepAngle = 360.0f - slice;
-    Gdiplus::REAL startAngle = m_Aperture * slice / 2.0f;
-    if (!m_ToTheRight) startAngle += 180.0f;
+    Gdiplus::REAL startAngle = m_aperture * slice / 2.0f;
+    if (!m_toTheRight) startAngle += 180.0f;
 
     // Fill background if requested
-    if (m_BackColor != -1)
+    if (m_backColor != -1)
     {
-        pdc->FillSolidRect(rect, m_BackColor);
+        pdc->FillSolidRect(rect, m_backColor);
     }
-    if (m_Done) return;
+    if (m_done) return;
 
     // Create pens and brushes
     const Gdiplus::Pen blackPen(Gdiplus::Color(0xFF, 0x00, 0x00, 0x00), 1);
@@ -122,14 +122,14 @@ void CPacman::Draw(CDC* pdc, const CRect& rect)
     graphics.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
     graphics.FillPie(&yellowPen, grect, startAngle, sweepAngle);
     graphics.DrawPie(&blackPen, grect, startAngle, sweepAngle);
-    if (m_Moving) return;
+    if (m_moving) return;
 
     // Draw sleepy graphic
     const COLORREF zColor = DarkMode::WdsSysColor(COLOR_WINDOWTEXT);
     const Gdiplus::SolidBrush zBrush(Gdiplus::Color(0xFF, GetRValue(zColor), GetGValue(zColor), GetBValue(zColor)));
-    graphics.DrawString(L"z",1, &m_Font, {rc.left + 5.0f, rc.top - 3.0f}, &zBrush);
-    graphics.DrawString(L"z", 1, &m_Font, { rc.left + 10.0f, rc.top - 4.5f }, &zBrush);
-    graphics.DrawString(L"z", 1, &m_Font, { rc.left + 15.0f, rc.top - 6.0f }, &zBrush);
+    graphics.DrawString(L"z",1, &m_font, {rc.left + 5.0f, rc.top - 3.0f}, &zBrush);
+    graphics.DrawString(L"z", 1, &m_font, { rc.left + 10.0f, rc.top - 4.5f }, &zBrush);
+    graphics.DrawString(L"z", 1, &m_font, { rc.left + 15.0f, rc.top - 6.0f }, &zBrush);
 }
 
 void CPacman::UpdatePosition(float& position, bool& up, const float diff)

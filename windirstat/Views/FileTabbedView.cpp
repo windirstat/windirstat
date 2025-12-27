@@ -36,14 +36,14 @@ int CFileTabbedView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
     if (CTabView::OnCreate(lpCreateStruct) == -1)
         return -1;
 
-    m_FileTreeViewIndex = AddView(RUNTIME_CLASS(CFileTreeView), Localization::Lookup(IDS_ALL_FILES).c_str(), CHAR_MAX);
-    m_FileTreeView = DYNAMIC_DOWNCAST(CFileTreeView, GetTabControl().GetTabWnd(m_FileTreeViewIndex));
-    m_FileTopViewIndex = AddView(RUNTIME_CLASS(CFileTopView), Localization::Lookup(IDS_LARGEST_FILES).c_str(), CHAR_MAX);
-    m_FileTopView = DYNAMIC_DOWNCAST(CFileTopView, GetTabControl().GetTabWnd(m_FileTopViewIndex));
-    m_FileDupeViewIndex = AddView(RUNTIME_CLASS(CFileDupeView), Localization::Lookup(IDS_DUPLICATE_FILES).c_str(), CHAR_MAX);
-    m_FileDupeView = DYNAMIC_DOWNCAST(CFileDupeView, GetTabControl().GetTabWnd(m_FileDupeViewIndex));
-    m_FileSearchViewIndex = AddView(RUNTIME_CLASS(CFileSearchView), Localization::Lookup(IDS_SEARCH_RESULTS).c_str(), CHAR_MAX);
-    m_FileSearchView = DYNAMIC_DOWNCAST(CFileSearchView, GetTabControl().GetTabWnd(m_FileSearchViewIndex));
+    m_fileTreeViewIndex = AddView(RUNTIME_CLASS(CFileTreeView), Localization::Lookup(IDS_ALL_FILES).c_str(), CHAR_MAX);
+    m_fileTreeView = DYNAMIC_DOWNCAST(CFileTreeView, GetTabControl().GetTabWnd(m_fileTreeViewIndex));
+    m_fileTopViewIndex = AddView(RUNTIME_CLASS(CFileTopView), Localization::Lookup(IDS_LARGEST_FILES).c_str(), CHAR_MAX);
+    m_fileTopView = DYNAMIC_DOWNCAST(CFileTopView, GetTabControl().GetTabWnd(m_fileTopViewIndex));
+    m_fileDupeViewIndex = AddView(RUNTIME_CLASS(CFileDupeView), Localization::Lookup(IDS_DUPLICATE_FILES).c_str(), CHAR_MAX);
+    m_fileDupeView = DYNAMIC_DOWNCAST(CFileDupeView, GetTabControl().GetTabWnd(m_fileDupeViewIndex));
+    m_fileSearchViewIndex = AddView(RUNTIME_CLASS(CFileSearchView), Localization::Lookup(IDS_SEARCH_RESULTS).c_str(), CHAR_MAX);
+    m_fileSearchView = DYNAMIC_DOWNCAST(CFileSearchView, GetTabControl().GetTabWnd(m_fileSearchViewIndex));
 
     return 0;
 }
@@ -61,12 +61,12 @@ void CFileTabbedView::OnInitialUpdate()
 
 void CFileTabbedView::SetDupeTabVisibility(const bool show)
 {
-    GetTabControl().ShowTab(m_FileDupeViewIndex, show);
+    GetTabControl().ShowTab(m_fileDupeViewIndex, show);
 }
 
 void CFileTabbedView::SetSearchTabVisibility(const bool show)
 {
-    GetTabControl().ShowTab(m_FileSearchViewIndex, show);
+    GetTabControl().ShowTab(m_fileSearchViewIndex, show);
 }
 
 BOOL CFileTabbedView::OnEraseBkgnd(CDC* /*pDC*/)
@@ -76,7 +76,7 @@ BOOL CFileTabbedView::OnEraseBkgnd(CDC* /*pDC*/)
 
 LRESULT CFileTabbedView::OnChangeActiveTab(WPARAM wp, LPARAM lp)
 {
-    if (wp == static_cast<WPARAM>(m_FileDupeViewIndex))
+    if (wp == static_cast<WPARAM>(m_fileDupeViewIndex))
     {
         // Duplicate view can take a while to populate so show wait cursor
         CWaitCursor wc;

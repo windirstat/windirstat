@@ -54,22 +54,22 @@ CTreeMap::CTreeMap()
 void CTreeMap::SetOptions(const Options* options)
 {
     ASSERT(options != nullptr);
-    m_Options = *options;
+    m_options = *options;
 
     // Derive normalized vector here for performance
-    const double lx = m_Options.lightSourceX; // negative = left
-    const double ly = m_Options.lightSourceY; // negative = top
+    const double lx = m_options.lightSourceX; // negative = left
+    const double ly = m_options.lightSourceY; // negative = top
     constexpr double lz = 10;
 
     const double len = sqrt(lx * lx + ly * ly + lz * lz);
-    m_Lx = lx / len;
-    m_Ly = ly / len;
-    m_Lz = lz / len;
+    m_lx = lx / len;
+    m_ly = ly / len;
+    m_lz = lz / len;
 }
 
 CTreeMap::Options CTreeMap::GetOptions() const
 {
-    return m_Options;
+    return m_options;
 }
 
 #ifdef _DEBUG
@@ -113,7 +113,7 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, Item* root, const Options* option
         return;
     }
 
-    if (!m_Options.grid)
+    if (!m_options.grid)
     {
         // We shrink the rectangle here, too.
         // If we didn't do this, the layout of the treemap would
@@ -134,7 +134,7 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, Item* root, const Options* option
         return;
     }
 
-    m_RenderArea = rc;
+    m_renderArea = rc;
 
     if (root->TmiGetSize() > 0)
     {
@@ -148,7 +148,7 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, Item* root, const Options* option
         // That bitmap in turn will be created from this array
         std::vector<COLORREF> bitmapBits;
         bitmapBits.resize(static_cast<size_t>(rc.Width()) * static_cast<size_t>(rc.Height()));
-        DrawSolidRect(bitmapBits, CRect(CPoint(), rc.Size()), m_Options.gridColor, PALETTE_BRIGHTNESS);
+        DrawSolidRect(bitmapBits, CRect(CPoint(), rc.Size()), m_options.gridColor, PALETTE_BRIGHTNESS);
 
         using DrawState = struct DrawState
         {
@@ -165,7 +165,7 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, Item* root, const Options* option
         initialState.rc = CRect(0, 0, rc.Width(), rc.Height());
         initialState.asroot = true;
         initialState.surface = {};
-        initialState.h = m_Options.height;
+        initialState.h = m_options.height;
 
         // Defined at top level to prevent reallocation
         std::vector<double> childWidth;
@@ -173,7 +173,7 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, Item* root, const Options* option
         std::vector<int> childrenPerRow;
 
         // Main loop
-        const int gridWidth = m_Options.grid ? 1 : 0;
+        const int gridWidth = m_options.grid ? 1 : 0;
         std::stack<DrawState> stack({ std::move(initialState) });
         while (!stack.empty())
         {
@@ -201,7 +201,7 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, Item* root, const Options* option
                 continue;
             }
 
-            if (m_Options.style == KDirStatStyle)
+            if (m_options.style == KDirStatStyle)
             {
                 // Reset vectors for next run
                 childWidth.clear();
@@ -264,7 +264,7 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, Item* root, const Options* option
                         childState.rc = rcChild;
                         childState.asroot = false;
                         childState.surface = state.surface;
-                        childState.h = state.h * m_Options.scaleFactor;
+                        childState.h = state.h * m_options.scaleFactor;
 
                         stack.push(std::move(childState));
 
@@ -387,7 +387,7 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, Item* root, const Options* option
                             childState.rc = rcChild;
                             childState.asroot = false;
                             childState.surface = state.surface;
-                            childState.h = state.h * m_Options.scaleFactor;
+                            childState.h = state.h * m_options.scaleFactor;
                             stack.push(std::move(childState));
                         }
 
@@ -457,7 +457,7 @@ CTreeMap::Item* CTreeMap::FindItemByPoint(Item* item, const CPoint point)
 
     Item* ret = nullptr;
 
-    const int gridWidth = m_Options.grid ? 1 : 0;
+    const int gridWidth = m_options.grid ? 1 : 0;
 
     if (rc.Width() <= gridWidth ||
         rc.Height() <= gridWidth ||
@@ -543,9 +543,9 @@ void CTreeMap::DrawColorPreview(CDC* pdc, const CRect& rc, const COLORREF color,
     }
 
     std::array<double, 4> surface{};
-    AddRidge(rc, surface, m_Options.height * m_Options.scaleFactor);
+    AddRidge(rc, surface, m_options.height * m_options.scaleFactor);
 
-    m_RenderArea = rc;
+    m_renderArea = rc;
 
     // Create a temporary CDC that represents only the tree map
     CDC dcTreeView;
@@ -570,9 +570,9 @@ void CTreeMap::DrawColorPreview(CDC* pdc, const CRect& rc, const COLORREF color,
     // And lastly, draw the temporary CDC to the real one
     VERIFY(pdc->BitBlt(rc.TopLeft().x, rc.TopLeft().y, rc.Width(), rc.Height(), &dcTreeView, 0, 0, SRCCOPY));
 
-    if (m_Options.grid)
+    if (m_options.grid)
     {
-        CPen pen(PS_SOLID, 1, m_Options.gridColor);
+        CPen pen(PS_SOLID, 1, m_options.gridColor);
         CSelectObject sopen(pdc, &pen);
         CSelectStockObject sobrush(pdc, NULL_BRUSH);
         VERIFY(pdc->Rectangle(rc));
@@ -587,7 +587,7 @@ void CTreeMap::RenderLeaf(std::vector<COLORREF>& bitmap, const Item* item, const
 {
     CRect rc = item->TmiGetRectangle();
 
-    if (m_Options.grid)
+    if (m_options.grid)
     {
         rc.top++;
         rc.left++;
@@ -602,7 +602,7 @@ void CTreeMap::RenderLeaf(std::vector<COLORREF>& bitmap, const Item* item, const
 
 void CTreeMap::RenderRectangle(std::vector<COLORREF>& bitmap, const CRect& rc, const std::array<double, 4>& surface, DWORD color) const
 {
-    double brightness = m_Options.brightness;
+    double brightness = m_options.brightness;
 
     if ((color & COLORFLAG_MASK) != 0)
     {
@@ -688,8 +688,8 @@ double CTreeMap::KDirStat_CalculateNextRow(
     std::vector<double>& childWidth
 ) const
 {
-    static constexpr double _minProportion = 0.4;
-    ASSERT(_minProportion < 1.);
+    static constexpr double s_minProportion = 0.4;
+    ASSERT(s_minProportion < 1.);
 
     ASSERT(nextChild < parent->TmiGetChildCount());
     ASSERT(width >= 1.0);
@@ -721,7 +721,7 @@ double CTreeMap::KDirStat_CalculateNextRow(
 
         const double childWidth_ = childSize / mySize * width / virtualRowHeight;
 
-        if (childWidth_ / virtualRowHeight < _minProportion)
+        if (childWidth_ / virtualRowHeight < s_minProportion)
         {
             ASSERT(i > nextChild); // because width >= 1 and _minProportion < 1.
             break;
@@ -757,9 +757,9 @@ double CTreeMap::KDirStat_CalculateNextRow(
 
 bool CTreeMap::IsCushionShading() const
 {
-    return m_Options.ambientLight < 1.0
-        && m_Options.height > 0.0
-        && m_Options.scaleFactor > 0.0;
+    return m_options.ambientLight < 1.0
+        && m_options.height > 0.0
+        && m_options.scaleFactor > 0.0;
 }
 
 void CTreeMap::DrawSolidRect(std::vector<COLORREF>& bitmap, const CRect& rc, const COLORREF col, const double brightness) const
@@ -774,7 +774,7 @@ void CTreeMap::DrawSolidRect(std::vector<COLORREF>& bitmap, const CRect& rc, con
 
     for (int iy = rc.top; iy < rc.bottom; iy++)
     {
-        const auto rowStart = bitmap.begin() + (iy * m_RenderArea.Width()) + rc.left;
+        const auto rowStart = bitmap.begin() + (iy * m_renderArea.Width()) + rc.left;
         std::fill_n(rowStart, rc.Width(), BGR(blue, green, red));
     }
 }
@@ -782,7 +782,7 @@ void CTreeMap::DrawSolidRect(std::vector<COLORREF>& bitmap, const CRect& rc, con
 void CTreeMap::DrawCushion(std::vector<COLORREF>& bitmap, const CRect& rc, const std::array<double, 4>& surface, const COLORREF col, const double brightness) const
 {
     // Cushion parameters
-    const double Ia = m_Options.ambientLight;
+    const double Ia = m_options.ambientLight;
 
     // Derived parameters
     const double Is = 1 - Ia; // shading
@@ -795,7 +795,7 @@ void CTreeMap::DrawCushion(std::vector<COLORREF>& bitmap, const CRect& rc, const
     {
         const double nx = -(2 * surface[0] * (ix + 0.5) + surface[2]);
         const double ny = -(2 * surface[1] * (iy + 0.5) + surface[3]);
-        double cosa = (nx * m_Lx + ny * m_Ly + m_Lz) / sqrt(nx * nx + ny * ny + 1.0);
+        double cosa = (nx * m_lx + ny * m_ly + m_lz) / sqrt(nx * nx + ny * ny + 1.0);
         cosa = std::min<double>(cosa, 1.0);
 
         double pixel = Is * cosa;
@@ -809,8 +809,8 @@ void CTreeMap::DrawCushion(std::vector<COLORREF>& bitmap, const CRect& rc, const
         // Apply contrast.
         // Not implemented.
         // Costs performance and nearly the same effect can be
-        // made width the m_Options->ambientLight parameter.
-        // pixel = pow(pixel, m_Options->contrast);
+        // made width the m_options->ambientLight parameter.
+        // pixel = pow(pixel, m_options->contrast);
 
         // Apply "brightness"
         pixel *= brightness / PALETTE_BRIGHTNESS;
@@ -823,7 +823,7 @@ void CTreeMap::DrawCushion(std::vector<COLORREF>& bitmap, const CRect& rc, const
         CColorSpace::NormalizeColor(red, green, blue);
 
         // ... and set!
-        bitmap[ix + iy * m_RenderArea.Width()] = BGR(blue, green, red);
+        bitmap[ix + iy * m_renderArea.Width()] = BGR(blue, green, red);
     }
 }
 
@@ -853,24 +853,24 @@ END_MESSAGE_MAP()
 
 CTreeMapPreview::CTreeMapPreview()
 {
-    m_Root = nullptr;
+    m_root = nullptr;
     BuildDemoData();
 }
 
 CTreeMapPreview::~CTreeMapPreview()
 {
-    delete m_Root;
+    delete m_root;
 }
 
 void CTreeMapPreview::SetOptions(const CTreeMap::Options* options)
 {
-    m_TreeMap.SetOptions(options);
+    m_treeMap.SetOptions(options);
     Invalidate();
 }
 
 void CTreeMapPreview::BuildDemoData()
 {
-    CTreeMap::GetDefaultPalette(m_Colors);
+    CTreeMap::GetDefaultPalette(m_colors);
     int col = -1;
 
     constexpr auto c4Items = 30;
@@ -924,14 +924,14 @@ void CTreeMapPreview::BuildDemoData()
         new CItem(c3)
     };
 
-    m_Root = new CItem(c10);
+    m_root = new CItem(c10);
 }
 
 COLORREF CTreeMapPreview::GetNextColor(int& i) const
 {
     i++;
-    i %= m_Colors.size();
-    return m_Colors[i];
+    i %= m_colors.size();
+    return m_colors[i];
 }
 
 void CTreeMapPreview::OnPaint()
@@ -939,5 +939,5 @@ void CTreeMapPreview::OnPaint()
     CPaintDC dc(this);
     CRect rc;
     GetClientRect(rc);
-    m_TreeMap.DrawTreeMap(&dc, rc, m_Root);
+    m_treeMap.DrawTreeMap(&dc, rc, m_root);
 }

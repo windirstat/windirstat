@@ -40,18 +40,18 @@ BEGIN_MESSAGE_MAP(CDirStatApp, CWinAppEx)
     ON_COMMAND(ID_HELP_REPORTBUG, OnReportBug)
 END_MESSAGE_MAP()
 
-CDirStatApp CDirStatApp::_singleton;
+CDirStatApp CDirStatApp::s_singleton;
 
 CDirStatApp::CDirStatApp()
 {
-    m_AltColor = GetAlternativeColor(RGB(0x3A, 0x99, 0xE8), L"AltColor");
-    m_AltEncryptionColor = GetAlternativeColor(RGB(0x00, 0x80, 0x00), L"AltEncryptionColor");
+    m_altColor = GetAlternativeColor(RGB(0x3A, 0x99, 0xE8), L"AltColor");
+    m_altEncryptionColor = GetAlternativeColor(RGB(0x00, 0x80, 0x00), L"AltEncryptionColor");
 }
 
 CIconHandler* CDirStatApp::GetIconHandler()
 {
-    m_IconList.Initialize();
-    return &m_IconList;
+    m_iconList.Initialize();
+    return &m_iconList;
 }
 
 void CDirStatApp::RestartApplication(bool resetPreferences)
@@ -149,13 +149,13 @@ COLORREF CDirStatApp::GetAlternativeColor(const COLORREF clrDefault, const std::
 COLORREF CDirStatApp::AltColor() const
 {
     // Return property value
-    return m_AltColor;
+    return m_altColor;
 }
 
 COLORREF CDirStatApp::AltEncryptionColor() const
 {
     // Return property value
-    return m_AltEncryptionColor;
+    return m_altEncryptionColor;
 }
 
 std::wstring CDirStatApp::GetCurrentProcessMemoryInfo()
@@ -231,9 +231,9 @@ CString AFXGetRegPath(LPCTSTR lpszPostFix, LPCTSTR)
 {
 public:
 
-    DWORD m_ParentPid = 0;
-    std::vector<std::wstring> m_PathsToOpen;
-    std::wstring m_SaveToCsvPath;
+    DWORD m_parentPid = 0;
+    std::vector<std::wstring> m_pathsToOpen;
+    std::wstring m_saveToCsvPath;
 
     void ParseParam(const WCHAR* pszParam, BOOL bFlag, BOOL bLast) override
     {
@@ -259,13 +259,13 @@ public:
         const std::wstring SaveToCsvFlag = L"savetocsv:";
         if (paramLower.starts_with(ParentPidFlag))
         {
-            m_ParentPid = std::stoul(param.substr(ParentPidFlag.size()));
+            m_parentPid = std::stoul(param.substr(ParentPidFlag.size()));
         }
         else if (paramLower.starts_with(SaveToCsvFlag))
         {
             // Path after colon should be the csv path
-            m_SaveToCsvPath = param.substr(SaveToCsvFlag.size());
-            m_SaveToCsvPath = TrimString(m_SaveToCsvPath, wds::chrDoubleQuote);
+            m_saveToCsvPath = param.substr(SaveToCsvFlag.size());
+            m_saveToCsvPath = TrimString(m_saveToCsvPath, wds::chrDoubleQuote);
         }
     }
 };
@@ -313,12 +313,12 @@ BOOL CDirStatApp::InitInstance()
     ULONG_PTR gdiplusToken;
     Gdiplus::GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, nullptr);
 
-    m_PDocTemplate = new CSingleDocTemplate(
+    m_pDocTemplate = new CSingleDocTemplate(
         IDR_MAINFRAME,
         RUNTIME_CLASS(CDirStatDoc),
         RUNTIME_CLASS(CMainFrame),
         RUNTIME_CLASS(CTreeMapView));
-    AddDocTemplate(m_PDocTemplate);
+    AddDocTemplate(m_pDocTemplate);
 
     // Parse command line arguments
     CWinDirStatCommandLineInfo cmdInfo;
@@ -335,9 +335,9 @@ BOOL CDirStatApp::InitInstance()
     m_pMainWnd->SetForegroundWindow();
 
     // Store csv path and hide window if specified
-    if (!cmdInfo.m_SaveToCsvPath.empty())
+    if (!cmdInfo.m_saveToCsvPath.empty())
     {
-        m_SaveToCsvPath = cmdInfo.m_SaveToCsvPath;
+        m_saveToCsvPath = cmdInfo.m_saveToCsvPath;
         m_pMainWnd->ShowWindow(SW_HIDE);
     }
 
@@ -358,9 +358,9 @@ BOOL CDirStatApp::InitInstance()
     }
 
     // If launched with a parent PID flag, close that process
-    if (cmdInfo.m_ParentPid != 0)
+    if (cmdInfo.m_parentPid != 0)
     {
-        if (SmartPointer<HANDLE> handle(CloseHandle, OpenProcess(PROCESS_TERMINATE, FALSE, cmdInfo.m_ParentPid)); handle != nullptr)
+        if (SmartPointer<HANDLE> handle(CloseHandle, OpenProcess(PROCESS_TERMINATE, FALSE, cmdInfo.m_parentPid)); handle != nullptr)
         {
             TerminateProcess(handle, 0);
         }
@@ -379,7 +379,7 @@ BOOL CDirStatApp::InitInstance()
     }
 
     // Allow user to elevate if desired
-    if (IsElevationAvailable() && COptions::ShowElevationPrompt && m_SaveToCsvPath.empty())
+    if (IsElevationAvailable() && COptions::ShowElevationPrompt && m_saveToCsvPath.empty())
     {
         CMessageBoxDlg elevationPrompt(Localization::Lookup(IDS_ELEVATION_QUESTION),
             Localization::LookupNeutral(AFX_IDS_APP_TITLE), MB_YESNO | MB_ICONQUESTION, m_pMainWnd, {},
@@ -405,7 +405,7 @@ BOOL CDirStatApp::InitInstance()
 
     // Either open the file names or open file selection dialog
     cmdInfo.m_strFileName.IsEmpty() ? OnFileOpen() :
-        (void)m_PDocTemplate->OpenDocumentFile(cmdInfo.m_strFileName, true);
+        (void)m_pDocTemplate->OpenDocumentFile(cmdInfo.m_strFileName, true);
 
     return TRUE;
 }
@@ -427,7 +427,7 @@ void CDirStatApp::OnFileOpen()
     if (IDOK == dlg.DoModal())
     {
         const std::wstring path = CDirStatDoc::EncodeSelection(dlg.GetSelectedItems());
-        m_PDocTemplate->OpenDocumentFile(path.c_str(), true);
+        m_pDocTemplate->OpenDocumentFile(path.c_str(), true);
     }
 }
 

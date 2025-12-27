@@ -34,10 +34,10 @@ COptionsPropertySheet* CPagePrompts::GetSheet() const
 void CPagePrompts::DoDataExchange(CDataExchange* pDX)
 {
     CMFCPropertyPage::DoDataExchange(pDX);
-    DDX_Check(pDX, IDC_DELETION_WARNING, m_ShowDeleteWarning);
-    DDX_Check(pDX, IDC_ELEVATION_PROMPT, m_ShowElevationPrompt);
-    DDX_Check(pDX, IDC_FAST_SCAN_PROMPT, m_ShowFastScanPrompt);
-    DDX_Check(pDX, IDC_CLOUD_LINKS_WARNING, m_SkipDupeDetectionCloudLinksWarning);
+    DDX_Check(pDX, IDC_DELETION_WARNING, m_showDeleteWarning);
+    DDX_Check(pDX, IDC_ELEVATION_PROMPT, m_showElevationPrompt);
+    DDX_Check(pDX, IDC_FAST_SCAN_PROMPT, m_showFastScanPrompt);
+    DDX_Check(pDX, IDC_CLOUD_LINKS_WARNING, m_skipDupeDetectionCloudLinksWarning);
 }
 
 BEGIN_MESSAGE_MAP(CPagePrompts, CMFCPropertyPage)
@@ -61,10 +61,10 @@ BOOL CPagePrompts::OnInitDialog()
     Localization::UpdateDialogs(*this);
     DarkMode::AdjustControls(GetSafeHwnd());
 
-    m_ShowDeleteWarning = COptions::ShowDeleteWarning;
-    m_ShowElevationPrompt = COptions::ShowElevationPrompt;
-    m_ShowFastScanPrompt = COptions::ShowFastScanPrompt;
-    m_SkipDupeDetectionCloudLinksWarning = COptions::SkipDupeDetectionCloudLinksWarning;
+    m_showDeleteWarning = COptions::ShowDeleteWarning;
+    m_showElevationPrompt = COptions::ShowElevationPrompt;
+    m_showFastScanPrompt = COptions::ShowFastScanPrompt;
+    m_skipDupeDetectionCloudLinksWarning = COptions::SkipDupeDetectionCloudLinksWarning;
 
     UpdateData(FALSE);
     return TRUE;
@@ -74,10 +74,10 @@ void CPagePrompts::OnOK()
 {
     UpdateData();
 
-    COptions::ShowDeleteWarning = (FALSE != m_ShowDeleteWarning);
-    COptions::ShowElevationPrompt = (FALSE != m_ShowElevationPrompt);
-    COptions::ShowFastScanPrompt = (FALSE != m_ShowFastScanPrompt);
-    COptions::SkipDupeDetectionCloudLinksWarning = (FALSE != m_SkipDupeDetectionCloudLinksWarning);
+    COptions::ShowDeleteWarning = (FALSE != m_showDeleteWarning);
+    COptions::ShowElevationPrompt = (FALSE != m_showElevationPrompt);
+    COptions::ShowFastScanPrompt = (FALSE != m_showFastScanPrompt);
+    COptions::SkipDupeDetectionCloudLinksWarning = (FALSE != m_skipDupeDetectionCloudLinksWarning);
 
     CMFCPropertyPage::OnOK();
 }

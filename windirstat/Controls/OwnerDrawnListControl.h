@@ -102,12 +102,12 @@ protected:
     void DrawItem(LPDRAWITEMSTRUCT pdis) override;
     int GetSubItemWidth(COwnerDrawnListItem* item, int subitem);
 
-    COLORREF m_WindowColor = CLR_NONE; // The default background color if !m_ShowStripes
-    COLORREF m_StripeColor = CLR_NONE; // The stripe color, used for every other item if m_ShowStripes
-    int m_RowHeight = 20;              // Height of an item
-    bool m_ShowGrid = false;           // Whether to draw a grid
-    bool m_ShowStripes = false;        // Whether to show stripes
-    bool m_ShowFullRowSelect = false;  // Whether to draw full row selection
+    COLORREF m_windowColor = CLR_NONE; // The default background color if !m_showStripes
+    COLORREF m_stripeColor = CLR_NONE; // The stripe color, used for every other item if m_showStripes
+    int m_rowHeight = 20;              // Height of an item
+    bool m_showGrid = false;           // Whether to draw a grid
+    bool m_showStripes = false;        // Whether to show stripes
+    bool m_showFullRowSelect = false;  // Whether to draw full row selection
 
     DECLARE_MESSAGE_MAP()
     afx_msg BOOL OnEraseBkgnd(CDC* pDC);

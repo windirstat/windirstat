@@ -58,8 +58,8 @@ class CSortingListControl : public CListCtrl
 {
     DECLARE_DYNAMIC(CSortingListControl)
 
-    std::vector<int>* m_ColumnOrder;
-    std::vector<int>* m_ColumnWidths;
+    std::vector<int>* m_columnOrder;
+    std::vector<int>* m_columnWidths;
 
     // Construction
     CSortingListControl(std::vector<int>* columnOrder, std::vector<int>* columnWidths);
@@ -86,10 +86,10 @@ class CSortingListControl : public CListCtrl
 private:
     void SavePersistentAttributes() const;
  
-    std::wstring m_Name; // for persistence
-    SSorting m_Sorting;
+    std::wstring m_name; // for persistence
+    SSorting m_sorting;
 
-    int m_IndicatedColumn = -1;
+    int m_indicatedColumn = -1;
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnLvnGetDispInfo(NMHDR* pNMHDR, LRESULT* pResult);

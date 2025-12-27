@@ -265,12 +265,12 @@ protected:
         RGB(255, 255, 255),  // White
     };
 
-    CRect m_RenderArea;
+    CRect m_renderArea;
 
-    Options m_Options; // Current options
-    double m_Lx = 0.0; // Derived parameters
-    double m_Ly = 0.0;
-    double m_Lz = 0.0;
+    Options m_options; // Current options
+    double m_lx = 0.0; // Derived parameters
+    double m_ly = 0.0;
+    double m_lz = 0.0;
 };
 
 //
@@ -286,26 +286,26 @@ class CTreeMapPreview final : public CStatic
     {
     public:
         CItem(const int size, const COLORREF color)
-            : m_Size(size)
-              , m_Color(color)
+            : m_size(size)
+              , m_color(color)
         {
         }
 
         CItem(const std::vector<CItem*>& children)
         {
-            m_Size = 0;
+            m_size = 0;
             for (const auto & child : children)
             {
-                m_Children.emplace_back(child);
-                m_Size += static_cast<int>(child->TmiGetSize());
+                m_children.emplace_back(child);
+                m_size += static_cast<int>(child->TmiGetSize());
             }
 
-            std::ranges::sort(m_Children, [](auto a, auto b) {return a->m_Size > b->m_Size; });
+            std::ranges::sort(m_children, [](auto a, auto b) {return a->m_size > b->m_size; });
         }
 
         ~CItem() override
         {
-            for (const auto & child : m_Children)
+            for (const auto & child : m_children)
             {
                 delete child;
             }
@@ -313,44 +313,44 @@ class CTreeMapPreview final : public CStatic
 
         bool TmiIsLeaf() const override
         {
-            return m_Children.empty();
+            return m_children.empty();
         }
 
         CRect TmiGetRectangle() const override
         {
-            return m_Rect;
+            return m_rect;
         }
 
         void TmiSetRectangle(const CRect& rc) override
         {
-            m_Rect = rc;
+            m_rect = rc;
         }
 
         COLORREF TmiGetGraphColor() const override
         {
-            return m_Color;
+            return m_color;
         }
 
         int TmiGetChildCount() const override
         {
-            return static_cast<int>(m_Children.size());
+            return static_cast<int>(m_children.size());
         }
 
         Item* TmiGetChild(const int c) const override
         {
-            return m_Children[c];
+            return m_children[c];
         }
 
         ULONGLONG TmiGetSize() const override
         {
-            return m_Size;
+            return m_size;
         }
 
     private:
-        std::vector<CItem*> m_Children; // Our children
-        int m_Size = 0;                    // Our size (in fantasy units)
-        COLORREF m_Color = CLR_INVALID;    // Our color
-        CRect m_Rect;                      // Our Rectangle in the treemap
+        std::vector<CItem*> m_children; // Our children
+        int m_size = 0;                    // Our size (in fantasy units)
+        COLORREF m_color = CLR_INVALID;    // Our color
+        CRect m_rect;                      // Our Rectangle in the treemap
     };
 
 public:
@@ -362,9 +362,9 @@ protected:
     void BuildDemoData();
     COLORREF GetNextColor(int& i) const;
 
-    std::vector<COLORREF> m_Colors; // Our color palette
-    CItem* m_Root;                  // Demo tree
-    CTreeMap m_TreeMap;             // Our treemap creator
+    std::vector<COLORREF> m_colors; // Our color palette
+    CItem* m_root;                  // Demo tree
+    CTreeMap m_treeMap;             // Our treemap creator
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnPaint();

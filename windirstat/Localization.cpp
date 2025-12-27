@@ -19,7 +19,7 @@
 #include "FinderBasic.h"
 #include "langs.h"
 
-std::unordered_map<std::wstring, std::wstring> Localization::m_Map;
+std::unordered_map<std::wstring, std::wstring> Localization::m_map;
 
 void Localization::SearchReplace(std::wstring& input, const std::wstring_view& search, const std::wstring_view& replace)
 {
@@ -51,7 +51,7 @@ bool Localization::CrackStrings(std::basic_istream<char>& stream, const unsigned
         SearchReplace(lineWide, L"\\t", L"\t");
         if (const auto e = lineWide.find_first_of(L'='); e != std::string::npos)
         {
-            m_Map[lineWide.substr(0, e)] = lineWide.substr(e + 1);
+            m_map[lineWide.substr(0, e)] = lineWide.substr(e + 1);
         }
     }
 
@@ -117,7 +117,7 @@ void Localization::UpdateMenu(CMenu& menu)
             Contains(mi.dwTypeData))
         {
             mi.fMask = MIIM_STRING;
-            mi.dwTypeData = const_cast<LPWSTR>(m_Map[mi.dwTypeData].c_str());
+            mi.dwTypeData = const_cast<LPWSTR>(m_map[mi.dwTypeData].c_str());
             menu.SetMenuItemInfoW(i, &mi, TRUE);
         }
         if (mi.hSubMenu != nullptr && IsMenu(mi.hSubMenu))
@@ -134,7 +134,7 @@ void Localization::UpdateTabControl(CMFCTabCtrl& tab)
         std::wstring tabLabelStr = tabLabel.GetString();
         if (tabLabelStr.starts_with(L"ID") && Contains(tabLabelStr))
         {
-            tab.SetTabLabel(i, m_Map[tabLabelStr].c_str());
+            tab.SetTabLabel(i, m_map[tabLabelStr].c_str());
         }
     }
 }
@@ -146,7 +146,7 @@ void Localization::UpdateWindowText(const HWND hwnd)
         wcsstr(buffer.data(), L"ID") == buffer.data() &&
         Contains(buffer.data()))
     {
-        ::SetWindowText(hwnd, m_Map[buffer.data()].c_str());
+        ::SetWindowText(hwnd, m_map[buffer.data()].c_str());
     }
 }
 

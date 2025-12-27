@@ -26,7 +26,7 @@ void DrawTextCache::DrawTextCached(CDC* pDC, const std::wstring& text, CRect& re
 
     // Look up in cache
     CacheKey key = CreateCacheKey(pDC, text, rect, format);
-    if (auto it = m_Cache.find(key); it != m_Cache.end())
+    if (auto it = m_cache.find(key); it != m_cache.end())
     {
         // Cache hit - use cached entry
         TouchEntry(it);
@@ -46,9 +46,9 @@ void DrawTextCache::DrawTextCached(CDC* pDC, const std::wstring& text, CRect& re
     else PaintCachedEntry(pDC, rect, *entry);
 
     // Add to LRU list and cache
-    m_LeastRecentList.push_front(key);
-    m_Cache.emplace(std::move(key),
-        std::make_pair(std::move(entry), m_LeastRecentList.begin()));
+    m_leastRecentList.push_front(key);
+    m_cache.emplace(std::move(key),
+        std::make_pair(std::move(entry), m_leastRecentList.begin()));
 }
 
 DrawTextCache::CacheKey DrawTextCache::CreateCacheKey(
@@ -129,20 +129,20 @@ std::unique_ptr<DrawTextCache::CacheEntry> DrawTextCache::CreateCachedBitmap(
 
 void DrawTextCache::EvictIfNeeded()
 {
-    while (m_Cache.size() >= MAX_CACHE_SIZE && !m_LeastRecentList.empty())
+    while (m_cache.size() >= MAX_CACHE_SIZE && !m_leastRecentList.empty())
     {
         // Remove least recently used (back of list)
-        const CacheKey& keyToRemove = m_LeastRecentList.back();
-        m_Cache.erase(keyToRemove);
-        m_LeastRecentList.pop_back();
+        const CacheKey& keyToRemove = m_leastRecentList.back();
+        m_cache.erase(keyToRemove);
+        m_leastRecentList.pop_back();
     }
 }
 
 void DrawTextCache::TouchEntry(CacheMap::iterator it)
 {
     // Move to front of LRU list
-    m_LeastRecentList.splice(m_LeastRecentList.begin(),
-        m_LeastRecentList, it->second.second);
+    m_leastRecentList.splice(m_leastRecentList.begin(),
+        m_leastRecentList, it->second.second);
 }
 
 void DrawTextCache::PaintCachedEntry(CDC* pDC, const CRect& rect, CacheEntry& entry)

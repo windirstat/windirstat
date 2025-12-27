@@ -33,7 +33,7 @@ class CMessageBoxDlg final : public CLayoutDialogEx
     ~CMessageBoxDlg() override = default;
 
     INT_PTR DoModal() override;
-    void SetInitialWindowSize(const CSize size) { m_InitialSize = size; }
+    void SetInitialWindowSize(const CSize size) { m_initialSize = size; }
 
     // Optional checkbox support
     bool IsCheckboxChecked() const;
@@ -67,25 +67,25 @@ private:
         CButton * btnFocus = nullptr;
     };
 
-    std::wstring m_Message;
-    std::wstring m_Title;
+    std::wstring m_message;
+    std::wstring m_title;
     ButtonContext m_buttonContext;
-    RECT m_WindowRect {};
+    RECT m_windowRect {};
 
-    HICON m_Icon;
-    CStatic m_IconCtrl;
-    CStatic m_MessageCtrl;
-    CButton m_ButtonLeft;
-    CButton m_ButtonMiddle;
-    CButton m_ButtonRight;
-    CSize m_InitialSize{};
+    HICON m_icon;
+    CStatic m_iconCtrl;
+    CStatic m_messageCtrl;
+    CButton m_buttonLeft;
+    CButton m_buttonMiddle;
+    CButton m_buttonRight;
+    CSize m_initialSize{};
 
     // Optional controls
-    CButton m_Checkbox;
-    CListBox m_ListView;
-    std::wstring m_CheckboxText;
-    std::vector<std::wstring> m_ListViewItems;
-    BOOL m_CheckboxChecked = FALSE;
+    CButton m_checkbox;
+    CListBox m_listView;
+    std::wstring m_checkboxText;
+    std::vector<std::wstring> m_listViewItems;
+    BOOL m_checkboxChecked = FALSE;
 };
 
 // Global wrapper functions that emulate MessageBox/AfxMessageBox

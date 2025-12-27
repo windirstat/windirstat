@@ -23,9 +23,9 @@ class COleFilterOverride final : public COleMessageFilter
 {
 public:
 
-    bool m_DefaultHandler = true;
-    int m_RefCounter = 0;
-    std::mutex m_Mutex;
+    bool m_defaultHandler = true;
+    int m_refCounter = 0;
+    std::mutex m_mutex;
 
     COleFilterOverride()
     {
@@ -40,14 +40,14 @@ public:
 
     BOOL OnMessagePending(const MSG* pMsg) override
     {
-        return (m_DefaultHandler) ? COleMessageFilter::OnMessagePending(pMsg) : FALSE;
+        return (m_defaultHandler) ? COleMessageFilter::OnMessagePending(pMsg) : FALSE;
     }
 
     void SetDefaultHandler(bool defaultHandler)
     {
         if (AfxGetThread() == nullptr) return;
-        std::scoped_lock guard(m_Mutex);
-        m_RefCounter = (defaultHandler) ? (m_RefCounter - 1) : (m_RefCounter + 1);
-        m_DefaultHandler = m_RefCounter == 0;
+        std::scoped_lock guard(m_mutex);
+        m_refCounter = (defaultHandler) ? (m_refCounter - 1) : (m_refCounter + 1);
+        m_defaultHandler = m_refCounter == 0;
     }
 };

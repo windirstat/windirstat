@@ -23,13 +23,13 @@ class CFileTreeControl final : public CTreeListControl
 {
 public:
     CFileTreeControl();
-    ~CFileTreeControl() override { m_Singleton = nullptr; }
+    ~CFileTreeControl() override { m_singleton = nullptr; }
     bool GetAscendingDefault(int column) override;
-    static CFileTreeControl* Get() { return m_Singleton; }
+    static CFileTreeControl* Get() { return m_singleton; }
 
 protected:
 
-    static CFileTreeControl * m_Singleton;
+    static CFileTreeControl * m_singleton;
 
     void OnItemDoubleClick(int i) override;
 

@@ -25,17 +25,17 @@ class CFileSearchControl final : public CTreeListControl
 {
 public:
     CFileSearchControl();
-    ~CFileSearchControl() override { m_Singleton = nullptr; }
+    ~CFileSearchControl() override { m_singleton = nullptr; }
     bool GetAscendingDefault(int column) override;
-    static CFileSearchControl* Get() { return m_Singleton; }
+    static CFileSearchControl* Get() { return m_singleton; }
     static std::wregex ComputeSearchRegex(const std::wstring& searchTerm, bool searchCase, bool useRegex);
     void ProcessSearch(CItem* item);
     void RemoveItem(CItem* items);
 
 protected:
 
-    static CFileSearchControl* m_Singleton;
-    std::unordered_map<CItem*, CItemSearch*> m_ItemTracker;
+    static CFileSearchControl* m_singleton;
+    std::unordered_map<CItem*, CItemSearch*> m_itemTracker;
 
     void OnItemDoubleClick(int i) override;
 

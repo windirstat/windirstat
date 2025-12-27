@@ -20,7 +20,7 @@
 
 CFileTreeControl::CFileTreeControl() : CTreeListControl(COptions::FileTreeColumnOrder.Ptr(), COptions::FileTreeColumnWidths.Ptr())
 {
-    m_Singleton = this;
+    m_singleton = this;
 }
 
 bool CFileTreeControl::GetAscendingDefault(const int column)
@@ -36,7 +36,7 @@ BEGIN_MESSAGE_MAP(CFileTreeControl, CTreeListControl)
     ON_NOTIFY_EX(HDN_ENDDRAG, 0, OnHeaderEndDrag)
 END_MESSAGE_MAP()
 
-CFileTreeControl* CFileTreeControl::m_Singleton = nullptr;
+CFileTreeControl* CFileTreeControl::m_singleton = nullptr;
 
 BOOL CFileTreeControl::OnHeaderEndDrag(UINT, NMHDR* pNMHDR, LRESULT* pResult)
 {

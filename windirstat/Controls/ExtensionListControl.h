@@ -58,13 +58,13 @@ protected:
 
         double GetBytesFraction() const;
 
-        std::wstring m_Extension;
-        std::wstring m_Description;
-        CExtensionListControl* m_List;
-        HICON m_Icon = nullptr;
-        ULONGLONG m_Bytes = 0;
-        ULONGLONG m_Files = 0;
-        COLORREF m_Color = 0;
+        std::wstring m_extension;
+        std::wstring m_description;
+        CExtensionListControl* m_list;
+        HICON m_icon = nullptr;
+        ULONGLONG m_bytes = 0;
+        ULONGLONG m_files = 0;
+        COLORREF m_color = 0;
     };
 
 public:
@@ -80,8 +80,8 @@ public:
 protected:
     CListItem* GetListItem(int i) const;
 
-    CExtensionView* m_ExtensionView;
-    ULONGLONG m_RootSize = 0;
+    CExtensionView* m_extensionView;
+    ULONGLONG m_rootSize = 0;
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnLvnDeleteItem(NMHDR* pNMHDR, LRESULT* pResult);

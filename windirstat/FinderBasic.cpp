@@ -28,121 +28,121 @@ static NTSTATUS(WINAPI* NtQueryDirectoryFile)(HANDLE FileHandle, HANDLE Event, P
 
 FinderBasic::~FinderBasic()
 {
-    if (m_Handle != nullptr) NtClose(m_Handle);
+    if (m_handle != nullptr) NtClose(m_handle);
 }
 
 bool FinderBasic::FindNext()
 {
     bool success = false;
-    if (m_FirstRun || m_CurrentInfo->NextEntryOffset == 0)
+    if (m_firstRun || m_currentInfo->NextEntryOffset == 0)
     {
         UNICODE_STRING uSearch
         {
-            .Length = static_cast<USHORT>(m_Search.size() * sizeof(WCHAR)),
-            .MaximumLength = static_cast<USHORT>((m_Search.size() + 1) * sizeof(WCHAR)),
-            .Buffer = m_Search.data()
+            .Length = static_cast<USHORT>(m_search.size() * sizeof(WCHAR)),
+            .MaximumLength = static_cast<USHORT>((m_search.size() + 1) * sizeof(WCHAR)),
+            .Buffer = m_search.data()
         };
 
-        const auto BUFFER_SIZE = static_cast<ULONG>(m_DirectoryInfo.size());
+        const auto BUFFER_SIZE = static_cast<ULONG>(m_directoryInfo.size());
         constexpr auto FileFullDirectoryInformation = 2;
         constexpr auto FileIdFullDirectoryInformation = 38;
         IO_STATUS_BLOCK IoStatusBlock;
 
         // Determine if volume supports FileId
-        if (!m_Context->Initialized)
+        if (!m_context->Initialized)
         {
-            NTSTATUS Status = NtQueryDirectoryFile(m_Handle, nullptr, nullptr, nullptr, &IoStatusBlock,
-                m_DirectoryInfo.data(), BUFFER_SIZE, static_cast<FILE_INFORMATION_CLASS>(FileIdFullDirectoryInformation),
+            NTSTATUS Status = NtQueryDirectoryFile(m_handle, nullptr, nullptr, nullptr, &IoStatusBlock,
+                m_directoryInfo.data(), BUFFER_SIZE, static_cast<FILE_INFORMATION_CLASS>(FileIdFullDirectoryInformation),
                 FALSE, (uSearch.Length > 0) ? &uSearch : nullptr, TRUE);
-            m_Context->SupportsFileId = (Status == 0);
-            m_Context->Initialized = true;
+            m_context->SupportsFileId = (Status == 0);
+            m_context->Initialized = true;
 
             // Query cluster size if not already known
             DWORD sectorsPerCluster, bytesPerSector, numberOfFreeClusters, totalNumberOfClusters;
-            if (GetDiskFreeSpace(m_Base.c_str(), &sectorsPerCluster, &bytesPerSector,
+            if (GetDiskFreeSpace(m_base.c_str(), &sectorsPerCluster, &bytesPerSector,
                 &numberOfFreeClusters, &totalNumberOfClusters))
             {
-                m_Context->ClusterSize = sectorsPerCluster * bytesPerSector;
+                m_context->ClusterSize = sectorsPerCluster * bytesPerSector;
             }
         }
 
         // Query directory with appropriate information class
-        const NTSTATUS Status = NtQueryDirectoryFile(m_Handle, nullptr, nullptr, nullptr, &IoStatusBlock,
-            m_DirectoryInfo.data(), BUFFER_SIZE, static_cast<FILE_INFORMATION_CLASS>(
-                m_Context->SupportsFileId ? FileIdFullDirectoryInformation : FileFullDirectoryInformation),
-            FALSE, (uSearch.Length > 0) ? &uSearch : nullptr, (m_FirstRun) ? TRUE : FALSE);
+        const NTSTATUS Status = NtQueryDirectoryFile(m_handle, nullptr, nullptr, nullptr, &IoStatusBlock,
+            m_directoryInfo.data(), BUFFER_SIZE, static_cast<FILE_INFORMATION_CLASS>(
+                m_context->SupportsFileId ? FileIdFullDirectoryInformation : FileFullDirectoryInformation),
+            FALSE, (uSearch.Length > 0) ? &uSearch : nullptr, (m_firstRun) ? TRUE : FALSE);
 
         success = (Status == 0);
-        m_CurrentInfo = std::assume_aligned<8>(reinterpret_cast<FILE_DIR_INFORMATION*>(m_DirectoryInfo.data()));
+        m_currentInfo = std::assume_aligned<8>(reinterpret_cast<FILE_DIR_INFORMATION*>(m_directoryInfo.data()));
     }
     else
     {
-        m_CurrentInfo = std::assume_aligned<8>(ByteOffset<FILE_DIR_INFORMATION>(m_CurrentInfo, m_CurrentInfo->NextEntryOffset));
+        m_currentInfo = std::assume_aligned<8>(ByteOffset<FILE_DIR_INFORMATION>(m_currentInfo, m_currentInfo->NextEntryOffset));
         success = true;
     }
 
     if (success)
     {
         // handle unexpected trailing null on some file systems
-        LPCWSTR fileNamePtr = m_Context->SupportsFileId ? m_CurrentInfo->IdInfo.FileName :
-            m_CurrentInfo->StandardInfo.FileName;
-        ULONG nameLength = m_CurrentInfo->FileNameLength / sizeof(WCHAR);
+        LPCWSTR fileNamePtr = m_context->SupportsFileId ? m_currentInfo->IdInfo.FileName :
+            m_currentInfo->StandardInfo.FileName;
+        ULONG nameLength = m_currentInfo->FileNameLength / sizeof(WCHAR);
         if (nameLength > 1 && fileNamePtr[nameLength - 1] == L'\0')
             nameLength -= 1;
 
         // copy name into local buffer
-        m_Name.resize(nameLength);
-        std::wmemcpy(m_Name.data(), fileNamePtr, nameLength);
+        m_name.resize(nameLength);
+        std::wmemcpy(m_name.data(), fileNamePtr, nameLength);
 
         // special case for reparse on initial run points since it will
         // return the attributes on the destination folder and not the reparse
         // point attributes itself that we want
-        if (m_FirstRun)
+        if (m_firstRun)
         {
             // Use cached value passed in from previous capture
-            if (m_Name == L".")
+            if (m_name == L".")
             {
-                m_CurrentInfo->FileAttributes = m_InitialAttributes;
+                m_currentInfo->FileAttributes = m_initialAttributes;
             }
 
             // Fallback if cached value was not passed
-            if (m_CurrentInfo->FileAttributes == INVALID_FILE_ATTRIBUTES)
+            if (m_currentInfo->FileAttributes == INVALID_FILE_ATTRIBUTES)
             {
                 std::wstring initialPath = GetFilePathLong();
-                if (m_Name == L"." || m_Name == L"..") initialPath.pop_back();
-                m_CurrentInfo->FileAttributes = GetFileAttributes(initialPath.c_str());
+                if (m_name == L"." || m_name == L"..") initialPath.pop_back();
+                m_currentInfo->FileAttributes = GetFileAttributes(initialPath.c_str());
             }
         }
 
         // Handle reparse points
-        m_ReparseTag = m_CurrentInfo->FileAttributes & FILE_ATTRIBUTE_REPARSE_POINT ?
-            m_CurrentInfo->ReparsePointTag : 0;
+        m_reparseTag = m_currentInfo->FileAttributes & FILE_ATTRIBUTE_REPARSE_POINT ?
+            m_currentInfo->ReparsePointTag : 0;
 
         // Mark file as compressed WOF compressed - this does not always
         // seem to be set with WOF compressed files 
-        if (m_ReparseTag == IO_REPARSE_TAG_WOF)
+        if (m_reparseTag == IO_REPARSE_TAG_WOF)
         {
-            m_CurrentInfo->FileAttributes |= FILE_ATTRIBUTE_COMPRESSED;
+            m_currentInfo->FileAttributes |= FILE_ATTRIBUTE_COMPRESSED;
         }
 
         // Correct physical size
-        if (m_CurrentInfo->AllocationSize.QuadPart == 0 &&
-            ((m_CurrentInfo->EndOfFile.QuadPart > m_Context->ClusterSize ||
-             (m_CurrentInfo->FileAttributes & FILE_ATTRIBUTE_SPARSE_FILE) != 0) ||
-             (m_CurrentInfo->FileAttributes & FILE_ATTRIBUTE_COMPRESSED) != 0))
+        if (m_currentInfo->AllocationSize.QuadPart == 0 &&
+            ((m_currentInfo->EndOfFile.QuadPart > m_context->ClusterSize ||
+             (m_currentInfo->FileAttributes & FILE_ATTRIBUTE_SPARSE_FILE) != 0) ||
+             (m_currentInfo->FileAttributes & FILE_ATTRIBUTE_COMPRESSED) != 0))
         {
             DWORD highPart;
             DWORD lowPart = GetCompressedFileSize(GetFilePathLong().c_str(), &highPart);
             if (lowPart != INVALID_FILE_SIZE || GetLastError() == NO_ERROR)
             {
-                m_CurrentInfo->AllocationSize.LowPart = lowPart;
-                m_CurrentInfo->AllocationSize.HighPart = static_cast<LONG>(highPart);
+                m_currentInfo->AllocationSize.LowPart = lowPart;
+                m_currentInfo->AllocationSize.HighPart = static_cast<LONG>(highPart);
             }
         }
 
         // Correct logical size
-        if (m_CurrentInfo->EndOfFile.QuadPart == 0 &&
-            m_CurrentInfo->AllocationSize.QuadPart != 0)
+        if (m_currentInfo->EndOfFile.QuadPart == 0 &&
+            m_currentInfo->AllocationSize.QuadPart != 0)
         {
             SmartPointer<HANDLE> handle(CloseHandle, CreateFile(GetFilePathLong().c_str(), FILE_READ_ATTRIBUTES,
                 FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr,
@@ -150,14 +150,14 @@ bool FinderBasic::FindNext()
 
             if (handle != INVALID_HANDLE_VALUE)
             {
-                GetFileSizeEx(handle, &m_CurrentInfo->EndOfFile);
+                GetFileSizeEx(handle, &m_currentInfo->EndOfFile);
             }
         }
     }
 
-    m_FirstRun = false;
+    m_firstRun = false;
 
-    if (success && (m_Name == L"." || m_Name == L"..")) return FindNext();
+    if (success && (m_name == L"." || m_name == L"..")) return FindNext();
     else return success;
 }
 
@@ -169,20 +169,20 @@ bool FinderBasic::FindFile(const CItem* item)
 bool FinderBasic::FindFile(const std::wstring & strFolder, const std::wstring& strName, const DWORD attr)
 {
     // stash the search pattern for later use
-    m_FirstRun = true;
-    m_Search = strName;
-    m_InitialAttributes = attr;
+    m_firstRun = true;
+    m_search = strName;
+    m_initialAttributes = attr;
 
     // convert the path to a long path that is compatible with the other call
-    m_Base = strFolder;
-    if (m_Base.find(L":\\", 1) == 1) m_Base = m_Dos.data() + m_Base;
-    else if (m_Base.starts_with(L"\\\\?\\")) m_Base = m_Dos.data() + m_Base.substr(4) + L"\\";
-    else if (m_Base.starts_with(L"\\\\")) m_Base = m_DosUNC.data() + m_Base.substr(2);
+    m_base = strFolder;
+    if (m_base.find(L":\\", 1) == 1) m_base = s_dosPath.data() + m_base;
+    else if (m_base.starts_with(L"\\\\?\\")) m_base = s_dosPath.data() + m_base.substr(4) + L"\\";
+    else if (m_base.starts_with(L"\\\\")) m_base = s_dosUNCPath.data() + m_base.substr(2);
     UNICODE_STRING path
     {
-        .Length = static_cast<USHORT>(m_Base.size() * sizeof(WCHAR)),
-        .MaximumLength = static_cast<USHORT>((m_Base.size() + 1) * sizeof(WCHAR)),
-        .Buffer = m_Base.data()
+        .Length = static_cast<USHORT>(m_base.size() * sizeof(WCHAR)),
+        .MaximumLength = static_cast<USHORT>((m_base.size() + 1) * sizeof(WCHAR)),
+        .Buffer = m_base.data()
     };
 
     // update object attributes object
@@ -192,11 +192,11 @@ bool FinderBasic::FindFile(const std::wstring & strFolder, const std::wstring& s
 
     // get an open file handle
     IO_STATUS_BLOCK statusBlock = {};
-    if (const NTSTATUS status = NtOpenFile(&m_Handle, FILE_LIST_DIRECTORY | SYNCHRONIZE,
+    if (const NTSTATUS status = NtOpenFile(&m_handle, FILE_LIST_DIRECTORY | SYNCHRONIZE,
         &attributes, &statusBlock, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
         FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT | FILE_OPEN_FOR_BACKUP_INTENT); status != 0)
     {
-        VTRACE(L"File Access Error {:#08X}: {}", static_cast<DWORD>(status), m_Base.data());
+        VTRACE(L"File Access Error {:#08X}: {}", static_cast<DWORD>(status), m_base.data());
         return FALSE;
     }
 
@@ -206,51 +206,51 @@ bool FinderBasic::FindFile(const std::wstring & strFolder, const std::wstring& s
 
 DWORD FinderBasic::GetAttributes() const
 {
-    return m_CurrentInfo->FileAttributes;
+    return m_currentInfo->FileAttributes;
 }
 
 std::wstring FinderBasic::GetFileName() const
 {
-    return m_Name;
+    return m_name;
 }
 
 ULONGLONG FinderBasic::GetFileSizePhysical() const
 {
-    return m_CurrentInfo->AllocationSize.QuadPart;
+    return m_currentInfo->AllocationSize.QuadPart;
 }
 
 ULONGLONG FinderBasic::GetFileSizeLogical() const
 {
-    return m_CurrentInfo->EndOfFile.QuadPart;
+    return m_currentInfo->EndOfFile.QuadPart;
 }
 
 ULONGLONG FinderBasic::GetIndex() const
 {
-    return m_Context->SupportsFileId ? m_CurrentInfo->IdInfo.FileId.QuadPart : 0;
+    return m_context->SupportsFileId ? m_currentInfo->IdInfo.FileId.QuadPart : 0;
 }
 
 FILETIME FinderBasic::GetLastWriteTime() const
 {
-    return { m_CurrentInfo->LastWriteTime.LowPart,
-        static_cast<DWORD>(m_CurrentInfo->LastWriteTime.HighPart) };
+    return { m_currentInfo->LastWriteTime.LowPart,
+        static_cast<DWORD>(m_currentInfo->LastWriteTime.HighPart) };
 }
 
 std::wstring FinderBasic::GetFilePath() const
 {
     // Get full path to folder or file
-    std::wstring path = m_Base.back() == L'\\'
-        ? (m_Base + m_Name)
-        : (m_Base + L"\\" + m_Name);
+    std::wstring path = m_base.back() == L'\\'
+        ? (m_base + m_name)
+        : (m_base + L"\\" + m_name);
 
     // Strip special DOS chars
-    if (path.starts_with(m_DosUNC)) return L"\\\\" + path.substr(m_DosUNC.size());
-    if (path.starts_with(m_Dos)) return path.substr(m_Dos.size());
+    if (path.starts_with(s_dosUNCPath)) return L"\\\\" + path.substr(s_dosUNCPath.size());
+    if (path.starts_with(s_dosPath)) return path.substr(s_dosPath.size());
     return path;
 }
 
 DWORD FinderBasic::GetReparseTag() const
 {
-    return m_ReparseTag;
+    return m_reparseTag;
 }
 
 bool FinderBasic::DoesFileExist(const std::wstring& folder, const std::wstring& file)

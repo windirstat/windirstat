@@ -39,10 +39,10 @@ class CAboutDlg final : public CLayoutDialogEx
         void ClearSelectionCursor();
 
     protected:
-        CFont m_MonoFont;
-        CRichEditCtrl m_TextAbout;
-        CRichEditCtrl m_TextThanks;
-        CRichEditCtrl m_TextLicense;
+        CFont m_monoFont;
+        CRichEditCtrl m_textAbout;
+        CRichEditCtrl m_textThanks;
+        CRichEditCtrl m_textLicense;
 
         DECLARE_MESSAGE_MAP()
         afx_msg void OnEnLinkText(NMHDR* pNMHDR, LRESULT* pResult);
@@ -57,8 +57,8 @@ protected:
     BOOL OnInitDialog() override;
     void DoDataExchange(CDataExchange* pDX) override;
 
-    CStatic m_Caption;
-    WdsTabControl m_Tab;
+    CStatic m_caption;
+    WdsTabControl m_tab;
 
     DECLARE_MESSAGE_MAP()
     afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);

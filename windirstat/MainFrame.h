@@ -56,15 +56,15 @@ class COptionsPropertySheet final : public CMFCPropertySheet
     void SetRestartRequired(bool changed);
     BOOL OnInitDialog() override;
 
-    bool m_RestartApplication = false; // [out]
+    bool m_restartApplication = false; // [out]
 
 protected:
     BOOL OnCommand(WPARAM wParam, LPARAM lParam) override;
     afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
     afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 
-    bool m_RestartRequest = false;
-    bool m_AlreadyAsked = false;
+    bool m_restartRequest = false;
+    bool m_alreadyAsked = false;
 
     DECLARE_MESSAGE_MAP()
 };
@@ -82,9 +82,9 @@ public:
     void RestoreSplitterPos(double posIfVirgin);
 
 protected:
-    double m_SplitterPos{0};    // Current split ratio
-    bool m_WasTrackedByUser;    // True as soon as user has modified the splitter position
-    double * m_UserSplitterPos; // Split ratio as set by the user
+    double m_splitterPos{0};    // Current split ratio
+    bool m_wasTrackedByUser;    // True as soon as user has modified the splitter position
+    double * m_userSplitterPos; // Split ratio as set by the user
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnSize(UINT nType, int cx, int cy);
@@ -102,7 +102,7 @@ public:
     void Stop();
 
 protected:
-    CPacman m_Pacman{ DarkMode::WdsSysColor(
+    CPacman m_pacman{ DarkMode::WdsSysColor(
         DarkMode::IsDarkModeActive() ? COLOR_WINDOW : COLOR_BTNFACE) };
 
     DECLARE_MESSAGE_MAP()
@@ -155,16 +155,16 @@ protected:
     void CopyToClipboard(const std::wstring& psz);
 
     // Used for storing and retrieving the various views
-    CFileTabbedView* m_FileTabbedView = nullptr;
-    CExtensionView* m_ExtensionView = nullptr;
-    CTreeMapView* m_TreeMapView = nullptr;
-    CFileTreeView* GetFileTreeView() const { return m_FileTabbedView->GetFileTreeView(); }
-    CFileTopView* GetFileTopView() const { return m_FileTabbedView->GetFileTopView(); }
-    CFileDupeView* GetFileDupeView() const { return m_FileTabbedView->GetFileDupeView(); }
-    CFileSearchView* GetFileSearchView() const { return m_FileTabbedView->GetFileSearchView(); }
-    CFileTabbedView* GetFileTabbedView() const { return m_FileTabbedView; }
-    CTreeMapView* GetTreeMapView() const { return m_TreeMapView; }
-    CExtensionView* GetExtensionView() const { return m_ExtensionView; }
+    CFileTabbedView* m_fileTabbedView = nullptr;
+    CExtensionView* m_extensionView = nullptr;
+    CTreeMapView* m_treeMapView = nullptr;
+    CFileTreeView* GetFileTreeView() const { return m_fileTabbedView->GetFileTreeView(); }
+    CFileTopView* GetFileTopView() const { return m_fileTabbedView->GetFileTopView(); }
+    CFileDupeView* GetFileDupeView() const { return m_fileTabbedView->GetFileDupeView(); }
+    CFileSearchView* GetFileSearchView() const { return m_fileTabbedView->GetFileSearchView(); }
+    CFileTabbedView* GetFileTabbedView() const { return m_fileTabbedView; }
+    CTreeMapView* GetTreeMapView() const { return m_treeMapView; }
+    CExtensionView* GetExtensionView() const { return m_extensionView; }
 
     void CreateProgress(ULONGLONG range);
     void SetProgressPos(ULONGLONG pos);
@@ -193,27 +193,27 @@ protected:
     void SetStatusPaneText(int pos, const std::wstring& text, int minWidth = 0);
     void UpdateCleanupMenu(CMenu* menu) const;
 
-    UINT_PTR m_Timer = 0;           // Timer for updating the display
-    bool m_ProgressVisible = false; // True while progress must be shown (either pacman or progress bar)
-    bool m_ScanSuspend = false;     // True if the scan has been suspended
-    ULONGLONG m_ProgressRange = 0;  // Progress range. A range of 0 means Pacman should be used.
-    ULONGLONG m_ProgressPos = 0;    // Progress position (<= progressRange, or an item count in case of m_ProgressRang == 0)
-    CItem* m_WorkingItem = nullptr;
+    UINT_PTR m_timer = 0;           // Timer for updating the display
+    bool m_progressVisible = false; // True while progress must be shown (either pacman or progress bar)
+    bool m_scanSuspend = false;     // True if the scan has been suspended
+    ULONGLONG m_progressRange = 0;  // Progress range. A range of 0 means Pacman should be used.
+    ULONGLONG m_progressPos = 0;    // Progress position (<= progressRange, or an item count in case of m_progressRang == 0)
+    CItem* m_workingItem = nullptr;
 
-    CMySplitterWnd m_SubSplitter; // Contains the two upper views
-    CMySplitterWnd m_Splitter;    // Contains (a) m_WndSubSplitter and (b) the graph view.
+    CMySplitterWnd m_subSplitter; // Contains the two upper views
+    CMySplitterWnd m_splitter;    // Contains (a) m_wndSubSplitter and (b) the graph view.
 
-    CMFCStatusBar m_WndStatusBar; // Status bar
-    CMFCToolBar m_WndToolBar;     // Tool bar
-    CProgressCtrl m_Progress;     // Progress control. Is Create()ed and Destroy()ed again every time.
-    CPacmanControl m_Pacman;      // Static control for Pacman.
-    CMFCToolBarImages m_Images;   // Tool bar images
-    LOGICAL_FOCUS m_LogicalFocus = LF_NONE; // Which view has the logical focus
-    CDeadFocusWnd m_WndDeadFocus; // Zero-size window which holds the focus if logical focus is "NONE"
+    CMFCStatusBar m_wndStatusBar; // Status bar
+    CMFCToolBar m_wndToolBar;     // Tool bar
+    CProgressCtrl m_progress;     // Progress control. Is Create()ed and Destroy()ed again every time.
+    CPacmanControl m_pacman;      // Static control for Pacman.
+    CMFCToolBarImages m_images;   // Tool bar images
+    LOGICAL_FOCUS m_logicalFocus = LF_NONE; // Which view has the logical focus
+    CDeadFocusWnd m_wndDeadFocus; // Zero-size window which holds the focus if logical focus is "NONE"
 
-    CComPtr<ITaskbarList3> m_TaskbarList;
-    TBPFLAG m_TaskbarButtonState = TBPF_INDETERMINATE;
-    TBPFLAG m_TaskbarButtonPreviousState = TBPF_INDETERMINATE;
+    CComPtr<ITaskbarList3> m_taskbarList;
+    TBPFLAG m_taskbarButtonState = TBPF_INDETERMINATE;
+    TBPFLAG m_taskbarButtonPreviousState = TBPF_INDETERMINATE;
 
     DECLARE_MESSAGE_MAP()
     afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);

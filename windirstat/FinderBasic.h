@@ -63,22 +63,22 @@ class FinderBasic final : public Finder
     };
     #pragma pack(pop)
 
-    std::vector<LARGE_INTEGER> m_DirectoryInfo = std::vector<LARGE_INTEGER>((4 * 1024 * 1024) / sizeof(LARGE_INTEGER));
-    std::wstring m_Search;
-    std::wstring m_Base;
-    std::wstring m_Name;
-    FILE_DIR_INFORMATION* m_CurrentInfo = nullptr;
-    FinderBasicContext m_Default{};
-    FinderBasicContext* m_Context = &m_Default;
-    HANDLE m_Handle = nullptr;
-    DWORD m_InitialAttributes = INVALID_FILE_ATTRIBUTES;
-    DWORD m_ReparseTag = 0;
-    bool m_FirstRun = true;
+    std::vector<LARGE_INTEGER> m_directoryInfo = std::vector<LARGE_INTEGER>((4 * 1024 * 1024) / sizeof(LARGE_INTEGER));
+    std::wstring m_search;
+    std::wstring m_base;
+    std::wstring m_name;
+    FILE_DIR_INFORMATION* m_currentInfo = nullptr;
+    FinderBasicContext m_default{};
+    FinderBasicContext* m_context = &m_default;
+    HANDLE m_handle = nullptr;
+    DWORD m_initialAttributes = INVALID_FILE_ATTRIBUTES;
+    DWORD m_reparseTag = 0;
+    bool m_firstRun = true;
 
 public:
 
     FinderBasic() = default;
-    FinderBasic(FinderBasicContext* context) : m_Context(context) {}
+    FinderBasic(FinderBasicContext* context) : m_context(context) {}
     ~FinderBasic();
 
     bool FindNext() override;

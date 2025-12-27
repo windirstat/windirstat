@@ -28,8 +28,8 @@ class CIconHandler final
     static constexpr UINT WDS_SHGFI_DEFAULTS = SHGFI_USEFILEATTRIBUTES | SHGFI_SMALLICON | SHGFI_ICON | SHGFI_ADDOVERLAYS | SHGFI_SYSICONINDEX | SHGFI_OVERLAYINDEX;
     static constexpr auto MAX_ICON_THREADS = 4;
 
-    std::mutex m_CachedIconMutex;
-    std::unordered_map<int, HICON> m_CachedIcons;
+    std::mutex m_cachedIconMutex;
+    std::unordered_map<int, HICON> m_cachedIcons;
 
 public:
     CIconHandler() = default;
@@ -46,25 +46,25 @@ public:
 
     HICON FetchShellIcon(const std::wstring& path, UINT flags = 0, DWORD attr = FILE_ATTRIBUTE_NORMAL, std::wstring* psTypeName = nullptr);
 
-    BlockingQueue<IconLookup> m_LookupQueue = BlockingQueue<IconLookup>(false);
-    COleFilterOverride m_FilterOverride;
+    BlockingQueue<IconLookup> m_lookupQueue = BlockingQueue<IconLookup>(false);
+    COleFilterOverride m_filterOverride;
 
-    HICON m_FreeSpaceImage = nullptr;    // <Free Space>
-    HICON m_UnknownImage = nullptr;      // <Unknown>
-    HICON m_HardlinksImage = nullptr;    // <Hardlinks>
-    HICON m_EmptyImage = nullptr;        // For items whose icon cannot be found
-    HICON m_JunctionImage = nullptr;     // For normal functions
-    HICON m_JunctionProtected = nullptr; // For protected junctions
-    HICON m_MountPointImage = nullptr;   // Mount point icon
-    HICON m_MyComputerImage = nullptr;   // My computer icon
+    HICON m_freeSpaceImage = nullptr;    // <Free Space>
+    HICON m_unknownImage = nullptr;      // <Unknown>
+    HICON m_hardlinksImage = nullptr;    // <Hardlinks>
+    HICON m_emptyImage = nullptr;        // For items whose icon cannot be found
+    HICON m_junctionImage = nullptr;     // For normal functions
+    HICON m_junctionProtected = nullptr; // For protected junctions
+    HICON m_mountPointImage = nullptr;   // Mount point icon
+    HICON m_myComputerImage = nullptr;   // My computer icon
 
     // Trivial getters
-    HICON GetMyComputerImage() const { return m_MyComputerImage; }
-    HICON GetMountPointImage() const { return m_MountPointImage; }
-    HICON GetJunctionImage() const { return m_JunctionImage; }
-    HICON GetJunctionProtectedImage() const { return m_JunctionProtected; }
-    HICON GetFreeSpaceImage() const { return m_FreeSpaceImage; }
-    HICON GetUnknownImage() const { return m_UnknownImage; }
-    HICON GetEmptyImage() const { return m_EmptyImage; }
-    HICON GetHardlinksImage() const { return m_HardlinksImage; }
+    HICON GetMyComputerImage() const { return m_myComputerImage; }
+    HICON GetMountPointImage() const { return m_mountPointImage; }
+    HICON GetJunctionImage() const { return m_junctionImage; }
+    HICON GetJunctionProtectedImage() const { return m_junctionProtected; }
+    HICON GetFreeSpaceImage() const { return m_freeSpaceImage; }
+    HICON GetUnknownImage() const { return m_unknownImage; }
+    HICON GetEmptyImage() const { return m_emptyImage; }
+    HICON GetHardlinksImage() const { return m_hardlinksImage; }
 };

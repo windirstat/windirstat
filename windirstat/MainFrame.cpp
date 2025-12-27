@@ -41,8 +41,8 @@ namespace
     public:
         COpenClipboard(CWnd* owner)
         {
-            m_Open = owner->OpenClipboard();
-            if (!m_Open || !EmptyClipboard())
+            m_open = owner->OpenClipboard();
+            if (!m_open || !EmptyClipboard())
             {
                 DisplayError(TranslateError());
             }
@@ -50,14 +50,14 @@ namespace
 
         ~COpenClipboard()
         {
-            if (m_Open)
+            if (m_open)
             {
                 CloseClipboard();
             }
         }
 
     private:
-        BOOL m_Open = FALSE;
+        BOOL m_open = FALSE;
     };
 }
 
@@ -73,7 +73,7 @@ COptionsPropertySheet::COptionsPropertySheet()
 
 void COptionsPropertySheet::SetRestartRequired(const bool changed)
 {
-    m_RestartRequest = changed;
+    m_restartRequest = changed;
 }
 
 BEGIN_MESSAGE_MAP(COptionsPropertySheet, CMFCPropertySheet)
@@ -122,7 +122,7 @@ BOOL COptionsPropertySheet::OnCommand(const WPARAM wParam, const LPARAM lParam)
     const int cmd = LOWORD(wParam);
     if (IDOK == cmd || ID_APPLY_NOW == cmd)
     {
-        if (m_RestartRequest && (IDOK == cmd || !m_AlreadyAsked))
+        if (m_restartRequest && (IDOK == cmd || !m_alreadyAsked))
         {
             const int r = WdsMessageBox(*this, Localization::Lookup(IDS_RESTART_REQUEST),
                 Localization::LookupNeutral(AFX_IDS_APP_TITLE), MB_YESNOCANCEL);
@@ -132,12 +132,12 @@ BOOL COptionsPropertySheet::OnCommand(const WPARAM wParam, const LPARAM lParam)
             }
             else if (IDNO == r)
             {
-                m_AlreadyAsked = true; // Don't ask twice.
+                m_alreadyAsked = true; // Don't ask twice.
             }
             else
             {
                 ASSERT(IDYES == r);
-                m_RestartApplication = true;
+                m_restartApplication = true;
 
                 if (ID_APPLY_NOW == cmd)
                 {
@@ -156,9 +156,9 @@ BOOL COptionsPropertySheet::OnCommand(const WPARAM wParam, const LPARAM lParam)
 /////////////////////////////////////////////////////////////////////////////
 
 CMySplitterWnd::CMySplitterWnd(double* splitterPos) :
-    m_UserSplitterPos(splitterPos)
+    m_userSplitterPos(splitterPos)
 {
-    m_WasTrackedByUser = (*splitterPos > 0 && *splitterPos < 1);
+    m_wasTrackedByUser = (*splitterPos > 0 && *splitterPos < 1);
 }
 
 BEGIN_MESSAGE_MAP(CMySplitterWnd, CSplitterWndEx)
@@ -182,7 +182,7 @@ void CMySplitterWnd::StopTracking(const BOOL bAccept)
 
             if (rcClient.Width() > 0)
             {
-                m_SplitterPos = static_cast<double>(cxLeft) / rcClient.Width();
+                m_splitterPos = static_cast<double>(cxLeft) / rcClient.Width();
             }
         }
         else
@@ -193,17 +193,17 @@ void CMySplitterWnd::StopTracking(const BOOL bAccept)
 
             if (rcClient.Height() > 0)
             {
-                m_SplitterPos = static_cast<double>(cyUpper) / rcClient.Height();
+                m_splitterPos = static_cast<double>(cyUpper) / rcClient.Height();
             }
         }
-        m_WasTrackedByUser = true;
-        *m_UserSplitterPos = m_SplitterPos;
+        m_wasTrackedByUser = true;
+        *m_userSplitterPos = m_splitterPos;
     }
 }
 
 void CMySplitterWnd::SetSplitterPos(const double pos)
 {
-    m_SplitterPos = pos;
+    m_splitterPos = pos;
 
     CRect rcClient;
     GetClientRect(rcClient);
@@ -236,9 +236,9 @@ void CMySplitterWnd::SetSplitterPos(const double pos)
 
 void CMySplitterWnd::RestoreSplitterPos(const double posIfVirgin)
 {
-    if (m_WasTrackedByUser)
+    if (m_wasTrackedByUser)
     {
-        SetSplitterPos(*m_UserSplitterPos);
+        SetSplitterPos(*m_userSplitterPos);
     }
     else
     {
@@ -250,7 +250,7 @@ void CMySplitterWnd::OnSize(const UINT nType, const int cx, const int cy)
 {
     if (GetColumnCount() > 1)
     {
-        const int cxLeft = static_cast<int>(cx * m_SplitterPos);
+        const int cxLeft = static_cast<int>(cx * m_splitterPos);
         if (cxLeft > 0)
         {
             SetColumnInfo(0, cxLeft, 0);
@@ -258,7 +258,7 @@ void CMySplitterWnd::OnSize(const UINT nType, const int cx, const int cy)
     }
     else
     {
-        const int cyUpper = static_cast<int>(cy * m_SplitterPos);
+        const int cyUpper = static_cast<int>(cy * m_splitterPos);
         if (cyUpper > 0)
         {
             SetRowInfo(0, cyUpper, 0);
@@ -273,19 +273,19 @@ void CPacmanControl::Drive()
 {
     if (IsWindow(m_hWnd))
     {
-        m_Pacman.UpdatePosition();
+        m_pacman.UpdatePosition();
         RedrawWindow();
     }
 }
 
 void CPacmanControl::Start()
 {
-    m_Pacman.Start();
+    m_pacman.Start();
 }
 
 void CPacmanControl::Stop()
 {
-    m_Pacman.Stop();
+    m_pacman.Stop();
 }
 
 BEGIN_MESSAGE_MAP(CPacmanControl, CWnd)
@@ -301,8 +301,8 @@ int CPacmanControl::OnCreate(const LPCREATESTRUCT lpCreateStruct)
         return -1;
     }
 
-    m_Pacman.Reset();
-    m_Pacman.Start();
+    m_pacman.Reset();
+    m_pacman.Start();
     return 0;
 }
 
@@ -322,11 +322,11 @@ void CPacmanControl::OnPaint()
     GetClientRect(&rect);
 
     // Draw the animation
-    m_Pacman.Draw(pDC, rect);
+    m_pacman.Draw(pDC, rect);
 
     // Draw the borders
     CMFCVisualManager::GetInstance()->OnDrawStatusBarPaneBorder(
-        pDC, &CMainFrame::Get()->m_WndStatusBar, rect, 0, CMainFrame::Get()->GetStyle());
+        pDC, &CMainFrame::Get()->m_wndStatusBar, rect, 0, CMainFrame::Get()->GetStyle());
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -408,8 +408,8 @@ constexpr UINT indicators[]
 CMainFrame* CMainFrame::s_Singleton;
 
 CMainFrame::CMainFrame() :
-        m_SubSplitter(COptions::SubSplitterPos.Ptr())
-      , m_Splitter(COptions::MainSplitterPos.Ptr())
+        m_subSplitter(COptions::SubSplitterPos.Ptr())
+      , m_splitter(COptions::MainSplitterPos.Ptr())
 {
     s_Singleton = this;
 }
@@ -421,9 +421,9 @@ CMainFrame::~CMainFrame()
 
 LRESULT CMainFrame::OnTaskButtonCreated(WPARAM, LPARAM)
 {
-    if (!m_TaskbarList)
+    if (!m_taskbarList)
     {
-        const HRESULT hr = CoCreateInstance(CLSID_TaskbarList, nullptr, CLSCTX_ALL, IID_PPV_ARGS(&m_TaskbarList));
+        const HRESULT hr = CoCreateInstance(CLSID_TaskbarList, nullptr, CLSCTX_ALL, IID_PPV_ARGS(&m_taskbarList));
         if (FAILED(hr))
         {
             VTRACE(L"CoCreateInstance(CLSID_TaskbarList, nullptr, CLSCTX_ALL) failed {:#08X}", static_cast<DWORD>(hr));
@@ -443,9 +443,9 @@ void CMainFrame::CreateProgress(ULONGLONG range)
         range = 0;
     }
 
-    m_ProgressRange = range;
-    m_ProgressPos = 0;
-    m_ProgressVisible = true;
+    m_progressRange = range;
+    m_progressPos = 0;
+    m_progressVisible = true;
     if (range > 0)
     {
         CreateStatusProgress();
@@ -458,12 +458,12 @@ void CMainFrame::CreateProgress(ULONGLONG range)
 
 void CMainFrame::SetProgressPos(ULONGLONG pos)
 {
-    if (m_ProgressRange > 0 && pos > m_ProgressRange)
+    if (m_progressRange > 0 && pos > m_progressRange)
     {
-        pos = m_ProgressRange;
+        pos = m_progressRange;
     }
 
-    m_ProgressPos = pos;
+    m_progressPos = pos;
     UpdateProgress();
 }
 
@@ -472,9 +472,9 @@ void CMainFrame::SetProgressComplete()
     // Disable any potential suspend state
     SuspendState(false);
 
-    if (m_TaskbarList)
+    if (m_taskbarList)
     {
-        m_TaskbarList->SetProgressState(*this, m_TaskbarButtonState = TBPF_NOPROGRESS);
+        m_taskbarList->SetProgressState(*this, m_taskbarButtonState = TBPF_NOPROGRESS);
     }
 
     DestroyProgress();
@@ -486,22 +486,22 @@ void CMainFrame::SetProgressComplete()
 
 bool CMainFrame::IsScanSuspended() const
 {
-    return m_ScanSuspend;
+    return m_scanSuspend;
 }
 
 void CMainFrame::SuspendState(const bool suspend)
 {
-    m_ScanSuspend = suspend;
-    if (m_TaskbarList)
+    m_scanSuspend = suspend;
+    if (m_taskbarList)
     {
-        if (m_TaskbarButtonState == TBPF_PAUSED)
+        if (m_taskbarButtonState == TBPF_PAUSED)
         {
-            m_TaskbarList->SetProgressState(*this, m_TaskbarButtonState = m_TaskbarButtonPreviousState);
+            m_taskbarList->SetProgressState(*this, m_taskbarButtonState = m_taskbarButtonPreviousState);
         }
         else
         {
-            m_TaskbarButtonPreviousState = m_TaskbarButtonState;
-            m_TaskbarList->SetProgressState(*this, m_TaskbarButtonState |= TBPF_PAUSED);
+            m_taskbarButtonPreviousState = m_taskbarButtonState;
+            m_taskbarList->SetProgressState(*this, m_taskbarButtonState |= TBPF_PAUSED);
         }
     }
     CPacman::SetGlobalSuspendState(suspend);
@@ -512,19 +512,19 @@ void CMainFrame::UpdateProgress()
 {
     // Update working item tracker if changed
     const auto currentRoot = CDirStatDoc::Get()->GetRootItem();
-    if (currentRoot != m_WorkingItem &&
+    if (currentRoot != m_workingItem &&
         currentRoot != nullptr && !currentRoot->IsDone())
     {
-        m_WorkingItem = currentRoot;
-        CreateProgress(m_WorkingItem->GetProgressRange());
+        m_workingItem = currentRoot;
+        CreateProgress(m_workingItem->GetProgressRange());
     }
 
     // Exit early if we not ready for visual updates
-    if (!m_ProgressVisible || m_WorkingItem == nullptr || currentRoot == nullptr) return;
+    if (!m_progressVisible || m_workingItem == nullptr || currentRoot == nullptr) return;
 
     // Update pacman graphic (does nothing if hidden)
-    m_ProgressPos = m_WorkingItem->GetProgressPos();
-    m_Pacman.Drive();
+    m_progressPos = m_workingItem->GetProgressPos();
+    m_pacman.Drive();
 
     std::wstring titlePrefix;
     std::wstring suspended;
@@ -536,23 +536,23 @@ void CMainFrame::UpdateProgress()
         suspended = suspendString;
     }
 
-    if (m_ProgressRange > 0 && m_Progress.m_hWnd != nullptr)
+    if (m_progressRange > 0 && m_progress.m_hWnd != nullptr)
     {
         // Limit progress at 100% as hard-linked files will count twice
-        const int pos = min(static_cast<int>((m_ProgressPos * 100ull) / m_ProgressRange), 100);
-        m_Progress.SetPos(pos);
+        const int pos = min(static_cast<int>((m_progressPos * 100ull) / m_progressRange), 100);
+        m_progress.SetPos(pos);
 
         titlePrefix = std::to_wstring(pos) + L"% " + suspended;
-        if (m_TaskbarList && m_TaskbarButtonState != TBPF_PAUSED)
+        if (m_taskbarList && m_taskbarButtonState != TBPF_PAUSED)
         {
             if (pos == 100)
             {
-                m_TaskbarList->SetProgressState(*this, m_TaskbarButtonState = TBPF_INDETERMINATE); // often happens before we're finished
+                m_taskbarList->SetProgressState(*this, m_taskbarButtonState = TBPF_INDETERMINATE); // often happens before we're finished
             }
             else
             {
-                m_TaskbarList->SetProgressState(*this, m_TaskbarButtonState = TBPF_NORMAL); // often happens before we're finished
-                m_TaskbarList->SetProgressValue(*this, m_ProgressPos, m_ProgressRange);
+                m_taskbarList->SetProgressState(*this, m_taskbarButtonState = TBPF_NORMAL); // often happens before we're finished
+                m_taskbarList->SetProgressValue(*this, m_progressPos, m_progressRange);
             }
         }
     }
@@ -568,55 +568,55 @@ void CMainFrame::UpdateProgress()
 
 void CMainFrame::CreateStatusProgress()
 {
-    if (m_Progress.m_hWnd == nullptr)
+    if (m_progress.m_hWnd == nullptr)
     {
         CRect rc;
-        m_WndStatusBar.GetItemRect(ID_STATUSPANE_IDLE_INDEX, rc);
-        m_Progress.Create(WS_CHILD | WS_VISIBLE, rc, &m_WndStatusBar, ID_WDS_CONTROL);
-        m_Progress.ModifyStyle(WS_BORDER, 0);
+        m_wndStatusBar.GetItemRect(ID_STATUSPANE_IDLE_INDEX, rc);
+        m_progress.Create(WS_CHILD | WS_VISIBLE, rc, &m_wndStatusBar, ID_WDS_CONTROL);
+        m_progress.ModifyStyle(WS_BORDER, 0);
 
         if (DarkMode::IsDarkModeActive())
         {
             // Disable theming for progress bar to avoid light background in dark mode
-            SetWindowTheme(m_Progress.GetSafeHwnd(), L"", L"");
-            m_Progress.SetBkColor(DarkMode::WdsSysColor(COLOR_WINDOWFRAME));
-            m_Progress.ModifyStyleEx(WS_EX_STATICEDGE, 0);
+            SetWindowTheme(m_progress.GetSafeHwnd(), L"", L"");
+            m_progress.SetBkColor(DarkMode::WdsSysColor(COLOR_WINDOWFRAME));
+            m_progress.ModifyStyleEx(WS_EX_STATICEDGE, 0);
         }
     }
-    if (m_TaskbarList)
+    if (m_taskbarList)
     {
-        m_TaskbarList->SetProgressState(*this, m_TaskbarButtonState = TBPF_INDETERMINATE);
+        m_taskbarList->SetProgressState(*this, m_taskbarButtonState = TBPF_INDETERMINATE);
     }
 }
 
 void CMainFrame::CreatePacmanProgress()
 {
-    if (m_Pacman.m_hWnd == nullptr)
+    if (m_pacman.m_hWnd == nullptr)
     {
         // Get rectangle and remove top/bottom border dimension
         CRect rc;
-        m_WndStatusBar.GetItemRect(0, rc);
-        m_Pacman.Create(nullptr, nullptr, WS_CHILD | WS_VISIBLE, rc, &m_WndStatusBar, ID_WDS_CONTROL);
-        m_Pacman.Start();
+        m_wndStatusBar.GetItemRect(0, rc);
+        m_pacman.Create(nullptr, nullptr, WS_CHILD | WS_VISIBLE, rc, &m_wndStatusBar, ID_WDS_CONTROL);
+        m_pacman.Start();
     }
 }
 
 void CMainFrame::DestroyProgress()
 {
-    if (IsWindow(m_Progress.m_hWnd))
+    if (IsWindow(m_progress.m_hWnd))
     {
-        m_Progress.DestroyWindow();
-        m_Progress.m_hWnd = nullptr;
+        m_progress.DestroyWindow();
+        m_progress.m_hWnd = nullptr;
     }
-    else if (IsWindow(m_Pacman.m_hWnd))
+    else if (IsWindow(m_pacman.m_hWnd))
     {
-        m_Pacman.Stop();
-        m_Pacman.DestroyWindow();
-        m_Pacman.m_hWnd = nullptr;
+        m_pacman.Stop();
+        m_pacman.DestroyWindow();
+        m_pacman.m_hWnd = nullptr;
     }
 
-    m_WorkingItem = nullptr;
-    m_ProgressVisible = false;
+    m_workingItem = nullptr;
+    m_progressVisible = false;
 }
 
 void CMainFrame::SetStatusPaneText(const int pos, const std::wstring & text, const int minWidth)
@@ -629,8 +629,8 @@ void CMainFrame::SetStatusPaneText(const int pos, const std::wstring & text, con
     // set status path width and then set text
     const CClientDC dc(this);
     const auto cx = dc.GetTextExtent(text.c_str(), static_cast<int>(text.size())).cx;
-    m_WndStatusBar.SetPaneWidth(pos, max(cx, minWidth));
-    m_WndStatusBar.SetPaneText(pos, text.c_str());
+    m_wndStatusBar.SetPaneWidth(pos, max(cx, minWidth));
+    m_wndStatusBar.SetPaneText(pos, text.c_str());
 }
 
 int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
@@ -640,15 +640,15 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
         return -1;
     }
     
-    m_WndToolBar.CreateEx(this, TBSTYLE_FLAT, WS_CHILD | WS_VISIBLE | CBRS_TOP | CBRS_TOOLTIPS | CBRS_SIZE_DYNAMIC);
-    m_WndToolBar.LoadToolBar(IDR_MAINFRAME);
-    m_WndToolBar.SetBorders(CRect());
-    m_WndToolBar.SetPaneStyle(m_WndToolBar.GetPaneStyle() & ~CBRS_GRIPPER);
+    m_wndToolBar.CreateEx(this, TBSTYLE_FLAT, WS_CHILD | WS_VISIBLE | CBRS_TOP | CBRS_TOOLTIPS | CBRS_SIZE_DYNAMIC);
+    m_wndToolBar.LoadToolBar(IDR_MAINFRAME);
+    m_wndToolBar.SetBorders(CRect());
+    m_wndToolBar.SetPaneStyle(m_wndToolBar.GetPaneStyle() & ~CBRS_GRIPPER);
 
     // Setup status pane and force initial field population
-    VERIFY(m_WndStatusBar.Create(this));
-    m_WndStatusBar.SetIndicators(indicators, std::size(indicators));
-    m_WndStatusBar.SetPaneStyle(ID_STATUSPANE_IDLE_INDEX, SBPS_STRETCH);
+    VERIFY(m_wndStatusBar.Create(this));
+    m_wndStatusBar.SetIndicators(indicators, std::size(indicators));
+    m_wndStatusBar.SetPaneStyle(ID_STATUSPANE_IDLE_INDEX, SBPS_STRETCH);
     SetStatusPaneText(ID_STATUSPANE_CAPS_INDEX, Localization::Lookup(IDS_INDICATOR_CAPS));
     SetStatusPaneText(ID_STATUSPANE_NUM_INDEX, Localization::Lookup(IDS_INDICATOR_NUM));
     SetStatusPaneText(ID_STATUSPANE_SCRL_INDEX, Localization::Lookup(IDS_INDICATOR_SCRL));
@@ -657,18 +657,18 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
     // Setup status pane for dark mode
     if (DarkMode::IsDarkModeActive())
     {
-        for (const int i : std::views::iota(0, m_WndStatusBar.GetCount()))
+        for (const int i : std::views::iota(0, m_wndStatusBar.GetCount()))
         {
-            m_WndStatusBar.SetPaneBackgroundColor(i, DarkMode::WdsSysColor(COLOR_WINDOW));
+            m_wndStatusBar.SetPaneBackgroundColor(i, DarkMode::WdsSysColor(COLOR_WINDOW));
         }
     }
 
     // Show or hide status bar if requested
-    if (!COptions::ShowStatusBar) m_WndStatusBar.ShowWindow(SW_HIDE);
-    if (!COptions::ShowToolBar) m_WndToolBar.ShowWindow(SW_HIDE);
+    if (!COptions::ShowStatusBar) m_wndStatusBar.ShowWindow(SW_HIDE);
+    if (!COptions::ShowToolBar) m_wndToolBar.ShowWindow(SW_HIDE);
 
-    m_WndDeadFocus.Create(this);
-    DockPane(&m_WndToolBar);
+    m_wndDeadFocus.Create(this);
+    DockPane(&m_wndToolBar);
 
     // map from toolbar resources to specific icons
     const std::unordered_map<UINT, std::pair<UINT, std::wstring_view>> toolbarMap =
@@ -693,11 +693,11 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
         { ID_HELP_MANUAL, {IDB_HELP_MANUAL, IDS_HELP_MANUAL}} };
 
     // update toolbar images with high resolution versions
-    m_Images.SetImageSize({ 16,16 }, TRUE);
-    for (const int i : std::views::iota(0, m_WndToolBar.GetCount()))
+    m_images.SetImageSize({ 16,16 }, TRUE);
+    for (const int i : std::views::iota(0, m_wndToolBar.GetCount()))
     {
         // lookup the button in the editor toolbox
-        const auto button = m_WndToolBar.GetButton(i);
+        const auto button = m_wndToolBar.GetButton(i);
         if (button->m_nID == 0) continue;
         ASSERT(toolbarMap.contains(button->m_nID));
 
@@ -705,14 +705,14 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
         CBitmap bitmap;
         bitmap.LoadBitmapW(toolbarMap.at(button->m_nID).first);
         DarkMode::LightenBitmap(&bitmap);
-        const int image = m_Images.AddImage(bitmap, TRUE);
-        CMFCToolBar::SetUserImages(&m_Images);
+        const int image = m_images.AddImage(bitmap, TRUE);
+        CMFCToolBar::SetUserImages(&m_images);
 
         // copy button into new toolbar control
         CMFCToolBarButton newButton(button->m_nID, image, nullptr, TRUE, TRUE);
         newButton.m_nStyle = button->m_nStyle | TBBS_DISABLED;
         newButton.m_strText = Localization::Lookup(toolbarMap.at(button->m_nID).second).c_str();
-        m_WndToolBar.ReplaceButton(button->m_nID, newButton);
+        m_wndToolBar.ReplaceButton(button->m_nID, newButton);
     }
 
     // setup look and feel with dark mode support
@@ -758,8 +758,8 @@ void CMainFrame::OnClose()
     // It's too late, to do this in OnDestroy(). Because the toolbar, if undocked,
     // is already destroyed in OnDestroy(). So we must save the toolbar state here
     // in OnClose().
-    COptions::ShowToolBar = (m_WndToolBar.GetStyle() & WS_VISIBLE) != 0;
-    COptions::ShowStatusBar = (m_WndStatusBar.GetStyle() & WS_VISIBLE) != 0;
+    COptions::ShowToolBar = (m_wndToolBar.GetStyle() & WS_VISIBLE) != 0;
+    COptions::ShowStatusBar = (m_wndStatusBar.GetStyle() & WS_VISIBLE) != 0;
 
     CFrameWndEx::OnClose();
 }
@@ -783,15 +783,15 @@ void CMainFrame::OnDestroy()
 
 BOOL CMainFrame::OnCreateClient(LPCREATESTRUCT /*lpcs*/, CCreateContext* pContext)
 {
-    m_Splitter.CreateStatic(this, 2, 1);
-    m_Splitter.CreateView(1, 0, RUNTIME_CLASS(CTreeMapView), CSize(100, 100), pContext);
-    m_SubSplitter.CreateStatic(&m_Splitter, 1, 2,WS_CHILD  | WS_VISIBLE | WS_BORDER, m_Splitter.IdFromRowCol(0, 0));
-    m_SubSplitter.CreateView(0, 0, RUNTIME_CLASS(CFileTabbedView), CSize(700, 500), pContext);
-    m_SubSplitter.CreateView(0, 1, RUNTIME_CLASS(CExtensionView), CSize(100, 500), pContext);
+    m_splitter.CreateStatic(this, 2, 1);
+    m_splitter.CreateView(1, 0, RUNTIME_CLASS(CTreeMapView), CSize(100, 100), pContext);
+    m_subSplitter.CreateStatic(&m_splitter, 1, 2,WS_CHILD  | WS_VISIBLE | WS_BORDER, m_splitter.IdFromRowCol(0, 0));
+    m_subSplitter.CreateView(0, 0, RUNTIME_CLASS(CFileTabbedView), CSize(700, 500), pContext);
+    m_subSplitter.CreateView(0, 1, RUNTIME_CLASS(CExtensionView), CSize(100, 500), pContext);
 
-    m_TreeMapView = DYNAMIC_DOWNCAST(CTreeMapView, m_Splitter.GetPane(1, 0));
-    m_FileTabbedView = DYNAMIC_DOWNCAST(CFileTabbedView, m_SubSplitter.GetPane(0, 0));
-    m_ExtensionView = DYNAMIC_DOWNCAST(CExtensionView, m_SubSplitter.GetPane(0, 1));
+    m_treeMapView = DYNAMIC_DOWNCAST(CTreeMapView, m_splitter.GetPane(1, 0));
+    m_fileTabbedView = DYNAMIC_DOWNCAST(CFileTabbedView, m_subSplitter.GetPane(0, 0));
+    m_extensionView = DYNAMIC_DOWNCAST(CExtensionView, m_subSplitter.GetPane(0, 1));
 
     MinimizeTreeMapView();
     MinimizeExtensionView();
@@ -819,28 +819,28 @@ BOOL CMainFrame::PreCreateWindow(CREATESTRUCT& cs)
 
 void CMainFrame::MinimizeExtensionView()
 {
-    m_SubSplitter.SetSplitterPos(1.0);
+    m_subSplitter.SetSplitterPos(1.0);
 }
 
 void CMainFrame::RestoreExtensionView()
 {
     if (GetExtensionView()->IsShowTypes())
     {
-        m_SubSplitter.RestoreSplitterPos(0.72);
+        m_subSplitter.RestoreSplitterPos(0.72);
         GetExtensionView()->RedrawWindow();
     }
 }
 
 void CMainFrame::MinimizeTreeMapView()
 {
-    m_Splitter.SetSplitterPos(1.0);
+    m_splitter.SetSplitterPos(1.0);
 }
 
 void CMainFrame::RestoreTreeMapView()
 {
     if (GetTreeMapView()->IsShowTreeMap())
     {
-        m_Splitter.RestoreSplitterPos(0.5);
+        m_splitter.RestoreSplitterPos(0.5);
         GetTreeMapView()->DrawEmptyView();
         GetTreeMapView()->RedrawWindow();
     }
@@ -1097,9 +1097,9 @@ void CMainFrame::UpdateDynamicMenuItems(CMenu* menu) const
 
 void CMainFrame::SetLogicalFocus(const LOGICAL_FOCUS lf)
 {
-    if (lf != m_LogicalFocus)
+    if (lf != m_logicalFocus)
     {
-        m_LogicalFocus = lf;
+        m_logicalFocus = lf;
         UpdatePaneText();
 
         CDirStatDoc::Get()->UpdateAllViews(nullptr, HINT_SELECTIONSTYLECHANGED);
@@ -1108,7 +1108,7 @@ void CMainFrame::SetLogicalFocus(const LOGICAL_FOCUS lf)
 
 LOGICAL_FOCUS CMainFrame::GetLogicalFocus() const
 {
-    return m_LogicalFocus;
+    return m_logicalFocus;
 }
 
 void CMainFrame::MoveFocus(const LOGICAL_FOCUS logicalFocus)
@@ -1123,7 +1123,7 @@ void CMainFrame::MoveFocus(const LOGICAL_FOCUS logicalFocus)
         case LF_NONE:
         {
             SetLogicalFocus(LF_NONE);
-            m_WndDeadFocus.SetFocus();
+            m_wndDeadFocus.SetFocus();
         }
     }
 }
@@ -1135,7 +1135,7 @@ void CMainFrame::UpdatePaneText()
     ULONGLONG size = MAXULONG64;
 
     // Allow override test
-    if (const std::wstring & hover = m_TreeMapView->GetTreeMapHoverPath(); !hover.empty())
+    if (const std::wstring & hover = m_treeMapView->GetTreeMapHoverPath(); !hover.empty())
     {
         fileSelectionText = hover;
     }
@@ -1183,21 +1183,21 @@ void CMainFrame::OnSize(const UINT nType, const int cx, const int cy)
 {
     CFrameWndEx::OnSize(nType, cx, cy);
 
-    if (!IsWindow(m_WndStatusBar.m_hWnd))
+    if (!IsWindow(m_wndStatusBar.m_hWnd))
     {
         return;
     }
 
     CRect rc;
-    m_WndStatusBar.GetItemRect(ID_STATUSPANE_IDLE_INDEX, rc);
+    m_wndStatusBar.GetItemRect(ID_STATUSPANE_IDLE_INDEX, rc);
 
-    if (m_Progress.m_hWnd != nullptr)
+    if (m_progress.m_hWnd != nullptr)
     {
-        m_Progress.MoveWindow(rc);
+        m_progress.MoveWindow(rc);
     }
-    else if (m_Pacman.m_hWnd != nullptr)
+    else if (m_pacman.m_hWnd != nullptr)
     {
-        m_Pacman.MoveWindow(rc);
+        m_pacman.MoveWindow(rc);
     }
 }
 
@@ -1278,7 +1278,7 @@ void CMainFrame::OnConfigure()
     // Save settings in case the application exits abnormally
     PersistedSetting::WritePersistedProperties();
     
-    if (sheet.m_RestartApplication)
+    if (sheet.m_restartApplication)
     {
         CDirStatApp::Get()->RestartApplication();
     }

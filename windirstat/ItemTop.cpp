@@ -19,17 +19,17 @@
 #include "ItemTop.h"
 #include "FileTopControl.h"
 
-CItemTop::CItemTop(CItem* item) : m_Item(item) {}
+CItemTop::CItemTop(CItem* item) : m_item(item) {}
 
 CItemTop::~CItemTop()
 {
-    for (const auto& m_Child : m_Children)
+    for (const auto& m_child : m_children)
     {
-        delete m_Child;
+        delete m_child;
     }
 }
 
-const std::unordered_map<uint8_t, uint8_t> CItemTop::columnMap =
+const std::unordered_map<uint8_t, uint8_t> CItemTop::s_columnMap =
 {
     { COL_ITEMTOP_NAME, COL_NAME },
     { COL_ITEMTOP_SIZE_LOGICAL, COL_SIZE_LOGICAL },
@@ -41,7 +41,7 @@ bool CItemTop::DrawSubItem(const int subitem, CDC* pdc, const CRect rc, const UI
 {
     // Handle individual file items
     if (subitem != COL_ITEMTOP_NAME) return false;
-    return CTreeListItem::DrawSubItem(columnMap.at(static_cast<uint8_t>(subitem)), pdc, rc, state, width, focusLeft);
+    return CTreeListItem::DrawSubItem(s_columnMap.at(static_cast<uint8_t>(subitem)), pdc, rc, state, width, focusLeft);
 }
 
 std::wstring CItemTop::GetText(const int subitem) const
@@ -51,11 +51,11 @@ std::wstring CItemTop::GetText(const int subitem) const
     if (GetParent() == nullptr) return subitem == COL_ITEMTOP_NAME ? tops : std::wstring{};
 
     // Parent hash nodes
-    if (m_Item == nullptr) return {};
+    if (m_item == nullptr) return {};
 
     // Individual file names
-    if (subitem == COL_ITEMTOP_NAME) return m_Item->GetPath();
-    return m_Item->GetText(columnMap.at(static_cast<uint8_t>(subitem)));
+    if (subitem == COL_ITEMTOP_NAME) return m_item->GetPath();
+    return m_item->GetText(s_columnMap.at(static_cast<uint8_t>(subitem)));
 }
 
 int CItemTop::CompareSibling(const CTreeListItem* tlib, const int subitem) const
@@ -64,47 +64,47 @@ int CItemTop::CompareSibling(const CTreeListItem* tlib, const int subitem) const
     if (GetParent() == nullptr) return 0;
     
     // Parent hash nodes
-    if (m_Item == nullptr) return 0;
+    if (m_item == nullptr) return 0;
 
     // Individual file names
     const auto* other = reinterpret_cast<const CItemTop*>(tlib);
-    return m_Item->CompareSibling(other->m_Item, columnMap.at(static_cast<uint8_t>(subitem)));
+    return m_item->CompareSibling(other->m_item, s_columnMap.at(static_cast<uint8_t>(subitem)));
 }
 
 int CItemTop::GetTreeListChildCount()const
 {
-    return static_cast<int>(m_Children.size());
+    return static_cast<int>(m_children.size());
 }
 
 CTreeListItem* CItemTop::GetTreeListChild(const int i) const
 {
-    return m_Children[i];
+    return m_children[i];
 }
 
 HICON CItemTop::GetIcon()
 {
     // No icon to return if not visible yet
-    if (m_VisualInfo == nullptr)
+    if (m_visualInfo == nullptr)
     {
         return nullptr;
     }
 
     // Return previously cached value
-    if (m_VisualInfo->icon != nullptr)
+    if (m_visualInfo->icon != nullptr)
     {
-        return m_VisualInfo->icon;
+        return m_visualInfo->icon;
     }
 
     // Cache icon for parent nodes
-    if (m_Item == nullptr)
+    if (m_item == nullptr)
     {
-        m_VisualInfo->icon = GetIconHandler()->GetFreeSpaceImage();
-        return m_VisualInfo->icon;
+        m_visualInfo->icon = GetIconHandler()->GetFreeSpaceImage();
+        return m_visualInfo->icon;
     }
 
     // Fetch all other icons
     CDirStatApp::Get()->GetIconHandler()->DoAsyncShellInfoLookup(std::make_tuple(this,
-        m_VisualInfo->control, m_Item->GetPath(), m_Item->GetAttributes(), &m_VisualInfo->icon, nullptr));
+        m_visualInfo->control, m_item->GetPath(), m_item->GetAttributes(), &m_visualInfo->icon, nullptr));
     return nullptr;
 }
 
@@ -112,8 +112,8 @@ void CItemTop::AddTopItemChild(CItemTop* child)
 {
     child->SetParent(this);
 
-    std::scoped_lock guard(m_Protect);
-    m_Children.push_back(child);
+    std::scoped_lock guard(m_protect);
+    m_children.push_back(child);
 
     if (IsVisible() && IsExpanded())
     {
@@ -128,8 +128,8 @@ void CItemTop::RemoveTopItemChild(CItemTop* child)
         CFileTopControl::Get()->OnChildRemoved(this, child);
     }
 
-    std::scoped_lock guard(m_Protect);
-    auto& children = m_Children;
+    std::scoped_lock guard(m_protect);
+    auto& children = m_children;
     if (auto it = std::ranges::find(children, child); it != children.end())
     {
         children.erase(it);

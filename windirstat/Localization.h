@@ -29,17 +29,17 @@ class Localization final
 public:
     static constexpr auto MAX_VALUE_SIZE = 1024;
     static constexpr auto LANG_RESOURCE_TYPE = L"RT_LANG";
-    static std::unordered_map<std::wstring, std::wstring> m_Map;
+    static std::unordered_map<std::wstring, std::wstring> m_map;
 
     static bool Contains(const std::wstring_view& name)
     {
-        ASSERT(m_Map.contains(std::wstring(name)));
-        return m_Map.contains(std::wstring(name));
+        ASSERT(m_map.contains(std::wstring(name)));
+        return m_map.contains(std::wstring(name));
     }
 
     static std::wstring Lookup(const std::wstring_view& name)
     {
-        return Contains(name) ? m_Map[std::wstring(name)] : std::wstring();
+        return Contains(name) ? m_map[std::wstring(name)] : std::wstring();
     }
 
     static std::wstring LookupNeutral(const UINT res)

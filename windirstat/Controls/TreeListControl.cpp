@@ -51,11 +51,11 @@ bool CTreeListItem::DrawSubItem(const int subitem, CDC* pdc, CRect rc, const UIN
 
     CRect rcNode = rc;
     CRect rcPlusMinus;
-    m_VisualInfo->control->DrawNode(pdc, rcNode, rcPlusMinus, this, width);
+    m_visualInfo->control->DrawNode(pdc, rcNode, rcPlusMinus, this, width);
 
     CRect rcLabel = rc;
     rcLabel.left = rcNode.right;
-    DrawLabel(m_VisualInfo->control, pdc, rcLabel, state, width, focusLeft, false);
+    DrawLabel(m_visualInfo->control, pdc, rcLabel, state, width, focusLeft, false);
 
     if (width)
     {
@@ -78,14 +78,14 @@ std::wstring CTreeListItem::GetText(int /*subitem*/) const
 void CTreeListItem::DrawPacman(CDC* pdc, const CRect& rc) const
 {
     ASSERT(IsVisible());
-    m_VisualInfo->pacman.Draw(pdc, rc);
+    m_visualInfo->pacman.Draw(pdc, rc);
 }
 
 void CTreeListItem::StartPacman() const
 {
     if (IsVisible())
     {
-        m_VisualInfo->pacman.Start();
+        m_visualInfo->pacman.Start();
     }
 }
 
@@ -93,7 +93,7 @@ void CTreeListItem::StopPacman() const
 {
     if (IsVisible())
     {
-        m_VisualInfo->pacman.Stop();
+        m_visualInfo->pacman.Stop();
     }
 }
 
@@ -101,18 +101,18 @@ void CTreeListItem::DrivePacman() const
 {
     if (IsVisible())
     {
-        m_VisualInfo->pacman.UpdatePosition();
+        m_visualInfo->pacman.UpdatePosition();
     }
 }
 
 int CTreeListItem::GetScrollPosition() const
 {
-    return m_VisualInfo->control->GetItemScrollPosition(this);
+    return m_visualInfo->control->GetItemScrollPosition(this);
 }
 
 void CTreeListItem::SetScrollPosition(const int top) const
 {
-    m_VisualInfo->control->SetItemScrollPosition(this, top);
+    m_visualInfo->control->SetItemScrollPosition(this, top);
 }
 
 int CTreeListItem::Compare(const CSortingListItem* baseOther, const int subitem) const
@@ -124,42 +124,42 @@ int CTreeListItem::Compare(const CSortingListItem* baseOther, const int subitem)
         return 0;
     }
 
-    if (m_Parent == other->m_Parent)
+    if (m_parent == other->m_parent)
     {
         return CompareSibling(other, subitem);
     }
 
-    if (m_Parent == nullptr)
+    if (m_parent == nullptr)
     {
         return -2;
     }
 
-    if (other->m_Parent == nullptr)
+    if (other->m_parent == nullptr)
     {
         return 2;
     }
 
     if (GetIndent() < other->GetIndent())
     {
-        return Compare(other->m_Parent, subitem);
+        return Compare(other->m_parent, subitem);
     }
 
     if (GetIndent() > other->GetIndent())
     {
-        return m_Parent->Compare(other, subitem);
+        return m_parent->Compare(other, subitem);
     }
 
-    return m_Parent->Compare(other->m_Parent, subitem);
+    return m_parent->Compare(other->m_parent, subitem);
 }
 
 CTreeListItem* CTreeListItem::GetParent() const
 {
-    return m_Parent;
+    return m_parent;
 }
 
 void CTreeListItem::SetParent(CTreeListItem* parent)
 {
-    m_Parent = parent;
+    m_parent = parent;
 }
 
 bool CTreeListItem::IsAncestorOf(const CTreeListItem* item) const
@@ -176,14 +176,14 @@ bool CTreeListItem::IsAncestorOf(const CTreeListItem* item) const
 
 bool CTreeListItem::HasMoreSiblings() const
 {
-    if (m_Parent == nullptr)
+    if (m_parent == nullptr)
     {
         return false;
     }
 
-    const auto thisIndex = m_VisualInfo->control->FindTreeItem(this);
-    const auto nextVisualItem = m_VisualInfo->control->GetItem(thisIndex + 1);
-    return nextVisualItem != nullptr && m_Parent == nextVisualItem->GetParent();
+    const auto thisIndex = m_visualInfo->control->FindTreeItem(this);
+    const auto nextVisualItem = m_visualInfo->control->GetItem(thisIndex + 1);
+    return nextVisualItem != nullptr && m_parent == nextVisualItem->GetParent();
 }
 
 bool CTreeListItem::HasChildren() const
@@ -194,13 +194,13 @@ bool CTreeListItem::HasChildren() const
 bool CTreeListItem::IsExpanded() const
 {
     ASSERT(IsVisible());
-    return m_VisualInfo->isExpanded;
+    return m_visualInfo->isExpanded;
 }
 
 void CTreeListItem::SetExpanded(const bool expanded) const
 {
     ASSERT(IsVisible());
-    m_VisualInfo->isExpanded = expanded;
+    m_visualInfo->isExpanded = expanded;
 }
 
 void CTreeListItem::SetVisible(CTreeListControl* control, const bool visible)
@@ -209,50 +209,50 @@ void CTreeListItem::SetVisible(CTreeListControl* control, const bool visible)
     {
         ASSERT(!IsVisible());
         const unsigned char indent = GetParent() == nullptr ? 0 : GetParent()->GetIndent() + 1;
-        m_VisualInfo = std::make_unique<VISIBLEINFO>(indent);
-        m_VisualInfo->control = control;
+        m_visualInfo = std::make_unique<VISIBLEINFO>(indent);
+        m_visualInfo->control = control;
     }
     else
     {
         ASSERT(IsVisible());
-        m_VisualInfo.reset();
+        m_visualInfo.reset();
     }
 }
 
 unsigned char CTreeListItem::GetIndent() const
 {
     ASSERT(IsVisible());
-    return m_VisualInfo->indent;
+    return m_visualInfo->indent;
 }
 
 void CTreeListItem::SetIndent(const unsigned char indent) const
 {
     ASSERT(IsVisible());
-    m_VisualInfo->indent = indent;
+    m_visualInfo->indent = indent;
 }
 
 CRect CTreeListItem::GetPlusMinusRect() const
 {
     ASSERT(IsVisible());
-    return m_VisualInfo->rcPlusMinus;
+    return m_visualInfo->rcPlusMinus;
 }
 
 void CTreeListItem::SetPlusMinusRect(const CRect& rc) const
 {
     ASSERT(IsVisible());
-    m_VisualInfo->rcPlusMinus = rc;
+    m_visualInfo->rcPlusMinus = rc;
 }
 
 CRect CTreeListItem::GetTitleRect() const
 {
     ASSERT(IsVisible());
-    return m_VisualInfo->rcTitle;
+    return m_visualInfo->rcTitle;
 }
 
 void CTreeListItem::SetTitleRect(const CRect& rc) const
 {
     ASSERT(IsVisible());
-    m_VisualInfo->rcTitle = rc;
+    m_visualInfo->rcTitle = rc;
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -383,16 +383,16 @@ void CTreeListControl::OnItemDoubleClick(const int i)
 
 void CTreeListControl::InitializeNodeBitmaps()
 {
-    m_BmNodes0.DeleteObject();
-    m_BmNodes1.DeleteObject();
+    m_bmNodes0.DeleteObject();
+    m_bmNodes1.DeleteObject();
 
     COLORMAP cm[1] = { {RGB(255, 0, 255), 0} };
 
     auto bitmapToUse = DarkMode::IsDarkModeActive() ? IDB_NODES_INVERT : IDB_NODES;
     cm[0].to = GetWindowColor();
-    VERIFY(m_BmNodes0.LoadMappedBitmap(bitmapToUse, 0, cm, 1));
+    VERIFY(m_bmNodes0.LoadMappedBitmap(bitmapToUse, 0, cm, 1));
     cm[0].to = GetStripeColor();
-    VERIFY(m_BmNodes1.LoadMappedBitmap(bitmapToUse, 0, cm, 1));
+    VERIFY(m_bmNodes1.LoadMappedBitmap(bitmapToUse, 0, cm, 1));
 }
 
 void CTreeListControl::InsertItem(const int i, CTreeListItem* item)
@@ -432,7 +432,7 @@ void CTreeListControl::DrawNode(CDC* pdc, CRect& rc, CRect& rcPlusMinus, const C
 
         CDC dcmem;
         dcmem.CreateCompatibleDC(pdc);
-        CSelectObject sonodes(&dcmem, IsItemStripColor(FindTreeItem(item)) ? &m_BmNodes1 : &m_BmNodes0);
+        CSelectObject sonodes(&dcmem, IsItemStripColor(FindTreeItem(item)) ? &m_bmNodes1 : &m_bmNodes0);
 
         const int ysrc = NODE_HEIGHT / 2 - GetRowHeight() / 2;
 
@@ -482,7 +482,7 @@ void CTreeListControl::DrawNode(CDC* pdc, CRect& rc, CRect& rcPlusMinus, const C
 
 void CTreeListControl::OnLButtonDown(const UINT nFlags, const CPoint point)
 {
-    m_LButtonDownItem = -1;
+    m_lButtonDownItem = -1;
 
     LVHITTESTINFO hti;
     ZeroMemory(&hti, sizeof(hti));
@@ -499,16 +499,16 @@ void CTreeListControl::OnLButtonDown(const UINT nFlags, const CPoint point)
 
     const CTreeListItem* item = GetItem(i);
 
-    m_LButtonDownItem = i;
+    m_lButtonDownItem = i;
 
     if (item->GetPlusMinusRect().PtInRect(pt))
     {
-        m_LButtonDownOnPlusMinusRect = true;
+        m_lButtonDownOnPlusMinusRect = true;
         ToggleExpansion(i);
     }
     else
     {
-        m_LButtonDownOnPlusMinusRect = false;
+        m_lButtonDownOnPlusMinusRect = false;
         COwnerDrawnListControl::OnLButtonDown(nFlags, point);
     }
 }
@@ -517,18 +517,18 @@ void CTreeListControl::OnLButtonDblClk(const UINT nFlags, const CPoint point)
 {
     COwnerDrawnListControl::OnLButtonDblClk(nFlags, point);
 
-    if (m_LButtonDownItem == -1)
+    if (m_lButtonDownItem == -1)
     {
         return;
     }
 
-    if (m_LButtonDownOnPlusMinusRect)
+    if (m_lButtonDownOnPlusMinusRect)
     {
-        ToggleExpansion(m_LButtonDownItem);
+        ToggleExpansion(m_lButtonDownItem);
     }
     else
     {
-        OnItemDoubleClick(m_LButtonDownItem);
+        OnItemDoubleClick(m_lButtonDownItem);
     }
 }
 

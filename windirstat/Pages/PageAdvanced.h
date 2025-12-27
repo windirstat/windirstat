@@ -40,20 +40,20 @@ protected:
     BOOL OnInitDialog() override;
     void OnOK() override;
 
-    BOOL m_ExcludeJunctions = TRUE;
-    BOOL m_ExcludeVolumeMountPoints = TRUE;
-    BOOL m_ExcludeSymbolicLinksDirectory = TRUE;
-    BOOL m_SkipDupeDetectionCloudLinks = TRUE;
-    BOOL m_SkipHiddenDirectory = FALSE;
-    BOOL m_SkipProtectedDirectory = FALSE;
-    BOOL m_ExcludeSymbolicLinksFile = TRUE;
-    BOOL m_SkipHiddenFile = FALSE;
-    BOOL m_SkipProtectedFile = FALSE;
-    BOOL m_UseBackupRestore = FALSE;
-    BOOL m_ProcessHardlinks = TRUE;
-    int m_ScanningThreads = 0;
-    CStringW m_LargestFileCount;
-    CStringW m_FolderHistoryCount;
+    BOOL m_excludeJunctions = TRUE;
+    BOOL m_excludeVolumeMountPoints = TRUE;
+    BOOL m_excludeSymbolicLinksDirectory = TRUE;
+    BOOL m_skipDupeDetectionCloudLinks = TRUE;
+    BOOL m_skipHiddenDirectory = FALSE;
+    BOOL m_skipProtectedDirectory = FALSE;
+    BOOL m_excludeSymbolicLinksFile = TRUE;
+    BOOL m_skipHiddenFile = FALSE;
+    BOOL m_skipProtectedFile = FALSE;
+    BOOL m_useBackupRestore = FALSE;
+    BOOL m_processHardlinks = TRUE;
+    int m_scanningThreads = 0;
+    CStringW m_largestFileCount;
+    CStringW m_folderHistoryCount;
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnEnChangeLargestFileCount();

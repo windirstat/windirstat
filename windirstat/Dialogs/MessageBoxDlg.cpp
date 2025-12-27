@@ -22,24 +22,24 @@ IMPLEMENT_DYNAMIC(CMessageBoxDlg, CLayoutDialogEx)
 
 CMessageBoxDlg::CMessageBoxDlg(const std::wstring& message, const std::wstring& title, const UINT type, CWnd* pParent,
     const std::vector<std::wstring>& listViewItems, const std::wstring& checkBoxText, const bool checkBoxValue)
-    : CLayoutDialogEx(IDD_MESSAGEBOX, &m_WindowRect, pParent)
-    , m_Message(message)
-    , m_Title(title)
-    , m_CheckboxText(checkBoxText)
-    , m_ListViewItems(listViewItems)
-    , m_CheckboxChecked(checkBoxValue ? TRUE : FALSE)
+    : CLayoutDialogEx(IDD_MESSAGEBOX, &m_windowRect, pParent)
+    , m_message(message)
+    , m_title(title)
+    , m_checkboxText(checkBoxText)
+    , m_listViewItems(listViewItems)
+    , m_checkboxChecked(checkBoxValue ? TRUE : FALSE)
 {
     const std::unordered_map<UINT, ButtonContext> buttonTypeContexts
     {
-        // m_ButtonType          btnLeftID  btnMidID   btnRightID  btnLeftIDS         btnMidIDS          btnRightIDS         btnFocus
-        { MB_OK,               { 0,         0,         IDOK,       IDS_GENERIC_BLANK, IDS_GENERIC_BLANK, IDS_GENERIC_OK,     &m_ButtonRight  } },
-        { MB_OKCANCEL,         { 0,         IDOK,      IDCANCEL,   IDS_GENERIC_BLANK, IDS_GENERIC_OK,    IDS_GENERIC_CANCEL, &m_ButtonMiddle } },
-        { MB_YESNO,            { 0,         IDYES,     IDNO,       IDS_GENERIC_BLANK, IDS_GENERIC_YES,   IDS_GENERIC_NO,     &m_ButtonMiddle } },
-        { MB_YESNOCANCEL,      { IDYES,     IDNO,      IDCANCEL,   IDS_GENERIC_YES,   IDS_GENERIC_NO,    IDS_GENERIC_CANCEL, &m_ButtonLeft   } },
+        // m_buttonType          btnLeftID  btnMidID   btnRightID  btnLeftIDS         btnMidIDS          btnRightIDS         btnFocus
+        { MB_OK,               { 0,         0,         IDOK,       IDS_GENERIC_BLANK, IDS_GENERIC_BLANK, IDS_GENERIC_OK,     &m_buttonRight  } },
+        { MB_OKCANCEL,         { 0,         IDOK,      IDCANCEL,   IDS_GENERIC_BLANK, IDS_GENERIC_OK,    IDS_GENERIC_CANCEL, &m_buttonMiddle } },
+        { MB_YESNO,            { 0,         IDYES,     IDNO,       IDS_GENERIC_BLANK, IDS_GENERIC_YES,   IDS_GENERIC_NO,     &m_buttonMiddle } },
+        { MB_YESNOCANCEL,      { IDYES,     IDNO,      IDCANCEL,   IDS_GENERIC_YES,   IDS_GENERIC_NO,    IDS_GENERIC_CANCEL, &m_buttonLeft   } },
         // these MB types are not used by WinDirStat, but included for completeness and using IDS_GENERIC_BLANK as placeholder for button labels,
         // please add required IDS to localization engine upon use
-        { MB_RETRYCANCEL,      { 0,         IDRETRY,   IDCANCEL,   IDS_GENERIC_BLANK, IDS_GENERIC_BLANK, IDS_GENERIC_CANCEL, &m_ButtonMiddle } },
-        { MB_ABORTRETRYIGNORE, { IDABORT,   IDRETRY,   IDIGNORE,   IDS_GENERIC_BLANK, IDS_GENERIC_BLANK, IDS_GENERIC_BLANK,  &m_ButtonLeft   } },
+        { MB_RETRYCANCEL,      { 0,         IDRETRY,   IDCANCEL,   IDS_GENERIC_BLANK, IDS_GENERIC_BLANK, IDS_GENERIC_CANCEL, &m_buttonMiddle } },
+        { MB_ABORTRETRYIGNORE, { IDABORT,   IDRETRY,   IDIGNORE,   IDS_GENERIC_BLANK, IDS_GENERIC_BLANK, IDS_GENERIC_BLANK,  &m_buttonLeft   } },
     };
 
     const auto buttonType = type & MB_TYPEMASK;
@@ -56,26 +56,26 @@ CMessageBoxDlg::CMessageBoxDlg(const std::wstring& message, const std::wstring& 
     };
 
     const auto iconType = type & MB_ICONMASK;
-    m_Icon = LoadIcon(nullptr, iconMap.contains(iconType) ?
+    m_icon = LoadIcon(nullptr, iconMap.contains(iconType) ?
         iconMap.at(iconType) : IDI_INFORMATION);
 }
 
 bool CMessageBoxDlg::IsCheckboxChecked() const
 {
-    return m_CheckboxChecked;
+    return m_checkboxChecked;
 }
 
 void CMessageBoxDlg::DoDataExchange(CDataExchange* pDX)
 {
     CLayoutDialogEx::DoDataExchange(pDX);
-    DDX_Control(pDX, IDC_MESSAGE_ICON, m_IconCtrl);
-    DDX_Control(pDX, IDC_MESSAGE_TEXT, m_MessageCtrl);
-    DDX_Control(pDX, IDC_MESSAGE_BUTTONLEFT, m_ButtonLeft);
-    DDX_Control(pDX, IDC_MESSAGE_BUTTONMIDDLE, m_ButtonMiddle);
-    DDX_Control(pDX, IDC_MESSAGE_BUTTONRIGHT, m_ButtonRight);
-    DDX_Control(pDX, IDC_MESSAGE_CHECKBOX, m_Checkbox);
-    DDX_Control(pDX, IDC_MESSAGE_LISTVIEW, m_ListView);
-    DDX_Check(pDX, IDC_MESSAGE_CHECKBOX, m_CheckboxChecked);
+    DDX_Control(pDX, IDC_MESSAGE_ICON, m_iconCtrl);
+    DDX_Control(pDX, IDC_MESSAGE_TEXT, m_messageCtrl);
+    DDX_Control(pDX, IDC_MESSAGE_BUTTONLEFT, m_buttonLeft);
+    DDX_Control(pDX, IDC_MESSAGE_BUTTONMIDDLE, m_buttonMiddle);
+    DDX_Control(pDX, IDC_MESSAGE_BUTTONRIGHT, m_buttonRight);
+    DDX_Control(pDX, IDC_MESSAGE_CHECKBOX, m_checkbox);
+    DDX_Control(pDX, IDC_MESSAGE_LISTVIEW, m_listView);
+    DDX_Check(pDX, IDC_MESSAGE_CHECKBOX, m_checkboxChecked);
 }
 
 BEGIN_MESSAGE_MAP(CMessageBoxDlg, CLayoutDialogEx)
@@ -140,35 +140,35 @@ BOOL CMessageBoxDlg::OnInitDialog()
     CLayoutDialogEx::OnInitDialog();
 
     // Set window title and message
-    SetWindowText(m_Title.c_str());
-    m_MessageCtrl.SetWindowText(m_Message.c_str());
+    SetWindowText(m_title.c_str());
+    m_messageCtrl.SetWindowText(m_message.c_str());
 
     // Configure buttons
-    m_ButtonLeft.ShowWindow(m_buttonContext.btnLeftID != 0 ? SW_SHOW : SW_HIDE);
-    m_ButtonMiddle.ShowWindow(m_buttonContext.btnMidID != 0 ? SW_SHOW : SW_HIDE);
-    m_ButtonRight.ShowWindow(m_buttonContext.btnRightID != 0 ? SW_SHOW : SW_HIDE);
+    m_buttonLeft.ShowWindow(m_buttonContext.btnLeftID != 0 ? SW_SHOW : SW_HIDE);
+    m_buttonMiddle.ShowWindow(m_buttonContext.btnMidID != 0 ? SW_SHOW : SW_HIDE);
+    m_buttonRight.ShowWindow(m_buttonContext.btnRightID != 0 ? SW_SHOW : SW_HIDE);
 
     // Set button texts
-    m_ButtonLeft.SetWindowText(Localization::Lookup(m_buttonContext.btnLeftIDS).c_str());
-    m_ButtonMiddle.SetWindowText(Localization::Lookup(m_buttonContext.btnMidIDS).c_str());
-    m_ButtonRight.SetWindowText(Localization::Lookup(m_buttonContext.btnRightIDS).c_str());
+    m_buttonLeft.SetWindowText(Localization::Lookup(m_buttonContext.btnLeftIDS).c_str());
+    m_buttonMiddle.SetWindowText(Localization::Lookup(m_buttonContext.btnMidIDS).c_str());
+    m_buttonRight.SetWindowText(Localization::Lookup(m_buttonContext.btnRightIDS).c_str());
 
     // Set focus to default button
     m_buttonContext.btnFocus->SetFocus();
 
     // Set display icon
-    m_IconCtrl.SetIcon(m_Icon);
+    m_iconCtrl.SetIcon(m_icon);
 
     // Add strings to optional listview
-    m_ListView.ShowWindow(m_ListViewItems.empty() ? SW_HIDE : SW_SHOW);
-    for (const auto& item : m_ListViewItems)
+    m_listView.ShowWindow(m_listViewItems.empty() ? SW_HIDE : SW_SHOW);
+    for (const auto& item : m_listViewItems)
     {
-        m_ListView.AddString(item.c_str());
+        m_listView.AddString(item.c_str());
     }
 
     // Hide checkbox if no text set
-    m_Checkbox.SetWindowText(m_CheckboxText.c_str());
-    m_Checkbox.ShowWindow(m_CheckboxText.empty() ? SW_HIDE : SW_SHOW);
+    m_checkbox.SetWindowText(m_checkboxText.c_str());
+    m_checkbox.ShowWindow(m_checkboxText.empty() ? SW_HIDE : SW_SHOW);
 
     // Apply dark mode
     DarkMode::AdjustControls(*this);
@@ -178,54 +178,54 @@ BOOL CMessageBoxDlg::OnInitDialog()
     // Calcualte width expansion if custom initial size set
     CRect rectWindow;
     GetWindowRect(&rectWindow); // get initial window size
-    const int widthExpansion = max(0, m_InitialSize.cx - rectWindow.Width());
+    const int widthExpansion = max(0, m_initialSize.cx - rectWindow.Width());
 
     // Calculate required message text rectangle
     CRect rectMessage;
-    m_MessageCtrl.GetWindowRect(&rectMessage);
+    m_messageCtrl.GetWindowRect(&rectMessage);
     ScreenToClient(&rectMessage);
-    CDC* pDC = m_MessageCtrl.GetDC();
+    CDC* pDC = m_messageCtrl.GetDC();
     CRect rectText(0, 0, rectMessage.Width() + widthExpansion, 0); // taking width expansion into account
-    pDC->DrawText(m_Message.c_str(), &rectText, DT_CALCRECT | DT_WORDBREAK | DT_NOPREFIX);
-    m_MessageCtrl.ReleaseDC(pDC);
+    pDC->DrawText(m_message.c_str(), &rectText, DT_CALCRECT | DT_WORDBREAK | DT_NOPREFIX);
+    m_messageCtrl.ReleaseDC(pDC);
 
     // Calculate message text height overflow and expend message control height if needed
     const int messageHeightOverflow = max(0, rectText.Height() - rectMessage.Height());
     if (messageHeightOverflow > 0)
     {
         rectMessage.bottom += messageHeightOverflow;
-        m_MessageCtrl.MoveWindow(rectMessage);
+        m_messageCtrl.MoveWindow(rectMessage);
     }
 
     // Shift down if message height exceeds icon height
     CRect iconRect;
-    m_IconCtrl.GetWindowRect(&iconRect);
+    m_iconCtrl.GetWindowRect(&iconRect);
     const int deltaHeight = rectText.Height() - max(iconRect.Height(), rectMessage.Height());
-    ShiftControls({ &m_ListView, &m_ButtonLeft, &m_ButtonMiddle, &m_ButtonRight, &m_Checkbox }, deltaHeight);
+    ShiftControls({ &m_listView, &m_buttonLeft, &m_buttonMiddle, &m_buttonRight, &m_checkbox }, deltaHeight);
 
     // Hide controls if hidden
-    ShiftControlsIfHidden(&m_ListView, { &m_ButtonLeft, &m_ButtonMiddle, &m_ButtonRight, &m_Checkbox });
-    ShiftControlsIfHidden(&m_Checkbox, { &m_ButtonLeft, &m_ButtonMiddle, &m_ButtonRight });
+    ShiftControlsIfHidden(&m_listView, { &m_buttonLeft, &m_buttonMiddle, &m_buttonRight, &m_checkbox });
+    ShiftControlsIfHidden(&m_checkbox, { &m_buttonLeft, &m_buttonMiddle, &m_buttonRight });
 
     // Active automatic layout management
-    m_Layout.AddControl(IDC_MESSAGE_ICON, 0, 0, 0, 0);
-    m_Layout.AddControl(IDC_MESSAGE_TEXT, 0, 0, 1, 0);
-    m_Layout.AddControl(IDC_MESSAGE_LISTVIEW, 0, 0, 1, 1);
-    m_Layout.AddControl(IDC_MESSAGE_CHECKBOX, 0, 1, 1, 0);
-    m_Layout.AddControl(IDC_MESSAGE_BUTTONLEFT, 1, 1, 0, 0);
-    m_Layout.AddControl(IDC_MESSAGE_BUTTONMIDDLE, 1, 1, 0, 0);
-    m_Layout.AddControl(IDC_MESSAGE_BUTTONRIGHT, 1, 1, 0, 0);
-    m_Layout.OnInitDialog(true);
+    m_layout.AddControl(IDC_MESSAGE_ICON, 0, 0, 0, 0);
+    m_layout.AddControl(IDC_MESSAGE_TEXT, 0, 0, 1, 0);
+    m_layout.AddControl(IDC_MESSAGE_LISTVIEW, 0, 0, 1, 1);
+    m_layout.AddControl(IDC_MESSAGE_CHECKBOX, 0, 1, 1, 0);
+    m_layout.AddControl(IDC_MESSAGE_BUTTONLEFT, 1, 1, 0, 0);
+    m_layout.AddControl(IDC_MESSAGE_BUTTONMIDDLE, 1, 1, 0, 0);
+    m_layout.AddControl(IDC_MESSAGE_BUTTONRIGHT, 1, 1, 0, 0);
+    m_layout.OnInitDialog(true);
 
     // Calculate minimum window height after dynamic layout adjustments
     GetWindowRect(&rectWindow); // get updated window size
     const int minWindowHeight = rectWindow.Height() + messageHeightOverflow;
 
     // Adjust dialog size if requested
-    if (m_InitialSize.cx > 0)
+    if (m_initialSize.cx > 0)
     {
-        rectWindow.right = rectWindow.left + m_InitialSize.cx;
-        rectWindow.bottom = rectWindow.top + max(m_InitialSize.cy, minWindowHeight); // respect minimum height
+        rectWindow.right = rectWindow.left + m_initialSize.cx;
+        rectWindow.bottom = rectWindow.top + max(m_initialSize.cy, minWindowHeight); // respect minimum height
         MoveWindow(&rectWindow);
     }
 

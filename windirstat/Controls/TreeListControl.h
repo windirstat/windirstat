@@ -29,8 +29,8 @@ class CItem;
 //
 // CTreeListItem. An item in the CTreeListControl. (CItem is derived from CTreeListItem.)
 // In order to save memory, once the item is actually inserted in the List,
-// we allocate the VISIBLEINFO structure (m_VisualInfo).
-// m_VisualInfo is freed as soon as the item is removed from the List.
+// we allocate the VISIBLEINFO structure (m_visualInfo).
+// m_visualInfo is freed as soon as the item is removed from the List.
 //
 class CTreeListItem : public COwnerDrawnListItem
 {
@@ -56,7 +56,7 @@ public:
 
     bool DrawSubItem(int subitem, CDC* pdc, CRect rc, UINT state, int* width, int* focusLeft) override;
     std::wstring GetText(int subitem) const override;
-    HICON GetIcon() override { return m_VisualInfo->icon; }
+    HICON GetIcon() override { return m_visualInfo->icon; }
     int Compare(const CSortingListItem* baseOther, int subitem) const override;
     virtual CTreeListItem* GetTreeListChild(int i) const = 0;
     virtual int GetTreeListChildCount() const = 0;
@@ -70,7 +70,7 @@ public:
     bool HasChildren() const;
     bool IsExpanded() const;
     void SetExpanded(bool expanded = true) const;
-    bool IsVisible() const { return m_VisualInfo != nullptr; }
+    bool IsVisible() const { return m_visualInfo != nullptr; }
     void SetVisible(CTreeListControl * control, bool visible = true);
     unsigned char GetIndent() const;
     void SetIndent(unsigned char indent) const;
@@ -85,10 +85,10 @@ public:
     void DrivePacman() const;
 
 protected:
-    std::unique_ptr<VISIBLEINFO> m_VisualInfo;
+    std::unique_ptr<VISIBLEINFO> m_visualInfo;
 
 private:
-    CTreeListItem* m_Parent = nullptr;
+    CTreeListItem* m_parent = nullptr;
 };
 
 //
@@ -155,10 +155,10 @@ protected:
     //
     /////////////////////////////////////////////////////
 
-    CBitmap m_BmNodes0;                // The bitmaps needed to draw the treecontrol-like branches
-    CBitmap m_BmNodes1;                // The same bitmaps with stripe-background color
-    int m_LButtonDownItem = -1;        // Set in OnLButtonDown(). -1 if not item hit.
-    bool m_LButtonDownOnPlusMinusRect = false; // Set in OnLButtonDown(). True, if plus-minus-rect hit.
+    CBitmap m_bmNodes0;                // The bitmaps needed to draw the treecontrol-like branches
+    CBitmap m_bmNodes1;                // The same bitmaps with stripe-background color
+    int m_lButtonDownItem = -1;        // Set in OnLButtonDown(). -1 if not item hit.
+    bool m_lButtonDownOnPlusMinusRect = false; // Set in OnLButtonDown(). True, if plus-minus-rect hit.
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnContextMenu(CWnd* /*pWnd*/, CPoint /*point*/);

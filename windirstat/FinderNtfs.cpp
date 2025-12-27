@@ -212,8 +212,8 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
 
     // Initialize with some sane defaults based on MFT record count
     auto inUseMftRecords = (volumeInfo.MftValidDataLength.QuadPart / volumeInfo.BytesPerFileRecordSegment) / 2;
-    m_BaseFileRecordMap.rehash(static_cast<size_t>(inUseMftRecords));
-    m_ParentToChildMap.rehash(static_cast<size_t>(inUseMftRecords) / 5);
+    m_baseFileRecordMap.rehash(static_cast<size_t>(inUseMftRecords));
+    m_parentToChildMap.rehash(static_cast<size_t>(inUseMftRecords) / 5);
 
     // Process MFT records
     std::for_each(std::execution::par_unseq, dataRuns.begin(), dataRuns.end(), [&](const auto& dataRun)
@@ -263,7 +263,7 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
                 if (!fileRecord->IsValid() || !fileRecord->IsInUse()) continue;
                 const auto currentRecord = fileRecord->SegmentNumber();
                 const auto baseRecordIndex = fileRecord->BaseFileRecordNumber > 0 ? fileRecord->BaseFileRecordNumber : currentRecord;
-                auto& baseRecord = m_BaseFileRecordMap[baseRecordIndex];
+                auto& baseRecord = m_baseFileRecordMap[baseRecordIndex];
 
                 for (auto [curAttribute, endAttribute] = ATTRIBUTE_RECORD::bounds(fileRecord, volumeInfo.BytesPerFileRecordSegment); curAttribute <
                     endAttribute && curAttribute->TypeCode != AttributeEnd; curAttribute = curAttribute->next())
@@ -284,7 +284,7 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
                         if (fn->IsShortNameRecord() ||
                             (fn->FileNameLength == 1 && wcscmp(fn->FileName, L".") == 0) ||
                             (fn->FileNameLength == 2 && wcscmp(fn->FileName, L"..") == 0)) continue;
-                        m_ParentToChildMap[fn->ParentDirectory].push_back(
+                        m_parentToChildMap[fn->ParentDirectory].push_back(
                             FileRecordName{ std::wstring{ fn->FileName, fn->FileNameLength }, baseRecordIndex });
                     }
                     else if (curAttribute->TypeCode == AttributeData)
@@ -339,13 +339,13 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
     });
 
     // Verify root node exists
-    if (m_ParentToChildMap.find(NtfsNodeRoot) == m_ParentToChildMap.end())
+    if (m_parentToChildMap.find(NtfsNodeRoot) == m_parentToChildMap.end())
     {
         return false;
     }
 
     // Remove bad cluster node and reserved entries
-    auto& rootChildren = m_ParentToChildMap[NtfsNodeRoot];
+    auto& rootChildren = m_parentToChildMap[NtfsNodeRoot];
     concurrency::concurrent_vector<FileRecordName> newChildren;
     std::copy_if(rootChildren.begin(), rootChildren.end(), std::back_inserter(newChildren), [](const auto& child)
     {
@@ -360,70 +360,70 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
 
 bool FinderNtfs::FindNext()
 {
-    if (m_RecordIterator == m_ChildrenSet->end()) return false;
-    m_Index = m_RecordIterator->BaseRecord;
-    m_CurrentRecord = &m_Master->m_BaseFileRecordMap[m_Index];
-    m_CurrentRecordName = &(*m_RecordIterator);
-    ++m_RecordIterator;
+    if (m_recordIterator == m_childrenSet->end()) return false;
+    m_index = m_recordIterator->BaseRecord;
+    m_currentRecord = &m_master->m_baseFileRecordMap[m_index];
+    m_currentRecordName = &(*m_recordIterator);
+    ++m_recordIterator;
 
     return true;
 }
 
 bool FinderNtfs::FindFile(const CItem* item)
 {
-    m_Base = item->GetPath();
-    const auto& result = m_Master->m_ParentToChildMap.find(item->GetIndex());
-    if (result == m_Master->m_ParentToChildMap.end()) return false;
-    m_ChildrenSet = &result->second;
-    m_RecordIterator = m_ChildrenSet->begin();
+    m_base = item->GetPath();
+    const auto& result = m_master->m_parentToChildMap.find(item->GetIndex());
+    if (result == m_master->m_parentToChildMap.end()) return false;
+    m_childrenSet = &result->second;
+    m_recordIterator = m_childrenSet->begin();
     return FindNext();
 }
 
 DWORD FinderNtfs::GetAttributes() const
 {
-    return m_CurrentRecord->Attributes;
+    return m_currentRecord->Attributes;
 }
 
 ULONGLONG FinderNtfs::GetIndex() const
 {
-    return m_CurrentRecordName->BaseRecord;
+    return m_currentRecordName->BaseRecord;
 }
 
 DWORD FinderNtfs::GetReparseTag() const
 {
-    return m_CurrentRecord->ReparsePointTag;
+    return m_currentRecord->ReparsePointTag;
 }
 
 std::wstring FinderNtfs::GetFileName() const
 {
-    return m_CurrentRecordName->FileName;
+    return m_currentRecordName->FileName;
 }
 
 ULONGLONG FinderNtfs::GetFileSizePhysical() const
 {
-    return m_CurrentRecord->PhysicalSize;
+    return m_currentRecord->PhysicalSize;
 }
 
 ULONGLONG FinderNtfs::GetFileSizeLogical() const
 {
-    return m_CurrentRecord->LogicalSize;
+    return m_currentRecord->LogicalSize;
 }
 
 FILETIME FinderNtfs::GetLastWriteTime() const
 {
-    return m_CurrentRecord->LastModifiedTime;
+    return m_currentRecord->LastModifiedTime;
 }
 
 std::wstring FinderNtfs::GetFilePath() const
 {
     // Get full path to folder or file
-    std::wstring path = (m_Base.at(m_Base.size() - 1) == L'\\') ?
-        (m_Base + GetFileName()) : (m_Base + L"\\" + GetFileName());
+    std::wstring path = (m_base.at(m_base.size() - 1) == L'\\') ?
+        (m_base + GetFileName()) : (m_base + L"\\" + GetFileName());
 
     // Strip special dos chars
-    if (wcsncmp(path.data(), m_DosUNC.data(), m_DosUNC.length() - 1) == 0)
-        path = L"\\\\" + path.substr(m_DosUNC.length());
-    else if (wcsncmp(path.data(), m_Dos.data(), m_Dos.length() - 1) == 0)
-        path = path.substr(m_Dos.length());
+    if (wcsncmp(path.data(), s_dosUNCPath.data(), s_dosUNCPath.length() - 1) == 0)
+        path = L"\\\\" + path.substr(s_dosUNCPath.length());
+    else if (wcsncmp(path.data(), s_dosPath.data(), s_dosPath.length() - 1) == 0)
+        path = path.substr(s_dosPath.length());
     return path;
 }

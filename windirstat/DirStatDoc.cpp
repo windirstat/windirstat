@@ -30,11 +30,11 @@
 IMPLEMENT_DYNCREATE(CDirStatDoc, CDocument)
 
 CDirStatDoc::CDirStatDoc() :
-        m_ShowFreeSpace(COptions::ShowFreeSpace)
-      , m_ShowUnknown(COptions::ShowUnknown)
+        m_showFreeSpace(COptions::ShowFreeSpace)
+      , m_showUnknown(COptions::ShowUnknown)
 {
-    ASSERT(nullptr == _theDocument);
-    _theDocument = this;
+    ASSERT(nullptr == s_singleton);
+    s_singleton = this;
 
     VTRACE(L"sizeof(CItem) = {}", sizeof(CItem));
     VTRACE(L"sizeof(CTreeListItem) = {}", sizeof(CTreeListItem));
@@ -44,11 +44,11 @@ CDirStatDoc::CDirStatDoc() :
 
 CDirStatDoc::~CDirStatDoc()
 {
-    delete m_RootItem;
-    _theDocument = nullptr;
+    delete m_rootItem;
+    s_singleton = nullptr;
 }
 
-CDirStatDoc* CDirStatDoc::_theDocument = nullptr;
+CDirStatDoc* CDirStatDoc::s_singleton = nullptr;
 
 // Encodes a selection from the CSelectDrivesDlg into a string which can be routed as a pseudo
 // document "path" through MFC and finally arrives in OnOpenDocument().
@@ -94,15 +94,15 @@ void CDirStatDoc::DeleteContents()
     if (CFileSearchControl::Get() != nullptr) CFileSearchControl::Get()->DeleteAllItems();
 
     // Cleanup structures
-    delete m_RootItemDupe;
-    delete m_RootItemTop;
-    delete m_RootItemSearch;
-    delete m_RootItem;
-    m_RootItemDupe = nullptr;
-    m_RootItemTop = nullptr;
-    m_RootItemSearch = nullptr;
-    m_RootItem = nullptr;
-    m_ZoomItem = nullptr;
+    delete m_rootItemDupe;
+    delete m_rootItemTop;
+    delete m_rootItemSearch;
+    delete m_rootItem;
+    m_rootItemDupe = nullptr;
+    m_rootItemTop = nullptr;
+    m_rootItemSearch = nullptr;
+    m_rootItem = nullptr;
+    m_zoomItem = nullptr;
 }
 
 BOOL CDirStatDoc::OnNewDocument()
@@ -158,27 +158,27 @@ BOOL CDirStatDoc::OnOpenDocument(LPCWSTR lpszPathName)
         }
 
         const LPCWSTR name = ppszName != nullptr ? const_cast<LPCWSTR>(*ppszName) : L"This PC";
-        m_RootItem = new CItem(IT_MYCOMPUTER | ITF_ROOTITEM, name);
+        m_rootItem = new CItem(IT_MYCOMPUTER | ITF_ROOTITEM, name);
         for (const auto & rootFolder : selections)
         {
             const auto drive = new CItem(IT_DRIVE, rootFolder);
-            m_RootItem->AddChild(drive);
+            m_rootItem->AddChild(drive);
         }
     }
     else
     {
         const ITEMTYPE type = driveCount == 1 ? IT_DRIVE : IT_DIRECTORY;
-        m_RootItem = new CItem(type | ITF_ROOTITEM, selections.front());
-        m_RootItem->UpdateStatsFromDisk();
+        m_rootItem = new CItem(type | ITF_ROOTITEM, selections.front());
+        m_rootItem->UpdateStatsFromDisk();
     }
 
     // Restore zoom scope to be the root
-    m_ZoomItem = m_RootItem;
+    m_zoomItem = m_rootItem;
 
     // Set new node for extra views
-    m_RootItemDupe = new CItemDupe();
-    m_RootItemTop = new CItemTop();
-    m_RootItemSearch = new CItemSearch();
+    m_rootItemDupe = new CItemDupe();
+    m_rootItemTop = new CItemTop();
+    m_rootItemSearch = new CItemSearch();
 
     // Update new root for display
     UpdateAllViews(nullptr, HINT_NEWROOT);
@@ -205,11 +205,11 @@ BOOL CDirStatDoc::OnOpenDocument(CItem * newroot)
 
     Get()->SetPathName(spec.c_str(), FALSE);
 
-    m_RootItemDupe = new CItemDupe();
-    m_RootItemTop = new CItemTop();
-    m_RootItemSearch = new CItemSearch();
-    m_RootItem = newroot;
-    m_ZoomItem = m_RootItem;
+    m_rootItemDupe = new CItemDupe();
+    m_rootItemTop = new CItemTop();
+    m_rootItemSearch = new CItemSearch();
+    m_rootItem = newroot;
+    m_zoomItem = m_rootItem;
 
     UpdateAllViews(nullptr, HINT_NEWROOT);
     StartScanningEngine({});
@@ -253,20 +253,20 @@ COLORREF CDirStatDoc::GetZoomColor() const
 
 CExtensionData* CDirStatDoc::GetExtensionData()
 {
-    return &m_ExtensionData;
+    return &m_extensionData;
 }
 
 SExtensionRecord* CDirStatDoc::GetExtensionDataRecord(const std::wstring& ext)
 {
-    std::scoped_lock guard(m_ExtensionMutex);
-    return &m_ExtensionData[ext];
+    std::scoped_lock guard(m_extensionMutex);
+    return &m_extensionData[ext];
 }
 
 ULONGLONG CDirStatDoc::GetRootSize() const
 {
-    ASSERT(m_RootItem != nullptr);
+    ASSERT(m_rootItem != nullptr);
     ASSERT(IsRootDone());
-    return m_RootItem->GetSizePhysical();
+    return m_rootItem->GetSizePhysical();
 }
 
 // Starts a refresh of all mount points in our tree.
@@ -284,12 +284,12 @@ void CDirStatDoc::RefreshReparsePointItems()
 
 bool CDirStatDoc::HasRootItem() const
 {
-    return m_RootItem != nullptr;
+    return m_rootItem != nullptr;
 }
 
 bool CDirStatDoc::IsRootDone() const
 {
-    return HasRootItem() && m_RootItem->IsDone();
+    return HasRootItem() && m_rootItem->IsDone();
 }
 
 bool CDirStatDoc::IsScanRunning() const
@@ -303,27 +303,27 @@ bool CDirStatDoc::IsScanRunning() const
 
 CItem* CDirStatDoc::GetRootItem() const
 {
-    return m_RootItem;
+    return m_rootItem;
 }
 
 CItem* CDirStatDoc::GetZoomItem() const
 {
-    return m_ZoomItem;
+    return m_zoomItem;
 }
 
 CItemDupe* CDirStatDoc::GetRootItemDupe() const
 {
-    return m_RootItemDupe;
+    return m_rootItemDupe;
 }
 
 CItemTop* CDirStatDoc::GetRootItemTop() const
 {
-    return m_RootItemTop;
+    return m_rootItemTop;
 }
 
 CItemSearch* CDirStatDoc::GetRootItemSearch() const
 {
-    return m_RootItemSearch;
+    return m_rootItemSearch;
 }
 
 bool CDirStatDoc::IsZoomed() const
@@ -333,13 +333,13 @@ bool CDirStatDoc::IsZoomed() const
 
 void CDirStatDoc::SetHighlightExtension(const std::wstring & ext)
 {
-    m_HighlightExtension = ext;
+    m_highlightExtension = ext;
     CMainFrame::Get()->UpdatePaneText();
 }
 
 std::wstring CDirStatDoc::GetHighlightExtension() const
 {
-    return m_HighlightExtension;
+    return m_highlightExtension;
 }
 
 // The root item has been deleted.
@@ -440,15 +440,15 @@ void CDirStatDoc::RecurseRefreshReparsePoints(CItem* item) const
 void CDirStatDoc::RebuildExtensionData()
 {
     // Do initial extension information population if necessary
-    if (m_ExtensionData.empty())
+    if (m_extensionData.empty())
     {
         GetRootItem()->ExtensionDataProcessChildren();
     }
 
     // Collect iterators to the map entries to avoid copying keys
     std::vector<CExtensionData::iterator> sortedExtensions;
-    sortedExtensions.reserve(m_ExtensionData.size());
-    for (auto it = m_ExtensionData.begin(); it != m_ExtensionData.end(); ++it)
+    sortedExtensions.reserve(m_extensionData.size());
+    for (auto it = m_extensionData.begin(); it != m_extensionData.end(); ++it)
     {
         sortedExtensions.emplace_back(it);
     }
@@ -611,7 +611,7 @@ bool CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, const bo
 
 void CDirStatDoc::SetZoomItem(CItem* item)
 {
-    m_ZoomItem = item;
+    m_zoomItem = item;
     UpdateAllViews(nullptr, HINT_ZOOMCHANGED);
 }
 
@@ -787,22 +787,22 @@ std::wstring CDirStatDoc::BuildUserDefinedCleanupCommandLine(const std::wstring 
 
 void CDirStatDoc::PushReselectChild(CItem* item)
 {
-    m_ReselectChildStack.AddHead(item);
+    m_reselectChildStack.AddHead(item);
 }
 
 CItem* CDirStatDoc::PopReselectChild()
 {
-    return m_ReselectChildStack.RemoveHead();
+    return m_reselectChildStack.RemoveHead();
 }
 
 void CDirStatDoc::ClearReselectChildStack()
 {
-    m_ReselectChildStack.RemoveAll();
+    m_reselectChildStack.RemoveAll();
 }
 
 bool CDirStatDoc::IsReselectChildAvailable() const
 {
-    return !m_ReselectChildStack.IsEmpty();
+    return !m_reselectChildStack.IsEmpty();
 }
 
 bool CDirStatDoc::FileTreeHasFocus()
@@ -844,25 +844,25 @@ std::vector<CItem*> CDirStatDoc::GetAllSelected()
 {
     // Check if we can use cached results
     const auto currentFocus = CMainFrame::Get()->GetLogicalFocus();
-    if (m_SelectionCacheValid && m_CachedFocus == currentFocus)
+    if (m_selectionCacheValid && m_cachedFocus == currentFocus)
     {
-        return m_CachedSelection;
+        return m_cachedSelection;
     }
 
     // Query fresh selection data
     auto selection = GetFocusControl()->GetAllSelected<CItem>();
 
     // Update cache
-    m_CachedFocus = currentFocus;
-    m_CachedSelection = selection;
-    m_SelectionCacheValid = true;
+    m_cachedFocus = currentFocus;
+    m_cachedSelection = selection;
+    m_selectionCacheValid = true;
 
     return selection;
 }
 
 void CDirStatDoc::InvalidateSelectionCache()
 {
-    m_SelectionCacheValid = false;
+    m_selectionCacheValid = false;
 }
 
 void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
@@ -1146,21 +1146,21 @@ void CDirStatDoc::OnRemoveShadowCopies()
 void CDirStatDoc::OnUpdateViewShowFreeSpace(CCmdUI* pCmdUI)
 {
     OnUpdateCentralHandler(pCmdUI);
-    pCmdUI->SetCheck(m_ShowFreeSpace);
+    pCmdUI->SetCheck(m_showFreeSpace);
 }
 
 void CDirStatDoc::OnViewShowFreeSpace()
 {
     for (const auto& drive : GetRootItem()->GetDriveItems())
     {
-        if (m_ShowFreeSpace)
+        if (m_showFreeSpace)
         {
             const CItem* free = drive->FindFreeSpaceItem();
             ASSERT(free != nullptr);
 
             if (GetZoomItem() == free)
             {
-                m_ZoomItem = free->GetParent();
+                m_zoomItem = free->GetParent();
             }
 
             drive->RemoveFreeSpaceItem();
@@ -1172,8 +1172,8 @@ void CDirStatDoc::OnViewShowFreeSpace()
     }
 
     // Toggle value
-    m_ShowFreeSpace = !m_ShowFreeSpace;
-    COptions::ShowFreeSpace = m_ShowFreeSpace;
+    m_showFreeSpace = !m_showFreeSpace;
+    COptions::ShowFreeSpace = m_showFreeSpace;
 
     // Force recalculation and graph refresh
     StartScanningEngine({});
@@ -1182,21 +1182,21 @@ void CDirStatDoc::OnViewShowFreeSpace()
 void CDirStatDoc::OnUpdateViewShowUnknown(CCmdUI* pCmdUI)
 {
     OnUpdateCentralHandler(pCmdUI);
-    pCmdUI->SetCheck(m_ShowUnknown);
+    pCmdUI->SetCheck(m_showUnknown);
 }
 
 void CDirStatDoc::OnViewShowUnknown()
 {
     for (const auto& drive : GetRootItem()->GetDriveItems())
     {
-        if (m_ShowUnknown)
+        if (m_showUnknown)
         {
             const CItem* unknown = drive->FindUnknownItem();
             ASSERT(unknown != nullptr);
 
             if (GetZoomItem() == unknown)
             {
-                m_ZoomItem = unknown->GetParent();
+                m_zoomItem = unknown->GetParent();
             }
 
             drive->RemoveUnknownItem();
@@ -1208,8 +1208,8 @@ void CDirStatDoc::OnViewShowUnknown()
     }
 
     // Toggle value
-    m_ShowUnknown = !m_ShowUnknown;
-    COptions::ShowUnknown = m_ShowUnknown;
+    m_showUnknown = !m_showUnknown;
+    COptions::ShowUnknown = m_showUnknown;
 
     // Force recalculation and graph refresh
     StartScanningEngine({});
