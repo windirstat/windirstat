@@ -40,6 +40,7 @@ public:
     virtual std::wstring GetFileName() const = 0;
     virtual inline ULONGLONG GetIndex() const = 0;
     virtual DWORD GetReparseTag() const = 0;
+    virtual bool IsReserved() const = 0;
 
     bool IsReparsePoint() const
     {

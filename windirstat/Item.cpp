@@ -1126,7 +1126,7 @@ void CItem::ScanItems(BlockingQueue<CItem*> * queue, FinderNtfsContext& contextN
 
         if (item->IsTypeOrFlag(IT_DRIVE, IT_DIRECTORY))
         {
-            Finder* finder = contextNtfs.IsLoaded && !item->IsTypeOrFlag(ITF_BASIC) ?
+            Finder* finder = contextNtfs.IsLoaded() && !item->IsTypeOrFlag(ITF_BASIC) ?
                 reinterpret_cast<Finder*>(&finderNtfs) : reinterpret_cast<Finder*>(&finderBasic);
 
             for (BOOL b = finder->FindFile(item); b; b = finder->FindNext())
@@ -1734,6 +1734,7 @@ CItem* CItem::AddDirectory(const Finder& finder)
     child->SetLastChange(finder.GetLastWriteTime());
     child->SetAttributes(finder.GetAttributes());
     child->SetReparseTag(finder.GetReparseTag());
+    if (finder.IsReserved() || this->IsTypeOrFlag(ITF_RESERVED)) child->SetFlag(ITF_RESERVED);
     if (finder.IsOffVolumeReparsePoint() && follow) child->SetFlag(ITF_BASIC);
     AddChild(child);
     child->UpwardAddReadJobs(follow ? 1 : 0);
@@ -1750,6 +1751,7 @@ CItem* CItem::AddFile(Finder& finder)
     child->SetLastChange(finder.GetLastWriteTime());
     child->SetAttributes(finder.GetAttributes());
     child->SetReparseTag(finder.GetReparseTag());
+    if (finder.IsReserved() || this->IsTypeOrFlag(ITF_RESERVED)) child->SetFlag(ITF_RESERVED);
     child->ExtensionDataAdd();
     AddChild(child);
     child->SetDone();

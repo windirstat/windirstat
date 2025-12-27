@@ -73,10 +73,11 @@ using ITEMTYPE = enum ITEMTYPE : std::uint32_t
     ITRP_MASK      = 0x00F00000,
 
     ITF_NONE       = 0,       // No flags
-    ITF_BASIC      = 1 << 24, // Forces basic finder
-    ITF_HARDLINK   = 1 << 25, // Indicates file is a hardlink
-    ITF_ROOTITEM   = 1 << 26, // Indicates root item
-    ITF_DONE       = 1 << 27, // Indicates done processing
+    ITF_RESERVED   = 1 << 24, // Indicates special reserved file
+    ITF_BASIC      = 1 << 25, // Forces basic finder
+    ITF_HARDLINK   = 1 << 26, // Indicates file is a hardlink
+    ITF_ROOTITEM   = 1 << 27, // Indicates root item
+    ITF_DONE       = 1 << 28, // Indicates done processing
     ITF_MASK       = 0xFF000000,
 
     ITF_ANY        = 0xFFFFFFFF, // Indicates any item type or flag

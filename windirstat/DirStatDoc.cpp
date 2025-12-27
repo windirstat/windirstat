@@ -959,6 +959,7 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
     if (items.empty()) allow &= filter.extra(nullptr);
     for (const auto& item : items)
     {
+        allow &= filter.typesAllow.front() == ITF_ANY || !item->IsTypeOrFlag(ITF_RESERVED);
         allow &= filter.extra(item);
         allow &= std::any_of(filter.typesAllow.begin(), filter.typesAllow.end(),
             [item](ITEMTYPE type) { return item->IsTypeOrFlag(type); });

@@ -92,6 +92,7 @@ public:
     std::wstring GetFilePath() const override;
     inline ULONGLONG GetIndex() const override;
     inline DWORD GetReparseTag() const override;
+    inline bool IsReserved() const override { return false; };
 
     static bool DoesFileExist(const std::wstring& folder, const std::wstring& file = {});
 };

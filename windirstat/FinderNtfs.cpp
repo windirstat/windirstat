@@ -159,10 +159,6 @@ using STANDARD_INFORMATION = struct STANDARD_INFORMATION
     ULONG FileAttributes;
 };
 
-constexpr auto NtfsMftRecord = 0;
-constexpr auto NtfsNodeRoot = 5;
-constexpr auto NtfsReservedMax = 16;
-
 bool FinderNtfsContext::LoadRoot(CItem* driveitem)
 {
     // Trim off excess characters
@@ -344,17 +340,8 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
         return false;
     }
 
-    // Remove bad cluster node and reserved entries
-    auto& rootChildren = m_parentToChildMap[NtfsNodeRoot];
-    concurrency::concurrent_vector<FileRecordName> newChildren;
-    std::copy_if(rootChildren.begin(), rootChildren.end(), std::back_inserter(newChildren), [](const auto& child)
-    {
-        return child.BaseRecord > NtfsReservedMax || child.BaseRecord == NtfsMftRecord || child.BaseRecord == NtfsNodeRoot;
-    });
-    rootChildren = std::move(newChildren);
-
     driveitem->SetIndex(NtfsNodeRoot);
-    IsLoaded = true;
+    m_isLoaded = true;
     return true;
 }
 
@@ -426,4 +413,9 @@ std::wstring FinderNtfs::GetFilePath() const
     else if (wcsncmp(path.data(), s_dosPath.data(), s_dosPath.length() - 1) == 0)
         path = path.substr(s_dosPath.length());
     return path;
+}
+
+bool FinderNtfs::IsReserved() const
+{
+    return m_index < FinderNtfsContext::NtfsReservedMax;
 }

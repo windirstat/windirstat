@@ -22,7 +22,9 @@
 
 class FinderNtfsContext final
 {
-public:
+    friend class FinderNtfs;
+
+private:
 
     using FileRecordBase = struct FileRecordBase
     {
@@ -39,13 +41,19 @@ public:
         ULONGLONG BaseRecord;
     };
 
-    FinderNtfsContext() = default;
-
     concurrency::concurrent_unordered_map<ULONGLONG, FileRecordBase> m_baseFileRecordMap;
     concurrency::concurrent_unordered_map<ULONGLONG, concurrency::concurrent_vector<FileRecordName>> m_parentToChildMap;
 
+    bool m_isLoaded = false;
+
+public:
+
+    FinderNtfsContext() = default;
     bool LoadRoot(CItem* driveitem);
-    bool IsLoaded = false;
+    bool IsLoaded() const { return m_isLoaded; };
+
+    static const ULONGLONG NtfsNodeRoot = 5;
+    static const ULONGLONG NtfsReservedMax = 16;
 };
 
 class FinderNtfs final : public Finder
@@ -74,4 +82,5 @@ public:
     ULONGLONG GetFileSizeLogical() const override;
     FILETIME GetLastWriteTime() const override;
     std::wstring GetFilePath() const override;
+    bool IsReserved() const override;
 };
