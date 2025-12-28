@@ -121,8 +121,8 @@ void CFileTreeControl::OnLButtonDown(const UINT nFlags, const CPoint point)
 
 BOOL CFileTreeControl::OnSetCursor(CWnd* pWnd, const UINT nHitTest, const UINT message)
 {
-    const auto defaultReturn = CTreeListControl::OnSetCursor(pWnd, nHitTest, message);
-    if (nHitTest != HTCLIENT) return defaultReturn;
+    auto defaultReturn = [&] { return CTreeListControl::OnSetCursor(pWnd, nHitTest, message); };
+    if (nHitTest != HTCLIENT) return defaultReturn();
 
     CPoint point;
     GetCursorPos(&point);
@@ -131,17 +131,17 @@ BOOL CFileTreeControl::OnSetCursor(CWnd* pWnd, const UINT nHitTest, const UINT m
     // Hit test
     LVHITTESTINFO hti{ .pt = point };
     const int i = HitTest(&hti);
-    if (i == -1) return defaultReturn;
+    if (i == -1) return defaultReturn();
 
     // Check if item is a hardlink or hardlinks file reference
     const auto* item = reinterpret_cast<CItem*>(GetItem(i));
-    if (item == nullptr) return defaultReturn;
+    if (item == nullptr) return defaultReturn();
     
     // Check for ITF_HARDLINK or IT_HLINKS_FILE
     const bool isHardlink = item->IsTypeOrFlag(ITF_HARDLINK);
     const bool isHlinksFile = item->IsTypeOrFlag(IT_HLINKS_FILE);
     
-    if (!isHardlink && !isHlinksFile) return defaultReturn;
+    if (!isHardlink && !isHlinksFile) return defaultReturn();
 
     // Validate if in physical size column
     if (!std::ranges::any_of(std::views::iota(0, GetHeaderCtrl()->GetItemCount()), [&](const int col)
@@ -149,8 +149,7 @@ BOOL CFileTreeControl::OnSetCursor(CWnd* pWnd, const UINT nHitTest, const UINT m
         LVCOLUMN colInfo{ LVCF_SUBITEM };
         GetColumn(col, &colInfo);
         return colInfo.iSubItem == COL_SIZE_PHYSICAL && GetWholeSubitemRect(i, col).PtInRect(point);
-    })) return defaultReturn;
-
+    })) return defaultReturn();
 
     SetCursor(AfxGetApp()->LoadStandardCursor(IDC_HAND));
     return TRUE;
