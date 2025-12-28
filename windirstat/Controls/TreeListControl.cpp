@@ -833,6 +833,12 @@ void CTreeListControl::EnsureItemVisible(const CTreeListItem* item)
         return;
     }
     EnsureVisible(i, false);
+    
+    // Scroll to the left to show the beginning of the item
+    if (const int currentScrollPos = GetScrollPos(SB_HORZ); currentScrollPos > 0)
+    {
+        Scroll(CSize(-currentScrollPos, 0));
+    }
 }
 
 void CTreeListControl::MeasureItem(LPMEASUREITEMSTRUCT mis)
@@ -843,12 +849,10 @@ void CTreeListControl::MeasureItem(LPMEASUREITEMSTRUCT mis)
 void CTreeListControl::OnContextMenu(CWnd* /*pWnd*/, const CPoint pt)
 {
     const int i = GetSelectionMark();
-    if (i == -1)
-    {
-        return;
-    }
+    if (i == -1) return;
 
     const CTreeListItem* item = GetItem(i);
+    if (item == nullptr) return;
     CRect rc = GetWholeSubitemRect(i, 0);
     const CRect rcTitle = item->GetTitleRect() + rc.TopLeft();
 
@@ -856,6 +860,7 @@ void CTreeListControl::OnContextMenu(CWnd* /*pWnd*/, const CPoint pt)
     menu.LoadMenu(IDR_POPUP_TREE);
     Localization::UpdateMenu(menu);
     CMenu* sub = menu.GetSubMenu(0);
+    if (sub == nullptr) return;
 
     // Populate default menu items
     if (item != nullptr && item->GetTreeListChildCount() == 0)
