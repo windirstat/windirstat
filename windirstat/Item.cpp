@@ -148,7 +148,7 @@ std::wstring CItem::GetText(const int subitem) const
         }
         if (IsTypeOrFlag(IT_HLINKS_FILE))
         {
-            return std::wstring(L"🔗 ") + FormatBytes(GetSizePhysical());
+            return std::wstring(L"⫘ ") + FormatBytes(GetSizePhysical());
         }
         return FormatBytes(GetSizePhysical());
 
