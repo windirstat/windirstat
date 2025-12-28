@@ -37,14 +37,15 @@ void CIconHandler::Initialize()
     std::call_once(s_once, [this]
     {
         m_filterOverride.RegisterFilter();
-
-        m_junctionImage = DarkMode::LightenIcon(CDirStatApp::Get()->LoadIcon(IDI_JUNCTION));
-        m_junctionProtected = DarkMode::LightenIcon(CDirStatApp::Get()->LoadIcon(IDI_JUNCTION_PROTECTED), true);
-        m_freeSpaceImage = DarkMode::LightenIcon(CDirStatApp::Get()->LoadIcon(IDI_FREE_SPACE), true);
-        m_unknownImage = DarkMode::LightenIcon(CDirStatApp::Get()->LoadIcon(IDI_UNKNOWN), true);
-        m_emptyImage = DarkMode::LightenIcon(CDirStatApp::Get()->LoadIcon(IDI_EMPTY), true);
-        m_hardlinksImage = DarkMode::LightenIcon(CDirStatApp::Get()->LoadIcon(IDI_HARDLINKS), true);
-
+        
+        m_junctionImage = IconFromFontChar(L'⤷', RGB(0x3A, 0x3A, 0xFF), true);
+        m_symlinkImage = IconFromFontChar(L'⤷', RGB(0x3A, 0xFF, 0x3A), true);
+        m_junctionProtected = IconFromFontChar(L'⤷', RGB(0xFF, 0x3A, 0x3A), true);
+        m_freeSpaceImage = IconFromFontChar(L'▢', RGB(0x3A, 0xCC, 0x3A), true);
+        m_emptyImage = IconFromFontChar(L'·', DarkMode::WdsSysColor(COLOR_WINDOWTEXT));
+        m_hardlinksImage = IconFromFontChar(L'⧉', DarkMode::WdsSysColor(COLOR_WINDOWTEXT));
+        m_unknownImage = IconFromFontChar(L'?', RGB(0xCC,0xB8,0x66), true);
+        
         // Cache icon for boot drive
         std::wstring drive(_MAX_PATH, wds::chrNull);
         drive.resize(min(wcslen(L"C:\\"), GetWindowsDirectory(drive.data(), _MAX_PATH)));
@@ -164,4 +165,146 @@ HICON CIconHandler::FetchShellIcon(const std::wstring & path, UINT flags, const 
 
     m_cachedIcons[sfi.iIcon] = sfi.hIcon;
     return sfi.hIcon;
+}
+
+HICON CIconHandler::IconFromFontChar(const WCHAR ch, const COLORREF textColor, const bool bold, LPCWSTR fontName)
+{
+    const int ICON_SIZE = GetSystemMetrics(SM_CXSMICON);
+    const int RENDER_SIZE = GetSystemMetrics(SM_CXSMICON) * 4;
+    constexpr int PADDING = 2;
+
+    // Lambda to create bitmap headers
+    auto createBitmapHeader = [](int size) {
+        BITMAPV5HEADER bi{};
+        bi.bV5Size = sizeof(BITMAPV5HEADER);
+        bi.bV5Width = size;
+        bi.bV5Height = -size;
+        bi.bV5Planes = 1;
+        bi.bV5BitCount = 32;
+        bi.bV5Compression = BI_RGB;
+        bi.bV5AlphaMask = 0xFF000000;
+        bi.bV5RedMask = 0x00FF0000;
+        bi.bV5GreenMask = 0x0000FF00;
+        bi.bV5BlueMask = 0x000000FF;
+        return bi;
+        };
+
+    // Create render DC and bitmap
+    CClientDC screenDC(nullptr);
+    CDC memDC;
+    memDC.CreateCompatibleDC(&screenDC);
+
+    const auto bi = createBitmapHeader(RENDER_SIZE);
+    BYTE* pBits = nullptr;
+    CBitmap renderBmp;
+    renderBmp.Attach(CreateDIBSection(screenDC.m_hDC,
+        reinterpret_cast<BITMAPINFO*>(const_cast<BITMAPV5HEADER*>(&bi)),
+        DIB_RGB_COLORS, reinterpret_cast<void**>(&pBits), nullptr, 0));
+
+    CBitmap* const pOldBmp = memDC.SelectObject(&renderBmp);
+
+    // Clear and setup rendering
+    memset(pBits, 0, RENDER_SIZE * RENDER_SIZE * 4);
+    memDC.SetBkMode(TRANSPARENT);
+    memDC.SetTextColor(RGB(255, 255, 255));
+    memDC.SetGraphicsMode(GM_ADVANCED);
+
+    // Create and select font
+    CFont font;
+    LOGFONT lf{};
+    lf.lfWeight = bold ? FW_BOLD : FW_NORMAL;
+    lf.lfHeight = -RENDER_SIZE + 8;
+    lf.lfQuality = ANTIALIASED_QUALITY;
+    wcscpy_s(lf.lfFaceName, fontName ? fontName : L"Segoe UI");
+    font.CreateFontIndirect(&lf);
+
+    CFont* const pOldFont = memDC.SelectObject(&font);
+
+    // Measure and draw text
+    const CSize textSize = memDC.GetTextExtent(&ch, 1);
+    const int x = (RENDER_SIZE - textSize.cx) / 2;
+    const int y = (RENDER_SIZE - textSize.cy) / 2;
+    memDC.TextOutW(x, y, &ch, 1);
+
+    // Apply color with alpha
+    const BYTE r = GetRValue(textColor);
+    const BYTE g = GetGValue(textColor);
+    const BYTE b = GetBValue(textColor);
+
+    const int PIXEL_COUNT = RENDER_SIZE * RENDER_SIZE;
+    for (int i = 0; i < PIXEL_COUNT; ++i) {
+        const BYTE alpha = pBits[i * 4 + 2]; // Red channel has intensity
+        pBits[i * 4] = b;
+        pBits[i * 4 + 1] = g;
+        pBits[i * 4 + 2] = r;
+        pBits[i * 4 + 3] = alpha;
+    }
+
+    // Find glyph bounds
+    int minX = RENDER_SIZE, maxX = 0, minY = RENDER_SIZE, maxY = 0;
+
+    for (int py = 0; py < RENDER_SIZE; ++py) {
+        for (int px = 0; px < RENDER_SIZE; ++px) {
+            if (pBits[(py * RENDER_SIZE + px) * 4 + 3] > 0) {
+                minX = min(minX, px);
+                maxX = max(maxX, px);
+                minY = min(minY, py);
+                maxY = max(maxY, py);
+            }
+        }
+    }
+
+    // Calculate scaling
+    const int glyphWidth = maxX - minX + 1;
+    const int glyphHeight = maxY - minY + 1;
+
+    const float scale = min(
+        static_cast<float>(ICON_SIZE - PADDING * 2) / glyphWidth,
+        static_cast<float>(ICON_SIZE - PADDING * 2) / glyphHeight
+    );
+
+    const int scaledWidth = static_cast<int>(glyphWidth * scale);
+    const int scaledHeight = static_cast<int>(glyphHeight * scale);
+
+    // Create final bitmap
+    const auto biFinal = createBitmapHeader(ICON_SIZE);
+    BYTE* pFinalBits = nullptr;
+    CBitmap finalBmp;
+    finalBmp.Attach(CreateDIBSection(screenDC.m_hDC,
+        reinterpret_cast<BITMAPINFO*>(const_cast<BITMAPV5HEADER*>(&biFinal)),
+        DIB_RGB_COLORS, reinterpret_cast<void**>(&pFinalBits), nullptr, 0));
+
+    //memset(pFinalBits, 0, ICON_SIZE * ICON_SIZE * 4);
+
+    CDC finalDC;
+    finalDC.CreateCompatibleDC(&screenDC);
+    CBitmap* const pOldFinal = finalDC.SelectObject(&finalBmp);
+
+    finalDC.SetStretchBltMode(HALFTONE);
+    finalDC.SetBrushOrg(0, 0);
+
+    // Center and blend the glyph
+    const int destX = (ICON_SIZE - scaledWidth) / 2;
+    const int destY = (ICON_SIZE - scaledHeight) / 2;
+
+    const BLENDFUNCTION blend{ AC_SRC_OVER, 0, 255, AC_SRC_ALPHA };
+    finalDC.AlphaBlend(destX, destY, scaledWidth, scaledHeight,
+        &memDC, minX, minY, glyphWidth, glyphHeight, blend);
+
+    // Create icon
+    CBitmap maskBmp;
+    maskBmp.CreateBitmap(ICON_SIZE, ICON_SIZE, 1, 1, nullptr);
+
+    ICONINFO ii{};
+    ii.fIcon = TRUE;
+    ii.hbmColor = (HBITMAP)finalBmp.m_hObject;
+    ii.hbmMask = (HBITMAP)maskBmp.m_hObject;
+    const HICON hIcon = CreateIconIndirect(&ii);
+
+    // Cleanup selections
+    memDC.SelectObject(pOldFont);
+    memDC.SelectObject(pOldBmp);
+    finalDC.SelectObject(pOldFinal);
+
+    return hIcon;
 }

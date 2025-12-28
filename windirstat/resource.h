@@ -38,12 +38,6 @@
 #define IDB_SCAN_RESUME                 217
 #define IDB_CLEANUP_EXPLORER_SELECT     218
 #define IDB_CLEANUP_OPEN_SELECTED       219
-#define IDI_JUNCTION                    300
-#define IDI_UNKNOWN                     301
-#define IDI_JUNCTION_PROTECTED          302
-#define IDI_FREE_SPACE                  303
-#define IDI_EMPTY                       304
-#define IDI_HARDLINKS                   305
 #define IDC_RADIO_TARGET_DRIVES_ALL     1000
 #define IDC_RADIO_TARGET_DRIVES_SUBSET  1001
 #define IDC_RADIO_TARGET_FOLDER         1002

@@ -314,28 +314,6 @@ LRESULT DarkMode::HandleMenuMessage(const UINT message, const WPARAM wParam, con
     return 1;
 }
 
-HICON DarkMode::LightenIcon(const HICON hIcon, const bool invert)
-{
-    if (!s_darkModeEnabled) return hIcon;
-
-    ICONINFO iconInfo;
-    if (!GetIconInfo(hIcon, &iconInfo)) return hIcon;
-
-    // Lighten the color bitmap
-    if (CBitmap* pColorBitmap = CBitmap::FromHandle(iconInfo.hbmColor))
-    {
-        LightenBitmap(pColorBitmap, invert);
-    }
-
-    // Create new icon with lightened bitmap
-    const HICON hNewIcon = CreateIconIndirect(&iconInfo);
-
-    // Clean up
-    if (iconInfo.hbmColor) DeleteObject(iconInfo.hbmColor);
-    if (iconInfo.hbmMask) DeleteObject(iconInfo.hbmMask);
-
-    return hNewIcon ? hNewIcon : hIcon;
-}
 void DarkMode::LightenBitmap(CBitmap* pBitmap, const bool invert)
 {
     if (!s_darkModeEnabled) return;

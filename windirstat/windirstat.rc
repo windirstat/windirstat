@@ -71,18 +71,6 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 // remains consistent on all systems.
 IDR_MAINFRAME           ICON                    "res\\WinDirStat.ico"
 
-IDI_JUNCTION            ICON                    "res\\nodes\\IDI_JUNCTION.ico"
-
-IDI_UNKNOWN             ICON                    "res\\nodes\\IDI_UNKNOWN.ico"
-
-IDI_JUNCTION_PROTECTED  ICON                    "res\\nodes\\IDI_JUNCTION_PROTECTED.ico"
-
-IDI_FREE_SPACE          ICON                    "res\\nodes\\IDI_FREE_SPACE.ico"
-
-IDI_EMPTY               ICON                    "res\\nodes\\IDI_EMPTY.ico"
-
-IDI_HARDLINKS           ICON                    "res\\nodes\\IDI_HARDLINKS.ico"
-
 
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////

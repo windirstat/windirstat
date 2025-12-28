@@ -148,7 +148,7 @@ std::wstring CItem::GetText(const int subitem) const
         }
         if (IsTypeOrFlag(IT_HLINKS_FILE))
         {
-            return std::wstring(L"▣ ") + FormatBytes(GetSizePhysical());
+            return std::wstring(L"🔗 ") + FormatBytes(GetSizePhysical());
         }
         return FormatBytes(GetSizePhysical());
 
@@ -361,28 +361,32 @@ HICON CItem::GetIcon()
         m_visualInfo->icon = GetIconHandler()->GetMyComputerImage();
         return m_visualInfo->icon;
     }
-    if (IsTypeOrFlag(IT_FREESPACE))
+    else if (IsTypeOrFlag(IT_FREESPACE))
     {
         m_visualInfo->icon = GetIconHandler()->GetFreeSpaceImage();
         return m_visualInfo->icon;
     }
-    if (IsTypeOrFlag(IT_UNKNOWN))
+    else if (IsTypeOrFlag(IT_UNKNOWN))
     {
         m_visualInfo->icon = GetIconHandler()->GetUnknownImage();
         return m_visualInfo->icon;
     }
-    if (IsTypeOrFlag(IT_HLINKS, IT_HLINKS_SET, IT_HLINKS_IDX))
+    else if (IsTypeOrFlag(IT_HLINKS, IT_HLINKS_SET, IT_HLINKS_IDX))
     {
         m_visualInfo->icon = GetIconHandler()->GetHardlinksImage();
         return m_visualInfo->icon;
     }
-
-    if (IsTypeOrFlag(ITRP_MOUNT))
+    else if (IsTypeOrFlag(ITRP_MOUNT))
     {
         m_visualInfo->icon = GetIconHandler()->GetMountPointImage();
         return m_visualInfo->icon;
     }
-    if (IsTypeOrFlag(ITRP_SYMLINK, ITRP_JUNCTION))
+    else if (IsTypeOrFlag(ITRP_SYMLINK, ITRP_JUNCTION))
+    {
+        m_visualInfo->icon = GetIconHandler()->GetSymbolicLinkImage();
+        return m_visualInfo->icon;
+    }
+    else if (IsTypeOrFlag(ITRP_SYMLINK, ITRP_JUNCTION))
     {
         constexpr DWORD mask = FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM;
         const bool osFile = (GetAttributes() & mask) == mask;
@@ -1386,10 +1390,12 @@ void CItem::CreateHardlinksItem()
     const auto hardlinks = new CItem(IT_HLINKS, Localization::Lookup(IDS_HARDLINKS_ITEM));
     
     // Create 20 Index Set subfolders (Index Set 1 through Index 20)
+    // On file systems with many hardlinks, this helps reduce the items
+    // to expand in the interface on when viewing hardlink structures
     constexpr char INDEX_SET_COUNT = 20;
     for (const int i : std::views::iota(1, INDEX_SET_COUNT + 1))
     {
-        const auto indexSet = new CItem(IT_HLINKS_SET, std::format(L"{} ⧉ {:02}", Localization::Lookup(IDS_COL_INDEX), i));
+        const auto indexSet = new CItem(IT_HLINKS_SET, std::format(L"{} ≡ 0x{:02X}", Localization::Lookup(IDS_COL_INDEX), i));
         indexSet->SetDone();
         hardlinks->AddChild(indexSet);
     }
@@ -1700,13 +1706,13 @@ std::wstring CItem::UpwardGetPathWithoutBackslash() const
         {
             path.append(pathPart->m_name.get(), pathPart->m_nameLen).append(L"\\");
         }
-        else if (pathPart->IsTypeOrFlag(IT_FILE, IT_HLINKS, IT_UNKNOWN, IT_FREESPACE, IT_HLINKS_SET, IT_HLINKS_IDX, IT_HLINKS_FILE))
-        {
-            path.append(pathPart->m_name.get(), pathPart->m_nameLen);
-        }
         else if (pathPart->IsTypeOrFlag(IT_DRIVE))
         {
             path.append(pathPart->m_name.get(), 2).append(L"\\");
+        }
+        else
+        {
+            path.append(pathPart->m_name.get(), pathPart->m_nameLen);
         }
     }
 

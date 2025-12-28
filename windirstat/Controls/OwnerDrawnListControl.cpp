@@ -328,9 +328,7 @@ COwnerDrawnListItem* COwnerDrawnListControl::GetItem(const int i) const
 
 int COwnerDrawnListControl::FindListItem(const COwnerDrawnListItem* item) const
 {
-    LVFINDINFO fi;
-    fi.flags = LVFI_PARAM;
-    fi.lParam = reinterpret_cast<LPARAM>(item);
+    LVFINDINFO fi{ .flags = LVFI_PARAM, .lParam = reinterpret_cast<LPARAM>(item) };
     return FindItem(&fi);
 }
 

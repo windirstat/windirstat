@@ -45,6 +45,7 @@ public:
     void StopAsyncShellInfoQueue();
 
     HICON FetchShellIcon(const std::wstring& path, UINT flags = 0, DWORD attr = FILE_ATTRIBUTE_NORMAL, std::wstring* psTypeName = nullptr);
+    static HICON IconFromFontChar(WCHAR ch, COLORREF textColor, bool bold = false, LPCWSTR fontName = L"Cambria Math");
 
     BlockingQueue<IconLookup> m_lookupQueue = BlockingQueue<IconLookup>(false);
     COleFilterOverride m_filterOverride;
@@ -53,7 +54,8 @@ public:
     HICON m_unknownImage = nullptr;      // <Unknown>
     HICON m_hardlinksImage = nullptr;    // <Hardlinks>
     HICON m_emptyImage = nullptr;        // For items whose icon cannot be found
-    HICON m_junctionImage = nullptr;     // For normal functions
+    HICON m_junctionImage = nullptr;     // For normal junctions
+    HICON m_symlinkImage = nullptr;      // For symbolic links
     HICON m_junctionProtected = nullptr; // For protected junctions
     HICON m_mountPointImage = nullptr;   // Mount point icon
     HICON m_myComputerImage = nullptr;   // My computer icon
@@ -62,6 +64,7 @@ public:
     HICON GetMyComputerImage() const { return m_myComputerImage; }
     HICON GetMountPointImage() const { return m_mountPointImage; }
     HICON GetJunctionImage() const { return m_junctionImage; }
+    HICON GetSymbolicLinkImage() const { return m_symlinkImage; }
     HICON GetJunctionProtectedImage() const { return m_junctionProtected; }
     HICON GetFreeSpaceImage() const { return m_freeSpaceImage; }
     HICON GetUnknownImage() const { return m_unknownImage; }

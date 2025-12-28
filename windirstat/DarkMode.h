@@ -43,7 +43,6 @@ public:
     static HBRUSH OnCtlColor(CDC* pDC, UINT nCtlColor);
     static void SetAppDarkMode() noexcept;
     static void SetupGlobalColors() noexcept;
-    static HICON LightenIcon(HICON hIcon, bool invert = false);
     static void LightenBitmap(CBitmap* pBitmap, bool invert = false);
 
 private:
