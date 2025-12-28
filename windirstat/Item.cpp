@@ -1710,7 +1710,7 @@ std::wstring CItem::UpwardGetPathWithoutBackslash() const
         {
             path.append(pathPart->m_name.get(), 2).append(L"\\");
         }
-        else
+        else if (!pathPart->IsTypeOrFlag(IT_MYCOMPUTER))
         {
             path.append(pathPart->m_name.get(), pathPart->m_nameLen);
         }
