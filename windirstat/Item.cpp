@@ -191,21 +191,21 @@ std::wstring CItem::GetText(const int subitem) const
         return FormatDouble(GetFraction() * 100) + L"%";
 
     case COL_ITEMS:
-        if (!IsTypeOrFlag(IT_FILE, IT_FREESPACE, IT_UNKNOWN, IT_HLINKS, IT_HLINKS_SET, IT_HLINKS_IDX, IT_HLINKS_FILE))
+        if (!IsTypeOrFlag(IT_FILE, IT_FREESPACE, IT_UNKNOWN, IT_HLINKS, IT_HLINKS_SET, IT_HLINKS_IDX))
         {
             return FormatCount(GetItemsCount());
         }
         break;
 
     case COL_FILES:
-        if (!IsTypeOrFlag(IT_FILE, IT_FREESPACE, IT_UNKNOWN, IT_HLINKS, IT_HLINKS_SET, IT_HLINKS_IDX, IT_HLINKS_FILE))
+        if (!IsTypeOrFlag(IT_FILE, IT_FREESPACE, IT_UNKNOWN, IT_HLINKS, IT_HLINKS_SET, IT_HLINKS_IDX))
         {
             return FormatCount(GetFilesCount());
         }
         break;
 
     case COL_FOLDERS:
-        if (!IsTypeOrFlag(IT_FILE, IT_FREESPACE, IT_UNKNOWN, IT_HLINKS, IT_HLINKS_SET, IT_HLINKS_IDX, IT_HLINKS_FILE))
+        if (!IsTypeOrFlag(IT_FILE, IT_FREESPACE, IT_UNKNOWN, IT_HLINKS, IT_HLINKS_SET, IT_HLINKS_IDX))
         {
             return FormatCount(GetFoldersCount());
         }
@@ -371,7 +371,7 @@ HICON CItem::GetIcon()
         m_visualInfo->icon = GetIconHandler()->GetUnknownImage();
         return m_visualInfo->icon;
     }
-    if (IsTypeOrFlag(IT_HLINKS, IT_HLINKS_SET, IT_HLINKS_IDX, IT_HLINKS_FILE))
+    if (IsTypeOrFlag(IT_HLINKS, IT_HLINKS_SET, IT_HLINKS_IDX))
     {
         m_visualInfo->icon = GetIconHandler()->GetHardlinksImage();
         return m_visualInfo->icon;
@@ -390,8 +390,9 @@ HICON CItem::GetIcon()
         return m_visualInfo->icon;
     }
 
+    const CItem* refItem = GetLinkedItem();
     CDirStatApp::Get()->GetIconHandler()->DoAsyncShellInfoLookup(std::make_tuple(const_cast<CItem*>(this),
-        m_visualInfo->control, GetPath(), GetAttributes(), &m_visualInfo->icon, nullptr));
+        m_visualInfo->control, refItem->GetPath(), refItem->GetAttributes(), &m_visualInfo->icon, nullptr));
 
     return nullptr;
 }
