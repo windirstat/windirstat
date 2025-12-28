@@ -994,13 +994,6 @@ void CItem::SetName(std::wstring_view name)
 
 std::wstring CItem::GetName() const
 {
-    // For IT_HLINKS_FILE, the name is stored as the full path - extract just the filename
-    if (IsTypeOrFlag(IT_HLINKS_FILE))
-    {
-        std::wstring fullName{ m_name.get(), m_nameLen };
-        return fullName.substr(fullName.find_last_of(wds::chrBackslash) + 1);
-    }
-    
     return { m_name.get(), m_nameLen };
 }
 
