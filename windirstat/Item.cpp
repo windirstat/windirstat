@@ -381,12 +381,12 @@ HICON CItem::GetIcon()
         m_visualInfo->icon = GetIconHandler()->GetMountPointImage();
         return m_visualInfo->icon;
     }
-    else if (IsTypeOrFlag(ITRP_SYMLINK, ITRP_JUNCTION))
+    else if (IsTypeOrFlag(ITRP_SYMLINK))
     {
         m_visualInfo->icon = GetIconHandler()->GetSymbolicLinkImage();
         return m_visualInfo->icon;
     }
-    else if (IsTypeOrFlag(ITRP_SYMLINK, ITRP_JUNCTION))
+    else if (IsTypeOrFlag(ITRP_JUNCTION))
     {
         constexpr DWORD mask = FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM;
         const bool osFile = (GetAttributes() & mask) == mask;
