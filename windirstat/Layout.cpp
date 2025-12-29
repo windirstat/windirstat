@@ -33,22 +33,20 @@ END_MESSAGE_MAP()
 BOOL CLayoutDialogEx::PreTranslateMessage(MSG* pMsg)
 {
     // Check for Ctrl+C key combination
-    if (pMsg->message == WM_KEYDOWN && pMsg->wParam == 'C' && 
+    if (pMsg->message == WM_KEYDOWN && pMsg->wParam == 'C' &&
         (GetKeyState(VK_CONTROL) & HSHELL_HIGHBIT))
     {
         // Get the mouse cursor position
         CPoint pt;
         GetCursorPos(&pt);
         ScreenToClient(&pt);
-        
+
         // Find which child window is at this position
-        if (const CWnd* pWndUnderCursor = ChildWindowFromPoint(pt, CWP_SKIPINVISIBLE);
+        if (CWnd* pWndUnderCursor = ChildWindowFromPoint(pt, CWP_SKIPINVISIBLE);
             pWndUnderCursor != nullptr && pWndUnderCursor != this)
         {
-            // Check if it's a static control
-            WCHAR className[MAX_CLASS_NAME]{};
-            ::GetClassName(pWndUnderCursor->GetSafeHwnd(), className, std::size(className));
-            if (_wcsicmp(className, WC_STATIC) == 0)
+            // Prefer MFC RTTI over raw window class-name checks.
+            if (pWndUnderCursor->IsKindOf(RUNTIME_CLASS(CStatic)))
             {
                 // Get the text from the static control
                 CString text;
@@ -175,9 +173,9 @@ void CLayout::OnGetMinMaxInfo(MINMAXINFO* mmi)
 
 void CLayout::CSizeGripper::Create(CWnd* parent, const CRect rc)
 {
-    VERIFY(CWnd::Create(AfxRegisterWndClass(0,
+    CWnd::Create(AfxRegisterWndClass(0,
         CDirStatApp::Get()->LoadStandardCursor(IDC_ARROW), nullptr, nullptr),
-        wds::strEmpty, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS, rc, parent, IDC_SIZEGRIPPER));
+        wds::strEmpty, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS, rc, parent, IDC_SIZEGRIPPER);
 }
 
 BEGIN_MESSAGE_MAP(CLayout::CSizeGripper, CWnd)

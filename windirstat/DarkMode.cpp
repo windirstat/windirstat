@@ -16,6 +16,7 @@
 //
 
 #include "pch.h"
+#include "SelectObject.h"
 
 #pragma comment(lib, "uxtheme.lib")
 #pragma comment(lib, "dwmapi.lib")
@@ -321,7 +322,7 @@ void DarkMode::LightenBitmap(CBitmap* pBitmap, const bool invert)
     pBitmap->GetBitmap(&bm);
     CDC memDC;
     memDC.CreateCompatibleDC(nullptr);
-    memDC.SelectObject(pBitmap);
+    CSelectObject sobmp(&memDC, pBitmap);
     BITMAPINFO bmi = { {sizeof(BITMAPINFOHEADER), bm.bmWidth, -bm.bmHeight, 1, 32, BI_RGB} };
     const auto pixels = std::make_unique_for_overwrite<BYTE[]>(bm.bmWidth * bm.bmHeight * 4);
     if (!GetDIBits(memDC, *pBitmap, 0, bm.bmHeight, pixels.get(), &bmi, DIB_RGB_COLORS)) return;

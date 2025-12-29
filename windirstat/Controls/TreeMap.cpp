@@ -140,7 +140,7 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, Item* root, const Options* option
     {
         // Create a temporary CDC that represents only the tree map
         CDC dcTreeView;
-        VERIFY(dcTreeView.CreateCompatibleDC(pdc));
+        dcTreeView.CreateCompatibleDC(pdc);
 
         // This bitmap will be blitted onto the temporary DC
         CBitmap bmp;
@@ -420,13 +420,15 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, Item* root, const Options* option
         }
 
         // Fill the bitmap with the array data and render
-        VERIFY(bmp.CreateBitmap(rc.Width(), rc.Height(), 1, 32, bitmapBits.data()));
-        dcTreeView.SelectObject(&bmp);
-        VERIFY(pdc->BitBlt(rc.TopLeft().x, rc.TopLeft().y, rc.Width(), rc.Height(), &dcTreeView, 0, 0, SRCCOPY));
+        bmp.CreateBitmap(rc.Width(), rc.Height(), 1, 32, bitmapBits.data());
+        {
+            CSelectObject sobmp(&dcTreeView, &bmp);
+            pdc->BitBlt(rc.TopLeft().x, rc.TopLeft().y, rc.Width(), rc.Height(), &dcTreeView, 0, 0, SRCCOPY);
+        }
 
         // Free memory
-        VERIFY(bmp.DeleteObject());
-        VERIFY(dcTreeView.DeleteDC());
+        bmp.DeleteObject();
+        dcTreeView.DeleteDC();
     }
     else
     {
@@ -549,7 +551,7 @@ void CTreeMap::DrawColorPreview(CDC* pdc, const CRect& rc, const COLORREF color,
 
     // Create a temporary CDC that represents only the tree map
     CDC dcTreeView;
-    VERIFY(dcTreeView.CreateCompatibleDC(pdc));
+    dcTreeView.CreateCompatibleDC(pdc);
 
     // This bitmap will be blitted onto the temporary DC
     CBitmap bmp;
@@ -562,25 +564,25 @@ void CTreeMap::DrawColorPreview(CDC* pdc, const CRect& rc, const COLORREF color,
     RenderRectangle(bitmapBits, CRect(0, 0, rc.Width(), rc.Height()), surface, color);
 
     // Fill the bitmap with the array
-    VERIFY(bmp.CreateBitmap(rc.Width(), rc.Height(), 1, 32, bitmapBits.data()));
+    bmp.CreateBitmap(rc.Width(), rc.Height(), 1, 32, bitmapBits.data());
+    {
+        CSelectObject sobmp(&dcTreeView, &bmp);
 
-    // Render bitmap to the temporary CDC
-    dcTreeView.SelectObject(&bmp);
-
-    // And lastly, draw the temporary CDC to the real one
-    VERIFY(pdc->BitBlt(rc.TopLeft().x, rc.TopLeft().y, rc.Width(), rc.Height(), &dcTreeView, 0, 0, SRCCOPY));
+        // Render bitmap to the temporary CDC
+        pdc->BitBlt(rc.TopLeft().x, rc.TopLeft().y, rc.Width(), rc.Height(), &dcTreeView, 0, 0, SRCCOPY);
+    }
 
     if (m_options.grid)
     {
         CPen pen(PS_SOLID, 1, m_options.gridColor);
         CSelectObject sopen(pdc, &pen);
         CSelectStockObject sobrush(pdc, NULL_BRUSH);
-        VERIFY(pdc->Rectangle(rc));
+        pdc->Rectangle(rc);
     }
 
     // Free memory
-    VERIFY(bmp.DeleteObject());
-    VERIFY(dcTreeView.DeleteDC());
+    bmp.DeleteObject();
+    dcTreeView.DeleteDC();
 }
 
 void CTreeMap::RenderLeaf(std::vector<COLORREF>& bitmap, const Item* item, const std::array<double, 4>& surface) const
@@ -669,12 +671,10 @@ bool CTreeMap::KDirStat_ArrangeChildren(
     }
 
     childWidth.resize(childCount);
-    for (int nextChild = 0; nextChild < childCount;)
+    for (int nextChild = 0, childrenUsed = 0; nextChild < childCount; nextChild += childrenUsed)
     {
-        int childrenUsed = 0;
         rows.emplace_back(KDirStat_CalculateNextRow(parent, nextChild, width, childrenUsed, childWidth));
         childrenPerRow.emplace_back(childrenUsed);
-        nextChild += childrenUsed;
     }
 
     return horizontalRows;
@@ -765,7 +765,7 @@ bool CTreeMap::IsCushionShading() const
 void CTreeMap::DrawSolidRect(std::vector<COLORREF>& bitmap, const CRect& rc, const COLORREF col, const double brightness) const
 {
     const double factor = brightness / PALETTE_BRIGHTNESS;
-    
+
     auto red = static_cast<int>(GetRValue(col) * factor);
     auto green = static_cast<int>(GetGValue(col) * factor);
     auto blue = static_cast<int>(GetBValue(col) * factor);

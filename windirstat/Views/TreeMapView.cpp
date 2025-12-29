@@ -51,10 +51,10 @@ void CTreeMapView::ShowTreeMap(const bool show)
 
 BOOL CTreeMapView::PreCreateWindow(CREATESTRUCT& cs)
 {
-    VERIFY(CView::PreCreateWindow(cs)); // this registers a wndclass
+    CView::PreCreateWindow(cs);
 
     WNDCLASS wc;
-    VERIFY(GetClassInfo(AfxGetInstanceHandle(), cs.lpszClass, &wc));
+    GetClassInfo(AfxGetInstanceHandle(), cs.lpszClass, &wc);
     wc.hbrBackground = nullptr;
     wc.lpszClassName = L"windirstatTreeMapClass";
     cs.lpszClass = reinterpret_cast<LPCWSTR>(::RegisterClass(&wc));

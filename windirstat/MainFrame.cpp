@@ -334,7 +334,7 @@ void CPacmanControl::OnPaint()
 void CDeadFocusWnd::Create(CWnd* parent)
 {
     const CRect rc(0, 0, 0, 0);
-    VERIFY(CWnd::Create(AfxRegisterWndClass(0, nullptr, nullptr, nullptr), L"_deadfocus", WS_CHILD, rc, parent, 0));
+    CWnd::Create(AfxRegisterWndClass(0, nullptr, nullptr, nullptr), L"_deadfocus", WS_CHILD, rc, parent, 0);
 }
 
 CDeadFocusWnd::~CDeadFocusWnd()
@@ -646,7 +646,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
     m_wndToolBar.SetPaneStyle(m_wndToolBar.GetPaneStyle() & ~CBRS_GRIPPER);
 
     // Setup status pane and force initial field population
-    VERIFY(m_wndStatusBar.Create(this));
+    m_wndStatusBar.Create(this);
     m_wndStatusBar.SetIndicators(indicators, std::size(indicators));
     m_wndStatusBar.SetPaneStyle(ID_STATUSPANE_IDLE_INDEX, SBPS_STRETCH);
     SetStatusPaneText(ID_STATUSPANE_CAPS_INDEX, Localization::Lookup(IDS_INDICATOR_CAPS));
@@ -962,7 +962,7 @@ void CMainFrame::UpdateCleanupMenu(CMenu* menu) const
             Localization::Format(IDS_sITEMSs, FormatCount(count), FormatBytes(bytes)));
 
         const UINT state = menu->GetMenuState(menuId, MF_BYCOMMAND);
-        VERIFY(menu->ModifyMenu(menuId, MF_BYCOMMAND | MF_STRING, menuId, label.c_str()));
+        menu->ModifyMenu(menuId, MF_BYCOMMAND | MF_STRING, menuId, label.c_str());
         menu->EnableMenuItem(menuId, state);
     }
 

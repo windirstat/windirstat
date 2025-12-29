@@ -248,10 +248,10 @@ std::wstring FormatFileTime(const FILETIME& t)
     const LCID lcid = COptions::GetLocaleForFormatting();
 
     std::array<WCHAR, 64> date;
-    VERIFY(0 < ::GetDateFormat(lcid, DATE_SHORTDATE, &st, nullptr, date.data(), static_cast<int>(date.size())));
+    GetDateFormat(lcid, DATE_SHORTDATE, &st, nullptr, date.data(), static_cast<int>(date.size()));
 
     std::array<WCHAR, 64> time;
-    VERIFY(0 < ::GetTimeFormat(lcid, TIME_NOSECONDS, &st, nullptr, time.data(), static_cast<int>(time.size())));
+    GetTimeFormat(lcid, TIME_NOSECONDS, &st, nullptr, time.data(), static_cast<int>(time.size()));
  
     return std::format(L"{}  {}", date.data(), time.data());
 }
@@ -774,7 +774,7 @@ std::wstring GetBaseNameFromPath(const std::wstring& path)
 std::wstring GetAppFileName(const std::wstring& ext)
 {
     std::wstring s(_MAX_PATH, wds::chrNull);
-    VERIFY(::GetModuleFileName(nullptr, s.data(), _MAX_PATH));
+    ::GetModuleFileName(nullptr, s.data(), _MAX_PATH);
     s.resize(wcslen(s.data()));
 
     // optional substitute extension

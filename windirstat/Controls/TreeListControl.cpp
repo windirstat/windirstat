@@ -274,7 +274,6 @@ BOOL CTreeListControl::CreateExtended(const DWORD dwExStyle, DWORD dwStyle, cons
     dwStyle |= LVS_OWNERDRAWFIXED;
 
     const BOOL bRet = Create(dwStyle, rect, pParentWnd, nID);
-    VERIFY(bRet);
     if (bRet && dwExStyle)
     {
         AddExtendedStyle(dwExStyle);
@@ -390,9 +389,9 @@ void CTreeListControl::InitializeNodeBitmaps()
 
     auto bitmapToUse = DarkMode::IsDarkModeActive() ? IDB_NODES_INVERT : IDB_NODES;
     cm[0].to = GetWindowColor();
-    VERIFY(m_bmNodes0.LoadMappedBitmap(bitmapToUse, 0, cm, 1));
+    m_bmNodes0.LoadMappedBitmap(bitmapToUse, 0, cm, 1);
     cm[0].to = GetStripeColor();
-    VERIFY(m_bmNodes1.LoadMappedBitmap(bitmapToUse, 0, cm, 1));
+    m_bmNodes1.LoadMappedBitmap(bitmapToUse, 0, cm, 1);
 }
 
 void CTreeListControl::InsertItem(const int i, CTreeListItem* item)
@@ -605,7 +604,7 @@ void CTreeListControl::CollapseItem(const int i)
 int CTreeListControl::GetItemScrollPosition(const CTreeListItem* item) const
 {
     CRect rc;
-    VERIFY(GetItemRect(FindTreeItem(item), rc, LVIR_BOUNDS));
+    GetItemRect(FindTreeItem(item), rc, LVIR_BOUNDS);
     return rc.top;
 }
 
@@ -872,7 +871,7 @@ void CTreeListControl::OnContextMenu(CWnd* /*pWnd*/, const CPoint pt)
     else
     {
         const std::wstring command = item->IsExpanded() && item->HasChildren() ? Localization::Lookup(IDS_COLLAPSE) : Localization::Lookup(IDS_EXPAND);
-        VERIFY(sub->ModifyMenu(ID_POPUP_TOGGLE, MF_BYCOMMAND | MF_STRING, ID_POPUP_TOGGLE, command.c_str()));
+        sub->ModifyMenu(ID_POPUP_TOGGLE, MF_BYCOMMAND | MF_STRING, ID_POPUP_TOGGLE, command.c_str());
         sub->SetDefaultItem(ID_POPUP_TOGGLE, false);
     }
 

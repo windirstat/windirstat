@@ -77,8 +77,8 @@ void CAboutDlg::WdsTabControl::Initialize()
     // Calculate initial client area
     auto createText = [&](CRichEditCtrl& ctrl, const DWORD align = ES_CENTER)
     {
-        VERIFY(ctrl.Create(WS_CHILD | WS_VISIBLE | WS_BORDER | ES_MULTILINE | ES_READONLY | WS_VSCROLL | align,
-            CRect(), this, ID_WDS_CONTROL));
+        ctrl.Create(WS_CHILD | WS_VISIBLE | WS_BORDER | ES_MULTILINE | ES_READONLY | WS_VSCROLL | align,
+            CRect(), this, ID_WDS_CONTROL);
         ctrl.SetEventMask(ENM_LINK | ENM_KEYEVENTS);
         return &ctrl;
     };

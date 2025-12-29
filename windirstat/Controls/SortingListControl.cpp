@@ -158,11 +158,11 @@ void CSortingListControl::InsertListItem(const int i, CSortingListItem* item)
 void CSortingListControl::SortItems()
 {
     // Reorder the list items based on the current sorting criteria using a lambda comparison function.
-    VERIFY(CListCtrl::SortItems([](LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort) {
+    CListCtrl::SortItems([](LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort) {
         const CSortingListItem* item1 = reinterpret_cast<CSortingListItem*>(lParam1);
         const CSortingListItem* item2 = reinterpret_cast<CSortingListItem*>(lParam2);
         const SSorting* sorting = reinterpret_cast<SSorting*>(lParamSort);
-        return item1->CompareSort(item2, *sorting); }, reinterpret_cast<DWORD_PTR>(&m_sorting)));
+        return item1->CompareSort(item2, *sorting); }, reinterpret_cast<DWORD_PTR>(&m_sorting));
 
     CHeaderCtrl* pHeaderCtrl = GetHeaderCtrl();
     

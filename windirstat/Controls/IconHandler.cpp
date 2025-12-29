@@ -17,6 +17,7 @@
 
 #include "pch.h"
 #include "IconHandler.h"
+#include "SelectObject.h"
 
 struct CFilterGuard
 {
@@ -189,7 +190,6 @@ HICON CIconHandler::IconFromFontChar(const WCHAR ch, const COLORREF textColor, c
         return bi;
         };
 
-    // Create render DC and bitmap
     CClientDC screenDC(nullptr);
     CDC memDC;
     memDC.CreateCompatibleDC(&screenDC);
@@ -201,7 +201,7 @@ HICON CIconHandler::IconFromFontChar(const WCHAR ch, const COLORREF textColor, c
         reinterpret_cast<BITMAPINFO*>(const_cast<BITMAPV5HEADER*>(&bi)),
         DIB_RGB_COLORS, reinterpret_cast<void**>(&pBits), nullptr, 0));
 
-    CBitmap* const pOldBmp = memDC.SelectObject(&renderBmp);
+    CSelectObject sobmp(&memDC, &renderBmp);
 
     // Clear and setup rendering
     memset(pBits, 0, RENDER_SIZE * RENDER_SIZE * 4);
@@ -218,7 +218,7 @@ HICON CIconHandler::IconFromFontChar(const WCHAR ch, const COLORREF textColor, c
     wcscpy_s(lf.lfFaceName, fontName ? fontName : L"Segoe UI");
     font.CreateFontIndirect(&lf);
 
-    CFont* const pOldFont = memDC.SelectObject(&font);
+    CSelectObject sofont(&memDC, &font);
 
     // Measure and draw text
     const CSize textSize = memDC.GetTextExtent(&ch, 1);
@@ -274,11 +274,9 @@ HICON CIconHandler::IconFromFontChar(const WCHAR ch, const COLORREF textColor, c
         reinterpret_cast<BITMAPINFO*>(const_cast<BITMAPV5HEADER*>(&biFinal)),
         DIB_RGB_COLORS, reinterpret_cast<void**>(&pFinalBits), nullptr, 0));
 
-    //memset(pFinalBits, 0, ICON_SIZE * ICON_SIZE * 4);
-
     CDC finalDC;
     finalDC.CreateCompatibleDC(&screenDC);
-    CBitmap* const pOldFinal = finalDC.SelectObject(&finalBmp);
+    CSelectObject sofinal(&finalDC, &finalBmp);
 
     finalDC.SetStretchBltMode(HALFTONE);
     finalDC.SetBrushOrg(0, 0);
@@ -300,11 +298,6 @@ HICON CIconHandler::IconFromFontChar(const WCHAR ch, const COLORREF textColor, c
     ii.hbmColor = (HBITMAP)finalBmp.m_hObject;
     ii.hbmMask = (HBITMAP)maskBmp.m_hObject;
     const HICON hIcon = CreateIconIndirect(&ii);
-
-    // Cleanup selections
-    memDC.SelectObject(pOldFont);
-    memDC.SelectObject(pOldBmp);
-    finalDC.SelectObject(pOldFinal);
 
     return hIcon;
 }

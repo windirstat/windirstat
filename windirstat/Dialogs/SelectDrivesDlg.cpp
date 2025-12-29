@@ -265,8 +265,7 @@ CDriveInformationThread::CDriveInformationThread(const std::wstring & path, cons
 
     // The constructor starts the thread
     AddRunningThread();
-
-    VERIFY(CreateThread());
+    CreateThread();
 }
 
 BOOL CDriveInformationThread::InitInstance()

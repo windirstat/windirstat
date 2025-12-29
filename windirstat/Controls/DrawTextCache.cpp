@@ -17,6 +17,7 @@
 
 #include "pch.h"
 #include "DrawTextCache.h"
+#include "SelectObject.h"
 
 void DrawTextCache::DrawTextCached(CDC* pDC, const std::wstring& text, CRect& rect, UINT format)
 {
@@ -68,11 +69,7 @@ std::unique_ptr<DrawTextCache::CacheEntry> DrawTextCache::CreateCachedBitmap(
     memDC.CreateCompatibleDC(pDC);
 
     // Select the same font to get accurate measurements
-    SmartPointer<CFont*> pOldFont([&](CFont* p) { memDC.SelectObject(p); }, nullptr);
-    if (CFont* pFont = pDC->GetCurrentFont(); pFont)
-    {
-        pOldFont = memDC.SelectObject(pFont);
-    }
+    CSelectObject sofont(&memDC, pDC->GetCurrentFont());
 
     // Calculate actual text dimensions
     CRect calcRect(0, 0, rect.Width(), rect.Height());
@@ -108,8 +105,7 @@ std::unique_ptr<DrawTextCache::CacheEntry> DrawTextCache::CreateCachedBitmap(
 
     // Create compatible bitmap for the text
     entry->bitmap.CreateCompatibleBitmap(pDC, calcRect.Width(), textHeight);
-    SmartPointer<CBitmap*> pOldBitmap([&](CBitmap* p) { memDC.SelectObject(p); },
-        memDC.SelectObject(&entry->bitmap));
+    CSelectObject sobmp(&memDC, &entry->bitmap);
 
     // Fill with background color and draw text with actual text color
     memDC.SetBkColor(pDC->GetBkColor());
@@ -150,8 +146,7 @@ void DrawTextCache::PaintCachedEntry(CDC* pDC, const CRect& rect, CacheEntry& en
     // Create memory DC
     CDC memDC;
     memDC.CreateCompatibleDC(pDC);
-    SmartPointer<CBitmap*> pOldBitmap([&](CBitmap* p) { memDC.SelectObject(p); },
-        memDC.SelectObject(&entry.bitmap));
+    CSelectObject sobmp(&memDC, &entry.bitmap);
 
     // Calculate horizontal position based on alignment
     int xPos = rect.left + entry.drawnRect.left;
