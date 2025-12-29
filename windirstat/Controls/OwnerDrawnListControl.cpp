@@ -66,7 +66,7 @@ void COwnerDrawnListItem::DrawLabel(const COwnerDrawnListControl* list, CDC* pdc
     rcRest.DeflateRect(list->GetTextXMargin(), 0);
 
     CRect rcLabel = rcRest;
-    DrawTextCache::GetInstance().DrawTextCached(pdc, GetText(0), rcLabel, DT_SINGLELINE | DT_VCENTER | DT_WORD_ELLIPSIS | DT_CALCRECT | DT_NOPREFIX);
+    DrawTextCache::GetInstance().DrawTextCached(pdc, GetText(0), rcLabel, true, true);
 
     rcLabel.InflateRect(LABEL_INFLATE_CX, 0);
     rcLabel.top = rcRest.top + LABEL_Y_MARGIN;
@@ -93,7 +93,7 @@ void COwnerDrawnListItem::DrawLabel(const COwnerDrawnListControl* list, CDC* pdc
     if (width == nullptr)
     {
         // Draw the actual text
-        DrawTextCache::GetInstance().DrawTextCached(pdc, GetText(0), rcRest, DT_SINGLELINE | DT_VCENTER | DT_WORD_ELLIPSIS | DT_NOPREFIX);
+        DrawTextCache::GetInstance().DrawTextCached(pdc, GetText(0), rcRest);
     }
 
     rcLabel.InflateRect(1, 1);
@@ -385,7 +385,7 @@ void COwnerDrawnListControl::DrawItem(LPDRAWITEMSTRUCT pdis)
         LVCOLUMN colInfo{ LVCF_SUBITEM | LVCF_FMT };
         GetColumn(i, &colInfo);
         const int subitem = colInfo.iSubItem;
-        const int alignment = (colInfo.fmt & LVCFMT_RIGHT) != 0 ? DT_RIGHT : DT_LEFT;
+        const bool leftAlign = (colInfo.fmt & LVCFMT_RIGHT) == 0;
 
         CRect rc = GetWholeSubitemRect(pdis->itemID, i);
         const CRect rcDraw = rc - rcItem.TopLeft();
@@ -413,7 +413,7 @@ void COwnerDrawnListControl::DrawItem(LPDRAWITEMSTRUCT pdis)
             CSetBkColor backColorSub(&dcMem, backColor);
 
             // Draw the (sub)item text
-            DrawTextCache::GetInstance().DrawTextCached(&dcMem, s, rcText, alignment | DT_SINGLELINE | DT_VCENTER | DT_WORD_ELLIPSIS | DT_NOPREFIX);
+            DrawTextCache::GetInstance().DrawTextCached(&dcMem, s, rcText, leftAlign);
         }
 
         if (m_showGrid)
@@ -460,11 +460,6 @@ CRect COwnerDrawnListControl::GetWholeSubitemRect(const int item, const int subi
         VERIFY(GetSubItemRect(item, subitem, LVIR_LABEL, rc));
     }
 
-    if (m_showGrid)
-    {
-        rc.right--;
-        rc.bottom--;
-    }
     return rc;
 }
 

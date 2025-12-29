@@ -32,7 +32,7 @@ public:
     }
 
     // Main drawing function - replacement for DrawText
-    void DrawTextCached(CDC* pDC, const std::wstring& text, CRect& rect, UINT format);
+    void DrawTextCached(CDC* pDC, const std::wstring& text, CRect& rect, bool leftAligned = true, bool calcRect = false);
 
 private:
 
@@ -67,11 +67,9 @@ private:
     // Cached bitmap entry - stored via unique_ptr to avoid copy issues with CBitmap
     struct CacheEntry
     {
-        CBitmap bitmap;
-        CSize bitmapSize;
-        CSmallRect drawnRect;
-        CSmallRect calculatedRect;
-        int textHeight = 0;
+        CBitmap bmp;
+        CSize bmpSize;
+        CSmallRect calcRect;
         UINT format = 0;
     };
 

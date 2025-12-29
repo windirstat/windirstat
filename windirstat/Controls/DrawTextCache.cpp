@@ -19,13 +19,13 @@
 #include "DrawTextCache.h"
 #include "SelectObject.h"
 
-void DrawTextCache::DrawTextCached(CDC* pDC, const std::wstring& text, CRect& rect, UINT format)
+void DrawTextCache::DrawTextCached(CDC* pDC, const std::wstring& text, CRect& rect, const bool leftAlign, const bool calcRect)
 {
-    ASSERT((format & DT_SINGLELINE) != 0);
-    ASSERT((format & DT_VCENTER) != 0);
     if (!pDC || text.empty()) return;
 
     // Look up in cache
+    const UINT format = DT_SINGLELINE | DT_VCENTER | DT_WORD_ELLIPSIS | DT_NOPREFIX |
+        (leftAlign ? DT_LEFT : DT_RIGHT) | (calcRect ? DT_CALCRECT : 0);
     CacheKey key = CreateCacheKey(pDC, text, rect, format);
     if (auto it = m_cache.find(key); it != m_cache.end())
     {
@@ -34,8 +34,9 @@ void DrawTextCache::DrawTextCached(CDC* pDC, const std::wstring& text, CRect& re
 
         // Handle rectangle calculation or normal drawing
         auto& entry = *it->second.first;
-        if (format & DT_CALCRECT) rect = entry.calculatedRect;
+        if (format & DT_CALCRECT) rect = entry.calcRect;
         else PaintCachedEntry(pDC, rect, entry);
+        return;
     }
 
     // Cache miss - create new cached entry
@@ -43,7 +44,7 @@ void DrawTextCache::DrawTextCached(CDC* pDC, const std::wstring& text, CRect& re
 
     // Handle rectangle calculation or normal drawing
     auto entry = CreateCachedBitmap(pDC, text, rect, format);
-    if (format & DT_CALCRECT) rect = entry->calculatedRect;
+    if (format & DT_CALCRECT) rect = entry->calcRect;
     else PaintCachedEntry(pDC, rect, *entry);
 
     // Add to LRU list and cache
@@ -76,25 +77,17 @@ std::unique_ptr<DrawTextCache::CacheEntry> DrawTextCache::CreateCachedBitmap(
     memDC.DrawTextW(text.c_str(), static_cast<int>(text.length()),
         &calcRect, format | DT_CALCRECT);
 
-    // For single-line text, use font metrics for accurate height
-    int textHeight = calcRect.Height();
-    if (TEXTMETRIC tm; memDC.GetTextMetrics(&tm))
-    {
-        textHeight = tm.tmHeight - 1;
-    }
+    // Get font metrics for accurate text height
+    TEXTMETRIC tm;
+    const int textHeight = memDC.GetTextMetrics(&tm) ? tm.tmHeight : calcRect.Height();
 
-    // Store the actual drawn rectangle (relative to input rect)
-    // The vertical offset positions the text correctly within the target rect
-    const int vertOffset = max(0, (rect.Height() - textHeight) / 2);
     auto entry = std::make_unique<CacheEntry>();
-    entry->drawnRect = CRect(calcRect.left, vertOffset, calcRect.right, vertOffset + textHeight);
-    entry->textHeight = textHeight;
-    entry->bitmapSize = CSize(calcRect.Width(), textHeight);
-    entry->format = format;  // Store format for alignment during painting
+    entry->bmpSize = CSize(calcRect.Width(), textHeight);
+    entry->format = format;
 
     // Store the calculated rectangle for DT_CALCRECT requests
     // Preserve the original position (left, top) from input rect, only update size
-    entry->calculatedRect = CRect(rect.left, rect.top,
+    entry->calcRect = CRect(rect.left, rect.top,
         rect.left + calcRect.Width(), rect.top + calcRect.Height());
 
     // If this is just a DT_CALCRECT request, we don't need to create the bitmap
@@ -103,20 +96,19 @@ std::unique_ptr<DrawTextCache::CacheEntry> DrawTextCache::CreateCachedBitmap(
         return entry;
     }
 
-    // Create compatible bitmap for the text
-    entry->bitmap.CreateCompatibleBitmap(pDC, calcRect.Width(), textHeight);
-    CSelectObject sobmp(&memDC, &entry->bitmap);
+    // Create compatible bitmap sized exactly for the text
+    entry->bmp.CreateCompatibleBitmap(pDC, calcRect.Width(), textHeight);
+    CSelectObject sobmp(&memDC, &entry->bmp);
 
     // Fill with background color and draw text with actual text color
     memDC.SetBkColor(pDC->GetBkColor());
     memDC.SetTextColor(pDC->GetTextColor());
 
-    // Fill the entire bitmap with background color first
+    // Fill the bitmap with background color
     CRect drawRect(0, 0, calcRect.Width(), textHeight);
     memDC.FillSolidRect(&drawRect, pDC->GetBkColor());
 
-    // Draw the text - remove vertical alignment flags since we're drawing into
-    // a bitmap sized exactly for the text
+    // Draw the text without vertical centering (bitmap is exact text height)
     memDC.DrawTextW(text.c_str(), static_cast<int>(text.length()),
         &drawRect, format & ~DT_VCENTER);
 
@@ -146,20 +138,18 @@ void DrawTextCache::PaintCachedEntry(CDC* pDC, const CRect& rect, CacheEntry& en
     // Create memory DC
     CDC memDC;
     memDC.CreateCompatibleDC(pDC);
-    CSelectObject sobmp(&memDC, &entry.bitmap);
+    CSelectObject sobmp(&memDC, &entry.bmp);
 
     // Calculate horizontal position based on alignment
-    int xPos = rect.left + entry.drawnRect.left;
+    int xPos = rect.left;
     if (entry.format & DT_RIGHT)
     {
-        xPos = rect.right - entry.bitmapSize.cx;
-    }
-    else if (entry.format & DT_CENTER)
-    {
-        xPos = rect.left + (rect.Width() - entry.bitmapSize.cx) / 2;
+        xPos = rect.right - entry.bmpSize.cx;
     }
 
-    // BitBlt at the calculated position
-    pDC->BitBlt(xPos, rect.top + entry.drawnRect.top,
-        entry.bitmapSize.cx, entry.bitmapSize.cy, &memDC, 0, 0, SRCCOPY);
+    // Calculate vertical position for centering
+    const int yPos = rect.top + (rect.Height() - entry.bmpSize.cy) / 2;
+
+    // BitBlt at the calculated position (skip 1 pixel top border)
+    pDC->BitBlt(xPos, yPos, entry.bmpSize.cx, entry.bmpSize.cy, &memDC, 0, 1, SRCCOPY);
 }
