@@ -364,13 +364,13 @@ bool SaveDuplicates(const std::wstring& path, CItemDupe* rootDupe)
             if (linkedItem == nullptr) continue;
 
             // Output file information
-            outf << std::format("{},{},{},{},{},0x{:08X}\r\n",
-                QuoteAndConvert(dupeFile->GetHash()),
+            outf << std::format("{},{},{},{},{},{}\r\n",
+                QuoteAndConvert(dupeGroup->GetHash()),
                 QuoteAndConvert(linkedItem->GetPath()),
                 linkedItem->GetSizeLogical(),
-                linkedItem->GetSizePhysical(),
+                linkedItem->GetSizePhysicalRaw(),
                 ToTimePoint(linkedItem->GetLastChange()),
-                linkedItem->GetAttributes());
+                QuoteAndConvert(FormatAttributes(linkedItem->GetAttributes())));
         }
     }
 
