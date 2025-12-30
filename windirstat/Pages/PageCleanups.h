@@ -46,7 +46,7 @@ protected:
     int m_current = -1; // currently selected user defined cleanup
 
     // Dialog data
-    CListBox m_list;
+    CListBox m_driveList;
     BOOL m_enabled = FALSE;
     CStringW m_title;
     BOOL m_worksForDrives = FALSE;

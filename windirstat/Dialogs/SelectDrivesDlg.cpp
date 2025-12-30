@@ -60,7 +60,7 @@ namespace
 /////////////////////////////////////////////////////////////////////////////
 
 CDriveItem::CDriveItem(CDrivesList* list, const std::wstring & pszPath)
-    : m_list(list)
+    : m_driveList(list)
     , m_path(pszPath)
     , m_icon(GetIconHandler()->FetchShellIcon(m_path))
     , m_isRemote(DRIVE_REMOTE == ::GetDriveType(m_path.c_str()))
@@ -136,7 +136,7 @@ bool CDriveItem::DrawSubItem(const int subitem, CDC* pdc, CRect rc, const UINT s
 {
     if (subitem == COL_DRIVES_NAME)
     {
-        DrawLabel(m_list, pdc, rc, state, width, focusLeft);
+        DrawLabel(m_driveList, pdc, rc, state, width, focusLeft);
         return true;
     }
 
@@ -153,7 +153,7 @@ bool CDriveItem::DrawSubItem(const int subitem, CDC* pdc, CRect rc, const UINT s
             return true;
         }
 
-        DrawSelection(m_list, pdc, rc, state);
+        DrawSelection(m_driveList, pdc, rc, state);
 
         rc.DeflateRect(3, 5);
 
@@ -369,7 +369,7 @@ CSelectDrivesDlg::CSelectDrivesDlg(CWnd* pParent) :
 void CSelectDrivesDlg::DoDataExchange(CDataExchange* pDX)
 {
     CLayoutDialogEx::DoDataExchange(pDX);
-    DDX_Control(pDX, IDC_TARGET_DRIVES_LIST, m_list);
+    DDX_Control(pDX, IDC_TARGET_DRIVES_LIST, m_driveList);
     DDX_Radio(pDX, IDC_RADIO_TARGET_DRIVES_ALL, m_radio);
     DDX_Check(pDX, IDC_SCAN_DUPLICATES, m_scanDuplicates);
     DDX_Check(pDX, IDC_FAST_SCAN_CHECKBOX, m_useFastScan);
@@ -423,19 +423,18 @@ BOOL CSelectDrivesDlg::OnInitDialog()
 
     m_layout.OnInitDialog(true);
 
-    m_list.ModifyStyle(0, LVS_SHOWSELALWAYS);
-    m_list.ShowGrid(COptions::ListGrid);
-    m_list.ShowStripes(COptions::ListStripes);
-    m_list.ShowFullRowSelection(COptions::ListFullRowSelection);
-    m_list.SetExtendedStyle(m_list.GetExtendedStyle() | LVS_EX_HEADERDRAGDROP);
+    m_driveList.ShowGrid(COptions::ListGrid);
+    m_driveList.ShowStripes(COptions::ListStripes);
+    m_driveList.ShowFullRowSelection(COptions::ListFullRowSelection);
+    m_driveList.SetExtendedStyle(m_driveList.GetExtendedStyle() | LVS_EX_HEADERDRAGDROP);
 
-    m_list.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_NAME).c_str(), LVCFMT_LEFT, 150, COL_DRIVES_NAME);
-    m_list.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_TOTAL).c_str(), LVCFMT_RIGHT, 65, COL_DRIVES_TOTAL);
-    m_list.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_FREE).c_str(), LVCFMT_RIGHT, 65, COL_DRIVES_FREE);
-    m_list.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_GRAPH).c_str(), LVCFMT_LEFT, 100, COL_DRIVES_GRAPH);
-    m_list.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_PERCENT_USED).c_str(),LVCFMT_RIGHT, 65, COL_DRIVES_PERCENT_USED);
+    m_driveList.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_NAME).c_str(), LVCFMT_LEFT, 150, COL_DRIVES_NAME);
+    m_driveList.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_TOTAL).c_str(), LVCFMT_RIGHT, 65, COL_DRIVES_TOTAL);
+    m_driveList.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_FREE).c_str(), LVCFMT_RIGHT, 65, COL_DRIVES_FREE);
+    m_driveList.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_GRAPH).c_str(), LVCFMT_LEFT, 100, COL_DRIVES_GRAPH);
+    m_driveList.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_PERCENT_USED).c_str(),LVCFMT_RIGHT, 65, COL_DRIVES_PERCENT_USED);
 
-    m_list.OnColumnsInserted();
+    m_driveList.OnColumnsInserted();
 
     m_selectedDrives = COptions::SelectDrivesDrives;
     m_scanDuplicates = COptions::ScanForDuplicates;
@@ -488,21 +487,21 @@ BOOL CSelectDrivesDlg::OnInitDialog()
             continue;
         }
 
-        const auto item = new CDriveItem(&m_list, s);
-        m_list.InsertListItem(m_list.GetItemCount(), item);
+        const auto item = new CDriveItem(&m_driveList, s);
+        m_driveList.InsertListItem(m_driveList.GetItemCount(), item);
         item->StartQuery(m_hWnd, s_serial);
 
         for (const auto & drive : m_selectedDrives)
         {
             if (std::wstring(item->GetDrive()) == drive)
             {
-                m_list.SelectItem(item);
+                m_driveList.SelectItem(item);
                 break;
             }
         }
     }
 
-    m_list.SortItems();
+    m_driveList.SortItems();
 
     m_radio = COptions::SelectDrivesRadio;
     UpdateData(FALSE);
@@ -514,7 +513,7 @@ BOOL CSelectDrivesDlg::OnInitDialog()
     }
     else if (m_radio == RADIO_TARGET_DRIVES_SUBSET)
     {
-        m_list.SetFocus();
+        m_driveList.SetFocus();
     }
 
     UpdateButtons();
@@ -548,16 +547,16 @@ void CSelectDrivesDlg::OnOK()
             COptions::SelectDrivesFolder.Obj().size()));
     }
 
-    for (const int i : std::views::iota(0, m_list.GetItemCount()))
+    for (const int i : std::views::iota(0, m_driveList.GetItemCount()))
     {
-        const CDriveItem* item = m_list.GetItem(i);
+        const CDriveItem* item = m_driveList.GetItem(i);
 
         if (m_radio == RADIO_TARGET_DRIVES_ALL && !item->IsRemote() && !item->IsSUBSTed() ||
-            m_radio == RADIO_TARGET_DRIVES_SUBSET && m_list.IsItemSelected(i))
+            m_radio == RADIO_TARGET_DRIVES_SUBSET && m_driveList.IsItemSelected(i))
         {
             m_drives.emplace_back(item->GetDrive());
         }
-        if (m_list.IsItemSelected(i))
+        if (m_driveList.IsItemSelected(i))
         {
             m_selectedDrives.emplace_back(item->GetDrive());
         }
@@ -607,7 +606,7 @@ void CSelectDrivesDlg::UpdateButtons()
         break;
     case RADIO_TARGET_DRIVES_SUBSET:
         {
-            enableOk = m_list.GetSelectedCount() > 0;
+            enableOk = m_driveList.GetSelectedCount() > 0;
         }
         break;
     case RADIO_TARGET_FOLDER:
@@ -695,7 +694,7 @@ LRESULT CSelectDrivesDlg::OnWmDriveInfoThreadFinished(const WPARAM serial, const
     fi.flags  = LVFI_PARAM;
     fi.lParam = driveItem;
 
-    if (m_list.FindItem(&fi) == -1)
+    if (m_driveList.FindItem(&fi) == -1)
     {
         VTRACE(L"Item not found!");
         return 0;
@@ -704,15 +703,27 @@ LRESULT CSelectDrivesDlg::OnWmDriveInfoThreadFinished(const WPARAM serial, const
     const auto item = reinterpret_cast<CDriveItem*>(driveItem);
     item->SetDriveInformation(success, name, total, free);
 
-    m_list.SortItems();
+    m_driveList.SortItems();
 
     return 0;
+}
+
+void CSelectDrivesDlg::OnMeasureItem(const int nIDCtl, LPMEASUREITEMSTRUCT lpMeasureItemStruct)
+{
+    if (nIDCtl == IDC_TARGET_DRIVES_LIST)
+    {
+        m_driveList.MeasureItem(lpMeasureItemStruct);
+    }
+    else
+    {
+        CLayoutDialogEx::OnMeasureItem(nIDCtl, lpMeasureItemStruct);
+    }
 }
 
 void CSelectDrivesDlg::OnSysColorChange()
 {
     CLayoutDialogEx::OnSysColorChange();
-    m_list.SysColorChanged();
+    m_driveList.SysColorChanged();
 }
 
 std::wstring CSelectDrivesDlg::GetFullPathName(const std::wstring & relativePath)
@@ -723,10 +734,10 @@ std::wstring CSelectDrivesDlg::GetFullPathName(const std::wstring & relativePath
 
 void CSelectDrivesDlg::OnNMSetfocusTargetDrivesList(NMHDR*, LRESULT* pResult)
 {
-    if (m_list.GetItemCount() > 0 && m_list.GetSelectedCount() == 0)
+    if (m_driveList.GetItemCount() > 0 && m_driveList.GetSelectedCount() == 0)
     {
-        m_list.SetFocus();
-        m_list.SelectItem(m_list.GetItem(0));
+        m_driveList.SetFocus();
+        m_driveList.SelectItem(m_driveList.GetItem(0));
     }
 
     *pResult = 0;

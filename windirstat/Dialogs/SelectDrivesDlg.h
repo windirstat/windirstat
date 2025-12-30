@@ -57,8 +57,8 @@ public:
     HICON GetIcon() override;
 
 private:
-    CDrivesList* m_list; // Backpointer
-    std::wstring m_path; // e.g. "C:\"
+    CDrivesList* m_driveList; // Backpointer
+    std::wstring m_path; // e.g. "C:\""
     HICON m_icon = nullptr; // Cached icon
     bool m_isRemote; // Whether the drive type is DRIVE_REMOTE (network drive)
 
@@ -97,7 +97,7 @@ public:
     LPARAM GetDriveInformation(bool& success, std::wstring& name, ULONGLONG& total, ULONGLONG& free) const;
 
 private:
-    const std::wstring m_path; // Path like "C:\"
+    const std::wstring m_path; // Path like "C:\""
     const LPARAM m_driveItem;  // The list item, we belong to
     const UINT m_serial;       // serial number of m_dialog
     std::atomic<HWND> m_dialog;
@@ -114,6 +114,7 @@ private:
 //
 class CDrivesList final : public COwnerDrawnListControl
 {
+    friend class CSelectDrivesDlg;
     DECLARE_DYNAMIC(CDrivesList)
 
     CDrivesList();
@@ -158,7 +159,7 @@ protected:
     CStringW m_folderName;    // out. Valid if m_radio = RADIO_TARGET_FOLDER
     std::vector<std::wstring> m_drives;    // out. Valid if m_radio != RADIO_TARGET_FOLDER
     static UINT s_serial; // Each Instance of this dialog gets a serial number
-    CDrivesList m_list;
+    CDrivesList m_driveList;
     CComboBox m_browseList;
     CButton m_okButton;
     CButton m_browseButton;
@@ -170,6 +171,7 @@ protected:
     afx_msg void OnDestroy();
     afx_msg LRESULT OnWmuOk(WPARAM, LPARAM);
     afx_msg LRESULT OnWmDriveInfoThreadFinished(WPARAM, LPARAM lparam);
+    afx_msg void OnMeasureItem(int nIDCtl, LPMEASUREITEMSTRUCT lpMeasureItemStruct);
     afx_msg void OnSysColorChange();
     afx_msg void OnBnClickedRadioTargetDrivesSubset();
     afx_msg void OnBnClickedRadioTargetFolder();

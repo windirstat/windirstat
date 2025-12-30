@@ -27,7 +27,7 @@ CPageCleanups::~CPageCleanups() = default;
 void CPageCleanups::DoDataExchange(CDataExchange* pDX)
 {
     CMFCPropertyPage::DoDataExchange(pDX);
-    DDX_Control(pDX, IDC_LIST, m_list);
+    DDX_Control(pDX, IDC_LIST, m_driveList);
     DDX_Check(pDX, IDC_ENABLED, m_enabled);
     DDX_Text(pDX, IDC_TITLE, m_title);
     DDX_Check(pDX, IDC_WORKSFORDRIVES, m_worksForDrives);
@@ -101,10 +101,10 @@ BOOL CPageCleanups::OnInitDialog()
     for (const auto i : std::views::iota(size_t{0}, COptions::UserDefinedCleanups.size()))
     {
         m_udc[i] = COptions::UserDefinedCleanups[i];
-        m_list.AddString(m_udc[i].Title.Obj().c_str());
+        m_driveList.AddString(m_udc[i].Title.Obj().c_str());
     }
 
-    m_list.SetCurSel(0);
+    m_driveList.SetCurSel(0);
     OnLbnSelchangeList();
 
     return TRUE; // return TRUE unless you set the focus to a control
@@ -138,11 +138,11 @@ void CPageCleanups::OnLbnSelchangeList()
 {
     CheckEmptyTitle();
 
-    m_current = m_list.GetCurSel();
+    m_current = m_driveList.GetCurSel();
     if (m_current < 0 || m_current >= USERDEFINEDCLEANUPCOUNT)
     {
         m_current = USERDEFINEDCLEANUPCOUNT - 1;
-        m_list.SetCurSel(m_current);
+        m_driveList.SetCurSel(m_current);
     }
     CurrentUdcToDialog();
 }
@@ -160,8 +160,8 @@ void CPageCleanups::CheckEmptyTitle()
         m_title = Localization::Format(IDS_USER_DEFINED_CLEANUPd, m_current).c_str();
         UpdateData(FALSE);
 
-        m_list.DeleteString(m_current);
-        m_list.InsertString(m_current, m_title);
+        m_driveList.DeleteString(m_current);
+        m_driveList.InsertString(m_current, m_title);
 
         DialogToCurrentUdc();
         m_udc[m_current].VirginTitle = true;
@@ -257,7 +257,7 @@ void CPageCleanups::OnBnClickedEnabled()
     }
     else
     {
-        m_list.SetFocus();
+        m_driveList.SetFocus();
     }
 }
 
@@ -265,9 +265,9 @@ void CPageCleanups::OnEnChangeTitle()
 {
     OnSomethingChanged();
     m_udc[m_current].VirginTitle = false;
-    m_list.DeleteString(m_current);
-    m_list.InsertString(m_current, m_title);
-    m_list.SetCurSel(m_current);
+    m_driveList.DeleteString(m_current);
+    m_driveList.InsertString(m_current, m_title);
+    m_driveList.SetCurSel(m_current);
 }
 
 void CPageCleanups::OnBnClickedWorksfordrives()
@@ -303,11 +303,11 @@ void CPageCleanups::OnBnClickedUp()
     m_udc[m_current - 1] = m_udc[m_current];
     m_udc[m_current] = h;
 
-    m_list.DeleteString(m_current);
-    m_list.InsertString(m_current - 1, m_title);
+    m_driveList.DeleteString(m_current);
+    m_driveList.InsertString(m_current - 1, m_title);
 
     m_current--;
-    m_list.SetCurSel(m_current);
+    m_driveList.SetCurSel(m_current);
 
     SetModified();
     UpdateControlStatus();
@@ -323,11 +323,11 @@ void CPageCleanups::OnBnClickedDown()
     m_udc[m_current + 1] = m_udc[m_current];
     m_udc[m_current] = h;
 
-    m_list.DeleteString(m_current);
-    m_list.InsertString(m_current + 1, m_title);
+    m_driveList.DeleteString(m_current);
+    m_driveList.InsertString(m_current + 1, m_title);
 
     m_current++;
-    m_list.SetCurSel(m_current);
+    m_driveList.SetCurSel(m_current);
 
     SetModified();
     UpdateControlStatus();
