@@ -43,8 +43,11 @@ void CIconHandler::Initialize()
         m_symlinkImage = IconFromFontChar(L'⤷', RGB(0x3A, 0xFF, 0x3A), true);
         m_junctionProtected = IconFromFontChar(L'⤷', RGB(0xFF, 0x3A, 0x3A), true);
         m_freeSpaceImage = IconFromFontChar(L'▢', RGB(0x3A, 0xCC, 0x3A), true);
-        m_emptyImage = IconFromFontChar(L'·', DarkMode::WdsSysColor(COLOR_WINDOWTEXT));
+        m_emptyImage = IconFromFontChar(L'▢', DarkMode::WdsSysColor(COLOR_WINDOWTEXT));
         m_hardlinksImage = IconFromFontChar(L'⧉', DarkMode::WdsSysColor(COLOR_WINDOWTEXT));
+        m_dupesImage = IconFromFontChar(L'⧈', DarkMode::WdsSysColor(COLOR_WINDOWTEXT));
+        m_searchImage = IconFromFontChar(L'⊙', DarkMode::WdsSysColor(COLOR_WINDOWTEXT));
+        m_largestImage = IconFromFontChar(L'⋙', DarkMode::WdsSysColor(COLOR_WINDOWTEXT));
         m_unknownImage = IconFromFontChar(L'?', RGB(0xCC,0xB8,0x66), true);
         
         // Cache icon for boot drive

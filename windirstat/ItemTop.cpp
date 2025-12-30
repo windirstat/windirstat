@@ -98,7 +98,7 @@ HICON CItemTop::GetIcon()
     // Cache icon for parent nodes
     if (m_item == nullptr)
     {
-        m_visualInfo->icon = GetIconHandler()->GetFreeSpaceImage();
+        m_visualInfo->icon = GetIconHandler()->GetLargestImage();
         return m_visualInfo->icon;
     }
 

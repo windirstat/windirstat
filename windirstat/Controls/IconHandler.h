@@ -53,6 +53,9 @@ public:
     HICON m_freeSpaceImage = nullptr;    // <Free Space>
     HICON m_unknownImage = nullptr;      // <Unknown>
     HICON m_hardlinksImage = nullptr;    // <Hardlinks>
+    HICON m_dupesImage = nullptr;        // <Duplicates>
+    HICON m_searchImage = nullptr;       // <Search>
+    HICON m_largestImage = nullptr;      // <Largest>
     HICON m_emptyImage = nullptr;        // For items whose icon cannot be found
     HICON m_junctionImage = nullptr;     // For normal junctions
     HICON m_symlinkImage = nullptr;      // For symbolic links
@@ -70,4 +73,7 @@ public:
     HICON GetUnknownImage() const { return m_unknownImage; }
     HICON GetEmptyImage() const { return m_emptyImage; }
     HICON GetHardlinksImage() const { return m_hardlinksImage; }
+    HICON GetDupesImage() const { return m_dupesImage; }
+    HICON GetSearchImage() const { return m_searchImage; }
+    HICON GetLargestImage() const { return m_largestImage; }
 };

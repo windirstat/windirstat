@@ -99,7 +99,7 @@ HICON CItemSearch::GetIcon()
     // Cache icon for parent nodes
     if (m_item == nullptr)
     {
-        m_visualInfo->icon = GetIconHandler()->GetFreeSpaceImage();
+        m_visualInfo->icon = GetIconHandler()->GetSearchImage();
         return m_visualInfo->icon;
     }
 
