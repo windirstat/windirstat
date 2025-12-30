@@ -230,11 +230,8 @@ class SingleConsumerQueue
         explicit Node(U&& value) : data(std::forward<U>(value)) {}
     };
 
-    #pragma warning(push)
-    #pragma warning(disable: 4324) // structure was padded due to alignment specifier
     alignas(std::hardware_destructive_interference_size) std::atomic<Node*> m_head;
     alignas(std::hardware_destructive_interference_size) Node* m_tail;
-    #pragma warning(pop)
 
 public:
     SingleConsumerQueue()

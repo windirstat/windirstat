@@ -40,10 +40,7 @@ public:
     std::map<std::vector<BYTE>, CItemDupe*> m_nodeTracker;
     std::map<CItemDupe*, std::set<CItem*>> m_childTracker;
     
-    #pragma warning(push)
-    #pragma warning(disable: 4324) // structure was padded due to alignment specifier
     SingleConsumerQueue<std::pair<CItemDupe*, CItemDupe*>> m_pendingListAdds;
-    #pragma warning(pop)
 
 protected:
 
