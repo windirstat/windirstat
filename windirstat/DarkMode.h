@@ -55,13 +55,13 @@ private:
 class CTabCtrlHelper final : public CMFCTabCtrl
 {
 public:
-    static void SetupTabControl(CMFCTabCtrl& tab)
+    static void SetupTabControl(CMFCTabCtrl& tab, Style lightStyle = STYLE_3D_VS2005)
     {
         auto& helper = reinterpret_cast<CTabCtrlHelper&>(tab);
 
-        helper.ModifyTabStyle(DarkMode::IsDarkModeActive() ? STYLE_FLAT : STYLE_3D_VS2005);
+        helper.ModifyTabStyle(DarkMode::IsDarkModeActive() ? STYLE_FLAT : lightStyle);
         helper.EnableTabSwap(FALSE);
-        helper.SetDrawFrame(FALSE);
+        helper.SetDrawFrame(TRUE);
         helper.SetScrollButtons();
 
         // Forcibly hide tabs
@@ -95,5 +95,6 @@ protected:
     void OnFillBarBackground(CDC* pDC, CBasePane* pBar, CRect rectClient, CRect rectClip, BOOL bNCArea) override;
     void OnDrawSeparator(CDC* pDC, CBasePane* pBar, CRect rect, BOOL bIsHoriz) override;
     void OnDrawStatusBarPaneBorder(CDC* pDC, CMFCStatusBar* pBar, CRect rectPane, UINT uiID, UINT nStyle) override;
+    void OnFillSplitterBackground(CDC* pDC, CSplitterWndEx* pSplitterWnd, CRect rect) override;
     void OnUpdateSystemColors() override;
 };
