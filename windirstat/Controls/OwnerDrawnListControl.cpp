@@ -424,8 +424,8 @@ void COwnerDrawnListControl::DrawItem(LPDRAWITEMSTRUCT pdis)
 
             dcMem.MoveTo(rcDraw.right, rcDraw.top);
             dcMem.LineTo(rcDraw.right, rcDraw.bottom);
-            dcMem.MoveTo(rcDraw.left, rcDraw.bottom + 1);
-            dcMem.LineTo(rcDraw.right, rcDraw.bottom + 1);
+            dcMem.MoveTo(rcDraw.left, rcDraw.bottom);
+            dcMem.LineTo(rcDraw.right, rcDraw.bottom);
         }
     }
 
