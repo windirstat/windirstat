@@ -244,6 +244,10 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
                 // Process MFT record inline
                 const auto fileRecord = ByteOffset<FILE_RECORD>(buffer.get(), offset);
 
+                // Bounds check for fixup array access
+                if (fileRecord->UsaOffset + sizeof(USHORT) * fileRecord->UsaCount > volumeInfo.BytesPerFileRecordSegment) continue;
+                if (fileRecord->FirstAttributeOffset >= volumeInfo.BytesPerFileRecordSegment) continue;
+
                 // Apply fixup
                 const auto wordsPerSector = volumeInfo.BytesPerSector / sizeof(USHORT);
                 const auto fixupArray = ByteOffset<USHORT>(fileRecord, fileRecord->UsaOffset);
