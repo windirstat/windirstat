@@ -109,6 +109,7 @@ IDS_MENU_LOAD_RESULTS=CSV Dosyasından Sonuç Yükle...\tCtrl+Alt+L
 IDS_MENU_LOGICAL_SIZE=Mantıksal Boyut Kullan\tCtrl+L
 IDS_MENU_MOVE_TO=&Taşı...\tCtrl+M
 IDS_MENU_OPEN=&Aç...\tEnter
+IDS_MENU_OPTIMIZE_VHD=VHD Dosyalarını İyileştir
 IDS_MENU_OPTIONS=&Seçenekler
 IDS_MENU_PROPERTIES=&Özellikler\tAlt+Enter
 IDS_MENU_PWSH=PowerShell'de Aç...\tCtrl+S

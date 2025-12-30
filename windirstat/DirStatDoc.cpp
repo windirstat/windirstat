@@ -890,6 +890,7 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
     static bool (*isElevated)(CItem*) = [](CItem*) { return IsElevationActive(); };
     static bool (*isElevationAvailable)(CItem*) = [](CItem*) { return IsElevationActive(); };
     static bool (*isDupeTabVisible)(CItem*) = [](CItem*) { return CMainFrame::Get()->GetFileTabbedView()->IsDupeTabVisible(); };
+    static bool (*isVhdFile)(CItem*) = [](CItem* item) { return IsElevationActive() && (!item->IsTypeOrFlag(IT_FILE) || item->GetExtension() == L".vhdx"); };
     
     static std::unordered_map<UINT, const commandFilter> filters
     {
@@ -910,6 +911,7 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
         { ID_CLEANUP_OPEN_IN_PWSH,    { false, true,  true,  LF_NONE,     { IT_DRIVE, IT_DIRECTORY, IT_FILE } } },
         { ID_CLEANUP_OPEN_SELECTED,   { false, true,  true,  LF_NONE,     { IT_MYCOMPUTER, IT_DRIVE, IT_DIRECTORY, IT_FILE } } },
         { ID_CLEANUP_PROPERTIES,      { false, true,  true,  LF_NONE,     { IT_MYCOMPUTER, IT_DRIVE, IT_DIRECTORY, IT_FILE } } },
+        { ID_CLEANUP_OPTIMIZE_VHD,    { false, true,  false, LF_NONE,     { IT_DIRECTORY, IT_FILE }, isVhdFile } },
         { ID_CLEANUP_REMOVE_LOCAL,    { true,  true,  false, LF_NONE,     { ITF_ANY }, isElevated } },
         { ID_CLEANUP_REMOVE_ROAMING,  { true,  true,  false, LF_NONE,     { ITF_ANY }, isElevated } },
         { ID_CLEANUP_REMOVE_SHADOW,   { true,  true,  false, LF_NONE,     { ITF_ANY }, isElevated } },
@@ -1026,6 +1028,7 @@ BEGIN_MESSAGE_MAP(CDirStatDoc, CDocument)
     ON_COMMAND_UPDATE_WRAPPER(ID_COMPUTE_HASH, OnComputeHash)
     ON_UPDATE_COMMAND_UI_RANGE(ID_COMPRESS_NONE, ID_COMPRESS_LZX, OnUpdateCompressionHandler)
     ON_COMMAND_RANGE(ID_COMPRESS_NONE, ID_COMPRESS_LZX, OnCleanupCompress)
+    ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_OPTIMIZE_VHD, OnCleanupOptimizeVhd)
     ON_COMMAND_UPDATE_WRAPPER(ID_SCAN_RESUME, OnScanResume)
     ON_COMMAND_UPDATE_WRAPPER(ID_SCAN_SUSPEND, OnScanSuspend)
     ON_COMMAND_UPDATE_WRAPPER(ID_SCAN_STOP, OnScanStop)
@@ -1601,14 +1604,13 @@ void CDirStatDoc::OnCleanupCompress(UINT id)
     CWaitCursor wc;
     const auto& itemsSelected = GetAllSelected();
     std::vector<const CItem*> itemsToCompress;
-    std::stack<const CItem*> childStack;
-    for (const auto & item : itemsSelected) { childStack.push(item); }
+    std::stack childStack{ itemsSelected  };
     while (!childStack.empty())
     {
         const auto& item = childStack.top();
         childStack.pop();
 
-        if (item->IsTypeOrFlag(IT_DIRECTORY))
+        if (item->HasChildren())
         {
             for (const auto& child : item->GetChildren())
             {
@@ -1626,14 +1628,55 @@ void CDirStatDoc::OnCleanupCompress(UINT id)
     CProgressDlg(itemsToCompress.size(), false, AfxGetMainWnd(), [&](const std::atomic<bool>& cancel,
         std::atomic<size_t>& current)
     {
-        for (size_t i = 0; i < itemsToCompress.size() && !cancel; ++i)
+        for (const auto i : std::views::iota(0u, itemsToCompress.size()))
         {
-            current = i + 1;
+            if (cancel) break;
+            current = static_cast<ULONGLONG>(i) + 1;
             CompressFile(itemsToCompress[i]->GetPathLong(), alg);
         }
     }).DoModal();
 
     // Refresh items after compression
+    RefreshItem(itemsSelected);
+}
+
+void CDirStatDoc::OnCleanupOptimizeVhd()
+{
+    CWaitCursor wc;
+    const auto& itemsSelected = GetAllSelected();
+    std::vector<const CItem*> vhdxFiles;
+    std::stack childStack { itemsSelected };
+    while (!childStack.empty())
+    {
+        const auto& item = childStack.top();
+        childStack.pop();
+
+        if (item->HasChildren())
+        {
+            for (const auto& child : item->GetChildren())
+            {
+                childStack.push(child);
+            }
+        }
+        else if (item->IsTypeOrFlag(IT_FILE) && item->GetExtension() == L".vhdx")
+        {
+            vhdxFiles.emplace_back(item);
+        }
+    }
+
+    // Show progress dialog and optimize VHD files
+    CProgressDlg(vhdxFiles.size(), false, AfxGetMainWnd(), [&](const std::atomic<bool>& cancel,
+        std::atomic<size_t>& current)
+    {
+        for (const auto i : std::views::iota(0u, vhdxFiles.size()))
+        {
+            if (cancel) break;
+            current = static_cast<ULONGLONG>(i) + 1;
+            OptimizeVhd(vhdxFiles[i]->GetPathLong());
+        }
+    }).DoModal();
+
+    // Refresh items after optimization
     RefreshItem(itemsSelected);
 }
 

@@ -56,6 +56,8 @@
 #include <dwmapi.h>
 #include <comdef.h>
 #include <wbemidl.h>
+#include <initguid.h>
+#include <virtdisk.h>
 
 // Microsoft Concurrency headers
 #include <concurrent_unordered_map.h>

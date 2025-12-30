@@ -109,6 +109,7 @@ IDS_MENU_LOAD_RESULTS=Importer visning fra CSV...\tCtrl+Alt+L
 IDS_MENU_LOGICAL_SIZE=Bruk logisk størrelse\tCtrl+L
 IDS_MENU_MOVE_TO=&Flytt til...\tCtrl+M
 IDS_MENU_OPEN=&Åpne...\tEnter
+IDS_MENU_OPTIMIZE_VHD=Optimaliser VHD-filer
 IDS_MENU_OPTIONS=In&nstillinger
 IDS_MENU_PROPERTIES=&Egenskaper\tAlt+Enter
 IDS_MENU_PWSH=Åpne i Power&shell...\tCtrl+S

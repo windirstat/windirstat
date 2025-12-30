@@ -109,6 +109,7 @@ IDS_MENU_LOAD_RESULTS=Laadi tulemused CSV-failist...\tCtrl+Alt+L
 IDS_MENU_LOGICAL_SIZE=Kasuta loogilist suurust\tCtrl+L
 IDS_MENU_MOVE_TO=&Teisalda...\tCtrl+M
 IDS_MENU_OPEN=&Ava\tEnter
+IDS_MENU_OPTIMIZE_VHD=VHD-failide optimeerimine
 IDS_MENU_OPTIONS=&Seaded
 IDS_MENU_PROPERTIES=&Seaded\tAlt+Enter
 IDS_MENU_PWSH=Ava Power&Shellis...\tCtrl+S

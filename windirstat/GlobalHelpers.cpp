@@ -21,6 +21,7 @@
 
 #pragma comment(lib,"powrprof.lib")
 #pragma comment(lib,"wbemuuid.lib")
+#pragma comment(lib,"virtdisk.lib")
 
 static NTSTATUS(NTAPI* RtlDecompressBuffer)(USHORT CompressionFormat, PUCHAR UncompressedBuffer,
     ULONG  UncompressedBufferSize, PUCHAR CompressedBuffer, ULONG  CompressedBufferSize,
@@ -1082,4 +1083,26 @@ void SetProcessIoPriorityHigh()
     {
         VTRACE(L"NtSetInformationProcess() Failed");
     }
+}
+
+bool OptimizeVhd(const std::wstring& vhdPath)
+{
+    VIRTUAL_DISK_ACCESS_MASK accessMask = VIRTUAL_DISK_ACCESS_ALL;
+    OPEN_VIRTUAL_DISK_PARAMETERS openParams{};
+    openParams.Version = OPEN_VIRTUAL_DISK_VERSION_1;
+
+    VIRTUAL_STORAGE_TYPE storageType{};
+    storageType.DeviceId = VIRTUAL_STORAGE_TYPE_DEVICE_UNKNOWN;
+    storageType.VendorId = VIRTUAL_STORAGE_TYPE_VENDOR_MICROSOFT;
+
+    SmartPointer<HANDLE> vhdHandle(CloseHandle, nullptr);
+    if (OpenVirtualDisk(&storageType, vhdPath.c_str(),
+        accessMask, OPEN_VIRTUAL_DISK_FLAG_NONE,
+        &openParams, &vhdHandle) != ERROR_SUCCESS) return false;
+
+    COMPACT_VIRTUAL_DISK_PARAMETERS compactParams{};
+    compactParams.Version = COMPACT_VIRTUAL_DISK_VERSION_1;
+
+    return CompactVirtualDisk(vhdHandle, COMPACT_VIRTUAL_DISK_FLAG_NONE,
+        &compactParams, nullptr) == ERROR_SUCCESS;
 }

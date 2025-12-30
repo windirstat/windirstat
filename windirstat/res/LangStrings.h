@@ -112,6 +112,7 @@ constexpr std::wstring_view IDS_MENU_LOAD_RESULTS = L"IDS_MENU_LOAD_RESULTS";
 constexpr std::wstring_view IDS_MENU_LOGICAL_SIZE = L"IDS_MENU_LOGICAL_SIZE";
 constexpr std::wstring_view IDS_MENU_MOVE_TO = L"IDS_MENU_MOVE_TO";
 constexpr std::wstring_view IDS_MENU_OPEN = L"IDS_MENU_OPEN";
+constexpr std::wstring_view IDS_MENU_OPTIMIZE_VHD = L"IDS_MENU_OPTIMIZE_VHD";
 constexpr std::wstring_view IDS_MENU_OPTIONS = L"IDS_MENU_OPTIONS";
 constexpr std::wstring_view IDS_MENU_PROPERTIES = L"IDS_MENU_PROPERTIES";
 constexpr std::wstring_view IDS_MENU_PWSH = L"IDS_MENU_PWSH";

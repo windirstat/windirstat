@@ -211,6 +211,7 @@ protected:
     afx_msg void OnCleanupProperties();
     afx_msg void OnComputeHash();
     afx_msg void OnCleanupCompress(UINT id);
+    afx_msg void OnCleanupOptimizeVhd();
     afx_msg void OnScanSuspend();
     afx_msg void OnScanResume();
     afx_msg void OnScanStop();

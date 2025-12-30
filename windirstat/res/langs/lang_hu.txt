@@ -109,6 +109,7 @@ IDS_MENU_LOAD_RESULTS=Eredmények betöltése CSV-ből...\tCtrl+Alt+L
 IDS_MENU_LOGICAL_SIZE=Logikai méret használata\tCtrl+L
 IDS_MENU_MOVE_TO=&Áthelyezés ide...\tCtrl+M
 IDS_MENU_OPEN=&Megnyitás\tEnter
+IDS_MENU_OPTIMIZE_VHD=VHD fájlok optimalizálása
 IDS_MENU_OPTIONS=&Beállítások
 IDS_MENU_PROPERTIES=T&ulajdonságok\tAlt+Enter
 IDS_MENU_PWSH=Megnyitás Power&Shellben...\tCtrl+S

@@ -109,6 +109,7 @@ IDS_MENU_LOAD_RESULTS=从 CSV 加载结果...\tCtrl+Alt+L
 IDS_MENU_LOGICAL_SIZE=使用逻辑大小(&L)\tCtrl+L
 IDS_MENU_MOVE_TO=&移动到...\tCtrl+M
 IDS_MENU_OPEN=打开...(&O)\tEnter
+IDS_MENU_OPTIMIZE_VHD=优化 VHD 文件
 IDS_MENU_OPTIONS=选项(&O)
 IDS_MENU_PROPERTIES=属性(&P)\tAlt+Enter
 IDS_MENU_PWSH=在 Power&Shell 中打开...\tCtrl+S

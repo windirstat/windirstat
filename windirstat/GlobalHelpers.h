@@ -104,6 +104,7 @@ std::wstring ComputeFileHashes(const std::wstring& filePath);
 void QueryShadowCopies(ULONGLONG& count, ULONGLONG& bytesUsed);
 void RemoveWmiInstances(const std::wstring& wmiClass, std::atomic<size_t> & progress,
     const std::atomic<bool>& cancelRequested, const std::wstring& whereClause = L"__PATH IS NOT NULL");
+bool OptimizeVhd(const std::wstring& vhdPath);
 
 using CSmallRect = struct CSmallRect
 {

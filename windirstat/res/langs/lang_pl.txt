@@ -109,6 +109,7 @@ IDS_MENU_LOAD_RESULTS=Wczytaj wyniki z pliku CSV...\tCtrl+Alt+L
 IDS_MENU_LOGICAL_SIZE=Użyj rozmiaru logicznego\tCtrl+L
 IDS_MENU_MOVE_TO=&Przenieś do...\tCtrl+M
 IDS_MENU_OPEN=&Otwórz\tEnter
+IDS_MENU_OPTIMIZE_VHD=Optymalizuj pliki VHD
 IDS_MENU_OPTIONS=&Opcje
 IDS_MENU_PROPERTIES=&Właściwości\tAlt+Enter
 IDS_MENU_PWSH=Otwórz w Power&Shell...\tCtrl+S
