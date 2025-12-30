@@ -422,10 +422,10 @@ void COwnerDrawnListControl::DrawItem(LPDRAWITEMSTRUCT pdis)
             CPen pen(PS_SOLID, 1, gridColor);
             CSelectObject sopen(&dcMem, &pen);
 
-            dcMem.MoveTo(rcDraw.right, rcDraw.top);
-            dcMem.LineTo(rcDraw.right, rcDraw.bottom);
-            dcMem.MoveTo(rcDraw.left, rcDraw.bottom);
-            dcMem.LineTo(rcDraw.right, rcDraw.bottom);
+            dcMem.MoveTo(rcDraw.right - 1, rcDraw.top);
+            dcMem.LineTo(rcDraw.right - 1, rcDraw.bottom);
+            dcMem.MoveTo(rcDraw.left, rcDraw.bottom - 1);
+            dcMem.LineTo(rcDraw.right, rcDraw.bottom - 1);
         }
     }
 
