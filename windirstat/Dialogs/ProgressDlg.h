@@ -61,7 +61,6 @@ private:
     const size_t m_total = 0;
     bool m_cancelled = false;
     const bool m_noCancel = false;
-    UINT_PTR m_nTimerID = 0;
 
     std::optional<std::jthread> m_workerThread;
     static constexpr UINT_PTR TIMER_ID = 1;

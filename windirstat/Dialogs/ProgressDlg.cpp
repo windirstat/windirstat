@@ -64,7 +64,7 @@ BOOL CProgressDlg::OnInitDialog()
         m_progressCtrl.SetPos(0);
 
         // Start timer for progress updates
-        m_nTimerID = SetTimer(TIMER_ID, TIMER_INTERVAL, nullptr);
+        SetTimer(TIMER_ID, TIMER_INTERVAL, nullptr);
     }
     else
     {
@@ -148,13 +148,6 @@ INT_PTR CProgressDlg::DoModal()
     {
         if (m_workerThread->joinable()) m_workerThread->join();
         m_workerThread.reset();
-    }
-
-    // Stop timer updates
-    if (m_nTimerID != 0)
-    {
-        KillTimer(TIMER_ID);
-        m_nTimerID = 0;
     }
 
     return result;
