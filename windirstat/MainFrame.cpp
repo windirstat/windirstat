@@ -1152,14 +1152,14 @@ void CMainFrame::UpdatePaneText()
     std::wstring fileSelectionText = Localization::Lookup(IDS_IDLEMESSAGE);
     ULONGLONG size = MAXULONG64;
 
-    // Allow override test
+    // Allow override on hover
     if (const std::wstring & hover = m_treeMapView->GetTreeMapHoverPath(); !hover.empty())
     {
         fileSelectionText = hover;
     }
 
     // Only get the data the document is not actively updating
-    if (CDirStatDoc::Get()->IsRootDone())
+    else if (CDirStatDoc::Get()->IsRootDone())
     {
         if (focus != LF_EXTLIST)
         {
