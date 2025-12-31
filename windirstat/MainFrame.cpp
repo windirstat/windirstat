@@ -945,21 +945,20 @@ void CMainFrame::OnInitMenuPopup(CMenu* pPopupMenu, const UINT nIndex, const BOO
     }
 }
 
-void CMainFrame::UpdateCleanupMenu(CMenu* menu) const
+void CMainFrame::UpdateCleanupMenu(CMenu* menu, const bool triggerAsync)
 {
-    struct { void (*queryFunc)(ULONGLONG&, ULONGLONG&); UINT menuId; LPCWSTR prefix; } menuItems[] = {
-        { QueryRecycleBin, ID_CLEANUP_EMPTY_BIN, IDS_EMPTY_RECYCLEBIN.data() },
-        { QueryShadowCopies, ID_CLEANUP_REMOVE_SHADOW, IDS_MENU_REMOVE_SHADOW.data() }
+    // Define menu items structure with cached values
+    struct { ULONGLONG* count; ULONGLONG* bytes; UINT menuId; LPCWSTR prefix; } menuItems[] = {
+        { &m_recycleBinItems, &m_recycleBinBytes, ID_CLEANUP_EMPTY_BIN, IDS_EMPTY_RECYCLEBIN.data() },
+        { &m_shadowCopyCount, &m_shadowCopyBytes, ID_CLEANUP_REMOVE_SHADOW, IDS_MENU_REMOVE_SHADOW.data() }
     };
 
-    for (const auto& [queryFunc, menuId, prefix] : menuItems)
+    // Update menu items using cached values (initially shows zeros or last cached values)
+    for (const auto& [count, bytes, menuId, prefix] : menuItems)
     {
-        ULONGLONG count, bytes;
-        queryFunc(count, bytes);
-
-        const std::wstring label = Localization::Lookup(prefix) + ((count == 1) ?
-            Localization::Format(IDS_ONEITEMs, FormatBytes(bytes)) :
-            Localization::Format(IDS_sITEMSs, FormatCount(count), FormatBytes(bytes)));
+        const std::wstring label = Localization::Lookup(prefix) + ((*count == 1) ?
+            Localization::Format(IDS_ONEITEMs, FormatBytes(*bytes)) :
+            Localization::Format(IDS_sITEMSs, FormatCount(*count), FormatBytes(*bytes)));
 
         const UINT state = menu->GetMenuState(menuId, MF_BYCOMMAND);
         menu->ModifyMenu(menuId, MF_BYCOMMAND | MF_STRING, menuId, label.c_str());
@@ -967,6 +966,25 @@ void CMainFrame::UpdateCleanupMenu(CMenu* menu) const
     }
 
     UpdateDynamicMenuItems(menu);
+
+    // Launch a detached thread to perform the queries
+    if (triggerAsync) std::thread([this]()
+    {
+        // Query recycle bin and shadow copies
+        QueryRecycleBin(m_recycleBinItems, m_recycleBinBytes);
+        QueryShadowCopies(m_shadowCopyCount, m_shadowCopyBytes);
+
+        // Use InvokeInMessageThread to update the menu on the UI thread
+        InvokeInMessageThread([this]()
+        {
+            // Check if the menu is still valid and visible
+            auto [menu, menuPos] = LocateNamedMenu(GetMenu(), Localization::Lookup(IDS_MENU_CLEANUP), false);
+            if (menu == nullptr || menu->GetMenuItemCount() <= 0) return;
+
+            // Update menu items with the newly retrieved values
+            UpdateCleanupMenu(menu, false);
+        });
+    }).detach();
 }
 
 void CMainFrame::QueryRecycleBin(ULONGLONG& items, ULONGLONG& bytes)

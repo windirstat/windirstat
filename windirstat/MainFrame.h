@@ -191,7 +191,7 @@ protected:
     void DestroyProgress();
 
     void SetStatusPaneText(int pos, const std::wstring& text, int minWidth = 0);
-    void UpdateCleanupMenu(CMenu* menu) const;
+    void UpdateCleanupMenu(CMenu* menu, bool triggerAsync = true);
 
     UINT_PTR m_timer = 0;           // Timer for updating the display
     bool m_progressVisible = false; // True while progress must be shown (either pacman or progress bar)
@@ -214,6 +214,12 @@ protected:
     CComPtr<ITaskbarList3> m_taskbarList;
     TBPFLAG m_taskbarButtonState = TBPF_INDETERMINATE;
     TBPFLAG m_taskbarButtonPreviousState = TBPF_INDETERMINATE;
+
+    // Cached values for cleanup menu queries (updated asynchronously)
+    ULONGLONG m_recycleBinItems = 0;
+    ULONGLONG m_recycleBinBytes = 0;
+    ULONGLONG m_shadowCopyCount = 0;
+    ULONGLONG m_shadowCopyBytes = 0;
 
     DECLARE_MESSAGE_MAP()
     afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
