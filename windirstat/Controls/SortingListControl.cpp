@@ -64,13 +64,13 @@ void CSortingListControl::LoadPersistentAttributes()
     // Load default column width values from resource
     if (m_columnWidths->size() != columnCount)
     {
-        m_columnWidths->resize(columnCount,0);
+        m_columnWidths->resize(columnCount, 0);
         for (const int i : std::views::iota(0, static_cast<int>(m_columnWidths->size())))
         {
             (*m_columnWidths)[i] = GetColumnWidth(i);
         }
     }
-    
+
     // Set based on persisted values
     SetColumnOrderArray(static_cast<int>(m_columnOrder->size()), m_columnOrder->data());
     for (const int i : std::views::iota(0, static_cast<int>(m_columnWidths->size())))

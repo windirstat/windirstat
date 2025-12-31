@@ -24,10 +24,8 @@
 namespace
 {
     constexpr UINT TEXT_X_MARGIN = 6; // Horizontal distance of the text from the edge of the item rectangle
-
     constexpr UINT LABEL_INFLATE_CX = 3; // How much the label is enlarged, to get the selection and focus rectangle
     constexpr UINT LABEL_Y_MARGIN = 2;
-
     constexpr UINT GENERAL_INDENT = 5;
 }
 
@@ -190,16 +188,41 @@ void COwnerDrawnListControl::OnColumnsInserted()
     // The pacman shall not draw over our header control.
     ModifyStyle(0, WS_CLIPCHILDREN);
     LoadPersistentAttributes();
+    
+    // Calculate row height now that window is created
+    CalculateRowHeight();
+
+    // Force the list control to register a new row height
+    // This is necessary for controls embedded in a dialog resource.
+    CImageList imageList;
+    imageList.Create(1, m_rowHeight, ILC_COLOR, 1, 1);
+    SetImageList(&imageList, LVSIL_SMALL);
+    SetImageList(nullptr, LVSIL_SMALL);
 }
 
 void COwnerDrawnListControl::SysColorChanged()
 {
     InitializeColors();
+    CalculateRowHeight();
 }
 
 int COwnerDrawnListControl::GetRowHeight() const
 {
     return m_rowHeight;
+}
+
+void COwnerDrawnListControl::CalculateRowHeight()
+{
+    // Create a device context to get font metrics
+    if (!IsWindow(m_hWnd)) return;
+    CClientDC dc(this);
+    CSelectObject sofont(&dc, GetFont());
+    
+    if (TEXTMETRIC tm; dc.GetTextMetrics(&tm))
+    {
+        // Row height = font height + padding
+        m_rowHeight = (tm.tmHeight + (LABEL_Y_MARGIN * 2) + 1) & ~1;
+    }
 }
 
 void COwnerDrawnListControl::ShowGrid(const bool show)

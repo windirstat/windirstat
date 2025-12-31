@@ -124,7 +124,6 @@ class CDrivesList final : public COwnerDrawnListControl
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnLvnDeleteItem(NMHDR* pNMHDR, LRESULT* pResult);
-    afx_msg void MeasureItem(LPMEASUREITEMSTRUCT mis);
     afx_msg void OnDoubleClick(NMHDR* pNMHDR, LRESULT* pResult);
 };
 
@@ -171,7 +170,6 @@ protected:
     afx_msg void OnDestroy();
     afx_msg LRESULT OnWmuOk(WPARAM, LPARAM);
     afx_msg LRESULT OnWmDriveInfoThreadFinished(WPARAM, LPARAM lparam);
-    afx_msg void OnMeasureItem(int nIDCtl, LPMEASUREITEMSTRUCT lpMeasureItemStruct);
     afx_msg void OnSysColorChange();
     afx_msg void OnBnClickedRadioTargetDrivesSubset();
     afx_msg void OnBnClickedRadioTargetFolder();

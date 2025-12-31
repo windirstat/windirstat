@@ -138,7 +138,6 @@ int CExtensionListControl::CListItem::Compare(const CSortingListItem* baseOther,
 /////////////////////////////////////////////////////////////////////////////
 
 BEGIN_MESSAGE_MAP(CExtensionListControl, COwnerDrawnListControl)
-    ON_WM_MEASUREITEM_REFLECT()
     ON_NOTIFY_REFLECT(LVN_DELETEITEM, OnLvnDeleteItem)
     ON_WM_SETFOCUS()
     ON_NOTIFY_REFLECT(LVN_ITEMCHANGED, OnLvnItemChanged)
@@ -246,11 +245,6 @@ void CExtensionListControl::OnLvnDeleteItem(NMHDR* pNMHDR, LRESULT* pResult)
     const auto lv = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
     delete reinterpret_cast<CListItem*>(lv->lParam);
     *pResult = FALSE;
-}
-
-void CExtensionListControl::MeasureItem(LPMEASUREITEMSTRUCT mis)
-{
-    mis->itemHeight = GetRowHeight();
 }
 
 void CExtensionListControl::OnSetFocus(CWnd* pOldWnd)

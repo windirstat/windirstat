@@ -72,6 +72,7 @@ public:
     virtual void SysColorChanged();
     
     int GetRowHeight() const;
+    void CalculateRowHeight();
     void ShowGrid(bool show);
     void ShowStripes(bool show);
     void ShowFullRowSelection(bool show);

@@ -162,7 +162,6 @@ protected:
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnContextMenu(CWnd* /*pWnd*/, CPoint /*point*/);
-    afx_msg void MeasureItem(LPMEASUREITEMSTRUCT mis);
     afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
     afx_msg void OnLButtonDblClk(UINT nFlags, CPoint point);
     afx_msg void OnLvnItemChangingList(NMHDR* pNMHDR, LRESULT* pResult);

@@ -85,7 +85,6 @@ protected:
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnLvnDeleteItem(NMHDR* pNMHDR, LRESULT* pResult);
-    afx_msg void MeasureItem(LPMEASUREITEMSTRUCT mis);
     afx_msg void OnSetFocus(CWnd* pOldWnd);
     afx_msg void OnLvnItemChanged(NMHDR* pNMHDR, LRESULT* pResult);
     afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);

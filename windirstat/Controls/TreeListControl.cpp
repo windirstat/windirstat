@@ -413,7 +413,6 @@ int CTreeListControl::FindTreeItem(const CTreeListItem* item) const
 }
 
 BEGIN_MESSAGE_MAP(CTreeListControl, COwnerDrawnListControl)
-    ON_WM_MEASUREITEM_REFLECT()
     ON_NOTIFY_REFLECT(LVN_ITEMCHANGING, OnLvnItemChangingList)
     ON_WM_CONTEXTMENU()
     ON_WM_LBUTTONDOWN()
@@ -838,11 +837,6 @@ void CTreeListControl::EnsureItemVisible(const CTreeListItem* item)
     {
         Scroll(CSize(-currentScrollPos, 0));
     }
-}
-
-void CTreeListControl::MeasureItem(LPMEASUREITEMSTRUCT mis)
-{
-    mis->itemHeight = GetRowHeight();
 }
 
 void CTreeListControl::OnContextMenu(CWnd* /*pWnd*/, const CPoint pt)

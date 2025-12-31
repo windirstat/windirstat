@@ -338,7 +338,6 @@ void CDrivesList::OnDoubleClick(NMHDR* /*pNMHDR*/, LRESULT* pResult)
 
 BEGIN_MESSAGE_MAP(CDrivesList, COwnerDrawnListControl)
     ON_NOTIFY_REFLECT(LVN_DELETEITEM, OnLvnDeleteItem)
-    ON_WM_MEASUREITEM_REFLECT()
     ON_NOTIFY_REFLECT(NM_DBLCLK, OnDoubleClick)
 END_MESSAGE_MAP()
 
@@ -347,11 +346,6 @@ void CDrivesList::OnLvnDeleteItem(NMHDR* pNMHDR, LRESULT* pResult)
     const auto pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
     delete GetItem(pNMLV->iItem);
     *pResult = FALSE;
-}
-
-void CDrivesList::MeasureItem(LPMEASUREITEMSTRUCT mis)
-{
-    mis->itemHeight = GetRowHeight();
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -390,7 +384,6 @@ BEGIN_MESSAGE_MAP(CSelectDrivesDlg, CLayoutDialogEx)
     ON_NOTIFY(NM_SETFOCUS, IDC_TARGET_DRIVES_LIST, &CSelectDrivesDlg::OnNMSetfocusTargetDrivesList)
     ON_REGISTERED_MESSAGE(WMU_THREADFINISHED, OnWmDriveInfoThreadFinished)
     ON_WM_DESTROY()
-    ON_WM_MEASUREITEM()
     ON_WM_SYSCOLORCHANGE()
     ON_WM_CTLCOLOR()
     ON_BN_CLICKED(IDC_BROWSE_BUTTON, &CSelectDrivesDlg::OnBnClickedBrowseButton)
@@ -706,18 +699,6 @@ LRESULT CSelectDrivesDlg::OnWmDriveInfoThreadFinished(const WPARAM serial, const
     m_driveList.SortItems();
 
     return 0;
-}
-
-void CSelectDrivesDlg::OnMeasureItem(const int nIDCtl, LPMEASUREITEMSTRUCT lpMeasureItemStruct)
-{
-    if (nIDCtl == IDC_TARGET_DRIVES_LIST)
-    {
-        m_driveList.MeasureItem(lpMeasureItemStruct);
-    }
-    else
-    {
-        CLayoutDialogEx::OnMeasureItem(nIDCtl, lpMeasureItemStruct);
-    }
 }
 
 void CSelectDrivesDlg::OnSysColorChange()
