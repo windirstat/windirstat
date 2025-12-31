@@ -248,8 +248,9 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
                 if (fileRecord->UsaOffset + sizeof(USHORT) * fileRecord->UsaCount > volumeInfo.BytesPerFileRecordSegment) continue;
                 if (fileRecord->FirstAttributeOffset >= volumeInfo.BytesPerFileRecordSegment) continue;
 
-                // Apply fixup
-                const auto wordsPerSector = volumeInfo.BytesPerSector / sizeof(USHORT);
+                // Apply fixup (NTFS MFTs always have a 512 byte sector size)
+                constexpr auto MFT_RECORD_SECTOR_SIZE = 512u;
+                const auto wordsPerSector = MFT_RECORD_SECTOR_SIZE / sizeof(USHORT);
                 const auto fixupArray = ByteOffset<USHORT>(fileRecord, fileRecord->UsaOffset);
                 const auto usn = fixupArray[0];
                 const auto recordWords = reinterpret_cast<PUSHORT>(ByteOffset<UCHAR>(buffer.get(), offset));
