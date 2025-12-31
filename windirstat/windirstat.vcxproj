@@ -541,7 +541,6 @@
     <ClInclude Include="Controls\IconHandler.h" />
     <ClInclude Include="Controls\OwnerDrawnListControl.h" />
     <ClInclude Include="Controls\PacMan.h" />
-    <ClInclude Include="Controls\SortingListControl.h" />
     <ClInclude Include="Controls\DrawTextCache.h" />
     <ClInclude Include="Controls\TreeListControl.h" />
     <ClInclude Include="Controls\TreeMap.h" />
@@ -602,7 +601,6 @@
     <ClCompile Include="Controls\FileTreeControl.cpp" />
     <ClCompile Include="Controls\OwnerDrawnListControl.cpp" />
     <ClCompile Include="Controls\PacMan.cpp" />
-    <ClCompile Include="Controls\SortingListControl.cpp" />
     <ClCompile Include="Controls\DrawTextCache.cpp" />
     <ClCompile Include="Controls\TreeListControl.cpp" />
     <ClCompile Include="Controls\TreeMap.cpp" />

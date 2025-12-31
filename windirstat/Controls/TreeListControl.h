@@ -57,7 +57,7 @@ public:
     bool DrawSubItem(int subitem, CDC* pdc, CRect rc, UINT state, int* width, int* focusLeft) override;
     std::wstring GetText(int subitem) const override;
     HICON GetIcon() override { return m_visualInfo->icon; }
-    int Compare(const CSortingListItem* baseOther, int subitem) const override;
+    int Compare(const COwnerDrawnListItem* baseOther, int subitem) const override;
     virtual CTreeListItem* GetTreeListChild(int i) const = 0;
     virtual int GetTreeListChildCount() const = 0;
     virtual CItem* GetLinkedItem() { return reinterpret_cast<CItem*>(this); }

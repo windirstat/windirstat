@@ -171,7 +171,7 @@ void CFileDupeControl::SortItems()
     }
 #endif
 
-    CSortingListControl::SortItems();
+    COwnerDrawnListControl::SortItems();
 }
 
 void CFileDupeControl::RemoveItem(CItem* item)

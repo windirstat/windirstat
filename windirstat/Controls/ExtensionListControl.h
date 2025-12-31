@@ -48,7 +48,7 @@ protected:
 
         std::wstring GetExtension() const;
         HICON GetIcon() override;
-        int Compare(const CSortingListItem* baseOther, int subitem) const override;
+        int Compare(const COwnerDrawnListItem* baseOther, int subitem) const override;
 
     private:
         void DrawColor(CDC* pdc, CRect rc, UINT state, int* width) const;

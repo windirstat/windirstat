@@ -46,7 +46,7 @@ public:
 
     void SetDriveInformation(bool success, const std::wstring& name, ULONGLONG total, ULONGLONG free);
 
-    int Compare(const CSortingListItem* baseOther, int subitem) const override;
+    int Compare(const COwnerDrawnListItem* baseOther, int subitem) const override;
 
     std::wstring GetPath() const;
     std::wstring GetDrive() const;

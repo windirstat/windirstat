@@ -115,7 +115,7 @@ void CTreeListItem::SetScrollPosition(const int top) const
     m_visualInfo->control->SetItemScrollPosition(this, top);
 }
 
-int CTreeListItem::Compare(const CSortingListItem* baseOther, const int subitem) const
+int CTreeListItem::Compare(const COwnerDrawnListItem* baseOther, const int subitem) const
 {
     const auto other = reinterpret_cast<const CTreeListItem*>(baseOther);
 

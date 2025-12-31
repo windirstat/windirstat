@@ -119,7 +119,7 @@ double CExtensionListControl::CListItem::GetBytesFraction() const
         static_cast<double>(m_driveList->GetRootSize());
 }
 
-int CExtensionListControl::CListItem::Compare(const CSortingListItem* baseOther, const int subitem) const
+int CExtensionListControl::CListItem::Compare(const COwnerDrawnListItem* baseOther, const int subitem) const
 {
     const auto other = static_cast<const CListItem*>(baseOther);
 

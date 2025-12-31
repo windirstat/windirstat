@@ -30,6 +30,26 @@ namespace
 }
 
 /////////////////////////////////////////////////////////////////////////////
+// COwnerDrawnListItem
+
+int COwnerDrawnListItem::CompareSort(const COwnerDrawnListItem* other, const SSorting& sorting) const
+{
+    int r = Compare(other, sorting.subitem1);
+    if (abs(r) < 2 && !sorting.ascending1)
+    {
+        r = -r;
+    }
+
+    if (r == 0 && sorting.subitem1 != sorting.subitem2)
+    {
+        r = Compare(other, sorting.subitem2);
+        if (abs(r) < 2 && !sorting.ascending2)
+        {
+            r = -r;
+        }
+    }
+    return r;
+}
 
 // Draws an item label (icon, text) in all parts of the WinDirStat view
 // the rest is drawn by DrawItem()
@@ -49,7 +69,7 @@ void COwnerDrawnListItem::DrawLabel(const COwnerDrawnListControl* list, CDC* pdc
     if (width == nullptr)
     {
         // Draw the color with transparent background
-        if (const auto icon = const_cast<const HICON>(GetIcon()); icon != nullptr)
+        if (const auto icon = GetIcon(); icon != nullptr)
         {
             const CPoint pt(rcRest.left, rcRest.top + rcRest.Height() / 2 - sizeImage.cy / 2);
             GetIconHandler()->DrawIcon(pdc, icon, pt, sizeImage);
@@ -172,12 +192,13 @@ void COwnerDrawnListItem::DrawPercentage(CDC* pdc, const CRect rc, const double 
 }
 
 /////////////////////////////////////////////////////////////////////////////
+// COwnerDrawnListControl
 
-IMPLEMENT_DYNAMIC(COwnerDrawnListControl, CSortingListControl)
+IMPLEMENT_DYNAMIC(COwnerDrawnListControl, CListCtrl)
 
-// Previously took rowHeight parameter; use default from constants instead
 COwnerDrawnListControl::COwnerDrawnListControl(std::vector<int>* columnOrder, std::vector<int>* columnWidths)
-    : CSortingListControl(columnOrder, columnWidths)
+    : m_columnOrder(columnOrder)
+    , m_columnWidths(columnWidths)
 {
     InitializeColors();
 }
@@ -188,7 +209,7 @@ void COwnerDrawnListControl::OnColumnsInserted()
     // The pacman shall not draw over our header control.
     ModifyStyle(0, WS_CLIPCHILDREN);
     LoadPersistentAttributes();
-    
+
     // Calculate row height now that window is created
     CalculateRowHeight();
 
@@ -217,7 +238,7 @@ void COwnerDrawnListControl::CalculateRowHeight()
     if (!IsWindow(m_hWnd)) return;
     CClientDC dc(this);
     CSelectObject sofont(&dc, GetFont());
-    
+
     if (TEXTMETRIC tm; dc.GetTextMetrics(&tm))
     {
         // Row height = font height + padding
@@ -383,8 +404,8 @@ void COwnerDrawnListControl::InitializeColors()
 
 void COwnerDrawnListControl::DrawItem(LPDRAWITEMSTRUCT pdis)
 {
-    COwnerDrawnListItem* item = reinterpret_cast<COwnerDrawnListItem*>(pdis->itemData);
-    CDC* pdc = CDC::FromHandle(pdis->hDC);
+    auto* item = reinterpret_cast<COwnerDrawnListItem*>(pdis->itemData);
+    auto* pdc = CDC::FromHandle(pdis->hDC);
     CRect rcItem(pdis->rcItem);
 
     CDC dcMem;
@@ -394,7 +415,7 @@ void COwnerDrawnListControl::DrawItem(LPDRAWITEMSTRUCT pdis)
     bm.CreateCompatibleBitmap(pdc, rcItem.Width(), rcItem.Height());
     CSelectObject sobm(&dcMem, &bm);
 
-    COLORREF backColor = GetItemBackgroundColor(static_cast<int>(pdis->itemID));
+    const COLORREF backColor = GetItemBackgroundColor(static_cast<int>(pdis->itemID));
     dcMem.FillSolidRect(rcItem - rcItem.TopLeft(), backColor);
 
     // Set defaults for all text drawing
@@ -410,9 +431,9 @@ void COwnerDrawnListControl::DrawItem(LPDRAWITEMSTRUCT pdis)
         const int subitem = colInfo.iSubItem;
         const bool leftAlign = (colInfo.fmt & LVCFMT_RIGHT) == 0;
 
-        CRect rc = GetWholeSubitemRect(pdis->itemID, i);
+        const CRect rc = GetWholeSubitemRect(pdis->itemID, i);
         const CRect rcDraw = rc - rcItem.TopLeft();
-        
+
         if (!item->DrawSubItem(subitem, &dcMem, rcDraw, pdis->itemState, nullptr, &focusLeft))
         {
             item->DrawSelection(this, &dcMem, rcDraw, pdis->itemState);
@@ -425,15 +446,16 @@ void COwnerDrawnListControl::DrawItem(LPDRAWITEMSTRUCT pdis)
             COLORREF textColor = item->GetItemTextColor();
 
             // Except if the item is selected - in this case just use standard colors
+            COLORREF backColorSub = backColor;
             if (pdis->itemState & ODS_SELECTED && IsFullRowSelection())
             {
-                backColor = GetItemSelectionBackgroundColor(pdis->itemID);
+                backColorSub = GetItemSelectionBackgroundColor(pdis->itemID);
                 textColor = GetItemSelectionTextColor(pdis->itemID);
             }
 
             // Set the text color
             CSetTextColor tc(&dcMem, textColor);
-            CSetBkColor backColorSub(&dcMem, backColor);
+            CSetBkColor backColorObj(&dcMem, backColorSub);
 
             // Draw the (sub)item text
             DrawTextCache::GetInstance().DrawTextCached(&dcMem, s, rcText, leftAlign);
@@ -494,7 +516,7 @@ bool COwnerDrawnListControl::HasFocus() const
 int COwnerDrawnListControl::GetSubItemWidth(COwnerDrawnListItem* item, const int subitem)
 {
     CClientDC dc(this);
-    CRect rc(0, 0, 3500, 20);
+    const CRect rc(0, 0, 3500, 20);
 
     int width;
     int dummy = rc.left;
@@ -516,12 +538,175 @@ int COwnerDrawnListControl::GetSubItemWidth(COwnerDrawnListItem* item, const int
     return TEXT_X_MARGIN + size.cx;
 }
 
-BEGIN_MESSAGE_MAP(COwnerDrawnListControl, CSortingListControl)
+/////////////////////////////////////////////////////////////////////////////
+// Sorting functionality (merged from CSortingListControl)
+
+void COwnerDrawnListControl::LoadPersistentAttributes()
+{
+    // Fetch casted column count to avoid signed comparison warnings
+    const auto columnCount = static_cast<size_t>(GetHeaderCtrl()->GetItemCount());
+
+    // Load default column order values from resource
+    if (m_columnOrder->size() != columnCount)
+    {
+        m_columnOrder->resize(columnCount);
+        GetColumnOrderArray(m_columnOrder->data(), static_cast<int>(m_columnOrder->size()));
+    }
+
+    // Load default column width values from resource
+    if (m_columnWidths->size() != columnCount)
+    {
+        m_columnWidths->resize(columnCount, 0);
+        for (const int i : std::views::iota(0, static_cast<int>(m_columnWidths->size())))
+        {
+            (*m_columnWidths)[i] = GetColumnWidth(i);
+        }
+    }
+
+    // Set based on persisted values
+    SetColumnOrderArray(static_cast<int>(m_columnOrder->size()), m_columnOrder->data());
+    for (const int i : std::views::iota(0, static_cast<int>(m_columnWidths->size())))
+    {
+        SetColumnWidth(i, min((*m_columnWidths)[i], (*m_columnWidths)[i] * 2));
+    }
+}
+
+void COwnerDrawnListControl::SavePersistentAttributes() const
+{
+    GetColumnOrderArray(m_columnOrder->data(), static_cast<int>(m_columnOrder->size()));
+    for (const int i : std::views::iota(0, static_cast<int>(m_columnWidths->size())))
+    {
+        (*m_columnWidths)[i] = GetColumnWidth(i);
+    }
+}
+
+void COwnerDrawnListControl::AddExtendedStyle(const DWORD exStyle)
+{
+    SetExtendedStyle(GetExtendedStyle() | exStyle);
+}
+
+void COwnerDrawnListControl::RemoveExtendedStyle(const DWORD exStyle)
+{
+    SetExtendedStyle(GetExtendedStyle() & ~exStyle);
+}
+
+const SSorting& COwnerDrawnListControl::GetSorting() const
+{
+    return m_sorting;
+}
+
+int COwnerDrawnListControl::ColumnToSubItem(const int col) const
+{
+    LVCOLUMN column_info{ LVCF_SUBITEM };
+    GetColumn(col, &column_info);
+    return column_info.iSubItem;
+}
+
+void COwnerDrawnListControl::SetSorting(const SSorting& sorting)
+{
+    m_sorting = sorting;
+}
+
+void COwnerDrawnListControl::SetSorting(const int sortColumn1, const bool ascending1, const int sortColumn2, const bool ascending2)
+{
+    m_sorting.column1    = sortColumn1;
+    m_sorting.subitem1   = ColumnToSubItem(sortColumn1);
+    m_sorting.ascending1 = ascending1;
+    m_sorting.column2    = sortColumn2;
+    m_sorting.subitem2   = ColumnToSubItem(sortColumn2);
+    m_sorting.ascending2 = ascending2;
+}
+
+void COwnerDrawnListControl::SetSorting(const int sortColumn, const bool ascending)
+{
+    m_sorting.column2    = m_sorting.column1;
+    m_sorting.subitem2   = m_sorting.subitem1;
+    m_sorting.ascending2 = m_sorting.ascending1;
+    m_sorting.column1    = sortColumn;
+    m_sorting.ascending1 = ascending;
+    m_sorting.subitem1   = ColumnToSubItem(sortColumn);
+}
+
+void COwnerDrawnListControl::InsertListItem(const int i, COwnerDrawnListItem* item)
+{
+    LVITEM lvitem;
+    lvitem.mask = LVIF_TEXT | LVIF_PARAM | LVIF_IMAGE;
+    lvitem.iItem = i;
+    lvitem.pszText = LPSTR_TEXTCALLBACK;
+    lvitem.iImage = I_IMAGECALLBACK;
+    lvitem.lParam = reinterpret_cast<LPARAM>(item);
+    lvitem.stateMask = 0;
+    lvitem.iSubItem = 0;
+    VERIFY(i == CListCtrl::InsertItem(&lvitem));
+}
+
+/*
+ * Sorts the list control's items and updates the header to display the correct sorting indicator.
+ * This method reorders the list control's items based on the current sorting column and direction.
+ * It then updates the header control by using native Windows header flags (HDF_SORTUP and HDF_SORTDOWN)
+ * to display a platform-consistent sorting arrow.
+ */
+void COwnerDrawnListControl::SortItems()
+{
+    // Reorder the list items based on the current sorting criteria using a lambda comparison function.
+    CListCtrl::SortItems([](LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort) {
+        const auto* item1 = reinterpret_cast<COwnerDrawnListItem*>(lParam1);
+        const auto* item2 = reinterpret_cast<COwnerDrawnListItem*>(lParam2);
+        const auto* sorting = reinterpret_cast<SSorting*>(lParamSort);
+        return item1->CompareSort(item2, *sorting); }, reinterpret_cast<DWORD_PTR>(&m_sorting));
+
+    auto* pHeaderCtrl = GetHeaderCtrl();
+
+    // Exit if the header control is unavailable, to prevent a null pointer crash.
+    if (pHeaderCtrl == nullptr)
+    {
+        return;
+    }
+
+    HDITEM hditem;
+    hditem.mask = HDI_FORMAT;
+
+    // Remove the sort indicator from the previously sorted column if one exists.
+    if (m_indicatedColumn != -1)
+    {
+        pHeaderCtrl->GetItem(m_indicatedColumn, &hditem);
+        // Use a bitwise operation to clear both the UP and DOWN sort flags.
+        hditem.fmt &= ~(HDF_SORTUP | HDF_SORTDOWN);
+        pHeaderCtrl->SetItem(m_indicatedColumn, &hditem);
+    }
+
+    // Retrieve the newly sorted column's current format flags.
+    pHeaderCtrl->GetItem(m_sorting.column1, &hditem);
+    // Clear any existing sort flags to ensure a clean state before applying the new one.
+    hditem.fmt &= ~(HDF_SORTUP | HDF_SORTDOWN);
+
+    // Apply the correct native sorting indicator based on the sort direction.
+    hditem.fmt |= m_sorting.ascending1 ? HDF_SORTUP : HDF_SORTDOWN;
+
+    pHeaderCtrl->SetItem(m_sorting.column1, &hditem);
+
+    // Store the current sorted column's index to be cleared next time.
+    m_indicatedColumn = m_sorting.column1;
+}
+
+bool COwnerDrawnListControl::GetAscendingDefault(int /*column*/)
+{
+    return true;
+}
+
+/////////////////////////////////////////////////////////////////////////////
+// Message Map
+
+BEGIN_MESSAGE_MAP(COwnerDrawnListControl, CListCtrl)
     ON_WM_ERASEBKGND()
     ON_NOTIFY(HDN_DIVIDERDBLCLICK, 0, OnHdnDividerdblclick)
     ON_NOTIFY(HDN_ITEMCHANGING, 0, OnHdnItemchanging)
     ON_WM_SHOWWINDOW()
     ON_NOTIFY(NM_CUSTOMDRAW, 0, OnCustomDraw)
+    ON_NOTIFY_REFLECT(LVN_GETDISPINFO, OnLvnGetDispInfo)
+    ON_NOTIFY(HDN_ITEMCLICK, 0, OnHdnItemClick)
+    ON_NOTIFY(HDN_ITEMDBLCLICK, 0, OnHdnItemDblClick)
+    ON_WM_DESTROY()
 END_MESSAGE_MAP()
 
 void COwnerDrawnListControl::OnCustomDraw(NMHDR* pNMHDR, LRESULT* pResult)
@@ -582,11 +767,11 @@ BOOL COwnerDrawnListControl::OnEraseBkgnd(CDC* pDC)
     const COLORREF bgcolor = DarkMode::WdsSysColor(COLOR_WINDOW);
 
     // draw blank space on right
-    CRect fillRight(tableRight, rcClient.top, rcClient.right, rcClient.bottom);
+    const CRect fillRight(tableRight, rcClient.top, rcClient.right, rcClient.bottom);
     pDC->FillSolidRect(fillRight, bgcolor);
 
     // draw blank space on bottom
-    CRect fillLeft(rcClient.left, tableBottom, rcClient.right, rcClient.bottom);
+    const CRect fillLeft(rcClient.left, tableBottom, rcClient.right, rcClient.bottom);
     pDC->FillSolidRect(fillLeft, bgcolor);
 
     return true;
@@ -626,4 +811,51 @@ void COwnerDrawnListControl::OnHdnItemchanging(NMHDR* /*pNMHDR*/, LRESULT* pResu
     InvalidateRect(nullptr);
 
     *pResult = FALSE;
+}
+
+void COwnerDrawnListControl::OnLvnGetDispInfo(NMHDR* pNMHDR, LRESULT* pResult)
+{
+    auto* displayInfo = reinterpret_cast<NMLVDISPINFO*>(pNMHDR);
+    *pResult = FALSE;
+
+    const auto* item = reinterpret_cast<COwnerDrawnListItem*>(displayInfo->item.lParam);
+
+    if ((displayInfo->item.mask & LVIF_TEXT) != 0)
+    {
+        // The passed subitem value is actually the column id so translate it
+        const int subitem = ColumnToSubItem(displayInfo->item.iSubItem);
+
+        // Copy maximum allowed to the provided buffer
+        wcsncpy_s(displayInfo->item.pszText, displayInfo->item.cchTextMax,
+            item->GetText(subitem).c_str(), displayInfo->item.cchTextMax - 1);
+    }
+}
+
+void COwnerDrawnListControl::OnHdnItemClick(NMHDR* pNMHDR, LRESULT* pResult)
+{
+    const auto* phdr = reinterpret_cast<LPNMHEADER>(pNMHDR);
+    *pResult = FALSE;
+    const int col = phdr->iItem;
+
+    if (col == m_sorting.column1)
+    {
+        m_sorting.ascending1 = !m_sorting.ascending1;
+    }
+    else
+    {
+        SetSorting(col, GetAscendingDefault(ColumnToSubItem(col)));
+    }
+
+    SortItems();
+}
+
+void COwnerDrawnListControl::OnHdnItemDblClick(NMHDR* pNMHDR, LRESULT* pResult)
+{
+    OnHdnItemClick(pNMHDR, pResult);
+}
+
+void COwnerDrawnListControl::OnDestroy()
+{
+    SavePersistentAttributes();
+    CListCtrl::OnDestroy();
 }

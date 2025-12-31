@@ -110,7 +110,7 @@ bool CDriveItem::IsSUBSTed() const
     return m_subst;
 }
 
-int CDriveItem::Compare(const CSortingListItem* baseOther, const int subitem) const
+int CDriveItem::Compare(const COwnerDrawnListItem* baseOther, const int subitem) const
 {
     const CDriveItem* other = reinterpret_cast<const CDriveItem*>(baseOther);
 
