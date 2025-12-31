@@ -705,12 +705,6 @@
     <Image Include="res\toolbar\IDB_FILTER.bmp" />
     <Image Include="res\toolbar\IDB_SEARCH.bmp" />
     <Image Include="res\WinDirStat.ico" />
-    <Image Include="res\nodes\IDI_EMPTY.ico" />
-    <Image Include="res\nodes\IDI_FREE_SPACE.ico" />
-    <Image Include="res\nodes\IDI_JUNCTION.ico" />
-    <Image Include="res\nodes\IDI_JUNCTION_PROTECTED.ico" />
-    <Image Include="res\nodes\IDI_UNKNOWN.ico" />
-    <Image Include="res\nodes\IDI_HARDLINKS.ico" />
     <Image Include="res\toolbar\IDB_CLEANUP_DELETE.bmp" />
     <Image Include="res\toolbar\IDB_CLEANUP_DELETE_BIN.bmp" />
     <Image Include="res\toolbar\IDB_CLEANUP_EXPLORER_SELECT.bmp" />

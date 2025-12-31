@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Header Files">
@@ -212,9 +212,6 @@
     <ClInclude Include="Pages\PageGeneral.h">
       <Filter>Header Files\Pages</Filter>
     </ClInclude>
-    <ClInclude Include="Pages\PageGeneral.h">
-      <Filter>Header Files\Pages</Filter>
-    </ClInclude>
     <ClInclude Include="Views\ExtensionView.h">
       <Filter>Header Files\Views</Filter>
     </ClInclude>
@@ -237,9 +234,6 @@
       <Filter>Header Files\Controls</Filter>
     </ClInclude>
     <ClInclude Include="Controls\TreeListControl.h">
-      <Filter>Header Files\Controls</Filter>
-    </ClInclude>
-    <ClInclude Include="Controls\SortingListControl.h">
       <Filter>Header Files\Controls</Filter>
     </ClInclude>
     <ClInclude Include="Controls\PacMan.h">
@@ -346,9 +340,6 @@
     <ClCompile Include="Localization.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="CsvLoader.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="ItemDupe.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -403,9 +394,6 @@
     <ClCompile Include="Controls\TreeListControl.cpp">
       <Filter>Source Files\Controls</Filter>
     </ClCompile>
-    <ClCompile Include="Controls\SortingListControl.cpp">
-      <Filter>Source Files\Controls</Filter>
-    </ClCompile>
     <ClCompile Include="Controls\PacMan.cpp">
       <Filter>Source Files\Controls</Filter>
     </ClCompile>
@@ -458,6 +446,9 @@
       <Filter>Source Files\Pages</Filter>
     </ClCompile>
     <ClCompile Include="Controls\DrawTextCache.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CsvLoader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -516,24 +507,6 @@
       <Filter>Resource Files\Resources</Filter>
     </Image>
     <Image Include="res\toolbar\IDB_SCAN_RESUME.bmp">
-      <Filter>Resource Files\Resources</Filter>
-    </Image>
-    <Image Include="res\nodes\IDI_EMPTY.ico">
-      <Filter>Resource Files\Resources</Filter>
-    </Image>
-    <Image Include="res\nodes\IDI_FREE_SPACE.ico">
-      <Filter>Resource Files\Resources</Filter>
-    </Image>
-    <Image Include="res\nodes\IDI_JUNCTION.ico">
-      <Filter>Resource Files\Resources</Filter>
-    </Image>
-    <Image Include="res\nodes\IDI_JUNCTION_PROTECTED.ico">
-      <Filter>Resource Files\Resources</Filter>
-    </Image>
-    <Image Include="res\nodes\IDI_UNKNOWN.ico">
-      <Filter>Resource Files\Resources</Filter>
-    </Image>
-    <Image Include="res\nodes\IDI_HARDLINKS.ico">
       <Filter>Resource Files\Resources</Filter>
     </Image>
     <Image Include="res\toolbar\IDB_SCAN_STOP.bmp">
