@@ -176,11 +176,6 @@ public:
         ResetQueue(m_totalWorkerThreads);
     }
 
-    bool IsSuspended() const
-    {
-        return m_started && m_suspended;
-    }
-
     void SuspendExecution(const bool clearQueue = false)
     {
         if (!m_started) return;

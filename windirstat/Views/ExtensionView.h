@@ -42,8 +42,7 @@ protected:
     void OnDraw(CDC* pDC) override;
     void SetSelection();
 
-    bool m_showTypes = true;                      // Whether this view shall be shown (F8 option)
-    CMFCTabCtrl m_tabs;                              // The tab control
+    bool m_showTypes = true; // Whether this view shall be shown (F8 option)
     CExtensionListControl m_extensionListControl; // The list control
 
     DECLARE_MESSAGE_MAP()

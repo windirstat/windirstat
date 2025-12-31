@@ -270,7 +270,6 @@ public:
         else m_type = bitOp ? (m_type | type) : ((m_type & ~Mask) | type);
     }
 
-    void SetItemType(const ITEMTYPE type) { SetType<IT_MASK>(type); }
     void SetReparseType(const ITEMTYPE type) { SetType<ITRP_MASK>(type); }
     void SetHashType(const ITEMTYPE type, const bool addType = true) { SetType<ITHASH_MASK>(type, addType); }
     void SetFlag(const ITEMTYPE type, const bool unsetVal = false) { SetType<ITF_MASK>(type, true, unsetVal); }

@@ -58,25 +58,24 @@ std::wstring FormatBytes(ULONGLONG n);
 std::wstring FormatSizeSuffixes(ULONGLONG n);
 std::wstring FormatCount(ULONGLONG n);
 std::wstring FormatDouble(double d);
-std::wstring PadWidthBlanks(const std::wstring& n, int width);
 std::wstring FormatFileTime(const FILETIME& t);
 std::wstring FormatAttributes(DWORD attr);
 std::wstring FormatMilliseconds(ULONGLONG ms);
-bool GetVolumeName(const std::wstring & rootPath, std::wstring& volumeName);
+bool GetVolumeName(const std::wstring& rootPath, std::wstring& volumeName);
 std::wstring FormatVolumeNameOfRootPath(const std::wstring& rootPath);
 std::wstring FormatVolumeName(const std::wstring& rootPath, const std::wstring& volumeName);
-std::wstring GetFolderNameFromPath(const std::wstring & path);
+std::wstring GetFolderNameFromPath(const std::wstring& path);
 std::wstring GetCOMSPEC();
 void WaitForHandleWithRepainting(HANDLE h, DWORD TimeOut = INFINITE);
-bool FolderExists(const std::wstring & path);
+bool FolderExists(const std::wstring& path);
 bool DriveExists(const std::wstring& path);
-std::wstring MyQueryDosDevice(const std::wstring & drive);
-bool IsSUBSTedDrive(const std::wstring & drive);
+std::wstring MyQueryDosDevice(const std::wstring& drive);
+bool IsSUBSTedDrive(const std::wstring& drive);
 const std::wstring& GetSpec_Bytes();
-const std::wstring & GetSpec_KiB();
-const std::wstring & GetSpec_MiB();
-const std::wstring & GetSpec_GiB();
-const std::wstring & GetSpec_TiB();
+const std::wstring& GetSpec_KiB();
+const std::wstring& GetSpec_MiB();
+const std::wstring& GetSpec_GiB();
+const std::wstring& GetSpec_TiB();
 bool IsElevationActive();
 bool IsElevationAvailable();
 void RunElevated(const std::wstring& cmdLine);
@@ -102,7 +101,7 @@ std::wstring GetAppFolder();
 std::wstring GetNameFromSid(PSID sid);
 std::wstring ComputeFileHashes(const std::wstring& filePath);
 void QueryShadowCopies(ULONGLONG& count, ULONGLONG& bytesUsed);
-void RemoveWmiInstances(const std::wstring& wmiClass, std::atomic<size_t> & progress,
+void RemoveWmiInstances(const std::wstring& wmiClass, std::atomic<size_t>& progress,
     const std::atomic<bool>& cancelRequested, const std::wstring& whereClause = L"__PATH IS NOT NULL");
 bool OptimizeVhd(const std::wstring& vhdPath);
 
@@ -118,8 +117,8 @@ using CSmallRect = struct CSmallRect
 
     // Constructor from CRect
     explicit constexpr CSmallRect(const CRect& rect) :
-          left(static_cast<WORD>(rect.left)), top(static_cast<WORD>(rect.top))
-        , right(static_cast<WORD>(rect.right)) , bottom(static_cast<WORD>(rect.bottom)) 
+        left(static_cast<WORD>(rect.left)), top(static_cast<WORD>(rect.top)),
+        right(static_cast<WORD>(rect.right)), bottom(static_cast<WORD>(rect.bottom))
     {
     }
 

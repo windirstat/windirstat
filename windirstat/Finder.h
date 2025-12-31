@@ -42,11 +42,6 @@ public:
     virtual DWORD GetReparseTag() const = 0;
     virtual bool IsReserved() const = 0;
 
-    bool IsReparsePoint() const
-    {
-        return (GetAttributes() & FILE_ATTRIBUTE_REPARSE_POINT) != 0;
-    }
-
     bool IsDirectory() const
     {
         return (GetAttributes() & FILE_ATTRIBUTE_DIRECTORY) != 0;

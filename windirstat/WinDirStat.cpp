@@ -232,7 +232,6 @@ CString AFXGetRegPath(LPCTSTR lpszPostFix, LPCTSTR)
 public:
 
     DWORD m_parentPid = 0;
-    std::vector<std::wstring> m_pathsToOpen;
     std::wstring m_saveToCsvPath;
 
     void ParseParam(const WCHAR* pszParam, BOOL bFlag, BOOL bLast) override

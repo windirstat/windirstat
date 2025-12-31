@@ -30,7 +30,7 @@ static NTSTATUS(NTAPI* RtlDecompressBuffer)(USHORT CompressionFormat, PUCHAR Unc
 
 static NTSTATUS(NTAPI* NtSetInformationProcess)(HANDLE ProcessHandle, ULONG ProcessInformationClass,
     PVOID ProcessInformation, ULONG ProcessInformationLength) = reinterpret_cast<decltype(NtSetInformationProcess)>(
-    reinterpret_cast<LPVOID>(GetProcAddress(GetModuleHandle(L"ntdll.dll"), "NtSetInformationProcess")));
+        reinterpret_cast<LPVOID>(GetProcAddress(GetModuleHandle(L"ntdll.dll"), "NtSetInformationProcess")));
 
 static HRESULT WmiConnect(CComPtr<IWbemServices>& pSvc)
 {
@@ -76,11 +76,10 @@ void QueryShadowCopies(ULONGLONG& count, ULONGLONG& bytesUsed)
     if (SUCCEEDED(svcObj->ExecQuery(CComBSTR(L"WQL"), CComBSTR(L"SELECT ID FROM Win32_ShadowCopy"),
         WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY, nullptr, &enumObj)))
     {
-        for (;; ++count)
+        for (ULONG ret = 0; ret == 0; ++count)
         {
-            ULONG ret;
             CComPtr<IWbemClassObject> pObj;
-            if (enumObj->Next(WBEM_INFINITE, 1, &pObj, &ret) != WBEM_S_NO_ERROR && ret == 0) break;
+            if (enumObj->Next(WBEM_INFINITE, 1, &pObj, &ret) != WBEM_S_NO_ERROR) break;
         }
     }
 }
@@ -183,7 +182,7 @@ std::wstring FormatBytes(const ULONGLONG n)
 }
 
 std::wstring FormatSizeSuffixes(ULONGLONG n)
-{   
+{
     constexpr ULONGLONG BASE_BYTES = 1024;
     constexpr ULONGLONG KIB_BYTES = BASE_BYTES;
     constexpr ULONGLONG MIB_BYTES = KIB_BYTES * BASE_BYTES;
@@ -192,7 +191,7 @@ std::wstring FormatSizeSuffixes(ULONGLONG n)
     constexpr ULONGLONG TIB_THRESHOLD_BYTES = TIB_BYTES - (GIB_BYTES / 2);
     constexpr ULONGLONG GIB_THRESHOLD_BYTES = GIB_BYTES - (MIB_BYTES / 2);
     constexpr ULONGLONG MIB_THRESHOLD_BYTES = MIB_BYTES - (KIB_BYTES / 2);
-    
+
     // Returns formatted number like "12,4 GiB" (uses IEC binary prefixes KiB/MiB/GiB/TiB)
     if (n >= TIB_THRESHOLD_BYTES)
     {
@@ -230,12 +229,6 @@ std::wstring FormatDouble(double d)
     return std::format(L"{}{}{}", i, GetLocaleDecimalSeparator(), r);
 }
 
-std::wstring PadWidthBlanks(const std::wstring& n, const int width)
-{
-    const auto blankCount = width - static_cast<int>(n.size());
-    return (blankCount <= 0) ? n : n + std::wstring(blankCount, wds::chrBlankSpace);
-}
-
 std::wstring FormatFileTime(const FILETIME& t)
 {
     SYSTEMTIME st;
@@ -245,7 +238,7 @@ std::wstring FormatFileTime(const FILETIME& t)
     {
         return {};
     }
-    
+
     const LCID lcid = COptions::GetLocaleForFormatting();
 
     std::array<WCHAR, 64> date;
@@ -253,7 +246,7 @@ std::wstring FormatFileTime(const FILETIME& t)
 
     std::array<WCHAR, 64> time;
     GetTimeFormat(lcid, TIME_NOSECONDS, &st, nullptr, time.data(), static_cast<int>(time.size()));
- 
+
     return std::format(L"{}  {}", date.data(), time.data());
 }
 
@@ -262,8 +255,6 @@ std::wstring FormatAttributes(const DWORD attr)
     if (attr == INVALID_FILE_ATTRIBUTES) return wds::strInvalidAttributes;
 
     std::wstring attributes;
-    attributes.reserve(8); // Typical max length for attribute string
-
     if (attr & FILE_ATTRIBUTE_READONLY) attributes += wds::strAttributeReadonly;
     if (attr & FILE_ATTRIBUTE_HIDDEN) attributes += wds::strAttributeHidden;
     if (attr & FILE_ATTRIBUTE_SYSTEM) attributes += wds::strAttributeSystem;
@@ -279,7 +270,7 @@ std::wstring FormatAttributes(const DWORD attr)
 std::wstring FormatMilliseconds(const ULONGLONG ms)
 {
     const ULONGLONG sec = (ms + 500) / 1000;
-    const ULONGLONG s   = sec % 60;
+    const ULONGLONG s = sec % 60;
     const ULONGLONG min = sec / 60;
     const ULONGLONG m = min % 60;
     const ULONGLONG h = min / 60;
@@ -287,7 +278,7 @@ std::wstring FormatMilliseconds(const ULONGLONG ms)
     return (h <= 0) ? std::format(L"{}:{:02}", m, s) : std::format(L"{}:{:02}:{:02}", h, m, s);
 }
 
-bool GetVolumeName(const std::wstring & rootPath, std::wstring& volumeName)
+bool GetVolumeName(const std::wstring& rootPath, std::wstring& volumeName)
 {
     volumeName.resize(MAX_PATH);
     const bool success = GetVolumeInformation(rootPath.c_str(), volumeName.data(),
@@ -311,7 +302,7 @@ std::wstring FormatVolumeName(const std::wstring& rootPath, const std::wstring& 
     return std::format(L"{} ({:.2})", volumeName, rootPath);
 }
 
-std::wstring GetFolderNameFromPath(const std::wstring & path)
+std::wstring GetFolderNameFromPath(const std::wstring& path)
 {
     const auto i = path.find_last_of(wds::chrBackslash);
     return i == std::wstring::npos ? path : path.substr(0, i);
@@ -354,7 +345,7 @@ void WaitForHandleWithRepainting(const HANDLE h, const DWORD TimeOut)
     }
 }
 
-bool FolderExists(const std::wstring & path)
+bool FolderExists(const std::wstring& path)
 {
     const DWORD result = GetFileAttributes(FinderBasic::MakeLongPathCompatible(path).c_str());
     return result != INVALID_FILE_ATTRIBUTES && (result & FILE_ATTRIBUTE_DIRECTORY) != 0;
@@ -405,7 +396,7 @@ bool DriveExists(const std::wstring& path)
 //   SUBST only works per session by definition whereas volume mount points
 //   work across sessions (after restarts).
 //
-std::wstring MyQueryDosDevice(const std::wstring & drive)
+std::wstring MyQueryDosDevice(const std::wstring& drive)
 {
     if (drive.size() < 2 || drive[1] != wds::chrColon) return {};
 
@@ -424,13 +415,13 @@ std::wstring MyQueryDosDevice(const std::wstring & drive)
 // This function returns true, if QueryDosDevice() is supported
 // and drive is a SUBSTed drive.
 //
-bool IsSUBSTedDrive(const std::wstring & drive)
+bool IsSUBSTedDrive(const std::wstring& drive)
 {
     const std::wstring info = MyQueryDosDevice(drive);
     return info.starts_with(L"\\??\\");
 }
 
-const std::wstring & GetSpec_Bytes()
+const std::wstring& GetSpec_Bytes()
 {
     static std::wstring s = Localization::Lookup(IDS_SPEC_BYTES);
     return s;
@@ -520,7 +511,7 @@ bool EnableReadPrivileges()
     {
         return false;
     }
-    
+
     bool ret = true;
     for (const auto priv : { SE_RESTORE_NAME, SE_BACKUP_NAME })
     {
@@ -540,7 +531,7 @@ bool EnableReadPrivileges()
         if (std::count_if(privsAvailable[0].Privileges, &privsAvailable->Privileges[privsAvailable->PrivilegeCount],
             [&](const LUID_AND_ATTRIBUTES& element) {
                 return element.Luid.HighPart == privEntry.Privileges[0].Luid.HighPart &&
-                    element.Luid.LowPart == privEntry.Privileges[0].Luid.LowPart;}) == 0)
+                    element.Luid.LowPart == privEntry.Privileges[0].Luid.LowPart; }) == 0)
         {
             ret = false;
             continue;
@@ -586,7 +577,7 @@ std::wstring& MakeLower(std::wstring& s)
     return s;
 }
 
-const std::wstring & GetSysDirectory()
+const std::wstring& GetSysDirectory()
 {
     static std::wstring s;
     if (!s.empty()) return s;
@@ -603,10 +594,10 @@ void ProcessMessagesUntilSignaled(const std::function<void()>& callback)
         // Start thread and wait post message when done
         static auto waitMessage = RegisterWindowMessage(L"WinDirStatSignalWaiter");
         std::jthread([wnd, &callback]() mutable
-        {
-            callback();
-            wnd->PostMessageW(waitMessage, 0, 0);
-        }).detach();
+            {
+                callback();
+                wnd->PostMessageW(waitMessage, 0, 0);
+            }).detach();
 
         // Read all messages in this next loop, removing each message as we read it
         MSG msg;
@@ -667,7 +658,7 @@ std::vector<BYTE> GetCompressedResource(const HRSRC resource)
     return decompressedData;
 }
 
-std::wstring GetVolumePathNameEx(const std::wstring & path)
+std::wstring GetVolumePathNameEx(const std::wstring& path)
 {
     // Static regex patterns - compiled once instead of every call
     static const std::wregex drivePattern(LR"(\\\\\?\\([A-Z]:).*)", std::regex_constants::optimize);
@@ -722,7 +713,7 @@ std::wstring TranslateError(const HRESULT hr)
 void DisableHibernate()
 {
     BOOLEAN hibernateEnabled = FALSE;
-    (void) CallNtPowerInformation(SystemReserveHiberFile, &hibernateEnabled,
+    (void)CallNtPowerInformation(SystemReserveHiberFile, &hibernateEnabled,
         sizeof(hibernateEnabled), nullptr, 0);
 
     // Delete file in the event that the above call does not actually delete the file as
@@ -1019,7 +1010,7 @@ std::wstring ComputeFileHashes(const std::wstring& filePath)
         {
             continue;
         }
-        
+
         ctx.name = algo.name;
         ctx.hashObject.resize(ctx.objectLen);
         ctx.hash.resize(algo.hashLen);
@@ -1043,14 +1034,14 @@ std::wstring ComputeFileHashes(const std::wstring& filePath)
     while (ReadFile(hFile, buffer.data(), BUFFER_SIZE, &bytesRead, nullptr) && bytesRead > 0)
     {
         std::for_each(std::execution::par, contexts.begin(), contexts.end(),
-            [&buffer, bytesRead](auto & ctx) {
-                (void) BCryptHashData(ctx.hHash, buffer.data(), bytesRead, 0);
+            [&buffer, bytesRead](auto& ctx) {
+                (void)BCryptHashData(ctx.hHash, buffer.data(), bytesRead, 0);
             });
     }
 
     // Finalize all hashes and convert to hex strings
     std::wstring result = filePath + L"\n\n";
-    for (auto & ctx : contexts)
+    for (auto& ctx : contexts)
     {
         if (BCryptFinishHash(ctx.hHash, ctx.hash.data(),
             static_cast<ULONG>(ctx.hash.size()), 0) != 0) continue;

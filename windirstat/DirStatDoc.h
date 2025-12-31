@@ -27,15 +27,6 @@ class CItemSearch;
 enum LOGICAL_FOCUS : uint8_t;
 
 //
-// The treemap colors as calculated in CDirStatDoc::SetExtensionColors()
-// all have the "brightness" BASE_BRIGHTNESS.
-// Brightness here is defined as (r+g+b)/255, i.e. an unnormalized sum of the
-// individual color intensities divided by 255 (range 0..3.0). This is not the
-// average intensity (which would be / (255*3)).
-//
-constexpr auto BASE_BRIGHTNESS = 1.8;
-
-//
 // Data stored for each extension.
 //
 struct SExtensionRecord

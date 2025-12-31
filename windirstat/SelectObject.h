@@ -192,12 +192,3 @@ inline BOOL CreateRectRgn(CRgn& rgn, const CRect rc)
 {
     return rgn.CreateRectRgn(rc.left, rc.top, rc.right, rc.bottom);
 }
-
-inline COLORREF MakeShadowColor(const COLORREF c, const int percent)
-{
-    return RGB(
-        GetRValue(c) * percent / 100,
-        GetGValue(c) * percent / 100,
-        GetBValue(c) * percent / 100
-    );
-}
