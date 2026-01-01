@@ -28,9 +28,9 @@ $CompressLibrary = Add-Type -TypeDefinition @"
     }
 "@ -PassThru
 
-$COMPRESSION_FORMAT_LZNT1 = 0x2
+$COMPRESSION_FORMAT_XPRESS_HUFF = 0x4
 $COMPRESSION_ENGINE_MAXIMUM = 0x0100
-$Alg = $COMPRESSION_FORMAT_LZNT1 -bor $COMPRESSION_ENGINE_MAXIMUM
+$Alg = $COMPRESSION_FORMAT_XPRESS_HUFF -bor $COMPRESSION_ENGINE_MAXIMUM
 
 [uint32]$workSpaceSize = 0
 [uint32]$fragmentWorkSpaceSize = 0
@@ -55,8 +55,14 @@ ForEach ($File in $Files)
         $compressedData, $compressedData.Length, 4096, [ref]$compressedSize, $workSpaceBuffer) -eq 0)
     {
         [Array]::Resize([ref] $compressedData, $compressedSize)
+        
+        # Prepend uncompressed size as ULONG (4 bytes, little-endian)
+        $uncompressedSize = [uint32]$bytesToCompress.Length
+        $sizeBytes = [System.BitConverter]::GetBytes($uncompressedSize)
+        $finalData = $sizeBytes + $compressedData
+        
         $NewFile = $File.FullName -replace '.txt$','.bin'
-        [System.IO.File]::WriteAllBytes($NewFile, $compressedData)
+        [System.IO.File]::WriteAllBytes($NewFile, $finalData)
     }
 }
 

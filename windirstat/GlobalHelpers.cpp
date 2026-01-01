@@ -23,10 +23,14 @@
 #pragma comment(lib,"wbemuuid.lib")
 #pragma comment(lib,"virtdisk.lib")
 
-static NTSTATUS(NTAPI* RtlDecompressBuffer)(USHORT CompressionFormat, PUCHAR UncompressedBuffer,
+static NTSTATUS(NTAPI* RtlDecompressBufferEx)(USHORT CompressionFormat, PUCHAR UncompressedBuffer,
     ULONG  UncompressedBufferSize, PUCHAR CompressedBuffer, ULONG  CompressedBufferSize,
-    PULONG FinalUncompressedSize) = reinterpret_cast<decltype(RtlDecompressBuffer)>(
-        reinterpret_cast<LPVOID>(GetProcAddress(GetModuleHandle(L"ntdll.dll"), "RtlDecompressBuffer")));
+    PULONG FinalUncompressedSize, PVOID WorkSpace) = reinterpret_cast<decltype(RtlDecompressBufferEx)>(
+        reinterpret_cast<LPVOID>(GetProcAddress(GetModuleHandle(L"ntdll.dll"), "RtlDecompressBufferEx")));
+
+static NTSTATUS(NTAPI* RtlGetCompressionWorkSpaceSize)(USHORT CompressionFormat,
+    PULONG CompressBufferWorkSpaceSize, PULONG CompressFragmentWorkSpaceSize) = reinterpret_cast<decltype(RtlGetCompressionWorkSpaceSize)>(
+        reinterpret_cast<LPVOID>(GetProcAddress(GetModuleHandle(L"ntdll.dll"), "RtlGetCompressionWorkSpaceSize")));
 
 static NTSTATUS(NTAPI* NtSetInformationProcess)(HANDLE ProcessHandle, ULONG ProcessInformationClass,
     PVOID ProcessInformation, ULONG ProcessInformationLength) = reinterpret_cast<decltype(NtSetInformationProcess)>(
@@ -647,13 +651,25 @@ std::vector<BYTE> GetCompressedResource(const HRSRC resource)
     const LPVOID binaryData = LockResource(resourceData);
     if (binaryData == nullptr) return {};
 
+    // Get workspace size needed for decompression
+    ULONG workSpaceSize = 0;
+    ULONG fragmentWorkSpaceSize = 0;
+    if (!NT_SUCCESS(RtlGetCompressionWorkSpaceSize(COMPRESSION_FORMAT_XPRESS_HUFF, &workSpaceSize,
+        &fragmentWorkSpaceSize)) != ERROR_SUCCESS) return {};
+
     // Decompress data
     const size_t resourceSize = SizeofResource(nullptr, resource);
-    std::vector<BYTE> decompressedData(resourceSize * 4u);
+    ULONG decompressedSize = *static_cast<const ULONG*>(binaryData);
+    std::vector<BYTE> decompressedData(decompressedSize);
     ULONG finalDecompressedSize = 0;
-    if (RtlDecompressBuffer(COMPRESSION_FORMAT_LZNT1, decompressedData.data(), static_cast<LONG>(decompressedData.size()),
-        static_cast<PUCHAR>(binaryData), static_cast<ULONG>(resourceSize), &finalDecompressedSize) != ERROR_SUCCESS) return {};
-    decompressedData.resize(finalDecompressedSize);
+
+    std::vector<BYTE> workSpace(workSpaceSize);
+    if (!NT_SUCCESS(RtlDecompressBufferEx(COMPRESSION_FORMAT_XPRESS_HUFF, decompressedData.data(),
+        static_cast<LONG>(decompressedData.size()), static_cast<PUCHAR>(binaryData) + sizeof(ULONG),
+        static_cast<ULONG>(resourceSize) - sizeof(ULONG), &finalDecompressedSize, workSpace.data())))
+    {
+       return {};
+    }
 
     return decompressedData;
 }
