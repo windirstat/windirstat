@@ -231,7 +231,6 @@ CString AFXGetRegPath(LPCTSTR lpszPostFix, LPCTSTR)
 {
 public:
 
-    DWORD m_parentPid = 0;
     std::wstring m_saveToCsvPath;
 
     void ParseParam(const WCHAR* pszParam, BOOL bFlag, BOOL bLast) override
@@ -251,16 +250,11 @@ public:
             return;
         }
 
-        // Handle special parameter of parent process to close
+        // Handle special param to save the scan to a CSV from command line
         std::wstring paramLower = param;
         MakeLower(paramLower);
-        const std::wstring ParentPidFlag = L"parentpid:";
         const std::wstring SaveToCsvFlag = L"savetocsv:";
-        if (paramLower.starts_with(ParentPidFlag))
-        {
-            m_parentPid = std::stoul(param.substr(ParentPidFlag.size()));
-        }
-        else if (paramLower.starts_with(SaveToCsvFlag))
+        if (paramLower.starts_with(SaveToCsvFlag))
         {
             // Path after colon should be the csv path
             m_saveToCsvPath = param.substr(SaveToCsvFlag.size());
@@ -354,15 +348,6 @@ BOOL CDirStatApp::InitInstance()
     {
         constexpr CHAR PHCM_EXPOSE_PLACEHOLDERS = 2;
         RtlSetProcessPlaceholderCompatibilityMode(PHCM_EXPOSE_PLACEHOLDERS);
-    }
-
-    // If launched with a parent PID flag, close that process
-    if (cmdInfo.m_parentPid != 0)
-    {
-        if (SmartPointer<HANDLE> handle(CloseHandle, OpenProcess(PROCESS_TERMINATE, FALSE, cmdInfo.m_parentPid)); handle != nullptr)
-        {
-            TerminateProcess(handle, 0);
-        }
     }
 
     // Prompt user to enable enhanced scanning engine if it is disabled and running in elevated privileges

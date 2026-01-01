@@ -746,8 +746,8 @@ void CMainFrame::OnClose()
 {
     CWaitCursor wc;
 
-    // Stop the timer so we are not updating elements during shutdown
-    KillTimer(ID_WDS_CONTROL);
+    // Mark process as shutting down
+    m_shuttingDown = true;
 
     // Suspend the scan and wait for scan to complete
     CDirStatDoc::Get()->StopScanningEngine(CDirStatDoc::Abort);
@@ -766,6 +766,9 @@ void CMainFrame::OnClose()
 
 void CMainFrame::OnDestroy()
 {
+    // Mark process as shutting down
+    m_shuttingDown = true;
+
     // Save our window position
     WINDOWPLACEMENT wp = { .length = sizeof(wp) };
     GetWindowPlacement(&wp);
@@ -860,6 +863,9 @@ LRESULT CMainFrame::OnExitSizeMove(WPARAM, LPARAM)
 
 void CMainFrame::OnTimer(const UINT_PTR nIDEvent)
 {
+    // Exit early if shutting down
+    if (nIDEvent != ID_WDS_CONTROL || m_shuttingDown) return;
+
     // Calculate UI updates that do not need to processed frequently
     static unsigned int updateCounter = 0;
     const bool doInfrequentUpdate = updateCounter++ % 15 == 0;

@@ -487,12 +487,9 @@ bool IsElevationAvailable()
 
 void RunElevated(const std::wstring& cmdLine)
 {
-    // For the configuration to launch, include the parent process so we can
-    // terminate it once launched from the child process
-    PersistedSetting::WritePersistedProperties(); // write settings to disk before elevation
-    const std::wstring launchConfig = std::format(LR"(/ParentPid:{} "{}")",
-        GetCurrentProcessId(), cmdLine);
-    ShellExecuteWrapper(GetAppFileName(), launchConfig, L"runas");
+    PersistedSetting::WritePersistedProperties();
+    ShellExecuteWrapper(GetAppFileName(), cmdLine, L"runas");
+    TerminateProcess(GetCurrentProcess(), 0);
 }
 
 bool EnableReadPrivileges()

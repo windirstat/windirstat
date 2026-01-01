@@ -196,6 +196,7 @@ protected:
     UINT_PTR m_timer = 0;           // Timer for updating the display
     bool m_progressVisible = false; // True while progress must be shown (either pacman or progress bar)
     bool m_scanSuspend = false;     // True if the scan has been suspended
+    bool m_shuttingDown = false;    // Marks the process is shutting down so we can exit timers
     ULONGLONG m_progressRange = 0;  // Progress range. A range of 0 means Pacman should be used.
     ULONGLONG m_progressPos = 0;    // Progress position (<= progressRange, or an item count in case of m_progressRang == 0)
     CItem* m_workingItem = nullptr;
