@@ -173,6 +173,7 @@ IDS_PAGE_FILTERING_TOOLTIP_PREFIX=Her satıra bir istisna yazın. Örnekler:
 IDS_PAGE_FILTERING_USE_REGEX=Glob pattern yerine regex kullanın
 IDS_PAGE_GENERAL_AUTO_ELEVATE=Başlangıçta otomatik olarak yükselt
 IDS_PAGE_GENERAL_COLAUTOSIZE=Sütunları otomatik olarak yeniden boyutlandır
+IDS_PAGE_GENERAL_CONTEXT_MENU=WinDirStat’i Windows Gezgini sağ tıklama menüsüne ekle
 IDS_PAGE_GENERAL_DARK_MODE_USE_WINDOWS=Windows ayarını kullan
 IDS_PAGE_GENERAL_DARK_MODE=Karanlık mod:
 IDS_PAGE_GENERAL_FORMATTING=&Tarih, saat ve sayı biçimlendirmesi için Windows ayarlarını kullanın

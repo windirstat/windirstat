@@ -173,6 +173,7 @@ IDS_PAGE_FILTERING_TOOLTIP_PREFIX=Loetlege üks välistus rea kohta. Näited:
 IDS_PAGE_FILTERING_USE_REGEX=Kasuta regulaaravaldisi glob mustrite asemel
 IDS_PAGE_GENERAL_AUTO_ELEVATE=Käivitamisel automaatselt kõrgemad õigused
 IDS_PAGE_GENERAL_COLAUTOSIZE=Muuda veerge automaatselt
+IDS_PAGE_GENERAL_CONTEXT_MENU=Lisa WinDirStat Windows Exploreri paremklõpsu menüüsse
 IDS_PAGE_GENERAL_DARK_MODE_USE_WINDOWS=Kasuta Windowsi sätteid
 IDS_PAGE_GENERAL_DARK_MODE=Tume režiim:
 IDS_PAGE_GENERAL_FORMATTING=&Kasutage Windowsi seadistusi kuupäeva, kellaaja ja numbrite vormindamiseks

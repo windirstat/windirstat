@@ -173,6 +173,7 @@ IDS_PAGE_FILTERING_TOOLTIP_PREFIX=Listez une exclusion par ligne. Exemples:
 IDS_PAGE_FILTERING_USE_REGEX=Utiliser des expressions régulières au lieu de modèles glob
 IDS_PAGE_GENERAL_AUTO_ELEVATE=Élever automatiquement au démarrage
 IDS_PAGE_GENERAL_COLAUTOSIZE=Redimensionner automatiquement les colonnes
+IDS_PAGE_GENERAL_CONTEXT_MENU=Ajouter WinDirStat au menu contextuel de l’Explorateur Windows
 IDS_PAGE_GENERAL_DARK_MODE_USE_WINDOWS=Utiliser les paramètres Windows
 IDS_PAGE_GENERAL_DARK_MODE=Mode sombre :
 IDS_PAGE_GENERAL_FORMATTING=&Utiliser les paramètres Windows pour le formatage des dates, heures et nombres

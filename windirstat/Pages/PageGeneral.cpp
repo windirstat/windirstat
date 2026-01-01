@@ -36,6 +36,7 @@ void CPageGeneral::DoDataExchange(CDataExchange* pDX)
     CMFCPropertyPage::DoDataExchange(pDX);
     DDX_Check(pDX, IDC_AUTO_ELEVATE, m_automaticallyElevateOnStartup);
     DDX_Check(pDX, IDC_COLUMN_AUTOSIZE, m_automaticallyResizeColumns);
+    DDX_Check(pDX, IDC_CONTEXT_MENU, m_contextMenuIntegration);
     DDX_Check(pDX, IDC_FULL_ROW_SELECTION, m_listFullRowSelection);
     DDX_Check(pDX, IDC_PORTABLE_MODE, m_portableMode);
     DDX_Check(pDX, IDC_SHOW_GRID, m_listGrid);
@@ -49,6 +50,7 @@ void CPageGeneral::DoDataExchange(CDataExchange* pDX)
 BEGIN_MESSAGE_MAP(CPageGeneral, CMFCPropertyPage)
     ON_BN_CLICKED(IDC_AUTO_ELEVATE, OnBnClickedSetModified)
     ON_BN_CLICKED(IDC_COLUMN_AUTOSIZE, OnBnClickedSetModified)
+    ON_BN_CLICKED(IDC_CONTEXT_MENU, OnBnClickedSetModified)
     ON_BN_CLICKED(IDC_FULL_ROW_SELECTION, OnBnClickedSetModified)
     ON_BN_CLICKED(IDC_PORTABLE_MODE, OnBnClickedSetModified)
     ON_BN_CLICKED(IDC_SHOW_GRID, OnBnClickedSetModified)
@@ -67,6 +69,49 @@ HBRUSH CPageGeneral::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
     const HBRUSH brush = DarkMode::OnCtlColor(pDC, nCtlColor);
     return brush ? brush : CMFCPropertyPage::OnCtlColor(pDC, pWnd, nCtlColor);
 }
+bool CPageGeneral::IsContextMenuRegistered()
+{
+    return CRegKey().Open(HKEY_CLASSES_ROOT, std::format(L"Drive\\shell\\{}",
+        wds::strWinDirStat).c_str(), KEY_READ) == ERROR_SUCCESS;
+}
+
+bool CPageGeneral::SetContextMenuRegistration(bool enable)
+{
+    for (const std::wstring& rootSubKey : { L"Drive", L"Directory" })
+    {
+        const std::wstring baseKey = rootSubKey + L"\\shell\\" + wds::strWinDirStat;
+
+        if (!enable)
+        {
+            // Remove the context menu entries
+            RegDeleteTree(HKEY_CLASSES_ROOT, baseKey.c_str());
+            continue;
+        }
+
+        // Create/open the base key
+        CRegKey key;
+        const std::wstring exePath = GetAppFileName();
+        if (key.Create(HKEY_CLASSES_ROOT, baseKey.c_str()) != ERROR_SUCCESS ||
+            key.SetStringValue(nullptr, wds::strWinDirStat) != ERROR_SUCCESS ||
+            key.SetStringValue(L"Icon", exePath.c_str()) != ERROR_SUCCESS)
+        {
+            SetContextMenuRegistration(false);
+            return false;
+        }
+
+        // Create/open the command key
+        const std::wstring cmdKey = baseKey + L"\\command";
+        const std::wstring cmdVal = std::format(LR"("{}" "%1")", exePath);
+        if (key.Create(HKEY_CLASSES_ROOT, cmdKey.c_str()) != ERROR_SUCCESS ||
+            key.SetStringValue(nullptr, cmdVal.c_str()) != ERROR_SUCCESS)
+        {
+            SetContextMenuRegistration(false);
+            return false;
+        }
+    }
+
+    return true;
+}
 
 BOOL CPageGeneral::OnInitDialog()
 {
@@ -84,6 +129,13 @@ BOOL CPageGeneral::OnInitDialog()
     m_useWindowsLocale = COptions::UseWindowsLocaleSetting;
     m_portableMode = CDirStatApp::InPortableMode();
     m_darkModeRadio = COptions::DarkMode;
+    
+    // Query checkbox status and then gray out if not elevated
+    m_contextMenuIntegration = IsContextMenuRegistered() ? TRUE : FALSE;
+    if (CWnd* pWnd = GetDlgItem(IDC_CONTEXT_MENU); pWnd != nullptr && !IsElevationActive())
+    {
+        pWnd->EnableWindow(FALSE);
+    }
 
     for (const auto& language : Localization::GetLanguageList())
     {
@@ -121,6 +173,13 @@ void CPageGeneral::OnOK()
     if (!CDirStatApp::Get()->SetPortableMode(m_portableMode))
     {
         DisplayError(L"Could not toggle WinDirStat portable mode. Check your permissions.");
+    }
+    
+    // Update context menu registration if elevated
+    const bool shouldBeRegistered = (m_contextMenuIntegration != FALSE);      
+    if (IsContextMenuRegistered() != shouldBeRegistered && IsElevationActive())
+    {
+        SetContextMenuRegistration(shouldBeRegistered);
     }
 
     // force general user interface update if anything changes

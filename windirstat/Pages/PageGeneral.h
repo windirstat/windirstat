@@ -43,6 +43,7 @@ protected:
     BOOL m_useWindowsLocale = FALSE;
     BOOL m_automaticallyElevateOnStartup = FALSE;
     BOOL m_automaticallyResizeColumns = FALSE;
+    BOOL m_contextMenuIntegration = FALSE;
     BOOL m_sizeSuffixesFormat = FALSE;
     BOOL m_portableMode = FALSE;
     BOOL m_listGrid = FALSE;
@@ -51,6 +52,10 @@ protected:
 
     CComboBox m_combo;
     int m_darkModeRadio = 0;
+
+    // Helper methods for context menu registry operations
+    static bool IsContextMenuRegistered();
+    static bool SetContextMenuRegistration(bool enable);
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnBnClickedSetModified();

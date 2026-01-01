@@ -173,6 +173,7 @@ IDS_PAGE_FILTERING_TOOLTIP_PREFIX=Noem één uitsluiting per regel. Voorbeelden:
 IDS_PAGE_FILTERING_USE_REGEX=Gebruik reguliere expressie in plaats van glob-patronen
 IDS_PAGE_GENERAL_AUTO_ELEVATE=Automatisch met verhoogde rechten opstarten
 IDS_PAGE_GENERAL_COLAUTOSIZE=Kolommen automatisch aanpassen
+IDS_PAGE_GENERAL_CONTEXT_MENU=WinDirStat toevoegen aan het contextmenu van Windows Verkenner
 IDS_PAGE_GENERAL_DARK_MODE_USE_WINDOWS=Windows-instelling gebruiken
 IDS_PAGE_GENERAL_DARK_MODE=Donkere modus:
 IDS_PAGE_GENERAL_FORMATTING=&Gebruik Windows-instellingen voor datum-, tijd- en getalnotatie

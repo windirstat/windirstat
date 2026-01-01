@@ -175,15 +175,15 @@ std::wstring CAboutDlg::GetAppVersion()
     if (GetFileVersionInfo(file.c_str(), 0, iVersionSize, tVersionInfo.data()) != 0 &&
         VerQueryValue(tVersionInfo.data(), L"\\", reinterpret_cast<LPVOID*>(&pVersion), &iQueriedSize) != 0)
     {
-        return std::format(L"WinDirStat {}{}.{}.{} ({})\nGit Commit: {}",
-            PRODUCTION == 0 ? L"Beta " : L"",
+        return std::format(L"{} {}{}.{}.{} ({})\nGit Commit: {}",
+            wds::strWinDirStat, PRODUCTION == 0 ? L"Beta " : L"",
             std::to_wstring(HIWORD(pVersion->dwFileVersionMS)),
             std::to_wstring(LOWORD(pVersion->dwFileVersionMS)),
             std::to_wstring(HIWORD(pVersion->dwFileVersionLS)),
             _CRT_WIDE(GIT_DATE), _CRT_WIDE(GIT_COMMIT));
     }
 
-    return L"WinDirStat";
+    return wds::strWinDirStat;
 }
 
 void CAboutDlg::DoDataExchange(CDataExchange* pDX)

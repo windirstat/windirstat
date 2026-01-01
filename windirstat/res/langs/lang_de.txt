@@ -173,6 +173,7 @@ IDS_PAGE_FILTERING_TOOLTIP_PREFIX=Listen Sie eine Ausschlussregel pro Zeile auf.
 IDS_PAGE_FILTERING_USE_REGEX=Verwenden Sie reguläre Ausdrücke anstelle von Glob-Mustern
 IDS_PAGE_GENERAL_AUTO_ELEVATE=Beim Start automatisch erhöhen
 IDS_PAGE_GENERAL_COLAUTOSIZE=Spalten automatisch anpassen
+IDS_PAGE_GENERAL_CONTEXT_MENU=WinDirStat zum Kontextmenü des Windows-Explorers hinzufügen
 IDS_PAGE_GENERAL_DARK_MODE_USE_WINDOWS=Windows-Einstellung verwenden
 IDS_PAGE_GENERAL_DARK_MODE=Dunkler Modus:
 IDS_PAGE_GENERAL_FORMATTING=&Windows-Einstellungen für Datums-, Uhrzeit- und Zahlenformatierung verwenden

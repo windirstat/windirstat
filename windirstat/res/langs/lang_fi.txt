@@ -173,6 +173,7 @@ IDS_PAGE_FILTERING_TOOLTIP_PREFIX=Luettele yksi poissulkeminen riviä kohden. Es
 IDS_PAGE_FILTERING_USE_REGEX=Käytä säännöllisiä lausekkeita glob-mallien sijaan
 IDS_PAGE_GENERAL_AUTO_ELEVATE=Korota automaattisesti käynnistyksessä
 IDS_PAGE_GENERAL_COLAUTOSIZE=Muuta sarakkeiden kokoa automaattisesti
+IDS_PAGE_GENERAL_CONTEXT_MENU=Lisää WinDirStat Resurssienhallinnan pikavalikkoon
 IDS_PAGE_GENERAL_DARK_MODE_USE_WINDOWS=Käytä Windowsin asetusta
 IDS_PAGE_GENERAL_DARK_MODE=Tumma tila:
 IDS_PAGE_GENERAL_FORMATTING=&Käytä Windowsin asetuksia päivämäärän, ajan ja numeroiden muotoiluun

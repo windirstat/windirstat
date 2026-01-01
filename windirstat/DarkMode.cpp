@@ -148,7 +148,8 @@ void DarkMode::AdjustControls(const HWND hWnd)
         if (className == WC_BUTTON)
         {
             const auto style = GetWindowLong(hWnd, GWL_STYLE) & BS_TYPEMASK;
-            if (style == BS_PUSHBUTTON || style == BS_DEFPUSHBUTTON)
+            if (style == BS_PUSHBUTTON || style == BS_DEFPUSHBUTTON ||
+                style == BS_CHECKBOX || style == BS_AUTOCHECKBOX)
             {
                 SetWindowTheme(hWnd, L"DarkMode_Explorer", nullptr);
             }

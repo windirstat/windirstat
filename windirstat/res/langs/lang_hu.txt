@@ -173,6 +173,7 @@ IDS_PAGE_FILTERING_TOOLTIP_PREFIX=Soroljon fel egy kizárást soronként. Péld�
 IDS_PAGE_FILTERING_USE_REGEX=Használjon reguláris kifejezést globális minták helyett
 IDS_PAGE_GENERAL_AUTO_ELEVATE=Automatikus emelt szintű futtatás indításkor
 IDS_PAGE_GENERAL_COLAUTOSIZE=Oszlopok automatikus átméretezése
+IDS_PAGE_GENERAL_CONTEXT_MENU=WinDirStat hozzáadása a Windows Intéző helyi menüjéhez
 IDS_PAGE_GENERAL_DARK_MODE_USE_WINDOWS=Windows beállítás használata
 IDS_PAGE_GENERAL_DARK_MODE=Sötét mód:
 IDS_PAGE_GENERAL_FORMATTING=&Használja a Windows beállításait a dátum, idő és számok formázásához
