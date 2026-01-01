@@ -1584,9 +1584,7 @@ void CDirStatDoc::OnComputeHash()
     const std::wstring hashResult = ComputeFileHashes(items.front()->GetPath());
 
     // Display result in message box
-    CMessageBoxDlg dlg(hashResult, Localization::LookupNeutral(AFX_IDS_APP_TITLE), MB_OK | MB_ICONINFORMATION);
-    dlg.SetInitialWindowSize(CSize(1000, 200));
-    dlg.DoModal();
+    WdsMessageBox(hashResult, MB_OK | MB_ICONINFORMATION, CSize(1000, 200));
 }
 
 CompressionAlgorithm CDirStatDoc::CompressionIdToAlg(const UINT id)
