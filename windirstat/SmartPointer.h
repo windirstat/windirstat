@@ -34,7 +34,7 @@ public:
 
     ~SmartPointer()
     {
-        Cleanup();
+        Release();
     }
 
     SmartPointer(SmartPointer&& src) noexcept
@@ -44,19 +44,11 @@ public:
         src.m_data = nullptr;
     }
 
-    void Cleanup()
-    {
-        if (m_data != nullptr)
-        {
-            m_cleanup(m_data);
-        }
-    }
-
     SmartPointer& operator=(SmartPointer&& src) noexcept
     {
         if (std::addressof(*this) != std::addressof(src))
         {
-            Cleanup();
+            Release();
             m_cleanup = src.m_cleanup;
             m_data = src.m_data;
             src.m_data = nullptr;
@@ -67,40 +59,25 @@ public:
 
     void Release() noexcept
     {
-        m_data = nullptr;
-    }
-
-    operator T()
-    {
-        return m_data;
-    }
-
-    T& operator*()
-    {
-        return m_data;
-    }
-
-    T* operator&()
-    {
-        return &m_data;
-    }
-
-    T operator->()
-    {
-        return m_data;
+        if (m_data != nullptr)
+        {
+            m_cleanup(m_data);
+            m_data = nullptr;
+        }
     }
 
     T operator=(T lp)
     {
-        Cleanup();
+        Release();
         m_data = lp;
         return m_data;
     }
 
-    bool operator!()
-    {
-        return m_data == nullptr;
-    }
+    operator T() { return m_data; }
+    T& operator*() { return m_data; }
+    T* operator&() { return &m_data; }
+    T operator->() { return m_data; }
+    bool operator!() { return m_data == nullptr; }
 
 private:
 

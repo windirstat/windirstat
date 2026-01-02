@@ -26,11 +26,6 @@ static NTSTATUS(WINAPI* NtQueryDirectoryFile)(HANDLE FileHandle, HANDLE Event, P
     PUNICODE_STRING FileName, BOOLEAN RestartScan) = reinterpret_cast<decltype(NtQueryDirectoryFile)>(
         static_cast<LPVOID>(GetProcAddress(GetModuleHandle(L"ntdll.dll"), "NtQueryDirectoryFile")));
 
-FinderBasic::~FinderBasic()
-{
-    if (m_handle != nullptr) NtClose(m_handle);
-}
-
 bool FinderBasic::FindNext()
 {
     bool success = false;
@@ -189,6 +184,9 @@ bool FinderBasic::FindFile(const std::wstring & strFolder, const std::wstring& s
     OBJECT_ATTRIBUTES attributes;
     InitializeObjectAttributes(&attributes, nullptr, OBJ_CASE_INSENSITIVE, nullptr, nullptr);
     attributes.ObjectName = &path;
+
+    // Close previous file handle if necessary
+    m_handle.Release();
 
     // get an open file handle
     IO_STATUS_BLOCK statusBlock = {};

@@ -19,6 +19,7 @@
 
 #include "pch.h"
 #include "Finder.h"
+#include "SmartPointer.h"
 
 class FinderBasicContext final
 {
@@ -70,7 +71,7 @@ class FinderBasic final : public Finder
     FILE_DIR_INFORMATION* m_currentInfo = nullptr;
     FinderBasicContext m_default{};
     FinderBasicContext* m_context = &m_default;
-    HANDLE m_handle = nullptr;
+    SmartPointer<HANDLE> m_handle{CloseHandle, nullptr};
     DWORD m_initialAttributes = INVALID_FILE_ATTRIBUTES;
     DWORD m_reparseTag = 0;
     bool m_firstRun = true;
@@ -79,7 +80,7 @@ public:
 
     FinderBasic() = default;
     FinderBasic(FinderBasicContext* context) : m_context(context) {}
-    ~FinderBasic();
+    ~FinderBasic() = default;
 
     bool FindNext() override;
     bool FindFile(const CItem* item) override;
