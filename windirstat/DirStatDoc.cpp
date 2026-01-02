@@ -1757,6 +1757,7 @@ void CDirStatDoc::OnContextMenuExplore(UINT nID)
 void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
 {
     // Stop any previous executions
+    CWaitCursor wc;
     StopScanningEngine();
 
     // Address conflicts with currently zoomed/selected items
@@ -1782,85 +1783,76 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
     // Do not attempt to update graph while scanning
     CMainFrame::Get()->GetTreeMapView()->SuspendRecalculationDrawing(true);
 
-    // Start a thread so we do not hang the message loop
-    // Lambda captures assume document exists for duration of thread
-    m_thread.emplace([this,items] () mutable
+    // If scanning drive(s) just rescan the child nodes
+    if (items.size() == 1 && items.at(0)->IsTypeOrFlag(IT_MYCOMPUTER))
     {
-        // Wait for other threads to finish if this was scheduled in parallel
-        static std::shared_mutex mutex;
-        std::scoped_lock lock(mutex);
+        items.at(0)->ResetScanStartTime();
+        items = items.at(0)->GetChildren();
+    }
 
-        // If scanning drive(s) just rescan the child nodes
-        if (items.size() == 1 && items.at(0)->IsTypeOrFlag(IT_MYCOMPUTER))
+    // Remove items in UI thread so we do not conflict with the timer updates
+    const auto selectedItems = GetAllSelected();
+    using VisualInfo = struct { int scrollPosition; bool wasExpanded; bool isSelected; };
+    std::unordered_map<CItem*, VisualInfo> visualInfo;
+    CMainFrame::Get()->SetRedraw(FALSE);
+    for (auto item : std::vector(items))
+    {
+        // Clear items from duplicates and top list;
+        CFileDupeControl::Get()->RemoveItem(item);
+        CFileTopControl::Get()->RemoveItem(item);
+        CFileSearchControl::Get()->RemoveItem(item);
+
+        // Record current visual arrangement to reapply afterward
+        if (item->IsVisible())
         {
-            items.at(0)->ResetScanStartTime();
-            items = items.at(0)->GetChildren();
+            visualInfo[item].isSelected = std::ranges::find(selectedItems, item) != selectedItems.end();
+            visualInfo[item].wasExpanded = item->IsExpanded();
+            visualInfo[item].scrollPosition = item->GetScrollPosition();
         }
 
-        const auto selectedItems = GetAllSelected();
-        using VisualInfo = struct { int scrollPosition; bool wasExpanded; bool isSelected; };
-        std::unordered_map<CItem *,VisualInfo> visualInfo;
-        CMainFrame::Get()->SetRedraw(FALSE);
-        for (auto item : std::vector(items))
+        // Skip pruning if it is a new element
+        if (!item->IsDone()) continue;
+        item->ExtensionDataProcessChildren(true);
+        item->UpwardRecalcLastChange(true);
+        item->UpwardSubtractSizePhysical(item->GetSizePhysical());
+        item->UpwardSubtractSizeLogical(item->GetSizeLogical());
+        item->UpwardSubtractFiles(item->GetFilesCount());
+        item->UpwardSubtractFolders(item->GetFoldersCount());
+        item->RemoveAllChildren();
+        item->UpwardSetUndone();
+
+        // Child removal will collapse the item, so re-expand it
+        if (visualInfo.contains(item) && item->IsVisible())
+            item->SetExpanded(visualInfo[item].wasExpanded);
+
+        // Handle if item to be refreshed has been removed
+        if (item->IsTypeOrFlag(IT_FILE, IT_DIRECTORY, IT_DRIVE) &&
+            !FinderBasic::DoesFileExist(item->GetFolderPath(),
+                item->IsTypeOrFlag(IT_FILE) ? item->GetName() : std::wstring()))
         {
-            // Clear items from duplicates and top list;
-            CFileDupeControl::Get()->RemoveItem(item);
-            CFileTopControl::Get()->RemoveItem(item);
-            CFileSearchControl::Get()->RemoveItem(item);
-            CDirStatDoc::InvalidateSelectionCache();
+            // Remove item from list so we do not rescan it
+            std::erase(items, item);
 
-            // Record current visual arrangement to reapply afterward
-            if (item->IsVisible())
+            if (item->IsRootItem())
             {
-                visualInfo[item].isSelected = std::ranges::find(selectedItems, item) != selectedItems.end();
-                visualInfo[item].wasExpanded = item->IsExpanded();
-                visualInfo[item].scrollPosition = item->GetScrollPosition();
+                Get()->UnlinkRoot();
+                CMainFrame::Get()->SetRedraw(TRUE);
+                return;
             }
 
-            // Skip pruning if it is a new element
-            if (!item->IsDone()) continue;
-            item->ExtensionDataProcessChildren(true);
-            item->UpwardRecalcLastChange(true);
-            item->UpwardSubtractSizePhysical(item->GetSizePhysical());
-            item->UpwardSubtractSizeLogical(item->GetSizeLogical());
-            item->UpwardSubtractFiles(item->GetFilesCount());
-            item->UpwardSubtractFolders(item->GetFoldersCount());
-            item->RemoveAllChildren();
-            item->UpwardSetUndone();
-
-            // Child removal will collapse the item, so re-expand it
-            if (visualInfo.contains(item) && item->IsVisible())
-                item->SetExpanded(visualInfo[item].wasExpanded);
-  
-            // Handle if item to be refreshed has been removed
-            if (item->IsTypeOrFlag(IT_FILE, IT_DIRECTORY, IT_DRIVE) &&
-                !FinderBasic::DoesFileExist(item->GetFolderPath(),
-                    item->IsTypeOrFlag(IT_FILE) ? item->GetName() : std::wstring()))
-            {
-                // Remove item from list so we do not rescan it
-                std::erase(items, item);
-
-                if (item->IsRootItem())
-                {
-                    // Handle deleted root item; this must be launched
-                    // asynchronously since it will end up calling this
-                    // function and could potentially deadlock
-                    std::jthread ([] ()
-                    {
-                        Get()->UnlinkRoot();
-                    }).detach();
-                    CMainFrame::Get()->SetRedraw(TRUE);
-                    return;
-                }
-
-                // Handle non-root item by removing from parent
-                item->UpwardSubtractFiles(item->IsTypeOrFlag(IT_FILE) ? 1 : 0);
-                item->UpwardSubtractFolders(item->IsTypeOrFlag(IT_FILE) ? 0 : 1);
-                item->GetParent()->RemoveChild(item);
-            }
+            // Handle non-root item by removing from parent
+            item->UpwardSubtractFiles(item->IsTypeOrFlag(IT_FILE) ? 1 : 0);
+            item->UpwardSubtractFolders(item->IsTypeOrFlag(IT_FILE) ? 0 : 1);
+            item->GetParent()->RemoveChild(item);
         }
-        CMainFrame::Get()->SetRedraw(TRUE);
+    }
+    CDirStatDoc::InvalidateSelectionCache();
+    CMainFrame::Get()->SetRedraw(TRUE);
 
+    // Start a thread so we do not hang the message loop during inserts
+    // Lambda captures assume document exists for duration of thread
+    m_thread.emplace([this,items, visualInfo] () mutable
+    {
         // Add items to processing queue
         for (const auto & item : items)
         {
