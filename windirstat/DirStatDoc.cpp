@@ -1296,7 +1296,12 @@ void CDirStatDoc::OnCommandPromptHere()
     const std::wstring cmd = GetCOMSPEC();
     for (const auto& path : paths)
     {
-        ShellExecuteWrapper(cmd, L"", L"open", *AfxGetMainWnd(), path);
+        // If using command prompt, use pushd to force a drive mount
+        std::wstring uncmod = path.starts_with(L"\\\\") ? std::format(L"&& PUSHD \"{}\" && CLS", path) : L"";
+        std::wstring params = std::format(L"/K TITLE {} - \"{}\" {}", wds::strWinDirStat, path, uncmod);
+
+        // Launch command prompt
+        ShellExecuteWrapper(cmd, params, L"open", *AfxGetMainWnd(), path);
     }
 }
 
