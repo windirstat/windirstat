@@ -29,6 +29,7 @@ public:
 
     // Check if dark mode is supported on this system
     static bool IsDarkModeActive() noexcept;
+    static bool EnhancedDarkModeSupport();
     static COLORREF WdsSysColor(DWORD index);
 
     // Menu rendering functions

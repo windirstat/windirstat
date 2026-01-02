@@ -128,6 +128,24 @@ bool DarkMode::IsDarkModeActive() noexcept
     return s_darkModeEnabled;
 }
 
+bool DarkMode::EnhancedDarkModeSupport()
+{
+    CRegKey key;
+    if (key.Open(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion",
+        KEY_READ) != ERROR_SUCCESS) return false;
+
+    // Fetch Windows build and revision information
+    DWORD ubr = 0;
+    std::array<WCHAR, 16> buildString;
+    DWORD buildLen = static_cast<DWORD>(buildString.size());
+    if (key.QueryStringValue(L"CurrentBuild", buildString.data(), &buildLen) != ERROR_SUCCESS ||
+        key.QueryDWORDValue(L"UBR", ubr) != ERROR_SUCCESS) return false;
+
+    // Support for dark mode checkboxes and other controls added in KB5072033
+    DWORD buildVal = std::wcstoul(buildString.data(), nullptr, 10);
+    return buildVal > 26200 || ((buildVal == 26100 || buildVal == 26200) && ubr >= 7462);
+}
+
 void DarkMode::AdjustControls(const HWND hWnd)
 {
     if (!s_darkModeEnabled) return;
@@ -147,9 +165,9 @@ void DarkMode::AdjustControls(const HWND hWnd)
 
         if (className == WC_BUTTON)
         {
-            const auto style = GetWindowLong(hWnd, GWL_STYLE) & BS_TYPEMASK;
-            if (style == BS_PUSHBUTTON || style == BS_DEFPUSHBUTTON ||
-                style == BS_CHECKBOX || style == BS_AUTOCHECKBOX)
+            if (const auto style = GetWindowLong(hWnd, GWL_STYLE) & BS_TYPEMASK;
+                style == BS_PUSHBUTTON || style == BS_DEFPUSHBUTTON ||
+                (EnhancedDarkModeSupport() && style == BS_CHECKBOX || style == BS_AUTOCHECKBOX))
             {
                 SetWindowTheme(hWnd, L"DarkMode_Explorer", nullptr);
             }
