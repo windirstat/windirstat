@@ -732,49 +732,30 @@ void COwnerDrawnListControl::OnCustomDraw(NMHDR* pNMHDR, LRESULT* pResult)
 
 BOOL COwnerDrawnListControl::OnEraseBkgnd(CDC* pDC)
 {
-    ASSERT(GetHeaderCtrl()->GetItemCount() > 0);
-
-    // Calculate bottom of control
-    int itemTopPos = 0;
-    if (GetItemCount() > 0)
+    // Fetch coordinate of the last item
+    CRect lastRect(0, 0, 0, 0);
+    if (const int itemCount = GetItemCount(); itemCount > 0)
     {
-        CRect rc;
-        GetItemRect(GetTopIndex(), rc, LVIR_BOUNDS);
-        itemTopPos = rc.top;
+        GetItemRect(itemCount - 1, &lastRect, LVIR_BOUNDS);
     }
 
-    const int lineCount = GetCountPerPage() + 1;
-    const int firstItem = GetTopIndex();
-    const int lastItem = min(firstItem + lineCount, GetItemCount()) - 1;
-
-    ASSERT(GetItemCount() == 0 || firstItem < GetItemCount());
-    ASSERT(GetItemCount() == 0 || lastItem < GetItemCount());
-    ASSERT(GetItemCount() == 0 || lastItem >= firstItem);
-
-    const int tableBottom = itemTopPos + (lastItem - firstItem + 1) * GetRowHeight();
-
-    // Calculate where the columns end on the right
-    int tableRight = -GetScrollPos(SB_HORZ);
-    for (const int i : std::views::iota(0, GetHeaderCtrl()->GetItemCount()))
+    // Erase unused area to the right of all items
+    CRect rectClient;
+    GetClientRect(&rectClient);
+    if (lastRect.right < rectClient.right)
     {
-        HDITEM hdi{ HDI_WIDTH };
-        GetHeaderCtrl()->GetItem(i, &hdi);
-        tableRight += hdi.cxy;
+        pDC->FillSolidRect(lastRect.right, 0, rectClient.right - lastRect.right,
+            lastRect.bottom, DarkMode::WdsSysColor(COLOR_WINDOW));
     }
 
-    CRect rcClient;
-    GetClientRect(rcClient);
-    const COLORREF bgcolor = DarkMode::WdsSysColor(COLOR_WINDOW);
+    // Erase unused area at the bottom of the last item
+    if (lastRect.bottom < rectClient.bottom)
+    {
+        pDC->FillSolidRect(0, lastRect.bottom, rectClient.right,
+            rectClient.bottom - lastRect.bottom, DarkMode::WdsSysColor(COLOR_WINDOW));
+    }
 
-    // draw blank space on right
-    const CRect fillRight(tableRight, rcClient.top, rcClient.right, rcClient.bottom);
-    pDC->FillSolidRect(fillRight, bgcolor);
-
-    // draw blank space on bottom
-    const CRect fillLeft(rcClient.left, tableBottom, rcClient.right, rcClient.bottom);
-    pDC->FillSolidRect(fillLeft, bgcolor);
-
-    return true;
+    return TRUE;
 }
 
 void COwnerDrawnListControl::OnHdnDividerdblclick(NMHDR* pNMHDR, LRESULT* pResult)
