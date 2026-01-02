@@ -50,11 +50,12 @@ void DarkMode::SetAppDarkMode() noexcept
     if (COptions::DarkMode == 2)
     {
         // Check Windows dark mode setting
-        DWORD darkSetting;
-        CRegKey key;
-        key.Open(HKEY_CURRENT_USER, wds::strThemesKey, KEY_READ);
-        key.QueryDWORDValue(L"AppsUseLightTheme", darkSetting);
-        s_darkModeEnabled = (darkSetting == 0);
+        if (CRegKey key; key.Open(HKEY_CURRENT_USER, wds::strThemesKey, KEY_READ) == ERROR_SUCCESS)
+        {
+            DWORD darkSetting = 0;
+            key.QueryDWORDValue(L"AppsUseLightTheme", darkSetting);
+            s_darkModeEnabled = (darkSetting == 0);
+        }
     }
 
     // Validate this version of Windows supports dark mode
