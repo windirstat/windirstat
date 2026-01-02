@@ -952,17 +952,17 @@ bool CompressFileAllowed(const std::wstring& filePath, const CompressionAlgorith
         return false;
     }
 
-    // Return cached value
-    if (compressionMap.contains(volumeName))
-    {
-        return compressionMap.at(volumeName);
-    }
-
     // Enable 'none' button if at least standard is available
     if (algorithm == CompressionAlgorithm::NONE)
     {
         return CompressFileAllowed(filePath, CompressionAlgorithm::LZNT1) ||
             CompressFileAllowed(filePath, CompressionAlgorithm::XPRESS4K);
+    }
+
+    // Return cached value
+    if (compressionMap.contains(volumeName))
+    {
+        return compressionMap.at(volumeName);
     }
 
     // Query volume for standard compression support based on whether NTFS
