@@ -30,6 +30,10 @@
 #define _AFX_NO_DAO_SUPPORT
 #define _AFX_NO_CTL3D_SUPPORT
 
+#define _ATL_NO_HOSTING
+#define _ATL_NO_DOCHOSTUIHANDLER
+#define _ATL_NO_UUIDOF
+
 #define _ATL_CSTRING_EXPLICIT_CONSTRUCTORS  // some CStringW constructors will be explicit
 #define _ITERATOR_DEBUG_LEVEL 0 // disable debugging due to debug performance impact
 
@@ -62,6 +66,7 @@
 #include <wbemidl.h>
 #include <initguid.h>
 #include <virtdisk.h>
+#include <tlhelp32.h>
 
 // Microsoft Concurrency headers
 #include <concurrent_unordered_map.h>

@@ -57,9 +57,14 @@ public:
         return *this;
     }
 
+    bool IsValid() const noexcept
+    {
+        return m_data != nullptr && m_data != INVALID_HANDLE_VALUE;
+    }
+
     void Release() noexcept
     {
-        if (m_data != nullptr)
+        if (IsValid())
         {
             m_cleanup(m_data);
             m_data = nullptr;

@@ -86,7 +86,7 @@ bool EnableReadPrivileges();
 void SetProcessIoPriorityHigh();
 void ReplaceString(std::wstring& subject, const std::wstring& search, const std::wstring& replace);
 std::wstring& TrimString(std::wstring& s, wchar_t c = L' ', bool endOnly = false);
-std::wstring& MakeLower(std::wstring& s);
+std::wstring MakeLower(const std::wstring& s);
 const std::wstring& GetSysDirectory();
 void ProcessMessagesUntilSignaled(const std::function<void()>& callback);
 std::wstring GlobToRegex(const std::wstring& glob, bool useAnchors = true);

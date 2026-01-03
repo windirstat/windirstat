@@ -32,7 +32,7 @@ namespace wds
 
     inline constexpr auto strExplorerKey = L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer";
     inline constexpr auto strThemesKey   = L"Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize";
-
+    inline constexpr auto strUninstall   = L"Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\WinDirStat";
     inline constexpr auto strInvalidAttributes     = L"??????";
     inline constexpr auto strAttributeReadonly     = L"R"; /*FILE_ATTRIBUTE_READONLY*/
     inline constexpr auto strAttributeHidden       = L"H"; /*FILE_ATTRIBUTE_HIDDEN*/

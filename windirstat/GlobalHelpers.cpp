@@ -572,10 +572,11 @@ std::wstring& TrimString(std::wstring& s, const wchar_t c, const bool endOnly)
     return s;
 }
 
-std::wstring& MakeLower(std::wstring& s)
+std::wstring MakeLower(const std::wstring& s)
 {
-    _wcslwr_s(s.data(), s.size() + 1);
-    return s;
+    std::wstring lower = s;
+    _wcslwr_s(lower.data(), lower.size() + 1);
+    return lower;
 }
 
 const std::wstring& GetSysDirectory()
