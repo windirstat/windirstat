@@ -37,6 +37,7 @@ class CAboutDlg final : public CLayoutDialogEx
     public:
         void Initialize();
         void ClearSelectionCursor();
+        bool HandleTabKey(bool shiftPressed);
 
     protected:
         CFont m_monoFont;
@@ -44,9 +45,12 @@ class CAboutDlg final : public CLayoutDialogEx
         CRichEditCtrl m_textThanks;
         CRichEditCtrl m_textLicense;
 
+        CRichEditCtrl& GetActiveRichEdit();
+
         DECLARE_MESSAGE_MAP()
         afx_msg void OnEnLinkText(NMHDR* pNMHDR, LRESULT* pResult);
         afx_msg void OnEnMsgFilter(NMHDR* pNMHDR, LRESULT* pResult);
+        afx_msg void OnSetFocus(CWnd* pOldWnd);
     };
 
 public:
@@ -55,6 +59,7 @@ public:
 
 protected:
     BOOL OnInitDialog() override;
+    BOOL PreTranslateMessage(MSG* pMsg) override;
     void DoDataExchange(CDataExchange* pDX) override;
 
     CStatic m_caption;
