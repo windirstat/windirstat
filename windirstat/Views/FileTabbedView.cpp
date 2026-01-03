@@ -85,3 +85,38 @@ LRESULT CFileTabbedView::OnChangeActiveTab(WPARAM wp, LPARAM lp)
 
     return CTabView::OnChangeActiveTab(wp, lp);
 }
+
+bool CFileTabbedView::CycleTab(const bool forward)
+{
+    std::vector<int> visibleTabs;
+    for (const int tabIndex : { m_fileTreeViewIndex, m_fileTopViewIndex, m_fileDupeViewIndex, m_fileSearchViewIndex })
+    {
+        if (GetTabControl().IsTabVisible(tabIndex)) visibleTabs.push_back(tabIndex);
+    }
+
+    const int activeTab = GetTabControl().GetActiveTab();
+    const auto it = std::ranges::find(visibleTabs, activeTab);
+    if (it == visibleTabs.end()) return false;
+
+    const size_t currentPos = std::distance(visibleTabs.begin(), it);
+    const size_t nextPos = currentPos + (forward ? 1 : -1);
+    
+    if (nextPos >= visibleTabs.size()) return false;
+    
+    SetActiveView(visibleTabs[nextPos]);
+    return true;
+}
+
+BOOL CFileTabbedView::PreTranslateMessage(MSG* pMsg)
+{
+    if (pMsg->message == WM_KEYDOWN && pMsg->wParam == VK_TAB)
+    {
+        if (!CycleTab(!IsShiftKeyDown()))
+        {
+            CMainFrame::Get()->MoveFocus(LF_EXTLIST);
+        }
+        return TRUE;
+    }
+
+    return CTabView::PreTranslateMessage(pMsg);
+}

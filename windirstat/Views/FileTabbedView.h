@@ -42,6 +42,7 @@ public:
     void SetSearchTabVisibility(bool show = true);
     bool IsDupeTabVisible() { return GetTabControl().IsTabVisible(m_fileDupeViewIndex); }
     bool IsSearchTabVisible() { return GetTabControl().IsTabVisible(m_fileSearchViewIndex); }
+    bool CycleTab(bool forward);
 
 protected:
     CFileTabbedView() = default;
@@ -63,4 +64,5 @@ protected:
     afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
     afx_msg BOOL OnEraseBkgnd(CDC* pDC);
     afx_msg LRESULT OnChangeActiveTab(WPARAM wp, LPARAM lp);
+    afx_msg BOOL PreTranslateMessage(MSG* pMsg) override;
 };

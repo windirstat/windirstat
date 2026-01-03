@@ -24,6 +24,9 @@ constexpr auto CONTENT_MENU_MAXCMD = 0x7FFFul;
 
 IContextMenu* GetContextMenu(HWND hwnd, const std::vector<std::wstring>& paths);
 
+inline bool IsControlKeyDown() { return (HSHELL_HIGHBIT & GetKeyState(VK_CONTROL)) != 0; };
+inline bool IsShiftKeyDown() { return (HSHELL_HIGHBIT & GetKeyState(VK_SHIFT)) != 0; };
+
 constexpr auto signum(auto x) { return x < 0 ? -1 : x == 0 ? 0 : 1; };
 constexpr auto usignum(auto x, auto y) { return x < y ? -1 : x == y ? 0 : 1; };
 

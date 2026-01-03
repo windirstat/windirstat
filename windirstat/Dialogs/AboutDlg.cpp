@@ -81,7 +81,7 @@ void CAboutDlg::WdsTabControl::Initialize()
             CRect(), this, ID_WDS_CONTROL);
         ctrl.SetEventMask(ENM_LINK | ENM_KEYEVENTS);
         ctrl.SetOptions(ECOOP_OR, ECO_READONLY);
-        ctrl.SetOptions(ECOOP_AND, ~ECO_SELECTIONBAR);
+        ctrl.SetOptions(ECOOP_AND, static_cast<DWORD>(~ECO_SELECTIONBAR));
         ctrl.HideSelection(TRUE, FALSE);
         return &ctrl;
     };
@@ -202,7 +202,7 @@ void CAboutDlg::WdsTabControl::OnEnMsgFilter(NMHDR* pNMHDR, LRESULT* pResult)
         }
         else if (mf->wParam == VK_TAB)
         {
-            HandleTabKey(GetKeyState(VK_SHIFT) < 0);
+            HandleTabKey(IsShiftKeyDown());
             *pResult = 1;
         }
     }
@@ -309,7 +309,7 @@ BOOL CAboutDlg::PreTranslateMessage(MSG* pMsg)
     {
         if (GetFocus() == GetDlgItem(IDOK))
         {
-            m_tab.SetActiveTab(GetKeyState(VK_SHIFT) < 0 ? m_tab.GetTabsNum() - 1 : 0);
+            m_tab.SetActiveTab(IsShiftKeyDown() ? m_tab.GetTabsNum() - 1 : 0);
             m_tab.SetFocus();
             return TRUE;
         }

@@ -361,7 +361,7 @@ void CTreeListControl::ExpandPathToItem(const CTreeListItem* item)
             for (int k = parent + 1; k < index; k++)
             {
                 // Do not collapse if in multiple selection mode (holding control)
-                if ((HSHELL_HIGHBIT & GetKeyState(VK_CONTROL)) == 0) CollapseItem(k);
+                if (!IsControlKeyDown()) CollapseItem(k);
                 index = FindTreeItem(path);
             }
         }
@@ -533,9 +533,9 @@ void CTreeListControl::OnLButtonDblClk(const UINT nFlags, const CPoint point)
 void CTreeListControl::EmulateInteractiveSelection(const CTreeListItem* item)
 {
     // see if any special keys are set so we can emulate them
-    const auto shiftFlag = (HSHELL_HIGHBIT & GetKeyState(VK_SHIFT)) ? MK_SHIFT : 0;
-    const auto controlFlag = (HSHELL_HIGHBIT & GetKeyState(VK_CONTROL)) ? MK_CONTROL : 0;
-    const auto vkFlag = shiftFlag | controlFlag;
+    const auto vkFlag =
+        (IsShiftKeyDown() ? MK_SHIFT : 0) |
+        (IsControlKeyDown() ? MK_CONTROL : 0);
 
     // make sure the item is selectable
     ExpandPathToItem(item);
@@ -741,8 +741,7 @@ void CTreeListControl::OnLvnItemChangingList(NMHDR* pNMHDR, LRESULT* pResult)
         (pNMLV->uNewState & LVIS_SELECTED) != 0;
 
     // if in shift-extend mode, prevent selecting of non-adjacent nodes
-    const auto shiftPressed = (HSHELL_HIGHBIT & GetKeyState(VK_SHIFT)) != 0;
-    if (shiftPressed && requestingSelection)
+    if (IsShiftKeyDown() && requestingSelection)
     {
         const auto& potentialSelection = GetItem(pNMLV->iItem);
         const auto& currentSelection = GetItem(GetSelectionMark());
@@ -751,8 +750,7 @@ void CTreeListControl::OnLvnItemChangingList(NMHDR* pNMHDR, LRESULT* pResult)
     }
 
     // if in ctrl-extend mode, do not allow selection of parent of child of existing collection
-    const auto ctrlPressed = (HSHELL_HIGHBIT & GetKeyState(VK_CONTROL)) != 0;
-    if (ctrlPressed && requestingSelection)
+    if (IsControlKeyDown() && requestingSelection)
     {
         const auto& items = GetAllSelected(true);
         const auto& potentialSelection = GetItem(pNMLV->iItem);

@@ -267,11 +267,34 @@ void CExtensionListControl::OnKeyDown(const UINT nChar, const UINT nRepCnt, cons
 {
     if (nChar == VK_TAB)
     {
-        CMainFrame::Get()->MoveFocus(LF_FILETREE);
+        if (!IsShiftKeyDown())
+        {
+            CMainFrame::Get()->MoveFocus(LF_FILETREE);
+        }
+        else
+        {
+            auto* tabbedView = CMainFrame::Get()->GetFileTabbedView();
+            if (tabbedView->IsSearchTabVisible())
+            {
+                tabbedView->SetActiveSearchView();
+                CMainFrame::Get()->MoveFocus(LF_SEARCHLIST);
+            }
+            else if (tabbedView->IsDupeTabVisible())
+            {
+                tabbedView->SetActiveDupeView();
+                CMainFrame::Get()->MoveFocus(LF_DUPELIST);
+            }
+            else
+            {
+                tabbedView->SetActiveTopView();
+                CMainFrame::Get()->MoveFocus(LF_TOPLIST);
+            }
+        }
     }
     else if (nChar == VK_ESCAPE)
     {
         CMainFrame::Get()->MoveFocus(LF_NONE);
     }
+
     COwnerDrawnListControl::OnKeyDown(nChar, nRepCnt, nFlags);
 }

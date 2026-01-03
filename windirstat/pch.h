@@ -26,6 +26,10 @@
 #define VC_EXTRALEAN
 #endif
 
+// Exclude unneeded MFC components
+#define _AFX_NO_DAO_SUPPORT
+#define _AFX_NO_CTL3D_SUPPORT
+
 #define _ATL_CSTRING_EXPLICIT_CONSTRUCTORS  // some CStringW constructors will be explicit
 #define _ITERATOR_DEBUG_LEVEL 0 // disable debugging due to debug performance impact
 

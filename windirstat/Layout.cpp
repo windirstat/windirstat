@@ -33,8 +33,7 @@ END_MESSAGE_MAP()
 BOOL CLayoutDialogEx::PreTranslateMessage(MSG* pMsg)
 {
     // Check for Ctrl+C key combination
-    if (pMsg->message == WM_KEYDOWN && pMsg->wParam == 'C' &&
-        (GetKeyState(VK_CONTROL) & HSHELL_HIGHBIT))
+    if (pMsg->message == WM_KEYDOWN && pMsg->wParam == 'C' && IsControlKeyDown())
     {
         // Get the mouse cursor position
         CPoint pt;
