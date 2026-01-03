@@ -18,6 +18,7 @@
 #include "pch.h"
 #include "ExtensionView.h"
 #include "ExtensionListControl.h"
+#include "FileSearchControl.h"
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -141,6 +142,8 @@ BEGIN_MESSAGE_MAP(CExtensionListControl, COwnerDrawnListControl)
     ON_NOTIFY_REFLECT(LVN_DELETEITEM, OnLvnDeleteItem)
     ON_WM_SETFOCUS()
     ON_NOTIFY_REFLECT(LVN_ITEMCHANGED, OnLvnItemChanged)
+    ON_WM_CONTEXTMENU()
+    ON_COMMAND(ID_EXTLIST_SEARCH_EXTENSION, &CExtensionListControl::OnSearchExtension)
     ON_WM_KEYDOWN()
 END_MESSAGE_MAP()
 
@@ -297,4 +300,32 @@ void CExtensionListControl::OnKeyDown(const UINT nChar, const UINT nRepCnt, cons
     }
 
     COwnerDrawnListControl::OnKeyDown(nChar, nRepCnt, nFlags);
+}
+
+void CExtensionListControl::OnContextMenu(CWnd* /*pWnd*/, CPoint point)
+{
+    if (CMenu menu; !GetSelectedExtension().empty() && menu.CreatePopupMenu())
+    {
+        menu.AppendMenuW(MF_STRING, ID_EXTLIST_SEARCH_EXTENSION, std::format(
+            L"{} - {}", Localization::Lookup(IDS_COL_EXTENSION), Localization::Lookup(IDS_SEARCH_TITLE)).c_str());
+        menu.TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, point.x, point.y, this);
+    }
+}
+
+void CExtensionListControl::OnSearchExtension()
+{
+    // Save off current search settings
+    const std::wstring previousTerm = COptions::SearchTerm;
+    const bool previousRegex = COptions::SearchRegex;
+
+    // Set terms and do search
+    COptions::SearchTerm = std::wstring(L"*") + GetSelectedExtension();
+    COptions::SearchRegex = false;
+    CFileSearchControl::Get()->ProcessSearch(CDirStatDoc::Get()->GetRootItem());
+
+    // Restore current search settings
+    COptions::SearchTerm =  previousTerm;
+    COptions::SearchRegex = previousRegex;
+
+    CMainFrame::Get()->GetFileTabbedView()->SetActiveSearchView();
 }

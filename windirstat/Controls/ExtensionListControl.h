@@ -88,4 +88,6 @@ protected:
     afx_msg void OnSetFocus(CWnd* pOldWnd);
     afx_msg void OnLvnItemChanged(NMHDR* pNMHDR, LRESULT* pResult);
     afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
+    afx_msg void OnContextMenu(CWnd* pWnd, CPoint point);
+    afx_msg void OnSearchExtension();
 };
