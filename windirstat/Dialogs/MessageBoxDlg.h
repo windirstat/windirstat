@@ -89,5 +89,5 @@ private:
 };
 
 // Global wrapper functions that emulate MessageBox/AfxMessageBox
-int WdsMessageBox(const std::wstring& message, UINT type = MB_OK);
+int WdsMessageBox(const std::wstring& message, UINT type = MB_OK, const CSize& initialSize = CSize(0, 0));
 int WdsMessageBox(HWND wnd, const std::wstring& message, const std::wstring& title, UINT type = MB_OK);

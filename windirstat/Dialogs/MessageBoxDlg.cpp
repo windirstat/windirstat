@@ -278,6 +278,13 @@ int WdsMessageBox(const std::wstring& message, const UINT type)
     return WdsMessageBox(nullptr, message, Localization::LookupNeutral(AFX_IDS_APP_TITLE), type);
 }
 
+int WdsMessageBox(const std::wstring& message, const UINT type, const CSize& initialSize)
+{
+    CMessageBoxDlg dlg(message, Localization::LookupNeutral(AFX_IDS_APP_TITLE), type);
+    dlg.SetInitialWindowSize(initialSize);
+    return static_cast<int>(dlg.DoModal());
+}
+
 int WdsMessageBox(const HWND wnd, const std::wstring& message, const std::wstring& title, const UINT type)
 {
     if (!DarkMode::IsDarkModeActive())
