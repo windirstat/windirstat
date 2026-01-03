@@ -529,10 +529,10 @@ bool CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, const bo
         }
 
         // Determine flags to use for deletion
-        auto flags = FOF_NOCONFIRMATION | FOFX_SHOWELEVATIONPROMPT | FOF_NOERRORUI;
+        auto flags = FOFX_SHOWELEVATIONPROMPT | FOF_NO_UI;
         if (toTrashBin)
         {
-            flags |= (IsWindows8OrGreater() ? (FOFX_ADDUNDORECORD | FOFX_RECYCLEONDELETE) : FOF_ALLOWUNDO);
+            flags |= FOFX_ADDUNDORECORD | FOFX_RECYCLEONDELETE;
         }
 
         CComPtr<IFileOperation> fileOperation;
