@@ -555,19 +555,28 @@ bool CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, const bo
         HRESULT res = fileOperation->PerformOperations();
         if (res != S_OK) VTRACE(L"File Operation Failed: {}", TranslateError(res));
 
+        // If user canceled (e.g., elevation prompt) then exit early
+        BOOL aborted = FALSE;
+        fileOperation->GetAnyOperationsAborted(&aborted);
+        if (aborted) return;
+
         // Re-run deletion using native function to handle any long paths that were missed
-        if (!toTrashBin)
+        if (!toTrashBin && res != S_OK)
         {
             // Create a list of files and directories that still exist to remove
             std::vector<const CItem*> filesToDelete;
             std::vector<const CItem*> dirsToDelete;
             std::stack<const CItem*> childStack;
-            for (const auto& item : items) childStack.push(item);
+            for (const auto& item : items)
+            {
+                if (!FinderBasic::DoesFileExist(item->GetPath())) continue;
+                childStack.push(item);
+            }
+
             while (!childStack.empty())
             {
                 const auto& item = childStack.top();
                 childStack.pop();
-                if (!FinderBasic::DoesFileExist(item->GetPath())) continue;
 
                 if (item->IsTypeOrFlag(IT_DIRECTORY))
                 {
