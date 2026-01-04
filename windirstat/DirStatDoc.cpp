@@ -1592,7 +1592,7 @@ void CDirStatDoc::OnComputeHash()
     // Compute the hash in the message thread
     std::wstring hashResult;
     const auto& items = GetAllSelected();
-    CProgressDlg(0, false, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
+    CProgressDlg(0, false, AfxGetMainWnd(), [&](CProgressDlg*)
     {
         hashResult = ComputeFileHashes(items.front()->GetPath());
     }).DoModal();
