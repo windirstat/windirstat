@@ -189,6 +189,7 @@ IDS_PAGE_GENERAL_TITLE=Allgemein
 IDS_PAGE_PROMPTS_CLOUD_LINKS=Cloud-Link-Warnhinweis während der Duplikaterkennung anzeigen
 IDS_PAGE_PROMPTS_DELETION_WARNING=Vor dem Löschen von Dateien Warnmeldung anzeigen
 IDS_PAGE_PROMPTS_ELEVATION_PROMPT=Dialog zum Erhöhen der Berechtigungen anzeigen
+IDS_PAGE_PROMPTS_MICROSOFT_PROGRESS=Microsoft-Fortschrittsdialoge beim Verschieben oder Löschen von Dateien anzeigen
 IDS_PAGE_PROMPTS_TITLE=Eingabeaufforderungen
 IDS_PAGE_TREELIST_COLORS=&Teilbaumanteil-Farben
 IDS_PAGE_TREELIST_OPTIONAL=Optionale Spalten

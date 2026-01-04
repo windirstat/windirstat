@@ -189,6 +189,7 @@ IDS_PAGE_GENERAL_TITLE=Üldine
 IDS_PAGE_PROMPTS_CLOUD_LINKS=Kuva duplikaatide tuvastamisel pilvelinkide hoiatusteade
 IDS_PAGE_PROMPTS_DELETION_WARNING=Kuva hoiatusteade enne failide kustutamist
 IDS_PAGE_PROMPTS_ELEVATION_PROMPT=Näita õiguste tõstmise viipa
+IDS_PAGE_PROMPTS_MICROSOFT_PROGRESS=Kuva Microsofti edenemisdialoogid failide teisaldamisel või kustutamisel
 IDS_PAGE_PROMPTS_TITLE=Küsimisviisid
 IDS_PAGE_TREELIST_COLORS=Alampuu esitus &värvides
 IDS_PAGE_TREELIST_OPTIONAL=Valikulised veerud

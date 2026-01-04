@@ -189,6 +189,7 @@ IDS_PAGE_GENERAL_TITLE=Genel
 IDS_PAGE_PROMPTS_CLOUD_LINKS=Kopya tespiti sırasında bulut bağlantıları uyarı iletişim kutusunu göster
 IDS_PAGE_PROMPTS_DELETION_WARNING=Dosyaları silmeden önce uyarı mesajı göster
 IDS_PAGE_PROMPTS_ELEVATION_PROMPT=Ayrıcalık yükseltme istemini göster
+IDS_PAGE_PROMPTS_MICROSOFT_PROGRESS=Dosyaları taşırken veya silerken Microsoft ilerleme iletişim kutularını göster
 IDS_PAGE_PROMPTS_TITLE=İstemler
 IDS_PAGE_TREELIST_COLORS=Alt Ağaç Yüzde Renkleri
 IDS_PAGE_TREELIST_OPTIONAL=İsteğe bağlı sütunlar

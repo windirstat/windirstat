@@ -189,6 +189,7 @@ IDS_PAGE_GENERAL_TITLE=Generelt
 IDS_PAGE_PROMPTS_CLOUD_LINKS=Vis advarsel om skylinker under duplikatdeteksjon
 IDS_PAGE_PROMPTS_DELETION_WARNING=Vis advarsel før sletting av filer
 IDS_PAGE_PROMPTS_ELEVATION_PROMPT=Vis ledetekst for privilegieheving
+IDS_PAGE_PROMPTS_MICROSOFT_PROGRESS=Vis Microsoft-fremdriftsdialoger når filer flyttes eller slettes
 IDS_PAGE_PROMPTS_TITLE=Varsler
 IDS_PAGE_TREELIST_COLORS=Farger for undermappeprosent
 IDS_PAGE_TREELIST_OPTIONAL=Valgfrie kolonner

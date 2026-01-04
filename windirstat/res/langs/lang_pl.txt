@@ -189,6 +189,7 @@ IDS_PAGE_GENERAL_TITLE=Ogólne
 IDS_PAGE_PROMPTS_CLOUD_LINKS=Wyświetl ostrzeżenie o linkach w chmurze podczas wykrywania duplikatów
 IDS_PAGE_PROMPTS_DELETION_WARNING=Pokaż komunikat ostrzegawczy przed usunięciem plików
 IDS_PAGE_PROMPTS_ELEVATION_PROMPT=Pokaż monit o podniesienie uprawnień
+IDS_PAGE_PROMPTS_MICROSOFT_PROGRESS=Pokazuj okna postępu firmy Microsoft podczas przenoszenia lub usuwania plików
 IDS_PAGE_PROMPTS_TITLE=Monity
 IDS_PAGE_TREELIST_COLORS=&Kolory poddrzewa - procentowo
 IDS_PAGE_TREELIST_OPTIONAL=Opcjonalne kolumny

@@ -189,6 +189,7 @@ IDS_PAGE_GENERAL_TITLE=Algemeen
 IDS_PAGE_PROMPTS_CLOUD_LINKS=Waarschuwing voor cloudkoppelingen tonen tijdens het detecteren van duplicaten
 IDS_PAGE_PROMPTS_DELETION_WARNING=Toon waarschuwingsbericht voordat bestanden worden verwijderd
 IDS_PAGE_PROMPTS_ELEVATION_PROMPT=Prompt voor verhoogde bevoegdheden tonen
+IDS_PAGE_PROMPTS_MICROSOFT_PROGRESS=Microsoft-voortgangsdialogen weergeven bij het verplaatsen of verwijderen van bestanden
 IDS_PAGE_PROMPTS_TITLE=Meldingen
 IDS_PAGE_TREELIST_COLORS=&Kleuren onderliggende percentages van tree
 IDS_PAGE_TREELIST_OPTIONAL=Optionele kolommen

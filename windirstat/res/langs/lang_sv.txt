@@ -189,6 +189,7 @@ IDS_PAGE_GENERAL_TITLE=Allmänt
 IDS_PAGE_PROMPTS_CLOUD_LINKS=Visa varning om molnlänkar under duplikatidentifiering
 IDS_PAGE_PROMPTS_DELETION_WARNING=Visa varningsmeddelande innan du tar bort filer
 IDS_PAGE_PROMPTS_ELEVATION_PROMPT=Visa bekräftelse för behörighetshöjning
+IDS_PAGE_PROMPTS_MICROSOFT_PROGRESS=Visa Microsoft-förloppsdialoger vid flytt eller borttagning av filer
 IDS_PAGE_PROMPTS_TITLE=Promptar
 IDS_PAGE_TREELIST_COLORS=Underträdets &procentfärger
 IDS_PAGE_TREELIST_OPTIONAL=Valfria kolumner

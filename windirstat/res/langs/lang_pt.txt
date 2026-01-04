@@ -189,6 +189,7 @@ IDS_PAGE_GENERAL_TITLE=Geral
 IDS_PAGE_PROMPTS_CLOUD_LINKS=Mostrar aviso de links na nuvem durante a detecção de duplicados
 IDS_PAGE_PROMPTS_DELETION_WARNING=Mostrar mensagem de aviso antes de excluir arquivos
 IDS_PAGE_PROMPTS_ELEVATION_PROMPT=Mostrar solicitação de elevação de privilégios
+IDS_PAGE_PROMPTS_MICROSOFT_PROGRESS=Mostrar caixas de diálogo de progresso da Microsoft ao mover ou excluir arquivos
 IDS_PAGE_PROMPTS_TITLE=Avisos
 IDS_PAGE_TREELIST_COLORS=&Cores dos percentuais dos subdiretórios
 IDS_PAGE_TREELIST_OPTIONAL=Colunas opcionais

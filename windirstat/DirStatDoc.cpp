@@ -529,7 +529,7 @@ bool CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, const bo
         }
 
         // Determine flags to use for deletion
-        auto flags = FOFX_SHOWELEVATIONPROMPT | FOF_NO_UI;
+        auto flags = FOFX_SHOWELEVATIONPROMPT | (COptions::ShowMicrosoftProgress ? FOF_NOCONFIRMMKDIR : FOF_NO_UI);
         if (toTrashBin)
         {
             flags |= FOFX_ADDUNDORECORD | FOFX_RECYCLEONDELETE;
@@ -1382,7 +1382,7 @@ void CDirStatDoc::OnCleanupMoveTo()
         // Create file operation object
         CComPtr<IFileOperation> fileOperation;
         CComPtr<IShellItem> destShellItem;
-        const auto flags = FOFX_SHOWELEVATIONPROMPT | FOF_NO_UI;
+        const auto flags = FOFX_SHOWELEVATIONPROMPT | (COptions::ShowMicrosoftProgress ? FOF_NOCONFIRMMKDIR : FOF_NO_UI);
         if (FAILED(::CoCreateInstance(CLSID_FileOperation, nullptr, CLSCTX_ALL, IID_PPV_ARGS(&fileOperation))) ||
             FAILED(fileOperation->SetOwnerWindow(*pdlg)) ||
             FAILED(fileOperation->SetOperationFlags(flags)) ||

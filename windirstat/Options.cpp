@@ -57,6 +57,7 @@ Setting<bool> COptions::ShowColumnSizeLogical(OptionsFileTree, L"ShowColumnSizeL
 Setting<bool> COptions::ShowColumnSizePhysical(OptionsFileTree, L"ShowColumnSizePhysical", true);
 Setting<bool> COptions::ShowDeleteWarning(OptionsGeneral, L"ShowDeleteWarning", true);
 Setting<bool> COptions::ShowElevationPrompt(OptionsGeneral, L"ShowElevationPrompt", true);
+Setting<bool> COptions::ShowMicrosoftProgress(OptionsGeneral, L"ShowMicrosoftProgress", false);
 Setting<bool> COptions::ShowFileTypes(OptionsGeneral, L"ShowFileTypes", true);
 Setting<bool> COptions::ShowFreeSpace(OptionsGeneral, L"ShowFreeSpace", false);
 Setting<bool> COptions::ShowStatusBar(OptionsGeneral, L"ShowStatusBar", true);

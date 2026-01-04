@@ -151,6 +151,7 @@
 #define IDC_AUTO_ELEVATE                1115
 #define IDC_PROCESS_HARDLINKS           1116
 #define IDC_CONTEXT_MENU                1117
+#define IDC_SHOW_MICROSOFT_PROGRESS     1118
 #define ID_WDS_CONTROL                  4711
 #define ID_CLEANUP_EXPLORER_SELECT      32768
 #define ID_TREEMAP_ZOOMIN               32769
@@ -239,7 +240,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        306
 #define _APS_NEXT_COMMAND_VALUE         32842
-#define _APS_NEXT_CONTROL_VALUE         1118
+#define _APS_NEXT_CONTROL_VALUE         1119
 #define _APS_NEXT_SYMED_VALUE           109
 #endif
 #endif
