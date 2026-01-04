@@ -1015,11 +1015,11 @@ std::wstring ComputeFileHashes(const std::wstring& filePath)
     // Initialize all hash contexts
     using HashContext = struct HashContext {
         LPCWSTR name = nullptr;
-        SmartPointer<BCRYPT_ALG_HANDLE> hAlg = { nullptr, nullptr };
-        SmartPointer<BCRYPT_HASH_HANDLE> hHash = { nullptr, nullptr };
+        DWORD objectLen = 0;
         std::vector<BYTE> hashObject;
         std::vector<BYTE> hash;
-        DWORD objectLen = 0;
+        SmartPointer<BCRYPT_ALG_HANDLE> hAlg = { nullptr, nullptr };  // Move to end
+        SmartPointer<BCRYPT_HASH_HANDLE> hHash = { nullptr, nullptr }; // B
     };
 
     // Define algorithms to compute
@@ -1056,8 +1056,7 @@ std::wstring ComputeFileHashes(const std::wstring& filePath)
         if (BCryptCreateHash(ctx.hAlg, &hHash, ctx.hashObject.data(),
             ctx.objectLen, nullptr, 0, 0) != 0) continue;
 
-        ctx.hHash = SmartPointer<BCRYPT_HASH_HANDLE>(
-            [](const BCRYPT_HASH_HANDLE h) { BCryptDestroyHash(h); }, hHash);
+        ctx.hHash = SmartPointer<BCRYPT_HASH_HANDLE>(BCryptDestroyHash, hHash);
 
         contexts.emplace_back(std::move(ctx));
     }
