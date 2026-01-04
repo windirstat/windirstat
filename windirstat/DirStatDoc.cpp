@@ -514,7 +514,7 @@ bool CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, const bo
         COptions::ShowDeleteWarning = !warning.IsCheckboxChecked();
     }
 
-    CProgressDlg(0, true, AfxGetMainWnd(), [&](const std::atomic<bool>&, std::atomic<size_t>&)
+    CProgressDlg(0, true, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
     {
         // Build list of items to delete
         std::vector<CItem*> itemsToDelete{ items };
@@ -718,7 +718,7 @@ void CDirStatDoc::RefreshAfterUserDefinedCleanup(const USERDEFINEDCLEANUP* udc, 
 
 void CDirStatDoc::RecursiveUserDefinedCleanup(USERDEFINEDCLEANUP* udc, const std::wstring& rootPath, const std::wstring& currentPath)
 {
-    // (Depth first.)
+    // (Depth first.) 
 
     FinderBasic finder;
     for (BOOL b = finder.FindFile(currentPath); b; b = finder.FindNext())
@@ -1069,7 +1069,7 @@ void CDirStatDoc::OnSaveResults()
     CFileDialog dlg(FALSE, L"csv", nullptr, OFN_EXPLORER | OFN_DONTADDTORECENT, fileSelectString.c_str());
     if (dlg.DoModal() != IDOK) return;
 
-    CProgressDlg(0, true, AfxGetMainWnd(), [&](const std::atomic<bool>&, std::atomic<size_t>&)
+    CProgressDlg(0, true, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
     {
         SaveResults(dlg.GetPathName().GetString(), GetRootItem());
     }).DoModal();
@@ -1083,7 +1083,7 @@ void CDirStatDoc::OnSaveDuplicates()
     CFileDialog dlg(FALSE, L"csv", nullptr, OFN_EXPLORER | OFN_DONTADDTORECENT, fileSelectString.c_str());
     if (dlg.DoModal() != IDOK) return;
 
-    CProgressDlg(0, true, AfxGetMainWnd(), [&](const std::atomic<bool>&, std::atomic<size_t>&)
+    CProgressDlg(0, true, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
     {
         SaveDuplicates(dlg.GetPathName().GetString(), GetRootItemDupe());
     }).DoModal();
@@ -1098,7 +1098,7 @@ void CDirStatDoc::OnLoadResults()
     if (dlg.DoModal() != IDOK) return;
 
     CItem* newroot = nullptr;
-    CProgressDlg(0, true, AfxGetMainWnd(), [&](const std::atomic<bool>&, std::atomic<size_t>&)
+    CProgressDlg(0, true, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
     {
         newroot = LoadResults(dlg.GetPathName().GetString());
     }).DoModal();
@@ -1122,7 +1122,7 @@ void CDirStatDoc::OnEditCopy()
 
 void CDirStatDoc::OnCleanupEmptyRecycleBin()
 {
-    CProgressDlg(0, true, AfxGetMainWnd(), [](const std::atomic<bool>&, std::atomic<size_t>&)
+    CProgressDlg(0, true, AfxGetMainWnd(), [](CProgressDlg* pdlg)
     {
         SHEmptyRecycleBin(*AfxGetMainWnd(), nullptr, 0);
     }).DoModal();
@@ -1147,10 +1147,9 @@ void CDirStatDoc::OnRemoveShadowCopies()
     ULONGLONG count = 0, bytesUsed = 0;
     QueryShadowCopies(count, bytesUsed);
 
-    CProgressDlg(static_cast<size_t>(count), false, AfxGetMainWnd(), [](const std::atomic<bool>& cancelRequested,
-        std::atomic<size_t>& progress)
+    CProgressDlg(static_cast<size_t>(count), false, AfxGetMainWnd(), [](CProgressDlg* pdlg)
     {
-        RemoveWmiInstances(L"Win32_ShadowCopy", progress, cancelRequested);
+        RemoveWmiInstances(L"Win32_ShadowCopy", pdlg);
     }).DoModal();
 
     GetRootItem()->UpdateFreeSpaceItem();
@@ -1377,7 +1376,7 @@ void CDirStatDoc::OnCleanupMoveTo()
     if (!FolderExists(destFolder)) return;
 
     // Show progress dialog and move files
-    CProgressDlg(items.size(), false, AfxGetMainWnd(), [&](const std::atomic<bool>&, std::atomic<size_t>&)
+    CProgressDlg(items.size(), false, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
     {
         // Create file operation object
         CComPtr<IFileOperation> fileOperation;
@@ -1456,9 +1455,9 @@ void CDirStatDoc::OnDisableHibernateFile()
 
 void CDirStatDoc::OnRemoveRoamingProfiles()
 {
-    CProgressDlg(0, false, AfxGetMainWnd(), [&](const std::atomic<bool>& cancelRequested, std::atomic<size_t>& progress)
+    CProgressDlg(0, false, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
     {
-        RemoveWmiInstances(L"Win32_UserProfile", progress, cancelRequested,
+        RemoveWmiInstances(L"Win32_UserProfile", pdlg,
             L"RoamingConfigured = TRUE");
     }).DoModal();
 
@@ -1467,9 +1466,9 @@ void CDirStatDoc::OnRemoveRoamingProfiles()
 
 void CDirStatDoc::OnRemoveLocalProfiles()
 {
-    CProgressDlg(0, false, AfxGetMainWnd(), [&](const std::atomic<bool>&cancelRequested, std::atomic<size_t>& progress)
+    CProgressDlg(0, false, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
     {
-        RemoveWmiInstances(L"Win32_UserProfile", progress, cancelRequested,
+        RemoveWmiInstances(L"Win32_UserProfile", pdlg,
             L"RoamingConfigured = FALSE AND Loaded = FALSE AND Special = FALSE");
     }).DoModal();
 
@@ -1639,13 +1638,12 @@ void CDirStatDoc::OnCleanupCompress(UINT id)
 
     // Show progress dialog and compress files
     const auto alg = CompressionIdToAlg(id);
-    CProgressDlg(itemsToCompress.size(), false, AfxGetMainWnd(), [&](const std::atomic<bool>& cancel,
-        std::atomic<size_t>& current)
+    CProgressDlg(itemsToCompress.size(), false, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
     {
         for (const auto i : std::views::iota(0u, itemsToCompress.size()))
         {
-            if (cancel) break;
-            current = static_cast<ULONGLONG>(i) + 1;
+            if (pdlg->IsCancelled()) break;
+            pdlg->SetCurrent(i + 1);
             CompressFile(itemsToCompress[i]->GetPathLong(), alg);
         }
     }).DoModal();
@@ -1679,13 +1677,12 @@ void CDirStatDoc::OnCleanupOptimizeVhd()
     }
 
     // Show progress dialog and optimize VHD files
-    CProgressDlg(vhdxFiles.size(), false, AfxGetMainWnd(), [&](const std::atomic<bool>& cancel,
-        std::atomic<size_t>& current)
+    CProgressDlg(vhdxFiles.size(), false, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
     {
         for (const auto i : std::views::iota(0u, vhdxFiles.size()))
         {
-            if (cancel) break;
-            current = static_cast<ULONGLONG>(i) + 1;
+            if (pdlg->IsCancelled()) break;
+            pdlg->SetCurrent(i + 1);
             OptimizeVhd(vhdxFiles[i]->GetPathLong());
         }
     }).DoModal();

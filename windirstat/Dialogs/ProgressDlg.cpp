@@ -20,7 +20,7 @@
 
 IMPLEMENT_DYNAMIC(CProgressDlg, CDialogEx)
 
-CProgressDlg::CProgressDlg(const size_t total, const bool noCancel, CWnd* pParent, std::function<void(std::atomic<bool>&, std::atomic<size_t>&)> task)
+CProgressDlg::CProgressDlg(const size_t total, const bool noCancel, CWnd* pParent, std::function<void(CProgressDlg*)> task)
     : CDialogEx(IDD, pParent)
     , m_total(total)
     , m_message(Localization::Lookup(IDS_PROGRESS))
@@ -85,8 +85,8 @@ void CProgressDlg::StartWorkerThread()
 {
     m_workerThread.emplace([this]()
     {
-        // Execute the task
-        m_task(m_cancelRequested, m_current);
+        // Execute the task, passing the dialog pointer
+        m_task(this);
 
         // Post message to close dialog when complete
         if (!m_cancelRequested)

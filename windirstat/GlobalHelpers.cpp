@@ -18,6 +18,7 @@
 #include "pch.h"
 #include "FinderBasic.h"
 #include "MessageBoxDlg.h"
+#include "ProgressDlg.h"
 
 #pragma comment(lib,"powrprof.lib")
 #pragma comment(lib,"wbemuuid.lib")
@@ -88,7 +89,7 @@ void QueryShadowCopies(ULONGLONG& count, ULONGLONG& bytesUsed)
     }
 }
 
-void RemoveWmiInstances(const std::wstring& wmiClass, std::atomic<size_t>& progress, const std::atomic<bool>& cancelRequested, const std::wstring& whereClause)
+void RemoveWmiInstances(const std::wstring& wmiClass, CProgressDlg* pdlg, const std::wstring& whereClause)
 {
     CComPtr<IWbemServices> svcObj;
     CComPtr<IWbemClassObject> classObj;
@@ -101,7 +102,7 @@ void RemoveWmiInstances(const std::wstring& wmiClass, std::atomic<size_t>& progr
         return;
     }
 
-    for (; !cancelRequested; ++progress)
+    for (size_t progress = 0; !pdlg->IsCancelled(); pdlg->SetCurrent(++progress))
     {
         ULONG uRet;
         CComPtr<IWbemClassObject> pObj;

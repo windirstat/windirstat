@@ -19,6 +19,9 @@
 
 #include "pch.h"
 
+// Forward declarations
+class CProgressDlg;
+
 constexpr auto CONTENT_MENU_MINCMD = 0x1ul;
 constexpr auto CONTENT_MENU_MAXCMD = 0x7FFFul;
 
@@ -104,8 +107,8 @@ std::wstring GetAppFolder();
 std::wstring GetNameFromSid(PSID sid);
 std::wstring ComputeFileHashes(const std::wstring& filePath);
 void QueryShadowCopies(ULONGLONG& count, ULONGLONG& bytesUsed);
-void RemoveWmiInstances(const std::wstring& wmiClass, std::atomic<size_t>& progress,
-    const std::atomic<bool>& cancelRequested, const std::wstring& whereClause = L"__PATH IS NOT NULL");
+void RemoveWmiInstances(const std::wstring& wmiClass, CProgressDlg* pdlg,
+    const std::wstring& whereClause = L"__PATH IS NOT NULL");
 bool OptimizeVhd(const std::wstring& vhdPath);
 
 using CSmallRect = struct CSmallRect

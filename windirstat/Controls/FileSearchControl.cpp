@@ -80,14 +80,15 @@ void CFileSearchControl::ProcessSearch(CItem* item)
 
     // Process search request using progress dialog
     CProgressDlg(static_cast<size_t>(item->GetItemsCount()), false, AfxGetMainWnd(),
-        [&](const std::atomic<bool>& cancel, std::atomic<size_t>& current)
+        [&](CProgressDlg* pdlg)
     {
         // Do search
         std::stack<CItem*> queue({ item });
-        while (!queue.empty() && !cancel)
+        size_t current = 0;
+        while (!queue.empty() && !pdlg->IsCancelled())
         {
             // Grab item from queue
-            ++current;
+            pdlg->SetCurrent(++current);
             CItem* qitem = queue.top();
             queue.pop();
 

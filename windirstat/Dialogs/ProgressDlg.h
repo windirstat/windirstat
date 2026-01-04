@@ -28,11 +28,17 @@ class CProgressDlg final : public CDialogEx
     DECLARE_DYNAMIC(CProgressDlg)
 
 public:
-    CProgressDlg(size_t total, bool noCancel, CWnd* pParent, std::function<void(std::atomic<bool>&, std::atomic<size_t>&)> task);
+    CProgressDlg(size_t total, bool noCancel, CWnd* pParent, std::function<void(CProgressDlg*)> task);
     ~CProgressDlg() override = default;
 
     INT_PTR DoModal() override;
     bool WasCancelled() const { return m_cancelled; }
+
+    // Methods for task lambda to interact with the dialog
+    bool IsCancelled() const { return m_cancelRequested.load(); }
+    void SetCurrent(size_t current) { m_current.store(current); }
+    size_t GetCurrent() const { return m_current.load(); }
+    size_t GetTotal() const { return m_total; }
 
 protected:
     enum : std::uint8_t { IDD = IDD_PROGRESS };
@@ -50,7 +56,7 @@ private:
     void StartWorkerThread();
 
     std::wstring m_message;
-    std::function<void(std::atomic<bool>&, std::atomic<size_t>&)> m_task;
+    std::function<void(CProgressDlg*)> m_task;
     
     CStatic m_messageCtrl;
     CProgressCtrl m_progressCtrl;
