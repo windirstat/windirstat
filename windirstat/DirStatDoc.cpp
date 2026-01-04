@@ -1590,8 +1590,12 @@ void CDirStatDoc::OnCleanupProperties()
 void CDirStatDoc::OnComputeHash()
 {
     // Compute the hash in the message thread
+    std::wstring hashResult;
     const auto& items = GetAllSelected();
-    const std::wstring hashResult = ComputeFileHashes(items.front()->GetPath());
+    CProgressDlg(0, false, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
+    {
+        hashResult = ComputeFileHashes(items.front()->GetPath());
+    }).DoModal();
 
     // Display result in message box
     CMessageBoxDlg dlg(hashResult, Localization::LookupNeutral(AFX_IDS_APP_TITLE), MB_OK | MB_ICONINFORMATION);

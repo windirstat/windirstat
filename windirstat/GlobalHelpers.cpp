@@ -985,10 +985,12 @@ bool CompressFileAllowed(const std::wstring& filePath, const CompressionAlgorith
 std::wstring ComputeFileHashes(const std::wstring& filePath)
 {
     // Open file with smart pointer
-    CWaitCursor wc;
     SmartPointer<HANDLE> hFile(CloseHandle, CreateFileW(filePath.c_str(), GENERIC_READ, FILE_SHARE_READ,
         nullptr, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, nullptr));
-    if (hFile == INVALID_HANDLE_VALUE) return {};
+    if (hFile == INVALID_HANDLE_VALUE)
+    {
+        return TranslateError();
+    }
 
     // Initialize all hash contexts
     using HashContext = struct HashContext {
@@ -1019,7 +1021,6 @@ std::wstring ComputeFileHashes(const std::wstring& filePath)
         if (BCryptOpenAlgorithmProvider(&hAlg, algo.id, nullptr, 0) != 0) continue;
         ctx.hAlg = SmartPointer<BCRYPT_ALG_HANDLE>(
             [](const BCRYPT_ALG_HANDLE h) { BCryptCloseAlgorithmProvider(h, 0); }, hAlg);
-
 
         if (DWORD bytesWritten = 0; BCryptGetProperty(ctx.hAlg, BCRYPT_OBJECT_LENGTH,
             reinterpret_cast<PBYTE>(&ctx.objectLen), sizeof(DWORD), &bytesWritten, 0) != ERROR_SUCCESS)
