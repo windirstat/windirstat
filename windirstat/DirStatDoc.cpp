@@ -537,6 +537,7 @@ bool CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, const bo
 
         CComPtr<IFileOperation> fileOperation;
         if (FAILED(::CoCreateInstance(CLSID_FileOperation, nullptr, CLSCTX_ALL, IID_PPV_ARGS(&fileOperation))) ||
+            FAILED(fileOperation->SetOwnerWindow(*pdlg)) ||
             FAILED(fileOperation->SetOperationFlags(flags)))
         {
             return;
@@ -1069,7 +1070,7 @@ void CDirStatDoc::OnSaveResults()
     CFileDialog dlg(FALSE, L"csv", nullptr, OFN_EXPLORER | OFN_DONTADDTORECENT, fileSelectString.c_str());
     if (dlg.DoModal() != IDOK) return;
 
-    CProgressDlg(0, true, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
+    CProgressDlg(0, true, AfxGetMainWnd(), [&](CProgressDlg*)
     {
         SaveResults(dlg.GetPathName().GetString(), GetRootItem());
     }).DoModal();
@@ -1083,7 +1084,7 @@ void CDirStatDoc::OnSaveDuplicates()
     CFileDialog dlg(FALSE, L"csv", nullptr, OFN_EXPLORER | OFN_DONTADDTORECENT, fileSelectString.c_str());
     if (dlg.DoModal() != IDOK) return;
 
-    CProgressDlg(0, true, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
+    CProgressDlg(0, true, AfxGetMainWnd(), [&](CProgressDlg*)
     {
         SaveDuplicates(dlg.GetPathName().GetString(), GetRootItemDupe());
     }).DoModal();
@@ -1098,7 +1099,7 @@ void CDirStatDoc::OnLoadResults()
     if (dlg.DoModal() != IDOK) return;
 
     CItem* newroot = nullptr;
-    CProgressDlg(0, true, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
+    CProgressDlg(0, true, AfxGetMainWnd(), [&](CProgressDlg*)
     {
         newroot = LoadResults(dlg.GetPathName().GetString());
     }).DoModal();
@@ -1122,7 +1123,7 @@ void CDirStatDoc::OnEditCopy()
 
 void CDirStatDoc::OnCleanupEmptyRecycleBin()
 {
-    CProgressDlg(0, true, AfxGetMainWnd(), [](CProgressDlg* pdlg)
+    CProgressDlg(0, true, AfxGetMainWnd(), [](CProgressDlg*)
     {
         SHEmptyRecycleBin(*AfxGetMainWnd(), nullptr, 0);
     }).DoModal();
@@ -1381,8 +1382,9 @@ void CDirStatDoc::OnCleanupMoveTo()
         // Create file operation object
         CComPtr<IFileOperation> fileOperation;
         CComPtr<IShellItem> destShellItem;
-        const auto flags = FOF_NOCONFIRMMKDIR | FOFX_SHOWELEVATIONPROMPT;
+        const auto flags = FOFX_SHOWELEVATIONPROMPT | FOF_NO_UI;
         if (FAILED(::CoCreateInstance(CLSID_FileOperation, nullptr, CLSCTX_ALL, IID_PPV_ARGS(&fileOperation))) ||
+            FAILED(fileOperation->SetOwnerWindow(*pdlg)) ||
             FAILED(fileOperation->SetOperationFlags(flags)) ||
             FAILED(SHCreateItemFromParsingName(destFolder.c_str(), nullptr, IID_PPV_ARGS(&destShellItem))))
         {

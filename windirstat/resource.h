@@ -147,7 +147,6 @@
 #define IDC_PROGRESS_MESSAGE            1110
 #define IDC_PROGRESS_BAR                1111
 #define IDC_ELEVATION_PROMPT            1112
-#define IDC_FAST_SCAN_PROMPT            1113
 #define IDC_CLOUD_LINKS_WARNING         1114
 #define IDC_AUTO_ELEVATE                1115
 #define IDC_PROCESS_HARDLINKS           1116

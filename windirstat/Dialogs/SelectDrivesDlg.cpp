@@ -411,8 +411,15 @@ BOOL CSelectDrivesDlg::OnInitDialog()
     m_layout.AddControl(IDC_FAST_SCAN_CHECKBOX, 0, 1, 1, 0);
     m_layout.AddControl(IDC_SCAN_DUPLICATES, 0, 1, 1, 0);
 
-    // Disable the Fast Scan checkbox if elevation is not available
-    GetDlgItem(IDC_FAST_SCAN_CHECKBOX)->EnableWindow(IsElevationActive() || IsElevationAvailable());
+    // Update checkbox text based on elevation status
+    if (!IsElevationActive())
+    {
+        // Show unavailable message when user is not elevated
+        CButton* pCheckbox = static_cast<CButton*>(GetDlgItem(IDC_FAST_SCAN_CHECKBOX));
+        pCheckbox->SetWindowText(std::format(L"{} ({})",
+            Localization::Lookup(IDS_FAST_SCAN_CHECKBOX),
+            Localization::Lookup(IDS_ELEVATION_REQUIRED)).c_str());
+    }
 
     m_layout.OnInitDialog(true);
 

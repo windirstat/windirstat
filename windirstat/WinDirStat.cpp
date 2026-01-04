@@ -356,18 +356,6 @@ BOOL CDirStatApp::InitInstance()
         RtlSetProcessPlaceholderCompatibilityMode(PHCM_EXPOSE_PLACEHOLDERS);
     }
 
-    // Prompt user to enable enhanced scanning engine if it is disabled and running in elevated privileges
-    if (IsElevationActive() && !COptions::UseFastScanEngine && COptions::ShowFastScanPrompt) {
-        CMessageBoxDlg fastScanPrompt( Localization::Lookup(IDS_ENABLEFASTSCAN_QUESTION),
-            Localization::LookupNeutral(AFX_IDS_APP_TITLE), MB_YESNO | MB_ICONQUESTION, m_pMainWnd,
-            {}, Localization::Lookup(IDS_DONT_SHOW_AGAIN), false);
-
-        const INT_PTR result = fastScanPrompt.DoModal();
-        COptions::UseFastScanEngine = (result == IDYES);
-        COptions::UseFastScanEngine.WritePersistedProperty();
-        COptions::ShowFastScanPrompt = !fastScanPrompt.IsCheckboxChecked();
-    }
-
     // Allow user to elevate if desired
     if (IsElevationAvailable() && COptions::ShowElevationPrompt && m_saveToCsvPath.empty())
     {

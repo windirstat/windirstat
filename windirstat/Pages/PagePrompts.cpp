@@ -36,14 +36,12 @@ void CPagePrompts::DoDataExchange(CDataExchange* pDX)
     CMFCPropertyPage::DoDataExchange(pDX);
     DDX_Check(pDX, IDC_DELETION_WARNING, m_showDeleteWarning);
     DDX_Check(pDX, IDC_ELEVATION_PROMPT, m_showElevationPrompt);
-    DDX_Check(pDX, IDC_FAST_SCAN_PROMPT, m_showFastScanPrompt);
     DDX_Check(pDX, IDC_CLOUD_LINKS_WARNING, m_skipDupeDetectionCloudLinksWarning);
 }
 
 BEGIN_MESSAGE_MAP(CPagePrompts, CMFCPropertyPage)
     ON_BN_CLICKED(IDC_DELETION_WARNING, OnBnClickedSetModified)
     ON_BN_CLICKED(IDC_ELEVATION_PROMPT, OnBnClickedSetModified)
-    ON_BN_CLICKED(IDC_FAST_SCAN_PROMPT, OnBnClickedSetModified)
     ON_BN_CLICKED(IDC_CLOUD_LINKS_WARNING, OnBnClickedSetModified)
     ON_WM_CTLCOLOR()
 END_MESSAGE_MAP()
@@ -63,7 +61,6 @@ BOOL CPagePrompts::OnInitDialog()
 
     m_showDeleteWarning = COptions::ShowDeleteWarning;
     m_showElevationPrompt = COptions::ShowElevationPrompt;
-    m_showFastScanPrompt = COptions::ShowFastScanPrompt;
     m_skipDupeDetectionCloudLinksWarning = COptions::SkipDupeDetectionCloudLinksWarning;
 
     UpdateData(FALSE);
@@ -76,7 +73,6 @@ void CPagePrompts::OnOK()
 
     COptions::ShowDeleteWarning = (FALSE != m_showDeleteWarning);
     COptions::ShowElevationPrompt = (FALSE != m_showElevationPrompt);
-    COptions::ShowFastScanPrompt = (FALSE != m_showFastScanPrompt);
     COptions::SkipDupeDetectionCloudLinksWarning = (FALSE != m_skipDupeDetectionCloudLinksWarning);
 
     CMFCPropertyPage::OnOK();
