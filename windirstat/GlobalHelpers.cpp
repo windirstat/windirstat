@@ -260,16 +260,36 @@ std::wstring FormatAttributes(const DWORD attr)
     if (attr == INVALID_FILE_ATTRIBUTES) return wds::strInvalidAttributes;
 
     std::wstring attributes;
-    if (attr & FILE_ATTRIBUTE_READONLY) attributes += wds::strAttributeReadonly;
-    if (attr & FILE_ATTRIBUTE_HIDDEN) attributes += wds::strAttributeHidden;
-    if (attr & FILE_ATTRIBUTE_SYSTEM) attributes += wds::strAttributeSystem;
-    if (attr & FILE_ATTRIBUTE_ARCHIVE) attributes += wds::strAttributeArchive;
-    if (attr & FILE_ATTRIBUTE_COMPRESSED) attributes += wds::strAttributeCompressed;
-    if (attr & FILE_ATTRIBUTE_ENCRYPTED) attributes += wds::strAttributeEncrypted;
-    if (attr & FILE_ATTRIBUTE_OFFLINE) attributes += wds::strAttributeOffline;
-    if (attr & FILE_ATTRIBUTE_SPARSE_FILE) attributes += wds::strAttributeSparse;
+    if (attr & FILE_ATTRIBUTE_READONLY) attributes += wds::chrAttributeReadonly;
+    if (attr & FILE_ATTRIBUTE_HIDDEN) attributes += wds::chrAttributeHidden;
+    if (attr & FILE_ATTRIBUTE_SYSTEM) attributes += wds::chrAttributeSystem;
+    if (attr & FILE_ATTRIBUTE_ARCHIVE) attributes += wds::chrAttributeArchive;
+    if (attr & FILE_ATTRIBUTE_COMPRESSED) attributes += wds::chrAttributeCompressed;
+    if (attr & FILE_ATTRIBUTE_ENCRYPTED) attributes += wds::chrAttributeEncrypted;
+    if (attr & FILE_ATTRIBUTE_OFFLINE) attributes += wds::chrAttributeOffline;
+    if (attr & FILE_ATTRIBUTE_SPARSE_FILE) attributes += wds::chrAttributeSparse;
 
     return attributes;
+}
+
+DWORD ParseAttributes(const std::wstring& attributes)
+{
+    if (attributes == wds::strInvalidAttributes) return 0;
+
+    DWORD attr = 0;
+    for (WCHAR ch : attributes)
+    {
+        if (ch == wds::chrAttributeReadonly) attr |= FILE_ATTRIBUTE_READONLY;
+        else if (ch == wds::chrAttributeHidden) attr |= FILE_ATTRIBUTE_HIDDEN;
+        else if (ch == wds::chrAttributeSystem) attr |= FILE_ATTRIBUTE_SYSTEM;
+        else if (ch == wds::chrAttributeArchive) attr |= FILE_ATTRIBUTE_ARCHIVE;
+        else if (ch == wds::chrAttributeCompressed) attr |= FILE_ATTRIBUTE_COMPRESSED;
+        else if (ch == wds::chrAttributeEncrypted) attr |= FILE_ATTRIBUTE_ENCRYPTED;
+        else if (ch == wds::chrAttributeOffline) attr |= FILE_ATTRIBUTE_OFFLINE;
+        else if (ch == wds::chrAttributeSparse) attr |= FILE_ATTRIBUTE_SPARSE_FILE;
+    }
+
+    return attr;
 }
 
 std::wstring FormatMilliseconds(const ULONGLONG ms)

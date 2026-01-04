@@ -171,6 +171,10 @@ CItem* LoadResults(const std::wstring & path)
             displayName = &displayName[1];
         }
 
+        // Parse attributes and set directory flag if needed
+        DWORD attributes = ParseAttributes(fields[orderMap[FIELD_ATTRIBUTES]]);
+        if (type & IT_DIRECTORY) attributes |= FILE_ATTRIBUTE_DIRECTORY;
+
         // Create the tree item
         CItem* newitem = new CItem(
             type,
@@ -179,7 +183,7 @@ CItem* LoadResults(const std::wstring & path)
             wcstoull(fields[orderMap[FIELD_SIZE_PHYSICAL]].c_str(), nullptr, 10),
             wcstoull(fields[orderMap[FIELD_SIZE_LOGICAL]].c_str(), nullptr, 10),
             wcstoull(fields[orderMap[FIELD_INDEX]].c_str(), nullptr, 16),
-            wcstoul(fields[orderMap[FIELD_ATTRIBUTES]].c_str(), nullptr, 16),
+            attributes,
             wcstoul(fields[orderMap[FIELD_FILES]].c_str(), nullptr, 10),
             wcstoul(fields[orderMap[FIELD_FOLDERS]].c_str(), nullptr, 10));
 
@@ -310,13 +314,13 @@ bool SaveResults(const std::wstring& path, CItem* rootItem)
         const bool nonPathItem = item->IsTypeOrFlag(IT_MYCOMPUTER);
         const ITEMTYPE itemType = item->GetRawType() & ~ITF_HARDLINK;
         const auto adjustedSize = adjustedSizes.contains(item) ? adjustedSizes[item] : 0;
-        outf << std::format("{},{},{},{},{},0x{:08X},{},0x{:08X},0x{:016X}",
+        outf << std::format("{},{},{},{},{},{},{},0x{:08X},0x{:016X}",
             QuoteAndConvert(nonPathItem ? item->GetName() : item->GetPath()),
             item->GetFilesCount(),
             item->GetFoldersCount(),
             item->GetSizeLogical(),
             item->GetSizePhysicalRaw() + adjustedSize,
-            item->GetAttributes(),
+            QuoteAndConvert(FormatAttributes(item->GetAttributes())),
             ToTimePoint(item->GetLastChange()),
             static_cast<std::uint32_t>(itemType),
             item->GetIndex());

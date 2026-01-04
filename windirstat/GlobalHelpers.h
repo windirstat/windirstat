@@ -66,6 +66,7 @@ std::wstring FormatCount(ULONGLONG n);
 std::wstring FormatDouble(double d);
 std::wstring FormatFileTime(const FILETIME& t);
 std::wstring FormatAttributes(DWORD attr);
+DWORD ParseAttributes(const std::wstring& attributes);
 std::wstring FormatMilliseconds(ULONGLONG ms);
 bool GetVolumeName(const std::wstring& rootPath, std::wstring& volumeName);
 std::wstring FormatVolumeNameOfRootPath(const std::wstring& rootPath);
