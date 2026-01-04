@@ -806,17 +806,17 @@ static constexpr DWORD SidGetLength(const PSID x)
 
 std::wstring GetNameFromSid(const PSID sid)
 {
-    // return immediately if sid is null
-    if (sid == nullptr) return {};
+    // return immediately if sid is null or invalid
+    if (sid == nullptr || !IsValidSid(sid)) return {};
 
     // define custom lookup function
     auto comp = [](const PSID p1, const PSID p2)
-        {
-            const DWORD l1 = SidGetLength(p1);
-            const DWORD l2 = SidGetLength(p2);
-            if (l1 != l2) return l1 < l2;
-            return memcmp(p1, p2, l1) > 0;
-        };
+    {
+        const DWORD l1 = SidGetLength(p1);
+        const DWORD l2 = SidGetLength(p2);
+        if (l1 != l2) return l1 < l2;
+        return std::memcmp(p1, p2, l1) < 0;
+    };
 
     // attempt to lookup sid in cache
     static std::map<PSID, std::wstring, decltype(comp)> nameMap(comp);
@@ -827,11 +827,12 @@ std::wstring GetNameFromSid(const PSID sid)
 
     // copy the sid for storage in our cache table
     const DWORD sidLength = SidGetLength(sid);
-    const auto sidCopy = std::memcpy(malloc(sidLength), sid, sidLength);
+    const auto sidCopy = static_cast<PSID>(::operator new(sidLength));
+    std::memcpy(sidCopy, sid, sidLength);
 
     // lookup the name for this sid
     SID_NAME_USE nameUse;
-    WCHAR accountName[UNLEN + 1], domainName[UNLEN + 1];
+    WCHAR accountName[UNLEN + 1], domainName[DNLEN + 1];
     DWORD iAccountNameSize = std::size(accountName), iDomainName = std::size(domainName);
     if (LookupAccountSid(nullptr, sid, accountName,
         &iAccountNameSize, domainName, &iDomainName, &nameUse) == 0)
