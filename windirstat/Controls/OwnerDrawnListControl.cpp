@@ -120,7 +120,7 @@ void COwnerDrawnListItem::DrawLabel(const COwnerDrawnListControl* list, CDC* pdc
 
     if ((state & ODS_FOCUS) != 0 && list->HasFocus() && width == nullptr && !list->IsFullRowSelection())
     {
-        pdc->DrawFocusRect(rcLabel);
+        DarkMode::DrawFocusRect(pdc, rcLabel);
     }
 
     if (width == nullptr)
@@ -478,7 +478,7 @@ void COwnerDrawnListControl::DrawItem(LPDRAWITEMSTRUCT pdis)
     {
         CRect focusRect = rcItem - rcItem.TopLeft();
         focusRect.left = focusLeft - 1;
-        dcMem.DrawFocusRect(focusRect);
+        DarkMode::DrawFocusRect(&dcMem, focusRect);
     }
 
     pdc->BitBlt(rcItem.left, rcItem.top,

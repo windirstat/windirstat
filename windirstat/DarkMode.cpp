@@ -370,6 +370,23 @@ void DarkMode::LightenBitmap(CBitmap* pBitmap, const bool invert)
     SetDIBits(memDC, *pBitmap, 0, bm.bmHeight, pixels.get(), &bmi, DIB_RGB_COLORS);
 }
 
+void DarkMode::DrawFocusRect(CDC* pdc, const CRect& rc)
+{
+    if (!s_darkModeEnabled)
+    {
+        pdc->DrawFocusRect(rc);
+        return;
+    }
+
+    // In dark mode, draw a dotted rectangle with a visible light color
+    // Standard DrawFocusRect uses XOR which is nearly invisible on dark backgrounds
+    CPen pen(PS_DOT, 1, RGB(120, 120, 120));
+    CSelectObject sopen(pdc, &pen);
+    CSelectStockObject sobrush(pdc, NULL_BRUSH);
+    CSetBkMode sbm(pdc, TRANSPARENT);
+    pdc->Rectangle(rc);
+}
+
 // Implement runtime class information for CDarkModeVisualManager
 IMPLEMENT_DYNCREATE(CDarkModeVisualManager, CMFCVisualManagerWindows7)
 

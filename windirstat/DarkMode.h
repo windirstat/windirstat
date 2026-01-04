@@ -45,6 +45,7 @@ public:
     static void SetAppDarkMode() noexcept;
     static void SetupGlobalColors() noexcept;
     static void LightenBitmap(CBitmap* pBitmap, bool invert = false);
+    static void DrawFocusRect(CDC* pdc, const CRect& rc);
 
 private:
     static bool s_darkModeEnabled;
