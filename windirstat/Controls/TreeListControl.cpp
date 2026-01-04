@@ -589,6 +589,13 @@ void CTreeListControl::CollapseItem(const int i)
         todelete++;
     }
 
+    // Correct focus to point to parent if was in the tree
+    const int hasFocus = GetNextItem(-1, LVNI_FOCUSED);
+    if (std::clamp(hasFocus, i + 1, i + todelete) == hasFocus)
+    {
+        SetItemState(i, LVIS_FOCUSED, LVIS_FOCUSED);
+    }
+
     for (int m = i + todelete; m > i; m--)
     {
         DeleteItem(m);
