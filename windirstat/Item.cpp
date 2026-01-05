@@ -744,7 +744,7 @@ void CItem::ExtensionDataRemove() const
 void CItem::ExtensionDataProcessChildren(const bool remove) const
 {
     std::stack<const CItem*> childStack({ this });
-    while (!childStack.empty())
+    while (!childStack.empty()) [[msvc::forceinline_calls]]
     {
         const auto& item = childStack.top();
         childStack.pop();
@@ -1090,7 +1090,7 @@ void CItem::ScanItemsFinalize(CItem* item)
 {
     if (item == nullptr) return;
     std::stack<CItem*> queue({item});
-    while (!queue.empty())
+    while (!queue.empty()) [[msvc::forceinline_calls]]
     {
         const auto & qitem = queue.top();
         queue.pop();
@@ -1700,7 +1700,7 @@ std::wstring CItem::UpwardGetPathWithoutBackslash() const
     }
 
     // append the strings in reverse order
-    for (auto it = pathParts.rbegin(); it != pathParts.rend(); ++it)
+    for (auto it = pathParts.rbegin(); it != pathParts.rend(); ++it) [[msvc::forceinline_calls]]
     {
         if (const auto & pathPart = *it; pathPart->IsTypeOrFlag(IT_DIRECTORY))
         {

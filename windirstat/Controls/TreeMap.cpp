@@ -97,7 +97,7 @@ void CTreeMap::RecurseCheckTree(const Item* item)
 }
 #endif
 
-void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, Item* root, const Options* options)
+void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, Item* root, const Options* options) 
 {
 #ifdef _DEBUG
     RecurseCheckTree(root);
@@ -136,304 +136,303 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, Item* root, const Options* option
 
     m_renderArea = rc;
 
-    if (root->TmiGetSize() > 0)
+    if (root->TmiGetSize() == 0)
     {
-        // Create a temporary CDC that represents only the tree map
-        CDC dcTreeView;
-        dcTreeView.CreateCompatibleDC(pdc);
+        pdc->FillSolidRect(rc, RGB(0, 0, 0));
+        return;
+    }
 
-        // This bitmap will be blitted onto the temporary DC
-        CBitmap bmp;
+    // Create a temporary CDC that represents only the tree map
+    CDC dcTreeView;
+    dcTreeView.CreateCompatibleDC(pdc);
 
-        // That bitmap in turn will be created from this array
-        std::vector<COLORREF> bitmapBits;
-        bitmapBits.resize(static_cast<size_t>(rc.Width()) * static_cast<size_t>(rc.Height()));
-        DrawSolidRect(bitmapBits, CRect(CPoint(), rc.Size()), m_options.gridColor, PALETTE_BRIGHTNESS);
+    // This bitmap will be blitted onto the temporary DC
+    CBitmap bmp;
 
-        using DrawState = struct DrawState
+    // That bitmap in turn will be created from this array
+    std::vector<COLORREF> bitmapBits;
+    bitmapBits.resize(static_cast<size_t>(rc.Width()) * static_cast<size_t>(rc.Height()));
+    DrawSolidRect(bitmapBits, CRect(CPoint(), rc.Size()), m_options.gridColor, PALETTE_BRIGHTNESS);
+
+    using DrawState = struct DrawState
+    {
+        std::array<double, 4> surface{};
+        CRect rc{};
+        Item* item = nullptr;
+        double h = 0.0;
+        bool asroot = false;
+    };
+
+    // Initialize the stack with the root item
+    DrawState initialState;
+    initialState.item = root;
+    initialState.rc = CRect(0, 0, rc.Width(), rc.Height());
+    initialState.asroot = true;
+    initialState.surface = {};
+    initialState.h = m_options.height;
+
+    // Defined at top level to prevent reallocation
+    std::vector<double> childWidth;
+    std::vector<double> rows;
+    std::vector<int> childrenPerRow;
+
+    // Main loop
+    const int gridWidth = m_options.grid ? 1 : 0;
+    std::stack<DrawState> stack({ std::move(initialState) });
+    while (!stack.empty())
+    {
+        DrawState state = std::move(stack.top());
+        stack.pop();
+        Item* item = state.item;
+
+        // Process the current state
+        item->TmiSetRectangle(state.rc);
+
+        if (state.rc.Width() <= gridWidth || state.rc.Height() <= gridWidth)
         {
-            std::array<double, 4> surface{};
-            CRect rc{};
-            Item* item = nullptr;
-            double h = 0.0;
-            bool asroot = false;
-        };
+            continue;
+        }
 
-        // Initialize the stack with the root item
-        DrawState initialState;
-        initialState.item = root;
-        initialState.rc = CRect(0, 0, rc.Width(), rc.Height());
-        initialState.asroot = true;
-        initialState.surface = {};
-        initialState.h = m_options.height;
-
-        // Defined at top level to prevent reallocation
-        std::vector<double> childWidth;
-        std::vector<double> rows;
-        std::vector<int> childrenPerRow;
-
-        // Main loop
-        const int gridWidth = m_options.grid ? 1 : 0;
-        std::stack<DrawState> stack({ std::move(initialState) });
-        while (!stack.empty())
+        if (IsCushionShading() && (!state.asroot))
         {
-            DrawState state = std::move(stack.top());
-            stack.pop();
-            Item* item = state.item;
+            AddRidge(state.rc, state.surface, state.h);
+        }
 
-            // Process the current state
-            item->TmiSetRectangle(state.rc);
+        if (item->TmiIsLeaf())
+        {
+            // Leaf node, render it
+            RenderLeaf(bitmapBits, item, state.surface);
+            continue;
+        }
 
-            if (state.rc.Width() <= gridWidth || state.rc.Height() <= gridWidth)
+        if (m_options.style == KDirStatStyle) [[msvc::flatten]]
+        {
+            // Reset vectors for next run
+            childWidth.clear();
+            rows.clear();
+            childrenPerRow.clear();
+
+            // KDirStat style preparation
+            const bool horizontalRows = KDirStat_ArrangeChildren(item, childWidth, rows, childrenPerRow);
+            const double horizontalTop = horizontalRows ? state.rc.top : state.rc.left;
+
+            // Now process the children
+            const int width = horizontalRows ? state.rc.Width() : state.rc.Height();
+            const int height = horizontalRows ? state.rc.Height() : state.rc.Width();
+
+            double top = horizontalTop;
+            size_t c = 0;
+            for (const size_t row : std::views::iota(0u, rows.size()))
             {
-                continue;
-            }
-
-            if (IsCushionShading() && (!state.asroot))
-            {
-                AddRidge(state.rc, state.surface, state.h);
-            }
-
-            if (item->TmiIsLeaf())
-            {
-                // Leaf node, render it
-                RenderLeaf(bitmapBits, item, state.surface);
-                continue;
-            }
-
-            if (m_options.style == KDirStatStyle)
-            {
-                // Reset vectors for next run
-                childWidth.clear();
-                rows.clear();
-                childrenPerRow.clear();
-
-                // KDirStat style preparation
-                const bool horizontalRows = KDirStat_ArrangeChildren(item, childWidth, rows, childrenPerRow);
-                const double horizontalTop = horizontalRows ? state.rc.top : state.rc.left;
-
-                // Now process the children
-                const int width = horizontalRows ? state.rc.Width() : state.rc.Height();
-                const int height = horizontalRows ? state.rc.Height() : state.rc.Width();
-
-                double top = horizontalTop;
-                size_t c = 0;
-                for (const size_t row : std::views::iota(0u, rows.size()))
+                const double fBottom = top + rows[row] * height;
+                int bottom = static_cast<int>(fBottom);
+                if (row == rows.size() - 1)
                 {
-                    const double fBottom = top + rows[row] * height;
-                    int bottom = static_cast<int>(fBottom);
-                    if (row == rows.size() - 1)
+                    bottom = horizontalRows ? state.rc.bottom : state.rc.right;
+                }
+                double left = horizontalRows ? state.rc.left : state.rc.top;
+                for (int i = 0; i < childrenPerRow[row]; i++, c++)
+                {
+                    Item* child = item->TmiGetChild(static_cast<int>(c));
+                    const double childWidth_ = childWidth[c];
+                    const double fRight = left + childWidth_ * width;
+                    int right = static_cast<int>(fRight);
+
+                    const bool lastChild = i == childrenPerRow[row] - 1 ||
+                        (c + 1 < childWidth.size() && childWidth[c + 1] == 0);
+
+                    if (lastChild)
                     {
-                        bottom = horizontalRows ? state.rc.bottom : state.rc.right;
+                        right = horizontalRows ? state.rc.right : state.rc.bottom;
                     }
-                    double left = horizontalRows ? state.rc.left : state.rc.top;
-                    for (int i = 0; i < childrenPerRow[row]; i++, c++)
+
+                    CRect rcChild;
+                    if (horizontalRows)
                     {
-                        Item* child = item->TmiGetChild(static_cast<int>(c));
-                        const double childWidth_ = childWidth[c];
-                        const double fRight = left + childWidth_ * width;
-                        int right = static_cast<int>(fRight);
+                        rcChild.left = static_cast<int>(left);
+                        rcChild.right = right;
+                        rcChild.top = static_cast<int>(top);
+                        rcChild.bottom = bottom;
+                    }
+                    else
+                    {
+                        rcChild.left = static_cast<int>(top);
+                        rcChild.right = bottom;
+                        rcChild.top = static_cast<int>(left);
+                        rcChild.bottom = right;
+                    }
 
-                        const bool lastChild = i == childrenPerRow[row] - 1 ||
-                            (c + 1 < childWidth.size() && childWidth[c + 1] == 0);
+                    // Prepare child state and push onto the stack
+                    DrawState childState;
+                    childState.item = child;
+                    childState.rc = rcChild;
+                    childState.asroot = false;
+                    childState.surface = state.surface;
+                    childState.h = state.h * m_options.scaleFactor;
 
-                        if (lastChild)
-                        {
-                            right = horizontalRows ? state.rc.right : state.rc.bottom;
-                        }
+                    stack.push(std::move(childState));
 
-                        CRect rcChild;
-                        if (horizontalRows)
-                        {
-                            rcChild.left = static_cast<int>(left);
-                            rcChild.right = right;
-                            rcChild.top = static_cast<int>(top);
-                            rcChild.bottom = bottom;
-                        }
-                        else
-                        {
-                            rcChild.left = static_cast<int>(top);
-                            rcChild.right = bottom;
-                            rcChild.top = static_cast<int>(left);
-                            rcChild.bottom = right;
-                        }
+                    left = fRight;
+                }
+                top = fBottom;
+            }
+        }
+        else
+        {
+            // SequoiaView style processing
+            CRect remaining = state.rc;
+            ULONGLONG remainingSize = item->TmiGetSize();
+            ASSERT(remainingSize > 0);
+            const double sizePerSquarePixel = static_cast<double>(remainingSize) /
+                remaining.Width() / remaining.Height();
+            int head = 0;
+            const int maxChild = item->TmiGetChildCount();
 
-                        // Prepare child state and push onto the stack
+            while (head < maxChild)
+            {
+                ASSERT(remaining.Width() > 0);
+                ASSERT(remaining.Height() > 0);
+
+                const bool horizontal = remaining.Width() >= remaining.Height();
+                const int height = horizontal ? remaining.Height() : remaining.Width();
+
+                const double hh = height * height * sizePerSquarePixel;
+                ASSERT(hh > 0);
+
+                int rowBegin = head;
+                int rowEnd = head;
+
+                double worst = DBL_MAX;
+                ULONGLONG rmax = item->TmiGetChild(rowBegin)->TmiGetSize();
+                ULONGLONG sum = 0;
+
+                while (rowEnd < maxChild)
+                {
+                    ULONGLONG childSize = item->TmiGetChild(rowEnd)->TmiGetSize();
+
+                    if (childSize == 0)
+                    {
+                        rowEnd = maxChild;
+                        break;
+                    }
+
+                    const ULONGLONG rmin = childSize;
+                    double ss = (static_cast<double>(sum) + rmin) * (static_cast<double>(sum) + rmin);
+                    double ratio1 = hh * rmax / ss;
+                    double ratio2 = ss / hh / rmin;
+                    double nextWorst = max(ratio1, ratio2);
+
+                    if (nextWorst > worst)
+                    {
+                        break;
+                    }
+
+                    sum += rmin;
+                    rowEnd++;
+                    worst = nextWorst;
+                }
+
+                // Now process the row from rowBegin to rowEnd - 1
+                int width = horizontal ? remaining.Width() : remaining.Height();
+
+                if (sum < remainingSize)
+                    width = static_cast<int>(static_cast<double>(sum) / remainingSize * width);
+
+                CRect rcRow = remaining;
+
+                if (horizontal)
+                {
+                    rcRow.right = rcRow.left + width;
+                }
+                else
+                {
+                    rcRow.bottom = rcRow.top + width;
+                }
+
+                // Distribute the children in the row
+                double fBegin = horizontal ? rcRow.top : rcRow.left;
+
+                for (const int i : std::views::iota(rowBegin, rowEnd))
+                {
+                    ULONGLONG childSize = item->TmiGetChild(i)->TmiGetSize();
+                    double fraction = static_cast<double>(childSize) / sum;
+                    double fEnd = fBegin + fraction * (horizontal ? rcRow.Height() : rcRow.Width());
+                    int end = static_cast<int>(fEnd);
+
+                    bool lastChild = (i == rowEnd - 1) ||
+                        (i + 1 < item->TmiGetChildCount() && item->TmiGetChild(i + 1)->TmiGetSize() == 0);
+
+                    if (lastChild)
+                    {
+                        end = horizontal ? rcRow.bottom : rcRow.right;
+                    }
+
+                    CRect rcChild;
+                    if (horizontal)
+                    {
+                        rcChild.left = rcRow.left;
+                        rcChild.right = rcRow.right;
+                        rcChild.top = static_cast<int>(fBegin);
+                        rcChild.bottom = end;
+                    }
+                    else
+                    {
+                        rcChild.left = static_cast<int>(fBegin);
+                        rcChild.right = end;
+                        rcChild.top = rcRow.top;
+                        rcChild.bottom = rcRow.bottom;
+                    }
+
+                    // Prepare child state and push onto the stack
+                    if (childSize > 0)
+                    {
                         DrawState childState;
-                        childState.item = child;
+                        childState.item = item->TmiGetChild(i);
                         childState.rc = rcChild;
                         childState.asroot = false;
                         childState.surface = state.surface;
                         childState.h = state.h * m_options.scaleFactor;
-
                         stack.push(std::move(childState));
-
-                        left = fRight;
                     }
-                    top = fBottom;
-                }
-            }
-            else
-            {
-                // SequoiaView style processing
-                CRect remaining = state.rc;
-                ULONGLONG remainingSize = item->TmiGetSize();
-                ASSERT(remainingSize > 0);
-                const double sizePerSquarePixel = static_cast<double>(remainingSize) /
-                    remaining.Width() / remaining.Height();
-                int head = 0;
-                const int maxChild = item->TmiGetChildCount();
 
-                while (head < maxChild)
+                    fBegin = fEnd;
+                }
+
+                // Adjust remaining rectangle
+                if (horizontal)
                 {
-                    ASSERT(remaining.Width() > 0);
-                    ASSERT(remaining.Height() > 0);
+                    remaining.left += width;
+                }
+                else
+                {
+                    remaining.top += width;
+                }
 
-                    const bool horizontal = remaining.Width() >= remaining.Height();
-                    const int height = horizontal ? remaining.Height() : remaining.Width();
+                remainingSize -= sum;
+                head += rowEnd - rowBegin;
 
-                    const double hh = height * height * sizePerSquarePixel;
-                    ASSERT(hh > 0);
-
-                    int rowBegin = head;
-                    int rowEnd = head;
-
-                    double worst = DBL_MAX;
-                    ULONGLONG rmax = item->TmiGetChild(rowBegin)->TmiGetSize();
-                    ULONGLONG sum = 0;
-
-                    while (rowEnd < maxChild)
+                if (remaining.Width() <= 0 || remaining.Height() <= 0)
+                {
+                    if (head < maxChild)
                     {
-                        ULONGLONG childSize = item->TmiGetChild(rowEnd)->TmiGetSize();
-
-                        if (childSize == 0)
-                        {
-                            rowEnd = maxChild;
-                            break;
-                        }
-
-                        const ULONGLONG rmin = childSize;
-                        double ss = (static_cast<double>(sum) + rmin) * (static_cast<double>(sum) + rmin);
-                        double ratio1 = hh * rmax / ss;
-                        double ratio2 = ss / hh / rmin;
-                        double nextWorst = max(ratio1, ratio2);
-
-                        if (nextWorst > worst)
-                        {
-                            break;
-                        }
-
-                        sum += rmin;
-                        rowEnd++;
-                        worst = nextWorst;
+                        item->TmiGetChild(head)->TmiSetRectangle(CRect(-1, -1, -1, -1));
                     }
-
-                    // Now process the row from rowBegin to rowEnd - 1
-                    int width = horizontal ? remaining.Width() : remaining.Height();
-
-                    if (sum < remainingSize)
-                        width = static_cast<int>(static_cast<double>(sum) / remainingSize * width);
-
-                    CRect rcRow = remaining;
-
-                    if (horizontal)
-                    {
-                        rcRow.right = rcRow.left + width;
-                    }
-                    else
-                    {
-                        rcRow.bottom = rcRow.top + width;
-                    }
-
-                    // Distribute the children in the row
-                    double fBegin = horizontal ? rcRow.top : rcRow.left;
-
-                    for (const int i : std::views::iota(rowBegin, rowEnd))
-                    {
-                        ULONGLONG childSize = item->TmiGetChild(i)->TmiGetSize();
-                        double fraction = static_cast<double>(childSize) / sum;
-                        double fEnd = fBegin + fraction * (horizontal ? rcRow.Height() : rcRow.Width());
-                        int end = static_cast<int>(fEnd);
-
-                        bool lastChild = (i == rowEnd - 1) ||
-                            (i + 1 < item->TmiGetChildCount() && item->TmiGetChild(i + 1)->TmiGetSize() == 0);
-
-                        if (lastChild)
-                        {
-                            end = horizontal ? rcRow.bottom : rcRow.right;
-                        }
-
-                        CRect rcChild;
-                        if (horizontal)
-                        {
-                            rcChild.left = rcRow.left;
-                            rcChild.right = rcRow.right;
-                            rcChild.top = static_cast<int>(fBegin);
-                            rcChild.bottom = end;
-                        }
-                        else
-                        {
-                            rcChild.left = static_cast<int>(fBegin);
-                            rcChild.right = end;
-                            rcChild.top = rcRow.top;
-                            rcChild.bottom = rcRow.bottom;
-                        }
-
-                        // Prepare child state and push onto the stack
-                        if (childSize > 0)
-                        {
-                            DrawState childState;
-                            childState.item = item->TmiGetChild(i);
-                            childState.rc = rcChild;
-                            childState.asroot = false;
-                            childState.surface = state.surface;
-                            childState.h = state.h * m_options.scaleFactor;
-                            stack.push(std::move(childState));
-                        }
-
-                        fBegin = fEnd;
-                    }
-
-                    // Adjust remaining rectangle
-                    if (horizontal)
-                    {
-                        remaining.left += width;
-                    }
-                    else
-                    {
-                        remaining.top += width;
-                    }
-
-                    remainingSize -= sum;
-                    head += rowEnd - rowBegin;
-
-                    if (remaining.Width() <= 0 || remaining.Height() <= 0)
-                    {
-                        if (head < maxChild)
-                        {
-                            item->TmiGetChild(head)->TmiSetRectangle(CRect(-1, -1, -1, -1));
-                        }
-                        break;
-                    }
+                    break;
                 }
             }
         }
-
-        // Fill the bitmap with the array data and render
-        bmp.CreateBitmap(rc.Width(), rc.Height(), 1, 32, bitmapBits.data());
-        {
-            CSelectObject sobmp(&dcTreeView, &bmp);
-            pdc->BitBlt(rc.TopLeft().x, rc.TopLeft().y, rc.Width(), rc.Height(), &dcTreeView, 0, 0, SRCCOPY);
-        }
-
-        // Free memory
-        bmp.DeleteObject();
-        dcTreeView.DeleteDC();
     }
-    else
+
+    // Fill the bitmap with the array data and render
+    bmp.CreateBitmap(rc.Width(), rc.Height(), 1, 32, bitmapBits.data());
     {
-        pdc->FillSolidRect(rc, RGB(0, 0, 0));
+        CSelectObject sobmp(&dcTreeView, &bmp);
+        pdc->BitBlt(rc.TopLeft().x, rc.TopLeft().y, rc.Width(), rc.Height(), &dcTreeView, 0, 0, SRCCOPY);
     }
+
+    // Free memory
+    bmp.DeleteObject();
+    dcTreeView.DeleteDC();
 }
 
 CTreeMap::Item* CTreeMap::FindItemByPoint(Item* item, const CPoint point)
@@ -870,61 +869,64 @@ void CTreeMapPreview::SetOptions(const CTreeMap::Options* options)
 
 void CTreeMapPreview::BuildDemoData()
 {
-    CTreeMap::GetDefaultPalette(m_colors);
-    int col = -1;
-
-    constexpr auto c4Items = 30;
-    std::vector<CItem*> c4;
-    c4.reserve(c4Items);
-    COLORREF color = GetNextColor(col);
-    for (const int i : std::views::iota(0, c4Items))
+    [[msvc::noinline_calls]]
     {
-        c4.emplace_back(new CItem(1 + 100 * i, color));
+        CTreeMap::GetDefaultPalette(m_colors);
+        int col = -1;
+
+        constexpr auto c4Items = 30;
+        std::vector<CItem*> c4;
+        c4.reserve(c4Items);
+        COLORREF color = GetNextColor(col);
+        for (const int i : std::views::iota(0, c4Items))
+        {
+            c4.emplace_back(new CItem(1 + 100 * i, color));
+        }
+
+        constexpr auto c0Items = 8;
+        std::vector<CItem*> c0;
+        c0.reserve(c0Items);
+        for (const int i : std::views::iota(0, c0Items))
+        {
+            c0.emplace_back(new CItem(500 + 600 * i, GetNextColor(col)));
+        }
+
+        constexpr auto c1Items = 10;
+        std::vector<CItem*> c1;
+        c1.reserve(c1Items);
+        color = GetNextColor(col);
+        for (const int i : std::views::iota(0, c1Items))
+        {
+            c1.emplace_back(new CItem(1 + 200 * i, color));
+        }
+        c0.emplace_back(new CItem(c1));
+
+        constexpr auto c2Items = 160;
+        std::vector<CItem*> c2;
+        c2.reserve(c2Items);
+        color = GetNextColor(col);
+        for (const int i : std::views::iota(0, c2Items))
+        {
+            c2.emplace_back(new CItem(1 + i, color));
+        }
+
+        const std::vector c3 =
+        {
+            new CItem(10000, GetNextColor(col)),
+            new CItem(c4),
+            new CItem(c2),
+            new CItem(6000, GetNextColor(col)),
+            new CItem(1500, GetNextColor(col))
+        };
+
+        const std::vector c10
+        {
+            new CItem(c0),
+            new CItem(c3)
+        };
+
+        m_root = new CItem(c10);
     }
-
-    constexpr auto c0Items = 8;
-    std::vector<CItem*> c0;
-    c0.reserve(c0Items);
-    for (const int i : std::views::iota(0, c0Items))
-    {
-        c0.emplace_back(new CItem(500 + 600 * i, GetNextColor(col)));
-    }
-
-    constexpr auto c1Items = 10;
-    std::vector<CItem*> c1;
-    c1.reserve(c1Items);
-    color = GetNextColor(col);
-    for (const int i : std::views::iota(0, c1Items))
-    {
-        c1.emplace_back(new CItem(1 + 200 * i, color));
-    }
-    c0.emplace_back(new CItem(c1));
-
-    constexpr auto c2Items = 160;
-    std::vector<CItem*> c2;
-    c2.reserve(c2Items);
-    color = GetNextColor(col);
-    for (const int i : std::views::iota(0, c2Items))
-    {
-        c2.emplace_back(new CItem(1 + i, color));
-    }
-
-    const std::vector c3 =
-    {
-        new CItem(10000, GetNextColor(col)),
-        new CItem(c4),
-        new CItem(c2),
-        new CItem(6000, GetNextColor(col)),
-        new CItem(1500, GetNextColor(col))
-    };
-
-    const std::vector c10
-    {
-        new CItem(c0),
-        new CItem(c3)
-    };
-
-    m_root = new CItem(c10);
 }
 
 COLORREF CTreeMapPreview::GetNextColor(int& i) const
