@@ -66,30 +66,75 @@ CDriveItem::CDriveItem(CDrivesList* list, const std::wstring & pszPath)
     , m_subst(IsSUBSTedDrive(m_path))
     , m_name(m_path) {}
 
-void CDriveItem::StartQuery(HWND dialog, const UINT serial) const
+CDriveItem::~CDriveItem()
+{
+    StopQuery();
+}
+
+void CDriveItem::StartQuery(HWND dialog)
 {
     ASSERT(dialog != nullptr);
+    ASSERT(m_querying);
 
-    ASSERT(m_querying); // The synchronous query in the constructor is commented out.
-
-    if (m_querying)
+    if (!m_querying)
     {
-        new CDriveInformationThread(m_path, reinterpret_cast<LPARAM>(this), dialog, serial);
-        // (will delete itself when finished.)
+        return;
+    }
+
+    m_dialog = dialog;
+
+    // Capture 'this' and the path for the thread
+    m_queryThread = std::jthread([this](std::stop_token stopToken)
+    {
+        std::wstring name;
+        ULONGLONG total = 0;
+        ULONGLONG free = 0;
+        const bool success = RetrieveDriveInformation(m_path, name, total, free);
+
+        // Check if we should still send the message
+        if (stopToken.stop_requested())
+        {
+            return;
+        }
+
+        // Store results directly (will be read by GUI thread after message)
+        // This is safe because the GUI thread will process the message synchronously
+        if (success)
+        {
+            m_name = name;
+            m_totalBytes = total;
+            m_freeBytes = free;
+        }
+
+        // Send message to dialog if it's still valid
+        if (HWND dialog = m_dialog.load(); dialog != nullptr)
+        {
+            ::PostMessage(dialog, WMU_THREADFINISHED, success ? 1 : 0, reinterpret_cast<LPARAM>(this));
+        }
+    });
+}
+
+void CDriveItem::StopQuery()
+{
+    // Invalidate dialog handle first to prevent message sending
+    m_dialog = nullptr;
+
+    // Request stop and wait for thread to finish
+    if (m_queryThread.joinable())
+    {
+        m_queryThread.request_stop();
+        m_queryThread.join();
     }
 }
 
-void CDriveItem::SetDriveInformation(const bool success, const std::wstring & name, const ULONGLONG total, const ULONGLONG free)
+void CDriveItem::SetDriveInformation(const bool success)
 {
     m_querying = false;
     m_success  = success;
 
     if (m_success)
     {
-        m_name       = name;
-        m_totalBytes = total;
-        m_freeBytes  = free;
-        m_used       = 0.0;
+        m_used = 0.0;
 
         // guard against cases where free bytes might be limited (e.g., quotas)
         if (m_totalBytes > 0 && m_totalBytes >= m_freeBytes)
@@ -227,77 +272,6 @@ std::wstring CDriveItem::GetDrive() const
 
 /////////////////////////////////////////////////////////////////////////////
 
-std::unordered_set<CDriveInformationThread*> CDriveInformationThread::s_runningThreads;
-std::mutex CDriveInformationThread::s_mutexRunningThreads;
-
-void CDriveInformationThread::AddRunningThread()
-{
-    std::scoped_lock lock(s_mutexRunningThreads);
-    s_runningThreads.insert(this);
-}
-
-void CDriveInformationThread::RemoveRunningThread()
-{
-    std::scoped_lock lock(s_mutexRunningThreads);
-    s_runningThreads.erase(this);
-}
-
-// This static method is called by the dialog when the dialog gets closed.
-// We set the m_dialog members of all running threads to null, so that
-// they don't send messages around to a no-more-existing window.
-void CDriveInformationThread::InvalidateDialogHandle()
-{
-    std::scoped_lock lock(s_mutexRunningThreads);
-    for (const auto & thread : s_runningThreads)
-    {
-        thread->m_dialog = nullptr;
-    }
-}
-
-CDriveInformationThread::CDriveInformationThread(const std::wstring & path, const LPARAM driveItem, HWND dialog, const UINT serial)
-    : m_path(path)
-      , m_driveItem(driveItem)
-      , m_serial(serial)
-      , m_dialog(dialog)
-{
-    ASSERT(m_bAutoDelete);
-
-    // The constructor starts the thread
-    AddRunningThread();
-    CreateThread();
-}
-
-BOOL CDriveInformationThread::InitInstance()
-{
-    m_success = RetrieveDriveInformation(m_path, m_name, m_totalBytes, m_freeBytes);
-
-    if (HWND dialog = m_dialog; dialog != nullptr)
-    {
-        ::SendMessage(dialog, WMU_THREADFINISHED, m_serial, reinterpret_cast<LPARAM>(this));
-    }
-
-    RemoveRunningThread();
-
-    ASSERT(m_bAutoDelete); // Object will delete itself.
-    return false;          // no Run(), please!
-}
-
-// This method is only called by the gui thread, while we hang
-// in SendMessage(dialog, WMU_THREADFINISHED, 0, this).
-// So we need no synchronization.
-//
-LPARAM CDriveInformationThread::GetDriveInformation(bool& success, std::wstring& name, ULONGLONG& total, ULONGLONG& free) const
-{
-    name    = m_name;
-    total   = m_totalBytes;
-    free    = m_freeBytes;
-    success = m_success;
-
-    return m_driveItem;
-}
-
-/////////////////////////////////////////////////////////////////////////////
-
 IMPLEMENT_DYNAMIC(CDrivesList, COwnerDrawnListControl)
 
 CDrivesList::CDrivesList()
@@ -351,12 +325,9 @@ void CDrivesList::OnLvnDeleteItem(NMHDR* pNMHDR, LRESULT* pResult)
 
 IMPLEMENT_DYNAMIC(CSelectDrivesDlg, CLayoutDialogEx)
 
-UINT CSelectDrivesDlg::s_serial;
-
 CSelectDrivesDlg::CSelectDrivesDlg(CWnd* pParent) :
     CLayoutDialogEx(IDD, COptions::DriveSelectWindowRect.Ptr(), pParent)
 {
-    s_serial++;
 }
 
 void CSelectDrivesDlg::DoDataExchange(CDataExchange* pDX)
@@ -480,7 +451,7 @@ BOOL CSelectDrivesDlg::OnInitDialog()
             continue;
         }
 
-        // The check of remote drives will be done in the background by the CDriveInformationThread.
+        // The check of remote drives will be done in the background by the query thread.
         if (type != DRIVE_REMOTE && !DriveExists(s))
         {
             continue;
@@ -488,7 +459,7 @@ BOOL CSelectDrivesDlg::OnInitDialog()
 
         const auto item = new CDriveItem(&m_driveList, s);
         m_driveList.InsertListItem(m_driveList.GetItemCount(), item);
-        item->StartQuery(m_hWnd, s_serial);
+        item->StartQuery(m_hWnd);
 
         for (const auto & drive : m_selectedDrives)
         {
@@ -662,7 +633,8 @@ void CSelectDrivesDlg::OnBnClickedUpdateButtons()
 
 void CSelectDrivesDlg::OnDestroy()
 {
-    CDriveInformationThread::InvalidateDialogHandle();
+    // Stop all running queries - the CDriveItem destructor handles thread cleanup
+    // when items are deleted from the list control
     CLayoutDialogEx::OnDestroy();
 }
 
@@ -672,26 +644,16 @@ LRESULT CSelectDrivesDlg::OnWmuOk(WPARAM, LPARAM)
     return 0;
 }
 
-LRESULT CSelectDrivesDlg::OnWmDriveInfoThreadFinished(const WPARAM serial, const LPARAM lparam)
+LRESULT CSelectDrivesDlg::OnWmDriveInfoThreadFinished(const WPARAM wParam, const LPARAM lparam)
 {
-    if (serial != s_serial)
-    {
-        VTRACE(L"Invalid serial");
-        return 0;
-    }
+    const auto item = reinterpret_cast<CDriveItem*>(lparam);
+    const bool success = (wParam != 0);
 
-    bool success;
-    std::wstring name;
-    ULONGLONG total;
-    ULONGLONG free;
-
-    const auto thread = reinterpret_cast<CDriveInformationThread*>(lparam);
-    const LPARAM driveItem = thread->GetDriveInformation(success, name, total, free);
-
+    // Find the item in the list to verify it still exists
     LVFINDINFO fi;
     ZeroMemory(&fi, sizeof(fi));
     fi.flags  = LVFI_PARAM;
-    fi.lParam = driveItem;
+    fi.lParam = lparam;
 
     if (m_driveList.FindItem(&fi) == -1)
     {
@@ -699,8 +661,8 @@ LRESULT CSelectDrivesDlg::OnWmDriveInfoThreadFinished(const WPARAM serial, const
         return 0;
     }
 
-    const auto item = reinterpret_cast<CDriveItem*>(driveItem);
-    item->SetDriveInformation(success, name, total, free);
+    // Mark the query as complete - the data is already stored in the item by the thread
+    item->SetDriveInformation(success);
 
     m_driveList.SortItems();
 

@@ -41,10 +41,12 @@ class CDriveItem final : public COwnerDrawnListItem
 {
 public:
     CDriveItem(CDrivesList* list, const std::wstring& pszPath);
+    ~CDriveItem();
 
-    void StartQuery(HWND dialog, UINT serial) const;
+    void StartQuery(HWND dialog);
+    void StopQuery();
 
-    void SetDriveInformation(bool success, const std::wstring& name, ULONGLONG total, ULONGLONG free);
+    void SetDriveInformation(bool success);
 
     int Compare(const COwnerDrawnListItem* baseOther, int subitem) const override;
 
@@ -71,42 +73,10 @@ private:
     ULONGLONG m_freeBytes = 0;  // Free space
 
     double m_used = 0.0; // used space / total space
-};
 
-//
-// CDriveInformationThread. Does the GetVolumeInformation() call, which
-// may hang for ca. 30 sec, if a network drive is not accessible.
-//
-class CDriveInformationThread final : public CWinThread
-{
-    // Set of all running CDriveInformationThreads.
-    // Used by InvalidateDialogHandle().
-    static std::unordered_set<CDriveInformationThread*> s_runningThreads;
-    static std::mutex s_mutexRunningThreads;
-
-    // The objects register and unregister themselves in _runningThreads
-    void AddRunningThread();
-    void RemoveRunningThread();
-
-public:
-    static void InvalidateDialogHandle();
-
-    CDriveInformationThread(const std::wstring& path, LPARAM driveItem, HWND dialog, UINT serial);
-    BOOL InitInstance() override;
-
-    LPARAM GetDriveInformation(bool& success, std::wstring& name, ULONGLONG& total, ULONGLONG& free) const;
-
-private:
-    const std::wstring m_path; // Path like "C:\""
-    const LPARAM m_driveItem;  // The list item, we belong to
-    const UINT m_serial;       // serial number of m_dialog
-    std::atomic<HWND> m_dialog;
-
-    // "[out]"-parameters
-    std::wstring m_name;        // Result: name like "BOOT (C:)", valid if m_success
-    ULONGLONG m_totalBytes = 0; // Result: capacity of the drive, valid if m_success
-    ULONGLONG m_freeBytes = 0;  // Result: free space on the drive, valid if m_success
-    bool m_success = false;     // Result: false, iff drive is inaccessible.
+    // Thread for querying drive information
+    std::jthread m_queryThread;
+    std::atomic<HWND> m_dialog{ nullptr };
 };
 
 //
@@ -157,7 +127,6 @@ protected:
     int m_radio = 0;          // out.
     CStringW m_folderName;    // out. Valid if m_radio = RADIO_TARGET_FOLDER
     std::vector<std::wstring> m_drives;    // out. Valid if m_radio != RADIO_TARGET_FOLDER
-    static UINT s_serial; // Each Instance of this dialog gets a serial number
     CDrivesList m_driveList;
     CComboBox m_browseList;
     CButton m_okButton;
@@ -169,7 +138,7 @@ protected:
     afx_msg void OnLvnItemChangedDrives(NMHDR* pNMHDR, LRESULT* pResult);
     afx_msg void OnDestroy();
     afx_msg LRESULT OnWmuOk(WPARAM, LPARAM);
-    afx_msg LRESULT OnWmDriveInfoThreadFinished(WPARAM, LPARAM lparam);
+    afx_msg LRESULT OnWmDriveInfoThreadFinished(WPARAM wParam, LPARAM lparam);
     afx_msg void OnSysColorChange();
     afx_msg void OnBnClickedRadioTargetDrivesSubset();
     afx_msg void OnBnClickedRadioTargetFolder();
