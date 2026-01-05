@@ -81,6 +81,14 @@ public:
         m_pushed.notify_one();
     }
 
+    void Push(T&& value)
+    {
+        // Push another entry onto the queue (move semantics)
+        std::scoped_lock lock(m_mutex);
+        m_queue.push_front(std::move(value));
+        m_pushed.notify_one();
+    }
+
     std::optional<T> Pop()
     {
         // Record that the worker is waiting for an item until
@@ -112,7 +120,7 @@ public:
         // Worker now has something to work on so pop it off the queue
         m_workersWaiting--;
         m_started = true;
-        T i = m_queue.front();
+        T i = std::move(m_queue.front());
         m_queue.pop_front();
         return i;
     }
@@ -122,6 +130,14 @@ public:
         std::scoped_lock lock(m_mutex);
         if (std::ranges::find(m_queue, value) != m_queue.end()) return;
         m_queue.push_back(value);
+        m_pushed.notify_one();
+    }
+
+    void PushIfNotQueued(T&& value)
+    {
+        std::scoped_lock lock(m_mutex);
+        if (std::ranges::find(m_queue, value) != m_queue.end()) return;
+        m_queue.push_back(std::move(value));
         m_pushed.notify_one();
     }
 

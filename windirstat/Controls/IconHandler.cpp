@@ -88,9 +88,9 @@ void CIconHandler::Initialize()
     });
 }
 
-void CIconHandler::DoAsyncShellInfoLookup(const IconLookup& lookupInfo)
+void CIconHandler::DoAsyncShellInfoLookup(IconLookup&& lookupInfo)
 {
-    m_lookupQueue.PushIfNotQueued(lookupInfo);
+    m_lookupQueue.PushIfNotQueued(std::move(lookupInfo));
 }
 
 void CIconHandler::ClearAsyncShellInfoQueue()

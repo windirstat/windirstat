@@ -39,7 +39,7 @@ public:
         std::wstring, DWORD, HICON*, std::wstring*>;
 
     void Initialize();
-    void DoAsyncShellInfoLookup(const IconLookup& lookupInfo);
+    void DoAsyncShellInfoLookup(IconLookup&& lookupInfo);
     void DrawIcon(const CDC* hdc, HICON image, const CPoint& pt, const CSize& sz);
     void ClearAsyncShellInfoQueue();
     void StopAsyncShellInfoQueue();
