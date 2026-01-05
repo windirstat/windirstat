@@ -17,7 +17,6 @@
 
 #include "pch.h"
 #include "FinderBasic.h"
-#include "MessageBoxDlg.h"
 #include "ProgressDlg.h"
 
 #pragma comment(lib,"powrprof.lib")

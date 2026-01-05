@@ -16,7 +16,6 @@
 //
 
 #include "pch.h"
-#include "MessageBoxDlg.h"
 
 IMPLEMENT_DYNAMIC(CMessageBoxDlg, CLayoutDialogEx)
 

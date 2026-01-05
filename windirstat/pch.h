@@ -119,3 +119,4 @@
 #include "Localization.h"
 #include "Constants.h"
 #include "MainFrame.h"
+#include "MessageBoxDlg.h"

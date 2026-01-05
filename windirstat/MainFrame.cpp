@@ -31,7 +31,6 @@
 #include "SelectObject.h"
 #include "FileTopControl.h"
 #include "FileSearchControl.h"
-#include "MessageBoxDlg.h"
 
 namespace
 {

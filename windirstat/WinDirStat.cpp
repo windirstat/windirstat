@@ -19,7 +19,6 @@
 #include "SelectDrivesDlg.h"
 #include "AboutDlg.h"
 #include "TreeMapView.h"
-#include "MessageBoxDlg.h"
 #include "PageFiltering.h"
 #include "CsvLoader.h"
 

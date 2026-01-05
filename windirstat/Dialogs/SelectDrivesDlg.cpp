@@ -18,7 +18,6 @@
 #include "pch.h"
 #include "SelectDrivesDlg.h"
 #include "FinderBasic.h"
-#include "MessageBoxDlg.h"
 
 namespace
 {

@@ -19,7 +19,6 @@
 
 #include "ItemDupe.h"
 #include "FileDupeView.h"
-#include "MessageBoxDlg.h"
 
 CFileDupeControl::CFileDupeControl() : CTreeListControl(COptions::DupeViewColumnOrder.Ptr(), COptions::DupeViewColumnWidths.Ptr())
 {

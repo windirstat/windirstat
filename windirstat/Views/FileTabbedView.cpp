@@ -20,7 +20,6 @@
 #include "FileSearchView.h"
 #include "FileTopView.h"
 #include "FileTreeView.h"
-#include "MessageBoxDlg.h"
 #include "ItemSearch.h"
 
 IMPLEMENT_DYNCREATE(CFileTabbedView, CTabView)

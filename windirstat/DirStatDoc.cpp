@@ -24,7 +24,6 @@
 #include "FinderBasic.h"
 #include "FinderNtfs.h"
 #include "SearchDlg.h"
-#include "MessageBoxDlg.h"
 #include "ProgressDlg.h"
 
 IMPLEMENT_DYNCREATE(CDirStatDoc, CDocument)
