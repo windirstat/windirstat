@@ -34,7 +34,6 @@ bool CFileTopControl::GetAscendingDefault(const int column)
 BEGIN_MESSAGE_MAP(CFileTopControl, CTreeListControl)
     ON_WM_SETFOCUS()
     ON_WM_KEYDOWN()
-    ON_NOTIFY_REFLECT_EX(LVN_DELETEALLITEMS, OnDeleteAllItems)
 END_MESSAGE_MAP()
 
 CFileTopControl* CFileTopControl::m_singleton = nullptr;
@@ -104,7 +103,6 @@ void CFileTopControl::SortItems()
     }
 
     // Update visual item removals
-    const auto root = reinterpret_cast<CItemTop*>(GetItem(0));
     auto itemTrackerCopy = std::unordered_map(m_itemTracker);
     for (const auto& largeItem : m_sizeMap | std::views::take(topN))
     {
@@ -115,7 +113,7 @@ void CFileTopControl::SortItems()
         }
         
         const auto itemTop = new CItemTop(largeItem);
-        root->AddTopItemChild(itemTop);
+        m_rootItem->AddTopItemChild(itemTop);
         m_itemTracker[largeItem] = itemTop;
     }
 
@@ -123,7 +121,7 @@ void CFileTopControl::SortItems()
     for (const auto& itemTop : itemTrackerCopy | std::views::values)
     {
         m_itemTracker.erase(itemTop->GetLinkedItem());
-        root->RemoveTopItemChild(itemTop);
+        m_rootItem->RemoveTopItemChild(itemTop);
     }
 
     CTreeListControl::SortItems();
@@ -177,7 +175,7 @@ void CFileTopControl::OnItemDoubleClick(const int i)
     }
 }
 
-BOOL CFileTopControl::OnDeleteAllItems(NMHDR*, LRESULT* pResult)
+void CFileTopControl::AfterDeleteAllItems()
 {
     // Reset trackers
     m_sizeMap.clear();
@@ -185,9 +183,11 @@ BOOL CFileTopControl::OnDeleteAllItems(NMHDR*, LRESULT* pResult)
     m_topNMinSize = 0;
     m_needsResort = true;
 
-    // Allow deletion to proceed
-    *pResult = FALSE;
-    return FALSE;
+    // Delete and recreate root item
+    if (m_rootItem != nullptr) delete m_rootItem;
+    m_rootItem = new CItemTop();
+    InsertItem(0, m_rootItem);
+    m_rootItem->SetExpanded(true);
 }
 
 void CFileTopControl::OnSetFocus(CWnd* pOldWnd)

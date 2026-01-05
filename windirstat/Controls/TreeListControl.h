@@ -102,7 +102,8 @@ class CTreeListControl : public COwnerDrawnListControl
     ~CTreeListControl() override = default;
     virtual BOOL CreateExtended(DWORD dwExStyle, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID);
     void SysColorChanged() override;
-    virtual void SetRootItem(CTreeListItem* root);
+    virtual void SetRootItem(CTreeListItem* root = nullptr);
+    virtual void AfterDeleteAllItems() {}
     void OnChildAdded(const CTreeListItem* parent, CTreeListItem* child);
     void OnChildRemoved(const CTreeListItem* parent, CTreeListItem* child);
     void OnRemovingAllChildren(const CTreeListItem* parent);

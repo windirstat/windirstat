@@ -27,9 +27,11 @@ public:
     ~CFileDupeControl() override { m_singleton = nullptr; }
     bool GetAscendingDefault(int column) override;
     static CFileDupeControl* Get() { return m_singleton; }
+    CItemDupe* GetRootItem() const { return m_rootItem; }
     void ProcessDuplicate(CItem* item, BlockingQueue<CItem*>* queue);
     void RemoveItem(CItem* items);
     void SortItems() override;
+    void AfterDeleteAllItems() override;
 
     std::mutex m_hashTrackerMutex;
     std::map<ULONGLONG, std::vector<CItem*>> m_sizeTracker;
@@ -46,6 +48,7 @@ protected:
 
     static constexpr auto m_partialBufferSize = 4ull * 1024ull;
     static CFileDupeControl* m_singleton;
+    CItemDupe* m_rootItem = nullptr;
     bool m_showCloudWarningOnThisScan = false;
     
     void OnItemDoubleClick(int i) override;
@@ -53,5 +56,4 @@ protected:
     DECLARE_MESSAGE_MAP()
     afx_msg void OnSetFocus(CWnd* pOldWnd);
     afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
-    afx_msg BOOL OnDeleteAllItems(NMHDR* pNMHDR, LRESULT* pResult);
 };

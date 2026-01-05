@@ -57,5 +57,4 @@ public:
 
     void AddSearchItemChild(CItemSearch* child);
     void RemoveSearchItemChild(CItemSearch* child);
-    void RemoveSearchItemResults();
 };

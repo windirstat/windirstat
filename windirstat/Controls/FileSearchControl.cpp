@@ -35,7 +35,6 @@ bool CFileSearchControl::GetAscendingDefault(const int column)
 BEGIN_MESSAGE_MAP(CFileSearchControl, CTreeListControl)
     ON_WM_SETFOCUS()
     ON_WM_KEYDOWN()
-    ON_NOTIFY_REFLECT_EX(LVN_DELETEALLITEMS, OnDeleteAllItems)
 END_MESSAGE_MAP()
 
 CFileSearchControl* CFileSearchControl::m_singleton = nullptr;
@@ -68,13 +67,10 @@ void CFileSearchControl::ProcessSearch(CItem* item)
 
     // Process search request using progress dialog
     CProgressDlg(static_cast<size_t>(item->GetItemsCount()), false, AfxGetMainWnd(),
-        [this, item](CProgressDlg* pdlg)
+        [&](CProgressDlg* pdlg)
     {
         // Remove previous results
-        SetRedraw(FALSE);
-        CDirStatDoc::Get()->GetRootItemSearch()->RemoveSearchItemResults();
-        m_itemTracker.clear();
-        SetRedraw(TRUE);
+        SetRootItem();
 
         // Precompile regex string
         const auto searchRegex = ComputeSearchRegex(COptions::SearchTerm,
@@ -107,21 +103,18 @@ void CFileSearchControl::ProcessSearch(CItem* item)
             {
                 queue.push(child);
             }
-        }
-
-        // Add found items to the interface
-        CMainFrame::Get()->InvokeInMessageThread([&]
-        {
-            SetRedraw(FALSE);
-            for (const auto& [_, searchItem] : m_itemTracker)
-            {
-                CDirStatDoc::Get()->GetRootItemSearch()->AddSearchItemChild(searchItem);
-            }
-            SetRedraw(TRUE);
-            SortItems();
-        });
-        
+        }        
     }).DoModal();
+
+    // Add found items to the interface
+    SetRedraw(FALSE);
+    for (const auto& [_, searchItem] : m_itemTracker)
+    {
+        m_rootItem->AddSearchItemChild(searchItem);
+    }
+    SetRedraw(TRUE);
+
+    SortItems(); 
 }
 
 void CFileSearchControl::RemoveItem(CItem* item)
@@ -130,7 +123,7 @@ void CFileSearchControl::RemoveItem(CItem* item)
     if (findItem == m_itemTracker.end()) return;
 
     // Remove the item from the interface
-    CDirStatDoc::Get()->GetRootItemSearch()->RemoveSearchItemChild(findItem->second);
+    m_rootItem->RemoveSearchItemChild(findItem->second);
     m_itemTracker.erase(findItem);
 }
 
@@ -147,11 +140,16 @@ void CFileSearchControl::OnItemDoubleClick(const int i)
     }
 }
 
-BOOL CFileSearchControl::OnDeleteAllItems(NMHDR*, LRESULT* pResult)
+void CFileSearchControl::AfterDeleteAllItems()
 {
-    // Allow deletion to proceed
-    *pResult = FALSE;
-    return FALSE;
+    // Delete previous search results
+    m_itemTracker.clear();
+
+    // Delete and recreate root item
+    if (m_rootItem != nullptr) delete m_rootItem;
+    m_rootItem = new CItemSearch();
+    InsertItem(0, m_rootItem);
+    m_rootItem->SetExpanded(true);
 }
 
 void CFileSearchControl::OnSetFocus(CWnd* pOldWnd)

@@ -315,6 +315,7 @@ void CTreeListControl::SelectItem(const CTreeListItem* item, const bool deselect
 void CTreeListControl::SetRootItem(CTreeListItem* root)
 {
     DeleteAllItems();
+    AfterDeleteAllItems();
     Invalidate();
 
     if (root != nullptr)

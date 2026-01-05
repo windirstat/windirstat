@@ -28,9 +28,11 @@ public:
     ~CFileTopControl() override { m_singleton = nullptr; }
     bool GetAscendingDefault(int column) override;
     static CFileTopControl* Get() { return m_singleton; }
+    CItemTop* GetRootItem() const { return m_rootItem; }
     void ProcessTop(CItem* item);
     void RemoveItem(CItem* items);
     void SortItems() override;
+    void AfterDeleteAllItems() override;
 
 protected:
 
@@ -41,6 +43,7 @@ protected:
     };
 
     static CFileTopControl* m_singleton;
+    CItemTop* m_rootItem = nullptr;
     SingleConsumerQueue<CItem*> m_queuedSet;
     std::vector<CItem*> m_sizeMap;
     ULONGLONG m_topNMinSize = 0;
@@ -53,5 +56,4 @@ protected:
     DECLARE_MESSAGE_MAP()
     afx_msg void OnSetFocus(CWnd* pOldWnd);
     afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
-    afx_msg BOOL OnDeleteAllItems(NMHDR* pNMHDR, LRESULT* pResult);
 };

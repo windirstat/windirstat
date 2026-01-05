@@ -96,9 +96,6 @@ protected:
     bool IsScanRunning() const;
     CItem* GetRootItem() const;
     CItem* GetZoomItem() const;
-    CItemDupe* GetRootItemDupe() const;
-    CItemTop* GetRootItemTop() const;
-    CItemSearch* GetRootItemSearch() const;
     bool IsZoomed() const;
 
     void SetHighlightExtension(const std::wstring& ext);
@@ -144,9 +141,6 @@ protected:
     bool m_showUnknown;   // Whether to show the <Unknown> item
 
     CItem* m_rootItem = nullptr; // The very root item
-    CItemDupe* m_rootItemDupe = nullptr; // The very root dupe item
-    CItemTop* m_rootItemTop = nullptr; // The very root top item
-    CItemSearch* m_rootItemSearch = nullptr; // The very root search item
     std::wstring m_highlightExtension; // Currently highlighted extension
     CItem* m_zoomItem = nullptr;   // Current "zoom root"
 

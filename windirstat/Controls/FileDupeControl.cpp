@@ -35,7 +35,6 @@ bool CFileDupeControl::GetAscendingDefault(const int column)
 BEGIN_MESSAGE_MAP(CFileDupeControl, CTreeListControl)
     ON_WM_SETFOCUS()
     ON_WM_KEYDOWN()
-    ON_NOTIFY_REFLECT_EX(LVN_DELETEALLITEMS, OnDeleteAllItems)
 END_MESSAGE_MAP()
 
 CFileDupeControl* CFileDupeControl::m_singleton = nullptr;
@@ -138,18 +137,17 @@ void CFileDupeControl::SortItems()
 
     // Add items to the list
     if (m_pendingListAdds.empty()) return;
-    const auto root = reinterpret_cast<CItemDupe*>(GetItem(0));
     SetRedraw(FALSE);
     std::pair<CItemDupe*, CItemDupe*> pair;
     while (m_pendingListAdds.pop(pair))
     {
         const auto& [parent, child] = pair;
-        (parent == nullptr ? root : parent)->AddDupeItemChild(child);
+        (parent == nullptr ? m_rootItem : parent)->AddDupeItemChild(child);
     }
     SetRedraw(TRUE);
 
 #ifdef _DEBUG
-    for (const auto& hashParent : root->GetChildren())
+    for (const auto& hashParent : m_rootItem->GetChildren())
     {
         const auto& hashString = hashParent->GetHashAndExtensions().substr(0, 8);
         if (hashParent->GetChildren().size() < 2)
@@ -223,7 +221,6 @@ void CFileDupeControl::RemoveItem(CItem* item)
     SetRedraw(FALSE);
 
     // Cleanup any empty visual nodes in the list
-    const auto root = reinterpret_cast<CItemDupe*>(GetItem(0));
     bool erasedNode = false;
     for (auto nodeIter = m_nodeTracker.begin(); nodeIter != m_nodeTracker.end();
         erasedNode ? nodeIter : ++nodeIter, erasedNode = false)
@@ -260,7 +257,7 @@ void CFileDupeControl::RemoveItem(CItem* item)
         // When no children left, remove parent item
         if (dupeParent->GetChildren().empty())
         {
-            root->RemoveDupeItemChild(dupeParent);
+            m_rootItem->RemoveDupeItemChild(dupeParent);
             nodeIter = m_nodeTracker.erase(nodeIter);
             erasedNode = true;
         }
@@ -288,7 +285,7 @@ void CFileDupeControl::OnItemDoubleClick(const int i)
     }
 }
 
-BOOL CFileDupeControl::OnDeleteAllItems(NMHDR*, LRESULT* pResult)
+void CFileDupeControl::AfterDeleteAllItems()
 {
     // Reset duplicate warning
     m_showCloudWarningOnThisScan = COptions::SkipDupeDetectionCloudLinksWarning;
@@ -301,9 +298,11 @@ BOOL CFileDupeControl::OnDeleteAllItems(NMHDR*, LRESULT* pResult)
     m_sizeTracker.clear();
     m_childTracker.clear();
 
-    // Allow deletion to proceed
-    *pResult = FALSE;
-    return FALSE;
+    // Delete and recreate root item
+    if (m_rootItem != nullptr) delete m_rootItem;
+    m_rootItem = new CItemDupe();
+    InsertItem(0, m_rootItem);
+    m_rootItem->SetExpanded(true);
 }
 
 void CFileDupeControl::OnSetFocus(CWnd* pOldWnd)

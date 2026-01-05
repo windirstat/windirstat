@@ -138,11 +138,3 @@ void CItemSearch::RemoveSearchItemChild(CItemSearch* child)
 
     delete child;
 }
-
-void CItemSearch::RemoveSearchItemResults()
-{
-    for (const auto& m_child : std::vector(m_children))
-    {
-        RemoveSearchItemChild(m_child);
-    }
-}

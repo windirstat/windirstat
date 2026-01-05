@@ -86,20 +86,14 @@ void CDirStatDoc::DeleteContents()
     // Reset extension data
     GetExtensionData()->clear();
 
-    // Cleanup visual artifacts
+    // Cleanup visual artifacts - controllers manage their own root items
     if (CFileTopControl::Get() != nullptr) CFileTopControl::Get()->DeleteAllItems();
     if (CFileTreeControl::Get() != nullptr) CFileTreeControl::Get()->DeleteAllItems();
     if (CFileDupeControl::Get() != nullptr) CFileDupeControl::Get()->DeleteAllItems();
     if (CFileSearchControl::Get() != nullptr) CFileSearchControl::Get()->DeleteAllItems();
 
     // Cleanup structures
-    delete m_rootItemDupe;
-    delete m_rootItemTop;
-    delete m_rootItemSearch;
     delete m_rootItem;
-    m_rootItemDupe = nullptr;
-    m_rootItemTop = nullptr;
-    m_rootItemSearch = nullptr;
     m_rootItem = nullptr;
     m_zoomItem = nullptr;
 }
@@ -174,11 +168,6 @@ BOOL CDirStatDoc::OnOpenDocument(LPCWSTR lpszPathName)
     // Restore zoom scope to be the root
     m_zoomItem = m_rootItem;
 
-    // Set new node for extra views
-    m_rootItemDupe = new CItemDupe();
-    m_rootItemTop = new CItemTop();
-    m_rootItemSearch = new CItemSearch();
-
     // Update new root for display
     UpdateAllViews(nullptr, HINT_NEWROOT);
     StartScanningEngine(std::vector({ Get()->GetRootItem() }));
@@ -204,9 +193,6 @@ BOOL CDirStatDoc::OnOpenDocument(CItem * newroot)
 
     Get()->SetPathName(spec.c_str(), FALSE);
 
-    m_rootItemDupe = new CItemDupe();
-    m_rootItemTop = new CItemTop();
-    m_rootItemSearch = new CItemSearch();
     m_rootItem = newroot;
     m_zoomItem = m_rootItem;
 
@@ -308,21 +294,6 @@ CItem* CDirStatDoc::GetRootItem() const
 CItem* CDirStatDoc::GetZoomItem() const
 {
     return m_zoomItem;
-}
-
-CItemDupe* CDirStatDoc::GetRootItemDupe() const
-{
-    return m_rootItemDupe;
-}
-
-CItemTop* CDirStatDoc::GetRootItemTop() const
-{
-    return m_rootItemTop;
-}
-
-CItemSearch* CDirStatDoc::GetRootItemSearch() const
-{
-    return m_rootItemSearch;
 }
 
 bool CDirStatDoc::IsZoomed() const
@@ -1085,7 +1056,7 @@ void CDirStatDoc::OnSaveDuplicates()
 
     CProgressDlg(0, true, AfxGetMainWnd(), [&](CProgressDlg*)
     {
-        SaveDuplicates(dlg.GetPathName().GetString(), GetRootItemDupe());
+        SaveDuplicates(dlg.GetPathName().GetString(), CFileDupeControl::Get()->GetRootItem());
     }).DoModal();
 }
 
@@ -1376,7 +1347,7 @@ void CDirStatDoc::OnCleanupMoveTo()
     if (!FolderExists(destFolder)) return;
 
     // Show progress dialog and move files
-    CProgressDlg(items.size(), false, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
+    CProgressDlg(0, false, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
     {
         // Create file operation object
         CComPtr<IFileOperation> fileOperation;
