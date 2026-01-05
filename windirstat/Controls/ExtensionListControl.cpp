@@ -318,9 +318,9 @@ void CExtensionListControl::OnSearchExtension()
     const std::wstring previousTerm = COptions::SearchTerm;
     const bool previousRegex = COptions::SearchRegex;
 
-    // Set terms and do search
-    COptions::SearchTerm = std::wstring(L"*") + GetSelectedExtension();
-    COptions::SearchRegex = false;
+    // Escape search terms and do search
+    COptions::SearchTerm = GlobToRegex(GetSelectedExtension(), false) + L"$";
+    COptions::SearchRegex = true;
     CFileSearchControl::Get()->ProcessSearch(CDirStatDoc::Get()->GetRootItem());
 
     // Restore current search settings

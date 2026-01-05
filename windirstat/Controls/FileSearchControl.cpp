@@ -63,25 +63,28 @@ std::wregex CFileSearchControl::ComputeSearchRegex(const std::wstring & searchTe
 
 void CFileSearchControl::ProcessSearch(CItem* item)
 {
-    // Remove previous results
-    SetRedraw(FALSE);
-    CDirStatDoc::Get()->GetRootItemSearch()->RemoveSearchItemResults();
-    m_itemTracker.clear();
-    SetRedraw(TRUE);
-
-    // Precompile regex string
-    const auto searchRegex = ComputeSearchRegex(COptions::SearchTerm,
-        COptions::SearchCase, COptions::SearchRegex);
-
-    // Determine which search function
-    const std::function searchFunc = COptions::SearchWholePhrase ?
-        [](const std::wstring& str, const std::wregex& regex) { return std::regex_match(str, regex); } :
-        [](const std::wstring& str, const std::wregex& regex) { return std::regex_search(str, regex); };
+    // Update tab visibility to show search tab if results exist
+    CMainFrame::Get()->GetFileTabbedView()->SetSearchTabVisibility(true);
 
     // Process search request using progress dialog
     CProgressDlg(static_cast<size_t>(item->GetItemsCount()), false, AfxGetMainWnd(),
-        [&](CProgressDlg* pdlg)
+        [this, item](CProgressDlg* pdlg)
     {
+        // Remove previous results
+        SetRedraw(FALSE);
+        CDirStatDoc::Get()->GetRootItemSearch()->RemoveSearchItemResults();
+        m_itemTracker.clear();
+        SetRedraw(TRUE);
+
+        // Precompile regex string
+        const auto searchRegex = ComputeSearchRegex(COptions::SearchTerm,
+            COptions::SearchCase, COptions::SearchRegex);
+
+        // Determine which search function
+        const std::function searchFunc = COptions::SearchWholePhrase ?
+            [](const std::wstring& str, const std::wregex& regex) { return std::regex_match(str, regex); } :
+            [](const std::wstring& str, const std::wregex& regex) { return std::regex_search(str, regex); };
+
         // Do search
         std::stack<CItem*> queue({ item });
         size_t current = 0;
@@ -92,30 +95,33 @@ void CFileSearchControl::ProcessSearch(CItem* item)
             CItem* qitem = queue.top();
             queue.pop();
 
+            // Check for match
             if (searchFunc(qitem->GetName(), searchRegex))
             {
-                CItemSearch* searchItem = new CItemSearch(qitem);
-                CMainFrame::Get()->InvokeInMessageThread([this, searchItem]
-                {
-                    CDirStatDoc::Get()->GetRootItemSearch()->AddSearchItemChild(searchItem);
-                });
-                m_itemTracker.emplace(qitem, searchItem);
+                m_itemTracker.emplace(qitem, new CItemSearch(qitem));
             }
 
             // Descend into child items
-            if (qitem->IsLeaf()) continue;
+            if (qitem->IsLeaf() || qitem->IsTypeOrFlag(IT_HLINKS)) continue;
             for (const auto& child : qitem->GetChildren())
             {
                 queue.push(child);
             }
         }
+
+        // Add found items to the interface
+        CMainFrame::Get()->InvokeInMessageThread([&]
+        {
+            SetRedraw(FALSE);
+            for (const auto& [_, searchItem] : m_itemTracker)
+            {
+                CDirStatDoc::Get()->GetRootItemSearch()->AddSearchItemChild(searchItem);
+            }
+            SetRedraw(TRUE);
+            SortItems();
+        });
+        
     }).DoModal();
-
-    // Reenable drawing
-    SortItems();
-
-    // Update tab visibility to show search tab if results exist
-    CMainFrame::Get()->GetFileTabbedView()->SetSearchTabVisibility(true);
 }
 
 void CFileSearchControl::RemoveItem(CItem* item)
