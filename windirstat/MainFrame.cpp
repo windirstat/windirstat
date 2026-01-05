@@ -717,7 +717,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
     // setup look and feel with dark mode support
     CMFCVisualManager::SetDefaultManager(DarkMode::IsDarkModeActive() ?
-        RUNTIME_CLASS(CDarkModeVisualManager) : RUNTIME_CLASS(CMFCVisualManagerWindows7));
+        RUNTIME_CLASS(CDarkModeVisualManager) : RUNTIME_CLASS(CMFCVisualManagerWindows));
 
     // apply dark mode to main frame window
     DarkMode::AdjustControls(GetSafeHwnd());

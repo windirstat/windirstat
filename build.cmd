@@ -52,13 +52,6 @@ IF EXIST "%WindowsSdkVerBinPath%\x64" msbuild "%BASEDIR%\windirstat.sln" /p:Conf
 IF EXIST "%WindowsSdkVerBinPath%\arm64" msbuild "%BASEDIR%\windirstat.sln" /p:Configuration=Release /t:Clean;Build /p:Platform=ARM64,ExternalCompilerOptions=/DPRODUCTION=%PRODUCTION%
 TIMEOUT /t 3 /nobreak >NUL
 
-:: optimize executable size if pwsh is present
-PWSH.EXE -Help >NUL 2>&1
-IF %ERRORLEVEL% NEQ 0 ECHO PowerShell not found; skipping executable pruning
-IF %ERRORLEVEL% EQU 0 FOR %%A IN (arm64 x86 x64) DO (
-  PWSH -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Unrestricted -File "%THISDIR%\windirstat\Build\Prune Executable.ps1" "%BLDDIR%\WinDirStat_%%A.exe"
-)
-
 :: sign the main executables 
 signtool sign /fd sha256 /tr %TSAURL% /td sha256 /d %LIBNAME% /du %LIBURL% "%BLDDIR%\*.exe"
 

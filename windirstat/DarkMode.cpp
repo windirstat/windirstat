@@ -388,13 +388,13 @@ void DarkMode::DrawFocusRect(CDC* pdc, const CRect& rc)
 }
 
 // Implement runtime class information for CDarkModeVisualManager
-IMPLEMENT_DYNCREATE(CDarkModeVisualManager, CMFCVisualManagerWindows7)
+IMPLEMENT_DYNCREATE(CDarkModeVisualManager, CMFCVisualManagerWindows)
 
 void CDarkModeVisualManager::GetTabFrameColors(const CMFCBaseTabCtrl* pTabWnd,
     COLORREF& clrDark, COLORREF& clrBlack, COLORREF& clrHighlight, COLORREF& clrFace,
     COLORREF& clrDarkShadow, COLORREF& clrLight, CBrush*& pbrFace, CBrush*& pbrBlack)
 {
-    CMFCVisualManagerWindows7::GetTabFrameColors(pTabWnd, clrDark, clrBlack,
+    CMFCVisualManagerWindows::GetTabFrameColors(pTabWnd, clrDark, clrBlack,
         clrHighlight, clrFace, clrDarkShadow, clrLight, pbrFace, pbrBlack);
 
     clrBlack = DarkMode::WdsSysColor(COLOR_BTNHILIGHT); // Flat Style - Tab Border
@@ -442,6 +442,6 @@ void CDarkModeVisualManager::OnFillSplitterBackground(CDC* pDC, CSplitterWndEx* 
 
 void CDarkModeVisualManager::OnUpdateSystemColors()
 {
-    CMFCVisualManagerWindows7::OnUpdateSystemColors();
+    CMFCVisualManagerWindows::OnUpdateSystemColors();
     DarkMode::SetupGlobalColors();
 }

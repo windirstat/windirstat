@@ -85,7 +85,7 @@ public:
 //
 // CDarkModeVisualManager. A visual manager tweak for dark mode support
 //
-class CDarkModeVisualManager final : public CMFCVisualManagerWindows7
+class CDarkModeVisualManager final : public CMFCVisualManagerWindows
 {
     DECLARE_DYNCREATE(CDarkModeVisualManager)
 

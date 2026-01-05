@@ -94,6 +94,16 @@ BEGIN
     "#define _AFX_NO_OLE_RESOURCES\r\n"
     "#define _AFX_NO_TRACKER_RESOURCES\r\n"
     "#define _AFX_NO_PROPERTY_RESOURCES\r\n"
+    "#define _AFX_NO_NEWTYPEDLG_RESOURCES\r\n"
+    "#define _AFX_NO_SCRIPT_RESOURCES\r\n"
+    "#define _AFX_NO_MAPI_RESOURCES\r\n"
+    "#define _AFX_NO_CFILE_RESOURCES\r\n"
+    "#define _AFX_NO_MOUSE_RESOURCES\r\n"
+    "#define _AFX_NO_CTLERROR_RESOURCES\r\n"
+    "#define _AFX_NO_FILECMD_RESOURCES\r\n"
+    "#define _AFX_NO_OCC_RESOURCES\r\n"
+    "#define _AFX_NO_STOCKPPG_RESOURCES\r\n"
+    "#define _AFX_INTL_RESOURCES\r\n"
     "\r\n"
     "#if !defined(AFX_RESOURCE_DLL)\r\n"
     "LANGUAGE 9, 1\r\n"
@@ -913,6 +923,16 @@ END
 #define _AFX_NO_OLE_RESOURCES
 #define _AFX_NO_TRACKER_RESOURCES
 #define _AFX_NO_PROPERTY_RESOURCES
+#define _AFX_NO_NEWTYPEDLG_RESOURCES
+#define _AFX_NO_SCRIPT_RESOURCES
+#define _AFX_NO_MAPI_RESOURCES
+#define _AFX_NO_CFILE_RESOURCES
+#define _AFX_NO_MOUSE_RESOURCES
+#define _AFX_NO_CTLERROR_RESOURCES
+#define _AFX_NO_FILECMD_RESOURCES
+#define _AFX_NO_OCC_RESOURCES
+#define _AFX_NO_STOCKPPG_RESOURCES
+#define _AFX_INTL_RESOURCES
 
 #if !defined(AFX_RESOURCE_DLL)
 LANGUAGE 9, 1
