@@ -19,7 +19,7 @@
 #include "ItemDupe.h"
 #include "FileDupeControl.h"
 
-CItemDupe::CItemDupe(const std::vector<BYTE>& hash) : m_hash(hash)
+CItemDupe::CItemDupe(const std::vector<BYTE>& hash) : m_hash(std::move(hash))
 {
     m_hashString.resize(2ull * m_hash.size());
     DWORD iHashStringLength = static_cast<DWORD>(m_hashString.size() + 1ull);
