@@ -19,6 +19,7 @@
 #include "TreeMapView.h"
 #include "FileTabbedView.h"
 #include "FileTreeView.h"
+#include "DrawTextCache.h"
 #include "ExtensionView.h"
 #include "Property.h"
 #include "PageAdvanced.h"
@@ -1312,6 +1313,7 @@ void CMainFrame::OnSysColorChange()
     CFrameWndEx::OnSysColorChange();
     GetFileTreeView()->SysColorChanged();
     GetExtensionView()->SysColorChanged();
+    DrawTextCache::Get().ClearCache();
 
     // Redraw menus for dark mode
     DarkMode::SetAppDarkMode();

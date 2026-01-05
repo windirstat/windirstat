@@ -126,6 +126,12 @@ void DrawTextCache::EvictIfNeeded()
     }
 }
 
+void DrawTextCache::ClearCache()
+{
+    m_cache.clear();
+    m_leastRecentList.clear();
+}
+
 void DrawTextCache::TouchEntry(CacheMap::iterator it)
 {
     // Move to front of LRU list
