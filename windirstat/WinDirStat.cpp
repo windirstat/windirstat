@@ -376,10 +376,6 @@ BOOL CDirStatApp::InitInstance()
         }
     }
 
-    // If elevation is available but not active, disable Fast Scan as it requires elevated privileges
-    if (COptions::UseFastScanEngine && IsElevationAvailable())
-        COptions::UseFastScanEngine = false;
-
     // Either open the file names or open file selection dialog
     cmdInfo.m_strFileName.IsEmpty() ? OnFileOpen() :
         (void)m_pDocTemplate->OpenDocumentFile(cmdInfo.m_strFileName, true);

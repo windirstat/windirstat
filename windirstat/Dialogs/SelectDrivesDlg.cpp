@@ -546,11 +546,11 @@ void CSelectDrivesDlg::OnOK()
 
 void CSelectDrivesDlg::UpdateButtons()
 {
+    const BOOL prevUseFastScan = m_useFastScan;
     UpdateData();
-    bool enableOk = false;
-
+    
     // Prompt user to elevate if the Fast Scan option is checked in non-elevated session
-    if (m_useFastScan && IsElevationAvailable())
+    if (m_useFastScan && prevUseFastScan != m_useFastScan && IsElevationAvailable())
     {
         if (WdsMessageBox(*this, Localization::Lookup(IDS_ELEVATION_QUESTION),
             Localization::LookupNeutral(AFX_IDS_APP_TITLE), MB_YESNO | MB_ICONQUESTION) == IDYES)
@@ -559,14 +559,9 @@ void CSelectDrivesDlg::UpdateButtons()
             RunElevated(CDirStatDoc::Get()->GetPathName().GetString());
             return;
         }
-        else
-        {
-            // If the user declines, uncheck the fast scan box to revert the state.
-            m_useFastScan = false;
-            UpdateData(FALSE);
-        }
     }
 
+    bool enableOk = false;
     switch (m_radio)
     {
     case RADIO_TARGET_DRIVES_ALL:
