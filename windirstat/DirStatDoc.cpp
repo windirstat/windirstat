@@ -452,10 +452,7 @@ void CDirStatDoc::RebuildExtensionData()
     }
 }
 
-// Deletes a file or directory via SHFileOperation.
-// Return: false, if canceled
-//
-bool CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, const bool toTrashBin, const bool emptyOnly) const
+void CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, const bool toTrashBin, const bool emptyOnly) const
 {
     if (COptions::ShowDeleteWarning)
     {
@@ -474,36 +471,87 @@ bool CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, const bo
             Localization::Lookup(IDS_DONT_SHOW_AGAIN), false);
 
         // Change default width and display
-        warning.SetInitialWindowSize({ 600, 600 });
-        if (IDYES != warning.DoModal())
-        {
-            return false;
-        }
+        warning.SetInitialWindowSize({ 600, 400 });
+        if (IDYES != warning.DoModal()) return;
 
         // Save off the deletion warning preference
         COptions::ShowDeleteWarning = !warning.IsCheckboxChecked();
     }
 
-    CProgressDlg(0, true, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
+    // Build list of items to delete
+    std::vector<CItem*> itemsToDelete{ items };
+    if (emptyOnly)
     {
-        // Build list of items to delete
-        std::vector<CItem*> itemsToDelete{ items };
-        if (emptyOnly)
+        auto childrenView = items | std::views::transform(&CItem::GetChildren) | std::views::join;
+        itemsToDelete.assign(childrenView.begin(), childrenView.end());
+    }
+
+    // Calculate total item count for progress tracking
+    size_t totalItems = 0;
+    for (const auto& item : itemsToDelete)
+    {
+        totalItems += 1 + item->GetItemsCount();
+    }
+
+    bool cancelled = false;
+    if (!toTrashBin) CProgressDlg(totalItems, true, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
+    {
+        // Try native deletion first for non-trash bin operations
+        std::vector<const CItem*> itemsInPostOrder;
+        std::stack<std::pair<const CItem*, bool>> stack;
+        for (const auto& item : itemsToDelete)
         {
-            itemsToDelete.clear();
-            for (const auto& item : items)
-            {
-                const auto& children = item->GetChildren();
-                itemsToDelete.insert(itemsToDelete.end(), children.begin(), children.end());
-            }
+            stack.emplace(item, false);
         }
 
-        // Determine flags to use for deletion
-        auto flags = FOFX_SHOWELEVATIONPROMPT | (COptions::ShowMicrosoftProgress ? FOF_NOCONFIRMMKDIR : FOF_NO_UI);
-        if (toTrashBin)
+        // Collect items in depth-first for native deletion
+        while (!stack.empty())
         {
-            flags |= FOFX_ADDUNDORECORD | FOFX_RECYCLEONDELETE;
+            auto [item, processed] = stack.top(); stack.pop();
+
+            if (!processed && item->HasChildren())
+            {
+                stack.emplace(item, true);
+                for (const auto& child : item->GetChildren())
+                    stack.emplace(child, false);
+            }
+            else itemsInPostOrder.push_back(item);
         }
+
+        // Actually delete items in post-order
+        size_t current = 0;
+        for (const auto& item : itemsInPostOrder)
+        {
+            if (pdlg->IsCancelled())
+            {
+                cancelled = true;
+                return;
+            }
+
+            pdlg->SetCurrent(++current);
+            item->IsTypeOrFlag(IT_DIRECTORY)
+                ? RemoveDirectory(item->GetPathLong().c_str())
+                : DeleteFile(item->GetPathLong().c_str());
+        }
+
+        // Check if top-level items still exist
+        std::vector<CItem*> remainingItems;
+        for (const auto& item : itemsToDelete)
+        {
+            if (GetFileAttributes(item->GetPathLong().c_str()) != INVALID_FILE_ATTRIBUTES)
+            {
+                remainingItems.push_back(item);
+            }
+        }
+        itemsToDelete = std::move(remainingItems);
+    }).DoModal();
+
+    if (!cancelled && !itemsToDelete.empty())
+        CProgressDlg(0, false, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
+    {
+        // For trash bin operations, use IFileOperation directly
+        auto flags = FOFX_SHOWELEVATIONPROMPT | (COptions::ShowMicrosoftProgress ? FOF_NOCONFIRMMKDIR : FOF_NO_UI);
+        if (toTrashBin) flags |= FOFX_ADDUNDORECORD | FOFX_RECYCLEONDELETE;
 
         CComPtr<IFileOperation> fileOperation;
         if (FAILED(::CoCreateInstance(CLSID_FileOperation, nullptr, CLSCTX_ALL, IID_PPV_ARGS(&fileOperation))) ||
@@ -514,7 +562,7 @@ bool CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, const bo
         }
 
         // Add all items into a single deletion operation
-        for (const auto& item : items)
+        for (const auto& item : itemsToDelete)
         {
             CComPtr<IShellItem> shellitem;
             SmartPointer<LPITEMIDLIST> pidl(CoTaskMemFree, ILCreateFromPath(item->GetPath().c_str()));
@@ -525,68 +573,20 @@ bool CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, const bo
         // Do all deletions
         HRESULT res = fileOperation->PerformOperations();
         if (res != S_OK) VTRACE(L"File Operation Failed: {}", TranslateError(res));
-
-        // If user canceled (e.g., elevation prompt) then exit early
-        BOOL aborted = FALSE;
-        fileOperation->GetAnyOperationsAborted(&aborted);
-        if (aborted) return;
-
-        // Re-run deletion using native function to handle any long paths that were missed
-        if (!toTrashBin && res != S_OK)
-        {
-            // Create a list of files and directories that still exist to remove
-            std::vector<const CItem*> filesToDelete;
-            std::vector<const CItem*> dirsToDelete;
-            std::stack<const CItem*> childStack;
-            for (const auto& item : items)
-            {
-                if (!FinderBasic::DoesFileExist(item->GetPath())) continue;
-                childStack.push(item);
-            }
-
-            while (!childStack.empty())
-            {
-                const auto& item = childStack.top();
-                childStack.pop();
-
-                if (item->IsTypeOrFlag(IT_DIRECTORY))
-                {
-                    dirsToDelete.emplace_back(item);
-                    for (const auto& child : item->GetChildren())
-                    {
-                        childStack.push(child);
-                    }
-                }
-                else if (item->IsTypeOrFlag(IT_FILE))
-                {
-                    filesToDelete.emplace_back(item);
-                }
-            }
-
-            // First remove files and then attempt directories in order from deep to shallow
-            for (const auto& file : filesToDelete) DeleteFile(file->GetPathLong().c_str());
-            for (const auto& dir : dirsToDelete | std::views::reverse)
-            {
-                std::error_code ec;
-                std::filesystem::remove_all(std::filesystem::path(dir->GetPathLong().c_str()), ec);
-            }
-        }
     }).DoModal();
 
-    // Create a list of items and recycler directories to refresh
-    std::vector<CItem*> refresh{ items };
+    // Create a recycler directories to refresh
+    std::unordered_set<CItem*> recyclers;
     if (toTrashBin) for (const auto& item : items)
     {
-        if (const auto & recycler = item->FindRecyclerItem(); recycler != nullptr &&
-            std::ranges::find(refresh, recycler) == refresh.end())
-        {
-            refresh.push_back(recycler);
-        }
+        const auto& recycler = item->FindRecyclerItem();
+        if (recycler != nullptr) recyclers.insert(recycler);
     }
 
     // Refresh the items and recycler directories
-    RefreshItem(refresh);
-    return true;
+    std::vector<CItem*> itemsToRefresh = items;
+    itemsToRefresh.insert(itemsToRefresh.end(), recyclers.begin(), recyclers.end());
+    RefreshItem(itemsToRefresh);
 }
 
 void CDirStatDoc::SetZoomItem(CItem* item)
