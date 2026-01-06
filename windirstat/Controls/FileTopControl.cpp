@@ -26,9 +26,7 @@ CFileTopControl::CFileTopControl() : CTreeListControl(COptions::TopViewColumnOrd
 
 bool CFileTopControl::GetAscendingDefault(const int column)
 {
-    return column == COL_ITEMTOP_SIZE_PHYSICAL ||
-        column == COL_ITEMTOP_SIZE_LOGICAL ||
-        column == COL_ITEMTOP_LAST_CHANGE;
+    return column == COL_ITEMTOP_NAME;
 }
 
 BEGIN_MESSAGE_MAP(CFileTopControl, CTreeListControl)

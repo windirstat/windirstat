@@ -27,9 +27,7 @@ CFileDupeControl::CFileDupeControl() : CTreeListControl(COptions::DupeViewColumn
 
 bool CFileDupeControl::GetAscendingDefault(const int column)
 {
-    return column == COL_ITEMDUP_SIZE_PHYSICAL ||
-        column == COL_ITEMDUP_SIZE_LOGICAL ||
-        column == COL_ITEMDUP_LAST_CHANGE;
+    return column == COL_ITEMDUP_NAME;
 }
 
 BEGIN_MESSAGE_MAP(CFileDupeControl, CTreeListControl)
@@ -136,15 +134,17 @@ void CFileDupeControl::SortItems()
     ASSERT(AfxGetThread() != nullptr);
 
     // Add items to the list
-    if (m_pendingListAdds.empty()) return;
-    SetRedraw(FALSE);
-    std::pair<CItemDupe*, CItemDupe*> pair;
-    while (m_pendingListAdds.pop(pair))
+    if (!m_pendingListAdds.empty())
     {
-        const auto& [parent, child] = pair;
-        (parent == nullptr ? m_rootItem : parent)->AddDupeItemChild(child);
+        SetRedraw(FALSE);
+        std::pair<CItemDupe*, CItemDupe*> pair;
+        while (m_pendingListAdds.pop(pair))
+        {
+            const auto& [parent, child] = pair;
+            (parent == nullptr ? m_rootItem : parent)->AddDupeItemChild(child);
+        }
+        SetRedraw(TRUE);
     }
-    SetRedraw(TRUE);
 
 #ifdef _DEBUG
     for (const auto& hashParent : m_rootItem->GetChildren())
@@ -168,7 +168,7 @@ void CFileDupeControl::SortItems()
     }
 #endif
 
-    COwnerDrawnListControl::SortItems();
+    CTreeListControl::SortItems();
 }
 
 void CFileDupeControl::RemoveItem(CItem* item)
