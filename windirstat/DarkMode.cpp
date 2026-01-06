@@ -209,6 +209,7 @@ HBRUSH DarkMode::OnCtlColor(CDC* pDC, UINT nCtlColor)
     {
         pDC->SetTextColor(WdsSysColor(COLOR_WINDOWTEXT));
         pDC->SetBkColor(WdsSysColor(CTLCOLOR_DLG));
+        pDC->SetBkMode(nCtlColor == CTLCOLOR_STATIC ? TRANSPARENT : OPAQUE);
         return GetDialogBackgroundBrush();
     }
 
