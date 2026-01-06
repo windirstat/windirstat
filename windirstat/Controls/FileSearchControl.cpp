@@ -107,6 +107,8 @@ void CFileSearchControl::ProcessSearch(CItem* item)
     }).DoModal();
 
     // Add found items to the interface
+    CWaitCursor wait;
+    CollapseItem(0);
     SetRedraw(FALSE);
     for (const auto& [_, searchItem] : m_itemTracker)
     {
@@ -114,7 +116,8 @@ void CFileSearchControl::ProcessSearch(CItem* item)
     }
     SetRedraw(TRUE);
 
-    SortItems(); 
+    SortItems();
+    ExpandItem(0);
 }
 
 void CFileSearchControl::RemoveItem(CItem* item)
