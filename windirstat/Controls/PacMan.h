@@ -37,7 +37,6 @@ private:
     static void UpdatePosition(float& position, bool& up, float diff);
     static bool m_suspended;
 
-    Gdiplus::Font m_font;
     COLORREF m_backColor;
     ULONGLONG m_lastUpdate = 0;  // TickCount
     ULONGLONG m_lastDraw = 0;    // Last time drawn

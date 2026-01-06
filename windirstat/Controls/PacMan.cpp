@@ -25,11 +25,8 @@ namespace
     constexpr float PACMANSPEED = 0.09f;      // pixels / ms
 }
 
-CPacman::CPacman(const COLORREF backColor) :
-    m_font(L"Arial", 6.0f, Gdiplus::FontStyleBold),
-    m_backColor(backColor)
+CPacman::CPacman(const COLORREF backColor) : m_backColor(backColor)
 {
-    Reset();
 }
 
 void CPacman::Reset()
@@ -114,8 +111,8 @@ void CPacman::Draw(CDC* pdc, const CRect& rect)
     if (m_done) return;
 
     // Create pens and brushes
-    const Gdiplus::Pen blackPen(Gdiplus::Color(0xFF, 0x00, 0x00, 0x00), 1);
-    const Gdiplus::SolidBrush yellowPen(Gdiplus::Color(0xFF, 0xFC, 0xC9, 0x2F));
+    static const Gdiplus::Pen blackPen(Gdiplus::Color(0xFF, 0x00, 0x00, 0x00), 1);
+    static const Gdiplus::SolidBrush yellowPen(Gdiplus::Color(0xFF, 0xFC, 0xC9, 0x2F));
 
     // Draw filled shape if we started and recently updated
     Gdiplus::Graphics graphics(pdc->GetSafeHdc());
@@ -126,10 +123,11 @@ void CPacman::Draw(CDC* pdc, const CRect& rect)
 
     // Draw sleepy graphic
     const COLORREF zColor = DarkMode::WdsSysColor(COLOR_WINDOWTEXT);
-    const Gdiplus::SolidBrush zBrush(Gdiplus::Color(0xFF, GetRValue(zColor), GetGValue(zColor), GetBValue(zColor)));
-    graphics.DrawString(L"z",1, &m_font, {rc.left + 5.0f, rc.top - 3.0f}, &zBrush);
-    graphics.DrawString(L"z", 1, &m_font, { rc.left + 10.0f, rc.top - 4.5f }, &zBrush);
-    graphics.DrawString(L"z", 1, &m_font, { rc.left + 15.0f, rc.top - 6.0f }, &zBrush);
+    static const Gdiplus::Font font{ L"Arial", 6.0f, Gdiplus::FontStyleBold };
+    static const Gdiplus::SolidBrush zBrush(Gdiplus::Color(0xFF, GetRValue(zColor), GetGValue(zColor), GetBValue(zColor)));
+    graphics.DrawString(L"z",1, &font, {rc.left + 5.0f, rc.top - 3.0f}, &zBrush);
+    graphics.DrawString(L"z", 1, &font, { rc.left + 10.0f, rc.top - 4.5f }, &zBrush);
+    graphics.DrawString(L"z", 1, &font, { rc.left + 15.0f, rc.top - 6.0f }, &zBrush);
 }
 
 void CPacman::UpdatePosition(float& position, bool& up, const float diff)
