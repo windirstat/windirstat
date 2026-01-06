@@ -464,8 +464,16 @@ void COwnerDrawnListControl::DrawItem(LPDRAWITEMSTRUCT pdis)
         if (m_showGrid)
         {
             constexpr COLORREF gridColor = RGB(212, 208, 200);
-            CPen pen(PS_SOLID, 1, gridColor);
+            constexpr COLORREF gridColorDark = RGB(99, 99, 99);
+            CPen pen(PS_SOLID, 1, DarkMode::IsDarkModeActive() ? gridColorDark : gridColor);
             CSelectObject sopen(&dcMem, &pen);
+
+            // Draw top line for first item
+            if (pdis->itemID == 0)
+            {
+                dcMem.MoveTo(rcDraw.left, rcDraw.top);
+                dcMem.LineTo(rcDraw.right, rcDraw.top);
+            }
 
             dcMem.MoveTo(rcDraw.right - 1, rcDraw.top);
             dcMem.LineTo(rcDraw.right - 1, rcDraw.bottom);
