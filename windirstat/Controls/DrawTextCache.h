@@ -46,8 +46,10 @@ private:
         COLORREF textColor;
         COLORREF backgroundColor;
         UINT format;
-        int width;
-        int height;
+        USHORT width;
+        USHORT height;
+        USHORT dpiX;
+        USHORT dpiY;
 
         bool operator==(const CacheKey& other) const = default;
     };
@@ -61,8 +63,10 @@ private:
             hash ^= std::hash<COLORREF>{}(key.textColor) << 1;
             hash ^= std::hash<COLORREF>{}(key.backgroundColor) << 2;
             hash ^= std::hash<UINT>{}(key.format) << 3;
-            hash ^= std::hash<int>{}(key.width) << 4;
-            hash ^= std::hash<int>{}(key.height) << 5;
+            hash ^= std::hash<USHORT>{}(key.width) << 4;
+            hash ^= std::hash<USHORT>{}(key.height) << 5;
+            hash ^= (std::hash<USHORT>{}(key.dpiX)) << 6;
+            hash ^= std::hash<USHORT>{}(key.dpiY) << 7;
             return hash;
         }
     };
@@ -91,9 +95,6 @@ private:
     // Create cached bitmap for the text
     std::unique_ptr<CacheEntry> CreateCachedBitmap(CDC* pDC, const std::wstring& text,
         const CRect& rect, UINT format);
-
-    // Evict oldest entry if cache is full
-    void EvictIfNeeded();
 
     // Move key to front of LRU list
     void TouchEntry(CacheMap::iterator it);

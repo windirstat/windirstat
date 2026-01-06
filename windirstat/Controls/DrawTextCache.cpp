@@ -40,8 +40,14 @@ void DrawTextCache::DrawTextCached(CDC* pDC, const std::wstring& text, CRect& re
     }
 
     // Cache miss - create new cached entry
-    EvictIfNeeded();
-
+    while (m_cache.size() >= MAX_CACHE_SIZE && !m_leastRecentList.empty())
+    {
+        // Remove least recently used (back of list)
+        const CacheKey& keyToRemove = m_leastRecentList.back();
+        m_cache.erase(keyToRemove);
+        m_leastRecentList.pop_back();
+    }
+    
     // Handle rectangle calculation or normal drawing
     auto entry = CreateCachedBitmap(pDC, text, rect, format);
     if (format & DT_CALCRECT) rect = entry->calcRect;
@@ -56,10 +62,14 @@ void DrawTextCache::DrawTextCached(CDC* pDC, const std::wstring& text, CRect& re
 DrawTextCache::CacheKey DrawTextCache::CreateCacheKey(
     CDC* pDC, const std::wstring& text, const CRect& rect, UINT format) const
 {
+    const int dpiX = ::GetDeviceCaps(pDC->m_hDC, LOGPIXELSX);
+    const int dpiY = ::GetDeviceCaps(pDC->m_hDC, LOGPIXELSY);
+
     return CacheKey{
         .text = text, .textColor = pDC->GetTextColor(),
         .backgroundColor = pDC->GetBkColor(), .format = format,
-        .width = rect.Width(), .height = rect.Height() };
+        .width = static_cast<USHORT>(rect.Width()), .height = static_cast<USHORT>(rect.Height()),
+        .dpiX = static_cast<USHORT>(dpiX), .dpiY = static_cast<USHORT>(dpiY)};
 }
 
 std::unique_ptr<DrawTextCache::CacheEntry> DrawTextCache::CreateCachedBitmap(
@@ -113,17 +123,6 @@ std::unique_ptr<DrawTextCache::CacheEntry> DrawTextCache::CreateCachedBitmap(
         &drawRect, format & ~DT_VCENTER);
 
     return entry;
-}
-
-void DrawTextCache::EvictIfNeeded()
-{
-    while (m_cache.size() >= MAX_CACHE_SIZE && !m_leastRecentList.empty())
-    {
-        // Remove least recently used (back of list)
-        const CacheKey& keyToRemove = m_leastRecentList.back();
-        m_cache.erase(keyToRemove);
-        m_leastRecentList.pop_back();
-    }
 }
 
 void DrawTextCache::ClearCache()
