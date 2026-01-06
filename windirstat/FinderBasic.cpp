@@ -253,8 +253,13 @@ DWORD FinderBasic::GetReparseTag() const
 
 bool FinderBasic::DoesFileExist(const std::wstring& folder, const std::wstring& file)
 {
+    const std::filesystem::path p = file.empty()
+        ? std::filesystem::path::path(folder)
+        : std::filesystem::path::path(folder) / file;
+
     // Use this method over GetFileAttributes() as GetFileAttributes() will
     // return valid INVALID_FILE_ATTRIBUTES on locked files
-    FinderBasic finder;
-    return finder.FindFile(folder, file);
+    return FinderBasic().FindFile(
+        p.parent_path().wstring(),
+        p.filename().wstring());
 }
