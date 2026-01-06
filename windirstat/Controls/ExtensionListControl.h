@@ -80,6 +80,7 @@ public:
 protected:
     CListItem* GetListItem(int i) const;
 
+    CBitmap m_searchBitmap;
     CExtensionView* m_extensionView;
     ULONGLONG m_rootSize = 0;
 

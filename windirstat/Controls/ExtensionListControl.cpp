@@ -19,6 +19,7 @@
 #include "ExtensionView.h"
 #include "ExtensionListControl.h"
 #include "FileSearchControl.h"
+#include "SelectObject.h"
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -308,6 +309,15 @@ void CExtensionListControl::OnContextMenu(CWnd* /*pWnd*/, CPoint point)
     {
         menu.AppendMenuW(MF_STRING, ID_EXTLIST_SEARCH_EXTENSION, std::format(
             L"{} - {}", Localization::Lookup(IDS_COL_EXTENSION), Localization::Lookup(IDS_SEARCH_TITLE)).c_str());
+
+        // Add search bitmap to menu
+        if (m_searchBitmap.GetSafeHandle() == NULL)
+        {
+            m_searchBitmap.Attach(LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDB_SEARCH), IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION));
+            DarkMode::LightenBitmap(&m_searchBitmap);
+            menu.SetMenuItemBitmaps(ID_EXTLIST_SEARCH_EXTENSION, MF_BYCOMMAND, &m_searchBitmap, &m_searchBitmap);
+        }
+        
         menu.TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, point.x, point.y, this);
     }
 }
