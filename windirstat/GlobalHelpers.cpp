@@ -140,7 +140,6 @@ std::wstring GetLocaleString(const LCTYPE lctype, const LCID lcid)
 
     std::wstring s(len - 1, L'\0');
     ::GetLocaleInfo(lcid, lctype, s.data(), len);
-
     return s;
 }
 
@@ -236,9 +235,8 @@ std::wstring FormatDouble(double d)
 std::wstring FormatFileTime(const FILETIME& t)
 {
     SYSTEMTIME st;
-    if (FILETIME ft;
-        FileTimeToLocalFileTime(&t, &ft) == 0 ||
-        FileTimeToSystemTime(&ft, &st) == 0)
+    FILETIME ft;
+    if (FileTimeToLocalFileTime(&t, &ft) == 0 || FileTimeToSystemTime(&ft, &st) == 0)
     {
         return {};
     }
@@ -246,10 +244,10 @@ std::wstring FormatFileTime(const FILETIME& t)
     const LCID lcid = COptions::GetLocaleForFormatting();
 
     std::array<WCHAR, 64> date;
-    GetDateFormat(lcid, DATE_SHORTDATE, &st, nullptr, date.data(), static_cast<int>(date.size()));
+    GetDateFormat(lcid, DATE_SHORTDATE, &st, nullptr, date.data(), std::ssize(date));
 
     std::array<WCHAR, 64> time;
-    GetTimeFormat(lcid, TIME_NOSECONDS, &st, nullptr, time.data(), static_cast<int>(time.size()));
+    GetTimeFormat(lcid, TIME_NOSECONDS, &st, nullptr, time.data(), std::ssize(time));
 
     return std::format(L"{}  {}", date.data(), time.data());
 }
@@ -328,14 +326,13 @@ std::wstring FormatVolumeName(const std::wstring& rootPath, const std::wstring& 
 
 std::wstring GetFolderNameFromPath(const std::wstring& path)
 {
-    const auto i = path.find_last_of(wds::chrBackslash);
-    return i == std::wstring::npos ? path : path.substr(0, i);
+    return std::filesystem::path(path).parent_path().wstring();
 }
 
 std::wstring GetCOMSPEC()
 {
     std::array<WCHAR, _MAX_PATH> cmd;
-    if (::GetEnvironmentVariable(L"COMSPEC", cmd.data(), static_cast<DWORD>(cmd.size())) == 0)
+    if (::GetEnvironmentVariable(L"COMSPEC", cmd.data(), std::ssize(cmd)) == 0)
     {
         VTRACE(L"COMSPEC not set.");
         return L"cmd.exe";
@@ -425,7 +422,7 @@ std::wstring MyQueryDosDevice(const std::wstring& drive)
     if (drive.size() < 2 || drive[1] != wds::chrColon) return {};
 
     std::array<WCHAR, 512> info;
-    if (::QueryDosDevice(drive.substr(0, 2).c_str(), info.data(), static_cast<DWORD>(info.size())) == 0)
+    if (::QueryDosDevice(drive.substr(0, 2).c_str(), info.data(), std::ssize(info)) == 0)
     {
         VTRACE(L"QueryDosDevice({}) Failed: {}", drive.substr(0, 2), TranslateError());
         return {};
@@ -700,7 +697,7 @@ std::wstring GetVolumePathNameEx(const std::wstring& path)
 
     // First, try the regular path resolution
     std::array<WCHAR, MAX_PATH> volume;
-    if (GetVolumePathName(path.c_str(), volume.data(), static_cast<DWORD>(volume.size())) != 0)
+    if (GetVolumePathName(path.c_str(), volume.data(), std::ssize(volume)) != 0)
         return volume.data();
 
     // Establish a fallback volume as drive letter or server name
@@ -752,8 +749,7 @@ void DisableHibernate()
 
     // Delete file in the event that the above call does not actually delete the file as
     // designed or hibernate was previously disabled in a way that did not delete the file
-    WCHAR drive[3];
-    if (GetEnvironmentVariable(L"SystemDrive", drive, std::size(drive)) == std::size(drive) - 1)
+    if (WCHAR drive[3]; GetEnvironmentVariable(L"SystemDrive", drive, std::size(drive)) == std::size(drive) - 1)
     {
         DeleteFile((drive + std::wstring(L"\\hiberfil.sys")).c_str());
     }
@@ -770,17 +766,17 @@ bool ShellExecuteWrapper(const std::wstring& lpFile, const std::wstring& lpParam
     const HWND hwnd, const std::wstring& lpDirectory, const INT nShowCmd)
 {
     CWaitCursor wc;
-
-    SHELLEXECUTEINFO sei;
-    ZeroMemory(&sei, sizeof(SHELLEXECUTEINFO));
-    sei.cbSize = sizeof(SHELLEXECUTEINFO);
-    sei.fMask = 0;
-    sei.hwnd = hwnd;
-    sei.lpParameters = lpParameters.empty() ? nullptr : lpParameters.c_str();
-    sei.lpVerb = lpVerb.empty() ? nullptr : lpVerb.c_str();
-    sei.lpFile = lpFile.empty() ? nullptr : lpFile.c_str();
-    sei.lpDirectory = lpDirectory.empty() ? nullptr : lpDirectory.c_str();
-    sei.nShow = nShowCmd;
+    
+    SHELLEXECUTEINFO sei = {
+        .cbSize = sizeof(SHELLEXECUTEINFO),
+        .fMask = 0,
+        .hwnd = hwnd,
+        .lpVerb = lpVerb.empty() ? nullptr : lpVerb.c_str(),
+        .lpFile = lpFile.empty() ? nullptr : lpFile.c_str(),
+        .lpParameters = lpParameters.empty() ? nullptr : lpParameters.c_str(),
+        .lpDirectory = lpDirectory.empty() ? nullptr : lpDirectory.c_str(),
+        .nShow = nShowCmd
+    };
 
     const BOOL bResult = ::ShellExecuteEx(&sei);
     if (!bResult && GetLastError() != ERROR_CANCELLED)
@@ -793,8 +789,7 @@ bool ShellExecuteWrapper(const std::wstring& lpFile, const std::wstring& lpParam
 
 std::wstring GetBaseNameFromPath(const std::wstring& path)
 {
-    const auto i = path.find_last_of(wds::chrBackslash);
-    return i == std::wstring::npos ? path : path.substr(i + 1);
+    return std::filesystem::path(path).filename().wstring();
 }
 
 std::wstring GetAppFileName(const std::wstring& ext)
@@ -806,7 +801,7 @@ std::wstring GetAppFileName(const std::wstring& ext)
     // optional substitute extension
     if (!ext.empty())
     {
-        s = s.substr(0, s.find_last_of(wds::chrDot) + 1) + ext;
+        return std::filesystem::path(s).replace_extension(ext);
     }
 
     return s;
@@ -814,8 +809,7 @@ std::wstring GetAppFileName(const std::wstring& ext)
 
 std::wstring GetAppFolder()
 {
-    const std::wstring folder = GetAppFileName();
-    return folder.substr(0, folder.find_last_of(wds::chrBackslash));
+    return std::filesystem::path(GetAppFileName()).parent_path().wstring();
 }
 
 static constexpr DWORD SidGetLength(const PSID x)
@@ -991,7 +985,7 @@ bool CompressFileAllowed(const std::wstring& filePath, const CompressionAlgorith
     std::array<WCHAR, MAX_PATH + 1> fileSystemName;
     DWORD fileSystemFlags = 0;
     const bool isNTFS = GetVolumeInformation(volumeName.c_str(), nullptr, 0, nullptr, nullptr,
-        &fileSystemFlags, fileSystemName.data(), static_cast<DWORD>(fileSystemName.size())) != 0 &&
+        &fileSystemFlags, fileSystemName.data(), std::ssize(fileSystemName)) != 0 &&
         std::wstring(fileSystemName.data()) == L"NTFS";
 
     // Query volume for modern compression support based on NTFS and OS version
@@ -1017,8 +1011,8 @@ std::wstring ComputeFileHashes(const std::wstring& filePath)
         DWORD objectLen = 0;
         std::vector<BYTE> hashObject;
         std::vector<BYTE> hash;
-        SmartPointer<BCRYPT_ALG_HANDLE> hAlg = { nullptr, nullptr };  // Move to end
-        SmartPointer<BCRYPT_HASH_HANDLE> hHash = { nullptr, nullptr }; // B
+        SmartPointer<BCRYPT_ALG_HANDLE> hAlg = { nullptr, nullptr };
+        SmartPointer<BCRYPT_HASH_HANDLE> hHash = { nullptr, nullptr };
     };
 
     // Define algorithms to compute
@@ -1033,11 +1027,11 @@ std::wstring ComputeFileHashes(const std::wstring& filePath)
 
     // Setup all algorithms
     std::vector<HashContext> contexts;
-    for (const auto& algo : algos)
+    for (const auto& [id, name, hashLen] : algos)
     {
         HashContext ctx;
         BCRYPT_ALG_HANDLE hAlg = nullptr;
-        if (BCryptOpenAlgorithmProvider(&hAlg, algo.id, nullptr, 0) != 0) continue;
+        if (BCryptOpenAlgorithmProvider(&hAlg, id, nullptr, 0) != 0) continue;
         ctx.hAlg = SmartPointer<BCRYPT_ALG_HANDLE>(
             [](const BCRYPT_ALG_HANDLE h) { BCryptCloseAlgorithmProvider(h, 0); }, hAlg);
 
@@ -1047,9 +1041,9 @@ std::wstring ComputeFileHashes(const std::wstring& filePath)
             continue;
         }
 
-        ctx.name = algo.name;
+        ctx.name = name;
         ctx.hashObject.resize(ctx.objectLen);
-        ctx.hash.resize(algo.hashLen);
+        ctx.hash.resize(hashLen);
 
         BCRYPT_HASH_HANDLE hHash = nullptr;
         if (BCryptCreateHash(ctx.hAlg, &hHash, ctx.hashObject.data(),
