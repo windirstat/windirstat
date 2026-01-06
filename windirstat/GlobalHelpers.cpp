@@ -642,7 +642,7 @@ std::wstring GlobToRegex(const std::wstring& glob, const bool useAnchors)
 {
     // Static regex patterns - compiled once instead of every call
     static const std::wregex escapePattern(LR"([.\\+^$|()[\]{}])", std::regex_constants::optimize);
-    static const std::wregex starPattern(LR"(\*)", std::regex_constants::optimize);
+    static const std::wregex starPattern(LR"(\*+)", std::regex_constants::optimize);
     static const std::wregex questionPattern(LR"(\?)", std::regex_constants::optimize);
 
     std::wstring regex = glob;
@@ -650,7 +650,7 @@ std::wstring GlobToRegex(const std::wstring& glob, const bool useAnchors)
     // Replace escape sequences for '\' in the glob
     regex = std::regex_replace(regex, escapePattern, LR"(\$&)");
 
-    // Replace '*' (match any sequence of characters)
+    // Replace one or more '*' (match any sequence of characters)
     regex = std::regex_replace(regex, starPattern, LR"([^\\/:]*)");
 
     // Replace '?' (match any single character)
