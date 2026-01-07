@@ -468,18 +468,18 @@ void CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, const bo
         }
 
         // Display the file deletion warning dialog
-        CMessageBoxDlg warning(
-            Localization::Lookup(emptyOnly ? IDS_EMPTY_FOLDER_WARNING : IDS_DELETE_WARNING),
-            Localization::Lookup(IDS_DELETE_TITLE),
-            MB_YESNO | MB_ICONWARNING, AfxGetMainWnd(), filePaths,
-            Localization::Lookup(IDS_DONT_SHOW_AGAIN), false);
+        [&] {
+            const auto result = CMessageBoxDlg::Show(
+                Localization::Lookup(emptyOnly ? IDS_EMPTY_FOLDER_WARNING : IDS_DELETE_WARNING), filePaths,
+                Localization::Lookup(IDS_DONT_SHOW_AGAIN), false, MB_YESNO | MB_ICONWARNING, AfxGetMainWnd(), { 600, 400 },
+                Localization::Lookup(IDS_DELETE_TITLE)
+            );
 
-        // Change default width and display
-        warning.SetInitialWindowSize({ 600, 400 });
-        if (IDYES != warning.DoModal()) return;
-
-        // Save off the deletion warning preference
-        COptions::ShowDeleteWarning = !warning.IsCheckboxChecked();
+            if (result.nID == IDYES)
+            {
+                COptions::ShowDeleteWarning = !result.isChecked;
+            }
+        }();
     }
 
     // Build list of items to delete
@@ -1567,14 +1567,12 @@ void CDirStatDoc::OnComputeHash()
     std::wstring hashResult;
     const auto& items = GetAllSelected();
     CProgressDlg(0, false, AfxGetMainWnd(), [&](CProgressDlg*)
-    {
-        hashResult = ComputeFileHashes(items.front()->GetPath());
-    }).DoModal();
+        {
+            hashResult = ComputeFileHashes(items.front()->GetPath());
+        }).DoModal();
 
     // Display result in message box
-    CMessageBoxDlg dlg(hashResult, Localization::LookupNeutral(AFX_IDS_APP_TITLE), MB_OK | MB_ICONINFORMATION);
-    dlg.SetInitialWindowSize(CSize(1110, 200));
-    dlg.DoModal();
+    CMessageBoxDlg::Show(hashResult, MB_OK | MB_ICONINFORMATION, nullptr, { 1110, 200 });
 }
 
 CompressionAlgorithm CDirStatDoc::CompressionIdToAlg(const UINT id)
