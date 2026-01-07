@@ -83,11 +83,10 @@ void CFileSearchControl::ProcessSearch(CItem* item)
 
         // Do search
         std::stack<CItem*> queue({ item });
-        size_t current = 0;
         while (!queue.empty() && !pdlg->IsCancelled())
         {
             // Grab item from queue
-            pdlg->SetCurrent(++current);
+            pdlg->Increment();
             CItem* qitem = queue.top();
             queue.pop();
 
@@ -103,7 +102,7 @@ void CFileSearchControl::ProcessSearch(CItem* item)
             {
                 queue.push(child);
             }
-        }        
+        }
     }).DoModal();
 
     // Add found items to the interface

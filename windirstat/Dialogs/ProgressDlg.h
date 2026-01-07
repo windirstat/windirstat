@@ -32,13 +32,14 @@ public:
     ~CProgressDlg() override = default;
 
     INT_PTR DoModal() override;
-    bool WasCancelled() const { return m_cancelled; }
+    bool WasCancelled() const noexcept { return m_cancelled; }
 
     // Methods for task lambda to interact with the dialog
-    bool IsCancelled() const { return m_cancelRequested.load(); }
-    void SetCurrent(size_t current) { m_current.store(current); }
-    size_t GetCurrent() const { return m_current.load(); }
-    size_t GetTotal() const { return m_total; }
+    bool IsCancelled() const noexcept { return m_cancelRequested.load(); }
+    void SetCurrent(size_t current) noexcept { m_current.store(current); }
+    size_t GetCurrent() const noexcept { return m_current.load(); }
+    size_t Increment() noexcept { return ++m_current; }
+    size_t GetTotal() const noexcept { return m_total; }
 
 protected:
     enum : std::uint8_t { IDD = IDD_PROGRESS };
@@ -52,7 +53,6 @@ protected:
     afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 
 private:
-    void UpdateProgress();
     void StartWorkerThread();
 
     std::wstring m_message;
@@ -70,5 +70,5 @@ private:
 
     std::optional<std::jthread> m_workerThread;
     static constexpr UINT_PTR TIMER_ID = 1;
-    static constexpr UINT TIMER_INTERVAL = 100; // Update every 100ms
+    static constexpr UINT TIMER_INTERVAL = 50; // Update every 100ms
 };

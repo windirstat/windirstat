@@ -60,9 +60,6 @@ BOOL CProgressDlg::OnInitDialog()
     // Configure progress bar
     if (m_total > 0)
     {
-        m_progressCtrl.SetRange(0, 100);
-        m_progressCtrl.SetPos(0);
-
         // Start timer for progress updates
         SetTimer(TIMER_ID, TIMER_INTERVAL, nullptr);
     }
@@ -88,6 +85,9 @@ void CProgressDlg::StartWorkerThread()
         // Execute the task, passing the dialog pointer
         m_task(this);
 
+        // Attempt to have timer fire one last time to update progress
+        SendMessage(WM_TIMER, TIMER_ID);
+
         // Post message to close dialog when complete
         if (!m_cancelRequested)
         {
@@ -96,22 +96,17 @@ void CProgressDlg::StartWorkerThread()
     });
 }
 
-void CProgressDlg::UpdateProgress()
-{
-    const int percent = static_cast<int>((m_current.load() * 100) / m_total);
-    m_progressCtrl.SetPos(percent);
-
-    // Update message with progress
-    const std::wstring progressText = std::format(L"{}: {} / {}",
-        m_message, m_current.load(), m_total);
-    m_messageCtrl.SetWindowText(progressText.c_str());
-}
-
 void CProgressDlg::OnTimer(UINT_PTR nIDEvent)
 {
     if (nIDEvent == TIMER_ID)
     {
-        UpdateProgress();
+        // Update progress bar position
+        m_progressCtrl.SetPos(static_cast<int>((m_current.load() * 100) / m_total));
+
+        // Update message with progress
+        const std::wstring progressText = std::format(L"{}: {} / {}",
+            m_message, m_current.load(), m_total);
+        m_messageCtrl.SetWindowText(progressText.c_str());
     }
     CDialogEx::OnTimer(nIDEvent);
 }
