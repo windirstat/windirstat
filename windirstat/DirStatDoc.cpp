@@ -152,7 +152,7 @@ BOOL CDirStatDoc::OnOpenDocument(LPCWSTR lpszPathName)
 
         const LPCWSTR name = ppszName != nullptr ? const_cast<LPCWSTR>(*ppszName) : L"This PC";
         m_rootItem = new CItem(IT_MYCOMPUTER | ITF_ROOTITEM, name);
-        for (const auto & rootFolder : selections)
+        for (const auto& rootFolder : selections)
         {
             const auto drive = new CItem(IT_DRIVE, rootFolder);
             m_rootItem->AddChild(drive);
@@ -174,7 +174,7 @@ BOOL CDirStatDoc::OnOpenDocument(LPCWSTR lpszPathName)
     return true;
 }
 
-BOOL CDirStatDoc::OnOpenDocument(CItem * newroot)
+BOOL CDirStatDoc::OnOpenDocument(CItem* newroot)
 {
     CMainFrame::Get()->MinimizeTreeMapView();
     CMainFrame::Get()->MinimizeExtensionView();
@@ -189,6 +189,10 @@ BOOL CDirStatDoc::OnOpenDocument(CItem * newroot)
         std::ranges::transform(newroot->GetChildren(), std::back_inserter(folders),
             [](const CItem* obj) -> std::wstring { return obj->GetName().substr(0, 2); });
         spec = EncodeSelection(folders);
+    }
+    else if (newroot->IsTypeOrFlag(IT_DRIVE))
+    {
+        spec = newroot->GetName().substr(0, 2);
     }
 
     Get()->SetPathName(spec.c_str(), FALSE);

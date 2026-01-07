@@ -231,6 +231,7 @@ CString AFXGetRegPath(LPCTSTR lpszPostFix, LPCTSTR)
 public:
 
     std::wstring m_saveToCsvPath;
+    std::wstring m_loadFromCsvPath;
 
     void ParseParam(const WCHAR* pszParam, BOOL bFlag, BOOL bLast) override
     {
@@ -258,6 +259,14 @@ public:
             // Path after colon should be the csv path
             m_saveToCsvPath = param.substr(saveToCsvFlag.size());
             m_saveToCsvPath = TrimString(m_saveToCsvPath, wds::chrDoubleQuote);
+        }
+
+        const std::wstring loadFromCsvFlag = L"loadfromcsv:";
+        if (param.starts_with(loadFromCsvFlag))
+        {
+            // Path after colon should be the csv path to load
+            m_loadFromCsvPath = param.substr(loadFromCsvFlag.size());
+            m_loadFromCsvPath = TrimString(m_loadFromCsvPath, wds::chrDoubleQuote);
         }
 
         const std::wstring legacyUninstallFlag = L"legacyuninstall";
@@ -374,6 +383,16 @@ BOOL CDirStatApp::InitInstance()
         {
             COptions::AutoElevate = false;
         }
+    }
+
+    // Load from CSV if specified via command line
+    if (!cmdInfo.m_loadFromCsvPath.empty())
+    {
+        if (CItem* newroot = LoadResults(cmdInfo.m_loadFromCsvPath); newroot != nullptr)
+        {
+            CDirStatDoc::Get()->OnOpenDocument(newroot);
+        }
+        return TRUE;
     }
 
     // Either open the file names or open file selection dialog
