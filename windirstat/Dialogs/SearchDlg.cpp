@@ -102,6 +102,13 @@ void SearchDlg::OnChangeSearchTerm()
 {
     UpdateData();
 
+    // Auto-enable whole phrase search if * is present and not in regex mode
+    if (!m_searchRegex && m_searchTerm.Find(L'*') != -1)
+    {
+        m_searchWholePhrase = TRUE;
+        UpdateData(FALSE);
+    }
+
     const auto regexTest = CFileSearchControl::ComputeSearchRegex(
         m_searchTerm.GetString(), m_searchCase, m_searchRegex);
     GetDlgItem(IDOK)->EnableWindow(regexTest.flags() & std::regex_constants::optimize);
