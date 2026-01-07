@@ -490,7 +490,7 @@ void CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, const bo
     size_t totalItems = 0;
     for (const auto& item : itemsToDelete)
     {
-        totalItems += 1 + item->GetItemsCount();
+        totalItems += static_cast<size_t>(1 + item->GetItemsCount());
     }
 
     bool cancelled = false;
