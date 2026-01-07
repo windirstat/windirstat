@@ -289,7 +289,9 @@ void CTreeListControl::SysColorChanged()
 
 CTreeListItem* CTreeListControl::GetItem(const int i) const
 {
-    if (i >= GetItemCount()) return nullptr;
+    bool doMaxCheck = false;
+    DEBUG_ONLY(doMaxCheck = true);
+    if (doMaxCheck && i >= GetItemCount()) return nullptr;
     return reinterpret_cast<CTreeListItem*>(GetItemData(i));
 }
 
@@ -655,7 +657,6 @@ void CTreeListControl::ExpandItem(const int i, const bool scroll)
     }
 
     CWaitCursor wc;
-
     SetRedraw(FALSE);
     LockWindowUpdate();
     int maxwidth = GetSubItemWidth(item, 0);
@@ -673,7 +674,6 @@ void CTreeListControl::ExpandItem(const int i, const bool scroll)
             maxwidth = max(maxwidth, GetSubItemWidth(child, 0));
         }
     }
-    if (childItems > 0) SortItems();
     UnlockWindowUpdate();
     SetRedraw(TRUE);
 
@@ -696,6 +696,9 @@ void CTreeListControl::ExpandItem(const int i, const bool scroll)
         }
         EnsureVisible(i, false);
     }
+
+    // Sort at end so we do not invalidate position data
+    if (childItems > 0) SortItems();
 }
 
 void CTreeListControl::OnKeyDown(const UINT nChar, const UINT nRepCnt, const UINT nFlags)
@@ -782,9 +785,16 @@ void CTreeListControl::OnChildAdded(const CTreeListItem* parent, CTreeListItem* 
         return;
     }
 
-    const int p = FindTreeItem(parent);
-    ASSERT(p != -1);
-    InsertItem(p + 1, child);
+    // Search backwards to find where this parent's children end (last direct child).
+    const int nextPos = FindTreeItem(parent) + 1;
+    int insertPos = nextPos + parent->GetTreeListChildCount();
+    for (; insertPos > nextPos; --insertPos)
+    {
+        if (const auto* item = GetItem(insertPos - 1);
+            item != nullptr && item->GetParent() == parent) break;
+    }
+
+    InsertItem(insertPos, child);
 }
 
 void CTreeListControl::OnChildRemoved(const CTreeListItem* parent, CTreeListItem* child)

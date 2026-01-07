@@ -404,7 +404,9 @@ BOOL CDirStatApp::InitInstance()
 
 BOOL CDirStatApp::IsIdleMessage(MSG* pMsg)
 {
-    if (pMsg->message == WM_TIMER) return FALSE;
+    // Treat WM_TIMER as an idle message to prevent excessive OnIdle calls
+    // The timer is used for UI updates and should not trigger idle processing
+    if (pMsg->message == WM_TIMER) return TRUE;
     return CWinApp::IsIdleMessage(pMsg);
 }
 
