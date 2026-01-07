@@ -47,6 +47,7 @@ Setting<bool> COptions::ScanForDuplicates(OptionsDupeTree, L"ScanForDuplicates",
 Setting<bool> COptions::SearchWholePhrase(OptionsSearch, L"SearchWholePhrase", false);
 Setting<bool> COptions::SearchRegex(OptionsSearch, L"SearchRegex", false);
 Setting<bool> COptions::SearchCase(OptionsSearch, L"SearchCase", false);
+Setting<int> COptions::SearchMaxResults(OptionsSearch, L"SearchMaxResults", 10000, 1, 1000000);
 Setting<bool> COptions::ShowColumnAttributes(OptionsFileTree, L"ShowColumnAttributes", false);
 Setting<bool> COptions::ShowColumnFiles(OptionsFileTree, L"ShowColumnFiles", true);
 Setting<bool> COptions::ShowColumnFolders(OptionsFileTree, L"ShowColumnFolders", false);

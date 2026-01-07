@@ -27,9 +27,7 @@ CFileSearchControl::CFileSearchControl() : CTreeListControl(COptions::SearchView
 
 bool CFileSearchControl::GetAscendingDefault(const int column)
 {
-    return column == COL_ITEMSEARCH_SIZE_PHYSICAL ||
-        column == COL_ITEMSEARCH_SIZE_LOGICAL ||
-        column == COL_ITEMSEARCH_LAST_CHANGE;
+    return column == COL_ITEMDUP_NAME || column == COL_ITEMDUP_LAST_CHANGE;
 }
 
 BEGIN_MESSAGE_MAP(CFileSearchControl, CTreeListControl)
@@ -60,17 +58,19 @@ std::wregex CFileSearchControl::ComputeSearchRegex(const std::wstring & searchTe
     }
 }
 
-void CFileSearchControl::ProcessSearch(CItem* item)
+void CFileSearchControl::ProcessSearch(CItem* item, const bool onlyFiles)
 {
     // Update tab visibility to show search tab if results exist
     CMainFrame::Get()->GetFileTabbedView()->SetSearchTabVisibility(true);
 
     // Process search request using progress dialog
+    std::vector<CItem*> matchedItems;
     CProgressDlg(static_cast<size_t>(item->GetItemsCount()), false, AfxGetMainWnd(),
         [&](CProgressDlg* pdlg)
     {
         // Remove previous results
         SetRootItem();
+        m_rootItem->SetLimitExceeded(false);
 
         // Precompile regex string
         const auto searchRegex = ComputeSearchRegex(COptions::SearchTerm,
@@ -80,7 +80,7 @@ void CFileSearchControl::ProcessSearch(CItem* item)
         const std::function searchFunc = COptions::SearchWholePhrase ?
             [](const std::wstring& str, const std::wregex& regex) { return std::regex_match(str, regex); } :
             [](const std::wstring& str, const std::wregex& regex) { return std::regex_search(str, regex); };
-
+  
         // Do search
         std::stack<CItem*> queue({ item });
         while (!queue.empty() && !pdlg->IsCancelled())
@@ -91,9 +91,10 @@ void CFileSearchControl::ProcessSearch(CItem* item)
             queue.pop();
 
             // Check for match
-            if (searchFunc(qitem->GetName(), searchRegex))
+            if ((!onlyFiles || qitem->IsTypeOrFlag(IT_FILE)) &&
+                searchFunc(qitem->GetName(), searchRegex))
             {
-                m_itemTracker.emplace(qitem, new CItemSearch(qitem));
+                matchedItems.push_back(qitem);
             }
 
             // Descend into child items
@@ -103,18 +104,36 @@ void CFileSearchControl::ProcessSearch(CItem* item)
                 queue.push(child);
             }
         }
+
+        // Sort by physical size (largest first) and take top N results
+        const size_t maxResults = COptions::SearchMaxResults;
+        if (matchedItems.size() > maxResults)
+        {
+            // Partial sort to get the top N largest items by physical size
+            std::partial_sort(matchedItems.begin(), matchedItems.begin() + maxResults,
+                matchedItems.end(), [](CItem* a, CItem* b) { return a->GetSizeLogical() > b->GetSizeLogical(); });
+            
+            // Keep only the top N results
+            matchedItems.resize(maxResults);
+            m_rootItem->SetLimitExceeded(true);
+        }
     }).DoModal();
 
     // Add found items to the interface
     CWaitCursor wait;
     CollapseItem(0);
     SetRedraw(FALSE);
-    for (const auto& [_, searchItem] : m_itemTracker)
+
+    // Add to found items
+    m_itemTracker.reserve(matchedItems.size());
+    for (CItem* matchedItem : matchedItems)
     {
+        auto searchItem = new CItemSearch(matchedItem);
+        m_itemTracker.emplace(matchedItem, searchItem);
         m_rootItem->AddSearchItemChild(searchItem);
     }
-    SetRedraw(TRUE);
 
+    SetRedraw(TRUE);
     SortItems();
     ExpandItem(0);
 }

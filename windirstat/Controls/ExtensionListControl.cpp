@@ -305,37 +305,39 @@ void CExtensionListControl::OnKeyDown(const UINT nChar, const UINT nRepCnt, cons
 
 void CExtensionListControl::OnContextMenu(CWnd* /*pWnd*/, CPoint point)
 {
-    if (CMenu menu; !GetSelectedExtension().empty() && menu.CreatePopupMenu())
-    {
-        menu.AppendMenuW(MF_STRING, ID_EXTLIST_SEARCH_EXTENSION, std::format(
-            L"{} - {}", Localization::Lookup(IDS_COL_EXTENSION), Localization::Lookup(IDS_SEARCH_TITLE)).c_str());
+    CMenu menu;
+    menu.CreatePopupMenu();
+    menu.AppendMenuW(MF_STRING, ID_EXTLIST_SEARCH_EXTENSION, std::format(
+        L"{} - {}", Localization::Lookup(IDS_COL_EXTENSION), Localization::Lookup(IDS_SEARCH_TITLE)).c_str());
 
-        // Add search bitmap to menu
-        if (m_searchBitmap.GetSafeHandle() == NULL)
-        {
-            m_searchBitmap.Attach(LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDB_SEARCH), IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION));
-            DarkMode::LightenBitmap(&m_searchBitmap);
-            menu.SetMenuItemBitmaps(ID_EXTLIST_SEARCH_EXTENSION, MF_BYCOMMAND, &m_searchBitmap, &m_searchBitmap);
-        }
-        
-        menu.TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, point.x, point.y, this);
+    // Add search bitmap to menu
+    if (m_searchBitmap.GetSafeHandle() == NULL)
+    {
+        m_searchBitmap.Attach(LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDB_SEARCH), IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION));
+        DarkMode::LightenBitmap(&m_searchBitmap);
     }
+
+    menu.SetMenuItemBitmaps(ID_EXTLIST_SEARCH_EXTENSION, MF_BYCOMMAND, &m_searchBitmap, &m_searchBitmap);
+    menu.TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, point.x, point.y, this);
 }
 
 void CExtensionListControl::OnSearchExtension()
 {
     // Save off current search settings
-    const std::wstring previousTerm = COptions::SearchTerm;
     const bool previousRegex = COptions::SearchRegex;
+    const std::wstring previousTerm = COptions::SearchTerm;
 
-    // Escape search terms and do search
-    COptions::SearchTerm = GlobToRegex(GetSelectedExtension(), false) + L"$";
+    // Temporarily set search settings to search for the selected extension
     COptions::SearchRegex = true;
-    CFileSearchControl::Get()->ProcessSearch(CDirStatDoc::Get()->GetRootItem());
+    COptions::SearchTerm = GetSelectedExtension().empty() ? std::wstring(LR"(^[^\.]+$)") :
+        (GlobToRegex(GetSelectedExtension(), false) + L"$");
+
+    // Do the search
+    CFileSearchControl::Get()->ProcessSearch(CDirStatDoc::Get()->GetRootItem(), true);
 
     // Restore current search settings
-    COptions::SearchTerm =  previousTerm;
     COptions::SearchRegex = previousRegex;
+    COptions::SearchTerm =  previousTerm;
 
     CMainFrame::Get()->GetFileTabbedView()->SetActiveSearchView();
 }

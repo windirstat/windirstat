@@ -33,6 +33,7 @@ class CItemSearch final : public CTreeListItem
     std::shared_mutex m_protect;
     std::vector<CItemSearch*> m_children;
     CItem* m_item = nullptr;
+    bool m_limitExceeded = false;
 
 public:
     CItemSearch(const CItemSearch&) = delete;
@@ -57,4 +58,6 @@ public:
 
     void AddSearchItemChild(CItemSearch* child);
     void RemoveSearchItemChild(CItemSearch* child);
+    void SetLimitExceeded(bool exceeded) { m_limitExceeded = exceeded; }
+    bool GetLimitExceeded() const { return m_limitExceeded; }
 };

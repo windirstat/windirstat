@@ -73,7 +73,7 @@ int CFileSearchView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
     m_control.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_SIZE_PHYSICAL).c_str(), LVCFMT_RIGHT, 90, COL_ITEMSEARCH_SIZE_PHYSICAL);
     m_control.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_SIZE_LOGICAL).c_str(), LVCFMT_RIGHT, 90, COL_ITEMSEARCH_SIZE_LOGICAL);
     m_control.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_LAST_CHANGE).c_str(), LVCFMT_LEFT, 120, COL_ITEMSEARCH_LAST_CHANGE);
-    m_control.SetSorting(COL_ITEMSEARCH_SIZE_PHYSICAL, false);
+    m_control.SetSorting(COL_ITEMSEARCH_SIZE_LOGICAL, false);
 
     m_control.OnColumnsInserted();
 

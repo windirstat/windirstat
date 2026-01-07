@@ -47,9 +47,15 @@ bool CItemSearch::DrawSubItem(const int subitem, CDC* pdc, const CRect rc, const
 std::wstring CItemSearch::GetText(const int subitem) const
 {
     // Root node
-    static std::wstring tops = Localization::Lookup(IDS_SEARCH_RESULTS);
-    if (GetParent() == nullptr) return subitem == COL_ITEMSEARCH_NAME ?
-        std::format(L"{} ({})", tops, m_children.size()) : std::wstring{};
+    if (GetParent() == nullptr)
+    {
+        if (subitem != COL_ITEMSEARCH_NAME) return {};
+
+        // Format as "Search Results (1234+)"
+        static const std::wstring tops = Localization::Lookup(IDS_SEARCH_RESULTS);
+        return std::format(L"{} ({}{})", tops,
+            FormatCount(m_children.size()), m_limitExceeded ? L"+" : L"");
+    }
 
     // Parent hash nodes
     if (m_item == nullptr) return {};

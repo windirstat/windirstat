@@ -105,7 +105,7 @@ void CProgressDlg::OnTimer(UINT_PTR nIDEvent)
 
         // Update message with progress
         const std::wstring progressText = std::format(L"{}: {} / {}",
-            m_message, m_current.load(), m_total);
+            m_message, FormatCount(m_current.load()), FormatCount(m_total));
         m_messageCtrl.SetWindowText(progressText.c_str());
     }
     CDialogEx::OnTimer(nIDEvent);

@@ -26,7 +26,7 @@ CFileTopControl::CFileTopControl() : CTreeListControl(COptions::TopViewColumnOrd
 
 bool CFileTopControl::GetAscendingDefault(const int column)
 {
-    return column == COL_ITEMTOP_NAME;
+    return column == COL_ITEMTOP_NAME || column == COL_ITEMTOP_LAST_CHANGE;
 }
 
 BEGIN_MESSAGE_MAP(CFileTopControl, CTreeListControl)

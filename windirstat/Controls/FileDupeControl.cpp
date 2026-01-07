@@ -27,7 +27,7 @@ CFileDupeControl::CFileDupeControl() : CTreeListControl(COptions::DupeViewColumn
 
 bool CFileDupeControl::GetAscendingDefault(const int column)
 {
-    return column == COL_ITEMDUP_NAME;
+    return column == COL_ITEMDUP_NAME || column == COL_ITEMDUP_LAST_CHANGE;
 }
 
 BEGIN_MESSAGE_MAP(CFileDupeControl, CTreeListControl)
