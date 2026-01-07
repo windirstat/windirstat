@@ -231,6 +231,7 @@ CString AFXGetRegPath(LPCTSTR lpszPostFix, LPCTSTR)
 public:
 
     std::wstring m_saveToCsvPath;
+    std::wstring m_saveDupesToCsvPath;
     std::wstring m_loadFromCsvPath;
 
     void ParseParam(const WCHAR* pszParam, BOOL bFlag, BOOL bLast) override
@@ -259,6 +260,15 @@ public:
             // Path after colon should be the csv path
             m_saveToCsvPath = param.substr(saveToCsvFlag.size());
             m_saveToCsvPath = TrimString(m_saveToCsvPath, wds::chrDoubleQuote);
+        }
+
+        const std::wstring saveDupesToCsvFlag = L"savedupestocsv:";
+        if (param.starts_with(saveDupesToCsvFlag))
+        {
+            // Path after colon should be the duplicate csv path
+            COptions::ScanForDuplicates = true;
+            m_saveDupesToCsvPath = param.substr(saveDupesToCsvFlag.size());
+            m_saveDupesToCsvPath = TrimString(m_saveDupesToCsvPath, wds::chrDoubleQuote);
         }
 
         const std::wstring loadFromCsvFlag = L"loadfromcsv:";
@@ -342,9 +352,11 @@ BOOL CDirStatApp::InitInstance()
     m_pMainWnd->SetForegroundWindow();
 
     // Store csv path and hide window if specified
-    if (!cmdInfo.m_saveToCsvPath.empty())
+    if (!cmdInfo.m_saveToCsvPath.empty() ||
+        !cmdInfo.m_saveDupesToCsvPath.empty())
     {
         m_saveToCsvPath = cmdInfo.m_saveToCsvPath;
+        m_saveDupesToCsvPath = cmdInfo.m_saveDupesToCsvPath;
         m_pMainWnd->ShowWindow(SW_HIDE);
     }
 
@@ -365,7 +377,8 @@ BOOL CDirStatApp::InitInstance()
     }
 
     // Allow user to elevate if desired
-    if (IsElevationAvailable() && COptions::ShowElevationPrompt && m_saveToCsvPath.empty())
+    if (IsElevationAvailable() && COptions::ShowElevationPrompt &&
+        m_saveToCsvPath.empty() && m_saveDupesToCsvPath.empty())
     {
         CMessageBoxDlg elevationPrompt(Localization::Lookup(IDS_ELEVATION_QUESTION),
             Localization::LookupNeutral(AFX_IDS_APP_TITLE), MB_YESNO | MB_ICONQUESTION, m_pMainWnd, {},

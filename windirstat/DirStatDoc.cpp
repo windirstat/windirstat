@@ -1953,8 +1953,20 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
             auto* doc = CDirStatDoc::Get();
             if (doc == nullptr || !doc->HasRootItem()) ExitProcess(1);
 
-            // Exit the application with appropriate code
+            // Run scan and exit with success == 0 or failure == 1
             ExitProcess(SaveResults(csvPath, doc->GetRootItem()) ? 0 : 1);
+        }
+
+        // Handle quiet save duplicates mode if path is set
+        if (const auto dupeCsvPath = CDirStatApp::Get()->GetSaveDupesToCsvPath(); !dupeCsvPath.empty())
+        {
+            // Get the duplicate root item
+            CFileDupeControl::Get()->SortItems();
+            auto* dupeRoot = CFileDupeControl::Get()->GetRootItem();
+            if (dupeRoot == nullptr) ExitProcess(1);
+
+            // Run scan and exit with success == 0 or failure == 1
+            ExitProcess(SaveDuplicates(dupeCsvPath, dupeRoot) ? 0 : 1);
         }
 
         // Invoke a UI thread to do updates

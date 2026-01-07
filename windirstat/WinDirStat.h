@@ -57,6 +57,7 @@ public:
     static std::tuple<ULONGLONG, ULONGLONG> GetFreeDiskSpace(const std::wstring& pszRootPath);
     static CDirStatApp* Get() { return &s_singleton; }
     std::wstring GetSaveToCsvPath() const { return m_saveToCsvPath; }
+    std::wstring GetSaveDupesToCsvPath() const { return m_saveDupesToCsvPath; }
 
 protected:
 
@@ -69,6 +70,7 @@ protected:
     COLORREF m_altColor;              // Coloring of compressed items
     COLORREF m_altEncryptionColor;    // Coloring of encrypted items
     std::wstring m_saveToCsvPath;     // Path to save csv file to
+    std::wstring m_saveDupesToCsvPath; // Path to save duplicates csv file to
     static CDirStatApp s_singleton;    // Singleton application instance
 #ifdef _DEBUG
     CWDSTracerConsole m_vtraceConsole;
