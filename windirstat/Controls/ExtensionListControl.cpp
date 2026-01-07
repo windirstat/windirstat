@@ -330,7 +330,7 @@ void CExtensionListControl::OnSearchExtension()
     // Temporarily set search settings to search for the selected extension
     COptions::SearchRegex = true;
     COptions::SearchTerm = GetSelectedExtension().empty() ? std::wstring(LR"(^[^\.]+$)") :
-        (GlobToRegex(GetSelectedExtension(), false) + L"$");
+        (L"^.*" + GlobToRegex(GetSelectedExtension(), false) + L"$");
 
     // Do the search
     CFileSearchControl::Get()->ProcessSearch(CDirStatDoc::Get()->GetRootItem(), true);
