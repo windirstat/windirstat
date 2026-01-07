@@ -284,25 +284,31 @@ bool SaveResults(const std::wstring& path, CItem* rootItem)
     std::unordered_map<CItem*, LONGLONG> unknownSize;
     for (const auto* item : items)
     {
-        if (!item->IsTypeOrFlag(ITF_HARDLINK)) continue;
+        // Subtract hardlinks size from drives and root node
+        if (item->IsTypeOrFlag(IT_DRIVE)) if (const auto hlinks = item->FindHardlinksItem(); hlinks != nullptr)
+        {
+            adjustedSizes[item] -= hlinks->GetSizePhysicalRaw();
+            if (const auto root = item->GetParent(); root != nullptr)
+            {
+                adjustedSizes[root] -= hlinks->GetSizePhysicalRaw();
+            }
+        }
 
         // Add size to all ancestors
+        if (!item->IsTypeOrFlag(ITF_HARDLINK)) continue;
         for (const CItem* p = item->GetParent(); p != nullptr; p = p->GetParent())
         {
-            if (p->IsTypeOrFlag(IT_DRIVE))
-            {
-                // Unknown size should be updated to account for all but one
-                if (const auto unknown = p->FindUnknownItem();
-                    seenIndex.contains({p, item->GetIndex() }) && unknown != nullptr)
-                { 
-                    unknownSize[unknown] -= item->GetSizePhysicalRaw();
-                }
-
-                seenIndex.emplace(p, item->GetIndex());
-                break;
-            }
-
             adjustedSizes[p] += item->GetSizePhysicalRaw();
+
+            if (!p->IsTypeOrFlag(IT_DRIVE)) continue;
+            const bool alreadySeen = seenIndex.contains({ p, item->GetIndex() });
+            if (!alreadySeen) seenIndex.emplace(p, item->GetIndex());
+
+            // Unknown size should be updated to account for all but one
+            if (const auto unknown = p->FindUnknownItem(); !alreadySeen && unknown != nullptr)
+            { 
+                unknownSize[unknown] -= item->GetSizePhysicalRaw();
+            }
         }
     }
 
