@@ -86,7 +86,7 @@ void CProgressDlg::StartWorkerThread()
         m_task(this);
 
         // Attempt to have timer fire one last time to update progress
-        SendMessage(WM_TIMER, TIMER_ID);
+        if (m_total > 0) SendMessage(WM_TIMER, TIMER_ID);
 
         // Post message to close dialog when complete
         if (!m_cancelRequested)
