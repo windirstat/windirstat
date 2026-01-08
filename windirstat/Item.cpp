@@ -1772,42 +1772,34 @@ void CItem::UpwardDrivePacman()
     }
 }
 
-std::once_flag CItem::s_HashInitFlag;
-BCRYPT_ALG_HANDLE CItem::s_HashAlgHandle = nullptr;
-DWORD CItem::s_HashLength = 0;
-
 std::vector<BYTE> CItem::GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CItem*>* queue)
 {
-    thread_local std::vector<BYTE> FileBuffer(1024ull * 1024ull);
-    thread_local std::vector<BYTE> Hash;
-    thread_local SmartPointer<BCRYPT_HASH_HANDLE> HashHandle(BCryptDestroyHash);
+    thread_local std::vector<BYTE> fileBuffer(1024ull * 1024ull);
+    thread_local std::vector<BYTE> hashBuffer;
+    thread_local std::once_flag hashInitFlag;
+    thread_local SmartPointer<BCRYPT_ALG_HANDLE> hashAlgHandle(
+        [](BCRYPT_ALG_HANDLE handle) { BCryptCloseAlgorithmProvider(handle, 0); });
+    thread_local SmartPointer<BCRYPT_HASH_HANDLE> hashHandle(BCryptDestroyHash);
 
     // Initialize shared structures using std::call_once for better performance
-    std::call_once(s_HashInitFlag, []()
+    std::call_once(hashInitFlag, []()
     {
         DWORD ResultLength = 0;
-        if (BCryptOpenAlgorithmProvider(&s_HashAlgHandle, BCRYPT_SHA512_ALGORITHM, MS_PRIMITIVE_PROVIDER, BCRYPT_HASH_REUSABLE_FLAG) != 0 ||
-            BCryptGetProperty(s_HashAlgHandle, BCRYPT_HASH_LENGTH, reinterpret_cast<PBYTE>(&s_HashLength), sizeof(s_HashLength), &ResultLength, 0) != 0)
+        DWORD iHashLength = 0;
+        if (BCryptOpenAlgorithmProvider(&hashAlgHandle, BCRYPT_SHA512_ALGORITHM, MS_PRIMITIVE_PROVIDER, BCRYPT_HASH_REUSABLE_FLAG) == 0 &&
+            BCryptGetProperty(hashAlgHandle, BCRYPT_HASH_LENGTH, reinterpret_cast<PBYTE>(&iHashLength), sizeof(iHashLength), &ResultLength, 0) == 0 &&
+            BCryptCreateHash(hashAlgHandle, &hashHandle, nullptr, 0, nullptr, 0, BCRYPT_HASH_REUSABLE_FLAG) == 0)
         {
-            s_HashLength = 0; // Indicate failure
+            hashBuffer.resize(iHashLength);
         }
     });
 
     // Check if initialization succeeded
-    if (s_HashLength == 0)
+    if (hashBuffer.size() == 0)
     {
         return {};
     }
-
-    // Initialize per-thread hashing handle
-    if (HashHandle == nullptr)
-    {
-        if (BCryptCreateHash(s_HashAlgHandle, &HashHandle, nullptr, 0, nullptr, 0, BCRYPT_HASH_REUSABLE_FLAG) != 0)
-        {
-            return {};
-        }
-    }
-
+        
     // Open file for reading - avoid files that are actively being written to
     SmartPointer<HANDLE> hFile(CloseHandle, CreateFile(GetPathLong().c_str(),
         GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING,
@@ -1821,20 +1813,29 @@ std::vector<BYTE> CItem::GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CIte
     DWORD iReadResult = 0;
     DWORD iHashResult = 0;
     DWORD iReadBytes = 0;
-    while ((iReadResult = ReadFile(hFile, FileBuffer.data(), static_cast<DWORD>(
-        hashSizeLimit > 0 ? min(hashSizeLimit, FileBuffer.size()) : FileBuffer.size()),
+    ULONGLONG totalBytesHashed = 0;
+    
+    while ((iReadResult = ReadFile(hFile, fileBuffer.data(), static_cast<DWORD>(
+        hashSizeLimit > 0 ? min(hashSizeLimit - totalBytesHashed, fileBuffer.size()) : fileBuffer.size()),
         &iReadBytes, nullptr)) != 0 && iReadBytes > 0)
     {
         UpwardDrivePacman();
-        iHashResult = BCryptHashData(HashHandle, FileBuffer.data(), iReadBytes, 0);
-        if (iHashResult != 0 || hashSizeLimit > 0) break;
+
+        // Hash the data
+        iHashResult = BCryptHashData(hashHandle, fileBuffer.data(), iReadBytes, 0);
+        if (iHashResult != 0) break;
+              
+        // Stop if we've reached the hash size limit
+        totalBytesHashed += iReadBytes;
+        if (hashSizeLimit > 0 && totalBytesHashed >= hashSizeLimit) break;
+
         queue->WaitIfSuspended();
     }
 
-    // Complete hash data
-    Hash.resize(s_HashLength);
-    if (iHashResult != 0 || iReadResult == 0 ||
-        BCryptFinishHash(HashHandle, Hash.data(), s_HashLength, 0) != 0)
+    // Complete the hashing process and check on errors
+    if (const NTSTATUS iFinishResult = BCryptFinishHash(hashHandle,
+        hashBuffer.data(), static_cast<ULONG>(hashBuffer.size()), 0);
+        iReadResult == 0 || iHashResult != 0 || iFinishResult != 0)
     {
         return {};
     }
@@ -1842,10 +1843,8 @@ std::vector<BYTE> CItem::GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CIte
     // We reduce the size of the stored hash since the level of uniqueness required
     // is unnecessary for simple dupe checking. This is preferred to just using a simpler
     // hash alg since SHA512 is FIPS compliant on Windows and more performant than SHA256.
-    constexpr auto ReducedHashInBytes = 16;
-    Hash.resize(ReducedHashInBytes);
-    Hash.shrink_to_fit();
-    return Hash;
+    const auto ReducedHashInBytes = min(16, hashBuffer.size());
+    return std::vector<BYTE>(hashBuffer.begin(), hashBuffer.begin() + ReducedHashInBytes);
 }
 
 CItem* CItem::FindItemByPath(const std::wstring& path) const

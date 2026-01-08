@@ -290,11 +290,6 @@ private:
     CItem* AddDirectory(const Finder& finder);
     CItem* AddFile(Finder& finder);
 
-    // Used for initialization of hashing process
-    static std::once_flag s_HashInitFlag;
-    static BCRYPT_ALG_HANDLE s_HashAlgHandle;
-    static DWORD s_HashLength;
-
     // Special structure for container items that is separately allocated to
     // reduce memory usage.  This operates under the assumption that most
     // containers have files in them.
