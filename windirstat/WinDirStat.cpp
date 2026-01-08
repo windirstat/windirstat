@@ -226,13 +226,15 @@ CString AFXGetRegPath(LPCTSTR lpszPostFix, LPCTSTR)
     return CString(L"Software\\WinDirStat\\WinDirStat\\") + lpszPostFix + L"\\";
 }
 
- class CWinDirStatCommandLineInfo final : public CCommandLineInfo
+class CWinDirStatCommandLineInfo final : public CCommandLineInfo
 {
-public:
+    std::wstring m_pendingFlag;
+    const std::wstring saveToCSVFlag = L"savetocsv";
+    const std::wstring saveDupesToCSVFlag = L"savedupestocsv";
+    const std::wstring loadFromCSVFlag = L"loadfromcsv";
+    const std::wstring legacyUninstallFlag = L"legacyuninstall";
 
-    std::wstring m_saveToCsvPath;
-    std::wstring m_saveDupesToCsvPath;
-    std::wstring m_loadFromCsvPath;
+public:
 
     void ParseParam(const WCHAR* pszParam, BOOL bFlag, BOOL bLast) override
     {
@@ -243,6 +245,28 @@ public:
         TrimString(param, wds::chrDoubleQuote);
         TrimString(param, wds::chrBackslash, true);
 
+        // If we have a pending flag, this non-flag param is its value
+        if (!m_pendingFlag.empty() && !bFlag)
+        {
+            if (m_pendingFlag == saveToCSVFlag)
+            {
+                CDirStatApp::Get()->m_saveToCsvPath = param;
+                COptions::ScanForDuplicates = false;
+            }
+            else if (m_pendingFlag == saveDupesToCSVFlag)
+            {
+                CDirStatApp::Get()->m_saveDupesToCsvPath = param;
+                COptions::ScanForDuplicates = true;
+            }
+            else if (m_pendingFlag == loadFromCSVFlag)
+            {
+                CDirStatApp::Get()->m_loadFromCsvPath = param;
+            }
+            
+            m_pendingFlag.clear();
+            return;
+        }
+
         // Handle any non-flags as paths
         if (!bFlag)
         {
@@ -251,36 +275,13 @@ public:
             return;
         }
 
-        // Handle special param to save the scan to a CSV from command line
+        // Handle flags
         param = MakeLower(param);
-
-        const std::wstring saveToCsvFlag = L"savetocsv:";
-        if (param.starts_with(saveToCsvFlag))
+        if (param == saveToCSVFlag || param == saveDupesToCSVFlag || param == loadFromCSVFlag)
         {
-            // Path after colon should be the csv path
-            m_saveToCsvPath = param.substr(saveToCsvFlag.size());
-            m_saveToCsvPath = TrimString(m_saveToCsvPath, wds::chrDoubleQuote);
+            m_pendingFlag = param;
         }
-
-        const std::wstring saveDupesToCsvFlag = L"savedupestocsv:";
-        if (param.starts_with(saveDupesToCsvFlag))
-        {
-            // Path after colon should be the duplicate csv path
-            COptions::ScanForDuplicates = true;
-            m_saveDupesToCsvPath = param.substr(saveDupesToCsvFlag.size());
-            m_saveDupesToCsvPath = TrimString(m_saveDupesToCsvPath, wds::chrDoubleQuote);
-        }
-
-        const std::wstring loadFromCsvFlag = L"loadfromcsv:";
-        if (param.starts_with(loadFromCsvFlag))
-        {
-            // Path after colon should be the csv path to load
-            m_loadFromCsvPath = param.substr(loadFromCsvFlag.size());
-            m_loadFromCsvPath = TrimString(m_loadFromCsvPath, wds::chrDoubleQuote);
-        }
-
-        const std::wstring legacyUninstallFlag = L"legacyuninstall";
-        if (param.starts_with(legacyUninstallFlag))
+        else if (param == legacyUninstallFlag)
         {
             CDirStatApp::LegacyUninstall();
         }
@@ -342,6 +343,10 @@ BOOL CDirStatApp::InitInstance()
     ParseCommandLine(cmdInfo);
     ProcessShellCommand(cmdInfo);
 
+    // Check if we should hide the app window
+    const bool hideApp = !m_saveToCsvPath.empty() || !m_saveDupesToCsvPath.empty();
+    if (hideApp) m_nCmdShow = SW_HIDE;
+
     CMainFrame::Get()->InitialShowWindow();
     m_pMainWnd->Invalidate();
     m_pMainWnd->UpdateWindow();
@@ -350,15 +355,6 @@ BOOL CDirStatApp::InitInstance()
     // background, so force it to the foreground
     m_pMainWnd->BringWindowToTop();
     m_pMainWnd->SetForegroundWindow();
-
-    // Store csv path and hide window if specified
-    if (!cmdInfo.m_saveToCsvPath.empty() ||
-        !cmdInfo.m_saveDupesToCsvPath.empty())
-    {
-        m_saveToCsvPath = cmdInfo.m_saveToCsvPath;
-        m_saveDupesToCsvPath = cmdInfo.m_saveDupesToCsvPath;
-        m_pMainWnd->ShowWindow(SW_HIDE);
-    }
 
     // Attempt to enable backup / restore privileges if running as admin
     if (COptions::UseBackupRestore && !EnableReadPrivileges())
@@ -377,8 +373,7 @@ BOOL CDirStatApp::InitInstance()
     }
 
     // Allow user to elevate if desired
-    if (IsElevationAvailable() && COptions::ShowElevationPrompt &&
-        m_saveToCsvPath.empty() && m_saveDupesToCsvPath.empty())
+    if (IsElevationAvailable() && COptions::ShowElevationPrompt && !hideApp)
     {
         CMessageBoxDlg elevationPrompt(Localization::Lookup(IDS_ELEVATION_QUESTION),
             Localization::LookupNeutral(AFX_IDS_APP_TITLE), MB_YESNO | MB_ICONQUESTION, m_pMainWnd, {},
@@ -392,16 +387,13 @@ BOOL CDirStatApp::InitInstance()
             RunElevated(m_lpCmdLine);
             return FALSE;
         }
-        else
-        {
-            COptions::AutoElevate = false;
-        }
+        else COptions::AutoElevate = false;
     }
 
     // Load from CSV if specified via command line
-    if (!cmdInfo.m_loadFromCsvPath.empty())
+    if (!m_loadFromCsvPath.empty())
     {
-        if (CItem* newroot = LoadResults(cmdInfo.m_loadFromCsvPath); newroot != nullptr)
+        if (CItem* newroot = LoadResults(m_loadFromCsvPath); newroot != nullptr)
         {
             CDirStatDoc::Get()->OnOpenDocument(newroot);
         }
@@ -563,5 +555,5 @@ void CDirStatApp::LegacyUninstall()
     std::array<WCHAR, MAX_PATH> programData;
     if (SHGetFolderPathW(nullptr, CSIDL_COMMON_APPDATA, nullptr, 0, programData.data()) != S_OK) return;
     fs::remove_all(fs::path(programData.data()) / startMenuLocation, ec);
-    std::exit(0);
+    ExitProcess(0);
 }

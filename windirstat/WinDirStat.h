@@ -32,6 +32,8 @@ CIconHandler* GetIconHandler();
 //
 class CDirStatApp final : public CWinAppEx
 {
+    friend class CWinDirStatCommandLineInfo;
+
 public:
 
     CDirStatApp();
@@ -66,10 +68,11 @@ protected:
 
     CSingleDocTemplate* m_pDocTemplate{nullptr}; // MFC voodoo.
 
-    CIconHandler m_iconList;          // Our central icon list
-    COLORREF m_altColor;              // Coloring of compressed items
-    COLORREF m_altEncryptionColor;    // Coloring of encrypted items
-    std::wstring m_saveToCsvPath;     // Path to save csv file to
+    CIconHandler m_iconList;           // Our central icon list
+    COLORREF m_altColor;               // Coloring of compressed items
+    COLORREF m_altEncryptionColor;     // Coloring of encrypted items
+    std::wstring m_loadFromCsvPath;    // Path to load csv file from
+    std::wstring m_saveToCsvPath;      // Path to save csv file to
     std::wstring m_saveDupesToCsvPath; // Path to save duplicates csv file to
     static CDirStatApp s_singleton;    // Singleton application instance
 #ifdef _DEBUG
