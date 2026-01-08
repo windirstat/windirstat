@@ -43,13 +43,26 @@ void CFileDupeControl::ProcessDuplicate(CItem * item, BlockingQueue<CItem*>* que
     if (COptions::SkipDupeDetectionCloudLinks && item->IsTypeOrFlag(ITRP_CLOUD))
     {
         std::unique_lock lock(m_hashTrackerMutex);
-        CMessageBoxDlg dlg(Localization::Lookup(IDS_DUPLICATES_WARNING), Localization::LookupNeutral(AFX_IDS_APP_TITLE),
-            MB_OK | MB_ICONINFORMATION, this, {}, Localization::Lookup(IDS_DONT_SHOW_AGAIN), false);
-        if (m_showCloudWarningOnThisScan && dlg.DoModal() == IDOK && dlg.IsCheckboxChecked())
+
+        if (m_showCloudWarningOnThisScan)
         {
-            COptions::SkipDupeDetectionCloudLinksWarning = false;
+            [&] {
+                const auto result = CMessageBoxDlg::Show(
+                    Localization::Lookup(IDS_DUPLICATES_WARNING),
+                    Localization::Lookup(IDS_DONT_SHOW_AGAIN),
+                    false,
+                    MB_OK | MB_ICONINFORMATION,
+                    this
+                );
+
+                if (result.nID == IDOK && result.isChecked)
+                {
+                    COptions::SkipDupeDetectionCloudLinksWarning = true;
+                }
+                }();
+
+            m_showCloudWarningOnThisScan = false;
         }
-        m_showCloudWarningOnThisScan = false;
         return;
     }
 
