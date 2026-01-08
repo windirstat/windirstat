@@ -836,6 +836,21 @@ std::vector<CItem*> CDirStatDoc::GetAllSelected()
     // Query fresh selection data
     auto selection = GetFocusControl()->GetAllSelected<CItem>();
 
+    // Expand any visual items if the direct item fetch did not work
+    if (selection.empty()) for (const auto item : GetFocusControl()->GetAllSelected<CTreeListItem>(true))
+    {
+        // If item has no direct link but has children, expand to children
+        if (item->GetLinkedItem()) continue;
+        
+        for (const auto i : std::views::iota(0, item->GetTreeListChildCount()))
+        {
+            if (const auto linkedItem = item->GetTreeListChild(i)->GetLinkedItem())
+            {
+                selection.push_back(linkedItem);
+            }
+        }
+    }
+
     // Update cache
     m_cachedFocus = currentFocus;
     m_cachedSelection = selection;
