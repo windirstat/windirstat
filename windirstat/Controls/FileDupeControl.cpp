@@ -97,6 +97,20 @@ void CFileDupeControl::ProcessDuplicate(CItem * item, BlockingQueue<CItem*>* que
                 hashVector.emplace_back(itemToHash);
         }
 
+        // If item was previously hashed, then look up the previous hash
+        if (hashForThisItem.empty())
+        {
+            if (const auto iter = std::ranges::find_if(m_hashTracker, [item](const auto& entry) {
+                return std::ranges::find(entry.second, item) != entry.second.end();
+            }); iter != m_hashTracker.end())
+            {
+                hashForThisItem = iter->first;
+            }
+
+            // Return if still no hash (likely all items skipped)
+            if (hashForThisItem.empty()) return;
+        }
+
         // Return if no hash conflicts
         const auto hashesResult = m_hashTracker.find(hashForThisItem);
         if (hashesResult == m_hashTracker.end() || hashesResult->second.size() < 2) return;
@@ -105,7 +119,7 @@ void CFileDupeControl::ProcessDuplicate(CItem * item, BlockingQueue<CItem*>* que
 
     // Add the hashes to the UI thread
     if (hashForThisItem.empty() || itemsToHash.empty()) return;
-    m_hashTrackerMutex.unlock();
+    lock.unlock();
     for (std::scoped_lock guard(m_nodeTrackerMutex); const auto& itemToAdd : itemsToHash)
     {
         const auto nodeEntry = m_nodeTracker.find(hashForThisItem);
@@ -126,7 +140,7 @@ void CFileDupeControl::ProcessDuplicate(CItem * item, BlockingQueue<CItem*>* que
         m_pendingListAdds.push(std::make_pair(dupeParent, dupeChild));
         m_hashParentNode.emplace(itemToAdd);
     }
-    m_hashTrackerMutex.lock();
+    lock.lock();
 }
 
 void CFileDupeControl::SortItems()
