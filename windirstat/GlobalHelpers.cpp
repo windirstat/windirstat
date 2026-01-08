@@ -150,7 +150,7 @@ std::wstring GetLocaleLanguage(const LANGID langid)
     return std::format(L"{} ({})", s, n);
 }
 
-wchar_t GetLocaleThousandSeparator()
+wchar_t GetLocaleThousandSeparator() noexcept
 {
     static LCID cachedLocale = static_cast<LCID>(-1);
     static wchar_t cachedChar;
@@ -162,7 +162,7 @@ wchar_t GetLocaleThousandSeparator()
     return cachedChar;
 }
 
-wchar_t GetLocaleDecimalSeparator()
+wchar_t GetLocaleDecimalSeparator() noexcept
 {
     static LCID cachedLocale = static_cast<LCID>(-1);
     static wchar_t cachedChar;
@@ -269,7 +269,7 @@ std::wstring FormatAttributes(const DWORD attr)
     return attributes;
 }
 
-DWORD ParseAttributes(const std::wstring& attributes)
+DWORD ParseAttributes(const std::wstring& attributes) noexcept
 {
     if (attributes == wds::strInvalidAttributes) return 0;
 
@@ -341,7 +341,7 @@ std::wstring GetCOMSPEC()
     return cmd.data();
 }
 
-void WaitForHandleWithRepainting(const HANDLE h, const DWORD TimeOut)
+void WaitForHandleWithRepainting(const HANDLE h, const DWORD TimeOut) noexcept
 {
     while (true)
     {
@@ -366,13 +366,13 @@ void WaitForHandleWithRepainting(const HANDLE h, const DWORD TimeOut)
     }
 }
 
-bool FolderExists(const std::wstring& path)
+bool FolderExists(const std::wstring& path) noexcept
 {
     const DWORD result = GetFileAttributes(FinderBasic::MakeLongPathCompatible(path).c_str());
     return result != INVALID_FILE_ATTRIBUTES && (result & FILE_ATTRIBUTE_DIRECTORY) != 0;
 }
 
-bool DriveExists(const std::wstring& path)
+bool DriveExists(const std::wstring& path) noexcept
 {
     if (path.size() != 3 || path[1] != wds::chrColon || path[2] != wds::chrBackslash)
     {
@@ -442,37 +442,37 @@ bool IsSUBSTedDrive(const std::wstring& drive)
     return info.starts_with(L"\\??\\");
 }
 
-const std::wstring& GetSpec_Bytes()
+const std::wstring& GetSpec_Bytes() noexcept
 {
     static std::wstring s = Localization::Lookup(IDS_SPEC_BYTES);
     return s;
 }
 
-const std::wstring& GetSpec_KiB()
+const std::wstring& GetSpec_KiB() noexcept
 {
     static std::wstring s = Localization::Lookup(IDS_SPEC_KiB);
     return s;
 }
 
-const std::wstring& GetSpec_MiB()
+const std::wstring& GetSpec_MiB() noexcept
 {
     static std::wstring s = Localization::Lookup(IDS_SPEC_MiB);
     return s;
 }
 
-const std::wstring& GetSpec_GiB()
+const std::wstring& GetSpec_GiB() noexcept
 {
     static std::wstring s = Localization::Lookup(IDS_SPEC_GiB);
     return s;
 }
 
-const std::wstring& GetSpec_TiB()
+const std::wstring& GetSpec_TiB() noexcept
 {
     static std::wstring s = Localization::Lookup(IDS_SPEC_TiB);
     return s;
 }
 
-bool IsElevationActive()
+bool IsElevationActive() noexcept
 {
     SmartPointer<HANDLE> token(CloseHandle);
     TOKEN_ELEVATION elevation;
@@ -486,7 +486,7 @@ bool IsElevationActive()
     return elevation.TokenIsElevated != 0;
 }
 
-bool IsElevationAvailable()
+bool IsElevationAvailable() noexcept
 {
     if (IsElevationActive()) return false;
 
@@ -509,7 +509,7 @@ void RunElevated(const std::wstring& cmdLine)
         ExitProcess(0);
 }
 
-bool EnableReadPrivileges()
+bool EnableReadPrivileges() noexcept
 {
     // Open a connection to the currently running process token and request
     // we have the ability to look at and adjust our privileges
@@ -582,7 +582,7 @@ void ReplaceString(std::wstring& subject, const std::wstring& search, const std:
     }
 }
 
-std::wstring& TrimString(std::wstring& s, const wchar_t c, const bool endOnly)
+std::wstring& TrimString(std::wstring& s, const wchar_t c, const bool endOnly) noexcept
 {
     while (!s.empty() && s.back() == c) s.pop_back();
     if (!endOnly) while (!s.empty() && s.front() == c) s.erase(0, 1);
@@ -596,7 +596,7 @@ std::wstring MakeLower(const std::wstring& s)
     return lower;
 }
 
-const std::wstring& GetSysDirectory()
+const std::wstring& GetSysDirectory() noexcept
 {
     static std::wstring s;
     if (!s.empty()) return s;
@@ -656,7 +656,7 @@ std::wstring GlobToRegex(const std::wstring& glob, const bool useAnchors)
     return useAnchors ? (L"^" + regex + L"$") : regex;
 }
 
-std::vector<BYTE> GetCompressedResource(const HRSRC resource)
+std::vector<BYTE> GetCompressedResource(const HRSRC resource) noexcept
 {
     // Establish the resource
     const HGLOBAL resourceData = ::LoadResource(nullptr, resource);
@@ -741,7 +741,7 @@ std::wstring TranslateError(const HRESULT hr)
     return static_cast<LPWSTR>(*lpMsgBuf);
 }
 
-void DisableHibernate()
+void DisableHibernate() noexcept
 {
     BOOLEAN hibernateEnabled = FALSE;
     (void)CallNtPowerInformation(SystemReserveHiberFile, &hibernateEnabled,
@@ -755,7 +755,7 @@ void DisableHibernate()
     }
 }
 
-bool IsHibernateEnabled()
+bool IsHibernateEnabled() noexcept
 {
     WCHAR drive[3];
     return GetEnvironmentVariable(L"SystemDrive", drive, std::size(drive)) == std::size(drive) - 1 &&
@@ -1090,7 +1090,7 @@ std::wstring ComputeFileHashes(const std::wstring& filePath)
     return result;
 }
 
-void SetProcessIoPriorityHigh()
+void SetProcessIoPriorityHigh() noexcept
 {
     // Define I/O priority constants
     constexpr ULONG ProcessIoPriority = 33;
@@ -1105,7 +1105,7 @@ void SetProcessIoPriorityHigh()
     }
 }
 
-bool OptimizeVhd(const std::wstring& vhdPath)
+bool OptimizeVhd(const std::wstring& vhdPath) noexcept
 {
     VIRTUAL_DISK_ACCESS_MASK accessMask = VIRTUAL_DISK_ACCESS_ALL;
     OPEN_VIRTUAL_DISK_PARAMETERS openParams{};

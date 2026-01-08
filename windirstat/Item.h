@@ -139,67 +139,67 @@ public:
     std::wstring GetText(int subitem) const override;
     COLORREF GetItemTextColor() const override;
     int CompareSibling(const CTreeListItem* tlib, int subitem) const override;
-    int GetTreeListChildCount() const override { return IsLeaf() ? 0 : static_cast<int>(GetChildren().size()); }
-    CTreeListItem* GetTreeListChild(const int i) const override { return GetChildren()[i]; }
+    int GetTreeListChildCount() const noexcept override { return IsLeaf() ? 0 : static_cast<int>(GetChildren().size()); }
+    CTreeListItem* GetTreeListChild(const int i) const noexcept override { return GetChildren()[i]; }
     HICON GetIcon() override;
     void DrawAdditionalState(CDC* pdc, const CRect& rcLabel) const override;
     CItem* GetLinkedItem() override;
 
     // CTreeMap::Item interface
-    bool TmiIsLeaf() const override { return IsLeaf() || IsTypeOrFlag(IT_HLINKS_IDX); }
-    CRect TmiGetRectangle() const override { return tmiRect; };
-    void TmiSetRectangle(const CRect& rc) override { tmiRect = rc; }
+    bool TmiIsLeaf() const noexcept override { return IsLeaf() || IsTypeOrFlag(IT_HLINKS_IDX); }
+    CRect TmiGetRectangle() const noexcept override { return tmiRect; };
+    void TmiSetRectangle(const CRect& rc) noexcept override { tmiRect = rc; }
     COLORREF TmiGetGraphColor() const override { return GetGraphColor(); }
-    int TmiGetChildCount() const override { 
+    int TmiGetChildCount() const noexcept override { 
         if (m_folderInfo == nullptr || IsTypeOrFlag(IT_HLINKS_IDX)) return 0;
         return static_cast<int>(m_folderInfo->m_children.size()); 
     }
-    Item* TmiGetChild(const int c) const override { return m_folderInfo->m_children[c]; }
-    ULONGLONG TmiGetSize() const override { return COptions::TreeMapUseLogical ? GetSizeLogical() : GetSizePhysical(); }
+    Item* TmiGetChild(const int c) const noexcept override { return m_folderInfo->m_children[c]; }
+    ULONGLONG TmiGetSize() const noexcept override { return COptions::TreeMapUseLogical ? GetSizeLogical() : GetSizePhysical(); }
 
     static int GetSubtreePercentageWidth();
     ULONGLONG GetProgressRange() const;
     ULONGLONG GetProgressPos() const;
     void UpdateStatsFromDisk();
-    const std::vector<CItem*>& GetChildren() const;
-    bool IsLeaf() const { return m_folderInfo == nullptr; }
-    CItem* GetParent() const;
-    CItem* GetParentDrive() const;
+    const std::vector<CItem*>& GetChildren() const noexcept;
+    bool IsLeaf() const noexcept { return m_folderInfo == nullptr; }
+    CItem* GetParent() const noexcept;
+    CItem* GetParentDrive() const noexcept;
     void AddChild(CItem* child, bool addOnly = false);
     void RemoveChild(CItem* child);
     void RemoveAllChildren();
-    void UpwardAddFolders(ULONG dirCount);
-    void UpwardSubtractFolders(ULONG dirCount);
-    void UpwardAddFiles(ULONG fileCount);
-    void UpwardSubtractFiles(ULONG fileCount);
-    void UpwardAddSizePhysical(ULONGLONG bytes);
-    void UpwardSubtractSizePhysical(ULONGLONG bytes);
-    void UpwardAddSizeLogical(ULONGLONG bytes);
-    void UpwardSubtractSizeLogical(ULONGLONG bytes);
-    void UpwardAddReadJobs(ULONG count);
-    void UpwardSubtractReadJobs(ULONG count);
-    void UpwardUpdateLastChange(const FILETIME& t);
+    void UpwardAddFolders(ULONG dirCount) noexcept;
+    void UpwardSubtractFolders(ULONG dirCount) noexcept;
+    void UpwardAddFiles(ULONG fileCount) noexcept;
+    void UpwardSubtractFiles(ULONG fileCount) noexcept;
+    void UpwardAddSizePhysical(ULONGLONG bytes) noexcept;
+    void UpwardSubtractSizePhysical(ULONGLONG bytes) noexcept;
+    void UpwardAddSizeLogical(ULONGLONG bytes) noexcept;
+    void UpwardSubtractSizeLogical(ULONGLONG bytes) noexcept;
+    void UpwardAddReadJobs(ULONG count) noexcept;
+    void UpwardSubtractReadJobs(ULONG count) noexcept;
+    void UpwardUpdateLastChange(const FILETIME& t) noexcept;
     void UpwardRecalcLastChange(bool withoutItem = false);
     void ExtensionDataAdd() const;
     void ExtensionDataRemove() const;
     void ExtensionDataProcessChildren(bool remove = false) const;
-    ULONGLONG GetSizePhysical() const;
-    ULONGLONG GetSizeLogical() const;
-    ULONGLONG GetSizePhysicalRaw() const;
-    void SetSizePhysical(ULONGLONG size);
-    void SetSizeLogical(ULONGLONG size);
-    ULONG GetReadJobs() const;
-    FILETIME GetLastChange() const;
-    void SetLastChange(const FILETIME& t);
-    void SetAttributes(DWORD attr);
-    DWORD GetAttributes() const;
-    void SetIndex(ULONGLONG index);
-    ULONGLONG GetIndex() const;
-    DWORD GetReparseTag() const;
-    void SetReparseTag(DWORD reparseType);
-    USHORT GetSortAttributes() const;
-    double GetFraction() const;
-    bool IsRootItem() const;
+    ULONGLONG GetSizePhysical() const noexcept;
+    ULONGLONG GetSizeLogical() const noexcept;
+    ULONGLONG GetSizePhysicalRaw() const noexcept;
+    void SetSizePhysical(ULONGLONG size) noexcept;
+    void SetSizeLogical(ULONGLONG size) noexcept;
+    ULONG GetReadJobs() const noexcept;
+    FILETIME GetLastChange() const noexcept;
+    void SetLastChange(const FILETIME& t) noexcept;
+    void SetAttributes(DWORD attr) noexcept;
+    DWORD GetAttributes() const noexcept;
+    void SetIndex(ULONGLONG index) noexcept;
+    ULONGLONG GetIndex() const noexcept;
+    DWORD GetReparseTag() const noexcept;
+    void SetReparseTag(DWORD reparseType) noexcept;
+    USHORT GetSortAttributes() const noexcept;
+    double GetFraction() const noexcept;
+    bool IsRootItem() const noexcept;
     std::wstring GetPath() const;
     std::wstring GetPathLong() const;
     CItem* FindItemByPath(const std::wstring& path) const;
@@ -210,18 +210,18 @@ public:
     void SetName(std::wstring_view name);
     std::wstring GetName() const;
     std::wstring GetExtension() const;
-    ULONG GetFilesCount() const;
-    ULONG GetFoldersCount() const;
-    ULONGLONG GetItemsCount() const;
+    ULONG GetFilesCount() const noexcept;
+    ULONG GetFoldersCount() const noexcept;
+    ULONGLONG GetItemsCount() const noexcept;
     void SetDone();
     void SortItemsBySizePhysical() const;
     void SortItemsBySizeLogical() const;
-    ULONGLONG GetTicksWorked() const;
-    void ResetScanStartTime() const;
+    ULONGLONG GetTicksWorked() const noexcept;
+    void ResetScanStartTime() const noexcept;
     static void ScanItems(BlockingQueue<CItem*> *, FinderNtfsContext& contextNtfs, FinderBasicContext& contextBasic);
     static void ScanItemsFinalize(CItem* item);
-    void UpwardSetDone();
-    void UpwardSetUndone();
+    void UpwardSetDone() noexcept;
+    void UpwardSetUndone() noexcept;
     CItem* FindRecyclerItem() const;
     void CreateFreeSpaceItem();
     CItem* FindFreeSpaceItem() const;
@@ -241,40 +241,40 @@ public:
 
     std::vector<BYTE> GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CItem*>* queue);
     
-    bool IsDone() const
+    bool IsDone() const noexcept
     {
         return IsTypeOrFlag(ITF_DONE);
     }
 
-    ITEMTYPE GetItemType() const
+    ITEMTYPE GetItemType() const noexcept
     {
         return m_type & IT_MASK;
     }
 
-    ITEMTYPE GetRawType() const
+    ITEMTYPE GetRawType() const noexcept
     {
         return m_type;
     }
 
     template<typename... Args>
-    constexpr bool IsTypeOrFlag(Args... args) const
+    constexpr bool IsTypeOrFlag(Args... args) const noexcept
     {
         const ITEMTYPE combinedMask = (args | ...);
         return (m_type & combinedMask) != IT_NONE;
     }
 
     template<ITEMTYPE Mask>
-    void SetType(const ITEMTYPE type, const bool bitOp = false, const bool unsetVal = false)
+    void SetType(const ITEMTYPE type, const bool bitOp = false, const bool unsetVal = false) noexcept
     {
         if (unsetVal) m_type = (m_type & ~type);
         else m_type = bitOp ? (m_type | type) : ((m_type & ~Mask) | type);
     }
 
-    void SetReparseType(const ITEMTYPE type) { SetType<ITRP_MASK>(type); }
-    void SetHashType(const ITEMTYPE type, const bool addType = true) { SetType<ITHASH_MASK>(type, addType); }
-    void SetFlag(const ITEMTYPE type, const bool unsetVal = false) { SetType<ITF_MASK>(type, true, unsetVal); }
+    void SetReparseType(const ITEMTYPE type) noexcept { SetType<ITRP_MASK>(type); }
+    void SetHashType(const ITEMTYPE type, const bool addType = true) noexcept { SetType<ITHASH_MASK>(type, addType); }
+    void SetFlag(const ITEMTYPE type, const bool unsetVal = false) noexcept { SetType<ITF_MASK>(type, true, unsetVal); }
 
-    static constexpr bool FileTimeIsGreater(const FILETIME& ft1, const FILETIME& ft2)
+    static constexpr bool FileTimeIsGreater(const FILETIME& ft1, const FILETIME& ft2) noexcept
     {
         return (static_cast<QWORD>(ft1.dwHighDateTime) << 32 | (ft1.dwLowDateTime)) >
             (static_cast<QWORD>(ft2.dwHighDateTime) << 32 | (ft2.dwLowDateTime));
@@ -284,8 +284,8 @@ private:
     ULONGLONG GetProgressRangeMyComputer() const;
     ULONGLONG GetProgressRangeDrive() const;
     COLORREF GetGraphColor() const;
-    bool MustShowReadJobs() const;
-    COLORREF GetPercentageColor() const;
+    bool MustShowReadJobs() const noexcept;
+    COLORREF GetPercentageColor() const noexcept;
     std::wstring UpwardGetPathWithoutBackslash() const;
     CItem* AddDirectory(const Finder& finder);
     CItem* AddFile(Finder& finder);

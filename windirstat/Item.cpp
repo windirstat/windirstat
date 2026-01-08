@@ -496,18 +496,18 @@ void CItem::UpdateStatsFromDisk()
     }
 }
 
-const std::vector<CItem*>& CItem::GetChildren() const
+const std::vector<CItem*>& CItem::GetChildren() const noexcept
 {
     ASSERT(m_folderInfo != nullptr);
     return m_folderInfo->m_children;
 }
 
-CItem* CItem::GetParent() const
+CItem* CItem::GetParent() const noexcept
 {
     return reinterpret_cast<CItem*>(CTreeListItem::GetParent());
 }
 
-CItem* CItem::GetParentDrive() const
+CItem* CItem::GetParentDrive() const noexcept
 {
     for (auto p = this; p != nullptr; p = p->GetParent())
     {
@@ -642,7 +642,7 @@ void CItem::RemoveAllChildren()
     m_folderInfo->m_children.clear();
 }
 
-void CItem::UpwardAddFolders(const ULONG dirCount)
+void CItem::UpwardAddFolders(const ULONG dirCount) noexcept
 {
     if (dirCount == 0) return;
     for (auto p = this; p != nullptr; p = p->GetParent())
@@ -652,7 +652,7 @@ void CItem::UpwardAddFolders(const ULONG dirCount)
     }
 }
 
-void CItem::UpwardSubtractFolders(const ULONG dirCount)
+void CItem::UpwardSubtractFolders(const ULONG dirCount) noexcept
 {
     if (dirCount == 0) return;
     for (auto p = this; p != nullptr; p = p->GetParent())
@@ -663,7 +663,7 @@ void CItem::UpwardSubtractFolders(const ULONG dirCount)
     }
 }
 
-void CItem::UpwardAddFiles(const ULONG fileCount)
+void CItem::UpwardAddFiles(const ULONG fileCount) noexcept
 {
     if (fileCount == 0) return;
     for (auto p = this; p != nullptr; p = p->GetParent())
@@ -673,7 +673,7 @@ void CItem::UpwardAddFiles(const ULONG fileCount)
     }
 }
 
-void CItem::UpwardSubtractFiles(const ULONG fileCount)
+void CItem::UpwardSubtractFiles(const ULONG fileCount) noexcept
 {
     if (fileCount == 0) return;
     for (auto p = this; p != nullptr; p = p->GetParent())
@@ -684,7 +684,7 @@ void CItem::UpwardSubtractFiles(const ULONG fileCount)
     }
 }
 
-void CItem::UpwardAddSizePhysical(const ULONGLONG bytes)
+void CItem::UpwardAddSizePhysical(const ULONGLONG bytes) noexcept
 {
     if (bytes == 0) return;
 
@@ -694,7 +694,7 @@ void CItem::UpwardAddSizePhysical(const ULONGLONG bytes)
     }
 }
 
-void CItem::UpwardSubtractSizePhysical(const ULONGLONG bytes)
+void CItem::UpwardSubtractSizePhysical(const ULONGLONG bytes) noexcept
 {
     if (bytes == 0) return;
 
@@ -705,7 +705,7 @@ void CItem::UpwardSubtractSizePhysical(const ULONGLONG bytes)
     }
 }
 
-void CItem::UpwardAddSizeLogical(const ULONGLONG bytes)
+void CItem::UpwardAddSizeLogical(const ULONGLONG bytes) noexcept
 {
     if (bytes == 0) return;
     for (auto p = this; p != nullptr; p = p->GetParent())
@@ -714,7 +714,7 @@ void CItem::UpwardAddSizeLogical(const ULONGLONG bytes)
     }
 }
 
-void CItem::UpwardSubtractSizeLogical(const ULONGLONG bytes)
+void CItem::UpwardSubtractSizeLogical(const ULONGLONG bytes) noexcept
 {
     if (bytes == 0) return;
     for (auto p = this; p != nullptr; p = p->GetParent())
@@ -763,7 +763,7 @@ void CItem::ExtensionDataProcessChildren(const bool remove) const
     }
 }
 
-void CItem::UpwardAddReadJobs(const ULONG count)
+void CItem::UpwardAddReadJobs(const ULONG count) noexcept
 {
     if (IsLeaf() || count == 0) return;
     if (m_folderInfo->m_jobs == 0) m_folderInfo->m_tstart = static_cast<ULONG>(GetTickCount64() / 1000ull);
@@ -774,7 +774,7 @@ void CItem::UpwardAddReadJobs(const ULONG count)
     }
 }
 
-void CItem::UpwardSubtractReadJobs(const ULONG count)
+void CItem::UpwardSubtractReadJobs(const ULONG count) noexcept
 {
     if (count == 0 || IsTypeOrFlag(IT_FILE)) return;
     for (auto p = this; p != nullptr; p = p->GetParent())
@@ -788,7 +788,7 @@ void CItem::UpwardSubtractReadJobs(const ULONG count)
 }
 
 // This method increases the last change
-void CItem::UpwardUpdateLastChange(const FILETIME& t)
+void CItem::UpwardUpdateLastChange(const FILETIME& t) noexcept
 {
     for (auto p = this; p != nullptr; p = p->GetParent())
     {
@@ -812,71 +812,71 @@ void CItem::UpwardRecalcLastChange(const bool withoutItem)
     }
 }
 
-ULONGLONG CItem::GetSizePhysical() const
+ULONGLONG CItem::GetSizePhysical() const noexcept
 {
     return (IsTypeOrFlag(ITF_HARDLINK) && COptions::ProcessHardlinks) ? 0 : m_sizePhysical.load();
 }
 
-ULONGLONG CItem::GetSizeLogical() const
+ULONGLONG CItem::GetSizeLogical() const noexcept
 {
     return m_sizeLogical;
 }
 
-ULONGLONG CItem::GetSizePhysicalRaw() const
+ULONGLONG CItem::GetSizePhysicalRaw() const noexcept
 {
     return m_sizePhysical;
 }
 
-void CItem::SetSizePhysical(const ULONGLONG size)
+void CItem::SetSizePhysical(const ULONGLONG size) noexcept
 {
     ASSERT(size >= 0);
     m_sizePhysical = size;
 }
 
-void CItem::SetSizeLogical(const ULONGLONG size)
+void CItem::SetSizeLogical(const ULONGLONG size) noexcept
 {
     ASSERT(size >= 0);
     m_sizeLogical = size;
 }
 
-ULONG CItem::GetReadJobs() const
+ULONG CItem::GetReadJobs() const noexcept
 {
     if (IsLeaf()) return 0;
     return m_folderInfo->m_jobs;
 }
 
-FILETIME CItem::GetLastChange() const
+FILETIME CItem::GetLastChange() const noexcept
 {
     return m_lastChange;
 }
 
-void CItem::SetLastChange(const FILETIME& t)
+void CItem::SetLastChange(const FILETIME& t) noexcept
 {
     m_lastChange = t;
 }
 
-void CItem::SetAttributes(const DWORD attr)
+void CItem::SetAttributes(const DWORD attr) noexcept
 {
     m_attributes = LOWORD(attr);
 }
 
-DWORD CItem::GetAttributes() const
+DWORD CItem::GetAttributes() const noexcept
 {
     return m_attributes == LOWORD(INVALID_FILE_ATTRIBUTES)
         ? INVALID_FILE_ATTRIBUTES : m_attributes;
 }
 
-void CItem::SetIndex(const ULONGLONG index)
+void CItem::SetIndex(const ULONGLONG index) noexcept
 {
     m_index = index;
 }
 
-ULONGLONG CItem::GetIndex() const
+ULONGLONG CItem::GetIndex() const noexcept
 {
     return m_index;
 }
 
-DWORD CItem::GetReparseTag() const
+DWORD CItem::GetReparseTag() const noexcept
 {
     if (IsTypeOrFlag(ITRP_SYMLINK)) return IO_REPARSE_TAG_SYMLINK;
     if (IsTypeOrFlag(ITRP_MOUNT)) return IO_REPARSE_TAG_MOUNT_POINT;
@@ -885,7 +885,7 @@ DWORD CItem::GetReparseTag() const
     return 0;
 }
 
-void CItem::SetReparseTag(const DWORD reparseType)
+void CItem::SetReparseTag(const DWORD reparseType) noexcept
 {
     if (reparseType == 0) (void) false;
     else if (reparseType == IO_REPARSE_TAG_SYMLINK) SetReparseType(ITRP_SYMLINK);
@@ -895,7 +895,7 @@ void CItem::SetReparseTag(const DWORD reparseType)
 }
 
 // Returns a value which resembles sorting of RHSACE considering gaps
-USHORT CItem::GetSortAttributes() const
+USHORT CItem::GetSortAttributes() const noexcept
 {
     USHORT ret = 0;
 
@@ -912,7 +912,7 @@ USHORT CItem::GetSortAttributes() const
     return ret;
 }
 
-double CItem::GetFraction() const
+double CItem::GetFraction() const noexcept
 {
     if (!GetParent() || GetParent()->GetSizePhysical() == 0)
     {
@@ -922,7 +922,7 @@ double CItem::GetFraction() const
         static_cast<double>(GetParent()->GetSizePhysical());
 }
 
-bool CItem::IsRootItem() const
+bool CItem::IsRootItem() const noexcept
 {
     return IsTypeOrFlag(ITF_ROOTITEM);
 }
@@ -971,7 +971,6 @@ std::wstring CItem::GetOwner(const bool force) const
 bool CItem::HasUncPath() const
 {
     return GetPath().starts_with(L"\\\\");
-
 }
 
 // Returns the path for "Explorer here" or "Command Prompt here"
@@ -1012,19 +1011,19 @@ std::wstring CItem::GetExtension() const
     return extLower;
 }
 
-ULONG CItem::GetFilesCount() const
+ULONG CItem::GetFilesCount() const noexcept
 {
     if (IsLeaf()) return 0;
     return m_folderInfo->m_files;
 }
 
-ULONG CItem::GetFoldersCount() const
+ULONG CItem::GetFoldersCount() const noexcept
 {
     if (IsLeaf()) return 0;
     return m_folderInfo->m_subdirs;
 }
 
-ULONGLONG CItem::GetItemsCount() const
+ULONGLONG CItem::GetItemsCount() const noexcept
 {
     if (IsLeaf()) return 0;
     return static_cast<ULONGLONG>(m_folderInfo->m_files) + static_cast<ULONGLONG>(m_folderInfo->m_subdirs);
@@ -1072,14 +1071,14 @@ void CItem::SortItemsBySizeLogical() const
     std::ranges::sort(m_folderInfo->m_children, std::ranges::greater{}, &CItem::GetSizeLogical);
 }
 
-ULONGLONG CItem::GetTicksWorked() const
+ULONGLONG CItem::GetTicksWorked() const noexcept
 {
     if (IsLeaf()) return 0;
     return m_folderInfo->m_tfinish > 0 ? (m_folderInfo->m_tfinish - m_folderInfo->m_tstart) :
         (m_folderInfo->m_tstart > 0) ? ((GetTickCount64() / 1000ull) - m_folderInfo->m_tstart) : 0;
 }
 
-void CItem::ResetScanStartTime() const
+void CItem::ResetScanStartTime() const noexcept
 {
     if (IsLeaf()) return;
     m_folderInfo->m_tfinish = 0;
@@ -1204,7 +1203,7 @@ void CItem::ScanItems(BlockingQueue<CItem*> * queue, FinderNtfsContext& contextN
     }
 }
 
-void CItem::UpwardSetDone()
+void CItem::UpwardSetDone() noexcept
 {
     for (auto p = this; p != nullptr; p = p->GetParent())
     {
@@ -1212,7 +1211,7 @@ void CItem::UpwardSetDone()
     }
 }
 
-void CItem::UpwardSetUndone()
+void CItem::UpwardSetUndone() noexcept
 {
     for (auto p = this; p != nullptr; p = p->GetParent())
     {
@@ -1657,7 +1656,7 @@ COLORREF CItem::GetGraphColor() const
     return RGB(0, 0, 0);
  }
 
-bool CItem::MustShowReadJobs() const
+bool CItem::MustShowReadJobs() const noexcept
 {
     if (GetParent() != nullptr)
     {
@@ -1667,7 +1666,7 @@ bool CItem::MustShowReadJobs() const
     return !IsDone();
 }
 
-COLORREF CItem::GetPercentageColor() const
+COLORREF CItem::GetPercentageColor() const noexcept
 {
     const int i = GetIndent() % COptions::FileTreeColorCount;
     return std::array<COLORREF, 8>
