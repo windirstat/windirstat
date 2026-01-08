@@ -42,14 +42,24 @@ void CFileDupeControl::ProcessDuplicate(CItem * item, BlockingQueue<CItem*>* que
     if (!COptions::ScanForDuplicates) return;
     if (COptions::SkipDupeDetectionCloudLinks && item->IsTypeOrFlag(ITRP_CLOUD))
     {
-        std::unique_lock lock(m_hashTrackerMutex);
-        CMessageBoxDlg dlg(Localization::Lookup(IDS_DUPLICATES_WARNING), Localization::LookupNeutral(AFX_IDS_APP_TITLE),
-            MB_OK | MB_ICONINFORMATION, this, {}, Localization::Lookup(IDS_DONT_SHOW_AGAIN), false);
-        if (m_showCloudWarningOnThisScan && dlg.DoModal() == IDOK && dlg.IsCheckboxChecked())
+        // Fetch settings for this scan
+        bool shouldShowDialog = false;
         {
-            COptions::SkipDupeDetectionCloudLinksWarning = false;
+            std::unique_lock lock(m_hashTrackerMutex);
+            if (!m_showCloudWarningOnThisScan) return;
+            shouldShowDialog = m_showCloudWarningOnThisScan;
+            m_showCloudWarningOnThisScan = false;
         }
-        m_showCloudWarningOnThisScan = false;
+        
+        if (shouldShowDialog)
+        {
+            CMessageBoxDlg dlg(Localization::Lookup(IDS_DUPLICATES_WARNING), Localization::LookupNeutral(AFX_IDS_APP_TITLE),
+                MB_OK | MB_ICONINFORMATION, this, {}, Localization::Lookup(IDS_DONT_SHOW_AGAIN), false);
+            if (dlg.DoModal() == IDOK && dlg.IsCheckboxChecked())
+            {
+                COptions::SkipDupeDetectionCloudLinksWarning = false;
+            }
+        }
         return;
     }
 
@@ -120,27 +130,29 @@ void CFileDupeControl::ProcessDuplicate(CItem * item, BlockingQueue<CItem*>* que
     // Add the hashes to the UI thread
     if (hashForThisItem.empty() || itemsToHash.empty()) return;
     lock.unlock();
-    for (std::scoped_lock guard(m_nodeTrackerMutex); const auto& itemToAdd : itemsToHash)
+
+    // Lock once and lookup dupeParent before iterating
+    std::scoped_lock guard(m_nodeTrackerMutex);
+    const auto nodeEntry = m_nodeTracker.find(hashForThisItem);
+    auto dupeParent = nodeEntry != m_nodeTracker.end() ? nodeEntry->second : nullptr;
+
+    if (dupeParent == nullptr)
     {
-        const auto nodeEntry = m_nodeTracker.find(hashForThisItem);
-        auto dupeParent = nodeEntry != m_nodeTracker.end() ? nodeEntry->second : nullptr;
+        // Create new root item to hold these duplicates
+        dupeParent = new CItemDupe(hashForThisItem);
+        m_pendingListAdds.push(std::make_pair(nullptr, dupeParent));
+        m_nodeTracker.emplace(hashForThisItem, dupeParent);
+    }
 
-        if (dupeParent == nullptr)
-        {
-            // Create new root item to hold these duplicates
-            dupeParent = new CItemDupe(hashForThisItem);
-            m_pendingListAdds.push(std::make_pair(nullptr, dupeParent));
-            m_nodeTracker.emplace(hashForThisItem, dupeParent);
-        }
-
-        // Add new item
-        auto& m_hashParentNode = m_childTracker[dupeParent];
-        if (m_hashParentNode.contains(itemToAdd)) continue;
+    // Add all items under the same parent
+    auto& hashParentNode = m_childTracker[dupeParent];
+    for (const auto& itemToAdd : itemsToHash)
+    {
+        if (hashParentNode.contains(itemToAdd)) continue;
         const auto dupeChild = new CItemDupe(itemToAdd);
         m_pendingListAdds.push(std::make_pair(dupeParent, dupeChild));
-        m_hashParentNode.emplace(itemToAdd);
+        hashParentNode.emplace(itemToAdd);
     }
-    lock.lock();
 }
 
 void CFileDupeControl::SortItems()
@@ -159,28 +171,6 @@ void CFileDupeControl::SortItems()
         }
         SetRedraw(TRUE);
     }
-
-#ifdef _DEBUG
-    for (const auto& hashParent : m_rootItem->GetChildren())
-    {
-        const auto& hashString = hashParent->GetHashAndExtensions().substr(0, 8);
-        if (hashParent->GetChildren().size() < 2)
-        {
-            VTRACE(L"Debug Dupe Tree Entry < 2 Nodes: {}", hashString);
-            continue;
-        }
-
-        const auto sizeCheck = hashParent->GetChildren()[0]->GetLinkedItem()->GetSizeLogical();
-        for (const auto& hashItem : hashParent->GetChildren())
-        {
-            const auto sizeCompare = hashItem->GetLinkedItem()->GetSizeLogical();
-            if (sizeCheck != sizeCompare)
-            {
-                VTRACE(L"Debug Dupe Tree: Hash {} Sizes: {} != {}", hashString, sizeCheck, sizeCompare);
-            }
-        }
-    }
-#endif
 
     CTreeListControl::SortItems();
 }
