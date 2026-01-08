@@ -58,7 +58,9 @@ std::wregex CFileSearchControl::ComputeSearchRegex(const std::wstring & searchTe
     }
 }
 
-void CFileSearchControl::ProcessSearch(CItem* item, const bool onlyFiles)
+void CFileSearchControl::ProcessSearch(CItem* item,
+    const std::wstring & searchTeam, const bool searchCase,
+    const bool searchWholePhrase, const bool searchRegex, const bool onlyFiles)
 {
     // Update tab visibility to show search tab if results exist
     CMainFrame::Get()->GetFileTabbedView()->SetSearchTabVisibility(true);
@@ -73,11 +75,11 @@ void CFileSearchControl::ProcessSearch(CItem* item, const bool onlyFiles)
         m_rootItem->SetLimitExceeded(false);
 
         // Precompile regex string
-        const auto searchRegex = ComputeSearchRegex(COptions::SearchTerm,
-            COptions::SearchCase, COptions::SearchRegex);
+        const auto searchTermRegex = ComputeSearchRegex(searchTeam,
+            searchCase, searchRegex);
 
         // Determine which search function
-        const std::function searchFunc = COptions::SearchWholePhrase ?
+        const std::function searchFunc = searchWholePhrase ?
             [](const std::wstring& str, const std::wregex& regex) { return std::regex_match(str, regex); } :
             [](const std::wstring& str, const std::wregex& regex) { return std::regex_search(str, regex); };
   
@@ -92,7 +94,7 @@ void CFileSearchControl::ProcessSearch(CItem* item, const bool onlyFiles)
 
             // Check for match
             if ((!onlyFiles || qitem->IsTypeOrFlag(IT_FILE)) &&
-                searchFunc(qitem->GetName(), searchRegex))
+                searchFunc(qitem->GetName(), searchTermRegex))
             {
                 matchedItems.push_back(qitem);
             }

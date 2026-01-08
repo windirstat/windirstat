@@ -323,21 +323,10 @@ void CExtensionListControl::OnContextMenu(CWnd* /*pWnd*/, CPoint point)
 
 void CExtensionListControl::OnSearchExtension()
 {
-    // Save off current search settings
-    const bool previousRegex = COptions::SearchRegex;
-    const std::wstring previousTerm = COptions::SearchTerm;
-
-    // Temporarily set search settings to search for the selected extension
-    COptions::SearchRegex = true;
-    COptions::SearchTerm = GetSelectedExtension().empty() ? std::wstring(LR"(^[^\.]+$)") :
+    const auto searchTerm = GetSelectedExtension().empty() ? std::wstring(LR"(^[^\.]+$)") :
         (GlobToRegex(GetSelectedExtension(), false) + L"$");
-
-    // Do the search
-    CFileSearchControl::Get()->ProcessSearch(CDirStatDoc::Get()->GetRootItem(), true);
-
-    // Restore current search settings
-    COptions::SearchRegex = previousRegex;
-    COptions::SearchTerm =  previousTerm;
+    CFileSearchControl::Get()->ProcessSearch(CDirStatDoc::Get()->GetRootItem(),
+        searchTerm, false, false, true, true);
 
     CMainFrame::Get()->GetFileTabbedView()->SetActiveSearchView();
 }

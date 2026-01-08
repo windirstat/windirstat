@@ -30,7 +30,8 @@ public:
     static CFileSearchControl* Get() { return m_singleton; }
     CItemSearch* GetRootItem() const { return m_rootItem; }
     static std::wregex ComputeSearchRegex(const std::wstring& searchTerm, bool searchCase, bool useRegex);
-    void ProcessSearch(CItem* item, bool onlyFiles = false);
+    void ProcessSearch(CItem* item, const std::wstring& searchTeam, bool searchCase,
+        bool searchWholePhrase, bool searchRegex, bool onlyFiles = false);
     void RemoveItem(CItem* items);
     void AfterDeleteAllItems() override;
 
