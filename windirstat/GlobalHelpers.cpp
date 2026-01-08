@@ -505,8 +505,8 @@ bool IsElevationAvailable()
 void RunElevated(const std::wstring& cmdLine)
 {
     PersistedSetting::WritePersistedProperties();
-    ShellExecuteWrapper(GetAppFileName(), cmdLine, L"runas");
-    TerminateProcess(GetCurrentProcess(), 0);
+    if (ShellExecuteWrapper(GetAppFileName(), cmdLine, L"runas"))
+        ExitProcess(0);
 }
 
 bool EnableReadPrivileges()

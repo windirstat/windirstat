@@ -309,7 +309,6 @@ BOOL CDirStatApp::InitInstance()
     if (IsElevationAvailable() && COptions::AutoElevate && !COptions::ShowElevationPrompt) // only if user doesn't want to be prompted
     {
         RunElevated(m_lpCmdLine);
-        return FALSE;
     }
 
     // Set app to prefer dark mode
