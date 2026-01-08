@@ -410,7 +410,7 @@ BOOL CDirStatApp::IsIdleMessage(MSG* pMsg)
 {
     // Treat WM_TIMER as an idle message to prevent excessive OnIdle calls
     // The timer is used for UI updates and should not trigger idle processing
-    if (pMsg->message == WM_TIMER) return TRUE;
+    if (pMsg->message == WM_TIMER) return FALSE;
     return CWinApp::IsIdleMessage(pMsg);
 }
 
