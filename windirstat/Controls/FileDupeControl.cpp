@@ -125,6 +125,9 @@ void CFileDupeControl::ProcessDuplicate(CItem * item, BlockingQueue<CItem*>* que
         const auto hashesResult = m_hashTracker.find(hashForThisItem);
         if (hashesResult == m_hashTracker.end() || hashesResult->second.size() < 2) return;
         itemsToHash = hashesResult->second;
+        
+        // Clear hash so it gets updated with the full hash in the next iteration
+        if (hashType == ITHASH_PART) hashForThisItem.clear();
     }
 
     // Add the hashes to the UI thread
