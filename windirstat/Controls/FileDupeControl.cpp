@@ -94,15 +94,13 @@ void CFileDupeControl::ProcessDuplicate(CItem* item, BlockingQueue<CItem*>* queu
         {
             // Skip if already marked as unhashable or hashed at this level
             if (itemToHash->IsTypeOrFlag(ITHASH_SKIP, hashLevel)) continue;
+            itemToHash->SetFlag(hashLevel);
 
             // Compute the hash for the file
             const auto hashSize = HashThresold(hashLevel);
             lock.unlock();
             auto hash = itemToHash->GetFileHash(hashSize, queue);
             lock.lock();
-
-            // Re-check state after re-acquiring lock to prevent race conditions
-            if (itemToHash->IsTypeOrFlag(ITHASH_SKIP, hashLevel)) continue;
 
             // Mark as bad if not hashable
             if (hash.empty())
@@ -112,7 +110,6 @@ void CFileDupeControl::ProcessDuplicate(CItem* item, BlockingQueue<CItem*>* queu
             }
 
             // Add this hash to the tracker
-            itemToHash->SetFlag(hashLevel);
             auto& entry = hashTracker[hash];
             entry.emplace_back(itemToHash);
             auto view = entry | std::views::filter([&](CItem* x)
