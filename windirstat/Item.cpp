@@ -467,7 +467,7 @@ void CItem::UpdateStatsFromDisk()
 {
     if (IsTypeOrFlag(IT_DIRECTORY, IT_FILE))
     {
-        FinderBasic finder;
+        FinderBasic finder(true);
         if (finder.FindFile(GetFolderPath(), IsTypeOrFlag(ITF_ROOTITEM) ? std::wstring() : GetName(), GetAttributes()))
         {
             SetLastChange(finder.GetLastWriteTime());

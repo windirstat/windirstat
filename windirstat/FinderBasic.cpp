@@ -152,7 +152,7 @@ bool FinderBasic::FindNext()
 
     m_firstRun = false;
 
-    if (success && (m_name == L"." || m_name == L"..")) return FindNext();
+    if (success && !m_statMode && (m_name == L"." || m_name == L"..")) return FindNext();
     else return success;
 }
 
@@ -163,13 +163,21 @@ bool FinderBasic::FindFile(const CItem* item)
 
 bool FinderBasic::FindFile(const std::wstring & strFolder, const std::wstring& strName, const DWORD attr)
 {
-    // stash the search pattern for later use
+    // initialize run
     m_firstRun = true;
-    m_search = strName;
     m_initialAttributes = attr;
+    m_base = strFolder;
+    m_search = strName;
+
+    // handle request to just get directory info
+    if (m_statMode && strName.empty())
+    {
+        std::filesystem::path path(strFolder);
+        m_base = path.parent_path();
+        m_search = path.filename();
+    }
 
     // convert the path to a long path that is compatible with the other call
-    m_base = strFolder;
     if (m_base.find(L":\\", 1) == 1) m_base = s_dosPath.data() + m_base;
     else if (m_base.starts_with(L"\\\\?\\")) m_base = s_dosPath.data() + m_base.substr(4) + L"\\";
     else if (m_base.starts_with(L"\\\\")) m_base = s_dosUNCPath.data() + m_base.substr(2);
@@ -259,7 +267,7 @@ bool FinderBasic::DoesFileExist(const std::wstring& folder, const std::wstring& 
 
     // Use this method over GetFileAttributes() as GetFileAttributes() will
     // return valid INVALID_FILE_ATTRIBUTES on locked files
-    return FinderBasic().FindFile(
+    return FinderBasic(true).FindFile(
         p.parent_path().wstring(),
         p.filename().wstring());
 }

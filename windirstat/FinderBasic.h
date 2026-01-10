@@ -75,10 +75,12 @@ class FinderBasic final : public Finder
     DWORD m_initialAttributes = INVALID_FILE_ATTRIBUTES;
     DWORD m_reparseTag = 0;
     bool m_firstRun = true;
+    bool m_statMode = false;
 
 public:
 
     FinderBasic() = default;
+    FinderBasic(bool statMode) : m_statMode(statMode) {};
     FinderBasic(FinderBasicContext* context) : m_context(context) {}
     ~FinderBasic() = default;
 
