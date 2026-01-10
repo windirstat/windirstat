@@ -33,10 +33,14 @@ public:
     void SortItems() override;
     void AfterDeleteAllItems() override;
 
-    std::mutex m_hashTrackerMutex;
+    std::mutex m_sizeTrackerMutex;
     std::map<ULONGLONG, std::vector<CItem*>> m_sizeTracker;
-    std::map<std::vector<BYTE>, std::vector<CItem*>> m_hashTrackerSmall;
-    std::map<std::vector<BYTE>, std::vector<CItem*>> m_hashTrackerLarge;
+    std::mutex m_trackerSmallMutex;
+    std::mutex m_trackerMediumMutex;
+    std::mutex m_trackerLargeMutex;
+    std::map<std::vector<BYTE>, std::vector<CItem*>> m_trackerSmall;
+    std::map<std::vector<BYTE>, std::vector<CItem*>> m_trackerMedium;
+    std::map<std::vector<BYTE>, std::vector<CItem*>> m_trackerLarge;
     
     std::mutex m_nodeTrackerMutex;
     std::map<std::vector<BYTE>, CItemDupe*> m_nodeTracker;
@@ -46,13 +50,19 @@ public:
 
 protected:
 
-    static constexpr auto m_partialBufferSize = 4ull * 1024ull;
+    constexpr static ULONGLONG HashThresold(ITEMTYPE hashLevel)
+    {
+        return
+            hashLevel == ITHASH_SMALL ? 4ull * 1024ull :
+            hashLevel == ITHASH_MEDIUM ? 1024ull * 1024ull : ULONGLONG_MAX;
+    }
+
     static CFileDupeControl* m_singleton;
     CItemDupe* m_rootItem = nullptr;
     bool m_showCloudWarningOnThisScan = false;
-    
-    void OnItemDoubleClick(int i) override;
 
+    void OnItemDoubleClick(int i) override;
+    
     DECLARE_MESSAGE_MAP()
     afx_msg void OnSetFocus(CWnd* pOldWnd);
     afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);

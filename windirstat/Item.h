@@ -61,8 +61,9 @@ using ITEMTYPE = enum ITEMTYPE : std::uint32_t
 
     ITHASH_NONE    = 0,       // Indicates no hash
     ITHASH_SKIP    = 1 << 16, // Indicates cannot be hashed (unreadable)
-    ITHASH_PART    = 1 << 17, // Indicates a partial hash
-    ITHASH_FULL    = 1 << 18, // Indicates a full hash
+    ITHASH_SMALL   = 1 << 17, // Indicates a small hash has been performed
+    ITHASH_MEDIUM  = 1 << 18, // Indicates a medium hash has been performed
+    ITHASH_LARGE   = 1 << 19, // Indicates a large has hhas been performed
     ITHASH_MASK    = 0x000F0000,
 
     ITRP_NONE      = 0,       // Indicates no reparse data

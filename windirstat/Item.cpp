@@ -1816,7 +1816,7 @@ std::vector<BYTE> CItem::GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CIte
     ULONGLONG totalBytesHashed = 0;
     
     while ((iReadResult = ReadFile(hFile, fileBuffer.data(), static_cast<DWORD>(
-        hashSizeLimit > 0 ? min(hashSizeLimit - totalBytesHashed, fileBuffer.size()) : fileBuffer.size()),
+        min(hashSizeLimit - totalBytesHashed, fileBuffer.size())),
         &iReadBytes, nullptr)) != 0 && iReadBytes > 0)
     {
         UpwardDrivePacman();
@@ -1827,7 +1827,7 @@ std::vector<BYTE> CItem::GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CIte
               
         // Stop if we've reached the hash size limit
         totalBytesHashed += iReadBytes;
-        if (hashSizeLimit > 0 && totalBytesHashed >= hashSizeLimit) break;
+        if (totalBytesHashed >= hashSizeLimit) break;
 
         queue->WaitIfSuspended();
     }

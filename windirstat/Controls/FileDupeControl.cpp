@@ -16,7 +16,6 @@
 //
 
 #include "pch.h"
-
 #include "ItemDupe.h"
 #include "FileDupeView.h"
 
@@ -37,7 +36,7 @@ END_MESSAGE_MAP()
 
 CFileDupeControl* CFileDupeControl::m_singleton = nullptr;
 
-void CFileDupeControl::ProcessDuplicate(CItem * item, BlockingQueue<CItem*>* queue)
+void CFileDupeControl::ProcessDuplicate(CItem* item, BlockingQueue<CItem*>* queue)
 {
     if (!COptions::ScanForDuplicates) return;
     if (COptions::SkipDupeDetectionCloudLinks && item->IsTypeOrFlag(ITRP_CLOUD))
@@ -45,12 +44,12 @@ void CFileDupeControl::ProcessDuplicate(CItem * item, BlockingQueue<CItem*>* que
         // Fetch settings for this scan
         bool shouldShowDialog = false;
         {
-            std::unique_lock lock(m_hashTrackerMutex);
+            std::scoped_lock lock(m_sizeTrackerMutex);
             if (!m_showCloudWarningOnThisScan) return;
             shouldShowDialog = m_showCloudWarningOnThisScan;
             m_showCloudWarningOnThisScan = false;
         }
-        
+
         if (shouldShowDialog)
         {
             CMessageBoxDlg dlg(Localization::Lookup(IDS_DUPLICATES_WARNING), Localization::LookupNeutral(AFX_IDS_APP_TITLE),
@@ -63,98 +62,111 @@ void CFileDupeControl::ProcessDuplicate(CItem * item, BlockingQueue<CItem*>* que
         return;
     }
 
-    // Determine which hash applies to this object
-    auto& m_hashTracker = item->GetSizeLogical() <= m_partialBufferSize
-        ? m_hashTrackerSmall : m_hashTrackerLarge;
-
-    // Add to size tracker and exit early if first item
-    std::unique_lock lock(m_hashTrackerMutex);
-    auto & sizeSet = m_sizeTracker[item->GetSizeLogical()];
-    sizeSet.emplace_back(item);
-    if (sizeSet.size() < 2) return;
-
-    std::vector<BYTE> hashForThisItem;
-    auto itemsToHash = std::vector(sizeSet);
-    for (const ITEMTYPE& hashType : { ITHASH_PART, ITHASH_FULL })
+    // Fetch the configuration information based on file size
+    const auto size = item->GetSizeLogical();
+    auto [hashTracker, hashTrackerMutex, maxHashLevel] = [&]()->std::tuple
+        <std::map<std::vector<BYTE>, std::vector<CItem*>>&, std::mutex&, ITEMTYPE>
     {
-        // Attempt to hash the file partially
-        for (auto& itemToHash : itemsToHash)
+        if (size <= HashThresold(ITHASH_SMALL)) return { m_trackerSmall, m_trackerSmallMutex, ITHASH_SMALL };
+        if (size > HashThresold(ITHASH_MEDIUM)) return { m_trackerLarge, m_trackerLargeMutex, ITHASH_LARGE };
+        else return { m_trackerMedium, m_trackerMediumMutex, ITHASH_MEDIUM };
+    }();
+
+    // First see if there's more than one size of this file since there is not need to
+    // hash if there is only a single file of this size
+    std::vector<CItem*> hashSet;
+    if (std::scoped_lock lock(m_sizeTrackerMutex); true)
+    {
+        auto& sizeSetLookup = m_sizeTracker[size];
+        sizeSetLookup.emplace_back(item);
+        hashSet.assign(sizeSetLookup.begin(), sizeSetLookup.end());
+        if (sizeSetLookup.size() < 2) return;
+    }
+
+    // Now we have multiple files of the same size, so we need to hash them
+    ITEMTYPE hashLevel = ITHASH_SMALL;
+    std::map<std::vector<BYTE>, std::set<CItem*>> hashItemsWithDupes;
+    for (std::unique_lock lock(hashTrackerMutex); !hashSet.empty();)
+    {
+        // Work on a snapshot of the current set
+        std::set<CItem*> nextLevelSet;
+        for (auto* itemToHash : std::vector(hashSet))
         {
-            if (itemToHash->IsTypeOrFlag(hashType, ITHASH_SKIP)) continue;
+            // Skip if already marked as unhashable or hashed at this level
+            if (itemToHash->IsTypeOrFlag(ITHASH_SKIP, hashLevel)) continue;
 
             // Compute the hash for the file
+            const auto hashSize = HashThresold(hashLevel);
             lock.unlock();
-            auto hash = itemToHash->GetFileHash(hashType == ITHASH_PART ? m_partialBufferSize : 0, queue);
+            auto hash = itemToHash->GetFileHash(hashSize, queue);
             lock.lock();
 
-            // Skip if not hashable
+            // Re-check state after re-acquiring lock to prevent race conditions
+            if (itemToHash->IsTypeOrFlag(ITHASH_SKIP, hashLevel)) continue;
+
+            // Mark as bad if not hashable
             if (hash.empty())
             {
-                itemToHash->SetHashType(ITHASH_SKIP);
+                itemToHash->SetFlag(ITHASH_SKIP);
                 continue;
             }
 
-            itemToHash->SetHashType(hashType);
-            if (itemToHash == item) hashForThisItem = hash;
+            // Add this hash to the tracker
+            itemToHash->SetFlag(hashLevel);
+            auto& entry = hashTracker[hash];
+            entry.emplace_back(itemToHash);
+            auto view = entry | std::views::filter([&](CItem* x)
+                { return x->GetSizeLogical() == size; });
+            std::vector subset(view.begin(), view.end());
+            if (subset.size() < 2) continue;
 
-            // Mark as the full being completed as well
-            if (itemToHash->GetSizeLogical() <= m_partialBufferSize)
-                itemToHash->SetHashType(ITHASH_FULL);
-
-            // Add hash to tracking queue
-            auto& hashVector = m_hashTracker[hash];
-            if (std::ranges::find(hashVector, itemToHash) == hashVector.end())
-                hashVector.emplace_back(itemToHash);
-        }
-
-        // If item was previously hashed, then look up the previous hash
-        if (hashForThisItem.empty())
-        {
-            if (const auto iter = std::ranges::find_if(m_hashTracker, [item](const auto& entry) {
-                return std::ranges::find(entry.second, item) != entry.second.end();
-            }); iter != m_hashTracker.end())
+            // See if this hash has duplicates
+            if (hashLevel == maxHashLevel)
             {
-                hashForThisItem = iter->first;
+                // Already at max level: record duplicates and stop
+                hashItemsWithDupes[hash].insert(subset.begin(), subset.end());
             }
-
-            // Return if still no hash (likely all items skipped)
-            if (hashForThisItem.empty()) return;
+            else
+            {
+                // Schedule next-level hashing
+                nextLevelSet.insert(subset.begin(), subset.end());
+            }
         }
 
-        // Return if no hash conflicts
-        const auto hashesResult = m_hashTracker.find(hashForThisItem);
-        if (hashesResult == m_hashTracker.end() || hashesResult->second.size() < 2) return;
-        itemsToHash = hashesResult->second;
-        
-        // Clear hash so it gets updated with the full hash in the next iteration
-        if (hashType == ITHASH_PART) hashForThisItem.clear();
-    }
+        hashSet.assign(nextLevelSet.begin(), nextLevelSet.end());
+        if (hashSet.empty()) break;
 
-    // Add the hashes to the UI thread
-    if (hashForThisItem.empty() || itemsToHash.empty()) return;
-    lock.unlock();
+        // Determine the appropriate hash level for this item based on what's already been hashed
+        hashLevel = min(maxHashLevel,
+            hashLevel == ITHASH_SMALL ? ITHASH_MEDIUM :
+            hashLevel == ITHASH_MEDIUM ? ITHASH_LARGE : ITHASH_LARGE);
+    }
 
     // Lock once and lookup dupeParent before iterating
-    std::scoped_lock guard(m_nodeTrackerMutex);
-    const auto nodeEntry = m_nodeTracker.find(hashForThisItem);
-    auto dupeParent = nodeEntry != m_nodeTracker.end() ? nodeEntry->second : nullptr;
-
-    if (dupeParent == nullptr)
+    if (hashItemsWithDupes.empty()) return;
+    std::scoped_lock nodeLock(m_nodeTrackerMutex);
+    for (const auto& [hash, itemsWithHash] : hashItemsWithDupes)
     {
-        // Create new root item to hold these duplicates
-        dupeParent = new CItemDupe(hashForThisItem);
-        m_pendingListAdds.push(std::make_pair(nullptr, dupeParent));
-        m_nodeTracker.emplace(hashForThisItem, dupeParent);
-    }
+        const auto nodeEntry = m_nodeTracker.find(hash);
+        auto dupeParent = nodeEntry != m_nodeTracker.end() ? nodeEntry->second : nullptr;
 
-    // Add all items under the same parent
-    auto& hashParentNode = m_childTracker[dupeParent];
-    for (const auto& itemToAdd : itemsToHash)
-    {
-        if (hashParentNode.contains(itemToAdd)) continue;
-        const auto dupeChild = new CItemDupe(itemToAdd);
-        m_pendingListAdds.push(std::make_pair(dupeParent, dupeChild));
-        hashParentNode.emplace(itemToAdd);
+        if (dupeParent == nullptr)
+        {
+            // Create new root item to hold these duplicates
+            dupeParent = new CItemDupe(hash);
+            m_pendingListAdds.push(std::make_pair(nullptr, dupeParent));
+            m_nodeTracker.emplace(hash, dupeParent);
+        }
+
+        // Add all items under the same parent
+        for (const auto& itemToAdd : itemsWithHash)
+        {
+            auto& hashParentNode = m_childTracker[dupeParent];
+            if (hashParentNode.find(itemToAdd) != hashParentNode.end()) continue;
+            const auto dupeChild = new CItemDupe(itemToAdd);
+            m_pendingListAdds.push(std::make_pair(dupeParent, dupeChild));
+            hashParentNode.emplace(itemToAdd);
+        }
     }
 }
 
@@ -189,11 +201,11 @@ void CFileDupeControl::RemoveItem(CItem* item)
     {
         const auto qitem = queue.top();
         queue.pop();
-        if (qitem->IsTypeOrFlag(IT_FILE))
+        if (qitem->IsTypeOrFlag(ITHASH_MASK))
         {
             // Mark as all files as not being hashed anymore
             std::erase(m_sizeTracker.at(qitem->GetSizeLogical()), qitem);
-            qitem->SetHashType(ITHASH_NONE, false);
+            qitem->SetHashType(ITHASH_NONE);
         }
         else if (!qitem->IsLeaf()) for (const auto& child : qitem->GetChildren())
         {
@@ -206,23 +218,24 @@ void CFileDupeControl::RemoveItem(CItem* item)
     });
 
     // Remove all unhashed files from hash trackers
-    for (auto& hashTracker : { std::ref(m_hashTrackerSmall), std::ref(m_hashTrackerLarge) })
-    {
-        for (auto& hashSet : hashTracker.get() | std::views::values)
-        {
-            // Skip if no matches of the item associated with this hash
-            std::erase_if(hashSet, [](const auto& hashItem)
-            {
-                return !hashItem->IsTypeOrFlag(ITHASH_PART, ITHASH_FULL);
-            });
-        }
+    auto& hashTracker =
+        item->GetSizeLogical() <= HashThresold(ITHASH_SMALL) ? m_trackerSmall :
+        item->GetSizeLogical() > HashThresold(ITHASH_MEDIUM) ? m_trackerLarge : m_trackerMedium;
 
-        // Cleanup empty structures
-        std::erase_if(hashTracker.get(), [](const auto& pair)
+    for (auto& hashSet : hashTracker | std::views::values)
+    {
+        // Skip if no matches of the item associated with this hash
+        std::erase_if(hashSet, [](const auto& hashItem)
         {
-            return pair.second.empty();
+            return !hashItem->IsTypeOrFlag(ITHASH_SMALL, ITHASH_MEDIUM, ITHASH_LARGE);
         });
     }
+
+    // Cleanup empty structures
+    std::erase_if(hashTracker, [](const auto& pair)
+    {
+        return pair.second.empty();
+    });
 
     // Pause redrawing for mass node removal
     SetRedraw(FALSE);
@@ -241,7 +254,7 @@ void CFileDupeControl::RemoveItem(CItem* item)
             erasedChild ? childItem : ++childItem, erasedChild = false)
         {
             // Nothing to do if still marked as hashed
-            if ((*childItem)->IsTypeOrFlag(ITHASH_PART, ITHASH_FULL)) continue;
+            if ((*childItem)->IsTypeOrFlag(ITHASH_SMALL, ITHASH_MEDIUM, ITHASH_LARGE)) continue;
 
             // Remove from child tracker and visual tree
             for (auto& visualChild : dupeParent->GetChildren())
@@ -300,8 +313,9 @@ void CFileDupeControl::AfterDeleteAllItems()
     // Cleanup support lists
     m_pendingListAdds.clear();
     m_nodeTracker.clear();
-    m_hashTrackerSmall.clear();
-    m_hashTrackerLarge.clear();
+    m_trackerSmall.clear();
+    m_trackerMedium.clear();
+    m_trackerLarge.clear();
     m_sizeTracker.clear();
     m_childTracker.clear();
 
