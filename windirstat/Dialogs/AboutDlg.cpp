@@ -197,7 +197,7 @@ void CAboutDlg::WdsTabControl::OnEnMsgFilter(NMHDR* pNMHDR, LRESULT* pResult)
     {
         if (mf->wParam == VK_ESCAPE)
         {
-            SetFocus();
+            GetParent()->PostMessage(WM_COMMAND, IDOK, 0);
             *pResult = 1;
         }
         else if (mf->wParam == VK_TAB)
