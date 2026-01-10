@@ -205,7 +205,7 @@ void CFileDupeControl::RemoveItem(CItem* item)
         {
             // Mark as all files as not being hashed anymore
             std::erase(m_sizeTracker.at(qitem->GetSizeLogical()), qitem);
-            qitem->SetHashType(ITHASH_NONE);
+            qitem->SetHashType(ITHASH_NONE, false);
         }
         else if (!qitem->IsLeaf()) for (const auto& child : qitem->GetChildren())
         {
@@ -254,7 +254,7 @@ void CFileDupeControl::RemoveItem(CItem* item)
             erasedChild ? childItem : ++childItem, erasedChild = false)
         {
             // Nothing to do if still marked as hashed
-            if ((*childItem)->IsTypeOrFlag(ITHASH_SMALL, ITHASH_MEDIUM, ITHASH_LARGE)) continue;
+            if ((*childItem)->IsTypeOrFlag(ITHASH_MASK)) continue;
 
             // Remove from child tracker and visual tree
             for (auto& visualChild : dupeParent->GetChildren())
