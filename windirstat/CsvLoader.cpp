@@ -364,24 +364,44 @@ bool SaveDuplicates(const std::wstring& path, CItemDupe* rootDupe)
     }
     outf << "\r\n";
 
-    // Iterate through all duplicate groups
+    // Collect all duplicate items with their hash and linked item
+    std::vector<std::tuple<std::wstring, const CItem*>> dupeItems;
     for (const auto& dupeGroup : rootDupe->GetChildren())
     {
-        // Output each file in the duplicate group
         for (const auto& dupeFile : dupeGroup->GetChildren())
         {
-            const auto* linkedItem = dupeFile->GetLinkedItem();
-            if (linkedItem == nullptr) continue;
-
-            // Output file information
-            outf << std::format("{},{},{},{},{},{}\r\n",
-                QuoteAndConvert(dupeGroup->GetHash()),
-                QuoteAndConvert(linkedItem->GetPath()),
-                linkedItem->GetSizeLogical(),
-                linkedItem->GetSizePhysicalRaw(),
-                ToTimePoint(linkedItem->GetLastChange()),
-                QuoteAndConvert(FormatAttributes(linkedItem->GetAttributes())));
+            if (const auto* dupeItem = dupeFile->GetLinkedItem(); dupeItem != nullptr)
+            {
+                dupeItems.emplace_back(dupeGroup->GetHash(), dupeItem);
+            }
         }
+    }
+
+    // Sort by logical size (descending) then by hash then by path
+    std::sort(dupeItems.begin(), dupeItems.end(), [](const auto& a, const auto& b)
+    {
+        const auto& [hashA, itemA] = a;
+        const auto& [hashB, itemB] = b;
+
+        const auto sizeA = itemA->GetSizeLogical();
+        const auto sizeB = itemB->GetSizeLogical();
+        if (sizeA != sizeB) return sizeA > sizeB;
+
+        if (const int hashCmp = hashA.compare(hashB); hashCmp != 0) return hashCmp < 0;
+
+        return _wcsicmp(itemA->GetPath().c_str(), itemB->GetPath().c_str()) < 0;
+    });
+
+    // Output all items to file
+    for (const auto& [hash, linkedItem] : dupeItems)
+    {
+        outf << std::format("{},{},{},{},{},{}\r\n",
+            QuoteAndConvert(hash),
+            QuoteAndConvert(linkedItem->GetPath()),
+            linkedItem->GetSizeLogical(),
+            linkedItem->GetSizePhysicalRaw(),
+            ToTimePoint(linkedItem->GetLastChange()),
+            QuoteAndConvert(FormatAttributes(linkedItem->GetAttributes())));
     }
 
     return true;
