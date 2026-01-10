@@ -318,7 +318,7 @@ bool SaveResults(const std::wstring& path, CItem* rootItem)
     {
         // Output primary columns
         const bool nonPathItem = item->IsTypeOrFlag(IT_MYCOMPUTER);
-        const ITEMTYPE itemType = item->GetRawType() & ~ITF_HARDLINK;
+        const ITEMTYPE itemType = item->GetRawType() & ~ITF_HARDLINK & ~ITHASH_MASK;
         const auto adjustedSize = adjustedSizes.contains(item) ? adjustedSizes[item] : 0;
         outf << std::format("{},{},{},{},{},{},{},0x{:08X},0x{:016X}",
             QuoteAndConvert(nonPathItem ? item->GetName() : item->GetPath()),
