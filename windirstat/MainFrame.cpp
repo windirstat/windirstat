@@ -703,7 +703,9 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
         // load high quality bitmap from resource
         CBitmap bitmap;
-        bitmap.LoadBitmapW(toolbarMap.at(button->m_nID).first);
+        bitmap.Attach(static_cast<HBITMAP>(LoadImage(AfxGetResourceHandle(),
+            MAKEINTRESOURCE(toolbarMap.at(button->m_nID).first),
+            IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION)));
         DarkMode::LightenBitmap(&bitmap);
         const int image = m_images.AddImage(bitmap, TRUE);
         CMFCToolBar::SetUserImages(&m_images);
