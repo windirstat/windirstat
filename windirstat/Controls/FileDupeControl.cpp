@@ -190,10 +190,10 @@ void CFileDupeControl::RemoveItem(CItem* item)
     {
         const auto qitem = queue.top();
         queue.pop();
-        if (qitem->IsTypeOrFlag(ITHASH_MASK))
+        if (qitem->IsTypeOrFlag(IT_FILE))
         {
             // Mark as all files as not being hashed anymore
-            std::erase(m_sizeTracker.at(qitem->GetSizeLogical()), qitem);
+            std::erase(m_sizeTracker[qitem->GetSizeLogical()], qitem);
             qitem->SetHashType(ITHASH_NONE, false);
         }
         else if (!qitem->IsLeaf()) for (const auto& child : qitem->GetChildren())
@@ -207,24 +207,23 @@ void CFileDupeControl::RemoveItem(CItem* item)
     });
 
     // Remove all unhashed files from hash trackers
-    auto& hashTracker =
-        item->GetSizeLogical() <= HashThresold(ITHASH_SMALL) ? m_trackerSmall :
-        item->GetSizeLogical() > HashThresold(ITHASH_MEDIUM) ? m_trackerLarge : m_trackerMedium;
-
-    for (auto& hashSet : hashTracker | std::views::values)
+    for (auto* hashTracker : { &m_trackerSmall, &m_trackerMedium, &m_trackerLarge })
     {
-        // Skip if no matches of the item associated with this hash
-        std::erase_if(hashSet, [](const auto& hashItem)
+        for (auto& hashSet : *hashTracker | std::views::values)
         {
-            return !hashItem->IsTypeOrFlag(ITHASH_SMALL, ITHASH_MEDIUM, ITHASH_LARGE);
+            // Skip if no matches of the item associated with this hash
+            std::erase_if(hashSet, [](const auto& hashItem)
+            {
+                return !hashItem->IsTypeOrFlag(ITHASH_MASK);
+            });
+        }
+
+        // Cleanup empty structures
+        std::erase_if(*hashTracker, [](const auto& pair)
+        {
+            return pair.second.empty();
         });
     }
-
-    // Cleanup empty structures
-    std::erase_if(hashTracker, [](const auto& pair)
-    {
-        return pair.second.empty();
-    });
 
     // Pause redrawing for mass node removal
     SetRedraw(FALSE);
