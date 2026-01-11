@@ -1800,7 +1800,6 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
     const auto selectedItems = GetAllSelected();
     using VisualInfo = struct { int scrollPosition; bool wasExpanded; bool isSelected; };
     std::unordered_map<CItem*, VisualInfo> visualInfo;
-    CMainFrame::Get()->SetRedraw(FALSE);
     for (auto item : std::vector(items))
     {
         // Clear items from duplicates and top list;
@@ -1842,7 +1841,6 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
             if (item->IsRootItem())
             {
                 Get()->UnlinkRoot();
-                CMainFrame::Get()->SetRedraw(TRUE);
                 return;
             }
 
@@ -1853,7 +1851,6 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
         }
     }
     CDirStatDoc::InvalidateSelectionCache();
-    CMainFrame::Get()->SetRedraw(TRUE);
 
     // Start a thread so we do not hang the message loop during inserts
     // Lambda captures assume document exists for duration of thread

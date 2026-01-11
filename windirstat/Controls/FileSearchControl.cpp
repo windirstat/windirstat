@@ -146,8 +146,10 @@ void CFileSearchControl::RemoveItem(CItem* item)
     if (findItem == m_itemTracker.end()) return;
 
     // Remove the item from the interface
+    SetRedraw(FALSE);
     m_rootItem->RemoveSearchItemChild(findItem->second);
     m_itemTracker.erase(findItem);
+    SetRedraw(TRUE);
 }
 
 void CFileSearchControl::OnItemDoubleClick(const int i)

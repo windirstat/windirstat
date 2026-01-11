@@ -116,13 +116,15 @@ void CFileTopControl::SortItems()
     }
 
     // Handle visual item additions
+    SetRedraw(FALSE);
     for (const auto& itemTop : itemTrackerCopy | std::views::values)
     {
         m_itemTracker.erase(itemTop->GetLinkedItem());
         m_rootItem->RemoveTopItemChild(itemTop);
     }
-
-    CTreeListControl::SortItems();
+    SetRedraw(TRUE);
+    
+    CTreeListControl::SortItems();   
 }
 
 void CFileTopControl::RemoveItem(CItem* item)
