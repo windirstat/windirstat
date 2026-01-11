@@ -24,10 +24,9 @@ class Localization final
 {
     static bool CrackStrings(std::basic_istream<char>& stream, unsigned int streamSize);
     static void SearchReplace(std::wstring& input, const std::wstring_view& search, const std::wstring_view& replace);
-    static void UpdateWindowText(HWND hwnd);
+    static void UpdateWindowText(CWnd& wnd);
 
 public:
-    static constexpr auto MAX_VALUE_SIZE = 1024;
     static constexpr auto LANG_RESOURCE_TYPE = L"RT_LANG";
     static std::unordered_map<std::wstring, std::wstring> m_map;
 
@@ -58,7 +57,7 @@ public:
 
     static void UpdateMenu(CMenu& menu);
     static void UpdateTabControl(CMFCTabCtrl& tab);
-    static void UpdateDialogs(const CWnd& wnd);
+    static void UpdateDialogs(CWnd& wnd);
     static bool LoadExternalLanguage(LCTYPE lcttype, LCID lcid);
     static bool LoadFile(const std::wstring& file);
     static bool LoadResource(WORD language);

@@ -107,21 +107,18 @@ void Localization::UpdateMenu(CMenu& menu)
 {
     for (const int i : std::views::iota(0, menu.GetMenuItemCount()))
     {
-        std::array<WCHAR, MAX_VALUE_SIZE> buffer;
-        MENUITEMINFOW mi{ sizeof(MENUITEMINFO) };
-        mi.cch = static_cast<UINT>(buffer.size());
-        mi.dwTypeData = buffer.data();
-        mi.fMask = MIIM_STRING | MIIM_FTYPE | MIIM_SUBMENU;
-        menu.GetMenuItemInfoW(i, &mi, TRUE);
-        if (mi.fType == MFT_STRING && wcsstr(mi.dwTypeData, L"ID") == mi.dwTypeData &&
-            Contains(mi.dwTypeData))
+        CString text;
+        if (menu.GetMenuString(i, text, MF_BYPOSITION) == 0) continue;
+
+        if (text.Find(L"ID") == 0 && Contains(text.GetString()))
         {
-            mi.fMask = MIIM_STRING;
-            mi.dwTypeData = const_cast<LPWSTR>(m_map[mi.dwTypeData].c_str());
+            MENUITEMINFOW mi{ .cbSize = sizeof(MENUITEMINFOW) };
+            mi.fMask = MIIM_STRING,
+            mi.dwTypeData = const_cast<LPWSTR>(m_map[text.GetString()].c_str());
             menu.SetMenuItemInfoW(i, &mi, TRUE);
         }
-        if (mi.hSubMenu != nullptr && IsMenu(mi.hSubMenu))
-            UpdateMenu(*menu.GetSubMenu(i));
+
+        if (CMenu* sub = menu.GetSubMenu(i); sub != nullptr) UpdateMenu(*sub);
     }
 }
 
@@ -139,27 +136,35 @@ void Localization::UpdateTabControl(CMFCTabCtrl& tab)
     }
 }
 
-void Localization::UpdateWindowText(const HWND hwnd)
+void Localization::UpdateWindowText(CWnd& wnd)
 {
-    std::array<WCHAR, MAX_VALUE_SIZE> buffer;
-    if (GetWindowText(hwnd, buffer.data(), static_cast<int>(buffer.size())) > 0 &&
-        wcsstr(buffer.data(), L"ID") == buffer.data() &&
-        Contains(buffer.data()))
-    {
-        ::SetWindowText(hwnd, m_map[buffer.data()].c_str());
-    }
+    // Lookup and cache system font
+    static CFont* systemFont = [] {
+        NONCLIENTMETRICS ncm{ .cbSize = sizeof(NONCLIENTMETRICS) };
+        SystemParametersInfo(SPI_GETNONCLIENTMETRICS, sizeof(ncm), &ncm, 0);
+        auto* font = new CFont();
+        font->CreateFontIndirect(&ncm.lfMessageFont);
+        return font;
+        }();
+
+    wnd.SetFont(systemFont);
+
+    // Update window text if it's a localizable ID
+    CString text;
+    wnd.GetWindowText(text);
+    if (text.Find(L"ID") == 0 && Contains(text.GetString()))
+        wnd.SetWindowText(m_map[text.GetString()].c_str());
 }
 
-void Localization::UpdateDialogs(const CWnd& wnd)
+void Localization::UpdateDialogs(CWnd& wnd)
 {
-    UpdateWindowText(wnd.m_hWnd);
+    UpdateWindowText(wnd);
 
-    EnumChildWindows(wnd.m_hWnd, [](HWND hwnd, LPARAM)
+    for (CWnd* child = wnd.GetWindow(GW_CHILD); child != nullptr;
+        child = child->GetWindow(GW_HWNDNEXT))
     {
-        UpdateWindowText(hwnd);
-        return TRUE;
-    },
-    reinterpret_cast<LPARAM>(nullptr));
+        UpdateWindowText(*child);
+    }
 }
 
 // Try to find and load external language file, return false if failed.
