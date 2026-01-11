@@ -36,7 +36,7 @@ void CPagePrompts::DoDataExchange(CDataExchange* pDX)
     CMFCPropertyPage::DoDataExchange(pDX);
     DDX_Check(pDX, IDC_DELETION_WARNING, m_showDeleteWarning);
     DDX_Check(pDX, IDC_ELEVATION_PROMPT, m_showElevationPrompt);
-    DDX_Check(pDX, IDC_CLOUD_LINKS_WARNING, m_skipDupeDetectionCloudLinksWarning);
+    DDX_Check(pDX, IDC_CLOUD_LINKS_WARNING, m_showDupeDetectionCloudLinksWarning);
     DDX_Check(pDX, IDC_SHOW_MICROSOFT_PROGRESS, m_showMicrosoftProgress);
 }
 
@@ -63,7 +63,7 @@ BOOL CPagePrompts::OnInitDialog()
 
     m_showDeleteWarning = COptions::ShowDeleteWarning;
     m_showElevationPrompt = COptions::ShowElevationPrompt;
-    m_skipDupeDetectionCloudLinksWarning = COptions::SkipDupeDetectionCloudLinksWarning;
+    m_showDupeDetectionCloudLinksWarning = COptions::ShowDupeDetectionCloudLinksWarning;
     m_showMicrosoftProgress = COptions::ShowMicrosoftProgress;
 
     UpdateData(FALSE);
@@ -76,7 +76,7 @@ void CPagePrompts::OnOK()
 
     COptions::ShowDeleteWarning = (FALSE != m_showDeleteWarning);
     COptions::ShowElevationPrompt = (FALSE != m_showElevationPrompt);
-    COptions::SkipDupeDetectionCloudLinksWarning = (FALSE != m_skipDupeDetectionCloudLinksWarning);
+    COptions::ShowDupeDetectionCloudLinksWarning = (FALSE != m_showDupeDetectionCloudLinksWarning);
     COptions::ShowMicrosoftProgress = (FALSE != m_showMicrosoftProgress);
 
     CMFCPropertyPage::OnOK();

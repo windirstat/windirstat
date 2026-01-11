@@ -42,7 +42,7 @@ protected:
 
     BOOL m_showDeleteWarning = FALSE;
     BOOL m_showElevationPrompt = FALSE;
-    BOOL m_skipDupeDetectionCloudLinksWarning = FALSE;
+    BOOL m_showDupeDetectionCloudLinksWarning = FALSE;
     BOOL m_showMicrosoftProgress = FALSE;
 
     DECLARE_MESSAGE_MAP()

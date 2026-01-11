@@ -39,25 +39,17 @@ CFileDupeControl* CFileDupeControl::m_singleton = nullptr;
 void CFileDupeControl::ProcessDuplicate(CItem* item, BlockingQueue<CItem*>* queue)
 {
     if (!COptions::ScanForDuplicates) return;
-    if (COptions::SkipDupeDetectionCloudLinks && item->IsTypeOrFlag(ITRP_CLOUD))
+    if (COptions::SkipDupeDetectionCloudLinks && item->IsTypeOrFlag(ITRP_CLOUD) && m_showCloudWarningOnThisScan)
     {
-        // Fetch settings for this scan
-        bool shouldShowDialog = false;
-        {
-            std::scoped_lock lock(m_sizeTrackerMutex);
-            if (!m_showCloudWarningOnThisScan) return;
-            shouldShowDialog = m_showCloudWarningOnThisScan;
-            m_showCloudWarningOnThisScan = false;
-        }
+        // Disable remainder for test of this scan
+        m_showCloudWarningOnThisScan = false;
 
-        if (shouldShowDialog)
+        // Show warning dialog
+        CMessageBoxDlg dlg(Localization::Lookup(IDS_DUPLICATES_WARNING), Localization::LookupNeutral(AFX_IDS_APP_TITLE),
+            MB_OK | MB_ICONINFORMATION, this, {}, Localization::Lookup(IDS_DONT_SHOW_AGAIN), false);
+        if (dlg.DoModal() == IDOK && dlg.IsCheckboxChecked())
         {
-            CMessageBoxDlg dlg(Localization::Lookup(IDS_DUPLICATES_WARNING), Localization::LookupNeutral(AFX_IDS_APP_TITLE),
-                MB_OK | MB_ICONINFORMATION, this, {}, Localization::Lookup(IDS_DONT_SHOW_AGAIN), false);
-            if (dlg.DoModal() == IDOK && dlg.IsCheckboxChecked())
-            {
-                COptions::SkipDupeDetectionCloudLinksWarning = false;
-            }
+            COptions::ShowDupeDetectionCloudLinksWarning = false;
         }
         return;
     }
@@ -305,7 +297,7 @@ void CFileDupeControl::OnItemDoubleClick(const int i)
 void CFileDupeControl::AfterDeleteAllItems()
 {
     // Reset duplicate warning
-    m_showCloudWarningOnThisScan = COptions::SkipDupeDetectionCloudLinksWarning;
+    m_showCloudWarningOnThisScan = COptions::ShowDupeDetectionCloudLinksWarning;
 
     // Cleanup support lists
     m_pendingListAdds.clear();

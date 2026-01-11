@@ -151,7 +151,7 @@ public:
     static Setting<bool> ShowTreeMap;
     static Setting<bool> ShowUnknown;
     static Setting<bool> SkipDupeDetectionCloudLinks;
-    static Setting<bool> SkipDupeDetectionCloudLinksWarning;
+    static Setting<bool> ShowDupeDetectionCloudLinksWarning;
     static Setting<bool> AutoElevate;
     static Setting<bool> TreeMapGrid;
     static Setting<bool> TreeMapUseLogical;
