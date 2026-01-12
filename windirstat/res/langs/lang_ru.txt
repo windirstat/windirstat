@@ -55,7 +55,6 @@ IDS_EMPTY_FOLDER_WARNING=Вы уверены, что хотите удалить
 IDS_EMPTY_RECYCLEBIN=Очистить корзину
 IDS_EXPAND=Развернуть
 IDS_EXTENSION_MISSING=Нет Расширение
-IDS_FAST_SCAN_CHECKBOX=Использовать улучшенный движок сканирования (требуются повышенные привилегии)
 IDS_FAST_SCAN_CHECKBOX=Использовать ускоренное сканирование
 IDS_FILE_SELECT=Открывает список дисков.\nОткрыть
 IDS_FREESPACE_ITEM=<Свободное место>

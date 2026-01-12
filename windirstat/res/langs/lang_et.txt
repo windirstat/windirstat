@@ -56,7 +56,6 @@ IDS_EMPTY_RECYCLEBIN=&Tühi Prügikast
 IDS_EXPAND=L&aiendama
 IDS_EXTENSION_MISSING=Ei Laiend
 IDS_FAST_SCAN_CHECKBOX=Kasuta kiirendatud skannimist
-IDS_FAST_SCAN_CHECKBOX=Kasuta täiustatud skaneerimis‑mootorit (nõuab tõstetud õigusi)
 IDS_FILE_SELECT=Ava Ajamite kolektsioon.\nOpen
 IDS_FREESPACE_ITEM=<Vaba maht>
 IDS_GENERIC_BLANK=

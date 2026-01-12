@@ -55,7 +55,6 @@ IDS_EMPTY_FOLDER_WARNING=Sei sicuro di voler eliminare tutti i file nelle seguen
 IDS_EMPTY_RECYCLEBIN=&Svuota Cestino
 IDS_EXPAND=E&spandi
 IDS_EXTENSION_MISSING=Senza Estensione
-IDS_FAST_SCAN_CHECKBOX=Usa motore di scansione avanzato (richiede privilegi elevati)
 IDS_FAST_SCAN_CHECKBOX=Usa scansione accelerata
 IDS_FILE_SELECT=Seleziona unità.\nApri
 IDS_FREESPACE_ITEM=<Spazio libero>

@@ -56,7 +56,6 @@ IDS_EMPTY_RECYCLEBIN=&Opróżnij Kosz
 IDS_EXPAND=&Rozwiń
 IDS_EXTENSION_MISSING=Bez Rozszerzenia
 IDS_FAST_SCAN_CHECKBOX=Użyj przyspieszonego skanowania
-IDS_FAST_SCAN_CHECKBOX=Użyj ulepszonego silnika skanowania (wymaga podwyższonych uprawnień)
 IDS_FILE_SELECT=Pozwala wybrać dyski.\nOpen
 IDS_FREESPACE_ITEM=<Wolna przestrzeń>
 IDS_GENERIC_BLANK=

@@ -56,7 +56,6 @@ IDS_EMPTY_RECYCLEBIN=&Vaciar la Papelera de Reciclaje
 IDS_EXPAND=E&xpandir
 IDS_EXTENSION_MISSING=Sin Extensión
 IDS_FAST_SCAN_CHECKBOX=Usar escaneo acelerado
-IDS_FAST_SCAN_CHECKBOX=Usar motor de escaneo mejorado (requiere privilegios elevados)
 IDS_FILE_SELECT=Abre una Colección de Discos.\nAbrir
 IDS_FREESPACE_ITEM=<Espacio Libre>
 IDS_GENERIC_BLANK=

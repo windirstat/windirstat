@@ -56,7 +56,6 @@ IDS_EMPTY_RECYCLEBIN=&Tøm papirkurv
 IDS_EXPAND=U&tvid
 IDS_EXTENSION_MISSING=Ingen filtype
 IDS_FAST_SCAN_CHECKBOX=Bruk akselerert skanning
-IDS_FAST_SCAN_CHECKBOX=Bruk forbedret skanne‑motor (krever forhøyede rettigheter)
 IDS_FILE_SELECT=Åpne en samling stasjoner.\nÅpne...
 IDS_FREESPACE_ITEM=<Ledig plass>
 IDS_GENERIC_BLANK=

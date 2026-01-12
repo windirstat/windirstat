@@ -56,7 +56,6 @@ IDS_EMPTY_RECYCLEBIN=Töm papp&erskorgen
 IDS_EXPAND=E&xpandera
 IDS_EXTENSION_MISSING=Inget filnamnstillägg
 IDS_FAST_SCAN_CHECKBOX=Använd accelererad skanning
-IDS_FAST_SCAN_CHECKBOX=Använd förbättrad skanningsmotor (kräver förhöjda behörigheter)
 IDS_FILE_SELECT=Öppna en samling av enheter.\nÖppna...
 IDS_FREESPACE_ITEM=<Ledigt utrymme>
 IDS_GENERIC_BLANK=

@@ -56,7 +56,6 @@ IDS_EMPTY_RECYCLEBIN=&Papierkorb leeren
 IDS_EXPAND=E&rweitern
 IDS_EXTENSION_MISSING=Ohne Dateityp
 IDS_FAST_SCAN_CHECKBOX=Beschleunigtes Scannen verwenden
-IDS_FAST_SCAN_CHECKBOX=Erweiterte Scan-Engine verwenden (erfordert erhöhte Rechte)
 IDS_FILE_SELECT=Öffnet eine Menge von Laufwerken.\nÖffnen
 IDS_FREESPACE_ITEM=<Freier Platz>
 IDS_GENERIC_BLANK=

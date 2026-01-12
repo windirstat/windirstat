@@ -56,7 +56,6 @@ IDS_EMPTY_RECYCLEBIN=&Vider la corbeille
 IDS_EXPAND=&Développer
 IDS_EXTENSION_MISSING=Sans Extension
 IDS_FAST_SCAN_CHECKBOX=Utiliser l’analyse accélérée
-IDS_FAST_SCAN_CHECKBOX=Utiliser le moteur de numérisation amélioré (nécessite des privilèges élevés)
 IDS_FILE_SELECT=Ouvre une liste de lecteurs.\nOuvrir
 IDS_FREESPACE_ITEM=<Espace libre>
 IDS_GENERIC_BLANK=

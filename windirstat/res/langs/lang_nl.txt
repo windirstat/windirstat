@@ -55,7 +55,6 @@ IDS_EMPTY_FOLDER_WARNING=Weet u zeker dat u alle bestanden in de volgende mappen
 IDS_EMPTY_RECYCLEBIN=&Prullenbak leegmaken
 IDS_EXPAND=&Uitvouwen
 IDS_EXTENSION_MISSING=Zonder Extensie
-IDS_FAST_SCAN_CHECKBOX=Gebruik verbeterde scan-engine (vereist verhoogde bevoegdheden)
 IDS_FAST_SCAN_CHECKBOX=Versnelde scan gebruiken
 IDS_FILE_SELECT=Een verzameling van stations openen.\nOpenen...
 IDS_FREESPACE_ITEM=<Beschikbare ruimte>

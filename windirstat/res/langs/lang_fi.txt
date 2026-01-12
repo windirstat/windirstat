@@ -56,7 +56,6 @@ IDS_EMPTY_RECYCLEBIN=&Tyhjennä roskakori
 IDS_EXPAND=&Laajenna
 IDS_EXTENSION_MISSING=Ei Pääte
 IDS_FAST_SCAN_CHECKBOX=Käytä nopeutettua skannausta
-IDS_FAST_SCAN_CHECKBOX=Käytä parannettua skannausmoottoria (vaatii korotetut oikeudet)
 IDS_FILE_SELECT=Avaa listan asemista.\nAvaa
 IDS_FREESPACE_ITEM=<Vapaa tila>
 IDS_GENERIC_BLANK=

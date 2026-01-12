@@ -55,7 +55,6 @@ IDS_EMPTY_FOLDER_WARNING=次のフォルダー内のすべてのファイルを�
 IDS_EMPTY_RECYCLEBIN=ごみ箱を空にする(&E)
 IDS_EXPAND=展開(&X)
 IDS_EXTENSION_MISSING=拡張子なし
-IDS_FAST_SCAN_CHECKBOX=特権昇格が必要な強化スキャン エンジンを使用する
 IDS_FAST_SCAN_CHECKBOX=高速スキャンを使用
 IDS_FILE_SELECT=ドライブのコレクションを開きます。\n開く...
 IDS_FREESPACE_ITEM=<空き容量>
