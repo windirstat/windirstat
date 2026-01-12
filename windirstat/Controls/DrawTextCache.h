@@ -48,8 +48,7 @@ private:
         UINT format;
         USHORT width;
         USHORT height;
-        USHORT dpiX;
-        USHORT dpiY;
+        USHORT dpi;
 
         bool operator==(const CacheKey& other) const = default;
     };
@@ -65,8 +64,7 @@ private:
             hash ^= std::hash<UINT>{}(key.format) << 3;
             hash ^= std::hash<USHORT>{}(key.width) << 4;
             hash ^= std::hash<USHORT>{}(key.height) << 5;
-            hash ^= (std::hash<USHORT>{}(key.dpiX)) << 6;
-            hash ^= std::hash<USHORT>{}(key.dpiY) << 7;
+            hash ^= (std::hash<USHORT>{}(key.dpi)) << 6;
             return hash;
         }
     };

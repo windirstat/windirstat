@@ -111,6 +111,7 @@ void QueryShadowCopies(ULONGLONG& count, ULONGLONG& bytesUsed);
 void RemoveWmiInstances(const std::wstring& wmiClass, CProgressDlg* pdlg,
     const std::wstring& whereClause = L"__PATH IS NOT NULL");
 bool OptimizeVhd(const std::wstring& vhdPath) noexcept;
+int ScaleDpi(int width, CWnd* wnd = nullptr) noexcept;
 
 using CSmallRect = struct CSmallRect
 {

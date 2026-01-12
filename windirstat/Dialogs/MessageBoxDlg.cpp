@@ -174,21 +174,34 @@ BOOL CMessageBoxDlg::OnInitDialog()
 
     // Determine if the dialog needs to be shifted down for the message //
 
-    // Calcualte width expansion if custom initial size set
+    // Scale the initial size for DPI if it was set
+    const CSize scaledInitialSize(
+        ScaleDpi(m_initialSize.cx, this),
+        ScaleDpi(m_initialSize.cy, this)
+    );
+
+    // Calculate width expansion if custom initial size set
     CRect rectWindow;
-    GetWindowRect(&rectWindow); // get initial window size
-    const int widthExpansion = max(0, m_initialSize.cx - rectWindow.Width());
+    GetWindowRect(&rectWindow);
+    const int widthExpansion = max(0, scaledInitialSize.cx - rectWindow.Width());
 
     // Calculate required message text rectangle
     CRect rectMessage;
     m_messageCtrl.GetWindowRect(&rectMessage);
     ScreenToClient(&rectMessage);
+    
+    // Get DC and select the message control's font for accurate measurement
     CDC* pDC = m_messageCtrl.GetDC();
-    CRect rectText(0, 0, rectMessage.Width() + widthExpansion, 0); // taking width expansion into account
+    CFont* pFont = m_messageCtrl.GetFont();
+    CFont* pOldFont = pFont ? pDC->SelectObject(pFont) : nullptr;
+    
+    CRect rectText(0, 0, rectMessage.Width() + widthExpansion, 0);
     pDC->DrawText(m_message.c_str(), &rectText, DT_CALCRECT | DT_WORDBREAK | DT_NOPREFIX);
+    
+    if (pOldFont) pDC->SelectObject(pOldFont);
     m_messageCtrl.ReleaseDC(pDC);
 
-    // Calculate message text height overflow and expend message control height if needed
+    // Calculate message text height overflow and expand message control height if needed
     const int messageHeightOverflow = max(0, rectText.Height() - rectMessage.Height());
     if (messageHeightOverflow > 0)
     {
@@ -196,17 +209,24 @@ BOOL CMessageBoxDlg::OnInitDialog()
         m_messageCtrl.MoveWindow(rectMessage);
     }
 
-    // Shift down if message height exceeds icon height
+    // Shift controls down if message height exceeds original layout
+    // Only shift by the overflow amount, not the full text height comparison
     CRect iconRect;
     m_iconCtrl.GetWindowRect(&iconRect);
-    const int deltaHeight = rectText.Height() - max(iconRect.Height(), rectMessage.Height());
+    ScreenToClient(&iconRect);
+    
+    // Calculate how much the message extends beyond the icon area
+    const int messageBottom = rectMessage.bottom;
+    const int iconBottom = iconRect.bottom;
+    const int deltaHeight = max(0, messageBottom - iconBottom);
+    
     ShiftControls({ &m_listView, &m_buttonLeft, &m_buttonMiddle, &m_buttonRight, &m_checkbox }, deltaHeight);
 
     // Hide controls if hidden
     ShiftControlsIfHidden(&m_listView, { &m_buttonLeft, &m_buttonMiddle, &m_buttonRight, &m_checkbox });
     ShiftControlsIfHidden(&m_checkbox, { &m_buttonLeft, &m_buttonMiddle, &m_buttonRight });
 
-    // Active automatic layout management
+    // Activate automatic layout management
     m_layout.AddControl(IDC_MESSAGE_ICON, 0, 0, 0, 0);
     m_layout.AddControl(IDC_MESSAGE_TEXT, 0, 0, 1, 0);
     m_layout.AddControl(IDC_MESSAGE_LISTVIEW, 0, 0, 1, 1);
@@ -217,14 +237,14 @@ BOOL CMessageBoxDlg::OnInitDialog()
     m_layout.OnInitDialog(true);
 
     // Calculate minimum window height after dynamic layout adjustments
-    GetWindowRect(&rectWindow); // get updated window size
-    const int minWindowHeight = rectWindow.Height() + messageHeightOverflow;
+    GetWindowRect(&rectWindow);
+    const int minWindowHeight = rectWindow.Height();
 
-    // Adjust dialog size if requested
-    if (m_initialSize.cx > 0)
+    // Adjust dialog size if requested (using DPI-scaled values)
+    if (scaledInitialSize.cx > 0)
     {
-        rectWindow.right = rectWindow.left + m_initialSize.cx;
-        rectWindow.bottom = rectWindow.top + max(m_initialSize.cy, minWindowHeight); // respect minimum height
+        rectWindow.right = rectWindow.left + scaledInitialSize.cx;
+        rectWindow.bottom = rectWindow.top + max(scaledInitialSize.cy, minWindowHeight);
         MoveWindow(&rectWindow);
     }
 
