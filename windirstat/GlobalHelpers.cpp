@@ -1146,7 +1146,7 @@ int DpiSave(int value, CWnd* wnd) noexcept
 
 void CopyAllDriveMappings() noexcept
 {
-    if (!IsElevationActive()) return;
+    if (!IsElevationActive() || !COptions::AutoMapDrivesWhenElevated) return;
 
     // Map the registry key for network drives
     CRegKey keyNetwork;

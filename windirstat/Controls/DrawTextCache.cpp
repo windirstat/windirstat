@@ -23,9 +23,17 @@ void DrawTextCache::DrawTextCached(CDC* pDC, const std::wstring& text, CRect& re
 {
     if (!pDC || text.empty()) return;
 
-    // Look up in cache
     const UINT format = DT_SINGLELINE | DT_VCENTER | DT_WORD_ELLIPSIS | DT_NOPREFIX |
         (leftAlign ? DT_LEFT : DT_RIGHT) | (calcRect ? DT_CALCRECT : 0);
+
+    // If caching is disabled, use normal DrawText API
+    if (!COptions::UseDrawTextCache)
+    {
+        pDC->DrawTextW(text.c_str(), static_cast<int>(text.length()), &rect, format);
+        return;
+    }
+
+    // Look up in cache
     CacheKey key = CreateCacheKey(pDC, text, rect, format);
     if (auto it = m_cache.find(key); it != m_cache.end())
     {

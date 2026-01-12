@@ -112,6 +112,7 @@ class COptions final
 public:
 
     static Setting<bool> AutomaticallyResizeColumns;
+    static Setting<bool> AutoMapDrivesWhenElevated;
     static Setting<bool> ExcludeJunctions;
     static Setting<bool> ExcludeSymbolicLinksDirectory;
     static Setting<bool> ExcludeVolumeMountPoints;
@@ -156,6 +157,7 @@ public:
     static Setting<bool> TreeMapGrid;
     static Setting<bool> TreeMapUseLogical;
     static Setting<bool> UseBackupRestore;
+    static Setting<bool> UseDrawTextCache;
     static Setting<bool> UseFastScanEngine;
     static Setting<bool> UseWindowsLocaleSetting;
     static Setting<bool> ProcessHardlinks;
