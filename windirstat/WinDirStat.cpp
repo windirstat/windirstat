@@ -422,6 +422,8 @@ void CDirStatApp::OnAppAbout()
 
 void CDirStatApp::OnFileOpen()
 {
+    CopyAllDriveMappings();
+
     CSelectDrivesDlg dlg;
     if (IDOK == dlg.DoModal())
     {

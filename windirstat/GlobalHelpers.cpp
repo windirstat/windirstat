@@ -22,6 +22,7 @@
 #pragma comment(lib,"powrprof.lib")
 #pragma comment(lib,"wbemuuid.lib")
 #pragma comment(lib,"virtdisk.lib")
+#pragma comment(lib,"mpr.lib")
 
 static NTSTATUS(NTAPI* RtlDecompressBufferEx)(USHORT CompressionFormat, PUCHAR UncompressedBuffer,
     ULONG  UncompressedBufferSize, PUCHAR CompressedBuffer, ULONG  CompressedBufferSize,
@@ -1134,4 +1135,50 @@ int ScaleDpi(int width, CWnd* wnd) noexcept
 
     const int dpi = dc != nullptr ? ::GetDeviceCaps(dc, LOGPIXELSX) : USER_DEFAULT_SCREEN_DPI;
     return ::MulDiv(width, dpi, 96);
+}
+
+void CopyAllDriveMappings() noexcept
+{
+    if (!IsElevationActive()) return;
+
+    // Map the registry key for network drives
+    CRegKey keyNetwork;
+    if (keyNetwork.Open(HKEY_CURRENT_USER, L"Network", KEY_READ) != ERROR_SUCCESS) return;
+
+    // Enumerate all subkeys (each subkey is a drive letter)
+    std::unordered_map<std::wstring, std::wstring> mappings;
+    std::array<WCHAR, MAX_PATH> driveLetter;
+    ULONG driveLetterSize = static_cast<ULONG>(driveLetter.size());
+    for (DWORD index = 0; keyNetwork.EnumKey(index, driveLetter.data(), &driveLetterSize) == ERROR_SUCCESS;
+        ++index, driveLetterSize = static_cast<ULONG>(driveLetter.size()))
+    {
+        // Get the drive letter and remove path
+        CRegKey keyDrive;
+        std::array<WCHAR, MAX_PATH> remotePath;
+        ULONG remotePathSize = static_cast<ULONG>(remotePath.size());       
+        if (keyDrive.Open(keyNetwork, driveLetter.data(), KEY_READ) == ERROR_SUCCESS &&
+            keyDrive.QueryStringValue(L"RemotePath", remotePath.data(), &remotePathSize) == ERROR_SUCCESS)
+        {
+            auto withColon = driveLetter.data() + std::wstring(L":");
+            if (DriveExists(withColon)) continue;
+            mappings[withColon] = remotePath.data();
+        }
+    }
+
+    if (!mappings.empty()) CProgressDlg(driveLetter.size(), true, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
+    {
+        for (const auto & mapping : mappings)
+        {
+            // Attempt to map the drive
+            auto& [driveLetter, remotePath] = mapping;
+            NETRESOURCEW mapProperties{
+                .dwType = RESOURCETYPE_DISK,
+                .lpLocalName = const_cast<LPWSTR>(driveLetter.data()),
+                .lpRemoteName = const_cast<LPWSTR>(remotePath.data())
+            };
+
+            (void)WNetAddConnection2(&mapProperties, nullptr, nullptr, 0);
+            pdlg->Increment();
+        }
+    }).DoModal();
 }
