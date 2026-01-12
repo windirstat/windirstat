@@ -79,13 +79,26 @@ template <> void Setting<std::wstring>::WritePersistedProperty()
 
 template <> void Setting<WINDOWPLACEMENT>::ReadPersistedProperty()
 {
-    ReadBinaryProperty(m_section, m_entry, &m_value, sizeof(WINDOWPLACEMENT));
+    if (ReadBinaryProperty(m_section, m_entry, &m_value, sizeof(WINDOWPLACEMENT)))
+    {
+        // Scale rcNormalPosition from stored 96 DPI values to current DPI
+        m_value.rcNormalPosition.left = DpiRest(m_value.rcNormalPosition.left);
+        m_value.rcNormalPosition.top = DpiRest(m_value.rcNormalPosition.top);
+        m_value.rcNormalPosition.right = DpiRest(m_value.rcNormalPosition.right);
+        m_value.rcNormalPosition.bottom = DpiRest(m_value.rcNormalPosition.bottom);
+    }
 }
 
 template <> void Setting<WINDOWPLACEMENT>::WritePersistedProperty()
 {
+    // Scale rcNormalPosition from current DPI to 96 DPI for storage
+    WINDOWPLACEMENT normalizedWp = m_value;
+    normalizedWp.rcNormalPosition.left = DpiSave(m_value.rcNormalPosition.left);
+    normalizedWp.rcNormalPosition.top = DpiSave(m_value.rcNormalPosition.top);
+    normalizedWp.rcNormalPosition.right = DpiSave(m_value.rcNormalPosition.right);
+    normalizedWp.rcNormalPosition.bottom = DpiSave(m_value.rcNormalPosition.bottom);
     CDirStatApp::Get()->WriteProfileBinary(m_section.c_str(), m_entry.c_str(),
-        reinterpret_cast<LPBYTE>(&m_value), sizeof(WINDOWPLACEMENT));
+        reinterpret_cast<LPBYTE>(&normalizedWp), sizeof(WINDOWPLACEMENT));
 }
 
 // Setting<std::vector<std::wstring>> Processing
@@ -120,7 +133,9 @@ template <> void Setting<std::vector<int>>::ReadPersistedProperty()
     for (const std::wstring s = CDirStatApp::Get()->GetProfileString(m_section.c_str(), m_entry.c_str()).GetString();
         const auto token_view : std::views::split(s, L','))
     {
-        m_value.push_back(std::stoi(std::wstring(token_view.begin(), token_view.end())));
+        // Scale from stored 96 DPI values to current DPI
+        int value = std::stoi(std::wstring(token_view.begin(), token_view.end()));
+        m_value.push_back(DpiRest(value));
     }
 }
 
@@ -129,7 +144,8 @@ template <> void Setting<std::vector<int>>::WritePersistedProperty()
     std::wstring result;
     for (const auto part : m_value)
     {
-        result += std::to_wstring(part) + L',';
+        // Scale from current DPI to 96 DPI for storage
+        result += std::to_wstring(DpiSave(part)) + L',';
     }
     if (result.ends_with(L',')) result.pop_back();
 
@@ -166,10 +182,24 @@ template <> void Setting<double>::WritePersistedProperty()
 
 template <> void Setting<RECT>::ReadPersistedProperty()
 {
-    ReadBinaryProperty(m_section, m_entry, &m_value, sizeof(RECT));
+    if (ReadBinaryProperty(m_section, m_entry, &m_value, sizeof(RECT)))
+    {
+        // Scale from stored 96 DPI values to current DPI
+        m_value.left = DpiRest(m_value.left);
+        m_value.top = DpiRest(m_value.top);
+        m_value.right = DpiRest(m_value.right);
+        m_value.bottom = DpiRest(m_value.bottom);
+    }
 }
 
 template <> void Setting<RECT>::WritePersistedProperty()
 {
-    CDirStatApp::Get()->WriteProfileBinary(m_section.c_str(), m_entry.c_str(), reinterpret_cast<LPBYTE>(&m_value), sizeof(RECT));
+    // Scale from current DPI to 96 DPI for storage
+    RECT normalizedRect;
+    normalizedRect.left = DpiSave(m_value.left);
+    normalizedRect.top = DpiSave(m_value.top);
+    normalizedRect.right = DpiSave(m_value.right);
+    normalizedRect.bottom = DpiSave(m_value.bottom);
+    CDirStatApp::Get()->WriteProfileBinary(m_section.c_str(), m_entry.c_str(),
+        reinterpret_cast<LPBYTE>(&normalizedRect), sizeof(RECT));
 }

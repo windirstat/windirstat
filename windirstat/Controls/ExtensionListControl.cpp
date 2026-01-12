@@ -171,12 +171,12 @@ bool CExtensionListControl::GetAscendingDefault(const int subitem)
 void CExtensionListControl::Initialize()
 {
     // Columns should be in the order of definition in order for sort to work
-    InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_EXTENSION).c_str(), LVCFMT_LEFT, ScaleDpi(60), COL_EXT_EXTENSION);
-    InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_COLOR).c_str(), LVCFMT_LEFT, ScaleDpi(40), COL_EXT_COLOR);
-    InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_DESCRIPTION).c_str(), LVCFMT_LEFT, ScaleDpi(170), COL_EXT_DESCRIPTION);
-    InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_BYTES).c_str(), LVCFMT_RIGHT, ScaleDpi(60), COL_EXT_BYTES);
-    InsertColumn(CHAR_MAX, (L"% " + Localization::Lookup(IDS_COL_BYTES)).c_str(), LVCFMT_RIGHT, ScaleDpi(50), COL_EXT_BYTESPERCENT);
-    InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_FILES).c_str(), LVCFMT_RIGHT, ScaleDpi(50), COL_EXT_FILES);
+    InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_EXTENSION).c_str(), LVCFMT_LEFT, DpiRest(60), COL_EXT_EXTENSION);
+    InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_COLOR).c_str(), LVCFMT_LEFT, DpiRest(40), COL_EXT_COLOR);
+    InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_DESCRIPTION).c_str(), LVCFMT_LEFT, DpiRest(170), COL_EXT_DESCRIPTION);
+    InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_BYTES).c_str(), LVCFMT_RIGHT, DpiRest(60), COL_EXT_BYTES);
+    InsertColumn(CHAR_MAX, (L"% " + Localization::Lookup(IDS_COL_BYTES)).c_str(), LVCFMT_RIGHT, DpiRest(50), COL_EXT_BYTESPERCENT);
+    InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_FILES).c_str(), LVCFMT_RIGHT, DpiRest(50), COL_EXT_FILES);
 
     SetSorting(COL_EXT_BYTES, GetAscendingDefault(COL_EXT_BYTES));
 

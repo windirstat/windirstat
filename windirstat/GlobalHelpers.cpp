@@ -1128,13 +1128,20 @@ bool OptimizeVhd(const std::wstring& vhdPath) noexcept
         &compactParams, nullptr) == ERROR_SUCCESS;
 }
 
-int ScaleDpi(int width, CWnd* wnd) noexcept
+int DpiRest(int value, CWnd* wnd) noexcept
 {
     const HWND h = (wnd && wnd->GetSafeHwnd()) ? wnd->GetSafeHwnd() : nullptr;
     SmartPointer<HDC> dc([h](HDC hdc) { ReleaseDC(h, hdc); }, GetDC(h));
-
     const int dpi = dc != nullptr ? ::GetDeviceCaps(dc, LOGPIXELSX) : USER_DEFAULT_SCREEN_DPI;
-    return ::MulDiv(width, dpi, 96);
+    return ::MulDiv(value, dpi, USER_DEFAULT_SCREEN_DPI);
+}
+
+int DpiSave(int value, CWnd* wnd) noexcept
+{
+    const HWND h = (wnd && wnd->GetSafeHwnd()) ? wnd->GetSafeHwnd() : nullptr;
+    SmartPointer<HDC> dc([h](HDC hdc) { ReleaseDC(h, hdc); }, GetDC(h));
+    const int dpi = dc != nullptr ? ::GetDeviceCaps(dc, LOGPIXELSX) : USER_DEFAULT_SCREEN_DPI;
+    return ::MulDiv(value, USER_DEFAULT_SCREEN_DPI, dpi);
 }
 
 void CopyAllDriveMappings() noexcept

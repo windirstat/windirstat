@@ -176,8 +176,8 @@ BOOL CMessageBoxDlg::OnInitDialog()
 
     // Scale the initial size for DPI if it was set
     const CSize scaledInitialSize(
-        ScaleDpi(m_initialSize.cx, this),
-        ScaleDpi(m_initialSize.cy, this)
+        DpiRest(m_initialSize.cx, this),
+        DpiRest(m_initialSize.cy, this)
     );
 
     // Calculate width expansion if custom initial size set

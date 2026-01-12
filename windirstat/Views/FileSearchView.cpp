@@ -69,10 +69,10 @@ int CFileSearchView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
     m_control.ShowFullRowSelection(COptions::ListFullRowSelection);
 
     // Columns should be in enumeration order so initial sort will work
-    m_control.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_NAME).c_str(), LVCFMT_LEFT, ScaleDpi(500), COL_ITEMSEARCH_NAME);
-    m_control.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_SIZE_PHYSICAL).c_str(), LVCFMT_RIGHT, ScaleDpi(90), COL_ITEMSEARCH_SIZE_PHYSICAL);
-    m_control.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_SIZE_LOGICAL).c_str(), LVCFMT_RIGHT, ScaleDpi(90), COL_ITEMSEARCH_SIZE_LOGICAL);
-    m_control.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_LAST_CHANGE).c_str(), LVCFMT_LEFT, ScaleDpi(120), COL_ITEMSEARCH_LAST_CHANGE);
+    m_control.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_NAME).c_str(), LVCFMT_LEFT, DpiRest(500), COL_ITEMSEARCH_NAME);
+    m_control.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_SIZE_PHYSICAL).c_str(), LVCFMT_RIGHT, DpiRest(90), COL_ITEMSEARCH_SIZE_PHYSICAL);
+    m_control.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_SIZE_LOGICAL).c_str(), LVCFMT_RIGHT, DpiRest(90), COL_ITEMSEARCH_SIZE_LOGICAL);
+    m_control.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_LAST_CHANGE).c_str(), LVCFMT_LEFT, DpiRest(120), COL_ITEMSEARCH_LAST_CHANGE);
     m_control.SetSorting(COL_ITEMSEARCH_SIZE_LOGICAL, false);
 
     m_control.OnColumnsInserted();

@@ -623,7 +623,7 @@ void CMainFrame::SetStatusPaneText(const int pos, const std::wstring & text, con
     // set status path width and then set text
     const CClientDC dc(this);
     const auto cx = dc.GetTextExtent(text.c_str(), static_cast<int>(text.size())).cx;
-    m_wndStatusBar.SetPaneWidth(pos, max(cx, ScaleDpi(minWidth)));
+    m_wndStatusBar.SetPaneWidth(pos, max(cx, DpiRest(minWidth)));
     m_wndStatusBar.SetPaneText(pos, text.c_str());
 }
 

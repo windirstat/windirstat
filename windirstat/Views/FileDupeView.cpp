@@ -70,11 +70,11 @@ int CFileDupeView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
 
     // Columns should be in enumeration order so initial sort will work
     const std::wstring hashName = Localization::Lookup(IDS_COL_HASH) + L" / " + Localization::Lookup(IDS_COL_NAME);
-    m_control.InsertColumn(CHAR_MAX, hashName.c_str(), LVCFMT_LEFT, ScaleDpi(500), COL_ITEMDUP_NAME);
-    m_control.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_ITEMS).c_str(), LVCFMT_RIGHT, ScaleDpi(70), COL_ITEMDUP_ITEMS);
-    m_control.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_SIZE_PHYSICAL).c_str(), LVCFMT_RIGHT, ScaleDpi(80), COL_ITEMDUP_SIZE_PHYSICAL);
-    m_control.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_SIZE_LOGICAL).c_str(), LVCFMT_RIGHT, ScaleDpi(80), COL_ITEMDUP_SIZE_LOGICAL);
-    m_control.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_LAST_CHANGE).c_str(), LVCFMT_LEFT, ScaleDpi(120), COL_ITEMDUP_LAST_CHANGE);
+    m_control.InsertColumn(CHAR_MAX, hashName.c_str(), LVCFMT_LEFT, DpiRest(500), COL_ITEMDUP_NAME);
+    m_control.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_ITEMS).c_str(), LVCFMT_RIGHT, DpiRest(70), COL_ITEMDUP_ITEMS);
+    m_control.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_SIZE_PHYSICAL).c_str(), LVCFMT_RIGHT, DpiRest(80), COL_ITEMDUP_SIZE_PHYSICAL);
+    m_control.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_SIZE_LOGICAL).c_str(), LVCFMT_RIGHT, DpiRest(80), COL_ITEMDUP_SIZE_LOGICAL);
+    m_control.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_LAST_CHANGE).c_str(), LVCFMT_LEFT, DpiRest(120), COL_ITEMDUP_LAST_CHANGE);
     m_control.SetSorting(COL_ITEMDUP_SIZE_PHYSICAL, false);
 
     m_control.OnColumnsInserted();
