@@ -62,14 +62,11 @@ void DrawTextCache::DrawTextCached(CDC* pDC, const std::wstring& text, CRect& re
 DrawTextCache::CacheKey DrawTextCache::CreateCacheKey(
     CDC* pDC, const std::wstring& text, const CRect& rect, UINT format) const
 {
-    const int dpiX = ::GetDeviceCaps(pDC->m_hDC, LOGPIXELSX);
-    const int dpiY = ::GetDeviceCaps(pDC->m_hDC, LOGPIXELSY);
-
     return CacheKey{
         .text = text, .textColor = pDC->GetTextColor(),
         .backgroundColor = pDC->GetBkColor(), .format = format,
         .width = static_cast<USHORT>(rect.Width()), .height = static_cast<USHORT>(rect.Height()),
-        .dpiX = static_cast<USHORT>(dpiX), .dpiY = static_cast<USHORT>(dpiY)};
+        .dpi = static_cast<USHORT>(::GetDeviceCaps(pDC->m_hDC, LOGPIXELSX))};
 }
 
 std::unique_ptr<DrawTextCache::CacheEntry> DrawTextCache::CreateCachedBitmap(

@@ -38,7 +38,7 @@ protected:
     bool IsShowTreeMap() const;
     void ShowTreeMap(bool show);
     void DrawEmptyView();
-    std::wstring GetTreeMapHoverPath();
+    std::tuple<std::wstring, ULONGLONG> GetTreeMapHoverInfo();
 
 protected:
     BOOL PreCreateWindow(CREATESTRUCT& cs) override;
@@ -62,14 +62,15 @@ protected:
 
     static constexpr int ZoomFrameWidth = 4;
 
-    std::wstring m_paneTextOverride; // Populated with the last hovered item for a period of time
-    bool m_drawingSuspended = false; // True while the user is resizing the window.
-    bool m_showTreeMap = true;       // False, if the user switched off the treemap (by F9).
-    CSize m_size{ 0, 0 };            // Current size of view
-    CTreeMap m_treeMap;              // Treemap generator
-    CBitmap m_bitmap;                // Cached view. If m_hObject is NULL, the view must be recalculated.
-    CSize m_dimmedSize{ 0,0 };       // Size of bitmap m_dimmed
-    CBitmap m_dimmed;                // Dimmed view. Used during refresh to avoid the ooops-effect.
+    std::wstring m_paneTextOverride;  // Populated with the last hovered item for a period of time
+    ULONGLONG m_paneSizeOverride = 0; // Size of the last hovered item for display in the pane text
+    bool m_drawingSuspended = false;  // True while the user is resizing the window.
+    bool m_showTreeMap = true;        // False, if the user switched off the treemap (by F9).
+    CSize m_size{ 0, 0 };             // Current size of view
+    CTreeMap m_treeMap;               // Treemap generator
+    CBitmap m_bitmap;                 // Cached view. If m_hObject is NULL, the view must be recalculated.
+    CSize m_dimmedSize{ 0,0 };        // Size of bitmap m_dimmed
+    CBitmap m_dimmed;                 // Dimmed view. Used during refresh to avoid the ooops-effect.
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnSize(UINT nType, int cx, int cy);

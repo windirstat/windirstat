@@ -389,20 +389,14 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
 END_MESSAGE_MAP()
 
 constexpr auto ID_STATUSPANE_IDLE_INDEX = 0;
-constexpr auto ID_STATUSPANE_DISK_INDEX = 1;
-constexpr auto ID_STATUSPANE_MEM_INDEX = 2;
-constexpr auto ID_STATUSPANE_CAPS_INDEX = 3;
-constexpr auto ID_STATUSPANE_NUM_INDEX = 4;
-constexpr auto ID_STATUSPANE_SCRL_INDEX = 5;
+constexpr auto ID_STATUSPANE_SIZE_INDEX = 1;
+constexpr auto ID_STATUSPANE_RAM_INDEX = 2;
 
 constexpr UINT indicators[]
 {
     ID_INDICATOR_IDLE,
-    ID_INDICATOR_DISK,
-    ID_INDICATOR_MEM,
-    ID_INDICATOR_CAPS,
-    ID_INDICATOR_NUM,
-    ID_INDICATOR_SCRL,
+    ID_INDICATOR_SIZE,
+    ID_INDICATOR_RAM
 };
 
 CMainFrame* CMainFrame::s_Singleton;
@@ -629,7 +623,7 @@ void CMainFrame::SetStatusPaneText(const int pos, const std::wstring & text, con
     // set status path width and then set text
     const CClientDC dc(this);
     const auto cx = dc.GetTextExtent(text.c_str(), static_cast<int>(text.size())).cx;
-    m_wndStatusBar.SetPaneWidth(pos, max(cx, minWidth));
+    m_wndStatusBar.SetPaneWidth(pos, max(cx, ScaleDpi(minWidth)));
     m_wndStatusBar.SetPaneText(pos, text.c_str());
 }
 
@@ -649,9 +643,6 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
     m_wndStatusBar.Create(this);
     m_wndStatusBar.SetIndicators(indicators, std::size(indicators));
     m_wndStatusBar.SetPaneStyle(ID_STATUSPANE_IDLE_INDEX, SBPS_STRETCH);
-    SetStatusPaneText(ID_STATUSPANE_CAPS_INDEX, Localization::Lookup(IDS_INDICATOR_CAPS));
-    SetStatusPaneText(ID_STATUSPANE_NUM_INDEX, Localization::Lookup(IDS_INDICATOR_NUM));
-    SetStatusPaneText(ID_STATUSPANE_SCRL_INDEX, Localization::Lookup(IDS_INDICATOR_SCRL));
     UpdatePaneText();
 
     // Setup status pane for dark mode
@@ -703,7 +694,9 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
         // load high quality bitmap from resource
         CBitmap bitmap;
-        bitmap.LoadBitmapW(toolbarMap.at(button->m_nID).first);
+        bitmap.Attach(static_cast<HBITMAP>(LoadImage(AfxGetResourceHandle(),
+            MAKEINTRESOURCE(toolbarMap.at(button->m_nID).first),
+            IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION)));
         DarkMode::LightenBitmap(&bitmap);
         const int image = m_images.AddImage(bitmap, TRUE);
         CMFCToolBar::SetUserImages(&m_images);
@@ -1159,9 +1152,11 @@ void CMainFrame::UpdatePaneText()
     ULONGLONG size = MAXULONG64;
 
     // Allow override on hover
-    if (const std::wstring & hover = m_treeMapView->GetTreeMapHoverPath(); !hover.empty())
+    if (const auto [hoverPath, hoverSize] =
+        m_treeMapView->GetTreeMapHoverInfo(); !hoverPath.empty())
     {
-        fileSelectionText = hover;
+        fileSelectionText = hoverPath;
+        size = hoverSize;
     }
 
     // Only get the data the document is not actively updating
@@ -1191,11 +1186,12 @@ void CMainFrame::UpdatePaneText()
     // Update message selection area
     SetStatusPaneText(ID_STATUSPANE_IDLE_INDEX, fileSelectionText);
 
-    // Update disk usage area
-    SetStatusPaneText(ID_STATUSPANE_DISK_INDEX, (size != MAXULONG64) ? (L"      ∑  " + FormatBytes(size)) : L"", 100);
+    // Update select logical size
+    auto sizeSummary = std::format(L"{}: {}", Localization::Lookup(IDS_COL_SIZE_LOGICAL), FormatBytes(size));
+    SetStatusPaneText(ID_STATUSPANE_SIZE_INDEX, (size != MAXULONG64) ? sizeSummary : L"", 175);
 
     // Update memory usage
-    SetStatusPaneText(ID_STATUSPANE_MEM_INDEX, CDirStatApp::GetCurrentProcessMemoryInfo(), 100);
+    SetStatusPaneText(ID_STATUSPANE_RAM_INDEX, CDirStatApp::GetCurrentProcessMemoryInfo(), 175);
 }
 
 void CMainFrame::OnUpdateEnableControl(CCmdUI* pCmdUI)

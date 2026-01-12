@@ -207,7 +207,8 @@
 #define ID_CLEANUP_REMOVE_ROAMING       32819
 #define ID_CLEANUP_OPEN_IN_PWSH         32820
 #define ID_INDICATOR_DISK               32821
-#define ID_INDICATOR_MEM                32822
+#define ID_INDICATOR_SIZE               32841
+#define ID_INDICATOR_RAM                32822
 #define ID_INDICATOR_IDLE               32823
 #define ID_CLEANUP_EMPTY_FOLDER         32824
 #define ID_CLEANUP_HIBERNATE            32825

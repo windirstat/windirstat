@@ -438,7 +438,7 @@ void CTreeMapView::OnUpdate(CView* pSender, const LPARAM lHint, CObject* pHint)
     }
 }
 
-std::wstring CTreeMapView::GetTreeMapHoverPath()
+std::tuple<std::wstring, ULONGLONG>  CTreeMapView::GetTreeMapHoverInfo()
 {
     CPoint point;
     GetCursorPos(&point);
@@ -450,9 +450,10 @@ std::wstring CTreeMapView::GetTreeMapHoverPath()
     if (!rc.PtInRect(point))
     {
         m_paneTextOverride = {};
+        m_paneSizeOverride = 0;
     }
 
-    return m_paneTextOverride;
+    return { m_paneTextOverride, m_paneSizeOverride };
 }
 
 void CTreeMapView::OnContextMenu(CWnd* /*pWnd*/, const CPoint point)
@@ -476,6 +477,7 @@ void CTreeMapView::OnMouseMove(UINT /*nFlags*/, const CPoint point)
         if (item != nullptr)
         {
             m_paneTextOverride = item->GetPath();
+            m_paneSizeOverride = item->GetSizeLogical();
             CMainFrame::Get()->UpdatePaneText();
         }
     }

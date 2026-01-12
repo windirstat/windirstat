@@ -1126,3 +1126,12 @@ bool OptimizeVhd(const std::wstring& vhdPath) noexcept
     return CompactVirtualDisk(vhdHandle, COMPACT_VIRTUAL_DISK_FLAG_NONE,
         &compactParams, nullptr) == ERROR_SUCCESS;
 }
+
+int ScaleDpi(int width, CWnd* wnd) noexcept
+{
+    const HWND h = (wnd && wnd->GetSafeHwnd()) ? wnd->GetSafeHwnd() : nullptr;
+    SmartPointer<HDC> dc([h](HDC hdc) { ReleaseDC(h, hdc); }, GetDC(h));
+
+    const int dpi = dc != nullptr ? ::GetDeviceCaps(dc, LOGPIXELSX) : USER_DEFAULT_SCREEN_DPI;
+    return ::MulDiv(width, dpi, 96);
+}
