@@ -73,10 +73,10 @@ void QueryShadowCopies(ULONGLONG& count, ULONGLONG& bytesUsed)
     if (SUCCEEDED(svcObj->ExecQuery(CComBSTR(L"WQL"), CComBSTR(L"SELECT ID FROM Win32_ShadowCopy"),
         WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY, nullptr, &enumObj)))
     {
-        for (ULONG ret = 0; ret == 0; ++count)
+        for (ULONG ret = 0;; ++count)
         {
             CComPtr<IWbemClassObject> pObj;
-            if (enumObj->Next(WBEM_INFINITE, 1, &pObj, &ret) != WBEM_S_NO_ERROR) break;
+            if (enumObj->Next(WBEM_INFINITE, 1, &pObj, &ret) != WBEM_S_NO_ERROR || ret == 0) break;
         }
     }
 }
