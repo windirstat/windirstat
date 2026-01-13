@@ -379,19 +379,29 @@ BOOL CDirStatApp::InitInstance()
     // Allow user to elevate if desired
     if (IsElevationAvailable() && COptions::ShowElevationPrompt && !hideApp)
     {
-        CMessageBoxDlg elevationPrompt(Localization::Lookup(IDS_ELEVATION_QUESTION),
-            wds::strWinDirStat, MB_YESNO | MB_ICONQUESTION, m_pMainWnd, {},
-            Localization::Lookup(IDS_DONT_SHOW_AGAIN), false);
+        if ([&]() -> bool
+            {
+                const auto result = CMessageBoxDlg::Show(Localization::Lookup(IDS_ELEVATION_QUESTION),
+                    Localization::Lookup(IDS_DONT_SHOW_AGAIN), false, MB_YESNO | MB_ICONQUESTION, m_pMainWnd);
 
-        const INT_PTR result = elevationPrompt.DoModal();
-        COptions::ShowElevationPrompt = !elevationPrompt.IsCheckboxChecked();
-        if (result == IDYES)
+                COptions::ShowElevationPrompt = !result.isChecked;
+
+                if (result.nID == IDYES)
+                {
+                    if (!COptions::ShowElevationPrompt)
+                    {
+                        COptions::AutoElevate = true;
+                    }
+                    RunElevated(m_lpCmdLine);
+                    return true;
+                }
+
+                COptions::AutoElevate = false;
+                return false;
+            }())
         {
-            if (!COptions::ShowElevationPrompt) COptions::AutoElevate = true;
-            RunElevated(m_lpCmdLine);
             return FALSE;
         }
-        else COptions::AutoElevate = false;
     }
 
     // Load from CSV if specified via command line
