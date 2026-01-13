@@ -428,7 +428,7 @@ bool CompressFile(const std::wstring& filePath, const CompressionAlgorithm algor
     USHORT numericAlgorithm = static_cast<USHORT>(algorithm) & ~FILE_PROVIDER_COMPRESSION_MODERN;
     const bool modernAlgorithm = static_cast<USHORT>(algorithm) != numericAlgorithm;
 
-    SmartPointer<HANDLE> handle(CloseHandle, CreateFileW(filePath.c_str(),
+    SmartPointer<HANDLE> handle(CloseHandle, CreateFile(filePath.c_str(),
         GENERIC_READ | GENERIC_WRITE, 0, nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, nullptr));
     if (handle == INVALID_HANDLE_VALUE)
     {
@@ -486,7 +486,7 @@ bool CompressFile(const std::wstring& filePath, const CompressionAlgorithm algor
 std::wstring ComputeFileHashes(const std::wstring& filePath)
 {
     // Open file with smart pointer
-    SmartPointer<HANDLE> hFile(CloseHandle, CreateFileW(filePath.c_str(), GENERIC_READ, FILE_SHARE_READ,
+    SmartPointer<HANDLE> hFile(CloseHandle, CreateFile(filePath.c_str(), GENERIC_READ, FILE_SHARE_READ,
         nullptr, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, nullptr));
     if (hFile == INVALID_HANDLE_VALUE)
     {

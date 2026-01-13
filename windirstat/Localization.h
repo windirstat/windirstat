@@ -38,13 +38,14 @@ public:
 
     static std::wstring Lookup(const std::wstring_view& name)
     {
-        return Contains(name) ? m_map[std::wstring(name)] : std::wstring();
+        auto it = m_map.find(std::wstring(name));
+        return it != m_map.end() ? it->second : std::wstring();
     }
 
     static std::wstring LookupNeutral(const UINT res)
     {
         CStringW name;
-        (void) name.LoadStringW(AfxGetResourceHandle(), res, MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL));
+        (void) name.LoadString(AfxGetResourceHandle(), res, MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL));
         return name.GetString();
     }
 

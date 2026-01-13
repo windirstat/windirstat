@@ -193,6 +193,9 @@ void COptions::SetTreeMapOptions(const CTreeMap::Options& options)
 
 void COptions::CompileFilters()
 {
+    FilteringExcludeDirsRegex.clear();
+    FilteringExcludeFilesRegex.clear();
+
     for (const auto & [optionString, optionRegex] : {
         std::pair{FilteringExcludeDirs.Obj(), std::ref(FilteringExcludeDirsRegex)},
         std::pair{FilteringExcludeFiles.Obj(), std::ref(FilteringExcludeFilesRegex)}})
@@ -203,7 +206,7 @@ void COptions::CompileFilters()
 
             try
             {
-                while (!token.empty() && token.back() == L'\r' || token.back() == L'\\') token.pop_back();
+                while (!token.empty() && (token.back() == L'\r' || token.back() == L'\\')) token.pop_back();
                 optionRegex.get().emplace_back(FilteringUseRegex ? token : GlobToRegex(token),
                     std::regex_constants::icase | std::regex_constants::optimize);
             }

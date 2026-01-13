@@ -485,10 +485,7 @@ void CTreeListControl::OnLButtonDown(const UINT nFlags, const CPoint point)
 {
     m_lButtonDownItem = -1;
 
-    LVHITTESTINFO hti;
-    ZeroMemory(&hti, sizeof(hti));
-    hti.pt = point;
-
+    LVHITTESTINFO hti{ .pt = point };
     const int i = HitTest(&hti);
     if (i == -1)
     {

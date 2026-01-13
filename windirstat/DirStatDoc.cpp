@@ -181,18 +181,18 @@ BOOL CDirStatDoc::OnOpenDocument(CItem* newroot)
 
     CDocument::OnNewDocument(); // --> DeleteContents()
 
-    // Determine root spec string
-    std::wstring spec = newroot->GetName();
+    // Determine root spec string using GetNameView to avoid temporary allocations
+    std::wstring spec(newroot->GetNameView());
     if (newroot->IsTypeOrFlag(IT_MYCOMPUTER))
     {
         std::vector<std::wstring> folders;
         std::ranges::transform(newroot->GetChildren(), std::back_inserter(folders),
-            [](const CItem* obj) -> std::wstring { return obj->GetName().substr(0, 2); });
+            [](const CItem* obj) -> std::wstring { return std::wstring(obj->GetNameView().substr(0, 2)); });
         spec = EncodeSelection(folders);
     }
     else if (newroot->IsTypeOrFlag(IT_DRIVE))
     {
-        spec = newroot->GetName().substr(0, 2);
+        spec = std::wstring(newroot->GetNameView().substr(0, 2));
     }
 
     Get()->SetPathName(spec.c_str(), FALSE);
@@ -364,8 +364,7 @@ void CDirStatDoc::OpenItem(const CItem* item, const std::wstring & verb)
     }
 
     // Launch properties dialog
-    SHELLEXECUTEINFO sei;
-    ZeroMemory(&sei, sizeof(sei));
+    SHELLEXECUTEINFO sei{};
     sei.cbSize = sizeof(sei);
     sei.hwnd = *AfxGetMainWnd();
     sei.lpVerb = verb.empty() ? nullptr : verb.c_str();
@@ -725,9 +724,7 @@ void CDirStatDoc::CallUserDefinedCleanup(const bool isDirectory, const std::wstr
     si.dwFlags     = STARTF_USESHOWWINDOW;
     si.wShowWindow = showConsoleWindow ? SW_SHOWNORMAL : SW_HIDE;
 
-    PROCESS_INFORMATION pi;
-    ZeroMemory(&pi, sizeof(pi));
-
+    PROCESS_INFORMATION pi{};
     if (CreateProcess(app.c_str(), cmdline.data(), nullptr, nullptr, false,
         0, nullptr, directory.c_str(), &si, &pi) == 0)
     {
@@ -1314,7 +1311,7 @@ void CDirStatDoc::OnPowerShellHere()
         SmartPointer<HMODULE> lib(FreeLibrary, LoadLibrary(exe));
         if (lib == nullptr) continue;
         pwsh.resize(MAX_PATH);
-        if (GetModuleFileNameW(lib, pwsh.data(),
+        if (GetModuleFileName(lib, pwsh.data(),
             static_cast<DWORD>(pwsh.size())) > 0 && GetLastError() == ERROR_SUCCESS)
         {
             pwsh.resize(wcslen(pwsh.data()));
@@ -1438,7 +1435,7 @@ void CDirStatDoc::OnDisableHibernateFile()
     {
         for (const auto& child : drive->GetChildren())
         {
-            if (_wcsicmp(child->GetName().c_str(), L"hiberfil.sys") == 0)
+            if (_wcsicmp(child->GetNameView().data(), L"hiberfil.sys") == 0)
             {
                 StartScanningEngine({ child });
             }
@@ -1594,19 +1591,19 @@ void CDirStatDoc::OnComputeHash()
     dlg.DoModal();
 }
 
-CompressionAlgorithm CDirStatDoc::CompressionIdToAlg(const UINT id)
+constexpr CompressionAlgorithm CDirStatDoc::CompressionIdToAlg(const UINT id)
 {
-    const std::unordered_map<UINT, CompressionAlgorithm> compressionMap =
+    switch (id)
     {
-        { ID_COMPRESS_NONE, CompressionAlgorithm::NONE },
-        { ID_COMPRESS_LZNT1, CompressionAlgorithm::LZNT1 },
-        { ID_COMPRESS_XPRESS4K, CompressionAlgorithm::XPRESS4K },
-        { ID_COMPRESS_XPRESS8K, CompressionAlgorithm::XPRESS8K },
-        { ID_COMPRESS_XPRESS16K, CompressionAlgorithm::XPRESS16K },
-        { ID_COMPRESS_LZX, CompressionAlgorithm::LZX }
+        case ID_COMPRESS_NONE: return CompressionAlgorithm::NONE;
+        case ID_COMPRESS_LZNT1: return  CompressionAlgorithm::LZNT1;
+        case ID_COMPRESS_XPRESS4K: return  CompressionAlgorithm::XPRESS4K;
+        case ID_COMPRESS_XPRESS8K: return  CompressionAlgorithm::XPRESS8K;
+        case ID_COMPRESS_XPRESS16K: return  CompressionAlgorithm::XPRESS16K;
+        case ID_COMPRESS_LZX: return  CompressionAlgorithm::LZX;
     };
 
-    return compressionMap.at(id);
+    return CompressionAlgorithm::NONE;
 }
 
 void CDirStatDoc::OnCleanupCompress(UINT id)
@@ -1892,9 +1889,13 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
         {
             queueContextNtfs.emplace(queue.first, FinderNtfsContext{});
             queueContextBasic.emplace(queue.first, FinderBasicContext{});
-            queue.second.StartThreads(COptions::ScanningThreads, [&]()
+
+            auto* queuePtr = &queue.second;
+            auto* ntfsCtx = &queueContextNtfs[queue.first];
+            auto* basicCtx = &queueContextBasic[queue.first];
+            queue.second.StartThreads(COptions::ScanningThreads, [queuePtr, ntfsCtx, basicCtx]()
             {
-                CItem::ScanItems(&queue.second, queueContextNtfs[queue.first], queueContextBasic[queue.first]);
+                CItem::ScanItems(queuePtr, *ntfsCtx, *basicCtx);
             });
         }
 

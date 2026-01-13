@@ -307,7 +307,7 @@ void CExtensionListControl::OnContextMenu(CWnd* /*pWnd*/, CPoint point)
 {
     CMenu menu;
     menu.CreatePopupMenu();
-    menu.AppendMenuW(MF_STRING, ID_EXTLIST_SEARCH_EXTENSION, std::format(
+    menu.AppendMenu(MF_STRING, ID_EXTLIST_SEARCH_EXTENSION, std::format(
         L"{} - {}", Localization::Lookup(IDS_COL_EXTENSION), Localization::Lookup(IDS_SEARCH_TITLE)).c_str());
 
     // Add search bitmap to menu

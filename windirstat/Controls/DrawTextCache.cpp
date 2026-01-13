@@ -29,7 +29,7 @@ void DrawTextCache::DrawTextCached(CDC* pDC, const std::wstring& text, CRect& re
     // If caching is disabled, use normal DrawText API
     if (!COptions::UseDrawTextCache)
     {
-        pDC->DrawTextW(text.c_str(), static_cast<int>(text.length()), &rect, format);
+        pDC->DrawText(text.c_str(), static_cast<int>(text.length()), &rect, format);
         return;
     }
 
@@ -89,7 +89,7 @@ std::unique_ptr<DrawTextCache::CacheEntry> DrawTextCache::CreateCachedBitmap(
 
     // Calculate actual text dimensions
     CRect calcRect(0, 0, rect.Width(), rect.Height());
-    memDC.DrawTextW(text.c_str(), static_cast<int>(text.length()),
+    memDC.DrawText(text.c_str(), static_cast<int>(text.length()),
         &calcRect, format | DT_CALCRECT);
 
     // Get font metrics for accurate text height
@@ -124,7 +124,7 @@ std::unique_ptr<DrawTextCache::CacheEntry> DrawTextCache::CreateCachedBitmap(
     memDC.FillSolidRect(&drawRect, pDC->GetBkColor());
 
     // Draw the text without vertical centering (bitmap is exact text height)
-    memDC.DrawTextW(text.c_str(), static_cast<int>(text.length()),
+    memDC.DrawText(text.c_str(), static_cast<int>(text.length()),
         &drawRect, format & ~DT_VCENTER);
 
     return entry;

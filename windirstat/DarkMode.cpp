@@ -30,10 +30,10 @@ using PreferredAppMode = enum : DWORD
 };
 
 static DWORD(WINAPI* SetPreferredAppMode)(PreferredAppMode word) = reinterpret_cast<decltype(SetPreferredAppMode)>(
-    reinterpret_cast<LPVOID>(GetProcAddress(LoadLibraryW(L"uxtheme.dll"), MAKEINTRESOURCEA(135))));
+    reinterpret_cast<LPVOID>(GetProcAddress(LoadLibrary(L"uxtheme.dll"), MAKEINTRESOURCEA(135))));
 
 static DWORD(WINAPI* AllowDarkModeForWindow)(HWND hwnd, bool allow) = reinterpret_cast<decltype(AllowDarkModeForWindow)>(
-    reinterpret_cast<LPVOID>(GetProcAddress(LoadLibraryW(L"uxtheme.dll"), MAKEINTRESOURCEA(133))));
+    reinterpret_cast<LPVOID>(GetProcAddress(LoadLibrary(L"uxtheme.dll"), MAKEINTRESOURCEA(133))));
 
 static LONG(WINAPI* RtlGetVersion)(LPOSVERSIONINFOEXW) = reinterpret_cast<decltype(RtlGetVersion)>(
     reinterpret_cast<LPVOID>(GetProcAddress(GetModuleHandle(L"ntdll.dll"), "RtlGetVersion")));

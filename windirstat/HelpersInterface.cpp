@@ -359,7 +359,7 @@ void ProcessMessagesUntilSignaled(const std::function<void()>& callback)
         std::jthread([wnd, &callback]() mutable
             {
                 callback();
-                wnd->PostMessageW(waitMessage, 0, 0);
+                wnd->PostMessage(waitMessage, 0, 0);
             }).detach();
 
         MSG msg;

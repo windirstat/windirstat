@@ -38,7 +38,8 @@ bool FinderBasic::FindNext()
             .Buffer = m_search.data()
         };
 
-        const auto BUFFER_SIZE = static_cast<ULONG>(m_directoryInfo.size());
+        const auto BUFFER_SIZE = static_cast<ULONG>(4 * 1024 * 1024);
+        thread_local std::vector<LARGE_INTEGER> m_directoryInfo(BUFFER_SIZE / sizeof(LARGE_INTEGER));
         constexpr auto FileFullDirectoryInformation = 2;
         constexpr auto FileIdFullDirectoryInformation = 38;
         IO_STATUS_BLOCK IoStatusBlock;
@@ -121,7 +122,8 @@ bool FinderBasic::FindNext()
         }
 
         // Correct physical size
-        if (m_currentInfo->AllocationSize.QuadPart == 0 &&
+        if (!(m_currentInfo->FileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
+            m_currentInfo->AllocationSize.QuadPart == 0 &&
             ((m_currentInfo->EndOfFile.QuadPart > m_context->ClusterSize ||
              (m_currentInfo->FileAttributes & FILE_ATTRIBUTE_SPARSE_FILE) != 0) ||
              (m_currentInfo->FileAttributes & FILE_ATTRIBUTE_COMPRESSED) != 0))

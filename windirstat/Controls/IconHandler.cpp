@@ -227,7 +227,7 @@ HICON CIconHandler::IconFromFontChar(const WCHAR ch, const COLORREF textColor, c
     const CSize textSize = memDC.GetTextExtent(&ch, 1);
     const int x = (RENDER_SIZE - textSize.cx) / 2;
     const int y = (RENDER_SIZE - textSize.cy) / 2;
-    memDC.TextOutW(x, y, &ch, 1);
+    memDC.TextOut(x, y, &ch, 1);
 
     // Apply color with alpha
     const BYTE r = GetRValue(textColor);

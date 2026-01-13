@@ -190,7 +190,7 @@ protected:
     void CreatePacmanProgress();
     void DestroyProgress();
 
-    void SetStatusPaneText(int pos, const std::wstring& text, int minWidth = 0);
+    void SetStatusPaneText(CDC& cdc, int pos, const std::wstring& text, int minWidth = 0);
     void UpdateCleanupMenu(CMenu* menu, bool triggerAsync = true);
 
     UINT_PTR m_timer = 0;           // Timer for updating the display

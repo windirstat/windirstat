@@ -613,7 +613,7 @@ void CMainFrame::DestroyProgress()
     m_progressVisible = false;
 }
 
-void CMainFrame::SetStatusPaneText(const int pos, const std::wstring & text, const int minWidth)
+void CMainFrame::SetStatusPaneText(CDC& cdc, const int pos, const std::wstring & text, const int minWidth)
 {
     // do not process the update if text is the same
     static std::unordered_map<int, std::wstring> last;
@@ -621,8 +621,7 @@ void CMainFrame::SetStatusPaneText(const int pos, const std::wstring & text, con
     last.insert_or_assign(pos, text);
 
     // set status path width and then set text
-    const CClientDC dc(this);
-    const auto cx = dc.GetTextExtent(text.c_str(), static_cast<int>(text.size())).cx;
+    const auto cx = cdc.GetTextExtent(text.c_str(), static_cast<int>(text.size())).cx;
     m_wndStatusBar.SetPaneWidth(pos, max(cx, DpiRest(minWidth)));
     m_wndStatusBar.SetPaneText(pos, text.c_str());
 }
@@ -1010,10 +1009,7 @@ void CMainFrame::QueryRecycleBin(ULONGLONG& items, ULONGLONG& bytes)
             continue;
         }
 
-        SHQUERYRBINFO qbi;
-        ZeroMemory(&qbi, sizeof(qbi));
-        qbi.cbSize = sizeof(qbi);
-
+        SHQUERYRBINFO qbi{ .cbSize = sizeof(qbi) };
         if (FAILED(::SHQueryRecycleBin(s.c_str(), &qbi)))
         {
             continue;
@@ -1032,7 +1028,7 @@ std::pair<CMenu*,int> CMainFrame::LocateNamedMenu(const CMenu* menu, const std::
     for (const int i : std::views::iota(0, menu->GetMenuItemCount()))
     {
         CStringW menuString;
-        if (menu->GetMenuStringW(i, menuString, MF_BYPOSITION) > 0 &&
+        if (menu->GetMenuString(i, menuString, MF_BYPOSITION) > 0 &&
             _wcsicmp(menuString, subMenuText.c_str()) == 0)
         {
             subMenu = menu->GetSubMenu(i);
@@ -1183,15 +1179,12 @@ void CMainFrame::UpdatePaneText()
         }
     }
 
-    // Update message selection area
-    SetStatusPaneText(ID_STATUSPANE_IDLE_INDEX, fileSelectionText);
-
     // Update select logical size
+    CClientDC dc(this);
     auto sizeSummary = std::format(L"{}: {}", Localization::Lookup(IDS_COL_SIZE_LOGICAL), FormatBytes(size));
-    SetStatusPaneText(ID_STATUSPANE_SIZE_INDEX, (size != MAXULONG64) ? sizeSummary : L"", 175);
-
-    // Update memory usage
-    SetStatusPaneText(ID_STATUSPANE_RAM_INDEX, CDirStatApp::GetCurrentProcessMemoryInfo(), 175);
+    SetStatusPaneText(dc, ID_STATUSPANE_IDLE_INDEX, fileSelectionText);
+    SetStatusPaneText(dc, ID_STATUSPANE_SIZE_INDEX, (size != MAXULONG64) ? sizeSummary : L"", 175);
+    SetStatusPaneText(dc, ID_STATUSPANE_RAM_INDEX, CDirStatApp::GetCurrentProcessMemoryInfo(), 175);
 }
 
 void CMainFrame::OnUpdateEnableControl(CCmdUI* pCmdUI)

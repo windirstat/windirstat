@@ -45,7 +45,7 @@ CItem::CItem(const ITEMTYPE type, const std::wstring & name) : m_type(type)
         // The name string on the drive is two parts separated by a pipe. For example,
         // C:\|Local Disk (C:) is the true path followed by the name description
         SetName(std::format(L"{:.2}|{}", nameTmp, FormatVolumeNameOfRootPath(nameTmp)));
-        m_attributes = LOWORD(GetFileAttributesW(GetPathLong().c_str()));
+        m_attributes = LOWORD(GetFileAttributes(GetPathLong().c_str()));
     }
     else
     {
@@ -160,7 +160,7 @@ std::wstring CItem::GetText(const int subitem) const
     case COL_NAME:
         if (IsTypeOrFlag(IT_DRIVE))
         {
-            return GetName().substr(std::size(L"?:"));
+            return std::wstring(GetNameView().substr(std::size(L"?:")));
         }
         return GetName();
 
@@ -605,7 +605,7 @@ void CItem::RemoveChild(CItem* child)
                             // Find and remove the file reference matching this child
                             for (auto* fileRef : indexFolder->GetChildren())
                             {
-                                if (fileRef->IsTypeOrFlag(IT_HLINKS_FILE) && fileRef->GetName() == child->GetName())
+                                if (fileRef->IsTypeOrFlag(IT_HLINKS_FILE) && fileRef->GetNameView() == child->GetNameView())
                                 {
                                     indexFolder->RemoveChild(fileRef);
                                     break;
@@ -971,6 +971,7 @@ std::wstring CItem::GetOwner(const bool force) const
 bool CItem::HasUncPath() const
 {
     return GetPath().starts_with(L"\\\\");
+
 }
 
 // Returns the path for "Explorer here" or "Command Prompt here"
@@ -995,7 +996,12 @@ void CItem::SetName(std::wstring_view name)
     m_name[m_nameLen] = L'\0';
 }
 
-std::wstring CItem::GetName() const
+std::wstring CItem::GetName() const noexcept
+{
+    return { m_name.get(), m_nameLen };
+}
+
+std::wstring_view CItem::GetNameView() const noexcept
 {
     return { m_name.get(), m_nameLen };
 }
@@ -1003,10 +1009,10 @@ std::wstring CItem::GetName() const
 std::wstring CItem::GetExtension() const
 {
     if (!IsTypeOrFlag(IT_FILE)) return GetName();
-    const auto & extName = GetName();
+    const auto extName = GetNameView();
     const auto pos = extName.rfind('.');
-    if (pos == std::string::npos) return {};
-    std::wstring extLower = extName.substr(pos);
+    if (pos == std::wstring_view::npos) return {};
+    std::wstring extLower(extName.substr(pos));
     _wcslwr_s(extLower.data(), extLower.size() + 1);
     return extLower;
 }
@@ -1240,7 +1246,7 @@ CItem* CItem::FindRecyclerItem() const
         {
             for (const auto& child : p->GetChildren())
             {
-                if (child->IsTypeOrFlag(IT_DIRECTORY) && _wcsicmp(child->GetName().c_str(), possible) == 0)
+                if (child->IsTypeOrFlag(IT_DIRECTORY) && _wcsicmp(child->GetNameView().data(), possible) == 0)
                 {
                     return child;
                 }
@@ -1290,7 +1296,7 @@ void CItem::UpdateFreeSpaceItem()
         auto [total, free] = CDirStatApp::GetFreeDiskSpace(GetPath());
 
         // Recreate name based on updated free space and percentage
-        SetName(std::format(L"{:.2}|{} - {} ({:.1f}%)", GetName(),
+        SetName(std::format(L"{:.2}|{} - {} ({:.1f}%)", GetNameView(),
             FormatVolumeNameOfRootPath(GetPath()), Localization::Format(
                 IDS_DRIVE_ITEM_FREEsTOTALs, FormatBytes(free), FormatBytes(total)),
             100.0 * free / total));
@@ -1863,7 +1869,7 @@ CItem* CItem::FindItemByPath(const std::wstring& path) const
     if (components.empty()) return nullptr;
 
     // First component should match the drive (e.g., "C:")
-    if (components[0] != pathDrive->GetName().substr(0, 2)) return nullptr;
+    if (components[0] != GetNameView().substr(0, 2)) return nullptr;
 
     // Start from the drive and process remaining components
     CItem* current = pathDrive;
@@ -1871,8 +1877,8 @@ CItem* CItem::FindItemByPath(const std::wstring& path) const
     {
         if (current->IsLeaf()) return nullptr;
 
-        // Find the matching child
-        auto it = std::ranges::find(current->GetChildren(), components[i], &CItem::GetName);
+        // Find the matching child using GetNameView for comparison
+        auto it = std::ranges::find_if(current->GetChildren(), [&](CItem* child) { return child->GetNameView() == components[i]; });
         if (it == current->GetChildren().end()) return nullptr;
         current = *it;
     }

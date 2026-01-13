@@ -143,10 +143,9 @@ public:
 
     void WaitIfSuspended()
     {
-        if (!m_suspended) return;
-
         // wait until not suspended or its cancelled
         std::unique_lock lock(m_mutex);
+        if (!m_suspended) return;
         m_workersWaiting++;
         m_waiting.notify_all();
         m_waiting.wait(lock, [&]
@@ -177,10 +176,13 @@ public:
     void CancelExecution(const int stopReason = -1)
     {
         // Start cancellation process
-        if (stopReason != -1) m_stopReason = stopReason;
-        m_cancelled = true;
-        m_waiting.notify_all();
-        m_pushed.notify_all();
+        if (std::scoped_lock lock(m_mutex); true)
+        {
+            if (stopReason != -1) m_stopReason = stopReason;
+            m_cancelled = true;
+            m_waiting.notify_all();
+            m_pushed.notify_all();
+        }
 
         // Wait for threads to complete
         for (auto& thread : m_threads)
@@ -194,8 +196,8 @@ public:
 
     void SuspendExecution(const bool clearQueue = false)
     {
-        if (!m_started) return;
         std::unique_lock lock(m_mutex);
+        if (!m_started) return;
         m_suspended = true;
         m_waiting.notify_all();
         m_waiting.wait(lock, [&]

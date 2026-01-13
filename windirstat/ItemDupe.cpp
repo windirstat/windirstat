@@ -23,7 +23,7 @@ CItemDupe::CItemDupe(const std::vector<BYTE>& hash) : m_hash(hash)
 {
     m_hashString.resize(2ull * m_hash.size());
     DWORD iHashStringLength = static_cast<DWORD>(m_hashString.size() + 1ull);
-    CryptBinaryToStringW(m_hash.data(), static_cast<DWORD>(m_hash.size()),
+    CryptBinaryToString(m_hash.data(), static_cast<DWORD>(m_hash.size()),
         CRYPT_STRING_HEXRAW | CRYPT_STRING_NOCRLF, m_hashString.data(), &iHashStringLength);
 }
 

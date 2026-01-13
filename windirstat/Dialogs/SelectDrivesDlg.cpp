@@ -426,7 +426,7 @@ BOOL CSelectDrivesDlg::OnInitDialog()
     UpdateData(FALSE);
 
     CBitmap bitmap;
-    bitmap.LoadBitmapW(IDB_FILE_SELECT);
+    bitmap.LoadBitmap(IDB_FILE_SELECT);
     DarkMode::LightenBitmap(&bitmap);
     m_browseButton.SetBitmap(bitmap);
 
@@ -645,11 +645,7 @@ LRESULT CSelectDrivesDlg::OnWmDriveInfoThreadFinished(const WPARAM wParam, const
     const bool success = (wParam != 0);
 
     // Find the item in the list to verify it still exists
-    LVFINDINFO fi;
-    ZeroMemory(&fi, sizeof(fi));
-    fi.flags  = LVFI_PARAM;
-    fi.lParam = lparam;
-
+    LVFINDINFO fi{ .flags = LVFI_PARAM, .lParam = lparam };
     if (m_driveList.FindItem(&fi) == -1)
     {
         VTRACE(L"Item not found!");

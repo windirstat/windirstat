@@ -477,7 +477,7 @@ void CDirStatApp::LegacyUninstall()
     {
         const std::wstring exeName = wds::strWinDirStat;
         PROCESSENTRY32W pe{ .dwSize = sizeof(pe) };
-        for (BOOL hasProcess = Process32FirstW(snap, &pe); hasProcess; hasProcess = Process32NextW(snap, &pe))
+        for (BOOL hasProcess = Process32First(snap, &pe); hasProcess; hasProcess = Process32NextW(snap, &pe))
         {
             if (_wcsnicmp(pe.szExeFile, exeName.c_str(), exeName.size()) != 0 ||
                 pe.th32ProcessID == GetCurrentProcessId()) continue;
@@ -535,7 +535,7 @@ void CDirStatApp::LegacyUninstall()
         }
 
         // Delete registry key
-        SHDeleteKeyW(regInfo.rootKey, (regInfo.subKey + L"\\WinDirStat").c_str());
+        SHDeleteKey(regInfo.rootKey, (regInfo.subKey + L"\\WinDirStat").c_str());
     }
 
     // Remove shortcuts and start menu items for all users
@@ -555,7 +555,7 @@ void CDirStatApp::LegacyUninstall()
 
     // Remove ProgramData start menu items
     std::array<WCHAR, MAX_PATH> programData;
-    if (SHGetFolderPathW(nullptr, CSIDL_COMMON_APPDATA, nullptr, 0, programData.data()) != S_OK) return;
+    if (SHGetFolderPath(nullptr, CSIDL_COMMON_APPDATA, nullptr, 0, programData.data()) != S_OK) return;
     fs::remove_all(fs::path(programData.data()) / startMenuLocation, ec);
     ExitProcess(0);
 }

@@ -166,7 +166,7 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
     while (!volumePath.empty() && volumePath.back() == L'\\') volumePath.pop_back();
     if (!volumePath.empty() && volumePath[0] != L'\\' && volumePath[0] != L'/') volumePath.insert(0, L"\\\\.\\");
 
-    // Open volume handle without FILE_FLAG_OVERLAPPED for synchronous I/O
+    // Open volume handle with FILE_FLAG_OVERLAPPED for asynchronous I/O
     SmartPointer<HANDLE> volumeHandle(CloseHandle, CreateFile(volumePath.c_str(), FILE_READ_DATA | FILE_READ_ATTRIBUTES | SYNCHRONIZE,
         FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING,
         FILE_FLAG_NO_BUFFERING | FILE_FLAG_OVERLAPPED, nullptr));

@@ -64,7 +64,6 @@ class FinderBasic final : public Finder
     };
     #pragma pack(pop)
 
-    std::vector<LARGE_INTEGER> m_directoryInfo = std::vector<LARGE_INTEGER>((4 * 1024 * 1024) / sizeof(LARGE_INTEGER));
     std::wstring m_search;
     std::wstring m_base;
     std::wstring m_name;

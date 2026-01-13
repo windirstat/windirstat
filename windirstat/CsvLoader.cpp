@@ -247,7 +247,7 @@ bool SaveResults(const std::wstring& path, CItem* rootItem)
         std::vector<CItem*> children = qitem->GetChildren();
         std::sort(children.begin(), children.end(), [](auto a, auto b)
         {
-            return _wcsicmp(a->GetName().c_str(), b->GetName().c_str()) > 0;
+            return _wcsicmp(a->GetNameView().data(), b->GetNameView().data()) > 0;
         });
 
         // Descend into childitems

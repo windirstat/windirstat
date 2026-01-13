@@ -61,7 +61,7 @@ bool Localization::CrackStrings(std::basic_istream<char>& stream, const unsigned
 std::vector<LANGID> Localization::GetLanguageList()
 {
     std::vector<LANGID> results;
-    EnumResourceLanguagesExW(nullptr, LANG_RESOURCE_TYPE, MAKEINTRESOURCE(IDR_RT_LANG), [](HMODULE, LPCWSTR, LPCWSTR, const WORD wIDLanguage, const LONG_PTR lParam)->BOOL
+    EnumResourceLanguagesEx(nullptr, LANG_RESOURCE_TYPE, MAKEINTRESOURCE(IDR_RT_LANG), [](HMODULE, LPCWSTR, LPCWSTR, const WORD wIDLanguage, const LONG_PTR lParam)->BOOL
     {
         std::bit_cast<std::vector<LANGID>*>(lParam)->push_back(wIDLanguage);
         return TRUE;
@@ -115,7 +115,7 @@ void Localization::UpdateMenu(CMenu& menu)
             MENUITEMINFOW mi{ .cbSize = sizeof(MENUITEMINFOW) };
             mi.fMask = MIIM_STRING,
             mi.dwTypeData = const_cast<LPWSTR>(m_map[text.GetString()].c_str());
-            menu.SetMenuItemInfoW(i, &mi, TRUE);
+            menu.SetMenuItemInfo(i, &mi, TRUE);
         }
 
         if (CMenu* sub = menu.GetSubMenu(i); sub != nullptr) UpdateMenu(*sub);

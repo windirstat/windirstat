@@ -94,7 +94,7 @@ void CFileSearchControl::ProcessSearch(CItem* item,
 
             // Check for match
             if ((!onlyFiles || qitem->IsTypeOrFlag(IT_FILE)) &&
-                searchFunc(qitem->GetName(), searchTermRegex))
+                searchFunc(std::wstring(qitem->GetNameView()), searchTermRegex))
             {
                 matchedItems.push_back(qitem);
             }
