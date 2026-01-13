@@ -20,6 +20,7 @@
 #include "HelpersInterface.h"
 #include "Options.h"
 #include "Localization.h"
+#include "SelectObject.h"
 
 static NTSTATUS(NTAPI* RtlDecompressBufferEx)(USHORT CompressionFormat, PUCHAR UncompressedBuffer,
     ULONG  UncompressedBufferSize, PUCHAR CompressedBuffer, ULONG  CompressedBufferSize,
@@ -522,4 +523,70 @@ std::vector<BYTE> GetCompressedResource(const HRSRC resource) noexcept
     }
 
     return decompressedData;
+}
+
+// Tree node drawing helper
+void DrawTreeNodeConnector(CDC* pdc, const CRect& nodeRect, const COLORREF bgColor,
+    const bool toTop, const bool toBottom, const bool toRight, const bool showPlus, const bool showMinus)
+{
+    const int nodeWidth = nodeRect.Width();
+    const int nodeHeight = nodeRect.Height();
+    const int centerX = nodeRect.left + nodeWidth / 2;
+    const int centerY = nodeRect.top + nodeHeight / 2;
+    
+    // Create pen once for all connector lines
+    constexpr DWORD dashPattern[] = { 1, 2 };
+    LOGBRUSH lb = { BS_SOLID, DarkMode::IsDarkModeActive() ? RGB(160, 160, 160) : RGB(128, 128, 128), 0 };
+    CPen linePen(PS_GEOMETRIC | PS_USERSTYLE | PS_ENDCAP_FLAT, 1, &lb, 2, dashPattern);
+    CSelectObject sopen(pdc, &linePen);
+
+    if (showPlus || showMinus)
+    {
+        // Calculate plus/minus box dimensions once
+        const int boxSize = max(nodeHeight / 3, 7) | 1;
+        const int boxHalf = boxSize / 2;
+        const int boxLeft = centerX - boxHalf;
+        const int boxRight = centerX + boxHalf + 1;
+        const int boxTop = centerY - boxHalf;
+        const int boxBottom = centerY + boxHalf + 1;
+
+        // Draw connector lines
+        if (toTop) pdc->MoveTo(centerX, nodeRect.top), pdc->LineTo(centerX, boxTop);
+        if (toBottom) pdc->MoveTo(centerX, boxBottom), pdc->LineTo(centerX, nodeRect.bottom);
+        if (toRight) pdc->MoveTo(boxRight, centerY), pdc->LineTo(nodeRect.right, centerY);
+        
+        // Draw plus/minus box
+        CRect boxRect(boxLeft, boxTop, boxRight, boxBottom);
+        pdc->FillSolidRect(boxRect, bgColor);
+
+        // Switch to solid pen for box border
+        CPen boxPen(PS_SOLID, 1, lb.lbColor);
+        CSelectObject soBoxPen(pdc, &boxPen);
+        
+        // Draw box border
+        pdc->MoveTo(boxLeft, boxTop);
+        pdc->LineTo(boxRight - 1, boxTop);
+        pdc->LineTo(boxRight - 1, boxBottom - 1);
+        pdc->LineTo(boxLeft, boxBottom - 1);
+        pdc->LineTo(boxLeft, boxTop);
+
+        // Draw minus sign and optional plus vertical
+        const int signMargin = max(boxSize / 4, 2);
+        pdc->MoveTo(boxLeft + signMargin, centerY);
+        pdc->LineTo(boxRight - signMargin, centerY);
+
+        if (showPlus)
+        {
+            pdc->MoveTo(centerX, boxTop + signMargin);
+            pdc->LineTo(centerX, boxBottom - signMargin);
+        }
+    }
+    else
+    {
+        // Draw simple connectors without box
+        if (toTop && toBottom) pdc->MoveTo(centerX, nodeRect.top), pdc->LineTo(centerX, nodeRect.bottom);
+        else if (toTop) pdc->MoveTo(centerX, nodeRect.top), pdc->LineTo(centerX, centerY + 1);
+        else if (toBottom) pdc->MoveTo(centerX, centerY), pdc->LineTo(centerX, nodeRect.bottom);
+        if (toRight) pdc->MoveTo(centerX, centerY), pdc->LineTo(nodeRect.right, centerY);
+    }
 }

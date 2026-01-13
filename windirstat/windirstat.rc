@@ -121,10 +121,6 @@ END
 // Bitmap
 //
 
-IDB_NODES               BITMAP                  "res\\IDB_NODES.bmp"
-
-IDB_NODES_INVERT        BITMAP                  "res\\IDB_NODES_INVERT.bmp"
-
 IDR_MAINFRAME           BITMAP                  "res\\IDR_MAINFRAME.bmp"
 
 IDB_TREEMAP_ZOOMOUT     BITMAP                  "res\\toolbar\\IDB_TREEMAP_ZOOMOUT.bmp"

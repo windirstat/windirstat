@@ -670,7 +670,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="res\IDB_NODES.bmp" />
     <None Include="res\langs\lang_cs.bin" />
     <None Include="res\langs\lang_de.bin" />
     <None Include="res\langs\lang_et.bin" />
@@ -703,7 +702,6 @@
     <ResourceCompile Include="version.rc" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="res\IDB_NODES_INVERT.bmp" />
     <Image Include="res\toolbar\IDB_FILTER.bmp" />
     <Image Include="res\toolbar\IDB_SEARCH.bmp" />
     <Image Include="res\WinDirStat.ico" />

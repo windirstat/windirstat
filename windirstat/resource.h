@@ -18,8 +18,6 @@
 #define IDR_POPUP_TREE                  129
 #define IDR_POPUP_MAP                   130
 #define IDR_LICENSE                     131
-#define IDB_NODES                       200
-#define IDB_NODES_INVERT                201
 #define IDB_FILTER                      202
 #define IDB_FILE_SELECT                 203
 #define IDB_SEARCH                      204
@@ -207,7 +205,6 @@
 #define ID_CLEANUP_REMOVE_ROAMING       32819
 #define ID_CLEANUP_OPEN_IN_PWSH         32820
 #define ID_INDICATOR_DISK               32821
-#define ID_INDICATOR_SIZE               32841
 #define ID_INDICATOR_RAM                32822
 #define ID_INDICATOR_IDLE               32823
 #define ID_CLEANUP_EMPTY_FOLDER         32824
@@ -226,6 +223,7 @@
 #define ID_CLEANUP_MOVE_TO              32838
 #define ID_CLEANUP_OPTIMIZE_VHD         32839
 #define ID_EXTLIST_SEARCH_EXTENSION     32840
+#define ID_INDICATOR_SIZE               32841
 #define IDS_AUTHOR_EMAIL                57345
 #define IDS_URL_WEBSITE                 57346
 #define IDS_URL_HELP                    57347

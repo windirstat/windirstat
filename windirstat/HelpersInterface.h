@@ -89,6 +89,10 @@ std::vector<BYTE> GetCompressedResource(HRSRC resource) noexcept;
 inline bool IsControlKeyDown() noexcept { return (HSHELL_HIGHBIT & GetKeyState(VK_CONTROL)) != 0; };
 inline bool IsShiftKeyDown() noexcept { return (HSHELL_HIGHBIT & GetKeyState(VK_SHIFT)) != 0; };
 
+// Tree node drawing helper
+void DrawTreeNodeConnector(CDC* pdc, const CRect& nodeRect, COLORREF bgColor,
+    bool toTop, bool toBottom, bool toRight, bool showPlus, bool showMinus);
+
 // Rect struct
 using CSmallRect = struct CSmallRect
 {

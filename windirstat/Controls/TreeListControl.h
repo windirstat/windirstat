@@ -146,7 +146,7 @@ class CTreeListControl : public COwnerDrawnListControl
 
 protected:
     virtual void OnItemDoubleClick(int i);
-    void InitializeNodeBitmaps();
+    void RebuildNodeMetrics();
     void InsertItem(int i, CTreeListItem* item);
     void DeleteItem(int i);
     void CollapseItem(int i);
@@ -156,8 +156,6 @@ protected:
     //
     /////////////////////////////////////////////////////
 
-    CBitmap m_bmNodes0;                // The bitmaps needed to draw the treecontrol-like branches
-    CBitmap m_bmNodes1;                // The same bitmaps with stripe-background color
     int m_lButtonDownItem = -1;        // Set in OnLButtonDown(). -1 if not item hit.
     bool m_lButtonDownOnPlusMinusRect = false; // Set in OnLButtonDown(). True, if plus-minus-rect hit.
 

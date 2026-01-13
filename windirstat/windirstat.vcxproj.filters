@@ -42,9 +42,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="res\IDB_NODES.bmp">
-      <Filter>Resource Files\Resources</Filter>
-    </None>
     <None Include="res\license.txt">
       <Filter>Resource Files\Resources</Filter>
     </None>
@@ -525,9 +522,6 @@
       <Filter>Resource Files\Resources</Filter>
     </Image>
     <Image Include="res\toolbar\IDB_SEARCH.bmp">
-      <Filter>Resource Files\Resources</Filter>
-    </Image>
-    <Image Include="res\IDB_NODES_INVERT.bmp">
       <Filter>Resource Files\Resources</Filter>
     </Image>
   </ItemGroup>

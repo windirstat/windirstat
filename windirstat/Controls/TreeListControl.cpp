@@ -19,29 +19,6 @@
 #include "SelectObject.h"
 #include "TreeListControl.h"
 
-namespace
-{
-    // Sequence within IDB_NODES
-    enum : std::uint8_t
-    {
-        NODE_PLUS_SIBLING,
-        NODE_PLUS_END,
-        NODE_MINUS_SIBLING,
-        NODE_MINUS_END,
-        NODE_SIBLING,
-        NODE_END,
-        NODE_LINE
-    };
-
-    constexpr auto NODE_WIDTH = 15; // Width of a node within IDB_NODES
-    constexpr auto NODE_HEIGHT = 24; // Height of IDB_NODES
-    constexpr auto INDENT_WIDTH = 18;
-
-    constexpr auto HOTNODE_CX = 9; // Size and position of the +/- buttons
-    constexpr auto HOTNODE_CY = 9;
-    constexpr auto HOTNODE_X = 0;
-}
-
 bool CTreeListItem::DrawSubItem(const int subitem, CDC* pdc, CRect rc, const UINT state, int* width, int* focusLeft)
 {
     if (subitem != 0)
@@ -176,14 +153,14 @@ bool CTreeListItem::IsAncestorOf(const CTreeListItem* item) const
 
 bool CTreeListItem::HasMoreSiblings() const
 {
-    if (m_parent == nullptr)
-    {
-        return false;
-    }
+    // Get the index of the final visible item of the parent
+    LVFINDINFO fi{ .flags = LVFI_PARAM, .lParam = reinterpret_cast<LPARAM>(GetParent()) };
+    int parentIndex = m_visualInfo->control->FindItem(&fi);
+    if (parentIndex == -1) return false;
 
-    const auto thisIndex = m_visualInfo->control->FindTreeItem(this);
-    const auto nextVisualItem = m_visualInfo->control->GetItem(thisIndex + 1);
-    return nextVisualItem != nullptr && m_parent == nextVisualItem->GetParent();
+    // See if that visual item is this item
+    return (m_visualInfo->control->GetItem(parentIndex +
+        GetParent()->GetTreeListChildCount()) != this);
 }
 
 bool CTreeListItem::HasChildren() const
@@ -263,14 +240,10 @@ IMPLEMENT_DYNAMIC(CTreeListControl, COwnerDrawnListControl)
 CTreeListControl::CTreeListControl(std::vector<int>* columnOrder, std::vector<int>* columnWidths)
     : COwnerDrawnListControl(columnOrder, columnWidths)
 {
-    ASSERT(GetRowHeight() <= NODE_HEIGHT); // can't be higher
-    ASSERT(GetRowHeight() % 2 == 0);       // must be an even number
 }
 
 BOOL CTreeListControl::CreateExtended(const DWORD dwExStyle, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, const UINT nID)
 {
-    InitializeNodeBitmaps();
-
     dwStyle |= LVS_OWNERDRAWFIXED;
 
     const BOOL bRet = Create(dwStyle, rect, pParentWnd, nID);
@@ -284,7 +257,6 @@ BOOL CTreeListControl::CreateExtended(const DWORD dwExStyle, DWORD dwStyle, cons
 void CTreeListControl::SysColorChanged()
 {
     COwnerDrawnListControl::SysColorChanged();
-    InitializeNodeBitmaps();
 }
 
 CTreeListItem* CTreeListControl::GetItem(const int i) const
@@ -383,20 +355,6 @@ void CTreeListControl::OnItemDoubleClick(const int i)
     ToggleExpansion(i);
 }
 
-void CTreeListControl::InitializeNodeBitmaps()
-{
-    m_bmNodes0.DeleteObject();
-    m_bmNodes1.DeleteObject();
-
-    COLORMAP cm[1] = { {RGB(255, 0, 255), 0} };
-
-    auto bitmapToUse = DarkMode::IsDarkModeActive() ? IDB_NODES_INVERT : IDB_NODES;
-    cm[0].to = GetWindowColor();
-    m_bmNodes0.LoadMappedBitmap(bitmapToUse, 0, cm, 1);
-    cm[0].to = GetStripeColor();
-    m_bmNodes1.LoadMappedBitmap(bitmapToUse, 0, cm, 1);
-}
-
 void CTreeListControl::InsertItem(const int i, CTreeListItem* item)
 {
     InsertListItem(i, item);
@@ -425,60 +383,69 @@ END_MESSAGE_MAP()
 
 void CTreeListControl::DrawNode(CDC* pdc, CRect& rc, CRect& rcPlusMinus, const CTreeListItem* item, int* width)
 {
+    const int nodeSize = GetRowHeight();
+    const int indentOffset = nodeSize * 7 / 8;
+
     CRect rcRest = rc;
-    rcRest.left += GetGeneralLeftIndent();
-    if (item->GetIndent() > 0)
+    rcRest.left += GetGeneralLeftIndent() + 3;
+    
+    // Early exit: handle width calculation only
+    if (item->GetIndent() == 0)
     {
-        rcRest.left += 3;
-
-        CDC dcmem;
-        dcmem.CreateCompatibleDC(pdc);
-        CSelectObject sonodes(&dcmem, IsItemStripColor(FindTreeItem(item)) ? &m_bmNodes1 : &m_bmNodes0);
-
-        const int ysrc = NODE_HEIGHT / 2 - GetRowHeight() / 2;
-
-        if (width == nullptr)
-        {
-            const CTreeListItem* ancestor = item;
-            for (int indent = item->GetIndent() - 1; indent >= 0; indent--)
-            {
-                ancestor = ancestor->GetParent();
-                if (ancestor->GetTreeListChildCount() > 1)
-                {
-                    pdc->BitBlt(rcRest.left + indent * INDENT_WIDTH, rcRest.top, NODE_WIDTH, NODE_HEIGHT, &dcmem, NODE_WIDTH * NODE_LINE, ysrc, SRCCOPY);
-                }
-            }
-        }
-
-        rcRest.left += (item->GetIndent() - 1) * INDENT_WIDTH;
-
-        if (width == nullptr)
-        {
-            int node = item->HasMoreSiblings() ? NODE_SIBLING : NODE_END;
-            if (item->HasChildren())
-            {
-                node = item->HasMoreSiblings() ?
-                    (item->IsExpanded() ? NODE_MINUS_SIBLING : NODE_PLUS_SIBLING) :
-                    (item->IsExpanded() ? NODE_MINUS_END : NODE_PLUS_END);
-            }
-
-            pdc->BitBlt(rcRest.left, rcRest.top, NODE_WIDTH, NODE_HEIGHT, &dcmem, NODE_WIDTH * node, ysrc, SRCCOPY);
-
-            rcPlusMinus.left = rcRest.left + HOTNODE_X;
-            rcPlusMinus.right = rcPlusMinus.left + HOTNODE_CX;
-            rcPlusMinus.top = rcRest.top + rcRest.Height() / 2 - HOTNODE_CY / 2 - 1;
-            rcPlusMinus.bottom = rcPlusMinus.top + HOTNODE_CY;
-        }
-
-        rcRest.left += NODE_WIDTH;
+        rc.right = rcRest.left;
+        if (width != nullptr) *width = rc.Width();
+        return;
     }
 
-    rc.right = rcRest.left;
-
+    // Width-only calculation path (early exit)
     if (width != nullptr)
     {
+        const int visualIndent = item->GetIndent() - 1;
+        rcRest.left += visualIndent * indentOffset + nodeSize;
+        rc.right = rcRest.left;
         *width = rc.Width();
+        return;
     }
+
+    // Main drawing path
+    const COLORREF bgColor = IsItemStripColor(FindTreeItem(item)) ? GetStripeColor() : GetWindowColor();
+    const int boxSize = max(nodeSize / 2, 9) | 1;
+    const int boxHalf = boxSize / 2;
+
+    // Draw vertical continuation lines for ancestors
+    auto* ancestor = item;
+    for (int indent = item->GetIndent() - 1; indent >= 0; indent--)
+    {
+        ancestor = ancestor->GetParent();
+        if (ancestor == nullptr) break;
+        if (!ancestor->HasMoreSiblings()) continue;
+
+        const int visualIndent = (indent > 0) ? indent - 1 : 0;
+        const int x = rcRest.left + visualIndent * indentOffset;
+        CRect nodeRect(x, rcRest.top, x + nodeSize, rcRest.top + nodeSize);
+        DrawTreeNodeConnector(pdc, nodeRect, bgColor, true, true, false, false, false);
+    }
+
+    // Position at this item's indent level
+    const int visualIndent = (item->GetIndent() > 0) ? item->GetIndent() - 1 : 0;
+    rcRest.left += visualIndent * indentOffset;
+
+    const int lineCenterX = rcRest.left + nodeSize / 2;
+    const int centerY = rcRest.top + nodeSize / 2;
+    const bool hasChildren = item->HasChildren();
+    const bool hasMoreSiblings = item->HasMoreSiblings();
+    
+    // Draw the node connector
+    CRect nodeRect(rcRest.left, rcRest.top, rcRest.left + nodeSize, rcRest.top + nodeSize);
+    DrawTreeNodeConnector(pdc, nodeRect, bgColor, true, hasMoreSiblings, true,
+        hasChildren && !item->IsExpanded(), hasChildren && item->IsExpanded());
+
+    // Set up the plus/minus hit rect for click detection
+    rcPlusMinus.SetRect(lineCenterX - boxHalf, centerY - boxHalf,
+                        lineCenterX - boxHalf + boxSize, centerY - boxHalf + boxSize);
+
+    rcRest.left += nodeSize;
+    rc.right = rcRest.left;
 }
 
 void CTreeListControl::OnLButtonDown(const UINT nFlags, const CPoint point)
