@@ -549,6 +549,8 @@
     <ClInclude Include="DarkMode.h" />
     <ClInclude Include="Dialogs\MessageBoxDlg.h" />
     <ClInclude Include="Dialogs\ProgressDlg.h" />
+    <ClInclude Include="HelpersInterface.h" />
+    <ClInclude Include="HelpersTasks.h" />
     <ClInclude Include="Pages\PagePrompts.h" />
     <ClInclude Include="Views\FileSearchView.h" />
     <ClInclude Include="Finder.h" />
@@ -567,7 +569,6 @@
     <ClInclude Include="CsvLoader.h" />
     <ClInclude Include="DirStatDoc.h" />
     <ClInclude Include="FinderBasic.h" />
-    <ClInclude Include="GlobalHelpers.h" />
     <ClInclude Include="Item.h" />
     <ClInclude Include="ItemDupe.h" />
     <ClInclude Include="Layout.h" />
@@ -616,8 +617,9 @@
     <ClCompile Include="Controls\FileSearchControl.cpp" />
     <ClCompile Include="FinderBasic.cpp" />
     <ClCompile Include="FinderNtfs.cpp" />
-    <ClCompile Include="GlobalHelpers.cpp">
+    <ClCompile Include="HelpersTasks.cpp">
     </ClCompile>
+    <ClCompile Include="HelpersInterface.cpp" />
     <ClCompile Include="Item.cpp">
     </ClCompile>
     <ClCompile Include="ItemDupe.cpp" />

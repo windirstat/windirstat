@@ -1,8 +1,4 @@
-﻿// pch.h - include file for standard system include files,
-// or project specific include files that are used frequently,
-// but are changed infrequently
-//
-// WinDirStat - Directory Statistics
+﻿// WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
 //
 // This program is free software: you can redistribute it and/or modify
@@ -109,7 +105,8 @@
 #include "resource.h"
 #include "Tracer.h"
 #include "DarkMode.h"
-#include "GlobalHelpers.h"
+#include "HelpersTasks.h"
+#include "HelpersInterface.h"
 #include "BlockingQueue.h"
 #include "Options.h"
 #include "WinDirStat.h"

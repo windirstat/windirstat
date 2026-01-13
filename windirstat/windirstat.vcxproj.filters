@@ -128,9 +128,6 @@
     <ClInclude Include="FinderBasic.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="GlobalHelpers.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Item.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -302,12 +299,15 @@
     <ClInclude Include="Controls\DrawTextCache.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="HelpersInterface.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="HelpersTasks.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DirStatDoc.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="GlobalHelpers.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Item.cpp">
@@ -449,6 +449,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="CsvLoader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="HelpersInterface.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="HelpersTasks.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
