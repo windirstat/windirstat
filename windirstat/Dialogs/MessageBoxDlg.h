@@ -20,6 +20,8 @@
 #include "pch.h"
 #include "Layout.h"
 
+struct WdsMessageBoxResult { int nID; bool isChecked; };
+
 //
 // CMessageBoxDlg. Custom message box dialog with dark mode support.
 // Emulates the functionality of MessageBox/AfxMessageBox.
@@ -31,6 +33,10 @@ class CMessageBoxDlg final : public CLayoutDialogEx
     CMessageBoxDlg(const std::wstring& message, const std::wstring& title, UINT type, CWnd* pParent = nullptr,
         const std::vector<std::wstring>& listViewItems = {}, const std::wstring& checkBoxText = {}, bool checkBoxValue = false);
     ~CMessageBoxDlg() override = default;
+
+    static int Show(const std::wstring& message, UINT type = MB_OK, CWnd* pParent = nullptr, const CSize& initialSize = {}, const std::wstring& title = Localization::LookupNeutral(AFX_IDS_APP_TITLE)) { return Show(message, {}, {}, false, type, pParent, initialSize, title).nID; }
+    static WdsMessageBoxResult Show(const std::wstring& message, const std::wstring& checkboxText, bool checkboxValue = false, UINT type = MB_YESNO | MB_ICONQUESTION, CWnd* pParent = nullptr, const CSize& initialSize = {}, const std::wstring& title = Localization::LookupNeutral(AFX_IDS_APP_TITLE)) { return Show(message, {}, checkboxText, checkboxValue, type, pParent, initialSize, title); }
+    static WdsMessageBoxResult Show(const std::wstring& message, const std::vector<std::wstring>& listViewItems, const std::wstring& checkboxText, bool checkboxValue = false, UINT type = MB_YESNO | MB_ICONWARNING, CWnd* pParent = nullptr, const CSize& initialSize = {}, const std::wstring& title = Localization::LookupNeutral(AFX_IDS_APP_TITLE));
 
     INT_PTR DoModal() override;
     void SetInitialWindowSize(const CSize size) { m_initialSize = size; }
@@ -56,7 +62,7 @@ protected:
     void ShiftControlsIfHidden(const CWnd* pTargetControl, const std::vector<CWnd*>& controlsToShift);
 
 private:
-
+    
     using ButtonContext = struct ButtonContext
     {
         BYTE btnLeftID = 0;
