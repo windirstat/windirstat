@@ -1307,14 +1307,11 @@ void CDirStatDoc::OnCommandPromptHere()
 void CDirStatDoc::OnPowerShellHere()
 {
     // locate PWSH
-    static std::wstring pwsh;
-    if (pwsh.empty()) for (const auto exe : { L"pwsh.exe", L"powershell.exe" })
+    static std::wstring pwsh(MAX_PATH, L'\0');
+    if (!pwsh.front()) for (const auto exe : { L"pwsh.exe", L"powershell.exe" })
     {
-        SmartPointer<HMODULE> lib(FreeLibrary, LoadLibrary(exe));
-        if (lib == nullptr) continue;
-        pwsh.resize(MAX_PATH);
-        if (GetModuleFileName(lib, pwsh.data(),
-            static_cast<DWORD>(pwsh.size())) > 0 && GetLastError() == ERROR_SUCCESS)
+        if (SearchPath(nullptr, exe, nullptr,
+            static_cast<DWORD>(pwsh.size()), pwsh.data(), nullptr) > 0)
         {
             pwsh.resize(wcslen(pwsh.data()));
             break;

@@ -54,8 +54,9 @@ public:
     static void ProcessOutput(const std::source_location& loc, std::wstring_view format, auto&&... args)
     {
         std::string fileName = loc.file_name();
-        if (fileName.find_last_of('\\')) fileName = fileName.substr(fileName.find_last_of('\\') + 1);
-        std::string errorPrefix = std::format("{}:{}", fileName, loc.line());
+        const auto pos = fileName.find_last_of('\\');
+        if (pos != std::string::npos) fileName = fileName.substr(pos + 1);
+        std::string errorPrefix = fileName + ":" + std::to_string(loc.line());
         std::wcout << std::format(L"[{}] {}\n", std::wstring(errorPrefix.begin(), errorPrefix.end()),
             std::vformat(format, std::make_wformat_args(args...)));
     }

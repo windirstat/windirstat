@@ -64,7 +64,7 @@ void COwnerDrawnListItem::DrawLabel(const COwnerDrawnListControl* list, CDC* pdc
     }
 
     // Get default small icon parameters
-    static const CSize sizeImage(GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CXSMICON));
+    static const CSize sizeImage(GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON));
 
     if (width == nullptr)
     {

@@ -49,7 +49,7 @@ public:
         if (std::addressof(*this) != std::addressof(src))
         {
             Release();
-            m_cleanup = src.m_cleanup;
+            m_cleanup = std::move(src.m_cleanup);
             m_data = src.m_data;
             src.m_data = nullptr;
         }
