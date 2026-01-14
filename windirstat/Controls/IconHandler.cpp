@@ -287,7 +287,7 @@ HICON CIconHandler::IconFromFontChar(const WCHAR ch, const COLORREF textColor, c
     const int destX = (ICON_SIZE - scaledWidth) / 2;
     const int destY = (ICON_SIZE - scaledHeight) / 2;
 
-    const BLENDFUNCTION blend{ AC_SRC_OVER, 0, 255, AC_SRC_ALPHA };
+    constexpr BLENDFUNCTION blend{ AC_SRC_OVER, 0, 255, AC_SRC_ALPHA };
     finalDC.AlphaBlend(destX, destY, scaledWidth, scaledHeight,
         &memDC, minX, minY, glyphWidth, glyphHeight, blend);
 
@@ -297,8 +297,8 @@ HICON CIconHandler::IconFromFontChar(const WCHAR ch, const COLORREF textColor, c
 
     ICONINFO ii{};
     ii.fIcon = TRUE;
-    ii.hbmColor = (HBITMAP)finalBmp.m_hObject;
-    ii.hbmMask = (HBITMAP)maskBmp.m_hObject;
+    ii.hbmColor = static_cast<HBITMAP>(finalBmp.m_hObject);
+    ii.hbmMask = static_cast<HBITMAP>(maskBmp.m_hObject);
     const HICON hIcon = CreateIconIndirect(&ii);
 
     return hIcon;

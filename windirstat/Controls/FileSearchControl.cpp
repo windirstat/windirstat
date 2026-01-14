@@ -112,8 +112,8 @@ void CFileSearchControl::ProcessSearch(CItem* item,
         if (matchedItems.size() > maxResults)
         {
             // Partial sort to get the top N largest items by physical size
-            std::partial_sort(matchedItems.begin(), matchedItems.begin() + maxResults,
-                matchedItems.end(), [](CItem* a, CItem* b) { return a->GetSizeLogical() > b->GetSizeLogical(); });
+            std::ranges::partial_sort(matchedItems, matchedItems.begin() + maxResults,
+                std::ranges::greater{}, &CItem::GetSizeLogical);
             
             // Keep only the top N results
             matchedItems.resize(maxResults);

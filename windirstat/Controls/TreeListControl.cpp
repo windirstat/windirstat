@@ -16,7 +16,6 @@
 //
 
 #include "pch.h"
-#include "SelectObject.h"
 #include "TreeListControl.h"
 
 bool CTreeListItem::DrawSubItem(const int subitem, CDC* pdc, CRect rc, const UINT state, int* width, int* focusLeft)
@@ -761,7 +760,7 @@ void CTreeListControl::OnChildAdded(const CTreeListItem* parent, CTreeListItem* 
     InsertItem(insertPos, child);
 }
 
-void CTreeListControl::OnChildRemoved(const CTreeListItem* parent, CTreeListItem* child)
+void CTreeListControl::OnChildRemoved(const CTreeListItem* parent, const CTreeListItem* child)
 {
     if (!parent->IsVisible())
     {
@@ -860,8 +859,7 @@ void CTreeListControl::OnContextMenu(CWnd* /*pWnd*/, const CPoint pt)
     // TrackPopupMenuEx() behaves in the desired way, if
     // we exclude the label rectangle extended to full screen width.
 
-    TPMPARAMS tp{};
-    tp.cbSize = sizeof(tp);
+    TPMPARAMS tp{ .cbSize = sizeof(tp) };
     tp.rcExclude = rcTitle;
     ClientToScreen(&tp.rcExclude);
 

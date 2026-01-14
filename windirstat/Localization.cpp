@@ -113,7 +113,7 @@ void Localization::UpdateMenu(CMenu& menu)
         if (text.Find(L"ID") == 0 && Contains(text.GetString()))
         {
             MENUITEMINFOW mi{ .cbSize = sizeof(MENUITEMINFOW) };
-            mi.fMask = MIIM_STRING,
+            mi.fMask = MIIM_STRING;
             mi.dwTypeData = const_cast<LPWSTR>(m_map[text.GetString()].c_str());
             menu.SetMenuItemInfo(i, &mi, TRUE);
         }

@@ -242,7 +242,7 @@ void COptions::PostProcessPersistedSettings()
     // Compile filters, if any
     CompileFilters();
 
-    // Setup the language for the environment
+    // Set up the language for the environment
     const LANGID langid = static_cast<LANGID>(LanguageId);
     const auto& languages = Localization::GetLanguageList();
     if (std::ranges::find(languages, langid) == languages.end())

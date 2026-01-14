@@ -105,7 +105,7 @@ class CTreeListControl : public COwnerDrawnListControl
     virtual void SetRootItem(CTreeListItem* root = nullptr);
     virtual void AfterDeleteAllItems() {}
     void OnChildAdded(const CTreeListItem* parent, CTreeListItem* child);
-    void OnChildRemoved(const CTreeListItem* parent, CTreeListItem* child);
+    void OnChildRemoved(const CTreeListItem* parent, const CTreeListItem* child);
     void OnRemovingAllChildren(const CTreeListItem* parent);
     CTreeListItem* GetItem(int i) const;
     bool IsItemSelected(const CTreeListItem* item) const;
@@ -128,7 +128,8 @@ class CTreeListControl : public COwnerDrawnListControl
         for (POSITION pos = GetFirstSelectedItemPosition(); pos != nullptr;)
         {
             const int i = GetNextSelectedItem(pos);
-            const auto item = reinterpret_cast<T*>(visual ? GetItem(i) : GetItem(i)->GetLinkedItem());
+            const auto item = visual ? reinterpret_cast<T*>(GetItem(i)) :
+                reinterpret_cast<T*>(GetItem(i)->GetLinkedItem());
             if (item != nullptr) array.push_back(item);
         }
         return array;
@@ -146,7 +147,6 @@ class CTreeListControl : public COwnerDrawnListControl
 
 protected:
     virtual void OnItemDoubleClick(int i);
-    void RebuildNodeMetrics();
     void InsertItem(int i, CTreeListItem* item);
     void DeleteItem(int i);
     void CollapseItem(int i);

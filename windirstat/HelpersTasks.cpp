@@ -30,15 +30,16 @@ static NTSTATUS(NTAPI* NtSetInformationProcess)(HANDLE ProcessHandle, ULONG Proc
 
 static HRESULT WmiConnect(CComPtr<IWbemServices>& pSvc)
 {
-    if (thread_local bool comInit = false; !comInit)
+    if (thread_local SmartPointer<PVOID> comInit([](PVOID) { CoUninitialize(); }, nullptr);
+        comInit == nullptr)
     {
         const HRESULT result = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
         if (FAILED(result) && result != RPC_E_CHANGED_MODE) return result;
-        comInit = true;
+        comInit = reinterpret_cast<PVOID>(TRUE);
     }
 
     CComPtr<IWbemLocator> locObj;
-    return SUCCEEDED(CoCreateInstance(CLSID_WbemLocator, 0, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&locObj))) &&
+    return SUCCEEDED(CoCreateInstance(CLSID_WbemLocator, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&locObj))) &&
         SUCCEEDED(locObj->ConnectServer(CComBSTR(L"ROOT\\CIMV2"), nullptr, nullptr, nullptr, 0, nullptr, nullptr, &pSvc)) &&
         SUCCEEDED(CoSetProxyBlanket(pSvc, RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE, nullptr,
             RPC_C_AUTHN_LEVEL_CALL, RPC_C_IMP_LEVEL_IMPERSONATE, nullptr, EOAC_NONE)) ? S_OK : E_FAIL;
@@ -611,9 +612,9 @@ bool OptimizeVhd(const std::wstring& vhdPath) noexcept
     OPEN_VIRTUAL_DISK_PARAMETERS openParams{};
     openParams.Version = OPEN_VIRTUAL_DISK_VERSION_1;
 
-    VIRTUAL_STORAGE_TYPE storageType{};
-    storageType.DeviceId = VIRTUAL_STORAGE_TYPE_DEVICE_UNKNOWN;
-    storageType.VendorId = VIRTUAL_STORAGE_TYPE_VENDOR_MICROSOFT;
+    VIRTUAL_STORAGE_TYPE storageType{
+        .DeviceId = VIRTUAL_STORAGE_TYPE_DEVICE_UNKNOWN,
+        .VendorId = VIRTUAL_STORAGE_TYPE_VENDOR_MICROSOFT };
 
     SmartPointer<HANDLE> vhdHandle(CloseHandle, nullptr);
     if (OpenVirtualDisk(&storageType, vhdPath.c_str(),
@@ -661,10 +662,10 @@ void CopyAllDriveMappings() noexcept
         for (const auto & mapping : mappings)
         {
             // Attempt to map the drive
-            auto& [driveLetter, remotePath] = mapping;
+            auto& [drivePath, remotePath] = mapping;
             NETRESOURCEW mapProperties{
                 .dwType = RESOURCETYPE_DISK,
-                .lpLocalName = const_cast<LPWSTR>(driveLetter.data()),
+                .lpLocalName = const_cast<LPWSTR>(drivePath.data()),
                 .lpRemoteName = const_cast<LPWSTR>(remotePath.data())
             };
 

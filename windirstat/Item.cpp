@@ -1492,7 +1492,6 @@ void CItem::DoHardlinkAdjustment()
     if (hardlinksItem == nullptr) return;
     
     const auto& indexSets = hardlinksItem->GetChildren();
-    constexpr int INDEX_SET_COUNT = 20;
     
     // Process hardlinks - create hierarchical structure
     for (const auto& [index, list] : indexDupes)
@@ -1515,6 +1514,7 @@ void CItem::DoHardlinkAdjustment()
         }
         
         // Determine which Index Set this belongs to (modulus 20, 0-based index)
+        constexpr int INDEX_SET_COUNT = 20;
         const int setIndex = (index % INDEX_SET_COUNT);  // 0-19
         CItem* indexSetItem = (setIndex < static_cast<int>(indexSets.size())) ? indexSets[setIndex] : nullptr;
         
@@ -1799,7 +1799,7 @@ std::vector<BYTE> CItem::GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CIte
     });
 
     // Check if initialization succeeded
-    if (hashBuffer.size() == 0)
+    if (hashBuffer.empty())
     {
         return {};
     }
@@ -1848,7 +1848,7 @@ std::vector<BYTE> CItem::GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CIte
     // is unnecessary for simple dupe checking. This is preferred to just using a simpler
     // hash alg since SHA512 is FIPS compliant on Windows and more performant than SHA256.
     const auto ReducedHashInBytes = min(16, hashBuffer.size());
-    return std::vector<BYTE>(hashBuffer.begin(), hashBuffer.begin() + ReducedHashInBytes);
+    return std::vector(hashBuffer.begin(), hashBuffer.begin() + ReducedHashInBytes);
 }
 
 CItem* CItem::FindItemByPath(const std::wstring& path) const
@@ -1876,7 +1876,8 @@ CItem* CItem::FindItemByPath(const std::wstring& path) const
         if (current->IsLeaf()) return nullptr;
 
         // Find the matching child using GetNameView for comparison
-        auto it = std::ranges::find_if(current->GetChildren(), [&](CItem* child) { return child->GetNameView() == components[i]; });
+        auto it = std::ranges::find_if(current->GetChildren(),
+            [&](const CItem* child) { return child->GetNameView() == components[i]; });
         if (it == current->GetChildren().end()) return nullptr;
         current = *it;
     }

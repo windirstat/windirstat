@@ -84,7 +84,7 @@ void CDriveItem::StartQuery(HWND dialog)
     m_dialog = dialog;
 
     // Capture 'this' and the path for the thread
-    m_queryThread = std::jthread([this](std::stop_token stopToken)
+    m_queryThread = std::jthread([this](const std::stop_token& stopToken)
     {
         std::wstring name;
         ULONGLONG total = 0;

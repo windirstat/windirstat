@@ -52,8 +52,8 @@ public:
     bool LoadRoot(CItem* driveitem);
     bool IsLoaded() const { return m_isLoaded; };
 
-    static const ULONGLONG NtfsNodeRoot = 5;
-    static const ULONGLONG NtfsReservedMax = 16;
+    static constexpr ULONGLONG NtfsNodeRoot = 5;
+    static constexpr ULONGLONG NtfsReservedMax = 16;
 };
 
 class FinderNtfs final : public Finder

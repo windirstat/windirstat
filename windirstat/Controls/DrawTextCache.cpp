@@ -67,8 +67,8 @@ void DrawTextCache::DrawTextCached(CDC* pDC, const std::wstring& text, CRect& re
         std::make_pair(std::move(entry), m_leastRecentList.begin()));
 }
 
-DrawTextCache::CacheKey DrawTextCache::CreateCacheKey(
-    CDC* pDC, const std::wstring& text, const CRect& rect, UINT format) const
+DrawTextCache::CacheKey DrawTextCache::CreateCacheKey(const CDC* pDC,
+    const std::wstring& text, const CRect& rect, const UINT format) const
 {
     return CacheKey{
         .text = text, .textColor = pDC->GetTextColor(),

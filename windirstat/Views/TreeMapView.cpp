@@ -356,7 +356,7 @@ void CTreeMapView::Inactivate()
     m_dimmed.DeleteObject();
     m_dimmed.Attach(m_bitmap.Detach());
     m_dimmedSize = m_size;
-    
+
     // Dim m_dimmed contents to indicate inactive/refresh state
     CClientDC dc(this);
     CDC dcmem;
@@ -364,11 +364,9 @@ void CTreeMapView::Inactivate()
     CSelectObject sobmp(&dcmem, &m_dimmed);
 
     // Apply the dimming overlay
-    BLENDFUNCTION blendFunc{};
-    blendFunc.BlendOp = AC_SRC_OVER;
-    blendFunc.BlendFlags = 0;
-    blendFunc.SourceConstantAlpha = 175;
-    blendFunc.AlphaFormat = 0;
+    constexpr BLENDFUNCTION blendFunc{ 
+        .BlendOp = AC_SRC_OVER, .BlendFlags = 0,
+        .SourceConstantAlpha = 175, .AlphaFormat = 0 };
     dcmem.FillSolidRect(CRect(0, 0, m_dimmedSize.cx, m_dimmedSize.cy), RGB(0, 0, 0));
     dcmem.AlphaBlend(0, 0, m_dimmedSize.cx, m_dimmedSize.cy, &dc,
         0, 0, m_dimmedSize.cx, m_dimmedSize.cy, blendFunc);

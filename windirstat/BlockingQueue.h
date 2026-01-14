@@ -256,7 +256,7 @@ public:
 
     ~SingleConsumerQueue()
     {
-        for (T tmp; pop(tmp););
+        for (T tmp; pop(tmp);) {};
         delete m_tail;
     }
 
@@ -292,7 +292,7 @@ public:
     // Clear out queue (unsafe with concurrent producers)
     void clear() noexcept
     {
-        for (T tmp; pop(tmp););
+        for (T tmp; pop(tmp);) {};
 
         Node* old = m_tail; // One dummy remains
         Node* dummy = new Node();

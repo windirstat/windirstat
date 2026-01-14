@@ -94,7 +94,7 @@ public:
         {
             const auto volumeIdentifier = LR"(\??\Volume)";
             const auto path = ByteOffset<WCHAR>(reparseBuffer.PathBuffer, reparseBuffer.SubstituteNameOffset);
-            if (_wcsnicmp(path, volumeIdentifier, min(reparseBuffer.SubstituteNameLength, wcslen(volumeIdentifier))) == 0)
+            if (_wcsnicmp(path, volumeIdentifier, min(reparseBuffer.SubstituteNameLength / sizeof(WCHAR), wcslen(volumeIdentifier))) == 0)
             {
                 return true;
             }

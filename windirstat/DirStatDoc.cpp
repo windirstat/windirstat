@@ -962,7 +962,7 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
     {
         allow &= filter.typesAllow.front() == ITF_ANY || !item->IsTypeOrFlag(ITF_RESERVED);
         allow &= (filter.extra == nullptr) || filter.extra(item);
-        allow &= std::any_of(filter.typesAllow.begin(), filter.typesAllow.end(),
+        allow &= std::ranges::any_of(filter.typesAllow,
             [item](ITEMTYPE type) { return item->IsTypeOrFlag(type); });
     }
 
@@ -1600,9 +1600,8 @@ constexpr CompressionAlgorithm CDirStatDoc::CompressionIdToAlg(const UINT id)
         case ID_COMPRESS_XPRESS8K: return  CompressionAlgorithm::XPRESS8K;
         case ID_COMPRESS_XPRESS16K: return  CompressionAlgorithm::XPRESS16K;
         case ID_COMPRESS_LZX: return  CompressionAlgorithm::LZX;
+        default: return CompressionAlgorithm::NONE;
     };
-
-    return CompressionAlgorithm::NONE;
 }
 
 void CDirStatDoc::OnCleanupCompress(UINT id)

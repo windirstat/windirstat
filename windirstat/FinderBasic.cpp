@@ -38,7 +38,7 @@ bool FinderBasic::FindNext()
             .Buffer = m_search.data()
         };
 
-        const auto BUFFER_SIZE = static_cast<ULONG>(4 * 1024 * 1024);
+        constexpr auto BUFFER_SIZE = static_cast<ULONG>(4 * 1024 * 1024);
         thread_local std::vector<LARGE_INTEGER> m_directoryInfo(BUFFER_SIZE / sizeof(LARGE_INTEGER));
         constexpr auto FileFullDirectoryInformation = 2;
         constexpr auto FileIdFullDirectoryInformation = 38;

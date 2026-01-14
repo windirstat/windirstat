@@ -22,9 +22,9 @@ IMPLEMENT_DYNAMIC(CProgressDlg, CDialogEx)
 
 CProgressDlg::CProgressDlg(const size_t total, const bool noCancel, CWnd* pParent, std::function<void(CProgressDlg*)> task)
     : CDialogEx(IDD, pParent)
-    , m_total(total)
     , m_message(Localization::Lookup(IDS_PROGRESS))
     , m_task(std::move(task))
+    , m_total(total)
     , m_noCancel(noCancel)
 {
 }

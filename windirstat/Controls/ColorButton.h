@@ -19,7 +19,7 @@
 
 #include "pch.h"
 
-#define COLBN_CHANGED   0x87    // this is a value, I hope, that is nowhere used as notification code.
+constexpr auto COLBN_CHANGED = 0x87;
 
 //
 // CColorButton. A Pushbutton which allows to choose a color and

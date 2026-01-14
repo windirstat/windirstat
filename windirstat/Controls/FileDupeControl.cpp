@@ -104,7 +104,7 @@ void CFileDupeControl::ProcessDuplicate(CItem* item, BlockingQueue<CItem*>* queu
             // Add this hash to the tracker
             auto& entry = hashTracker[hash];
             entry.emplace_back(itemToHash);
-            auto view = entry | std::views::filter([&](CItem* x)
+            auto view = entry | std::views::filter([&](const CItem* x)
                 { return x->GetSizeLogical() == size; });
             std::vector subset(view.begin(), view.end());
             if (subset.size() < 2) continue;
@@ -151,7 +151,7 @@ void CFileDupeControl::ProcessDuplicate(CItem* item, BlockingQueue<CItem*>* queu
         for (const auto& itemToAdd : itemsWithHash)
         {
             auto& hashParentNode = m_childTracker[dupeParent];
-            if (hashParentNode.find(itemToAdd) != hashParentNode.end()) continue;
+            if (hashParentNode.contains(itemToAdd)) continue;
             const auto dupeChild = new CItemDupe(itemToAdd);
             m_pendingListAdds.push(std::make_pair(dupeParent, dupeChild));
             hashParentNode.emplace(itemToAdd);

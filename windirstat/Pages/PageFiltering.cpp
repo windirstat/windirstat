@@ -84,21 +84,21 @@ BOOL CPageFiltering::OnInitDialog()
 
     UpdateData(FALSE);
 
-  // Apply dark mode to this property page AFTER controls are initialized
+    // Apply dark mode to this property page AFTER controls are initialized
     if (DarkMode::IsDarkModeActive())
     {
         DarkMode::AdjustControls(GetSafeHwnd());
-        
+
         // Explicitly apply dark mode to edit controls with scrollbars
         if (DarkMode::IsDarkModeActive())
         {
-          // Force the edit controls to refresh their scrollbars
+            // Force the edit controls to refresh their scrollbars
             DarkMode::AdjustControls(m_ctrlFilteringExcludeDirs.GetSafeHwnd());
             DarkMode::AdjustControls(m_ctrlFilteringExcludeFiles.GetSafeHwnd());
-   
+
             // Force a complete redraw
-       m_ctrlFilteringExcludeDirs.Invalidate();
-   m_ctrlFilteringExcludeFiles.Invalidate();
+            m_ctrlFilteringExcludeDirs.Invalidate();
+            m_ctrlFilteringExcludeFiles.Invalidate();
         }
     }
 

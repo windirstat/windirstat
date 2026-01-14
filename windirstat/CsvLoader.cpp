@@ -245,7 +245,7 @@ bool SaveResults(const std::wstring& path, CItem* rootItem)
 
         // Sort child items alphabetically
         std::vector<CItem*> children = qitem->GetChildren();
-        std::sort(children.begin(), children.end(), [](auto a, auto b)
+        std::ranges::sort(children, [](auto a, auto b)
         {
             return _wcsicmp(a->GetNameView().data(), b->GetNameView().data()) > 0;
         });
@@ -378,7 +378,7 @@ bool SaveDuplicates(const std::wstring& path, CItemDupe* rootDupe)
     }
 
     // Sort by logical size (descending) then by hash then by path
-    std::sort(dupeItems.begin(), dupeItems.end(), [](const auto& a, const auto& b)
+    std::ranges::sort(dupeItems, [](const auto& a, const auto& b)
     {
         const auto& [hashA, itemA] = a;
         const auto& [hashB, itemB] = b;

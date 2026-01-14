@@ -29,9 +29,7 @@
 #include "PageTreeMap.h"
 #include "PageGeneral.h"
 #include "PagePrompts.h"
-#include "SelectObject.h"
 #include "FileTopControl.h"
-#include "FileSearchControl.h"
 
 namespace
 {
@@ -613,7 +611,8 @@ void CMainFrame::DestroyProgress()
     m_progressVisible = false;
 }
 
-void CMainFrame::SetStatusPaneText(CDC& cdc, const int pos, const std::wstring & text, const int minWidth)
+void CMainFrame::SetStatusPaneText(const CDC& cdc, const int pos,
+    const std::wstring & text, const int minWidth)
 {
     // do not process the update if text is the same
     static std::unordered_map<int, std::wstring> last;
@@ -870,7 +869,7 @@ void CMainFrame::OnTimer(const UINT_PTR nIDEvent)
     // UI updates that do need to processed frequently
     if (!CDirStatDoc::Get()->IsRootDone() && !IsScanSuspended())
     {
-        // Update the visual progress on the bottom of the screen
+        // Update the visual progress at the bottom of the screen
         UpdateProgress();
 
         // By sorting items, items will be redrawn which will

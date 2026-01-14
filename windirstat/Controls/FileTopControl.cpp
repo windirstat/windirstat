@@ -84,7 +84,7 @@ void CFileTopControl::SortItems()
         : m_sizeMap.begin() + topN;
 
     // Partial sort to get top N items at the front
-    std::partial_sort(m_sizeMap.begin(), sortEnd, m_sizeMap.end(), CompareBySize);
+    std::ranges::partial_sort(m_sizeMap, sortEnd, CompareBySize);
 
     // Update minimum size in top N for future comparisons
     if (m_sizeMap.size() >= topN)
@@ -150,9 +150,9 @@ void CFileTopControl::RemoveItem(CItem* item)
 
     // Remove items in bulk
     m_needsResort = true;
-    std::erase_if(m_sizeMap, [&](const auto& item)
+    std::erase_if(m_sizeMap, [&](const auto& itemToRemove)
     {
-        return toRemove.contains(item);
+        return toRemove.contains(itemToRemove);
     });
 
     // Use the sort function to remove visual items

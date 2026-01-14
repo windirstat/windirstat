@@ -87,7 +87,7 @@ private:
         CacheKeyHash>;
 
     // Create cache key from current DC state
-    [[nodiscard]] CacheKey CreateCacheKey(CDC* pDC, const std::wstring& text,
+    [[nodiscard]] CacheKey CreateCacheKey(const CDC* pDC, const std::wstring& text,
         const CRect& rect, UINT format) const;
 
     // Create cached bitmap for the text

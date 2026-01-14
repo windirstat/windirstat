@@ -61,7 +61,7 @@ std::wstring GetCOMSPEC();
 const std::wstring& GetSysDirectory() noexcept;
 
 // UI helpers
-void WaitForHandleWithRepainting(const HANDLE h, DWORD TimeOut = INFINITE) noexcept;
+void WaitForHandleWithRepainting(HANDLE h, DWORD TimeOut = INFINITE) noexcept;
 void ProcessMessagesUntilSignaled(const std::function<void()>& callback);
 void DisplayError(const std::wstring& error);
 std::wstring TranslateError(HRESULT hr = static_cast<HRESULT>(GetLastError()));
@@ -70,13 +70,13 @@ bool ShellExecuteWrapper(const std::wstring& lpFile, const std::wstring& lpParam
         const std::wstring& lpDirectory = L"", INT nShowCmd = SW_NORMAL);
 
 // DPI scaling
-int DpiRest(int value, CWnd* wnd = nullptr) noexcept;
-int DpiSave(int value, CWnd* wnd = nullptr) noexcept;
+int DpiRest(int value, const CWnd* wnd = nullptr) noexcept;
+int DpiSave(int value, const CWnd* wnd = nullptr) noexcept;
 
 // Context menu
 constexpr auto CONTENT_MENU_MINCMD = 0x1ul;
 constexpr auto CONTENT_MENU_MAXCMD = 0x7FFFul;
-IContextMenu* GetContextMenu(const HWND hwnd, const std::vector<std::wstring>& paths);
+IContextMenu* GetContextMenu(HWND hwnd, const std::vector<std::wstring>& paths);
 
 // Application info
 std::wstring GetAppFileName(const std::wstring& ext = L"");

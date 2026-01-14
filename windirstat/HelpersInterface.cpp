@@ -46,7 +46,7 @@ static std::wstring FormatLongLongNormal(ULONGLONG n)
         buffer[--pos] = L'0' + (n % 10);
     }
 
-    return std::wstring(buffer.begin() + pos, buffer.end() - 1);
+    return { buffer.begin() + pos, buffer.end() - 1 };
 }
 
 std::wstring GetLocaleString(const LCTYPE lctype, const LCID lcid)
@@ -357,11 +357,11 @@ void ProcessMessagesUntilSignaled(const std::function<void()>& callback)
         wnd->m_hWnd, nullptr) == GetCurrentThreadId())
     {
         static auto waitMessage = RegisterWindowMessage(L"WinDirStatSignalWaiter");
-        std::jthread([wnd, callback=std::move(callback)]() mutable
-            {
-                callback();
-                wnd->PostMessage(waitMessage, 0, 0);
-            }).detach();
+        std::jthread([wnd, callback]() mutable
+        {
+            callback();
+            wnd->PostMessage(waitMessage, 0, 0);
+        }).detach();
 
         MSG msg;
         while (GetMessage(&msg, nullptr, 0, 0)) {
@@ -381,7 +381,7 @@ void ProcessMessagesUntilSignaled(const std::function<void()>& callback)
 
 void DisplayError(const std::wstring& error)
 {
-    WdsMessageBox(error.c_str(), MB_OK | MB_ICONERROR);
+    WdsMessageBox(error, MB_OK | MB_ICONERROR);
 }
 
 std::wstring TranslateError(const HRESULT hr)
@@ -422,7 +422,7 @@ bool ShellExecuteWrapper(const std::wstring& lpFile, const std::wstring& lpParam
 }
 
 // DPI scaling
-int DpiRest(int value, CWnd* wnd) noexcept
+int DpiRest(int value, const CWnd* wnd) noexcept
 {
     const HWND h = (wnd && wnd->GetSafeHwnd()) ? wnd->GetSafeHwnd() : nullptr;
     SmartPointer<HDC> dc([h](HDC hdc) { ReleaseDC(h, hdc); }, GetDC(h));
@@ -430,7 +430,7 @@ int DpiRest(int value, CWnd* wnd) noexcept
     return ::MulDiv(value, dpi, USER_DEFAULT_SCREEN_DPI);
 }
 
-int DpiSave(int value, CWnd* wnd) noexcept
+int DpiSave(int value, const CWnd* wnd) noexcept
 {
     const HWND h = (wnd && wnd->GetSafeHwnd()) ? wnd->GetSafeHwnd() : nullptr;
     SmartPointer<HDC> dc([h](HDC hdc) { ReleaseDC(h, hdc); }, GetDC(h));
@@ -567,7 +567,7 @@ void DrawTreeNodeConnector(CDC* pdc, const CRect& nodeRect, const COLORREF bgCol
         if (toRight)
         {
             pts[ptCount++] = { boxRight, centerY };
-            pts[ptCount++] = { nodeRect.right, centerY };
+            pts[ptCount] = { nodeRect.right, centerY };
             counts[segCount++] = 2;
         }
 
@@ -604,7 +604,7 @@ void DrawTreeNodeConnector(CDC* pdc, const CRect& nodeRect, const COLORREF bgCol
         if (showPlus)
         {
             boxPts[boxPtCount++] = { centerX, boxTop + signMargin };
-            boxPts[boxPtCount++] = { centerX, boxBottom - signMargin };
+            boxPts[boxPtCount] = { centerX, boxBottom - signMargin };
             boxCounts[boxSegCount++] = 2;
         }
 
@@ -623,7 +623,7 @@ void DrawTreeNodeConnector(CDC* pdc, const CRect& nodeRect, const COLORREF bgCol
         if (toRight)
         {
             pts[ptCount++] = { centerX, centerY };
-            pts[ptCount++] = { nodeRect.right, centerY };
+            pts[ptCount] = { nodeRect.right, centerY };
             counts[segCount++] = 2;
         }
 

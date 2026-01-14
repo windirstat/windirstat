@@ -17,7 +17,6 @@
 
 #include "pch.h"
 #include "ItemSearch.h"
-#include "FileTopControl.h"
 
 CItemSearch::CItemSearch(CItem* item) : m_item(item) {}
 

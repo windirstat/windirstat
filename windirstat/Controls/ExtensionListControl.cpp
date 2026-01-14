@@ -19,13 +19,12 @@
 #include "ExtensionView.h"
 #include "ExtensionListControl.h"
 #include "FileSearchControl.h"
-#include "SelectObject.h"
 
 /////////////////////////////////////////////////////////////////////////////
 
 CExtensionListControl::CListItem::CListItem(CExtensionListControl* list, const std::wstring& extension, const SExtensionRecord& r)
-    : m_driveList(list)
-    , m_extension(extension)
+    : m_extension(extension)
+    , m_driveList(list)
     , m_bytes(r.GetBytes())
     , m_files(r.GetFiles())
     , m_color(r.color)
@@ -311,9 +310,9 @@ void CExtensionListControl::OnContextMenu(CWnd* /*pWnd*/, CPoint point)
         L"{} - {}", Localization::Lookup(IDS_COL_EXTENSION), Localization::Lookup(IDS_SEARCH_TITLE)).c_str());
 
     // Add search bitmap to menu
-    if (m_searchBitmap.GetSafeHandle() == NULL)
+    if (m_searchBitmap.GetSafeHandle() == nullptr)
     {
-        m_searchBitmap.Attach(LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDB_SEARCH), IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION));
+        m_searchBitmap.Attach(LoadImage(GetModuleHandle(nullptr), MAKEINTRESOURCE(IDB_SEARCH), IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION));
         DarkMode::LightenBitmap(&m_searchBitmap);
     }
 

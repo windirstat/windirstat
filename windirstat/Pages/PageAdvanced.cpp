@@ -164,7 +164,8 @@ void CPageAdvanced::OnEnChangeLargestFileCount()
     // This function limits the number of files in the largest files list
     UpdateData(TRUE);
 
-    m_largestFileCount = std::to_wstring(std::clamp(std::stoi(m_largestFileCount.GetString()),
+    m_largestFileCount = m_largestFileCount.IsEmpty() ? L"0" :
+        std::to_wstring(std::clamp(std::stoi(m_largestFileCount.GetString()),
         COptions::LargeFileCount.Min(), COptions::LargeFileCount.Max())).c_str();
 
     UpdateData(FALSE);
@@ -175,7 +176,8 @@ void CPageAdvanced::OnEnChangeFolderHistoryCount()
     // This function limits the value in the folder history count
     UpdateData(TRUE);
 
-    m_folderHistoryCount = std::to_wstring(std::clamp(std::stoi(m_folderHistoryCount.GetString()),
+    m_folderHistoryCount = m_folderHistoryCount.IsEmpty() ? L"0" :
+        std::to_wstring(std::clamp(std::stoi(m_folderHistoryCount.GetString()),
         COptions::FolderHistoryCount.Min(), COptions::FolderHistoryCount.Max())).c_str();
 
     UpdateData(FALSE);
