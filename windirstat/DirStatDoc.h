@@ -29,11 +29,27 @@ enum LOGICAL_FOCUS : uint8_t;
 //
 // Data stored for each extension.
 //
-struct SExtensionRecord
+struct alignas(std::hardware_destructive_interference_size) SExtensionRecord
 {
     std::atomic<ULONGLONG> files = 0;
     std::atomic<ULONGLONG> bytes = 0;
     COLORREF color = 0;
+
+    // Use relaxed memory ordering for simple accumulation operations
+    void AddFile(ULONGLONG size) noexcept
+    {
+        files.fetch_add(1, std::memory_order_relaxed);
+        bytes.fetch_add(size, std::memory_order_relaxed);
+    }
+
+    void RemoveFile(ULONGLONG size) noexcept
+    {
+        files.fetch_sub(1, std::memory_order_relaxed);
+        bytes.fetch_sub(size, std::memory_order_relaxed);
+    }
+
+    ULONGLONG GetFiles() const noexcept { return files.load(std::memory_order_relaxed); }
+    ULONGLONG GetBytes() const noexcept { return bytes.load(std::memory_order_relaxed); }
 };
 
 //

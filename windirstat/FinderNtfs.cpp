@@ -212,7 +212,7 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
     m_parentToChildMap.rehash(static_cast<size_t>(inUseMftRecords) / 5);
 
     // Process MFT records
-    std::for_each(std::execution::par_unseq, dataRuns.begin(), dataRuns.end(), [&](const auto& dataRun)
+    std::for_each(std::execution::par, dataRuns.begin(), dataRuns.end(), [&](const auto& dataRun)
     {
         constexpr size_t bufferSize = 4ull * 1024 * 1024;
         thread_local std::unique_ptr<UCHAR, decltype(&_aligned_free)> buffer(
@@ -258,6 +258,7 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
                 {
                     const auto sectorEnd = recordWords + i * wordsPerSector - 1;
                     if (*sectorEnd == usn) *sectorEnd = fixupArray[i];
+                    else continue;
                 }
 
                 // Only process records with valid headers and are in use
@@ -409,14 +410,13 @@ FILETIME FinderNtfs::GetLastWriteTime() const
 std::wstring FinderNtfs::GetFilePath() const
 {
     // Get full path to folder or file
-    std::wstring path = (m_base.at(m_base.size() - 1) == L'\\') ?
-        (m_base + GetFileName()) : (m_base + L"\\" + GetFileName());
+    std::wstring path = (m_base.back() == L'\\') ?
+        (m_base + GetFileName()) :
+        (m_base + L"\\" + GetFileName());
 
     // Strip special dos chars
-    if (wcsncmp(path.data(), s_dosUNCPath.data(), s_dosUNCPath.length() - 1) == 0)
-        path = L"\\\\" + path.substr(s_dosUNCPath.length());
-    else if (wcsncmp(path.data(), s_dosPath.data(), s_dosPath.length() - 1) == 0)
-        path = path.substr(s_dosPath.length());
+    if (path.starts_with(s_dosUNCPath)) return L"\\\\" + path.substr(s_dosUNCPath.length());
+    if (path.starts_with(s_dosPath)) return path.substr(s_dosPath.length());
     return path;
 }
 

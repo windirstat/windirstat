@@ -120,7 +120,6 @@ void CIconHandler::DrawIcon(const CDC* hdc, const HICON image, const CPoint & pt
 // Returns the icon handle
 HICON CIconHandler::FetchShellIcon(const std::wstring & path, UINT flags, const DWORD attr, std::wstring* psTypeName)
 {
-    ASSERT(AfxGetThread() != GetCurrentThread());
     flags |= WDS_SHGFI_DEFAULTS;
 
     // Also retrieve the file type description

@@ -429,7 +429,7 @@ void CDirStatDoc::RebuildExtensionData()
     // Sort the iterators based on total bytes in descending order
     std::ranges::sort(sortedExtensions, [](const auto& a_it, const auto& b_it)
     {
-        return a_it->second.bytes.load() > b_it->second.bytes.load();
+        return a_it->second.GetBytes() > b_it->second.GetBytes();
     });
 
     // Initialize colors if not already done
@@ -870,7 +870,7 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
         bool allowEarly = false; // allow display before processing is finished
         LOGICAL_FOCUS focus = LF_NONE; // restrict which views support this selection
         std::vector<ITEMTYPE> typesAllow{ ITF_ANY }; // only display if these types are allowed
-        bool (*extra)(CItem*) = [](CItem*) { return true; }; // extra checks
+        bool (*extra)(CItem*) = nullptr; // extra checks
     };
 
     // special conditions
@@ -879,6 +879,7 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
     static bool (*parentNotNull)(CItem*) = [](CItem* item) { return item != nullptr && item->GetParent() != nullptr; };
     static bool (*reselectAvail)(CItem*) = [](CItem*) { return doc->IsReselectChildAvailable(); };
     static bool (*notRoot)(CItem*) = [](CItem* item) { return item != nullptr && !item->IsRootItem(); };
+    static bool (*hasRecycleBin)(CItem*) = [](CItem* item) { return item != nullptr && !item->IsRootItem() && IsLocalDrive(item->GetPath()); };
     static bool (*isResumable)(CItem*) = [](CItem*) { return CMainFrame::Get()->IsScanSuspended(); };
     static bool (*isSuspendable)(CItem*) = [](CItem*) { return doc->HasRootItem() && !doc->IsRootDone() && !CMainFrame::Get()->IsScanSuspended(); };
     static bool (*isStoppable)(CItem*) = [](CItem*) { return doc->HasRootItem() && !doc->IsRootDone(); };
@@ -892,7 +893,7 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
     {
         // ID                           none   many   early  focus        types
         { ID_CLEANUP_DELETE,          { false, true,  false, LF_NONE,     { IT_DIRECTORY, IT_FILE }, notRoot } },
-        { ID_CLEANUP_DELETE_BIN,      { false, true,  false, LF_NONE,     { IT_DIRECTORY, IT_FILE }, notRoot } },
+        { ID_CLEANUP_DELETE_BIN,      { false, true,  false, LF_NONE,     { IT_DIRECTORY, IT_FILE }, hasRecycleBin } },
         { ID_CLEANUP_DISK_CLEANUP  ,  { true,  true,  false, LF_NONE,     { ITF_ANY }, isElevationAvailable } },
         { ID_CLEANUP_MOVE_TO,         { false, true,  false, LF_NONE,     { IT_DIRECTORY, IT_FILE }, notRoot } },
         { ID_CLEANUP_REMOVE_PROGRAMS, { true,  true,  false, LF_NONE,     { ITF_ANY } } },
@@ -940,13 +941,14 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
         { ID_VIEW_SHOWUNKNOWN,        { true,  true,  false, LF_NONE,     { ITF_ANY } } }
     };
 
-    if (!filters.contains(pCmdUI->m_nID))
+    const auto it = filters.find(pCmdUI->m_nID);
+    if (it == filters.end())
     {
         ASSERT(FALSE);
         return;
     }
 
-    const auto& filter = filters[pCmdUI->m_nID];
+    const auto& filter = it->second;
     const auto& items = (filter.allowNone && filter.extra == nullptr) ?
         std::vector<CItem*>{} : GetAllSelected();
 
@@ -955,11 +957,11 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
     allow &= filter.allowNone || !items.empty();
     allow &= filter.allowMany || items.size() <= 1;
     allow &= filter.allowEarly || (IsRootDone() && !IsScanRunning());
-    if (items.empty()) allow &= filter.extra(nullptr);
+    if (items.empty() && filter.extra != nullptr) allow &= filter.extra(nullptr);
     for (const auto& item : items)
     {
         allow &= filter.typesAllow.front() == ITF_ANY || !item->IsTypeOrFlag(ITF_RESERVED);
-        allow &= filter.extra(item);
+        allow &= (filter.extra == nullptr) || filter.extra(item);
         allow &= std::any_of(filter.typesAllow.begin(), filter.typesAllow.end(),
             [item](ITEMTYPE type) { return item->IsTypeOrFlag(type); });
     }

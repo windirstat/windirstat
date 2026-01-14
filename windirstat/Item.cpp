@@ -657,7 +657,7 @@ void CItem::UpwardSubtractFolders(const ULONG dirCount) noexcept
     if (dirCount == 0) return;
     for (auto p = this; p != nullptr; p = p->GetParent())
     {
-        ASSERT(p->m_folderInfo->m_subdirs - dirCount >= 0);
+        ASSERT(p->m_folderInfo->m_subdirs >= dirCount);
         if (p->IsTypeOrFlag(IT_FILE)) continue;
         p->m_folderInfo->m_subdirs -= dirCount;
     }
@@ -679,7 +679,7 @@ void CItem::UpwardSubtractFiles(const ULONG fileCount) noexcept
     for (auto p = this; p != nullptr; p = p->GetParent())
     {
         if (p->IsTypeOrFlag(IT_FILE)) continue;
-        ASSERT(p->m_folderInfo->m_files - fileCount >= 0);
+        ASSERT(p->m_folderInfo->m_files >= fileCount);
         p->m_folderInfo->m_files -= fileCount;
     }
 }
@@ -728,17 +728,15 @@ void CItem::ExtensionDataAdd() const
 {
     if (!IsTypeOrFlag(IT_FILE)) return;
     const auto record = CDirStatDoc::Get()->GetExtensionDataRecord(GetExtension());
-    record->bytes += GetSizePhysical();
-    record->files += 1;
+    record->AddFile(GetSizePhysical());
 }
 
 void CItem::ExtensionDataRemove() const
 {
     if (!IsTypeOrFlag(IT_FILE)) return;
     const auto record = CDirStatDoc::Get()->GetExtensionDataRecord(GetExtension());
-    record->bytes -= GetSizePhysical();
-    record->files -= 1;
-    if (record->files == 0) CDirStatDoc::Get()->GetExtensionData()->erase(GetExtension());
+    record->RemoveFile(GetSizePhysical());
+    if (record->GetFiles() == 0) CDirStatDoc::Get()->GetExtensionData()->erase(GetExtension());
 }
 
 void CItem::ExtensionDataProcessChildren(const bool remove) const
@@ -1808,7 +1806,7 @@ std::vector<BYTE> CItem::GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CIte
         
     // Open file for reading - avoid files that are actively being written to
     SmartPointer<HANDLE> hFile(CloseHandle, CreateFile(GetPathLong().c_str(),
-        GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING,
+        GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING,
         FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_SEQUENTIAL_SCAN, nullptr));
     if (hFile == INVALID_HANDLE_VALUE)
     {

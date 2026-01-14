@@ -161,5 +161,5 @@ void DrawTextCache::PaintCachedEntry(CDC* pDC, const CRect& rect, CacheEntry& en
     const int yPos = rect.top + (rect.Height() - entry.bmpSize.cy) / 2;
 
     // BitBlt at the calculated position (skip 1 pixel top border)
-    pDC->BitBlt(xPos, yPos, entry.bmpSize.cx, entry.bmpSize.cy, &memDC, 0, 1, SRCCOPY);
+    pDC->BitBlt(xPos, yPos, entry.bmpSize.cx, entry.bmpSize.cy, &memDC, 0, 0, SRCCOPY);
 }

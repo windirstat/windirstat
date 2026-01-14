@@ -251,8 +251,8 @@ std::wstring FinderBasic::GetFilePath() const
         : (m_base + L"\\" + m_name);
 
     // Strip special DOS chars
-    if (path.starts_with(s_dosUNCPath)) return L"\\\\" + path.substr(s_dosUNCPath.size());
-    if (path.starts_with(s_dosPath)) return path.substr(s_dosPath.size());
+    if (path.starts_with(s_dosUNCPath)) return L"\\\\" + path.substr(s_dosUNCPath.length());
+    if (path.starts_with(s_dosPath)) return path.substr(s_dosPath.length());
     return path;
 }
 

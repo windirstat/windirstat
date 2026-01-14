@@ -136,6 +136,17 @@ bool DriveExists(const std::wstring& path) noexcept
     return true;
 }
 
+bool IsLocalDrive(const std::wstring& path) noexcept
+{
+    if (path.size() < 3 || path[1] != wds::chrColon || path[2] != wds::chrBackslash)
+    {
+        return false;
+    }
+
+    const auto driveType = GetDriveType(path.substr(0, 2).c_str());
+    return driveType == DRIVE_REMOVABLE || driveType == DRIVE_FIXED;
+}
+
 // Volume utilities
 bool GetVolumeName(const std::wstring& rootPath, std::wstring& volumeName)
 {

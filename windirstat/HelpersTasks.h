@@ -52,6 +52,7 @@ void RemoveWmiInstances(const std::wstring& wmiClass, CProgressDlg* pdlg, const 
 // File system helpers
 bool FolderExists(const std::wstring& path) noexcept;
 bool DriveExists(const std::wstring& path) noexcept;
+bool IsLocalDrive(const std::wstring& rootPath) noexcept;
 
 // Volume utilities
 bool GetVolumeName(const std::wstring& rootPath, std::wstring& volumeName);

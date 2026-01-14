@@ -26,8 +26,8 @@
 CExtensionListControl::CListItem::CListItem(CExtensionListControl* list, const std::wstring& extension, const SExtensionRecord& r)
     : m_driveList(list)
     , m_extension(extension)
-    , m_bytes(r.bytes)
-    , m_files(r.files)
+    , m_bytes(r.GetBytes())
+    , m_files(r.GetFiles())
     , m_color(r.color)
 {
 }
