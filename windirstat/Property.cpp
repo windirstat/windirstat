@@ -135,7 +135,8 @@ template <> void Setting<std::vector<int>>::ReadPersistedProperty()
     {
         // Scale from stored 96 DPI values to current DPI
         int value = std::stoi(std::wstring(token_view.begin(), token_view.end()));
-        m_value.push_back(DpiRest(value));
+        if (m_entry == L"ColumnWidths") value = DpiRest(value);
+        m_value.push_back(value);
     }
 }
 
@@ -144,8 +145,8 @@ template <> void Setting<std::vector<int>>::WritePersistedProperty()
     std::wstring result;
     for (const auto part : m_value)
     {
-        // Scale from current DPI to 96 DPI for storage
-        result += std::to_wstring(DpiSave(part)) + L',';
+        const auto val = (m_entry == L"ColumnWidths") ? DpiSave(part) : part;
+        result += std::to_wstring(val) + L',';
     }
     if (result.ends_with(L',')) result.pop_back();
 
