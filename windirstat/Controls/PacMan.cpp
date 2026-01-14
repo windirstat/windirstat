@@ -104,7 +104,7 @@ void CPacman::Draw(CDC* pdc, const CRect& rect)
     if (!m_toTheRight) startAngle += 180.0f;
 
     // Fill background if requested
-    if (m_backColor != -1)
+    if (m_backColor != ~COLORREF())
     {
         pdc->FillSolidRect(rect, m_backColor);
     }
@@ -125,9 +125,12 @@ void CPacman::Draw(CDC* pdc, const CRect& rect)
     const COLORREF zColor = DarkMode::WdsSysColor(COLOR_WINDOWTEXT);
     static const Gdiplus::Font font{ L"Arial", 6.0f, Gdiplus::FontStyleBold };
     static const Gdiplus::SolidBrush zBrush(Gdiplus::Color(0xFF, GetRValue(zColor), GetGValue(zColor), GetBValue(zColor)));
-    graphics.DrawString(L"z",1, &font, {rc.left + 5.0f, rc.top - 3.0f}, &zBrush);
-    graphics.DrawString(L"z", 1, &font, { rc.left + 10.0f, rc.top - 4.5f }, &zBrush);
-    graphics.DrawString(L"z", 1, &font, { rc.left + 15.0f, rc.top - 6.0f }, &zBrush);
+    for (const auto x : { 1.0f, 2.0f, 3.0f })
+    {
+        const auto deltaX = x * static_cast<float>(rc.Width()) / 3.0f;
+        const auto deltaY = (x + 1) * static_cast<float>(rc.Height()) / 18.0f;
+        graphics.DrawString(L"z", 1, &font, { rc.left + deltaX, rc.top - deltaY }, &zBrush);
+    }
 }
 
 void CPacman::UpdatePosition(float& position, bool& up, const float diff)

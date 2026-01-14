@@ -536,8 +536,8 @@ void DrawTreeNodeConnector(CDC* pdc, const CRect& nodeRect, const COLORREF bgCol
 
     // Create pen once for all connector lines
     static constexpr DWORD dashPattern[] = { 1, 2 };
-    static LOGBRUSH lb = { BS_SOLID, DarkMode::IsDarkModeActive() ? RGB(160, 160, 160) : RGB(64, 64, 64), 0 };
-    static CPen linePen(PS_GEOMETRIC | PS_USERSTYLE | PS_ENDCAP_FLAT, 2, &lb, 2, dashPattern);
+    static LOGBRUSH lb = { BS_SOLID, DarkMode::IsDarkModeActive() ? RGB(160, 160, 160) : RGB(96, 96, 96), 0 };
+    static CPen linePen(PS_GEOMETRIC | PS_USERSTYLE | PS_ENDCAP_FLAT, 1, &lb, 2, dashPattern);
     CSelectObject sopen(pdc, &linePen);
 
     std::array<POINT, 6> pts{};
@@ -556,7 +556,7 @@ void DrawTreeNodeConnector(CDC* pdc, const CRect& nodeRect, const COLORREF bgCol
         const int boxBottom = centerY + boxHalf + 1;
 
         // Vertical connector
-        int vertStart = ptCount;
+        const int vertStart = ptCount;
         if (toTop) pts[ptCount++] = { centerX, nodeRect.top };
         pts[ptCount++] = { centerX, toTop ? boxTop : centerY };
         if (toBottom) pts[ptCount++] = { centerX, boxBottom };
@@ -578,7 +578,8 @@ void DrawTreeNodeConnector(CDC* pdc, const CRect& nodeRect, const COLORREF bgCol
         pdc->FillSolidRect(boxLeft, boxTop, boxSize, boxSize, bgColor);
 
         // Switch to solid pen for box border
-        static CPen boxPen(PS_GEOMETRIC | PS_SOLID | PS_ENDCAP_FLAT | PS_JOIN_MITER, 2, &lb);
+        static const LOGBRUSH lbBox = { BS_SOLID, DarkMode::IsDarkModeActive() ? RGB(160, 160, 160) : RGB(96, 96, 96), 0 };
+        static CPen boxPen(PS_GEOMETRIC, 1, &lbBox);
         CSelectObject soBoxPen(pdc, &boxPen);
 
         POINT boxPts[12];
@@ -613,7 +614,7 @@ void DrawTreeNodeConnector(CDC* pdc, const CRect& nodeRect, const COLORREF bgCol
     else
     {
         // Vertical connector
-        int vertStart = ptCount;
+        const int vertStart = ptCount;
         if (toTop) pts[ptCount++] = { centerX, nodeRect.top };
         pts[ptCount++] = { centerX, centerY + (toTop && !toBottom ? 1 : 0) };
         if (toBottom) pts[ptCount++] = { centerX, nodeRect.bottom };

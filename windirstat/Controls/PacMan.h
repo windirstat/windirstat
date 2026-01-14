@@ -25,7 +25,7 @@
 class CPacman final
 {
 public:
-    CPacman(COLORREF backColor = -1);
+    CPacman(COLORREF backColor = ~COLORREF());
     static void SetGlobalSuspendState(bool suspend = true);
     void Reset();
     void Start();
