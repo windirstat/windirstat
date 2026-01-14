@@ -527,15 +527,16 @@ void CItem::AddChild(CItem* child, const bool addOnly)
     }
 
     child->SetParent(this);
-    m_folderInfo->m_children.push_back(child);
-  
     if (IsVisible() && IsExpanded())
     {
         CMainFrame::Get()->InvokeInMessageThread([this, child]
         {
+            // Add child in UI thread since UI thread immediately use it
+            m_folderInfo->m_children.push_back(child);
             CFileTreeControl::Get()->OnChildAdded(this, child);
         });
     }
+    else m_folderInfo->m_children.push_back(child);
 }
 
 void CItem::RemoveChild(CItem* child)
