@@ -1115,7 +1115,8 @@ void CDirStatDoc::OnCleanupEmptyRecycleBin()
 {
     CProgressDlg(0, true, AfxGetMainWnd(), [](CProgressDlg*)
     {
-        SHEmptyRecycleBin(*AfxGetMainWnd(), nullptr, 0);
+        SHEmptyRecycleBin(*AfxGetMainWnd(), nullptr, SHERB_NOCONFIRMATION |
+            SHERB_NOPROGRESSUI | SHERB_NOSOUND);
     }).DoModal();
 
     // locate all drive items in order to refresh recyclers
