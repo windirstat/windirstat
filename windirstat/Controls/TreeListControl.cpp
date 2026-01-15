@@ -608,6 +608,7 @@ void CTreeListControl::ExpandItem(const int i, const bool scroll)
     LockWindowUpdate();
     int maxwidth = GetSubItemWidth(item, 0);
     const auto childItems = item->GetTreeListChildCount();
+    SetItemCount(GetItemCount() + childItems);
     for (const int c : std::views::iota(0, childItems))
     {
         CTreeListItem* child = item->GetTreeListChild(c);
