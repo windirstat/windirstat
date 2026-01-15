@@ -535,9 +535,8 @@ void DrawTreeNodeConnector(CDC* pdc, const CRect& nodeRect, const COLORREF bgCol
     const int centerY = nodeRect.top + nodeHeight / 2;
 
     // Create pen once for all connector lines
-    static constexpr DWORD dashPattern[] = { 1, 2 };
-    static LOGBRUSH lb = { BS_SOLID, DarkMode::IsDarkModeActive() ? RGB(160, 160, 160) : RGB(96, 96, 96), 0 };
-    static CPen linePen(PS_GEOMETRIC | PS_USERSTYLE | PS_ENDCAP_FLAT, 1, &lb, 2, dashPattern);
+    static LOGBRUSH lb = { BS_SOLID, DarkMode::IsDarkModeActive() ? RGB(160, 160, 160) : RGB(64, 64, 64), 0 };
+    static CPen linePen(PS_GEOMETRIC | PS_DOT, 1, &lb);
     CSelectObject sopen(pdc, &linePen);
 
     std::array<POINT, 6> pts{};
@@ -548,12 +547,15 @@ void DrawTreeNodeConnector(CDC* pdc, const CRect& nodeRect, const COLORREF bgCol
     if (showPlus || showMinus)
     {
         // Calculate plus/minus box dimensions once
-        const int boxSize = (nodeHeight / 2) | 1;
+        const int penWidth = DarkMode::IsDarkModeActive() ? 1 : 2;
+        int boxSize = nodeHeight / 2;
+        if ((boxSize & 1) != (penWidth & 1)) boxSize++;
+
         const int boxHalf = boxSize / 2;
         const int boxLeft = centerX - boxHalf;
-        const int boxRight = centerX + boxHalf + 1;
+        const int boxRight = boxLeft + boxSize;
         const int boxTop = centerY - boxHalf;
-        const int boxBottom = centerY + boxHalf + 1;
+        const int boxBottom = boxTop + boxSize;
 
         // Vertical connector
         const int vertStart = ptCount;
@@ -574,14 +576,6 @@ void DrawTreeNodeConnector(CDC* pdc, const CRect& nodeRect, const COLORREF bgCol
         // Draw connector lines
         pdc->PolyPolyline(pts.data(), counts.data(), segCount);
 
-        // Draw plus/minus box background
-        pdc->FillSolidRect(boxLeft, boxTop, boxSize, boxSize, bgColor);
-
-        // Switch to solid pen for box border
-        static const LOGBRUSH lbBox = { BS_SOLID, DarkMode::IsDarkModeActive() ? RGB(160, 160, 160) : RGB(96, 96, 96), 0 };
-        static CPen boxPen(PS_GEOMETRIC, 1, &lbBox);
-        CSelectObject soBoxPen(pdc, &boxPen);
-
         POINT boxPts[12];
         DWORD boxCounts[3];
         int boxSegCount = 0;
@@ -589,16 +583,16 @@ void DrawTreeNodeConnector(CDC* pdc, const CRect& nodeRect, const COLORREF bgCol
 
         // Box border
         boxPts[boxPtCount++] = { boxLeft, boxTop };
-        boxPts[boxPtCount++] = { boxRight - 1, boxTop };
-        boxPts[boxPtCount++] = { boxRight - 1, boxBottom - 1 };
-        boxPts[boxPtCount++] = { boxLeft, boxBottom - 1 };
+        boxPts[boxPtCount++] = { boxRight, boxTop };
+        boxPts[boxPtCount++] = { boxRight, boxBottom };
+        boxPts[boxPtCount++] = { boxLeft, boxBottom };
         boxPts[boxPtCount++] = { boxLeft, boxTop };
         boxCounts[boxSegCount++] = 5;
 
         // Minus sign
-        const int signMargin = max(boxSize / 4, 2) + 1;
+        const int signMargin = nodeWidth / 9;
         boxPts[boxPtCount++] = { boxLeft + signMargin, centerY };
-        boxPts[boxPtCount++] = { boxRight - signMargin - 1, centerY };
+        boxPts[boxPtCount++] = { boxRight - signMargin, centerY };
         boxCounts[boxSegCount++] = 2;
 
         // Plus vertical
@@ -609,6 +603,15 @@ void DrawTreeNodeConnector(CDC* pdc, const CRect& nodeRect, const COLORREF bgCol
             boxCounts[boxSegCount++] = 2;
         }
 
+        // Draw plus/minus box background
+        pdc->FillSolidRect(boxLeft, boxTop, boxSize, boxSize, bgColor);
+
+        // Draw box and plus/minus
+        static auto lineWidth = DarkMode::IsDarkModeActive() ? 1 : 2;
+        static auto boxColor = DarkMode::IsDarkModeActive() ? RGB(160, 160, 160) : RGB(96, 96, 96);
+        static LOGBRUSH lbBox = { BS_SOLID, boxColor, 0 };
+        static CPen boxPen(PS_GEOMETRIC | PS_ENDCAP_FLAT, lineWidth, &lbBox);
+        CSelectObject soBoxPen(pdc, &boxPen);
         pdc->PolyPolyline(boxPts, boxCounts, boxSegCount);
     }
     else
