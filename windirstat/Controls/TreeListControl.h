@@ -66,7 +66,6 @@ public:
     CTreeListItem* GetParent() const;
     void SetParent(CTreeListItem* parent);
     bool IsAncestorOf(const CTreeListItem* item) const;
-    bool HasMoreSiblings() const;
     bool HasChildren() const;
     bool IsExpanded() const;
     void SetExpanded(bool expanded = true) const;

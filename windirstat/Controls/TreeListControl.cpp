@@ -150,18 +150,6 @@ bool CTreeListItem::IsAncestorOf(const CTreeListItem* item) const
     return false;
 }
 
-bool CTreeListItem::HasMoreSiblings() const
-{
-    // Get the index of the final visible item of the parent
-    LVFINDINFO fi{ .flags = LVFI_PARAM, .lParam = reinterpret_cast<LPARAM>(GetParent()) };
-    int parentIndex = m_visualInfo->control->FindItem(&fi);
-    if (parentIndex == -1) return false;
-
-    // See if that visual item is this item
-    return (m_visualInfo->control->GetItem(parentIndex +
-        GetParent()->GetTreeListChildCount()) != this);
-}
-
 bool CTreeListItem::HasChildren() const
 {
     return GetTreeListChildCount() > 0;
@@ -384,67 +372,63 @@ void CTreeListControl::DrawNode(CDC* pdc, CRect& rc, CRect& rcPlusMinus, const C
 {
     const int nodeSize = GetRowHeight();
     const int indentOffset = nodeSize * 7 / 8;
-
+    const int currentDepth = item->GetIndent();
     CRect rcRest = rc;
     rcRest.left += GetGeneralLeftIndent() + 3;
-    
-    // Early exit: handle width calculation only
-    if (item->GetIndent() == 0)
+
+    // Handle root item (depth 0) - no connectors
+    if (currentDepth == 0)
     {
         rc.right = rcRest.left;
         if (width != nullptr) *width = rc.Width();
         return;
     }
 
-    // Width-only calculation path (early exit)
+    // Width-only calculation (early exit)
+    const int visualIndent = currentDepth - 1;
     if (width != nullptr)
     {
-        const int visualIndent = item->GetIndent() - 1;
         rcRest.left += visualIndent * indentOffset + nodeSize;
         rc.right = rcRest.left;
         *width = rc.Width();
         return;
     }
 
-    // Main drawing path
-    const COLORREF bgColor = IsItemStripColor(FindTreeItem(item)) ? GetStripeColor() : GetWindowColor();
-    const int boxSize = max(nodeSize / 2, 9) | 1;
-    const int boxHalf = boxSize / 2;
+    // Full drawing path - cache expensive lookup
+    const int rowIndex = FindTreeItem(item);
+    const int totalRows = GetItemCount();
+    const int nextDepth = (rowIndex + 1 < totalRows) ? GetItem(rowIndex + 1)->GetIndent() : -1;
+    const bool isLastChild = (nextDepth < currentDepth);
+    const COLORREF bgColor = IsItemStripColor(rowIndex) ? GetStripeColor() : GetWindowColor();
 
-    // Draw vertical continuation lines for ancestors
-    auto* ancestor = item;
-    for (int indent = item->GetIndent() - 1; indent >= 0; indent--)
+    // Draw vertical connectors for ancestor levels using ranges
+    for (const int level : std::views::iota(0, visualIndent))
     {
-        ancestor = ancestor->GetParent();
-        if (ancestor == nullptr) break;
-        if (!ancestor->HasMoreSiblings()) continue;
-
-        const int visualIndent = (indent > 0) ? indent - 1 : 0;
-        const int x = rcRest.left + visualIndent * indentOffset;
-        CRect nodeRect(x, rcRest.top, x + nodeSize, rcRest.top + nodeSize);
-        DrawTreeNodeConnector(pdc, nodeRect, bgColor, true, true, false, false, false);
+        if (nextDepth > level)
+        {
+            const CRect nodeRect(rcRest.left + level * indentOffset, rcRest.top,
+                rcRest.left + level * indentOffset + nodeSize, rcRest.top + nodeSize);
+            DrawTreeNodeConnector(pdc, nodeRect, bgColor, true, true, false);
+        }
     }
 
-    // Position at this item's indent level
-    const int visualIndent = (item->GetIndent() > 0) ? item->GetIndent() - 1 : 0;
+    // Draw connector for current item
     rcRest.left += visualIndent * indentOffset;
-
-    const int lineCenterX = rcRest.left + nodeSize / 2;
-    const int centerY = rcRest.top + nodeSize / 2;
     const bool hasChildren = item->HasChildren();
-    const bool hasMoreSiblings = item->HasMoreSiblings();
-    
-    // Draw the node connector
-    CRect nodeRect(rcRest.left, rcRest.top, rcRest.left + nodeSize, rcRest.top + nodeSize);
-    DrawTreeNodeConnector(pdc, nodeRect, bgColor, true, hasMoreSiblings, true,
+    const CRect nodeRect(rcRest.left, rcRest.top, rcRest.left + nodeSize, rcRest.top + nodeSize);
+
+    DrawTreeNodeConnector(pdc, nodeRect, bgColor, true, !isLastChild, true,
         hasChildren && !item->IsExpanded(), hasChildren && item->IsExpanded());
 
-    // Set up the plus/minus hit rect for click detection
-    rcPlusMinus.SetRect(lineCenterX - boxHalf, centerY - boxHalf,
-                        lineCenterX - boxHalf + boxSize, centerY - boxHalf + boxSize);
+    // Set up plus/minus hit rect for click detection
+    const int boxHalf = ((nodeSize / 2) | 1) / 2;
+    const int lineCenterX = rcRest.left + nodeSize / 2;
+    const int centerY = rcRest.top + nodeSize / 2;
+    rcPlusMinus = CRect(lineCenterX - boxHalf, centerY - boxHalf,
+        lineCenterX + boxHalf + 1, centerY + boxHalf + 1);
 
-    rcRest.left += nodeSize;
-    rc.right = rcRest.left;
+    // Update final position
+    rc.right = rcRest.left + nodeSize;
 }
 
 void CTreeListControl::OnLButtonDown(const UINT nFlags, const CPoint point)
