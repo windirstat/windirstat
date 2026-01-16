@@ -1843,8 +1843,8 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
             }
 
             // Handle non-root item by removing from parent
-            item->UpwardSubtractFiles(item->IsTypeOrFlag(IT_FILE) ? 1 : 0);
-            item->UpwardSubtractFolders(item->IsTypeOrFlag(IT_FILE) ? 0 : 1);
+            item->GetParent()->UpwardSubtractFiles(item->IsTypeOrFlag(IT_FILE) ? 1 : 0);
+            item->GetParent()->UpwardSubtractFolders(item->IsTypeOrFlag(IT_FILE) ? 0 : 1);
             item->GetParent()->RemoveChild(item);
         }
     }
