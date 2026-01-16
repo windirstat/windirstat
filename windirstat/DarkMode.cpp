@@ -269,7 +269,7 @@ LRESULT DarkMode::HandleMenuMessage(const UINT message, const WPARAM wParam, con
 
     if (message == WM_UAHDRAWMENU)
     {
-        UAHMENU* pUDM = reinterpret_cast<UAHMENU*>(lParam);
+        UAHMENU* pUDM = std::bit_cast<UAHMENU*>(lParam);
         MENUBARINFO mbi{};
         mbi.cbSize = sizeof(MENUBARINFO);
         GetMenuBarInfo(hWnd, OBJID_MENU, 0, &mbi);
@@ -285,7 +285,7 @@ LRESULT DarkMode::HandleMenuMessage(const UINT message, const WPARAM wParam, con
     }
     else if (message == WM_UAHDRAWMENUITEM)
     {
-        UAHDRAWMENUITEM* pUDMI = reinterpret_cast<UAHDRAWMENUITEM*>(lParam);
+        UAHDRAWMENUITEM* pUDMI = std::bit_cast<UAHDRAWMENUITEM*>(lParam);
 
         std::array<WCHAR, 256> menuString = { L'\0' };
         MENUITEMINFO mii{ .cbSize = sizeof(MENUITEMINFO), .fMask = MIIM_STRING,

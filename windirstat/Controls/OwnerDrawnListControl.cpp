@@ -22,10 +22,10 @@
 
 namespace
 {
-    constexpr UINT TEXT_X_MARGIN = 6; // Horizontal distance of the text from the edge of the item rectangle
-    constexpr UINT LABEL_INFLATE_CX = 3; // How much the label is enlarged, to get the selection and focus rectangle
-    constexpr UINT LABEL_Y_MARGIN = 2;
-    constexpr UINT GENERAL_INDENT = 5;
+    constexpr UINT TEXT_X_MARGIN = 6u; // Horizontal distance of the text from the edge of the item rectangle
+    constexpr UINT LABEL_INFLATE_CX = 3u; // How much the label is enlarged, to get the selection and focus rectangle
+    constexpr UINT LABEL_Y_MARGIN = 2u;
+    constexpr UINT GENERAL_INDENT = 5u;
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -404,7 +404,7 @@ void COwnerDrawnListControl::InitializeColors()
 
 void COwnerDrawnListControl::DrawItem(LPDRAWITEMSTRUCT pdis)
 {
-    auto* item = reinterpret_cast<COwnerDrawnListItem*>(pdis->itemData);
+    auto* item = std::bit_cast<COwnerDrawnListItem*>(pdis->itemData);
     auto* pdc = CDC::FromHandle(pdis->hDC);
     CRect rcItem(pdis->rcItem);
 

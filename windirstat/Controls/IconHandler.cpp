@@ -50,8 +50,8 @@ void CIconHandler::Initialize()
         m_unknownImage = IconFromFontChar(L'?', RGB(0xCC,0xB8,0x66), true);
         
         // Cache icon for boot drive
-        std::wstring drive(_MAX_PATH, wds::chrNull);
-        drive.resize(min(wcslen(L"C:\\"), GetWindowsDirectory(drive.data(), _MAX_PATH)));
+        std::wstring drive(MAX_PATH, wds::chrNull);
+        drive.resize(min(wcslen(L"C:\\"), GetWindowsDirectory(drive.data(), MAX_PATH)));
         m_mountPointImage = FetchShellIcon(drive, 0, FILE_ATTRIBUTE_REPARSE_POINT);
 
         // Cache icon for my computer

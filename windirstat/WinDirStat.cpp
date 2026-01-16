@@ -513,13 +513,12 @@ void CDirStatApp::LegacyUninstall()
         if (key.Open(regInfo.rootKey, regInfo.subKey.c_str(), KEY_READ) != ERROR_SUCCESS) continue;
 
         // Query InstallLocation
-        std::array<WCHAR, MAX_PATH> installPath;
+        std::array<WCHAR, MAX_PATH + 1> installPath;
         ULONG size = static_cast<ULONG>(installPath.size());
         if (key.QueryStringValue(L"InstallLocation", installPath.data(), &size) == ERROR_SUCCESS)
         {
             // Clean up installation directory
-            fs::path dir(installPath.data());
-            if (fs::exists(dir))
+            if (fs::path dir(installPath.data()); fs::exists(dir))
             {
                 for (auto& file : fs::directory_iterator(dir, ec))
                 {
@@ -554,7 +553,7 @@ void CDirStatApp::LegacyUninstall()
     }
 
     // Remove ProgramData start menu items
-    std::array<WCHAR, MAX_PATH> programData;
+    std::array<WCHAR, MAX_PATH + 1> programData;
     if (SHGetFolderPath(nullptr, CSIDL_COMMON_APPDATA, nullptr, 0, programData.data()) != S_OK) return;
     fs::remove_all(fs::path(programData.data()) / startMenuLocation, ec);
     ExitProcess(0);

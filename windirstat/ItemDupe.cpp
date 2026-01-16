@@ -139,7 +139,7 @@ std::wstring CItemDupe::GetHashAndExtensions() const
         else extensionsSet.emplace(ext);
     }
 
-    // Create list of comma and space delimitered extensions
+    // Create list of comma and space delimited extensions
     std::wstring extensions;
     for (const auto& extension : extensionsSet)
     {

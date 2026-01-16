@@ -166,7 +166,7 @@ std::wstring GetVolumePathNameEx(const std::wstring& path)
     static const std::wregex uncPattern(LR"(\\\\\?\\UNC\\([^\\]*).*)", std::regex_constants::optimize);
 
     // First, try the regular path resolution
-    std::array<WCHAR, MAX_PATH> volume;
+    std::array<WCHAR, MAX_PATH + 1> volume;
     if (GetVolumePathName(path.c_str(), volume.data(), std::ssize(volume)) != 0)
         return volume.data();
 
@@ -422,7 +422,7 @@ bool CompressFileAllowed(const std::wstring& filePath, const CompressionAlgorith
     }
 
     // Query volume for standard compression support based on whether NTFS
-    std::array<WCHAR, MAX_PATH + 1> fileSystemName;
+    std::array<WCHAR, MAX_PATH + 1> fileSystemName{};
     DWORD fileSystemFlags = 0;
     const bool isNTFS = GetVolumeInformation(volumeName.c_str(), nullptr, 0, nullptr, nullptr,
         &fileSystemFlags, fileSystemName.data(), std::ssize(fileSystemName)) != 0 &&
@@ -633,14 +633,14 @@ void CopyAllDriveMappings() noexcept
 
     // Enumerate all subkeys (each subkey is a drive letter)
     std::unordered_map<std::wstring, std::wstring> mappings;
-    std::array<WCHAR, MAX_PATH> driveLetter;
+    std::array<WCHAR, MAX_PATH + 1> driveLetter;
     ULONG driveLetterSize = static_cast<ULONG>(driveLetter.size());
     for (DWORD index = 0; keyNetwork.EnumKey(index, driveLetter.data(), &driveLetterSize) == ERROR_SUCCESS;
         ++index, driveLetterSize = static_cast<ULONG>(driveLetter.size()))
     {
         // Get the drive letter and remove path
         CRegKey keyDrive;
-        std::array<WCHAR, MAX_PATH> remotePath;
+        std::array<WCHAR, MAX_PATH + 1> remotePath{};
         ULONG remotePathSize = static_cast<ULONG>(remotePath.size());       
         if (keyDrive.Open(keyNetwork, driveLetter.data(), KEY_READ) == ERROR_SUCCESS &&
             keyDrive.QueryStringValue(L"RemotePath", remotePath.data(), &remotePathSize) == ERROR_SUCCESS)

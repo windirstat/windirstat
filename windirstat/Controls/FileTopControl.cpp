@@ -184,7 +184,7 @@ void CFileTopControl::AfterDeleteAllItems()
     m_needsResort = true;
 
     // Delete and recreate root item
-    if (m_rootItem != nullptr) delete m_rootItem;
+    delete m_rootItem;
     m_rootItem = new CItemTop();
     InsertItem(0, m_rootItem);
     m_rootItem->SetExpanded(true);

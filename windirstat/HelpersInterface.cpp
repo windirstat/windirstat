@@ -325,7 +325,7 @@ const std::wstring& GetSpec_TiB() noexcept
 // System information
 std::wstring GetCOMSPEC()
 {
-    std::array<WCHAR, _MAX_PATH> cmd;
+    std::array<WCHAR, MAX_PATH + 1> cmd;
     if (::GetEnvironmentVariable(L"COMSPEC", cmd.data(), std::ssize(cmd)) == 0)
     {
         VTRACE(L"COMSPEC not set.");
@@ -339,7 +339,7 @@ const std::wstring& GetSysDirectory() noexcept
 {
     static std::wstring s;
     if (!s.empty()) return s;
-    s.resize(_MAX_PATH), ::GetSystemDirectory(s.data(), _MAX_PATH);
+    s.resize(MAX_PATH), ::GetSystemDirectory(s.data(), MAX_PATH);
     s.resize(wcslen(s.data()));
     return s;
 }
@@ -487,8 +487,8 @@ IContextMenu* GetContextMenu(const HWND hwnd, const std::vector<std::wstring>& p
 // Application info
 std::wstring GetAppFileName(const std::wstring& ext)
 {
-    std::wstring s(_MAX_PATH, wds::chrNull);
-    ::GetModuleFileName(nullptr, s.data(), _MAX_PATH);
+    std::wstring s(MAX_PATH, wds::chrNull);
+    ::GetModuleFileName(nullptr, s.data(), MAX_PATH);
     s.resize(wcslen(s.data()));
 
     // optional substitute extension

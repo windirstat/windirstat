@@ -281,7 +281,7 @@ CDrivesList::CDrivesList()
 
 CDriveItem* CDrivesList::GetItem(const int i) const
 {
-    return reinterpret_cast<CDriveItem*>(GetItemData(i));
+    return std::bit_cast<CDriveItem*>(GetItemData(i));
 }
 
 void CDrivesList::SelectItem(const CDriveItem* item)
@@ -641,7 +641,7 @@ LRESULT CSelectDrivesDlg::OnWmuOk(WPARAM, LPARAM)
 
 LRESULT CSelectDrivesDlg::OnWmDriveInfoThreadFinished(const WPARAM wParam, const LPARAM lparam)
 {
-    const auto item = reinterpret_cast<CDriveItem*>(lparam);
+    const auto item = std::bit_cast<CDriveItem*>(lparam);
     const bool success = (wParam != 0);
 
     // Find the item in the list to verify it still exists

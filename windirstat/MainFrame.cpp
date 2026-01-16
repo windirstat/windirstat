@@ -894,7 +894,7 @@ void CMainFrame::OnTimer(const UINT_PTR nIDEvent)
 
 LRESULT CMainFrame::OnCallbackRequest(WPARAM, const LPARAM lParam)
 {
-    const auto & callback = *static_cast<std::function<void()>*>(reinterpret_cast<LPVOID>(lParam));
+    const auto & callback = *static_cast<std::function<void()>*>(std::bit_cast<LPVOID>(lParam));
     callback();
     return 0;
 }

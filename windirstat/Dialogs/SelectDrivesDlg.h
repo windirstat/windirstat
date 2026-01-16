@@ -41,7 +41,7 @@ class CDriveItem final : public COwnerDrawnListItem
 {
 public:
     CDriveItem(CDrivesList* list, const std::wstring& pszPath);
-    ~CDriveItem();
+    ~CDriveItem() override;
 
     void StartQuery(HWND dialog);
     void StopQuery();
