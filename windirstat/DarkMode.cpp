@@ -16,7 +16,6 @@
 //
 
 #include "pch.h"
-#include "SelectObject.h"
 
 #pragma comment(lib, "uxtheme.lib")
 #pragma comment(lib, "dwmapi.lib")

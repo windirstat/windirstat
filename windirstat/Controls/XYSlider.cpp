@@ -16,7 +16,6 @@
 //
 
 #include "pch.h"
-#include "SelectObject.h"
 #include "XYSlider.h"
 #include "resource.h"
 

@@ -20,7 +20,6 @@
 #include "HelpersInterface.h"
 #include "Options.h"
 #include "Localization.h"
-#include "SelectObject.h"
 
 static NTSTATUS(NTAPI* RtlDecompressBufferEx)(USHORT CompressionFormat, PUCHAR UncompressedBuffer,
     ULONG  UncompressedBufferSize, PUCHAR CompressedBuffer, ULONG  CompressedBufferSize,
@@ -63,7 +62,7 @@ std::wstring GetLocaleLanguage(const LANGID langid)
 {
     const std::wstring s = GetLocaleString(LOCALE_SLOCALIZEDLANGUAGENAME, langid);
     const std::wstring n = GetLocaleString(LOCALE_SNATIVELANGNAME, langid);
-    return std::format(L"{} ({})", s, n);
+    return s + L" (" + n + L")";
 }
 
 wchar_t GetLocaleThousandSeparator() noexcept
@@ -90,17 +89,17 @@ wchar_t GetLocaleDecimalSeparator() noexcept
     return cachedChar;
 }
 
-std::wstring FormatBytes(const ULONGLONG n)
+std::wstring FormatBytes(const ULONGLONG n) noexcept
 {
     if (COptions::UseSizeSuffixes)
     {
         return FormatSizeSuffixes(n);
     }
 
-    return std::format(L"{} {}", FormatLongLongNormal(n), GetSpec_Bytes());
+    return FormatLongLongNormal(n) + L" " + GetSpec_Bytes();
 }
 
-std::wstring FormatSizeSuffixes(ULONGLONG n)
+std::wstring FormatSizeSuffixes(const ULONGLONG n) noexcept
 {
     constexpr ULONGLONG BASE_BYTES = 1024;
     constexpr ULONGLONG KIB_BYTES = BASE_BYTES;
@@ -113,29 +112,29 @@ std::wstring FormatSizeSuffixes(ULONGLONG n)
 
     if (n >= TIB_THRESHOLD_BYTES)
     {
-        return std::format(L"{} {}", FormatDouble(static_cast<double>(n) / TIB_BYTES), GetSpec_TiB());
+        return FormatDouble(static_cast<double>(n) / TIB_BYTES) + L" " + GetSpec_TiB();
     }
     if (n >= GIB_THRESHOLD_BYTES)
     {
-        return std::format(L"{} {}", FormatDouble(static_cast<double>(n) / GIB_BYTES), GetSpec_GiB());
+        return FormatDouble(static_cast<double>(n) / GIB_BYTES) + L" " + GetSpec_GiB();
     }
     if (n >= MIB_THRESHOLD_BYTES)
     {
-        return std::format(L"{} {}", FormatDouble(static_cast<double>(n) / MIB_BYTES), GetSpec_MiB());
+        return FormatDouble(static_cast<double>(n) / MIB_BYTES) + L" " + GetSpec_MiB();
     }
     if (n >= KIB_BYTES)
     {
-        return std::format(L"{} {}", FormatDouble(static_cast<double>(n) / KIB_BYTES), GetSpec_KiB());
+        return FormatDouble(static_cast<double>(n) / KIB_BYTES) + L" " + GetSpec_KiB();
     }
-    return std::format(L"{} {}", n, GetSpec_Bytes());
+    return std::to_wstring(n) + L" " + GetSpec_Bytes();
 }
 
-std::wstring FormatCount(const ULONGLONG n)
+std::wstring FormatCount(const ULONGLONG n) noexcept
 {
     return FormatLongLongNormal(n);
 }
 
-std::wstring FormatDouble(double d)
+std::wstring FormatDouble(const double d) noexcept
 {
     ASSERT(d >= 0);
 
@@ -143,10 +142,10 @@ std::wstring FormatDouble(double d)
     const int i = x / 10;
     const int r = x % 10;
 
-    return std::format(L"{}{}{}", i, GetLocaleDecimalSeparator(), r);
+    return std::to_wstring(i) + GetLocaleDecimalSeparator() + std::to_wstring(r);
 }
 
-std::wstring FormatFileTime(const FILETIME& t)
+std::wstring FormatFileTime(const FILETIME& t) noexcept
 {
     SYSTEMTIME st;
     FILETIME ft;
@@ -163,10 +162,10 @@ std::wstring FormatFileTime(const FILETIME& t)
     std::array<WCHAR, 64> time;
     GetTimeFormat(lcid, TIME_NOSECONDS, &st, nullptr, time.data(), std::ssize(time));
 
-    return std::format(L"{}  {}", date.data(), time.data());
+    return std::wstring(date.data()) + L"  " + time.data();
 }
 
-std::wstring FormatAttributes(const DWORD attr)
+std::wstring FormatAttributes(const DWORD attr) noexcept
 {
     if (attr == INVALID_FILE_ATTRIBUTES) return wds::strInvalidAttributes;
 
@@ -183,7 +182,23 @@ std::wstring FormatAttributes(const DWORD attr)
     return attributes;
 }
 
-std::wstring FormatMilliseconds(const ULONGLONG ms)
+std::wstring FormatHex(const std::vector<BYTE> & bytes, const bool upper) noexcept
+{
+    const wchar_t* h = upper
+        ? L"0123456789ABCDEF"
+        : L"0123456789abcdef";
+
+    std::wstring out(bytes.size() * 2, L'\0');
+    for (size_t i = 0; i < bytes.size(); ++i)
+    {
+        const BYTE b = bytes[i];
+        out[2 * i] = h[b >> 4];
+        out[2 * i + 1] = h[b & 0x0F];
+    }
+    return out;
+}
+
+std::wstring FormatMilliseconds(const ULONGLONG ms) noexcept
 {
     const ULONGLONG sec = (ms + 500) / 1000;
     const ULONGLONG s = sec % 60;
@@ -415,25 +430,24 @@ bool ShellExecuteWrapper(const std::wstring& lpFile, const std::wstring& lpParam
     const BOOL bResult = ::ShellExecuteEx(&sei);
     if (!bResult && GetLastError() != ERROR_CANCELLED)
     {
-        DisplayError(std::format(L"ShellExecute failed: {}",
-            TranslateError(GetLastError())));
+        DisplayError(L"ShellExecute failed: " + TranslateError(GetLastError()));
     }
     return bResult;
 }
 
 // DPI scaling
-int DpiRest(int value, const CWnd* wnd) noexcept
+int DpiRest(const int value, const CWnd* wnd) noexcept
 {
     const HWND h = (wnd && wnd->GetSafeHwnd()) ? wnd->GetSafeHwnd() : nullptr;
-    SmartPointer<HDC> dc([h](HDC hdc) { ReleaseDC(h, hdc); }, GetDC(h));
+    SmartPointer<HDC> dc([h](const HDC hdc) { ReleaseDC(h, hdc); }, GetDC(h));
     const int dpi = dc != nullptr ? ::GetDeviceCaps(dc, LOGPIXELSX) : USER_DEFAULT_SCREEN_DPI;
     return ::MulDiv(value, dpi, USER_DEFAULT_SCREEN_DPI);
 }
 
-int DpiSave(int value, const CWnd* wnd) noexcept
+int DpiSave(const int value, const CWnd* wnd) noexcept
 {
     const HWND h = (wnd && wnd->GetSafeHwnd()) ? wnd->GetSafeHwnd() : nullptr;
-    SmartPointer<HDC> dc([h](HDC hdc) { ReleaseDC(h, hdc); }, GetDC(h));
+    SmartPointer<HDC> dc([h](const HDC hdc) { ReleaseDC(h, hdc); }, GetDC(h));
     const int dpi = dc != nullptr ? ::GetDeviceCaps(dc, LOGPIXELSX) : USER_DEFAULT_SCREEN_DPI;
     return ::MulDiv(value, USER_DEFAULT_SCREEN_DPI, dpi);
 }
@@ -510,7 +524,7 @@ std::vector<BYTE> GetCompressedResource(const HRSRC resource) noexcept
 
     // Decompress data
     const size_t resourceSize = SizeofResource(nullptr, resource);
-    ULONG decompressedSize = *static_cast<const ULONG*>(binaryData);
+    const ULONG decompressedSize = *static_cast<const ULONG*>(binaryData);
     std::vector<BYTE> decompressedData(decompressedSize);
     ULONG finalDecompressedSize = 0;
 

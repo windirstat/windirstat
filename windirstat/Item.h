@@ -290,7 +290,7 @@ private:
     COLORREF GetPercentageColor() const noexcept;
     std::wstring UpwardGetPathWithoutBackslash() const;
     CItem* AddDirectory(const Finder& finder);
-    CItem* AddFile(Finder& finder);
+    CItem* AddFile(const Finder& finder);
 
     // Special structure for container items that is separately allocated to
     // reduce memory usage.  This operates under the assumption that most

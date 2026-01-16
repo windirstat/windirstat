@@ -636,7 +636,7 @@ void CTreeListControl::ExpandItem(const int i, const bool scroll)
 
     if (scroll)
     {
-        // Scroll up so far, that i is still visible
+        // Scroll up so far, that item is still visible
         // and the first child becomes visible, if possible.
         if (item->GetTreeListChildCount() > 0)
         {
@@ -752,9 +752,6 @@ void CTreeListControl::OnChildRemoved(const CTreeListItem* parent, const CTreeLi
         return;
     }
 
-    const int p = FindTreeItem(parent);
-    ASSERT(p != -1);
-
     if (parent->IsExpanded())
     {
         for (int i = 0; i < child->GetTreeListChildCount(); i++)
@@ -767,6 +764,8 @@ void CTreeListControl::OnChildRemoved(const CTreeListItem* parent, const CTreeLi
         DeleteItem(c);
     }
 
+    const int p = FindTreeItem(parent);
+    ASSERT(p != -1);
     RedrawItems(p, p);
 }
 

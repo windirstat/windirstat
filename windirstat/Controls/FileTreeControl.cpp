@@ -95,7 +95,7 @@ void CFileTreeControl::OnLButtonDown(const UINT nFlags, const CPoint point)
     // Validate if in physical size column
     if (!std::ranges::any_of(std::views::iota(0, GetHeaderCtrl()->GetItemCount()), [&](const int col)
         {
-            LVCOLUMN colInfo{ LVCF_SUBITEM };
+            LVCOLUMN colInfo{ .mask = LVCF_SUBITEM };
             GetColumn(col, &colInfo);
             return colInfo.iSubItem == COL_SIZE_PHYSICAL && GetWholeSubitemRect(i, col).PtInRect(point);
         })) return;
@@ -146,7 +146,7 @@ BOOL CFileTreeControl::OnSetCursor(CWnd* pWnd, const UINT nHitTest, const UINT m
     // Validate if in physical size column
     if (!std::ranges::any_of(std::views::iota(0, GetHeaderCtrl()->GetItemCount()), [&](const int col)
     {
-        LVCOLUMN colInfo{ LVCF_SUBITEM };
+        LVCOLUMN colInfo{ .mask = LVCF_SUBITEM };
         GetColumn(col, &colInfo);
         return colInfo.iSubItem == COL_SIZE_PHYSICAL && GetWholeSubitemRect(i, col).PtInRect(point);
     })) return defaultReturn();

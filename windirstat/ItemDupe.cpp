@@ -19,12 +19,9 @@
 #include "ItemDupe.h"
 #include "FileDupeControl.h"
 
-CItemDupe::CItemDupe(const std::vector<BYTE>& hash) : m_hash(hash)
+CItemDupe::CItemDupe(const std::vector<BYTE>& hash) :
+    m_hashString(FormatHex(hash, false)), m_hash(hash)
 {
-    m_hashString.resize(2ull * m_hash.size());
-    DWORD iHashStringLength = static_cast<DWORD>(m_hashString.size() + 1ull);
-    CryptBinaryToString(m_hash.data(), static_cast<DWORD>(m_hash.size()),
-        CRYPT_STRING_HEXRAW | CRYPT_STRING_NOCRLF, m_hashString.data(), &iHashStringLength);
 }
 
 CItemDupe::CItemDupe(CItem* item) : m_item(item) {}
@@ -162,7 +159,7 @@ std::wstring CItemDupe::GetHashAndExtensions() const
     }
 
     // Format string as Hash (.exta, .extb)
-    return std::format(L"{} ({})", m_hashString, extensions);
+    return m_hashString + L" (" + extensions + L")";
 }
 
 void CItemDupe::AddDupeItemChild(CItemDupe* child)

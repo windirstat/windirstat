@@ -575,15 +575,9 @@ std::wstring ComputeFileHashes(const std::wstring& filePath)
         if (BCryptFinishHash(ctx.hHash, ctx.hash.data(),
             static_cast<ULONG>(ctx.hash.size()), 0) != 0) continue;
 
-        // Convert to hex
-        std::wstring hashHex;
-        for (const auto byte : ctx.hash)
-        {
-            std::format_to(std::back_inserter(hashHex), "{:02X}", byte);
-        }
-
         // Add to result
-        result += std::format(L"{:\u2007<7}\t{}\n", std::wstring(ctx.name) + L':', hashHex);
+        result += std::format(L"{:\u2007<7}\t{}\n",
+            std::wstring(ctx.name) + L':', FormatHex(ctx.hash));
     }
     if (!result.empty() && result.back() == L'\n') result.pop_back();
 

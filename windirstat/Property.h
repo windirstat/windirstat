@@ -70,8 +70,8 @@ public:
 
     T* Ptr() { return &m_value; }
     T& Obj() { return m_value; }
-    T Min() { return m_min; }
-    T Max() { return m_max; }
+    const T& Min() const { return m_min; }
+    const T& Max() const { return m_max; }
     const T& Obj() const { return m_value; }
 
     // Member persistence read/write settings
@@ -82,27 +82,23 @@ public:
     operator const T& () { return m_value; }
 
     // Copy assignment operators
-    T operator=(T other) { return (m_value = other); }
-    T operator=(Setting other) { return (m_value = other.m_value); }
+    T& operator=(const T& other) { return (m_value = other); }
+    T& operator=(const Setting& other) { return (m_value = other.m_value); }
 
     // Math operators
-    T operator++() { return ++m_value; }
-    T operator--() { return --m_value; }
+    T& operator++() { return ++m_value; }
+    T& operator--() { return --m_value; }
     T operator++(int) { return m_value++; }
     T operator--(int) { return m_value--; }
-    T operator+=(const T& other) { return m_value = m_value + other; }
-    T operator-=(const T& other) { return m_value = m_value - other; }
+    T& operator+=(const T& other) { return m_value = m_value + other; }
+    T& operator-=(const T& other) { return m_value = m_value - other; }
     T operator+(const T& other) { return m_value + other; }
     T operator-(const T& other) { return m_value - other; }
     T operator*(const T& other) { return m_value * other; }
     T operator/(const T& other) { return m_value / other; }
 
     // Forces identical type assignment
-    template <typename T2> T2& operator=(const T2&)
-    {
-        const T2& guard = m_value;
-        throw guard; // Never reached.
-    }
+    template <typename T2> T2& operator=(const T2&) = delete;
 
     Setting(const std::wstring& section, const std::wstring& entry, const T& defaultValue = {}, const T& checkMin = {}, const T& checkMax = {}) :
         m_value(defaultValue), m_min(checkMin), m_max(checkMax)

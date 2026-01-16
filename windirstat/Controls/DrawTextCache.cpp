@@ -17,7 +17,6 @@
 
 #include "pch.h"
 #include "DrawTextCache.h"
-#include "SelectObject.h"
 
 void DrawTextCache::DrawTextCached(CDC* pDC, const std::wstring& text, CRect& rect, const bool leftAlign, const bool calcRect)
 {

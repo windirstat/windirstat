@@ -341,7 +341,7 @@ bool SaveResults(const std::wstring& path, CItem* rootItem)
     return true;
 }
 
-bool SaveDuplicates(const std::wstring& path, CItemDupe* rootDupe)
+bool SaveDuplicates(const std::wstring& path, const CItemDupe* rootDupe)
 {
     // Open output file
     std::ofstream outf(path, std::ios::binary);

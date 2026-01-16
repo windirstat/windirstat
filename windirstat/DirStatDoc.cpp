@@ -1115,8 +1115,8 @@ void CDirStatDoc::OnCleanupEmptyRecycleBin()
 {
     CProgressDlg(0, true, AfxGetMainWnd(), [](CProgressDlg*)
     {
-        SHEmptyRecycleBin(*AfxGetMainWnd(), nullptr, SHERB_NOCONFIRMATION |
-            SHERB_NOPROGRESSUI | SHERB_NOSOUND);
+        SHEmptyRecycleBin(*AfxGetMainWnd(), nullptr,
+            SHERB_NOCONFIRMATION | SHERB_NOPROGRESSUI | SHERB_NOSOUND);
     }).DoModal();
 
     // locate all drive items in order to refresh recyclers
@@ -1365,7 +1365,7 @@ void CDirStatDoc::OnCleanupMoveTo()
     if (!FolderExists(destFolder)) return;
 
     // Show progress dialog and move files
-    CProgressDlg(0, false, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
+    CProgressDlg(0, false, AfxGetMainWnd(), [&](const CProgressDlg* pdlg)
     {
         // Create file operation object
         CComPtr<IFileOperation> fileOperation;

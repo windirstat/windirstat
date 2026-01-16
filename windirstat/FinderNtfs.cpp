@@ -231,12 +231,16 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
 
             // Set file pointer for synchronous read
             const ULONG bytesThisRead = static_cast<ULONG>(min(bytesToRead, bufferSize));
-            OVERLAPPED overlapped = { .Offset = fileOffset.LowPart, . OffsetHigh = static_cast<DWORD>(fileOffset.HighPart), .hEvent = event };
-            if (ReadFile(volumeHandle, buffer.get(), bytesThisRead, &bytesRead, &overlapped) == 0 && GetLastError() != ERROR_IO_PENDING ||
-                WaitForSingleObject(event, INFINITE) != WAIT_OBJECT_0 ||
-                GetOverlappedResult(volumeHandle, &overlapped, &bytesRead, TRUE) == 0)
+            OVERLAPPED overlapped = { .Offset = fileOffset.LowPart, .OffsetHigh = static_cast<DWORD>(fileOffset.HighPart), .hEvent = event };
+            if (ReadFile(volumeHandle, buffer.get(), bytesThisRead, &bytesRead, &overlapped) == 0)
             {
-                break;
+                if (GetLastError() != ERROR_IO_PENDING ||
+                    WaitForSingleObject(event, INFINITE) != WAIT_OBJECT_0 ||
+                    GetOverlappedResult(volumeHandle, &overlapped, &bytesRead, FALSE) == 0)
+                {
+                    VTRACE(L"ERROR: Failed to read MFT data.");
+                    break;
+                }
             }
 
             for (ULONG offset = 0; offset + volumeInfo.BytesPerFileRecordSegment <= bytesRead; offset += volumeInfo.BytesPerFileRecordSegment)
@@ -254,12 +258,16 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
                 const auto fixupArray = ByteOffset<USHORT>(fileRecord, fileRecord->UsaOffset);
                 const auto usn = fixupArray[0];
                 const auto recordWords = reinterpret_cast<PUSHORT>(ByteOffset<UCHAR>(buffer.get(), offset));
+                bool skipRecord = false;
                 if (fileRecord->UsaCount > 0) for (const auto i : std::views::iota(1u, fileRecord->UsaCount))
                 {
                     const auto sectorEnd = recordWords + i * wordsPerSector - 1;
                     if (*sectorEnd == usn) *sectorEnd = fixupArray[i];
-                    else continue;
+                    else { skipRecord = true; break; }
                 }
+
+                // Skip if corrupt record detected
+                if (skipRecord) [[unlikely]] break;
 
                 // Only process records with valid headers and are in use
                 if (!fileRecord->IsValid() || !fileRecord->IsInUse()) continue;

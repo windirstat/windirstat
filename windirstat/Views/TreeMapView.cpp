@@ -17,7 +17,6 @@
 
 #include "pch.h"
 #include "FileTreeView.h"
-#include "SelectObject.h"
 #include "TreeMapView.h"
 
 IMPLEMENT_DYNCREATE(CTreeMapView, CView)

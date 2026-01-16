@@ -975,11 +975,11 @@ void CMainFrame::UpdateCleanupMenu(CMenu* menu, const bool triggerAsync)
         InvokeInMessageThread([this]()
         {
             // Check if the menu is still valid and visible
-            auto [menu, menuPos] = LocateNamedMenu(GetMenu(), Localization::Lookup(IDS_MENU_CLEANUP), false);
-            if (menu == nullptr || menu->GetMenuItemCount() <= 0) return;
+            const auto [menuObj, menuPos] = LocateNamedMenu(GetMenu(), Localization::Lookup(IDS_MENU_CLEANUP), false);
+            if (menuObj == nullptr || menuObj->GetMenuItemCount() <= 0) return;
 
             // Update menu items with the newly retrieved values
-            UpdateCleanupMenu(menu, false);
+            UpdateCleanupMenu(menuObj, false);
         });
     }).detach();
 }
@@ -990,18 +990,16 @@ void CMainFrame::QueryRecycleBin(ULONGLONG& items, ULONGLONG& bytes)
     bytes = 0;
 
     const DWORD drives = GetLogicalDrives();
-    DWORD mask = 0x00000001;
     for (const auto i : std::views::iota(0, static_cast<int>(wds::strAlpha.size())))
     {
-        mask = 0x00000001 << i;
-        if ((drives & mask) == 0)
+        if (((0x00000001 << i) & drives) == 0)
         {
             continue;
         }
 
         std::wstring s = std::wstring(1, wds::strAlpha.at(i)) + L":\\";
-        const UINT type = ::GetDriveType(s.c_str());
-        if (type == DRIVE_UNKNOWN ||
+        if (const UINT type = ::GetDriveType(s.c_str());
+            type == DRIVE_UNKNOWN ||
             type == DRIVE_NO_ROOT_DIR ||
             type == DRIVE_REMOTE)
         {

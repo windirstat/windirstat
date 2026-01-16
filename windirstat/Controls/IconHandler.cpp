@@ -17,7 +17,6 @@
 
 #include "pch.h"
 #include "IconHandler.h"
-#include "SelectObject.h"
 
 struct CFilterGuard
 {

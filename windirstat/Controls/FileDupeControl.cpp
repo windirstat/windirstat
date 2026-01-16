@@ -64,7 +64,7 @@ void CFileDupeControl::ProcessDuplicate(CItem* item, BlockingQueue<CItem*>* queu
         else return { m_trackerMedium, m_trackerMediumMutex, ITHASH_MEDIUM };
     }();
 
-    // First see if there's more than one size of this file since there is not need to
+    // First see if there's more than one size of this file since there is no need to
     // hash if there is only a single file of this size
     std::vector<CItem*> hashSet;
     if (std::scoped_lock lock(m_sizeTrackerMutex); true)

@@ -117,3 +117,5 @@
 #include "Constants.h"
 #include "MainFrame.h"
 #include "MessageBoxDlg.h"
+#include "LangStrings.h"
+#include "SelectObject.h"

@@ -18,7 +18,6 @@
 #pragma once
 
 #include "pch.h"
-#include "LangStrings.h"
 
 class Localization final
 {
@@ -38,7 +37,7 @@ public:
 
     static std::wstring Lookup(const std::wstring_view& name)
     {
-        auto it = m_map.find(std::wstring(name));
+        const auto it = m_map.find(std::wstring(name));
         return it != m_map.end() ? it->second : std::wstring();
     }
 

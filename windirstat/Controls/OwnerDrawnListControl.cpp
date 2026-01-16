@@ -17,7 +17,6 @@
 
 #include "pch.h"
 #include "TreeMap.h"
-#include "SelectObject.h"
 #include "OwnerDrawnListControl.h"
 #include "DrawTextCache.h"
 
@@ -426,7 +425,7 @@ void COwnerDrawnListControl::DrawItem(LPDRAWITEMSTRUCT pdis)
     for (const int i : std::views::iota(0, GetHeaderCtrl()->GetItemCount()))
     {
         // The subitem tracks the identifier that maps the column enum
-        LVCOLUMN colInfo{ LVCF_SUBITEM | LVCF_FMT };
+        LVCOLUMN colInfo{ .mask = LVCF_SUBITEM | LVCF_FMT };
         GetColumn(i, &colInfo);
         const int subitem = colInfo.iSubItem;
         const bool leftAlign = (colInfo.fmt & LVCFMT_RIGHT) == 0;
@@ -502,7 +501,7 @@ CRect COwnerDrawnListControl::GetWholeSubitemRect(const int item, const int subi
         // If we did GetSubItemRect(item 0, LVIR_LABEL, rc)
         // and we have an icon list, then we would get the rectangle
         // excluding the icon.
-        HDITEM hditem = { HDI_WIDTH };
+        HDITEM hditem = { .mask = HDI_WIDTH };
         GetHeaderCtrl()->GetItem(0, &hditem);
 
         VERIFY(GetItemRect(item, rc, LVIR_LABEL));
@@ -605,7 +604,7 @@ const SSorting& COwnerDrawnListControl::GetSorting() const
 
 int COwnerDrawnListControl::ColumnToSubItem(const int col) const
 {
-    LVCOLUMN column_info{ LVCF_SUBITEM };
+    LVCOLUMN column_info{ .mask = LVCF_SUBITEM };
     GetColumn(col, &column_info);
     return column_info.iSubItem;
 }

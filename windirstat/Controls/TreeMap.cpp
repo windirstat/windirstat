@@ -16,7 +16,6 @@
 //
 
 #include "pch.h"
-#include "SelectObject.h"
 #include "TreeMap.h"
 
 static constexpr COLORREF BGR(auto b, auto g, auto r)
@@ -442,15 +441,6 @@ CTreeMap::Item* CTreeMap::FindItemByPoint(Item* item, const CPoint point)
 
     if (!rc.PtInRect(point))
     {
-        // The only case that this function returns NULL is that
-        // point is not inside the rectangle of item.
-        //
-        // Take notice of
-        // (a) the very right an bottom lines, which can be "grid" and
-        //     are not covered by the root rectangle,
-        // (b) the fact, that WM_MOUSEMOVEs can occur after WM_SIZE but
-        //     before WM_PAINT.
-        //
         return nullptr;
     }
 
@@ -491,36 +481,6 @@ CTreeMap::Item* CTreeMap::FindItemByPoint(Item* item, const CPoint point)
             {
                 ret = FindItemByPoint(child, point);
                 ASSERT(ret != nullptr);
-#ifdef STRONGDEBUG
-#ifdef _DEBUG
-                for (i++; i < item->TmiGetChildCount(); i++)
-                {
-                    child = item->TmiGetChild(i);
-
-                    if (child->TmiGetSize() == 0)
-                    {
-                        break;
-                    }
-
-                    rcChild = child->TmiGetRectangle();
-                    if (rcChild.left == -1)
-                    {
-                        ASSERT(rcChild.top == -1);
-                        ASSERT(rcChild.right == -1);
-                        ASSERT(rcChild.bottom == -1);
-                        break;
-                    }
-
-                    ASSERT(rcChild.right >= rcChild.left);
-                    ASSERT(rcChild.bottom >= rcChild.top);
-                    ASSERT(rcChild.left >= rc.left);
-                    ASSERT(rcChild.right <= rc.right);
-                    ASSERT(rcChild.top >= rc.top);
-                    ASSERT(rcChild.bottom <= rc.bottom);
-                }
-#endif
-#endif
-
                 break;
             }
         }
