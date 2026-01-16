@@ -65,8 +65,9 @@ public:
         helper.EnableTabSwap(FALSE);
         helper.SetDrawFrame(TRUE);
         helper.SetScrollButtons();
+        helper.SetActiveTabBoldFont();
 
-        // Forcibly hide tabs
+        // Forcibly hide scroll controls
         if (IsWindow(helper.m_btnScrollFirst)) helper.m_btnScrollFirst.ShowWindow(SW_HIDE);
         if (IsWindow(helper.m_btnScrollLast)) helper.m_btnScrollLast.ShowWindow(SW_HIDE);
         if (IsWindow(helper.m_btnScrollLeft)) helper.m_btnScrollLeft.ShowWindow(SW_HIDE);
