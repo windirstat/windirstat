@@ -241,7 +241,8 @@ void COwnerDrawnListControl::CalculateRowHeight()
     if (TEXTMETRIC tm; dc.GetTextMetrics(&tm))
     {
         // Row height = font height + padding
-        m_rowHeight = (tm.tmHeight + (LABEL_Y_MARGIN * 2) + 1) & ~1;
+        // Make sure it's odd number for dotted connector mating
+        m_rowHeight = (tm.tmHeight + (LABEL_Y_MARGIN * 2) + 1) | 1;
     }
 }
 

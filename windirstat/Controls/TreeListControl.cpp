@@ -396,15 +396,30 @@ void CTreeListControl::DrawNode(CDC* pdc, CRect& rc, CRect& rcPlusMinus, const C
 
     // Full drawing path - cache expensive lookup
     const int rowIndex = FindTreeItem(item);
-    const int totalRows = GetItemCount();
-    const int nextDepth = (rowIndex + 1 < totalRows) ? GetItem(rowIndex + 1)->GetIndent() : -1;
-    const bool isLastChild = (nextDepth < currentDepth);
     const COLORREF bgColor = IsItemStripColor(rowIndex) ? GetStripeColor() : GetWindowColor();
 
-    // Draw vertical connectors for ancestor levels using ranges
-    for (const int level : std::views::iota(0, visualIndent))
+    auto isLastChild = [](const CTreeListItem* node) {
+        const auto parent = node->GetParent();
+        if (!parent) return true;
+        const int count = parent->GetTreeListChildCount();
+        return count > 0 && parent->GetTreeListChild(count - 1) == node;
+    };
+
+    std::vector drawConnector(visualIndent, false);
+    const CTreeListItem* walker = item->GetParent();
+    while (walker && walker->GetIndent() > 0)
     {
-        if (nextDepth > level)
+        for (const auto level : std::views::iota(walker->GetIndent() - 1, visualIndent))
+        {
+            drawConnector[level] = !isLastChild(walker);
+        }
+        walker = walker->GetParent();
+    }
+
+    // Draw vertical connectors for ancestor levels using ranges
+    for (const auto level : std::views::iota(0, visualIndent))
+    {
+        if (drawConnector[level])
         {
             const CRect nodeRect(rcRest.left + level * indentOffset, rcRest.top,
                 rcRest.left + level * indentOffset + nodeSize, rcRest.top + nodeSize);
@@ -417,8 +432,16 @@ void CTreeListControl::DrawNode(CDC* pdc, CRect& rc, CRect& rcPlusMinus, const C
     const bool hasChildren = item->HasChildren();
     const CRect nodeRect(rcRest.left, rcRest.top, rcRest.left + nodeSize, rcRest.top + nodeSize);
 
-    DrawTreeNodeConnector(pdc, nodeRect, bgColor, true, !isLastChild, true,
+    DrawTreeNodeConnector(pdc, nodeRect, bgColor, true, !isLastChild(item), true,
         hasChildren && !item->IsExpanded(), hasChildren && item->IsExpanded());
+
+    // Draw expanded connector if needed
+    if (hasChildren && item->IsExpanded())
+    {
+        CRect rcIcon = nodeRect;
+        rcIcon.OffsetRect(indentOffset, 0);
+        DrawTreeNodeConnector(pdc, rcIcon, bgColor, false, true, false);
+    }
 
     // Set up plus/minus hit rect for click detection
     const int boxHalf = ((nodeSize / 2) | 1) / 2;

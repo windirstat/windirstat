@@ -548,103 +548,35 @@ void DrawTreeNodeConnector(CDC* pdc, const CRect& nodeRect, const COLORREF bgCol
     const int centerX = nodeRect.left + nodeWidth / 2;
     const int centerY = nodeRect.top + nodeHeight / 2;
 
-    // Create pen once for all connector lines
-    static LOGBRUSH lb = { BS_SOLID, DarkMode::IsDarkModeActive() ? RGB(160, 160, 160) : RGB(64, 64, 64), 0 };
-    static CPen linePen(PS_GEOMETRIC | PS_DOT, 1, &lb);
-    CSelectObject sopen(pdc, &linePen);
+    // Connectors
+    static LOGBRUSH lbConn { BS_SOLID, DarkMode::IsDarkModeActive() ? RGB(160,160,160) : RGB(96,96,96), 0 };
+    static CPen connPen(PS_GEOMETRIC | PS_DOT, 1, &lbConn);
+    CSelectObject soConn(pdc, &connPen);
+    if (toBottom && toTop) pdc->MoveTo(centerX, nodeRect.top), pdc->LineTo(centerX, nodeRect.bottom);
+    else if (toBottom) pdc->MoveTo(centerX, centerY), pdc->LineTo(centerX, nodeRect.bottom);
+    else if (toTop) pdc->MoveTo(centerX, nodeRect.top), pdc->LineTo(centerX, centerY);
+    if (toRight) pdc->MoveTo(centerX + 1, centerY), pdc->LineTo(nodeRect.right, centerY);
 
-    std::array<POINT, 6> pts{};
-    std::array<DWORD, 2> counts{};
-    int segCount = 0;
-    int ptCount = 0;
+    if (!(showPlus || showMinus)) return;
 
-    if (showPlus || showMinus)
-    {
-        // Calculate plus/minus box dimensions once
-        const int penWidth = DarkMode::IsDarkModeActive() ? 1 : 2;
-        int boxSize = nodeHeight / 2;
-        if ((boxSize & 1) != (penWidth & 1)) boxSize++;
+    // Outside box
+    const int boxSize = nodeHeight / 2 | 1;
+    const int boxHalf = boxSize / 2;
+    const int boxLeft = centerX - boxHalf;
+    const int boxRight = boxLeft + boxSize;
+    const int boxTop = centerY - boxHalf;
+    const int boxBottom = boxTop + boxSize;
+    static LOGBRUSH lbBox { BS_SOLID, DarkMode::IsDarkModeActive() ? RGB(160,160,160) : RGB(96,96,96), 0 };
+    static CPen boxPen(PS_GEOMETRIC | PS_ENDCAP_FLAT, 1, &lbBox);
+    CBrush bgBox(bgColor);
+    CSelectObject soBox(pdc, &boxPen);
+    CSelectObject a(pdc, &bgBox);
+    pdc->RoundRect(boxLeft, boxTop, boxRight, boxBottom, 2, 2);
 
-        const int boxHalf = boxSize / 2;
-        const int boxLeft = centerX - boxHalf;
-        const int boxRight = boxLeft + boxSize;
-        const int boxTop = centerY - boxHalf;
-        const int boxBottom = boxTop + boxSize;
+    // Minus sign
+    const int margin = nodeHeight / 10;
+    pdc->MoveTo(boxLeft + margin, centerY), pdc->LineTo(boxRight - margin, centerY);
 
-        // Vertical connector
-        const int vertStart = ptCount;
-        if (toTop) pts[ptCount++] = { centerX, nodeRect.top };
-        pts[ptCount++] = { centerX, toTop ? boxTop : centerY };
-        if (toBottom) pts[ptCount++] = { centerX, boxBottom };
-        if (toBottom) pts[ptCount++] = { centerX, nodeRect.bottom };
-        counts[segCount++] = ptCount - vertStart;
-
-        // Horizontal connector
-        if (toRight)
-        {
-            pts[ptCount++] = { boxRight, centerY };
-            pts[ptCount] = { nodeRect.right, centerY };
-            counts[segCount++] = 2;
-        }
-
-        // Draw connector lines
-        pdc->PolyPolyline(pts.data(), counts.data(), segCount);
-
-        POINT boxPts[12];
-        DWORD boxCounts[3];
-        int boxSegCount = 0;
-        int boxPtCount = 0;
-
-        // Box border
-        boxPts[boxPtCount++] = { boxLeft, boxTop };
-        boxPts[boxPtCount++] = { boxRight, boxTop };
-        boxPts[boxPtCount++] = { boxRight, boxBottom };
-        boxPts[boxPtCount++] = { boxLeft, boxBottom };
-        boxPts[boxPtCount++] = { boxLeft, boxTop };
-        boxCounts[boxSegCount++] = 5;
-
-        // Minus sign
-        const int signMargin = nodeWidth / 9;
-        boxPts[boxPtCount++] = { boxLeft + signMargin, centerY };
-        boxPts[boxPtCount++] = { boxRight - signMargin, centerY };
-        boxCounts[boxSegCount++] = 2;
-
-        // Plus vertical
-        if (showPlus)
-        {
-            boxPts[boxPtCount++] = { centerX, boxTop + signMargin };
-            boxPts[boxPtCount] = { centerX, boxBottom - signMargin };
-            boxCounts[boxSegCount++] = 2;
-        }
-
-        // Draw plus/minus box background
-        pdc->FillSolidRect(boxLeft, boxTop, boxSize, boxSize, bgColor);
-
-        // Draw box and plus/minus
-        static auto lineWidth = DarkMode::IsDarkModeActive() ? 1 : 2;
-        static auto boxColor = DarkMode::IsDarkModeActive() ? RGB(160, 160, 160) : RGB(96, 96, 96);
-        static LOGBRUSH lbBox = { BS_SOLID, boxColor, 0 };
-        static CPen boxPen(PS_GEOMETRIC | PS_ENDCAP_FLAT, lineWidth, &lbBox);
-        CSelectObject soBoxPen(pdc, &boxPen);
-        pdc->PolyPolyline(boxPts, boxCounts, boxSegCount);
-    }
-    else
-    {
-        // Vertical connector
-        const int vertStart = ptCount;
-        if (toTop) pts[ptCount++] = { centerX, nodeRect.top };
-        pts[ptCount++] = { centerX, centerY + (toTop && !toBottom ? 1 : 0) };
-        if (toBottom) pts[ptCount++] = { centerX, nodeRect.bottom };
-        if (ptCount > vertStart + 1) counts[segCount++] = ptCount - vertStart;
-
-        // Horizontal connector
-        if (toRight)
-        {
-            pts[ptCount++] = { centerX, centerY };
-            pts[ptCount] = { nodeRect.right, centerY };
-            counts[segCount++] = 2;
-        }
-
-        pdc->PolyPolyline(pts.data(), counts.data(), segCount);
-    }
+    // Plus sign
+    if (showPlus) pdc->MoveTo(centerX, boxTop + margin), pdc->LineTo(centerX, boxBottom - margin);
 }
