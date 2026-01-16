@@ -34,6 +34,7 @@ class CMessageBoxDlg final : public CLayoutDialogEx
 
     INT_PTR DoModal() override;
     void SetInitialWindowSize(const CSize size) { m_initialSize = size; }
+    void SetWidthAuto() { m_autoWidth = true; }
 
     // Optional checkbox support
     bool IsCheckboxChecked() const;
@@ -79,6 +80,7 @@ private:
     CButton m_buttonMiddle;
     CButton m_buttonRight;
     CSize m_initialSize{};
+    bool m_autoWidth = false;
 
     // Optional controls
     CButton m_checkbox;

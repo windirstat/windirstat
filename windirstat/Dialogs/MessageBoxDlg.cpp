@@ -86,9 +86,6 @@ END_MESSAGE_MAP()
 
 void CMessageBoxDlg::ShiftControls(const std::vector<CWnd*>& controls, const int shiftAmount)
 {
-    if (shiftAmount == 0)
-        return;
-
     for (auto* pCtrl : controls)
     {
         CRect rect;
@@ -107,8 +104,7 @@ void CMessageBoxDlg::ShiftControls(const std::vector<CWnd*>& controls, const int
 
 void CMessageBoxDlg::ShiftControlsIfHidden(const CWnd* pTargetControl, const std::vector<CWnd*>& controlsToShift)
 {
-    if (pTargetControl->GetStyle() & WS_VISIBLE)
-        return;
+    if (pTargetControl->GetStyle() & WS_VISIBLE) return;
 
     CRect targetRect;
     pTargetControl->GetWindowRect(&targetRect);
@@ -152,9 +148,6 @@ BOOL CMessageBoxDlg::OnInitDialog()
     m_buttonMiddle.SetWindowText(Localization::Lookup(m_buttonContext.btnMidIDS).c_str());
     m_buttonRight.SetWindowText(Localization::Lookup(m_buttonContext.btnRightIDS).c_str());
 
-    // Set focus to default button
-    m_buttonContext.btnFocus->SetFocus();
-
     // Set display icon
     m_iconCtrl.SetIcon(m_icon);
 
@@ -172,61 +165,75 @@ BOOL CMessageBoxDlg::OnInitDialog()
     // Apply dark mode
     DarkMode::AdjustControls(*this);
 
-    // Determine if the dialog needs to be shifted down for the message //
+    // Collapse hidden controls vertically
+    ShiftControlsIfHidden(&m_listView, { &m_checkbox, &m_buttonLeft, &m_buttonMiddle, &m_buttonRight });
+    ShiftControlsIfHidden(&m_checkbox, { &m_buttonLeft, &m_buttonMiddle, &m_buttonRight });
 
-    // Scale the initial size for DPI if it was set
+    // Measure message text
+    CRect rectMessage;
+    m_messageCtrl.GetWindowRect(&rectMessage);
+    ScreenToClient(&rectMessage);
+
+    // Account for control borders/margins
+    CRect rectMessageClient;
+    m_messageCtrl.GetClientRect(&rectMessageClient);
+    const int messageBorders = rectMessage.Width() - rectMessageClient.Width();
+
+    // Calculate scaling for initial size requirements
     const CSize scaledInitialSize(
         DpiRest(m_initialSize.cx, this),
         DpiRest(m_initialSize.cy, this)
     );
 
-    // Calculate width expansion if custom initial size set
     CRect rectWindow;
     GetWindowRect(&rectWindow);
-    const int widthExpansion = max(0, scaledInitialSize.cx - rectWindow.Width());
+    const int initialWidthExpansion = max(0, scaledInitialSize.cx - rectWindow.Width());
 
-    // Calculate required message text rectangle
-    CRect rectMessage;
-    m_messageCtrl.GetWindowRect(&rectMessage);
-    ScreenToClient(&rectMessage);
-    
-    // Get DC and select the message control's font for accurate measurement
-    CDC* pDC = m_messageCtrl.GetDC();
-    CFont* pFont = m_messageCtrl.GetFont();
-    CFont* pOldFont = pFont ? pDC->SelectObject(pFont) : nullptr;
-    
-    CRect rectText(0, 0, rectMessage.Width() + widthExpansion, 0);
-    pDC->DrawText(m_message.c_str(), &rectText, DT_CALCRECT | DT_WORDBREAK | DT_NOPREFIX);
-    
-    if (pOldFont) pDC->SelectObject(pOldFont);
-    m_messageCtrl.ReleaseDC(pDC);
+    CClientDC dc(&m_messageCtrl);
+    CSelectObject selectFont(&dc, m_messageCtrl.GetFont());
 
-    // Calculate message text height overflow and expand message control height if needed
-    const int messageHeightOverflow = max(0, rectText.Height() - rectMessage.Height());
-    if (messageHeightOverflow > 0)
+    CRect rectTextCalc = rectMessage;
+    constexpr UINT baseFlags = DT_CALCRECT | DT_NOPREFIX | DT_EXPANDTABS;
+
+    if (m_autoWidth)
     {
-        rectMessage.bottom += messageHeightOverflow;
-        m_messageCtrl.MoveWindow(rectMessage);
+        // Don't wrap words, calculate full width
+        rectTextCalc.right = LONG_MAX;
+        dc.DrawText(m_message.c_str(), &rectTextCalc, baseFlags);
+    }
+    else
+    {
+        // Wrap words within the allowed width (current + initial expansion)
+        rectTextCalc.right += initialWidthExpansion;
+
+        // Ensure we respect borders when calculating available text width
+        rectTextCalc.right -= messageBorders;
+        dc.DrawText(m_message.c_str(), &rectTextCalc, baseFlags | DT_WORDBREAK);
     }
 
-    // Shift controls down if message height exceeds original layout
-    // Only shift by the overflow amount, not the full text height comparison
-    CRect iconRect;
-    m_iconCtrl.GetWindowRect(&iconRect);
-    ScreenToClient(&iconRect);
-    
-    // Calculate how much the message extends beyond the icon area
-    const int messageBottom = rectMessage.bottom;
-    const int iconBottom = iconRect.bottom;
-    const int deltaHeight = max(0, messageBottom - iconBottom);
-    
-    ShiftControls({ &m_listView, &m_buttonLeft, &m_buttonMiddle, &m_buttonRight, &m_checkbox }, deltaHeight);
+    // Restore border width to the calculated rect for layout consistency
+    rectTextCalc.right += messageBorders;
 
-    // Hide controls if hidden
-    ShiftControlsIfHidden(&m_listView, { &m_buttonLeft, &m_buttonMiddle, &m_buttonRight, &m_checkbox });
-    ShiftControlsIfHidden(&m_checkbox, { &m_buttonLeft, &m_buttonMiddle, &m_buttonRight });
+    // Determine Expansion Needed
+    int deltaWidth = initialWidthExpansion;
+    if (m_autoWidth)
+    {
+        // If auto-width, ensure we expand enough for the text
+        const int textRequiredExpanded = max(0, rectTextCalc.Width() - rectMessage.Width());
+        deltaWidth = max(deltaWidth, textRequiredExpanded);
+    }
 
-    // Activate automatic layout management
+    // Apply Vertical Expansion
+    if (const int deltaHeight = max(0, rectTextCalc.Height() - rectMessage.Height()); deltaHeight > 0)
+    {
+        // Expand message control
+        m_messageCtrl.SetWindowPos(nullptr, 0, 0, rectMessage.Width(), rectMessage.Height() + deltaHeight, SWP_NOMOVE | SWP_NOZORDER);
+
+        // Push everything else down
+        ShiftControls({ &m_listView, &m_checkbox, &m_buttonLeft, &m_buttonMiddle, &m_buttonRight }, deltaHeight);
+    }
+
+    // Activate automatic layout management (snapshots current positions)
     m_layout.AddControl(IDC_MESSAGE_ICON, 0, 0, 0, 0);
     m_layout.AddControl(IDC_MESSAGE_TEXT, 0, 0, 1, 0);
     m_layout.AddControl(IDC_MESSAGE_LISTVIEW, 0, 0, 1, 1);
@@ -236,23 +243,30 @@ BOOL CMessageBoxDlg::OnInitDialog()
     m_layout.AddControl(IDC_MESSAGE_BUTTONRIGHT, 1, 1, 0, 0);
     m_layout.OnInitDialog(true);
 
-    // Calculate minimum window height after dynamic layout adjustments
+    // Apply width and final height expansion
     GetWindowRect(&rectWindow);
-    const int minWindowHeight = rectWindow.Height();
+    const int newWidth = rectWindow.Width() + deltaWidth;
+    int newHeight = rectWindow.Height();
 
-    // Adjust dialog size if requested (using DPI-scaled values)
-    if (scaledInitialSize.cx > 0)
+    // Ensure minimum height from initial size
+    newHeight = max(scaledInitialSize.cy, newHeight);
+    if (newWidth != rectWindow.Width() || newHeight != rectWindow.Height())
     {
-        rectWindow.right = rectWindow.left + scaledInitialSize.cx;
-        rectWindow.bottom = rectWindow.top + max(scaledInitialSize.cy, minWindowHeight);
-        MoveWindow(&rectWindow);
+        SetWindowPos(nullptr, 0, 0, newWidth, newHeight, SWP_NOMOVE | SWP_NOZORDER);
     }
 
     // Remove resizable border
-    ModifyStyle(WS_THICKFRAME, 0, SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER);
+    if (m_autoWidth) ModifyStyle(WS_THICKFRAME, 0, SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER);
 
     // Center dialog
     CenterWindow();
+
+    // Set focus to default button
+    if (m_buttonContext.btnFocus)
+    {
+        m_buttonContext.btnFocus->SetFocus();
+        return FALSE;
+    }
 
     return TRUE;
 }

@@ -1587,7 +1587,7 @@ void CDirStatDoc::OnComputeHash()
 
     // Display result in message box
     CMessageBoxDlg dlg(hashResult, Localization::LookupNeutral(AFX_IDS_APP_TITLE), MB_OK | MB_ICONINFORMATION);
-    dlg.SetInitialWindowSize(CSize(1110, 200));
+    dlg.SetWidthAuto();
     dlg.DoModal();
 }
 
