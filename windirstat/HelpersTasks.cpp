@@ -363,8 +363,8 @@ std::wstring GetNameFromSid(const PSID sid)
     SID_NAME_USE nameUse;
     std::array<WCHAR, UNLEN + 1> accountName;
     std::array<WCHAR, DNLEN + 1> domainName;
-    DWORD iAccountNameSize = accountName.size();
-    DWORD iDomainName = domainName.size();
+    DWORD iAccountNameSize = static_cast<DWORD>(accountName.size());
+    DWORD iDomainName = static_cast<DWORD>(domainName.size());
     std::wstring result;
     if (LookupAccountSid(nullptr, sid, accountName.data(),
         &iAccountNameSize, domainName.data(), &iDomainName, &nameUse) != 0)
