@@ -345,6 +345,9 @@ void CDirStatDoc::OpenItem(const CItem* item, const std::wstring & verb)
 {
     ASSERT(item != nullptr);
 
+    // Ignore if special reserved item
+    if (item->IsTypeOrFlag(ITF_RESERVED)) return;
+
     // Determine path to feed into shell function
     SmartPointer<LPITEMIDLIST> pidl(CoTaskMemFree, nullptr);
     if (item->IsTypeOrFlag(IT_MYCOMPUTER))
