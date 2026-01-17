@@ -1,3 +1,56 @@
+# WinDirStat 2.5.0
+
+Enhancements
+- Added dark mode
+- Added direct NTFS MFT scanning option
+- Added hardlink tracking
+- Added progress dialogs for long-running operations
+- Added ability to search scan results
+- Added ability to auto-search from extensions menu
+- Added ability to move files
+- Added ability to compute and display file hashes
+- Added ability to save duplicate files to CSV file
+- Added elevation eligibility detection and prompting
+- Added new keyboard shortcuts
+- Added previous folder tracking history
+- Added option to launch programs and features applet
+- Added option to optimize virtual hard disk files
+- Added command line scanning options
+- Added dism analyze option
+- Added option to toggle Explorer context menu within application
+- Added automatic copying of drive mapping when launched as admin
+- Enhanced DPI awareness
+- Changed sizes to use binary prefixes
+- Changed treemap ability to show logical or physical sizes
+- Changed file scan output to be sorted by path
+- Changed column autosize to respect header width
+- Changed volume display to show free, total, and percentages
+- Changed compression option to recurse directories
+- Changed CSV file output to be sorted by path
+- Improved command-line parsing for target directory
+- Improved delete and empty folder interface behaviors
+- Improved various translations
+- Added Swedish translation
+- Added Japanese translation
+- Added Turkish translation
+- Various performance enhancements
+
+Bug Fixes
+- Corrected icon caching issues that could result in freezing
+- Corrected exclusion case sensitivity selection for filtering
+- Corrected extension colorization not working on file load
+- Corrected highlight offset when not zoomed
+- Corrected Explorer selection in treemap view
+- Corrected potential crash when exiting program
+- Corrected last-sibling node rendering
+- Various other minor bug fixes
+
+Miscellaneous
+- Microsoft Windows 7 no longer supported
+- Microsoft Windows Server 2008 R2 no longer supported
+- ARM 32-Bit builds no longer supported
+- CSV files created with previous versions will not be loadable
+
 # WinDirStat 2.2.2
 
 ## Enhancements
