@@ -17,6 +17,7 @@
 
 #include "pch.h"
 #include "TreeListControl.h"
+#include "../HelpersInterface.h"
 
 bool CTreeListItem::DrawSubItem(const int subitem, CDC* pdc, CRect rc, const UINT state, int* width, int* focusLeft)
 {
@@ -368,90 +369,127 @@ BEGIN_MESSAGE_MAP(CTreeListControl, COwnerDrawnListControl)
     ON_WM_LBUTTONDBLCLK()
 END_MESSAGE_MAP()
 
-void CTreeListControl::DrawNode(CDC* pdc, CRect& rc, CRect& rcPlusMinus, const CTreeListItem* item, int* width)
+void CTreeListControl::DrawNode(CDC* pDC, CRect& rcRest, CRect& expanderRect, const CTreeListItem* item, int* width)
 {
-    const int nodeSize = GetRowHeight();
-    const int indentOffset = nodeSize * 7 / 8;
-    const int currentDepth = item->GetIndent();
-    CRect rcRest = rc;
-    rcRest.left += GetGeneralLeftIndent() + 3;
+    const int rowHeight = GetRowHeight();
+    const int indentStep = rowHeight * 7 / 8;
+    const int indentationLevel = item->GetIndent();
+    CRect remainingRect = rcRest;
+    remainingRect.left += GetGeneralLeftIndent() + 3; // 3 magic number from original code
 
     // Handle root item (depth 0) - no connectors
-    if (currentDepth == 0)
+    if (indentationLevel == 0)
     {
-        rc.right = rcRest.left;
-        if (width != nullptr) *width = rc.Width();
+        rcRest.right = remainingRect.left;
+        if (width != nullptr) *width = rcRest.Width();
         return;
     }
 
     // Width-only calculation (early exit)
-    const int visualIndent = currentDepth - 1;
+    const int visualIndent = indentationLevel - 1;
     if (width != nullptr)
     {
-        rcRest.left += visualIndent * indentOffset + nodeSize;
-        rc.right = rcRest.left;
-        *width = rc.Width();
+        remainingRect.left += visualIndent * indentStep + rowHeight;
+        rcRest.right = remainingRect.left;
+        *width = rcRest.Width();
         return;
     }
 
-    // Full drawing path - cache expensive lookup
+    // Determine connector symbols
     const int rowIndex = FindTreeItem(item);
     const COLORREF bgColor = IsItemStripColor(rowIndex) ? GetStripeColor() : GetWindowColor();
 
-    auto isLastChild = [](const CTreeListItem* node) {
-        const auto parent = node->GetParent();
-        if (!parent) return true;
-        const int count = parent->GetTreeListChildCount();
-        return count > 0 && parent->GetTreeListChild(count - 1) == node;
+    // Cache ancestors to draw connecting lines
+    // Use static vector to avoid repeated allocations in the draw loop
+    static std::vector<const CTreeListItem*> ancestors;
+    ancestors.clear();
+    ancestors.reserve(indentationLevel + 1);
+    for (auto p = item; p != nullptr; p = p->GetParent())
+    {
+        ancestors.push_back(p);
+    }
+
+    // Lambda to check if a node is the last child of its parent
+    // Optimized to use list position for the current item if possible
+    auto isVisualLastChild = [&](const CTreeListItem* node, const bool isCurrentItem)
+    {
+        // For the current item (if not expanded), check the next item in the list
+        // This avoids iterating through thousands of siblings for leaf nodes
+        if (isCurrentItem && !node->IsExpanded())
+        {
+            const int nextIndex = rowIndex + 1;
+
+            // If we are at the end of the list, we are definitely the last child
+            if (nextIndex >= GetItemCount()) return true;
+            return GetItem(nextIndex)->GetIndent() < node->GetIndent();
+        }
+
+        const auto* parent = node->GetParent();
+        const int count = parent ? parent->GetTreeListChildCount() : 0;
+        if (count <= 1) return true;
+
+        const auto& sorting = GetSorting();
+        const int sub1 = ColumnToSubItem(sorting.column1);
+        const int sub2 = ColumnToSubItem(sorting.column2);
+
+        // Check if any sibling comes after this node in sort order
+        for (const int k : std::views::iota(0, count))
+        {
+            const auto* sibling = parent->GetTreeListChild(k);
+            if (sibling == node) continue;
+
+            int compareResult = sibling->Compare(node, sub1);
+            const bool use2 = (compareResult == 0);
+            if (use2) compareResult = sibling->Compare(node, sub2);
+
+            if (const bool asc = use2 ? sorting.ascending2 : sorting.ascending1;
+                (asc && compareResult > 0) || (!asc && compareResult < 0)) return false;
+        }
+        return true;
     };
 
-    std::vector drawConnector(visualIndent, false);
-    const CTreeListItem* walker = item->GetParent();
-    while (walker && walker->GetIndent() > 0)
+    // Draw connectors for each indentation level
+    for (const int i : std::views::iota(1, indentationLevel + 1))
     {
-        for (const auto level : std::views::iota(walker->GetIndent() - 1, visualIndent))
+        // Ancestors are stored in reverse order (Item -> Root)
+        // Ancestors[indentationLevel - i] gives the ancestor at level 'i'
+        const CTreeListItem* ancestor = ancestors[indentationLevel - i];
+        const bool isCurrentItem = (i == indentationLevel);
+
+        const bool isLast = isVisualLastChild(ancestor, isCurrentItem);
+        CRect rcColumn(remainingRect.left, remainingRect.top, remainingRect.left + rowHeight, remainingRect.bottom);
+
+        if (isCurrentItem)
         {
-            drawConnector[level] = !isLastChild(walker);
+            // Draw L-shaped connector for the item itself
+            DrawTreeNodeConnector(pDC, rcColumn, bgColor, true, !isLast, true,
+                item->HasChildren() && !item->IsExpanded(),
+                item->HasChildren() && item->IsExpanded());
         }
-        walker = walker->GetParent();
+        else
+        {
+            // Draw vertical line for ancestors if they are not the last child
+            if (!isLast) DrawTreeNodeConnector(pDC, rcColumn, bgColor, true, true, false);
+            remainingRect.left += indentStep;
+        }
     }
 
-    // Draw vertical connectors for ancestor levels using ranges
-    for (const auto level : std::views::iota(0, visualIndent))
+    // Draw line under node icon if applicable
+    if (item->HasChildren() && item->IsExpanded())
     {
-        if (drawConnector[level])
-        {
-            const CRect nodeRect(rcRest.left + level * indentOffset, rcRest.top,
-                rcRest.left + level * indentOffset + nodeSize, rcRest.top + nodeSize);
-            DrawTreeNodeConnector(pdc, nodeRect, bgColor, true, true, false);
-        }
-    }
-
-    // Draw connector for current item
-    rcRest.left += visualIndent * indentOffset;
-    const bool hasChildren = item->HasChildren();
-    const CRect nodeRect(rcRest.left, rcRest.top, rcRest.left + nodeSize, rcRest.top + nodeSize);
-
-    DrawTreeNodeConnector(pdc, nodeRect, bgColor, true, !isLastChild(item), true,
-        hasChildren && !item->IsExpanded(), hasChildren && item->IsExpanded());
-
-    // Draw expanded connector if needed
-    if (hasChildren && item->IsExpanded())
-    {
-        CRect rcIcon = nodeRect;
-        rcIcon.OffsetRect(indentOffset, 0);
-        DrawTreeNodeConnector(pdc, rcIcon, bgColor, false, true, false);
+        CRect rcIcon{POINT{ remainingRect.left + indentStep, remainingRect.top },SIZE{ rowHeight, rowHeight }};
+        DrawTreeNodeConnector(pDC, rcIcon, bgColor, false, true, false);
     }
 
     // Set up plus/minus hit rect for click detection
-    const int boxHalf = ((nodeSize / 2) | 1) / 2;
-    const int lineCenterX = rcRest.left + nodeSize / 2;
-    const int centerY = rcRest.top + nodeSize / 2;
-    rcPlusMinus = CRect(lineCenterX - boxHalf, centerY - boxHalf,
+    const int boxHalf = ((rowHeight / 2) | 1) / 2;
+    const int lineCenterX = remainingRect.left + rowHeight / 2;
+    const int centerY = remainingRect.top + rowHeight / 2;
+    expanderRect = CRect(lineCenterX - boxHalf, centerY - boxHalf,
         lineCenterX + boxHalf + 1, centerY + boxHalf + 1);
 
     // Update final position
-    rc.right = rcRest.left + nodeSize;
+    rcRest.right = remainingRect.left + rowHeight;
 }
 
 void CTreeListControl::OnLButtonDown(const UINT nFlags, const CPoint point)
