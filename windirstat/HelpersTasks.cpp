@@ -351,46 +351,33 @@ std::wstring GetNameFromSid(const PSID sid)
     // return immediately if sid is null or invalid
     if (sid == nullptr || !IsValidSid(sid)) return {};
 
-    // define custom lookup function
-    auto comp = [](const PSID p1, const PSID p2)
-    {
-        const DWORD l1 = SidGetLength(p1);
-        const DWORD l2 = SidGetLength(p2);
-        if (l1 != l2) return l1 < l2;
-        return std::memcmp(p1, p2, l1) < 0;
-    };
-
     // attempt to lookup sid in cache
-    static std::map<PSID, std::wstring, decltype(comp)> nameMap(comp);
-    if (const auto iter = nameMap.find(sid); iter != nameMap.end())
+    const std::vector sidVec(ByteOffset<BYTE>(sid, 0), ByteOffset<BYTE>(sid, SidGetLength(sid)));
+    static std::map<std::vector<BYTE>, std::wstring> nameMap;
+    if (const auto iter = nameMap.find(sidVec); iter != nameMap.end())
     {
         return iter->second;
     }
 
-    // copy the sid for storage in our cache table
-    const DWORD sidLength = SidGetLength(sid);
-    const auto sidCopy = static_cast<PSID>(::operator new(sidLength));
-    std::memcpy(sidCopy, sid, sidLength);
-
     // lookup the name for this sid
     SID_NAME_USE nameUse;
-    WCHAR accountName[UNLEN + 1], domainName[DNLEN + 1];
-    DWORD iAccountNameSize = std::size(accountName), iDomainName = std::size(domainName);
-    if (LookupAccountSid(nullptr, sid, accountName,
-        &iAccountNameSize, domainName, &iDomainName, &nameUse) == 0)
-    {
-        SmartPointer<LPWSTR> sidBuff(LocalFree);
-        ConvertSidToStringSid(sid, &sidBuff);
-        nameMap[sidCopy] = sidBuff;
-    }
-    else
+    std::array<WCHAR, UNLEN + 1> accountName;
+    std::array<WCHAR, DNLEN + 1> domainName;
+    DWORD iAccountNameSize = accountName.size();
+    DWORD iDomainName = domainName.size();
+    std::wstring result;
+    if (LookupAccountSid(nullptr, sid, accountName.data(),
+        &iAccountNameSize, domainName.data(), &iDomainName, &nameUse) != 0)
     {
         // generate full name in domain\name format
-        nameMap[sidCopy] = std::format(L"{}\\{}", domainName, accountName);
+        return nameMap.try_emplace(sidVec, std::format(L"{}\\{}",
+            domainName.data(), accountName.data())).first->second;
     }
 
-    // return name
-    return nameMap[sidCopy];
+    // fallback: return sid string
+    SmartPointer<LPWSTR> sidBuff(LocalFree);
+    ConvertSidToStringSid(sid, &sidBuff);
+    return nameMap.try_emplace(sidVec, sidBuff).first->second;
 }
 
 // Compression
