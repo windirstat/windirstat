@@ -106,8 +106,7 @@ void CAboutDlg::WdsTabControl::Initialize()
     m_textLicense.SetFont(&m_monoFont);
 
     // Set default rich edit settings
-    CHARFORMAT2 charFormat = { {} };
-    charFormat.cbSize = sizeof(CHARFORMAT2);
+    CHARFORMAT2 charFormat = {{.cbSize = sizeof(CHARFORMAT2)}};
     charFormat.dwMask = CFM_COLOR;
     charFormat.crTextColor = DarkMode::WdsSysColor(COLOR_WINDOWTEXT);
     const auto bgColor = DarkMode::WdsSysColor(COLOR_WINDOW);

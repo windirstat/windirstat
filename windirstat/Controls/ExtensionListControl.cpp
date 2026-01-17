@@ -240,13 +240,13 @@ std::wstring CExtensionListControl::GetSelectedExtension() const
 
 CExtensionListControl::CListItem* CExtensionListControl::GetListItem(const int i) const
 {
-    return reinterpret_cast<CListItem*>(GetItemData(i));
+    return std::bit_cast<CListItem*>(GetItemData(i));
 }
 
 void CExtensionListControl::OnLvnDeleteItem(NMHDR* pNMHDR, LRESULT* pResult)
 {
     const auto lv = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
-    delete reinterpret_cast<CListItem*>(lv->lParam);
+    delete std::bit_cast<CListItem*>(lv->lParam);
     *pResult = FALSE;
 }
 

@@ -134,7 +134,7 @@ HICON CIconHandler::FetchShellIcon(const std::wstring & path, UINT flags, const 
         if (SUCCEEDED(SHGetSpecialFolderLocation(nullptr, std::stoi(path), &pidl)))
         {
             CFilterGuard guard(m_filterOverride);
-            success = reinterpret_cast<HIMAGELIST>(::SHGetFileInfo(
+            success = std::bit_cast<HIMAGELIST>(::SHGetFileInfo(
                 static_cast<LPCWSTR>(static_cast<LPVOID>(pidl)), attr, &sfi,
                 sizeof(sfi), flags)) != nullptr;
         }
@@ -142,7 +142,7 @@ HICON CIconHandler::FetchShellIcon(const std::wstring & path, UINT flags, const 
     else
     {
         CFilterGuard guard(m_filterOverride);
-        success = reinterpret_cast<HIMAGELIST>(::SHGetFileInfo(path.c_str(),
+        success = std::bit_cast<HIMAGELIST>(::SHGetFileInfo(path.c_str(),
             attr, &sfi, sizeof(sfi), flags)) != nullptr;
     }
 

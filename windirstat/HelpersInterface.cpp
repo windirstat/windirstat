@@ -574,7 +574,7 @@ void DrawTreeNodeConnector(CDC* pdc, const CRect& nodeRect, const COLORREF bgCol
     pdc->RoundRect(boxLeft, boxTop, boxRight, boxBottom, 2, 2);
 
     // Minus sign
-    const int margin = nodeHeight / 10;
+    const int margin = nodeHeight / 8;
     pdc->MoveTo(boxLeft + margin, centerY), pdc->LineTo(boxRight - margin, centerY);
 
     // Plus sign

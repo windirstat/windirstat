@@ -72,14 +72,14 @@ CPoint CXySlider::GetPos() const
 
 LRESULT CXySlider::OnSetPos(WPARAM, const LPARAM lparam)
 {
-    const auto point = reinterpret_cast<PPOINT>(lparam);
+    const auto point = std::bit_cast<PPOINT>(lparam);
     SetPos(*point);
     return 0;
 }
 
 LRESULT CXySlider::OnGetPos(WPARAM, const LPARAM lparam)
 {
-    const auto point = reinterpret_cast<PPOINT>(lparam);
+    const auto point = std::bit_cast<PPOINT>(lparam);
     *point = GetPos();
     return 0;
 }

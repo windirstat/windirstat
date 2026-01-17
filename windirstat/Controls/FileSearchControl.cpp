@@ -171,7 +171,7 @@ void CFileSearchControl::AfterDeleteAllItems()
     m_itemTracker.clear();
 
     // Delete and recreate root item
-    if (m_rootItem != nullptr) delete m_rootItem;
+    delete m_rootItem;
     m_rootItem = new CItemSearch();
     InsertItem(0, m_rootItem);
     m_rootItem->SetExpanded(true);

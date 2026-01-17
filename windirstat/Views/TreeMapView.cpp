@@ -53,12 +53,16 @@ BOOL CTreeMapView::PreCreateWindow(CREATESTRUCT& cs)
     CView::PreCreateWindow(cs);
 
     WNDCLASS wc;
-    GetClassInfo(AfxGetInstanceHandle(), cs.lpszClass, &wc);
-    wc.hbrBackground = nullptr;
-    wc.lpszClassName = L"windirstatTreeMapClass";
-    cs.lpszClass = reinterpret_cast<LPCWSTR>(::RegisterClass(&wc));
+    if (!::GetClassInfo(AfxGetInstanceHandle(), L"WinDirStatTreeMapClass", &wc))
+    {
+        ::GetClassInfo(AfxGetInstanceHandle(), cs.lpszClass, &wc);
+        wc.hbrBackground = nullptr;
+        wc.lpszClassName = L"WinDirStatTreeMapClass";
+        ::RegisterClass(&wc);
+    }
 
-    return true;
+    cs.lpszClass = wc.lpszClassName;
+    return TRUE;
 }
 
 void CTreeMapView::DrawEmptyView()

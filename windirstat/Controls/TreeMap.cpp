@@ -160,15 +160,11 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, Item* root, const Options* option
         Item* item = nullptr;
         double h = 0.0;
         bool asroot = false;
-    };
 
-    // Initialize the stack with the root item
-    DrawState initialState;
-    initialState.item = root;
-    initialState.rc = CRect(0, 0, rc.Width(), rc.Height());
-    initialState.asroot = true;
-    initialState.surface = {};
-    initialState.h = m_options.height;
+        DrawState(Item* item_, const CRect rc_, const bool asroot_,
+            const std::array<double, 4>& surface_, const double h_)
+            : surface(surface_), rc(rc_), item(item_), h(h_), asroot(asroot_) {}
+    };
 
     // Defined at top level to prevent reallocation
     std::vector<double> childWidth;
@@ -177,7 +173,9 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, Item* root, const Options* option
 
     // Main loop
     const int gridWidth = m_options.grid ? 1 : 0;
-    std::stack<DrawState> stack({ std::move(initialState) });
+    std::stack<DrawState> stack;
+    stack.emplace(root, CRect(0, 0, rc.Width(), rc.Height()), true,
+        std::array<double, 4>{}, m_options.height);
     while (!stack.empty())
     {
         DrawState state = std::move(stack.top());
@@ -262,14 +260,8 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, Item* root, const Options* option
                     }
 
                     // Prepare child state and push onto the stack
-                    DrawState childState;
-                    childState.item = child;
-                    childState.rc = rcChild;
-                    childState.asroot = false;
-                    childState.surface = state.surface;
-                    childState.h = state.h * m_options.scaleFactor;
-
-                    stack.push(std::move(childState));
+                    stack.emplace(child, rcChild, false, state.surface,
+                        state.h * m_options.scaleFactor);
 
                     left = fRight;
                 }
@@ -385,13 +377,7 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, Item* root, const Options* option
                     // Prepare child state and push onto the stack
                     if (childSize > 0)
                     {
-                        DrawState childState;
-                        childState.item = item->TmiGetChild(i);
-                        childState.rc = rcChild;
-                        childState.asroot = false;
-                        childState.surface = state.surface;
-                        childState.h = state.h * m_options.scaleFactor;
-                        stack.push(std::move(childState));
+                        stack.emplace(item->TmiGetChild(i), rcChild, false, state.surface, state.h * m_options.scaleFactor);
                     }
 
                     fBegin = fEnd;

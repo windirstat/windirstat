@@ -366,7 +366,7 @@ int COwnerDrawnListControl::GetGeneralLeftIndent() const
 
 COwnerDrawnListItem* COwnerDrawnListControl::GetItem(const int i) const
 {
-    const auto item = reinterpret_cast<COwnerDrawnListItem*>(GetItemData(i));
+    const auto item = std::bit_cast<COwnerDrawnListItem*>(GetItemData(i));
     return item;
 }
 
@@ -658,9 +658,9 @@ void COwnerDrawnListControl::SortItems()
 {
     // Reorder the list items based on the current sorting criteria using a lambda comparison function.
     CListCtrl::SortItems([](LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort) {
-        const auto* item1 = reinterpret_cast<COwnerDrawnListItem*>(lParam1);
-        const auto* item2 = reinterpret_cast<COwnerDrawnListItem*>(lParam2);
-        const auto* sorting = reinterpret_cast<SSorting*>(lParamSort);
+        const auto* item1 = std::bit_cast<COwnerDrawnListItem*>(lParam1);
+        const auto* item2 = std::bit_cast<COwnerDrawnListItem*>(lParam2);
+        const auto* sorting = std::bit_cast<SSorting*>(lParamSort);
         return item1->CompareSort(item2, *sorting); }, reinterpret_cast<DWORD_PTR>(&m_sorting));
 
     auto* pHeaderCtrl = GetHeaderCtrl();
@@ -807,7 +807,7 @@ void COwnerDrawnListControl::OnLvnGetDispInfo(NMHDR* pNMHDR, LRESULT* pResult)
     auto* displayInfo = reinterpret_cast<NMLVDISPINFO*>(pNMHDR);
     *pResult = FALSE;
 
-    const auto* item = reinterpret_cast<COwnerDrawnListItem*>(displayInfo->item.lParam);
+    const auto* item = std::bit_cast<COwnerDrawnListItem*>(displayInfo->item.lParam);
 
     if ((displayInfo->item.mask & LVIF_TEXT) != 0)
     {

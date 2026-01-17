@@ -18,6 +18,12 @@
 #include "pch.h"
 #include "DrawTextCache.h"
 
+DrawTextCache& DrawTextCache::Get()
+{
+    static DrawTextCache instance;
+    return instance;
+}
+
 void DrawTextCache::DrawTextCached(CDC* pDC, const std::wstring& text, CRect& rect, const bool leftAlign, const bool calcRect)
 {
     if (!pDC || text.empty()) return;

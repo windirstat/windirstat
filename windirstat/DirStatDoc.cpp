@@ -550,7 +550,7 @@ void CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, const bo
     }).DoModal();
 
     if (!cancelled && !itemsToDelete.empty())
-        CProgressDlg(0, false, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
+        CProgressDlg(0, false, AfxGetMainWnd(), [&](const CProgressDlg* pdlg)
     {
         // For trash bin operations, use IFileOperation directly
         auto flags = FOFX_SHOWELEVATIONPROMPT | (COptions::ShowMicrosoftProgress ? FOF_NOCONFIRMMKDIR : FOF_NO_UI);
@@ -1356,7 +1356,7 @@ void CDirStatDoc::OnCleanupMoveTo()
 
     // Show folder browser dialog to get destination directory
     CFolderPickerDialog dlg(nullptr, OFN_EXPLORER | OFN_PATHMUSTEXIST | OFN_DONTADDTORECENT);
-    dlg.m_ofn.lpstrTitle = Localization::LookupNeutral(AFX_IDS_APP_TITLE).c_str();
+    dlg.m_ofn.lpstrTitle = wds::strWinDirStat;
 
     if (dlg.DoModal() != IDOK) return;
     const std::wstring destFolder = dlg.GetPathName().GetString();
@@ -1602,7 +1602,7 @@ constexpr CompressionAlgorithm CDirStatDoc::CompressionIdToAlg(const UINT id)
         case ID_COMPRESS_XPRESS16K: return  CompressionAlgorithm::XPRESS16K;
         case ID_COMPRESS_LZX: return  CompressionAlgorithm::LZX;
         default: return CompressionAlgorithm::NONE;
-    };
+    }
 }
 
 void CDirStatDoc::OnCleanupCompress(UINT id)

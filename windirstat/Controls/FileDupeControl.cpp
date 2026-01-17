@@ -308,7 +308,7 @@ void CFileDupeControl::AfterDeleteAllItems()
     m_childTracker.clear();
 
     // Delete and recreate root item
-    if (m_rootItem != nullptr) delete m_rootItem;
+    delete m_rootItem;
     m_rootItem = new CItemDupe();
     InsertItem(0, m_rootItem);
     m_rootItem->SetExpanded(true);

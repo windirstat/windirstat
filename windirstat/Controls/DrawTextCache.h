@@ -25,11 +25,7 @@ public:
     static constexpr size_t MAX_CACHE_SIZE = 1000;
 
     // Singleton access
-    static DrawTextCache& Get()
-    {
-        static DrawTextCache instance;
-        return instance;
-    }
+    static DrawTextCache& Get();
 
     // Main drawing function - replacement for DrawText
     void DrawTextCached(CDC* pDC, const std::wstring& text, CRect& rect, bool leftAligned = true, bool calcRect = false);
