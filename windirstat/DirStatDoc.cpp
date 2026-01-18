@@ -500,7 +500,7 @@ void CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, const bo
     }
 
     bool cancelled = false;
-    if (!toTrashBin) CProgressDlg(totalItems, true, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
+    if (!toTrashBin) CProgressDlg(totalItems, false, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
     {
         // Try native deletion first for non-trash bin operations
         std::vector<const CItem*> itemsInPostOrder;
