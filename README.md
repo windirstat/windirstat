@@ -48,12 +48,10 @@ To see a list of contributors, please check out [the contributors page](CONTRIBU
 
 WinDirStat 2.x has been developed for and tested on the following operating systems. They may work on older or newer operating systems but are not supported.
 
-* Windows 7
 * Windows 8
 * Windows 8.1
 * Windows 10
 * Windows 11
-* Windows Server 2008 R2
 * Windows Server 2012
 * Windows Server 2012 R2
 * Windows Server 2016
