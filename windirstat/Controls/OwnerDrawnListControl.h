@@ -127,6 +127,9 @@ public:
     virtual void SortItems();
     virtual bool GetAscendingDefault(int column);
 
+    // Selection change batching
+    void PostSelectionChanged();
+
 protected:
     void InitializeColors();
     void DrawItem(LPDRAWITEMSTRUCT pdis) override;
@@ -147,6 +150,10 @@ protected:
     SSorting m_sorting;
     int m_indicatedColumn = -1;
 
+    // Selection change batching
+    static constexpr DWORD WM_SELECTION_CHANGED = WM_USER + 1;
+    bool m_selectionChangePending = false;
+
     DECLARE_MESSAGE_MAP()
     afx_msg BOOL OnEraseBkgnd(CDC* pDC);
     afx_msg void OnHdnDividerdblclick(NMHDR* pNMHDR, LRESULT* pResult);
@@ -156,4 +163,5 @@ protected:
     afx_msg void OnHdnItemClick(NMHDR* pNMHDR, LRESULT* pResult);
     afx_msg void OnHdnItemDblClick(NMHDR* pNMHDR, LRESULT* pResult);
     afx_msg void OnDestroy();
+    afx_msg virtual LRESULT OnSelectionChanged(WPARAM wParam, LPARAM lParam);
 };

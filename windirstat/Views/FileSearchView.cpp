@@ -100,8 +100,8 @@ void CFileSearchView::OnLvnItemChanged(NMHDR* pNMHDR, LRESULT* pResult)
         return;
     }
 
-    // Signal to listeners that selection has changed
-    CDirStatDoc::Get()->UpdateAllViews(this, HINT_SELECTIONREFRESH);
+    // Defer selection processing for very large selections
+    m_control.PostSelectionChanged();
 
     *pResult = FALSE;
 }

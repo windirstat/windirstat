@@ -702,6 +702,16 @@ bool COwnerDrawnListControl::GetAscendingDefault(int /*column*/)
     return true;
 }
 
+void COwnerDrawnListControl::PostSelectionChanged()
+{
+    // Only post if there isn't already a pending message
+    if (!m_selectionChangePending)
+    {
+        m_selectionChangePending = true;
+        PostMessage(WM_SELECTION_CHANGED, 0, 0);
+    }
+}
+
 /////////////////////////////////////////////////////////////////////////////
 // Message Map
 
@@ -715,6 +725,7 @@ BEGIN_MESSAGE_MAP(COwnerDrawnListControl, CListCtrl)
     ON_NOTIFY(HDN_ITEMCLICK, 0, OnHdnItemClick)
     ON_NOTIFY(HDN_ITEMDBLCLICK, 0, OnHdnItemDblClick)
     ON_WM_DESTROY()
+    ON_MESSAGE(WM_SELECTION_CHANGED, OnSelectionChanged)
 END_MESSAGE_MAP()
 
 void COwnerDrawnListControl::OnCustomDraw(NMHDR* pNMHDR, LRESULT* pResult)
@@ -847,4 +858,15 @@ void COwnerDrawnListControl::OnDestroy()
 {
     SavePersistentAttributes();
     CListCtrl::OnDestroy();
+}
+
+LRESULT COwnerDrawnListControl::OnSelectionChanged(WPARAM wParam, LPARAM lParam)
+{
+    UNREFERENCED_PARAMETER(wParam);
+    UNREFERENCED_PARAMETER(lParam);
+
+    m_selectionChangePending = false;
+    CDirStatDoc::Get()->UpdateAllViews(nullptr, HINT_SELECTIONREFRESH);
+
+    return 0;
 }
