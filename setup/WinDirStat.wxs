@@ -64,14 +64,14 @@
           <Publish Event="NewDialog" Value="VerifyReadyDlg" Condition="1"/>
         </Control>
         <Control Id="Back" Type="PushButton" X="180" Y="243" Width="56" Height="17" Text="!(loc.WixUIBack)">
-          <Publish Event="NewDialog" Value="InstallDirDlg" Condition="1"/>
+          <Publish Event="NewDialog" Value="InstallDirDlg" Condition="1" Order="100"/>
         </Control>
         <Control Id="Cancel" Type="PushButton" X="304" Y="243" Width="56" Height="17" Cancel="yes" Text="!(loc.WixUICancel)">
-          <Publish Event="SpawnDialog" Value="CancelDlg" Condition="1"/>
+          <Publish Event="SpawnDialog" Value="CancelDlg" Condition="1" Order="100"/>
         </Control>
       </Dialog>
-      <Publish Dialog="InstallDirDlg" Control="Next" Event="NewDialog" Value="OptionsDlg" Condition="NOT Installed"/>
-      <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="OptionsDlg" Condition="NOT Installed"/>
+      <Publish Dialog="InstallDirDlg" Control="Next" Event="NewDialog" Value="OptionsDlg" Order="5" Condition="NOT Installed OR WIX_UPGRADE_DETECTED"/>
+      <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="OptionsDlg" Order="5" Condition="NOT Installed OR WIX_UPGRADE_DETECTED"/>
     </UI>
     <!-- Directory Structure -->
     <StandardDirectory Id="$(var.ProgramFilesNative)">
