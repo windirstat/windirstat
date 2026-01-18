@@ -92,7 +92,7 @@ void CAboutDlg::WdsTabControl::Initialize()
     AddTab(createText(m_textLicense, ES_LEFT), Localization::Lookup(IDS_ABOUT_LICENSE).c_str(), TAB_LICENSE);
 
     // Use monospace font for license page
-    m_monoFont.CreateFont(12, 0, 0, 0, 0, 0, 0, 0, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
+    m_monoFont.CreateFont(DpiRest(12), 0, 0, 0, 0, 0, 0, 0, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
         CLIP_DEFAULT_PRECIS, CLEARTYPE_NATURAL_QUALITY, FF_MODERN, L"Consolas");
 
     // Populate text
