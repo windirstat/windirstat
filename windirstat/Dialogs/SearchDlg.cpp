@@ -93,7 +93,7 @@ void SearchDlg::OnBnClickedOk()
     // Process search request
     CFileSearchControl::Get()->ProcessSearch(CDirStatDoc::Get()->GetRootItem(),
         COptions::SearchTerm, COptions::SearchCase,
-        COptions::SearchWholePhrase, COptions::SearchRegex);
+        COptions::SearchWholePhrase, COptions::SearchRegex, true);
 
     // Switch focus to search results
     const auto tabbedView = CMainFrame::Get()->GetFileTabbedView();
