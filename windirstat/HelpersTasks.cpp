@@ -148,7 +148,6 @@ bool IsLocalDrive(const std::wstring& path) noexcept
     return driveType == DRIVE_REMOVABLE || driveType == DRIVE_FIXED;
 }
 
-// Volume utilities
 bool GetVolumeName(const std::wstring& rootPath, std::wstring& volumeName)
 {
     volumeName.resize(MAX_PATH);
@@ -157,41 +156,6 @@ bool GetVolumeName(const std::wstring& rootPath, std::wstring& volumeName)
     volumeName.resize(success ? wcslen(volumeName.data()) : 0);
     if (!success) VTRACE(L"GetVolumeInformation({}) failed: {}", rootPath.c_str(), ::GetLastError());
     return success;
-}
-
-std::wstring GetVolumePathNameEx(const std::wstring& path)
-{
-    // Static regex patterns - compiled once instead of every call
-    static const std::wregex drivePattern(LR"(\\\\\?\\([A-Z]:).*)", std::regex_constants::optimize);
-    static const std::wregex uncPattern(LR"(\\\\\?\\UNC\\([^\\]*).*)", std::regex_constants::optimize);
-
-    // First, try the regular path resolution
-    std::array<WCHAR, MAX_PATH + 1> volume;
-    if (GetVolumePathName(path.c_str(), volume.data(), std::ssize(volume)) != 0)
-        return volume.data();
-
-    // Establish a fallback volume as drive letter or server name
-    std::wstring fallback;
-    if (std::wsmatch match; std::regex_match(path, match, drivePattern) && match.size() > 1 ||
-        std::regex_match(path, match, uncPattern) && match.size() > 1)
-        fallback = match[1].str();
-
-    // Create a file handle to do a reverse lookup (in case of subst'd drive)
-    SmartPointer<HANDLE> handle(CloseHandle, CreateFile(path.c_str(), FILE_READ_ATTRIBUTES,
-        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, nullptr));
-    if (handle == nullptr) return fallback;
-
-    // Determine the maximum size to hold the resultant final path
-    const DWORD bufferSize = GetFinalPathNameByHandle(handle, nullptr, 0, FILE_NAME_NORMALIZED);
-    if (bufferSize == 0) return fallback;
-
-    // Lookup the path and then determine the pathname from it
-    std::vector final(bufferSize + 1, L'\0');
-    if (GetFinalPathNameByHandle(handle, final.data(), static_cast<DWORD>(final.size()), FILE_NAME_NORMALIZED) != 0 &&
-        GetVolumePathName(final.data(), volume.data(), static_cast<DWORD>(volume.size())) != 0)
-        return volume.data();
-
-    return fallback;
 }
 
 // Path utilities
@@ -381,25 +345,18 @@ std::wstring GetNameFromSid(const PSID sid)
 }
 
 // Compression
-bool CompressFileAllowed(const std::wstring& filePath, const CompressionAlgorithm algorithm)
+bool CompressFileAllowed(const std::wstring& volumeName, const CompressionAlgorithm algorithm)
 {
     static std::unordered_map<std::wstring, bool> compressionStandard;
     static std::unordered_map<std::wstring, bool> compressionModern;
     const auto& compressionMap = (algorithm == CompressionAlgorithm::LZNT1) ?
         compressionStandard : compressionModern;
 
-    // Fetch volume root path
-    const auto volumeName = GetVolumePathNameEx(filePath);
-    if (volumeName.empty())
-    {
-        return false;
-    }
-
     // Enable 'none' button if at least standard is available
     if (algorithm == CompressionAlgorithm::NONE)
     {
-        return CompressFileAllowed(filePath, CompressionAlgorithm::LZNT1) ||
-            CompressFileAllowed(filePath, CompressionAlgorithm::XPRESS4K);
+        return CompressFileAllowed(volumeName, CompressionAlgorithm::LZNT1) ||
+            CompressFileAllowed(volumeName, CompressionAlgorithm::XPRESS4K);
     }
 
     // Return cached value
@@ -417,7 +374,7 @@ bool CompressFileAllowed(const std::wstring& filePath, const CompressionAlgorith
 
     // Query volume for modern compression support based on NTFS and OS version
     compressionStandard[volumeName.data()] = isNTFS && (fileSystemFlags & FILE_FILE_COMPRESSION) != 0;
-    compressionModern[volumeName.data()] = isNTFS && IsWindows10OrGreater() && !filePath.starts_with(L"\\\\");
+    compressionModern[volumeName.data()] = isNTFS && IsWindows10OrGreater() && !volumeName.starts_with(L"\\\\");
 
     return compressionMap.at(volumeName);
 }

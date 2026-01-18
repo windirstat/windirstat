@@ -53,10 +53,7 @@ void RemoveWmiInstances(const std::wstring& wmiClass, CProgressDlg* pdlg, const 
 bool FolderExists(const std::wstring& path) noexcept;
 bool DriveExists(const std::wstring& path) noexcept;
 bool IsLocalDrive(const std::wstring& rootPath) noexcept;
-
-// Volume utilities
 bool GetVolumeName(const std::wstring& rootPath, std::wstring& volumeName);
-std::wstring GetVolumePathNameEx(const std::wstring& path);
 
 // Path utilities
 std::wstring MyQueryDosDevice(const std::wstring& drive);
@@ -76,7 +73,7 @@ void RunElevated(const std::wstring& cmdLine);
 std::wstring GetNameFromSid(PSID sid);
 
 // Compression
-bool CompressFileAllowed(const std::wstring& filePath, CompressionAlgorithm algorithm);
+bool CompressFileAllowed(const std::wstring& volumeName, CompressionAlgorithm algorithm);
 bool CompressFile(const std::wstring& filePath, CompressionAlgorithm algorithm);
 
 // File hashing

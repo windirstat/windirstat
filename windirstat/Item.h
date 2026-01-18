@@ -166,6 +166,7 @@ public:
     bool IsLeaf() const noexcept { return m_folderInfo == nullptr; }
     CItem* GetParent() const noexcept;
     CItem* GetParentDrive() const noexcept;
+    CItem* GetVolumeRoot() const noexcept;
     void AddChild(CItem* child, bool addOnly = false);
     void RemoveChild(CItem* child);
     void RemoveAllChildren();

@@ -983,7 +983,7 @@ void CDirStatDoc::OnUpdateCompressionHandler(CCmdUI* pCmdUI)
     bool allow = (flag & (MF_DISABLED | MF_GRAYED)) == 0;
     for (const auto& item : GetAllSelected())
     {
-        allow &= CompressFileAllowed(item->GetPath(),
+        allow &= CompressFileAllowed(item->GetVolumeRoot()->GetPath(),
             CompressionIdToAlg(pCmdUI->m_nID));
     }
     pCmdUI->Enable(allow);
@@ -1875,13 +1875,8 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
                 CMainFrame::Get()->UpdateProgress();
             });
 
-            // Separate into separate m_queues per drive
-            const auto volume = GetVolumePathNameEx(item->GetPathLong());
-            if (!volume.empty())
-            {
-                m_queues[volume].Push(item);
-            }
-            else ASSERT(FALSE);
+            // Separate into separate m_queues per volume
+            m_queues[item->GetVolumeRoot()->GetPath()].Push(item);
         }
 
         // Create subordinate threads if there is work to do
