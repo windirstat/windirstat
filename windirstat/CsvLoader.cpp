@@ -348,7 +348,7 @@ bool SaveDuplicates(const std::wstring& path, const CItemDupe* rootDupe)
     if (!outf.is_open()) return false;
 
     // Define and output column headers
-    std::vector cols =
+    const std::vector cols =
     {
         Localization::Lookup(IDS_COL_HASH),
         Localization::Lookup(IDS_COL_NAME),

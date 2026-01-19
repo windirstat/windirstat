@@ -186,7 +186,7 @@ void CPageGeneral::OnOK()
     if (const CDirStatDoc* doc = CDirStatDoc::Get(); listChanged && doc != nullptr)
     {
         // Iterate over all drive items and update their display names/free space item sizes
-        if (CItem* root = doc->GetRootItem(); root != nullptr)
+        if (const CItem* root = doc->GetRootItem(); root != nullptr)
         {
             for (CItem* item : root->GetDriveItems())
             {

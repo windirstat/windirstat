@@ -111,7 +111,7 @@ void CAboutDlg::WdsTabControl::Initialize()
     charFormat.crTextColor = DarkMode::WdsSysColor(COLOR_WINDOWTEXT);
     const auto bgColor = DarkMode::WdsSysColor(COLOR_WINDOW);
 
-    for (auto ctrl : { &m_textAbout, &m_textThanks, &m_textLicense })
+    for (const auto ctrl : { &m_textAbout, &m_textThanks, &m_textLicense })
     {
         ctrl->SetDefaultCharFormat(charFormat);
         ctrl->SetAutoURLDetect();
@@ -181,7 +181,7 @@ void CAboutDlg::WdsTabControl::OnEnLinkText(NMHDR* pNMHDR, LRESULT* pResult)
     if (el->msg == WM_LBUTTONDOWN)
     {
         CStringW link;
-        auto& active = GetActiveRichEdit();
+        const auto& active = GetActiveRichEdit();
         active.GetTextRange(el->chrg.cpMin, el->chrg.cpMax, link);
         ::ShellExecute(*this, nullptr, link, nullptr, wds::strEmpty, SW_SHOWNORMAL);
     }

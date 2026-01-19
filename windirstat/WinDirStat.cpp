@@ -326,7 +326,7 @@ BOOL CDirStatApp::InitInstance()
     (void)AfxInitRichEdit2();
 
     // Initialize GDI Plus
-    Gdiplus::GdiplusStartupInput gdiplusStartupInput;
+    const Gdiplus::GdiplusStartupInput gdiplusStartupInput;
     ULONG_PTR gdiplusToken;
     Gdiplus::GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, nullptr);
 

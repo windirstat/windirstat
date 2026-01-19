@@ -276,7 +276,7 @@ DWORD ParseAttributes(const std::wstring& attributes) noexcept
     if (attributes == wds::strInvalidAttributes) return 0;
 
     DWORD attr = 0;
-    for (WCHAR ch : attributes)
+    for (const WCHAR ch : attributes)
     {
         if (ch == wds::chrAttributeReadonly) attr |= FILE_ATTRIBUTE_READONLY;
         else if (ch == wds::chrAttributeHidden) attr |= FILE_ATTRIBUTE_HIDDEN;

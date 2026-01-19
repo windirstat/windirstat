@@ -561,7 +561,7 @@ void CItem::RemoveChild(CItem* child)
     }
 
     auto& children = m_folderInfo->m_children;
-    if (auto it = std::ranges::find(children, child); it != children.end())
+    if (const auto it = std::ranges::find(children, child); it != children.end())
     {
         children.erase(it);
     }
@@ -579,7 +579,7 @@ void CItem::RemoveChild(CItem* child)
             remainingItem->SetFlag(ITF_HARDLINK, true);  // Clear the flag
 
             // Find and update the hardlink structure
-            if (CItem* hardlinksItem = remainingItem->FindHardlinksItem(); hardlinksItem != nullptr)
+            if (const CItem* hardlinksItem = remainingItem->FindHardlinksItem(); hardlinksItem != nullptr)
             {
                 // Find the Index folder for this index and remove it
                 for (auto* indexSet : hardlinksItem->GetChildren())
@@ -605,9 +605,9 @@ void CItem::RemoveChild(CItem* child)
         else if (sameIndexItems.size() > 1)
         {
             // Multiple items still exist - just remove this file's reference from the hardlink structure
-            if (CItem* hardlinksItem = child->FindHardlinksItem(); hardlinksItem != nullptr)
+            if (const CItem* hardlinksItem = child->FindHardlinksItem(); hardlinksItem != nullptr)
             {
-                for (auto* indexSet : hardlinksItem->GetChildren())
+                for (const auto* indexSet : hardlinksItem->GetChildren())
                 {
                     if (!indexSet->IsTypeOrFlag(IT_HLINKS_SET)) continue;
                     for (auto* indexFolder : indexSet->GetChildren())
@@ -789,7 +789,7 @@ void CItem::UpwardSubtractReadJobs(const ULONG count) noexcept
     if (count == 0 || IsTypeOrFlag(IT_FILE)) return;
     for (auto p = this; p != nullptr; p = p->GetParent())
     {
-        ULONG previous = p->m_folderInfo->m_jobs.fetch_sub(count);
+        const ULONG previous = p->m_folderInfo->m_jobs.fetch_sub(count);
         if (previous >= count && previous - count == 0)
         {
             p->SetDone();
@@ -1436,14 +1436,14 @@ CItem* CItem::FindHardlinksIndexItem() const
     }
 
     // Find the <Hardlinks> container
-    CItem* hardlinksItem = FindHardlinksItem();
+    const CItem* hardlinksItem = FindHardlinksItem();
     if (hardlinksItem == nullptr)
     {
         return nullptr;
     }
 
     // Search through Index Sets to find the IT_HLINKS_IDX with matching index
-    for (auto* indexSet : hardlinksItem->GetChildren())
+    for (const auto* indexSet : hardlinksItem->GetChildren())
     {
         if (!indexSet->IsTypeOrFlag(IT_HLINKS_SET)) continue;
         for (auto* indexFolder : indexSet->GetChildren())
@@ -1512,7 +1512,7 @@ void CItem::DoHardlinkAdjustment()
         auto itemSize = 0ull;
         
         // Check if any items already have the hardlink flag (already processed)
-        for (auto* item : list)
+        for (const auto* item : list)
         {
             if (item->IsTypeOrFlag(ITF_HARDLINK)) { skipAdd = true; break; }
         }
@@ -1520,7 +1520,7 @@ void CItem::DoHardlinkAdjustment()
         if (skipAdd) continue;
         
         // Calculate the maximum physical size among all hardlinks with this index
-        for (auto* item : list)
+        for (const auto* item : list)
         {
             itemSize = max(itemSize, item->GetSizePhysicalRaw());
         }

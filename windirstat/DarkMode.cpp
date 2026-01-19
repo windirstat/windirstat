@@ -142,7 +142,7 @@ bool DarkMode::EnhancedDarkModeSupport()
         key.QueryDWORDValue(L"UBR", ubr) != ERROR_SUCCESS) return false;
 
     // Support for dark mode checkboxes and other controls added in KB5072033
-    DWORD buildVal = std::wcstoul(buildString.data(), nullptr, 10);
+    const DWORD buildVal = std::wcstoul(buildString.data(), nullptr, 10);
     return buildVal > 26200 || ((buildVal == 26100 || buildVal == 26200) && ubr >= 7462);
 }
 
@@ -269,7 +269,7 @@ LRESULT DarkMode::HandleMenuMessage(const UINT message, const WPARAM wParam, con
 
     if (message == WM_UAHDRAWMENU)
     {
-        UAHMENU* pUDM = std::bit_cast<UAHMENU*>(lParam);
+        const UAHMENU* pUDM = std::bit_cast<UAHMENU*>(lParam);
         MENUBARINFO mbi{};
         mbi.cbSize = sizeof(MENUBARINFO);
         GetMenuBarInfo(hWnd, OBJID_MENU, 0, &mbi);

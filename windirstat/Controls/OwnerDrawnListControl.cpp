@@ -738,7 +738,7 @@ void COwnerDrawnListControl::OnCustomDraw(NMHDR* pNMHDR, LRESULT* pResult)
     }
 
     // Handle custom text color for headers in dark mode
-    NMCUSTOMDRAW* pCustomDraw = reinterpret_cast<NMCUSTOMDRAW*>(pNMHDR);
+    const NMCUSTOMDRAW* pCustomDraw = reinterpret_cast<NMCUSTOMDRAW*>(pNMHDR);
     if (pCustomDraw->dwDrawStage == CDDS_PREPAINT)
     {
         *pResult = CDRF_NOTIFYITEMDRAW;
@@ -815,7 +815,7 @@ void COwnerDrawnListControl::OnHdnItemchanging(NMHDR* /*pNMHDR*/, LRESULT* pResu
 
 void COwnerDrawnListControl::OnLvnGetDispInfo(NMHDR* pNMHDR, LRESULT* pResult)
 {
-    auto* displayInfo = reinterpret_cast<NMLVDISPINFO*>(pNMHDR);
+    const auto* displayInfo = reinterpret_cast<NMLVDISPINFO*>(pNMHDR);
     *pResult = FALSE;
 
     const auto* item = std::bit_cast<COwnerDrawnListItem*>(displayInfo->item.lParam);

@@ -477,7 +477,7 @@ void CTreeListControl::DrawNode(CDC* pDC, CRect& rcRest, CRect& expanderRect, co
     // Draw line under node icon if applicable
     if (item->HasChildren() && item->IsExpanded())
     {
-        CRect rcIcon{POINT{ remainingRect.left + indentStep, remainingRect.top },SIZE{ rowHeight, rowHeight }};
+        const CRect rcIcon{POINT{ remainingRect.left + indentStep, remainingRect.top },SIZE{ rowHeight, rowHeight }};
         DrawTreeNodeConnector(pDC, rcIcon, bgColor, false, true, false);
     }
 
@@ -579,7 +579,7 @@ void CTreeListControl::ToggleExpansion(const int i)
 
 void CTreeListControl::CollapseItem(const int i)
 {
-    CTreeListItem* item = GetItem(i);
+    const CTreeListItem* item = GetItem(i);
     if (!item->IsExpanded())
     {
         return;

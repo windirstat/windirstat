@@ -84,7 +84,7 @@ void CTreeMap::RecurseCheckTree(const Item* item)
         ULONGLONG last = static_cast<ULONGLONG>(-1);
         for (const int i : std::views::iota(0, item->TmiGetChildCount()))
         {
-            Item* child = item->TmiGetChild(i);
+            const Item* child = item->TmiGetChild(i);
             const ULONGLONG size = child->TmiGetSize();
             ASSERT(size <= last);
             sum += size;
@@ -455,7 +455,7 @@ CTreeMap::Item* CTreeMap::FindItemByPoint(Item* item, const CPoint point)
             ASSERT(child->TmiGetSize() > 0);
 
 #ifdef _DEBUG
-            CRect rcChild(child->TmiGetRectangle());
+            const CRect rcChild(child->TmiGetRectangle());
             ASSERT(rcChild.right >= rcChild.left);
             ASSERT(rcChild.bottom >= rcChild.top);
             ASSERT(rcChild.left >= rc.left);

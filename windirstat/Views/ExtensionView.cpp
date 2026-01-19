@@ -131,7 +131,7 @@ void CExtensionView::SetSelection()
 {
     // Get first extension from selected items
     const auto & items = CFileTreeControl::Get()->GetAllSelected<CItem>();
-    CItem* validItem = nullptr;
+    const CItem* validItem = nullptr;
     for (const auto& item : items)
     {
         if (item->IsTypeOrFlag(IT_FILE))

@@ -198,7 +198,7 @@ void CItemDupe::RemoveDupeItemChild(CItemDupe* child)
     }
 
     auto& children = m_children;
-    if (auto it = std::ranges::find(children, child); it != children.end())
+    if (const auto it = std::ranges::find(children, child); it != children.end())
     {
         children.erase(it);
     }

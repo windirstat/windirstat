@@ -40,7 +40,7 @@ void DrawTextCache::DrawTextCached(CDC* pDC, const std::wstring& text, CRect& re
 
     // Look up in cache
     CacheKey key = CreateCacheKey(pDC, text, rect, format);
-    if (auto it = m_cache.find(key); it != m_cache.end())
+    if (const auto it = m_cache.find(key); it != m_cache.end())
     {
         // Cache hit - use cached entry
         TouchEntry(it);

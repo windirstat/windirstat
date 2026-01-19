@@ -40,7 +40,7 @@ BOOL CLayoutDialogEx::PreTranslateMessage(MSG* pMsg)
         ScreenToClient(&pt);
 
         // Find which child window is at this position
-        if (CWnd* pWndUnderCursor = ChildWindowFromPoint(pt, CWP_SKIPINVISIBLE);
+        if (const CWnd* pWndUnderCursor = ChildWindowFromPoint(pt, CWP_SKIPINVISIBLE);
             pWndUnderCursor != nullptr && pWndUnderCursor != this)
         {
             // Prefer MFC RTTI over raw window class-name checks.

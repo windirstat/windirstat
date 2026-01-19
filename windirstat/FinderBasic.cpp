@@ -47,7 +47,7 @@ bool FinderBasic::FindNext()
         // Determine if volume supports FileId
         if (!m_context->Initialized)
         {
-            NTSTATUS Status = NtQueryDirectoryFile(m_handle, nullptr, nullptr, nullptr, &IoStatusBlock,
+            const NTSTATUS Status = NtQueryDirectoryFile(m_handle, nullptr, nullptr, nullptr, &IoStatusBlock,
                 m_directoryInfo.data(), BUFFER_SIZE, static_cast<FILE_INFORMATION_CLASS>(FileIdFullDirectoryInformation),
                 FALSE, (uSearch.Length > 0) ? &uSearch : nullptr, TRUE);
             m_context->SupportsFileId = (Status == 0);
@@ -80,7 +80,7 @@ bool FinderBasic::FindNext()
     if (success)
     {
         // handle unexpected trailing null on some file systems
-        LPCWSTR fileNamePtr = m_context->SupportsFileId ? m_currentInfo->IdInfo.FileName :
+        const LPCWSTR fileNamePtr = m_context->SupportsFileId ? m_currentInfo->IdInfo.FileName :
             m_currentInfo->StandardInfo.FileName;
         ULONG nameLength = m_currentInfo->FileNameLength / sizeof(WCHAR);
         if (nameLength > 1 && fileNamePtr[nameLength - 1] == L'\0')
@@ -129,7 +129,7 @@ bool FinderBasic::FindNext()
              (m_currentInfo->FileAttributes & FILE_ATTRIBUTE_COMPRESSED) != 0))
         {
             DWORD highPart;
-            DWORD lowPart = GetCompressedFileSize(GetFilePathLong().c_str(), &highPart);
+            const DWORD lowPart = GetCompressedFileSize(GetFilePathLong().c_str(), &highPart);
             if (lowPart != INVALID_FILE_SIZE || GetLastError() == NO_ERROR)
             {
                 m_currentInfo->AllocationSize.LowPart = lowPart;
@@ -174,7 +174,7 @@ bool FinderBasic::FindFile(const std::wstring & strFolder, const std::wstring& s
     // handle request to just get directory info
     if (m_statMode && strName.empty())
     {
-        std::filesystem::path path(strFolder);
+        const std::filesystem::path path(strFolder);
         m_base = path.parent_path();
         m_search = path.filename();
     }

@@ -294,7 +294,7 @@ public:
     {
         for (T tmp; pop(tmp);) {};
 
-        Node* old = m_tail; // One dummy remains
+        const Node* old = m_tail; // One dummy remains
         Node* dummy = new Node();
 
         m_tail = dummy;

@@ -136,7 +136,7 @@ void CItemSearch::RemoveSearchItemChild(CItemSearch* child)
 
     std::scoped_lock guard(m_protect);
     auto& children = m_children;
-    if (auto it = std::ranges::find(children, child); it != children.end())
+    if (const auto it = std::ranges::find(children, child); it != children.end())
     {
         children.erase(it);
     }
