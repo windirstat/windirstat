@@ -743,7 +743,7 @@ void COwnerDrawnListControl::OnCustomDraw(NMHDR* pNMHDR, LRESULT* pResult)
     {
         *pResult = CDRF_NOTIFYITEMDRAW;
     }
-    else if (pCustomDraw->dwDrawStage == CDDS_ITEMPREPAINT)
+    else if (pCustomDraw->dwDrawStage == CDDS_ITEMPREPAINT && pNMHDR->hwndFrom == GetHeaderCtrl()->GetSafeHwnd())
     {
         ::SetTextColor(pCustomDraw->hdc, DarkMode::WdsSysColor(COLOR_BTNTEXT));
     }
