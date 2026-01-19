@@ -518,7 +518,7 @@ CItem* CItem::GetParentDrive() const noexcept
 CItem* CItem::GetVolumeRoot() const noexcept
 {
     auto p = const_cast<CItem*>(this);
-    for (; p != nullptr; p = p->GetParent())
+    for (; p->GetParent() != nullptr; p = p->GetParent())
     {
         if (p->IsTypeOrFlag(IT_DRIVE)) return p;
         if (p->IsTypeOrFlag(ITRP_MOUNT)) return p;
