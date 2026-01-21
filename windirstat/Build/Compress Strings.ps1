@@ -37,7 +37,38 @@ $Alg = $COMPRESSION_FORMAT_XPRESS_HUFF -bor $COMPRESSION_ENGINE_MAXIMUM
 if ($CompressLibrary::RtlGetCompressionWorkSpaceSize($Alg, [ref]$workSpaceSize, [ref]$fragmentWorkSpaceSize) -ne 0) { Exit 1 }
 $workSpaceBuffer = [System.Runtime.InteropServices.Marshal]::AllocHGlobal([int]$workSpaceSize)
 
+# Combine all language files into lang.txt
 $Files = Get-ChildItem -Path "$Path\*.txt" -Recurse
+$CombinedLines = Get-ChildItem -Path "${Path}\lang_*.txt" -Recurse |
+    Where-Object Name -match '^lang_([a-z]{2}(?:-[A-Z]{2})?)\.txt$' | ForEach-Object `
+{
+    $LangCode = $Matches[1]
+    Get-Content $_ -Encoding UTF8 | ForEach-Object { "${LangCode}:$_" }
+}
+if ($CombinedLines) {
+    $CombinedLines = $CombinedLines | Sort-Object -Unique
+    $Encoding = New-Object System.Text.UTF8Encoding $False
+    $OutFile = (Join-Path $Path 'lang_combined.txt')
+    [System.IO.File]::WriteAllLines($OutFile, $CombinedLines, $Encoding)
+    $Files = @(Get-Item -LiteralPath $OutFile)
+}
+
+# Write out languages header file
+$TempHeader = (New-TemporaryFile).FullName
+'#pragma once' | Out-File $TempHeader -Force -Encoding utf8
+'#include <string_view>' | Out-File $TempHeader -Encoding utf8 -Append
+$Files | Where-Object Name -like 'lang_*.txt' | Get-Content | 
+    ForEach-Object { $_ -replace '=.*','' -replace '^.*?:','' } |
+    Sort-Object -Unique | 
+    ForEach { "constexpr std::wstring_view $_ = L""$_"";" } |
+    Out-File $TempHeader -Encoding utf8 -Append
+If ((Get-FileHash "$Path\LangStrings.h").Hash -ne (Get-FileHash $TempHeader).Hash)
+{
+    Copy-Item -LiteralPath $TempHeader "$Path\LangStrings.h" -Force
+}
+Remove-Item -LiteralPath $TempHeader -Force
+
+# Compress file data
 ForEach ($File in $Files)
 {
     If ($File.Name -like 'lang_*.txt')
@@ -63,19 +94,7 @@ ForEach ($File in $Files)
         
         $NewFile = $File.FullName -replace '.txt$','.bin'
         [System.IO.File]::WriteAllBytes($NewFile, $finalData)
+        If ($File.Name -eq 'lang_combined.txt') { Remove-Item $File.FullName -Force } 
     }
 }
 
-$TempHeader = (New-TemporaryFile).FullName
-'#pragma once' | Out-File $TempHeader -Force -Encoding utf8
-'#include <string_view>' | Out-File $TempHeader -Encoding utf8 -Append
-$Files | Where-Object Name -like 'lang_*.txt' | Get-Content | 
-    ForEach-Object { $_ -replace '=.*','' } |
-    Sort-Object -Unique | 
-    ForEach { "constexpr std::wstring_view $_ = L""$_"";" } |
-    Out-File $TempHeader -Encoding utf8 -Append
-If ((Get-FileHash "$Path\LangStrings.h").Hash -ne (Get-FileHash $TempHeader).Hash)
-{
-    Copy-Item -LiteralPath $TempHeader "$Path\LangStrings.h" -Force
-}
-Remove-Item -LiteralPath $TempHeader -Force

@@ -582,7 +582,6 @@
     <ClInclude Include="Pages\PageTreeMap.h" />
     <ClInclude Include="Property.h" />
     <ClInclude Include="resource.h" />
-    <ClInclude Include="langs.h" />
     <ClInclude Include="SelectObject.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Views\ExtensionView.h" />
@@ -670,28 +669,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="res\langs\lang_cs.bin" />
-    <None Include="res\langs\lang_da.bin" />
-    <None Include="res\langs\lang_de.bin" />
-    <None Include="res\langs\lang_et.bin" />
-    <None Include="res\langs\lang_en.bin" />
-    <None Include="res\langs\lang_es.bin" />
-    <None Include="res\langs\lang_fi.bin" />
-    <None Include="res\langs\lang_fr.bin" />
-    <None Include="res\langs\lang_hk.bin" />
-    <None Include="res\langs\lang_hu.bin" />
-    <None Include="res\langs\lang_it.bin" />
-    <None Include="res\langs\lang_ja.bin" />
-    <None Include="res\langs\lang_ko.bin" />
-    <None Include="res\langs\lang_nl.bin" />
-    <None Include="res\langs\lang_no.bin" />
-    <None Include="res\langs\lang_pl.bin" />
-    <None Include="res\langs\lang_pt.bin" />
-    <None Include="res\langs\lang_ru.bin" />
-    <None Include="res\langs\lang_sv.bin" />
-    <None Include="res\langs\lang_tr.bin" />
-    <None Include="res\langs\lang_uk.bin" />
-    <None Include="res\langs\lang_zh.bin" />
     <None Include="res\license.bin" />
     <None Include="res\license.txt" />
     <None Include="res\IDR_MAINFRAME.bmp" />
@@ -699,7 +676,6 @@
     <None Include="res\windirstat.rc2" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="langs.rc" />
     <ResourceCompile Include="windirstat.rc" />
     <ResourceCompile Include="version.rc" />
   </ItemGroup>
@@ -728,12 +704,11 @@
     <Text Include="res\langs\lang_cs.txt" />
     <Text Include="res\langs\lang_da.txt" />
     <Text Include="res\langs\lang_de.txt" />
-    <Text Include="res\langs\lang_et.txt" />
     <Text Include="res\langs\lang_en.txt" />
     <Text Include="res\langs\lang_es.txt" />
+    <Text Include="res\langs\lang_et.txt" />
     <Text Include="res\langs\lang_fi.txt" />
     <Text Include="res\langs\lang_fr.txt" />
-    <Text Include="res\langs\lang_hk.txt" />
     <Text Include="res\langs\lang_hu.txt" />
     <Text Include="res\langs\lang_it.txt" />
     <Text Include="res\langs\lang_ja.txt" />
@@ -746,6 +721,7 @@
     <Text Include="res\langs\lang_sv.txt" />
     <Text Include="res\langs\lang_tr.txt" />
     <Text Include="res\langs\lang_uk.txt" />
+    <Text Include="res\langs\lang_zh-hk.txt" />
     <Text Include="res\langs\lang_zh.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

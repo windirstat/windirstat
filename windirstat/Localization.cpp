@@ -17,7 +17,6 @@
 
 #include "pch.h"
 #include "FinderBasic.h"
-#include "langs.h"
 
 std::unordered_map<std::wstring, std::wstring> Localization::m_map;
 
@@ -29,54 +28,69 @@ void Localization::SearchReplace(std::wstring& input, const std::wstring_view& s
     }
 }
 
-bool Localization::CrackStrings(std::basic_istream<char>& stream, const unsigned int streamSize)
+bool Localization::CrackStrings(const std::wstring& sFileData, const std::wstring& sPrefix)
 {
-    // Size a buffer to the largest string it will contain
-    std::wstring bufferWide(streamSize + 1, L'\0');
-
     // Read the file line by line
-    std::string line;
+    std::wstring line;
+    std::wistringstream stream(sFileData);
     while (std::getline(stream, line))
     {
-        // Convert to wide strings
-        if (line.empty() || line[0] == L'#') continue;
-        const int sz = MultiByteToWideChar(CP_UTF8, 0, line.c_str(), static_cast<int>(line.size()),
-            bufferWide.data(), static_cast<int>(bufferWide.size()));
-        ASSERT(sz != 0);
-        std::wstring lineWide = bufferWide.substr(0, sz);
+        // Filter out unwanted languages
+        if (!sPrefix.empty() && !line.starts_with(sPrefix)) continue;
 
         // Parse the string after the first equals
-        SearchReplace(lineWide, L"\r", L"");
-        SearchReplace(lineWide, L"\\n", L"\n");
-        SearchReplace(lineWide, L"\\t", L"\t");
-        if (const auto e = lineWide.find_first_of(L'='); e != std::string::npos)
+        SearchReplace(line, L"\r", L"");
+        SearchReplace(line, L"\\n", L"\n");
+        SearchReplace(line, L"\\t", L"\t");
+        if (const auto e = line.find_first_of(L'='); e != std::string::npos)
         {
-            m_map[lineWide.substr(0, e)] = lineWide.substr(e + 1);
+            // Strip the prefix if any and add to map
+            size_t startPos = 0;
+            if (!sPrefix.empty()) startPos = line.find_first_of(L':') + 1;
+            m_map[line.substr(startPos, e - startPos)] = line.substr(e + 1);
         }
     }
 
-    return true;
+    return !m_map.empty();
 }
 
-std::vector<LANGID> Localization::GetLanguageList()
+std::set<LANGID> Localization::GetLanguageList()
 {
-    std::vector<LANGID> results;
-    EnumResourceLanguagesEx(nullptr, LANG_RESOURCE_TYPE, MAKEINTRESOURCE(IDR_RT_LANG), [](HMODULE, LPCWSTR, LPCWSTR, const WORD wIDLanguage, const LONG_PTR lParam)->BOOL
-    {
-        std::bit_cast<std::vector<LANGID>*>(lParam)->push_back(wIDLanguage);
-        return TRUE;
-    }, reinterpret_cast<LONG_PTR>(&results), 0, 0);
+    // Decompress the resource
+    const auto resourceData = GetTextResource(IDR_LANGS);
+    if (resourceData.empty()) return {};
 
-    FinderBasic finder;
-    for (BOOL b = finder.FindFile(GetAppFolder(), L"lang_??.txt"); b; b = finder.FindNext())
+    // Read the combined language line by line
+    std::wstring line;
+    std::wistringstream is(resourceData);
+    std::set<std::wstring> uniqueLangs;
+    while (std::getline(is, line))
     {
-        const std::wstring lang = finder.GetFileName().substr(5, 2);
+        // Convert to wide strings
+        SearchReplace(line, L"\r", L"");
+        auto linePos = line.find_first_of(L':');
+        if (linePos == std::wstring::npos) continue;
+        uniqueLangs.emplace(line.substr(0, linePos));
+    }
+
+    // Also check for external language files
+    FinderBasic finder;
+    for (BOOL b = finder.FindFile(GetAppFolder(), L"lang_*.txt"); b; b = finder.FindNext())
+    {
+        auto langString = finder.GetFileName().substr(5);
+        langString = langString.substr(0, langString.find_first_of(L'.'));
+        uniqueLangs.emplace(langString);
+    }
+
+    // Convert to langids
+    std::set<LANGID> results;
+    for (const auto& lang : uniqueLangs)
+    {
         const LCID lcid = LocaleNameToLCID(lang.c_str(), LOCALE_ALLOW_NEUTRAL_NAMES);
         if (lcid == LOCALE_NEUTRAL || lcid == LOCALE_CUSTOM_UNSPECIFIED) continue;
 
         const LANGID langid = LANGIDFROMLCID(lcid);
-        const LANGID langidn = MAKELANGID(PRIMARYLANGID(langid), SUBLANG_NEUTRAL);
-        if (std::ranges::find(results, langidn) == results.end()) results.push_back(langidn);
+        results.emplace(langid);
     }
 
     return results;
@@ -84,23 +98,18 @@ std::vector<LANGID> Localization::GetLanguageList()
 
 bool Localization::LoadResource(const WORD language)
 {
-    if (LoadExternalLanguage(LOCALE_SISO639LANGNAME, language)) return true; // ISO 639-1 language code
-    if (LoadExternalLanguage(LOCALE_SNAME, language)) return true; // BCP 47 language code
+    const LCID lcid = MAKELCID(language, SORT_DEFAULT);
+    std::array<wchar_t, LOCALE_NAME_MAX_LENGTH> name{};
+    if (LCIDToLocaleName(lcid, name.data(), LOCALE_NAME_MAX_LENGTH, 0) == 0) return {};
+    
+    // Try to load external language file first
+    if (LoadExternalLanguage(LOCALE_SISO639LANGNAME, language) ||
+        LoadExternalLanguage(LOCALE_SNAME, language)) return true;
 
-    // Find the resource in the loaded module
-    const HRSRC resource = ::FindResourceEx(nullptr, LANG_RESOURCE_TYPE, MAKEINTRESOURCE(IDR_RT_LANG), language);
-    if (resource == nullptr) return false;
-
-    // Decompress the resource
-    auto resourceData = GetCompressedResource(resource);
-    if (resourceData.empty()) return false;
-
-    // Organize the data into a string
-    const std::string file(reinterpret_cast<PCHAR>(resourceData.data()), resourceData.size());
-    std::istringstream is(file);
-
-    // Process the data
-    return CrackStrings(is, SizeofResource(nullptr, resource));
+    // Try to load built-in resource
+    const std::wstring sResourceData = GetTextResource(IDR_LANGS);
+    return CrackStrings(sResourceData, GetLocaleString(LOCALE_SISO639LANGNAME, language)) ||
+        CrackStrings(sResourceData, GetLocaleString(LOCALE_SNAME, language));
 }
 
 void Localization::UpdateMenu(CMenu& menu)
@@ -179,9 +188,12 @@ bool Localization::LoadExternalLanguage(const LCTYPE lcttype, const LCID lcid)
 bool Localization::LoadFile(const std::wstring& file)
 {
     // Open the file
-    std::ifstream fileStream(file);
-    if (!fileStream.good()) return false;
+    std::ifstream f(file, std::ios::binary);
+    if (!f) return {};
+
+    const std::vector b((std::istreambuf_iterator(f)), {});
+    if (b.empty()) return {};
 
     // Process the data
-    return CrackStrings(fileStream, static_cast<unsigned int>(std::filesystem::file_size(file)));
+    return CrackStrings(CComBSTR(static_cast<int>(b.size()), b.data()).m_str);
 }
