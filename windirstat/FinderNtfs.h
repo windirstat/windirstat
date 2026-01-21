@@ -24,8 +24,6 @@ class FinderNtfsContext final
 {
     friend class FinderNtfs;
 
-private:
-
     using FileRecordBase = struct FileRecordBase
     {
         ULONGLONG LogicalSize = 0;
@@ -39,10 +37,16 @@ private:
     {
         std::wstring FileName;
         ULONGLONG BaseRecord;
+
+        FileRecordName(std::wstring fileName, ULONGLONG baseRecord) : 
+            FileName(std::move(fileName)), BaseRecord(baseRecord) {}
     };
 
-    concurrency::concurrent_unordered_map<ULONGLONG, FileRecordBase> m_baseFileRecordMap;
-    concurrency::concurrent_unordered_map<ULONGLONG, concurrency::concurrent_vector<FileRecordName>> m_parentToChildMap;
+    std::map<ULONGLONG, FileRecordBase> m_baseFileRecordMap;
+    std::map<ULONGLONG, std::vector<FileRecordName>> m_parentToChildMap;
+
+    mutable std::shared_mutex m_baseFileRecordMutex;
+    mutable std::shared_mutex m_parentToChildMutex;
 
     bool m_isLoaded = false;
 
@@ -62,8 +66,8 @@ class FinderNtfs final : public Finder
     FinderNtfsContext::FileRecordBase* m_currentRecord = nullptr;
     const FinderNtfsContext::FileRecordName* m_currentRecordName = nullptr;
 
-    const concurrency::concurrent_vector<FinderNtfsContext::FileRecordName>* m_childrenSet = nullptr;
-    concurrency::concurrent_vector<FinderNtfsContext::FileRecordName>::const_iterator m_recordIterator;
+    std::vector<FinderNtfsContext::FileRecordName> m_childrenSet;
+    std::vector<FinderNtfsContext::FileRecordName>::const_iterator m_recordIterator;
     
     std::wstring m_base;
     ULONGLONG m_index = 0;

@@ -577,7 +577,7 @@ void CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, const bo
         }
 
         // Do all deletions
-        HRESULT res = fileOperation->PerformOperations();
+        const HRESULT res = fileOperation->PerformOperations();
         if (res != S_OK) VTRACE(L"File Operation Failed: {}", TranslateError(res));
     }).DoModal();
 
@@ -1058,7 +1058,7 @@ void CDirStatDoc::OnRefreshAll()
 void CDirStatDoc::OnSaveResults()
 {
     // Request the file path from the user
-    std::wstring fileSelectString = std::format(L"{} (*.csv)|*.csv|{} (*.*)|*.*||",
+    const std::wstring fileSelectString = std::format(L"{} (*.csv)|*.csv|{} (*.*)|*.*||",
         Localization::Lookup(IDS_CSV_FILES), Localization::Lookup(IDS_ALL_FILES));
     CFileDialog dlg(FALSE, L"csv", nullptr, OFN_EXPLORER | OFN_DONTADDTORECENT, fileSelectString.c_str());
     if (dlg.DoModal() != IDOK) return;
@@ -1072,7 +1072,7 @@ void CDirStatDoc::OnSaveResults()
 void CDirStatDoc::OnSaveDuplicates()
 {
     // Request the file path from the user
-    std::wstring fileSelectString = std::format(L"{} (*.csv)|*.csv|{} (*.*)|*.*||",
+    const std::wstring fileSelectString = std::format(L"{} (*.csv)|*.csv|{} (*.*)|*.*||",
         Localization::Lookup(IDS_CSV_FILES), Localization::Lookup(IDS_ALL_FILES));
     CFileDialog dlg(FALSE, L"csv", nullptr, OFN_EXPLORER | OFN_DONTADDTORECENT, fileSelectString.c_str());
     if (dlg.DoModal() != IDOK) return;
@@ -1086,7 +1086,7 @@ void CDirStatDoc::OnSaveDuplicates()
 void CDirStatDoc::OnLoadResults()
 {
     // Request the file path from the user
-    std::wstring fileSelectString = std::format(L"{} (*.csv)|*.csv|{} (*.*)|*.*||",
+    const std::wstring fileSelectString = std::format(L"{} (*.csv)|*.csv|{} (*.*)|*.*||",
         Localization::Lookup(IDS_CSV_FILES), Localization::Lookup(IDS_ALL_FILES));
     CFileDialog dlg(TRUE, L"csv", nullptr, OFN_EXPLORER | OFN_DONTADDTORECENT | OFN_PATHMUSTEXIST, fileSelectString.c_str());
     if (dlg.DoModal() != IDOK) return;
@@ -1396,7 +1396,7 @@ void CDirStatDoc::OnCleanupMoveTo()
         }
 
         // Do all moves
-        HRESULT res = fileOperation->PerformOperations();
+        const HRESULT res = fileOperation->PerformOperations();
         if (res != S_OK) VTRACE(L"File Operation Failed: {}", TranslateError(res));
     }).DoModal();
 
@@ -1736,12 +1736,12 @@ void CDirStatDoc::OnContextMenuExplore(UINT nID)
 {
     // get list of paths from items
     std::vector<std::wstring> paths;
-    for (auto& item : GetAllSelected())
+    for (const auto& item : GetAllSelected())
         paths.push_back(item->GetPath());
 
     // query current context menu
     if (paths.empty()) return;
-    CComPtr contextMenu = GetContextMenu(CMainFrame::Get()->GetSafeHwnd(), paths);
+    const CComPtr contextMenu = GetContextMenu(CMainFrame::Get()->GetSafeHwnd(), paths);
     if (contextMenu == nullptr) return;
 
     // create placeholder menu
@@ -1884,8 +1884,8 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
         std::unordered_map<std::wstring, FinderBasicContext> queueContextBasic;
         for (auto& queue : m_queues)
         {
-            queueContextNtfs.emplace(queue.first, FinderNtfsContext{});
-            queueContextBasic.emplace(queue.first, FinderBasicContext{});
+            queueContextNtfs.try_emplace(queue.first);
+            queueContextBasic.try_emplace(queue.first);
 
             auto* queuePtr = &queue.second;
             auto* ntfsCtx = &queueContextNtfs[queue.first];
@@ -1962,7 +1962,7 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
         if (const auto csvPath = CDirStatApp::Get()->GetSaveToCsvPath(); !csvPath.empty())
         {
             // Get the document and root item
-            auto* doc = CDirStatDoc::Get();
+            const auto* doc = CDirStatDoc::Get();
             if (doc == nullptr || !doc->HasRootItem()) ExitProcess(1);
 
             // Run scan and exit with success == 0 or failure == 1
@@ -1974,7 +1974,7 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
         {
             // Get the duplicate root item
             CFileDupeControl::Get()->SortItems();
-            auto* dupeRoot = CFileDupeControl::Get()->GetRootItem();
+            const auto* dupeRoot = CFileDupeControl::Get()->GetRootItem();
             if (dupeRoot == nullptr) ExitProcess(1);
 
             // Run scan and exit with success == 0 or failure == 1

@@ -64,10 +64,6 @@
 #include <virtdisk.h>
 #include <tlhelp32.h>
 
-// Microsoft Concurrency headers
-#include <concurrent_unordered_map.h>
-#include <concurrent_vector.h>
-
 // STL headers
 #include <algorithm>
 #include <array>

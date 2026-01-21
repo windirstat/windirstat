@@ -616,7 +616,7 @@ void CMainFrame::SetStatusPaneText(const CDC& cdc, const int pos,
 {
     // do not process the update if text is the same
     static std::unordered_map<int, std::wstring> last;
-    if (auto it = last.find(pos); it != last.end() && it->second == text) return;
+    if (const auto it = last.find(pos); it != last.end() && it->second == text) return;
     last.insert_or_assign(pos, text);
 
     // set status path width and then set text
@@ -1052,7 +1052,7 @@ void CMainFrame::UpdateDynamicMenuItems(CMenu* menu) const
     auto [explorerMenu, explorerMenuPos] = LocateNamedMenu(menu, Localization::Lookup(IDS_MENU_EXPLORER_MENU));
     if (explorerMenu != nullptr && !paths.empty())
     {
-        CComPtr contextMenu = GetContextMenu(Get()->GetSafeHwnd(), paths);
+        const CComPtr contextMenu = GetContextMenu(Get()->GetSafeHwnd(), paths);
         if (contextMenu != nullptr) contextMenu->QueryContextMenu(explorerMenu->GetSafeHmenu(), 0,
             CONTENT_MENU_MINCMD, CONTENT_MENU_MAXCMD, CMF_NORMAL);
 
@@ -1177,8 +1177,8 @@ void CMainFrame::UpdatePaneText()
     }
 
     // Update select logical size
-    CClientDC dc(this);
-    auto sizeSummary = std::format(L"{}: {}", Localization::Lookup(IDS_COL_SIZE_LOGICAL), FormatBytes(size));
+    const CClientDC dc(this);
+    const auto sizeSummary = std::format(L"{}: {}", Localization::Lookup(IDS_COL_SIZE_LOGICAL), FormatBytes(size));
     SetStatusPaneText(dc, ID_STATUSPANE_IDLE_INDEX, fileSelectionText);
     SetStatusPaneText(dc, ID_STATUSPANE_SIZE_INDEX, (size != MAXULONG64) ? sizeSummary : L"", 175);
     SetStatusPaneText(dc, ID_STATUSPANE_RAM_INDEX, CDirStatApp::GetCurrentProcessMemoryInfo(), 175);

@@ -546,7 +546,7 @@ void SetProcessIoPriorityHigh() noexcept
 
 bool OptimizeVhd(const std::wstring& vhdPath) noexcept
 {
-    VIRTUAL_DISK_ACCESS_MASK accessMask = VIRTUAL_DISK_ACCESS_ALL;
+    const VIRTUAL_DISK_ACCESS_MASK accessMask = VIRTUAL_DISK_ACCESS_ALL;
     OPEN_VIRTUAL_DISK_PARAMETERS openParams{};
     openParams.Version = OPEN_VIRTUAL_DISK_VERSION_1;
 

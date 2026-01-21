@@ -107,7 +107,7 @@ void CDriveItem::StartQuery(HWND dialog)
         }
 
         // Send message to dialog if it's still valid
-        if (HWND dialog = m_dialog.load(); dialog != nullptr)
+        if (const HWND dialog = m_dialog.load(); dialog != nullptr)
         {
             ::PostMessage(dialog, WMU_THREADFINISHED, success ? 1 : 0, reinterpret_cast<LPARAM>(this));
         }
