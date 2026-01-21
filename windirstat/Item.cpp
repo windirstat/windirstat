@@ -1002,6 +1002,7 @@ void CItem::SetName(std::wstring_view name)
 {
     m_nameLen = static_cast<std::uint8_t>(name.size());
     m_name = std::make_unique_for_overwrite<wchar_t[]>(m_nameLen + 1);
+    while (m_nameLen > 0 && name[m_nameLen - 1] == L'\\') m_nameLen--;
     if (m_nameLen) std::wmemcpy(m_name.get(), name.data(), m_nameLen);
     m_name[m_nameLen] = L'\0';
 }
