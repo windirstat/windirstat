@@ -25,10 +25,6 @@ namespace
     constexpr float PACMANSPEED = 0.09f;      // pixels / ms
 }
 
-CPacman::CPacman(const COLORREF backColor) : m_backColor(backColor)
-{
-}
-
 void CPacman::Reset()
 {
     m_lastUpdate   = 0;
@@ -65,7 +61,7 @@ void CPacman::UpdatePosition()
     m_done = false;
 }
 
-void CPacman::Draw(CDC* pdc, const CRect& rect)
+void CPacman::Draw(CDC* pdc, const CRect& rect, const COLORREF backColor)
 {
     const ULONGLONG now = GetTickCount64();
     if (m_suspended)
@@ -104,9 +100,9 @@ void CPacman::Draw(CDC* pdc, const CRect& rect)
     if (!m_toTheRight) startAngle += 180.0f;
 
     // Fill background if requested
-    if (m_backColor != ~COLORREF())
+    if (backColor != ~COLORREF())
     {
-        pdc->FillSolidRect(rect, m_backColor);
+        pdc->FillSolidRect(rect, backColor);
     }
     if (m_done) return;
 

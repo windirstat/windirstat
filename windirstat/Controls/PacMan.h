@@ -25,19 +25,18 @@
 class CPacman final
 {
 public:
-    CPacman(COLORREF backColor = ~COLORREF());
     static void SetGlobalSuspendState(bool suspend = true);
+    CPacman() = default;
     void Reset();
     void Start();
     void Stop();
     void UpdatePosition();
-    void Draw(CDC* pdc, const CRect& rect);
+    void Draw(CDC* pdc, const CRect& rect, COLORREF backColor = ~COLORREF());
 
 private:
     static void UpdatePosition(float& position, bool& up, float diff);
     static bool m_suspended;
 
-    COLORREF m_backColor;
     ULONGLONG m_lastUpdate = 0;  // TickCount
     ULONGLONG m_lastDraw = 0;    // Last time drawn
     float m_position = 0.0f;     // 0...1

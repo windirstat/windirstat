@@ -102,8 +102,7 @@ public:
     void Stop();
 
 protected:
-    CPacman m_pacman{ DarkMode::WdsSysColor(
-        DarkMode::IsDarkModeActive() ? COLOR_WINDOW : COLOR_BTNFACE) };
+    CPacman m_pacman;
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnPaint();
