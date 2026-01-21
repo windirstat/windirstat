@@ -671,6 +671,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="res\langs\lang_cs.bin" />
+    <None Include="res\langs\lang_da.bin" />
     <None Include="res\langs\lang_de.bin" />
     <None Include="res\langs\lang_et.bin" />
     <None Include="res\langs\lang_en.bin" />
@@ -689,6 +690,7 @@
     <None Include="res\langs\lang_ru.bin" />
     <None Include="res\langs\lang_sv.bin" />
     <None Include="res\langs\lang_tr.bin" />
+    <None Include="res\langs\lang_uk.bin" />
     <None Include="res\langs\lang_zh.bin" />
     <None Include="res\license.bin" />
     <None Include="res\license.txt" />
@@ -724,6 +726,7 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="res\langs\lang_cs.txt" />
+    <Text Include="res\langs\lang_da.txt" />
     <Text Include="res\langs\lang_de.txt" />
     <Text Include="res\langs\lang_et.txt" />
     <Text Include="res\langs\lang_en.txt" />
@@ -742,6 +745,7 @@
     <Text Include="res\langs\lang_ru.txt" />
     <Text Include="res\langs\lang_sv.txt" />
     <Text Include="res\langs\lang_tr.txt" />
+    <Text Include="res\langs\lang_uk.txt" />
     <Text Include="res\langs\lang_zh.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

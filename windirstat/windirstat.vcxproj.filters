@@ -117,6 +117,12 @@
     <None Include="res\langs\lang_tr.bin">
       <Filter>Resource Files\Languages</Filter>
     </None>
+    <None Include="res\langs\lang_da.bin">
+      <Filter>Resource Files\Languages</Filter>
+    </None>
+    <None Include="res\langs\lang_uk.bin">
+      <Filter>Resource Files\Languages</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DirStatDoc.h">
@@ -584,6 +590,12 @@
       <Filter>Resource Files\Languages</Filter>
     </Text>
     <Text Include="res\langs\lang_tr.txt">
+      <Filter>Resource Files\Languages</Filter>
+    </Text>
+    <Text Include="res\langs\lang_da.txt">
+      <Filter>Resource Files\Languages</Filter>
+    </Text>
+    <Text Include="res\langs\lang_uk.txt">
       <Filter>Resource Files\Languages</Filter>
     </Text>
   </ItemGroup>
