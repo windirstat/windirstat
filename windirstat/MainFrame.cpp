@@ -320,7 +320,8 @@ void CPacmanControl::OnPaint()
     GetClientRect(&rect);
 
     // Draw the animation
-    m_pacman.Draw(pDC, rect);
+    m_pacman.Draw(pDC, rect, DarkMode::WdsSysColor(
+        DarkMode::IsDarkModeActive() ? COLOR_WINDOW : COLOR_BTNFACE));
 
     // Draw the borders
     CMFCVisualManager::GetInstance()->OnDrawStatusBarPaneBorder(
