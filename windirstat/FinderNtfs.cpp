@@ -363,7 +363,7 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
 
 bool FinderNtfs::FindNext()
 {
-    if (m_recordIterator == m_childrenSet.end()) return false;
+    if (m_recordIterator == m_recordIteratorEnd) return false;
     m_index = m_recordIterator->BaseRecord;
     const auto it = m_master->m_baseFileRecordMap.find(m_index);
     if (it == m_master->m_baseFileRecordMap.end()) return false;
@@ -379,8 +379,8 @@ bool FinderNtfs::FindFile(const CItem* item)
     m_base = item->GetPath();
     const auto result = m_master->m_parentToChildMap.find(item->GetIndex());
     if (result == m_master->m_parentToChildMap.end()) return false;
-    m_childrenSet = result->second;
-    m_recordIterator = m_childrenSet.begin();
+    m_recordIteratorEnd = result->second.end();
+    m_recordIterator = result->second.begin();
     return FindNext();
 }
 

@@ -42,8 +42,8 @@ class FinderNtfsContext final
             FileName(std::move(fileName)), BaseRecord(baseRecord) {}
     };
 
-    std::map<ULONGLONG, FileRecordBase> m_baseFileRecordMap;
-    std::map<ULONGLONG, std::vector<FileRecordName>> m_parentToChildMap;
+    std::unordered_map<ULONGLONG, FileRecordBase> m_baseFileRecordMap;
+    std::unordered_map<ULONGLONG, std::vector<FileRecordName>> m_parentToChildMap;
 
     mutable std::shared_mutex m_baseFileRecordMutex;
     mutable std::shared_mutex m_parentToChildMutex;
@@ -66,7 +66,7 @@ class FinderNtfs final : public Finder
     FinderNtfsContext::FileRecordBase* m_currentRecord = nullptr;
     const FinderNtfsContext::FileRecordName* m_currentRecordName = nullptr;
 
-    std::vector<FinderNtfsContext::FileRecordName> m_childrenSet;
+    std::vector<FinderNtfsContext::FileRecordName>::const_iterator m_recordIteratorEnd;
     std::vector<FinderNtfsContext::FileRecordName>::const_iterator m_recordIterator;
     
     std::wstring m_base;
