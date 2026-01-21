@@ -60,9 +60,18 @@ std::wstring GetLocaleString(const LCTYPE lctype, const LCID lcid)
 
 std::wstring GetLocaleLanguage(const LANGID langid)
 {
-    const std::wstring s = GetLocaleString(LOCALE_SLOCALIZEDLANGUAGENAME, langid);
-    const std::wstring n = GetLocaleString(LOCALE_SNATIVELANGNAME, langid);
-    return s + L" (" + n + L")";
+    // Check if this is a neutral language (no specific region)
+    if (SUBLANGID(langid) == SUBLANG_NEUTRAL)
+    {
+        // Use just the language name without the full display name
+        const std::wstring s = GetLocaleString(LOCALE_SENGLISHLANGUAGENAME, langid);
+        const std::wstring n = GetLocaleString(LOCALE_SNATIVELANGUAGENAME, langid);
+        return s + L" - " + n;
+    }
+
+    const std::wstring s = GetLocaleString(LOCALE_SENGLISHDISPLAYNAME, langid);
+    const std::wstring n = GetLocaleString(LOCALE_SNATIVEDISPLAYNAME, langid);
+    return s + L" - " + n;
 }
 
 wchar_t GetLocaleThousandSeparator() noexcept
@@ -537,6 +546,21 @@ std::vector<BYTE> GetCompressedResource(const HRSRC resource) noexcept
     }
 
     return decompressedData;
+}
+
+// Retrieve the GPL text from our resources
+std::wstring GetTextResource(const UINT id)
+{
+    // Fetch the resource
+    const HRSRC hrsrc = ::FindResource(nullptr, MAKEINTRESOURCE(id), L"TEXT");
+    if (nullptr == hrsrc) return {};
+
+    // Decompress the resource
+    const auto resourceData = GetCompressedResource(hrsrc);
+    if (resourceData.empty()) return {};
+
+    return CComBSTR(static_cast<int>(resourceData.size()),
+        reinterpret_cast<LPCSTR>(resourceData.data())).m_str;
 }
 
 // Tree node drawing helper

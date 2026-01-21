@@ -21,12 +21,11 @@
 
 class Localization final
 {
-    static bool CrackStrings(std::basic_istream<char>& stream, unsigned int streamSize);
+    static bool CrackStrings(const std::wstring& sFileData, const std::wstring& sPrefix = {});
     static void SearchReplace(std::wstring& input, const std::wstring_view& search, const std::wstring_view& replace);
     static void UpdateWindowText(CWnd& wnd);
 
 public:
-    static constexpr auto LANG_RESOURCE_TYPE = L"RT_LANG";
     static std::unordered_map<std::wstring, std::wstring> m_map;
 
     static bool Contains(const std::wstring_view& name)
@@ -49,7 +48,7 @@ public:
     }
 
     template <typename... Args>
-    static std::wstring Format(std::wstring_view format, const Args&... args)
+    static std::wstring Format(const std::wstring_view format, const Args&... args)
     {
         const auto & formatString = Lookup(format);
         return std::vformat(formatString, std::make_wformat_args(args...));
@@ -61,5 +60,5 @@ public:
     static bool LoadExternalLanguage(LCTYPE lcttype, LCID lcid);
     static bool LoadFile(const std::wstring& file);
     static bool LoadResource(WORD language);
-    static std::vector<LANGID> GetLanguageList();
+    static std::set<LANGID> GetLanguageList();
 };

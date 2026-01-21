@@ -54,74 +54,8 @@
     <None Include="res\windirstat.rc2">
       <Filter>Resource Files\Resources</Filter>
     </None>
-    <None Include="res\langs\lang_cs.bin">
-      <Filter>Resource Files\Languages</Filter>
-    </None>
-    <None Include="res\langs\lang_de.bin">
-      <Filter>Resource Files\Languages</Filter>
-    </None>
-    <None Include="res\langs\lang_et.bin">
-      <Filter>Resource Files\Languages</Filter>
-    </None>
-    <None Include="res\langs\lang_en.bin">
-      <Filter>Resource Files\Languages</Filter>
-    </None>
-    <None Include="res\langs\lang_es.bin">
-      <Filter>Resource Files\Languages</Filter>
-    </None>
-    <None Include="res\langs\lang_fi.bin">
-      <Filter>Resource Files\Languages</Filter>
-    </None>
-    <None Include="res\langs\lang_fr.bin">
-      <Filter>Resource Files\Languages</Filter>
-    </None>
-    <None Include="res\langs\lang_hu.bin">
-      <Filter>Resource Files\Languages</Filter>
-    </None>
-    <None Include="res\langs\lang_it.bin">
-      <Filter>Resource Files\Languages</Filter>
-    </None>
-    <None Include="res\langs\lang_nl.bin">
-      <Filter>Resource Files\Languages</Filter>
-    </None>
-    <None Include="res\langs\lang_no.bin">
-      <Filter>Resource Files\Languages</Filter>
-    </None>
-    <None Include="res\langs\lang_pl.bin">
-      <Filter>Resource Files\Languages</Filter>
-    </None>
-    <None Include="res\langs\lang_pt.bin">
-      <Filter>Resource Files\Languages</Filter>
-    </None>
-    <None Include="res\langs\lang_ru.bin">
-      <Filter>Resource Files\Languages</Filter>
-    </None>
-    <None Include="res\langs\lang_zh.bin">
-      <Filter>Resource Files\Languages</Filter>
-    </None>
     <None Include="res\license.bin">
       <Filter>Resource Files\Resources</Filter>
-    </None>
-    <None Include="res\langs\lang_ko.bin">
-      <Filter>Resource Files\Languages</Filter>
-    </None>
-    <None Include="res\langs\lang_hk.bin">
-      <Filter>Resource Files\Languages</Filter>
-    </None>
-    <None Include="res\langs\lang_sv.bin">
-      <Filter>Resource Files\Languages</Filter>
-    </None>
-    <None Include="res\langs\lang_ja.bin">
-      <Filter>Resource Files\Languages</Filter>
-    </None>
-    <None Include="res\langs\lang_tr.bin">
-      <Filter>Resource Files\Languages</Filter>
-    </None>
-    <None Include="res\langs\lang_da.bin">
-      <Filter>Resource Files\Languages</Filter>
-    </None>
-    <None Include="res\langs\lang_uk.bin">
-      <Filter>Resource Files\Languages</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
@@ -163,9 +97,6 @@
     </ClInclude>
     <ClInclude Include="Localization.h">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="langs.h">
-      <Filter>Resource Files\Languages</Filter>
     </ClInclude>
     <ClInclude Include="CsvLoader.h">
       <Filter>Header Files</Filter>
@@ -468,9 +399,6 @@
     <ResourceCompile Include="version.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
-    <ResourceCompile Include="langs.rc">
-      <Filter>Resource Files\Languages</Filter>
-    </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\toolbar\IDB_CLEANUP_DELETE.bmp">
@@ -568,9 +496,6 @@
     <Text Include="res\langs\lang_nl.txt">
       <Filter>Resource Files\Languages</Filter>
     </Text>
-    <Text Include="res\langs\lang_cs.txt">
-      <Filter>Resource Files\Languages</Filter>
-    </Text>
     <Text Include="res\langs\lang_zh.txt">
       <Filter>Resource Files\Languages</Filter>
     </Text>
@@ -578,9 +503,6 @@
       <Filter>Resource Files\Languages</Filter>
     </Text>
     <Text Include="res\langs\lang_ko.txt">
-      <Filter>Resource Files\Languages</Filter>
-    </Text>
-    <Text Include="res\langs\lang_hk.txt">
       <Filter>Resource Files\Languages</Filter>
     </Text>
     <Text Include="res\langs\lang_sv.txt">
@@ -596,6 +518,10 @@
       <Filter>Resource Files\Languages</Filter>
     </Text>
     <Text Include="res\langs\lang_uk.txt">
+      <Filter>Resource Files\Languages</Filter>
+    </Text>
+    <Text Include="res\langs\lang_zh-hk.txt" />
+    <Text Include="res\langs\lang_cs.txt">
       <Filter>Resource Files\Languages</Filter>
     </Text>
   </ItemGroup>

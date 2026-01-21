@@ -243,12 +243,14 @@ void COptions::PostProcessPersistedSettings()
     CompileFilters();
 
     // Set up the language for the environment
-    const LANGID langid = static_cast<LANGID>(LanguageId);
-    const auto& languages = Localization::GetLanguageList();
-    if (std::ranges::find(languages, langid) == languages.end())
+    if (const auto& languages = Localization::GetLanguageList();
+        std::ranges::find(languages, static_cast<LANGID>(LanguageId)) == languages.end())
     {
-        const LANGID best = MAKELANGID(PRIMARYLANGID(GetUserDefaultLangID()), SUBLANG_NEUTRAL);
-        LanguageId.Obj() = (std::ranges::find(languages, best) != languages.end()) ? best : MAKELANGID(LANG_ENGLISH, SUBLANG_NEUTRAL);
+        const LANGID specified = GetUserDefaultLangID();
+        const LANGID generic = MAKELANGID(PRIMARYLANGID(specified), SUBLANG_NEUTRAL);
+        LanguageId =
+            languages.contains(specified) ? specified :
+            languages.contains(generic) ? generic : MAKELANGID(LANG_ENGLISH, SUBLANG_NEUTRAL);
     }
     Localization::LoadResource(static_cast<LANGID>(LanguageId));
 

@@ -18,6 +18,7 @@
 #define IDR_POPUP_TREE                  129
 #define IDR_POPUP_MAP                   130
 #define IDR_LICENSE                     131
+#define IDR_LANGS                       132
 #define IDB_FILTER                      202
 #define IDB_FILE_SELECT                 203
 #define IDB_SEARCH                      204

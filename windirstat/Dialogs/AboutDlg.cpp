@@ -30,21 +30,6 @@ namespace
         TAB_THANKSTO,
         TAB_LICENSE
     };
-
-    // Retrieve the GPL text from our resources
-    std::wstring GetTextResource(const UINT id, const HMODULE dll = AfxGetResourceHandle())
-    {
-        // Fetch the resource
-        const HRSRC hrsrc = ::FindResource(dll, MAKEINTRESOURCE(id), L"TEXT");
-        if (nullptr == hrsrc) return {};
-
-        // Decompress the resource
-        const auto resourceData = GetCompressedResource(hrsrc);
-        if (resourceData.empty()) return {};
-
-        return CComBSTR(static_cast<int>(resourceData.size()),
-            reinterpret_cast<LPCSTR>(resourceData.data())).m_str;
-    }
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -102,7 +87,7 @@ void CAboutDlg::WdsTabControl::Initialize()
 
     m_textThanks.SetWindowText(Localization::Lookup(IDS_ABOUT_THANKS_TEXT).c_str());
 
-    m_textLicense.SetWindowText(GetTextResource(IDR_LICENSE, nullptr).c_str());
+    m_textLicense.SetWindowText(GetTextResource(IDR_LICENSE).c_str());
     m_textLicense.SetFont(&m_monoFont);
 
     // Set default rich edit settings
