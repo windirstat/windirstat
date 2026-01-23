@@ -22,10 +22,11 @@
 class DrawTextCache
 {
 public:
+
     static constexpr size_t MAX_CACHE_SIZE = 1000;
 
     // Singleton access
-    static DrawTextCache& Get();
+    static DrawTextCache* Get() { return &s_instance; }
 
     // Main drawing function - replacement for DrawText
     void DrawTextCached(CDC* pDC, const std::wstring& text, CRect& rect, bool leftAligned = true, bool calcRect = false);
@@ -95,6 +96,9 @@ private:
 
     // Paint cached entry to DC
     void PaintCachedEntry(CDC* pDC, const CRect& rect, CacheEntry& entry);
+
+    // Singleton constructor
+    static DrawTextCache s_instance;
 
     CacheMap m_cache;
     LRUList m_leastRecentList;

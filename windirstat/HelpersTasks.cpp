@@ -159,7 +159,7 @@ bool GetVolumeName(const std::wstring& rootPath, std::wstring& volumeName)
 }
 
 // Path utilities
-std::wstring MyQueryDosDevice(const std::wstring& drive)
+std::wstring WdsQueryDosDevice(const std::wstring& drive)
 {
     if (drive.size() < 2 || drive[1] != wds::chrColon) return {};
 
@@ -175,7 +175,7 @@ std::wstring MyQueryDosDevice(const std::wstring& drive)
 
 bool IsSUBSTedDrive(const std::wstring& drive)
 {
-    const std::wstring info = MyQueryDosDevice(drive);
+    const std::wstring info = WdsQueryDosDevice(drive);
     return info.starts_with(L"\\??\\");
 }
 
@@ -546,7 +546,7 @@ void SetProcessIoPriorityHigh() noexcept
 
 bool OptimizeVhd(const std::wstring& vhdPath) noexcept
 {
-    const VIRTUAL_DISK_ACCESS_MASK accessMask = VIRTUAL_DISK_ACCESS_ALL;
+    constexpr VIRTUAL_DISK_ACCESS_MASK accessMask = VIRTUAL_DISK_ACCESS_ALL;
     OPEN_VIRTUAL_DISK_PARAMETERS openParams{};
     openParams.Version = OPEN_VIRTUAL_DISK_VERSION_1;
 

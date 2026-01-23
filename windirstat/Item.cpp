@@ -1869,13 +1869,7 @@ CItem* CItem::FindItemByPath(const std::wstring& path) const
     if (pathDrive == nullptr) return nullptr;
 
     // Split the path into components, filtering out empty strings
-    std::vector<std::wstring> components;
-    for (auto&& part : path | std::views::split(L'\\')) {
-        if (auto str = std::wstring(part.begin(), part.end()); !str.empty()) {
-            components.emplace_back(std::move(str));
-        }
-    }
-
+    std::vector<std::wstring> components = SplitString(path, wds::chrBackslash);
     if (components.empty()) return nullptr;
 
     // First component should match the drive (e.g., "C:")

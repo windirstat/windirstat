@@ -83,7 +83,7 @@ void COwnerDrawnListItem::DrawLabel(const COwnerDrawnListControl* list, CDC* pdc
     rcRest.DeflateRect(list->GetTextXMargin(), 0);
 
     CRect rcLabel = rcRest;
-    DrawTextCache::Get().DrawTextCached(pdc, GetText(0), rcLabel, true, true);
+    DrawTextCache::Get()->DrawTextCached(pdc, GetText(0), rcLabel, true, true);
 
     rcLabel.InflateRect(LABEL_INFLATE_CX, 0);
     rcLabel.top = rcRest.top + LABEL_Y_MARGIN;
@@ -110,7 +110,7 @@ void COwnerDrawnListItem::DrawLabel(const COwnerDrawnListControl* list, CDC* pdc
     if (width == nullptr)
     {
         // Draw the actual text
-        DrawTextCache::Get().DrawTextCached(pdc, GetText(0), rcRest);
+        DrawTextCache::Get()->DrawTextCached(pdc, GetText(0), rcRest);
     }
 
     rcLabel.InflateRect(1, 1);
@@ -458,7 +458,7 @@ void COwnerDrawnListControl::DrawItem(LPDRAWITEMSTRUCT pdis)
             CSetBkColor backColorObj(&dcMem, backColorSub);
 
             // Draw the (sub)item text
-            DrawTextCache::Get().DrawTextCached(&dcMem, s, rcText, leftAlign);
+            DrawTextCache::Get()->DrawTextCached(&dcMem, s, rcText, leftAlign);
         }
 
         if (m_showGrid)

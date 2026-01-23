@@ -153,17 +153,17 @@ BOOL COptionsPropertySheet::OnCommand(const WPARAM wParam, const LPARAM lParam)
 
 /////////////////////////////////////////////////////////////////////////////
 
-CMySplitterWnd::CMySplitterWnd(double* splitterPos) :
+CWdsSplitterWnd::CWdsSplitterWnd(double* splitterPos) :
     m_userSplitterPos(splitterPos)
 {
     m_wasTrackedByUser = (*splitterPos > 0 && *splitterPos < 1);
 }
 
-BEGIN_MESSAGE_MAP(CMySplitterWnd, CSplitterWndEx)
+BEGIN_MESSAGE_MAP(CWdsSplitterWnd, CSplitterWndEx)
     ON_WM_SIZE()
 END_MESSAGE_MAP()
 
-void CMySplitterWnd::StopTracking(const BOOL bAccept)
+void CWdsSplitterWnd::StopTracking(const BOOL bAccept)
 {
     CSplitterWndEx::StopTracking(bAccept);
 
@@ -199,7 +199,7 @@ void CMySplitterWnd::StopTracking(const BOOL bAccept)
     }
 }
 
-void CMySplitterWnd::SetSplitterPos(const double pos)
+void CWdsSplitterWnd::SetSplitterPos(const double pos)
 {
     m_splitterPos = pos;
 
@@ -232,7 +232,7 @@ void CMySplitterWnd::SetSplitterPos(const double pos)
     }
 }
 
-void CMySplitterWnd::RestoreSplitterPos(const double posIfVirgin)
+void CWdsSplitterWnd::RestoreSplitterPos(const double posIfVirgin)
 {
     if (m_wasTrackedByUser)
     {
@@ -244,7 +244,7 @@ void CMySplitterWnd::RestoreSplitterPos(const double posIfVirgin)
     }
 }
 
-void CMySplitterWnd::OnSize(const UINT nType, const int cx, const int cy)
+void CWdsSplitterWnd::OnSize(const UINT nType, const int cx, const int cy)
 {
     if (GetColumnCount() > 1)
     {
@@ -1300,7 +1300,7 @@ void CMainFrame::OnSysColorChange()
     CFrameWndEx::OnSysColorChange();
     GetFileTreeView()->SysColorChanged();
     GetExtensionView()->SysColorChanged();
-    DrawTextCache::Get().ClearCache();
+    DrawTextCache::Get()->ClearCache();
 
     // Redraw menus for dark mode
     DarkMode::SetAppDarkMode();

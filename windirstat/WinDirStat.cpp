@@ -270,8 +270,13 @@ public:
         // Handle any non-flags as paths
         if (!bFlag)
         {
-            if (!m_strFileName.IsEmpty()) m_strFileName += wds::chrPipe;
-            m_strFileName += param.c_str();
+            for (const auto& paramSpilt : SplitString(param))
+            {
+                if (!m_strFileName.IsEmpty()) m_strFileName += wds::chrPipe;
+                std::error_code ec;
+                const std::wstring fullPath = std::filesystem::absolute(paramSpilt + L"\\", ec).wstring();
+                if (FolderExists(fullPath)) m_strFileName += fullPath.c_str();
+            }
             return;
         }
 
@@ -424,10 +429,9 @@ void CDirStatApp::OnFileOpen()
 {
     CopyAllDriveMappings();
 
-    CSelectDrivesDlg dlg;
-    if (IDOK == dlg.DoModal())
+    if (CSelectDrivesDlg dlg; IDOK == dlg.DoModal())
     {
-        const std::wstring path = CDirStatDoc::EncodeSelection(dlg.GetSelectedItems());
+        const std::wstring path = JoinString(dlg.GetSelectedItems());
         m_pDocTemplate->OpenDocumentFile(path.c_str(), true);
     }
 }

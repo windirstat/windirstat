@@ -200,10 +200,8 @@ void COptions::CompileFilters()
         std::pair{FilteringExcludeDirs.Obj(), std::ref(FilteringExcludeDirsRegex)},
         std::pair{FilteringExcludeFiles.Obj(), std::ref(FilteringExcludeFilesRegex)}})
     {
-        for (const auto token_view : std::views::split(optionString, L'\n'))
+        for (auto& token : SplitString(optionString, L'\n'))
         {
-            std::wstring token(token_view.begin(), token_view.end());
-
             try
             {
                 while (!token.empty() && (token.back() == L'\r' || token.back() == L'\\')) token.pop_back();

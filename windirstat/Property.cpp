@@ -105,23 +105,13 @@ template <> void Setting<WINDOWPLACEMENT>::WritePersistedProperty()
 
 template <> void Setting<std::vector<std::wstring>>::ReadPersistedProperty()
 {
-    m_value.clear();
-    for (const std::wstring s = CDirStatApp::Get()->GetProfileString(m_section.c_str(), m_entry.c_str()).GetString();
-        const auto token_view : std::views::split(s, L'|'))
-    {
-        m_value.emplace_back(token_view.begin(), token_view.end());
-    }
+    const std::wstring s = CDirStatApp::Get()->GetProfileString(m_section.c_str(), m_entry.c_str()).GetString();
+    m_value = SplitString(s);
 }
 
 template <> void Setting<std::vector<std::wstring>>::WritePersistedProperty()
 {
-    std::wstring result;
-    for (const auto & part : m_value)
-    {
-        result += part + L'|';
-    }
-    if (result.ends_with(L'|')) result.pop_back();
-
+    const std::wstring result = JoinString(m_value);
     CDirStatApp::Get()->WriteProfileString(m_section.c_str(), m_entry.c_str(), result.c_str());
 }
 
@@ -131,10 +121,10 @@ template <> void Setting<std::vector<int>>::ReadPersistedProperty()
 {
     m_value.clear();
     for (const std::wstring s = CDirStatApp::Get()->GetProfileString(m_section.c_str(), m_entry.c_str()).GetString();
-        const auto token_view : std::views::split(s, L','))
+        const auto& token : SplitString(s, L','))
     {
         // Scale from stored 96 DPI values to current DPI
-        int value = std::stoi(std::wstring(token_view.begin(), token_view.end()));
+        int value = std::stoi(token);
         if (m_entry == L"ColumnWidths") value = DpiRest(value);
         m_value.push_back(value);
     }

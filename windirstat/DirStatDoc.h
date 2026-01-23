@@ -88,9 +88,6 @@ protected:
 
     ~CDirStatDoc() override;
 
-    static std::wstring EncodeSelection(const std::vector<std::wstring>& folders);
-    static std::vector<std::wstring> DecodeSelection(const std::wstring& encodedPath);
-
     void DeleteContents() override;
     BOOL OnNewDocument() override;
     BOOL OnOpenDocument(LPCWSTR lpszPathName) override;

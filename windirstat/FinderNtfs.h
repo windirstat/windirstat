@@ -54,7 +54,7 @@ public:
 
     FinderNtfsContext() = default;
     bool LoadRoot(CItem* driveitem);
-    bool IsLoaded() const { return m_isLoaded; };
+    bool IsLoaded() const { return m_isLoaded; }
 
     static constexpr ULONGLONG NtfsNodeRoot = 5;
     static constexpr ULONGLONG NtfsReservedMax = 16;

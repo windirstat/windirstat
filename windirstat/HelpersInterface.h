@@ -46,6 +46,8 @@ std::wstring GlobToRegex(const std::wstring& glob, bool useAnchors = true);
 void ReplaceString(std::wstring& subject, const std::wstring& search, const std::wstring& replace);
 std::wstring& TrimString(std::wstring& s, wchar_t c = L' ', bool endOnly = false) noexcept;
 std::wstring MakeLower(const std::wstring& s);
+std::wstring JoinString(const std::vector<std::wstring>& items, WCHAR delim = wds::chrPipe);
+std::vector<std::wstring> SplitString(const std::wstring& string, WCHAR delim = wds::chrPipe);
 
 // Attribute parsing
 DWORD ParseAttributes(const std::wstring& attributes) noexcept;

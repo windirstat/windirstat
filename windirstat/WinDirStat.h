@@ -68,7 +68,7 @@ protected:
 
     CSingleDocTemplate* m_pDocTemplate{nullptr}; // MFC voodoo.
 
-    CIconHandler m_iconList;           // Our central icon list
+    CIconHandler m_iconList;           // Central icon list
     COLORREF m_altColor;               // Coloring of compressed items
     COLORREF m_altEncryptionColor;     // Coloring of encrypted items
     std::wstring m_loadFromCsvPath;    // Path to load csv file from
