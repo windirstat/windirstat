@@ -36,7 +36,7 @@ bool Localization::CrackStrings(const std::wstring& sFileData, const std::wstrin
     while (std::getline(stream, line))
     {
         // Filter out unwanted languages
-        if (!sPrefix.empty() && !line.starts_with(sPrefix)) continue;
+        if (!sPrefix.empty() && !line.starts_with(sPrefix + L":")) continue;
 
         // Parse the string after the first equals
         SearchReplace(line, L"\r", L"");

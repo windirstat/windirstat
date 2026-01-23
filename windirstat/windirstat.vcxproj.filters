@@ -520,8 +520,10 @@
     <Text Include="res\langs\lang_uk.txt">
       <Filter>Resource Files\Languages</Filter>
     </Text>
-    <Text Include="res\langs\lang_zh-hk.txt" />
     <Text Include="res\langs\lang_cs.txt">
+      <Filter>Resource Files\Languages</Filter>
+    </Text>
+    <Text Include="res\langs\lang_zh-hk.txt">
       <Filter>Resource Files\Languages</Filter>
     </Text>
   </ItemGroup>
