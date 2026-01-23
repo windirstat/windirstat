@@ -87,7 +87,7 @@ std::wstring GetAppFolder();
 
 // Resources
 std::vector<BYTE> GetCompressedResource(HRSRC resource) noexcept;
-std::wstring GetTextResource(const UINT id);
+std::wstring GetTextResource(UINT id);
 
 // Input state
 inline bool IsControlKeyDown() noexcept { return (HSHELL_HIGHBIT & GetKeyState(VK_CONTROL)) != 0; };
