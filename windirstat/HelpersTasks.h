@@ -56,7 +56,7 @@ bool IsLocalDrive(const std::wstring& rootPath) noexcept;
 bool GetVolumeName(const std::wstring& rootPath, std::wstring& volumeName);
 
 // Path utilities
-std::wstring MyQueryDosDevice(const std::wstring& drive);
+std::wstring WdsQueryDosDevice(const std::wstring& drive);
 bool IsSUBSTedDrive(const std::wstring& drive);
 
 // Hibernation

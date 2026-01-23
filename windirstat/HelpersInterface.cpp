@@ -110,30 +110,28 @@ std::wstring FormatBytes(const ULONGLONG n) noexcept
 
 std::wstring FormatSizeSuffixes(const ULONGLONG n) noexcept
 {
-    constexpr ULONGLONG BASE_BYTES = 1024;
-    constexpr ULONGLONG KIB_BYTES = BASE_BYTES;
-    constexpr ULONGLONG MIB_BYTES = KIB_BYTES * BASE_BYTES;
-    constexpr ULONGLONG GIB_BYTES = MIB_BYTES * BASE_BYTES;
-    constexpr ULONGLONG TIB_BYTES = GIB_BYTES * BASE_BYTES;
-    constexpr ULONGLONG TIB_THRESHOLD_BYTES = TIB_BYTES - (GIB_BYTES / 2);
-    constexpr ULONGLONG GIB_THRESHOLD_BYTES = GIB_BYTES - (MIB_BYTES / 2);
-    constexpr ULONGLONG MIB_THRESHOLD_BYTES = MIB_BYTES - (KIB_BYTES / 2);
+    constexpr ULONGLONG K = 1024;
+    constexpr ULONGLONG M = K * K;
+    constexpr ULONGLONG G = M * K;
+    constexpr ULONGLONG T = G * K;
 
-    if (n >= TIB_THRESHOLD_BYTES)
+    static constexpr struct {
+        ULONGLONG bytes;
+        ULONGLONG threshold;
+        const std::wstring& (*suffix)();
+    } units[] = {
+        {T, T - (G / 2), GetSpec_TiB},
+        {G, G - (M / 2), GetSpec_GiB},
+        {M, M - (K / 2), GetSpec_MiB},
+        {K, K,           GetSpec_KiB},
+    };
+
+    for (const auto& [bytes, threshold, suffix] : units) [[msvc::flatten]]
     {
-        return FormatDouble(static_cast<double>(n) / TIB_BYTES) + L" " + GetSpec_TiB();
-    }
-    if (n >= GIB_THRESHOLD_BYTES)
-    {
-        return FormatDouble(static_cast<double>(n) / GIB_BYTES) + L" " + GetSpec_GiB();
-    }
-    if (n >= MIB_THRESHOLD_BYTES)
-    {
-        return FormatDouble(static_cast<double>(n) / MIB_BYTES) + L" " + GetSpec_MiB();
-    }
-    if (n >= KIB_BYTES)
-    {
-        return FormatDouble(static_cast<double>(n) / KIB_BYTES) + L" " + GetSpec_KiB();
+        if (n < threshold) continue;
+        
+        return FormatDouble(static_cast<double>(n)
+            / static_cast<double>(bytes)) + L" " + suffix();
     }
     return std::to_wstring(n) + L" " + GetSpec_Bytes();
 }
@@ -277,6 +275,25 @@ std::wstring MakeLower(const std::wstring& s)
     std::wstring lower = s;
     _wcslwr_s(lower.data(), lower.size() + 1);
     return lower;
+}
+
+std::wstring JoinString(const std::vector<std::wstring>& items, const WCHAR delim)
+{
+    return std::accumulate(items.begin(), items.end(), std::wstring(),
+        [&](const std::wstring& a, const std::wstring& b) {
+            return a.empty() ? b : a + delim + b;
+        });
+}
+
+std::vector<std::wstring> SplitString(const std::wstring& string, const WCHAR delim)
+{
+    std::vector<std::wstring> selections;
+    for (const auto part : std::views::split(string, delim)) {
+        std::wstring partString(part.begin(), part.end());
+        selections.emplace_back(TrimString(partString));
+    }
+
+    return selections;
 }
 
 // Attribute parsing

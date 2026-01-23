@@ -21,7 +21,7 @@
 #include "PacMan.h"
 #include "FileTabbedView.h"
 
-class CMySplitterWnd;
+class CWdsSplitterWnd;
 class CMainFrame;
 
 class CFileTreeView;
@@ -70,13 +70,13 @@ protected:
 };
 
 //
-// CMySplitterWnd. A CSplitterWnd with 2 columns or rows, which
+// CWdsSplitterWnd. A CSplitterWnd with 2 columns or rows, which
 // knows about the current split ratio and retains it even when resized.
 //
-class CMySplitterWnd final : public CSplitterWndEx
+class CWdsSplitterWnd final : public CSplitterWndEx
 {
 public:
-    CMySplitterWnd(double * splitterPos);
+    CWdsSplitterWnd(double * splitterPos);
     void StopTracking(BOOL bAccept) override;
     void SetSplitterPos(double pos);
     void RestoreSplitterPos(double posIfVirgin);
@@ -201,8 +201,8 @@ protected:
     ULONGLONG m_progressPos = 0;    // Progress position (<= progressRange, or an item count in case of m_progressRang == 0)
     CItem* m_workingItem = nullptr;
 
-    CMySplitterWnd m_subSplitter; // Contains the two upper views
-    CMySplitterWnd m_splitter;    // Contains (a) m_wndSubSplitter and (b) the graph view.
+    CWdsSplitterWnd m_subSplitter; // Contains the two upper views
+    CWdsSplitterWnd m_splitter;    // Contains (a) m_wndSubSplitter and (b) the graph view.
 
     CMFCStatusBar m_wndStatusBar; // Status bar
     CMFCToolBar m_wndToolBar;     // Toolbar

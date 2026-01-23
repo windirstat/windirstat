@@ -49,30 +49,6 @@ CDirStatDoc::~CDirStatDoc()
 
 CDirStatDoc* CDirStatDoc::s_singleton = nullptr;
 
-// Encodes a selection from the CSelectDrivesDlg into a string which can be routed as a pseudo
-// document "path" through MFC and finally arrives in OnOpenDocument().
-//
-std::wstring CDirStatDoc::EncodeSelection(const std::vector<std::wstring>& folders)
-{
-    return std::accumulate(folders.begin(), folders.end(), std::wstring(),
-        [](const std::wstring& a, const std::wstring& b) {
-            return a.empty() ? b : a + wds::chrPipe + b;
-        });
-}
-
-// The inverse of EncodeSelection
-//
-std::vector<std::wstring> CDirStatDoc::DecodeSelection(const std::wstring& encodedPath)
-{
-    std::vector<std::wstring> selections;
-    for (const auto part : std::views::split(encodedPath, wds::chrPipe)) {
-        std::wstring partString(part.begin(), part.end());
-        selections.emplace_back(TrimString(partString));
-    }
-
-    return selections;
-}
-
 void CDirStatDoc::DeleteContents()
 {
     CWaitCursor wc;
@@ -117,7 +93,7 @@ BOOL CDirStatDoc::OnOpenDocument(LPCWSTR lpszPathName)
 
     // Decode list of folders to scan
     const std::wstring spec = lpszPathName;
-    std::vector<std::wstring> selections = DecodeSelection(spec);
+    std::vector<std::wstring> selections = SplitString(spec);
 
     // Prepare for new root and delete any existing data
     CDocument::OnNewDocument();
@@ -188,7 +164,7 @@ BOOL CDirStatDoc::OnOpenDocument(CItem* newroot)
         std::vector<std::wstring> folders;
         std::ranges::transform(newroot->GetChildren(), std::back_inserter(folders),
             [](const CItem* obj) -> std::wstring { return std::wstring(obj->GetNameView().substr(0, 2)); });
-        spec = EncodeSelection(folders);
+        spec = JoinString(folders);
     }
     else if (newroot->IsTypeOrFlag(IT_DRIVE))
     {

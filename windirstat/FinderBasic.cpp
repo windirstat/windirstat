@@ -135,6 +135,7 @@ bool FinderBasic::FindNext()
                 m_currentInfo->AllocationSize.LowPart = lowPart;
                 m_currentInfo->AllocationSize.HighPart = static_cast<LONG>(highPart);
             }
+            VTRACE(L"File Size: {}", GetFilePathLong());
         }
 
         // Correct logical size
