@@ -30,27 +30,33 @@ void Localization::SearchReplace(std::wstring& input, const std::wstring_view& s
 
 bool Localization::CrackStrings(const std::wstring& sFileData, const std::wstring& sPrefix)
 {
+    const bool hasPrefix = !sPrefix.empty();
+    const std::wstring prefix = sPrefix + wds::chrColon;
+
     // Read the file line by line
     std::wstring line;
     std::wistringstream stream(sFileData);
+
+    // Look for the language prefix and return false if not found
+    if (hasPrefix && sFileData.find(prefix) == wds::szNpos) return false;
+
     while (std::getline(stream, line))
     {
         // Filter out unwanted languages
-        if (!sPrefix.empty() && !line.starts_with(sPrefix + L":")) continue;
+        if (hasPrefix && !line.starts_with(prefix)) continue;
 
         // Parse the string after the first equals
-        SearchReplace(line, L"\r", L"");
+        SearchReplace(line, L"\r", wds::strEmpty);
         SearchReplace(line, L"\\n", L"\n");
         SearchReplace(line, L"\\t", L"\t");
-        if (const auto e = line.find_first_of(L'='); e != std::string::npos)
+        if (const auto e = line.find_first_of(wds::chrEqual); e != wds::szNpos)
         {
             // Strip the prefix if any and add to map
             size_t startPos = 0;
-            if (!sPrefix.empty()) startPos = line.find_first_of(L':') + 1;
+            if (hasPrefix) startPos = line.find_first_of(wds::chrColon) + 1;
             m_map[line.substr(startPos, e - startPos)] = line.substr(e + 1);
         }
     }
-
     return !m_map.empty();
 }
 
@@ -67,8 +73,8 @@ std::set<LANGID> Localization::GetLanguageList()
     while (std::getline(is, line))
     {
         // Convert to wide strings
-        SearchReplace(line, L"\r", L"");
-        auto linePos = line.find_first_of(L':');
+        SearchReplace(line, L"\r", wds::strEmpty);
+        auto linePos = line.find_first_of(wds::chrColon);
         if (linePos == std::wstring::npos) continue;
         uniqueLangs.emplace(line.substr(0, linePos));
     }
@@ -103,13 +109,13 @@ bool Localization::LoadResource(const WORD language)
     if (LCIDToLocaleName(lcid, name.data(), LOCALE_NAME_MAX_LENGTH, 0) == 0) return {};
     
     // Try to load external language file first
-    if (LoadExternalLanguage(LOCALE_SISO639LANGNAME, language) ||
-        LoadExternalLanguage(LOCALE_SNAME, language)) return true;
+    if (LoadExternalLanguage(LOCALE_SNAME, language) ||
+        LoadExternalLanguage(LOCALE_SISO639LANGNAME, language)) return true;
 
     // Try to load built-in resource
     const std::wstring sResourceData = GetTextResource(IDR_LANGS);
-    return CrackStrings(sResourceData, GetLocaleString(LOCALE_SISO639LANGNAME, language)) ||
-        CrackStrings(sResourceData, GetLocaleString(LOCALE_SNAME, language));
+    return CrackStrings(sResourceData, GetLocaleString(LOCALE_SNAME, language)) ||
+        CrackStrings(sResourceData, GetLocaleString(LOCALE_SISO639LANGNAME, language));
 }
 
 void Localization::UpdateMenu(CMenu& menu)

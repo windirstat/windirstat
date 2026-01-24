@@ -721,7 +721,7 @@
     <Text Include="res\langs\lang_sv.txt" />
     <Text Include="res\langs\lang_tr.txt" />
     <Text Include="res\langs\lang_uk.txt" />
-    <Text Include="res\langs\lang_zh-hk.txt" />
+    <Text Include="res\langs\lang_zh-HK.txt" />
     <Text Include="res\langs\lang_zh.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
