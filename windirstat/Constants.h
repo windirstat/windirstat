@@ -29,6 +29,8 @@ namespace wds
     inline constexpr auto strEmpty        = L"";
     inline constexpr auto chrBlankSpace   = L' ';
     inline constexpr auto chrStar         = L'*';
+    inline constexpr auto chrEqual        = L'=';
+    inline constexpr auto szNpos          = std::wstring::npos;
 
     inline constexpr auto strExplorerKey = L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer";
     inline constexpr auto strThemesKey   = L"Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize";
