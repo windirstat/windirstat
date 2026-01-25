@@ -30,3 +30,4 @@ jobs:
           version: ${{ steps.get-version.outputs.version }}
           installers-regex: '\.msi$' # Only .msi files
           token: ${{ secrets.WINGET_TOKEN }}
+          release-notes-url: https://github.com/windirstat/windirstat/blob/master/CHANGELOG.md#windirstat-${{ steps.get-version.outputs.version }}
