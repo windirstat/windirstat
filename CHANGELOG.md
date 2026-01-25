@@ -1,3 +1,4 @@
+<a name="windirstat-2.5.0"></a>
 # WinDirStat 2.5.0
 
 Enhancements
@@ -51,6 +52,7 @@ Miscellaneous
 - ARM 32-Bit builds no longer supported
 - CSV files created with previous versions will not be loadable
 
+<a name="windirstat-2.2.2"></a>
 # WinDirStat 2.2.2
 
 ## Enhancements
@@ -67,6 +69,7 @@ Miscellaneous
 - Corrected treemap zoomed view hit detection and highlighting
 - Corrected treemap custom grid color not being applied
 
+<a name="windirstat-2.2.1"></a>
 # WinDirStat 2.2.1
 
 ## Enhancements
@@ -89,7 +92,8 @@ Miscellaneous
 * Addressed numerous potential hanging / crashing scenarios
 * Addressed copy / paste not always working
 * Addressed hiding toolbar and status bar setting persistence
-  
+
+<a name="windirstat-2.1.1"></a>
 # WinDirStat 2.1.1
 
 ## Enhancements
@@ -112,6 +116,7 @@ Miscellaneous
 * Addressed hover over treemap not showing filename properly
 * Addressed not being able to scan in some Acronis folders
 
+<a name="windirstat-2.0.3"></a>
 # WinDirStat 2.0.3
 
 ## Enhancements
@@ -126,7 +131,8 @@ Miscellaneous
 * Addressed Norwegian language loading Dutch language
 * Addressed Portuguese mistranslation (thanks @PedroBittarBarao)
 * Addressed various typos in code comments (thanks @NathanBaulch)
-  
+
+<a name="windirstat-2.0.1"></a>
 # WinDirStat 2.0.1
 
 ## Enhancements
