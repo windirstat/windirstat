@@ -63,6 +63,7 @@
 #include <initguid.h>
 #include <virtdisk.h>
 #include <tlhelp32.h>
+#include <fdi.h>
 
 // STL headers
 #include <algorithm>

@@ -21,14 +21,7 @@
 #include "Options.h"
 #include "Localization.h"
 
-static NTSTATUS(NTAPI* RtlDecompressBufferEx)(USHORT CompressionFormat, PUCHAR UncompressedBuffer,
-    ULONG  UncompressedBufferSize, PUCHAR CompressedBuffer, ULONG  CompressedBufferSize,
-    PULONG FinalUncompressedSize, PVOID WorkSpace) = reinterpret_cast<decltype(RtlDecompressBufferEx)>(
-        reinterpret_cast<LPVOID>(GetProcAddress(GetModuleHandle(L"ntdll.dll"), "RtlDecompressBufferEx")));
-
-static NTSTATUS(NTAPI* RtlGetCompressionWorkSpaceSize)(USHORT CompressionFormat,
-    PULONG CompressBufferWorkSpaceSize, PULONG CompressFragmentWorkSpaceSize) = reinterpret_cast<decltype(RtlGetCompressionWorkSpaceSize)>(
-        reinterpret_cast<LPVOID>(GetProcAddress(GetModuleHandle(L"ntdll.dll"), "RtlGetCompressionWorkSpaceSize")));
+#pragma comment(lib, "cabinet.lib")
 
 static std::wstring FormatLongLongNormal(ULONGLONG n)
 {
@@ -534,35 +527,59 @@ std::wstring GetAppFolder()
 // Resources
 std::vector<BYTE> GetCompressedResource(const HRSRC resource) noexcept
 {
-    // Establish the resource
     const HGLOBAL resourceData = ::LoadResource(nullptr, resource);
-    if (resourceData == nullptr) return {};
+    if (!resourceData) return {};
 
-    // Fetch a pointer to the data
     const LPVOID binaryData = LockResource(resourceData);
-    if (binaryData == nullptr) return {};
+    if (!binaryData) return {};
 
-    // Get workspace size needed for decompression
-    ULONG workSpaceSize = 0;
-    ULONG fragmentWorkSpaceSize = 0;
-    if (!NT_SUCCESS(RtlGetCompressionWorkSpaceSize(COMPRESSION_FORMAT_XPRESS_HUFF, &workSpaceSize,
-        &fragmentWorkSpaceSize))) return {};
+    // Setup global structure for cabinet callbacks
+    struct ExtractContext {
+        std::span<BYTE> cabData;
+        std::vector<BYTE> output;
+        int nextHandle = 1;
+        std::map<INT_PTR, size_t> handles;
+    } ctx{ { static_cast<BYTE*>(binaryData), SizeofResource(nullptr, resource) } };
 
-    // Decompress data
-    const size_t resourceSize = SizeofResource(nullptr, resource);
-    const ULONG decompressedSize = *static_cast<const ULONG*>(binaryData);
-    std::vector<BYTE> decompressedData(decompressedSize);
-    ULONG finalDecompressedSize = 0;
+    static ExtractContext* g_ctx = nullptr;
+    g_ctx = &ctx;
 
-    std::vector<BYTE> workSpace(workSpaceSize);
-    if (!NT_SUCCESS(RtlDecompressBufferEx(COMPRESSION_FORMAT_XPRESS_HUFF, decompressedData.data(),
-        static_cast<LONG>(decompressedData.size()), static_cast<PUCHAR>(binaryData) + sizeof(ULONG),
-        static_cast<ULONG>(resourceSize) - sizeof(ULONG), &finalDecompressedSize, workSpace.data())))
-    {
-        return {};
-    }
+    // Use the cabinet function to decompress the resource
+    ERF erf;
+    SmartPointer<HFDI> hfdi(FDIDestroy, FDICreate(
+        +[](ULONG cb) -> void* { return malloc(cb); },
+        +[](void* pv) { free(pv); },
+        +[](char*, int, int) -> INT_PTR { return g_ctx->nextHandle++; },
+        +[](INT_PTR hf, void* pv, UINT cb) -> UINT {
+            size_t& pos = g_ctx->handles[hf];
+            const size_t toRead = min(cb, (UINT)(g_ctx->cabData.size() - pos));
+            memcpy(pv, g_ctx->cabData.data() + pos, toRead);
+            pos += toRead;
+            return static_cast<UINT>(toRead);
+        },
+        +[](INT_PTR, void* pv, UINT cb) -> UINT {
+            const char* p = static_cast<const char*>(pv);
+            g_ctx->output.insert(g_ctx->output.end(), p, p + cb);
+            return cb;
+        },
+        +[](INT_PTR hf) -> int { g_ctx->handles.erase(hf); return 0; },
+        +[](INT_PTR hf, long dist, int seektype) -> long {
+            size_t& pos = g_ctx->handles[hf];
+            if (seektype == SEEK_SET) pos = dist;
+            else if (seektype == SEEK_CUR) pos += dist;
+            else pos = g_ctx->cabData.size() + dist;
+            return static_cast<long>(pos);
+        },
+        cpu80386, &erf));
 
-    return decompressedData;
+    if (!hfdi) return {};
+
+    FDICopy(hfdi, std::string().data(), std::string().data(), 0,
+        +[](FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION) -> INT_PTR {
+            return (fdint == fdintCOPY_FILE) ? 1 : (fdint == fdintCLOSE_FILE_INFO);
+        }, nullptr, &ctx);
+
+    return ctx.output;
 }
 
 // Retrieve the GPL text from our resources

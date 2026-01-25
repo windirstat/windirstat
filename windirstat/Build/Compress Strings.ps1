@@ -1,42 +1,5 @@
 ﻿param($Path)
 
-$env:LIB = ''
-$CompressLibrary = Add-Type -TypeDefinition @"
-    using System;
-    using System.Runtime.InteropServices;
-
-    public class RtlCompression
-    {
-        [DllImport("ntdll.dll", SetLastError=true)]
-        public static extern uint RtlCompressBuffer(
-            ushort CompressionFormat,
-            byte[] UncompressedBuffer,
-            uint UncompressedBufferSize,
-            byte[] CompressedBuffer,
-            uint CompressedBufferSize,
-            uint chunkSize,
-            out uint FinalCompressedSize,
-            IntPtr WorkSpace
-        );
-
-        [DllImport("ntdll.dll", SetLastError=true)]
-        public static extern uint RtlGetCompressionWorkSpaceSize(
-            ushort CompressionFormat,
-            out uint CompressBufferWorkSpaceSize,
-            out uint CompressFragmentWorkSpaceSize
-        );
-    }
-"@ -PassThru
-
-$COMPRESSION_FORMAT_XPRESS_HUFF = 0x4
-$COMPRESSION_ENGINE_MAXIMUM = 0x0100
-$Alg = $COMPRESSION_FORMAT_XPRESS_HUFF -bor $COMPRESSION_ENGINE_MAXIMUM
-
-[uint32]$workSpaceSize = 0
-[uint32]$fragmentWorkSpaceSize = 0
-if ($CompressLibrary::RtlGetCompressionWorkSpaceSize($Alg, [ref]$workSpaceSize, [ref]$fragmentWorkSpaceSize) -ne 0) { Exit 1 }
-$workSpaceBuffer = [System.Runtime.InteropServices.Marshal]::AllocHGlobal([int]$workSpaceSize)
-
 # Combine all language files into lang.txt
 $Encoding = New-Object System.Text.UTF8Encoding $False
 $Files = Get-ChildItem -Path "$Path\*.txt" -Recurse
@@ -80,23 +43,9 @@ Remove-Item -LiteralPath $TempHeader -Force
 # Compress file data
 ForEach ($File in $Files)
 {
-    $bytesToCompress = [System.IO.File]::ReadAllBytes($File.FullName)
-    $compressedData = New-Object byte[] ($bytesToCompress.Length)
-
-    [uint32]$compressedSize = 0
-    if ($CompressLibrary::RtlCompressBuffer($Alg, $bytesToCompress, $bytesToCompress.Length,
-        $compressedData, $compressedData.Length, 4096, [ref]$compressedSize, $workSpaceBuffer) -eq 0)
-    {
-        [Array]::Resize([ref] $compressedData, $compressedSize)
-        
-        # Prepend uncompressed size as ULONG (4 bytes, little-endian)
-        $uncompressedSize = [uint32]$bytesToCompress.Length
-        $sizeBytes = [System.BitConverter]::GetBytes($uncompressedSize)
-        $finalData = $sizeBytes + $compressedData
-        
-        $NewFile = $File.FullName -replace '.txt$','.bin'
-        [System.IO.File]::WriteAllBytes($NewFile, $finalData)
-        If ($File.Name -eq 'lang_combined.txt') { Remove-Item $File.FullName -Force } 
-    }
+    $TxtFile = $File.FullName
+    $BinFile = $TxtFile -replace '.txt$','.bin'
+    makecab /D CompressionType=LZX /D CompressionMemory=21 $TxtFile $BinFile | Out-Null
+    If ($File.Name -eq 'lang_combined.txt') { Remove-Item $TxtFile -Force } 
 }
 
