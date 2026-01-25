@@ -1978,5 +1978,8 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
                 if (visualInfo[item].isSelected) GetFocusControl()->SelectItem(item, false, true);
             }
         });
+
+        // Force heap cleanup after scan
+        _heapmin();
     });
 }
