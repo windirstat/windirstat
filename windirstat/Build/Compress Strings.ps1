@@ -43,13 +43,17 @@ $Files = Get-ChildItem -Path "$Path\*.txt" -Recurse
 $CombinedLines = Get-ChildItem -Path "${Path}\lang_*.txt" -Recurse |
     Where-Object Name -match '^lang_([a-z]{2}(?:-[A-Z]{2})?)\.txt$' | ForEach-Object `
 {
+    $Content = $_ | Get-Content -Encoding UTF8 | Sort-Object -Unique | Where-Object { -not [string]::IsNullOrEmpty($_) }
+    [System.IO.File]::WriteAllLines($_.FullName, $Content, $Encoding)
+
     $LangCode = $Matches[1]
     Get-Content $_ -Encoding UTF8 | ForEach-Object { "${LangCode}:$_" }
+    $Files = @($Files | Where-Object FullName -ne $_.FullName)
 }
 if ($CombinedLines) {
     $OutFile = (Join-Path $Path 'lang_combined.txt')
     [System.IO.File]::WriteAllLines($OutFile, $CombinedLines, $Encoding)
-    $Files = @(Get-Item -LiteralPath $OutFile)
+    $Files += @(Get-Item $OutFile)
 }
 
 # Sort lines for normalization / comparison
@@ -62,7 +66,7 @@ Get-ChildItem -Path "${Path}\lang_*.txt" -Recurse | ForEach-Object {
 $TempHeader = (New-TemporaryFile).FullName
 '#pragma once' | Out-File $TempHeader -Force -Encoding utf8
 '#include <string_view>' | Out-File $TempHeader -Encoding utf8 -Append
-$Files | Where-Object Name -like 'lang_*.txt' | Get-Content | 
+$CombinedLines | 
     ForEach-Object { $_ -replace '=.*','' -replace '^.*?:','' } |
     Sort-Object -Unique | 
     ForEach { "constexpr std::wstring_view $_ = L""$_"";" } |
@@ -76,13 +80,6 @@ Remove-Item -LiteralPath $TempHeader -Force
 # Compress file data
 ForEach ($File in $Files)
 {
-    If ($File.Name -like 'lang_*.txt')
-    {
-        $Content = $File | Get-Content -Encoding UTF8 | Sort-Object -Unique | Where-Object { -not [string]::IsNullOrEmpty($_) }
-        $Encoding = New-Object System.Text.UTF8Encoding $False
-        [System.IO.File]::WriteAllLines($File.FullName, $Content, $Encoding)
-    }
-
     $bytesToCompress = [System.IO.File]::ReadAllBytes($File.FullName)
     $compressedData = New-Object byte[] ($bytesToCompress.Length)
 
