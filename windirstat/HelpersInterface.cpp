@@ -580,6 +580,74 @@ std::wstring GetTextResource(const UINT id)
         reinterpret_cast<LPCSTR>(resourceData.data())).m_str;
 }
 
+std::wstring GetAcceleratorString(const UINT commandID)
+{
+    static std::map<UINT, std::wstring> cache;
+    if (!cache.empty())
+    {
+        return cache[commandID];
+    }
+
+    // Load all accelerator object and get count 
+    static std::vector<ACCEL> accels;
+    HACCEL hAccel = LoadAccelerators(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDR_MAINFRAME));
+    const int count = CopyAcceleratorTable(hAccel, nullptr, 0);
+    if (count == 0) return L"";
+
+    // Read all from the table
+    accels.resize(count);
+    ::CopyAcceleratorTable(hAccel, accels.data(), count);
+
+    // Computer strings for all the commands in the table
+    for (const auto& [virtKey, key, cmd] : accels)
+    {
+        auto& result = cache[cmd];
+        if (!result.empty()) result += L", ";
+
+        // Build modifier string
+        if (virtKey & FCONTROL) result += L"Ctrl+";
+        if (virtKey & FALT) result += L"Alt+";
+        if (virtKey & FSHIFT) result += L"Shift+";
+
+        // Get key name
+        if ((virtKey & FVIRTKEY) == 0)
+        {
+            result += static_cast<WCHAR>(key);
+            continue;
+        }
+
+        // Function keys
+        if (key >= VK_F1 && key <= VK_F24)
+            result += std::format(L"F{}", key - VK_F1 + 1);
+
+        // Letter keys
+        else if (key >= 'A' && key <= 'Z')
+            result += static_cast<WCHAR>(key);
+
+        // Number keys
+        else if (key >= '0' && key <= '9')
+            result += static_cast<WCHAR>(key);
+
+        // Special keys
+        else switch (key)
+        {
+            case VK_RETURN:   result += L"Enter"; break;
+            case VK_DELETE:   result += L"Del"; break;
+            case VK_INSERT:   result += L"Ins"; break;
+            case VK_SPACE:    result += L"Space"; break;
+            case VK_ADD:      result += L"Num +"; break;
+            case VK_SUBTRACT: result += L"Num -"; break;
+            case VK_MULTIPLY: result += L"Num *"; break;
+            case VK_DIVIDE:   result += L"Num /"; break;
+            case VK_OEM_PLUS:  result += L"+"; break;
+            case VK_OEM_MINUS: result += L"-"; break;
+            default: result += std::format(L"VK_{:X}", key);
+        }
+    }
+
+    return cache[commandID];
+}
+
 // Tree node drawing helper
 void DrawTreeNodeConnector(CDC* pdc, const CRect& nodeRect, const COLORREF bgColor,
     const bool toTop, const bool toBottom, const bool toRight, const bool showPlus, const bool showMinus)

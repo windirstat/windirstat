@@ -234,6 +234,7 @@ constexpr std::wstring_view IDS_SCANNING_EXCLUSIONS_FILE = L"IDS_SCANNING_EXCLUS
 constexpr std::wstring_view IDS_SEARCH_CASE = L"IDS_SEARCH_CASE";
 constexpr std::wstring_view IDS_SEARCH_LABEL = L"IDS_SEARCH_LABEL";
 constexpr std::wstring_view IDS_SEARCH_REGEX = L"IDS_SEARCH_REGEX";
+constexpr std::wstring_view IDS_SEARCH_RESULT = L"IDS_SEARCH_RESULT";
 constexpr std::wstring_view IDS_SEARCH_RESULTS = L"IDS_SEARCH_RESULTS";
 constexpr std::wstring_view IDS_SEARCH_TITLE = L"IDS_SEARCH_TITLE";
 constexpr std::wstring_view IDS_SEARCH_WHOLE_PHRASE = L"IDS_SEARCH_WHOLE_PHRASE";

@@ -128,8 +128,20 @@ void Localization::UpdateMenu(CMenu& menu)
         if (text.Find(L"ID") == 0 && Contains(text.GetString()))
         {
             MENUITEMINFOW mi{ .cbSize = sizeof(MENUITEMINFOW) };
+            mi.fMask = MIIM_ID;
+            menu.GetMenuItemInfo(i, &mi, TRUE);
+
+            // Build the menu text with localized string and accelerator
+            std::wstring menuText = m_map[text.GetString()];
+            if (mi.wID != std::bit_cast<UINT>(-1))
+            {
+                const std::wstring accel = GetAcceleratorString(mi.wID);
+                if (!accel.empty()) menuText += L"\t" + accel;
+            }
+            
+            // Set the item text
             mi.fMask = MIIM_STRING;
-            mi.dwTypeData = const_cast<LPWSTR>(m_map[text.GetString()].c_str());
+            mi.dwTypeData = const_cast<LPWSTR>(menuText.c_str());
             menu.SetMenuItemInfo(i, &mi, TRUE);
         }
 
