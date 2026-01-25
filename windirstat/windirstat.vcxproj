@@ -718,6 +718,7 @@
     <Text Include="res\langs\lang_pl.txt" />
     <Text Include="res\langs\lang_pt.txt" />
     <Text Include="res\langs\lang_ru.txt" />
+    <Text Include="res\langs\lang_sl.txt" />
     <Text Include="res\langs\lang_sv.txt" />
     <Text Include="res\langs\lang_tr.txt" />
     <Text Include="res\langs\lang_uk.txt" />

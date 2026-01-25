@@ -38,6 +38,7 @@ if ($CompressLibrary::RtlGetCompressionWorkSpaceSize($Alg, [ref]$workSpaceSize, 
 $workSpaceBuffer = [System.Runtime.InteropServices.Marshal]::AllocHGlobal([int]$workSpaceSize)
 
 # Combine all language files into lang.txt
+$Encoding = New-Object System.Text.UTF8Encoding $False
 $Files = Get-ChildItem -Path "$Path\*.txt" -Recurse
 $CombinedLines = Get-ChildItem -Path "${Path}\lang_*.txt" -Recurse |
     Where-Object Name -match '^lang_([a-z]{2}(?:-[A-Z]{2})?)\.txt$' | ForEach-Object `
@@ -46,11 +47,15 @@ $CombinedLines = Get-ChildItem -Path "${Path}\lang_*.txt" -Recurse |
     Get-Content $_ -Encoding UTF8 | ForEach-Object { "${LangCode}:$_" }
 }
 if ($CombinedLines) {
-    $CombinedLines = $CombinedLines | Sort-Object -Unique
-    $Encoding = New-Object System.Text.UTF8Encoding $False
     $OutFile = (Join-Path $Path 'lang_combined.txt')
     [System.IO.File]::WriteAllLines($OutFile, $CombinedLines, $Encoding)
     $Files = @(Get-Item -LiteralPath $OutFile)
+}
+
+# Sort lines for normalization / comparison
+Get-ChildItem -Path "${Path}\lang_*.txt" -Recurse | ForEach-Object { 
+   $FileData = $_ | Get-Content -Encoding UTF8 | Sort-Object -Unique
+   [System.IO.File]::WriteAllLines($_.FullName, $FileData, $Encoding)
 }
 
 # Write out languages header file
