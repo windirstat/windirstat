@@ -147,7 +147,6 @@ constexpr std::wstring_view IDS_PAGE_CLEANUPS_DOWN = L"IDS_PAGE_CLEANUPS_DOWN";
 constexpr std::wstring_view IDS_PAGE_CLEANUPS_ENABLED = L"IDS_PAGE_CLEANUPS_ENABLED";
 constexpr std::wstring_view IDS_PAGE_CLEANUPS_FILES = L"IDS_PAGE_CLEANUPS_FILES";
 constexpr std::wstring_view IDS_PAGE_CLEANUPS_FOLDERS = L"IDS_PAGE_CLEANUPS_FOLDERS";
-constexpr std::wstring_view IDS_PAGE_CLEANUPS_HELP = L"IDS_PAGE_CLEANUPS_HELP";
 constexpr std::wstring_view IDS_PAGE_CLEANUPS_NAME = L"IDS_PAGE_CLEANUPS_NAME";
 constexpr std::wstring_view IDS_PAGE_CLEANUPS_PN = L"IDS_PAGE_CLEANUPS_PN";
 constexpr std::wstring_view IDS_PAGE_CLEANUPS_PP = L"IDS_PAGE_CLEANUPS_PP";
