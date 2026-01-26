@@ -422,7 +422,7 @@ BOOL CDirStatApp::IsIdleMessage(MSG* pMsg)
 
 void CDirStatApp::OnAppAbout()
 {
-    StartAboutDialog();
+    CAboutDlg().DoModal();
 }
 
 void CDirStatApp::OnFileOpen()

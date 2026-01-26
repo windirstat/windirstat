@@ -20,16 +20,6 @@
 #include "pch.h"
 #include "Layout.h"
 
-void StartAboutDialog();
-
-class CAboutThread final : public CWinThread
-{
-    DECLARE_DYNCREATE(CAboutThread)
-
-protected:
-    BOOL InitInstance() override;
-};
-
 class CAboutDlg final : public CLayoutDialogEx
 {
     class WdsTabControl final : public CMFCTabCtrl

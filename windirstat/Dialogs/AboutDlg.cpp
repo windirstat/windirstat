@@ -34,26 +34,6 @@ namespace
 
 /////////////////////////////////////////////////////////////////////////////
 
-void StartAboutDialog()
-{
-    AfxBeginThread(RUNTIME_CLASS(CAboutThread), NULL);
-}
-
-/////////////////////////////////////////////////////////////////////////////
-
-IMPLEMENT_DYNCREATE(CAboutThread, CWinThread);
-
-BOOL CAboutThread::InitInstance()
-{
-    CWinThread::InitInstance();
-
-    CAboutDlg dlg;
-    dlg.DoModal();
-    return false;
-}
-
-/////////////////////////////////////////////////////////////////////////////
-
 void CAboutDlg::WdsTabControl::Initialize()
 {
     SetLocation(LOCATION_TOP);
