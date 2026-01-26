@@ -36,8 +36,6 @@ public:
 
     // Methods for task lambda to interact with the dialog
     bool IsCancelled() const noexcept { return m_cancelRequested.load(); }
-    void SetCurrent(size_t current) noexcept { m_current.store(current); }
-    size_t GetCurrent() const noexcept { return m_current.load(); }
     size_t Increment() noexcept { return ++m_current; }
     size_t GetTotal() const noexcept { return m_total; }
 

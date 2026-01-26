@@ -108,6 +108,7 @@ IDS_MENU_PWSH=Otevřít v Power&Shellu...
 IDS_MENU_REFRESH_ALL=Obnovit &vše
 IDS_MENU_REFRESH_SELECTED=Obnovit v&ybrané
 IDS_MENU_REMOVE_LOCAL=Odstranit místní profily
+IDS_MENU_REMOVE_MOTW=Odebrat značky Mark-of-the-Web
 IDS_MENU_REMOVE_PROGRAMS=Spustit Programy a funkce
 IDS_MENU_REMOVE_ROAMING=Odebrat soubory cestovního profilu uloženého v mezipaměti
 IDS_MENU_REMOVE_SHADOW=Odstranit stínové kopie svazku

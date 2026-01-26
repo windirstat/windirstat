@@ -108,6 +108,7 @@ IDS_MENU_PWSH=Avaa Power&Shellissä...
 IDS_MENU_REFRESH_ALL=Päivitä &kaikki
 IDS_MENU_REFRESH_SELECTED=Päivitä &valittu
 IDS_MENU_REMOVE_LOCAL=Poista paikalliset profiilit
+IDS_MENU_REMOVE_MOTW=Poista Mark-of-the-Web -tunnisteet
 IDS_MENU_REMOVE_PROGRAMS=Käynnistä Ohjelmat ja Ominaisuudet
 IDS_MENU_REMOVE_ROAMING=Poista välimuistissa olevat Roaming-profiilit
 IDS_MENU_REMOVE_SHADOW=Poista levyn varjokopiot

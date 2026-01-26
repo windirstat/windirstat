@@ -108,6 +108,7 @@ IDS_MENU_PWSH=Åbn i Power&Shell...
 IDS_MENU_REFRESH_ALL=Opdater alt
 IDS_MENU_REFRESH_SELECTED=Opdater &valgt
 IDS_MENU_REMOVE_LOCAL=Fjern lokale profiler
+IDS_MENU_REMOVE_MOTW=Fjern Mark-of-the-Web-mærker
 IDS_MENU_REMOVE_PROGRAMS=Startprogram og funktioner
 IDS_MENU_REMOVE_ROAMING=Fjern cachelagrede roamingprofiler
 IDS_MENU_REMOVE_SHADOW=Fjern skyggekopier af volumen

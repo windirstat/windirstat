@@ -108,6 +108,7 @@ IDS_MENU_PWSH=PowerShell에서 열기(&S)...
 IDS_MENU_REFRESH_ALL=모두 새로 고침(&A)
 IDS_MENU_REFRESH_SELECTED=선택 항목 새로고침(&S)
 IDS_MENU_REMOVE_LOCAL=로컬 프로필 제거
+IDS_MENU_REMOVE_MOTW=Mark-of-the-Web 태그 제거
 IDS_MENU_REMOVE_PROGRAMS=프로그램 및 기능 실행
 IDS_MENU_REMOVE_ROAMING=캐시된 로밍 프로필 제거
 IDS_MENU_REMOVE_SHADOW=볼륨 섀도 복사본 제거

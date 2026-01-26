@@ -95,7 +95,7 @@ void RemoveWmiInstances(const std::wstring& wmiClass, CProgressDlg* pdlg, const 
         return;
     }
 
-    for (size_t progress = 0; !pdlg->IsCancelled(); pdlg->SetCurrent(++progress))
+    for (; !pdlg->IsCancelled(); pdlg->Increment())
     {
         ULONG uRet;
         CComPtr<IWbemClassObject> pObj;

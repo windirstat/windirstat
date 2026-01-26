@@ -109,6 +109,7 @@ IDS_MENU_PWSH=Відкрити у Power&Shell...
 IDS_MENU_REFRESH_ALL=Оновити все
 IDS_MENU_REFRESH_SELECTED=Оновити &виділене
 IDS_MENU_REMOVE_LOCAL=Видалити локальні профілі
+IDS_MENU_REMOVE_MOTW=Видалити мітки Mark-of-the-Web
 IDS_MENU_REMOVE_PROGRAMS=Запустити Програми та компоненти
 IDS_MENU_REMOVE_ROAMING=Видалити кешовані переміщувані профілі
 IDS_MENU_REMOVE_SHADOW=Видалити тіньові копії тома

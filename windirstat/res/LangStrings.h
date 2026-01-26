@@ -112,6 +112,7 @@ constexpr std::wstring_view IDS_MENU_PWSH = L"IDS_MENU_PWSH";
 constexpr std::wstring_view IDS_MENU_REFRESH_ALL = L"IDS_MENU_REFRESH_ALL";
 constexpr std::wstring_view IDS_MENU_REFRESH_SELECTED = L"IDS_MENU_REFRESH_SELECTED";
 constexpr std::wstring_view IDS_MENU_REMOVE_LOCAL = L"IDS_MENU_REMOVE_LOCAL";
+constexpr std::wstring_view IDS_MENU_REMOVE_MOTW = L"IDS_MENU_REMOVE_MOTW";
 constexpr std::wstring_view IDS_MENU_REMOVE_PROGRAMS = L"IDS_MENU_REMOVE_PROGRAMS";
 constexpr std::wstring_view IDS_MENU_REMOVE_ROAMING = L"IDS_MENU_REMOVE_ROAMING";
 constexpr std::wstring_view IDS_MENU_REMOVE_SHADOW = L"IDS_MENU_REMOVE_SHADOW";

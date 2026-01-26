@@ -108,6 +108,7 @@ IDS_MENU_PWSH=Abrir no Power&Shell...
 IDS_MENU_REFRESH_ALL=Atualizar &Tudo
 IDS_MENU_REFRESH_SELECTED=&Recarregar Seleção
 IDS_MENU_REMOVE_LOCAL=Remover perfis locais
+IDS_MENU_REMOVE_MOTW=Remover marcas Mark-of-the-Web
 IDS_MENU_REMOVE_PROGRAMS=Iniciar Programas e Recursos
 IDS_MENU_REMOVE_ROAMING=Remover perfis de roaming em cache
 IDS_MENU_REMOVE_SHADOW=Remover cópias de sombra do volume

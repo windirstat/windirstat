@@ -1949,3 +1949,26 @@ CItem* CItem::GetLinkedItem()
     // Default: return this item
     return this;
 }
+
+std::vector<CItem*> CItem::GetItemsRecursive(const std::vector<CItem*>& initialItems, const std::function<bool(CItem*)>& task)
+{
+    std::vector<CItem*> files;
+    std::stack childStack{ initialItems };
+    while (!childStack.empty())
+    {
+        const auto& item = childStack.top();
+        childStack.pop();
+        if (item->HasChildren())
+        {
+            for (const auto& child : item->GetChildren())
+            {
+                childStack.push(child);
+            }
+        }
+        else if (task(item))
+        {
+            files.emplace_back(item);
+        }
+    }
+    return files;
+}

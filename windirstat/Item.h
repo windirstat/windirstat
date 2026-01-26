@@ -283,6 +283,9 @@ public:
             (static_cast<QWORD>(ft2.dwHighDateTime) << 32 | (ft2.dwLowDateTime));
     }
 
+    static std::vector<CItem*> GetItemsRecursive(const std::vector<CItem*>& initialItems,
+        const std::function<bool(CItem*)>& task = [](const CItem* item) { return item->IsTypeOrFlag(IT_FILE); });
+
 private:
     ULONGLONG GetProgressRangeMyComputer() const;
     ULONGLONG GetProgressRangeDrive() const;

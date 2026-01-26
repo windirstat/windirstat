@@ -108,6 +108,7 @@ IDS_MENU_PWSH=Odpri v Power&Shell...
 IDS_MENU_REFRESH_ALL=Osveži &vse
 IDS_MENU_REFRESH_SELECTED=Osveži &izbrano
 IDS_MENU_REMOVE_LOCAL=Odstrani lokalne profile
+IDS_MENU_REMOVE_MOTW=Odstrani oznake Mark-of-the-Web
 IDS_MENU_REMOVE_PROGRAMS=Zaženi Programi in funkcije
 IDS_MENU_REMOVE_ROAMING=Odstrani predpomnjene roaming profile
 IDS_MENU_REMOVE_SHADOW=Odstrani senčne kopije (Shadow Copies)

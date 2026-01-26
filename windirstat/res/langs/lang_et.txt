@@ -108,6 +108,7 @@ IDS_MENU_PWSH=Ava Power&Shellis...
 IDS_MENU_REFRESH_ALL=Värskenda &kõik
 IDS_MENU_REFRESH_SELECTED=&Värskenda valikut
 IDS_MENU_REMOVE_LOCAL=Eemalda kohalikud profiilid
+IDS_MENU_REMOVE_MOTW=Eemalda Mark-of-the-Web sildid
 IDS_MENU_REMOVE_PROGRAMS=Käivita Programmid && Funktsioonid
 IDS_MENU_REMOVE_ROAMING=Eemalda vahemälust rändprofiilid
 IDS_MENU_REMOVE_SHADOW=Eemalda kettatõmmiste varikoopiad

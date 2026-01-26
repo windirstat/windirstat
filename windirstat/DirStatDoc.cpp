@@ -501,7 +501,6 @@ void CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, const bo
         }
 
         // Actually delete items in post-order
-        size_t current = 0;
         for (const auto& item : itemsInPostOrder)
         {
             if (pdlg->IsCancelled())
@@ -510,7 +509,7 @@ void CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, const bo
                 return;
             }
 
-            pdlg->SetCurrent(++current);
+            pdlg->Increment();
             item->IsTypeOrFlag(IT_DIRECTORY)
                 ? RemoveDirectory(item->GetPathLong().c_str())
                 : DeleteFile(item->GetPathLong().c_str());
@@ -887,8 +886,9 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
         { ID_CLEANUP_OPEN_IN_PWSH,    { false, true,  true,  LF_NONE,     { IT_DRIVE, IT_DIRECTORY, IT_FILE } } },
         { ID_CLEANUP_OPEN_SELECTED,   { false, true,  true,  LF_NONE,     { IT_MYCOMPUTER, IT_DRIVE, IT_DIRECTORY, IT_FILE } } },
         { ID_CLEANUP_PROPERTIES,      { false, true,  true,  LF_NONE,     { IT_MYCOMPUTER, IT_DRIVE, IT_DIRECTORY, IT_FILE } } },
-        { ID_CLEANUP_OPTIMIZE_VHD,    { false, true,  false, LF_NONE,     { IT_DIRECTORY, IT_FILE }, isVhdFile } },
+        { ID_CLEANUP_OPTIMIZE_VHD,    { false, true,  false, LF_NONE,     { IT_DRIVE, IT_DIRECTORY, IT_FILE }, isVhdFile } },
         { ID_CLEANUP_REMOVE_LOCAL,    { true,  true,  false, LF_NONE,     { ITF_ANY }, isElevated } },
+        { ID_CLEANUP_REMOVE_MOTW,     { false, true,  false, LF_NONE,     { IT_DRIVE, IT_DIRECTORY, IT_FILE } } },
         { ID_CLEANUP_REMOVE_ROAMING,  { true,  true,  false, LF_NONE,     { ITF_ANY }, isElevated } },
         { ID_CLEANUP_REMOVE_SHADOW,   { true,  true,  false, LF_NONE,     { ITF_ANY }, isElevated } },
         { ID_COMPRESS_LZNT1,          { false, true,  false, LF_NONE,     { IT_DIRECTORY, IT_FILE } } },
@@ -997,6 +997,7 @@ BEGIN_MESSAGE_MAP(CDirStatDoc, CDocument)
     ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_REMOVE_LOCAL, OnRemoveLocalProfiles)
     ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_DISK_CLEANUP, OnExecuteDiskCleanupUtility)
     ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_REMOVE_PROGRAMS, OnExecuteProgramsFeatures)
+    ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_REMOVE_MOTW, OnRemoveMarkOfTheWebTags)
     ON_UPDATE_COMMAND_UI_RANGE(ID_USERDEFINEDCLEANUP0, ID_USERDEFINEDCLEANUP9, OnUpdateUserDefinedCleanup)
     ON_COMMAND_RANGE(ID_USERDEFINEDCLEANUP0, ID_USERDEFINEDCLEANUP9, OnUserDefinedCleanup)
     ON_COMMAND_UPDATE_WRAPPER(ID_TREEMAP_SELECT_PARENT, OnTreeMapSelectParent)
@@ -1538,8 +1539,7 @@ void CDirStatDoc::OnTreeMapReselectChild()
 
 void CDirStatDoc::OnCleanupOpenTarget()
 {
-    const auto & items = GetAllSelected();
-    for (const auto & item : items)
+    for (const auto & item : GetAllSelected())
     {
         OpenItem(item);
     }
@@ -1547,8 +1547,7 @@ void CDirStatDoc::OnCleanupOpenTarget()
 
 void CDirStatDoc::OnCleanupProperties()
 {
-    const auto & items = GetAllSelected();
-    for (const auto & item : items)
+    for (const auto & item : GetAllSelected())
     {
         OpenItem(item, L"properties");
     }
@@ -1588,35 +1587,17 @@ void CDirStatDoc::OnCleanupCompress(UINT id)
 {
     CWaitCursor wc;
     const auto& itemsSelected = GetAllSelected();
-    std::vector<const CItem*> itemsToCompress;
-    std::stack childStack{ itemsSelected  };
-    while (!childStack.empty())
-    {
-        const auto& item = childStack.top();
-        childStack.pop();
-
-        if (item->HasChildren())
-        {
-            for (const auto& child : item->GetChildren())
-            {
-                childStack.push(child);
-            }
-        }
-        else if (item->IsTypeOrFlag(IT_FILE))
-        {
-            itemsToCompress.emplace_back(item);
-        }
-    }
-
+    const auto& items = CItem::GetItemsRecursive(itemsSelected);
+   
     // Show progress dialog and compress files
     const auto alg = CompressionIdToAlg(id);
-    CProgressDlg(itemsToCompress.size(), false, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
+    CProgressDlg(items.size(), false, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
     {
-        for (const auto i : std::views::iota(0u, itemsToCompress.size()))
+        for (const auto & item : items)
         {
             if (pdlg->IsCancelled()) break;
-            pdlg->SetCurrent(i + 1);
-            CompressFile(itemsToCompress[i]->GetPathLong(), alg);
+            CompressFile(item->GetPathLong(), alg);
+            pdlg->Increment();
         }
     }).DoModal();
 
@@ -1628,34 +1609,17 @@ void CDirStatDoc::OnCleanupOptimizeVhd()
 {
     CWaitCursor wc;
     const auto& itemsSelected = GetAllSelected();
-    std::vector<const CItem*> vhdxFiles;
-    std::stack childStack { itemsSelected };
-    while (!childStack.empty())
-    {
-        const auto& item = childStack.top();
-        childStack.pop();
-
-        if (item->HasChildren())
-        {
-            for (const auto& child : item->GetChildren())
-            {
-                childStack.push(child);
-            }
-        }
-        else if (item->IsTypeOrFlag(IT_FILE) && item->GetExtension() == L".vhdx")
-        {
-            vhdxFiles.emplace_back(item);
-        }
-    }
+    const auto& items = CItem::GetItemsRecursive(itemsSelected, [](const CItem* item) {
+        return item->IsTypeOrFlag(IT_FILE) && item->GetExtension() == L".vhdx"; });
 
     // Show progress dialog and optimize VHD files
-    CProgressDlg(vhdxFiles.size(), false, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
+    CProgressDlg(items.size(), false, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
     {
-        for (const auto i : std::views::iota(0u, vhdxFiles.size()))
+        for (const auto item : items)
         {
             if (pdlg->IsCancelled()) break;
-            pdlg->SetCurrent(i + 1);
-            OptimizeVhd(vhdxFiles[i]->GetPathLong());
+            OptimizeVhd(item->GetPathLong());
+            pdlg->Increment();
         }
     }).DoModal();
 
@@ -1982,4 +1946,21 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
         // Force heap cleanup after scan
         _heapmin();
     });
+}
+
+void CDirStatDoc::OnRemoveMarkOfTheWebTags()
+{
+    CWaitCursor wc;
+    const auto& itemsSelected = GetAllSelected();
+    const auto& items = CItem::GetItemsRecursive(itemsSelected);
+
+    CProgressDlg(items.size(), false, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
+    {
+        for (const auto item : items)
+        {
+            if (pdlg->IsCancelled()) break;
+            DeleteFile((item->GetPathLong() + L":Zone.Identifier").c_str());
+            pdlg->Increment();
+        }
+    }).DoModal();
 }

@@ -108,6 +108,7 @@ IDS_MENU_PWSH=Megnyitás Power&Shellben...
 IDS_MENU_REFRESH_ALL=M&indet frissíti
 IDS_MENU_REFRESH_SELECTED=K&ijelölt frissítése
 IDS_MENU_REMOVE_LOCAL=Helyi profilok eltávolítása
+IDS_MENU_REMOVE_MOTW=Mark-of-the-Web címkék eltávolítása
 IDS_MENU_REMOVE_PROGRAMS=Programok és szolgáltatások indítása
 IDS_MENU_REMOVE_ROAMING=Gyorsítótárazott barangoló profilok eltávolítása
 IDS_MENU_REMOVE_SHADOW=Kötet árnyékmásolatainak eltávolítása

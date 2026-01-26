@@ -108,6 +108,7 @@ IDS_MENU_PWSH=In Power&Shell öffnen...
 IDS_MENU_REFRESH_ALL=&Alles aktualisieren
 IDS_MENU_REFRESH_SELECTED=&Auswahl aktualisieren
 IDS_MENU_REMOVE_LOCAL=Lokale Profile entfernen
+IDS_MENU_REMOVE_MOTW=Mark-of-the-Web-Kennzeichnungen entfernen
 IDS_MENU_REMOVE_PROGRAMS=Programme und Features starten
 IDS_MENU_REMOVE_ROAMING=Zwischengespeicherte Roaming-Profile entfernen
 IDS_MENU_REMOVE_SHADOW=Volume-Schattenkopien entfernen
