@@ -33,6 +33,7 @@
       <ComponentRef Id="Component_Main"/>
       <ComponentRef Id="Component_ContextMenuEntry"/>
       <ComponentRef Id="Component_DesktopShortcut"/>
+      <ComponentRef Id="Component_AddToPath"/>
     </Feature>
     <!-- Custom Actions -->
     <CustomAction Id="DoLegacyUninstall" FileRef="File_Main" ExeCommand="/LegacyUninstall" Execute="deferred" Impersonate="no" Return="ignore"/>
@@ -51,6 +52,11 @@
       <RegistrySearch Id="ContextMenuSearch" Type="raw" Root="HKCR" Key="Directory\shell\WinDirStat" Name="Icon"/>
     </Property>
     <SetProperty Id="CONTEXTMENU_ENTRY" After="AppSearch" Value="1" Sequence="first" Condition="((WIX_UPGRADE_DETECTED &lt;&gt; &quot;&quot; AND CONTEXT_MENU_LOCATE &lt;&gt; &quot;&quot;) OR NOT WIX_UPGRADE_DETECTED) AND DISABLE_CONTEXTMENU &lt;&gt; 1"/>
+    <!-- Properties for Add to PATH Detection -->
+    <Property Id="SYSTEM_PATH">
+      <RegistrySearch Id="AddToPathSearch" Type="raw" Root="HKLM" Key="SYSTEM\CurrentControlSet\Control\Session Manager\Environment" Name="Path"/>
+    </Property>
+    <SetProperty Id="ADD_TO_PATH" After="AppSearch" Value="1" Sequence="first" Condition="(WIX_UPGRADE_DETECTED &lt;&gt; &quot;&quot; AND SYSTEM_PATH &gt;&lt; &quot;WinDirStat&quot;) OR ENABLE_ADD_TO_PATH = 1"/>
     <!-- Custom UI Dialog -->
     <UI Id="InstallerUI">
       <Dialog Id="OptionsDlg" Width="370" Height="270" Title="WinDirStat Options">
@@ -60,6 +66,7 @@
         <Control Id="Title" Type="Text" X="15" Y="6" Width="210" Height="15" Transparent="yes" NoPrefix="yes" Text="{\WixUI_Font_Title}Install Options"/>
         <Control Id="DesktopShortcutCheckBox" Type="CheckBox" Height="18" Width="295" X="26" Y="58" Text="Create Desktop Shortcut" Property="DESKTOP_SHORTCUT" CheckBoxValue="1"/>
         <Control Id="ContextMenuEntryCheckBox" Type="CheckBox" Height="18" Width="295" X="26" Y="79" Text="Create Classic Shell Context Menu Entry" Property="CONTEXTMENU_ENTRY" CheckBoxValue="1"/>
+        <Control Id="AddToPathCheckBox" Type="CheckBox" Height="18" Width="295" X="26" Y="100" Text="Add WinDirStat To System Path" Property="ADD_TO_PATH" CheckBoxValue="1"/>
         <Control Id="Next" Type="PushButton" X="236" Y="243" Width="56" Height="17" Default="yes" Text="!(loc.WixUINext)">
           <Publish Event="NewDialog" Value="VerifyReadyDlg" Condition="1"/>
         </Control>
@@ -88,6 +95,9 @@
             <ShortcutProperty Key="System.AppUserModel.ID" Value="WinDirStat"/>
           </Shortcut>
         </File>
+      </Component>
+      <Component Id="Component_AddToPath" Guid="{D5A7D5D0-3D45-4A41-8F4F-6F8E6C2A9F13}" Condition="ADD_TO_PATH">
+        <Environment Id="Env_AddWinDirStatToPath" Name="PATH" Value="[INSTALLFOLDER]" Permanent="no" Part="last" Action="set" System="yes"/>
       </Component>
     </DirectoryRef>
     <Component Id="Component_ContextMenuEntry" Directory="TARGETDIR" Guid="{7B6A2A2E-BF9E-4F37-8EAA-0E7E6B98D87A}" Condition="CONTEXTMENU_ENTRY">
