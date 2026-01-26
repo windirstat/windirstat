@@ -593,8 +593,8 @@ std::wstring GetTextResource(const UINT id)
     const auto resourceData = GetCompressedResource(hrsrc);
     if (resourceData.empty()) return {};
 
-    return CComBSTR(static_cast<int>(resourceData.size()),
-        reinterpret_cast<LPCSTR>(resourceData.data())).m_str;
+    return Localization::ConvertToWideString(
+        { reinterpret_cast<const char*>(resourceData.data()), resourceData.size()});
 }
 
 std::wstring GetAcceleratorString(const UINT commandID)

@@ -60,5 +60,6 @@ public:
     static bool LoadExternalLanguage(LCTYPE lcttype, LCID lcid);
     static bool LoadFile(const std::wstring& file);
     static bool LoadResource(WORD language);
+    static std::wstring ConvertToWideString(const std::string_view& sv);
     static std::set<LANGID> GetLanguageList();
 };

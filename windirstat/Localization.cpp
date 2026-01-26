@@ -213,5 +213,20 @@ bool Localization::LoadFile(const std::wstring& file)
     if (b.empty()) return {};
 
     // Process the data
-    return CrackStrings(CComBSTR(static_cast<int>(b.size()), b.data()).m_str);
+    return CrackStrings(ConvertToWideString({ b.data(), b.size() }));
+}
+
+std::wstring Localization::ConvertToWideString(const std::string_view & sv)
+{
+    if (sv.empty()) return {};
+
+    const int required = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, sv.data(),
+        static_cast<int>(sv.size()), nullptr, 0);
+    if (required <= 0) return {};
+
+    std::wstring out(required, L'\0');
+    if (MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, sv.data(),
+        static_cast<int>(sv.size()), out.data(), required) <= 0) return {};
+
+    return out;
 }
