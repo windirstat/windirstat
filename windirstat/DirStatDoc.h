@@ -160,7 +160,7 @@ protected:
     std::mutex m_extensionMutex;
     CExtensionData m_extensionData;    // Base for the extension view and cushion colors
 
-    CList<CItem*, CItem*> m_reselectChildStack; // Stack for the "Re-select Child"-Feature
+    std::vector<CItem*> m_reselectChildStack; // Stack for the "Re-select Child"-Feature
 
     std::unordered_map<std::wstring, BlockingQueue<CItem*>> m_queues; // The scanning and thread queue
     std::optional<std::jthread> m_thread; // Wrapper thread so we do not occupy the UI thread

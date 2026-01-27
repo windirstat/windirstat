@@ -746,22 +746,25 @@ std::wstring CDirStatDoc::BuildUserDefinedCleanupCommandLine(const std::wstring 
 
 void CDirStatDoc::PushReselectChild(CItem* item)
 {
-    m_reselectChildStack.AddHead(item);
+    m_reselectChildStack.push_back(item);
 }
 
 CItem* CDirStatDoc::PopReselectChild()
 {
-    return m_reselectChildStack.RemoveHead();
+    if (m_reselectChildStack.empty()) return nullptr;
+    CItem* item = m_reselectChildStack.back();
+    m_reselectChildStack.pop_back();
+    return item;
 }
 
 void CDirStatDoc::ClearReselectChildStack()
 {
-    m_reselectChildStack.RemoveAll();
+    m_reselectChildStack.clear();
 }
 
 bool CDirStatDoc::IsReselectChildAvailable() const
 {
-    return !m_reselectChildStack.IsEmpty();
+    return !m_reselectChildStack.empty();
 }
 
 bool CDirStatDoc::FileTreeHasFocus()
