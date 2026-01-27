@@ -25,23 +25,17 @@
 // Exclude unneeded MFC components
 #define _AFX_NO_DAO_SUPPORT
 #define _AFX_NO_CTL3D_SUPPORT
-
 #define _ATL_NO_HOSTING
 #define _ATL_NO_DOCHOSTUIHANDLER
 #define _ATL_NO_UUIDOF
 
 #define _ATL_CSTRING_EXPLICIT_CONSTRUCTORS  // some CStringW constructors will be explicit
-#define _ITERATOR_DEBUG_LEVEL 0 // disable debugging due to debug performance impact
 
 // enables new GDI+ version
 #define GDIPVER 0x0110
 
 #include <afxwin.h>         // MFC Core
 #include <afxext.h>         // MFC Extensions
-
-#include <afxdtctl.h>       // MFC IE 4
-#include <afxcmn.h>         // MFC Common Controls
-#include <afxmt.h>          // MFC Multi-threading
 #include <afxcontrolbars.h> // MFC support for ribbons and control bars
 
 // Windows API headers
