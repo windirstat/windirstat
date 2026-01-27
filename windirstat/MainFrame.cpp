@@ -632,11 +632,6 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
     {
         return -1;
     }
-    
-    m_wndToolBar.CreateEx(this, TBSTYLE_FLAT, WS_CHILD | WS_VISIBLE | CBRS_TOP | CBRS_TOOLTIPS | CBRS_SIZE_DYNAMIC);
-    m_wndToolBar.LoadToolBar(IDR_MAINFRAME);
-    m_wndToolBar.SetBorders(CRect());
-    m_wndToolBar.SetPaneStyle(m_wndToolBar.GetPaneStyle() & ~CBRS_GRIPPER);
 
     // Setup status pane and force initial field population
     m_wndStatusBar.Create(this);
@@ -653,59 +648,71 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
         }
     }
 
+    const std::vector<std::tuple<UINT, UINT, std::wstring_view>> toolbarButtons =
+    {
+        { ID_FILE_SELECT, IDB_FILE_SELECT, IDS_FILE_SELECT },
+        { ID_SEPARATOR, 0, {} },
+        { ID_SCAN_RESUME, IDB_SCAN_RESUME, IDS_RESUME },
+        { ID_SCAN_SUSPEND, IDB_SCAN_SUSPEND, IDS_SUSPEND },
+        { ID_SCAN_STOP, IDB_SCAN_STOP, IDS_STOP },
+        { ID_SEPARATOR, 0, {} },
+        { ID_REFRESH_ALL, IDB_REFRESH_ALL, IDS_REFRESH_ALL },
+        { ID_REFRESH_SELECTED, IDB_REFRESH_SELECTED, IDS_REFRESH_SELECTED },
+        { ID_SEPARATOR, 0, {} },
+        { ID_SEARCH, IDB_SEARCH, IDS_SEARCH_TITLE },
+        { ID_FILTER, IDB_FILTER, IDS_PAGE_FILTERING_TITLE },
+        { ID_SEPARATOR, 0, {} },
+        { ID_CLEANUP_OPEN_SELECTED, IDB_CLEANUP_OPEN_SELECTED, IDS_CLEANUP_OPEN_SELECTED },
+        { ID_CLEANUP_EXPLORER_SELECT, IDB_CLEANUP_EXPLORER_SELECT, IDS_CLEANUP_EXPLORER_SELECT },
+        { ID_EDIT_COPY_CLIPBOARD, IDB_EDIT_COPY_CLIPBOARD, IDS_EDIT_COPY_CLIPBOARD },
+        { ID_CLEANUP_OPEN_IN_CONSOLE, IDB_CLEANUP_OPEN_IN_CONSOLE, IDS_CLEANUP_OPEN_IN_CONSOLE },
+        { ID_CLEANUP_PROPERTIES, IDB_CLEANUP_PROPERTIES, IDS_CLEANUP_PROPERTIES },
+        { ID_SEPARATOR, 0, {} },
+        { ID_CLEANUP_DELETE_BIN, IDB_CLEANUP_DELETE_BIN, IDS_CLEANUP_DELETE_BIN },
+        { ID_CLEANUP_DELETE, IDB_CLEANUP_DELETE, IDS_CLEANUP_DELETE },
+        { ID_SEPARATOR, 0, {} },
+        { ID_TREEMAP_ZOOMIN, IDB_TREEMAP_ZOOMIN, IDS_TREEMAP_ZOOMIN },
+        { ID_TREEMAP_ZOOMOUT, IDB_TREEMAP_ZOOMOUT, IDS_TREEMAP_ZOOMOUT },
+        { ID_SEPARATOR, 0, {} },
+        { ID_HELP_MANUAL, IDB_HELP_MANUAL, IDS_HELP_MANUAL }
+    };
+
+    m_wndToolBar.CreateEx(this, TBSTYLE_FLAT, WS_CHILD | WS_VISIBLE | CBRS_TOP | CBRS_TOOLTIPS | CBRS_SIZE_DYNAMIC);
+    m_wndToolBar.SetBorders(CRect());
+    m_wndToolBar.SetPaneStyle(m_wndToolBar.GetPaneStyle() & ~CBRS_GRIPPER);
+    m_wndToolBar.SetHeight(m_wndToolBar.GetRowHeight());
+    DockPane(&m_wndToolBar);
+
+    // Create toolbar buttons with images
+    constexpr auto imageSize = 16;
+    const auto buttonSize = m_wndToolBar.GetButtonSize();
+    CMFCToolBar::SetSizes({ DpiRest(buttonSize.cx),DpiRest(buttonSize.cy) }, { imageSize, imageSize });
+    for (const auto& [id, bitmapId, text] : toolbarButtons)
+    {
+        if (id == ID_SEPARATOR)
+        {
+            m_wndToolBar.InsertSeparator();
+            continue;
+        }
+
+        CBitmap bitmap;
+        bitmap.Attach(LoadImage(AfxGetResourceHandle(),
+            MAKEINTRESOURCE(bitmapId), IMAGE_BITMAP, imageSize, imageSize, LR_CREATEDIBSECTION));
+        DarkMode::LightenBitmap(&bitmap);
+        const int index = CMFCToolBar::GetImages()->AddImage(bitmap, TRUE);
+
+        // Create and insert button with image
+        CMFCToolBarButton button(id, index, nullptr, TRUE, TRUE);
+        button.m_bText = FALSE;
+        button.m_nStyle = TBBS_DISABLED;
+        button.m_strText = Localization::Lookup(text).c_str();
+        m_wndToolBar.InsertButton(button);
+    }
+
     // Show or hide status bar if requested
     if (!COptions::ShowStatusBar) m_wndStatusBar.ShowWindow(SW_HIDE);
     if (!COptions::ShowToolBar) m_wndToolBar.ShowWindow(SW_HIDE);
-
     m_wndDeadFocus.Create(this);
-    DockPane(&m_wndToolBar);
-
-    // map from toolbar resources to specific icons
-    const std::unordered_map<UINT, std::pair<UINT, std::wstring_view>> toolbarMap =
-    {
-        { ID_FILE_SELECT, {IDB_FILE_SELECT, IDS_FILE_SELECT}},
-        { ID_CLEANUP_OPEN_SELECTED, {IDB_CLEANUP_OPEN_SELECTED, IDS_CLEANUP_OPEN_SELECTED}},
-        { ID_EDIT_COPY_CLIPBOARD, {IDB_EDIT_COPY_CLIPBOARD, IDS_EDIT_COPY_CLIPBOARD}},
-        { ID_CLEANUP_EXPLORER_SELECT, {IDB_CLEANUP_EXPLORER_SELECT, IDS_CLEANUP_EXPLORER_SELECT}},
-        { ID_CLEANUP_OPEN_IN_CONSOLE, {IDB_CLEANUP_OPEN_IN_CONSOLE, IDS_CLEANUP_OPEN_IN_CONSOLE}},
-        { ID_REFRESH_SELECTED, {IDB_REFRESH_SELECTED, IDS_REFRESH_SELECTED}},
-        { ID_REFRESH_ALL, {IDB_REFRESH_ALL, IDS_REFRESH_ALL}},
-        { ID_FILTER, {IDB_FILTER, IDS_PAGE_FILTERING_TITLE}},
-        { ID_SEARCH, {IDB_SEARCH, IDS_SEARCH_TITLE}},
-        { ID_SCAN_SUSPEND, {IDB_SCAN_SUSPEND, IDS_SUSPEND}},
-        { ID_SCAN_RESUME, {IDB_SCAN_RESUME, IDS_RESUME}},
-        { ID_SCAN_STOP, {IDB_SCAN_STOP, IDS_STOP}},
-        { ID_CLEANUP_DELETE_BIN, {IDB_CLEANUP_DELETE_BIN, IDS_CLEANUP_DELETE_BIN}},
-        { ID_CLEANUP_DELETE, {IDB_CLEANUP_DELETE, IDS_CLEANUP_DELETE}},
-        { ID_CLEANUP_PROPERTIES, {IDB_CLEANUP_PROPERTIES, IDS_CLEANUP_PROPERTIES}},
-        { ID_TREEMAP_ZOOMIN, {IDB_TREEMAP_ZOOMIN, IDS_TREEMAP_ZOOMIN}},
-        { ID_TREEMAP_ZOOMOUT, {IDB_TREEMAP_ZOOMOUT, IDS_TREEMAP_ZOOMOUT}},
-        { ID_HELP_MANUAL, {IDB_HELP_MANUAL, IDS_HELP_MANUAL}} };
-
-    // update toolbar images with high resolution versions
-    m_images.SetImageSize({ 16,16 }, TRUE);
-    for (const int i : std::views::iota(0, m_wndToolBar.GetCount()))
-    {
-        // lookup the button in the editor toolbox
-        const auto button = m_wndToolBar.GetButton(i);
-        if (button->m_nID == 0) continue;
-        ASSERT(toolbarMap.contains(button->m_nID));
-
-        // load high quality bitmap from resource
-        CBitmap bitmap;
-        bitmap.Attach(static_cast<HBITMAP>(LoadImage(AfxGetResourceHandle(),
-            MAKEINTRESOURCE(toolbarMap.at(button->m_nID).first),
-            IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION)));
-        DarkMode::LightenBitmap(&bitmap);
-        const int image = m_images.AddImage(bitmap, TRUE);
-        CMFCToolBar::SetUserImages(&m_images);
-
-        // copy button into new toolbar control
-        CMFCToolBarButton newButton(button->m_nID, image, nullptr, TRUE, TRUE);
-        newButton.m_nStyle = button->m_nStyle | TBBS_DISABLED;
-        newButton.m_strText = Localization::Lookup(toolbarMap.at(button->m_nID).second).c_str();
-        m_wndToolBar.ReplaceButton(button->m_nID, newButton);
-    }
 
     // setup look and feel with dark mode support
     CMFCVisualManager::SetDefaultManager(DarkMode::IsDarkModeActive() ?

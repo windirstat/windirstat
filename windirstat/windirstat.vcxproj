@@ -671,7 +671,6 @@
   <ItemGroup>
     <None Include="res\license.bin" />
     <None Include="res\license.txt" />
-    <None Include="res\IDR_MAINFRAME.bmp" />
     <None Include="res\windirstat.manifest" />
     <None Include="res\windirstat.rc2" />
   </ItemGroup>

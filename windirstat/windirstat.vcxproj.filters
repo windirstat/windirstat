@@ -45,9 +45,6 @@
     <None Include="res\license.txt">
       <Filter>Resource Files\Resources</Filter>
     </None>
-    <None Include="res\IDR_MAINFRAME.bmp">
-      <Filter>Resource Files\Resources</Filter>
-    </None>
     <None Include="res\windirstat.manifest">
       <Filter>Resource Files\Resources</Filter>
     </None>
