@@ -320,7 +320,6 @@ BOOL CDirStatApp::InitInstance()
     DarkMode::SetAppDarkMode();
 
     CWinAppEx::InitInstance();
-    InitShellManager();
 
     // Initialize visual controls
     constexpr INITCOMMONCONTROLSEX ctrls = { sizeof(INITCOMMONCONTROLSEX) , ICC_STANDARD_CLASSES };
