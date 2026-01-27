@@ -54,6 +54,7 @@
     <None Include="res\license.bin">
       <Filter>Resource Files\Resources</Filter>
     </None>
+    <None Include="res\lang_combined.bin" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DirStatDoc.h">

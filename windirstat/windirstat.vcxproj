@@ -669,6 +669,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <None Include="res\lang_combined.bin" />
     <None Include="res\license.bin" />
     <None Include="res\license.txt" />
     <None Include="res\windirstat.manifest" />
