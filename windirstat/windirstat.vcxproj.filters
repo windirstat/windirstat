@@ -40,21 +40,32 @@
     <Filter Include="Source Files\Pages">
       <UniqueIdentifier>{48734b53-64ee-4a01-9ed9-2a08de961821}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resource Files\Toolbar">
+      <UniqueIdentifier>{d78ee95b-5d90-4405-8f08-aad4cf4819c1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\Icon">
+      <UniqueIdentifier>{7e4f4843-62b8-45f8-af9b-7be2708530d3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\License">
+      <UniqueIdentifier>{669943eb-0d29-4c39-bf02-fdd365d0b07e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="res\license.txt">
-      <Filter>Resource Files\Resources</Filter>
-    </None>
     <None Include="res\windirstat.manifest">
       <Filter>Resource Files\Resources</Filter>
     </None>
     <None Include="res\windirstat.rc2">
       <Filter>Resource Files\Resources</Filter>
     </None>
-    <None Include="res\license.bin">
-      <Filter>Resource Files\Resources</Filter>
+    <None Include="res\license.txt">
+      <Filter>Resource Files\License</Filter>
     </None>
-    <None Include="res\lang_combined.bin" />
+    <None Include="res\license.bin">
+      <Filter>Resource Files\License</Filter>
+    </None>
+    <None Include="res\lang_combined.bin">
+      <Filter>Resource Files\Languages</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DirStatDoc.h">
@@ -98,9 +109,6 @@
     </ClInclude>
     <ClInclude Include="CsvLoader.h">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="resource.h">
-      <Filter>Resource Files</Filter>
     </ClInclude>
     <ClInclude Include="ItemDupe.h">
       <Filter>Header Files</Filter>
@@ -236,6 +244,9 @@
     </ClInclude>
     <ClInclude Include="HelpersTasks.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Resource Files\Resources</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -391,70 +402,70 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="windirstat.rc">
-      <Filter>Resource Files</Filter>
-    </ResourceCompile>
     <ResourceCompile Include="version.rc">
-      <Filter>Resource Files</Filter>
+      <Filter>Resource Files\Resources</Filter>
+    </ResourceCompile>
+    <ResourceCompile Include="windirstat.rc">
+      <Filter>Resource Files\Resources</Filter>
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\toolbar\IDB_CLEANUP_DELETE.bmp">
-      <Filter>Resource Files\Resources</Filter>
+      <Filter>Resource Files\Toolbar</Filter>
     </Image>
     <Image Include="res\toolbar\IDB_CLEANUP_DELETE_BIN.bmp">
-      <Filter>Resource Files\Resources</Filter>
-    </Image>
-    <Image Include="res\toolbar\IDB_CLEANUP_PROPERTIES.bmp">
-      <Filter>Resource Files\Resources</Filter>
-    </Image>
-    <Image Include="res\toolbar\IDB_EDIT_COPY_CLIPBOARD.bmp">
-      <Filter>Resource Files\Resources</Filter>
-    </Image>
-    <Image Include="res\toolbar\IDB_FILE_SELECT.bmp">
-      <Filter>Resource Files\Resources</Filter>
-    </Image>
-    <Image Include="res\toolbar\IDB_REFRESH_ALL.bmp">
-      <Filter>Resource Files\Resources</Filter>
-    </Image>
-    <Image Include="res\toolbar\IDB_SCAN_SUSPEND.bmp">
-      <Filter>Resource Files\Resources</Filter>
-    </Image>
-    <Image Include="res\toolbar\IDB_TREEMAP_ZOOMIN.bmp">
-      <Filter>Resource Files\Resources</Filter>
-    </Image>
-    <Image Include="res\toolbar\IDB_TREEMAP_ZOOMOUT.bmp">
-      <Filter>Resource Files\Resources</Filter>
+      <Filter>Resource Files\Toolbar</Filter>
     </Image>
     <Image Include="res\toolbar\IDB_CLEANUP_EXPLORER_SELECT.bmp">
-      <Filter>Resource Files\Resources</Filter>
+      <Filter>Resource Files\Toolbar</Filter>
     </Image>
     <Image Include="res\toolbar\IDB_CLEANUP_OPEN_IN_CONSOLE.bmp">
-      <Filter>Resource Files\Resources</Filter>
+      <Filter>Resource Files\Toolbar</Filter>
     </Image>
     <Image Include="res\toolbar\IDB_CLEANUP_OPEN_SELECTED.bmp">
-      <Filter>Resource Files\Resources</Filter>
+      <Filter>Resource Files\Toolbar</Filter>
     </Image>
-    <Image Include="res\toolbar\IDB_HELP_MANUAL.bmp">
-      <Filter>Resource Files\Resources</Filter>
+    <Image Include="res\toolbar\IDB_CLEANUP_PROPERTIES.bmp">
+      <Filter>Resource Files\Toolbar</Filter>
     </Image>
-    <Image Include="res\toolbar\IDB_REFRESH_SELECTED.bmp">
-      <Filter>Resource Files\Resources</Filter>
+    <Image Include="res\toolbar\IDB_EDIT_COPY_CLIPBOARD.bmp">
+      <Filter>Resource Files\Toolbar</Filter>
     </Image>
-    <Image Include="res\toolbar\IDB_SCAN_RESUME.bmp">
-      <Filter>Resource Files\Resources</Filter>
-    </Image>
-    <Image Include="res\toolbar\IDB_SCAN_STOP.bmp">
-      <Filter>Resource Files\Resources</Filter>
-    </Image>
-    <Image Include="res\WinDirStat.ico">
-      <Filter>Resource Files</Filter>
+    <Image Include="res\toolbar\IDB_FILE_SELECT.bmp">
+      <Filter>Resource Files\Toolbar</Filter>
     </Image>
     <Image Include="res\toolbar\IDB_FILTER.bmp">
-      <Filter>Resource Files\Resources</Filter>
+      <Filter>Resource Files\Toolbar</Filter>
+    </Image>
+    <Image Include="res\toolbar\IDB_HELP_MANUAL.bmp">
+      <Filter>Resource Files\Toolbar</Filter>
+    </Image>
+    <Image Include="res\toolbar\IDB_REFRESH_ALL.bmp">
+      <Filter>Resource Files\Toolbar</Filter>
+    </Image>
+    <Image Include="res\toolbar\IDB_REFRESH_SELECTED.bmp">
+      <Filter>Resource Files\Toolbar</Filter>
+    </Image>
+    <Image Include="res\toolbar\IDB_SCAN_RESUME.bmp">
+      <Filter>Resource Files\Toolbar</Filter>
+    </Image>
+    <Image Include="res\toolbar\IDB_SCAN_STOP.bmp">
+      <Filter>Resource Files\Toolbar</Filter>
+    </Image>
+    <Image Include="res\toolbar\IDB_SCAN_SUSPEND.bmp">
+      <Filter>Resource Files\Toolbar</Filter>
     </Image>
     <Image Include="res\toolbar\IDB_SEARCH.bmp">
-      <Filter>Resource Files\Resources</Filter>
+      <Filter>Resource Files\Toolbar</Filter>
+    </Image>
+    <Image Include="res\toolbar\IDB_TREEMAP_ZOOMIN.bmp">
+      <Filter>Resource Files\Toolbar</Filter>
+    </Image>
+    <Image Include="res\toolbar\IDB_TREEMAP_ZOOMOUT.bmp">
+      <Filter>Resource Files\Toolbar</Filter>
+    </Image>
+    <Image Include="res\WinDirStat.ico">
+      <Filter>Resource Files\Icon</Filter>
     </Image>
   </ItemGroup>
   <ItemGroup>
