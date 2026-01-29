@@ -35,13 +35,13 @@ int CFileTabbedView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
     if (CTabView::OnCreate(lpCreateStruct) == -1)
         return -1;
 
-    m_fileTreeViewIndex = AddView(RUNTIME_CLASS(CFileTreeView), Localization::Lookup(IDS_ALL_FILES).c_str(), CHAR_MAX);
+    m_fileTreeViewIndex = AddView(RUNTIME_CLASS(CFileTreeView), IDS_ALL_FILES.data(), CHAR_MAX);
     m_fileTreeView = DYNAMIC_DOWNCAST(CFileTreeView, GetTabControl().GetTabWnd(m_fileTreeViewIndex));
-    m_fileTopViewIndex = AddView(RUNTIME_CLASS(CFileTopView), Localization::Lookup(IDS_LARGEST_FILES).c_str(), CHAR_MAX);
+    m_fileTopViewIndex = AddView(RUNTIME_CLASS(CFileTopView), IDS_LARGEST_FILES.data(), CHAR_MAX);
     m_fileTopView = DYNAMIC_DOWNCAST(CFileTopView, GetTabControl().GetTabWnd(m_fileTopViewIndex));
-    m_fileDupeViewIndex = AddView(RUNTIME_CLASS(CFileDupeView), Localization::Lookup(IDS_DUPLICATE_FILES).c_str(), CHAR_MAX);
+    m_fileDupeViewIndex = AddView(RUNTIME_CLASS(CFileDupeView), IDS_DUPLICATE_FILES.data(), CHAR_MAX);
     m_fileDupeView = DYNAMIC_DOWNCAST(CFileDupeView, GetTabControl().GetTabWnd(m_fileDupeViewIndex));
-    m_fileSearchViewIndex = AddView(RUNTIME_CLASS(CFileSearchView), Localization::Lookup(IDS_SEARCH_RESULTS).c_str(), CHAR_MAX);
+    m_fileSearchViewIndex = AddView(RUNTIME_CLASS(CFileSearchView), IDS_SEARCH_RESULTS.data(), CHAR_MAX);
     m_fileSearchView = DYNAMIC_DOWNCAST(CFileSearchView, GetTabControl().GetTabWnd(m_fileSearchViewIndex));
 
     return 0;
@@ -52,6 +52,7 @@ void CFileTabbedView::OnInitialUpdate()
     CTabView::OnInitialUpdate();
 
     CTabCtrlHelper::SetupTabControl(GetTabControl());
+    Localization::UpdateTabControl(GetTabControl());
 
     SetSearchTabVisibility(false);
     SetDupeTabVisibility(COptions::ScanForDuplicates &&

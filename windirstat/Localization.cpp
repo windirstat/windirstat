@@ -158,7 +158,7 @@ void Localization::UpdateTabControl(CMFCTabCtrl& tab)
         std::wstring tabLabelStr = tabLabel.GetString();
         if (tabLabelStr.starts_with(L"ID") && Contains(tabLabelStr))
         {
-            tab.SetTabLabel(i, m_map[tabLabelStr].c_str());
+            tab.SetTabLabel(i, (L" " + m_map[tabLabelStr] + L" ").c_str());
         }
     }
 }

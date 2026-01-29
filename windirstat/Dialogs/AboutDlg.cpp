@@ -19,8 +19,6 @@
 #include "version.h"
 #include "AboutDlg.h"
 
-#pragma comment(lib,"version.lib")
-
 namespace
 {
     // Tabs
@@ -52,9 +50,10 @@ void CAboutDlg::WdsTabControl::Initialize()
     };
 
     // Create all three pages and add them as tabs
-    AddTab(createText(m_textAbout), Localization::Lookup(IDS_ABOUT_ABOUT).c_str(), TAB_ABOUT);
-    AddTab(createText(m_textThanks), Localization::Lookup(IDS_ABOUT_THANKS).c_str(), TAB_THANKSTO);
-    AddTab(createText(m_textLicense, ES_LEFT), Localization::Lookup(IDS_ABOUT_LICENSE).c_str(), TAB_LICENSE);
+    AddTab(createText(m_textAbout), IDS_ABOUT_ABOUT.data(), TAB_ABOUT);
+    AddTab(createText(m_textThanks), IDS_ABOUT_THANKS.data(), TAB_THANKSTO);
+    AddTab(createText(m_textLicense, ES_LEFT), IDS_ABOUT_LICENSE.data(), TAB_LICENSE);
+    Localization::UpdateTabControl(*this);
 
     // Use monospace font for license page
     m_monoFont.CreateFont(DpiRest(12), 0, 0, 0, 0, 0, 0, 0, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
@@ -188,29 +187,10 @@ CAboutDlg::CAboutDlg()
 
 std::wstring CAboutDlg::GetAppVersion()
 {
-    const std::wstring file = GetAppFileName();
-    const DWORD iVersionSize = GetFileVersionInfoSize(file.c_str(), nullptr);
-    if (iVersionSize == 0)
-    {
-        return wds::strWinDirStat;
-    }
-
-    auto tVersionInfo = std::vector<BYTE>(iVersionSize);
-    VS_FIXEDFILEINFO* pVersion = nullptr;
-    UINT iQueriedSize = 0;
-
-    if (GetFileVersionInfo(file.c_str(), 0, iVersionSize, tVersionInfo.data()) != 0 &&
-        VerQueryValue(tVersionInfo.data(), L"\\", reinterpret_cast<LPVOID*>(&pVersion), &iQueriedSize) != 0)
-    {
-        return std::format(L"{} {}{}.{}.{} ({})\nGit Commit: {}",
-            wds::strWinDirStat, PRODUCTION == 0 ? L"Beta " : L"",
-            HIWORD(pVersion->dwFileVersionMS),
-            LOWORD(pVersion->dwFileVersionMS),
-            HIWORD(pVersion->dwFileVersionLS),
-            _CRT_WIDE(GIT_DATE), _CRT_WIDE(GIT_COMMIT));
-    }
-
-    return wds::strWinDirStat;
+    return std::format(L"{} {}{}.{}.{} ({})\nGit Commit: {}",
+        wds::strWinDirStat, PRODUCTION == 0 ? L"Beta " : L"",
+        PRD_MAJVER, PRD_MINVER, PRD_PATCH,
+        _CRT_WIDE(GIT_DATE), _CRT_WIDE(GIT_COMMIT));
 }
 
 void CAboutDlg::DoDataExchange(CDataExchange* pDX)
