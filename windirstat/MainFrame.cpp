@@ -378,6 +378,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
     ON_WM_INITMENUPOPUP()
     ON_WM_SIZE()
     ON_WM_SYSCOLORCHANGE()
+    ON_WM_POWERBROADCAST()
     ON_WM_TIMER()
     ON_WM_NCPAINT()
     ON_WM_NCACTIVATE()
@@ -1304,7 +1305,6 @@ void CMainFrame::OnConfigure()
 
 void CMainFrame::OnSysColorChange()
 {
-    CFrameWndEx::OnSysColorChange();
     GetFileTreeView()->SysColorChanged();
     GetExtensionView()->SysColorChanged();
     DrawTextCache::Get()->ClearCache();
@@ -1312,6 +1312,12 @@ void CMainFrame::OnSysColorChange()
     // Redraw menus for dark mode
     DarkMode::SetAppDarkMode();
     RedrawWindow();
+}
+
+UINT CMainFrame::OnPowerBroadcast(UINT, LPARAM)
+{
+    OnSysColorChange();
+    return TRUE;
 }
 
 LRESULT CMainFrame::OnUahDrawMenu(WPARAM wParam, LPARAM lParam)

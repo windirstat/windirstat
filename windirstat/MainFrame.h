@@ -244,6 +244,7 @@ protected:
     afx_msg void OnConfigure();
     afx_msg void OnDestroy();
     afx_msg LRESULT OnTaskButtonCreated(WPARAM, LPARAM);
+    afx_msg UINT OnPowerBroadcast(UINT, LPARAM);
     afx_msg void OnSysColorChange();
     afx_msg LRESULT OnUahDrawMenu(WPARAM wParam, LPARAM lParam);
     afx_msg void OnNcPaint();
