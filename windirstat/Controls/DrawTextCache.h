@@ -29,10 +29,13 @@ public:
     static DrawTextCache* Get() { return &s_instance; }
 
     // Main drawing function - replacement for DrawText
-    void DrawTextCached(CDC* pDC, const std::wstring& text, CRect& rect, bool leftAligned = true, bool calcRect = false);
+    void DrawTextCached(CDC* pDC, const std::wstring& text, CRect& rect, bool leftAlign = true, bool calcRect = false);
 
     // Clears all cached entries
     void ClearCache();
+
+    // Constructor
+    DrawTextCache() { m_cache.reserve(MAX_CACHE_SIZE); }
 
 private:
 
@@ -53,7 +56,7 @@ private:
     // Hash function for CacheKey
     struct CacheKeyHash
     {
-        size_t operator()(const CacheKey& key) const
+        size_t operator()(const CacheKey& key) const noexcept
         {
             size_t hash = std::hash<std::wstring>{}(key.text);
             hash ^= std::hash<COLORREF>{}(key.textColor) << 1;
@@ -85,17 +88,17 @@ private:
 
     // Create cache key from current DC state
     [[nodiscard]] CacheKey CreateCacheKey(const CDC* pDC, const std::wstring& text,
-        const CRect& rect, UINT format) const;
+        const CRect& rect, UINT format) const noexcept;
 
     // Create cached bitmap for the text
     std::unique_ptr<CacheEntry> CreateCachedBitmap(CDC* pDC, const std::wstring& text,
-        const CRect& rect, UINT format);
+        const CRect& rect, UINT format) noexcept;
 
     // Move key to front of LRU list
-    void TouchEntry(CacheMap::iterator it);
+    void TouchEntry(const CacheMap::iterator& it);
 
     // Paint cached entry to DC
-    void PaintCachedEntry(CDC* pDC, const CRect& rect, CacheEntry& entry);
+    void PaintCachedEntry(CDC* pDC, const CRect& rect, CacheEntry& entry) noexcept;
 
     // Singleton constructor
     static DrawTextCache s_instance;

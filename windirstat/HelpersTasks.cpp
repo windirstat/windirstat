@@ -477,7 +477,7 @@ std::wstring ComputeFileHashes(const std::wstring& filePath)
         BCRYPT_ALG_HANDLE hAlg = nullptr;
         if (BCryptOpenAlgorithmProvider(&hAlg, id, nullptr, 0) != 0) continue;
         ctx.hAlg = SmartPointer<BCRYPT_ALG_HANDLE>(
-            [](const BCRYPT_ALG_HANDLE h) { BCryptCloseAlgorithmProvider(h, 0); }, hAlg);
+            [](const BCRYPT_ALG_HANDLE h) { (void) BCryptCloseAlgorithmProvider(h, 0); }, hAlg);
 
         if (DWORD bytesWritten = 0; BCryptGetProperty(ctx.hAlg, BCRYPT_OBJECT_LENGTH,
             reinterpret_cast<PBYTE>(&ctx.objectLen), sizeof(DWORD), &bytesWritten, 0) != ERROR_SUCCESS)
@@ -499,7 +499,7 @@ std::wstring ComputeFileHashes(const std::wstring& filePath)
     }
 
     // Read file and update all hashes
-    constexpr size_t BUFFER_SIZE = 1024 * 1024; // 1MB chunks
+    constexpr size_t BUFFER_SIZE = 1024ull * 1024ull; // 1MB chunks
     std::vector<BYTE> buffer(BUFFER_SIZE);
     DWORD bytesRead;
 

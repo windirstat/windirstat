@@ -102,8 +102,9 @@ BOOL CDirStatDoc::OnOpenDocument(LPCWSTR lpszPathName)
     Get()->SetPathName(spec.c_str(), FALSE);
 
     // Count number of drives for validation
-    const auto driveCount = static_cast<size_t>(std::ranges::count_if(selections, [](const std::wstring& str) {
-        return std::regex_match(str, std::wregex(LR"(^[A-Za-z]:[\\]?$)"));
+    const std::wregex driveMatch(LR"(^[A-Za-z]:[\\]?$)", std::regex_constants::optimize);
+    const auto driveCount = static_cast<size_t>(std::ranges::count_if(selections, [&](const std::wstring& str) {
+        return std::regex_match(str, driveMatch);
     }));
 
     // Return if no paths were passed
@@ -328,7 +329,7 @@ void CDirStatDoc::OpenItem(const CItem* item, const std::wstring & verb)
     SmartPointer<LPITEMIDLIST> pidl(CoTaskMemFree, nullptr);
     if (item->IsTypeOrFlag(IT_MYCOMPUTER))
     {
-        (void) SHGetSpecialFolderLocation(nullptr, CSIDL_DRIVES, &pidl);
+        SHGetKnownFolderIDList(FOLDERID_ComputerFolder, 0, nullptr, &pidl);
     }
     else
     {
@@ -353,12 +354,12 @@ void CDirStatDoc::OpenItem(const CItem* item, const std::wstring & verb)
     ShellExecuteEx(&sei);
 }
 
-void CDirStatDoc::RecurseRefreshReparsePoints(CItem* item) const
+void CDirStatDoc::RecurseRefreshReparsePoints(CItem* items) const
 {
     std::vector<CItem*> toRefresh;
 
-    if (item == nullptr) return;
-    std::stack<CItem*> reparseStack({item});
+    if (items == nullptr) return;
+    std::stack<CItem*> reparseStack({items});
     while (!reparseStack.empty())
     {
         const auto qitem = reparseStack.top();
@@ -1084,8 +1085,7 @@ void CDirStatDoc::OnEditCopy()
 {
     // create concatenated paths
     std::wstring paths;
-    const auto & items = GetAllSelected();
-    for (const auto & item : items)
+    for (const auto & item : GetAllSelected())
     {
         if (!paths.empty()) paths += L"\r\n";
         paths += item->GetPath();
@@ -1261,7 +1261,8 @@ void CDirStatDoc::OnExplorerSelect()
         }
 
         // attempt to open the items in the shell
-        SHOpenFolderAndSelectItems(parent, static_cast<UINT>(pidl.size()), const_cast<LPCITEMIDLIST*>(pidl.data()), 0);
+        (void) SHOpenFolderAndSelectItems(parent, static_cast<UINT>(pidl.size()),
+            const_cast<LPCITEMIDLIST*>(pidl.data()), 0);
     }
 }
 

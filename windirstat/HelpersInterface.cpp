@@ -545,7 +545,7 @@ std::vector<BYTE> GetCompressedResource(const HRSRC resource) noexcept
     g_ctx = &ctx;
 
     // Use the cabinet function to decompress the resource
-    ERF erf;
+    ERF erf{};
     SmartPointer<HFDI> hfdi(FDIDestroy, FDICreate(
         +[](ULONG cb) -> void* { return malloc(cb); },
         +[](void* pv) { free(pv); },

@@ -69,7 +69,7 @@ void DrawTextCache::DrawTextCached(CDC* pDC, const std::wstring& text, CRect& re
 }
 
 DrawTextCache::CacheKey DrawTextCache::CreateCacheKey(const CDC* pDC,
-    const std::wstring& text, const CRect& rect, const UINT format) const
+    const std::wstring& text, const CRect& rect, const UINT format) const noexcept
 {
     return CacheKey{
         .text = text, .textColor = pDC->GetTextColor(),
@@ -79,7 +79,7 @@ DrawTextCache::CacheKey DrawTextCache::CreateCacheKey(const CDC* pDC,
 }
 
 std::unique_ptr<DrawTextCache::CacheEntry> DrawTextCache::CreateCachedBitmap(
-    CDC* pDC, const std::wstring& text, const CRect& rect, UINT format)
+    CDC* pDC, const std::wstring& text, const CRect& rect, const UINT format) noexcept
 {
     // Create temporary DC to calculate text bounds
     CDC memDC;
@@ -137,14 +137,14 @@ void DrawTextCache::ClearCache()
     m_leastRecentList.clear();
 }
 
-void DrawTextCache::TouchEntry(CacheMap::iterator it)
+void DrawTextCache::TouchEntry(const CacheMap::iterator& it)
 {
     // Move to front of LRU list
     m_leastRecentList.splice(m_leastRecentList.begin(),
         m_leastRecentList, it->second.second);
 }
 
-void DrawTextCache::PaintCachedEntry(CDC* pDC, const CRect& rect, CacheEntry& entry)
+void DrawTextCache::PaintCachedEntry(CDC* pDC, const CRect& rect, CacheEntry& entry) noexcept
 {
     // Create memory DC
     CDC memDC;
