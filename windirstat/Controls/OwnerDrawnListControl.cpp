@@ -205,6 +205,9 @@ COwnerDrawnListControl::COwnerDrawnListControl(std::vector<int>* columnOrder, st
 // This method MUST be called before the Control is shown.
 void COwnerDrawnListControl::OnColumnsInserted()
 {
+    // Cache the column count
+    m_columnCount = GetHeaderCtrl()->GetItemCount();
+
     // The pacman shall not draw over our header control.
     ModifyStyle(0, WS_CLIPCHILDREN);
     LoadPersistentAttributes();
@@ -423,7 +426,7 @@ void COwnerDrawnListControl::DrawItem(LPDRAWITEMSTRUCT pdis)
     CSelectObject sofont(&dcMem, GetFont());
 
     int focusLeft = 0;
-    for (const int i : std::views::iota(0, GetHeaderCtrl()->GetItemCount()))
+    for (const int i : std::views::iota(0, m_columnCount))
     {
         // The subitem tracks the identifier that maps the column enum
         LVCOLUMN colInfo{ .mask = LVCF_SUBITEM | LVCF_FMT };
@@ -552,7 +555,7 @@ int COwnerDrawnListControl::GetSubItemWidth(COwnerDrawnListItem* item, const int
 void COwnerDrawnListControl::LoadPersistentAttributes()
 {
     // Fetch casted column count to avoid signed comparison warnings
-    const auto columnCount = static_cast<size_t>(GetHeaderCtrl()->GetItemCount());
+    const auto columnCount = static_cast<size_t>(m_columnCount);
 
     // Load default column order values from resource
     if (m_columnOrder->size() != columnCount)
@@ -786,7 +789,7 @@ void COwnerDrawnListControl::OnHdnDividerdblclick(NMHDR* pNMHDR, LRESULT* pResul
     // temporarily insert a false column to the finalize column does
     // not autosize to fit the whole control width
     SetRedraw(FALSE);
-    const int falseColumn = InsertColumn(GetHeaderCtrl()->GetItemCount() + 1, L"");
+    const int falseColumn = InsertColumn(m_columnCount + 1, L"");
     SetColumnWidth(column, LVSCW_AUTOSIZE_USEHEADER);
     int width = GetColumnWidth(column);
     DeleteColumn(falseColumn);

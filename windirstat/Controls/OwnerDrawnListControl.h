@@ -140,6 +140,7 @@ protected:
     COLORREF m_windowColor = CLR_NONE; // The default background color if !m_showStripes
     COLORREF m_stripeColor = CLR_NONE; // The stripe color, used for every other item if m_showStripes
     int m_rowHeight = 20;              // Height of an item
+    int m_columnCount = 0;
     bool m_showGrid = false;           // Whether to draw a grid
     bool m_showStripes = false;        // Whether to show stripes
     bool m_showFullRowSelect = false;  // Whether to draw full row selection
