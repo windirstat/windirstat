@@ -1762,9 +1762,11 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
 
         // Skip pruning if it is a new element
         if (!item->IsDone()) continue;
+
+        // Remove item from tree
         item->ExtensionDataProcessChildren(true);
-        item->UpwardRecalcLastChange(true);
-        item->UpwardSubtractSizePhysical(item->GetSizePhysical());
+        item->UpwardRecalcLastChange();
+        item->UpwardSubtractSizePhysical(item->GetSizePhysicalRaw());
         item->UpwardSubtractSizeLogical(item->GetSizeLogical());
         item->UpwardSubtractFiles(item->GetFilesCount());
         item->UpwardSubtractFolders(item->GetFoldersCount());
@@ -1948,7 +1950,7 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
         });
 
         // Force heap cleanup after scan
-        _heapmin();
+        (void) _heapmin();
     });
 }
 

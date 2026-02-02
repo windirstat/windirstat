@@ -36,13 +36,13 @@ struct alignas(std::hardware_destructive_interference_size) SExtensionRecord
     COLORREF color = 0;
 
     // Use relaxed memory ordering for simple accumulation operations
-    void AddFile(ULONGLONG size) noexcept
+    void AddFile(const ULONGLONG size) noexcept
     {
         files.fetch_add(1, std::memory_order_relaxed);
         bytes.fetch_add(size, std::memory_order_relaxed);
     }
 
-    void RemoveFile(ULONGLONG size) noexcept
+    void RemoveFile(const ULONGLONG size) noexcept
     {
         files.fetch_sub(1, std::memory_order_relaxed);
         bytes.fetch_sub(size, std::memory_order_relaxed);

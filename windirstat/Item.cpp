@@ -475,7 +475,7 @@ void CItem::UpdateStatsFromDisk()
             if (IsTypeOrFlag(IT_FILE))
             {
                 ExtensionDataRemove();
-                UpwardSubtractSizePhysical(GetSizePhysical());
+                UpwardSubtractSizePhysical(GetSizePhysicalRaw());
                 UpwardSubtractSizeLogical(GetSizeLogical());
                 UpwardAddSizePhysical(finder.GetFileSizePhysical());
                 UpwardAddSizeLogical(finder.GetFileSizeLogical());
@@ -593,7 +593,6 @@ void CItem::RemoveChild(CItem* child)
                             indexSet->UpwardSubtractSizePhysical(indexFolder->GetSizePhysical());
                             indexSet->RemoveChild(indexFolder);
                             
-
                             // Restore size to the remaining item's hierarchy
                             remainingItem->GetParent()->UpwardAddSizePhysical(remainingItem->GetSizePhysicalRaw());
                             break;
@@ -703,6 +702,7 @@ void CItem::UpwardAddSizePhysical(const ULONGLONG bytes) noexcept
     for (auto p = this; p != nullptr; p = p->GetParent())
     {
         p->m_sizePhysical += bytes;
+        if (p->IsTypeOrFlag(ITF_HARDLINK)) break;
     }
 }
 
@@ -714,6 +714,7 @@ void CItem::UpwardSubtractSizePhysical(const ULONGLONG bytes) noexcept
     {
         ASSERT(bytes <= p->m_sizePhysical);
         p->m_sizePhysical -= bytes;
+        if (p->IsTypeOrFlag(ITF_HARDLINK)) break;
     }
 }
 
@@ -736,24 +737,26 @@ void CItem::UpwardSubtractSizeLogical(const ULONGLONG bytes) noexcept
     }
 }
 
-void CItem::ExtensionDataAdd() const
+void CItem::ExtensionDataAdd()
 {
-    if (!IsTypeOrFlag(IT_FILE)) return;
+    if (!IsTypeOrFlag(IT_FILE) || IsTypeOrFlag(ITF_EXTDATA)) return;
     const auto record = CDirStatDoc::Get()->GetExtensionDataRecord(GetExtension());
-    record->AddFile(GetSizePhysical());
+    record->AddFile(GetSizeLogical());
+    SetFlag(ITF_EXTDATA);
 }
 
-void CItem::ExtensionDataRemove() const
+void CItem::ExtensionDataRemove()
 {
-    if (!IsTypeOrFlag(IT_FILE)) return;
+    if (!IsTypeOrFlag(IT_FILE) || !IsTypeOrFlag(ITF_EXTDATA)) return;
     const auto record = CDirStatDoc::Get()->GetExtensionDataRecord(GetExtension());
-    record->RemoveFile(GetSizePhysical());
+    record->RemoveFile(GetSizeLogical());
     if (record->GetFiles() == 0) CDirStatDoc::Get()->GetExtensionData()->erase(GetExtension());
+    SetFlag(ITF_EXTDATA, true);
 }
 
-void CItem::ExtensionDataProcessChildren(const bool remove) const
+void CItem::ExtensionDataProcessChildren(const bool remove)
 {
-    std::stack<const CItem*> childStack({ this });
+    std::stack<CItem*> childStack({ this });
     while (!childStack.empty()) [[msvc::forceinline_calls]]
     {
         const auto& item = childStack.top();
@@ -806,16 +809,14 @@ void CItem::UpwardUpdateLastChange(const FILETIME& t) noexcept
     }
 }
 
-void CItem::UpwardRecalcLastChange(const bool withoutItem)
+void CItem::UpwardRecalcLastChange()
 {
     for (auto p = this; p != nullptr; p = p->GetParent())
     {
-        p->UpdateStatsFromDisk();
-
         if (IsLeaf()) continue;
         for (const auto& child : p->GetChildren())
         {
-            if (withoutItem && child == this) continue;
+            if (child == this) continue;
             if (FileTimeIsGreater(child->m_lastChange, p->m_lastChange))
                 p->m_lastChange = child->m_lastChange;
         }

@@ -76,9 +76,10 @@ using ITEMTYPE = enum ITEMTYPE : std::uint32_t
     ITF_NONE       = 0,       // No flags
     ITF_RESERVED   = 1 << 24, // Indicates special reserved file
     ITF_BASIC      = 1 << 25, // Forces basic finder
-    ITF_HARDLINK   = 1 << 26, // Indicates file is a hardlink
-    ITF_ROOTITEM   = 1 << 27, // Indicates root item
-    ITF_DONE       = 1 << 28, // Indicates done processing
+    ITF_EXTDATA    = 1 << 26, // Notes extension data has been processed
+    ITF_HARDLINK   = 1 << 27, // Indicates file is a hardlink
+    ITF_ROOTITEM   = 1 << 28, // Indicates root item
+    ITF_DONE       = 1 << 29, // Indicates done processing
     ITF_MASK       = 0xFF000000,
 
     ITF_ANY        = 0xFFFFFFFF, // Indicates any item type or flag
@@ -181,10 +182,10 @@ public:
     void UpwardAddReadJobs(ULONG count) noexcept;
     void UpwardSubtractReadJobs(ULONG count) noexcept;
     void UpwardUpdateLastChange(const FILETIME& t) noexcept;
-    void UpwardRecalcLastChange(bool withoutItem = false);
-    void ExtensionDataAdd() const;
-    void ExtensionDataRemove() const;
-    void ExtensionDataProcessChildren(bool remove = false) const;
+    void UpwardRecalcLastChange();
+    void ExtensionDataAdd();
+    void ExtensionDataRemove();
+    void ExtensionDataProcessChildren(bool remove = false);
     ULONGLONG GetSizePhysical() const noexcept;
     ULONGLONG GetSizeLogical() const noexcept;
     ULONGLONG GetSizePhysicalRaw() const noexcept;
