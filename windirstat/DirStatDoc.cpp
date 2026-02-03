@@ -462,7 +462,7 @@ void CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, const bo
     }
 
     // Build list of items to delete
-    std::vector<CItem*> itemsToDelete{ items };
+    std::vector itemsToDelete{ items };
     if (emptyOnly)
     {
         auto childrenView = items | std::views::transform(&CItem::GetChildren) | std::views::join;
@@ -479,30 +479,23 @@ void CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, const bo
     bool cancelled = false;
     if (!toTrashBin) CProgressDlg(totalItems, false, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
     {
-        // Try native deletion first for non-trash bin operations
-        std::vector<const CItem*> itemsInPostOrder;
-        std::stack<std::pair<const CItem*, bool>> stack;
-        for (const auto& item : itemsToDelete)
-        {
-            stack.emplace(item, false);
-        }
-
-        // Collect items in depth-first for native deletion
+        // Collect all items depth-first
+        std::vector<const CItem*> allItems;
+        std::vector<CItem*> stack = itemsToDelete;
         while (!stack.empty())
         {
-            auto [item, processed] = stack.top(); stack.pop();
+            const CItem* item = stack.back(); stack.pop_back();
 
-            if (!processed && item->HasChildren())
+            allItems.push_back(item);
+            if (item->HasChildren() && !item->IsTypeOrFlag(ITRP_MASK))
             {
-                stack.emplace(item, true);
-                for (const auto& child : item->GetChildren())
-                    stack.emplace(child, false);
+                const auto& children = item->GetChildren();
+                stack.insert(stack.end(), children.begin(), children.end());
             }
-            else itemsInPostOrder.push_back(item);
         }
 
-        // Actually delete items in post-order
-        for (const auto& item : itemsInPostOrder)
+        // Delete in reverse order (children before parents)
+        for (const auto& item : allItems | std::views::reverse)
         {
             if (pdlg->IsCancelled())
             {
@@ -510,10 +503,12 @@ void CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, const bo
                 return;
             }
 
+            // Delete the physical item
+            item->IsTypeOrFlag(IT_DIRECTORY) ?
+                RemoveDirectory(item->GetPathLong().c_str()) :
+                DeleteFile(item->GetPathLong().c_str());
+
             pdlg->Increment();
-            item->IsTypeOrFlag(IT_DIRECTORY)
-                ? RemoveDirectory(item->GetPathLong().c_str())
-                : DeleteFile(item->GetPathLong().c_str());
         }
 
         // Check if top-level items still exist
