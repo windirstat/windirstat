@@ -22,8 +22,6 @@ IMPLEMENT_DYNAMIC(CPageCleanups, CMFCPropertyPage)
 
 CPageCleanups::CPageCleanups() : CMFCPropertyPage(IDD) {}
 
-CPageCleanups::~CPageCleanups() = default;
-
 void CPageCleanups::DoDataExchange(CDataExchange* pDX)
 {
     CMFCPropertyPage::DoDataExchange(pDX);

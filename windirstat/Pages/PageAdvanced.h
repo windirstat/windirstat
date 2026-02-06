@@ -31,7 +31,7 @@ class CPageAdvanced final : public CMFCPropertyPage
     enum : std::uint8_t { IDD = IDD_PAGE_ADVANCED };
 
     CPageAdvanced();
-    ~CPageAdvanced() override;
+    ~CPageAdvanced() override = default;
 
 protected:
     COptionsPropertySheet* GetSheet() const;

@@ -68,34 +68,34 @@ class Setting final : PersistedSetting
 
 public:
 
-    T* Ptr() { return &m_value; }
-    T& Obj() { return m_value; }
-    const T& Min() const { return m_min; }
-    const T& Max() const { return m_max; }
-    const T& Obj() const { return m_value; }
+    T* Ptr() noexcept { return &m_value; }
+    T& Obj() noexcept { return m_value; }
+    const T& Min() const noexcept { return m_min; }
+    const T& Max() const noexcept { return m_max; }
+    const T& Obj() const noexcept { return m_value; }
 
     // Member persistence read/write settings
     void ReadPersistedProperty() override;
     void WritePersistedProperty() override;
 
     // Implicit conversion back to T.
-    operator const T& () { return m_value; }
+    operator const T& () noexcept { return m_value; }
 
     // Copy assignment operators
-    T& operator=(const T& other) { return (m_value = other); }
-    T& operator=(const Setting& other) { return (m_value = other.m_value); }
+    T& operator=(const T& other) noexcept { return (m_value = other); }
+    T& operator=(const Setting& other) noexcept { return (m_value = other.m_value); }
 
     // Math operators
-    T& operator++() { return ++m_value; }
-    T& operator--() { return --m_value; }
-    T operator++(int) { return m_value++; }
-    T operator--(int) { return m_value--; }
-    T& operator+=(const T& other) { return m_value = m_value + other; }
-    T& operator-=(const T& other) { return m_value = m_value - other; }
-    T operator+(const T& other) { return m_value + other; }
-    T operator-(const T& other) { return m_value - other; }
-    T operator*(const T& other) { return m_value * other; }
-    T operator/(const T& other) { return m_value / other; }
+    T& operator++() noexcept { return ++m_value; }
+    T& operator--() noexcept { return --m_value; }
+    T operator++(int) noexcept { return m_value++; }
+    T operator--(int) noexcept { return m_value--; }
+    T& operator+=(const T& other) noexcept { return m_value = m_value + other; }
+    T& operator-=(const T& other) noexcept { return m_value = m_value - other; }
+    T operator+(const T& other) noexcept { return m_value + other; }
+    T operator-(const T& other) noexcept { return m_value - other; }
+    T operator*(const T& other) noexcept { return m_value * other; }
+    T operator/(const T& other) noexcept { return m_value / other; }
 
     // Forces identical type assignment
     template <typename T2> T2& operator=(const T2&) = delete;

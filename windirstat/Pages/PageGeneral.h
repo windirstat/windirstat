@@ -31,7 +31,7 @@ class CPageGeneral final : public CMFCPropertyPage
     enum : std::uint8_t { IDD = IDD_PAGE_GENERAL };
 
     CPageGeneral();
-    ~CPageGeneral() override;
+    ~CPageGeneral() override = default;
 
 protected:
     COptionsPropertySheet* GetSheet() const;

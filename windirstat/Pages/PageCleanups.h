@@ -29,7 +29,7 @@ class CPageCleanups final : public CMFCPropertyPage
     enum : std::uint8_t { IDD = IDD_PAGE_CLEANUPS };
 
     CPageCleanups();
-    ~CPageCleanups() override;
+    ~CPageCleanups() override = default;
 
 protected:
     void DoDataExchange(CDataExchange* pDX) override;

@@ -22,8 +22,6 @@ IMPLEMENT_DYNAMIC(CPageAdvanced, CMFCPropertyPage)
 
 CPageAdvanced::CPageAdvanced() : CMFCPropertyPage(IDD) {}
 
-CPageAdvanced::~CPageAdvanced() = default;
-
 COptionsPropertySheet* CPageAdvanced::GetSheet() const
 {
     return DYNAMIC_DOWNCAST(COptionsPropertySheet, GetParent());

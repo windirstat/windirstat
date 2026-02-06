@@ -54,7 +54,7 @@ public:
     int GetTreeListChildCount() const override;
     CTreeListItem* GetTreeListChild(int i) const override;
     HICON GetIcon() override;
-    CItem* GetLinkedItem() override { return m_item; }
+    CItem* GetLinkedItem() noexcept override { return m_item; }
 
     void AddSearchItemChild(CItemSearch* child);
     void RemoveSearchItemChild(CItemSearch* child);

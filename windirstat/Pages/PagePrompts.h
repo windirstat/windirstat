@@ -31,7 +31,7 @@ class CPagePrompts final : public CMFCPropertyPage
     enum : std::uint8_t { IDD = IDD_PAGE_PROMPTS };
 
     CPagePrompts();
-    ~CPagePrompts() override;
+    ~CPagePrompts() override = default;
 
 protected:
     COptionsPropertySheet* GetSheet() const;

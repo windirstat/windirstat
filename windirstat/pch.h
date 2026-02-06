@@ -63,6 +63,7 @@
 #include <algorithm>
 #include <array>
 #include <atomic>
+#include <bit>
 #include <cstdint>
 #include <cmath>
 #include <condition_variable>

@@ -22,8 +22,6 @@ IMPLEMENT_DYNAMIC(CPageGeneral, CMFCPropertyPage)
 
 CPageGeneral::CPageGeneral() : CMFCPropertyPage(IDD) {}
 
-CPageGeneral::~CPageGeneral() = default;
-
 COptionsPropertySheet* CPageGeneral::GetSheet() const
 {
     const auto sheet = DYNAMIC_DOWNCAST(COptionsPropertySheet, GetParent());

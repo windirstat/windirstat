@@ -57,6 +57,11 @@ public:
         return *this;
     }
 
+    T Get() const noexcept
+    {
+        return m_data;
+    }
+
     bool IsValid() const noexcept
     {
         return m_data != nullptr && m_data != INVALID_HANDLE_VALUE;

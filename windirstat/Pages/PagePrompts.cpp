@@ -22,8 +22,6 @@ IMPLEMENT_DYNAMIC(CPagePrompts, CMFCPropertyPage)
 
 CPagePrompts::CPagePrompts() : CMFCPropertyPage(IDD) {}
 
-CPagePrompts::~CPagePrompts() = default;
-
 COptionsPropertySheet* CPagePrompts::GetSheet() const
 {
     const auto sheet = DYNAMIC_DOWNCAST(COptionsPropertySheet, GetParent());

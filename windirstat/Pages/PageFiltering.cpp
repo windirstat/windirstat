@@ -22,8 +22,6 @@ IMPLEMENT_DYNAMIC(CPageFiltering, CMFCPropertyPage)
 
 CPageFiltering::CPageFiltering() : CMFCPropertyPage(IDD) {}
 
-CPageFiltering::~CPageFiltering() = default;
-
 COptionsPropertySheet* CPageFiltering::GetSheet() const
 {
     return DYNAMIC_DOWNCAST(COptionsPropertySheet, GetParent());

@@ -31,7 +31,7 @@ class CPageFiltering final : public CMFCPropertyPage
     enum : std::uint8_t { IDD = IDD_PAGE_FILTERING };
 
     CPageFiltering();
-    ~CPageFiltering() override;
+    ~CPageFiltering() override = default;
 
 protected:
     COptionsPropertySheet* GetSheet() const;

@@ -17,7 +17,6 @@
 
 #include "pch.h"
 #include "TreeListControl.h"
-#include "../HelpersInterface.h"
 
 bool CTreeListItem::DrawSubItem(const int subitem, CDC* pdc, CRect rc, const UINT state, int* width, int* focusLeft)
 {
