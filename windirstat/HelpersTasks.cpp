@@ -286,32 +286,41 @@ bool IsHibernateEnabled() noexcept
 // Elevation and privileges
 bool IsElevationActive() noexcept
 {
-    SmartPointer<HANDLE> token(CloseHandle);
-    TOKEN_ELEVATION elevation;
-    DWORD size = sizeof(TOKEN_ELEVATION);
-    if (OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token) == 0 ||
-        GetTokenInformation(token, TokenElevation, &elevation, sizeof(elevation), &size) == 0)
+    static const auto result = []() noexcept -> bool
     {
-        return false;
-    }
-
-    return elevation.TokenIsElevated != 0;
+        SmartPointer<HANDLE> token(CloseHandle);
+        TOKEN_ELEVATION elevation;
+        DWORD size = sizeof(TOKEN_ELEVATION);
+        if (OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token) == 0 ||
+            GetTokenInformation(token, TokenElevation, &elevation, sizeof(elevation), &size) == 0)
+        {
+            return false;
+        }
+        return elevation.TokenIsElevated != 0;
+    }();
+    
+    return result;
 }
 
 bool IsElevationAvailable() noexcept
 {
-    if (IsElevationActive()) return false;
-
-    SmartPointer<HANDLE> token(CloseHandle);
-    TOKEN_ELEVATION_TYPE elevationType;
-    DWORD size = sizeof(TOKEN_ELEVATION_TYPE);
-    if (OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token) == 0 ||
-        GetTokenInformation(token, TokenElevationType, &elevationType, sizeof(elevationType), &size) == 0)
+    static const auto result = []() noexcept -> bool
     {
-        return false;
-    }
-
-    return elevationType == TokenElevationTypeLimited;
+        if (IsElevationActive()) return false;
+        
+        SmartPointer<HANDLE> token(CloseHandle);
+        TOKEN_ELEVATION_TYPE elevationType;
+        DWORD size = sizeof(TOKEN_ELEVATION_TYPE);
+        if (OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token) == 0 ||
+            GetTokenInformation(token, TokenElevationType, &elevationType, sizeof(elevationType), &size) == 0)
+        {
+            return false;
+        }
+        
+        return elevationType == TokenElevationTypeLimited;
+    }();
+    
+    return result;
 }
 
 void RunElevated(const std::wstring& cmdLine)

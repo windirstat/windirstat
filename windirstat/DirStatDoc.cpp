@@ -964,8 +964,7 @@ void CDirStatDoc::OnUpdateCompressionHandler(CCmdUI* pCmdUI)
     if (pCmdUI->m_pMenu == nullptr) return;
 
     // See if each path supports available compression options
-    const UINT flag = pCmdUI->m_pMenu->GetMenuState(pCmdUI->m_nID, MF_BYCOMMAND);
-    bool allow = (flag & (MF_DISABLED | MF_GRAYED)) == 0;
+    bool allow = IsMenuEnabled(pCmdUI->m_pMenu, pCmdUI->m_nID, true);
     for (const auto& item : GetAllSelected())
     {
         allow &= CompressFileAllowed(item->GetVolumeRoot()->GetPath(),

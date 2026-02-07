@@ -472,6 +472,19 @@ int DpiRest(const int value, const CWnd* wnd) noexcept
     return ::MulDiv(value, dpi, USER_DEFAULT_SCREEN_DPI);
 }
 
+void SetMenuItem(CMenu* menu, const int pos, const bool enable, const bool isCommand)
+{
+    const auto lookup = isCommand ? MF_BYCOMMAND : MF_BYPOSITION;
+    if (pos >= 0) menu->EnableMenuItem(pos, lookup | (enable ? MF_ENABLED
+         : (MF_DISABLED | MF_GRAYED)));
+}
+
+bool IsMenuEnabled(const CMenu* menu, const UINT pos, const bool isCommand) noexcept
+{
+    const auto lookup = isCommand ? MF_BYCOMMAND : MF_BYPOSITION;
+    return (menu->GetMenuState(pos, lookup) & (MF_DISABLED | MF_GRAYED)) == 0;
+}
+
 int DpiSave(const int value, const CWnd* wnd) noexcept
 {
     const HWND h = (wnd && wnd->GetSafeHwnd()) ? wnd->GetSafeHwnd() : nullptr;

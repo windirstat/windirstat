@@ -1048,8 +1048,7 @@ void CMainFrame::UpdateDynamicMenuItems(CMenu* menu) const
             CONTENT_MENU_MINCMD, CONTENT_MENU_MAXCMD, CMF_NORMAL);
 
         // conditionally disable menu if empty
-        if (explorerMenuPos >= 0) menu->EnableMenuItem(explorerMenuPos, MF_BYPOSITION |
-            (explorerMenu->GetMenuItemCount() > 0 ? MF_ENABLED : (MF_DISABLED | MF_GRAYED)));
+        SetMenuItem(menu, explorerMenuPos, explorerMenu->GetMenuItemCount() > 0);
     }
 
     // locate compress menu
@@ -1058,7 +1057,7 @@ void CMainFrame::UpdateDynamicMenuItems(CMenu* menu) const
     {
         // Check if any submenu items are enabled
         const int menuItemCount = compressMenu->GetMenuItemCount();
-        const bool anyEnabled = std::ranges::any_of(std::views::iota(0, menuItemCount), [&](int i)
+        const bool anyEnabled = std::ranges::any_of(std::views::iota(0, menuItemCount), [&](const int i)
         {
             CCmdUI state;
             state.m_nIndex = i;
@@ -1066,14 +1065,14 @@ void CMainFrame::UpdateDynamicMenuItems(CMenu* menu) const
             state.m_nID = compressMenu->GetMenuItemID(i);
             state.m_pMenu = compressMenu;
             state.DoUpdate(const_cast<CMainFrame*>(this), FALSE);
-            return (compressMenu->GetMenuState(i, MF_BYPOSITION) & (MF_DISABLED | MF_GRAYED)) == 0;
+            return IsMenuEnabled(compressMenu, i);
         });
 
-        menu->EnableMenuItem(compressMenuPos, MF_BYPOSITION | (anyEnabled ? MF_ENABLED : (MF_DISABLED | MF_GRAYED)));
+        SetMenuItem(menu, compressMenuPos, anyEnabled);
     }
 
     auto[customMenu, customMenuPos] = LocateNamedMenu(menu, Localization::Lookup(IDS_USER_DEFINED_CLEANUP));
-    for (size_t iCurrent = 0; customMenu != nullptr && iCurrent < COptions::UserDefinedCleanups.size(); iCurrent++)
+    for (UINT iCurrent = 0; customMenu != nullptr && iCurrent < COptions::UserDefinedCleanups.size(); iCurrent++)
     {
         auto& udc = COptions::UserDefinedCleanups[iCurrent];
         if (!udc.Enabled) continue;
@@ -1087,13 +1086,13 @@ void CMainFrame::UpdateDynamicMenuItems(CMenu* menu) const
             udcValid &= CDirStatDoc::Get()->UserDefinedCleanupWorksForItem(&udc, item);
         }
 
-        const UINT flags = udcValid ? MF_ENABLED : (MF_DISABLED | MF_GRAYED);
-        customMenu->AppendMenu(flags | MF_STRING, ID_USERDEFINEDCLEANUP0 + iCurrent, string.c_str());
+        customMenu->AppendMenu(MF_STRING, ID_USERDEFINEDCLEANUP0 + iCurrent, string.c_str());
+        SetMenuItem(customMenu, ID_USERDEFINEDCLEANUP0 + iCurrent, udcValid, true);
     }
 
     // conditionally disable menu if empty
-    if (customMenu && customMenuPos >= 0) menu->EnableMenuItem(customMenuPos, MF_BYPOSITION |
-        (customMenu->GetMenuItemCount() > 0 ? MF_ENABLED : (MF_DISABLED | MF_GRAYED)));
+    if (customMenu) SetMenuItem(menu,
+        customMenuPos, customMenu->GetMenuItemCount() > 0);
 }
 
 void CMainFrame::OnAdvancedShadowCopy(const UINT nID)
@@ -1135,37 +1134,23 @@ void CMainFrame::UpdateToolsMenu(CMenu* menu)
     auto [defragMenu, defragPos] = LocateNamedMenu(menu, Localization::Lookup(IDS_MENU_DEFRAGMENT), true);
     auto [chkdskMenu, chkdskPos] = LocateNamedMenu(menu, Localization::Lookup(IDS_MENU_CHKDSK), true);
 
-    // Shadow copy requires elevation
-    const bool isElevated = IsElevationActive();
-
-    // Get available local drives
+    // Get available local drives and conditionally enable based on elevation
     const auto drives = GetDriveList({DRIVE_FIXED, DRIVE_REMOVABLE, DRIVE_RAMDISK});
-    if (drives.empty())
-    {
-        if (shadowCopyPos >= 0) menu->EnableMenuItem(shadowCopyPos, MF_BYPOSITION | MF_DISABLED | MF_GRAYED);
-        if (defragPos >= 0) menu->EnableMenuItem(defragPos, MF_BYPOSITION | MF_DISABLED | MF_GRAYED);
-        if (chkdskPos >= 0) menu->EnableMenuItem(chkdskPos, MF_BYPOSITION | MF_DISABLED | MF_GRAYED);
-        return;
-    }
-
-    // Disable shadow copy submenu if not elevated
-    if (!isElevated && shadowCopyPos >= 0)
-    {
-        menu->EnableMenuItem(shadowCopyPos, MF_BYPOSITION | MF_DISABLED | MF_GRAYED);
-    }
-
+    SetMenuItem(menu, shadowCopyPos, IsElevationActive() && !drives.empty());
+    SetMenuItem(menu, defragPos, IsElevationAvailable() && !drives.empty());
+    SetMenuItem(menu, chkdskPos, IsElevationAvailable() && !drives.empty());
+    
     for (const auto& drive : drives)
     {
-        const int driveIndex = std::toupper(drive[0]) - L'A';
-
         // Get volume label for display
         const std::wstring volumeName = GetVolumeName(drive);
         const std::wstring displayName = volumeName.empty()
             ? GetDrive(drive) : std::format(L"{:.2} ({})", drive, volumeName);
 
-        if (shadowCopyMenu && isElevated) shadowCopyMenu->AppendMenu(MF_STRING, ID_TOOLS_SHADOW_COPY_BASE + driveIndex, displayName.c_str());
-        if (defragMenu) defragMenu->AppendMenu(MF_STRING, ID_TOOLS_DEFRAG_BASE + driveIndex, displayName.c_str());
-        if (chkdskMenu) chkdskMenu->AppendMenu(MF_STRING, ID_TOOLS_CHKDSK_BASE + driveIndex, displayName.c_str());
+        const int driveIndex = std::toupper(drive[0]) - L'A';
+        shadowCopyMenu->AppendMenu(MF_STRING, ID_TOOLS_SHADOW_COPY_BASE + driveIndex, displayName.c_str());
+        defragMenu->AppendMenu(MF_STRING, ID_TOOLS_DEFRAG_BASE + driveIndex, displayName.c_str());
+        chkdskMenu->AppendMenu(MF_STRING, ID_TOOLS_CHKDSK_BASE + driveIndex, displayName.c_str());
     }
 }
 

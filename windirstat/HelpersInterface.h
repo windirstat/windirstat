@@ -72,6 +72,8 @@ bool ShellExecuteWrapper(const std::wstring& lpFile, const std::wstring& lpParam
         const std::wstring& lpVerb = L"", HWND hwnd = *AfxGetMainWnd(),
         const std::wstring& lpDirectory = L"", INT nShowCmd = SW_NORMAL);
 bool ExecuteCommandInConsole(const std::wstring& command, const std::wstring& title = L"");
+void SetMenuItem(CMenu* menu, int pos, bool enable, bool isCommand = false);
+bool IsMenuEnabled(const CMenu* menu, UINT pos, bool isCommand = false) noexcept;
 
 // DPI scaling
 int DpiRest(int value, const CWnd* wnd = nullptr) noexcept;
