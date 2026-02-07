@@ -35,7 +35,7 @@ enum : std::uint8_t
 };
 
 static std::array<UCHAR, FIELD_COUNT> orderMap{};
-static void ParseHeaderLine(const std::vector<std::wstring>& header)
+static void ParseHeaderLine(const std::vector<std::wstring_view>& header)
 {
     orderMap.fill(static_cast<size_t>(UCHAR_MAX));
     std::unordered_map<std::wstring, DWORD> resMap =
@@ -54,7 +54,7 @@ static void ParseHeaderLine(const std::vector<std::wstring>& header)
 
     for (const auto c : std::views::iota(0u, header.size()))
     {
-        if (const auto it = resMap.find(header[c]); it != resMap.end())
+        if (const auto it = resMap.find(header[c].data()); it != resMap.end())
             orderMap[it->second] = static_cast<BYTE>(c);
     }
 }
@@ -68,12 +68,12 @@ static std::string ToTimePoint(const FILETIME& fileTime)
         sysTime.wHour, sysTime.wMinute, sysTime.wSecond);
 }
 
-static FILETIME FromTimeString(const std::wstring& time)
+static FILETIME FromTimeString(const std::wstring_view& time)
 {
     // Expected format: YYYY-MM-DDTHH:MM:SSZ
     SYSTEMTIME utc = {};
     if (time.size() < std::size("YYYY-MM-DDTHH:MM:SS") || time[10] != 'T' ||
-        swscanf_s(time.c_str(), L"%4hu-%2hu-%2huT%2hu:%2hu:%2hu",
+        swscanf_s(time.data(), L"%4hu-%2hu-%2huT%2hu:%2hu:%2hu",
         &utc.wYear, &utc.wMonth, &utc.wDay,
         &utc.wHour, &utc.wMinute, &utc.wSecond) != 6) return {};
 
@@ -82,7 +82,7 @@ static FILETIME FromTimeString(const std::wstring& time)
     return ft;
 }
 
-static std::string QuoteAndConvert(const std::wstring& inc)
+static std::string QuoteAndConvert(const std::wstring_view& inc)
 {
     thread_local std::vector<CHAR> result(512, '"');
     int charsWritten = static_cast<int>(result.size());
@@ -109,10 +109,10 @@ CItem* LoadResults(const std::wstring & path)
     std::unordered_map<const std::wstring, CItem*, std::hash<std::wstring>> parentMap;
 
     bool headerProcessed = false;
-    while (std::getline(reader, linebuf))
+    std::wstring headerLine;
+    for (std::vector<std::wstring_view> fields; std::getline(reader, linebuf); fields.clear())
     {
         if (linebuf.empty()) continue;
-        std::vector<std::wstring> fields;
 
         // Convert to wide string
         line.resize(linebuf.size() + 1);
@@ -137,7 +137,8 @@ CItem* LoadResults(const std::wstring & path)
             }
 
             // Extra value(s)
-            fields.emplace_back(line, pos, end - pos);
+            line[end] = L'\0';
+            fields.emplace_back(line.data() + pos, end - pos);
             pos = end + (quoted ? 1 : 0);
         }
 
@@ -156,14 +157,14 @@ CItem* LoadResults(const std::wstring & path)
         }
 
         // Decode item type
-        const ITEMTYPE type = static_cast<ITEMTYPE>(wcstoull(fields[orderMap[FIELD_ATTRIBUTES_WDS]].c_str(), nullptr, 16));
+        const auto type = static_cast<ITEMTYPE>(wcstoull(fields[orderMap[FIELD_ATTRIBUTES_WDS]].data(), nullptr, 16));
 
         // Determine how to store the path if it was the root or not
         const auto itType = IT_MASK & type;
         const bool isRoot = (type & ITF_ROOTITEM);
         const bool isInRoot = itType == IT_DRIVE;
         const bool useFullPath = isRoot || isInRoot;
-        LPWSTR lookupPath = fields[orderMap[FIELD_NAME]].data();
+        LPWSTR lookupPath = const_cast<LPWSTR>(fields[orderMap[FIELD_NAME]].data());
         LPWSTR displayName = useFullPath ? lookupPath : wcsrchr(lookupPath, L'\\');
         if (!useFullPath && displayName != nullptr)
         {
@@ -180,12 +181,12 @@ CItem* LoadResults(const std::wstring & path)
             type,
             displayName,
             FromTimeString(fields[orderMap[FIELD_LAST_CHANGE]]),
-            wcstoull(fields[orderMap[FIELD_SIZE_PHYSICAL]].c_str(), nullptr, 10),
-            wcstoull(fields[orderMap[FIELD_SIZE_LOGICAL]].c_str(), nullptr, 10),
-            wcstoull(fields[orderMap[FIELD_INDEX]].c_str(), nullptr, 16),
+            wcstoull(fields[orderMap[FIELD_SIZE_PHYSICAL]].data(), nullptr, 10),
+            wcstoull(fields[orderMap[FIELD_SIZE_LOGICAL]].data(), nullptr, 10),
+            wcstoull(fields[orderMap[FIELD_INDEX]].data(), nullptr, 16),
             attributes,
-            wcstoul(fields[orderMap[FIELD_FILES]].c_str(), nullptr, 10),
-            wcstoul(fields[orderMap[FIELD_FOLDERS]].c_str(), nullptr, 10));
+            wcstoul(fields[orderMap[FIELD_FILES]].data(), nullptr, 10),
+            wcstoul(fields[orderMap[FIELD_FOLDERS]].data(), nullptr, 10));
 
         if (isRoot)
         {
@@ -206,11 +207,12 @@ CItem* LoadResults(const std::wstring & path)
             // Restore full path for parent assignment
             if (lookupPath != displayName) lookupPath[wcslen(lookupPath)] = wds::chrBackslash;
 
-            const std::wstring & mapPath = fields[orderMap[FIELD_NAME]];
-            parentMap[mapPath] = newitem;
+            const auto mapPath = fields[orderMap[FIELD_NAME]];
+            parentMap[mapPath.data()] = newitem;
 
             // Special case: also add mapping for drive without backslash
-            if (newitem->IsTypeOrFlag(IT_DRIVE)) parentMap[mapPath.substr(0, 2)] = newitem;
+            if (newitem->IsTypeOrFlag(IT_DRIVE)) parentMap[
+                std::wstring(mapPath).substr(0, 2).c_str()] = newitem;
         }
     }
 
@@ -250,7 +252,7 @@ bool SaveResults(const std::wstring& path, CItem* rootItem)
             return _wcsicmp(a->GetNameView().data(), b->GetNameView().data()) > 0;
         });
 
-        // Descend into childitems
+        // Descend into child items
         for (const auto& child : children) queue.push(child);
     }
 
@@ -301,11 +303,10 @@ bool SaveResults(const std::wstring& path, CItem* rootItem)
             adjustedSizes[p] += item->GetSizePhysicalRaw();
 
             if (!p->IsTypeOrFlag(IT_DRIVE)) continue;
-            const bool alreadySeen = seenIndex.contains({ p, item->GetIndex() });
-            if (!alreadySeen) seenIndex.emplace(p, item->GetIndex());
+            const auto [iter, inserted] = seenIndex.emplace(p, item->GetIndex());
 
             // Unknown size should be updated to account for all but one
-            if (const auto unknown = p->FindUnknownItem(); !alreadySeen && unknown != nullptr)
+            if (const auto unknown = p->FindUnknownItem(); inserted && unknown != nullptr)
             { 
                 unknownSize[unknown] -= item->GetSizePhysicalRaw();
             }
@@ -313,14 +314,14 @@ bool SaveResults(const std::wstring& path, CItem* rootItem)
     }
 
     // Output all items to file
-    outf << "\r\n";
     for (const auto* item : items)
     {
         // Output primary columns
         const bool nonPathItem = item->IsTypeOrFlag(IT_MYCOMPUTER);
         const ITEMTYPE itemType = item->GetRawType() & ~ITF_HARDLINK & ~ITHASH_MASK & ~ITF_EXTDATA;
-        const auto adjustedSize = adjustedSizes.contains(item) ? adjustedSizes[item] : 0;
-        outf << std::format("{},{},{},{},{},{},{},0x{:08X},0x{:016X}",
+        const auto adjustedSizeIter = adjustedSizes.find(item);
+        const auto adjustedSize = adjustedSizeIter != adjustedSizes.end() ? adjustedSizeIter->second : 0;
+        outf << std::format("\r\n{},{},{},{},{},{},{},0x{:08X},0x{:016X}",
             QuoteAndConvert(nonPathItem ? item->GetName() : item->GetPath()),
             item->GetFilesCount(),
             item->GetFoldersCount(),
@@ -333,9 +334,6 @@ bool SaveResults(const std::wstring& path, CItem* rootItem)
 
         // Output additional columns
         if (COptions::ShowColumnOwner) outf << "," << QuoteAndConvert(item->GetOwner(true));
-
-        // Finalize lines
-        outf << "\r\n";
     }
 
     return true;

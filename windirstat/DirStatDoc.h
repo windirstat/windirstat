@@ -143,6 +143,7 @@ protected:
     static bool DupeListHasFocus();
     static bool TopListHasFocus();
     static bool SearchListHasFocus();
+    static bool WatcherListHasFocus();
     std::vector<CItem*> GetAllSelected();
     void InvalidateSelectionCache();
     static CTreeListControl* GetFocusControl();
@@ -217,4 +218,6 @@ protected:
     afx_msg void OnRemoveShadowCopies();
     afx_msg void OnCleanupMoveTo();
     afx_msg void OnRemoveMarkOfTheWebTags();
+    afx_msg void OnUpdateCreateHardlink(CCmdUI* pCmdUI);
+    afx_msg void OnCreateHardlink();
 };

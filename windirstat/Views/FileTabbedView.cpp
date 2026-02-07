@@ -17,10 +17,7 @@
 
 #include "pch.h"
 #include "FileTabbedView.h"
-#include "FileSearchView.h"
-#include "FileTopView.h"
 #include "FileTreeView.h"
-#include "ItemSearch.h"
 
 IMPLEMENT_DYNCREATE(CFileTabbedView, CTabView)
 
@@ -43,6 +40,8 @@ int CFileTabbedView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
     m_fileDupeView = DYNAMIC_DOWNCAST(CFileDupeView, GetTabControl().GetTabWnd(m_fileDupeViewIndex));
     m_fileSearchViewIndex = AddView(RUNTIME_CLASS(CFileSearchView), IDS_SEARCH_RESULTS.data(), CHAR_MAX);
     m_fileSearchView = DYNAMIC_DOWNCAST(CFileSearchView, GetTabControl().GetTabWnd(m_fileSearchViewIndex));
+    m_fileWatcherViewIndex = AddView(RUNTIME_CLASS(CFileWatcherView), IDS_WATCHER.data(), CHAR_MAX);
+    m_fileWatcherView = DYNAMIC_DOWNCAST(CFileWatcherView, GetTabControl().GetTabWnd(m_fileWatcherViewIndex));
 
     return 0;
 }
@@ -55,6 +54,7 @@ void CFileTabbedView::OnInitialUpdate()
     Localization::UpdateTabControl(GetTabControl());
 
     SetSearchTabVisibility(false);
+    SetWatcherTabVisibility(false);
     SetDupeTabVisibility(COptions::ScanForDuplicates &&
         CDirStatDoc::Get()->GetRootItem() != nullptr);
 }
@@ -67,6 +67,13 @@ void CFileTabbedView::SetDupeTabVisibility(const bool show)
 void CFileTabbedView::SetSearchTabVisibility(const bool show)
 {
     GetTabControl().ShowTab(m_fileSearchViewIndex, show);
+}
+
+void CFileTabbedView::SetWatcherTabVisibility(const bool show)
+{
+    GetTabControl().ShowTab(m_fileWatcherViewIndex, show);
+    if (show) CFileWatcherControl::Get()->StartMonitoring();
+    else CFileWatcherControl::Get()->StopMonitoring();
 }
 
 BOOL CFileTabbedView::OnEraseBkgnd(CDC* /*pDC*/)
@@ -89,7 +96,7 @@ LRESULT CFileTabbedView::OnChangeActiveTab(WPARAM wp, LPARAM lp)
 bool CFileTabbedView::CycleTab(const bool forward)
 {
     std::vector<int> visibleTabs;
-    for (const int tabIndex : { m_fileTreeViewIndex, m_fileTopViewIndex, m_fileDupeViewIndex, m_fileSearchViewIndex })
+    for (const int tabIndex : { m_fileTreeViewIndex, m_fileTopViewIndex, m_fileDupeViewIndex, m_fileSearchViewIndex, m_fileWatcherViewIndex })
     {
         if (GetTabControl().IsTabVisible(tabIndex)) visibleTabs.push_back(tabIndex);
     }

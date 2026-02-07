@@ -25,6 +25,7 @@ LPCWSTR COptions::OptionsDupeTree = L"DupeView";
 LPCWSTR COptions::OptionsExtView = L"ExtView";
 LPCWSTR COptions::OptionsTopView = L"TopView";
 LPCWSTR COptions::OptionsSearch = L"SearchView";
+LPCWSTR COptions::OptionsWatcher = L"Watcher";
 LPCWSTR COptions::OptionsDriveSelect = L"DriveSelect";
 
 Setting<bool> COptions::AutomaticallyResizeColumns(OptionsGeneral, L"AutomaticallyResizeColumns", true);
@@ -121,6 +122,8 @@ Setting<std::vector<int>> COptions::TopViewColumnOrder(OptionsTopView, L"ColumnO
 Setting<std::vector<int>> COptions::TopViewColumnWidths(OptionsTopView, L"ColumnWidths");
 Setting<std::vector<int>> COptions::SearchViewColumnOrder(OptionsSearch, L"ColumnOrder");
 Setting<std::vector<int>> COptions::SearchViewColumnWidths(OptionsSearch, L"ColumnWidths");
+Setting<std::vector<int>> COptions::WatcherColumnOrder(OptionsWatcher, L"ColumnOrder");
+Setting<std::vector<int>> COptions::WatcherColumnWidths(OptionsWatcher, L"ColumnWidths");
 Setting<std::vector<std::wstring>> COptions::SelectDrivesDrives(OptionsDriveSelect, L"SelectDrivesDrives");
 Setting<std::vector<std::wstring>> COptions::SelectDrivesFolder(OptionsDriveSelect, L"SelectDrivesFolder");
 Setting<std::wstring> COptions::SearchTerm(OptionsSearch, L"SearchTerm");

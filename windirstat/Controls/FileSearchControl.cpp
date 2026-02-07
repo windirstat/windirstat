@@ -17,8 +17,7 @@
 
 #include "pch.h"
 #include "ItemSearch.h"
-#include "FileSearchControl.h"
-#include "ProgressDlg.h"
+#include "FileTreeView.h"
 
 CFileSearchControl::CFileSearchControl() : CTreeListControl(COptions::SearchViewColumnOrder.Ptr(), COptions::SearchViewColumnWidths.Ptr())
 {

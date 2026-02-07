@@ -226,6 +226,11 @@
 #define ID_EXTLIST_SEARCH_EXTENSION     32840
 #define ID_INDICATOR_SIZE               32841
 #define ID_CLEANUP_REMOVE_MOTW          32842
+#define ID_CLEANUP_CREATE_HARDLINK      32843
+#define ID_TOOLS_SHADOW_COPY_BASE       32850
+#define ID_TOOLS_DEFRAG_BASE            32880
+#define ID_TOOLS_CHKDSK_BASE            32910
+#define ID_TOOLS_WATCHER                32940
 #define IDS_AUTHOR_EMAIL                57345
 #define IDS_URL_WEBSITE                 57346
 #define IDS_URL_HELP                    57347
@@ -240,7 +245,7 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        306
-#define _APS_NEXT_COMMAND_VALUE         32843
+#define _APS_NEXT_COMMAND_VALUE         32940
 #define _APS_NEXT_CONTROL_VALUE         1119
 #define _APS_NEXT_SYMED_VALUE           110
 #endif

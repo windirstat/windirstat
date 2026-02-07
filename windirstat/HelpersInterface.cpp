@@ -145,7 +145,7 @@ std::wstring FormatDouble(const double d) noexcept
     return std::to_wstring(i) + GetLocaleDecimalSeparator() + std::to_wstring(r);
 }
 
-std::wstring FormatFileTime(const FILETIME& t) noexcept
+std::wstring FormatFileTime(const FILETIME& t, const bool seconds) noexcept
 {
     SYSTEMTIME st;
     FILETIME ft;
@@ -160,7 +160,7 @@ std::wstring FormatFileTime(const FILETIME& t) noexcept
     GetDateFormat(lcid, DATE_SHORTDATE, &st, nullptr, date.data(), std::ssize(date));
 
     std::array<WCHAR, 64> time;
-    GetTimeFormat(lcid, TIME_NOSECONDS, &st, nullptr, time.data(), std::ssize(time));
+    GetTimeFormat(lcid, seconds ? 0 : TIME_NOSECONDS, &st, nullptr, time.data(), std::ssize(time));
 
     return std::wstring(date.data()) + L"  " + time.data();
 }
@@ -211,8 +211,8 @@ std::wstring FormatMilliseconds(const ULONGLONG ms) noexcept
 
 std::wstring FormatVolumeNameOfRootPath(const std::wstring& rootPath)
 {
-    std::wstring volumeName;
-    return GetVolumeName(rootPath, volumeName) ? FormatVolumeName(rootPath, volumeName) : rootPath;
+    const std::wstring volumeName = GetVolumeName(rootPath);
+    return volumeName.empty() ? rootPath : FormatVolumeName(rootPath, volumeName);
 }
 
 std::wstring FormatVolumeName(const std::wstring& rootPath, const std::wstring& volumeName)
@@ -290,7 +290,7 @@ std::vector<std::wstring> SplitString(const std::wstring& string, const WCHAR de
 }
 
 // Attribute parsing
-DWORD ParseAttributes(const std::wstring& attributes) noexcept
+DWORD ParseAttributes(const std::wstring_view& attributes) noexcept
 {
     if (attributes == wds::strInvalidAttributes) return 0;
 
@@ -344,7 +344,7 @@ const std::wstring& GetSpec_TiB() noexcept
 // System information
 std::wstring GetCOMSPEC()
 {
-    std::array<WCHAR, MAX_PATH + 1> cmd;
+    std::array<WCHAR, MAX_PATH> cmd;
     if (::GetEnvironmentVariable(L"COMSPEC", cmd.data(), std::ssize(cmd)) == 0)
     {
         VTRACE(L"COMSPEC not set.");
@@ -452,6 +452,15 @@ bool ShellExecuteWrapper(const std::wstring& lpFile, const std::wstring& lpParam
         DisplayError(L"ShellExecute failed: " + TranslateError(GetLastError()));
     }
     return bResult;
+}
+
+bool ExecuteCommandInConsole(const std::wstring& command, const std::wstring& title)
+{
+    const std::wstring cmd = GetSysDirectory() + L"\\CMD.EXE";
+    const std::wstring cmdline = std::format(LR"(/C "TITLE {} - {} & {} & PAUSE")",
+        wds::strWinDirStat, title, command);
+    
+    return ShellExecuteWrapper(cmd, cmdline, L"runas");
 }
 
 // DPI scaling

@@ -19,7 +19,6 @@
 
 #include "pch.h"
 #include "TreeListControl.h"
-#include "TreeMap.h"
 #include "Finder.h"
 
 class Finder;
@@ -63,7 +62,7 @@ using ITEMTYPE = enum ITEMTYPE : std::uint32_t
     ITHASH_SKIP    = 1 << 16, // Indicates cannot be hashed (unreadable)
     ITHASH_SMALL   = 1 << 17, // Indicates a small hash has been performed
     ITHASH_MEDIUM  = 1 << 18, // Indicates a medium hash has been performed
-    ITHASH_LARGE   = 1 << 19, // Indicates a large has hhas been performed
+    ITHASH_LARGE   = 1 << 19, // Indicates a large hash has been performed
     ITHASH_MASK    = 0x000F0000,
 
     ITRP_NONE      = 0,       // Indicates no reparse data
@@ -80,6 +79,7 @@ using ITEMTYPE = enum ITEMTYPE : std::uint32_t
     ITF_HARDLINK   = 1 << 27, // Indicates file is a hardlink
     ITF_ROOTITEM   = 1 << 28, // Indicates root item
     ITF_DONE       = 1 << 29, // Indicates done processing
+    ITF_PREVIEW    = 1 << 30, // Indicates preview item (color stored in index)
     ITF_MASK       = 0xFF000000,
 
     ITF_ANY        = 0xFFFFFFFF, // Indicates any item type or flag
@@ -102,13 +102,12 @@ constexpr ITEMTYPE operator&(const ITEMTYPE& a, const ITEMTYPE& b)
 
 constexpr auto operator<=>(const FILETIME& t1, const FILETIME& t2)
 {
-    if (const auto cmp = t1.dwHighDateTime <=> t2.dwHighDateTime; cmp != 0) return cmp;
-    return t1.dwLowDateTime <=> t2.dwLowDateTime;
+    return std::bit_cast<std::uint64_t>(t1) <=> std::bit_cast<std::uint64_t>(t2);
 }
 
 constexpr bool operator==(const FILETIME& t1, const FILETIME& t2)
 {
-    return (t1 <=> t2) == 0;
+    return std::bit_cast<std::uint64_t>(t1) == std::bit_cast<std::uint64_t>(t2);
 }
 
 //
@@ -124,7 +123,7 @@ constexpr bool operator==(const FILETIME& t1, const FILETIME& t2)
 // rather than browsing to virtual functions I like to flatly see what's going on.
 // But, of course, now we have quite many switch statements in the member functions.
 //
-class CItem final : public CTreeListItem, public CTreeMap::Item
+class __declspec(empty_bases) CItem final : public CTreeListItem
 {
 public:
     CItem(const CItem&) = delete;
@@ -145,19 +144,19 @@ public:
     CTreeListItem* GetTreeListChild(const int i) const noexcept override { return GetChildren()[i]; }
     HICON GetIcon() override;
     void DrawAdditionalState(CDC* pdc, const CRect& rcLabel) const override;
-    CItem* GetLinkedItem() override;
+    CItem* GetLinkedItem() noexcept override;
 
-    // CTreeMap::Item interface
-    bool TmiIsLeaf() const noexcept override { return IsLeaf() || IsTypeOrFlag(IT_HLINKS_IDX); }
-    CRect TmiGetRectangle() const noexcept override { return tmiRect; };
-    void TmiSetRectangle(const CRect& rc) noexcept override { tmiRect = rc; }
-    COLORREF TmiGetGraphColor() const override { return GetGraphColor(); }
-    int TmiGetChildCount() const noexcept override { 
+    // CTreeMap Functions
+    bool TmiIsLeaf() const noexcept { return IsLeaf() || IsTypeOrFlag(IT_HLINKS_IDX); }
+    CRect TmiGetRectangle() const noexcept { return tmiRect; };
+    void TmiSetRectangle(const CRect& rc) noexcept { tmiRect = rc; }
+    COLORREF TmiGetGraphColor() const { return GetGraphColor(); }
+    int TmiGetChildCount() const noexcept { 
         if (m_folderInfo == nullptr || IsTypeOrFlag(IT_HLINKS_IDX)) return 0;
         return static_cast<int>(m_folderInfo->m_children.size()); 
     }
-    Item* TmiGetChild(const int c) const noexcept override { return m_folderInfo->m_children[c]; }
-    ULONGLONG TmiGetSize() const noexcept override { return COptions::TreeMapUseLogical ? GetSizeLogical() : GetSizePhysical(); }
+    CItem* TmiGetChild(const int c) const noexcept { return m_folderInfo->m_children[c]; }
+    ULONGLONG TmiGetSize() const noexcept;
 
     static int GetSubtreePercentageWidth();
     ULONGLONG GetProgressRange() const;
@@ -280,8 +279,7 @@ public:
 
     static constexpr bool FileTimeIsGreater(const FILETIME& ft1, const FILETIME& ft2) noexcept
     {
-        return (static_cast<QWORD>(ft1.dwHighDateTime) << 32 | (ft1.dwLowDateTime)) >
-            (static_cast<QWORD>(ft2.dwHighDateTime) << 32 | (ft2.dwLowDateTime));
+        return std::bit_cast<std::uint64_t>(ft1) > std::bit_cast<std::uint64_t>(ft2);
     }
 
     static std::vector<CItem*> GetItemsRecursive(const std::vector<CItem*>& initialItems,

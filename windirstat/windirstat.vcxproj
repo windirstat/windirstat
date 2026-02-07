@@ -538,6 +538,7 @@
     <ClInclude Include="Controls\FileDupeControl.h" />
     <ClInclude Include="Controls\FileTopControl.h" />
     <ClInclude Include="Controls\FileTreeControl.h" />
+    <ClInclude Include="Controls\FileWatcherControl.h" />
     <ClInclude Include="Controls\IconHandler.h" />
     <ClInclude Include="Controls\OwnerDrawnListControl.h" />
     <ClInclude Include="Controls\PacMan.h" />
@@ -552,7 +553,7 @@
     <ClInclude Include="HelpersInterface.h" />
     <ClInclude Include="HelpersTasks.h" />
     <ClInclude Include="Pages\PagePrompts.h" />
-    <ClInclude Include="Views\FileSearchView.h" />
+    <ClInclude Include="Views\ControlView.h" />
     <ClInclude Include="Finder.h" />
     <ClInclude Include="FinderNtfs.h" />
     <ClInclude Include="ItemSearch.h" />
@@ -585,9 +586,7 @@
     <ClInclude Include="SelectObject.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Views\ExtensionView.h" />
-    <ClInclude Include="Views\FileDupeView.h" />
     <ClInclude Include="Views\FileTabbedView.h" />
-    <ClInclude Include="Views\FileTopView.h" />
     <ClInclude Include="Views\FileTreeView.h" />
     <ClInclude Include="Views\TreeMapView.h" />
     <ClInclude Include="WinDirStat.h" />
@@ -599,6 +598,7 @@
     <ClCompile Include="Controls\FileDupeControl.cpp" />
     <ClCompile Include="Controls\FileTopControl.cpp" />
     <ClCompile Include="Controls\FileTreeControl.cpp" />
+    <ClCompile Include="Controls\FileWatcherControl.cpp" />
     <ClCompile Include="Controls\OwnerDrawnListControl.cpp" />
     <ClCompile Include="Controls\PacMan.cpp" />
     <ClCompile Include="Controls\DrawTextCache.cpp" />
@@ -612,7 +612,7 @@
     <ClCompile Include="DirStatDoc.cpp">
     </ClCompile>
     <ClCompile Include="Pages\PagePrompts.cpp" />
-    <ClCompile Include="Views\FileSearchView.cpp" />
+    <ClCompile Include="Views\ControlView.cpp" />
     <ClCompile Include="Controls\FileSearchControl.cpp" />
     <ClCompile Include="FinderBasic.cpp" />
     <ClCompile Include="FinderNtfs.cpp" />
@@ -652,9 +652,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Views\ExtensionView.cpp" />
-    <ClCompile Include="Views\FileDupeView.cpp" />
     <ClCompile Include="Views\FileTabbedView.cpp" />
-    <ClCompile Include="Views\FileTopView.cpp" />
     <ClCompile Include="Views\FileTreeView.cpp" />
     <ClCompile Include="Views\TreeMapView.cpp" />
     <ClCompile Include="WinDirStat.cpp">

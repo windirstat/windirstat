@@ -17,6 +17,7 @@
 
 #include "pch.h"
 #include "TreeMap.h"
+#include "Item.h"
 
 static constexpr COLORREF BGR(auto b, auto g, auto r)
 {
@@ -37,7 +38,7 @@ void CTreeMap::GetDefaultPalette(std::vector<COLORREF>& palette)
 {
     palette.resize(std::size(DefaultCushionColors));
     std::ranges::transform(DefaultCushionColors, palette.begin(),
-        [](COLORREF color) { return CColorSpace::MakeBrightColor(color, PALETTE_BRIGHTNESS); });
+        [](const COLORREF color) { return CColorSpace::MakeBrightColor(color, PALETTE_BRIGHTNESS); });
 }
 
 CTreeMap::Options CTreeMap::GetDefaults()
@@ -72,7 +73,7 @@ CTreeMap::Options CTreeMap::GetOptions() const
 }
 
 #ifdef _DEBUG
-void CTreeMap::RecurseCheckTree(const Item* item)
+void CTreeMap::RecurseCheckTree(const CItem* item)
 {
     if (item->TmiIsLeaf())
     {
@@ -84,7 +85,7 @@ void CTreeMap::RecurseCheckTree(const Item* item)
         ULONGLONG last = static_cast<ULONGLONG>(-1);
         for (const int i : std::views::iota(0, item->TmiGetChildCount()))
         {
-            const Item* child = item->TmiGetChild(i);
+            const CItem* child = item->TmiGetChild(i);
             const ULONGLONG size = child->TmiGetSize();
             ASSERT(size <= last);
             sum += size;
@@ -96,7 +97,7 @@ void CTreeMap::RecurseCheckTree(const Item* item)
 }
 #endif
 
-void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, Item* root, const Options* options) 
+void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, CItem* root, const Options* options) 
 {
 #ifdef _DEBUG
     RecurseCheckTree(root);
@@ -157,11 +158,11 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, Item* root, const Options* option
     {
         std::array<double, 4> surface{};
         CRect rc{};
-        Item* item = nullptr;
+        CItem* item = nullptr;
         double h = 0.0;
         bool asroot = false;
 
-        DrawState(Item* item_, const CRect rc_, const bool asroot_,
+        DrawState(CItem* item_, const CRect rc_, const bool asroot_,
             const std::array<double, 4>& surface_, const double h_)
             : surface(surface_), rc(rc_), item(item_), h(h_), asroot(asroot_) {}
     };
@@ -180,7 +181,7 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, Item* root, const Options* option
     {
         DrawState state = std::move(stack.top());
         stack.pop();
-        Item* item = state.item;
+        CItem* item = state.item;
 
         // Process the current state
         item->TmiSetRectangle(state.rc);
@@ -230,7 +231,7 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, Item* root, const Options* option
                 double left = horizontalRows ? state.rc.left : state.rc.top;
                 for (int i = 0; i < childrenPerRow[row]; i++, c++)
                 {
-                    Item* child = item->TmiGetChild(static_cast<int>(c));
+                    CItem* child = item->TmiGetChild(static_cast<int>(c));
                     const double childWidth_ = childWidth[c];
                     const double fRight = left + childWidth_ * width;
                     int right = static_cast<int>(fRight);
@@ -420,7 +421,7 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, Item* root, const Options* option
     dcTreeView.DeleteDC();
 }
 
-CTreeMap::Item* CTreeMap::FindItemByPoint(Item* item, const CPoint point)
+CItem* CTreeMap::FindItemByPoint(CItem* item, const CPoint point)
 {
     ASSERT(item != nullptr);
     const CRect& rc = item->TmiGetRectangle();
@@ -432,7 +433,7 @@ CTreeMap::Item* CTreeMap::FindItemByPoint(Item* item, const CPoint point)
 
     ASSERT(rc.PtInRect(point));
 
-    Item* ret = nullptr;
+    CItem* ret = nullptr;
 
     const int gridWidth = m_options.grid ? 1 : 0;
 
@@ -450,7 +451,7 @@ CTreeMap::Item* CTreeMap::FindItemByPoint(Item* item, const CPoint point)
         const auto childCount = item->TmiGetChildCount();
         for (int i = 0; i < childCount; i++)
         {
-            Item* child = item->TmiGetChild(i);
+            CItem* child = item->TmiGetChild(i);
 
             ASSERT(child->TmiGetSize() > 0);
 
@@ -530,7 +531,7 @@ void CTreeMap::DrawColorPreview(CDC* pdc, const CRect& rc, const COLORREF color,
     dcTreeView.DeleteDC();
 }
 
-void CTreeMap::RenderLeaf(std::vector<COLORREF>& bitmap, const Item* item, const std::array<double, 4>& surface) const
+void CTreeMap::RenderLeaf(std::vector<COLORREF>& bitmap, const CItem* item, const std::array<double, 4>& surface) const
 {
     CRect rc = item->TmiGetRectangle();
 
@@ -579,7 +580,7 @@ void CTreeMap::RenderRectangle(std::vector<COLORREF>& bitmap, const CRect& rc, c
 
 // Helper functions for KDirStat style
 bool CTreeMap::KDirStat_ArrangeChildren(
-    const Item* parent,
+    const CItem* parent,
     std::vector<double>& childWidth,
     std::vector<double>& rows,
     std::vector<int>& childrenPerRow
@@ -626,7 +627,7 @@ bool CTreeMap::KDirStat_ArrangeChildren(
 }
 
 double CTreeMap::KDirStat_CalculateNextRow(
-    const Item* parent,
+    const CItem* parent,
     const int nextChild,
     const double width,
     int& childrenUsed,
@@ -820,13 +821,33 @@ void CTreeMapPreview::BuildDemoData()
         CTreeMap::GetDefaultPalette(m_colors);
         int col = -1;
 
+        auto createLeaf = [&](const int size, const COLORREF color) -> CItem*
+        {
+            const auto item = new CItem(IT_FILE | ITF_PREVIEW, L"");
+            item->SetSizePhysical(size);
+            item->SetSizeLogical(size);
+            item->SetIndex(color);
+            return item;
+        };
+
+        auto createContainer = [&](std::vector<CItem*>& children) -> CItem*
+        {
+            std::ranges::sort(children, [](CItem* a, CItem* b) { return a->GetSizePhysical() > b->GetSizePhysical(); });
+            const auto item = new CItem(IT_DIRECTORY, L"");
+            for (auto* child : children)
+            {
+                item->AddChild(child);
+            }
+            return item;
+        };
+
         constexpr auto c4Items = 30;
         std::vector<CItem*> c4;
         c4.reserve(c4Items);
         COLORREF color = GetNextColor(col);
         for (const int i : std::views::iota(0, c4Items))
         {
-            c4.emplace_back(new CItem(1 + 100 * i, color));
+            c4.emplace_back(createLeaf(1 + 100 * i, color));
         }
 
         constexpr auto c0Items = 8;
@@ -834,7 +855,7 @@ void CTreeMapPreview::BuildDemoData()
         c0.reserve(c0Items);
         for (const int i : std::views::iota(0, c0Items))
         {
-            c0.emplace_back(new CItem(500 + 600 * i, GetNextColor(col)));
+            c0.emplace_back(createLeaf(500 + 600 * i, GetNextColor(col)));
         }
 
         constexpr auto c1Items = 10;
@@ -843,9 +864,9 @@ void CTreeMapPreview::BuildDemoData()
         color = GetNextColor(col);
         for (const int i : std::views::iota(0, c1Items))
         {
-            c1.emplace_back(new CItem(1 + 200 * i, color));
+            c1.emplace_back(createLeaf(1 + 200 * i, color));
         }
-        c0.emplace_back(new CItem(c1));
+        c0.emplace_back(createContainer(c1));
 
         constexpr auto c2Items = 160;
         std::vector<CItem*> c2;
@@ -853,25 +874,23 @@ void CTreeMapPreview::BuildDemoData()
         color = GetNextColor(col);
         for (const int i : std::views::iota(0, c2Items))
         {
-            c2.emplace_back(new CItem(1 + i, color));
+            c2.emplace_back(createLeaf(1 + i, color));
         }
 
-        const std::vector c3 =
-        {
-            new CItem(10000, GetNextColor(col)),
-            new CItem(c4),
-            new CItem(c2),
-            new CItem(6000, GetNextColor(col)),
-            new CItem(1500, GetNextColor(col))
-        };
+        std::vector<CItem*> c3;
+        c3.reserve(5);
+        c3.emplace_back(createLeaf(10000, GetNextColor(col)));
+        c3.emplace_back(createContainer(c4));
+        c3.emplace_back(createContainer(c2));
+        c3.emplace_back(createLeaf(6000, GetNextColor(col)));
+        c3.emplace_back(createLeaf(1500, GetNextColor(col)));
 
-        const std::vector c10
-        {
-            new CItem(c0),
-            new CItem(c3)
-        };
+        std::vector<CItem*> c10;
+        c10.reserve(2);
+        c10.emplace_back(createContainer(c0));
+        c10.emplace_back(createContainer(c3));
 
-        m_root = new CItem(c10);
+        m_root = createContainer(c10);
     }
 }
 

@@ -18,33 +18,95 @@
 #pragma once
 
 #include "pch.h"
+#include "FileWatcherControl.h"
+#include "FileTopControl.h"
+#include "FileDupeControl.h"
+#include "FileSearchControl.h"
 #include "FileTreeControl.h"
+#include "ControlView.h"
 
-//
-// CFileTreeView. The upper left view, which consists of the TreeList.
-//
-class CFileTreeView final : public CView
+class CFileTreeView final : public CControlView
 {
 protected:
-    CFileTreeView(); // Created by MFC only
+
+    CTreeListControl& GetControl() override { return m_control; }
+    const CTreeListControl& GetControl() const override { return m_control; }
+
     DECLARE_DYNCREATE(CFileTreeView)
-
+    CFileTreeView() = default;
     ~CFileTreeView() override = default;
-    void SysColorChanged();
-    void CreateColumns(bool all = false);
 
-protected:
-    void OnDraw(CDC* pDC) override;
+    void CreateColumns(bool all = false);
     void OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint) override;
 
     CFileTreeControl m_control;
 
     DECLARE_MESSAGE_MAP()
-    afx_msg void OnSize(UINT nType, int cx, int cy);
     afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
-    afx_msg BOOL OnEraseBkgnd(CDC* pDC);
-    afx_msg void OnSetFocus(CWnd* pOldWnd);
-    afx_msg void OnLvnItemChanged(NMHDR* pNMHDR, LRESULT* pResult);
-    afx_msg void OnUpdatePopupToggle(CCmdUI* pCmdUI);
-    afx_msg void OnPopupToggle();
+};
+
+class CFileWatcherView final : public CControlView
+{
+protected:
+    CTreeListControl& GetControl() override { return m_control; }
+    const CTreeListControl& GetControl() const override { return m_control; }
+
+    DECLARE_DYNCREATE(CFileWatcherView)
+    CFileWatcherView() = default;
+    ~CFileWatcherView() override = default;
+
+    CFileWatcherControl m_control;
+
+    DECLARE_MESSAGE_MAP()
+    afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
+};
+
+class CFileTopView final : public CControlView
+{
+protected:
+    DECLARE_DYNCREATE(CFileTopView)
+    CFileTopView() = default;
+    ~CFileTopView() override = default;
+
+    CTreeListControl& GetControl() override { return m_control; }
+    const CTreeListControl& GetControl() const override { return m_control; }
+
+    CFileTopControl m_control;
+
+    DECLARE_MESSAGE_MAP()
+    afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
+};
+
+class CFileDupeView final : public CControlView
+{
+protected:
+
+    DECLARE_DYNCREATE(CFileDupeView)
+    CFileDupeView() = default;
+    ~CFileDupeView() override = default;
+
+    CTreeListControl& GetControl() override { return m_control; }
+    const CTreeListControl& GetControl() const override { return m_control; }
+
+    CFileDupeControl m_control;
+
+    DECLARE_MESSAGE_MAP()
+    afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
+};
+
+class CFileSearchView final : public CControlView
+{
+protected:
+
+    DECLARE_DYNCREATE(CFileSearchView)
+    CFileSearchView() = default;
+    ~CFileSearchView() override = default;
+
+    CTreeListControl& GetControl() override { return m_control; }
+    const CTreeListControl& GetControl() const override { return m_control; }
+
+    CFileSearchControl m_control;
+
+    DECLARE_MESSAGE_MAP()
+    afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 };

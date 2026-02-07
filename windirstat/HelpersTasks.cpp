@@ -109,6 +109,66 @@ void RemoveWmiInstances(const std::wstring& wmiClass, CProgressDlg* pdlg, const 
     }
 }
 
+bool CreateShadowCopy(const std::wstring& volumePath)
+{
+    CComPtr<IWbemServices> svcObj;
+    CComPtr<IWbemClassObject> classObj;
+    CComPtr<IWbemClassObject> inParams;
+    CComPtr<IWbemClassObject> outParams;
+    CComVariant vtReturnValue;
+
+    if (FAILED(WmiConnect(svcObj)) ||
+        FAILED(svcObj->GetObject(CComBSTR(L"Win32_ShadowCopy"), 0, nullptr, &classObj, nullptr)) ||
+        FAILED(classObj->GetMethod(L"Create", 0, &inParams, nullptr)))
+    {
+        return false;
+    }
+
+    // Ensure volume path ends with backslash
+    std::wstring volume = volumePath;
+    if (!volume.empty() && volume.back() != L'\\') volume += L'\\';
+
+    // Attempt to do the shadow copy creation
+    CComVariant vtVolume(volume.c_str());
+    CComVariant vtContext(L"ClientAccessible");
+    if (FAILED(inParams->Put(L"Volume", 0, &vtVolume, 0)) ||
+        FAILED(inParams->Put(L"Context", 0, &vtContext, 0)) ||
+        FAILED(svcObj->ExecMethod(CComBSTR(L"Win32_ShadowCopy"), CComBSTR(L"Create"),
+            0, nullptr, inParams, &outParams, nullptr)) || !outParams ||
+        FAILED(outParams->Get(L"ReturnValue", 0, &vtReturnValue, nullptr, nullptr)))
+    {
+        return false;
+    }
+
+    return vtReturnValue.vt == VT_I4 && vtReturnValue.lVal == 0;
+}
+
+std::vector<std::wstring> GetDriveList(const std::vector<UINT>& driveTypes, const bool checkAccessible)
+{
+    std::vector<std::wstring> drives;
+    const DWORD driveMask = GetLogicalDrives();
+
+    for (const auto i : std::views::iota(0, wds::alphaSize))
+    {
+        if ((driveMask & (1 << i)) == 0) continue;
+
+        std::wstring drive = std::wstring{ wds::strAlpha[i] } + L":";
+        const UINT driveType = GetDriveType(drive.c_str());
+
+        // See if drive type matches and in accessible
+        for (const UINT dt : driveTypes) if (driveType == dt)
+        {
+            // Check if the drive is actually accessible
+            if (!checkAccessible || checkAccessible && !GetVolumeName(drive).empty())
+            {
+                drives.push_back(drive);
+            }
+        }
+    }
+
+    return drives;
+}
+
 // File system helpers
 bool FolderExists(const std::wstring& path) noexcept
 {
@@ -119,22 +179,12 @@ bool FolderExists(const std::wstring& path) noexcept
 bool DriveExists(const std::wstring& path) noexcept
 {
     if (path.size() != 3 || path[1] != wds::chrColon || path[2] != wds::chrBackslash)
-    {
         return false;
-    }
 
-    const int d = std::toupper(path.at(0)) - wds::strAlpha.at(0);
-    if (const DWORD mask = 0x1 << d; (mask & GetLogicalDrives()) == 0)
-    {
-        return false;
-    }
+    const int d = std::toupper(path[0]) - wds::strAlpha[0];
+    const DWORD mask = 0x1 << d;
 
-    if (std::wstring dummy; !GetVolumeName(path, dummy))
-    {
-        return false;
-    }
-
-    return true;
+    return (mask & GetLogicalDrives()) != 0 && !GetVolumeName(path).empty();
 }
 
 bool IsLocalDrive(const std::wstring& path) noexcept
@@ -144,18 +194,50 @@ bool IsLocalDrive(const std::wstring& path) noexcept
         return false;
     }
 
-    const auto driveType = GetDriveType(path.substr(0, 2).c_str());
+    const auto driveType = GetDriveType(GetDrive(path).c_str());
     return driveType == DRIVE_REMOVABLE || driveType == DRIVE_FIXED;
 }
 
-bool GetVolumeName(const std::wstring& rootPath, std::wstring& volumeName)
+std::wstring GetVolumeName(const std::wstring& rootPath)
 {
-    volumeName.resize(MAX_PATH);
-    const bool success = GetVolumeInformation(rootPath.c_str(), volumeName.data(),
-        static_cast<DWORD>(volumeName.size()), nullptr, nullptr, nullptr, nullptr, 0) != FALSE;
-    volumeName.resize(success ? wcslen(volumeName.data()) : 0);
-    if (!success) VTRACE(L"GetVolumeInformation({}) failed: {}", rootPath.c_str(), ::GetLastError());
-    return success;
+    std::wstring volumeName(MAX_PATH, L'\0');
+    GetVolumeInformation(rootPath.c_str(), volumeName.data(),
+        static_cast<DWORD>(volumeName.size()), nullptr, nullptr, nullptr, nullptr, 0);
+    volumeName.resize(wcslen(volumeName.data()));
+    return volumeName;
+}
+
+bool DeleteFileForce(const std::wstring& path, DWORD attributes)
+{
+    // Attempt deletion
+    if (DeleteFile(path.c_str())) return true;
+
+    // If attributes not provided, query them
+    if (attributes == INVALID_FILE_ATTRIBUTES)
+    {
+        attributes = GetFileAttributes(path.c_str());
+    }
+
+    // Clear problematic attributes
+    const DWORD newAttrs = attributes == INVALID_FILE_ATTRIBUTES ? FILE_ATTRIBUTE_NORMAL :
+        attributes & ~(FILE_ATTRIBUTE_READONLY | FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM);
+    if (newAttrs != attributes)
+    {
+        SetFileAttributes(path.c_str(), newAttrs);
+        if (DeleteFile(path.c_str())) return true;
+    }
+
+    // If normal delete failed, try delete-on-close
+    SmartPointer<HANDLE> handle(CloseHandle, CreateFile(path.c_str(), DELETE,
+        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+        nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, nullptr));
+    if (handle == INVALID_HANDLE_VALUE) return false;
+
+    FILE_DISPOSITION_INFO info{};
+    info.DeleteFile = TRUE;
+    SetFileInformationByHandle(handle, FileDispositionInfo, &info, sizeof(info));
+    return GetFileAttributes(path.c_str()) == INVALID_FILE_ATTRIBUTES
+        && GetLastError() == ERROR_FILE_NOT_FOUND;
 }
 
 // Path utilities
@@ -164,9 +246,9 @@ std::wstring WdsQueryDosDevice(const std::wstring& drive)
     if (drive.size() < 2 || drive[1] != wds::chrColon) return {};
 
     std::array<WCHAR, 512> info;
-    if (::QueryDosDevice(drive.substr(0, 2).c_str(), info.data(), std::ssize(info)) == 0)
+    if (::QueryDosDevice(GetDrive(drive).c_str(), info.data(), std::ssize(info)) == 0)
     {
-        VTRACE(L"QueryDosDevice({}) Failed: {}", drive.substr(0, 2), TranslateError());
+        VTRACE(L"QueryDosDevice({}) Failed: {}", GetDrive(drive), TranslateError());
         return {};
     }
 
@@ -244,8 +326,7 @@ bool EnableReadPrivileges() noexcept
     // Open a connection to the currently running process token and request
     // we have the ability to look at and adjust our privileges
     SmartPointer<HANDLE> token(CloseHandle);
-    if (OpenProcessToken(GetCurrentProcess(),
-        TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &token) == 0)
+    if (OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &token) == 0)
     {
         return false;
     }
@@ -366,7 +447,7 @@ bool CompressFileAllowed(const std::wstring& volumeName, const CompressionAlgori
     }
 
     // Query volume for standard compression support based on whether NTFS
-    std::array<WCHAR, MAX_PATH + 1> fileSystemName{};
+    std::array<WCHAR, MAX_PATH> fileSystemName{};
     DWORD fileSystemFlags = 0;
     const bool isNTFS = GetVolumeInformation(volumeName.c_str(), nullptr, 0, nullptr, nullptr,
         &fileSystemFlags, fileSystemName.data(), std::ssize(fileSystemName)) != 0 &&
@@ -438,6 +519,113 @@ bool CompressFile(const std::wstring& filePath, const CompressionAlgorithm algor
     return status == 1 || status == 0xC000046F;
 }
 
+bool SparsifyFile(const std::wstring& path, const ULONGLONG minZeroRunSize, const ULONGLONG chunkSize)
+{
+    // Open file with read/write access
+    SmartPointer<HANDLE> h(CloseHandle, CreateFile(path.c_str(), GENERIC_READ | GENERIC_WRITE,
+        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+        nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr));
+    if (h == INVALID_HANDLE_VALUE) return false;
+    LARGE_INTEGER fileSize{};
+    if (!::GetFileSizeEx(h, &fileSize)) return false;
+
+    // Determine filesystem cluster size for alignment
+    DWORD sectorsPerCluster = 0, bytesPerSector = 0, dummy1, dummy2;
+    wchar_t volume[MAX_PATH];
+    ::GetVolumePathName(path.c_str(), volume, MAX_PATH);
+    ::GetDiskFreeSpace(volume, &sectorsPerCluster, &bytesPerSector, &dummy1, &dummy2);
+    ULONGLONG clusterSize = static_cast<ULONGLONG>(sectorsPerCluster) * bytesPerSector;
+    if (clusterSize == 0) clusterSize = 4096;
+
+    auto alignDown = [clusterSize](ULONGLONG val) { return (val / clusterSize) * clusterSize; };
+    auto alignUp = [clusterSize](ULONGLONG val) { return ((val + clusterSize - 1) / clusterSize) * clusterSize; };
+
+    struct ZeroRange { ULONGLONG offset, length; };
+    std::vector<ZeroRange> ranges;
+    std::vector<BYTE> buffer(static_cast<size_t>(chunkSize));
+    ULONGLONG pos = 0, runStart = 0, runLen = 0;
+    bool inRun = false;
+
+    // Save qualifying zero runs with cluster alignment
+    auto saveRun = [&]() {
+        if (inRun && runLen >= minZeroRunSize) {
+            const ULONGLONG alignedStart = alignUp(runStart);
+            const ULONGLONG alignedEnd = alignDown(runStart + runLen);
+            if (alignedEnd > alignedStart)
+                ranges.push_back({ alignedStart, alignedEnd - alignedStart });
+        }
+        inRun = false;
+        };
+
+    // Scan file in chunks to detect zero byte runs
+    for (DWORD bytesRead = 0; pos < static_cast<ULONGLONG>(fileSize.QuadPart); pos += bytesRead)
+    {
+        const DWORD toRead = static_cast<DWORD>(min(chunkSize, static_cast<ULONGLONG>(fileSize.QuadPart) - pos));
+        if (!::ReadFile(h, buffer.data(), toRead, &bytesRead, nullptr) || !bytesRead) break;
+
+        const BYTE* data = buffer.data();
+        for (DWORD i = 0; i < bytesRead; )
+        {
+            if (data[i] == 0) {
+                if (!inRun) { runStart = pos + i; runLen = 0; inRun = true; }
+
+                // Optimized zero detection using 64-bit word scanning
+                const BYTE* ptr = data + i;
+                const DWORD remaining = bytesRead - i;
+                DWORD scanned = 0;
+
+                if (remaining >= 8 && (reinterpret_cast<uintptr_t>(ptr) & 7) == 0)
+                {
+                    const uint64_t* qword = reinterpret_cast<const uint64_t*>(ptr);
+                    while (scanned + 8 <= remaining && *qword++ == 0) scanned += 8;
+                }
+                while (scanned < remaining && ptr[scanned] == 0) ++scanned;
+
+                runLen += scanned;
+                i += scanned;
+            }
+            else {
+                saveRun();
+                ++i;
+            }
+        }
+    }
+    saveRun();
+
+    if (ranges.empty()) return true;
+
+    // Mark file as sparse
+    DWORD bytesReturned = 0;
+    if (!::DeviceIoControl(h, FSCTL_SET_SPARSE, nullptr, 0, nullptr, 0, &bytesReturned, nullptr))
+        return false;
+
+    // Deallocate storage for each zero range
+    bool success = true;
+    for (const auto& [offset, length] : ranges) {
+        FILE_ZERO_DATA_INFORMATION zdi{};
+        zdi.FileOffset.QuadPart = static_cast<LONGLONG>(offset);
+        zdi.BeyondFinalZero.QuadPart = static_cast<LONGLONG>(offset + length);
+        if (!::DeviceIoControl(h, FSCTL_SET_ZERO_DATA, &zdi, sizeof(zdi),
+            nullptr, 0, &bytesReturned, nullptr))
+            success = false;
+    }
+    return success;
+}
+
+bool CreateHardlinkFromFile(const std::wstring& pathOne, const std::wstring& pathTwo)
+{
+    // Construct a temporary name in the same directory
+    GUID guid;
+    if (FAILED(CoCreateGuid(&guid))) return false;
+    std::array<WCHAR, GUIDSTRING_MAX> guidStr;
+    (void) StringFromGUID2(guid, guidStr.data(), static_cast<int>(guidStr.size()));
+
+    // Create hardlink to source
+    const std::wstring tempPath = pathTwo + guidStr.data();
+    return CreateHardLink(tempPath.c_str(), pathOne.c_str(), nullptr) != 0 &&
+        MoveFileEx(tempPath.c_str(), pathTwo.c_str(), MOVEFILE_REPLACE_EXISTING) != 0;
+}
+
 // File hashing
 std::wstring ComputeFileHashes(const std::wstring& filePath)
 {
@@ -477,7 +665,7 @@ std::wstring ComputeFileHashes(const std::wstring& filePath)
         BCRYPT_ALG_HANDLE hAlg = nullptr;
         if (BCryptOpenAlgorithmProvider(&hAlg, id, nullptr, 0) != 0) continue;
         ctx.hAlg = SmartPointer<BCRYPT_ALG_HANDLE>(
-            [](const BCRYPT_ALG_HANDLE h) { (void) BCryptCloseAlgorithmProvider(h, 0); }, hAlg);
+            [](const BCRYPT_ALG_HANDLE h) { (void)BCryptCloseAlgorithmProvider(h, 0); }, hAlg);
 
         if (DWORD bytesWritten = 0; BCryptGetProperty(ctx.hAlg, BCRYPT_OBJECT_LENGTH,
             reinterpret_cast<PBYTE>(&ctx.objectLen), sizeof(DWORD), &bytesWritten, 0) != ERROR_SUCCESS)
@@ -577,15 +765,15 @@ void CopyAllDriveMappings() noexcept
 
     // Enumerate all subkeys (each subkey is a drive letter)
     std::unordered_map<std::wstring, std::wstring> mappings;
-    std::array<WCHAR, MAX_PATH + 1> driveLetter;
+    std::array<WCHAR, MAX_PATH> driveLetter;
     ULONG driveLetterSize = static_cast<ULONG>(driveLetter.size());
     for (DWORD index = 0; keyNetwork.EnumKey(index, driveLetter.data(), &driveLetterSize) == ERROR_SUCCESS;
         ++index, driveLetterSize = static_cast<ULONG>(driveLetter.size()))
     {
         // Get the drive letter and remove path
         CRegKey keyDrive;
-        std::array<WCHAR, MAX_PATH + 1> remotePath{};
-        ULONG remotePathSize = static_cast<ULONG>(remotePath.size());       
+        std::array<WCHAR, MAX_PATH> remotePath{};
+        ULONG remotePathSize = static_cast<ULONG>(remotePath.size());
         if (keyDrive.Open(keyNetwork, driveLetter.data(), KEY_READ) == ERROR_SUCCESS &&
             keyDrive.QueryStringValue(L"RemotePath", remotePath.data(), &remotePathSize) == ERROR_SUCCESS)
         {
@@ -597,7 +785,7 @@ void CopyAllDriveMappings() noexcept
 
     if (!mappings.empty()) CProgressDlg(driveLetter.size(), true, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
     {
-        for (const auto & mapping : mappings)
+        for (const auto& mapping : mappings)
         {
             // Attempt to map the drive
             auto& [drivePath, remotePath] = mapping;

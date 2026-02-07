@@ -17,7 +17,7 @@
 
 #include "pch.h"
 #include "ItemTop.h"
-#include "FileTopControl.h"
+#include "FileTreeView.h"
 
 CFileTopControl::CFileTopControl() : CTreeListControl(COptions::TopViewColumnOrder.Ptr(), COptions::TopViewColumnWidths.Ptr())
 {
@@ -26,7 +26,7 @@ CFileTopControl::CFileTopControl() : CTreeListControl(COptions::TopViewColumnOrd
 
 bool CFileTopControl::GetAscendingDefault(const int column)
 {
-    return column == COL_ITEMSEARCH_NAME || column == COL_ITEMSEARCH_LAST_CHANGE;
+    return column == COL_ITEMTOP_NAME || column == COL_ITEMTOP_LAST_CHANGE;
 }
 
 BEGIN_MESSAGE_MAP(CFileTopControl, CTreeListControl)

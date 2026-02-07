@@ -30,7 +30,7 @@ std::wstring FormatBytes(ULONGLONG n) noexcept;
 std::wstring FormatSizeSuffixes(ULONGLONG n) noexcept;
 std::wstring FormatCount(ULONGLONG n) noexcept;
 std::wstring FormatDouble(double d) noexcept;
-std::wstring FormatFileTime(const FILETIME& t) noexcept;
+std::wstring FormatFileTime(const FILETIME& t, bool seconds = false) noexcept;
 std::wstring FormatAttributes(DWORD attr) noexcept;
 std::wstring FormatHex(const std::vector<BYTE>& bytes, bool upper = true) noexcept;
 std::wstring FormatMilliseconds(ULONGLONG ms) noexcept;
@@ -50,7 +50,7 @@ std::wstring JoinString(const std::vector<std::wstring>& items, WCHAR delim = wd
 std::vector<std::wstring> SplitString(const std::wstring& string, WCHAR delim = wds::chrPipe);
 
 // Attribute parsing
-DWORD ParseAttributes(const std::wstring& attributes) noexcept;
+DWORD ParseAttributes(const std::wstring_view& attributes) noexcept;
 
 // Size specifiers
 const std::wstring& GetSpec_Bytes() noexcept;
@@ -71,6 +71,7 @@ std::wstring TranslateError(HRESULT hr = static_cast<HRESULT>(GetLastError()));
 bool ShellExecuteWrapper(const std::wstring& lpFile, const std::wstring& lpParameters = L"",
         const std::wstring& lpVerb = L"", HWND hwnd = *AfxGetMainWnd(),
         const std::wstring& lpDirectory = L"", INT nShowCmd = SW_NORMAL);
+bool ExecuteCommandInConsole(const std::wstring& command, const std::wstring& title = L"");
 
 // DPI scaling
 int DpiRest(int value, const CWnd* wnd = nullptr) noexcept;

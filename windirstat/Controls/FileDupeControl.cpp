@@ -17,7 +17,7 @@
 
 #include "pch.h"
 #include "ItemDupe.h"
-#include "FileDupeView.h"
+#include "FileTreeView.h"
 
 CFileDupeControl::CFileDupeControl() : CTreeListControl(COptions::DupeViewColumnOrder.Ptr(), COptions::DupeViewColumnWidths.Ptr())
 {

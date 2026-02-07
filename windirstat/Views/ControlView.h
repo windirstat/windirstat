@@ -18,29 +18,27 @@
 #pragma once
 
 #include "pch.h"
-#include "FileDupeControl.h"
+#include "TreeListControl.h"
 
-//
-// CFileDupeView. The upper left view, which consists of the TreeList.
-//
-class CFileDupeView final : public CView
+class CControlView : public CView
 {
-protected:
-    CFileDupeView(); // Created by MFC only
-    DECLARE_DYNCREATE(CFileDupeView)
-
-    ~CFileDupeView() override = default;
+public:
     void SysColorChanged();
 
 protected:
-    void OnDraw(CDC* pDC) override;
-    void OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint) override;
+    DECLARE_DYNAMIC(CControlView)
+    CControlView() = default;
+    ~CControlView() override = default;
 
-    CFileDupeControl m_control;
+    virtual CTreeListControl& GetControl() = 0;
+    virtual const CTreeListControl& GetControl() const = 0;
+
+    int InsertCol(const std::wstring_view& colName, const int nFormat, const int nWidth, const int nSubItem);
+    void OnDraw(CDC*) override;
+    void OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint) override;
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnSize(UINT nType, int cx, int cy);
-    afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
     afx_msg BOOL OnEraseBkgnd(CDC* pDC);
     afx_msg void OnSetFocus(CWnd* pOldWnd);
     afx_msg void OnLvnItemChanged(NMHDR* pNMHDR, LRESULT* pResult);

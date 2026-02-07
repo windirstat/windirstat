@@ -21,6 +21,7 @@
 #include "TreeMapView.h"
 #include "FileTopControl.h"
 #include "FileSearchControl.h"
+#include "FileWatcherControl.h"
 #include "FinderBasic.h"
 #include "FinderNtfs.h"
 #include "SearchDlg.h"
@@ -37,7 +38,6 @@ CDirStatDoc::CDirStatDoc() :
 
     VTRACE(L"sizeof(CItem) = {}", sizeof(CItem));
     VTRACE(L"sizeof(CTreeListItem) = {}", sizeof(CTreeListItem));
-    VTRACE(L"sizeof(CTreeMap::Item) = {}", sizeof(CTreeMap::Item));
     VTRACE(L"sizeof(COwnerDrawnListItem) = {}", sizeof(COwnerDrawnListItem));
 }
 
@@ -56,6 +56,9 @@ void CDirStatDoc::DeleteContents()
     // Wait for system to fully shutdown
     StopScanningEngine(Abort);
 
+    // Stop watchers
+    if (CFileWatcherControl::Get() != nullptr) CFileWatcherControl::Get()->StopMonitoring();
+
     // Clean out icon queue
     GetIconHandler()->ClearAsyncShellInfoQueue();
 
@@ -67,6 +70,7 @@ void CDirStatDoc::DeleteContents()
     if (CFileTreeControl::Get() != nullptr) CFileTreeControl::Get()->DeleteAllItems();
     if (CFileDupeControl::Get() != nullptr) CFileDupeControl::Get()->DeleteAllItems();
     if (CFileSearchControl::Get() != nullptr) CFileSearchControl::Get()->DeleteAllItems();
+    if (CFileWatcherControl::Get() != nullptr) CFileWatcherControl::Get()->DeleteAllItems();
 
     // Cleanup structures
     delete m_rootItem;
@@ -164,12 +168,12 @@ BOOL CDirStatDoc::OnOpenDocument(CItem* newroot)
     {
         std::vector<std::wstring> folders;
         std::ranges::transform(newroot->GetChildren(), std::back_inserter(folders),
-            [](const CItem* obj) -> std::wstring { return std::wstring(obj->GetNameView().substr(0, 2)); });
+            [](const CItem* obj) -> std::wstring { return GetDrive(obj->GetNameView()); });
         spec = JoinString(folders);
     }
     else if (newroot->IsTypeOrFlag(IT_DRIVE))
     {
-        spec = std::wstring(newroot->GetNameView().substr(0, 2));
+        spec = GetDrive(newroot->GetNameView());
     }
 
     Get()->SetPathName(spec.c_str(), FALSE);
@@ -504,9 +508,9 @@ void CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, const bo
             }
 
             // Delete the physical item
-            item->IsTypeOrFlag(IT_DIRECTORY) ?
-                RemoveDirectory(item->GetPathLong().c_str()) :
-                DeleteFile(item->GetPathLong().c_str());
+            item->IsTypeOrFlag(IT_DIRECTORY)
+                ? RemoveDirectory(item->GetPathLong().c_str())
+                : DeleteFileForce(item->GetPathLong(), item->GetAttributes());
 
             pdlg->Increment();
         }
@@ -783,11 +787,17 @@ bool CDirStatDoc::SearchListHasFocus()
     return LF_SEARCHLIST == CMainFrame::Get()->GetLogicalFocus();
 }
 
+bool CDirStatDoc::WatcherListHasFocus()
+{
+    return LF_WATCHERLIST == CMainFrame::Get()->GetLogicalFocus();
+}
+
 CTreeListControl* CDirStatDoc::GetFocusControl()
 {
     if (DupeListHasFocus()) return CFileDupeControl::Get();
     if (TopListHasFocus()) return CFileTopControl::Get();
     if (SearchListHasFocus()) return CFileSearchControl::Get();
+    if (WatcherListHasFocus()) return CFileWatcherControl::Get();
     return CFileTreeControl::Get();
 }
 
@@ -997,6 +1007,8 @@ BEGIN_MESSAGE_MAP(CDirStatDoc, CDocument)
     ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_DISK_CLEANUP, OnExecuteDiskCleanupUtility)
     ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_REMOVE_PROGRAMS, OnExecuteProgramsFeatures)
     ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_REMOVE_MOTW, OnRemoveMarkOfTheWebTags)
+    ON_UPDATE_COMMAND_UI(ID_CLEANUP_CREATE_HARDLINK, OnUpdateCreateHardlink)
+    ON_COMMAND(ID_CLEANUP_CREATE_HARDLINK, OnCreateHardlink)
     ON_UPDATE_COMMAND_UI_RANGE(ID_USERDEFINEDCLEANUP0, ID_USERDEFINEDCLEANUP9, OnUpdateUserDefinedCleanup)
     ON_COMMAND_RANGE(ID_USERDEFINEDCLEANUP0, ID_USERDEFINEDCLEANUP9, OnUserDefinedCleanup)
     ON_COMMAND_UPDATE_WRAPPER(ID_TREEMAP_SELECT_PARENT, OnTreeMapSelectParent)
@@ -1456,23 +1468,17 @@ void CDirStatDoc::OnExecuteProgramsFeatures()
 
 void CDirStatDoc::OnExecuteDismAnalyze()
 {
-    const std::wstring cmd = std::format(LR"(/C "TITLE {} & DISM.EXE {} & PAUSE)",
-        L"WinDirStat - DISM", L"/Online /Cleanup-Image /AnalyzeComponentStore");
-    ShellExecuteWrapper(GetCOMSPEC(), cmd, L"runas");
+    ExecuteCommandInConsole(L"DISM.EXE /Online /Cleanup-Image /AnalyzeComponentStore", L"DISM");
 }
 
 void CDirStatDoc::OnExecuteDismReset()
 {
-    const std::wstring cmd = std::format(LR"(/C "TITLE {} & DISM.EXE {} & PAUSE)",
-        L"WinDirStat - DISM", L"/Online /Cleanup-Image /StartComponentCleanup /ResetBase");
-    ShellExecuteWrapper(GetCOMSPEC(), cmd, L"runas");
+    ExecuteCommandInConsole(L"DISM.EXE /Online /Cleanup-Image /StartComponentCleanup /ResetBase", L"DISM");
 }
 
 void CDirStatDoc::OnExecuteDism()
 {
-    const std::wstring cmd = std::format(LR"(/C "TITLE {} & DISM.EXE {} & PAUSE)",
-        L"WinDirStat - DISM", L"/Online /Cleanup-Image /StartComponentCleanup");
-    ShellExecuteWrapper(GetCOMSPEC(), cmd, L"runas");
+    ExecuteCommandInConsole(L"DISM.EXE /Online /Cleanup-Image /StartComponentCleanup", L"DISM");
 }
 
 void CDirStatDoc::OnUpdateUserDefinedCleanup(CCmdUI* pCmdUI)
@@ -1563,7 +1569,7 @@ void CDirStatDoc::OnComputeHash()
     }).DoModal();
 
     // Display result in message box
-    CMessageBoxDlg dlg(hashResult, Localization::LookupNeutral(AFX_IDS_APP_TITLE), MB_OK | MB_ICONINFORMATION);
+    CMessageBoxDlg dlg(hashResult, wds::strWinDirStat, MB_OK | MB_ICONINFORMATION);
     dlg.SetWidthAuto();
     dlg.DoModal();
 }
@@ -1964,4 +1970,71 @@ void CDirStatDoc::OnRemoveMarkOfTheWebTags()
             pdlg->Increment();
         }
     }).DoModal();
+}
+
+void CDirStatDoc::OnUpdateCreateHardlink(CCmdUI* pCmdUI)
+{
+    // Only allow when focused on duplicate list
+    if (!DupeListHasFocus())
+    {
+        pCmdUI->Enable(FALSE);
+        return;
+    }
+
+    // Get selected items from the duplicate control
+    const auto& control = CFileDupeControl::Get();
+    if (control == nullptr)
+    {
+        pCmdUI->Enable(FALSE);
+        return;
+    }
+
+    // Get the selected tree list items directly
+    const auto selectedItems = control->GetAllSelected<CTreeListItem>(true);
+    
+    // Must have exactly 2 items selected
+    if (selectedItems.size() != 2)
+    {
+        pCmdUI->Enable(FALSE);
+        return;
+    }
+
+    // Both items must be files (have a linked item) with the same parent
+    auto* item1 = selectedItems[0];
+    auto* item2 = selectedItems[1];
+    
+    const bool bothAreFiles = item1->GetLinkedItem() != nullptr && 
+                              item2->GetLinkedItem() != nullptr;
+    const bool sameParent = item1->GetParent() == item2->GetParent() && 
+                            item1->GetParent() != nullptr;
+    
+    pCmdUI->Enable(bothAreFiles && sameParent);
+}
+
+void CDirStatDoc::OnCreateHardlink()
+{
+    // Get selected items from the duplicate control
+    const auto& control = CFileDupeControl::Get();
+    if (control == nullptr) return;
+
+    const auto selectedItems = control->GetAllSelected<CTreeListItem>(true);
+    if (selectedItems.size() != 2) return;
+
+    // Get the linked CItem objects
+    CItem* item1 = selectedItems[0]->GetLinkedItem();
+    CItem* item2 = selectedItems[1]->GetLinkedItem();
+    
+    if (item1 == nullptr || item2 == nullptr) return;
+
+    // Determine which file to keep and which to replace
+    // Use the first selected item as source, second as target to be replaced
+    const std::wstring& sourcePath = item1->GetPath();
+    const std::wstring& targetPath = item2->GetPath();
+
+    // Attempt to create the hardlink
+    if (CreateHardlinkFromFile(sourcePath, targetPath))
+    {
+        // Refresh the target item to reflect the change
+        RefreshItem(item2);
+    }
 }

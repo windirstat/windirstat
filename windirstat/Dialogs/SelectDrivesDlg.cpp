@@ -37,20 +37,13 @@ namespace
     // Return: false, if drive not accessible
     bool RetrieveDriveInformation(const std::wstring & path, std::wstring& name, ULONGLONG& total, ULONGLONG& free)
     {
-        std::wstring volumeName;
-
-        if (!GetVolumeName(path, volumeName))
-        {
-            return false;
-        }
+        const std::wstring volumeName = GetVolumeName(path);
+        if (volumeName.empty()) return false;
 
         name = FormatVolumeName(path, volumeName);
 
         std::tie(total, free) = CDirStatApp::GetFreeDiskSpace(path);
-        if (total == 0)
-        {
-            return false;
-        }
+        if (total == 0) return false;
 
         return true;
     }
@@ -267,7 +260,7 @@ std::wstring CDriveItem::GetPath() const
 
 std::wstring CDriveItem::GetDrive() const
 {
-    return m_path.substr(0, 2);
+    return ::GetDrive(m_path);
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -436,7 +429,7 @@ BOOL CSelectDrivesDlg::OnInitDialog()
     SetForegroundWindow();
 
     const DWORD drives = GetLogicalDrives();
-    for (const size_t i : std::views::iota(0u, wds::strAlpha.size()))
+    for (const auto i : std::views::iota(0, wds::alphaSize))
     {
         const DWORD mask = 0x00000001 << i;
         if ((drives & mask) == 0)
@@ -553,7 +546,7 @@ void CSelectDrivesDlg::UpdateButtons()
     if (m_useFastScan && prevUseFastScan != m_useFastScan && IsElevationAvailable())
     {
         if (WdsMessageBox(*this, Localization::Lookup(IDS_ELEVATION_QUESTION),
-            Localization::LookupNeutral(AFX_IDS_APP_TITLE), MB_YESNO | MB_ICONQUESTION) == IDYES)
+            wds::strWinDirStat, MB_YESNO | MB_ICONQUESTION) == IDYES)
         {
             COptions::UseFastScanEngine = true;
             RunElevated(CDirStatDoc::Get()->GetPathName().GetString());
@@ -716,8 +709,7 @@ void CSelectDrivesDlg::OnBnClickedBrowseButton()
     // Setup folder picker dialog
     CFolderPickerDialog dlg(nullptr,
         OFN_EXPLORER | OFN_PATHMUSTEXIST | OFN_DONTADDTORECENT, this);
-    const auto title = Localization::LookupNeutral(AFX_IDS_APP_TITLE);
-    dlg.m_ofn.lpstrTitle = title.c_str();
+    dlg.m_ofn.lpstrTitle = const_cast<LPWSTR>(wds::strWinDirStat);
 
     // Show dialog and validate results
     if (dlg.DoModal() != IDOK) return;

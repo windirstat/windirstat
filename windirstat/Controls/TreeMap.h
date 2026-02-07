@@ -17,6 +17,9 @@
 
 #pragma once
 
+#include "pch.h"
+#include "Item.h"
+
 //
 // CColorSpace. Helper class for manipulating colors. Static members only.
 //
@@ -117,25 +120,6 @@ public:
     static constexpr DWORD COLORFLAG_MASK    = 0x03000000;
 
     //
-    // Item. Interface which must be supported by the tree items.
-    // If you prefer to use the getHead()/getNext() pattern rather
-    // than using an array for the children, you will have to
-    // rewrite CTreeMap.
-    //
-    class Item
-    {
-    public:
-        virtual ~Item() = default;
-        virtual bool TmiIsLeaf() const = 0;
-        virtual CRect TmiGetRectangle() const = 0;
-        virtual void TmiSetRectangle(const CRect& rc) = 0;
-        virtual COLORREF TmiGetGraphColor() const = 0;
-        virtual int TmiGetChildCount() const = 0;
-        virtual Item* TmiGetChild(int c) const = 0;
-        virtual ULONGLONG TmiGetSize() const = 0;
-    };
-
-    //
     // Treemap squarification style.
     //
     enum STYLE : std::uint8_t
@@ -150,7 +134,7 @@ public:
     struct Options
     {
         STYLE style;         // Squarification method
-        bool grid;           // Whether or not to draw grid lines
+        bool grid;           // Whether to draw grid lines
         COLORREF gridColor;  // Color of grid lines
         double brightness;   // 0..1.0   (default = 0.84)
         double height;       // >= 0.0    (default = 0.40)    Factor "H"
@@ -193,15 +177,15 @@ public:
 
 #ifdef _DEBUG
     // DEBUG function
-    void RecurseCheckTree(const Item *item);
+    void RecurseCheckTree(const CItem *item);
 #endif // _DEBUG
 
     // Create and draw a treemap
-    void DrawTreeMap(CDC* pdc, CRect rc, Item* root, const Options* options = nullptr);
+    void DrawTreeMap(CDC* pdc, CRect rc, CItem* root, const Options* options = nullptr);
 
     // In the resulting treemap, find the item below a given coordinate.
     // Return value can be NULL, iff point is outside root rect.
-    Item* FindItemByPoint(Item* item, CPoint point);
+    CItem* FindItemByPoint(CItem* item, CPoint point);
 
     // Draws a sample rectangle in the given style (for color legend)
     void DrawColorPreview(CDC* pdc, const CRect& rc, COLORREF color, const Options* options = nullptr);
@@ -209,14 +193,14 @@ public:
 protected:
 
     // KDirStat-like squarification
-    bool KDirStat_ArrangeChildren(const Item* parent, std::vector<double>& childWidth, std::vector<double>& rows, std::vector<int>& childrenPerRow) const;
-    double KDirStat_CalculateNextRow(const Item* parent, int nextChild, double width, int& childrenUsed, std::vector<double>& childWidth) const;
+    bool KDirStat_ArrangeChildren(const CItem* parent, std::vector<double>& childWidth, std::vector<double>& rows, std::vector<int>& childrenPerRow) const;
+    double KDirStat_CalculateNextRow(const CItem* parent, int nextChild, double width, int& childrenUsed, std::vector<double>& childWidth) const;
 
     // Returns true, if height and scaleFactor are > 0 and ambientLight is < 1.0
     bool IsCushionShading() const;
 
     // Leaves space for grid and then calls RenderRectangle()
-    void RenderLeaf(std::vector<COLORREF>& bitmap, const Item* item, const std::array<double, 4>& surface) const;
+    void RenderLeaf(std::vector<COLORREF>& bitmap, const CItem* item, const std::array<double, 4>& surface) const;
 
     // Either calls DrawCushion() or DrawSolidRect()
     void RenderRectangle(std::vector<COLORREF>& bitmap, const CRect& rc, const std::array<double, 4>& surface, DWORD color) const;
@@ -279,80 +263,6 @@ protected:
 //
 class CTreeMapPreview final : public CStatic
 {
-    //
-    // CItem. Element of the demo tree.
-    //
-    class CItem final : public CTreeMap::Item
-    {
-    public:
-        CItem(const int size, const COLORREF color)
-            : m_size(size)
-              , m_color(color)
-        {
-        }
-
-        CItem(const std::vector<CItem*>& children)
-        {
-            m_size = 0;
-            for (const auto & child : children)
-            {
-                m_children.emplace_back(child);
-                m_size += static_cast<int>(child->TmiGetSize());
-            }
-
-            std::ranges::sort(m_children, [](auto a, auto b) {return a->m_size > b->m_size; });
-        }
-
-        ~CItem() override
-        {
-            for (const auto & child : m_children)
-            {
-                delete child;
-            }
-        }
-
-        bool TmiIsLeaf() const override
-        {
-            return m_children.empty();
-        }
-
-        CRect TmiGetRectangle() const override
-        {
-            return m_rect;
-        }
-
-        void TmiSetRectangle(const CRect& rc) override
-        {
-            m_rect = rc;
-        }
-
-        COLORREF TmiGetGraphColor() const override
-        {
-            return m_color;
-        }
-
-        int TmiGetChildCount() const override
-        {
-            return static_cast<int>(m_children.size());
-        }
-
-        Item* TmiGetChild(const int c) const override
-        {
-            return m_children[c];
-        }
-
-        ULONGLONG TmiGetSize() const override
-        {
-            return m_size;
-        }
-
-    private:
-        std::vector<CItem*> m_children; // Our children
-        int m_size = 0;                    // Our size (in fantasy units)
-        COLORREF m_color = CLR_INVALID;    // Our color
-        CRect m_rect;                      // Our Rectangle in the treemap
-    };
-
 public:
     CTreeMapPreview();
     ~CTreeMapPreview() override;

@@ -822,15 +822,16 @@ void COwnerDrawnListControl::OnLvnGetDispInfo(NMHDR* pNMHDR, LRESULT* pResult)
     *pResult = FALSE;
 
     const auto* item = std::bit_cast<COwnerDrawnListItem*>(displayInfo->item.lParam);
+    if (item == nullptr) return;
 
-    if ((displayInfo->item.mask & LVIF_TEXT) != 0)
+    if ((displayInfo->item.mask & LVIF_TEXT) != 0 && displayInfo->item.cchTextMax > 0)
     {
         // The passed subitem value is actually the column id so translate it
         const int subitem = ColumnToSubItem(displayInfo->item.iSubItem);
 
         // Copy maximum allowed to the provided buffer
         wcsncpy_s(displayInfo->item.pszText, displayInfo->item.cchTextMax,
-            item->GetText(subitem).c_str(), displayInfo->item.cchTextMax - 1);
+            item->GetText(subitem).c_str(), _TRUNCATE);
     }
 }
 

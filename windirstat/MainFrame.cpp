@@ -21,7 +21,6 @@
 #include "FileTreeView.h"
 #include "DrawTextCache.h"
 #include "ExtensionView.h"
-#include "Property.h"
 #include "PageAdvanced.h"
 #include "PageFiltering.h"
 #include "PageCleanups.h"
@@ -29,35 +28,31 @@
 #include "PageTreeMap.h"
 #include "PageGeneral.h"
 #include "PagePrompts.h"
-#include "FileTopControl.h"
+#include "ProgressDlg.h"
 
-namespace
+// Clipboard Opener
+class COpenClipboard final
 {
-    // Clipboard-Opener
-    class COpenClipboard final
+    BOOL m_open = FALSE;
+
+public:
+    COpenClipboard(CWnd* owner)
     {
-    public:
-        COpenClipboard(CWnd* owner)
+        m_open = owner->OpenClipboard();
+        if (!m_open || !EmptyClipboard())
         {
-            m_open = owner->OpenClipboard();
-            if (!m_open || !EmptyClipboard())
-            {
-                DisplayError(TranslateError());
-            }
+            DisplayError(TranslateError());
         }
+    }
 
-        ~COpenClipboard()
+    ~COpenClipboard()
+    {
+        if (m_open)
         {
-            if (m_open)
-            {
-                CloseClipboard();
-            }
+            CloseClipboard();
         }
-
-    private:
-        BOOL m_open = FALSE;
-    };
-}
+    }
+};
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -117,13 +112,12 @@ BOOL COptionsPropertySheet::OnCommand(const WPARAM wParam, const LPARAM lParam)
 {
     COptions::ConfigPage = GetActiveIndex();
 
-    const int cmd = LOWORD(wParam);
-    if (IDOK == cmd || ID_APPLY_NOW == cmd)
+    if (const int cmd = LOWORD(wParam); IDOK == cmd || ID_APPLY_NOW == cmd)
     {
         if (m_restartRequest && (IDOK == cmd || !m_alreadyAsked))
         {
             const int r = WdsMessageBox(*this, Localization::Lookup(IDS_RESTART_REQUEST),
-                Localization::LookupNeutral(AFX_IDS_APP_TITLE), MB_YESNOCANCEL);
+                wds::strWinDirStat, MB_YESNOCANCEL);
             if (IDCANCEL == r)
             {
                 return true; // "Message handled". Don't proceed.
@@ -386,6 +380,10 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
     ON_COMMAND(ID_VIEW_LARGEST_FILES, &CMainFrame::OnViewLargestFiles)
     ON_COMMAND(ID_VIEW_DUPLICATE_FILES, &CMainFrame::OnViewDuplicateFiles)
     ON_COMMAND(ID_VIEW_SEARCH_RESULTS, &CMainFrame::OnViewSearchResults)
+    ON_COMMAND_RANGE(ID_TOOLS_SHADOW_COPY_BASE, ID_TOOLS_SHADOW_COPY_BASE + wds::alphaSize, &CMainFrame::OnAdvancedShadowCopy)
+    ON_COMMAND_RANGE(ID_TOOLS_DEFRAG_BASE, ID_TOOLS_DEFRAG_BASE + wds::alphaSize, &CMainFrame::OnAdvancedDefrag)
+    ON_COMMAND_RANGE(ID_TOOLS_CHKDSK_BASE, ID_TOOLS_CHKDSK_BASE + wds::alphaSize, &CMainFrame::OnAdvancedChkdsk)
+    ON_COMMAND(ID_TOOLS_WATCHER, &CMainFrame::OnToolsWatcher)
 END_MESSAGE_MAP()
 
 constexpr auto ID_STATUSPANE_IDLE_INDEX = 0;
@@ -410,10 +408,9 @@ LRESULT CMainFrame::OnTaskButtonCreated(WPARAM, LPARAM)
 {
     if (!m_taskbarList)
     {
-        const HRESULT hr = CoCreateInstance(CLSID_TaskbarList, nullptr, CLSCTX_ALL, IID_PPV_ARGS(&m_taskbarList));
-        if (FAILED(hr))
+        if (FAILED(CoCreateInstance(CLSID_TaskbarList, nullptr, CLSCTX_ALL, IID_PPV_ARGS(&m_taskbarList))))
         {
-            VTRACE(L"CoCreateInstance(CLSID_TaskbarList, nullptr, CLSCTX_ALL) failed {:#08X}", static_cast<DWORD>(hr));
+            VTRACE(L"CoCreateInstance(CLSCID_TaskbarList, nullptr, CLSCTX_ALL) failed");
         }
     }
     return 0;
@@ -534,11 +531,11 @@ void CMainFrame::UpdateProgress()
         {
             if (pos == 100)
             {
-                m_taskbarList->SetProgressState(*this, m_taskbarButtonState = TBPF_INDETERMINATE); // often happens before we're finished
+                m_taskbarList->SetProgressState(*this, m_taskbarButtonState = TBPF_INDETERMINATE);
             }
             else
             {
-                m_taskbarList->SetProgressState(*this, m_taskbarButtonState = TBPF_NORMAL); // often happens before we're finished
+                m_taskbarList->SetProgressState(*this, m_taskbarButtonState = TBPF_NORMAL);
                 m_taskbarList->SetProgressValue(*this, m_progressPos, m_progressRange);
             }
         }
@@ -904,9 +901,7 @@ LRESULT CMainFrame::OnCallbackRequest(WPARAM, const LPARAM lParam)
 
 void CMainFrame::CopyToClipboard(const std::wstring & psz)
 {
-    COpenClipboard clipboard(this);
     const SIZE_T cchBufLen = psz.size() + 1;
-
     SmartPointer<HGLOBAL> h(GlobalFree, GlobalAlloc(GMEM_MOVEABLE, cchBufLen * sizeof(WCHAR)));
     if (h == nullptr)
     {
@@ -914,9 +909,9 @@ void CMainFrame::CopyToClipboard(const std::wstring & psz)
         return;
     }
 
-    // Allocate memory - scoped to forced release after copy
+    // Allocate and copy into global memory
+    if (SmartPointer<LPVOID> lp(GlobalUnlock, GlobalLock(h)); true)
     {
-        SmartPointer<LPVOID> lp(GlobalUnlock, GlobalLock(h));
         if (lp == nullptr)
         {
             DisplayError(TranslateError());
@@ -925,6 +920,7 @@ void CMainFrame::CopyToClipboard(const std::wstring & psz)
         wcscpy_s(static_cast<LPWSTR>(*lp), cchBufLen, psz.c_str());
     }
     
+    COpenClipboard clipboard(this);
     if (SetClipboardData(CF_UNICODETEXT, h) == nullptr)
     {
         DisplayError(TranslateError());
@@ -942,6 +938,13 @@ void CMainFrame::OnInitMenuPopup(CMenu* pPopupMenu, const UINT nIndex, const BOO
     if (pPopupMenu->GetMenuState(ID_CLEANUP_EMPTY_BIN, MF_BYCOMMAND) != static_cast<UINT>(-1))
     {
         UpdateCleanupMenu(pPopupMenu);
+    }
+
+    // update tools menu - check if pPopupMenu is the Tools menu by looking for our operation submenus
+    const auto [shadowCopyMenu, shadowCopyPos] = LocateNamedMenu(pPopupMenu, Localization::Lookup(IDS_MENU_SHADOW_COPY), false);
+    if (shadowCopyMenu != nullptr)
+    {
+        UpdateToolsMenu(pPopupMenu);
     }
 }
 
@@ -992,25 +995,10 @@ void CMainFrame::QueryRecycleBin(ULONGLONG& items, ULONGLONG& bytes)
     items = 0;
     bytes = 0;
 
-    const DWORD drives = GetLogicalDrives();
-    for (const auto i : std::views::iota(0, static_cast<int>(wds::strAlpha.size())))
+    for (const std::wstring & drive : GetDriveList({DRIVE_FIXED, DRIVE_REMOVABLE, DRIVE_RAMDISK}))
     {
-        if (((0x00000001 << i) & drives) == 0)
-        {
-            continue;
-        }
-
-        std::wstring s = std::wstring(1, wds::strAlpha.at(i)) + L":\\";
-        if (const UINT type = ::GetDriveType(s.c_str());
-            type == DRIVE_UNKNOWN ||
-            type == DRIVE_NO_ROOT_DIR ||
-            type == DRIVE_REMOTE)
-        {
-            continue;
-        }
-
         SHQUERYRBINFO qbi{ .cbSize = sizeof(qbi) };
-        if (FAILED(::SHQueryRecycleBin(s.c_str(), &qbi)))
+        if (FAILED(::SHQueryRecycleBin((drive + L"\\").c_str(), &qbi)))
         {
             continue;
         }
@@ -1108,6 +1096,79 @@ void CMainFrame::UpdateDynamicMenuItems(CMenu* menu) const
         (customMenu->GetMenuItemCount() > 0 ? MF_ENABLED : (MF_DISABLED | MF_GRAYED)));
 }
 
+void CMainFrame::OnAdvancedShadowCopy(const UINT nID)
+{
+    const WCHAR driveLetter = wds::strAlpha[nID - ID_TOOLS_SHADOW_COPY_BASE];
+    const std::wstring drive = std::format(L"{:c}:", driveLetter);
+
+    bool success = false;
+    CProgressDlg dlg(0, true, this, [&](CProgressDlg*)
+    {
+        success = CreateShadowCopy(drive);
+    });
+    dlg.DoModal();
+
+    if (!success)
+    {
+        const std::wstring msg = Localization::Format(IDS_SHADOW_COPY_FAILED, GetDrive(drive));
+        WdsMessageBox(*this, msg, wds::strWinDirStat, MB_ICONERROR | MB_OK);
+    }
+}
+
+void CMainFrame::OnAdvancedDefrag(const UINT nID)
+{
+    const WCHAR driveLetter = wds::strAlpha[nID - ID_TOOLS_DEFRAG_BASE];
+    ExecuteCommandInConsole(std::format(L"DEFRAG.EXE {:c}: /O", driveLetter), L"DEFRAG");
+}
+
+void CMainFrame::OnAdvancedChkdsk(const UINT nID)
+{
+    const WCHAR driveLetter = wds::strAlpha[nID - ID_TOOLS_CHKDSK_BASE];
+    ExecuteCommandInConsole(std::format(L"CHKDSK.EXE {:c}: /F", driveLetter), L"CHKDSK");
+}
+
+void CMainFrame::UpdateToolsMenu(CMenu* menu)
+{
+    // menu is the Tools popup menu itself
+    // Find each operation submenu and populate with drives
+    auto [shadowCopyMenu, shadowCopyPos] = LocateNamedMenu(menu, Localization::Lookup(IDS_MENU_SHADOW_COPY), true);
+    auto [defragMenu, defragPos] = LocateNamedMenu(menu, Localization::Lookup(IDS_MENU_DEFRAGMENT), true);
+    auto [chkdskMenu, chkdskPos] = LocateNamedMenu(menu, Localization::Lookup(IDS_MENU_CHKDSK), true);
+
+    // Shadow copy requires elevation
+    const bool isElevated = IsElevationActive();
+
+    // Get available local drives
+    const auto drives = GetDriveList({DRIVE_FIXED, DRIVE_REMOVABLE, DRIVE_RAMDISK});
+    if (drives.empty())
+    {
+        if (shadowCopyPos >= 0) menu->EnableMenuItem(shadowCopyPos, MF_BYPOSITION | MF_DISABLED | MF_GRAYED);
+        if (defragPos >= 0) menu->EnableMenuItem(defragPos, MF_BYPOSITION | MF_DISABLED | MF_GRAYED);
+        if (chkdskPos >= 0) menu->EnableMenuItem(chkdskPos, MF_BYPOSITION | MF_DISABLED | MF_GRAYED);
+        return;
+    }
+
+    // Disable shadow copy submenu if not elevated
+    if (!isElevated && shadowCopyPos >= 0)
+    {
+        menu->EnableMenuItem(shadowCopyPos, MF_BYPOSITION | MF_DISABLED | MF_GRAYED);
+    }
+
+    for (const auto& drive : drives)
+    {
+        const int driveIndex = std::toupper(drive[0]) - L'A';
+
+        // Get volume label for display
+        const std::wstring volumeName = GetVolumeName(drive);
+        const std::wstring displayName = volumeName.empty()
+            ? GetDrive(drive) : std::format(L"{:.2} ({})", drive, volumeName);
+
+        if (shadowCopyMenu && isElevated) shadowCopyMenu->AppendMenu(MF_STRING, ID_TOOLS_SHADOW_COPY_BASE + driveIndex, displayName.c_str());
+        if (defragMenu) defragMenu->AppendMenu(MF_STRING, ID_TOOLS_DEFRAG_BASE + driveIndex, displayName.c_str());
+        if (chkdskMenu) chkdskMenu->AppendMenu(MF_STRING, ID_TOOLS_CHKDSK_BASE + driveIndex, displayName.c_str());
+    }
+}
+
 void CMainFrame::SetLogicalFocus(const LOGICAL_FOCUS lf)
 {
     if (lf != m_logicalFocus)
@@ -1132,6 +1193,7 @@ void CMainFrame::MoveFocus(const LOGICAL_FOCUS logicalFocus)
         case LF_DUPELIST: GetFileDupeView()->SetFocus(); break;
         case LF_TOPLIST: GetFileTopView()->SetFocus(); break;
         case LF_SEARCHLIST: GetFileSearchView()->SetFocus(); break;
+        case LF_WATCHERLIST: GetFileWatcherView()->SetFocus(); break;
         case LF_FILETREE: GetFileTreeView()->SetFocus(); break;
         case LF_NONE:
         {
@@ -1343,7 +1405,17 @@ BOOL CMainFrame::LoadFrame(const UINT nIDResource, const DWORD dwDefaultStyle, C
 
     Localization::UpdateMenu(*GetMenu());
     Localization::UpdateDialogs(*this);
-    SetTitle(Localization::LookupNeutral(AFX_IDS_APP_TITLE).c_str());
+    SetTitle(wds::strWinDirStat);
 
     return TRUE;
+}
+
+void CMainFrame::OnToolsWatcher()
+{
+    const bool visible = !GetFileTabbedView()->IsWatcherTabVisible();
+    GetFileTabbedView()->SetWatcherTabVisibility(visible);
+    if (visible)
+    {
+        GetFileTabbedView()->SetActiveWatcherView();
+    }
 }

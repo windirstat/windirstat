@@ -999,7 +999,7 @@ std::wstring CItem::GetFolderPath() const
     return path;
 }
 
-void CItem::SetName(std::wstring_view name)
+void CItem::SetName(const std::wstring_view name)
 {
     m_nameLen = static_cast<std::uint8_t>(name.size());
     m_name = std::make_unique_for_overwrite<wchar_t[]>(m_nameLen + 1);
@@ -1655,6 +1655,11 @@ COLORREF CItem::GetGraphColor() const
         return RGB(255, 255, 0) | CTreeMap::COLORFLAG_LIGHTER;
     }
 
+    if (IsTypeOrFlag(ITF_PREVIEW))
+    {
+        return static_cast<COLORREF>(GetIndex());
+    }
+
     if (IsTypeOrFlag(IT_FREESPACE))
     {
         return RGB(100, 100, 100) | CTreeMap::COLORFLAG_DARKER;
@@ -1672,6 +1677,11 @@ COLORREF CItem::GetGraphColor() const
 
     return RGB(0, 0, 0);
  }
+
+ULONGLONG CItem::TmiGetSize() const noexcept
+{
+    return COptions::TreeMapUseLogical ? GetSizeLogical() : GetSizePhysical();
+}
 
 bool CItem::MustShowReadJobs() const noexcept
 {
@@ -1874,7 +1884,7 @@ CItem* CItem::FindItemByPath(const std::wstring& path) const
     if (components.empty()) return nullptr;
 
     // First component should match the drive (e.g., "C:")
-    if (components[0] != GetNameView().substr(0, 2)) return nullptr;
+    if (components[0] != GetDrive(GetNameView())) return nullptr;
 
     // Start from the drive and process remaining components
     CItem* current = pathDrive;
@@ -1935,7 +1945,7 @@ std::vector<CItem*> CItem::FindItemsBySameIndex() const
     return results;
 }
 
-CItem* CItem::GetLinkedItem()
+CItem* CItem::GetLinkedItem() noexcept
 {
     // For IT_HLINKS_FILE, the name stores the full path
     if (IsTypeOrFlag(IT_HLINKS_FILE))

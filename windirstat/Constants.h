@@ -49,4 +49,5 @@ namespace wds
 
     inline constexpr auto strWinDirStat = L"WinDirStat";
     inline constexpr std::wstring_view strAlpha{ L"ABCDEFGHIJKLMNOPQRSTUVWXYZ" };
+    inline constexpr int alphaSize = std::ssize(strAlpha);
 }

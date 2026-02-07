@@ -203,14 +203,14 @@ bool CDirStatApp::SetPortableMode(const bool enable, const bool onlyOpen)
         }
 
         // Fallback to registry mode for any failures
-        SetRegistryKey(Localization::LookupNeutral(AFX_IDS_APP_TITLE).c_str());
+        SetRegistryKey(wds::strWinDirStat);
         return false;
     }
 
     // Attempt to remove file succeeded
     if (DeleteFile(ini.c_str()) != 0 || GetLastError() == ERROR_FILE_NOT_FOUND)
     {
-        SetRegistryKey(Localization::LookupNeutral(AFX_IDS_APP_TITLE).c_str());
+        SetRegistryKey(wds::strWinDirStat);
         return true;
     }
 
@@ -379,7 +379,7 @@ BOOL CDirStatApp::InitInstance()
     if (IsElevationAvailable() && COptions::ShowElevationPrompt && !hideApp)
     {
         CMessageBoxDlg elevationPrompt(Localization::Lookup(IDS_ELEVATION_QUESTION),
-            Localization::LookupNeutral(AFX_IDS_APP_TITLE), MB_YESNO | MB_ICONQUESTION, m_pMainWnd, {},
+            wds::strWinDirStat, MB_YESNO | MB_ICONQUESTION, m_pMainWnd, {},
             Localization::Lookup(IDS_DONT_SHOW_AGAIN), false);
 
         const INT_PTR result = elevationPrompt.DoModal();
@@ -480,7 +480,7 @@ void CDirStatApp::LegacyUninstall()
     {
         const std::wstring exeName = wds::strWinDirStat;
         PROCESSENTRY32W pe{ .dwSize = sizeof(pe) };
-        for (BOOL hasProcess = Process32First(snap, &pe); hasProcess; hasProcess = Process32NextW(snap, &pe))
+        for (BOOL hasProcess = Process32First(snap, &pe); hasProcess; hasProcess = Process32Next(snap, &pe))
         {
             if (_wcsnicmp(pe.szExeFile, exeName.c_str(), exeName.size()) != 0 ||
                 pe.th32ProcessID == GetCurrentProcessId()) continue;
@@ -516,7 +516,7 @@ void CDirStatApp::LegacyUninstall()
         if (key.Open(regInfo.rootKey, regInfo.subKey.c_str(), KEY_READ) != ERROR_SUCCESS) continue;
 
         // Query InstallLocation
-        std::array<WCHAR, MAX_PATH + 1> installPath;
+        std::array<WCHAR, MAX_PATH> installPath;
         ULONG size = static_cast<ULONG>(installPath.size());
         if (key.QueryStringValue(L"InstallLocation", installPath.data(), &size) == ERROR_SUCCESS)
         {
@@ -556,7 +556,7 @@ void CDirStatApp::LegacyUninstall()
     }
 
     // Remove ProgramData start menu items
-    std::array<WCHAR, MAX_PATH + 1> programData;
+    std::array<WCHAR, MAX_PATH> programData;
     if (SHGetFolderPath(nullptr, CSIDL_COMMON_APPDATA, nullptr, 0, programData.data()) != S_OK) return;
     fs::remove_all(fs::path(programData.data()) / startMenuLocation, ec);
     ExitProcess(0);

@@ -48,16 +48,24 @@ constexpr T* ByteOffset(void* ptr, const std::ptrdiff_t offset) noexcept
 // WMI helpers
 void QueryShadowCopies(ULONGLONG& count, ULONGLONG& bytesUsed);
 void RemoveWmiInstances(const std::wstring& wmiClass, CProgressDlg* pdlg, const std::wstring& whereClause = L"__PATH IS NOT NULL");
+bool CreateShadowCopy(const std::wstring& volumePath);
+
+// Disk utilities
+std::vector<std::wstring> GetDriveList(
+    const std::vector<UINT> & driveTypes = {DRIVE_FIXED, DRIVE_REMOTE, 
+    DRIVE_REMOVABLE, DRIVE_RAMDISK }, bool checkAccessible = true);
 
 // File system helpers
 bool FolderExists(const std::wstring& path) noexcept;
 bool DriveExists(const std::wstring& path) noexcept;
 bool IsLocalDrive(const std::wstring& path) noexcept;
-bool GetVolumeName(const std::wstring& rootPath, std::wstring& volumeName);
-
+std::wstring GetVolumeName(const std::wstring& rootPath);
+bool DeleteFileForce(const std::wstring& path, DWORD attributes = INVALID_FILE_ATTRIBUTES);
+ 
 // Path utilities
 std::wstring WdsQueryDosDevice(const std::wstring& drive);
 bool IsSUBSTedDrive(const std::wstring& drive);
+inline auto GetDrive(const std::wstring_view& sv) { return std::wstring{ sv.substr(0, 2) }; };
 
 // Hibernation
 void DisableHibernate() noexcept;
@@ -75,6 +83,8 @@ std::wstring GetNameFromSid(PSID sid);
 // Compression
 bool CompressFileAllowed(const std::wstring& volumeName, CompressionAlgorithm algorithm);
 bool CompressFile(const std::wstring& filePath, CompressionAlgorithm algorithm);
+bool SparsifyFile(const std::wstring& path, ULONGLONG minZeroRunSize = 64 * 1024, ULONGLONG chunkSize = 1024 * 1024);
+bool CreateHardlinkFromFile(const std::wstring& pathOne, const std::wstring& pathTwo);
 
 // File hashing
 std::wstring ComputeFileHashes(const std::wstring& filePath);

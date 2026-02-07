@@ -42,6 +42,7 @@ enum LOGICAL_FOCUS : uint8_t
     LF_DUPELIST,
     LF_TOPLIST,
     LF_SEARCHLIST,
+    LF_WATCHERLIST,
     LF_EXTLIST,
 };
 
@@ -161,6 +162,7 @@ protected:
     CFileTopView* GetFileTopView() const { return m_fileTabbedView->GetFileTopView(); }
     CFileDupeView* GetFileDupeView() const { return m_fileTabbedView->GetFileDupeView(); }
     CFileSearchView* GetFileSearchView() const { return m_fileTabbedView->GetFileSearchView(); }
+    CFileWatcherView* GetFileWatcherView() const { return m_fileTabbedView->GetFileWatcherView(); }
     CFileTabbedView* GetFileTabbedView() const { return m_fileTabbedView; }
     CTreeMapView* GetTreeMapView() const { return m_treeMapView; }
     CExtensionView* GetExtensionView() const { return m_extensionView; }
@@ -240,6 +242,11 @@ protected:
     afx_msg void OnViewLargestFiles() { GetFileTabbedView()->SetActiveTopView(); }
     afx_msg void OnViewDuplicateFiles() { GetFileTabbedView()->SetActiveDupeView(); }
     afx_msg void OnViewSearchResults() { GetFileTabbedView()->SetActiveSearchView(); }
+    afx_msg void OnAdvancedShadowCopy(UINT nID);
+    afx_msg void OnAdvancedDefrag(UINT nID);
+    afx_msg void OnAdvancedChkdsk(UINT nID);
+    afx_msg void OnToolsWatcher();
+    void UpdateToolsMenu(CMenu* menu);
     afx_msg void OnConfigure();
     afx_msg void OnDestroy();
     afx_msg LRESULT OnTaskButtonCreated(WPARAM, LPARAM);

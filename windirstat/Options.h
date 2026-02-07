@@ -107,6 +107,7 @@ class COptions final
     static LPCWSTR OptionsExtView;
     static LPCWSTR OptionsTopView;
     static LPCWSTR OptionsSearch;
+    static LPCWSTR OptionsWatcher;
     static LPCWSTR OptionsDriveSelect;
 
 public:
@@ -206,6 +207,8 @@ public:
     static Setting<std::vector<int>> SearchViewColumnWidths;
     static Setting<std::vector<int>> TopViewColumnOrder;
     static Setting<std::vector<int>> TopViewColumnWidths;
+    static Setting<std::vector<int>> WatcherColumnOrder;
+    static Setting<std::vector<int>> WatcherColumnWidths;
     static Setting<std::vector<std::wstring>> SelectDrivesDrives;
     static Setting<std::vector<std::wstring>> SelectDrivesFolder;
     static Setting<std::wstring> FilteringExcludeDirs;
