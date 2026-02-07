@@ -49,7 +49,7 @@ void CControlView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
     {
     case HINT_NEWROOT:
     {
-        control.SetRootItem();
+        control.SetRootItem(reinterpret_cast<CTreeListItem*>(pHint));
         control.Invalidate();
     }
     break;

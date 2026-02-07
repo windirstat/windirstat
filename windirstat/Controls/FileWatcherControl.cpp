@@ -141,11 +141,14 @@ void CFileWatcherControl::AddChange(const std::wstring& path, const DWORD action
 
     static auto verbs = SplitString(Localization::Lookup(IDS_WATCHER_VERBS), L',');
 
-    FILETIME fileTime{};
-    GetSystemTimeAsFileTime(&fileTime);
-
+    // Ignore modified events for directories as they will be depicted by changed to their children
     WIN32_FILE_ATTRIBUTE_DATA fileAttr{};
     GetFileAttributesExW(path.c_str(), GetFileExInfoStandard, &fileAttr);
+    if (action == FILE_ACTION_MODIFIED &&
+        (fileAttr.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0) return;
+
+    FILETIME fileTime{};
+    GetSystemTimeAsFileTime(&fileTime);
 
     auto item = std::make_unique<CWatcherItem>(path, verbs[action - 1], fileTime,
         ULARGE_INTEGER{ .u = { fileAttr.nFileSizeLow, fileAttr.nFileSizeHigh } }.QuadPart, fileAttr.dwFileAttributes);

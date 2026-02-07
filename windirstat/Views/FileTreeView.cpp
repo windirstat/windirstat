@@ -67,16 +67,11 @@ int CFileTreeView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
     return 0;
 }
 
+
 void CFileTreeView::OnUpdate(CView* pSender, const LPARAM lHint, CObject* pHint)
 {
-    ASSERT(AfxGetThread() != nullptr);
-
-    if (lHint == HINT_NEWROOT)
-    {
-        m_control.SetRootItem(CDirStatDoc::Get()->GetRootItem());
-    }
-
-    CControlView::OnUpdate(pSender, lHint, pHint);
+    CControlView::OnUpdate(pSender, lHint,
+        reinterpret_cast<CObject*>(CDirStatDoc::Get()->GetRootItem()));
 }
 
 IMPLEMENT_DYNCREATE(CFileWatcherView, CControlView)
