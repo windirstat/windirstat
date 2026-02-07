@@ -1085,7 +1085,7 @@ void CDirStatDoc::OnLoadResults()
         newroot = LoadResults(dlg.GetPathName().GetString());
     }).DoModal();
 
-    Get()->OnOpenDocument(newroot);
+    if (newroot != nullptr) Get()->OnOpenDocument(newroot);
 }
 
 void CDirStatDoc::OnEditCopy()
