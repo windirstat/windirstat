@@ -68,7 +68,7 @@ int CFileTreeView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
 }
 
 
-void CFileTreeView::OnUpdate(CView* pSender, const LPARAM lHint, CObject* pHint)
+void CFileTreeView::OnUpdate(CView* pSender, const LPARAM lHint, CObject*)
 {
     CControlView::OnUpdate(pSender, lHint,
         reinterpret_cast<CObject*>(CDirStatDoc::Get()->GetRootItem()));
