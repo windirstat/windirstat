@@ -118,7 +118,7 @@ void CPacman::Draw(CDC* pdc, const CRect& rect, const COLORREF backColor)
     if (m_moving) return;
 
     // Draw sleepy graphic
-    const COLORREF zColor = DarkMode::WdsSysColor(COLOR_WINDOWTEXT);
+    const COLORREF zColor = DarkMode::IsDarkModeActive() ? 0x888888 : 0x000000;
     static const Gdiplus::Font font{ L"Arial", 6.0f, Gdiplus::FontStyleBold };
     static const Gdiplus::SolidBrush zBrush(Gdiplus::Color(0xFF, GetRValue(zColor), GetGValue(zColor), GetBValue(zColor)));
     for (const auto x : { 1.0f, 2.0f, 3.0f })
