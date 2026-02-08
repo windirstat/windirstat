@@ -68,10 +68,15 @@ int CFileTreeView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
 }
 
 
-void CFileTreeView::OnUpdate(CView* pSender, const LPARAM lHint, CObject*)
+void CFileTreeView::OnUpdate(CView* pSender, const LPARAM lHint, CObject* pHint)
 {
     CControlView::OnUpdate(pSender, lHint,
         reinterpret_cast<CObject*>(CDirStatDoc::Get()->GetRootItem()));
+
+    if (lHint == HINT_SELECTIONACTION)
+    {
+        m_control.EmulateInteractiveSelection(reinterpret_cast<const CItem*>(pHint));
+    }
 }
 
 IMPLEMENT_DYNCREATE(CFileWatcherView, CControlView)
