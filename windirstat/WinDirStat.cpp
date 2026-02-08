@@ -233,6 +233,7 @@ class CWinDirStatCommandLineInfo final : public CCommandLineInfo
     const std::wstring saveDupesToCSVFlag = L"savedupestocsv";
     const std::wstring loadFromCSVFlag = L"loadfromcsv";
     const std::wstring legacyUninstallFlag = L"legacyuninstall";
+    const std::wstring silentFlag = L"silent";
 
 public:
 
@@ -252,18 +253,32 @@ public:
             {
                 CDirStatApp::Get()->m_saveToCsvPath = param;
                 COptions::ScanForDuplicates = false;
+                m_pendingFlag.clear();
             }
             else if (m_pendingFlag == saveDupesToCSVFlag)
             {
                 CDirStatApp::Get()->m_saveDupesToCsvPath = param;
                 COptions::ScanForDuplicates = true;
+                m_pendingFlag.clear();
             }
             else if (m_pendingFlag == loadFromCSVFlag)
             {
                 CDirStatApp::Get()->m_loadFromCsvPath = param;
+                m_pendingFlag.clear();
             }
-            
-            m_pendingFlag.clear();
+            else if (m_pendingFlag == silentFlag)
+            {
+                if (m_strFileName.IsEmpty())
+                {
+                    m_strFileName = param.c_str();
+                }
+                else
+                {
+                    CDirStatApp::Get()->m_saveToCsvPath = param;
+                    COptions::ScanForDuplicates = false;
+                    m_pendingFlag.clear();
+                }
+            }
             return;
         }
 
@@ -282,7 +297,7 @@ public:
 
         // Handle flags
         param = MakeLower(param);
-        if (param == saveToCSVFlag || param == saveDupesToCSVFlag || param == loadFromCSVFlag)
+        if (param == saveToCSVFlag || param == saveDupesToCSVFlag || param == loadFromCSVFlag || param == silentFlag)
         {
             m_pendingFlag = param;
         }
