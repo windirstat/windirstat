@@ -151,12 +151,9 @@ protected:
 
     static CDirStatDoc* s_singleton;
 
-    bool m_showFreeSpace; // Whether to show the <Free Space> item
-    bool m_showUnknown;   // Whether to show the <Unknown> item
-
     CItem* m_rootItem = nullptr; // The very root item
-    std::wstring m_highlightExtension; // Currently highlighted extension
     CItem* m_zoomItem = nullptr;   // Current "zoom root"
+    std::wstring m_highlightExtension; // Currently highlighted extension
 
     std::mutex m_extensionMutex;
     CExtensionData m_extensionData;    // Base for the extension view and cushion colors
@@ -170,6 +167,9 @@ protected:
     LOGICAL_FOCUS m_cachedFocus{}; 
     std::vector<CItem*> m_cachedSelection;
     bool m_selectionCacheValid = false;
+
+    bool m_showFreeSpace; // Whether to show the <Free Space> item
+    bool m_showUnknown;   // Whether to show the <Unknown> item
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnRefreshSelected();

@@ -84,7 +84,6 @@
 #include <set>
 #include <shared_mutex>
 #include <source_location>
-#include <stack>
 #include <string>
 #include <string_view>
 #include <thread>

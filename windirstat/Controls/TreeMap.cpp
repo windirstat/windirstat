@@ -174,13 +174,13 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, CItem* root, const Options* optio
 
     // Main loop
     const int gridWidth = m_options.grid ? 1 : 0;
-    std::stack<DrawState> stack;
-    stack.emplace(root, CRect(0, 0, rc.Width(), rc.Height()), true,
+    std::vector<DrawState> stack;
+    stack.emplace_back(root, CRect(0, 0, rc.Width(), rc.Height()), true,
         std::array<double, 4>{}, m_options.height);
     while (!stack.empty())
     {
-        DrawState state = std::move(stack.top());
-        stack.pop();
+        DrawState state = stack.back();
+        stack.pop_back();
         CItem* item = state.item;
 
         // Process the current state
@@ -261,7 +261,7 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, CItem* root, const Options* optio
                     }
 
                     // Prepare child state and push onto the stack
-                    stack.emplace(child, rcChild, false, state.surface,
+                    stack.emplace_back(child, rcChild, false, state.surface,
                         state.h * m_options.scaleFactor);
 
                     left = fRight;
@@ -378,7 +378,7 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, CItem* root, const Options* optio
                     // Prepare child state and push onto the stack
                     if (childSize > 0)
                     {
-                        stack.emplace(item->TmiGetChild(i), rcChild, false, state.surface, state.h * m_options.scaleFactor);
+                        stack.emplace_back(item->TmiGetChild(i), rcChild, false, state.surface, state.h * m_options.scaleFactor);
                     }
 
                     fBegin = fEnd;

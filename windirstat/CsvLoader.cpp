@@ -232,12 +232,12 @@ bool SaveResults(const std::wstring& path, CItem* rootItem)
     items.reserve(static_cast<size_t>(rootItem->GetItemsCount()));
 
     // Output all items to file
-    std::stack<CItem*> queue({ rootItem });
+    std::vector<CItem*> queue({ rootItem });
     while (!queue.empty())
     {
         // Grab item from queue
-        const CItem* qitem = queue.top();
-        queue.pop();
+        const CItem* qitem = queue.back();
+        queue.pop_back();
 
         // Skip hardlink container items - we output files as if hardlink processing wasn't done
         if (qitem->IsTypeOrFlag(IT_HLINKS)) continue;
@@ -253,7 +253,8 @@ bool SaveResults(const std::wstring& path, CItem* rootItem)
         });
 
         // Descend into child items
-        for (const auto& child : children) queue.push(child);
+        queue.reserve(queue.size() + children.size());
+        for (const auto& child : children) queue.push_back(child);
     }
 
     // Output header line to file

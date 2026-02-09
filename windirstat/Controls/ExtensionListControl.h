@@ -22,7 +22,7 @@ class CExtensionView;
 //
 // CExtensionListControl.
 //
-class CExtensionListControl final : public COwnerDrawnListControl
+class CExtensionListControl final : public CWdsListControl
 {
 protected:
     // Columns
@@ -37,7 +37,7 @@ protected:
     };
 
     // CListItem. The items of the CExtensionListControl.
-    class CListItem final : public COwnerDrawnListItem
+    class CListItem final : public CWdsListItem
     {
     public:
         CListItem(CExtensionListControl* list, const std::wstring & extension, const SExtensionRecord& r);
@@ -48,7 +48,7 @@ protected:
 
         std::wstring GetExtension() const;
         HICON GetIcon() override;
-        int Compare(const COwnerDrawnListItem* baseOther, int subitem) const override;
+        int Compare(const CWdsListItem* baseOther, int subitem) const override;
 
     private:
         void DrawColor(CDC* pdc, CRect rc, UINT state, int* width) const;

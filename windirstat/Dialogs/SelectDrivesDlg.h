@@ -18,7 +18,7 @@
 #pragma once
 
 #include "pch.h"
-#include "OwnerDrawnListControl.h"
+#include "WdsListControl.h"
 #include "Layout.h"
 
 //
@@ -37,7 +37,7 @@ class CDrivesList;
 // CDriveItem. An item in the CDrivesList Control.
 // All methods are called by the gui thread.
 //
-class CDriveItem final : public COwnerDrawnListItem
+class CDriveItem final : public CWdsListItem
 {
 public:
     CDriveItem(CDrivesList* list, const std::wstring& pszPath);
@@ -48,7 +48,7 @@ public:
 
     void SetDriveInformation(bool success);
 
-    int Compare(const COwnerDrawnListItem* baseOther, int subitem) const override;
+    int Compare(const CWdsListItem* baseOther, int subitem) const override;
 
     std::wstring GetPath() const;
     std::wstring GetDrive() const;
@@ -82,7 +82,7 @@ private:
 //
 // CDrivesList.
 //
-class CDrivesList final : public COwnerDrawnListControl
+class CDrivesList final : public CWdsListControl
 {
     friend class CSelectDrivesDlg;
     DECLARE_DYNAMIC(CDrivesList)

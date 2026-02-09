@@ -66,7 +66,7 @@ int CExtensionView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
     }
 
     constexpr RECT rect = {0, 0, 0, 0};
-    m_extensionListControl.Create(LVS_SINGLESEL | LVS_OWNERDRAWFIXED | LVS_SHOWSELALWAYS | WS_CHILD | WS_VISIBLE | LVS_REPORT, rect, this, ID_WDS_CONTROL);
+    m_extensionListControl.Create(LVS_OWNERDATA | LVS_SINGLESEL | LVS_OWNERDRAWFIXED | LVS_SHOWSELALWAYS | WS_CHILD | WS_VISIBLE | LVS_REPORT, rect, this, ID_WDS_CONTROL);
     m_extensionListControl.SetExtendedStyle(m_extensionListControl.GetExtendedStyle() | LVS_EX_HEADERDRAGDROP);
     m_extensionListControl.ShowGrid(COptions::ListGrid);
     m_extensionListControl.ShowStripes(COptions::ListStripes);

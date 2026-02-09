@@ -152,13 +152,7 @@
     <ClInclude Include="Views\ExtensionView.h">
       <Filter>Header Files\Views</Filter>
     </ClInclude>
-    <ClInclude Include="Views\FileDupeView.h">
-      <Filter>Header Files\Views</Filter>
-    </ClInclude>
     <ClInclude Include="Views\FileTabbedView.h">
-      <Filter>Header Files\Views</Filter>
-    </ClInclude>
-    <ClInclude Include="Views\FileTopView.h">
       <Filter>Header Files\Views</Filter>
     </ClInclude>
     <ClInclude Include="Views\FileTreeView.h">
@@ -176,7 +170,7 @@
     <ClInclude Include="Controls\PacMan.h">
       <Filter>Header Files\Controls</Filter>
     </ClInclude>
-    <ClInclude Include="Controls\OwnerDrawnListControl.h">
+    <ClInclude Include="Controls\WdsListControl.h">
       <Filter>Header Files\Controls</Filter>
     </ClInclude>
     <ClInclude Include="Controls\IconHandler.h">
@@ -218,9 +212,6 @@
     <ClInclude Include="ItemSearch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Views\FileSearchView.h">
-      <Filter>Header Files\Views</Filter>
-    </ClInclude>
     <ClInclude Include="res\LangStrings.h">
       <Filter>Resource Files\Languages</Filter>
     </ClInclude>
@@ -250,9 +241,6 @@
     </ClInclude>
     <ClInclude Include="Controls\FileWatcherControl.h">
       <Filter>Header Files\Controls</Filter>
-    </ClInclude>
-    <ClInclude Include="Views\FileWatcherView.h">
-      <Filter>Header Files\Views</Filter>
     </ClInclude>
     <ClInclude Include="Views\ControlView.h">
       <Filter>Header Files\Views</Filter>
@@ -316,9 +304,6 @@
     <ClCompile Include="Pages\PageTreeMap.cpp">
       <Filter>Source Files\Pages</Filter>
     </ClCompile>
-    <ClCompile Include="Views\FileTopView.cpp">
-      <Filter>Source Files\Views</Filter>
-    </ClCompile>
     <ClCompile Include="Views\FileTreeView.cpp">
       <Filter>Source Files\Views</Filter>
     </ClCompile>
@@ -329,9 +314,6 @@
       <Filter>Source Files\Views</Filter>
     </ClCompile>
     <ClCompile Include="Views\FileTabbedView.cpp">
-      <Filter>Source Files\Views</Filter>
-    </ClCompile>
-    <ClCompile Include="Views\FileDupeView.cpp">
       <Filter>Source Files\Views</Filter>
     </ClCompile>
     <ClCompile Include="ItemTop.cpp">
@@ -349,7 +331,7 @@
     <ClCompile Include="Controls\PacMan.cpp">
       <Filter>Source Files\Controls</Filter>
     </ClCompile>
-    <ClCompile Include="Controls\OwnerDrawnListControl.cpp">
+    <ClCompile Include="Controls\WdsListControl.cpp">
       <Filter>Source Files\Controls</Filter>
     </ClCompile>
     <ClCompile Include="Controls\FileTreeControl.cpp">
@@ -382,9 +364,6 @@
     <ClCompile Include="ItemSearch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Views\FileSearchView.cpp">
-      <Filter>Source Files\Views</Filter>
-    </ClCompile>
     <ClCompile Include="DarkMode.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -408,9 +387,6 @@
     </ClCompile>
     <ClCompile Include="HelpersTasks.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Views\FileWatcherView.cpp">
-      <Filter>Source Files\Views</Filter>
     </ClCompile>
     <ClCompile Include="Controls\FileWatcherControl.cpp">
       <Filter>Source Files\Controls</Filter>

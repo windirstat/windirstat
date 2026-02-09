@@ -18,7 +18,7 @@
 #pragma once
 
 #include "pch.h"
-#include "OwnerDrawnListControl.h"
+#include "WdsListControl.h"
 #include "PacMan.h"
 
 class CFileTreeView;
@@ -32,7 +32,7 @@ class CItem;
 // we allocate the VISIBLEINFO structure (m_visualInfo).
 // m_visualInfo is freed as soon as the item is removed from the List.
 //
-class CTreeListItem : public COwnerDrawnListItem
+class CTreeListItem : public CWdsListItem
 {
     // Data needed to display the item.
     struct VISIBLEINFO final
@@ -57,7 +57,7 @@ public:
     bool DrawSubItem(int subitem, CDC* pdc, CRect rc, UINT state, int* width, int* focusLeft) override;
     std::wstring GetText(int subitem) const override;
     HICON GetIcon() override { return m_visualInfo->icon; }
-    int Compare(const COwnerDrawnListItem* baseOther, int subitem) const override;
+    int Compare(const CWdsListItem* baseOther, int subitem) const override;
     virtual CTreeListItem* GetTreeListChild(int i) const = 0;
     virtual int GetTreeListChildCount() const = 0;
     virtual CItem* GetLinkedItem() { return reinterpret_cast<CItem*>(this); }
@@ -69,7 +69,7 @@ public:
     bool HasChildren() const;
     bool IsExpanded() const;
     void SetExpanded(bool expanded = true) const;
-    bool IsVisible() const { return m_visualInfo != nullptr; }
+    bool IsVisible() const { return m_visualInfo.get() != nullptr; }
     void SetVisible(CTreeListControl * control, bool visible = true);
     unsigned char GetIndent() const;
     void SetIndent(unsigned char indent) const;
@@ -93,7 +93,7 @@ private:
 //
 // CTreeListControl. A CListCtrl, which additionally behaves and looks like a tree control.
 //
-class CTreeListControl : public COwnerDrawnListControl
+class CTreeListControl : public CWdsListControl
 {
     DECLARE_DYNAMIC(CTreeListControl)
 

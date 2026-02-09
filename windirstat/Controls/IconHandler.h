@@ -35,7 +35,7 @@ public:
     CIconHandler() = default;
     ~CIconHandler();
 
-    using IconLookup = std::tuple<COwnerDrawnListItem*, COwnerDrawnListControl*,
+    using IconLookup = std::tuple<CWdsListItem*, CWdsListControl*,
         std::wstring, DWORD, HICON*, std::wstring*>;
 
     void Initialize();

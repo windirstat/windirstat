@@ -31,6 +31,7 @@ CFileWatcherControl* CFileWatcherControl::m_singleton = nullptr;
 CFileWatcherControl::CFileWatcherControl()
     : CTreeListControl(COptions::WatcherColumnOrder.Ptr(), COptions::WatcherColumnWidths.Ptr())
 {
+    SetOwnsItems(true);
     m_singleton = this;
 }
 
@@ -50,7 +51,7 @@ void CFileWatcherControl::OnDestroy()
     StopMonitoring();
     DeleteAllItems();
 
-    COwnerDrawnListControl::OnDestroy();
+    CWdsListControl::OnDestroy();
 }
 
 void CFileWatcherControl::OnSetFocus(CWnd* pOldWnd)

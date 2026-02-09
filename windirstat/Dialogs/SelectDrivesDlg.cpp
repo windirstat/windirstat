@@ -147,7 +147,7 @@ bool CDriveItem::IsSUBSTed() const
     return m_subst;
 }
 
-int CDriveItem::Compare(const COwnerDrawnListItem* baseOther, const int subitem) const
+int CDriveItem::Compare(const CWdsListItem* baseOther, const int subitem) const
 {
     const CDriveItem* other = reinterpret_cast<const CDriveItem*>(baseOther);
 
@@ -265,16 +265,16 @@ std::wstring CDriveItem::GetDrive() const
 
 /////////////////////////////////////////////////////////////////////////////
 
-IMPLEMENT_DYNAMIC(CDrivesList, COwnerDrawnListControl)
+IMPLEMENT_DYNAMIC(CDrivesList, CWdsListControl)
 
 CDrivesList::CDrivesList()
-    : COwnerDrawnListControl(COptions::DriveListColumnOrder.Ptr(), COptions::DriveListColumnWidths.Ptr())
+    : CWdsListControl(COptions::DriveListColumnOrder.Ptr(), COptions::DriveListColumnWidths.Ptr())
 {
 }
 
 CDriveItem* CDrivesList::GetItem(const int i) const
 {
-    return std::bit_cast<CDriveItem*>(GetItemData(i));
+    return reinterpret_cast<CDriveItem*>(CWdsListControl::GetItem(i));
 }
 
 void CDrivesList::SelectItem(const CDriveItem* item)
@@ -302,7 +302,7 @@ void CDrivesList::OnDoubleClick(NMHDR* /*pNMHDR*/, LRESULT* pResult)
     (void) GetParent()->SendMessage(WMU_OK);
 }
 
-BEGIN_MESSAGE_MAP(CDrivesList, COwnerDrawnListControl)
+BEGIN_MESSAGE_MAP(CDrivesList, CWdsListControl)
     ON_NOTIFY_REFLECT(LVN_DELETEITEM, OnLvnDeleteItem)
     ON_NOTIFY_REFLECT(NM_DBLCLK, OnDoubleClick)
 END_MESSAGE_MAP()
@@ -451,7 +451,7 @@ BOOL CSelectDrivesDlg::OnInitDialog()
         }
 
         const auto item = new CDriveItem(&m_driveList, s);
-        m_driveList.InsertListItem(m_driveList.GetItemCount(), item);
+        m_driveList.InsertListItem(m_driveList.GetItemCount(), { item });
         item->StartQuery(m_hWnd);
 
         for (const auto & drive : m_selectedDrives)

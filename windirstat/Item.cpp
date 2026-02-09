@@ -756,17 +756,17 @@ void CItem::ExtensionDataRemove()
 
 void CItem::ExtensionDataProcessChildren(const bool remove)
 {
-    std::stack<CItem*> childStack({ this });
+    std::vector childStack({ this });
     while (!childStack.empty()) [[msvc::forceinline_calls]]
     {
-        const auto& item = childStack.top();
-        childStack.pop();
+        const auto& item = childStack.back();
+        childStack.pop_back();
 
         if (item->IsTypeOrFlag(IT_MYCOMPUTER, IT_DIRECTORY, IT_DRIVE))
         {
             for (const auto& child : item->GetChildren())
             {
-                childStack.push(child);
+                childStack.push_back(child);
             }
         }
         else if (item->IsTypeOrFlag(IT_FILE))
@@ -1106,16 +1106,16 @@ void CItem::ResetScanStartTime() const noexcept
 void CItem::ScanItemsFinalize(CItem* item)
 {
     if (item == nullptr) return;
-    std::stack<CItem*> queue({item});
+    std::vector<CItem*> queue({item});
     while (!queue.empty()) [[msvc::forceinline_calls]]
     {
-        const auto & qitem = queue.top();
-        queue.pop();
+        const auto & qitem = queue.back();
+        queue.pop_back();
         qitem->SetDone();
         if (qitem->m_folderInfo == nullptr) continue;
         for (const auto& child : qitem->GetChildren())
         {
-            if (!child->IsDone()) queue.push(child);
+            if (!child->IsDone()) queue.push_back(child);
         }
     }
 }
@@ -1470,33 +1470,31 @@ void CItem::DoHardlinkAdjustment()
     indexMapInitial.reserve(GetFilesCount());
 
     // Look for all indexed items in the tree
-    for (std::stack<CItem*> queue({  this }); !queue.empty();)
+    for (std::vector queue({ this }); !queue.empty();)
     {
         // Grab item from queue
-        const CItem* qitem = queue.top();
-        queue.pop();
+        const CItem* qitem = queue.back();
+        queue.pop_back();
 
         // Descend into child items
         if (qitem->IsLeaf()) continue;
         for (const auto& child : qitem->GetChildren())
         {
             // Add for duplicate index detection
-            if (child->IsTypeOrFlag(IT_FILE) && child->GetIndex() > 0)
+            if (const auto index = child->GetIndex(); child->IsTypeOrFlag(IT_FILE) && index > 0)
             {
-                if (indexMapInitial.contains(child->GetIndex()))
+                if (const auto [it, inserted] = indexMapInitial.try_emplace(index, child); !inserted)
                 {
-                    auto & existing = indexDupes[child->GetIndex()];
-                    if (existing.empty()) existing.emplace_back(indexMapInitial[child->GetIndex()]);
-                    existing.emplace_back(child);
+                    auto& existing = indexDupes[index];
+                    existing.emplace_back(existing.empty() ? it->second : child);
                 }
-                else indexMapInitial.emplace(child->GetIndex(), child);
             }
 
             // Do not descend into reparse points since indexes may be from other volumes
             else if (!child->IsLeaf() &&
                 (child->GetAttributes() & FILE_ATTRIBUTE_REPARSE_POINT) == 0)
             {
-                queue.push(child);
+                queue.push_back(child);
             }
         }
     }
@@ -1528,9 +1526,9 @@ void CItem::DoHardlinkAdjustment()
         }
         
         // Determine which Index Set this belongs to (modulus 20, 0-based index)
-        constexpr int INDEX_SET_COUNT = 20;
-        const int setIndex = index % INDEX_SET_COUNT;  // 0-19
-        CItem* indexSetItem = (setIndex < static_cast<int>(indexSets.size())) ? indexSets[setIndex] : nullptr;
+        constexpr auto INDEX_SET_COUNT = 20u;
+        const ULONGLONG setIndex = index % INDEX_SET_COUNT;  // 0-19
+        CItem* indexSetItem = setIndex < indexSets.size() ? indexSets[setIndex] : nullptr;
         
         if (indexSetItem == nullptr) continue;
         
@@ -1920,10 +1918,10 @@ std::vector<CItem*> CItem::FindItemsBySameIndex() const
 
     // Use a stack-based traversal to search through all items under the drive
     std::vector<CItem*> results;
-    for (std::stack<CItem*> itemStack({ driveItem }); !itemStack.empty();)
+    for (std::vector itemStack({ driveItem }); !itemStack.empty();)
     {
-        CItem* current = itemStack.top();
-        itemStack.pop();
+        CItem* current = itemStack.back();
+        itemStack.pop_back();
 
         // Check if this item has the same index (but is not the current item itself)
         if (current != this && current->GetIndex() == targetIndex)
@@ -1937,7 +1935,7 @@ std::vector<CItem*> CItem::FindItemsBySameIndex() const
         {
             for (auto* child : current->GetChildren())
             {
-                itemStack.push(child);
+                itemStack.push_back(child);
             }
         }
     }
@@ -1964,16 +1962,16 @@ CItem* CItem::GetLinkedItem() noexcept
 std::vector<CItem*> CItem::GetItemsRecursive(const std::vector<CItem*>& initialItems, const std::function<bool(CItem*)>& task)
 {
     std::vector<CItem*> files;
-    std::stack childStack{ initialItems };
+    std::vector childStack{ initialItems };
     while (!childStack.empty())
     {
-        const auto& item = childStack.top();
-        childStack.pop();
+        const auto& item = childStack.back();
+        childStack.pop_back();
         if (item->HasChildren())
         {
             for (const auto& child : item->GetChildren())
             {
-                childStack.push(child);
+                childStack.push_back(child);
             }
         }
         else if (task(item))

@@ -185,11 +185,11 @@ void CFileDupeControl::RemoveItem(CItem* item)
     if (!COptions::ScanForDuplicates) return;
 
     // Enumerate child items and mark all as unhashed
-    std::stack<CItem*> queue({ item });
+    std::vector queue({ item });
     while (!queue.empty())
     {
-        const auto qitem = queue.top();
-        queue.pop();
+        const auto qitem = queue.back();
+        queue.pop_back();
         if (qitem->IsTypeOrFlag(IT_FILE))
         {
             // Mark as all files as not being hashed anymore
@@ -198,7 +198,7 @@ void CFileDupeControl::RemoveItem(CItem* item)
         }
         else if (!qitem->IsLeaf()) for (const auto& child : qitem->GetChildren())
         {
-            queue.push(child);
+            queue.push_back(child);
         }
     }
     std::erase_if(m_sizeTracker, [](const auto& pair)

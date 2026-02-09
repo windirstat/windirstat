@@ -83,13 +83,13 @@ void CFileSearchControl::ProcessSearch(CItem* item,
             [](const std::wstring& str, const std::wregex& regex) { return std::regex_search(str, regex); };
   
         // Do search
-        std::stack<CItem*> queue({ item });
+        std::vector queue({ item });
         while (!queue.empty() && !pdlg->IsCancelled())
         {
             // Grab item from queue
             pdlg->Increment();
-            CItem* qitem = queue.top();
-            queue.pop();
+            CItem* qitem = queue.back();
+            queue.pop_back();
 
             // Check for match
             if ((!onlyFiles || qitem->IsTypeOrFlag(IT_FILE)) &&
@@ -102,7 +102,7 @@ void CFileSearchControl::ProcessSearch(CItem* item,
             if (qitem->IsLeaf() || qitem->IsTypeOrFlag(IT_HLINKS)) continue;
             for (const auto& child : qitem->GetChildren())
             {
-                queue.push(child);
+                queue.push_back(child);
             }
         }
 

@@ -19,8 +19,7 @@
 
 #include "pch.h"
 
-class COwnerDrawnListControl;
-class CIconHandler;
+class CWdsListControl;
 
 //
 // SSorting. A sorting specification. We sort by column1, and if two items
@@ -43,11 +42,11 @@ struct SSorting
 // DrawLabel() draws a standard label (width icon, text, selection and focus rect)
 //
 
-class COwnerDrawnListItem
+class CWdsListItem
 {
 public:
-    COwnerDrawnListItem() = default;
-    virtual ~COwnerDrawnListItem() = default;
+    CWdsListItem() = default;
+    virtual ~CWdsListItem() = default;
 
     // This text is drawn, if DrawSubItem returns false
     virtual std::wstring GetText(int subitem) const = 0;
@@ -58,8 +57,8 @@ public:
     }
 
     // Comparison methods for sorting
-    virtual int Compare(const COwnerDrawnListItem* other, int subitem) const = 0;
-    int CompareSort(const COwnerDrawnListItem* other, const SSorting& sorting) const;
+    virtual int Compare(const CWdsListItem* other, int subitem) const = 0;
+    int CompareSort(const CWdsListItem* other, const SSorting& sorting) const;
 
     // Return value is true, if the item draws itself.
     // width != NULL -> only determine width, do not draw.
@@ -67,9 +66,9 @@ public:
     // to the left edge of the desired focus rectangle.
     virtual bool DrawSubItem(int subitem, CDC* pdc, CRect rc, UINT state, int* width, int* focusLeft) = 0;
     virtual void DrawAdditionalState(CDC* /*pdc*/, const CRect& /*rcLabel*/) const {}
-    void DrawSelection(const COwnerDrawnListControl* list, CDC* pdc, CRect rc, UINT state) const;
+    void DrawSelection(const CWdsListControl* list, CDC* pdc, CRect rc, UINT state) const;
     virtual HICON GetIcon() = 0;
-    void DrawLabel(const COwnerDrawnListControl* list, CDC* pdc, CRect& rc, UINT state, int* width, int* focusLeft, bool indent = true);
+    void DrawLabel(const CWdsListControl* list, CDC* pdc, CRect& rc, UINT state, int* width, int* focusLeft, bool indent = true);
     void DrawPercentage(CDC* pdc, CRect rc, double fraction, COLORREF color) const;
 };
 
@@ -78,13 +77,13 @@ public:
 // Can have a grid or not (own implementation, don't set LVS_EX_GRIDLINES). Flicker-free.
 // Also handles sorting functionality (merged from CSortingListControl).
 //
-class COwnerDrawnListControl : public CListCtrl
+class CWdsListControl : public CListCtrl
 {
-    DECLARE_DYNAMIC(COwnerDrawnListControl)
+    DECLARE_DYNAMIC(CWdsListControl)
 
 public:
-    COwnerDrawnListControl(std::vector<int>* columnOrder, std::vector<int>* columnWidths);
-    ~COwnerDrawnListControl() override = default;
+    CWdsListControl(std::vector<int>* columnOrder, std::vector<int>* columnWidths);
+    ~CWdsListControl() override = default;
     void OnColumnsInserted();
     virtual void SysColorChanged();
 
@@ -107,8 +106,8 @@ public:
     COLORREF GetItemSelectionBackgroundColor(int i) const;
     COLORREF GetItemSelectionTextColor(int i) const;
 
-    COwnerDrawnListItem* GetItem(int i) const;
-    int FindListItem(const COwnerDrawnListItem* item) const;
+    CWdsListItem* GetItem(int i) const;
+    int FindListItem(const CWdsListItem* item) const;
     int GetTextXMargin() const;
     int GetGeneralLeftIndent() const;
     CRect GetWholeSubitemRect(int item, int subitem) const;
@@ -116,7 +115,14 @@ public:
     bool HasFocus() const;
     void AddExtendedStyle(DWORD exStyle);
     void RemoveExtendedStyle(DWORD exStyle);
-    void InsertListItem(int i, COwnerDrawnListItem* item);
+    void InsertListItem(int i, const std::vector<CWdsListItem*>& items);
+    void RemoveListItem(int i, int c = 1);
+    void ClearList();
+    
+    // Shadow CListCtrl methods for Owner Data management.
+    // Use these instead of standard CListCtrl methods to ensure proper data management in LVS_OWNERDATA mode.
+    BOOL DeleteItem(int i);
+    BOOL DeleteAllItems();
 
     // Sorting functionality
     const SSorting& GetSorting() const;
@@ -126,6 +132,8 @@ public:
     void SetSorting(int sortColumn, bool ascending);
     virtual void SortItems();
     virtual bool GetAscendingDefault(int column);
+    int GetItemCount() const noexcept { return static_cast<int>(m_items.size()); }
+    void SetOwnsItems(const bool owns) { m_ownsItems = owns; }
 
     // Selection change batching
     void PostSelectionChanged();
@@ -133,10 +141,13 @@ public:
 protected:
     void InitializeColors();
     void DrawItem(LPDRAWITEMSTRUCT pdis) override;
-    int GetSubItemWidth(COwnerDrawnListItem* item, int subitem);
+    int GetSubItemWidth(CWdsListItem* item, int subitem);
     void SavePersistentAttributes() const;
 
     // Owner-drawn related members
+    std::vector<CWdsListItem*> m_items;
+    std::unordered_map<CWdsListItem*, int> m_itemMap;
+    bool m_ownsItems = false;
     COLORREF m_windowColor = CLR_NONE; // The default background color if !m_showStripes
     COLORREF m_stripeColor = CLR_NONE; // The stripe color, used for every other item if m_showStripes
     int m_rowHeight = 20;              // Height of an item

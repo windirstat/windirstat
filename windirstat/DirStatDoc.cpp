@@ -36,9 +36,10 @@ CDirStatDoc::CDirStatDoc() :
     ASSERT(nullptr == s_singleton);
     s_singleton = this;
 
+
     VTRACE(L"sizeof(CItem) = {}", sizeof(CItem));
     VTRACE(L"sizeof(CTreeListItem) = {}", sizeof(CTreeListItem));
-    VTRACE(L"sizeof(COwnerDrawnListItem) = {}", sizeof(COwnerDrawnListItem));
+    VTRACE(L"sizeof(COwnerDrawnListItem) = {}", sizeof(CWdsListItem));
 }
 
 CDirStatDoc::~CDirStatDoc()
@@ -363,11 +364,11 @@ void CDirStatDoc::RecurseRefreshReparsePoints(CItem* items) const
     std::vector<CItem*> toRefresh;
 
     if (items == nullptr) return;
-    std::stack<CItem*> reparseStack({items});
+    std::vector reparseStack({items});
     while (!reparseStack.empty())
     {
-        const auto qitem = reparseStack.top();
-        reparseStack.pop();
+        const auto qitem = reparseStack.back();
+        reparseStack.pop_back();
 
         if (!qitem->IsTypeOrFlag(IT_DIRECTORY, IT_DRIVE)) continue;
         for (const auto& child : qitem->GetChildren())
@@ -383,7 +384,7 @@ void CDirStatDoc::RecurseRefreshReparsePoints(CItem* items) const
             }
             else
             {
-                reparseStack.push(child);
+                reparseStack.push_back(child);
             }
         }
     }

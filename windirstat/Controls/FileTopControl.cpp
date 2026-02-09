@@ -131,11 +131,11 @@ void CFileTopControl::RemoveItem(CItem* item)
 {
     // Create list of all items to remove
     std::unordered_set<CItem*> toRemove;
-    std::stack<CItem*> queue({ item });
+    std::vector queue({ item });
     while (!queue.empty())
     {
-        const auto qitem = queue.top();
-        queue.pop();
+        const auto qitem = queue.back();
+        queue.pop_back();
 
         if (qitem->IsTypeOrFlag(IT_FILE))
         {
@@ -144,7 +144,7 @@ void CFileTopControl::RemoveItem(CItem* item)
         else if (!qitem->IsLeaf()) for (const auto& child : qitem->GetChildren())
         {
             if (child->IsTypeOrFlag(IT_FILE)) toRemove.emplace(child);
-            else queue.push(child);
+            else queue.push_back(child);
         }
     }
 

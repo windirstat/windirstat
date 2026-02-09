@@ -17,7 +17,7 @@
 
 #include "pch.h"
 #include "TreeMap.h"
-#include "OwnerDrawnListControl.h"
+#include "WdsListControl.h"
 #include "DrawTextCache.h"
 
 namespace
@@ -31,7 +31,7 @@ namespace
 /////////////////////////////////////////////////////////////////////////////
 // COwnerDrawnListItem
 
-int COwnerDrawnListItem::CompareSort(const COwnerDrawnListItem* other, const SSorting& sorting) const
+int CWdsListItem::CompareSort(const CWdsListItem* other, const SSorting& sorting) const
 {
     int r = Compare(other, sorting.subitem1);
     if (abs(r) < 2 && !sorting.ascending1)
@@ -52,7 +52,7 @@ int COwnerDrawnListItem::CompareSort(const COwnerDrawnListItem* other, const SSo
 
 // Draws an item label (icon, text) in all parts of the WinDirStat view
 // the rest is drawn by DrawItem()
-void COwnerDrawnListItem::DrawLabel(const COwnerDrawnListControl* list, CDC* pdc, CRect& rc, const UINT state, int* width, int* focusLeft, const bool indent)
+void CWdsListItem::DrawLabel(const CWdsListControl* list, CDC* pdc, CRect& rc, const UINT state, int* width, int* focusLeft, const bool indent)
 {
     CRect rcRest = rc;
 
@@ -136,7 +136,7 @@ void COwnerDrawnListItem::DrawLabel(const COwnerDrawnListControl* list, CDC* pdc
     }
 }
 
-void COwnerDrawnListItem::DrawSelection(const COwnerDrawnListControl* list, CDC* pdc, CRect rc, const UINT state) const
+void CWdsListItem::DrawSelection(const CWdsListControl* list, CDC* pdc, CRect rc, const UINT state) const
 {
     if (!list->IsFullRowSelection())
     {
@@ -151,7 +151,7 @@ void COwnerDrawnListItem::DrawSelection(const COwnerDrawnListControl* list, CDC*
     pdc->FillSolidRect(rc, list->GetHighlightColor());
 }
 
-void COwnerDrawnListItem::DrawPercentage(CDC* pdc, const CRect rc, const double fraction, const COLORREF color) const
+void CWdsListItem::DrawPercentage(CDC* pdc, const CRect rc, const double fraction, const COLORREF color) const
 {
     COLORREF dark = RGB(118, 118, 118); // Light edge
     COLORREF light = RGB(198, 198, 198); // Dark edge
@@ -193,9 +193,9 @@ void COwnerDrawnListItem::DrawPercentage(CDC* pdc, const CRect rc, const double 
 /////////////////////////////////////////////////////////////////////////////
 // COwnerDrawnListControl
 
-IMPLEMENT_DYNAMIC(COwnerDrawnListControl, CListCtrl)
+IMPLEMENT_DYNAMIC(CWdsListControl, CListCtrl)
 
-COwnerDrawnListControl::COwnerDrawnListControl(std::vector<int>* columnOrder, std::vector<int>* columnWidths)
+CWdsListControl::CWdsListControl(std::vector<int>* columnOrder, std::vector<int>* columnWidths)
     : m_columnOrder(columnOrder)
     , m_columnWidths(columnWidths)
 {
@@ -203,13 +203,14 @@ COwnerDrawnListControl::COwnerDrawnListControl(std::vector<int>* columnOrder, st
 }
 
 // This method MUST be called before the Control is shown.
-void COwnerDrawnListControl::OnColumnsInserted()
+void CWdsListControl::OnColumnsInserted()
 {
     // Cache the column count
     m_columnCount = GetHeaderCtrl()->GetItemCount();
 
     // The pacman shall not draw over our header control.
     ModifyStyle(0, WS_CLIPCHILDREN);
+    ModifyStyle(0, LVS_OWNERDATA);
     LoadPersistentAttributes();
 
     // Calculate row height now that window is created
@@ -223,18 +224,18 @@ void COwnerDrawnListControl::OnColumnsInserted()
     SetImageList(nullptr, LVSIL_SMALL);
 }
 
-void COwnerDrawnListControl::SysColorChanged()
+void CWdsListControl::SysColorChanged()
 {
     InitializeColors();
     CalculateRowHeight();
 }
 
-int COwnerDrawnListControl::GetRowHeight() const
+int CWdsListControl::GetRowHeight() const
 {
     return m_rowHeight;
 }
 
-void COwnerDrawnListControl::CalculateRowHeight()
+void CWdsListControl::CalculateRowHeight()
 {
     // Create a device context to get font metrics
     if (!IsWindow(m_hWnd)) return;
@@ -249,7 +250,7 @@ void COwnerDrawnListControl::CalculateRowHeight()
     }
 }
 
-void COwnerDrawnListControl::ShowGrid(const bool show)
+void CWdsListControl::ShowGrid(const bool show)
 {
     m_showGrid = show;
     if (IsWindow(m_hWnd))
@@ -258,7 +259,7 @@ void COwnerDrawnListControl::ShowGrid(const bool show)
     }
 }
 
-void COwnerDrawnListControl::ShowStripes(const bool show)
+void CWdsListControl::ShowStripes(const bool show)
 {
     m_showStripes = show;
     if (IsWindow(m_hWnd))
@@ -267,7 +268,7 @@ void COwnerDrawnListControl::ShowStripes(const bool show)
     }
 }
 
-void COwnerDrawnListControl::ShowFullRowSelection(const bool show)
+void CWdsListControl::ShowFullRowSelection(const bool show)
 {
     m_showFullRowSelect = show;
     if (IsWindow(m_hWnd))
@@ -276,36 +277,36 @@ void COwnerDrawnListControl::ShowFullRowSelection(const bool show)
     }
 }
 
-bool COwnerDrawnListControl::IsFullRowSelection() const
+bool CWdsListControl::IsFullRowSelection() const
 {
     return m_showFullRowSelect;
 }
 
 // Normal window background color
-COLORREF COwnerDrawnListControl::GetWindowColor() const
+COLORREF CWdsListControl::GetWindowColor() const
 {
     return m_windowColor;
 }
 
 // Shaded window background color (for stripes)
-COLORREF COwnerDrawnListControl::GetStripeColor() const
+COLORREF CWdsListControl::GetStripeColor() const
 {
     return m_stripeColor;
 }
 
 // Highlight color if we have no focus
-COLORREF COwnerDrawnListControl::GetNonFocusHighlightColor() const
+COLORREF CWdsListControl::GetNonFocusHighlightColor() const
 {
     return DarkMode::IsDarkModeActive() ? RGB(90, 90, 90) : RGB(190, 190, 190);
 }
 
 // Highlight text color if we have no focus
-COLORREF COwnerDrawnListControl::GetNonFocusHighlightTextColor() const
+COLORREF CWdsListControl::GetNonFocusHighlightTextColor() const
 {
     return DarkMode::IsDarkModeActive() ? RGB(255, 255, 255) : RGB(0, 0, 0);
 }
 
-COLORREF COwnerDrawnListControl::GetHighlightColor() const
+COLORREF CWdsListControl::GetHighlightColor() const
 {
     if (HasFocus())
     {
@@ -315,7 +316,7 @@ COLORREF COwnerDrawnListControl::GetHighlightColor() const
     return GetNonFocusHighlightColor();
 }
 
-COLORREF COwnerDrawnListControl::GetHighlightTextColor() const
+COLORREF CWdsListControl::GetHighlightTextColor() const
 {
     if (HasFocus())
     {
@@ -325,17 +326,17 @@ COLORREF COwnerDrawnListControl::GetHighlightTextColor() const
     return GetNonFocusHighlightTextColor();
 }
 
-bool COwnerDrawnListControl::IsItemStripColor(const int i) const
+bool CWdsListControl::IsItemStripColor(const int i) const
 {
     return m_showStripes && i % 2 != 0;
 }
 
-COLORREF COwnerDrawnListControl::GetItemBackgroundColor(const int i) const
+COLORREF CWdsListControl::GetItemBackgroundColor(const int i) const
 {
     return IsItemStripColor(i) ? GetStripeColor() : GetWindowColor();
 }
 
-COLORREF COwnerDrawnListControl::GetItemSelectionBackgroundColor(const int i) const
+COLORREF CWdsListControl::GetItemSelectionBackgroundColor(const int i) const
 {
     const bool selected = (GetItemState(i, LVIS_SELECTED) & LVIS_SELECTED) != 0;
     if (selected && IsFullRowSelection())
@@ -346,7 +347,7 @@ COLORREF COwnerDrawnListControl::GetItemSelectionBackgroundColor(const int i) co
     return GetItemBackgroundColor(i);
 }
 
-COLORREF COwnerDrawnListControl::GetItemSelectionTextColor(const int i) const
+COLORREF CWdsListControl::GetItemSelectionTextColor(const int i) const
 {
     const bool selected = (GetItemState(i, LVIS_SELECTED) & LVIS_SELECTED) != 0;
     if (selected && IsFullRowSelection())
@@ -357,29 +358,36 @@ COLORREF COwnerDrawnListControl::GetItemSelectionTextColor(const int i) const
     return DarkMode::WdsSysColor(COLOR_WINDOWTEXT);
 }
 
-int COwnerDrawnListControl::GetTextXMargin() const
+int CWdsListControl::GetTextXMargin() const
 {
     return TEXT_X_MARGIN;
 }
 
-int COwnerDrawnListControl::GetGeneralLeftIndent() const
+int CWdsListControl::GetGeneralLeftIndent() const
 {
     return GENERAL_INDENT;
 }
 
-COwnerDrawnListItem* COwnerDrawnListControl::GetItem(const int i) const
+CWdsListItem* CWdsListControl::GetItem(const int i) const
 {
-    const auto item = std::bit_cast<COwnerDrawnListItem*>(GetItemData(i));
-    return item;
+    if (i < 0 || i >= static_cast<int>(m_items.size()))
+    {
+        return nullptr;
+    }
+
+    return m_items[i];
 }
 
-int COwnerDrawnListControl::FindListItem(const COwnerDrawnListItem* item) const
+int CWdsListControl::FindListItem(const CWdsListItem* item) const
 {
-    LVFINDINFO fi{ .flags = LVFI_PARAM, .lParam = reinterpret_cast<LPARAM>(item) };
-    return FindItem(&fi);
+    if (const auto it = m_itemMap.find(const_cast<CWdsListItem*>(item)); it != m_itemMap.end())
+    {
+        return it->second;
+    }
+    return -1;
 }
 
-void COwnerDrawnListControl::InitializeColors()
+void CWdsListControl::InitializeColors()
 {
     // I try to find a good contrast to COLOR_WINDOW (usually white or light grey).
     // This is a result of experiments.
@@ -405,9 +413,11 @@ void COwnerDrawnListControl::InitializeColors()
         CColorSpace::MakeBrightColor(m_windowColor, b);
 }
 
-void COwnerDrawnListControl::DrawItem(LPDRAWITEMSTRUCT pdis)
+void CWdsListControl::DrawItem(LPDRAWITEMSTRUCT pdis)
 {
-    auto* item = std::bit_cast<COwnerDrawnListItem*>(pdis->itemData);
+    auto* item = GetItem(static_cast<int>(pdis->itemID));
+    if (item == nullptr) return;
+
     auto* pdc = CDC::FromHandle(pdis->hDC);
     CRect rcItem(pdis->rcItem);
 
@@ -496,7 +506,7 @@ void COwnerDrawnListControl::DrawItem(LPDRAWITEMSTRUCT pdis)
         rcItem.Width(), rcItem.Height(), &dcMem, 0, 0, SRCCOPY);
 }
 
-CRect COwnerDrawnListControl::GetWholeSubitemRect(const int item, const int subitem) const
+CRect CWdsListControl::GetWholeSubitemRect(const int item, const int subitem) const
 {
     CRect rc;
     if (subitem == 0)
@@ -519,12 +529,12 @@ CRect COwnerDrawnListControl::GetWholeSubitemRect(const int item, const int subi
     return rc;
 }
 
-bool COwnerDrawnListControl::HasFocus() const
+bool CWdsListControl::HasFocus() const
 {
     return ::GetFocus() == m_hWnd;
 }
 
-int COwnerDrawnListControl::GetSubItemWidth(COwnerDrawnListItem* item, const int subitem)
+int CWdsListControl::GetSubItemWidth(CWdsListItem* item, const int subitem)
 {
     CClientDC dc(this);
     const CRect rc(0, 0, 3500, 20);
@@ -552,7 +562,7 @@ int COwnerDrawnListControl::GetSubItemWidth(COwnerDrawnListItem* item, const int
 /////////////////////////////////////////////////////////////////////////////
 // Sorting functionality (merged from CSortingListControl)
 
-void COwnerDrawnListControl::LoadPersistentAttributes()
+void CWdsListControl::LoadPersistentAttributes()
 {
     // Fetch casted column count to avoid signed comparison warnings
     const auto columnCount = static_cast<size_t>(m_columnCount);
@@ -582,7 +592,7 @@ void COwnerDrawnListControl::LoadPersistentAttributes()
     }
 }
 
-void COwnerDrawnListControl::SavePersistentAttributes() const
+void CWdsListControl::SavePersistentAttributes() const
 {
     GetColumnOrderArray(m_columnOrder->data(), static_cast<int>(m_columnOrder->size()));
     for (const int i : std::views::iota(0, static_cast<int>(m_columnWidths->size())))
@@ -591,64 +601,65 @@ void COwnerDrawnListControl::SavePersistentAttributes() const
     }
 }
 
-void COwnerDrawnListControl::AddExtendedStyle(const DWORD exStyle)
+void CWdsListControl::AddExtendedStyle(const DWORD exStyle)
 {
     SetExtendedStyle(GetExtendedStyle() | exStyle);
 }
 
-void COwnerDrawnListControl::RemoveExtendedStyle(const DWORD exStyle)
+void CWdsListControl::RemoveExtendedStyle(const DWORD exStyle)
 {
     SetExtendedStyle(GetExtendedStyle() & ~exStyle);
 }
 
-const SSorting& COwnerDrawnListControl::GetSorting() const
+const SSorting& CWdsListControl::GetSorting() const
 {
     return m_sorting;
 }
 
-int COwnerDrawnListControl::ColumnToSubItem(const int col) const
+int CWdsListControl::ColumnToSubItem(const int col) const
 {
     LVCOLUMN column_info{ .mask = LVCF_SUBITEM };
     GetColumn(col, &column_info);
     return column_info.iSubItem;
 }
 
-void COwnerDrawnListControl::SetSorting(const SSorting& sorting)
+void CWdsListControl::SetSorting(const SSorting& sorting)
 {
     m_sorting = sorting;
 }
 
-void COwnerDrawnListControl::SetSorting(const int sortColumn1, const bool ascending1, const int sortColumn2, const bool ascending2)
+void CWdsListControl::SetSorting(const int sortColumn1, const bool ascending1, const int sortColumn2, const bool ascending2)
 {
-    m_sorting.column1    = sortColumn1;
-    m_sorting.subitem1   = ColumnToSubItem(sortColumn1);
+    m_sorting.column1 = sortColumn1;
+    m_sorting.subitem1 = ColumnToSubItem(sortColumn1);
     m_sorting.ascending1 = ascending1;
-    m_sorting.column2    = sortColumn2;
-    m_sorting.subitem2   = ColumnToSubItem(sortColumn2);
+    m_sorting.column2 = sortColumn2;
+    m_sorting.subitem2 = ColumnToSubItem(sortColumn2);
     m_sorting.ascending2 = ascending2;
 }
 
-void COwnerDrawnListControl::SetSorting(const int sortColumn, const bool ascending)
+void CWdsListControl::SetSorting(const int sortColumn, const bool ascending)
 {
-    m_sorting.column2    = m_sorting.column1;
-    m_sorting.subitem2   = m_sorting.subitem1;
+    m_sorting.column2 = m_sorting.column1;
+    m_sorting.subitem2 = m_sorting.subitem1;
     m_sorting.ascending2 = m_sorting.ascending1;
-    m_sorting.column1    = sortColumn;
+    m_sorting.column1 = sortColumn;
     m_sorting.ascending1 = ascending;
-    m_sorting.subitem1   = ColumnToSubItem(sortColumn);
+    m_sorting.subitem1 = ColumnToSubItem(sortColumn);
 }
 
-void COwnerDrawnListControl::InsertListItem(const int i, COwnerDrawnListItem* item)
+void CWdsListControl::InsertListItem(const int i, const std::vector<CWdsListItem*>& items)
 {
-    LVITEM lvitem;
-    lvitem.mask = LVIF_TEXT | LVIF_PARAM | LVIF_IMAGE;
-    lvitem.iItem = i;
-    lvitem.pszText = LPSTR_TEXTCALLBACK;
-    lvitem.iImage = I_IMAGECALLBACK;
-    lvitem.lParam = reinterpret_cast<LPARAM>(item);
-    lvitem.stateMask = 0;
-    lvitem.iSubItem = 0;
-    VERIFY(i == CListCtrl::InsertItem(&lvitem));
+    ASSERT(i >= 0 && i <= GetItemCount());
+
+    m_items.insert(m_items.begin() + i, items.begin(), items.end());
+
+    for (const int  x : std::views::iota(i, GetItemCount()))
+    {
+        m_itemMap[m_items[x]] = x;
+    }
+
+    SetItemCountEx(GetItemCount(), LVSICF_NOSCROLL);
 }
 
 /*
@@ -657,18 +668,22 @@ void COwnerDrawnListControl::InsertListItem(const int i, COwnerDrawnListItem* it
  * It then updates the header control by using native Windows header flags (HDF_SORTUP and HDF_SORTDOWN)
  * to display a platform-consistent sorting arrow.
  */
-void COwnerDrawnListControl::SortItems()
+void CWdsListControl::SortItems()
 {
-    // Reorder the list items based on the current sorting criteria using a lambda comparison function.
-    CListCtrl::SortItems([](LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort) {
-        const auto* item1 = std::bit_cast<COwnerDrawnListItem*>(lParam1);
-        const auto* item2 = std::bit_cast<COwnerDrawnListItem*>(lParam2);
-        const auto* sorting = std::bit_cast<SSorting*>(lParamSort);
-        return item1->CompareSort(item2, *sorting); }, reinterpret_cast<DWORD_PTR>(&m_sorting));
+    std::ranges::stable_sort(m_items, [this](const CWdsListItem* item1, const CWdsListItem* item2)
+    {
+        return item1->CompareSort(item2, m_sorting) < 0;
+    });
 
-    auto* pHeaderCtrl = GetHeaderCtrl();
+    for (const int i : std::views::iota(0, GetItemCount()))
+    {
+        m_itemMap[m_items[i]] = i;
+    }
+
+    Invalidate();
 
     // Exit if the header control is unavailable, to prevent a null pointer crash.
+    auto* pHeaderCtrl = GetHeaderCtrl();
     if (pHeaderCtrl == nullptr)
     {
         return;
@@ -700,12 +715,12 @@ void COwnerDrawnListControl::SortItems()
     m_indicatedColumn = m_sorting.column1;
 }
 
-bool COwnerDrawnListControl::GetAscendingDefault(int /*column*/)
+bool CWdsListControl::GetAscendingDefault(int /*column*/)
 {
     return true;
 }
 
-void COwnerDrawnListControl::PostSelectionChanged()
+void CWdsListControl::PostSelectionChanged()
 {
     // Only post if there isn't already a pending message
     if (!m_selectionChangePending)
@@ -718,7 +733,7 @@ void COwnerDrawnListControl::PostSelectionChanged()
 /////////////////////////////////////////////////////////////////////////////
 // Message Map
 
-BEGIN_MESSAGE_MAP(COwnerDrawnListControl, CListCtrl)
+BEGIN_MESSAGE_MAP(CWdsListControl, CListCtrl)
     ON_WM_ERASEBKGND()
     ON_NOTIFY(HDN_DIVIDERDBLCLICK, 0, OnHdnDividerdblclick)
     ON_NOTIFY(HDN_ITEMCHANGING, 0, OnHdnItemchanging)
@@ -731,7 +746,7 @@ BEGIN_MESSAGE_MAP(COwnerDrawnListControl, CListCtrl)
     ON_MESSAGE(WM_SELECTION_CHANGED, OnSelectionChanged)
 END_MESSAGE_MAP()
 
-void COwnerDrawnListControl::OnCustomDraw(NMHDR* pNMHDR, LRESULT* pResult)
+void CWdsListControl::OnCustomDraw(NMHDR* pNMHDR, LRESULT* pResult)
 {
     // Check if this is a notification from the header control
     *pResult = CDRF_DODEFAULT;
@@ -752,7 +767,7 @@ void COwnerDrawnListControl::OnCustomDraw(NMHDR* pNMHDR, LRESULT* pResult)
     }
 }
 
-BOOL COwnerDrawnListControl::OnEraseBkgnd(CDC* pDC)
+BOOL CWdsListControl::OnEraseBkgnd(CDC* pDC)
 {
     // Fetch coordinate of the last item
     CRect lastRect(0, 0, 0, 0);
@@ -780,7 +795,7 @@ BOOL COwnerDrawnListControl::OnEraseBkgnd(CDC* pDC)
     return TRUE;
 }
 
-void COwnerDrawnListControl::OnHdnDividerdblclick(NMHDR* pNMHDR, LRESULT* pResult)
+void CWdsListControl::OnHdnDividerdblclick(NMHDR* pNMHDR, LRESULT* pResult)
 {
     const int column = reinterpret_cast<LPNMHEADER>(pNMHDR)->iItem;
     const int subitem = ColumnToSubItem(column);
@@ -808,7 +823,7 @@ void COwnerDrawnListControl::OnHdnDividerdblclick(NMHDR* pNMHDR, LRESULT* pResul
     *pResult = FALSE;
 }
 
-void COwnerDrawnListControl::OnHdnItemchanging(NMHDR* /*pNMHDR*/, LRESULT* pResult)
+void CWdsListControl::OnHdnItemchanging(NMHDR* /*pNMHDR*/, LRESULT* pResult)
 {
     Default();
     InvalidateRect(nullptr);
@@ -816,13 +831,18 @@ void COwnerDrawnListControl::OnHdnItemchanging(NMHDR* /*pNMHDR*/, LRESULT* pResu
     *pResult = FALSE;
 }
 
-void COwnerDrawnListControl::OnLvnGetDispInfo(NMHDR* pNMHDR, LRESULT* pResult)
+void CWdsListControl::OnLvnGetDispInfo(NMHDR* pNMHDR, LRESULT* pResult)
 {
-    const auto* displayInfo = reinterpret_cast<NMLVDISPINFO*>(pNMHDR);
+    auto* displayInfo = reinterpret_cast<NMLVDISPINFO*>(pNMHDR);
     *pResult = FALSE;
 
-    const auto* item = std::bit_cast<COwnerDrawnListItem*>(displayInfo->item.lParam);
+    auto* item = GetItem(displayInfo->item.iItem);
     if (item == nullptr) return;
+
+    if (displayInfo->item.mask & LVIF_PARAM)
+    {
+        displayInfo->item.lParam = reinterpret_cast<LPARAM>(item);
+    }
 
     if ((displayInfo->item.mask & LVIF_TEXT) != 0 && displayInfo->item.cchTextMax > 0)
     {
@@ -835,13 +855,12 @@ void COwnerDrawnListControl::OnLvnGetDispInfo(NMHDR* pNMHDR, LRESULT* pResult)
     }
 }
 
-void COwnerDrawnListControl::OnHdnItemClick(NMHDR* pNMHDR, LRESULT* pResult)
+void CWdsListControl::OnHdnItemClick(NMHDR* pNMHDR, LRESULT* pResult)
 {
     const auto* phdr = reinterpret_cast<LPNMHEADER>(pNMHDR);
     *pResult = FALSE;
-    const int col = phdr->iItem;
 
-    if (col == m_sorting.column1)
+    if (const int col = phdr->iItem; col == m_sorting.column1)
     {
         m_sorting.ascending1 = !m_sorting.ascending1;
     }
@@ -853,18 +872,18 @@ void COwnerDrawnListControl::OnHdnItemClick(NMHDR* pNMHDR, LRESULT* pResult)
     SortItems();
 }
 
-void COwnerDrawnListControl::OnHdnItemDblClick(NMHDR* pNMHDR, LRESULT* pResult)
+void CWdsListControl::OnHdnItemDblClick(NMHDR* pNMHDR, LRESULT* pResult)
 {
     OnHdnItemClick(pNMHDR, pResult);
 }
 
-void COwnerDrawnListControl::OnDestroy()
+void CWdsListControl::OnDestroy()
 {
     SavePersistentAttributes();
     CListCtrl::OnDestroy();
 }
 
-LRESULT COwnerDrawnListControl::OnSelectionChanged(WPARAM wParam, LPARAM lParam)
+LRESULT CWdsListControl::OnSelectionChanged(WPARAM wParam, LPARAM lParam)
 {
     UNREFERENCED_PARAMETER(wParam);
     UNREFERENCED_PARAMETER(lParam);
@@ -873,4 +892,55 @@ LRESULT COwnerDrawnListControl::OnSelectionChanged(WPARAM wParam, LPARAM lParam)
     CDirStatDoc::Get()->UpdateAllViews(nullptr, HINT_SELECTIONREFRESH);
 
     return 0;
+}
+
+void CWdsListControl::RemoveListItem(const int i, const int c)
+{
+    ASSERT(i >= 0 && i < GetItemCount());
+
+    for (const int x : std::views::iota(i, i + c))
+    {
+        CWdsListItem* item = m_items[x];
+        m_itemMap.erase(item);
+        if (m_ownsItems)
+        {
+            delete item;
+        }
+    }
+
+    m_items.erase(m_items.begin() + i, m_items.begin() + i + c);
+
+    for (const int x : std::views::iota(i, GetItemCount()))
+    {
+        m_itemMap[m_items[x]] = x;
+    }
+
+    SetItemCountEx(GetItemCount(), LVSICF_NOSCROLL);
+    RedrawItems(i, GetItemCount() - 1);
+}
+
+void CWdsListControl::ClearList()
+{
+    if (m_ownsItems)
+    {
+        for (const auto* item : m_items)
+        {
+            delete item;
+        }
+    }
+    m_items.clear();
+    m_itemMap.clear();
+    SetItemCountEx(0, LVSICF_NOINVALIDATEALL | LVSICF_NOSCROLL);
+}
+
+BOOL CWdsListControl::DeleteItem(const int i)
+{
+    RemoveListItem(i);
+    return TRUE;
+}
+
+BOOL CWdsListControl::DeleteAllItems()
+{
+    ClearList();
+    return TRUE;
 }

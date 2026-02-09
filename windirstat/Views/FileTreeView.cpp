@@ -57,7 +57,7 @@ int CFileTreeView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
     if (CControlView::OnCreate(lpCreateStruct) == -1) return -1;
 
     constexpr RECT rect = { 0, 0, 0, 0 };
-    m_control.CreateExtended(LVS_EX_HEADERDRAGDROP, WS_CHILD | WS_VISIBLE | LVS_REPORT | LVS_SHOWSELALWAYS, rect, this, ID_WDS_CONTROL);
+    m_control.CreateExtended(LVS_EX_HEADERDRAGDROP, LVS_OWNERDATA | WS_CHILD | WS_VISIBLE | LVS_REPORT | LVS_SHOWSELALWAYS, rect, this, ID_WDS_CONTROL);
     m_control.ShowGrid(COptions::ListGrid);
     m_control.ShowStripes(COptions::ListStripes);
     m_control.ShowFullRowSelection(COptions::ListFullRowSelection);
@@ -90,7 +90,7 @@ int CFileWatcherView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
     if (CControlView::OnCreate(lpCreateStruct) == -1) return -1;
 
     constexpr RECT rect = {0, 0, 0, 0};
-    m_control.CreateExtended(LVS_EX_HEADERDRAGDROP, LVS_SINGLESEL | WS_CHILD | WS_VISIBLE | LVS_REPORT | LVS_SHOWSELALWAYS, rect, this, ID_WDS_CONTROL);
+    m_control.CreateExtended(LVS_EX_HEADERDRAGDROP, LVS_OWNERDATA | LVS_SINGLESEL | WS_CHILD | WS_VISIBLE | LVS_REPORT | LVS_SHOWSELALWAYS, rect, this, ID_WDS_CONTROL);
     m_control.ShowGrid(COptions::ListGrid);
     m_control.ShowStripes(COptions::ListStripes);
     m_control.ShowFullRowSelection(COptions::ListFullRowSelection);
@@ -118,7 +118,7 @@ int CFileTopView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
     if (CControlView::OnCreate(lpCreateStruct) == -1) return -1;
     
     constexpr RECT rect = { 0, 0, 0, 0 };
-    m_control.CreateExtended(LVS_EX_HEADERDRAGDROP, WS_CHILD | WS_VISIBLE | LVS_REPORT | LVS_SHOWSELALWAYS, rect, this, ID_WDS_CONTROL);
+    m_control.CreateExtended(LVS_EX_HEADERDRAGDROP, LVS_OWNERDATA | WS_CHILD | WS_VISIBLE | LVS_REPORT | LVS_SHOWSELALWAYS, rect, this, ID_WDS_CONTROL);
     m_control.ShowGrid(COptions::ListGrid);
     m_control.ShowStripes(COptions::ListStripes);
     m_control.ShowFullRowSelection(COptions::ListFullRowSelection);
@@ -146,7 +146,7 @@ int CFileDupeView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
     if (CControlView::OnCreate(lpCreateStruct) == -1) return -1;
 
     constexpr RECT rect = { 0, 0, 0, 0 };
-    m_control.CreateExtended(LVS_EX_HEADERDRAGDROP, WS_CHILD | WS_VISIBLE | LVS_REPORT | LVS_SHOWSELALWAYS, rect, this, ID_WDS_CONTROL);
+    m_control.CreateExtended(LVS_EX_HEADERDRAGDROP, LVS_OWNERDATA | WS_CHILD | WS_VISIBLE | LVS_REPORT | LVS_SHOWSELALWAYS, rect, this, ID_WDS_CONTROL);
     m_control.ShowGrid(COptions::ListGrid);
     m_control.ShowStripes(COptions::ListStripes);
     m_control.ShowFullRowSelection(COptions::ListFullRowSelection);
@@ -176,7 +176,7 @@ int CFileSearchView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
     if (CControlView::OnCreate(lpCreateStruct) == -1) return -1;
 
     constexpr RECT rect = { 0, 0, 0, 0 };
-    m_control.CreateExtended(LVS_EX_HEADERDRAGDROP, WS_CHILD | WS_VISIBLE | LVS_REPORT | LVS_SHOWSELALWAYS, rect, this, ID_WDS_CONTROL);
+    m_control.CreateExtended(LVS_EX_HEADERDRAGDROP, LVS_OWNERDATA | WS_CHILD | WS_VISIBLE | LVS_REPORT | LVS_SHOWSELALWAYS, rect, this, ID_WDS_CONTROL);
     m_control.ShowGrid(COptions::ListGrid);
     m_control.ShowStripes(COptions::ListStripes);
     m_control.ShowFullRowSelection(COptions::ListFullRowSelection);

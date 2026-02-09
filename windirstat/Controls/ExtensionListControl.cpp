@@ -120,7 +120,7 @@ double CExtensionListControl::CListItem::GetBytesFraction() const
         static_cast<double>(m_driveList->GetRootSize());
 }
 
-int CExtensionListControl::CListItem::Compare(const COwnerDrawnListItem* baseOther, const int subitem) const
+int CExtensionListControl::CListItem::Compare(const CWdsListItem* baseOther, const int subitem) const
 {
     const auto other = static_cast<const CListItem*>(baseOther);
 
@@ -138,7 +138,7 @@ int CExtensionListControl::CListItem::Compare(const COwnerDrawnListItem* baseOth
 
 /////////////////////////////////////////////////////////////////////////////
 
-BEGIN_MESSAGE_MAP(CExtensionListControl, COwnerDrawnListControl)
+BEGIN_MESSAGE_MAP(CExtensionListControl, CWdsListControl)
     ON_NOTIFY_REFLECT(LVN_DELETEITEM, OnLvnDeleteItem)
     ON_WM_SETFOCUS()
     ON_NOTIFY_REFLECT(LVN_ITEMCHANGED, OnLvnItemChanged)
@@ -148,8 +148,11 @@ BEGIN_MESSAGE_MAP(CExtensionListControl, COwnerDrawnListControl)
 END_MESSAGE_MAP()
 
 CExtensionListControl::CExtensionListControl(CExtensionView* extensionView)
-    : COwnerDrawnListControl(COptions::ExtViewColumnOrder.Ptr(), COptions::ExtViewColumnWidths.Ptr())
-    , m_extensionView(extensionView) {}
+    : CWdsListControl(COptions::ExtViewColumnOrder.Ptr(), COptions::ExtViewColumnWidths.Ptr())
+    , m_extensionView(extensionView)
+{
+    SetOwnsItems(true);
+}
 
 bool CExtensionListControl::GetAscendingDefault(const int subitem)
 {
@@ -191,11 +194,11 @@ void CExtensionListControl::SetExtensionData(const CExtensionData* ed)
     // Insert new items
     if (ed != nullptr)
     {
-        int i = 0;
+        std::vector<CWdsListItem*> items;
         for (const auto& [ext, rec] : *ed)
-        {
-            InsertListItem(i++, new CListItem(this, ext, rec));
-        }
+            items.push_back(new CListItem(this, ext, rec));
+
+        InsertListItem(0, items);
     }
 
     SetRedraw(TRUE);
@@ -240,7 +243,7 @@ std::wstring CExtensionListControl::GetSelectedExtension() const
 
 CExtensionListControl::CListItem* CExtensionListControl::GetListItem(const int i) const
 {
-    return std::bit_cast<CListItem*>(GetItemData(i));
+    return static_cast<CListItem*>(GetItem(i));
 }
 
 void CExtensionListControl::OnLvnDeleteItem(NMHDR* pNMHDR, LRESULT* pResult)
@@ -252,7 +255,7 @@ void CExtensionListControl::OnLvnDeleteItem(NMHDR* pNMHDR, LRESULT* pResult)
 
 void CExtensionListControl::OnSetFocus(CWnd* pOldWnd)
 {
-    COwnerDrawnListControl::OnSetFocus(pOldWnd);
+    CWdsListControl::OnSetFocus(pOldWnd);
     CMainFrame::Get()->SetLogicalFocus(LF_EXTLIST);
 }
 
@@ -299,7 +302,7 @@ void CExtensionListControl::OnKeyDown(const UINT nChar, const UINT nRepCnt, cons
         CMainFrame::Get()->MoveFocus(LF_NONE);
     }
 
-    COwnerDrawnListControl::OnKeyDown(nChar, nRepCnt, nFlags);
+    CWdsListControl::OnKeyDown(nChar, nRepCnt, nFlags);
 }
 
 void CExtensionListControl::OnContextMenu(CWnd* /*pWnd*/, CPoint point)
