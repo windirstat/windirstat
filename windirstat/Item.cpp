@@ -1527,7 +1527,7 @@ void CItem::DoHardlinkAdjustment()
         
         // Determine which Index Set this belongs to (modulus 20, 0-based index)
         constexpr auto INDEX_SET_COUNT = 20u;
-        const ULONGLONG setIndex = index % INDEX_SET_COUNT;  // 0-19
+        const size_t setIndex = index % INDEX_SET_COUNT;  // 0-19
         CItem* indexSetItem = setIndex < indexSets.size() ? indexSets[setIndex] : nullptr;
         
         if (indexSetItem == nullptr) continue;
