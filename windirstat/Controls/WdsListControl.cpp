@@ -29,7 +29,7 @@ namespace
 }
 
 /////////////////////////////////////////////////////////////////////////////
-// COwnerDrawnListItem
+// CWdsListItem
 
 int CWdsListItem::CompareSort(const CWdsListItem* other, const SSorting& sorting) const
 {
@@ -191,7 +191,7 @@ void CWdsListItem::DrawPercentage(CDC* pdc, const CRect rc, const double fractio
 }
 
 /////////////////////////////////////////////////////////////////////////////
-// COwnerDrawnListControl
+// CWdsListControl
 
 IMPLEMENT_DYNAMIC(CWdsListControl, CListCtrl)
 

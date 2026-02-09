@@ -36,9 +36,9 @@ struct SSorting
 };
 
 //
-// COwnerDrawnListItem. An item in a COwnerDrawnListControl.
+// CWdsListItem. An item in a CWdsListControl.
 // Some columns (subitems) may be owner drawn (DrawSubItem() returns true),
-// COwnerDrawnListControl draws the texts (GetText()) of all others.
+// CWdsListControl draws the texts (GetText()) of all others.
 // DrawLabel() draws a standard label (width icon, text, selection and focus rect)
 //
 
@@ -73,7 +73,7 @@ public:
 };
 
 //
-// COwnerDrawnListControl. Must be report view. Deals with COwnerDrawnListItems.
+// CWdsListControl. Must be report view. Deals with CWdsListItems.
 // Can have a grid or not (own implementation, don't set LVS_EX_GRIDLINES). Flicker-free.
 // Also handles sorting functionality (merged from CSortingListControl).
 //

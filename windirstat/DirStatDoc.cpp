@@ -39,7 +39,7 @@ CDirStatDoc::CDirStatDoc() :
 
     VTRACE(L"sizeof(CItem) = {}", sizeof(CItem));
     VTRACE(L"sizeof(CTreeListItem) = {}", sizeof(CTreeListItem));
-    VTRACE(L"sizeof(COwnerDrawnListItem) = {}", sizeof(CWdsListItem));
+    VTRACE(L"sizeof(CWdsListItem) = {}", sizeof(CWdsListItem));
 }
 
 CDirStatDoc::~CDirStatDoc()

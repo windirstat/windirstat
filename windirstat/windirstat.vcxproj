@@ -540,7 +540,7 @@
     <ClInclude Include="Controls\FileTreeControl.h" />
     <ClInclude Include="Controls\FileWatcherControl.h" />
     <ClInclude Include="Controls\IconHandler.h" />
-    <ClInclude Include="Controls\OwnerDrawnListControl.h" />
+    <ClInclude Include="Controls\WdsListControl.h" />
     <ClInclude Include="Controls\PacMan.h" />
     <ClInclude Include="Controls\DrawTextCache.h" />
     <ClInclude Include="Controls\TreeListControl.h" />
@@ -599,7 +599,7 @@
     <ClCompile Include="Controls\FileTopControl.cpp" />
     <ClCompile Include="Controls\FileTreeControl.cpp" />
     <ClCompile Include="Controls\FileWatcherControl.cpp" />
-    <ClCompile Include="Controls\OwnerDrawnListControl.cpp" />
+    <ClCompile Include="Controls\WdsListControl.cpp" />
     <ClCompile Include="Controls\PacMan.cpp" />
     <ClCompile Include="Controls\DrawTextCache.cpp" />
     <ClCompile Include="Controls\TreeListControl.cpp" />
