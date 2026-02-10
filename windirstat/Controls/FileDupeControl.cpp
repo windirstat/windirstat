@@ -19,7 +19,7 @@
 #include "ItemDupe.h"
 #include "FileTreeView.h"
 
-CFileDupeControl::CFileDupeControl() : CTreeListControl(COptions::DupeViewColumnOrder.Ptr(), COptions::DupeViewColumnWidths.Ptr())
+CFileDupeControl::CFileDupeControl() : CTreeListControl(COptions::DupeViewColumnOrder.Ptr(), COptions::DupeViewColumnWidths.Ptr(), LF_DUPELIST, false)
 {
     m_singleton = this;
 }
@@ -30,8 +30,6 @@ bool CFileDupeControl::GetAscendingDefault(const int column)
 }
 
 BEGIN_MESSAGE_MAP(CFileDupeControl, CTreeListControl)
-    ON_WM_SETFOCUS()
-    ON_WM_KEYDOWN()
 END_MESSAGE_MAP()
 
 CFileDupeControl* CFileDupeControl::m_singleton = nullptr;
@@ -280,19 +278,6 @@ void CFileDupeControl::RemoveItem(CItem* item)
     Invalidate();
 }
 
-void CFileDupeControl::OnItemDoubleClick(const int i)
-{
-    if (const auto item = GetItem(i)->GetLinkedItem();
-        item != nullptr && item->IsTypeOrFlag(IT_FILE))
-    {
-        CDirStatDoc::OpenItem(item);
-    }
-    else
-    {
-        CTreeListControl::OnItemDoubleClick(i);
-    }
-}
-
 void CFileDupeControl::AfterDeleteAllItems()
 {
     // Reset duplicate warning
@@ -314,21 +299,3 @@ void CFileDupeControl::AfterDeleteAllItems()
     m_rootItem->SetExpanded(true);
 }
 
-void CFileDupeControl::OnSetFocus(CWnd* pOldWnd)
-{
-    CTreeListControl::OnSetFocus(pOldWnd);
-    CMainFrame::Get()->SetLogicalFocus(LF_DUPELIST);
-}
-
-void CFileDupeControl::OnKeyDown(const UINT nChar, const UINT nRepCnt, const UINT nFlags)
-{
-    if (nChar == VK_TAB)
-    {
-        CMainFrame::Get()->MoveFocus(LF_EXTLIST);
-    }
-    else if (nChar == VK_ESCAPE)
-    {
-        CMainFrame::Get()->MoveFocus(LF_NONE);
-    }
-    CTreeListControl::OnKeyDown(nChar, nRepCnt, nFlags);
-}

@@ -19,7 +19,7 @@
 #include "ItemSearch.h"
 #include "FileTreeView.h"
 
-CFileSearchControl::CFileSearchControl() : CTreeListControl(COptions::SearchViewColumnOrder.Ptr(), COptions::SearchViewColumnWidths.Ptr())
+CFileSearchControl::CFileSearchControl() : CTreeListControl(COptions::SearchViewColumnOrder.Ptr(), COptions::SearchViewColumnWidths.Ptr(), LF_SEARCHLIST, false)
 {
     m_singleton = this;
 }
@@ -30,8 +30,6 @@ bool CFileSearchControl::GetAscendingDefault(const int column)
 }
 
 BEGIN_MESSAGE_MAP(CFileSearchControl, CTreeListControl)
-    ON_WM_SETFOCUS()
-    ON_WM_KEYDOWN()
 END_MESSAGE_MAP()
 
 CFileSearchControl* CFileSearchControl::m_singleton = nullptr;
@@ -151,19 +149,6 @@ void CFileSearchControl::RemoveItem(CItem* item)
     SetRedraw(TRUE);
 }
 
-void CFileSearchControl::OnItemDoubleClick(const int i)
-{
-    if (const auto item = GetItem(i)->GetLinkedItem();
-        item != nullptr && item->IsTypeOrFlag(IT_FILE))
-    {
-        CDirStatDoc::OpenItem(item);
-    }
-    else
-    {
-        CTreeListControl::OnItemDoubleClick(i);
-    }
-}
-
 void CFileSearchControl::AfterDeleteAllItems()
 {
     // Delete previous search results
@@ -176,21 +161,3 @@ void CFileSearchControl::AfterDeleteAllItems()
     m_rootItem->SetExpanded(true);
 }
 
-void CFileSearchControl::OnSetFocus(CWnd* pOldWnd)
-{
-    CTreeListControl::OnSetFocus(pOldWnd);
-    CMainFrame::Get()->SetLogicalFocus(LF_SEARCHLIST);
-}
-
-void CFileSearchControl::OnKeyDown(const UINT nChar, const UINT nRepCnt, const UINT nFlags)
-{
-    if (nChar == VK_TAB)
-    {
-        CMainFrame::Get()->MoveFocus(LF_EXTLIST);
-    }
-    else if (nChar == VK_ESCAPE)
-    {
-        CMainFrame::Get()->MoveFocus(LF_NONE);
-    }
-    CTreeListControl::OnKeyDown(nChar, nRepCnt, nFlags);
-}

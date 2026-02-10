@@ -18,7 +18,7 @@
 #include "pch.h"
 #include "FileTreeView.h"
 
-CFileTreeControl::CFileTreeControl() : CTreeListControl(COptions::FileTreeColumnOrder.Ptr(), COptions::FileTreeColumnWidths.Ptr())
+CFileTreeControl::CFileTreeControl() : CTreeListControl(COptions::FileTreeColumnOrder.Ptr(), COptions::FileTreeColumnWidths.Ptr(), LF_FILETREE, true)
 {
     m_singleton = this;
 }
@@ -29,55 +29,11 @@ bool CFileTreeControl::GetAscendingDefault(const int column)
 }
 
 BEGIN_MESSAGE_MAP(CFileTreeControl, CTreeListControl)
-    ON_WM_SETFOCUS()
-    ON_WM_KEYDOWN()
     ON_WM_LBUTTONDOWN()
     ON_WM_SETCURSOR()
-    ON_NOTIFY_EX(HDN_ENDDRAG, 0, OnHeaderEndDrag)
 END_MESSAGE_MAP()
 
 CFileTreeControl* CFileTreeControl::m_singleton = nullptr;
-
-BOOL CFileTreeControl::OnHeaderEndDrag(UINT, NMHDR* pNMHDR, LRESULT* pResult)
-{
-    // Do not allow first column to be re-ordered
-    const LPNMHEADERW hdr = reinterpret_cast<LPNMHEADERW>(pNMHDR);
-    const BOOL block = (hdr->iItem == COL_NAME || hdr->pitem->iOrder == COL_NAME);
-    *pResult = block;
-    return block;
-}
-
-void CFileTreeControl::OnItemDoubleClick(const int i)
-{
-    const auto item = reinterpret_cast<const CItem*>(GetItem(i));
-    if (item->IsTypeOrFlag(IT_FILE))
-    {
-        CDirStatDoc::OpenItem(item);
-    }
-    else
-    {
-        CTreeListControl::OnItemDoubleClick(i);
-    }
-}
-
-void CFileTreeControl::OnSetFocus(CWnd* pOldWnd)
-{
-    CTreeListControl::OnSetFocus(pOldWnd);
-    CMainFrame::Get()->SetLogicalFocus(LF_FILETREE);
-}
-
-void CFileTreeControl::OnKeyDown(const UINT nChar, const UINT nRepCnt, const UINT nFlags)
-{
-    if (nChar == VK_TAB)
-    {
-        CMainFrame::Get()->MoveFocus(LF_EXTLIST);
-    }
-    else if (nChar == VK_ESCAPE)
-    {
-        CMainFrame::Get()->MoveFocus(LF_NONE);
-    }
-    CTreeListControl::OnKeyDown(nChar, nRepCnt, nFlags);
-}
 
 void CFileTreeControl::OnLButtonDown(const UINT nFlags, const CPoint point)
 {

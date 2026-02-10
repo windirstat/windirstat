@@ -224,8 +224,10 @@ void CTreeListItem::SetTitleRect(const CRect& rc) const
 
 IMPLEMENT_DYNAMIC(CTreeListControl, CWdsListControl)
 
-CTreeListControl::CTreeListControl(std::vector<int>* columnOrder, std::vector<int>* columnWidths)
+CTreeListControl::CTreeListControl(std::vector<int>* columnOrder, std::vector<int>* columnWidths, LOGICAL_FOCUS logicalFocus, bool blockFirstColumnReorder)
     : CWdsListControl(columnOrder, columnWidths)
+    , m_logicalFocus(logicalFocus)
+    , m_blockFirstColumnReorder(blockFirstColumnReorder)
 {
 }
 
@@ -339,7 +341,22 @@ void CTreeListControl::ExpandPathToItem(const CTreeListItem* item)
 
 void CTreeListControl::OnItemDoubleClick(const int i)
 {
-    ToggleExpansion(i);
+    auto* treeItem = GetItem(i);
+    if (treeItem == nullptr) return;
+
+    // Get the linked item (for most controls this is the same as the tree item)
+    auto* item = treeItem->GetLinkedItem();
+    
+    // If it's a file, open it
+    if (item != nullptr && item->IsTypeOrFlag(IT_FILE))
+    {
+        CDirStatDoc::OpenItem(item);
+    }
+    else
+    {
+        // Otherwise, toggle expansion
+        ToggleExpansion(i);
+    }
 }
 
 void CTreeListControl::InsertItem(const int i, CTreeListItem* item)
@@ -366,6 +383,8 @@ BEGIN_MESSAGE_MAP(CTreeListControl, CWdsListControl)
     ON_WM_LBUTTONDOWN()
     ON_WM_KEYDOWN()
     ON_WM_LBUTTONDBLCLK()
+    ON_WM_SETFOCUS()
+    ON_NOTIFY_EX(HDN_ENDDRAG, 0, OnHeaderEndDrag)
 END_MESSAGE_MAP()
 
 void CTreeListControl::DrawNode(CDC* pDC, CRect& rcRest, CRect& rcPlusMinus, const CTreeListItem* item, int* width)
@@ -698,6 +717,21 @@ void CTreeListControl::ExpandItem(const int i, const bool scroll)
 
 void CTreeListControl::OnKeyDown(const UINT nChar, const UINT nRepCnt, const UINT nFlags)
 {
+    // Handle common key navigation if logical focus is set
+    if (m_logicalFocus != static_cast<LOGICAL_FOCUS>(0))
+    {
+        if (nChar == VK_TAB)
+        {
+            CMainFrame::Get()->MoveFocus(LF_EXTLIST);
+            return;
+        }
+        if (nChar == VK_ESCAPE)
+        {
+            CMainFrame::Get()->MoveFocus(LF_NONE);
+            return;
+        }
+    }
+
     if (const auto& items = GetAllSelected(true); items.size() == 1)
     {
         if (nChar == VK_RIGHT)
@@ -906,3 +940,28 @@ void CTreeListControl::OnContextMenu(CWnd* /*pWnd*/, const CPoint pt)
 
     sub->TrackPopupMenuEx(TPM_LEFTALIGN | TPM_LEFTBUTTON, pt.x, pt.y, AfxGetMainWnd(), &tp);
 }
+
+void CTreeListControl::OnSetFocus(CWnd* pOldWnd)
+{
+    CWdsListControl::OnSetFocus(pOldWnd);
+    if (m_logicalFocus != static_cast<LOGICAL_FOCUS>(0) && CMainFrame::Get() != nullptr)
+    {
+        CMainFrame::Get()->SetLogicalFocus(m_logicalFocus);
+    }
+}
+
+BOOL CTreeListControl::OnHeaderEndDrag(UINT, NMHDR* pNMHDR, LRESULT* pResult)
+{
+    if (!m_blockFirstColumnReorder)
+    {
+        *pResult = FALSE;
+        return FALSE;
+    }
+
+    // Do not allow first column to be re-ordered
+    const LPNMHEADERW hdr = reinterpret_cast<LPNMHEADERW>(pNMHDR);
+    const BOOL block = (hdr->iItem == 0 || hdr->pitem->iOrder == 0);
+    *pResult = block;
+    return block;
+}
+

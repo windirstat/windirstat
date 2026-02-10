@@ -29,7 +29,7 @@ const std::unordered_map<uint8_t, uint8_t> CWatcherItem::s_columnMap =
 CFileWatcherControl* CFileWatcherControl::m_singleton = nullptr;
 
 CFileWatcherControl::CFileWatcherControl()
-    : CTreeListControl(COptions::WatcherColumnOrder.Ptr(), COptions::WatcherColumnWidths.Ptr())
+    : CTreeListControl(COptions::WatcherColumnOrder.Ptr(), COptions::WatcherColumnWidths.Ptr(), LF_WATCHERLIST, false)
 {
     SetOwnsItems(true);
     m_singleton = this;
@@ -43,7 +43,6 @@ CFileWatcherControl::~CFileWatcherControl()
 
 BEGIN_MESSAGE_MAP(CFileWatcherControl, CTreeListControl)
     ON_WM_DESTROY()
-    ON_WM_SETFOCUS()
 END_MESSAGE_MAP()
 
 void CFileWatcherControl::OnDestroy()
@@ -52,12 +51,6 @@ void CFileWatcherControl::OnDestroy()
     DeleteAllItems();
 
     CWdsListControl::OnDestroy();
-}
-
-void CFileWatcherControl::OnSetFocus(CWnd* pOldWnd)
-{
-    CTreeListControl::OnSetFocus(pOldWnd);
-    if (CMainFrame::Get()) CMainFrame::Get()->SetLogicalFocus(LF_WATCHERLIST);
 }
 
 void CFileWatcherControl::StartMonitoring()

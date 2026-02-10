@@ -19,7 +19,7 @@
 #include "ItemTop.h"
 #include "FileTreeView.h"
 
-CFileTopControl::CFileTopControl() : CTreeListControl(COptions::TopViewColumnOrder.Ptr(), COptions::TopViewColumnWidths.Ptr())
+CFileTopControl::CFileTopControl() : CTreeListControl(COptions::TopViewColumnOrder.Ptr(), COptions::TopViewColumnWidths.Ptr(), LF_TOPLIST, false)
 {
     m_singleton = this;
 }
@@ -30,8 +30,6 @@ bool CFileTopControl::GetAscendingDefault(const int column)
 }
 
 BEGIN_MESSAGE_MAP(CFileTopControl, CTreeListControl)
-    ON_WM_SETFOCUS()
-    ON_WM_KEYDOWN()
 END_MESSAGE_MAP()
 
 CFileTopControl* CFileTopControl::m_singleton = nullptr;
@@ -162,19 +160,6 @@ void CFileTopControl::RemoveItem(CItem* item)
     });
 }
 
-void CFileTopControl::OnItemDoubleClick(const int i)
-{
-    if (const auto item = GetItem(i)->GetLinkedItem();
-        item != nullptr && item->IsTypeOrFlag(IT_FILE))
-    {
-        CDirStatDoc::OpenItem(item);
-    }
-    else
-    {
-        CTreeListControl::OnItemDoubleClick(i);
-    }
-}
-
 void CFileTopControl::AfterDeleteAllItems()
 {
     // Reset trackers
@@ -190,21 +175,3 @@ void CFileTopControl::AfterDeleteAllItems()
     m_rootItem->SetExpanded(true);
 }
 
-void CFileTopControl::OnSetFocus(CWnd* pOldWnd)
-{
-    CTreeListControl::OnSetFocus(pOldWnd);
-    CMainFrame::Get()->SetLogicalFocus(LF_TOPLIST);
-}
-
-void CFileTopControl::OnKeyDown(const UINT nChar, const UINT nRepCnt, const UINT nFlags)
-{
-    if (nChar == VK_TAB)
-    {
-        CMainFrame::Get()->MoveFocus(LF_EXTLIST);
-    }
-    else if (nChar == VK_ESCAPE)
-    {
-        CMainFrame::Get()->MoveFocus(LF_NONE);
-    }
-    CTreeListControl::OnKeyDown(nChar, nRepCnt, nFlags);
-}

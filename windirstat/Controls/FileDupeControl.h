@@ -60,10 +60,6 @@ protected:
     static CFileDupeControl* m_singleton;
     CItemDupe* m_rootItem = nullptr;
     bool m_showCloudWarningOnThisScan = false;
-
-    void OnItemDoubleClick(int i) override;
     
     DECLARE_MESSAGE_MAP()
-    afx_msg void OnSetFocus(CWnd* pOldWnd);
-    afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
 };

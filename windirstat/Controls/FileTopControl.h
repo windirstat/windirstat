@@ -51,9 +51,5 @@ protected:
     std::unordered_map<CItem*, CItemTop*> m_itemTracker;
     size_t m_previousTopN = 0;
 
-    void OnItemDoubleClick(int i) override;
-
     DECLARE_MESSAGE_MAP()
-    afx_msg void OnSetFocus(CWnd* pOldWnd);
-    afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
 };

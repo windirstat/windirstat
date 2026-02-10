@@ -26,6 +26,9 @@ class CTreeListItem;
 class CTreeListControl;
 class CItem;
 
+// Forward declaration for LOGICAL_FOCUS enum from MainFrame.h
+enum LOGICAL_FOCUS : uint8_t;
+
 //
 // CTreeListItem. An item in the CTreeListControl. (CItem is derived from CTreeListItem.)
 // In order to save memory, once the item is actually inserted in the List,
@@ -97,7 +100,7 @@ class CTreeListControl : public CWdsListControl
 {
     DECLARE_DYNAMIC(CTreeListControl)
 
-    CTreeListControl(std::vector<int>* columnOrder = {}, std::vector<int>* columnWidths = {});
+    CTreeListControl(std::vector<int>* columnOrder = {}, std::vector<int>* columnWidths = {}, LOGICAL_FOCUS logicalFocus = static_cast<LOGICAL_FOCUS>(0), bool blockFirstColumnReorder = false);
     ~CTreeListControl() override = default;
     virtual BOOL CreateExtended(DWORD dwExStyle, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID);
     void SysColorChanged() override;
@@ -145,7 +148,7 @@ class CTreeListControl : public CWdsListControl
     }
 
 protected:
-    virtual void OnItemDoubleClick(int i);
+    void OnItemDoubleClick(int i);
     void InsertItem(int i, CTreeListItem* item);
     void DeleteItem(int i);
     void CollapseItem(int i);
@@ -157,6 +160,8 @@ protected:
 
     int m_lButtonDownItem = -1;        // Set in OnLButtonDown(). -1 if not item hit.
     bool m_lButtonDownOnPlusMinusRect = false; // Set in OnLButtonDown(). True, if plus-minus-rect hit.
+    LOGICAL_FOCUS m_logicalFocus = static_cast<LOGICAL_FOCUS>(0);
+    bool m_blockFirstColumnReorder = false;
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnContextMenu(CWnd* /*pWnd*/, CPoint /*point*/);
@@ -164,4 +169,6 @@ protected:
     afx_msg void OnLButtonDblClk(UINT nFlags, CPoint point);
     afx_msg void OnLvnItemChangingList(NMHDR* pNMHDR, LRESULT* pResult);
     afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
+    afx_msg void OnSetFocus(CWnd* pOldWnd);
+    afx_msg BOOL OnHeaderEndDrag(UINT, NMHDR* pNMHDR, LRESULT* pResult);
 };

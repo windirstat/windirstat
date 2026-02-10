@@ -92,5 +92,4 @@ protected:
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnDestroy();
-    afx_msg void OnSetFocus(CWnd* pOldWnd);
 };

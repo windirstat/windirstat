@@ -41,9 +41,5 @@ protected:
     CItemSearch* m_rootItem = nullptr;
     std::unordered_map<CItem*, CItemSearch*> m_itemTracker;
 
-    void OnItemDoubleClick(int i) override;
-
     DECLARE_MESSAGE_MAP()
-    afx_msg void OnSetFocus(CWnd* pOldWnd);
-    afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
 };
