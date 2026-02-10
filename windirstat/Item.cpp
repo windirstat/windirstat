@@ -1486,13 +1486,12 @@ void CItem::DoHardlinkAdjustment()
                 if (const auto [it, inserted] = indexMapInitial.try_emplace(index, child); !inserted)
                 {
                     auto& existing = indexDupes[index];
-                    existing.emplace_back(existing.empty() ? it->second : child);
+                    if (existing.empty()) existing.emplace_back(it->second);
+                    existing.emplace_back(child);
                 }
             }
-
             // Do not descend into reparse points since indexes may be from other volumes
-            else if (!child->IsLeaf() &&
-                (child->GetAttributes() & FILE_ATTRIBUTE_REPARSE_POINT) == 0)
+            else if (!child->IsLeaf() && (child->GetAttributes() & FILE_ATTRIBUTE_REPARSE_POINT) == 0)
             {
                 queue.push_back(child);
             }
