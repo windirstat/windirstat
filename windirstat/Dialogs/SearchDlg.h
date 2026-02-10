@@ -36,16 +36,16 @@ class SearchDlg final : public CLayoutDialogEx
 
 protected:
     void DoDataExchange(CDataExchange* pDX) override; // DDX/DDV support
+    BOOL OnInitDialog() override;
 
 private:
     DECLARE_MESSAGE_MAP()
-    BOOL OnInitDialog() override;
     afx_msg void OnBnClickedOk();
     afx_msg void OnChangeSearchTerm();
     afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 
+    CString m_searchTerm;
     BOOL m_searchWholePhrase;
     BOOL m_searchCase;
     BOOL m_searchRegex;
-    CString m_searchTerm;
 };

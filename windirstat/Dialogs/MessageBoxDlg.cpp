@@ -55,8 +55,9 @@ CMessageBoxDlg::CMessageBoxDlg(const std::wstring& message, const std::wstring& 
     };
 
     const auto iconType = type & MB_ICONMASK;
-    m_icon = LoadIcon(nullptr, iconMap.contains(iconType) ?
-        iconMap.at(iconType) : IDI_INFORMATION);
+    const auto iconIter = iconMap.find(iconType);
+    m_icon = LoadIcon(nullptr, iconIter != iconMap.end() ?
+        iconIter->second : IDI_INFORMATION);
 }
 
 bool CMessageBoxDlg::IsCheckboxChecked() const

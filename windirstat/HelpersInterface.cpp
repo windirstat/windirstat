@@ -189,7 +189,7 @@ std::wstring FormatHex(const std::vector<BYTE> & bytes, const bool upper) noexce
         : L"0123456789abcdef";
 
     std::wstring out(bytes.size() * 2, L'\0');
-    for (size_t i = 0; i < bytes.size(); ++i)
+    for (const size_t i : std::views::iota(0u, bytes.size()))
     {
         const BYTE b = bytes[i];
         out[2 * i] = h[b >> 4];

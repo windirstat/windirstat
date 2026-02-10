@@ -116,13 +116,6 @@ constexpr bool operator==(const FILETIME& t1, const FILETIME& t2)
 // It is derived from CTreeListItem because it _may_ become "visible" and therefore
 // may be inserted in the TreeList view (we don't clone any data).
 //
-// Of course, this class and the base classes are optimized rather for size than for speed.
-//
-// The m_type indicates whether we are a file or a folder or a drive etc.
-// It may have been better to design a class hierarchy for this, but I can't help it,
-// rather than browsing to virtual functions I like to flatly see what's going on.
-// But, of course, now we have quite many switch statements in the member functions.
-//
 class __declspec(empty_bases) CItem final : public CTreeListItem
 {
 public:
@@ -130,6 +123,8 @@ public:
     CItem(CItem&&) = delete;
     CItem& operator=(const CItem&) = delete;
     CItem& operator=(CItem&&) = delete;
+
+    // Construction / Destruction
     CItem(ITEMTYPE type, const std::wstring& name);
     CItem(ITEMTYPE type, const std::wstring& name, FILETIME lastChange, ULONGLONG sizePhysical,
         ULONGLONG sizeLogical, ULONGLONG index, DWORD attributes, ULONG files, ULONG subdirs);
@@ -146,85 +141,97 @@ public:
     void DrawAdditionalState(CDC* pdc, const CRect& rcLabel) const override;
     CItem* GetLinkedItem() noexcept override;
 
-    // CTreeMap Functions
-    bool TmiIsLeaf() const noexcept { return IsLeaf() || IsTypeOrFlag(IT_HLINKS_IDX); }
-    CRect TmiGetRectangle() const noexcept { return tmiRect; };
-    void TmiSetRectangle(const CRect& rc) noexcept { tmiRect = rc; }
-    COLORREF TmiGetGraphColor() const { return GetGraphColor(); }
-    int TmiGetChildCount() const noexcept { 
-        if (m_folderInfo == nullptr || IsTypeOrFlag(IT_HLINKS_IDX)) return 0;
-        return static_cast<int>(m_folderInfo->m_children.size()); 
-    }
-    CItem* TmiGetChild(const int c) const noexcept { return m_folderInfo->m_children[c]; }
-    ULONGLONG TmiGetSize() const noexcept;
-
-    static int GetSubtreePercentageWidth();
-    ULONGLONG GetProgressRange() const;
-    ULONGLONG GetProgressPos() const;
-    void UpdateStatsFromDisk();
+    // Hierarchy / Navigation
     const std::vector<CItem*>& GetChildren() const noexcept;
     bool IsLeaf() const noexcept { return m_folderInfo == nullptr; }
+    bool HasChildren() const noexcept { return m_folderInfo != nullptr && !m_folderInfo->m_children.empty(); }
     CItem* GetParent() const noexcept;
     CItem* GetParentDrive() const noexcept;
     CItem* GetVolumeRoot() const noexcept;
     void AddChild(CItem* child, bool addOnly = false);
     void RemoveChild(CItem* child);
     void RemoveAllChildren();
-    void UpwardAddFolders(ULONG dirCount) noexcept;
-    void UpwardSubtractFolders(ULONG dirCount) noexcept;
-    void UpwardAddFiles(ULONG fileCount) noexcept;
-    void UpwardSubtractFiles(ULONG fileCount) noexcept;
-    void UpwardAddSizePhysical(ULONGLONG bytes) noexcept;
-    void UpwardSubtractSizePhysical(ULONGLONG bytes) noexcept;
-    void UpwardAddSizeLogical(ULONGLONG bytes) noexcept;
-    void UpwardSubtractSizeLogical(ULONGLONG bytes) noexcept;
-    void UpwardAddReadJobs(ULONG count) noexcept;
-    void UpwardSubtractReadJobs(ULONG count) noexcept;
-    void UpwardUpdateLastChange(const FILETIME& t) noexcept;
-    void UpwardRecalcLastChange();
-    void ExtensionDataAdd();
-    void ExtensionDataRemove();
-    void ExtensionDataProcessChildren(bool remove = false);
+
+    // Size & Statistics
     ULONGLONG GetSizePhysical() const noexcept;
     ULONGLONG GetSizeLogical() const noexcept;
     ULONGLONG GetSizePhysicalRaw() const noexcept;
     void SetSizePhysical(ULONGLONG size) noexcept;
     void SetSizeLogical(ULONGLONG size) noexcept;
-    ULONG GetReadJobs() const noexcept;
+    void UpwardAddSizePhysical(ULONGLONG bytes) noexcept;
+    void UpwardSubtractSizePhysical(ULONGLONG bytes) noexcept;
+    void UpwardAddSizeLogical(ULONGLONG bytes) noexcept;
+    void UpwardSubtractSizeLogical(ULONGLONG bytes) noexcept;
+    void UpwardAddFolders(ULONG dirCount) noexcept;
+    void UpwardSubtractFolders(ULONG dirCount) noexcept;
+    void UpwardAddFiles(ULONG fileCount) noexcept;
+    void UpwardSubtractFiles(ULONG fileCount) noexcept;
+    double GetFraction() const noexcept;
+    ULONG GetFilesCount() const noexcept;
+    ULONG GetFoldersCount() const noexcept;
+    ULONGLONG GetItemsCount() const noexcept;
+    void ExtensionDataAdd();
+    void ExtensionDataRemove();
+    void ExtensionDataProcessChildren(bool remove = false);
+
+    // Attributes & Properties
     FILETIME GetLastChange() const noexcept;
     void SetLastChange(const FILETIME& t) noexcept;
     void SetAttributes(DWORD attr) noexcept;
     DWORD GetAttributes() const noexcept;
+    USHORT GetSortAttributes() const noexcept;
     void SetIndex(ULONGLONG index) noexcept;
     ULONGLONG GetIndex() const noexcept;
     DWORD GetReparseTag() const noexcept;
     void SetReparseTag(DWORD reparseType) noexcept;
-    USHORT GetSortAttributes() const noexcept;
-    double GetFraction() const noexcept;
-    bool IsRootItem() const noexcept;
-    std::wstring GetPath() const;
-    std::wstring GetPathLong() const;
-    CItem* FindItemByPath(const std::wstring& path) const;
-    std::vector<CItem*> FindItemsBySameIndex() const;
     std::wstring GetOwner(bool force = false) const;
-    bool HasUncPath() const;
-    std::wstring GetFolderPath() const;
+    void UpwardUpdateLastChange(const FILETIME& t) noexcept;
+    void UpwardRecalcLastChange();
+
+    // Paths & Names
     void SetName(std::wstring_view name);
     std::wstring GetName() const noexcept;
     std::wstring_view GetNameView() const noexcept;
     std::wstring GetExtension() const;
-    ULONG GetFilesCount() const noexcept;
-    ULONG GetFoldersCount() const noexcept;
-    ULONGLONG GetItemsCount() const noexcept;
+    std::wstring GetPath() const;
+    std::wstring GetPathLong() const;
+    std::wstring GetFolderPath() const;
+    bool HasUncPath() const;
+    CItem* FindItemByPath(const std::wstring& path) const;
+
+    // Scanning & Done State
     void SetDone();
-    void SortItemsBySizePhysical() const;
-    void SortItemsBySizeLogical() const;
-    ULONGLONG GetTicksWorked() const noexcept;
-    void ResetScanStartTime() const noexcept;
-    static void ScanItems(BlockingQueue<CItem*> *, FinderNtfsContext& contextNtfs, FinderBasicContext& contextBasic);
-    static void ScanItemsFinalize(CItem* item);
+    bool IsDone() const noexcept { return IsTypeOrFlag(ITF_DONE); }
     void UpwardSetDone() noexcept;
     void UpwardSetUndone() noexcept;
+    ULONG GetReadJobs() const noexcept;
+    void UpwardAddReadJobs(ULONG count) noexcept;
+    void UpwardSubtractReadJobs(ULONG count) noexcept;
+    ULONGLONG GetTicksWorked() const noexcept;
+    void ResetScanStartTime() const noexcept;
+    void SortItemsBySizePhysical() const;
+    void SortItemsBySizeLogical() const;
+    void UpdateStatsFromDisk();
+    static void ScanItems(BlockingQueue<CItem*>*, FinderNtfsContext& contextNtfs, FinderBasicContext& contextBasic);
+    static void ScanItemsFinalize(CItem* item);
+    static std::vector<CItem*> GetItemsRecursive(const std::vector<CItem*>& initialItems,
+        const std::function<bool(CItem*)>& task = [](const CItem* item) { return item->IsTypeOrFlag(IT_FILE); });
+
+    // CTreeMap Interface
+    bool TmiIsLeaf() const noexcept { return IsLeaf() || IsTypeOrFlag(IT_HLINKS_IDX); }
+    CRect TmiGetRectangle() const noexcept { return tmiRect; };
+    void TmiSetRectangle(const CRect& rc) noexcept { tmiRect = rc; }
+    COLORREF TmiGetGraphColor() const { return GetGraphColor(); }
+    int TmiGetChildCount() const noexcept;
+    CItem* TmiGetChild(const int c) const noexcept { return m_folderInfo->m_children[c]; }
+    ULONGLONG TmiGetSize() const noexcept;
+
+    // Drive/Volume Specific
+    bool IsRootItem() const noexcept;
+    std::vector<CItem*> GetDriveItems() const;
+    ULONGLONG GetProgressRange() const;
+    ULONGLONG GetProgressPos() const;
+    static int GetSubtreePercentageWidth();
     CItem* FindRecyclerItem() const;
     void CreateFreeSpaceItem();
     CItem* FindFreeSpaceItem() const;
@@ -234,30 +241,19 @@ public:
     CItem* FindUnknownItem() const;
     void UpdateUnknownItem() const;
     void RemoveUnknownItem();
+    void UpwardDrivePacman();
+
+    // Hardlinks & Hashing
     void CreateHardlinksItem();
     CItem* FindHardlinksItem() const;
     CItem* FindHardlinksIndexItem() const;
     void RemoveHardlinksItem();
-    void UpwardDrivePacman();
     void DoHardlinkAdjustment();
-    std::vector<CItem*> GetDriveItems() const;
-
+    std::vector<CItem*> FindItemsBySameIndex() const;
     std::vector<BYTE> GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CItem*>* queue);
-    
-    bool IsDone() const noexcept
-    {
-        return IsTypeOrFlag(ITF_DONE);
-    }
 
-    ITEMTYPE GetItemType() const noexcept
-    {
-        return m_type & IT_MASK;
-    }
-
-    ITEMTYPE GetRawType() const noexcept
-    {
-        return m_type;
-    }
+    ITEMTYPE GetItemType() const noexcept { return m_type & IT_MASK; }
+    ITEMTYPE GetRawType() const noexcept { return m_type; }
 
     template<typename... Args>
     constexpr bool IsTypeOrFlag(Args... args) const noexcept
@@ -282,16 +278,13 @@ public:
         return std::bit_cast<std::uint64_t>(ft1) > std::bit_cast<std::uint64_t>(ft2);
     }
 
-    static std::vector<CItem*> GetItemsRecursive(const std::vector<CItem*>& initialItems,
-        const std::function<bool(CItem*)>& task = [](const CItem* item) { return item->IsTypeOrFlag(IT_FILE); });
-
 private:
     ULONGLONG GetProgressRangeMyComputer() const;
     ULONGLONG GetProgressRangeDrive() const;
     COLORREF GetGraphColor() const;
     bool MustShowReadJobs() const noexcept;
     COLORREF GetPercentageColor() const noexcept;
-    std::wstring UpwardGetPathWithoutBackslash() const;
+    std::wstring GetPathWithoutSlash() const;
     CItem* AddDirectory(const Finder& finder);
     CItem* AddFile(const Finder& finder);
 

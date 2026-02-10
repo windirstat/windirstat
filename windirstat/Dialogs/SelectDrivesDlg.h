@@ -145,8 +145,7 @@ protected:
     afx_msg void OnNMSetfocusTargetDrivesList(NMHDR*, LRESULT* pResult);
     afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
     afx_msg void OnBnClickedBrowseButton();
-    BOOL PreTranslateMessage(MSG* pMsg) override;
-public:
+    afx_msg BOOL PreTranslateMessage(MSG* pMsg) override;
     afx_msg void OnEditchangeBrowseFolder();
     afx_msg void OnCbnSelchangeBrowseFolder();
 };

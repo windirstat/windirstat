@@ -1775,8 +1775,9 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
         item->UpwardSetUndone();
 
         // Child removal will collapse the item, so re-expand it
-        if (visualInfo.contains(item) && item->IsVisible())
-            item->SetExpanded(visualInfo[item].wasExpanded);
+        if (const auto iter = visualInfo.find(item);
+            iter != visualInfo.end() && item->IsVisible())
+            item->SetExpanded(iter->second.wasExpanded);
 
         // Handle if item to be refreshed has been removed
         if (item->IsTypeOrFlag(IT_FILE, IT_DIRECTORY, IT_DRIVE) &&

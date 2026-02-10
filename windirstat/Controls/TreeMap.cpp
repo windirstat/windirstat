@@ -448,8 +448,7 @@ CItem* CTreeMap::FindItemByPoint(CItem* item, const CPoint point)
         ASSERT(item->TmiGetSize() > 0);
         ASSERT(item->TmiGetChildCount() > 0);
 
-        const auto childCount = item->TmiGetChildCount();
-        for (int i = 0; i < childCount; i++)
+        for (const int i : std::views::iota(0, item->TmiGetChildCount()))
         {
             CItem* child = item->TmiGetChild(i);
 
@@ -687,8 +686,8 @@ double CTreeMap::KDirStat_CalculateNextRow(
 
     childrenUsed = i - nextChild;
 
-    // Now as we know the rowHeight, we compute the widths of our children.
-    for (int j = 0; j < childrenUsed; j++)
+    // Now as we know the rowHeight, we compute the widths of our children
+    for (const int j : std::views::iota(0, childrenUsed))
     {
         // Rectangle(1.0 * 1.0) = mySize
         const double rowSize = mySize * rowHeight;
@@ -718,7 +717,7 @@ void CTreeMap::DrawSolidRect(std::vector<COLORREF>& bitmap, const CRect& rc, con
 
     CColorSpace::NormalizeColor(red, green, blue);
 
-    for (int iy = rc.top; iy < rc.bottom; iy++)
+    for (const int iy : std::views::iota(rc.top, rc.bottom))
     {
         const auto rowStart = bitmap.begin() + (iy * m_renderArea.Width()) + rc.left;
         std::fill_n(rowStart, rc.Width(), BGR(blue, green, red));
@@ -737,7 +736,8 @@ void CTreeMap::DrawCushion(std::vector<COLORREF>& bitmap, const CRect& rc, const
     const double colG = GetGValue(col);
     const double colB = GetBValue(col);
 
-    for (int iy = rc.top; iy < rc.bottom; iy++) for (int ix = rc.left; ix < rc.right; ix++)
+    for (const int iy : std::views::iota(rc.top, rc.bottom))
+        for (const int ix : std::views::iota(rc.left, rc.right))
     {
         const double nx = -(2 * surface[0] * (ix + 0.5) + surface[2]);
         const double ny = -(2 * surface[1] * (iy + 0.5) + surface[3]);

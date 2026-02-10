@@ -33,7 +33,7 @@ protected:
     virtual CTreeListControl& GetControl() = 0;
     virtual const CTreeListControl& GetControl() const = 0;
 
-    int InsertCol(const std::wstring_view& colName, const int nFormat, const int nWidth, const int nSubItem);
+    int InsertCol(const std::wstring_view& colName, int nFormat, int nWidth, const int nSubItem);
     void OnDraw(CDC*) override;
     void OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint) override;
 

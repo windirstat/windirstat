@@ -835,7 +835,7 @@ void CTreeListControl::OnChildRemoved(const CTreeListItem* parent, const CTreeLi
 
     if (parent->IsExpanded())
     {
-        for (int i = 0; i < child->GetTreeListChildCount(); i++)
+        for (const int i : std::views::iota(0, child->GetTreeListChildCount()))
         {
             OnChildRemoved(child, child->GetTreeListChild(i));
         }

@@ -233,7 +233,8 @@ HICON CIconHandler::IconFromFontChar(const WCHAR ch, const COLORREF textColor, c
     const BYTE b = GetBValue(textColor);
 
     const int PIXEL_COUNT = RENDER_SIZE * RENDER_SIZE;
-    for (int i = 0; i < PIXEL_COUNT; ++i) {
+    for (const int i : std::views::iota(0, PIXEL_COUNT))
+    {
         const BYTE alpha = pBits[i * 4 + 2]; // Red channel has intensity
         pBits[i * 4] = b;
         pBits[i * 4 + 1] = g;
@@ -244,16 +245,15 @@ HICON CIconHandler::IconFromFontChar(const WCHAR ch, const COLORREF textColor, c
     // Find glyph bounds
     int minX = RENDER_SIZE, maxX = 0, minY = RENDER_SIZE, maxY = 0;
 
-    for (int py = 0; py < RENDER_SIZE; ++py) {
-        for (int px = 0; px < RENDER_SIZE; ++px) {
-            if (pBits[(py * RENDER_SIZE + px) * 4 + 3] > 0) {
+    for (const int py : std::views::iota(0, RENDER_SIZE))
+        for (const int px : std::views::iota(0, RENDER_SIZE))
+            if (pBits[(py * RENDER_SIZE + px) * 4 + 3] > 0)
+            {
                 minX = min(minX, px);
                 maxX = max(maxX, px);
                 minY = min(minY, py);
                 maxY = max(maxY, py);
             }
-        }
-    }
 
     // Calculate scaling
     const int glyphWidth = maxX - minX + 1;

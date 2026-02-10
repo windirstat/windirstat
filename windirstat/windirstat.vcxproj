@@ -611,6 +611,7 @@
     <ClCompile Include="Dialogs\ProgressDlg.cpp" />
     <ClCompile Include="DirStatDoc.cpp">
     </ClCompile>
+    <ClCompile Include="Item.Extended.cpp" />
     <ClCompile Include="Pages\PagePrompts.cpp" />
     <ClCompile Include="Views\ControlView.cpp" />
     <ClCompile Include="Controls\FileSearchControl.cpp" />
