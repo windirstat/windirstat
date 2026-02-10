@@ -32,7 +32,7 @@ public:
     SmartPointer(std::function<void(T)> cleanup) : m_cleanup(std::move(cleanup)), m_data(nullptr) {}
     SmartPointer(std::function<void(T)> cleanup, T data) : m_cleanup(std::move(cleanup)), m_data(data) {}
 
-    ~SmartPointer()
+    ~SmartPointer() noexcept
     {
         Release();
     }
@@ -76,18 +76,26 @@ public:
         }
     }
 
-    T operator=(T lp)
+    T Detach() noexcept
+    {
+        const T data = m_data;
+        m_data = nullptr;
+        return data;
+    }
+
+    T operator=(T lp) noexcept
     {
         Release();
         m_data = lp;
         return m_data;
     }
 
-    operator T() { return m_data; }
-    T& operator*() { return m_data; }
-    T* operator&() { return &m_data; }
-    T operator->() { return m_data; }
-    bool operator!() { return m_data == nullptr; }
+    operator T() const noexcept { return m_data; }
+    T& operator*() const noexcept { return m_data; }
+    const T& operator*() noexcept { return m_data; }
+    T* operator&() noexcept { return &m_data; }
+    T operator->() const noexcept { return m_data; }
+    bool operator!() const noexcept { return m_data == nullptr; }
 
 private:
 

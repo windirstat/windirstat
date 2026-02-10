@@ -34,18 +34,21 @@
 class COpenClipboard final
 {
     BOOL m_open = FALSE;
+    BOOL m_ready = FALSE;
 
 public:
-    COpenClipboard(CWnd* owner)
+    COpenClipboard(CWnd* owner) noexcept
     {
         m_open = owner->OpenClipboard();
-        if (!m_open || !EmptyClipboard())
+        if (m_open)
         {
-            DisplayError(TranslateError());
+            m_ready = EmptyClipboard();
         }
     }
 
-    ~COpenClipboard()
+    bool IsReady() const noexcept { return m_ready; }
+
+    ~COpenClipboard() noexcept
     {
         if (m_open)
         {
@@ -903,31 +906,34 @@ void CMainFrame::CopyToClipboard(const std::wstring & psz)
 {
     const SIZE_T cchBufLen = psz.size() + 1;
     SmartPointer<HGLOBAL> h(GlobalFree, GlobalAlloc(GMEM_MOVEABLE, cchBufLen * sizeof(WCHAR)));
-    if (h == nullptr)
+    if (!h.IsValid())
     {
         DisplayError(TranslateError());
         return;
     }
 
     // Allocate and copy into global memory
-    if (SmartPointer<LPVOID> lp(GlobalUnlock, GlobalLock(h)); true)
+    const HGLOBAL hRaw = h;
+    if (SmartPointer<LPVOID> lp([hRaw](LPVOID) { GlobalUnlock(hRaw); }, GlobalLock(hRaw)); lp.IsValid())
     {
-        if (lp == nullptr)
-        {
-            DisplayError(TranslateError());
-            return;
-        }
         wcscpy_s(static_cast<LPWSTR>(*lp), cchBufLen, psz.c_str());
     }
-    
-    COpenClipboard clipboard(this);
-    if (SetClipboardData(CF_UNICODETEXT, h) == nullptr)
+    else
     {
         DisplayError(TranslateError());
+        return;
+    }
+
+    // Store text to clipboard 
+    if (const COpenClipboard clipboard(this);
+        !clipboard.IsReady() || SetClipboardData(CF_UNICODETEXT, h) == nullptr)
+    {
+        DisplayError(TranslateError());
+        return;
     }
 
     // System now owns pointer so do not allow cleanup
-    h.Release();
+    h.Detach();
 }
 
 void CMainFrame::OnInitMenuPopup(CMenu* pPopupMenu, const UINT nIndex, const BOOL bSysMenu)
