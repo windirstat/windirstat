@@ -652,14 +652,16 @@ void CWdsListControl::InsertListItem(const int i, const std::vector<CWdsListItem
 {
     ASSERT(i >= 0 && i <= GetItemCount());
 
+    const int itemCount = GetItemCount() + static_cast<int>(items.size());
     m_items.insert(m_items.begin() + i, items.begin(), items.end());
 
-    for (const int  x : std::views::iota(i, GetItemCount()))
+    for (const int x : std::views::iota(i, itemCount))
     {
         m_itemMap[m_items[x]] = x;
     }
 
-    SetItemCountEx(GetItemCount(), LVSICF_NOSCROLL);
+    SetItemCountEx(itemCount, LVSICF_NOINVALIDATEALL | LVSICF_NOSCROLL);
+    RedrawItems(i, itemCount - 1);
 }
 
 /*
@@ -896,7 +898,8 @@ LRESULT CWdsListControl::OnSelectionChanged(WPARAM wParam, LPARAM lParam)
 
 void CWdsListControl::RemoveListItem(const int i, const int c)
 {
-    ASSERT(i >= 0 && i < GetItemCount());
+    int itemCount = GetItemCount();
+    ASSERT(i >= 0 && i < itemCount);
 
     for (const int x : std::views::iota(i, i + c))
     {
@@ -910,13 +913,14 @@ void CWdsListControl::RemoveListItem(const int i, const int c)
 
     m_items.erase(m_items.begin() + i, m_items.begin() + i + c);
 
-    for (const int x : std::views::iota(i, GetItemCount()))
+    itemCount -= c;
+    for (const int x : std::views::iota(i, itemCount))
     {
         m_itemMap[m_items[x]] = x;
     }
 
-    SetItemCountEx(GetItemCount(), LVSICF_NOSCROLL);
-    RedrawItems(i, GetItemCount() - 1);
+    SetItemCountEx(itemCount, LVSICF_NOINVALIDATEALL | LVSICF_NOSCROLL);
+    RedrawItems(i, itemCount - 1);
 }
 
 void CWdsListControl::ClearList()

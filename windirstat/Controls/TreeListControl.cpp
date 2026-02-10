@@ -344,8 +344,8 @@ void CTreeListControl::OnItemDoubleClick(const int i)
 
 void CTreeListControl::InsertItem(const int i, CTreeListItem* item)
 {
-    InsertListItem(i, { item });
     item->SetVisible(this, true);
+    InsertListItem(i, { item });
 }
 
 void CTreeListControl::DeleteItem(const int i)
