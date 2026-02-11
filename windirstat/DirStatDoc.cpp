@@ -132,7 +132,7 @@ BOOL CDirStatDoc::OnOpenDocument(LPCWSTR lpszPathName)
             ASSERT(FALSE);
         }
 
-        const LPCWSTR name = ppszName != nullptr ? const_cast<LPCWSTR>(*ppszName) : L"This PC";
+        const LPCWSTR name = ppszName != nullptr ? const_cast<LPCWSTR>(*ppszName) : Localization::Lookup(IDS_THISPC).c_str();
         m_rootItem = new CItem(IT_MYCOMPUTER | ITF_ROOTITEM, name);
         for (const auto& rootFolder : selections)
         {
@@ -204,7 +204,7 @@ void CDirStatDoc::SetPathName(LPCWSTR lpszPathName, BOOL /*bAddToMRU*/)
 //
 void CDirStatDoc::SetTitlePrefix(const std::wstring& prefix) const
 {
-    static std::wstring suffix = IsElevationActive() ? L" (Administrator)" : L"";
+    static std::wstring suffix = IsElevationActive() ? std::format(L" ({})", Localization::Lookup(IDS_ADMIN)) : L"";
     std::wstring docName = std::format(L"{} {} {}", prefix, GetTitle().GetString(), suffix);
     docName = TrimString(docName);
     CMainFrame::Get()->UpdateFrameTitleForDocument(docName.empty() ? nullptr : docName.c_str());

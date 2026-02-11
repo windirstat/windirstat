@@ -802,7 +802,7 @@ BOOL CMainFrame::OnCreateClient(LPCREATESTRUCT /*lpcs*/, CCreateContext* pContex
 BOOL CMainFrame::PreCreateWindow(CREATESTRUCT& cs)
 {
     // seed initial Title bar text
-    static std::wstring title = Localization::LookupNeutral(AFX_IDS_APP_TITLE) + (IsElevationActive() ? L" (Administrator)" : L"");
+    static std::wstring title = Localization::LookupNeutral(AFX_IDS_APP_TITLE) + (IsElevationActive() ? std::format(L" ({})", Localization::Lookup(IDS_ADMIN)) : L"");
     cs.style &= ~FWS_ADDTOTITLE;
     cs.lpszName = title.c_str();
 
