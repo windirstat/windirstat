@@ -104,7 +104,6 @@ constexpr std::wstring_view IDS_MENU_FILE_TYPES = L"IDS_MENU_FILE_TYPES";
 constexpr std::wstring_view IDS_MENU_FREE_SPACE = L"IDS_MENU_FREE_SPACE";
 constexpr std::wstring_view IDS_MENU_HELP = L"IDS_MENU_HELP";
 constexpr std::wstring_view IDS_MENU_HELP_ABOUT = L"IDS_MENU_HELP_ABOUT";
-constexpr std::wstring_view IDS_MENU_HELP_OPEN = L"IDS_MENU_HELP_OPEN";
 constexpr std::wstring_view IDS_MENU_HELP_REPORT = L"IDS_MENU_HELP_REPORT";
 constexpr std::wstring_view IDS_MENU_LOAD_RESULTS = L"IDS_MENU_LOAD_RESULTS";
 constexpr std::wstring_view IDS_MENU_LOGICAL_SIZE = L"IDS_MENU_LOGICAL_SIZE";
