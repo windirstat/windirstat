@@ -60,6 +60,18 @@ CMessageBoxDlg::CMessageBoxDlg(const std::wstring& message, const std::wstring& 
         iconIter->second : IDI_INFORMATION);
 }
 
+WdsMessageBoxResult CMessageBoxDlg::Show(const std::wstring& message, const std::vector<std::wstring>& listViewItems, const std::wstring& checkboxText, bool checkboxValue, UINT type, CWnd* pParent, const CSize& initialSize, const std::wstring& title)
+{
+    CWnd* parent = pParent ? pParent : AfxGetMainWnd();
+
+    CMessageBoxDlg dlg(message, title, type, parent, listViewItems, checkboxText, checkboxValue);
+
+    if (initialSize.cx > 0 || initialSize.cy > 0)
+        dlg.SetInitialWindowSize(initialSize);
+
+    return { static_cast<int>(dlg.DoModal()), dlg.IsCheckboxChecked() };
+}
+
 bool CMessageBoxDlg::IsCheckboxChecked() const
 {
     return m_checkboxChecked;
