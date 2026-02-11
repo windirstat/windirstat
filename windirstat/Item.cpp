@@ -692,11 +692,11 @@ std::wstring CItem::GetPathWithoutSlash() const
     {
         if (const auto & pathPart = *it; pathPart->IsTypeOrFlag(IT_DIRECTORY))
         {
-            path.append(pathPart->m_name.get(), pathPart->m_nameLen).append(L"\\ ");
+            path.append(pathPart->m_name.get(), pathPart->m_nameLen).append(L"\\");
         }
         else if (pathPart->IsTypeOrFlag(IT_DRIVE))
         {
-            path.append(pathPart->m_name.get(), 2).append(L"\\ ");
+            path.append(pathPart->m_name.get(), 2).append(L"\\");
         }
         else if (!pathPart->IsTypeOrFlag(IT_MYCOMPUTER))
         {
