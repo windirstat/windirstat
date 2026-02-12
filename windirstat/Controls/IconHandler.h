@@ -57,6 +57,8 @@ public:
     HICON m_searchImage = nullptr;       // <Search>
     HICON m_largestImage = nullptr;      // <Largest>
     HICON m_emptyImage = nullptr;        // For items whose icon cannot be found
+    HICON m_defaultFileImage = nullptr;  // Generic file icon while loading
+    HICON m_defaultFolderImage = nullptr;// Generic folder icon while loading
     HICON m_junctionImage = nullptr;     // For normal junctions
     HICON m_symlinkImage = nullptr;      // For symbolic links
     HICON m_junctionProtected = nullptr; // For protected junctions

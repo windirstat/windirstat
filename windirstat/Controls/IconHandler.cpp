@@ -48,7 +48,9 @@ void CIconHandler::Initialize()
         m_searchImage = IconFromFontChar(L'⊙', DarkMode::WdsSysColor(COLOR_WINDOWTEXT));
         m_largestImage = IconFromFontChar(L'⋙', DarkMode::WdsSysColor(COLOR_WINDOWTEXT));
         m_unknownImage = IconFromFontChar(L'?', RGB(0xCC,0xB8,0x66), true);
-        
+        m_defaultFileImage = FetchShellIcon(GetSysDirectory() + L"\\~", 0, FILE_ATTRIBUTE_NORMAL);
+        m_defaultFolderImage = FetchShellIcon(GetSysDirectory() + L"\\~", 0, FILE_ATTRIBUTE_DIRECTORY);
+
         // Cache icon for boot drive
         std::wstring drive(MAX_PATH, wds::chrNull);
         drive.resize(min(wcslen(L"C:\\"), GetWindowsDirectory(drive.data(), MAX_PATH)));
@@ -76,8 +78,8 @@ void CIconHandler::Initialize()
                 CMainFrame::Get()->InvokeInMessageThread([&]
                 {
                     const auto i = control->FindListItem(item);
-                    if (i == -1 || *icon != nullptr) return;
-                     
+                    if (i == -1) return;
+
                     *icon = iconTmp;
                     if (desc != nullptr) *desc = descTmp;
                     control->RedrawItems(i, i);
@@ -89,6 +91,15 @@ void CIconHandler::Initialize()
 
 void CIconHandler::DoAsyncShellInfoLookup(IconLookup&& lookupInfo)
 {
+    const auto& [item, control, path, attr, icon, desc] = lookupInfo;
+
+    // set default icon while loading
+    if (*icon == nullptr)
+    {
+        *icon = (attr & FILE_ATTRIBUTE_DIRECTORY) ? m_defaultFolderImage : m_defaultFileImage;
+    }
+
+    // queue for lookup
     m_lookupQueue.PushIfNotQueued(std::move(lookupInfo));
 }
 
