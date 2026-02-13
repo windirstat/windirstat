@@ -327,7 +327,7 @@ LRESULT DarkMode::HandleMenuMessage(const UINT message, const WPARAM wParam, con
         dttopts.dwFlags = DTT_TEXTCOLOR;
         dttopts.crText = textColor;
 
-        SmartPointer<HTHEME> menuTheme(CloseThemeData, OpenThemeData(hWnd, VSCLASS_MENU));
+        const SmartPointer<HTHEME> menuTheme(CloseThemeData, OpenThemeData(hWnd, VSCLASS_MENU));
         DrawThemeTextEx(menuTheme, pUDMI->um.hdc, MENU_BARITEM, txtId,
             menuString.data(), mii.cch, dwFlags, &pUDMI->dis.rcItem, &dttopts);
     }

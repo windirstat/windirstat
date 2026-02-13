@@ -555,21 +555,20 @@ void CItem::UpwardUpdateLastChange(const FILETIME& t) noexcept
 {
     for (auto p = this; p != nullptr; p = p->GetParent())
     {
-        if (FileTimeIsGreater(t, p->m_lastChange)) p->m_lastChange = t;
+        if (t > p->m_lastChange) p->m_lastChange = t;
     }
 }
 
 void CItem::UpwardRecalcLastChange()
 {
-    for (auto p = this; p != nullptr; p = p->GetParent())
+    // ignore current object in recalculation 
+    for (auto p = GetParent(); p != nullptr; p = p->GetParent())
     {
-        if (IsLeaf()) continue;
-        for (const auto& child : p->GetChildren())
-        {
-            if (child == this) continue;
-            if (FileTimeIsGreater(child->m_lastChange, p->m_lastChange))
-                p->m_lastChange = child->m_lastChange;
-        }
+        const auto newMax = (std::ranges::max)(
+            p->GetChildren() | std::views::transform(&CItem::m_lastChange));
+
+        if (p->m_lastChange == newMax) break;
+        p->m_lastChange = newMax;
     }
 }
 
@@ -649,7 +648,7 @@ CItem* CItem::FindItemByPath(const std::wstring& path) const
     if (pathDrive == nullptr) return nullptr;
 
     // Split the path into components, filtering out empty strings
-    std::vector<std::wstring> components = SplitString(path, wds::chrBackslash);
+    const std::vector<std::wstring> components = SplitString(path, wds::chrBackslash);
     if (components.empty()) return nullptr;
 
     // First component should match the drive (e.g., "C:")
@@ -848,7 +847,7 @@ void CItem::UpdateStatsFromDisk()
     }
     else if (IsTypeOrFlag(IT_DRIVE))
     {
-        SmartPointer<HANDLE> handle(CloseHandle, CreateFile(GetPathLong().c_str(), FILE_READ_ATTRIBUTES,
+        const SmartPointer<HANDLE> handle(CloseHandle, CreateFile(GetPathLong().c_str(), FILE_READ_ATTRIBUTES,
             FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr,
             OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, nullptr));
         if (handle != INVALID_HANDLE_VALUE)

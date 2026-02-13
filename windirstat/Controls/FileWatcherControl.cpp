@@ -85,7 +85,7 @@ bool CFileWatcherControl::IsMonitoring() const
 
 void CFileWatcherControl::WatchDirectory(const std::wstring& path, const std::stop_token& stopToken)
 {
-    SmartPointer<HANDLE> hDir(CloseHandle, CreateFileW(FinderBasic::MakeLongPathCompatible(path).c_str(),
+    const SmartPointer<HANDLE> hDir(CloseHandle, CreateFileW(FinderBasic::MakeLongPathCompatible(path).c_str(),
         FILE_LIST_DIRECTORY, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr,
         OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OVERLAPPED, nullptr));
     if (hDir == INVALID_HANDLE_VALUE) return;
@@ -93,7 +93,7 @@ void CFileWatcherControl::WatchDirectory(const std::wstring& path, const std::st
     std::wstring pathWithSlash = path;
     if (pathWithSlash.back() != L'\\') pathWithSlash += L'\\';
 
-    SmartPointer<HANDLE> hEvent(CloseHandle, CreateEvent(nullptr, TRUE, FALSE, nullptr));
+    const SmartPointer<HANDLE> hEvent(CloseHandle, CreateEvent(nullptr, TRUE, FALSE, nullptr));
     OVERLAPPED overlapped{ .hEvent = hEvent };
     std::vector<BYTE> buffer(64ul * 1024ul);
 
@@ -144,11 +144,9 @@ void CFileWatcherControl::AddChange(const std::wstring& path, const DWORD action
     FILETIME fileTime{};
     GetSystemTimeAsFileTime(&fileTime);
 
-    auto item = std::make_unique<CWatcherItem>(path, verbs[action - 1], fileTime,
+    const auto item = new CWatcherItem(path, verbs[action - 1], fileTime,
         ULARGE_INTEGER{ .u = { fileAttr.nFileSizeLow, fileAttr.nFileSizeHigh } }.QuadPart, fileAttr.dwFileAttributes);
-    InsertItem(GetItemCount(), item.get());
-
-    m_items.emplace_back(std::move(item));
+    InsertItem(GetItemCount(), item);
 }
 
 HICON CWatcherItem::GetIcon()

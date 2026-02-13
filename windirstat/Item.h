@@ -273,11 +273,6 @@ public:
     void SetHashType(const ITEMTYPE type, const bool addType = true) noexcept { SetType<ITHASH_MASK>(type, addType); }
     void SetFlag(const ITEMTYPE type, const bool unsetVal = false) noexcept { SetType<ITF_MASK>(type, true, unsetVal); }
 
-    static constexpr bool FileTimeIsGreater(const FILETIME& ft1, const FILETIME& ft2) noexcept
-    {
-        return std::bit_cast<std::uint64_t>(ft1) > std::bit_cast<std::uint64_t>(ft2);
-    }
-
 private:
     ULONGLONG GetProgressRangeMyComputer() const;
     ULONGLONG GetProgressRangeDrive() const;

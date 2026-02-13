@@ -193,7 +193,8 @@ bool CDirStatApp::SetPortableMode(const bool enable, const bool onlyOpen)
     if (enable)
     {
         // Enable portable mode by creating the file
-        SmartPointer<HANDLE> iniHandle(CloseHandle, CreateFile(ini.c_str(), GENERIC_WRITE | GENERIC_READ, FILE_SHARE_READ,
+        const SmartPointer<HANDLE> iniHandle(CloseHandle, CreateFile(ini.c_str(), GENERIC_WRITE | GENERIC_READ,
+            FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
             nullptr, onlyOpen ? OPEN_EXISTING : OPEN_ALWAYS , 0, nullptr));
         if (iniHandle != INVALID_HANDLE_VALUE)
         {

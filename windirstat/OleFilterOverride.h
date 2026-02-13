@@ -27,12 +27,12 @@ public:
     int m_refCounter = 0;
     std::mutex m_mutex;
 
-    COleFilterOverride()
+    COleFilterOverride() noexcept
     {
         m_bEnableNotResponding = FALSE;
     }
 
-    void RegisterFilter()
+    void RegisterFilter() noexcept
     {
         AfxOleGetMessageFilter()->Revoke();
         this->Register();
@@ -43,7 +43,7 @@ public:
         return (m_defaultHandler) ? COleMessageFilter::OnMessagePending(pMsg) : FALSE;
     }
 
-    void SetDefaultHandler(bool defaultHandler)
+    void SetDefaultHandler(const bool defaultHandler) noexcept
     {
         if (AfxGetThread() == nullptr) return;
         std::scoped_lock guard(m_mutex);

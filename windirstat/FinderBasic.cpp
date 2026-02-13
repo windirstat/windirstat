@@ -141,7 +141,7 @@ bool FinderBasic::FindNext()
         if (m_currentInfo->EndOfFile.QuadPart == 0 &&
             m_currentInfo->AllocationSize.QuadPart != 0)
         {
-            SmartPointer<HANDLE> handle(CloseHandle, CreateFile(GetFilePathLong().c_str(), FILE_READ_ATTRIBUTES,
+            const SmartPointer<HANDLE> handle(CloseHandle, CreateFile(GetFilePathLong().c_str(), FILE_READ_ATTRIBUTES,
                 FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr,
                 OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, nullptr));
 

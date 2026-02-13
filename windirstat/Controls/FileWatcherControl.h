@@ -88,8 +88,6 @@ protected:
     void WatchDirectory(const std::wstring& path, const std::stop_token& stopToken);
     void AddChange(const std::wstring& path, DWORD action);
 
-    std::vector<std::unique_ptr<CWatcherItem>> m_items;
-
     DECLARE_MESSAGE_MAP()
     afx_msg void OnDestroy();
 };

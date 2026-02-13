@@ -111,8 +111,7 @@ void CColorButton::OnDestroy()
 
 void CColorButton::OnBnClicked()
 {
-    CMFCColorDialog dlg(GetColor());
-    if (IDOK == dlg.DoModal())
+    if (CMFCColorDialog dlg(GetColor()); IDOK == dlg.DoModal())
     {
         SetColor(dlg.GetColor());
         NMHDR hdr;

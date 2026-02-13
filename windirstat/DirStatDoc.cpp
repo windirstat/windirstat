@@ -2022,7 +2022,7 @@ void CDirStatDoc::OnCreateHardlink()
     if (selectedItems.size() != 2) return;
 
     // Get the linked CItem objects
-    CItem* item1 = selectedItems[0]->GetLinkedItem();
+    const CItem* item1 = selectedItems[0]->GetLinkedItem();
     CItem* item2 = selectedItems[1]->GetLinkedItem();
     
     if (item1 == nullptr || item2 == nullptr) return;

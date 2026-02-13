@@ -345,7 +345,7 @@ void CTreeListControl::OnItemDoubleClick(const int i)
     if (treeItem == nullptr) return;
 
     // Get the linked item (for most controls this is the same as the tree item)
-    auto* item = treeItem->GetLinkedItem();
+    const auto* item = treeItem->GetLinkedItem();
     
     // If it's a file, open it
     if (item != nullptr && item->IsTypeOrFlag(IT_FILE))
@@ -621,7 +621,7 @@ void CTreeListControl::CollapseItem(const int i)
         SetItemState(i, LVIS_FOCUSED, LVIS_FOCUSED);
     }
 
-    RemoveListItem(i + 1, todelete); 
+    if (todelete > 0) RemoveListItem(i + 1, todelete);
     item->SetExpanded(false);
 }
 

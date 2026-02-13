@@ -467,7 +467,7 @@ bool ExecuteCommandInConsole(const std::wstring& command, const std::wstring& ti
 int DpiRest(const int value, const CWnd* wnd) noexcept
 {
     const HWND h = (wnd && wnd->GetSafeHwnd()) ? wnd->GetSafeHwnd() : nullptr;
-    SmartPointer<HDC> dc([h](const HDC hdc) { ReleaseDC(h, hdc); }, GetDC(h));
+    const SmartPointer<HDC> dc([h](const HDC hdc) { ReleaseDC(h, hdc); }, GetDC(h));
     const int dpi = dc != nullptr ? ::GetDeviceCaps(dc, LOGPIXELSX) : USER_DEFAULT_SCREEN_DPI;
     return ::MulDiv(value, dpi, USER_DEFAULT_SCREEN_DPI);
 }
@@ -488,7 +488,7 @@ bool IsMenuEnabled(const CMenu* menu, const UINT pos, const bool isCommand) noex
 int DpiSave(const int value, const CWnd* wnd) noexcept
 {
     const HWND h = (wnd && wnd->GetSafeHwnd()) ? wnd->GetSafeHwnd() : nullptr;
-    SmartPointer<HDC> dc([h](const HDC hdc) { ReleaseDC(h, hdc); }, GetDC(h));
+    const SmartPointer<HDC> dc([h](const HDC hdc) { ReleaseDC(h, hdc); }, GetDC(h));
     const int dpi = dc != nullptr ? ::GetDeviceCaps(dc, LOGPIXELSX) : USER_DEFAULT_SCREEN_DPI;
     return ::MulDiv(value, USER_DEFAULT_SCREEN_DPI, dpi);
 }
@@ -568,7 +568,7 @@ std::vector<BYTE> GetCompressedResource(const HRSRC resource) noexcept
 
     // Use the cabinet function to decompress the resource
     ERF erf{};
-    SmartPointer<HFDI> hfdi(FDIDestroy, FDICreate(
+    const SmartPointer<HFDI> hfdi(FDIDestroy, FDICreate(
         +[](ULONG cb) -> void* { return malloc(cb); },
         +[](void* pv) { free(pv); },
         +[](char*, int, int) -> INT_PTR { return g_ctx->nextHandle++; },
@@ -629,7 +629,7 @@ std::wstring GetAcceleratorString(const UINT commandID)
 
     // Load all accelerator object and get count 
     static std::vector<ACCEL> accels;
-    HACCEL hAccel = LoadAccelerators(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDR_MAINFRAME));
+    const HACCEL hAccel = LoadAccelerators(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDR_MAINFRAME));
     const int count = CopyAcceleratorTable(hAccel, nullptr, 0);
     if (count == 0) return L"";
 

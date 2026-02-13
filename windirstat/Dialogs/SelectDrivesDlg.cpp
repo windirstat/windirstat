@@ -660,7 +660,7 @@ void CSelectDrivesDlg::OnSysColorChange()
 
 std::wstring CSelectDrivesDlg::GetFullPathName(const std::wstring & relativePath)
 {
-    SmartPointer<LPWSTR> path(free, _wfullpath(nullptr, relativePath.c_str(), 0));
+    const SmartPointer<LPWSTR> path(free, _wfullpath(nullptr, relativePath.c_str(), 0));
     return path != nullptr ? static_cast<LPWSTR>(path) : relativePath;
 }
 

@@ -329,10 +329,10 @@ HICON CItem::GetIcon()
     }
 
     const CItem* refItem = GetLinkedItem();
-    CDirStatApp::Get()->GetIconHandler()->DoAsyncShellInfoLookup(std::make_tuple(const_cast<CItem*>(this),
+    CDirStatApp::Get()->GetIconHandler()->DoAsyncShellInfoLookup(std::make_tuple(this,
         m_visualInfo->control, refItem->GetPath(), refItem->GetAttributes(), &m_visualInfo->icon, nullptr));
 
-    return nullptr;
+    return m_visualInfo->icon;
 }
 
 void CItem::DrawAdditionalState(CDC* pdc, const CRect& rcLabel) const
@@ -899,7 +899,7 @@ std::vector<BYTE> CItem::GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CIte
     }
 
     // Open file for reading - avoid files that are actively being written to
-    SmartPointer<HANDLE> hFile(CloseHandle, CreateFile(GetPathLong().c_str(),
+    const SmartPointer<HANDLE> hFile(CloseHandle, CreateFile(GetPathLong().c_str(),
         GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING,
         FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_SEQUENTIAL_SCAN, nullptr));
     if (hFile == INVALID_HANDLE_VALUE)

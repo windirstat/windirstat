@@ -261,14 +261,14 @@ public:
     }
 
     template<typename U>
-    void push(U&& item)
+    void push(U&& item) noexcept
     {
         Node* node = new Node(std::forward<U>(item));
         Node* prev = m_head.exchange(node, std::memory_order_release);
         prev->next.store(node, std::memory_order_release);
     }
 
-    [[nodiscard]] bool pop(T& item) noexcept(std::is_nothrow_move_assignable_v<T>)
+    [[nodiscard]] bool pop(T& item) noexcept(std::is_nothrow_move_assignable_v<T>) 
     {
         Node* t = m_tail;
         Node* next = t->next.load(std::memory_order_acquire);
@@ -292,7 +292,7 @@ public:
     // Clear out queue (unsafe with concurrent producers)
     void clear() noexcept
     {
-        for (T tmp; pop(tmp);) {};
+        for (T tmp; pop(tmp);) {}
 
         const Node* old = m_tail; // One dummy remains
         Node* dummy = new Node();
