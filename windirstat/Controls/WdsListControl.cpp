@@ -26,6 +26,48 @@ namespace
     constexpr UINT LABEL_INFLATE_CX = 3u; // How much the label is enlarged, to get the selection and focus rectangle
     constexpr UINT LABEL_Y_MARGIN = 2u;
     constexpr UINT GENERAL_INDENT = 5u;
+
+    class SelectionPreserver
+    {
+    public:
+        explicit SelectionPreserver(CWdsListControl* list) : m_list(list)
+        {
+            // Focused item
+            if (const int i = m_list->GetNextItem(-1, LVNI_FOCUSED); i != -1)
+            {
+                m_focusedItem = m_list->GetItem(i);
+            }
+
+            // Selected items
+            for (int i = m_list->GetNextItem(-1, LVNI_SELECTED); i != -1; i = m_list->GetNextItem(i, LVNI_SELECTED))
+            {
+                if (auto* item = m_list->GetItem(i)) m_selectedItems.push_back(item);
+            }
+        }
+
+        ~SelectionPreserver()
+        {
+            // Handle re-selections
+            m_list->SetItemState(-1, 0, LVIS_SELECTED);
+            for (const auto* item : m_selectedItems)
+            {
+                if (const int i = m_list->FindListItem(item); i != -1)
+                    m_list->SetItemState(i, LVIS_SELECTED, LVIS_SELECTED);
+            }
+
+            // Handle focus-reselection
+            if (!m_focusedItem) return;
+            if (const int i = m_list->FindListItem(m_focusedItem); i != -1)
+            {
+                m_list->SetItemState(i, LVIS_FOCUSED, LVIS_FOCUSED);
+            }
+        }
+
+    private:
+        CWdsListControl* m_list;
+        std::vector<CWdsListItem*> m_selectedItems;
+        CWdsListItem* m_focusedItem = nullptr;
+    };
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -652,6 +694,8 @@ void CWdsListControl::InsertListItem(const int i, const std::vector<CWdsListItem
 {
     ASSERT(i >= 0 && i <= GetItemCount());
 
+    SelectionPreserver preserve(this);
+
     const int itemCount = GetItemCount() + static_cast<int>(items.size());
     m_items.insert(m_items.begin() + i, items.begin(), items.end());
 
@@ -909,6 +953,8 @@ void CWdsListControl::RemoveListItem(const int i, const int c)
 {
     int itemCount = GetItemCount();
     ASSERT(i >= 0 && i < itemCount);
+
+    SelectionPreserver preserve(this);
 
     for (const int x : std::views::iota(i, i + c))
     {
