@@ -288,15 +288,6 @@ void CTreeListControl::SetRootItem(CTreeListItem* root)
     }
 }
 
-void CTreeListControl::DeselectAll()
-{
-    for (POSITION pos = GetFirstSelectedItemPosition(); pos != nullptr;)
-    {
-        const int i = GetNextSelectedItem(pos);
-        SetItemState(i, 0, LVIS_SELECTED);
-    }
-}
-
 void CTreeListControl::ExpandPathToItem(const CTreeListItem* item)
 {
     if (item == nullptr)

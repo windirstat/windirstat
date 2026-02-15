@@ -466,6 +466,13 @@ void CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, const bo
         COptions::ShowDeleteWarning = !warning.IsCheckboxChecked();
     }
 
+    // Clear active selections
+    if (!emptyOnly)
+    {
+        GetFocusControl()->DeselectAll();
+        Get()->InvalidateSelectionCache();
+    }
+
     // Build list of items to delete
     std::vector itemsToDelete{ items };
     if (emptyOnly)
@@ -483,79 +490,94 @@ void CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, const bo
 
     bool cancelled = false;
     if (!toTrashBin) CProgressDlg(totalItems, false, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
-    {
-        // Collect all items depth-first
-        std::vector<const CItem*> allItems;
-        std::vector<CItem*> stack = itemsToDelete;
-        while (!stack.empty())
         {
-            const CItem* item = stack.back(); stack.pop_back();
-
-            allItems.push_back(item);
-            if (item->HasChildren() && !item->IsTypeOrFlag(ITRP_MASK))
+            // Collect items depth-first and separate into files and directories
+            std::vector<const CItem*> files;
+            std::vector<const CItem*> directories;
+            for (std::vector<CItem*> stack = itemsToDelete; !stack.empty();)
             {
-                const auto& children = item->GetChildren();
-                stack.insert(stack.end(), children.begin(), children.end());
-            }
-        }
+                const CItem* item = stack.back(); stack.pop_back();
 
-        // Delete in reverse order (children before parents)
-        for (const auto& item : allItems | std::views::reverse)
-        {
-            if (pdlg->IsCancelled())
-            {
-                cancelled = true;
-                return;
+                // Sort into files or directories
+                (item->IsTypeOrFlag(IT_DIRECTORY) ? directories : files).push_back(item);
+
+                // Add children to stack
+                if (item->HasChildren() && !item->IsTypeOrFlag(ITRP_MASK))
+                {
+                    const auto& children = item->GetChildren();
+                    stack.insert(stack.end(), children.begin(), children.end());
+                }
             }
 
-            // Delete the physical item
-            item->IsTypeOrFlag(IT_DIRECTORY)
-                ? RemoveDirectory(item->GetPathLong().c_str())
-                : DeleteFileForce(item->GetPathLong(), item->GetAttributes());
+            // Delete files in parallel
+            std::for_each(std::execution::par, files.begin(), files.end(), [&](const CItem* item)
+                {
+                    if (pdlg->IsCancelled() || cancelled)
+                    {
+                        cancelled = true;
+                        return;
+                    }
 
-            pdlg->Increment();
-        }
+                    DeleteFileForce(item->GetPathLong(), item->GetAttributes());
+                    pdlg->Increment();
+                });
 
-        // Check if top-level items still exist
-        std::vector<CItem*> remainingItems;
-        for (const auto& item : itemsToDelete)
-        {
-            if (GetFileAttributes(item->GetPathLong().c_str()) != INVALID_FILE_ATTRIBUTES)
+            // Check if cancelled during parallel deletion
+            if (cancelled) return;
+
+            // Delete directories in reverse order (children before parents)
+            for (const auto& item : directories | std::views::reverse)
             {
-                remainingItems.push_back(item);
+                if (pdlg->IsCancelled())
+                {
+                    cancelled = true;
+                    return;
+                }
+
+                RemoveDirectory(item->GetPathLong().c_str());
+                pdlg->Increment();
             }
-        }
-        itemsToDelete = std::move(remainingItems);
-    }).DoModal();
+
+            // Check if top-level items still exist
+            std::vector<CItem*> remainingItems;
+            for (const auto& item : itemsToDelete)
+            {
+                if (GetFileAttributes(item->GetPathLong().c_str()) != INVALID_FILE_ATTRIBUTES)
+                {
+                    remainingItems.push_back(item);
+                }
+            }
+            itemsToDelete = std::move(remainingItems);
+        }).DoModal();
 
     if (!cancelled && !itemsToDelete.empty())
         CProgressDlg(0, false, AfxGetMainWnd(), [&](const CProgressDlg* pdlg)
-    {
-        // For trash bin operations, use IFileOperation directly
-        auto flags = FOFX_SHOWELEVATIONPROMPT | (COptions::ShowMicrosoftProgress ? FOF_NOCONFIRMMKDIR : FOF_NO_UI);
-        if (toTrashBin) flags |= FOFX_ADDUNDORECORD | FOFX_RECYCLEONDELETE;
+            {
+                // For trash bin operations, use IFileOperation directly
+                auto flags = FOFX_SHOWELEVATIONPROMPT | (COptions::ShowMicrosoftProgress ? FOF_NOCONFIRMMKDIR : FOF_NO_UI);
+                if (toTrashBin) flags |= FOFX_ADDUNDORECORD | FOFX_RECYCLEONDELETE;
 
-        CComPtr<IFileOperation> fileOperation;
-        if (FAILED(::CoCreateInstance(CLSID_FileOperation, nullptr, CLSCTX_ALL, IID_PPV_ARGS(&fileOperation))) ||
-            FAILED(fileOperation->SetOwnerWindow(*pdlg)) ||
-            FAILED(fileOperation->SetOperationFlags(flags)))
-        {
-            return;
-        }
+                CComPtr<IFileOperation> fileOperation;
+                if (FAILED(::CoCreateInstance(CLSID_FileOperation, nullptr, CLSCTX_ALL, IID_PPV_ARGS(&fileOperation))) ||
+                    FAILED(fileOperation->SetOwnerWindow(*pdlg)) ||
+                    FAILED(fileOperation->SetOperationFlags(flags)))
+                {
+                    return;
+                }
 
-        // Add all items into a single deletion operation
-        for (const auto& item : itemsToDelete)
-        {
-            CComPtr<IShellItem> shellitem;
-            SmartPointer<LPITEMIDLIST> pidl(CoTaskMemFree, ILCreateFromPath(item->GetPath().c_str()));
-            if (pidl == nullptr || FAILED(SHCreateItemFromIDList(pidl, IID_PPV_ARGS(&shellitem)))) continue;
-            fileOperation->DeleteItem(shellitem, nullptr);
-        }
+                // Add all items into a single deletion operation
+                for (const auto& item : itemsToDelete)
+                {
+                    CComPtr<IShellItem> shellitem;
+                    SmartPointer<LPITEMIDLIST> pidl(CoTaskMemFree, ILCreateFromPath(item->GetPath().c_str()));
+                    if (pidl == nullptr || FAILED(SHCreateItemFromIDList(pidl, IID_PPV_ARGS(&shellitem)))) continue;
+                    fileOperation->DeleteItem(shellitem, nullptr);
+                }
 
-        // Do all deletions
-        const HRESULT res = fileOperation->PerformOperations();
-        if (res != S_OK) VTRACE(L"File Operation Failed: {}", TranslateError(res));
-    }).DoModal();
+                // Do all deletions
+                const HRESULT res = fileOperation->PerformOperations();
+                if (res != S_OK) VTRACE(L"File Operation Failed: {}", TranslateError(res));
+            }).DoModal();
 
     // Create a recycler directories to refresh
     std::unordered_set<CItem*> recyclers;

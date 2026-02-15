@@ -137,6 +137,7 @@ public:
 
     // Selection change batching
     void PostSelectionChanged();
+    void DeselectAll();
 
 protected:
     void InitializeColors();

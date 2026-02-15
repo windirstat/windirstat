@@ -112,7 +112,6 @@ class CTreeListControl : public CWdsListControl
     CTreeListItem* GetItem(int i) const;
     bool IsItemSelected(const CTreeListItem* item) const;
     void SelectItem(const CTreeListItem* item, bool deselect = false, bool focus = false);
-    void DeselectAll();
     void ExpandPathToItem(const CTreeListItem* item);
     void DrawNode(CDC* pdc, CRect& rc, CRect& rcPlusMinus, const CTreeListItem* item, int* width);
     void EnsureItemVisible(const CTreeListItem* item);
