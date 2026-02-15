@@ -55,6 +55,10 @@ void CPageTreeMap::DoDataExchange(CDataExchange* pDX)
 
     DDX_Radio(pDX, IDC_KDIRSTAT, m_style);
     DDX_Check(pDX, IDC_TREEMAPGRID, m_grid);
+    DDX_Check(pDX, IDC_TREEMAPHEADER, m_headers);
+
+    DDX_Text(pDX, IDC_STATICGRIDMINIMUMAREA, m_sGridMinimumArea);
+    DDX_Slider(pDX, IDC_GRIDMINIMUMAREA, m_nGridMinimumArea);
 
     DDX_Text(pDX, IDC_STATICBRIGHTNESS, m_sBrightness);
     DDX_Slider(pDX, IDC_BRIGHTNESS, m_nBrightness);
@@ -83,6 +87,7 @@ BEGIN_MESSAGE_MAP(CPageTreeMap, CMFCPropertyPage)
     ON_BN_CLICKED(IDC_KDIRSTAT, OnSetModified)
     ON_BN_CLICKED(IDC_SEQUOIAVIEW, OnSetModified)
     ON_BN_CLICKED(IDC_TREEMAPGRID, OnSetModified)
+    ON_BN_CLICKED(IDC_TREEMAPHEADER, OnSetModified)
     ON_BN_CLICKED(IDC_RESET, OnBnClickedReset)
     ON_NOTIFY(CXySlider::XYSLIDER_CHANGED, IDC_LIGHTSOURCE, OnLightSourceChanged)
     ON_WM_CTLCOLOR()
@@ -138,8 +143,10 @@ void CPageTreeMap::UpdateOptions(const bool save)
         m_options.SetHeightPercent(c_MaxHeight - m_nHeight);
         m_options.SetScaleFactorPercent(100 - m_nScaleFactor);
         m_options.SetLightSourcePoint(m_ptLightSource);
+        m_options.SetGridMinimumArea(m_nGridMinimumArea);
         m_options.style = m_style == 0 ? CTreeMap::KDirStatStyle : CTreeMap::SequoiaViewStyle;
         m_options.grid = FALSE != m_grid;
+        m_options.showHeaders = FALSE != m_headers;
         m_options.gridColor = m_gridColor.GetColor();
     }
     else
@@ -149,8 +156,10 @@ void CPageTreeMap::UpdateOptions(const bool save)
         m_nHeight = c_MaxHeight - m_options.GetHeightPercent();
         m_nScaleFactor = 100 - m_options.GetScaleFactorPercent();
         m_ptLightSource = m_options.GetLightSourcePoint();
+        m_nGridMinimumArea = m_options.GetGridMinimumArea();
         m_style = m_options.style == CTreeMap::KDirStatStyle ? 0 : 1;
         m_grid = m_options.grid;
+        m_headers = m_options.showHeaders;
         m_gridColor.SetColor(m_options.gridColor);
     }
 }
@@ -161,6 +170,7 @@ void CPageTreeMap::UpdateStatics()
     m_sCushionShading.Format(L"%d", 100 - m_nCushionShading);
     m_sHeight.Format(L"%d", (c_MaxHeight - m_nHeight) / (c_MaxHeight / 100));
     m_sScaleFactor.Format(L"%d", 100 - m_nScaleFactor);
+    m_sGridMinimumArea.Format(L"%d px", m_nGridMinimumArea);
 }
 
 void CPageTreeMap::OnSomethingChanged()

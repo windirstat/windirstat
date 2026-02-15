@@ -53,7 +53,12 @@ protected:
     int m_style = 0;
     CColorButton m_highlightColor;
     BOOL m_grid = 0;
+    BOOL m_headers = 0;
     CColorButton m_gridColor;
+
+    CSliderCtrl m_gridMinimumArea;
+    CStringW m_sGridMinimumArea;
+    int m_nGridMinimumArea = 0;
 
     CSliderCtrl m_brightness;
     CStringW m_sBrightness;

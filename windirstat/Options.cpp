@@ -72,6 +72,8 @@ Setting<bool> COptions::ShowDupeDetectionCloudLinksWarning(OptionsGeneral, L"Sho
 Setting<bool> COptions::AutoElevate(OptionsGeneral, L"AutoElevate", false);
 Setting<bool> COptions::AutoMapDrivesWhenElevated(OptionsGeneral, L"AutoMapDrivesWhenElevated", true);
 Setting<bool> COptions::TreeMapGrid(OptionsTreeMap, L"TreeMapGrid", (CTreeMap::GetDefaults().grid));
+Setting<bool> COptions::TreeMapHeaders(OptionsTreeMap, L"TreeMapHeaders", (CTreeMap::GetDefaults().showHeaders));
+Setting<int> COptions::TreeMapGridMinimumArea(OptionsTreeMap, L"TreeMapGridMinimumArea", (CTreeMap::GetDefaults().GetGridMinimumArea()));
 Setting<bool> COptions::TreeMapUseLogical(OptionsTreeMap, L"TreeMapUseLogicalSize", false);
 Setting<bool> COptions::UseBackupRestore(OptionsGeneral, L"UseBackupRestore", true);
 Setting<bool> COptions::UseDrawTextCache(OptionsGeneral, L"UseDrawTextCache", true);
@@ -183,6 +185,8 @@ void COptions::SetTreeMapOptions(const CTreeMap::Options& options)
 
     TreeMapStyle = static_cast<int>(TreeMapOptions.style);
     TreeMapGrid = TreeMapOptions.grid;
+    TreeMapHeaders = TreeMapOptions.showHeaders;
+    TreeMapGridMinimumArea = TreeMapOptions.GetGridMinimumArea();
     TreeMapGridColor = TreeMapOptions.gridColor;
     TreeMapBrightness = TreeMapOptions.GetBrightnessPercent();
     TreeMapHeightFactor = TreeMapOptions.GetHeightPercent();
@@ -258,6 +262,8 @@ void COptions::PostProcessPersistedSettings()
     // Load treemap settings
     TreeMapOptions.style = static_cast<CTreeMap::STYLE>(static_cast<int>(TreeMapStyle));
     TreeMapOptions.grid = TreeMapGrid;
+    TreeMapOptions.showHeaders = TreeMapHeaders;
+    TreeMapOptions.SetGridMinimumArea(TreeMapGridMinimumArea);
     TreeMapOptions.gridColor = TreeMapGridColor;
     TreeMapOptions.SetBrightnessPercent(TreeMapBrightness);
     TreeMapOptions.SetHeightPercent(TreeMapHeightFactor);

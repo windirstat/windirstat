@@ -156,6 +156,8 @@ public:
     static Setting<bool> ShowDupeDetectionCloudLinksWarning;
     static Setting<bool> AutoElevate;
     static Setting<bool> TreeMapGrid;
+    static Setting<bool> TreeMapHeaders;
+    static Setting<int> TreeMapGridMinimumArea;
     static Setting<bool> TreeMapUseLogical;
     static Setting<bool> UseBackupRestore;
     static Setting<bool> UseDrawTextCache;
