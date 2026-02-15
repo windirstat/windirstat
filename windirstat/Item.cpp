@@ -841,6 +841,7 @@ void CItem::UpdateStatsFromDisk()
                 UpwardSubtractSizeLogical(GetSizeLogical());
                 UpwardAddSizePhysical(finder.GetFileSizePhysical());
                 UpwardAddSizeLogical(finder.GetFileSizeLogical());
+                SetIndex(finder.GetIndex());
                 ExtensionDataAdd();
             }
         }

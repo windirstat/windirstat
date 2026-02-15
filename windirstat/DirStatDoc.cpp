@@ -1998,66 +1998,45 @@ void CDirStatDoc::OnRemoveMarkOfTheWebTags()
 void CDirStatDoc::OnUpdateCreateHardlink(CCmdUI* pCmdUI)
 {
     // Only allow when focused on duplicate list
-    if (!DupeListHasFocus())
-    {
-        pCmdUI->Enable(FALSE);
-        return;
-    }
-
-    // Get selected items from the duplicate control
     const auto& control = CFileDupeControl::Get();
-    if (control == nullptr)
+    if (!DupeListHasFocus() || control == nullptr)
     {
-        pCmdUI->Enable(FALSE);
-        return;
+        return pCmdUI->Enable(FALSE);
+        
     }
 
     // Get the selected tree list items directly
-    const auto selectedItems = control->GetAllSelected<CTreeListItem>(true);
-    
-    // Must have exactly 2 items selected
-    if (selectedItems.size() != 2)
+    const auto selected = control->GetAllSelected();
+    if (selected.size() < 2)
     {
-        pCmdUI->Enable(FALSE);
-        return;
+        return pCmdUI->Enable(FALSE);
     }
 
-    // Both items must be files (have a linked item) with the same parent
-    auto* item1 = selectedItems[0];
-    auto* item2 = selectedItems[1];
-    
-    const bool bothAreFiles = item1->GetLinkedItem() != nullptr && 
-                              item2->GetLinkedItem() != nullptr;
-    const bool sameParent = item1->GetParent() == item2->GetParent() && 
-                            item1->GetParent() != nullptr;
-    
-    pCmdUI->Enable(bothAreFiles && sameParent);
+    // Validate all items are on same logical volume
+    const auto drive = selected.front()->GetLinkedItem()->GetParentDrive();
+    for (auto* item : selected)
+    {
+        if (!item->GetLinkedItem()->IsTypeOrFlag(IT_FILE) ||
+            item->GetLinkedItem()->GetParentDrive() != drive)
+        {
+            return pCmdUI->Enable(FALSE);
+        }
+    }
+
+    pCmdUI->Enable(TRUE);
 }
 
 void CDirStatDoc::OnCreateHardlink()
 {
-    // Get selected items from the duplicate control
-    const auto& control = CFileDupeControl::Get();
-    if (control == nullptr) return;
-
-    const auto selectedItems = control->GetAllSelected<CTreeListItem>(true);
-    if (selectedItems.size() != 2) return;
-
-    // Get the linked CItem objects
-    const CItem* item1 = selectedItems[0]->GetLinkedItem();
-    CItem* item2 = selectedItems[1]->GetLinkedItem();
-    
-    if (item1 == nullptr || item2 == nullptr) return;
-
-    // Determine which file to keep and which to replace
-    // Use the first selected item as source, second as target to be replaced
-    const std::wstring& sourcePath = item1->GetPath();
-    const std::wstring& targetPath = item2->GetPath();
-
-    // Attempt to create the hardlink
-    if (CreateHardlinkFromFile(sourcePath, targetPath))
+    // Validate all items are on same logical volume
+    const auto selected = GetAllSelected();
+    for (const auto* item : selected)
     {
-        // Refresh the target item to reflect the change
-        RefreshItem(item2);
+        if (item == selected.front()) continue;
+
+        CreateHardlinkFromFile(selected.front()->GetPathLong(), item->GetPathLong());
     }
+
+    // Refresh the target item to reflect the change
+    RefreshItem(selected);
 }
