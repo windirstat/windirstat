@@ -52,7 +52,9 @@ protected:
 
     int m_style = 0;
     CColorButton m_highlightColor;
-    BOOL m_grid = 0;
+    CComboBox m_gridMode;
+    int m_nGridMode = 0;
+    BOOL m_headers = 0;
     CColorButton m_gridColor;
 
     CSliderCtrl m_brightness;

@@ -128,13 +128,21 @@ public:
         SequoiaViewStyle // The classical squarification as described at https://www.win.tue.nl/~vanwijk/
     };
 
+    enum GridMode : std::uint8_t 
+    {
+        GridNever,
+        GridAuto,
+        GridAlways
+    };
+
     //
     // Collection of all treemap options.
     //
     struct Options
     {
         STYLE style;         // Squarification method
-        bool grid;           // Whether to draw grid lines
+        GridMode gridMode; // Whether and how to draw grid lines
+        bool showHeaders;    // Whether to draw headers for folders
         COLORREF gridColor;  // Color of grid lines
         double brightness;   // 0..1.0   (default = 0.84)
         double height;       // >= 0.0    (default = 0.40)    Factor "H"
@@ -192,15 +200,22 @@ public:
 
 protected:
 
+    // Helper structures for text rendering
+    struct TextOverlay
+    {
+        CRect rc;
+        std::wstring name;
+        COLORREF color;
+        // Folder header or leaf body
+        bool isFolderHeader;
+    };
+
     // KDirStat-like squarification
     bool KDirStat_ArrangeChildren(const CItem* parent, std::vector<double>& childWidth, std::vector<double>& rows, std::vector<int>& childrenPerRow) const;
     double KDirStat_CalculateNextRow(const CItem* parent, int nextChild, double width, int& childrenUsed, std::vector<double>& childWidth) const;
 
     // Returns true, if height and scaleFactor are > 0 and ambientLight is < 1.0
     bool IsCushionShading() const;
-
-    // Leaves space for grid and then calls RenderRectangle()
-    void RenderLeaf(std::vector<COLORREF>& bitmap, const CItem* item, const std::array<double, 4>& surface) const;
 
     // Either calls DrawCushion() or DrawSolidRect()
     void RenderRectangle(std::vector<COLORREF>& bitmap, const CRect& rc, const std::array<double, 4>& surface, DWORD color) const;
@@ -214,10 +229,14 @@ protected:
     // Adds a new ridge to surface
     static void AddRidge(const CRect& rc, std::array<double, 4>& surface, double h);
 
+    // File tree colors (depth-based coloring for folders)
+    static std::array<COLORREF, 8> GetFileTreeColors();
+
     // Default tree map options
     static constexpr Options DefaultOptions = {
         .style = KDirStatStyle,
-        .grid = false,
+        .gridMode = GridNever,
+        .showHeaders = false,
         .gridColor = RGB(0, 0, 0),
         .brightness = 0.88,
         .height = 0.38,
@@ -255,6 +274,8 @@ protected:
     double m_lx = 0.0; // Derived parameters
     double m_ly = 0.0;
     double m_lz = 0.0;
+
+    CFont m_headerFont;
 };
 
 //
