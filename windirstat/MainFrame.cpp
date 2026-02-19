@@ -1232,11 +1232,11 @@ void CMainFrame::UpdatePaneText()
         }
     }
 
-    // Update select logical size
+    // Update select physical size
     const CClientDC dc(this);
-    const auto sizeSummary = std::format(L"{}: {}", Localization::Lookup(IDS_COL_SIZE_LOGICAL), FormatBytes(size));
+    const auto sizeSummary = std::format(L"{}: {}", Localization::Lookup(IDS_COL_SIZE_PHYSICAL), FormatBytes(size));
     SetStatusPaneText(dc, ID_STATUSPANE_IDLE_INDEX, fileSelectionText);
-    SetStatusPaneText(dc, ID_STATUSPANE_SIZE_INDEX, (size != MAXULONG64) ? sizeSummary : L"", 175);
+    SetStatusPaneText(dc, ID_STATUSPANE_SIZE_INDEX, (size != MAXULONG64) ? sizeSummary : wds::strEmpty, 175);
     SetStatusPaneText(dc, ID_STATUSPANE_RAM_INDEX, CDirStatApp::GetCurrentProcessMemoryInfo(), 175);
 }
 
