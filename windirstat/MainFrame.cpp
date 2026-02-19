@@ -1144,8 +1144,8 @@ void CMainFrame::UpdateToolsMenu(CMenu* menu)
     // Get available local drives and conditionally enable based on elevation
     const auto drives = GetDriveList({DRIVE_FIXED, DRIVE_REMOVABLE, DRIVE_RAMDISK});
     SetMenuItem(menu, shadowCopyPos, IsElevationActive() && !drives.empty());
-    SetMenuItem(menu, defragPos, IsElevationAvailable() && !drives.empty());
-    SetMenuItem(menu, chkdskPos, IsElevationAvailable() && !drives.empty());
+    SetMenuItem(menu, defragPos, (IsElevationAvailable() || IsElevationActive()) && !drives.empty());
+    SetMenuItem(menu, chkdskPos, (IsElevationAvailable() || IsElevationActive()) && !drives.empty());
     
     for (const auto& drive : drives)
     {
