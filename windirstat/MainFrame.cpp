@@ -366,9 +366,10 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
     ON_MESSAGE(DarkMode::WM_UAHDRAWMENU, OnUahDrawMenu)
     ON_MESSAGE(DarkMode::WM_UAHDRAWMENUITEM, OnUahDrawMenu)
     ON_REGISTERED_MESSAGE(s_TaskBarMessage, OnTaskButtonCreated)
-    ON_UPDATE_COMMAND_UI(ID_VIEW_SHOWFILETYPES, OnUpdateViewShowFileTypes)
     ON_UPDATE_COMMAND_UI(ID_VIEW_SHOWTREEMAP, OnUpdateViewShowTreeMap)
+    ON_UPDATE_COMMAND_UI(ID_VIEW_SHOWFILETYPES, OnUpdateViewShowFileTypes)
     ON_UPDATE_COMMAND_UI(ID_TREEMAP_LOGICAL_SIZE, OnUpdateTreeMapUseLogical)
+    ON_UPDATE_COMMAND_UI(ID_TOOLS_WATCHER, OnUpdateViewShowWatcher)
     ON_WM_CLOSE()
     ON_WM_CREATE()
     ON_WM_DESTROY()
@@ -1232,11 +1233,11 @@ void CMainFrame::UpdatePaneText()
         }
     }
 
-    // Update select logical size
+    // Update select physical size
     const CClientDC dc(this);
-    const auto sizeSummary = std::format(L"{}: {}", Localization::Lookup(IDS_COL_SIZE_LOGICAL), FormatBytes(size));
+    const auto sizeSummary = std::format(L"{}: {}", Localization::Lookup(IDS_COL_SIZE_PHYSICAL), FormatBytes(size));
     SetStatusPaneText(dc, ID_STATUSPANE_IDLE_INDEX, fileSelectionText);
-    SetStatusPaneText(dc, ID_STATUSPANE_SIZE_INDEX, (size != MAXULONG64) ? sizeSummary : L"", 175);
+    SetStatusPaneText(dc, ID_STATUSPANE_SIZE_INDEX, (size != MAXULONG64) ? sizeSummary : wds::strEmpty, 175);
     SetStatusPaneText(dc, ID_STATUSPANE_RAM_INDEX, CDirStatApp::GetCurrentProcessMemoryInfo(), 175);
 }
 
@@ -1279,6 +1280,16 @@ void CMainFrame::OnUpdateTreeMapUseLogical(CCmdUI* pCmdUI)
     pCmdUI->SetCheck(COptions::TreeMapUseLogical);
 }
 
+void CMainFrame::OnUpdateViewShowFileTypes(CCmdUI* pCmdUI)
+{
+    pCmdUI->SetCheck(GetExtensionView()->IsShowTypes());
+}
+
+void CMainFrame::OnUpdateViewShowWatcher(CCmdUI* pCmdUI)
+{
+    pCmdUI->SetCheck(GetFileTabbedView()->IsWatcherTabVisible());
+}
+
 void CMainFrame::OnViewShowTreeMap()
 {
     GetTreeMapView()->ShowTreeMap(!GetTreeMapView()->IsShowTreeMap());
@@ -1299,11 +1310,6 @@ void CMainFrame::OnViewTreeMapUseLogical()
     {
         CDirStatDoc::Get()->RefreshItem(CDirStatDoc::Get()->GetRootItem());
     }
-}
-
-void CMainFrame::OnUpdateViewShowFileTypes(CCmdUI* pCmdUI)
-{
-    pCmdUI->SetCheck(GetExtensionView()->IsShowTypes());
 }
 
 void CMainFrame::OnViewShowFileTypes()
