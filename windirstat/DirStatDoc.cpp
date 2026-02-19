@@ -895,7 +895,7 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
     static bool (*isStoppable)(CItem*) = [](CItem*) { return doc->HasRootItem() && !doc->IsRootDone(); };
     static bool (*isHibernate)(CItem*) = [](CItem*) { return IsElevationActive() && IsHibernateEnabled(); };
     static bool (*isElevated)(CItem*) = [](CItem*) { return IsElevationActive(); };
-    static bool (*isElevationAvailable)(CItem*) = [](CItem*) { return IsElevationActive(); };
+    static bool (*isElevationPossible)(CItem*) = [](CItem*) { return IsElevationActive() || IsElevationAvailable(); };
     static bool (*isDupeTabVisible)(CItem*) = [](CItem*) { return CMainFrame::Get()->GetFileTabbedView()->IsDupeTabVisible(); };
     static bool (*isVhdFile)(CItem*) = [](CItem* item) { return item != nullptr && IsElevationActive() && (!item->IsTypeOrFlag(IT_FILE) || item->GetExtension() == L".vhdx"); };
     
@@ -904,12 +904,12 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
         // ID                           none   many   early  focus        types
         { ID_CLEANUP_DELETE,          { false, true,  false, LF_NONE,     { IT_DIRECTORY, IT_FILE }, notRoot } },
         { ID_CLEANUP_DELETE_BIN,      { false, true,  false, LF_NONE,     { IT_DIRECTORY, IT_FILE }, hasRecycleBin } },
-        { ID_CLEANUP_DISK_CLEANUP  ,  { true,  true,  false, LF_NONE,     { ITF_ANY }, isElevationAvailable } },
+        { ID_CLEANUP_DISK_CLEANUP  ,  { true,  true,  false, LF_NONE,     { ITF_ANY }, isElevationPossible } },
         { ID_CLEANUP_MOVE_TO,         { false, true,  false, LF_NONE,     { IT_DIRECTORY, IT_FILE }, notRoot } },
         { ID_CLEANUP_REMOVE_PROGRAMS, { true,  true,  false, LF_NONE,     { ITF_ANY } } },
-        { ID_CLEANUP_DISM_ANALYZE,    { true,  true,  true,  LF_NONE,     { ITF_ANY }, isElevationAvailable } },
-        { ID_CLEANUP_DISM_NORMAL,     { true,  true,  false, LF_NONE,     { ITF_ANY }, isElevationAvailable } },
-        { ID_CLEANUP_DISM_RESET,      { true,  true,  false, LF_NONE,     { ITF_ANY }, isElevationAvailable } },
+        { ID_CLEANUP_DISM_ANALYZE,    { true,  true,  true,  LF_NONE,     { ITF_ANY }, isElevationPossible } },
+        { ID_CLEANUP_DISM_NORMAL,     { true,  true,  false, LF_NONE,     { ITF_ANY }, isElevationPossible } },
+        { ID_CLEANUP_DISM_RESET,      { true,  true,  false, LF_NONE,     { ITF_ANY }, isElevationPossible } },
         { ID_CLEANUP_EMPTY_BIN,       { true,  true,  false, LF_NONE,     { ITF_ANY } } },
         { ID_CLEANUP_EMPTY_FOLDER,    { true,  true,  false, LF_NONE,     { IT_DIRECTORY }, notRoot } },
         { ID_CLEANUP_EXPLORER_SELECT, { false, true,  true,  LF_NONE,     { IT_DIRECTORY, IT_FILE } } },
