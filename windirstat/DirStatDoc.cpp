@@ -446,24 +446,19 @@ void CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, const bo
     {
         // Build list of file paths for the message box
         std::vector<std::wstring> filePaths;
-        for (const auto& item : items)
-        {
-            filePaths.push_back(item->GetPath());
-        }
+        for (const auto& item : items) filePaths.push_back(item->GetPath());
 
-        // Display the file deletion warning dialog
-        CMessageBoxDlg warning(
-            Localization::Lookup(emptyOnly ? IDS_EMPTY_FOLDER_WARNING : IDS_DELETE_WARNING),
-            Localization::Lookup(IDS_DELETE_TITLE),
-            MB_YESNO | MB_ICONWARNING, AfxGetMainWnd(), filePaths,
-            Localization::Lookup(IDS_DONT_SHOW_AGAIN), false);
+        // Display the file deletion warning dialog with custom width and height
+        if (![&]() -> bool {
+            const auto result = CMessageBoxDlg::Show(Localization::Lookup(emptyOnly ? IDS_EMPTY_FOLDER_WARNING : IDS_DELETE_WARNING), filePaths,
+                Localization::Lookup(IDS_DONT_SHOW_AGAIN), false, MB_YESNO | MB_ICONWARNING, AfxGetMainWnd(), { 600, 400 }, Localization::Lookup(IDS_DELETE_TITLE));
 
-        // Change default width and display
-        warning.SetInitialWindowSize({ 600, 400 });
-        if (IDYES != warning.DoModal()) return;
+            if (result.nID != IDYES) return false;
 
-        // Save off the deletion warning preference
-        COptions::ShowDeleteWarning = !warning.IsCheckboxChecked();
+            // Save off the deletion warning preference
+            COptions::ShowDeleteWarning = !result.isChecked;
+            return true;
+        }()) return;
     }
 
     // Clear active selections

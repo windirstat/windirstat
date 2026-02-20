@@ -43,11 +43,18 @@ void CFileDupeControl::ProcessDuplicate(CItem* item, BlockingQueue<CItem*>* queu
         m_showCloudWarningOnThisScan = false;
 
         // Show warning dialog
-        CMessageBoxDlg dlg(Localization::Lookup(IDS_DUPLICATES_WARNING), Localization::LookupNeutral(AFX_IDS_APP_TITLE),
-            MB_OK | MB_ICONINFORMATION, this, {}, Localization::Lookup(IDS_DONT_SHOW_AGAIN), false);
-        if (dlg.DoModal() == IDOK && dlg.IsCheckboxChecked())
+        if (COptions::SkipDupeDetectionCloudLinks && item->IsTypeOrFlag(ITRP_CLOUD) && m_showCloudWarningOnThisScan)
         {
-            COptions::ShowDupeDetectionCloudLinksWarning = false;
+            m_showCloudWarningOnThisScan = false;
+
+            // Show warning and immediately "unpack" the returned structure
+            if (const auto [nID, isChecked] = CMessageBoxDlg::Show(Localization::Lookup(IDS_DUPLICATES_WARNING),
+                Localization::Lookup(IDS_DONT_SHOW_AGAIN), false, MB_OK | MB_ICONINFORMATION, this);
+                nID == IDOK && isChecked)
+            {
+                COptions::ShowDupeDetectionCloudLinksWarning = false;
+            }
+            return;
         }
         return;
     }
