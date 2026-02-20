@@ -74,6 +74,7 @@ bool IsHibernateEnabled() noexcept;
 // Elevation and privileges
 bool IsElevationActive() noexcept;
 bool IsElevationAvailable() noexcept;
+inline bool IsElevationPossible() noexcept { return IsElevationActive() || IsElevationAvailable(); };
 bool EnableReadPrivileges() noexcept;
 void RunElevated(const std::wstring& cmdLine);
 
