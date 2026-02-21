@@ -941,6 +941,41 @@ void CMainFrame::OnInitMenuPopup(CMenu* pPopupMenu, const UINT nIndex, const BOO
 {
     CFrameWndEx::OnInitMenuPopup(pPopupMenu, nIndex, bSysMenu);
 
+    if (const auto [explorerMenu, explorerMenuPos] = LocateNamedMenu(pPopupMenu,
+        Localization::Lookup(IDS_MENU_EXPLORER_MENU), false); explorerMenu != nullptr)
+    {
+        // Add placeholder only
+        if (explorerMenu->GetMenuItemCount() == 0)
+        {
+            explorerMenu->AppendMenu(MF_STRING | MF_DISABLED | MF_GRAYED, 0,
+                Localization::Lookup(IDS_PROGRESS).c_str());
+        }
+
+        SetMenuItem(pPopupMenu, explorerMenuPos, true);
+    }
+
+    // If the menu being opened is populate it
+    if (pPopupMenu->GetMenuItemCount() == 1 && pPopupMenu->GetMenuItemID(0) == 0)
+    {
+        while (pPopupMenu->GetMenuItemCount() > 0)
+        {
+            pPopupMenu->DeleteMenu(0, MF_BYPOSITION);
+        }
+
+        std::vector<std::wstring> paths;
+        for (const auto& item : CDirStatDoc::Get()->GetAllSelected())
+        {
+            paths.push_back(item->GetPath());
+        }
+
+        if (const CComPtr contextMenu = GetContextMenu(GetSafeHwnd(), paths);
+            contextMenu != nullptr)
+        {
+            (void) contextMenu->QueryContextMenu(pPopupMenu->GetSafeHmenu(), 0,
+                CONTENT_MENU_MINCMD, CONTENT_MENU_MAXCMD, CMF_NORMAL);
+        }
+    }
+
     // update cleanup menu if this is the cleanup submenu
     if (pPopupMenu->GetMenuState(ID_CLEANUP_EMPTY_BIN, MF_BYCOMMAND) != static_cast<UINT>(-1))
     {
@@ -1045,18 +1080,6 @@ void CMainFrame::UpdateDynamicMenuItems(CMenu* menu) const
     // get list of paths from items
     std::vector<std::wstring> paths;
     for (auto& item : items) paths.push_back(item->GetPath());
-
-    // locate submenu and merge explorer items
-    auto [explorerMenu, explorerMenuPos] = LocateNamedMenu(menu, Localization::Lookup(IDS_MENU_EXPLORER_MENU));
-    if (explorerMenu != nullptr && !paths.empty())
-    {
-        const CComPtr contextMenu = GetContextMenu(Get()->GetSafeHwnd(), paths);
-        if (contextMenu != nullptr) contextMenu->QueryContextMenu(explorerMenu->GetSafeHmenu(), 0,
-            CONTENT_MENU_MINCMD, CONTENT_MENU_MAXCMD, CMF_NORMAL);
-
-        // conditionally disable menu if empty
-        SetMenuItem(menu, explorerMenuPos, explorerMenu->GetMenuItemCount() > 0);
-    }
 
     // locate compress menu
     auto [compressMenu, compressMenuPos] = CMainFrame::LocateNamedMenu(menu, Localization::Lookup(IDS_MENU_COMPRESS_MENU), false);
