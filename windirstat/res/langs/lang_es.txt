@@ -132,6 +132,7 @@ IDS_MENU_STATUS_BAR=Mostrar &Barra de Estado
 IDS_MENU_TOOL_BAR=Mostrar Barra de &Herramientas
 IDS_MENU_TOOLS=Herramientas
 IDS_MENU_TREEMAP=&Mapa de Árbol
+IDS_MENU_VIEW=&Ver
 IDS_MENU_WATCHER=Iniciar monitor de archivos
 IDS_MENU_ZOOMIN=A&cercar 
 IDS_MENU_ZOOMOUT=Al&ejar

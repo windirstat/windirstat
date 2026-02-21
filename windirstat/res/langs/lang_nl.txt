@@ -132,6 +132,7 @@ IDS_MENU_STATUS_BAR=S&tatusbalk weergeven
 IDS_MENU_TOOL_BAR=Werk&balk weergeven
 IDS_MENU_TOOLS=Hulpmiddelen
 IDS_MENU_TREEMAP=&Treemap
+IDS_MENU_VIEW=Beeld(&V)
 IDS_MENU_WATCHER=Bestandsbewaking starten
 IDS_MENU_ZOOMIN=&Inzoomen
 IDS_MENU_ZOOMOUT=&Uitzoomen

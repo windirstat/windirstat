@@ -132,6 +132,7 @@ IDS_MENU_STATUS_BAR=Pokaż Pasek &Stanu
 IDS_MENU_TOOL_BAR=Pokaż &Pasek Narzędzi
 IDS_MENU_TOOLS=Narzędzia
 IDS_MENU_TREEMAP=&Mapa drzewa
+IDS_MENU_VIEW=&Widok
 IDS_MENU_WATCHER=Uruchom monitor plików
 IDS_MENU_ZOOMIN=Po&większ
 IDS_MENU_ZOOMOUT=Po&mniejsz

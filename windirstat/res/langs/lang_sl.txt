@@ -132,6 +132,7 @@ IDS_MENU_STATUS_BAR=Pokaži vrstico s &stanjem
 IDS_MENU_TOOL_BAR=Pokaži orodno &vrstico
 IDS_MENU_TOOLS=Orodja
 IDS_MENU_TREEMAP=&Drevesna karta
+IDS_MENU_VIEW=&Pogled
 IDS_MENU_WATCHER=Zaženi nadzor datotek
 IDS_MENU_ZOOMIN=Povečaj &(+) 
 IDS_MENU_ZOOMOUT=Pomanjšaj &(-) 

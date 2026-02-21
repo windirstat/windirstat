@@ -132,6 +132,7 @@ IDS_MENU_STATUS_BAR=Durum Çubuğunu Göster
 IDS_MENU_TOOL_BAR=Araç Çubuğunu Göster
 IDS_MENU_TOOLS=Araçlar
 IDS_MENU_TREEMAP=&Ağaç Haritası
+IDS_MENU_VIEW=&Görünüm
 IDS_MENU_WATCHER=Dosya izleyiciyi başlat
 IDS_MENU_ZOOMIN=Yakınlaştır
 IDS_MENU_ZOOMOUT=Uzaklaştır

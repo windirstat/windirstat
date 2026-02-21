@@ -132,6 +132,7 @@ IDS_MENU_STATUS_BAR=Näytä t&ilarivi
 IDS_MENU_TOOL_BAR=Näytä työkalu&rivi
 IDS_MENU_TOOLS=Työkalut
 IDS_MENU_TREEMAP=&Kuvaaja
+IDS_MENU_VIEW=&Näytä
 IDS_MENU_WATCHER=Käynnistä tiedostovalvonta
 IDS_MENU_ZOOMIN=&Suurenna
 IDS_MENU_ZOOMOUT=&Pienennä
