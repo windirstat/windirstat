@@ -132,6 +132,7 @@ IDS_MENU_STATUS_BAR=Vis statuslinje
 IDS_MENU_TOOL_BAR=Vis værktøjslinje
 IDS_MENU_TOOLS=Værktøjer
 IDS_MENU_TREEMAP=&Træstruktur
+IDS_MENU_VIEW=&Vis
 IDS_MENU_WATCHER=Start filovervågning
 IDS_MENU_ZOOMIN=Zoom ind
 IDS_MENU_ZOOMOUT=Zoom ud

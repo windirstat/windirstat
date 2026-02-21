@@ -132,6 +132,7 @@ IDS_MENU_STATUS_BAR=Zobrazit stavový &řádek
 IDS_MENU_TOOL_BAR=Zobrazit &panel nástrojů
 IDS_MENU_TOOLS=Nástroje
 IDS_MENU_TREEMAP=Stromová &mapa
+IDS_MENU_VIEW=&Zobrazit
 IDS_MENU_WATCHER=Spustit sledování souborů
 IDS_MENU_ZOOMIN=&Přiblížit
 IDS_MENU_ZOOMOUT=&Oddálit

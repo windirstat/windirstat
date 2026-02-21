@@ -132,6 +132,7 @@ IDS_MENU_STATUS_BAR=Afficher la barre de &statut
 IDS_MENU_TOOL_BAR=Afficher la barre d'&outils
 IDS_MENU_TOOLS=Outils
 IDS_MENU_TREEMAP=&Treemap
+IDS_MENU_VIEW=Afficha&ge
 IDS_MENU_WATCHER=Démarrer le surveillant de fichiers
 IDS_MENU_ZOOMIN=Agrand&ir
 IDS_MENU_ZOOMOUT=Dimin&uer

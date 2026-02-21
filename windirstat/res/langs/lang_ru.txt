@@ -132,6 +132,7 @@ IDS_MENU_STATUS_BAR=Показывать строку состояния
 IDS_MENU_TOOL_BAR=Показывать панель инструментов
 IDS_MENU_TOOLS=Инструменты
 IDS_MENU_TREEMAP=&Карта каталогов
+IDS_MENU_VIEW=&Вид
 IDS_MENU_WATCHER=Запустить наблюдение за файлами
 IDS_MENU_ZOOMIN=Увеличить
 IDS_MENU_ZOOMOUT=Уменьшить

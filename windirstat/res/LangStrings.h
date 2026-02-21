@@ -135,6 +135,7 @@ constexpr std::wstring_view IDS_MENU_STATUS_BAR = L"IDS_MENU_STATUS_BAR";
 constexpr std::wstring_view IDS_MENU_TOOL_BAR = L"IDS_MENU_TOOL_BAR";
 constexpr std::wstring_view IDS_MENU_TOOLS = L"IDS_MENU_TOOLS";
 constexpr std::wstring_view IDS_MENU_TREEMAP = L"IDS_MENU_TREEMAP";
+constexpr std::wstring_view IDS_MENU_VIEW = L"IDS_MENU_VIEW";
 constexpr std::wstring_view IDS_MENU_WATCHER = L"IDS_MENU_WATCHER";
 constexpr std::wstring_view IDS_MENU_ZOOMIN = L"IDS_MENU_ZOOMIN";
 constexpr std::wstring_view IDS_MENU_ZOOMOUT = L"IDS_MENU_ZOOMOUT";
