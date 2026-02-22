@@ -558,6 +558,20 @@ void CSelectDrivesDlg::UpdateButtons()
     {
     case RADIO_TARGET_DRIVES_ALL:
         {
+            // Ignore drive selection changes because this operation changes them and we don't want other UI to activate
+            m_ignoreDriveSelectionChange = true;
+            // Select all items in the list
+            for (int i = 0; i < m_driveList.GetItemCount(); i++)
+            {
+                const CDriveItem* item = m_driveList.GetItem(i);
+                if (!item->IsRemote() && !item->IsSUBSTed())
+                {
+                    m_driveList.SetItemState(i, LVIS_SELECTED, LVIS_SELECTED);
+                }
+            }
+
+            // Restore drive selection changes so that other UI can activate
+            m_ignoreDriveSelectionChange = false;
             enableOk = true;
         }
         break;
@@ -607,6 +621,12 @@ void CSelectDrivesDlg::OnBnClickedRadioTargetFolder()
 
 void CSelectDrivesDlg::OnLvnItemChangedDrives(NMHDR* /*pNMHDR*/, LRESULT* pResult)
 {
+    if (m_ignoreDriveSelectionChange)
+    {
+        // If we're told to ignore drive selection changes, then do nothing
+        *pResult = FALSE;
+        return;
+    }
     SetActiveRadio(IDC_RADIO_TARGET_DRIVES_SUBSET);
     UpdateButtons();
 
