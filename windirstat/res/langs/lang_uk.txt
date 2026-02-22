@@ -128,6 +128,7 @@ IDS_MENU_SETTINGS=Налаштувати WinDirStat...
 IDS_MENU_SHADOW_COPY=Створити тіньову копію
 IDS_MENU_SHOW_UNKNOWN=Показувати &невідомі
 IDS_MENU_SHOW=Показувати карту каталогів
+IDS_MENU_SPARSIFY_FILE=Стиснути файл
 IDS_MENU_STATUS_BAR=Показувати рядок стану
 IDS_MENU_TOOL_BAR=Показувати панель інструментів
 IDS_MENU_TOOLS=Інструменти

@@ -131,6 +131,7 @@ constexpr std::wstring_view IDS_MENU_SETTINGS = L"IDS_MENU_SETTINGS";
 constexpr std::wstring_view IDS_MENU_SHADOW_COPY = L"IDS_MENU_SHADOW_COPY";
 constexpr std::wstring_view IDS_MENU_SHOW = L"IDS_MENU_SHOW";
 constexpr std::wstring_view IDS_MENU_SHOW_UNKNOWN = L"IDS_MENU_SHOW_UNKNOWN";
+constexpr std::wstring_view IDS_MENU_SPARSIFY_FILE = L"IDS_MENU_SPARSIFY_FILE";
 constexpr std::wstring_view IDS_MENU_STATUS_BAR = L"IDS_MENU_STATUS_BAR";
 constexpr std::wstring_view IDS_MENU_TOOL_BAR = L"IDS_MENU_TOOL_BAR";
 constexpr std::wstring_view IDS_MENU_TOOLS = L"IDS_MENU_TOOLS";

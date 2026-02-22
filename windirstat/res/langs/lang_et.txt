@@ -128,6 +128,7 @@ IDS_MENU_SETTINGS=&Seaded
 IDS_MENU_SHADOW_COPY=Loo varukoopia
 IDS_MENU_SHOW_UNKNOWN=Näita &tundmatut
 IDS_MENU_SHOW=Näita &puukaarti
+IDS_MENU_SPARSIFY_FILE=Muuda fail hõredaks
 IDS_MENU_STATUS_BAR=Näita &olekuriba
 IDS_MENU_TOOL_BAR=Näita &tööriistariba
 IDS_MENU_TOOLS=Tööriistad

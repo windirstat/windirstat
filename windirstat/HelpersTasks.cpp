@@ -533,7 +533,7 @@ bool SparsifyFile(const std::wstring& path, const ULONGLONG minZeroRunSize, cons
     // Open file with read/write access
     const SmartPointer<HANDLE> h(CloseHandle, CreateFile(path.c_str(), GENERIC_READ | GENERIC_WRITE,
         FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-        nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr));
+        nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, nullptr));
     if (h == INVALID_HANDLE_VALUE) return false;
     LARGE_INTEGER fileSize{};
     if (!::GetFileSizeEx(h, &fileSize)) return false;
@@ -556,7 +556,8 @@ bool SparsifyFile(const std::wstring& path, const ULONGLONG minZeroRunSize, cons
     bool inRun = false;
 
     // Save qualifying zero runs with cluster alignment
-    auto saveRun = [&]() {
+    auto saveRun = [&]() 
+    {
         if (inRun && runLen >= minZeroRunSize) {
             const ULONGLONG alignedStart = alignUp(runStart);
             const ULONGLONG alignedEnd = alignDown(runStart + runLen);
@@ -564,7 +565,7 @@ bool SparsifyFile(const std::wstring& path, const ULONGLONG minZeroRunSize, cons
                 ranges.push_back({ alignedStart, alignedEnd - alignedStart });
         }
         inRun = false;
-        };
+    };
 
     // Scan file in chunks to detect zero byte runs
     for (DWORD bytesRead = 0; pos < static_cast<ULONGLONG>(fileSize.QuadPart); pos += bytesRead)

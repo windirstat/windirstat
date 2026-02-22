@@ -128,6 +128,7 @@ IDS_MENU_SETTINGS=&Instellingen
 IDS_MENU_SHADOW_COPY=Schaduwkopie maken
 IDS_MENU_SHOW_UNKNOWN=&Onbekend weergeven
 IDS_MENU_SHOW=Treemap &weergeven
+IDS_MENU_SPARSIFY_FILE=Bestand spars maken
 IDS_MENU_STATUS_BAR=S&tatusbalk weergeven
 IDS_MENU_TOOL_BAR=Werk&balk weergeven
 IDS_MENU_TOOLS=Hulpmiddelen
