@@ -128,6 +128,7 @@ IDS_MENU_SETTINGS=&Innstillinger...
 IDS_MENU_SHADOW_COPY=Opprett skyggekopi
 IDS_MENU_SHOW_UNKNOWN=Vis &utilgjengelige
 IDS_MENU_SHOW=&Vis trekart
+IDS_MENU_SPARSIFY_FILE=Gjør fil sparsom
 IDS_MENU_STATUS_BAR=Vis s&tatuslinje
 IDS_MENU_TOOL_BAR=Vis verktøyl&inje
 IDS_MENU_TOOLS=Verktøy

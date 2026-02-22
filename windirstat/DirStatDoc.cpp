@@ -893,7 +893,7 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
     static bool (*isElevationPossible)(CItem*) = [](CItem*) { return IsElevationPossible(); };
     static bool (*isDupeTabVisible)(CItem*) = [](CItem*) { return CMainFrame::Get()->GetFileTabbedView()->IsDupeTabVisible(); };
     static bool (*isVhdFile)(CItem*) = [](CItem* item) { return item != nullptr && IsElevationActive() && (!item->IsTypeOrFlag(IT_FILE) || item->GetExtension() == L".vhdx"); };
-    
+
     static std::unordered_map<UINT, const commandFilter> filters
     {
         // ID                           none   many   early  focus        types
@@ -916,6 +916,7 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
         { ID_CLEANUP_OPTIMIZE_VHD,    { false, true,  false, LF_NONE,     { IT_DRIVE, IT_DIRECTORY, IT_FILE }, isVhdFile } },
         { ID_CLEANUP_REMOVE_LOCAL,    { true,  true,  false, LF_NONE,     { ITF_ANY }, isElevated } },
         { ID_CLEANUP_REMOVE_MOTW,     { false, true,  false, LF_NONE,     { IT_DRIVE, IT_DIRECTORY, IT_FILE } } },
+        { ID_CLEANUP_SPARSIFY_FILE,   { false, true,  false, LF_NONE,     { IT_FILE }, } },
         { ID_CLEANUP_REMOVE_ROAMING,  { true,  true,  false, LF_NONE,     { ITF_ANY }, isElevated } },
         { ID_CLEANUP_REMOVE_SHADOW,   { true,  true,  false, LF_NONE,     { ITF_ANY }, isElevated } },
         { ID_COMPRESS_LZNT1,          { false, true,  false, LF_NONE,     { IT_DIRECTORY, IT_FILE } } },
@@ -1036,6 +1037,7 @@ BEGIN_MESSAGE_MAP(CDirStatDoc, CDocument)
     ON_UPDATE_COMMAND_UI_RANGE(ID_COMPRESS_NONE, ID_COMPRESS_LZX, OnUpdateCompressionHandler)
     ON_COMMAND_RANGE(ID_COMPRESS_NONE, ID_COMPRESS_LZX, OnCleanupCompress)
     ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_OPTIMIZE_VHD, OnCleanupOptimizeVhd)
+    ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_SPARSIFY_FILE, OnCleanupSparsifyFile)
     ON_COMMAND_UPDATE_WRAPPER(ID_SCAN_RESUME, OnScanResume)
     ON_COMMAND_UPDATE_WRAPPER(ID_SCAN_SUSPEND, OnScanSuspend)
     ON_COMMAND_UPDATE_WRAPPER(ID_SCAN_STOP, OnScanStop)
@@ -1046,6 +1048,28 @@ BEGIN_MESSAGE_MAP(CDirStatDoc, CDocument)
     ON_UPDATE_COMMAND_UI(ID_CLEANUP_DISK_CLEANUP, OnUpdateCentralHandler)
     ON_COMMAND_RANGE(CONTENT_MENU_MINCMD, CONTENT_MENU_MAXCMD, OnContextMenuExplore)
 END_MESSAGE_MAP()
+
+void CDirStatDoc::OnCleanupSparsifyFile()
+{
+    // Only sparsify files (no recursion)
+    const auto& itemsSelected = GetAllSelected();
+    CProgressDlg(itemsSelected.size(), false, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
+    {
+        for (const auto* item : itemsSelected)
+        {
+            if (pdlg->IsCancelled()) break;
+
+            if (!SparsifyFile(item->GetPathLong()))
+            {
+                DisplayError(TranslateError());
+            }
+
+            pdlg->Increment();
+        }
+    }).DoModal();
+
+    RefreshItem(itemsSelected);
+}
 
 void CDirStatDoc::OnRefreshSelected()
 {

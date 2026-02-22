@@ -128,6 +128,7 @@ IDS_MENU_SETTINGS=&Asetukset
 IDS_MENU_SHADOW_COPY=Luo varjokopio
 IDS_MENU_SHOW_UNKNOWN=Näytä &tuntematon
 IDS_MENU_SHOW=&Näytä kuvaaja
+IDS_MENU_SPARSIFY_FILE=Muuta tiedosto harvaksi
 IDS_MENU_STATUS_BAR=Näytä t&ilarivi
 IDS_MENU_TOOL_BAR=Näytä työkalu&rivi
 IDS_MENU_TOOLS=Työkalut

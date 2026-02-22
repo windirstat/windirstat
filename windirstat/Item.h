@@ -43,7 +43,7 @@ enum ITEMCOLUMNS : std::uint8_t
 };
 
 // Item types - all values are bitmasks for efficient type checking
-using ITEMTYPE = enum ITEMTYPE : std::uint32_t
+enum ITEMTYPE : std::uint32_t
 {
     IT_NONE        = 0,       // No type
     IT_MYCOMPUTER  = 1 << 0,  // Pseudo Container "My Computer"
@@ -90,7 +90,7 @@ constexpr ITEMTYPE operator~(const ITEMTYPE& a)
     return static_cast<ITEMTYPE>(~static_cast<std::uint32_t>(a));
 }
 
-constexpr ITEMTYPE operator|(const ITEMTYPE & a, const ITEMTYPE & b)
+constexpr ITEMTYPE operator|(const ITEMTYPE& a, const ITEMTYPE& b)
 {
     return static_cast<ITEMTYPE>(static_cast<std::uint32_t>(a) | static_cast<std::uint32_t>(b));
 }
