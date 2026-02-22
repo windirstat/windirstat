@@ -505,9 +505,6 @@
     <Text Include="res\langs\lang_zh.txt">
       <Filter>Resource Files\Languages</Filter>
     </Text>
-    <Text Include="res\langs\lang_no.txt">
-      <Filter>Resource Files\Languages</Filter>
-    </Text>
     <Text Include="res\langs\lang_ko.txt">
       <Filter>Resource Files\Languages</Filter>
     </Text>
@@ -533,6 +530,9 @@
       <Filter>Resource Files\Languages</Filter>
     </Text>
     <Text Include="res\langs\lang_sl.txt">
+      <Filter>Resource Files\Languages</Filter>
+    </Text>
+    <Text Include="res\langs\lang_nb.txt">
       <Filter>Resource Files\Languages</Filter>
     </Text>
   </ItemGroup>
