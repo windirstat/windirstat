@@ -459,15 +459,27 @@ std::tuple<std::wstring, ULONGLONG>  CTreeMapView::GetTreeMapHoverInfo()
 
 void CTreeMapView::OnContextMenu(CWnd* /*pWnd*/, const CPoint point)
 {
-    const CItem* root = CDirStatDoc::Get()->GetRootItem();
-    if (root != nullptr && root->IsDone())
+    // Validate root is valid
+    if (const CItem* root = CDirStatDoc::Get()->GetRootItem();
+        root == nullptr && !root->IsDone()) return;
+    
+    CPoint clientPoint = point;
+    ScreenToClient(&clientPoint);
+
+    // See if right-click item is one of the selected items
+    const auto selection = CDirStatDoc::Get()->GetAllSelected();
+    const auto clickedItem = static_cast<const CItem*>(
+        m_treeMap.FindItemByPoint(CDirStatDoc::Get()->GetZoomItem(), clientPoint));
+    if (clickedItem == nullptr || std::ranges::find(selection, const_cast<CItem*>(clickedItem)) == selection.end())
     {
-        CMenu menu;
-        menu.LoadMenu(IDR_POPUP_MAP);
-        Localization::UpdateMenu(menu);
-        CMenu* sub = menu.GetSubMenu(0);
-        sub->TrackPopupMenu(TPM_LEFTALIGN | TPM_LEFTBUTTON, point.x, point.y, AfxGetMainWnd());
+        return;
     }
+
+    CMenu menu;
+    menu.LoadMenu(IDR_POPUP_MAP);
+    Localization::UpdateMenu(menu);
+    CMenu* sub = menu.GetSubMenu(0);
+    sub->TrackPopupMenu(TPM_LEFTALIGN | TPM_LEFTBUTTON, point.x, point.y, AfxGetMainWnd());
 }
 
 void CTreeMapView::OnMouseMove(UINT /*nFlags*/, const CPoint point)
