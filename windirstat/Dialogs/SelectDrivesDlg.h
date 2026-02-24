@@ -142,6 +142,7 @@ protected:
     afx_msg void OnSysColorChange();
     afx_msg void OnBnClickedRadioTargetDrivesSubset();
     afx_msg void OnBnClickedRadioTargetFolder();
+    afx_msg void OnBnDoubleclickedRadio();
     afx_msg void OnNMSetfocusTargetDrivesList(NMHDR*, LRESULT* pResult);
     afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
     afx_msg void OnBnClickedBrowseButton();
