@@ -465,6 +465,21 @@ BOOL CSelectDrivesDlg::OnInitDialog()
 
     m_driveList.SortItems();
 
+    // Create list of local drives to append "All Local Drives" option
+    std::vector<std::wstring> localDrives;
+    for (const int i : std::views::iota(0, m_driveList.GetItemCount()))
+    {
+        if (const CDriveItem* item = m_driveList.GetItem(i);
+            !item->IsRemote() && !item->IsSUBSTed())
+        {
+            localDrives.emplace_back(item->GetDrive());
+        }
+    }
+
+    // Append list of local drives to "All Local Drives" option
+    SetDlgItemText(IDC_RADIO_TARGET_DRIVES_ALL, std::format(L"{} ({})",
+        Localization::Lookup(IDS_DRIVES_ALL), JoinString(localDrives, L' ')).c_str());
+
     m_radio = COptions::SelectDrivesRadio;
     UpdateData(FALSE);
 
