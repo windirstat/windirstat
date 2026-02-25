@@ -7,18 +7,6 @@
     <Filter Include="Source Files">
       <UniqueIdentifier>{6DC87E6B-4990-1F63-4AC3-166E48564572}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\Controls">
-      <UniqueIdentifier>{58B807A6-D922-7836-CD41-082C57F30F2D}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Dialogs">
-      <UniqueIdentifier>{ED9704D9-CF24-8B4E-26A4-D7DDA6351EDB}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\Controls">
-      <UniqueIdentifier>{463565AC-33C1-91A1-6035-48A265809213}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\Dialogs">
-      <UniqueIdentifier>{E1C05760-1E9F-D184-92A0-4B6CF146078C}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Resource Files">
       <UniqueIdentifier>{8B94EBAA-F5FC-2C67-17EA-B0CF28E72DB4}</UniqueIdentifier>
     </Filter>
@@ -28,18 +16,6 @@
     <Filter Include="Resource Files\Languages">
       <UniqueIdentifier>{ca41237d-3469-4146-909c-126f62a5c504}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\Views">
-      <UniqueIdentifier>{0e125e15-73d4-4995-940a-0b8038f23bde}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\Views">
-      <UniqueIdentifier>{442ebfd0-7b2c-4c88-82fd-8aaac4efe37f}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\Pages">
-      <UniqueIdentifier>{6a5393ca-7832-4451-bdb4-0938bdad20a4}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Pages">
-      <UniqueIdentifier>{48734b53-64ee-4a01-9ed9-2a08de961821}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Resource Files\Toolbar">
       <UniqueIdentifier>{d78ee95b-5d90-4405-8f08-aad4cf4819c1}</UniqueIdentifier>
     </Filter>
@@ -48,6 +24,60 @@
     </Filter>
     <Filter Include="Resource Files\License">
       <UniqueIdentifier>{669943eb-0d29-4c39-bf02-fdd365d0b07e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Core">
+      <UniqueIdentifier>{0a69cfea-c6c8-4f8b-93a8-a1de057c9900}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Core\Helpers">
+      <UniqueIdentifier>{4d058f89-46a2-403d-8141-5e65851ab3b4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Core">
+      <UniqueIdentifier>{4ef3aa46-25b7-450b-80e4-1a54a3659269}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\User Interface">
+      <UniqueIdentifier>{866e4ed1-e3ca-4c05-96c7-b505e06ad2aa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\User Interface">
+      <UniqueIdentifier>{bcb01734-d55d-4ffd-aa73-256f4f84a6ac}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\User Interface\Dialogs">
+      <UniqueIdentifier>{ED9704D9-CF24-8B4E-26A4-D7DDA6351EDB}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\User Interface\Controls">
+      <UniqueIdentifier>{58B807A6-D922-7836-CD41-082C57F30F2D}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\User Interface\Views">
+      <UniqueIdentifier>{0e125e15-73d4-4995-940a-0b8038f23bde}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\User Interface\Pages">
+      <UniqueIdentifier>{48734b53-64ee-4a01-9ed9-2a08de961821}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Core\Helpers">
+      <UniqueIdentifier>{e56db083-f2ee-43a2-a421-b48a4eb53951}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Core\Finders">
+      <UniqueIdentifier>{2accb413-0b4e-4cb8-af4f-e011dc25405c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Core\Items">
+      <UniqueIdentifier>{12de6be8-f9e0-4d0b-aba9-a1c5002ecbb6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\User Interface\Pages">
+      <UniqueIdentifier>{6a5393ca-7832-4451-bdb4-0938bdad20a4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\User Interface\Views">
+      <UniqueIdentifier>{442ebfd0-7b2c-4c88-82fd-8aaac4efe37f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Core\Items">
+      <UniqueIdentifier>{df2d3bb4-16e0-419a-839d-23e6b333c6e6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Core\Finders">
+      <UniqueIdentifier>{9713a44b-196b-4901-b663-2d9899087ee3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\User Interface\Dialogs">
+      <UniqueIdentifier>{E1C05760-1E9F-D184-92A0-4B6CF146078C}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\User Interface\Controls">
+      <UniqueIdentifier>{463565AC-33C1-91A1-6035-48A265809213}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -68,334 +98,334 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="DirStatDoc.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="FinderBasic.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Item.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Layout.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MainFrame.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Options.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="SelectObject.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="pch.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="WinDirStat.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Dialogs\AboutDlg.h">
-      <Filter>Header Files\Dialogs</Filter>
+      <Filter>Header Files\User Interface\Dialogs</Filter>
     </ClInclude>
     <ClInclude Include="Dialogs\SelectDrivesDlg.h">
-      <Filter>Header Files\Dialogs</Filter>
-    </ClInclude>
-    <ClInclude Include="BlockingQueue.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Localization.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="CsvLoader.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ItemDupe.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Constants.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Property.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="SmartPointer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Tracer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="version.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="OleFilterOverride.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\User Interface\Dialogs</Filter>
     </ClInclude>
     <ClInclude Include="Pages\PageTreeMap.h">
-      <Filter>Header Files\Pages</Filter>
+      <Filter>Header Files\User Interface\Pages</Filter>
     </ClInclude>
     <ClInclude Include="Pages\PageAdvanced.h">
-      <Filter>Header Files\Pages</Filter>
+      <Filter>Header Files\User Interface\Pages</Filter>
     </ClInclude>
     <ClInclude Include="Pages\PageCleanups.h">
-      <Filter>Header Files\Pages</Filter>
+      <Filter>Header Files\User Interface\Pages</Filter>
     </ClInclude>
     <ClInclude Include="Pages\PageFileTree.h">
-      <Filter>Header Files\Pages</Filter>
+      <Filter>Header Files\User Interface\Pages</Filter>
     </ClInclude>
     <ClInclude Include="Pages\PageFiltering.h">
-      <Filter>Header Files\Pages</Filter>
+      <Filter>Header Files\User Interface\Pages</Filter>
     </ClInclude>
     <ClInclude Include="Pages\PageGeneral.h">
-      <Filter>Header Files\Pages</Filter>
+      <Filter>Header Files\User Interface\Pages</Filter>
     </ClInclude>
     <ClInclude Include="Views\ExtensionView.h">
-      <Filter>Header Files\Views</Filter>
+      <Filter>Header Files\User Interface\Views</Filter>
     </ClInclude>
     <ClInclude Include="Views\FileTabbedView.h">
-      <Filter>Header Files\Views</Filter>
+      <Filter>Header Files\User Interface\Views</Filter>
     </ClInclude>
     <ClInclude Include="Views\FileTreeView.h">
-      <Filter>Header Files\Views</Filter>
+      <Filter>Header Files\User Interface\Views</Filter>
     </ClInclude>
     <ClInclude Include="Controls\XYSlider.h">
-      <Filter>Header Files\Controls</Filter>
+      <Filter>Header Files\User Interface\Controls</Filter>
     </ClInclude>
     <ClInclude Include="Controls\TreeMap.h">
-      <Filter>Header Files\Controls</Filter>
+      <Filter>Header Files\User Interface\Controls</Filter>
     </ClInclude>
     <ClInclude Include="Controls\TreeListControl.h">
-      <Filter>Header Files\Controls</Filter>
+      <Filter>Header Files\User Interface\Controls</Filter>
     </ClInclude>
     <ClInclude Include="Controls\PacMan.h">
-      <Filter>Header Files\Controls</Filter>
+      <Filter>Header Files\User Interface\Controls</Filter>
     </ClInclude>
     <ClInclude Include="Controls\WdsListControl.h">
-      <Filter>Header Files\Controls</Filter>
+      <Filter>Header Files\User Interface\Controls</Filter>
     </ClInclude>
     <ClInclude Include="Controls\IconHandler.h">
-      <Filter>Header Files\Controls</Filter>
+      <Filter>Header Files\User Interface\Controls</Filter>
     </ClInclude>
     <ClInclude Include="Controls\FileTreeControl.h">
-      <Filter>Header Files\Controls</Filter>
+      <Filter>Header Files\User Interface\Controls</Filter>
     </ClInclude>
     <ClInclude Include="Controls\FileTopControl.h">
-      <Filter>Header Files\Controls</Filter>
+      <Filter>Header Files\User Interface\Controls</Filter>
     </ClInclude>
     <ClInclude Include="Controls\FileDupeControl.h">
-      <Filter>Header Files\Controls</Filter>
+      <Filter>Header Files\User Interface\Controls</Filter>
     </ClInclude>
     <ClInclude Include="Controls\ExtensionListControl.h">
-      <Filter>Header Files\Controls</Filter>
+      <Filter>Header Files\User Interface\Controls</Filter>
     </ClInclude>
     <ClInclude Include="Controls\ColorButton.h">
-      <Filter>Header Files\Controls</Filter>
-    </ClInclude>
-    <ClInclude Include="ItemTop.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\User Interface\Controls</Filter>
     </ClInclude>
     <ClInclude Include="Views\TreeMapView.h">
-      <Filter>Header Files\Views</Filter>
-    </ClInclude>
-    <ClInclude Include="Finder.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="FinderNtfs.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\User Interface\Views</Filter>
     </ClInclude>
     <ClInclude Include="Dialogs\SearchDlg.h">
-      <Filter>Header Files\Dialogs</Filter>
+      <Filter>Header Files\User Interface\Dialogs</Filter>
     </ClInclude>
     <ClInclude Include="Controls\FileSearchControl.h">
-      <Filter>Header Files\Controls</Filter>
-    </ClInclude>
-    <ClInclude Include="ItemSearch.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\User Interface\Controls</Filter>
     </ClInclude>
     <ClInclude Include="res\LangStrings.h">
       <Filter>Resource Files\Languages</Filter>
     </ClInclude>
     <ClInclude Include="Dialogs\MessageBoxDlg.h">
-      <Filter>Header Files\Dialogs</Filter>
-    </ClInclude>
-    <ClInclude Include="DarkMode.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\User Interface\Dialogs</Filter>
     </ClInclude>
     <ClInclude Include="Dialogs\ProgressDlg.h">
-      <Filter>Header Files\Dialogs</Filter>
+      <Filter>Header Files\User Interface\Dialogs</Filter>
     </ClInclude>
     <ClInclude Include="Pages\PagePrompts.h">
-      <Filter>Header Files\Pages</Filter>
-    </ClInclude>
-    <ClInclude Include="Controls\DrawTextCache.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="HelpersInterface.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="HelpersTasks.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\User Interface\Pages</Filter>
     </ClInclude>
     <ClInclude Include="resource.h">
       <Filter>Resource Files\Resources</Filter>
     </ClInclude>
     <ClInclude Include="Controls\FileWatcherControl.h">
-      <Filter>Header Files\Controls</Filter>
+      <Filter>Header Files\User Interface\Controls</Filter>
     </ClInclude>
     <ClInclude Include="Views\ControlView.h">
-      <Filter>Header Files\Views</Filter>
+      <Filter>Header Files\User Interface\Views</Filter>
+    </ClInclude>
+    <ClInclude Include="BlockingQueue.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Constants.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="CsvLoader.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="DirStatDoc.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="OleFilterOverride.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Options.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="pch.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Property.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="SelectObject.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="SmartPointer.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Tracer.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="version.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="WinDirStat.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="DarkMode.h">
+      <Filter>Header Files\User Interface</Filter>
+    </ClInclude>
+    <ClInclude Include="Controls\DrawTextCache.h">
+      <Filter>Header Files\User Interface</Filter>
+    </ClInclude>
+    <ClInclude Include="Layout.h">
+      <Filter>Header Files\User Interface</Filter>
+    </ClInclude>
+    <ClInclude Include="MainFrame.h">
+      <Filter>Header Files\User Interface</Filter>
+    </ClInclude>
+    <ClInclude Include="Finder.h">
+      <Filter>Header Files\Core\Finders</Filter>
+    </ClInclude>
+    <ClInclude Include="FinderBasic.h">
+      <Filter>Header Files\Core\Finders</Filter>
+    </ClInclude>
+    <ClInclude Include="FinderNtfs.h">
+      <Filter>Header Files\Core\Finders</Filter>
+    </ClInclude>
+    <ClInclude Include="HelpersInterface.h">
+      <Filter>Header Files\Core\Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="HelpersTasks.h">
+      <Filter>Header Files\Core\Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="Item.h">
+      <Filter>Header Files\Core\Items</Filter>
+    </ClInclude>
+    <ClInclude Include="ItemDupe.h">
+      <Filter>Header Files\Core\Items</Filter>
+    </ClInclude>
+    <ClInclude Include="ItemSearch.h">
+      <Filter>Header Files\Core\Items</Filter>
+    </ClInclude>
+    <ClInclude Include="ItemTop.h">
+      <Filter>Header Files\Core\Items</Filter>
+    </ClInclude>
+    <ClInclude Include="Localization.h">
+      <Filter>Header Files\User Interface</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="DirStatDoc.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Item.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Layout.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="MainFrame.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Options.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="pch.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="WinDirStat.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Dialogs\AboutDlg.cpp">
-      <Filter>Source Files\Dialogs</Filter>
+      <Filter>Source Files\User Interface\Dialogs</Filter>
     </ClCompile>
     <ClCompile Include="Dialogs\SelectDrivesDlg.cpp">
-      <Filter>Source Files\Dialogs</Filter>
-    </ClCompile>
-    <ClCompile Include="FinderBasic.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Localization.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ItemDupe.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Property.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\User Interface\Dialogs</Filter>
     </ClCompile>
     <ClCompile Include="Pages\PageAdvanced.cpp">
-      <Filter>Source Files\Pages</Filter>
+      <Filter>Source Files\User Interface\Pages</Filter>
     </ClCompile>
     <ClCompile Include="Pages\PageCleanups.cpp">
-      <Filter>Source Files\Pages</Filter>
+      <Filter>Source Files\User Interface\Pages</Filter>
     </ClCompile>
     <ClCompile Include="Pages\PageFileTree.cpp">
-      <Filter>Source Files\Pages</Filter>
+      <Filter>Source Files\User Interface\Pages</Filter>
     </ClCompile>
     <ClCompile Include="Pages\PageFiltering.cpp">
-      <Filter>Source Files\Pages</Filter>
+      <Filter>Source Files\User Interface\Pages</Filter>
     </ClCompile>
     <ClCompile Include="Pages\PageGeneral.cpp">
-      <Filter>Source Files\Pages</Filter>
+      <Filter>Source Files\User Interface\Pages</Filter>
     </ClCompile>
     <ClCompile Include="Pages\PageTreeMap.cpp">
-      <Filter>Source Files\Pages</Filter>
+      <Filter>Source Files\User Interface\Pages</Filter>
     </ClCompile>
     <ClCompile Include="Views\FileTreeView.cpp">
-      <Filter>Source Files\Views</Filter>
+      <Filter>Source Files\User Interface\Views</Filter>
     </ClCompile>
     <ClCompile Include="Views\ExtensionView.cpp">
-      <Filter>Source Files\Views</Filter>
+      <Filter>Source Files\User Interface\Views</Filter>
     </ClCompile>
     <ClCompile Include="Views\TreeMapView.cpp">
-      <Filter>Source Files\Views</Filter>
+      <Filter>Source Files\User Interface\Views</Filter>
     </ClCompile>
     <ClCompile Include="Views\FileTabbedView.cpp">
-      <Filter>Source Files\Views</Filter>
-    </ClCompile>
-    <ClCompile Include="ItemTop.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\User Interface\Views</Filter>
     </ClCompile>
     <ClCompile Include="Controls\XYSlider.cpp">
-      <Filter>Source Files\Controls</Filter>
+      <Filter>Source Files\User Interface\Controls</Filter>
     </ClCompile>
     <ClCompile Include="Controls\TreeMap.cpp">
-      <Filter>Source Files\Controls</Filter>
+      <Filter>Source Files\User Interface\Controls</Filter>
     </ClCompile>
     <ClCompile Include="Controls\TreeListControl.cpp">
-      <Filter>Source Files\Controls</Filter>
+      <Filter>Source Files\User Interface\Controls</Filter>
     </ClCompile>
     <ClCompile Include="Controls\PacMan.cpp">
-      <Filter>Source Files\Controls</Filter>
+      <Filter>Source Files\User Interface\Controls</Filter>
     </ClCompile>
     <ClCompile Include="Controls\WdsListControl.cpp">
-      <Filter>Source Files\Controls</Filter>
+      <Filter>Source Files\User Interface\Controls</Filter>
     </ClCompile>
     <ClCompile Include="Controls\FileTreeControl.cpp">
-      <Filter>Source Files\Controls</Filter>
+      <Filter>Source Files\User Interface\Controls</Filter>
     </ClCompile>
     <ClCompile Include="Controls\FileTopControl.cpp">
-      <Filter>Source Files\Controls</Filter>
+      <Filter>Source Files\User Interface\Controls</Filter>
     </ClCompile>
     <ClCompile Include="Controls\FileDupeControl.cpp">
-      <Filter>Source Files\Controls</Filter>
+      <Filter>Source Files\User Interface\Controls</Filter>
     </ClCompile>
     <ClCompile Include="Controls\ExtensionListControl.cpp">
-      <Filter>Source Files\Controls</Filter>
+      <Filter>Source Files\User Interface\Controls</Filter>
     </ClCompile>
     <ClCompile Include="Controls\IconHandler.cpp">
-      <Filter>Source Files\Controls</Filter>
+      <Filter>Source Files\User Interface\Controls</Filter>
     </ClCompile>
     <ClCompile Include="Controls\ColorButton.cpp">
-      <Filter>Source Files\Controls</Filter>
-    </ClCompile>
-    <ClCompile Include="FinderNtfs.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\User Interface\Controls</Filter>
     </ClCompile>
     <ClCompile Include="Dialogs\SearchDlg.cpp">
-      <Filter>Source Files\Dialogs</Filter>
+      <Filter>Source Files\User Interface\Dialogs</Filter>
     </ClCompile>
     <ClCompile Include="Controls\FileSearchControl.cpp">
-      <Filter>Source Files\Controls</Filter>
-    </ClCompile>
-    <ClCompile Include="ItemSearch.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="DarkMode.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\User Interface\Controls</Filter>
     </ClCompile>
     <ClCompile Include="Dialogs\MessageBoxDlg.cpp">
-      <Filter>Source Files\Dialogs</Filter>
+      <Filter>Source Files\User Interface\Dialogs</Filter>
     </ClCompile>
     <ClCompile Include="Dialogs\ProgressDlg.cpp">
-      <Filter>Source Files\Dialogs</Filter>
+      <Filter>Source Files\User Interface\Dialogs</Filter>
     </ClCompile>
     <ClCompile Include="Pages\PagePrompts.cpp">
-      <Filter>Source Files\Pages</Filter>
-    </ClCompile>
-    <ClCompile Include="Controls\DrawTextCache.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="CsvLoader.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="HelpersInterface.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="HelpersTasks.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\User Interface\Pages</Filter>
     </ClCompile>
     <ClCompile Include="Controls\FileWatcherControl.cpp">
-      <Filter>Source Files\Controls</Filter>
+      <Filter>Source Files\User Interface\Controls</Filter>
     </ClCompile>
     <ClCompile Include="Views\ControlView.cpp">
-      <Filter>Source Files\Views</Filter>
+      <Filter>Source Files\User Interface\Views</Filter>
+    </ClCompile>
+    <ClCompile Include="Options.cpp">
+      <Filter>Source Files\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="pch.cpp">
+      <Filter>Source Files\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Controls\DrawTextCache.cpp">
+      <Filter>Source Files\User Interface</Filter>
+    </ClCompile>
+    <ClCompile Include="DarkMode.cpp">
+      <Filter>Source Files\User Interface</Filter>
+    </ClCompile>
+    <ClCompile Include="Layout.cpp">
+      <Filter>Source Files\User Interface</Filter>
+    </ClCompile>
+    <ClCompile Include="CsvLoader.cpp">
+      <Filter>Source Files\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="DirStatDoc.cpp">
+      <Filter>Source Files\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Property.cpp">
+      <Filter>Source Files\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="WinDirStat.cpp">
+      <Filter>Source Files\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Item.cpp">
+      <Filter>Source Files\Core\Items</Filter>
     </ClCompile>
     <ClCompile Include="Item.Extended.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Core\Items</Filter>
+    </ClCompile>
+    <ClCompile Include="ItemDupe.cpp">
+      <Filter>Source Files\Core\Items</Filter>
+    </ClCompile>
+    <ClCompile Include="ItemSearch.cpp">
+      <Filter>Source Files\Core\Items</Filter>
+    </ClCompile>
+    <ClCompile Include="ItemTop.cpp">
+      <Filter>Source Files\Core\Items</Filter>
+    </ClCompile>
+    <ClCompile Include="FinderBasic.cpp">
+      <Filter>Source Files\Core\Finders</Filter>
+    </ClCompile>
+    <ClCompile Include="FinderNtfs.cpp">
+      <Filter>Source Files\Core\Finders</Filter>
+    </ClCompile>
+    <ClCompile Include="HelpersInterface.cpp">
+      <Filter>Source Files\Core\Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="HelpersTasks.cpp">
+      <Filter>Source Files\Core\Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="MainFrame.cpp">
+      <Filter>Source Files\User Interface</Filter>
+    </ClCompile>
+    <ClCompile Include="Localization.cpp">
+      <Filter>Source Files\User Interface</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
