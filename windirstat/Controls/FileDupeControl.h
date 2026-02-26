@@ -59,7 +59,7 @@ protected:
 
     static CFileDupeControl* m_singleton;
     CItemDupe* m_rootItem = nullptr;
-    bool m_showCloudWarningOnThisScan = false;
+    bool m_showCloudWarningOnThisScan = true;
     
     DECLARE_MESSAGE_MAP()
 };

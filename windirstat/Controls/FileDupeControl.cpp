@@ -22,6 +22,7 @@
 CFileDupeControl::CFileDupeControl() : CTreeListControl(COptions::DupeViewColumnOrder.Ptr(), COptions::DupeViewColumnWidths.Ptr(), LF_DUPELIST, false)
 {
     m_singleton = this;
+    m_showCloudWarningOnThisScan = COptions::ShowDupeDetectionCloudLinksWarning;
 }
 
 bool CFileDupeControl::GetAscendingDefault(const int column)
@@ -37,25 +38,20 @@ CFileDupeControl* CFileDupeControl::m_singleton = nullptr;
 void CFileDupeControl::ProcessDuplicate(CItem* item, BlockingQueue<CItem*>* queue)
 {
     if (!COptions::ScanForDuplicates) return;
-    if (COptions::SkipDupeDetectionCloudLinks && item->IsTypeOrFlag(ITRP_CLOUD) && m_showCloudWarningOnThisScan)
+    if (item->IsTypeOrFlag(ITRP_CLOUD) && COptions::SkipDupeDetectionCloudLinks)
     {
-        // Disable remainder for test of this scan
-        m_showCloudWarningOnThisScan = false;
-
-        // Show warning dialog
-        if (COptions::SkipDupeDetectionCloudLinks && item->IsTypeOrFlag(ITRP_CLOUD) && m_showCloudWarningOnThisScan)
+        // Show warning abd 
+        if (m_showCloudWarningOnThisScan)
         {
             m_showCloudWarningOnThisScan = false;
-
-            // Show warning and immediately "unpack" the returned structure
             if (const auto [nID, isChecked] = CMessageBoxDlg::Show(Localization::Lookup(IDS_DUPLICATES_WARNING),
                 Localization::Lookup(IDS_DONT_SHOW_AGAIN), false, MB_OK | MB_ICONINFORMATION, this);
                 nID == IDOK && isChecked)
             {
                 COptions::ShowDupeDetectionCloudLinksWarning = false;
             }
-            return;
         }
+        
         return;
     }
 
