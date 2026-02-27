@@ -201,7 +201,9 @@ bool IsLocalDrive(const std::wstring& path) noexcept
 std::wstring GetVolumeName(const std::wstring& rootPath)
 {
     std::wstring volumeName(MAX_PATH, L'\0');
-    GetVolumeInformation(rootPath.c_str(), volumeName.data(),
+    std::wstring volumePath = rootPath;
+    if (volumePath.back() != L'\\') volumePath += L'\\';
+    GetVolumeInformation(volumePath.c_str(), volumeName.data(),
         static_cast<DWORD>(volumeName.size()), nullptr, nullptr, nullptr, nullptr, 0);
     volumeName.resize(wcslen(volumeName.data()));
     return volumeName;
