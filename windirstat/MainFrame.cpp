@@ -176,7 +176,15 @@ void CWdsSplitterWnd::StopTracking(const BOOL bAccept)
             GetColumnInfo(0, cxLeft, dummy);
 
             if (rcClient.Width() > 0)
-            {
+            {        
+                // if user drag the splitter to show the extension view,
+                // treat that as an intent to enable showing file types in the extension view
+                if (CExtensionView* pExtensionView = CMainFrame::Get()->GetExtensionView();
+                    pExtensionView != nullptr && !pExtensionView->IsShowTypes()) 
+                {
+                    pExtensionView->ShowTypes(true);
+                }
+
                 m_splitterPos = static_cast<double>(cxLeft) / rcClient.Width();
             }
         }
@@ -188,6 +196,13 @@ void CWdsSplitterWnd::StopTracking(const BOOL bAccept)
 
             if (rcClient.Height() > 0)
             {
+                // if user drag the splitter to show the treemap view,
+                // treat that as an intent to enable treemap
+                if (CTreeMapView* pTreeMapView = CMainFrame::Get()->GetTreeMapView();
+                    pTreeMapView != nullptr && !pTreeMapView->IsShowTreeMap())
+                {
+                    pTreeMapView->ShowTreeMap(true);
+                }
                 m_splitterPos = static_cast<double>(cyUpper) / rcClient.Height();
             }
         }
