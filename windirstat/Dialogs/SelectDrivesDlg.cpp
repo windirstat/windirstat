@@ -63,7 +63,7 @@ CDriveItem::~CDriveItem()
     StopQuery();
 }
 
-void CDriveItem::StartQuery(HWND dialog)
+void CDriveItem::StartQuery(const HWND dialog)
 {
     ASSERT(dialog != nullptr);
     ASSERT(m_querying);
@@ -430,39 +430,17 @@ BOOL CSelectDrivesDlg::OnInitDialog()
     BringWindowToTop();
     SetForegroundWindow();
 
-    const DWORD drives = GetLogicalDrives();
-    for (const auto i : std::views::iota(0, wds::alphaSize))
+    const auto driveList = GetDriveList({ DRIVE_REMOVABLE, DRIVE_FIXED,
+        DRIVE_REMOTE, DRIVE_CDROM, DRIVE_RAMDISK });
+    for (const auto & drive : driveList)
     {
-        const DWORD mask = 0x00000001 << i;
-        if ((drives & mask) == 0)
-        {
-            continue;
-        }
-        
-        std::wstring s = std::wstring(1, wds::strAlpha.at(i)) + L":\\";
-        const UINT type = ::GetDriveType(s.c_str());
-        if (type == DRIVE_UNKNOWN || type == DRIVE_NO_ROOT_DIR)
-        {
-            continue;
-        }
-
-        // The check of remote drives will be done in the background by the query thread.
-        if (type != DRIVE_REMOTE && !DriveExists(s))
-        {
-            continue;
-        }
-
-        const auto item = new CDriveItem(&m_driveList, s);
+        const auto item = new CDriveItem(&m_driveList, drive + L'\\');
         m_driveList.InsertListItem(m_driveList.GetItemCount(), { item });
         item->StartQuery(m_hWnd);
 
-        for (const auto & drive : m_selectedDrives)
+        if (std::ranges::find(m_selectedDrives, drive) != m_selectedDrives.end())
         {
-            if (std::wstring(item->GetDrive()) == drive)
-            {
-                m_driveList.SelectItem(item);
-                break;
-            }
+            m_driveList.SelectItem(item);
         }
     }
 

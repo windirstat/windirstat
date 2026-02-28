@@ -143,7 +143,7 @@ bool CreateShadowCopy(const std::wstring& volumePath)
     return vtReturnValue.vt == VT_I4 && vtReturnValue.lVal == 0;
 }
 
-std::vector<std::wstring> GetDriveList(const std::vector<UINT>& driveTypes, const bool checkAccessible)
+std::vector<std::wstring> GetDriveList(const std::vector<UINT>& driveTypes, const bool checkLocal, const bool checkRemote)
 {
     std::vector<std::wstring> drives;
     const DWORD driveMask = GetLogicalDrives();
@@ -152,17 +152,18 @@ std::vector<std::wstring> GetDriveList(const std::vector<UINT>& driveTypes, cons
     {
         if ((driveMask & (1 << i)) == 0) continue;
 
-        std::wstring drive = std::wstring{ wds::strAlpha[i] } + L":";
+        std::wstring drive = std::wstring{ wds::strAlpha[i] } + L":\\";
         const UINT driveType = GetDriveType(drive.c_str());
 
         // See if drive type matches and in accessible
         for (const UINT dt : driveTypes) if (driveType == dt)
         {
             // Check if the drive is actually accessible
-            if (!checkAccessible || checkAccessible && !GetVolumeName(drive).empty())
-            {
-                drives.push_back(drive);
-            }
+            if ((checkLocal && driveType != DRIVE_REMOTE ||
+                checkRemote && driveType == DRIVE_REMOTE) && !DriveExists(drive)) continue;
+
+            // Passed checks - add to drive list
+            drives.push_back(drive.substr(0, 2));
         }
     }
 
@@ -178,8 +179,7 @@ bool FolderExists(const std::wstring& path) noexcept
 
 bool DriveExists(const std::wstring& path) noexcept
 {
-    if (path.size() != 3 || path[1] != wds::chrColon || path[2] != wds::chrBackslash)
-        return false;
+    if (path.size() < 2 || path[1] != wds::chrColon) return false;
 
     const int d = std::toupper(path[0]) - wds::strAlpha[0];
     const DWORD mask = 0x1 << d;
