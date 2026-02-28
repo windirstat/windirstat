@@ -74,6 +74,7 @@ int CItemSearch::CompareSibling(const CTreeListItem* tlib, const int subitem) co
 
     // Individual file names
     const auto* other = reinterpret_cast<const CItemSearch*>(tlib);
+    if (subitem == COL_ITEMSEARCH_NAME) return signum(_wcsicmp(m_item->GetPath().c_str(), other->m_item->GetPath().c_str()));
     return m_item->CompareSibling(other->m_item, s_columnMap.at(static_cast<uint8_t>(subitem)));
 }
 
