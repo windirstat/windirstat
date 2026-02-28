@@ -184,7 +184,8 @@ bool DriveExists(const std::wstring& path) noexcept
     const int d = std::toupper(path[0]) - wds::strAlpha[0];
     const DWORD mask = 0x1 << d;
 
-    return (mask & GetLogicalDrives()) != 0 && !GetVolumeName(path).empty();
+    return (mask & GetLogicalDrives()) != 0 && 
+        GetVolumeInformation(path.c_str(), nullptr, 0, nullptr, nullptr, nullptr, nullptr, 0) != FALSE;;
 }
 
 bool IsLocalDrive(const std::wstring& path) noexcept

@@ -36,10 +36,7 @@ namespace
     // Return: false, if drive not accessible
     bool RetrieveDriveInformation(const std::wstring & path, std::wstring& name, ULONGLONG& total, ULONGLONG& free)
     {
-        const std::wstring volumeName = GetVolumeName(path);
-        if (volumeName.empty()) return false;
-
-        name = FormatVolumeName(path, volumeName);
+        name = FormatVolumeNameOfRootPath(path);
 
         std::tie(total, free) = CDirStatApp::GetFreeDiskSpace(path);
         if (total == 0) return false;
