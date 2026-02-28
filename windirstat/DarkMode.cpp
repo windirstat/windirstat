@@ -157,11 +157,15 @@ void DarkMode::AdjustControls(const HWND hWnd)
         const std::wstring className(classNameBuffer.data(), length);
 
         // Control whether the window is allowed for dark mode
-        AllowDarkModeForWindow(hWnd, s_darkModeEnabled);
+        AllowDarkModeForWindow(hWnd, TRUE);
 
         // Set toplevel theme
-        const BOOL dark = s_darkModeEnabled;
-        DwmSetWindowAttribute(hWnd, DWMWA_USE_IMMERSIVE_DARK_MODE, &dark, sizeof(dark));
+        constexpr BOOL dark = TRUE;
+        if (DwmSetWindowAttribute(hWnd, DWMWA_USE_IMMERSIVE_DARK_MODE, &dark, sizeof(dark)) == E_INVALIDARG)
+        {
+            // Fallback for older operating systems
+            DwmSetWindowAttribute(hWnd, DWMWA_USE_IMMERSIVE_DARK_MODE - 1, &dark, sizeof(dark));
+        }
 
         if (className == WC_BUTTON)
         {
