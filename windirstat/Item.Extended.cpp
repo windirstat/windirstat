@@ -872,7 +872,7 @@ std::vector<CItem*> CItem::FindItemsBySameIndex() const
 
 std::vector<BYTE> CItem::GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CItem*>* queue)
 {
-    thread_local std::vector<BYTE> fileBuffer(1024ull * 1024ull);
+    thread_local std::vector<BYTE> fileBuffer(wds::Mi);
     thread_local std::vector<BYTE> hashBuffer;
     thread_local std::once_flag hashInitFlag;
     thread_local SmartPointer<BCRYPT_ALG_HANDLE> hashAlgHandle(

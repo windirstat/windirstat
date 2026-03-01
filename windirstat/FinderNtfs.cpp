@@ -209,7 +209,7 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
     // Process MFT records
     std::for_each(std::execution::par, dataRuns.begin(), dataRuns.end(), [&](const auto& dataRun)
     {
-        constexpr size_t bufferSize = 4ull * 1024 * 1024;
+        constexpr size_t bufferSize = 4ull * wds::Mi;
         thread_local std::unique_ptr<UCHAR, decltype(&_aligned_free)> buffer(
             static_cast<UCHAR*>(_aligned_malloc(bufferSize, volumeInfo.BytesPerSector)), &_aligned_free);
 
