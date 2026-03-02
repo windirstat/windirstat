@@ -103,20 +103,16 @@ std::wstring FormatBytes(const ULONGLONG n) noexcept
 
 std::wstring FormatSizeSuffixes(const ULONGLONG n) noexcept
 {
-    constexpr ULONGLONG K = 1024;
-    constexpr ULONGLONG M = K * K;
-    constexpr ULONGLONG G = M * K;
-    constexpr ULONGLONG T = G * K;
-
+    using namespace wds;
     static constexpr struct {
         ULONGLONG bytes;
         ULONGLONG threshold;
         const std::wstring& (*suffix)();
     } units[] = {
-        {T, T - (G / 2), GetSpec_TiB},
-        {G, G - (M / 2), GetSpec_GiB},
-        {M, M - (K / 2), GetSpec_MiB},
-        {K, K,           GetSpec_KiB},
+        {Ti, Ti - (Gi / 2), GetSpec_TiB},
+        {Gi, Gi - (Mi / 2), GetSpec_GiB},
+        {Mi, Mi - (Ki / 2), GetSpec_MiB},
+        {Ki, Ki,            GetSpec_KiB},
     };
 
     for (const auto& [bytes, threshold, suffix] : units) [[msvc::flatten]]

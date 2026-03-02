@@ -32,6 +32,12 @@ namespace wds
     inline constexpr auto chrEqual        = L'=';
     inline constexpr auto szNpos          = std::wstring::npos;
 
+    // Binary size constants
+    inline constexpr auto Ki = 1024ull;
+    inline constexpr auto Mi = Ki * Ki;
+    inline constexpr auto Gi = Mi * Ki;
+    inline constexpr auto Ti = Gi * Ki;
+
     inline constexpr auto strExplorerKey = L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer";
     inline constexpr auto strThemesKey   = L"Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize";
     inline constexpr auto strUninstall   = L"Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\WinDirStat";
