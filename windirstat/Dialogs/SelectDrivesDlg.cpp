@@ -283,9 +283,29 @@ void CDrivesList::OnDoubleClick(NMHDR* /*pNMHDR*/, LRESULT* pResult)
     (void) GetParent()->SendMessage(WMU_OK);
 }
 
+void CDrivesList::OnLButtonDown(UINT nFlags, CPoint point)
+{
+    LVHITTESTINFO lvhti = { 0 };
+    lvhti.pt = point;
+
+    if (SubItemHitTest(&lvhti) != -1)
+    {
+        int nItem = lvhti.iItem;
+        UINT uState = GetItemState(nItem, LVIS_SELECTED);
+        SetItemState(nItem, (uState & LVIS_SELECTED) ? 0 : (LVIS_SELECTED | LVIS_FOCUSED),
+            LVIS_SELECTED | LVIS_FOCUSED);
+        SetFocus();
+    }
+    else
+    {
+        CWdsListControl::OnLButtonDown(nFlags, point);
+    }
+}
+
 BEGIN_MESSAGE_MAP(CDrivesList, CWdsListControl)
     ON_NOTIFY_REFLECT(LVN_DELETEITEM, OnLvnDeleteItem)
     ON_NOTIFY_REFLECT(NM_DBLCLK, OnDoubleClick)
+    ON_WM_LBUTTONDOWN()
 END_MESSAGE_MAP()
 
 void CDrivesList::OnLvnDeleteItem(NMHDR* pNMHDR, LRESULT* pResult)
@@ -373,7 +393,7 @@ BOOL CSelectDrivesDlg::OnInitDialog()
     m_driveList.ShowGrid(COptions::ListGrid);
     m_driveList.ShowStripes(COptions::ListStripes);
     m_driveList.ShowFullRowSelection(COptions::ListFullRowSelection);
-    m_driveList.SetExtendedStyle(m_driveList.GetExtendedStyle() | LVS_EX_HEADERDRAGDROP);
+    m_driveList.SetExtendedStyle(m_driveList.GetExtendedStyle() | LVS_EX_HEADERDRAGDROP | LVS_EX_FULLROWSELECT);
 
     m_driveList.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_NAME).c_str(), LVCFMT_LEFT, DpiRest(150), COL_DRIVES_NAME);
     m_driveList.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_TOTAL).c_str(), LVCFMT_RIGHT, DpiRest(65), COL_DRIVES_TOTAL);
