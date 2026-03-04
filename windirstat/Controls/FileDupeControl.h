@@ -53,8 +53,8 @@ protected:
     constexpr static ULONGLONG HashThresold(ITEMTYPE hashLevel)
     {
         return
-            hashLevel == ITHASH_SMALL ? 4ull * 1024ull :
-            hashLevel == ITHASH_MEDIUM ? 1024ull * 1024ull : ULONGLONG_MAX;
+            hashLevel == ITHASH_SMALL ? 4ull * wds::Ki :
+            hashLevel == ITHASH_MEDIUM ? wds::Mi : ULONGLONG_MAX;
     }
 
     static CFileDupeControl* m_singleton;
