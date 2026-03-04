@@ -77,9 +77,7 @@ void CTreeMapView::DrawEmptyView(CDC* pDC)
 
     Inactivate();
 
-    CRect rc;
-    GetClientRect(rc);
-
+    const CRect rc = ClientRectOf(this);
     if (m_dimmed.m_hObject == nullptr)
     {
         pDC->FillSolidRect(rc, gray);
@@ -116,8 +114,7 @@ void CTreeMapView::OnDraw(CDC * pDC)
         return;
     }
 
-    CRect rc;
-    GetClientRect(rc);
+    CRect rc = ClientRectOf(this);
     ASSERT(m_size == rc.Size());
     ASSERT(rc.TopLeft() == CPoint(0, 0));
 
@@ -264,9 +261,7 @@ void CTreeMapView::HighlightSelectedItem(CDC* pdc, const CItem* item, const bool
 
     if (single)
     {
-        CRect rcClient;
-        GetClientRect(rcClient);
-
+        CRect rcClient = ClientRectOf(this);
         if (m_treeMap.GetOptions().grid)
         {
             rc.right++;
@@ -445,10 +440,7 @@ std::tuple<std::wstring, ULONGLONG>  CTreeMapView::GetTreeMapHoverInfo()
     GetCursorPos(&point);
     ScreenToClient(&point);
 
-    CRect rc;
-    GetClientRect(rc);
-
-    if (!rc.PtInRect(point))
+    if (const CRect rc = ClientRectOf(this); !rc.PtInRect(point))
     {
         m_paneTextOverride = {};
         m_paneSizeOverride = 0;
@@ -461,7 +453,7 @@ void CTreeMapView::OnContextMenu(CWnd* /*pWnd*/, const CPoint point)
 {
     // Validate root is valid
     if (const CItem* root = CDirStatDoc::Get()->GetRootItem();
-        root == nullptr && !root->IsDone()) return;
+        root == nullptr || !root->IsDone()) return;
     
     CPoint clientPoint = point;
     ScreenToClient(&clientPoint);

@@ -17,7 +17,6 @@
 
 #include "pch.h"
 #include "XYSlider.h"
-#include "resource.h"
 
 IMPLEMENT_DYNAMIC(CXySlider, CStatic)
 
@@ -38,18 +37,24 @@ void CXySlider::Initialize()
         CRect rc;
         GetWindowRect(rc);
         GetParent()->ScreenToClient(rc);
-        if (rc.Width() % 2 == 0)
-        {
-            rc.right--;
-        }
-        if (rc.Height() % 2 == 0)
-        {
-            rc.bottom--;
-        }
+        if (rc.Width() % 2 == 0) rc.right--;
+        if (rc.Height() % 2 == 0) rc.bottom--;
         MoveWindow(rc);
 
-        // Initialize constants
-        CalcSizes();
+        // Initialize sizes
+        m_rcAll = ClientRectOf(this);
+        constexpr int s_gripperRadius = 8;
+
+        m_zero.x = m_rcAll.Width() / 2;
+        m_zero.y = m_rcAll.Height() / 2;
+        m_radius.cx = m_rcAll.Width() / 2 - 1;
+        m_radius.cy = m_rcAll.Height() / 2 - 1;
+
+        m_rcInner = m_rcAll;
+        m_rcInner.DeflateRect(s_gripperRadius - 3, s_gripperRadius - 3);
+        m_gripperRadius.cx = s_gripperRadius;
+        m_gripperRadius.cy = s_gripperRadius;
+        m_range = m_radius - m_gripperRadius;
 
         m_inited = true;
     }
@@ -91,34 +96,6 @@ void CXySlider::SetPos(const CPoint pt)
     m_externalPos = pt;
     ExternToIntern();
     Invalidate();
-}
-
-void CXySlider::CalcSizes()
-{
-    static constexpr int s_gripperRadius = 8;
-
-    GetClientRect(m_rcAll);
-
-    ASSERT(m_rcAll.left == 0);
-    ASSERT(m_rcAll.top == 0);
-    ASSERT(m_rcAll.Width() % 2 == 1);
-    ASSERT(m_rcAll.Height() % 2 == 1);
-    ASSERT(m_rcAll.Width() >= s_gripperRadius * 2); // Control must be large enough
-    ASSERT(m_rcAll.Height() >= s_gripperRadius * 2);
-
-    m_zero.x = m_rcAll.Width() / 2;
-    m_zero.y = m_rcAll.Height() / 2;
-
-    m_radius.cx = m_rcAll.Width() / 2 - 1;
-    m_radius.cy = m_rcAll.Height() / 2 - 1;
-
-    m_rcInner = m_rcAll;
-    m_rcInner.DeflateRect(s_gripperRadius - 3, s_gripperRadius - 3);
-
-    m_gripperRadius.cx = s_gripperRadius;
-    m_gripperRadius.cy = s_gripperRadius;
-
-    m_range = m_radius - m_gripperRadius;
 }
 
 CRect CXySlider::GetGripperRect() const

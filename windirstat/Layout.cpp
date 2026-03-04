@@ -116,8 +116,7 @@ void CLayout::OnInitDialog(const bool centerWindow)
     }
 
     // Create size gripper
-    CRect sg;
-    m_dialog->GetClientRect(sg);
+    CRect sg = ClientRectOf(m_dialog);
     sg.left = sg.right - m_sizeGripper.m_width;
     sg.top = sg.bottom - m_sizeGripper.m_width;
     m_sizeGripper.Create(m_dialog, sg);
@@ -184,8 +183,7 @@ END_MESSAGE_MAP()
 
 BOOL CLayout::CSizeGripper::OnEraseBkgnd(CDC* pDC)
 {
-    CRect rc;
-    GetClientRect(rc);
+    CRect rc = ClientRectOf(this);
     pDC->FillSolidRect(rc, DarkMode::WdsSysColor(CTLCOLOR_DLG));
     return TRUE;
 }
@@ -194,9 +192,7 @@ void CLayout::CSizeGripper::OnPaint()
 {
     CPaintDC dc(this);
 
-    CRect rc;
-    GetClientRect(rc);
-
+    const CRect rc = ClientRectOf(this);
     ASSERT(rc.Width() == m_width);
     ASSERT(rc.Height() == m_width);
 

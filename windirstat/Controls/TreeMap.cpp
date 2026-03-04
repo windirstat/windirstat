@@ -415,10 +415,6 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, CItem* root, const Options* optio
         CSelectObject sobmp(&dcTreeView, &bmp);
         pdc->BitBlt(rc.TopLeft().x, rc.TopLeft().y, rc.Width(), rc.Height(), &dcTreeView, 0, 0, SRCCOPY);
     }
-
-    // Free memory
-    bmp.DeleteObject();
-    dcTreeView.DeleteDC();
 }
 
 CItem* CTreeMap::FindItemByPoint(CItem* item, const CPoint point)
@@ -524,10 +520,6 @@ void CTreeMap::DrawColorPreview(CDC* pdc, const CRect& rc, const COLORREF color,
         CSelectStockObject sobrush(pdc, NULL_BRUSH);
         pdc->Rectangle(rc);
     }
-
-    // Free memory
-    bmp.DeleteObject();
-    dcTreeView.DeleteDC();
 }
 
 void CTreeMap::RenderLeaf(std::vector<COLORREF>& bitmap, const CItem* item, const std::array<double, 4>& surface) const
@@ -904,7 +896,6 @@ COLORREF CTreeMapPreview::GetNextColor(int& i) const
 void CTreeMapPreview::OnPaint()
 {
     CPaintDC dc(this);
-    CRect rc;
-    GetClientRect(rc);
+    const CRect rc = ClientRectOf(this);
     m_treeMap.DrawTreeMap(&dc, rc, m_root);
 }

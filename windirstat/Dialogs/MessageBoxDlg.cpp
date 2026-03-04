@@ -188,8 +188,7 @@ BOOL CMessageBoxDlg::OnInitDialog()
     ScreenToClient(&rectMessage);
 
     // Account for control borders/margins
-    CRect rectMessageClient;
-    m_messageCtrl.GetClientRect(&rectMessageClient);
+    CRect rectMessageClient = ClientRectOf(&m_messageCtrl);
     const int messageBorders = rectMessage.Width() - rectMessageClient.Width();
 
     // Calculate scaling for initial size requirements

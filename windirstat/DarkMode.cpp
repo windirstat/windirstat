@@ -236,8 +236,7 @@ void DarkMode::DrawMenuClientArea(CWnd& wnd)
         return;
     }
 
-    CRect rcClient;
-    wnd.GetClientRect(&rcClient);
+    CRect rcClient = ClientRectOf(&wnd);
     wnd.ClientToScreen(&rcClient);
 
     CRect rcWindow;

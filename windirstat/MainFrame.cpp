@@ -85,8 +85,7 @@ BOOL COptionsPropertySheet::OnEraseBkgnd(CDC* pDC)
     }
 
     // Paint the background with dark mode color
-    CRect rect;
-    GetClientRect(&rect);
+    const CRect rect = ClientRectOf(this);
     pDC->FillSolidRect(&rect, DarkMode::WdsSysColor(CTLCOLOR_DLG));
     
     return TRUE;
@@ -166,9 +165,7 @@ void CWdsSplitterWnd::StopTracking(const BOOL bAccept)
 
     if (bAccept)
     {
-        CRect rcClient;
-        GetClientRect(rcClient);
-
+        const CRect rcClient = ClientRectOf(this);
         if (GetColumnCount() > 1)
         {
             int dummy;
@@ -215,9 +212,7 @@ void CWdsSplitterWnd::SetSplitterPos(const double pos)
 {
     m_splitterPos = pos;
 
-    CRect rcClient;
-    GetClientRect(rcClient);
-
+    const CRect rcClient = ClientRectOf(this);
     if (GetColumnCount() > 1)
     {
         if (m_pColInfo != nullptr)
@@ -328,16 +323,14 @@ void CPacmanControl::OnPaint()
     CMemDC memDC(dc, this);
     CDC* pDC = &memDC.GetDC();
 
-    CRect rect;
-    GetClientRect(&rect);
-
     // Draw the animation
-    m_pacman.Draw(pDC, rect, DarkMode::WdsSysColor(
+    const CRect rc = ClientRectOf(this);
+    m_pacman.Draw(pDC, rc, DarkMode::WdsSysColor(
         DarkMode::IsDarkModeActive() ? COLOR_WINDOW : COLOR_BTNFACE));
 
     // Draw the borders
     CMFCVisualManager::GetInstance()->OnDrawStatusBarPaneBorder(
-        pDC, &CMainFrame::Get()->m_wndStatusBar, rect, 0, CMainFrame::Get()->GetStyle());
+        pDC, &CMainFrame::Get()->m_wndStatusBar, rc, 0, CMainFrame::Get()->GetStyle());
 }
 
 /////////////////////////////////////////////////////////////////////////////

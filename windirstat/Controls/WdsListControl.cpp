@@ -832,8 +832,7 @@ BOOL CWdsListControl::OnEraseBkgnd(CDC* pDC)
     }
 
     // Erase unused area to the right of all items
-    CRect rectClient;
-    GetClientRect(&rectClient);
+    const CRect rectClient = ClientRectOf(this);
     if (lastRect.right < rectClient.right)
     {
         pDC->FillSolidRect(lastRect.right, 0, rectClient.right - lastRect.right,

@@ -48,9 +48,7 @@ void CColorButton::CPreview::OnPaint()
 {
     CPaintDC dc(this);
 
-    CRect rc;
-    GetClientRect(rc);
-
+    CRect rc = ClientRectOf(this);
     dc.DrawEdge(rc, EDGE_BUMP, BF_RECT | BF_ADJUST);
 
     const bool disabled = (GetParent()->GetStyle() & WS_DISABLED) != 0;
@@ -87,9 +85,7 @@ void CColorButton::OnPaint()
 {
     if (nullptr == m_preview.m_hWnd)
     {
-        CRect rc;
-        GetClientRect(rc);
-
+        CRect rc = ClientRectOf(this);
         rc.right = rc.left + rc.Width() / 3;
         rc.DeflateRect(4, 4);
 

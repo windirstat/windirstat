@@ -38,7 +38,6 @@ class CXySlider final : public CStatic
 
 protected:
     void Initialize();
-    void CalcSizes();
     CRect GetGripperRect() const;
     void CheckMinMax(LONG& val, int minVal, int maxVal) const;
     void InternToExtern();

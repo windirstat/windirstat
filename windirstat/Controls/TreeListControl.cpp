@@ -562,9 +562,9 @@ void CTreeListControl::EmulateInteractiveSelection(const CTreeListItem* item)
     EnsureItemVisible(item);
 
     // get the item relative offset
-    RECT rect = {}, clientRect = {};
+    RECT rect = {};
     GetItemRect(FindTreeItem(item), &rect, LVIR_BOUNDS);
-    GetClientRect(&clientRect);
+    const CRect clientRect = ClientRectOf(this);
     IntersectRect(&rect, &rect, &clientRect);
     const LPARAM lparam = MAKELPARAM(rect.left, rect.top);
 

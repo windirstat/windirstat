@@ -131,3 +131,9 @@ using CSmallRect = struct CSmallRect
     }
 };
 
+inline CRect ClientRectOf(const CWnd* hWnd)
+{
+    CRect rc;
+    ::GetClientRect(*hWnd, &rc);
+    return rc;
+}
