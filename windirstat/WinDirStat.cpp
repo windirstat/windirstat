@@ -379,27 +379,13 @@ BOOL CDirStatApp::InitInstance()
     // Allow user to elevate if desired
     if (IsElevationAvailable() && COptions::ShowElevationPrompt && !hideApp)
     {
-        if ([&]() -> bool
-            {
-                const auto result = CMessageBoxDlg::Show(Localization::Lookup(IDS_ELEVATION_QUESTION),
-                    Localization::Lookup(IDS_DONT_SHOW_AGAIN), false, MB_YESNO | MB_ICONQUESTION, m_pMainWnd);
-
-                COptions::ShowElevationPrompt = !result.isChecked;
-
-                if (result.nID == IDYES)
-                {
-                    if (!COptions::ShowElevationPrompt)
-                    {
-                        COptions::AutoElevate = true;
-                    }
-                    RunElevated(m_lpCmdLine);
-                    return true;
-                }
-
-                COptions::AutoElevate = false;
-                return false;
-            }())
+        if (const auto [nID, isChecked] =
+            CMessageBoxDlg::Show(Localization::Lookup(IDS_ELEVATION_QUESTION), Localization::Lookup(IDS_DONT_SHOW_AGAIN),
+                false, MB_YESNO | MB_ICONQUESTION, m_pMainWnd);
+            (COptions::ShowElevationPrompt = !isChecked, nID == IDYES))
         {
+            if (isChecked) COptions::AutoElevate = true;
+            RunElevated(m_lpCmdLine);
             return FALSE;
         }
     }
