@@ -57,7 +57,7 @@ void CAboutDlg::WdsTabControl::Initialize()
 
     // Use monospace font for license page
     m_monoFont.CreateFont(DpiRest(12), 0, 0, 0, 0, 0, 0, 0, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
-        CLIP_DEFAULT_PRECIS, CLEARTYPE_NATURAL_QUALITY, FF_MODERN, L"Consolas");
+        CLIP_DEFAULT_PRECIS, CLEARTYPE_NATURAL_QUALITY, FF_MODERN, L"Lucida Console");
 
     // Populate text
     m_textAbout.SetWindowText(Localization::Format(IDS_ABOUT_ABOUT_TEXTss,
