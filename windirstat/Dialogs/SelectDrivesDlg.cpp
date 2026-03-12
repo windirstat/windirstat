@@ -367,6 +367,7 @@ BOOL CSelectDrivesDlg::OnInitDialog()
     m_layout.AddControl(IDOK, 1, 1, 0, 0);
     m_layout.AddControl(IDCANCEL, 1, 1, 0, 0);
     m_layout.AddControl(IDC_TARGET_DRIVES_LIST, 0, 0, 1, 1);
+    m_layout.AddControl(IDC_RADIO_TARGET_DRIVES_ALL, 0, 0, 1, 0);
     m_layout.AddControl(IDC_RADIO_TARGET_FOLDER, 0, 1, 0, 0);
     m_layout.AddControl(IDC_BROWSE_BUTTON, 1, 1, 0, 0);
     m_layout.AddControl(IDC_BROWSE_FOLDER, 0, 1, 1, 0);
