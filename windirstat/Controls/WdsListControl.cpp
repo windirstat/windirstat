@@ -125,7 +125,15 @@ void CWdsListItem::DrawLabel(const CWdsListControl* list, CDC* pdc, CRect& rc, c
     rcRest.DeflateRect(list->GetTextXMargin(), 0);
 
     CRect rcLabel = rcRest;
-    DrawTextCache::Get()->DrawTextCached(pdc, GetText(0), rcLabel, true, true);
+
+    if (GetText(0).empty())
+    {
+        rcLabel.right = rcLabel.left;
+    }
+    else
+    {
+        DrawTextCache::Get()->DrawTextCached(pdc, GetText(0), rcLabel, true, true);
+    }
 
     rcLabel.InflateRect(LABEL_INFLATE_CX, 0);
     rcLabel.top = rcRest.top + LABEL_Y_MARGIN;
