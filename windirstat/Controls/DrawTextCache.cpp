@@ -22,7 +22,13 @@ DrawTextCache DrawTextCache::s_instance;
 
 void DrawTextCache::DrawTextCached(CDC* pDC, const std::wstring& text, CRect& rect, const bool leftAlign, const bool calcRect)
 {
-    if (!pDC || text.empty()) return;
+    // If no DC or empty text, collapse rect and return
+    if (!pDC || text.empty())
+    {
+        rect.right = rect.left;
+        rect.bottom = rect.top;
+        return;
+    }
 
     const UINT format = DT_SINGLELINE | DT_VCENTER | DT_WORD_ELLIPSIS | DT_NOPREFIX |
         (leftAlign ? DT_LEFT : DT_RIGHT) | (calcRect ? DT_CALCRECT : 0);
