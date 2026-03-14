@@ -151,6 +151,9 @@
 #define IDC_PROCESS_HARDLINKS           1116
 #define IDC_CONTEXT_MENU                1117
 #define IDC_SHOW_MICROSOFT_PROGRESS     1118
+#define IDC_TREEMAPHEADER               1119
+#define IDC_GRIDMINIMUMAREA             1120
+#define IDC_STATICGRIDMINIMUMAREA       1121
 #define ID_WDS_CONTROL                  4711
 #define ID_CLEANUP_EXPLORER_SELECT      32768
 #define ID_TREEMAP_ZOOMIN               32769

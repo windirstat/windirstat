@@ -135,6 +135,7 @@ public:
     {
         STYLE style;         // Squarification method
         bool grid;           // Whether to draw grid lines
+        bool showHeaders;    // Whether to draw headers for folders
         COLORREF gridColor;  // Color of grid lines
         double brightness;   // 0..1.0   (default = 0.84)
         double height;       // >= 0.0    (default = 0.40)    Factor "H"
@@ -142,6 +143,7 @@ public:
         double ambientLight; // 0..1.0   (default = 0.15)    Factor "Ia"
         double lightSourceX; // -4.0..+4.0 (default = -1.0), negative = left
         double lightSourceY; // -4.0..+4.0 (default = -1.0), negative = top
+        double gridMinimumArea; // >= 0.0 (default = 0.0), minimum area in pixels for grid border rendering
 
         constexpr int GetBrightnessPercent() const { return RoundDouble(brightness * 100); }
         constexpr int GetHeightPercent() const { return RoundDouble(height * 100); }
@@ -149,6 +151,7 @@ public:
         constexpr int GetAmbientLightPercent() const { return RoundDouble(ambientLight * 100); }
         constexpr int GetLightSourceXPercent() const { return RoundDouble(lightSourceX * 100); }
         constexpr int GetLightSourceYPercent() const { return RoundDouble(lightSourceY * 100); }
+        constexpr int GetGridMinimumArea() const { return RoundDouble(gridMinimumArea); }
         CPoint GetLightSourcePoint() const { return { GetLightSourceXPercent(), GetLightSourceYPercent() }; }
 
         constexpr void SetBrightnessPercent(int n) { brightness = n / 100.0; }
@@ -157,6 +160,7 @@ public:
         constexpr void SetAmbientLightPercent(int n) { ambientLight = n / 100.0; }
         constexpr void SetLightSourceXPercent(int n) { lightSourceX = n / 100.0; }
         constexpr void SetLightSourceYPercent(int n) { lightSourceY = n / 100.0; }
+        constexpr void SetGridMinimumArea(int n) { gridMinimumArea = n; }
         void SetLightSourcePoint(CPoint pt) { SetLightSourceXPercent(pt.x); SetLightSourceYPercent(pt.y); }
 
         static constexpr int RoundDouble(double d) { return static_cast<int>(d + (d < 0.0 ? -0.5 : 0.5)); }
@@ -218,13 +222,15 @@ protected:
     static constexpr Options DefaultOptions = {
         .style = KDirStatStyle,
         .grid = false,
+        .showHeaders = false,
         .gridColor = RGB(0, 0, 0),
         .brightness = 0.88,
         .height = 0.38,
         .scaleFactor = 0.91,
         .ambientLight = 0.13,
         .lightSourceX = -1.0,
-        .lightSourceY = -1.0
+        .lightSourceY = -1.0,
+        .gridMinimumArea = 0.0
     };
 
     // Standard palette for WinDirStat
