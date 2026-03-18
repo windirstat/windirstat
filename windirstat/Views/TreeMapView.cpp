@@ -307,6 +307,29 @@ void CTreeMapView::RenderHighlightRectangle(CDC* pdc, CRect& rc) const
     }
 }
 
+CItem* CTreeMapView::ResolveItemAtPoint(CPoint point, bool isScreenCoords)
+{
+    // Validate that the document and root are in a ready state
+    const CItem* root = CDirStatDoc::Get()->GetRootItem();
+    if (root == nullptr || !root->IsDone() || !IsDrawn())
+    {
+        return nullptr;
+    }
+
+    // Offset the click point if zoomed
+    CPoint pointClicked = point;
+    if (isScreenCoords) ScreenToClient(&pointClicked);
+
+    if (CDirStatDoc::Get()->IsZoomed())
+    {
+        pointClicked.Offset(-ZoomFrameWidth, -ZoomFrameWidth);
+    }
+
+    // Perform the hit-test against the current tree map projection
+    return static_cast<CItem*>(m_treeMap.FindItemByPoint(
+        CDirStatDoc::Get()->GetZoomItem(), pointClicked));
+}
+
 void CTreeMapView::OnSize(const UINT nType, const int cx, const int cy)
 {
     CView::OnSize(nType, cx, cy);
@@ -320,22 +343,9 @@ void CTreeMapView::OnSize(const UINT nType, const int cx, const int cy)
 
 void CTreeMapView::OnLButtonDown(const UINT nFlags, const CPoint point)
 {
-    // Offset the click point if zoomed
-    CPoint pointClicked = point;
-    if (CDirStatDoc::Get()->IsZoomed())
+    if (auto* item = ResolveItemAtPoint(point))
     {
-        pointClicked.Offset(-1 * ZoomFrameWidth, -1 * ZoomFrameWidth);
-    }
-
-    const CItem* root = CDirStatDoc::Get()->GetRootItem();
-    if (root != nullptr && root->IsDone() && IsDrawn())
-    {
-        const auto item = static_cast<CItem*>(m_treeMap.FindItemByPoint(CDirStatDoc::Get()->GetZoomItem(), pointClicked));
-        if (item == nullptr)
-        {
-            return;
-        }
-
+        CDirStatDoc::Get()->ClearReselectChildStack();
         CDirStatDoc::Get()->UpdateAllViews(this, HINT_SELECTIONACTION, item);
     }
     CView::OnLButtonDown(nFlags, point);
@@ -451,39 +461,61 @@ std::tuple<std::wstring, ULONGLONG>  CTreeMapView::GetTreeMapHoverInfo()
 
 void CTreeMapView::OnContextMenu(CWnd* /*pWnd*/, const CPoint point)
 {
-    // Validate root is valid
-    if (const CItem* root = CDirStatDoc::Get()->GetRootItem();
-        root == nullptr || !root->IsDone()) return;
-    
-    CPoint clientPoint = point;
-    ScreenToClient(&clientPoint);
+    // List of context menu command IDs and whether the menu
+    // should remain open after executing the command
+    static constexpr struct {
+        UINT id;
+        bool isPersistent;
+    } contextMenuPersistant[] = {
+        { ID_TREEMAP_ZOOMIN,            true  },
+        { ID_TREEMAP_ZOOMOUT,           true  },
+        { ID_TREEMAP_SELECT_PARENT,     true  },
+        { ID_TREEMAP_RESELECT_CHILD,    true  },
+        { ID_EDIT_COPY_CLIPBOARD,       false },
+        { ID_CLEANUP_EXPLORER_SELECT,   false },
+        { ID_CLEANUP_OPEN_IN_CONSOLE,   false },
+        { ID_CLEANUP_OPEN_IN_PWSH,      false },
+        { ID_POPUP_CANCEL,              false }
+    };
 
-    // See if right-click item is one of the selected items
-    const auto selection = CDirStatDoc::Get()->GetAllSelected();
-    const auto clickedItem = static_cast<const CItem*>(
-        m_treeMap.FindItemByPoint(CDirStatDoc::Get()->GetZoomItem(), clientPoint));
-    if (clickedItem == nullptr || std::ranges::find(selection, const_cast<CItem*>(clickedItem)) == selection.end())
+    // Helper lambda to check if a command ID is in the list of persistent context menu commands
+    [[msvc::flatten]] static constexpr auto IsContextMenuPersistent = [](UINT id) -> bool {
+        return std::ranges::any_of(contextMenuPersistant, [id](const auto& cmd) {
+            return cmd.id == id && cmd.isPersistent;
+        });
+    };
+
+    auto* clickedItem = ResolveItemAtPoint(point, true);
+    if (clickedItem == nullptr) return;
+
+    if (!std::ranges::any_of(CDirStatDoc::Get()->GetAllSelected(), [&](auto* s)
+        { return s == clickedItem || s->IsAncestorOf(clickedItem); }))
     {
-        return;
+        CDirStatDoc::Get()->ClearReselectChildStack();
+        CDirStatDoc::Get()->UpdateAllViews(this, HINT_SELECTIONACTION, clickedItem);
     }
 
-    CMenu menu;
-    menu.LoadMenu(IDR_POPUP_MAP);
-    Localization::UpdateMenu(menu);
-    CMenu* sub = menu.GetSubMenu(0);
-    sub->TrackPopupMenu(TPM_LEFTALIGN | TPM_LEFTBUTTON, point.x, point.y, AfxGetMainWnd());
+    if (CMenu menu; menu.LoadMenu(IDR_POPUP_MAP))
+    {
+        Localization::UpdateMenu(menu);
+        if (CMenu* sub = menu.GetSubMenu(0))
+        {
+            UINT cmdId = 0;
+            do {
+                cmdId = sub->TrackPopupMenu(TPM_LEFTALIGN | TPM_LEFTBUTTON | TPM_RIGHTBUTTON | TPM_RETURNCMD,
+                    point.x, point.y, AfxGetMainWnd());
+                if (cmdId > 0) AfxGetMainWnd()->SendMessage(WM_COMMAND, cmdId);
+            } while (cmdId > 0 && IsContextMenuPersistent(cmdId));
+        }
+    }
 }
 
 void CTreeMapView::OnMouseMove(UINT /*nFlags*/, const CPoint point)
 {
-    if (CDirStatDoc::Get()->IsRootDone() && IsDrawn())
+    if (auto* item = ResolveItemAtPoint(point))
     {
-        const auto item = static_cast<const CItem*>(m_treeMap.FindItemByPoint(CDirStatDoc::Get()->GetZoomItem(), point));
-        if (item != nullptr)
-        {
-            m_paneTextOverride = item->GetPath();
-            m_paneSizeOverride = item->GetSizeLogical();
-            CMainFrame::Get()->UpdatePaneText();
-        }
+        m_paneTextOverride = item->GetPath();
+        m_paneSizeOverride = item->GetSizeLogical();
+        CMainFrame::Get()->UpdatePaneText();
     }
 }

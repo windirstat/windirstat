@@ -60,6 +60,8 @@ protected:
     void HighlightSelectedItem(CDC* pdc, const CItem* item, bool single) const;
     void RenderHighlightRectangle(CDC* pdc, CRect& rc) const;
 
+    CItem* ResolveItemAtPoint(CPoint point, bool isScreenCoords = false);
+
     static constexpr int ZoomFrameWidth = 4;
 
     std::wstring m_paneTextOverride;  // Populated with the last hovered item for a period of time
