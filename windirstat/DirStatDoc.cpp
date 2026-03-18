@@ -943,7 +943,7 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
         { ID_SEARCH,                  { true,  true,  false, LF_NONE,     { ITF_ANY } } },
         { ID_TREEMAP_RESELECT_CHILD,  { true,  true,  true,  LF_FILETREE, { ITF_ANY }, reselectAvail } },
         { ID_TREEMAP_SELECT_PARENT,   { false, false, true,  LF_FILETREE, { ITF_ANY }, parentNotNull } },
-        { ID_TREEMAP_ZOOMIN,          { false, false, false, LF_FILETREE, { IT_DRIVE , IT_DIRECTORY } } },
+        { ID_TREEMAP_ZOOMIN,          { false, false, false, LF_FILETREE, { IT_DRIVE , IT_DIRECTORY, IT_FILE } } },
         { ID_TREEMAP_ZOOMOUT,         { true,  true,  false, LF_FILETREE, { ITF_ANY }, canZoomOut } },
         { ID_VIEW_SHOWFREESPACE,      { true,  true,  false, LF_NONE,     { ITF_ANY } } },
         { ID_VIEW_SHOWUNKNOWN,        { true,  true,  false, LF_NONE,     { ITF_ANY } } }
@@ -1257,7 +1257,15 @@ void CDirStatDoc::OnTreeMapZoomIn()
     const auto & item = CFileTreeControl::Get()->GetFirstSelectedItem<CItem>();
     if (item != nullptr)
     {
-        SetZoomItem(item);
+        if (item->IsTypeOrFlag(IT_DIRECTORY))
+        {
+            SetZoomItem(item);
+        }
+        else
+        {
+            OnTreeMapSelectParent();
+            SetZoomItem(item->GetParent());
+        }
     }
 }
 
