@@ -932,6 +932,7 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
         { ID_INDICATOR_IDLE,          { true,  true,  true,  LF_NONE,     { ITF_ANY } } },
         { ID_INDICATOR_RAM,           { true,  true,  true,  LF_NONE,     { ITF_ANY } } },
         { ID_INDICATOR_SIZE,          { true,  true,  false, LF_NONE,     { ITF_ANY } } },
+        { ID_POPUP_CANCEL,            { true,  true,  true,  LF_NONE,     { ITF_ANY } } },
         { ID_REFRESH_ALL,             { true,  true,  false, LF_NONE,     { ITF_ANY } } },
         { ID_REFRESH_SELECTED,        { false, true,  false, LF_NONE,     { IT_MYCOMPUTER, IT_DRIVE, IT_DIRECTORY, IT_FILE } } },
         { ID_SAVE_DUPLICATES,         { true,  true,  false, LF_NONE,     { ITF_ANY }, isDupeTabVisible } },
@@ -1041,6 +1042,7 @@ BEGIN_MESSAGE_MAP(CDirStatDoc, CDocument)
     ON_COMMAND_UPDATE_WRAPPER(ID_SCAN_RESUME, OnScanResume)
     ON_COMMAND_UPDATE_WRAPPER(ID_SCAN_SUSPEND, OnScanSuspend)
     ON_COMMAND_UPDATE_WRAPPER(ID_SCAN_STOP, OnScanStop)
+    ON_COMMAND_UPDATE_WRAPPER(ID_POPUP_CANCEL, OnPopupCancel)
     ON_UPDATE_COMMAND_UI(ID_INDICATOR_RAM, OnUpdateCentralHandler)
     ON_UPDATE_COMMAND_UI(ID_INDICATOR_DISK, OnUpdateCentralHandler)
     ON_UPDATE_COMMAND_UI(ID_INDICATOR_IDLE, OnUpdateCentralHandler)
