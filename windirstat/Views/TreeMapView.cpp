@@ -27,6 +27,7 @@ BEGIN_MESSAGE_MAP(CTreeMapView, CView)
     ON_WM_SETFOCUS()
     ON_WM_CONTEXTMENU()
     ON_WM_MOUSEMOVE()
+    ON_WM_MOUSEWHEEL()
 END_MESSAGE_MAP()
 
 void CTreeMapView::SuspendRecalculationDrawing(const bool suspend)
@@ -486,4 +487,30 @@ void CTreeMapView::OnMouseMove(UINT /*nFlags*/, const CPoint point)
             CMainFrame::Get()->UpdatePaneText();
         }
     }
+}
+
+BOOL CTreeMapView::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
+{
+    if (!CMainFrame::Get())
+        return CView::OnMouseWheel(nFlags, zDelta, pt);
+
+    const int clicks = zDelta / WHEEL_DELTA;
+    if (clicks == 0) return TRUE;
+
+    // Determine the Command IDs based on the Modifier State
+    // Use the Ctrl key to toggle between Navigation and Zooming
+    const UINT cmdUp = (nFlags & MK_CONTROL) ? ID_TREEMAP_ZOOMIN : ID_TREEMAP_SELECT_PARENT;
+    const UINT cmdDown = (nFlags & MK_CONTROL) ? ID_TREEMAP_ZOOMOUT : ID_TREEMAP_RESELECT_CHILD;
+
+    // Resolve the active command based on scroll direction
+    const UINT targetCmd = (clicks > 0) ? cmdUp : cmdDown;
+    const int absoluteClicks = std::abs(clicks);
+
+    // Dispatch the commands through the central routing engine
+    for (int i = 0; i < absoluteClicks; ++i)
+    {
+        CMainFrame::Get()->SendMessage(WM_COMMAND, targetCmd);
+    }
+
+    return TRUE;
 }
