@@ -30,7 +30,8 @@ bool CItem::DrawSubItem(const int subitem, CDC* pdc, CRect rc, const UINT state,
         return CTreeListItem::DrawSubItem(subitem, pdc, rc, state, width, focusLeft);
     }
 
-    if (subitem != COL_SUBTREE_PERCENTAGE)
+    if (subitem != COL_SUBTREE_PERCENTAGE &&
+        subitem != COL_SUBTREE_PERCENTAGE_ABSOLUTE)
     {
         return false;
     }
@@ -66,7 +67,9 @@ bool CItem::DrawSubItem(const int subitem, CDC* pdc, CRect rc, const UINT state,
         rc.DeflateRect(2, 5);
         rc.left += GetIndent() * rc.Width() / 10;
 
-        DrawPercentage(pdc, rc, GetFraction(), GetPercentageColor());
+        DrawPercentage(pdc, rc, subitem == COL_SUBTREE_PERCENTAGE
+            ? GetFraction()
+            : GetFractionOfRoot(), GetPercentageColor());
     }
     return true;
 }
@@ -106,6 +109,7 @@ std::wstring CItem::GetText(const int subitem) const
         break;
 
     case COL_SUBTREE_PERCENTAGE:
+    case COL_SUBTREE_PERCENTAGE_ABSOLUTE:
         if (!IsDone())
         {
             if (GetReadJobs() == 1)
@@ -123,6 +127,13 @@ std::wstring CItem::GetText(const int subitem) const
             return L"[" + FormatMilliseconds(GetTicksWorked() * 1000) + L"]";
         }
         return FormatDouble(GetFraction() * 100) + L"%";
+
+    case COL_PERCENTAGE_ABSOLUTE:
+        if (COptions::ShowTimeSpent && MustShowReadJobs() || IsRootItem())
+        {
+            return L"[" + FormatMilliseconds(GetTicksWorked() * 1000) + L"]";
+        }
+        return FormatDouble(GetFractionOfRoot() * 100) + L"%";
 
     case COL_ITEMS:
         if (!IsTypeOrFlag(IT_FILE, IT_FREESPACE, IT_UNKNOWN, IT_HLINKS, IT_HLINKS_SET, IT_HLINKS_IDX))
@@ -219,9 +230,26 @@ int CItem::CompareSibling(const CTreeListItem* tlib, const int subitem) const
         }
     }
 
+    case COL_SUBTREE_PERCENTAGE_ABSOLUTE:
+    {
+        if (MustShowReadJobs())
+        {
+            return usignum(GetReadJobs(), other->GetReadJobs());
+        }
+        else
+        {
+            return signum(GetFractionOfRoot() - other->GetFractionOfRoot());
+        }
+    }
+
     case COL_PERCENTAGE:
     {
         return signum(GetFraction() - other->GetFraction());
+    }
+
+    case COL_PERCENTAGE_ABSOLUTE:
+    {
+        return signum(GetFractionOfRoot() - other->GetFractionOfRoot());
     }
 
     case COL_SIZE_PHYSICAL:

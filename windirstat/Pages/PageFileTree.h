@@ -40,6 +40,7 @@ protected:
 
     BOOL m_pacmanAnimation = FALSE;
     BOOL m_showTimeSpent = FALSE;
+    BOOL m_showColumnAbsolutePercentages = FALSE;
     BOOL m_showColumnFolders = FALSE;
     BOOL m_showColumnItems = FALSE;
     BOOL m_showColumnFiles = FALSE;
