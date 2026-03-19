@@ -67,9 +67,7 @@ bool CItem::DrawSubItem(const int subitem, CDC* pdc, CRect rc, const UINT state,
         rc.DeflateRect(2, 5);
         rc.left += GetIndent() * rc.Width() / 10;
 
-        DrawPercentage(pdc, rc, subitem == COL_SUBTREE_PERCENTAGE
-            ? GetFraction()
-            : GetFractionOfRoot(), GetPercentageColor());
+        DrawPercentage(pdc, rc, subitem == COL_SUBTREE_PERCENTAGE ? GetFraction() : GetFractionOfRoot(), GetPercentageColor());
     }
     return true;
 }
@@ -124,16 +122,16 @@ std::wstring CItem::GetText(const int subitem) const
     case COL_PERCENTAGE:
         if (COptions::ShowTimeSpent && MustShowReadJobs() || IsRootItem())
         {
-            return L"[" + FormatMilliseconds(GetTicksWorked() * 1000) + L"]";
+            return std::format(L"[{}]", FormatMilliseconds(GetTicksWorked() * 1000));
         }
-        return FormatDouble(GetFraction() * 100) + L"%";
+        return std::format(L"{}%", FormatDouble(GetFraction() * 100));
 
     case COL_PERCENTAGE_ABSOLUTE:
         if (COptions::ShowTimeSpent && MustShowReadJobs() || IsRootItem())
         {
-            return L"[" + FormatMilliseconds(GetTicksWorked() * 1000) + L"]";
+            return std::format(L"[{}]", FormatMilliseconds(GetTicksWorked() * 1000));
         }
-        return FormatDouble(GetFractionOfRoot() * 100) + L"%";
+        return std::format(L"{}%", FormatDouble(GetFractionOfRoot() * 100));
 
     case COL_ITEMS:
         if (!IsTypeOrFlag(IT_FILE, IT_FREESPACE, IT_UNKNOWN, IT_HLINKS, IT_HLINKS_SET, IT_HLINKS_IDX))
