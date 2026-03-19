@@ -32,6 +32,8 @@ enum ITEMCOLUMNS : std::uint8_t
     COL_SUBTREE_PERCENTAGE,
     COL_PERCENTAGE,
     COL_OPTIONAL_START,
+    COL_SUBTREE_PERCENTAGE_ABSOLUTE = COL_OPTIONAL_START,
+    COL_PERCENTAGE_ABSOLUTE,
     COL_SIZE_PHYSICAL,
     COL_SIZE_LOGICAL,
     COL_ITEMS,
@@ -167,6 +169,7 @@ public:
     void UpwardAddFiles(ULONG fileCount) noexcept;
     void UpwardSubtractFiles(ULONG fileCount) noexcept;
     double GetFraction() const noexcept;
+    double GetFractionOfRoot() const noexcept;
     ULONG GetFilesCount() const noexcept;
     ULONG GetFoldersCount() const noexcept;
     ULONGLONG GetItemsCount() const noexcept;

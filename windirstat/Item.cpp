@@ -405,6 +405,24 @@ double CItem::GetFraction() const noexcept
         static_cast<double>(GetParent()->GetSizePhysical());
 }
 
+double CItem::GetFractionOfRoot() const noexcept
+{
+    const CItem* root = this;
+    while (root->GetParent() != nullptr)
+    {
+        root = root->GetParent();
+    }
+
+    const ULONGLONG rootSize = root->GetSizePhysical();
+    if (rootSize == 0)
+    {
+        return root == this ? 1.0 : 0.0;
+    }
+
+    return static_cast<double>(GetSizePhysical()) /
+        static_cast<double>(rootSize);
+}
+
 ULONG CItem::GetFilesCount() const noexcept
 {
     if (IsLeaf()) return 0;
