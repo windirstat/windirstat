@@ -640,7 +640,7 @@ bool CreateHardlinkFromFile(const std::wstring& pathOne, const std::wstring& pat
 }
 
 // File hashing
-std::wstring ComputeFileHashes(const std::wstring& filePath)
+std::wstring ComputeFileHashes(const std::wstring& filePath, CProgressDlg* pdlg)
 {
     // Open file with smart pointer
     const SmartPointer<HANDLE> hFile(CloseHandle, CreateFile(filePath.c_str(),
@@ -708,10 +708,12 @@ std::wstring ComputeFileHashes(const std::wstring& filePath)
     // Update all valid hashes with the same buffer in parallel
     while (ReadFile(hFile, buffer.data(), BUFFER_SIZE, &bytesRead, nullptr) && bytesRead > 0)
     {
+        if (pdlg->IsCancelled()) return L"Hashing Cancelled";
         std::for_each(std::execution::par, contexts.begin(), contexts.end(),
             [&buffer, bytesRead](auto& ctx) {
                 (void)BCryptHashData(ctx.hHash, buffer.data(), bytesRead, 0);
             });
+        pdlg->Increment();
     }
 
     // Finalize all hashes and convert to hex strings
