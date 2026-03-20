@@ -1615,15 +1615,19 @@ void CDirStatDoc::OnComputeHash()
     // Compute the hash in the message thread
     std::wstring hashResult;
     const auto& items = GetAllSelected();
-    CProgressDlg(0, false, AfxGetMainWnd(), [&](CProgressDlg*)
+    const ULONGLONG totalSize = items.front()->GetSizeLogical() / wds::Mi;
+    CProgressDlg(totalSize , false, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
     {
-        hashResult = ComputeFileHashes(items.front()->GetPath());
+        hashResult = ComputeFileHashes(items.front()->GetPath(), pdlg);
     }).DoModal();
 
-    // Display result in message box
-    CMessageBoxDlg dlg(hashResult, wds::strWinDirStat, MB_OK | MB_ICONINFORMATION);
-    dlg.SetWidthAuto();
-    dlg.DoModal();
+    if (!hashResult.empty())
+    {
+        // Display result in message box
+        CMessageBoxDlg dlg(hashResult, wds::strWinDirStat, MB_OK | MB_ICONINFORMATION);
+        dlg.SetWidthAuto();
+        dlg.DoModal();
+    }
 }
 
 constexpr CompressionAlgorithm CDirStatDoc::CompressionIdToAlg(const UINT id)
