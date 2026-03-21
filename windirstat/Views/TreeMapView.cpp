@@ -263,7 +263,7 @@ void CTreeMapView::HighlightSelectedItem(CDC* pdc, const CItem* item, const bool
     if (single)
     {
         CRect rcClient = ClientRectOf(this);
-        if (m_treeMap.GetOptions().grid)
+        if (m_treeMap.GetOptions().gridMode != CTreeMap::GridMode::GridNever)
         {
             rc.right++;
             rc.bottom++;

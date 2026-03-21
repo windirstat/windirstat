@@ -71,7 +71,8 @@ Setting<bool> COptions::SkipDupeDetectionCloudLinks(OptionsGeneral, L"SkipDupeDe
 Setting<bool> COptions::ShowDupeDetectionCloudLinksWarning(OptionsGeneral, L"ShowDupeDetectionCloudLinksWarning", true);
 Setting<bool> COptions::AutoElevate(OptionsGeneral, L"AutoElevate", false);
 Setting<bool> COptions::AutoMapDrivesWhenElevated(OptionsGeneral, L"AutoMapDrivesWhenElevated", true);
-Setting<bool> COptions::TreeMapGrid(OptionsTreeMap, L"TreeMapGrid", (CTreeMap::GetDefaults().grid));
+Setting<int> COptions::TreeMapGridMode(OptionsTreeMap, L"TreeMapGridMode", static_cast<int>(CTreeMap::GetDefaults().gridMode));
+Setting<bool> COptions::TreeMapHeaders(OptionsTreeMap, L"TreeMapHeaders", (CTreeMap::GetDefaults().showHeaders));
 Setting<bool> COptions::TreeMapUseLogical(OptionsTreeMap, L"TreeMapUseLogicalSize", false);
 Setting<bool> COptions::UseBackupRestore(OptionsGeneral, L"UseBackupRestore", true);
 Setting<bool> COptions::UseDrawTextCache(OptionsGeneral, L"UseDrawTextCache", true);
@@ -182,7 +183,8 @@ void COptions::SetTreeMapOptions(const CTreeMap::Options& options)
     TreeMapOptions = options;
 
     TreeMapStyle = static_cast<int>(TreeMapOptions.style);
-    TreeMapGrid = TreeMapOptions.grid;
+    TreeMapGridMode = static_cast<int>(TreeMapOptions.gridMode);
+    TreeMapHeaders = TreeMapOptions.showHeaders;
     TreeMapGridColor = TreeMapOptions.gridColor;
     TreeMapBrightness = TreeMapOptions.GetBrightnessPercent();
     TreeMapHeightFactor = TreeMapOptions.GetHeightPercent();
@@ -257,7 +259,8 @@ void COptions::PostProcessPersistedSettings()
 
     // Load treemap settings
     TreeMapOptions.style = static_cast<CTreeMap::STYLE>(static_cast<int>(TreeMapStyle));
-    TreeMapOptions.grid = TreeMapGrid;
+    TreeMapOptions.gridMode = static_cast<CTreeMap::GridMode>(static_cast<int>(TreeMapGridMode));
+    TreeMapOptions.showHeaders = TreeMapHeaders;
     TreeMapOptions.gridColor = TreeMapGridColor;
     TreeMapOptions.SetBrightnessPercent(TreeMapBrightness);
     TreeMapOptions.SetHeightPercent(TreeMapHeightFactor);
