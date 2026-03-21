@@ -34,16 +34,21 @@ void CPageFiltering::DoDataExchange(CDataExchange* pDX)
     DDX_Text(pDX, IDC_FILTERING_EXCLUDE_FILES, m_filteringExcludeFiles);
     DDX_Text(pDX, IDC_FILTERING_SIZE_MIN, m_filteringSizeMinimum);
     DDX_Check(pDX, IDC_FILTERING_USE_REGEX, m_filteringUseRegex);
+    DDX_Check(pDX, IDC_FILTERING_USE_MODIFIED_WITHIN_DAYS, m_filteringUseModifiedWithinDays);
     DDX_Control(pDX, IDC_FILTERING_MIN_UNITS, m_ctlFilteringSizeUnits);
     DDX_Control(pDX, IDC_FILTERING_EXCLUDE_FILES, m_ctrlFilteringExcludeFiles);
     DDX_Control(pDX, IDC_FILTERING_EXCLUDE_DIRS, m_ctrlFilteringExcludeDirs);
+    DDX_Control(pDX, IDC_FILTERING_MODIFIED_WITHIN_DAYS, m_ctrlFilteringModifiedWithinDays);
     DDX_CBIndex(pDX, IDC_FILTERING_MIN_UNITS, m_filteringSizeUnits);
+    DDX_Text(pDX, IDC_FILTERING_MODIFIED_WITHIN_DAYS, m_filteringModifiedWithinDays);
 }
 
 BEGIN_MESSAGE_MAP(CPageFiltering, CMFCPropertyPage)
     ON_EN_CHANGE(IDC_FILTERING_EXCLUDE_DIRS, OnSettingChanged)
     ON_EN_CHANGE(IDC_FILTERING_EXCLUDE_FILES, OnSettingChanged)
     ON_BN_CLICKED(IDC_FILTERING_USE_REGEX, OnSettingChanged)
+    ON_BN_CLICKED(IDC_FILTERING_USE_MODIFIED_WITHIN_DAYS, OnSettingChanged)
+    ON_EN_CHANGE(IDC_FILTERING_MODIFIED_WITHIN_DAYS, OnSettingChanged)
     ON_EN_CHANGE(IDC_FILTERING_SIZE_MIN, OnSettingChanged)
     ON_EN_CHANGE(IDC_FILTERING_MIN_UNITS, OnSettingChanged)
     ON_CBN_SELENDOK(IDC_FILTERING_MIN_UNITS, OnSettingChanged)
@@ -65,6 +70,8 @@ BOOL CPageFiltering::OnInitDialog()
     m_filteringSizeMinimum = COptions::FilteringSizeMinimum;
     m_filteringSizeUnits = COptions::FilteringSizeUnits;
     m_filteringUseRegex = COptions::FilteringUseRegex;
+    m_filteringUseModifiedWithinDays = COptions::FilteringUseModifiedWithinDays;
+    m_filteringModifiedWithinDays = COptions::FilteringModifiedWithinDays;
     m_filteringExcludeDirs = COptions::FilteringExcludeDirs.Obj().c_str();
     m_filteringExcludeFiles = COptions::FilteringExcludeFiles.Obj().c_str();
 
@@ -81,6 +88,7 @@ BOOL CPageFiltering::OnInitDialog()
     m_toolTip.Activate(TRUE);
 
     UpdateData(FALSE);
+    UpdateModifiedWithinDaysControls();
 
     // Apply dark mode to this property page AFTER controls are initialized
     if (DarkMode::IsDarkModeActive())
@@ -122,9 +130,14 @@ void CPageFiltering::OnOK()
 {
     UpdateData();
 
+    m_filteringModifiedWithinDays = std::clamp(m_filteringModifiedWithinDays,
+        COptions::FilteringModifiedWithinDays.Min(), COptions::FilteringModifiedWithinDays.Max());
+
     COptions::FilteringSizeMinimum = m_filteringSizeMinimum;
     COptions::FilteringSizeUnits = m_filteringSizeUnits;
     COptions::FilteringUseRegex = (FALSE != m_filteringUseRegex);
+    COptions::FilteringUseModifiedWithinDays = (FALSE != m_filteringUseModifiedWithinDays);
+    COptions::FilteringModifiedWithinDays = m_filteringModifiedWithinDays;
     COptions::FilteringExcludeFiles.Obj() = m_filteringExcludeFiles;
     COptions::FilteringExcludeDirs.Obj() = m_filteringExcludeDirs;
     COptions::CompileFilters();
@@ -137,6 +150,12 @@ void CPageFiltering::OnSettingChanged()
     UpdateData();
     SetModified();
     SetToolTips();
+    UpdateModifiedWithinDaysControls();
+}
+
+void CPageFiltering::UpdateModifiedWithinDaysControls()
+{
+    m_ctrlFilteringModifiedWithinDays.EnableWindow(FALSE != m_filteringUseModifiedWithinDays);
 }
 
 BOOL CPageFiltering::PreTranslateMessage(MSG* pMsg)

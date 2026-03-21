@@ -260,7 +260,7 @@ CItem* CItem::AddDirectory(const Finder& finder)
     child->SetReparseTag(finder.GetReparseTag());
     if (finder.IsReserved() || this->IsTypeOrFlag(ITF_RESERVED)) child->SetFlag(ITF_RESERVED);
     if (finder.IsOffVolumeReparsePoint() && follow) child->SetFlag(ITF_BASIC);
-    AddChild(child);
+    AddChild(child, COptions::IsModifiedDateFilterActive());
     child->UpwardAddReadJobs(follow ? 1 : 0);
 
     return child;
@@ -923,6 +923,10 @@ void CItem::ScanItems(BlockingQueue<CItem*> * queue, FinderNtfsContext& contextN
 
                     // Exclude files matching size filter
                     if (COptions::FilteringSizeMinimumCalculated > 0 && finder->GetFileSizeLogical() < COptions::FilteringSizeMinimumCalculated)
+                    {
+                        continue;
+                    }
+                    if (!COptions::IsFileModifiedWithinRange(finder->GetLastWriteTime()))
                     {
                         continue;
                     }
