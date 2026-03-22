@@ -169,6 +169,7 @@ IDS_PAGE_CLEANUPS_WORKS_FOR=Munkaterület
 IDS_PAGE_FILTERING_EXCLUDE_DIRS=Mappa elérési utak kizárása:
 IDS_PAGE_FILTERING_EXCLUDE_FILES=Fájlnév-minták kizárása:
 IDS_PAGE_FILTERING_INVALID_FILTER=Érvénytelen szűrő:
+IDS_PAGE_FILTERING_MODIFIED_PAST=Only include files modified in the past:
 IDS_PAGE_FILTERING_SIZE_MIN=Ennél kisebb fájlok kizárása:
 IDS_PAGE_FILTERING_TITLE=Szűrés
 IDS_PAGE_FILTERING_TOOLTIP_PREFIX=Soroljon fel egy kizárást soronként. Példák:

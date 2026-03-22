@@ -169,6 +169,7 @@ IDS_PAGE_CLEANUPS_WORKS_FOR=Deluje za
 IDS_PAGE_FILTERING_EXCLUDE_DIRS=Poti map za izključitev:
 IDS_PAGE_FILTERING_EXCLUDE_FILES=Vzorci imen datotek za izključitev:
 IDS_PAGE_FILTERING_INVALID_FILTER=Neveljaven filter:
+IDS_PAGE_FILTERING_MODIFIED_PAST=Only include files modified in the past:
 IDS_PAGE_FILTERING_SIZE_MIN=Izključi datoteke manjše od:
 IDS_PAGE_FILTERING_TITLE=Filtriranje
 IDS_PAGE_FILTERING_TOOLTIP_PREFIX=Naštej eno izključitev na vrstico. Primeri:

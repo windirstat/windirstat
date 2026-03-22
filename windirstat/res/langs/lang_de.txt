@@ -169,6 +169,7 @@ IDS_PAGE_CLEANUPS_WORKS_FOR=Anwendbar auf
 IDS_PAGE_FILTERING_EXCLUDE_DIRS=Ordnerpfade zum Ausschließen:
 IDS_PAGE_FILTERING_EXCLUDE_FILES=Dateinamenmuster zum Ausschließen:
 IDS_PAGE_FILTERING_INVALID_FILTER=Ungültiger Filter:
+IDS_PAGE_FILTERING_MODIFIED_PAST=Only include files modified in the past:
 IDS_PAGE_FILTERING_SIZE_MIN=Dateien ausschließen, die kleiner sind als:
 IDS_PAGE_FILTERING_TITLE=Filterung
 IDS_PAGE_FILTERING_TOOLTIP_PREFIX=Listen Sie eine Ausschlussregel pro Zeile auf. Beispiele:
