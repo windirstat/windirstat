@@ -23,6 +23,7 @@ IMPLEMENT_DYNCREATE(CTreeMapView, CView)
 
 BEGIN_MESSAGE_MAP(CTreeMapView, CView)
     ON_WM_SIZE()
+    ON_WM_LBUTTONDBLCLK()
     ON_WM_LBUTTONDOWN()
     ON_WM_SETFOCUS()
     ON_WM_CONTEXTMENU()
@@ -340,6 +341,16 @@ void CTreeMapView::OnSize(const UINT nType, const int cx, const int cy)
         Inactivate();
         m_size = sz;
     }
+}
+
+void CTreeMapView::OnLButtonDblClk(UINT nFlags, CPoint point)
+{
+    if (CItem* item = ResolveItemAtPoint(point); item && item != CDirStatDoc::Get()->GetZoomItem())
+    {
+        CDirStatDoc::Get()->UpdateAllViews(this, HINT_SELECTIONACTION, item);
+        AfxGetMainWnd()->SendMessage(WM_COMMAND, ID_TREEMAP_ZOOMIN);
+    }
+    CView::OnLButtonDblClk(nFlags, point);
 }
 
 void CTreeMapView::OnLButtonDown(const UINT nFlags, const CPoint point)
