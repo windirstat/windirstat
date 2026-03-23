@@ -689,6 +689,37 @@ BOOL CSelectDrivesDlg::PreTranslateMessage(MSG* pMsg)
         UpdateButtons();
     }
 
+    // Intercept VK_DELETE to remove the highlighted history item from both UI and persistent options
+    if (pMsg->message == WM_KEYDOWN && pMsg->wParam == VK_DELETE && m_browseList.GetDroppedState())
+    {
+        if (pMsg->hwnd == m_browseList.m_hWnd || ::GetParent(pMsg->hwnd) == m_browseList.m_hWnd)
+        {
+            const int n = m_browseList.GetCurSel();
+            auto& h = COptions::SelectDrivesFolder.Obj();
+            if (n != CB_ERR && n < (int)h.size())
+            {
+                h.erase(h.begin() + n);
+                m_browseList.DeleteString(n);
+                const int cnt = m_browseList.GetCount();
+
+                if (cnt > 0)
+                {
+                    const int newSel = min(n, cnt - 1);
+                    m_browseList.SetCurSel(newSel);
+                    m_browseList.GetLBText(newSel, m_folderName);
+                }
+                else
+                {
+                    m_folderName = wds::strEmpty;
+                }
+
+                UpdateData(FALSE);
+                UpdateButtons();
+                return TRUE;
+            }
+        }
+    }
+
     return CLayoutDialogEx::PreTranslateMessage(pMsg);
 }
 
