@@ -591,6 +591,10 @@ void CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, const bo
 void CDirStatDoc::SetZoomItem(CItem* item)
 {
     m_zoomItem = item;
+    CTreeListControl* pControl = GetFocusControl();
+    pControl->EnsureItemVisible(item);
+    pControl->Invalidate();
+    pControl->UpdateWindow();
     UpdateAllViews(nullptr, HINT_ZOOMCHANGED);
 }
 
@@ -880,7 +884,7 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
 
     // special conditions
     static auto doc = this;
-    static bool (*canZoomIn)(CItem*) = [](CItem* item) { return item != nullptr && item != doc->GetZoomItem() && !item->IsRootItem(); };
+    static bool (*canZoomIn)(CItem*) = [](CItem* item) { return item != nullptr && !item->IsRootItem() && (item->GetParent() != doc->GetZoomItem() || item->GetParent() == doc->GetRootItem()); };
     static bool (*canZoomOut)(CItem*) = [](CItem*) { return doc->GetZoomItem() != doc->GetRootItem(); };
     static bool (*parentNotNull)(CItem*) = [](CItem* item) { return item != nullptr && item->GetParent() != nullptr; };
     static bool (*reselectAvail)(CItem*) = [](CItem*) { return doc->IsReselectChildAvailable(); };
@@ -1258,15 +1262,7 @@ void CDirStatDoc::OnTreeMapZoomIn()
     const auto & item = CFileTreeControl::Get()->GetFirstSelectedItem<CItem>();
     if (item != nullptr)
     {
-        if (item->IsTypeOrFlag(IT_DRIVE) || item->IsTypeOrFlag(IT_DIRECTORY))
-        {
-            SetZoomItem(item);
-        }
-        else
-        {
-            OnTreeMapSelectParent();
-            SetZoomItem(item->GetParent());
-        }
+        SetZoomItem((item->IsTypeOrFlag(IT_FILE)) ? item->GetParent() : item);
     }
 }
 
@@ -1590,6 +1586,7 @@ void CDirStatDoc::OnTreeMapSelectParent()
 void CDirStatDoc::OnTreeMapReselectChild()
 {
     const CItem* item = PopReselectChild();
+    CFileTreeControl::Get()->ExpandPathToItem(item); // ensure item is visible before selecting
     CFileTreeControl::Get()->SelectItem(item, true, true);
     UpdateAllViews(nullptr, HINT_SELECTIONREFRESH);
 }
