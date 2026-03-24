@@ -152,6 +152,7 @@
 #define IDC_CONTEXT_MENU                1117
 #define IDC_SHOW_MICROSOFT_PROGRESS     1118
 #define ID_WDS_CONTROL                  4711
+#define ID_TREEMAP_ZOOMRESET            32767
 #define ID_CLEANUP_EXPLORER_SELECT      32768
 #define ID_TREEMAP_ZOOMIN               32769
 #define ID_TREEMAP_ZOOMOUT              32770

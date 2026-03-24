@@ -25,6 +25,7 @@ BEGIN_MESSAGE_MAP(CTreeMapView, CView)
     ON_WM_SIZE()
     ON_WM_LBUTTONDBLCLK()
     ON_WM_LBUTTONDOWN()
+    ON_WM_MBUTTONDOWN()
     ON_WM_SETFOCUS()
     ON_WM_CONTEXTMENU()
     ON_WM_MOUSEMOVE()
@@ -361,6 +362,16 @@ void CTreeMapView::OnLButtonDown(const UINT nFlags, const CPoint point)
         CDirStatDoc::Get()->UpdateAllViews(this, HINT_SELECTIONACTION, item);
     }
     CView::OnLButtonDown(nFlags, point);
+}
+
+void CTreeMapView::OnMButtonDown(UINT nFlags, CPoint point)
+{
+    if (ResolveItemAtPoint(point))
+    {
+        AfxGetMainWnd()->SendMessage(WM_COMMAND, ID_TREEMAP_ZOOMRESET);
+    }
+
+    CView::OnMButtonDown(nFlags, point);
 }
 
 bool CTreeMapView::IsDrawn() const

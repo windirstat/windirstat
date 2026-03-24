@@ -136,6 +136,7 @@ IDS_MENU_TREEMAP=&Ağaç Haritası
 IDS_MENU_WATCHER=Dosya izleyiciyi başlat
 IDS_MENU_ZOOMIN=Yakınlaştır
 IDS_MENU_ZOOMOUT=Uzaklaştır
+IDS_MENU_ZOOMRESET=Yakınlaştırmayı &Sıfırla
 IDS_NOTACCESSIBLE=(yok)
 IDS_ONEITEMs= (1 Öğa, {})
 IDS_ONEREADJOB=[1 İşi Oku]

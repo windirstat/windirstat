@@ -136,6 +136,7 @@ IDS_MENU_TREEMAP=&Térképfa
 IDS_MENU_WATCHER=Fájlfelügyelő indítása
 IDS_MENU_ZOOMIN=&Nagyít
 IDS_MENU_ZOOMOUT=&Kicsinyít
+IDS_MENU_ZOOMRESET=&Nagyítás alaphelyzetbe
 IDS_NOTACCESSIBLE=(nem elérhető)
 IDS_ONEITEMs= (1 elem, {})
 IDS_ONEREADJOB=[1 feladat beolvasása]
