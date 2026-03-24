@@ -56,10 +56,11 @@ protected:
     afx_msg void OnButtonMiddle();
     afx_msg void OnButtonRight();
     afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
+    afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 
     // Helper methods for control layout
     void ShiftControls(const std::vector<CWnd*>& controls, int shiftAmount);
-    void ShiftControlsIfHidden(const CWnd* pTargetControl, const std::vector<CWnd*>& controlsToShift);
+    void ShiftControlsIfHidden(const CWnd* pTargetControl, const std::vector<CWnd*>& controlsToShift, int paddint = 0);
 
 private:
     
