@@ -95,6 +95,7 @@ BEGIN_MESSAGE_MAP(CMessageBoxDlg, CLayoutDialogEx)
     ON_BN_CLICKED(IDC_MESSAGE_BUTTONMIDDLE, OnButtonMiddle)
     ON_BN_CLICKED(IDC_MESSAGE_BUTTONRIGHT, OnButtonRight)
     ON_WM_CTLCOLOR()
+    ON_WM_ERASEBKGND()
 END_MESSAGE_MAP()
 
 void CMessageBoxDlg::ShiftControls(const std::vector<CWnd*>& controls, const int shiftAmount)
@@ -115,8 +116,28 @@ void CMessageBoxDlg::ShiftControls(const std::vector<CWnd*>& controls, const int
     MoveWindow(&dialogRect);
 }
 
-void CMessageBoxDlg::ShiftControlsIfHidden(const CWnd* pTargetControl, const std::vector<CWnd*>& controlsToShift)
+void CMessageBoxDlg::ShiftControlsIfHidden(const CWnd* pTargetControl, const std::vector<CWnd*>& controlsToShift, int padding)
 {
+    // Expend checkbox width to the leftmost visible button
+    if (pTargetControl == &m_listView && (m_checkbox.GetStyle() & WS_VISIBLE))
+    {
+        for (CWnd* pBtn : { &m_buttonLeft, &m_buttonMiddle, &m_buttonRight })
+        {
+            if (pBtn->GetSafeHwnd() && (pBtn->GetStyle() & WS_VISIBLE))
+            {
+                CRect cbRect, btnRect;
+                m_checkbox.GetWindowRect(&cbRect);
+                pBtn->GetWindowRect(&btnRect);
+                ScreenToClient(&cbRect);
+                ScreenToClient(&btnRect);
+
+                cbRect.right = btnRect.left;
+                if (cbRect.right > cbRect.left) m_checkbox.MoveWindow(&cbRect);
+                break;
+            }
+        }
+    }
+
     if (pTargetControl->GetStyle() & WS_VISIBLE) return;
 
     CRect targetRect;
@@ -135,9 +156,9 @@ void CMessageBoxDlg::ShiftControlsIfHidden(const CWnd* pTargetControl, const std
             minYBelow = min(minYBelow, ctrlRect.top);
     }
 
-    // Calculate shift: control height + spacing to next control
-    const int shiftAmount = (minYBelow != INT_MAX) ?
-        (minYBelow - targetRect.top) : targetRect.Height();
+    // Calculate shift: control height + spacing to next control, and optional padding
+    const int shiftAmount = max(0, ((minYBelow != INT_MAX) ?
+        (minYBelow - targetRect.top) : targetRect.Height()) - DpiRest(padding, this));
 
     // Shift controls below target upward
     ShiftControls(controlsToShift, -shiftAmount);
@@ -178,9 +199,8 @@ BOOL CMessageBoxDlg::OnInitDialog()
     // Apply dark mode
     DarkMode::AdjustControls(*this);
 
-    // Collapse hidden controls vertically
-    ShiftControlsIfHidden(&m_listView, { &m_checkbox, &m_buttonLeft, &m_buttonMiddle, &m_buttonRight });
-    ShiftControlsIfHidden(&m_checkbox, { &m_buttonLeft, &m_buttonMiddle, &m_buttonRight });
+    // Collapse hidden controls vertically and add padding to vertically center the message area
+    ShiftControlsIfHidden(&m_listView, { &m_checkbox, &m_buttonLeft, &m_buttonMiddle, &m_buttonRight }, 16);
 
     // Measure message text
     CRect rectMessage;
@@ -238,18 +258,19 @@ BOOL CMessageBoxDlg::OnInitDialog()
     // Apply Vertical Expansion
     if (const int deltaHeight = max(0, rectTextCalc.Height() - rectMessage.Height()); deltaHeight > 0)
     {
+        const int padding = DpiRest(16, this);
         // Expand message control
-        m_messageCtrl.SetWindowPos(nullptr, 0, 0, rectMessage.Width(), rectMessage.Height() + deltaHeight, SWP_NOMOVE | SWP_NOZORDER);
+        m_messageCtrl.SetWindowPos(nullptr, 0, 0, rectMessage.Width(), rectMessage.Height() + deltaHeight + padding, SWP_NOMOVE | SWP_NOZORDER);
 
         // Push everything else down
-        ShiftControls({ &m_listView, &m_checkbox, &m_buttonLeft, &m_buttonMiddle, &m_buttonRight }, deltaHeight);
+        ShiftControls({ &m_listView, &m_checkbox, &m_buttonLeft, &m_buttonMiddle, &m_buttonRight }, deltaHeight + padding);
     }
 
     // Activate automatic layout management (snapshots current positions)
     m_layout.AddControl(IDC_MESSAGE_ICON, 0, 0, 0, 0);
     m_layout.AddControl(IDC_MESSAGE_TEXT, 0, 0, 1, 0);
     m_layout.AddControl(IDC_MESSAGE_LISTVIEW, 0, 0, 1, 1);
-    m_layout.AddControl(IDC_MESSAGE_CHECKBOX, 0, 1, 1, 0);
+    m_layout.AddControl(IDC_MESSAGE_CHECKBOX, 0, 1, 0, 0);
     m_layout.AddControl(IDC_MESSAGE_BUTTONLEFT, 1, 1, 0, 0);
     m_layout.AddControl(IDC_MESSAGE_BUTTONMIDDLE, 1, 1, 0, 0);
     m_layout.AddControl(IDC_MESSAGE_BUTTONRIGHT, 1, 1, 0, 0);
@@ -310,7 +331,59 @@ INT_PTR CMessageBoxDlg::DoModal()
 HBRUSH CMessageBoxDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, const UINT nCtlColor)
 {
     const HBRUSH brush = DarkMode::OnCtlColor(pDC, nCtlColor);
+    const int nID = pWnd->GetDlgCtrlID();
+
+    // Set checkbox background to match dialog background in dark mode
+    if (nID == IDC_MESSAGE_CHECKBOX)
+    {
+        pDC->SetBkColor(DarkMode::WdsSysColor(COLOR_BTNFACE));
+        return CreateSolidBrush(DarkMode::WdsSysColor(COLOR_BTNFACE));
+    }
+
+    // Set icon and message text backgrounds to white in light mode
+    if (!DarkMode::IsDarkModeActive() && (nID == IDC_MESSAGE_ICON || nID == IDC_MESSAGE_TEXT))
+    {
+        pDC->SetBkColor(GetSysColor(COLOR_WINDOW));
+        return (HBRUSH)GetStockObject(WHITE_BRUSH);
+    }
+
     return brush ? brush : CLayoutDialogEx::OnCtlColor(pDC, pWnd, nCtlColor);
+}
+
+BOOL CMessageBoxDlg::OnEraseBkgnd(CDC* pDC)
+{
+    CRect rect;
+    GetClientRect(&rect);
+    const bool bDark = DarkMode::IsDarkModeActive();
+
+    const COLORREF topColor = DarkMode::WdsSysColor(COLOR_WINDOW);
+    const COLORREF footerColor = DarkMode::WdsSysColor(COLOR_BTNFACE);
+    const COLORREF lineColor = bDark ? DarkMode::WdsSysColor(COLOR_BTNHIGHLIGHT) : GetSysColor(COLOR_3DSHADOW);
+
+    int lineY = rect.bottom - DpiRest(46, this);
+
+    if (m_buttonRight.GetSafeHwnd())
+    {
+        CRect btnRect;
+        m_buttonRight.GetWindowRect(&btnRect);
+        ScreenToClient(&btnRect);
+        lineY = btnRect.top - DpiRest(12, this);
+    }
+
+    // Paint the top area
+    pDC->FillSolidRect(CRect(rect.left, rect.top, rect.right, lineY), topColor);
+
+    // Paint the footer area
+    pDC->FillSolidRect(CRect(rect.left, lineY, rect.right, rect.bottom), footerColor);
+
+    // Draw the 1px separator
+    CPen pen(PS_SOLID, 1, lineColor);
+    CPen* pOld = pDC->SelectObject(&pen);
+    pDC->MoveTo(0, lineY);
+    pDC->LineTo(rect.right, lineY);
+    pDC->SelectObject(pOld);
+
+    return TRUE;
 }
 
 // Global wrapper functions
