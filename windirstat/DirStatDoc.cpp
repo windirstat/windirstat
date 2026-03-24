@@ -880,7 +880,7 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
 
     // special conditions
     static auto doc = this;
-    static bool (*canZoomIn)(CItem*) = [](CItem* item) { return item != nullptr && item != doc->GetZoomItem(); };
+    static bool (*canZoomIn)(CItem*) = [](CItem* item) { return item != nullptr && item != doc->GetZoomItem() && !item->IsRootItem(); };
     static bool (*canZoomOut)(CItem*) = [](CItem*) { return doc->GetZoomItem() != doc->GetRootItem(); };
     static bool (*parentNotNull)(CItem*) = [](CItem* item) { return item != nullptr && item->GetParent() != nullptr; };
     static bool (*reselectAvail)(CItem*) = [](CItem*) { return doc->IsReselectChildAvailable(); };
@@ -1258,7 +1258,7 @@ void CDirStatDoc::OnTreeMapZoomIn()
     const auto & item = CFileTreeControl::Get()->GetFirstSelectedItem<CItem>();
     if (item != nullptr)
     {
-        if (item->IsTypeOrFlag(IT_DIRECTORY))
+        if (item->IsTypeOrFlag(IT_DRIVE) || item->IsTypeOrFlag(IT_DIRECTORY))
         {
             SetZoomItem(item);
         }
