@@ -105,6 +105,7 @@ protected:
     void RefreshReparsePointItems();
 
     bool HasRootItem() const;
+    bool IsRefreshSelectionsSafe() const;
     bool IsRootDone() const;
     bool IsScanRunning() const;
     CItem* GetRootItem() const;

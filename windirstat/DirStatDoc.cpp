@@ -258,6 +258,23 @@ bool CDirStatDoc::HasRootItem() const
     return m_rootItem != nullptr;
 }
 
+// Validates whether the items selection would be safe to refresh
+bool CDirStatDoc::IsRefreshSelectionsSafe() const
+{
+    const std::vector<CItem*> selection = CDirStatDoc::Get()->GetAllSelected();
+    if (selection.empty()) return false;
+
+    const ITEMTYPE firstItemType = selection.front()->GetItemType();
+    if ((firstItemType & IT_MYCOMPUTER) && selection.size() > 1) return false;
+
+    for (const CItem* item : selection)
+    {
+        if (item->GetItemType() != firstItemType) return false;
+    }
+
+    return true;
+}
+
 bool CDirStatDoc::IsRootDone() const
 {
     return HasRootItem() && m_rootItem->IsDone();
@@ -894,6 +911,7 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
     static bool (*isElevationPossible)(CItem*) = [](CItem*) { return IsElevationPossible(); };
     static bool (*isDupeTabVisible)(CItem*) = [](CItem*) { return CMainFrame::Get()->GetFileTabbedView()->IsDupeTabVisible(); };
     static bool (*isVhdFile)(CItem*) = [](CItem* item) { return item != nullptr && IsElevationActive() && (!item->IsTypeOrFlag(IT_FILE) || item->GetExtension() == L".vhdx"); };
+    static bool (*isRefreshSelectionsSafe)(CItem*) = [](CItem*) { return CDirStatDoc::Get()->IsRefreshSelectionsSafe(); };
 
     static std::unordered_map<UINT, const commandFilter> filters
     {
@@ -935,7 +953,7 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
         { ID_INDICATOR_SIZE,          { true,  true,  false, LF_NONE,     { ITF_ANY } } },
         { ID_POPUP_CANCEL,            { true,  true,  true,  LF_NONE,     { ITF_ANY } } },
         { ID_REFRESH_ALL,             { true,  true,  false, LF_NONE,     { ITF_ANY } } },
-        { ID_REFRESH_SELECTED,        { false, true,  false, LF_NONE,     { IT_MYCOMPUTER, IT_DRIVE, IT_DIRECTORY, IT_FILE } } },
+        { ID_REFRESH_SELECTED,        { false, true,  false, LF_NONE,     { IT_MYCOMPUTER, IT_DRIVE, IT_DIRECTORY, IT_FILE }, isRefreshSelectionsSafe } },
         { ID_SAVE_DUPLICATES,         { true,  true,  false, LF_NONE,     { ITF_ANY }, isDupeTabVisible } },
         { ID_SAVE_RESULTS,            { true,  true,  false, LF_NONE,     { ITF_ANY } } },
         { ID_SCAN_RESUME,             { true,  true,  true,  LF_NONE,     { ITF_ANY }, isResumable } },
