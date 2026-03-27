@@ -83,5 +83,6 @@ protected:
     afx_msg void OnLightSourceChanged(NMHDR*, LRESULT*);
     afx_msg void OnSetModified();
     afx_msg void OnBnClickedReset();
+    afx_msg void OnPaint();
     afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 };

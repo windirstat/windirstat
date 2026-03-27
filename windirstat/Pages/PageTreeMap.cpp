@@ -77,6 +77,7 @@ void CPageTreeMap::DoDataExchange(CDataExchange* pDX)
 }
 
 BEGIN_MESSAGE_MAP(CPageTreeMap, CMFCPropertyPage)
+    ON_WM_PAINT()
     ON_WM_VSCROLL()
     ON_NOTIFY(COLBN_CHANGED, IDC_TREEMAPGRIDCOLOR, OnColorChangedTreeMapGrid)
     ON_NOTIFY(COLBN_CHANGED, IDC_TREEMAPHIGHLIGHTCOLOR, OnColorChangedTreeMapHighlight)
@@ -87,6 +88,38 @@ BEGIN_MESSAGE_MAP(CPageTreeMap, CMFCPropertyPage)
     ON_NOTIFY(CXySlider::XYSLIDER_CHANGED, IDC_LIGHTSOURCE, OnLightSourceChanged)
     ON_WM_CTLCOLOR()
 END_MESSAGE_MAP()
+
+void CPageTreeMap::OnPaint()
+{
+    CPaintDC dc(this);
+    COLORREF textColor = DarkMode::WdsSysColor(COLOR_WINDOWTEXT);
+
+    UINT nLabelIDs[] = {
+        IDC_STATIC_TREEMAP_BRIGHTNESS,
+        IDC_STATIC_TREEMAP_CUSHION,
+        IDC_STATIC_TREEMAP_HEIGHT,
+        IDC_STATIC_TREEMAP_SCALE
+    };
+
+    for (int i = 0; i < 4; i++)
+    {
+        CWnd* pStatic = GetDlgItem(nLabelIDs[i]);
+        if (pStatic)
+        {
+            CRect rect;
+            pStatic->GetWindowRect(&rect);
+            ScreenToClient(&rect);
+
+            CString strLabel;
+            pStatic->GetWindowText(strLabel);
+
+            DrawVerticalText(&dc, this, strLabel, rect, textColor);
+
+            if (pStatic->IsWindowVisible())
+                pStatic->ShowWindow(SW_HIDE);
+        }
+    }
+}
 
 HBRUSH CPageTreeMap::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 {

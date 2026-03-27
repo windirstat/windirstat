@@ -724,3 +724,65 @@ void DrawTreeNodeConnector(CDC* pdc, const CRect& nodeRect, const COLORREF bgCol
     // Plus sign
     if (showPlus) pdc->MoveTo(centerX, boxTop + margin), pdc->LineTo(centerX, boxBottom - margin);
 }
+
+void DrawVerticalText(CDC* pDC, CWnd* pParent, const CString& strText, const CRect& rect, COLORREF color)
+{
+    constexpr bool (*IsAsian)(const CString&) = [](const CString& s) -> bool {
+        for (int i = 0; i < s.GetLength(); ++i) [[msvc::flatten]] {
+            wchar_t c = s[i];
+            if ((c >= 0x4E00 && c <= 0x9FFF) || (c >= 0xAC00 && c <= 0xD7AF) || (c >= 0x3040 && c <= 0x30FF))
+                return true;
+        }
+        return false;
+    };
+
+    if (pDC == nullptr || strText.IsEmpty()) return;
+
+    LOGFONT lf = { 0 };
+    CFont* pDlgFont = (pParent != nullptr) ? pParent->GetFont() : pDC->GetCurrentFont();
+
+    if (pDlgFont)
+    {
+        pDlgFont->GetLogFont(&lf);
+    }
+    else
+    {
+        GetObject(GetStockObject(DEFAULT_GUI_FONT), sizeof(LOGFONT), &lf);
+    }
+
+
+    if (IsAsian(strText))
+    {
+        lf.lfHeight = DpiRest(lf.lfHeight) / 100;
+    }
+    else
+    {
+        lf.lfWeight = FW_NORMAL;
+    }
+
+    lf.lfEscapement = 900;
+    lf.lfOrientation = 900;
+    lf.lfQuality = CLEARTYPE_QUALITY;
+
+    CFont fontVertical;
+    if (fontVertical.CreateFontIndirect(&lf))
+    {
+        CFont* pOldFont = pDC->SelectObject(&fontVertical);
+        pDC->SetTextColor(color);
+        pDC->SetBkMode(TRANSPARENT);
+
+        TEXTMETRIC tm;
+        pDC->GetTextMetrics(&tm);
+
+        // Recalculate anchor with the new, larger tmHeight
+        int xAnchor = rect.left + (rect.Width() / 2) + (tm.tmHeight / 2);
+
+        // Keep the +1 nudge for flushness
+        CRect drawRect(xAnchor - tm.tmHeight, rect.top, xAnchor, rect.bottom + 1);
+
+        pDC->DrawText(strText, &drawRect, DT_SINGLELINE | DT_BOTTOM | DT_NOCLIP);
+
+        pDC->SelectObject(pOldFont);
+        fontVertical.DeleteObject();
+    }
+}
