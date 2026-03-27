@@ -62,6 +62,7 @@ void CIconHandler::Initialize()
         // Use two threads for asynchronous icon lookup
         m_lookupQueue.StartThreads(MAX_ICON_THREADS, [this]
         {
+            if (FAILED(CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE))) return;
             for (auto itemOpt = m_lookupQueue.Pop(); itemOpt.has_value(); itemOpt = m_lookupQueue.Pop())
             {
                 // Fetch item from queue
@@ -85,6 +86,7 @@ void CIconHandler::Initialize()
                     control->RedrawItems(i, i);
                 });
             }
+            CoUninitialize();
         });
     });
 }
