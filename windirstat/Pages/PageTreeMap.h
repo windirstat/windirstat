@@ -79,7 +79,7 @@ protected:
     DECLARE_MESSAGE_MAP()
     afx_msg void OnColorChangedTreeMapGrid(NMHDR*, LRESULT*);
     afx_msg void OnColorChangedTreeMapHighlight(NMHDR*, LRESULT*);
-    afx_msg void OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
+    afx_msg void OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
     afx_msg void OnLightSourceChanged(NMHDR*, LRESULT*);
     afx_msg void OnSetModified();
     afx_msg void OnBnClickedReset();
