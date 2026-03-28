@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2024 Your Name
+// SPDX-License-Identifier: MIT
 // SideBySidePane.cpp
 // Implementation of CSideBySidePaneManager.
 // Standard header: MIT License, see LICENSE.txt for details.
