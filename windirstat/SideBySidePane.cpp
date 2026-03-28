@@ -6,14 +6,14 @@
 
 #include "SideBySidePane.h"
 
-enum class LayoutMode {
+enum LayoutMode {
     Stacked,
     SideBySide
 };
 
 CSideBySidePaneManager::CSideBySidePaneManager(CSplitterWnd* splitter)
     : m_splitter(splitter)
-    , m_isSideBySide(LayoutMode::Stacked)
+    , m_isSideBySide(Stacked)
 {
     // Ensure we start in the default stacked layout.
     if (m_splitter != nullptr)
@@ -27,8 +27,8 @@ bool CSideBySidePaneManager::ToggleLayout()
     if (m_splitter == nullptr)
         return false;
 
-    m_isSideBySide = (m_isSideBySide == LayoutMode::Stacked) ? LayoutMode::SideBySide : LayoutMode::Stacked;
-    if (m_isSideBySide == LayoutMode::SideBySide)
+    m_isSideBySide = (m_isSideBySide == Stacked) ? SideBySide : Stacked;
+    if (m_isSideBySide == SideBySide)
         ApplySideBySideLayout();
     else
         ApplyStackedLayout();
