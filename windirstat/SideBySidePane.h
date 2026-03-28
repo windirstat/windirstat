@@ -1,5 +1,7 @@
+// SPDX-FileCopyrightText: 2024 Your Name
+// SPDX-License-Identifier: MIT
 // SideBySidePane.h
-// Helper to toggle between stacked and side-by-side pane layouts.
+// Helper to toggle between stacked and side‑by‑side pane layouts.
 // Minimal implementation that works with a standard CSplitterWnd.
 
 #pragma once
