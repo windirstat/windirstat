@@ -46,7 +46,7 @@
 #define IDC_PACMANANIMATION             1007
 #define IDC_ASKFORCONFIRMATION          1008
 #define IDC_SHOWTIMESPENT               1009
-#define IDC_TREEMAPGRID                 1010
+#define IDC_TREEMAPGRIDMODE             1010
 #define IDC_EXCLUDE_VOLUME_MOUNT_POINTS 1011
 #define IDC_SHOWCONSOLEWINDOW           1012
 #define IDC_TREECOL_OWNER               1013
@@ -151,6 +151,7 @@
 #define IDC_PROCESS_HARDLINKS           1116
 #define IDC_CONTEXT_MENU                1117
 #define IDC_SHOW_MICROSOFT_PROGRESS     1118
+#define IDC_TREEMAPHEADER               1119
 #define ID_WDS_CONTROL                  4711
 #define ID_CLEANUP_EXPLORER_SELECT      32768
 #define ID_TREEMAP_ZOOMIN               32769

@@ -155,7 +155,7 @@ public:
     static Setting<bool> SkipDupeDetectionCloudLinks;
     static Setting<bool> ShowDupeDetectionCloudLinksWarning;
     static Setting<bool> AutoElevate;
-    static Setting<bool> TreeMapGrid;
+    static Setting<bool> TreeMapHeaders;
     static Setting<bool> TreeMapUseLogical;
     static Setting<bool> UseBackupRestore;
     static Setting<bool> UseDrawTextCache;
@@ -192,6 +192,7 @@ public:
     static Setting<int> TreeMapStyle;
     static Setting<int> DarkMode;
     static Setting<int> FolderHistoryCount;
+    static Setting<int> TreeMapGridMode;
     static Setting<RECT> AboutWindowRect;
     static Setting<RECT> DriveSelectWindowRect;
     static Setting<RECT> SearchWindowRect;
