@@ -195,88 +195,79 @@ COLORREF CItem::GetItemTextColor() const
 int CItem::CompareSibling(const CTreeListItem* tlib, const int subitem) const
 {
     const CItem* other = reinterpret_cast<const CItem*>(tlib);
+    const bool flipToTop = (subitem == COL_NAME || subitem == COL_LAST_CHANGE);
+
+    // Show <Free Space> <Unknown> and <Hardlinks> on top or bottom in a fixed order if the option is enabled
+    if (COptions::PinDriveStatsOnTop)
+    {
+        const bool thisIsStat = this->IsTypeOrFlag(IT_FREESPACE, IT_UNKNOWN);
+        const bool otherIsStat = other->IsTypeOrFlag(IT_FREESPACE, IT_UNKNOWN);
+
+        if (thisIsStat || otherIsStat)
+        {
+            if (thisIsStat != otherIsStat)
+            {
+                return (thisIsStat) ? (flipToTop ? -1 : 1) : (flipToTop ? 1 : -1);
+            }
+
+            if (this->GetItemType() != other->GetItemType())
+            {
+                const bool isThisFreeSpace = (this->GetItemType() == IT_FREESPACE);
+                return isThisFreeSpace ? (flipToTop ? -1 : 1) : (flipToTop ? 1 : -1);
+            }
+
+            return 0;
+        }
+    }
+
+    // Group folders before files if the option is enabled and the item types differ
+    if (COptions::GroupFoldersBeforeFiles && (this->GetItemType() != other->GetItemType()))
+    {
+        return flipToTop ? usignum(this->GetItemType(), other->GetItemType()) :
+            usignum(other->GetItemType(), this->GetItemType());
+    }
 
     switch (subitem)
     {
     case COL_NAME:
-    {
-        if (GetItemType() != other->GetItemType())
+        if (this->GetItemType() != other->GetItemType())
         {
-            return usignum(GetItemType(), other->GetItemType());
+            return usignum(this->GetItemType(), other->GetItemType());
         }
         return signum(_wcsicmp(m_name.get(), other->m_name.get()));
-    }
 
     case COL_SUBTREE_PERCENTAGE:
-    {
         if (MustShowReadJobs())
         {
-            return usignum(GetReadJobs(), other->GetReadJobs());
+            return usignum(this->GetReadJobs(), other->GetReadJobs());
         }
-        else
-        {
-            return signum(GetFraction() - other->GetFraction());
-        }
-    }
+        [[fallthrough]];
 
     case COL_PERCENTAGE:
-    {
-        return signum(GetFraction() - other->GetFraction());
-    }
+        return signum(this->GetFraction() - other->GetFraction());
 
     case COL_SIZE_PHYSICAL:
-    {
-        return usignum(GetSizePhysical(), other->GetSizePhysical());
-    }
+        return usignum(this->GetSizePhysical(), other->GetSizePhysical());
 
     case COL_SIZE_LOGICAL:
-    {
-        return usignum(GetSizeLogical(), other->GetSizeLogical());
-    }
+        return usignum(this->GetSizeLogical(), other->GetSizeLogical());
 
     case COL_ITEMS:
-    {
-        return usignum(GetItemsCount(), other->GetItemsCount());
-    }
+        return usignum(this->GetItemsCount(), other->GetItemsCount());
 
     case COL_FILES:
-    {
-        return usignum(GetFilesCount(), other->GetFilesCount());
-    }
+        return usignum(this->GetFilesCount(), other->GetFilesCount());
 
     case COL_FOLDERS:
-    {
-        return usignum(GetFoldersCount(), other->GetFoldersCount());
-    }
+        return usignum(this->GetFoldersCount(), other->GetFoldersCount());
 
     case COL_LAST_CHANGE:
-    {
-        if (m_lastChange < other->m_lastChange)
-        {
-            return -1;
-        }
-        if (m_lastChange == other->m_lastChange)
-        {
-            return 0;
-        }
-
-        return 1;
-    }
-
-    case COL_ATTRIBUTES:
-    {
-        return signum(GetSortAttributes() - other->GetSortAttributes());
-    }
-
-    case COL_OWNER:
-    {
-        return signum(_wcsicmp(GetOwner().c_str(), other->GetOwner().c_str()));
-    }
+        if (m_lastChange < other->m_lastChange) return -1;
+        if (m_lastChange > other->m_lastChange) return 1;
+        return 0;
 
     default:
-    {
         return 0;
-    }
     }
 }
 

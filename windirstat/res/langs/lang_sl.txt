@@ -100,6 +100,7 @@ IDS_MENU_EXPLORER_SELECT=Izb&eri v Raziskovalcu...
 IDS_MENU_FILE_TYPES=Pokaži &vrste datotek
 IDS_MENU_FILE=&Datoteka
 IDS_MENU_FREE_SPACE=Pokaži nezaseden &prostor
+IDS_MENU_GROUPFOLDERSBEFOREFILES=&Združi mape pred datotekami
 IDS_MENU_HELP_ABOUT=&O programu
 IDS_MENU_HELP_REPORT=&Prijavi napako/Povratne informacije...
 IDS_MENU_HELP=&Pomoč

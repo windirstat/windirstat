@@ -100,6 +100,7 @@ IDS_MENU_EXPLORER_SELECT=&Avasta siin
 IDS_MENU_FILE_TYPES=Näita faili &tüüpe
 IDS_MENU_FILE=&Fail
 IDS_MENU_FREE_SPACE=Näita &vabat mahtu
+IDS_MENU_GROUPFOLDERSBEFOREFILES=&Rühmita kaustad enne faile
 IDS_MENU_HELP_ABOUT=&WinDirStat-ist...
 IDS_MENU_HELP_REPORT=Teata veast/tagasisidest
 IDS_MENU_HELP=&Abi
