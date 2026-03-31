@@ -169,6 +169,7 @@ IDS_PAGE_CLEANUPS_WORKS_FOR=Oppgaven påvirker:
 IDS_PAGE_FILTERING_EXCLUDE_DIRS=Mappebaner som skal utelates:
 IDS_PAGE_FILTERING_EXCLUDE_FILES=Filnavnmønstre som skal utelates:
 IDS_PAGE_FILTERING_INVALID_FILTER=Ugyldig filter:
+IDS_PAGE_FILTERING_MODIFIED_PAST=Only include files modified in the past:
 IDS_PAGE_FILTERING_SIZE_MIN=Utelat filer mindre enn:
 IDS_PAGE_FILTERING_TITLE=Filtrering
 IDS_PAGE_FILTERING_TOOLTIP_PREFIX=List opp ett unntak per linje. Eksempler:

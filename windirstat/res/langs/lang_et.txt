@@ -169,6 +169,7 @@ IDS_PAGE_CLEANUPS_WORKS_FOR=Tööd
 IDS_PAGE_FILTERING_EXCLUDE_DIRS=Kaustade teed, mida välistada:
 IDS_PAGE_FILTERING_EXCLUDE_FILES=Failinimede mustrid, mida välistada:
 IDS_PAGE_FILTERING_INVALID_FILTER=Kehtetu filter:
+IDS_PAGE_FILTERING_MODIFIED_PAST=Only include files modified in the past:
 IDS_PAGE_FILTERING_SIZE_MIN=Välista failid, mis on väiksemad kui:
 IDS_PAGE_FILTERING_TITLE=Filtreerimine
 IDS_PAGE_FILTERING_TOOLTIP_PREFIX=Loetlege üks välistus rea kohta. Näited:

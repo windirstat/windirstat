@@ -169,6 +169,7 @@ IDS_PAGE_CLEANUPS_WORKS_FOR=Trabaja para
 IDS_PAGE_FILTERING_EXCLUDE_DIRS=Rutas de carpetas para excluir:
 IDS_PAGE_FILTERING_EXCLUDE_FILES=Patrones de nombres de archivos para excluir:
 IDS_PAGE_FILTERING_INVALID_FILTER=Filtro inválido:
+IDS_PAGE_FILTERING_MODIFIED_PAST=Only include files modified in the past:
 IDS_PAGE_FILTERING_SIZE_MIN=Excluir archivos menores que:
 IDS_PAGE_FILTERING_TITLE=Filtrando
 IDS_PAGE_FILTERING_TOOLTIP_PREFIX=Enumere una exclusión por línea. Ejemplos:

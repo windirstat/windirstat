@@ -169,6 +169,7 @@ IDS_PAGE_CLEANUPS_WORKS_FOR=Застосувати до
 IDS_PAGE_FILTERING_EXCLUDE_DIRS=Шляхи до папок для виключення:
 IDS_PAGE_FILTERING_EXCLUDE_FILES=Шаблони імен файлів для виключення:
 IDS_PAGE_FILTERING_INVALID_FILTER=Неправильний фільтр:
+IDS_PAGE_FILTERING_MODIFIED_PAST=Only include files modified in the past:
 IDS_PAGE_FILTERING_SIZE_MIN=Виключити файли менші за:
 IDS_PAGE_FILTERING_TITLE=Фільтрація
 IDS_PAGE_FILTERING_TOOLTIP_PREFIX=Вкажіть одне виключення на рядок. Приклади:
