@@ -135,6 +135,7 @@ public:
     static Setting<bool> SearchRegex;
     static Setting<int> SearchMaxResults;
     static Setting<bool> ShowColumnAttributes;
+    static Setting<bool> ShowColumnAbsolutePercentages;
     static Setting<bool> ShowColumnFiles;
     static Setting<bool> ShowColumnFolders;
     static Setting<bool> ShowColumnItems;

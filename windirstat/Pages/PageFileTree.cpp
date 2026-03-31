@@ -28,6 +28,7 @@ void CPageFileTree::DoDataExchange(CDataExchange* pDX)
     CMFCPropertyPage::DoDataExchange(pDX);
     DDX_Check(pDX, IDC_PACMANANIMATION, m_pacmanAnimation);
     DDX_Check(pDX, IDC_SHOWTIMESPENT, m_showTimeSpent);
+    DDX_Check(pDX, IDC_TREECOL_ABSOLUTE_PERCENTAGES, m_showColumnAbsolutePercentages);
     DDX_Check(pDX, IDC_TREECOL_FOLDERS, m_showColumnFolders);
     DDX_Check(pDX, IDC_TREECOL_SIZE_PHYSICAL, m_showColumnSizePhysical);
     DDX_Check(pDX, IDC_TREECOL_SIZE_LOGICAL, m_showColumnSizeLogical);
@@ -56,6 +57,7 @@ BEGIN_MESSAGE_MAP(CPageFileTree, CMFCPropertyPage)
     ON_WM_VSCROLL()
     ON_BN_CLICKED(IDC_PACMANANIMATION, OnBnClickedSetModified)
     ON_BN_CLICKED(IDC_SHOWTIMESPENT, OnBnClickedSetModified)
+    ON_BN_CLICKED(IDC_TREECOL_ABSOLUTE_PERCENTAGES, OnBnClickedSetModified)
     ON_BN_CLICKED(IDC_TREECOL_FOLDERS, OnBnClickedSetModified)
     ON_BN_CLICKED(IDC_TREECOL_ITEMS, OnBnClickedSetModified)
     ON_BN_CLICKED(IDC_TREECOL_FILES, OnBnClickedSetModified)
@@ -82,6 +84,7 @@ BOOL CPageFileTree::OnInitDialog()
 
     m_pacmanAnimation= COptions::PacmanAnimation;
     m_showTimeSpent = COptions::ShowTimeSpent;
+    m_showColumnAbsolutePercentages = COptions::ShowColumnAbsolutePercentages;
     m_showColumnFolders = COptions::ShowColumnFolders;
     m_showColumnItems = COptions::ShowColumnItems;
     m_showColumnFiles = COptions::ShowColumnFiles;
@@ -112,6 +115,7 @@ BOOL CPageFileTree::OnInitDialog()
 void CPageFileTree::OnOK()
 {
     const bool colsChanged =
+        COptions::ShowColumnAbsolutePercentages != (FALSE != m_showColumnAbsolutePercentages) ||
         COptions::ShowColumnFolders != (FALSE != m_showColumnFolders) ||
         COptions::ShowColumnItems != (FALSE != m_showColumnItems) ||
         COptions::ShowColumnFiles != (FALSE != m_showColumnFiles) ||
@@ -124,6 +128,7 @@ void CPageFileTree::OnOK()
     UpdateData();
     COptions::PacmanAnimation = (FALSE != m_pacmanAnimation);
     COptions::ShowTimeSpent = (FALSE != m_showTimeSpent);
+    COptions::ShowColumnAbsolutePercentages = (FALSE != m_showColumnAbsolutePercentages);
     COptions::ShowColumnFolders = (FALSE != m_showColumnFolders);
     COptions::ShowColumnItems = (FALSE != m_showColumnItems);
     COptions::ShowColumnFiles = (FALSE != m_showColumnFiles);
