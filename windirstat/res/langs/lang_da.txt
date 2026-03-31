@@ -136,6 +136,7 @@ IDS_MENU_TREEMAP=&Træstruktur
 IDS_MENU_WATCHER=Start filovervågning
 IDS_MENU_ZOOMIN=Zoom ind
 IDS_MENU_ZOOMOUT=Zoom ud
+IDS_MENU_ZOOMRESET=&Nulstil zoom
 IDS_NOTACCESSIBLE=(ikke tilgængelig)
 IDS_ONEITEMs=(1 enhed, {})
 IDS_ONEREADJOB=[1 læst job]

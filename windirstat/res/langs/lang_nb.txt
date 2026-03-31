@@ -136,6 +136,7 @@ IDS_MENU_TREEMAP=&Trekart
 IDS_MENU_WATCHER=Start filovervåking
 IDS_MENU_ZOOMIN=Zoom &inn
 IDS_MENU_ZOOMOUT=Zoom &ut
+IDS_MENU_ZOOMRESET=&Nullstill zoom
 IDS_NOTACCESSIBLE=(utilgjengelig)
 IDS_ONEITEMs= (1 element, {})
 IDS_ONEREADJOB=[1 lesearbeid]

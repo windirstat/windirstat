@@ -884,6 +884,7 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
 
     // special conditions
     static auto doc = this;
+    static bool (*isZoomed)(CItem*) = [](CItem*) { return CDirStatDoc::Get()->IsZoomed(); };
     static bool (*canZoomIn)(CItem*) = [](CItem* item) { return item != nullptr && !item->IsRootItem() && (item->GetParent() != doc->GetZoomItem() || item->GetParent() == doc->GetRootItem()); };
     static bool (*canZoomOut)(CItem*) = [](CItem*) { return doc->GetZoomItem() != doc->GetRootItem(); };
     static bool (*parentNotNull)(CItem*) = [](CItem* item) { return item != nullptr && item->GetParent() != nullptr; };
@@ -948,6 +949,7 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
         { ID_SEARCH,                  { true,  true,  false, LF_NONE,     { ITF_ANY } } },
         { ID_TREEMAP_RESELECT_CHILD,  { true,  true,  true,  LF_FILETREE, { ITF_ANY }, reselectAvail } },
         { ID_TREEMAP_SELECT_PARENT,   { false, false, true,  LF_FILETREE, { ITF_ANY }, parentNotNull } },
+        { ID_TREEMAP_ZOOMRESET,       { true,  true,  false, LF_FILETREE, { ITF_ANY }, isZoomed } },
         { ID_TREEMAP_ZOOMIN,          { false, false, false, LF_FILETREE, { IT_DRIVE , IT_DIRECTORY, IT_FILE }, canZoomIn } },
         { ID_TREEMAP_ZOOMOUT,         { true,  true,  false, LF_FILETREE, { ITF_ANY }, canZoomOut } },
         { ID_VIEW_SHOWFREESPACE,      { true,  true,  false, LF_NONE,     { ITF_ANY } } },
@@ -1014,6 +1016,7 @@ BEGIN_MESSAGE_MAP(CDirStatDoc, CDocument)
     ON_COMMAND(ID_VIEW_SHOWUNKNOWN, OnViewShowUnknown)
     ON_COMMAND_UPDATE_WRAPPER(ID_TREEMAP_ZOOMIN, OnTreeMapZoomIn)
     ON_COMMAND_UPDATE_WRAPPER(ID_TREEMAP_ZOOMOUT, OnTreeMapZoomOut)
+    ON_COMMAND_UPDATE_WRAPPER(ID_TREEMAP_ZOOMRESET, OnTreeMapZoomReset)
     ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_EXPLORER_SELECT, OnExplorerSelect)
     ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_OPEN_IN_CONSOLE, OnCommandPromptHere)
     ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_OPEN_IN_PWSH, OnPowerShellHere)
@@ -1271,6 +1274,14 @@ void CDirStatDoc::OnTreeMapZoomOut()
     if (GetZoomItem() != nullptr)
     {
         SetZoomItem(GetZoomItem()->GetParent());
+    }
+}
+
+void CDirStatDoc::OnTreeMapZoomReset()
+{
+    if (IsZoomed())
+    {
+        SetZoomItem(GetRootItem());
     }
 }
 
