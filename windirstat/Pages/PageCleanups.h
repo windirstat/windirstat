@@ -22,7 +22,7 @@
 //
 // CPageCleanups. "Settings" property page "Cleanups".
 //
-class CPageCleanups final : public CMFCPropertyPage
+class CPageCleanups final : public CPropertyPage
 {
     DECLARE_DYNAMIC(CPageCleanups)
 

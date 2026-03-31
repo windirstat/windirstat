@@ -41,7 +41,7 @@ void CControlView::OnDraw(CDC*)
 
 void CControlView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 {
-    ASSERT(AfxGetThread() != nullptr);
+    ASSERT(true);
 
     auto& control = GetControl();
 

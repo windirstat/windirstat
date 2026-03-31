@@ -62,7 +62,7 @@ CMessageBoxDlg::CMessageBoxDlg(const std::wstring& message, const std::wstring& 
 
 WdsMessageBoxResult CMessageBoxDlg::Show(const std::wstring& message, const std::vector<std::wstring>& listViewItems, const std::wstring& checkboxText, bool checkboxValue, UINT type, CWnd* pParent, const CSize& initialSize, const std::wstring& title)
 {
-    CWnd* parent = pParent ? pParent : AfxGetMainWnd();
+    CWnd* parent = pParent ? pParent : CMainFrame::Get();
 
     CMessageBoxDlg dlg(message, title, type, parent, listViewItems, checkboxText, checkboxValue);
 

@@ -22,21 +22,25 @@
 #define VC_EXTRALEAN
 #endif
 
-// Exclude unneeded MFC components
-#define _AFX_NO_DAO_SUPPORT
-#define _AFX_NO_CTL3D_SUPPORT
-#define _ATL_NO_HOSTING
-#define _ATL_NO_DOCHOSTUIHANDLER
-#define _ATL_NO_UUIDOF
-
-#define _ATL_CSTRING_EXPLICIT_CONSTRUCTORS  // some CStringW constructors will be explicit
-
-// enables new GDI+ version
+// Win32++ headers
+// NOTE: These headers are expected to be provided by the vendored Win32++ SDK
+// under third_party/win32xx/include (configured in windirstat.vcxproj).
 #define GDIPVER 0x0110
 
-#include <afxwin.h>         // MFC Core
-#include <afxext.h>         // MFC Extensions
-#include <afxcontrolbars.h> // MFC support for ribbons and control bars
+#include <wxx_appcore.h>
+#include <wxx_cstring.h>
+#include <wxx_controls.h>
+#include <wxx_dialog.h>
+#include <wxx_docview.h>
+#include <wxx_splitter.h>
+#include <wxx_frame.h>
+#include <wxx_gdi.h>
+#include <wxx_listview.h>
+#include <wxx_menu.h>
+#include <wxx_propertysheet.h>
+#include <wxx_tab.h>
+#include <wxx_treeview.h>
+#include <wxx_wincore.h>
 
 // Windows API headers
 #include <VersionHelpers.h>
@@ -85,6 +89,7 @@
 #include <shared_mutex>
 #include <source_location>
 #include <string>
+#include <stdexcept>
 #include <string_view>
 #include <thread>
 #include <unordered_map>

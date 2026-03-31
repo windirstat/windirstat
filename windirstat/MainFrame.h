@@ -49,7 +49,7 @@ enum LOGICAL_FOCUS : uint8_t
 //
 // COptionsPropertySheet.
 //
-class COptionsPropertySheet final : public CMFCPropertySheet
+class COptionsPropertySheet final : public CPropertySheet
 {
     DECLARE_DYNAMIC(COptionsPropertySheet)
 
@@ -74,7 +74,7 @@ protected:
 // CWdsSplitterWnd. A CSplitterWnd with 2 columns or rows, which
 // knows about the current split ratio and retains it even when resized.
 //
-class CWdsSplitterWnd final : public CSplitterWndEx
+class CWdsSplitterWnd final : public CSplitter
 {
 public:
     CWdsSplitterWnd(double * splitterPos);
@@ -134,7 +134,7 @@ protected:
 //
 // CMainFrame. The main application window.
 //
-class CMainFrame final : public CFrameWndEx
+class CMainFrame final : public CFrame
 {
 protected:
     static constexpr DWORD WM_CALLBACKUI = WM_USER + 1;

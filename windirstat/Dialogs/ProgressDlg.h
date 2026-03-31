@@ -23,7 +23,7 @@
 // CProgressDlg - Modal progress dialog for long-running operations
 // Shows progress bar and allows cancellation
 //
-class CProgressDlg final : public CDialogEx
+class CProgressDlg final : public CDialog
 {
     DECLARE_DYNAMIC(CProgressDlg)
 

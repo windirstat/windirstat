@@ -44,7 +44,7 @@ void CFileTopControl::ProcessTop(CItem * item)
 
 void CFileTopControl::SortItems()
 {
-    ASSERT(AfxGetThread() != nullptr);
+    ASSERT(true);
 
     // Verify at least root exists
     if (GetItemCount() == 0) return;

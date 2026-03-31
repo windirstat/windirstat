@@ -24,7 +24,7 @@ class COptionsPropertySheet;
 //
 // CPageAdvanced. "Settings" property page "Advanced".
 //
-class CPageAdvanced final : public CMFCPropertyPage
+class CPageAdvanced final : public CPropertyPage
 {
     DECLARE_DYNAMIC(CPageAdvanced)
 

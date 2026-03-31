@@ -24,7 +24,7 @@
 //
 // CPageTreeMap. "Settings" property page "TreeMap".
 //
-class CPageTreeMap final : public CMFCPropertyPage
+class CPageTreeMap final : public CPropertyPage
 {
     DECLARE_DYNAMIC(CPageTreeMap)
 

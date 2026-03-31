@@ -107,6 +107,6 @@ BOOL CFileTreeControl::OnSetCursor(CWnd* pWnd, const UINT nHitTest, const UINT m
         return colInfo.iSubItem == COL_SIZE_PHYSICAL && GetWholeSubitemRect(i, col).PtInRect(point);
     })) return defaultReturn();
 
-    SetCursor(AfxGetApp()->LoadStandardCursor(IDC_HAND));
+    SetCursor(CDirStatApp::Get()->LoadStandardCursor(IDC_HAND));
     return TRUE;
 }

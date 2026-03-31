@@ -383,7 +383,7 @@ void WaitForHandleWithRepainting(const HANDLE h, const DWORD TimeOut) noexcept
 
 void ProcessMessagesUntilSignaled(const std::function<void()>& callback)
 {
-    if (CWnd* wnd = AfxGetMainWnd(); wnd != nullptr && GetWindowThreadProcessId(
+    if (CWnd* wnd = CMainFrame::Get(); wnd != nullptr && GetWindowThreadProcessId(
         wnd->m_hWnd, nullptr) == GetCurrentThreadId())
     {
         static auto waitMessage = RegisterWindowMessage(L"WinDirStatSignalWaiter");

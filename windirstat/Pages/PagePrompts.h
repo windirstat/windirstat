@@ -24,7 +24,7 @@ class COptionsPropertySheet;
 //
 // CPagePrompts. "Settings" property page "Prompts".
 //
-class CPagePrompts final : public CMFCPropertyPage
+class CPagePrompts final : public CPropertyPage
 {
     DECLARE_DYNAMIC(CPagePrompts)
 

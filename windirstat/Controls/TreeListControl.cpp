@@ -922,7 +922,7 @@ void CTreeListControl::OnContextMenu(CWnd* /*pWnd*/, const CPoint pt)
     tp.rcExclude.top += overlap;
     tp.rcExclude.bottom -= overlap;
 
-    sub->TrackPopupMenuEx(TPM_LEFTALIGN | TPM_LEFTBUTTON, pt.x, pt.y, AfxGetMainWnd(), &tp);
+    sub->TrackPopupMenuEx(TPM_LEFTALIGN | TPM_LEFTBUTTON, pt.x, pt.y, CMainFrame::Get(), &tp);
 }
 
 void CTreeListControl::OnSetFocus(CWnd* pOldWnd)

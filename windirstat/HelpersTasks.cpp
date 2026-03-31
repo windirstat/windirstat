@@ -797,7 +797,7 @@ void CopyAllDriveMappings() noexcept
         }
     }
 
-    if (!mappings.empty()) CProgressDlg(driveLetter.size(), true, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
+    if (!mappings.empty()) CProgressDlg(driveLetter.size(), true, CMainFrame::Get(), [&](CProgressDlg* pdlg)
     {
         for (const auto& mapping : mappings)
         {

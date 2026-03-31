@@ -29,7 +29,7 @@ CIconHandler* GetIconHandler()
 
 // CDirStatApp
 
-BEGIN_MESSAGE_MAP(CDirStatApp, CWinAppEx)
+BEGIN_MESSAGE_MAP(CDirStatApp, CWinApp)
     ON_COMMAND(ID_APP_ABOUT, OnAppAbout)
     ON_COMMAND(ID_FILE_SELECT, OnFileOpen)
     ON_COMMAND(ID_FILTER, OnFilter)
@@ -222,7 +222,7 @@ bool CDirStatApp::SetPortableMode(const bool enable, const bool onlyOpen)
 
 CString AFXGetRegPath(LPCTSTR lpszPostFix, LPCTSTR)
 {
-    // This overrides an internal MFC function that causes CWinAppEx
+    // This overrides an internal MFC function that causes CWinApp
     // to malfunction when operated in portable mode
     return CString(L"Software\\WinDirStat\\WinDirStat\\") + lpszPostFix + L"\\";
 }
@@ -320,7 +320,7 @@ BOOL CDirStatApp::InitInstance()
     // Set app to prefer dark mode
     DarkMode::SetAppDarkMode();
 
-    CWinAppEx::InitInstance();
+    CWinApp::InitInstance();
 
     // Initialize visual controls
     constexpr INITCOMMONCONTROLSEX ctrls = { sizeof(INITCOMMONCONTROLSEX) , ICC_STANDARD_CLASSES };
@@ -413,7 +413,7 @@ BOOL CDirStatApp::IsIdleMessage(MSG* pMsg)
     // The timer is used for UI updates and should not trigger idle processing
     if (pMsg->message == WM_TIMER) return FALSE;
     if (pMsg->message == WM_MOUSEMOVE || pMsg->message == WM_NCMOUSEMOVE) return FALSE;
-    return CWinAppEx::IsIdleMessage(pMsg);
+    return CWinApp::IsIdleMessage(pMsg);
 }
 
 void CDirStatApp::OnAppAbout()
@@ -452,7 +452,7 @@ void CDirStatApp::OnFilter()
 
 void CDirStatApp::LaunchHelp()
 {
-    ShellExecute(*AfxGetMainWnd(), L"open", Localization::LookupNeutral(IDS_URL_HELP).c_str(),
+    ShellExecute(*CMainFrame::Get(), L"open", Localization::LookupNeutral(IDS_URL_HELP).c_str(),
         nullptr, nullptr, SW_SHOWNORMAL);
 }
 
@@ -463,7 +463,7 @@ void CDirStatApp::OnHelpManual()
 
 void CDirStatApp::OnReportBug()
 {
-    ShellExecute(*AfxGetMainWnd(), L"open", Localization::LookupNeutral(IDS_URL_REPORT_BUG).c_str(),
+    ShellExecute(*CMainFrame::Get(), L"open", Localization::LookupNeutral(IDS_URL_REPORT_BUG).c_str(),
         nullptr, nullptr, SW_SHOWNORMAL);
 }
 

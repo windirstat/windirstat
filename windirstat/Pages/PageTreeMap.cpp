@@ -23,10 +23,10 @@ namespace
     constexpr UINT c_MaxHeight = 200;
 }
 
-IMPLEMENT_DYNAMIC(CPageTreeMap, CMFCPropertyPage)
+IMPLEMENT_DYNAMIC(CPageTreeMap, CPropertyPage)
 
 CPageTreeMap::CPageTreeMap()
-    : CMFCPropertyPage(IDD)
+    : CPropertyPage(IDD)
     , m_options()
     , m_undo()
 {
@@ -34,7 +34,7 @@ CPageTreeMap::CPageTreeMap()
 
 void CPageTreeMap::DoDataExchange(CDataExchange* pDX)
 {
-    CMFCPropertyPage::DoDataExchange(pDX);
+    CPropertyPage::DoDataExchange(pDX);
 
     DDX_Control(pDX, IDC_PREVIEW, m_preview);
     DDX_Control(pDX, IDC_TREEMAPHIGHLIGHTCOLOR, m_highlightColor);
@@ -76,7 +76,7 @@ void CPageTreeMap::DoDataExchange(CDataExchange* pDX)
     }
 }
 
-BEGIN_MESSAGE_MAP(CPageTreeMap, CMFCPropertyPage)
+BEGIN_MESSAGE_MAP(CPageTreeMap, CPropertyPage)
     ON_WM_HSCROLL()
     ON_NOTIFY(COLBN_CHANGED, IDC_TREEMAPGRIDCOLOR, OnColorChangedTreeMapGrid)
     ON_NOTIFY(COLBN_CHANGED, IDC_TREEMAPHIGHLIGHTCOLOR, OnColorChangedTreeMapHighlight)
@@ -91,12 +91,12 @@ END_MESSAGE_MAP()
 HBRUSH CPageTreeMap::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 {
     const HBRUSH brush = DarkMode::OnCtlColor(pDC, nCtlColor);
-    return brush ? brush : CMFCPropertyPage::OnCtlColor(pDC, pWnd, nCtlColor);
+    return brush ? brush : CPropertyPage::OnCtlColor(pDC, pWnd, nCtlColor);
 }
 
 BOOL CPageTreeMap::OnInitDialog()
 {
-    CMFCPropertyPage::OnInitDialog();
+    CPropertyPage::OnInitDialog();
 
     Localization::UpdateDialogs(*this);
     DarkMode::AdjustControls(GetSafeHwnd());
@@ -126,7 +126,7 @@ void CPageTreeMap::OnOK()
     COptions::TreeMapHighlightColor = m_highlightColor.GetColor();
     CDirStatDoc::Get()->UpdateAllViews(nullptr, HINT_SELECTIONSTYLECHANGED);
 
-    CMFCPropertyPage::OnOK();
+    CPropertyPage::OnOK();
 }
 
 void CPageTreeMap::UpdateOptions(const bool save)

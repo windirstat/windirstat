@@ -23,7 +23,7 @@
 //
 // CPageFileTree. "Settings" property page "Folder List".
 //
-class CPageFileTree final : public CMFCPropertyPage
+class CPageFileTree final : public CPropertyPage
 {
     DECLARE_DYNAMIC(CPageFileTree)
 

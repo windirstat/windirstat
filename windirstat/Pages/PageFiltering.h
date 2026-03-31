@@ -24,7 +24,7 @@ class COptionsPropertySheet;
 //
 // CPageFiltering. "Settings" property page "Filtering".
 //
-class CPageFiltering final : public CMFCPropertyPage
+class CPageFiltering final : public CPropertyPage
 {
     DECLARE_DYNAMIC(CPageFiltering)
 

@@ -19,13 +19,13 @@
 #include "PageFileTree.h"
 #include "FileTreeView.h"
 
-IMPLEMENT_DYNAMIC(CPageFileTree, CMFCPropertyPage)
+IMPLEMENT_DYNAMIC(CPageFileTree, CPropertyPage)
 
-CPageFileTree::CPageFileTree() : CMFCPropertyPage(IDD) {}
+CPageFileTree::CPageFileTree() : CPropertyPage(IDD) {}
 
 void CPageFileTree::DoDataExchange(CDataExchange* pDX)
 {
-    CMFCPropertyPage::DoDataExchange(pDX);
+    CPropertyPage::DoDataExchange(pDX);
     DDX_Check(pDX, IDC_PACMANANIMATION, m_pacmanAnimation);
     DDX_Check(pDX, IDC_SHOWTIMESPENT, m_showTimeSpent);
     DDX_Check(pDX, IDC_TREECOL_FOLDERS, m_showColumnFolders);
@@ -51,7 +51,7 @@ void CPageFileTree::DoDataExchange(CDataExchange* pDX)
     DDX_Control(pDX, IDC_SLIDER, m_slider);
 }
 
-BEGIN_MESSAGE_MAP(CPageFileTree, CMFCPropertyPage)
+BEGIN_MESSAGE_MAP(CPageFileTree, CPropertyPage)
  ON_NOTIFY_RANGE(COLBN_CHANGED, IDC_COLORBUTTON0, IDC_COLORBUTTON7, OnColorChanged)
     ON_WM_VSCROLL()
     ON_BN_CLICKED(IDC_PACMANANIMATION, OnBnClickedSetModified)
@@ -70,12 +70,12 @@ END_MESSAGE_MAP()
 HBRUSH CPageFileTree::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 {
     const HBRUSH brush = DarkMode::OnCtlColor(pDC, nCtlColor);
-    return brush ? brush : CMFCPropertyPage::OnCtlColor(pDC, pWnd, nCtlColor);
+    return brush ? brush : CPropertyPage::OnCtlColor(pDC, pWnd, nCtlColor);
 }
 
 BOOL CPageFileTree::OnInitDialog()
 {
-    CMFCPropertyPage::OnInitDialog();
+    CPropertyPage::OnInitDialog();
 
     Localization::UpdateDialogs(*this);
     DarkMode::AdjustControls(GetSafeHwnd());
@@ -143,7 +143,7 @@ void CPageFileTree::OnOK()
     COptions::FileTreeColor7 = m_fileTreeColor[7];
     if (colsChanged) CMainFrame::Get()->GetFileTreeView()->CreateColumns();
     CDirStatDoc::Get()->UpdateAllViews(nullptr, HINT_LISTSTYLECHANGED);
-    CMFCPropertyPage::OnOK();
+    CPropertyPage::OnOK();
 }
 
 void CPageFileTree::OnBnClickedSetModified()
@@ -180,5 +180,5 @@ void CPageFileTree::OnVScroll(const UINT nSBCode, const UINT nPos, CScrollBar* p
         EnableButtons();
         SetModified();
     }
-    CMFCPropertyPage::OnVScroll(nSBCode, nPos, pScrollBar);
+    CPropertyPage::OnVScroll(nSBCode, nPos, pScrollBar);
 }

@@ -96,10 +96,10 @@ protected:
 
 //
 // CLayoutDialogEx. A class that provides automatic layout management
-// for dialogs. Inherit from this class instead of CDialogEx to get automatic
+// for dialogs. Inherit from this class instead of CDialog to get automatic
 // m_layout support with OnSize, OnGetMinMaxInfo, and OnDestroy handling.
 //
-class CLayoutDialogEx : public CDialogEx
+class CLayoutDialogEx : public CDialog
 {
     DECLARE_DYNCREATE(CLayoutDialogEx)
 
@@ -108,7 +108,7 @@ protected:
 
     // Constructor that takes dialog ID and window placement
     CLayoutDialogEx(UINT nIDTemplate, RECT* placement, CWnd* pParent = nullptr)
-        : CDialogEx(nIDTemplate, pParent)
+        : CDialog(nIDTemplate, pParent)
         , m_layout(this, placement)
     {
     }

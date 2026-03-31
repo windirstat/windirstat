@@ -21,9 +21,9 @@
 /////////////////////////////////////////////////////////////////////////////
 // CLayoutDialogEx
 
-IMPLEMENT_DYNCREATE(CLayoutDialogEx, CDialogEx)
+IMPLEMENT_DYNCREATE(CLayoutDialogEx, CDialog)
 
-BEGIN_MESSAGE_MAP(CLayoutDialogEx, CDialogEx)
+BEGIN_MESSAGE_MAP(CLayoutDialogEx, CDialog)
     ON_WM_SIZE()
     ON_WM_GETMINMAXINFO()
     ON_WM_DESTROY()
@@ -58,25 +58,25 @@ BOOL CLayoutDialogEx::PreTranslateMessage(MSG* pMsg)
         }
     }
 
-    return CDialogEx::PreTranslateMessage(pMsg);
+    return CDialog::PreTranslateMessage(pMsg);
 }
 
 void CLayoutDialogEx::OnSize(UINT nType, int cx, int cy)
 {
-    CDialogEx::OnSize(nType, cx, cy);
+    CDialog::OnSize(nType, cx, cy);
     m_layout.OnSize();
 }
 
 void CLayoutDialogEx::OnGetMinMaxInfo(MINMAXINFO* lpMMI)
 {
     m_layout.OnGetMinMaxInfo(lpMMI);
-    CDialogEx::OnGetMinMaxInfo(lpMMI);
+    CDialog::OnGetMinMaxInfo(lpMMI);
 }
 
 void CLayoutDialogEx::OnDestroy()
 {
     m_layout.OnDestroy();
-    CDialogEx::OnDestroy();
+    CDialog::OnDestroy();
 }
 
 /////////////////////////////////////////////////////////////////////////////

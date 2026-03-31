@@ -59,10 +59,10 @@ public:
 
 /////////////////////////////////////////////////////////////////////////////
 
-IMPLEMENT_DYNAMIC(COptionsPropertySheet, CMFCPropertySheet)
+IMPLEMENT_DYNAMIC(COptionsPropertySheet, CPropertySheet)
 
 COptionsPropertySheet::COptionsPropertySheet()
-    : CMFCPropertySheet(Localization::Lookup(IDS_WINDIRSTAT_SETTINGS).c_str())
+    : CPropertySheet(Localization::Lookup(IDS_WINDIRSTAT_SETTINGS).c_str())
 {
     m_look = PropSheetLook_OneNoteTabs;
 }
@@ -72,7 +72,7 @@ void COptionsPropertySheet::SetRestartRequired(const bool changed)
     m_restartRequest = changed;
 }
 
-BEGIN_MESSAGE_MAP(COptionsPropertySheet, CMFCPropertySheet)
+BEGIN_MESSAGE_MAP(COptionsPropertySheet, CPropertySheet)
     ON_WM_CTLCOLOR()
     ON_WM_ERASEBKGND()
 END_MESSAGE_MAP()
@@ -81,7 +81,7 @@ BOOL COptionsPropertySheet::OnEraseBkgnd(CDC* pDC)
 {
     if (!DarkMode::IsDarkModeActive())
     {
-        return CMFCPropertySheet::OnEraseBkgnd(pDC);
+        return CPropertySheet::OnEraseBkgnd(pDC);
     }
 
     // Paint the background with dark mode color
@@ -94,12 +94,12 @@ BOOL COptionsPropertySheet::OnEraseBkgnd(CDC* pDC)
 HBRUSH COptionsPropertySheet::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 {
     const HBRUSH brush = DarkMode::OnCtlColor(pDC, nCtlColor);
-    return brush ? brush : CMFCPropertySheet::OnCtlColor(pDC, pWnd, nCtlColor);
+    return brush ? brush : CPropertySheet::OnCtlColor(pDC, pWnd, nCtlColor);
 }
 
 BOOL COptionsPropertySheet::OnInitDialog()
 {
-    const BOOL bResult = CMFCPropertySheet::OnInitDialog();
+    const BOOL bResult = CPropertySheet::OnInitDialog();
     CTabCtrlHelper::SetupTabControl(GetTab());
 
     Localization::UpdateDialogs(*this);
@@ -144,7 +144,7 @@ BOOL COptionsPropertySheet::OnCommand(const WPARAM wParam, const LPARAM lParam)
         }
     }
 
-    return CMFCPropertySheet::OnCommand(wParam, lParam);
+    return CPropertySheet::OnCommand(wParam, lParam);
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -155,13 +155,13 @@ CWdsSplitterWnd::CWdsSplitterWnd(double* splitterPos) :
     m_wasTrackedByUser = (*splitterPos > 0 && *splitterPos < 1);
 }
 
-BEGIN_MESSAGE_MAP(CWdsSplitterWnd, CSplitterWndEx)
+BEGIN_MESSAGE_MAP(CWdsSplitterWnd, CSplitter)
     ON_WM_SIZE()
 END_MESSAGE_MAP()
 
 void CWdsSplitterWnd::StopTracking(const BOOL bAccept)
 {
-    CSplitterWndEx::StopTracking(bAccept);
+    CSplitter::StopTracking(bAccept);
 
     if (bAccept)
     {
@@ -269,7 +269,7 @@ void CWdsSplitterWnd::OnSize(const UINT nType, const int cx, const int cy)
             SetRowInfo(0, cyUpper, 0);
         }
     }
-    CSplitterWndEx::OnSize(nType, cx, cy);
+    CSplitter::OnSize(nType, cx, cy);
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -361,9 +361,9 @@ void CDeadFocusWnd::OnKeyDown(const UINT nChar, UINT /*nRepCnt*/, UINT /*nFlags*
 /////////////////////////////////////////////////////////////////////////////
 UINT CMainFrame::s_TaskBarMessage = ::RegisterWindowMessage(L"TaskbarButtonCreated");
 
-IMPLEMENT_DYNCREATE(CMainFrame, CFrameWndEx)
+IMPLEMENT_DYNCREATE(CMainFrame, CFrame)
 
-BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
+BEGIN_MESSAGE_MAP(CMainFrame, CFrame)
     ON_COMMAND(ID_CONFIGURE, OnConfigure)
     ON_COMMAND(ID_VIEW_SHOWFILETYPES, OnViewShowFileTypes)
     ON_COMMAND(ID_VIEW_SHOWTREEMAP, OnViewShowTreeMap)
@@ -631,7 +631,7 @@ void CMainFrame::SetStatusPaneText(const CDC& cdc, const int pos,
 
 int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 {
-    if (CFrameWndEx::OnCreate(lpCreateStruct) == -1)
+    if (CFrame::OnCreate(lpCreateStruct) == -1)
     {
         return -1;
     }
@@ -700,7 +700,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
         }
 
         CBitmap bitmap;
-        bitmap.Attach(LoadImage(AfxGetResourceHandle(),
+        bitmap.Attach(LoadImage(GetModuleHandle(nullptr),
             MAKEINTRESOURCE(bitmapId), IMAGE_BITMAP, imageSize, imageSize, LR_CREATEDIBSECTION));
         DarkMode::LightenBitmap(&bitmap);
         const int index = CMFCToolBar::GetImages()->AddImage(bitmap, TRUE);
@@ -764,7 +764,7 @@ void CMainFrame::OnClose()
     COptions::ShowToolBar = (m_wndToolBar.GetStyle() & WS_VISIBLE) != 0;
     COptions::ShowStatusBar = (m_wndStatusBar.GetStyle() & WS_VISIBLE) != 0;
 
-    CFrameWndEx::OnClose();
+    CFrame::OnClose();
 }
 
 void CMainFrame::OnDestroy()
@@ -781,7 +781,7 @@ void CMainFrame::OnDestroy()
     COptions::ShowTreeMap = GetTreeMapView()->IsShowTreeMap();
 
     // Close all artifacts and our child windows
-    CFrameWndEx::OnDestroy();
+    CFrame::OnDestroy();
 
     // Persist values at very end after all children have closed
     PersistedSetting::WritePersistedProperties();
@@ -815,7 +815,7 @@ BOOL CMainFrame::PreCreateWindow(CREATESTRUCT& cs)
     cs.style &= ~FWS_ADDTOTITLE;
     cs.lpszName = title.c_str();
 
-    if (!CFrameWndEx::PreCreateWindow(cs))
+    if (!CFrame::PreCreateWindow(cs))
     {
         return FALSE;
     }
@@ -901,7 +901,7 @@ void CMainFrame::OnTimer(const UINT_PTR nIDEvent)
         }
     }
 
-    CFrameWndEx::OnTimer(nIDEvent);
+    CFrame::OnTimer(nIDEvent);
 }
 
 LRESULT CMainFrame::OnCallbackRequest(WPARAM, const LPARAM lParam)
@@ -947,7 +947,7 @@ void CMainFrame::CopyToClipboard(const std::wstring & psz)
 
 void CMainFrame::OnInitMenuPopup(CMenu* pPopupMenu, const UINT nIndex, const BOOL bSysMenu)
 {
-    CFrameWndEx::OnInitMenuPopup(pPopupMenu, nIndex, bSysMenu);
+    CFrame::OnInitMenuPopup(pPopupMenu, nIndex, bSysMenu);
 
     if (const auto [explorerMenu, explorerMenuPos] = LocateNamedMenu(pPopupMenu,
         Localization::Lookup(IDS_MENU_EXPLORER_MENU), false); explorerMenu != nullptr)
@@ -1279,7 +1279,7 @@ void CMainFrame::OnUpdateEnableControl(CCmdUI* pCmdUI)
 
 void CMainFrame::OnSize(const UINT nType, const int cx, const int cy)
 {
-    CFrameWndEx::OnSize(nType, cx, cy);
+    CFrame::OnSize(nType, cx, cy);
 
     if (!IsWindow(m_wndStatusBar.m_hWnd))
     {
@@ -1412,21 +1412,21 @@ LRESULT CMainFrame::OnUahDrawMenu(WPARAM wParam, LPARAM lParam)
 void CMainFrame::OnNcPaint()
 {
     // Update the bottom of the menu bar that is not properly painted
-    CFrameWndEx::OnNcPaint();
+    CFrame::OnNcPaint();
     DarkMode::DrawMenuClientArea(*this);
 }
 
 BOOL CMainFrame::OnNcActivate(BOOL bActive)
 {
     // Update the bottom of the menu bar that is not properly painted
-    const auto ret = CFrameWndEx::OnNcActivate(bActive);
+    const auto ret = CFrame::OnNcActivate(bActive);
     DarkMode::DrawMenuClientArea(*this);
     return ret;
 }
 
 BOOL CMainFrame::LoadFrame(const UINT nIDResource, const DWORD dwDefaultStyle, CWnd* pParentWnd, CCreateContext* pContext)
 {
-    if (!CFrameWndEx::LoadFrame(nIDResource, dwDefaultStyle, pParentWnd, pContext))
+    if (!CFrame::LoadFrame(nIDResource, dwDefaultStyle, pParentWnd, pContext))
     {
         return FALSE;
     }

@@ -18,9 +18,9 @@
 #include "pch.h"
 #include "PageGeneral.h"
 
-IMPLEMENT_DYNAMIC(CPageGeneral, CMFCPropertyPage)
+IMPLEMENT_DYNAMIC(CPageGeneral, CPropertyPage)
 
-CPageGeneral::CPageGeneral() : CMFCPropertyPage(IDD) {}
+CPageGeneral::CPageGeneral() : CPropertyPage(IDD) {}
 
 COptionsPropertySheet* CPageGeneral::GetSheet() const
 {
@@ -31,7 +31,7 @@ COptionsPropertySheet* CPageGeneral::GetSheet() const
 
 void CPageGeneral::DoDataExchange(CDataExchange* pDX)
 {
-    CMFCPropertyPage::DoDataExchange(pDX);
+    CPropertyPage::DoDataExchange(pDX);
     DDX_Check(pDX, IDC_AUTO_ELEVATE, m_automaticallyElevateOnStartup);
     DDX_Check(pDX, IDC_COLUMN_AUTOSIZE, m_automaticallyResizeColumns);
     DDX_Check(pDX, IDC_CONTEXT_MENU, m_contextMenuIntegration);
@@ -45,7 +45,7 @@ void CPageGeneral::DoDataExchange(CDataExchange* pDX)
     DDX_Radio(pDX, IDC_DARK_MODE_DISABLED, m_darkModeRadio);
 }
 
-BEGIN_MESSAGE_MAP(CPageGeneral, CMFCPropertyPage)
+BEGIN_MESSAGE_MAP(CPageGeneral, CPropertyPage)
     ON_BN_CLICKED(IDC_AUTO_ELEVATE, OnBnClickedSetModified)
     ON_BN_CLICKED(IDC_COLUMN_AUTOSIZE, OnBnClickedSetModified)
     ON_BN_CLICKED(IDC_CONTEXT_MENU, OnBnClickedSetModified)
@@ -65,7 +65,7 @@ END_MESSAGE_MAP()
 HBRUSH CPageGeneral::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 {
     const HBRUSH brush = DarkMode::OnCtlColor(pDC, nCtlColor);
-    return brush ? brush : CMFCPropertyPage::OnCtlColor(pDC, pWnd, nCtlColor);
+    return brush ? brush : CPropertyPage::OnCtlColor(pDC, pWnd, nCtlColor);
 }
 bool CPageGeneral::IsContextMenuRegistered()
 {
@@ -113,7 +113,7 @@ bool CPageGeneral::SetContextMenuRegistration(bool enable)
 
 BOOL CPageGeneral::OnInitDialog()
 {
-    CMFCPropertyPage::OnInitDialog();
+    CPropertyPage::OnInitDialog();
 
     Localization::UpdateDialogs(*this);
     DarkMode::AdjustControls(GetSafeHwnd());
@@ -202,7 +202,7 @@ void CPageGeneral::OnOK()
     const LANGID id = static_cast<LANGID>(m_combo.GetItemData(m_combo.GetCurSel()));
     COptions::LanguageId = static_cast<int>(id);
 
-    CMFCPropertyPage::OnOK();
+    CPropertyPage::OnOK();
 }
 
 void CPageGeneral::OnBnClickedSetModified()

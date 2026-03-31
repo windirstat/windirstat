@@ -69,7 +69,7 @@ void ProcessMessagesUntilSignaled(const std::function<void()>& callback);
 void DisplayError(const std::wstring& error);
 std::wstring TranslateError(HRESULT hr = static_cast<HRESULT>(GetLastError()));
 bool ShellExecuteWrapper(const std::wstring& lpFile, const std::wstring& lpParameters = L"",
-        const std::wstring& lpVerb = L"", HWND hwnd = *AfxGetMainWnd(),
+        const std::wstring& lpVerb = L"", HWND hwnd = nullptr,
         const std::wstring& lpDirectory = L"", INT nShowCmd = SW_NORMAL);
 bool ExecuteCommandInConsole(const std::wstring& command, const std::wstring& title = L"");
 void SetMenuItem(CMenu* menu, int pos, bool enable, bool isCommand = false);

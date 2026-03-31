@@ -18,10 +18,10 @@
 #include "pch.h"
 #include "ProgressDlg.h"
 
-IMPLEMENT_DYNAMIC(CProgressDlg, CDialogEx)
+IMPLEMENT_DYNAMIC(CProgressDlg, CDialog)
 
 CProgressDlg::CProgressDlg(const size_t total, const bool noCancel, CWnd* pParent, std::function<void(CProgressDlg*)> task)
-    : CDialogEx(IDD, pParent)
+    : CDialog(IDD, pParent)
     , m_message(Localization::Lookup(IDS_PROGRESS))
     , m_task(std::move(task))
     , m_total(total)
@@ -29,7 +29,7 @@ CProgressDlg::CProgressDlg(const size_t total, const bool noCancel, CWnd* pParen
 {
 }
 
-BEGIN_MESSAGE_MAP(CProgressDlg, CDialogEx)
+BEGIN_MESSAGE_MAP(CProgressDlg, CDialog)
     ON_WM_TIMER()
     ON_WM_CTLCOLOR()
     ON_BN_CLICKED(IDCANCEL, OnCancel)
@@ -37,7 +37,7 @@ END_MESSAGE_MAP()
 
 void CProgressDlg::DoDataExchange(CDataExchange* pDX)
 {
-    CDialogEx::DoDataExchange(pDX);
+    CDialog::DoDataExchange(pDX);
     DDX_Control(pDX, IDC_PROGRESS_MESSAGE, m_messageCtrl);
     DDX_Control(pDX, IDC_PROGRESS_BAR, m_progressCtrl);
     DDX_Control(pDX, IDCANCEL, m_cancelButton);
@@ -45,7 +45,7 @@ void CProgressDlg::DoDataExchange(CDataExchange* pDX)
 
 BOOL CProgressDlg::OnInitDialog()
 {
-    CDialogEx::OnInitDialog();
+    CDialog::OnInitDialog();
 
     Localization::UpdateDialogs(*this);
     DarkMode::AdjustControls(GetSafeHwnd());
@@ -108,7 +108,7 @@ void CProgressDlg::OnTimer(UINT_PTR nIDEvent)
             m_message, FormatCount(m_current.load()), FormatCount(m_total));
         m_messageCtrl.SetWindowText(progressText.c_str());
     }
-    CDialogEx::OnTimer(nIDEvent);
+    CDialog::OnTimer(nIDEvent);
 }
 
 void CProgressDlg::OnCancel()
@@ -131,12 +131,12 @@ void CProgressDlg::OnCancel()
         m_workerThread.reset();
     }
 
-    CDialogEx::OnCancel();
+    CDialog::OnCancel();
 }
 
 INT_PTR CProgressDlg::DoModal()
 {
-    const INT_PTR result = CDialogEx::DoModal();
+    const INT_PTR result = CDialog::DoModal();
 
     // Clean up worker thread if still running
     if (m_workerThread.has_value())
@@ -151,5 +151,5 @@ INT_PTR CProgressDlg::DoModal()
 HBRUSH CProgressDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, const UINT nCtlColor)
 {
     const HBRUSH brush = DarkMode::OnCtlColor(pDC, nCtlColor);
-    return brush ? brush : CDialogEx::OnCtlColor(pDC, pWnd, nCtlColor);
+    return brush ? brush : CDialog::OnCtlColor(pDC, pWnd, nCtlColor);
 }

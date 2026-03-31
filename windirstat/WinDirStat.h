@@ -30,7 +30,7 @@ CIconHandler* GetIconHandler();
 // CDirStatApp. The MFC application object.
 // Knows about RAM Usage, Mount points, Help files and the CIconHandler.
 //
-class CDirStatApp final : public CWinAppEx
+class CDirStatApp final : public CWinApp
 {
     friend class CWinDirStatCommandLineInfo;
 

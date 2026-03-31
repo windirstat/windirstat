@@ -195,7 +195,7 @@ std::wstring CAboutDlg::GetAppVersion()
 
 void CAboutDlg::DoDataExchange(CDataExchange* pDX)
 {
-    CDialogEx::DoDataExchange(pDX);
+    CDialog::DoDataExchange(pDX);
     DDX_Control(pDX, IDC_CAPTION, m_caption);
     DDX_Control(pDX, IDC_TAB, m_tab);
 }

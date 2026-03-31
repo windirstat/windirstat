@@ -24,7 +24,7 @@ class COptionsPropertySheet;
 //
 // CPageGeneral. "Settings" property page "General".
 //
-class CPageGeneral final : public CMFCPropertyPage
+class CPageGeneral final : public CPropertyPage
 {
     DECLARE_DYNAMIC(CPageGeneral)
 

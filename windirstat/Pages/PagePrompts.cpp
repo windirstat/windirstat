@@ -18,9 +18,9 @@
 #include "pch.h"
 #include "PagePrompts.h"
 
-IMPLEMENT_DYNAMIC(CPagePrompts, CMFCPropertyPage)
+IMPLEMENT_DYNAMIC(CPagePrompts, CPropertyPage)
 
-CPagePrompts::CPagePrompts() : CMFCPropertyPage(IDD) {}
+CPagePrompts::CPagePrompts() : CPropertyPage(IDD) {}
 
 COptionsPropertySheet* CPagePrompts::GetSheet() const
 {
@@ -31,14 +31,14 @@ COptionsPropertySheet* CPagePrompts::GetSheet() const
 
 void CPagePrompts::DoDataExchange(CDataExchange* pDX)
 {
-    CMFCPropertyPage::DoDataExchange(pDX);
+    CPropertyPage::DoDataExchange(pDX);
     DDX_Check(pDX, IDC_DELETION_WARNING, m_showDeleteWarning);
     DDX_Check(pDX, IDC_ELEVATION_PROMPT, m_showElevationPrompt);
     DDX_Check(pDX, IDC_CLOUD_LINKS_WARNING, m_showDupeDetectionCloudLinksWarning);
     DDX_Check(pDX, IDC_SHOW_MICROSOFT_PROGRESS, m_showMicrosoftProgress);
 }
 
-BEGIN_MESSAGE_MAP(CPagePrompts, CMFCPropertyPage)
+BEGIN_MESSAGE_MAP(CPagePrompts, CPropertyPage)
     ON_BN_CLICKED(IDC_DELETION_WARNING, OnBnClickedSetModified)
     ON_BN_CLICKED(IDC_ELEVATION_PROMPT, OnBnClickedSetModified)
     ON_BN_CLICKED(IDC_CLOUD_LINKS_WARNING, OnBnClickedSetModified)
@@ -49,12 +49,12 @@ END_MESSAGE_MAP()
 HBRUSH CPagePrompts::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 {
     const HBRUSH brush = DarkMode::OnCtlColor(pDC, nCtlColor);
-    return brush ? brush : CMFCPropertyPage::OnCtlColor(pDC, pWnd, nCtlColor);
+    return brush ? brush : CPropertyPage::OnCtlColor(pDC, pWnd, nCtlColor);
 }
 
 BOOL CPagePrompts::OnInitDialog()
 {
-    CMFCPropertyPage::OnInitDialog();
+    CPropertyPage::OnInitDialog();
 
     Localization::UpdateDialogs(*this);
     DarkMode::AdjustControls(GetSafeHwnd());
@@ -77,7 +77,7 @@ void CPagePrompts::OnOK()
     COptions::ShowDupeDetectionCloudLinksWarning = (FALSE != m_showDupeDetectionCloudLinksWarning);
     COptions::ShowMicrosoftProgress = (FALSE != m_showMicrosoftProgress);
 
-    CMFCPropertyPage::OnOK();
+    CPropertyPage::OnOK();
 }
 
 void CPagePrompts::OnBnClickedSetModified()

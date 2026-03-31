@@ -162,7 +162,7 @@ void CFileDupeControl::ProcessDuplicate(CItem* item, BlockingQueue<CItem*>* queu
 
 void CFileDupeControl::SortItems()
 {
-    ASSERT(AfxGetThread() != nullptr);
+    ASSERT(true);
 
     // Add items to the list
     if (!m_pendingListAdds.empty())

@@ -18,9 +18,9 @@
 #include "pch.h"
 #include "PageAdvanced.h"
 
-IMPLEMENT_DYNAMIC(CPageAdvanced, CMFCPropertyPage)
+IMPLEMENT_DYNAMIC(CPageAdvanced, CPropertyPage)
 
-CPageAdvanced::CPageAdvanced() : CMFCPropertyPage(IDD) {}
+CPageAdvanced::CPageAdvanced() : CPropertyPage(IDD) {}
 
 COptionsPropertySheet* CPageAdvanced::GetSheet() const
 {
@@ -29,7 +29,7 @@ COptionsPropertySheet* CPageAdvanced::GetSheet() const
 
 void CPageAdvanced::DoDataExchange(CDataExchange* pDX)
 {
-    CMFCPropertyPage::DoDataExchange(pDX);
+    CPropertyPage::DoDataExchange(pDX);
     DDX_Check(pDX, IDC_EXCLUDE_VOLUME_MOUNT_POINTS, m_excludeVolumeMountPoints);
     DDX_Check(pDX, IDC_EXCLUDE_JUNCTIONS, m_excludeJunctions);
     DDX_Check(pDX, IDC_EXCLUDE_SYMLINKS_DIRECTORY, m_excludeSymbolicLinksDirectory);
@@ -46,7 +46,7 @@ void CPageAdvanced::DoDataExchange(CDataExchange* pDX)
     DDX_CBIndex(pDX, IDC_COMBO_THREADS, m_scanningThreads);
 }
 
-BEGIN_MESSAGE_MAP(CPageAdvanced, CMFCPropertyPage)
+BEGIN_MESSAGE_MAP(CPageAdvanced, CPropertyPage)
     ON_BN_CLICKED(IDC_BACKUP_RESTORE, OnSettingChanged)
     ON_BN_CLICKED(IDC_EXCLUDE_HIDDEN_DIRECTORY, OnSettingChanged)
     ON_BN_CLICKED(IDC_EXCLUDE_PROTECTED_DIRECTORY, OnSettingChanged)
@@ -68,12 +68,12 @@ END_MESSAGE_MAP()
 HBRUSH CPageAdvanced::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 {
     const HBRUSH brush = DarkMode::OnCtlColor(pDC, nCtlColor);
-    return brush ? brush : CMFCPropertyPage::OnCtlColor(pDC, pWnd, nCtlColor);
+    return brush ? brush : CPropertyPage::OnCtlColor(pDC, pWnd, nCtlColor);
 }
 
 BOOL CPageAdvanced::OnInitDialog()
 {
-    CMFCPropertyPage::OnInitDialog();
+    CPropertyPage::OnInitDialog();
 
     Localization::UpdateDialogs(*this);
 
@@ -144,7 +144,7 @@ void CPageAdvanced::OnOK()
     }
 
     CDirStatDoc::Get()->UpdateAllViews(nullptr, HINT_LISTSTYLECHANGED);
-    CMFCPropertyPage::OnOK();
+    CPropertyPage::OnOK();
 }
 
 void CPageAdvanced::OnSettingChanged()

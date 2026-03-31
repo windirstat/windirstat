@@ -35,7 +35,7 @@ SearchDlg::SearchDlg(CWnd* pParent /*=nullptr*/)
 
 void SearchDlg::DoDataExchange(CDataExchange* pDX)
 {
-    CDialogEx::DoDataExchange(pDX);
+    CDialog::DoDataExchange(pDX);
     DDX_Check(pDX, IDC_SEARCH_WHOLE_PHRASE, m_searchWholePhrase);
     DDX_Check(pDX, IDC_SEARCH_CASE, m_searchCase);
     DDX_Check(pDX, IDC_SEARCH_REGEX, m_searchRegex);
@@ -53,7 +53,7 @@ END_MESSAGE_MAP()
 
 BOOL SearchDlg::OnInitDialog()
 {
-    CDialogEx::OnInitDialog();
+    CDialog::OnInitDialog();
 
     Localization::UpdateDialogs(*this);
     DarkMode::AdjustControls(GetSafeHwnd());
@@ -119,5 +119,5 @@ void SearchDlg::OnChangeSearchTerm()
 HBRUSH SearchDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, const UINT nCtlColor)
 {
     const HBRUSH brush = DarkMode::OnCtlColor(pDC, nCtlColor);
-    return brush ? brush : CDialogEx::OnCtlColor(pDC, pWnd, nCtlColor);
+    return brush ? brush : CDialog::OnCtlColor(pDC, pWnd, nCtlColor);
 }

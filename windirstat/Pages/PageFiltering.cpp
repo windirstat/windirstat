@@ -18,9 +18,9 @@
 #include "pch.h"
 #include "PageFiltering.h"
 
-IMPLEMENT_DYNAMIC(CPageFiltering, CMFCPropertyPage)
+IMPLEMENT_DYNAMIC(CPageFiltering, CPropertyPage)
 
-CPageFiltering::CPageFiltering() : CMFCPropertyPage(IDD) {}
+CPageFiltering::CPageFiltering() : CPropertyPage(IDD) {}
 
 COptionsPropertySheet* CPageFiltering::GetSheet() const
 {
@@ -29,7 +29,7 @@ COptionsPropertySheet* CPageFiltering::GetSheet() const
 
 void CPageFiltering::DoDataExchange(CDataExchange* pDX)
 {
-    CMFCPropertyPage::DoDataExchange(pDX);
+    CPropertyPage::DoDataExchange(pDX);
     DDX_Text(pDX, IDC_FILTERING_EXCLUDE_DIRS, m_filteringExcludeDirs);
     DDX_Text(pDX, IDC_FILTERING_EXCLUDE_FILES, m_filteringExcludeFiles);
     DDX_Text(pDX, IDC_FILTERING_SIZE_MIN, m_filteringSizeMinimum);
@@ -40,7 +40,7 @@ void CPageFiltering::DoDataExchange(CDataExchange* pDX)
     DDX_CBIndex(pDX, IDC_FILTERING_MIN_UNITS, m_filteringSizeUnits);
 }
 
-BEGIN_MESSAGE_MAP(CPageFiltering, CMFCPropertyPage)
+BEGIN_MESSAGE_MAP(CPageFiltering, CPropertyPage)
     ON_EN_CHANGE(IDC_FILTERING_EXCLUDE_DIRS, OnSettingChanged)
     ON_EN_CHANGE(IDC_FILTERING_EXCLUDE_FILES, OnSettingChanged)
     ON_BN_CLICKED(IDC_FILTERING_USE_REGEX, OnSettingChanged)
@@ -53,12 +53,12 @@ END_MESSAGE_MAP()
 HBRUSH CPageFiltering::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 {
     const HBRUSH brush = DarkMode::OnCtlColor(pDC, nCtlColor);
-    return brush ? brush : CMFCPropertyPage::OnCtlColor(pDC, pWnd, nCtlColor);
+    return brush ? brush : CPropertyPage::OnCtlColor(pDC, pWnd, nCtlColor);
 }
 
 BOOL CPageFiltering::OnInitDialog()
 {
-    CMFCPropertyPage::OnInitDialog();
+    CPropertyPage::OnInitDialog();
 
     Localization::UpdateDialogs(*this);
 
@@ -129,7 +129,7 @@ void CPageFiltering::OnOK()
     COptions::FilteringExcludeDirs.Obj() = m_filteringExcludeDirs;
     COptions::CompileFilters();
 
-    CMFCPropertyPage::OnOK();
+    CPropertyPage::OnOK();
 }
 
 void CPageFiltering::OnSettingChanged()
@@ -143,6 +143,6 @@ BOOL CPageFiltering::PreTranslateMessage(MSG* pMsg)
 {
     m_toolTip.RelayEvent(pMsg);
 
-    return CMFCPropertyPage::PreTranslateMessage(pMsg);
+    return CPropertyPage::PreTranslateMessage(pMsg);
 }
 

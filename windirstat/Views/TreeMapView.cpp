@@ -348,7 +348,7 @@ void CTreeMapView::OnLButtonDblClk(UINT nFlags, CPoint point)
     if (CItem* item = ResolveItemAtPoint(point); item && item != CDirStatDoc::Get()->GetZoomItem())
     {
         CDirStatDoc::Get()->UpdateAllViews(this, HINT_SELECTIONACTION, item);
-        AfxGetMainWnd()->SendMessage(WM_COMMAND, ID_TREEMAP_ZOOMIN);
+        CMainFrame::Get()->SendMessage(WM_COMMAND, ID_TREEMAP_ZOOMIN);
     }
     CView::OnLButtonDblClk(nFlags, point);
 }
@@ -515,8 +515,8 @@ void CTreeMapView::OnContextMenu(CWnd* /*pWnd*/, const CPoint point)
             UINT cmdId = 0;
             do {
                 cmdId = sub->TrackPopupMenu(TPM_LEFTALIGN | TPM_LEFTBUTTON | TPM_RIGHTBUTTON | TPM_RETURNCMD,
-                    point.x, point.y, AfxGetMainWnd());
-                if (cmdId > 0) AfxGetMainWnd()->SendMessage(WM_COMMAND, cmdId);
+                    point.x, point.y, CMainFrame::Get());
+                if (cmdId > 0) CMainFrame::Get()->SendMessage(WM_COMMAND, cmdId);
             } while (cmdId > 0 && IsContextMenuPersistent(cmdId));
         }
     }
