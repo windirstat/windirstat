@@ -200,8 +200,8 @@ int CItem::CompareSibling(const CTreeListItem* tlib, const int subitem) const
     // Show <Free Space> <Unknown> and <Hardlinks> on top or bottom in a fixed order if the option is enabled
     if (COptions::PinDriveStatsOnTop)
     {
-        const bool thisIsStat = this->IsTypeOrFlag(IT_FREESPACE, IT_UNKNOWN);
-        const bool otherIsStat = other->IsTypeOrFlag(IT_FREESPACE, IT_UNKNOWN);
+        const bool thisIsStat = this->IsTypeOrFlag(IT_FREESPACE | IT_UNKNOWN | IT_HLINKS);
+        const bool otherIsStat = other->IsTypeOrFlag(IT_FREESPACE | IT_UNKNOWN | IT_HLINKS);
 
         if (thisIsStat || otherIsStat)
         {
@@ -212,8 +212,8 @@ int CItem::CompareSibling(const CTreeListItem* tlib, const int subitem) const
 
             if (this->GetItemType() != other->GetItemType())
             {
-                const bool isThisFreeSpace = (this->GetItemType() == IT_FREESPACE);
-                return isThisFreeSpace ? (flipToTop ? -1 : 1) : (flipToTop ? 1 : -1);
+                return flipToTop ? usignum(this->GetItemType(), other->GetItemType()) :
+                    usignum(other->GetItemType(), this->GetItemType());
             }
 
             return 0;
