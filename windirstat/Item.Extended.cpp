@@ -195,36 +195,44 @@ COLORREF CItem::GetItemTextColor() const
 int CItem::CompareSibling(const CTreeListItem* tlib, const int subitem) const
 {
     const CItem* other = reinterpret_cast<const CItem*>(tlib);
-    const bool flipToTop = (subitem == COL_NAME || subitem == COL_LAST_CHANGE);
 
-    // Show <Free Space> <Unknown> and <Hardlinks> on top or bottom in a fixed order if the option is enabled
-    if (COptions::PinDriveStatsOnTop)
+    // Isolate drive stats and folder grouping logic to reduce performance impact when disabled
+    if (COptions::PinDriveStatsOnTop || COptions::GroupFoldersBeforeFiles)
     {
-        const bool thisIsStat = this->IsTypeOrFlag(IT_FREESPACE | IT_UNKNOWN | IT_HLINKS);
-        const bool otherIsStat = other->IsTypeOrFlag(IT_FREESPACE | IT_UNKNOWN | IT_HLINKS);
+        // Define a mask for drive stats types to simplify checks below
+        constexpr ITEMTYPE driveStatsMask = (IT_FREESPACE | IT_UNKNOWN | IT_HLINKS);
+        // Handle sorting direction for name and last change columns which sort in ascending order by default
+        const bool isAscendingSort = (subitem == COL_NAME || subitem == COL_LAST_CHANGE);
 
-        if (thisIsStat || otherIsStat)
+        // Show <Free Space> <Unknown> and <Hardlinks> on top or bottom in a fixed order if the option is enabled
+        if (COptions::PinDriveStatsOnTop)
         {
-            if (thisIsStat != otherIsStat)
-            {
-                return (thisIsStat) ? (flipToTop ? -1 : 1) : (flipToTop ? 1 : -1);
-            }
+            const bool thisIsStat = this->IsTypeOrFlag(driveStatsMask);
+            const bool otherIsStat = other->IsTypeOrFlag(driveStatsMask);
 
-            if (this->GetItemType() != other->GetItemType())
+            if (thisIsStat || otherIsStat)
             {
-                return flipToTop ? usignum(this->GetItemType(), other->GetItemType()) :
-                    usignum(other->GetItemType(), this->GetItemType());
-            }
+                if (thisIsStat != otherIsStat)
+                {
+                    return (thisIsStat) ? (isAscendingSort ? -1 : 1) : (isAscendingSort ? 1 : -1);
+                }
 
-            return 0;
+                if (this->GetItemType() != other->GetItemType())
+                {
+                    return isAscendingSort ? usignum(this->GetItemType(), other->GetItemType()) :
+                        usignum(other->GetItemType(), this->GetItemType());
+                }
+
+                return 0;
+            }
         }
-    }
 
-    // Group folders before files if the option is enabled and the item types differ
-    if (COptions::GroupFoldersBeforeFiles && (this->GetItemType() != other->GetItemType()))
-    {
-        return flipToTop ? usignum(this->GetItemType(), other->GetItemType()) :
-            usignum(other->GetItemType(), this->GetItemType());
+        // Group folders before files if the option is enabled and the item types differ
+        if (COptions::GroupFoldersBeforeFiles && (this->GetItemType() != other->GetItemType()))
+        {
+            return isAscendingSort ? usignum(this->GetItemType(), other->GetItemType()) :
+                usignum(other->GetItemType(), this->GetItemType());
+        }
     }
 
     switch (subitem)
