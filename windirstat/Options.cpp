@@ -78,16 +78,16 @@ Setting<bool> COptions::UseDrawTextCache(OptionsGeneral, L"UseDrawTextCache", tr
 Setting<bool> COptions::UseFastScanEngine(OptionsGeneral, L"UseFastScanEngine", true);
 Setting<bool> COptions::UseWindowsLocaleSetting(OptionsGeneral, L"UseWindowsLocaleSetting", true);
 Setting<bool> COptions::ProcessHardlinks(OptionsGeneral, L"ProcessHardlinks", true);
-Setting<COLORREF> COptions::FileTreeColor0(OptionsFileTree, L"FileTreeColor0", RGB(64, 64, 140));
-Setting<COLORREF> COptions::FileTreeColor1(OptionsFileTree, L"FileTreeColor1", RGB(140, 64, 64));
-Setting<COLORREF> COptions::FileTreeColor2(OptionsFileTree, L"FileTreeColor2", RGB(64, 140, 64));
-Setting<COLORREF> COptions::FileTreeColor3(OptionsFileTree, L"FileTreeColor3", RGB(140, 140, 64));
-Setting<COLORREF> COptions::FileTreeColor4(OptionsFileTree, L"FileTreeColor4", RGB(0, 0, 255));
-Setting<COLORREF> COptions::FileTreeColor5(OptionsFileTree, L"FileTreeColor5", RGB(255, 0, 0));
-Setting<COLORREF> COptions::FileTreeColor6(OptionsFileTree, L"FileTreeColor6", RGB(0, 255, 0));
-Setting<COLORREF> COptions::FileTreeColor7(OptionsFileTree, L"FileTreeColor7", RGB(255, 255, 0));
+Setting<COLORREF> COptions::FileTreeColor0(OptionsFileTree, L"FileTreeColor0", RGB(66,  133, 244));  // Google Blue
+Setting<COLORREF> COptions::FileTreeColor1(OptionsFileTree, L"FileTreeColor1", RGB(219, 68,  55));   // Material Red
+Setting<COLORREF> COptions::FileTreeColor2(OptionsFileTree, L"FileTreeColor2", RGB(15,  157, 88));   // Material Green
+Setting<COLORREF> COptions::FileTreeColor3(OptionsFileTree, L"FileTreeColor3", RGB(244, 160, 0));    // Material Amber
+Setting<COLORREF> COptions::FileTreeColor4(OptionsFileTree, L"FileTreeColor4", RGB(171, 71,  188));  // Material Purple
+Setting<COLORREF> COptions::FileTreeColor5(OptionsFileTree, L"FileTreeColor5", RGB(0,   172, 193));  // Material Cyan
+Setting<COLORREF> COptions::FileTreeColor6(OptionsFileTree, L"FileTreeColor6", RGB(255, 112, 67));   // Material Deep Orange
+Setting<COLORREF> COptions::FileTreeColor7(OptionsFileTree, L"FileTreeColor7", RGB(38,  166, 154));  // Material Teal
 Setting<COLORREF> COptions::TreeMapGridColor(OptionsTreeMap, L"TreeMapGridColor", CTreeMap::GetDefaults().gridColor);
-Setting<COLORREF> COptions::TreeMapHighlightColor(OptionsTreeMap, L"TreeMapHighlightColor", RGB(255, 255, 255));
+Setting<COLORREF> COptions::TreeMapHighlightColor(OptionsTreeMap, L"TreeMapHighlightColor", RGB(255, 220, 80));  // Warm gold highlight
 Setting<double> COptions::MainSplitterPos(OptionsGeneral, L"MainSplitterPos", -1.0, 0.0, 1.0);
 Setting<double> COptions::SubSplitterPos(OptionsGeneral, L"SubSplitterPos", -1.0, 0.0, 1.0);
 Setting<int> COptions::ConfigPage(OptionsGeneral, L"ConfigPage", 0);

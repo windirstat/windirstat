@@ -75,26 +75,26 @@ void DarkMode::SetAppDarkMode() noexcept
         OriginalColors[i] = GetSysColor(i);
     }
 
-    // Setup dark mode colors
+    // Setup dark mode colors (VS Code-inspired dark theme)
     DarkModeColors = OriginalColors;
-    DarkModeColors[CTLCOLOR_DLG] = RGB(40, 40, 40);
-    DarkModeColors[CTLCOLOR_STATIC] = RGB(40, 40, 40);
-    DarkModeColors[CTLCOLOR_EDIT] = RGB(32, 32, 32);
-    DarkModeColors[CTLCOLOR_LISTBOX] = RGB(32, 32, 32);
-    DarkModeColors[COLOR_3DHIGHLIGHT] = RGB(70, 70, 70);
-    DarkModeColors[COLOR_3DLIGHT] = RGB(60, 60, 60);
-    DarkModeColors[COLOR_3DSHADOW] = RGB(20, 20, 20);
-    DarkModeColors[COLOR_BACKGROUND] = RGB(25, 25, 25);
-    DarkModeColors[COLOR_BTNFACE] = RGB(45, 45, 45);
-    DarkModeColors[COLOR_BTNTEXT] = RGB(220, 220, 220);
-    DarkModeColors[COLOR_GRAYTEXT] = RGB(120, 120, 120);
-    DarkModeColors[COLOR_HIGHLIGHT] = RGB(0, 120, 215);
+    DarkModeColors[CTLCOLOR_DLG] = RGB(37, 37, 38);      // VS Code sidebar background
+    DarkModeColors[CTLCOLOR_STATIC] = RGB(37, 37, 38);   // VS Code sidebar background
+    DarkModeColors[CTLCOLOR_EDIT] = RGB(30, 30, 30);     // VS Code editor background
+    DarkModeColors[CTLCOLOR_LISTBOX] = RGB(30, 30, 30);  // VS Code editor background
+    DarkModeColors[COLOR_3DHIGHLIGHT] = RGB(68, 68, 74); // Subtle highlight
+    DarkModeColors[COLOR_3DLIGHT] = RGB(58, 58, 64);     // Subtle light surface
+    DarkModeColors[COLOR_3DSHADOW] = RGB(20, 20, 22);    // Deep shadow
+    DarkModeColors[COLOR_BACKGROUND] = RGB(22, 22, 24);  // Near-black background
+    DarkModeColors[COLOR_BTNFACE] = RGB(45, 45, 51);     // Button face (slightly cool)
+    DarkModeColors[COLOR_BTNTEXT] = RGB(204, 204, 204);  // VS Code foreground #CCCCCC
+    DarkModeColors[COLOR_GRAYTEXT] = RGB(96, 96, 106);   // Muted text
+    DarkModeColors[COLOR_HIGHLIGHT] = RGB(0, 120, 215);  // Windows 10 accent blue
     DarkModeColors[COLOR_HIGHLIGHTTEXT] = RGB(255, 255, 255);
-    DarkModeColors[COLOR_MENU] = RGB(35, 35, 35);
-    DarkModeColors[COLOR_MENUBAR] = RGB(30, 30, 30);
-    DarkModeColors[COLOR_WINDOW] = RGB(32, 32, 32);
-    DarkModeColors[COLOR_WINDOWFRAME] = RGB(50, 50, 50);
-    DarkModeColors[COLOR_WINDOWTEXT] = RGB(220, 220, 220);
+    DarkModeColors[COLOR_MENU] = RGB(37, 37, 38);        // Menu background
+    DarkModeColors[COLOR_MENUBAR] = RGB(50, 50, 56);     // Menu bar (slightly lighter)
+    DarkModeColors[COLOR_WINDOW] = RGB(30, 30, 30);      // VS Code editor #1E1E1E
+    DarkModeColors[COLOR_WINDOWFRAME] = RGB(62, 62, 70); // VS Code panel border
+    DarkModeColors[COLOR_WINDOWTEXT] = RGB(204, 204, 204); // VS Code foreground #CCCCCC
 
     // Update colors
     SetupGlobalColors();

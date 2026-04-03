@@ -218,35 +218,35 @@ protected:
     static constexpr Options DefaultOptions = {
         .style = KDirStatStyle,
         .grid = false,
-        .gridColor = RGB(0, 0, 0),
-        .brightness = 0.88,
-        .height = 0.38,
+        .gridColor = RGB(24, 24, 24),  // Subtle dark grid instead of pure black
+        .brightness = 0.90,            // Slightly more vibrant
+        .height = 0.40,                // Slightly deeper 3D cushions
         .scaleFactor = 0.91,
-        .ambientLight = 0.13,
+        .ambientLight = 0.15,          // Slightly softer shadows
         .lightSourceX = -1.0,
         .lightSourceY = -1.0
     };
 
     // Standard palette for WinDirStat
     static constexpr COLORREF DefaultCushionColors[] = {
-        RGB(  0,   0, 255),  // Blue
-        RGB(255,   0,   0),  // Red
-        RGB(  0, 255,   0),  // Green
-        RGB(255, 255,   0),  // Yellow
-        RGB(  0, 255, 255),  // Cyan
-        RGB(255,   0, 255),  // Magenta
-        RGB(255, 170,   0),  // Orange
-        RGB(  0,  85, 255),  // Dodger Blue
-        RGB(255,   0,  85),  // Hot Pink
-        RGB( 85, 255,   0),  // Lime Green
-        RGB(170,   0, 255),  // Violet
-        RGB(  0, 255,  85),  // Spring Green
-        RGB(255,   0, 170),  // Deep Pink
-        RGB(  0, 170, 255),  // Sky Blue
-        RGB(255,  85,   0),  // Orange Red
-        RGB(  0, 255, 170),  // Aquamarine
-        RGB( 85,   0, 255),  // Indigo
-        RGB(255, 255, 255),  // White
+        RGB( 66, 133, 244),  // Google Blue
+        RGB(219,  68,  55),  // Material Red
+        RGB( 15, 157,  88),  // Material Green
+        RGB(244, 160,   0),  // Material Amber
+        RGB(171,  71, 188),  // Material Purple
+        RGB(  0, 172, 193),  // Material Cyan
+        RGB(255, 112,  67),  // Material Deep Orange
+        RGB( 38, 166, 154),  // Material Teal
+        RGB(240,  98, 146),  // Material Pink
+        RGB(124, 179,  66),  // Material Light Green
+        RGB(255, 193,   7),  // Material Yellow
+        RGB( 41, 182, 246),  // Material Light Blue
+        RGB(255, 138,  80),  // Material Orange Light
+        RGB(149, 117, 205),  // Material Deep Purple Light
+        RGB( 77, 208, 225),  // Material Cyan Light
+        RGB(174, 213,  90),  // Material Lime
+        RGB(229, 115, 115),  // Material Red Light
+        RGB(100, 181, 246),  // Material Blue Light
     };
 
     CRect m_renderArea;
