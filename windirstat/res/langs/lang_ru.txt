@@ -100,6 +100,7 @@ IDS_MENU_EXPLORER_SELECT=Открыть в проводнике
 IDS_MENU_FILE_TYPES=Показывать типы файлов
 IDS_MENU_FILE=Файл
 IDS_MENU_FREE_SPACE=Показывать свободное место
+IDS_MENU_GROUPFOLDERSBEFOREFILES=&Группировать папки перед файлами
 IDS_MENU_HELP_ABOUT=О WinDirStat...
 IDS_MENU_HELP_REPORT=Послать сообщение об ошибке или отзыв...
 IDS_MENU_HELP=Помощь

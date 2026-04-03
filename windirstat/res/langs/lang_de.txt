@@ -100,6 +100,7 @@ IDS_MENU_EXPLORER_SELECT=&Explorer hier starten
 IDS_MENU_FILE_TYPES=&Dateityp-Liste anzeigen
 IDS_MENU_FILE=&Datei
 IDS_MENU_FREE_SPACE=&Freien Platz anzeigen
+IDS_MENU_GROUPFOLDERSBEFOREFILES=&Ordner vor Dateien gruppieren
 IDS_MENU_HELP_ABOUT=&Über WinDirStat...
 IDS_MENU_HELP_REPORT=&Fehlerbericht/Feedback senden...
 IDS_MENU_HELP=&Hilfe

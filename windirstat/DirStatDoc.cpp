@@ -1054,7 +1054,33 @@ BEGIN_MESSAGE_MAP(CDirStatDoc, CDocument)
     ON_UPDATE_COMMAND_UI(ID_INDICATOR_SIZE, OnUpdateCentralHandler)    
     ON_UPDATE_COMMAND_UI(ID_CLEANUP_DISK_CLEANUP, OnUpdateCentralHandler)
     ON_COMMAND_RANGE(CONTENT_MENU_MINCMD, CONTENT_MENU_MAXCMD, OnContextMenuExplore)
+    ON_COMMAND(ID_GROUPFOLDERSBEFOREFILES, &CDirStatDoc::OnGroupFoldersBeforeFiles)
+    ON_UPDATE_COMMAND_UI(ID_GROUPFOLDERSBEFOREFILES, &CDirStatDoc::OnUpdateGroupFoldersBeforeFiles)
+    ON_COMMAND(ID_PINDRIVESTATSONTOP, OnPinDriveStatsOnTop)
+    ON_UPDATE_COMMAND_UI(ID_PINDRIVESTATSONTOP, OnUpdatePinDriveStatsOnTop)
 END_MESSAGE_MAP()
+
+void CDirStatDoc::OnGroupFoldersBeforeFiles()
+{
+    COptions::GroupFoldersBeforeFiles = !COptions::GroupFoldersBeforeFiles;
+    UpdateAllViews(nullptr, HINT_SORTORDERCHANGED);
+}
+
+void CDirStatDoc::OnUpdateGroupFoldersBeforeFiles(CCmdUI* pCmdUI)
+{
+    pCmdUI->SetCheck(COptions::GroupFoldersBeforeFiles);
+}
+
+void CDirStatDoc::OnPinDriveStatsOnTop()
+{
+    COptions::PinDriveStatsOnTop = !COptions::PinDriveStatsOnTop;
+    UpdateAllViews(nullptr, HINT_SORTORDERCHANGED);
+}
+
+void CDirStatDoc::OnUpdatePinDriveStatsOnTop(CCmdUI * pCmdUI)
+{
+    pCmdUI->SetCheck(COptions::PinDriveStatsOnTop);
+}
 
 void CDirStatDoc::OnCleanupSparsifyFile()
 {

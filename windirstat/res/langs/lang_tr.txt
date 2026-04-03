@@ -100,6 +100,7 @@ IDS_MENU_EXPLORER_SELECT=Dosya Gezgininde Seç...
 IDS_MENU_FILE_TYPES=Dosya Türlerini Göster
 IDS_MENU_FILE=&Dosya
 IDS_MENU_FREE_SPACE=Boş Alanı Göster
+IDS_MENU_GROUPFOLDERSBEFOREFILES=&Klasörleri dosyalardan önce grupla
 IDS_MENU_HELP_ABOUT=&Hakkında
 IDS_MENU_HELP_REPORT=&Bug Bildir/Geri Bildirim Yap...
 IDS_MENU_HELP=&Yardım

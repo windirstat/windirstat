@@ -100,6 +100,7 @@ IDS_MENU_EXPLORER_SELECT=Välj i Utforskar&en...
 IDS_MENU_FILE_TYPES=Visa fil&typer
 IDS_MENU_FILE=&Fil
 IDS_MENU_FREE_SPACE=Visa ledigt utry&mme
+IDS_MENU_GROUPFOLDERSBEFOREFILES=&Gruppera mappar före filer
 IDS_MENU_HELP_ABOUT=&Om
 IDS_MENU_HELP_REPORT=&Rapportera fel/Återkoppling...
 IDS_MENU_HELP=&Hjälp
