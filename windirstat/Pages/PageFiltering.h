@@ -40,19 +40,19 @@ protected:
     BOOL OnInitDialog() override;
     void OnOK() override;
     void SetToolTips();
-    void UpdateModifiedWithinDaysControls();
+    void UpdateModifiedDaysControls();
 
     int m_filteringSizeMinimum = 0;
     int m_filteringSizeUnits = 0;
-    int m_filteringModifiedWithinDays = 1;
+    int m_filteringModifiedDays = 1;
     BOOL m_filteringUseRegex = FALSE;
-    BOOL m_filteringUseModifiedWithinDays = FALSE;
+    BOOL m_filteringUseModifiedDays = FALSE;
     CString m_filteringExcludeDirs;
     CString m_filteringExcludeFiles;
     CComboBox m_ctlFilteringSizeUnits;
     CEdit m_ctrlFilteringExcludeFiles;
     CEdit m_ctrlFilteringExcludeDirs;
-    CEdit m_ctrlFilteringModifiedWithinDays;
+    CEdit m_ctrlFilteringModifiedDays;
     CToolTipCtrl m_toolTip;
 
     DECLARE_MESSAGE_MAP()
