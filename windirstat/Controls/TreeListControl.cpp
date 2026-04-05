@@ -369,7 +369,6 @@ int CTreeListControl::FindTreeItem(const CTreeListItem* item) const
 }
 
 BEGIN_MESSAGE_MAP(CTreeListControl, CWdsListControl)
-    ON_NOTIFY_REFLECT(LVN_ITEMCHANGING, OnLvnItemChangingList)
     ON_WM_CONTEXTMENU()
     ON_WM_LBUTTONDOWN()
     ON_WM_KEYDOWN()
@@ -762,40 +761,34 @@ void CTreeListControl::OnKeyDown(const UINT nChar, const UINT nRepCnt, const UIN
     CWdsListControl::OnKeyDown(nChar, nRepCnt, nFlags);
 }
 
-void CTreeListControl::OnLvnItemChangingList(NMHDR* pNMHDR, LRESULT* pResult)
+LRESULT CTreeListControl::OnSelectionChanged(WPARAM wParam, LPARAM lParam)
 {
-    const auto pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
-
-    // determine if a new selection is being made
-    const bool requestingSelection =
-        (pNMLV->uOldState & LVIS_SELECTED) == 0 &&
-        (pNMLV->uNewState & LVIS_SELECTED) != 0;
-
-    // if in shift-extend mode, prevent selecting of non-adjacent nodes
-    if (IsShiftKeyDown() && requestingSelection)
+    const auto selectedItems = GetAllSelected(true);
+    if (selectedItems.size() >= 2)
     {
-        const auto& potentialSelection = GetItem(pNMLV->iItem);
-        const auto& currentSelection = GetItem(GetSelectionMark());
-        *pResult = potentialSelection->GetParent() != currentSelection->GetParent();
-        return;
-    }
-
-    // if in ctrl-extend mode, do not allow selection of parent of child of existing collection
-    if (IsControlKeyDown() && requestingSelection)
-    {
-        const auto& items = GetAllSelected(true);
-        const auto& potentialSelection = GetItem(pNMLV->iItem);
-        for (const auto item : items)
+        // Deselect children of already-selected parents
+        SetRedraw(FALSE);
+        std::unordered_set<const CTreeListItem*> selectedSet(selectedItems.begin(), selectedItems.end());
+        for (const auto* item : selectedItems)
         {
-            if (potentialSelection->IsAncestorOf(item) || item->IsAncestorOf(potentialSelection))
+            if (!selectedSet.contains(item)) continue;
+            for (const auto* parent = item->GetParent(); parent != nullptr; parent = parent->GetParent())
             {
-                *pResult = TRUE;
-                return;
+                if (selectedSet.contains(parent))
+                {
+                    const int idx = FindTreeItem(item);
+                    if (idx != -1) SetItemState(idx, 0, LVIS_SELECTED);
+                    selectedSet.erase(item);
+                    break;
+                }
             }
         }
+
+        SetRedraw(TRUE);
+        Invalidate();
     }
 
-    *pResult = FALSE;
+    return CWdsListControl::OnSelectionChanged(wParam, lParam);
 }
 
 void CTreeListControl::OnChildAdded(const CTreeListItem* parent, CTreeListItem* child)

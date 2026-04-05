@@ -77,7 +77,7 @@ void CPageTreeMap::DoDataExchange(CDataExchange* pDX)
 }
 
 BEGIN_MESSAGE_MAP(CPageTreeMap, CMFCPropertyPage)
-    ON_WM_VSCROLL()
+    ON_WM_HSCROLL()
     ON_NOTIFY(COLBN_CHANGED, IDC_TREEMAPGRIDCOLOR, OnColorChangedTreeMapGrid)
     ON_NOTIFY(COLBN_CHANGED, IDC_TREEMAPHIGHLIGHTCOLOR, OnColorChangedTreeMapHighlight)
     ON_BN_CLICKED(IDC_KDIRSTAT, OnSetModified)
@@ -133,10 +133,10 @@ void CPageTreeMap::UpdateOptions(const bool save)
 {
     if (save)
     {
-        m_options.SetBrightnessPercent(100 - m_nBrightness);
-        m_options.SetAmbientLightPercent(m_nCushionShading);
-        m_options.SetHeightPercent(c_MaxHeight - m_nHeight);
-        m_options.SetScaleFactorPercent(100 - m_nScaleFactor);
+        m_options.SetBrightnessPercent(m_nBrightness);
+        m_options.SetAmbientLightPercent(100 - m_nCushionShading);
+        m_options.SetHeightPercent(m_nHeight);
+        m_options.SetScaleFactorPercent(m_nScaleFactor);
         m_options.SetLightSourcePoint(m_ptLightSource);
         m_options.style = m_style == 0 ? CTreeMap::KDirStatStyle : CTreeMap::SequoiaViewStyle;
         m_options.grid = FALSE != m_grid;
@@ -144,10 +144,10 @@ void CPageTreeMap::UpdateOptions(const bool save)
     }
     else
     {
-        m_nBrightness = 100 - m_options.GetBrightnessPercent();
-        m_nCushionShading = m_options.GetAmbientLightPercent();
-        m_nHeight = c_MaxHeight - m_options.GetHeightPercent();
-        m_nScaleFactor = 100 - m_options.GetScaleFactorPercent();
+        m_nBrightness = m_options.GetBrightnessPercent();
+        m_nCushionShading = 100 - m_options.GetAmbientLightPercent();
+        m_nHeight = m_options.GetHeightPercent();
+        m_nScaleFactor = m_options.GetScaleFactorPercent();
         m_ptLightSource = m_options.GetLightSourcePoint();
         m_style = m_options.style == CTreeMap::KDirStatStyle ? 0 : 1;
         m_grid = m_options.grid;
@@ -157,10 +157,10 @@ void CPageTreeMap::UpdateOptions(const bool save)
 
 void CPageTreeMap::UpdateStatics()
 {
-    m_sBrightness.Format(L"%d", 100 - m_nBrightness);
-    m_sCushionShading.Format(L"%d", 100 - m_nCushionShading);
-    m_sHeight.Format(L"%d", (c_MaxHeight - m_nHeight) / (c_MaxHeight / 100));
-    m_sScaleFactor.Format(L"%d", 100 - m_nScaleFactor);
+    m_sBrightness.Format(L"%d", m_nBrightness);
+    m_sCushionShading.Format(L"%d", m_nCushionShading);
+    m_sHeight.Format(L"%d", m_nHeight / (c_MaxHeight / 100));
+    m_sScaleFactor.Format(L"%d", m_nScaleFactor);
 }
 
 void CPageTreeMap::OnSomethingChanged()
@@ -189,7 +189,7 @@ void CPageTreeMap::OnColorChangedTreeMapHighlight(NMHDR*, LRESULT* result)
     OnSomethingChanged();
 }
 
-void CPageTreeMap::OnVScroll(UINT, UINT, CScrollBar*)
+void CPageTreeMap::OnHScroll(UINT, UINT, CScrollBar*)
 {
     OnSomethingChanged();
     ValuesAltered();
