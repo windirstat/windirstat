@@ -136,6 +136,7 @@ IDS_MENU_TREEMAP=Stromová &mapa
 IDS_MENU_WATCHER=Spustit sledování souborů
 IDS_MENU_ZOOMIN=&Přiblížit
 IDS_MENU_ZOOMOUT=&Oddálit
+IDS_MENU_ZOOMRESET=&Resetovat lupu
 IDS_NOTACCESSIBLE=(není k dispozici)
 IDS_ONEITEMs= (1 položka, {})
 IDS_ONEREADJOB=[1 čtecí úloha]
