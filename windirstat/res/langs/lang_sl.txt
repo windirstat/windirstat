@@ -136,6 +136,7 @@ IDS_MENU_TREEMAP=&Drevesna karta
 IDS_MENU_WATCHER=Zaženi nadzor datotek
 IDS_MENU_ZOOMIN=Povečaj &(+) 
 IDS_MENU_ZOOMOUT=Pomanjšaj &(-) 
+IDS_MENU_ZOOMRESET=&Ponastavi povečavo
 IDS_NOTACCESSIBLE=(nedostopno)
 IDS_ONEITEMs= (1 element, {})
 IDS_ONEREADJOB=[1 bralna opravila]

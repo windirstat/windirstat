@@ -136,6 +136,7 @@ IDS_MENU_TREEMAP=&Treemap
 IDS_MENU_WATCHER=Démarrer le surveillant de fichiers
 IDS_MENU_ZOOMIN=Agrand&ir
 IDS_MENU_ZOOMOUT=Dimin&uer
+IDS_MENU_ZOOMRESET=&Réinitialiser le zoom
 IDS_NOTACCESSIBLE=(indisponible)
 IDS_ONEITEMs= (1 élément; {})
 IDS_ONEREADJOB=[1 traitement de lecture]

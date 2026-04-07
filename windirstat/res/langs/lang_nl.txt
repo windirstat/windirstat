@@ -136,6 +136,7 @@ IDS_MENU_TREEMAP=&Treemap
 IDS_MENU_WATCHER=Bestandsbewaking starten
 IDS_MENU_ZOOMIN=&Inzoomen
 IDS_MENU_ZOOMOUT=&Uitzoomen
+IDS_MENU_ZOOMRESET=Zoom &herstellen
 IDS_NOTACCESSIBLE=(niet beschikbaar)
 IDS_ONEITEMs= (1 item, {})
 IDS_ONEREADJOB=[1 leestaak]

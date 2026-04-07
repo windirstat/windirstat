@@ -136,6 +136,7 @@ IDS_MENU_TREEMAP=&Mapa de Árvore
 IDS_MENU_WATCHER=Iniciar monitor de arquivos
 IDS_MENU_ZOOMIN=Aumentar &Zoom
 IDS_MENU_ZOOMOUT=Reduzir Zoo&m
+IDS_MENU_ZOOMRESET=&Redefinir zoom
 IDS_NOTACCESSIBLE=(unavailable)
 IDS_ONEITEMs= (1 Item, {})
 IDS_ONEREADJOB=[1 Trabalho de Leitura]
