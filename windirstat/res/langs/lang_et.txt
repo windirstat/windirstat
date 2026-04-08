@@ -135,6 +135,7 @@ IDS_MENU_TOOL_BAR=Näita &tööriistariba
 IDS_MENU_TOOLS=Tööriistad
 IDS_MENU_TREEMAP_SHOW_EXTENSIONS=Kuva laiendused
 IDS_MENU_TREEMAP=&Puukaart
+IDS_MENU_VIEW=&Vaade
 IDS_MENU_WATCHER=Käivita failijälgija
 IDS_MENU_ZOOMIN=Suuren&da
 IDS_MENU_ZOOMOUT=Vähe&nda

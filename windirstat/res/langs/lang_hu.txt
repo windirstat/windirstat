@@ -135,6 +135,7 @@ IDS_MENU_TOOL_BAR=&Eszköztár mutatása
 IDS_MENU_TOOLS=Eszközök
 IDS_MENU_TREEMAP_SHOW_EXTENSIONS=Kiterjesztések megjelenítése
 IDS_MENU_TREEMAP=&Térképfa
+IDS_MENU_VIEW=&Nézet
 IDS_MENU_WATCHER=Fájlfelügyelő indítása
 IDS_MENU_ZOOMIN=&Nagyít
 IDS_MENU_ZOOMOUT=&Kicsinyít

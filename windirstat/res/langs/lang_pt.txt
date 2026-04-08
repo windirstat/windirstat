@@ -135,6 +135,7 @@ IDS_MENU_TOOL_BAR=Exibir Barra de Ferramen&tas
 IDS_MENU_TOOLS=Ferramentas
 IDS_MENU_TREEMAP_SHOW_EXTENSIONS=Mostrar extensões
 IDS_MENU_TREEMAP=&Mapa de Árvore
+IDS_MENU_VIEW=E&xibir
 IDS_MENU_WATCHER=Iniciar monitor de arquivos
 IDS_MENU_ZOOMIN=Aumentar &Zoom
 IDS_MENU_ZOOMOUT=Reduzir Zoo&m
