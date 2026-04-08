@@ -40,6 +40,8 @@ void CFileTreeView::CreateColumns(const bool all)
     while (m_control.DeleteColumn(COL_OPTIONAL_START)) {}
 
     // add optional columns based on settings
+    if (COptions::ShowColumnAbsolutePercentages) InsertCol(IDS_COL_SUBTREE_PERCENTAGE_ABSOLUTE, LVCFMT_RIGHT, CItem::GetSubtreePercentageWidth() + 80, COL_SUBTREE_PERCENTAGE_ABSOLUTE);
+    if (COptions::ShowColumnAbsolutePercentages) InsertCol(IDS_COL_PERCENTAGE_ABSOLUTE, LVCFMT_RIGHT, 120, COL_PERCENTAGE_ABSOLUTE);
     if (COptions::ShowColumnSizePhysical) InsertCol(IDS_COL_SIZE_PHYSICAL, LVCFMT_RIGHT, 90, COL_SIZE_PHYSICAL);
     if (COptions::ShowColumnSizeLogical) InsertCol(IDS_COL_SIZE_LOGICAL, LVCFMT_RIGHT, 90, COL_SIZE_LOGICAL);
     if (COptions::ShowColumnItems) InsertCol(IDS_COL_ITEMS, LVCFMT_RIGHT, 90, COL_ITEMS);
