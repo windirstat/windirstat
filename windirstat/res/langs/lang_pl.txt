@@ -136,6 +136,7 @@ IDS_MENU_TREEMAP=&Mapa drzewa
 IDS_MENU_WATCHER=Uruchom monitor plików
 IDS_MENU_ZOOMIN=Po&większ
 IDS_MENU_ZOOMOUT=Po&mniejsz
+IDS_MENU_ZOOMRESET=&Resetuj powiększenie
 IDS_NOTACCESSIBLE=(niedostępne)
 IDS_ONEITEMs= (1 element, {})
 IDS_ONEREADJOB=[1 zadanie odczytu]

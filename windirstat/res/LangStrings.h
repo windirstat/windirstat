@@ -140,6 +140,7 @@ constexpr std::wstring_view IDS_MENU_TREEMAP_SHOW_EXTENSIONS = L"IDS_MENU_TREEMA
 constexpr std::wstring_view IDS_MENU_WATCHER = L"IDS_MENU_WATCHER";
 constexpr std::wstring_view IDS_MENU_ZOOMIN = L"IDS_MENU_ZOOMIN";
 constexpr std::wstring_view IDS_MENU_ZOOMOUT = L"IDS_MENU_ZOOMOUT";
+constexpr std::wstring_view IDS_MENU_ZOOMRESET = L"IDS_MENU_ZOOMRESET";
 constexpr std::wstring_view IDS_NOTACCESSIBLE = L"IDS_NOTACCESSIBLE";
 constexpr std::wstring_view IDS_ONEITEMs = L"IDS_ONEITEMs";
 constexpr std::wstring_view IDS_ONEREADJOB = L"IDS_ONEREADJOB";

@@ -33,6 +33,8 @@ class CPageTreeMap final : public CMFCPropertyPage
     CPageTreeMap();
     ~CPageTreeMap() override = default;
 
+    virtual BOOL PreTranslateMessage(MSG* pMsg);
+
 protected:
     void UpdateOptions(bool save = true);
     void UpdateStatics();

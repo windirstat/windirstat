@@ -32,6 +32,42 @@ CPageTreeMap::CPageTreeMap()
 {
 }
 
+BOOL CPageTreeMap::PreTranslateMessage(MSG* pMsg)
+{
+    if (pMsg->message == WM_MOUSEWHEEL)
+    {
+        CPoint pt(pMsg->pt);
+        ScreenToClient(&pt);
+        CWnd* pWnd = ChildWindowFromPoint(pt);
+
+        if (pWnd != nullptr)
+        {
+            int nID = pWnd->GetDlgCtrlID();
+
+            if (nID == IDC_BRIGHTNESS || nID == IDC_CUSHIONSHADING ||
+                nID == IDC_HEIGHT || nID == IDC_SCALEFACTOR)
+            {
+                CSliderCtrl* pSlider = (CSliderCtrl*)pWnd;
+                short zDelta = (short)HIWORD(pMsg->wParam);
+
+                int currentPos = pSlider->GetPos();
+
+                // Perform "Natural Scroll" (Up = Increase)
+                if (zDelta > 0)
+                    pSlider->SetPos(currentPos + 1);
+                else
+                    pSlider->SetPos(currentPos - 1);
+
+                OnSomethingChanged();
+                ValuesAltered();
+
+                return TRUE;
+            }
+        }
+    }
+    return CMFCPropertyPage::PreTranslateMessage(pMsg);
+}
+
 void CPageTreeMap::DoDataExchange(CDataExchange* pDX)
 {
     CMFCPropertyPage::DoDataExchange(pDX);
