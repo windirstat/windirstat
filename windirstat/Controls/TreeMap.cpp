@@ -415,6 +415,11 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, CItem* root, const Options* optio
         CSelectObject sobmp(&dcTreeView, &bmp);
         pdc->BitBlt(rc.TopLeft().x, rc.TopLeft().y, rc.Width(), rc.Height(), &dcTreeView, 0, 0, SRCCOPY);
     }
+
+    if (m_options.showExtensions)
+    {
+        DrawExtensionLabels(pdc, root, rc.TopLeft());
+    }
 }
 
 CItem* CTreeMap::FindItemByPoint(CItem* item, const CPoint point)
@@ -781,6 +786,75 @@ void CTreeMap::AddRidge(const CRect& rc, std::array<double,4> & surface, const d
     const double hf = h4 / height;
     surface[3] += hf * (rc.bottom + rc.top);
     surface[1] -= hf;
+}
+
+void CTreeMap::DrawExtensionLabels(CDC* pdc, CItem* root, const CPoint& offset) const
+{
+    CSelectStockObject soFont(pdc, DEFAULT_GUI_FONT);
+    CSetBkMode soBkMode(pdc, TRANSPARENT);
+
+    std::vector<CItem*> stack;
+    stack.push_back(root);
+
+    while (!stack.empty())
+    {
+        CItem* item = stack.back();
+        stack.pop_back();
+
+        if (item->TmiIsLeaf())
+        {
+            CRect rc = item->TmiGetRectangle();
+            rc.OffsetRect(offset);
+
+            const std::wstring ext = item->GetExtension();
+            if (ext.empty()) continue;
+
+            CSize textSize;
+            ::GetTextExtentPoint32(pdc->GetSafeHdc(), ext.c_str(),
+                static_cast<int>(ext.size()), &textSize);
+
+            if (textSize.cx + 4 <= rc.Width() && textSize.cy + 4 <= rc.Height())
+            {
+                // Estimate the rendered cushion brightness using the same
+                // color pipeline as RenderRectangle / DrawCushion
+                DWORD color = item->TmiGetGraphColor();
+                double brightness = m_options.brightness;
+
+                if ((color & COLORFLAG_MASK) != 0)
+                {
+                    const DWORD flags = color & COLORFLAG_MASK;
+                    color = CColorSpace::MakeBrightColor(color, PALETTE_BRIGHTNESS);
+
+                    if ((flags & COLORFLAG_DARKER) != 0)
+                        brightness *= 0.66;
+                    else
+                        brightness = std::min<double>(brightness * 1.2, 1.0);
+                }
+
+                const double factor = brightness / PALETTE_BRIGHTNESS;
+                const double luminance =
+                    (0.299 * GetRValue(color) + 0.587 * GetGValue(color) + 0.114 * GetBValue(color))
+                    / 255.0 * factor;
+
+                const BYTE gray = luminance > 0.5 ? 0 : 255;
+                CSetTextColor soTextColor(pdc, RGB(gray, gray, gray));
+
+                pdc->DrawText(ext.c_str(), static_cast<int>(ext.size()),
+                    &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+            }
+        }
+        else
+        {
+            for (const int i : std::views::iota(0, item->TmiGetChildCount()))
+            {
+                CItem* child = item->TmiGetChild(i);
+                if (child->TmiGetSize() > 0)
+                {
+                    stack.push_back(child);
+                }
+            }
+        }
+    }
 }
 
 /////////////////////////////////////////////////////////////////////////////
