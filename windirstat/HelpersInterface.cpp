@@ -625,17 +625,17 @@ std::wstring GetAcceleratorString(const UINT commandID)
         // Define mappings for modifier keys and special keys to their string representations
         static constexpr struct { UINT key; std::wstring_view name; }
         Modifiers[] = {
-            { FCONTROL,        L"Ctrl"  }, { FALT,            L"Alt"   }, { FSHIFT,          L"Shift" } },
+            { FCONTROL,      L"Ctrl"  }, { FALT,        L"Alt"   }, { FSHIFT,      L"Shift" } },
         SpecialKeys[] = {
             // Directional Keys
-            { VK_UP,           L"Up"    }, { VK_DOWN,         L"Down"  }, { VK_LEFT,         L"Left"  }, { VK_RIGHT,        L"Right" },
+            { VK_UP,         L"Up"    }, { VK_DOWN,     L"Down"  }, { VK_LEFT,     L"Left"  }, { VK_RIGHT,     L"Right" },
             // Numpad Keys
-            { VK_ADD,          L"Num +" }, { VK_SUBTRACT,     L"Num -" }, { VK_MULTIPLY,     L"Num *" }, { VK_DIVIDE,       L"Num /" },
-            { VK_DECIMAL,      L"Num ." },
+            { VK_ADD,        L"Num +" }, { VK_SUBTRACT, L"Num -" }, { VK_MULTIPLY, L"Num *" }, { VK_DIVIDE,    L"Num /" },
+            { VK_DECIMAL,    L"Num ." },
             // Other Special Keys
-            { VK_INSERT,       L"Ins"   }, { VK_DELETE,       L"Del"   }, { VK_HOME,         L"Home"  }, { VK_END,          L"End"   },
-            { VK_PRIOR,        L"PgUp"  }, { VK_NEXT,         L"PgDn"  }, { VK_OEM_PLUS,     L"+"     }, { VK_OEM_MINUS,    L"-"     },
-            { VK_OEM_PERIOD,   L"."     }, { VK_TAB,          L"Tab"   }, { VK_RETURN,       L"Enter" }, { VK_SPACE,        L"Space" }
+            { VK_INSERT,     L"Ins"   }, { VK_DELETE,   L"Del"   }, { VK_HOME,     L"Home"  }, { VK_END,       L"End"   },
+            { VK_PRIOR,      L"PgUp"  }, { VK_NEXT,     L"PgDn"  }, { VK_OEM_PLUS, L"+"     }, { VK_OEM_MINUS, L"-"     },
+            { VK_OEM_PERIOD, L"."     }, { VK_TAB,      L"Tab"   }, { VK_RETURN,   L"Enter" }, { VK_SPACE,     L"Space" }
         };
 
         // Load all accelerator object and get count 
@@ -645,7 +645,7 @@ std::wstring GetAcceleratorString(const UINT commandID)
 
         // Read all from the table
         std::vector<ACCEL> accels(count);
-        ::CopyAcceleratorTable(hAccel, accels.data(), count);
+        CopyAcceleratorTable(hAccel, accels.data(), count);
 
         // Sort the accelerators to ensure numpad keys always at the end of the shortcut key hint to improve
         // its readability and visual consistency, disregarding lines order in the accelerator table
@@ -655,9 +655,6 @@ std::wstring GetAcceleratorString(const UINT commandID)
             return !isNumpadKey(firstAccel) && isNumpadKey(secondAccel);
         });
 
-        // Pre-allocate shortcut hint strings cache
-        cache.reserve(accels.size());
-
         // Compute strings for all the commands in the table
         for (const auto& [virtKey, key, cmd] : accels)
         {
@@ -666,7 +663,6 @@ std::wstring GetAcceleratorString(const UINT commandID)
             {
                 cache.emplace_back(cmd, wds::strEmpty);
                 cacheEntry = std::prev(cache.end());
-                cacheEntry->second.reserve(23); // Pre-allocate string size to eliminate reallocations
             }
             auto& result = cacheEntry->second;
 
@@ -702,8 +698,7 @@ std::wstring GetAcceleratorString(const UINT commandID)
                 result.append(it->name);
 
             // Fallback for other keys - show hex code
-            else
-                result.append(std::format(L"VK_{:X}", key));
+            else result.append(std::format(L"VK_{:X}", key));
         }
     }
 
