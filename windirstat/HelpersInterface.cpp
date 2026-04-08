@@ -617,70 +617,94 @@ std::wstring GetTextResource(const UINT id)
 
 std::wstring GetAcceleratorString(const UINT commandID)
 {
-    static std::map<UINT, std::wstring> cache;
-    if (!cache.empty())
+    static std::vector<std::pair<UINT, std::wstring>> cache;
+
+    // Populate the cache on first use
+    if (cache.empty())
     {
-        return cache[commandID];
+        // Define mappings for modifier keys and special keys to their string representations
+        static constexpr struct { UINT key; std::wstring_view name; }
+        Modifiers[] = {
+            { FCONTROL,      L"Ctrl"  }, { FALT,        L"Alt"   }, { FSHIFT,      L"Shift" } },
+        SpecialKeys[] = {
+            // Directional Keys
+            { VK_UP,         L"Up"    }, { VK_DOWN,     L"Down"  }, { VK_LEFT,     L"Left"  }, { VK_RIGHT,     L"Right" },
+            // Numpad Keys
+            { VK_ADD,        L"Num +" }, { VK_SUBTRACT, L"Num -" }, { VK_MULTIPLY, L"Num *" }, { VK_DIVIDE,    L"Num /" },
+            { VK_DECIMAL,    L"Num ." },
+            // Other Special Keys
+            { VK_INSERT,     L"Ins"   }, { VK_DELETE,   L"Del"   }, { VK_HOME,     L"Home"  }, { VK_END,       L"End"   },
+            { VK_PRIOR,      L"PgUp"  }, { VK_NEXT,     L"PgDn"  }, { VK_OEM_PLUS, L"+"     }, { VK_OEM_MINUS, L"-"     },
+            { VK_OEM_PERIOD, L"."     }, { VK_TAB,      L"Tab"   }, { VK_RETURN,   L"Enter" }, { VK_SPACE,     L"Space" }
+        };
+
+        // Load all accelerator object and get count 
+        const HACCEL hAccel = LoadAccelerators(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDR_MAINFRAME));
+        const int count = CopyAcceleratorTable(hAccel, nullptr, 0);
+        if (count == 0) return wds::strEmpty;
+
+        // Read all from the table
+        std::vector<ACCEL> accels(count);
+        CopyAcceleratorTable(hAccel, accels.data(), count);
+
+        // Sort the accelerators to ensure numpad keys always at the end of the shortcut key hint to improve
+        // its readability and visual consistency, disregarding lines order in the accelerator table
+        std::ranges::sort(accels, [](const ACCEL& firstAccel, const ACCEL& secondAccel) {
+            if (firstAccel.cmd != secondAccel.cmd) return firstAccel.cmd < secondAccel.cmd;
+            auto isNumpadKey = [](const ACCEL& entry) { return (entry.key >= VK_MULTIPLY && entry.key <= VK_DIVIDE); };
+            return !isNumpadKey(firstAccel) && isNumpadKey(secondAccel);
+        });
+
+        // Compute strings for all the commands in the table
+        for (const auto& [virtKey, key, cmd] : accels)
+        {
+            auto cacheEntry = std::ranges::find_if(cache, [cmd](const auto& pair) { return pair.first == cmd; });
+            if (cacheEntry == cache.end())
+            {
+                cache.emplace_back(cmd, wds::strEmpty);
+                cacheEntry = std::prev(cache.end());
+            }
+            auto& result = cacheEntry->second;
+
+            if (!result.empty()) result.append(L" / ");
+
+            // Build modifier string
+            for (const auto& mod : Modifiers)
+            {
+                if (virtKey & mod.key) {
+                    result.append(mod.name);
+                    result.push_back(L'+');
+                }
+            }
+
+            // ASCII keys without FVIRTKEY flag
+            if ((virtKey & FVIRTKEY) == 0)
+            {
+                result.push_back(static_cast<WCHAR>(key));
+                continue;
+            }
+
+            // Function keys
+            if (key >= VK_F1 && key <= VK_F24)
+                result.append(std::format(L"F{}", key - VK_F1 + 1));
+
+            // Letter and Number keys
+            else if ((key >= 'A' && key <= 'Z') || (key >= '0' && key <= '9'))
+                result.push_back(static_cast<WCHAR>(key));
+
+            // Special keys
+            else if (const auto it = std::ranges::find_if(SpecialKeys, [key](const auto& mapping)
+                { return mapping.key == key; }); it != std::ranges::end(SpecialKeys))
+                result.append(it->name);
+
+            // Fallback for other keys - show hex code
+            else result.append(std::format(L"VK_{:X}", key));
+        }
     }
 
-    // Load all accelerator object and get count 
-    static std::vector<ACCEL> accels;
-    const HACCEL hAccel = LoadAccelerators(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDR_MAINFRAME));
-    const int count = CopyAcceleratorTable(hAccel, nullptr, 0);
-    if (count == 0) return L"";
-
-    // Read all from the table
-    accels.resize(count);
-    ::CopyAcceleratorTable(hAccel, accels.data(), count);
-
-    // Computer strings for all the commands in the table
-    for (const auto& [virtKey, key, cmd] : accels)
-    {
-        auto& result = cache[cmd];
-        if (!result.empty()) result += L", ";
-
-        // Build modifier string
-        if (virtKey & FCONTROL) result += L"Ctrl+";
-        if (virtKey & FALT) result += L"Alt+";
-        if (virtKey & FSHIFT) result += L"Shift+";
-
-        // Get key name
-        if ((virtKey & FVIRTKEY) == 0)
-        {
-            result += static_cast<WCHAR>(key);
-            continue;
-        }
-
-        // Function keys
-        if (key >= VK_F1 && key <= VK_F24)
-            result += std::format(L"F{}", key - VK_F1 + 1);
-
-        // Letter keys
-        else if (key >= 'A' && key <= 'Z')
-            result += static_cast<WCHAR>(key);
-
-        // Number keys
-        else if (key >= '0' && key <= '9')
-            result += static_cast<WCHAR>(key);
-
-        // Special keys
-        else switch (key)
-        {
-            case VK_RETURN:   result += L"Enter"; break;
-            case VK_DELETE:   result += L"Del"; break;
-            case VK_INSERT:   result += L"Ins"; break;
-            case VK_SPACE:    result += L"Space"; break;
-            case VK_ADD:      result += L"Num +"; break;
-            case VK_SUBTRACT: result += L"Num -"; break;
-            case VK_MULTIPLY: result += L"Num *"; break;
-            case VK_DIVIDE:   result += L"Num /"; break;
-            case VK_OEM_PLUS:  result += L"+"; break;
-            case VK_OEM_MINUS: result += L"-"; break;
-            default: result += std::format(L"VK_{:X}", key);
-        }
-    }
-
-    return cache[commandID];
+    // Lookup the requested command ID in the cache
+    auto cacheEntry = std::ranges::lower_bound(cache, commandID, {}, &std::pair<UINT, std::wstring>::first);
+    return (cacheEntry != cache.end() && cacheEntry->first == commandID) ? cacheEntry->second : wds::strEmpty;
 }
 
 // Tree node drawing helper
