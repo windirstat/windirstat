@@ -132,6 +132,7 @@ IDS_MENU_SPARSIFY_FILE=Muuta tiedosto harvaksi
 IDS_MENU_STATUS_BAR=Näytä t&ilarivi
 IDS_MENU_TOOL_BAR=Näytä työkalu&rivi
 IDS_MENU_TOOLS=Työkalut
+IDS_MENU_TREEMAP_SHOW_EXTENSIONS=Näytä tiedostopäätteet
 IDS_MENU_TREEMAP=&Kuvaaja
 IDS_MENU_WATCHER=Käynnistä tiedostovalvonta
 IDS_MENU_ZOOMIN=&Suurenna

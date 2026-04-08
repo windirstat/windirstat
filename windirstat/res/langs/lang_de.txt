@@ -132,6 +132,7 @@ IDS_MENU_SPARSIFY_FILE=Datei ausdünnen
 IDS_MENU_STATUS_BAR=S&tatusleiste anzeigen
 IDS_MENU_TOOL_BAR=&Symbolleiste anzeigen
 IDS_MENU_TOOLS=Werkzeuge
+IDS_MENU_TREEMAP_SHOW_EXTENSIONS=Erweiterungen anzeigen
 IDS_MENU_TREEMAP=&Baumkarte
 IDS_MENU_WATCHER=Dateiüberwachung starten
 IDS_MENU_ZOOMIN=Hin&einzoomen
