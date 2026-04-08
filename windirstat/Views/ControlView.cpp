@@ -62,6 +62,12 @@ void CControlView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
     }
     break;
 
+    case HINT_SORTORDERCHANGED:
+    {
+        control.SortItems();
+    }
+    break;
+
     case HINT_NULL:
     {
         CView::OnUpdate(pSender, lHint, pHint);
