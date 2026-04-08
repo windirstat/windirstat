@@ -67,6 +67,7 @@ using VIEW_HINT = enum VIEW_HINT : std::uint8_t
     HINT_SELECTIONACTION,           // Inform central selection handler to update selection (uses pHint)
     HINT_SELECTIONREFRESH,          // Inform all views to redraw based on current selections
     HINT_SELECTIONSTYLECHANGED,     // Only update selection in TreeMapView
+    HINT_SORTORDERCHANGED,          // Inform all views to update sort order
     HINT_EXTENSIONSELECTIONCHANGED, // Type list selected a new extension
     HINT_ZOOMCHANGED,               // Only zoom item has changed.
     HINT_LISTSTYLECHANGED,          // Options: List style (grid/stripes) or treelist colors changed
@@ -223,4 +224,8 @@ protected:
     afx_msg void OnUpdateCreateHardlink(CCmdUI* pCmdUI);
     afx_msg void OnCreateHardlink();
     afx_msg void OnPopupCancel() {}
+    afx_msg void OnGroupFoldersBeforeFiles();
+    afx_msg void OnUpdateGroupFoldersBeforeFiles(CCmdUI* pCmdUI);
+    afx_msg void OnGroupDriveStatsFirst();
+    afx_msg void OnUpdateGroupDriveStatsFirst(CCmdUI* pCmdUI);
 };
