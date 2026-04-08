@@ -88,7 +88,7 @@ bool SparsifyFile(const std::wstring& path, ULONGLONG minZeroRunSize = 64ull * w
 bool CreateHardlinkFromFile(const std::wstring& pathOne, const std::wstring& pathTwo);
 
 // File hashing
-std::wstring ComputeFileHashes(const std::wstring& filePath);
+std::wstring ComputeFileHashes(const std::wstring& filePath, CProgressDlg* pdlg);
 
 // I/O priority and VHD optimization
 void SetProcessIoPriorityHigh() noexcept;
