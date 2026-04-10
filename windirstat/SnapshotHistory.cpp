@@ -24,6 +24,16 @@ namespace
     constexpr std::string_view SnapshotHeader = "path,type,size_physical,files,folders,last_change";
     constexpr size_t MaxSnapshotsPerRoot = 20;
 
+    enum : std::uint8_t
+    {
+        RESULT_FIELD_NAME,
+        RESULT_FIELD_FILES,
+        RESULT_FIELD_FOLDERS,
+        RESULT_FIELD_SIZE_PHYSICAL,
+        RESULT_FIELD_ATTRIBUTES_WDS,
+        RESULT_FIELD_COUNT,
+    };
+
     struct SnapshotEntry
     {
         std::wstring path;
@@ -35,11 +45,19 @@ namespace
     };
 
     using SnapshotMap = std::unordered_map<std::wstring, SnapshotEntry>;
+    using ResultsFieldOrder = std::array<UCHAR, RESULT_FIELD_COUNT>;
 
     struct CurrentSnapshot
     {
         SnapshotMap entries;
         std::unordered_map<std::wstring, CItem*> items;
+    };
+
+    struct ResultsCsvLoadResult
+    {
+        ResultsCsvCompareStatus status = ResultsCsvCompareStatus::UnsupportedFormat;
+        std::wstring previousSnapshotLabel;
+        SnapshotMap snapshot;
     };
 
     std::wstring CanonicalizeKey(std::wstring key)
@@ -351,6 +369,141 @@ namespace
     {
         return entry.deltaSizePhysical > 0 || entry.deltaFiles > 0 || entry.deltaFolders > 0;
     }
+
+    bool TryParseResultsHeader(const std::vector<std::wstring_view>& header, ResultsFieldOrder& order)
+    {
+        order.fill(static_cast<UCHAR>(UCHAR_MAX));
+
+        const auto assignField = [&](const std::wstring_view columnName, const std::uint8_t field)
+        {
+            for (const auto i : std::views::iota(0u, header.size()))
+            {
+                if (header[i] == columnName)
+                {
+                    order[field] = static_cast<UCHAR>(i);
+                    return;
+                }
+            }
+        };
+
+        assignField(Localization::Lookup(IDS_COL_NAME), RESULT_FIELD_NAME);
+        assignField(Localization::Lookup(IDS_COL_FILES), RESULT_FIELD_FILES);
+        assignField(Localization::Lookup(IDS_COL_FOLDERS), RESULT_FIELD_FOLDERS);
+        assignField(Localization::Lookup(IDS_COL_SIZE_PHYSICAL), RESULT_FIELD_SIZE_PHYSICAL);
+        assignField(Localization::LookupNeutral(AFX_IDS_APP_TITLE) + L" " + Localization::Lookup(IDS_COL_ATTRIBUTES), RESULT_FIELD_ATTRIBUTES_WDS);
+
+        return std::ranges::all_of(order, [](const UCHAR index) { return index != UCHAR_MAX; });
+    }
+
+    ResultsCsvLoadResult LoadResultsCsvSnapshot(const std::wstring& resultsPath)
+    {
+        ResultsCsvLoadResult result;
+
+        std::ifstream input(resultsPath, std::ios::binary);
+        if (!input.is_open())
+        {
+            result.status = ResultsCsvCompareStatus::InvalidResultsFile;
+            return result;
+        }
+
+        std::string lineBuffer;
+        if (!std::getline(input, lineBuffer))
+        {
+            result.status = ResultsCsvCompareStatus::InvalidResultsFile;
+            return result;
+        }
+
+        if (lineBuffer == SnapshotSignature)
+        {
+            result.status = ResultsCsvCompareStatus::UnsupportedFormat;
+            return result;
+        }
+
+        std::wstring line = Localization::ConvertToWideString(lineBuffer);
+        auto header = ParseCsvLine(line);
+        ResultsFieldOrder order{};
+        if (!TryParseResultsHeader(header, order))
+        {
+            result.status = ResultsCsvCompareStatus::UnsupportedFormat;
+            return result;
+        }
+
+        const auto maxField = static_cast<size_t>(*std::ranges::max_element(order));
+
+        while (std::getline(input, lineBuffer))
+        {
+            if (lineBuffer.empty()) continue;
+
+            line = Localization::ConvertToWideString(lineBuffer);
+            if (line.empty()) continue;
+
+            auto fields = ParseCsvLine(line);
+            if (fields.empty())
+            {
+                result.status = ResultsCsvCompareStatus::InvalidResultsFile;
+                return result;
+            }
+
+            if (fields.size() <= maxField)
+            {
+                result.status = ResultsCsvCompareStatus::InvalidResultsFile;
+                return result;
+            }
+
+            SnapshotEntry entry;
+            entry.path = fields[order[RESULT_FIELD_NAME]];
+            entry.type = static_cast<ITEMTYPE>(wcstoul(fields[order[RESULT_FIELD_ATTRIBUTES_WDS]].data(), nullptr, 16));
+            entry.sizePhysical = wcstoull(fields[order[RESULT_FIELD_SIZE_PHYSICAL]].data(), nullptr, 10);
+            entry.files = wcstoul(fields[order[RESULT_FIELD_FILES]].data(), nullptr, 10);
+            entry.folders = wcstoul(fields[order[RESULT_FIELD_FOLDERS]].data(), nullptr, 10);
+
+            result.snapshot[CanonicalizeKey(entry.path)] = std::move(entry);
+        }
+
+        result.status = ResultsCsvCompareStatus::Success;
+        result.previousSnapshotLabel = std::filesystem::path(resultsPath).filename().wstring();
+        return result;
+    }
+
+    SnapshotGrowthResult BuildGrowthResult(const CurrentSnapshot& currentSnapshot, const SnapshotMap& previousSnapshot,
+        std::wstring previousSnapshotLabel)
+    {
+        SnapshotGrowthResult result;
+        result.previousSnapshotLabel = std::move(previousSnapshotLabel);
+        result.entries.reserve(currentSnapshot.entries.size());
+
+        for (const auto& [canonicalKey, currentEntry] : currentSnapshot.entries)
+        {
+            const auto currentItemIt = currentSnapshot.items.find(canonicalKey);
+            CItem* currentItem = currentItemIt != currentSnapshot.items.end() ? currentItemIt->second : nullptr;
+            if (!ShouldDisplayGrowthItem(currentItem)) continue;
+
+            const auto previousIt = previousSnapshot.find(canonicalKey);
+            const SnapshotEntry* previousEntry = previousIt != previousSnapshot.end() ? &previousIt->second : nullptr;
+
+            SnapshotGrowthEntry growth;
+            growth.path = currentEntry.path;
+            growth.type = currentEntry.type;
+            growth.currentItem = currentItem;
+            growth.currentSizePhysical = currentEntry.sizePhysical;
+            growth.previousSizePhysical = previousEntry != nullptr ? previousEntry->sizePhysical : 0;
+            growth.deltaSizePhysical = static_cast<LONGLONG>(growth.currentSizePhysical) - static_cast<LONGLONG>(growth.previousSizePhysical);
+            growth.deltaFiles = static_cast<LONGLONG>(currentEntry.files) - static_cast<LONGLONG>(previousEntry != nullptr ? previousEntry->files : 0);
+            growth.deltaFolders = static_cast<LONGLONG>(currentEntry.folders) - static_cast<LONGLONG>(previousEntry != nullptr ? previousEntry->folders : 0);
+
+            if (IsPositiveGrowth(growth)) result.entries.push_back(growth);
+        }
+
+        std::ranges::sort(result.entries, [](const auto& lhs, const auto& rhs)
+        {
+            if (lhs.deltaSizePhysical != rhs.deltaSizePhysical) return lhs.deltaSizePhysical > rhs.deltaSizePhysical;
+            if (lhs.deltaFiles != rhs.deltaFiles) return lhs.deltaFiles > rhs.deltaFiles;
+            if (lhs.deltaFolders != rhs.deltaFolders) return lhs.deltaFolders > rhs.deltaFolders;
+            return _wcsicmp(lhs.path.c_str(), rhs.path.c_str()) < 0;
+        });
+
+        return result;
+    }
 }
 
 SnapshotGrowthResult UpdateSnapshotHistory(const std::wstring& rootSpec, CItem* rootItem)
@@ -365,42 +518,27 @@ SnapshotGrowthResult UpdateSnapshotHistory(const std::wstring& rootSpec, CItem* 
     {
         if (const auto previousSnapshot = LoadSnapshotFile(*latestSnapshot))
         {
-            result.previousSnapshotLabel = BuildSnapshotLabel(*latestSnapshot);
-
-            for (const auto& [canonicalKey, currentEntry] : currentSnapshot.entries)
-            {
-                const auto currentItemIt = currentSnapshot.items.find(canonicalKey);
-                CItem* currentItem = currentItemIt != currentSnapshot.items.end() ? currentItemIt->second : nullptr;
-                if (!ShouldDisplayGrowthItem(currentItem)) continue;
-
-                const auto previousIt = previousSnapshot->find(canonicalKey);
-                const SnapshotEntry* previousEntry = previousIt != previousSnapshot->end() ? &previousIt->second : nullptr;
-
-                SnapshotGrowthEntry growth;
-                growth.path = currentEntry.path;
-                growth.type = currentEntry.type;
-                growth.currentItem = currentItem;
-                growth.currentSizePhysical = currentEntry.sizePhysical;
-                growth.previousSizePhysical = previousEntry != nullptr ? previousEntry->sizePhysical : 0;
-                growth.deltaSizePhysical = static_cast<LONGLONG>(growth.currentSizePhysical) - static_cast<LONGLONG>(growth.previousSizePhysical);
-                growth.deltaFiles = static_cast<LONGLONG>(currentEntry.files) - static_cast<LONGLONG>(previousEntry != nullptr ? previousEntry->files : 0);
-                growth.deltaFolders = static_cast<LONGLONG>(currentEntry.folders) - static_cast<LONGLONG>(previousEntry != nullptr ? previousEntry->folders : 0);
-
-                if (IsPositiveGrowth(growth)) result.entries.push_back(growth);
-            }
-
-            std::ranges::sort(result.entries, [](const auto& lhs, const auto& rhs)
-            {
-                if (lhs.deltaSizePhysical != rhs.deltaSizePhysical) return lhs.deltaSizePhysical > rhs.deltaSizePhysical;
-                if (lhs.deltaFiles != rhs.deltaFiles) return lhs.deltaFiles > rhs.deltaFiles;
-                if (lhs.deltaFolders != rhs.deltaFolders) return lhs.deltaFolders > rhs.deltaFolders;
-                return _wcsicmp(lhs.path.c_str(), rhs.path.c_str()) < 0;
-            });
+            result = BuildGrowthResult(currentSnapshot, *previousSnapshot, BuildSnapshotLabel(*latestSnapshot));
         }
     }
 
     (void)SaveSnapshotFile(rootSpec, currentSnapshot);
     return result;
+}
+
+ResultsCsvCompareResult CompareResultsCsvToCurrent(const std::wstring& currentRootSpec, CItem* currentRootItem,
+    const std::wstring& previousResultsPath)
+{
+    ResultsCsvCompareResult compareResult;
+    if (currentRootItem == nullptr || previousResultsPath.empty()) return compareResult;
+
+    const ResultsCsvLoadResult loadResult = LoadResultsCsvSnapshot(previousResultsPath);
+    compareResult.status = loadResult.status;
+    if (loadResult.status != ResultsCsvCompareStatus::Success) return compareResult;
+
+    const CurrentSnapshot currentSnapshot = CollectCurrentSnapshot(currentRootSpec, currentRootItem);
+    compareResult.result = BuildGrowthResult(currentSnapshot, loadResult.snapshot, loadResult.previousSnapshotLabel);
+    return compareResult;
 }
 
 SnapshotGrowthResult CompareSnapshotTrees(const std::wstring& currentRootSpec, CItem* currentRootItem,
@@ -411,39 +549,7 @@ SnapshotGrowthResult CompareSnapshotTrees(const std::wstring& currentRootSpec, C
 
     const CurrentSnapshot currentSnapshot = CollectCurrentSnapshot(currentRootSpec, currentRootItem);
     const CurrentSnapshot previousSnapshot = CollectCurrentSnapshot(previousRootItem->GetPath(), previousRootItem);
-    result.previousSnapshotLabel = previousSnapshotLabel;
-
-    for (const auto& [canonicalKey, currentEntry] : currentSnapshot.entries)
-    {
-        const auto currentItemIt = currentSnapshot.items.find(canonicalKey);
-        CItem* currentItem = currentItemIt != currentSnapshot.items.end() ? currentItemIt->second : nullptr;
-        if (!ShouldDisplayGrowthItem(currentItem)) continue;
-
-        const auto previousIt = previousSnapshot.entries.find(canonicalKey);
-        const SnapshotEntry* previousEntry = previousIt != previousSnapshot.entries.end() ? &previousIt->second : nullptr;
-
-        SnapshotGrowthEntry growth;
-        growth.path = currentEntry.path;
-        growth.type = currentEntry.type;
-        growth.currentItem = currentItem;
-        growth.currentSizePhysical = currentEntry.sizePhysical;
-        growth.previousSizePhysical = previousEntry != nullptr ? previousEntry->sizePhysical : 0;
-        growth.deltaSizePhysical = static_cast<LONGLONG>(growth.currentSizePhysical) - static_cast<LONGLONG>(growth.previousSizePhysical);
-        growth.deltaFiles = static_cast<LONGLONG>(currentEntry.files) - static_cast<LONGLONG>(previousEntry != nullptr ? previousEntry->files : 0);
-        growth.deltaFolders = static_cast<LONGLONG>(currentEntry.folders) - static_cast<LONGLONG>(previousEntry != nullptr ? previousEntry->folders : 0);
-
-        if (IsPositiveGrowth(growth)) result.entries.push_back(growth);
-    }
-
-    std::ranges::sort(result.entries, [](const auto& lhs, const auto& rhs)
-    {
-        if (lhs.deltaSizePhysical != rhs.deltaSizePhysical) return lhs.deltaSizePhysical > rhs.deltaSizePhysical;
-        if (lhs.deltaFiles != rhs.deltaFiles) return lhs.deltaFiles > rhs.deltaFiles;
-        if (lhs.deltaFolders != rhs.deltaFolders) return lhs.deltaFolders > rhs.deltaFolders;
-        return _wcsicmp(lhs.path.c_str(), rhs.path.c_str()) < 0;
-    });
-
-    return result;
+    return BuildGrowthResult(currentSnapshot, previousSnapshot.entries, previousSnapshotLabel);
 }
 
 SnapshotGrowthResult CompareSnapshotFileToCurrent(const std::wstring& currentRootSpec, CItem* currentRootItem,
@@ -455,38 +561,6 @@ SnapshotGrowthResult CompareSnapshotFileToCurrent(const std::wstring& currentRoo
     const auto previousSnapshot = LoadSnapshotFile(previousSnapshotPath);
     if (!previousSnapshot.has_value()) return result;
 
-    result.previousSnapshotLabel = BuildSnapshotLabel(previousSnapshotPath);
     const CurrentSnapshot currentSnapshot = CollectCurrentSnapshot(currentRootSpec, currentRootItem);
-
-    for (const auto& [canonicalKey, currentEntry] : currentSnapshot.entries)
-    {
-        const auto currentItemIt = currentSnapshot.items.find(canonicalKey);
-        CItem* currentItem = currentItemIt != currentSnapshot.items.end() ? currentItemIt->second : nullptr;
-        if (!ShouldDisplayGrowthItem(currentItem)) continue;
-
-        const auto previousIt = previousSnapshot->find(canonicalKey);
-        const SnapshotEntry* previousEntry = previousIt != previousSnapshot->end() ? &previousIt->second : nullptr;
-
-        SnapshotGrowthEntry growth;
-        growth.path = currentEntry.path;
-        growth.type = currentEntry.type;
-        growth.currentItem = currentItem;
-        growth.currentSizePhysical = currentEntry.sizePhysical;
-        growth.previousSizePhysical = previousEntry != nullptr ? previousEntry->sizePhysical : 0;
-        growth.deltaSizePhysical = static_cast<LONGLONG>(growth.currentSizePhysical) - static_cast<LONGLONG>(growth.previousSizePhysical);
-        growth.deltaFiles = static_cast<LONGLONG>(currentEntry.files) - static_cast<LONGLONG>(previousEntry != nullptr ? previousEntry->files : 0);
-        growth.deltaFolders = static_cast<LONGLONG>(currentEntry.folders) - static_cast<LONGLONG>(previousEntry != nullptr ? previousEntry->folders : 0);
-
-        if (IsPositiveGrowth(growth)) result.entries.push_back(growth);
-    }
-
-    std::ranges::sort(result.entries, [](const auto& lhs, const auto& rhs)
-    {
-        if (lhs.deltaSizePhysical != rhs.deltaSizePhysical) return lhs.deltaSizePhysical > rhs.deltaSizePhysical;
-        if (lhs.deltaFiles != rhs.deltaFiles) return lhs.deltaFiles > rhs.deltaFiles;
-        if (lhs.deltaFolders != rhs.deltaFolders) return lhs.deltaFolders > rhs.deltaFolders;
-        return _wcsicmp(lhs.path.c_str(), rhs.path.c_str()) < 0;
-    });
-
-    return result;
+    return BuildGrowthResult(currentSnapshot, *previousSnapshot, BuildSnapshotLabel(previousSnapshotPath));
 }

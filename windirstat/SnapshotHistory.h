@@ -37,7 +37,22 @@ struct SnapshotGrowthResult
     std::vector<SnapshotGrowthEntry> entries;
 };
 
+enum class ResultsCsvCompareStatus : std::uint8_t
+{
+    Success,
+    UnsupportedFormat,
+    InvalidResultsFile,
+};
+
+struct ResultsCsvCompareResult
+{
+    ResultsCsvCompareStatus status = ResultsCsvCompareStatus::UnsupportedFormat;
+    SnapshotGrowthResult result;
+};
+
 SnapshotGrowthResult UpdateSnapshotHistory(const std::wstring& rootSpec, CItem* rootItem);
+ResultsCsvCompareResult CompareResultsCsvToCurrent(const std::wstring& currentRootSpec, CItem* currentRootItem,
+    const std::wstring& previousResultsPath);
 SnapshotGrowthResult CompareSnapshotTrees(const std::wstring& currentRootSpec, CItem* currentRootItem,
     const std::wstring& previousSnapshotLabel, CItem* previousRootItem);
 SnapshotGrowthResult CompareSnapshotFileToCurrent(const std::wstring& currentRootSpec, CItem* currentRootItem,

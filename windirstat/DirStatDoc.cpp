@@ -1165,34 +1165,33 @@ void CDirStatDoc::OnCompareResults()
     if (dlg.DoModal() != IDOK) return;
 
     const auto selectedPath = dlg.GetPathName().GetString();
-    CItem* previousRoot = nullptr;
+    ResultsCsvCompareResult resultsCsvCompare;
     CProgressDlg(0, true, AfxGetMainWnd(), [&](CProgressDlg*)
     {
-        previousRoot = LoadResults(selectedPath);
+        resultsCsvCompare = CompareResultsCsvToCurrent(GetPathName().GetString(), GetRootItem(), selectedPath);
+        if (resultsCsvCompare.status == ResultsCsvCompareStatus::UnsupportedFormat)
+        {
+            resultsCsvCompare.result = CompareSnapshotFileToCurrent(GetPathName().GetString(), GetRootItem(), selectedPath);
+            if (!resultsCsvCompare.result.previousSnapshotLabel.empty())
+            {
+                resultsCsvCompare.status = ResultsCsvCompareStatus::Success;
+            }
+        }
     }).DoModal();
 
-    SnapshotGrowthResult compareResult;
-    if (previousRoot != nullptr)
+    if (resultsCsvCompare.status == ResultsCsvCompareStatus::InvalidResultsFile)
     {
-        compareResult = CompareSnapshotTrees(GetPathName().GetString(), GetRootItem(),
-            std::filesystem::path(selectedPath).filename().wstring(), previousRoot);
-        delete previousRoot;
-    }
-    else
-    {
-        compareResult = CompareSnapshotFileToCurrent(GetPathName().GetString(), GetRootItem(), selectedPath);
-        if (compareResult.previousSnapshotLabel.empty())
-        {
-            WdsMessageBox(L"The selected CSV is not a supported results file.", MB_OK | MB_ICONERROR);
-            return;
-        }
+        WdsMessageBox(L"The selected CSV is not a valid exported results file.", MB_OK | MB_ICONERROR);
+        return;
     }
 
-    m_snapshotGrowthResult = compareResult;
-    if (CFileChangeControl::Get() != nullptr)
+    if (resultsCsvCompare.result.previousSnapshotLabel.empty())
     {
-        CFileChangeControl::Get()->SetChanges(compareResult);
+        WdsMessageBox(L"The selected CSV is not a supported results file.", MB_OK | MB_ICONERROR);
+        return;
     }
+
+    m_snapshotGrowthResult = std::move(resultsCsvCompare.result);
     CMainFrame::Get()->GetFileTabbedView()->SetChangesTabVisibility(true);
     CMainFrame::Get()->GetFileTabbedView()->SetActiveChangeView();
     UpdateAllViews(nullptr);
