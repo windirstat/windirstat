@@ -147,6 +147,12 @@ void CItemChange::AddChangeItemChild(CItemChange* child)
     if (IsVisible() && IsExpanded()) CFileChangeControl::Get()->OnChildAdded(this, child);
 }
 
+void CItemChange::ReserveChangeItemChildren(const size_t count)
+{
+    std::scoped_lock guard(m_protect);
+    m_children.reserve(count);
+}
+
 void CItemChange::RemoveChangeItemChild(CItemChange* child)
 {
     if (IsVisible()) CFileChangeControl::Get()->OnChildRemoved(this, child);

@@ -57,5 +57,6 @@ public:
 
     void AddChangeItemChild(CItemChange* child);
     void RemoveChangeItemChild(CItemChange* child);
+    void ReserveChangeItemChildren(size_t count);
     void SetPreviousSnapshotLabel(const std::wstring& label) { m_previousSnapshotLabel = label; }
 };

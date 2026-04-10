@@ -663,9 +663,15 @@ void CTreeListControl::ExpandItem(const int i, const bool scroll)
 
     CWaitCursor wc;
 
-    int maxwidth = GetSubItemWidth(item, 0);
     const auto childCount = item->GetTreeListChildCount();
+    int maxwidth = 0;
+    if (scroll)
+    {
+        maxwidth = GetSubItemWidth(item, 0);
+    }
+
     std::vector<CWdsListItem*> children;
+    children.reserve(childCount);
     for (const int c : std::views::iota(0, childCount))
     {
         const auto child = item->GetTreeListChild(c);
@@ -702,7 +708,7 @@ void CTreeListControl::ExpandItem(const int i, const bool scroll)
     }
 
     // Sort at end so we do not invalidate position data
-    if (childCount > 0) SortItems();
+    if (childCount > 1) SortItems();
 }
 
 void CTreeListControl::OnKeyDown(const UINT nChar, const UINT nRepCnt, const UINT nFlags)

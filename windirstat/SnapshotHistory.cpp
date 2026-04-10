@@ -120,6 +120,24 @@ namespace
         return item != nullptr && !item->IsTypeOrFlag(ITF_ROOTITEM) && item->IsTypeOrFlag(IT_DRIVE, IT_DIRECTORY, IT_FILE);
     }
 
+    bool ConvertUtf8ToWide(const std::string_view input, std::wstring& output)
+    {
+        output.clear();
+        if (input.empty()) return true;
+
+        const int required = MultiByteToWideChar(CP_UTF8, 0, input.data(), static_cast<int>(input.size()), nullptr, 0);
+        if (required <= 0) return false;
+
+        output.resize(required);
+        if (MultiByteToWideChar(CP_UTF8, 0, input.data(), static_cast<int>(input.size()), output.data(), required) <= 0)
+        {
+            output.clear();
+            return false;
+        }
+
+        return true;
+    }
+
     std::string ToUtf8(const std::wstring_view input)
     {
         if (input.empty()) return {};
@@ -167,9 +185,9 @@ namespace
         return fileTime;
     }
 
-    std::vector<std::wstring_view> ParseCsvLine(std::wstring& line)
+    bool ParseCsvLine(std::wstring& line, std::vector<std::wstring_view>& fields)
     {
-        std::vector<std::wstring_view> fields;
+        fields.clear();
         for (size_t pos = 0; pos < line.length(); pos++)
         {
             const size_t comma = line.find(L',', pos);
@@ -180,7 +198,11 @@ namespace
             {
                 pos++;
                 end = line.find(L'"', pos);
-                if (end == std::wstring::npos) return {};
+                if (end == std::wstring::npos)
+                {
+                    fields.clear();
+                    return false;
+                }
             }
 
             const wchar_t restore = end < line.size() ? line[end] : wds::chrNull;
@@ -190,7 +212,37 @@ namespace
             pos = end + (quoted ? 1 : 0);
         }
 
-        return fields;
+        return true;
+    }
+
+    bool ParseCsvLine(std::string& line, std::vector<std::string_view>& fields)
+    {
+        fields.clear();
+        for (size_t pos = 0; pos < line.length(); pos++)
+        {
+            const size_t comma = line.find(',', pos);
+            size_t end = comma == std::string::npos ? line.length() : comma;
+
+            bool quoted = line.at(pos) == '"';
+            if (quoted)
+            {
+                pos++;
+                end = line.find('"', pos);
+                if (end == std::string::npos)
+                {
+                    fields.clear();
+                    return false;
+                }
+            }
+
+            const char restore = end < line.size() ? line[end] : '\0';
+            if (end < line.size()) line[end] = '\0';
+            fields.emplace_back(line.data() + pos, end - pos);
+            if (end < line.size()) line[end] = restore;
+            pos = end + (quoted ? 1 : 0);
+        }
+
+        return true;
     }
 
     std::wstring HashRootSpec(const std::wstring& rootSpec)
@@ -391,15 +443,16 @@ namespace
 
         SnapshotMap snapshot;
         std::wstring line;
+        std::vector<std::wstring_view> fields;
+        fields.reserve(6);
         while (std::getline(input, lineBuffer))
         {
             if (lineBuffer.empty()) continue;
 
-            line = Localization::ConvertToWideString(lineBuffer);
+            if (!ConvertUtf8ToWide(lineBuffer, line)) return std::nullopt;
             if (line.empty()) continue;
 
-            auto fields = ParseCsvLine(line);
-            if (fields.size() != 6) return std::nullopt;
+            if (!ParseCsvLine(line, fields) || fields.size() != 6) return std::nullopt;
 
             SnapshotEntry entry;
             entry.path = fields[0];
@@ -445,7 +498,7 @@ namespace
         return std::ranges::all_of(order, [](const UCHAR index) { return index != UCHAR_MAX; });
     }
 
-    ResultsCsvLoadResult LoadResultsCsvSnapshot(const std::wstring& resultsPath)
+    ResultsCsvLoadResult LoadResultsCsvSnapshot(const std::wstring& resultsPath, const size_t reserveHint)
     {
         ResultsCsvLoadResult result;
 
@@ -469,8 +522,15 @@ namespace
             return result;
         }
 
-        std::wstring line = Localization::ConvertToWideString(lineBuffer);
-        auto header = ParseCsvLine(line);
+        std::wstring line;
+        std::vector<std::wstring_view> header;
+        header.reserve(RESULT_FIELD_COUNT + 2);
+        if (!ConvertUtf8ToWide(lineBuffer, line) || !ParseCsvLine(line, header))
+        {
+            result.status = ResultsCsvCompareStatus::InvalidResultsFile;
+            return result;
+        }
+
         ResultsFieldOrder order{};
         if (!TryParseResultsHeader(header, order))
         {
@@ -479,16 +539,16 @@ namespace
         }
 
         const auto maxField = static_cast<size_t>(*std::ranges::max_element(order));
+        result.snapshot.reserve(reserveHint);
+        std::vector<std::string_view> fields;
+        fields.reserve(maxField + 1);
+        std::wstring pathBuffer;
 
         while (std::getline(input, lineBuffer))
         {
             if (lineBuffer.empty()) continue;
 
-            line = Localization::ConvertToWideString(lineBuffer);
-            if (line.empty()) continue;
-
-            auto fields = ParseCsvLine(line);
-            if (fields.empty())
+            if (!ParseCsvLine(lineBuffer, fields))
             {
                 result.status = ResultsCsvCompareStatus::InvalidResultsFile;
                 return result;
@@ -501,11 +561,17 @@ namespace
             }
 
             SnapshotEntry entry;
-            entry.path = fields[order[RESULT_FIELD_NAME]];
-            entry.type = static_cast<ITEMTYPE>(wcstoul(fields[order[RESULT_FIELD_ATTRIBUTES_WDS]].data(), nullptr, 16));
-            entry.sizePhysical = wcstoull(fields[order[RESULT_FIELD_SIZE_PHYSICAL]].data(), nullptr, 10);
-            entry.files = wcstoul(fields[order[RESULT_FIELD_FILES]].data(), nullptr, 10);
-            entry.folders = wcstoul(fields[order[RESULT_FIELD_FOLDERS]].data(), nullptr, 10);
+            if (!ConvertUtf8ToWide(fields[order[RESULT_FIELD_NAME]], pathBuffer))
+            {
+                result.status = ResultsCsvCompareStatus::InvalidResultsFile;
+                return result;
+            }
+
+            entry.path = pathBuffer;
+            entry.type = static_cast<ITEMTYPE>(strtoul(fields[order[RESULT_FIELD_ATTRIBUTES_WDS]].data(), nullptr, 16));
+            entry.sizePhysical = strtoull(fields[order[RESULT_FIELD_SIZE_PHYSICAL]].data(), nullptr, 10);
+            entry.files = strtoul(fields[order[RESULT_FIELD_FILES]].data(), nullptr, 10);
+            entry.folders = strtoul(fields[order[RESULT_FIELD_FOLDERS]].data(), nullptr, 10);
 
             result.snapshot[entry.path] = std::move(entry);
         }
@@ -582,7 +648,8 @@ ResultsCsvCompareResult CompareResultsCsvToCurrent(const std::wstring& currentRo
     ResultsCsvCompareResult compareResult;
     if (currentRootItem == nullptr || previousResultsPath.empty()) return compareResult;
 
-    const ResultsCsvLoadResult loadResult = LoadResultsCsvSnapshot(previousResultsPath);
+    const ResultsCsvLoadResult loadResult = LoadResultsCsvSnapshot(previousResultsPath,
+        static_cast<size_t>(currentRootItem->GetItemsCount()) + 1);
     compareResult.status = loadResult.status;
     if (loadResult.status != ResultsCsvCompareStatus::Success) return compareResult;
 

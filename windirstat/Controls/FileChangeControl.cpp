@@ -39,6 +39,7 @@ void CFileChangeControl::SetChanges(const SnapshotGrowthResult& result)
     m_hasChanges = !result.entries.empty();
     m_rootItem->SetPreviousSnapshotLabel(result.previousSnapshotLabel);
     m_rootItem->SetExpanded(false);
+    m_rootItem->ReserveChangeItemChildren(result.entries.size());
 
     SetRedraw(FALSE);
     for (const auto& entry : result.entries)
@@ -46,7 +47,7 @@ void CFileChangeControl::SetChanges(const SnapshotGrowthResult& result)
         m_rootItem->AddChangeItemChild(new CItemChange(entry));
     }
 
-    ExpandItem(0);
+    ExpandItem(0, false);
     SetRedraw(TRUE);
     Invalidate();
 }
