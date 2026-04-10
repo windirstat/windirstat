@@ -230,7 +230,10 @@ void CFileChangeView::OnUpdate(CView* pSender, const LPARAM lHint, CObject* pHin
         return;
     }
 
-    m_control.SetChanges(CDirStatDoc::Get()->GetSnapshotGrowthResult());
+    if (lHint == HINT_NULL)
+    {
+        m_control.SetChanges(CDirStatDoc::Get()->GetSnapshotGrowthResult());
+    }
 
     CControlView::OnUpdate(pSender, lHint, pHint);
 }
