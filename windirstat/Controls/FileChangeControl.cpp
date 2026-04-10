@@ -38,16 +38,17 @@ void CFileChangeControl::SetChanges(const SnapshotGrowthResult& result)
     SetRootItem();
     m_hasChanges = !result.entries.empty();
     m_rootItem->SetPreviousSnapshotLabel(result.previousSnapshotLabel);
+    m_rootItem->SetExpanded(false);
 
     SetRedraw(FALSE);
     for (const auto& entry : result.entries)
     {
         m_rootItem->AddChangeItemChild(new CItemChange(entry));
     }
-    SetRedraw(TRUE);
 
-    SortItems();
     ExpandItem(0);
+    SetRedraw(TRUE);
+    Invalidate();
 }
 
 void CFileChangeControl::ClearChanges()

@@ -44,13 +44,46 @@ namespace
         FILETIME lastChange{};
     };
 
-    using SnapshotMap = std::unordered_map<std::wstring, SnapshotEntry>;
+    struct SnapshotPathHash
+    {
+        size_t operator()(const std::wstring& value) const noexcept
+        {
+            constexpr std::uint64_t basis = 14695981039346656037ull;
+            constexpr std::uint64_t prime = 1099511628211ull;
+
+            std::uint64_t hash = basis;
+            for (const wchar_t ch : value)
+            {
+                hash ^= static_cast<std::uint64_t>(towupper(ch));
+                hash *= prime;
+            }
+
+            return static_cast<size_t>(hash);
+        }
+    };
+
+    struct SnapshotPathEqual
+    {
+        bool operator()(const std::wstring& lhs, const std::wstring& rhs) const noexcept
+        {
+            return _wcsicmp(lhs.c_str(), rhs.c_str()) == 0;
+        }
+    };
+
+    using SnapshotMap = std::unordered_map<std::wstring, SnapshotEntry, SnapshotPathHash, SnapshotPathEqual>;
     using ResultsFieldOrder = std::array<UCHAR, RESULT_FIELD_COUNT>;
+    using SnapshotItemMap = std::unordered_map<std::wstring, CItem*, SnapshotPathHash, SnapshotPathEqual>;
 
     struct CurrentSnapshot
     {
         SnapshotMap entries;
-        std::unordered_map<std::wstring, CItem*> items;
+        SnapshotItemMap items;
+    };
+
+    struct PendingSnapshotItem
+    {
+        CItem* item = nullptr;
+        std::wstring path;
     };
 
     struct ResultsCsvLoadResult
@@ -60,13 +93,21 @@ namespace
         SnapshotMap snapshot;
     };
 
-    std::wstring CanonicalizeKey(std::wstring key)
+    std::wstring BuildChildSnapshotPath(const std::wstring& parentPath, const CItem* child)
     {
-        std::ranges::transform(key, key.begin(), [](const wchar_t ch)
+        if (child == nullptr) return {};
+
+        if (child->IsTypeOrFlag(IT_DRIVE))
         {
-            return static_cast<wchar_t>(towupper(ch));
-        });
-        return key;
+            std::wstring path(child->GetNameView());
+            if (!path.empty() && path.back() != wds::chrBackslash) path.push_back(wds::chrBackslash);
+            return path;
+        }
+
+        std::wstring path = parentPath;
+        if (!path.empty() && path.back() != wds::chrBackslash) path.push_back(wds::chrBackslash);
+        path.append(child->GetNameView());
+        return path;
     }
 
     bool ShouldPersistItem(const CItem* item)
@@ -77,11 +118,6 @@ namespace
     bool ShouldDisplayGrowthItem(const CItem* item)
     {
         return item != nullptr && !item->IsTypeOrFlag(ITF_ROOTITEM) && item->IsTypeOrFlag(IT_DRIVE, IT_DIRECTORY, IT_FILE);
-    }
-
-    std::wstring GetSnapshotKey(const std::wstring& rootSpec, const CItem* item)
-    {
-        return item->IsTypeOrFlag(ITF_ROOTITEM) ? rootSpec : item->GetPath();
     }
 
     std::string ToUtf8(const std::wstring_view input)
@@ -266,28 +302,42 @@ namespace
         CurrentSnapshot snapshot;
         if (rootItem == nullptr) return snapshot;
 
-        std::vector<CItem*> queue{ rootItem };
+        const auto estimatedItems = static_cast<size_t>(rootItem->GetItemsCount()) + 1;
+        snapshot.entries.reserve(estimatedItems);
+        snapshot.items.reserve(estimatedItems);
+
+        std::vector<PendingSnapshotItem> queue;
+        queue.reserve(estimatedItems);
+        queue.push_back({ rootItem, rootSpec });
+
         while (!queue.empty())
         {
-            CItem* item = queue.back();
+            PendingSnapshotItem pending = std::move(queue.back());
             queue.pop_back();
+
+            CItem* item = pending.item;
 
             if (!ShouldPersistItem(item)) continue;
 
             SnapshotEntry entry;
-            entry.path = GetSnapshotKey(rootSpec, item);
+            entry.path = std::move(pending.path);
             entry.type = item->GetRawType() & ~ITF_HARDLINK & ~ITHASH_MASK & ~ITF_EXTDATA;
             entry.sizePhysical = item->GetSizePhysicalRaw();
             entry.files = item->GetFilesCount();
             entry.folders = item->GetFoldersCount();
             entry.lastChange = item->GetLastChange();
 
-            const std::wstring canonicalPath = CanonicalizeKey(entry.path);
-            snapshot.entries[canonicalPath] = entry;
-            snapshot.items[canonicalPath] = item;
+            snapshot.items[entry.path] = item;
+            snapshot.entries[entry.path] = entry;
 
             if (item->IsLeaf()) continue;
-            for (const auto& child : item->GetChildren()) queue.push_back(child);
+
+            const auto& children = item->GetChildren();
+            queue.reserve(queue.size() + children.size());
+            for (const auto& child : children)
+            {
+                queue.push_back({ child, BuildChildSnapshotPath(entry.path, child) });
+            }
         }
 
         return snapshot;
@@ -359,7 +409,7 @@ namespace
             entry.folders = wcstoul(fields[4].data(), nullptr, 10);
             entry.lastChange = ParseTimestamp(fields[5]);
 
-            snapshot[CanonicalizeKey(entry.path)] = entry;
+            snapshot[entry.path] = entry;
         }
 
         return snapshot;
@@ -457,7 +507,7 @@ namespace
             entry.files = wcstoul(fields[order[RESULT_FIELD_FILES]].data(), nullptr, 10);
             entry.folders = wcstoul(fields[order[RESULT_FIELD_FOLDERS]].data(), nullptr, 10);
 
-            result.snapshot[CanonicalizeKey(entry.path)] = std::move(entry);
+            result.snapshot[entry.path] = std::move(entry);
         }
 
         result.status = ResultsCsvCompareStatus::Success;
