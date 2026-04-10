@@ -132,7 +132,7 @@ BOOL CDirStatDoc::OnOpenDocument(LPCWSTR lpszPathName)
             ASSERT(FALSE);
         }
 
-        const LPCWSTR name = ppszName != nullptr ? const_cast<LPCWSTR>(*ppszName) : Localization::Lookup(IDS_THISPC).c_str();
+        const std::wstring name = ppszName != nullptr ? *ppszName : Localization::Lookup(IDS_THISPC);
         m_rootItem = new CItem(IT_MYCOMPUTER | ITF_ROOTITEM, name);
         for (const auto& rootFolder : selections)
         {
