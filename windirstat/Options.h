@@ -107,6 +107,7 @@ class COptions final
     static LPCWSTR OptionsExtView;
     static LPCWSTR OptionsTopView;
     static LPCWSTR OptionsSearch;
+    static LPCWSTR OptionsChanges;
     static LPCWSTR OptionsWatcher;
     static LPCWSTR OptionsDriveSelect;
 
@@ -204,6 +205,8 @@ public:
     static Setting<std::vector<int>> FileTreeColumnWidths;
     static Setting<std::vector<int>> ExtViewColumnOrder;
     static Setting<std::vector<int>> ExtViewColumnWidths;
+    static Setting<std::vector<int>> ChangeViewColumnOrder;
+    static Setting<std::vector<int>> ChangeViewColumnWidths;
     static Setting<std::vector<int>> SearchViewColumnOrder;
     static Setting<std::vector<int>> SearchViewColumnWidths;
     static Setting<std::vector<int>> TopViewColumnOrder;

@@ -18,6 +18,7 @@
 #include "pch.h"
 #include "CsvLoader.h"
 #include "FileTreeView.h"
+#include "SnapshotHistory.h"
 #include "TreeMapView.h"
 #include "FileTopControl.h"
 #include "FileSearchControl.h"
@@ -92,6 +93,10 @@ BOOL CDirStatDoc::OnNewDocument()
 
 BOOL CDirStatDoc::OnOpenDocument(LPCWSTR lpszPathName)
 {
+    m_snapshotGrowthResult = {};
+    if (CFileChangeControl::Get() != nullptr) CFileChangeControl::Get()->ClearChanges();
+    CMainFrame::Get()->GetFileTabbedView()->SetChangesTabVisibility(true);
+
     // Temporarily minimize extra views
     CMainFrame::Get()->MinimizeTreeMapView();
     CMainFrame::Get()->MinimizeExtensionView();
@@ -158,6 +163,10 @@ BOOL CDirStatDoc::OnOpenDocument(LPCWSTR lpszPathName)
 
 BOOL CDirStatDoc::OnOpenDocument(CItem* newroot)
 {
+    m_snapshotGrowthResult = {};
+    if (CFileChangeControl::Get() != nullptr) CFileChangeControl::Get()->ClearChanges();
+    CMainFrame::Get()->GetFileTabbedView()->SetChangesTabVisibility(true);
+
     CMainFrame::Get()->MinimizeTreeMapView();
     CMainFrame::Get()->MinimizeExtensionView();
 
@@ -809,6 +818,11 @@ bool CDirStatDoc::SearchListHasFocus()
     return LF_SEARCHLIST == CMainFrame::Get()->GetLogicalFocus();
 }
 
+bool CDirStatDoc::ChangesListHasFocus()
+{
+    return LF_CHANGELIST == CMainFrame::Get()->GetLogicalFocus();
+}
+
 bool CDirStatDoc::WatcherListHasFocus()
 {
     return LF_WATCHERLIST == CMainFrame::Get()->GetLogicalFocus();
@@ -819,6 +833,7 @@ CTreeListControl* CDirStatDoc::GetFocusControl()
     if (DupeListHasFocus()) return CFileDupeControl::Get();
     if (TopListHasFocus()) return CFileTopControl::Get();
     if (SearchListHasFocus()) return CFileSearchControl::Get();
+    if (ChangesListHasFocus()) return CFileChangeControl::Get();
     if (WatcherListHasFocus()) return CFileWatcherControl::Get();
     return CFileTreeControl::Get();
 }
@@ -1005,6 +1020,7 @@ BEGIN_MESSAGE_MAP(CDirStatDoc, CDocument)
     ON_COMMAND_UPDATE_WRAPPER(ID_REFRESH_SELECTED, OnRefreshSelected)
     ON_COMMAND_UPDATE_WRAPPER(ID_REFRESH_ALL, OnRefreshAll)
     ON_COMMAND(ID_LOAD_RESULTS, OnLoadResults)
+    ON_COMMAND(ID_COMPARE_RESULTS, OnCompareResults)
     ON_COMMAND_UPDATE_WRAPPER(ID_SAVE_RESULTS, OnSaveResults)
     ON_COMMAND_UPDATE_WRAPPER(ID_SAVE_DUPLICATES, OnSaveDuplicates)
     ON_COMMAND_UPDATE_WRAPPER(ID_EDIT_COPY_CLIPBOARD, OnEditCopy)
@@ -1137,6 +1153,49 @@ void CDirStatDoc::OnLoadResults()
     }).DoModal();
 
     if (newroot != nullptr) Get()->OnOpenDocument(newroot);
+}
+
+void CDirStatDoc::OnCompareResults()
+{
+    if (!HasRootItem()) return;
+
+    const std::wstring fileSelectString = std::format(L"{} (*.csv)|*.csv|{} (*.*)|*.*||",
+        Localization::Lookup(IDS_CSV_FILES), Localization::Lookup(IDS_ALL_FILES));
+    CFileDialog dlg(TRUE, L"csv", nullptr, OFN_EXPLORER | OFN_DONTADDTORECENT | OFN_PATHMUSTEXIST, fileSelectString.c_str());
+    if (dlg.DoModal() != IDOK) return;
+
+    const auto selectedPath = dlg.GetPathName().GetString();
+    CItem* previousRoot = nullptr;
+    CProgressDlg(0, true, AfxGetMainWnd(), [&](CProgressDlg*)
+    {
+        previousRoot = LoadResults(selectedPath);
+    }).DoModal();
+
+    SnapshotGrowthResult compareResult;
+    if (previousRoot != nullptr)
+    {
+        compareResult = CompareSnapshotTrees(GetPathName().GetString(), GetRootItem(),
+            std::filesystem::path(selectedPath).filename().wstring(), previousRoot);
+        delete previousRoot;
+    }
+    else
+    {
+        compareResult = CompareSnapshotFileToCurrent(GetPathName().GetString(), GetRootItem(), selectedPath);
+        if (compareResult.previousSnapshotLabel.empty())
+        {
+            WdsMessageBox(L"The selected CSV is not a supported results file.", MB_OK | MB_ICONERROR);
+            return;
+        }
+    }
+
+    m_snapshotGrowthResult = compareResult;
+    if (CFileChangeControl::Get() != nullptr)
+    {
+        CFileChangeControl::Get()->SetChanges(compareResult);
+    }
+    CMainFrame::Get()->GetFileTabbedView()->SetChangesTabVisibility(true);
+    CMainFrame::Get()->GetFileTabbedView()->SetActiveChangeView();
+    UpdateAllViews(nullptr);
 }
 
 void CDirStatDoc::OnEditCopy()
@@ -1863,7 +1922,8 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
 
     // Start a thread so we do not hang the message loop during inserts
     // Lambda captures assume document exists for duration of thread
-    m_thread.emplace([this,items, visualInfo] () mutable
+    const bool shouldUpdateHistory = !items.empty();
+    m_thread.emplace([this,items, visualInfo, shouldUpdateHistory] () mutable
     {
         // Add items to processing queue
         for (const auto & item : items)
@@ -1966,6 +2026,8 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
         CItem::ScanItemsFinalize(GetRootItem());
         Get()->RebuildExtensionData();
 
+        const SnapshotGrowthResult historyResult = shouldUpdateHistory ? UpdateSnapshotHistory(GetPathName().GetString(), GetRootItem()) : SnapshotGrowthResult{};
+
         // Handle quiet save mode if path is set
         if (const auto csvPath = CDirStatApp::Get()->GetSaveToCsvPath(); !csvPath.empty())
         {
@@ -1992,6 +2054,13 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
         // Invoke a UI thread to do updates
         CMainFrame::Get()->InvokeInMessageThread([&]
         {
+            m_snapshotGrowthResult = historyResult;
+            if (CFileChangeControl::Get() != nullptr)
+            {
+                CFileChangeControl::Get()->SetChanges(historyResult);
+            }
+            CMainFrame::Get()->GetFileTabbedView()->SetChangesTabVisibility(true);
+
             CMainFrame::Get()->LockWindowUpdate();
             Get()->UpdateAllViews(nullptr);
             CMainFrame::Get()->SetProgressComplete();

@@ -25,6 +25,7 @@ LPCWSTR COptions::OptionsDupeTree = L"DupeView";
 LPCWSTR COptions::OptionsExtView = L"ExtView";
 LPCWSTR COptions::OptionsTopView = L"TopView";
 LPCWSTR COptions::OptionsSearch = L"SearchView";
+LPCWSTR COptions::OptionsChanges = L"ChangeView";
 LPCWSTR COptions::OptionsWatcher = L"Watcher";
 LPCWSTR COptions::OptionsDriveSelect = L"DriveSelect";
 
@@ -119,6 +120,8 @@ Setting<std::vector<int>> COptions::FileTreeColumnOrder(OptionsFileTree, L"Colum
 Setting<std::vector<int>> COptions::FileTreeColumnWidths(OptionsFileTree, L"ColumnWidths");
 Setting<std::vector<int>> COptions::ExtViewColumnOrder(OptionsExtView, L"ColumnOrder");
 Setting<std::vector<int>> COptions::ExtViewColumnWidths(OptionsExtView, L"ColumnWidths");
+Setting<std::vector<int>> COptions::ChangeViewColumnOrder(OptionsChanges, L"ColumnOrder");
+Setting<std::vector<int>> COptions::ChangeViewColumnWidths(OptionsChanges, L"ColumnWidths");
 Setting<std::vector<int>> COptions::TopViewColumnOrder(OptionsTopView, L"ColumnOrder");
 Setting<std::vector<int>> COptions::TopViewColumnWidths(OptionsTopView, L"ColumnWidths");
 Setting<std::vector<int>> COptions::SearchViewColumnOrder(OptionsSearch, L"ColumnOrder");

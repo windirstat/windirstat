@@ -27,22 +27,27 @@ public:
     bool IsFileDupeViewTabActive() { return GetTabControl().GetActiveTab() == m_fileDupeViewIndex; }
     bool IsFileTopViewTabActive() { return GetTabControl().GetActiveTab() == m_fileTopViewIndex; }
     bool IsFileSearchViewTabActive() { return GetTabControl().GetActiveTab() == m_fileSearchViewIndex; }
+    bool IsFileChangeViewTabActive() { return GetTabControl().GetActiveTab() == m_fileChangeViewIndex; }
     bool IsFileWatcherViewTabActive() { return GetTabControl().GetActiveTab() == m_fileWatcherViewIndex; }
     CFileTopView* GetFileTopView() const { return m_fileTopView; }
     CFileTreeView* GetFileTreeView() const { return m_fileTreeView; }
     CFileDupeView* GetFileDupeView() const { return m_fileDupeView; }
     CFileSearchView* GetFileSearchView() const { return m_fileSearchView; }
+    CFileChangeView* GetFileChangeView() const { return m_fileChangeView; }
     CFileWatcherView* GetFileWatcherView() const { return m_fileWatcherView; }
     void SetActiveFileTreeView() { SetActiveView(m_fileTreeViewIndex); }
     void SetActiveTopView() { SetActiveView(m_fileTopViewIndex); }
     void SetActiveDupeView() { SetActiveView(m_fileDupeViewIndex); }
     void SetActiveSearchView() { SetActiveView(m_fileSearchViewIndex); }
+    void SetActiveChangeView() { SetActiveView(m_fileChangeViewIndex); }
     void SetActiveWatcherView() { SetActiveView(m_fileWatcherViewIndex); }
     void SetDupeTabVisibility(bool show = true);
     void SetSearchTabVisibility(bool show = true);
+    void SetChangesTabVisibility(bool show = true);
     void SetWatcherTabVisibility(bool show = true);
     bool IsDupeTabVisible() { return GetTabControl().IsTabVisible(m_fileDupeViewIndex); }
     bool IsSearchTabVisible() { return GetTabControl().IsTabVisible(m_fileSearchViewIndex); }
+    bool IsChangesTabVisible() { return GetTabControl().IsTabVisible(m_fileChangeViewIndex); }
     bool IsWatcherTabVisible() { return GetTabControl().IsTabVisible(m_fileWatcherViewIndex); }
     bool CycleTab(bool forward);
 
@@ -61,6 +66,8 @@ protected:
     CFileTopView* m_fileTopView = nullptr;
     int m_fileSearchViewIndex = -1;
     CFileSearchView* m_fileSearchView = nullptr;
+    int m_fileChangeViewIndex = -1;
+    CFileChangeView* m_fileChangeView = nullptr;
     int m_fileWatcherViewIndex = -1;
     CFileWatcherView* m_fileWatcherView = nullptr;
 
