@@ -653,7 +653,7 @@ void CTreeListControl::ExpandItem(const CTreeListItem* item)
     ExpandItem(FindTreeItem(item), false);
 }
 
-void CTreeListControl::ExpandItem(const int i, const bool scroll)
+void CTreeListControl::ExpandItem(const int i, const bool scroll, const bool sort)
 {
     CTreeListItem* item = GetItem(i);
     if (item->IsExpanded())
@@ -708,7 +708,7 @@ void CTreeListControl::ExpandItem(const int i, const bool scroll)
     }
 
     // Sort at end so we do not invalidate position data
-    if (childCount > 1) SortItems();
+    if (sort && childCount > 1) SortItems();
 }
 
 void CTreeListControl::OnKeyDown(const UINT nChar, const UINT nRepCnt, const UINT nFlags)

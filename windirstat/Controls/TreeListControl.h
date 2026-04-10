@@ -151,7 +151,7 @@ protected:
     void InsertItem(int i, CTreeListItem* item);
     void DeleteItem(int i);
     void CollapseItem(int i);
-    void ExpandItem(int i, bool scroll = true);
+    void ExpandItem(int i, bool scroll = true, bool sort = true);
     void ToggleExpansion(int i);
 
     //

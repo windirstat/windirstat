@@ -39,7 +39,15 @@ namespace
     }
 }
 
-CItemChange::CItemChange(const SnapshotGrowthEntry& entry) : m_entry(entry) {}
+CItemChange::CItemChange(const SnapshotGrowthEntry& entry) : m_entry(entry)
+{
+    m_cachedText[COL_ITEMCHANGE_NAME] = m_entry->path;
+    m_cachedText[COL_ITEMCHANGE_DELTA] = FormatSignedBytes(m_entry->deltaSizePhysical);
+    m_cachedText[COL_ITEMCHANGE_CURRENT_SIZE] = FormatBytes(m_entry->currentSizePhysical);
+    m_cachedText[COL_ITEMCHANGE_PREVIOUS_SIZE] = FormatBytes(m_entry->previousSizePhysical);
+    m_cachedText[COL_ITEMCHANGE_FILES_DELTA] = FormatSignedCountValue(m_entry->deltaFiles);
+    m_cachedText[COL_ITEMCHANGE_FOLDERS_DELTA] = FormatSignedCountValue(m_entry->deltaFolders);
+}
 
 CItemChange::~CItemChange()
 {
@@ -65,25 +73,8 @@ std::wstring CItemChange::GetText(const int subitem) const
         return text;
     }
 
-    if (!m_entry.has_value()) return {};
-
-    switch (subitem)
-    {
-    case COL_ITEMCHANGE_NAME:
-        return m_entry->path;
-    case COL_ITEMCHANGE_DELTA:
-        return FormatSignedBytes(m_entry->deltaSizePhysical);
-    case COL_ITEMCHANGE_CURRENT_SIZE:
-        return FormatBytes(m_entry->currentSizePhysical);
-    case COL_ITEMCHANGE_PREVIOUS_SIZE:
-        return FormatBytes(m_entry->previousSizePhysical);
-    case COL_ITEMCHANGE_FILES_DELTA:
-        return FormatSignedCountValue(m_entry->deltaFiles);
-    case COL_ITEMCHANGE_FOLDERS_DELTA:
-        return FormatSignedCountValue(m_entry->deltaFolders);
-    default:
-        return {};
-    }
+    if (!m_entry.has_value() || subitem < 0 || subitem >= static_cast<int>(m_cachedText.size())) return {};
+    return m_cachedText[subitem];
 }
 
 int CItemChange::CompareSibling(const CTreeListItem* tlib, const int subitem) const

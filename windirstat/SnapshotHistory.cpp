@@ -473,6 +473,75 @@ namespace
         return entry.deltaSizePhysical > 0 || entry.deltaFiles > 0 || entry.deltaFolders > 0;
     }
 
+    void SortGrowthEntries(std::vector<SnapshotGrowthEntry>& entries)
+    {
+        std::ranges::sort(entries, [](const auto& lhs, const auto& rhs)
+        {
+            if (lhs.deltaSizePhysical != rhs.deltaSizePhysical) return lhs.deltaSizePhysical > rhs.deltaSizePhysical;
+            if (lhs.deltaFiles != rhs.deltaFiles) return lhs.deltaFiles > rhs.deltaFiles;
+            if (lhs.deltaFolders != rhs.deltaFolders) return lhs.deltaFolders > rhs.deltaFolders;
+            return _wcsicmp(lhs.path.c_str(), rhs.path.c_str()) < 0;
+        });
+    }
+
+    void AppendGrowthEntryForCurrentItem(std::vector<SnapshotGrowthEntry>& entries, const SnapshotMap& previousSnapshot,
+        CItem* currentItem, const std::wstring& currentPath)
+    {
+        if (!ShouldDisplayGrowthItem(currentItem)) return;
+
+        const auto previousIt = previousSnapshot.find(currentPath);
+        const SnapshotEntry* previousEntry = previousIt != previousSnapshot.end() ? &previousIt->second : nullptr;
+
+        SnapshotGrowthEntry growth;
+        growth.path = currentPath;
+        growth.type = currentItem->GetRawType() & ~ITF_HARDLINK & ~ITHASH_MASK & ~ITF_EXTDATA;
+        growth.currentItem = currentItem;
+        growth.currentSizePhysical = currentItem->GetSizePhysicalRaw();
+        growth.previousSizePhysical = previousEntry != nullptr ? previousEntry->sizePhysical : 0;
+        growth.deltaSizePhysical = static_cast<LONGLONG>(growth.currentSizePhysical) - static_cast<LONGLONG>(growth.previousSizePhysical);
+        growth.deltaFiles = static_cast<LONGLONG>(currentItem->GetFilesCount()) - static_cast<LONGLONG>(previousEntry != nullptr ? previousEntry->files : 0);
+        growth.deltaFolders = static_cast<LONGLONG>(currentItem->GetFoldersCount()) - static_cast<LONGLONG>(previousEntry != nullptr ? previousEntry->folders : 0);
+
+        if (IsPositiveGrowth(growth)) entries.push_back(std::move(growth));
+    }
+
+    SnapshotGrowthResult CompareSnapshotToCurrentTree(const std::wstring& currentRootSpec, CItem* currentRootItem,
+        const SnapshotMap& previousSnapshot, std::wstring previousSnapshotLabel)
+    {
+        SnapshotGrowthResult result;
+        if (currentRootItem == nullptr) return result;
+
+        result.previousSnapshotLabel = std::move(previousSnapshotLabel);
+
+        const auto estimatedItems = static_cast<size_t>(currentRootItem->GetItemsCount()) + 1;
+        std::vector<PendingSnapshotItem> queue;
+        queue.reserve(estimatedItems);
+        queue.push_back({ currentRootItem, currentRootSpec });
+
+        while (!queue.empty())
+        {
+            PendingSnapshotItem pending = std::move(queue.back());
+            queue.pop_back();
+
+            CItem* item = pending.item;
+            if (!ShouldPersistItem(item)) continue;
+
+            AppendGrowthEntryForCurrentItem(result.entries, previousSnapshot, item, pending.path);
+
+            if (item->IsLeaf()) continue;
+
+            const auto& children = item->GetChildren();
+            queue.reserve(queue.size() + children.size());
+            for (const auto& child : children)
+            {
+                queue.push_back({ child, BuildChildSnapshotPath(pending.path, child) });
+            }
+        }
+
+        SortGrowthEntries(result.entries);
+        return result;
+    }
+
     bool TryParseResultsHeader(const std::vector<std::wstring_view>& header, ResultsFieldOrder& order)
     {
         order.fill(static_cast<UCHAR>(UCHAR_MAX));
@@ -610,13 +679,7 @@ namespace
             if (IsPositiveGrowth(growth)) result.entries.push_back(growth);
         }
 
-        std::ranges::sort(result.entries, [](const auto& lhs, const auto& rhs)
-        {
-            if (lhs.deltaSizePhysical != rhs.deltaSizePhysical) return lhs.deltaSizePhysical > rhs.deltaSizePhysical;
-            if (lhs.deltaFiles != rhs.deltaFiles) return lhs.deltaFiles > rhs.deltaFiles;
-            if (lhs.deltaFolders != rhs.deltaFolders) return lhs.deltaFolders > rhs.deltaFolders;
-            return _wcsicmp(lhs.path.c_str(), rhs.path.c_str()) < 0;
-        });
+        SortGrowthEntries(result.entries);
 
         return result;
     }
@@ -653,8 +716,8 @@ ResultsCsvCompareResult CompareResultsCsvToCurrent(const std::wstring& currentRo
     compareResult.status = loadResult.status;
     if (loadResult.status != ResultsCsvCompareStatus::Success) return compareResult;
 
-    const CurrentSnapshot currentSnapshot = CollectCurrentSnapshot(currentRootSpec, currentRootItem);
-    compareResult.result = BuildGrowthResult(currentSnapshot, loadResult.snapshot, loadResult.previousSnapshotLabel);
+    compareResult.result = CompareSnapshotToCurrentTree(currentRootSpec, currentRootItem,
+        loadResult.snapshot, loadResult.previousSnapshotLabel);
     return compareResult;
 }
 
@@ -664,9 +727,8 @@ SnapshotGrowthResult CompareSnapshotTrees(const std::wstring& currentRootSpec, C
     SnapshotGrowthResult result;
     if (currentRootItem == nullptr || previousRootItem == nullptr) return result;
 
-    const CurrentSnapshot currentSnapshot = CollectCurrentSnapshot(currentRootSpec, currentRootItem);
     const CurrentSnapshot previousSnapshot = CollectCurrentSnapshot(previousRootItem->GetPath(), previousRootItem);
-    return BuildGrowthResult(currentSnapshot, previousSnapshot.entries, previousSnapshotLabel);
+    return CompareSnapshotToCurrentTree(currentRootSpec, currentRootItem, previousSnapshot.entries, previousSnapshotLabel);
 }
 
 SnapshotGrowthResult CompareSnapshotFileToCurrent(const std::wstring& currentRootSpec, CItem* currentRootItem,
@@ -678,6 +740,5 @@ SnapshotGrowthResult CompareSnapshotFileToCurrent(const std::wstring& currentRoo
     const auto previousSnapshot = LoadSnapshotFile(previousSnapshotPath);
     if (!previousSnapshot.has_value()) return result;
 
-    const CurrentSnapshot currentSnapshot = CollectCurrentSnapshot(currentRootSpec, currentRootItem);
-    return BuildGrowthResult(currentSnapshot, *previousSnapshot, BuildSnapshotLabel(previousSnapshotPath));
+    return CompareSnapshotToCurrentTree(currentRootSpec, currentRootItem, *previousSnapshot, BuildSnapshotLabel(previousSnapshotPath));
 }

@@ -33,9 +33,12 @@ using ITEMCHANGECOLUMNS = enum : std::uint8_t
 
 class CItemChange final : public CTreeListItem
 {
+    static constexpr size_t CachedTextCount = COL_ITEMCHANGE_FOLDERS_DELTA + 1;
+
     std::shared_mutex m_protect;
     std::vector<CItemChange*> m_children;
     std::optional<SnapshotGrowthEntry> m_entry;
+    std::array<std::wstring, CachedTextCount> m_cachedText;
     std::wstring m_previousSnapshotLabel;
 
 public:

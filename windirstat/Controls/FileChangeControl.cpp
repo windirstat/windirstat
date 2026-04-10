@@ -47,8 +47,9 @@ void CFileChangeControl::SetChanges(const SnapshotGrowthResult& result)
         m_rootItem->AddChangeItemChild(new CItemChange(entry));
     }
 
-    ExpandItem(0, false);
+    ExpandItem(0, false, false);
     SetRedraw(TRUE);
+    UpdateSortIndicator();
     Invalidate();
 }
 

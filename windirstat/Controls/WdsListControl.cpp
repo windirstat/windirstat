@@ -728,6 +728,12 @@ void CWdsListControl::SortItems()
 
     Invalidate();
 
+    UpdateSortIndicator();
+}
+
+void CWdsListControl::UpdateSortIndicator()
+{
+    
     // Exit if the header control is unavailable, to prevent a null pointer crash.
     auto* pHeaderCtrl = GetHeaderCtrl();
     if (pHeaderCtrl == nullptr)

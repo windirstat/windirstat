@@ -141,6 +141,7 @@ public:
 
 protected:
     void InitializeColors();
+    void UpdateSortIndicator();
     void DrawItem(LPDRAWITEMSTRUCT pdis) override;
     int GetSubItemWidth(CWdsListItem* item, int subitem);
     void SavePersistentAttributes() const;
