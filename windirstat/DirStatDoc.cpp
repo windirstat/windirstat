@@ -1922,8 +1922,7 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
 
     // Start a thread so we do not hang the message loop during inserts
     // Lambda captures assume document exists for duration of thread
-    const bool shouldUpdateHistory = !items.empty();
-    m_thread.emplace([this,items, visualInfo, shouldUpdateHistory] () mutable
+    m_thread.emplace([this,items, visualInfo] () mutable
     {
         // Add items to processing queue
         for (const auto & item : items)
@@ -2026,8 +2025,6 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
         CItem::ScanItemsFinalize(GetRootItem());
         Get()->RebuildExtensionData();
 
-        const SnapshotGrowthResult historyResult = shouldUpdateHistory ? UpdateSnapshotHistory(GetPathName().GetString(), GetRootItem()) : SnapshotGrowthResult{};
-
         // Handle quiet save mode if path is set
         if (const auto csvPath = CDirStatApp::Get()->GetSaveToCsvPath(); !csvPath.empty())
         {
@@ -2054,11 +2051,8 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
         // Invoke a UI thread to do updates
         CMainFrame::Get()->InvokeInMessageThread([&]
         {
-            m_snapshotGrowthResult = historyResult;
-            if (CFileChangeControl::Get() != nullptr)
-            {
-                CFileChangeControl::Get()->SetChanges(historyResult);
-            }
+            m_snapshotGrowthResult = {};
+            if (CFileChangeControl::Get() != nullptr) CFileChangeControl::Get()->ClearChanges();
             CMainFrame::Get()->GetFileTabbedView()->SetChangesTabVisibility(true);
 
             CMainFrame::Get()->LockWindowUpdate();
