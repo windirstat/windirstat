@@ -187,6 +187,7 @@ protected:
     afx_msg void OnViewShowUnknown();
     afx_msg void OnTreeMapZoomIn();
     afx_msg void OnTreeMapZoomOut();
+    afx_msg void OnTreeMapZoomReset();
     afx_msg void OnRemoveRoamingProfiles();
     afx_msg void OnRemoveLocalProfiles();
     afx_msg void OnDisableHibernateFile();

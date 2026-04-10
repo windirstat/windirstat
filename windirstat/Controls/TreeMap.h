@@ -135,6 +135,7 @@ public:
     {
         STYLE style;         // Squarification method
         bool grid;           // Whether to draw grid lines
+        bool showExtensions; // Whether to show file extensions in treemap
         COLORREF gridColor;  // Color of grid lines
         double brightness;   // 0..1.0   (default = 0.84)
         double height;       // >= 0.0    (default = 0.40)    Factor "H"
@@ -214,10 +215,14 @@ protected:
     // Adds a new ridge to surface
     static void AddRidge(const CRect& rc, std::array<double, 4>& surface, double h);
 
+    // Draws file extension labels on leaf items
+    void DrawExtensionLabels(CDC* pdc, CItem* root, const CPoint& offset) const;
+
     // Default tree map options
     static constexpr Options DefaultOptions = {
         .style = KDirStatStyle,
         .grid = false,
+        .showExtensions = false,
         .gridColor = RGB(0, 0, 0),
         .brightness = 0.88,
         .height = 0.38,
