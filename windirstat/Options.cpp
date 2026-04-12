@@ -95,6 +95,7 @@ Setting<int> COptions::ConfigPage(OptionsGeneral, L"ConfigPage", 0);
 Setting<int> COptions::DarkMode(OptionsGeneral, L"DarkMode", DM_USE_WINDOWS, DM_DISABLED, DM_USE_WINDOWS);
 Setting<int> COptions::LanguageId(OptionsGeneral, L"LanguageId", 0);
 Setting<int> COptions::LargeFileCount(OptionsGeneral, L"LargeFileCount", 50, 0, 10000);
+Setting<int> COptions::MinimizeViewThreshold(OptionsGeneral, L"MinimizeViewThreshold", 10, 1, 10000);
 Setting<int> COptions::ScanningThreads(OptionsGeneral, L"ScanningThreads", 4, 1, 16);
 Setting<int> COptions::SelectDrivesRadio(OptionsDriveSelect, L"SelectDrivesRadio", 0, 0, 2);
 Setting<int> COptions::FileTreeColorCount(OptionsFileTree, L"FileTreeColorCount", 8);

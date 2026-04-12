@@ -161,51 +161,42 @@ END_MESSAGE_MAP()
 
 void CWdsSplitterWnd::StopTracking(const BOOL bAccept)
 {
+    // Define toggle functions for both views, which will show or hide the corresponding views based on the calculated visibility.
+    static constexpr bool (*toggleTreeMap)(bool) = [](bool isVisible) { CTreeMapView* pView = CMainFrame::Get()->GetTreeMapView(); return pView && (pView->ShowTreeMap(isVisible), true); };
+    static constexpr bool (*toggleExtension)(bool) = [](bool isVisible) { CExtensionView* pView = CMainFrame::Get()->GetExtensionView(); return pView && (pView->ShowTypes(isVisible), true); };
+
+    static constexpr struct {
+        void (CMainFrame::* minimize)();
+        int (CRect::* totalSize)() const;
+        bool (*toggle)(bool);
+    } views[] = {
+        { &CMainFrame::MinimizeTreeMapView,  &CRect::Height, toggleTreeMap },  // [0] TreeMap
+        { &CMainFrame::MinimizeExtensionView, &CRect::Width, toggleExtension } // [1] Extension List
+    };
+
     CSplitterWndEx::StopTracking(bAccept);
+    if (!bAccept) return;
 
-    if (bAccept)
+    int currentPos, dummy;
+    const bool isVertical = (GetColumnCount() > 1); // Determine if the splitter is vertical (columns) or horizontal (rows)
+    isVertical ? GetColumnInfo(0, currentPos, dummy) : GetRowInfo(0, currentPos, dummy); // Get the current position of the splitter
+    const auto& view = views[isVertical]; // Select view based on the splitter orientation
+    const CRect rcClient = ClientRectOf(this); // Get the current client area to calculate the total size for visibility determination
+    const int totalSize = (rcClient.*view.totalSize)(); // Calculate the left or upper view size
+    const bool isVisible = (totalSize - currentPos) > DpiRest(COptions::MinimizeViewThreshold); // Consider the view visible if larger than 10 pixels by default
+
+    if (totalSize <= 0) return;
+    if (!view.toggle(isVisible)) return; // Toggle Show/Hide of the view based on the calculated visibility
+
+    if (!isVisible)
     {
-        const CRect rcClient = ClientRectOf(this);
-        if (GetColumnCount() > 1)
-        {
-            int dummy;
-            int cxLeft;
-            GetColumnInfo(0, cxLeft, dummy);
-
-            if (rcClient.Width() > 0)
-            {        
-                // if user drag the splitter to show the extension view,
-                // treat that as an intent to enable showing file types in the extension view
-                if (CExtensionView* pExtensionView = CMainFrame::Get()->GetExtensionView();
-                    pExtensionView != nullptr && !pExtensionView->IsShowTypes()) 
-                {
-                    pExtensionView->ShowTypes(true);
-                }
-
-                m_splitterPos = static_cast<double>(cxLeft) / rcClient.Width();
-            }
-        }
-        else
-        {
-            int dummy;
-            int cyUpper;
-            GetRowInfo(0, cyUpper, dummy);
-
-            if (rcClient.Height() > 0)
-            {
-                // if user drag the splitter to show the treemap view,
-                // treat that as an intent to enable treemap
-                if (CTreeMapView* pTreeMapView = CMainFrame::Get()->GetTreeMapView();
-                    pTreeMapView != nullptr && !pTreeMapView->IsShowTreeMap())
-                {
-                    pTreeMapView->ShowTreeMap(true);
-                }
-                m_splitterPos = static_cast<double>(cyUpper) / rcClient.Height();
-            }
-        }
-        m_wasTrackedByUser = true;
-        *m_userSplitterPos = m_splitterPos;
+        (CMainFrame::Get()->*view.minimize)(); // Minimize the view if it considered not visible
+        return; // Early exit to keep the current splitter position unchanged for show views to function properly
     }
+
+    m_splitterPos = static_cast<double>(currentPos) / totalSize;
+    m_wasTrackedByUser = true;
+    *m_userSplitterPos = m_splitterPos;
 }
 
 void CWdsSplitterWnd::SetSplitterPos(const double pos)
