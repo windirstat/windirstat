@@ -133,12 +133,13 @@ std::wstring FormatCount(const ULONGLONG n) noexcept
 std::wstring FormatDouble(const double d) noexcept
 {
     ASSERT(d >= 0);
+    const int x = std::lround(d * 100);
+    const int i = x / 100;
+    const int r = x % 100;
 
-    const int x = std::lround(d * 10);
-    const int i = x / 10;
-    const int r = x % 10;
-
-    return std::to_wstring(i) + GetLocaleDecimalSeparator() + std::to_wstring(r);
+    if (r == 0) return std::to_wstring(i);
+    return std::to_wstring(i) + GetLocaleDecimalSeparator() + (r % 10 == 0 ? 
+        std::wstring(1, L'0' + r / 10) : std::wstring{L'0' + r / 10, L'0' + r % 10});
 }
 
 std::wstring FormatFileTime(const FILETIME& t, const bool seconds) noexcept
