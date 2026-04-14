@@ -130,38 +130,16 @@ std::wstring FormatCount(const ULONGLONG n) noexcept
     return FormatLongLongNormal(n);
 }
 
-std::wstring FormatDouble(const double input) noexcept
+std::wstring FormatDouble(const double d) noexcept
 {
-    ASSERT(input >= 0);
-    static constexpr int scale = 100; // Scale to preserve two decimal places
-    thread_local std::wstring result; // Make string buffer thread persistent
-    result.clear();  // Clear previous contents while keeping allocated memory for reuse
+    ASSERT(d >= 0);
+    const int x = std::lround(d * 100);
+    const int i = x / 100;
+    const int r = x % 100;
 
-    static constexpr auto appendInt = [](std::wstring& str, int n) noexcept {
-        const size_t start = str.size();
-        do { str.push_back(static_cast<wchar_t>(L'0' + (n % 10))); } while (n /= 10);
-        std::reverse(str.begin() + start, str.end());
-    };
-
-    // Skip unnecessary integer calculations for very small values that returns 0.00
-    if (input < 0.005)
-    {
-        result.push_back(L'0');
-        result.push_back(GetLocaleDecimalSeparator());
-        result.append(L"00");
-        return result;
-    }
-
-    const int scaledValue = std::lround(input * scale);
-    const int integer = scaledValue / scale;
-    const int decimal = scaledValue % scale;
-
-    appendInt(result, integer);
-    result.push_back(GetLocaleDecimalSeparator());
-    if (decimal < 10) result.push_back(L'0'); // Pad with leading zero for single-digit decimals
-    appendInt(result, decimal);
-
-    return result;
+    if (r == 0) return std::to_wstring(i);
+    return std::to_wstring(i) + GetLocaleDecimalSeparator() + (r % 10 == 0 ? 
+        std::wstring(1, L'0' + r / 10) : std::wstring{L'0' + r / 10, L'0' + r % 10});
 }
 
 std::wstring FormatFileTime(const FILETIME& t, const bool seconds) noexcept
