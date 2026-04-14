@@ -1771,6 +1771,7 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
     // Stop any previous executions
     CWaitCursor wc;
     StopScanningEngine();
+    COptions::UpdateDateFilter();
 
     // Address conflicts with currently zoomed/selected items
     const auto zoomItem = GetZoomItem();
@@ -1921,11 +1922,11 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
         {
             if (!item->IsTypeOrFlag(IT_DRIVE)) continue;
             
-            if (COptions::ShowFreeSpace)
+            if (COptions::ShowFreeSpace && !COptions::IsModifiedDateFilterActive())
             {
                 item->CreateFreeSpaceItem();
             }
-            if (COptions::ShowUnknown)
+            if (COptions::ShowUnknown && !COptions::IsModifiedDateFilterActive())
             {
                 item->CreateUnknownItem();
             }

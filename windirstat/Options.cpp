@@ -38,6 +38,7 @@ Setting<bool> COptions::ExcludeSymbolicLinksFile(OptionsGeneral, L"ExcludeSymbol
 Setting<bool> COptions::ExcludeHiddenFile(OptionsGeneral, L"ExcludeHiddenFile", false);
 Setting<bool> COptions::ExcludeProtectedFile(OptionsGeneral, L"ExcludeProtectedFile", false);
 Setting<bool> COptions::FilteringUseRegex(OptionsGeneral, L"FilteringUseRegex", false);
+Setting<bool> COptions::FilteringUseModifiedWithinDays(OptionsGeneral, L"FilteringUseModifiedWithinDays", false);
 Setting<bool> COptions::FollowVolumeMountPoints(OptionsGeneral, L"FollowVolumeMountPoints", false);
 Setting<bool> COptions::UseSizeSuffixes(OptionsGeneral, L"UseSizeSuffixes", true);
 Setting<bool> COptions::ListFullRowSelection(OptionsGeneral, L"ListFullRowSelection", true);
@@ -101,6 +102,7 @@ Setting<int> COptions::SelectDrivesRadio(OptionsDriveSelect, L"SelectDrivesRadio
 Setting<int> COptions::FileTreeColorCount(OptionsFileTree, L"FileTreeColorCount", 8);
 Setting<int> COptions::FilteringSizeMinimum(OptionsGeneral, L"FilteringSizeMinimum", 0);
 Setting<int> COptions::FilteringSizeUnits(OptionsGeneral, L"FilteringSizeUnits", 0);
+Setting<int> COptions::FilteringModifiedWithinDays(OptionsGeneral, L"FilteringModifiedWithinDays", 1, 0, 3650);
 Setting<int> COptions::TreeMapAmbientLightPercent(OptionsTreeMap, L"TreeMapAmbientLightPercent", CTreeMap::GetDefaults().GetAmbientLightPercent(), 0, 100);
 Setting<int> COptions::TreeMapBrightness(OptionsTreeMap, L"TreeMapBrightness", CTreeMap::GetDefaults().GetBrightnessPercent(), 0, 100);
 Setting<int> COptions::TreeMapHeightFactor(OptionsTreeMap, L"TreeMapHeightFactor", CTreeMap::GetDefaults().GetHeightPercent(), 0, 100);
@@ -138,6 +140,42 @@ std::vector<USERDEFINEDCLEANUP> COptions::UserDefinedCleanups;
 std::vector<std::wregex> COptions::FilteringExcludeDirsRegex;
 std::vector<std::wregex> COptions::FilteringExcludeFilesRegex;
 ULONGLONG COptions::FilteringSizeMinimumCalculated;
+FILETIME COptions::DateFilterMinimumUtc;
+
+namespace
+{
+FILETIME GetLocalMidnightDaysAgoUtc(const int daysBack)
+{
+    // "Days back" is interpreted as local calendar days, not a rolling 24-hour window.
+    // For example, 1 means "since local midnight at the start of yesterday", which
+    // guarantees at least the previous full day plus the current partial day.
+    SYSTEMTIME nowLocal{};
+    GetLocalTime(&nowLocal);
+
+    using namespace std::chrono;
+    const auto today = year_month_day{
+        year{ nowLocal.wYear },
+        month{ static_cast<unsigned>(nowLocal.wMonth) },
+        day{ static_cast<unsigned>(nowLocal.wDay) } };
+    const auto cutoffDay = sys_days{ today } - days{ daysBack };
+    const auto cutoffYmd = year_month_day{ cutoffDay };
+
+    SYSTEMTIME cutoffLocal{};
+    cutoffLocal.wYear = static_cast<WORD>(static_cast<int>(cutoffYmd.year()));
+    cutoffLocal.wMonth = static_cast<WORD>(static_cast<unsigned>(cutoffYmd.month()));
+    cutoffLocal.wDay = static_cast<WORD>(static_cast<unsigned>(cutoffYmd.day()));
+
+    SYSTEMTIME cutoffUtc{};
+    FILETIME cutoffFileTime{};
+    if (TzSpecificLocalTimeToSystemTime(nullptr, &cutoffLocal, &cutoffUtc) == 0 ||
+        SystemTimeToFileTime(&cutoffUtc, &cutoffFileTime) == 0)
+    {
+        cutoffFileTime = {};
+    }
+
+    return cutoffFileTime;
+}
+}
 
 void COptions::SanitizeRect(RECT& rect)
 {
@@ -223,6 +261,28 @@ void COptions::CompileFilters()
 
     // Calculate the total number of bytes to test as a scan minimum
     FilteringSizeMinimumCalculated = static_cast<ULONGLONG>(FilteringSizeMinimum) * (1ull << (10 * FilteringSizeUnits));
+    UpdateDateFilter();
+}
+
+void COptions::UpdateDateFilter()
+{
+    DateFilterMinimumUtc = {};
+    if (!FilteringUseModifiedWithinDays) return;
+
+    const int daysBack = std::clamp(static_cast<int>(FilteringModifiedWithinDays),
+        FilteringModifiedWithinDays.Min(), FilteringModifiedWithinDays.Max());
+    DateFilterMinimumUtc = GetLocalMidnightDaysAgoUtc(daysBack);
+}
+
+bool COptions::IsModifiedDateFilterActive() noexcept
+{
+    return FilteringUseModifiedWithinDays;
+}
+
+bool COptions::IsFileModifiedWithinRange(const FILETIME& lastWriteTime) noexcept
+{
+    return !IsModifiedDateFilterActive() ||
+        CompareFileTime(&lastWriteTime, &DateFilterMinimumUtc) >= 0;
 }
 
 void COptions::PreProcessPersistedSettings()

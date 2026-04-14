@@ -123,6 +123,7 @@ public:
     static Setting<bool> ExcludeHiddenFile;
     static Setting<bool> ExcludeProtectedFile;
     static Setting<bool> FilteringUseRegex;
+    static Setting<bool> FilteringUseModifiedWithinDays;
     static Setting<bool> FollowVolumeMountPoints;
     static Setting<bool> UseSizeSuffixes;
     static Setting<bool> ListFullRowSelection;
@@ -185,6 +186,7 @@ public:
     static Setting<int> FileTreeColorCount;
     static Setting<int> FilteringSizeMinimum;
     static Setting<int> FilteringSizeUnits;
+    static Setting<int> FilteringModifiedWithinDays;
     static Setting<int> TreeMapAmbientLightPercent;
     static Setting<int> TreeMapBrightness;
     static Setting<int> TreeMapHeightFactor;
@@ -223,6 +225,7 @@ public:
     static std::vector<std::wregex> FilteringExcludeDirsRegex;
     static std::vector<std::wregex> FilteringExcludeFilesRegex;
     static ULONGLONG FilteringSizeMinimumCalculated;
+    static FILETIME DateFilterMinimumUtc;
 
     static void SanitizeRect(RECT& rect);
     static void LoadAppSettings();
@@ -230,6 +233,9 @@ public:
     static void PostProcessPersistedSettings();
     static void SetTreeMapOptions(const CTreeMap::Options& options);
     static void CompileFilters();
+    static void UpdateDateFilter();
+    static bool IsModifiedDateFilterActive() noexcept;
+    static bool IsFileModifiedWithinRange(const FILETIME& lastWriteTime) noexcept;
 
     static LCID GetLocaleForFormatting();
 };
