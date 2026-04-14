@@ -1221,7 +1221,7 @@ void CMainFrame::UpdatePaneText()
 {
     const auto focus = GetLogicalFocus();
     std::wstring fileSelectionText = Localization::Lookup(IDS_IDLEMESSAGE);
-    ULONGLONG size = MAXULONG64;
+    ULONGLONG size = MAXULONGLONG;
 
     // Allow override on hover
     if (const auto [hoverPath, hoverSize] =
@@ -1257,9 +1257,9 @@ void CMainFrame::UpdatePaneText()
 
     // Update select physical size
     const CClientDC dc(this);
-    const auto sizeSummary = std::format(L"{}: \u2211 {}", Localization::Lookup(IDS_COL_SIZE_PHYSICAL), FormatBytes(size));
     SetStatusPaneText(dc, ID_STATUSPANE_IDLE_INDEX, fileSelectionText);
-    SetStatusPaneText(dc, ID_STATUSPANE_SIZE_INDEX, (size != MAXULONG64) ? sizeSummary : wds::strEmpty, 175);
+    SetStatusPaneText(dc, ID_STATUSPANE_SIZE_INDEX, (size == MAXULONGLONG) ? wds::strEmpty :
+        std::format(L"{}: \u2211 {}", Localization::Lookup(IDS_COL_SIZE_PHYSICAL), FormatBytes(size)), 175);
     SetStatusPaneText(dc, ID_STATUSPANE_RAM_INDEX, CDirStatApp::GetCurrentProcessMemoryInfo(), 175);
 }
 
