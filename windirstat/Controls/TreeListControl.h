@@ -1,4 +1,4 @@
-﻿// WinDirStat - Directory Statistics
+// WinDirStat - Directory Statistics
 // Copyright © WinDirStat Team
 //
 // This program is free software: you can redistribute it and/or modify
@@ -151,7 +151,7 @@ protected:
     void InsertItem(int i, CTreeListItem* item);
     void DeleteItem(int i);
     void CollapseItem(int i);
-    void ExpandItem(int i, bool scroll = true, bool sort = true);
+    void ExpandItem(int i, bool scroll = true);
     void ToggleExpansion(int i);
 
     //

@@ -40,14 +40,24 @@ void CFileChangeControl::SetChanges(const SnapshotGrowthResult& result)
     m_rootItem->SetPreviousSnapshotLabel(result.previousSnapshotLabel);
     m_rootItem->SetExpanded(false);
     m_rootItem->ReserveChangeItemChildren(result.entries.size());
+    std::vector<CWdsListItem*> children;
+    children.reserve(result.entries.size());
 
     SetRedraw(FALSE);
     for (const auto& entry : result.entries)
     {
-        m_rootItem->AddChangeItemChild(new CItemChange(entry));
+        auto* child = new CItemChange(entry);
+        m_rootItem->AddChangeItemChild(child);
+        child->SetVisible(this, true);
+        children.push_back(child);
     }
 
-    ExpandItem(0, false, false);
+    m_rootItem->SetExpanded(true);
+    if (!children.empty())
+    {
+        InsertListItem(1, children);
+    }
+
     SetRedraw(TRUE);
     UpdateSortIndicator();
     Invalidate();
