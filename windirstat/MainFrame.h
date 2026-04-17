@@ -208,6 +208,7 @@ protected:
 
     CMFCStatusBar m_wndStatusBar; // Status bar
     CMFCToolBar m_wndToolBar;     // Toolbar
+    CSize m_defaultButtonSize;    // Toolbar button size at creation (pre-SetSizes, DPI-scaled)
     CProgressCtrl m_progress;     // Progress control. Is Create()ed and Destroy()ed again every time.
     CPacmanControl m_pacman;      // Static control for Pacman
     LOGICAL_FOCUS m_logicalFocus = LF_NONE; // Which view has the logical focus
@@ -240,10 +241,13 @@ protected:
     afx_msg void OnViewShowTreeMap();
     afx_msg void OnViewTreeMapUseLogical();
     afx_msg void OnViewShowFileTypes();
+    void RebuildToolBar();
     afx_msg void OnViewAllFiles() { GetFileTabbedView()->SetActiveFileTreeView(); }
     afx_msg void OnViewLargestFiles() { GetFileTabbedView()->SetActiveTopView(); }
     afx_msg void OnViewDuplicateFiles() { GetFileTabbedView()->SetActiveDupeView(); }
     afx_msg void OnViewSearchResults() { GetFileTabbedView()->SetActiveSearchView(); }
+    afx_msg void OnViewLargeToolBar();
+    afx_msg void OnUpdateViewLargeToolBar(CCmdUI* pCmdUI);
     afx_msg void OnAdvancedShadowCopy(UINT nID);
     afx_msg void OnAdvancedDefrag(UINT nID);
     afx_msg void OnAdvancedChkdsk(UINT nID);

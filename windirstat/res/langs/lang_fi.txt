@@ -103,6 +103,7 @@ IDS_MENU_FREE_SPACE=Näytä &vapaa tila
 IDS_MENU_HELP_ABOUT=&Tietoa
 IDS_MENU_HELP_REPORT=Antaa palautetta
 IDS_MENU_HELP=&Ohje
+IDS_MENU_LARGE_TOOLBAR=Suuret työkalurivin kuvakkeet
 IDS_MENU_LOAD_RESULTS=Lataa tulokset CSV-tiedostosta...
 IDS_MENU_LOGICAL_SIZE=Käytä loogista kokoa
 IDS_MENU_MOVE_TO=&Siirrä kohteeseen...

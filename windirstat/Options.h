@@ -150,6 +150,7 @@ public:
     static Setting<bool> ShowStatusBar;
     static Setting<bool> ShowTimeSpent;
     static Setting<bool> ShowToolBar;
+    static Setting<bool> LargeToolBar;
     static Setting<bool> ShowTreeMap;
     static Setting<bool> ShowUnknown;
     static Setting<bool> SkipDupeDetectionCloudLinks;

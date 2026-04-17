@@ -79,6 +79,9 @@ bool IsMenuEnabled(const CMenu* menu, UINT pos, bool isCommand = false) noexcept
 int DpiRest(int value, const CWnd* wnd = nullptr) noexcept;
 int DpiSave(int value, const CWnd* wnd = nullptr) noexcept;
 
+// Bitmap scaling
+HBITMAP ScaleBitmapHighQuality(const CBitmap& src, int newWidth, int newHeight);
+
 // Context menu
 constexpr auto CONTENT_MENU_MINCMD = 0x1ul;
 constexpr auto CONTENT_MENU_MAXCMD = 0x7FFFul;
