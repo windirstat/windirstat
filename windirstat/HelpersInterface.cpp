@@ -138,9 +138,8 @@ std::wstring FormatDouble(const double d) noexcept
     const int r = x % 100;
 
     if (r == 0) return std::to_wstring(i);
-    return std::to_wstring(i) + GetLocaleDecimalSeparator() + (r % 10 == 0 ?
-        std::wstring(1, static_cast<wchar_t>(L'0' + r / 10)) :
-        std::wstring({ static_cast<wchar_t>(L'0' + r / 10), static_cast<wchar_t>(L'0' + r % 10) }));
+    return std::to_wstring(i) + GetLocaleDecimalSeparator() +
+        std::wstring({ static_cast<wchar_t>(L'0' + r / 10), static_cast<wchar_t>(L'0' + r % 10) });
 }
 
 std::wstring FormatFileTime(const FILETIME& t, const bool seconds) noexcept
