@@ -716,6 +716,8 @@ void CWdsListControl::InsertListItem(const int i, const std::vector<CWdsListItem
  */
 void CWdsListControl::SortItems()
 {
+    SelectionPreserver preserve(this);
+
     std::ranges::stable_sort(m_items, [this](const CWdsListItem* item1, const CWdsListItem* item2)
     {
         return item1->CompareSort(item2, m_sorting) < 0;
