@@ -534,7 +534,7 @@ void CDirStatApp::LegacyUninstall()
         }
 
         // Delete registry key
-        SHDeleteKey(regInfo.rootKey, (regInfo.subKey + L"\\WinDirStat").c_str());
+        SHDeleteKey(regInfo.rootKey, regInfo.subKey.c_str());
     }
 
     // Remove shortcuts and start menu items for all users
