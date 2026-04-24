@@ -107,8 +107,6 @@ class CSelectDrivesDlg final : public CLayoutDialogEx
 
     enum : std::uint8_t { IDD = IDD_SELECTDRIVES };
 
-    static std::wstring GetFullPathName(const std::wstring& relativePath);
-
     CSelectDrivesDlg(CWnd* pParent = nullptr);
     ~CSelectDrivesDlg() override = default;
 
@@ -132,11 +130,13 @@ protected:
     CButton m_okButton;
     CButton m_browseButton;
     std::vector<std::wstring> m_selectedDrives;
+    bool m_suppressItemChanged = false;
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnBnClickedUpdateButtons();
+    afx_msg void OnBnClickedFastScanCheckbox();
     afx_msg void OnLvnItemChangedDrives(NMHDR* pNMHDR, LRESULT* pResult);
-    afx_msg void OnDestroy();
+    afx_msg LRESULT OnInitComplete(WPARAM, LPARAM);
     afx_msg LRESULT OnWmuOk(WPARAM, LPARAM);
     afx_msg LRESULT OnWmDriveInfoThreadFinished(WPARAM wParam, LPARAM lparam);
     afx_msg void OnSysColorChange();
