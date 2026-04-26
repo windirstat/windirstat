@@ -188,7 +188,7 @@ void CExtensionListControl::Initialize()
 void CExtensionListControl::SetExtensionData(const CExtensionData* ed)
 {
     // Cleanup visual nodes
-    SetRedraw(FALSE);
+    const CSetRedrawLock lock(this);
     DeleteAllItems();
 
     // Insert new items
@@ -201,7 +201,6 @@ void CExtensionListControl::SetExtensionData(const CExtensionData* ed)
         InsertListItem(0, items);
     }
 
-    SetRedraw(TRUE);
     SortItems();
 }
 

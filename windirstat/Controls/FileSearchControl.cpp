@@ -121,9 +121,9 @@ void CFileSearchControl::ProcessSearch(CItem* item,
     // Add found items to the interface
     CWaitCursor wait;
     CollapseItem(0);
-    SetRedraw(FALSE);
 
     // Add to found items
+    const CSetRedrawLock lock(this);
     m_itemTracker.reserve(matchedItems.size());
     for (CItem* matchedItem : matchedItems)
     {
@@ -132,7 +132,6 @@ void CFileSearchControl::ProcessSearch(CItem* item,
         m_rootItem->AddSearchItemChild(searchItem);
     }
 
-    SetRedraw(TRUE);
     SortItems();
     ExpandItem(0);
 }
@@ -143,10 +142,9 @@ void CFileSearchControl::RemoveItem(CItem* item)
     if (findItem == m_itemTracker.end()) return;
 
     // Remove the item from the interface
-    SetRedraw(FALSE);
+    const CSetRedrawLock lock(this);
     m_rootItem->RemoveSearchItemChild(findItem->second);
     m_itemTracker.erase(findItem);
-    SetRedraw(TRUE);
 }
 
 void CFileSearchControl::AfterDeleteAllItems()

@@ -167,14 +167,14 @@ void CFileDupeControl::SortItems()
     // Add items to the list
     if (!m_pendingListAdds.empty())
     {
-        SetRedraw(FALSE);
+        const CSetRedrawLock lock(this);
         std::pair<CItemDupe*, CItemDupe*> pair;
         while (m_pendingListAdds.pop(pair))
         {
             const auto& [parent, child] = pair;
             (parent == nullptr ? m_rootItem : parent)->AddDupeItemChild(child);
         }
-        SetRedraw(TRUE);
+
     }
 
     CTreeListControl::SortItems();
@@ -226,10 +226,8 @@ void CFileDupeControl::RemoveItem(CItem* item)
         });
     }
 
-    // Pause redrawing for mass node removal
-    SetRedraw(FALSE);
-
     // Cleanup any empty visual nodes in the list
+    const CSetRedrawLock lock(this);
     bool erasedNode = false;
     for (auto nodeIter = m_nodeTracker.begin(); nodeIter != m_nodeTracker.end();
         erasedNode ? nodeIter : ++nodeIter, erasedNode = false)
@@ -275,10 +273,6 @@ void CFileDupeControl::RemoveItem(CItem* item)
     {
         return pair.second.size() <= 1;
     });
-
-    // Resume redrawing and invalidate to force refresh
-    SetRedraw(TRUE);
-    Invalidate();
 }
 
 void CFileDupeControl::AfterDeleteAllItems()

@@ -767,7 +767,7 @@ LRESULT CTreeListControl::OnSelectionChanged(WPARAM wParam, LPARAM lParam)
     if (selectedItems.size() >= 2)
     {
         // Deselect children of already-selected parents
-        SetRedraw(FALSE);
+        const CSetRedrawLock lock(this);
         std::unordered_set<const CTreeListItem*> selectedSet(selectedItems.begin(), selectedItems.end());
         for (const auto* item : selectedItems)
         {
@@ -784,7 +784,6 @@ LRESULT CTreeListControl::OnSelectionChanged(WPARAM wParam, LPARAM lParam)
             }
         }
 
-        SetRedraw(TRUE);
         Invalidate();
     }
 

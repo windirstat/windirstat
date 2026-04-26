@@ -872,7 +872,7 @@ void CWdsListControl::OnHdnDividerdblclick(NMHDR* pNMHDR, LRESULT* pResult)
     // fetch size of rendered column header text
     // temporarily insert a false column to the finalize column does
     // not autosize to fit the whole control width
-    SetRedraw(FALSE);
+    const CSetRedrawLock lock(this);
     const int falseColumn = InsertColumn(m_columnCount + 1, L"");
     SetColumnWidth(column, LVSCW_AUTOSIZE_USEHEADER);
     int width = GetColumnWidth(column);
@@ -887,8 +887,6 @@ void CWdsListControl::OnHdnDividerdblclick(NMHDR* pNMHDR, LRESULT* pResult)
     // update final column width
     constexpr int padding = 3;
     SetColumnWidth(column, width + padding);
-
-    SetRedraw(TRUE);
     *pResult = FALSE;
 }
 

@@ -73,6 +73,21 @@ public:
 };
 
 //
+// CSetRedrawLock. RAII wrapper for SetRedraw(FALSE)/SetRedraw(TRUE).
+//
+class CSetRedrawLock final
+{
+public:
+    explicit CSetRedrawLock(CWnd* wnd) : m_wnd(wnd) { m_wnd->SetRedraw(FALSE); }
+    ~CSetRedrawLock() { m_wnd->SetRedraw(TRUE); m_wnd->Invalidate(); }
+    CSetRedrawLock(const CSetRedrawLock&) = delete;
+    CSetRedrawLock& operator=(const CSetRedrawLock&) = delete;
+
+private:
+    CWnd* m_wnd;
+};
+
+//
 // CWdsListControl. Must be report view. Deals with CWdsListItems.
 // Can have a grid or not (own implementation, don't set LVS_EX_GRIDLINES). Flicker-free.
 // Also handles sorting functionality (merged from CSortingListControl).
