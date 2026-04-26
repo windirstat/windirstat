@@ -52,7 +52,10 @@ namespace
             for (const auto* item : m_selectedItems)
             {
                 if (const int i = m_list->FindListItem(item); i != -1)
+                {
                     m_list->SetItemState(i, LVIS_SELECTED, LVIS_SELECTED);
+                    m_list->EnsureVisible(i, FALSE);
+                }
             }
 
             // Handle focus-reselection
@@ -60,6 +63,7 @@ namespace
             if (const int i = m_list->FindListItem(m_focusedItem); i != -1)
             {
                 m_list->SetItemState(i, LVIS_FOCUSED, LVIS_FOCUSED);
+                m_list->EnsureVisible(i, FALSE);
             }
         }
 
