@@ -49,21 +49,30 @@ namespace
         {
             // Handle re-selections
             m_list->SetItemState(-1, 0, LVIS_SELECTED);
+            int scrollTo = -1;
             for (const auto* item : m_selectedItems)
             {
                 if (const int i = m_list->FindListItem(item); i != -1)
                 {
                     m_list->SetItemState(i, LVIS_SELECTED, LVIS_SELECTED);
-                    m_list->EnsureVisible(i, FALSE);
+                    scrollTo = i;
                 }
             }
 
             // Handle focus-reselection
-            if (!m_focusedItem) return;
-            if (const int i = m_list->FindListItem(m_focusedItem); i != -1)
+            if (m_focusedItem)
             {
-                m_list->SetItemState(i, LVIS_FOCUSED, LVIS_FOCUSED);
-                m_list->EnsureVisible(i, FALSE);
+                if (const int i = m_list->FindListItem(m_focusedItem); i != -1)
+                {
+                    m_list->SetItemState(i, LVIS_FOCUSED, LVIS_FOCUSED);
+                    scrollTo = i;
+                }
+            }
+
+            // Scroll once to the most relevant item
+            if (scrollTo != -1)
+            {
+                m_list->EnsureVisible(scrollTo, FALSE);
             }
         }
 
