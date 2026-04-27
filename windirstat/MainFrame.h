@@ -241,6 +241,8 @@ protected:
     afx_msg void OnViewShowTreeMap();
     afx_msg void OnViewTreeMapUseLogical();
     afx_msg void OnViewShowFileTypes();
+    afx_msg void OnViewShowExtensionsOnTreeMap();
+    afx_msg void OnUpdateViewShowExtensionsOnTreeMap(CCmdUI* pCmdUI);
     void RebuildToolBar();
     afx_msg void OnViewAllFiles() { GetFileTabbedView()->SetActiveFileTreeView(); }
     afx_msg void OnViewLargestFiles() { GetFileTabbedView()->SetActiveTopView(); }

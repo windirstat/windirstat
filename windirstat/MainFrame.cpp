@@ -368,6 +368,8 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
     ON_UPDATE_COMMAND_UI(ID_VIEW_SHOWTREEMAP, OnUpdateViewShowTreeMap)
     ON_UPDATE_COMMAND_UI(ID_VIEW_SHOWFILETYPES, OnUpdateViewShowFileTypes)
     ON_UPDATE_COMMAND_UI(ID_TREEMAP_LOGICAL_SIZE, OnUpdateTreeMapUseLogical)
+    ON_COMMAND(ID_TREEMAP_SHOW_EXTENSIONS, OnViewShowExtensionsOnTreeMap)
+    ON_UPDATE_COMMAND_UI(ID_TREEMAP_SHOW_EXTENSIONS, OnUpdateViewShowExtensionsOnTreeMap)
     ON_UPDATE_COMMAND_UI(ID_TOOLS_WATCHER, OnUpdateViewShowWatcher)
     ON_WM_CLOSE()
     ON_WM_CREATE()
@@ -1327,6 +1329,18 @@ void CMainFrame::OnViewShowFileTypes()
     {
         MinimizeExtensionView();
     }
+}
+
+void CMainFrame::OnViewShowExtensionsOnTreeMap()
+{
+    COptions::TreeMapShowExtensions = !static_cast<bool>(COptions::TreeMapShowExtensions);
+    COptions::TreeMapOptions.showExtensions = COptions::TreeMapShowExtensions;
+    CDirStatDoc::Get()->UpdateAllViews(nullptr, HINT_TREEMAPSTYLECHANGED);
+}
+
+void CMainFrame::OnUpdateViewShowExtensionsOnTreeMap(CCmdUI* pCmdUI)
+{
+    pCmdUI->SetCheck(COptions::TreeMapOptions.showExtensions);
 }
 
 void CMainFrame::RebuildToolBar()
