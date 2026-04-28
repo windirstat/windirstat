@@ -99,6 +99,7 @@ Setting<int> COptions::LargeFileCount(OptionsGeneral, L"LargeFileCount", 50, 0, 
 Setting<int> COptions::MinimizeViewThreshold(OptionsGeneral, L"MinimizeViewThreshold", 10, 1, 10000);
 Setting<int> COptions::ScanningThreads(OptionsGeneral, L"ScanningThreads", 4, 1, 16);
 Setting<int> COptions::SelectDrivesRadio(OptionsDriveSelect, L"SelectDrivesRadio", 0, 0, 2);
+Setting<int> COptions::SubtreePercentageIndent(OptionsFileTree, L"SubtreePercentageIndent", 16, 0, 1000);
 Setting<int> COptions::FileTreeColorCount(OptionsFileTree, L"FileTreeColorCount", 8);
 Setting<int> COptions::FilteringSizeMinimum(OptionsGeneral, L"FilteringSizeMinimum", 0);
 Setting<int> COptions::FilteringSizeUnits(OptionsGeneral, L"FilteringSizeUnits", 0);
