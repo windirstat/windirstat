@@ -64,7 +64,7 @@ bool CItem::DrawSubItem(const int subitem, CDC* pdc, CRect rc, const UINT state,
     else
     {
         rc.DeflateRect(2, 5);
-        rc.left += GetIndent() * rc.Width() / 10;
+        rc.left += GetIndent() * DpiRest(COptions::SubtreePercentageIndent);
 
         DrawPercentage(pdc, rc, GetFraction(), GetPercentageColor());
     }
