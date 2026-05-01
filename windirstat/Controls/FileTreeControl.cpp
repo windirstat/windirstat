@@ -28,12 +28,62 @@ bool CFileTreeControl::GetAscendingDefault(const int column)
     return column == COL_NAME || column == COL_LAST_CHANGE;
 }
 
+// Scroll to the first item of the same parent as the first selected item that matches any of the specified ITEMTYPE
+void CFileTreeControl::ScrollToFirstItemByType(ITEMTYPE itemType)
+{
+    CItem* const itemSelected = GetFirstSelectedItem<CItem>();
+    if (!itemSelected) return;
+
+    const CSetRedrawLock lock(this); // Supress redraw until the end of the function
+    CItem* const itemTarget = static_cast<CItem*>(itemSelected->GetParent());
+    CItem** const items = (CItem**)m_items.data();
+
+    for (int i : std::views::iota(0, static_cast<int>(m_items.size())))
+    {
+        CItem* const itemCurrent = items[i];
+
+        if (itemCurrent->GetParent() == itemTarget && itemCurrent->IsTypeOrFlag(itemType))
+        {
+            SetItemState(-1, 0, LVIS_SELECTED);
+            SetItemState(i, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
+
+            if (CRect rect; GetItemRect(i, &rect, LVIR_BOUNDS))
+            {
+                Scroll(CSize(0, (i - GetTopIndex()) * rect.Height()));
+            }
+
+            return;
+        }
+    }
+}
+
 BEGIN_MESSAGE_MAP(CFileTreeControl, CTreeListControl)
+    ON_WM_KEYDOWN()
     ON_WM_LBUTTONDOWN()
     ON_WM_SETCURSOR()
 END_MESSAGE_MAP()
 
 CFileTreeControl* CFileTreeControl::m_singleton = nullptr;
+
+void CFileTreeControl::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
+{
+    if (IsControlKeyDown())
+    {
+        if (nChar == VK_LEFT)
+        {
+            ScrollToFirstItemByType(IT_DIRECTORY);
+            return;
+        }
+
+        if (nChar == VK_RIGHT)
+        {
+            ScrollToFirstItemByType(IT_FILE);
+            return;
+        }
+    }
+
+    CTreeListControl::OnKeyDown(nChar, nRepCnt, nFlags);
+}
 
 void CFileTreeControl::OnLButtonDown(const UINT nFlags, const CPoint point)
 {
