@@ -325,9 +325,6 @@ BOOL CDirStatApp::InitInstance()
     // Initialize visual controls
     constexpr INITCOMMONCONTROLSEX ctrls = { sizeof(INITCOMMONCONTROLSEX) , ICC_STANDARD_CLASSES };
     (void)InitCommonControlsEx(&ctrls);
-    (void)OleInitialize(nullptr);
-    (void)AfxOleInit();
-    AfxEnableControlContainer();
     (void)AfxInitRichEdit2();
 
     // Initialize GDI Plus

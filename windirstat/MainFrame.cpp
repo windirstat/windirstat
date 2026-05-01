@@ -747,6 +747,9 @@ void CMainFrame::OnDestroy()
     // Mark process as shutting down
     m_shuttingDown = true;
 
+    // Force early cleanup of taskbar resources
+    m_taskbarList.Release();
+
     // Save our window position
     WINDOWPLACEMENT wp = { .length = sizeof(wp) };
     GetWindowPlacement(&wp);

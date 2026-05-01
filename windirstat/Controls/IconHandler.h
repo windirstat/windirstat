@@ -18,7 +18,6 @@
 #pragma once
 
 #include "TreeListControl.h"
-#include "OleFilterOverride.h"
 
 //
 // CIconHandler. Handles all shell information lookup.
@@ -48,7 +47,6 @@ public:
     static HICON IconFromFontChar(WCHAR ch, COLORREF textColor, bool bold = false, LPCWSTR fontName = L"Cambria Math");
 
     BlockingQueue<IconLookup> m_lookupQueue = BlockingQueue<IconLookup>(false);
-    COleFilterOverride m_filterOverride;
 
     HICON m_freeSpaceImage = nullptr;    // <Free Space>
     HICON m_unknownImage = nullptr;      // <Unknown>

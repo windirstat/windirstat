@@ -206,9 +206,6 @@
     <ClInclude Include="DirStatDoc.h">
       <Filter>Header Files\Core</Filter>
     </ClInclude>
-    <ClInclude Include="OleFilterOverride.h">
-      <Filter>Header Files\Core</Filter>
-    </ClInclude>
     <ClInclude Include="Options.h">
       <Filter>Header Files\Core</Filter>
     </ClInclude>

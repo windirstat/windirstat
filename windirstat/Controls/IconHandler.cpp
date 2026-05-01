@@ -18,13 +18,6 @@
 #include "pch.h"
 #include "IconHandler.h"
 
-struct CFilterGuard
-{
-    COleFilterOverride& f;
-    explicit CFilterGuard(COleFilterOverride& x) : f(x) { f.SetDefaultHandler(false); }
-    ~CFilterGuard() { f.SetDefaultHandler(true); }
-};
-
 CIconHandler::~CIconHandler()
 {
     m_lookupQueue.SuspendExecution();
@@ -36,8 +29,6 @@ void CIconHandler::Initialize()
     static std::once_flag s_once;
     std::call_once(s_once, [this]
     {
-        m_filterOverride.RegisterFilter();
-        
         m_junctionImage = IconFromFontChar(L'⤷', RGB(0x3A, 0x3A, 0xFF), true);
         m_symlinkImage = IconFromFontChar(L'⤷', RGB(0x3A, 0xFF, 0x3A), true);
         m_junctionProtected = IconFromFontChar(L'⤷', RGB(0xFF, 0x3A, 0x3A), true);
@@ -125,7 +116,6 @@ void CIconHandler::StopAsyncShellInfoQueue()
 
 void CIconHandler::DrawIcon(const CDC* hdc, const HICON image, const CPoint & pt, const CSize& sz)
 {
-    CFilterGuard guard(m_filterOverride);
     DrawIconEx(*hdc, pt.x, pt.y, image, sz.cx, sz.cy, 0, nullptr, DI_NORMAL);
 }
 
@@ -146,7 +136,6 @@ HICON CIconHandler::FetchShellIcon(const std::wstring & path, UINT flags, const 
         SmartPointer<LPITEMIDLIST> pidl(CoTaskMemFree);
         if (SUCCEEDED(SHGetSpecialFolderLocation(nullptr, std::stoi(path), &pidl)))
         {
-            CFilterGuard guard(m_filterOverride);
             success = std::bit_cast<HIMAGELIST>(::SHGetFileInfo(
                 static_cast<LPCWSTR>(static_cast<LPVOID>(pidl)), attr, &sfi,
                 sizeof(sfi), flags)) != nullptr;
@@ -154,7 +143,6 @@ HICON CIconHandler::FetchShellIcon(const std::wstring & path, UINT flags, const 
     }
     else
     {
-        CFilterGuard guard(m_filterOverride);
         success = std::bit_cast<HIMAGELIST>(::SHGetFileInfo(path.c_str(),
             attr, &sfi, sizeof(sfi), flags)) != nullptr;
     }
