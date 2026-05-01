@@ -133,8 +133,6 @@ void CFileWatcherControl::AddChange(const std::wstring& path, const DWORD action
 {
     if (GetSafeHwnd() == nullptr) return;
 
-    static auto verbs = SplitString(Localization::Lookup(IDS_WATCHER_VERBS), L',');
-
     // Ignore modified events for directories as they will be depicted by changed to their children
     WIN32_FILE_ATTRIBUTE_DATA fileAttr{};
     GetFileAttributesExW(path.c_str(), GetFileExInfoStandard, &fileAttr);
@@ -144,9 +142,11 @@ void CFileWatcherControl::AddChange(const std::wstring& path, const DWORD action
     FILETIME fileTime{};
     GetSystemTimeAsFileTime(&fileTime);
 
+    static auto verbs = SplitString(Localization::Lookup(IDS_WATCHER_VERBS), L',');
     const auto item = new CWatcherItem(path, verbs[action - 1], fileTime,
         ULARGE_INTEGER{ .u = { fileAttr.nFileSizeLow, fileAttr.nFileSizeHigh } }.QuadPart, fileAttr.dwFileAttributes);
     InsertItem(GetItemCount(), item);
+    SortItems();
 }
 
 HICON CWatcherItem::GetIcon()
