@@ -44,7 +44,7 @@ public:
     void StopAsyncShellInfoQueue();
 
     HICON FetchShellIcon(const std::wstring& path, UINT flags = 0, DWORD attr = FILE_ATTRIBUTE_NORMAL, std::wstring* psTypeName = nullptr);
-    static HICON IconFromFontChar(WCHAR ch, COLORREF textColor, bool bold = false, LPCWSTR fontName = L"Cambria Math");
+    static HICON IconFromFontChar(WCHAR ch, COLORREF textColor, bool bold = false, LPCWSTR fontName = L"Cambria Math", int iconSize = 0);
 
     BlockingQueue<IconLookup> m_lookupQueue = BlockingQueue<IconLookup>(false);
 

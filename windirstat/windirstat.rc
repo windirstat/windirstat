@@ -127,35 +127,21 @@ IDB_CLEANUP_DELETE_BIN  BITMAP                  "res\\toolbar\\IDB_CLEANUP_DELET
 
 IDB_FILE_SELECT         BITMAP                  "res\\toolbar\\IDB_FILE_SELECT.bmp"
 
-IDB_SCAN_SUSPEND        BITMAP                  "res\\toolbar\\IDB_SCAN_SUSPEND.bmp"
-
-IDB_SCAN_STOP           BITMAP                  "res\\toolbar\\IDB_SCAN_STOP.bmp"
-
-IDB_REFRESH_ALL         BITMAP                  "res\\toolbar\\IDB_REFRESH_ALL.bmp"
-
 IDB_TREEMAP_ZOOMIN      BITMAP                  "res\\toolbar\\IDB_TREEMAP_ZOOMIN.bmp"
 
 IDB_EDIT_COPY_CLIPBOARD BITMAP                  "res\\toolbar\\IDB_EDIT_COPY_CLIPBOARD.bmp"
 
 IDB_CLEANUP_DELETE      BITMAP                  "res\\toolbar\\IDB_CLEANUP_DELETE.bmp"
 
-IDB_CLEANUP_PROPERTIES  BITMAP                  "res\\toolbar\\IDB_CLEANUP_PROPERTIES.bmp"
-
 IDB_CLEANUP_OPEN_IN_CONSOLE BITMAP                  "res\\toolbar\\IDB_CLEANUP_OPEN_IN_CONSOLE.bmp"
 
 IDB_REFRESH_SELECTED    BITMAP                  "res\\toolbar\\IDB_REFRESH_SELECTED.bmp"
-
-IDB_HELP_MANUAL         BITMAP                  "res\\toolbar\\IDB_HELP_MANUAL.bmp"
-
-IDB_SCAN_RESUME         BITMAP                  "res\\toolbar\\IDB_SCAN_RESUME.bmp"
 
 IDB_CLEANUP_EXPLORER_SELECT BITMAP                  "res\\toolbar\\IDB_CLEANUP_EXPLORER_SELECT.bmp"
 
 IDB_CLEANUP_OPEN_SELECTED BITMAP                  "res\\toolbar\\IDB_CLEANUP_OPEN_SELECTED.bmp"
 
 IDB_FILTER              BITMAP                  "res\\toolbar\\IDB_FILTER.bmp"
-
-IDB_SEARCH              BITMAP                  "res\\toolbar\\IDB_SEARCH.bmp"
 
 
 /////////////////////////////////////////////////////////////////////////////

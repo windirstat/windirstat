@@ -170,136 +170,76 @@ HICON CIconHandler::FetchShellIcon(const std::wstring & path, UINT flags, const 
     return sfi.hIcon;
 }
 
-HICON CIconHandler::IconFromFontChar(const WCHAR ch, const COLORREF textColor, const bool bold, LPCWSTR fontName)
+HICON CIconHandler::IconFromFontChar(const WCHAR ch, const COLORREF textColor, const bool bold, LPCWSTR fontName, const int iconSize)
 {
-    const int ICON_SIZE = GetSystemMetrics(SM_CXSMICON);
-    const int RENDER_SIZE = GetSystemMetrics(SM_CXSMICON) * 4;
+    const int ICON_SIZE = iconSize > 0 ? iconSize : GetSystemMetrics(SM_CXSMICON);
+    const int RENDER_SIZE = ICON_SIZE * 4;
     constexpr int PADDING = 2;
 
-    // Lambda to create bitmap headers
-    auto createBitmapHeader = [](int size) {
-        BITMAPV5HEADER bi{};
-        bi.bV5Size = sizeof(BITMAPV5HEADER);
-        bi.bV5Width = size;
-        bi.bV5Height = -size;
-        bi.bV5Planes = 1;
-        bi.bV5BitCount = 32;
-        bi.bV5Compression = BI_RGB;
-        bi.bV5AlphaMask = 0xFF000000;
-        bi.bV5RedMask = 0x00FF0000;
-        bi.bV5GreenMask = 0x0000FF00;
-        bi.bV5BlueMask = 0x000000FF;
-        return bi;
-        };
+    const WCHAR text[]{ ch, wds::chrNull };
+    Gdiplus::FontFamily fontFamily(fontName);
+    Gdiplus::StringFormat format;
+    format.SetAlignment(Gdiplus::StringAlignmentCenter);
+    format.SetLineAlignment(Gdiplus::StringAlignmentCenter);
+    format.SetFormatFlags(Gdiplus::StringFormatFlagsNoClip);
 
-    CClientDC screenDC(nullptr);
-    CDC memDC;
-    memDC.CreateCompatibleDC(&screenDC);
+    Gdiplus::GraphicsPath path;
+    path.AddString(text, 1, &fontFamily, bold ? Gdiplus::FontStyleBold : Gdiplus::FontStyleRegular,
+        static_cast<Gdiplus::REAL>(RENDER_SIZE - 8),
+        Gdiplus::RectF(0.0f, 0.0f, static_cast<Gdiplus::REAL>(RENDER_SIZE), static_cast<Gdiplus::REAL>(RENDER_SIZE)),
+        &format);
 
-    const auto bi = createBitmapHeader(RENDER_SIZE);
-    BYTE* pBits = nullptr;
-    CBitmap renderBmp;
-    renderBmp.Attach(CreateDIBSection(screenDC.m_hDC,
-        reinterpret_cast<BITMAPINFO*>(const_cast<BITMAPV5HEADER*>(&bi)),
-        DIB_RGB_COLORS, reinterpret_cast<void**>(&pBits), nullptr, 0));
+    Gdiplus::RectF bounds;
+    path.GetBounds(&bounds);
+    if (bounds.Width <= 0.0f || bounds.Height <= 0.0f) return nullptr;
 
-    CSelectObject sobmp(&memDC, &renderBmp);
+    // Scale and center path within the oversampled canvas.
+    const auto pathScale = min(
+        static_cast<Gdiplus::REAL>(RENDER_SIZE - PADDING * 8) / bounds.Width,
+        static_cast<Gdiplus::REAL>(RENDER_SIZE - PADDING * 8) / bounds.Height);
+    Gdiplus::Matrix m;
+    m.Scale(pathScale, pathScale);
+    path.Transform(&m);
+    path.GetBounds(&bounds);
+    m.Reset();
+    m.Translate((static_cast<Gdiplus::REAL>(RENDER_SIZE) - bounds.Width) / 2.0f - bounds.X,
+                (static_cast<Gdiplus::REAL>(RENDER_SIZE) - bounds.Height) / 2.0f - bounds.Y);
+    path.Transform(&m);
 
-    // Clear and setup rendering
-    memset(pBits, 0, RENDER_SIZE * RENDER_SIZE * 4);
-    memDC.SetBkMode(TRANSPARENT);
-    memDC.SetTextColor(RGB(255, 255, 255));
-    memDC.SetGraphicsMode(GM_ADVANCED);
-
-    // Create and select font
-    CFont font;
-    LOGFONT lf{};
-    lf.lfWeight = bold ? FW_BOLD : FW_NORMAL;
-    lf.lfHeight = -RENDER_SIZE + 8;
-    lf.lfQuality = ANTIALIASED_QUALITY;
-    wcscpy_s(lf.lfFaceName, fontName ? fontName : L"Segoe UI");
-    font.CreateFontIndirect(&lf);
-
-    CSelectObject sofont(&memDC, &font);
-
-    // Measure and draw text
-    const CSize textSize = memDC.GetTextExtent(&ch, 1);
-    const int x = (RENDER_SIZE - textSize.cx) / 2;
-    const int y = (RENDER_SIZE - textSize.cy) / 2;
-    memDC.TextOut(x, y, &ch, 1);
-
-    // Apply color with alpha
-    const BYTE r = GetRValue(textColor);
-    const BYTE g = GetGValue(textColor);
-    const BYTE b = GetBValue(textColor);
-
-    const int PIXEL_COUNT = RENDER_SIZE * RENDER_SIZE;
-    for (const int i : std::views::iota(0, PIXEL_COUNT))
+    // Fill onto oversampled canvas then bicubic-downsample to final size.
+    const Gdiplus::SolidBrush brush(Gdiplus::Color(255,
+        GetRValue(textColor), GetGValue(textColor), GetBValue(textColor)));
+    Gdiplus::Bitmap renderBitmap(RENDER_SIZE, RENDER_SIZE, PixelFormat32bppARGB);
     {
-        const BYTE alpha = pBits[i * 4 + 2]; // Red channel has intensity
-        pBits[i * 4] = b;
-        pBits[i * 4 + 1] = g;
-        pBits[i * 4 + 2] = r;
-        pBits[i * 4 + 3] = alpha;
+        Gdiplus::Graphics g(&renderBitmap);
+        g.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
+        g.SetPixelOffsetMode(Gdiplus::PixelOffsetModeHighQuality);
+        g.Clear(Gdiplus::Color(0, 0, 0, 0));
+        g.FillPath(&brush, &path);
+    }
+    Gdiplus::Bitmap finalBitmap(ICON_SIZE, ICON_SIZE, PixelFormat32bppARGB);
+    {
+        Gdiplus::Graphics g(&finalBitmap);
+        g.SetInterpolationMode(Gdiplus::InterpolationModeHighQualityBicubic);
+        g.SetPixelOffsetMode(Gdiplus::PixelOffsetModeHighQuality);
+        g.Clear(Gdiplus::Color(0, 0, 0, 0));
+        g.DrawImage(&renderBitmap, 0, 0, ICON_SIZE, ICON_SIZE);
     }
 
-    // Find glyph bounds
-    int minX = RENDER_SIZE, maxX = 0, minY = RENDER_SIZE, maxY = 0;
+    SmartPointer<HBITMAP> hColorBitmap(DeleteObject, nullptr);
+    finalBitmap.GetHBITMAP(Gdiplus::Color(0, 0, 0, 0), &hColorBitmap);
+    if (hColorBitmap == nullptr)
+    {
+        return nullptr;
+    }
 
-    for (const int py : std::views::iota(0, RENDER_SIZE))
-        for (const int px : std::views::iota(0, RENDER_SIZE))
-            if (pBits[(py * RENDER_SIZE + px) * 4 + 3] > 0)
-            {
-                minX = min(minX, px);
-                maxX = max(maxX, px);
-                minY = min(minY, py);
-                maxY = max(maxY, py);
-            }
-
-    // Calculate scaling
-    const int glyphWidth = maxX - minX + 1;
-    const int glyphHeight = maxY - minY + 1;
-
-    const float scale = min(
-        static_cast<float>(ICON_SIZE - PADDING * 2) / glyphWidth,
-        static_cast<float>(ICON_SIZE - PADDING * 2) / glyphHeight
-    );
-
-    const int scaledWidth = static_cast<int>(glyphWidth * scale);
-    const int scaledHeight = static_cast<int>(glyphHeight * scale);
-
-    // Create final bitmap
-    const auto biFinal = createBitmapHeader(ICON_SIZE);
-    BYTE* pFinalBits = nullptr;
-    CBitmap finalBmp;
-    finalBmp.Attach(CreateDIBSection(screenDC.m_hDC,
-        reinterpret_cast<BITMAPINFO*>(const_cast<BITMAPV5HEADER*>(&biFinal)),
-        DIB_RGB_COLORS, reinterpret_cast<void**>(&pFinalBits), nullptr, 0));
-
-    CDC finalDC;
-    finalDC.CreateCompatibleDC(&screenDC);
-    CSelectObject sofinal(&finalDC, &finalBmp);
-
-    finalDC.SetStretchBltMode(HALFTONE);
-    finalDC.SetBrushOrg(0, 0);
-
-    // Center and blend the glyph
-    const int destX = (ICON_SIZE - scaledWidth) / 2;
-    const int destY = (ICON_SIZE - scaledHeight) / 2;
-
-    constexpr BLENDFUNCTION blend{ AC_SRC_OVER, 0, 255, AC_SRC_ALPHA };
-    finalDC.AlphaBlend(destX, destY, scaledWidth, scaledHeight,
-        &memDC, minX, minY, glyphWidth, glyphHeight, blend);
-
-    // Create icon
     CBitmap maskBmp;
     maskBmp.CreateBitmap(ICON_SIZE, ICON_SIZE, 1, 1, nullptr);
 
     ICONINFO ii{};
     ii.fIcon = TRUE;
-    ii.hbmColor = static_cast<HBITMAP>(finalBmp.m_hObject);
+    ii.hbmColor = hColorBitmap;
     ii.hbmMask = static_cast<HBITMAP>(maskBmp.m_hObject);
     const HICON hIcon = CreateIconIndirect(&ii);
-
     return hIcon;
 }

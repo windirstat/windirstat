@@ -654,6 +654,30 @@ static const std::vector<std::tuple<UINT, UINT, std::wstring_view>> s_toolbarBut
     { ID_HELP_MANUAL, IDB_HELP_MANUAL, IDS_HELP_MANUAL }
 };
 
+static HBITMAP CreateToolbarGlyphBitmap(const UINT id, const int imageSize)
+{
+    WCHAR ch{};
+    COLORREF color = DarkMode::WdsSysColor(COLOR_WINDOWTEXT);
+    switch (id)
+    {
+        case ID_SCAN_STOP:          ch = L'■';  color = RGB(220, 20, 60);   break;
+        case ID_SCAN_RESUME:        ch = L'▶';  color = RGB(50, 205, 50);   break;
+        case ID_SCAN_SUSPEND:       ch = L'⏸'; color = RGB(200, 160, 0);   break;
+        case ID_REFRESH_ALL:        ch = L'↻';  color = RGB(0, 156, 221);   break;
+        case ID_SEARCH:             ch = L'⌕';                              break;
+        case ID_CLEANUP_PROPERTIES: ch = L'ⓘ'; color = RGB(0, 156, 221);    break;
+        case ID_HELP_MANUAL:        ch = L'❔'; color = RGB(100, 149, 237); break;
+        default: return nullptr;
+    }
+
+    ICONINFO iconInfo{};
+    SmartPointer<HICON> hIcon(DestroyIcon, GetIconHandler()->IconFromFontChar(ch, color, true, L"Segoe UI Symbol", imageSize));
+    if (hIcon == nullptr || GetIconInfo(hIcon, &iconInfo) == 0) return nullptr;
+
+    DeleteObject(iconInfo.hbmMask);
+    return iconInfo.hbmColor;
+}
+
 int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 {
     if (CFrameWndEx::OnCreate(lpCreateStruct) == -1)
@@ -1369,23 +1393,32 @@ void CMainFrame::RebuildToolBar()
             continue;
         }
 
-        // Always load the source at native 16x16; scale up when large icons are requested
-        CBitmap bitmap;
-        bitmap.Attach(LoadImage(AfxGetResourceHandle(),
-            MAKEINTRESOURCE(bitmapId), IMAGE_BITMAP, 16, 16, LR_CREATEDIBSECTION));
-
         int index;
-        if (COptions::LargeToolBar)
+        if (const HBITMAP glyphBitmap = CreateToolbarGlyphBitmap(id, imageSize); glyphBitmap != nullptr)
         {
-            CBitmap scaled;
-            scaled.Attach(ScaleBitmapHighQuality(bitmap, 32, 32));
-            DarkMode::LightenBitmap(&scaled);
-            index = CMFCToolBar::GetImages()->AddImage(scaled, TRUE);
+            CBitmap bitmap;
+            bitmap.Attach(glyphBitmap);
+            index = CMFCToolBar::GetImages()->AddImage(bitmap, TRUE);
         }
         else
         {
-            DarkMode::LightenBitmap(&bitmap);
-            index = CMFCToolBar::GetImages()->AddImage(bitmap, TRUE);
+            // Always load the source at native 16x16; scale up when large icons are requested
+            CBitmap bitmap;
+            bitmap.Attach(LoadImage(AfxGetResourceHandle(),
+                MAKEINTRESOURCE(bitmapId), IMAGE_BITMAP, 16, 16, LR_CREATEDIBSECTION));
+
+            if (COptions::LargeToolBar)
+            {
+                CBitmap scaled;
+                scaled.Attach(ScaleBitmapHighQuality(bitmap, 32, 32));
+                DarkMode::LightenBitmap(&scaled);
+                index = CMFCToolBar::GetImages()->AddImage(scaled, TRUE);
+            }
+            else
+            {
+                DarkMode::LightenBitmap(&bitmap);
+                index = CMFCToolBar::GetImages()->AddImage(bitmap, TRUE);
+            }
         }
 
         CMFCToolBarButton button(id, index, nullptr, TRUE, TRUE);
