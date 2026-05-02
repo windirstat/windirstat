@@ -58,6 +58,7 @@
 #include <virtdisk.h>
 #include <tlhelp32.h>
 #include <fdi.h>
+#include <gdiplus.h>
 
 // STL headers
 #include <algorithm>

@@ -625,58 +625,35 @@ void CMainFrame::SetStatusPaneText(const CDC& cdc, const int pos,
 }
 
 // Toolbar button definitions shared between OnCreate and RebuildToolBar
-static const std::vector<std::tuple<UINT, UINT, std::wstring_view>> s_toolbarButtons =
+static const std::vector<std::tuple<UINT, std::wstring_view>> s_toolbarButtons =
 {
-    { ID_FILE_SELECT, IDB_FILE_SELECT, IDS_FILE_SELECT },
-    { ID_SEPARATOR, 0, {} },
-    { ID_SCAN_RESUME, IDB_SCAN_RESUME, IDS_RESUME },
-    { ID_SCAN_SUSPEND, IDB_SCAN_SUSPEND, IDS_SUSPEND },
-    { ID_SCAN_STOP, IDB_SCAN_STOP, IDS_STOP },
-    { ID_SEPARATOR, 0, {} },
-    { ID_REFRESH_ALL, IDB_REFRESH_ALL, IDS_REFRESH_ALL },
-    { ID_REFRESH_SELECTED, IDB_REFRESH_SELECTED, IDS_REFRESH_SELECTED },
-    { ID_SEPARATOR, 0, {} },
-    { ID_SEARCH, IDB_SEARCH, IDS_SEARCH_TITLE },
-    { ID_FILTER, IDB_FILTER, IDS_PAGE_FILTERING_TITLE },
-    { ID_SEPARATOR, 0, {} },
-    { ID_CLEANUP_OPEN_SELECTED, IDB_CLEANUP_OPEN_SELECTED, IDS_CLEANUP_OPEN_SELECTED },
-    { ID_CLEANUP_EXPLORER_SELECT, IDB_CLEANUP_EXPLORER_SELECT, IDS_CLEANUP_EXPLORER_SELECT },
-    { ID_EDIT_COPY_CLIPBOARD, IDB_EDIT_COPY_CLIPBOARD, IDS_EDIT_COPY_CLIPBOARD },
-    { ID_CLEANUP_OPEN_IN_CONSOLE, IDB_CLEANUP_OPEN_IN_CONSOLE, IDS_CLEANUP_OPEN_IN_CONSOLE },
-    { ID_CLEANUP_PROPERTIES, IDB_CLEANUP_PROPERTIES, IDS_CLEANUP_PROPERTIES },
-    { ID_SEPARATOR, 0, {} },
-    { ID_CLEANUP_DELETE_BIN, IDB_CLEANUP_DELETE_BIN, IDS_CLEANUP_DELETE_BIN },
-    { ID_CLEANUP_DELETE, IDB_CLEANUP_DELETE, IDS_CLEANUP_DELETE },
-    { ID_SEPARATOR, 0, {} },
-    { ID_TREEMAP_ZOOMIN, IDB_TREEMAP_ZOOMIN, IDS_TREEMAP_ZOOMIN },
-    { ID_TREEMAP_ZOOMOUT, IDB_TREEMAP_ZOOMOUT, IDS_TREEMAP_ZOOMOUT },
-    { ID_SEPARATOR, 0, {} },
-    { ID_HELP_MANUAL, IDB_HELP_MANUAL, IDS_HELP_MANUAL }
+    { ID_FILE_SELECT, IDS_FILE_SELECT },
+    { ID_SEPARATOR, {} },
+    { ID_SCAN_RESUME, IDS_RESUME },
+    { ID_SCAN_SUSPEND, IDS_SUSPEND },
+    { ID_SCAN_STOP, IDS_STOP },
+    { ID_SEPARATOR, {} },
+    { ID_REFRESH_ALL, IDS_REFRESH_ALL },
+    { ID_REFRESH_SELECTED, IDS_REFRESH_SELECTED },
+    { ID_SEPARATOR, {} },
+    { ID_SEARCH, IDS_SEARCH_TITLE },
+    { ID_FILTER, IDS_PAGE_FILTERING_TITLE },
+    { ID_SEPARATOR, {} },
+    { ID_CLEANUP_OPEN_SELECTED, IDS_CLEANUP_OPEN_SELECTED },
+    { ID_CLEANUP_EXPLORER_SELECT, IDS_CLEANUP_EXPLORER_SELECT },
+    { ID_EDIT_COPY_CLIPBOARD, IDS_EDIT_COPY_CLIPBOARD },
+    { ID_CLEANUP_OPEN_IN_CONSOLE, IDS_CLEANUP_OPEN_IN_CONSOLE },
+    { ID_CLEANUP_PROPERTIES, IDS_CLEANUP_PROPERTIES },
+    { ID_SEPARATOR, {} },
+    { ID_CLEANUP_DELETE_BIN, IDS_CLEANUP_DELETE_BIN },
+    { ID_CLEANUP_DELETE, IDS_CLEANUP_DELETE },
+    { ID_SEPARATOR, {} },
+    { ID_TREEMAP_ZOOMIN, IDS_TREEMAP_ZOOMIN },
+    { ID_TREEMAP_ZOOMOUT, IDS_TREEMAP_ZOOMOUT },
+    { ID_SEPARATOR, {} },
+    { ID_HELP_MANUAL, IDS_HELP_MANUAL }
 };
 
-static HBITMAP CreateToolbarGlyphBitmap(const UINT id, const int imageSize)
-{
-    WCHAR ch{};
-    COLORREF color = DarkMode::WdsSysColor(COLOR_WINDOWTEXT);
-    switch (id)
-    {
-        case ID_SCAN_STOP:          ch = L'■';  color = RGB(220, 20, 60);   break;
-        case ID_SCAN_RESUME:        ch = L'▶';  color = RGB(50, 205, 50);   break;
-        case ID_SCAN_SUSPEND:       ch = L'⏸'; color = RGB(200, 160, 0);   break;
-        case ID_REFRESH_ALL:        ch = L'↻';  color = RGB(0, 156, 221);   break;
-        case ID_SEARCH:             ch = L'⌕';                              break;
-        case ID_CLEANUP_PROPERTIES: ch = L'ⓘ'; color = RGB(0, 156, 221);    break;
-        case ID_HELP_MANUAL:        ch = L'❔'; color = RGB(100, 149, 237); break;
-        default: return nullptr;
-    }
-
-    ICONINFO iconInfo{};
-    SmartPointer<HICON> hIcon(DestroyIcon, GetIconHandler()->IconFromFontChar(ch, color, true, L"Segoe UI Symbol", imageSize));
-    if (hIcon == nullptr || GetIconInfo(hIcon, &iconInfo) == 0) return nullptr;
-
-    DeleteObject(iconInfo.hbmMask);
-    return iconInfo.hbmColor;
-}
 
 int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 {
@@ -1385,7 +1362,7 @@ void CMainFrame::RebuildToolBar()
         { m_defaultButtonSize.cx * scale, m_defaultButtonSize.cy * scale },
         { imageSize, imageSize });
 
-    for (const auto& [id, bitmapId, text] : s_toolbarButtons)
+    for (const auto& [id, text] : s_toolbarButtons)
     {
         if (id == ID_SEPARATOR)
         {
@@ -1393,32 +1370,36 @@ void CMainFrame::RebuildToolBar()
             continue;
         }
 
-        int index;
-        if (const HBITMAP glyphBitmap = CreateToolbarGlyphBitmap(id, imageSize); glyphBitmap != nullptr)
-        {
-            CBitmap bitmap;
-            bitmap.Attach(glyphBitmap);
-            index = CMFCToolBar::GetImages()->AddImage(bitmap, TRUE);
-        }
-        else
-        {
-            // Always load the source at native 16x16; scale up when large icons are requested
-            CBitmap bitmap;
-            bitmap.Attach(LoadImage(AfxGetResourceHandle(),
-                MAKEINTRESOURCE(bitmapId), IMAGE_BITMAP, 16, 16, LR_CREATEDIBSECTION));
+        // Map command IDs to bitmap creators (rendered at the exact target size)
+        int index = 0;
+        using IcoCreator = HBITMAP(*)(int, int);
+        static const std::unordered_map<UINT, IcoCreator> icoMap{
+            { ID_SCAN_STOP,               [](int w, int) { return Icons::CreateGlyphBitmap(L'■',  RGB(220,  20,  60), w); } },
+            { ID_SCAN_RESUME,             [](int w, int) { return Icons::CreateGlyphBitmap(L'▶',  RGB( 50, 205,  50), w); } },
+            { ID_SCAN_SUSPEND,            [](int w, int) { return Icons::CreateGlyphBitmap(L'⏸', RGB(200, 160,   0), w); } },
+            { ID_REFRESH_ALL,             [](int w, int) { return Icons::CreateGlyphBitmap(L'↻',  RGB(  0, 156, 221), w); } },
+            { ID_SEARCH,                  [](int w, int) { return Icons::CreateGlyphBitmap(L'⌕',  DarkMode::WdsSysColor(COLOR_WINDOWTEXT), w); } },
+            { ID_HELP_MANUAL,             [](int w, int) { return Icons::CreateGlyphBitmap(L'❔', RGB(100, 149, 237), w); } },
+            { ID_CLEANUP_PROPERTIES,      [](int w, int h) { return Icons::Make<Icons::PaintProperties>(w, h); }      },
+            { ID_FILE_SELECT,             [](int w, int h) { return Icons::Make<Icons::PaintFileSelect>(w, h); }       },
+            { ID_REFRESH_SELECTED,        [](int w, int h) { return Icons::Make<Icons::PaintRefreshSelected>(w, h); }  },
+            { ID_FILTER,                  [](int w, int h) { return Icons::Make<Icons::PaintFilter>(w, h); }           },
+            { ID_CLEANUP_OPEN_SELECTED,   [](int w, int h) { return Icons::Make<Icons::PaintOpenSelected>(w, h); }     },
+            { ID_CLEANUP_EXPLORER_SELECT, [](int w, int h) { return Icons::Make<Icons::PaintExplorerSelect>(w, h); }   },
+            { ID_EDIT_COPY_CLIPBOARD,     [](int w, int h) { return Icons::Make<Icons::PaintEditCopyClipboard>(w, h); }},
+            { ID_CLEANUP_OPEN_IN_CONSOLE, [](int w, int h) { return Icons::Make<Icons::PaintOpenInConsole>(w, h); }    },
+            { ID_CLEANUP_DELETE_BIN,      [](int w, int h) { return Icons::Make<Icons::PaintDeleteBin>(w, h); }        },
+            { ID_CLEANUP_DELETE,          [](int w, int h) { return Icons::Make<Icons::PaintDelete>(w, h); }           },
+            { ID_TREEMAP_ZOOMIN,          [](int w, int h) { return Icons::Make<[](auto& g){ Icons::PaintMagnifier(g, true);  }>(w, h); } },
+            { ID_TREEMAP_ZOOMOUT,         [](int w, int h) { return Icons::Make<[](auto& g){ Icons::PaintMagnifier(g, false); }>(w, h); } },
+        };
 
-            if (COptions::LargeToolBar)
-            {
-                CBitmap scaled;
-                scaled.Attach(ScaleBitmapHighQuality(bitmap, 32, 32));
-                DarkMode::LightenBitmap(&scaled);
-                index = CMFCToolBar::GetImages()->AddImage(scaled, TRUE);
-            }
-            else
-            {
-                DarkMode::LightenBitmap(&bitmap);
-                index = CMFCToolBar::GetImages()->AddImage(bitmap, TRUE);
-            }
+        CBitmap bitmap;
+        if (const auto it = icoMap.find(id); it != icoMap.end())
+        {
+            bitmap.Attach(it->second(imageSize, imageSize));
+            DarkMode::LightenBitmap(&bitmap);
+            index = CMFCToolBar::GetImages()->AddImage(bitmap, TRUE);
         }
 
         CMFCToolBarButton button(id, index, nullptr, TRUE, TRUE);

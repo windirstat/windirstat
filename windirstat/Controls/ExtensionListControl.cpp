@@ -314,11 +314,14 @@ void CExtensionListControl::OnContextMenu(CWnd* /*pWnd*/, CPoint point)
     // Add search bitmap to menu
     if (m_searchBitmap.GetSafeHandle() == nullptr)
     {
-        m_searchBitmap.Attach(LoadImage(GetModuleHandle(nullptr), MAKEINTRESOURCE(IDB_SEARCH), IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION));
-        DarkMode::LightenBitmap(&m_searchBitmap);
+        m_searchBitmap.Attach(Icons::CreateGlyphBitmap(L'⌕', DarkMode::WdsSysColor(COLOR_WINDOWTEXT), 16));
     }
 
-    menu.SetMenuItemBitmaps(ID_EXTLIST_SEARCH_EXTENSION, MF_BYCOMMAND, &m_searchBitmap, &m_searchBitmap);
+    MENUITEMINFO mii{};
+    mii.cbSize = sizeof(mii);
+    mii.fMask = MIIM_BITMAP;
+    mii.hbmpItem = static_cast<HBITMAP>(m_searchBitmap.GetSafeHandle());
+    SetMenuItemInfo(menu.GetSafeHmenu(), ID_EXTLIST_SEARCH_EXTENSION, FALSE, &mii);
     menu.TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, point.x, point.y, this);
 }
 
