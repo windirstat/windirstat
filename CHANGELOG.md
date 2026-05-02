@@ -1,3 +1,37 @@
+<a name="windirstat-2.6.0"></a>
+# WinDirStat 2.6.0 (Upcoming)
+
+Enhancements
+- Improved treemap navigation, zooming, and context-menu behavior
+- Improved FileTreeView keyboard navigation and scroll-to-selection behavior
+- Improved selection handling when sorting file-tree results
+- Improved Select Drives dialog layout and local-drive display
+- Added double-click scan behavior in the Select Drives dialog
+- Added pruning for previous-folder history
+- Added larger toolbar icon support and runtime-generated toolbar icons
+- Improved toolbar rendering with Unicode glyph support
+- Increased size and percentage display precision
+- Expanded cleanup and system-tool handling
+- Improved localization resources and multiple language updates
+- Added installer option to add WinDirStat to the system PATH, disabled by default
+- Removed OLE dependency to allow execution on Server Core
+- Various performance, memory, and internal refactoring improvements
+
+Bug Fixes
+- Corrected custom folder icon resolution failures
+- Corrected extension column autosizing issues
+- Corrected extension calculations after refresh
+- Correct legacy uninstall registry key removal
+- Addressed selection regressions in owner-data tree/list handling
+- Corrected drive handling when volume names or trailing slashes are missing
+- Corrected cloud-duplication-detection warning behavior
+- Corrected clipboard memory handling
+
+Miscellaneous
+- Microsoft Windows Server Core now supported
+- Microsoft Windows 7 supported again
+- Microsoft Windows Server 2008 R2 supported again
+
 <a name="windirstat-2.5.0"></a>
 # WinDirStat 2.5.0
 
@@ -102,7 +136,7 @@ Miscellaneous
 * Ability to exclude files by minimum file size
 * Scans now stop quicker when requested during duplicate scan
 * Slightly reduced executable size
-* Better Norwegian tranlsations (thanks @TilKenneth)
+* Better Norwegian translations (thanks @TilKenneth)
 * Improved keyboard navigation on the file deletion dialog box
 * Cleanup option to empty folder
 * Improved file deletion progress indicator
