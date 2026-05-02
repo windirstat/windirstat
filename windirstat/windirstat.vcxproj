@@ -536,6 +536,7 @@
     <ClInclude Include="Controls\ColorButton.h" />
     <ClInclude Include="Controls\ExtensionListControl.h" />
     <ClInclude Include="Controls\FileDupeControl.h" />
+    <ClInclude Include="Controls\FileChangeControl.h" />
     <ClInclude Include="Controls\FileTopControl.h" />
     <ClInclude Include="Controls\FileTreeControl.h" />
     <ClInclude Include="Controls\FileWatcherControl.h" />
@@ -556,6 +557,7 @@
     <ClInclude Include="Views\ControlView.h" />
     <ClInclude Include="Finder.h" />
     <ClInclude Include="FinderNtfs.h" />
+    <ClInclude Include="ItemChange.h" />
     <ClInclude Include="ItemSearch.h" />
     <ClInclude Include="ItemTop.h" />
     <ClInclude Include="Pages\PageFiltering.h" />
@@ -583,6 +585,7 @@
     <ClInclude Include="Property.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="SelectObject.h" />
+    <ClInclude Include="SnapshotHistory.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Views\ExtensionView.h" />
     <ClInclude Include="Views\FileTabbedView.h" />
@@ -595,6 +598,7 @@
   <ItemGroup>
     <ClCompile Include="Controls\ExtensionListControl.cpp" />
     <ClCompile Include="Controls\FileDupeControl.cpp" />
+    <ClCompile Include="Controls\FileChangeControl.cpp" />
     <ClCompile Include="Controls\FileTopControl.cpp" />
     <ClCompile Include="Controls\FileTreeControl.cpp" />
     <ClCompile Include="Controls\FileWatcherControl.cpp" />
@@ -622,6 +626,7 @@
     <ClCompile Include="Item.cpp">
     </ClCompile>
     <ClCompile Include="ItemDupe.cpp" />
+    <ClCompile Include="ItemChange.cpp" />
     <ClCompile Include="ItemSearch.cpp" />
     <ClCompile Include="ItemTop.cpp" />
     <ClCompile Include="Layout.cpp">
@@ -654,6 +659,7 @@
     <ClCompile Include="Views\ExtensionView.cpp" />
     <ClCompile Include="Views\FileTabbedView.cpp" />
     <ClCompile Include="Views\FileTreeView.cpp" />
+    <ClCompile Include="SnapshotHistory.cpp" />
     <ClCompile Include="Views\TreeMapView.cpp" />
     <ClCompile Include="WinDirStat.cpp">
     </ClCompile>

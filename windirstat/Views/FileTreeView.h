@@ -21,6 +21,7 @@
 #include "FileWatcherControl.h"
 #include "FileTopControl.h"
 #include "FileDupeControl.h"
+#include "FileChangeControl.h"
 #include "FileSearchControl.h"
 #include "FileTreeControl.h"
 #include "ControlView.h"
@@ -106,6 +107,23 @@ protected:
     const CTreeListControl& GetControl() const override { return m_control; }
 
     CFileSearchControl m_control;
+
+    DECLARE_MESSAGE_MAP()
+    afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
+};
+
+class CFileChangeView final : public CControlView
+{
+protected:
+    DECLARE_DYNCREATE(CFileChangeView)
+    CFileChangeView() = default;
+    ~CFileChangeView() override = default;
+
+    CTreeListControl& GetControl() override { return m_control; }
+    const CTreeListControl& GetControl() const override { return m_control; }
+    void OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint) override;
+
+    CFileChangeControl m_control;
 
     DECLARE_MESSAGE_MAP()
     afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);

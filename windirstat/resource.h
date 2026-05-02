@@ -1,4 +1,4 @@
-﻿//{{NO_DEPENDENCIES}}
+//{{NO_DEPENDENCIES}}
 // Microsoft Visual C++ generated include file.
 // Used by windirstat.rc
 //
@@ -229,6 +229,7 @@
 #define ID_CLEANUP_REMOVE_MOTW          32842
 #define ID_CLEANUP_CREATE_HARDLINK      32843
 #define ID_CLEANUP_SPARSIFY_FILE        32844
+#define ID_COMPARE_RESULTS              32845
 #define ID_TOOLS_SHADOW_COPY_BASE       32850
 #define ID_TOOLS_DEFRAG_BASE            32880
 #define ID_TOOLS_CHKDSK_BASE            32910

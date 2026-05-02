@@ -158,6 +158,9 @@
     <ClInclude Include="Controls\FileDupeControl.h">
       <Filter>Header Files\User Interface\Controls</Filter>
     </ClInclude>
+    <ClInclude Include="Controls\FileChangeControl.h">
+      <Filter>Header Files\User Interface\Controls</Filter>
+    </ClInclude>
     <ClInclude Include="Controls\ExtensionListControl.h">
       <Filter>Header Files\User Interface\Controls</Filter>
     </ClInclude>
@@ -218,6 +221,9 @@
     <ClInclude Include="SelectObject.h">
       <Filter>Header Files\Core</Filter>
     </ClInclude>
+    <ClInclude Include="SnapshotHistory.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
     <ClInclude Include="SmartPointer.h">
       <Filter>Header Files\Core</Filter>
     </ClInclude>
@@ -267,6 +273,9 @@
       <Filter>Header Files\Core\Items</Filter>
     </ClInclude>
     <ClInclude Include="ItemTop.h">
+      <Filter>Header Files\Core\Items</Filter>
+    </ClInclude>
+    <ClInclude Include="ItemChange.h">
       <Filter>Header Files\Core\Items</Filter>
     </ClInclude>
     <ClInclude Include="Localization.h">
@@ -334,6 +343,9 @@
     <ClCompile Include="Controls\FileDupeControl.cpp">
       <Filter>Source Files\User Interface\Controls</Filter>
     </ClCompile>
+    <ClCompile Include="Controls\FileChangeControl.cpp">
+      <Filter>Source Files\User Interface\Controls</Filter>
+    </ClCompile>
     <ClCompile Include="Controls\ExtensionListControl.cpp">
       <Filter>Source Files\User Interface\Controls</Filter>
     </ClCompile>
@@ -391,6 +403,9 @@
     <ClCompile Include="WinDirStat.cpp">
       <Filter>Source Files\Core</Filter>
     </ClCompile>
+    <ClCompile Include="SnapshotHistory.cpp">
+      <Filter>Source Files\Core</Filter>
+    </ClCompile>
     <ClCompile Include="Item.cpp">
       <Filter>Source Files\Core\Items</Filter>
     </ClCompile>
@@ -404,6 +419,9 @@
       <Filter>Source Files\Core\Items</Filter>
     </ClCompile>
     <ClCompile Include="ItemTop.cpp">
+      <Filter>Source Files\Core\Items</Filter>
+    </ClCompile>
+    <ClCompile Include="ItemChange.cpp">
       <Filter>Source Files\Core\Items</Filter>
     </ClCompile>
     <ClCompile Include="FinderBasic.cpp">

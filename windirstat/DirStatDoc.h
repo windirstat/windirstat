@@ -18,6 +18,7 @@
 #pragma once
 
 #include "pch.h"
+#include "SnapshotHistory.h"
 #include "TreeListControl.h"
 
 class CItem;
@@ -143,8 +144,10 @@ protected:
     static bool DupeListHasFocus();
     static bool TopListHasFocus();
     static bool SearchListHasFocus();
+    static bool ChangesListHasFocus();
     static bool WatcherListHasFocus();
     std::vector<CItem*> GetAllSelected();
+    const SnapshotGrowthResult& GetSnapshotGrowthResult() const { return m_snapshotGrowthResult; }
     void InvalidateSelectionCache();
     static CTreeListControl* GetFocusControl();
     void UpdateAllViews(CView* pSender, VIEW_HINT hint = HINT_NULL, CItem* pHint = nullptr);
@@ -167,6 +170,7 @@ protected:
     LOGICAL_FOCUS m_cachedFocus{}; 
     std::vector<CItem*> m_cachedSelection;
     bool m_selectionCacheValid = false;
+    SnapshotGrowthResult m_snapshotGrowthResult;
 
     bool m_showFreeSpace; // Whether to show the <Free Space> item
     bool m_showUnknown;   // Whether to show the <Unknown> item
@@ -177,6 +181,7 @@ protected:
     afx_msg void OnSaveResults();
     afx_msg void OnSaveDuplicates();
     afx_msg void OnLoadResults();
+    afx_msg void OnCompareResults();
     afx_msg void OnEditCopy();
     afx_msg void OnCleanupEmptyRecycleBin();
     afx_msg void OnUpdateCentralHandler(CCmdUI* pCmdUI);
