@@ -1,14 +1,13 @@
 # Major Contributors
 
-* Bernhard Seifert
-	* Original Author
-* Oliver Schneider
-	* Maintainer	
 * Bryan Berns
-	* Developer
+* Oliver Schneider
+* Bernhard Seifert (Original Author)
 
 # Development Contributors
 
+* Tim Ming "harrytm" Yeung
+    * Variety of useability enhancements
 * Robin "tuqueque" Marín
     * Created logo used on website and within WinDirStat
 * Falco Peijnenburg
