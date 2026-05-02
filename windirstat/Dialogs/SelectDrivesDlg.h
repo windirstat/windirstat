@@ -95,6 +95,7 @@ class CDrivesList final : public CWdsListControl
     DECLARE_MESSAGE_MAP()
     afx_msg void OnLvnDeleteItem(NMHDR* pNMHDR, LRESULT* pResult);
     afx_msg void OnDoubleClick(NMHDR* pNMHDR, LRESULT* pResult);
+    afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 };
 
 //
