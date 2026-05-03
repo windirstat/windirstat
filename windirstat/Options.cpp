@@ -44,6 +44,7 @@ Setting<bool> COptions::ListFullRowSelection(OptionsGeneral, L"ListFullRowSelect
 Setting<bool> COptions::ListGrid(OptionsGeneral, L"ListGrid", false);
 Setting<bool> COptions::ListStripes(OptionsGeneral, L"ListStripes", false);
 Setting<bool> COptions::PacmanAnimation(OptionsGeneral, L"PacmanAnimation", true);
+Setting<bool> COptions::GroupDriveStatsFirst(OptionsGeneral, L"GroupDriveStatsFirst", true);
 Setting<bool> COptions::ScanForDuplicates(OptionsDupeTree, L"ScanForDuplicates", false);
 Setting<bool> COptions::SearchWholePhrase(OptionsSearch, L"SearchWholePhrase", false);
 Setting<bool> COptions::SearchRegex(OptionsSearch, L"SearchRegex", false);
@@ -69,6 +70,7 @@ Setting<bool> COptions::LargeToolBar(OptionsGeneral, L"LargeToolBar", false);
 Setting<bool> COptions::ShowTreeMap(OptionsTreeMap, L"ShowTreeMap", true);
 Setting<bool> COptions::ShowUnknown(OptionsGeneral, L"ShowUnknown", false);
 Setting<bool> COptions::SkipDupeDetectionCloudLinks(OptionsGeneral, L"SkipDupeDetectionCloudLinks", true);
+Setting<bool> COptions::GroupFoldersBeforeFiles(OptionsGeneral, L"GroupFoldersBeforeFiles", true);
 Setting<bool> COptions::ShowDupeDetectionCloudLinksWarning(OptionsGeneral, L"ShowDupeDetectionCloudLinksWarning", true);
 Setting<bool> COptions::AutoElevate(OptionsGeneral, L"AutoElevate", false);
 Setting<bool> COptions::AutoMapDrivesWhenElevated(OptionsGeneral, L"AutoMapDrivesWhenElevated", true);

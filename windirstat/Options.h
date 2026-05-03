@@ -124,11 +124,13 @@ public:
     static Setting<bool> ExcludeProtectedFile;
     static Setting<bool> FilteringUseRegex;
     static Setting<bool> FollowVolumeMountPoints;
+    static Setting<bool> GroupFoldersBeforeFiles;
     static Setting<bool> UseSizeSuffixes;
     static Setting<bool> ListFullRowSelection;
     static Setting<bool> ListGrid;
     static Setting<bool> ListStripes;
     static Setting<bool> PacmanAnimation;
+    static Setting<bool> GroupDriveStatsFirst;
     static Setting<bool> ScanForDuplicates;
     static Setting<bool> SearchWholePhrase;
     static Setting<bool> SearchCase;
