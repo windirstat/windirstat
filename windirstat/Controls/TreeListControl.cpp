@@ -886,7 +886,6 @@ void CTreeListControl::OnContextMenu(CWnd* /*pWnd*/, const CPoint pt)
     if (item != nullptr && item->GetTreeListChildCount() == 0)
     {
         sub->DeleteMenu(0, MF_BYPOSITION); // Remove "Expand/Collapse" item
-        sub->DeleteMenu(0, MF_BYPOSITION); // Remove separator
         sub->SetDefaultItem(ID_CLEANUP_OPEN_SELECTED, false);
     }
     else
