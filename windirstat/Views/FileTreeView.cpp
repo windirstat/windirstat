@@ -30,7 +30,7 @@ void CFileTreeView::CreateColumns(const bool all)
     {
         // Columns should be in enumeration order so initial sort will work
         InsertCol(IDS_COL_NAME, LVCFMT_LEFT, 250, COL_NAME);
-        InsertCol(IDS_COL_SUBTREE_PERCENTAGE, LVCFMT_RIGHT, CItem::GetSubtreePercentageWidth() + 30, COL_SUBTREE_PERCENTAGE);
+        InsertCol(IDS_COL_SIZE_PROPORTION, LVCFMT_RIGHT, CItem::GetSizeProportionWidth() + 30, COL_SIZE_PROPORTION);
         InsertCol(IDS_COL_PERCENTAGE, LVCFMT_RIGHT, 90, COL_PERCENTAGE);
     }
 

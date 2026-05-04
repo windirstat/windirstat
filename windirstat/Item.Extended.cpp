@@ -30,7 +30,7 @@ bool CItem::DrawSubItem(const int subitem, CDC* pdc, CRect rc, const UINT state,
         return CTreeListItem::DrawSubItem(subitem, pdc, rc, state, width, focusLeft);
     }
 
-    if (subitem != COL_SUBTREE_PERCENTAGE)
+    if (subitem != COL_SIZE_PROPORTION)
     {
         return false;
     }
@@ -49,7 +49,7 @@ bool CItem::DrawSubItem(const int subitem, CDC* pdc, CRect rc, const UINT state,
 
     if (width != nullptr)
     {
-        *width = GetSubtreePercentageWidth();
+        *width = GetSizeProportionWidth();
         return true;
     }
 
@@ -63,10 +63,81 @@ bool CItem::DrawSubItem(const int subitem, CDC* pdc, CRect rc, const UINT state,
     }
     else
     {
-        rc.DeflateRect(2, 5);
-        rc.left += GetIndent() * DpiRest(COptions::SubtreePercentageIndent);
+        rc.DeflateRect(2, 4);
+        rc.left += GetIndent() * DpiRest(COptions::SizeProportionIndent);
 
-        DrawPercentage(pdc, rc, GetFraction(), GetPercentageColor());
+        // Use highlight color when selected, otherwise the default background
+        const COLORREF backColor = (state & ODS_SELECTED) != 0 && CFileTreeControl::Get() != nullptr && CFileTreeControl::Get()->IsFullRowSelection() ?
+            CFileTreeControl::Get()->GetHighlightColor() : pdc->GetBkColor();
+
+        const bool dark = DarkMode::IsDarkModeActive();
+        // Linearly interpolate each channel between two colors
+        const auto blendColor = [](COLORREF from, COLORREF to, double amount) {
+            const auto ch = [amount](BYTE a, BYTE b) {
+                return static_cast<BYTE>(std::lround(a + (b - a) * std::clamp(amount, 0.0, 1.0)));
+            };
+            return RGB(ch(GetRValue(from), GetRValue(to)), ch(GetGValue(from), GetGValue(to)), ch(GetBValue(from), GetBValue(to)));
+        };
+        // Blend toward white in dark mode, toward black in light mode
+        const auto blendDark = [&](COLORREF c, double d, double l) {
+            return dark ? blendColor(c, RGB(255, 255, 255), d) : blendColor(c, RGB(0, 0, 0), l);
+        };
+
+        // Walk to root and compute this item's fraction of the total tree size
+        const CItem* root = this;
+        while (root->GetParent() != nullptr) root = root->GetParent();
+        const ULONGLONG rootSize = root->GetSizePhysical();
+        const double absoluteFraction = rootSize == 0 ? 0.0 :
+            static_cast<double>(GetSizePhysical()) / static_cast<double>(rootSize);
+
+        // Derive palette for track, subtree bar, and absolute bar
+        const double subtreeFraction = GetFraction();
+        const COLORREF color         = GetPercentageColor();
+        const COLORREF trackFill     = blendDark(backColor,   0.10, 0.06);
+        const COLORREF trackBorder   = blendDark(trackFill,   0.18, 0.18);
+        const COLORREF subtreeFill   = dark ? blendColor(trackFill, color, 0.68) : blendColor(trackFill, color, 0.48);
+        const COLORREF subtreeGlow   = blendColor(subtreeFill,  RGB(255, 255, 255), dark ? 0.18 : 0.30);
+        const COLORREF absoluteFill  = blendDark(color,        0.12, 0.10);
+        const COLORREF absoluteGlow  = blendColor(absoluteFill, RGB(255, 255, 255), dark ? 0.16 : 0.26);
+        const COLORREF absoluteEdge  = blendColor(absoluteFill, RGB(0, 0, 0),       dark ? 0.18 : 0.12);
+
+        if (rc.Width() <= 0 || rc.Height() <= 0) return true;
+
+        // Draw the track background and border
+        pdc->FillSolidRect(rc, trackFill);
+        pdc->Draw3dRect(rc, trackBorder, trackBorder);
+        rc.DeflateRect(1, 1);
+        if (rc.Width() <= 0 || rc.Height() <= 0) return true;
+
+        // Maps a [0,1] fraction to an x-coordinate within rc
+        const auto fractionX = [&rc](double f) {
+            return rc.left + static_cast<int>(std::lround(rc.Width() * std::clamp(f, 0.0, 1.0)));
+        };
+
+        // Draw the subtree bar with a top highlight and right-edge divider
+        const int subtreeRight = fractionX(subtreeFraction);
+        if (subtreeRight > rc.left)
+        {
+            CRect rcSubtree = rc;
+            rcSubtree.right = subtreeRight;
+            pdc->FillSolidRect(rcSubtree, subtreeFill);
+            if (rcSubtree.Height() >= 3)
+                pdc->FillSolidRect(rcSubtree.left, rcSubtree.top, rcSubtree.Width(), 1, subtreeGlow);
+            if (subtreeRight < rc.right)
+                pdc->FillSolidRect(subtreeRight, rc.top, 1, rc.Height(), trackBorder);
+        }
+
+        // Draw the absolute bar inset vertically within the subtree bar
+        CRect rcAbsolute = rc;
+        rcAbsolute.right = fractionX(min(subtreeFraction, absoluteFraction));
+        rcAbsolute.DeflateRect(0, 2);
+        if (rcAbsolute.right > rcAbsolute.left && rcAbsolute.Height() > 0)
+        {
+            pdc->FillSolidRect(rcAbsolute, absoluteFill);
+            if (rcAbsolute.Height() >= 3)
+                pdc->FillSolidRect(rcAbsolute.left, rcAbsolute.top, rcAbsolute.Width(), 1, absoluteGlow);
+            pdc->FillSolidRect(rcAbsolute.right - 1, rcAbsolute.top, 1, rcAbsolute.Height(), absoluteEdge);
+        }
     }
     return true;
 }
@@ -105,7 +176,7 @@ std::wstring CItem::GetText(const int subitem) const
         }
         break;
 
-    case COL_SUBTREE_PERCENTAGE:
+    case COL_SIZE_PROPORTION:
         if (!IsDone())
         {
             if (GetReadJobs() == 1)
@@ -207,7 +278,7 @@ int CItem::CompareSibling(const CTreeListItem* tlib, const int subitem) const
         return signum(_wcsicmp(m_name.get(), other->m_name.get()));
     }
 
-    case COL_SUBTREE_PERCENTAGE:
+    case COL_SIZE_PROPORTION:
     {
         if (MustShowReadJobs())
         {
@@ -461,7 +532,7 @@ ULONGLONG CItem::GetProgressPos() const
     return 0;
 }
 
-int CItem::GetSubtreePercentageWidth()
+int CItem::GetSizeProportionWidth()
 {
     return 105;
 }

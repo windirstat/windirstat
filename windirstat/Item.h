@@ -29,7 +29,7 @@ class FinderBasicContext;
 enum ITEMCOLUMNS : std::uint8_t
 {
     COL_NAME,
-    COL_SUBTREE_PERCENTAGE,
+    COL_SIZE_PROPORTION,
     COL_PERCENTAGE,
     COL_OPTIONAL_START,
     COL_SIZE_PHYSICAL,
@@ -231,7 +231,7 @@ public:
     std::vector<CItem*> GetDriveItems() const;
     ULONGLONG GetProgressRange() const;
     ULONGLONG GetProgressPos() const;
-    static int GetSubtreePercentageWidth();
+    static int GetSizeProportionWidth();
     CItem* FindRecyclerItem() const;
     void CreateFreeSpaceItem();
     CItem* FindFreeSpaceItem() const;
