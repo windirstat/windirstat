@@ -37,21 +37,21 @@
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>Unicode</CharacterSet>
-    <PlatformToolset>v145</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <UseOfMfc>Static</UseOfMfc>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>Unicode</CharacterSet>
-    <PlatformToolset>v145</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <UseOfMfc>Static</UseOfMfc>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>Unicode</CharacterSet>
-    <PlatformToolset>v145</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <UseOfMfc>Static</UseOfMfc>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
@@ -192,6 +192,7 @@
       <TargetMachine>MachineX86</TargetMachine>
       <AdditionalOptions>/pdbaltpath:%_PDB% /nodefaultlib:libcmt %(AdditionalOptions)</AdditionalOptions>
       <Profile>false</Profile>
+      <LargeAddressAware>true</LargeAddressAware>
     </Link>
     <Manifest>
       <AdditionalManifestFiles>res\windirstat.manifest</AdditionalManifestFiles>
@@ -240,6 +241,7 @@
       <TargetMachine>MachineX64</TargetMachine>
       <AdditionalOptions>/pdbaltpath:%_PDB% /nodefaultlib:libcmt %(AdditionalOptions)</AdditionalOptions>
       <Profile>false</Profile>
+      <LargeAddressAware>true</LargeAddressAware>
     </Link>
     <PreBuildEvent>
       <Command>POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(ProjectDir)Build\Compress Strings.ps1" -Path "$(ProjectDir)res"</Command>
@@ -287,6 +289,7 @@
       <OutputFile>$(OutDir)$(TargetName).exe</OutputFile>
       <AdditionalOptions>/pdbaltpath:%_PDB% /nodefaultlib:libcmt %(AdditionalOptions)</AdditionalOptions>
       <Profile>false</Profile>
+      <LargeAddressAware>true</LargeAddressAware>
     </Link>
     <PreBuildEvent>
       <Command>POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(ProjectDir)Build\Compress Strings.ps1" -Path "$(ProjectDir)res"</Command>
@@ -345,6 +348,7 @@
       <AdditionalOptions>/pdbaltpath:%_PDB% /release %(AdditionalOptions)</AdditionalOptions>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <Profile>false</Profile>
+      <LargeAddressAware>true</LargeAddressAware>
     </Link>
     <Manifest>
       <AdditionalManifestFiles>res\windirstat.manifest</AdditionalManifestFiles>
@@ -458,6 +462,7 @@
       <AdditionalOptions>/pdbaltpath:%_PDB% /release %(AdditionalOptions)</AdditionalOptions>
       <Profile>false</Profile>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+      <LargeAddressAware>true</LargeAddressAware>
     </Link>
     <Manifest>
       <AdditionalManifestFiles>res\windirstat.manifest</AdditionalManifestFiles>
@@ -516,6 +521,7 @@
       <AdditionalOptions>/pdbaltpath:%_PDB% /release %(AdditionalOptions)</AdditionalOptions>
       <Profile>false</Profile>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+      <LargeAddressAware>true</LargeAddressAware>
     </Link>
     <Manifest>
       <AdditionalManifestFiles>res\windirstat.manifest</AdditionalManifestFiles>
@@ -678,25 +684,7 @@
     <ResourceCompile Include="version.rc" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="res\toolbar\IDB_FILTER.bmp" />
-    <Image Include="res\toolbar\IDB_SEARCH.bmp" />
     <Image Include="res\WinDirStat.ico" />
-    <Image Include="res\toolbar\IDB_CLEANUP_DELETE.bmp" />
-    <Image Include="res\toolbar\IDB_CLEANUP_DELETE_BIN.bmp" />
-    <Image Include="res\toolbar\IDB_CLEANUP_EXPLORER_SELECT.bmp" />
-    <Image Include="res\toolbar\IDB_CLEANUP_OPEN_IN_CONSOLE.bmp" />
-    <Image Include="res\toolbar\IDB_CLEANUP_OPEN_SELECTED.bmp" />
-    <Image Include="res\toolbar\IDB_CLEANUP_PROPERTIES.bmp" />
-    <Image Include="res\toolbar\IDB_EDIT_COPY_CLIPBOARD.bmp" />
-    <Image Include="res\toolbar\IDB_FILE_SELECT.bmp" />
-    <Image Include="res\toolbar\IDB_HELP_MANUAL.bmp" />
-    <Image Include="res\toolbar\IDB_REFRESH_ALL.bmp" />
-    <Image Include="res\toolbar\IDB_REFRESH_SELECTED.bmp" />
-    <Image Include="res\toolbar\IDB_SCAN_RESUME.bmp" />
-    <Image Include="res\toolbar\IDB_SCAN_STOP.bmp" />
-    <Image Include="res\toolbar\IDB_SCAN_SUSPEND.bmp" />
-    <Image Include="res\toolbar\IDB_TREEMAP_ZOOMIN.bmp" />
-    <Image Include="res\toolbar\IDB_TREEMAP_ZOOMOUT.bmp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="res\langs\lang_cs.txt" />

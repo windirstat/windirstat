@@ -16,9 +16,6 @@
     <Filter Include="Resource Files\Languages">
       <UniqueIdentifier>{ca41237d-3469-4146-909c-126f62a5c504}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Resource Files\Toolbar">
-      <UniqueIdentifier>{d78ee95b-5d90-4405-8f08-aad4cf4819c1}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Resource Files\Icon">
       <UniqueIdentifier>{7e4f4843-62b8-45f8-af9b-7be2708530d3}</UniqueIdentifier>
     </Filter>
@@ -434,60 +431,6 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="res\toolbar\IDB_CLEANUP_DELETE.bmp">
-      <Filter>Resource Files\Toolbar</Filter>
-    </Image>
-    <Image Include="res\toolbar\IDB_CLEANUP_DELETE_BIN.bmp">
-      <Filter>Resource Files\Toolbar</Filter>
-    </Image>
-    <Image Include="res\toolbar\IDB_CLEANUP_EXPLORER_SELECT.bmp">
-      <Filter>Resource Files\Toolbar</Filter>
-    </Image>
-    <Image Include="res\toolbar\IDB_CLEANUP_OPEN_IN_CONSOLE.bmp">
-      <Filter>Resource Files\Toolbar</Filter>
-    </Image>
-    <Image Include="res\toolbar\IDB_CLEANUP_OPEN_SELECTED.bmp">
-      <Filter>Resource Files\Toolbar</Filter>
-    </Image>
-    <Image Include="res\toolbar\IDB_CLEANUP_PROPERTIES.bmp">
-      <Filter>Resource Files\Toolbar</Filter>
-    </Image>
-    <Image Include="res\toolbar\IDB_EDIT_COPY_CLIPBOARD.bmp">
-      <Filter>Resource Files\Toolbar</Filter>
-    </Image>
-    <Image Include="res\toolbar\IDB_FILE_SELECT.bmp">
-      <Filter>Resource Files\Toolbar</Filter>
-    </Image>
-    <Image Include="res\toolbar\IDB_FILTER.bmp">
-      <Filter>Resource Files\Toolbar</Filter>
-    </Image>
-    <Image Include="res\toolbar\IDB_HELP_MANUAL.bmp">
-      <Filter>Resource Files\Toolbar</Filter>
-    </Image>
-    <Image Include="res\toolbar\IDB_REFRESH_ALL.bmp">
-      <Filter>Resource Files\Toolbar</Filter>
-    </Image>
-    <Image Include="res\toolbar\IDB_REFRESH_SELECTED.bmp">
-      <Filter>Resource Files\Toolbar</Filter>
-    </Image>
-    <Image Include="res\toolbar\IDB_SCAN_RESUME.bmp">
-      <Filter>Resource Files\Toolbar</Filter>
-    </Image>
-    <Image Include="res\toolbar\IDB_SCAN_STOP.bmp">
-      <Filter>Resource Files\Toolbar</Filter>
-    </Image>
-    <Image Include="res\toolbar\IDB_SCAN_SUSPEND.bmp">
-      <Filter>Resource Files\Toolbar</Filter>
-    </Image>
-    <Image Include="res\toolbar\IDB_SEARCH.bmp">
-      <Filter>Resource Files\Toolbar</Filter>
-    </Image>
-    <Image Include="res\toolbar\IDB_TREEMAP_ZOOMIN.bmp">
-      <Filter>Resource Files\Toolbar</Filter>
-    </Image>
-    <Image Include="res\toolbar\IDB_TREEMAP_ZOOMOUT.bmp">
-      <Filter>Resource Files\Toolbar</Filter>
-    </Image>
     <Image Include="res\WinDirStat.ico">
       <Filter>Resource Files\Icon</Filter>
     </Image>
