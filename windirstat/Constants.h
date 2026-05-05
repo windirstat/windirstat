@@ -56,4 +56,11 @@ namespace wds
     inline constexpr auto strWinDirStat = L"WinDirStat";
     inline constexpr std::wstring_view strAlpha{ L"ABCDEFGHIJKLMNOPQRSTUVWXYZ" };
     inline constexpr int alphaSize = std::ssize(strAlpha);
+
+    // Font name constants
+    inline constexpr auto strFontArial = L"Arial";
+    inline constexpr auto strFontCambriaMath = L"Cambria Math";
+    inline constexpr auto strFontLucidaConsole = L"Lucida Console";
+    inline constexpr auto strFontSegoeUI = L"Segoe UI";
+    inline constexpr auto strFontSegoeUISymbol = L"Segoe UI Symbol";
 }

@@ -422,10 +422,19 @@ void CDarkModeVisualManager::OnFillBarBackground(CDC* pDC, CBasePane* pBar, CRec
 
 void CDarkModeVisualManager::OnDrawSeparator(CDC* pDC, CBasePane* pBar, CRect rect, BOOL bIsHoriz)
 {
-    UNREFERENCED_PARAMETER(pDC);
     UNREFERENCED_PARAMETER(pBar);
-    UNREFERENCED_PARAMETER(rect);
-    UNREFERENCED_PARAMETER(bIsHoriz);
+
+    const COLORREF clrSeparator = DarkMode::WdsSysColor(COLOR_3DHIGHLIGHT);
+    if (bIsHoriz)
+    {
+        const int x = rect.left + rect.Width() / 2;
+        pDC->FillSolidRect(x, rect.top + 2, 1, rect.Height() - 4, clrSeparator);
+    }
+    else
+    {
+        const int y = rect.top + rect.Height() / 2;
+        pDC->FillSolidRect(rect.left + 2, y, rect.Width() - 4, 1, clrSeparator);
+    }
 }
 
 void CDarkModeVisualManager::OnDrawStatusBarPaneBorder(CDC* pDC, CMFCStatusBar* pBar, CRect rectPane, UINT uiID, UINT nStyle)

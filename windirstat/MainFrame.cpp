@@ -1383,7 +1383,7 @@ void CMainFrame::RebuildToolBar()
             { ID_CLEANUP_PROPERTIES,      [](int w, int h) { return Icons::Make<Icons::PaintProperties>(w, h); }      },
             { ID_FILE_SELECT,             [](int w, int h) { return Icons::Make<Icons::PaintFileSelect>(w, h); }       },
             { ID_REFRESH_SELECTED,        [](int w, int h) { return Icons::Make<Icons::PaintRefreshSelected>(w, h); }  },
-            { ID_FILTER,                  [](int w, int h) { return Icons::Make<Icons::PaintFilter>(w, h); }           },
+            { ID_FILTER,                  [](int w, int h) { return Icons::Make<[](auto& g){ Icons::PaintFilter(g, COptions::IsFilterActive()); }>(w, h); } },
             { ID_CLEANUP_OPEN_SELECTED,   [](int w, int h) { return Icons::Make<Icons::PaintOpenSelected>(w, h); }     },
             { ID_CLEANUP_EXPLORER_SELECT, [](int w, int h) { return Icons::Make<Icons::PaintExplorerSelect>(w, h); }   },
             { ID_EDIT_COPY_CLIPBOARD,     [](int w, int h) { return Icons::Make<Icons::PaintEditCopyClipboard>(w, h); }},
@@ -1445,6 +1445,9 @@ void CMainFrame::OnConfigure()
     sheet.AddPage(&advanced);
 
     sheet.DoModal();
+
+    // Rebuild the toolbar so icons (e.g. the filter indicator) reflect the new settings
+    RebuildToolBar();
 
     // Save settings in case the application exits abnormally
     PersistedSetting::WritePersistedProperties();

@@ -199,6 +199,13 @@ void COptions::SetTreeMapOptions(const CTreeMap::Options& options)
     CDirStatDoc::Get()->UpdateAllViews(nullptr, HINT_TREEMAPSTYLECHANGED);
 }
 
+bool COptions::IsFilterActive()
+{
+    return !FilteringExcludeDirs.Obj().empty() ||
+           !FilteringExcludeFiles.Obj().empty() ||
+           FilteringSizeMinimum.Obj() != 0;
+}
+
 void COptions::CompileFilters()
 {
     FilteringExcludeDirsRegex.clear();

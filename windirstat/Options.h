@@ -232,6 +232,7 @@ public:
     static void PostProcessPersistedSettings();
     static void SetTreeMapOptions(const CTreeMap::Options& options);
     static void CompileFilters();
+    static bool IsFilterActive();
 
     static LCID GetLocaleForFormatting();
 };
