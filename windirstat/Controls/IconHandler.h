@@ -46,7 +46,6 @@ public:
     void StopAsyncShellInfoQueue();
 
     HICON FetchShellIcon(const std::wstring& path, UINT flags = 0, DWORD attr = FILE_ATTRIBUTE_NORMAL, std::wstring* psTypeName = nullptr);
-    static HICON IconFromFontChar(WCHAR ch, COLORREF textColor, bool bold = false, LPCWSTR fontName = wds::strFontCambriaMath, int iconSize = 0);
 
     BlockingQueue<IconLookup> m_lookupQueue = BlockingQueue<IconLookup>(false);
 
@@ -201,21 +200,19 @@ namespace Icons
 
     inline void PaintFilter(Graphics& g, bool active = false)
     {
+        PointF funnelShape[] = { {8, 16}, {56, 16}, {40, 34},
+                         {40, 58}, {24, 58}, {24, 34} };
+        if (active)
+        {
+            SolidBrush activeBrush(C(255, 140, 0));
+            g.FillPolygon(&activeBrush, funnelShape, 6);
+        }
+
         SolidBrush darkBrush(Neutral());
         Pen outlinePen(Neutral(), 5);
         outlinePen.SetLineJoin(LineJoinMiter);
         g.FillRectangle(&darkBrush, 4, 8, 56, 6);
-        PointF funnelOutline[] = { {8, 16}, {56, 16}, {40, 34},
-                                   {40, 58}, {24, 58}, {24, 34} };
-        g.DrawPolygon(&outlinePen, funnelOutline, 6);
-
-        if (!active) return;
-        Pen asteriskPen(C(255, 140, 0), 5);
-        asteriskPen.SetStartCap(LineCapRound);
-        asteriskPen.SetEndCap(LineCapRound);
-        g.DrawLine(&asteriskPen, 50, 42, 50, 62); // vertical
-        g.DrawLine(&asteriskPen, 38, 47, 62, 57); // diagonal top-left to bottom-right
-        g.DrawLine(&asteriskPen, 62, 47, 38, 57); // diagonal top-right to bottom-left
+        g.DrawPolygon(&outlinePen, funnelShape, 6);
     }
 
     inline void PaintMagnifier(Graphics& g, bool plus)
@@ -230,44 +227,54 @@ namespace Icons
         if (plus) g.FillRectangle(&blueBrush, 23, 14, 6, 24);
     }
 
-    template <auto Painter>
-    HBITMAP Make(int width, int height)
+    // Paint a single glyph centered in the 64x64 canonical canvas.
+    inline void PaintCharacter(Graphics& g, WCHAR ch, COLORREF clr,
+                               bool bold = true, LPCWSTR fontName = wds::strFontSegoeUISymbol)
     {
-        Bitmap bitmap(width, height, PixelFormat32bppPARGB);
-        Graphics g(&bitmap);
-        g.SetSmoothingMode(SmoothingModeAntiAlias);
-        g.SetPixelOffsetMode(PixelOffsetModeHighQuality);
-        g.ScaleTransform(static_cast<REAL>(width) / 64,
-            static_cast<REAL>(height) / 64);
-        Painter(g);
-        HBITMAP hbitmap = nullptr;
-        bitmap.GetHBITMAP(Color(0, 0, 0, 0), &hbitmap);
-        return hbitmap;
+        const WCHAR text[]{ ch, L'\0' };
+        FontFamily fontFamily(fontName);
+        StringFormat format;
+        format.SetAlignment(StringAlignmentCenter);
+        format.SetLineAlignment(StringAlignmentCenter);
+        format.SetFormatFlags(StringFormatFlagsNoClip);
+
+        GraphicsPath path;
+        path.AddString(text, 1, &fontFamily,
+            bold ? FontStyleBold : FontStyleRegular, 56.0f,
+            RectF(0.0f, 0.0f, 64.0f, 64.0f), &format);
+
+        RectF bounds;
+        path.GetBounds(&bounds);
+        if (bounds.Width <= 0.0f || bounds.Height <= 0.0f) return;
+
+        const REAL scale = min(56.0f / bounds.Width, 56.0f / bounds.Height);
+        Matrix m;
+        m.Scale(scale, scale);
+        path.Transform(&m);
+        path.GetBounds(&bounds);
+        m.Reset();
+        m.Translate((64.0f - bounds.Width) / 2.0f - bounds.X,
+                    (64.0f - bounds.Height) / 2.0f - bounds.Y);
+        path.Transform(&m);
+
+        SolidBrush brush(Color(255, GetRValue(clr), GetGValue(clr), GetBValue(clr)));
+        g.FillPath(&brush, &path);
     }
 
-    inline HBITMAP CreateGlyphBitmap(WCHAR ch, COLORREF color, int size)
+    template <WCHAR Ch, COLORREF Clr>
+    void FromCharacter(Graphics& g) { PaintCharacter(g, Ch, Clr); }
+
+    // Render a Painter into an HBITMAP/HICON at the requested size using 4x SSAA.
+    HBITMAP MakeBitmap(int size, const std::function<void(Graphics&)>& painter);
+    HICON MakeIcon(int size, const std::function<void(Graphics&)>& painter);
+
+    template <auto Painter>
+    HBITMAP Make(int size) { return MakeBitmap(size, Painter); }
+
+    inline HICON IconFromFontChar(WCHAR ch, COLORREF clr, bool bold = false,
+        LPCWSTR fontName = wds::strFontCambriaMath, int iconSize = 0)
     {
-        // Render with premultiplied alpha so the bitmap is transparent in menus
-        // when used with MIIM_BITMAP / SetMenuItemInfo.
-        SmartPointer<HICON> hIcon(DestroyIcon, CIconHandler::IconFromFontChar(ch, color, true, wds::strFontSegoeUISymbol, size));
-        if (hIcon == nullptr) return nullptr;
-
-        // Create a 32bpp PARGB DIB section to hold the icon with transparency
-        BITMAPINFO bmi{};
-        bmi.bmiHeader.biSize        = sizeof(BITMAPINFOHEADER);
-        bmi.bmiHeader.biWidth       = size;
-        bmi.bmiHeader.biHeight      = -size; // top-down
-        bmi.bmiHeader.biPlanes      = 1;
-        bmi.bmiHeader.biBitCount    = 32;
-        bmi.bmiHeader.biCompression = BI_RGB;
-
-        void* bits = nullptr;
-        CDC dc;
-        dc.CreateCompatibleDC(nullptr);
-        CBitmap bm;
-        bm.Attach(CreateDIBSection(dc.GetSafeHdc(), &bmi, DIB_RGB_COLORS, &bits, nullptr, 0));
-        CSelectObject sobm(&dc, &bm);
-        DrawIconEx(dc.GetSafeHdc(), 0, 0, hIcon, size, size, 0, nullptr, DI_NORMAL);
-        return static_cast<HBITMAP>(bm.Detach());
+        const int size = iconSize > 0 ? iconSize : GetSystemMetrics(SM_CXSMICON);
+        return MakeIcon(size, [=](Graphics& g) { PaintCharacter(g, ch, clr, bold, fontName); });
     }
 }

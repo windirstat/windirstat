@@ -80,7 +80,8 @@ int DpiRest(int value, const CWnd* wnd = nullptr) noexcept;
 int DpiSave(int value, const CWnd* wnd = nullptr) noexcept;
 
 // Bitmap scaling
-HBITMAP ScaleBitmapHighQuality(const CBitmap& src, int newWidth, int newHeight);
+HBITMAP ScaleBitmapHighQuality(Gdiplus::Bitmap& src, int newWidth, int newHeight,
+    Gdiplus::PixelFormat fmt = PixelFormat32bppARGB);
 
 // Context menu
 constexpr auto CONTENT_MENU_MINCMD = 0x1ul;

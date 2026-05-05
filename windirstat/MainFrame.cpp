@@ -1349,8 +1349,8 @@ void CMainFrame::OnUpdateViewShowExtensionsOnTreeMap(CCmdUI* pCmdUI)
 
 void CMainFrame::RebuildToolBar()
 {
-    const auto imageSize = COptions::LargeToolBar ? 32 : 16;
-    const auto scale = COptions::LargeToolBar ? 2 : 1;
+    const auto imageSize = COptions::LargeToolBar ? 32 : 20;
+    const auto scale = COptions::LargeToolBar ? (32.0f / 20.0f) : 1.0f;
 
     // Remove all existing buttons
     while (m_wndToolBar.GetCount() > 0)
@@ -1359,7 +1359,8 @@ void CMainFrame::RebuildToolBar()
     // Clear the shared image list and resize buttons to match the new icon size
     CMFCToolBar::GetImages()->Clear();
     CMFCToolBar::SetSizes(
-        { m_defaultButtonSize.cx * scale, m_defaultButtonSize.cy * scale },
+        { static_cast<LONG>(m_defaultButtonSize.cx * scale),
+          static_cast<LONG>(m_defaultButtonSize.cy * scale)},
         { imageSize, imageSize });
 
     for (const auto& [id, text] : s_toolbarButtons)
@@ -1372,32 +1373,32 @@ void CMainFrame::RebuildToolBar()
 
         // Map command IDs to bitmap creators (rendered at the exact target size)
         int index = 0;
-        using IcoCreator = HBITMAP(*)(int, int);
+        using IcoCreator = HBITMAP(*)(int);
         static const std::unordered_map<UINT, IcoCreator> icoMap{
-            { ID_SCAN_STOP,               [](int w, int) { return Icons::CreateGlyphBitmap(L'■',  RGB(220,  20,  60), w); } },
-            { ID_SCAN_RESUME,             [](int w, int) { return Icons::CreateGlyphBitmap(L'▶',  RGB( 50, 205,  50), w); } },
-            { ID_SCAN_SUSPEND,            [](int w, int) { return Icons::CreateGlyphBitmap(L'⏸', RGB(200, 160,   0), w); } },
-            { ID_REFRESH_ALL,             [](int w, int) { return Icons::CreateGlyphBitmap(L'↻',  RGB(  0, 156, 221), w); } },
-            { ID_SEARCH,                  [](int w, int) { return Icons::CreateGlyphBitmap(L'⌕',  DarkMode::WdsSysColor(COLOR_WINDOWTEXT), w); } },
-            { ID_HELP_MANUAL,             [](int w, int) { return Icons::CreateGlyphBitmap(L'❔', RGB(100, 149, 237), w); } },
-            { ID_CLEANUP_PROPERTIES,      [](int w, int h) { return Icons::Make<Icons::PaintProperties>(w, h); }      },
-            { ID_FILE_SELECT,             [](int w, int h) { return Icons::Make<Icons::PaintFileSelect>(w, h); }       },
-            { ID_REFRESH_SELECTED,        [](int w, int h) { return Icons::Make<Icons::PaintRefreshSelected>(w, h); }  },
-            { ID_FILTER,                  [](int w, int h) { return Icons::Make<[](auto& g){ Icons::PaintFilter(g, COptions::IsFilterActive()); }>(w, h); } },
-            { ID_CLEANUP_OPEN_SELECTED,   [](int w, int h) { return Icons::Make<Icons::PaintOpenSelected>(w, h); }     },
-            { ID_CLEANUP_EXPLORER_SELECT, [](int w, int h) { return Icons::Make<Icons::PaintExplorerSelect>(w, h); }   },
-            { ID_EDIT_COPY_CLIPBOARD,     [](int w, int h) { return Icons::Make<Icons::PaintEditCopyClipboard>(w, h); }},
-            { ID_CLEANUP_OPEN_IN_CONSOLE, [](int w, int h) { return Icons::Make<Icons::PaintOpenInConsole>(w, h); }    },
-            { ID_CLEANUP_DELETE_BIN,      [](int w, int h) { return Icons::Make<Icons::PaintDeleteBin>(w, h); }        },
-            { ID_CLEANUP_DELETE,          [](int w, int h) { return Icons::Make<Icons::PaintDelete>(w, h); }           },
-            { ID_TREEMAP_ZOOMIN,          [](int w, int h) { return Icons::Make<[](auto& g){ Icons::PaintMagnifier(g, true);  }>(w, h); } },
-            { ID_TREEMAP_ZOOMOUT,         [](int w, int h) { return Icons::Make<[](auto& g){ Icons::PaintMagnifier(g, false); }>(w, h); } },
+            { ID_SCAN_STOP,               [](int s) { return Icons::Make<Icons::FromCharacter<L'■',  RGB(220,  20,  60)>>(s); } },
+            { ID_SCAN_RESUME,             [](int s) { return Icons::Make<Icons::FromCharacter<L'▶',  RGB( 50, 205,  50)>>(s); } },
+            { ID_SCAN_SUSPEND,            [](int s) { return Icons::Make<Icons::FromCharacter<L'⏸', RGB(200, 160,   0)>>(s); } },
+            { ID_REFRESH_ALL,             [](int s) { return Icons::Make<Icons::FromCharacter<L'↻',  RGB(  0, 156, 221)>>(s); } },
+            { ID_SEARCH,                  [](int s) { return Icons::Make<Icons::FromCharacter<L'⌕',  RGB(140, 140, 140)>>(s); } },
+            { ID_HELP_MANUAL,             [](int s) { return Icons::Make<Icons::FromCharacter<L'❔', RGB(100, 149, 237)>>(s); } },
+            { ID_CLEANUP_PROPERTIES,      [](int s) { return Icons::Make<Icons::PaintProperties>(s); }      },
+            { ID_FILE_SELECT,             [](int s) { return Icons::Make<Icons::PaintFileSelect>(s); }       },
+            { ID_REFRESH_SELECTED,        [](int s) { return Icons::Make<Icons::PaintRefreshSelected>(s); }  },
+            { ID_FILTER,                  [](int s) { return Icons::Make<[](auto& g){ Icons::PaintFilter(g, COptions::IsFilterActive()); }>(s); } },
+            { ID_CLEANUP_OPEN_SELECTED,   [](int s) { return Icons::Make<Icons::PaintOpenSelected>(s); }     },
+            { ID_CLEANUP_EXPLORER_SELECT, [](int s) { return Icons::Make<Icons::PaintExplorerSelect>(s); }   },
+            { ID_EDIT_COPY_CLIPBOARD,     [](int s) { return Icons::Make<Icons::PaintEditCopyClipboard>(s); }},
+            { ID_CLEANUP_OPEN_IN_CONSOLE, [](int s) { return Icons::Make<Icons::PaintOpenInConsole>(s); }    },
+            { ID_CLEANUP_DELETE_BIN,      [](int s) { return Icons::Make<Icons::PaintDeleteBin>(s); }        },
+            { ID_CLEANUP_DELETE,          [](int s) { return Icons::Make<Icons::PaintDelete>(s); }           },
+            { ID_TREEMAP_ZOOMIN,          [](int s) { return Icons::Make<[](auto& g){ Icons::PaintMagnifier(g, true);  }>(s); } },
+            { ID_TREEMAP_ZOOMOUT,         [](int s) { return Icons::Make<[](auto& g){ Icons::PaintMagnifier(g, false); }>(s); } },
         };
 
         CBitmap bitmap;
         if (const auto it = icoMap.find(id); it != icoMap.end())
         {
-            bitmap.Attach(it->second(imageSize, imageSize));
+            bitmap.Attach(it->second(imageSize));
             DarkMode::LightenBitmap(&bitmap);
             index = CMFCToolBar::GetImages()->AddImage(bitmap, TRUE);
         }

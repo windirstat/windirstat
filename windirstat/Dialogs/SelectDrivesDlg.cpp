@@ -397,7 +397,7 @@ BOOL CSelectDrivesDlg::OnInitDialog()
     }
 
     CBitmap bitmap;
-    bitmap.Attach(Icons::Make<Icons::PaintFileSelect>(32, 32));
+    bitmap.Attach(Icons::Make<Icons::PaintFileSelect>(32));
     m_browseButton.SetBitmap(bitmap);
 
     ShowWindow(SW_SHOWNORMAL);

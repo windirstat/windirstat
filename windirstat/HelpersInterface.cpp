@@ -490,37 +490,25 @@ int DpiSave(const int value, const CWnd* wnd) noexcept
     return ::MulDiv(value, USER_DEFAULT_SCREEN_DPI, dpi);
 }
 
-HBITMAP ScaleBitmapHighQuality(const CBitmap& src, const int newWidth, const int newHeight)
+HBITMAP ScaleBitmapHighQuality(Gdiplus::Bitmap& src, const int newWidth, const int newHeight,
+    const Gdiplus::PixelFormat fmt)
 {
-    BITMAP bm{};
-    GetObject(src.GetSafeHandle(), sizeof(bm), &bm);
-
-    CDC memDC;
-    memDC.CreateCompatibleDC(nullptr);
-    BITMAPINFO bmi = { {sizeof(BITMAPINFOHEADER), bm.bmWidth, -bm.bmHeight, 1, 32, BI_RGB} };
-    const auto srcPixels = std::make_unique_for_overwrite<BYTE[]>(bm.bmWidth * bm.bmHeight * 4);
-    if (!GetDIBits(memDC, static_cast<HBITMAP>(src.GetSafeHandle()), 0, bm.bmHeight,
-        srcPixels.get(), &bmi, DIB_RGB_COLORS)) return nullptr;
-
-    // The 32-bit DIB memory layout (BGRA) matches PixelFormat32bppARGB on little-endian Windows.
-    // This constructor references srcPixels directly (no copy), so the buffer must stay alive
-    // until DrawImage completes.
-    Gdiplus::Bitmap gdipSrc(bm.bmWidth, bm.bmHeight, bm.bmWidth * 4,
-        PixelFormat32bppARGB, srcPixels.get());
-
-    // Create a 32-bit ARGB destination bitmap at the target size
-    Gdiplus::Bitmap gdipDst(newWidth, newHeight, PixelFormat32bppARGB);
-
-    // Draw with the highest-quality bicubic resampling
-    Gdiplus::Graphics g(&gdipDst);
+    Gdiplus::Bitmap dst(newWidth, newHeight, fmt);
+    Gdiplus::Graphics g(&dst);
     g.SetInterpolationMode(Gdiplus::InterpolationModeHighQualityBicubic);
     g.SetSmoothingMode(Gdiplus::SmoothingModeHighQuality);
     g.SetPixelOffsetMode(Gdiplus::PixelOffsetModeHighQuality);
-    g.DrawImage(&gdipSrc, 0, 0, newWidth, newHeight);
+    g.SetCompositingQuality(Gdiplus::CompositingQualityHighQuality);
+
+    Gdiplus::ImageAttributes attr;
+    attr.SetWrapMode(Gdiplus::WrapModeTileFlipXY);
+
+    g.DrawImage(&src, Gdiplus::Rect(0, 0, newWidth, newHeight), 0, 0,
+        static_cast<int>(src.GetWidth()), static_cast<int>(src.GetHeight()), Gdiplus::UnitPixel, &attr);
 
     // Extract an HBITMAP from the GDI+ result; caller owns the returned handle
     HBITMAP hbm = nullptr;
-    gdipDst.GetHBITMAP(Gdiplus::Color(0, 0, 0, 0), &hbm);
+    dst.GetHBITMAP(Gdiplus::Color(0, 0, 0, 0), &hbm);
     return hbm;
 }
 

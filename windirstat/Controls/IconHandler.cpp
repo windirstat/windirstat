@@ -17,6 +17,7 @@
 
 #include "pch.h"
 #include "IconHandler.h"
+#include "HelpersInterface.h"
 
 CIconHandler::~CIconHandler()
 {
@@ -29,16 +30,16 @@ void CIconHandler::Initialize()
     static std::once_flag s_once;
     std::call_once(s_once, [this]
     {
-        m_junctionImage = IconFromFontChar(L'⤷', RGB(0x3A, 0x3A, 0xFF), true);
-        m_symlinkImage = IconFromFontChar(L'⤷', RGB(0x3A, 0xFF, 0x3A), true);
-        m_junctionProtected = IconFromFontChar(L'⤷', RGB(0xFF, 0x3A, 0x3A), true);
-        m_freeSpaceImage = IconFromFontChar(L'▢', RGB(0x3A, 0xCC, 0x3A), true);
-        m_emptyImage = IconFromFontChar(L'▢', DarkMode::WdsSysColor(COLOR_WINDOWTEXT));
-        m_hardlinksImage = IconFromFontChar(L'⧉', DarkMode::WdsSysColor(COLOR_WINDOWTEXT));
-        m_dupesImage = IconFromFontChar(L'⧈', DarkMode::WdsSysColor(COLOR_WINDOWTEXT));
-        m_searchImage = IconFromFontChar(L'⊙', DarkMode::WdsSysColor(COLOR_WINDOWTEXT));
-        m_largestImage = IconFromFontChar(L'⋙', DarkMode::WdsSysColor(COLOR_WINDOWTEXT));
-        m_unknownImage = IconFromFontChar(L'?', RGB(0xCC,0xB8,0x66), true);
+        m_junctionImage = Icons::IconFromFontChar(L'⤷', RGB(0x3A, 0x3A, 0xFF), true);
+        m_symlinkImage = Icons::IconFromFontChar(L'⤷', RGB(0x3A, 0xFF, 0x3A), true);
+        m_junctionProtected = Icons::IconFromFontChar(L'⤷', RGB(0xFF, 0x3A, 0x3A), true);
+        m_freeSpaceImage = Icons::IconFromFontChar(L'▢', RGB(0x3A, 0xCC, 0x3A), true);
+        m_emptyImage = Icons::IconFromFontChar(L'▢', DarkMode::WdsSysColor(COLOR_WINDOWTEXT));
+        m_hardlinksImage = Icons::IconFromFontChar(L'⧉', DarkMode::WdsSysColor(COLOR_WINDOWTEXT));
+        m_dupesImage = Icons::IconFromFontChar(L'⧈', DarkMode::WdsSysColor(COLOR_WINDOWTEXT));
+        m_searchImage = Icons::IconFromFontChar(L'⊙', DarkMode::WdsSysColor(COLOR_WINDOWTEXT));
+        m_largestImage = Icons::IconFromFontChar(L'⋙', DarkMode::WdsSysColor(COLOR_WINDOWTEXT));
+        m_unknownImage = Icons::IconFromFontChar(L'?', RGB(0xCC,0xB8,0x66), true);
         m_defaultFileImage = FetchShellIcon(GetSysDirectory() + L"\\~", 0, FILE_ATTRIBUTE_NORMAL);
         m_defaultFolderImage = FetchShellIcon(GetSysDirectory() + L"\\~", 0, FILE_ATTRIBUTE_DIRECTORY);
 
@@ -170,76 +171,32 @@ HICON CIconHandler::FetchShellIcon(const std::wstring & path, UINT flags, const 
     return sfi.hIcon;
 }
 
-HICON CIconHandler::IconFromFontChar(const WCHAR ch, const COLORREF textColor, const bool bold, LPCWSTR fontName, const int iconSize)
+HBITMAP Icons::MakeBitmap(const int size, const std::function<void(Graphics&)>& painter)
 {
-    const int ICON_SIZE = iconSize > 0 ? iconSize : GetSystemMetrics(SM_CXSMICON);
-    const int RENDER_SIZE = ICON_SIZE * 4;
-    constexpr int PADDING = 2;
+    // 4x super-sampling antialiased render in the canonical 64-unit space,
+    // then bicubic downsample to the requested size.
+    const int renderSize = size * 4;
+    Bitmap renderBitmap(renderSize, renderSize, PixelFormat32bppPARGB);
+    Graphics g(&renderBitmap);
+    g.SetSmoothingMode(SmoothingModeAntiAlias);
+    g.SetPixelOffsetMode(PixelOffsetModeHighQuality);
+    g.ScaleTransform(static_cast<REAL>(renderSize) / 64.0f,
+                     static_cast<REAL>(renderSize) / 64.0f);
+    painter(g);
+    return ScaleBitmapHighQuality(renderBitmap, size, size, PixelFormat32bppPARGB);
+}
 
-    const WCHAR text[]{ ch, wds::chrNull };
-    Gdiplus::FontFamily fontFamily(fontName);
-    Gdiplus::StringFormat format;
-    format.SetAlignment(Gdiplus::StringAlignmentCenter);
-    format.SetLineAlignment(Gdiplus::StringAlignmentCenter);
-    format.SetFormatFlags(Gdiplus::StringFormatFlagsNoClip);
+HICON Icons::MakeIcon(const int size, const std::function<void(Graphics&)>& painter)
+{
+    SmartPointer<HBITMAP> color(DeleteObject, MakeBitmap(size, painter));
+    if (color == nullptr) return nullptr;
 
-    Gdiplus::GraphicsPath path;
-    path.AddString(text, 1, &fontFamily, bold ? Gdiplus::FontStyleBold : Gdiplus::FontStyleRegular,
-        static_cast<Gdiplus::REAL>(RENDER_SIZE - 8),
-        Gdiplus::RectF(0.0f, 0.0f, static_cast<Gdiplus::REAL>(RENDER_SIZE), static_cast<Gdiplus::REAL>(RENDER_SIZE)),
-        &format);
-
-    Gdiplus::RectF bounds;
-    path.GetBounds(&bounds);
-    if (bounds.Width <= 0.0f || bounds.Height <= 0.0f) return nullptr;
-
-    // Scale and center path within the oversampled canvas.
-    const auto pathScale = min(
-        static_cast<Gdiplus::REAL>(RENDER_SIZE - PADDING * 8) / bounds.Width,
-        static_cast<Gdiplus::REAL>(RENDER_SIZE - PADDING * 8) / bounds.Height);
-    Gdiplus::Matrix m;
-    m.Scale(pathScale, pathScale);
-    path.Transform(&m);
-    path.GetBounds(&bounds);
-    m.Reset();
-    m.Translate((static_cast<Gdiplus::REAL>(RENDER_SIZE) - bounds.Width) / 2.0f - bounds.X,
-                (static_cast<Gdiplus::REAL>(RENDER_SIZE) - bounds.Height) / 2.0f - bounds.Y);
-    path.Transform(&m);
-
-    // Fill onto oversampled canvas then bicubic-downsample to final size.
-    const Gdiplus::SolidBrush brush(Gdiplus::Color(255,
-        GetRValue(textColor), GetGValue(textColor), GetBValue(textColor)));
-    Gdiplus::Bitmap renderBitmap(RENDER_SIZE, RENDER_SIZE, PixelFormat32bppARGB);
-    {
-        Gdiplus::Graphics g(&renderBitmap);
-        g.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
-        g.SetPixelOffsetMode(Gdiplus::PixelOffsetModeHighQuality);
-        g.Clear(Gdiplus::Color(0, 0, 0, 0));
-        g.FillPath(&brush, &path);
-    }
-    Gdiplus::Bitmap finalBitmap(ICON_SIZE, ICON_SIZE, PixelFormat32bppARGB);
-    {
-        Gdiplus::Graphics g(&finalBitmap);
-        g.SetInterpolationMode(Gdiplus::InterpolationModeHighQualityBicubic);
-        g.SetPixelOffsetMode(Gdiplus::PixelOffsetModeHighQuality);
-        g.Clear(Gdiplus::Color(0, 0, 0, 0));
-        g.DrawImage(&renderBitmap, 0, 0, ICON_SIZE, ICON_SIZE);
-    }
-
-    SmartPointer<HBITMAP> hColorBitmap(DeleteObject, nullptr);
-    finalBitmap.GetHBITMAP(Gdiplus::Color(0, 0, 0, 0), &hColorBitmap);
-    if (hColorBitmap == nullptr)
-    {
-        return nullptr;
-    }
-
-    CBitmap maskBmp;
-    maskBmp.CreateBitmap(ICON_SIZE, ICON_SIZE, 1, 1, nullptr);
+    CBitmap mask;
+    mask.CreateBitmap(size, size, 1, 1, nullptr);
 
     ICONINFO ii{};
     ii.fIcon = TRUE;
-    ii.hbmColor = hColorBitmap;
-    ii.hbmMask = static_cast<HBITMAP>(maskBmp.m_hObject);
-    const HICON hIcon = CreateIconIndirect(&ii);
-    return hIcon;
+    ii.hbmColor = color;
+    ii.hbmMask = static_cast<HBITMAP>(mask.m_hObject);
+    return CreateIconIndirect(&ii);
 }
