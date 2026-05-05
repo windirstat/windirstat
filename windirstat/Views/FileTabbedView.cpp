@@ -40,6 +40,8 @@ int CFileTabbedView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
     m_fileDupeView = DYNAMIC_DOWNCAST(CFileDupeView, GetTabControl().GetTabWnd(m_fileDupeViewIndex));
     m_fileSearchViewIndex = AddView(RUNTIME_CLASS(CFileSearchView), IDS_SEARCH_RESULTS.data(), CHAR_MAX);
     m_fileSearchView = DYNAMIC_DOWNCAST(CFileSearchView, GetTabControl().GetTabWnd(m_fileSearchViewIndex));
+    m_fileChangeViewIndex = AddView(RUNTIME_CLASS(CFileChangeView), IDS_CHANGES.data(), CHAR_MAX);
+    m_fileChangeView = DYNAMIC_DOWNCAST(CFileChangeView, GetTabControl().GetTabWnd(m_fileChangeViewIndex));
     m_fileWatcherViewIndex = AddView(RUNTIME_CLASS(CFileWatcherView), IDS_WATCHER.data(), CHAR_MAX);
     m_fileWatcherView = DYNAMIC_DOWNCAST(CFileWatcherView, GetTabControl().GetTabWnd(m_fileWatcherViewIndex));
 
@@ -54,6 +56,7 @@ void CFileTabbedView::OnInitialUpdate()
     Localization::UpdateTabControl(GetTabControl());
 
     SetSearchTabVisibility(false);
+    SetChangesTabVisibility(true);
     SetWatcherTabVisibility(false);
     SetDupeTabVisibility(COptions::ScanForDuplicates &&
         CDirStatDoc::Get()->GetRootItem() != nullptr);
@@ -67,6 +70,11 @@ void CFileTabbedView::SetDupeTabVisibility(const bool show)
 void CFileTabbedView::SetSearchTabVisibility(const bool show)
 {
     GetTabControl().ShowTab(m_fileSearchViewIndex, show);
+}
+
+void CFileTabbedView::SetChangesTabVisibility(const bool show)
+{
+    GetTabControl().ShowTab(m_fileChangeViewIndex, show);
 }
 
 void CFileTabbedView::SetWatcherTabVisibility(const bool show)
@@ -96,7 +104,7 @@ LRESULT CFileTabbedView::OnChangeActiveTab(WPARAM wp, LPARAM lp)
 bool CFileTabbedView::CycleTab(const bool forward)
 {
     std::vector<int> visibleTabs;
-    for (const int tabIndex : { m_fileTreeViewIndex, m_fileTopViewIndex, m_fileDupeViewIndex, m_fileSearchViewIndex, m_fileWatcherViewIndex })
+    for (const int tabIndex : { m_fileTreeViewIndex, m_fileTopViewIndex, m_fileDupeViewIndex, m_fileSearchViewIndex, m_fileChangeViewIndex, m_fileWatcherViewIndex })
     {
         if (GetTabControl().IsTabVisible(tabIndex)) visibleTabs.push_back(tabIndex);
     }

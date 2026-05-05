@@ -193,4 +193,49 @@ int CFileSearchView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
     return 0;
 }
 
+IMPLEMENT_DYNCREATE(CFileChangeView, CControlView)
+
+BEGIN_MESSAGE_MAP(CFileChangeView, CControlView)
+    ON_WM_CREATE()
+END_MESSAGE_MAP()
+
+int CFileChangeView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
+{
+    if (CControlView::OnCreate(lpCreateStruct) == -1) return -1;
+
+    constexpr RECT rect = { 0, 0, 0, 0 };
+    m_control.CreateExtended(LVS_EX_HEADERDRAGDROP, LVS_OWNERDATA | WS_CHILD | WS_VISIBLE | LVS_REPORT | LVS_SHOWSELALWAYS, rect, this, ID_WDS_CONTROL);
+    m_control.ShowGrid(COptions::ListGrid);
+    m_control.ShowStripes(COptions::ListStripes);
+    m_control.ShowFullRowSelection(COptions::ListFullRowSelection);
+
+    InsertCol(IDS_COL_NAME, LVCFMT_LEFT, 500, COL_ITEMCHANGE_NAME);
+    InsertCol(IDS_COL_CHANGE, LVCFMT_RIGHT, 120, COL_ITEMCHANGE_DELTA);
+    InsertCol(IDS_COL_CURRENT_SIZE, LVCFMT_RIGHT, 110, COL_ITEMCHANGE_CURRENT_SIZE);
+    InsertCol(IDS_COL_PREVIOUS_SIZE, LVCFMT_RIGHT, 110, COL_ITEMCHANGE_PREVIOUS_SIZE);
+    InsertCol(IDS_COL_FILES_DELTA, LVCFMT_RIGHT, 90, COL_ITEMCHANGE_FILES_DELTA);
+    InsertCol(IDS_COL_FOLDERS_DELTA, LVCFMT_RIGHT, 90, COL_ITEMCHANGE_FOLDERS_DELTA);
+    m_control.SetSorting(COL_ITEMCHANGE_DELTA, false);
+
+    m_control.OnColumnsInserted();
+
+    return 0;
+}
+
+void CFileChangeView::OnUpdate(CView* pSender, const LPARAM lHint, CObject* pHint)
+{
+    if (lHint == HINT_NEWROOT)
+    {
+        m_control.ClearChanges();
+        return;
+    }
+
+    if (lHint == HINT_NULL)
+    {
+        m_control.SetChanges(CDirStatDoc::Get()->GetSnapshotGrowthResult());
+    }
+
+    CControlView::OnUpdate(pSender, lHint, pHint);
+}
+
 

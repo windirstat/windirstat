@@ -176,6 +176,7 @@ void CTreeMapView::DrawHighlights(CDC* pdc)
     case LF_TOPLIST:
     case LF_FILETREE:
     case LF_SEARCHLIST:
+    case LF_CHANGELIST:
         DrawSelection(pdc);
         break;
     case LF_EXTLIST:

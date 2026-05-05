@@ -42,6 +42,7 @@ enum LOGICAL_FOCUS : uint8_t
     LF_DUPELIST,
     LF_TOPLIST,
     LF_SEARCHLIST,
+    LF_CHANGELIST,
     LF_WATCHERLIST,
     LF_EXTLIST,
 };
@@ -162,6 +163,7 @@ protected:
     CFileTopView* GetFileTopView() const { return m_fileTabbedView->GetFileTopView(); }
     CFileDupeView* GetFileDupeView() const { return m_fileTabbedView->GetFileDupeView(); }
     CFileSearchView* GetFileSearchView() const { return m_fileTabbedView->GetFileSearchView(); }
+    CFileChangeView* GetFileChangeView() const { return m_fileTabbedView->GetFileChangeView(); }
     CFileWatcherView* GetFileWatcherView() const { return m_fileTabbedView->GetFileWatcherView(); }
     CFileTabbedView* GetFileTabbedView() const { return m_fileTabbedView; }
     CTreeMapView* GetTreeMapView() const { return m_treeMapView; }

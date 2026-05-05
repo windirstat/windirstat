@@ -198,7 +198,7 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
 
     // Extract data run origins and cluster counts
     RETRIEVAL_POINTERS_BUFFER* retrievalBuffer = ByteOffset<RETRIEVAL_POINTERS_BUFFER>(dataRunsBuffer.data(), 0);
-    std::vector<std::pair<ULONGLONG, ULONGLONG>> dataRuns(retrievalBuffer->ExtentCount, {});
+    std::vector<std::pair<ULONGLONG, ULONGLONG>> dataRuns(retrievalBuffer->ExtentCount);
     for (const auto i : std::views::iota(0u, retrievalBuffer->ExtentCount))
     {
         dataRuns[i] = { retrievalBuffer->Extents[i].Lcn.QuadPart,
