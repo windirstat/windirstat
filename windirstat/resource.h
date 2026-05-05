@@ -133,6 +133,8 @@
 #define IDC_PROCESS_HARDLINKS           1116
 #define IDC_CONTEXT_MENU                1117
 #define IDC_SHOW_MICROSOFT_PROGRESS     1118
+#define IDC_FILTERING_INCLUDE_DIRS      1119
+#define IDC_FILTERING_INCLUDE_FILES     1120
 #define ID_WDS_CONTROL                  4711
 #define ID_TREEMAP_ZOOMRESET            32767
 #define ID_CLEANUP_EXPLORER_SELECT      32768
@@ -232,7 +234,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        306
 #define _APS_NEXT_COMMAND_VALUE         32943
-#define _APS_NEXT_CONTROL_VALUE         1119
+#define _APS_NEXT_CONTROL_VALUE         1121
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif

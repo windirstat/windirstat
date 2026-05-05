@@ -217,6 +217,8 @@ public:
     static Setting<std::vector<std::wstring>> SelectDrivesFolder;
     static Setting<std::wstring> FilteringExcludeDirs;
     static Setting<std::wstring> FilteringExcludeFiles;
+    static Setting<std::wstring> FilteringIncludeDirs;
+    static Setting<std::wstring> FilteringIncludeFiles;
     static Setting<std::wstring> SearchTerm;
     static Setting<WINDOWPLACEMENT> MainWindowPlacement;
 
@@ -224,6 +226,8 @@ public:
     static std::vector<USERDEFINEDCLEANUP> UserDefinedCleanups;
     static std::vector<std::wregex> FilteringExcludeDirsRegex;
     static std::vector<std::wregex> FilteringExcludeFilesRegex;
+    static std::vector<std::wregex> FilteringIncludeDirsRegex;
+    static std::vector<std::wregex> FilteringIncludeFilesRegex;
     static ULONGLONG FilteringSizeMinimumCalculated;
 
     static void SanitizeRect(RECT& rect);

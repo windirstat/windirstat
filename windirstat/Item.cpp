@@ -921,6 +921,20 @@ void CItem::ScanItems(BlockingQueue<CItem*> * queue, FinderNtfsContext& contextN
                         continue;
                     }
 
+                    // Include only files whose path matches the include path filter
+                    if (!COptions::FilteringIncludeDirsRegex.empty() && std::ranges::none_of(COptions::FilteringIncludeDirsRegex,
+                        [&finder](const auto& pattern) { return std::regex_match(finder->GetFilePath(), pattern); }))
+                    {
+                        continue;
+                    }
+
+                    // Include only files whose name matches the include name filter
+                    if (!COptions::FilteringIncludeFilesRegex.empty() && std::ranges::none_of(COptions::FilteringIncludeFilesRegex,
+                        [&finder](const auto& pattern) { return std::regex_match(finder->GetFileName(), pattern); }))
+                    {
+                        continue;
+                    }
+
                     // Exclude files matching size filter
                     if (COptions::FilteringSizeMinimumCalculated > 0 && finder->GetFileSizeLogical() < COptions::FilteringSizeMinimumCalculated)
                     {

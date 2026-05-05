@@ -46,9 +46,13 @@ protected:
     BOOL m_filteringUseRegex = FALSE;
     CString m_filteringExcludeDirs;
     CString m_filteringExcludeFiles;
+    CString m_filteringIncludeDirs;
+    CString m_filteringIncludeFiles;
     CComboBox m_ctlFilteringSizeUnits;
     CEdit m_ctrlFilteringExcludeFiles;
     CEdit m_ctrlFilteringExcludeDirs;
+    CEdit m_ctrlFilteringIncludeFiles;
+    CEdit m_ctrlFilteringIncludeDirs;
     CToolTipCtrl m_toolTip;
 
     DECLARE_MESSAGE_MAP()

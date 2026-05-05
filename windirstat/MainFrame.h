@@ -243,7 +243,6 @@ protected:
     afx_msg void OnViewShowFileTypes();
     afx_msg void OnViewShowExtensionsOnTreeMap();
     afx_msg void OnUpdateViewShowExtensionsOnTreeMap(CCmdUI* pCmdUI);
-    void RebuildToolBar();
     afx_msg void OnViewAllFiles() { GetFileTabbedView()->SetActiveFileTreeView(); }
     afx_msg void OnViewLargestFiles() { GetFileTabbedView()->SetActiveTopView(); }
     afx_msg void OnViewDuplicateFiles() { GetFileTabbedView()->SetActiveDupeView(); }
@@ -265,5 +264,6 @@ protected:
     afx_msg BOOL OnNcActivate(BOOL bActive);
 public:
     static CMainFrame* Get() { return s_Singleton; }
+    void RebuildToolBar();
     BOOL LoadFrame(UINT nIDResource, DWORD dwDefaultStyle = WS_OVERLAPPEDWINDOW | FWS_ADDTOTITLE, CWnd* pParentWnd = NULL, CCreateContext* pContext = NULL) override;
 };

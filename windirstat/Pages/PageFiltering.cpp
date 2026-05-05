@@ -32,17 +32,23 @@ void CPageFiltering::DoDataExchange(CDataExchange* pDX)
     CMFCPropertyPage::DoDataExchange(pDX);
     DDX_Text(pDX, IDC_FILTERING_EXCLUDE_DIRS, m_filteringExcludeDirs);
     DDX_Text(pDX, IDC_FILTERING_EXCLUDE_FILES, m_filteringExcludeFiles);
+    DDX_Text(pDX, IDC_FILTERING_INCLUDE_DIRS, m_filteringIncludeDirs);
+    DDX_Text(pDX, IDC_FILTERING_INCLUDE_FILES, m_filteringIncludeFiles);
     DDX_Text(pDX, IDC_FILTERING_SIZE_MIN, m_filteringSizeMinimum);
     DDX_Check(pDX, IDC_FILTERING_USE_REGEX, m_filteringUseRegex);
     DDX_Control(pDX, IDC_FILTERING_MIN_UNITS, m_ctlFilteringSizeUnits);
     DDX_Control(pDX, IDC_FILTERING_EXCLUDE_FILES, m_ctrlFilteringExcludeFiles);
     DDX_Control(pDX, IDC_FILTERING_EXCLUDE_DIRS, m_ctrlFilteringExcludeDirs);
+    DDX_Control(pDX, IDC_FILTERING_INCLUDE_FILES, m_ctrlFilteringIncludeFiles);
+    DDX_Control(pDX, IDC_FILTERING_INCLUDE_DIRS, m_ctrlFilteringIncludeDirs);
     DDX_CBIndex(pDX, IDC_FILTERING_MIN_UNITS, m_filteringSizeUnits);
 }
 
 BEGIN_MESSAGE_MAP(CPageFiltering, CMFCPropertyPage)
     ON_EN_CHANGE(IDC_FILTERING_EXCLUDE_DIRS, OnSettingChanged)
     ON_EN_CHANGE(IDC_FILTERING_EXCLUDE_FILES, OnSettingChanged)
+    ON_EN_CHANGE(IDC_FILTERING_INCLUDE_DIRS, OnSettingChanged)
+    ON_EN_CHANGE(IDC_FILTERING_INCLUDE_FILES, OnSettingChanged)
     ON_BN_CLICKED(IDC_FILTERING_USE_REGEX, OnSettingChanged)
     ON_EN_CHANGE(IDC_FILTERING_SIZE_MIN, OnSettingChanged)
     ON_EN_CHANGE(IDC_FILTERING_MIN_UNITS, OnSettingChanged)
@@ -67,6 +73,8 @@ BOOL CPageFiltering::OnInitDialog()
     m_filteringUseRegex = COptions::FilteringUseRegex;
     m_filteringExcludeDirs = COptions::FilteringExcludeDirs.Obj().c_str();
     m_filteringExcludeFiles = COptions::FilteringExcludeFiles.Obj().c_str();
+    m_filteringIncludeDirs = COptions::FilteringIncludeDirs.Obj().c_str();
+    m_filteringIncludeFiles = COptions::FilteringIncludeFiles.Obj().c_str();
 
     m_ctlFilteringSizeUnits.AddString(GetSpec_Bytes().c_str());
     m_ctlFilteringSizeUnits.AddString(GetSpec_KiB().c_str());
@@ -93,10 +101,14 @@ BOOL CPageFiltering::OnInitDialog()
             // Force the edit controls to refresh their scrollbars
             DarkMode::AdjustControls(m_ctrlFilteringExcludeDirs.GetSafeHwnd());
             DarkMode::AdjustControls(m_ctrlFilteringExcludeFiles.GetSafeHwnd());
+            DarkMode::AdjustControls(m_ctrlFilteringIncludeDirs.GetSafeHwnd());
+            DarkMode::AdjustControls(m_ctrlFilteringIncludeFiles.GetSafeHwnd());
 
             // Force a complete redraw
             m_ctrlFilteringExcludeDirs.Invalidate();
             m_ctrlFilteringExcludeFiles.Invalidate();
+            m_ctrlFilteringIncludeDirs.Invalidate();
+            m_ctrlFilteringIncludeFiles.Invalidate();
         }
     }
 
@@ -110,11 +122,15 @@ void CPageFiltering::SetToolTips()
     {
         m_toolTip.AddTool(&m_ctrlFilteringExcludeDirs, (tip + Localization::LookupNeutral(IDS_FILTER_EXAMPLE_DIRS_REGEX)).c_str());
         m_toolTip.AddTool(&m_ctrlFilteringExcludeFiles, (tip + Localization::LookupNeutral(IDS_FILTER_EXAMPLE_FILES_REGEX)).c_str());
+        m_toolTip.AddTool(&m_ctrlFilteringIncludeDirs, (tip + Localization::LookupNeutral(IDS_FILTER_EXAMPLE_DIRS_REGEX)).c_str());
+        m_toolTip.AddTool(&m_ctrlFilteringIncludeFiles, (tip + Localization::LookupNeutral(IDS_FILTER_EXAMPLE_FILES_REGEX)).c_str());
     }
     else
     {
         m_toolTip.AddTool(&m_ctrlFilteringExcludeDirs, (tip + Localization::LookupNeutral(IDS_FILTER_EXAMPLE_DIRS)).c_str());
         m_toolTip.AddTool(&m_ctrlFilteringExcludeFiles, (tip + Localization::LookupNeutral(IDS_FILTER_EXAMPLE_FILES)).c_str());
+        m_toolTip.AddTool(&m_ctrlFilteringIncludeDirs, (tip + Localization::LookupNeutral(IDS_FILTER_EXAMPLE_DIRS)).c_str());
+        m_toolTip.AddTool(&m_ctrlFilteringIncludeFiles, (tip + Localization::LookupNeutral(IDS_FILTER_EXAMPLE_FILES)).c_str());
     }
 }
 
@@ -127,8 +143,11 @@ void CPageFiltering::OnOK()
     COptions::FilteringUseRegex = (FALSE != m_filteringUseRegex);
     COptions::FilteringExcludeFiles.Obj() = m_filteringExcludeFiles;
     COptions::FilteringExcludeDirs.Obj() = m_filteringExcludeDirs;
+    COptions::FilteringIncludeFiles.Obj() = m_filteringIncludeFiles;
+    COptions::FilteringIncludeDirs.Obj() = m_filteringIncludeDirs;
     COptions::CompileFilters();
 
+    CMainFrame::Get()->RebuildToolBar();
     CMFCPropertyPage::OnOK();
 }
 

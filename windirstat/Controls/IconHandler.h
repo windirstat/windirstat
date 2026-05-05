@@ -210,10 +210,12 @@ namespace Icons
         g.DrawPolygon(&outlinePen, funnelOutline, 6);
 
         if (!active) return;
-        SolidBrush orangeBrush(C(255, 140, 0));
-        Gdiplus::Font font(wds::strFontSegoeUI, 28, FontStyleBold, UnitPoint);
-        PointF origin(38, 30);
-        g.DrawString(L"*", 1, &font, origin, &orangeBrush);
+        Pen asteriskPen(C(255, 140, 0), 5);
+        asteriskPen.SetStartCap(LineCapRound);
+        asteriskPen.SetEndCap(LineCapRound);
+        g.DrawLine(&asteriskPen, 50, 42, 50, 62); // vertical
+        g.DrawLine(&asteriskPen, 38, 47, 62, 57); // diagonal top-left to bottom-right
+        g.DrawLine(&asteriskPen, 62, 47, 38, 57); // diagonal top-right to bottom-left
     }
 
     inline void PaintMagnifier(Graphics& g, bool plus)

@@ -133,12 +133,16 @@ Setting<std::vector<std::wstring>> COptions::SelectDrivesFolder(OptionsDriveSele
 Setting<std::wstring> COptions::SearchTerm(OptionsSearch, L"SearchTerm");
 Setting<std::wstring> COptions::FilteringExcludeDirs(OptionsDriveSelect, L"FilteringExcludeDirs");
 Setting<std::wstring> COptions::FilteringExcludeFiles(OptionsDriveSelect, L"FilteringExcludeFiles");
+Setting<std::wstring> COptions::FilteringIncludeDirs(OptionsDriveSelect, L"FilteringIncludeDirs");
+Setting<std::wstring> COptions::FilteringIncludeFiles(OptionsDriveSelect, L"FilteringIncludeFiles");
 Setting<WINDOWPLACEMENT> COptions::MainWindowPlacement(OptionsGeneral, L"MainWindowPlacement");
 
 CTreeMap::Options COptions::TreeMapOptions;
 std::vector<USERDEFINEDCLEANUP> COptions::UserDefinedCleanups;
 std::vector<std::wregex> COptions::FilteringExcludeDirsRegex;
 std::vector<std::wregex> COptions::FilteringExcludeFilesRegex;
+std::vector<std::wregex> COptions::FilteringIncludeDirsRegex;
+std::vector<std::wregex> COptions::FilteringIncludeFilesRegex;
 ULONGLONG COptions::FilteringSizeMinimumCalculated;
 
 void COptions::SanitizeRect(RECT& rect)
@@ -203,6 +207,8 @@ bool COptions::IsFilterActive()
 {
     return !FilteringExcludeDirs.Obj().empty() ||
            !FilteringExcludeFiles.Obj().empty() ||
+           !FilteringIncludeDirs.Obj().empty() ||
+           !FilteringIncludeFiles.Obj().empty() ||
            FilteringSizeMinimum.Obj() != 0;
 }
 
@@ -210,10 +216,14 @@ void COptions::CompileFilters()
 {
     FilteringExcludeDirsRegex.clear();
     FilteringExcludeFilesRegex.clear();
+    FilteringIncludeDirsRegex.clear();
+    FilteringIncludeFilesRegex.clear();
 
     for (const auto & [optionString, optionRegex] : {
         std::pair{FilteringExcludeDirs.Obj(), std::ref(FilteringExcludeDirsRegex)},
-        std::pair{FilteringExcludeFiles.Obj(), std::ref(FilteringExcludeFilesRegex)}})
+        std::pair{FilteringExcludeFiles.Obj(), std::ref(FilteringExcludeFilesRegex)},
+        std::pair{FilteringIncludeDirs.Obj(), std::ref(FilteringIncludeDirsRegex)},
+        std::pair{FilteringIncludeFiles.Obj(), std::ref(FilteringIncludeFilesRegex)}})
     {
         for (auto& token : SplitString(optionString, L'\n'))
         {
