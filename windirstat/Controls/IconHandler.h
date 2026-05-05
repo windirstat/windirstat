@@ -90,7 +90,7 @@ namespace Icons
     {
         Pen outlinePen(Neutral(), 4);
         SolidBrush lineBrush(Neutral());
-        PointF body[] = { {8, 6}, {44, 6}, {56, 18}, {56, 58}, {8, 58} };
+        Point body[] = { {8, 6}, {44, 6}, {56, 18}, {56, 58}, {8, 58} };
         g.DrawPolygon(&outlinePen, body, 5);
         g.DrawLine(&outlinePen, 44, 6, 44, 18);
         g.DrawLine(&outlinePen, 44, 18, 56, 18);
@@ -114,7 +114,7 @@ namespace Icons
     {
         PaintDocument(g);
         SolidBrush cursorBrush(C(0, 102, 204));
-        PointF cursor[] = {
+        Point cursor[] = {
             {21, 14}, {21, 44}, {29, 36},
             {37, 48}, {43, 44}, {35, 32}, {45, 32}
         };
@@ -134,7 +134,7 @@ namespace Icons
         promptPen.SetEndCap(LineCapRound);
         g.DrawRectangle(&framePen, 6, 8, 52, 48);
         g.FillRectangle(&grayBrush, 6, 17, 52, 2);
-        PointF chevronPts[] = { {14, 26}, {22, 34}, {14, 42} };
+        Point chevronPts[] = { {14, 26}, {22, 34}, {14, 42} };
         g.DrawLines(&chevronPen, chevronPts, 3);
         g.DrawLine(&chevronPen, 26, 42, 38, 42);
     }
@@ -143,7 +143,7 @@ namespace Icons
     {
         PaintDocument(g);
         SolidBrush greenBrush(C(40, 140, 50));
-        PointF triangle[] = { {20, 18}, {44, 32}, {20, 46} };
+        Point triangle[] = { {20, 18}, {44, 32}, {20, 46} };
         g.FillPolygon(&greenBrush, triangle, 3);
     }
 
@@ -200,7 +200,7 @@ namespace Icons
 
     inline void PaintFilter(Graphics& g, bool active = false)
     {
-        PointF funnelShape[] = { {8, 16}, {56, 16}, {40, 34},
+        Point funnelShape[] = { {8, 16}, {56, 16}, {40, 34},
                          {40, 58}, {24, 58}, {24, 34} };
         if (active)
         {
@@ -240,12 +240,12 @@ namespace Icons
 
         GraphicsPath path;
         path.AddString(text, 1, &fontFamily,
-            bold ? FontStyleBold : FontStyleRegular, 56.0f,
-            RectF(0.0f, 0.0f, 64.0f, 64.0f), &format);
+            bold ? FontStyleBold : FontStyleRegular, 56,
+            Rect(0, 0, 64, 64), &format);
 
-        RectF bounds;
+        Rect bounds;
         path.GetBounds(&bounds);
-        if (bounds.Width <= 0.0f || bounds.Height <= 0.0f) return;
+        if (bounds.Width <= 0 || bounds.Height <= 0) return;
 
         const REAL scale = min(56.0f / bounds.Width, 56.0f / bounds.Height);
         Matrix m;

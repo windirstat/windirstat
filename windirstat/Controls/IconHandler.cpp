@@ -173,17 +173,22 @@ HICON CIconHandler::FetchShellIcon(const std::wstring & path, UINT flags, const 
 
 HBITMAP Icons::MakeBitmap(const int size, const std::function<void(Graphics&)>& painter)
 {
-    // 4x super-sampling antialiased render in the canonical 64-unit space,
-    // then bicubic downsample to the requested size.
-    const int renderSize = size * 4;
-    Bitmap renderBitmap(renderSize, renderSize, PixelFormat32bppPARGB);
+    // Render directly at the target size in the canonical 64-unit space.
+    // GDI+'s native antialiasing at the destination resolution produces
+    // crisper edges than super-sampling and bicubic downsampling, which
+    // compounds two AA passes and introduces ringing on thin strokes.
+    Bitmap renderBitmap(size, size, PixelFormat32bppPARGB);
     Graphics g(&renderBitmap);
     g.SetSmoothingMode(SmoothingModeAntiAlias);
-    g.SetPixelOffsetMode(PixelOffsetModeHighQuality);
-    g.ScaleTransform(static_cast<REAL>(renderSize) / 64.0f,
-                     static_cast<REAL>(renderSize) / 64.0f);
+    g.SetPixelOffsetMode(PixelOffsetModeHalf);
+    g.SetCompositingQuality(CompositingQualityHighQuality);
+    const REAL scale = static_cast<REAL>(size) / 64.0f;
+    g.ScaleTransform(scale, scale);
     painter(g);
-    return ScaleBitmapHighQuality(renderBitmap, size, size, PixelFormat32bppPARGB);
+
+    HBITMAP hbm = nullptr;
+    renderBitmap.GetHBITMAP(Color(0, 0, 0, 0), &hbm);
+    return hbm;
 }
 
 HICON Icons::MakeIcon(const int size, const std::function<void(Graphics&)>& painter)

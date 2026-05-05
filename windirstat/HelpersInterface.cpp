@@ -490,28 +490,6 @@ int DpiSave(const int value, const CWnd* wnd) noexcept
     return ::MulDiv(value, USER_DEFAULT_SCREEN_DPI, dpi);
 }
 
-HBITMAP ScaleBitmapHighQuality(Gdiplus::Bitmap& src, const int newWidth, const int newHeight,
-    const Gdiplus::PixelFormat fmt)
-{
-    Gdiplus::Bitmap dst(newWidth, newHeight, fmt);
-    Gdiplus::Graphics g(&dst);
-    g.SetInterpolationMode(Gdiplus::InterpolationModeHighQualityBicubic);
-    g.SetSmoothingMode(Gdiplus::SmoothingModeHighQuality);
-    g.SetPixelOffsetMode(Gdiplus::PixelOffsetModeHighQuality);
-    g.SetCompositingQuality(Gdiplus::CompositingQualityHighQuality);
-
-    Gdiplus::ImageAttributes attr;
-    attr.SetWrapMode(Gdiplus::WrapModeTileFlipXY);
-
-    g.DrawImage(&src, Gdiplus::Rect(0, 0, newWidth, newHeight), 0, 0,
-        static_cast<int>(src.GetWidth()), static_cast<int>(src.GetHeight()), Gdiplus::UnitPixel, &attr);
-
-    // Extract an HBITMAP from the GDI+ result; caller owns the returned handle
-    HBITMAP hbm = nullptr;
-    dst.GetHBITMAP(Gdiplus::Color(0, 0, 0, 0), &hbm);
-    return hbm;
-}
-
 // Context menu
 IContextMenu* GetContextMenu(const HWND hwnd, const std::vector<std::wstring>& paths)
 {
