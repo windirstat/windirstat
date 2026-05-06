@@ -118,7 +118,7 @@ void CMessageBoxDlg::ShiftControls(const std::vector<CWnd*>& controls, const int
 
 void CMessageBoxDlg::ShiftControlsIfHidden(const CWnd* pTargetControl, const std::vector<CWnd*>& controlsToShift, int padding)
 {
-    // Expend checkbox width to the leftmost visible button
+    // Expand checkbox width to the leftmost visible button
     if (pTargetControl == &m_listView && (m_checkbox.GetStyle() & WS_VISIBLE))
     {
         for (CWnd* pBtn : { &m_buttonLeft, &m_buttonMiddle, &m_buttonRight })
@@ -378,10 +378,9 @@ BOOL CMessageBoxDlg::OnEraseBkgnd(CDC* pDC)
 
     // Draw the 1px separator
     CPen pen(PS_SOLID, 1, lineColor);
-    CPen* pOld = pDC->SelectObject(&pen);
+    const CSelectObject soPen(pDC, &pen);
     pDC->MoveTo(0, lineY);
     pDC->LineTo(rect.right, lineY);
-    pDC->SelectObject(pOld);
 
     return TRUE;
 }

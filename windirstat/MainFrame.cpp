@@ -873,7 +873,7 @@ void CMainFrame::OnTimer(const UINT_PTR nIDEvent)
             CFileDupeControl::Get()->SortItems();
         }
 
-        // Conditionally sort duplicates
+        // Conditionally sort largest files
         if (doInfrequentUpdate && GetFileTabbedView()->IsFileTopViewTabActive())
         {
             CFileTopControl::Get()->SortItems();

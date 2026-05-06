@@ -212,9 +212,9 @@ void CPageGeneral::OnBnClickedSetModified()
 
     // Assess for restart required
     const LANGID id = static_cast<LANGID>(m_combo.GetItemData(m_combo.GetCurSel()));
-    const bool languagedChanged = id != static_cast<LANGID>(COptions::LanguageId);
+    const bool languageChanged = id != static_cast<LANGID>(COptions::LanguageId);
     const bool darkModeChanged = m_darkModeRadio != COptions::DarkMode;
-    GetSheet()->SetRestartRequired(darkModeChanged || languagedChanged);
+    GetSheet()->SetRestartRequired(darkModeChanged || languageChanged);
 
     SetModified();
 }

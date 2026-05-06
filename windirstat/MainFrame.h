@@ -182,7 +182,6 @@ protected:
     void MoveFocus(LOGICAL_FOCUS logicalFocus);
     void UpdatePaneText();
 
-
     static void QueryRecycleBin(ULONGLONG& items, ULONGLONG& bytes);
 
     BOOL OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext* pContext) override;

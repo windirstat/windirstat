@@ -56,7 +56,7 @@ std::wregex CFileSearchControl::ComputeSearchRegex(const std::wstring & searchTe
 }
 
 void CFileSearchControl::ProcessSearch(CItem* item,
-    const std::wstring & searchTeam, const bool searchCase,
+    const std::wstring & searchTerm, const bool searchCase,
     const bool searchWholePhrase, const bool searchRegex, const bool onlyFiles)
 {
     // Update tab visibility to show search tab if results exist
@@ -72,7 +72,7 @@ void CFileSearchControl::ProcessSearch(CItem* item,
         m_rootItem->SetLimitExceeded(false);
 
         // Precompile regex string
-        const auto searchTermRegex = ComputeSearchRegex(searchTeam,
+        const auto searchTermRegex = ComputeSearchRegex(searchTerm,
             searchCase, searchRegex);
 
         // Determine which search function

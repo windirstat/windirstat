@@ -203,7 +203,7 @@ std::wstring FormatMilliseconds(const ULONGLONG ms) noexcept
     const ULONGLONG m = min % 60;
     const ULONGLONG h = min / 60;
 
-    return (h <= 0) ? std::format(L"{}:{:02}", m, s) : std::format(L"{}:{:02}:{:02}", h, m, s);
+    return (h == 0) ? std::format(L"{}:{:02}", m, s) : std::format(L"{}:{:02}:{:02}", h, m, s);
 }
 
 std::wstring FormatVolumeNameOfRootPath(const std::wstring& rootPath)
@@ -718,8 +718,9 @@ void DrawTreeNodeConnector(CDC* pdc, const CRect& nodeRect, const COLORREF bgCol
     const int centerY = nodeRect.top + nodeHeight / 2;
 
     // Connectors
-    static LOGBRUSH lbConn { BS_SOLID, DarkMode::IsDarkModeActive() ? RGB(160,160,160) : RGB(96,96,96), 0 };
-    static CPen connPen(PS_GEOMETRIC | PS_DOT, 1, &lbConn);
+    const COLORREF lineColor = DarkMode::IsDarkModeActive() ? RGB(160, 160, 160) : RGB(96, 96, 96);
+    LOGBRUSH lbConn { BS_SOLID, lineColor, 0 };
+    CPen connPen(PS_GEOMETRIC | PS_DOT, 1, &lbConn);
     CSelectObject soConn(pdc, &connPen);
     if (toBottom && toTop) pdc->MoveTo(centerX, nodeRect.top), pdc->LineTo(centerX, nodeRect.bottom);
     else if (toBottom) pdc->MoveTo(centerX, centerY), pdc->LineTo(centerX, nodeRect.bottom);
@@ -735,8 +736,8 @@ void DrawTreeNodeConnector(CDC* pdc, const CRect& nodeRect, const COLORREF bgCol
     const int boxRight = boxLeft + boxSize;
     const int boxTop = centerY - boxHalf;
     const int boxBottom = boxTop + boxSize;
-    static LOGBRUSH lbBox { BS_SOLID, DarkMode::IsDarkModeActive() ? RGB(160,160,160) : RGB(96,96,96), 0 };
-    static CPen boxPen(PS_GEOMETRIC | PS_ENDCAP_FLAT, 1, &lbBox);
+    LOGBRUSH lbBox { BS_SOLID, lineColor, 0 };
+    CPen boxPen(PS_GEOMETRIC | PS_ENDCAP_FLAT, 1, &lbBox);
     CBrush bgBox(bgColor);
     CSelectObject soBox(pdc, &boxPen);
     CSelectObject a(pdc, &bgBox);

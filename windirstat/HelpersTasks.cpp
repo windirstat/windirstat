@@ -184,8 +184,8 @@ bool DriveExists(const std::wstring& path) noexcept
     const int d = std::toupper(path[0]) - wds::strAlpha[0];
     const DWORD mask = 0x1 << d;
 
-    return (mask & GetLogicalDrives()) != 0 && 
-        GetVolumeInformation(path.c_str(), nullptr, 0, nullptr, nullptr, nullptr, nullptr, 0) != FALSE;;
+    return (mask & GetLogicalDrives()) != 0 &&
+        GetVolumeInformation(path.c_str(), nullptr, 0, nullptr, nullptr, nullptr, nullptr, 0) != FALSE;
 }
 
 bool IsLocalDrive(const std::wstring& path) noexcept
@@ -466,8 +466,8 @@ bool CompressFileAllowed(const std::wstring& volumeName, const CompressionAlgori
         std::wstring(fileSystemName.data()) == L"NTFS";
 
     // Query volume for modern compression support based on NTFS and OS version
-    compressionStandard[volumeName.data()] = isNTFS && (fileSystemFlags & FILE_FILE_COMPRESSION) != 0;
-    compressionModern[volumeName.data()] = isNTFS && IsWindows10OrGreater() && !volumeName.starts_with(L"\\\\");
+    compressionStandard[volumeName] = isNTFS && (fileSystemFlags & FILE_FILE_COMPRESSION) != 0;
+    compressionModern[volumeName] = isNTFS && IsWindows10OrGreater() && !volumeName.starts_with(L"\\\\");
 
     return compressionMap.at(volumeName);
 }

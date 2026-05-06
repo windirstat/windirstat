@@ -68,5 +68,5 @@ private:
 
     std::optional<std::jthread> m_workerThread;
     static constexpr UINT_PTR TIMER_ID = 1;
-    static constexpr UINT TIMER_INTERVAL = 50; // Update every 100ms
+    static constexpr UINT TIMER_INTERVAL = 50; // Update every 50ms
 };

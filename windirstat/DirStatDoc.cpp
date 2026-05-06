@@ -36,7 +36,6 @@ CDirStatDoc::CDirStatDoc() :
     ASSERT(nullptr == s_singleton);
     s_singleton = this;
 
-
     VTRACE(L"sizeof(CItem) = {}", sizeof(CItem));
     VTRACE(L"sizeof(CTreeListItem) = {}", sizeof(CTreeListItem));
     VTRACE(L"sizeof(CWdsListItem) = {}", sizeof(CWdsListItem));

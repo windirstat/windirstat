@@ -166,7 +166,7 @@ class CSaveDC final
 public:
     CSaveDC(CDC* pdc)
     {
-        m_pdc= pdc;
+        m_pdc = pdc;
         m_save = pdc->SaveDC();
     }
 

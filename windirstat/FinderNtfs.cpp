@@ -182,7 +182,7 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
     SmartPointer<HANDLE> fileHandle(CloseHandle, CreateFile((volumePath + L"\\$MFT::$DATA").c_str(), FILE_READ_ATTRIBUTES | SYNCHRONIZE,
         FILE_SHARE_WRITE | FILE_SHARE_READ | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING,
         FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_NO_BUFFERING, nullptr));
-    if (fileHandle == INVALID_HANDLE_VALUE) return {};
+    if (fileHandle == INVALID_HANDLE_VALUE) return false;
 
     std::vector<BYTE> dataRunsBuffer(sizeof(RETRIEVAL_POINTERS_BUFFER) + 32 * sizeof(LARGE_INTEGER));
     STARTING_VCN_INPUT_BUFFER input = {};

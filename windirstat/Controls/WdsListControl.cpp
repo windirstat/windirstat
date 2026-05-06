@@ -208,13 +208,13 @@ void CWdsListItem::DrawSelection(const CWdsListControl* list, CDC* pdc, CRect rc
 
 void CWdsListItem::DrawPercentage(CDC* pdc, const CRect rc, const double fraction, const COLORREF color) const
 {
-    COLORREF dark = RGB(118, 118, 118); // Light edge
-    COLORREF light = RGB(198, 198, 198); // Dark edge
+    COLORREF dark = RGB(118, 118, 118); // Dark edge
+    COLORREF light = RGB(198, 198, 198); // Light edge
     COLORREF bg = RGB(225, 225, 225); // Background
     if (DarkMode::IsDarkModeActive())
     {
-        dark = RGB(60, 60, 60); // Light edge
-        light = RGB(50, 50, 50); // Dark edge
+        dark = RGB(60, 60, 60); // Dark edge
+        light = RGB(50, 50, 50); // Light edge
         bg = RGB(40, 40, 40); // Background
     }
 

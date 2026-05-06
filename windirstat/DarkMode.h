@@ -74,7 +74,7 @@ public:
         if (IsWindow(helper.m_btnScrollRight)) helper.m_btnScrollRight.ShowWindow(SW_HIDE);
         helper.m_bScroll = FALSE;
 
-        // Dark mode tab have a black background so set text to be white
+        // Dark mode tabs have a black background so set text to be white
         if (DarkMode::IsDarkModeActive())
         {
             helper.SetActiveTabColor(DarkMode::WdsSysColor(COLOR_WINDOWTEXT));

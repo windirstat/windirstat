@@ -50,7 +50,7 @@ public:
 
 protected:
 
-    constexpr static ULONGLONG HashThresold(ITEMTYPE hashLevel)
+    constexpr static ULONGLONG HashThreshold(ITEMTYPE hashLevel)
     {
         return
             hashLevel == ITHASH_SMALL ? 4ull * wds::Ki :

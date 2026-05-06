@@ -152,11 +152,8 @@ void BlitBitmap(CDC* const pdc, const CRect& rc, const std::vector<COLORREF>& bi
 
 void DrawShadowedExtensionText(CDC* const pdc, const std::wstring_view text, const CRect& rc)
 {
-    const int savedDc = pdc->SaveDC();
-    if (savedDc != 0)
-    {
-        pdc->IntersectClipRect(rc);
-    }
+    CSaveDC saveDc(pdc);
+    pdc->IntersectClipRect(rc);
 
     {
         CSetTextColor soShadowTextColor(pdc, RGB(0, 0, 0));
@@ -172,11 +169,6 @@ void DrawShadowedExtensionText(CDC* const pdc, const std::wstring_view text, con
         CSetTextColor soTextColor(pdc, RGB(255, 255, 255));
         CRect textRc = rc;
         pdc->DrawText(text.data(), static_cast<int>(text.size()), &textRc, EXTENSION_TEXT_FLAGS);
-    }
-
-    if (savedDc != 0)
-    {
-        pdc->RestoreDC(savedDc);
     }
 }
 

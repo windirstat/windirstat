@@ -40,7 +40,7 @@ void CFileDupeControl::ProcessDuplicate(CItem* item, BlockingQueue<CItem*>* queu
     if (!COptions::ScanForDuplicates) return;
     if (item->IsTypeOrFlag(ITRP_CLOUD) && COptions::SkipDupeDetectionCloudLinks)
     {
-        // Show warning abd 
+        // Show warning and skip
         if (m_showCloudWarningOnThisScan)
         {
             m_showCloudWarningOnThisScan = false;
@@ -60,16 +60,16 @@ void CFileDupeControl::ProcessDuplicate(CItem* item, BlockingQueue<CItem*>* queu
     auto [hashTracker, hashTrackerMutex, maxHashLevel] = [&]()->std::tuple
         <std::map<std::vector<BYTE>, std::vector<CItem*>>&, std::mutex&, ITEMTYPE>
     {
-        if (size <= HashThresold(ITHASH_SMALL)) return { m_trackerSmall, m_trackerSmallMutex, ITHASH_SMALL };
-        if (size > HashThresold(ITHASH_MEDIUM)) return { m_trackerLarge, m_trackerLargeMutex, ITHASH_LARGE };
+        if (size <= HashThreshold(ITHASH_SMALL)) return { m_trackerSmall, m_trackerSmallMutex, ITHASH_SMALL };
+        if (size > HashThreshold(ITHASH_MEDIUM)) return { m_trackerLarge, m_trackerLargeMutex, ITHASH_LARGE };
         else return { m_trackerMedium, m_trackerMediumMutex, ITHASH_MEDIUM };
     }();
 
     // First see if there's more than one size of this file since there is no need to
     // hash if there is only a single file of this size
     std::vector<CItem*> hashSet;
-    if (std::scoped_lock lock(m_sizeTrackerMutex); true)
     {
+        std::scoped_lock lock(m_sizeTrackerMutex);
         auto& sizeSetLookup = m_sizeTracker[size];
         sizeSetLookup.emplace_back(item);
         hashSet.assign(sizeSetLookup.begin(), sizeSetLookup.end());
@@ -90,7 +90,7 @@ void CFileDupeControl::ProcessDuplicate(CItem* item, BlockingQueue<CItem*>* queu
             itemToHash->SetFlag(hashLevel);
 
             // Compute the hash for the file
-            const auto hashSize = HashThresold(hashLevel);
+            const auto hashSize = HashThreshold(hashLevel);
             lock.unlock();
             auto hash = itemToHash->GetFileHash(hashSize, queue);
             lock.lock();

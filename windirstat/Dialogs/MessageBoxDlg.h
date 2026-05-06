@@ -60,7 +60,7 @@ protected:
 
     // Helper methods for control layout
     void ShiftControls(const std::vector<CWnd*>& controls, int shiftAmount);
-    void ShiftControlsIfHidden(const CWnd* pTargetControl, const std::vector<CWnd*>& controlsToShift, int paddint = 0);
+    void ShiftControlsIfHidden(const CWnd* pTargetControl, const std::vector<CWnd*>& controlsToShift, int padding = 0);
 
 private:
     

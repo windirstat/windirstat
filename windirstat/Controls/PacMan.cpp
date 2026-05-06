@@ -108,19 +108,19 @@ void CPacman::Draw(CDC* pdc, const CRect& rect, const COLORREF backColor)
 
     // Create pens and brushes
     static const Gdiplus::Pen blackPen(Gdiplus::Color(0xFF, 0x00, 0x00, 0x00), 1);
-    static const Gdiplus::SolidBrush yellowPen(Gdiplus::Color(0xFF, 0xFC, 0xC9, 0x2F));
+    static const Gdiplus::SolidBrush yellowBrush(Gdiplus::Color(0xFF, 0xFC, 0xC9, 0x2F));
 
     // Draw filled shape if we started and recently updated
     Gdiplus::Graphics graphics(pdc->GetSafeHdc());
     graphics.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
-    graphics.FillPie(&yellowPen, grect, startAngle, sweepAngle);
+    graphics.FillPie(&yellowBrush, grect, startAngle, sweepAngle);
     graphics.DrawPie(&blackPen, grect, startAngle, sweepAngle);
     if (m_moving) return;
 
     // Draw sleepy graphic
     const COLORREF zColor = DarkMode::IsDarkModeActive() ? 0x888888 : 0x000000;
     static const Gdiplus::Font font{ wds::strFontArial, 6.0f, Gdiplus::FontStyleBold };
-    static const Gdiplus::SolidBrush zBrush(Gdiplus::Color(0xFF, GetRValue(zColor), GetGValue(zColor), GetBValue(zColor)));
+    const Gdiplus::SolidBrush zBrush(Gdiplus::Color(0xFF, GetRValue(zColor), GetGValue(zColor), GetBValue(zColor)));
     for (const auto x : { 1.0f, 2.0f, 3.0f })
     {
         const auto deltaX = x * static_cast<float>(rc.Width()) / 3.0f;

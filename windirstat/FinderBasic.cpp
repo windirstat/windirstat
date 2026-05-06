@@ -90,7 +90,7 @@ bool FinderBasic::FindNext()
         m_name.resize(nameLength);
         std::wmemcpy(m_name.data(), fileNamePtr, nameLength);
 
-        // special case for reparse on initial run points since it will
+        // special case for reparse points on the initial run since it will
         // return the attributes on the destination folder and not the reparse
         // point attributes itself that we want
         if (m_firstRun)

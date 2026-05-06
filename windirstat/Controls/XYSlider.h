@@ -68,7 +68,6 @@ protected:
     CSize m_radius;
     CSize m_gripperRadius;
 
-    UINT_PTR m_timer = 0;
     bool m_gripperHighlight = false;
 
     DECLARE_MESSAGE_MAP()

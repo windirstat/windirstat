@@ -133,7 +133,7 @@ void CFileWatcherControl::AddChange(const std::wstring& path, const DWORD action
 {
     if (GetSafeHwnd() == nullptr) return;
 
-    // Ignore modified events for directories as they will be depicted by changed to their children
+    // Ignore modified events for directories as changes will be captured via their children
     WIN32_FILE_ATTRIBUTE_DATA fileAttr{};
     GetFileAttributesExW(path.c_str(), GetFileExInfoStandard, &fileAttr);
     if (action == FILE_ACTION_MODIFIED &&

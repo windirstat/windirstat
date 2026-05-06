@@ -80,7 +80,7 @@ BOOL CPageFileTree::OnInitDialog()
     Localization::UpdateDialogs(*this);
     DarkMode::AdjustControls(GetSafeHwnd());
 
-    m_pacmanAnimation= COptions::PacmanAnimation;
+    m_pacmanAnimation = COptions::PacmanAnimation;
     m_showTimeSpent = COptions::ShowTimeSpent;
     m_showColumnFolders = COptions::ShowColumnFolders;
     m_showColumnItems = COptions::ShowColumnItems;

@@ -489,7 +489,7 @@ void CTreeMapView::OnContextMenu(CWnd* /*pWnd*/, const CPoint point)
     static constexpr struct {
         UINT id;
         bool isPersistent;
-    } contextMenuPersistant[] = {
+    } contextMenuPersistent[] = {
         { ID_TREEMAP_ZOOMIN,            true  },
         { ID_TREEMAP_ZOOMOUT,           true  },
         { ID_TREEMAP_SELECT_PARENT,     true  },
@@ -503,7 +503,7 @@ void CTreeMapView::OnContextMenu(CWnd* /*pWnd*/, const CPoint point)
 
     // Helper lambda to check if a command ID is in the list of persistent context menu commands
     [[msvc::flatten]] static constexpr auto IsContextMenuPersistent = [](UINT id) -> bool {
-        return std::ranges::any_of(contextMenuPersistant, [id](const auto& cmd) {
+        return std::ranges::any_of(contextMenuPersistent, [id](const auto& cmd) {
             return cmd.id == id && cmd.isPersistent;
         });
     };

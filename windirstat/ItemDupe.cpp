@@ -93,7 +93,7 @@ int CItemDupe::CompareSibling(const CTreeListItem* tlib, const int subitem) cons
     return m_item->CompareSibling(other->m_item, s_columnMap.at(static_cast<uint8_t>(subitem)));
 }
 
-int CItemDupe::GetTreeListChildCount()const
+int CItemDupe::GetTreeListChildCount() const
 {
     return static_cast<int>(m_children.size());
 }

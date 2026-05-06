@@ -253,7 +253,7 @@ CItem* CItem::AddDirectory(const Finder& finder)
     const bool follow = !finder.IsProtectedReparsePoint() &&
         CDirStatApp::Get()->IsFollowingAllowed(finder.GetReparseTag());
 
-    const auto & child = new CItem(IT_DIRECTORY, finder.GetFileName());
+    auto* const child = new CItem(IT_DIRECTORY, finder.GetFileName());
     child->SetIndex(finder.GetIndex());
     child->SetLastChange(finder.GetLastWriteTime());
     child->SetAttributes(finder.GetAttributes());
@@ -268,7 +268,7 @@ CItem* CItem::AddDirectory(const Finder& finder)
 
 CItem* CItem::AddFile(const Finder& finder)
 {
-    const auto & child = new CItem(IT_FILE, finder.GetFileName());
+    auto* const child = new CItem(IT_FILE, finder.GetFileName());
     child->SetIndex(finder.GetIndex());
     child->SetSizePhysical(finder.GetFileSizePhysical());
     child->SetSizeLogical(finder.GetFileSizeLogical());
@@ -301,13 +301,11 @@ ULONGLONG CItem::GetSizePhysicalRaw() const noexcept
 
 void CItem::SetSizePhysical(const ULONGLONG size) noexcept
 {
-    ASSERT(size >= 0);
     m_sizePhysical = size;
 }
 
 void CItem::SetSizeLogical(const ULONGLONG size) noexcept
 {
-    ASSERT(size >= 0);
     m_sizeLogical = size;
 }
 
@@ -348,7 +346,7 @@ void CItem::UpwardSubtractSizeLogical(const ULONGLONG bytes) noexcept
     if (bytes == 0) return;
     for (auto p = this; p != nullptr; p = p->GetParent())
     {
-        ASSERT(p->m_sizeLogical - bytes >= 0);
+        ASSERT(bytes <= p->m_sizeLogical);
         p->m_sizeLogical -= bytes;
     }
 }
