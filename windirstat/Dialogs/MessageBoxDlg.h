@@ -91,6 +91,7 @@ private:
 
     // Optional controls
     CButton m_checkbox;
+    CBrush m_checkboxBrush;
     CListBox m_listView;
     std::wstring m_checkboxText;
     std::vector<std::wstring> m_listViewItems;

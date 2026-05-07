@@ -68,6 +68,7 @@
 #include <cstdint>
 #include <cmath>
 #include <condition_variable>
+#include <cstdlib>
 #include <execution>
 #include <filesystem>
 #include <format>

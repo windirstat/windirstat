@@ -44,23 +44,22 @@ bool FinderBasic::FindNext()
         constexpr auto FileIdFullDirectoryInformation = 38;
         IO_STATUS_BLOCK IoStatusBlock;
 
-        // Determine if volume supports FileId
-        if (!m_context->Initialized)
+        std::call_once(m_context->InitOnce, [&]
         {
             const NTSTATUS Status = NtQueryDirectoryFile(m_handle, nullptr, nullptr, nullptr, &IoStatusBlock,
                 m_directoryInfo.data(), BUFFER_SIZE, static_cast<FILE_INFORMATION_CLASS>(FileIdFullDirectoryInformation),
                 FALSE, (uSearch.Length > 0) ? &uSearch : nullptr, TRUE);
             m_context->SupportsFileId = (Status == 0);
-            m_context->Initialized = true;
 
-            // Query cluster size if not already known
             DWORD sectorsPerCluster, bytesPerSector, numberOfFreeClusters, totalNumberOfClusters;
             if (GetDiskFreeSpace(m_base.c_str(), &sectorsPerCluster, &bytesPerSector,
                 &numberOfFreeClusters, &totalNumberOfClusters))
             {
                 m_context->ClusterSize = sectorsPerCluster * bytesPerSector;
             }
-        }
+
+            m_context->Initialized = true;
+        });
 
         // Query directory with appropriate information class
         const NTSTATUS Status = NtQueryDirectoryFile(m_handle, nullptr, nullptr, nullptr, &IoStatusBlock,

@@ -27,6 +27,7 @@ public:
     bool Initialized = false;
     bool SupportsFileId = false;
     ULONG ClusterSize = 0;
+    std::once_flag InitOnce;
 };
 
 class FinderBasic final : public Finder

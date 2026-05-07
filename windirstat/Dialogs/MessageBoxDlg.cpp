@@ -27,6 +27,7 @@ CMessageBoxDlg::CMessageBoxDlg(const std::wstring& message, const std::wstring& 
     , m_checkboxText(checkBoxText)
     , m_listViewItems(listViewItems)
     , m_checkboxChecked(checkBoxValue ? TRUE : FALSE)
+    , m_checkboxBrush(DarkMode::WdsSysColor(COLOR_BTNFACE))
 {
     const std::unordered_map<UINT, ButtonContext> buttonTypeContexts
     {
@@ -337,7 +338,7 @@ HBRUSH CMessageBoxDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, const UINT nCtlColor)
     if (nID == IDC_MESSAGE_CHECKBOX)
     {
         pDC->SetBkColor(DarkMode::WdsSysColor(COLOR_BTNFACE));
-        return CreateSolidBrush(DarkMode::WdsSysColor(COLOR_BTNFACE));
+        return m_checkboxBrush;
     }
 
     // Set icon and message text backgrounds to white in light mode

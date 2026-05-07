@@ -52,7 +52,6 @@ constexpr std::wstring_view IDS_DRIVES_TITLE = L"IDS_DRIVES_TITLE";
 constexpr std::wstring_view IDS_DUPLICATE_FILES = L"IDS_DUPLICATE_FILES";
 constexpr std::wstring_view IDS_DUPLICATES_SCAN = L"IDS_DUPLICATES_SCAN";
 constexpr std::wstring_view IDS_DUPLICATES_WARNING = L"IDS_DUPLICATES_WARNING";
-constexpr std::wstring_view IDS_EDIT_COPY = L"IDS_EDIT_COPY";
 constexpr std::wstring_view IDS_EDIT_COPY_CLIPBOARD = L"IDS_EDIT_COPY_CLIPBOARD";
 constexpr std::wstring_view IDS_ELEVATION_QUESTION = L"IDS_ELEVATION_QUESTION";
 constexpr std::wstring_view IDS_ELEVATION_REQUIRED = L"IDS_ELEVATION_REQUIRED";

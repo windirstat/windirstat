@@ -259,6 +259,7 @@ bool SaveResults(const std::wstring& path, CItem* rootItem)
 
     // Output header line to file
     std::ofstream outf(path, std::ios::binary);
+    if (!outf.is_open()) return false;
 
     // Determine columns
     std::vector cols =
@@ -337,7 +338,8 @@ bool SaveResults(const std::wstring& path, CItem* rootItem)
         if (COptions::ShowColumnOwner) outf << "," << QuoteAndConvert(item->GetOwner(true));
     }
 
-    return true;
+    outf.flush();
+    return outf.good();
 }
 
 bool SaveDuplicates(const std::wstring& path, const CItemDupe* rootDupe)

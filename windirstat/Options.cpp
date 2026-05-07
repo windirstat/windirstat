@@ -102,7 +102,7 @@ Setting<int> COptions::MinimizeViewThreshold(OptionsGeneral, L"MinimizeViewThres
 Setting<int> COptions::ScanningThreads(OptionsGeneral, L"ScanningThreads", 4, 1, 16);
 Setting<int> COptions::SelectDrivesRadio(OptionsDriveSelect, L"SelectDrivesRadio", 0, 0, 2);
 Setting<int> COptions::SizeProportionIndent(OptionsFileTree, L"SizeProportionIndent", 16, 0, 1000);
-Setting<int> COptions::FileTreeColorCount(OptionsFileTree, L"FileTreeColorCount", 8);
+Setting<int> COptions::FileTreeColorCount(OptionsFileTree, L"FileTreeColorCount", 8, 1, TREELISTCOLORCOUNT);
 Setting<int> COptions::FilteringSizeMinimum(OptionsGeneral, L"FilteringSizeMinimum", 0);
 Setting<int> COptions::FilteringSizeUnits(OptionsGeneral, L"FilteringSizeUnits", 0);
 Setting<int> COptions::TreeMapAmbientLightPercent(OptionsTreeMap, L"TreeMapAmbientLightPercent", CTreeMap::GetDefaults().GetAmbientLightPercent(), 0, 100);
