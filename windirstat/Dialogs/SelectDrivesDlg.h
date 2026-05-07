@@ -115,6 +115,7 @@ class CSelectDrivesDlg final : public CLayoutDialogEx
     BOOL OnInitDialog() override;
     void OnOK() override;
     void UpdateButtons();
+    void UpdateFilterButton();
     void SetActiveRadio(int radio);
 
 protected:
@@ -128,7 +129,10 @@ protected:
     CDrivesList m_driveList;
     CComboBox m_browseList;
     CButton m_okButton;
-    CButton m_browseButton;
+    CStatic m_browseButton;
+    CStatic m_filterButton;
+    HICON m_browseIcon = nullptr;
+    HICON m_filterIcon = nullptr;
     std::vector<std::wstring> m_selectedDrives;
     bool m_suppressItemChanged = false;
 
@@ -146,6 +150,7 @@ protected:
     afx_msg void OnNMSetfocusTargetDrivesList(NMHDR*, LRESULT* pResult);
     afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
     afx_msg void OnBnClickedBrowseButton();
+    afx_msg void OnBnClickedFilterButton();
     afx_msg BOOL PreTranslateMessage(MSG* pMsg) override;
     afx_msg void OnEditchangeBrowseFolder();
     afx_msg void OnCbnSelchangeBrowseFolder();

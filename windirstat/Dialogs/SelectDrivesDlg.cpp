@@ -18,6 +18,7 @@
 #include "pch.h"
 #include "SelectDrivesDlg.h"
 #include "FinderBasic.h"
+#include "PageFiltering.h"
 
 namespace
 {
@@ -314,11 +315,13 @@ void CSelectDrivesDlg::DoDataExchange(CDataExchange* pDX)
     DDX_Control(pDX, IDOK, m_okButton);
     DDX_Control(pDX, IDC_BROWSE_FOLDER, m_browseList);
     DDX_Control(pDX, IDC_BROWSE_BUTTON, m_browseButton);
+    DDX_Control(pDX, IDC_FILTER_BUTTON, m_filterButton);
     DDX_CBString(pDX, IDC_BROWSE_FOLDER, m_folderName);
 }
 
 BEGIN_MESSAGE_MAP(CSelectDrivesDlg, CLayoutDialogEx)
-    ON_BN_CLICKED(IDC_BROWSE_BUTTON, &CSelectDrivesDlg::OnBnClickedBrowseButton)
+    ON_STN_CLICKED(IDC_BROWSE_BUTTON, &CSelectDrivesDlg::OnBnClickedBrowseButton)
+    ON_STN_CLICKED(IDC_FILTER_BUTTON, &CSelectDrivesDlg::OnBnClickedFilterButton)
     ON_BN_CLICKED(IDC_FAST_SCAN_CHECKBOX, OnBnClickedFastScanCheckbox)
     ON_BN_CLICKED(IDC_RADIO_TARGET_DRIVES_ALL, OnBnClickedUpdateButtons)
     ON_BN_CLICKED(IDC_RADIO_TARGET_DRIVES_SUBSET, &CSelectDrivesDlg::OnBnClickedRadioTargetDrivesSubset)
@@ -357,6 +360,7 @@ BOOL CSelectDrivesDlg::OnInitDialog()
     m_layout.AddControl(IDC_BROWSE_FOLDER, 0, 1, 1, 0);
     m_layout.AddControl(IDC_FAST_SCAN_CHECKBOX, 0, 1, 1, 0);
     m_layout.AddControl(IDC_SCAN_DUPLICATES, 0, 1, 1, 0);
+    m_layout.AddControl(IDC_FILTER_BUTTON, 0, 1, 0, 0);
 
     // Update checkbox text based on elevation status
     if (!IsElevationActive())
@@ -396,9 +400,10 @@ BOOL CSelectDrivesDlg::OnInitDialog()
         m_folderName = COptions::SelectDrivesFolder.Obj().front().c_str();
     }
 
-    CBitmap bitmap;
-    bitmap.Attach(Icons::Make<Icons::PaintFileSelect>(DpiRest(16)));
-    m_browseButton.SetBitmap(bitmap);
+    if (m_browseIcon) DestroyIcon(m_browseIcon);
+    m_browseIcon = Icons::MakeIcon(DpiRest(16), Icons::PaintFileSelect);
+    m_browseButton.SetIcon(m_browseIcon);
+    UpdateFilterButton();
 
     ShowWindow(SW_SHOWNORMAL);
     UpdateWindow();
@@ -535,6 +540,14 @@ void CSelectDrivesDlg::UpdateButtons()
         ASSERT(FALSE);
     }
     m_okButton.EnableWindow(enableOk);
+}
+
+void CSelectDrivesDlg::UpdateFilterButton()
+{
+    if (m_filterIcon) DestroyIcon(m_filterIcon);
+    const bool active = COptions::IsFilterActive();
+    m_filterIcon = Icons::MakeIcon(DpiRest(20), [active](auto& g) { Icons::PaintFilter(g, active); });
+    m_filterButton.SetIcon(m_filterIcon);
 }
 
 void CSelectDrivesDlg::OnBnClickedFastScanCheckbox()
@@ -720,6 +733,16 @@ void CSelectDrivesDlg::OnBnClickedBrowseButton()
 
     SetActiveRadio(IDC_RADIO_TARGET_FOLDER);
     UpdateButtons();
+}
+
+void CSelectDrivesDlg::OnBnClickedFilterButton()
+{
+    COptionsPropertySheet sheet;
+    CPageFiltering filtering;
+    sheet.AddPage(&filtering);
+    sheet.DoModal();
+
+    UpdateFilterButton();
 }
 
 void CSelectDrivesDlg::OnEditchangeBrowseFolder()
