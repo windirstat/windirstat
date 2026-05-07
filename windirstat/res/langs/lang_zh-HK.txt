@@ -1,7 +1,7 @@
 IDS_ABOUT_ABOUT_TEXTss=\nWinDirStat - 檔案路徑統計工具\n\n"用來顯示你的磁碟空間檔案佔用情況\n並幫助你進行清理工作"\n\n由 Bernhard Seifert, Oliver Schneider, Bryan Berns\n為 Microsoft Windows 編寫的軟件\n(mailto:{})\n\n以 Stefan Hundhammer 的 KDE（Linux）應用軟件 KDirStat 為基礎\n(https://kdirstat.sourceforge.net/)。\n\nWinDirStat 的主頁為 {}/\n\n版權所有 © WinDirStat 團隊
 IDS_ABOUT_ABOUT=關於
 IDS_ABOUT_LICENSE=特許條款
-IDS_ABOUT_THANKS_TEXT=\n感謝由 Stefan Hundhammer 編寫出色的 Linux 工具 KDirStat。\n採用 KDirStat（2.3.7）作為範本節省了我很多開發時間。\nhttps://kdirstat.sourceforge.net/\n\nSequoiaView 的作者展示了樹狀圖真正有多有用。\nhttps://www.win.tue.nl/sequoiaview/\n\nJarke J. van Wijk、Huub van de Wetering、Mark Bruls和Kees Huizing\n對他們關於咕𠱸樹狀圖和方形樹狀圖的論文表示感謝。\nhttps://www.win.tue.nl/~vanwijk/\n\nBen Shneiderman 提出了樹狀圖的巧妙想法-\n一種真正以直觀的方式來視覺化樹狀內容。\nhttps://www.cs.umd.edu/hcil/TreeMap.history/
+IDS_ABOUT_THANKS_TEXT=\n感謝由 Stefan Hundhammer 編寫出色的 Linux 工具 KDirStat。\n採用 KDirStat（2.3.7）作為範本節省了我很多開發時間。\nhttps://kdirstat.sourceforge.net/\n\nSequoiaView 的作者展示了樹狀圖真正有多有用。\nhttps://www.win.tue.nl/sequoiaview/\n\nJarke J. van Wijk、Huub van de Wetering、Mark Bruls和Kees Huizing\n對他們關於墊狀樹狀圖和方形樹狀圖的論文表示感謝。\nhttps://www.win.tue.nl/~vanwijk/\n\nBen Shneiderman 提出了樹狀圖的巧妙想法-\n一種真正以直觀的方式來視覺化樹狀內容。\nhttps://www.cs.umd.edu/hcil/TreeMap.history/
 IDS_ABOUT_THANKS=感謝
 IDS_ABOUT_TITLE=關於 WinDirStat
 IDS_ADMIN=系統管理員
@@ -213,7 +213,7 @@ IDS_PAGE_TREELIST_TREE_L7=樹狀層級 &7
 IDS_PAGE_TREELIST_TREE_L8=樹狀層級 &8
 IDS_PAGE_TREEMAP_BORDER_COLOR=已選取邊框顏色(&I)
 IDS_PAGE_TREEMAP_BRIGHTNESS=亮度(&B)
-IDS_PAGE_TREEMAP_CUSHION=咕𠱸陰影(&C)
+IDS_PAGE_TREEMAP_CUSHION=墊狀陰影(&C)
 IDS_PAGE_TREEMAP_GRID_COLOR=格線顏色(&C)
 IDS_PAGE_TREEMAP_HEIGHT=陰影高度(&H)
 IDS_PAGE_TREEMAP_INCIDENCE=光線照射角度(&L)

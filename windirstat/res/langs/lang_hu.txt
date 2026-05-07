@@ -38,7 +38,7 @@ IDS_COL_USED_TOTAL=Foglalt/Teljes
 IDS_COLLAPSE=&Bezár
 IDS_COMPUTE_HASH=Hash kiszámítása
 IDS_CSV_FILES=CSV fájlok
-IDS_DELETE_TITLE=IDS_DRIVE_ITEM_FREEsTOTALs={} szabad a(z) {} -ból
+IDS_DELETE_TITLE=Figyelmeztetés
 IDS_DELETE_WARNING=Az alábbi fájlokat törölni készül a számítógépéről. Önt terheli a felelősség annak ellenőrzéséért, hogy ezen fájlok törlése biztonságos-e. Fontos rendszerfájlok törlése rendszerhibához vezethet.\n\nFolytatja?
 IDS_DIRECTORYs_NOT_EXIST=A(z) '{}' könyvtár nem létezik.
 IDS_DONT_SHOW_AGAIN=Ne jelenjen meg többé ez az üzenet.
