@@ -33,6 +33,29 @@ using CompressionAlgorithm = enum CompressionAlgorithm {
     LZX = FILE_PROVIDER_COMPRESSION_LZX | FILE_PROVIDER_COMPRESSION_MODERN
 };
 
+using HashAlgorithm = enum HashAlgorithm {
+    HASH_MD5,
+    HASH_SHA1,
+    HASH_SHA256,
+    HASH_SHA384,
+    HASH_SHA512
+};
+
+struct HashAlgorithmInfo
+{
+    HashAlgorithm algorithm;
+    LPCWSTR id;
+    LPCWSTR name;
+};
+
+constexpr std::array HashAlgorithms = {
+    HashAlgorithmInfo{ HASH_MD5, BCRYPT_MD5_ALGORITHM, L"MD5" },
+    HashAlgorithmInfo{ HASH_SHA1, BCRYPT_SHA1_ALGORITHM, L"SHA1" },
+    HashAlgorithmInfo{ HASH_SHA256, BCRYPT_SHA256_ALGORITHM, L"SHA256" },
+    HashAlgorithmInfo{ HASH_SHA384, BCRYPT_SHA384_ALGORITHM, L"SHA384" },
+    HashAlgorithmInfo{ HASH_SHA512, BCRYPT_SHA512_ALGORITHM, L"SHA512" }
+};
+
 // Used at runtime to distinguish between mount points and junction points since they
 // share the same reparse tag on the file system.
 constexpr DWORD IO_REPARSE_TAG_JUNCTION_POINT = ~IO_REPARSE_TAG_MOUNT_POINT;

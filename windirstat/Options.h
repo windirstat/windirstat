@@ -179,6 +179,7 @@ public:
     static Setting<int> ConfigPage;
     static Setting<int> FollowReparsePointMask;
     static Setting<int> LanguageId;
+    static Setting<int> FileHashAlgorithm;
     static Setting<int> LargeFileCount;
     static Setting<int> MinimizeViewThreshold;
     static Setting<int> ScanningThreads;

@@ -943,25 +943,41 @@ std::vector<CItem*> CItem::FindItemsBySameIndex() const
 
 std::vector<BYTE> CItem::GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CItem*>* queue)
 {
+    const HashAlgorithm hashAlgorithm = static_cast<HashAlgorithm>(COptions::FileHashAlgorithm.Obj());
+    const auto& hashAlgorithmInfo = HashAlgorithms[hashAlgorithm];
+
     thread_local std::vector<BYTE> fileBuffer(wds::Mi);
     thread_local std::vector<BYTE> hashBuffer;
-    thread_local std::once_flag hashInitFlag;
+    thread_local HashAlgorithm initializedHashAlgorithm = static_cast<HashAlgorithm>(-1);
     thread_local SmartPointer<BCRYPT_ALG_HANDLE> hashAlgHandle(
         [](BCRYPT_ALG_HANDLE handle) { BCryptCloseAlgorithmProvider(handle, 0); });
     thread_local SmartPointer<BCRYPT_HASH_HANDLE> hashHandle(BCryptDestroyHash);
 
-    // Initialize shared structures using std::call_once for better performance
-    std::call_once(hashInitFlag, []()
+    // Initialize shared structures once per thread and selected algorithm.
+    if (initializedHashAlgorithm != hashAlgorithm || !hashAlgHandle.IsValid() || !hashHandle.IsValid())
+    {
+        hashHandle.Release();
+        hashAlgHandle.Release();
+        hashBuffer.clear();
+        initializedHashAlgorithm = static_cast<HashAlgorithm>(-1);
+
+        BCRYPT_ALG_HANDLE hAlg = nullptr;
+        if (BCryptOpenAlgorithmProvider(&hAlg, hashAlgorithmInfo.id, MS_PRIMITIVE_PROVIDER, 0) == 0)
         {
+            hashAlgHandle = hAlg;
             DWORD ResultLength = 0;
             DWORD iHashLength = 0;
-            if (BCryptOpenAlgorithmProvider(&hashAlgHandle, BCRYPT_SHA512_ALGORITHM, MS_PRIMITIVE_PROVIDER, BCRYPT_HASH_REUSABLE_FLAG) == 0 &&
-                BCryptGetProperty(hashAlgHandle, BCRYPT_HASH_LENGTH, reinterpret_cast<PBYTE>(&iHashLength), sizeof(iHashLength), &ResultLength, 0) == 0 &&
-                BCryptCreateHash(hashAlgHandle, &hashHandle, nullptr, 0, nullptr, 0, BCRYPT_HASH_REUSABLE_FLAG) == 0)
+            BCRYPT_HASH_HANDLE hHash = nullptr;
+            if (BCryptGetProperty(hashAlgHandle, BCRYPT_HASH_LENGTH,
+                reinterpret_cast<PBYTE>(&iHashLength), sizeof(iHashLength), &ResultLength, 0) == 0 &&
+                BCryptCreateHash(hashAlgHandle, &hHash, nullptr, 0, nullptr, 0, BCRYPT_HASH_REUSABLE_FLAG) == 0)
             {
+                hashHandle = hHash;
                 hashBuffer.resize(iHashLength);
+                initializedHashAlgorithm = hashAlgorithm;
             }
-        });
+        }
+    }
 
     // Check if initialization succeeded
     if (hashBuffer.empty())

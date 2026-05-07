@@ -52,6 +52,7 @@ protected:
     BOOL m_useBackupRestore = FALSE;
     BOOL m_processHardlinks = TRUE;
     int m_scanningThreads = 0;
+    int m_fileHashAlgorithm = HASH_SHA512;
     CStringW m_largestFileCount;
     CStringW m_folderHistoryCount;
 

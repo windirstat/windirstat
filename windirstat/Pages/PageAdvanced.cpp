@@ -44,6 +44,7 @@ void CPageAdvanced::DoDataExchange(CDataExchange* pDX)
     DDX_Text(pDX, IDC_LARGEST_FILE_COUNT, m_largestFileCount);
     DDX_Text(pDX, IDC_FOLDER_HISTORY_COUNT, m_folderHistoryCount);
     DDX_CBIndex(pDX, IDC_COMBO_THREADS, m_scanningThreads);
+    DDX_CBIndex(pDX, IDC_HASH_ALGORITHM, m_fileHashAlgorithm);
 }
 
 BEGIN_MESSAGE_MAP(CPageAdvanced, CMFCPropertyPage)
@@ -51,6 +52,7 @@ BEGIN_MESSAGE_MAP(CPageAdvanced, CMFCPropertyPage)
     ON_BN_CLICKED(IDC_EXCLUDE_HIDDEN_DIRECTORY, OnSettingChanged)
     ON_BN_CLICKED(IDC_EXCLUDE_PROTECTED_DIRECTORY, OnSettingChanged)
     ON_CBN_SELENDOK(IDC_COMBO_THREADS, OnSettingChanged)
+    ON_CBN_SELENDOK(IDC_HASH_ALGORITHM, OnSettingChanged)
     ON_BN_CLICKED(IDC_EXCLUDE_VOLUME_MOUNT_POINTS, OnSettingChanged)
     ON_BN_CLICKED(IDC_EXCLUDE_JUNCTIONS, OnSettingChanged)
     ON_BN_CLICKED(IDC_EXCLUDE_SYMLINKS_DIRECTORY, OnSettingChanged)
@@ -92,6 +94,7 @@ BOOL CPageAdvanced::OnInitDialog()
     m_useBackupRestore = COptions::UseBackupRestore;
     m_processHardlinks = COptions::ProcessHardlinks;
     m_scanningThreads = COptions::ScanningThreads - 1;
+    m_fileHashAlgorithm = COptions::FileHashAlgorithm;
     m_largestFileCount = std::to_wstring(COptions::LargeFileCount.Obj()).c_str();
     m_folderHistoryCount = std::to_wstring(COptions::FolderHistoryCount.Obj()).c_str();
 
@@ -112,7 +115,8 @@ void CPageAdvanced::OnOK()
         COptions::ExcludeProtectedDirectory != static_cast<bool>(m_skipProtectedDirectory) ||
         COptions::ExcludeHiddenFile != static_cast<bool>(m_skipHiddenFile) ||
         COptions::ExcludeProtectedFile != static_cast<bool>(m_skipProtectedFile) ||
-        COptions::ProcessHardlinks != static_cast<bool>(m_processHardlinks);
+        COptions::ProcessHardlinks != static_cast<bool>(m_processHardlinks) ||
+        (COptions::ScanForDuplicates && COptions::FileHashAlgorithm != m_fileHashAlgorithm);
 
     COptions::ExcludeJunctions = (FALSE != m_excludeJunctions);
     COptions::ExcludeSymbolicLinksDirectory = (FALSE != m_excludeSymbolicLinksDirectory);
@@ -126,6 +130,7 @@ void CPageAdvanced::OnOK()
     COptions::UseBackupRestore = (FALSE != m_useBackupRestore);
     COptions::ProcessHardlinks = (FALSE != m_processHardlinks);
     COptions::ScanningThreads = m_scanningThreads + 1;
+    COptions::FileHashAlgorithm = m_fileHashAlgorithm;
     COptions::LargeFileCount = std::stoi(m_largestFileCount.GetString());
     COptions::FolderHistoryCount = std::stoi(m_folderHistoryCount.GetString());
 
