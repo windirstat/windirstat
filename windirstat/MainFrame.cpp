@@ -651,6 +651,7 @@ static const std::vector<std::tuple<UINT, std::wstring_view>> s_toolbarButtons =
     { ID_TREEMAP_ZOOMIN, IDS_TREEMAP_ZOOMIN },
     { ID_TREEMAP_ZOOMOUT, IDS_TREEMAP_ZOOMOUT },
     { ID_SEPARATOR, {} },
+    { ID_CONFIGURE, IDS_MENU_SETTINGS },
     { ID_HELP_MANUAL, IDS_HELP_MANUAL }
 };
 
@@ -1380,6 +1381,7 @@ void CMainFrame::RebuildToolBar()
             { ID_SCAN_SUSPEND,            [](int s) { return Icons::Make<Icons::FromCharacter<L'⏸', RGB(200, 160,   0)>>(s); } },
             { ID_REFRESH_ALL,             [](int s) { return Icons::Make<Icons::FromCharacter<L'↻',  RGB(  0, 156, 221)>>(s); } },
             { ID_SEARCH,                  [](int s) { return Icons::Make<Icons::FromCharacter<L'⌕',  RGB(140, 140, 140)>>(s); } },
+            { ID_CONFIGURE,               [](int s) { return Icons::Make<Icons::FromCharacter<L'⚙', RGB(140, 140, 140)>>(s); } },
             { ID_HELP_MANUAL,             [](int s) { return Icons::Make<Icons::FromCharacter<L'❔', RGB(100, 149, 237)>>(s); } },
             { ID_CLEANUP_PROPERTIES,      [](int s) { return Icons::Make<Icons::PaintProperties>(s); }      },
             { ID_FILE_SELECT,             [](int s) { return Icons::Make<Icons::PaintFileSelect>(s); }       },
