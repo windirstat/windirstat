@@ -2,26 +2,44 @@
 
 ## Description
 
-WinDirStat is a program that allows you to find drive space hogs at a glance. It achieves that by displaying a drive, drives or directories in a [treemap](https://en.wikipedia.org/wiki/Treemap) that assigns bigger areas to bigger files and directories. Making those areas visually separate by coloring and other means allows you to see literally at a glance what the space hogs are and where to dig deeper.
+WinDirStat is a disk usage analyzer and cleanup assistant for Microsoft Windows. It scans local drives, selected drives, individual folders, and command-line targets, then shows where storage is being used through a sortable directory tree, an extension/type breakdown, and an interactive [treemap](https://en.wikipedia.org/wiki/Treemap) where larger files and folders take up larger areas.
 
-The directory tree is simultaneously shown as a tree list and as a treemap. One can effortlessly gain an impression of the proportions on the drive(s).
+Alongside the visual overview, WinDirStat helps you investigate and act on disk usage. You can find large files, search and filter results, detect duplicates by hash, inspect logical versus physical size, watch file-system changes, save or reload scans, and launch cleanup or Windows maintenance actions directly from the interface.
 
 For more information on the background of WinDirStat and alternative versions on other operating systems, please visit the [WinDirStat website](https://windirstat.net/)
 
 ### Major features
 
-* Three views: Directory Tree, Treemap, and Extension
-* Duplicate file detection
-* Built-in cleanup actions including Open, Delete, Show Properties
-* User-defined cleanup actions (command line based)
+* Flexible scanning for local drives, selected drives, folders, and command-line targets, with refresh, suspend, resume, stop, fast NTFS scanning, multithreading, and elevated privilege support
+* Linked All Files, Largest Files, Duplicate Files, Search Results, File Watcher, Extension, and Treemap views
+* Interactive treemap navigation with zooming, parent/child reselection, extension labels, logical or physical sizing, and configurable KDirStat or SequoiaView styling
+* Sortable file details including logical/physical size, percentages, item counts, attributes, owner, modified time, free/unknown space, hardlinks, and hash prefixes
+* Search, duplicate detection, and filtering with regular expressions, configurable hash algorithms, cloud-file safeguards, hardlink deduplication, path/name filters, size filters, and reparse-point exclusions
+* File watching and reporting with created/deleted/modified/renamed events, CSV scan import/export, duplicate CSV export, and command-line CSV workflows
+* Built-in actions for opening items, copying paths, selecting in Explorer, invoking the Explorer context menu, opening Command Prompt or PowerShell, moving files, showing properties, deleting files, and emptying folders or the Recycle Bin
+* Windows cleanup and maintenance shortcuts for Disk Cleanup, Programs and Features, DISM, shadow copies, defrag, CHKDSK, VHDX optimization, hibernate files, user profiles, Mark-of-the-Web tags, sparse files, and NTFS compression
+* User-defined cleanup actions plus dark mode, portable settings, Explorer context-menu integration, localization, locale-aware formatting, configurable columns, larger toolbar icons, and high-DPI aware UI behavior
 
 For changes in recent versions, please check out [the change log](CHANGELOG.md).
 
 ### Installation
 
-* 📦 Install it by downloading the appropriate version for your system from the [release page](https://github.com/windirstat/windirstat/releases/)
-  * 📦 Install with `winget install -e --id WinDirStat.WinDirStat` (or use `winget upgrade` subsequently)
-  * 📦 Alternatively install with `scoop install extras/windirstat` (requires `scoop bucket add extras`)
+The recommended way to install WinDirStat is with a package manager, which also makes future updates easier:
+
+* Install with `winget install -e --id WinDirStat.WinDirStat` (or use `winget upgrade` later)
+* Install with `choco install windirstat` (or use `choco upgrade windirstat` later)
+* Install with `scoop install extras/windirstat` (requires `scoop bucket add extras`)
+
+If you prefer a manual installer, need a portable archive, or want to browse older versions and beta builds, use the [GitHub releases page](https://github.com/windirstat/windirstat/releases/). If you are not sure which file to choose, download the **64-bit MSI installer**.
+
+| Download | Best for | What is inside |
+| --- | --- | --- |
+| [WinDirStat-x64.msi](https://github.com/windirstat/windirstat/releases/latest/download/WinDirStat-x64.msi) | Most users on modern Intel or AMD 64-bit Windows PCs | Standard Windows installer for 64-bit systems. Adds WinDirStat to the Start menu and installs it like a normal app. |
+| [WinDirStat-arm64.msi](https://github.com/windirstat/windirstat/releases/latest/download/WinDirStat-arm64.msi) | Windows on ARM devices, including newer Surface devices and other Snapdragon-based laptops | Standard Windows installer built for ARM64 Windows. |
+| [WinDirStat-x86.msi](https://github.com/windirstat/windirstat/releases/latest/download/WinDirStat-x86.msi) | Older 32-bit Windows installations | Standard Windows installer for 32-bit systems. |
+| [MSIX bundle](https://github.com/windirstat/windirstat/releases/latest) | Windows App Installer or Store-style deployment across different CPU types | If the release includes an `.msixbundle` asset, it can contain packages for multiple CPU types and Windows chooses the right package for your device. |
+| [WinDirStat.zip](https://github.com/windirstat/windirstat/releases/latest/download/WinDirStat.zip) | Portable use, testing, or running without an installer | Zip archive containing the WinDirStat executables. Extract it first, then run the executable for your CPU type. |
+| [WinDirStat.7z](https://github.com/windirstat/windirstat/releases/latest/download/WinDirStat.7z) | Portable use when you already have 7-Zip installed | Same kind of portable executable archive as the zip file, usually with a smaller download size. |
 
 ## Copyright / Licenses
 
@@ -63,8 +81,6 @@ WinDirStat 2.x has been developed for and tested on the following operating syst
 
 ![WinDirStat logo](windirstat/logos/logo_256px.png)
 
-The logo was generously designed and contributed to the project by Robin "tuqueque" Marín.
-
 ## Resources
 
 * A [website](https://windirstat.net/)
@@ -73,3 +89,9 @@ The logo was generously designed and contributed to the project by Robin "tuqueq
 * SubReddit [r/WinDirStat](https://www.reddit.com/r/WinDirStat/)
 
 Find a more up-to-date list of resources on the website and the blog at any point in time.
+
+## Official Downloads and Malware Warning
+
+WinDirStat's popularity has led to unofficial websites that copy the project's name, branding, or downloads. These sites are not operated by the WinDirStat team, may offer outdated or modified files, and may expose users to malware.
+
+For your safety, install WinDirStat only through the package managers listed above, the official [GitHub releases](https://github.com/windirstat/windirstat/releases/), or links from [windirstat.net](https://windirstat.net/). The team reports impersonation sites when possible, but takedowns are not always successful.
