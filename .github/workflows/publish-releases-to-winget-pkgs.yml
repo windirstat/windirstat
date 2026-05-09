@@ -1,15 +1,19 @@
-name: Publish releases to WinGet
+name: Publish releases to WinGet and Chocolatey
 on:
   release:
     types: [released]
+permissions:
+  contents: read
 jobs:
-  publish:
+  get-version:
     runs-on: windows-latest
+    outputs:
+      version: ${{ steps.get-version.outputs.version }}
+      skip: ${{ steps.get-version.outputs.skip }}
     steps:
       - name: Get version
         id: get-version
         run: |
-          # Finding the version from release tag name
           if ("${{ github.ref_name }}" -imatch "^release/")
           {
               $VERSION="${{ github.ref_name }}" -ireplace '^release/v?'
@@ -21,13 +25,55 @@ jobs:
               "skip=true" >> $env:GITHUB_OUTPUT
           }
         shell: pwsh
+
+  publish-winget:
+    needs: get-version
+    if: ${{ needs.get-version.outputs.skip != 'true' }}
+    runs-on: windows-latest
+    steps:
       - name: Call winget-releaser action
-        id: call-winget-releaser
-        if: ${{ steps.get-version.outputs.skip != 'true' }}
         uses: vedantmgoyal9/winget-releaser@main
         with:
           identifier: WinDirStat.WinDirStat
-          version: ${{ steps.get-version.outputs.version }}
-          installers-regex: '\.msi$' # Only .msi files
+          version: ${{ needs.get-version.outputs.version }}
+          installers-regex: '\.msi$'
           token: ${{ secrets.WINGET_TOKEN }}
-          release-notes-url: https://github.com/windirstat/windirstat/blob/master/CHANGELOG.md#windirstat-${{ steps.get-version.outputs.version }}
+          release-notes-url: https://github.com/windirstat/windirstat/blob/master/CHANGELOG.md#windirstat-${{ needs.get-version.outputs.version }}
+
+  publish-chocolatey:
+    needs: get-version
+    if: ${{ needs.get-version.outputs.skip != 'true' }}
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download release MSI assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download "${{ github.ref_name }}" --pattern "WinDirStat-x86.msi" --pattern "WinDirStat-x64.msi" --dir publish --clobber
+          $missing = "publish\WinDirStat-x86.msi", "publish\WinDirStat-x64.msi" | Where-Object { -not (Test-Path -LiteralPath $_) }
+          if ($missing) { throw "Missing release asset(s): $($missing -join ', ')" }
+        shell: pwsh
+      - name: Build Chocolatey package
+        run: |
+          Set-Location setup\chocolatey
+          .\update.cmd
+          if ($LASTEXITCODE -ne 0) { throw "update.cmd failed with exit code $LASTEXITCODE." }
+
+          [xml]$nuspec = Get-Content -LiteralPath WinDirStat.nuspec
+          $releaseVersion = "${{ needs.get-version.outputs.version }}"
+          if ($nuspec.package.metadata.version -ne $releaseVersion)
+          {
+              throw "Chocolatey package version '$($nuspec.package.metadata.version)' does not match release tag '$releaseVersion'."
+          }
+
+          Remove-Item -Path *.nupkg -Force -ErrorAction SilentlyContinue
+          choco pack
+        shell: pwsh
+      - name: Push Chocolatey package
+        env:
+          CHOCOLATEY_API_KEY: ${{ secrets.CHOCOLATEY_API_KEY }}
+        run: |
+          $package = Get-ChildItem -LiteralPath setup\chocolatey -Filter *.nupkg | Select-Object -First 1 -ExpandProperty FullName
+          choco push $package --source https://push.chocolatey.org/ --api-key $env:CHOCOLATEY_API_KEY
+        shell: pwsh
