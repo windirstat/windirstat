@@ -11,6 +11,9 @@ DEL /F "%PSSCRIPT%" > NUL
 EXIT /B %ERR%
 #>
 
+# Normalize module path
+$env:PSModulePath = Join-Path ([System.Environment]::SystemDirectory) '\WindowsPowerShell\v1.0\Modules'
+
 $Content = Get-Content '..\..\windirstat\Version.h'
 $Pattern = "#define\s+PRD_\S+\s+(\d+)"
 $VersionMatches = $Content | Select-String -Pattern $Pattern -AllMatches
