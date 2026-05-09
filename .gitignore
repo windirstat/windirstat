@@ -5,6 +5,11 @@
 /intermediate/
 /build/
 /publish/
+/setup/store/out/
+/setup/store/*.pfx
+/setup/store/*.cer
+/setup/store/**/*.pfx
+/setup/store/**/*.cer
 /enc_temp_folder/
 /.git/
 .vs/
