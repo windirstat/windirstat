@@ -11,29 +11,62 @@ DEL /F "%PSSCRIPT%" > NUL
 EXIT /B %ERR%
 #>
 
-# Normalize module path
-$env:PSModulePath = Join-Path ([System.Environment]::SystemDirectory) '\WindowsPowerShell\v1.0\Modules'
+$ErrorActionPreference = 'Stop'
 
-$Content = Get-Content '..\..\windirstat\Version.h'
+# Normalize module path
+$env:PSModulePath = Join-Path ([System.Environment]::SystemDirectory) 'WindowsPowerShell\v1.0\Modules'
+
+$ScriptRoot = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyInvocation.MyCommand.Path }
+$RepoRoot = Resolve-Path -LiteralPath (Join-Path $ScriptRoot '..\..')
+$VersionHeader = Join-Path $RepoRoot 'windirstat\Version.h'
+$MsiX86 = Join-Path $RepoRoot 'publish\WinDirStat-x86.msi'
+$MsiX64 = Join-Path $RepoRoot 'publish\WinDirStat-x64.msi'
+
+ForEach ($Path in @($VersionHeader, $MsiX86, $MsiX64))
+{
+    If (-not (Test-Path -LiteralPath $Path))
+    {
+        Throw "Required Chocolatey input file is missing: $Path"
+    }
+}
+
+$Content = Get-Content -LiteralPath $VersionHeader
 $Pattern = "#define\s+PRD_\S+\s+(\d+)"
 $VersionMatches = $Content | Select-String -Pattern $Pattern -AllMatches
 $VersionParts = $VersionMatches | ForEach-Object { $_.Matches.Groups[1].Value }
 $Version = $VersionParts -join '.'
 
-$ReplaceStrings = @{
-    '${VERSION}' = $Version
-    '${HASHX86}' = (Get-FileHash -Algorithm SHA256 -LiteralPath '..\..\publish\WinDirStat-x86.msi').Hash;
-    '${HASHX64}' = (Get-FileHash -Algorithm SHA256 -LiteralPath '..\..\publish\WinDirStat-x64.msi').Hash;
+If ([String]::IsNullOrWhiteSpace($Version))
+{
+    Throw "Could not determine WinDirStat version from $VersionHeader"
 }
 
-ForEach ($File in (Get-ChildItem ".\*.template" -Recurse -Force))
+$ReplaceStrings = @{
+    '${VERSION}' = $Version
+    '${HASHX86}' = (Get-FileHash -Algorithm SHA256 -LiteralPath $MsiX86).Hash;
+    '${HASHX64}' = (Get-FileHash -Algorithm SHA256 -LiteralPath $MsiX64).Hash;
+}
+
+$Templates = Get-ChildItem -LiteralPath $ScriptRoot -Filter "*.template" -Recurse -Force
+If ($Templates.Count -eq 0)
+{
+    Throw "No Chocolatey template files found under $ScriptRoot"
+}
+
+ForEach ($File in $Templates)
 {
     $Content = [System.IO.File]::ReadAllText($File.FullName)
     ForEach ($Key in $ReplaceStrings.Keys)
     {
         $Content = $Content.Replace($Key, $ReplaceStrings[$Key])   
     }
-    [System.IO.File]::WriteAllText(($File.FullName -replace '.template$',''), $Content)
+
+    If ($Content -match '\$\{(VERSION|HASHX86|HASHX64)\}')
+    {
+        Throw "Unresolved Chocolatey template placeholder remains in $($File.FullName)"
+    }
+
+    [System.IO.File]::WriteAllText(($File.FullName -replace '\.template$',''), $Content)
 }
 
 Exit 0
