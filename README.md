@@ -52,16 +52,6 @@ The application itself is distributed under the terms of the [GPL v2](windirstat
 The logo and all derivatives are available under the terms of the Creative
 Commons license [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/).
 
-## Building
-
-WinDirStat can be built with Visual Studio 2022 or later. A Visual Studio solution file can be loaded from `windirstat\WinDirStat.sln`.
-
-## Contributing
-
-You can contribute by responding to issues, developing source code, or developing translations.
-
-To see a list of contributors, please check out [the contributors page](CONTRIBUTORS.md).
-
 ## Compatibility
 
 WinDirStat 2.x has been developed for and tested on the following operating systems. They may work on older or newer operating systems but are not supported.
@@ -77,10 +67,6 @@ WinDirStat 2.x has been developed for and tested on the following operating syst
 * Windows Server 2022
 * Windows Server 2025
 
-## Logo
-
-![WinDirStat logo](windirstat/logos/logo_256px.png)
-
 ## Resources
 
 * A [website](https://windirstat.net/)
@@ -95,3 +81,23 @@ Find a more up-to-date list of resources on the website and the blog at any poin
 WinDirStat's popularity has led to unofficial websites that copy the project's name, branding, or downloads. These sites are not operated by the WinDirStat team, may offer outdated or modified files, and may expose users to malware.
 
 For your safety, install WinDirStat only through the package managers listed above, the official [GitHub releases](https://github.com/windirstat/windirstat/releases/), or links from [windirstat.net](https://windirstat.net/). The team reports impersonation sites when possible, but takedowns are not always successful.
+
+## Building
+
+WinDirStat can be built with Visual Studio 2022 or later. A Visual Studio solution file can be loaded from `windirstat\WinDirStat.sln`.
+
+## Contributors
+
+You can contribute by responding to issues, developing source code, or developing translations.
+
+Thank you to everyone who has helped shape WinDirStat over the years.
+
+<a href="https://github.com/windirstat/windirstat/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=windirstat/windirstat&max=1000" alt="WinDirStat contributor tiles" />
+</a>
+
+For additional historical contributors, testers, and translators, please check out [the contributors page](CONTRIBUTORS.md).
+
+## Logo
+
+![WinDirStat logo](windirstat/logos/logo_256px.png)
