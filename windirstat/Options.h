@@ -225,19 +225,12 @@ public:
 
     static CTreeMap::Options TreeMapOptions;
     static std::vector<USERDEFINEDCLEANUP> UserDefinedCleanups;
-    static std::vector<std::wregex> FilteringExcludeDirsRegex;
-    static std::vector<std::wregex> FilteringExcludeFilesRegex;
-    static std::vector<std::wregex> FilteringIncludeDirsRegex;
-    static std::vector<std::wregex> FilteringIncludeFilesRegex;
-    static ULONGLONG FilteringSizeMinimumCalculated;
 
     static void SanitizeRect(RECT& rect);
     static void LoadAppSettings();
     static void PreProcessPersistedSettings();
     static void PostProcessPersistedSettings();
     static void SetTreeMapOptions(const CTreeMap::Options& options);
-    static void CompileFilters();
-    static bool IsFilterActive();
 
     static LCID GetLocaleForFormatting();
 };

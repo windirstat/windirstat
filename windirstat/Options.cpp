@@ -16,6 +16,7 @@
 //
 
 #include "pch.h"
+#include "Filtering.h"
 #include "Property.h"
 
 LPCWSTR COptions::OptionsGeneral = L"Options";
@@ -141,11 +142,6 @@ Setting<WINDOWPLACEMENT> COptions::MainWindowPlacement(OptionsGeneral, L"MainWin
 
 CTreeMap::Options COptions::TreeMapOptions;
 std::vector<USERDEFINEDCLEANUP> COptions::UserDefinedCleanups;
-std::vector<std::wregex> COptions::FilteringExcludeDirsRegex;
-std::vector<std::wregex> COptions::FilteringExcludeFilesRegex;
-std::vector<std::wregex> COptions::FilteringIncludeDirsRegex;
-std::vector<std::wregex> COptions::FilteringIncludeFilesRegex;
-ULONGLONG COptions::FilteringSizeMinimumCalculated;
 
 void COptions::SanitizeRect(RECT& rect)
 {
@@ -205,47 +201,6 @@ void COptions::SetTreeMapOptions(const CTreeMap::Options& options)
     CDirStatDoc::Get()->UpdateAllViews(nullptr, HINT_TREEMAPSTYLECHANGED);
 }
 
-bool COptions::IsFilterActive()
-{
-    return !FilteringExcludeDirs.Obj().empty() ||
-           !FilteringExcludeFiles.Obj().empty() ||
-           !FilteringIncludeDirs.Obj().empty() ||
-           !FilteringIncludeFiles.Obj().empty() ||
-           FilteringSizeMinimum.Obj() != 0;
-}
-
-void COptions::CompileFilters()
-{
-    FilteringExcludeDirsRegex.clear();
-    FilteringExcludeFilesRegex.clear();
-    FilteringIncludeDirsRegex.clear();
-    FilteringIncludeFilesRegex.clear();
-
-    for (const auto & [optionString, optionRegex] : {
-        std::pair{FilteringExcludeDirs.Obj(), std::ref(FilteringExcludeDirsRegex)},
-        std::pair{FilteringExcludeFiles.Obj(), std::ref(FilteringExcludeFilesRegex)},
-        std::pair{FilteringIncludeDirs.Obj(), std::ref(FilteringIncludeDirsRegex)},
-        std::pair{FilteringIncludeFiles.Obj(), std::ref(FilteringIncludeFilesRegex)}})
-    {
-        for (auto& token : SplitString(optionString, L'\n'))
-        {
-            try
-            {
-                while (!token.empty() && (token.back() == L'\r' || token.back() == L'\\')) token.pop_back();
-                optionRegex.get().emplace_back(FilteringUseRegex ? token : GlobToRegex(token),
-                    std::regex_constants::icase | std::regex_constants::optimize);
-            }
-            catch (const std::regex_error&)
-            {
-                DisplayError(Localization::Lookup(IDS_PAGE_FILTERING_INVALID_FILTER) + L" " + token);
-            }
-        }
-    }
-
-    // Calculate the total number of bytes to test as a scan minimum
-    FilteringSizeMinimumCalculated = static_cast<ULONGLONG>(FilteringSizeMinimum) * (1ull << (10 * FilteringSizeUnits));
-}
-
 void COptions::PreProcessPersistedSettings()
 {
     // Reserve space so the copy/move constructors are not called
@@ -265,7 +220,7 @@ void COptions::PostProcessPersistedSettings()
     SanitizeRect(SearchWindowRect.Obj());
 
     // Compile filters, if any
-    CompileFilters();
+    CFiltering::CompileFilters();
 
     // Set up the language for the environment
     if (const auto& languages = Localization::GetLanguageList();

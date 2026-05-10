@@ -16,6 +16,7 @@
 //
 
 #include "pch.h"
+#include "Filtering.h"
 #include "SelectDrivesDlg.h"
 #include "FinderBasic.h"
 #include "PageFiltering.h"
@@ -545,7 +546,7 @@ void CSelectDrivesDlg::UpdateButtons()
 void CSelectDrivesDlg::UpdateFilterButton()
 {
     if (m_filterIcon) DestroyIcon(m_filterIcon);
-    const bool active = COptions::IsFilterActive();
+    const bool active = CFiltering::IsFilterActive();
     m_filterIcon = Icons::MakeIcon(DpiRest(20), [active](auto& g) { Icons::PaintFilter(g, active); });
     m_filterButton.SetIcon(m_filterIcon);
 }

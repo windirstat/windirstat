@@ -16,6 +16,7 @@
 //
 
 #include "pch.h"
+#include "Filtering.h"
 #include "TreeMapView.h"
 #include "FileTabbedView.h"
 #include "FileTreeView.h"
@@ -1334,7 +1335,7 @@ void CMainFrame::RebuildToolBar()
         { ID_REFRESH_SELECTED,        IDS_REFRESH_SELECTED,        Icons::PaintRefreshSelected},
         { ID_SEPARATOR,               {},{}},
         { ID_SEARCH,                  IDS_SEARCH_TITLE,            Icons::Char(L'⌕', RGB(140, 140, 140))},
-        { ID_FILTER,                  IDS_PAGE_FILTERING_TITLE,    [](auto& g){ Icons::PaintFilter(g, COptions::IsFilterActive()); } },
+        { ID_FILTER,                  IDS_PAGE_FILTERING_TITLE,    [](auto& g){ Icons::PaintFilter(g, CFiltering::IsFilterActive()); } },
         { ID_SEPARATOR,               {},{}},
         { ID_CLEANUP_OPEN_SELECTED,   IDS_CLEANUP_OPEN_SELECTED,   Icons::PaintOpenSelected},
         { ID_CLEANUP_EXPLORER_SELECT, IDS_CLEANUP_EXPLORER_SELECT, Icons::PaintExplorerSelect},

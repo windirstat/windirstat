@@ -269,6 +269,9 @@
     <ClInclude Include="Localization.h">
       <Filter>Header Files\User Interface</Filter>
     </ClInclude>
+    <ClInclude Include="Filtering.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Dialogs\AboutDlg.cpp">
@@ -420,6 +423,9 @@
     </ClCompile>
     <ClCompile Include="Localization.cpp">
       <Filter>Source Files\User Interface</Filter>
+    </ClCompile>
+    <ClCompile Include="Filtering.cpp">
+      <Filter>Source Files\Core</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

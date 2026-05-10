@@ -17,6 +17,7 @@
 
 #include "pch.h"
 #include "Item.h"
+#include "Filtering.h"
 #include "FinderBasic.h"
 #include "FinderNtfs.h"
 
@@ -869,6 +870,13 @@ void CItem::ScanItems(BlockingQueue<CItem*> * queue, FinderNtfsContext& contextN
         // Mark the time we started evaluating this node
         item->ResetScanStartTime();
 
+        if (item->IsTypeOrFlag(IT_DRIVE, IT_DIRECTORY) && !CFiltering::ShouldScanDirectory(item->GetPath()))
+        {
+            item->UpwardSubtractReadJobs(1);
+            item->UpwardDrivePacman();
+            continue;
+        }
+
         // Try to load NTFS MFT
         if (item->IsTypeOrFlag(IT_DRIVE) && COptions::UseFastScanEngine)
         {
@@ -890,9 +898,8 @@ void CItem::ScanItems(BlockingQueue<CItem*> * queue, FinderNtfsContext& contextN
                         continue;
                     }
 
-                    // Exclude directories matching path filter
-                    if (!COptions::FilteringExcludeDirsRegex.empty() && std::ranges::any_of(COptions::FilteringExcludeDirsRegex,
-                        [&finder](const auto& pattern) { return std::regex_match(finder->GetFilePath(), pattern); }))
+                    // Excludes win; includes may still allow ancestors needed to reach them.
+                    if (!CFiltering::ShouldScanDirectory(finder->GetFilePath()))
                     {
                         continue;
                     }
@@ -912,29 +919,7 @@ void CItem::ScanItems(BlockingQueue<CItem*> * queue, FinderNtfsContext& contextN
                         continue;
                     }
 
-                    // Exclude files matching name filter
-                    if (!COptions::FilteringExcludeFilesRegex.empty() && std::ranges::any_of(COptions::FilteringExcludeFilesRegex,
-                        [&finder](const auto& pattern) { return std::regex_match(finder->GetFileName(), pattern); }))
-                    {
-                        continue;
-                    }
-
-                    // Include only files whose path matches the include path filter
-                    if (!COptions::FilteringIncludeDirsRegex.empty() && std::ranges::none_of(COptions::FilteringIncludeDirsRegex,
-                        [&finder](const auto& pattern) { return std::regex_match(finder->GetFilePath(), pattern); }))
-                    {
-                        continue;
-                    }
-
-                    // Include only files whose name matches the include name filter
-                    if (!COptions::FilteringIncludeFilesRegex.empty() && std::ranges::none_of(COptions::FilteringIncludeFilesRegex,
-                        [&finder](const auto& pattern) { return std::regex_match(finder->GetFileName(), pattern); }))
-                    {
-                        continue;
-                    }
-
-                    // Exclude files matching size filter
-                    if (COptions::FilteringSizeMinimumCalculated > 0 && finder->GetFileSizeLogical() < COptions::FilteringSizeMinimumCalculated)
+                    if (!CFiltering::ShouldIncludeFile(*finder))
                     {
                         continue;
                     }

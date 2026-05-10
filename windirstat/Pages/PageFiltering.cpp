@@ -16,6 +16,7 @@
 //
 
 #include "pch.h"
+#include "Filtering.h"
 #include "PageFiltering.h"
 
 IMPLEMENT_DYNAMIC(CPageFiltering, CMFCPropertyPage)
@@ -145,7 +146,7 @@ void CPageFiltering::OnOK()
     COptions::FilteringExcludeDirs.Obj() = m_filteringExcludeDirs;
     COptions::FilteringIncludeFiles.Obj() = m_filteringIncludeFiles;
     COptions::FilteringIncludeDirs.Obj() = m_filteringIncludeDirs;
-    COptions::CompileFilters();
+    CFiltering::CompileFilters();
 
     CMainFrame::Get()->RebuildToolBar();
     CMFCPropertyPage::OnOK();
