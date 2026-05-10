@@ -140,7 +140,6 @@ protected:
     afx_msg void OnBnClickedUpdateButtons();
     afx_msg void OnBnClickedFastScanCheckbox();
     afx_msg void OnLvnItemChangedDrives(NMHDR* pNMHDR, LRESULT* pResult);
-    afx_msg LRESULT OnInitComplete(WPARAM, LPARAM);
     afx_msg LRESULT OnWmuOk(WPARAM, LPARAM);
     afx_msg LRESULT OnWmDriveInfoThreadFinished(WPARAM wParam, LPARAM lparam);
     afx_msg void OnSysColorChange();

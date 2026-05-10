@@ -447,17 +447,6 @@ void CMainFrame::CreateProgress(ULONGLONG range)
     }
 }
 
-void CMainFrame::SetProgressPos(ULONGLONG pos)
-{
-    if (m_progressRange > 0 && pos > m_progressRange)
-    {
-        pos = m_progressRange;
-    }
-
-    m_progressPos = pos;
-    UpdateProgress();
-}
-
 void CMainFrame::SetProgressComplete()
 {
     // Disable any potential suspend state

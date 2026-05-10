@@ -168,7 +168,6 @@ protected:
     CExtensionView* GetExtensionView() const { return m_extensionView; }
 
     void CreateProgress(ULONGLONG range);
-    void SetProgressPos(ULONGLONG pos);
     void SetProgressComplete();
     void SuspendState(bool suspend);
     bool IsScanSuspended() const;

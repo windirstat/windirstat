@@ -79,7 +79,6 @@ public:
 
     void StartMonitoring();
     void StopMonitoring();
-    bool IsMonitoring() const;
 
 protected:
     static CFileWatcherControl* m_singleton;

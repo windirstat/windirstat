@@ -78,11 +78,6 @@ void CFileWatcherControl::StopMonitoring()
     m_watchThreads.clear();
 }
 
-bool CFileWatcherControl::IsMonitoring() const
-{
-    return !m_watchThreads.empty();
-}
-
 void CFileWatcherControl::WatchDirectory(const std::wstring& path, const std::stop_token& stopToken)
 {
     const SmartPointer<HANDLE> hDir(CloseHandle, CreateFileW(FinderBasic::MakeLongPathCompatible(path).c_str(),

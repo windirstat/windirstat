@@ -431,7 +431,7 @@ BOOL CSelectDrivesDlg::OnInitDialog()
         }
     }
     m_driveList.SortItems();
-    PostMessage(WM_APP);
+    m_suppressItemChanged = false;
 
     // Create list of local drives to append "All Local Drives" option
     std::vector<std::wstring> localDrives;
@@ -606,12 +606,6 @@ void CSelectDrivesDlg::OnLvnItemChangedDrives(NMHDR* /*pNMHDR*/, LRESULT* pResul
 void CSelectDrivesDlg::OnBnClickedUpdateButtons()
 {
     UpdateButtons();
-}
-
-LRESULT CSelectDrivesDlg::OnInitComplete(WPARAM, LPARAM)
-{
-    m_suppressItemChanged = false;
-    return 0;
 }
 
 LRESULT CSelectDrivesDlg::OnWmuOk(WPARAM, LPARAM)
