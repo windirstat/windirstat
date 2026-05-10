@@ -171,6 +171,204 @@ HICON CIconHandler::FetchShellIcon(const std::wstring & path, UINT flags, const 
     return sfi.hIcon;
 }
 
+namespace Icons
+{
+    using namespace Gdiplus;
+
+    static void PaintDocument(Graphics& g)
+    {
+        Pen outlinePen(Neutral(), 4);
+        SolidBrush lineBrush(Neutral());
+        Point body[] = { {8, 6}, {44, 6}, {56, 18}, {56, 58}, {8, 58} };
+        g.DrawPolygon(&outlinePen, body, 5);
+        g.DrawLine(&outlinePen, 44, 6, 44, 18);
+        g.DrawLine(&outlinePen, 44, 18, 56, 18);
+    }
+
+    static void PaintBin(Graphics& g, Color body, Color bar)
+    {
+        SolidBrush bodyBrush(body), barBrush(bar);
+        g.FillRectangle(&bodyBrush, 24, 6,  16, 6);
+        g.FillRectangle(&bodyBrush,  6, 12, 52, 6);
+        g.FillRectangle(&bodyBrush, 12, 18,  4, 40);
+        g.FillRectangle(&bodyBrush, 48, 18,  4, 40);
+        g.FillRectangle(&bodyBrush, 12, 54, 40, 4);
+        for (int i = 0; i < 3; ++i)
+            g.FillRectangle(&barBrush, 23 + i * 8, 26, 3, 24);
+    }
+
+    void PaintDelete(Graphics& g)    { PaintBin(g, C(204, 0, 0), C(204, 40, 40)); }
+    void PaintDeleteBin(Graphics& g) { PaintBin(g, Neutral(), Neutral()); }
+
+    void PaintExplorerSelect(Graphics& g)
+    {
+        PaintDocument(g);
+        SolidBrush cursorBrush(C(0, 102, 204));
+        Point cursor[] = {
+            {21, 14}, {21, 44}, {29, 36},
+            {37, 48}, {43, 44}, {35, 32}, {45, 32}
+        };
+        g.FillPolygon(&cursorBrush, cursor, 7);
+    }
+
+    void PaintOpenInConsole(Graphics& g)
+    {
+        SolidBrush grayBrush(Neutral());
+        Pen framePen(Neutral(), 4);
+        Pen chevronPen(Neutral(), 4);
+        chevronPen.SetStartCap(LineCapRound);
+        chevronPen.SetEndCap(LineCapRound);
+        chevronPen.SetLineJoin(LineJoinRound);
+        g.DrawRectangle(&framePen, 6, 8, 52, 48);
+        g.FillRectangle(&grayBrush, 6, 17, 52, 2);
+        Point chevronPts[] = { {14, 26}, {22, 34}, {14, 42} };
+        g.DrawLines(&chevronPen, chevronPts, 3);
+        g.DrawLine(&chevronPen, 26, 42, 38, 42);
+    }
+
+    void PaintOpenSelected(Graphics& g)
+    {
+        PaintDocument(g);
+        SolidBrush greenBrush(C(40, 140, 50));
+        Point triangle[] = { {20, 18}, {44, 32}, {20, 46} };
+        g.FillPolygon(&greenBrush, triangle, 3);
+    }
+
+    void PaintRefreshSelected(Graphics& g)
+    {
+        PaintDocument(g);
+        Pen arcPen(C(0, 156, 221), 4);
+        arcPen.SetStartCap(LineCapRound);
+        arcPen.SetEndCap(LineCapRound);
+        g.DrawArc(&arcPen, Rect(18, 20, 27, 27), -45, 270);
+        SolidBrush brush(C(0, 156, 221));
+        Point arrow[] = { {17,34},{20,24},{16,19},{26,20},{27,30},{23,27},{22,34} };
+        g.FillPolygon(&brush, arrow, static_cast<INT>(std::size(arrow)));
+    }
+
+    void PaintProperties(Graphics& g)
+    {
+        PaintDocument(g);
+        SolidBrush blueBrush(C(0, 102, 204));
+        g.FillEllipse(&blueBrush, 26, 15, 8, 8);
+        g.FillRectangle(&blueBrush, 27, 27, 6, 23);
+    }
+
+    void PaintEditCopyClipboard(Graphics& g)
+    {
+        SolidBrush goldBrush(C(200, 140, 30)), goldLightBrush(C(230, 180, 80)),
+            clipBrush(C(120, 90, 20)), grayBrush(C(180, 180, 180));
+        Pen outlinePen(Neutral(), 3);
+        g.FillRectangle(&goldBrush, 4, 10, 36, 50);
+        g.FillRectangle(&clipBrush, 12, 2, 20, 10);
+        g.FillRectangle(&goldLightBrush, 16, 5, 12, 4);
+        SolidBrush whiteBrush(C(255, 255, 255));
+        g.FillRectangle(&whiteBrush, 28, 24, 32, 36);
+        g.DrawRectangle(&outlinePen, 28, 24, 32, 36);
+        for (int i = 0; i < 3; ++i)
+            g.FillRectangle(&grayBrush, 33, 32 + i * 7, 22, 3);
+    }
+
+    void PaintFileSelect(Graphics& g)
+    {
+        SolidBrush folderBrush(C(210, 160, 40));
+        g.FillRectangle(&folderBrush,  2,  4, 30,  8);
+        g.FillRectangle(&folderBrush,  2, 12, 60, 48);
+        SolidBrush ringRed(C(200, 30, 30)), ringWhite(C(240, 240, 240)), ringRed2(C(200, 30, 30));
+        g.FillEllipse(&ringRed,   14, 18, 36, 36);
+        g.FillEllipse(&ringWhite, 21, 25, 22, 22);
+        g.FillEllipse(&ringRed2,  27, 31, 10, 10);
+    }
+
+    void PaintFilter(Graphics& g, bool active)
+    {
+        Point funnelShape[] = { {8, 16}, {56, 16}, {40, 34}, {40, 58}, {24, 58}, {24, 34} };
+        if (active)
+        {
+            SolidBrush activeBrush(C(255, 140, 0));
+            g.FillPolygon(&activeBrush, funnelShape, 6);
+        }
+        SolidBrush darkBrush(Neutral());
+        Pen outlinePen(Neutral(), 5);
+        outlinePen.SetLineJoin(LineJoinMiter);
+        g.FillRectangle(&darkBrush, 4, 8, 56, 6);
+        g.DrawPolygon(&outlinePen, funnelShape, 6);
+    }
+
+    void PaintHelp(Graphics& g)
+    {
+        Color blue = C(100, 149, 237);
+        Pen pen(blue, 10);
+        pen.SetStartCap(LineCapRound);
+        pen.SetEndCap(LineCapRound);
+        g.DrawArc(&pen, Rect(18, 8, 28, 28), 180, 270);
+        SolidBrush brush(blue);
+        g.FillEllipse(&brush, 27, 48, 10, 10);
+    }
+
+    void PaintPause(Graphics& g)
+    {
+        SolidBrush amberBrush(C(200, 160, 0));
+        g.FillRectangle(&amberBrush, 16, 12, 12, 40);
+        g.FillRectangle(&amberBrush, 36, 12, 12, 40);
+    }
+
+    void PaintMagnifier(Graphics& g, bool plus)
+    {
+        SolidBrush blueBrush(C(0, 102, 204));
+        Pen rimPen(Neutral(), 6);
+        Pen handlePen(Neutral(), 10);
+        handlePen.SetEndCap(LineCapRound);
+        g.DrawEllipse(&rimPen, 6, 6, 40, 40);
+        g.DrawLine(&handlePen, 39, 39, 58, 58);
+        g.FillRectangle(&blueBrush, 14, 23, 24, 6);
+        if (plus) g.FillRectangle(&blueBrush, 23, 14, 6, 24);
+    }
+
+    void PaintCharacter(Graphics& g, WCHAR ch, COLORREF clr, bool bold, LPCWSTR fontName)
+    {
+        const WCHAR text[]{ ch, L'\0' };
+        FontFamily fontFamily(fontName);
+        StringFormat format;
+        format.SetAlignment(StringAlignmentCenter);
+        format.SetLineAlignment(StringAlignmentCenter);
+        format.SetFormatFlags(StringFormatFlagsNoClip);
+
+        GraphicsPath path;
+        path.AddString(text, 1, &fontFamily,
+            bold ? FontStyleBold : FontStyleRegular, 56,
+            Rect(0, 0, 64, 64), &format);
+
+        Rect bounds;
+        path.GetBounds(&bounds);
+        if (bounds.Width <= 0 || bounds.Height <= 0) return;
+
+        const REAL scale = min(56.0f / bounds.Width, 56.0f / bounds.Height);
+        Matrix m;
+        m.Scale(scale, scale);
+        path.Transform(&m);
+        path.GetBounds(&bounds);
+        m.Reset();
+        m.Translate((64.0f - bounds.Width) / 2.0f - bounds.X,
+                    (64.0f - bounds.Height) / 2.0f - bounds.Y);
+        path.Transform(&m);
+
+        SolidBrush brush(Color(255, GetRValue(clr), GetGValue(clr), GetBValue(clr)));
+        g.FillPath(&brush, &path);
+    }
+
+    std::function<void(Graphics&)> Char(WCHAR ch, COLORREF clr)
+    {
+        return [=](Graphics& g) { PaintCharacter(g, ch, clr); };
+    }
+
+    HICON IconFromFontChar(WCHAR ch, COLORREF clr, bool bold, LPCWSTR fontName, int iconSize)
+    {
+        const int size = iconSize > 0 ? iconSize : GetSystemMetrics(SM_CXSMICON);
+        return MakeIcon(size, [=](Graphics& g) { PaintCharacter(g, ch, clr, bold, fontName); });
+    }
+}
+
 HBITMAP Icons::MakeBitmap(const int size, const std::function<void(Graphics&)>& painter)
 {
     // Render directly at the target size in the canonical 64-unit space.

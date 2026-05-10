@@ -624,38 +624,6 @@ void CMainFrame::SetStatusPaneText(const CDC& cdc, const int pos,
     m_wndStatusBar.SetPaneText(pos, text.c_str());
 }
 
-// Toolbar button definitions shared between OnCreate and RebuildToolBar
-static const std::vector<std::tuple<UINT, std::wstring_view>> s_toolbarButtons =
-{
-    { ID_FILE_SELECT, IDS_FILE_SELECT },
-    { ID_SEPARATOR, {} },
-    { ID_SCAN_RESUME, IDS_RESUME },
-    { ID_SCAN_SUSPEND, IDS_SUSPEND },
-    { ID_SCAN_STOP, IDS_STOP },
-    { ID_SEPARATOR, {} },
-    { ID_REFRESH_ALL, IDS_REFRESH_ALL },
-    { ID_REFRESH_SELECTED, IDS_REFRESH_SELECTED },
-    { ID_SEPARATOR, {} },
-    { ID_SEARCH, IDS_SEARCH_TITLE },
-    { ID_FILTER, IDS_PAGE_FILTERING_TITLE },
-    { ID_SEPARATOR, {} },
-    { ID_CLEANUP_OPEN_SELECTED, IDS_CLEANUP_OPEN_SELECTED },
-    { ID_CLEANUP_EXPLORER_SELECT, IDS_CLEANUP_EXPLORER_SELECT },
-    { ID_EDIT_COPY_CLIPBOARD, IDS_EDIT_COPY_CLIPBOARD },
-    { ID_CLEANUP_OPEN_IN_CONSOLE, IDS_CLEANUP_OPEN_IN_CONSOLE },
-    { ID_CLEANUP_PROPERTIES, IDS_CLEANUP_PROPERTIES },
-    { ID_SEPARATOR, {} },
-    { ID_CLEANUP_DELETE_BIN, IDS_CLEANUP_DELETE_BIN },
-    { ID_CLEANUP_DELETE, IDS_CLEANUP_DELETE },
-    { ID_SEPARATOR, {} },
-    { ID_TREEMAP_ZOOMIN, IDS_TREEMAP_ZOOMIN },
-    { ID_TREEMAP_ZOOMOUT, IDS_TREEMAP_ZOOMOUT },
-    { ID_SEPARATOR, {} },
-    { ID_CONFIGURE, IDS_MENU_SETTINGS },
-    { ID_HELP_MANUAL, IDS_HELP_MANUAL }
-};
-
-
 int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 {
     if (CFrameWndEx::OnCreate(lpCreateStruct) == -1)
@@ -1364,7 +1332,38 @@ void CMainFrame::RebuildToolBar()
           static_cast<LONG>(m_defaultButtonSize.cy * scale)},
         { imageSize, imageSize });
 
-    for (const auto& [id, text] : s_toolbarButtons)
+    using Painter = std::function<void(Gdiplus::Graphics&)>;
+    static const std::vector<std::tuple<UINT, std::wstring_view, Painter>> toolbarButtons =
+    {
+        { ID_FILE_SELECT,             IDS_FILE_SELECT,             Icons::PaintFileSelect},
+        { ID_SEPARATOR,               {},{}},
+        { ID_SCAN_RESUME,             IDS_RESUME,                  Icons::Char(L'▶', RGB( 50, 205,  50))},
+        { ID_SCAN_SUSPEND,            IDS_SUSPEND,                 Icons::PaintPause},
+        { ID_SCAN_STOP,               IDS_STOP,                    Icons::Char(L'■', RGB(220,  20,  60))},
+        { ID_SEPARATOR,               {},{}},
+        { ID_REFRESH_ALL,             IDS_REFRESH_ALL,             Icons::Char(L'↻', RGB(  0, 156, 221))},
+        { ID_REFRESH_SELECTED,        IDS_REFRESH_SELECTED,        Icons::PaintRefreshSelected},
+        { ID_SEPARATOR,               {},{}},
+        { ID_SEARCH,                  IDS_SEARCH_TITLE,            Icons::Char(L'⌕', RGB(140, 140, 140))},
+        { ID_FILTER,                  IDS_PAGE_FILTERING_TITLE,    [](auto& g){ Icons::PaintFilter(g, COptions::IsFilterActive()); } },
+        { ID_SEPARATOR,               {},{}},
+        { ID_CLEANUP_OPEN_SELECTED,   IDS_CLEANUP_OPEN_SELECTED,   Icons::PaintOpenSelected},
+        { ID_CLEANUP_EXPLORER_SELECT, IDS_CLEANUP_EXPLORER_SELECT, Icons::PaintExplorerSelect},
+        { ID_EDIT_COPY_CLIPBOARD,     IDS_EDIT_COPY_CLIPBOARD,     Icons::PaintEditCopyClipboard},
+        { ID_CLEANUP_OPEN_IN_CONSOLE, IDS_CLEANUP_OPEN_IN_CONSOLE, Icons::PaintOpenInConsole},
+        { ID_CLEANUP_PROPERTIES,      IDS_CLEANUP_PROPERTIES,      Icons::PaintProperties},
+        { ID_SEPARATOR,               {},{}},
+        { ID_CLEANUP_DELETE_BIN,      IDS_CLEANUP_DELETE_BIN,      Icons::PaintDeleteBin},
+        { ID_CLEANUP_DELETE,          IDS_CLEANUP_DELETE,          Icons::PaintDelete},
+        { ID_SEPARATOR,               {},{}},
+        { ID_TREEMAP_ZOOMIN,          IDS_TREEMAP_ZOOMIN,          [](auto& g) { Icons::PaintMagnifier(g, true);}},
+        { ID_TREEMAP_ZOOMOUT,         IDS_TREEMAP_ZOOMOUT,         [](auto& g){ Icons::PaintMagnifier(g, false);}},
+        { ID_SEPARATOR,               {},{}},
+        { ID_CONFIGURE,               IDS_MENU_SETTINGS,           Icons::Char(L'⚙', RGB(140, 140, 140))},
+        { ID_HELP_MANUAL,             IDS_HELP_MANUAL,             Icons::PaintHelp},
+    };
+
+    for (const auto& [id, text, painter] : toolbarButtons)
     {
         if (id == ID_SEPARATOR)
         {
@@ -1372,35 +1371,11 @@ void CMainFrame::RebuildToolBar()
             continue;
         }
 
-        // Map command IDs to bitmap creators (rendered at the exact target size)
         int index = 0;
-        using IcoCreator = HBITMAP(*)(int);
-        static const std::unordered_map<UINT, IcoCreator> icoMap{
-            { ID_SCAN_STOP,               [](int s) { return Icons::Make<Icons::FromCharacter<L'■',  RGB(220,  20,  60)>>(s); } },
-            { ID_SCAN_RESUME,             [](int s) { return Icons::Make<Icons::FromCharacter<L'▶',  RGB( 50, 205,  50)>>(s); } },
-            { ID_SCAN_SUSPEND,            [](int s) { return Icons::Make<Icons::FromCharacter<L'⏸', RGB(200, 160,   0)>>(s); } },
-            { ID_REFRESH_ALL,             [](int s) { return Icons::Make<Icons::FromCharacter<L'↻',  RGB(  0, 156, 221)>>(s); } },
-            { ID_SEARCH,                  [](int s) { return Icons::Make<Icons::FromCharacter<L'⌕',  RGB(140, 140, 140)>>(s); } },
-            { ID_CONFIGURE,               [](int s) { return Icons::Make<Icons::FromCharacter<L'⚙', RGB(140, 140, 140)>>(s); } },
-            { ID_HELP_MANUAL,             [](int s) { return Icons::Make<Icons::FromCharacter<L'❔', RGB(100, 149, 237)>>(s); } },
-            { ID_CLEANUP_PROPERTIES,      [](int s) { return Icons::Make<Icons::PaintProperties>(s); }      },
-            { ID_FILE_SELECT,             [](int s) { return Icons::Make<Icons::PaintFileSelect>(s); }       },
-            { ID_REFRESH_SELECTED,        [](int s) { return Icons::Make<Icons::PaintRefreshSelected>(s); }  },
-            { ID_FILTER,                  [](int s) { return Icons::Make<[](auto& g){ Icons::PaintFilter(g, COptions::IsFilterActive()); }>(s); } },
-            { ID_CLEANUP_OPEN_SELECTED,   [](int s) { return Icons::Make<Icons::PaintOpenSelected>(s); }     },
-            { ID_CLEANUP_EXPLORER_SELECT, [](int s) { return Icons::Make<Icons::PaintExplorerSelect>(s); }   },
-            { ID_EDIT_COPY_CLIPBOARD,     [](int s) { return Icons::Make<Icons::PaintEditCopyClipboard>(s); }},
-            { ID_CLEANUP_OPEN_IN_CONSOLE, [](int s) { return Icons::Make<Icons::PaintOpenInConsole>(s); }    },
-            { ID_CLEANUP_DELETE_BIN,      [](int s) { return Icons::Make<Icons::PaintDeleteBin>(s); }        },
-            { ID_CLEANUP_DELETE,          [](int s) { return Icons::Make<Icons::PaintDelete>(s); }           },
-            { ID_TREEMAP_ZOOMIN,          [](int s) { return Icons::Make<[](auto& g){ Icons::PaintMagnifier(g, true);  }>(s); } },
-            { ID_TREEMAP_ZOOMOUT,         [](int s) { return Icons::Make<[](auto& g){ Icons::PaintMagnifier(g, false); }>(s); } },
-        };
-
-        CBitmap bitmap;
-        if (const auto it = icoMap.find(id); it != icoMap.end())
+        if (painter)
         {
-            bitmap.Attach(it->second(imageSize));
+            CBitmap bitmap;
+            bitmap.Attach(Icons::MakeBitmap(imageSize, painter));
             DarkMode::LightenBitmap(&bitmap);
             index = CMFCToolBar::GetImages()->AddImage(bitmap, TRUE);
         }
