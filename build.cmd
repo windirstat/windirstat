@@ -83,7 +83,8 @@ FOR %%A IN (arm64 x86 x64) DO (
 )
 
 :: build and sign the Microsoft Store MSIX bundle
-%POWERSHELL% -File "%THISDIR%\setup\store\build-store-msix.ps1" -IdentityName "%STORE_ID%" -Publisher "%STORE_PUB%" -PublisherDisplayName "%STORE_PUB_NAME%" -OutDir "%STOREBLDDIR%"
+SET "WDS_STORE_PUB=%STORE_PUB%"
+%POWERSHELL% -File "%THISDIR%\setup\store\build-store-msix.ps1" -IdentityName "%STORE_ID%" -PublisherDisplayName "%STORE_PUB_NAME%" -OutDir "%STOREBLDDIR%"
 IF ERRORLEVEL 1 EXIT /B 1
 %POWERSHELL% -Command "$packages = @(Get-ChildItem -LiteralPath '%STOREBLDDIR%\packages' -File | Where-Object { $_.Extension -in '.msix', '.msixbundle' }); if (-not $packages) { throw 'No Store artifacts were generated.' }; foreach ($package in $packages) { Move-Item -LiteralPath $package.FullName -Destination '%PUBDIR%' -Force }"
 IF ERRORLEVEL 1 EXIT /B 1

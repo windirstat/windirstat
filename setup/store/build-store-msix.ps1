@@ -2,7 +2,7 @@ using namespace System.Drawing
 using namespace System.Drawing.Drawing2D
 using namespace System.Drawing.Imaging
 
-[CmdletBinding()]
+[CmdletBinding(PositionalBinding = $false)]
 param(
     [ValidateSet("x86", "x64", "arm64")][string[]] $Platform = @("x86", "x64", "arm64"),
 
