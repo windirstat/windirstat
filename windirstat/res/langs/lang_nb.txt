@@ -94,6 +94,7 @@ IDS_MENU_EDIT=&Rediger
 IDS_MENU_ELEVATED=Sta&rt om som administrator...
 IDS_MENU_EMPTY_BIN=Tøm Papir&kurven
 IDS_MENU_EMPTY_FOLDER=Tom mappe
+IDS_MENU_EXCLUDE_ITEM=Legg til i &utelukkelsesfilter
 IDS_MENU_EXIT=&Avslutt
 IDS_MENU_EXPLORER_MENU=Vis meny fra Filutforsker
 IDS_MENU_EXPLORER_SELECT=Velg i Fil&utforsker...

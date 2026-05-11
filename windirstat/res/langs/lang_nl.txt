@@ -94,6 +94,7 @@ IDS_MENU_EDIT=&Bewerken
 IDS_MENU_ELEVATED=&Verhoogd rennen
 IDS_MENU_EMPTY_BIN=&Prullenbak leegmaken
 IDS_MENU_EMPTY_FOLDER=Lege map
+IDS_MENU_EXCLUDE_ITEM=Toevoegen aan &uitsluitingsfilter
 IDS_MENU_EXIT=&Afsluiten
 IDS_MENU_EXPLORER_MENU=Windows Verkenner-menu
 IDS_MENU_EXPLORER_SELECT=Openen in &verkenner...

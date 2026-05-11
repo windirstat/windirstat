@@ -94,6 +94,7 @@ IDS_MENU_EDIT=&Uredi
 IDS_MENU_ELEVATED=Zaženi z &dvignjenimi pravicami
 IDS_MENU_EMPTY_BIN=Izprazni &koš
 IDS_MENU_EMPTY_FOLDER=Izprazni mapo
+IDS_MENU_EXCLUDE_ITEM=Dodaj v filter i&zključitev
 IDS_MENU_EXIT=&Izhod
 IDS_MENU_EXPLORER_MENU=Meni Windows Raziskovalca
 IDS_MENU_EXPLORER_SELECT=Izb&eri v Raziskovalcu...

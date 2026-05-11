@@ -222,5 +222,6 @@ protected:
     afx_msg void OnRemoveMarkOfTheWebTags();
     afx_msg void OnUpdateCreateHardlink(CCmdUI* pCmdUI);
     afx_msg void OnCreateHardlink();
+    afx_msg void OnFilterExcludeItem();
     afx_msg void OnPopupCancel() {}
 };

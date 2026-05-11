@@ -94,6 +94,7 @@ IDS_MENU_EDIT=&Edycja
 IDS_MENU_ELEVATED=Uruchom podwyższone
 IDS_MENU_EMPTY_BIN=Opróżnij &Kosz
 IDS_MENU_EMPTY_FOLDER=Pusty folder
+IDS_MENU_EXCLUDE_ITEM=Dodaj do filtru &wykluczeń
 IDS_MENU_EXIT=&Zakończ
 IDS_MENU_EXPLORER_MENU=Menu Eksploratora Windows
 IDS_MENU_EXPLORER_SELECT=&Eksploruj

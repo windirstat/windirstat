@@ -94,6 +94,7 @@ IDS_MENU_EDIT=&Editar
 IDS_MENU_ELEVATED=Ejecutar elevada
 IDS_MENU_EMPTY_BIN=&Vaciar la Papelera de Reciclaje
 IDS_MENU_EMPTY_FOLDER=Carpeta vacía
+IDS_MENU_EXCLUDE_ITEM=Agregar al filtro de e&xclusión
 IDS_MENU_EXIT=&Salir
 IDS_MENU_EXPLORER_MENU=Menú del Explorador de Windows
 IDS_MENU_EXPLORER_SELECT=&Explorador Aquí

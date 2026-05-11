@@ -94,6 +94,7 @@ IDS_MENU_EDIT=&Edit
 IDS_MENU_ELEVATED=R&un Elevated
 IDS_MENU_EMPTY_BIN=Empty Recycle &Bin
 IDS_MENU_EMPTY_FOLDER=Empty Folder
+IDS_MENU_EXCLUDE_ITEM=Add to &Exclusion Filter
 IDS_MENU_EXIT=&Exit
 IDS_MENU_EXPLORER_MENU=Windows Explorer Menu
 IDS_MENU_EXPLORER_SELECT=Select in &Explorer...

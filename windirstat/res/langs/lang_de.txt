@@ -94,6 +94,7 @@ IDS_MENU_EDIT=&Bearbeiten
 IDS_MENU_ELEVATED=&Mit Administratorrechten neustarten
 IDS_MENU_EMPTY_BIN=&Papierkorb leeren
 IDS_MENU_EMPTY_FOLDER=Ordner leeren
+IDS_MENU_EXCLUDE_ITEM=Zum &Ausschlussfilter hinzufügen
 IDS_MENU_EXIT=&Beenden
 IDS_MENU_EXPLORER_MENU=Windows-Explorer-Menü
 IDS_MENU_EXPLORER_SELECT=&Explorer hier starten

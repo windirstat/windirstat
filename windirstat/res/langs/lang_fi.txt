@@ -94,6 +94,7 @@ IDS_MENU_EDIT=&Muokkaa
 IDS_MENU_ELEVATED=Suorita korotettuna
 IDS_MENU_EMPTY_BIN=Tyhjennä &roskakori
 IDS_MENU_EMPTY_FOLDER=Tyhjä kansio
+IDS_MENU_EXCLUDE_ITEM=Lisää &poissulkusuodattimeen
 IDS_MENU_EXIT=&Lopeta
 IDS_MENU_EXPLORER_MENU=Windowsin Resurssienhallinnan valikko
 IDS_MENU_EXPLORER_SELECT=&Selaa kohdetta

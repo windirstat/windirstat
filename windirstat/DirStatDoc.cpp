@@ -26,6 +26,7 @@
 #include "FinderNtfs.h"
 #include "SearchDlg.h"
 #include "ProgressDlg.h"
+#include "Filtering.h"
 
 IMPLEMENT_DYNCREATE(CDirStatDoc, CDocument)
 
@@ -933,6 +934,7 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
         { ID_COMPUTE_HASH,            { false, false, true,  LF_NONE,     { IT_FILE } } },
         { ID_EDIT_COPY_CLIPBOARD,     { false, true,  true,  LF_NONE,     { IT_DRIVE, IT_DIRECTORY, IT_FILE } } },
         { ID_FILTER,                  { true,  true,  true,  LF_NONE,     { ITF_ANY } } },
+        { ID_FILTER_EXCLUDE_ITEM,     { false, true,  false, LF_NONE,     { IT_DRIVE, IT_DIRECTORY, IT_FILE } } },
         { ID_INDICATOR_DISK,          { true,  true,  false, LF_NONE,     { ITF_ANY } } },
         { ID_INDICATOR_IDLE,          { true,  true,  true,  LF_NONE,     { ITF_ANY } } },
         { ID_INDICATOR_RAM,           { true,  true,  true,  LF_NONE,     { ITF_ANY } } },
@@ -1050,6 +1052,7 @@ BEGIN_MESSAGE_MAP(CDirStatDoc, CDocument)
     ON_COMMAND_UPDATE_WRAPPER(ID_SCAN_SUSPEND, OnScanSuspend)
     ON_COMMAND_UPDATE_WRAPPER(ID_SCAN_STOP, OnScanStop)
     ON_COMMAND_UPDATE_WRAPPER(ID_POPUP_CANCEL, OnPopupCancel)
+    ON_COMMAND_UPDATE_WRAPPER(ID_FILTER_EXCLUDE_ITEM, OnFilterExcludeItem)
     ON_UPDATE_COMMAND_UI(ID_INDICATOR_RAM, OnUpdateCentralHandler)
     ON_UPDATE_COMMAND_UI(ID_INDICATOR_DISK, OnUpdateCentralHandler)
     ON_UPDATE_COMMAND_UI(ID_INDICATOR_IDLE, OnUpdateCentralHandler)
@@ -1057,6 +1060,23 @@ BEGIN_MESSAGE_MAP(CDirStatDoc, CDocument)
     ON_UPDATE_COMMAND_UI(ID_CLEANUP_DISK_CLEANUP, OnUpdateCentralHandler)
     ON_COMMAND_RANGE(CONTENT_MENU_MINCMD, CONTENT_MENU_MAXCMD, OnContextMenuExplore)
 END_MESSAGE_MAP()
+
+void CDirStatDoc::OnFilterExcludeItem()
+{
+    const auto selected = GetAllSelected();
+
+    for (const auto* item : selected)
+    {
+        const std::wstring path = item->GetPath();
+        std::wstring& current = item->IsTypeOrFlag(IT_FILE) ?
+            COptions::FilteringExcludeFiles.Obj() : COptions::FilteringExcludeDirs.Obj();
+        if (!current.empty() && current.back() != L'\n') current += L"\r\n";
+        current += path;
+    }
+
+    CFiltering::CompileFilters();
+    RefreshItem(selected);
+}
 
 void CDirStatDoc::OnCleanupSparsifyFile()
 {

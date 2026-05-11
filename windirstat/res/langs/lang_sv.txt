@@ -94,6 +94,7 @@ IDS_MENU_EDIT=R&edigera
 IDS_MENU_ELEVATED=K&ör i förhöjd rättighet
 IDS_MENU_EMPTY_BIN=Töm &papperskorgen
 IDS_MENU_EMPTY_FOLDER=Töm mappen
+IDS_MENU_EXCLUDE_ITEM=Lägg till i &exkluderingsfilter
 IDS_MENU_EXIT=&Avsluta
 IDS_MENU_EXPLORER_MENU=Utforskarens innehållsmeny
 IDS_MENU_EXPLORER_SELECT=Välj i Utforskar&en...

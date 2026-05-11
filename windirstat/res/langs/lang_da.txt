@@ -94,6 +94,7 @@ IDS_MENU_EDIT=&Redigere
 IDS_MENU_ELEVATED=Kør som Administrator
 IDS_MENU_EMPTY_BIN=Tøm papirkurven
 IDS_MENU_EMPTY_FOLDER=Tom mappe
+IDS_MENU_EXCLUDE_ITEM=Føj til &udelukkelsesfilter
 IDS_MENU_EXIT=&Afslut
 IDS_MENU_EXPLORER_MENU=Windows Stifinder-menu
 IDS_MENU_EXPLORER_SELECT=Vælg i &Stifinder...

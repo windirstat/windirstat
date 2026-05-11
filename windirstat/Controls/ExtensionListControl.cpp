@@ -19,6 +19,8 @@
 #include "ExtensionView.h"
 #include "ExtensionListControl.h"
 #include "FileSearchControl.h"
+#include "Filtering.h"
+#include "Options.h"
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -144,6 +146,7 @@ BEGIN_MESSAGE_MAP(CExtensionListControl, CWdsListControl)
     ON_NOTIFY_REFLECT(LVN_ITEMCHANGED, OnLvnItemChanged)
     ON_WM_CONTEXTMENU()
     ON_COMMAND(ID_EXTLIST_SEARCH_EXTENSION, &CExtensionListControl::OnSearchExtension)
+    ON_COMMAND(ID_FILTER_EXCLUDE_ITEM, &CExtensionListControl::OnExcludeExtension)
     ON_WM_KEYDOWN()
 END_MESSAGE_MAP()
 
@@ -310,6 +313,7 @@ void CExtensionListControl::OnContextMenu(CWnd* /*pWnd*/, CPoint point)
     menu.CreatePopupMenu();
     menu.AppendMenu(MF_STRING, ID_EXTLIST_SEARCH_EXTENSION, std::format(
         L"{} - {}", Localization::Lookup(IDS_COL_EXTENSION), Localization::Lookup(IDS_SEARCH_TITLE)).c_str());
+    menu.AppendMenu(MF_STRING, ID_FILTER_EXCLUDE_ITEM, Localization::Lookup(IDS_MENU_EXCLUDE_ITEM).c_str());
 
     // Add search bitmap to menu
     if (m_searchBitmap.GetSafeHandle() == nullptr)
@@ -333,4 +337,20 @@ void CExtensionListControl::OnSearchExtension()
         searchTerm, false, false, true, true);
 
     CMainFrame::Get()->GetFileTabbedView()->SetActiveSearchView();
+}
+
+void CExtensionListControl::OnExcludeExtension()
+{
+    const std::wstring ext = GetSelectedExtension();
+    if (ext.empty()) return;
+
+    // Build a glob pattern: e.g. "*.txt"; for no-extension files use "*."
+    const std::wstring pattern = (ext == L".") ? L"*." : (L"*" + ext);
+
+    std::wstring& current = COptions::FilteringExcludeFiles.Obj();
+    if (!current.empty() && current.back() != L'\n') current += L"\r\n";
+    current += pattern;
+
+    CFiltering::CompileFilters();
+    AfxGetMainWnd()->SendMessage(WM_COMMAND, ID_REFRESH_ALL);
 }

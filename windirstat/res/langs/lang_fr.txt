@@ -94,6 +94,7 @@ IDS_MENU_EDIT=&Edition
 IDS_MENU_ELEVATED=&Exécuter avec élévation des privilèges
 IDS_MENU_EMPTY_BIN=&Vider la corbeille
 IDS_MENU_EMPTY_FOLDER=Dossier vide
+IDS_MENU_EXCLUDE_ITEM=Ajouter au filtre d'e&xclusion
 IDS_MENU_EXIT=&Quitter
 IDS_MENU_EXPLORER_MENU=Menu de l'Explorateur Windows
 IDS_MENU_EXPLORER_SELECT=&Explorer ici

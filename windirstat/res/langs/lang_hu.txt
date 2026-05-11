@@ -94,6 +94,7 @@ IDS_MENU_EDIT=Sz&erkesztés
 IDS_MENU_ELEVATED=Végrehajtás emelt jogosultsággal
 IDS_MENU_EMPTY_BIN=&Lomtár ürítése
 IDS_MENU_EMPTY_FOLDER=Üres mappa
+IDS_MENU_EXCLUDE_ITEM=Hozzáadás a k&izárási szűrőhöz
 IDS_MENU_EXIT=&Kilépés
 IDS_MENU_EXPLORER_MENU=Windows Intéző menü
 IDS_MENU_EXPLORER_SELECT=&Intéző megnyitása

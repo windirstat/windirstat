@@ -96,6 +96,7 @@ constexpr std::wstring_view IDS_MENU_EDIT = L"IDS_MENU_EDIT";
 constexpr std::wstring_view IDS_MENU_ELEVATED = L"IDS_MENU_ELEVATED";
 constexpr std::wstring_view IDS_MENU_EMPTY_BIN = L"IDS_MENU_EMPTY_BIN";
 constexpr std::wstring_view IDS_MENU_EMPTY_FOLDER = L"IDS_MENU_EMPTY_FOLDER";
+constexpr std::wstring_view IDS_MENU_EXCLUDE_ITEM = L"IDS_MENU_EXCLUDE_ITEM";
 constexpr std::wstring_view IDS_MENU_EXIT = L"IDS_MENU_EXIT";
 constexpr std::wstring_view IDS_MENU_EXPLORER_MENU = L"IDS_MENU_EXPLORER_MENU";
 constexpr std::wstring_view IDS_MENU_EXPLORER_SELECT = L"IDS_MENU_EXPLORER_SELECT";

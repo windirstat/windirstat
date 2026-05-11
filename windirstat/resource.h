@@ -221,6 +221,7 @@
 #define ID_TOOLS_WATCHER                32940
 #define ID_TREEMAP_SHOW_EXTENSIONS      32941
 #define ID_VIEW_LARGE_TOOLBAR           32942
+#define ID_FILTER_EXCLUDE_ITEM          32943
 #define IDS_AUTHOR_EMAIL                57345
 #define IDS_URL_WEBSITE                 57346
 #define IDS_URL_HELP                    57347

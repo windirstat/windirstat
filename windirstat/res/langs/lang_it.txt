@@ -94,6 +94,7 @@ IDS_MENU_EDIT=&Modifica
 IDS_MENU_ELEVATED=Esegui come amministratore
 IDS_MENU_EMPTY_BIN=Svuota &Cestino
 IDS_MENU_EMPTY_FOLDER=Cartella vuota
+IDS_MENU_EXCLUDE_ITEM=Aggiungi al filtro di e&sclusione
 IDS_MENU_EXIT=&Esci
 IDS_MENU_EXPLORER_MENU=Menù di Esplora risorse di Windows
 IDS_MENU_EXPLORER_SELECT=&Explorer qui
