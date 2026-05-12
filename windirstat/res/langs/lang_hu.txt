@@ -42,6 +42,8 @@ IDS_COL_TIME=Idő
 IDS_COL_TOTAL=Teljes
 IDS_COL_USED_TOTAL=Foglalt/Teljes
 IDS_COLLAPSE=&Bezár
+IDS_COMPARE_RESULTS_INVALID_FILE=A kijelölt CSV nem érvényes exportált eredményfájl.
+IDS_COMPARE_RESULTS_UNSUPPORTED_FILE=A kijelölt CSV nem támogatott eredményfájl.
 IDS_COMPUTE_HASH=Hash kiszámítása
 IDS_CSV_FILES=CSV fájlok
 IDS_DELETE_TITLE=IDS_DRIVE_ITEM_FREEsTOTALs={} szabad a(z) {} -ból

@@ -1181,13 +1181,13 @@ void CDirStatDoc::OnCompareResults()
 
     if (resultsCsvCompare.status == ResultsCsvCompareStatus::InvalidResultsFile)
     {
-        WdsMessageBox(L"The selected CSV is not a valid exported results file.", MB_OK | MB_ICONERROR);
+        WdsMessageBox(Localization::Lookup(IDS_COMPARE_RESULTS_INVALID_FILE), MB_OK | MB_ICONERROR);
         return;
     }
 
     if (resultsCsvCompare.result.previousSnapshotLabel.empty())
     {
-        WdsMessageBox(L"The selected CSV is not a supported results file.", MB_OK | MB_ICONERROR);
+        WdsMessageBox(Localization::Lookup(IDS_COMPARE_RESULTS_UNSUPPORTED_FILE), MB_OK | MB_ICONERROR);
         return;
     }
 
