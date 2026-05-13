@@ -182,6 +182,12 @@ BOOL CDirStatDoc::OnOpenDocument(CItem* newroot)
     m_rootItem = newroot;
     m_zoomItem = m_rootItem;
 
+    // Populate the Largest Files list from the pre-built tree
+    for (CItem* item : CItem::GetItemsRecursive({ m_rootItem }))
+    {
+        CFileTopControl::Get()->ProcessTop(item);
+    }
+
     UpdateAllViews(nullptr, HINT_NEWROOT);
     StartScanningEngine({});
     return true;
