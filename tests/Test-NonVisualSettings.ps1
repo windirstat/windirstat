@@ -784,7 +784,7 @@ function Invoke-WinDirStatCsv {
         Remove-Item -LiteralPath $Csv -Force
     }
 
-    $flag = if ($Duplicates) { '/savedupestocsv' } else { '/savetocsv' }
+    $flag = if ($Duplicates) { '/savedupesto' } else { '/saveto' }
     $run = Invoke-ProcessWithTimeout -FileName $Exe -Arguments @($flag, $Csv, $Root) -WorkingDirectory $runRoot
     if ($run.ExitCode -ne 0) {
         throw "WinDirStat exited with code $($run.ExitCode). StdErr: $($run.StdErr)"
@@ -1688,6 +1688,118 @@ try {
             CommandLine = $lastCommand
             ElapsedSeconds = [math]::Round($elapsed, 3)
         }
+    }))
+
+    [void] $results.Add((Invoke-Scenario -Name 'Json_Results_ValidJsonAndStructure' -Behavior 'Saving scan results to a .json path should produce valid JSON: an array of objects with a required set of properties, hex-formatted WinDirStat Attributes and Index fields, and ISO-8601 Last Change timestamps.' -Body {
+        param($ctx)
+
+        $sections = New-BaseIniSections
+        $jsonPath = Join-Path $workRoot 'json-results-structure.json'
+        Write-PortableIni -Path (Join-Path $runRoot 'WinDirStat.ini') -Sections $sections
+        $run = Invoke-WinDirStatCsv -Exe $testExe -Csv $jsonPath -Root $scanRoot
+
+        $rawText = Get-Content -LiteralPath $jsonPath -Raw -Encoding UTF8
+        $items = @($rawText | ConvertFrom-Json)
+
+        Assert-True $ctx 'JSON array is non-empty' ($items.Count -gt 0)
+
+        $requiredProps = @('Name', 'Files', 'Folders', 'Logical Size', 'Physical Size', 'Attributes', 'Last Change', 'WinDirStat Attributes', 'Index')
+        foreach ($prop in $requiredProps) {
+            Assert-True $ctx "First item has '$prop' property" ($null -ne $items[0].PSObject.Properties[$prop])
+        }
+
+        $scanRootNorm = Normalize-ComparePath $scanRoot
+        $jsonNames = @($items | ForEach-Object { Normalize-ComparePath $_.Name })
+        Assert-True $ctx 'Scan root appears in results' ($scanRootNorm -in $jsonNames)
+
+        $badWdsAttr = @($items | Where-Object { $_.'WinDirStat Attributes' -notmatch '^0x[0-9A-Fa-f]{8}$' })
+        Assert-True $ctx 'All WinDirStat Attributes are 0x-prefixed hex' ($badWdsAttr.Count -eq 0)
+
+        $badIndex = @($items | Where-Object { $_.Index -notmatch '^0x[0-9A-Fa-f]{16}$' })
+        Assert-True $ctx 'All Index values are 0x-prefixed hex' ($badIndex.Count -eq 0)
+
+        $badTimestamp = @($items | Where-Object {
+            $v = $_.'Last Change'
+            if ($v -is [datetime]) { return $false }
+            $v -notmatch '^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z)?$'
+        })
+        Assert-True $ctx 'All Last Change values are ISO-8601 UTC timestamps or empty' ($badTimestamp.Count -eq 0)
+
+        $badFiles = @($items | Where-Object { $_.'Files' -is [string] })
+        Assert-True $ctx 'All Files values are numeric' ($badFiles.Count -eq 0)
+
+        $badFolders = @($items | Where-Object { $_.'Folders' -is [string] })
+        Assert-True $ctx 'All Folders values are numeric' ($badFolders.Count -eq 0)
+
+        [pscustomobject] @{ CommandLine = $run.CommandLine; ElapsedSeconds = $run.ElapsedSeconds }
+    }))
+
+    [void] $results.Add((Invoke-Scenario -Name 'Json_Results_ContentMatchesCsv' -Behavior 'Saving the same scan to .json and .csv should yield the same set of file-system paths in both outputs.' -Body {
+        param($ctx)
+
+        $sections = New-BaseIniSections
+        $csvPath = Join-Path $workRoot 'json-vs-csv.csv'
+        $jsonPath = Join-Path $workRoot 'json-vs-csv.json'
+
+        Write-PortableIni -Path (Join-Path $runRoot 'WinDirStat.ini') -Sections $sections
+        $csvRun = Invoke-WinDirStatCsv -Exe $testExe -Csv $csvPath -Root $scanRoot
+
+        Write-PortableIni -Path (Join-Path $runRoot 'WinDirStat.ini') -Sections $sections
+        $jsonRun = Invoke-WinDirStatCsv -Exe $testExe -Csv $jsonPath -Root $scanRoot
+
+        $csvPaths = @(Read-CsvPaths -Csv $csvPath | Where-Object { Test-PathUnder -Path $_ -Root $scanRoot })
+
+        $jsonItems = @(Get-Content -LiteralPath $jsonPath -Raw -Encoding UTF8 | ConvertFrom-Json)
+        $jsonPaths = @($jsonItems | ForEach-Object {
+            try { $n = Normalize-ComparePath $_.Name; if (Test-PathUnder -Path $n -Root $scanRoot) { $n } } catch {}
+        } | Where-Object { $_ })
+
+        Assert-SetEqual $ctx 'JSON and CSV report the same paths' -Actual $jsonPaths -Expected $csvPaths
+
+        [pscustomobject] @{
+            CommandLine = $jsonRun.CommandLine
+            ElapsedSeconds = [math]::Round($csvRun.ElapsedSeconds + $jsonRun.ElapsedSeconds, 3)
+        }
+    }))
+
+    [void] $results.Add((Invoke-Scenario -Name 'Json_Duplicates_ValidJsonAndStructure' -Behavior 'Saving duplicate results to a .json path should produce valid JSON: an array where the two paired duplicates share a Hash Prefix and all entries carry the expected typed fields.' -Body {
+        param($ctx)
+
+        $sections = New-BaseIniSections
+        Set-IniValue $sections 'Options' 'UseFastScanEngine' 0
+        Set-IniValue $sections 'DupeView' 'ScanForDuplicates' 1
+        $jsonPath = Join-Path $workRoot 'json-dupes-structure.json'
+        Write-PortableIni -Path (Join-Path $runRoot 'WinDirStat.ini') -Sections $sections
+        $run = Invoke-WinDirStatCsv -Exe $testExe -Csv $jsonPath -Root $dupeRoot -Duplicates
+
+        $rawText = Get-Content -LiteralPath $jsonPath -Raw -Encoding UTF8
+        $items = @($rawText | ConvertFrom-Json)
+
+        Assert-Equal $ctx 'Duplicate JSON entry count' $items.Count 2
+
+        $requiredDupeProps = @('Hash Prefix', 'Name', 'Logical Size', 'Physical Size', 'Last Change', 'Attributes')
+        if ($items.Count -gt 0) {
+            foreach ($prop in $requiredDupeProps) {
+                Assert-True $ctx "Dupe entry has '$prop' property" ($null -ne $items[0].PSObject.Properties[$prop])
+            }
+        }
+
+        if ($items.Count -eq 2) {
+            Assert-Equal $ctx 'Duplicates share the same Hash Prefix' $items[0].'Hash Prefix' $items[1].'Hash Prefix'
+            Assert-True $ctx 'Hash Prefix is non-empty' (![string]::IsNullOrEmpty($items[0].'Hash Prefix'))
+        }
+
+        $badTimestamp = @($items | Where-Object {
+            $v = $_.'Last Change'
+            if ($v -is [datetime]) { return $false }
+            $v -notmatch '^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z)?$'
+        })
+        Assert-True $ctx 'All dupe Last Change values are ISO-8601 UTC timestamps or empty' ($badTimestamp.Count -eq 0)
+
+        $badSizes = @($items | Where-Object { $_.'Logical Size' -is [string] })
+        Assert-True $ctx 'All dupe Logical Size values are numeric' ($badSizes.Count -eq 0)
+
+        [pscustomobject] @{ CommandLine = $run.CommandLine; ElapsedSeconds = $run.ElapsedSeconds }
     }))
 
     $failed = @($results | Where-Object { $_.Status -eq 'FAIL' })

@@ -58,8 +58,8 @@ public:
     static void LegacyUninstall();
     static std::tuple<ULONGLONG, ULONGLONG> GetFreeDiskSpace(const std::wstring& pszRootPath);
     static CDirStatApp* Get() { return &s_singleton; }
-    std::wstring GetSaveToCsvPath() const { return m_saveToCsvPath; }
-    std::wstring GetSaveDupesToCsvPath() const { return m_saveDupesToCsvPath; }
+    std::wstring GetSaveToPath() const { return m_saveToPath; }
+    std::wstring GetSaveDupesToPath() const { return m_saveDupesToPath; }
 
 protected:
 
@@ -68,13 +68,13 @@ protected:
 
     CSingleDocTemplate* m_pDocTemplate{nullptr}; // MFC voodoo.
 
-    CIconHandler m_iconList;           // Central icon list
-    COLORREF m_altColor;               // Coloring of compressed items
-    COLORREF m_altEncryptionColor;     // Coloring of encrypted items
-    std::wstring m_loadFromCsvPath;    // Path to load csv file from
-    std::wstring m_saveToCsvPath;      // Path to save csv file to
-    std::wstring m_saveDupesToCsvPath; // Path to save duplicates csv file to
-    static CDirStatApp s_singleton;    // Singleton application instance
+    CIconHandler m_iconList;        // Central icon list
+    COLORREF m_altColor;            // Coloring of compressed items
+    COLORREF m_altEncryptionColor;  // Coloring of encrypted items
+    std::wstring m_loadFromPath;    // Path to load results from
+    std::wstring m_saveToPath;      // Path to save results to
+    std::wstring m_saveDupesToPath; // Path to save duplicates to
+    static CDirStatApp s_singleton; // Singleton application instance
 #ifdef _DEBUG
     CWDSTracerConsole m_vtraceConsole;
 #endif

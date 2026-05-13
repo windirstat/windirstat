@@ -230,9 +230,9 @@ CString AFXGetRegPath(LPCTSTR lpszPostFix, LPCTSTR)
 class CWinDirStatCommandLineInfo final : public CCommandLineInfo
 {
     std::wstring m_pendingFlag;
-    const std::wstring saveToCSVFlag = L"savetocsv";
-    const std::wstring saveDupesToCSVFlag = L"savedupestocsv";
-    const std::wstring loadFromCSVFlag = L"loadfromcsv";
+    const std::wstring saveToFlag = L"saveto";
+    const std::wstring saveDupesToFlag = L"savedupesto";
+    const std::wstring loadFromFlag = L"loadfrom";
     const std::wstring legacyUninstallFlag = L"legacyuninstall";
 
 public:
@@ -249,19 +249,19 @@ public:
         // If we have a pending flag, this non-flag param is its value
         if (!m_pendingFlag.empty() && !bFlag)
         {
-            if (m_pendingFlag == saveToCSVFlag)
+            if (m_pendingFlag == saveToFlag)
             {
-                CDirStatApp::Get()->m_saveToCsvPath = param;
+                CDirStatApp::Get()->m_saveToPath = param;
                 COptions::ScanForDuplicates = false;
             }
-            else if (m_pendingFlag == saveDupesToCSVFlag)
+            else if (m_pendingFlag == saveDupesToFlag)
             {
-                CDirStatApp::Get()->m_saveDupesToCsvPath = param;
+                CDirStatApp::Get()->m_saveDupesToPath = param;
                 COptions::ScanForDuplicates = true;
             }
-            else if (m_pendingFlag == loadFromCSVFlag)
+            else if (m_pendingFlag == loadFromFlag)
             {
-                CDirStatApp::Get()->m_loadFromCsvPath = param;
+                CDirStatApp::Get()->m_loadFromPath = param;
             }
             
             m_pendingFlag.clear();
@@ -283,7 +283,7 @@ public:
 
         // Handle flags
         param = MakeLower(param);
-        if (param == saveToCSVFlag || param == saveDupesToCSVFlag || param == loadFromCSVFlag)
+        if (param == saveToFlag || param == saveDupesToFlag || param == loadFromFlag)
         {
             m_pendingFlag = param;
         }
@@ -345,7 +345,7 @@ BOOL CDirStatApp::InitInstance()
     ProcessShellCommand(cmdInfo);
 
     // Check if we should hide the app window
-    const bool hideApp = !m_saveToCsvPath.empty() || !m_saveDupesToCsvPath.empty();
+    const bool hideApp = !m_saveToPath.empty() || !m_saveDupesToPath.empty();
     if (hideApp) m_nCmdShow = SW_HIDE;
 
     CMainFrame::Get()->InitialShowWindow();
@@ -387,10 +387,10 @@ BOOL CDirStatApp::InitInstance()
         }
     }
 
-    // Load from CSV if specified via command line
-    if (!m_loadFromCsvPath.empty())
+    // Load results if specified via command line
+    if (!m_loadFromPath.empty())
     {
-        if (CItem* newroot = LoadResults(m_loadFromCsvPath); newroot != nullptr)
+        if (CItem* newroot = LoadResults(m_loadFromPath); newroot != nullptr)
         {
             CDirStatDoc::Get()->OnOpenDocument(newroot);
         }

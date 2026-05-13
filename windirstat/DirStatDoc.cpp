@@ -1116,8 +1116,8 @@ void CDirStatDoc::OnRefreshAll()
 void CDirStatDoc::OnSaveResults()
 {
     // Request the file path from the user
-    const std::wstring fileSelectString = std::format(L"{} (*.csv)|*.csv|{} (*.*)|*.*||",
-        Localization::Lookup(IDS_CSV_FILES), Localization::Lookup(IDS_ALL_FILES));
+    const std::wstring fileSelectString = std::format(L"{} (*.csv;*.json)|*.csv;*.json|{} (*.*)|*.*||",
+        Localization::Lookup(IDS_FILE_FILTER), Localization::Lookup(IDS_ALL_FILES));
     CFileDialog dlg(FALSE, L"csv", nullptr, OFN_EXPLORER | OFN_DONTADDTORECENT, fileSelectString.c_str());
     if (dlg.DoModal() != IDOK) return;
 
@@ -1130,8 +1130,8 @@ void CDirStatDoc::OnSaveResults()
 void CDirStatDoc::OnSaveDuplicates()
 {
     // Request the file path from the user
-    const std::wstring fileSelectString = std::format(L"{} (*.csv)|*.csv|{} (*.*)|*.*||",
-        Localization::Lookup(IDS_CSV_FILES), Localization::Lookup(IDS_ALL_FILES));
+    const std::wstring fileSelectString = std::format(L"{} (*.csv;*.json)|*.csv;*.json|{} (*.*)|*.*||",
+        Localization::Lookup(IDS_FILE_FILTER), Localization::Lookup(IDS_ALL_FILES));
     CFileDialog dlg(FALSE, L"csv", nullptr, OFN_EXPLORER | OFN_DONTADDTORECENT, fileSelectString.c_str());
     if (dlg.DoModal() != IDOK) return;
 
@@ -1144,8 +1144,8 @@ void CDirStatDoc::OnSaveDuplicates()
 void CDirStatDoc::OnLoadResults()
 {
     // Request the file path from the user
-    const std::wstring fileSelectString = std::format(L"{} (*.csv)|*.csv|{} (*.*)|*.*||",
-        Localization::Lookup(IDS_CSV_FILES), Localization::Lookup(IDS_ALL_FILES));
+    const std::wstring fileSelectString = std::format(L"{} (*.csv;*.json)|*.csv;*.json|{} (*.*)|*.*||",
+        Localization::Lookup(IDS_FILE_FILTER), Localization::Lookup(IDS_ALL_FILES));
     CFileDialog dlg(TRUE, L"csv", nullptr, OFN_EXPLORER | OFN_DONTADDTORECENT | OFN_PATHMUSTEXIST, fileSelectString.c_str());
     if (dlg.DoModal() != IDOK) return;
 
@@ -1987,18 +1987,18 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
         Get()->RebuildExtensionData();
 
         // Handle quiet save mode if path is set
-        if (const auto csvPath = CDirStatApp::Get()->GetSaveToCsvPath(); !csvPath.empty())
+        if (const auto savePath = CDirStatApp::Get()->GetSaveToPath(); !savePath.empty())
         {
             // Get the document and root item
             const auto* doc = CDirStatDoc::Get();
             if (doc == nullptr || !doc->HasRootItem()) ExitProcess(1);
 
             // Run scan and exit with success == 0 or failure == 1
-            ExitProcess(SaveResults(csvPath, doc->GetRootItem()) ? 0 : 1);
+            ExitProcess(SaveResults(savePath, doc->GetRootItem()) ? 0 : 1);
         }
 
         // Handle quiet save duplicates mode if path is set
-        if (const auto dupeCsvPath = CDirStatApp::Get()->GetSaveDupesToCsvPath(); !dupeCsvPath.empty())
+        if (const auto dupeSavePath = CDirStatApp::Get()->GetSaveDupesToPath(); !dupeSavePath.empty())
         {
             // Get the duplicate root item
             CFileDupeControl::Get()->SortItems();
@@ -2006,7 +2006,7 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
             if (dupeRoot == nullptr) ExitProcess(1);
 
             // Run scan and exit with success == 0 or failure == 1
-            ExitProcess(SaveDuplicates(dupeCsvPath, dupeRoot) ? 0 : 1);
+            ExitProcess(SaveDuplicates(dupeSavePath, dupeRoot) ? 0 : 1);
         }
 
         // Invoke a UI thread to do updates

@@ -308,7 +308,7 @@ function Invoke-WinDirStatCsvScan {
         [Parameter(Mandatory)] [string] $Root
     )
 
-    $arguments = "/savetocsv `"$Csv`" `"$Root`""
+    $arguments = "/saveto `"$Csv`" `"$Root`""
     $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
     $startInfo.FileName = $Exe
     $startInfo.Arguments = $arguments
@@ -564,7 +564,7 @@ function Invoke-Scenario {
     $actualRows = @()
     $missingRows = @()
     $unexpectedRows = @()
-    $commandLine = "`"$Exe`" /savetocsv `"$scenarioCsv`" `"$Root`""
+    $commandLine = "`"$Exe`" /saveto `"$scenarioCsv`" `"$Root`""
     $exitCode = $null
     $elapsedSeconds = $null
     $errorText = $null
