@@ -378,7 +378,7 @@ BOOL CSelectDrivesDlg::OnInitDialog()
     m_driveList.ShowGrid(COptions::ListGrid);
     m_driveList.ShowStripes(COptions::ListStripes);
     m_driveList.ShowFullRowSelection(COptions::ListFullRowSelection);
-    m_driveList.SetExtendedStyle(m_driveList.GetExtendedStyle() | LVS_EX_HEADERDRAGDROP);
+    m_driveList.SetExtendedStyle(m_driveList.GetExtendedStyle() | LVS_EX_HEADERDRAGDROP | LVS_EX_FULLROWSELECT);
 
     m_driveList.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_NAME).c_str(), LVCFMT_LEFT, DpiRest(150), COL_DRIVES_NAME);
     m_driveList.InsertColumn(CHAR_MAX, Localization::Lookup(IDS_COL_TOTAL).c_str(), LVCFMT_RIGHT, DpiRest(65), COL_DRIVES_TOTAL);
