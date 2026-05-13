@@ -74,7 +74,7 @@
 #include <format>
 #include <fstream>
 #include <functional>
-#include <iostream>
+#include <istream>
 #include <map>
 #include <memory>
 #include <mutex>
