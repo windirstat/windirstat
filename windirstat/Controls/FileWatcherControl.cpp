@@ -75,6 +75,7 @@ void CFileWatcherControl::StartMonitoring()
 
 void CFileWatcherControl::StopMonitoring()
 {
+    for (auto& thread : m_watchThreads) thread.request_stop();
     m_watchThreads.clear();
 }
 
@@ -89,10 +90,17 @@ void CFileWatcherControl::WatchDirectory(const std::wstring& path, const std::st
     if (pathWithSlash.back() != L'\\') pathWithSlash += L'\\';
 
     const SmartPointer<HANDLE> hEvent(CloseHandle, CreateEvent(nullptr, TRUE, FALSE, nullptr));
+    const SmartPointer<HANDLE> hStopEvent(CloseHandle, CreateEvent(nullptr, TRUE, FALSE, nullptr));
     OVERLAPPED overlapped{ .hEvent = hEvent };
     std::vector<BYTE> buffer(64ul * 1024ul);
 
-    std::stop_callback stopCallback(stopToken, [handle = hDir.Get()]() { CancelIoEx(handle, nullptr); });
+    std::stop_callback stopCallback(stopToken, [handle = hDir.Get(), stop = hStopEvent.Get()]()
+    {
+        SetEvent(stop);
+        CancelIoEx(handle, nullptr);
+    });
+
+    const std::array<HANDLE, 2> waitHandles = { hEvent, hStopEvent };
 
     for (; !stopToken.stop_requested(); ResetEvent(overlapped.hEvent))
     {
@@ -103,7 +111,7 @@ void CFileWatcherControl::WatchDirectory(const std::wstring& path, const std::st
             if (GetLastError() != ERROR_IO_PENDING) break;
         }
 
-        if (WaitForSingleObject(overlapped.hEvent, INFINITE) != WAIT_OBJECT_0) continue;
+        if (WaitForMultipleObjects(static_cast<DWORD>(waitHandles.size()), waitHandles.data(), FALSE, INFINITE) != WAIT_OBJECT_0) break;
         if (stopToken.stop_requested()) break;
 
         DWORD bytesReturned = 0;
