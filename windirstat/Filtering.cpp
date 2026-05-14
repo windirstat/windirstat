@@ -29,6 +29,8 @@ std::vector<std::wregex> CFiltering::IncludeDirsRegex;
 std::vector<std::wregex> CFiltering::IncludeFilesRegex;
 std::vector<std::wstring> CFiltering::IncludeDirsAnchors;
 ULONGLONG CFiltering::SizeMinimumCalculated = 0;
+FILETIME  CFiltering::MaxAgeFileTimeCutoff  = {};
+bool      CFiltering::FilterActive          = false;
 
 // --- Private helpers ---
 
@@ -132,11 +134,7 @@ std::wstring CFiltering::NormalizePathRegex(std::wstring_view pattern)
 
 bool CFiltering::IsFilterActive()
 {
-    return !COptions::FilteringExcludeDirs.Obj().empty() ||
-           !COptions::FilteringExcludeFiles.Obj().empty() ||
-           !COptions::FilteringIncludeDirs.Obj().empty() ||
-           !COptions::FilteringIncludeFiles.Obj().empty() ||
-           COptions::FilteringSizeMinimum.Obj() != 0;
+    return FilterActive;
 }
 
 void CFiltering::CompileFilters()
@@ -188,6 +186,23 @@ void CFiltering::CompileFilters()
 
     // Calculate the total number of bytes to test as a scan minimum
     SizeMinimumCalculated = static_cast<ULONGLONG>(COptions::FilteringSizeMinimum) * (1ull << (10 * static_cast<int>(COptions::FilteringSizeUnits)));
+
+    // Calculate the FILETIME cutoff for max-age filtering
+    MaxAgeFileTimeCutoff = {};
+    if (COptions::FilteringMaxAgeDays > 0)
+    {
+        FILETIME ft;
+        GetSystemTimeAsFileTime(&ft); // Windows 7 compatible
+        uint64_t t = (uint64_t(ft.dwHighDateTime) << 32) | ft.dwLowDateTime;
+        t -= COptions::FilteringMaxAgeDays.Obj() * 864'000'000'000ULL; // 100ns ticks per day
+        MaxAgeFileTimeCutoff ={ DWORD(t), DWORD(t >> 32) };
+    }
+
+    // Cache whether any filter is active so callers can short-circuit cheaply
+    FilterActive = !ExcludeDirsRegex.empty() || !ExcludeFilesRegex.empty() ||
+                   !IncludeDirsRegex.empty()  || !IncludeFilesRegex.empty() ||
+                   SizeMinimumCalculated != 0  ||
+                   std::bit_cast<ULONGLONG>(MaxAgeFileTimeCutoff) != 0;
 }
 
 std::wstring CFiltering::WithoutTrailingBackslashes(std::wstring path)
@@ -214,6 +229,7 @@ bool CFiltering::MatchesAnyPath(const std::wstring& path, const std::vector<std:
 
 bool CFiltering::ShouldScanDirectory(const std::wstring& path)
 {
+    if (!FilterActive) return true;
     if (MatchesAnyPath(path, ExcludeDirsRegex)) return false;
     if (IncludeDirsRegex.empty()) return true;
     if (MatchesAnyPath(path, IncludeDirsRegex)) return true;
@@ -233,6 +249,8 @@ bool CFiltering::ShouldScanDirectory(const std::wstring& path)
 
 bool CFiltering::ShouldIncludeFile(const Finder& finder)
 {
+    if (!FilterActive) return true;
+
     // Exclude files matching name filter
     if (!ExcludeFilesRegex.empty() && std::ranges::any_of(ExcludeFilesRegex,
         [&finder](const auto& pattern) { return std::regex_match(finder.GetFileName(), pattern); }))
@@ -257,6 +275,14 @@ bool CFiltering::ShouldIncludeFile(const Finder& finder)
     if (SizeMinimumCalculated > 0 && finder.GetFileSizeLogical() < SizeMinimumCalculated)
     {
         return false;
+    }
+
+    // Exclude files older than the max-age cutoff
+    if (std::bit_cast<ULONGLONG>(MaxAgeFileTimeCutoff) != 0)
+    {
+        const FILETIME ft = finder.GetLastWriteTime();
+        if (CompareFileTime(&ft, &MaxAgeFileTimeCutoff) < 0)
+            return false;
     }
 
     return true;

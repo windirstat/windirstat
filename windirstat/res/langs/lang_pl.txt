@@ -62,6 +62,7 @@ IDS_FILE_SELECT=Pozwala wybrać dyski.\nOpen
 IDS_FREESPACE_ITEM=<Wolna przestrzeń>
 IDS_GENERIC_BLANK=
 IDS_GENERIC_CANCEL=&Anuluj
+IDS_GENERIC_DAYS=dni
 IDS_GENERIC_NO=&Nie
 IDS_GENERIC_OK=&OK
 IDS_GENERIC_YES=&Tak
@@ -176,6 +177,7 @@ IDS_PAGE_FILTERING_EXCLUDE_FILES=Wzory nazw plików do wykluczenia:
 IDS_PAGE_FILTERING_INCLUDE_DIRS=Ścieżki folderów do uwzględnienia:
 IDS_PAGE_FILTERING_INCLUDE_FILES=Wzory nazw plików do uwzględnienia:
 IDS_PAGE_FILTERING_INVALID_FILTER=Nieprawidłowy filtr:
+IDS_PAGE_FILTERING_MAX_AGE_DAYS=Wyklucz pliki starsze niż (0 = wyłączone):
 IDS_PAGE_FILTERING_SIZE_MIN=Wyklucz pliki mniejsze niż:
 IDS_PAGE_FILTERING_TITLE=Filtrowanie
 IDS_PAGE_FILTERING_TOOLTIP_PREFIX=Wymień jedno wyklucenie na wiersz. Przykłady:

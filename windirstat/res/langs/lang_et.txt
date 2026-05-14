@@ -62,6 +62,7 @@ IDS_FILE_SELECT=Ava ajamite kogum.\nAva...
 IDS_FREESPACE_ITEM=<Vaba maht>
 IDS_GENERIC_BLANK=
 IDS_GENERIC_CANCEL=&Loobu
+IDS_GENERIC_DAYS=päeva
 IDS_GENERIC_NO=&Ei
 IDS_GENERIC_OK=&OK
 IDS_GENERIC_YES=&Jah
@@ -176,6 +177,7 @@ IDS_PAGE_FILTERING_EXCLUDE_FILES=Failinimede mustrid, mida välistada:
 IDS_PAGE_FILTERING_INCLUDE_DIRS=Kaustade teed, mida kaasata:
 IDS_PAGE_FILTERING_INCLUDE_FILES=Failinimede mustrid, mida kaasata:
 IDS_PAGE_FILTERING_INVALID_FILTER=Kehtetu filter:
+IDS_PAGE_FILTERING_MAX_AGE_DAYS=Failid vanemad kui (0 = keelatud):
 IDS_PAGE_FILTERING_SIZE_MIN=Välista failid, mis on väiksemad kui:
 IDS_PAGE_FILTERING_TITLE=Filtreerimine
 IDS_PAGE_FILTERING_TOOLTIP_PREFIX=Loetlege üks välistus rea kohta. Näited:

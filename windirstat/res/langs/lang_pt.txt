@@ -62,6 +62,7 @@ IDS_FILE_SELECT=Abrir uma lista de discos.\nOpen
 IDS_FREESPACE_ITEM=<Espaço Livre>
 IDS_GENERIC_BLANK=
 IDS_GENERIC_CANCEL=&Cancelar
+IDS_GENERIC_DAYS=dias
 IDS_GENERIC_NO=&Não
 IDS_GENERIC_OK=&OK
 IDS_GENERIC_YES=&Sim
@@ -176,6 +177,7 @@ IDS_PAGE_FILTERING_EXCLUDE_FILES=Padrões de nomes de arquivos para excluir:
 IDS_PAGE_FILTERING_INCLUDE_DIRS=Caminhos de pastas para incluir:
 IDS_PAGE_FILTERING_INCLUDE_FILES=Padrões de nomes de arquivos para incluir:
 IDS_PAGE_FILTERING_INVALID_FILTER=Filtro inválido:
+IDS_PAGE_FILTERING_MAX_AGE_DAYS=Ficheiros mais antigos que (0 = desativado):
 IDS_PAGE_FILTERING_SIZE_MIN=Excluir arquivos menores que:
 IDS_PAGE_FILTERING_TITLE=Filtragem
 IDS_PAGE_FILTERING_TOOLTIP_PREFIX=Liste uma exclusão por linha. Exemplos:

@@ -62,6 +62,7 @@ IDS_FILE_SELECT=Odpri zbirko pogonov.\nOdpri...
 IDS_FREESPACE_ITEM=<Prostor>
 IDS_GENERIC_BLANK=
 IDS_GENERIC_CANCEL=&Prekliči
+IDS_GENERIC_DAYS=dni
 IDS_GENERIC_NO=&Ne
 IDS_GENERIC_OK=&V redu
 IDS_GENERIC_YES=&Da
@@ -176,6 +177,7 @@ IDS_PAGE_FILTERING_EXCLUDE_FILES=Vzorci imen datotek za izključitev:
 IDS_PAGE_FILTERING_INCLUDE_DIRS=Poti map za vključitev:
 IDS_PAGE_FILTERING_INCLUDE_FILES=Vzorci imen datotek za vključitev:
 IDS_PAGE_FILTERING_INVALID_FILTER=Neveljaven filter:
+IDS_PAGE_FILTERING_MAX_AGE_DAYS=Izloči datoteke, starejše od (0 = onemogočeno):
 IDS_PAGE_FILTERING_SIZE_MIN=Izključi datoteke manjše od:
 IDS_PAGE_FILTERING_TITLE=Filtriranje
 IDS_PAGE_FILTERING_TOOLTIP_PREFIX=Naštej eno izključitev na vrstico. Primeri:

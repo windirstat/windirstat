@@ -35,6 +35,8 @@ public:
     static std::vector<std::wregex> IncludeFilesRegex;
     static std::vector<std::wstring> IncludeDirsAnchors;
     static ULONGLONG SizeMinimumCalculated;
+    static FILETIME MaxAgeFileTimeCutoff;
+    static bool FilterActive;
 
     static void CompileFilters();
     static bool IsFilterActive();

@@ -137,6 +137,7 @@
 #define IDC_FILTERING_INCLUDE_FILES     1120
 #define IDC_HASH_ALGORITHM              1121
 #define IDC_FILTER_BUTTON               1122
+#define IDC_FILTERING_MAX_AGE_DAYS      1124
 #define ID_WDS_CONTROL                  4711
 #define ID_TREEMAP_ZOOMRESET            32767
 #define ID_CLEANUP_EXPLORER_SELECT      32768

@@ -62,6 +62,7 @@ IDS_FILE_SELECT=Een verzameling van stations openen.\nOpenen...
 IDS_FREESPACE_ITEM=<Beschikbare ruimte>
 IDS_GENERIC_BLANK=
 IDS_GENERIC_CANCEL=&Annuleren
+IDS_GENERIC_DAYS=dagen
 IDS_GENERIC_NO=&Nee
 IDS_GENERIC_OK=&OK
 IDS_GENERIC_YES=&Ja
@@ -176,6 +177,7 @@ IDS_PAGE_FILTERING_EXCLUDE_FILES=Bestandsnaam patronen om uit te sluiten:
 IDS_PAGE_FILTERING_INCLUDE_DIRS=Mappaden om op te nemen:
 IDS_PAGE_FILTERING_INCLUDE_FILES=Bestandsnaampatronen om op te nemen:
 IDS_PAGE_FILTERING_INVALID_FILTER=Ongeldig filter:
+IDS_PAGE_FILTERING_MAX_AGE_DAYS=Bestanden ouder dan (0 = uitgeschakeld):
 IDS_PAGE_FILTERING_SIZE_MIN=Sluit bestanden kleiner dan:
 IDS_PAGE_FILTERING_TITLE=Filteren
 IDS_PAGE_FILTERING_TOOLTIP_PREFIX=Noem één uitsluiting per regel. Voorbeelden:

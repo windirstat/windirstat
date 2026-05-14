@@ -62,6 +62,7 @@ IDS_FILE_SELECT=Bir Sürücü Koleksiyonunu açın.\nAç...
 IDS_FREESPACE_ITEM=<Boş Alan>
 IDS_GENERIC_BLANK=
 IDS_GENERIC_CANCEL=&İptal
+IDS_GENERIC_DAYS=gün
 IDS_GENERIC_NO=&Hayır
 IDS_GENERIC_OK=&Tamam
 IDS_GENERIC_YES=&Evet
@@ -176,6 +177,7 @@ IDS_PAGE_FILTERING_EXCLUDE_FILES=Hariç tutulacak dosya adı patternleri:
 IDS_PAGE_FILTERING_INCLUDE_DIRS=Dahil edilecek dizin yolları:
 IDS_PAGE_FILTERING_INCLUDE_FILES=Dahil edilecek dosya adı desenleri:
 IDS_PAGE_FILTERING_INVALID_FILTER=Geçersiz filtre:
+IDS_PAGE_FILTERING_MAX_AGE_DAYS=Dosyalar şundan eski (0 = devre dışı):
 IDS_PAGE_FILTERING_SIZE_MIN=Şundan küçük dosyaları hariç tut:
 IDS_PAGE_FILTERING_TITLE=Filtreleme
 IDS_PAGE_FILTERING_TOOLTIP_PREFIX=Her satıra bir istisna yazın. Örnekler:

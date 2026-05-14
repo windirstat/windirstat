@@ -62,6 +62,7 @@ IDS_FILE_SELECT=Öffnet eine Menge von Laufwerken.\nÖffnen
 IDS_FREESPACE_ITEM=<Freier Platz>
 IDS_GENERIC_BLANK=
 IDS_GENERIC_CANCEL=&Abbruch
+IDS_GENERIC_DAYS=Tage
 IDS_GENERIC_NO=&Nein
 IDS_GENERIC_OK=&OK
 IDS_GENERIC_YES=&Ja
@@ -176,6 +177,7 @@ IDS_PAGE_FILTERING_EXCLUDE_FILES=Auszuschließende Dateinamenmuster:
 IDS_PAGE_FILTERING_INCLUDE_DIRS=Einzuschließende Ordnerpfade:
 IDS_PAGE_FILTERING_INCLUDE_FILES=Einzuschließende Dateinamenmuster:
 IDS_PAGE_FILTERING_INVALID_FILTER=Ungültiger Filter:
+IDS_PAGE_FILTERING_MAX_AGE_DAYS=Dateien älter als (0 = deaktiviert):
 IDS_PAGE_FILTERING_SIZE_MIN=Dateien ausschließen, die kleiner sind als:
 IDS_PAGE_FILTERING_TITLE=Filter
 IDS_PAGE_FILTERING_TOOLTIP_PREFIX=Listen Sie eine Ausschlussregel pro Zeile auf. Beispiele:

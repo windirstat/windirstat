@@ -188,6 +188,7 @@ public:
     static Setting<int> FileTreeColorCount;
     static Setting<int> FilteringSizeMinimum;
     static Setting<int> FilteringSizeUnits;
+    static Setting<int> FilteringMaxAgeDays;
     static Setting<int> TreeMapAmbientLightPercent;
     static Setting<int> TreeMapBrightness;
     static Setting<int> TreeMapHeightFactor;

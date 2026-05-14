@@ -62,6 +62,7 @@ IDS_FILE_SELECT=Lemezgyujtemény megnyitása.\nMegnyitás
 IDS_FREESPACE_ITEM=<Szabad terület>
 IDS_GENERIC_BLANK=
 IDS_GENERIC_CANCEL=&Mégse
+IDS_GENERIC_DAYS=nap
 IDS_GENERIC_NO=&Nem
 IDS_GENERIC_OK=&OK
 IDS_GENERIC_YES=&Igen
@@ -176,6 +177,7 @@ IDS_PAGE_FILTERING_EXCLUDE_FILES=Fájlnév-minták kizárása:
 IDS_PAGE_FILTERING_INCLUDE_DIRS=Felvenni kívánt mappaelérési utak:
 IDS_PAGE_FILTERING_INCLUDE_FILES=Felvenni kívánt fájlnév-minták:
 IDS_PAGE_FILTERING_INVALID_FILTER=Érvénytelen szűrő:
+IDS_PAGE_FILTERING_MAX_AGE_DAYS=Kizárja az ennél régebbi fájlokat (0 = kikapcsolva):
 IDS_PAGE_FILTERING_SIZE_MIN=Ennél kisebb fájlok kizárása:
 IDS_PAGE_FILTERING_TITLE=Szűrés
 IDS_PAGE_FILTERING_TOOLTIP_PREFIX=Soroljon fel egy kizárást soronként. Példák:

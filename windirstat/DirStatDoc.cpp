@@ -1887,6 +1887,10 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
     }
     CDirStatDoc::InvalidateSelectionCache();
 
+    // Refresh filter cutoffs immediately before scanning in case settings
+    // were compiled long ago (e.g. dialog left open before clicking scan).
+    CFiltering::CompileFilters();
+
     // Start a thread so we do not hang the message loop during inserts
     // Lambda captures assume document exists for duration of thread
     m_thread.emplace([this,items, visualInfo] () mutable

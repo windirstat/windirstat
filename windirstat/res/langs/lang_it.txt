@@ -62,6 +62,7 @@ IDS_FILE_SELECT=Seleziona unità.\nApri
 IDS_FREESPACE_ITEM=<Spazio libero>
 IDS_GENERIC_BLANK=
 IDS_GENERIC_CANCEL=&Annulla
+IDS_GENERIC_DAYS=giorni
 IDS_GENERIC_NO=&No
 IDS_GENERIC_OK=&OK
 IDS_GENERIC_YES=&Sì
@@ -176,6 +177,7 @@ IDS_PAGE_FILTERING_EXCLUDE_FILES=Modelli di nomi di file da escludere:
 IDS_PAGE_FILTERING_INCLUDE_DIRS=Percorsi di cartelle da includere:
 IDS_PAGE_FILTERING_INCLUDE_FILES=Modelli di nomi di file da includere:
 IDS_PAGE_FILTERING_INVALID_FILTER=Filtro non valido:
+IDS_PAGE_FILTERING_MAX_AGE_DAYS=Escludi i file più vecchi di (0 = disabilitato):
 IDS_PAGE_FILTERING_SIZE_MIN=Escludi file inferiori a:
 IDS_PAGE_FILTERING_TITLE=Filtraggio
 IDS_PAGE_FILTERING_TOOLTIP_PREFIX=Elenca un'esclusione per riga. Esempi:

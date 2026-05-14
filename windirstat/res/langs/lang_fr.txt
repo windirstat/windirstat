@@ -62,6 +62,7 @@ IDS_FILE_SELECT=Ouvre une liste de lecteurs.\nOuvrir
 IDS_FREESPACE_ITEM=<Espace libre>
 IDS_GENERIC_BLANK=
 IDS_GENERIC_CANCEL=&Annuler
+IDS_GENERIC_DAYS=jours
 IDS_GENERIC_NO=&Non
 IDS_GENERIC_OK=&OK
 IDS_GENERIC_YES=&Oui
@@ -176,6 +177,7 @@ IDS_PAGE_FILTERING_EXCLUDE_FILES=Modèles de noms de fichiers à exclure:
 IDS_PAGE_FILTERING_INCLUDE_DIRS=Chemins de dossiers à inclure:
 IDS_PAGE_FILTERING_INCLUDE_FILES=Modèles de noms de fichiers à inclure:
 IDS_PAGE_FILTERING_INVALID_FILTER=Filtre invalide:
+IDS_PAGE_FILTERING_MAX_AGE_DAYS=Fichiers de plus de (0 = désactivé) :
 IDS_PAGE_FILTERING_SIZE_MIN=Exclure les fichiers de moins de :
 IDS_PAGE_FILTERING_TITLE=Filtrage
 IDS_PAGE_FILTERING_TOOLTIP_PREFIX=Listez une exclusion par ligne. Exemples:

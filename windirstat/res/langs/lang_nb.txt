@@ -62,6 +62,7 @@ IDS_FILE_SELECT=Åpne en samling stasjoner.\nÅpne...
 IDS_FREESPACE_ITEM=<Ledig plass>
 IDS_GENERIC_BLANK=
 IDS_GENERIC_CANCEL=&Avbryt
+IDS_GENERIC_DAYS=dager
 IDS_GENERIC_NO=&Nei
 IDS_GENERIC_OK=&OK
 IDS_GENERIC_YES=&Ja
@@ -176,6 +177,7 @@ IDS_PAGE_FILTERING_EXCLUDE_FILES=Filnavnmønstre som skal utelates:
 IDS_PAGE_FILTERING_INCLUDE_DIRS=Mappebaner som skal inkluderes:
 IDS_PAGE_FILTERING_INCLUDE_FILES=Filnavnmønstre som skal inkluderes:
 IDS_PAGE_FILTERING_INVALID_FILTER=Ugyldig filter:
+IDS_PAGE_FILTERING_MAX_AGE_DAYS=Ekskluder filer eldre enn (0 = deaktivert):
 IDS_PAGE_FILTERING_SIZE_MIN=Utelat filer mindre enn:
 IDS_PAGE_FILTERING_TITLE=Filtrering
 IDS_PAGE_FILTERING_TOOLTIP_PREFIX=List opp ett unntak per linje. Eksempler:

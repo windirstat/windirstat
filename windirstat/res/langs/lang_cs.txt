@@ -62,6 +62,7 @@ IDS_FILE_SELECT=otevře seznam disků.\nOtevřít...
 IDS_FREESPACE_ITEM=<Volné místo>
 IDS_GENERIC_BLANK=
 IDS_GENERIC_CANCEL=&Zrušit
+IDS_GENERIC_DAYS=dny
 IDS_GENERIC_NO=&Ne
 IDS_GENERIC_OK=&OK
 IDS_GENERIC_YES=&Ano
@@ -176,6 +177,7 @@ IDS_PAGE_FILTERING_EXCLUDE_FILES=Vzory názvů souborů k vyloučení:
 IDS_PAGE_FILTERING_INCLUDE_DIRS=Cesty ke složkám k zahrnutí:
 IDS_PAGE_FILTERING_INCLUDE_FILES=Vzory názvů souborů k zahrnutí:
 IDS_PAGE_FILTERING_INVALID_FILTER=Neplatný filtr:
+IDS_PAGE_FILTERING_MAX_AGE_DAYS=Vyloučit soubory starší než (0 = vypnuto):
 IDS_PAGE_FILTERING_SIZE_MIN=Vyloučit soubory menší než:
 IDS_PAGE_FILTERING_TITLE=Filtrování
 IDS_PAGE_FILTERING_TOOLTIP_PREFIX=Uveďte jednu výjimku na řádek. Příklady:
