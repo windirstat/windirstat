@@ -134,7 +134,7 @@ HICON CIconHandler::FetchShellIcon(const std::wstring & path, UINT flags, const 
     if (flags & SHGFI_PIDL)
     {
         // Assume folder id numeric encoded as string
-        SmartPointer<LPITEMIDLIST> pidl(CoTaskMemFree);
+        SmartPointer pidl(CoTaskMemFree, static_cast<LPITEMIDLIST>(nullptr));
         if (SUCCEEDED(SHGetSpecialFolderLocation(nullptr, std::stoi(path), &pidl)))
         {
             success = std::bit_cast<HIMAGELIST>(::SHGetFileInfo(
@@ -391,7 +391,7 @@ HBITMAP Icons::MakeBitmap(const int size, const std::function<void(Graphics&)>& 
 
 HICON Icons::MakeIcon(const int size, const std::function<void(Graphics&)>& painter)
 {
-    SmartPointer<HBITMAP> color(DeleteObject, MakeBitmap(size, painter));
+    SmartPointer color(DeleteObject, MakeBitmap(size, painter));
     if (color == nullptr) return nullptr;
 
     CBitmap mask;

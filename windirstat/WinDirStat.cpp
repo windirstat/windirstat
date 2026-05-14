@@ -193,7 +193,7 @@ bool CDirStatApp::SetPortableMode(const bool enable, const bool onlyOpen)
     if (enable)
     {
         // Enable portable mode by creating the file
-        const SmartPointer<HANDLE> iniHandle(CloseHandle, CreateFile(ini.c_str(), GENERIC_WRITE | GENERIC_READ,
+        const SmartPointer iniHandle(CloseHandle, CreateFile(ini.c_str(), GENERIC_WRITE | GENERIC_READ,
             FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
             nullptr, onlyOpen ? OPEN_EXISTING : OPEN_ALWAYS , 0, nullptr));
         if (iniHandle != INVALID_HANDLE_VALUE)
@@ -470,7 +470,7 @@ void CDirStatApp::LegacyUninstall()
     std::error_code ec;
 
     // Kill WinDirStat processes based on executable name
-    if (SmartPointer<HANDLE> snap(CloseHandle, CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0)); snap.IsValid())
+    if (SmartPointer snap(CloseHandle, CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0)); snap.IsValid())
     {
         const std::wstring exeName = wds::strWinDirStat;
         PROCESSENTRY32W pe{ .dwSize = sizeof(pe) };
@@ -479,7 +479,7 @@ void CDirStatApp::LegacyUninstall()
             if (_wcsnicmp(pe.szExeFile, exeName.c_str(), exeName.size()) != 0 ||
                 pe.th32ProcessID == GetCurrentProcessId()) continue;
 
-            SmartPointer<HANDLE> h(CloseHandle, OpenProcess(PROCESS_TERMINATE, FALSE, pe.th32ProcessID));
+            SmartPointer h(CloseHandle, OpenProcess(PROCESS_TERMINATE, FALSE, pe.th32ProcessID));
             if (h.IsValid()) TerminateProcess(h, 0);
         }
     }
@@ -536,7 +536,7 @@ void CDirStatApp::LegacyUninstall()
 
     // Remove shortcuts and start menu items for all users
     constexpr auto startMenuLocation = L"Microsoft\\Windows\\Start Menu\\Programs\\WinDirStat";
-    SmartPointer<PWSTR> usersPath(CoTaskMemFree, nullptr);
+    SmartPointer usersPath(CoTaskMemFree, static_cast<PWSTR>(nullptr));
     if (SHGetKnownFolderPath(FOLDERID_UserProfiles, 0, nullptr, &usersPath) != S_OK) return;
     if (fs::path usersDir(static_cast<LPWSTR>(usersPath)); fs::exists(usersDir, ec))
     {

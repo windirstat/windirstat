@@ -81,7 +81,7 @@ void CFileWatcherControl::StopMonitoring()
 
 void CFileWatcherControl::WatchDirectory(const std::wstring& path, const std::stop_token& stopToken)
 {
-    const SmartPointer<HANDLE> hDir(CloseHandle, CreateFileW(FinderBasic::MakeLongPathCompatible(path).c_str(),
+    const SmartPointer hDir(CloseHandle, CreateFileW(FinderBasic::MakeLongPathCompatible(path).c_str(),
         FILE_LIST_DIRECTORY, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr,
         OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OVERLAPPED, nullptr));
     if (hDir == INVALID_HANDLE_VALUE) return;
@@ -89,8 +89,8 @@ void CFileWatcherControl::WatchDirectory(const std::wstring& path, const std::st
     std::wstring pathWithSlash = path;
     if (pathWithSlash.back() != L'\\') pathWithSlash += L'\\';
 
-    const SmartPointer<HANDLE> hEvent(CloseHandle, CreateEvent(nullptr, TRUE, FALSE, nullptr));
-    const SmartPointer<HANDLE> hStopEvent(CloseHandle, CreateEvent(nullptr, TRUE, FALSE, nullptr));
+    const SmartPointer hEvent(CloseHandle, CreateEvent(nullptr, TRUE, FALSE, nullptr));
+    const SmartPointer hStopEvent(CloseHandle, CreateEvent(nullptr, TRUE, FALSE, nullptr));
     OVERLAPPED overlapped{ .hEvent = hEvent };
     std::vector<BYTE> buffer(64ul * 1024ul);
 

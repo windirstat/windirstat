@@ -18,6 +18,8 @@
 #include "pch.h"
 #include "Item.h"
 
+static void CloseBCryptAlgHandle(BCRYPT_ALG_HANDLE h) noexcept { BCryptCloseAlgorithmProvider(h, 0); }
+
 #pragma comment(lib, "crypt32.lib")
 #pragma comment(lib, "bcrypt.lib")
 
@@ -949,9 +951,8 @@ std::vector<BYTE> CItem::GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CIte
     thread_local std::vector<BYTE> fileBuffer(wds::Mi);
     thread_local std::vector<BYTE> hashBuffer;
     thread_local HashAlgorithm initializedHashAlgorithm = static_cast<HashAlgorithm>(-1);
-    thread_local SmartPointer<BCRYPT_ALG_HANDLE> hashAlgHandle(
-        [](BCRYPT_ALG_HANDLE handle) { BCryptCloseAlgorithmProvider(handle, 0); });
-    thread_local SmartPointer<BCRYPT_HASH_HANDLE> hashHandle(BCryptDestroyHash);
+    thread_local SmartPointer hashAlgHandle(CloseBCryptAlgHandle, BCRYPT_ALG_HANDLE{});
+    thread_local SmartPointer hashHandle(BCryptDestroyHash, BCRYPT_HASH_HANDLE{});
 
     // Initialize shared structures once per thread and selected algorithm.
     if (initializedHashAlgorithm != hashAlgorithm || !hashAlgHandle.IsValid() || !hashHandle.IsValid())
@@ -986,7 +987,7 @@ std::vector<BYTE> CItem::GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CIte
     }
 
     // Open file for reading - avoid files that are actively being written to
-    const SmartPointer<HANDLE> hFile(CloseHandle, CreateFile(GetPathLong().c_str(),
+    const SmartPointer hFile(CloseHandle, CreateFile(GetPathLong().c_str(),
         GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING,
         FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_SEQUENTIAL_SCAN, nullptr));
     if (hFile == INVALID_HANDLE_VALUE)

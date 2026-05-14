@@ -852,7 +852,7 @@ LRESULT CMainFrame::OnCallbackRequest(WPARAM, const LPARAM lParam)
 void CMainFrame::CopyToClipboard(const std::wstring & psz)
 {
     const SIZE_T cchBufLen = psz.size() + 1;
-    SmartPointer<HGLOBAL> h(GlobalFree, GlobalAlloc(GMEM_MOVEABLE, cchBufLen * sizeof(WCHAR)));
+    SmartPointer h(GlobalFree, GlobalAlloc(GMEM_MOVEABLE, cchBufLen * sizeof(WCHAR)));
     if (!h.IsValid())
     {
         DisplayError(TranslateError());
@@ -861,7 +861,7 @@ void CMainFrame::CopyToClipboard(const std::wstring & psz)
 
     // Allocate and copy into global memory
     const HGLOBAL hRaw = h;
-    if (SmartPointer<LPVOID> lp([hRaw](LPVOID) { GlobalUnlock(hRaw); }, GlobalLock(hRaw)); lp.IsValid())
+    if (SmartPointer lp([hRaw](LPVOID) noexcept { GlobalUnlock(hRaw); }, GlobalLock(hRaw)); lp.IsValid())
     {
         wcscpy_s(static_cast<LPWSTR>(*lp), cchBufLen, psz.c_str());
     }

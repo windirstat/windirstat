@@ -45,7 +45,7 @@ namespace
 
     std::wstring ResolveFullPath(const std::wstring& relativePath)
     {
-        const SmartPointer<LPWSTR> path(free, _wfullpath(nullptr, relativePath.c_str(), 0));
+        const SmartPointer path(free, _wfullpath(nullptr, relativePath.c_str(), 0));
         return path != nullptr ? static_cast<LPWSTR>(path) : relativePath;
     }
 }

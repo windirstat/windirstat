@@ -542,7 +542,7 @@ std::wstring CItem::GetOwner(const bool force) const
     if (!ret.empty()) return ret;
 
     // Fetch owner information from drive
-    SmartPointer<PSECURITY_DESCRIPTOR> ps(LocalFree);
+    SmartPointer ps(LocalFree, static_cast<PSECURITY_DESCRIPTOR>(nullptr));
     PSID sid = nullptr;
     GetNamedSecurityInfo(GetPathLong().c_str(), SE_FILE_OBJECT, OWNER_SECURITY_INFORMATION,
         &sid, nullptr, nullptr, nullptr, &ps);
@@ -847,7 +847,7 @@ void CItem::UpdateStatsFromDisk()
     }
     else if (IsTypeOrFlag(IT_DRIVE))
     {
-        const SmartPointer<HANDLE> handle(CloseHandle, CreateFile(GetPathLong().c_str(), FILE_READ_ATTRIBUTES,
+        const SmartPointer handle(CloseHandle, CreateFile(GetPathLong().c_str(), FILE_READ_ATTRIBUTES,
             FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr,
             OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, nullptr));
         if (handle != INVALID_HANDLE_VALUE)

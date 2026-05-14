@@ -18,10 +18,16 @@
 #pragma once
 
 //
-// SmartPointer<>. Custom template for WinAPI resource cleanup.
+// SmartPointer<T, Cleanup>. Custom template for WinAPI resource cleanup.
 // Automatically invokes the provided cleanup callable in its destructor.
 //
-template <typename T>
+// Cleanup is a second template parameter so the callable is stored directly
+// with no std::function overhead. CTAD deduces both T and Cleanup from the
+// constructor arguments, so most call sites need no explicit template args:
+//   SmartPointer handle(CloseHandle, CreateFile(...));
+//   SmartPointer pidl(CoTaskMemFree, pidlValue);
+//
+template <typename T, typename Cleanup = void(*)(T) noexcept>
 class SmartPointer final
 {
 public:
@@ -29,8 +35,7 @@ public:
     SmartPointer(const SmartPointer&) = delete; // non-copyable
     T operator=(const SmartPointer& lp) = delete; // copy assignment forbidden
 
-    SmartPointer(std::function<void(T)> cleanup) : m_cleanup(std::move(cleanup)), m_data(nullptr) {}
-    SmartPointer(std::function<void(T)> cleanup, T data) : m_cleanup(std::move(cleanup)), m_data(data) {}
+    SmartPointer(Cleanup cleanup, T data = T{}) : m_cleanup(cleanup), m_data(data) {}
 
     ~SmartPointer() noexcept
     {
@@ -99,6 +104,10 @@ public:
 
 private:
 
-    std::function<void(T)> m_cleanup;
+    Cleanup m_cleanup;
     T m_data;
 };
+
+// CTAD: SmartPointer(cleanup, data) deduces T from data, Cleanup from cleanup.
+template <typename Cleanup, typename T>
+SmartPointer(Cleanup, T) -> SmartPointer<T, Cleanup>;

@@ -71,7 +71,7 @@ class FinderBasic final : public Finder
     FILE_DIR_INFORMATION* m_currentInfo = nullptr;
     FinderBasicContext m_default{};
     FinderBasicContext* m_context = &m_default;
-    SmartPointer<HANDLE> m_handle{CloseHandle, nullptr};
+    SmartPointer<HANDLE, decltype(&CloseHandle)> m_handle{CloseHandle, HANDLE{}};
     DWORD m_initialAttributes = INVALID_FILE_ATTRIBUTES;
     DWORD m_reparseTag = 0;
     bool m_firstRun = true;

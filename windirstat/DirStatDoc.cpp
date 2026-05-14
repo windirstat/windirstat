@@ -122,8 +122,8 @@ BOOL CDirStatDoc::OnOpenDocument(LPCWSTR lpszPathName)
     if (selections.size() >= 2)
     {
         // Fetch the localized string for the root computer object
-        SmartPointer<LPITEMIDLIST> pidl(CoTaskMemFree);
-        SmartPointer<LPWSTR> ppszName(CoTaskMemFree);
+        SmartPointer pidl(CoTaskMemFree, static_cast<LPITEMIDLIST>(nullptr));
+        SmartPointer ppszName(CoTaskMemFree, static_cast<LPWSTR>(nullptr));
         CComPtr<IShellItem> psi;
         if (FAILED(SHGetKnownFolderIDList(FOLDERID_ComputerFolder, 0, nullptr, &pidl)) ||
             SHCreateItemFromIDList(pidl, IID_PPV_ARGS(&psi)) != S_OK ||
@@ -337,7 +337,7 @@ void CDirStatDoc::OpenItem(const CItem* item, const std::wstring & verb)
     if (item->IsTypeOrFlag(ITF_RESERVED)) return;
 
     // Determine path to feed into shell function
-    SmartPointer<LPITEMIDLIST> pidl(CoTaskMemFree, nullptr);
+    SmartPointer pidl(CoTaskMemFree, static_cast<LPITEMIDLIST>(nullptr));
     if (item->IsTypeOrFlag(IT_MYCOMPUTER))
     {
         SHGetKnownFolderIDList(FOLDERID_ComputerFolder, 0, nullptr, &pidl);
@@ -570,7 +570,7 @@ void CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, const bo
                 for (const auto& item : itemsToDelete)
                 {
                     CComPtr<IShellItem> shellitem;
-                    SmartPointer<LPITEMIDLIST> pidl(CoTaskMemFree, ILCreateFromPath(item->GetPath().c_str()));
+                    SmartPointer pidl(CoTaskMemFree, ILCreateFromPath(item->GetPath().c_str()));
                     if (pidl == nullptr || FAILED(SHCreateItemFromIDList(pidl, IID_PPV_ARGS(&shellitem)))) continue;
                     fileOperation->DeleteItem(shellitem, nullptr);
                 }
@@ -1326,7 +1326,7 @@ void CDirStatDoc::OnExplorerSelect()
     for (const auto& path : paths)
     {
         // create path pidl
-        SmartPointer<LPITEMIDLIST> parent(CoTaskMemFree);
+        SmartPointer parent(CoTaskMemFree, static_cast<LPITEMIDLIST>(nullptr));
         parent = ILCreateFromPath(path.c_str());
 
         // ignore unresolvable (e.g., deleted) files
@@ -1337,7 +1337,7 @@ void CDirStatDoc::OnExplorerSelect()
         }
 
         // structures to hold and track pidls for children
-        std::vector<SmartPointer<LPITEMIDLIST>> pidlCleanup;
+        std::vector<SmartPointer<LPITEMIDLIST, decltype(&CoTaskMemFree)>> pidlCleanup;
         std::vector<LPITEMIDLIST> pidl;
 
         // create list of children from paths
@@ -1459,7 +1459,7 @@ void CDirStatDoc::OnCleanupMoveTo()
         for (const auto& item : items)
         {
             CComPtr<IShellItem> sourceShellItem;
-            SmartPointer<LPITEMIDLIST> pidl(CoTaskMemFree, ILCreateFromPath(item->GetPath().c_str()));
+            SmartPointer pidl(CoTaskMemFree, ILCreateFromPath(item->GetPath().c_str()));
             if (pidl == nullptr || FAILED(SHCreateItemFromIDList(pidl, IID_PPV_ARGS(&sourceShellItem))))
             {
                 continue;

@@ -167,7 +167,7 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
     if (!volumePath.empty() && volumePath[0] != L'\\' && volumePath[0] != L'/') volumePath.insert(0, L"\\\\.\\");
 
     // Open volume handle with FILE_FLAG_OVERLAPPED for asynchronous I/O
-    SmartPointer<HANDLE> volumeHandle(CloseHandle, CreateFile(volumePath.c_str(), FILE_READ_DATA | FILE_READ_ATTRIBUTES | SYNCHRONIZE,
+    SmartPointer volumeHandle(CloseHandle, CreateFile(volumePath.c_str(), FILE_READ_DATA | FILE_READ_ATTRIBUTES | SYNCHRONIZE,
         FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING,
         FILE_FLAG_NO_BUFFERING | FILE_FLAG_OVERLAPPED, nullptr));
     if (volumeHandle == INVALID_HANDLE_VALUE) return false;
@@ -179,7 +179,7 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
         false;
 
     // Get MFT retrieval pointers
-    SmartPointer<HANDLE> fileHandle(CloseHandle, CreateFile((volumePath + L"\\$MFT::$DATA").c_str(), FILE_READ_ATTRIBUTES | SYNCHRONIZE,
+    SmartPointer fileHandle(CloseHandle, CreateFile((volumePath + L"\\$MFT::$DATA").c_str(), FILE_READ_ATTRIBUTES | SYNCHRONIZE,
         FILE_SHARE_WRITE | FILE_SHARE_READ | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING,
         FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_NO_BUFFERING, nullptr));
     if (fileHandle == INVALID_HANDLE_VALUE) return false;
@@ -218,7 +218,7 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
         // Enumerate over the data run in buffer-sized chunks
         ULONGLONG bytesToRead = clusterCount * volumeInfo.BytesPerCluster;
         LARGE_INTEGER fileOffset{ .QuadPart = static_cast<LONGLONG>(clusterStart * volumeInfo.BytesPerCluster) };
-        thread_local SmartPointer<HANDLE> event(CloseHandle, CreateEvent(nullptr, FALSE, FALSE, nullptr));
+        thread_local SmartPointer event(CloseHandle, CreateEvent(nullptr, FALSE, FALSE, nullptr));
         for (ULONG bytesRead = 0; bytesToRead > 0; bytesToRead -= bytesRead, fileOffset.QuadPart += bytesRead)
         {
             // Animate pacman

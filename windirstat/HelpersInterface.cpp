@@ -417,7 +417,7 @@ void DisplayError(const std::wstring& error)
 
 std::wstring TranslateError(const HRESULT hr)
 {
-    SmartPointer<LPVOID> lpMsgBuf(LocalFree);
+    SmartPointer lpMsgBuf(LocalFree, static_cast<LPVOID>(nullptr));
     if (FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, nullptr, hr,
         MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), reinterpret_cast<LPWSTR>(&lpMsgBuf), 0, nullptr) == 0)
     {
@@ -464,7 +464,7 @@ bool ExecuteCommandInConsole(const std::wstring& command, const std::wstring& ti
 int DpiRest(const int value, const CWnd* wnd) noexcept
 {
     const HWND h = (wnd && wnd->GetSafeHwnd()) ? wnd->GetSafeHwnd() : nullptr;
-    const SmartPointer<HDC> dc([h](const HDC hdc) { ReleaseDC(h, hdc); }, GetDC(h));
+    const SmartPointer dc([h](const HDC hdc) noexcept { ReleaseDC(h, hdc); }, GetDC(h));
     const int dpi = dc != nullptr ? ::GetDeviceCaps(dc, LOGPIXELSX) : USER_DEFAULT_SCREEN_DPI;
     return ::MulDiv(value, dpi, USER_DEFAULT_SCREEN_DPI);
 }
@@ -485,7 +485,7 @@ bool IsMenuEnabled(const CMenu* menu, const UINT pos, const bool isCommand) noex
 int DpiSave(const int value, const CWnd* wnd) noexcept
 {
     const HWND h = (wnd && wnd->GetSafeHwnd()) ? wnd->GetSafeHwnd() : nullptr;
-    const SmartPointer<HDC> dc([h](const HDC hdc) { ReleaseDC(h, hdc); }, GetDC(h));
+    const SmartPointer dc([h](const HDC hdc) noexcept { ReleaseDC(h, hdc); }, GetDC(h));
     const int dpi = dc != nullptr ? ::GetDeviceCaps(dc, LOGPIXELSX) : USER_DEFAULT_SCREEN_DPI;
     return ::MulDiv(value, USER_DEFAULT_SCREEN_DPI, dpi);
 }
@@ -494,7 +494,7 @@ int DpiSave(const int value, const CWnd* wnd) noexcept
 IContextMenu* GetContextMenu(const HWND hwnd, const std::vector<std::wstring>& paths)
 {
     // structures to hold and track pidls for children
-    std::vector<SmartPointer<LPITEMIDLIST>> pidlsForCleanup;
+    std::vector<SmartPointer<LPITEMIDLIST, decltype(&CoTaskMemFree)>> pidlsForCleanup;
     std::vector<LPCITEMIDLIST> pidlsRelatives;
 
     // create list of children from paths
@@ -565,7 +565,7 @@ std::vector<BYTE> GetCompressedResource(const HRSRC resource) noexcept
 
     // Use the cabinet function to decompress the resource
     ERF erf{};
-    const SmartPointer<HFDI> hfdi(FDIDestroy, FDICreate(
+    const SmartPointer hfdi(FDIDestroy, FDICreate(
         +[](ULONG cb) -> void* { return malloc(cb); },
         +[](void* pv) { free(pv); },
         +[](char*, int, int) -> INT_PTR { return g_ctx->nextHandle++; },

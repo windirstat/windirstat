@@ -28,9 +28,11 @@ static NTSTATUS(NTAPI* NtSetInformationProcess)(HANDLE ProcessHandle, ULONG Proc
     PVOID ProcessInformation, ULONG ProcessInformationLength) = reinterpret_cast<decltype(NtSetInformationProcess)>(
         reinterpret_cast<LPVOID>(GetProcAddress(GetModuleHandle(L"ntdll.dll"), "NtSetInformationProcess")));
 
+static void CloseAlgProvider(BCRYPT_ALG_HANDLE h) noexcept { BCryptCloseAlgorithmProvider(h, 0); }
+
 static HRESULT WmiConnect(CComPtr<IWbemServices>& pSvc)
 {
-    if (thread_local SmartPointer<PVOID> comInit([](PVOID) { CoUninitialize(); }, nullptr);
+    if (thread_local SmartPointer comInit([](PVOID) noexcept { CoUninitialize(); }, PVOID{});
         comInit == nullptr)
     {
         const HRESULT result = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
@@ -231,7 +233,7 @@ bool DeleteFileForce(const std::wstring& path, DWORD attributes)
     }
 
     // If normal delete failed, try delete-on-close
-    const SmartPointer<HANDLE> handle(CloseHandle, CreateFile(path.c_str(), DELETE,
+    const SmartPointer handle(CloseHandle, CreateFile(path.c_str(), DELETE,
         FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
         nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, nullptr));
     if (handle == INVALID_HANDLE_VALUE) return false;
@@ -291,7 +293,7 @@ bool IsElevationActive() noexcept
 {
     static const auto result = []() noexcept -> bool
     {
-        SmartPointer<HANDLE> token(CloseHandle);
+        SmartPointer token(CloseHandle, HANDLE{});
         TOKEN_ELEVATION elevation;
         DWORD size = sizeof(TOKEN_ELEVATION);
         if (OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token) == 0 ||
@@ -311,7 +313,7 @@ bool IsElevationAvailable() noexcept
     {
         if (IsElevationActive()) return false;
         
-        SmartPointer<HANDLE> token(CloseHandle);
+        SmartPointer token(CloseHandle, HANDLE{});
         TOKEN_ELEVATION_TYPE elevationType;
         DWORD size = sizeof(TOKEN_ELEVATION_TYPE);
         if (OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token) == 0 ||
@@ -337,7 +339,7 @@ bool EnableReadPrivileges() noexcept
 {
     // Open a connection to the currently running process token and request
     // we have the ability to look at and adjust our privileges
-    SmartPointer<HANDLE> token(CloseHandle);
+    SmartPointer token(CloseHandle, HANDLE{});
     if (OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &token) == 0)
     {
         return false;
@@ -432,7 +434,7 @@ std::wstring GetNameFromSid(const PSID sid)
     }
 
     // fallback: return sid string
-    SmartPointer<LPWSTR> sidBuff(LocalFree);
+    SmartPointer sidBuff(LocalFree, static_cast<LPWSTR>(nullptr));
     ConvertSidToStringSid(sid, &sidBuff);
     return nameMap.try_emplace(sidVec, sidBuff).first->second;
 }
@@ -477,7 +479,7 @@ bool CompressFile(const std::wstring& filePath, const CompressionAlgorithm algor
     USHORT numericAlgorithm = static_cast<USHORT>(algorithm) & ~FILE_PROVIDER_COMPRESSION_MODERN;
     const bool modernAlgorithm = static_cast<USHORT>(algorithm) != numericAlgorithm;
 
-    const SmartPointer<HANDLE> handle(CloseHandle, CreateFile(filePath.c_str(),
+    const SmartPointer handle(CloseHandle, CreateFile(filePath.c_str(),
         GENERIC_READ | GENERIC_WRITE, 0, nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, nullptr));
     if (handle == INVALID_HANDLE_VALUE)
     {
@@ -534,7 +536,7 @@ bool CompressFile(const std::wstring& filePath, const CompressionAlgorithm algor
 bool SparsifyFile(const std::wstring& path, const ULONGLONG minZeroRunSize, const ULONGLONG chunkSize)
 {
     // Open file with read/write access
-    const SmartPointer<HANDLE> h(CloseHandle, CreateFile(path.c_str(), GENERIC_READ | GENERIC_WRITE,
+    const SmartPointer h(CloseHandle, CreateFile(path.c_str(), GENERIC_READ | GENERIC_WRITE,
         FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
         nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, nullptr));
     if (h == INVALID_HANDLE_VALUE) return false;
@@ -643,7 +645,7 @@ bool CreateHardlinkFromFile(const std::wstring& pathOne, const std::wstring& pat
 std::wstring ComputeFileHashes(const std::wstring& filePath)
 {
     // Open file with smart pointer
-    const SmartPointer<HANDLE> hFile(CloseHandle, CreateFile(filePath.c_str(),
+    const SmartPointer hFile(CloseHandle, CreateFile(filePath.c_str(),
         GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
         nullptr, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, nullptr));
     if (hFile == INVALID_HANDLE_VALUE)
@@ -657,8 +659,8 @@ std::wstring ComputeFileHashes(const std::wstring& filePath)
         DWORD objectLen = 0;
         std::vector<BYTE> hashObject;
         std::vector<BYTE> hash;
-        SmartPointer<BCRYPT_ALG_HANDLE> hAlg = { nullptr, nullptr };
-        SmartPointer<BCRYPT_HASH_HANDLE> hHash = { nullptr, nullptr };
+        SmartPointer<BCRYPT_ALG_HANDLE, decltype(&CloseAlgProvider)> hAlg = { CloseAlgProvider, BCRYPT_ALG_HANDLE{} };
+        SmartPointer<BCRYPT_HASH_HANDLE, decltype(&BCryptDestroyHash)> hHash = { BCryptDestroyHash, BCRYPT_HASH_HANDLE{} };
     };
 
     // Define algorithms to compute
@@ -678,8 +680,7 @@ std::wstring ComputeFileHashes(const std::wstring& filePath)
         HashContext ctx;
         BCRYPT_ALG_HANDLE hAlg = nullptr;
         if (BCryptOpenAlgorithmProvider(&hAlg, id, nullptr, 0) != 0) continue;
-        ctx.hAlg = SmartPointer<BCRYPT_ALG_HANDLE>(
-            [](const BCRYPT_ALG_HANDLE h) { (void)BCryptCloseAlgorithmProvider(h, 0); }, hAlg);
+        ctx.hAlg = SmartPointer(CloseAlgProvider, hAlg);
 
         if (DWORD bytesWritten = 0; BCryptGetProperty(ctx.hAlg, BCRYPT_OBJECT_LENGTH,
             reinterpret_cast<PBYTE>(&ctx.objectLen), sizeof(DWORD), &bytesWritten, 0) != ERROR_SUCCESS)
@@ -695,7 +696,7 @@ std::wstring ComputeFileHashes(const std::wstring& filePath)
         if (BCryptCreateHash(ctx.hAlg, &hHash, ctx.hashObject.data(),
             ctx.objectLen, nullptr, 0, 0) != 0) continue;
 
-        ctx.hHash = SmartPointer<BCRYPT_HASH_HANDLE>(BCryptDestroyHash, hHash);
+        ctx.hHash = SmartPointer(BCryptDestroyHash, hHash);
 
         contexts.emplace_back(std::move(ctx));
     }
@@ -756,7 +757,7 @@ bool OptimizeVhd(const std::wstring& vhdPath) noexcept
         .DeviceId = VIRTUAL_STORAGE_TYPE_DEVICE_UNKNOWN,
         .VendorId = VIRTUAL_STORAGE_TYPE_VENDOR_MICROSOFT };
 
-    SmartPointer<HANDLE> vhdHandle(CloseHandle, nullptr);
+    SmartPointer vhdHandle(CloseHandle, HANDLE{});
     if (OpenVirtualDisk(&storageType, vhdPath.c_str(),
         accessMask, OPEN_VIRTUAL_DISK_FLAG_NONE,
         &openParams, &vhdHandle) != ERROR_SUCCESS) return false;
