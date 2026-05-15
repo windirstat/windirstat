@@ -38,16 +38,19 @@ CFileWatcherControl::CFileWatcherControl()
 CFileWatcherControl::~CFileWatcherControl()
 {
     StopMonitoring();
+    ClearPendingItems();
     m_singleton = nullptr;
 }
 
 BEGIN_MESSAGE_MAP(CFileWatcherControl, CTreeListControl)
     ON_WM_DESTROY()
+    ON_MESSAGE(WM_WATCHER_CHANGE, OnWatcherChange)
 END_MESSAGE_MAP()
 
 void CFileWatcherControl::OnDestroy()
 {
     StopMonitoring();
+    ClearPendingItems();
     DeleteAllItems();
 
     CWdsListControl::OnDestroy();
@@ -146,10 +149,39 @@ void CFileWatcherControl::AddChange(const std::wstring& path, const DWORD action
     GetSystemTimeAsFileTime(&fileTime);
 
     static auto verbs = SplitString(Localization::Lookup(IDS_WATCHER_VERBS), L',');
+    if (action == 0 || action > verbs.size()) return;
+
     const auto item = new CWatcherItem(path, verbs[action - 1], fileTime,
         ULARGE_INTEGER{ .u = { fileAttr.nFileSizeLow, fileAttr.nFileSizeHigh } }.QuadPart, fileAttr.dwFileAttributes);
-    InsertItem(GetItemCount(), item);
+    m_pendingItems.push(item);
+    PostMessage(WM_WATCHER_CHANGE, 0, 0);
+}
+
+void CFileWatcherControl::ClearPendingItems()
+{
+    CWatcherItem* item = nullptr;
+    while (m_pendingItems.pop(item))
+    {
+        delete item;
+    }
+}
+
+LRESULT CFileWatcherControl::OnWatcherChange(WPARAM, LPARAM)
+{
+    std::vector<CWdsListItem*> items;
+    CWatcherItem* item = nullptr;
+    while (m_pendingItems.pop(item))
+    {
+        item->SetVisible(this, true);
+        items.push_back(item);
+    }
+
+    if (items.empty()) return 0;
+
+    const CSetRedrawLock lock(this);
+    InsertListItem(GetItemCount(), items);
     SortItems();
+    return 0;
 }
 
 HICON CWatcherItem::GetIcon()

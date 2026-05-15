@@ -84,9 +84,15 @@ protected:
     static CFileWatcherControl* m_singleton;
 
     std::vector<std::jthread> m_watchThreads;
+    SingleConsumerQueue<CWatcherItem*> m_pendingItems;
+
+    static constexpr DWORD WM_WATCHER_CHANGE = WM_APP + 2;
+
     void WatchDirectory(const std::wstring& path, const std::stop_token& stopToken);
     void AddChange(const std::wstring& path, DWORD action);
+    void ClearPendingItems();
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnDestroy();
+    afx_msg LRESULT OnWatcherChange(WPARAM wParam, LPARAM lParam);
 };
