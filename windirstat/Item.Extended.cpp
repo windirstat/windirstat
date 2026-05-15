@@ -68,10 +68,6 @@ bool CItem::DrawSubItem(const int subitem, CDC* pdc, CRect rc, const UINT state,
         rc.DeflateRect(2, 4);
         rc.left += GetIndent() * DpiRest(COptions::SizeProportionIndent);
 
-        // Use highlight color when selected, otherwise the default background
-        const COLORREF backColor = (state & ODS_SELECTED) != 0 && CFileTreeControl::Get() != nullptr && CFileTreeControl::Get()->IsFullRowSelection() ?
-            CFileTreeControl::Get()->GetHighlightColor() : pdc->GetBkColor();
-
         const bool dark = DarkMode::IsDarkModeActive();
         // Linearly interpolate each channel between two colors
         const auto blendColor = [](COLORREF from, COLORREF to, double amount) {
@@ -93,9 +89,10 @@ bool CItem::DrawSubItem(const int subitem, CDC* pdc, CRect rc, const UINT state,
             static_cast<double>(GetSizePhysical()) / static_cast<double>(rootSize);
 
         // Derive palette for track, subtree bar, and absolute bar
+        const COLORREF neutralBack  = dark ? RGB(40, 40, 40) : RGB(225, 225, 225);
         const double subtreeFraction = GetFraction();
         const COLORREF color         = GetPercentageColor();
-        const COLORREF trackFill     = blendDark(backColor,   0.10, 0.06);
+        const COLORREF trackFill     = blendDark(neutralBack,  0.10, 0.06);
         const COLORREF trackBorder   = blendDark(trackFill,   0.18, 0.18);
         const COLORREF subtreeFill   = dark ? blendColor(trackFill, color, 0.68) : blendColor(trackFill, color, 0.48);
         const COLORREF subtreeGlow   = blendColor(subtreeFill,  RGB(255, 255, 255), dark ? 0.18 : 0.30);
