@@ -7,10 +7,16 @@ Enhancements
 - Improved selection handling when sorting file-tree results
 - Improved Select Drives dialog layout and local-drive display
 - Added double-click scan behavior in the Select Drives dialog
+- Added include filters and file age filtering
+- Added filter exclusion context-menu actions
 - Added pruning for previous-folder history
 - Added larger toolbar icon support and runtime-generated toolbar icons
+- Added Settings button to toolbar
 - Improved toolbar rendering with Unicode glyph support
+- Added selectable file hash algorithms
 - Increased size and percentage display precision
+- Changed subtree percentage display to size proportion terminology
+- Added JSON support for saving/loading scan results and duplicate lists
 - Expanded cleanup and system-tool handling
 - Improved localization resources and multiple language updates
 - Added installer option to add WinDirStat to the system PATH, disabled by default
@@ -28,6 +34,8 @@ Bug Fixes
 - Corrected clipboard memory handling
 
 Miscellaneous
+- Added Microsoft Store MSIX packaging support
+- Added Chocolatey release publishing automation
 - Microsoft Windows Server Core now supported
 - Microsoft Windows 7 supported again
 - Microsoft Windows Server 2008 R2 supported again
