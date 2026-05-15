@@ -124,6 +124,37 @@ function Remove-TestBuildArtifacts {
     }
 }
 
+function Get-RelativePathCompat {
+    param(
+        [Parameter(Mandatory)] [string] $BasePath,
+        [Parameter(Mandatory)] [string] $Path
+    )
+
+    $getRelativePath = [System.IO.Path].GetMethods() |
+        Where-Object { $_.Name -eq 'GetRelativePath' -and $_.GetParameters().Count -eq 2 } |
+        Select-Object -First 1
+    if ($getRelativePath) { return [System.IO.Path]::GetRelativePath($BasePath, $Path) }
+
+    $baseFull = [System.IO.Path]::GetFullPath($BasePath).TrimEnd([char[]] @('\', '/')) + [System.IO.Path]::DirectorySeparatorChar
+    $pathFull = [System.IO.Path]::GetFullPath($Path)
+    if (!$pathFull.StartsWith($baseFull, [System.StringComparison]::OrdinalIgnoreCase)) {
+        throw "Path '$Path' is not under '$BasePath'."
+    }
+    return $pathFull.Substring($baseFull.Length)
+}
+
+function Join-ProcessArguments {
+    param([Parameter(Mandatory)] [string[]] $Arguments)
+
+    @($Arguments | ForEach-Object {
+        if ($_.Length -eq 0 -or $_ -match '[\s"]') {
+            $escaped = $_ -replace '(\\*)"', '$1$1\"'
+            $escaped = $escaped -replace '(\\+)$', '$1$1'
+            '"' + $escaped + '"'
+        } else { $_ }
+    }) -join ' '
+}
+
 function Copy-SourceTreeForBuild {
     param(
         [Parameter(Mandatory)] [string] $Source,
@@ -153,7 +184,7 @@ function Copy-SourceTreeForBuild {
             return $true
         } |
         ForEach-Object {
-            $relative = [System.IO.Path]::GetRelativePath($Source, $_.FullName)
+            $relative = Get-RelativePathCompat -BasePath $Source -Path $_.FullName
             $target = Join-Path $Destination $relative
             New-Item -ItemType Directory -Force -Path (Split-Path -Parent $target) | Out-Null
             Copy-Item -LiteralPath $_.FullName -Destination $target -Force
@@ -441,6 +472,7 @@ namespace WdsSettingsTest
         IntField(out, first, "FileTreeColorCount", COptions::FileTreeColorCount.Obj());
         IntField(out, first, "FilteringSizeMinimum", COptions::FilteringSizeMinimum.Obj());
         IntField(out, first, "FilteringSizeUnits", COptions::FilteringSizeUnits.Obj());
+        IntField(out, first, "FilteringMaxAgeDays", COptions::FilteringMaxAgeDays.Obj());
         IntField(out, first, "TreeMapAmbientLightPercent", COptions::TreeMapAmbientLightPercent.Obj());
         IntField(out, first, "TreeMapBrightness", COptions::TreeMapBrightness.Obj());
         IntField(out, first, "TreeMapHeightFactor", COptions::TreeMapHeightFactor.Obj());
@@ -485,7 +517,7 @@ namespace WdsSettingsTest
     void TryRun()
     {
         int argc = 0;
-        SmartPointer<LPWSTR*> argv([](LPWSTR* value) { LocalFree(value); }, CommandLineToArgvW(GetCommandLineW(), &argc));
+        SmartPointer argv([](LPWSTR* value) { LocalFree(value); }, CommandLineToArgvW(GetCommandLineW(), &argc));
         if (!argv) return;
 
         std::wstring outputPath;
@@ -640,8 +672,13 @@ function Invoke-ProcessWithTimeout {
     $startInfo.CreateNoWindow = $true
     $startInfo.RedirectStandardOutput = $true
     $startInfo.RedirectStandardError = $true
-    foreach ($argument in $Arguments) {
-        [void] $startInfo.ArgumentList.Add($argument)
+    if ([System.Diagnostics.ProcessStartInfo].GetProperty('ArgumentList')) {
+        foreach ($argument in $Arguments) {
+            [void] $startInfo.ArgumentList.Add($argument)
+        }
+    }
+    else {
+        $startInfo.Arguments = Join-ProcessArguments -Arguments $Arguments
     }
 
     $sw = [System.Diagnostics.Stopwatch]::StartNew()
@@ -653,9 +690,7 @@ function Invoke-ProcessWithTimeout {
     $stdout = $process.StandardOutput.ReadToEnd()
     $stderr = $process.StandardError.ReadToEnd()
     $sw.Stop()
-    $displayArgs = @($Arguments | ForEach-Object {
-        if ($_ -match '\s') { '"' + ($_ -replace '"', '\"') + '"' } else { $_ }
-    }) -join ' '
+    $displayArgs = Join-ProcessArguments -Arguments $Arguments
 
     [pscustomobject] @{
         CommandLine = "`"$FileName`" $displayArgs"
@@ -701,6 +736,18 @@ function Invoke-SettingsDump {
         ElapsedSeconds = $run.ElapsedSeconds
         IniPath = $scenarioIni
         JsonPath = $jsonPath
+    }
+}
+
+function ConvertFrom-JsonItems {
+    param([Parameter(Mandatory)] [string] $Json)
+
+    $value = $Json | ConvertFrom-Json
+    if ($value -is [System.Array]) {
+        foreach ($item in $value) { $item }
+    }
+    else {
+        $value
     }
 }
 
@@ -991,6 +1038,7 @@ $coveredNonVisualSettings = @(
     'ExcludeSymbolicLinksFile',
     'ExcludeVolumeMountPoints',
     'FileHashAlgorithm',
+    'FilteringMaxAgeDays',
     'FolderHistoryCount',
     'FollowVolumeMountPoints',
     'LanguageId',
@@ -1287,6 +1335,7 @@ try {
         Assert-Equal $ctx 'UseWindowsLocaleSetting' $s.UseWindowsLocaleSetting $true
         Assert-Equal $ctx 'ProcessHardlinks' $s.ProcessHardlinks $true
         Assert-Equal $ctx 'FileHashAlgorithm' $s.FileHashAlgorithm 4
+        Assert-Equal $ctx 'FilteringMaxAgeDays' $s.FilteringMaxAgeDays 0
         Assert-Equal $ctx 'LargeFileCount' $s.LargeFileCount 50
         Assert-Equal $ctx 'ScanningThreads' $s.ScanningThreads 4
         Assert-Equal $ctx 'SelectDrivesRadio' $s.SelectDrivesRadio 0
@@ -1336,6 +1385,7 @@ try {
             UseWindowsLocaleSetting = 0
             ProcessHardlinks = 0
             FileHashAlgorithm = 2
+            FilteringMaxAgeDays = 14
             LargeFileCount = 123
             MinimizeViewThreshold = 42
             ScanningThreads = 7
@@ -1400,6 +1450,7 @@ try {
         Assert-Equal $ctx 'UseWindowsLocaleSetting' $s.UseWindowsLocaleSetting $false
         Assert-Equal $ctx 'ProcessHardlinks' $s.ProcessHardlinks $false
         Assert-Equal $ctx 'FileHashAlgorithm' $s.FileHashAlgorithm 2
+        Assert-Equal $ctx 'FilteringMaxAgeDays' $s.FilteringMaxAgeDays 14
         Assert-Equal $ctx 'LargeFileCount' $s.LargeFileCount 123
         Assert-Equal $ctx 'MinimizeViewThreshold' $s.MinimizeViewThreshold 42
         Assert-Equal $ctx 'ScanningThreads' $s.ScanningThreads 7
@@ -1699,7 +1750,7 @@ try {
         $run = Invoke-WinDirStatCsv -Exe $testExe -Csv $jsonPath -Root $scanRoot
 
         $rawText = Get-Content -LiteralPath $jsonPath -Raw -Encoding UTF8
-        $items = @($rawText | ConvertFrom-Json)
+        $items = @(ConvertFrom-JsonItems -Json $rawText)
 
         Assert-True $ctx 'JSON array is non-empty' ($items.Count -gt 0)
 
@@ -1749,7 +1800,7 @@ try {
 
         $csvPaths = @(Read-CsvPaths -Csv $csvPath | Where-Object { Test-PathUnder -Path $_ -Root $scanRoot })
 
-        $jsonItems = @(Get-Content -LiteralPath $jsonPath -Raw -Encoding UTF8 | ConvertFrom-Json)
+        $jsonItems = @(ConvertFrom-JsonItems -Json (Get-Content -LiteralPath $jsonPath -Raw -Encoding UTF8))
         $jsonPaths = @($jsonItems | ForEach-Object {
             try { $n = Normalize-ComparePath $_.Name; if (Test-PathUnder -Path $n -Root $scanRoot) { $n } } catch {}
         } | Where-Object { $_ })
@@ -1773,7 +1824,7 @@ try {
         $run = Invoke-WinDirStatCsv -Exe $testExe -Csv $jsonPath -Root $dupeRoot -Duplicates
 
         $rawText = Get-Content -LiteralPath $jsonPath -Raw -Encoding UTF8
-        $items = @($rawText | ConvertFrom-Json)
+        $items = @(ConvertFrom-JsonItems -Json $rawText)
 
         Assert-Equal $ctx 'Duplicate JSON entry count' $items.Count 2
 
