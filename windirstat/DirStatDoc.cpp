@@ -598,7 +598,6 @@ void CDirStatDoc::SetZoomItem(CItem* item)
 {
     m_zoomItem = item;
     CTreeListControl* pControl = GetFocusControl();
-    pControl->EnsureItemVisible(item);
     pControl->Invalidate();
     pControl->UpdateWindow();
     UpdateAllViews(nullptr, HINT_ZOOMCHANGED);
@@ -1830,7 +1829,7 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
 
     // Remove items in UI thread so we do not conflict with the timer updates
     const auto selectedItems = GetAllSelected();
-    using VisualInfo = struct { int scrollPosition; bool wasExpanded; bool isSelected; };
+    using VisualInfo = struct { bool wasExpanded; bool isSelected; };
     std::unordered_map<CItem*, VisualInfo> visualInfo;
     for (auto item : std::vector(items))
     {
@@ -1844,7 +1843,6 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
         {
             visualInfo[item].isSelected = std::ranges::find(selectedItems, item) != selectedItems.end();
             visualInfo[item].wasExpanded = item->IsExpanded();
-            visualInfo[item].scrollPosition = item->GetScrollPosition();
         }
 
         // Skip pruning if it is a new element
@@ -2035,8 +2033,7 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
             {
                 if (GetFocusControl()->FindTreeItem(item) == -1 || !item->IsVisible()) continue;
 
-                // Restore scroll position and selection if previously set
-                item->SetScrollPosition(visualInfo[item].scrollPosition);
+                // Restore selection if previously set
                 if (visualInfo[item].isSelected) GetFocusControl()->SelectItem(item, false, true);
             }
         });

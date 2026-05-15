@@ -81,16 +81,6 @@ void CTreeListItem::DrivePacman() const
     }
 }
 
-int CTreeListItem::GetScrollPosition() const
-{
-    return m_visualInfo->control->GetItemScrollPosition(this);
-}
-
-void CTreeListItem::SetScrollPosition(const int top) const
-{
-    m_visualInfo->control->SetItemScrollPosition(this, top);
-}
-
 int CTreeListItem::Compare(const CWdsListItem* baseOther, const int subitem) const
 {
     const auto other = reinterpret_cast<const CTreeListItem*>(baseOther);
@@ -268,11 +258,12 @@ bool CTreeListControl::IsItemSelected(const CTreeListItem* item) const
 void CTreeListControl::SelectItem(const CTreeListItem* item, const bool deselect, const bool focus)
 {
     const int itempos = FindTreeItem(item);
+    if (itempos == -1) return;
+
     if (deselect) DeselectAll();
     SetItemState(itempos, LVIS_SELECTED, LVIS_SELECTED);
     if (focus) SetItemState(itempos, LVIS_FOCUSED, LVIS_FOCUSED);
     if (focus) SetSelectionMark(itempos);
-    EnsureItemVisible(item);
 }
 
 void CTreeListControl::SetRootItem(CTreeListItem* root)
@@ -323,7 +314,10 @@ void CTreeListControl::ExpandPathToItem(const CTreeListItem* item)
         parent = index;
     }
 
-    const int w = GetSubItemWidth(GetItem(FindTreeItem(paths[0])), 0) + 5;
+    const int targetIndex = FindTreeItem(paths[0]);
+    if (targetIndex == -1) return;
+
+    const int w = GetSubItemWidth(GetItem(targetIndex), 0) + 5;
     if (GetColumnWidth(0) < w)
     {
         SetColumnWidth(0, w);
@@ -358,9 +352,39 @@ void CTreeListControl::InsertItem(const int i, CTreeListItem* item)
 
 void CTreeListControl::DeleteItem(const int i)
 {
-    GetItem(i)->SetExpanded(false);
-    GetItem(i)->SetVisible(this, false);
+    auto* item = GetItem(i);
+    if (item == nullptr) return;
+
+    CTreeListItem* focusAfterDelete = nullptr;
+    if ((GetItemState(i, LVIS_SELECTED | LVIS_FOCUSED) & (LVIS_SELECTED | LVIS_FOCUSED)) != 0)
+    {
+        const int itemIndent = item->GetIndent();
+        for (int j = i + 1; j < GetItemCount(); ++j)
+        {
+            auto* candidate = GetItem(j);
+            if (candidate == nullptr || candidate->GetIndent() < itemIndent) break;
+            if (candidate->GetIndent() == itemIndent && candidate->GetParent() == item->GetParent())
+            {
+                focusAfterDelete = candidate;
+                break;
+            }
+        }
+
+        if (focusAfterDelete == nullptr)
+        {
+            focusAfterDelete = item->GetParent();
+        }
+    }
+
+    item->SetExpanded(false);
+    item->SetVisible(this, false);
     CWdsListControl::DeleteItem(i);
+
+    if (const int target = FindTreeItem(focusAfterDelete); target != -1)
+    {
+        SetItemState(target, LVIS_FOCUSED, LVIS_FOCUSED);
+        SetSelectionMark(target);
+    }
 }
 
 int CTreeListControl::FindTreeItem(const CTreeListItem* item) const
@@ -515,6 +539,7 @@ void CTreeListControl::OnLButtonDown(const UINT nFlags, const CPoint point)
     const CPoint pt = point - rc.TopLeft();
 
     const CTreeListItem* item = GetItem(i);
+    if (item == nullptr) return;
 
     m_lButtonDownItem = i;
 
@@ -539,14 +564,9 @@ void CTreeListControl::OnLButtonDblClk(const UINT nFlags, const CPoint point)
         return;
     }
 
-    if (m_lButtonDownOnPlusMinusRect)
-    {
-        ToggleExpansion(m_lButtonDownItem);
-    }
-    else
-    {
-        OnItemDoubleClick(m_lButtonDownItem);
-    }
+    if (m_lButtonDownOnPlusMinusRect) return;
+
+    OnItemDoubleClick(m_lButtonDownItem);
 }
 
 void CTreeListControl::EmulateInteractiveSelection(const CTreeListItem* item)
@@ -561,8 +581,11 @@ void CTreeListControl::EmulateInteractiveSelection(const CTreeListItem* item)
     EnsureItemVisible(item);
 
     // get the item relative offset
+    const int itemIndex = FindTreeItem(item);
+    if (itemIndex == -1) return;
+
     RECT rect = {};
-    GetItemRect(FindTreeItem(item), &rect, LVIR_BOUNDS);
+    GetItemRect(itemIndex, &rect, LVIR_BOUNDS);
     const CRect clientRect = ClientRectOf(this);
     IntersectRect(&rect, &rect, &clientRect);
     const LPARAM lparam = MAKELPARAM(rect.left, rect.top);
@@ -575,7 +598,10 @@ void CTreeListControl::EmulateInteractiveSelection(const CTreeListItem* item)
 
 void CTreeListControl::ToggleExpansion(const int i)
 {
-    if (GetItem(i)->IsExpanded())
+    auto* item = GetItem(i);
+    if (item == nullptr) return;
+
+    if (item->IsExpanded())
     {
         CollapseItem(i);
     }
@@ -588,6 +614,8 @@ void CTreeListControl::ToggleExpansion(const int i)
 void CTreeListControl::CollapseItem(const int i)
 {
     const CTreeListItem* item = GetItem(i);
+    if (item == nullptr) return;
+
     if (!item->IsExpanded())
     {
         return;
@@ -613,19 +641,7 @@ void CTreeListControl::CollapseItem(const int i)
 
     if (todelete > 0) RemoveListItem(i + 1, todelete);
     item->SetExpanded(false);
-}
-
-int CTreeListControl::GetItemScrollPosition(const CTreeListItem* item) const
-{
-    CRect rc;
-    GetItemRect(FindTreeItem(item), rc, LVIR_BOUNDS);
-    return rc.top;
-}
-
-void CTreeListControl::SetItemScrollPosition(const CTreeListItem* item, const int top)
-{
-    const int old = GetItemScrollPosition(item);
-    Scroll(CSize(0, top - old));
+    RedrawItems(i, i);
 }
 
 bool CTreeListControl::SelectedItemCanToggle()
@@ -656,6 +672,8 @@ void CTreeListControl::ExpandItem(const CTreeListItem* item)
 void CTreeListControl::ExpandItem(const int i, const bool scroll)
 {
     CTreeListItem* item = GetItem(i);
+    if (item == nullptr) return;
+
     if (item->IsExpanded())
     {
         return;
@@ -690,19 +708,9 @@ void CTreeListControl::ExpandItem(const int i, const bool scroll)
     InsertListItem(i + 1, children);
     item->SetExpanded(true);
 
-    if (scroll)
-    {
-        // Scroll up so far, that item is still visible
-        // and the first child becomes visible, if possible.
-        if (item->GetTreeListChildCount() > 0)
-        {
-            EnsureVisible(i + 1, false);
-        }
-        EnsureVisible(i, false);
-    }
-
     // Sort at end so we do not invalidate position data
     if (childCount > 0) SortItems();
+
 }
 
 void CTreeListControl::OnKeyDown(const UINT nChar, const UINT nRepCnt, const UINT nFlags)
@@ -726,13 +734,22 @@ void CTreeListControl::OnKeyDown(const UINT nChar, const UINT nRepCnt, const UIN
     {
         if (nChar == VK_RIGHT)
         {
+            const int selectedIndex = FindTreeItem(items[0]);
+            if (selectedIndex == -1) return;
+
             if (items[0]->IsExpanded() && items[0]->HasChildren())
             {
-                SelectItem(GetItem(FindTreeItem(items[0]) + 1), true, true);
+                CTreeListItem* child = GetItem(selectedIndex + 1);
+                SelectItem(child, true, true);
+                EnsureItemVisible(child);
             }
-            if (!items[0]->IsExpanded() && items[0]->HasChildren())
+            else if (items[0]->HasChildren())
             {
-                ExpandItem(FindTreeItem(items[0]));
+                ExpandItem(selectedIndex);
+                if (const int expandedIndex = FindTreeItem(items[0]); expandedIndex != -1)
+                {
+                    EnsureItemVisible(GetItem(expandedIndex + 1));
+                }
             }
             return;
         }
@@ -741,10 +758,12 @@ void CTreeListControl::OnKeyDown(const UINT nChar, const UINT nRepCnt, const UIN
             if (items[0]->IsExpanded())
             {
                 CollapseItem(FindTreeItem(items[0]));
+                EnsureItemVisible(items[0]);
             }
             else if (items[0]->GetParent() != nullptr)
             {
                 SelectItem(items[0]->GetParent(), true, true);
+                EnsureItemVisible(items[0]->GetParent());
             }
             return;
         }
@@ -797,16 +816,22 @@ void CTreeListControl::OnChildAdded(const CTreeListItem* parent, CTreeListItem* 
         return;
     }
 
-    // Search backwards to find where this parent's children end (last direct child).
-    const int nextPos = FindTreeItem(parent) + 1;
-    int insertPos = nextPos + parent->GetTreeListChildCount();
-    for (; insertPos > nextPos; --insertPos)
+    const int parentPos = FindTreeItem(parent);
+    if (parentPos == -1) return;
+
+    int insertPos = parentPos + 1;
+    const int parentIndent = parent->GetIndent();
+    const int itemCount = GetItemCount();
+    while (insertPos < itemCount)
     {
-        if (const auto* item = GetItem(insertPos - 1);
-            item != nullptr && item->GetParent() == parent) break;
+        const auto* item = GetItem(insertPos);
+        if (item == nullptr || item->GetIndent() <= parentIndent) break;
+
+        ++insertPos;
     }
 
     InsertItem(insertPos, child);
+    RedrawItems(parentPos, parentPos);
 }
 
 void CTreeListControl::OnChildRemoved(const CTreeListItem* parent, const CTreeListItem* child)
@@ -857,7 +882,7 @@ void CTreeListControl::EnsureItemVisible(const CTreeListItem* item)
     {
         return;
     }
-    EnsureVisible(i, false);
+    EnsureVisible(i, FALSE);
     
     // Scroll to the left to show the beginning of the item
     if (const int currentScrollPos = GetScrollPos(SB_HORZ); currentScrollPos > 0)
@@ -868,13 +893,21 @@ void CTreeListControl::EnsureItemVisible(const CTreeListItem* item)
 
 void CTreeListControl::OnContextMenu(CWnd* /*pWnd*/, const CPoint pt)
 {
-    const int i = GetSelectionMark();
+    CPoint point = pt;
+    int i = point == CPoint(-1, -1) ? GetNextItem(-1, LVNI_FOCUSED) : GetSelectionMark();
+    if (i == -1) i = GetSelectionMark();
     if (i == -1) return;
 
     const CTreeListItem* item = GetItem(i);
     if (item == nullptr) return;
     CRect rc = GetWholeSubitemRect(i, 0);
     const CRect rcTitle = item->GetTitleRect() + rc.TopLeft();
+
+    if (point == CPoint(-1, -1))
+    {
+        point = CPoint(rcTitle.left, rcTitle.bottom);
+        ClientToScreen(&point);
+    }
 
     CMenu menu;
     menu.LoadMenu(IDR_POPUP_TREE);
@@ -921,7 +954,7 @@ void CTreeListControl::OnContextMenu(CWnd* /*pWnd*/, const CPoint pt)
     tp.rcExclude.top += overlap;
     tp.rcExclude.bottom -= overlap;
 
-    sub->TrackPopupMenuEx(TPM_LEFTALIGN | TPM_LEFTBUTTON, pt.x, pt.y, AfxGetMainWnd(), &tp);
+    sub->TrackPopupMenuEx(TPM_LEFTALIGN | TPM_LEFTBUTTON, point.x, point.y, AfxGetMainWnd(), &tp);
 }
 
 void CTreeListControl::OnSetFocus(CWnd* pOldWnd)

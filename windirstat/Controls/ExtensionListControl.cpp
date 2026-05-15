@@ -224,7 +224,7 @@ void CExtensionListControl::SelectExtension(const std::wstring & ext)
         if (_wcsicmp(GetListItem(i)->GetExtension().c_str(), ext.c_str()) == 0)
         {
             SetItemState(i, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
-            EnsureVisible(i, false);
+            EnsureVisible(i, FALSE);
             return;
         }
     }
@@ -309,6 +309,18 @@ void CExtensionListControl::OnKeyDown(const UINT nChar, const UINT nRepCnt, cons
 
 void CExtensionListControl::OnContextMenu(CWnd* /*pWnd*/, CPoint point)
 {
+    if (point == CPoint(-1, -1))
+    {
+        const int i = GetNextItem(-1, LVNI_FOCUSED);
+        if (i == -1) return;
+
+        CRect rc;
+        if (!GetItemRect(i, rc, LVIR_LABEL)) return;
+
+        point = CPoint(rc.left, rc.bottom);
+        ClientToScreen(&point);
+    }
+
     CMenu menu;
     menu.CreatePopupMenu();
     menu.AppendMenu(MF_STRING, ID_EXTLIST_SEARCH_EXTENSION, std::format(

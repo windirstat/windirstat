@@ -419,20 +419,23 @@ BOOL CSelectDrivesDlg::OnInitDialog()
 
     const auto driveList = GetDriveList({ DRIVE_REMOVABLE, DRIVE_FIXED,
         DRIVE_REMOTE, DRIVE_CDROM, DRIVE_RAMDISK });
-    m_suppressItemChanged = true;
-    for (const auto & drive : driveList)
     {
-        const auto item = new CDriveItem(&m_driveList, drive + L'\\');
-        m_driveList.InsertListItem(m_driveList.GetItemCount(), { item });
-        item->StartQuery(m_hWnd);
-
-        if (std::ranges::find(m_selectedDrives, drive) != m_selectedDrives.end())
+        const bool wasSuppressingItemChanged = m_suppressItemChanged;
+        m_suppressItemChanged = true;
+        for (const auto & drive : driveList)
         {
-            m_driveList.SelectItem(item);
+            const auto item = new CDriveItem(&m_driveList, drive + L'\\');
+            m_driveList.InsertListItem(m_driveList.GetItemCount(), { item });
+            item->StartQuery(m_hWnd);
+
+            if (std::ranges::find(m_selectedDrives, drive) != m_selectedDrives.end())
+            {
+                m_driveList.SelectItem(item);
+            }
         }
+        m_driveList.SortItems();
+        m_suppressItemChanged = wasSuppressingItemChanged;
     }
-    m_driveList.SortItems();
-    m_suppressItemChanged = false;
 
     // Create list of local drives to append "All Local Drives" option
     std::vector<std::wstring> localDrives;
@@ -630,9 +633,10 @@ LRESULT CSelectDrivesDlg::OnWmDriveInfoThreadFinished(const WPARAM wParam, const
     // Update the item with the query result (data written by thread) and recompute m_used
     item->SetDriveInformation(success);
 
+    const bool wasSuppressingItemChanged = m_suppressItemChanged;
     m_suppressItemChanged = true;
     m_driveList.SortItems();
-    m_suppressItemChanged = false;
+    m_suppressItemChanged = wasSuppressingItemChanged;
 
     return 0;
 }

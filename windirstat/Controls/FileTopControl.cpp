@@ -85,11 +85,11 @@ void CFileTopControl::SortItems()
     std::ranges::partial_sort(m_sizeMap, sortEnd, CompareBySize);
 
     // Update minimum size in top N for future comparisons
-    if (m_sizeMap.size() >= topN)
+    if (topN > 0 && m_sizeMap.size() >= topN)
     {
         m_topNMinSize = m_sizeMap[topN - 1]->GetSizeLogical();
     }
-    else if (!m_sizeMap.empty())
+    else if (topN > 0 && !m_sizeMap.empty())
     {
         m_topNMinSize = m_sizeMap.back()->GetSizeLogical();
     }

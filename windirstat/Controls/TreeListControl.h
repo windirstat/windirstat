@@ -80,8 +80,6 @@ public:
     void SetPlusMinusRect(const CRect& rc) const;
     CRect GetTitleRect() const;
     void SetTitleRect(const CRect& rc) const;
-    int GetScrollPosition() const;
-    void SetScrollPosition(int top) const;
     void StartPacman() const;
     void StopPacman() const;
     void DrivePacman() const;
@@ -117,8 +115,6 @@ class CTreeListControl : public CWdsListControl
     void EnsureItemVisible(const CTreeListItem* item);
     void ExpandItem(const CTreeListItem* item);
     int FindTreeItem(const CTreeListItem* item) const;
-    int GetItemScrollPosition(const CTreeListItem* item) const;
-    void SetItemScrollPosition(const CTreeListItem* item, int top);
     bool SelectedItemCanToggle();
     void ToggleSelectedItem();
     void EmulateInteractiveSelection(const CTreeListItem* item);
@@ -141,7 +137,7 @@ class CTreeListControl : public CWdsListControl
         POSITION pos = GetFirstSelectedItemPosition();
         if (pos == nullptr) return nullptr;
         const int i = GetNextSelectedItem(pos);
-        if (GetNextSelectedItem(pos) != -1) return nullptr;
+        if (pos != nullptr) return nullptr;
 
         return reinterpret_cast<T*>(GetItem(i));
     }
@@ -166,7 +162,6 @@ protected:
     afx_msg void OnContextMenu(CWnd* /*pWnd*/, CPoint /*point*/);
     afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
     afx_msg void OnLButtonDblClk(UINT nFlags, CPoint point);
-    afx_msg void OnLvnItemChangingList(NMHDR* pNMHDR, LRESULT* pResult);
     afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
     afx_msg void OnSetFocus(CWnd* pOldWnd);
     afx_msg BOOL OnHeaderEndDrag(UINT, NMHDR* pNMHDR, LRESULT* pResult);

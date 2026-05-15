@@ -30,56 +30,74 @@ namespace
     class SelectionPreserver
     {
     public:
-        explicit SelectionPreserver(CWdsListControl* list) : m_list(list)
+        explicit SelectionPreserver(CWdsListControl* list)
+            : m_list(list)
         {
-            // Focused item
+            ASSERT(m_list != nullptr);
+
             if (const int i = m_list->GetNextItem(-1, LVNI_FOCUSED); i != -1)
             {
                 m_focusedItem = m_list->GetItem(i);
+                m_list->SetItemState(i, 0, LVIS_FOCUSED);
             }
 
-            // Selected items
+            if (const int i = m_list->GetSelectionMark(); i != -1)
+            {
+                m_selectionMarkItem = m_list->GetItem(i);
+            }
+
             for (int i = m_list->GetNextItem(-1, LVNI_SELECTED); i != -1; i = m_list->GetNextItem(i, LVNI_SELECTED))
             {
                 if (auto* item = m_list->GetItem(i)) m_selectedItems.push_back(item);
             }
+
+            m_list->SetItemState(-1, 0, LVIS_SELECTED);
         }
 
         ~SelectionPreserver()
         {
-            // Handle re-selections
-            m_list->SetItemState(-1, 0, LVIS_SELECTED);
-            int scrollTo = -1;
+            int firstSelected = -1;
             for (const auto* item : m_selectedItems)
             {
                 if (const int i = m_list->FindListItem(item); i != -1)
                 {
                     m_list->SetItemState(i, LVIS_SELECTED, LVIS_SELECTED);
-                    scrollTo = i;
+                    if (firstSelected == -1) firstSelected = i;
                 }
             }
 
-            // Handle focus-reselection
-            if (m_focusedItem)
-            {
-                if (const int i = m_list->FindListItem(m_focusedItem); i != -1)
-                {
-                    m_list->SetItemState(i, LVIS_FOCUSED, LVIS_FOCUSED);
-                    scrollTo = i;
-                }
-            }
+            RestoreSelectionMark(firstSelected);
 
-            // Scroll once to the most relevant item
-            if (scrollTo != -1)
+            const int focused = m_list->FindListItem(m_focusedItem);
+            if (focused != -1 && IsVisible(focused))
             {
-                m_list->EnsureVisible(scrollTo, FALSE);
+                m_list->SetItemState(focused, LVIS_FOCUSED, LVIS_FOCUSED);
             }
         }
 
     private:
+        void RestoreSelectionMark(const int firstSelected) const
+        {
+            int selectionMark = -1;
+            if (m_selectionMarkItem != nullptr)
+            {
+                selectionMark = m_list->FindListItem(m_selectionMarkItem);
+                if (selectionMark == -1) selectionMark = firstSelected;
+            }
+
+            m_list->SetSelectionMark(selectionMark);
+        }
+
+        bool IsVisible(const int i) const
+        {
+            const int top = m_list->GetTopIndex();
+            return i >= top && i < top + m_list->GetCountPerPage();
+        }
+
         CWdsListControl* m_list;
         std::vector<CWdsListItem*> m_selectedItems;
         CWdsListItem* m_focusedItem = nullptr;
+        CWdsListItem* m_selectionMarkItem = nullptr;
     };
 }
 
@@ -705,6 +723,8 @@ void CWdsListControl::SetSorting(const int sortColumn, const bool ascending)
 
 void CWdsListControl::InsertListItem(const int i, const std::vector<CWdsListItem*>& items)
 {
+    if (items.empty()) return;
+
     ASSERT(i >= 0 && i <= GetItemCount());
 
     SelectionPreserver preserve(this);
@@ -963,8 +983,17 @@ LRESULT CWdsListControl::OnSelectionChanged(WPARAM wParam, LPARAM lParam)
 
 void CWdsListControl::RemoveListItem(const int i, const int c)
 {
+    if (c <= 0) return;
+
     int itemCount = GetItemCount();
     ASSERT(i >= 0 && i < itemCount);
+    ASSERT(i + c <= itemCount);
+
+    std::vector<std::unique_ptr<CWdsListItem>> removedItems;
+    if (m_ownsItems)
+    {
+        removedItems.reserve(c);
+    }
 
     SelectionPreserver preserve(this);
 
@@ -974,7 +1003,7 @@ void CWdsListControl::RemoveListItem(const int i, const int c)
         m_itemMap.erase(item);
         if (m_ownsItems)
         {
-            delete item;
+            removedItems.emplace_back(item);
         }
     }
 
@@ -987,7 +1016,14 @@ void CWdsListControl::RemoveListItem(const int i, const int c)
     }
 
     SetItemCountEx(itemCount, LVSICF_NOINVALIDATEALL | LVSICF_NOSCROLL);
-    RedrawItems(i, itemCount - 1);
+    if (i < itemCount)
+    {
+        RedrawItems(i, itemCount - 1);
+    }
+    else
+    {
+        Invalidate();
+    }
 }
 
 void CWdsListControl::ClearList()

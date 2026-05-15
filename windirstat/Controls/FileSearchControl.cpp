@@ -26,7 +26,7 @@ CFileSearchControl::CFileSearchControl() : CTreeListControl(COptions::SearchView
 
 bool CFileSearchControl::GetAscendingDefault(const int column)
 {
-    return column == COL_ITEMDUP_NAME || column == COL_ITEMDUP_LAST_CHANGE;
+    return column == COL_ITEMSEARCH_NAME || column == COL_ITEMSEARCH_LAST_CHANGE;
 }
 
 BEGIN_MESSAGE_MAP(CFileSearchControl, CTreeListControl)

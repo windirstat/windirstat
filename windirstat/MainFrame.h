@@ -137,7 +137,7 @@ protected:
 class CMainFrame final : public CFrameWndEx
 {
 protected:
-    static constexpr DWORD WM_CALLBACKUI = WM_USER + 1;
+    static constexpr DWORD WM_CALLBACKUI = WM_APP + 1;
     static UINT s_TaskBarMessage;
     static CMainFrame* s_Singleton;
 

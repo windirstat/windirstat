@@ -179,7 +179,7 @@ protected:
     int m_indicatedColumn = -1;
 
     // Selection change batching
-    static constexpr DWORD WM_SELECTION_CHANGED = WM_USER + 1;
+    static constexpr DWORD WM_SELECTION_CHANGED = WM_APP + 1;
     bool m_selectionChangePending = false;
 
     DECLARE_MESSAGE_MAP()
