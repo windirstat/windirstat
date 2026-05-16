@@ -29,7 +29,7 @@ public:
 
 protected:
 
-    void SelectFirstItemByType(ITEMTYPE itemType);
+    void ScrollToFirstItemByType(ITEMTYPE itemType);
     static CFileTreeControl * m_singleton;
 
     DECLARE_MESSAGE_MAP()

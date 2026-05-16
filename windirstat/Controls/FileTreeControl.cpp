@@ -28,8 +28,8 @@ bool CFileTreeControl::GetAscendingDefault(const int column)
     return column == COL_NAME || column == COL_LAST_CHANGE;
 }
 
-// Select the first item of the same parent as the first selected item that matches any of the specified ITEMTYPE
-void CFileTreeControl::SelectFirstItemByType(ITEMTYPE itemType)
+// Scroll to the first item of the same parent as the first selected item that matches any of the specified ITEMTYPE
+void CFileTreeControl::ScrollToFirstItemByType(ITEMTYPE itemType)
 {
     CItem* const itemSelected = GetFirstSelectedItem<CItem>();
     if (!itemSelected) return;
@@ -46,6 +46,12 @@ void CFileTreeControl::SelectFirstItemByType(ITEMTYPE itemType)
         {
             SetItemState(-1, 0, LVIS_SELECTED);
             SetItemState(i, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
+
+            if (CRect rect; GetItemRect(i, &rect, LVIR_BOUNDS))
+            {
+                Scroll(CSize(0, (i - GetTopIndex()) * rect.Height()));
+            }
+
             return;
         }
     }
@@ -65,13 +71,13 @@ void CFileTreeControl::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
     {
         if (nChar == VK_LEFT)
         {
-            SelectFirstItemByType(IT_DIRECTORY);
+            ScrollToFirstItemByType(IT_DIRECTORY);
             return;
         }
 
         if (nChar == VK_RIGHT)
         {
-            SelectFirstItemByType(IT_FILE);
+            ScrollToFirstItemByType(IT_FILE);
             return;
         }
     }
