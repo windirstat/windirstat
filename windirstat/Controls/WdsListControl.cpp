@@ -813,11 +813,7 @@ void CWdsListControl::PostSelectionChanged()
 
 void CWdsListControl::DeselectAll()
 {
-    for (POSITION pos = GetFirstSelectedItemPosition(); pos != nullptr;)
-    {
-        const int i = GetNextSelectedItem(pos);
-        SetItemState(i, 0, LVIS_SELECTED);
-    }
+    SetItemState(-1, 0, LVIS_SELECTED);
 }
 
 /////////////////////////////////////////////////////////////////////////////

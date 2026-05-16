@@ -41,11 +41,11 @@ void CFileTreeControl::SelectFirstItemByType(ITEMTYPE itemType)
     for (int i : std::views::iota(0, static_cast<int>(m_items.size())))
     {
         CItem* const itemCurrent = items[i];
-
         if (itemCurrent->GetParent() == itemTarget && itemCurrent->IsTypeOrFlag(itemType))
         {
-            SetItemState(-1, 0, LVIS_SELECTED);
+            DeselectAll();
             SetItemState(i, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
+            EnsureVisible(i, FALSE);
             return;
         }
     }
