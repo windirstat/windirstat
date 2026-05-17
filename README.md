@@ -11,7 +11,7 @@ For more information on the background of WinDirStat and alternative versions on
 ### Major features
 
 * Flexible scanning for local drives, selected drives, folders, and command-line targets, with refresh, suspend, resume, stop, fast NTFS scanning, multithreading, and elevated privilege support
-* Linked All Files, Largest Files, Duplicate Files, Search Results, File Watcher, Extension, and Treemap views
+* All Files, Largest Files, Duplicate Files, Search Results, File Watcher, Extension, and Treemap views
 * Interactive treemap navigation with zooming, parent/child reselection, extension labels, logical or physical sizing, and configurable KDirStat or SequoiaView styling
 * Sortable file details including logical/physical size, percentages, item counts, attributes, owner, modified time, free/unknown space, hardlinks, and hash prefixes
 * Search, duplicate detection, and filtering with regular expressions, configurable hash algorithms, cloud-file safeguards, hardlink deduplication, path/name filters, size filters, and reparse-point exclusions
@@ -56,10 +56,12 @@ Commons license [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/).
 
 WinDirStat 2.x has been developed for and tested on the following operating systems. They may work on older or newer operating systems but are not supported.
 
+* Windows 7
 * Windows 8
 * Windows 8.1
 * Windows 10
 * Windows 11
+* Windows Server 2008 R2
 * Windows Server 2012
 * Windows Server 2012 R2
 * Windows Server 2016
