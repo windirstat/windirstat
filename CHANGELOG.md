@@ -1,5 +1,5 @@
 <a name="windirstat-2.6.0"></a>
-# WinDirStat 2.6.0 (Upcoming)
+# WinDirStat 2.6.0
 
 Enhancements
 - Improved treemap navigation, zooming, and context-menu behavior
@@ -39,6 +39,9 @@ Miscellaneous
 - Microsoft Windows Server Core now supported
 - Microsoft Windows 7 supported again
 - Microsoft Windows Server 2008 R2 supported again
+
+## Breaking Changes
+- Command line options for saving and loading have changed (see Wiki)
 
 <a name="windirstat-2.5.0"></a>
 # WinDirStat 2.5.0
