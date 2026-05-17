@@ -598,10 +598,10 @@ void CItem::UpdateFreeSpaceItem()
         auto [total, free] = CDirStatApp::GetFreeDiskSpace(GetPath());
 
         // Recreate name based on updated free space and percentage
-        SetName(std::format(L"{:.2}|{} - {} ({:.1f}%)", GetNameView(),
+        SetName(std::format(L"{:.2}|{} - {} ({}%)", GetNameView(),
             FormatVolumeNameOfRootPath(GetPath()), Localization::Format(
                 IDS_DRIVE_ITEM_FREEsTOTALs, FormatBytes(free), FormatBytes(total)),
-            100.0 * free / total));
+            FormatDouble(100.0 * free / total)));
 
         // Update freespace item if it exists
         if (CItem* freeSpaceItem = FindFreeSpaceItem(); freeSpaceItem != nullptr)
