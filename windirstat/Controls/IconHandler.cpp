@@ -35,10 +35,10 @@ void CIconHandler::Initialize()
         m_junctionProtected = Icons::IconFromFontChar(L'⤷', RGB(0xFF, 0x3A, 0x3A), true);
         m_freeSpaceImage = Icons::IconFromFontChar(L'▢', RGB(0x3A, 0xCC, 0x3A), true);
         m_emptyImage = Icons::IconFromFontChar(L'▢', DarkMode::WdsSysColor(COLOR_WINDOWTEXT));
-        m_hardlinksImage = Icons::IconFromFontChar(L'⧉', DarkMode::WdsSysColor(COLOR_WINDOWTEXT));
-        m_dupesImage = Icons::IconFromFontChar(L'⧈', DarkMode::WdsSysColor(COLOR_WINDOWTEXT));
-        m_searchImage = Icons::IconFromFontChar(L'⊙', DarkMode::WdsSysColor(COLOR_WINDOWTEXT));
-        m_largestImage = Icons::IconFromFontChar(L'⋙', DarkMode::WdsSysColor(COLOR_WINDOWTEXT));
+        m_hardlinksImage = Icons::IconFromFontChar(L'⫘', DarkMode::WdsSysColor(COLOR_WINDOWTEXT));
+        m_dupesImage = Icons::IconFromFontChar(L'⧉', DarkMode::WdsSysColor(COLOR_WINDOWTEXT));
+        m_searchImage = Icons::IconFromFontChar(L'⌕', DarkMode::WdsSysColor(COLOR_WINDOWTEXT));
+        m_largestImage = Icons::IconFromFontChar(L'▼', DarkMode::WdsSysColor(COLOR_WINDOWTEXT));
         m_unknownImage = Icons::IconFromFontChar(L'?', RGB(0xCC,0xB8,0x66), true);
         m_defaultFileImage = FetchShellIcon(GetSysDirectory() + L"\\~", 0, FILE_ATTRIBUTE_NORMAL);
         m_defaultFolderImage = FetchShellIcon(GetSysDirectory() + L"\\~", 0, FILE_ATTRIBUTE_DIRECTORY);
