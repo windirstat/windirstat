@@ -309,8 +309,8 @@ namespace Icons
     void PaintPause(Graphics& g)
     {
         SolidBrush amberBrush(C(200, 160, 0));
-        g.FillRectangle(&amberBrush, 16, 12, 12, 40);
-        g.FillRectangle(&amberBrush, 36, 12, 12, 40);
+        g.FillRectangle(&amberBrush, 5, 5, 19, 54);
+        g.FillRectangle(&amberBrush, 39, 5, 19, 54);
     }
 
     void PaintMagnifier(Graphics& g, bool plus)
