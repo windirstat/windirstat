@@ -64,6 +64,7 @@ public:
     virtual CTreeListItem* GetTreeListChild(int i) const = 0;
     virtual int GetTreeListChildCount() const = 0;
     virtual CItem* GetLinkedItem() { return reinterpret_cast<CItem*>(this); }
+    virtual CTreeListItem* GetAncestorCheckItem() { return this; }
 
     void DrawPacman(CDC* pdc, const CRect& rc) const;
     CTreeListItem* GetParent() const;

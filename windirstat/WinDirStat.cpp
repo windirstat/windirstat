@@ -349,6 +349,7 @@ BOOL CDirStatApp::InitInstance()
     if (hideApp) m_nCmdShow = SW_HIDE;
 
     CMainFrame::Get()->InitialShowWindow();
+    CMainFrame::Get()->RebuildToolBar();
     m_pMainWnd->Invalidate();
     m_pMainWnd->UpdateWindow();
 

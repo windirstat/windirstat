@@ -1312,6 +1312,7 @@ void CMainFrame::RebuildToolBar()
     const auto scale = COptions::LargeToolBar ? (32.0f / 20.0f) : 1.0f;
 
     // Remove all existing buttons
+    if (CDirStatApp::Get()->m_pMainWnd == nullptr) return;
     while (m_wndToolBar.GetCount() > 0)
         m_wndToolBar.RemoveButton(0);
 

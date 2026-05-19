@@ -152,7 +152,6 @@ void CPageFiltering::OnOK()
     COptions::FilteringIncludeDirs.Obj() = m_filteringIncludeDirs;
     CFiltering::CompileFilters();
 
-    CMainFrame::Get()->RebuildToolBar();
     CMFCPropertyPage::OnOK();
 }
 

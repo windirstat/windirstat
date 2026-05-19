@@ -149,7 +149,6 @@ void CPageAdvanced::OnOK()
     }
 
     CDirStatDoc::Get()->UpdateAllViews(nullptr, HINT_LISTSTYLECHANGED);
-    CMainFrame::Get()->RebuildToolBar();
     CMFCPropertyPage::OnOK();
 }
 

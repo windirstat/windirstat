@@ -851,7 +851,9 @@ std::vector<CItem*> CDirStatDoc::GetAllSelected()
     if (selection.empty()) for (const auto item : GetFocusControl()->GetAllSelected<CTreeListItem>(true))
     {
         // If item has no direct link but has children, expand to children
+        // Skip root container nodes (no parent) - they should not proxy as a full selection
         if (item->GetLinkedItem()) continue;
+        if (item->GetParent() == nullptr) continue;
         
         for (const auto i : std::views::iota(0, item->GetTreeListChildCount()))
         {
@@ -1069,18 +1071,24 @@ END_MESSAGE_MAP()
 void CDirStatDoc::OnFilterExcludeItem()
 {
     const auto selected = GetAllSelected();
+    std::vector<CItem*> toRefresh;
 
     for (const auto* item : selected)
     {
-        const std::wstring path = item->GetPath();
-        std::wstring& current = item->IsTypeOrFlag(IT_FILE) ?
+        const bool isFile = item->IsTypeOrFlag(IT_FILE);
+        const std::wstring value = isFile ? item->GetName() : item->GetPath();
+        std::wstring& current = isFile ?
             COptions::FilteringExcludeFiles.Obj() : COptions::FilteringExcludeDirs.Obj();
         if (!current.empty() && current.back() != L'\n') current += L"\r\n";
-        current += path;
+        current += value;
+
+        // Files must refresh via parent so ShouldIncludeFile is checked during enumeration
+        CItem* target = isFile ? item->GetParent() : const_cast<CItem*>(item);
+        if (target != nullptr) toRefresh.push_back(target);
     }
 
     CFiltering::CompileFilters();
-    RefreshItem(selected);
+    RefreshItem(toRefresh);
 }
 
 void CDirStatDoc::OnCleanupSparsifyFile()
@@ -1863,8 +1871,10 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
             iter != visualInfo.end() && item->IsVisible())
             item->SetExpanded(iter->second.wasExpanded);
 
-        // Handle if item to be refreshed has been removed
-        if (item->IsTypeOrFlag(IT_FILE, IT_DIRECTORY, IT_DRIVE) &&
+        // Handle if item to be refreshed has been removed or filtered
+        if (item->IsTypeOrFlag(IT_DIRECTORY) &&
+            !CFiltering::ShouldScanDirectory(item->GetPath()) ||
+            item->IsTypeOrFlag(IT_FILE, IT_DIRECTORY, IT_DRIVE) &&
             !FinderBasic::DoesFileExist(item->GetFolderPath(),
                 item->IsTypeOrFlag(IT_FILE) ? item->GetName() : std::wstring()))
         {

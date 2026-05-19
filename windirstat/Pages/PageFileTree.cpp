@@ -144,7 +144,6 @@ void CPageFileTree::OnOK()
     if (colsChanged) CMainFrame::Get()->GetFileTreeView()->CreateColumns();
 
     CDirStatDoc::Get()->UpdateAllViews(nullptr, HINT_LISTSTYLECHANGED);
-    CMainFrame::Get()->RebuildToolBar();
     CMFCPropertyPage::OnOK();
 }
 

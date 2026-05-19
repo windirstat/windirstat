@@ -55,6 +55,7 @@ public:
     CTreeListItem* GetTreeListChild(int i) const override;
     HICON GetIcon() override;
     CItem* GetLinkedItem() noexcept override { return m_item; }
+    CTreeListItem* GetAncestorCheckItem() override { return m_item; }
 
     void AddSearchItemChild(CItemSearch* child);
     void RemoveSearchItemChild(CItemSearch* child);

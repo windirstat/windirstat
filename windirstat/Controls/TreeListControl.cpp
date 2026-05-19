@@ -782,28 +782,30 @@ void CTreeListControl::OnKeyDown(const UINT nChar, const UINT nRepCnt, const UIN
 
 LRESULT CTreeListControl::OnSelectionChanged(WPARAM wParam, LPARAM lParam)
 {
-    const auto selectedItems = GetAllSelected(true);
+    auto selectedItems = GetAllSelected(true);
     if (selectedItems.size() >= 2)
     {
-        // Deselect children of already-selected parents
         const CSetRedrawLock lock(this);
-        std::unordered_set<const CTreeListItem*> selectedSet(selectedItems.begin(), selectedItems.end());
-        for (const auto* item : selectedItems)
+        std::unordered_set<CTreeListItem*> selectedSet;
+        for (auto* item : selectedItems)
         {
-            if (!selectedSet.contains(item)) continue;
-            for (const auto* parent = item->GetParent(); parent != nullptr; parent = parent->GetParent())
-            {
-                if (selectedSet.contains(parent))
-                {
-                    const int idx = FindTreeItem(item);
-                    if (idx != -1) SetItemState(idx, 0, LVIS_SELECTED);
-                    selectedSet.erase(item);
-                    break;
-                }
-            }
+            if (auto* checkItem = item->GetAncestorCheckItem())
+                selectedSet.insert(checkItem);
         }
 
-        Invalidate();
+        for (auto* item : selectedItems)
+        {
+            auto* checkItem = item->GetAncestorCheckItem();
+            if (checkItem == nullptr || !selectedSet.contains(checkItem)) continue;
+
+            if (std::ranges::any_of(selectedSet, [checkItem](CTreeListItem* other)
+                { return other != checkItem && other->IsAncestorOf(checkItem); }))
+            {
+                const int idx = FindTreeItem(item);
+                if (idx != -1) SetItemState(idx, 0, LVIS_SELECTED);
+                selectedSet.erase(checkItem);
+            }
+        }
     }
 
     return CWdsListControl::OnSelectionChanged(wParam, lParam);

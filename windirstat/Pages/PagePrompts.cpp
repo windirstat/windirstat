@@ -77,7 +77,6 @@ void CPagePrompts::OnOK()
     COptions::ShowDupeDetectionCloudLinksWarning = (FALSE != m_showDupeDetectionCloudLinksWarning);
     COptions::ShowMicrosoftProgress = (FALSE != m_showMicrosoftProgress);
 
-    CMainFrame::Get()->RebuildToolBar();
     CMFCPropertyPage::OnOK();
 }
 

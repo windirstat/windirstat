@@ -138,13 +138,13 @@ void CFileSearchControl::ProcessSearch(CItem* item,
 
 void CFileSearchControl::RemoveItem(CItem* item)
 {
-    const auto& findItem = m_itemTracker.find(item);
-    if (findItem == m_itemTracker.end()) return;
-
-    // Remove the item from the interface
     const CSetRedrawLock lock(this);
-    m_rootItem->RemoveSearchItemChild(findItem->second);
-    m_itemTracker.erase(findItem);
+    std::erase_if(m_itemTracker, [&](const auto& pair)
+    {
+        if (pair.first != item && !item->IsAncestorOf(pair.first)) return false;
+        m_rootItem->RemoveSearchItemChild(pair.second);
+        return true;
+    });
 }
 
 void CFileSearchControl::AfterDeleteAllItems()

@@ -129,7 +129,6 @@ void CPageCleanups::OnOK()
         COptions::UserDefinedCleanups[i].WorksForUncPaths = m_udc[i].WorksForUncPaths.Obj();
     }
 
-    CMainFrame::Get()->RebuildToolBar();
     CMFCPropertyPage::OnOK();
 }
 

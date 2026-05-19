@@ -202,7 +202,6 @@ void CPageGeneral::OnOK()
     const LANGID id = static_cast<LANGID>(m_combo.GetItemData(m_combo.GetCurSel()));
     COptions::LanguageId = static_cast<int>(id);
 
-    CMainFrame::Get()->RebuildToolBar();
     CMFCPropertyPage::OnOK();
 }
 

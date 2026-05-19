@@ -203,6 +203,9 @@ void CFiltering::CompileFilters()
                    !IncludeDirsRegex.empty()  || !IncludeFilesRegex.empty() ||
                    SizeMinimumCalculated != 0  ||
                    std::bit_cast<ULONGLONG>(MaxAgeFileTimeCutoff) != 0;
+
+    // Rebuild toolbar to reflect status
+    CMainFrame::Get()->RebuildToolBar();
 }
 
 std::wstring CFiltering::WithoutTrailingBackslashes(std::wstring path)
