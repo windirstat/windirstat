@@ -401,7 +401,6 @@ BOOL CSelectDrivesDlg::OnInitDialog()
         m_folderName = COptions::SelectDrivesFolder.Obj().front().c_str();
     }
 
-    if (m_browseIcon) DestroyIcon(m_browseIcon);
     m_browseIcon = Icons::MakeIcon(DpiRest(16), Icons::PaintFileSelect);
     m_browseButton.SetIcon(m_browseIcon);
     UpdateFilterButton();
@@ -548,7 +547,6 @@ void CSelectDrivesDlg::UpdateButtons()
 
 void CSelectDrivesDlg::UpdateFilterButton()
 {
-    if (m_filterIcon) DestroyIcon(m_filterIcon);
     const bool active = CFiltering::IsFilterActive();
     m_filterIcon = Icons::MakeIcon(DpiRest(20), [active](auto& g) { Icons::PaintFilter(g, active); });
     m_filterButton.SetIcon(m_filterIcon);

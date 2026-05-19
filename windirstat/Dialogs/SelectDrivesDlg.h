@@ -131,8 +131,8 @@ protected:
     CButton m_okButton;
     CStatic m_browseButton;
     CStatic m_filterButton;
-    HICON m_browseIcon = nullptr;
-    HICON m_filterIcon = nullptr;
+    SmartPointer<HICON, decltype(&DestroyIcon)> m_browseIcon{ &DestroyIcon };
+    SmartPointer<HICON, decltype(&DestroyIcon)> m_filterIcon{ &DestroyIcon };
     std::vector<std::wstring> m_selectedDrives;
     bool m_suppressItemChanged = false;
 
