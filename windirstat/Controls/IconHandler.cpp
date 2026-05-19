@@ -288,15 +288,15 @@ namespace Icons
 
     void PaintFilter(Graphics& g, bool active)
     {
-        Point funnelShape[] = { {8, 12}, {56, 12}, {40, 30}, {40, 54}, {24, 54}, {24, 30} };
+        Point funnelShape[] = { {8, 6}, {56, 6}, {56, 14}, {38, 34}, {38, 56}, {26, 52}, {26, 34}, {8, 14} };
         if (active)
         {
             SolidBrush activeBrush(C(255, 140, 0));
-            g.FillPolygon(&activeBrush, funnelShape, 6);
+            g.FillPolygon(&activeBrush, funnelShape, 8);
         }
-        Pen outlinePen(Neutral(), 5);
+        Pen outlinePen(Neutral(), 4);
         outlinePen.SetLineJoin(LineJoinMiter);
-        g.DrawPolygon(&outlinePen, funnelShape, 6);
+        g.DrawPolygon(&outlinePen, funnelShape, 8);
     }
 
     void PaintHelp(Graphics& g)
