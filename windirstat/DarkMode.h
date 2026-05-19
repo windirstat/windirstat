@@ -28,7 +28,7 @@ public:
     static constexpr auto WM_UAHDRAWMENUITEM = 0x0092;
 
     // Check if dark mode is supported on this system
-    static bool IsDarkModeActive() noexcept;
+    static bool IsDarkModeActive() noexcept { return s_darkModeEnabled; }
     static bool EnhancedDarkModeSupport();
     static COLORREF WdsSysColor(DWORD index);
 

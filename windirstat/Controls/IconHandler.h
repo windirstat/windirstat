@@ -84,8 +84,10 @@ namespace Icons
 {
     using namespace Gdiplus;
 
+    inline COLORREF NeutralRef() { return DarkMode::IsDarkModeActive() ? RGB(210, 210, 210) : RGB(90, 90, 90); }
     inline Color C(BYTE r, BYTE g, BYTE b, BYTE a = 255) { return Color(a, r, g, b); }
-    inline Color Neutral() { return C(140, 140, 140); }
+    inline Color C(COLORREF clr) { return C(GetRValue(clr), GetGValue(clr), GetBValue(clr)); }
+    inline Color Neutral() { return C(NeutralRef()); }
 
     void PaintDelete(Graphics& g);
     void PaintDeleteBin(Graphics& g);

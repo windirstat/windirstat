@@ -1334,7 +1334,7 @@ void CMainFrame::RebuildToolBar()
         { ID_REFRESH_ALL,             IDS_REFRESH_ALL,             Icons::Char(L'↻', RGB(  0, 156, 221))},
         { ID_REFRESH_SELECTED,        IDS_REFRESH_SELECTED,        Icons::PaintRefreshSelected},
         { ID_SEPARATOR,               {},{}},
-        { ID_SEARCH,                  IDS_SEARCH_TITLE,            Icons::Char(L'⌕', RGB(140, 140, 140))},
+        { ID_SEARCH,                  IDS_SEARCH_TITLE,            Icons::Char(L'⌕', Icons::NeutralRef())},
         { ID_FILTER,                  IDS_PAGE_FILTERING_TITLE,    [](auto& g){ Icons::PaintFilter(g, CFiltering::IsFilterActive()); } },
         { ID_SEPARATOR,               {},{}},
         { ID_CLEANUP_OPEN_SELECTED,   IDS_CLEANUP_OPEN_SELECTED,   Icons::PaintOpenSelected},
@@ -1366,7 +1366,6 @@ void CMainFrame::RebuildToolBar()
         {
             CBitmap bitmap;
             bitmap.Attach(Icons::MakeBitmap(imageSize, painter));
-            DarkMode::LightenBitmap(&bitmap);
             index = CMFCToolBar::GetImages()->AddImage(bitmap, TRUE);
         }
 

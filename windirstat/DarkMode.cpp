@@ -123,11 +123,6 @@ COLORREF DarkMode::WdsSysColor(const DWORD index)
     return s_darkModeEnabled ? DarkModeColors[index] : OriginalColors[index];
 }
 
-bool DarkMode::IsDarkModeActive() noexcept
-{
-    return s_darkModeEnabled;
-}
-
 bool DarkMode::EnhancedDarkModeSupport()
 {
     CRegKey key;
