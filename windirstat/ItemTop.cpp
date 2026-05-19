@@ -105,7 +105,7 @@ HICON CItemTop::GetIcon()
     // Fetch all other icons
     CDirStatApp::Get()->GetIconHandler()->DoAsyncShellInfoLookup(std::make_tuple(this,
         m_visualInfo->control, m_item->GetPath(), m_item->GetAttributes(), &m_visualInfo->icon, nullptr));
-    return nullptr;
+    return m_visualInfo->icon;
 }
 
 void CItemTop::AddTopItemChild(CItemTop* child)

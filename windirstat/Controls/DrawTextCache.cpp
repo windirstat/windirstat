@@ -70,8 +70,7 @@ void DrawTextCache::DrawTextCached(CDC* pDC, const std::wstring& text, CRect& re
 
     // Add to LRU list and cache
     m_leastRecentList.push_front(key);
-    m_cache.emplace(std::move(key),
-        std::make_pair(std::move(entry), m_leastRecentList.begin()));
+    m_cache.emplace(key, std::make_pair(std::move(entry), m_leastRecentList.begin()));
 }
 
 DrawTextCache::CacheKey DrawTextCache::CreateCacheKey(const CDC* pDC,

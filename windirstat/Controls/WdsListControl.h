@@ -68,6 +68,7 @@ public:
     virtual void DrawAdditionalState(CDC* /*pdc*/, const CRect& /*rcLabel*/) const {}
     void DrawSelection(const CWdsListControl* list, CDC* pdc, CRect rc, UINT state) const;
     virtual HICON GetIcon() = 0;
+    virtual bool IsVisible() const { return true; }
     void DrawLabel(const CWdsListControl* list, CDC* pdc, CRect& rc, UINT state, int* width, int* focusLeft, bool indent = true);
     void DrawPercentage(CDC* pdc, CRect rc, double fraction, COLORREF color) const;
 };

@@ -71,7 +71,7 @@ void CIconHandler::Initialize()
                 CMainFrame::Get()->InvokeInMessageThread([&]
                 {
                     const auto i = control->FindListItem(item);
-                    if (i == -1) return;
+                    if (i == -1 || !item->IsVisible()) return;
 
                     *icon = iconTmp;
                     if (desc != nullptr) *desc = descTmp;
