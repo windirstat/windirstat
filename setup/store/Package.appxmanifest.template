@@ -13,7 +13,32 @@
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
 
-  <Resources><Resource Language="en-us" /></Resources>
+  <Resources>
+    <Resource Language="en" />
+    <Resource Language="en-us" />
+    <Resource Language="cs" />
+    <Resource Language="da" />
+    <Resource Language="de" />
+    <Resource Language="es" />
+    <Resource Language="et" />
+    <Resource Language="fi" />
+    <Resource Language="fr" />
+    <Resource Language="hu" />
+    <Resource Language="it" />
+    <Resource Language="ja" />
+    <Resource Language="ko" />
+    <Resource Language="nb" />
+    <Resource Language="nl" />
+    <Resource Language="pl" />
+    <Resource Language="pt" />
+    <Resource Language="ru" />
+    <Resource Language="sl" />
+    <Resource Language="sv" />
+    <Resource Language="tr" />
+    <Resource Language="uk" />
+    <Resource Language="zh-HK" />
+    <Resource Language="zh" />
+  </Resources>
 
   <Dependencies>
     <TargetDeviceFamily Name="Windows.Desktop" MinVersion="{{MinVersion}}"

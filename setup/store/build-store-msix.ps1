@@ -7,8 +7,8 @@ param(
     [ValidateSet("x86", "x64", "arm64")][string[]] $Platform = @("x86", "x64", "arm64"),
 
     [string] $Version,
-    [string] $IdentityName = "WinDirStat.WinDirStat",
-    [string] $Publisher = $(if ($env:WDS_STORE_PUB) { $env:WDS_STORE_PUB } else { "CN=WinDirStat Team" }),
+    [string] $IdentityName = "WinDirStatTeam.WinDirStat",
+    [string] $Publisher = "CN=BACE0F4C-E0CC-4A1D-945E-61E8D6D94180",
     [string] $PublisherDisplayName = "WinDirStat Team",
     [string] $DisplayName = "WinDirStat",
     [string] $MinVersion = "10.0.17763.0",

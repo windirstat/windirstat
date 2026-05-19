@@ -24,10 +24,6 @@ SET STOREBLDDIR=%BLDDIR%\store
 SET "TSAURL=http://time.certum.pl/"
 SET "LIBNAME=WinDirStat"
 SET "LIBURL=https://github.com/WinDirStat/WinDirStat"
-SET "STORE_ID=WinDirStat.WinDirStat"
-SET "STORE_PUB="
-SET "STORE_PUB_NAME=WinDirStat Team"
-SET "SIGN_ENABLED=0"
 
 :: prepend 7-Zip and system paths
 IF EXIST "%ProgramFiles%\7-Zip" SET PATH=%ProgramFiles%\7-Zip;%PATH%
@@ -50,28 +46,16 @@ IF EXIST "%WindowsSdkVerBinPath%\x86" msbuild "%BASEDIR%\windirstat.sln" /p:Conf
 IF EXIST "%WindowsSdkVerBinPath%\x64" msbuild "%BASEDIR%\windirstat.sln" /p:Configuration=Release /t:Clean;Build /p:Platform=x64,ExternalCompilerOptions=/DPRODUCTION=%PRODUCTION%
 IF EXIST "%WindowsSdkVerBinPath%\arm64" msbuild "%BASEDIR%\windirstat.sln" /p:Configuration=Release /t:Clean;Build /p:Platform=ARM64,ExternalCompilerOptions=/DPRODUCTION=%PRODUCTION%
 
-:: try signing the main executables, then verify the result from the executable signature
+:: try signing the main executables
 signtool sign /fd sha256 /tr %TSAURL% /td sha256 /d %LIBNAME% /du %LIBURL% "%BLDDIR%\*.exe"
-FOR /F "USEBACKQ DELIMS=" %%X IN (`%POWERSHELL% -Command "$exe = @(Get-ChildItem '%BLDDIR%\WinDirStat_*.exe' -ErrorAction SilentlyContinue)[0]; If ($exe) { (Get-AuthenticodeSignature -LiteralPath $exe.FullName).SignerCertificate.Subject }"`) DO SET "STORE_PUB=%%X"
-IF DEFINED STORE_PUB (
-   SET "SIGN_ENABLED=1"
-   ECHO Executable signing verified.
-) ELSE (
-   ECHO Executable signing could not be verified; signing steps will be skipped.
-   IF DEFINED WDS_STORE_PUB SET "STORE_PUB=!WDS_STORE_PUB!"
-)
-IF NOT DEFINED STORE_PUB SET "STORE_PUB=CN=%STORE_PUB_NAME%"
+IF ERRORLEVEL 1 ECHO Executable signing failed; continuing without signed executables.
 
 :: build the msi
 CALL "%THISDIR%\setup\build.cmd" "%RELTYPE%"
 
 :: sign the msi
-IF "%SIGN_ENABLED%" EQU "1" (
-   signtool sign /fd sha256 /tr %TSAURL% /td sha256 /d %LIBNAME% /du %LIBURL% "%BLDDIR%\*.msi"
-   IF ERRORLEVEL 1 EXIT /B 1
-) ELSE (
-   ECHO Skipping MSI signing.
-)
+signtool sign /fd sha256 /tr %TSAURL% /td sha256 /d %LIBNAME% /du %LIBURL% "%BLDDIR%\*.msi"
+IF ERRORLEVEL 1 ECHO MSI signing failed; continuing without a signed MSI.
 
 :: copy the output files
 IF EXIST "%PUBDIR%" RD /S /Q "%PUBDIR%"
@@ -82,18 +66,11 @@ FOR %%A IN (arm64 x86 x64) DO (
    COPY /Y "%BLDDIR%\WinDirStat-%%A.msi" "%PUBDIR%"
 )
 
-:: build and sign the Microsoft Store MSIX bundle
-SET "WDS_STORE_PUB=%STORE_PUB%"
-%POWERSHELL% -File "%THISDIR%\setup\store\build-store-msix.ps1" -IdentityName "%STORE_ID%" -PublisherDisplayName "%STORE_PUB_NAME%" -OutDir "%STOREBLDDIR%"
+:: build the Microsoft Store MSIX bundle; Partner Center signs it during submission
+%POWERSHELL% -File "%THISDIR%\setup\store\build-store-msix.ps1" -OutDir "%STOREBLDDIR%"
 IF ERRORLEVEL 1 EXIT /B 1
 %POWERSHELL% -Command "$packages = @(Get-ChildItem -LiteralPath '%STOREBLDDIR%\packages' -File | Where-Object { $_.Extension -in '.msix', '.msixbundle' }); if (-not $packages) { throw 'No Store artifacts were generated.' }; foreach ($package in $packages) { Move-Item -LiteralPath $package.FullName -Destination '%PUBDIR%' -Force }"
 IF ERRORLEVEL 1 EXIT /B 1
-IF "%SIGN_ENABLED%" EQU "1" (
-   signtool sign /fd sha256 /tr %TSAURL% /td sha256 /d %LIBNAME% /du %LIBURL% /a "%PUBDIR%\*.msixbundle"
-   IF ERRORLEVEL 1 EXIT /B 1
-) ELSE (
-   ECHO Skipping Store MSIX bundle signing.
-)
 
 :: 7-zip executables and debug files
 7z.EXE >NUL 2>&1
@@ -104,7 +81,6 @@ DEL /F /S /Q "%PUBDIR%\*.pdb" >NUL 2>&1
 
 :: zip up executables
 FOR %%A IN (arm64 x86 x64) DO %POWERSHELL% -Command "Compress-Archive '%PUBDIR%\%%A' -DestinationPath '%PUBDIR%\WinDirStat.zip' -Update"
-
 
 :: output hash information
 SET HASHFILE=%PUBDIR%\WinDirStat-Hashes.txt
