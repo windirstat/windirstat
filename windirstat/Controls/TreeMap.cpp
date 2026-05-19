@@ -543,7 +543,7 @@ CItem* CTreeMap::FindItemByPoint(CItem* item, const CPoint point)
         const CRect& rc = current->TmiGetRectangle();
         ASSERT(rc.PtInRect(point));
 
-        if (rc.Width() <= gridWidth || rc.Height() <= gridWidth || current->TmiIsLeaf())
+        if (rc.Width() <= gridWidth || rc.Height() <= gridWidth || current->TmiIsLeaf() || current->TmiGetSize() == 0)
         {
             return current;
         }
