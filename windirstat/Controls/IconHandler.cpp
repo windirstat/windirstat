@@ -21,8 +21,11 @@
 
 CIconHandler::~CIconHandler()
 {
-    m_lookupQueue.SuspendExecution();
-    m_lookupQueue.CancelExecution();
+    for (auto* queue : { &m_fastQueue, &m_slowQueue })
+    {
+        queue->SuspendExecution();
+        queue->CancelExecution();
+    }
 }
 
 void CIconHandler::Initialize()
@@ -51,19 +54,14 @@ void CIconHandler::Initialize()
         // Cache icon for my computer
         m_myComputerImage = FetchShellIcon(std::to_wstring(CSIDL_DRIVES), SHGFI_PIDL);
 
-        // Use two threads for asynchronous icon lookup
-        m_lookupQueue.StartThreads(MAX_ICON_THREADS, [this]
+        for (auto* queue : { &m_fastQueue, &m_slowQueue }) queue->StartThreads(MAX_ICON_THREADS, [this, queue]
         {
             if (FAILED(CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE))) return;
-            for (auto itemOpt = m_lookupQueue.Pop(); itemOpt.has_value(); itemOpt = m_lookupQueue.Pop())
+            for (auto itemOpt = queue->Pop(); itemOpt.has_value(); itemOpt = queue->Pop())
             {
-                // Fetch item from queue
                 auto& [item, control, path, attr, icon, desc] = itemOpt.value();
-
-                // Query the icon from the system
                 std::wstring descTmp;
-                const HICON iconTmp = FetchShellIcon(
-                    path, 0, attr, desc != nullptr ? &descTmp : nullptr);
+                const HICON iconTmp = FetchShellIcon(path, 0, attr, desc != nullptr ? &descTmp : nullptr);
 
                 // Join the UI thread and see if the item still exists
                 // since it could have been deleted since originally
@@ -72,7 +70,6 @@ void CIconHandler::Initialize()
                 {
                     const auto i = control->FindListItem(item);
                     if (i == -1 || !item->IsVisible()) return;
-
                     *icon = iconTmp;
                     if (desc != nullptr) *desc = descTmp;
                     control->RedrawItems(i, i);
@@ -93,16 +90,22 @@ void CIconHandler::DoAsyncShellInfoLookup(IconLookup&& lookupInfo)
         *icon = (attr & FILE_ATTRIBUTE_DIRECTORY) ? m_defaultFolderImage : m_defaultFileImage;
     }
 
-    // queue for lookup
-    m_lookupQueue.PushIfNotQueued(std::move(lookupInfo));
+    static constexpr std::array slowExts = { L".exe", L".ico", L".lnk", L".url" };
+    const auto dot = path.rfind(L'.');
+    const bool isSlow = dot != std::wstring::npos &&
+        std::ranges::any_of(slowExts, [ext = path.data() + dot](const wchar_t* e) { return _wcsicmp(ext, e) == 0; });
+    (isSlow ? m_slowQueue : m_fastQueue).PushIfNotQueued(std::move(lookupInfo));
 }
 
 void CIconHandler::ClearAsyncShellInfoQueue()
 {
     ProcessMessagesUntilSignaled([this]
     {
-        m_lookupQueue.SuspendExecution(true);
-        m_lookupQueue.ResumeExecution();
+        for (auto* queue : { &m_fastQueue, &m_slowQueue })
+        {
+            queue->SuspendExecution(true);
+            queue->ResumeExecution();
+        }
     });
 }
 
@@ -110,8 +113,11 @@ void CIconHandler::StopAsyncShellInfoQueue()
 {
     ProcessMessagesUntilSignaled([this]
     {
-        m_lookupQueue.SuspendExecution();
-        m_lookupQueue.CancelExecution();
+        for (auto* queue : { &m_fastQueue, &m_slowQueue })
+        {
+            queue->SuspendExecution();
+            queue->CancelExecution();
+        }
     });
 }
 

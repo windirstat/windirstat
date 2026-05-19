@@ -27,7 +27,7 @@
 class CIconHandler final
 {
     static constexpr UINT WDS_SHGFI_DEFAULTS = SHGFI_USEFILEATTRIBUTES | SHGFI_SMALLICON | SHGFI_ICON | SHGFI_ADDOVERLAYS | SHGFI_SYSICONINDEX | SHGFI_OVERLAYINDEX;
-    static constexpr auto MAX_ICON_THREADS = 4;
+    static constexpr auto MAX_ICON_THREADS = 2;
 
     std::mutex m_cachedIconMutex;
     std::unordered_map<int, HICON> m_cachedIcons;
@@ -47,7 +47,8 @@ public:
 
     HICON FetchShellIcon(const std::wstring& path, UINT flags = 0, DWORD attr = FILE_ATTRIBUTE_NORMAL, std::wstring* psTypeName = nullptr);
 
-    BlockingQueue<IconLookup> m_lookupQueue = BlockingQueue<IconLookup>(false);
+    BlockingQueue<IconLookup> m_fastQueue = BlockingQueue<IconLookup>(false);
+    BlockingQueue<IconLookup> m_slowQueue = BlockingQueue<IconLookup>(false);
 
     HICON m_freeSpaceImage = nullptr;    // <Free Space>
     HICON m_unknownImage = nullptr;      // <Unknown>
