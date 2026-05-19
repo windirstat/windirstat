@@ -303,11 +303,12 @@ namespace Icons
     {
         Color blue = C(100, 149, 237);
         Pen pen(blue, 10);
-        pen.SetStartCap(LineCapRound);
-        pen.SetEndCap(LineCapRound);
-        g.DrawArc(&pen, Rect(18, 8, 28, 28), 180, 270);
         SolidBrush brush(blue);
-        g.FillEllipse(&brush, 27, 48, 10, 10);
+        GraphicsPath path;
+        path.AddBezier(20, 22, 20, 5, 44, 5, 44, 22);
+        path.AddBezier(44, 22, 44, 32, 30, 28, 32, 42);
+        g.DrawPath(&pen, &path);
+        g.FillEllipse(&brush, 26, 48, 12, 12);
     }
 
     void PaintPause(Graphics& g)
