@@ -242,7 +242,7 @@ namespace Icons
         arcPen.SetEndCap(LineCapRound);
         g.DrawArc(&arcPen, Rect(18, 20, 27, 27), -45, 270);
         SolidBrush brush(C(0, 156, 221));
-        Point arrow[] = { {17,34},{20,24},{16,19},{26,20},{27,30},{23,27},{22,34} };
+        Point arrow[] = { {26,20},{24,30},{16,22} };
         g.FillPolygon(&brush, arrow, static_cast<INT>(std::size(arrow)));
     }
 
