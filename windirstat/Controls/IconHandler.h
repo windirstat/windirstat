@@ -99,6 +99,7 @@ namespace Icons
     void PaintHelp(Graphics& g);
     void PaintPause(Graphics& g);
     void PaintMagnifier(Graphics& g, bool plus);
+    void PaintGear(Graphics& g);
     void PaintCharacter(Graphics& g, WCHAR ch, COLORREF clr,
                         bool bold = true, LPCWSTR fontName = wds::strFontSegoeUISymbol);
 

@@ -1349,7 +1349,7 @@ void CMainFrame::RebuildToolBar()
         { ID_TREEMAP_ZOOMIN,          IDS_TREEMAP_ZOOMIN,          [](auto& g) { Icons::PaintMagnifier(g, true);}},
         { ID_TREEMAP_ZOOMOUT,         IDS_TREEMAP_ZOOMOUT,         [](auto& g){ Icons::PaintMagnifier(g, false);}},
         { ID_SEPARATOR,               {},{}},
-        { ID_CONFIGURE,               IDS_MENU_SETTINGS,           Icons::Char(L'⚙', RGB(140, 140, 140))},
+        { ID_CONFIGURE,               IDS_MENU_SETTINGS,           Icons::PaintGear},
         { ID_HELP_MANUAL,             IDS_HELP_MANUAL,             Icons::PaintHelp},
     };
 

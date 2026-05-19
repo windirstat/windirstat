@@ -325,6 +325,28 @@ namespace Icons
         if (plus) g.FillRectangle(&blueBrush, 23, 14, 6, 24);
     }
 
+    void PaintGear(Graphics& g)
+    {
+        SolidBrush gearBrush(Neutral());
+        const Point primaryTooth[] = { {-3, -27}, {3, -27}, {6, -17}, {-6, -17} };
+
+        GraphicsState state = g.Save();
+        g.TranslateTransform(32, 32);
+
+        for (int i = 0; i < 8; ++i)
+        {
+            g.FillPolygon(&gearBrush, primaryTooth, 4);
+            g.RotateTransform(45);
+        }
+        g.Restore(state);
+
+        Pen ringPen(Neutral(), 8);
+        g.DrawEllipse(&ringPen, 15, 15, 34, 34);
+
+        Pen bearingPen(Neutral(), 1);
+        g.DrawEllipse(&bearingPen, 23, 23, 18, 18);
+    }
+
     void PaintCharacter(Graphics& g, WCHAR ch, COLORREF clr, bool bold, LPCWSTR fontName)
     {
         const WCHAR text[]{ ch, L'\0' };
