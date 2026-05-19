@@ -1,4 +1,17 @@
 <a name="windirstat-2.6.0"></a>
+# WinDirStat 2.6.1 (Upcoming)
+
+Enhancements
+- Improved gear, pause, and refresh icon rendering
+- Improved icons lookups on latent networks
+
+Bug Fixes
+- Corrected file-based exclusions context menu option
+- Corrected potential race conditions during icon rendering
+- Corrected minor handle leak in drive selection dialog
+- Addressed folders not appearing in search results
+
+<a name="windirstat-2.6.0"></a>
 # WinDirStat 2.6.0
 
 Enhancements
