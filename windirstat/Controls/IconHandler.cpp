@@ -289,11 +289,8 @@ namespace Icons
     void PaintFilter(Graphics& g, bool active)
     {
         Point funnelShape[] = { {8, 6}, {56, 6}, {56, 14}, {38, 34}, {38, 56}, {26, 52}, {26, 34}, {8, 14} };
-        if (active)
-        {
-            SolidBrush activeBrush(C(255, 140, 0));
-            g.FillPolygon(&activeBrush, funnelShape, 8);
-        }
+        SolidBrush fillBrush(active ? C(255, 140, 0) : Neutral());
+        g.FillPolygon(&fillBrush, funnelShape, 8);
         Pen outlinePen(Neutral(), 4);
         outlinePen.SetLineJoin(LineJoinMiter);
         g.DrawPolygon(&outlinePen, funnelShape, 8);
