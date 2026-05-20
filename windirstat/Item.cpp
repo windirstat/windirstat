@@ -870,7 +870,7 @@ void CItem::ScanItems(BlockingQueue<CItem*> * queue, FinderNtfsContext& contextN
         // Mark the time we started evaluating this node
         item->ResetScanStartTime();
 
-        if (item->IsTypeOrFlag(IT_DRIVE, IT_DIRECTORY) && !CFiltering::ShouldScanDirectory(item->GetPath()))
+        if (item->IsTypeOrFlag(IT_DRIVE, IT_DIRECTORY) && CFiltering::IsFilteredOut(item->GetPath()))
         {
             item->UpwardSubtractReadJobs(1);
             item->UpwardDrivePacman();
@@ -893,13 +893,8 @@ void CItem::ScanItems(BlockingQueue<CItem*> * queue, FinderNtfsContext& contextN
                 if (finder->IsDirectory())
                 {
                     if (COptions::ExcludeHiddenDirectory && finder->IsHidden() ||
-                        COptions::ExcludeProtectedDirectory && finder->IsHiddenSystem())
-                    {
-                        continue;
-                    }
-
-                    // Excludes win; includes may still allow ancestors needed to reach them.
-                    if (!CFiltering::ShouldScanDirectory(finder->GetFilePath()))
+                        COptions::ExcludeProtectedDirectory && finder->IsHiddenSystem() ||
+                        CFiltering::IsFilteredOut(finder->GetFilePath()))
                     {
                         continue;
                     }
@@ -914,12 +909,9 @@ void CItem::ScanItems(BlockingQueue<CItem*> * queue, FinderNtfsContext& contextN
                 {
                     if (COptions::ExcludeHiddenFile && finder->IsHidden() ||
                         COptions::ExcludeProtectedFile && finder->IsHiddenSystem() ||
-                        COptions::ExcludeSymbolicLinksFile && finder->GetReparseTag() == IO_REPARSE_TAG_SYMLINK)
-                    {
-                        continue;
-                    }
-
-                    if (!CFiltering::ShouldIncludeFile(*finder))
+                        COptions::ExcludeSymbolicLinksFile && finder->GetReparseTag() == IO_REPARSE_TAG_SYMLINK ||
+                        CFiltering::IsFilteredOut(finder->GetFileName(), finder->GetFilePath(),
+                            finder->GetFileSizeLogical(), finder->GetLastWriteTime()))
                     {
                         continue;
                     }

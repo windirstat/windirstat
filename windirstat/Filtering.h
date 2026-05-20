@@ -19,8 +19,6 @@
 
 #include "pch.h"
 
-class Finder;
-
 class CFiltering final
 {
     static std::wstring ExtractIncludeAnchor(std::wstring_view pattern, bool useRegex);
@@ -42,6 +40,8 @@ public:
     static bool IsFilterActive();
     static std::wstring WithoutTrailingBackslashes(std::wstring path);
     static bool MatchesAnyPath(const std::wstring& path, const std::vector<std::wregex>& patterns);
-    static bool ShouldScanDirectory(const std::wstring& path);
-    static bool ShouldIncludeFile(const Finder& finder);
+    static bool IsFilteredOut(const std::wstring& path);
+    static bool IsFilteredOut(const std::wstring& fileName, const std::wstring& filePath,
+        ULONGLONG fileSizeLogical, const FILETIME& lastWriteTime);
+    static bool IsFilteredOut(const CItem* item);
 };

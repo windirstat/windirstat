@@ -1071,9 +1071,7 @@ END_MESSAGE_MAP()
 
 void CDirStatDoc::OnFilterExcludeItem()
 {
-    const auto selected = GetAllSelected();
-    std::vector<CItem*> toRefresh;
-
+    const auto& selected = GetAllSelected();
     for (const auto* item : selected)
     {
         const bool isFile = item->IsTypeOrFlag(IT_FILE);
@@ -1082,14 +1080,10 @@ void CDirStatDoc::OnFilterExcludeItem()
             COptions::FilteringExcludeFiles.Obj() : COptions::FilteringExcludeDirs.Obj();
         if (!current.empty() && current.back() != L'\n') current += L"\r\n";
         current += value;
-
-        // Files must refresh via parent so ShouldIncludeFile is checked during enumeration
-        CItem* target = isFile ? item->GetParent() : const_cast<CItem*>(item);
-        if (target != nullptr) toRefresh.push_back(target);
     }
 
     CFiltering::CompileFilters();
-    RefreshItem(toRefresh);
+    RefreshItem(selected);
 }
 
 void CDirStatDoc::OnCleanupSparsifyFile()
@@ -1873,8 +1867,7 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
             item->SetExpanded(iter->second.wasExpanded);
 
         // Handle if item to be refreshed has been removed or filtered
-        if (item->IsTypeOrFlag(IT_DIRECTORY) &&
-            !CFiltering::ShouldScanDirectory(item->GetPath()) ||
+        if (CFiltering::IsFilteredOut(item) ||
             item->IsTypeOrFlag(IT_FILE, IT_DIRECTORY, IT_DRIVE) &&
             !FinderBasic::DoesFileExist(item->GetFolderPath(),
                 item->IsTypeOrFlag(IT_FILE) ? item->GetName() : std::wstring()))

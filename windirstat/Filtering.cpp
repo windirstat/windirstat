@@ -230,63 +230,71 @@ bool CFiltering::MatchesAnyPath(const std::wstring& path, const std::vector<std:
     return trimmed != path && matches(trimmed);
 }
 
-bool CFiltering::ShouldScanDirectory(const std::wstring& path)
+bool CFiltering::IsFilteredOut(const std::wstring& directoryName)
 {
-    if (!FilterActive) return true;
-    if (MatchesAnyPath(path, ExcludeDirsRegex)) return false;
-    if (IncludeDirsRegex.empty()) return true;
-    if (MatchesAnyPath(path, IncludeDirsRegex)) return true;
+    if (!FilterActive) return false;
+    if (MatchesAnyPath(directoryName, ExcludeDirsRegex)) return true;
+    if (IncludeDirsRegex.empty()) return false;
+    if (MatchesAnyPath(directoryName, IncludeDirsRegex)) return false;
 
     // Check if path is the same as or an ancestor of any include-anchor,
     // meaning we still need to descend into this directory to reach an included one.
-    return std::ranges::any_of(IncludeDirsAnchors, [&](const auto& anchor) -> bool
+    return !std::ranges::any_of(IncludeDirsAnchors, [&](const auto& anchor) -> bool
     {
         if (anchor.empty()) return true;
         const std::wstring a = WithoutTrailingBackslashes(anchor);
-        const std::wstring d = WithoutTrailingBackslashes(path);
+        const std::wstring d = WithoutTrailingBackslashes(directoryName);
         if (d.empty() || d.size() > a.size()) return false;
         if (_wcsnicmp(d.c_str(), a.c_str(), d.size()) != 0) return false;
         return d.size() == a.size() || a[d.size()] == L'\\';
     });
 }
 
-bool CFiltering::ShouldIncludeFile(const Finder& finder)
+bool CFiltering::IsFilteredOut(const std::wstring& fileName, const std::wstring& filePath,
+    ULONGLONG fileSizeLogical, const FILETIME& lastWriteTime)
 {
-    if (!FilterActive) return true;
+    if (!FilterActive) return false;
 
     // Exclude files matching name filter
     if (!ExcludeFilesRegex.empty() && std::ranges::any_of(ExcludeFilesRegex,
-        [&finder](const auto& pattern) { return std::regex_match(finder.GetFileName(), pattern); }))
+        [&fileName](const auto& pattern) { return std::regex_match(fileName, pattern); }))
     {
-        return false;
+        return true;
     }
 
     // Include only files whose path matches the include directory filter
-    if (!IncludeDirsRegex.empty() && !MatchesAnyPath(finder.GetFilePath(), IncludeDirsRegex))
+    if (!IncludeDirsRegex.empty() && !MatchesAnyPath(filePath, IncludeDirsRegex))
     {
-        return false;
+        return true;
     }
 
     // Include only files whose name matches the include name filter
     if (!IncludeFilesRegex.empty() && std::ranges::none_of(IncludeFilesRegex,
-        [&finder](const auto& pattern) { return std::regex_match(finder.GetFileName(), pattern); }))
+        [&fileName](const auto& pattern) { return std::regex_match(fileName, pattern); }))
     {
-        return false;
+        return true;
     }
 
     // Exclude files below the minimum size threshold
-    if (SizeMinimumCalculated > 0 && finder.GetFileSizeLogical() < SizeMinimumCalculated)
+    if (SizeMinimumCalculated > 0 && fileSizeLogical < SizeMinimumCalculated)
     {
-        return false;
+        return true;
     }
 
     // Exclude files older than the max-age cutoff
     if (std::bit_cast<ULONGLONG>(MaxAgeFileTimeCutoff) != 0)
     {
-        const FILETIME ft = finder.GetLastWriteTime();
-        if (CompareFileTime(&ft, &MaxAgeFileTimeCutoff) < 0)
-            return false;
+        if (CompareFileTime(&lastWriteTime, &MaxAgeFileTimeCutoff) < 0)
+            return true;
     }
 
-    return true;
+    return false;
+}
+
+bool CFiltering::IsFilteredOut(const CItem* item)
+{
+    if (item->IsTypeOrFlag(IT_FILE))
+        return IsFilteredOut(item->GetName(), item->GetPath(),
+            item->GetSizeLogical(), item->GetLastChange());
+    return IsFilteredOut(item->GetPath());
 }
