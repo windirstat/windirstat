@@ -148,7 +148,7 @@ protected:
     void InitialShowWindow();
     void InvokeInMessageThread(std::function<void()> callback) const;
 
-    void RestoreTreeMapView();
+    void RestoreTreeMapView(bool forced = false);
     void RestoreExtensionView();
     void MinimizeTreeMapView();
     void MinimizeExtensionView();
