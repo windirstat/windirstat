@@ -780,8 +780,9 @@ void CMainFrame::MinimizeTreeMapView()
     m_splitter.SetSplitterPos(1.0);
 }
 
-void CMainFrame::RestoreTreeMapView()
+void CMainFrame::RestoreTreeMapView(bool force)
 {
+    if (force) GetTreeMapView()->ShowTreeMap(true);
     if (GetTreeMapView()->IsShowTreeMap())
     {
         m_splitter.RestoreSplitterPos(0.5);

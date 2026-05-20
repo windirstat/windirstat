@@ -1294,6 +1294,8 @@ void CDirStatDoc::OnTreeMapZoomIn()
     {
         SetZoomItem(item->IsRootItem() ? GetRootItem() :
             item->IsTypeOrFlag(IT_FILE) ? item->GetParent() : item);
+        if (!CMainFrame::Get()->GetTreeMapView()->IsShowTreeMap())
+            CMainFrame::Get()->RestoreTreeMapView(true);
     }
 }
 
@@ -1302,6 +1304,8 @@ void CDirStatDoc::OnTreeMapZoomOut()
     if (GetZoomItem() != nullptr)
     {
         SetZoomItem(GetZoomItem()->GetParent());
+        if (!CMainFrame::Get()->GetTreeMapView()->IsShowTreeMap())
+            CMainFrame::Get()->RestoreTreeMapView(true);
     }
 }
 
