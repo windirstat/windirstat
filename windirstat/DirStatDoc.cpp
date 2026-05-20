@@ -905,6 +905,7 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
     static bool (*isElevated)(CItem*) = [](CItem*) { return IsElevationActive(); };
     static bool (*isElevationPossible)(CItem*) = [](CItem*) { return IsElevationPossible(); };
     static bool (*isDupeTabVisible)(CItem*) = [](CItem*) { return CMainFrame::Get()->GetFileTabbedView()->IsDupeTabVisible(); };
+    static bool (*isDriveOrDirOrFile)(CItem*) = [](CItem* item) { return item != nullptr && item->IsTypeOrFlag(IT_DRIVE, IT_DIRECTORY, IT_FILE); };
     static bool (*isVhdFile)(CItem*) = [](CItem* item) { return item != nullptr && IsElevationActive() && (!item->IsTypeOrFlag(IT_FILE) || item->GetExtension() == L".vhdx"); };
 
     static std::unordered_map<UINT, const commandFilter> filters
@@ -941,7 +942,7 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
         { ID_COMPUTE_HASH,            { false, false, true,  LF_NONE,     { IT_FILE } } },
         { ID_EDIT_COPY_CLIPBOARD,     { false, true,  true,  LF_NONE,     { IT_DRIVE, IT_DIRECTORY, IT_FILE } } },
         { ID_FILTER,                  { true,  true,  true,  LF_NONE,     { ITF_ANY } } },
-        { ID_FILTER_EXCLUDE_ITEM,     { false, true,  false, LF_NONE,     { IT_DRIVE, IT_DIRECTORY, IT_FILE } } },
+        { ID_FILTER_EXCLUDE_ITEM,     { false, true,  false, LF_NONE,     { ITF_ANY }, isDriveOrDirOrFile } },
         { ID_INDICATOR_DISK,          { true,  true,  false, LF_NONE,     { ITF_ANY } } },
         { ID_INDICATOR_IDLE,          { true,  true,  true,  LF_NONE,     { ITF_ANY } } },
         { ID_INDICATOR_RAM,           { true,  true,  true,  LF_NONE,     { ITF_ANY } } },
