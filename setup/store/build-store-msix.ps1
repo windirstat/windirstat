@@ -12,7 +12,7 @@ param(
     [string] $PublisherDisplayName = "WinDirStat Team",
     [string] $DisplayName = "WinDirStat",
     [string] $MinVersion = "10.0.17763.0",
-    [string] $MaxVersionTested = "10.0.26100.0",
+    [string] $MaxVersionTested = "10.0.29999.0",
     [string] $OutDir
 )
 
