@@ -304,7 +304,8 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
                         // Special case for WofCompressedData files
                         if (const WCHAR* streamName = ByteOffset<WCHAR>(curAttribute, curAttribute->NameOffset); curAttribute->NameLength > 0)
                         {
-                            if (std::wstring_view(streamName, curAttribute->NameLength) == L"WofCompressedData")
+                            if (std::wstring_view(streamName, curAttribute->NameLength) == L"WofCompressedData" &&
+                                (!curAttribute->IsNonResident() || curAttribute->Form.Nonresident.LowestVcn == 0))
                             {
                                 baseRecord.PhysicalSize = curAttribute->IsNonResident() ?
                                     curAttribute->Form.Nonresident.AllocatedLength :
@@ -319,8 +320,12 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
                         {
                             if (curAttribute->Form.Nonresident.LowestVcn != 0) continue;
                             baseRecord.LogicalSize = curAttribute->Form.Nonresident.FileSize;
-                            baseRecord.PhysicalSize = (curAttribute->IsCompressed() || curAttribute->IsSparse()) ?
-                                curAttribute->Form.Nonresident.Compressed : curAttribute->Form.Nonresident.AllocatedLength;
+
+                            if (const ULONGLONG physSize = (curAttribute->IsCompressed() || curAttribute->IsSparse()) ?
+                                curAttribute->Form.Nonresident.Compressed : curAttribute->Form.Nonresident.AllocatedLength; physSize > 0)
+                            {
+                                baseRecord.PhysicalSize = physSize;
+                            }
                         }
                         else
                         {
