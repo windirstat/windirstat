@@ -1624,7 +1624,7 @@ void CDirStatDoc::OnTreeMapSelectParent()
 {
     const auto & item = CFileTreeControl::Get()->GetFirstSelectedItem<CItem>();
     PushReselectChild(item);
-    CFileTreeControl::Get()->SelectItem(item->GetParent(), true, true);
+    CFileTreeControl::Get()->SelectItem(item->GetParent(), true, true, true);
     UpdateAllViews(nullptr, HINT_SELECTIONREFRESH);
 }
 
@@ -1632,7 +1632,7 @@ void CDirStatDoc::OnTreeMapReselectChild()
 {
     const CItem* item = PopReselectChild();
     CFileTreeControl::Get()->ExpandPathToItem(item); // ensure item is visible before selecting
-    CFileTreeControl::Get()->SelectItem(item, true, true);
+    CFileTreeControl::Get()->SelectItem(item, true, true, true);
     UpdateAllViews(nullptr, HINT_SELECTIONREFRESH);
 }
 

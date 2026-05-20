@@ -255,7 +255,7 @@ bool CTreeListControl::IsItemSelected(const CTreeListItem* item) const
     return false;
 }
 
-void CTreeListControl::SelectItem(const CTreeListItem* item, const bool deselect, const bool focus)
+void CTreeListControl::SelectItem(const CTreeListItem* item, const bool deselect, const bool focus, const bool scroll)
 {
     const int itempos = FindTreeItem(item);
     if (itempos == -1) return;
@@ -264,6 +264,7 @@ void CTreeListControl::SelectItem(const CTreeListItem* item, const bool deselect
     SetItemState(itempos, LVIS_SELECTED, LVIS_SELECTED);
     if (focus) SetItemState(itempos, LVIS_FOCUSED, LVIS_FOCUSED);
     if (focus) SetSelectionMark(itempos);
+    if (scroll) EnsureItemVisible(GetItem(itempos));
 }
 
 void CTreeListControl::SetRootItem(CTreeListItem* root)
