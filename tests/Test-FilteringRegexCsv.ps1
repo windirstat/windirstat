@@ -1,19 +1,10 @@
+#Requires -Version 7.0
 param(
-    [ValidateSet('Release', 'Debug')]
-    [string] $Configuration = 'Release',
-
-    [ValidateSet('x64', 'Win32', 'ARM64')]
-    [string] $Platform = 'x64',
-
-    [string] $ExePath,
-
-    [switch] $SkipBuild,
+    [string] $ExePath = (Join-Path $PSScriptRoot '..\publish\x64\WinDirStat.exe'),
 
     [int] $TimeoutSeconds = 120,
 
     [switch] $KeepArtifacts,
-
-    [switch] $ShowBuildOutput,
 
     [Alias('ShowPassedDetails')]
     [switch] $Details
@@ -22,19 +13,11 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-$repoRoot = Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')
-$repoRoot = $repoRoot.ProviderPath
-$buildRoot = Join-Path $repoRoot 'build'
-$workRoot = Join-Path $buildRoot 'filter-regex-csv-test'
-$runRoot = Join-Path $workRoot 'runner'
-$scanRoot = Join-Path $workRoot 'scan-root'
-$platformShortName = switch ($Platform) {
-    'Win32' { 'x86' }
-    'x64' { 'x64' }
-    'ARM64' { 'arm64' }
-}
-$targetName = "WinDirStat_$($platformShortName)_filtertest"
-$symbolIn = [string] [char] 0x25cf
+$repoRoot  = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
+$workRoot  = Join-Path $repoRoot 'build\filter-regex-csv-test'
+$runRoot   = Join-Path $workRoot 'runner'
+$scanRoot  = Join-Path $workRoot 'scan-root'
+$symbolIn  = [string] [char] 0x25cf
 $symbolOut = [string] [char] 0x25cb
 $symbolPass = [string] [char] 0x2713
 $symbolFail = [string] [char] 0x2717
@@ -67,44 +50,6 @@ function Write-LabelValue {
 
     Write-Host -NoNewline "${Label}: " -ForegroundColor DarkCyan
     Write-Host $Value -ForegroundColor $ValueColor
-}
-
-function Find-MSBuild {
-    $cmd = Get-Command msbuild.exe -ErrorAction SilentlyContinue
-    if ($cmd) { return $cmd.Source }
-
-    $candidates = @(
-        'C:\Program Files\Microsoft Visual Studio',
-        'C:\Program Files (x86)\Microsoft Visual Studio'
-    )
-
-    foreach ($root in $candidates) {
-        if (!(Test-Path -LiteralPath $root)) { continue }
-        $match = Get-ChildItem -LiteralPath $root -Recurse -Filter MSBuild.exe -ErrorAction SilentlyContinue |
-            Where-Object { $_.FullName -like '*\MSBuild\Current\Bin\MSBuild.exe' } |
-            Select-Object -First 1
-        if ($match) { return $match.FullName }
-    }
-
-    throw 'MSBuild.exe was not found. Pass -SkipBuild -ExePath <path-to-WinDirStat.exe> to test an existing build.'
-}
-
-function Remove-TestBuildArtifacts {
-    $paths = @(
-        (Join-Path $buildRoot "$targetName.exe"),
-        (Join-Path $buildRoot "$targetName.pdb"),
-        (Join-Path $buildRoot "$targetName.lib"),
-        (Join-Path $repoRoot "intermediate\$($Platform)_$($Configuration)\windirstat\$targetName.exe.recipe"),
-        (Join-Path $repoRoot "intermediate\$($Platform)_$($Configuration)\windirstat\$targetName.iobj"),
-        (Join-Path $repoRoot "intermediate\$($Platform)_$($Configuration)\windirstat\$targetName.ipdb"),
-        (Join-Path $repoRoot "intermediate\$($Platform)_$($Configuration)\windirstat\$targetName.pch")
-    )
-
-    foreach ($path in $paths) {
-        if (Test-Path -LiteralPath $path) {
-            Remove-Item -LiteralPath $path -Force
-        }
-    }
 }
 
 function New-TestFile {
@@ -678,46 +623,12 @@ function Get-ExpectedRows {
     @(@($candidateDirs) + @($candidateFiles) | ForEach-Object { Normalize-ComparePath $_ } | Sort-Object)
 }
 
-$sourceExe = $ExePath
-$builtForTest = $false
-$suiteSucceeded = $false
+$sourceExe       = [System.IO.Path]::GetFullPath($ExePath)
+$suiteSucceeded  = $false
 
 try {
-    if (!$SkipBuild) {
-        $msbuild = Find-MSBuild
-        $solution = Join-Path $repoRoot 'windirstat.sln'
-        $buildArgs = @(
-            $solution,
-            '/m:1',
-            '/v:minimal',
-            "/p:Configuration=$Configuration",
-            "/p:Platform=$Platform",
-            "/p:TargetName=$targetName"
-        )
-
-        Write-ColoredLine "Building $targetName..." Cyan
-        $buildOutput = @(& $msbuild @buildArgs 2>&1)
-        $buildExitCode = $LASTEXITCODE
-        if ($ShowBuildOutput -or $buildExitCode -ne 0) {
-            $buildOutput | ForEach-Object {
-                $color = if ($buildExitCode -eq 0) { 'DarkGray' } else { 'Yellow' }
-                Write-Host $_ -ForegroundColor $color
-            }
-        }
-        if ($buildExitCode -ne 0) {
-            throw "MSBuild failed with exit code $buildExitCode."
-        }
-
-        $sourceExe = Join-Path $buildRoot "$targetName.exe"
-        $builtForTest = $true
-        Write-ColoredLine "Build complete: $sourceExe" Green
-    }
-    elseif ([string]::IsNullOrWhiteSpace($sourceExe)) {
-        $sourceExe = Join-Path $buildRoot "WinDirStat_$platformShortName.exe"
-    }
-
-    if (!(Test-Path -LiteralPath $sourceExe)) {
-        throw "WinDirStat executable was not found: $sourceExe"
+    if (-not (Test-Path -LiteralPath $sourceExe)) {
+        throw "WinDirStat executable not found: $sourceExe"
     }
 
     if (Test-Path -LiteralPath $workRoot) {
@@ -947,19 +858,16 @@ try {
     $suiteSucceeded = $true
 }
 finally {
-    if (!$KeepArtifacts) {
+    if (-not $KeepArtifacts) {
         if (Test-Path -LiteralPath $workRoot) {
             Remove-Item -LiteralPath $workRoot -Recurse -Force
-        }
-        if ($builtForTest) {
-            Remove-TestBuildArtifacts
         }
     }
     elseif (Test-Path -LiteralPath $workRoot) {
         Write-ColoredLine "Kept test artifacts in: $workRoot" Yellow
     }
 
-    if (!$suiteSucceeded) {
-        Write-ColoredLine 'Filtering CSV suite failed.' Red
+    if (-not $suiteSucceeded) {
+        Write-ColoredLine 'Filtering CSV suite FAILED.' Red
     }
 }

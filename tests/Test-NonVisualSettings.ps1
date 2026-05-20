@@ -1,7 +1,5 @@
+#Requires -Version 7.0
 param(
-    [ValidateSet('Release', 'Debug')]
-    [string] $Configuration = 'Release',
-
     [ValidateSet('x64', 'Win32', 'ARM64')]
     [string] $Platform = 'x64',
 
@@ -13,8 +11,6 @@ param(
 
     [switch] $KeepArtifacts,
 
-    [switch] $ShowBuildOutput,
-
     [Alias('ShowPassedDetails')]
     [switch] $Details
 )
@@ -22,10 +18,8 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-$repoRoot = Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')
-$repoRoot = $repoRoot.ProviderPath
-$buildRoot = Join-Path $repoRoot 'build'
-$workRoot = Join-Path $buildRoot 'nonvisual-settings-test'
+$repoRoot  = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
+$workRoot  = Join-Path $repoRoot 'build\nonvisual-settings-test'
 $sourceRoot = Join-Path $workRoot 'source'
 $runRoot = Join-Path $workRoot 'runner'
 $scanRoot = Join-Path $workRoot 'scan-root'
@@ -571,7 +565,7 @@ function Build-SettingsTestExecutable {
         $solution,
         '/m:1',
         '/v:minimal',
-        "/p:Configuration=$Configuration",
+        '/p:Configuration=Release',
         "/p:Platform=$Platform",
         "/p:TargetName=$targetName",
         '/p:ExternalCompilerOptions=/DWDS_SETTINGS_TEST'
@@ -580,13 +574,8 @@ function Build-SettingsTestExecutable {
     Write-ColoredLine "Building $targetName from isolated source copy..." Cyan
     $buildOutput = @(& $msbuild @buildArgs 2>&1)
     $buildExitCode = $LASTEXITCODE
-    if ($ShowBuildOutput -or $buildExitCode -ne 0) {
-        $buildOutput | ForEach-Object {
-            $color = if ($buildExitCode -eq 0) { 'DarkGray' } else { 'Yellow' }
-            Write-Host $_ -ForegroundColor $color
-        }
-    }
     if ($buildExitCode -ne 0) {
+        $buildOutput | ForEach-Object { Write-Host $_ -ForegroundColor Yellow }
         throw "MSBuild failed with exit code $buildExitCode."
     }
 
@@ -1263,17 +1252,20 @@ try {
     }
     New-Item -ItemType Directory -Force -Path $workRoot, $runRoot | Out-Null
 
-    if (!$SkipBuild) {
+    if (-not $SkipBuild) {
         Write-ColoredLine "Copying isolated source tree to: $sourceRoot" Cyan
         Copy-SourceTreeForBuild -Source $repoRoot -Destination $sourceRoot
         Add-SettingsTestHarness -Source $sourceRoot
         $sourceExe = Build-SettingsTestExecutable
     }
     elseif ([string]::IsNullOrWhiteSpace($sourceExe)) {
-        $sourceExe = Join-Path $buildRoot "$targetName.exe"
+        throw 'Pass -ExePath <path-to-settingstest-WinDirStat.exe> when using -SkipBuild.'
+    }
+    else {
+        $sourceExe = [System.IO.Path]::GetFullPath($sourceExe)
     }
 
-    if (!(Test-Path -LiteralPath $sourceExe)) {
+    if (-not (Test-Path -LiteralPath $sourceExe)) {
         throw "WinDirStat settings-test executable was not found: $sourceExe"
     }
 
@@ -1892,14 +1884,14 @@ try {
     $suiteSucceeded = $true
 }
 finally {
-    if (!$KeepArtifacts) {
+    if (-not $KeepArtifacts) {
         Remove-TestBuildArtifacts
     }
     elseif (Test-Path -LiteralPath $workRoot) {
         Write-ColoredLine "Kept test artifacts in: $workRoot" Yellow
     }
 
-    if (!$suiteSucceeded) {
-        Write-ColoredLine 'Non-visual settings suite failed.' Red
+    if (-not $suiteSucceeded) {
+        Write-ColoredLine 'Non-visual settings suite FAILED.' Red
     }
 }
