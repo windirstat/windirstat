@@ -29,7 +29,7 @@ SET "LIBURL=https://github.com/WinDirStat/WinDirStat"
 IF EXIST "%ProgramFiles%\7-Zip" SET PATH=%ProgramFiles%\7-Zip;%PATH%
 IF EXIST "%ProgramFiles(x86)%\7-Zip" SET PATH=%ProgramFiles(x86)%\7-Zip;%PATH%
 SET PATH=%WINDIR%\system32;%WINDIR%\system32\WindowsPowerShell\v1.0;%PATH%
-SET "POWERSHELL=POWERSHELL.EXE -NoProfile -NonInteractive -NoLogo -ExecutionPolicy Unrestricted"
+SET "POWERSHELL=POWERSHELL.EXE -NoProfile -NonInteractive -NoLogo -ExecutionPolicy Bypass"
 
 :: create define for build about box
 SET PRODUCTION=0
@@ -53,10 +53,6 @@ IF ERRORLEVEL 1 ECHO Executable signing failed; continuing without signed execut
 :: build the msi
 CALL "%THISDIR%\setup\build.cmd" "%RELTYPE%"
 
-:: sign the msi
-signtool sign /fd sha256 /tr %TSAURL% /td sha256 /d %LIBNAME% /du %LIBURL% "%BLDDIR%\*.msi"
-IF ERRORLEVEL 1 ECHO MSI signing failed; continuing without a signed MSI.
-
 :: copy the output files
 IF EXIST "%PUBDIR%" RD /S /Q "%PUBDIR%"
 FOR %%A IN (arm64 x86 x64) DO (
@@ -66,11 +62,13 @@ FOR %%A IN (arm64 x86 x64) DO (
    COPY /Y "%BLDDIR%\WinDirStat-%%A.msi" "%PUBDIR%"
 )
 
-:: build the Microsoft Store MSIX bundle; Partner Center signs it during submission
-%POWERSHELL% -File "%THISDIR%\setup\store\build-store-msix.ps1" -OutDir "%STOREBLDDIR%"
+:: build the msix files
+%POWERSHELL% -File "%THISDIR%\setup\store\build-store-msix.ps1" -OutDir "%PUBDIR%"
 IF ERRORLEVEL 1 EXIT /B 1
-%POWERSHELL% -Command "$packages = @(Get-ChildItem -LiteralPath '%STOREBLDDIR%\packages' -File | Where-Object { $_.Extension -in '.msix', '.msixbundle' }); if (-not $packages) { throw 'No Store artifacts were generated.' }; foreach ($package in $packages) { Move-Item -LiteralPath $package.FullName -Destination '%PUBDIR%' -Force }"
-IF ERRORLEVEL 1 EXIT /B 1
+
+:: sign the msi, msix, and msibundle
+signtool sign /fd sha256 /tr %TSAURL% /td sha256 /d %LIBNAME% /du %LIBURL% "%PUBDIR%\*.msi*"
+IF ERRORLEVEL 1 ECHO MSI/MSIX signing failed; continuing without a signed MSI.
 
 :: 7-zip executables and debug files
 7z.EXE >NUL 2>&1
@@ -85,7 +83,7 @@ FOR %%A IN (arm64 x86 x64) DO %POWERSHELL% -Command "Compress-Archive '%PUBDIR%\
 :: output hash information
 SET HASHFILE=%PUBDIR%\WinDirStat-Hashes.txt
 IF EXIST "%HASHFILE%" DEL /F "%HASHFILE%"
-%POWERSHELL% -Command "$f = Get-ChildItem -Include @('*.msi','*.exe','*.zip','*.7z','*.msix','*.msixbundle') -Path '%PUBDIR%' -Recurse; 'SHA256','SHA1','MD5' | ForEach-Object { $f | Get-FileHash -Algorithm $_ | Out-File -Append '%HASHFILE%' -Width 256 }"
-%POWERSHELL% -Command "$Data = Get-Content '%HASHFILE%'; $Data.Replace((Get-Item -LiteralPath '%PUBDIR%').FullName + '\','').Trim() | Set-Content '%HASHFILE%'"
+%POWERSHELL% -Command "$f = Get-ChildItem -Recurse -Include @('*.msi','*.zip','*.7z','*.msix','*.msixbundle') -Path '%PUBDIR%' | Where-Object { $_.FullName -notlike '*\unsigned\*' }; 'SHA256','SHA1','MD5' | ForEach-Object { $f | Get-FileHash -Algorithm $_ | Out-File -Append '%HASHFILE%' -Width 256 }"
+%POWERSHELL% -Command "$Data = Get-Content '%HASHFILE%'; if ($Data) { $Data.Replace((Get-Item -LiteralPath '%PUBDIR%').FullName + '\','').Trim() | Set-Content '%HASHFILE%' }"
 
 PAUSE
