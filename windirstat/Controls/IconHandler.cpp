@@ -349,10 +349,10 @@ namespace Icons
         g.DrawEllipse(&bearingPen, 23, 23, 18, 18);
     }
 
-    void PaintCharacter(Graphics& g, WCHAR ch, COLORREF clr, bool bold, LPCWSTR fontName)
+    void PaintCharacter(Graphics& g, WCHAR ch, COLORREF clr, bool bold)
     {
         const WCHAR text[]{ ch, L'\0' };
-        FontFamily fontFamily(fontName);
+        FontFamily fontFamily(wds::strFontSegoeUISymbol);
         StringFormat format;
         format.SetAlignment(StringAlignmentCenter);
         format.SetLineAlignment(StringAlignmentCenter);
@@ -386,10 +386,10 @@ namespace Icons
         return [=](Graphics& g) { PaintCharacter(g, ch, clr); };
     }
 
-    HICON IconFromFontChar(WCHAR ch, COLORREF clr, bool bold, LPCWSTR fontName, int iconSize)
+    HICON IconFromFontChar(WCHAR ch, COLORREF clr, bool bold, int iconSize)
     {
         const int size = iconSize > 0 ? iconSize : GetSystemMetrics(SM_CXSMICON);
-        return MakeIcon(size, [=](Graphics& g) { PaintCharacter(g, ch, clr, bold, fontName); });
+        return MakeIcon(size, [=](Graphics& g) { PaintCharacter(g, ch, clr, bold); });
     }
 }
 

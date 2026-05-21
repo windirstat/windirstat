@@ -103,15 +103,13 @@ namespace Icons
     void PaintPause(Graphics& g);
     void PaintMagnifier(Graphics& g, bool plus);
     void PaintGear(Graphics& g);
-    void PaintCharacter(Graphics& g, WCHAR ch, COLORREF clr,
-                        bool bold = true, LPCWSTR fontName = wds::strFontSegoeUISymbol);
+    void PaintCharacter(Graphics& g, WCHAR ch, COLORREF clr, bool bold = true);
 
     std::function<void(Graphics&)> Char(WCHAR ch, COLORREF clr);
 
     HBITMAP MakeBitmap(int size, const std::function<void(Graphics&)>& painter);
     HICON   MakeIcon(int size, const std::function<void(Graphics&)>& painter);
-    HICON   IconFromFontChar(WCHAR ch, COLORREF clr, bool bold = false,
-                LPCWSTR fontName = wds::strFontCambriaMath, int iconSize = 0);
+    HICON   IconFromFontChar(WCHAR ch, COLORREF clr, bool bold = false, int iconSize = 0);
 
     template <auto Painter>
     HBITMAP Make(int size) { return MakeBitmap(size, Painter); }

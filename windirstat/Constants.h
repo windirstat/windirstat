@@ -59,8 +59,6 @@ namespace wds
 
     // Font name constants
     inline constexpr auto strFontArial = L"Arial";
-    inline constexpr auto strFontCambriaMath = L"Cambria Math";
     inline constexpr auto strFontLucidaConsole = L"Lucida Console";
-    inline constexpr auto strFontSegoeUI = L"Segoe UI";
     inline constexpr auto strFontSegoeUISymbol = L"Segoe UI Symbol";
 }
