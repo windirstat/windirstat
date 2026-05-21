@@ -889,6 +889,8 @@ void CTreeMap::DrawExtensionLabels(CDC* pdc, CItem* root, const CPoint& offset) 
     stack.reserve(128);
     stack.push_back(root);
 
+    std::unordered_map<std::wstring, CSize> textExtentCache;
+
     while (!stack.empty())
     {
         const CItem* item = stack.back();
@@ -905,9 +907,12 @@ void CTreeMap::DrawExtensionLabels(CDC* pdc, CItem* root, const CPoint& offset) 
                 continue;
             }
 
-            CSize textSize;
-            ::GetTextExtentPoint32(pdc->GetSafeHdc(), ext.c_str(), static_cast<int>(ext.size()), &textSize);
-            if (!CanDrawExtensionLabel(rc, textSize))
+            auto [cacheIt, inserted] = textExtentCache.try_emplace(ext);
+            if (inserted)
+            {
+                ::GetTextExtentPoint32(pdc->GetSafeHdc(), ext.c_str(), static_cast<int>(ext.size()), &cacheIt->second);
+            }
+            if (!CanDrawExtensionLabel(rc, cacheIt->second))
             {
                 continue;
             }

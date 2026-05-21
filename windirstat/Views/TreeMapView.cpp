@@ -193,40 +193,44 @@ void CTreeMapView::DrawHighlightExtension(CDC* pdc)
     CPen pen(PS_SOLID, 1, COptions::TreeMapHighlightColor);
     CSelectObject sopen(pdc, &pen);
     CSelectStockObject sobrush(pdc, NULL_BRUSH);
-    RecurseHighlightExtension(pdc, CDirStatDoc::Get()->GetZoomItem());
-}
 
-void CTreeMapView::RecurseHighlightExtension(CDC* pdc, const CItem* item)
-{
-    CRect rc(item->TmiGetRectangle());
-    if (CDirStatDoc::Get()->IsZoomed())
-    {
-        rc.OffsetRect(ZoomFrameWidth, ZoomFrameWidth);
-    }
+    const CDirStatDoc* doc = CDirStatDoc::Get();
+    const std::wstring& highlightExt = doc->GetHighlightExtension();
+    const bool isZoomed = doc->IsZoomed();
 
-    if (rc.Width() <= 0 || rc.Height() <= 0)
-    {
-        return;
-    }
+    std::vector<const CItem*> stack;
+    stack.reserve(128);
+    stack.push_back(doc->GetZoomItem());
 
-    if (item->TmiIsLeaf())
+    while (!stack.empty())
     {
-        if (item->IsTypeOrFlag(IT_FILE) && _wcsicmp(item->GetExtension().c_str(), CDirStatDoc::Get()->GetHighlightExtension().c_str()) == 0)
+        const CItem* item = stack.back();
+        stack.pop_back();
+
+        CRect rc(item->TmiGetRectangle());
+        if (isZoomed)
         {
-            RenderHighlightRectangle(pdc, rc);
+            rc.OffsetRect(ZoomFrameWidth, ZoomFrameWidth);
         }
-    }
-    else for (const auto& child : item->GetChildren())
-    {
-        if (child->TmiGetSize() == 0)
+
+        if (rc.Width() <= 0 || rc.Height() <= 0)
         {
-            break;
+            continue;
         }
-        if (child->TmiGetRectangle().left == -1)
+
+        if (item->TmiIsLeaf())
         {
-            break;
+            if (item->IsTypeOrFlag(IT_FILE) && _wcsicmp(item->GetExtension().c_str(), highlightExt.c_str()) == 0)
+            {
+                RenderHighlightRectangle(pdc, rc);
+            }
         }
-        RecurseHighlightExtension(pdc, child);
+        else for (const auto& child : item->GetChildren())
+        {
+            if (child->TmiGetSize() == 0) break;
+            if (child->TmiGetRectangle().left == -1) break;
+            stack.push_back(child);
+        }
     }
 }
 

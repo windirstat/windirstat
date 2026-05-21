@@ -53,7 +53,6 @@ protected:
     void DrawHighlights(CDC* pdc);
 
     void DrawHighlightExtension(CDC* pdc);
-    void RecurseHighlightExtension(CDC* pdc, const CItem* item);
 
     void DrawSelection(CDC* pdc) const;
 
