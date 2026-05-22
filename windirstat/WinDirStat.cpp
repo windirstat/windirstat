@@ -19,7 +19,6 @@
 #include "SelectDrivesDlg.h"
 #include "AboutDlg.h"
 #include "TreeMapView.h"
-#include "PageFiltering.h"
 #include "CsvLoader.h"
 
 CIconHandler* GetIconHandler()
@@ -442,10 +441,7 @@ void CDirStatApp::OnRunElevated()
 
 void CDirStatApp::OnFilter()
 {
-    COptionsPropertySheet sheet;
-    CPageFiltering filtering;
-    sheet.AddPage(&filtering);
-    sheet.DoModal();
+    COptionsPropertySheet::ShowSettings(1); // 1 = Filtering tab
 }
 
 void CDirStatApp::LaunchHelp()

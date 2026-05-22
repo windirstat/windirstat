@@ -107,8 +107,34 @@ BOOL COptionsPropertySheet::OnInitDialog()
     Localization::UpdateTabControl(GetTab());
     DarkMode::AdjustControls(GetSafeHwnd());
 
-    SetActivePage(min(COptions::ConfigPage, GetPageCount() - 1));
+    const int page = (m_initialPage >= 0) ? m_initialPage : static_cast<int>(COptions::ConfigPage);
+    SetActivePage(min(page, GetPageCount() - 1));
     return bResult;
+}
+
+bool COptionsPropertySheet::ShowSettings(const int initialPage)
+{
+    COptionsPropertySheet sheet;
+    sheet.m_initialPage = initialPage; // -1 means restore last-used tab
+
+    CPageGeneral general;
+    CPageFiltering filtering;
+    CPageFileTree treelist;
+    CPageTreeMap treemap;
+    CPageCleanups cleanups;
+    CPagePrompts prompts;
+    CPageAdvanced advanced;
+
+    sheet.AddPage(&general);
+    sheet.AddPage(&filtering); // index 1
+    sheet.AddPage(&treelist);
+    sheet.AddPage(&treemap);
+    sheet.AddPage(&cleanups);
+    sheet.AddPage(&prompts);
+    sheet.AddPage(&advanced);
+
+    sheet.DoModal();
+    return sheet.m_restartApplication;
 }
 
 BOOL COptionsPropertySheet::OnCommand(const WPARAM wParam, const LPARAM lParam)
@@ -1395,33 +1421,15 @@ void CMainFrame::OnUpdateViewLargeToolBar(CCmdUI* pCmdUI)
 
 void CMainFrame::OnConfigure()
 {
-    COptionsPropertySheet sheet;
-
-    CPageGeneral general;
-    CPageFiltering filtering;
-    CPageFileTree treelist;
-    CPageTreeMap treemap;
-    CPageCleanups cleanups;
-    CPagePrompts prompts;
-    CPageAdvanced advanced;
-
-    sheet.AddPage(&general);
-    sheet.AddPage(&filtering);
-    sheet.AddPage(&treelist);
-    sheet.AddPage(&treemap);
-    sheet.AddPage(&cleanups);
-    sheet.AddPage(&prompts);
-    sheet.AddPage(&advanced);
-
-    sheet.DoModal();
+    const bool restart = COptionsPropertySheet::ShowSettings();
 
     // Rebuild the toolbar so icons (e.g. the filter indicator) reflect the new settings
     RebuildToolBar();
 
     // Save settings in case the application exits abnormally
     PersistedSetting::WritePersistedProperties();
-    
-    if (sheet.m_restartApplication)
+
+    if (restart)
     {
         CDirStatApp::Get()->RestartApplication();
     }

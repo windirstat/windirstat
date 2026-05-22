@@ -19,7 +19,6 @@
 #include "Filtering.h"
 #include "SelectDrivesDlg.h"
 #include "FinderBasic.h"
-#include "PageFiltering.h"
 
 namespace
 {
@@ -734,11 +733,7 @@ void CSelectDrivesDlg::OnBnClickedBrowseButton()
 
 void CSelectDrivesDlg::OnBnClickedFilterButton()
 {
-    COptionsPropertySheet sheet;
-    CPageFiltering filtering;
-    sheet.AddPage(&filtering);
-    sheet.DoModal();
-
+    COptionsPropertySheet::ShowSettings(1); // 1 = Filtering tab
     UpdateFilterButton();
 }
 

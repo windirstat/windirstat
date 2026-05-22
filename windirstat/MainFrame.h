@@ -56,8 +56,10 @@ class COptionsPropertySheet final : public CMFCPropertySheet
     COptionsPropertySheet();
     void SetRestartRequired(bool changed);
     BOOL OnInitDialog() override;
+    static bool ShowSettings(int initialPage = -1);
 
     bool m_restartApplication = false; // [out]
+    int m_initialPage = -1;
 
 protected:
     BOOL OnCommand(WPARAM wParam, LPARAM lParam) override;
