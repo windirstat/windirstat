@@ -1,14 +1,20 @@
-<a name="windirstat-2.6.0"></a>
-# WinDirStat 2.6.1 (Upcoming)
+<a name="windirstat-2.6.1"></a>
+# WinDirStat 2.6.1
 
 Enhancements
-- Improved gear, pause, and refresh icon rendering
+- Improved gear, pause, filter, and refresh icon rendering
 - Improved icons lookups on latent networks
+- Improved treemap rendering performance
 
 Bug Fixes
+- Corrected some glyphs not rendering on Windows 7
+- Corrected potential compressed size detection issue 
+- Corrected potential reparse point enumeration issues
 - Corrected file-based exclusions context menu option
-- Corrected potential race conditions during icon rendering
+- Corrected potential race condition during icon rendering
 - Corrected minor handle leak in drive selection dialog
+- Corrected potential crash when excluding reserved files
+- Corrected Windows Store manifest generation issues
 - Addressed folders not appearing in search results
 
 <a name="windirstat-2.6.0"></a>
