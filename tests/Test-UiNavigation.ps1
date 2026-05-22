@@ -1213,7 +1213,7 @@ function Test-DriveSelectionDialog {
     }
 
     # Radio buttons
-    $radios = Find-UiaAll -Root $dialog -Type ([System.Windows.Automation.ControlType]::RadioButton)
+    $radios = @(Find-UiaAll -Root $dialog -Type ([System.Windows.Automation.ControlType]::RadioButton))
     if ($radios.Count -ge 3) {
         Assert-Pass $g "$($radios.Count) radio buttons present"
         $radioNames = ($radios | ForEach-Object { $_.Current.Name }) -join ', '
@@ -1227,7 +1227,7 @@ function Test-DriveSelectionDialog {
     $driveGrid = Find-UiaFirst -Root $dialog -Type ([System.Windows.Automation.ControlType]::DataGrid)
     if ($driveGrid) {
         Assert-Pass $g 'Drive list grid present'
-        $driveItems = Find-UiaAll -Root $driveGrid -Type ([System.Windows.Automation.ControlType]::DataItem)
+        $driveItems = @(Find-UiaAll -Root $driveGrid -Type ([System.Windows.Automation.ControlType]::DataItem))
         if ($driveItems.Count -gt 0) {
             Assert-Pass $g "$($driveItems.Count) drive(s) listed in drive grid"
         }
@@ -1242,7 +1242,7 @@ function Test-DriveSelectionDialog {
     }
 
     # Checkboxes (scan for duplicates, use accelerated scanning)
-    $checkboxes = Find-UiaAll -Root $dialog -Type ([System.Windows.Automation.ControlType]::CheckBox)
+    $checkboxes = @(Find-UiaAll -Root $dialog -Type ([System.Windows.Automation.ControlType]::CheckBox))
     if ($checkboxes.Count -ge 1) {
         Assert-Pass $g "$($checkboxes.Count) option checkbox(es) present"
         $cbNames = ($checkboxes | ForEach-Object { $_.Current.Name }) -join '; '
@@ -1292,7 +1292,7 @@ function Test-Toolbar {
     if (!$tb) { Assert-Fail $g 'Toolbar pane found' 'Not found'; return }
     Assert-Pass $g 'Toolbar pane found'
 
-    $btns = Find-UiaAll -Root $tb -Type ([System.Windows.Automation.ControlType]::Button)
+    $btns = @(Find-UiaAll -Root $tb -Type ([System.Windows.Automation.ControlType]::Button))
     if ($btns.Count -gt 0) {
         Assert-Pass $g "$($btns.Count) toolbar button(s) found"
     }
@@ -1392,7 +1392,7 @@ function Test-AboutDialog {
     # Tab control within About dialog
     $tabCtrl = Find-UiaFirst -Root $dialog -Type ([System.Windows.Automation.ControlType]::Tab)
     if ($tabCtrl) {
-        $tabItems = Find-UiaAll -Root $tabCtrl -Type ([System.Windows.Automation.ControlType]::TabItem)
+        $tabItems = @(Find-UiaAll -Root $tabCtrl -Type ([System.Windows.Automation.ControlType]::TabItem))
         Assert-Pass $g "$($tabItems.Count) tab(s) in About dialog"
 
         foreach ($tabName in @('About', 'License', 'Thanks To')) {
@@ -1458,7 +1458,7 @@ function Test-SettingsDialog {
     # Property sheet pages via Tab control
     $tabCtrl = Find-UiaFirst -Root $dialog -Type ([System.Windows.Automation.ControlType]::Tab)
     if ($tabCtrl) {
-        $tabItems = Find-UiaAll -Root $tabCtrl -Type ([System.Windows.Automation.ControlType]::TabItem)
+        $tabItems = @(Find-UiaAll -Root $tabCtrl -Type ([System.Windows.Automation.ControlType]::TabItem))
         if ($tabItems.Count -gt 0) {
             Assert-Pass $g "$($tabItems.Count) settings page tab(s) found"
         }
@@ -1562,7 +1562,7 @@ function Test-SearchDialog {
     }
 
     # Checkboxes (regex, case, whole phrase)
-    $checkboxes = Find-UiaAll -Root $dialog -Type ([System.Windows.Automation.ControlType]::CheckBox)
+    $checkboxes = @(Find-UiaAll -Root $dialog -Type ([System.Windows.Automation.ControlType]::CheckBox))
     if ($checkboxes.Count -ge 1) {
         Assert-Pass $g "$($checkboxes.Count) search option checkbox(es) present"
     }
@@ -2206,7 +2206,7 @@ public static class RightClickHelper {
 
     if ($ctxMenu) {
         Assert-Pass $g 'Context menu appears'
-        $menuItems = Find-UiaAll -Root $ctxMenu -Type ([System.Windows.Automation.ControlType]::MenuItem)
+        $menuItems = @(Find-UiaAll -Root $ctxMenu -Type ([System.Windows.Automation.ControlType]::MenuItem))
         if ($menuItems.Count -gt 0) {
             Assert-Pass $g "$($menuItems.Count) context menu item(s) found"
             if ($Details) {

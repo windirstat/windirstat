@@ -114,10 +114,33 @@ bool FinderBasic::FindNext()
             m_currentInfo->ReparsePointTag : 0;
 
         // Mark file as compressed WOF compressed - this does not always
-        // seem to be set with WOF compressed files 
+        // seem to be set with WOF compressed files
         if (m_reparseTag == IO_REPARSE_TAG_WOF)
         {
             m_currentInfo->FileAttributes |= FILE_ATTRIBUTE_COMPRESSED;
+        }
+
+        // NtQueryDirectoryFile returns IO_REPARSE_TAG_MOUNT_POINT for both volume mount
+        // points and junctions. Read the reparse data buffer to tell them apart so that
+        // junction-vs-mount-point exclusion options work correctly in all code paths.
+        if (m_reparseTag == IO_REPARSE_TAG_MOUNT_POINT && IsDirectory() &&
+            m_name != L"." && m_name != L"..")
+        {
+            if (const SmartPointer handle(CloseHandle, CreateFile(GetFilePathLong().c_str(),
+                FILE_READ_ATTRIBUTES, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT, nullptr));
+                handle != INVALID_HANDLE_VALUE)
+            {
+                std::array<BYTE, MAXIMUM_REPARSE_DATA_BUFFER_SIZE> buf;
+                DWORD returned = 0;
+                if (DeviceIoControl(handle, FSCTL_GET_REPARSE_POINT, nullptr, 0,
+                    buf.data(), static_cast<DWORD>(buf.size()), &returned, nullptr))
+                {
+                    auto& rp = *reinterpret_cast<Finder::REPARSE_DATA_BUFFER*>(buf.data());
+                    if (Finder::IsJunction(rp))
+                        m_reparseTag = IO_REPARSE_TAG_JUNCTION_POINT;
+                }
+            }
         }
 
         // Correct physical size

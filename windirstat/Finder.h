@@ -94,7 +94,8 @@ public:
         {
             const auto volumeIdentifier = LR"(\??\Volume)";
             const auto path = ByteOffset<WCHAR>(reparseBuffer.PathBuffer, reparseBuffer.SubstituteNameOffset);
-            if (_wcsnicmp(path, volumeIdentifier, min(reparseBuffer.SubstituteNameLength / sizeof(WCHAR), wcslen(volumeIdentifier))) == 0)
+            if (reparseBuffer.SubstituteNameLength / sizeof(WCHAR) >= wcslen(volumeIdentifier) &&
+                _wcsnicmp(path, volumeIdentifier, wcslen(volumeIdentifier)) == 0)
             {
                 return true;
             }
@@ -103,10 +104,11 @@ public:
         return false;
     }
 
-    bool IsOffVolumeReparsePoint() const
+    bool RequiresBasicEnumeration() const
     {
         return GetReparseTag() == IO_REPARSE_TAG_MOUNT_POINT ||
-            GetReparseTag() == IO_REPARSE_TAG_SYMLINK;
+            GetReparseTag() == IO_REPARSE_TAG_SYMLINK ||
+            GetReparseTag() == IO_REPARSE_TAG_JUNCTION_POINT;
     }
 
     static bool IsJunction(REPARSE_DATA_BUFFER& reparseBuffer)

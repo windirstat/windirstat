@@ -260,7 +260,8 @@ CItem* CItem::AddDirectory(const Finder& finder)
     child->SetAttributes(finder.GetAttributes());
     child->SetReparseTag(finder.GetReparseTag());
     if (finder.IsReserved() || this->IsTypeOrFlag(ITF_RESERVED)) child->SetFlag(ITF_RESERVED);
-    if (finder.IsOffVolumeReparsePoint() && follow) child->SetFlag(ITF_BASIC);
+    if ((finder.RequiresBasicEnumeration() || IsTypeOrFlag(ITF_BASIC)) && follow)
+        child->SetFlag(ITF_BASIC);
     AddChild(child);
     child->UpwardAddReadJobs(follow ? 1 : 0);
 
@@ -526,7 +527,7 @@ void CItem::SetReparseTag(const DWORD reparseType) noexcept
     else if (reparseType == IO_REPARSE_TAG_SYMLINK) SetReparseType(ITRP_SYMLINK);
     else if (reparseType == IO_REPARSE_TAG_MOUNT_POINT) SetReparseType(ITRP_MOUNT);
     else if (reparseType == IO_REPARSE_TAG_JUNCTION_POINT) SetReparseType(ITRP_JUNCTION);
-    else if ((reparseType & 0xF00000FF) == IO_REPARSE_TAG_CLOUD) SetReparseType(ITRP_CLOUD);
+    else if ((reparseType & ~IO_REPARSE_TAG_CLOUD_MASK) == IO_REPARSE_TAG_CLOUD) SetReparseType(ITRP_CLOUD);
 }
 
 std::wstring CItem::GetOwner(const bool force) const
@@ -847,10 +848,9 @@ void CItem::UpdateStatsFromDisk()
     }
     else if (IsTypeOrFlag(IT_DRIVE))
     {
-        const SmartPointer handle(CloseHandle, CreateFile(GetPathLong().c_str(), FILE_READ_ATTRIBUTES,
+        if (const SmartPointer handle(CloseHandle, CreateFile(GetPathLong().c_str(), FILE_READ_ATTRIBUTES,
             FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr,
-            OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, nullptr));
-        if (handle != INVALID_HANDLE_VALUE)
+            OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, nullptr)); handle != INVALID_HANDLE_VALUE)
         {
             GetFileTime(handle, nullptr, nullptr, &m_lastChange);
         }
