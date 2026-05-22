@@ -187,8 +187,8 @@ namespace Icons
         SolidBrush lineBrush(Neutral());
         Point body[] = { {8, 6}, {44, 6}, {56, 18}, {56, 58}, {8, 58} };
         g.DrawPolygon(&outlinePen, body, 5);
-        g.DrawLine(&outlinePen, 44, 6, 44, 18);
-        g.DrawLine(&outlinePen, 44, 18, 56, 18);
+        Point docFoldPts[] = { {44, 6}, {44, 18}, {56, 18} };
+        g.DrawLines(&outlinePen, docFoldPts, 3);
     }
 
     static void PaintBin(Graphics& g, Color body, Color bar)
