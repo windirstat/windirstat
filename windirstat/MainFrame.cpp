@@ -112,6 +112,16 @@ BOOL COptionsPropertySheet::OnInitDialog()
     return bResult;
 }
 
+BOOL COptionsPropertySheet::PreTranslateMessage(MSG* pMsg)
+{
+    if (pMsg->message == WM_KEYDOWN && pMsg->wParam == VK_ESCAPE)
+    {
+        EndDialog(IDCANCEL);
+        return TRUE;
+    }
+    return CMFCPropertySheet::PreTranslateMessage(pMsg);
+}
+
 bool COptionsPropertySheet::ShowSettings(const int initialPage)
 {
     COptionsPropertySheet sheet;

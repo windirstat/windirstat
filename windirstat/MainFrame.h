@@ -56,6 +56,7 @@ class COptionsPropertySheet final : public CMFCPropertySheet
     COptionsPropertySheet();
     void SetRestartRequired(bool changed);
     BOOL OnInitDialog() override;
+    BOOL PreTranslateMessage(MSG* pMsg) override;
     static bool ShowSettings(int initialPage = -1);
 
     bool m_restartApplication = false; // [out]
