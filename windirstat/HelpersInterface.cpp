@@ -137,7 +137,6 @@ std::wstring FormatDouble(const double d) noexcept
     const int i = x / 100;
     const int r = x % 100;
 
-    if (r == 0) return std::to_wstring(i);
     return std::to_wstring(i) + GetLocaleDecimalSeparator() +
         std::wstring({ static_cast<wchar_t>(L'0' + r / 10), static_cast<wchar_t>(L'0' + r % 10) });
 }
