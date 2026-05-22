@@ -318,11 +318,11 @@ BOOL CDirStatApp::InitInstance()
 
     // Set app to prefer dark mode
     DarkMode::SetAppDarkMode();
-
     CWinAppEx::InitInstance();
 
     // Initialize visual controls
     constexpr INITCOMMONCONTROLSEX ctrls = { sizeof(INITCOMMONCONTROLSEX) , ICC_STANDARD_CLASSES };
+    (void)CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
     (void)InitCommonControlsEx(&ctrls);
     (void)AfxInitRichEdit2();
 
