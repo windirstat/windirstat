@@ -1,7 +1,7 @@
-IDS_ABOUT_ABOUT_TEXTss=\nWinDirStat - 磁盘目录统计\n\n查看磁盘空间占用分布\n一键清理冗余文件\n\n本软件由伯恩哈德·赛弗特、奥利弗·施耐德、布莱恩·伯恩斯专为微软 Windows 系统开发\n(邮箱：{})\n\n软件原型源自 Linux 平台 KDE 桌面应用 KDirStat\n(https://kdirstat.sourceforge.net/)\n\n项目官网地址：{}/\n\n版权所有 © WinDirStat 开发团队
+IDS_ABOUT_ABOUT_TEXTss=\nWinDirStat - 目录统计信息\n\n“显示您的所有驱动器空间都用在了哪里\n并帮助您清理它们。”\n\n由 Bernhard Seifert、Oliver Schneider 和 Bryan Berns 为 Microsoft Windows 编写\n(mailto:{})\n\n基于 Stefan Hundhammer 的 KDE（Linux）应用程序 KDirStat\n(https://kdirstat.sourceforge.net/)\n\nWinDirStat 的主页是 {}/\n\n版权所有 © WinDirStat Team
 IDS_ABOUT_ABOUT=关于
-IDS_ABOUT_LICENSE=许可协议
-IDS_ABOUT_THANKS_TEXT=\n感谢斯特凡·洪德哈默开发优秀的 Linux 工具 KDirStat\n参照 KDirStat 2.3.7 版本规范大幅缩减开发工作量\nhttps://kdirstat.sourceforge.net/\n\n感谢 SequoiaView 项目团队，直观展现树形区块图实用价值\nhttps://www.win.tue.nl/sequoiaview/\n\n感谢亚克·范维克、胡布·范德维特林、马克·布尔斯、凯斯·赫伊津\n发布曲面树形图与方形树形图相关研究论文\nhttps://www.win.tue.nl/~vanwijk/\n\n感谢本·施耐德曼首创树形图可视化理念\n清晰直观展示目录层级内容\nhttps://www.cs.umd.edu/hcil/TreeMap.history/\n
+IDS_ABOUT_LICENSE=许可证
+IDS_ABOUT_THANKS_TEXT=\n感谢 Stefan Hundhammer 开发的出色 Linux 工具 KDirStat。\n使用 KDirStat (2.3.7) 作为规范为我节省了大量时间。\nhttps://kdirstat.sourceforge.net/\n\n感谢 SequoiaView 的作者们，他们展示了树状图的真正用途。\nhttps://www.win.tue.nl/sequoiaview/\n\n感谢 Jarke J. van Wijk、Huub van de Wetering、Mark Bruls 和 Kees Huizing，感谢他们关于缓冲树状图和方形树状图的论文。\nhttps://www.win.tue.nl/~vanwijk/\n\n感谢 Ben Shneiderman 提出的树状图这一巧妙构想 —— 一种真正直观的树状图可视化方式内容。\nhttps://www.cs.umd.edu/hcil/TreeMap.history/\n
 IDS_ABOUT_THANKS=致谢
 IDS_ABOUT_TITLE=关于 WinDirStat
 IDS_ADMIN=管理员
