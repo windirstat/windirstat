@@ -277,13 +277,15 @@ namespace Icons
 
     void PaintFileSelect(Graphics& g)
     {
-        SolidBrush folderBrush(C(210, 160, 40));
-        g.FillRectangle(&folderBrush,  2,  4, 30,  8);
-        g.FillRectangle(&folderBrush,  2, 12, 60, 48);
+        Pen outlinePen(C(238, 203, 74), 4);
+        Point folderShapePts[] = { {2, 4}, {28, 4}, {32, 12}, {62, 12}, {62, 58}, {2, 58} };
+        SolidBrush fillBrush(C(255, 231, 146));
         SolidBrush ringRed(C(200, 30, 30)), ringWhite(C(240, 240, 240)), ringRed2(C(200, 30, 30));
-        g.FillEllipse(&ringRed,   14, 18, 36, 36);
-        g.FillEllipse(&ringWhite, 21, 25, 22, 22);
-        g.FillEllipse(&ringRed2,  27, 31, 10, 10);
+        g.FillPolygon(&fillBrush, folderShapePts, 6);
+        g.DrawPolygon(&outlinePen, folderShapePts, 6);
+        g.FillEllipse(&ringRed,   14, 17, 36, 36);
+        g.FillEllipse(&ringWhite, 21, 24, 22, 22);
+        g.FillEllipse(&ringRed2,  27, 30, 10, 10);
     }
 
     void PaintFilter(Graphics& g, bool active)
