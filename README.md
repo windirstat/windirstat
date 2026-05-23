@@ -26,6 +26,7 @@ For changes in recent versions, please check out [the change log](CHANGELOG.md).
 
 The recommended way to install WinDirStat is with a package manager, which also makes future updates easier:
 
+* Install from the [Microsoft Store](https://apps.microsoft.com/detail/9ph1gl95p3wf) for Store-managed installation and updates
 * Install with `winget install -e --id WinDirStat.WinDirStat` (or use `winget upgrade` later)
 * Install with `choco install windirstat` (or use `choco upgrade windirstat` later)
 * Install with `scoop install extras/windirstat` (requires `scoop bucket add extras`)
@@ -34,6 +35,7 @@ If you prefer a manual installer, need a portable archive, or want to browse old
 
 | Download | Best for | What is inside |
 | --- | --- | --- |
+| [Microsoft Store app](https://apps.microsoft.com/detail/9ph1gl95p3wf) | Users who want one-click installation and Store-managed updates | Installs WinDirStat through the Microsoft Store app experience on supported Windows systems. |
 | [WinDirStat-x64.msi](https://github.com/windirstat/windirstat/releases/latest/download/WinDirStat-x64.msi) | Most users on modern Intel or AMD 64-bit Windows PCs | Standard Windows installer for 64-bit systems. Adds WinDirStat to the Start menu and installs it like a normal app. |
 | [WinDirStat-arm64.msi](https://github.com/windirstat/windirstat/releases/latest/download/WinDirStat-arm64.msi) | Windows on ARM devices, including newer Surface devices and other Snapdragon-based laptops | Standard Windows installer built for ARM64 Windows. |
 | [WinDirStat-x86.msi](https://github.com/windirstat/windirstat/releases/latest/download/WinDirStat-x86.msi) | Older 32-bit Windows installations | Standard Windows installer for 32-bit systems. |
@@ -82,7 +84,7 @@ Find a more up-to-date list of resources on the website and the blog at any poin
 
 WinDirStat's popularity has led to unofficial websites that copy the project's name, branding, or downloads. These sites are not operated by the WinDirStat team, may offer outdated or modified files, and may expose users to malware.
 
-For your safety, install WinDirStat only through the package managers listed above, the official [GitHub releases](https://github.com/windirstat/windirstat/releases/), or links from [windirstat.net](https://windirstat.net/). The team reports impersonation sites when possible, but takedowns are not always successful.
+For your safety, install WinDirStat only through the Microsoft Store link and package managers listed above, the official [GitHub releases](https://github.com/windirstat/windirstat/releases/), or links from [windirstat.net](https://windirstat.net/). The team reports impersonation sites when possible, but takedowns are not always successful.
 
 ## Building
 
