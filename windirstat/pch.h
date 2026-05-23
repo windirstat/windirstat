@@ -88,6 +88,7 @@
 #include <source_location>
 #include <string>
 #include <string_view>
+#include <future>
 #include <thread>
 #include <unordered_map>
 #include <unordered_set>
