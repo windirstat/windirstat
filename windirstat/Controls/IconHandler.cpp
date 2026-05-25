@@ -82,7 +82,7 @@ void CIconHandler::Initialize()
 
 void CIconHandler::DoAsyncShellInfoLookup(IconLookup&& lookupInfo)
 {
-    const auto& [item, control, path, attr, icon, desc] = lookupInfo;
+    auto& [item, control, path, attr, icon, desc] = lookupInfo;
 
     // set default icon while loading
     if (*icon == nullptr)
@@ -94,6 +94,18 @@ void CIconHandler::DoAsyncShellInfoLookup(IconLookup&& lookupInfo)
     const auto dot = path.rfind(L'.');
     const bool isSlow = dot != std::wstring::npos &&
         std::ranges::any_of(slowExts, [ext = path.data() + dot](const wchar_t* e) { return _wcsicmp(ext, e) == 0; });
+
+    // FILE_ATTRIBUTE_OFFLINE indicates the file is not immediately available locally
+    // (cloud placeholder, Remote Storage, etc.). SHGetFileInfo opens these file types
+    // directly despite SHGFI_USEFILEATTRIBUTES, triggering a download.
+    // Redirect to a synthetic extension-only path so the type icon is used instead.
+    if (attr & FILE_ATTRIBUTE_OFFLINE)
+    {
+        path = GetSysDirectory() + L"\\~" + path.substr(dot);
+        m_fastQueue.PushIfNotQueued(std::move(lookupInfo));
+        return;
+    }
+
     (isSlow ? m_slowQueue : m_fastQueue).PushIfNotQueued(std::move(lookupInfo));
 }
 
