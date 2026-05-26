@@ -892,7 +892,7 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
     // special conditions
     static auto doc = this;
     static bool (*isZoomed)(CItem*) = [](CItem*) { return CDirStatDoc::Get()->IsZoomed(); };
-    static bool (*canZoomIn)(CItem*) = [](CItem* item) { return item != nullptr && (item = item->IsLeaf() ? item->GetParent() : item) != doc->GetZoomItem() && item->TmiGetSize() > 0; };
+    static bool (*canZoomIn)(CItem*) = [](CItem* item) { return item != nullptr && (item = item->IsLeaf() ? item->GetParent() : item) != nullptr && item != doc->GetZoomItem() && item->TmiGetSize() > 0; };
     static bool (*canZoomOut)(CItem*) = [](CItem*) { return doc->GetZoomItem() != doc->GetRootItem(); };
     static bool (*parentNotNull)(CItem*) = [](CItem* item) { return item != nullptr && item->GetParent() != nullptr; };
     static bool (*reselectAvail)(CItem*) = [](CItem*) { return doc->IsReselectChildAvailable(); };
