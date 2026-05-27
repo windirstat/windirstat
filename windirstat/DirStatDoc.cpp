@@ -641,7 +641,7 @@ void CDirStatDoc::PerformUserDefinedCleanup(USERDEFINEDCLEANUP* udc, const CItem
     {
         if (!FolderExists(path) && !DriveExists(path))
         {
-            DisplayError(Localization::Format(IDS_DIRECTORYs_NOT_EXIST, path));
+            DisplayError(Localization::Format(IDS_PATHs_NOT_EXIST, path));
             throw;
         }
     }
@@ -651,7 +651,7 @@ void CDirStatDoc::PerformUserDefinedCleanup(USERDEFINEDCLEANUP* udc, const CItem
 
         if (!::PathFileExists(path.c_str()))
         {
-            DisplayError(Localization::Format(IDS_THEFILEsDOESNOTEXIST, path));
+            DisplayError(Localization::Format(IDS_PATHs_NOT_EXIST, path));
             throw;
         }
     }
@@ -733,8 +733,7 @@ void CDirStatDoc::CallUserDefinedCleanup(const bool isDirectory, const std::wstr
     if (CreateProcess(app.c_str(), cmdline.data(), nullptr, nullptr, false,
         0, nullptr, directory.c_str(), &si, &pi) == 0)
     {
-        DisplayError(Localization::Format(IDS_PROCESS_ERRORssss,
-            app, cmdline, directory, TranslateError()));
+        DisplayError(Localization::Format(IDS_PROCESS_FAILEDss, app, TranslateError()));
         throw;
     }
 
