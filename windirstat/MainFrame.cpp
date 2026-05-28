@@ -794,6 +794,15 @@ BOOL CMainFrame::PreCreateWindow(CREATESTRUCT& cs)
         return FALSE;
     }
 
+    // Prevent flashing of the main window when launching in non-interactive mode
+    if (!CDirStatApp::Get()->GetSaveToPath().empty() ||
+        !CDirStatApp::Get()->GetSaveDupesToPath().empty())
+    {
+        AfxGetApp()->m_nCmdShow = SW_HIDE;
+        cs.style &= ~WS_VISIBLE;
+        cs.dwExStyle |= WS_EX_NOACTIVATE;
+    }
+
     return TRUE;
 }
 
