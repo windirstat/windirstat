@@ -128,7 +128,7 @@ bool CItem::DrawSubItem(const int subitem, CDC* pdc, CRect rc, const UINT state,
 
         // Draw the absolute bar inset vertically within the subtree bar
         CRect rcAbsolute = rc;
-        rcAbsolute.right = fractionX(min(subtreeFraction, absoluteFraction));
+        rcAbsolute.right = fractionX(std::min(subtreeFraction, absoluteFraction));
         rcAbsolute.DeflateRect(0, 2);
         if (rcAbsolute.right > rcAbsolute.left && rcAbsolute.Height() > 0)
         {
@@ -148,11 +148,11 @@ std::wstring CItem::GetText(const int subitem) const
     case COL_SIZE_PHYSICAL:
         if (IsTypeOrFlag(ITF_HARDLINK))
         {
-            return std::wstring(L"⧉ ") + FormatBytes(GetSizePhysicalRaw());
+            return L"⧉ " + FormatBytes(GetSizePhysicalRaw());
         }
         if (IsTypeOrFlag(IT_HLINKS_FILE))
         {
-            return std::wstring(L"⫘ ") + FormatBytes(GetSizePhysical());
+            return L"⫘ " + FormatBytes(GetSizePhysical());
         }
         return FormatBytes(GetSizePhysical());
 
@@ -544,11 +544,11 @@ CItem* CItem::FindRecyclerItem() const
 
         // There is no cross-platform way to consistently identify the recycle bin
         // so attempt to find an item with the most probable values
-        for (const auto possible : { L"$RECYCLE.BIN", L"RECYCLER", L"RECYCLED" })
+        for (const std::wstring_view possible : { std::wstring_view(L"$RECYCLE.BIN"), std::wstring_view(L"RECYCLER"), std::wstring_view(L"RECYCLED") })
         {
             for (const auto& child : p->GetChildren())
             {
-                if (child->IsTypeOrFlag(IT_DIRECTORY) && _wcsicmp(child->GetNameView().data(), possible) == 0)
+                if (child->IsTypeOrFlag(IT_DIRECTORY) && _wcsicmp(child->GetNameView().data(), possible.data()) == 0)
                 {
                     return child;
                 }
@@ -828,7 +828,7 @@ void CItem::DoHardlinkAdjustment()
         // Calculate the maximum physical size among all hardlinks with this index
         for (const auto* item : list)
         {
-            itemSize = max(itemSize, item->GetSizePhysicalRaw());
+            itemSize = std::max(itemSize, item->GetSizePhysicalRaw());
         }
 
         // Determine which Index Set this belongs to (modulus 20, 0-based index)
@@ -999,7 +999,7 @@ std::vector<BYTE> CItem::GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CIte
     ULONGLONG totalBytesHashed = 0;
 
     while ((iReadResult = ReadFile(hFile, fileBuffer.data(), static_cast<DWORD>(
-        min(hashSizeLimit - totalBytesHashed, fileBuffer.size())),
+        std::min<ULONGLONG>(hashSizeLimit - totalBytesHashed, fileBuffer.size())),
         &iReadBytes, nullptr)) != 0 && iReadBytes > 0)
     {
         UpwardDrivePacman();
@@ -1026,7 +1026,7 @@ std::vector<BYTE> CItem::GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CIte
     // We reduce the size of the stored hash since the level of uniqueness required
     // is unnecessary for simple dupe checking. This is preferred to just using a simpler
     // hash alg since SHA512 is FIPS compliant on Windows and more performant than SHA256.
-    const auto ReducedHashInBytes = min(16, hashBuffer.size());
+    const auto ReducedHashInBytes = std::min<size_t>(16, hashBuffer.size());
     return { hashBuffer.begin(), hashBuffer.begin() + ReducedHashInBytes };
 }
 
@@ -1095,16 +1095,17 @@ bool CItem::MustShowReadJobs() const noexcept
 
 COLORREF CItem::GetPercentageColor() const noexcept
 {
-    const int i = GetIndent() % COptions::FileTreeColorCount;
-    return std::array<COLORREF, 8>
+    static const COLORREF* const kColors[] =
     {
-        COptions::FileTreeColor0,
-            COptions::FileTreeColor1,
-            COptions::FileTreeColor2,
-            COptions::FileTreeColor3,
-            COptions::FileTreeColor4,
-            COptions::FileTreeColor5,
-            COptions::FileTreeColor6,
-            COptions::FileTreeColor7
-    }[i];
+        &COptions::FileTreeColor0.Obj(),
+        &COptions::FileTreeColor1.Obj(),
+        &COptions::FileTreeColor2.Obj(),
+        &COptions::FileTreeColor3.Obj(),
+        &COptions::FileTreeColor4.Obj(),
+        &COptions::FileTreeColor5.Obj(),
+        &COptions::FileTreeColor6.Obj(),
+        &COptions::FileTreeColor7.Obj()
+    };
+    const int i = GetIndent() % COptions::FileTreeColorCount;
+    return *kColors[i];
 }

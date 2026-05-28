@@ -128,7 +128,7 @@ bool CreateShadowCopy(const std::wstring& volumePath)
 
     // Ensure volume path ends with backslash
     std::wstring volume = volumePath;
-    if (!volume.empty() && volume.back() != L'\\') volume += L'\\';
+    if (!volume.empty() && !volume.ends_with(L'\\')) volume += L'\\';
 
     // Attempt to do the shadow copy creation
     CComVariant vtVolume(volume.c_str());
@@ -154,18 +154,18 @@ std::vector<std::wstring> GetDriveList(const std::vector<UINT>& driveTypes, cons
     {
         if ((driveMask & (1 << i)) == 0) continue;
 
-        std::wstring drive = std::wstring{ wds::strAlpha[i] } + L":\\";
-        const UINT driveType = GetDriveType(drive.c_str());
+        const WCHAR driveStr[] = { wds::strAlpha[i], L':', L'\\', L'\0' };
+        const UINT driveType = GetDriveType(driveStr);
 
         // See if drive type matches and in accessible
-        for (const UINT dt : driveTypes) if (driveType == dt)
+        if (std::ranges::find(driveTypes, driveType) != driveTypes.end())
         {
             // Check if the drive is actually accessible
             if ((checkLocal && driveType != DRIVE_REMOTE ||
-                checkRemote && driveType == DRIVE_REMOTE) && !DriveExists(drive)) continue;
+                checkRemote && driveType == DRIVE_REMOTE) && !DriveExists(driveStr)) continue;
 
             // Passed checks - add to drive list
-            drives.push_back(drive.substr(0, 2));
+            drives.push_back(std::wstring{ wds::strAlpha[i], L':' });
         }
     }
 
@@ -303,7 +303,7 @@ bool IsElevationActive() noexcept
         }
         return elevation.TokenIsElevated != 0;
     }();
-    
+
     return result;
 }
 
@@ -312,7 +312,7 @@ bool IsElevationAvailable() noexcept
     static const auto result = []() noexcept -> bool
     {
         if (IsElevationActive()) return false;
-        
+
         SmartPointer token(CloseHandle, HANDLE{});
         TOKEN_ELEVATION_TYPE elevationType;
         DWORD size = sizeof(TOKEN_ELEVATION_TYPE);
@@ -321,10 +321,10 @@ bool IsElevationAvailable() noexcept
         {
             return false;
         }
-        
+
         return elevationType == TokenElevationTypeLimited;
     }();
-    
+
     return result;
 }
 
@@ -455,9 +455,9 @@ bool CompressFileAllowed(const std::wstring& volumeName, const CompressionAlgori
     }
 
     // Return cached value
-    if (compressionMap.contains(volumeName))
+    if (const auto it = compressionMap.find(volumeName); it != compressionMap.end())
     {
-        return compressionMap.at(volumeName);
+        return it->second;
     }
 
     // Query volume for standard compression support based on whether NTFS
@@ -561,7 +561,7 @@ bool SparsifyFile(const std::wstring& path, const ULONGLONG minZeroRunSize, cons
     bool inRun = false;
 
     // Save qualifying zero runs with cluster alignment
-    auto saveRun = [&]() 
+    auto saveRun = [&]()
     {
         if (inRun && runLen >= minZeroRunSize) {
             const ULONGLONG alignedStart = alignUp(runStart);
@@ -575,7 +575,7 @@ bool SparsifyFile(const std::wstring& path, const ULONGLONG minZeroRunSize, cons
     // Scan file in chunks to detect zero byte runs
     for (DWORD bytesRead = 0; pos < static_cast<ULONGLONG>(fileSize.QuadPart); pos += bytesRead)
     {
-        const DWORD toRead = static_cast<DWORD>(min(chunkSize, static_cast<ULONGLONG>(fileSize.QuadPart) - pos));
+        const DWORD toRead = static_cast<DWORD>(std::min(chunkSize, static_cast<ULONGLONG>(fileSize.QuadPart) - pos));
         if (!::ReadFile(h, buffer.data(), toRead, &bytesRead, nullptr) || !bytesRead) break;
 
         const BYTE* data = buffer.data();

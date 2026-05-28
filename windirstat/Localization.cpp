@@ -18,7 +18,7 @@
 #include "pch.h"
 #include "FinderBasic.h"
 
-std::unordered_map<std::wstring, std::wstring> Localization::m_map;
+std::unordered_map<std::wstring, std::wstring, string_hash, std::equal_to<>> Localization::m_map;
 
 void Localization::SearchReplace(std::wstring& input, const std::wstring_view& search, const std::wstring_view& replace)
 {
@@ -107,7 +107,7 @@ bool Localization::LoadResource(const WORD language)
     const LCID lcid = MAKELCID(language, SORT_DEFAULT);
     std::array<wchar_t, LOCALE_NAME_MAX_LENGTH> name{};
     if (LCIDToLocaleName(lcid, name.data(), LOCALE_NAME_MAX_LENGTH, 0) == 0) return {};
-    
+
     // Try to load external language file first
     if (LoadExternalLanguage(LOCALE_SNAME, language) ||
         LoadExternalLanguage(LOCALE_SISO639LANGNAME, language)) return true;
@@ -125,7 +125,7 @@ void Localization::UpdateMenu(CMenu& menu)
         CString text;
         if (menu.GetMenuString(i, text, MF_BYPOSITION) == 0) continue;
 
-        if (text.Find(L"ID") == 0 && Contains(text.GetString()))
+        if (std::wstring_view(text.GetString()).starts_with(L"ID") && Contains(text.GetString()))
         {
             MENUITEMINFOW mi{ .cbSize = sizeof(MENUITEMINFOW) };
             mi.fMask = MIIM_ID;
@@ -138,7 +138,7 @@ void Localization::UpdateMenu(CMenu& menu)
                 const std::wstring accel = GetAcceleratorString(mi.wID);
                 if (!accel.empty()) menuText += L"\t" + accel;
             }
-            
+
             // Set the item text
             mi.fMask = MIIM_STRING;
             mi.dwTypeData = const_cast<LPWSTR>(menuText.c_str());
@@ -179,7 +179,7 @@ void Localization::UpdateWindowText(CWnd& wnd)
     // Update window text if it's a localizable ID
     CString text;
     wnd.GetWindowText(text);
-    if (text.Find(L"ID") == 0 && Contains(text.GetString()))
+    if (std::wstring_view(text.GetString()).starts_with(L"ID") && Contains(text.GetString()))
         wnd.SetWindowText(m_map[text.GetString()].c_str());
 }
 

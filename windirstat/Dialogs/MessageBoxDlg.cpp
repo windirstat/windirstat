@@ -154,11 +154,11 @@ void CMessageBoxDlg::ShiftControlsIfHidden(const CWnd* pTargetControl, const std
         ScreenToClient(&ctrlRect);
 
         if (ctrlRect.top > targetRect.top)
-            minYBelow = min(minYBelow, ctrlRect.top);
+            minYBelow = std::min<int>(minYBelow, ctrlRect.top);
     }
 
     // Calculate shift: control height + spacing to next control, and optional padding
-    const int shiftAmount = max(0, ((minYBelow != INT_MAX) ?
+    const int shiftAmount = std::max<int>(0, ((minYBelow != INT_MAX) ?
         (minYBelow - targetRect.top) : targetRect.Height()) - DpiRest(padding, this));
 
     // Shift controls below target upward
@@ -220,7 +220,7 @@ BOOL CMessageBoxDlg::OnInitDialog()
 
     CRect rectWindow;
     GetWindowRect(&rectWindow);
-    const int initialWidthExpansion = max(0, scaledInitialSize.cx - rectWindow.Width());
+    const int initialWidthExpansion = std::max<int>(0, scaledInitialSize.cx - rectWindow.Width());
 
     CClientDC dc(&m_messageCtrl);
     CSelectObject selectFont(&dc, m_messageCtrl.GetFont());
@@ -252,12 +252,12 @@ BOOL CMessageBoxDlg::OnInitDialog()
     if (m_autoWidth)
     {
         // If auto-width, ensure we expand enough for the text
-        const int textRequiredExpanded = max(0, rectTextCalc.Width() - rectMessage.Width());
-        deltaWidth = max(deltaWidth, textRequiredExpanded);
+        const int textRequiredExpanded = std::max<int>(0, rectTextCalc.Width() - rectMessage.Width());
+        deltaWidth = std::max(deltaWidth, textRequiredExpanded);
     }
 
     // Apply Vertical Expansion
-    if (const int deltaHeight = max(0, rectTextCalc.Height() - rectMessage.Height()); deltaHeight > 0)
+    if (const int deltaHeight = std::max<int>(0, rectTextCalc.Height() - rectMessage.Height()); deltaHeight > 0)
     {
         const int padding = DpiRest(16, this);
         // Expand message control
@@ -283,7 +283,7 @@ BOOL CMessageBoxDlg::OnInitDialog()
     int newHeight = rectWindow.Height();
 
     // Ensure minimum height from initial size
-    newHeight = max(scaledInitialSize.cy, newHeight);
+    newHeight = std::max((int)scaledInitialSize.cy, newHeight);
     if (newWidth != rectWindow.Width() || newHeight != rectWindow.Height())
     {
         SetWindowPos(nullptr, 0, 0, newWidth, newHeight, SWP_NOMOVE | SWP_NOZORDER);

@@ -19,13 +19,6 @@
 #include "FileWatcherControl.h"
 #include "FinderBasic.h"
 
-const std::unordered_map<uint8_t, uint8_t> CWatcherItem::s_columnMap =
-{
-    { COL_ITEMWATCH_TIME, COL_LAST_CHANGE },
-    { COL_ITEMWATCH_NAME, COL_NAME },
-    { COL_ITEMWATCH_SIZE_LOGICAL, COL_SIZE_LOGICAL }
-};
-
 CFileWatcherControl* CFileWatcherControl::m_singleton = nullptr;
 
 CFileWatcherControl::CFileWatcherControl()
@@ -65,7 +58,8 @@ void CFileWatcherControl::StartMonitoring()
 
     if (CItem* root = doc->GetRootItem(); root != nullptr)
     {
-        const auto& children = root->IsTypeOrFlag(IT_MYCOMPUTER) ? root->GetChildren() : std::vector{ root };
+        auto children = root->IsTypeOrFlag(IT_MYCOMPUTER) ?
+            std::span<CItem* const>(root->GetChildren()) : std::span<CItem* const>(&root, 1);
         for (const auto& child : children)
         {
             m_watchThreads.emplace_back([this, path = child->GetPath()](const std::stop_token& stopToken)
@@ -126,8 +120,8 @@ void CFileWatcherControl::WatchDirectory(const std::wstring& path, const std::st
 
         if (bytesReturned == 0) continue;
 
-        for (auto pNotify = reinterpret_cast<FILE_NOTIFY_INFORMATION*>(buffer.data()); 
-            pNotify; pNotify = pNotify->NextEntryOffset ? 
+        for (auto pNotify = reinterpret_cast<FILE_NOTIFY_INFORMATION*>(buffer.data());
+            pNotify; pNotify = pNotify->NextEntryOffset ?
             ByteOffset<FILE_NOTIFY_INFORMATION>(pNotify, pNotify->NextEntryOffset) : nullptr)
         {
             AddChange(pathWithSlash + std::wstring(pNotify->FileName, pNotify->FileNameLength / sizeof(WCHAR)), pNotify->Action);
@@ -203,4 +197,3 @@ HICON CWatcherItem::GetIcon()
         m_visualInfo->control, m_item->GetPath(), m_item->GetAttributes(), &m_visualInfo->icon, nullptr));
     return nullptr;
 }
-

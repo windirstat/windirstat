@@ -24,15 +24,13 @@ CFileTopControl::CFileTopControl() : CTreeListControl(COptions::TopViewColumnOrd
     m_singleton = this;
 }
 
-bool CFileTopControl::GetAscendingDefault(const int column)
+bool CFileTopControl::GetAscendingDefault(int column)
 {
     return column == COL_ITEMTOP_NAME || column == COL_ITEMTOP_LAST_CHANGE;
 }
 
 BEGIN_MESSAGE_MAP(CFileTopControl, CTreeListControl)
 END_MESSAGE_MAP()
-
-CFileTopControl* CFileTopControl::m_singleton = nullptr;
 
 void CFileTopControl::ProcessTop(CItem * item)
 {
@@ -76,7 +74,7 @@ void CFileTopControl::SortItems()
         CTreeListControl::SortItems();
         return;
     }
-    
+
     m_needsResort = false;
     const auto sortEnd = m_sizeMap.size() <= topN ? m_sizeMap.end()
         : m_sizeMap.begin() + topN;
@@ -85,17 +83,10 @@ void CFileTopControl::SortItems()
     std::ranges::partial_sort(m_sizeMap, sortEnd, CompareBySize);
 
     // Update minimum size in top N for future comparisons
-    if (topN > 0 && m_sizeMap.size() >= topN)
+    m_topNMinSize = 0;
+    if (topN > 0 && !m_sizeMap.empty())
     {
-        m_topNMinSize = m_sizeMap[topN - 1]->GetSizeLogical();
-    }
-    else if (topN > 0 && !m_sizeMap.empty())
-    {
-        m_topNMinSize = m_sizeMap.back()->GetSizeLogical();
-    }
-    else
-    {
-        m_topNMinSize = 0;
+        m_topNMinSize = m_sizeMap[std::min(topN, m_sizeMap.size()) - 1]->GetSizeLogical();
     }
 
     // Update visual item removals
@@ -107,7 +98,7 @@ void CFileTopControl::SortItems()
             itemTrackerCopy.erase(largeItem);
             continue;
         }
-        
+
         const auto itemTop = new CItemTop(largeItem);
         m_rootItem->AddTopItemChild(itemTop);
         m_itemTracker[largeItem] = itemTop;
@@ -120,15 +111,15 @@ void CFileTopControl::SortItems()
         m_itemTracker.erase(itemTop->GetLinkedItem());
         m_rootItem->RemoveTopItemChild(itemTop);
     }
-    
-    CTreeListControl::SortItems();   
+
+    CTreeListControl::SortItems();
 }
 
 void CFileTopControl::RemoveItem(CItem* item)
 {
     // Create list of all items to remove
     std::unordered_set<CItem*> toRemove;
-    std::vector queue({ item });
+    std::vector<CItem*> queue{ item };
     while (!queue.empty())
     {
         const auto qitem = queue.back();
@@ -173,4 +164,3 @@ void CFileTopControl::AfterDeleteAllItems()
     InsertItem(0, m_rootItem);
     m_rootItem->SetExpanded(true);
 }
-

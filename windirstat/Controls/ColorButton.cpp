@@ -26,19 +26,15 @@ BEGIN_MESSAGE_MAP(CColorButton::CPreview, CWnd)
     ON_WM_LBUTTONDOWN()
 END_MESSAGE_MAP()
 
-CColorButton::CPreview::CPreview() : m_color(0)
-{
-}
-
 COLORREF CColorButton::CPreview::GetColor() const
 {
     return m_color;
 }
 
-void CColorButton::CPreview::SetColor(const COLORREF color)
+void CColorButton::CPreview::SetColor(COLORREF color)
 {
     m_color = color;
-    if (IsWindow(m_hWnd))
+    if (m_hWnd != nullptr)
     {
         InvalidateRect(nullptr);
     }
@@ -55,7 +51,7 @@ void CColorButton::CPreview::OnPaint()
     dc.FillSolidRect(rc, disabled ? DarkMode::WdsSysColor(COLOR_BTNFACE) : m_color);
 }
 
-void CColorButton::CPreview::OnLButtonDown(const UINT nFlags, CPoint point)
+void CColorButton::CPreview::OnLButtonDown(UINT nFlags, CPoint point)
 {
     ClientToScreen(&point);
     GetParent()->ScreenToClient(&point);
@@ -76,14 +72,14 @@ COLORREF CColorButton::GetColor() const
     return m_preview.GetColor();
 }
 
-void CColorButton::SetColor(const COLORREF color)
+void CColorButton::SetColor(COLORREF color)
 {
     m_preview.SetColor(color);
 }
 
 void CColorButton::OnPaint()
 {
-    if (nullptr == m_preview.m_hWnd)
+    if (m_preview.m_hWnd == nullptr)
     {
         CRect rc = ClientRectOf(this);
         rc.right = rc.left + rc.Width() / 3;
@@ -98,7 +94,7 @@ void CColorButton::OnPaint()
 
 void CColorButton::OnDestroy()
 {
-    if (IsWindow(m_preview.m_hWnd))
+    if (m_preview.m_hWnd != nullptr)
     {
         m_preview.DestroyWindow();
     }
@@ -110,18 +106,19 @@ void CColorButton::OnBnClicked()
     if (CMFCColorDialog dlg(GetColor()); IDOK == dlg.DoModal())
     {
         SetColor(dlg.GetColor());
-        NMHDR hdr;
-        hdr.hwndFrom = m_hWnd;
-        hdr.idFrom   = GetDlgCtrlID();
-        hdr.code     = COLBN_CHANGED;
+        NMHDR hdr{
+            .hwndFrom = m_hWnd,
+            .idFrom   = static_cast<UINT_PTR>(GetDlgCtrlID()),
+            .code     = COLBN_CHANGED
+        };
 
         GetParent()->SendMessage(WM_NOTIFY, GetDlgCtrlID(), reinterpret_cast<LPARAM>(&hdr));
     }
 }
 
-void CColorButton::OnEnable(const BOOL bEnable)
+void CColorButton::OnEnable(BOOL bEnable)
 {
-    if (IsWindow(m_preview.m_hWnd))
+    if (m_preview.m_hWnd != nullptr)
     {
         m_preview.InvalidateRect(nullptr);
     }

@@ -107,9 +107,9 @@ bool CFileTabbedView::CycleTab(const bool forward)
 
     const size_t currentPos = std::distance(visibleTabs.begin(), it);
     const size_t nextPos = currentPos + (forward ? 1 : -1);
-    
+
     if (nextPos >= visibleTabs.size()) return false;
-    
+
     SetActiveView(visibleTabs[nextPos]);
     return true;
 }

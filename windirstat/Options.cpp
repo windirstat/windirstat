@@ -225,7 +225,7 @@ void COptions::PostProcessPersistedSettings()
 
     // Set up the language for the environment
     if (const auto& languages = Localization::GetLanguageList();
-        std::ranges::find(languages, static_cast<LANGID>(LanguageId)) == languages.end())
+        !languages.contains(static_cast<LANGID>(LanguageId)))
     {
         const LANGID specified = GetUserDefaultLangID();
         const LANGID generic = MAKELANGID(PRIMARYLANGID(specified), SUBLANG_NEUTRAL);

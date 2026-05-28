@@ -30,7 +30,7 @@ public:
 protected:
 
     void SelectFirstItemByType(ITEMTYPE itemType);
-    static CFileTreeControl * m_singleton;
+    inline static CFileTreeControl* m_singleton = nullptr;
 
     DECLARE_MESSAGE_MAP()
     afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);

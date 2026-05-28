@@ -88,7 +88,7 @@ BOOL COptionsPropertySheet::OnEraseBkgnd(CDC* pDC)
     // Paint the background with dark mode color
     const CRect rect = ClientRectOf(this);
     pDC->FillSolidRect(&rect, DarkMode::WdsSysColor(CTLCOLOR_DLG));
-    
+
     return TRUE;
 }
 
@@ -108,7 +108,7 @@ BOOL COptionsPropertySheet::OnInitDialog()
     DarkMode::AdjustControls(GetSafeHwnd());
 
     const int page = (m_initialPage >= 0) ? m_initialPage : static_cast<int>(COptions::ConfigPage);
-    SetActivePage(min(page, GetPageCount() - 1));
+    SetActivePage(std::min((int)page, (int)GetPageCount() - 1));
     return bResult;
 }
 
@@ -556,7 +556,7 @@ void CMainFrame::UpdateProgress()
     if (m_progressRange > 0 && m_progress.m_hWnd != nullptr)
     {
         // Limit progress at 100% as hard-linked files will count twice
-        const int pos = min(static_cast<int>((m_progressPos * 100ull) / m_progressRange), 100);
+        const int pos = std::min(static_cast<int>((m_progressPos * 100ull) / m_progressRange), 100);
         m_progress.SetPos(pos);
 
         titlePrefix = std::to_wstring(pos) + L"% " + suspended;
@@ -646,7 +646,7 @@ void CMainFrame::SetStatusPaneText(const CDC& cdc, const int pos,
 
     // set status path width and then set text
     const auto cx = cdc.GetTextExtent(text.c_str(), static_cast<int>(text.size())).cx;
-    m_wndStatusBar.SetPaneWidth(pos, max(cx, DpiRest(minWidth)));
+    m_wndStatusBar.SetPaneWidth(pos, std::max((int)cx, DpiRest(minWidth)));
     m_wndStatusBar.SetPaneText(pos, text.c_str());
 }
 
@@ -908,7 +908,7 @@ void CMainFrame::CopyToClipboard(const std::wstring & psz)
         return;
     }
 
-    // Store text to clipboard 
+    // Store text to clipboard
     if (const COpenClipboard clipboard(this);
         !clipboard.IsReady() || SetClipboardData(CF_UNICODETEXT, h) == nullptr)
     {
@@ -1152,7 +1152,7 @@ void CMainFrame::UpdateToolsMenu(CMenu* menu)
     SetMenuItem(menu, shadowCopyPos, IsElevationActive() && !drives.empty());
     SetMenuItem(menu, defragPos, IsElevationPossible() && !drives.empty());
     SetMenuItem(menu, chkdskPos, IsElevationPossible() && !drives.empty());
-    
+
     for (const auto& drive : drives)
     {
         // Get volume label for display
@@ -1449,7 +1449,7 @@ void CMainFrame::OnSysColorChange()
 {
     GetFileTreeView()->SysColorChanged();
     GetExtensionView()->SysColorChanged();
-    DrawTextCache::Get()->ClearCache();
+    DrawTextCache::Get().ClearCache();
 
     // Redraw menus for dark mode
     DarkMode::SetAppDarkMode();

@@ -66,12 +66,14 @@ template <> void Setting<bool>::WritePersistedProperty()
 template <> void Setting<std::wstring>::ReadPersistedProperty()
 {
     m_value = CDirStatApp::Get()->GetProfileString(m_section.c_str(), m_entry.c_str(), m_value.c_str());
-    m_value = std::regex_replace(m_value, std::wregex(LR"(\x1e)"), L"\r\n");
+    static const std::wregex reRead(LR"(\x1e)");
+    m_value = std::regex_replace(m_value, reRead, L"\r\n");
 }
 
 template <> void Setting<std::wstring>::WritePersistedProperty()
 {
-    const std::wstring valueCleaned = std::regex_replace(m_value, std::wregex(LR"((\r|\n)+)"), L"\x1e");
+    static const std::wregex reWrite(LR"((\r|\n)+)");
+    const std::wstring valueCleaned = std::regex_replace(m_value, reWrite, L"\x1e");
     CDirStatApp::Get()->WriteProfileString(m_section.c_str(), m_entry.c_str(), valueCleaned.c_str());
 }
 

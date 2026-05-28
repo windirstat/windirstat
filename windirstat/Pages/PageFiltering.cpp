@@ -98,22 +98,14 @@ BOOL CPageFiltering::OnInitDialog()
     if (DarkMode::IsDarkModeActive())
     {
         DarkMode::AdjustControls(GetSafeHwnd());
-
-        // Explicitly apply dark mode to edit controls with scrollbars
-        if (DarkMode::IsDarkModeActive())
-        {
-            // Force the edit controls to refresh their scrollbars
-            DarkMode::AdjustControls(m_ctrlFilteringExcludeDirs.GetSafeHwnd());
-            DarkMode::AdjustControls(m_ctrlFilteringExcludeFiles.GetSafeHwnd());
-            DarkMode::AdjustControls(m_ctrlFilteringIncludeDirs.GetSafeHwnd());
-            DarkMode::AdjustControls(m_ctrlFilteringIncludeFiles.GetSafeHwnd());
-
-            // Force a complete redraw
-            m_ctrlFilteringExcludeDirs.Invalidate();
-            m_ctrlFilteringExcludeFiles.Invalidate();
-            m_ctrlFilteringIncludeDirs.Invalidate();
-            m_ctrlFilteringIncludeFiles.Invalidate();
-        }
+        DarkMode::AdjustControls(m_ctrlFilteringExcludeDirs.GetSafeHwnd());
+        DarkMode::AdjustControls(m_ctrlFilteringExcludeFiles.GetSafeHwnd());
+        DarkMode::AdjustControls(m_ctrlFilteringIncludeDirs.GetSafeHwnd());
+        DarkMode::AdjustControls(m_ctrlFilteringIncludeFiles.GetSafeHwnd());
+        m_ctrlFilteringExcludeDirs.Invalidate();
+        m_ctrlFilteringExcludeFiles.Invalidate();
+        m_ctrlFilteringIncludeDirs.Invalidate();
+        m_ctrlFilteringIncludeFiles.Invalidate();
     }
 
     return TRUE;
@@ -168,4 +160,3 @@ BOOL CPageFiltering::PreTranslateMessage(MSG* pMsg)
 
     return CMFCPropertyPage::PreTranslateMessage(pMsg);
 }
-

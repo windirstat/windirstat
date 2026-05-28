@@ -107,7 +107,7 @@ namespace
 int CWdsListItem::CompareSort(const CWdsListItem* other, const SSorting& sorting) const
 {
     int r = Compare(other, sorting.subitem1);
-    if (abs(r) < 2 && !sorting.ascending1)
+    if (std::abs(r) < 2 && !sorting.ascending1)
     {
         r = -r;
     }
@@ -115,7 +115,7 @@ int CWdsListItem::CompareSort(const CWdsListItem* other, const SSorting& sorting
     if (r == 0 && sorting.subitem1 != sorting.subitem2)
     {
         r = Compare(other, sorting.subitem2);
-        if (abs(r) < 2 && !sorting.ascending2)
+        if (std::abs(r) < 2 && !sorting.ascending2)
         {
             r = -r;
         }
@@ -156,7 +156,7 @@ void CWdsListItem::DrawLabel(const CWdsListControl* list, CDC* pdc, CRect& rc, c
     rcRest.DeflateRect(list->GetTextXMargin(), 0);
 
     CRect rcLabel = rcRest;
-    DrawTextCache::Get()->DrawTextCached(pdc, GetText(0), rcLabel, true, true);
+    DrawTextCache::Get().DrawTextCached(pdc, GetText(0), rcLabel, true, true);
 
     rcLabel.InflateRect(LABEL_INFLATE_CX, 0);
     rcLabel.top = rcRest.top + LABEL_Y_MARGIN;
@@ -183,7 +183,7 @@ void CWdsListItem::DrawLabel(const CWdsListControl* list, CDC* pdc, CRect& rc, c
     if (width == nullptr)
     {
         // Draw the actual text
-        DrawTextCache::Get()->DrawTextCached(pdc, GetText(0), rcRest);
+        DrawTextCache::Get().DrawTextCached(pdc, GetText(0), rcRest);
     }
 
     rcLabel.InflateRect(1, 1);
@@ -544,7 +544,7 @@ void CWdsListControl::DrawItem(LPDRAWITEMSTRUCT pdis)
             CSetBkColor backColorObj(&dcMem, backColorSub);
 
             // Draw the (sub)item text
-            DrawTextCache::Get()->DrawTextCached(&dcMem, s, rcText, leftAlign);
+            DrawTextCache::Get().DrawTextCached(&dcMem, s, rcText, leftAlign);
         }
 
         if (m_showGrid)
@@ -661,7 +661,7 @@ void CWdsListControl::LoadPersistentAttributes()
     SetColumnOrderArray(static_cast<int>(m_columnOrder->size()), m_columnOrder->data());
     for (const int i : std::views::iota(0, static_cast<int>(m_columnWidths->size())))
     {
-        SetColumnWidth(i, min((*m_columnWidths)[i], (*m_columnWidths)[i] * 2));
+        SetColumnWidth(i, std::min((*m_columnWidths)[i], (*m_columnWidths)[i] * 2));
     }
 }
 
@@ -703,12 +703,14 @@ void CWdsListControl::SetSorting(const SSorting& sorting)
 
 void CWdsListControl::SetSorting(const int sortColumn1, const bool ascending1, const int sortColumn2, const bool ascending2)
 {
-    m_sorting.column1 = sortColumn1;
-    m_sorting.subitem1 = ColumnToSubItem(sortColumn1);
-    m_sorting.ascending1 = ascending1;
-    m_sorting.column2 = sortColumn2;
-    m_sorting.subitem2 = ColumnToSubItem(sortColumn2);
-    m_sorting.ascending2 = ascending2;
+    m_sorting = {
+        .column1 = sortColumn1,
+        .column2 = sortColumn2,
+        .subitem1 = ColumnToSubItem(sortColumn1),
+        .subitem2 = ColumnToSubItem(sortColumn2),
+        .ascending1 = ascending1,
+        .ascending2 = ascending2
+    };
 }
 
 void CWdsListControl::SetSorting(const int sortColumn, const bool ascending)
@@ -721,7 +723,7 @@ void CWdsListControl::SetSorting(const int sortColumn, const bool ascending)
     m_sorting.subitem1 = ColumnToSubItem(sortColumn);
 }
 
-void CWdsListControl::InsertListItem(const int i, const std::vector<CWdsListItem*>& items)
+void CWdsListControl::InsertListItem(const int i, std::span<CWdsListItem* const> items)
 {
     if (items.empty()) return;
 
@@ -729,8 +731,8 @@ void CWdsListControl::InsertListItem(const int i, const std::vector<CWdsListItem
 
     SelectionPreserver preserve(this);
 
-    const int itemCount = GetItemCount() + static_cast<int>(items.size());
     m_items.insert(m_items.begin() + i, items.begin(), items.end());
+    const int itemCount = static_cast<int>(m_items.size());
 
     for (const int x : std::views::iota(i, itemCount))
     {
@@ -770,8 +772,7 @@ void CWdsListControl::SortItems()
         return;
     }
 
-    HDITEM hditem;
-    hditem.mask = HDI_FORMAT;
+    HDITEM hditem{ .mask = HDI_FORMAT };
 
     // Remove the sort indicator from the previously sorted column if one exists.
     if (m_indicatedColumn != -1)
@@ -897,7 +898,7 @@ void CWdsListControl::OnHdnDividerdblclick(NMHDR* pNMHDR, LRESULT* pResult)
     // fetch size of sub-elements
     for (const int i : std::views::iota(0, GetItemCount()))
     {
-        width = max(width, GetSubItemWidth(GetItem(i), subitem));
+        width = std::max(width, GetSubItemWidth(GetItem(i), subitem));
     }
 
     // update final column width

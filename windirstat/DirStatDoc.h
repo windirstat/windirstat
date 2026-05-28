@@ -164,7 +164,7 @@ protected:
     std::optional<std::jthread> m_thread; // Wrapper thread so we do not occupy the UI thread
 
     // Cache for GetAllSelected to avoid expensive queries
-    LOGICAL_FOCUS m_cachedFocus{}; 
+    LOGICAL_FOCUS m_cachedFocus{};
     std::vector<CItem*> m_cachedSelection;
     bool m_selectionCacheValid = false;
 

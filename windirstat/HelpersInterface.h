@@ -38,12 +38,12 @@ std::wstring FormatVolumeNameOfRootPath(const std::wstring& rootPath);
 std::wstring FormatVolumeName(const std::wstring& rootPath, const std::wstring& volumeName);
 
 // File and path helpers
-std::wstring GetFolderNameFromPath(const std::wstring& path);
-std::wstring GetBaseNameFromPath(const std::wstring& path);
+std::wstring GetFolderNameFromPath(std::wstring_view path);
+std::wstring GetBaseNameFromPath(std::wstring_view path);
 std::wstring GlobToRegex(const std::wstring& glob, bool useAnchors = true);
 
 // String helpers
-void ReplaceString(std::wstring& subject, const std::wstring& search, const std::wstring& replace);
+void ReplaceString(std::wstring& subject, std::wstring_view search, std::wstring_view replace);
 std::wstring& TrimString(std::wstring& s, wchar_t c = L' ', bool endOnly = false) noexcept;
 std::wstring MakeLower(const std::wstring& s);
 std::wstring JoinString(const std::vector<std::wstring>& items, WCHAR delim = wds::chrPipe);

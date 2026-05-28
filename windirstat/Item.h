@@ -300,10 +300,10 @@ private:
     std::unique_ptr<CHILDINFO> m_folderInfo;   // Child information for non-files
     std::atomic<ULONGLONG> m_sizePhysical = 0; // Total physical size of self or subtree
     std::atomic<ULONGLONG> m_sizeLogical = 0;  // Total local size of self or subtree
-    FILETIME m_lastChange = { 0, 0 };          // Last modification time of self or subtree
     ULONGLONG m_index = 0;                     // Index of item for special scan types
-    CSmallRect tmiRect = {};                   // Treemap rectangle
+    FILETIME m_lastChange = { 0, 0 };          // Last modification time of self or subtree
     ITEMTYPE m_type;                           // Indicates our type.
+    CSmallRect tmiRect = {};                   // Treemap rectangle
     USHORT m_attributes = 0xFFFF;              // File or directory attributes of the item
     USHORT m_nameLen = 0;                      // Length of name string
 };

@@ -75,7 +75,7 @@ bool CreateShadowCopy(const std::wstring& volumePath);
 
 // Disk utilities
 std::vector<std::wstring> GetDriveList(
-    const std::vector<UINT> & driveTypes = {DRIVE_FIXED, DRIVE_REMOTE, 
+    const std::vector<UINT> & driveTypes = {DRIVE_FIXED, DRIVE_REMOTE,
     DRIVE_REMOVABLE, DRIVE_RAMDISK }, bool checkLocal = true, bool checkRemote = false);
 
 // File system helpers
@@ -84,7 +84,7 @@ bool DriveExists(const std::wstring& path) noexcept;
 bool IsLocalDrive(const std::wstring& path) noexcept;
 std::wstring GetVolumeName(const std::wstring& rootPath);
 bool DeleteFileForce(const std::wstring& path, DWORD attributes = INVALID_FILE_ATTRIBUTES);
- 
+
 // Path utilities
 std::wstring WdsQueryDosDevice(const std::wstring& drive);
 bool IsSUBSTedDrive(const std::wstring& drive);

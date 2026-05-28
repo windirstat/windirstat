@@ -20,7 +20,7 @@
 #include "pch.h"
 #include "TreeListControl.h"
 
-using ITEMWATCHCOLUMNS = enum : std::uint8_t
+enum ITEMWATCHCOLUMNS : std::uint8_t
 {
     COL_ITEMWATCH_NAME,
     COL_ITEMWATCH_TIME,
@@ -51,9 +51,16 @@ public:
     // CTreeListItem required overrides
     int CompareSibling(const CTreeListItem* other, int subitem) const override
     {
-        const auto* otherItem = reinterpret_cast<const CWatcherItem*>(other);
+        const auto* otherItem = static_cast<const CWatcherItem*>(other);
         if (subitem == COL_ITEMWATCH_ACTION) return signum(_wcsicmp(m_action.c_str(), otherItem->m_action.c_str()));
-        return m_item->CompareSibling(otherItem->m_item.get(), s_columnMap.at(static_cast<uint8_t>(subitem)));
+
+        switch (subitem)
+        {
+        case COL_ITEMWATCH_TIME:          return m_item->CompareSibling(otherItem->m_item.get(), COL_LAST_CHANGE);
+        case COL_ITEMWATCH_NAME:          return m_item->CompareSibling(otherItem->m_item.get(), COL_NAME);
+        case COL_ITEMWATCH_SIZE_LOGICAL:  return m_item->CompareSibling(otherItem->m_item.get(), COL_SIZE_LOGICAL);
+        default:                          return 0;
+        }
     }
 
     CTreeListItem* GetTreeListChild(int) const override { return nullptr; }
@@ -66,7 +73,6 @@ private:
 
     std::unique_ptr<CItem> m_item;
     std::wstring m_action;
-    static const std::unordered_map<uint8_t, uint8_t> s_columnMap;
 };
 
 class CFileWatcherControl final : public CTreeListControl

@@ -19,6 +19,11 @@
 
 #include "pch.h"
 
+struct string_hash {
+    using is_transparent = void;
+    size_t operator()(std::wstring_view txt) const { return std::hash<std::wstring_view>{}(txt); }
+};
+
 class Localization final
 {
     static bool CrackStrings(const std::wstring& sFileData, const std::wstring& sPrefix = {});
@@ -26,17 +31,17 @@ class Localization final
     static void UpdateWindowText(CWnd& wnd);
 
 public:
-    static std::unordered_map<std::wstring, std::wstring> m_map;
+    static std::unordered_map<std::wstring, std::wstring, string_hash, std::equal_to<>> m_map;
 
-    static bool Contains(const std::wstring_view& name)
+    static bool Contains(const std::wstring_view name)
     {
-        ASSERT(m_map.contains(std::wstring(name)));
-        return m_map.contains(std::wstring(name));
+        ASSERT(m_map.contains(name));
+        return m_map.contains(name);
     }
 
-    static std::wstring Lookup(const std::wstring_view& name)
+    static std::wstring Lookup(const std::wstring_view name)
     {
-        const auto it = m_map.find(std::wstring(name));
+        const auto it = m_map.find(name);
         return it != m_map.end() ? it->second : std::wstring();
     }
 

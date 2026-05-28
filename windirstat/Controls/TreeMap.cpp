@@ -174,7 +174,6 @@ void DrawShadowedExtensionText(CDC* const pdc, const std::wstring_view text, con
 
 /////////////////////////////////////////////////////////////////////////////
 
-
 void CTreeMap::GetDefaultPalette(std::vector<COLORREF>& palette)
 {
     palette.resize(std::size(DefaultCushionColors));
@@ -384,7 +383,7 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, CItem* root, const Options* optio
 
                 const double nextSum = static_cast<double>(sum) + childSize;
                 const double ss = nextSum * nextSum;
-                const double nextWorst = max(hh * rmax / ss, ss / hh / childSize);
+                const double nextWorst = std::max(hh * rmax / ss, ss / hh / childSize);
 
                 if (nextWorst > worst)
                 {
@@ -521,7 +520,6 @@ void CTreeMap::DrawTreeMap(CDC* pdc, CRect rc, CItem* root, const Options* optio
     }
 }
 
-
 CItem* CTreeMap::FindItemByPoint(CItem* item, const CPoint point)
 {
     ASSERT(item != nullptr);
@@ -583,7 +581,6 @@ CItem* CTreeMap::FindItemByPoint(CItem* item, const CPoint point)
     }
 }
 
-
 void CTreeMap::DrawColorPreview(CDC* pdc, const CRect& rc, const COLORREF color, const Options* options)
 {
     ASSERT(pdc != nullptr);
@@ -615,7 +612,6 @@ void CTreeMap::DrawColorPreview(CDC* pdc, const CRect& rc, const COLORREF color,
         pdc->Rectangle(rc);
     }
 }
-
 
 void CTreeMap::RenderLeaf(std::vector<COLORREF>& bitmap, const CItem* item, const std::array<double, 4>& surface) const
 {
@@ -652,7 +648,6 @@ void CTreeMap::RenderRectangle(std::vector<COLORREF>& bitmap, const CRect& rc, c
         DrawSolidRect(bitmap, rc, prepared.color, prepared.brightness);
     }
 }
-
 
 // Helper functions for KDirStat style
 bool CTreeMap::KDirStat_ArrangeChildren(
@@ -711,7 +706,6 @@ bool CTreeMap::KDirStat_ArrangeChildren(
 
     return horizontalRows;
 }
-
 
 double CTreeMap::KDirStat_CalculateNextRow(
     const CItem* parent,
@@ -807,7 +801,6 @@ void CTreeMap::DrawSolidRect(std::vector<COLORREF>& bitmap, const CRect& rc, con
     }
 }
 
-
 void CTreeMap::DrawCushion(std::vector<COLORREF>& bitmap, const CRect& rc, const std::array<double, 4>& surface, const COLORREF col, const double brightness) const
 {
     const double Ia = m_options.ambientLight;
@@ -853,7 +846,6 @@ void CTreeMap::DrawCushion(std::vector<COLORREF>& bitmap, const CRect& rc, const
         }
     }
 }
-
 
 void CTreeMap::AddRidge(const CRect& rc, std::array<double, 4>& surface, const double h)
 {
@@ -931,7 +923,6 @@ void CTreeMap::DrawExtensionLabels(CDC* pdc, CItem* root, const CPoint& offset) 
         }
     }
 }
-
 
 /////////////////////////////////////////////////////////////////////////////
 

@@ -75,13 +75,8 @@ void CFileSearchControl::ProcessSearch(CItem* item,
         const auto searchTermRegex = ComputeSearchRegex(searchTerm,
             searchCase, searchRegex);
 
-        // Determine which search function
-        const std::function searchFunc = searchWholePhrase ?
-            [](const std::wstring& str, const std::wregex& regex) { return std::regex_match(str, regex); } :
-            [](const std::wstring& str, const std::wregex& regex) { return std::regex_search(str, regex); };
-  
         // Do search
-        std::vector queue({ item });
+        std::vector<CItem*> queue{ item };
         while (!queue.empty() && !pdlg->IsCancelled())
         {
             // Grab item from queue
@@ -90,10 +85,17 @@ void CFileSearchControl::ProcessSearch(CItem* item,
             queue.pop_back();
 
             // Check for match
-            if ((!onlyFiles || qitem->IsTypeOrFlag(IT_FILE)) &&
-                searchFunc(std::wstring(qitem->GetNameView()), searchTermRegex))
+            if (!onlyFiles || qitem->IsTypeOrFlag(IT_FILE))
             {
-                matchedItems.push_back(qitem);
+                const auto nameView = qitem->GetNameView();
+                const bool isMatch = searchWholePhrase ?
+                    std::regex_match(nameView.begin(), nameView.end(), searchTermRegex) :
+                    std::regex_search(nameView.begin(), nameView.end(), searchTermRegex);
+
+                if (isMatch)
+                {
+                    matchedItems.push_back(qitem);
+                }
             }
 
             // Descend into child items
@@ -111,7 +113,7 @@ void CFileSearchControl::ProcessSearch(CItem* item,
             // Partial sort to get the top N items by physical size
             std::ranges::partial_sort(matchedItems, matchedItems.begin() + maxResults,
                 std::ranges::greater{}, &CItem::GetSizeLogical);
-            
+
             // Keep only the top N results
             matchedItems.resize(maxResults);
             m_rootItem->SetLimitExceeded(true);
@@ -158,4 +160,3 @@ void CFileSearchControl::AfterDeleteAllItems()
     InsertItem(0, m_rootItem);
     m_rootItem->SetExpanded(true);
 }
-

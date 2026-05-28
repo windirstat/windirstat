@@ -22,6 +22,10 @@
 #define VC_EXTRALEAN
 #endif
 
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+
 // Exclude unneeded MFC components
 #define _AFX_NO_DAO_SUPPORT
 #define _AFX_NO_CTL3D_SUPPORT

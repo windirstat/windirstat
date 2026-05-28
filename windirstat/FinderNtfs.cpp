@@ -225,7 +225,7 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
             driveitem->UpwardDrivePacman();
 
             // Set file pointer for synchronous read
-            const ULONG bytesThisRead = static_cast<ULONG>(min(bytesToRead, bufferSize));
+            const ULONG bytesThisRead = static_cast<ULONG>(std::min<ULONGLONG>(bytesToRead, bufferSize));
             OVERLAPPED overlapped = { .Offset = fileOffset.LowPart, .OffsetHigh = static_cast<DWORD>(fileOffset.HighPart), .hEvent = event };
             if (ReadFile(volumeHandle, buffer.get(), bytesThisRead, &bytesRead, &overlapped) == 0)
             {
@@ -294,7 +294,7 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
                         if (fn->IsShortNameRecord() ||
                             (fn->FileNameLength == 1 && wcscmp(fn->FileName, L".") == 0) ||
                             (fn->FileNameLength == 2 && wcscmp(fn->FileName, L"..") == 0)) continue;
-                        
+
                         std::scoped_lock lock(m_parentToChildMutex);
                         auto& children = m_parentToChildMap.try_emplace(fn->ParentDirectory).first->second;
                         children.emplace_back(std::wstring{ fn->FileName, fn->FileNameLength }, baseRecordIndex);

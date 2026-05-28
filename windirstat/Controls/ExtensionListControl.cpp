@@ -24,8 +24,8 @@
 
 /////////////////////////////////////////////////////////////////////////////
 
-CExtensionListControl::CListItem::CListItem(CExtensionListControl* list, const std::wstring& extension, const SExtensionRecord& r)
-    : m_extension(extension)
+CExtensionListControl::CListItem::CListItem(CExtensionListControl* list, std::wstring extension, const SExtensionRecord& r)
+    : m_extension(std::move(extension))
     , m_driveList(list)
     , m_bytes(r.GetBytes())
     , m_files(r.GetFiles())
@@ -35,20 +35,17 @@ CExtensionListControl::CListItem::CListItem(CExtensionListControl* list, const s
 
 bool CExtensionListControl::CListItem::DrawSubItem(const int subitem, CDC* pdc, CRect rc, const UINT state, int* width, int* focusLeft)
 {
-    if (subitem == COL_EXT_EXTENSION)
+    switch (subitem)
     {
+    case COL_EXT_EXTENSION:
         DrawLabel(m_driveList, pdc, rc, state, width, focusLeft);
-    }
-    else if (subitem == COL_EXT_COLOR)
-    {
+        return true;
+    case COL_EXT_COLOR:
         DrawColor(pdc, rc, state, width);
-    }
-    else
-    {
+        return true;
+    default:
         return false;
     }
-
-    return true;
 }
 
 void CExtensionListControl::CListItem::DrawColor(CDC* pdc, CRect rc, const UINT state, int* width) const
@@ -86,7 +83,7 @@ std::wstring CExtensionListControl::CListItem::GetText(const int subitem) const
     }
 }
 
-std::wstring CExtensionListControl::CListItem::GetExtension() const
+const std::wstring& CExtensionListControl::CListItem::GetExtension() const
 {
     return m_extension;
 }
@@ -101,9 +98,10 @@ HICON CExtensionListControl::CListItem::GetIcon()
     return m_icon;
 }
 
-std::wstring CExtensionListControl::CListItem::GetDescription() const
+const std::wstring& CExtensionListControl::CListItem::GetDescription() const
 {
-    return m_icon == nullptr ? L"" : m_description;
+    static const std::wstring empty;
+    return m_icon == nullptr ? empty : m_description;
 }
 
 std::wstring CExtensionListControl::CListItem::GetBytesPercent() const
@@ -198,8 +196,9 @@ void CExtensionListControl::SetExtensionData(const CExtensionData* ed)
     if (ed != nullptr)
     {
         std::vector<CWdsListItem*> items;
+        items.reserve(ed->size());
         for (const auto& [ext, rec] : *ed)
-            items.push_back(new CListItem(this, ext, rec));
+            items.emplace_back(new CListItem(this, ext, rec));
 
         InsertListItem(0, items);
     }
@@ -219,14 +218,15 @@ ULONGLONG CExtensionListControl::GetRootSize() const
 
 void CExtensionListControl::SelectExtension(const std::wstring & ext)
 {
-    for (const int i : std::views::iota(0, GetItemCount()))
+    auto view = std::views::iota(0, GetItemCount());
+    auto it = std::ranges::find_if(view, [&](int i) {
+        return _wcsicmp(GetListItem(i)->GetExtension().c_str(), ext.c_str()) == 0;
+    });
+
+    if (it != view.end())
     {
-        if (_wcsicmp(GetListItem(i)->GetExtension().c_str(), ext.c_str()) == 0)
-        {
-            SetItemState(i, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
-            EnsureVisible(i, FALSE);
-            return;
-        }
+        SetItemState(*it, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
+        EnsureVisible(*it, FALSE);
     }
 }
 
@@ -333,10 +333,11 @@ void CExtensionListControl::OnContextMenu(CWnd* /*pWnd*/, CPoint point)
         m_searchBitmap.Attach(Icons::MakeBitmap(16, Icons::Char(L'⌕', RGB(140, 140, 140))));
     }
 
-    MENUITEMINFO mii{};
-    mii.cbSize = sizeof(mii);
-    mii.fMask = MIIM_BITMAP;
-    mii.hbmpItem = static_cast<HBITMAP>(m_searchBitmap.GetSafeHandle());
+    MENUITEMINFO mii{
+        .cbSize = sizeof(MENUITEMINFO),
+        .fMask = MIIM_BITMAP,
+        .hbmpItem = static_cast<HBITMAP>(m_searchBitmap.GetSafeHandle())
+    };
     SetMenuItemInfo(menu.GetSafeHmenu(), ID_EXTLIST_SEARCH_EXTENSION, FALSE, &mii);
     menu.TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, point.x, point.y, this);
 }

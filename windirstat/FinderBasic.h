@@ -50,10 +50,10 @@ class FinderBasic final : public Finder
         {
             struct
             {
-                WCHAR FileName[1]; 
+                WCHAR FileName[1];
             }
             StandardInfo;
-            
+
             struct
             {
                 BYTE Padding[4];

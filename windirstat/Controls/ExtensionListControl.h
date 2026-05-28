@@ -40,20 +40,20 @@ protected:
     class CListItem final : public CWdsListItem
     {
     public:
-        CListItem(CExtensionListControl* list, const std::wstring & extension, const SExtensionRecord& r);
+        CListItem(CExtensionListControl* list, std::wstring extension, const SExtensionRecord& r);
         ~CListItem() override = default;
 
         bool DrawSubItem(int subitem, CDC* pdc, CRect rc, UINT state, int* width, int* focusLeft) override;
         std::wstring GetText(int subitem) const override;
 
-        std::wstring GetExtension() const;
+        const std::wstring& GetExtension() const;
         HICON GetIcon() override;
         int Compare(const CWdsListItem* baseOther, int subitem) const override;
 
     private:
         void DrawColor(CDC* pdc, CRect rc, UINT state, int* width) const;
 
-        std::wstring GetDescription() const;
+        const std::wstring& GetDescription() const;
         std::wstring GetBytesPercent() const;
 
         double GetBytesFraction() const;

@@ -34,7 +34,7 @@ public:
 
     // Menu rendering functions
     static void DrawMenuClientArea(CWnd& wnd);
-    
+
     // Unified message handler for menu drawing messages
     static LRESULT HandleMenuMessage(UINT message, WPARAM wParam, LPARAM lParam, HWND hWnd);
 
@@ -68,10 +68,10 @@ public:
         helper.SetActiveTabBoldFont();
 
         // Forcibly hide scroll controls
-        if (IsWindow(helper.m_btnScrollFirst)) helper.m_btnScrollFirst.ShowWindow(SW_HIDE);
-        if (IsWindow(helper.m_btnScrollLast)) helper.m_btnScrollLast.ShowWindow(SW_HIDE);
-        if (IsWindow(helper.m_btnScrollLeft)) helper.m_btnScrollLeft.ShowWindow(SW_HIDE);
-        if (IsWindow(helper.m_btnScrollRight)) helper.m_btnScrollRight.ShowWindow(SW_HIDE);
+        for (auto* const btn : { &helper.m_btnScrollFirst, &helper.m_btnScrollLast, &helper.m_btnScrollLeft, &helper.m_btnScrollRight })
+        {
+            if (IsWindow(*btn)) btn->ShowWindow(SW_HIDE);
+        }
         helper.m_bScroll = FALSE;
 
         // Dark mode tabs have a black background so set text to be white

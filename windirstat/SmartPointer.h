@@ -96,8 +96,8 @@ public:
     }
 
     operator T() const noexcept { return m_data; }
-    T& operator*() const noexcept { return m_data; }
-    const T& operator*() noexcept { return m_data; }
+    T& operator*() noexcept { return m_data; }
+    const T& operator*() const noexcept { return m_data; }
     T* operator&() noexcept { return &m_data; }
     T operator->() const noexcept { return m_data; }
     bool operator!() const noexcept { return m_data == nullptr; }

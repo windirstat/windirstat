@@ -16,6 +16,7 @@
 //
 
 #pragma once
+#include <span>
 
 #include "pch.h"
 
@@ -33,6 +34,8 @@ struct SSorting
     int subitem2 = 0;
     bool ascending1 = true;
     bool ascending2 = true;
+
+    bool operator==(const SSorting&) const = default;
 };
 
 //
@@ -61,7 +64,7 @@ public:
     int CompareSort(const CWdsListItem* other, const SSorting& sorting) const;
 
     // Return value is true, if the item draws itself.
-    // width != NULL -> only determine width, do not draw.
+    // width != nullptr -> only determine width, do not draw.
     // If focus rectangle shall not begin leftmost, set *focusLeft
     // to the left edge of the desired focus rectangle.
     virtual bool DrawSubItem(int subitem, CDC* pdc, CRect rc, UINT state, int* width, int* focusLeft) = 0;
@@ -131,10 +134,11 @@ public:
     bool HasFocus() const;
     void AddExtendedStyle(DWORD exStyle);
     void RemoveExtendedStyle(DWORD exStyle);
-    void InsertListItem(int i, const std::vector<CWdsListItem*>& items);
+    void InsertListItem(int i, std::span<CWdsListItem* const> items);
+    void InsertListItem(int i, CWdsListItem* item) { InsertListItem(i, std::span<CWdsListItem* const>(&item, 1)); }
     void RemoveListItem(int i, int c = 1);
     void ClearList();
-    
+
     // Shadow CListCtrl methods for Owner Data management.
     // Use these instead of standard CListCtrl methods to ensure proper data management in LVS_OWNERDATA mode.
     BOOL DeleteItem(int i);

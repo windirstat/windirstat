@@ -63,7 +63,7 @@ protected:
     void ShiftControlsIfHidden(const CWnd* pTargetControl, const std::vector<CWnd*>& controlsToShift, int padding = 0);
 
 private:
-    
+
     using ButtonContext = struct ButtonContext
     {
         BYTE btnLeftID = 0;

@@ -34,20 +34,24 @@ CItemDupe::~CItemDupe()
     }
 }
 
-const std::unordered_map<uint8_t, uint8_t> CItemDupe::s_columnMap =
+static int GetMappedColumn(int subitem)
 {
-    { COL_ITEMDUP_NAME, COL_NAME },
-    { COL_ITEMDUP_ITEMS, COL_ITEMS },
-    { COL_ITEMDUP_SIZE_LOGICAL, COL_SIZE_LOGICAL },
-    { COL_ITEMDUP_SIZE_PHYSICAL, COL_SIZE_PHYSICAL },
-    { COL_ITEMDUP_LAST_CHANGE, COL_LAST_CHANGE }
-};
+    switch (subitem)
+    {
+    case COL_ITEMDUP_NAME: return COL_NAME;
+    case COL_ITEMDUP_ITEMS: return COL_ITEMS;
+    case COL_ITEMDUP_SIZE_LOGICAL: return COL_SIZE_LOGICAL;
+    case COL_ITEMDUP_SIZE_PHYSICAL: return COL_SIZE_PHYSICAL;
+    case COL_ITEMDUP_LAST_CHANGE: return COL_LAST_CHANGE;
+    default: return -1;
+    }
+}
 
 bool CItemDupe::DrawSubItem(const int subitem, CDC* pdc, const CRect rc, const UINT state, int* width, int* focusLeft)
 {
     // Handle individual file items
     if (subitem != COL_ITEMDUP_NAME) return false;
-    return CTreeListItem::DrawSubItem(s_columnMap.at(static_cast<uint8_t>(subitem)), pdc, rc, state, width, focusLeft);
+    return CTreeListItem::DrawSubItem(COL_NAME, pdc, rc, state, width, focusLeft);
 }
 
 std::wstring CItemDupe::GetText(const int subitem) const
@@ -69,14 +73,15 @@ std::wstring CItemDupe::GetText(const int subitem) const
 
     // Individual file names
     if (subitem == COL_ITEMDUP_NAME) return m_item->GetPath();
-    return m_item->GetText(s_columnMap.at(static_cast<uint8_t>(subitem)));
+    int mapped = GetMappedColumn(subitem);
+    return mapped != -1 ? m_item->GetText(mapped) : std::wstring{};
 }
 
 int CItemDupe::CompareSibling(const CTreeListItem* tlib, const int subitem) const
 {
     // Root node
     if (GetParent() == nullptr) return 0;
-    
+
     // Parent hash nodes
     const auto* other = reinterpret_cast<const CItemDupe*>(tlib);
     if (m_item == nullptr)
@@ -90,7 +95,8 @@ int CItemDupe::CompareSibling(const CTreeListItem* tlib, const int subitem) cons
     }
 
     // Individual file names
-    return m_item->CompareSibling(other->m_item, s_columnMap.at(static_cast<uint8_t>(subitem)));
+    int mapped = GetMappedColumn(subitem);
+    return mapped != -1 ? m_item->CompareSibling(other->m_item, mapped) : 0;
 }
 
 int CItemDupe::GetTreeListChildCount() const

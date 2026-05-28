@@ -120,7 +120,7 @@ void CProgressDlg::OnCancel()
 
     // Disable cancel button to prevent multiple clicks
     m_cancelButton.EnableWindow(FALSE);
-    
+
     // Wait for worker thread to complete
     if (m_workerThread.has_value())
     {

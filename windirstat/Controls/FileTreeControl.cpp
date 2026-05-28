@@ -35,19 +35,19 @@ void CFileTreeControl::SelectFirstItemByType(ITEMTYPE itemType)
     if (!itemSelected) return;
 
     const CSetRedrawLock lock(this); // Supress redraw until the end of the function
-    CItem* const itemTarget = static_cast<CItem*>(itemSelected->GetParent());
-    CItem** const items = (CItem**)m_items.data();
+    const CItem* const itemTarget = static_cast<const CItem*>(itemSelected->GetParent());
 
-    for (int i : std::views::iota(0, static_cast<int>(m_items.size())))
+    auto it = std::ranges::find_if(m_items, [&](const CWdsListItem* item) {
+        auto* const itemCurrent = static_cast<const CItem*>(item);
+        return itemCurrent->GetParent() == itemTarget && itemCurrent->IsTypeOrFlag(itemType);
+    });
+
+    if (it != m_items.end())
     {
-        CItem* const itemCurrent = items[i];
-        if (itemCurrent->GetParent() == itemTarget && itemCurrent->IsTypeOrFlag(itemType))
-        {
-            DeselectAll();
-            SetItemState(i, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
-            EnsureVisible(i, FALSE);
-            return;
-        }
+        DeselectAll();
+        const int i = static_cast<int>(std::distance(m_items.begin(), it));
+        SetItemState(i, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
+        EnsureVisible(i, FALSE);
     }
 }
 
@@ -56,8 +56,6 @@ BEGIN_MESSAGE_MAP(CFileTreeControl, CTreeListControl)
     ON_WM_LBUTTONDOWN()
     ON_WM_SETCURSOR()
 END_MESSAGE_MAP()
-
-CFileTreeControl* CFileTreeControl::m_singleton = nullptr;
 
 void CFileTreeControl::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 {
@@ -89,7 +87,7 @@ void CFileTreeControl::OnLButtonDown(const UINT nFlags, const CPoint point)
     if (i == -1) return;
 
     // Check if item is a hardlink or hardlinks file reference
-    const auto* item = reinterpret_cast<CItem*>(GetItem(i));
+    const auto* item = static_cast<const CItem*>(GetItem(i));
     if (item == nullptr || !item->IsTypeOrFlag(ITF_HARDLINK, IT_HLINKS_FILE)) return;
 
     // Validate if in physical size column
@@ -134,13 +132,13 @@ BOOL CFileTreeControl::OnSetCursor(CWnd* pWnd, const UINT nHitTest, const UINT m
     if (i == -1) return defaultReturn();
 
     // Check if item is a hardlink or hardlinks file reference
-    const auto* item = reinterpret_cast<CItem*>(GetItem(i));
+    const auto* item = static_cast<const CItem*>(GetItem(i));
     if (item == nullptr) return defaultReturn();
-    
+
     // Check for ITF_HARDLINK or IT_HLINKS_FILE
     const bool isHardlink = item->IsTypeOrFlag(ITF_HARDLINK);
     const bool isHlinksFile = item->IsTypeOrFlag(IT_HLINKS_FILE);
-    
+
     if (!isHardlink && !isHlinksFile) return defaultReturn();
 
     // Validate if in physical size column

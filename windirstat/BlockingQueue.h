@@ -268,13 +268,21 @@ public:
         prev->next.store(node, std::memory_order_release);
     }
 
-    [[nodiscard]] bool pop(T& item) noexcept(std::is_nothrow_move_assignable_v<T>) 
+    [[nodiscard]] bool pop(T& item) noexcept(std::is_nothrow_move_assignable_v<T>)
     {
         Node* t = m_tail;
         Node* next = t->next.load(std::memory_order_acquire);
 
         if (next == nullptr)
-            return false;
+        {
+            if (m_head.load(std::memory_order_acquire) == t)
+                return false;
+
+            while ((next = t->next.load(std::memory_order_acquire)) == nullptr)
+            {
+                std::this_thread::yield();
+            }
+        }
 
         item = std::move(next->data);
         m_tail = next;
@@ -286,7 +294,8 @@ public:
     // Only valid for consumer
     [[nodiscard]] bool empty() const noexcept
     {
-        return m_tail->next.load(std::memory_order_acquire) == nullptr;
+        if (m_tail->next.load(std::memory_order_acquire) != nullptr) return false;
+        return m_head.load(std::memory_order_acquire) == m_tail;
     }
 
     // Clear out queue (unsafe with concurrent producers)

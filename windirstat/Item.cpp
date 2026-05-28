@@ -82,9 +82,22 @@ CItem::~CItem()
 {
     if (m_folderInfo != nullptr)
     {
-        for (const auto& child : m_folderInfo->m_children)
+        std::vector<CItem*> queue = std::move(m_folderInfo->m_children);
+        while (!queue.empty())
         {
-            delete child;
+            CItem* current = queue.back();
+            queue.pop_back();
+
+            if (current->m_folderInfo != nullptr)
+            {
+                auto& children = current->m_folderInfo->m_children;
+                if (!children.empty())
+                {
+                    queue.insert(queue.end(), children.begin(), children.end());
+                    children.clear();
+                }
+            }
+            delete current;
         }
     }
 }
@@ -561,7 +574,7 @@ void CItem::UpwardUpdateLastChange(const FILETIME& t) noexcept
 
 void CItem::UpwardRecalcLastChange()
 {
-    // ignore current object in recalculation 
+    // ignore current object in recalculation
     for (auto p = GetParent(); p != nullptr; p = p->GetParent())
     {
         const auto newMax = (std::ranges::max)(
@@ -576,7 +589,7 @@ void CItem::UpwardRecalcLastChange()
 
 void CItem::SetName(const std::wstring_view name)
 {
-    m_nameLen = static_cast<std::uint8_t>(name.size());
+    m_nameLen = static_cast<std::uint16_t>(name.size());
     m_name = std::make_unique_for_overwrite<wchar_t[]>(m_nameLen + 1);
     while (m_nameLen > 0 && name[m_nameLen - 1] == L'\\') m_nameLen--;
     if (m_nameLen) std::wmemcpy(m_name.get(), name.data(), m_nameLen);

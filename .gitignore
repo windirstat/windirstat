@@ -2,7 +2,7 @@
 /.claude/
 /.vs/
 /publish/
-build/
+/build/
 intermediate/
 *.aps
 *.bin

@@ -28,19 +28,23 @@ CItemSearch::~CItemSearch()
     }
 }
 
-const std::unordered_map<uint8_t, uint8_t> CItemSearch::s_columnMap =
+static int GetMappedColumn(int subitem)
 {
-    { COL_ITEMSEARCH_NAME, COL_NAME },
-    { COL_ITEMSEARCH_SIZE_LOGICAL, COL_SIZE_LOGICAL },
-    { COL_ITEMSEARCH_SIZE_PHYSICAL, COL_SIZE_PHYSICAL },
-    { COL_ITEMSEARCH_LAST_CHANGE, COL_LAST_CHANGE }
-};
+    switch (subitem)
+    {
+    case COL_ITEMSEARCH_NAME: return COL_NAME;
+    case COL_ITEMSEARCH_SIZE_LOGICAL: return COL_SIZE_LOGICAL;
+    case COL_ITEMSEARCH_SIZE_PHYSICAL: return COL_SIZE_PHYSICAL;
+    case COL_ITEMSEARCH_LAST_CHANGE: return COL_LAST_CHANGE;
+    default: return -1;
+    }
+}
 
 bool CItemSearch::DrawSubItem(const int subitem, CDC* pdc, const CRect rc, const UINT state, int* width, int* focusLeft)
 {
     // Handle individual file items
     if (subitem != COL_ITEMSEARCH_NAME) return false;
-    return CTreeListItem::DrawSubItem(s_columnMap.at(static_cast<uint8_t>(subitem)), pdc, rc, state, width, focusLeft);
+    return CTreeListItem::DrawSubItem(COL_NAME, pdc, rc, state, width, focusLeft);
 }
 
 std::wstring CItemSearch::GetText(const int subitem) const
@@ -61,7 +65,8 @@ std::wstring CItemSearch::GetText(const int subitem) const
 
     // Individual file names
     if (subitem == COL_ITEMSEARCH_NAME) return m_item->GetPath();
-    return m_item->GetText(s_columnMap.at(static_cast<uint8_t>(subitem)));
+    int mapped = GetMappedColumn(subitem);
+    return mapped != -1 ? m_item->GetText(mapped) : std::wstring{};
 }
 
 int CItemSearch::CompareSibling(const CTreeListItem* tlib, const int subitem) const
@@ -75,7 +80,9 @@ int CItemSearch::CompareSibling(const CTreeListItem* tlib, const int subitem) co
     // Individual file names
     const auto* other = reinterpret_cast<const CItemSearch*>(tlib);
     if (subitem == COL_ITEMSEARCH_NAME) return signum(_wcsicmp(m_item->GetPath().c_str(), other->m_item->GetPath().c_str()));
-    return m_item->CompareSibling(other->m_item, s_columnMap.at(static_cast<uint8_t>(subitem)));
+
+    int mapped = GetMappedColumn(subitem);
+    return mapped != -1 ? m_item->CompareSibling(other->m_item, mapped) : 0;
 }
 
 int CItemSearch::GetTreeListChildCount() const

@@ -248,11 +248,8 @@ CTreeListItem* CTreeListControl::GetItem(const int i) const
 
 bool CTreeListControl::IsItemSelected(const CTreeListItem* item) const
 {
-    for (POSITION pos = GetFirstSelectedItemPosition(); pos != nullptr;)
-    {
-        if (GetItem(GetNextSelectedItem(pos)) == item) return true;
-    }
-    return false;
+    const int itempos = FindTreeItem(item);
+    return itempos != -1 && (GetItemState(itempos, LVIS_SELECTED) & LVIS_SELECTED) != 0;
 }
 
 void CTreeListControl::SelectItem(const CTreeListItem* item, const bool deselect, const bool focus, const bool scroll)
@@ -295,7 +292,7 @@ void CTreeListControl::ExpandPathToItem(const CTreeListItem* item)
     }
 
     int parent = 0;
-    for (const auto& path : paths | std::views::reverse)
+    for (const auto* path : paths | std::views::reverse)
     {
         int index = FindTreeItem(path);
         if (index == -1)
@@ -332,7 +329,7 @@ void CTreeListControl::OnItemDoubleClick(const int i)
 
     // Get the linked item (for most controls this is the same as the tree item)
     const auto* item = treeItem->GetLinkedItem();
-    
+
     // If it's a file, open it
     if (item != nullptr && item->IsTypeOrFlag(IT_FILE))
     {
@@ -466,19 +463,20 @@ void CTreeListControl::DrawNode(CDC* pDC, CRect& rcRest, CRect& rcPlusMinus, con
         const int sub2 = ColumnToSubItem(sorting.column2);
 
         // Check if any sibling comes after this node in sort order
-        for (const int k : std::views::iota(0, count))
-        {
+        const bool asc1 = sorting.ascending1;
+        const bool asc2 = sorting.ascending2;
+
+        return !std::ranges::any_of(std::views::iota(0, count), [&](const int k) {
             const auto* sibling = parent->GetTreeListChild(k);
-            if (sibling == node) continue;
+            if (sibling == node) return false;
 
-            int compareResult = sibling->Compare(node, sub1);
-            const bool use2 = (compareResult == 0);
-            if (use2) compareResult = sibling->Compare(node, sub2);
+            int cmp = sibling->Compare(node, sub1);
+            const bool use2 = (cmp == 0);
+            if (use2) cmp = sibling->Compare(node, sub2);
 
-            if (const bool asc = use2 ? sorting.ascending2 : sorting.ascending1;
-                (asc && compareResult > 0) || (!asc && compareResult < 0)) return false;
-        }
-        return true;
+            const bool asc = use2 ? asc2 : asc1;
+            return (asc && cmp > 0) || (!asc && cmp < 0);
+        });
     };
 
     // Draw connectors for each indentation level
@@ -696,7 +694,7 @@ void CTreeListControl::ExpandItem(const int i, const bool scroll)
         // first few bunch of visible items
         if (COptions::AutomaticallyResizeColumns && scroll && c < 50)
         {
-            maxwidth = max(maxwidth, GetSubItemWidth(child, 0));
+            maxwidth = std::max(maxwidth, GetSubItemWidth(child, 0));
         }
     }
 
@@ -886,7 +884,7 @@ void CTreeListControl::EnsureItemVisible(const CTreeListItem* item)
         return;
     }
     EnsureVisible(i, FALSE);
-    
+
     // Scroll to the left to show the beginning of the item
     if (const int currentScrollPos = GetScrollPos(SB_HORZ); currentScrollPos > 0)
     {
@@ -983,4 +981,3 @@ BOOL CTreeListControl::OnHeaderEndDrag(UINT, NMHDR* pNMHDR, LRESULT* pResult)
     *pResult = block;
     return block;
 }
-

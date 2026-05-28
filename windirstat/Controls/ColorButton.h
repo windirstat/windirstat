@@ -42,12 +42,12 @@ private:
     class CPreview final : public CWnd
     {
     public:
-        CPreview();
+        CPreview() = default;
         COLORREF GetColor() const;
         void SetColor(COLORREF color);
 
     private:
-        COLORREF m_color;
+        COLORREF m_color = 0;
 
         DECLARE_MESSAGE_MAP()
         afx_msg void OnPaint();

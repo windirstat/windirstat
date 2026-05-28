@@ -38,7 +38,7 @@ class FinderNtfsContext final
         std::wstring FileName;
         ULONGLONG BaseRecord;
 
-        FileRecordName(std::wstring fileName, ULONGLONG baseRecord) : 
+        FileRecordName(std::wstring fileName, ULONGLONG baseRecord) :
             FileName(std::move(fileName)), BaseRecord(baseRecord) {}
     };
 
@@ -68,7 +68,7 @@ class FinderNtfs final : public Finder
 
     std::vector<FinderNtfsContext::FileRecordName>::const_iterator m_recordIteratorEnd;
     std::vector<FinderNtfsContext::FileRecordName>::const_iterator m_recordIterator;
-    
+
     std::wstring m_base;
     ULONGLONG m_index = 0;
 

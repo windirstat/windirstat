@@ -185,7 +185,7 @@ public:
     void DrawTreeMap(CDC* pdc, CRect rc, CItem* root, const Options* options = nullptr);
 
     // In the resulting treemap, find the item below a given coordinate.
-    // Return value can be NULL, iff point is outside root rect.
+    // Return value can be nullptr, iff point is outside root rect.
     CItem* FindItemByPoint(CItem* item, CPoint point);
 
     // Draws a sample rectangle in the given style (for color legend)

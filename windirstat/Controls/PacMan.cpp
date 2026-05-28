@@ -30,13 +30,12 @@ void CPacman::Reset()
     m_lastUpdate   = 0;
     m_lastDraw     = 0;
     m_toTheRight   = true;
-    m_position     = 0;
+    m_position     = 0.0f;
     m_mouthOpening = true;
-    m_aperture     = 0;
+    m_aperture     = 0.0f;
     m_done         = false;
+    m_moving       = false;
 }
-
-bool CPacman::m_suspended = false;
 
 void CPacman::SetGlobalSuspendState(const bool suspend)
 {
@@ -137,7 +136,7 @@ void CPacman::UpdatePosition(float& position, bool& up, const float diff)
 
     if (!up) position = 2.0f - position;
     position += diff;
-    position = std::fmodf(position, 2.0f);
+    position = std::fmod(position, 2.0f);
     up = (position <= 1.0f);
     if (!up) position = 2.0f - position;
 }

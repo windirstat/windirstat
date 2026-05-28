@@ -55,7 +55,7 @@ private:
 
     std::wstring m_message;
     std::function<void(CProgressDlg*)> m_task;
-    
+
     CStatic m_messageCtrl;
     CProgressCtrl m_progressCtrl;
     CButton m_cancelButton;

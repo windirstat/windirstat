@@ -44,9 +44,6 @@ public:
     CItemTop(CItem* item);
     ~CItemTop() override;
 
-    // Translation map for leveraging Item routines
-    static const std::unordered_map<uint8_t, uint8_t> s_columnMap;
-
     // CTreeListItem Interface
     bool DrawSubItem(int subitem, CDC* pdc, CRect rc, UINT state, int* width, int* focusLeft) override;
     std::wstring GetText(int subitem) const override;

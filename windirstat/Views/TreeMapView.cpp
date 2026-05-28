@@ -399,7 +399,7 @@ void CTreeMapView::Inactivate()
     CSelectObject sobmp(&dcmem, &m_dimmed);
 
     // Apply the dimming overlay
-    constexpr BLENDFUNCTION blendFunc{ 
+    constexpr BLENDFUNCTION blendFunc{
         .BlendOp = AC_SRC_OVER, .BlendFlags = 0,
         .SourceConstantAlpha = 175, .AlphaFormat = 0 };
     dcmem.FillSolidRect(CRect(0, 0, m_dimmedSize.cx, m_dimmedSize.cy), RGB(0, 0, 0));

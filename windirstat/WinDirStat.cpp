@@ -188,7 +188,7 @@ bool CDirStatApp::SetPortableMode(const bool enable, const bool onlyOpen)
     if (m_pszProfileName != nullptr) free(const_cast<LPVOID>(static_cast<LPCVOID>(m_pszProfileName)));
     m_pszProfileName = nullptr;
     m_pszRegistryKey = nullptr;
-    
+
     if (enable)
     {
         // Enable portable mode by creating the file
@@ -262,7 +262,7 @@ public:
             {
                 CDirStatApp::Get()->m_loadFromPath = param;
             }
-            
+
             m_pendingFlag.clear();
             return;
         }

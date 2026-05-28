@@ -118,7 +118,7 @@ std::wstring FormatSizeSuffixes(const ULONGLONG n) noexcept
     for (const auto& [bytes, threshold, suffix] : units) [[msvc::flatten]]
     {
         if (n < threshold) continue;
-        
+
         return FormatDouble(static_cast<double>(n)
             / static_cast<double>(bytes)) + L" " + suffix();
     }
@@ -217,12 +217,12 @@ std::wstring FormatVolumeName(const std::wstring& rootPath, const std::wstring& 
 }
 
 // File and path helpers
-std::wstring GetFolderNameFromPath(const std::wstring& path)
+std::wstring GetFolderNameFromPath(std::wstring_view path)
 {
     return std::filesystem::path(path).parent_path().wstring();
 }
 
-std::wstring GetBaseNameFromPath(const std::wstring& path)
+std::wstring GetBaseNameFromPath(std::wstring_view path)
 {
     return std::filesystem::path(path).filename().wstring();
 }
@@ -242,7 +242,7 @@ std::wstring GlobToRegex(const std::wstring& glob, const bool useAnchors)
 }
 
 // String helpers
-void ReplaceString(std::wstring& subject, const std::wstring& search, const std::wstring& replace)
+void ReplaceString(std::wstring& subject, std::wstring_view search, std::wstring_view replace)
 {
     if (search.empty()) return;
 
@@ -268,10 +268,17 @@ std::wstring MakeLower(const std::wstring& s)
 
 std::wstring JoinString(const std::vector<std::wstring>& items, const WCHAR delim)
 {
-    return std::accumulate(items.begin(), items.end(), std::wstring(),
-        [&](const std::wstring& a, const std::wstring& b) {
-            return a.empty() ? b : a + delim + b;
-        });
+    if (items.empty()) return {};
+    size_t len = 0;
+    for (const auto& item : items) len += item.size() + 1;
+    std::wstring result;
+    result.reserve(len);
+    for (const auto& item : items)
+    {
+        if (!result.empty()) result += delim;
+        result += item;
+    }
+    return result;
 }
 
 std::vector<std::wstring> SplitString(const std::wstring& string, const WCHAR delim)
@@ -279,7 +286,8 @@ std::vector<std::wstring> SplitString(const std::wstring& string, const WCHAR de
     std::vector<std::wstring> selections;
     for (const auto part : std::views::split(string, delim)) {
         std::wstring partString(part.begin(), part.end());
-        selections.emplace_back(TrimString(partString));
+        TrimString(partString);
+        selections.emplace_back(std::move(partString));
     }
 
     return selections;
@@ -430,7 +438,7 @@ bool ShellExecuteWrapper(const std::wstring& lpFile, const std::wstring& lpParam
     const HWND hwnd, const std::wstring& lpDirectory, const INT nShowCmd)
 {
     CWaitCursor wc;
-    
+
     SHELLEXECUTEINFO sei = {
         .cbSize = sizeof(SHELLEXECUTEINFO),
         .fMask = 0,
@@ -455,7 +463,7 @@ bool ExecuteCommandInConsole(const std::wstring& command, const std::wstring& ti
     const std::wstring cmd = GetSysDirectory() + L"\\CMD.EXE";
     const std::wstring cmdline = std::format(LR"(/C "TITLE {} - {} & {} & PAUSE")",
         wds::strWinDirStat, title, command);
-    
+
     return ShellExecuteWrapper(cmd, cmdline, L"runas");
 }
 
@@ -570,7 +578,7 @@ std::vector<BYTE> GetCompressedResource(const HRSRC resource) noexcept
         +[](char*, int, int) -> INT_PTR { return g_ctx->nextHandle++; },
         +[](INT_PTR hf, void* pv, UINT cb) -> UINT {
             size_t& pos = g_ctx->handles[hf];
-            const size_t toRead = min(cb, (UINT)(g_ctx->cabData.size() - pos));
+            const size_t toRead = std::min(cb, (UINT)(g_ctx->cabData.size() - pos));
             memcpy(pv, g_ctx->cabData.data() + pos, toRead);
             pos += toRead;
             return static_cast<UINT>(toRead);
@@ -638,7 +646,7 @@ std::wstring GetAcceleratorString(const UINT commandID)
             { VK_OEM_PERIOD, L"."     }, { VK_TAB,      L"Tab"   }, { VK_RETURN,   L"Enter" }, { VK_SPACE,     L"Space" }
         };
 
-        // Load all accelerator object and get count 
+        // Load all accelerator object and get count
         const HACCEL hAccel = LoadAccelerators(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDR_MAINFRAME));
         const int count = CopyAcceleratorTable(hAccel, nullptr, 0);
         if (count == 0) return wds::strEmpty;

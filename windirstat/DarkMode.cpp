@@ -106,16 +106,17 @@ void DarkMode::SetupGlobalColors() noexcept
     if (!s_darkModeEnabled) return;
 
     // Update global colors
-    GetGlobalData()->clrBarFace = WdsSysColor(COLOR_MENUBAR);
-    GetGlobalData()->clrBarShadow = WdsSysColor(COLOR_MENUBAR);
-    GetGlobalData()->clrBtnText = WdsSysColor(COLOR_BTNTEXT);
-    GetGlobalData()->clrBtnFace = WdsSysColor(COLOR_BTNFACE);
-    GetGlobalData()->clrBtnHilite = WdsSysColor(COLOR_BTNHILIGHT);
-    GetGlobalData()->clrBtnShadow = WdsSysColor(COLOR_BTNSHADOW);
-    GetGlobalData()->brBarFace.DeleteObject();
-    GetGlobalData()->brBarFace.CreateSolidBrush(GetGlobalData()->clrBarFace);
-    GetGlobalData()->brBtnFace.DeleteObject();
-    GetGlobalData()->brBtnFace.CreateSolidBrush(GetGlobalData()->clrBtnFace);
+    auto* const data = GetGlobalData();
+    data->clrBarFace = WdsSysColor(COLOR_MENUBAR);
+    data->clrBarShadow = WdsSysColor(COLOR_MENUBAR);
+    data->clrBtnText = WdsSysColor(COLOR_BTNTEXT);
+    data->clrBtnFace = WdsSysColor(COLOR_BTNFACE);
+    data->clrBtnHilite = WdsSysColor(COLOR_BTNHILIGHT);
+    data->clrBtnShadow = WdsSysColor(COLOR_BTNSHADOW);
+    data->brBarFace.DeleteObject();
+    data->brBarFace.CreateSolidBrush(data->clrBarFace);
+    data->brBtnFace.DeleteObject();
+    data->brBtnFace.CreateSolidBrush(data->clrBtnFace);
 }
 
 COLORREF DarkMode::WdsSysColor(const DWORD index)
@@ -149,7 +150,7 @@ void DarkMode::AdjustControls(const HWND hWnd)
     {
         std::array<WCHAR, MAX_CLASS_NAME> classNameBuffer;
         const int length = GetClassName(hWnd, classNameBuffer.data(), static_cast<int>(classNameBuffer.size()));
-        const std::wstring className(classNameBuffer.data(), length);
+        const std::wstring_view className(classNameBuffer.data(), length);
 
         // Control whether the window is allowed for dark mode
         AllowDarkModeForWindow(hWnd, TRUE);
@@ -188,12 +189,12 @@ void DarkMode::AdjustControls(const HWND hWnd)
         {
             SetWindowTheme(hWnd, L"DarkMode_Explorer", nullptr);
         }
-        
+
         return TRUE;
     };
 
-    ProcessWindow(hWnd, NULL);
-    EnumChildWindows(hWnd, ProcessWindow, NULL);
+    ProcessWindow(hWnd, 0);
+    EnumChildWindows(hWnd, ProcessWindow, 0);
 
     SetWindowPos(hWnd, nullptr, 0, 0, 0, 0,
         SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOOWNERZORDER);
@@ -249,7 +250,7 @@ void DarkMode::DrawMenuClientArea(CWnd& wnd)
 
 LRESULT DarkMode::HandleMenuMessage(const UINT message, const WPARAM wParam, const LPARAM lParam, const HWND hWnd)
 {
-    if (!s_darkModeEnabled || lParam == NULL) return DefWindowProc(hWnd, message, wParam, lParam);
+    if (!s_darkModeEnabled || lParam == 0) return DefWindowProc(hWnd, message, wParam, lParam);
 
     using UAHMENU = struct UAHMENU
     {

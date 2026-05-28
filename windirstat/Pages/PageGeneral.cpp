@@ -127,7 +127,7 @@ BOOL CPageGeneral::OnInitDialog()
     m_useWindowsLocale = COptions::UseWindowsLocaleSetting;
     m_portableMode = CDirStatApp::InPortableMode();
     m_darkModeRadio = COptions::DarkMode;
-    
+
     // Query checkbox status and then gray out if not elevated
     m_contextMenuIntegration = IsContextMenuRegistered() ? TRUE : FALSE;
     if (CWnd* pWnd = GetDlgItem(IDC_CONTEXT_MENU); pWnd != nullptr && !IsElevationActive())
@@ -172,9 +172,9 @@ void CPageGeneral::OnOK()
     {
         DisplayError(L"Could not toggle WinDirStat portable mode. Check your permissions.");
     }
-    
+
     // Update context menu registration if elevated
-    const bool shouldBeRegistered = (m_contextMenuIntegration != FALSE);      
+    const bool shouldBeRegistered = (m_contextMenuIntegration != FALSE);
     if (IsContextMenuRegistered() != shouldBeRegistered && IsElevationActive())
     {
         SetContextMenuRegistration(shouldBeRegistered);

@@ -35,7 +35,7 @@ public:
 
 private:
     static void UpdatePosition(float& position, bool& up, float diff);
-    static bool m_suspended;
+    static inline bool m_suspended = false;
 
     ULONGLONG m_lastUpdate = 0;  // TickCount
     ULONGLONG m_lastDraw = 0;    // Last time drawn

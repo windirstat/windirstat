@@ -30,7 +30,7 @@ public:
     static CFileTopControl* Get() { return m_singleton; }
     CItemTop* GetRootItem() const { return m_rootItem; }
     void ProcessTop(CItem* item);
-    void RemoveItem(CItem* items);
+    void RemoveItem(CItem* item);
     void SortItems() override;
     void AfterDeleteAllItems() override;
 
@@ -42,7 +42,7 @@ protected:
         return lhs->GetSizeLogical() > rhs->GetSizeLogical();
     };
 
-    static CFileTopControl* m_singleton;
+    inline static CFileTopControl* m_singleton = nullptr;
     CItemTop* m_rootItem = nullptr;
     SingleConsumerQueue<CItem*> m_queuedSet;
     std::vector<CItem*> m_sizeMap;

@@ -48,7 +48,7 @@ void CIconHandler::Initialize()
 
         // Cache icon for boot drive
         std::wstring drive(MAX_PATH, wds::chrNull);
-        drive.resize(min(wcslen(L"C:\\"), GetWindowsDirectory(drive.data(), MAX_PATH)));
+        drive.resize(std::min<size_t>(wcslen(L"C:\\"), GetWindowsDirectory(drive.data(), MAX_PATH)));
         m_mountPointImage = FetchShellIcon(drive, 0, FILE_ATTRIBUTE_REPARSE_POINT);
 
         // Cache icon for my computer
@@ -198,9 +198,9 @@ namespace Icons
         Pen outlinePen(Neutral(), 4);
         SolidBrush lineBrush(Neutral());
         Point body[] = { {8, 6}, {44, 6}, {56, 18}, {56, 58}, {8, 58} };
-        g.DrawPolygon(&outlinePen, body, 5);
+        g.DrawPolygon(&outlinePen, body, static_cast<INT>(std::size(body)));
         Point docFoldPts[] = { {44, 6}, {44, 18}, {56, 18} };
-        g.DrawLines(&outlinePen, docFoldPts, 3);
+        g.DrawLines(&outlinePen, docFoldPts, static_cast<INT>(std::size(docFoldPts)));
     }
 
     static void PaintBin(Graphics& g, Color body, Color bar)
@@ -226,7 +226,7 @@ namespace Icons
             {21, 14}, {21, 44}, {29, 36},
             {37, 48}, {43, 44}, {35, 32}, {45, 32}
         };
-        g.FillPolygon(&cursorBrush, cursor, 7);
+        g.FillPolygon(&cursorBrush, cursor, static_cast<INT>(std::size(cursor)));
     }
 
     void PaintOpenInConsole(Graphics& g)
@@ -240,7 +240,7 @@ namespace Icons
         g.DrawRectangle(&framePen, 6, 8, 52, 48);
         g.FillRectangle(&grayBrush, 6, 17, 52, 2);
         Point chevronPts[] = { {14, 26}, {22, 34}, {14, 42} };
-        g.DrawLines(&chevronPen, chevronPts, 3);
+        g.DrawLines(&chevronPen, chevronPts, static_cast<INT>(std::size(chevronPts)));
         g.DrawLine(&chevronPen, 26, 42, 38, 42);
     }
 
@@ -249,7 +249,7 @@ namespace Icons
         PaintDocument(g);
         SolidBrush greenBrush(C(40, 140, 50));
         Point triangle[] = { {20, 18}, {44, 32}, {20, 46} };
-        g.FillPolygon(&greenBrush, triangle, 3);
+        g.FillPolygon(&greenBrush, triangle, static_cast<INT>(std::size(triangle)));
     }
 
     void PaintRefreshSelected(Graphics& g)
@@ -293,8 +293,8 @@ namespace Icons
         Point folderShapePts[] = { {2, 4}, {28, 4}, {32, 12}, {62, 12}, {62, 58}, {2, 58} };
         SolidBrush fillBrush(C(255, 231, 146));
         SolidBrush ringRed(C(200, 30, 30)), ringWhite(C(240, 240, 240)), ringRed2(C(200, 30, 30));
-        g.FillPolygon(&fillBrush, folderShapePts, 6);
-        g.DrawPolygon(&outlinePen, folderShapePts, 6);
+        g.FillPolygon(&fillBrush, folderShapePts, static_cast<INT>(std::size(folderShapePts)));
+        g.DrawPolygon(&outlinePen, folderShapePts, static_cast<INT>(std::size(folderShapePts)));
         g.FillEllipse(&ringRed,   14, 17, 36, 36);
         g.FillEllipse(&ringWhite, 21, 24, 22, 22);
         g.FillEllipse(&ringRed2,  27, 30, 10, 10);
@@ -304,10 +304,10 @@ namespace Icons
     {
         Point funnelShape[] = { {8, 6}, {56, 6}, {56, 14}, {38, 34}, {38, 56}, {26, 52}, {26, 34}, {8, 14} };
         SolidBrush fillBrush(active ? C(255, 140, 0) : Neutral());
-        g.FillPolygon(&fillBrush, funnelShape, 8);
+        g.FillPolygon(&fillBrush, funnelShape, static_cast<INT>(std::size(funnelShape)));
         Pen outlinePen(Neutral(), 4);
         outlinePen.SetLineJoin(LineJoinMiter);
-        g.DrawPolygon(&outlinePen, funnelShape, 8);
+        g.DrawPolygon(&outlinePen, funnelShape, static_cast<INT>(std::size(funnelShape)));
     }
 
     void PaintHelp(Graphics& g)
@@ -351,7 +351,7 @@ namespace Icons
 
         for (int i = 0; i < 8; ++i)
         {
-            g.FillPolygon(&gearBrush, primaryTooth, 4);
+            g.FillPolygon(&gearBrush, primaryTooth, static_cast<INT>(std::size(primaryTooth)));
             g.RotateTransform(45);
         }
         g.Restore(state);
@@ -381,7 +381,7 @@ namespace Icons
         path.GetBounds(&bounds);
         if (bounds.Width <= 0 || bounds.Height <= 0) return;
 
-        const REAL scale = min(56.0f / bounds.Width, 56.0f / bounds.Height);
+        const REAL scale = std::min(56.0f / bounds.Width, 56.0f / bounds.Height);
         Matrix m;
         m.Scale(scale, scale);
         path.Transform(&m);
@@ -435,9 +435,10 @@ HICON Icons::MakeIcon(const int size, const std::function<void(Graphics&)>& pain
     CBitmap mask;
     mask.CreateBitmap(size, size, 1, 1, nullptr);
 
-    ICONINFO ii{};
-    ii.fIcon = TRUE;
-    ii.hbmColor = color;
-    ii.hbmMask = static_cast<HBITMAP>(mask.m_hObject);
+    ICONINFO ii{
+        .fIcon = TRUE,
+        .hbmMask = static_cast<HBITMAP>(mask.m_hObject),
+        .hbmColor = color
+    };
     return CreateIconIndirect(&ii);
 }

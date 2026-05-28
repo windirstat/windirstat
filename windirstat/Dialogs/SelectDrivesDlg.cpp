@@ -483,7 +483,7 @@ void CSelectDrivesDlg::OnOK()
           COptions::SelectDrivesFolder.Obj().begin(), folderName);
 
         // Limit the folder history to the configured count
-        COptions::SelectDrivesFolder.Obj().resize(min(static_cast<size_t>(COptions::FolderHistoryCount),
+        COptions::SelectDrivesFolder.Obj().resize(std::min(static_cast<size_t>(COptions::FolderHistoryCount),
             COptions::SelectDrivesFolder.Obj().size()));
     }
 
@@ -678,7 +678,7 @@ BOOL CSelectDrivesDlg::PreTranslateMessage(MSG* pMsg)
 
                 if (cnt > 0)
                 {
-                    const int newSel = min(n, cnt - 1);
+                    const int newSel = std::min(n, cnt - 1);
                     m_browseList.SetCurSel(newSel);
                     m_browseList.GetLBText(newSel, m_folderName);
                 }

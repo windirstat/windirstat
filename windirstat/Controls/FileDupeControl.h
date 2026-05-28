@@ -29,7 +29,7 @@ public:
     static CFileDupeControl* Get() { return m_singleton; }
     CItemDupe* GetRootItem() const { return m_rootItem; }
     void ProcessDuplicate(CItem* item, BlockingQueue<CItem*>* queue);
-    void RemoveItem(CItem* items);
+    void RemoveItem(CItem* item);
     void SortItems() override;
     void AfterDeleteAllItems() override;
 
@@ -41,11 +41,11 @@ public:
     std::map<std::vector<BYTE>, std::vector<CItem*>> m_trackerSmall;
     std::map<std::vector<BYTE>, std::vector<CItem*>> m_trackerMedium;
     std::map<std::vector<BYTE>, std::vector<CItem*>> m_trackerLarge;
-    
+
     std::mutex m_nodeTrackerMutex;
     std::map<std::vector<BYTE>, CItemDupe*> m_nodeTracker;
     std::map<CItemDupe*, std::set<CItem*>> m_childTracker;
-    
+
     SingleConsumerQueue<std::pair<CItemDupe*, CItemDupe*>> m_pendingListAdds;
 
 protected:
@@ -60,6 +60,6 @@ protected:
     static CFileDupeControl* m_singleton;
     CItemDupe* m_rootItem = nullptr;
     bool m_showCloudWarningOnThisScan = true;
-    
+
     DECLARE_MESSAGE_MAP()
 };

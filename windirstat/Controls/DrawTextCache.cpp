@@ -18,8 +18,6 @@
 #include "pch.h"
 #include "DrawTextCache.h"
 
-DrawTextCache DrawTextCache::s_instance;
-
 void DrawTextCache::DrawTextCached(CDC* pDC, const std::wstring& text, CRect& rect, const bool leftAlign, const bool calcRect)
 {
     // If no DC or empty text, collapse rect and return
@@ -62,7 +60,7 @@ void DrawTextCache::DrawTextCached(CDC* pDC, const std::wstring& text, CRect& re
         m_cache.erase(keyToRemove);
         m_leastRecentList.pop_back();
     }
-    
+
     // Handle rectangle calculation or normal drawing
     auto entry = CreateCachedBitmap(pDC, text, rect, format);
     if (format & DT_CALCRECT) rect = entry->calcRect;
@@ -70,7 +68,7 @@ void DrawTextCache::DrawTextCached(CDC* pDC, const std::wstring& text, CRect& re
 
     // Add to LRU list and cache
     m_leastRecentList.push_front(key);
-    m_cache.emplace(key, std::make_pair(std::move(entry), m_leastRecentList.begin()));
+    m_cache.emplace(std::move(key), std::make_pair(std::move(entry), m_leastRecentList.begin()));
 }
 
 DrawTextCache::CacheKey DrawTextCache::CreateCacheKey(const CDC* pDC,

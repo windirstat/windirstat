@@ -132,10 +132,11 @@ void CXySlider::ExternToIntern()
 
 void CXySlider::NotifyParent() const
 {
-    NMHDR hdr;
-    hdr.hwndFrom = m_hWnd;
-    hdr.idFrom   = GetDlgCtrlID();
-    hdr.code     = XYSLIDER_CHANGED;
+    NMHDR hdr{
+        .hwndFrom = m_hWnd,
+        .idFrom   = static_cast<UINT_PTR>(GetDlgCtrlID()),
+        .code     = XYSLIDER_CHANGED
+    };
 
     GetParent()->SendMessage(WM_NOTIFY, GetDlgCtrlID(), reinterpret_cast<LPARAM>(&hdr));
 }
@@ -274,7 +275,7 @@ void CXySlider::DoPage(const CPoint & point)
 
     ASSERT(sz.cx != 0 || sz.cy != 0);
 
-    const double len = sqrt(static_cast<double>(sz.cx * sz.cx + sz.cy * sz.cy));
+    const double len = std::hypot(sz.cx, sz.cy);
 
     constexpr double d = 10;
 

@@ -67,7 +67,6 @@ int CFileTreeView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
     return 0;
 }
 
-
 void CFileTreeView::OnUpdate(CView* pSender, const LPARAM lHint, CObject* pHint)
 {
     CControlView::OnUpdate(pSender, lHint,
@@ -116,7 +115,7 @@ END_MESSAGE_MAP()
 int CFileTopView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
 {
     if (CControlView::OnCreate(lpCreateStruct) == -1) return -1;
-    
+
     constexpr RECT rect = { 0, 0, 0, 0 };
     m_control.CreateExtended(LVS_EX_HEADERDRAGDROP, LVS_OWNERDATA | WS_CHILD | WS_VISIBLE | LVS_REPORT | LVS_SHOWSELALWAYS, rect, this, ID_WDS_CONTROL);
     m_control.ShowGrid(COptions::ListGrid);
@@ -192,5 +191,3 @@ int CFileSearchView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
 
     return 0;
 }
-
-

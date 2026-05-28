@@ -94,7 +94,7 @@ static bool JsonReadObject(std::istream& in, std::unordered_map<std::wstring, st
         const char* colon = strchr(keyStart, ':');
         if (!colon) continue;
         const std::wstring key = Localization::ConvertToWideString(JsonUnescape(
-            { keyStart, static_cast<size_t>(colon - keyStart) }));
+            std::string_view(keyStart, colon)));
 
         // Parse value (string or bare numeric)
         const char* valp = colon + 1;
@@ -106,13 +106,13 @@ static bool JsonReadObject(std::istream& in, std::unordered_map<std::wstring, st
             // Quoted string — unescape inner content
             ++valp;
             value = Localization::ConvertToWideString(JsonUnescape(
-                { valp, linebuf.size() - static_cast<size_t>(valp - linebuf.c_str()) }));
+                std::string_view(valp, linebuf.data() + linebuf.size())));
         }
         else
         {
             // Bare numeric — strip trailing comma if present
             std::string_view raw(valp);
-            if (!raw.empty() && raw.back() == ',') raw.remove_suffix(1);
+            if (raw.ends_with(',')) raw.remove_suffix(1);
             value = Localization::ConvertToWideString(raw);
         }
         obj.emplace(std::move(key), std::move(value));
@@ -139,7 +139,7 @@ static std::array<UCHAR, FIELD_COUNT> orderMap{};
 static void ParseHeaderLine(const std::vector<std::wstring_view>& header)
 {
     orderMap.fill(UCHAR_MAX);
-    std::unordered_map<std::wstring, DWORD> resMap =
+    std::unordered_map<std::wstring, DWORD, string_hash, std::equal_to<>> resMap =
     {
         { Localization::Lookup(IDS_COL_NAME), FIELD_NAME},
         { Localization::Lookup(IDS_COL_FILES), FIELD_FILES },
@@ -155,7 +155,7 @@ static void ParseHeaderLine(const std::vector<std::wstring_view>& header)
 
     for (const auto c : std::views::iota(0u, header.size()))
     {
-        if (const auto it = resMap.find(header[c].data()); it != resMap.end())
+        if (const auto it = resMap.find(header[c]); it != resMap.end())
             orderMap[it->second] = static_cast<BYTE>(c);
 }
 }
@@ -173,7 +173,7 @@ static FILETIME FromTimeString(std::wstring_view time)
 {
     // Expected format: YYYY-MM-DDTHH:MM:SSZ
     SYSTEMTIME utc = {};
-    if (time.size() < std::size("YYYY-MM-DDTHH:MM:SS") || time[10] != 'T' ||
+    if (time.size() < (std::size("YYYY-MM-DDTHH:MM:SS") - 1) || time[10] != 'T' ||
         swscanf_s(time.data(), L"%4hu-%2hu-%2huT%2hu:%2hu:%2hu",
         &utc.wYear, &utc.wMonth, &utc.wDay,
         &utc.wHour, &utc.wMinute, &utc.wSecond) != 6) return {};
@@ -186,7 +186,7 @@ static FILETIME FromTimeString(std::wstring_view time)
 // CSV quoting: wrap UTF-8 bytes in double quotes (CSV values contain no embedded quotes)
 static std::string QuoteAndConvert(std::wstring_view inc)
 {
-    return '"' + WideToUtf8(inc) + '"';
+    return std::format("\"{}\"", WideToUtf8(inc));
 }
 
 // ── shared item-construction helper ─────────────────────────────────────────
@@ -195,7 +195,7 @@ static std::string QuoteAndConvert(std::wstring_view inc)
 static CItem* BuildAndAttachItem(std::wstring& namePath, std::wstring_view wdsAttr,
     std::wstring_view lastChange, std::wstring_view sizePhysical, std::wstring_view sizeLogical,
     std::wstring_view index, std::wstring_view attributes, std::wstring_view files,
-    std::wstring_view folders, CItem*& newroot, std::unordered_map<std::wstring, CItem*>& parentMap)
+    std::wstring_view folders, CItem*& newroot, std::unordered_map<std::wstring, CItem*, string_hash, std::equal_to<>>& parentMap)
 {
     const auto type = static_cast<ITEMTYPE>(wcstoull(wdsAttr.data(), nullptr, 16));
 
@@ -233,7 +233,7 @@ static CItem* BuildAndAttachItem(std::wstring& namePath, std::wstring_view wdsAt
     {
         parent->second->AddChild(newitem, true);
     }
-    else { ASSERT(FALSE); }
+    else { delete newitem; return nullptr; }
 
     if (!newitem->TmiIsLeaf() && newitem->GetItemsCount() > 0)
     {
@@ -254,7 +254,7 @@ static CItem* LoadResultsCsv(std::ifstream& reader)
     CItem* newroot = nullptr;
     std::string linebuf;
     std::wstring line;
-    std::unordered_map<std::wstring, CItem*> parentMap;
+    std::unordered_map<std::wstring, CItem*, string_hash, std::equal_to<>> parentMap;
 
     bool headerProcessed = false;
     for (std::vector<std::wstring_view> fields; std::getline(reader, linebuf); fields.clear())
@@ -280,7 +280,11 @@ static CItem* LoadResultsCsv(std::ifstream& reader)
             {
                 pos = pos + 1;
                 end = line.find(L'"', pos);
-                if (end == std::wstring::npos) return nullptr;
+                if (end == std::wstring::npos)
+                {
+                    delete newroot;
+                    return nullptr;
+                }
             }
 
             line[end] = L'\0';
@@ -297,7 +301,11 @@ static CItem* LoadResultsCsv(std::ifstream& reader)
             // Validate all necessary fields are present
             for (const auto i : std::views::iota(0u, orderMap.size()))
             {
-                if (i != FIELD_OWNER && orderMap[i] == UCHAR_MAX) return nullptr;
+                if (i != FIELD_OWNER && orderMap[i] == UCHAR_MAX)
+                {
+                    delete newroot;
+                    return nullptr;
+                }
             }
             continue;
         }
@@ -336,7 +344,7 @@ static CItem* LoadResultsJson(std::ifstream& reader)
     };
 
     CItem* newroot = nullptr;
-    std::unordered_map<std::wstring, CItem*> parentMap;
+    std::unordered_map<std::wstring, CItem*, string_hash, std::equal_to<>> parentMap;
     std::unordered_map<std::wstring, std::wstring> obj;
 
     // Skip lines until '[' (start of JSON array)
@@ -448,7 +456,7 @@ static bool SaveResultsCsv(std::ofstream& outf, const std::vector<const CItem*>&
         const ITEMTYPE itemType = item->GetRawType() & ~ITF_HARDLINK & ~ITHASH_MASK & ~ITF_EXTDATA;
         const auto adjIt = adjustedSizes.find(item);
         const auto adjustedSize = adjIt != adjustedSizes.end() ? adjIt->second : 0;
-        outf << std::format("\r\n{},{},{},{},{},{},{},0x{:08X},0x{:016X}",
+        std::format_to(std::ostreambuf_iterator<char>(outf), "\r\n{},{},{},{},{},{},{},0x{:08X},0x{:016X}",
             QuoteAndConvert(nonPathItem ? item->GetName() : item->GetPath()),
             item->GetFilesCount(),
             item->GetFoldersCount(),
@@ -497,8 +505,9 @@ static bool SaveResultsJson(std::ofstream& outf,
         outf << "  " << jk[FIELD_SIZE_PHYSICAL]  << ": " << (item->GetSizePhysicalRaw() + adjustedSize)                << ",\r\n";
         outf << "  " << jk[FIELD_ATTRIBUTES]     << ": " << JsonQuoteW(FormatAttributes(item->GetAttributes()))        << ",\r\n";
         outf << "  " << jk[FIELD_LAST_CHANGE]    << ": " << JsonQuote(ToTimePoint(item->GetLastChange()))              << ",\r\n";
-        outf << std::format("  {}: \"0x{:08X}\",\r\n", jk[FIELD_ATTRIBUTES_WDS], static_cast<std::uint32_t>(itemType));
-        outf << std::format("  {}: \"0x{:016X}\"",     jk[FIELD_INDEX],          item->GetIndex());
+        std::format_to(std::ostreambuf_iterator<char>(outf), "  {}: \"0x{:08X}\",\r\n  {}: \"0x{:016X}\"",
+            jk[FIELD_ATTRIBUTES_WDS], static_cast<std::uint32_t>(itemType),
+            jk[FIELD_INDEX], item->GetIndex());
         if (COptions::ShowColumnOwner)
             outf << ",\r\n  " << jkOwner << ": " << JsonQuoteW(item->GetOwner(true));
         outf << "\r\n}";
@@ -566,7 +575,7 @@ static bool SaveDuplicatesCsv(std::ofstream& outf, const std::vector<std::wstrin
 
     for (const auto& [hash, linkedItem] : dupeItems)
     {
-        outf << std::format("{},{},{},{},{},{}\r\n",
+        std::format_to(std::ostreambuf_iterator<char>(outf), "{},{},{},{},{},{}\r\n",
             QuoteAndConvert(hash),
             QuoteAndConvert(linkedItem->GetPath()),
             linkedItem->GetSizeLogical(),

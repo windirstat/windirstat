@@ -252,7 +252,7 @@ ULONGLONG CDirStatDoc::GetRootSize() const
 void CDirStatDoc::RefreshReparsePointItems()
 {
     CWaitCursor wc;
-    
+
     if (CItem* root = GetRootItem(); nullptr != root)
     {
         RecurseRefreshReparsePoints(root);
@@ -432,7 +432,7 @@ void CDirStatDoc::RebuildExtensionData()
 
     // Assign primary colors to extensions
     const auto extensionsSize = sortedExtensions.size();
-    const auto primaryColorsMax = min(colors.size(), extensionsSize);
+    const auto primaryColorsMax = std::min(colors.size(), extensionsSize);
     for (const size_t i : std::views::iota(0u, primaryColorsMax))
     {
         sortedExtensions[i]->second.color = colors[i];
@@ -452,7 +452,8 @@ void CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, const bo
     {
         // Build list of file paths for the message box
         std::vector<std::wstring> filePaths;
-        for (const auto& item : items) filePaths.push_back(item->GetPath());
+        filePaths.reserve(items.size());
+        for (const auto& item : items) filePaths.emplace_back(item->GetPath());
 
         // Display the file deletion warning dialog with custom width and height
         if (![&]() -> bool {
@@ -621,7 +622,7 @@ void CDirStatDoc::AskForConfirmation(USERDEFINEDCLEANUP* udc, const CItem* item)
         return;
     }
 
-    const std::wstring msg = Localization::Format(udc->RecurseIntoSubdirectories ? 
+    const std::wstring msg = Localization::Format(udc->RecurseIntoSubdirectories ?
         Localization::Lookup(IDS_RUDC_CONFIRMATIONss) : Localization::Lookup(IDS_UDC_CONFIRMATIONss),
         udc->Title.Obj(), item->GetPath());
     if (IDYES != WdsMessageBox(msg, MB_YESNO))
@@ -697,7 +698,7 @@ void CDirStatDoc::RefreshAfterUserDefinedCleanup(const USERDEFINEDCLEANUP* udc, 
 
 void CDirStatDoc::RecursiveUserDefinedCleanup(USERDEFINEDCLEANUP* udc, const std::wstring& rootPath, const std::wstring& currentPath)
 {
-    // (Depth first.) 
+    // (Depth first.)
 
     FinderBasic finder;
     for (BOOL b = finder.FindFile(currentPath); b; b = finder.FindNext())
@@ -853,7 +854,7 @@ std::vector<CItem*> CDirStatDoc::GetAllSelected()
         // Skip root container nodes (no parent) - they should not proxy as a full selection
         if (item->GetLinkedItem()) continue;
         if (item->GetParent() == nullptr) continue;
-        
+
         for (const auto i : std::views::iota(0, item->GetTreeListChildCount()))
         {
             if (const auto linkedItem = item->GetTreeListChild(i)->GetLinkedItem())
@@ -1060,7 +1061,7 @@ BEGIN_MESSAGE_MAP(CDirStatDoc, CDocument)
     ON_UPDATE_COMMAND_UI(ID_INDICATOR_RAM, OnUpdateCentralHandler)
     ON_UPDATE_COMMAND_UI(ID_INDICATOR_DISK, OnUpdateCentralHandler)
     ON_UPDATE_COMMAND_UI(ID_INDICATOR_IDLE, OnUpdateCentralHandler)
-    ON_UPDATE_COMMAND_UI(ID_INDICATOR_SIZE, OnUpdateCentralHandler)    
+    ON_UPDATE_COMMAND_UI(ID_INDICATOR_SIZE, OnUpdateCentralHandler)
     ON_UPDATE_COMMAND_UI(ID_CLEANUP_DISK_CLEANUP, OnUpdateCentralHandler)
     ON_COMMAND_RANGE(CONTENT_MENU_MINCMD, CONTENT_MENU_MAXCMD, OnContextMenuExplore)
 END_MESSAGE_MAP()
@@ -1108,7 +1109,7 @@ void CDirStatDoc::OnRefreshSelected()
 {
     // Optimize refresh selected when done on root item
     const auto& selected = GetAllSelected();
-    if (selected.size() == 1 && selected.at(0) == GetRootItem()) OnRefreshAll();
+    if (selected.size() == 1 && selected.front() == GetRootItem()) OnRefreshAll();
     else RefreshItem(selected);
 }
 
@@ -1324,7 +1325,7 @@ void CDirStatDoc::OnExplorerSelect()
         std::filesystem::path target(item->GetPath());
         paths.insert(target.parent_path());
     }
-    
+
     for (const auto& path : paths)
     {
         // create path pidl
@@ -1681,7 +1682,7 @@ void CDirStatDoc::OnCleanupCompress(UINT id)
     CWaitCursor wc;
     const auto& itemsSelected = GetAllSelected();
     const auto& items = CItem::GetItemsRecursive(itemsSelected);
-   
+
     // Show progress dialog and compress files
     const auto alg = CompressionIdToAlg(id);
     CProgressDlg(items.size(), false, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
@@ -1768,9 +1769,11 @@ void CDirStatDoc::StopScanningEngine(StopReason stopReason)
 void CDirStatDoc::OnContextMenuExplore(UINT nID)
 {
     // get list of paths from items
+    const auto selected = GetAllSelected();
     std::vector<std::wstring> paths;
-    for (const auto& item : GetAllSelected())
-        paths.push_back(item->GetPath());
+    paths.reserve(selected.size());
+    for (const auto& item : selected)
+        paths.emplace_back(item->GetPath());
 
     // query current context menu
     if (paths.empty()) return;
@@ -1802,7 +1805,7 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
 
     // Address conflicts with currently zoomed/selected items
     const auto zoomItem = GetZoomItem();
-    for (const auto& item : std::vector(items))
+    for (const auto item : items)
     {
         // Abort if bad entry detected
         if (item == nullptr)
@@ -1824,10 +1827,10 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
     CMainFrame::Get()->GetTreeMapView()->SuspendRecalculationDrawing(true);
 
     // If scanning drive(s) just rescan the child nodes
-    if (items.size() == 1 && items.at(0)->IsTypeOrFlag(IT_MYCOMPUTER))
+    if (items.size() == 1 && items.front()->IsTypeOrFlag(IT_MYCOMPUTER))
     {
-        items.at(0)->ResetScanStartTime();
-        items = items.at(0)->GetChildren();
+        items.front()->ResetScanStartTime();
+        items = items.front()->GetChildren();
     }
 
     // Remove items in UI thread so we do not conflict with the timer updates
@@ -1947,12 +1950,12 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
         StopReason stopReason = Default;
         for (auto& queue : m_queues | std::views::values)
             stopReason = static_cast<StopReason>(queue.WaitForCompletion());
-   
+
         // Restore unknown and freespace items
         for (const auto& item : items)
         {
             if (!item->IsTypeOrFlag(IT_DRIVE)) continue;
-            
+
             if (COptions::ShowFreeSpace)
             {
                 item->CreateFreeSpaceItem();
@@ -2071,7 +2074,7 @@ void CDirStatDoc::OnUpdateCreateHardlink(CCmdUI* pCmdUI)
     if (!DupeListHasFocus() || control == nullptr)
     {
         return pCmdUI->Enable(FALSE);
-        
+
     }
 
     // Get the selected tree list items directly

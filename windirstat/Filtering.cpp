@@ -208,9 +208,9 @@ void CFiltering::CompileFilters()
     CMainFrame::Get()->RebuildToolBar();
 }
 
-std::wstring CFiltering::WithoutTrailingBackslashes(std::wstring path)
+std::wstring_view CFiltering::WithoutTrailingBackslashes(std::wstring_view path)
 {
-    while (!path.empty() && path.back() == L'\\') path.pop_back();
+    while (!path.empty() && path.back() == L'\\') path.remove_suffix(1);
     return path;
 }
 
@@ -218,15 +218,15 @@ bool CFiltering::MatchesAnyPath(const std::wstring& path, const std::vector<std:
 {
     if (patterns.empty()) return false;
 
-    const auto matches = [&patterns](const std::wstring& candidate)
+    const auto matches = [&patterns](std::wstring_view candidate)
     {
         return std::ranges::any_of(patterns,
-            [&candidate](const auto& pattern) { return std::regex_match(candidate, pattern); });
+            [&candidate](const auto& pattern) { return std::regex_match(candidate.begin(), candidate.end(), pattern); });
     };
 
     if (matches(path)) return true;
 
-    const std::wstring trimmed = WithoutTrailingBackslashes(path);
+    const std::wstring_view trimmed = WithoutTrailingBackslashes(path);
     return trimmed != path && matches(trimmed);
 }
 
@@ -242,10 +242,10 @@ bool CFiltering::IsFilteredOut(const std::wstring& directoryName)
     return !std::ranges::any_of(IncludeDirsAnchors, [&](const auto& anchor) -> bool
     {
         if (anchor.empty()) return true;
-        const std::wstring a = WithoutTrailingBackslashes(anchor);
-        const std::wstring d = WithoutTrailingBackslashes(directoryName);
+        const std::wstring_view a = WithoutTrailingBackslashes(anchor);
+        const std::wstring_view d = WithoutTrailingBackslashes(directoryName);
         if (d.empty() || d.size() > a.size()) return false;
-        if (_wcsnicmp(d.c_str(), a.c_str(), d.size()) != 0) return false;
+        if (_wcsnicmp(d.data(), a.data(), d.size()) != 0) return false;
         return d.size() == a.size() || a[d.size()] == L'\\';
     });
 }

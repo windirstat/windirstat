@@ -69,7 +69,7 @@ protected:
     bool m_showTreeMap = true;        // False, if the user switched off the treemap (by F9).
     CSize m_size{ 0, 0 };             // Current size of view
     CTreeMap m_treeMap;               // Treemap generator
-    CBitmap m_bitmap;                 // Cached view. If m_hObject is NULL, the view must be recalculated.
+    CBitmap m_bitmap;                 // Cached view. If m_hObject is nullptr, the view must be recalculated.
     CSize m_dimmedSize{ 0,0 };        // Size of bitmap m_dimmed
     CBitmap m_dimmed;                 // Dimmed view. Used during refresh to avoid the ooops-effect.
 
@@ -83,4 +83,3 @@ protected:
     afx_msg void OnMouseMove(UINT nFlags, CPoint point);
     afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
 };
-
