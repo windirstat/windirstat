@@ -3,6 +3,7 @@
 /.vs/
 /publish/
 /build/
+/enc_temp_folder/
 intermediate/
 *.aps
 *.bin
