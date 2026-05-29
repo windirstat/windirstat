@@ -442,20 +442,28 @@ std::wstring GetNameFromSid(const PSID sid)
 // Compression
 bool CompressFileAllowed(const std::wstring& volumeName, const CompressionAlgorithm algorithm)
 {
+    // When scanning a specific folder GetVolumeRoot() returns a directory item, so
+    // GetPath() yields a path without a trailing backslash that fails GetVolumeInformation().
+    std::array<WCHAR, MAX_PATH> volumeRoot{};
+    const std::wstring resolvedVolume = (!volumeName.ends_with(L'\\') &&
+        GetVolumePathName(volumeName.c_str(), volumeRoot.data(), volumeRoot.size())) ?
+        std::wstring(volumeRoot.data()) : volumeName;
+
     static std::unordered_map<std::wstring, bool> compressionStandard;
     static std::unordered_map<std::wstring, bool> compressionModern;
-    const auto& compressionMap = (algorithm == CompressionAlgorithm::LZNT1) ?
-        compressionStandard : compressionModern;
 
     // Enable 'none' button if at least standard is available
     if (algorithm == CompressionAlgorithm::NONE)
     {
-        return CompressFileAllowed(volumeName, CompressionAlgorithm::LZNT1) ||
-            CompressFileAllowed(volumeName, CompressionAlgorithm::XPRESS4K);
+        return CompressFileAllowed(resolvedVolume, CompressionAlgorithm::LZNT1) ||
+            CompressFileAllowed(resolvedVolume, CompressionAlgorithm::XPRESS4K);
     }
 
+    const auto& compressionMap = (algorithm == CompressionAlgorithm::LZNT1) ?
+        compressionStandard : compressionModern;
+
     // Return cached value
-    if (const auto it = compressionMap.find(volumeName); it != compressionMap.end())
+    if (const auto it = compressionMap.find(resolvedVolume); it != compressionMap.end())
     {
         return it->second;
     }
@@ -463,15 +471,15 @@ bool CompressFileAllowed(const std::wstring& volumeName, const CompressionAlgori
     // Query volume for standard compression support based on whether NTFS
     std::array<WCHAR, MAX_PATH> fileSystemName{};
     DWORD fileSystemFlags = 0;
-    const bool isNTFS = GetVolumeInformation(volumeName.c_str(), nullptr, 0, nullptr, nullptr,
+    const bool isNTFS = GetVolumeInformation(resolvedVolume.c_str(), nullptr, 0, nullptr, nullptr,
         &fileSystemFlags, fileSystemName.data(), std::ssize(fileSystemName)) != 0 &&
         std::wstring(fileSystemName.data()) == L"NTFS";
 
     // Query volume for modern compression support based on NTFS and OS version
-    compressionStandard[volumeName] = isNTFS && (fileSystemFlags & FILE_FILE_COMPRESSION) != 0;
-    compressionModern[volumeName] = isNTFS && IsWindows10OrGreater() && !volumeName.starts_with(L"\\\\");
+    compressionStandard[resolvedVolume] = isNTFS && (fileSystemFlags & FILE_FILE_COMPRESSION) != 0;
+    compressionModern[resolvedVolume] = isNTFS && IsWindows10OrGreater() && !resolvedVolume.starts_with(L"\\\\");
 
-    return compressionMap.at(volumeName);
+    return compressionMap.at(resolvedVolume);
 }
 
 bool CompressFile(const std::wstring& filePath, const CompressionAlgorithm algorithm)
