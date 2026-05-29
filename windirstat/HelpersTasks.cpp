@@ -446,7 +446,7 @@ bool CompressFileAllowed(const std::wstring& volumeName, const CompressionAlgori
     // GetPath() yields a path without a trailing backslash that fails GetVolumeInformation().
     std::array<WCHAR, MAX_PATH> volumeRoot{};
     const std::wstring resolvedVolume = (!volumeName.ends_with(L'\\') &&
-        GetVolumePathName(volumeName.c_str(), volumeRoot.data(), volumeRoot.size())) ?
+        GetVolumePathName(volumeName.c_str(), volumeRoot.data(), static_cast<DWORD>(volumeRoot.size()))) ?
         std::wstring(volumeRoot.data()) : volumeName;
 
     static std::unordered_map<std::wstring, bool> compressionStandard;
