@@ -606,6 +606,17 @@ std::wstring_view CItem::GetNameView() const noexcept
     return { m_name.get(), m_nameLen };
 }
 
+bool CItem::HasExtension(const std::wstring_view extension) const noexcept
+{
+    if (!IsTypeOrFlag(IT_FILE)) return false;
+
+    const auto name = GetNameView();
+    if (extension.empty() || extension.size() > name.size()) return false;
+
+    const auto suffix = name.substr(name.size() - extension.size());
+    return _wcsnicmp(suffix.data(), extension.data(), extension.size()) == 0;
+}
+
 std::wstring CItem::GetExtension() const
 {
     if (!IsTypeOrFlag(IT_FILE)) return GetName();

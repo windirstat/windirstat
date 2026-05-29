@@ -220,7 +220,7 @@ void CTreeMapView::DrawHighlightExtension(CDC* pdc)
 
         if (item->TmiIsLeaf())
         {
-            if (item->IsTypeOrFlag(IT_FILE) && _wcsicmp(item->GetExtension().c_str(), highlightExt.c_str()) == 0)
+            if (item->HasExtension(highlightExt))
             {
                 RenderHighlightRectangle(pdc, rc);
             }

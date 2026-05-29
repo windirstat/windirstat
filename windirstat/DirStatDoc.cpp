@@ -906,7 +906,7 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
     static bool (*isElevationPossible)(CItem*) = [](CItem*) { return IsElevationPossible(); };
     static bool (*isDupeTabVisible)(CItem*) = [](CItem*) { return CMainFrame::Get()->GetFileTabbedView()->IsDupeTabVisible(); };
     static bool (*isDriveOrDirOrFile)(CItem*) = [](CItem* i) { return i != nullptr && i->IsTypeOrFlag(IT_DRIVE, IT_DIRECTORY, IT_FILE); };
-    static bool (*isVhdFile)(CItem*) = [](CItem* i) { return i != nullptr && IsElevationActive() && (!i->IsTypeOrFlag(IT_FILE) || i->GetExtension() == L".vhdx"); };
+    static bool (*isVhdFile)(CItem*) = [](CItem* i) { return i != nullptr && IsElevationActive() && (!i->IsTypeOrFlag(IT_FILE) || i->HasExtension(L".vhdx")); };
 
     static std::unordered_map<UINT, const commandFilter> filters
     {
@@ -1704,7 +1704,7 @@ void CDirStatDoc::OnCleanupOptimizeVhd()
     CWaitCursor wc;
     const auto& itemsSelected = GetAllSelected();
     const auto& items = CItem::GetItemsRecursive(itemsSelected, [](const CItem* item) {
-        return item->IsTypeOrFlag(IT_FILE) && item->GetExtension() == L".vhdx"; });
+        return item->IsTypeOrFlag(IT_FILE) && item->HasExtension(L".vhdx"); });
 
     // Show progress dialog and optimize VHD files
     CProgressDlg(items.size(), false, AfxGetMainWnd(), [&](CProgressDlg* pdlg)

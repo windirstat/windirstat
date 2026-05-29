@@ -192,6 +192,7 @@ public:
     void SetName(std::wstring_view name);
     std::wstring GetName() const noexcept;
     std::wstring_view GetNameView() const noexcept;
+    bool HasExtension(std::wstring_view extension) const noexcept;
     std::wstring GetExtension() const;
     std::wstring GetPath() const;
     std::wstring GetPathLong() const;

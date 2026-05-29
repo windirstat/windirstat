@@ -78,6 +78,13 @@ bool FinderBasic::FindNext()
 
     if (success)
     {
+        std::optional<std::wstring> filePathLong;
+        const auto GetFilePathLongCached = [&]() -> const std::wstring&
+        {
+            if (!filePathLong.has_value()) filePathLong = GetFilePathLong();
+            return filePathLong.value();
+        };
+
         // handle unexpected trailing null on some file systems
         const LPCWSTR fileNamePtr = m_context->SupportsFileId ? m_currentInfo->IdInfo.FileName :
             m_currentInfo->StandardInfo.FileName;
@@ -103,7 +110,7 @@ bool FinderBasic::FindNext()
             // Fallback if cached value was not passed
             if (m_currentInfo->FileAttributes == INVALID_FILE_ATTRIBUTES)
             {
-                std::wstring initialPath = GetFilePathLong();
+                std::wstring initialPath = GetFilePathLongCached();
                 if (m_name == L"." || m_name == L"..") initialPath.pop_back();
                 m_currentInfo->FileAttributes = GetFileAttributes(initialPath.c_str());
             }
@@ -126,7 +133,7 @@ bool FinderBasic::FindNext()
         if (m_reparseTag == IO_REPARSE_TAG_MOUNT_POINT && IsDirectory() &&
             m_name != L"." && m_name != L"..")
         {
-            if (const SmartPointer handle(CloseHandle, CreateFile(GetFilePathLong().c_str(),
+            if (const SmartPointer handle(CloseHandle, CreateFile(GetFilePathLongCached().c_str(),
                 FILE_READ_ATTRIBUTES, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
                 nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT, nullptr));
                 handle != INVALID_HANDLE_VALUE)
@@ -151,7 +158,7 @@ bool FinderBasic::FindNext()
              (m_currentInfo->FileAttributes & FILE_ATTRIBUTE_COMPRESSED) != 0))
         {
             DWORD highPart;
-            const DWORD lowPart = GetCompressedFileSize(GetFilePathLong().c_str(), &highPart);
+            const DWORD lowPart = GetCompressedFileSize(GetFilePathLongCached().c_str(), &highPart);
             if (lowPart != INVALID_FILE_SIZE || GetLastError() == NO_ERROR)
             {
                 m_currentInfo->AllocationSize.LowPart = lowPart;
@@ -163,7 +170,7 @@ bool FinderBasic::FindNext()
         if (m_currentInfo->EndOfFile.QuadPart == 0 &&
             m_currentInfo->AllocationSize.QuadPart != 0)
         {
-            const SmartPointer handle(CloseHandle, CreateFile(GetFilePathLong().c_str(), FILE_READ_ATTRIBUTES,
+            const SmartPointer handle(CloseHandle, CreateFile(GetFilePathLongCached().c_str(), FILE_READ_ATTRIBUTES,
                 FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr,
                 OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, nullptr));
 
