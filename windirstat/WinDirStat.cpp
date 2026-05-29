@@ -295,6 +295,9 @@ public:
 
 BOOL CDirStatApp::InitInstance()
 {
+    // Restrict DLL search to System32 — prevents DLL hijacking from CWD or PATH
+    SetDefaultDllDirectories(LOAD_LIBRARY_SEARCH_SYSTEM32);
+
     // Prevent state saving
     m_bSaveState = FALSE;
 
