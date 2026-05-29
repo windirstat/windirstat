@@ -930,6 +930,13 @@ void CTreeListControl::OnContextMenu(CWnd* /*pWnd*/, const CPoint pt)
         sub->SetDefaultItem(ID_POPUP_TOGGLE, false);
     }
 
+    // Deduplicating with hardlinks is only valid in the duplicate list, where
+    // entries are confirmed to share identical content; hide it elsewhere
+    if (m_logicalFocus != LF_DUPELIST)
+    {
+        sub->DeleteMenu(ID_CLEANUP_CREATE_HARDLINK, MF_BYCOMMAND);
+    }
+
     // Update dynamic menu items
     CMainFrame::Get()->UpdateDynamicMenuItems(sub);
 
