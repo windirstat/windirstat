@@ -134,14 +134,12 @@ const std::array<CPoint, 8> EXTENSION_SHADOW_OFFSETS = {
 
 void BlitBitmap(CDC* const pdc, const CRect& rc, const std::vector<COLORREF>& bitmapBits)
 {
-    CDC dcTreeView;
-    dcTreeView.CreateCompatibleDC(pdc);
-
-    CBitmap bmp;
-    bmp.CreateBitmap(rc.Width(), rc.Height(), 1, 32, bitmapBits.data());
-
-    CSelectObject sobmp(&dcTreeView, &bmp);
-    pdc->BitBlt(rc.left, rc.top, rc.Width(), rc.Height(), &dcTreeView, 0, 0, SRCCOPY);
+    // Use SetDIBitsToDevice for compatibility with Remote Desktop at <32-bit depth
+    const BITMAPINFO bmi{ .bmiHeader = { .biSize = sizeof(BITMAPINFOHEADER),
+        .biWidth = rc.Width(), .biHeight = -rc.Height(), .biPlanes = 1,
+        .biBitCount = 32, .biCompression = BI_RGB } };
+    ::SetDIBitsToDevice(pdc->GetSafeHdc(), rc.left, rc.top, rc.Width(), rc.Height(),
+        0, 0, 0, rc.Height(), bitmapBits.data(), &bmi, DIB_RGB_COLORS);
 }
 
 [[nodiscard]] bool CanDrawExtensionLabel(const CRect& rc, const CSize& textSize)
