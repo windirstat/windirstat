@@ -1,3 +1,23 @@
+<a name="windirstat-2.6.2"></a>
+# WinDirStat 2.6.2
+
+Enhancements
+- Improved extension-checking performance during scan
+- Improved icon-loading behavior to skip downloads for offline files
+- Improved window flashing using non-interactive command line options
+- Improved numeric display precision for percentages and sizes
+- Improved security by preventing DLL sideloading
+- Improved file select and document icons
+- Improved Simplified Chinese translation
+- Improved treemap rendering on low color depth Remote Desktop
+
+Bug Fixes
+- Corrected compression options not showing for a folder-based scan
+- Corrected potential crash in file watcher component
+- Corrected potential copy/paste path handling in the Select Drives dialog
+- Corrected potential COM initialization to occur on the UI thread
+- Corrected potential hang for unresponsive drive mappings
+
 <a name="windirstat-2.6.1"></a>
 # WinDirStat 2.6.1
 
