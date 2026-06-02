@@ -27,6 +27,11 @@ foreach ($File in $Files) {
     $Content = [System.Text.RegularExpressions.Regex]::Replace($Content, "(?s)\s*\z", "")
     $Content = $Content + "`r`n"
 
-    # Save the file back as UTF-8 with BOM
-    [System.IO.File]::WriteAllText($FilePath, $Content, $Utf8WithBom)
+    # Only write the file back (as UTF-8 with BOM) if the bytes actually
+    # changed, so we don't bump the timestamp and trigger needless rebuilds.
+    $NewBytes = $Utf8WithBom.GetPreamble() + $Utf8WithBom.GetBytes($Content)
+    $OldBytes = [System.IO.File]::ReadAllBytes($FilePath)
+    if (-not [System.Linq.Enumerable]::SequenceEqual([byte[]]$NewBytes, [byte[]]$OldBytes)) {
+        [System.IO.File]::WriteAllBytes($FilePath, $NewBytes)
+    }
 }
