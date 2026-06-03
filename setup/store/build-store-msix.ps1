@@ -7,6 +7,7 @@ param(
     [ValidateSet("x86", "x64", "arm64")][string[]] $Platform = @("x86", "x64", "arm64"),
     [string] $IdentityName = "WinDirStatTeam.WinDirStat",
     [string] $Publisher = "CN=BACE0F4C-E0CC-4A1D-945E-61E8D6D94180",
+    [string] $CertificateThumbprint,
     [string] $PublisherDisplayName = "WinDirStat Team",
     [string] $DisplayName = "WinDirStat",
     [string] $MinVersion = "10.0.17763.0",
@@ -46,12 +47,96 @@ $Patch = [regex]::Match($Content, "#define\s+PRD_PATCH\s+(\d+)").Groups[1].Value
 $Version = "$Major.$Minor.$Patch.0"
 
 # Get code signing certificate
-$Cert = Get-ChildItem Cert:\CurrentUser\My |
-    Where-Object { $_.HasPrivateKey -and ($_.EnhancedKeyUsageList.ObjectId -contains "1.3.6.1.5.5.7.3.3") } |
-    Sort-Object NotAfter -Descending |
-    Select-Object -First 1
+$CodeSigningEkuOid = "1.3.6.1.5.5.7.3.3"
 
-$StorePublisher = $Cert.Subject
+function Test-HasCodeSigningEku
+{
+    param(
+        [Parameter(Mandatory = $true)]
+        [System.Security.Cryptography.X509Certificates.X509Certificate2] $Certificate
+    )
+
+    ForEach ($Extension in $Certificate.Extensions)
+    {
+        If ($Extension -is [System.Security.Cryptography.X509Certificates.X509EnhancedKeyUsageExtension])
+        {
+            ForEach ($Oid in $Extension.EnhancedKeyUsages)
+            {
+                If ($Oid.Value -eq $CodeSigningEkuOid) { return $true }
+            }
+
+            return $false
+        }
+    }
+
+    return $false
+}
+
+function Test-IsTrustedCertificate
+{
+    param(
+        [Parameter(Mandatory = $true)]
+        [System.Security.Cryptography.X509Certificates.X509Certificate2] $Certificate
+    )
+
+    $Chain = [System.Security.Cryptography.X509Certificates.X509Chain]::new()
+    Try
+    {
+        $Chain.ChainPolicy.RevocationMode = [System.Security.Cryptography.X509Certificates.X509RevocationMode]::NoCheck
+        $Chain.ChainPolicy.RevocationFlag = [System.Security.Cryptography.X509Certificates.X509RevocationFlag]::EntireChain
+        $Chain.ChainPolicy.VerificationFlags = [System.Security.Cryptography.X509Certificates.X509VerificationFlags]::NoFlag
+        $Chain.ChainPolicy.VerificationTime = Get-Date
+
+        $null = $Chain.Build($Certificate)
+        $Status = @($Chain.ChainStatus | Where-Object { $_.Status -ne [System.Security.Cryptography.X509Certificates.X509ChainStatusFlags]::NoError })
+        return $Status.Count -eq 0
+    }
+    Finally
+    {
+        $Chain.Dispose()
+    }
+}
+
+$CodeSigningCerts = @(Get-ChildItem Cert:\CurrentUser\My |
+    Where-Object {
+        $_.HasPrivateKey -and
+        (Test-HasCodeSigningEku -Certificate $_) -and
+        (Test-IsTrustedCertificate -Certificate $_)
+    } |
+    Sort-Object NotAfter -Descending)
+
+$Cert = $null
+If ($CertificateThumbprint)
+{
+    $RequestedThumbprint = ($CertificateThumbprint -replace "\s", "").ToUpperInvariant()
+    $MatchingCerts = @($CodeSigningCerts | Where-Object { $_.Thumbprint.ToUpperInvariant() -eq $RequestedThumbprint })
+    If ($MatchingCerts.Count -eq 0)
+    {
+        Throw "Code-signing certificate '$CertificateThumbprint' was not found in Cert:\CurrentUser\My as a trusted certificate with private key and EKU $CodeSigningEkuOid."
+    }
+
+    $Cert = $MatchingCerts[0]
+}
+ElseIf ($CodeSigningCerts.Count -eq 1)
+{
+    $Cert = $CodeSigningCerts[0]
+}
+ElseIf ($CodeSigningCerts.Count -eq 0)
+{
+    Write-Warning "No trusted code-signing certificate found in Cert:\CurrentUser\My. Continuing with store/unsigned MSIX only. Install/import one with a private key and EKU $CodeSigningEkuOid, or pass -CertificateThumbprint to also build local signed packages."
+}
+Else
+{
+    $CertList = $CodeSigningCerts | ForEach-Object { "  - $($_.Subject) | Thumbprint=$($_.Thumbprint) | Expires=$($_.NotAfter.ToString('yyyy-MM-dd'))" }
+    Write-Warning "Multiple trusted code-signing certificates found in Cert:\CurrentUser\My. Continuing with store/unsigned MSIX only.`n$($CertList -join "`n")`nPass -CertificateThumbprint to select one for local signed packages."
+}
+
+$StorePublisher = If ($Cert) { $Cert.Subject } Else { $Publisher }
+
+If (-not $Cert)
+{
+    Write-Host "Skipping local signed MSIX build because no single trusted code-signing certificate was selected."
+}
 $UnsignedOutDir = Join-Path $OutDir "unsigned"
 $StoreTempRoot = Join-Path $OutDir "temp-store"
 $StorePackageDir = $OutDir

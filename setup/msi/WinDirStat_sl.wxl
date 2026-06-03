@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<WixLocalization Culture="sl-SI" Codepage="1250" xmlns="http://wixtoolset.org/schemas/v4/wxl">
+  <String Id="DowngradeError" Value="Novejša različica [ProductName] je že nameščena."/>
+  <String Id="OptionsDlgTitle" Value="Možnosti WinDirStat"/>
+  <String Id="OptionsDlgDescription" Value="Izberite spodnje možnosti za prilagoditev namestitve WinDirStat."/>
+  <String Id="OptionsDlgHeaderTitle" Value="Možnosti namestitve"/>
+  <String Id="OptionsDlgDesktopShortcut" Value="Ustvari bližnjico na namizju"/>
+  <String Id="OptionsDlgContextMenuEntry" Value="Ustvari vnos v klasičnem kontekstnem meniju lupine"/>
+  <String Id="OptionsDlgAddToPath" Value="Dodaj WinDirStat v sistemsko pot"/>
+</WixLocalization>

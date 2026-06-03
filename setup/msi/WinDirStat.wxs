@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs" xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui" xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util">
+  <?include Defines.wxi?>
+  <Package Name="$(var.ProductName)" ProductCode="$(var.ProductCode)" Language="1033" Version="$(var.ProductVersion)" Manufacturer="$(var.Manufacturer)" UpgradeCode="$(var.UpgradeCode)" InstallerVersion="500" Compressed="yes" Scope="perMachine">
+    <SummaryInformation Description="$(var.ProductName) $(var.ProductVersion) ($(sys.BUILDARCH))" />
+    <!-- Upgrade Detection -->
+    <Upgrade Id="$(var.UpgradeCodeAlt)">
+      <UpgradeVersion OnlyDetect="no" Minimum="1.0.0.0" Maximum="99.0.0.0" Property="OLDPRODUCTS" IncludeMinimum="yes" IncludeMaximum="no"/>
+    </Upgrade>
+    <MajorUpgrade AllowSameVersionUpgrades="$(var.AllowSameVersionUpgrades)" DowngradeErrorMessage="!(loc.DowngradeError)" Schedule="afterInstallInitialize"/>
+    <!-- Icon -->
+    <Icon Id="WinDirStat.ico" SourceFile="$(var.IconFilePath)"/>
+    <!-- ARP Properties -->
+    <Property Id="ARPCONTACT" Value="$(var.Contact)"/>
+    <Property Id="ARPHELPLINK" Value="$(var.HelpLink)"/>
+    <Property Id="ARPPRODUCTICON" Value="WinDirStat.ico"/>
+    <Property Id="ARPREADME" Value="$(var.ReadMeLink)"/>
+    <Property Id="ARPSIZE" Value="$(var.EstimatedSize)"/>
+    <Property Id="ARPURLINFOABOUT" Value="$(var.AboutLink)"/>
+    <Property Id="ARPURLUPDATEINFO" Value="$(var.UpdateLink)"/>
+    <Property Id="ARPCOMMENTS" Value="$(var.ProductName) $(var.ProductVersion) ($(sys.BUILDARCH))"/>
+    <Property Id="WIXUI_INSTALLDIR" Value="INSTALLFOLDER"/>
+    <SetProperty Id="ARPINSTALLLOCATION" Value="[INSTALLFOLDER]" After="CostFinalize"/>
+    <!-- Media -->
+    <MediaTemplate EmbedCab="yes" CompressionLevel="high"/>
+    <!-- UI -->
+    <ui:WixUI Id="WixUI_InstallDir"/>
+    <WixVariable Id="WixUILicenseRtf" Value="$(var.LicenseRtf)"/>
+    <WixVariable Id="WixUIBannerBmp" Value="$(var.BannerBmp)"/>
+    <WixVariable Id="WixUIDialogBmp" Value="$(var.DialogBmp)"/>
+    <!-- Features -->
+    <Feature Id="FT_Core" Title="WinDirStat" Level="1" Description="Includes WinDirStat">
+      <ComponentRef Id="Component_Main"/>
+      <ComponentRef Id="Component_ContextMenuEntry"/>
+      <ComponentRef Id="Component_DesktopShortcut"/>
+      <ComponentRef Id="Component_AddToPath"/>
+    </Feature>
+    <!-- Custom Actions -->
+    <CustomAction Id="DoLegacyUninstall" FileRef="File_Main" ExeCommand="/LegacyUninstall" Execute="deferred" Impersonate="no" Return="ignore"/>
+    <InstallExecuteSequence>
+      <Custom Action="DoLegacyUninstall" After="InstallFiles" Condition="NOT REMOVE"/>
+    </InstallExecuteSequence>
+    <!-- Properties for Desktop Shortcut Detection -->
+    <Property Id="DESKTOP_SHORTCUT_LOCATE">
+      <DirectorySearch Id="DesktopFolderSearch" Path="[DesktopFolder]">
+        <FileSearch Name="WinDirStat.lnk"/>
+      </DirectorySearch>
+    </Property>
+    <SetProperty Id="DESKTOP_SHORTCUT" After="AppSearch" Value="1" Sequence="first" Condition="((WIX_UPGRADE_DETECTED &lt;&gt; &quot;&quot; AND DESKTOP_SHORTCUT_LOCATE &lt;&gt; &quot;&quot;) OR ENABLE_SHORTCUT = 1)"/>
+    <!-- Properties for Context Menu Detection -->
+    <Property Id="CONTEXT_MENU_LOCATE">
+      <RegistrySearch Id="ContextMenuSearch" Type="raw" Root="HKCR" Key="Directory\shell\WinDirStat" Name="Icon"/>
+    </Property>
+    <SetProperty Id="CONTEXTMENU_ENTRY" After="AppSearch" Value="1" Sequence="first" Condition="((WIX_UPGRADE_DETECTED &lt;&gt; &quot;&quot; AND CONTEXT_MENU_LOCATE &lt;&gt; &quot;&quot;) OR NOT WIX_UPGRADE_DETECTED) AND DISABLE_CONTEXTMENU &lt;&gt; 1"/>
+    <!-- Properties for Add to PATH Detection -->
+    <Property Id="SYSTEM_PATH">
+      <RegistrySearch Id="AddToPathSearch" Type="raw" Root="HKLM" Key="SYSTEM\CurrentControlSet\Control\Session Manager\Environment" Name="Path"/>
+    </Property>
+    <SetProperty Id="ADD_TO_PATH" After="AppSearch" Value="1" Sequence="first" Condition="(WIX_UPGRADE_DETECTED &lt;&gt; &quot;&quot; AND SYSTEM_PATH &gt;&lt; &quot;WinDirStat&quot;) OR ENABLE_ADD_TO_PATH = 1"/>
+    <!-- Custom UI Dialog -->
+    <UI Id="InstallerUI">
+      <Dialog Id="OptionsDlg" Width="370" Height="270" Title="!(loc.OptionsDlgTitle)">
+        <Control Id="BannerLine" Type="Line" X="0" Y="44" Width="370" Height="2"/>
+        <Control Id="BottomLine" Type="Line" X="0" Y="234" Width="370" Height="2"/>
+        <Control Id="Description" Type="Text" X="25" Y="23" Width="280" Height="15" Transparent="yes" NoPrefix="yes" Text="!(loc.OptionsDlgDescription)"/>
+        <Control Id="Title" Type="Text" X="15" Y="6" Width="210" Height="15" Transparent="yes" NoPrefix="yes" Text="{\WixUI_Font_Title}!(loc.OptionsDlgHeaderTitle)"/>
+        <Control Id="DesktopShortcutCheckBox" Type="CheckBox" Height="18" Width="295" X="26" Y="58" Text="!(loc.OptionsDlgDesktopShortcut)" Property="DESKTOP_SHORTCUT" CheckBoxValue="1"/>
+        <Control Id="ContextMenuEntryCheckBox" Type="CheckBox" Height="18" Width="295" X="26" Y="79" Text="!(loc.OptionsDlgContextMenuEntry)" Property="CONTEXTMENU_ENTRY" CheckBoxValue="1"/>
+        <Control Id="AddToPathCheckBox" Type="CheckBox" Height="18" Width="295" X="26" Y="100" Text="!(loc.OptionsDlgAddToPath)" Property="ADD_TO_PATH" CheckBoxValue="1"/>
+        <Control Id="Next" Type="PushButton" X="236" Y="243" Width="56" Height="17" Default="yes" Text="!(loc.WixUINext)">
+          <Publish Event="NewDialog" Value="VerifyReadyDlg" Condition="1"/>
+        </Control>
+        <Control Id="Back" Type="PushButton" X="180" Y="243" Width="56" Height="17" Text="!(loc.WixUIBack)">
+          <Publish Event="NewDialog" Value="InstallDirDlg" Condition="1" Order="100"/>
+        </Control>
+        <Control Id="Cancel" Type="PushButton" X="304" Y="243" Width="56" Height="17" Cancel="yes" Text="!(loc.WixUICancel)">
+          <Publish Event="SpawnDialog" Value="CancelDlg" Condition="1" Order="100"/>
+        </Control>
+      </Dialog>
+      <Publish Dialog="InstallDirDlg" Control="Next" Event="NewDialog" Value="OptionsDlg" Order="5" Condition="NOT Installed OR WIX_UPGRADE_DETECTED"/>
+      <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="OptionsDlg" Order="5" Condition="NOT Installed OR WIX_UPGRADE_DETECTED"/>
+    </UI>
+    <!-- Directory Structure -->
+    <StandardDirectory Id="$(var.ProgramFilesNative)">
+      <Directory Id="INSTALLFOLDER" Name="WinDirStat"/>
+    </StandardDirectory>
+    <StandardDirectory Id="ProgramMenuFolder"/>
+    <StandardDirectory Id="TempFolder"/>
+    <StandardDirectory Id="DesktopFolder"/>
+    <!-- Components -->
+    <DirectoryRef Id="INSTALLFOLDER">
+      <Component Id="Component_Main" Guid="{48E1104D-2466-4ADC-8BC0-521B6EBA8621}">
+        <File Id="File_Main" Source="$(var.ProductBinariesDir)\$(var.WinDirStatExe)" Name="WinDirStat.exe">
+          <Shortcut Id="File_Main_Shortcut" Directory="ProgramMenuFolder" WorkingDirectory="INSTALLFOLDER" Name="WinDirStat">
+            <ShortcutProperty Key="System.AppUserModel.ID" Value="WinDirStat"/>
+          </Shortcut>
+        </File>
+      </Component>
+      <Component Id="Component_AddToPath" Guid="{D5A7D5D0-3D45-4A41-8F4F-6F8E6C2A9F13}" Condition="ADD_TO_PATH">
+        <Environment Id="Env_AddWinDirStatToPath" Name="PATH" Value="[INSTALLFOLDER]" Permanent="no" Part="last" Action="set" System="yes"/>
+      </Component>
+    </DirectoryRef>
+    <Component Id="Component_ContextMenuEntry" Directory="TARGETDIR" Guid="{7B6A2A2E-BF9E-4F37-8EAA-0E7E6B98D87A}" Condition="CONTEXTMENU_ENTRY">
+      <RegistryKey Root="HKCR" Key="Directory\shell\WinDirStat" ForceDeleteOnUninstall="yes">
+        <RegistryValue Name="Icon" Value="[INSTALLFOLDER]WinDirStat.exe" Type="string"/>
+        <RegistryValue Value="WinDirStat" Type="string"/>
+        <RegistryKey Key="command">
+          <RegistryValue Value="&quot;[INSTALLFOLDER]WinDirStat.exe&quot; &quot;%1&quot;" Type="string"/>
+        </RegistryKey>
+      </RegistryKey>
+      <RegistryKey Root="HKCR" Key="Drive\shell\WinDirStat" ForceDeleteOnUninstall="yes">
+        <RegistryValue Name="Icon" Value="[INSTALLFOLDER]WinDirStat.exe" Type="string"/>
+        <RegistryValue Value="WinDirStat" Type="string"/>
+        <RegistryKey Key="command">
+          <RegistryValue Value="&quot;[INSTALLFOLDER]WinDirStat.exe&quot; %1" Type="string"/>
+        </RegistryKey>
+      </RegistryKey>
+    </Component>
+    <Component Id="Component_DesktopShortcut" Directory="DesktopFolder" Guid="{82879C46-B937-405B-8931-EB8FE3CF606A}" Condition="DESKTOP_SHORTCUT">
+      <Shortcut Id="ConfigDesktopShortcut" Name="WinDirStat" WorkingDirectory="INSTALLFOLDER" Target="[INSTALLFOLDER]WinDirStat.exe"/>
+      <RegistryValue Root="HKCU" Key="SOFTWARE\WinDirStat\WinDirStat" Name="DesktopShortcut" Type="integer" Value="1" KeyPath="yes"/>
+    </Component>
+  </Package>
+</Wix>

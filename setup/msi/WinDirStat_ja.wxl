@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<WixLocalization Culture="ja-JP" Codepage="932" xmlns="http://wixtoolset.org/schemas/v4/wxl">
+  <String Id="DowngradeError" Value="[ProductName] の新しいバージョンが既にインストールされています。"/>
+  <String Id="OptionsDlgTitle" Value="WinDirStat オプション"/>
+  <String Id="OptionsDlgDescription" Value="以下のオプションを選択して、WinDirStat のインストールをカスタマイズしてください。"/>
+  <String Id="OptionsDlgHeaderTitle" Value="インストール オプション"/>
+  <String Id="OptionsDlgDesktopShortcut" Value="デスクトップ ショートカットを作成する"/>
+  <String Id="OptionsDlgContextMenuEntry" Value="クラシック シェル コンテキスト メニュー エントリを作成する"/>
+  <String Id="OptionsDlgAddToPath" Value="WinDirStat をシステム パスに追加する"/>
+</WixLocalization>

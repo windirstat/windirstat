@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<WixLocalization Culture="da-DK" Codepage="1252" xmlns="http://wixtoolset.org/schemas/v4/wxl">
+  <String Id="DowngradeError" Value="En nyere version af [ProductName] er allerede installeret."/>
+  <String Id="OptionsDlgTitle" Value="WinDirStat-indstillinger"/>
+  <String Id="OptionsDlgDescription" Value="Vælg indstillingerne nedenfor for at tilpasse din WinDirStat-installation."/>
+  <String Id="OptionsDlgHeaderTitle" Value="Installationsindstillinger"/>
+  <String Id="OptionsDlgDesktopShortcut" Value="Opret skrivebordsgenvej"/>
+  <String Id="OptionsDlgContextMenuEntry" Value="Opret klassisk Shell-kontekstmenupunkt"/>
+  <String Id="OptionsDlgAddToPath" Value="Tilføj WinDirStat til systemstien"/>
+</WixLocalization>

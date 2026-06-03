@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<WixLocalization Culture="zh-CN" Codepage="936" xmlns="http://wixtoolset.org/schemas/v4/wxl">
+  <String Id="DowngradeError" Value="[ProductName] 的较新版本已安装。"/>
+  <String Id="OptionsDlgTitle" Value="WinDirStat 选项"/>
+  <String Id="OptionsDlgDescription" Value="选择下方选项以自定义您的 WinDirStat 安装。"/>
+  <String Id="OptionsDlgHeaderTitle" Value="安装选项"/>
+  <String Id="OptionsDlgDesktopShortcut" Value="创建桌面快捷方式"/>
+  <String Id="OptionsDlgContextMenuEntry" Value="创建经典 Shell 右键菜单项"/>
+  <String Id="OptionsDlgAddToPath" Value="将 WinDirStat 添加到系统路径"/>
+</WixLocalization>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<WixLocalization Culture="pt-PT" Codepage="1252" xmlns="http://wixtoolset.org/schemas/v4/wxl">
+  <String Id="DowngradeError" Value="Já está instalada uma versão mais recente do [ProductName]."/>
+  <String Id="OptionsDlgTitle" Value="Opções do WinDirStat"/>
+  <String Id="OptionsDlgDescription" Value="Selecione as opções abaixo para personalizar a sua instalação do WinDirStat."/>
+  <String Id="OptionsDlgHeaderTitle" Value="Opções de instalação"/>
+  <String Id="OptionsDlgDesktopShortcut" Value="Criar atalho no ambiente de trabalho"/>
+  <String Id="OptionsDlgContextMenuEntry" Value="Criar entrada no menu de contexto do shell clássico"/>
+  <String Id="OptionsDlgAddToPath" Value="Adicionar WinDirStat ao caminho do sistema"/>
+</WixLocalization>

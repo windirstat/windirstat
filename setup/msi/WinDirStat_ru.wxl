@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<WixLocalization Culture="ru-RU" Codepage="1251" xmlns="http://wixtoolset.org/schemas/v4/wxl">
+  <String Id="DowngradeError" Value="Более новая версия [ProductName] уже установлена."/>
+  <String Id="OptionsDlgTitle" Value="Параметры WinDirStat"/>
+  <String Id="OptionsDlgDescription" Value="Выберите параметры ниже, чтобы настроить установку WinDirStat."/>
+  <String Id="OptionsDlgHeaderTitle" Value="Параметры установки"/>
+  <String Id="OptionsDlgDesktopShortcut" Value="Создать ярлык на рабочем столе"/>
+  <String Id="OptionsDlgContextMenuEntry" Value="Создать запись в контекстном меню классической оболочки"/>
+  <String Id="OptionsDlgAddToPath" Value="Добавить WinDirStat в системный путь"/>
+</WixLocalization>

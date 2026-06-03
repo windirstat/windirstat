@@ -51,7 +51,7 @@ signtool sign /fd sha256 /tr %TSAURL% /td sha256 /d %LIBNAME% /du %LIBURL% "%BLD
 IF ERRORLEVEL 1 ECHO Executable signing failed; continuing without signed executables.
 
 :: build the msi
-CALL "%THISDIR%\setup\build.cmd" "%RELTYPE%"
+CALL "%THISDIR%\setup\msi\build.cmd" "%RELTYPE%"
 
 :: copy the output files
 IF EXIST "%PUBDIR%" RD /S /Q "%PUBDIR%"

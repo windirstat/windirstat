@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<WixLocalization Culture="ko-KR" Codepage="949" xmlns="http://wixtoolset.org/schemas/v4/wxl">
+  <String Id="DowngradeError" Value="[ProductName]의 최신 버전이 이미 설치되어 있습니다."/>
+  <String Id="OptionsDlgTitle" Value="WinDirStat 옵션"/>
+  <String Id="OptionsDlgDescription" Value="아래 옵션을 선택하여 WinDirStat 설치를 사용자 지정하십시오."/>
+  <String Id="OptionsDlgHeaderTitle" Value="설치 옵션"/>
+  <String Id="OptionsDlgDesktopShortcut" Value="바탕화면 바로 가기 만들기"/>
+  <String Id="OptionsDlgContextMenuEntry" Value="클래식 셸 컨텍스트 메뉴 항목 만들기"/>
+  <String Id="OptionsDlgAddToPath" Value="WinDirStat를 시스템 경로에 추가"/>
+</WixLocalization>
