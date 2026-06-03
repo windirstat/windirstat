@@ -6,10 +6,10 @@ SETLOCAL EnableExtensions EnableDelayedExpansion
 ECHO Please choose a release type:
 ECHO 1. Beta
 ECHO 2. Production
-SET /p CHOICE=Enter Choice (1 or 2): 
 SET RELTYPE=
-IF "%CHOICE%" EQU "1" SET RELTYPE=BETA
-IF "%CHOICE%" EQU "2" SET RELTYPE=PRODUCTION
+CHOICE /C 12 /T 5 /D 1 /M "Enter Choice: "
+IF ERRORLEVEL 2 SET RELTYPE=PRODUCTION
+IF ERRORLEVEL 1 SET RELTYPE=BETA
 IF "%RELTYPE%" EQU "" EXIT /B 1
 
 :: setup environment variables based on location of this script
