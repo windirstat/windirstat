@@ -36,7 +36,7 @@ jobs:
         with:
           identifier: WinDirStat.WinDirStat
           version: ${{ needs.get-version.outputs.version }}
-          installers-regex: '\.msi$'
+          installers-regex: '\.(msi|msixbundle)$'
           token: ${{ secrets.WINGET_TOKEN }}
           release-notes-url: https://github.com/windirstat/windirstat/blob/master/CHANGELOG.md#windirstat-${{ needs.get-version.outputs.version }}
 

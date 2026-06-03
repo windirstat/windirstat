@@ -30,5 +30,5 @@ jobs:
         with:
           identifier: WinDirStat.WinDirStat.Beta
           version: ${{ steps.get-version.outputs.version }}
-          installers-regex: '\.msi$' # Only .msi files
+          installers-regex: '\.(msi|msixbundle)$' # .msi and .msixbundle files
           token: ${{ secrets.WINGET_TOKEN }}
