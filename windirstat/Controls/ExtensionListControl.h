@@ -60,7 +60,7 @@ protected:
 
         std::wstring m_extension;
         std::wstring m_description;
-        CExtensionListControl* m_driveList;
+        CExtensionListControl* m_extensionList;
         HICON m_icon = nullptr;
         ULONGLONG m_bytes = 0;
         ULONGLONG m_files = 0;
