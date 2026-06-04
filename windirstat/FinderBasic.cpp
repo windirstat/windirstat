@@ -117,7 +117,8 @@ bool FinderBasic::FindNext()
         }
 
         // Handle reparse points
-        m_reparseTag = m_currentInfo->FileAttributes & FILE_ATTRIBUTE_REPARSE_POINT ?
+        m_reparseTag = (m_currentInfo->FileAttributes != INVALID_FILE_ATTRIBUTES &&
+            m_currentInfo->FileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) ?
             m_currentInfo->ReparsePointTag : 0;
 
         // Mark file as compressed WOF compressed - this does not always
@@ -151,7 +152,8 @@ bool FinderBasic::FindNext()
         }
 
         // Correct physical size
-        if (!(m_currentInfo->FileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
+        if (m_currentInfo->FileAttributes != INVALID_FILE_ATTRIBUTES &&
+            !(m_currentInfo->FileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
             m_currentInfo->AllocationSize.QuadPart == 0 &&
             ((m_currentInfo->EndOfFile.QuadPart > m_context->ClusterSize ||
              (m_currentInfo->FileAttributes & FILE_ATTRIBUTE_SPARSE_FILE) != 0) ||

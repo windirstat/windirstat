@@ -500,6 +500,8 @@ DWORD CItem::GetAttributes() const noexcept
 
 USHORT CItem::GetSortAttributes() const noexcept
 {
+    if (GetAttributes() == INVALID_FILE_ATTRIBUTES) return 0;
+
     USHORT ret = 0;
 
     // We want to enforce the order RHSACE with R being the highest priority
@@ -867,6 +869,14 @@ void CItem::UpdateStatsFromDisk()
                 UpwardAddSizeLogical(finder.GetFileSizeLogical());
                 SetIndex(finder.GetIndex());
                 ExtensionDataAdd();
+            }
+        }
+        else if (IsTypeOrFlag(ITF_ROOTITEM) && GetAttributes() == INVALID_FILE_ATTRIBUTES)
+        {
+            // Correct potential invalid attributes on root items
+            if (const DWORD attr = GetFileAttributes(GetPathLong().c_str()); attr != INVALID_FILE_ATTRIBUTES)
+            {
+                SetAttributes(attr);
             }
         }
     }

@@ -99,9 +99,9 @@ void CIconHandler::DoAsyncShellInfoLookup(IconLookup&& lookupInfo)
     // (cloud placeholder, Remote Storage, etc.). SHGetFileInfo opens these file types
     // directly despite SHGFI_USEFILEATTRIBUTES, triggering a download.
     // Redirect to a synthetic extension-only path so the type icon is used instead.
-    if (attr & FILE_ATTRIBUTE_OFFLINE)
+    if (attr != INVALID_FILE_ATTRIBUTES && (attr & FILE_ATTRIBUTE_OFFLINE) != 0)
     {
-        path = GetSysDirectory() + L"\\~" + path.substr(dot);
+        path = GetSysDirectory() + L"\\~" + (dot == std::wstring::npos ? path : path.substr(dot));
         m_fastQueue.PushIfNotQueued(std::move(lookupInfo));
         return;
     }

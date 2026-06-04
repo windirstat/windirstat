@@ -8254,6 +8254,150 @@ Invoke-WinDirStatCsvScan
     }
 }
 
+# #############################################################################
+# UNC SHARE-ROOT SUITE  (regression: issue #538)
+# #############################################################################
+#
+# WinDirStat 2.6.2 fail-fast crashed (exception 0xC0000409) the instant it
+# scanned the ROOT of a UNC share — e.g. \\NAS\nas or \\<computer>\c$ — while
+# subdirectories of that same share, and the mapped-drive equivalent (Z:\),
+# scanned without issue.  The crash is specific to the bare \\server\share
+# shape (a share root with nothing after the share).
+#
+# This suite reproduces that exact shape deterministically and cheaply: it
+# publishes a throwaway, hidden ($-suffixed, like c$) SMB share over a tiny
+# seeded folder, points a headless scan at the share ROOT, and asserts the
+# process exits cleanly and emits a CSV.  Using a purpose-built share instead
+# of a real c$ keeps the scan tiny and self-cleaning (scanning a real c$ would
+# walk the entire system drive) while exercising the identical code path.
+#
+# Publishing an SMB share requires elevation, so — like the Reparse suite — the
+# suite skips gracefully when not elevated or when the SMB server is unavailable.
+function Invoke-UncSuite {
+    $g        = 'Unc'
+    $workRoot = Join-Path $BuildRoot 'unc-scan-test'
+    $runRoot  = Join-Path $workRoot 'runner'
+    $dataRoot = Join-Path $workRoot 'share-data'
+    $csvOut   = Join-Path $workRoot 'unc-results.csv'
+
+    # Unique, hidden ($-suffixed) share name so we never collide with a real
+    # share and stay out of the network browse list (just like the c$ admin share).
+    $shareName    = 'WdsUnc' + $PID + '$'
+    $shareCreated = $false
+
+    try {
+        # --- Prerequisite gates ---------------------------------------------
+        if (-not (Test-IsElevated)) {
+            Assert-Skip $g 'Administrator privileges' 'Not elevated; publishing a temporary SMB share requires admin'
+            return
+        }
+        if (-not (Get-Command New-SmbShare -ErrorAction SilentlyContinue)) {
+            Assert-Skip $g 'SMB cmdlets available' 'New-SmbShare is not available on this system'
+            return
+        }
+        if (-not (Test-Path -LiteralPath $ExePath)) {
+            Assert-Skip $g 'Executable present' "WinDirStat executable not found: $ExePath"
+            return
+        }
+
+        # --- Stage an isolated runner (own exe + portable English INI) ------
+        if (Test-Path -LiteralPath $workRoot) { Remove-Item -LiteralPath $workRoot -Recurse -Force }
+        New-Item -ItemType Directory -Force -Path $runRoot, $dataRoot | Out-Null
+
+        $runnerExe = Join-Path $runRoot 'WinDirStat.exe'
+        Copy-Item -LiteralPath $ExePath -Destination $runnerExe -Force
+
+        # Portable INI beside the exe: force English (Read-CsvPaths needs the
+        # English 'Name' column) and suppress elevation prompts so the headless
+        # scan never blocks on UI.
+        $ini = @(
+            '[Options]',
+            'LanguageId=9',            # English
+            'UseFastScanEngine=1',
+            'ShowElevationPrompt=0',
+            'AutoElevate=0',
+            'ShowFreeSpace=0',
+            'ShowUnknown=0',
+            'ProcessHardlinks=0'
+        ) -join "`r`n"
+        [System.IO.File]::WriteAllText((Join-Path $runRoot 'WinDirStat.ini'), $ini, [System.Text.Encoding]::Unicode)
+
+        # --- Seed a tiny tree under the share root --------------------------
+        New-TestFile -Path (Join-Path $dataRoot 'unc_root_file.dat') -Size 2048 -Seed 1
+        New-TestFile -Path (Join-Path $dataRoot 'SubDir\nested.dat') -Size 4096 -Seed 2
+
+        # --- Publish the throwaway hidden SMB share -------------------------
+        $account = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
+        try {
+            New-SmbShare -Name $shareName -Path $dataRoot -FullAccess $account -ErrorAction Stop | Out-Null
+            $shareCreated = $true
+        }
+        catch {
+            Assert-Skip $g 'Publish temporary SMB share' "Could not create SMB share (is the Server/LanmanServer service running?): $($_.Exception.Message)"
+            return
+        }
+
+        # The share ROOT — the exact \\server\share shape that crashed in #538.
+        $uncRoot = "\\$env:COMPUTERNAME\$shareName"
+
+        # SMB share visibility can lag a beat after creation; poll briefly.
+        $reachable = $false
+        foreach ($attempt in 1..10) {
+            if (Test-Path -LiteralPath $uncRoot) { $reachable = $true; break }
+            Start-Sleep -Milliseconds 200
+        }
+        if (-not $reachable) {
+            Assert-Skip $g 'UNC share reachable' "Share published but $uncRoot is not reachable over SMB loopback"
+            return
+        }
+
+        Write-ColoredLine 'UNC share-root scan suite (issue #538)' Cyan
+        Write-LabelValue 'Share root' $uncRoot
+        Write-LabelValue 'Backing'    $dataRoot
+        Write-LabelValue 'Exe'        $runnerExe
+        Write-Host ''
+
+        # --- Core regression check: scan the share ROOT, expect a clean exit -
+        # Invoke-WinDirStatCsv throws on a non-zero exit code; a 0xC0000409
+        # fail-fast surfaces as exit code -1073740791, which is precisely the
+        # #538 crash we are guarding against.
+        $scanOk = $false
+        try {
+            $run = Invoke-WinDirStatCsv -Exe $runnerExe -Csv $csvOut -Root $uncRoot
+            $scanOk = $true
+            Assert-Pass $g 'Scan UNC share root without crashing'
+            Write-LabelValue 'Exit code' $run.ExitCode       DarkGray
+            Write-LabelValue 'Elapsed'   "$($run.ElapsedSeconds)s" DarkGray
+        }
+        catch {
+            $detail = $_.Exception.Message
+            if ($detail -match '-1073740791') {
+                $detail += '  (exit 0xC0000409 fail-fast — issue #538 regression)'
+            }
+            Assert-Fail $g 'Scan UNC share root without crashing' $detail
+        }
+
+        # --- Content checks (only meaningful once a CSV was produced) -------
+        if ($scanOk) {
+            $names = @((Import-Csv -LiteralPath $csvOut -Encoding UTF8) | ForEach-Object { $_.Name })
+            foreach ($leaf in @('unc_root_file.dat', 'nested.dat')) {
+                if ($names | Where-Object { $_ -match [regex]::Escape($leaf) }) {
+                    Assert-Pass $g "CSV contains '$leaf'"
+                }
+                else {
+                    Assert-Fail $g "CSV contains '$leaf'" 'Seeded file missing from UNC scan output'
+                }
+            }
+        }
+    }
+    finally {
+        if ($shareCreated) {
+            try { Remove-SmbShare -Name $shareName -Force -ErrorAction SilentlyContinue | Out-Null } catch {}
+        }
+        Remove-TestArtifacts -Path $workRoot
+    }
+}
+
 # =============================================================================
 # MAIN
 # =============================================================================
@@ -8283,6 +8427,7 @@ $allSuites = [ordered]@{
     Ui        = 'Invoke-UiSuite'
     Reparse   = 'Invoke-ReparseSuite'
     EdgeCases = 'Invoke-EdgeCasesSuite'
+    Unc       = 'Invoke-UncSuite'
 }
 
 $onlySet = @($Only -split '[,;\s]+' | Where-Object { $_ })
