@@ -26,7 +26,7 @@
 
 CExtensionListControl::CListItem::CListItem(CExtensionListControl* list, std::wstring extension, const SExtensionRecord& r)
     : m_extension(std::move(extension))
-    , m_driveList(list)
+    , m_extensionList(list)
     , m_bytes(r.GetBytes())
     , m_files(r.GetFiles())
     , m_color(r.color)
@@ -38,7 +38,7 @@ bool CExtensionListControl::CListItem::DrawSubItem(const int subitem, CDC* pdc, 
     switch (subitem)
     {
     case COL_EXT_EXTENSION:
-        DrawLabel(m_driveList, pdc, rc, state, width, focusLeft);
+        DrawLabel(m_extensionList, pdc, rc, state, width, focusLeft);
         return true;
     case COL_EXT_COLOR:
         DrawColor(pdc, rc, state, width);
@@ -56,7 +56,7 @@ void CExtensionListControl::CListItem::DrawColor(CDC* pdc, CRect rc, const UINT 
         return;
     }
 
-    DrawSelection(m_driveList, pdc, rc, state);
+    DrawSelection(m_extensionList, pdc, rc, state);
 
     rc.DeflateRect(2, 3);
 
@@ -93,7 +93,7 @@ HICON CExtensionListControl::CListItem::GetIcon()
     if (m_icon != nullptr) return m_icon;
 
     GetIconHandler()->DoAsyncShellInfoLookup(std::make_tuple(const_cast<CListItem*>(this),
-        m_driveList, m_extension, FILE_ATTRIBUTE_NORMAL, &m_icon, &m_description));
+        m_extensionList, m_extension, FILE_ATTRIBUTE_NORMAL, &m_icon, &m_description));
 
     return m_icon;
 }
@@ -111,13 +111,13 @@ std::wstring CExtensionListControl::CListItem::GetBytesPercent() const
 
 double CExtensionListControl::CListItem::GetBytesFraction() const
 {
-    if (m_driveList->GetRootSize() == 0)
+    if (m_extensionList->GetRootSize() == 0)
     {
         return 0;
     }
 
     return static_cast<double>(m_bytes) /
-        static_cast<double>(m_driveList->GetRootSize());
+        static_cast<double>(m_extensionList->GetRootSize());
 }
 
 int CExtensionListControl::CListItem::Compare(const CWdsListItem* baseOther, const int subitem) const
