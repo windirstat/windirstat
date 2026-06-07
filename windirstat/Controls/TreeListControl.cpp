@@ -401,6 +401,8 @@ END_MESSAGE_MAP()
 
 void CTreeListControl::DrawNode(CDC* pDC, CRect& rcRest, CRect& rcPlusMinus, const CTreeListItem* item, int* width)
 {
+    if (item == nullptr) return;
+
     const int rowHeight = GetRowHeight();
     const int indentStep = rowHeight * 7 / 8;
     const int indentationLevel = item->GetIndent();

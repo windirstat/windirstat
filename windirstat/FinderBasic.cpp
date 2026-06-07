@@ -139,12 +139,12 @@ bool FinderBasic::FindNext()
                 nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT, nullptr));
                 handle != INVALID_HANDLE_VALUE)
             {
-                std::array<BYTE, MAXIMUM_REPARSE_DATA_BUFFER_SIZE> buf;
                 DWORD returned = 0;
-                if (DeviceIoControl(handle, FSCTL_GET_REPARSE_POINT, nullptr, 0,
-                    buf.data(), static_cast<DWORD>(buf.size()), &returned, nullptr))
+                if (auto buf = std::make_unique<std::array<BYTE, MAXIMUM_REPARSE_DATA_BUFFER_SIZE>>();
+                    DeviceIoControl(handle, FSCTL_GET_REPARSE_POINT, nullptr, 0,
+                        buf->data(), static_cast<DWORD>(buf->size()), &returned, nullptr))
                 {
-                    auto& rp = *reinterpret_cast<Finder::REPARSE_DATA_BUFFER*>(buf.data());
+                    auto& rp = *reinterpret_cast<Finder::REPARSE_DATA_BUFFER*>(buf->data());
                     if (Finder::IsJunction(rp))
                         m_reparseTag = IO_REPARSE_TAG_JUNCTION_POINT;
                 }

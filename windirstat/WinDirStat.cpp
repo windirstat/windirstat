@@ -418,16 +418,17 @@ BOOL CDirStatApp::IsIdleMessage(MSG* pMsg)
 
 void CDirStatApp::OnAppAbout()
 {
-    CAboutDlg().DoModal();
+    auto dlg = std::make_unique<CAboutDlg>();
+    dlg->DoModal();
 }
 
 void CDirStatApp::OnFileOpen()
 {
     CopyAllDriveMappings();
 
-    if (CSelectDrivesDlg dlg; IDOK == dlg.DoModal())
+    if (auto dlg = std::make_unique<CSelectDrivesDlg>(); IDOK == dlg->DoModal())
     {
-        const std::wstring path = JoinString(dlg.GetSelectedItems());
+        const std::wstring path = JoinString(dlg->GetSelectedItems());
         m_pDocTemplate->OpenDocumentFile(path.c_str(), true);
     }
 }

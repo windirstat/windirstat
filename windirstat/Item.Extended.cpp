@@ -703,7 +703,7 @@ void CItem::CreateHardlinksItem()
 
     // Create 20 Index Set subfolders (Index Set 1 through Index 20)
     // On file systems with many hardlinks, this helps reduce the items
-    // to expand in the interface on when viewing hardlink structures
+    // to expand in the interface when viewing hardlink structures
     constexpr char INDEX_SET_COUNT = 20;
     for (const int i : std::views::iota(1, INDEX_SET_COUNT + 1))
     {
@@ -1018,7 +1018,7 @@ std::vector<BYTE> CItem::GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CIte
     // Complete the hashing process and check on errors
     if (const NTSTATUS iFinishResult = BCryptFinishHash(hashHandle,
         hashBuffer.data(), static_cast<ULONG>(hashBuffer.size()), 0);
-        iReadResult == 0 || iHashResult != 0 || iFinishResult != 0)
+        iFinishResult != 0 || iReadResult == 0 || iHashResult != 0)
     {
         return {};
     }

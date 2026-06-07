@@ -211,6 +211,10 @@ static CItem* BuildAndAttachItem(std::wstring& namePath, std::wstring_view wdsAt
         displayName[0] = wds::chrNull;
         displayName = &displayName[1];
     }
+    else
+    {
+        displayName = lookupPath;
+    }
 
     DWORD attrs = ParseAttributes(attributes);
     if (type & IT_DIRECTORY) attrs |= FILE_ATTRIBUTE_DIRECTORY;
