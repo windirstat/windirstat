@@ -1,21 +1,26 @@
-# Embeds language transforms into a WinDirStat MSI, producing a single
-# multilingual installer that displays the system locale language on launch.
-#
-# Called by build.cmd after the base (en-US) MSI has been built.
 param(
-    [Parameter(Mandatory)][string]$MsiPath,
-    [Parameter(Mandatory)][string]$Arch,
-    [Parameter(Mandatory)][string]$RelType,
-    [Parameter(Mandatory)][string]$MajVer,
-    [Parameter(Mandatory)][string]$MinVer,
-    [Parameter(Mandatory)][string]$Patch,
-    [Parameter(Mandatory)][string]$Build,
-    [Parameter(Mandatory)][string]$EstimatedSize,
-    [Parameter(Mandatory)][string]$ProductCode
+    [string]$MsiPath,
+    [string]$Arch,
+    [string]$RelType,
+    [string]$MajVer,
+    [string]$MinVer,
+    [string]$Patch,
+    [string]$Build,
+    [string]$EstimatedSize,
+    [string]$ProductCode,
+    [switch]$GenerateOnly
 )
+
 
 $ErrorActionPreference = 'Stop'
 Set-Location $PSScriptRoot
+
+if (-not $GenerateOnly) {
+    if (-not $MsiPath -or -not $Arch -or -not $RelType -or -not $MajVer -or -not $MinVer -or -not $Patch -or -not $Build -or -not $EstimatedSize -or -not $ProductCode) {
+        Write-Error "Missing required parameters for embedding transforms."
+        exit 1
+    }
+}
 
 # ---------------------------------------------------------------------------
 # IStorage COM interop - all logic in C# so PowerShell never touches the
@@ -171,34 +176,93 @@ function Update-TemplateLangs {
 }
 
 # ---------------------------------------------------------------------------
-# Language table  (project code -> WiX culture, MSI LCID)
+# Generate WiX localization .wxl files dynamically
 # ---------------------------------------------------------------------------
-$languages = @(
-    [pscustomobject]@{ Code = 'cs';    Culture = 'cs-CZ'; Lcid = 1029 }
-    [pscustomobject]@{ Code = 'da';    Culture = 'da-DK'; Lcid = 1030 }
-    [pscustomobject]@{ Code = 'de';    Culture = 'de-DE'; Lcid = 1031 }
-    [pscustomobject]@{ Code = 'es';    Culture = 'es-ES'; Lcid = 3082 }
-    [pscustomobject]@{ Code = 'et';    Culture = 'et-EE'; Lcid = 1061 }
-    [pscustomobject]@{ Code = 'fi';    Culture = 'fi-FI'; Lcid = 1035 }
-    [pscustomobject]@{ Code = 'fr';    Culture = 'fr-FR'; Lcid = 1036 }
-    [pscustomobject]@{ Code = 'hu';    Culture = 'hu-HU'; Lcid = 1038 }
-    [pscustomobject]@{ Code = 'it';    Culture = 'it-IT'; Lcid = 1040 }
-    [pscustomobject]@{ Code = 'ja';    Culture = 'ja-JP'; Lcid = 1041 }
-    [pscustomobject]@{ Code = 'ko';    Culture = 'ko-KR'; Lcid = 1042 }
-    [pscustomobject]@{ Code = 'nb';    Culture = 'nb-NO'; Lcid = 1044 }
-    [pscustomobject]@{ Code = 'nl';    Culture = 'nl-NL'; Lcid = 1043 }
-    [pscustomobject]@{ Code = 'pl';    Culture = 'pl-PL'; Lcid = 1045 }
-    [pscustomobject]@{ Code = 'pt';    Culture = 'pt-PT'; Lcid = 2070 }
-    [pscustomobject]@{ Code = 'ru';    Culture = 'ru-RU'; Lcid = 1049 }
-    [pscustomobject]@{ Code = 'sl';    Culture = 'sl-SI'; Lcid = 1060 }
-    [pscustomobject]@{ Code = 'sv';    Culture = 'sv-SE'; Lcid = 1053 }
-    [pscustomobject]@{ Code = 'tr';    Culture = 'tr-TR'; Lcid = 1055 }
-    [pscustomobject]@{ Code = 'uk';    Culture = 'uk-UA'; Lcid = 1058 }
-    [pscustomobject]@{ Code = 'zh-hk'; Culture = 'zh-HK'; Lcid = 3076 }
-    [pscustomobject]@{ Code = 'zh';    Culture = 'zh-CN'; Lcid = 2052 }
-)
+function Generate-WxlFiles {
+    param(
+        [string]$LangDir = "$PSScriptRoot\..\..\windirstat\res\langs",
+        [string]$OutputDir = "$PSScriptRoot\temp_wxl"
+    )
+
+    if (-not (Test-Path $OutputDir)) {
+        New-Item -ItemType Directory -Path $OutputDir -Force | Out-Null
+    }
+
+    function Escape-XmlString ([string]$str) {
+        if ([string]::IsNullOrEmpty($str)) { return "" }
+        return $str.Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;").Replace('"', "&quot;").Replace("'", "&apos;")
+    }
+
+    $languagesList = [System.Collections.Generic.List[PSCustomObject]]::new()
+
+    $langFiles = Get-ChildItem -Path "$LangDir\lang_*.txt"
+    foreach ($file in $langFiles) {
+        $code = ($file.BaseName -replace '^lang_', '').ToLower()
+        
+        $lines = [System.IO.File]::ReadAllLines($file.FullName, [System.Text.UTF8Encoding]::new($false))
+        
+        $msiKeys = @{}
+        foreach ($line in $lines) {
+            if ($line -match '^MSI_([^=]+)=(.*)$') {
+                $key = $Matches[1]
+                $value = $Matches[2]
+                $msiKeys[$key] = $value
+            }
+        }
+        
+        if (-not $msiKeys.ContainsKey('CULTURE') -or -not $msiKeys.ContainsKey('LCID') -or -not $msiKeys.ContainsKey('CODEPAGE')) {
+            continue
+        }
+        
+        $culture = $msiKeys['CULTURE']
+        $lcid = [int]$msiKeys['LCID']
+        $codepage = $msiKeys['CODEPAGE']
+        
+        $xmlLines = @(
+            '<?xml version="1.0" encoding="UTF-8"?>'
+            "<WixLocalization Culture=""$culture"" Codepage=""$codepage"" xmlns=""http://wixtoolset.org/schemas/v4/wxl"">"
+        )
+        
+        $sortedKeys = $msiKeys.Keys | Sort-Object
+        foreach ($key in $sortedKeys) {
+            if ($key -eq 'CULTURE' -or $key -eq 'LCID' -or $key -eq 'CODEPAGE') {
+                continue
+            }
+            $escapedValue = Escape-XmlString $msiKeys[$key]
+            $xmlLines += "  <String Id=""$key"" Value=""$escapedValue""/>"
+        }
+        
+        $xmlLines += "</WixLocalization>"
+        $xmlContent = $xmlLines -join "`r`n"
+        
+        $wxlFileName = "WinDirStat_$code.wxl"
+        $wxlPath = Join-Path $OutputDir $wxlFileName
+        
+        [System.IO.File]::WriteAllText($wxlPath, $xmlContent, [System.Text.UTF8Encoding]::new($false))
+        
+        $languagesList.Add([PSCustomObject]@{
+            Code     = $code
+            Culture  = $culture
+            Lcid     = $lcid
+            Codepage = $codepage
+            WxlPath  = $wxlPath
+        })
+    }
+
+    $languagesList
+}
+
+if ($GenerateOnly) {
+    Generate-WxlFiles | Out-Null
+    exit 0
+}
+
+# Dynamically generate .wxl files and load language metadata (except 'en')
+$languages = Generate-WxlFiles | Where-Object { $_.Code -ne 'en' }
+
 
 # Version/release args shared by every wix build invocation
+$licenseRtf = if (Test-Path 'license-build.rtf') { 'license-build.rtf' } else { 'license.rtf' }
 $verArgs = @(
     '-d', "RELTYPE=$RelType",
     '-d', "MAJVER=$MajVer",
@@ -206,7 +270,8 @@ $verArgs = @(
     '-d', "PATCH=$Patch",
     '-d', "BUILD=$Build",
     '-d', "EstimatedSize=$EstimatedSize",
-    '-d', "ProductCode=$ProductCode"
+    '-d', "ProductCode=$ProductCode",
+    '-d', "LicenseRtf=$licenseRtf"
 )
 
 # Resolve to absolute path so P/Invoke calls always get a full path
@@ -221,7 +286,7 @@ $embeddedLcids.Add(1033)   # base English is always present
 $failed = [System.Collections.Generic.List[string]]::new()
 
 foreach ($lang in $languages) {
-    $wxl     = "WinDirStat_$($lang.Code).wxl"
+    $wxl     = $lang.WxlPath
     $tmpMsi  = Join-Path $tmpDir "WinDirStat-$Arch-$($lang.Code).msi"
     $tmpMst  = Join-Path $tmpDir "WinDirStat-$Arch-$($lang.Code).mst"
 

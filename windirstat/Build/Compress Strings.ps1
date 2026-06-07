@@ -13,7 +13,7 @@ $CombinedLines = Get-ChildItem -Path "${Path}\lang_*.txt" -Recurse |
     [System.IO.File]::WriteAllLines($_.FullName, $Content, $Encoding)
 
     $LangCode = $Matches[1]
-    $Content | ForEach-Object { "${LangCode}:$_" }
+    $Content | Where-Object { $_ -notmatch '^MSI_' } | ForEach-Object { "${LangCode}:$_" }
     $Files = @($Files | Where-Object FullName -ne $_.FullName)
 }
 if ($CombinedLines) {

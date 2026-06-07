@@ -21,11 +21,25 @@ IF %ERRORLEVEL% NEQ 0 (
 :: grab current version information from source
 FOR /F "TOKENS=2,3 DELIMS=	 " %%A IN ('FINDSTR "#define.PRD_" ..\..\windirstat\version.h') DO SET %%A=%%B
 
+
 :: grab current data for installer build version
 FOR /F %%X in ('git -C ..\.. rev-list --count --all') DO SET PRD_BUILD=%%X
 
 :: create version string based on git and source
 SET VERSTRING=-d MAJVER=%PRD_MAJVER% -d MINVER=%PRD_MINVER% -d PATCH=%PRD_PATCH% -d BUILD=%PRD_BUILD%
+
+:: generate localized WiX .wxl files
+POWERSHELL -NoLogo -NoProfile -ExecutionPolicy Bypass -File "make-multilingual.ps1" -GenerateOnly
+IF !ERRORLEVEL! NEQ 0 (
+   ECHO ERROR: wxl generation failed
+   EXIT /B 1
+)
+
+
+:: create a temporary license RTF with smaller font sizes for the installer dialog (8pt body / 10pt headings)
+SET LICENSERTF=license-build.rtf
+POWERSHELL -NoLogo -NoProfile -Command ^
+   "$c = [IO.File]::ReadAllText('license.rtf'); $c = $c.Replace('\afs24','\afs16').Replace('\fs24','\fs16').Replace('\fs28','\fs20'); [IO.File]::WriteAllText('%LICENSERTF%',$c)"
 
 :: create the installers
 FOR %%A IN (arm64 x86 x64) DO (
@@ -35,7 +49,7 @@ FOR %%A IN (arm64 x86 x64) DO (
    FOR /F %%G in ('POWERSHELL -NoLogo -NoProfile "[guid]::NewGuid().ToString().ToUpper()"') DO SET PRODCODE=%%G
 
    :: Build base English MSI
-   wix build -arch %%A "WinDirStat.wxs" -loc "WinDirStat_en.wxl" -culture en-US -o "%BLDDIR%\WinDirStat-%%A.msi" -d RELTYPE=%RELTYPE% %VERSTRING% -d EstimatedSize=!SIZE! -d ProductCode=!PRODCODE! -ext WixToolset.UI.wixext -ext WixToolset.Util.wixext
+   wix build -arch %%A "WinDirStat.wxs" -loc "temp_wxl\WinDirStat_en.wxl" -culture en-US -o "%BLDDIR%\WinDirStat-%%A.msi" -d RELTYPE=%RELTYPE% %VERSTRING% -d EstimatedSize=!SIZE! -d ProductCode=!PRODCODE! -d LicenseRtf=!LICENSERTF! -ext WixToolset.UI.wixext -ext WixToolset.Util.wixext
    IF !ERRORLEVEL! NEQ 0 (
       ECHO ERROR: base MSI build failed for %%A
       EXIT /B 1
@@ -51,5 +65,9 @@ FOR %%A IN (arm64 x86 x64) DO (
       EXIT /B 1
    )
 )
+
+:: cleanup temporary files
+IF EXIST "%LICENSERTF%" DEL "%LICENSERTF%"
+IF EXIST "temp_wxl" RD /S /Q "temp_wxl"
 
 EXIT /B 0

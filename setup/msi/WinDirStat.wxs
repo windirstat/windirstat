@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs" xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui" xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util">
   <?include Defines.wxi?>
-  <Package Name="$(var.ProductName)" ProductCode="$(var.ProductCode)" Language="1033" Version="$(var.ProductVersion)" Manufacturer="$(var.Manufacturer)" UpgradeCode="$(var.UpgradeCode)" InstallerVersion="500" Compressed="yes" Scope="perMachine">
+  <Package Name="$(var.ProductName) $(var.ProductVersion)" ProductCode="$(var.ProductCode)" Language="1033" Version="$(var.ProductVersion)" Manufacturer="$(var.Manufacturer)" UpgradeCode="$(var.UpgradeCode)" InstallerVersion="500" Compressed="yes" Scope="perMachine">
     <SummaryInformation Description="$(var.ProductName) $(var.ProductVersion) ($(sys.BUILDARCH))" />
     <!-- Upgrade Detection -->
     <Upgrade Id="$(var.UpgradeCodeAlt)">

@@ -26,7 +26,9 @@
     <?define IconFilePath =             "..\..\windirstat\res\WinDirStat.ico" ?>
 
     <?define ProductBinariesDir =       "..\..\build"?>
-    <?define LicenseRtf =               "license.rtf"?>
+    <?ifndef LicenseRtf ?>
+        <?define LicenseRtf =               "license.rtf"?>
+    <?endif ?>
     <?define BannerBmp =                "banner.bmp"?>
     <?define DialogBmp =                "background.bmp"?>
     
