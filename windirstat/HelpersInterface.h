@@ -79,6 +79,10 @@ bool IsMenuEnabled(const CMenu* menu, UINT pos, bool isCommand = false) noexcept
 int DpiRest(int value, const CWnd* wnd = nullptr) noexcept;
 int DpiSave(int value, const CWnd* wnd = nullptr) noexcept;
 
+// Shell item array
+class CItem;
+CComPtr<IShellItemArray> CreateShellItemArray(const std::vector<CItem*>& items);
+
 // Context menu
 constexpr auto CONTENT_MENU_MINCMD = 0x1ul;
 constexpr auto CONTENT_MENU_MAXCMD = 0x7FFFul;

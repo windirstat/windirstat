@@ -18,6 +18,7 @@
 
 #include "pch.h"
 #include "HelpersInterface.h"
+#include "Item.h"
 #include "Options.h"
 #include "Localization.h"
 
@@ -496,6 +497,31 @@ bool IsMenuEnabled(const CMenu* menu, const UINT pos, const bool isCommand) noex
 int DpiSave(const int value, const CWnd* wnd) noexcept
 {
     return ::MulDiv(value, USER_DEFAULT_SCREEN_DPI, GetWindowDpi(wnd));
+}
+
+// Shell item array
+CComPtr<IShellItemArray> CreateShellItemArray(const std::vector<CItem*>& items)
+{
+    std::vector<SmartPointer<LPITEMIDLIST, decltype(&CoTaskMemFree)>> pidlHolders;
+    std::vector<LPCITEMIDLIST> pidls;
+    pidlHolders.reserve(items.size());
+
+    for (const auto& item : items)
+    {
+        PIDLIST_ABSOLUTE pidl = nullptr;
+        if (item->IsTypeOrFlag(IT_MYCOMPUTER))
+            SHGetKnownFolderIDList(FOLDERID_ComputerFolder, 0, nullptr, &pidl);
+        else
+            pidl = ILCreateFromPath(item->GetPath().c_str());
+        if (!pidl) continue;
+        pidlHolders.emplace_back(CoTaskMemFree, pidl);
+        pidls.push_back(pidl);
+    }
+
+    CComPtr<IShellItemArray> psia;
+    if (!pidls.empty())
+        SHCreateShellItemArrayFromIDLists(static_cast<UINT>(pidls.size()), pidls.data(), &psia);
+    return psia;
 }
 
 // Context menu

@@ -491,7 +491,7 @@ void CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, const bo
     }
 
     bool cancelled = false;
-    if (!toTrashBin) CProgressDlg(totalItems, false, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
+    if (!toTrashBin && !COptions::ShowMicrosoftProgress) CProgressDlg(totalItems, false, AfxGetMainWnd(), [&](CProgressDlg* pdlg)
         {
             // Collect items depth-first and separate into files and directories
             std::vector<const CItem*> files;
@@ -553,33 +553,29 @@ void CDirStatDoc::DeletePhysicalItems(const std::vector<CItem*>& items, const bo
         }).DoModal();
 
     if (!cancelled && !itemsToDelete.empty())
-        CProgressDlg(0, false, AfxGetMainWnd(), [&](const CProgressDlg* pdlg)
-            {
-                // For trash bin operations, use IFileOperation directly
-                auto flags = FOFX_SHOWELEVATIONPROMPT | (COptions::ShowMicrosoftProgress ? FOF_NOCONFIRMMKDIR : FOF_NO_UI);
-                if (toTrashBin) flags |= FOFX_ADDUNDORECORD | FOFX_RECYCLEONDELETE;
+    {
+        DWORD flags = FOFX_SHOWELEVATIONPROMPT | FOF_NOCONFIRMATION;
+        if (toTrashBin) flags |= FOFX_ADDUNDORECORD | FOFX_RECYCLEONDELETE;
 
-                CComPtr<IFileOperation> fileOperation;
-                if (FAILED(::CoCreateInstance(CLSID_FileOperation, nullptr, CLSCTX_ALL, IID_PPV_ARGS(&fileOperation))) ||
-                    FAILED(fileOperation->SetOwnerWindow(*pdlg)) ||
-                    FAILED(fileOperation->SetOperationFlags(flags)))
-                {
-                    return;
-                }
+        const auto doDelete = [&](HWND hwnd, DWORD opFlags)
+        {
+            CComPtr<IFileOperation> fileOperation;
+            if (FAILED(::CoCreateInstance(CLSID_FileOperation, nullptr, CLSCTX_ALL, IID_PPV_ARGS(&fileOperation))) ||
+                FAILED(fileOperation->SetOwnerWindow(hwnd)) ||
+                FAILED(fileOperation->SetOperationFlags(opFlags)))
+                return;
+            if (const CComPtr<IShellItemArray> psia = CreateShellItemArray(itemsToDelete))
+                fileOperation->DeleteItems(psia);
+            const HRESULT res = fileOperation->PerformOperations();
+            if (res != S_OK) VTRACE(L"File Operation Failed: {}", TranslateError(res));
+        };
 
-                // Add all items into a single deletion operation
-                for (const auto& item : itemsToDelete)
-                {
-                    CComPtr<IShellItem> shellitem;
-                    SmartPointer pidl(CoTaskMemFree, ILCreateFromPath(item->GetPath().c_str()));
-                    if (pidl == nullptr || FAILED(SHCreateItemFromIDList(pidl, IID_PPV_ARGS(&shellitem)))) continue;
-                    fileOperation->DeleteItem(shellitem, nullptr);
-                }
-
-                // Do all deletions
-                const HRESULT res = fileOperation->PerformOperations();
-                if (res != S_OK) VTRACE(L"File Operation Failed: {}", TranslateError(res));
-            }).DoModal();
+        if (COptions::ShowMicrosoftProgress)
+            doDelete(*AfxGetMainWnd(), flags);
+        else
+            CProgressDlg(0, false, AfxGetMainWnd(), [&](const CProgressDlg* pdlg)
+                { doDelete(*pdlg, flags | FOF_NO_UI); }).DoModal();
+    }
 
     // Create a recycler directories to refresh
     std::unordered_set<CItem*> recyclers;
@@ -1449,7 +1445,7 @@ void CDirStatDoc::OnCleanupMoveTo()
         // Create file operation object
         CComPtr<IFileOperation> fileOperation;
         CComPtr<IShellItem> destShellItem;
-        const auto flags = FOFX_SHOWELEVATIONPROMPT | (COptions::ShowMicrosoftProgress ? FOF_NOCONFIRMMKDIR : FOF_NO_UI);
+        const auto flags = FOFX_SHOWELEVATIONPROMPT | FOF_NOCONFIRMATION | (COptions::ShowMicrosoftProgress ? 0 : FOF_NO_UI);
         if (FAILED(::CoCreateInstance(CLSID_FileOperation, nullptr, CLSCTX_ALL, IID_PPV_ARGS(&fileOperation))) ||
             FAILED(fileOperation->SetOwnerWindow(*pdlg)) ||
             FAILED(fileOperation->SetOperationFlags(flags)) ||
@@ -1458,18 +1454,8 @@ void CDirStatDoc::OnCleanupMoveTo()
             return;
         }
 
-        // Add all items to the move operation
-        for (const auto& item : items)
-        {
-            CComPtr<IShellItem> sourceShellItem;
-            SmartPointer pidl(CoTaskMemFree, ILCreateFromPath(item->GetPath().c_str()));
-            if (pidl == nullptr || FAILED(SHCreateItemFromIDList(pidl, IID_PPV_ARGS(&sourceShellItem))))
-            {
-                continue;
-            }
-
-            fileOperation->MoveItem(sourceShellItem, destShellItem, nullptr, nullptr);
-        }
+        if (const CComPtr<IShellItemArray> psia = CreateShellItemArray(items))
+            fileOperation->MoveItems(psia, destShellItem);
 
         // Do all moves
         const HRESULT res = fileOperation->PerformOperations();
@@ -1641,10 +1627,16 @@ void CDirStatDoc::OnCleanupOpenTarget()
 
 void CDirStatDoc::OnCleanupProperties()
 {
-    for (const auto & item : GetAllSelected())
-    {
+    const auto& selected = GetAllSelected();
+    const CComPtr<IShellItemArray> psia = CreateShellItemArray(selected);
+    if (!psia) return;
+
+    CComPtr<IDataObject> pDataObj;
+    if (SUCCEEDED(psia->BindToHandler(nullptr, BHID_DataObject, IID_PPV_ARGS(&pDataObj))) &&
+        SUCCEEDED(SHMultiFileProperties(pDataObj, 0))) return;
+
+    for (const auto& item : selected)
         OpenItem(item, L"properties");
-    }
 }
 
 void CDirStatDoc::OnComputeHash()
