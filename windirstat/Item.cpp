@@ -538,8 +538,7 @@ DWORD CItem::GetReparseTag() const noexcept
 
 void CItem::SetReparseTag(const DWORD reparseType) noexcept
 {
-    if (reparseType == 0) (void) false;
-    else if (reparseType == IO_REPARSE_TAG_SYMLINK) SetReparseType(ITRP_SYMLINK);
+    if (reparseType == IO_REPARSE_TAG_SYMLINK) SetReparseType(ITRP_SYMLINK);
     else if (reparseType == IO_REPARSE_TAG_MOUNT_POINT) SetReparseType(ITRP_MOUNT);
     else if (reparseType == IO_REPARSE_TAG_JUNCTION_POINT) SetReparseType(ITRP_JUNCTION);
     else if ((reparseType & ~IO_REPARSE_TAG_CLOUD_MASK) == IO_REPARSE_TAG_CLOUD) SetReparseType(ITRP_CLOUD);
@@ -810,8 +809,7 @@ void CItem::UpwardSubtractReadJobs(const ULONG count) noexcept
     if (count == 0 || IsTypeOrFlag(IT_FILE)) return;
     for (auto p = this; p != nullptr; p = p->GetParent())
     {
-        const ULONG previous = p->m_folderInfo->m_jobs.fetch_sub(count);
-        if (previous >= count && previous - count == 0)
+        if (p->m_folderInfo->m_jobs.fetch_sub(count) == count)
         {
             p->SetDone();
         }

@@ -87,7 +87,8 @@ int CItemDupe::CompareSibling(const CTreeListItem* tlib, const int subitem) cons
     if (m_item == nullptr)
     {
         // Handle top-level hash collection nodes
-        if (subitem == COL_ITEMDUP_NAME) return memcmp(m_hash.data(), other->m_hash.data(), m_hash.size());
+        // Sibling comparisons must return -1/0/1 for sort direction handling
+        if (subitem == COL_ITEMDUP_NAME) return signum(m_hashString.compare(other->m_hashString));
         if (subitem == COL_ITEMDUP_SIZE_PHYSICAL) return usignum(m_sizePhysical, other->m_sizePhysical);
         if (subitem == COL_ITEMDUP_SIZE_LOGICAL) return usignum(m_sizeLogical, other->m_sizeLogical);
         if (subitem == COL_ITEMDUP_ITEMS) return usignum(m_children.size(), other->m_children.size());

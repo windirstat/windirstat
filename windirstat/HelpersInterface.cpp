@@ -468,12 +468,16 @@ bool ExecuteCommandInConsole(const std::wstring& command, const std::wstring& ti
 }
 
 // DPI scaling
-int DpiRest(const int value, const CWnd* wnd) noexcept
+static int GetWindowDpi(const CWnd* wnd) noexcept
 {
     const HWND h = (wnd && wnd->GetSafeHwnd()) ? wnd->GetSafeHwnd() : nullptr;
     const SmartPointer dc([h](const HDC hdc) noexcept { ReleaseDC(h, hdc); }, GetDC(h));
-    const int dpi = dc != nullptr ? ::GetDeviceCaps(dc, LOGPIXELSX) : USER_DEFAULT_SCREEN_DPI;
-    return ::MulDiv(value, dpi, USER_DEFAULT_SCREEN_DPI);
+    return dc != nullptr ? ::GetDeviceCaps(dc, LOGPIXELSX) : USER_DEFAULT_SCREEN_DPI;
+}
+
+int DpiRest(const int value, const CWnd* wnd) noexcept
+{
+    return ::MulDiv(value, GetWindowDpi(wnd), USER_DEFAULT_SCREEN_DPI);
 }
 
 void SetMenuItem(CMenu* menu, const int pos, const bool enable, const bool isCommand)
@@ -491,10 +495,7 @@ bool IsMenuEnabled(const CMenu* menu, const UINT pos, const bool isCommand) noex
 
 int DpiSave(const int value, const CWnd* wnd) noexcept
 {
-    const HWND h = (wnd && wnd->GetSafeHwnd()) ? wnd->GetSafeHwnd() : nullptr;
-    const SmartPointer dc([h](const HDC hdc) noexcept { ReleaseDC(h, hdc); }, GetDC(h));
-    const int dpi = dc != nullptr ? ::GetDeviceCaps(dc, LOGPIXELSX) : USER_DEFAULT_SCREEN_DPI;
-    return ::MulDiv(value, USER_DEFAULT_SCREEN_DPI, dpi);
+    return ::MulDiv(value, USER_DEFAULT_SCREEN_DPI, GetWindowDpi(wnd));
 }
 
 // Context menu

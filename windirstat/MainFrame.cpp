@@ -511,14 +511,14 @@ void CMainFrame::SuspendState(const bool suspend)
     m_scanSuspend = suspend;
     if (m_taskbarList)
     {
-        if (m_taskbarButtonState == TBPF_PAUSED)
-        {
-            m_taskbarList->SetProgressState(*this, m_taskbarButtonState = m_taskbarButtonPreviousState);
-        }
-        else
+        if (suspend && m_taskbarButtonState != TBPF_PAUSED)
         {
             m_taskbarButtonPreviousState = m_taskbarButtonState;
-            m_taskbarList->SetProgressState(*this, m_taskbarButtonState |= TBPF_PAUSED);
+            m_taskbarList->SetProgressState(*this, m_taskbarButtonState = TBPF_PAUSED);
+        }
+        else if (!suspend && m_taskbarButtonState == TBPF_PAUSED)
+        {
+            m_taskbarList->SetProgressState(*this, m_taskbarButtonState = m_taskbarButtonPreviousState);
         }
     }
     CPacman::SetGlobalSuspendState(suspend);

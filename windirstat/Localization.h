@@ -56,7 +56,16 @@ public:
     static std::wstring Format(const std::wstring_view format, const Args&... args)
     {
         const auto & formatString = Lookup(format);
-        return std::vformat(formatString, std::make_wformat_args(args...));
+        try
+        {
+            return std::vformat(formatString, std::make_wformat_args(args...));
+        }
+        catch (const std::format_error&)
+        {
+            // Translation files are user-editable so a malformed
+            // substitution must not take down the application
+            return formatString;
+        }
     }
 
     static void UpdateMenu(CMenu& menu);

@@ -261,6 +261,7 @@ static CItem* LoadResultsCsv(std::ifstream& reader)
     std::unordered_map<std::wstring, CItem*, string_hash, std::equal_to<>> parentMap;
 
     bool headerProcessed = false;
+    size_t maxRequiredField = 0;
     for (std::vector<std::wstring_view> fields; std::getline(reader, linebuf); fields.clear())
     {
         if (linebuf.empty()) continue;
@@ -305,14 +306,19 @@ static CItem* LoadResultsCsv(std::ifstream& reader)
             // Validate all necessary fields are present
             for (const auto i : std::views::iota(0u, orderMap.size()))
             {
-                if (i != FIELD_OWNER && orderMap[i] == UCHAR_MAX)
+                if (i == FIELD_OWNER) continue;
+                if (orderMap[i] == UCHAR_MAX)
                 {
                     delete newroot;
                     return nullptr;
                 }
+                maxRequiredField = std::max<size_t>(maxRequiredField, orderMap[i]);
             }
             continue;
         }
+
+        // Skip malformed rows that do not cover all required columns
+        if (fields.size() <= maxRequiredField) continue;
 
         std::wstring namePath(fields[orderMap[FIELD_NAME]]);
         BuildAndAttachItem(namePath, fields[orderMap[FIELD_ATTRIBUTES_WDS]],
@@ -440,7 +446,6 @@ static std::unordered_map<const CItem*, LONGLONG>
         for (const CItem* p = item->GetParent(); p != nullptr; p = p->GetParent())
         {
             adjustedSizes[p] += item->GetSizePhysicalRaw();
-            if (!p->IsTypeOrFlag(IT_DRIVE)) continue;
         }
     }
     return adjustedSizes;

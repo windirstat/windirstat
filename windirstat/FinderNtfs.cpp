@@ -122,7 +122,7 @@ using ATTRIBUTE_RECORD = struct ATTRIBUTE_RECORD
     {
         return {
             ByteOffset<ATTRIBUTE_RECORD>(FileRecord, FileRecord->FirstAttributeOffset),
-            ByteOffset<ATTRIBUTE_RECORD>(FileRecord, FileRecord->FirstAttributeOffset + TotalLength)
+            ByteOffset<ATTRIBUTE_RECORD>(FileRecord, TotalLength)
         };
     }
 };
@@ -186,12 +186,13 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
 
     std::vector<BYTE> dataRunsBuffer(sizeof(RETRIEVAL_POINTERS_BUFFER) + 32 * sizeof(LARGE_INTEGER));
     STARTING_VCN_INPUT_BUFFER input = {};
-    while (!DeviceIoControl(fileHandle, FSCTL_GET_RETRIEVAL_POINTERS, &input, sizeof(input), dataRunsBuffer.data(),
-        static_cast<DWORD>(dataRunsBuffer.size()), &bytesReturned, nullptr) && GetLastError() == ERROR_MORE_DATA)
+    BOOL pointersFetched = FALSE;
+    while ((pointersFetched = DeviceIoControl(fileHandle, FSCTL_GET_RETRIEVAL_POINTERS, &input, sizeof(input), dataRunsBuffer.data(),
+        static_cast<DWORD>(dataRunsBuffer.size()), &bytesReturned, nullptr)) == FALSE && GetLastError() == ERROR_MORE_DATA)
     {
         dataRunsBuffer.resize(dataRunsBuffer.size() * 2);
     }
-    if (GetLastError() != ERROR_SUCCESS && GetLastError() != ERROR_MORE_DATA)
+    if (pointersFetched == FALSE)
     {
         return false;
     }
@@ -209,9 +210,11 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
     // Process MFT records
     std::for_each(std::execution::par, dataRuns.begin(), dataRuns.end(), [&](const auto& dataRun)
     {
+        // Page alignment satisfies FILE_FLAG_NO_BUFFERING for any sector size 
         constexpr size_t bufferSize = 4ull * wds::Mi;
+        constexpr size_t bufferAlignment = 4ull * wds::Ki;
         thread_local std::unique_ptr<UCHAR, decltype(&_aligned_free)> buffer(
-            static_cast<UCHAR*>(_aligned_malloc(bufferSize, volumeInfo.BytesPerSector)), &_aligned_free);
+            static_cast<UCHAR*>(_aligned_malloc(bufferSize, bufferAlignment)), &_aligned_free);
 
         const auto& [clusterStart, clusterCount] = dataRun;
 
@@ -276,7 +279,7 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
                 auto& baseRecord = *baseRecordPtr;
 
                 for (auto [curAttribute, endAttribute] = ATTRIBUTE_RECORD::bounds(fileRecord, volumeInfo.BytesPerFileRecordSegment); curAttribute <
-                    endAttribute && curAttribute->TypeCode != AttributeEnd; curAttribute = curAttribute->next())
+                    endAttribute && curAttribute->TypeCode != AttributeEnd && curAttribute->RecordLength > 0; curAttribute = curAttribute->next())
                 {
                     if (curAttribute->TypeCode == AttributeStandardInformation)
                     {
@@ -291,9 +294,10 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
                     {
                         if (curAttribute->IsNonResident()) continue;
                         const auto fn = ByteOffset<FILE_NAME>(curAttribute, curAttribute->Form.Resident.ValueOffset);
+                        // FileName is not null-terminated so compare by length and characters
                         if (fn->IsShortNameRecord() ||
-                            (fn->FileNameLength == 1 && wcscmp(fn->FileName, L".") == 0) ||
-                            (fn->FileNameLength == 2 && wcscmp(fn->FileName, L"..") == 0)) continue;
+                            (fn->FileNameLength == 1 && fn->FileName[0] == L'.') ||
+                            (fn->FileNameLength == 2 && fn->FileName[0] == L'.' && fn->FileName[1] == L'.')) continue;
 
                         std::scoped_lock lock(m_parentToChildMutex);
                         auto& children = m_parentToChildMap.try_emplace(fn->ParentDirectory).first->second;
