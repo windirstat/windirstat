@@ -77,6 +77,7 @@ constexpr std::wstring_view IDS_HARDLINKS_ITEM = L"IDS_HARDLINKS_ITEM";
 constexpr std::wstring_view IDS_HELP_MANUAL = L"IDS_HELP_MANUAL";
 constexpr std::wstring_view IDS_HIDDEN = L"IDS_HIDDEN";
 constexpr std::wstring_view IDS_IDLEMESSAGE = L"IDS_IDLEMESSAGE";
+constexpr std::wstring_view IDS_ITEMSs_SELECTED_FILESs_FOLDERSs = L"IDS_ITEMSs_SELECTED_FILESs_FOLDERSs";
 constexpr std::wstring_view IDS_JUNCTIONS = L"IDS_JUNCTIONS";
 constexpr std::wstring_view IDS_LARGEST_FILES = L"IDS_LARGEST_FILES";
 constexpr std::wstring_view IDS_MENU_CANCEL = L"IDS_MENU_CANCEL";
