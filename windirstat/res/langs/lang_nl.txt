@@ -87,6 +87,7 @@ IDS_HELP_MANUAL=WinDirStat online help openen\nHandleiding
 IDS_HIDDEN=Verborgen
 IDS_HOT_COST=Kosten hete laag ($/{}/maand):
 IDS_IDLEMESSAGE=Klaar
+IDS_ITEMSs_SELECTED_FILESs_FOLDERSs={} items geselecteerd | {} bestanden | {} mappen
 IDS_JUNCTIONS=Kruispunten
 IDS_LARGEST_FILES=Grootste bestanden
 IDS_MENU_CANCEL=&Annuleren

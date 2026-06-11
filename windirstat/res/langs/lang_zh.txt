@@ -87,6 +87,7 @@ IDS_HELP_MANUAL=打开在线帮助文档。\n手册
 IDS_HIDDEN=隐藏
 IDS_HOT_COST=热访问成本 ($/{}/月)：
 IDS_IDLEMESSAGE=就绪
+IDS_ITEMSs_SELECTED_FILESs_FOLDERSs=已选择 {} 个项目 | {} 个文件 | {} 个文件夹
 IDS_JUNCTIONS=目录联接点
 IDS_LARGEST_FILES=超大文件
 IDS_MENU_CANCEL=取消(&C)

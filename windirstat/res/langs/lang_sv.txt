@@ -87,6 +87,7 @@ IDS_HELP_MANUAL=Öppna WinDirStat onlinehjälp.\nHandbok
 IDS_HIDDEN=Dold
 IDS_HOT_COST=Kostnad för het nivå ($/{}/mån):
 IDS_IDLEMESSAGE=Klar
+IDS_ITEMSs_SELECTED_FILESs_FOLDERSs={} markerade objekt | {} filer | {} mappar
 IDS_JUNCTIONS=Knutpunkter
 IDS_LARGEST_FILES=Största filerna
 IDS_MENU_CANCEL=&Avbryt

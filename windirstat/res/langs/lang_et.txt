@@ -87,6 +87,7 @@ IDS_HELP_MANUAL=Ava WinDirStati veebijuhend.\nJuhend
 IDS_HIDDEN=Peidetud
 IDS_HOT_COST=Kuuma taseme kulu ($/{}/kuu):
 IDS_IDLEMESSAGE=Valmis
+IDS_ITEMSs_SELECTED_FILESs_FOLDERSs={} valitud elementi | {} faili | {} kausta
 IDS_JUNCTIONS=Ümbersuunamised
 IDS_LARGEST_FILES=Suurimad failid
 IDS_MENU_CANCEL=L&õpeta

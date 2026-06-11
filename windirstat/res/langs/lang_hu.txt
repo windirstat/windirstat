@@ -87,6 +87,7 @@ IDS_HELP_MANUAL=WinDirStat online súgó megnyitása\nKézikönyv
 IDS_HIDDEN=Rejtett
 IDS_HOT_COST=Forró szint költsége ($/{}/hó):
 IDS_IDLEMESSAGE=Kész
+IDS_ITEMSs_SELECTED_FILESs_FOLDERSs={} elem kijelölve | {} fájl | {} mappa
 IDS_JUNCTIONS=Csomópontok
 IDS_LARGEST_FILES=Legnagyobb fájlok
 IDS_MENU_CANCEL=&Mégse
