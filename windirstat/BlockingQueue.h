@@ -173,6 +173,16 @@ public:
         return m_stopReason;
     }
 
+    void CancelThreadIo()
+    {
+        std::scoped_lock lock(m_mutex);
+        for (auto& thread : m_threads)
+        {
+            if (thread.joinable())
+                CancelSynchronousIo(thread.native_handle());
+        }
+    }
+
     void CancelExecution(const int stopReason = -1)
     {
         // Start cancellation process
