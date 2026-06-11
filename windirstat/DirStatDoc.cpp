@@ -1746,7 +1746,6 @@ void CDirStatDoc::StopScanningEngine(StopReason stopReason)
     for (auto& queue : m_queues | std::views::values)
         queue.CancelThreadIo();
 
-
     // Request for all threads to stop processing
     for (auto& queue : m_queues | std::views::values)
         ProcessMessagesUntilSignaled([&queue] { queue.SuspendExecution(); });

@@ -175,9 +175,6 @@ public:
 
     void CancelThreadIo()
     {
-        // Interrupt any blocking I/O (ReadFile, etc.) in worker threads so they
-        // can reach WaitIfSuspended quickly instead of waiting for the read to
-        // complete naturally. ReadFile returns ERROR_OPERATION_ABORTED on cancel.
         std::scoped_lock lock(m_mutex);
         for (auto& thread : m_threads)
         {
