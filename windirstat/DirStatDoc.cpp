@@ -2015,7 +2015,7 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
         // Using GetProgressRange() (GetFreeDiskSpace) here would still be a mismatch.
         {
             const ULONGLONG correctedRange = GetRootItem()->GetProgressPos();
-            CMainFrame::PostToMessageThread([correctedRange]
+            CMainFrame::Get()->InvokeInMessageThread([correctedRange]
             {
                 CMainFrame::Get()->UpdateProgressRange(correctedRange);
             });
