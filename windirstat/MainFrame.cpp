@@ -960,11 +960,23 @@ void CMainFrame::OnInitMenuPopup(CMenu* pPopupMenu, const UINT nIndex, const BOO
             paths.push_back(item->GetPath());
         }
 
-        if (const CComPtr contextMenu = GetContextMenu(GetSafeHwnd(), paths);
-            contextMenu != nullptr)
+        // Shell extensions (OneDrive, antivirus, git, ...) are loaded synchronously on
+        // the UI thread inside GetContextMenu/QueryContextMenu. Cap to 15 items to keep
+        // the menu responsive; beyond that the overhead per additional file is not worth
+        // the wait. Also avoids the IShellFolder parent-mismatch for cross-directory sets.
+        if (paths.size() > kShellMenuPathLimit)
+            paths.resize(kShellMenuPathLimit);
+
+        BeginWaitCursor();
+        const CComPtr contextMenu = GetContextMenu(GetSafeHwnd(), paths);
+        EndWaitCursor();
+
+        if (contextMenu != nullptr)
         {
+            BeginWaitCursor();
             (void) contextMenu->QueryContextMenu(pPopupMenu->GetSafeHmenu(), 0,
                 CONTENT_MENU_MINCMD, CONTENT_MENU_MAXCMD, CMF_NORMAL);
+            EndWaitCursor();
         }
     }
 

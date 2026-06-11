@@ -141,3 +141,5 @@ inline CRect ClientRectOf(const CWnd* hWnd)
     ::GetClientRect(*hWnd, &rc);
     return rc;
 }
+
+constexpr size_t kShellMenuPathLimit = 15;

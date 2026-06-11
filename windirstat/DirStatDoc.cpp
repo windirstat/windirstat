@@ -1767,16 +1767,23 @@ void CDirStatDoc::OnContextMenuExplore(UINT nID)
     for (const auto& item : selected)
         paths.emplace_back(item->GetPath());
 
-    // query current context menu
     if (paths.empty()) return;
+    if (paths.size() > kShellMenuPathLimit)
+        paths.resize(kShellMenuPathLimit);
+
+    AfxGetMainWnd()->BeginWaitCursor();
     const CComPtr contextMenu = GetContextMenu(CMainFrame::Get()->GetSafeHwnd(), paths);
+    AfxGetMainWnd()->EndWaitCursor();
     if (contextMenu == nullptr) return;
 
     // create placeholder menu
     CMenu menu;
     if (menu.CreatePopupMenu() == 0) return;
-    if (FAILED(contextMenu->QueryContextMenu(menu.GetSafeHmenu(), 0,
-        CONTENT_MENU_MINCMD, CONTENT_MENU_MAXCMD, CMF_NORMAL))) return;
+    AfxGetMainWnd()->BeginWaitCursor();
+    const bool queryOk = SUCCEEDED(contextMenu->QueryContextMenu(menu.GetSafeHmenu(), 0,
+        CONTENT_MENU_MINCMD, CONTENT_MENU_MAXCMD, CMF_NORMAL));
+    AfxGetMainWnd()->EndWaitCursor();
+    if (!queryOk) return;
 
     // launch command associated with passed item identifier
     CMINVOKECOMMANDINFOEX info = {};
