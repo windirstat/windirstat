@@ -210,7 +210,7 @@ bool FinderNtfsContext::LoadRoot(CItem* driveitem)
     // Process MFT records
     std::for_each(std::execution::par, dataRuns.begin(), dataRuns.end(), [&](const auto& dataRun)
     {
-        // Page alignment satisfies FILE_FLAG_NO_BUFFERING for any sector size 
+        // Page alignment satisfies FILE_FLAG_NO_BUFFERING for any sector size
         constexpr size_t bufferSize = 4ull * wds::Mi;
         constexpr size_t bufferAlignment = 4ull * wds::Ki;
         thread_local std::unique_ptr<UCHAR, decltype(&_aligned_free)> buffer(
