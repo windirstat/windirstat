@@ -113,6 +113,9 @@
     <ClInclude Include="Pages\PageFileTree.h">
       <Filter>Header Files\User Interface\Pages</Filter>
     </ClInclude>
+    <ClInclude Include="Pages\PagePermissions.h">
+      <Filter>Header Files\User Interface\Pages</Filter>
+    </ClInclude>
     <ClInclude Include="Pages\PageFiltering.h">
       <Filter>Header Files\User Interface\Pages</Filter>
     </ClInclude>
@@ -184,6 +187,9 @@
     </ClInclude>
     <ClInclude Include="resource.h">
       <Filter>Resource Files\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="Controls\FilePermsControl.h">
+      <Filter>Header Files\User Interface\Controls</Filter>
     </ClInclude>
     <ClInclude Include="Controls\FileWatcherControl.h">
       <Filter>Header Files\User Interface\Controls</Filter>
@@ -260,6 +266,9 @@
     <ClInclude Include="ItemDupe.h">
       <Filter>Header Files\Core\Items</Filter>
     </ClInclude>
+    <ClInclude Include="ItemPerm.h">
+      <Filter>Header Files\Core\Items</Filter>
+    </ClInclude>
     <ClInclude Include="ItemSearch.h">
       <Filter>Header Files\Core\Items</Filter>
     </ClInclude>
@@ -287,6 +296,9 @@
       <Filter>Source Files\User Interface\Pages</Filter>
     </ClCompile>
     <ClCompile Include="Pages\PageFileTree.cpp">
+      <Filter>Source Files\User Interface\Pages</Filter>
+    </ClCompile>
+    <ClCompile Include="Pages\PagePermissions.cpp">
       <Filter>Source Files\User Interface\Pages</Filter>
     </ClCompile>
     <ClCompile Include="Pages\PageFiltering.cpp">
@@ -358,6 +370,9 @@
     <ClCompile Include="Pages\PagePrompts.cpp">
       <Filter>Source Files\User Interface\Pages</Filter>
     </ClCompile>
+    <ClCompile Include="Controls\FilePermsControl.cpp">
+      <Filter>Source Files\User Interface\Controls</Filter>
+    </ClCompile>
     <ClCompile Include="Controls\FileWatcherControl.cpp">
       <Filter>Source Files\User Interface\Controls</Filter>
     </ClCompile>
@@ -398,6 +413,9 @@
       <Filter>Source Files\Core\Items</Filter>
     </ClCompile>
     <ClCompile Include="ItemDupe.cpp">
+      <Filter>Source Files\Core\Items</Filter>
+    </ClCompile>
+    <ClCompile Include="ItemPerm.cpp">
       <Filter>Source Files\Core\Items</Filter>
     </ClCompile>
     <ClCompile Include="ItemSearch.cpp">

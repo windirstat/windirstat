@@ -19,6 +19,7 @@
 
 #include "pch.h"
 #include "FileWatcherControl.h"
+#include "FilePermsControl.h"
 #include "FileTopControl.h"
 #include "FileDupeControl.h"
 #include "FileSearchControl.h"
@@ -56,6 +57,22 @@ protected:
     ~CFileWatcherView() override = default;
 
     CFileWatcherControl m_control;
+
+    DECLARE_MESSAGE_MAP()
+    afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
+};
+
+class CFilePermsView final : public CControlView
+{
+protected:
+    CTreeListControl& GetControl() override { return m_control; }
+    const CTreeListControl& GetControl() const override { return m_control; }
+
+    DECLARE_DYNCREATE(CFilePermsView)
+    CFilePermsView() = default;
+    ~CFilePermsView() override = default;
+
+    CFilePermsControl m_control;
 
     DECLARE_MESSAGE_MAP()
     afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);

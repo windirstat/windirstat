@@ -231,6 +231,7 @@ class CWinDirStatCommandLineInfo final : public CCommandLineInfo
     std::wstring m_pendingFlag;
     const std::wstring saveToFlag = L"saveto";
     const std::wstring saveDupesToFlag = L"savedupesto";
+    const std::wstring savePermsToFlag = L"savepermsto";
     const std::wstring loadFromFlag = L"loadfrom";
     const std::wstring legacyUninstallFlag = L"legacyuninstall";
 
@@ -258,6 +259,10 @@ public:
                 CDirStatApp::Get()->m_saveDupesToPath = param;
                 COptions::ScanForDuplicates = true;
             }
+            else if (m_pendingFlag == savePermsToFlag)
+            {
+                CDirStatApp::Get()->m_savePermsToPath = param;
+            }
             else if (m_pendingFlag == loadFromFlag)
             {
                 CDirStatApp::Get()->m_loadFromPath = param;
@@ -282,7 +287,7 @@ public:
 
         // Handle flags
         param = MakeLower(param);
-        if (param == saveToFlag || param == saveDupesToFlag || param == loadFromFlag)
+        if (param == saveToFlag || param == saveDupesToFlag || param == savePermsToFlag || param == loadFromFlag)
         {
             m_pendingFlag = param;
         }
@@ -347,7 +352,7 @@ BOOL CDirStatApp::InitInstance()
     ProcessShellCommand(cmdInfo);
 
     // Check if we should hide the app window
-    const bool hideApp = !m_saveToPath.empty() || !m_saveDupesToPath.empty();
+    const bool hideApp = !m_saveToPath.empty() || !m_saveDupesToPath.empty() || !m_savePermsToPath.empty();
     if (hideApp) m_nCmdShow = SW_HIDE;
 
     CMainFrame::Get()->InitialShowWindow();

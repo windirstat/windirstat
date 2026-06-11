@@ -144,6 +144,7 @@ protected:
     static bool TopListHasFocus();
     static bool SearchListHasFocus();
     static bool WatcherListHasFocus();
+    static bool PermsListHasFocus();
     std::vector<CItem*> GetAllSelected();
     void InvalidateSelectionCache();
     static CTreeListControl* GetFocusControl();
@@ -176,6 +177,7 @@ protected:
     afx_msg void OnRefreshAll();
     afx_msg void OnSaveResults();
     afx_msg void OnSaveDuplicates();
+    afx_msg void OnSavePermissions();
     afx_msg void OnLoadResults();
     afx_msg void OnEditCopy();
     afx_msg void OnCleanupEmptyRecycleBin();

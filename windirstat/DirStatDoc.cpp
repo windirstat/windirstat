@@ -22,6 +22,7 @@
 #include "FileTopControl.h"
 #include "FileSearchControl.h"
 #include "FileWatcherControl.h"
+#include "FilePermsControl.h"
 #include "FinderBasic.h"
 #include "FinderNtfs.h"
 #include "SearchDlg.h"
@@ -60,6 +61,9 @@ void CDirStatDoc::DeleteContents()
     // Stop watchers
     if (CFileWatcherControl::Get() != nullptr) CFileWatcherControl::Get()->StopMonitoring();
 
+    // Stop permissions scanner before the tree is torn down
+    if (CFilePermsControl::Get() != nullptr) CFilePermsControl::Get()->StopScan();
+
     // Clean out icon queue
     GetIconHandler()->ClearAsyncShellInfoQueue();
 
@@ -72,6 +76,7 @@ void CDirStatDoc::DeleteContents()
     if (CFileDupeControl::Get() != nullptr) CFileDupeControl::Get()->DeleteAllItems();
     if (CFileSearchControl::Get() != nullptr) CFileSearchControl::Get()->DeleteAllItems();
     if (CFileWatcherControl::Get() != nullptr) CFileWatcherControl::Get()->DeleteAllItems();
+    if (CFilePermsControl::Get() != nullptr) CFilePermsControl::Get()->DeleteAllItems();
 
     // Cleanup structures
     delete m_rootItem;
@@ -815,12 +820,18 @@ bool CDirStatDoc::WatcherListHasFocus()
     return LF_WATCHERLIST == CMainFrame::Get()->GetLogicalFocus();
 }
 
+bool CDirStatDoc::PermsListHasFocus()
+{
+    return LF_PERMSLIST == CMainFrame::Get()->GetLogicalFocus();
+}
+
 CTreeListControl* CDirStatDoc::GetFocusControl()
 {
     if (DupeListHasFocus()) return CFileDupeControl::Get();
     if (TopListHasFocus()) return CFileTopControl::Get();
     if (SearchListHasFocus()) return CFileSearchControl::Get();
     if (WatcherListHasFocus()) return CFileWatcherControl::Get();
+    if (PermsListHasFocus()) return CFilePermsControl::Get();
     return CFileTreeControl::Get();
 }
 
@@ -901,6 +912,7 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
     static bool (*isElevated)(CItem*) = [](CItem*) { return IsElevationActive(); };
     static bool (*isElevationPossible)(CItem*) = [](CItem*) { return IsElevationPossible(); };
     static bool (*isDupeTabVisible)(CItem*) = [](CItem*) { return CMainFrame::Get()->GetFileTabbedView()->IsDupeTabVisible(); };
+    static bool (*isPermsTabVisible)(CItem*) = [](CItem*) { return CMainFrame::Get()->GetFileTabbedView()->IsPermsTabVisible(); };
     static bool (*isDriveOrDirOrFile)(CItem*) = [](CItem* i) { return i != nullptr && i->IsTypeOrFlag(IT_DRIVE, IT_DIRECTORY, IT_FILE); };
     static bool (*isVhdFile)(CItem*) = [](CItem* i) { return i != nullptr && IsElevationActive() && (!i->IsTypeOrFlag(IT_FILE) || i->HasExtension(L".vhdx")); };
 
@@ -947,6 +959,7 @@ void CDirStatDoc::OnUpdateCentralHandler(CCmdUI* pCmdUI)
         { ID_REFRESH_ALL,             { true,  true,  false, LF_NONE,     ITF_ANY } },
         { ID_REFRESH_SELECTED,        { false, true,  false, LF_NONE,     IT_MYCOMPUTER | IT_DRIVE | IT_DIRECTORY | IT_FILE } },
         { ID_SAVE_DUPLICATES,         { true,  true,  false, LF_NONE,     ITF_ANY, isDupeTabVisible } },
+        { ID_SAVE_PERMISSIONS,        { true,  true,  false, LF_NONE,     ITF_ANY, isPermsTabVisible } },
         { ID_SAVE_RESULTS,            { true,  true,  false, LF_NONE,     ITF_ANY } },
         { ID_SCAN_RESUME,             { true,  true,  true,  LF_NONE,     ITF_ANY, isResumable } },
         { ID_SCAN_STOP,               { true,  true,  true,  LF_NONE,     ITF_ANY, isStoppable } },
@@ -1009,6 +1022,7 @@ BEGIN_MESSAGE_MAP(CDirStatDoc, CDocument)
     ON_COMMAND(ID_LOAD_RESULTS, OnLoadResults)
     ON_COMMAND_UPDATE_WRAPPER(ID_SAVE_RESULTS, OnSaveResults)
     ON_COMMAND_UPDATE_WRAPPER(ID_SAVE_DUPLICATES, OnSaveDuplicates)
+    ON_COMMAND_UPDATE_WRAPPER(ID_SAVE_PERMISSIONS, OnSavePermissions)
     ON_COMMAND_UPDATE_WRAPPER(ID_EDIT_COPY_CLIPBOARD, OnEditCopy)
     ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_EMPTY_BIN, OnCleanupEmptyRecycleBin)
     ON_COMMAND_UPDATE_WRAPPER(ID_CLEANUP_MOVE_TO, OnCleanupMoveTo)
@@ -1139,6 +1153,20 @@ void CDirStatDoc::OnSaveDuplicates()
     CProgressDlg(0, true, AfxGetMainWnd(), [&](CProgressDlg*)
     {
         SaveDuplicates(dlg.GetPathName().GetString(), CFileDupeControl::Get()->GetRootItem());
+    }).DoModal();
+}
+
+void CDirStatDoc::OnSavePermissions()
+{
+    // Request the file path from the user
+    const std::wstring fileSelectString = std::format(L"{} (*.csv;*.json)|*.csv;*.json|{} (*.*)|*.*||",
+        Localization::Lookup(IDS_FILE_FILTER), Localization::Lookup(IDS_ALL_FILES));
+    CFileDialog dlg(FALSE, L"csv", nullptr, OFN_EXPLORER | OFN_DONTADDTORECENT, fileSelectString.c_str());
+    if (dlg.DoModal() != IDOK) return;
+
+    CProgressDlg(0, true, AfxGetMainWnd(), [&](CProgressDlg*)
+    {
+        SavePermissions(dlg.GetPathName().GetString(), CFilePermsControl::Get()->GetPermItems());
     }).DoModal();
 }
 
@@ -1795,6 +1823,9 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
     CWaitCursor wc;
     StopScanningEngine();
 
+    // Stop permissions scanner since the tree is about to be modified
+    if (CFilePermsControl::Get() != nullptr) CFilePermsControl::Get()->StopScan();
+
     // Address conflicts with currently zoomed/selected items
     const auto zoomItem = GetZoomItem();
     for (const auto item : items)
@@ -2014,6 +2045,16 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
 
             // Run scan and exit with success == 0 or failure == 1
             ExitProcess(SaveDuplicates(dupeSavePath, dupeRoot) ? 0 : 1);
+        }
+
+        // Handle quiet save permissions mode if path is set
+        if (const auto permsSavePath = CDirStatApp::Get()->GetSavePermsToPath(); !permsSavePath.empty())
+        {
+            // Scan the tree headlessly and exit with success == 0 or failure == 1
+            if (!HasRootItem()) ExitProcess(1);
+            const auto rows = CFilePermsControl::ScanTree(GetRootItem());
+            const std::vector<const CItemPerm*> ptrs(rows.begin(), rows.end());
+            ExitProcess(SavePermissions(permsSavePath, ptrs) ? 0 : 1);
         }
 
         // Invoke a UI thread to do updates

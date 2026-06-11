@@ -644,6 +644,72 @@ std::wstring CItem::GetPath() const
     return path;
 }
 
+int CItem::ComparePath(const CItem* other) const
+{
+    if (!other) return 1;
+
+    auto getValid = [](const CItem* item) -> const CItem*
+    {
+        while (item && item->IsTypeOrFlag(IT_MYCOMPUTER, IT_HLINKS_SET, IT_HLINKS_IDX))
+        {
+            item = item->GetParent();
+        }
+
+        return item;
+    };
+
+    const CItem* leftRoot = getValid(this);
+    const CItem* rightRoot = getValid(other);
+
+    if (!leftRoot || !rightRoot) return (leftRoot > rightRoot) - (leftRoot < rightRoot);
+
+    thread_local std::vector<const CItem*> leftPath;
+    thread_local std::vector<const CItem*> rightPath;
+
+    leftPath.clear();
+    rightPath.clear();
+
+    for (const CItem* p = leftRoot; p; p = getValid(p->GetParent())) leftPath.push_back(p);
+    for (const CItem* p = rightRoot; p; p = getValid(p->GetParent())) rightPath.push_back(p);
+
+    size_t leftIdx = leftPath.size();
+    size_t rightIdx = rightPath.size();
+
+    // Walk from root toward leaves by indexing backwards.
+    while (leftIdx > 0 && rightIdx > 0 && leftPath[leftIdx - 1] == rightPath[rightIdx - 1])
+    {
+        --leftIdx;
+        --rightIdx;
+    }
+
+    // One path is an ancestor of the other.
+    if (leftIdx == 0 || rightIdx == 0)
+    {
+        if (leftIdx == 0 && rightIdx == 0) return 0;
+        return leftIdx == 0 ? -1 : 1;
+    }
+
+    const CItem* left = leftPath[leftIdx - 1];
+    const CItem* right = rightPath[rightIdx - 1];
+    auto getSlice = [](const CItem* item)
+    {
+        auto view = item->GetNameView();
+        if (item->IsTypeOrFlag(IT_DRIVE)) return view.substr(0, 2);
+        return view;
+    };
+
+    auto leftView = getSlice(left);
+    auto rightView = getSlice(right);
+
+    const size_t minLen = (std::min)(leftView.size(), rightView.size());
+    if (int cmp = _wcsnicmp(leftView.data(), rightView.data(), minLen))
+    {
+        return (cmp > 0) - (cmp < 0);
+    }
+
+    return (leftView.size() > rightView.size()) - (leftView.size() < rightView.size());
+}
+
 std::wstring CItem::GetPathLong() const
 {
     return FinderBasic::MakeLongPathCompatible(GetPath());

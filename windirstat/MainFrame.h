@@ -43,6 +43,7 @@ enum LOGICAL_FOCUS : uint8_t
     LF_TOPLIST,
     LF_SEARCHLIST,
     LF_WATCHERLIST,
+    LF_PERMSLIST,
     LF_EXTLIST,
 };
 
@@ -166,6 +167,7 @@ protected:
     CFileDupeView* GetFileDupeView() const { return m_fileTabbedView->GetFileDupeView(); }
     CFileSearchView* GetFileSearchView() const { return m_fileTabbedView->GetFileSearchView(); }
     CFileWatcherView* GetFileWatcherView() const { return m_fileTabbedView->GetFileWatcherView(); }
+    CFilePermsView* GetFilePermsView() const { return m_fileTabbedView->GetFilePermsView(); }
     CFileTabbedView* GetFileTabbedView() const { return m_fileTabbedView; }
     CTreeMapView* GetTreeMapView() const { return m_treeMapView; }
     CExtensionView* GetExtensionView() const { return m_extensionView; }
@@ -254,6 +256,8 @@ protected:
     afx_msg void OnAdvancedDefrag(UINT nID);
     afx_msg void OnAdvancedChkdsk(UINT nID);
     afx_msg void OnToolsWatcher();
+    afx_msg void OnToolsPermissions();
+    afx_msg void OnUpdateToolsPermissions(CCmdUI* pCmdUI);
     void UpdateToolsMenu(CMenu* menu);
     afx_msg void OnConfigure();
     afx_msg void OnDestroy();

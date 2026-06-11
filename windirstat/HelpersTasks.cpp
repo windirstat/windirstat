@@ -405,27 +405,35 @@ std::wstring GetNameFromSid(const PSID sid)
     // return immediately if sid is null or invalid
     if (sid == nullptr || !IsValidSid(sid)) return {};
 
-    // attempt to lookup sid in cache
+    // attempt to lookup sid in cache (guarded since callers may be on worker threads)
     const std::vector sidVec(ByteOffset<BYTE>(sid, 0), ByteOffset<BYTE>(sid, GetLengthSid(sid)));
+    static std::mutex nameMapMutex;
+    std::scoped_lock lock(nameMapMutex);
     static std::map<std::vector<BYTE>, std::wstring> nameMap;
     if (const auto iter = nameMap.find(sidVec); iter != nameMap.end())
     {
         return iter->second;
     }
 
-    // lookup the name for this sid
+    // query required buffer sizes first so long domains (e.g. APPLICATION PACKAGE AUTHORITY) resolve
     SID_NAME_USE nameUse;
-    std::array<WCHAR, UNLEN + 1> accountName;
-    std::array<WCHAR, DNLEN + 1> domainName;
-    DWORD iAccountNameSize = static_cast<DWORD>(accountName.size());
-    DWORD iDomainName = static_cast<DWORD>(domainName.size());
-    std::wstring result;
-    if (LookupAccountSid(nullptr, sid, accountName.data(),
-        &iAccountNameSize, domainName.data(), &iDomainName, &nameUse) != 0)
+    DWORD accountSize = 0;
+    DWORD domainSize = 0;
+    LookupAccountSid(nullptr, sid, nullptr, &accountSize, nullptr, &domainSize, &nameUse);
+    if (accountSize > 0)
     {
-        // generate full name in domain\name format
-        return nameMap.try_emplace(sidVec, std::format(L"{}\\{}",
-            domainName.data(), accountName.data())).first->second;
+        std::wstring accountName(accountSize, L'\0');
+        std::wstring domainName(domainSize, L'\0');
+        if (LookupAccountSid(nullptr, sid, accountName.data(), &accountSize,
+            domainName.data(), &domainSize, &nameUse) != 0)
+        {
+            accountName.resize(accountSize);
+            domainName.resize(domainSize);
+
+            // omit the domain prefix for well-known identities with none (e.g. Everyone)
+            return nameMap.try_emplace(sidVec, domainName.empty() ? accountName :
+                std::format(L"{}\\{}", domainName, accountName)).first->second;
+        }
     }
 
     // fallback: return sid string

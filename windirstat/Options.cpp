@@ -27,6 +27,7 @@ LPCWSTR COptions::OptionsExtView = L"ExtView";
 LPCWSTR COptions::OptionsTopView = L"TopView";
 LPCWSTR COptions::OptionsSearch = L"SearchView";
 LPCWSTR COptions::OptionsWatcher = L"Watcher";
+LPCWSTR COptions::OptionsPerms = L"PermissionsView";
 LPCWSTR COptions::OptionsDriveSelect = L"DriveSelect";
 
 Setting<bool> COptions::AutomaticallyResizeColumns(OptionsGeneral, L"AutomaticallyResizeColumns", true);
@@ -91,6 +92,32 @@ Setting<COLORREF> COptions::FileTreeColor6(OptionsFileTree, L"FileTreeColor6", R
 Setting<COLORREF> COptions::FileTreeColor7(OptionsFileTree, L"FileTreeColor7", RGB(255, 255, 0));
 Setting<COLORREF> COptions::TreeMapGridColor(OptionsTreeMap, L"TreeMapGridColor", CTreeMap::GetDefaults().gridColor);
 Setting<COLORREF> COptions::TreeMapHighlightColor(OptionsTreeMap, L"TreeMapHighlightColor", RGB(255, 255, 255));
+Setting<std::wstring> COptions::PermsColorAccount[PERMSRULECOUNT] =
+{
+    { OptionsPerms, L"ColorAccount0", L"" },
+    { OptionsPerms, L"ColorAccount1", L"" },
+    { OptionsPerms, L"ColorAccount2", L"" },
+    { OptionsPerms, L"ColorAccount3", L"" },
+    { OptionsPerms, L"ColorAccount4", L"" }
+};
+// Level values are 0 (any) or 1 + PERMSLEVEL enumeration value (excluding Special)
+Setting<int> COptions::PermsColorLevel[PERMSRULECOUNT] =
+{
+    { OptionsPerms, L"ColorLevel0", 0, 0, 5 },
+    { OptionsPerms, L"ColorLevel1", 0, 0, 5 },
+    { OptionsPerms, L"ColorLevel2", 0, 0, 5 },
+    { OptionsPerms, L"ColorLevel3", 0, 0, 5 },
+    { OptionsPerms, L"ColorLevel4", 0, 0, 5 }
+};
+Setting<COLORREF> COptions::PermsColor[PERMSRULECOUNT] =
+{
+    { OptionsPerms, L"Color0", RGB(200, 0, 0) },
+    { OptionsPerms, L"Color1", RGB(200, 100, 0) },
+    { OptionsPerms, L"Color2", RGB(0, 100, 200) },
+    { OptionsPerms, L"Color3", RGB(0, 150, 0) },
+    { OptionsPerms, L"Color4", RGB(150, 0, 200) }
+};
+Setting<std::wstring> COptions::PermsExcludeRegex(OptionsPerms, L"ExcludeRegex", L"");
 Setting<double> COptions::MainSplitterPos(OptionsGeneral, L"MainSplitterPos", -1.0, 0.0, 1.0);
 Setting<double> COptions::SubSplitterPos(OptionsGeneral, L"SubSplitterPos", -1.0, 0.0, 1.0);
 Setting<int> COptions::ConfigPage(OptionsGeneral, L"ConfigPage", 0);
@@ -132,6 +159,8 @@ Setting<std::vector<int>> COptions::SearchViewColumnOrder(OptionsSearch, L"Colum
 Setting<std::vector<int>> COptions::SearchViewColumnWidths(OptionsSearch, L"ColumnWidths");
 Setting<std::vector<int>> COptions::WatcherColumnOrder(OptionsWatcher, L"ColumnOrder");
 Setting<std::vector<int>> COptions::WatcherColumnWidths(OptionsWatcher, L"ColumnWidths");
+Setting<std::vector<int>> COptions::PermsViewColumnOrder(OptionsPerms, L"ColumnOrder");
+Setting<std::vector<int>> COptions::PermsViewColumnWidths(OptionsPerms, L"ColumnWidths");
 Setting<std::vector<std::wstring>> COptions::SelectDrivesDrives(OptionsDriveSelect, L"SelectDrivesDrives");
 Setting<std::vector<std::wstring>> COptions::SelectDrivesFolder(OptionsDriveSelect, L"SelectDrivesFolder");
 Setting<std::wstring> COptions::SearchTerm(OptionsSearch, L"SearchTerm");

@@ -106,6 +106,36 @@ int CFileWatcherView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
     return 0;
 }
 
+IMPLEMENT_DYNCREATE(CFilePermsView, CControlView)
+
+BEGIN_MESSAGE_MAP(CFilePermsView, CControlView)
+    ON_WM_CREATE()
+END_MESSAGE_MAP()
+
+int CFilePermsView::OnCreate(const LPCREATESTRUCT lpCreateStruct)
+{
+    if (CControlView::OnCreate(lpCreateStruct) == -1) return -1;
+
+    constexpr RECT rect = { 0, 0, 0, 0 };
+    m_control.CreateExtended(LVS_EX_HEADERDRAGDROP, LVS_OWNERDATA | WS_CHILD | WS_VISIBLE | LVS_REPORT | LVS_SHOWSELALWAYS, rect, this, ID_WDS_CONTROL);
+    m_control.ShowGrid(COptions::ListGrid);
+    m_control.ShowStripes(COptions::ListStripes);
+    m_control.ShowFullRowSelection(COptions::ListFullRowSelection);
+
+    // Columns should be in enumeration order so initial sort will work
+    InsertCol(IDS_COL_NAME, LVCFMT_LEFT, 400, COL_ITEMPERM_NAME);
+    InsertCol(IDS_COL_ACCOUNT, LVCFMT_LEFT, 180, COL_ITEMPERM_ACCOUNT);
+    InsertCol(IDS_COL_ACCESS, LVCFMT_LEFT, 70, COL_ITEMPERM_TYPE);
+    InsertCol(IDS_COL_RIGHTS, LVCFMT_LEFT, 150, COL_ITEMPERM_RIGHTS);
+    InsertCol(IDS_COL_APPLIES_TO, LVCFMT_LEFT, 200, COL_ITEMPERM_APPLIESTO);
+    InsertCol(IDS_COL_INHERITANCE, LVCFMT_LEFT, 90, COL_ITEMPERM_INHERITANCE);
+    m_control.SetSorting(COL_ITEMPERM_NAME, true);
+
+    m_control.OnColumnsInserted();
+
+    return 0;
+}
+
 IMPLEMENT_DYNCREATE(CFileTopView, CControlView)
 
 BEGIN_MESSAGE_MAP(CFileTopView, CControlView)

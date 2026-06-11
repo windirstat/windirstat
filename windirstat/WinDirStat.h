@@ -60,6 +60,7 @@ public:
     static CDirStatApp* Get() { return &s_singleton; }
     std::wstring GetSaveToPath() const { return m_saveToPath; }
     std::wstring GetSaveDupesToPath() const { return m_saveDupesToPath; }
+    std::wstring GetSavePermsToPath() const { return m_savePermsToPath; }
 
 protected:
 
@@ -74,6 +75,7 @@ protected:
     std::wstring m_loadFromPath;    // Path to load results from
     std::wstring m_saveToPath;      // Path to save results to
     std::wstring m_saveDupesToPath; // Path to save duplicates to
+    std::wstring m_savePermsToPath; // Path to save permissions to
     static CDirStatApp s_singleton; // Singleton application instance
 #ifdef _DEBUG
     CWDSTracerConsole m_vtraceConsole;

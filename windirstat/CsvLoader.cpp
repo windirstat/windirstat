@@ -16,7 +16,6 @@
 //
 
 #include "pch.h"
-#include "ItemDupe.h"
 #include "CsvLoader.h"
 
 static bool IsJsonPath(const std::wstring& path)
@@ -570,7 +569,7 @@ static std::vector<std::tuple<std::wstring, const CItem*>>
         const auto sizeB = itemB->GetSizeLogical();
         if (sizeA != sizeB) return sizeA > sizeB;
         if (const int hashCmp = hashA.compare(hashB); hashCmp != 0) return hashCmp < 0;
-        return _wcsicmp(itemA->GetPath().c_str(), itemB->GetPath().c_str()) < 0;
+        return itemA->ComparePath(itemB) < 0;
     });
     return dupeItems;
 }
@@ -651,4 +650,82 @@ bool SaveDuplicates(const std::wstring& path, const CItemDupe* rootDupe)
     return IsJsonPath(path)
         ? SaveDuplicatesJson(outf, cols, dupeItems)
         : SaveDuplicatesCsv (outf, cols, dupeItems);
+}
+
+// ── permissions save ──────────────────────────────────────────────────────────
+
+static bool SavePermissionsCsv(std::ofstream& outf, const std::vector<std::wstring>& cols,
+    const std::vector<const CItemPerm*>& items)
+{
+    for (size_t i = 0; i < cols.size(); ++i)
+        outf << QuoteAndConvert(cols[i]) << (i + 1 < cols.size() ? "," : "");
+    outf << "\r\n";
+
+    for (const auto* item : items)
+    {
+        std::format_to(std::ostreambuf_iterator<char>(outf), "{},{},{},{},{},0x{:08X},{}\r\n",
+            QuoteAndConvert(item->GetPath()),
+            QuoteAndConvert(item->GetAccount()),
+            QuoteAndConvert(CItemPerm::GetAccessTypeName(item->IsDeny())),
+            QuoteAndConvert(CItemPerm::GetRightsLevelName(CItemPerm::ComputeRightsLevel(item->GetAccessMask()))),
+            QuoteAndConvert(item->GetAppliesText()),
+            item->GetAccessMask(),
+            QuoteAndConvert(CItemPerm::GetInheritedName(item->IsInheritanceDisabled())));
+    }
+    outf.flush();
+    return outf.good();
+}
+
+static bool SavePermissionsJson(std::ofstream& outf, const std::vector<std::wstring>& cols,
+    const std::vector<const CItemPerm*>& items)
+{
+    // cols order: NAME, ACCOUNT, ACCESS, RIGHTS, APPLIES_TO, MASK, INHERITED
+    const auto jName    = JsonQuoteW(cols[0]);
+    const auto jAccount = JsonQuoteW(cols[1]);
+    const auto jAccess  = JsonQuoteW(cols[2]);
+    const auto jRights  = JsonQuoteW(cols[3]);
+    const auto jApplies = JsonQuoteW(cols[4]);
+    const auto jMask    = JsonQuoteW(cols[5]);
+    const auto jInherited = JsonQuoteW(cols[6]);
+
+    outf << "[\r\n";
+    bool first = true;
+    for (const auto* item : items)
+    {
+        if (!first) outf << ",\r\n";
+        first = false;
+        outf << "{\r\n";
+        outf << "  " << jName    << ": " << JsonQuoteW(item->GetPath()) << ",\r\n";
+        outf << "  " << jAccount << ": " << JsonQuoteW(item->GetAccount()) << ",\r\n";
+        outf << "  " << jAccess  << ": " << JsonQuoteW(CItemPerm::GetAccessTypeName(item->IsDeny())) << ",\r\n";
+        outf << "  " << jRights  << ": " << JsonQuoteW(CItemPerm::GetRightsLevelName(CItemPerm::ComputeRightsLevel(item->GetAccessMask()))) << ",\r\n";
+        outf << "  " << jApplies << ": " << JsonQuoteW(item->GetAppliesText()) << ",\r\n";
+        std::format_to(std::ostreambuf_iterator<char>(outf), "  {}: \"0x{:08X}\",\r\n", jMask, item->GetAccessMask());
+        outf << "  " << jInherited << ": " << JsonQuoteW(CItemPerm::GetInheritedName(item->IsInheritanceDisabled())) << "\r\n";
+        outf << "}";
+    }
+    outf << "\r\n]\r\n";
+    outf.flush();
+    return outf.good();
+}
+
+bool SavePermissions(const std::wstring& path, const std::vector<const CItemPerm*>& items)
+{
+    std::ofstream outf(path, std::ios::binary);
+    if (!outf.is_open()) return false;
+
+    const std::vector<std::wstring> cols =
+    {
+        Localization::Lookup(IDS_COL_NAME),
+        Localization::Lookup(IDS_COL_ACCOUNT),
+        Localization::Lookup(IDS_COL_ACCESS),
+        Localization::Lookup(IDS_COL_RIGHTS),
+        Localization::Lookup(IDS_COL_APPLIES_TO),
+        Localization::Lookup(IDS_COL_MASK),
+        Localization::Lookup(IDS_COL_INHERITANCE)
+    };
+
+    return IsJsonPath(path)
+        ? SavePermissionsJson(outf, cols, items)
+        : SavePermissionsCsv (outf, cols, items);
 }

@@ -25,6 +25,7 @@ class COptions;
 
 constexpr auto USERDEFINEDCLEANUPCOUNT = 10;
 constexpr auto TREELISTCOLORCOUNT = 8;
+constexpr auto PERMSRULECOUNT = 5;
 
 enum REFRESHPOLICY : std::uint8_t
 {
@@ -108,6 +109,7 @@ class COptions final
     static LPCWSTR OptionsTopView;
     static LPCWSTR OptionsSearch;
     static LPCWSTR OptionsWatcher;
+    static LPCWSTR OptionsPerms;
     static LPCWSTR OptionsDriveSelect;
 
 public:
@@ -174,6 +176,10 @@ public:
     static Setting<COLORREF> FileTreeColor7;
     static Setting<COLORREF> TreeMapGridColor;
     static Setting<COLORREF> TreeMapHighlightColor;
+    static Setting<std::wstring> PermsColorAccount[PERMSRULECOUNT];
+    static Setting<int> PermsColorLevel[PERMSRULECOUNT];
+    static Setting<COLORREF> PermsColor[PERMSRULECOUNT];
+    static Setting<std::wstring> PermsExcludeRegex;
     static Setting<double> MainSplitterPos;
     static Setting<double> SubSplitterPos;
     static Setting<int> ConfigPage;
@@ -215,6 +221,8 @@ public:
     static Setting<std::vector<int>> TopViewColumnWidths;
     static Setting<std::vector<int>> WatcherColumnOrder;
     static Setting<std::vector<int>> WatcherColumnWidths;
+    static Setting<std::vector<int>> PermsViewColumnOrder;
+    static Setting<std::vector<int>> PermsViewColumnWidths;
     static Setting<std::vector<std::wstring>> SelectDrivesDrives;
     static Setting<std::vector<std::wstring>> SelectDrivesFolder;
     static Setting<std::wstring> FilteringExcludeDirs;

@@ -27,6 +27,7 @@
 #include "PageCleanups.h"
 #include "PageFileTree.h"
 #include "PageTreeMap.h"
+#include "PagePermissions.h"
 #include "PageGeneral.h"
 #include "PagePrompts.h"
 #include "ProgressDlg.h"
@@ -131,6 +132,7 @@ bool COptionsPropertySheet::ShowSettings(const int initialPage)
     auto filtering = std::make_unique<CPageFiltering>();
     auto treelist = std::make_unique<CPageFileTree>();
     auto treemap = std::make_unique<CPageTreeMap>();
+    auto permissions = std::make_unique<CPagePermissions>();
     auto cleanups = std::make_unique<CPageCleanups>();
     auto prompts = std::make_unique<CPagePrompts>();
     auto advanced = std::make_unique<CPageAdvanced>();
@@ -139,6 +141,7 @@ bool COptionsPropertySheet::ShowSettings(const int initialPage)
     sheet->AddPage(filtering.get()); // index 1
     sheet->AddPage(treelist.get());
     sheet->AddPage(treemap.get());
+    sheet->AddPage(permissions.get());
     sheet->AddPage(cleanups.get());
     sheet->AddPage(prompts.get());
     sheet->AddPage(advanced.get());
@@ -428,6 +431,8 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
     ON_COMMAND_RANGE(ID_TOOLS_DEFRAG_BASE, ID_TOOLS_DEFRAG_BASE + wds::alphaSize, &CMainFrame::OnAdvancedDefrag)
     ON_COMMAND_RANGE(ID_TOOLS_CHKDSK_BASE, ID_TOOLS_CHKDSK_BASE + wds::alphaSize, &CMainFrame::OnAdvancedChkdsk)
     ON_COMMAND(ID_TOOLS_WATCHER, &CMainFrame::OnToolsWatcher)
+    ON_COMMAND(ID_TOOLS_PERMISSIONS, &CMainFrame::OnToolsPermissions)
+    ON_UPDATE_COMMAND_UI(ID_TOOLS_PERMISSIONS, OnUpdateToolsPermissions)
 END_MESSAGE_MAP()
 
 constexpr auto ID_STATUSPANE_IDLE_INDEX = 0;
@@ -796,7 +801,8 @@ BOOL CMainFrame::PreCreateWindow(CREATESTRUCT& cs)
 
     // Prevent flashing of the main window when launching in non-interactive mode
     if (!CDirStatApp::Get()->GetSaveToPath().empty() ||
-        !CDirStatApp::Get()->GetSaveDupesToPath().empty())
+        !CDirStatApp::Get()->GetSaveDupesToPath().empty() ||
+        !CDirStatApp::Get()->GetSavePermsToPath().empty())
     {
         AfxGetApp()->m_nCmdShow = SW_HIDE;
         cs.style &= ~WS_VISIBLE;
@@ -1201,6 +1207,7 @@ void CMainFrame::MoveFocus(const LOGICAL_FOCUS logicalFocus)
         case LF_TOPLIST: GetFileTopView()->SetFocus(); break;
         case LF_SEARCHLIST: GetFileSearchView()->SetFocus(); break;
         case LF_WATCHERLIST: GetFileWatcherView()->SetFocus(); break;
+        case LF_PERMSLIST: GetFilePermsView()->SetFocus(); break;
         case LF_FILETREE: GetFileTreeView()->SetFocus(); break;
         case LF_NONE:
         {
@@ -1513,4 +1520,24 @@ void CMainFrame::OnToolsWatcher()
     {
         GetFileTabbedView()->SetActiveWatcherView();
     }
+}
+
+void CMainFrame::OnToolsPermissions()
+{
+    GetFileTabbedView()->SetPermsTabVisibility(!GetFileTabbedView()->IsPermsTabVisible());
+
+    // Re-check visibility: a cancelled scan leaves the tab hidden, so don't activate it
+    if (GetFileTabbedView()->IsPermsTabVisible())
+    {
+        GetFileTabbedView()->SetActivePermsView();
+    }
+}
+
+void CMainFrame::OnUpdateToolsPermissions(CCmdUI* pCmdUI)
+{
+    // Only allow launching a scan once the file tree has been fully populated
+    const auto* doc = CDirStatDoc::Get();
+    pCmdUI->SetCheck(GetFileTabbedView()->IsPermsTabVisible());
+    pCmdUI->Enable(GetFileTabbedView()->IsPermsTabVisible() ||
+        (doc->HasRootItem() && doc->IsRootDone() && !doc->IsScanRunning()));
 }

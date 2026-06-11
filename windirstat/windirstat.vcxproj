@@ -192,7 +192,8 @@
       </Command>
     </CustomBuildStep>
     <PreBuildEvent>
-      <Command>POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(ProjectDir)Build\Format Sources.ps1" -Path "$(ProjectDir)."&#xD;&#xA;POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(ProjectDir)Build\Compress Strings.ps1" -Path "$(ProjectDir)res"</Command>
+      <Command>POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(ProjectDir)Build\Format Sources.ps1" -Path "$(ProjectDir)."
+POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(ProjectDir)Build\Compress Strings.ps1" -Path "$(ProjectDir)res"</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -233,7 +234,8 @@
       <LargeAddressAware>true</LargeAddressAware>
     </Link>
     <PreBuildEvent>
-      <Command>POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(ProjectDir)Build\Format Sources.ps1" -Path "$(ProjectDir)."&#xD;&#xA;POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(ProjectDir)Build\Compress Strings.ps1" -Path "$(ProjectDir)res"</Command>
+      <Command>POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(ProjectDir)Build\Format Sources.ps1" -Path "$(ProjectDir)."
+POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(ProjectDir)Build\Compress Strings.ps1" -Path "$(ProjectDir)res"</Command>
     </PreBuildEvent>
     <Manifest>
       <AdditionalManifestFiles>res\windirstat.manifest</AdditionalManifestFiles>
@@ -281,7 +283,8 @@
       <LargeAddressAware>true</LargeAddressAware>
     </Link>
     <PreBuildEvent>
-      <Command>POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(ProjectDir)Build\Format Sources.ps1" -Path "$(ProjectDir)."&#xD;&#xA;POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(ProjectDir)Build\Compress Strings.ps1" -Path "$(ProjectDir)res"</Command>
+      <Command>POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(ProjectDir)Build\Format Sources.ps1" -Path "$(ProjectDir)."
+POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(ProjectDir)Build\Compress Strings.ps1" -Path "$(ProjectDir)res"</Command>
     </PreBuildEvent>
     <Manifest>
       <AdditionalManifestFiles>res\windirstat.manifest</AdditionalManifestFiles>
@@ -336,7 +339,7 @@
       <TargetMachine>MachineX86</TargetMachine>
       <AdditionalOptions>/pdbaltpath:%_PDB% /release /OPT:ICF=8 %(AdditionalOptions)</AdditionalOptions>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
-      <Profile>false</Profile>
+      <Profile>true</Profile>
       <LargeAddressAware>true</LargeAddressAware>
     </Link>
     <Manifest>
@@ -348,7 +351,8 @@
       </Command>
     </CustomBuildStep>
     <PreBuildEvent>
-      <Command>POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(ProjectDir)Build\Format Sources.ps1" -Path "$(ProjectDir)."&#xD;&#xA;POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(ProjectDir)Build\Compress Strings.ps1" -Path "$(ProjectDir)res"</Command>
+      <Command>POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(ProjectDir)Build\Format Sources.ps1" -Path "$(ProjectDir)."
+POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(ProjectDir)Build\Compress Strings.ps1" -Path "$(ProjectDir)res"</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -395,7 +399,7 @@
       <OutputFile>$(OutDir)$(TargetName).exe</OutputFile>
       <TargetMachine>MachineX64</TargetMachine>
       <AdditionalOptions>/pdbaltpath:%_PDB% /release /OPT:ICF=8 %(AdditionalOptions)</AdditionalOptions>
-      <Profile>false</Profile>
+      <Profile>true</Profile>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <LargeAddressAware>true</LargeAddressAware>
     </Link>
@@ -408,7 +412,8 @@
       </Command>
     </CustomBuildStep>
     <PreBuildEvent>
-      <Command>POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(ProjectDir)Build\Format Sources.ps1" -Path "$(ProjectDir)."&#xD;&#xA;POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(ProjectDir)Build\Compress Strings.ps1" -Path "$(ProjectDir)res"</Command>
+      <Command>POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(ProjectDir)Build\Format Sources.ps1" -Path "$(ProjectDir)."
+POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(ProjectDir)Build\Compress Strings.ps1" -Path "$(ProjectDir)res"</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
@@ -454,7 +459,7 @@
       <AdditionalDependencies>delayimp.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)$(TargetName).exe</OutputFile>
       <AdditionalOptions>/pdbaltpath:%_PDB% /release /OPT:ICF=8 %(AdditionalOptions)</AdditionalOptions>
-      <Profile>false</Profile>
+      <Profile>true</Profile>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <LargeAddressAware>true</LargeAddressAware>
     </Link>
@@ -467,7 +472,8 @@
       </Command>
     </CustomBuildStep>
     <PreBuildEvent>
-      <Command>POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(ProjectDir)Build\Format Sources.ps1" -Path "$(ProjectDir)."&#xD;&#xA;POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(ProjectDir)Build\Compress Strings.ps1" -Path "$(ProjectDir)res"</Command>
+      <Command>POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(ProjectDir)Build\Format Sources.ps1" -Path "$(ProjectDir)."
+POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(ProjectDir)Build\Compress Strings.ps1" -Path "$(ProjectDir)res"</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ImportGroup Label="PropertySheets">
@@ -479,6 +485,7 @@
     <ClInclude Include="Controls\FileDupeControl.h" />
     <ClInclude Include="Controls\FileTopControl.h" />
     <ClInclude Include="Controls\FileTreeControl.h" />
+    <ClInclude Include="Controls\FilePermsControl.h" />
     <ClInclude Include="Controls\FileWatcherControl.h" />
     <ClInclude Include="Controls\IconHandler.h" />
     <ClInclude Include="Controls\WdsListControl.h" />
@@ -501,6 +508,7 @@
     <ClInclude Include="ItemSearch.h" />
     <ClInclude Include="ItemTop.h" />
     <ClInclude Include="Pages\PageFiltering.h" />
+    <ClInclude Include="Pages\PagePermissions.h" />
     <ClInclude Include="res\LangStrings.h" />
     <ClInclude Include="Dialogs\SearchDlg.h" />
     <ClInclude Include="SmartPointer.h" />
@@ -513,6 +521,7 @@
     <ClInclude Include="FinderBasic.h" />
     <ClInclude Include="Item.h" />
     <ClInclude Include="ItemDupe.h" />
+    <ClInclude Include="ItemPerm.h" />
     <ClInclude Include="Layout.h" />
     <ClInclude Include="Localization.h" />
     <ClInclude Include="MainFrame.h" />
@@ -539,6 +548,7 @@
     <ClCompile Include="Controls\FileDupeControl.cpp" />
     <ClCompile Include="Controls\FileTopControl.cpp" />
     <ClCompile Include="Controls\FileTreeControl.cpp" />
+    <ClCompile Include="Controls\FilePermsControl.cpp" />
     <ClCompile Include="Controls\FileWatcherControl.cpp" />
     <ClCompile Include="Controls\WdsListControl.cpp" />
     <ClCompile Include="Controls\PacMan.cpp" />
@@ -565,6 +575,7 @@
     <ClCompile Include="Item.cpp">
     </ClCompile>
     <ClCompile Include="ItemDupe.cpp" />
+    <ClCompile Include="ItemPerm.cpp" />
     <ClCompile Include="ItemSearch.cpp" />
     <ClCompile Include="ItemTop.cpp" />
     <ClCompile Include="Layout.cpp">
@@ -578,6 +589,7 @@
     <ClCompile Include="Pages\PageCleanups.cpp">
     </ClCompile>
     <ClCompile Include="Pages\PageFiltering.cpp" />
+    <ClCompile Include="Pages\PagePermissions.cpp" />
     <ClCompile Include="Pages\PageGeneral.cpp">
     </ClCompile>
     <ClCompile Include="Pages\PageFileTree.cpp">

@@ -195,6 +195,7 @@ public:
     bool HasExtension(std::wstring_view extension) const noexcept;
     std::wstring GetExtension() const;
     std::wstring GetPath() const;
+    int ComparePath(const CItem* other) const;
     std::wstring GetPathLong() const;
     std::wstring GetFolderPath() const;
     bool HasUncPath() const;

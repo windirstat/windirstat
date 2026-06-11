@@ -512,11 +512,11 @@ function Invoke-ProcessWithTimeout {
 # The exe used must have its WinDirStat.ini sitting next to it (the caller stages
 # that copy).  Returns { CommandLine, ExitCode, ElapsedSeconds, StdOut, StdErr }.
 function Invoke-WinDirStatCsv {
-    param([string] $Exe, [string] $Csv, [string] $Root, [switch] $Duplicates, [string] $WorkingDirectory)
+    param([string] $Exe, [string] $Csv, [string] $Root, [switch] $Duplicates, [switch] $Permissions, [string] $WorkingDirectory)
 
     if (Test-Path -LiteralPath $Csv) { Remove-Item -LiteralPath $Csv -Force }
 
-    $flag = if ($Duplicates) { '/savedupesto' } else { '/saveto' }
+    $flag = if ($Permissions) { '/savepermsto' } elseif ($Duplicates) { '/savedupesto' } else { '/saveto' }
     $wd   = if ($WorkingDirectory) { $WorkingDirectory } else { Split-Path -Parent $Exe }
     $run  = Invoke-ProcessWithTimeout -FileName $Exe -Arguments @($flag, $Csv, $Root) -WorkingDirectory $wd
     if ($run.ExitCode -ne 0) {
@@ -8398,6 +8398,245 @@ function Invoke-UncSuite {
     }
 }
 
+# #############################################################################
+# PERMISSIONS SUITE  (Tools -> Scan Permissions / command-line /savepermsto)
+# #############################################################################
+#
+# Exercises the permissions scanner almost entirely through the headless
+# /savepermsto command line (CSV + JSON), so it runs unelevated and
+# deterministically.  Each subfolder under the scan root is stamped with a
+# specific ACE shape via icacls, then a single scan is asserted against:
+#   - non-inherited capture: children list only explicit ACEs while the root
+#     lists every ACE (including inherited ones)
+#   - Rights summarization (Full Control / Modify / Read & Execute / Read / Write)
+#   - "Applies To" inheritance-scope mapping (OI/CI/IO -> standard phrases; files)
+#   - Allow vs Deny
+#   - broken-inheritance flag (a protected DACL -> Inherited = No)
+#   - identity resolution (Everyone shown without a leading backslash; an
+#     app-package SID resolves to a name rather than a raw S-1-... string)
+#   - the Access Mask hex column
+#   - the account-exclusion regular expression (partial, case-insensitive, anchored)
+#   - JSON output shape
+#
+# No elevation is required: the scan only READS DACLs (which owners can read) and
+# the ACEs are stamped on freshly-created, user-owned temp folders.
+function Invoke-PermissionsSuite {
+    $workRoot = Join-Path $BuildRoot 'permissions-test'
+    $runRoot  = Join-Path $workRoot 'runner'
+    $scanRoot = Join-Path $workRoot 'scan-root'
+
+    # Well-known SIDs are locale-independent for GRANTING; the resolved display
+    # names the scan emits may be localized, so name-specific assertions derive
+    # their expectations from the scan output itself.
+    $sidEveryone = '*S-1-1-0'
+    $sidUsers    = '*S-1-5-32-545'
+    $sidAuth     = '*S-1-5-11'
+    $sidInteract = '*S-1-5-4'
+    $sidNetwork  = '*S-1-5-2'
+    $sidAppPkgs  = '*S-1-15-2-1'
+
+    function Invoke-Icacls {
+        param([Parameter(Mandatory)] [string[]] $Arguments)
+        $p = Invoke-ProcessWithTimeout -FileName "$env:SystemRoot\System32\icacls.exe" -Arguments $Arguments -WorkingDirectory $env:SystemRoot
+        if ($p.ExitCode -ne 0) { throw "icacls $($Arguments -join ' ') failed [$($p.ExitCode)]: $($p.StdOut)$($p.StdErr)" }
+    }
+
+    # Run a headless permissions scan and return the rows.  CSV vs JSON is chosen
+    # by the output extension; English is forced so the column values are stable.
+    function Get-PermRows {
+        param([string] $Root, [string] $Out, [string] $ExcludeRegex = '')
+        $sections = [ordered] @{
+            Options = [ordered] @{
+                LanguageId          = 9   # English
+                UseFastScanEngine   = 1
+                ShowElevationPrompt = 0
+                AutoElevate         = 0
+            }
+        }
+        if (-not [string]::IsNullOrEmpty($ExcludeRegex)) {
+            Set-IniValue $sections 'PermissionsView' 'ExcludeRegex' $ExcludeRegex
+        }
+        Write-PortableIni -Path (Join-Path $runRoot 'WinDirStat.ini') -Sections $sections
+        [void] (Invoke-WinDirStatCsv -Exe $runnerExe -Csv $Out -Root $Root -Permissions)
+        # Leading comma keeps an empty result an empty array (not $null) across the return.
+        if ($Out -match '\.json$') { return ,@(ConvertFrom-JsonItems ([System.IO.File]::ReadAllText($Out))) }
+        return ,@(Import-Csv -LiteralPath $Out -Encoding UTF8)
+    }
+
+    function Get-RowsForPath {
+        param($Rows, [string] $Path)
+        $norm = Normalize-ComparePath $Path
+        ,@($Rows | Where-Object { (Normalize-ComparePath $_.Name) -ieq $norm })
+    }
+
+    function Assert-That {
+        param([string] $G, [string] $Name, [bool] $Cond, [string] $Detail = '')
+        if ($Cond) { Assert-Pass $G $Name } else { Assert-Fail $G $Name $Detail }
+    }
+
+    try {
+        if (-not (Test-Path -LiteralPath $ExePath)) {
+            Assert-Skip 'Permissions' 'Executable present' "WinDirStat executable not found: $ExePath"
+            return
+        }
+
+        # --- Stage an isolated runner (own exe + portable English INI) ------
+        if (Test-Path -LiteralPath $workRoot) { Remove-Item -LiteralPath $workRoot -Recurse -Force }
+        New-Item -ItemType Directory -Force -Path $runRoot, $scanRoot | Out-Null
+        $runnerExe = Join-Path $runRoot 'WinDirStat.exe'
+        Copy-Item -LiteralPath $ExePath -Destination $runnerExe -Force
+
+        # --- Stamp each subfolder with a specific ACE shape ----------------
+        $fExplicit    = Join-Path $scanRoot 'explicit'        # one explicit Everyone ACE
+        $fInheritOnly = Join-Path $scanRoot 'inherited-only'  # no explicit ACEs
+        $fRights      = Join-Path $scanRoot 'rights'          # five distinct rights levels
+        $fApplies     = Join-Path $scanRoot 'applies'         # four inheritance scopes + a file
+        $fProtected   = Join-Path $scanRoot 'protected'       # inheritance disabled
+        $fDeny        = Join-Path $scanRoot 'deny'            # an allow and a deny ACE
+        $fAppPkg      = Join-Path $scanRoot 'apppkg'          # app-package SID
+        foreach ($d in @($fExplicit, $fInheritOnly, $fRights, $fApplies, $fProtected, $fDeny, $fAppPkg)) {
+            New-Item -ItemType Directory -Force -Path $d | Out-Null
+        }
+        $applyFile = Join-Path $fApplies 'file.txt'
+        New-TestFile -Path $applyFile -Size 64
+
+        # Root gets one explicit (this-folder-only) ACE atop its inherited ones.
+        Invoke-Icacls @($scanRoot, '/grant', "${sidEveryone}:(R)")
+        Invoke-Icacls @($fExplicit, '/grant', "${sidEveryone}:(OI)(CI)(R)")
+        # icacls simple (W) omits READ_CONTROL (0x00100116) so it is "Special", not a
+        # full FILE_GENERIC_WRITE; grant the exact write bits via specific-rights tokens.
+        Invoke-Icacls @($fRights,
+            '/grant', "${sidEveryone}:(OI)(CI)(F)",
+            '/grant', "${sidUsers}:(OI)(CI)(M)",
+            '/grant', "${sidAuth}:(OI)(CI)(RX)",
+            '/grant', "${sidInteract}:(OI)(CI)(R)",
+            '/grant', "${sidNetwork}:(OI)(CI)(RC,S,WD,AD,WEA,WA)")
+        Invoke-Icacls @($fApplies,
+            '/grant', "${sidEveryone}:(OI)(CI)(R)",
+            '/grant', "${sidUsers}:(CI)(R)",
+            '/grant', "${sidAuth}:(OI)(CI)(IO)(R)",
+            '/grant', "${sidInteract}:(R)")
+        Invoke-Icacls @($applyFile, '/grant', "${sidEveryone}:(R)")
+        Invoke-Icacls @($fProtected, '/inheritance:d')
+        Invoke-Icacls @($fProtected, '/grant', "${sidEveryone}:(OI)(CI)(R)")
+        # Deny a principal the local interactive user is NOT part of (NETWORK), so
+        # the Deny ACE is listed without locking this process out of its own folder.
+        Invoke-Icacls @($fDeny, '/grant', "${sidUsers}:(M)")
+        Invoke-Icacls @($fDeny, '/deny', "${sidNetwork}:(W)")
+        Invoke-Icacls @($fAppPkg, '/grant', "${sidAppPkgs}:(OI)(CI)(R)")
+
+        Write-ColoredLine 'Permissions scanner suite (headless /savepermsto)' Cyan
+        Write-LabelValue 'Scan root' $scanRoot DarkGray
+        Write-LabelValue 'Exe'       $runnerExe DarkGray
+        Write-Host ''
+
+        # --- One scan drives the bulk of the assertions --------------------
+        $csv  = Join-Path $workRoot 'perms.csv'
+        $rows = Get-PermRows -Root $scanRoot -Out $csv
+
+        # ----- column shape ------------------------------------------------
+        $g = 'Perms/Columns'
+        $expectedCols = @('Name', 'Account', 'Access', 'Rights', 'Applies To', 'Access Mask', 'Inherited')
+        $actualCols   = @($rows[0].PSObject.Properties.Name)
+        Assert-That $g 'CSV has the expected columns' (@($expectedCols | Where-Object { $_ -notin $actualCols }).Count -eq 0) "got: $($actualCols -join ', ')"
+
+        # ----- root lists inherited; children do not -----------------------
+        $g = 'Perms/Inheritance scope'
+        $rootRows        = Get-RowsForPath $rows $scanRoot
+        $inheritOnlyRows = Get-RowsForPath $rows $fInheritOnly
+        Assert-That $g 'Root lists inherited ACEs (more than its one explicit ACE)' ($rootRows.Count -gt 1) "root rows: $($rootRows.Count)"
+        Assert-That $g 'Child with only inherited ACEs is omitted' ($inheritOnlyRows.Count -eq 0) "rows: $($inheritOnlyRows.Count)"
+
+        # ----- explicit child basics ---------------------------------------
+        $g = 'Perms/Explicit ACE'
+        $exRows = Get-RowsForPath $rows $fExplicit
+        Assert-That $g 'Exactly one explicit ACE row' ($exRows.Count -eq 1) "rows: $($exRows.Count)"
+        if ($exRows.Count -eq 1) {
+            Assert-That $g 'Access = Allow'  ($exRows[0].Access -eq 'Allow') "got '$($exRows[0].Access)'"
+            Assert-That $g 'Rights = Read'   ($exRows[0].Rights -eq 'Read')  "got '$($exRows[0].Rights)'"
+            Assert-That $g 'Applies To = This folder, subfolders and files' ($exRows[0].'Applies To' -eq 'This folder, subfolders and files') "got '$($exRows[0].'Applies To')'"
+            Assert-That $g 'Inherited = Yes' ($exRows[0].Inherited -eq 'Yes') "got '$($exRows[0].Inherited)'"
+        }
+
+        # ----- rights summarization ----------------------------------------
+        $g = 'Perms/Rights mapping'
+        $rightsRows = Get-RowsForPath $rows $fRights
+        $rightsSet  = @($rightsRows | ForEach-Object { $_.Rights })
+        foreach ($lvl in @('Full Control', 'Modify', 'Read & Execute', 'Read', 'Write')) {
+            Assert-That $g "Rights includes '$lvl'" ($rightsSet -contains $lvl) "got: $($rightsSet -join ', ')"
+        }
+        $modifyRow = @($rightsRows | Where-Object { $_.Rights -eq 'Modify' })
+        Assert-That $g 'Modify Access Mask = 0x001301BF' (($modifyRow.Count -eq 1) -and ($modifyRow[0].'Access Mask' -eq '0x001301BF')) "got '$(@($modifyRow | ForEach-Object { $_.'Access Mask' }) -join ', ')'"
+
+        # ----- applies-to scope mapping ------------------------------------
+        $g = 'Perms/Applies To'
+        $appliesRows = Get-RowsForPath $rows $fApplies
+        $appliesSet  = @($appliesRows | ForEach-Object { $_.'Applies To' })
+        foreach ($scope in @('This folder, subfolders and files', 'This folder and subfolders', 'Subfolders and files only', 'This folder only')) {
+            Assert-That $g "Applies To includes '$scope'" ($appliesSet -contains $scope) "got: $($appliesSet -join ' | ')"
+        }
+        $fileRows = Get-RowsForPath $rows $applyFile
+        Assert-That $g 'File ACE Applies To = This file only' (($fileRows.Count -eq 1) -and ($fileRows[0].'Applies To' -eq 'This file only')) "rows: $($fileRows.Count)"
+
+        # ----- broken inheritance flag -------------------------------------
+        $g = 'Perms/Broken inheritance'
+        $protRows = Get-RowsForPath $rows $fProtected
+        Assert-That $g 'Protected folder produced rows' ($protRows.Count -ge 1) "rows: $($protRows.Count)"
+        Assert-That $g 'All protected rows are Inherited = No' (($protRows.Count -ge 1) -and (@($protRows | Where-Object { $_.Inherited -ne 'No' }).Count -eq 0)) "values: $(@($protRows | ForEach-Object { $_.Inherited }) -join ', ')"
+
+        # ----- allow vs deny -----------------------------------------------
+        $g = 'Perms/Access type'
+        $denyRows = Get-RowsForPath $rows $fDeny
+        Assert-That $g 'Deny folder has a Deny row'  (@($denyRows | Where-Object { $_.Access -eq 'Deny' }).Count -ge 1)  "access: $(@($denyRows | ForEach-Object { $_.Access }) -join ', ')"
+        Assert-That $g 'Deny folder has an Allow row' (@($denyRows | Where-Object { $_.Access -eq 'Allow' }).Count -ge 1) "access: $(@($denyRows | ForEach-Object { $_.Access }) -join ', ')"
+
+        # ----- identity resolution -----------------------------------------
+        $g = 'Perms/Identity'
+        $backslashAccts = @($rows | Where-Object { $_.Account -like '\*' } | ForEach-Object { $_.Account } | Select-Object -Unique)
+        Assert-That $g 'No account name has a leading backslash' ($backslashAccts.Count -eq 0) "offenders: $($backslashAccts -join ', ')"
+        $appPkgRows = Get-RowsForPath $rows $fAppPkg
+        Assert-That $g 'App-package SID resolved to a name (not a raw SID)' (($appPkgRows.Count -ge 1) -and (@($appPkgRows | Where-Object { $_.Account -match '^S-1-' }).Count -eq 0)) "accounts: $(@($appPkgRows | ForEach-Object { $_.Account }) -join ', ')"
+
+        # ----- account-exclusion regex -------------------------------------
+        $g = 'Perms/Exclude regex'
+        $everyoneName  = if ($exRows.Count -eq 1) { $exRows[0].Account } else { 'Everyone' }
+        $everyoneCount = @($rows | Where-Object { $_.Account -eq $everyoneName }).Count
+        Assert-That $g "Baseline contains the '$everyoneName' account" ($everyoneCount -ge 1) "count: $everyoneCount"
+
+        $exclRows = Get-PermRows -Root $scanRoot -Out (Join-Path $workRoot 'perms-ex.csv') -ExcludeRegex ([regex]::Escape($everyoneName))
+        Assert-That $g 'Excluded account is gone'  (@($exclRows | Where-Object { $_.Account -eq $everyoneName }).Count -eq 0) 'still present after exclude'
+        Assert-That $g 'Other accounts remain'     (@($exclRows | Where-Object { $_.Account -ne $everyoneName }).Count -ge 1) 'everything was excluded'
+
+        $upRows = Get-PermRows -Root $scanRoot -Out (Join-Path $workRoot 'perms-up.csv') -ExcludeRegex ([regex]::Escape($everyoneName).ToUpperInvariant())
+        Assert-That $g 'Upper-cased pattern still excludes (case-insensitive)' (@($upRows | Where-Object { $_.Account -eq $everyoneName }).Count -eq 0) 'match was case-sensitive'
+
+        $anchorRows = Get-PermRows -Root $scanRoot -Out (Join-Path $workRoot 'perms-anchor.csv') -ExcludeRegex ('^' + [regex]::Escape($everyoneName) + '$')
+        Assert-That $g 'Anchored full-name pattern excludes' (@($anchorRows | Where-Object { $_.Account -eq $everyoneName }).Count -eq 0) 'anchored full match did not exclude'
+
+        if ($everyoneName.Length -gt 3) {
+            $partialPat  = '^' + [regex]::Escape($everyoneName.Substring(0, 3)) + '$'
+            $partialRows = Get-PermRows -Root $scanRoot -Out (Join-Path $workRoot 'perms-partial.csv') -ExcludeRegex $partialPat
+            Assert-That $g 'Anchored partial pattern does NOT exclude' (@($partialRows | Where-Object { $_.Account -eq $everyoneName }).Count -ge 1) "pattern '$partialPat' wrongly excluded"
+        }
+
+        # ----- JSON output shape -------------------------------------------
+        $g = 'Perms/JSON'
+        $jsonRows = Get-PermRows -Root $scanRoot -Out (Join-Path $workRoot 'perms.json')
+        Assert-That $g 'JSON produced rows' ($jsonRows.Count -ge 1) "rows: $($jsonRows.Count)"
+        if ($jsonRows.Count -ge 1) {
+            $props    = @($jsonRows[0].PSObject.Properties.Name)
+            $expected = @('Name', 'Account', 'Access', 'Rights', 'Applies To', 'Access Mask', 'Inherited')
+            Assert-That $g 'JSON object has all permission fields' (@($expected | Where-Object { $_ -notin $props }).Count -eq 0) "props: $($props -join ', ')"
+            $jsonEx = Get-RowsForPath $jsonRows $fExplicit
+            Assert-That $g 'JSON explicit ACE matches CSV (Read / Allow)' (($jsonEx.Count -eq 1) -and ($jsonEx[0].Rights -eq 'Read') -and ($jsonEx[0].Access -eq 'Allow')) 'mismatch vs CSV'
+        }
+    }
+    finally {
+        Clear-TestAttributes -Path $workRoot
+        Remove-TestArtifacts -Path $workRoot
+    }
+}
+
 # =============================================================================
 # MAIN
 # =============================================================================
@@ -8422,12 +8661,13 @@ Write-LabelValue 'Elevated'   $(if (Test-IsElevated) { 'yes' } else { 'no' }) Da
 
 # Suite registry — name -> function.  All run unless narrowed by -Only / -Skip.
 $allSuites = [ordered]@{
-    Filtering = 'Invoke-FilteringSuite'
-    Settings  = 'Invoke-SettingsSuite'
-    Ui        = 'Invoke-UiSuite'
-    Reparse   = 'Invoke-ReparseSuite'
-    EdgeCases = 'Invoke-EdgeCasesSuite'
-    Unc       = 'Invoke-UncSuite'
+    Filtering   = 'Invoke-FilteringSuite'
+    Settings    = 'Invoke-SettingsSuite'
+    Ui          = 'Invoke-UiSuite'
+    Reparse     = 'Invoke-ReparseSuite'
+    EdgeCases   = 'Invoke-EdgeCasesSuite'
+    Unc         = 'Invoke-UncSuite'
+    Permissions = 'Invoke-PermissionsSuite'
 }
 
 $onlySet = @($Only -split '[,;\s]+' | Where-Object { $_ })
