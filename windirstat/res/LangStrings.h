@@ -272,6 +272,7 @@ constexpr std::wstring_view IDS_SEARCH_RESULTS = L"IDS_SEARCH_RESULTS";
 constexpr std::wstring_view IDS_SEARCH_TITLE = L"IDS_SEARCH_TITLE";
 constexpr std::wstring_view IDS_SEARCH_WHOLE_PHRASE = L"IDS_SEARCH_WHOLE_PHRASE";
 constexpr std::wstring_view IDS_SHADOW_COPY_FAILED = L"IDS_SHADOW_COPY_FAILED";
+constexpr std::wstring_view IDS_sITEMS_SELECTED = L"IDS_sITEMS_SELECTED";
 constexpr std::wstring_view IDS_sITEMSs = L"IDS_sITEMSs";
 constexpr std::wstring_view IDS_SPEC_BYTES = L"IDS_SPEC_BYTES";
 constexpr std::wstring_view IDS_SPEC_GiB = L"IDS_SPEC_GiB";
