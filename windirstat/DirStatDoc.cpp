@@ -2009,6 +2009,17 @@ void CDirStatDoc::StartScanningEngine(std::vector<CItem*> items)
                 drive->RemoveHardlinksItem();
             }
         });
+        // After hardlink adjustment GetProgressPos() holds the corrected scan-based size.
+        // Resync the progress range to this value so position and range share exactly the
+        // same calculation basis — they will converge to 100%, not drop to 99%.
+        // Using GetProgressRange() (GetFreeDiskSpace) here would still be a mismatch.
+        {
+            const ULONGLONG correctedRange = GetRootItem()->GetProgressPos();
+            CMainFrame::PostToMessageThread([correctedRange]
+            {
+                CMainFrame::Get()->UpdateProgressRange(correctedRange);
+            });
+        }
 
         // If new scan or closing, indicate done and exit early
         if (stopReason == Abort)

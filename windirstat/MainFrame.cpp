@@ -489,6 +489,14 @@ void CMainFrame::CreateProgress(ULONGLONG range)
     }
 }
 
+void CMainFrame::UpdateProgressRange(const ULONGLONG range)
+{
+    // Resync the range after hardlink adjustment so that the scan-based position
+    // and the range share the same calculation basis, converging exactly at 100%.
+    if (m_progressVisible && m_progressRange > 0)
+        m_progressRange = range;
+}
+
 void CMainFrame::SetProgressComplete()
 {
     // Disable any potential suspend state
