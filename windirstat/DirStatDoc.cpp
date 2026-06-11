@@ -1740,6 +1740,13 @@ void CDirStatDoc::OnScanStop()
 
 void CDirStatDoc::StopScanningEngine(StopReason stopReason)
 {
+    // Interrupt blocking I/O (e.g. ReadFile on large files) in worker threads
+    // so they reach WaitIfSuspended promptly. Without this, SuspendExecution
+    // hangs indefinitely waiting for AllThreadsIdling() while a thread reads.
+    for (auto& queue : m_queues | std::views::values)
+        queue.CancelThreadIo();
+
+
     // Request for all threads to stop processing
     for (auto& queue : m_queues | std::views::values)
         ProcessMessagesUntilSignaled([&queue] { queue.SuspendExecution(); });
