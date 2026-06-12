@@ -46,7 +46,6 @@ void CPageAdvanced::DoDataExchange(CDataExchange* pDX)
     DDX_CBIndex(pDX, IDC_COMBO_THREADS, m_scanningThreads);
     DDX_CBIndex(pDX, IDC_HASH_ALGORITHM, m_fileHashAlgorithm);
     DDX_CBIndex(pDX, IDC_SCAN_IO_PRIORITY, m_scanIoPriority);
-
 }
 
 BEGIN_MESSAGE_MAP(CPageAdvanced, CMFCPropertyPage)
@@ -142,7 +141,6 @@ void CPageAdvanced::OnOK()
     COptions::ScanningThreads = m_scanningThreads + 1;
     COptions::FileHashAlgorithm = m_fileHashAlgorithm;
     COptions::ScanIoPriority = m_scanIoPriority;
-
     COptions::LargeFileCount = std::stoi(m_largestFileCount.GetString());
     COptions::FolderHistoryCount = std::stoi(m_folderHistoryCount.GetString());
 

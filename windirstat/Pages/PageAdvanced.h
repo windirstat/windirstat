@@ -54,7 +54,6 @@ protected:
     int m_scanningThreads = 0;
     int m_fileHashAlgorithm = HASH_SHA512;
     int m_scanIoPriority = 1;  // 0=Normal, 1=BelowNormal, 2=Idle
-
     CStringW m_largestFileCount;
     CStringW m_folderHistoryCount;
 
