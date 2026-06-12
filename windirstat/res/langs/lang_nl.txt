@@ -323,3 +323,4 @@ MSI_OptionsDlgDescription=Selecteer de opties hieronder om uw WinDirStat-install
 MSI_OptionsDlgDesktopShortcut=Snelkoppeling op bureaublad aanmaken
 MSI_OptionsDlgHeaderTitle=Installatie-opties
 MSI_OptionsDlgTitle=WinDirStat-opties
+IDS_PAGE_ADVANCED_IO_PRIORITY=I/O-prioriteit van scan

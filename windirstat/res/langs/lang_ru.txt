@@ -323,3 +323,4 @@ MSI_OptionsDlgDescription=Выберите параметры ниже, чтоб
 MSI_OptionsDlgDesktopShortcut=Создать ярлык на рабочем столе
 MSI_OptionsDlgHeaderTitle=Параметры установки
 MSI_OptionsDlgTitle=Параметры WinDirStat
+IDS_PAGE_ADVANCED_IO_PRIORITY=Приоритет ввода/вывода при сканировании

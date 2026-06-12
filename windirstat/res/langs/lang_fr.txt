@@ -323,3 +323,4 @@ MSI_OptionsDlgDescription=Sélectionnez les options ci-dessous pour personnalise
 MSI_OptionsDlgDesktopShortcut=Créer un raccourci sur le bureau
 MSI_OptionsDlgHeaderTitle=Options d'installation
 MSI_OptionsDlgTitle=Options de WinDirStat
+IDS_PAGE_ADVANCED_IO_PRIORITY=Priorité E/S de l'analyse
