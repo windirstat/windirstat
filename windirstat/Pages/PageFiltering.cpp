@@ -134,6 +134,15 @@ void CPageFiltering::OnOK()
 {
     UpdateData();
 
+    const bool refreshAll = COptions::FilteringSizeMinimum != m_filteringSizeMinimum ||
+        COptions::FilteringSizeUnits != m_filteringSizeUnits ||
+        COptions::FilteringUseRegex != (FALSE != m_filteringUseRegex) ||
+        COptions::FilteringMaxAgeDays != m_filteringMaxAgeDays ||
+        COptions::FilteringExcludeFiles.Obj() != m_filteringExcludeFiles.GetString() ||
+        COptions::FilteringExcludeDirs.Obj() != m_filteringExcludeDirs.GetString() ||
+        COptions::FilteringIncludeFiles.Obj() != m_filteringIncludeFiles.GetString() ||
+        COptions::FilteringIncludeDirs.Obj() != m_filteringIncludeDirs.GetString();
+
     COptions::FilteringSizeMinimum = m_filteringSizeMinimum;
     COptions::FilteringSizeUnits = m_filteringSizeUnits;
     COptions::FilteringUseRegex = (FALSE != m_filteringUseRegex);
@@ -143,6 +152,12 @@ void CPageFiltering::OnOK()
     COptions::FilteringIncludeFiles.Obj() = m_filteringIncludeFiles;
     COptions::FilteringIncludeDirs.Obj() = m_filteringIncludeDirs;
     CFiltering::CompileFilters();
+
+    if (refreshAll)
+    {
+        CDirStatDoc::Get()->OnOpenDocument(
+            CDirStatDoc::Get()->GetPathName().GetString());
+    }
 
     CMFCPropertyPage::OnOK();
 }
