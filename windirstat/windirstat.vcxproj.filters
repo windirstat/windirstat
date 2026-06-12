@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Header Files">
@@ -99,6 +99,9 @@
     <None Include="res\lang_combined.bin">
       <Filter>Resource Files\Languages</Filter>
     </None>
+    <None Include="Shaders\GpuHash.hlsl">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Dialogs\AboutDlg.h">
@@ -111,6 +114,9 @@
       <Filter>Header Files\User Interface\Pages</Filter>
     </ClInclude>
     <ClInclude Include="Pages\PageAdvanced.h">
+      <Filter>Header Files\User Interface\Pages</Filter>
+    </ClInclude>
+    <ClInclude Include="Pages\PageGpu.h">
       <Filter>Header Files\User Interface\Pages</Filter>
     </ClInclude>
     <ClInclude Include="Pages\PageCleanups.h">
@@ -218,6 +224,9 @@
     <ClInclude Include="DirStatDoc.h">
       <Filter>Header Files\Core</Filter>
     </ClInclude>
+    <ClInclude Include="GpuHasher.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
     <ClInclude Include="Options.h">
       <Filter>Header Files\Core</Filter>
     </ClInclude>
@@ -305,6 +314,9 @@
       <Filter>Source Files\User Interface\Dialogs</Filter>
     </ClCompile>
     <ClCompile Include="Pages\PageAdvanced.cpp">
+      <Filter>Source Files\User Interface\Pages</Filter>
+    </ClCompile>
+    <ClCompile Include="Pages\PageGpu.cpp">
       <Filter>Source Files\User Interface\Pages</Filter>
     </ClCompile>
     <ClCompile Include="Pages\PageCleanups.cpp">
@@ -396,6 +408,9 @@
     </ClCompile>
     <ClCompile Include="Views\ControlView.cpp">
       <Filter>Source Files\User Interface\Views</Filter>
+    </ClCompile>
+    <ClCompile Include="GpuHasher.cpp">
+      <Filter>Source Files\Core</Filter>
     </ClCompile>
     <ClCompile Include="Options.cpp">
       <Filter>Source Files\Core</Filter>
