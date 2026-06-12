@@ -324,3 +324,7 @@ MSI_OptionsDlgDesktopShortcut=Crear acceso directo en el escritorio
 MSI_OptionsDlgHeaderTitle=Opciones de instalación
 MSI_OptionsDlgTitle=Opciones de WinDirStat
 IDS_PAGE_ADVANCED_IO_PRIORITY=Prioridad de E/S del análisis
+
+IDS_IO_PRIORITY_NORMAL=Normal
+IDS_IO_PRIORITY_BELOW_NORMAL=Por debajo de lo normal
+IDS_IO_PRIORITY_IDLE=Inactivo

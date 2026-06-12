@@ -324,3 +324,7 @@ MSI_OptionsDlgDesktopShortcut=Snelkoppeling op bureaublad aanmaken
 MSI_OptionsDlgHeaderTitle=Installatie-opties
 MSI_OptionsDlgTitle=WinDirStat-opties
 IDS_PAGE_ADVANCED_IO_PRIORITY=I/O-prioriteit van scan
+
+IDS_IO_PRIORITY_NORMAL=Normaal
+IDS_IO_PRIORITY_BELOW_NORMAL=Onder normaal
+IDS_IO_PRIORITY_IDLE=Inactief

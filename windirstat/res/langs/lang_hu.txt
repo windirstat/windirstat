@@ -324,3 +324,7 @@ MSI_OptionsDlgDesktopShortcut=Asztali parancsikon létrehozása
 MSI_OptionsDlgHeaderTitle=Telepítési lehetőségek
 MSI_OptionsDlgTitle=WinDirStat beállítások
 IDS_PAGE_ADVANCED_IO_PRIORITY=Vizsgálat I/O prioritása
+
+IDS_IO_PRIORITY_NORMAL=Normál
+IDS_IO_PRIORITY_BELOW_NORMAL=Az átlag alatt
+IDS_IO_PRIORITY_IDLE=Inaktív
