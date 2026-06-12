@@ -296,3 +296,6 @@ constexpr std::wstring_view IDS_WATCHER = L"IDS_WATCHER";
 constexpr std::wstring_view IDS_WATCHER_VERBS = L"IDS_WATCHER_VERBS";
 constexpr std::wstring_view IDS_WINDIRSTAT_SETTINGS = L"IDS_WINDIRSTAT_SETTINGS";
 constexpr std::wstring_view IDS_PAGE_ADVANCED_IO_PRIORITY = L"IDS_PAGE_ADVANCED_IO_PRIORITY";
+constexpr std::wstring_view IDS_IO_PRIORITY_NORMAL = L"IDS_IO_PRIORITY_NORMAL";
+constexpr std::wstring_view IDS_IO_PRIORITY_BELOW_NORMAL = L"IDS_IO_PRIORITY_BELOW_NORMAL";
+constexpr std::wstring_view IDS_IO_PRIORITY_IDLE = L"IDS_IO_PRIORITY_IDLE";

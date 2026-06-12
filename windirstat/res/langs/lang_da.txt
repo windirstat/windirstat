@@ -304,3 +304,7 @@ MSI_OptionsDlgDesktopShortcut=Opret skrivebordsgenvej
 MSI_OptionsDlgHeaderTitle=Installationsindstillinger
 MSI_OptionsDlgTitle=WinDirStat-indstillinger
 IDS_PAGE_ADVANCED_IO_PRIORITY=I/O-prioritet for scanning
+
+IDS_IO_PRIORITY_NORMAL=Normal
+IDS_IO_PRIORITY_BELOW_NORMAL=Under normal
+IDS_IO_PRIORITY_IDLE=Inaktiv

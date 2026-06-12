@@ -304,3 +304,7 @@ MSI_OptionsDlgDesktopShortcut=Loo töölaua otsetee
 MSI_OptionsDlgHeaderTitle=Installi suvandid
 MSI_OptionsDlgTitle=WinDirStat sätted
 IDS_PAGE_ADVANCED_IO_PRIORITY=Skannimise I/O prioriteet
+
+IDS_IO_PRIORITY_NORMAL=Tavaline
+IDS_IO_PRIORITY_BELOW_NORMAL=Alla normaalse
+IDS_IO_PRIORITY_IDLE=Jõude
