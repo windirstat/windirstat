@@ -150,6 +150,7 @@
 #define IDC_PERMS_LEVEL3                1133
 #define IDC_PERMS_LEVEL4                1134
 #define IDC_PERMS_EXCLUDE               1135
+#define IDC_SCAN_IO_PRIORITY            1136
 #define ID_WDS_CONTROL                  4711
 #define ID_TREEMAP_ZOOMRESET            32767
 #define ID_CLEANUP_EXPLORER_SELECT      32768
@@ -265,9 +266,8 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        306
-#define _APS_NEXT_COMMAND_VALUE         32958
-#define _APS_NEXT_CONTROL_VALUE         1136
+#define _APS_NEXT_COMMAND_VALUE         32959
+#define _APS_NEXT_CONTROL_VALUE         1138
 #define _APS_NEXT_SYMED_VALUE           110
-#define IDC_SCAN_IO_PRIORITY            1134
 #endif
 #endif
