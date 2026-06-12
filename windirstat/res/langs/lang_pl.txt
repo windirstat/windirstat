@@ -303,3 +303,4 @@ MSI_OptionsDlgDescription=Wybierz poniższe opcje, aby dostosować instalację W
 MSI_OptionsDlgDesktopShortcut=Utwórz skrót na pulpicie
 MSI_OptionsDlgHeaderTitle=Opcje instalacji
 MSI_OptionsDlgTitle=Opcje WinDirStat
+IDS_PAGE_ADVANCED_IO_PRIORITY=Priorytet I/O skanowania
