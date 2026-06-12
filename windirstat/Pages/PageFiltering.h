@@ -49,11 +49,14 @@ protected:
     CString m_filteringExcludeFiles;
     CString m_filteringIncludeDirs;
     CString m_filteringIncludeFiles;
+    BOOL m_extJunkEnable = FALSE;
+    CString m_extJunkPattern;
     CComboBox m_ctlFilteringSizeUnits;
     CEdit m_ctrlFilteringExcludeFiles;
     CEdit m_ctrlFilteringExcludeDirs;
     CEdit m_ctrlFilteringIncludeFiles;
     CEdit m_ctrlFilteringIncludeDirs;
+    CEdit m_ctrlExtJunkPattern;
     CToolTipCtrl m_toolTip;
 
     DECLARE_MESSAGE_MAP()

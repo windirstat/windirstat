@@ -226,6 +226,8 @@ public:
     static Setting<std::vector<int>> PermsViewColumnWidths;
     static Setting<std::vector<std::wstring>> SelectDrivesDrives;
     static Setting<std::vector<std::wstring>> SelectDrivesFolder;
+    static Setting<bool> ExtJunkGroupingEnable;
+    static Setting<std::wstring> ExtJunkGroupingPattern;
     static Setting<std::wstring> FilteringExcludeDirs;
     static Setting<std::wstring> FilteringExcludeFiles;
     static Setting<std::wstring> FilteringIncludeDirs;

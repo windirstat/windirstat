@@ -164,6 +164,9 @@ Setting<std::vector<int>> COptions::PermsViewColumnOrder(OptionsPerms, L"ColumnO
 Setting<std::vector<int>> COptions::PermsViewColumnWidths(OptionsPerms, L"ColumnWidths");
 Setting<std::vector<std::wstring>> COptions::SelectDrivesDrives(OptionsDriveSelect, L"SelectDrivesDrives");
 Setting<std::vector<std::wstring>> COptions::SelectDrivesFolder(OptionsDriveSelect, L"SelectDrivesFolder");
+Setting<bool> COptions::ExtJunkGroupingEnable(OptionsExtView, L"ExtJunkGroupingEnable", false);
+Setting<std::wstring> COptions::ExtJunkGroupingPattern(OptionsExtView, L"ExtJunkGroupingPattern",
+    L"\\.(exe|dll|sys|msi|mui|fon|ttf|efi|mof|winmd|cip|ppkg)_[0-9a-f]{8,}$");
 Setting<std::wstring> COptions::SearchTerm(OptionsSearch, L"SearchTerm");
 Setting<std::wstring> COptions::FilteringExcludeDirs(OptionsDriveSelect, L"FilteringExcludeDirs");
 Setting<std::wstring> COptions::FilteringExcludeFiles(OptionsDriveSelect, L"FilteringExcludeFiles");
