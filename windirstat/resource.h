@@ -251,13 +251,16 @@
 #define IDS_FILTER_EXAMPLE_FILES_REGEX  57351
 #define IDS_FILTER_EXAMPLE_DIRS_REGEX   57352
 
+#define IDC_EXT_JUNK_ENABLE             1136
+#define IDC_EXT_JUNK_PATTERN            1137
+
 // Next default values for new objects
 //
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        306
 #define _APS_NEXT_COMMAND_VALUE         32949
-#define _APS_NEXT_CONTROL_VALUE         1136
+#define _APS_NEXT_CONTROL_VALUE         1138
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif
