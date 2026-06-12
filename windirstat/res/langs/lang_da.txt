@@ -323,4 +323,3 @@ MSI_OptionsDlgDescription=Vælg indstillingerne nedenfor for at tilpasse din Win
 MSI_OptionsDlgDesktopShortcut=Opret skrivebordsgenvej
 MSI_OptionsDlgHeaderTitle=Installationsindstillinger
 MSI_OptionsDlgTitle=WinDirStat-indstillinger
-IDS_PAGE_ADVANCED_IO_PRIORITY=Scan I/O priority
