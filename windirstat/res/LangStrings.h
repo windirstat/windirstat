@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include <string_view>
 constexpr std::wstring_view IDS_ABOUT_ABOUT = L"IDS_ABOUT_ABOUT";
 constexpr std::wstring_view IDS_ABOUT_ABOUT_TEXTss = L"IDS_ABOUT_ABOUT_TEXTss";
@@ -90,8 +90,10 @@ constexpr std::wstring_view IDS_HELP_MANUAL = L"IDS_HELP_MANUAL";
 constexpr std::wstring_view IDS_HIDDEN = L"IDS_HIDDEN";
 constexpr std::wstring_view IDS_HOT_COST = L"IDS_HOT_COST";
 constexpr std::wstring_view IDS_IDLEMESSAGE = L"IDS_IDLEMESSAGE";
-constexpr std::wstring_view IDS_ITEMSs_SELECTED_FILESs_FOLDERSs = L"IDS_ITEMSs_SELECTED_FILESs_FOLDERSs";
-constexpr std::wstring_view IDS_JUNCTIONS = L"IDS_JUNCTIONS";
+constexpr std::wstring_view IDS_IO_PRIORITY_BELOW_NORMAL = L"IDS_IO_PRIORITY_BELOW_NORMAL";
+constexpr std::wstring_view IDS_IO_PRIORITY_IDLE = L"IDS_IO_PRIORITY_IDLE";
+constexpr std::wstring_view IDS_IO_PRIORITY_NORMAL = L"IDS_IO_PRIORITY_NORMAL";
+constexpr std::wstring_view IDS_ITEMSs_SELECTED_FILESs_FOLDERSs = L"IDS_ITEMSs_SELECTED_FILESs_FOLDERSs";`nconstexpr std::wstring_view IDS_JUNCTIONS = L"IDS_JUNCTIONS";
 constexpr std::wstring_view IDS_LARGEST_FILES = L"IDS_LARGEST_FILES";
 constexpr std::wstring_view IDS_MENU_CANCEL = L"IDS_MENU_CANCEL";
 constexpr std::wstring_view IDS_MENU_CHKDSK = L"IDS_MENU_CHKDSK";
@@ -175,6 +177,7 @@ constexpr std::wstring_view IDS_ONEREADJOB = L"IDS_ONEREADJOB";
 constexpr std::wstring_view IDS_OPTIMIZED_COST_LABEL = L"IDS_OPTIMIZED_COST_LABEL";
 constexpr std::wstring_view IDS_PAGE_ADVANCED_FOLDER_HISTORY = L"IDS_PAGE_ADVANCED_FOLDER_HISTORY";
 constexpr std::wstring_view IDS_PAGE_ADVANCED_HASH_ALGORITHM = L"IDS_PAGE_ADVANCED_HASH_ALGORITHM";
+constexpr std::wstring_view IDS_PAGE_ADVANCED_IO_PRIORITY = L"IDS_PAGE_ADVANCED_IO_PRIORITY";
 constexpr std::wstring_view IDS_PAGE_ADVANCED_LARGEST_COUNT = L"IDS_PAGE_ADVANCED_LARGEST_COUNT";
 constexpr std::wstring_view IDS_PAGE_ADVANCED_PROCESS_HARDLINKS = L"IDS_PAGE_ADVANCED_PROCESS_HARDLINKS";
 constexpr std::wstring_view IDS_PAGE_ADVANCED_SKIP_CLOUD_LINKS = L"IDS_PAGE_ADVANCED_SKIP_CLOUD_LINKS";
@@ -321,8 +324,4 @@ constexpr std::wstring_view IDS_VOLUME_MOUNT_POINTS = L"IDS_VOLUME_MOUNT_POINTS"
 constexpr std::wstring_view IDS_WATCHER = L"IDS_WATCHER";
 constexpr std::wstring_view IDS_WATCHER_VERBS = L"IDS_WATCHER_VERBS";
 constexpr std::wstring_view IDS_WINDIRSTAT_SETTINGS = L"IDS_WINDIRSTAT_SETTINGS";
-constexpr std::wstring_view IDS_PAGE_ADVANCED_IO_PRIORITY = L"IDS_PAGE_ADVANCED_IO_PRIORITY";
-constexpr std::wstring_view IDS_IO_PRIORITY_BELOW_NORMAL = L"IDS_IO_PRIORITY_BELOW_NORMAL";
-constexpr std::wstring_view IDS_IO_PRIORITY_IDLE = L"IDS_IO_PRIORITY_IDLE";
-constexpr std::wstring_view IDS_IO_PRIORITY_NORMAL = L"IDS_IO_PRIORITY_NORMAL";
 constexpr std::wstring_view IDS_WINDOW_LAYOUT = L"IDS_WINDOW_LAYOUT";
