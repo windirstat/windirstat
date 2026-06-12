@@ -1158,6 +1158,7 @@ void CWinDirStatModel::StartScanningEngine(std::vector<CItem*> items)
             auto* basicCtx = &queueContextBasic[queue.first];
             queue.second.StartThreads(COptions::ScanningThreads, [queuePtr, ntfsCtx, basicCtx]()
             {
+                SetCurrentThreadIoPriority(COptions::ScanIoPriority);
                 CItem::ScanItems(queuePtr, *ntfsCtx, *basicCtx);
             });
         }

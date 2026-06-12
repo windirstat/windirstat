@@ -268,5 +268,6 @@
 #define _APS_NEXT_COMMAND_VALUE         32958
 #define _APS_NEXT_CONTROL_VALUE         1136
 #define _APS_NEXT_SYMED_VALUE           110
+#define IDC_SCAN_IO_PRIORITY            1134
 #endif
 #endif

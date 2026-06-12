@@ -333,3 +333,4 @@ MSI_OptionsDlgDescription=Select the options below to customize your WinDirStat 
 MSI_OptionsDlgDesktopShortcut=Create Desktop Shortcut
 MSI_OptionsDlgHeaderTitle=Install Options
 MSI_OptionsDlgTitle=WinDirStat Options
+IDS_PAGE_ADVANCED_IO_PRIORITY=Scan I/O priority

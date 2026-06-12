@@ -332,3 +332,4 @@ MSI_OptionsDlgDescription=Velg alternativene nedenfor for å tilpasse din WinDir
 MSI_OptionsDlgDesktopShortcut=Lag snarvei på skrivebordet
 MSI_OptionsDlgHeaderTitle=Installasjonsalternativer
 MSI_OptionsDlgTitle=WinDirStat-innstillinger
+IDS_PAGE_ADVANCED_IO_PRIORITY=Scan I/O priority
