@@ -762,12 +762,14 @@ void SetProcessIoPriorityHigh() noexcept
 
 void SetCurrentThreadIoPriority(const int level) noexcept
 {
-    // level: 0=Normal, 1=BelowNormal, 2=Idle
-    // NT ThreadIoPriority values: 2=Normal, 1=Low, 0=VeryLow
-    constexpr ULONG ThreadIoPriority = 31;
-    ULONG ioPriority = static_cast<ULONG>(2 - std::clamp(level, 0, 2));
-    NtSetInformationThread(GetCurrentThread(),
-        static_cast<THREADINFOCLASS>(ThreadIoPriority), &ioPriority, sizeof(ioPriority));
+    enum class NtIoPriority : ULONG { VeryLow = 0, Low = 1, Normal = 2 };
+    constexpr THREADINFOCLASS ThreadIoPriorityClass = static_cast<THREADINFOCLASS>(31);
+
+    // Map user-facing level (0=Normal, 1=BelowNormal, 2=Idle) to NT values
+    const auto ntPriority = static_cast<NtIoPriority>(
+        static_cast<ULONG>(NtIoPriority::Normal) - static_cast<ULONG>(std::clamp(level, 0, 2)));
+    ULONG value = static_cast<ULONG>(ntPriority);
+    NtSetInformationThread(GetCurrentThread(), ThreadIoPriorityClass, &value, sizeof(value));
 }
 
 bool OptimizeVhd(const std::wstring& vhdPath) noexcept
