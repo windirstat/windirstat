@@ -329,3 +329,4 @@ MSI_OptionsDlgDescription=Wählen Sie die folgenden Optionen, um Ihre WinDirStat
 MSI_OptionsDlgDesktopShortcut=Desktop-Verknüpfung erstellen
 MSI_OptionsDlgHeaderTitle=Installationsoptionen
 MSI_OptionsDlgTitle=WinDirStat-Optionen
+IDS_PAGE_ADVANCED_IO_PRIORITY=Scan-Lese-Priorität
