@@ -15,7 +15,9 @@
 #define IDD_PROGRESS                    112
 #define IDD_PAGE_PROMPTS                113
 #define IDD_PAGE_PERMISSIONS            114
+#define IDD_PAGE_GPU                    115
 #define IDR_MAINFRAME                   128
+#define IDR_GPUHASH_SHADER              133
 #define IDR_POPUP_TREE                  129
 #define IDR_POPUP_MAP                   130
 #define IDR_LICENSE                     131
@@ -150,6 +152,15 @@
 #define IDC_PERMS_LEVEL3                1133
 #define IDC_PERMS_LEVEL4                1134
 #define IDC_PERMS_EXCLUDE               1135
+#define IDC_GPU_BENCHMARK_LIST          1136
+#define IDC_GPU_TEST_FILE               1137
+#define IDC_GPU_BROWSE                  1138
+#define IDC_GPU_START_BENCHMARK         1139
+#define IDC_GPU_ALGO_COMBO              1140
+#define IDC_GPU_RADIO_CPU               1141
+#define IDC_GPU_RADIO_GPU               1142
+#define IDC_GPU_APPLY_GROUP             1143
+#define IDC_GPU_STATUS                  1144
 #define ID_WDS_CONTROL                  4711
 #define ID_TREEMAP_ZOOMRESET            32767
 #define ID_CLEANUP_EXPLORER_SELECT      32768
@@ -252,7 +263,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        306
 #define _APS_NEXT_COMMAND_VALUE         32946
-#define _APS_NEXT_CONTROL_VALUE         1136
+#define _APS_NEXT_CONTROL_VALUE         1145
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif
