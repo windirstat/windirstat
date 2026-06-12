@@ -17,6 +17,7 @@
 
 #include "pch.h"
 #include "Item.h"
+#include "GpuHasher.h"
 
 static void CloseBCryptAlgHandle(BCRYPT_ALG_HANDLE h) noexcept { BCryptCloseAlgorithmProvider(h, 0); }
 
@@ -951,6 +952,29 @@ std::vector<BYTE> CItem::GetFileHash(ULONGLONG hashSizeLimit, BlockingQueue<CIte
 {
     const HashAlgorithm hashAlgorithm = static_cast<HashAlgorithm>(COptions::FileHashAlgorithm.Obj());
     const auto& hashAlgorithmInfo = HashAlgorithms[hashAlgorithm];
+
+    // GPU path: only for files > 256 KB (below that the PCIe round-trip
+    // overhead dominates) and only when the user opted in for this
+    // algorithm. On any failure GpuHasher returns an empty digest and we
+    // fall through to BCrypt, so a correct hash is always produced.
+    if (COptions::UseGpuHashing &&
+        hashAlgorithm == static_cast<HashAlgorithm>(COptions::GpuHashAlgorithm.Obj()) &&
+        std::min<ULONGLONG>(GetSizeLogical(), hashSizeLimit) > 256 * wds::Ki &&
+        GpuHasher::IsAvailable())
+    {
+        auto gpuHash = GpuHasher::HashFile(GetPathLong(), hashSizeLimit, hashAlgorithm,
+            [this, queue]
+        {
+            UpwardDrivePacman();
+            if (queue != nullptr) queue->WaitIfSuspended();
+        });
+        if (!gpuHash.empty())
+        {
+            // Reduce to the same stored size as the BCrypt path below
+            gpuHash.resize(std::min<size_t>(16, gpuHash.size()));
+            return gpuHash;
+        }
+    }
 
     thread_local std::vector<BYTE> fileBuffer(wds::Mi);
     thread_local std::vector<BYTE> hashBuffer;
