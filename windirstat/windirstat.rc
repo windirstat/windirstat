@@ -890,18 +890,10 @@ BEGIN
 END
 
 
-/////////////////////////////////////////////////////////////////////////////
-//
-// Dialog Info
-//
-
-    IDD_PAGE_GPU, DIALOG
-    BEGIN
-        LEFTMARGIN, 7
-        RIGHTMARGIN, 375
-        TOPMARGIN, 7
-        BOTTOMMARGIN, 195
-    END
+IDD_PAGE_GPU AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
 
 IDD_PAGE_ADVANCED DLGINIT
 BEGIN
