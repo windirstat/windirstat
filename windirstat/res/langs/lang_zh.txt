@@ -329,4 +329,3 @@ MSI_OptionsDlgDescription=选择下方选项以自定义您的 WinDirStat 安装
 MSI_OptionsDlgDesktopShortcut=创建桌面快捷方式
 MSI_OptionsDlgHeaderTitle=安装选项
 MSI_OptionsDlgTitle=WinDirStat 选项
-IDS_PAGE_ADVANCED_IO_PRIORITY=Scan I/O priority

@@ -329,4 +329,3 @@ MSI_OptionsDlgDescription=Valitse alla olevat asetukset mukauttaaksesi WinDirSta
 MSI_OptionsDlgDesktopShortcut=Luo työpöydän pikakuvake
 MSI_OptionsDlgHeaderTitle=Asennusasetukset
 MSI_OptionsDlgTitle=WinDirStat-asetukset
-IDS_PAGE_ADVANCED_IO_PRIORITY=Scan I/O priority
