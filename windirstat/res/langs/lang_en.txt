@@ -331,3 +331,7 @@ MSI_OptionsDlgDesktopShortcut=Create Desktop Shortcut
 MSI_OptionsDlgHeaderTitle=Install Options
 MSI_OptionsDlgTitle=WinDirStat Options
 IDS_PAGE_ADVANCED_IO_PRIORITY=Scan I/O priority
+
+IDS_IO_PRIORITY_NORMAL=Normal
+IDS_IO_PRIORITY_BELOW_NORMAL=Below normal
+IDS_IO_PRIORITY_IDLE=Idle

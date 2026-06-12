@@ -97,15 +97,15 @@ BOOL CPageAdvanced::OnInitDialog()
     m_scanningThreads = COptions::ScanningThreads - 1;
     m_fileHashAlgorithm = COptions::FileHashAlgorithm;
     m_scanIoPriority = COptions::ScanIoPriority;
-    // Populate scan I/O priority combo
-    if (auto* pIoPrio = static_cast<CComboBox*>(GetDlgItem(IDC_SCAN_IO_PRIORITY)); pIoPrio != nullptr)
-    {
-        static constexpr std::wstring_view kLabels[] = { L"Normal", L"Below normal", L"Idle" };
-        for (const auto& label : kLabels)
-            pIoPrio->AddString(label.data());
-    }
     m_largestFileCount = std::to_wstring(COptions::LargeFileCount.Obj()).c_str();
     m_folderHistoryCount = std::to_wstring(COptions::FolderHistoryCount.Obj()).c_str();
+
+    if (auto* pIoPrio = static_cast<CComboBox*>(GetDlgItem(IDC_SCAN_IO_PRIORITY)); pIoPrio != nullptr)
+    {
+        pIoPrio->AddString(Localization::Lookup(IDS_IO_PRIORITY_NORMAL).c_str());
+        pIoPrio->AddString(Localization::Lookup(IDS_IO_PRIORITY_BELOW_NORMAL).c_str());
+        pIoPrio->AddString(Localization::Lookup(IDS_IO_PRIORITY_IDLE).c_str());
+    }
 
     UpdateData(FALSE);
     return TRUE;
