@@ -333,3 +333,7 @@ MSI_OptionsDlgDesktopShortcut=Vytvořit zástupce na ploše
 MSI_OptionsDlgHeaderTitle=Možnosti instalace
 MSI_OptionsDlgTitle=Možnosti WinDirStat
 IDS_PAGE_ADVANCED_IO_PRIORITY=Priorita I/O skenování
+
+IDS_IO_PRIORITY_NORMAL=Normal
+IDS_IO_PRIORITY_BELOW_NORMAL=Nízká
+IDS_IO_PRIORITY_IDLE=Nečinná

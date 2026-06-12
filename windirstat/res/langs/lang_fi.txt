@@ -333,3 +333,7 @@ MSI_OptionsDlgDesktopShortcut=Luo työpöydän pikakuvake
 MSI_OptionsDlgHeaderTitle=Asennusasetukset
 MSI_OptionsDlgTitle=WinDirStat-asetukset
 IDS_PAGE_ADVANCED_IO_PRIORITY=Skannauksen I/O-prioriteetti
+
+IDS_IO_PRIORITY_NORMAL=Normaali
+IDS_IO_PRIORITY_BELOW_NORMAL=Alle normaalin
+IDS_IO_PRIORITY_IDLE=Käyttämättömänä
