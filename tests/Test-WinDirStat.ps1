@@ -6164,6 +6164,7 @@ namespace WdsSettingsTest
         StringField(out, first, "FilteringExcludeFiles", COptions::FilteringExcludeFiles.Obj());
         StringField(out, first, "FilteringIncludeDirs", COptions::FilteringIncludeDirs.Obj());
         StringField(out, first, "FilteringIncludeFiles", COptions::FilteringIncludeFiles.Obj());
+        StringField(out, first, "PermsExcludeRegex", COptions::PermsExcludeRegex.Obj());
         StringField(out, first, "SearchTerm", COptions::SearchTerm.Obj());
         RawField(out, first, "LanguageList", LanguageArray());
         IntField(out, first, "LocaleForFormatting", COptions::GetLocaleForFormatting());
@@ -6361,6 +6362,8 @@ $visualSettings = @(
     'MainWindowPlacement',
     'MinimizeViewThreshold',
     'PacmanAnimation',
+    'PermsViewColumnOrder',
+    'PermsViewColumnWidths',
     'SearchViewColumnOrder',
     'SearchViewColumnWidths',
     'SearchWindowRect',
@@ -6407,6 +6410,7 @@ $coveredNonVisualSettings = @(
     'FollowVolumeMountPoints',
     'LanguageId',
     'LargeFileCount',
+    'PermsExcludeRegex',
     'ProcessHardlinks',
     'ScanForDuplicates',
     'ScanningThreads',
@@ -6715,6 +6719,7 @@ try {
         Assert-Equal $ctx 'FileHashAlgorithm' $s.FileHashAlgorithm 4
         Assert-Equal $ctx 'FilteringMaxAgeDays' $s.FilteringMaxAgeDays 0
         Assert-Equal $ctx 'LargeFileCount' $s.LargeFileCount 50
+        Assert-Equal $ctx 'PermsExcludeRegex' $s.PermsExcludeRegex ''
         Assert-Equal $ctx 'ScanningThreads' $s.ScanningThreads 4
         Assert-Equal $ctx 'SelectDrivesRadio' $s.SelectDrivesRadio 0
         Assert-Equal $ctx 'FolderHistoryCount' $s.FolderHistoryCount 10
@@ -6780,6 +6785,7 @@ try {
         Set-IniValue $sections 'SearchView' 'SearchCase' 1
         Set-IniValue $sections 'SearchView' 'SearchMaxResults' 321
         Set-IniValue $sections 'SearchView' 'SearchTerm' "alpha${recordSeparator}beta"
+        Set-IniValue $sections 'PermissionsView' 'ExcludeRegex' '^BUILTIN\\Users$'
         $sections['Cleanups\UserDefinedCleanup00'] = [ordered] @{
             Title = 'Custom cleanup'
             CommandLine = "echo %p${recordSeparator}echo %sn"
@@ -6831,6 +6837,7 @@ try {
         Assert-Equal $ctx 'FilteringMaxAgeDays' $s.FilteringMaxAgeDays 14
         Assert-Equal $ctx 'LargeFileCount' $s.LargeFileCount 123
         Assert-Equal $ctx 'MinimizeViewThreshold' $s.MinimizeViewThreshold 42
+        Assert-Equal $ctx 'PermsExcludeRegex' $s.PermsExcludeRegex '^BUILTIN\\Users$'
         Assert-Equal $ctx 'ScanningThreads' $s.ScanningThreads 7
         Assert-Equal $ctx 'SelectDrivesRadio' $s.SelectDrivesRadio 2
         Assert-Equal $ctx 'FolderHistoryCount' $s.FolderHistoryCount 3

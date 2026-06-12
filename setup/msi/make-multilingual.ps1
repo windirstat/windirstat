@@ -198,9 +198,9 @@ function Generate-WxlFiles {
     $langFiles = Get-ChildItem -Path "$LangDir\lang_*.txt"
     foreach ($file in $langFiles) {
         $code = ($file.BaseName -replace '^lang_', '').ToLower()
-        
+
         $lines = [System.IO.File]::ReadAllLines($file.FullName, [System.Text.UTF8Encoding]::new($false))
-        
+
         $msiKeys = @{}
         foreach ($line in $lines) {
             if ($line -match '^MSI_([^=]+)=(.*)$') {
@@ -209,20 +209,20 @@ function Generate-WxlFiles {
                 $msiKeys[$key] = $value
             }
         }
-        
+
         if (-not $msiKeys.ContainsKey('CULTURE') -or -not $msiKeys.ContainsKey('LCID') -or -not $msiKeys.ContainsKey('CODEPAGE')) {
             continue
         }
-        
+
         $culture = $msiKeys['CULTURE']
         $lcid = [int]$msiKeys['LCID']
         $codepage = $msiKeys['CODEPAGE']
-        
+
         $xmlLines = @(
             '<?xml version="1.0" encoding="UTF-8"?>'
             "<WixLocalization Culture=""$culture"" Codepage=""$codepage"" xmlns=""http://wixtoolset.org/schemas/v4/wxl"">"
         )
-        
+
         $sortedKeys = $msiKeys.Keys | Sort-Object
         foreach ($key in $sortedKeys) {
             if ($key -eq 'CULTURE' -or $key -eq 'LCID' -or $key -eq 'CODEPAGE') {
@@ -231,15 +231,15 @@ function Generate-WxlFiles {
             $escapedValue = Escape-XmlString $msiKeys[$key]
             $xmlLines += "  <String Id=""$key"" Value=""$escapedValue""/>"
         }
-        
+
         $xmlLines += "</WixLocalization>"
         $xmlContent = $xmlLines -join "`r`n"
-        
+
         $wxlFileName = "WinDirStat_$code.wxl"
         $wxlPath = Join-Path $OutputDir $wxlFileName
-        
+
         [System.IO.File]::WriteAllText($wxlPath, $xmlContent, [System.Text.UTF8Encoding]::new($false))
-        
+
         $languagesList.Add([PSCustomObject]@{
             Code     = $code
             Culture  = $culture
