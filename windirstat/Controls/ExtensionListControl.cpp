@@ -197,8 +197,41 @@ void CExtensionListControl::SetExtensionData(const CExtensionData* ed)
     {
         std::vector<CWdsListItem*> items;
         items.reserve(ed->size());
+
+        // Aggregate junk extensions into one bucket when enabled
+        ULONGLONG junkFiles = 0, junkBytes = 0;
+        bool hasJunk = false;
+        std::wregex junkRx;
+        bool junkActive = COptions::ExtJunkGroupingEnable;
+        if (junkActive)
+        {
+            try { junkRx = std::wregex(COptions::ExtJunkGroupingPattern.Obj(),
+                std::regex_constants::icase | std::regex_constants::ECMAScript); }
+            catch (...) { junkActive = false; }
+        }
+
         for (const auto& [ext, rec] : *ed)
-            items.emplace_back(new CListItem(this, ext, rec));
+        {
+            if (junkActive && std::regex_search(ext, junkRx))
+            {
+                junkFiles += rec.GetFiles();
+                junkBytes += rec.GetBytes();
+                hasJunk = true;
+            }
+            else
+            {
+                items.emplace_back(new CListItem(this, ext, rec));
+            }
+        }
+
+        if (hasJunk)
+        {
+            SExtensionRecord junkRec;
+            junkRec.files.store(junkFiles, std::memory_order_relaxed);
+            junkRec.bytes.store(junkBytes, std::memory_order_relaxed);
+            items.emplace_back(new CListItem(this,
+                L"(" + std::wstring(Localization::Lookup(IDS_EXT_JUNK_BUCKET)) + L")", junkRec));
+        }
 
         InsertListItem(0, items);
     }
