@@ -254,5 +254,16 @@
 #define _APS_NEXT_COMMAND_VALUE         32946
 #define _APS_NEXT_CONTROL_VALUE         1136
 #define _APS_NEXT_SYMED_VALUE           110
+#define IDD_PAGE_GPU                    114
+#define IDR_GPUHASH_SHADER              133
+#define IDC_GPU_BENCHMARK_LIST          1125
+#define IDC_GPU_TEST_FILE               1126
+#define IDC_GPU_BROWSE                  1127
+#define IDC_GPU_START_BENCHMARK         1128
+#define IDC_GPU_ALGO_COMBO              1129
+#define IDC_GPU_RADIO_CPU               1130
+#define IDC_GPU_RADIO_GPU               1131
+#define IDC_GPU_APPLY_GROUP             1132
+#define IDC_GPU_STATUS                  1133
 #endif
 #endif

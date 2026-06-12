@@ -23,6 +23,7 @@
 #include "DrawTextCache.h"
 #include "ExtensionView.h"
 #include "PageAdvanced.h"
+#include "PageGpu.h"
 #include "PageFiltering.h"
 #include "PageCleanups.h"
 #include "PageFileTree.h"
@@ -136,6 +137,7 @@ bool COptionsPropertySheet::ShowSettings(const int initialPage)
     auto cleanups = std::make_unique<CPageCleanups>();
     auto prompts = std::make_unique<CPagePrompts>();
     auto advanced = std::make_unique<CPageAdvanced>();
+    auto hashing = std::make_unique<CPageGpu>();
 
     sheet->AddPage(general.get());
     sheet->AddPage(filtering.get()); // index 1
@@ -145,6 +147,7 @@ bool COptionsPropertySheet::ShowSettings(const int initialPage)
     sheet->AddPage(cleanups.get());
     sheet->AddPage(prompts.get());
     sheet->AddPage(advanced.get());
+    sheet->AddPage(hashing.get());
 
     sheet->DoModal();
     return sheet->m_restartApplication;

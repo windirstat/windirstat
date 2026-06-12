@@ -560,6 +560,7 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
     <ClCompile Include="DarkMode.cpp" />
     <ClCompile Include="Dialogs\MessageBoxDlg.cpp" />
     <ClCompile Include="Dialogs\ProgressDlg.cpp" />
+    <ClCompile Include="GpuHasher.cpp" />
     <ClCompile Include="DirStatDoc.cpp">
     </ClCompile>
     <ClCompile Include="Filtering.cpp" />
