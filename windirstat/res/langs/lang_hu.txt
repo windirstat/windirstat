@@ -323,3 +323,4 @@ MSI_OptionsDlgDescription=Válassza ki az alábbi lehetőségeket a WinDirStat t
 MSI_OptionsDlgDesktopShortcut=Asztali parancsikon létrehozása
 MSI_OptionsDlgHeaderTitle=Telepítési lehetőségek
 MSI_OptionsDlgTitle=WinDirStat beállítások
+IDS_PAGE_ADVANCED_IO_PRIORITY=Scan I/O priority

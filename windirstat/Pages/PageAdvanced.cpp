@@ -45,6 +45,8 @@ void CPageAdvanced::DoDataExchange(CDataExchange* pDX)
     DDX_Text(pDX, IDC_FOLDER_HISTORY_COUNT, m_folderHistoryCount);
     DDX_CBIndex(pDX, IDC_COMBO_THREADS, m_scanningThreads);
     DDX_CBIndex(pDX, IDC_HASH_ALGORITHM, m_fileHashAlgorithm);
+    DDX_CBIndex(pDX, IDC_SCAN_IO_PRIORITY, m_scanIoPriority);
+
 }
 
 BEGIN_MESSAGE_MAP(CPageAdvanced, CMFCPropertyPage)
@@ -95,6 +97,14 @@ BOOL CPageAdvanced::OnInitDialog()
     m_processHardlinks = COptions::ProcessHardlinks;
     m_scanningThreads = COptions::ScanningThreads - 1;
     m_fileHashAlgorithm = COptions::FileHashAlgorithm;
+    m_scanIoPriority = COptions::ScanIoPriority;
+    // Populate scan I/O priority combo
+    if (auto* pIoPrio = static_cast<CComboBox*>(GetDlgItem(IDC_SCAN_IO_PRIORITY)); pIoPrio != nullptr)
+    {
+        static constexpr std::wstring_view kLabels[] = { L"Normal", L"Below normal", L"Idle" };
+        for (const auto& label : kLabels)
+            pIoPrio->AddString(label.data());
+    }
     m_largestFileCount = std::to_wstring(COptions::LargeFileCount.Obj()).c_str();
     m_folderHistoryCount = std::to_wstring(COptions::FolderHistoryCount.Obj()).c_str();
 
@@ -131,6 +141,8 @@ void CPageAdvanced::OnOK()
     COptions::ProcessHardlinks = (FALSE != m_processHardlinks);
     COptions::ScanningThreads = m_scanningThreads + 1;
     COptions::FileHashAlgorithm = m_fileHashAlgorithm;
+    COptions::ScanIoPriority = m_scanIoPriority;
+
     COptions::LargeFileCount = std::stoi(m_largestFileCount.GetString());
     COptions::FolderHistoryCount = std::stoi(m_folderHistoryCount.GetString());
 
