@@ -303,4 +303,3 @@ MSI_OptionsDlgDescription=WinDirStat kurulumunuzu özelleştirmek için aşağı
 MSI_OptionsDlgDesktopShortcut=Masaüstü Kısayolu Oluştur
 MSI_OptionsDlgHeaderTitle=Yükleme Seçenekleri
 MSI_OptionsDlgTitle=WinDirStat Seçenekleri
-IDS_PAGE_ADVANCED_IO_PRIORITY=Scan I/O priority

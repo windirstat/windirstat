@@ -303,4 +303,3 @@ MSI_OptionsDlgDescription=Vyberte níže uvedené možnosti pro přizpůsobení 
 MSI_OptionsDlgDesktopShortcut=Vytvořit zástupce na ploše
 MSI_OptionsDlgHeaderTitle=Možnosti instalace
 MSI_OptionsDlgTitle=Možnosti WinDirStat
-IDS_PAGE_ADVANCED_IO_PRIORITY=Scan I/O priority

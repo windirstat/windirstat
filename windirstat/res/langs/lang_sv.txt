@@ -303,4 +303,3 @@ MSI_OptionsDlgDescription=Välj alternativen nedan för att anpassa din WinDirSt
 MSI_OptionsDlgDesktopShortcut=Skapa genväg på skrivbordet
 MSI_OptionsDlgHeaderTitle=Installationsalternativ
 MSI_OptionsDlgTitle=WinDirStat-alternativ
-IDS_PAGE_ADVANCED_IO_PRIORITY=Scan I/O priority
