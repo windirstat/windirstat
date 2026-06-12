@@ -115,6 +115,8 @@ std::wstring ComputeFileHashes(const std::wstring& filePath);
 
 // I/O priority and VHD optimization
 void SetProcessIoPriorityHigh() noexcept;
+// Sets thread-level I/O priority: 0=Normal, 1=BelowNormal, 2=Idle
+void SetCurrentThreadIoPriority(int level) noexcept;
 bool OptimizeVhd(const std::wstring& vhdPath) noexcept;
 
 // Drive mappings
