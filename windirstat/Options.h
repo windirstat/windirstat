@@ -186,8 +186,7 @@ public:
     static Setting<int> FollowReparsePointMask;
     static Setting<int> LanguageId;
     static Setting<int> FileHashAlgorithm;
-    static Setting<int>  ScanIoPriority;  // 0=Normal, 1=BelowNormal, 2=Idle
-
+    static Setting<int> ScanIoPriority;  // 0=Normal, 1=BelowNormal, 2=Idle
     static Setting<int> LargeFileCount;
     static Setting<int> MinimizeViewThreshold;
     static Setting<int> ScanningThreads;
