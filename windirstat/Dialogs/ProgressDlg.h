@@ -18,6 +18,16 @@
 #pragma once
 
 #include "pch.h"
+class CWdsProgressCtrl final : public CProgressCtrl
+{
+public:
+    CWdsProgressCtrl() = default;
+
+protected:
+    afx_msg void OnPaint();
+    afx_msg BOOL OnEraseBkgnd(CDC* pDC);
+    DECLARE_MESSAGE_MAP()
+};
 
 //
 // CProgressDlg - Modal progress dialog for long-running operations
@@ -57,7 +67,7 @@ private:
     std::function<void(CProgressDlg*)> m_task;
 
     CStatic m_messageCtrl;
-    CProgressCtrl m_progressCtrl;
+    CWdsProgressCtrl m_progressCtrl;
     CButton m_cancelButton;
 
     std::atomic<bool> m_cancelRequested = false;

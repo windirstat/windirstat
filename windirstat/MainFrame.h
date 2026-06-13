@@ -20,6 +20,7 @@
 #include "pch.h"
 #include "PacMan.h"
 #include "FileTabbedView.h"
+#include "Dialogs/ProgressDlg.h"
 
 class CWdsSplitterWnd;
 class CMainFrame;
@@ -213,7 +214,7 @@ protected:
     CMFCStatusBar m_wndStatusBar; // Status bar
     CMFCToolBar m_wndToolBar;     // Toolbar
     CSize m_defaultButtonSize;    // Toolbar button size at creation (pre-SetSizes, DPI-scaled)
-    CProgressCtrl m_progress;     // Progress control. Is Create()ed and Destroy()ed again every time.
+    CWdsProgressCtrl m_progress;  // Progress control. Is Create()ed and Destroy()ed again every time.
     CPacmanControl m_pacman;      // Static control for Pacman
     LOGICAL_FOCUS m_logicalFocus = LF_NONE; // Which view has the logical focus
     CDeadFocusWnd m_wndDeadFocus; // Zero-size window which holds the focus if logical focus is "NONE"
