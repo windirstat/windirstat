@@ -67,6 +67,7 @@ bool CItem::DrawSubItem(const int subitem, CDC* pdc, CRect rc, const UINT state,
     {
         rc.DeflateRect(2, 4);
         rc.left += GetIndent() * DpiRest(COptions::SizeProportionIndent);
+        if (rc.Width() <= 0 || rc.Height() <= 0) return true;
 
         const bool dark = DarkMode::IsDarkModeActive();
         // Linearly interpolate each channel between two colors
@@ -100,11 +101,16 @@ bool CItem::DrawSubItem(const int subitem, CDC* pdc, CRect rc, const UINT state,
         const COLORREF absoluteGlow  = blendColor(absoluteFill, RGB(255, 255, 255), dark ? 0.16 : 0.26);
         const COLORREF absoluteEdge  = blendColor(absoluteFill, RGB(0, 0, 0),       dark ? 0.18 : 0.12);
 
-        if (rc.Width() <= 0 || rc.Height() <= 0) return true;
+        const auto drawRoundRect = [&](CRect r, COLORREF fill, COLORREF border) {
+            pdc->SetDCBrushColor(fill);
+            pdc->SetDCPenColor(border);
+            CSelectStockObject sb(pdc, DC_BRUSH);
+            CSelectStockObject sp(pdc, DC_PEN);
+            pdc->RoundRect(r, CPoint(3, 3));
+        };
 
         // Draw the track background and border
-        pdc->FillSolidRect(rc, trackFill);
-        pdc->Draw3dRect(rc, trackBorder, trackBorder);
+        drawRoundRect(rc, trackFill, trackBorder);
         rc.DeflateRect(1, 1);
         if (rc.Width() <= 0 || rc.Height() <= 0) return true;
 
@@ -119,9 +125,9 @@ bool CItem::DrawSubItem(const int subitem, CDC* pdc, CRect rc, const UINT state,
         {
             CRect rcSubtree = rc;
             rcSubtree.right = subtreeRight;
-            pdc->FillSolidRect(rcSubtree, subtreeFill);
-            if (rcSubtree.Height() >= 3)
-                pdc->FillSolidRect(rcSubtree.left, rcSubtree.top, rcSubtree.Width(), 1, subtreeGlow);
+            drawRoundRect(rcSubtree, subtreeFill, subtreeFill);
+            if (rcSubtree.Height() >= 3 && rcSubtree.Width() >= 2)
+                pdc->FillSolidRect(rcSubtree.left + 1, rcSubtree.top, rcSubtree.Width() - 2, 1, subtreeGlow);
             if (subtreeRight < rc.right)
                 pdc->FillSolidRect(subtreeRight, rc.top, 1, rc.Height(), trackBorder);
         }
@@ -132,10 +138,11 @@ bool CItem::DrawSubItem(const int subitem, CDC* pdc, CRect rc, const UINT state,
         rcAbsolute.DeflateRect(0, 2);
         if (rcAbsolute.right > rcAbsolute.left && rcAbsolute.Height() > 0)
         {
-            pdc->FillSolidRect(rcAbsolute, absoluteFill);
-            if (rcAbsolute.Height() >= 3)
-                pdc->FillSolidRect(rcAbsolute.left, rcAbsolute.top, rcAbsolute.Width(), 1, absoluteGlow);
-            pdc->FillSolidRect(rcAbsolute.right - 1, rcAbsolute.top, 1, rcAbsolute.Height(), absoluteEdge);
+            drawRoundRect(rcAbsolute, absoluteFill, absoluteFill);
+            if (rcAbsolute.Height() >= 3 && rcAbsolute.Width() >= 2)
+                pdc->FillSolidRect(rcAbsolute.left + 1, rcAbsolute.top, rcAbsolute.Width() - 2, 1, absoluteGlow);
+            if (rcAbsolute.Height() >= 2)
+                pdc->FillSolidRect(rcAbsolute.right - 1, rcAbsolute.top + 1, 1, rcAbsolute.Height() - 2, absoluteEdge);
         }
     }
     return true;

@@ -600,14 +600,20 @@ void CTreeMap::DrawColorPreview(CDC* pdc, const CRect& rc, const COLORREF color,
     std::vector<COLORREF> bitmapBits(static_cast<size_t>(rc.Width()) * static_cast<size_t>(rc.Height()));
     RenderRectangle(bitmapBits, CRect(0, 0, rc.Width(), rc.Height()), surface, color);
 
-    BlitBitmap(pdc, rc, bitmapBits);
+    if (CSaveDC saveDc(pdc); true)
+    {
+        CRgn rgn;
+        rgn.CreateRoundRectRgn(rc.left, rc.top, rc.right, rc.bottom, 3, 3);
+        pdc->SelectClipRgn(&rgn, RGN_AND);
+        BlitBitmap(pdc, rc, bitmapBits);
+    }
 
     if (m_options.grid)
     {
-        CPen pen(PS_SOLID, 1, m_options.gridColor);
-        CSelectObject sopen(pdc, &pen);
-        CSelectStockObject sobrush(pdc, NULL_BRUSH);
-        pdc->Rectangle(rc);
+        pdc->SetDCPenColor(m_options.gridColor);
+        CSelectStockObject sp(pdc, DC_PEN);
+        CSelectStockObject sb(pdc, NULL_BRUSH);
+        pdc->RoundRect(rc, CPoint(3, 3));
     }
 }
 
