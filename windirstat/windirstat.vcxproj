@@ -339,7 +339,8 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
       <TargetMachine>MachineX86</TargetMachine>
       <AdditionalOptions>/pdbaltpath:%_PDB% /release /OPT:ICF=8 %(AdditionalOptions)</AdditionalOptions>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
-      <Profile>true</Profile>
+      <Profile>false</Profile>
+      <Profile Condition="'$(BuildingInsideVisualStudio)' == 'true'">true</Profile>
       <LargeAddressAware>true</LargeAddressAware>
     </Link>
     <Manifest>
@@ -399,7 +400,8 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
       <OutputFile>$(OutDir)$(TargetName).exe</OutputFile>
       <TargetMachine>MachineX64</TargetMachine>
       <AdditionalOptions>/pdbaltpath:%_PDB% /release /OPT:ICF=8 %(AdditionalOptions)</AdditionalOptions>
-      <Profile>true</Profile>
+      <Profile>false</Profile>
+      <Profile Condition="'$(BuildingInsideVisualStudio)' == 'true'">true</Profile>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <LargeAddressAware>true</LargeAddressAware>
     </Link>
@@ -459,7 +461,8 @@ POWERSHELL.EXE -NoLogo -ExecutionPolicy Unrestricted -NoProfile -File "$(Project
       <AdditionalDependencies>delayimp.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)$(TargetName).exe</OutputFile>
       <AdditionalOptions>/pdbaltpath:%_PDB% /release /OPT:ICF=8 %(AdditionalOptions)</AdditionalOptions>
-      <Profile>true</Profile>
+      <Profile>false</Profile>
+      <Profile Condition="'$(BuildingInsideVisualStudio)' == 'true'">true</Profile>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <LargeAddressAware>true</LargeAddressAware>
     </Link>
