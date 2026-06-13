@@ -102,7 +102,7 @@ HBRUSH COptionsPropertySheet::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 BOOL COptionsPropertySheet::OnInitDialog()
 {
     const BOOL bResult = CMFCPropertySheet::OnInitDialog();
-    CTabCtrlHelper::SetupTabControl(GetTab());
+    CTabCtrlHelper::SetupTabControl(GetTab(), CMFCTabCtrl::STYLE_FLAT);
 
     Localization::UpdateDialogs(*this);
     Localization::UpdateTabControl(GetTab());
