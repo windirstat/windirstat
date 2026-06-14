@@ -174,19 +174,23 @@ void CWdsProgressCtrl::OnPaint()
     const COLORREF trackPenColor = isDark ? DarkMode::WdsSysColor(COLOR_WINDOWFRAME) : GetSysColor(COLOR_3DSHADOW);
     const COLORREF trackBrushColor = isDark ? DarkMode::WdsSysColor(COLOR_WINDOWFRAME) : GetSysColor(COLOR_WINDOW);
 
-    // 1. Draw track background (no border)
+    // 1. Draw track background and border
     {
-        CPen nullPen(PS_NULL, 0, RGB(0,0,0));
+        CPen trackPen(PS_SOLID, 1, trackPenColor);
         CBrush trackBrush(trackBrushColor);
-        const CSelectObject soPen(&dc, &nullPen);
+        const CSelectObject soPen(&dc, &trackPen);
         const CSelectObject soBrush(&dc, &trackBrush);
         dc.RoundRect(&rect, CPoint(4, 4));
     }
 
-    // 2. Draw progress fill (square)
+    // 3. Draw progress fill (square)
     const COLORREF progColor = DarkMode::WdsSysColor(COLOR_HIGHLIGHT);
     CRect progRect = rect;
     progRect.DeflateRect(1, 1);
+
+    CRgn clipRgn;
+    clipRgn.CreateRoundRectRgn(rect.left + 1, rect.top + 1, rect.right - 1, rect.bottom - 1, 2, 2);
+    dc.SelectClipRgn(&clipRgn);
 
     if (GetStyle() & PBS_MARQUEE)
     {
@@ -219,15 +223,5 @@ void CWdsProgressCtrl::OnPaint()
         }
     }
 
-    // 3. Draw track border (hollow)
-    {
-        CPen trackPen(PS_SOLID, 1, trackPenColor);
-        LOGBRUSH lb = { BS_NULL, 0, 0 };
-        CBrush nullBrush;
-        nullBrush.CreateBrushIndirect(&lb);
-
-        const CSelectObject soPen(&dc, &trackPen);
-        const CSelectObject soBrush(&dc, &nullBrush);
-        dc.RoundRect(&rect, CPoint(4, 4));
-    }
+    dc.SelectClipRgn(NULL);
 }

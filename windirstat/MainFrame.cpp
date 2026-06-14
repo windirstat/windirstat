@@ -606,7 +606,8 @@ void CMainFrame::CreateStatusProgress()
     {
         CRect rc;
         m_wndStatusBar.GetItemRect(ID_STATUSPANE_IDLE_INDEX, rc);
-        rc.DeflateRect(2, rc.Height() / 8);
+        rc.DeflateRect(DpiRest(3, &m_wndStatusBar), DpiRest(4, &m_wndStatusBar),
+            DpiRest(5, &m_wndStatusBar), DpiRest(4, &m_wndStatusBar));
         m_progress.Create(WS_CHILD | WS_VISIBLE, rc, &m_wndStatusBar, ID_WDS_CONTROL);
         m_progress.ModifyStyle(WS_BORDER, 0);
 
@@ -1296,7 +1297,8 @@ void CMainFrame::OnSize(const UINT nType, const int cx, const int cy)
     if (m_progress.m_hWnd != nullptr)
     {
         CRect progRc = rc;
-        progRc.DeflateRect(2, rc.Height() / 8);
+        progRc.DeflateRect(DpiRest(3, &m_wndStatusBar), DpiRest(4, &m_wndStatusBar),
+            DpiRest(5, &m_wndStatusBar), DpiRest(4, &m_wndStatusBar));
         m_progress.MoveWindow(progRc);
     }
     else if (m_pacman.m_hWnd != nullptr)
