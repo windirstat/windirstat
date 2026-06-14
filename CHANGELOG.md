@@ -6,6 +6,7 @@ Enhancements
 - Added permissions scanning and export capabilities
 - Added folder frames option to treemap visualization
 - Added multilingual support for MSI installer
+- Added file deletion warning before profile deletions
 - Improved progress control rendering and layout behavior
 - Improved multi-file operations and multi-selection properties dialog
 - Improved CSV/JSON loading performance using buffered reads
@@ -14,6 +15,7 @@ Enhancements
 - Improved Italian translation
 
 Bug Fixes
+- Corrected accelerated scanning on Linux-created NTFS file systems
 - Corrected potential crash when scanning root network shares
 - Corrected potential shutdown hang or delay after a scan completes
 - Corrected potential scan cancellation hang when worker thread is blocked
