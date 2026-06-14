@@ -70,6 +70,7 @@ constexpr T* ByteOffset(void* ptr, const std::ptrdiff_t offset) noexcept
 
 // WMI helpers
 void QueryShadowCopies(ULONGLONG& count, ULONGLONG& bytesUsed);
+std::vector<std::wstring> QueryWmiStringProperty(const std::wstring& wmiClass, const std::wstring& property, const std::wstring& whereClause);
 void RemoveWmiInstances(const std::wstring& wmiClass, CProgressDlg* pdlg, const std::wstring& whereClause = L"__PATH IS NOT NULL");
 bool CreateShadowCopy(const std::wstring& volumePath);
 

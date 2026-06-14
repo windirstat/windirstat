@@ -84,6 +84,35 @@ void QueryShadowCopies(ULONGLONG& count, ULONGLONG& bytesUsed)
     }
 }
 
+std::vector<std::wstring> QueryWmiStringProperty(const std::wstring& wmiClass, const std::wstring& property, const std::wstring& whereClause)
+{
+    std::vector<std::wstring> results;
+    CComPtr<IWbemServices> svcObj;
+    CComPtr<IEnumWbemClassObject> enumObj;
+    if (FAILED(WmiConnect(svcObj)) || !svcObj ||
+        FAILED(svcObj->ExecQuery(CComBSTR(L"WQL"),
+            CComBSTR(std::format(L"SELECT {} FROM {} WHERE {}", property, wmiClass, whereClause).c_str()),
+            WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY, nullptr, &enumObj)))
+    {
+        return results;
+    }
+
+    while (true)
+    {
+        ULONG uRet;
+        CComPtr<IWbemClassObject> pObj;
+        if (enumObj->Next(WBEM_INFINITE, 1, &pObj, &uRet) != WBEM_S_NO_ERROR || uRet == 0) break;
+
+        CComVariant vtVal;
+        if (SUCCEEDED(pObj->Get(property.c_str(), 0, &vtVal, nullptr, nullptr)) && vtVal.vt == VT_BSTR)
+        {
+            results.emplace_back(vtVal.bstrVal);
+        }
+    }
+
+    return results;
+}
+
 void RemoveWmiInstances(const std::wstring& wmiClass, CProgressDlg* pdlg, const std::wstring& whereClause)
 {
     CComPtr<IWbemServices> svcObj;
